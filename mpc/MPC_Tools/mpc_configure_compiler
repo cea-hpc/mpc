@@ -92,15 +92,15 @@ fi
 
 # Regular flags and compiler (C, C++ or fortran)
 cat <<EOF >> $1
-CFLAGS="\`$SCTK_PREFIX/bin/mpc_cflags $2\`"
-LDFLAGS="\`$SCTK_PREFIX/bin/mpc_ldflags $2\`"
+CFLAGS="\`$SCTK_BIN_DIR/mpc_cflags $2\`"
+LDFLAGS="\`$SCTK_BIN_DIR/mpc_ldflags $2\`"
 CC=$CC
 EOF
 
 
 # More variable definitions (Library path, show and different shades of args)
 cat << EOF >> $1
-LIB_PATH="-Wl,-rpath,$SCTK_PREFIX/lib ${LIB_PATH}"
+LIB_PATH="-Wl,-rpath,$SCTK_LIB_DIR ${LIB_PATH}"
 if test "\$MPC_MAKEFILE" != "" ; then 
 LIB_PATH=""
 fi

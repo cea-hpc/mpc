@@ -171,6 +171,15 @@ SCTK_CHECK_PROG 'sed'
 SCTK_CHECK_PROG 'grep'
 }
 
+post_update_vars(){
+#update paths
+if test "$SCTK_EPREFIX" = "" ; then SCTK_EPREFIX="${SCTK_PREFIX}"; fi
+if test "$SCTK_BIN_DIR" = "" ; then SCTK_BIN_DIR="${SCTK_EPREFIX}/bin"; fi
+if test "$SCTK_LIB_DIR" = "" ; then SCTK_LIB_DIR="${SCTK_EPREFIX}/lib"; fi
+if test "$SCTK_INCLUDE_DIR" = "" ; then SCTK_INCLUDE_DIR="${SCTK_PREFIX}/include"; fi
+if test "$SCTK_MAN_DIR" = "" ; then SCTK_MAN_DIR="${SCTK_EPREFIX}/man"; fi
+}
+
 check_compilers(){
 SCTK_CONF_LOG="${LOG_FILE}"
 SCTK_CHECK_PROG ${SCTK_GCC}

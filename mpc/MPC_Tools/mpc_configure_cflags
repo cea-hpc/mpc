@@ -37,9 +37,9 @@ done
 
 cat <<EOF >> bin/mpc_cflags
 if test "\$1" != "fortran" ; then 
-echo "-I${SCTK_PREFIX}/include $FLAGS"
+echo "-I${SCTK_INCLUDE_DIR} $FLAGS"
 else 
-echo "-I${SCTK_PREFIX}/include $FLAGS"
+echo "-I${SCTK_INCLUDE_DIR} $FLAGS"
 fi 
 EOF
 

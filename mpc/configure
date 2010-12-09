@@ -140,6 +140,12 @@ cat <<EOF
 Installation directories:
   --prefix=PREFIX         install architecture-independent files in PREFIX
                           [/usr/local]
+  --exec-prefix=EPREFIX   install architecture-dependent files in EPREFIX
+                          [same as prefix]
+  --bindir=DIR            User executables in DIR [EPREFIX/bin]
+  --includedir=DIR        C header files in DIR [PREFIX/include]
+  --libdir=DIR            Object code libraries in DIR [EPREFIX/lib]
+  --mandir=DIR            Man documentation in DIR [PREFIX/man]
 
 By default, 'make install' will install all the files in
 '/usr/local/bin', '/usr/local/lib' etc.  You can specify
@@ -234,6 +240,18 @@ for arg in "$@" ; do
     ;;
     --exec-prefix=*)
     SCTK_EPREFIX="`echo A$arg | sed -e 's/A--exec-prefix=//g'`"
+    ;;
+    --includedir=*)
+    SCTK_INCLUDE_DIR="`echo A$arg | sed -e 's/A--includedir=//g'`"
+    ;;
+    --libdir=*)
+    SCTK_LIB_DIR="`echo A$arg | sed -e 's/A--libdir=//g'`"
+    ;;
+    --mandir=*)
+    SCTK_MAN_DIR="`echo A$arg | sed -e 's/A--mandir=//g'`"
+    ;;
+    --bindir=*)
+    SCTK_BIN_DIR="`echo A$arg | sed -e 's/A--bindir=//g'`"
     ;;
     CC=*)
     SCTK_CC="`echo A$arg | sed -e 's/ACC=//g'`"
@@ -354,6 +372,9 @@ for arg in "$@" ; do
     ;;
     esac
 done
+
+#update paths
+post_update_vars
 
 SCTK_CFLAGS="$SCTK_CFLAGS $SCTK_CFLAGS_NON_GNU"
 
