@@ -233,6 +233,7 @@ extern "C"
 #define MPC_2DOUBLE_PRECISION 21
 /*    struct { double, double }*/
 #define MPC_LOGICAL 22
+#define MPC_DOUBLE_COMPLEX 23
     /*Initialisation */
   int MPC_Init (int *argc, char ***argv);
   int MPC_Init_thread (int *argc, char ***argv, int required, int *provided);

@@ -1447,6 +1447,7 @@ __MPC_init_types ()
   mpc_init (MPC_2FLOAT, mpc_float_float);
   mpc_init (MPC_COMPLEX, mpc_float_float);
   mpc_init (MPC_2DOUBLE_PRECISION, mpc_double_double);
+  mpc_init (MPC_DOUBLE_COMPLEX, mpc_double_double);
 }
 
 #ifdef MPC_OpenMP
@@ -1699,6 +1700,7 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
       ADD_FUNC_HANDLER(func,MPC_LONG_DOUBLE,op);        \
       ADD_FUNC_HANDLER(func,MPC_LONG_LONG_INT,op);      \
       ADD_FUNC_HANDLER(func,MPC_COMPLEX,op);		\
+      ADD_FUNC_HANDLER(func,MPC_DOUBLE_COMPLEX,op);		\
     default:not_reachable();				\
     }							\
   }
