@@ -107,6 +107,19 @@ extern "C"
 				  mpc_float_float * inout, size_t size,
 				  MPC_Datatype datatype);
 
+  void MPC_SUM_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * in,
+				 mpc_double_double * inout, size_t size,
+				 MPC_Datatype datatype);
+  void MPC_MIN_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * in,
+				 mpc_double_double * inout, size_t size,
+				 MPC_Datatype datatype);
+  void MPC_MAX_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * in,
+				 mpc_double_double * inout, size_t size,
+				 MPC_Datatype datatype);
+  void MPC_PROD_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * in,
+				  mpc_double_double * inout, size_t size,
+				  MPC_Datatype datatype);
+
 #ifdef __cplusplus
 }
 #endif

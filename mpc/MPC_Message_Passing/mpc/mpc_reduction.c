@@ -84,6 +84,59 @@ mpc_redution_check_type (MPC_Datatype a, MPC_Datatype b)
   }
 
 void
+MPC_SUM_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
+			  mpc_double_double * mpc_restrict inout, size_t size,
+			  MPC_Datatype datatype)
+{
+  size_t i;
+  mpc_redution_check_type (datatype, MPC_DOUBLE_COMPLEX);
+  for (i = 0; i < size; i++)
+    {
+      inout[i].val = in[i].val + inout[i].val;
+      inout[i].pos = in[i].pos + inout[i].pos;
+    }
+}
+void
+MPC_MIN_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
+			  mpc_double_double * mpc_restrict inout, size_t size,
+			  MPC_Datatype datatype)
+{
+  mpc_redution_check_type (datatype, MPC_DOUBLE_COMPLEX);
+  not_available ();
+  assert (in == NULL);
+  assert (inout == NULL);
+  assert (size == 0);
+  assert (datatype == 0);
+}
+
+void
+MPC_MAX_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
+			  mpc_double_double * mpc_restrict inout, size_t size,
+			  MPC_Datatype datatype)
+{
+  mpc_redution_check_type (datatype, MPC_DOUBLE_COMPLEX);
+  not_available ();
+  assert (in == NULL);
+  assert (inout == NULL);
+  assert (size == 0);
+  assert (datatype == 0);
+}
+
+void
+MPC_PROD_func_MPC_DOUBLE_COMPLEX (const mpc_double_double * mpc_restrict in,
+			   mpc_double_double * mpc_restrict inout, size_t size,
+			   MPC_Datatype datatype)
+{
+  size_t i;
+  mpc_redution_check_type (datatype, MPC_DOUBLE_COMPLEX);
+  for (i = 0; i < size; i++)
+    {
+      inout[i].val = (in[i].val * inout[i].val) - (in[i].pos * inout[i].pos);
+      inout[i].pos = (in[i].pos * inout[i].val) + (in[i].val * inout[i].pos);
+    }
+}
+
+void
 MPC_SUM_func_MPC_COMPLEX (const mpc_float_float * mpc_restrict in,
 			  mpc_float_float * mpc_restrict inout, size_t size,
 			  MPC_Datatype datatype)
