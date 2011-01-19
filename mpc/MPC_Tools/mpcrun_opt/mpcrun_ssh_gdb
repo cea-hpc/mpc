@@ -1,0 +1,118 @@
+#!/bin/sh
+############################# MPC License ############################## 
+# Wed Nov 19 15:19:19 CET 2008                                         # 
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # 
+#                                                                      # 
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            # 
+# This file is part of the MPC Runtime.                                # 
+#                                                                      # 
+# This software is governed by the CeCILL-C license under French law   # 
+# and abiding by the rules of distribution of free software.  You can  # 
+# use, modify and/ or redistribute the software under the terms of     # 
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # 
+# following URL http://www.cecill.info.                                # 
+#                                                                      # 
+# The fact that you are presently reading this means that you have     # 
+# had knowledge of the CeCILL-C license and that you accept its        # 
+# terms.                                                               # 
+#                                                                      # 
+# Authors:                                                             # 
+#   - PERACHE Marc marc.perache@cea.fr                                 # 
+#                                                                      # 
+######################################################################## 
+
+decho(){
+	echo "$0 DEBUG $@" > /dev/null
+}
+
+mpc_get_host(){
+    decho $MPC_HOST_LIST_TMP
+	DONE="0"
+	HOST="$1"
+	MPC_HOST_LIST_TMP=""
+	for i in $@; do
+		if test "$DONE" = "0" ; then 
+			DONE="1"
+		else
+			MPC_HOST_LIST_TMP="$MPC_HOST_LIST_TMP $i"	
+		fi
+	done
+	if test "$MPC_HOST_LIST_TMP" = "" ; then 
+		MPC_HOST_LIST_TMP="$MPC_HOST_LIST"
+	fi
+}
+
+
+if test "$MPCRUN_SSH_REAL_LAUNCH" != "1"; then 
+decho "$@"
+
+decho "Host server $SCTK_SERVER_HOSTNAME on port $SCTK_SERVER_PORT"
+
+mpc_read_file(){
+read HOST
+MPC_HOST_LIST=""
+while test "$HOST" != "" ; do
+MPC_HOST_LIST="$MPC_HOST_LIST $HOST"
+read HOST
+done
+}
+
+if test -f ${HOME}/.mpcrun_tcp_host ; then 
+decho "Use ~/.mpcrun_tcp_host host list"
+mpc_read_file < ${HOME}/.mpcrun_tcp_host
+else
+decho "No ~/.mpcrun_tcp_host file"
+MPC_HOST_LIST="`hostname`"
+fi
+
+
+HOST=""
+
+MPC_HOST_LIST_TMP="$MPC_HOST_LIST"
+
+#SCTK_ARGS="$MPC_STARTUP_ARGS"
+decho "SCTK_ARGS $SCTK_ARGS"
+decho "MPC_STARTUP_ARGS $MPC_STARTUP_ARGS"
+decho "USER_ARGS $USER_ARGS"
+
+export MPC_HOST_LIST_TMP
+export MPC_HOST_LIST
+export PROCESS_NB
+export MPC_BIN_DIR
+export BINARY
+export USER_ARGS
+
+else
+    NB_PROCESS_TCP="0"
+    MPC_PIDS=""
+    MPC_PWD="`pwd`"
+    while test "$NB_PROCESS_TCP" != "$PROCESS_NB" ; do
+	decho "$NB_PROCESS_TCP != $PROCESS_NB"
+	mpc_get_host $MPC_HOST_LIST_TMP
+	decho "Host $HOST"
+	decho "$NB_PROCESS_TCP Use host $HOST"
+	decho "ssh -n $HOST \( cd $MPC_PWD \;${MPC_BIN_DIR}/mpcrun_opt/mpcrun_propagate_env $BINARY \"$MPC_STARTUP_ARGS\" \"$USER_ARGS\" \"$MPC_SERVER_PORT\" \"$MPC_SERVER_HOST\" \"$MPC_AUTO_KILL_TIMEOUT\" \"$MPC_AUTO_KILL_TIMEOUT\"\) "
+	ssh -X $HOST \( cd $MPC_PWD \;${MPC_BIN_DIR}/mpcrun_opt/mpcrun_propagate_env \"xterm \"$MPC_STARTUP_ARGS\" \"-e gdb -x $debug_file $BINARY\" \"$MPC_STARTUP_ARGS\" \"$USER_ARGS\" \"$MPC_SERVER_PORT\" \"$MPC_SERVER_HOST\"  \"$MPC_AUTO_KILL_TIMEOUT\"\) &
+
+	    MPC_PIDS="$MPC_PIDS $!"
+	    NB_PROCESS_TCP="`expr $NB_PROCESS_TCP + 1`"
+    done
+    
+    trap "kill -s 2 0" INT
+    
+    
+    for pid in $MPC_PIDS ; do
+	wait $pid
+	res_mpcrun_ssh="$?"
+	if test "$res_mpcrun_ssh" != "0"; then 
+	    kill -s 2 $pid
+	    exit $res_mpcrun_ssh
+	fi
+    done
+fi
+
+LAUNCH_COMMAND="${MPC_BIN_DIR}/mpcrun_opt/mpcrun_ssh"
+MPCRUN_SSH_REAL_LAUNCH="1"
+export MPCRUN_SSH_REAL_LAUNCH
+
+#exit $RES_SSH_MPCRUN

@@ -1,0 +1,4 @@
+#Version of MPC library
+MAJOR="2"
+MINOR="1"
+PRE_RELEASE="_rc2"

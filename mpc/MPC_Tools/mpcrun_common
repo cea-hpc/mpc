@@ -1,0 +1,469 @@
+#!/bin/sh
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - PERACHE Marc marc.perache@cea.fr                                 #
+#                                                                      #
+########################################################################
+
+LAUNCH="mpirun"
+BINS_HOME="${MPC_BIN_DIR}/mpcrun_opt/mpcrun"
+
+GDB_LIBTHREAD_DB="${MPC_LIB_DIR}/libmpc_thread_db.so"
+export GDB_LIBTHREAD_DB
+
+VERBOSE=""
+MPC_DISABLE="0"
+
+show=${MPC_BIN_DIR}/mpcrun_server
+
+#. ${MPC_BIN_DIR}/mpc_modes
+SCTK_USE_PTHREAD=1
+SCTK_USE_MADELEINE=0
+SCTK_USE_MPI=1
+SCTK_USE_MPI2=0
+DISABLE_SMT="0"
+
+if test "$MPC_AUTO_KILL_TIMEOUT" = "" ; then
+    MPC_AUTO_KILL_TIMEOUT="0"
+    export MPC_AUTO_KILL_TIMEOUT
+fi
+
+MPC_VERSION="${MAJOR}.${MINOR}"
+if test "${MINOR}" = "-1" ; then
+MPC_VERSION="Experimental"
+fi
+
+MODES_MULTITHREAD="ethread"
+MODES_NET="$SCTK_NET_LIST"
+if test "$SCTK_USE_PTHREAD" = "1" ; then
+MODES_MULTITHREAD="pthread ethread_mxn $MODES_MULTITHREAD"
+fi
+
+check_net(){
+    if test "$1" != "none" ; then
+	NET_TYPE="--sctk_use_network=$1"
+    fi
+}
+
+check_thread(){
+    if test "$1" != "none" ; then
+    for mode in $MODES_MULTITHREAD ; do
+	if test "$1" = "$mode" ; then
+	    THREAD_TYPE="--use-$1"
+	fi
+    done
+    fi
+}
+
+print_help(){
+cat << EOF
+Usage mpcrun [option] [--] binary [user args]
+
+Informations:
+    --help,-h Display this help
+    --show, Display command line
+    --version-details, Print version of each module used
+    --report, Print report
+    --tmp_dir=dir, Directory to store mpc files
+    --verbose,-v Verbose mode
+
+Topology:
+    --task-nb=n,-n=n Total number of tasks
+    --process-nb=n,-p=n Total number of processes
+    --cpu-nb=n,-c=n Number of cpus per process
+    --node-nb=n,-N=n Total number of nodes
+    --disable-smt Disable SMT capabilities
+    --share-node Restrict CPU number to share node
+
+Multithreading:
+    --multithreading=n,-m=n Define multithreading mode
+        modes: $MODES_MULTITHREAD
+
+Network:
+    --network=n,-net=n Define Network mode (TCP + SHM by default)
+        modes: $MODES_NET
+        modes (experimental): $SCTK_NET_LIST_EXP
+
+Checkpoint/Restart and Migration:
+    --checkpoint Enable checkpoint
+    --migration Enable migration
+    --restart Enable restart
+
+Launcher:
+    --launcher=n,-l=n Define launcher
+    --opt=<options> launcher specific options
+    --launch_list print available launch methods
+
+Debugger:
+    --dbg=<debugger_name> to use a debugger
+EOF
+}
+
+MPC_MONO="0"
+
+if test "$MPC_USE_MPCRC_FILE" = "" ; then
+	MPC_USE_MPCRC_FILE="${HOME}/.mpcrc"
+fi
+
+if test -f $MPC_USE_MPCRC_FILE; then
+. $MPC_USE_MPCRC_FILE
+else
+. ${BINS_HOME}_default_param
+. $MPC_USE_MPCRC_FILE
+fi
+
+#For backward compatibility
+if test "$LAUNCHE" != "" ; then
+    LAUNCH="$LAUNCHE"
+fi
+
+mpi_only=no
+BINARY=""
+USER_ARGS=""
+SHOW_COM=""
+RESTART=""
+MIGRATION=""
+DEBUG=""
+PROCESS_NB="1"
+
+THREAD_TYPE="--use-$THREAD_TYPE"
+NET_TYPE="--use-$NET_TYPE"
+if test "$NET_TYPE" = "--use-none" ; then
+NET_TYPE="--use-tcp"
+fi
+if test "$VERSION_DETAILS" = "yes" ; then
+VERSION_DETAILS="--version-details"
+else
+VERSION_DETAILS=""
+fi
+if test "$REPORT" = "yes" ; then
+REPORT="--report"
+else
+REPORT=""
+fi
+if test "$CHECKPOINT" = "yes" ; then
+CHECKPOINT="--checkpoint"
+else
+CHECKPOINT=""
+fi
+if test "$MIGRATION" = "yes" ; then
+MIGRATION="--migration"
+else
+MIGRATION=""
+fi
+TMP_DIR_D=""
+TMP_DIR=""
+READ_MPC_ARG="true"
+
+TMP_DIR_D="TEMP_MPC_$$/"
+TMP_DIR="--directory=${TMP_DIR_D}"
+LAUNCH_OPTIONS=""
+MPC_CLEAN_TMP_DIR="0"
+
+DEFAULT_CPU_NB=""
+for arg in "$@" ; do
+    if test "$READ_MPC_ARG" = "true" ; then
+    case $arg in
+    -h|--help)
+    print_help;
+    exit 0;
+    ;;
+    -v|--verbose)
+    VERBOSE="1"
+    ;;
+    --show)
+    show=echo
+    ;;
+    --mono)
+    MPC_MONO="1"
+    ;;
+    --noversion-details)
+    VERSION_DETAILS=""
+    ;;
+    --version-details)
+    VERSION_DETAILS="--version-details"
+    ;;
+    --version)
+    echo "mpcrun $MPC_VERSION"
+    exit 0
+    ;;
+    --clean)
+    MPC_CLEAN_TMP_DIR="1"
+    ;;
+    --launch_list)
+    echo "Available launch method"
+    for i in ${MPC_BIN_DIR}/mpcrun_opt/* ; do echo "    - `basename $i`" | sed s,mpcrun_,,g  | grep -v default_param | grep -v propagate_env | grep -v "~" ; done
+    exit 0
+    ;;
+    --nocheckpoint)
+    CHECKPOINT=""
+    ;;
+    --checkpoint)
+    CHECKPOINT="--checkpoint"
+    ;;
+    --restart)
+    RESTART="--restart"
+    ;;
+    --migration)
+    MIGRATION="--migration"
+    ;;
+    --noreport)
+    REPORT=""
+    ;;
+    --report)
+    REPORT="--report"
+    ;;
+    --disable-smt)
+    DISABLE_SMT="1"
+    ;;
+    --share-node)
+    SHARE_NODE="1"
+    ;;
+    --dbg=*)
+    DEBUG="`echo A$arg | sed -e 's/A--dbg=//g'`"
+    ;;
+    --autokill=*)
+    MPC_AUTO_KILL_TIMEOUT="`echo A$arg | sed -e 's/A--autokill=//g'`"
+    ;;
+    --opt=*)
+    LAUNCH_OPTIONS="$LAUNCH_OPTIONS `echo A$arg | sed -e 's/A--opt=//g'`"
+    ;;
+    --tmp_dir=*)
+    TMP_DIR_D="`echo A$arg | sed -e 's/A--tmp_dir=//g'`/"
+    TMP_DIR="--directory=${TMP_DIR_D}"
+    ;;
+    --task-nb=*)
+    TASK_NB="`echo A$arg | sed -e 's/A--task-nb=//g'`"
+    ;;
+    -n=*)
+    TASK_NB="`echo A$arg | sed -e 's/A-n=//g'`"
+    ;;
+    --process-nb=*)
+    PROCESS_NB="`echo A$arg | sed -e 's/A--process-nb=//g'`"
+    ;;
+    -p=*)
+    PROCESS_NB="`echo A$arg | sed -e 's/A-p=//g'`"
+    ;;
+    --cpu-nb=*)
+    CPU_NB="`echo A$arg | sed -e 's/A--cpu-nb=//g'`"
+    DEFAULT_CPU_NB="1"
+    ;;
+    -c=*)
+    CPU_NB="`echo A$arg | sed -e 's/A-c=//g'`"
+    DEFAULT_CPU_NB="1"
+    ;;
+    --node-nb=*)
+    NODE_NB="`echo A$arg | sed -e 's/A--node-nb=//g'`"
+    ;;
+    -N=*)
+    NODE_NB="`echo A$arg | sed -e 's/A-N=//g'`"
+    ;;
+    --multithreading=*)
+    check_thread "`echo A$arg | sed -e 's/A--multithreading=//g'`"
+    ;;
+    -m=*)
+    check_thread "`echo A$arg | sed -e 's/A-m=//g'`"
+    ;;
+    --network=*)
+    check_net "`echo A$arg | sed -e 's/A--network=//g'`"
+    ;;
+    -net=*)
+    check_net "`echo A$arg | sed -e 's/A-net=//g'`"
+    ;;
+    -l=*)
+    LAUNCH="`echo A$arg | sed -e 's/A-l=//g'`"
+    ;;
+    --launcher=*)
+    LAUNCH="`echo A$arg | sed -e 's/A--launcher=//g'`"
+    ;;
+    -mpi-only|-mpi_only)
+    mpi_only=yes
+    ;;
+    --)
+    READ_MPC_ARG="false"
+    ;;
+    *)
+    BINARY="$arg"
+    READ_MPC_ARG="false"
+    ;;
+    esac
+    else
+	if test "$BINARY" = "" ; then
+	    BINARY="$arg"
+	else
+	    arg="`echo A$arg | sed s,\"A$arg\",\"$arg\",g | sed s,' ',@MPC_LINK_ARGS@,g`"
+	    USER_ARGS="$USER_ARGS $arg"
+	fi
+    fi
+done
+
+#echo "$USER_ARGS"
+
+SCTK_ARGS="--sctk-args--"
+SCTK_LINUX_DISABLE_ADDR_RADOMIZE="1"
+export SCTK_LINUX_DISABLE_ADDR_RADOMIZE
+
+add_arg(){
+SCTK_ARGS="$SCTK_ARGS $@"
+}
+
+add_arg "--task-number=$TASK_NB"
+
+if test "$DEFAULT_CPU_NB" = "1" ; then
+if test "$CPU_NB" != ""  ; then
+add_arg "--processor-number=$CPU_NB "
+fi
+fi
+
+if test "$PROCESS_NB" != ""  ; then
+add_arg "--process-number=$PROCESS_NB"
+fi
+
+if test "$DISABLE_SMT" = "1"  ; then
+add_arg "--disable-smt"
+fi
+
+if test "$SHARE_NODE" = "1"  ; then
+add_arg "--share-node"
+fi
+
+if test "$NODE_NB" != ""  ; then
+add_arg "--node-number=$NODE_NB"
+fi
+
+if test "$THREAD_TYPE" != ""  ; then
+add_arg "$THREAD_TYPE"
+fi
+
+if test "$NET_TYPE" != ""  ; then
+add_arg "$NET_TYPE"
+fi
+
+if test "$PROCESS_NB" != "1"  ; then
+    if test "$LAUNCH" = "none" ; then
+	LAUNCH="fork"
+    fi
+fi
+
+SCTK_ARGS="$SCTK_ARGS $VERSION_DETAILS $REPORT $CHECKPOINT $RESTART $MIGRATION $TMP_DIR "
+#echo "$SCTK_ARGS"
+if test "$MPC_MONO" = "1" ; then
+SCTK_ARGS="$SCTK_ARGS --mono=$BINARY"
+BINARY="mpc_mono"
+fi
+
+SCTK_ARGS="$SCTK_ARGS --sctk_use_port_number=0 --sctk_use_host=0 --sctk-args-end--"
+
+if test "$mpi_only" = "yes" ; then
+SCTK_ARGS=""
+MPC_DISABLE="1"
+PROCESS_NB="$TASK_NB"
+NET_TYPE="--use-mpi"
+fi
+
+export PROCESS_NB
+
+if test "$show" = "eval" ; then
+    if test "@GNU_COMPATIBLE_WHICH@" = "1" ; then
+	which -- $BINARY > /dev/null 2>&1
+	if test "$?" != "0" ; then
+	    echo "Binary $BINARY not found"
+	    exit 1
+	fi
+    else
+	which $BINARY > /dev/null 2>&1
+	if test "$?" != "0" ; then
+	    echo "Binary $BINARY not found"
+	    exit 1
+	fi
+    fi
+fi
+
+TMP_SCTK_ARG="$SCTK_ARGS"
+SCTK_ARGS=""
+for arg in $TMP_SCTK_ARG; do
+SCTK_ARGS="$SCTK_ARGS $arg"
+done
+
+MPC_STARTUP_ARGS="$SCTK_ARGS"
+if test "$MPC_MONO" != "1" ; then
+if test "$LAUNCH" != "madeleine" ; then
+export MPC_STARTUP_ARGS
+SCTK_ARGS=""
+fi
+fi
+
+export MPC_DISABLE
+
+if test "${DEBUG}" = "mpc-gdb"; then
+    DEBUG="${MPC_BIN_DIR}/mpc-gdb"
+fi
+
+if test "$show" != "echo" ; then
+if test "$TMP_DIR_D" != "" ; then
+    mkdir -p ${TMP_DIR_D}
+fi
+echo "$0 $@" > ${TMP_DIR_D}mpcrun_args
+
+if test "$VERBOSE" = "1" ; then
+if test "${DEBUG}" = "" ; then
+echo "Using $LAUNCH" >&2
+else
+echo "Using $LAUNCH with `basename ${DEBUG}`" >&2
+fi
+fi
+
+fi
+
+debug_file="${TMP_DIR_D}debug_file"
+
+if test "$DEBUG" = "" ; then
+. ${BINS_HOME}_$LAUNCH
+else
+echo "Using $DEBUG as debugger"
+. ${BINS_HOME}_${LAUNCH}_`basename ${DEBUG}`
+fi
+
+if test "$VERBOSE" = "1" ; then
+SCTK_VERBOSE="1"
+export SCTK_VERBOSE
+fi
+
+trap "kill -s 2 0" INT
+#echo "LAUNCH_COMMAND $LAUNCH_COMMAND"
+$show $LAUNCH_COMMAND
+rc=$?
+#echo $rc
+
+rm -f $debug_file > /dev/null 2>&1
+
+#if test "$mpi_only" = "yes" ; then
+
+if test "$rc" = "0" ; then
+rm -f ${TMP_DIR_D}mpcrun_args > /dev/null 2>&1
+rmdir ${TMP_DIR_D} > /dev/null 2>&1
+rm -rf ${TMP_DIR_D} > /dev/null 2>&1
+fi
+
+if test "$MPC_CLEAN_TMP_DIR" = "1" ;then
+    rm -rf ${TMP_DIR_D} > /dev/null 2>&1
+fi
+
+exit $rc
+

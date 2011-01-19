@@ -1,0 +1,90 @@
+/* ############################# MPC License ############################## */
+/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
+/* # This file is part of the MPC Runtime.                                # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #                                                                      # */
+/* ######################################################################## */
+
+#define MAX_MPC_BUFFERED_MSG 16
+#define MAX_MPC_BUFFERED_SIZE (128 * sizeof(long))
+
+typedef struct
+{
+  sctk_request_t request;
+  long buf[(MAX_MPC_BUFFERED_SIZE / sizeof (long)) + 1];
+} mpc_buffered_msg_t;
+
+typedef struct
+{
+  size_t size;
+  mpc_pack_absolute_indexes_t *begins;
+  mpc_pack_absolute_indexes_t *ends;
+  unsigned long count;
+  unsigned long ref_count;
+  mpc_pack_absolute_indexes_t lb;
+  mpc_pack_absolute_indexes_t ub;
+  int is_lb;
+  int is_ub;
+} sctk_derived_type_t;
+
+#define MPC_DECL_TYPE_PROTECTED(data_type, name_type) typedef struct {data_type; sctk_spinlock_t lock;} name_type##_t
+#define MPC_USE_TYPE(name_type) name_type##_t name_type
+
+MPC_DECL_TYPE_PROTECTED (sctk_datatype_t user_types[sctk_user_data_types_max],
+			 user_types);
+MPC_DECL_TYPE_PROTECTED (sctk_derived_type_t *
+			 user_types_struct[sctk_user_data_types_max],
+			 user_types_struct);
+MPC_DECL_TYPE_PROTECTED (MPC_Handler_function *
+			 user_error_handlers[SCTK_MAX_COMMUNICATOR_NUMBER],
+			 user_error_handlers);
+MPC_DECL_TYPE_PROTECTED (mpc_buffered_msg_t buffer[MAX_MPC_BUFFERED_MSG];
+			 volatile int buffer_rank, buffer);
+MPC_DECL_TYPE_PROTECTED (mpc_buffered_msg_t
+			 buffer_async[MAX_MPC_BUFFERED_MSG];
+			 volatile int buffer_async_rank, buffer_async);
+
+struct sctk_task_specific_s
+{
+  int task_id;
+
+    MPC_USE_TYPE (user_types);
+    MPC_USE_TYPE (user_types_struct);
+    MPC_USE_TYPE (user_error_handlers);
+
+  void *keys;
+  void *requests;
+  void *buffers;
+  void *errors;
+  void *comm_type;
+  void *op;
+  void *groups;
+
+  int init_done;
+};
+
+typedef struct sctk_task_specific_s sctk_task_specific_t;
+
+
+struct sctk_thread_specific_s
+{
+  MPC_USE_TYPE (buffer);
+  MPC_USE_TYPE (buffer_async);
+};
+typedef struct sctk_thread_specific_s sctk_thread_specific_t;
+

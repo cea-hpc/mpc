@@ -1,0 +1,6 @@
+# Configuration file
+# If default options, only put MODULE_NAME and VERSION_NAME
+# -> the corresponding configuration will be extracted from the
+# $(MODULE_NAME)/VERSIONS file
+mpc-gcc 440
+mpc-gdb 6.8

@@ -1,0 +1,441 @@
+%# MPC License ##############################
+% # Wed Nov 19 15:19:19 CET 2008                                         #
+%# Copyright or (C) or Copr. Commissariat a l'Energie Atomique           #
+%#
+%# IDDN.FR.001.230040.000.S.P.2007.000.10000l'Energie Atomique           #
+%# This file is part of the MPC Runtime.0000l'Energie Atomique           #
+%#
+%# This software is governed by the CeCILL-C license under French law    #
+%# and abiding by the rules of distribution of free software.  You can   #
+%# use, modify and/ or redistribute the software under the terms of an   #
+%# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the an   #
+%# following URL http://www.cecill.info. CEA, CNRS and INRIA at the an   #
+%#
+%# The fact that you are presently reading this means that you have an   #
+%# had knowledge of the CeCILL-C license and that you accept itsave an   #
+%# terms.owledge of the CeCILL-C license and that you accept itsave an   #
+%#
+% # Authors:                                                             #
+% #   - PERACHE Marc marc.perache@cea.fr                                 #
+% #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
+% #   - DIDELOT Sylvain sdidelot@exascale-computing.eu                   #
+% #                                                                      #
+% ########################################################################
+
+
+\documentclass[a4paper,11pt]{article}
+
+%%%%%%%%%%%%
+% PACKAGES %
+%%%%%%%%%%%%
+\usepackage{a4}
+\usepackage{fullpage}
+\usepackage{palatino}
+\usepackage{xspace}
+
+%%%%%%%%%%
+% MACROS %
+%%%%%%%%%%
+% \def\TODO#1{}
+\def\TODO#1{\textbf{TODO: #1}}
+\def\MPCVERSION{2.1\_rc2}
+
+%%%%%%%%%%%%%%%%
+% BIBLIOGRAPHY %
+%%%%%%%%%%%%%%%%
+\bibliographystyle{plain}
+
+%%%%%%%%%%%%%%%
+% MAIN HEADER %
+%%%%%%%%%%%%%%%
+\title{Getting Started MPC\\Multi-Processor Communications Library\\Version 2.1}
+
+\author{Patrick Carribault \and Marc P\'{e}rache \and Sylvain Didelot}
+
+\date{\today}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+This \textit{Getting Started} guide details the various ways to install and configure the MPC library
+(Multi-Processor Communications) version {\MPCVERSION} including MPI 1.3, OpenMP 2.5 (with patched GCC) and PThread support.
+Section~\ref{sec:installation} describes the steps to install and setup the library.
+Section~\ref{sec:APIs} enumerates the parallel-programming models supported in MPC.
+A Frequently Asked Questions (FAQ) section is also provided at this end of this guide (see section~\ref{sec:faq}).
+% The following sections detail the API and the different execution modes.
+
+For further information on MPC internals, the reader may refer to the
+articles~\cite{Perache08,Perache09,Carribault10} containing more details about the MPC
+framework and its execution model.
+
+%%%%%%%%%%%%%%%%
+% INSTALLATION %
+%%%%%%%%%%%%%%%%
+\section{Installation}
+\label{sec:installation}
+
+This section takes you through a sequence of steps to get MPC up and running.
+
+\subsection{Prerequisites}
+
+The following prerequisites are required to compile MPC:
+\begin{itemize}
+    \item  The main archive file MPC\_\MPCVERSION.tar.gz
+
+    \item  A C compiler (e.g., gcc)
+
+    \item  A GNU C compiler
+
+    \item  An optional Fortran compiler if Fortran applications are to be used
+      (e.g., g77 or gfortran)
+\end{itemize}
+
+Some additionnal extra libraries are required to compile the patched GCC and GDB.
+See their corresponding website and installation guide to get a list of prerequisites.
+
+
+\subsection{Standard Installation}
+
+These steps describe the default installation of MPC with its additionnal components (GCC and GDB).
+% The following instructions take you through a sequence of steps to get
+% the default configuration MPC up and running.  Alternate configuration
+% options are described later, in the section \emph{Alternative configurations}.
+
+\begin{enumerate}
+\item  Unpack the main archive (\texttt{tar} format) and go to the top-level directory:
+\begin{verbatim}
+      tar xfz MPC_2.1_rc2.tar.gz
+      cd MPC_2.1_rc2
+\end{verbatim}
+
+    If your tar program does not accept the 'z' option, use the following commands
+
+\begin{verbatim}
+      gunzip MPC_2.1_rc2.tar.gz
+      tar xf MPC_2.1_rc2.tar
+      cd MPC_2.1_rc2
+\end{verbatim}
+
+\item  Choose an installation directory (the default is \texttt{/usr/local/}):
+
+\begin{verbatim}
+      mkdir /home/you/mpc-install
+\end{verbatim}
+
+    The most convenient choice is a directory shared among all the machines you
+    want to use the library on.  If such a directory is not accessible, you will
+    have to deploy MPC on every machine after the installation.
+
+\item  Configure MPC, specifying the installation directory:
+
+\begin{verbatim}
+      ./configure --prefix=/home/you/mpc-install
+\end{verbatim}
+
+\item  Build MPC:
+
+\begin{verbatim}
+      make
+\end{verbatim}
+
+\item  Install the MPC commands and library:
+
+\begin{verbatim}
+      make install
+\end{verbatim}
+
+\item Source the \texttt{mpcvars} script (located inside the \texttt{bin/} directory of the MPC installation) to update environment variables (e.g., \texttt{PATH} and \texttt{LD\_LIBRARY\_PATH}).
+
+For csh and tcsh:
+
+\begin{verbatim}
+      source /home/you/mpc-install/bin/mpcvars.csh
+\end{verbatim}
+
+    For bash and sh:
+
+\begin{verbatim}
+      . /home/you/mpc-install/bin/mpcvars.sh
+\end{verbatim}
+
+
+    Check that everything went well at this point by running
+
+\begin{verbatim}
+      which mpcrun
+      which mpc_cc
+\end{verbatim}
+
+\item  To compile your first MPC program, you may execute the
+    \texttt{mpc\_cc} compiler:
+
+\begin{verbatim}
+      mpc_cc MPC_Tests/parallel/MPC_Message_Passing/hello_world.c \
+             -o hello_world
+\end{verbatim}
+
+This command uses the main default patched GCC to compile the code.
+If you want to use your favorite compiler instead (loosing some features like
+    OpenMP support and global-variable removal), you may use the
+\texttt{mpc\_cflags} and \texttt{mpc\_ldflags} commands:
+
+\begin{verbatim}
+      $CC MPC_Tests/parallel/MPC_Message_Passing/hello_world.c \
+           -o hello_world `mpc_cflags` `mpc_ldflags`
+\end{verbatim}
+
+\item  To execute your MPC program, use the mpcrun command:
+
+\begin{verbatim}
+      mpcrun -m=ethread      -n=4 hello_world
+      mpcrun -m=ethread_mxn  -n=4 hello_world
+      mpcrun -m=pthread      -n=4 hello_world
+\end{verbatim}
+
+    See the section \emph{Thread types} for details on the '-m' option.
+
+\end{enumerate}
+
+\subsection{Custom Installation}
+The previous section described the default installation and configuration of MPC.
+But other alternatives are available. You can find out more details on the
+configuration by running:
+
+\begin{verbatim}
+   ./configure --help
+\end{verbatim}
+
+The following options are related to additional libraries required to compile the MPC distribution:
+\begin{itemize}
+\item \texttt{--with-cpath=DIR1:DIR2:...}   \\
+    Add directories to the CPATH environment variable for the whole MPC distribution.
+\item  \texttt{--with-library-path=DIR1:DIR2:...}\\
+    Add directories to the LD\_LIBRARY\_PATH environment variable for the whole MPC distribution
+\end{itemize}
+
+For more information about options to MPC, run the \texttt{configure} script located in the \texttt{mpc} directory.
+
+
+
+%%%%%%%%%%%%%%%%%%%%%%
+% MPC SUPPORTED APIS %
+%%%%%%%%%%%%%%%%%%%%%%
+\section{MPC Supported APIs}
+\label{sec:APIs}
+
+%%%% MESSAGE PASSING %%%%
+\subsection{Message Passing}
+
+\subsubsection{API}
+MPC is fully MPI-1.3 compliant and supports the \texttt{MPI\_THREAD\_MULTIPLE} level from standard 2.
+See the document \emph{MPI: A Message-Passing Interface Standard} version 1.3
+(May 2008) for more details.
+
+\subsubsection{Warning to Users}
+\textbf{Remove global variables!}
+In MPC, every MPI task is a thread and thus all tasks share global variables
+with each other.
+
+\subsubsection{Removing Global Variables}
+We propose several solutions to ease the removal of global variables:
+\begin{enumerate}
+\item Use the option \texttt{-Wmpc} with the patched GCC compiler to generate warnings.
+In this mode, the compiler will warn you about every global variable declared in the program.
+\item Use the option \texttt{-fmpc-privatize} to automatically privatize the global variables.
+In this mode, every global variable is duplicated for every MPI task such as the code can run correctly with MPC.
+Note the application has to be compiled as a dynamic library for this solution to work.
+\end{enumerate}
+
+
+%%%% OpenMP %%%%
+\subsection{OpenMP}
+
+\subsubsection{API}
+MPC is fully OpenMP-2.5 compliant.
+See the document \emph{OpenMP Application Program Interface} version 2.5
+(May 2005) for more details.
+
+\subsubsection{Compiling and Running OpenMP Programs}
+To compile applications with OpenMP directives (C, C++ or Fortran), you have to
+use the default compiler coming with the MPC Distribution (see
+    Section~\ref{sec:installation} for explanation to install MPC).
+This compiler is a patched version of GCC generating code for the MPC library
+when transforming OpenMP directives.
+Thus, to activate the OpenMP transformation, use the \texttt{-fopenmp} option
+with the compiler drivers \texttt{mpc\_cc} (C), \texttt{mpc\_cxx} (C++) or \texttt{mpc\_f77} (Fortran).
+
+\subsubsection{Threadprivate Variables}
+
+The OpenMP standard proposes a directive to create \emph{thread-private} variables.
+The MPC implementation follows the standard and supports this feature.
+Nevertheless, for this feature to work, the application has to be compiled as a dynamic library.
+
+%%%% Threads %%%%
+\subsection{Threads}
+
+\subsubsection{API}
+MPC provides a POSIX Thread 2003 compatible API.
+
+\subsubsection{Thread types}
+The main command \texttt{mpcrun} accepts the '-m' option to choose between several kind of threads.
+Here is a list of the current available thread types:
+
+\begin{enumerate}
+  \item  Ethread: Mx1 user level thread model.
+
+  \item   Ethread\_mxn: MxN user level thread model.
+
+  \item   Pthread: underlying POSIX Thread library.
+
+\end{enumerate}
+The article~\cite{Perache08} contains more details on the multiple thread types and their characteristics.
+
+
+\subsubsection{Warning to Users}
+\textbf{It is dangerous to mix MPC POSIX Threads and system POSIX Threads!}
+This mix may lead to an undefined behavior.
+
+%%%%%%%%%%
+% MPCRUN %
+%%%%%%%%%%
+\section{Running MPC}
+
+The \texttt{mpcrun} script drives the launch of MPC programs with different
+types of parallelism.
+Its usage is defined as follows:
+\begin{verbatim}
+Usage mpcrun [option] [--] binary [user args]
+
+Informations:
+    --help,-h Display this help
+    --show, Display command line
+    --version-details, Print version of each module used
+    --report, Print report
+    --tmp_dir=dir, Directory to store mpc files
+    --verbose,-v Verbose mode
+
+Topology:
+    --task-nb=n,-n=n Total number of tasks
+    --process-nb=n,-p=n Total number of processes
+    --cpu-nb=n,-c=n Number of cpus per process
+    --node-nb=n,-N=n Total number of nodes
+    --disable-smt Disable SMT capabilities
+    --share-node Restrict CPU number to share node
+
+Multithreading:
+    --multithreading=n,-m=n Define multithreading mode
+        modes: pthread ethread_mxn ethread
+
+Network:
+    --network=n,-net=n Define Network mode
+        modes:  none tcp ...
+        modes (experimental): ...
+
+Checkpoint/Restart and Migration:
+    --checkpoint Enable checkpoint
+    --migration Enable migration
+    --restart Enable restart
+
+Launcher:
+    --launcher=n,-l=n Define launcher
+    --opt=<options> launcher specific options
+    --launch_list print available launch methods
+
+Debugger:
+    --dbg=<debugger_name> to use a debugger
+
+\end{verbatim}
+
+\subsection{Mono-process job}
+In order to run an MPC job in a single process, you should use on of the following methods (depending on the thread type you want to use).
+
+\begin{verbatim}
+      mpcrun -m=ethread      -n=4 hello_world
+      mpcrun -m=ethread_mxn  -n=4 hello_world
+      mpcrun -m=pthread      -n=4 hello_world
+\end{verbatim}
+
+
+\subsection{Multi-process job on a single node}
+In order to run an MPC job in a $2$-process single-node manner with the SHared Memory module enabled (\emph{SHM}),
+you should use one of the following methods (depending on the thread type you want to use).
+Note that on a single node, even if the \emph{TCP} module is explicitly used,
+MPC automatically uses the \emph{SHM} module for all process communications.
+
+\begin{verbatim}
+      mpcrun -m=ethread      -n=4 -p=2 -net=tcp hello_world
+      mpcrun -m=ethread_mxn  -n=4 -p=2 -net=tcp hello_world
+      mpcrun -m=pthread      -n=4 -p=2 -net=tcp hello_world
+\end{verbatim}
+
+Of course, this mode supports both MPI and OpenMP standards, enabling the use of hybrid programming.
+
+There are different implementations of inter-process communications.
+A call to {\tt mpcrun --help} details all the available implementations.
+
+\subsection{Multi-process job on multiple nodes}
+In order to run an MPC job on $2$ node with $8$ processes communicating with \emph{TCP}, you should use one of the following methods (depending on the thread type you want to use). Note that on multiple nodes, MPC automatically switches to the MPC SHared Memory module (\emph{SHM}) when a communication between processes on the same node occurs. This behavior is available with all inter-process communication modules (\emph{TCP} included).
+
+\begin{verbatim}
+      mpcrun -m=ethread      -n=8 -p=8 -net=tcp -N=2 -l=ssh hello_world
+      mpcrun -m=ethread_mxn  -n=8 -p=8 -net=tcp -N=2 -l=ssh hello_world
+      mpcrun -m=pthread      -n=8 -p=8 -net=tcp -N=2 -l=ssh hello_world
+\end{verbatim}
+
+Of course, this mode supports both MPI and OpenMP standards, enabling the use of hybrid programming.
+
+There are different implementations of inter-process communications and launch methods.
+A call to {\tt mpcrun --help} detail all the available implementations and launch methods.
+
+\subsubsection{Launch with ssh}
+In order to execute an MPC job on multile nodes using \emph{ssh}, you need to fill the {\tt \${HOME}/.mpcrun\_tcp\_host} file with the list of nodes to use.
+
+\section{FAQ}
+\label{sec:faq}
+\subsection*{Q - How can I execute Fortan program on MPC ?}
+A - First, be sure that you don't have disabled the fortran support (\texttt{--disable-fortran} of the MPC configure).
+Second, rename your main fortran function by {\tt subroutine mpc\_user\_main}.\\
+For example, change {\tt{\textless}{\textless}program main\_program{\textgreater}{\textgreater}} by {\tt{\textless}{\textless}subroutine mpc\_user\_main{\textgreater}{\textgreater}}\\
+Now, you can execute your fortran program using the \texttt{mpcrun} command.
+
+\subsection*{Q - How can I disable the MPC SHared Memory module (\emph{SHM}) ?}
+A - The \emph{SHM} module is enabled by default. To disable it, pass the argument {\tt--disable-shm} to the MPC configure. Don't forget to recompile MPC.
+
+\subsection*{Q - MPC configure gives me a "FATAL ERROR" message. What can I do ?}
+\begin{verbatim}
+####################### FATAL ERROR #######################
+MPC *WILL* overwrite the following include file(s):
+include/mpi.h
+include/pthread.h
+include/semaphore.h
+include/omp.h
+
+Please set your --prefix correctly and run configure again.
+If you know what you are doing, you can use the configure
+flag --disable-prefix-check. Keep in mind that your headers
+will be *DEFINITIVELY* overwritten.
+Configure exiting with no Makefile generated....
+###########################################################
+\end{verbatim}
+A - You must be careful with this error message. MPC detected that the prefix path you have given already includes header files. I.e: mpi.h, pthread.h, semaphore.h and omp.h.
+If you continue the MPC installation using this prefix path, these files will be *DEFINITIVELY* overwritten.
+As a conclusion, either you change the prefix path (recommanded version), or you pass the argument {\tt --disable-prefix-check} to MPC configure, but your headers *WILL* be overwritten.
+
+\subsection*{Q - How can I tune the MPC SHared Memory module (\emph{SHM}) according to my needs ?}
+A - You need to edit the file located there : \\{\tt mpc/MPC\_Message\_Passing/sctk\_low\_level\_comm/sctk\_shm\_consts.h}. In this file, you can modify the number of cells in each queue (PTP queues, collective queues, etc\dots) as well as the size allocated by each cell. Don't forget to recompile MPC after it.
+
+\section{Contacts}
+\begin{itemize}
+  \item CARRIBAULT Patrick $\quad$ patrick.carribault@cea.fr
+  \item P\'{E}RACHE Marc $\quad$ marc.perache@cea.fr
+  \item DIDELOT Sylvain $\quad$ sdidelot@exascale-computing.eu
+\end{itemize}
+
+%%%%%%%%%%%%%%%%
+% BIBLIOGRAPHY %
+%%%%%%%%%%%%%%%%
+\bibliography{readme}
+
+\end{document}

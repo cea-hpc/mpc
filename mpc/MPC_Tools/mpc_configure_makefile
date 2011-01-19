@@ -1,0 +1,539 @@
+#!/bin/sh
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - PERACHE Marc marc.perache@cea.fr                                 #
+#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
+#                                                                      #
+########################################################################
+
+begin_section Generate Makefile
+
+if test "$SCTK_FORTRAN" = "0"; then
+SCTK_F77="true"
+fi
+
+header_sh > Makefile
+
+PWD="`pwd`"
+
+#
+# Populate SCTK_GNU_CFLAGS variable
+#
+SCTK_GNU_CFLAGS="-O6 -fPIC"
+for sctk_flags_i in $SCTK_CFLAGS; do
+  FLAG_NAME="$sctk_flags_i"
+  if test "$COMPILER_SPECIFC_FLAGS" != "" ; then
+    for sctk_flags_j in $COMPILER_SPECIFC_FLAGS; do
+      if test "$sctk_flags_i" = "$sctk_flags_j"; then
+	FLAG_NAME=""
+      fi
+    done
+  fi
+  SCTK_GNU_CFLAGS="$SCTK_GNU_CFLAGS $FLAG_NAME"
+done
+
+#
+# Generate SCTK_MAKE_NO_DEP variable
+#
+if test "$SCTK_NODEP" = "1" ; then
+cat <<EOF >> Makefile
+SCTK_MAKE_NO_DEP=yes
+export SCTK_MAKE_NO_DEP
+EOF
+fi
+
+TMP_MODULE_LIST="$MODULE_LIST"
+MODULE_LIST=""
+HAVE_EXTRAS="0"
+for i in $TMP_MODULE_LIST; do
+  if test "$i" = "MPC_Extras"; then
+  HAVE_EXTRAS="1"
+  else
+	MODULE_LIST="$MODULE_LIST $i"
+  fi
+done
+
+#
+# Export common variables
+#
+cat <<EOF >> Makefile
+MODULE_LIST=$MODULE_LIST
+BUILD_DIR=\$(addprefix BUILD_,\$(MODULE_LIST))
+COMPIL_DIR=\$(addprefix COMPILE_,\$(MODULE_LIST))
+INSTALL_DIR=\$(addprefix COMPILE_,\$(MODULE_LIST))
+PREPARE_INCLUDES_DIR=\$(addprefix PREPARE_INCLUDES_,\$(MODULE_LIST))
+MPC_SOURCE_DIR=$MPC_SOURCE_DIR
+SCTK_ARCH_OPTIM=$SCTK_ARCH_OPTIM
+
+CC=$SCTK_CC
+GCC=$SCTK_GCC
+F77=$SCTK_F77
+FFLAGS=-D__SCTK__INTERNALS__ -I${PWD}/include -I${PWD}/include_modules $SCTK_FFLAGS
+CFLAGS=-D__SCTK__INTERNALS__ -I${PWD}/include -I${PWD}/include_modules $SCTK_CFLAGS -DTDB_${SCTK_ARCH}_ARCH_TDB -DTDB_${SCTK_OS}_SYS
+GNU_CFLAGS=-D__SCTK__INTERNALS__ -I${PWD}/include -I${PWD}/include_modules $SCTK_GNU_CFLAGS -DTDB_${SCTK_ARCH}_ARCH_TDB -DTDB_${SCTK_OS}_SYS
+LDFLAGS=$SCTK_LDFLAGS
+M_PWD=$PWD
+AR=$SCTK_AR
+MPC_MAKEFILE="1"
+DIR_DEST_EXE=${PWD}/bin_modules
+SCTK_CC_DEP=$SCTK_CC_DEP
+SCTK_OS=${SCTK_OS}
+SCTK_ARCH=${SCTK_ARCH}
+MPC_AUTO_KILL_TIMEOUT=300
+
+export MPC_SOURCE_DIR
+export SCTK_ARCH_OPTIM
+export CC
+export GCC
+export F77
+export FFLAGS
+export CFLAGS
+export GNU_CFLAGS
+export LDFLAGS
+export M_PWD
+export MPC_MAKEFILE
+export DIR_DEST_EXE
+export SCTK_CC_DEP
+export MPC_AUTO_KILL_TIMEOUT
+
+MAKEFLAGS += --no-print-directory
+
+all:lib/libmpc.a lib/libmpcf.a lib/libmpc_iso_alloc.a lib/libmpc_thread_db.so lib/libmpc_tdb_remote_static.a
+
+
+#
+# Build the list of objects used to construct the main library
+#
+OBJ_LIST=
+EOF
+for i in $MODULE_LIST; do
+  echo "OBJ_LIST += \$(wildcard BUILD_$i/lib/*.o)"  >> Makefile
+done
+echo "COBJ_LIST=\$(OBJ_LIST)"  >> Makefile
+if test "$SCTK_FORTRAN" = "1"; then
+#  echo "COBJ_LIST=\$(shell echo \$(OBJ_LIST) | sed s,BUILD_MPC_Common/lib/main_f.o,,g)"  >> Makefile
+
+#  echo "FOBJ_LIST=\$(OBJ_LIST)"  >> Makefile
+#  echo "TFOBJ_LIST=\$(OBJ_LIST)"  >> Makefile
+  echo "FOBJ_LIST=\$(shell echo \$(OBJ_LIST) | sed s,BUILD_MPC_Common/lib/main.o,,g)"  >> Makefile
+#  echo "FOBJ_LIST=\$(shell echo \$(OBJ_LIST) | sed s,BUILD_MPC_Common/lib/main_f.o,,g)"  >> Makefile
+fi
+
+#
+# Rule to build libmpc.a
+#
+echo "" >> Makefile
+echo "lib/libmpc.a: \$(COMPIL_DIR)" >> Makefile
+printf "\t@mkdir -p lib">> Makefile; echo "">> Makefile
+printf "\t@echo Build \$@">> Makefile; echo "">> Makefile
+printf "\t@\$(AR) rcu \$@ \$(COBJ_LIST)">> Makefile; echo "">> Makefile
+
+#
+# Rule to build libmpc_iso_alloc.a
+#
+echo "" >> Makefile
+echo "lib/libmpc_iso_alloc.a: \$(COMPIL_DIR)" >> Makefile
+printf "\t@mkdir -p lib">> Makefile; echo "">> Makefile
+printf "\t@echo Build \$@">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p lib_isoalloc">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) -Iinclude_modules -DSCTK_ISO_ALLOC_LIB -c \$(CFLAGS) ${MPC_SOURCE_DIR}MPC_Common/sctk_alloc/sctk_iso_alloc.c -o lib_isoalloc/sctk_iso_alloc.o">> Makefile; echo "">> Makefile
+printf "\t@\$(AR) rcu \$@ lib_isoalloc/sctk_iso_alloc.o">> Makefile; echo "">> Makefile
+
+#
+# Rule to build libmpc_tdb_remote_static.a
+#
+echo "" >> Makefile
+echo "lib/libmpc_tdb_remote_static.a: \$(COMPIL_DIR)" >> Makefile
+printf "\t@mkdir -p lib">> Makefile; echo "">> Makefile
+printf "\t@echo Build \$@">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p lib_thread_db_static">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) -DTDB_${SCTK_ARCH}_ARCH_TDB -DTDB_${SCTK_OS}_SYS -Iinclude_modules -DTDB_REMOTE_STATIC -c \$(CFLAGS) ${MPC_SOURCE_DIR}MPC_Debugger/sctk_dbg_thread/tdb_remote_static.c -o lib_thread_db_static/tdb_remote_static.o">> Makefile; echo "">> Makefile
+printf "\t@\$(AR) rcu \$@ lib_thread_db_static/tdb_remote_static.o">> Makefile; echo "">> Makefile
+
+#
+# Rule to build libmpc_thread.so
+#
+echo "" >> Makefile
+echo "lib/libmpc_thread_db.so: \$(COMPIL_DIR)" >> Makefile
+printf "\t@mkdir -p lib">> Makefile; echo "">> Makefile
+printf "\t@echo Build \$@">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p lib_thread_db">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) -shared -Iinclude_modules -DTDB_${SCTK_ARCH}_ARCH_TDB -DTDB_${SCTK_OS}_SYS -DLIB_THREAD_DB \$(CFLAGS) ${MPC_SOURCE_DIR}MPC_Debugger/sctk_dbg_thread/sctk_lib_thread_db*.c -o \$@">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) -shared -Iinclude_modules -DTDB_${SCTK_ARCH}_ARCH_TDB -DTDB_${SCTK_OS}_SYS -DLIB_THREAD_DB \$(CFLAGS) -DENABLE_TEST -I${MPC_SOURCE_DIR}MPC_Debugger/sctk_dbg_thread/test/ ${MPC_SOURCE_DIR}MPC_Debugger/sctk_dbg_thread/sctk_lib_thread_db*.c ${MPC_SOURCE_DIR}MPC_Debugger/sctk_dbg_thread/test/*.c -o lib/libmpc_thread_db_check.so ">> Makefile; echo "">> Makefile
+
+#
+# Rule to build libmpcf.a
+#
+echo "" >> Makefile
+echo "lib/libmpcf.a: \$(COMPIL_DIR)" >> Makefile
+printf "\t@mkdir -p lib">> Makefile; echo "">> Makefile
+if test "$SCTK_FORTRAN" = "1"; then
+printf "\t@echo Build \$@">> Makefile; echo "">> Makefile
+printf "\t@\$(AR) rcu \$@ \$(FOBJ_LIST)">> Makefile; echo "">> Makefile
+fi
+
+#
+# Rule to prepare includes for every module
+#
+for i in $MODULE_LIST; do
+echo "" >> Makefile
+echo "PREPARE_INCLUDES_$i:" >> Makefile
+printf "\t@echo Prepare includes module $i">> Makefile; echo "">> Makefile
+printf "\t@\$(MAKE) -C ${MPC_SOURCE_DIR}$i prepare_includes">> Makefile; echo "">> Makefile
+done
+
+#
+#
+#
+cat <<EOF >> Makefile
+include_modules:
+EOF
+printf "\t@\$(MAKE) -C . \$(PREPARE_INCLUDES_DIR)">> Makefile; echo "">> Makefile
+
+#
+#
+#
+for i in $MODULE_LIST; do
+  echo "" >> Makefile
+  echo "COMPILE_$i:include_modules bin_modules" >> Makefile
+  printf "\t@echo Build module $i">> Makefile; echo "">> Makefile
+  printf "\t@mkdir -p BUILD_$i/lib">> Makefile; echo "">> Makefile
+  printf "\t@\$(MAKE) -C ${MPC_SOURCE_DIR}$i all">> Makefile; echo "">> Makefile
+done
+
+#
+# Rule 'clean'
+#
+echo "" >> Makefile
+echo "clean:" >> Makefile
+printf "\t@rm -rf \$(BUILD_DIR) lib include_modules bin_modules">> Makefile; echo "">> Makefile
+
+TEST_LIST=""
+
+check_module(){
+FOUND=""
+for tmp in $MODULE_LIST; do
+if test "$DIR_TEST" = "$tmp" ; then
+FOUND="$tmp"
+fi
+done
+}
+
+
+cat <<EOF >> Makefile
+bin_modules:
+EOF
+printf "\t@echo Build bin_modules">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p bin_modules">> Makefile; echo "">> Makefile
+echo "">> Makefile
+
+echo "" >> Makefile
+echo "doc:" >> Makefile
+printf "\t@\$(MAKE) -C ${MPC_SOURCE_DIR}MPC_Doc">> Makefile; echo "">> Makefile
+
+if test "$HAVE_EXTRAS" = "1" ; then
+i="MPC_Extras"
+  echo "" >> Makefile
+  printf "extras: install">> Makefile; echo "">> Makefile
+  printf "\t@echo Build module $i">> Makefile; echo "">> Makefile
+  printf "\t@mkdir -p BUILD_$i/lib">> Makefile; echo "">> Makefile
+  printf "\t@\$(MAKE) -C ${MPC_SOURCE_DIR}$i all">> Makefile; echo "">> Makefile
+fi
+
+#
+# Rule 'install'
+#
+echo "" >> Makefile
+echo "install: all" >> Makefile
+printf "\t@rm -rf INSTALL">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p INSTALL">> Makefile; echo "">> Makefile
+printf "\t@cp -r bin INSTALL">> Makefile; echo "">> Makefile
+printf "\t@cp -r \$(DIR_DEST_EXE)/* INSTALL/bin 2>/dev/null || true">> Makefile; echo "">> Makefile
+printf "\t@cp -r lib INSTALL">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p INSTALL/bin/mpcrun_opt">> Makefile; echo "">> Makefile
+printf "\t@cp ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_opt/* INSTALL/bin/mpcrun_opt">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p INSTALL/include">> Makefile; echo "">> Makefile
+for i in $MODULE_LIST; do
+if test -d ${MPC_SOURCE_DIR}$i/include ; then
+echo "Preparing includes for $i"
+printf "\t@echo \"    Includes for module $i\"">> Makefile; echo "">> Makefile
+printf "\t@cp ${MPC_SOURCE_DIR}$i/include/* INSTALL/include 2>/dev/null || true">> Makefile; echo "">> Makefile
+else
+echo "No include directory for $i (${MPC_SOURCE_DIR}$i/include)"
+fi
+done
+printf "\t@cp include/sctk_config.h INSTALL/include">> Makefile; echo "">> Makefile
+printf "\t@cp include/mpc.h INSTALL/include">> Makefile; echo "">> Makefile
+printf "\t@echo \"Install in ${SCTK_PREFIX}\"">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p \${DESTDIR}${SCTK_PREFIX}">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p INSTALL/man">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p INSTALL/man/man1">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p INSTALL/man/man3">> Makefile; echo "">> Makefile
+printf "\t@cp ${MPC_SOURCE_DIR}MPC_Doc/man1/*.1 INSTALL/man/man1">> Makefile; echo "">> Makefile
+printf "\t@cp ${MPC_SOURCE_DIR}MPC_Doc/man3/*.3 INSTALL/man/man3">> Makefile; echo "">> Makefile
+
+DIR_TEST="MPC_Threads"
+check_module
+if test "$FOUND" != "" ; then
+printf "\t@cp ${MPC_SOURCE_DIR}/MPC_Threads/sctk_thread/sctk_pthread_api.h  INSTALL/include/pthread.h ">> Makefile; echo "">> Makefile
+printf "\t@cp ${MPC_SOURCE_DIR}/MPC_Threads/sctk_thread/sctk_pthread_api.h  INSTALL/include/semaphore.h ">> Makefile; echo "">> Makefile
+fi
+
+
+echo "Preparing includes for Fortran"
+for i in $MODULE_LIST; do
+NAME="fortran_header"
+if test "$SCTK_FORTRAN" = "1" && test "$i" = "MPC_Message_Passing"; then
+printf "\t@\$(CC) -g $SCTK_CFLAGS -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME -LINSTALL/lib -lmpc -lmpc_iso_alloc -lmpc_tdb_remote_static $SCTK_LDFLAGS -lm">> Makefile; echo "">> Makefile
+printf "\t@./$NAME mpc.h > INSTALL/include/mpcf.h 2>/dev/null">> Makefile; echo "">> Makefile
+
+DIR_TEST="MPC_MPI"
+check_module
+if test "$FOUND" != "" ; then
+printf "\t@./$NAME mpi.h > INSTALL/include/mpif.h 2>/dev/null">> Makefile; echo "">> Makefile
+fi
+
+printf "\t@rm ./$NAME">> Makefile; echo "">> Makefile
+fi
+done
+printf "\t@chmod -R 644 INSTALL/lib/*">> Makefile; echo "">> Makefile
+#printf "\t@echo \"Build mpc db\"">> Makefile; echo "">> Makefile
+#printf "\t@\$(CC) $SCTK_CFLAGS ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_tools/mpcdb_client.c -o INSTALL/bin/mpcdb_client $SCTK_LDFLAGS ">> Makefile; echo "">> Makefile
+#printf "\t@\$(CC) $SCTK_CFLAGS ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_tools/mpcdb_server.c -o INSTALL/bin/mpcdb_server $SCTK_LDFLAGS ">> Makefile; echo "">> Makefile
+printf "\t@echo \"Build mpcrun_server\"">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) $SCTK_CFLAGS  -Iinclude_modules ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_tools/mpcrun_server.c -o INSTALL/bin/mpcrun_server $SCTK_LDFLAGS ">> Makefile; echo "">> Makefile
+printf "\t@chmod -R 755 INSTALL/bin/*">> Makefile; echo "">> Makefile
+printf "\t@chmod -R 644 INSTALL/include/*">> Makefile; echo "">> Makefile
+printf "\t@chmod 644 INSTALL/man/man1/*.1">> Makefile; echo "">> Makefile
+printf "\t@chmod 644 INSTALL/man/man3/*.3">> Makefile; echo "">> Makefile
+printf "\t@cp -r INSTALL/lib \${DESTDIR}${SCTK_PREFIX}">> Makefile; echo "">> Makefile
+printf "\t@cp -r INSTALL/include \${DESTDIR}${SCTK_PREFIX}">> Makefile; echo "">> Makefile
+printf "\t@cp -r INSTALL/man \${DESTDIR}${SCTK_PREFIX}">> Makefile; echo "">> Makefile
+printf "\t@echo \"Build dynamic libraries\"">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) \$(COBJ_LIST) -fPIC -shared -o \${DESTDIR}${SCTK_PREFIX}/lib/libmpc.so $SCTK_LDFLAGS|| echo \"Unable to build C shared library\"">> Makefile; echo "">> Makefile
+if test "$SCTK_FORTRAN" = "1"; then
+printf "\t@\$(F77) \$(FOBJ_LIST) -fPIC -shared -o \${DESTDIR}${SCTK_PREFIX}/lib/libmpcf.so $SCTK_LDFLAGS|| echo \"Unable to build Fortran shared library\"">> Makefile; echo "">> Makefile
+fi
+printf "\t@cp -r INSTALL/bin \${DESTDIR}${SCTK_PREFIX}">> Makefile; echo "">> Makefile
+
+#
+# Rule 'uninstall'
+#
+echo "" >> Makefile
+echo "uninstall:" >> Makefile
+printf "\t@for i in  INSTALL/lib/* ; do rm -rf \${DESTDIR}${SCTK_PREFIX}/lib/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
+printf "\t@for i in  INSTALL/bin/* ; do rm -rf \${DESTDIR}${SCTK_PREFIX}/bin/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
+printf "\t@for i in  INSTALL/include/* ; do rm -rf \${DESTDIR}${SCTK_PREFIX}/include/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
+printf "\t@for i in  INSTALL/man/man1/* ; do rm -rf \${DESTDIR}${SCTK_PREFIX}/man/man1/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
+printf "\t@for i in  INSTALL/man/man3/* ; do rm -rf \${DESTDIR}${SCTK_PREFIX}/man/man3/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
+
+
+TEST_RES="check_results"
+
+no_fail_res(){
+#printf " || echo \"\$@ FAIL\">> check_nofail_results">> Makefile
+printf " || (echo \"${MPC_MODE_EXEC}_$NAME='FAIL'\" >> ${TEST_RES})">> Makefile
+}
+
+MPC_TEST_DIR="MPC_Tests"
+build_test(){
+for i in ${MPC_SOURCE_DIR}${MPC_TEST_DIR}/${MPC_MODE_EXEC}/*; do
+DIR_TEST="`basename $i`"
+check_module
+if test "$FOUND" != "" ; then
+if test "$i" != "${MPC_SOURCE_DIR}${MPC_TEST_DIR}/${MPC_MODE_EXEC}/*" ; then
+for j in $i/*.c ; do
+if test "$j" != "$i/*.c" ; then
+DIR_TYPE="`dirname $j`"
+DIR_TYPE="`basename $DIR_TYPE`"
+NAME="${DIR_TYPE}_`basename $j .c`"
+echo "" >> Makefile
+TEST_LIST="$TEST_LIST ${MPC_MODE_EXEC}_$NAME"
+echo "${MPC_MODE_EXEC}_$NAME:" >> Makefile
+printf "\t@echo \$@">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p TEST">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p TEST/${MPC_MODE_EXEC}">> Makefile; echo "">> Makefile
+printf "\t@echo \"${MPC_MODE_EXEC}_$NAME='SUCCESS'\" >> ${TEST_RES}">> Makefile; echo "">> Makefile
+printf "\t@echo \"BENCH_LIST=\\\\\"\\\$\$BENCH_LIST ${MPC_MODE_EXEC}_$NAME\\\\\"\" >> ${TEST_RES}">> Makefile; echo "">> Makefile
+printf "\t@INSTALL/bin/mpc_cc -O0 -g $j -o ./TEST/${MPC_MODE_EXEC}/$NAME -lm">> Makefile; echo "">> Makefile
+printf "\t@echo ./TEST/${MPC_MODE_EXEC}/$NAME">> Makefile; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun -l=none -n=$1 -m=ethread ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun -l=none -n=$1 -m=pthread ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun -l=none -n=$1 -m=ethread_mxn ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
+if test "$MPC_MODE_EXEC" = "parallel" ; then
+printf "\tINSTALL/bin/mpcrun -l=fork --share-node -n=$1 -m=ethread -p=2 -net=tcp ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun -l=fork --share-node -n=$1 -m=pthread -p=2 -net=tcp ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun -l=fork --share-node -n=$1 -m=ethread_mxn -p=2 -net=tcp ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
+fi
+printf "\t@rm ./TEST/${MPC_MODE_EXEC}/$NAME">> Makefile; echo "">> Makefile
+printf "\t@echo \"\"">> Makefile; echo "">> Makefile
+fi
+done
+if test "$SCTK_FORTRAN" = "1"; then
+for j in $i/*.f ; do
+if test "$j" != "$i/*.f" ; then
+DIR_TYPE="`dirname $j`"
+DIR_TYPE="`basename $DIR_TYPE`"
+NAME="${DIR_TYPE}_`basename $j .f`"
+echo "" >> Makefile
+TEST_LIST="$TEST_LIST ${MPC_MODE_EXEC}_$NAME"
+echo "${MPC_MODE_EXEC}_$NAME:" >> Makefile
+printf "\t@echo \$@">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p TEST">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p TEST/${MPC_MODE_EXEC}">> Makefile; echo "">> Makefile
+printf "\t@echo \"${MPC_MODE_EXEC}_$NAME='SUCCESS'\" >> ${TEST_RES}">> Makefile; echo "">> Makefile
+printf "\t@echo \"BENCH_LIST=\\\\\"\\\$\$BENCH_LIST ${MPC_MODE_EXEC}_$NAME\\\\\"\" >> ${TEST_RES}">> Makefile; echo "">> Makefile
+printf "\t@INSTALL/bin/mpc_f77 -O0  -g $j -o ./TEST/${MPC_MODE_EXEC}/$NAME -lm">> Makefile; echo "">> Makefile
+printf "\t@echo ./TEST/${MPC_MODE_EXEC}/$NAME">> Makefile; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun -l=none -n=$1 -m=ethread ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun -l=none -n=$1 -m=pthread ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun -l=none -n=$1 -m=ethread_mxn ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
+if test "$MPC_MODE_EXEC" = "parallel" ; then
+printf "\tINSTALL/bin/mpcrun -l=fork --share-node -n=$1 -m=ethread -p=2 -net=tcp ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun -l=fork --share-node -n=$1 -m=pthread -p=2 -net=tcp ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun -l=fork --share-node -n=$1 -m=ethread_mxn -p=2 -net=tcp ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
+fi
+printf "\t@rm ./TEST/${MPC_MODE_EXEC}/$NAME">> Makefile; echo "">> Makefile
+printf "\t@echo \"\"">> Makefile; echo "">> Makefile
+fi
+done
+fi
+fi
+fi
+done
+}
+
+#
+# Create the rules for MPC_Tests
+#
+MPC_MODE_EXEC="sequential"
+build_test 1
+MPC_MODE_EXEC="parallel"
+build_test 4
+
+end_res_file(){
+printf "\t@echo \"END='\`date\`'\" >> ${TEST_RES}">> Makefile; echo "">> Makefile
+printf "\t@echo \"echo CHECK form \\\$\${START} to \\\$\${END}\" >> ${TEST_RES}">> Makefile; echo "">> Makefile
+#for i in $TEST_LIST; do
+#printf "\t@echo \"echo $i \\\$\{$i\}\" >> ${TEST_RES}">> Makefile; echo "">> Makefile
+#done
+printf "\t@echo \"sctk_read_in_arg(){\" >> ${TEST_RES}">> Makefile; echo "">> Makefile
+printf "\t@echo \"sctk_read_in_arg_val=\\\"\\\\\\$\$\\\$\$1\\\"\" >> ${TEST_RES}">> Makefile; echo "">> Makefile
+printf "\t@echo \"eval \\\"echo \\\$\$sctk_read_in_arg_val\\\"\" >> ${TEST_RES}">> Makefile; echo "">> Makefile
+printf "\t@echo \"}\" >> ${TEST_RES}">> Makefile; echo "">> Makefile
+printf "\t@echo \"for i in \\\$\$BENCH_LIST; do echo \\\$\$i  \\\`sctk_read_in_arg \\\$\$i\\\`; done\" >> ${TEST_RES}">> Makefile; echo "">> Makefile
+printf "\t@chmod 755 ${TEST_RES}">> Makefile; echo "">> Makefile
+}
+
+echo "" >> Makefile
+printf "check_all:$TEST_LIST" >> Makefile
+##### START REMOVE IN OSE ####
+printf " check_private" >> Makefile
+##### END REMOVE IN OSE ####
+echo "">> Makefile
+
+
+echo "" >> Makefile
+echo "check_all_install:" >> Makefile
+printf "\t@\$(MAKE) -C . ">> Makefile; echo "">> Makefile
+printf "\t@\$(MAKE) -C . install">> Makefile; echo "">> Makefile
+echo "" >> Makefile
+
+echo "" >> Makefile
+echo "check:check_all_install" >> Makefile
+printf "\t@rm -rf  check_nofail_results || true">> Makefile; echo "">> Makefile
+printf "\t@echo \"#!/bin/sh\" > ${TEST_RES}">> Makefile; echo "">> Makefile
+printf "\t@echo \"START='\`date\`'\" >> ${TEST_RES}">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p TEST">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p TEST/sequential">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p TEST/parallel">> Makefile; echo "">> Makefile
+printf "\t@\$(MAKE) -C . check_all">> Makefile; echo "">> Makefile
+printf "\t@rm -rf  TEST">> Makefile; echo "">> Makefile
+end_res_file
+
+echo "" >> Makefile
+echo "check_nofail:check_all_install" >> Makefile
+printf "\t@rm -rf  check_nofail_results || true">> Makefile; echo "">> Makefile
+printf "\t@echo \"#!/bin/sh\" > ${TEST_RES}">> Makefile; echo "">> Makefile
+printf "\t@echo \"START='\`date\`'\" >> ${TEST_RES}">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p TEST">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p TEST/sequential">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p TEST/parallel">> Makefile; echo "">> Makefile
+printf "\t@\$(MAKE) -iC . check_all">> Makefile; echo "">> Makefile
+#printf "\t@\$(MAKE) -iC . sequential_MPC_Common_compilation_test">> Makefile; echo "">> Makefile
+printf "\t@rm -rf  TEST">> Makefile; echo "">> Makefile
+end_res_file
+
+end_section
+
+
+##### START REMOVE IN OSE ####
+#####################################
+#PRIVATE
+#####################################
+if test -d ${MPC_SOURCE_DIR}PRIVATE_MPC_Tests; then
+TEST_LIST=""
+echo "" >> Makefile
+echo "check_private:check_mpich check_all_private" >> Makefile
+echo "" >> Makefile
+
+build_test_private(){
+MPC_TEST_DIR="PRIVATE_MPC_Tests"
+build_test $1
+}
+
+MPC_MODE_EXEC="sequential"
+build_test_private 1
+MPC_MODE_EXEC="parallel"
+build_test_private 4
+
+echo "" >> Makefile
+echo "check_all_private:$TEST_LIST" >> Makefile
+
+
+echo "" >> Makefile
+echo "check_mpich:" >> Makefile
+DIR_TEST="${MPC_SOURCE_DIR}PRIVATE_MPC_Tests/parallel/MPC_Message_Passing/mpich-test/"
+MPC_MODE_EXEC="mpich"
+if test -d $DIR_TEST ; then
+printf "\t@mkdir -p TEST">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p TEST/mpich">> Makefile; echo "">> Makefile
+for i in ${MPC_SOURCE_DIR}PRIVATE_MPC_Tests/parallel/MPC_Message_Passing/mpich-test/coll ${MPC_SOURCE_DIR}PRIVATE_MPC_Tests/parallel/MPC_Message_Passing/mpich-test/pt2pt ; do
+TYPE_OP="`basename $i`"
+for j in $i/*.c ; do
+NAME="`basename $j .c`"
+printf "\t@echo \"${MPC_MODE_EXEC}_$NAME='SUCCESS'\" >> ${TEST_RES}">> Makefile; echo "">> Makefile
+printf "\t@echo \"BENCH_LIST=\\\\\"\\\$\$BENCH_LIST ${MPC_MODE_EXEC}_$NAME\\\\\"\" >> ${TEST_RES}">> Makefile; echo "">> Makefile
+printf "\t@INSTALL/bin/mpc_cc -O0 -g ${MPC_SOURCE_DIR}PRIVATE_MPC_Tests/parallel/MPC_Message_Passing/mpich-test/tools/${TYPE_OP}/*.c -I${MPC_SOURCE_DIR}PRIVATE_MPC_Tests/parallel/MPC_Message_Passing/mpich-test/tools/${TYPE_OP} $j -o ./TEST/${MPC_MODE_EXEC}/$NAME -lm">> Makefile; echo "">> Makefile
+printf "\t@echo ./TEST/${MPC_MODE_EXEC}/$NAME">> Makefile; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun -l=none -n=4 -m=ethread ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err">> Makefile; no_fail_res; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun -l=none -n=4 -m=pthread ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err">> Makefile; no_fail_res; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun -l=none -n=4 -m=ethread_mxn ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err">> Makefile; no_fail_res; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun -l=fork --share-node -p=2 -n=4 -m=ethread ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err">> Makefile; no_fail_res; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun -l=fork --share-node -p=2 -n=4 -m=pthread ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err">> Makefile; no_fail_res; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun -l=fork --share-node -p=2 -n=4 -m=ethread_mxn ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err">> Makefile; no_fail_res; echo "">> Makefile
+printf "\t@rm ./TEST/${MPC_MODE_EXEC}/$NAME">> Makefile; echo "">> Makefile
+printf "\t@echo \"\"">> Makefile; echo "">> Makefile
+done
+done
+fi
+printf "\t@rm -rf  TEST">> Makefile; echo "">> Makefile
+
+fi
+##### END REMOVE IN OSE ####

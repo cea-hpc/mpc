@@ -1,0 +1,132 @@
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - PERACHE Marc marc.perache@cea.fr                                 #
+#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
+#                                                                      #
+########################################################################
+SCTK_CHECK_HEADER ctype.h
+SCTK_CHECK_HEADER errno.h
+SCTK_CHECK_HEADER limits.h
+if test "$SCTK_OS" = "Linux" ; then 
+SCTK_CHECK_HEADER linux/unistd.h
+fi
+SCTK_CHECK_HEADER pthread.h
+SCTK_CHECK_HEADER sched.h
+SCTK_CHECK_HEADER semaphore.h
+SCTK_CHECK_HEADER setjmp.h
+SCTK_CHECK_HEADER signal.h
+SCTK_CHECK_HEADER stdarg.h
+SCTK_CHECK_HEADER stdio.h
+SCTK_CHECK_HEADER stdlib.h
+SCTK_CHECK_HEADER string.h
+SCTK_CHECK_HEADER dirent.h
+SCTK_CHECK_HEADER sys/time.h
+SCTK_CHECK_HEADER sys/types.h
+SCTK_CHECK_HEADER_NOFAIL sys/utsname.h
+if test "$SCTK_SCTK_CHECK_HEADER_RES" != 0 ; then 
+SCTK_CHECK_UTSNAME="/* #define HAVE_UTSNAME */"
+else
+SCTK_CHECK_UTSNAME="#define HAVE_UTSNAME"
+fi
+SCTK_CHECK_HEADER time.h
+SCTK_CHECK_HEADER unistd.h
+if test "${SCTK_OS}" = "HP_UX"; then 
+SCTK_CHECK_HEADER sys/pstat.h
+SCTK_CHECK_HEADER sys/param.h
+fi
+SCTK_CHECK_HEADER_NOFAIL windows.h
+
+SCTK_CHECK_FUNC abort
+SCTK_CHECK_FUNC fclose
+SCTK_CHECK_FUNC fopen
+SCTK_CHECK_FUNC fprintf
+SCTK_CHECK_FUNC fscanf
+SCTK_CHECK_FUNC fwrite
+SCTK_CHECK_FUNC getenv
+SCTK_CHECK_FUNC gethostname
+SCTK_CHECK_FUNC gettimeofday
+SCTK_CHECK_FUNC kill
+SCTK_CHECK_FUNC memcpy
+SCTK_CHECK_FUNC memset
+
+SCTK_CHECK_FUNC raise
+SCTK_CHECK_FUNC realloc
+SCTK_CHECK_FUNC remove
+SCTK_CHECK_FUNC sched_yield
+SCTK_CHECK_FUNC sprintf
+SCTK_CHECK_FUNC strcmp
+SCTK_CHECK_FUNC strcpy
+SCTK_CHECK_FUNC strlen
+SCTK_CHECK_FUNC strncmp
+if test "$SCTK_OS" != "WINDOWS" ; then 
+SCTK_CHECK_FUNC sysconf
+fi
+SCTK_CHECK_FUNC uname
+if test "$SCTK_OS" != "WINDOWS" ; then 
+SCTK_CHECK_FUNC usleep
+fi
+
+SCTK_CHECK_FUNC opendir
+SCTK_CHECK_FUNC readdir
+SCTK_CHECK_FUNC closedir
+
+begin_section Binding
+check_binding
+end_section 
+
+if test "$SCTK_OS" != "WINDOWS" ; then 
+begin_section Signals
+SCTK_CHECK_FUNC sigaction
+SCTK_CHECK_FUNC sigaddset
+SCTK_CHECK_FUNC sigemptyset
+SCTK_CHECK_FUNC sigfillset
+SCTK_CHECK_FUNC sigismember
+SCTK_CHECK_FUNC sigpending
+SCTK_CHECK_FUNC sigsuspend
+SCTK_CHECK_FUNC sigaltstack
+SCTK_CHECK_FUNC sigdelset
+end_section
+fi
+
+begin_section Context switch
+SCTK_CHECK_HEADER setjmp.h
+SCTK_CHECK_FUNC setjmp
+SCTK_CHECK_FUNC longjmp
+
+SCTK_CHECK_HEADER_NOFAIL ucontext.h
+if test "$SCTK_SCTK_CHECK_HEADER_RES" = "0" ; then 
+SCTK_CHECK_FUNC makecontext
+SCTK_CHECK_FUNC swapcontext
+SCTK_CHECK_FUNC getcontext
+SCTK_CHECK_FUNC setcontext
+else
+    SCTK_CHECK_OPTION	-DDONOTHAVE_CONTEXTS	
+fi
+end_section
+
+begin_section Mono
+SCTK_CHECK_HEADER_NOFAIL gc.h
+SCTK_CHECK_HEADER_NOFAIL mono/jit/jit.h
+SCTK_CHECK_HEADER_NOFAIL mono/metadata/threads.h
+end_section
+
+begin_section Pthread
+check_pthread_flags 
+gen_pthread_config
+end_section

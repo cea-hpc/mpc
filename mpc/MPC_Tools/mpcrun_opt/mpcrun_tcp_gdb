@@ -1,0 +1,86 @@
+#!/bin/sh
+############################# MPC License ############################## 
+# Wed Nov 19 15:19:19 CET 2008                                         # 
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # 
+#                                                                      # 
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            # 
+# This file is part of the MPC Runtime.                                # 
+#                                                                      # 
+# This software is governed by the CeCILL-C license under French law   # 
+# and abiding by the rules of distribution of free software.  You can  # 
+# use, modify and/ or redistribute the software under the terms of     # 
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # 
+# following URL http://www.cecill.info.                                # 
+#                                                                      # 
+# The fact that you are presently reading this means that you have     # 
+# had knowledge of the CeCILL-C license and that you accept its        # 
+# terms.                                                               # 
+#                                                                      # 
+# Authors:                                                             # 
+#   - PERACHE Marc marc.perache@cea.fr                                 # 
+#                                                                      # 
+######################################################################## 
+if test "$NET_TYPE" = ""  ; then 
+LAUNCH_COMMAND="$BINARY $USER_ARGS $SCTK_ARGS"
+else
+
+mpc_read_file(){
+read HOST
+MPC_HOST_LIST=""
+while test "$HOST" != "" ; do
+MPC_HOST_LIST="$MPC_HOST_LIST $HOST"
+read HOST
+done
+}
+
+if test -f ${HOME}/.mpcrun_tcp_host ; then 
+#echo "Use ~/.mpcrun_tcp_host for host list"
+mpc_read_file < ${HOME}/.mpcrun_tcp_host
+else
+echo "No ~/.mpcrun_tcp_host file using localhost"
+MPC_HOST_LIST="localhost"
+fi
+
+NB_PROCESS_TCP="0"
+
+mpc_get_host(){
+	DONE="0"
+	HOST="$1"
+	MPC_HOST_LIST_TMP=""
+	for i in $@; do
+		if test "$DONE" = "0" ; then 
+			DONE="1"
+		else
+			MPC_HOST_LIST_TMP="$MPC_HOST_LIST_TMP $i"	
+		fi
+	done
+	if test "$MPC_HOST_LIST_TMP" = "" ; then 
+		MPC_HOST_LIST_TMP="$MPC_HOST_LIST"
+	fi
+}
+
+mpc_launch_tcp(){
+HOST=""
+
+MPC_HOST_LIST_TMP="$MPC_HOST_LIST"
+MPC_PIDS=""
+MPC_PWD="`pwd`"
+SCTK_ARGS="$MPC_STARTUP_ARGS"
+while test "$NB_PROCESS_TCP" != "$PROCESS_NB" ; do
+	mpc_get_host $MPC_HOST_LIST_TMP
+	echo "$NB_PROCESS_TCP Use host $HOST"
+	ssh -x $HOST \( cd $MPC_PWD \; $BINARY $USER_ARGS $SCTK_ARGS \) &
+	MPC_PIDS="$MPC_PIDS $!"
+	NB_PROCESS_TCP="`expr $NB_PROCESS_TCP + 1`"
+done
+for pid in $MPC_PIDS ; do
+	wait $pid
+done
+}
+
+export USER_ARGS
+export MPC_BIN_DIR
+export debug_file="$debug_file"
+export PROCESS_NB="$PROCESS_NB"
+LAUNCH_COMMAND="${MPC_BIN_DIR}/mpc_server ${MPC_BIN_DIR}/mpcrun_ssh_gdb $BINARY $USER_ARGS $SCTK_ARGS"
+fi

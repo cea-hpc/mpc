@@ -1,0 +1,75 @@
+#!/bin/sh
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - PERACHE Marc marc.perache@cea.fr                                 #
+#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
+#                                                                      #
+########################################################################
+
+
+gen(){
+    read line
+    while test "$line" != "" ; do 
+	DIR="`dirname $line`"
+	NAME="`basename $line`"
+	FIND="`find /usr/include/${DIR} -name $NAME 2>&1`"
+	if test "$line" = "stdarg.h" ; then 
+	    FIND="1"
+	fi
+	if test "$FIND" != "" ; then 
+	    echo "SCTK_CHECK_HEADER $line"
+	else
+	    echo "SCTK_CHECK_HEADER_NOFAIL $line"
+#cat <<EOF       
+#if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then 
+#   #TODO
+#fi
+#EOF
+	fi
+	read line
+    done
+}
+
+gen_check(){
+    read line
+    while test "$line" != "" ; do 
+	echo $line
+	find /usr/include/`dirname $line` -name `basename $line`
+	read line
+	echo 
+    done
+}
+
+#echo "# MPC Module System Dependency Check"
+grep -rh "#include" * | grep -v "~" | grep -v "sctk_" | grep "<" | grep -v ".svn" | sed s/"#include <"/""/g | sed s/">"/""/g \
+| grep -v "mpcalloc.h" \
+| grep -v "mpcdebug.h" \
+| grep -v "mpcmicrothread.h" \
+| grep -v "mpcmp.h" \
+| grep -v "mpcomp.h" \
+| grep -v "mpcomp_abi.h" \
+| grep -v "mpcprofil.h" \
+| grep -v "mpcthread.h" \
+| sort -u | gen
+
+echo 
+echo 
+
+#grep -rh "#include" * | grep -v "~" | grep -v "sctk_" | grep "<" | grep -v ".svn" | sed s/"#include <"/""/g | sed s/">"/""/g | sort -u | gen_check
+

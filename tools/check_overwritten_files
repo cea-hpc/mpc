@@ -1,0 +1,59 @@
+#!/bin/sh
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
+#   - PERACHE Marc marc.perache@cea.fr                                 #
+#   - DIDELOT Sylvain didelot.sylvain@gmail.com                        #
+#                                                                      #
+########################################################################
+
+FILES="include/mpi.h include/pthread.h include/semaphore.h include/omp.h"
+OVERWRITTEN_FILES=""
+HAS_OVERWRITTEN_FILES=0
+
+check_overwritten_files() {
+  SCTK_PREFIX_PATH="`echo A$SCTK_PREFIX | sed -e 's/A--prefix=//g'`"
+
+  for tmp in $FILES; do
+    printf "Checking if file $SCTK_PREFIX_PATH/$tmp exists... "
+    if [ -e "$SCTK_PREFIX_PATH/$tmp" ]; then
+      printf "FAILED\n"
+      OVERWRITTEN_FILES="${OVERWRITTEN_FILES}\n${tmp}"
+      HAS_OVERWRITTEN_FILES=1
+    else
+      printf "OK\n"
+    fi
+  done
+
+  if [ $HAS_OVERWRITTEN_FILES -eq 1 ]; then
+    printf "####################### FATAL ERROR #######################\n"
+    printf "MPC *WILL* overwrite the following include file:"
+    printf "${OVERWRITTEN_FILES}\n\n"
+    printf "Please set your --prefix correctly and run configure again.\n"
+    printf "If you know what you are doing, you can use the configure\n"
+    printf "flag --disable-prefix-check. Keep in mind that your headers\n"
+    printf "will be *DEFINITIVELY* overwritten.\n"
+    printf "Configure exiting with no Makefile generated....\n"
+    printf "###########################################################\n"
+    exit 1
+  fi
+}
+
+
+

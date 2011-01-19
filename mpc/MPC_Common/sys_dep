@@ -1,0 +1,148 @@
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - PERACHE Marc marc.perache@cea.fr                                 #
+#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
+#                                                                      #
+########################################################################
+# MPC Module System Dependency Check
+if test "${SCTK_OS}" = "SunOS"; then
+SCTK_CHECK_LDOPTION "-lsunmath"
+fi
+
+SCTK_CHECK_LDOPTION "-lm"
+
+begin_section Pthread
+check_pthread_flags_comp
+end_section
+
+SCTK_CHECK_HEADER ctype.h
+if test "${SCTK_OS}/${SCTK_ARCH}" = "Linux/ia64"; then
+SCTK_CHECK_HEADER features.h
+fi
+SCTK_CHECK_HEADER limits.h
+SCTK_CHECK_HEADER malloc.h
+SCTK_CHECK_HEADER math.h
+SCTK_CHECK_HEADER pthread.h
+SCTK_CHECK_HEADER sched.h
+SCTK_CHECK_HEADER stdarg.h
+SCTK_CHECK_HEADER stdio.h
+SCTK_CHECK_HEADER stdlib.h
+SCTK_CHECK_HEADER string.h
+SCTK_CHECK_HEADER sys/stat.h
+SCTK_CHECK_HEADER sys/time.h
+SCTK_CHECK_HEADER sys/types.h
+SCTK_CHECK_HEADER unistd.h
+SCTK_CHECK_HEADER setjmp.h
+SCTK_CHECK_HEADER signal.h
+
+
+sctk_echo
+
+SCTK_CHECK_FUNC abort
+SCTK_CHECK_FUNC exit
+SCTK_CHECK_FUNC fclose
+SCTK_CHECK_FUNC fflush
+SCTK_CHECK_FUNC fopen
+SCTK_CHECK_FUNC fprintf
+SCTK_CHECK_FUNC fscanf
+SCTK_CHECK_FUNC fwrite
+SCTK_CHECK_FUNC getenv
+SCTK_CHECK_FUNC memcpy
+SCTK_CHECK_FUNC mkdir
+SCTK_CHECK_FUNC pow
+SCTK_CHECK_FUNC remove
+SCTK_CHECK_FUNC rmdir
+SCTK_CHECK_FUNC sched_yield
+SCTK_CHECK_FUNC sin
+SCTK_CHECK_FUNC sprintf
+SCTK_CHECK_FUNC strcpy
+SCTK_CHECK_FUNC strlen
+SCTK_CHECK_FUNC longjmp
+SCTK_CHECK_FUNC setjmp
+SCTK_CHECK_FUNC vfprintf
+SCTK_CHECK_FUNC_NOFAIL vsnprintf
+if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
+   SCTK_CHECK_OPTION "-DHAVE_VSNPRINTF"
+fi
+SCTK_CHECK_FUNC_NOFAIL cfree
+if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
+   SCTK_CHECK_OPTION "-DHAVE_CFREE"
+fi
+SCTK_CHECK_FUNC_NOFAIL posix_memalign
+if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
+   SCTK_CHECK_OPTION "-DHAVE_POSIX_MEMALIGN"
+fi
+SCTK_CHECK_FUNC_NOFAIL memalign
+if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
+   SCTK_CHECK_OPTION "-DHAVE_MEMALIGN"
+fi
+
+SCTK_CHECK_FUNC write
+SCTK_CHECK_FUNC raise
+SCTK_CHECK_FUNC pthread_create
+SCTK_CHECK_FUNC getpid
+
+if test "${SCTK_OS}" = "Linux"; then
+begin_section Address randomize
+	SCTK_MSG_CHECKING disable_opt
+cat  << EOF  > ${SCTK_CONF_C}
+#include <asm/unistd.h>
+#include <linux/personality.h>
+#define THIS__set_personality(pers) ((long)syscall(__NR_personality,pers))
+
+static inline void sctk_disable_addr_randomize(int argc, char** argv){
+  char* disable_addr_randomize;
+  disable_addr_randomize = getenv("SCTK_LINUX_DISABLE_ADDR_RADOMIZE");
+  if(disable_addr_randomize){
+    unsetenv("SCTK_LINUX_DISABLE_ADDR_RADOMIZE");
+    THIS__set_personality(ADDR_NO_RANDOMIZE);
+    execvp(argv[0],argv);
+  }
+}
+
+int main(int argc, char** argv){
+	sctk_disable_addr_randomize(argc,argv);
+	return 0;
+}
+EOF
+
+echo "File ${SCTK_CONF_C}" >> ${SCTK_CONF_LOG} 2>&1
+cat ${SCTK_CONF_C} >> ${SCTK_CONF_LOG} 2>&1
+echo "$SCTK_CC $SCTK_CFLAGS -c ${SCTK_CONF_C} -o ${SCTK_CONF_OBJ}">> ${SCTK_CONF_LOG} 2>&1
+eval "$SCTK_CC $SCTK_CFLAGS -c ${SCTK_CONF_C} -o ${SCTK_CONF_OBJ}">> ${SCTK_CONF_LOG} 2>&1
+SCTK_SCTK_CHECK_HEADER_RES="$?"
+rm ${SCTK_CONF_C} ${SCTK_CONF_OBJ} >> ${SCTK_CONF_LOG} 2>&1
+if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
+    result yes
+    SCTK_CHECK_OPTION	-DSCTK_LINUX_DISABLE_ADDR_RADOMIZE
+else
+    result no
+fi
+fi
+end_section
+
+#Check if shell colors are enabled
+if test "$SCTK_SHELL_COLORS" = 1 ; then
+   SCTK_CHECK_OPTION "-DSHELL_COLORS"
+fi
+
+
+begin_section Valgrind
+check_debug
+end_section

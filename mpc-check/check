@@ -1,0 +1,308 @@
+#!/bin/sh
+
+if test "${MPC_STORE_CHECK_RESULT}" = "" ; then 
+    echo "You have to define the MPC_STORE_CHECK_RESULT env variable"
+    exit 1
+fi
+
+mkdir -p  ${MPC_STORE_CHECK_RESULT}
+
+CHECK_SOURCE="`pwd`"
+
+SERIE="`date +%Y_%m_%d_%H_%M_%S`"
+
+trap "kill -s 2 0" INT
+
+MPC_AUTO_KILL_TIMEOUT="120"
+export MPC_AUTO_KILL_TIMEOUT
+
+if test "$1" != "" ; then 
+    PATH="${1}/bin:$PATH"
+    export PATH
+else 
+    echo "Specify a MPC version"
+    exit 1
+fi
+
+MPCPATH="$1"
+shift 1
+
+NICE=""
+PROG=""
+for arg in $@ ; do 
+case $arg in 
+    -l=*)
+	    LAUNCHER="$arg"
+	    ;;
+    -nice)
+	    NICE="nice -n 20 "
+	    ;;
+    *)
+	  PROG="$PROG $arg"  
+esac    
+done
+
+PROGRAMMS="$PROG"
+
+NET_LIST="`cat $MPCPATH/bin/mpcrun | grep \"SCTK_NET_LIST=\"`"
+eval $NET_LIST
+echo "Net list: $SCTK_NET_LIST"
+export SCTK_NET_LIST
+
+mpc_check_open_file(){
+    printf ""
+}
+
+mpc_check_close_file(){
+    printf ""
+}
+
+check_dep(){
+    if test "$1" != "$CHECK_SOURCE" && test "$1" != "" && test "$1" != "."; then
+#	echo "Check Deps in $1"
+	if test -f $1/module_dep; then 
+	    MODULES=""
+	    . $1/module_dep
+	    LOCAL_DEP="FAIL"
+	    for dep in $MODULES ; do 
+		for mod in $MPCMODULES; do 
+		    if test "$mod" = "$dep" ; then 
+			LOCAL_DEP="OK"
+		    fi
+		done
+		if test "$LOCAL_DEP" != "OK"; then 
+		    DEPS="FAIL"
+		fi
+	    done 
+	fi
+	check_dep "`dirname $1`"
+    fi
+}
+
+store_result_check_pass(){
+    mpc_check_open_file
+    echo "$1 EXECUTION $2 $3 PASS ${SERIE}" >> $BASE_NAME
+    mpc_check_close_file    
+}
+store_result_check_fail(){
+    mpc_check_open_file
+    echo "$1 EXECUTION $2 $3 FAIL ${SERIE} $4" >> $BASE_NAME
+    mpc_check_close_file        
+}
+
+store_result_compilation_pass(){
+    mpc_check_open_file
+    echo "$1 COMPILATION PASS ${SERIE}" >> $BASE_NAME
+    mpc_check_close_file    
+}
+store_result_compilation_fail(){
+    mpc_check_open_file
+    echo "$1 COMPILATION FAIL ${SERIE} $2" >> $BASE_NAME
+    mpc_check_close_file    
+}
+
+check_one_test(){
+    OLD_PWD="`pwd`"
+    cd $1
+    TEST_DIR="`dirname $2`/`basename $2`"
+    TEST_DIR="`echo $TEST_DIR | sed s,//,/,g| sed s,//,/,g| sed s,//,/,g| sed s,//,/,g| sed s,//,/,g| sed s,//,/,g| sed s,//,/,g| sed s,//,/,g| sed s,//,/,g`"
+    FILE_NAME="$TEST_DIR"
+    FILE_NAME="${BASE_NAME}_`echo "$FILE_NAME" | sed s,/,_,g | sed s,' ',_,g | sed s,':',_,g`"
+    
+    if test -f build.sh; then 
+	BUILD="./build.sh"
+    else
+	BUILD="${CHECK_SOURCE}/simple/hello_world/build.sh"
+    fi
+    
+    if test -f check.sh; then 
+	CHECK="./check.sh"
+    else
+	CHECK="${CHECK_SOURCE}/simple/hello_world/check.sh"
+    fi
+    
+    if test -f clean.sh; then 
+	CLEAN="./clean.sh"
+    else
+	CLEAN="${CHECK_SOURCE}/simple/hello_world/clean.sh"
+    fi
+    
+    rm compilation_trace execution_trace execution_trace_thread > /dev/null  2>&1 
+    RES="Compilation fail"
+
+    echo "Check $TEST_DIR"
+    printf "    Build"
+    sh $BUILD > compilation_trace 2>&1
+    if test "$?" = "0" ; then 
+	echo "    Pass"
+	store_result_compilation_pass $TEST_DIR;
+
+	for net in $SCTK_NET_LIST; do 
+	    for THREAD in pthread ethread ethread_mxn ; do 
+		MPCRUN_COMMAND="-m=$THREAD --tmp_dir=`pwd`/temp_dir_mpcrun "
+		case $net in 
+		    none)
+			MPCRUN_COMMAND="--share-node $MPCRUN_COMMAND $LAUNCHER "
+			;;
+		    tcp)
+			MPCRUN_COMMAND="$MPCRUN_COMMAND -net=$net -p=2 $LAUNCHER "
+			;;
+		    elan)
+			MPCRUN_COMMAND="$MPCRUN_COMMAND -net=$net -p=2 -c=4 $LAUNCHER "
+			;;
+		    elan_gen)
+			MPCRUN_COMMAND="$MPCRUN_COMMAND -net=$net -p=2 -c=4 $LAUNCHER "
+			;;
+		    elan_gen)
+			MPCRUN_COMMAND="$MPCRUN_COMMAND -net=$net -p=2 -c=4 $LAUNCHER "
+			;;
+		    infiniband)
+			MPCRUN_COMMAND="$MPCRUN_COMMAND -net=$net -p=2 $LAUNCHER "
+			;;
+		    *)
+			echo "no rules"
+			exit 1
+		esac
+		export MPCRUN_COMMAND
+		
+		printf "    Check $THREAD $net "
+		echo "Check $THREAD $net " > execution_trace_thread
+		sh $CHECK >> execution_trace_thread 2>&1 
+		if test "$?" = "0" ; then 
+		    echo "Pass"
+		    store_result_check_pass $TEST_DIR $THREAD $net
+		else 
+		    echo "Fail"
+		    store_result_check_fail $TEST_DIR $THREAD $net ${FILE_NAME}_EXECUTION_FAIL_${THREAD}_${net}_${SERIE}
+		    cp execution_trace_thread ${FILE_NAME}_EXECUTION_FAIL_${THREAD}_${net}_${SERIE}
+		fi
+		rm -rf temp_dir_mpcrun > /dev/null  2>&1 
+	    done
+	done
+    else
+	echo "    Fail"	 
+	store_result_compilation_fail $TEST_DIR ${FILE_NAME}_COMPILATION_FAIL_${SERIE} 
+	cp compilation_trace ${FILE_NAME}_COMPILATION_FAIL_${SERIE} 
+    fi 
+    
+    echo "    Clean"
+    sh $CLEAN
+    cd $OLD_PWD
+}
+
+mk_tmp_cpy(){
+    DEPS="OK"
+    check_dep $1
+    if test "$DEPS" = "OK" ; then 
+	TMP_NAME="./MPC_TMP_CHECK_`whoami`_$$"
+	rm -rf $TMP_NAME > /dev/null 2>&1
+	if test "$?" != "0"; then 
+	    sleep 5s
+	    rm -rf $TMP_NAME > /dev/null 2>&1
+	fi
+	cp -r $1 $TMP_NAME
+	touch  $TMP_NAME/.ignore
+	
+	check_one_test $TMP_NAME $1
+	
+	rm -rf $TMP_NAME > /dev/null 2>&1
+	if test "$?" != "0"; then 
+	    sleep 5s
+	    rm -rf $TMP_NAME > /dev/null 2>&1
+	fi
+    fi
+}
+
+find_subdirs(){
+    DEPS="OK"
+
+    if test -e "${1}/.ignore" ; then 
+	echo ""
+    else
+	if test -f ${1}/module_dep; then 
+	    MODULES=""
+	    . ${1}/module_dep
+	#echo "MODULES $MODULES"
+	    LOCAL_DEP="FAIL"
+	    for dep in $MODULES ; do 
+		for mod in $MPCMODULES; do 
+		    if test "$mod" = "$dep" ; then 
+			LOCAL_DEP="OK"
+		    fi
+		done
+		if test "$LOCAL_DEP" != "OK"; then 
+		    DEPS="FAIL"
+		fi
+	    done
+	    
+	fi
+    #echo "DEPS $1 $DEPS" 
+	if test "$DEPS" = "OK" ; then  
+	    if ls ${1}/*.c  > /dev/null 2>&1  || ls ${1}/*.f > /dev/null 2>&1 ; then 
+		echo "$1"
+	    fi
+	    for j in $1/* ; do 
+		if ((test -d $j) && (test "$j" != ".") && (test "$j" != "..")) ; then 
+		    find_subdirs $j
+		fi
+	    done
+	fi
+    fi
+}
+
+info(){
+    read MPCVERSION
+    export MPCVERSION
+    read MPCBUILD
+    export MPCBUILD
+    read MPCCONFIGURE
+    export MPCCONFIGURE
+    read line
+    read line
+    while test "$line" != "" ; do 
+	MPCMODULES="$MPCMODULES $line"
+	read line
+    done
+
+    export MPCMODULES
+
+    BASE_NAME="`whoami`_`hostname`_${MPCVERSION}_${MPCBUILD}_${MPCPATH}"
+    BASE_NAME="`whoami`_`hostname`_${MPCVERSION}"
+    BASE_NAME="${MPC_STORE_CHECK_RESULT}/`echo "$BASE_NAME" | sed s,/,_,g | sed s,' ',_,g | sed s,':',_,g`"
+
+    echo $BASE_NAME
+
+    if test "$PROGRAMMS" = "" ; then 
+	PROGRAMMS="*"
+    fi
+
+    MAIN_PROG="$PROGRAMMS"
+    PROGRAMMS=""
+    for i in $MAIN_PROG ; do 
+	if test -d "$i" && test "$i" != "." && test "$i" != ".." ; then 	    
+	    if test -e "${i}/.ignore" ; then 
+		echo "ignore $i"
+	    else
+		PROGRAMMS="$PROGRAMMS `find_subdirs $i`"
+		cd ${CHECK_SOURCE}
+	    fi
+	fi 
+    done
+
+#    echo $PROGRAMMS
+#    exit 1
+
+    for P in $PROGRAMMS; do
+	mk_tmp_cpy $P
+    done
+
+    FAIL="`cat $BASE_NAME | grep "FAIL" | wc -l`"
+    TOT="`cat $BASE_NAME | wc -l`"
+    
+    echo "Fail $FAIL/$TOT"
+}
+echo "$NICE $MPCPATH/bin/mpc_status -v"
+
+#$NICE /bin/echo toto
+
+$NICE $MPCPATH/bin/mpc_status -v | info

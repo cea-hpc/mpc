@@ -1,0 +1,146 @@
+/* ############################# MPC License ############################## */
+/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
+/* # This file is part of the MPC Runtime.                                # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #                                                                      # */
+/* ######################################################################## */
+#ifndef __SCTK_TLS_H_
+#define __SCTK_TLS_H_
+
+#include <stdlib.h>
+#include <string.h>
+#include "sctk_config.h"
+#include "sctk_context.h"
+#include "sctk_spinlock.h"
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+
+#if defined(SCTK_USE_TLS)
+
+  typedef enum
+  { sctk_tls_process_scope = 0, sctk_tls_task_scope =
+      1, sctk_tls_thread_scope = 2,
+#if defined (MPC_OpenMP)
+    sctk_tls_openmp_scope = 3, sctk_tls_max_scope = 4
+#else
+    sctk_tls_max_scope = 3
+#endif
+  } sctk_tls_scope_t;
+  void sctk_tls_duplicate (void **new);
+  void sctk_tls_keep (int *scopes);
+  void sctk_tls_keep_non_current_thread (void **tls, int *scopes);
+  void sctk_tls_delete ();
+
+
+#if defined (MPC_Allocator)
+  extern __thread void *sctk_tls_key;
+#endif
+#if defined (MPC_Profiler)
+  extern __thread void *sctk_tls_trace;
+#endif
+
+  extern __thread char *mpc_user_tls_1;
+  extern unsigned long mpc_user_tls_1_offset;
+  extern unsigned long mpc_user_tls_1_entry_number;
+  extern __thread void *sctk_hierarchical_tls;
+  //profiling TLS
+  extern __thread void *tls_trace_module;
+  extern __thread void *tls_args;
+
+#endif
+
+#ifdef MPC_Message_Passing
+  extern __thread struct sctk_thread_specific_s *sctk_message_passing;
+#endif
+
+#define tls_save(a) ucp->a = a;
+#define tls_restore(a) a = ucp->a;
+#define tls_init(a) ucp->a = NULL;
+
+  static inline void sctk_context_save_tls (sctk_mctx_t * ucp)
+  {
+#if defined(SCTK_USE_TLS)
+#if defined (MPC_Allocator)
+    ucp->sctk_tls_key_local = sctk_tls_key;
+#endif
+#if defined (MPC_Profiler)
+    ucp->sctk_tls_trace_local = sctk_tls_trace;
+#endif
+    tls_save (mpc_user_tls_1);
+    tls_save (sctk_hierarchical_tls);
+    tls_save (sctk_message_passing);
+    //profiling TLS
+    tls_save (tls_args);
+    tls_save (tls_trace_module);
+#endif
+  }
+
+  static inline void sctk_context_restore_tls (sctk_mctx_t * ucp)
+  {
+#if defined(SCTK_USE_TLS)
+#if defined (MPC_Allocator)
+    sctk_tls_key = ucp->sctk_tls_key_local;
+#endif
+#if defined (MPC_Profiler)
+    sctk_tls_trace = ucp->sctk_tls_trace_local;
+#endif
+    tls_restore (mpc_user_tls_1);
+    tls_restore (sctk_hierarchical_tls);
+    tls_restore (sctk_message_passing);
+    //profiling TLS
+    tls_restore (tls_args);
+    tls_restore (tls_trace_module);
+#endif
+  }
+
+  static inline void sctk_context_init_tls_hierarchical_tls (sctk_mctx_t *
+							     ucp)
+  {
+#if defined(SCTK_USE_TLS)
+#if defined (MPC_Allocator)
+    ucp->sctk_tls_key_local = NULL;
+#endif
+#if defined (MPC_Profiler)
+    ucp->sctk_tls_trace_local = NULL;
+#endif
+    /* tls_init (mpc_user_tls_1); */
+    ucp->mpc_user_tls_1 = mpc_user_tls_1 ;
+    tls_init (sctk_message_passing);
+    //profiling TLS
+    tls_init (tls_args);
+    tls_init (tls_trace_module);
+#endif
+  }
+
+  static inline void sctk_context_init_tls (sctk_mctx_t * ucp)
+  {
+#if defined(SCTK_USE_TLS)
+    sctk_context_init_tls_hierarchical_tls (ucp);
+    tls_init (sctk_hierarchical_tls);
+    sctk_tls_duplicate (&(ucp->sctk_hierarchical_tls));
+#endif
+  }
+
+#ifdef __cplusplus
+}
+#endif
+#endif

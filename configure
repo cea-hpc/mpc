@@ -1,0 +1,328 @@
+#!/bin/sh
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
+#   - PERACHE Marc marc.perache@cea.fr                                 #
+#                                                                      #
+########################################################################
+
+# Add current directory to the PATH environment
+PATH="$PATH:."
+export PATH
+
+CONF_NAME="configure"
+
+BUILD_DIR="`pwd`"
+
+TOP_SOURCE_DIR="`dirname $0`/"
+
+# Update directories to absolute paths
+cd ${TOP_SOURCE_DIR}
+TOP_SOURCE_DIR="`pwd`"
+MPC_SOURCE_DIR="${TOP_SOURCE_DIR}/mpc/"
+cd ${BUILD_DIR}
+
+export MPC_SOURCE_DIR
+
+MPC_VERSION="`${MPC_SOURCE_DIR}/MPC_Tools/mpc_print_version`"
+# If the prefix must be checked
+SCTK_PREFIX_CHECK="1"
+
+# List of all modules to add to MPC distribution
+MODULES="mpc-gdb mpc-gcc"
+# List of modules for the 'clean' rule
+MODULES_CLEAN=
+
+MPC_ARGS=
+
+SCTK_PREFIX="--prefix=/usr/local"
+
+# Default file to read configuration
+DEFAULT_CONFIG_FILE=${TOP_SOURCE_DIR}/config
+CONFIG_FILE=${DEFAULT_CONFIG_FILE}
+
+# Check if include files will be overwritten
+. ${TOP_SOURCE_DIR}/tools/check_overwritten_files
+
+echo "'configure' configures MPC Distribution ${MPC_VERSION} to adapt to many kinds of systems."
+echo
+
+usage() {
+cat <<EOF
+Usage: $0 [OPTION]... [VAR=VALUE]...
+
+Configuration:
+  -h, --help                   display this help and exit
+
+Installation directories:
+  --prefix=PREFIX              install architecture-independent files in PREFIX
+                               [default value: /usr/local]
+
+Optional Features:
+  --disable-mpc-gcc            Disable compilation of mpc-gcc
+  --disable-mpc-gdb            Disable compilation of mpc-gdb
+  --disable-prefix-check       Force given prefix
+  --with-cpath=DIR1:DIR2:...   Add directories to the CPATH environment variable
+                               for the whole MPC distribution
+  --with-library-path=DIR1:DIR2:...   Add directories to the LD_LIBRARY_PATH environment
+                                      variable for the whole MPC distribution
+  --with-config=file           Read the file 'file' for main configuration
+                               [default value: ${DEFAULT_CONFIG_FILE}]
+
+Additional options are passed to the configure script of MPC library.
+See "${MPC_SOURCE_DIR}/configure --help" for more details.
+
+EOF
+}
+
+#
+# INPUT-ARGUMENT PARSING
+#
+printf "$0 " > configure.log
+for arg in "$@" ; do
+    printf "\'$arg\' " >> configure.log
+    case $arg in
+    # Prefix for installation of every module
+    --prefix=*)
+    SCTK_PREFIX="$arg"
+    MPC_ARGS="$arg $MPC_ARGS"
+    ;;
+    # Usage
+    --disable-mpc-gcc)
+       MODULES="`echo $MODULES | sed -e 's/mpc-gcc//g'`"
+    ;;
+    --disable-mpc-gdb)
+        MODULES="`echo $MODULES | sed -e 's/mpc-gdb//g'`"
+    ;;
+    --help)
+	usage
+	exit 1
+    ;;
+    --with-cpath=*)
+      ADD_TO_CPATH="`echo A$arg | sed -e 's/A--with-cpath=//g'`"
+    ;;
+    --with-library-path=*)
+      ADD_TO_LIBRARY_PATH="`echo A$arg | sed -e 's/A--with-library-path=//g'`"
+    ;;
+    --with-config=*)
+      CONFIG_FILE="`echo A$arg | sed -e 's/A--with-config=//g'`"
+    ;;
+    --disable-prefix-check)
+    SCTK_PREFIX_CHECK="0"
+    ;;
+
+    *)
+    MPC_ARGS="$arg $MPC_ARGS"
+    ;;
+    esac
+done
+echo "" >> configure.log
+
+if [ $SCTK_PREFIX_CHECK -eq 1 ]; then
+  check_overwritten_files
+fi
+
+# Check that the configuration file exists
+echo -n "Checking if configuration file exists ... "
+if ! test -f ${CONFIG_FILE} ; then
+  echo "FAILED"
+  echo "Error: configuration file ${CONFIG_FILE} does not exist"
+  exit 1
+fi
+echo "OK"
+
+#
+# MAKEFILE GENERATION
+#
+echo "Generating `pwd`/Makefile"
+cat <<EOF > Makefile
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
+#   - PERACHE Marc marc.perache@cea.fr                                 #
+#                                                                      #
+########################################################################
+
+EOF
+
+# Variable initialization
+MAKE_ALL_RULE="mpc_make"
+INSTALL_ALL_RULE="mpc_install"
+
+if test "${ADD_TO_CPATH}" != "" ; then
+  printf "ifeq (\${CPATH},)\n" >> Makefile
+  printf "  CPATH:=${ADD_TO_CPATH}\n" >> Makefile
+  printf "else\n" >> Makefile
+  printf "  CPATH:=${ADD_TO_CPATH}:\${CPATH}\n" >> Makefile
+  printf "endif\n" >> Makefile
+  printf "export CPATH\n" >> Makefile
+  printf "\n" >> Makefile
+fi
+
+if test "${ADD_TO_LIBRARY_PATH}" != "" ; then
+  printf "ifeq (\${LIBRARY_PATH},)\n" >> Makefile
+  printf "  LIBRARY_PATH:=${ADD_TO_LIBRARY_PATH}\n" >> Makefile
+  printf "else\n" >> Makefile
+  printf "  LIBRARY_PATH:=${ADD_TO_LIBRARY_PATH}:\${LIBRARY_PATH}\n" >> Makefile
+  printf "endif\n" >> Makefile
+  printf "ifeq (\${LD_LIBRARY_PATH},)\n" >> Makefile
+  printf "  LD_LIBRARY_PATH:=${ADD_TO_LIBRARY_PATH}\n" >> Makefile
+  printf "else\n" >> Makefile
+  printf "  LD_LIBRARY_PATH:=${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}\n" >> Makefile
+  printf "endif\n" >> Makefile
+  printf "export LIBRARY_PATH\n" >> Makefile
+  printf "export LD_LIBRARY_PATH\n" >> Makefile
+  printf "\n" >> Makefile
+fi
+
+
+
+# Rule 'all' (a simple link)
+printf "#\n# Rule 'all'\n#\n" >> Makefile
+printf "all:make_all" >> Makefile
+printf "\n\n" >> Makefile
+
+# Rule 'install' (a simple link)
+printf "#\n# Rule 'install'\n#\n" >> Makefile
+printf "install:install_all" >> Makefile
+printf "\n\n" >> Makefile
+
+# Rule 'check'
+printf "#\n# Rule check\n#\n" >> Makefile
+printf "check:" >> Makefile
+printf "\n" >> Makefile
+printf "\tcd mpc_build && \$(MAKE) check \n" >> Makefile
+printf "\n" >> Makefile
+
+#
+# Rules for every module
+#
+COMPILER_LIST=""
+for i in $MODULES ; do
+echo "===== Checking module $i =====" >> configure.log
+# Read config file
+while read mod ver conf; do
+if test "$mod" != "#" ; then
+  if test "$mod" = "$i" ; then
+    # Add this version to the compiler list
+    if test "$mod" = "mpc-gcc" ; then
+      COMPILER_LIST="$ver $COMPILER_LIST"
+    fi
+
+    # Print message
+    echo "Generating rules for module $mod (version $ver)"
+    echo "Found version $ver with configuration $conf" >> configure.log
+
+    FULL_NAME="${mod}-${ver}"
+    MODULES_CLEAN="${MODULES_CLEAN} ${FULL_NAME}_build"
+
+    printf "#\n# Module ${mod} / Version ${ver}\n#\n" >> Makefile
+    printf "${FULL_NAME}_build/config.status:\n" >> Makefile
+    printf "\tmkdir -p ${FULL_NAME}_build\n" >> Makefile
+    printf "\tcd ${FULL_NAME}_build && ${TOP_SOURCE_DIR}/${mod}/configure $ver ${SCTK_PREFIX}/${FULL_NAME} \n" >> Makefile
+    printf "\n" >> Makefile
+
+    MAKE_ALL_RULE="${MAKE_ALL_RULE} ${FULL_NAME}_make"
+    INSTALL_ALL_RULE="${INSTALL_ALL_RULE} ${FULL_NAME}_install"
+
+    printf "${FULL_NAME}_make:${FULL_NAME}_build/config.status\n" >> Makefile
+    printf "\t\$(MAKE) -C ${FULL_NAME}_build \n" >> Makefile
+    printf "\n" >> Makefile
+
+    printf "${FULL_NAME}_install:\n" >> Makefile
+    printf "\t\$(MAKE) -C ${FULL_NAME}_build install \n" >> Makefile
+    printf "\n" >> Makefile
+  fi
+fi
+done < ${CONFIG_FILE}
+done # End for every module
+
+
+# Rule 'check'
+printf "#\n# Rule clean\n#\n" >> Makefile
+printf "clean:" >> Makefile
+printf "\n" >> Makefile
+printf "\t@rm -fr mpc_build ${MODULES_CLEAN}\n" >> Makefile
+printf "\n" >> Makefile
+
+
+#
+# Rules for configuring and compiling MPC
+#
+
+echo "===== MPC =====" >> configure.log
+
+ARG_COMPILER_LIST=""
+if test "${COMPILER_LIST}" != "" ; then
+  ARG_COMPILER_LIST="--compilers=\"${COMPILER_LIST}\""
+fi
+
+ARG_LIBRARY_PATH=""
+if test "${ADD_TO_LIBRARY_PATH}" != "" ; then
+  ARG_LIBRARY_PATH="--add-library-path=\"${ADD_TO_LIBRARY_PATH}\""
+fi
+
+printf "#\n# Rule for MPC\n#\n" >> Makefile
+printf "mpc_build/config.status:\n" >> Makefile
+printf "\tmkdir -p mpc_build\n" >> Makefile
+printf "\tcd mpc_build && ${MPC_SOURCE_DIR}/configure ${ARG_COMPILER_LIST} ${ARG_LIBRARY_PATH} ${MPC_ARGS} \n" >> Makefile
+echo "">> Makefile
+echo "Compiler list for MPC: ${COMPILER_LIST}" >> configure.log
+echo "Additionnal args for MPC ${MPC_ARGS}" >> configure.log
+
+printf "mpc_make:mpc_build/config.status\n" >> Makefile
+printf "\t\$(MAKE) -C mpc_build \n" >> Makefile
+echo "">> Makefile
+
+printf "mpc_install:\n" >> Makefile
+printf "\t\$(MAKE) -C mpc_build install \n" >> Makefile
+echo "">> Makefile
+
+
+#
+# Rule "make_all"
+#
+printf "#\n# Rule make_all\n#\n" >> Makefile
+printf "make_all: ${MAKE_ALL_RULE} \n" >> Makefile
+
+#
+# Rule "install_all"
+#
+printf "#\n# Rule install_all\n#\n" >> Makefile
+printf "install_all: ${INSTALL_ALL_RULE} \n" >> Makefile
+
+echo "Configuration process is done. Type 'make' to start compiling the MPC distribution..."
+
+exit 0
