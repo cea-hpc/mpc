@@ -801,12 +801,13 @@ sctk_shm_init ( int init ) {
     void* munmap_ptr;
     unsigned long page_size;
 
-    sctk_assert( ftruncate(shm_fd, sctk_shm_get_allocated_mem_size()) == 0 );
+    sctk_debug("Size : %lu", sctk_shm_get_allocated_mem_size());
+    assume (ftruncate(shm_fd, SCTK_SHM_LEN) == 0);
 
     /* unlink the SHM segment */
     munmap_ptr = sctk_shm_get_memstruct_base() + sctk_shm_get_allocated_mem_size();
     munmap_ptr = munmap_ptr + (((unsigned long) munmap_ptr) % page_size);
-    sctk_assert ( shm_unlink ( shm_filename ) == 0 );
+    assume ( shm_unlink ( shm_filename ) == 0 );
   }
 
   sctk_nodebug ( "Init done by process %d", sctk_local_process_rank );
