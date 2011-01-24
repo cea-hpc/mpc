@@ -451,8 +451,8 @@ rm -rf include_modules > /dev/null 2>&1
 
 mkdir -p include
 header > include/mpc.h
-echo "#ifndef ___MPC___GLOBAL___HEDAER___FILE___" >> include/mpc.h
-echo "#define ___MPC___GLOBAL___HEDAER___FILE___" >> include/mpc.h
+echo "#ifndef ___MPC___GLOBAL___HEADER___FILE___" >> include/mpc.h
+echo "#define ___MPC___GLOBAL___HEADER___FILE___" >> include/mpc.h
 
 echo "#include <sctk_config.h>">> include/mpc.h
 
