@@ -713,7 +713,6 @@ static int
 sctk_shm_init ( int init ) {
   void *tmp_ptr_shm_current = NULL;
   int shm_fd;
-  int ret;
   unsigned long page_size;
   void* ptr;
 
@@ -724,7 +723,7 @@ sctk_shm_init ( int init ) {
   page_size = getpagesize ();
   /* malloc the shared memory segment */
   ptr = sctk_memalign(page_size, SCTK_SHM_LEN);
-  sctk_assert(ptr);
+  assume(ptr);
 
   /* process with rank 0 opens the shared memory
    * other processes wait until rank 0 finishes
@@ -745,13 +744,13 @@ sctk_shm_init ( int init ) {
       sctk_abort();
     }
 
+    /* truncate the shared memory */
+    assume (ftruncate ( shm_fd, SCTK_SHM_LEN) == 0);
+
     tmp_ptr_shm_current = ( void * )
       mmap ( ptr, SCTK_SHM_LEN, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, shm_fd, 0 );
-    sctk_assert ( !tmp_ptr_shm_current );
-
-    /* truncate the shared memory */
-    ret = ftruncate ( shm_fd, SCTK_SHM_LEN);
-    sctk_assert(!ret);
+    sctk_nodebug("Pointer : %p", tmp_ptr_shm_current);
+    assume ( tmp_ptr_shm_current );
 
     /* create the structure mapped in the shared memory segment */
     sctk_shm_init_mem_struct ( tmp_ptr_shm_current, ptr );
@@ -768,16 +767,18 @@ sctk_shm_init ( int init ) {
     sctk_mpcrun_client_get_shmfilename ( shm_filename );
     sctk_nodebug ( "SHM filename got: %s", shm_filename );
 
-    sctk_assert ( shm_filename != NULL );
+    assume ( shm_filename );
     sctk_nodebug ( "Filename : %s", shm_filename );
 
     /* clients open the shared memory */
     shm_fd = shm_open ( shm_filename, O_RDWR, S_IRWXU | S_IRWXG );
-    sctk_assert ( shm_fd >= 0 );
+    assume( shm_fd >= 0 );
+
+    assume (ftruncate(shm_fd, SCTK_SHM_LEN) == 0);
 
     tmp_ptr_shm_current = ( void * ) mmap ( ptr,
         SCTK_SHM_LEN, PROT_READ | PROT_WRITE, MAP_SHARED | MAP_FIXED, shm_fd, 0 );
-    sctk_assert (tmp_ptr_shm_current);
+    assume (tmp_ptr_shm_current);
 
     mem_init = tmp_ptr_shm_current;
 
@@ -785,7 +786,7 @@ sctk_shm_init ( int init ) {
      * CARE : MPC can crash during the init if the malloc doesn't return the same
      * address in each process
      * TODO Change this implementation when new memory allocation will be developped */
-    sctk_assert(ptr == mem_init->malloc_base);
+    assume(ptr == mem_init->malloc_base);
 
     sctk_shm_mem_struct = mem_init->mem_base;
     ptr_shm_current = mem_init->malloc_ptr;
@@ -800,9 +801,6 @@ sctk_shm_init ( int init ) {
   if ( sctk_local_process_rank == init ) {
     void* munmap_ptr;
     unsigned long page_size;
-
-    sctk_debug("Size : %lu", sctk_shm_get_allocated_mem_size());
-    assume (ftruncate(shm_fd, SCTK_SHM_LEN) == 0);
 
     /* unlink the SHM segment */
     munmap_ptr = sctk_shm_get_memstruct_base() + sctk_shm_get_allocated_mem_size();
