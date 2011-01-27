@@ -1,26 +1,27 @@
-%# MPC License ##############################
-% # Wed Nov 19 15:19:19 CET 2008                                         #
-%# Copyright or (C) or Copr. Commissariat a l'Energie Atomique           #
-%#
-%# IDDN.FR.001.230040.000.S.P.2007.000.10000l'Energie Atomique           #
-%# This file is part of the MPC Runtime.0000l'Energie Atomique           #
-%#
-%# This software is governed by the CeCILL-C license under French law    #
-%# and abiding by the rules of distribution of free software.  You can   #
-%# use, modify and/ or redistribute the software under the terms of an   #
-%# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the an   #
-%# following URL http://www.cecill.info. CEA, CNRS and INRIA at the an   #
-%#
-%# The fact that you are presently reading this means that you have an   #
-%# had knowledge of the CeCILL-C license and that you accept itsave an   #
-%# terms.owledge of the CeCILL-C license and that you accept itsave an   #
-%#
-% # Authors:                                                             #
-% #   - PERACHE Marc marc.perache@cea.fr                                 #
-% #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
-% #   - DIDELOT Sylvain sdidelot@exascale-computing.eu                   #
-% #                                                                      #
-% ########################################################################
+%########################### MPC License ################################
+%# Wed Nov 19 15:19:19 CET 2008                                         #
+%# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+%#                                                                      #
+%# IDDN.FR.001.230040.000.S.P.2007.000.10000l'Energie Atomique          #
+%# This file is part of the MPC Runtime.0000l'Energie Atomique          #
+%#                                                                      #
+%# This software is governed by the CeCILL-C license under French law   #
+%# and abiding by the rules of distribution of free software.  You can  #
+%# use, modify and/ or redistribute the software under the terms of an  #
+%# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the an  #
+%# following URL http://www.cecill.info. CEA, CNRS and INRIA at the an  #
+%#                                                                      #
+%# The fact that you are presently reading this means that you have an  #
+%# had knowledge of the CeCILL-C license and that you accept itsave an  #
+%# terms.owledge of the CeCILL-C license and that you accept itsave an  #
+%#                                                                      #
+%# Authors:                                                             #
+%#   - PERACHE Marc marc.perache@cea.fr                                 #
+%#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
+%#   - DIDELOT Sylvain sdidelot@exascale-computing.eu                   #
+%#   - VALAT Sebastien sebastien.valat@cea.fr                           #
+%#                                                                      #
+%########################################################################
 
 
 \documentclass[a4paper,11pt]{article}
@@ -217,7 +218,22 @@ The following options are related to additional libraries required to compile th
 
 For more information about options to MPC, run the \texttt{configure} script located in the \texttt{mpc} directory.
 
+\subsection{Known issues}
+\label{sec:installationKnownBugs}
 
+\subsubsection{Error related to mpfr/gmp}
+
+When building \texttt{mpc-gcc}, you may get errors related to  \texttt{libmpfr} or \texttt{libgmp}.
+If those libraries are installed into a non standard prefix, it may be required to use the following
+arguments while running the \texttt{configure} script :
+
+\begin{verbatim}
+   ./configure --gcc-with-mpfr=YOUR_PREFIX --gcc-with-gmp=YOUR_PREFIX\
+               --with-library-path=YOUR_PREFIX
+\end{verbatim}
+
+In case of conflitcts with \texttt{libgmp}, it may be preferable to avoid the version 4.3.2 which
+broke its ABI due to a mistake in documentation and move to 5.0.1 or higher.
 
 %%%%%%%%%%%%%%%%%%%%%%
 % MPC SUPPORTED APIS %
@@ -431,6 +447,7 @@ A - You need to edit the file located there : \\{\tt mpc/MPC\_Message\_Passing/s
   \item CARRIBAULT Patrick $\quad$ patrick.carribault@cea.fr
   \item P\'{E}RACHE Marc $\quad$ marc.perache@cea.fr
   \item DIDELOT Sylvain $\quad$ sdidelot@exascale-computing.eu
+  \item VALAT S\'{e}bastien $\quad$ sebastien.valat@cea.fr
 \end{itemize}
 
 %%%%%%%%%%%%%%%%

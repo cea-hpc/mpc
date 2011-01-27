@@ -60,6 +60,10 @@ CONFIG_FILE=${DEFAULT_CONFIG_FILE}
 # Check if include files will be overwritten
 . ${TOP_SOURCE_DIR}/tools/check_overwritten_files
 
+# Default options
+GCC_CONFIGURE_ARGUMENTS=""
+GDB_CONFIGURE_ARGUMENTS=""
+
 echo "'configure' configures MPC Distribution ${MPC_VERSION} to adapt to many kinds of systems."
 echo
 
@@ -84,6 +88,10 @@ Optional Features:
                                       variable for the whole MPC distribution
   --with-config=file           Read the file 'file' for main configuration
                                [default value: ${DEFAULT_CONFIG_FILE}]
+  --with-mpfr=prefix           Prefix for libmpfr needed to build gcc.
+  --with-gmp=prefix            Prefix for libgmp needed to build gcc.
+  --gcc-{with-mpfr|...}        Options for GCC configure script.
+  --gdb-{prefix|...}           Options for GDB configure script.
 
 Additional options are passed to the configure script of MPC library.
 See "${MPC_SOURCE_DIR}/configure --help" for more details.
@@ -124,9 +132,20 @@ for arg in "$@" ; do
       CONFIG_FILE="`echo A$arg | sed -e 's/A--with-config=//g'`"
     ;;
     --disable-prefix-check)
-    SCTK_PREFIX_CHECK="0"
+      SCTK_PREFIX_CHECK="0"
     ;;
-
+    --with-mpfr=*)
+      GCC_CONFIGURE_ARGUMENTS="${GCC_CONFIGURE_ARGUMENTS} ${arg}"
+    ;;
+    --with-gmp=*)
+      GCC_CONFIGURE_ARGUMENTS="${GCC_CONFIGURE_ARGUMENTS} ${arg}"
+    ;;
+    --gcc-*)
+      GCC_CONFIGURE_ARGUMENTS="${GCC_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--gcc//g'`"
+    ;;
+    --gdb-*)
+      GDB_CONFIGURE_ARGUMENTS="${GDB_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--gdb//g'`"
+    ;;
     *)
     MPC_ARGS="$arg $MPC_ARGS"
     ;;
@@ -241,9 +260,23 @@ if test "$mod" != "#" ; then
       COMPILER_LIST="$ver $COMPILER_LIST"
     fi
 
+   # Get configure arguments
+    case $i in
+       mpc-gcc)
+         MOD_CONFIGURE_ARGUMENTS="${GCC_CONFIGURE_ARGUMENTS}"
+       ;;
+       mpc-gdb)
+         MOD_CONFIGURE_ARGUMENTS="${GDB_CONFIGURE_ARGUMENTS}"
+       ;;
+       *)
+         MOD_CONFIGURE_ARGUMENTS=''
+       ;;
+    esac
+
     # Print message
     echo "Generating rules for module $mod (version $ver)"
     echo "Found version $ver with configuration $conf" >> configure.log
+    echo "Select module configure arguements for $mod-$ver : ${MOD_CONFIGURE_ARGUMENTS}" >> configure.log
 
     FULL_NAME="${mod}-${ver}"
     MODULES_CLEAN="${MODULES_CLEAN} ${FULL_NAME}_build"
@@ -251,7 +284,8 @@ if test "$mod" != "#" ; then
     printf "#\n# Module ${mod} / Version ${ver}\n#\n" >> Makefile
     printf "${FULL_NAME}_build/config.status:\n" >> Makefile
     printf "\tmkdir -p ${FULL_NAME}_build\n" >> Makefile
-    printf "\tcd ${FULL_NAME}_build && ${TOP_SOURCE_DIR}/${mod}/configure $ver ${SCTK_PREFIX}/${FULL_NAME} \n" >> Makefile
+    printf "\tcd ${FULL_NAME}_build && ${TOP_SOURCE_DIR}/${mod}/configure \
+      $ver ${SCTK_PREFIX}/${FULL_NAME} '' '' '' '' '' '${MOD_CONFIGURE_ARGUMENTS}'\n" >> Makefile
     printf "\n" >> Makefile
 
     MAKE_ALL_RULE="${MAKE_ALL_RULE} ${FULL_NAME}_make"
