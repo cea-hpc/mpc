@@ -517,7 +517,6 @@ void sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood){
 
       for ( c = 0 ; c < max_core ; c++ ) {
 	int current_core_id =c ;
-	int target_cpu = -1 ;
 
 	/* For the first time, start from the target cpu */
 	if ( n == 0 && s == 0 ) {
@@ -534,19 +533,14 @@ void sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood){
 	  if ( sctk_cpuinfos[i].numa_id == current_numa_id &&
 	      sctk_cpuinfos[i].socket_id == current_socket_id &&
 	      sctk_cpuinfos[i].core_id == current_core_id ) {
-	    sctk_assert( target_cpu == -1 ) ;
-	    target_cpu = i ;
+    	  
+          if( neighbor_index < nb_cpus ) ;
+	        neighborhood[ neighbor_index ] = i ;
+	      
+          neighbor_index++ ;
 	  }
 	}
 
-	// sctk_assert( target_cpu >= 0 ) ;
-
-
-	if ( target_cpu >= 0 ) {
-	  sctk_assert( neighbor_index < nb_cpus ) ;
-	  neighborhood[ neighbor_index ] = target_cpu ;
-	  neighbor_index++ ;
-	}
 	
       }
     }
