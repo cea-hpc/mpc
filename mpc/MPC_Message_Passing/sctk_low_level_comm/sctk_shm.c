@@ -799,12 +799,9 @@ sctk_shm_init ( int init ) {
   /* remove the shm file when all processes have
    * opened the shared memory */
   if ( sctk_local_process_rank == init ) {
-    void* munmap_ptr;
     unsigned long page_size;
 
     /* unlink the SHM segment */
-    munmap_ptr = sctk_shm_get_memstruct_base() + sctk_shm_get_allocated_mem_size();
-    munmap_ptr = munmap_ptr + (((unsigned long) munmap_ptr) % page_size);
     assume ( shm_unlink ( shm_filename ) == 0 );
   }
 
