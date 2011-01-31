@@ -42,7 +42,7 @@ if test "$ARCHIVE_TYPE" = "" ; then
       ARCHIVE_DIR=$adir
       PATCH_NEEDED=$pneeded
       PATCH_NAME=$pname
-      ARGUMENTS=$args
+      ARGUMENTS="$args $ARGUMENTS"
       break
     else
       echo "Skipping version $ver..."
