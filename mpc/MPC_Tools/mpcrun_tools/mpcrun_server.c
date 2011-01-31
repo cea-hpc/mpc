@@ -351,6 +351,8 @@ char** host_list;
   static void
 sctk_register_host (int fd, int rank)
 {
+  //fprintf(stderr, "THERE for rank %d | %p | %d \n\n", rank, host_list, process_nb);
+
   unsigned long size;
   safe_read (fd, &size, sizeof (unsigned long));
   sctk_debug("Msg size %lu",size);
@@ -436,6 +438,12 @@ sctk_get_shm_filename (int fd, int rank)
   sctk_debug("SHM filename sent : %s",registered_node[index].shm_filename);
 }
 
+  static void
+sctk_set_process_number (fd, rank)
+{
+  safe_read (fd, &process_nb, sizeof (int));
+  //fprintf(stderr, "NB processes : %d", process_nb);
+}
 
 /*
  * This function can now perfom more than one barrier !
@@ -573,6 +581,10 @@ server (void *arg)
     else if (strcmp (req, MPC_SERVER_BARRIER) == 0)
     {
       sctk_barrier (fd, rank);
+    }
+    else if (strcmp (req, MPC_SERVER_SET_PROCESS_NUMBER) == 0)
+    {
+      sctk_set_process_number (fd, rank);
     }
     else
     {

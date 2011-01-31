@@ -69,6 +69,8 @@ extern "C"
 
   void sctk_mpcrun_client_create_recv_socket ();
 
+  void sctk_mpcrun_client_set_process_number();
+
 #ifdef __cplusplus
 }
 #endif

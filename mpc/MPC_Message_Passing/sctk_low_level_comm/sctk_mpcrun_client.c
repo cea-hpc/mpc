@@ -315,6 +315,17 @@ sctk_mpcrun_client_get_local_consts ()
 }
 
 
+void
+sctk_mpcrun_client_set_process_number()
+{
+  int fd;
+
+  fd = sctk_tcp_connect_to (sctk_mpcrun_client_port, sctk_mpcrun_client_host);
+
+  sctk_mpcserver_safe_write (fd, MPC_SERVER_SET_PROCESS_NUMBER, MPC_ACTION_SIZE);
+  sctk_mpcserver_safe_write (fd, &sctk_process_rank, sizeof (int));
+  sctk_mpcserver_safe_write (fd, &sctk_process_number, sizeof (int));
+}
 
 /*
  * ===  FUNCTION  ===================================================
@@ -371,20 +382,13 @@ sctk_mpcrun_client_register_shmfilename (char* in)
   void
 sctk_mpcrun_client_init_host_port()
 {
+  char *tmp;
+
   /* fill localhost variable */
   memset(local_host,'\0', HOSTNAME_PORT_SIZE);
   gethostname(local_host, HOSTNAME_SIZE);
   sctk_nodebug("use port %s",port);
   sprintf(local_host+HOSTNAME_SIZE,"%s",port);
-}
-
-  void
-sctk_mpcrun_client_init_connect ()
-{
-  int rank;
-  int i;
-  char dist_host[HOSTNAME_SIZE+PORT_SIZE+10];
-  char *tmp;
 
   tmp = getenv (MPC_SERVER_PORT);
   assume (tmp);
@@ -398,6 +402,14 @@ sctk_mpcrun_client_init_connect ()
 
   socket_graph = malloc(sctk_process_number*sizeof(int));
   memset(socket_graph,-1,sctk_process_number*sizeof(int));
+}
+
+  void
+sctk_mpcrun_client_init_connect ()
+{
+  int rank;
+  int i;
+  char dist_host[HOSTNAME_SIZE+PORT_SIZE+10];
 
   rank = sctk_process_rank;
   sctk_nodebug("RANK : %d", rank);
