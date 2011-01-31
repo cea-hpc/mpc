@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile Mon Nov  2 15:31:01 CET 2009
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile Mon Jan 31 16:28:05 CET 2011
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -60,9 +60,9 @@ prepare_includes:$(M_PWD)/include_modules/MPC_MPI
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-DEPENDS=$(DEP_include) $(DEP_src)
+DEPENDS=$(DEP_include) $(DEP_src) 
 
-$(DEPENDS):Makefile
+$(DEPENDS):Makefile 
 endif
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
