@@ -716,8 +716,8 @@ sctk_shm_init ( int init ) {
   unsigned long page_size;
   void* ptr;
 
-  sctk_nodebug ( "sctk_local_process_rank = %d\n", sctk_local_process_rank );
-  sctk_nodebug ( "sctk_local_process_number = %d\n", sctk_local_process_number );
+  sctk_debug ( "sctk_local_process_rank = %d\n", sctk_local_process_rank );
+  sctk_debug ( "sctk_local_process_number = %d\n", sctk_local_process_number );
 
   /* get the size of system paged */
   page_size = getpagesize ();
@@ -731,9 +731,10 @@ sctk_shm_init ( int init ) {
   if ( sctk_local_process_rank == init ) {
 
     sctk_mpcrun_client_forge_shm_filename ( shm_filename );
-    sctk_nodebug ( "SHM filename generated: %s", shm_filename );
+    sctk_debug ( "SHM filename generated: %s", shm_filename );
 
     sctk_mpcrun_client_register_shmfilename ( shm_filename );
+    sctk_debug("registered");
 
     /* open shared memory */
     shm_fd =

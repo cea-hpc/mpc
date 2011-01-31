@@ -34,6 +34,7 @@
 
 /* localhost and disthost of the TCP connection */
 static char local_host[HOSTNAME_PORT_SIZE];
+static char port[PORT_SIZE];
 
 ssize_t
 sctk_mpcserver_safe_read (int fd, void *buf, size_t count)
@@ -228,9 +229,9 @@ sctk_mpcrun_read_to_process (void *buf, size_t count, int process){
 
 
 static int sockfd;
-static char port[PORT_SIZE];
-static void
-sctk_create_recv_socket ()
+
+  void
+sctk_mpcrun_client_create_recv_socket ()
 {
   int portno;
   struct sockaddr_in serv_addr;
@@ -261,21 +262,11 @@ sctk_create_recv_socket ()
 }
 
 void
-sctk_mpcrun_client_init ()
+sctk_mpcrun_client_get_global_consts()
 {
-  char *tmp;
   sctk_client_hostname_message_t hostname_msg;
   sctk_client_init_message_t msg;
 
-  tmp = getenv (MPC_SERVER_PORT);
-  assume (tmp);
-  if (tmp)
-    sctk_mpcrun_client_port = atoi (tmp);
-  sctk_nodebug ("PORT %s", tmp);
-  tmp = getenv (MPC_SERVER_HOST);
-  assume (tmp);
-  sctk_nodebug ("HOSTNAME %s", tmp);
-  sctk_mpcrun_client_host = tmp;
   sctk_process_number = sctk_get_process_nb ();
 
   /* fill the msg */
@@ -290,22 +281,18 @@ sctk_mpcrun_client_init ()
   sctk_node_rank = msg.node_rank;
   sctk_nodebug("NODE RANK : %d", sctk_node_rank);
   sctk_local_process_rank = msg.local_process_rank;
-
-  socket_graph = malloc(sctk_process_number*sizeof(int));
-  memset(socket_graph,-1,sctk_process_number*sizeof(int));
-
 }
 
 
 /*
  * ===  FUNCTION  ===================================================
- *         Name:  sctk_mpcrun_client_get_local_size_and_node_number
+ *         Name:  sctk_mpcrun_client_get_local_consts
  *  Description:  Get the number of local processes on a node and the number
  *  of nodes.
  * ==================================================================
  */
 void
-sctk_mpcrun_client_get_local_size_and_node_number ()
+sctk_mpcrun_client_get_local_consts ()
 {
   char hostname[HOSTNAME_SIZE];
   int fd;
@@ -382,28 +369,42 @@ sctk_mpcrun_client_register_shmfilename (char* in)
 }
 
   void
-sctk_mpcrun_client_init_connect ()
+sctk_mpcrun_client_init_host_port()
 {
-  int rank;
-  int i;
-  char dist_host[HOSTNAME_SIZE+PORT_SIZE+10];
-
-  sctk_create_recv_socket ();
-
   /* fill localhost variable */
   memset(local_host,'\0', HOSTNAME_PORT_SIZE);
   gethostname(local_host, HOSTNAME_SIZE);
   sctk_nodebug("use port %s",port);
   sprintf(local_host+HOSTNAME_SIZE,"%s",port);
+}
 
-  sctk_mpcrun_client_init ();
+  void
+sctk_mpcrun_client_init_connect ()
+{
+  int rank;
+  int i;
+  char dist_host[HOSTNAME_SIZE+PORT_SIZE+10];
+  char *tmp;
+
+  tmp = getenv (MPC_SERVER_PORT);
+  assume (tmp);
+  if (tmp)
+    sctk_mpcrun_client_port = atoi (tmp);
+  sctk_nodebug ("PORT %s", tmp);
+  tmp = getenv (MPC_SERVER_HOST);
+  assume (tmp);
+  sctk_nodebug ("HOSTNAME %s", tmp);
+  sctk_mpcrun_client_host = tmp;
+
+  socket_graph = malloc(sctk_process_number*sizeof(int));
+  memset(socket_graph,-1,sctk_process_number*sizeof(int));
+
   rank = sctk_process_rank;
   sctk_nodebug("RANK : %d", rank);
 
-
-
   assume(sctk_mpcrun_client(MPC_SERVER_REGISTER_HOST,NULL,0,local_host,(HOSTNAME_SIZE+PORT_SIZE+10)*sizeof(char)) == 0);
   sctk_nodebug("SEND %s %s",local_host,local_host+HOSTNAME_SIZE);
+  sctk_nodebug("sctk_process_number : %d", sctk_process_rank);
   for(i = 0; i < sctk_process_number; i++){
     if(i != rank){
       if(i < rank){

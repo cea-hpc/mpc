@@ -28,6 +28,7 @@
 #include "sctk_debug.h"
 #include "sctk_rpc.h"
 #include "sctk_shm.h"
+#include "sctk_bootstrap.h"
 #include "sctk_tcp.h"
 #include "sctk_shm_mem_struct_funcs.h"
 #include "sctk_mpcrun_client.h"
@@ -342,14 +343,8 @@ sctk_inter_comm_thread(void *arg)
   void
 sctk_net_preinit_driver_hybrid ()
 {
-  /* connect the process to the TCP server.
-   * Permits to grab the process_rank, node_number, local_process_rank */
-  sctk_mpcrun_client_init_connect ();
 
-  sctk_mpcrun_barrier ();
-  /* also grab the number of processes in the node */
-  sctk_mpcrun_client_get_local_size_and_node_number();
-
+  sctk_bootstrap_init();
 
   /* initialize intra communication module with local size and rank as
    * parameters */

@@ -19,55 +19,14 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK__MPCRUN_CLIENT_H_
-#define __SCTK__MPCRUN_CLIENT_H_
-#include <stdlib.h>
-#include <stdlib.h>
-
-#include <string.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include "sctk_mpcserver_actions.h"
+#ifndef __SCTK__BOOTSTRAP_H_
+#define __SCTK__BOOTSTRAP_H_
 #ifdef __cplusplus
 extern "C"
 {
 #endif
-  extern int sctk_mpcrun_client_port;
-  extern char *sctk_mpcrun_client_host;
-  extern int sctk_use_tcp_o_ib;
 
-  ssize_t sctk_mpcserver_safe_read (int fd, void *buf, size_t count);
-  ssize_t sctk_mpcserver_safe_write (int fd, const void *buf, size_t count);
-  int sctk_tcp_connect_to (int portno, char *name);
-  int sctk_mpcrun_client (char *request, void *in, size_t size_in,
-			  void *out, size_t size_out);
-  void
-  sctk_mpcrun_client_init_connect ();
-
-  void sctk_mpcrun_barrier (void);
-  void
-  sctk_mpcrun_send_to_process (void *buf, size_t count, int process);
-  void
-  sctk_mpcrun_read_to_process (void *buf, size_t count, int process);
-
-  void sctk_mpcrun_client_get_shmfilename (char* out);
-  void sctk_mpcrun_client_register_shmfilename (char* in);
-
-
-  /* return the hostname and the port of the TCP client */
-  void sctk_mpcrun_client_get_hostname(char* __string);
-  void sctk_mpcrun_client_get_local_size_and_node_number();
-
-  /* forge a string with the SHM filename */
-  void sctk_mpcrun_client_forge_shm_filename(char* __string);
-
-  void sctk_mpcrun_client_init_host_port();
-
-  void sctk_mpcrun_client_get_global_consts();
-  void sctk_mpcrun_client_get_local_consts ();
-
-  void sctk_mpcrun_client_create_recv_socket ();
+  void sctk_bootstrap_init();
 
 #ifdef __cplusplus
 }
