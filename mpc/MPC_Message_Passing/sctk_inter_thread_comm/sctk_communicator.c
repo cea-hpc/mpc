@@ -44,6 +44,7 @@ sctk_get_communicator (const sctk_communicator_t com_id)
   return sctk_communicator_list[com_id];
 }
 
+void sctk_init_comm_world(int sctk_total_task_number);
 void
 sctk_communicator_init (const int nb_task)
 {
@@ -124,6 +125,8 @@ sctk_communicator_init (const int nb_task)
 
 
   sctk_ptp_init (nb_task);
+
+  sctk_init_comm_world(nb_task);
 }
 
 void
@@ -209,7 +212,7 @@ sctk_update_new_communicator (const sctk_communicator_t origin_communicator,
 /*       { */
 /* 	int w;  */
 /* 	for( w = 0; w < nb_task_involved; w++){ */
-    /* 	  sctk_nodebug("recv %d = %d",w,task_list[w]); */
+/* 	  sctk_debug("recv %d = %d",w,task_list[w]); */
 /* 	} */
 /*       } */
 
@@ -371,7 +374,7 @@ sctk_update_new_communicator_all (const sctk_communicator_t
 /*       { */
 /* 	int w;  */
 /* 	for( w = 0; w < nb_task_involved; w++){ */
-  /* 	  sctk_nodebug("send %d = %d",w,task_list[w]); */
+/* 	  sctk_debug("send %d = %d",w,task_list[w]); */
 /* 	} */
 /*       } */
 
@@ -419,14 +422,10 @@ __sctk_get_rank (const sctk_communicator_t communicator,
 {
   int res;
   if (sctk_communicator_list[communicator]->rank_in_communicator != NULL)
-  {
     res = sctk_communicator_list[communicator]->
       rank_in_communicator[comm_world_rank];
-  }
   else
-  {
     res = comm_world_rank;
-  }
   return res;
 }
 

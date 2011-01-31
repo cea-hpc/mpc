@@ -61,7 +61,7 @@ MonoDomain *domain;
 #define sctk_thread_list() (void)(0)
 
 /** ** **/
-#define sctk_report_creation(a) (void)(0) 
+#define sctk_report_creation(a) (void)(0)
 #define sctk_report_death(a) (void) (0)
 /** **/
 
@@ -72,6 +72,7 @@ MonoDomain *domain;
 
 #ifdef MPC_Message_Passing
 #include <mpc_internal_thread.h>
+#include "sctk_hybrid_comm.h"
 #endif
 
 typedef unsigned sctk_long_long sctk_timer_t;
@@ -642,13 +643,13 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   __mpcomp_init() ;
 #endif
 #endif
-  
+
   res = tmp.__start_routine (tmp.__arg);
-  
+
   /** ** **/
   sctk_report_death (sctk_thread_self());
   /** **/
-  
+
   SCTK_TRACE_END (task, tmp.task_id, NULL, NULL, NULL);
   sctk_profiling_commit ();
 
@@ -749,7 +750,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 
   sctk_profiling_init ();
   SCTK_TRACE_START (user_thread, tmp.task_id, NULL, NULL, NULL);
-  
+
   /** ** **/
   sctk_report_creation (sctk_thread_self());
   /** **/
@@ -767,7 +768,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   /** ** **/
   sctk_report_death (sctk_thread_self());
   /** **/
-  
+
   SCTK_TRACE_END (user_thread, tmp.task_id, NULL, NULL, NULL);
   sctk_profiling_commit ();
 
@@ -817,7 +818,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
   tmp->father_data = NULL;
 #endif
 
-  /* 
+  /*
      Décommenter la suite pour permettre aux thread utilisateur de commuiquer via MPC.
      ATTENTION: MPC n'est pas thread safe pour les threads MPC.
    */
@@ -1814,6 +1815,9 @@ sctk_thread_timer (void *arg)
 static int sctk_first_local = 0;
 static int sctk_last_local = 0;
 
+extern double __sctk_profiling__start__sctk_init_MPC;
+extern double __sctk_profiling__end__sctk_init_MPC;
+
 int
 sctk_get_init_vp (int i)
 {
@@ -1891,6 +1895,62 @@ sctk_thread_init_no_mpc (void)
 			   &ptr_cleanup_sctk_thread_init_no_mpc);
 }
 
+
+#if defined(Linux_SYS)
+typedef  unsigned long poff_t;
+
+static poff_t dataused(void) {
+  poff_t mem_used = 0;
+  FILE* f = fopen("/proc/self/stat","r");
+  if (f){
+    // See proc(1), category 'stat'
+    int z_pid;
+    char z_comm[4096];
+    char z_state;
+    int z_ppid;
+    int z_pgrp;
+    int z_session;
+    int z_tty_nr;
+    int z_tpgid;
+    unsigned long z_flags;
+    unsigned long z_minflt;
+    unsigned long z_cminflt;
+    unsigned long z_majflt;
+    unsigned long z_cmajflt;
+    unsigned long z_utime;
+    unsigned long z_stime;
+    long z_cutime;
+    long z_cstime;
+    long z_priority;
+    long z_nice;
+    long z_zero;
+    long z_itrealvalue;
+    long z_starttime;
+    unsigned long z_vsize;
+    long z_rss;
+    fscanf(f,"%d %s %c %d %d %d %d %d",
+           &z_pid,z_comm,&z_state,&z_ppid,&z_pgrp,&z_session,&z_tty_nr,&z_tpgid);
+
+    fscanf(f,"%lu %lu %lu %lu %lu %lu %lu",
+           &z_flags,&z_minflt,&z_cminflt,&z_majflt,&z_cmajflt,&z_utime,&z_stime);
+
+    fscanf(f,"%ld %ld %ld %ld %ld %ld %ld %lu %ld",
+
+           &z_cutime,&z_cstime,&z_priority,&z_nice,&z_zero,&z_itrealvalue,&z_starttime,&z_vsize,&z_rss);
+    int pz =  getpagesize();
+
+    mem_used = (poff_t)(z_rss * pz);
+    fclose(f);
+
+  }
+  return mem_used ;
+}
+#else
+poff_t dataused(void) {
+  return 0;
+}
+#endif
+
 void
 sctk_start_func (void *(*run) (void *), void *arg)
 {
@@ -1928,6 +1988,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 #endif
 
   sctk_total_number_of_tasks = THREAD_NUMBER;
+  sctk_nodebug("sctk_total_number_of_tasks %d",sctk_total_number_of_tasks);
 
   sctk_mono_init (sctk_mono_bin);
 
@@ -2008,7 +2069,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
       threads =
 	(sctk_thread_t *) sctk_malloc (local_threads *
 				       sizeof (sctk_thread_t));
-
+      sctk_total_number_of_tasks = local_threads;
       for (i = start_thread; i < start_thread + local_threads; i++)
 	{
 	  sctk_nodebug ("Thread %d try create", i);
@@ -2049,6 +2110,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 /*     if(0 == sctk_process_rank){ */
 /*       sctk_warning("Try restart from checkpoint %lu",step); */
 /*     } */
+      sctk_total_number_of_tasks = 0;
       for (i = 0; i < THREAD_NUMBER; i++)
 	{
 	  char file_name[SCTK_MAX_FILENAME_SIZE];
@@ -2149,6 +2211,9 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	  sctk_nodebug ("Task %d is in %d with %p on vp %d", i, proc,
 			self_p, vp);
 #ifdef MPC_Message_Passing
+	  sctk_thread_mutex_lock (&sctk_total_number_of_tasks_lock);
+	  sctk_total_number_of_tasks++;
+	  sctk_thread_mutex_unlock (&sctk_total_number_of_tasks_lock);
 	  sctk_register_restart_thread (i, proc);
 #endif
 	  if (proc == sctk_process_rank)
@@ -2177,6 +2242,12 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	}
     }
 
+  sctk_nodebug("sctk_total_number_of_tasks %d",sctk_total_number_of_tasks);
+
+  __sctk_profiling__end__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
+  if(sctk_process_rank == 0){
+    sctk_nodebug("Init time %f %f",__sctk_profiling__end__sctk_init_MPC-__sctk_profiling__start__sctk_init_MPC,(double)dataused()/(1024.0*1024.0));
+  }
 
 #ifdef MPC_Message_Passing
   if ((sctk_net_adm_poll != NULL) || (sctk_net_ptp_poll != NULL))
@@ -2197,6 +2268,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 				       NULL, NULL);
 #endif
 
+  sctk_profiling_commit ();
   sctk_profiling_result ();
   sctk_multithreading_initialised = 0;
 
@@ -2205,6 +2277,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 
 #ifdef MPC_Message_Passing
   sctk_communicator_delete ();
+  sctk_net_hybrid_finalize();
 #endif
 
 /*   for (i = 0; i < thread_to_join; i++) */

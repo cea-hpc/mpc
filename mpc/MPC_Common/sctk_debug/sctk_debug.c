@@ -328,9 +328,12 @@ sctk_log (FILE * file, const char *fmt, ...)
   fflush (file);
 }
 
+int sctk_print_warnings = 1;
+
 void
 sctk_warning (const char *fmt, ...)
 {
+  if(sctk_print_warnings){
   va_list ap;
   char buff[SMALL_BUFFER_SIZE];
   int task_id;
@@ -345,6 +348,7 @@ sctk_warning (const char *fmt, ...)
 		 fmt);
   sctk_noalloc_vfprintf (stderr, buff, ap);
   va_end (ap);
+  }
 }
 
 void

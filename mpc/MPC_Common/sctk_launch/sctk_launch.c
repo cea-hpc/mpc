@@ -71,6 +71,9 @@ char *sctk_network_mode = "none";
 int sctk_disable_smt_capabilities = 0;
 int sctk_share_node_capabilities = 0;
 
+double __sctk_profiling__start__sctk_init_MPC;
+double __sctk_profiling__end__sctk_init_MPC;
+
 static void
 format_output (char *name, char *def)
 {
@@ -771,6 +774,7 @@ auto_kill_func (void *arg)
   return NULL;
 }
 
+extern int sctk_print_warnings;
 int
 sctk_launch_main (int argc, char **argv)
 {
@@ -784,7 +788,13 @@ sctk_launch_main (int argc, char **argv)
   int tofree_nb = 0;
   char *auto_kill;
 
+  if(getenv("MPC_DISABLE_WARNINGS") != NULL){
+    sctk_print_warnings = 0;
+  }
+
   sctk_disable_addr_randomize (argc, argv);
+
+  __sctk_profiling__start__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
 
   auto_kill = getenv ("MPC_AUTO_KILL_TIMEOUT");
   if (auto_kill != NULL)

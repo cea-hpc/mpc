@@ -17,7 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc    marc.perache@cea.fr                              # */
-/* #   - DIDELOT Sylvain sdidelot@exascale-computing.eu                        # */
+/*  #   - DIDELOT Sylvain didelot.sylvain@gmail.com                       # */
 /* #                                                                      # */
 /* ######################################################################## */
 #ifndef __SCTK_INTER_THREAD_COMMUNICATIONS_H_
@@ -237,21 +237,21 @@ extern "C"
 
     tmp = sctk_get_communicator (communicator);
     sctk_nodebug ("tmp->global_in_communicator %p",
-        tmp->global_in_communicator_local);
+		  tmp->global_in_communicator_local);
     if (tmp->global_in_communicator_local != NULL)
-    {
-      res = tmp->global_in_communicator_local[i];
-    }
+      {
+	res = tmp->global_in_communicator_local[i];
+      }
     else
       res = i;
     sctk_nodebug ("translate to global %d->%d, %d comm", i, res,
-        communicator);
-    assert (res >= -1);
+		  communicator);
+    assert (res >= 0);
     return res;
   }
   static inline int sctk_translate_to_global_rank_remote (const int i, const
-      sctk_communicator_t
-      communicator)
+							  sctk_communicator_t
+							  communicator)
   {
     int res;
     sctk_internal_communicator_t *tmp;
@@ -266,35 +266,33 @@ extern "C"
 
     tmp = sctk_get_communicator (communicator);
     sctk_nodebug ("tmp->global_in_communicator %p",
-        tmp->global_in_communicator_remote);
+		  tmp->global_in_communicator_remote);
     if (tmp->global_in_communicator_remote != NULL)
-    {
-      res = tmp->global_in_communicator_remote[i];
-    }
+      {
+	res = tmp->global_in_communicator_remote[i];
+      }
     else
       res = i;
     sctk_nodebug ("translate to global %d->%d, %d comm", i, res,
-        communicator);
-    assert (res >= -1);
+		  communicator);
+    assert (res >= 0);
     return res;
   }
 
   static inline void sctk_set_header_in_message (sctk_thread_ptp_message_t *
-      msg, const int message_tag,
-      const sctk_communicator_t
-      communicator,
-      const int source,
-      const int destination,
-      sctk_request_t * request,
-      const size_t count)
+						 msg, const int message_tag,
+						 const sctk_communicator_t
+						 communicator,
+						 const int source,
+						 const int destination,
+						 sctk_request_t * request,
+						 const size_t count)
   {
     msg->header.msg_size = count;
     msg->header.rank = 0;
     msg->header.message_tag = message_tag;
     msg->header.communicator = communicator;
     msg->header.local_source = source;
-
-    sctk_nodebug("Source : %d", source);
 
     msg->header.source =
       sctk_translate_to_global_rank_local (source, communicator);
@@ -309,44 +307,44 @@ extern "C"
     msg->request = request;
 
     if (request != NULL)
-    {
-      /* Prepare link in header for request*/
-      msg->header.req_msg_size = &(request->msg_size);
-      msg->header.request = &(request->completion_flag);
-      request->header = msg->header;
-      request->msg = msg;
-      request->completion_flag = 0;
-      request->msg_size = count;
-      request->is_null = 0;
-    }
+      {
+	/* Prepare link in header for request*/
+	msg->header.req_msg_size = &(request->msg_size);
+	msg->header.request = &(request->completion_flag);
+	request->header = msg->header;
+	request->msg = msg;
+	request->completion_flag = 0;
+	request->msg_size = count;
+	request->is_null = 0;
+      }
     else
-    {
-      msg->header.request = NULL;
-    }
+      {
+	msg->header.request = NULL;
+      }
     msg->net_mesg = NULL;
 
     sctk_nodebug ("message from %d to %d created on %d",
-        source, destination, msg->header.myself);
+		  source, destination, msg->header.myself);
   }
   sctk_thread_ptp_message_t *sctk_create_header (const int myself);
   sctk_thread_ptp_message_t
     * sctk_add_adress_in_message (sctk_thread_ptp_message_t *
-        restrict msg, void *restrict adr,
-        const size_t size);
+				  restrict msg, void *restrict adr,
+				  const size_t size);
   sctk_thread_ptp_message_t
     * sctk_add_pack_in_message (sctk_thread_ptp_message_t * msg,
-        void *adr, const sctk_count_t nb_items,
-        const size_t elem_size,
-        sctk_pack_indexes_t * begins,
-        sctk_pack_indexes_t * ends);
+				void *adr, const sctk_count_t nb_items,
+				const size_t elem_size,
+				sctk_pack_indexes_t * begins,
+				sctk_pack_indexes_t * ends);
   sctk_thread_ptp_message_t
     * sctk_add_pack_in_message_absolute (sctk_thread_ptp_message_t *
-        msg, void *adr,
-        const sctk_count_t nb_items,
-        const size_t elem_size,
-        sctk_pack_absolute_indexes_t *
-        begins,
-        sctk_pack_absolute_indexes_t * ends);
+					 msg, void *adr,
+					 const sctk_count_t nb_items,
+					 const size_t elem_size,
+					 sctk_pack_absolute_indexes_t *
+					 begins,
+					 sctk_pack_absolute_indexes_t * ends);
 
   int sctk_is_net_message (int dest);
   void sctk_send_message (sctk_thread_ptp_message_t * msg);
@@ -358,51 +356,50 @@ extern "C"
   void sctk_register_restart_thread (const int i, const int pos);
   void sctk_unregister_distant_thread (const int i);
 
-  /* accessor to the array sctk_ptp_process_location */
-  int sctk_get_ptp_process_localisation(int i);
-
-  /*  void sctk_check_for_communicator(const int task,const sctk_communicator_t comm);*/
+/*  void sctk_check_for_communicator(const int task,const sctk_communicator_t comm);*/
   void sctk_wait_message (sctk_request_t * request);
   void sctk_wait_all (const int task, const sctk_communicator_t com);
   void sctk_probe_source_any_tag (int destination, int source,
-      const sctk_communicator_t comm,
-      int *status,
-      sctk_thread_message_header_t * msg);
+				  const sctk_communicator_t comm,
+				  int *status,
+				  sctk_thread_message_header_t * msg);
   void sctk_probe_any_source_any_tag (int destination,
-      const sctk_communicator_t comm,
-      int *status,
-      sctk_thread_message_header_t * msg);
+				      const sctk_communicator_t comm,
+				      int *status,
+				      sctk_thread_message_header_t * msg);
   void sctk_probe_source_tag (int destination, int source,
-      const sctk_communicator_t comm, int *status,
-      sctk_thread_message_header_t * msg);
+			      const sctk_communicator_t comm, int *status,
+			      sctk_thread_message_header_t * msg);
   void sctk_probe_any_source_tag (int destination,
-      const sctk_communicator_t comm,
-      int *status,
-      sctk_thread_message_header_t * msg);
+				  const sctk_communicator_t comm,
+				  int *status,
+				  sctk_thread_message_header_t * msg);
   void sctk_perform_messages (const int task, const sctk_communicator_t com);
   void sctk_ptp_per_task_init (int i);
   void sctk_check_messages (int destination, int source,
-      sctk_communicator_t communicator);
+			    sctk_communicator_t communicator);
   void sctk_cancel_message (sctk_request_t * msg);
 
   static inline
     void sctk_init_thread_ptp_message (sctk_thread_ptp_message_t * tmp,
-        const int myself)
-    {
-      tmp->next = NULL;
-      tmp->wait_next = NULL;
-      /*tmp->tls */
+				       const int myself)
+  {
+    tmp->next = NULL;
+    tmp->wait_next = NULL;
+    /*tmp->tls */
 
-      /*tmp->message */
-      tmp->message.nb_items = 0;
-      tmp->message.max_count = 0;
-      tmp->message.message_size = 0;
-      tmp->completion_flag = 0;
-      /*tmp->data */
+    /*tmp->message */
+    tmp->message.nb_items = 0;
+    tmp->message.max_count = 0;
+    tmp->message.message_size = 0;
+    tmp->completion_flag = 0;
+    /*tmp->data */
 
-      tmp->header.myself = myself;
-      tmp->request = NULL;
-    }
+    tmp->header.myself = myself;
+    tmp->request = NULL;
+  }
+
+  int sctk_get_ptp_process_localisation(int i);
 
 
 #define SCTK_MESSAGE_UNIT_NUMBER 10

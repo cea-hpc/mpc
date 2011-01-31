@@ -130,12 +130,16 @@ sctk_net_realloc (sctk_collective_communications_t * com, size_t size)
   sctk_spinlock_unlock(&(collective_comm_allocator.lock));
 }
 
+
 sctk_collective_communications_t
   * sctk_collective_communications_create (const int nb_task_involved)
 {
   int i, cpu_number;
   sctk_virtual_processor_t *tmp_father;
   sctk_collective_communications_t *tmp = NULL;
+  int sctk_total_task_number;
+
+  sctk_total_task_number = nb_task_involved;
 
   sctk_nodebug ("sctk_collective_communications_create");
 
@@ -253,12 +257,42 @@ sctk_collective_communications_t
   tmp->initialized = 0;
   sctk_nodebug ("initalisation of tree done");
 
-//#ifdef MPC_USE_SHM
-  /* hook when a new communicator is created */
-//  sctk_shm_init_new_com(tmp);
-//#endif
-
   return tmp;
+}
+
+void sctk_init_comm_world(int sctk_total_task_number){
+  int i;
+  int j;
+
+  sctk_nodebug ("initalisation of remote COMM_WORLD start");
+  {
+      for(i = 0; i < sctk_total_task_number; i++){
+	int j;
+	int pos = -1;
+	int local_threads;
+	int start_thread;
+	int THREAD_NUMBER;
+	j = i;
+	THREAD_NUMBER = sctk_total_task_number;
+
+	do{
+	  pos ++;
+	  local_threads = THREAD_NUMBER / sctk_process_number;
+	  if (THREAD_NUMBER % sctk_process_number > pos)
+	    local_threads++;
+
+	  start_thread = local_threads * pos;
+	  if (THREAD_NUMBER % sctk_process_number <= pos)
+	    start_thread += THREAD_NUMBER % sctk_process_number;
+	  sctk_nodebug("Start %d end %d on %d thread %d",start_thread,start_thread + local_threads,pos,j);
+	}while(j >= start_thread + local_threads);
+	if(pos != sctk_process_rank){
+	  sctk_init_collective_communicator (0, j, 0,
+					     pos);
+	}
+      }
+  }
+  sctk_nodebug ("initalisation of remote COMM_WORLD done");
 }
 
 static void
@@ -926,7 +960,7 @@ sctk_init_collective_communicator (const int vp,
   com->reinitialize = 0;
 
   sctk_thread_mutex_lock (&com->lock);
-  assume (task_id >= -0);
+  assume (task_id >= 0);
   com->last_vp[task_id] = vp;
   com->last_process[task_id] = process;
 

@@ -55,6 +55,8 @@ sctk_net_sctk_specific_adm_rpc_remote (void * arg)
   }
 }
 
+
+#warning "Optimize for scalability"
 /*send_task_location*/
   typedef struct
 {
@@ -87,6 +89,7 @@ sctk_net_send_task_location (int task, int process)
     }
 }
 
+#warning "Optimize for scalability"
 /*send_task_end*/
 typedef struct
 {
@@ -107,8 +110,10 @@ sctk_net_send_task_end_remote (send_task_location_t * arg)
 void
 sctk_net_send_task_end (int task, int process)
 {
+#if 0
   int i;
   send_task_location_t msg;
+
   sctk_nodebug ("%s", SCTK_FUNCTION);
   msg.task = task;
   msg.new_proc = process;
@@ -120,6 +125,7 @@ sctk_net_send_task_end (int task, int process)
 			    &msg, sizeof (send_task_location_t));
 	}
     }
+#endif
 
   sctk_thread_mutex_lock (&sctk_total_number_of_tasks_lock);
   sctk_total_number_of_tasks--;
@@ -140,6 +146,7 @@ sctk_net_update_communicator (int task, sctk_communicator_t comm, int vp)
 {
   sctk_update_communicator_t msg;
   int i;
+  if(comm != 0){
   sctk_nodebug ("%s vp %d task_id %d com %d process %d", SCTK_FUNCTION,
 		vp, task, comm, sctk_process_rank);
   //TODO
@@ -156,8 +163,10 @@ sctk_net_update_communicator (int task, sctk_communicator_t comm, int vp)
 			    i, &msg, sizeof (sctk_update_communicator_t));
 	}
     }
+  }
 }
 
+#warning "Optimize for scalability"
 /*get_free_communicator*/
 typedef struct
 {
@@ -211,6 +220,7 @@ sctk_net_get_free_communicator (const sctk_communicator_t origin_communicator)
      (void (*)(void *)) sctk_get_free_communicator_wait, (void *) &wait_s);
 }
 
+#warning "Optimize for scalability"
 /*update_new_communicator*/
 typedef struct sctk_update_new_communicator_s
 {
@@ -327,6 +337,7 @@ sctk_net_update_new_communicator (const sctk_communicator_t
     sctk_net_unregister_ptr ((void *) &(msg.done), sizeof (int));
 }
 
+#warning "Optimize for scalability"
 /*set_free_communicator*/
 typedef struct
 {
@@ -402,6 +413,9 @@ sctk_net_migration_remote (sctk_migration_t * arg)
   sctk_nodebug ("Recover task %d thread %p", arg->task, self_p);
 
   sprintf (name, "%s/mig_task_%p", sctk_store_dir, self_p);
+  sctk_thread_mutex_lock (&sctk_total_number_of_tasks_lock);
+  sctk_total_number_of_tasks++;
+  sctk_thread_mutex_unlock (&sctk_total_number_of_tasks_lock);
   sctk_thread_restore (self_p, name, vp);
 }
 
@@ -420,6 +434,10 @@ sctk_net_migration (const int rank, const int process)
 
   sctk_perform_rpc ((sctk_rpc_t) sctk_net_migration_remote, process, &msg,
       sizeof (sctk_migration_t));
+
+  sctk_thread_mutex_lock (&sctk_total_number_of_tasks_lock);
+  sctk_total_number_of_tasks--;
+  sctk_thread_mutex_unlock (&sctk_total_number_of_tasks_lock);
 }
 
 /*rpc_collective_op*/

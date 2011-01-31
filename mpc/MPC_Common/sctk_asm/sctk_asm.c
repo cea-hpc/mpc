@@ -111,3 +111,11 @@ __asm_default_sctk_test_and_set (sctk_atomic_test_t * atomic)
   pthread_mutex_unlock (&sctk_asm_default_mutex);
   return res;
 }
+
+double
+sctk_get_time_stamp_gettimeofday()
+{
+  struct timeval tp;
+  gettimeofday (&tp, NULL);
+  return tp.tv_usec + tp.tv_sec * 1000000;
+}

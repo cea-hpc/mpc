@@ -40,10 +40,10 @@ static sctk_messages_alloc_thread_data_t inter_thread_comm_allocator;
 
 
 static inline void __sctk_optimized_memcpy (void * dest, const void * src, size_t n)
-{    
+{
 #if !defined(NO_INTERNAL_ASSERT) && defined(MPC_Allocator)
   sctk_check_address(dest,n);
-  sctk_check_address(src,n);  
+  sctk_check_address(src,n);
 #endif
   memcpy(dest,src,n);
 }
@@ -136,7 +136,7 @@ sctk_ptp_per_task_init (int i)
 
   sctk_ptp_list[i].allocator.alloc = __sctk_create_thread_memory_area ();
   sctk_ptp_list[i].allocator.lock = 0;
-  
+
   sctk_spinlock_lock(&(sctk_ptp_list[i].allocator.lock));
 
   nb_task = sctk_total_task_number;
@@ -357,10 +357,10 @@ sctk_copy_buffer_absolute_absolute (sctk_pack_absolute_indexes_t *
 
 /*       { */
 /* 	for(i = 0 ; i < in_sizes; i++){ */
-/* 	  sctk_nodebug("in %lu %lu-%lu",i, in_begins[i],in_ends[i]); */
+/* 	  sctk_debug("in %lu %lu-%lu",i, in_begins[i],in_ends[i]); */
 /* 	} */
 /* 	for(i = 0 ; i < out_sizes; i++){ */
-/* 	  sctk_nodebug("out %lu %lu-%lu",i, out_begins[i],out_ends[i]); */
+/* 	  sctk_debug("out %lu %lu-%lu",i, out_begins[i],out_ends[i]); */
 /* 	} */
 /*       } */
 
@@ -932,7 +932,7 @@ __sctk_perform_match_for_source_found (sctk_thread_ptp_message_t *
       sctk_copy_message_net (cursor, src);
     }
 
-  /*Just flip the completion flag, memory liberation 
+  /*Just flip the completion flag, memory liberation
      will be performed by the caller */
   sctk_nodebug ("Wake %p", &(cursor->completion_flag));
   cursor->completion_flag = 1;
@@ -948,9 +948,9 @@ __sctk_perform_match_for_source_found_register(sctk_thread_ptp_message_t *
   if(((target == cursor) || (target == src)) && 0){
       __sctk_perform_match_for_source_found (cursor,src);
   } else {
-    cursor->pair = src; 
+    cursor->pair = src;
     sctk_spinlock_lock (&(data->spinlock_matched));
-    cursor->next = data->matched; 
+    cursor->next = data->matched;
     data->matched = cursor;
     sctk_spinlock_unlock (&(data->spinlock_matched));
   }
@@ -961,12 +961,12 @@ __sctk_perform_matched_messages(sctk_task_ptp_data_t * restrict data){
   while((data->matched != NULL) || (data->busy == 1)){
     sctk_thread_ptp_message_t *restrict cursor;
     sctk_spinlock_lock (&(data->spinlock_matched));
-    
-    cursor = (sctk_thread_ptp_message_t *)data->matched; 
+
+    cursor = (sctk_thread_ptp_message_t *)data->matched;
     if(cursor != NULL){
-      data->matched = cursor->next; 
+      data->matched = cursor->next;
       sctk_spinlock_unlock (&(data->spinlock_matched));
-      __sctk_perform_match_for_source_found (cursor,(sctk_thread_ptp_message_t *)cursor->pair);      
+      __sctk_perform_match_for_source_found (cursor,(sctk_thread_ptp_message_t *)cursor->pair);
     } else {
       sctk_spinlock_unlock (&(data->spinlock_matched));
     }
@@ -1315,8 +1315,8 @@ __sctk_free_message_wait (sctk_per_communicator_ptp_data_t *
 	}
       cursor = tmp;
     }
-  assert(communicator->sctk_wait_send_list.head == NULL); 
-  assert(communicator->sctk_wait_send_list.tail == NULL); 
+  assert(communicator->sctk_wait_send_list.head == NULL);
+  assert(communicator->sctk_wait_send_list.tail == NULL);
   communicator->sctk_wait_send_list.head = new_list;
   communicator->sctk_wait_send_list.tail = new_list_tail;
   sctk_thread_ptp_message_list_unlock (&(communicator->sctk_wait_send_list));
@@ -1778,8 +1778,6 @@ typedef struct
 static void
 sctk_placement_test (sctk_placement_status_t * arg)
 {
-//  sctk_nodebug("TASK : %d",  arg->task);
-
   if (sctk_ptp_process_localisation[arg->task] != -1)
     arg->val = 1;
 
@@ -1832,7 +1830,6 @@ sctk_send_message (sctk_thread_ptp_message_t * msg)
 	{
 	  state.val = 0;
 	  state.task = msg->header.destination;
-    sctk_nodebug("TEST WAIT HERE");
 	  sctk_thread_wait_for_value_and_poll (&(state.val), 1,
 					       (void (*)(void *))
 					       sctk_placement_test, &state);
@@ -1870,7 +1867,7 @@ sctk_send_message (sctk_thread_ptp_message_t * msg)
       sctk_thread_ptp_message_list_unlock (&
 					   (communicator->
 					    sctk_wait_send_list));
-    } 
+    }
   sctk_nodebug ("send message %p done", msg);
 }
 
@@ -2001,7 +1998,7 @@ sctk_register_thread (const int i)
 /*   sctk_ptp_data_t* tmp; */
 /*   tmp = &(sctk_ptp_list[i]); */
   sctk_ptp_process_localisation[i] = sctk_process_rank;
-  sctk_nodebug ("REGISTER : task %d on %d", i, sctk_ptp_process_localisation[i]);
+  sctk_nodebug ("task %d on %d", i, sctk_ptp_process_localisation[i]);
   for (j = 0; j < SCTK_MAX_COMMUNICATOR_NUMBER; j++)
     {
       for (k = 0; k < sctk_ptp_list[i].communicators[j].nb_tasks; k++)
@@ -2009,13 +2006,56 @@ sctk_register_thread (const int i)
 	  sctk_ptp_list[i].communicators[j].tasks[k].is_usable = 1;
 	}
     }
-  sctk_net_send_task_location (i, sctk_process_rank);
+
+#warning "Remove dynamic registering"
+  {
+    static volatile int done = 0;
+    static sctk_spinlock_t lock;
+    int THREAD_NUMBER;
+
+    sctk_spinlock_lock(&lock);
+
+    if(done == 0){
+      for(j = 0; j < sctk_total_task_number; j++){
+	int pos = -1;
+	int local_threads;
+	int start_thread;
+	THREAD_NUMBER = sctk_total_task_number;
+
+	do{
+	  pos ++;
+	  local_threads = THREAD_NUMBER / sctk_process_number;
+	  if (THREAD_NUMBER % sctk_process_number > pos)
+	    local_threads++;
+
+	  start_thread = local_threads * pos;
+	  if (THREAD_NUMBER % sctk_process_number <= pos)
+	    start_thread += THREAD_NUMBER % sctk_process_number;
+	  sctk_nodebug("Start %d end %d on %d thread %d",start_thread,start_thread + local_threads,pos,j);
+	}while(j >= start_thread + local_threads);
+
+	sctk_ptp_process_localisation[j] = pos;
+	sctk_nodebug("%d/%d is on %d/%d",j,THREAD_NUMBER,pos,sctk_process_number);
+      }
+      done = 1;
+    }
+
+    sctk_spinlock_unlock(&lock);
+  }
+
+#warning "Reenable the following for migration"
+  /*
+    we need to remove first time registration only
+   */
+  /*
+    sctk_net_send_task_location (i, sctk_process_rank);
+  */
 }
 
 void
 sctk_register_distant_thread (const int i, const int pos)
 {
-  sctk_nodebug ("\t\t\t\tset task %d on %d really done", i, pos);
+  sctk_nodebug ("set task %d on %d really done", i, pos);
   while (sctk_ptp_process_localisation == NULL)
     sctk_thread_yield ();
   sctk_ptp_process_localisation[i] = pos;
@@ -2225,8 +2265,6 @@ sctk_wait_all (const int task, const sctk_communicator_t com)
   sctk_assert (communicator->sctk_wait_list.head == NULL);
   sctk_nodebug ("Start %d message on %d done %p\n", val, task, &val);
 }
-
-
 
 int sctk_get_ptp_process_localisation(int i)
 {
