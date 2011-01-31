@@ -1,0 +1,14 @@
+MPC_Common              ;   forced      ;   Bases of MPC framework, common to all modules
+MPC_Allocator           ;   enabled     ;   MPC memory allocator
+MPC_Message_Passing     ;   enabled     ;   MPC message passing support
+MPC_Microthreads        ;   enabled     ;   MPC microthreads implementation
+MPC_OpenMP              ;   enabled     ;   MPC OpenMP implementation
+MPC_Threads             ;   enabled     ;   MPC threads support and pthread implementation
+MPC_MPI                 ;   enabled     ;   MPI compatibility layer
+MPC_Profiler            ;   disabled    ;   MPC internal profiler
+MPC_Debugger            ;   disabled    ;   MPC threads support for GDB
+MPC_Tools               ;   ignored     ;   Scripts for MPC source management
+MPC_Virtual_Machines    ;   ignored     ;   MPC virtual machine support
+MPC_Accelerators        ;   ignored     ;   MPC Support of specialized hardware
+MPC_Tests               ;   ignored     ;   MPC test suite
+MPC_Doc                 ;   ignored     ;   MPC Documentation

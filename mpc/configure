@@ -62,6 +62,7 @@ export MPC_SOURCE_DIR
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_functions
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_determine_config
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_gen_compilation_flags
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_modules
 
 # Catch the MPC version
 MPC_VERSION="`${MPC_SOURCE_DIR}MPC_Tools/mpc_print_version`"
@@ -81,17 +82,7 @@ sctk_echo
 
 # Module list
 
-MODULES=""
-for i in ${MPC_SOURCE_DIR}MPC_*; do
-    MODULE_NAME="`basename $i`"
-    if test "$MODULE_NAME" != "MPC_Tests"; then
-	if test "$MODULE_NAME" != "MPC_Tools"; then
-	    if test "$MODULE_NAME" != "MPC_Doc"; then
-		MODULES="$MODULES $MODULE_NAME"
-	    fi
-	fi
-    fi
-done
+MODULES="`mpc_modules_get_list`"
 
 activate_module(){
     if test -d ${MPC_SOURCE_DIR}$1 ; then
@@ -168,13 +159,8 @@ Optional Features:
   --enable-shell-colors            enable support of colors in shell
 EOF
 
-for i in $MODULES ; do
-if test -d ${MPC_SOURCE_DIR}$i ; then
-echo "  --enable-$i     "
-rm -rf BUILD_$i > /dev/null 2>&1
-fi
-done
-
+mpc_modules_print_help disabled
+mpc_modules_print_help enabled
 
 cat <<EOF
 
@@ -202,14 +188,7 @@ EOF
 
 begin_section "Module detection:"
 # Activate all modules (look for the directory)
-# By default: disable MPC_Debugger and MPC_Profiler (for performance purpose)
-for i in $MODULES ; do
-  if test "$i" != "MPC_Debugger"; then
-    if test "$i" != "MPC_Profiler"; then
-      activate_module $i
-    fi
-  fi
-done
+mpc_modules_activate_modules
 
 SCTK_LIBUNWIND="1"
 SCTK_LIBNUMA="0"
@@ -336,12 +315,7 @@ for arg in "$@" ; do
     ;;
 
     --disable-all)
-    for i in $MODULES ; do
-	if test "$i" != "MPC_Common" ; then
-	    debug  "${i}=''"
-	    eval "${i}=''"
-	fi
-    done
+	mpc_modules_disable_all
     ;;
     --disable-*)
     CONF_ARG="`echo A$arg | sed -e 's/A--disable-//g'`"
