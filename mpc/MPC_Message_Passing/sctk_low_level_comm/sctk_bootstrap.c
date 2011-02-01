@@ -131,7 +131,7 @@ static void sctk_bootstrap_pmi_init()
 }
 
 void
-sctk_bootstrap_register(char* pkey, char* pval)
+sctk_bootstrap_register(char* pkey, char* pval, int size)
 {
   int res;
 
@@ -146,7 +146,7 @@ sctk_bootstrap_register(char* pkey, char* pval)
       break;
 
     case TCP:
-      sctk_mpcrun_client_register_shmfilename (pkey, pval);
+      sctk_mpcrun_client_register_shmfilename (pkey, pval, TCP_KEY_MAX, size);
       break;
   }
 }
@@ -165,7 +165,7 @@ sctk_bootstrap_get(char* pkey, char* pval, int size)
       break;
 
     case TCP:
-      sctk_mpcrun_client_get_shmfilename (pkey, pval);
+      sctk_mpcrun_client_get_shmfilename (pkey, pval, TCP_KEY_MAX, size);
       break;
   }
 }

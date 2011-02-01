@@ -745,7 +745,7 @@ sctk_shm_init ( int init ) {
     sctk_mpcrun_client_forge_shm_filename ( shm_filename );
     sctk_nodebug ( "SHM filename generated: %s", shm_filename );
 
-    sctk_bootstrap_register(shm_key, shm_filename);
+    sctk_bootstrap_register(shm_key, shm_filename, SHM_FILENAME_SIZE);
 
     /* open shared memory */
     shm_fd =

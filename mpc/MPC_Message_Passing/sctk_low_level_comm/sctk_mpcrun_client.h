@@ -51,8 +51,8 @@ extern "C"
   void
   sctk_mpcrun_read_to_process (void *buf, size_t count, int process);
 
-  void sctk_mpcrun_client_get_shmfilename (char* key, char* out);
-  void sctk_mpcrun_client_register_shmfilename (char* key, char* in);
+  void sctk_mpcrun_client_get_shmfilename (char* key, char* out, int key_len, int val_len);
+  void sctk_mpcrun_client_register_shmfilename (char* key, char* in, int key_len, int val_len);
 
   /* return the hostname and the port of the TCP client */
   char* sctk_mpcrun_client_get_hostname();

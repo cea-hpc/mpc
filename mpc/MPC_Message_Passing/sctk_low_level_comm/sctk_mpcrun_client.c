@@ -307,7 +307,7 @@ sctk_mpcrun_client_get_local_consts ()
 
   sctk_mpcserver_safe_write (fd, MPC_SERVER_GET_LOCAL_SIZE, MPC_ACTION_SIZE);
   sctk_mpcserver_safe_write (fd, &sctk_process_rank, sizeof (int));
-  sctk_mpcserver_safe_write (fd, hostname, HOSTNAME_PORT_SIZE);
+  sctk_mpcserver_safe_write (fd, hostname, HOSTNAME_SIZE);
 
   sctk_mpcserver_safe_read (fd, &msg, sizeof(sctk_client_local_size_and_node_number_message_t));
   sctk_local_process_number = msg.local_process_number;
@@ -339,7 +339,7 @@ sctk_mpcrun_client_set_process_number()
  * ==================================================================
  */
   void
-sctk_mpcrun_client_get_shmfilename (char* key, char* out)
+sctk_mpcrun_client_get_shmfilename (char* key, char* out, int key_len, int val_len)
 {
   int fd;
 
@@ -347,10 +347,10 @@ sctk_mpcrun_client_get_shmfilename (char* key, char* out)
 
   sctk_mpcserver_safe_write (fd, MPC_SERVER_GET_SHM_FILENAME, MPC_ACTION_SIZE);
   sctk_mpcserver_safe_write (fd, &sctk_process_rank, sizeof (int));
-  sctk_mpcserver_safe_write (fd, key, HOSTNAME_PORT_SIZE);
+  sctk_mpcserver_safe_write (fd, key, key_len);
 
   /*  filename */
-  sctk_mpcserver_safe_read (fd, out, SHM_FILENAME_SIZE);
+  sctk_mpcserver_safe_read (fd, out, val_len);
 
   sctk_nodebug("got %s", out);
 
@@ -365,7 +365,7 @@ sctk_mpcrun_client_get_shmfilename (char* key, char* out)
  * ==================================================================
  */
   void
-sctk_mpcrun_client_register_shmfilename (char* key, char* in)
+sctk_mpcrun_client_register_shmfilename (char* key, char* in, int key_len, int val_len)
 {
   int fd;
 
@@ -373,8 +373,8 @@ sctk_mpcrun_client_register_shmfilename (char* key, char* in)
 
   sctk_mpcserver_safe_write (fd, MPC_SERVER_REGISTER_SHM_FILENAME, MPC_ACTION_SIZE);
   sctk_mpcserver_safe_write (fd, &sctk_process_rank, sizeof (int));
-  sctk_mpcserver_safe_write (fd, key, HOSTNAME_PORT_SIZE);
-  sctk_mpcserver_safe_write (fd, in, SHM_FILENAME_SIZE);
+  sctk_mpcserver_safe_write (fd, key, key_len);
+  sctk_mpcserver_safe_write (fd, in,  val_len);
 
   sctk_nodebug("written shm filename : %s", in);
 
@@ -411,7 +411,7 @@ sctk_mpcrun_client_init_connect ()
 {
   int rank;
   int i;
-  char dist_host[HOSTNAME_SIZE+PORT_SIZE+10];
+  char dist_host[HOSTNAME_SIZE+PORT_SIZE];
 
   rank = sctk_process_rank;
   sctk_nodebug("RANK : %d", rank);
