@@ -397,7 +397,7 @@ sctk_perform_collective_communication_tree (sctk_collective_communications_t
 	{
 	  /*Multiple process involved */
 	  sctk_nodebug ("Entering net collective communication");
-	  sctk_net_collective_op (com, my_vp, elem_size, nb_elem, func,
+	  sctk_net_collective_op (com, my_vp, elem_size, nb_elem, -1, func,
 				  data_type);
 	  sctk_nodebug ("Leaving net collective communication");
 	}
@@ -536,10 +536,10 @@ static inline void
   sctk_perform_collective_communication_tree_broadcast
   (sctk_collective_communications_t * restrict com,
    sctk_virtual_processor_t * restrict my_vp, const size_t elem_size,
-   const size_t nb_elem, const sctk_datatype_t data_type)
+   const size_t nb_elem, const int root, const sctk_datatype_t data_type)
 {
   sctk_virtual_processor_t *restrict father;
-  sctk_nodebug ("BCAST TREE Using vp %p com_id %d", my_vp, com->id);
+  sctk_nodebug ("BCAST TREE Using vp %p com_id %d root %d", my_vp, com->id, root);
   my_vp->data.done = 0;
   father = my_vp->father;
   if (expect_false (father == NULL))
@@ -548,8 +548,8 @@ static inline void
 	  (com->nb_task_involved_in_this_process < com->nb_task_involved))
 	{
 	  /*Multiple process involved */
-	  sctk_nodebug ("Entering net collective communication");
-	  sctk_net_collective_op (com, my_vp, elem_size, nb_elem, NULL,
+	  sctk_nodebug ("Entering net collective communication with root %d", root);
+	  sctk_net_collective_op (com, my_vp, elem_size, nb_elem, root, NULL,
 				  data_type);
 	  sctk_nodebug ("Leaving net collective communication");
 	}
@@ -634,6 +634,7 @@ static inline void
 								father,
 								elem_size,
 								nb_elem,
+                root,
 								data_type);
 	  father->nb_task_registered = 0;
 	  sctk_nodebug("REINIT %d %s",father->nb_task_registered,__func__);
@@ -722,7 +723,7 @@ static inline void
 	{
 	  /*Multiple process involved */
 	  sctk_nodebug ("Entering net collective communication");
-	  sctk_net_collective_op (com, my_vp, elem_size, nb_elem, func,
+	  sctk_net_collective_op (com, my_vp, elem_size, nb_elem, -1, func,
 				  data_type);
 	  sctk_nodebug ("Leaving net collective communication");
 	}
@@ -864,7 +865,7 @@ static inline void
 	{
 	  /*Multiple process involved */
 	  sctk_nodebug ("Entering net collective communication");
-	  sctk_net_collective_op (com, my_vp, 0, 0, NULL,
+	  sctk_net_collective_op (com, my_vp, 0, 0, -1, NULL,
 				  sctk_null_data_type);
 	  sctk_nodebug ("Leaving net collective communication");
 	}
@@ -1358,6 +1359,7 @@ __sctk_perform_collective_comm_intern (const size_t elem_size,
 static inline int
 __sctk_perform_collective_comm_intern_broadcast (const size_t elem_size,
 						 const size_t nb_elem,
+             const int root,
 						 const void *data_in,
 						 void *const data_out,
 						 const sctk_communicator_t
@@ -1421,6 +1423,7 @@ __sctk_perform_collective_comm_intern_broadcast (const size_t elem_size,
       sctk_perform_collective_communication_tree_broadcast (com, my_vp,
 							    elem_size,
 							    nb_elem,
+                  root,
 							    data_type);
 
       tmp_size_copy = elem_size * nb_elem;
@@ -1821,6 +1824,7 @@ sctk_perform_collective_communication_init (const size_t elem_size,
 void
 sctk_perform_collective_communication_broadcast (const size_t elem_size,
 						 const size_t nb_elem,
+             const int root,
 						 const void *data_in,
 						 void *const data_out,
 						 const sctk_communicator_t
@@ -1857,7 +1861,7 @@ sctk_perform_collective_communication_broadcast (const size_t elem_size,
 
   if (expect_true
       (__sctk_perform_collective_comm_intern_broadcast
-       (elem_size, nb_elem, data_in, data_out, com_id, vp, data_type) == 1))
+       (elem_size, nb_elem, root, data_in, data_out, com_id, vp, data_type) == 1))
     {
       /*Freeze */
       sctk_thread_freeze_thread_on_vp (&(my_vp->lock),

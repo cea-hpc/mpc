@@ -680,6 +680,7 @@ static void (*sctk_net_collective_op_ptr) (sctk_collective_communications_t
     sctk_virtual_processor_t * my_vp,
     const size_t elem_size,
     const size_t nb_elem,
+    const int root,
     void (*func) (const void *,
       void *, size_t,
       sctk_datatype_t),
@@ -690,6 +691,7 @@ static void (*sctk_net_collective_op_ptr) (sctk_collective_communications_t
       (sctk_collective_communications_t * com,
        sctk_virtual_processor_t * my_vp,
        const size_t elem_size, const size_t nb_elem,
+       const int root,
        void (*func) (const void *, void *, size_t,
          sctk_datatype_t),
        const sctk_datatype_t data_type))
@@ -703,12 +705,13 @@ sctk_net_collective_op (sctk_collective_communications_t * com,
     sctk_virtual_processor_t * my_vp,
     const size_t elem_size,
     const size_t nb_elem,
+    const int root,
     void (*func) (const void *, void *, size_t,
       sctk_datatype_t),
     const sctk_datatype_t data_type)
 {
   sctk_nodebug ("%s", SCTK_FUNCTION);
-  sctk_net_collective_op_ptr (com, my_vp, elem_size, nb_elem, func,
+  sctk_net_collective_op_ptr (com, my_vp, elem_size, nb_elem, root, func,
       data_type);
   sctk_nodebug ("%s DONE", SCTK_FUNCTION);
 }

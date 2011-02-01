@@ -139,6 +139,7 @@ extern "C"
     sctk_perform_collective_communication_broadcast (const size_t
 						     elem_size,
 						     const size_t nb_elem,
+                 const int root,
 						     const void *data_in,
 						     void *const data_out,
 						     const
@@ -257,6 +258,7 @@ extern "C"
     if (id == root)
       {
 	sctk_perform_collective_communication_broadcast (1, size,
+               root,
 							 buffer, NULL,
 							 com_id, vp, id,
 							 sctk_null_data_type);
@@ -264,6 +266,7 @@ extern "C"
     else
       {
 	sctk_perform_collective_communication_broadcast (1, size,
+               root,
 							 NULL, buffer,
 							 com_id, vp, id,
 							 sctk_null_data_type);

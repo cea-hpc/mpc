@@ -66,12 +66,14 @@ extern "C"
 			       (sctk_collective_communications_t * com,
 				sctk_virtual_processor_t * my_vp,
 				const size_t elem_size, const size_t nb_elem,
+        const int root,
 				void (*func) (const void *, void *, size_t,
 					      sctk_datatype_t),
 				const sctk_datatype_t data_type));
   void sctk_net_collective_op (sctk_collective_communications_t * com,
 			       sctk_virtual_processor_t * my_vp,
 			       const size_t elem_size, const size_t nb_elem,
+             const int root,
 			       void (*func) (const void *, void *, size_t,
 					     sctk_datatype_t),
 			       const sctk_datatype_t data_type);

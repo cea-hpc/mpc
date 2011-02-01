@@ -201,6 +201,7 @@ sctk_net_broadcast_op_driver (sctk_collective_communications_t * com,
 			      sctk_virtual_processor_t * my_vp,
 			      const size_t elem_size,
 			      const size_t nb_elem,
+            const int root,
 			      const sctk_datatype_t data_type,
 			      void *data_in, void *data_out)
 {
@@ -356,7 +357,7 @@ sctk_net_broadcast_op_driver (sctk_collective_communications_t * com,
 	  while (done_mem < total_mem)
 	    {
 	      sctk_net_broadcast_op_driver (com, my_vp, cur_size, 1,
-					    data_type,
+					    root, data_type,
 					    ((char *) data_in) + done_mem,
 					    NULL);
 	      done_mem += cur_size;
@@ -371,7 +372,7 @@ sctk_net_broadcast_op_driver (sctk_collective_communications_t * com,
 	  while (done_mem < total_mem)
 	    {
 	      sctk_net_broadcast_op_driver (com, my_vp, cur_size, 1,
-					    data_type, NULL,
+					    root, data_type, NULL,
 					    ((char *) data_out) + done_mem);
 	      done_mem += cur_size;
 	      if (done_mem + cur_size > total_mem)
@@ -558,14 +559,14 @@ sctk_net_reduce_op_driver_intern (sctk_collective_communications_t * com,
 	    memcpy ((char *) (my_vp->data.data_out) + offset,
 		    coll_send->msg.buffer, elem_size * nb_elem);
 	    sctk_net_broadcast_op_driver (com, my_vp, elem_size, nb_elem,
-					  data_type,
+					  -1, data_type,
 					  (char *) (my_vp->data.data_out) +
 					  offset, NULL);
 	  }
 	else
 	  {
 	    sctk_net_broadcast_op_driver (com, my_vp, elem_size, nb_elem,
-					  data_type, NULL,
+					  -1, data_type, NULL,
 					  (char *) (my_vp->data.data_out) +
 					  offset);
 	  }
@@ -621,6 +622,7 @@ sctk_net_collective_op_driver (sctk_collective_communications_t * com,
 			       sctk_virtual_processor_t * my_vp,
 			       const size_t elem_size,
 			       const size_t nb_elem,
+             const int root,
 			       void (*func) (const void *, void *, size_t,
 					     sctk_datatype_t),
 			       const sctk_datatype_t data_type)
@@ -637,7 +639,7 @@ sctk_net_collective_op_driver (sctk_collective_communications_t * com,
       if (func == NULL)
 	{
 	  sctk_nodebug ("begin collective broadcast");
-	  sctk_net_broadcast_op_driver (com, my_vp, elem_size, nb_elem,
+	  sctk_net_broadcast_op_driver (com, my_vp, elem_size, nb_elem, root,
 					data_type, my_vp->data.data_in,
 					my_vp->data.data_out);
 	  sctk_nodebug ("end collective broadcast");
