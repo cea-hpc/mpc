@@ -51,12 +51,11 @@ extern "C"
   void
   sctk_mpcrun_read_to_process (void *buf, size_t count, int process);
 
-  void sctk_mpcrun_client_get_shmfilename (char* out);
-  void sctk_mpcrun_client_register_shmfilename (char* in);
-
+  void sctk_mpcrun_client_get_shmfilename (char* key, char* out);
+  void sctk_mpcrun_client_register_shmfilename (char* key, char* in);
 
   /* return the hostname and the port of the TCP client */
-  void sctk_mpcrun_client_get_hostname(char* __string);
+  char* sctk_mpcrun_client_get_hostname();
   void sctk_mpcrun_client_get_local_size_and_node_number();
 
   /* forge a string with the SHM filename */

@@ -578,6 +578,7 @@ sctk_net_preinit_driver_tcp(sctk_net_driver_pointers_functions_t* pointers)
 
 
   sctk_create_recv_socket ();
+  sctk_mpcrun_client_init_connect ();
 
   idents = sctk_malloc (sizeof (tpc_ident_t) * sctk_process_number);
   memset (idents, 0, sizeof (tpc_ident_t) * sctk_process_number);

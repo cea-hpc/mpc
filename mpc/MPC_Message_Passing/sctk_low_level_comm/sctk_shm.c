@@ -24,6 +24,7 @@
 #include "sctk_low_level_comm.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"
+#include "sctk_bootstrap.h"
 #include "sctk_rpc.h"
 #include "sctk_shm.h"
 #include "sctk_mpcrun_client.h"
@@ -39,8 +40,6 @@
 
 /* pointer to the memory structure */
 extern struct sctk_shm_mem_struct_s *sctk_shm_mem_struct;
-/* buffer which contains the SHM filname */
-static char shm_filename[SHM_FILENAME_SIZE];
 /* mutex between pool and thread PTP receiver. Thread receiver is a rescue polling function when
  * the receving daemon is blocked on a sending function;*/
 static sctk_thread_mutex_t ptp_received_lock;
@@ -715,9 +714,22 @@ sctk_shm_init ( int init ) {
   int shm_fd;
   unsigned long page_size;
   void* ptr;
+  char* local_host;
+  char* shm_key;
+  char* shm_filename;
 
-  sctk_debug ( "sctk_local_process_rank = %d\n", sctk_local_process_rank );
-  sctk_debug ( "sctk_local_process_number = %d\n", sctk_local_process_number );
+  assume(sctk_bootstrap_get_max_key_len() >= SHM_FILENAME_SIZE);
+
+  shm_key = sctk_malloc(sctk_bootstrap_get_max_key_len());
+  assume(shm_key);
+  shm_filename = sctk_malloc(sctk_bootstrap_get_max_key_len());
+  assume(shm_filename);
+
+  local_host = sctk_mpcrun_client_get_hostname();
+  sprintf(shm_key, "SHM.%s", local_host);
+
+  sctk_nodebug ( "sctk_local_process_rank = %d", sctk_local_process_rank );
+  sctk_nodebug ( "sctk_local_process_number = %d", sctk_local_process_number );
 
   /* get the size of system paged */
   page_size = getpagesize ();
@@ -731,10 +743,9 @@ sctk_shm_init ( int init ) {
   if ( sctk_local_process_rank == init ) {
 
     sctk_mpcrun_client_forge_shm_filename ( shm_filename );
-    sctk_debug ( "SHM filename generated: %s", shm_filename );
+    sctk_nodebug ( "SHM filename generated: %s", shm_filename );
 
-    sctk_mpcrun_client_register_shmfilename ( shm_filename );
-    sctk_debug("registered");
+    sctk_bootstrap_register(shm_key, shm_filename);
 
     /* open shared memory */
     shm_fd =
@@ -758,17 +769,17 @@ sctk_shm_init ( int init ) {
   }
 
   sctk_nodebug ( "Waiting" );
-  sctk_mpcrun_barrier ();
+  sctk_bootstrap_barrier();
+
   sctk_nodebug ( "Barrier 1 for process %d", sctk_local_process_rank );
 
   if ( sctk_local_process_rank != init ) {
     int shm_fd;
     struct mmap_infos_s *mem_init;
 
-    sctk_mpcrun_client_get_shmfilename ( shm_filename );
+    sctk_bootstrap_get(shm_key, shm_filename, SHM_FILENAME_SIZE);
     sctk_nodebug ( "SHM filename got: %s", shm_filename );
 
-    assume ( shm_filename );
     sctk_nodebug ( "Filename : %s", shm_filename );
 
     /* clients open the shared memory */
@@ -794,13 +805,12 @@ sctk_shm_init ( int init ) {
   }
 
   sctk_nodebug ( "Barrier 2 (pre) for process %d", sctk_local_process_rank );
-  sctk_mpcrun_barrier ();
+  sctk_bootstrap_barrier();
   sctk_nodebug ( "Barrier 2 for process %d", sctk_local_process_rank );
 
   /* remove the shm file when all processes have
    * opened the shared memory */
   if ( sctk_local_process_rank == init ) {
-    unsigned long page_size;
 
     /* unlink the SHM segment */
     assume ( shm_unlink ( shm_filename ) == 0 );
@@ -1192,11 +1202,11 @@ sctk_net_preinit_driver_shm ( sctk_net_driver_pointers_functions_t* pointers ) {
 #if SCTK_HYBRID_DEBUG == 1
   /* print informations about the SHM (size of queues,
    * size allocated, etc... */
-  sctk_mpcrun_barrier ();
+  sctk_bootstrap_barrier();
   if ( sctk_process_rank == init ) {
     sctk_shm_init_printinfos ();
   }
-  sctk_mpcrun_barrier ();
+  sctk_bootstrap_barrier();
 #endif
 
   sctk_nodebug ( "SHM - Module pre-initialized" );

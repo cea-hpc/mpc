@@ -26,7 +26,7 @@
 #include "sctk_thread.h"
 #include "sctk_mpcrun_client.h"
 #include <stdlib.h>
-#include "slurm/pmi.h"
+#include <slurm/pmi.h>
 
 enum bootstrap_mode {
   PMI,
@@ -34,19 +34,21 @@ enum bootstrap_mode {
 };
 enum bootstrap_mode mode;
 
-int process_size;
-int process_rank;
-int local_process_size;
-int local_process_rank;
-int key_max;
-int val_max;
-int spawn;
-int appnum;
-int name_max;
-char* kvsname;
-char* kvsname2;
-char* key;
-char* val;
+static int process_size;
+static int process_rank;
+static int local_process_size;
+static int local_process_rank;
+static int key_max;
+static int val_max;
+static int spawn;
+static int appnum;
+static int name_max;
+static char* kvsname;
+static char* key;
+static char* val;
+
+#define TCP_KEY_MAX 256
+#define TCP_VAL_MAX 256
 
 static void sctk_bootstrap_slurm_env()
 {
@@ -128,6 +130,91 @@ static void sctk_bootstrap_pmi_init()
   assume(val);
 }
 
+void
+sctk_bootstrap_register(char* pkey, char* pval)
+{
+  int res;
+
+  switch(mode)
+  {
+    case PMI:
+      res = PMI_KVS_Put(kvsname, pkey, pval);
+      assume(res == PMI_SUCCESS);
+
+      res = PMI_KVS_Commit(kvsname);
+      assume(res == PMI_SUCCESS);
+      break;
+
+    case TCP:
+      sctk_mpcrun_client_register_shmfilename (pkey, pval);
+      break;
+  }
+}
+
+  void
+sctk_bootstrap_get(char* pkey, char* pval, int size)
+{
+  int res;
+
+  switch(mode)
+  {
+    case PMI:
+      assume(size <= val_max);
+      res = PMI_KVS_Get(kvsname, pkey, pval, size);
+      assume(res == PMI_SUCCESS);
+      break;
+
+    case TCP:
+      sctk_mpcrun_client_get_shmfilename (pkey, pval);
+      break;
+  }
+}
+
+  int
+sctk_bootstrap_get_max_key_len()
+{
+  switch(mode)
+  {
+    case PMI:
+      return key_max;
+      break;
+
+    case TCP:
+      return TCP_KEY_MAX;
+      break;
+  }
+}
+
+  int
+sctk_bootstrap_get_max_val_len()
+{
+  switch(mode)
+  {
+    case PMI:
+      return val_max;
+      break;
+
+    case TCP:
+      return TCP_VAL_MAX;
+      break;
+  }
+}
+
+
+void
+  sctk_bootstrap_barrier() {
+    switch (mode)
+    {
+      case PMI:
+        PMI_Barrier();
+        break;
+
+      case TCP:
+        sctk_mpcrun_barrier ();
+        break;
+    }
+}
+
 void sctk_bootstrap_init() {
   char* env = NULL;
 
@@ -141,7 +228,6 @@ void sctk_bootstrap_init() {
   switch (mode)
   {
     case PMI:
-      sctk_debug("Launch mode : PMI Launcher used");
       sctk_bootstrap_pmi_init();
       sctk_mpcrun_client_create_recv_socket ();
       sctk_mpcrun_client_init_host_port();
@@ -153,21 +239,22 @@ void sctk_bootstrap_init() {
         sctk_mpcrun_client_set_process_number();
       }
       PMI_Barrier();
-      sctk_mpcrun_client_init_connect ();
+      if (sctk_process_rank == 0)
+        sctk_debug("Launch mode : PMI Launcher used");
       break;
 
     case TCP:
-      sctk_debug("Launch mode : TCP Launcher used");
       /* connect the process to the TCP server.
        * Permits to grab the process_rank, node_number, local_process_rank */
       sctk_mpcrun_client_create_recv_socket ();
       sctk_mpcrun_client_init_host_port();
       sctk_mpcrun_client_get_global_consts();
-      sctk_mpcrun_client_init_connect ();
-
       sctk_mpcrun_barrier ();
+
       /* also grab the number of processes in the node */
       sctk_mpcrun_client_get_local_consts();
+      if (sctk_process_rank == 0)
+        sctk_debug("Launch mode : TCP Launcher used");
       break;
   }
 }

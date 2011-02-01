@@ -60,10 +60,7 @@ sctk_mpcserver_safe_read (int fd, void *buf, size_t count)
 	{
 	  perror ("safe_read");
 	}
-      /* TODO: problem with TCP function read */
-      /* assume (dcount >= 0); */
-      if (dcount < 0)
-        sctk_warning("problem with TCP function");
+      assume(dcount >=0);
 
       allready_readed += dcount;
     }
@@ -337,7 +334,7 @@ sctk_mpcrun_client_set_process_number()
  * ==================================================================
  */
   void
-sctk_mpcrun_client_get_shmfilename (char* out)
+sctk_mpcrun_client_get_shmfilename (char* key, char* out)
 {
   int fd;
 
@@ -345,7 +342,7 @@ sctk_mpcrun_client_get_shmfilename (char* out)
 
   sctk_mpcserver_safe_write (fd, MPC_SERVER_GET_SHM_FILENAME, MPC_ACTION_SIZE);
   sctk_mpcserver_safe_write (fd, &sctk_process_rank, sizeof (int));
-  sctk_mpcserver_safe_write (fd, local_host, HOSTNAME_PORT_SIZE);
+  sctk_mpcserver_safe_write (fd, key, HOSTNAME_PORT_SIZE);
 
   /*  filename */
   sctk_mpcserver_safe_read (fd, out, SHM_FILENAME_SIZE);
@@ -363,7 +360,7 @@ sctk_mpcrun_client_get_shmfilename (char* out)
  * ==================================================================
  */
   void
-sctk_mpcrun_client_register_shmfilename (char* in)
+sctk_mpcrun_client_register_shmfilename (char* key, char* in)
 {
   int fd;
 
@@ -371,7 +368,7 @@ sctk_mpcrun_client_register_shmfilename (char* in)
 
   sctk_mpcserver_safe_write (fd, MPC_SERVER_REGISTER_SHM_FILENAME, MPC_ACTION_SIZE);
   sctk_mpcserver_safe_write (fd, &sctk_process_rank, sizeof (int));
-  sctk_mpcserver_safe_write (fd, local_host, HOSTNAME_PORT_SIZE);
+  sctk_mpcserver_safe_write (fd, key, HOSTNAME_PORT_SIZE);
   sctk_mpcserver_safe_write (fd, in, SHM_FILENAME_SIZE);
 
   sctk_nodebug("written shm filename : %s", in);
@@ -462,4 +459,9 @@ void sctk_mpcrun_client_forge_shm_filename(char* __string)
   sctk_assert(template[0] != '\0');
 
   sprintf(__string, "SHM_%s.%s.%s", local_host, template, local_host+HOSTNAME_SIZE);
+}
+
+char* sctk_mpcrun_client_get_hostname()
+{
+  return local_host;
 }
