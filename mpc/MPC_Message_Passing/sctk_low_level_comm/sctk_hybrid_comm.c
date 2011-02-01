@@ -42,6 +42,9 @@ static int nb_intra_comm = 0;
 static int nb_inter_comm = 0;
 #endif
 
+/* if a system thread is needed for RDMA messages */
+int rdma_system_thread_needed = 1;
+
 //sctk_net_driver_pointers_functions_t sctk_net_driver_pointers_functions_array[MAX_MODULES_LEVELS];
 static int number_modules_levels = 0;
 /* hybrid modue */
@@ -109,10 +112,10 @@ void sctk_net_hybrid_free_com(int com_id)
       pointers_intra.net_adm_poll(arg);
   }
 #endif
-  /* Commented because the polling function is
-   * in a thread */
-  //  if (pointers_inter.net_adm_poll != NULL)
-  //    pointers_inter.net_adm_poll(arg);
+  if (rdma_system_thread_needed == 1) {
+    if (pointers_inter.net_adm_poll != NULL)
+        pointers_inter.net_adm_poll(arg);
+  }
 }
 
 
@@ -293,7 +296,7 @@ sctk_net_free_func_driver (sctk_thread_ptp_message_t * item)
 #else
   sctk_nodebug("INTER net_free_func");
   pointers_inter.net_free(item);
-  sctk_nodebug("INTER net_free_func");
+  sctk_nodebug("END net_free_func");
 #endif
 }
 
@@ -481,17 +484,20 @@ sctk_net_init_driver_hybrid (int *argc, char ***argv)
     sctk_user_thread_create (&pidt_inter_rdma, &attr_inter_rdma, sctk_inter_comm_thread,
         NULL);
 
+    rdma_system_thread_needed = 0;
+
     sctk_net_init_driver_tcp(argc, argv);
   }
   else if ( (strcmp(sctk_module_name, "ipoib") == 0) ||
       (strcmp(sctk_module_name, "ipoib_only") == 0))
   {
-    /* thread for TCP/IPoIB DMA
+  	  /* thread for TCP/IPoIB DMA
      * / ! \ : we create a thread instead of polling the function. Interblocking issues.*/
     sctk_thread_attr_init (&attr_inter_rdma);
     sctk_thread_attr_setscope (&attr_inter_rdma, SCTK_THREAD_SCOPE_SYSTEM);
     sctk_user_thread_create (&pidt_inter_rdma, &attr_inter_rdma, sctk_inter_comm_thread,
-        NULL);
+      NULL);
+    rdma_system_thread_needed = 0;
 
     sctk_net_init_driver_ipoib(argc, argv);
   }

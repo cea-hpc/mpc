@@ -17,46 +17,22 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - DIDELOT Sylvain didelot.sylvain@gmail.com                        # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "sctk_hybrid_comm.h"
 
-#ifndef __SCTK__INFINIBAND_H_
-#define __SCTK__INFINIBAND_H_
-#ifdef __cplusplus
+#ifndef __SCTK__INFINIBAND_CONST_H_
+#define __SCTK__INFINIBAND_CONST_H_
 
-extern "C"
+typedef enum
 {
-#endif
+  IBV_CHAN_RC_SR = 0,
+  IBV_CHAN_RC_RDMA = 1,
+} sctk_net_ibv_allocator_type_t;
 
+/* max number of WC extracted for the input
+ * and the output completion queue */
+#define SCTK_PENDING_IN_NUMBER 1
+#define SCTK_PENDING_OUT_NUMBER 1
 
-  void sctk_net_init_driver_infiniband (int *argc, char ***argv);
-  void sctk_net_preinit_driver_infiniband ( sctk_net_driver_pointers_functions_t* pointers );
-
-  void sctk_net_ibv_finalize();
-  /* type of the message */
-//  typedef enum
-//  {
-//    ibv_msg_eager_send,
-//    ibv_msg_rendezvous_request,
-//    ibv_msg_buff_recv,
-//    ibv_msg_rendezvous_request_ack
-//  } ibv_msg_type_t;
-
-//  typedef enum
-//  {
-//    ibv_type_rdma_write,
-//    ibv_type_rdma_read,
-//  } sctk_net_ibv_type_t;
-//
-//  typedef struct
-//  {
-//    sctk_net_ibv_type_t type;
-//    int threshold;
-//  } sctk_net_ibv_buffers_t;
-
-
-#ifdef __cplusplus
-}
-#endif
 #endif

@@ -17,46 +17,68 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - DIDELOT Sylvain didelot.sylvain@gmail.com                        # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "sctk_hybrid_comm.h"
 
-#ifndef __SCTK__INFINIBAND_H_
-#define __SCTK__INFINIBAND_H_
-#ifdef __cplusplus
+#ifndef __SCTK__INFINIBAND_MMU_H_
+#define __SCTK__INFINIBAND_MMU_H_
 
-extern "C"
+#include <sctk_spinlock.h>
+#include <sctk_debug.h>
+
+/* enumeration for entry state  */
+typedef enum
 {
-#endif
+  ibv_entry_used,
+//  ibv_entry_perm,
+  ibv_entry_free
+} sctk_net_ibv_mmu_entry_status_t;
+
+/* entry to the soft MMU */
+typedef struct
+{
+  sctk_net_ibv_mmu_entry_status_t status;     /* status of the slot */
+
+  void *ptr;                /* ptr to the MR */
+  size_t size;              /* size of the MR */
+  struct ibv_mr *mr;        /* MR */
+//  uint32_t rkey;          /* REMOVED */
+//  uint32_t lkey;          /* REMOVED */
+} sctk_net_ibv_mmu_entry_t;
 
 
-  void sctk_net_init_driver_infiniband (int *argc, char ***argv);
-  void sctk_net_preinit_driver_infiniband ( sctk_net_driver_pointers_functions_t* pointers );
+typedef struct sctk_net_ibv_mmu_s
+{
+  sctk_spinlock_t lock;     /* MMU lock */
+  int entry_nb;             /* Number of entries */
+  sctk_net_ibv_mmu_entry_t** entry;  /* entries */
+} sctk_net_ibv_mmu_t;
 
-  void sctk_net_ibv_finalize();
-  /* type of the message */
-//  typedef enum
-//  {
-//    ibv_msg_eager_send,
-//    ibv_msg_rendezvous_request,
-//    ibv_msg_buff_recv,
-//    ibv_msg_rendezvous_request_ack
-//  } ibv_msg_type_t;
+#include "sctk_infiniband_qp.h"
 
-//  typedef enum
-//  {
-//    ibv_type_rdma_write,
-//    ibv_type_rdma_read,
-//  } sctk_net_ibv_type_t;
-//
-//  typedef struct
-//  {
-//    sctk_net_ibv_type_t type;
-//    int threshold;
-//  } sctk_net_ibv_buffers_t;
+/*-----------------------------------------------------------
+ *  NEW / FREE
+ *----------------------------------------------------------*/
+sctk_net_ibv_mmu_t* sctk_net_ibv_mmu_new();
 
+void sctk_net_ibv_mmu_free();
 
-#ifdef __cplusplus
-}
-#endif
+/*-----------------------------------------------------------
+ *  Register / Unregister
+ *----------------------------------------------------------*/
+
+sctk_net_ibv_mmu_entry_t *
+sctk_net_ibv_mmu_register(
+    sctk_net_ibv_mmu_t* mmu,
+    sctk_net_ibv_qp_local_t* local,
+    void *ptr, size_t size);
+
+int
+sctk_net_ibv_mmu_unregister (
+    sctk_net_ibv_mmu_t *mmu,
+    sctk_net_ibv_mmu_entry_t *mmu_entry);
+
+long unsigned
+sctk_net_ibv_mmu_get_pagesize();
 #endif

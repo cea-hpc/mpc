@@ -17,46 +17,36 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - DIDELOT Sylvain didelot.sylvain@gmail.com                        # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "sctk_hybrid_comm.h"
 
-#ifndef __SCTK__INFINIBAND_H_
-#define __SCTK__INFINIBAND_H_
-#ifdef __cplusplus
+#ifndef __SCTK__INFINIBAND_SCHEDULING_H_
+#define __SCTK__INFINIBAND_SCHEDULING_H_
 
-extern "C"
-{
-#endif
+#include <sctk.h>
+#include <stdint.h>
+#include "sctk_infiniband_const.h"
+#include "sctk_infiniband_comp_rc_sr.h"
+#include "sctk_infiniband_comp_rc_rdma.h"
 
+void sctk_net_ibv_sched_init();
 
-  void sctk_net_init_driver_infiniband (int *argc, char ***argv);
-  void sctk_net_preinit_driver_infiniband ( sctk_net_driver_pointers_functions_t* pointers );
+int
+sctk_net_ibv_sched_psn_inc (int dest);
 
-  void sctk_net_ibv_finalize();
-  /* type of the message */
-//  typedef enum
-//  {
-//    ibv_msg_eager_send,
-//    ibv_msg_rendezvous_request,
-//    ibv_msg_buff_recv,
-//    ibv_msg_rendezvous_request_ack
-//  } ibv_msg_type_t;
+int
+sctk_net_ibv_sched_esn_inc (int dest);
 
-//  typedef enum
-//  {
-//    ibv_type_rdma_write,
-//    ibv_type_rdma_read,
-//  } sctk_net_ibv_type_t;
-//
-//  typedef struct
-//  {
-//    sctk_net_ibv_type_t type;
-//    int threshold;
-//  } sctk_net_ibv_buffers_t;
+int
+sctk_net_ibv_sched_get_esn(int dest);
 
+  int
+sctk_net_ibv_sched_sn_check(int dest, uint64_t num);
 
-#ifdef __cplusplus
-}
-#endif
+int
+sctk_net_ibv_sched_sn_check_and_inc(int dest, uint64_t num);
+
+int
+  sctk_net_ibv_sched_rc_sr_free_pending_msg(sctk_thread_ptp_message_t * item );
 #endif

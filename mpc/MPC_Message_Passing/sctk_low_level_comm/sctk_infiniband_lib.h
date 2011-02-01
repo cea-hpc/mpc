@@ -17,46 +17,32 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - DIDELOT Sylvain didelot.sylvain@gmail.com                        # */
 /* #                                                                      # */
 /* ######################################################################## */
 #include "sctk_hybrid_comm.h"
+#include "sctk_infiniband_allocator.h"
 
-#ifndef __SCTK__INFINIBAND_H_
-#define __SCTK__INFINIBAND_H_
-#ifdef __cplusplus
+#ifndef __SCTK__INFINIBAND_LIB_H_
+#define __SCTK__INFINIBAND_LIB_H_
 
-extern "C"
-{
-#endif
+/* channel selection */
+extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
 
+static void
+sctk_net_ibv_send_msg_to_mpc(sctk_thread_ptp_message_t* msg_header, void* msg, int src_process) {
 
-  void sctk_net_init_driver_infiniband (int *argc, char ***argv);
-  void sctk_net_preinit_driver_infiniband ( sctk_net_driver_pointers_functions_t* pointers );
+  sctk_net_ibv_allocator->entry[src_process].nb_ptp_msg_received++;
 
-  void sctk_net_ibv_finalize();
-  /* type of the message */
-//  typedef enum
-//  {
-//    ibv_msg_eager_send,
-//    ibv_msg_rendezvous_request,
-//    ibv_msg_buff_recv,
-//    ibv_msg_rendezvous_request_ack
-//  } ibv_msg_type_t;
+  sctk_nodebug("\t\t\t\tSent message to mpc");
+  msg_header->net_mesg = msg;
+  sctk_send_message (msg_header);
 
-//  typedef enum
-//  {
-//    ibv_type_rdma_write,
-//    ibv_type_rdma_read,
-//  } sctk_net_ibv_type_t;
-//
-//  typedef struct
-//  {
-//    sctk_net_ibv_type_t type;
-//    int threshold;
-//  } sctk_net_ibv_buffers_t;
-
-
-#ifdef __cplusplus
 }
-#endif
+
+#define max(a,b) \
+  ({ typeof (a) _a = (a); \
+   typeof (b) _b = (b); \
+   _a > _b ? _a : _b; })
+
 #endif
