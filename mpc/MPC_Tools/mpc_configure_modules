@@ -35,7 +35,7 @@ mpc_modules_get_list()
 {
 	#setup default filter
 	if test -z "$1"; then
-		filter=",enabled,disabled,force,"
+		filter=",enabled,disabled,forced,"
 	else
 		filter=",$1,"
 	fi
