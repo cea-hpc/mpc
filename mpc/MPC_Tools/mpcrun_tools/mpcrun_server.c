@@ -90,36 +90,49 @@ static ssize_t
 safe_read (int fd, void *buf, size_t count)
 {
   char *tmp;
-  ssize_t allready_readed = 0;
+  ssize_t already_read = 0;
   ssize_t dcount = 0;
 
   tmp = buf;
-  while (allready_readed < count)
+  while (already_read < count)
     {
       tmp += dcount;
-      dcount = read (fd, tmp, count - allready_readed);
-      if (!(dcount >= 0))
+      dcount = read (fd, tmp, count - already_read);
+      if (dcount < 0)
 	{
 	  perror ("safe_read");
+	  abort();
 	}
-      assert (dcount >= 0);
-      allready_readed += dcount;
+      already_read += dcount;
     }
-  assert (count == allready_readed);
-  return allready_readed;
+  assert (count == already_read);
+  return already_read;
 }
 
 static ssize_t
 safe_write (int fd, const void *buf, size_t count)
 {
-  ssize_t dcount;
-  dcount = write (fd, buf, count);
-  if (!(dcount == count))
+  ssize_t dcount = 0;
+  ssize_t already_written = 0;
+  char *tmp = (char *)buf;
+
+
+  while( already_written < count )
     {
-      perror ("safe_write");
+     tmp += dcount;
+     dcount = write (fd, buf, count - already_written );
+     
+     if ( dcount < 0 )
+       {
+         perror ("safe_write");
+	 abort();
+       }
+   
+	already_written += dcount;
     }
-  assert (dcount == count);
-  return dcount;
+
+  assert (already_written == count);
+  return already_written;
 }
 
 static void

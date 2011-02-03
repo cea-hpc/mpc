@@ -38,7 +38,7 @@ extern "C"
   extern int sctk_use_tcp_o_ib;
 
   ssize_t sctk_mpcserver_safe_read (int fd, void *buf, size_t count);
-  ssize_t sctk_mpcserver_safe_write (int fd, const void *buf, size_t count);
+  ssize_t sctk_mpcserver_safe_write (int fd, void *buf, size_t count);
   int sctk_tcp_connect_to (int portno, char *name);
   int sctk_mpcrun_client (char *request, void *in, size_t size_in,
 			  void *out, size_t size_out);

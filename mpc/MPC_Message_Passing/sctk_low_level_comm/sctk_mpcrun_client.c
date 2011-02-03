@@ -40,48 +40,53 @@ ssize_t
 sctk_mpcserver_safe_read (int fd, void *buf, size_t count)
 {
   char *tmp;
-  ssize_t allready_readed = 0;
+  ssize_t already_read = 0;
   ssize_t dcount = 0;
-  struct timeval tv;
-  fd_set rfds;
-
-  FD_ZERO(&rfds);
-  FD_SET(0, &rfds);
-  tv.tv_sec = 1;
-  tv.tv_usec = 0;
 
   tmp = buf;
-  while (allready_readed < (ssize_t)count)
+  while (already_read < count)
     {
       tmp += dcount;
-
-      dcount = read (fd, tmp, count - allready_readed);
-      if (!(dcount >= 0))
+      dcount = read (fd, tmp, count - already_read);
+      if (dcount < 0)
 	{
 	  perror ("safe_read");
+	  abort();
 	}
-      assume(dcount >=0);
-
-      allready_readed += dcount;
+      already_read += dcount;
     }
-  assert ((ssize_t)count == allready_readed);
-  return allready_readed;
+  assert (count == already_read);
+  return already_read;
 }
 
 ssize_t
-sctk_mpcserver_safe_write (int fd, const void *buf, size_t count)
+sctk_mpcserver_safe_write (int fd,  void *buf, size_t count)
 {
-  ssize_t dcount;
-  sctk_nodebug("COUNT : %d WRITE", count);
-  dcount = write (fd, buf, count);
-  if (!(dcount == (ssize_t)count))
+  ssize_t dcount = 0;
+  ssize_t already_written = 0;
+  char *tmp = (char *)buf;
+
+
+  while( already_written < count )
     {
-      perror ("safe_write");
+     tmp += dcount;
+     dcount = write (fd, buf, count - already_written );
+     
+     if ( dcount < 0 )
+       {
+         perror ("safe_write");
+	 abort();
+       }
+   
+	already_written += dcount;
     }
-  assume (dcount == (ssize_t)count);
-  fsync (fd);
-  return dcount;
+
+  assert (already_written == count);
+  return already_written;
 }
+
+
+
 
 int sctk_use_tcp_o_ib = 0;
 
