@@ -643,7 +643,7 @@ sctk_create_tls ()
 
       sctk_free_chunk_small (next, tls);
 
-      tls->spinlock = 0;
+      tls->spinlock = SCTK_SPINLOCK_INITIALIZER;
     }
   sctk_spinlock_unlock (&old_tls_list_spinlock);
   return tls;

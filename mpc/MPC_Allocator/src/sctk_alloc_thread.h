@@ -27,15 +27,16 @@ extern "C"
 {
 #endif
 
-#ifdef MPC_Threads
 #include "sctk_config.h"
+#include "sctk_spinlock.h"
+
+#ifdef MPC_Threads
 #include "sctk_context.h"
 
 #define sctk_once sctk_thread_once
 #define sctk_once_t sctk_thread_once_t
 #define SCTK_ONCE_INIT SCTK_THREAD_ONCE_INIT
 
-#include "sctk_spinlock.h"
 #define sctk_alloc_spinlock_t sctk_spinlock_t
 #define sctk_alloc_spinlock_lock sctk_spinlock_lock
 #define sctk_alloc_spinlock_unlock sctk_spinlock_unlock
@@ -139,6 +140,7 @@ extern "C"
 #define PTHREAD_USE_TLS
    /*PTHREAD*/
 #include <pthread.h>
+
 #define sctk_once pthread_once
 #define sctk_once_t pthread_once_t
 #define SCTK_ONCE_INIT PTHREAD_ONCE_INIT
