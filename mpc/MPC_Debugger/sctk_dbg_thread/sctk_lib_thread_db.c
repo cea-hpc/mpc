@@ -62,9 +62,11 @@ td_err_e td_init (void) {
   
   err = TD_OK ;
   tdb_log("%s returns: %s", __FUNCTION__, tdb_err_str(err)) ;
+/*
   if(symbol_list_arr[NUM_MESSAGES] == NULL){
     return TD_ERR;
   }
+*/
   return err;
 }
 
