@@ -17,7 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - DIDELOT Sylvain  sdidelot@exascale-computing.eu                    # */
+/* #   - DIDELOT Sylvain  sdidelot@exascale-computing.eu                  # */
 /* #                                                                      # */
 /* ######################################################################## */
 #include <stdio.h>
@@ -79,6 +79,23 @@ sctk_snprintf (char *restrict s, size_t n, const char *restrict format, ...)
   return res;
 }
 
+/**********************************************************************/
+/*Threads support                                                     */
+/**********************************************************************/
+#ifndef MPC_Threads
+void
+sctk_get_thread_info (int *task_id, int *thread_id)
+{
+  *task_id = -1;
+  *thread_id = -1;
+}
+
+int
+sctk_thread_get_vp ()
+{
+  return -1;
+}
+#endif
 
 static char*
 sctk_print_debug_infos()
@@ -105,24 +122,6 @@ sctk_print_debug_infos()
 
   return ret;
 }
-
-/**********************************************************************/
-/*Threads support                                                     */
-/**********************************************************************/
-#ifndef MPC_Threads
-void
-sctk_get_thread_info (int *task_id, int *thread_id)
-{
-  *task_id = -1;
-  *thread_id = -1;
-}
-
-int
-sctk_thread_get_vp ()
-{
-  return -1;
-}
-#endif
 
 /**********************************************************************/
 /*No alloc IO                                                         */
