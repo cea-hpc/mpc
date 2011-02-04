@@ -120,6 +120,10 @@ extern "C"
     struct sctk_request_s *request;
     /* if SHM has been used to send ths msg */
     int sent_by_shm;
+    /* TODO : surround by macro */
+    /* additional information for infiniband */
+    int channel_type;
+    void* struct_ptr;
   } sctk_thread_ptp_message_t;
 
 

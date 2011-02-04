@@ -25,6 +25,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
+#include <sctk_config.h>
 
 #ifndef __SCTK__BUFFERED_FIFO__
 #define __SCTK__BUFFERED_FIFO__
@@ -61,6 +62,9 @@ struct sctk_buffered_fifo {
 
     ///Is initialized
     uint8_t is_initialized;
+
+    ///Lock
+    sctk_thread_mutex_t lock;
 
 };
 

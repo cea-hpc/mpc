@@ -58,7 +58,9 @@ static int *sctk_comm_world_array;
   ptr = sctk_malloc(msg->size);
   memcpy(ptr, msg, msg->size);
 
+  sctk_list_lock(list);
   sctk_list_push(list, ptr);
+  sctk_list_unlock(list);
 
   return ptr;
 }
@@ -78,7 +80,9 @@ sctk_net_ibv_collective_lookup_src(struct sctk_list* list, const int src)
     msg = (sctk_net_ibv_rc_sr_msg_header_t*) elem->elem;
     if (msg->src_process == src)
     {
+      sctk_list_lock(list);
       sctk_list_remove(list, elem);
+      sctk_list_unlock(list);
       return msg;
     }
     elem = elem->p_next;
@@ -142,7 +146,7 @@ sctk_net_ibv_broadcast_send(sctk_collective_communications_t * com,
       sctk_net_ibv_comp_rc_sr_send_ptp_message (
           rc_sr_local,
           rc_sr_coll_send_buff, data,
-          dest, size, RC_SR_BCAST, -1);
+          dest, size, RC_SR_BCAST);
     }
   *mask >>= 1;
   }
@@ -186,6 +190,21 @@ sctk_net_ibv_broadcast ( sctk_collective_communications_t * com,
   sctk_nodebug("Leave broadcast");
 }
 
+static void*
+walk_list(void* elem, int cond)
+{
+  sctk_net_ibv_rc_sr_msg_header_t* msg;
+  msg = (sctk_net_ibv_rc_sr_msg_header_t* ) elem;
+
+  if (msg->src_process == cond)
+  {
+    sctk_nodebug("Found for process %d", cond);
+    return msg;
+  }
+
+  return NULL;
+}
+
 static inline void
 sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
     sctk_virtual_processor_t * my_vp,
@@ -221,14 +240,15 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
     {
       sctk_nodebug("Receive from process %d", child);
 
-      while(sctk_list_is_empty(&reduce_fifo))
+      while(! (msg = sctk_list_walk_on_cond(&reduce_fifo, child, walk_list, 1)))
       {
+//        sctk_net_ibv_allocator_ptp_poll_all();
         sctk_thread_yield();
       }
-      sctk_nodebug("Done msg from %d", i);
+      sctk_nodebug("Done msg from %d", child);
 
       /* an entry is ready to be read : we pop the element from list */
-      msg = sctk_list_pop(&reduce_fifo);
+//      msg = sctk_list_pop(&reduce_fifo);
       sctk_nodebug("Msg from %d", msg->src_process);
 
       /* function execution */
@@ -246,9 +266,11 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
       sctk_net_ibv_comp_rc_sr_send_ptp_message (
           rc_sr_local,
           rc_sr_coll_send_buff, my_vp->data.data_out,
-          parent, size, RC_SR_REDUCE, -1);
+          parent, size, RC_SR_REDUCE);
     }
   }
+
+  sctk_nodebug("Finished for process");
 
   /* broadcast */
   mask = 0x1;

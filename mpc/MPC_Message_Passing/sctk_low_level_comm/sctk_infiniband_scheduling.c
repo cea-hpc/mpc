@@ -26,12 +26,14 @@
 #include <sctk_infiniband_allocator.h>
 #include "sctk_infiniband_const.h"
 #include "sctk_list.h"
+#include "sctk_buffered_fifo.h"
 
 extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
 extern struct sctk_list rc_sr_pending;
 extern struct sctk_list rc_rdma_pending;
 
 struct sctk_buffered_fifo sctk_net_ibv_pending_rc_sr;
+static sctk_spinlock_t lock;
 
 void
 sctk_net_ibv_sched_init() {
@@ -42,6 +44,8 @@ sctk_net_ibv_sched_init() {
     sctk_net_ibv_allocator->entry[i].esn = 0;
     sctk_net_ibv_allocator->entry[i].psn = 0;
   }
+
+  lock = SCTK_SPINLOCK_INITIALIZER;
 
   sctk_buffered_fifo_new(&sctk_net_ibv_pending_rc_sr,
       sizeof(sctk_net_ibv_rc_sr_msg_header_t), 32, 0);
@@ -119,7 +123,10 @@ sctk_net_ibv_sched_rc_sr_get_tail_psn(int* ret)
 
     if (&(msg->payload) == (char*) item)
     {
+      sctk_nodebug("FREE EAGER message");
+      sctk_list_lock(&rc_sr_pending);
       sctk_list_remove(&rc_sr_pending, tmp);
+      sctk_list_unlock(&rc_sr_pending);
       free(msg);
       return 1;
     }
@@ -145,12 +152,13 @@ sctk_net_ibv_sched_rc_sr_get_tail_psn(int* ret)
 
     if (!ret)
     {
-      sctk_nodebug("PENDING - EAGER - Found pending msg from %lu psn %lu - %p", msg->src_process, msg->psn, &(msg->payload) );
+      sctk_nodebug("PENDING - Recv EAGER message from %d (PSN %d)", msg->src_process, msg->psn );
 
       sctk_net_ibv_send_msg_to_mpc(
           (sctk_thread_ptp_message_t*) &(msg->payload),
           (char*) &(msg->payload)
-          + sizeof(sctk_thread_ptp_message_t), msg->src_process);
+          + sizeof(sctk_thread_ptp_message_t), msg->src_process,
+          IBV_POLL_RC_SR_ORIGIN, msg);
 
 //      sctk_list_remove(&rc_sr_pending, tmp);
       return;
@@ -165,6 +173,7 @@ sctk_net_ibv_sched_rc_rdma_poll_pending()
 {
   struct sctk_list_elem* tmp = rc_rdma_pending.head;
   sctk_net_ibv_rc_rdma_entry_recv_t* msg;
+  sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma;
   int ret;
 
   while(tmp)
@@ -175,11 +184,14 @@ sctk_net_ibv_sched_rc_rdma_poll_pending()
 
     if (!ret)
     {
-      sctk_nodebug("PENDING - RDVZ - Found pending msg from %lu %p", msg->src_process, msg);
+      sctk_nodebug("PENDING - Recv RDVZ message from %d (PSN %d)", msg->src_process, msg->psn);
 
       sctk_net_ibv_comp_rc_rdma_read_msg(msg);
 
-//      sctk_list_remove(&rc_rdma_pending, tmp);
+      entry_rc_rdma = (sctk_net_ibv_rc_rdma_process_t*)
+        sctk_net_ibv_allocator_get(msg->src_process, IBV_CHAN_RC_RDMA);
+      sctk_net_ibv_allocator_rc_rdma_process_next_request(entry_rc_rdma);
+
       return;
     }
 
@@ -206,8 +218,10 @@ sctk_net_ibv_sched_psn_inc (int dest)
 {
   int i;
 
+  //  sctk_net_ibv_sched_lock();
   i = sctk_net_ibv_allocator->entry[dest].psn;
   sctk_net_ibv_allocator->entry[dest].psn++;
+  //  sctk_net_ibv_sched_unlock();
 
   return i;
 }
@@ -216,10 +230,8 @@ sctk_net_ibv_sched_psn_inc (int dest)
 sctk_net_ibv_sched_esn_inc (int dest)
 {
   int i;
-
   i = sctk_net_ibv_allocator->entry[dest].esn;
   sctk_net_ibv_allocator->entry[dest].esn++;
-
   return i;
 }
 
@@ -236,17 +248,32 @@ sctk_net_ibv_sched_sn_check(int dest, uint64_t num)
   int
 sctk_net_ibv_sched_sn_check_and_inc(int dest, uint64_t num)
 {
-  int i;
+  //  int i;
 
   if (!sctk_net_ibv_sched_sn_check(dest, num)) {
-    i = sctk_net_ibv_allocator->entry[dest].esn;
+    //    i = sctk_net_ibv_allocator->entry[dest].esn;
     //    sctk_error("Wrong Sequence Number received from %d. Expected %d got %d", dest, i, num);
     return 1;
   }
   else
   {
+    sctk_net_ibv_sched_lock();
     sctk_net_ibv_sched_esn_inc (dest);
+    sctk_net_ibv_sched_unlock();
     return 0;
   }
+}
+
+
+  void
+sctk_net_ibv_sched_lock()
+{
+  sctk_spinlock_lock(&lock);
+}
+
+  void
+sctk_net_ibv_sched_unlock()
+{
+  sctk_spinlock_unlock(&lock);
 }
 

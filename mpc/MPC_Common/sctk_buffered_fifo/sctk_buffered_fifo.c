@@ -21,6 +21,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+//TODO : Implement remaining locks
+
 #include "sctk_buffered_fifo.h"
 
     void
@@ -95,10 +97,10 @@ sctk_buffered_fifo_push(struct sctk_buffered_fifo *fifo, void *elem)
     void *ret =
         (char *) fifo->head->payload +
         (fifo->head->current_offset * fifo->elem_size);
-    memcpy(ret, elem, fifo->elem_size);
     fifo->head->current_offset++;
-
     fifo->elem_count++;
+
+    memcpy(ret, elem, fifo->elem_size);
     return ret;
 }
 
@@ -144,14 +146,17 @@ sctk_buffered_fifo_chunk_pop(struct sctk_buffered_fifo *fifo,
 void *
 sctk_buffered_fifo_pop_elem(struct sctk_buffered_fifo *fifo, void *dest)
 {
-    void *elem = sctk_buffered_fifo_chunk_pop(fifo, fifo->tail);
+    void* elem;
 
+    elem = sctk_buffered_fifo_chunk_pop(fifo, fifo->tail);
     if (!elem)
+    {
         return NULL;
+    }
+    fifo->elem_count--;
+
     if(dest)
       memcpy(dest, elem, fifo->elem_size);
-
-    fifo->elem_count--;
 
     return elem;
 }
@@ -180,7 +185,6 @@ sctk_buffered_fifo_is_empty(struct sctk_buffered_fifo *fifo)
     if (fifo->elem_count)
       return 0;
     return 1;
-
 }
 
 
@@ -189,6 +193,7 @@ sctk_buffered_fifo_get_elem_from_tail(struct sctk_buffered_fifo *fifo, uint64_t 
 {
     struct sctk_buffered_fifo_chunk *tmp = fifo->tail;
     uint64_t n_offset;
+    char* ret;
 
     while (tmp) {
 
@@ -196,7 +201,9 @@ sctk_buffered_fifo_get_elem_from_tail(struct sctk_buffered_fifo *fifo, uint64_t 
 
         if( n_offset < tmp->current_offset )
         {
-            return (char *) tmp->payload + ( n_offset * (fifo->elem_size)) ;
+            ret = (char *) tmp->payload + ( n_offset * (fifo->elem_size)) ;
+
+            return ret;
         }
         else
         {
@@ -212,12 +219,14 @@ sctk_buffered_fifo_get_elem_from_tail(struct sctk_buffered_fifo *fifo, uint64_t 
 void *sctk_buffered_fifo_getnth(struct sctk_buffered_fifo *fifo, uint64_t n)
 {
     struct sctk_buffered_fifo_chunk *tmp = fifo->head;
+    char* ret;
 
     while (tmp) {
 
         if( n < tmp->current_offset )
         {
-            return (char *) tmp->payload + (n * fifo->elem_size);
+            ret = (char *) tmp->payload + (n * fifo->elem_size);
+            return ret;
         }
         else
         {

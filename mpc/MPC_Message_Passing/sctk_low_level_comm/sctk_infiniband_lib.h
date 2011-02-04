@@ -26,16 +26,23 @@
 #ifndef __SCTK__INFINIBAND_LIB_H_
 #define __SCTK__INFINIBAND_LIB_H_
 
+#define IBV_RC_SR_ORIGIN 0
+#define IBV_RC_RDMA_ORIGIN 1
+#define IBV_POLL_RC_SR_ORIGIN 2
+
 /* channel selection */
 extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
 
 static void
-sctk_net_ibv_send_msg_to_mpc(sctk_thread_ptp_message_t* msg_header, void* msg, int src_process) {
+sctk_net_ibv_send_msg_to_mpc(sctk_thread_ptp_message_t* msg_header, void* msg, int src_process,
+    int origin, void* ptr) {
 
   sctk_net_ibv_allocator->entry[src_process].nb_ptp_msg_received++;
 
   sctk_nodebug("\t\t\t\tSent message to mpc");
   msg_header->net_mesg = msg;
+  msg_header->channel_type = origin;
+  msg_header->struct_ptr = ptr;
   sctk_send_message (msg_header);
 
 }

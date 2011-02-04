@@ -63,6 +63,7 @@ typedef struct
 
   /* locks */
   sctk_thread_mutex_t rc_sr_lock;
+  sctk_thread_mutex_t rc_rdma_lock;
 
 } sctk_net_ibv_allocator_entry_t;
 

@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <infiniband/verbs.h>
-#include "sctk_buffered_fifo.h"
+#include "sctk_list.h"
 #include "sctk_infiniband_qp.h"
 
 typedef struct
@@ -46,6 +46,7 @@ typedef struct
   size_t                          size;
   struct ibv_sge                  list;
   int                             directly_pinned;
+  int                             psn;
 } sctk_net_ibv_rc_rdma_entry_send_t;
 
 typedef struct
@@ -107,9 +108,9 @@ typedef struct
 
   sctk_spinlock_t lock;
   /* where are stored send infos */
-  struct sctk_buffered_fifo send;
+  struct sctk_list send;
   /* where are stored recv ifos */
-  struct sctk_buffered_fifo recv;
+  struct sctk_list recv;
   int                     ready;     /* if the qp is ready */
 } sctk_net_ibv_rc_rdma_process_t;
 
@@ -143,8 +144,7 @@ sctk_net_ibv_comp_rc_rdma_send_request(
     int dest_process,
     size_t size,
     sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma,
-    int need_connection,
-    uint32_t psn);
+    int need_connection);
 
 sctk_net_ibv_rc_rdma_process_t*
 sctk_net_ibv_comp_rc_rdma_add_request(

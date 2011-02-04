@@ -32,6 +32,12 @@
 
 void sctk_net_ibv_sched_init();
 
+void
+sctk_net_ibv_sched_lock();
+
+void
+sctk_net_ibv_sched_unlock();
+
 int
 sctk_net_ibv_sched_psn_inc (int dest);
 

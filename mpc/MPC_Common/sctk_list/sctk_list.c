@@ -30,6 +30,7 @@ void
 sctk_list_new(struct sctk_list* list, uint8_t is_collector)
 {
   list->elem_count = 0;
+  list->lock = SCTK_SPINLOCK_INITIALIZER;
   list->is_collector = is_collector;
   list->head = NULL;
   list->tail = NULL;
@@ -52,8 +53,10 @@ sctk_list_get_from_head(struct sctk_list* list, uint32_t n)
   while (tmp && n--) {
     tmp = tmp->p_next;
   }
-  return tmp->elem;
 
+  if (tmp != NULL)
+    return tmp->elem;
+  else return NULL;
 }
 
   void*
@@ -106,10 +109,7 @@ sctk_list_push(struct sctk_list* list, void *elem)
     new_elem->p_next = NULL;
     list->head = new_elem;
     list->tail = new_elem;
-  }
-
-  else
-  {
+  } else {
     new_elem = sctk_list_alloc_elem(elem);
     new_elem->p_prev = list->tail;
     new_elem->p_next = NULL;
@@ -121,8 +121,64 @@ sctk_list_push(struct sctk_list* list, void *elem)
   return new_elem;
 }
 
+void* sctk_list_walk(struct sctk_list* list,
+    void* (*funct) (void* elem), int remove)
+{
+  struct sctk_list_elem *tmp = list->head;
+  assume(funct);
+  void* ret = NULL;
+
+  while (tmp) {
+
+    ret = funct(tmp->elem);
+    if (ret)
+    {
+      if (remove)
+        sctk_list_remove(list, tmp);
+      return ret;
+    }
+
+    tmp = tmp->p_next;
+  }
+  return ret;
+}
+
+
+void* sctk_list_walk_on_cond(struct sctk_list* list, int cond,
+    void* (*funct) (void* elem, int cond), int remove)
+{
+  struct sctk_list_elem *tmp = list->head;
+  assume(funct);
+  void* ret = NULL;
+
+  while (tmp) {
+
+    ret = funct(tmp->elem, cond);
+    if (ret)
+    {
+      if (remove)
+        sctk_list_remove(list, tmp);
+      return ret;
+    }
+
+    tmp = tmp->p_next;
+  }
+  return ret;
+}
+
+
 int sctk_list_is_empty(struct sctk_list* list)
 {
   if(list->head) return 0;
   else return 1;
+}
+
+void sctk_list_lock(struct sctk_list* list)
+{
+  sctk_spinlock_lock(&list->lock);
+}
+
+void sctk_list_unlock(struct sctk_list* list)
+{
+  sctk_spinlock_unlock(&list->lock);
 }

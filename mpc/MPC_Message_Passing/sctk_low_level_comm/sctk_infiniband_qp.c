@@ -35,11 +35,12 @@
 /* FIXME Why this value is so high? */
 #define IB_RX_DEPTH 1000
 /* decrease this values if many processes */
-#define IB_MAX_SG_SQ 2
-#define IB_MAX_SG_RQ 2
+#define IB_MAX_SG_SQ 4
+#define IB_MAX_SG_RQ 4
 #define IB_MAX_INLINE 128
 /* maximum number of resources for incoming RDMA requests */
 #define IB_RMDA_DEPTH 4
+#define IB_RMDA_DEST_DEPTH 1
 /* physical port number */
 #define IBV_ADM_PORT 1
 
@@ -229,9 +230,9 @@ sctk_net_ibv_qp_state_rtr_attr(sctk_net_ibv_qp_exchange_keys_t* keys, int *flags
   attr.path_mtu = IBV_MTU_512;
   /* QP number of remote QP */
   /* maximul number if resiyrces for incoming RDMA request */
-  attr.max_dest_rd_atomic = IB_RMDA_DEPTH;
+  attr.max_dest_rd_atomic = IB_RMDA_DEST_DEPTH;
   /* maximum RNR NAK timer (recommanded value: 12) */
-  attr.min_rnr_timer = 20;
+  attr.min_rnr_timer = 12;
 
   /* an address handle (AH) needs to be created and filled in as appropriate. */
   attr.ah_attr.is_global = 0;
@@ -268,13 +269,13 @@ sctk_net_ibv_qp_state_rts_attr( uint32_t psn, int *flags)
   //FIXME : PB with little values
   attr.timeout = 14;
   /* retry count (recommended value: 7) */
-  attr.retry_cnt = 10;
+  attr.retry_cnt = 7;
   /* RNR retry count (recommended value: 7) */
-  attr.rnr_retry = 10;
+  attr.rnr_retry = 7;
   /* packet sequence number */
   attr.sq_psn = psn;
   /* number or outstanding RDMA reads and atomic operations allowed */
-  attr.max_rd_atomic = IB_RMDA_DEPTH;
+  attr.max_rd_atomic = IB_RMDA_DEST_DEPTH;
 
   *flags = IBV_QP_STATE |
     IBV_QP_TIMEOUT |

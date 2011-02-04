@@ -48,10 +48,11 @@ sctk_net_ibv_allocator_new()
   sctk_nodebug("creation : %p", sctk_net_ibv_allocator->entry);
   memset(sctk_net_ibv_allocator->entry, 0, size);
 
-//  for (i=0; i < sctk_process_number; ++i)
-//  {
-//    sctk_net_ibv_allocator->entry[i].rc_sr_lock = SCTK_THREAD_MUTEX_INITIALIZER;
-//  }
+  for (i=0; i < sctk_process_number; ++i)
+  {
+    sctk_thread_mutex_init(&sctk_net_ibv_allocator->entry[i].rc_sr_lock, NULL);
+    sctk_thread_mutex_init(&sctk_net_ibv_allocator->entry[i].rc_rdma_lock, NULL);
+  }
 
   /* init pending queues */
   sctk_net_ibv_allocator_pending_init(IBV_CHAN_RC_SR);
@@ -69,7 +70,7 @@ sctk_net_ibv_allocator_register(
     case IBV_CHAN_RC_SR:
       if (sctk_net_ibv_allocator->entry[rank].rc_sr)
       {
-        sctk_error("Process %d already registered to sctk_net_ibv_allocator RC_SR");
+        sctk_error("Process %d already registered to sctk_net_ibv_allocator RC_SR", rank);
         sctk_abort();
       }
       sctk_net_ibv_allocator->entry[rank].rc_sr = entry;
@@ -78,7 +79,7 @@ sctk_net_ibv_allocator_register(
     case IBV_CHAN_RC_RDMA:
       if (sctk_net_ibv_allocator->entry[rank].rc_rdma)
       {
-        sctk_error("Process %d already registered to chan RC_RDMA");
+        sctk_error("Process %d already registered to chan RC_RDMA", rank);
         sctk_abort();
       }
       sctk_net_ibv_allocator->entry[rank].rc_rdma = entry;
@@ -98,26 +99,10 @@ sctk_net_ibv_allocator_lock(
       break;
 
     case IBV_CHAN_RC_RDMA:
-      not_implemented();
+      sctk_thread_mutex_lock(&sctk_net_ibv_allocator->entry[rank].rc_rdma_lock);
       break;
   }
 }
-
-//void
-//sctk_net_ibv_allocator_trylock(
-//    unsigned int rank,
-//    sctk_net_ibv_allocator_type_t type)
-//{
-//   switch(type) {
-//    case IBV_CHAN_RC_SR:
-//      return sctk_spinlock_trylock(&sctk_net_ibv_allocator->entry[rank].rc_sr_lock);
-//      break;
-//
-//    case IBV_CHAN_RC_RDMA:
-//      not_implemented();
-//      break;
-//  }
-//}
 
 void
 sctk_net_ibv_allocator_unlock(
@@ -130,7 +115,7 @@ sctk_net_ibv_allocator_unlock(
       break;
 
     case IBV_CHAN_RC_RDMA:
-      not_implemented();
+      sctk_thread_mutex_unlock(&sctk_net_ibv_allocator->entry[rank].rc_rdma_lock);
       break;
   }
 }
@@ -146,8 +131,8 @@ sctk_net_ibv_allocator_get(
       break;
 
     case IBV_CHAN_RC_RDMA:
-  sctk_nodebug("Geting %p", &sctk_net_ibv_allocator->entry[rank]);
-  sctk_nodebug("Allocator get : %p", sctk_net_ibv_allocator->entry[rank].rc_rdma);
+      sctk_nodebug("Geting %p", &sctk_net_ibv_allocator->entry[rank]);
+      sctk_nodebug("Allocator get : %p", sctk_net_ibv_allocator->entry[rank].rc_rdma);
       return sctk_net_ibv_allocator->entry[rank].rc_rdma;
       break;
   }
@@ -195,14 +180,17 @@ sctk_net_ibv_allocator_pending_push(
   switch(type) {
     case IBV_CHAN_RC_SR:
       sctk_nodebug("New Message RC_SR pushed %p", msg);
-      sctk_list_push(
-          &rc_sr_pending, msg);
+      sctk_list_lock(&rc_sr_pending);
+      sctk_list_push(&rc_sr_pending, msg);
+      sctk_list_unlock(&rc_sr_pending);
       break;
 
     case IBV_CHAN_RC_RDMA:
-      sctk_nodebug("\t\t\t\t\t\t\t\tNew Message RC_RDMA pushed ");
+      sctk_nodebug("New Message RC_RDMA pushed ");
+      sctk_list_lock(&rc_rdma_pending);
       sctk_list_push(
           &rc_rdma_pending, msg);
+      sctk_list_unlock(&rc_rdma_pending);
       break;
   }
 }
@@ -268,21 +256,26 @@ sctk_net_ibv_allocator_rc_rdma_process_next_request(
   sctk_net_ibv_rc_rdma_request_ack_t* ack;
   sctk_net_ibv_qp_remote_t* remote_rc_sr;
   sctk_net_ibv_rc_sr_entry_t* entry;
-  sctk_net_ibv_rc_rdma_entry_recv_t *last_entry_recv;
+  sctk_net_ibv_rc_rdma_entry_recv_t *last_entry_recv = NULL;
 
+
+  sctk_net_ibv_allocator_lock(entry_rc_rdma->remote.rank, IBV_CHAN_RC_RDMA);
   last_entry_recv = sctk_net_ibv_comp_rc_rdma_check_pending_request(entry_rc_rdma);
 
   /* if we have pop an element */
   if ( last_entry_recv )
   {
     last_entry_recv->used = 1;
+    sctk_net_ibv_allocator_unlock(entry_rc_rdma->remote.rank, IBV_CHAN_RC_RDMA);
+
+    sctk_nodebug("there is one message to perform (dest %d PSN %d)!",
+        last_entry_recv->src_process, last_entry_recv->psn);
 
     sctk_nodebug("Element to pop");
     entry = sctk_net_ibv_comp_rc_sr_pick_header(rc_sr_ptp_send_buff);
     ack = (sctk_net_ibv_rc_rdma_request_ack_t* ) &(entry->msg_header->payload);
 
-    sctk_net_ibv_comp_rc_rdma_prepare_ack(rail, entry_rc_rdma, ack,
-        last_entry_recv);
+    //TODO reorder post_recv and prepate_ack
 
     /* post buffer and register ptr*/
     sctk_net_ibv_comp_rc_rdma_post_recv(
@@ -292,11 +285,16 @@ sctk_net_ibv_allocator_rc_rdma_process_next_request(
         &(ack->dest_ptr), &(ack->dest_rkey) );
 
 
+    sctk_net_ibv_comp_rc_rdma_prepare_ack(rail, entry_rc_rdma, ack,
+        last_entry_recv);
+
     /* send msg RC_SR_RDVZ_ACK */
     remote_rc_sr = sctk_net_ibv_allocator_get(last_entry_recv->src_process, IBV_CHAN_RC_SR);
 
-    sctk_net_ibv_comp_rc_sr_send(remote_rc_sr, entry, sizeof(sctk_thread_ptp_message_t), RC_SR_RDVZ_ACK);
+    sctk_net_ibv_comp_rc_sr_send(remote_rc_sr, entry, sizeof(sctk_thread_ptp_message_t), RC_SR_RDVZ_ACK, NULL);
   }
+
+  sctk_net_ibv_allocator_unlock(entry_rc_rdma->remote.rank, IBV_CHAN_RC_RDMA);
 }
 
 
@@ -318,26 +316,6 @@ sctk_net_ibv_alloc_rc_rdma_find_from_qp_num(uint32_t qp_num)
         && (entry_rdma->remote.qp->qp_num == qp_num))
     {
       sctk_nodebug("FOUND process %d", entry_rdma->remote.rank);
-      return entry_rdma;
-    }
-  }
-  return NULL;
-}
-
-  sctk_net_ibv_rc_rdma_process_t*
-sctk_net_ibv_alloc_rc_rdma_find_from_rank(int rank)
-{
-  sctk_net_ibv_rc_rdma_process_t          *entry_rdma = NULL;
-
-  int i;
-  for(i=0; i < sctk_process_number; ++i)
-  {
-    entry_rdma = sctk_net_ibv_allocator_get(i, IBV_CHAN_RC_RDMA);
-
-    if (entry_rdma
-        && (entry_rdma->remote.rank == rank))
-    {
-      sctk_nodebug("Found entry %p", entry_rdma);
       return entry_rdma;
     }
   }
@@ -423,6 +401,7 @@ int sctk_net_ibv_allocator_ptp_lookup_all(int dest)
 {
   int ret;
 
+  /* poll pending messages */
   sctk_net_ibv_sched_poll_pending();
 
   sctk_net_ibv_allocator_ptp_lookup(dest, IBV_CHAN_RC_SR);
@@ -469,7 +448,7 @@ sctk_create_recv_socket ()
   gethostname (hostname, 256);
 
   sctk_nodebug("TCP server is running on port %d", portno);
-  listen (fd, 20);
+  listen (fd, 40);
 
   return fd;
 }

@@ -25,6 +25,8 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <sctk_config.h>
+#include <sctk_spinlock.h>
 
 #ifndef __SCTK__LIST__
 #define __SCTK__LIST__
@@ -38,6 +40,7 @@ struct sctk_list_elem {
 struct sctk_list {
   uint64_t elem_count;
   uint8_t is_collector;
+  sctk_spinlock_t   lock;
   struct sctk_list_elem *head;
   struct sctk_list_elem *tail;
 };
@@ -55,6 +58,16 @@ sctk_list_get_from_head(struct sctk_list* list, uint32_t n);
 sctk_list_remove(struct sctk_list* list, struct sctk_list_elem* elem);
 
 int sctk_list_is_empty(struct sctk_list* list);
+
+void* sctk_list_walk_on_cond(struct sctk_list* list, int cond,
+    void* (*funct) (void* elem, int cond), int remove);
+
+void* sctk_list_walk(struct sctk_list* list,
+    void* (*funct) (void* elem), int remove);
+
+void sctk_list_lock(struct sctk_list* list);
+
+void sctk_list_unlock(struct sctk_list* list);
 
   void*
 sctk_list_pop(struct sctk_list* list);

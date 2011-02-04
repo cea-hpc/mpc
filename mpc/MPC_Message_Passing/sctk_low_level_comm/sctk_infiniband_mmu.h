@@ -26,6 +26,7 @@
 
 #include <sctk_spinlock.h>
 #include <sctk_debug.h>
+#include <sctk_config.h>
 
 /* enumeration for entry state  */
 typedef enum
@@ -43,8 +44,6 @@ typedef struct
   void *ptr;                /* ptr to the MR */
   size_t size;              /* size of the MR */
   struct ibv_mr *mr;        /* MR */
-//  uint32_t rkey;          /* REMOVED */
-//  uint32_t lkey;          /* REMOVED */
 } sctk_net_ibv_mmu_entry_t;
 
 

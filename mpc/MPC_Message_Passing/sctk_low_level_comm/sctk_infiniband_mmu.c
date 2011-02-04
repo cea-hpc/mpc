@@ -27,7 +27,7 @@
 #include "sctk_infiniband_qp.h"
 #include <infiniband/verbs.h>
 
-#define SCTK_MAX_MR_ALLOWED 2000
+#define SCTK_MAX_MR_ALLOWED 20000
 
 /*-----------------------------------------------------------
  *  NEW / FREE

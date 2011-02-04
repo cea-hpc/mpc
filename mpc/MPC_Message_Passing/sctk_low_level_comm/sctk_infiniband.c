@@ -99,11 +99,26 @@ sctk_net_ibv_update_network_mode()
   sctk_network_mode = sctk_net_network_mode;
 }
 
+#include "sctk_infiniband_coll.h"
   void
 sctk_net_init_driver_infiniband (int *argc, char ***argv)
 {
   assume (argc != NULL);
   assume (argv != NULL);
+
+  /*-----------------------------------------------------------
+   *  RC_SR
+   *----------------------------------------------------------*/
+  /* initialization of queue pairs */
+  sctk_net_ibv_allocator_rc_sr_buffers_init(rail);
+
+  /* channel selection */
+  sctk_net_ibv_allocator_new();
+
+  /* message numbering */
+  sctk_net_ibv_sched_init();
+
+  sctk_net_ibv_collective_init();
 
   sctk_net_ibv_update_network_mode();
 
@@ -134,29 +149,27 @@ sctk_net_ibv_send_ptp_message_driver ( sctk_thread_ptp_message_t * msg,
   size_t size;
   sctk_net_ibv_rc_rdma_process_t*     rc_rdma_entry = NULL;
   int need_connection = 0;
-  uint32_t psn;
 
   size = sctk_net_determine_message_size(msg);
   /* determine message number */
-  psn = sctk_net_ibv_sched_psn_inc(dest_process);
-  sctk_nodebug("Send PTP %lu to %d with psn %lu", size, dest_process, psn);
 
  sctk_net_ibv_allocator->entry[dest_process].nb_ptp_msg_transfered++;
 
   /* EAGER MODE */
   if ( (size + sizeof(sctk_thread_ptp_message_t)) <= SCTK_EAGER_THRESHOLD)  {
-   sctk_nodebug("Send EAGER message to %d %d and size %lu", dest_process, psn, size);
+   sctk_nodebug("Send EAGER message to %d and size %lu", dest_process, size);
     sctk_net_ibv_comp_rc_sr_send_ptp_message (
         rc_sr_local,
         rc_sr_ptp_send_buff, msg,
-        dest_process, size, RC_SR_EAGER, psn);
+        dest_process, size, RC_SR_EAGER);
     /* RDVZ MODE */
   } else {
-  /* check if the dest process exists in the RDVZ remote list.
+    sctk_net_ibv_allocator_lock(dest_process, IBV_CHAN_RC_RDMA);
+    /* check if the dest process exists in the RDVZ remote list.
    * If it doesn't, we initialize a QP creation/connection */
-   rc_rdma_entry = sctk_net_ibv_alloc_rc_rdma_find_from_rank(
-       dest_process);
-   sctk_nodebug("Send RDVZ message to %d %d", dest_process, psn);
+   rc_rdma_entry = sctk_net_ibv_allocator_get(dest_process, IBV_CHAN_RC_RDMA);
+
+   sctk_nodebug("Send RDVZ message to %d", dest_process);
    /* if a new connection is needed */
    if (!rc_rdma_entry)
    {
@@ -166,9 +179,11 @@ sctk_net_ibv_send_ptp_message_driver ( sctk_thread_ptp_message_t * msg,
      rc_rdma_entry = sctk_net_ibv_comp_rc_rdma_allocate_init(dest_process, rc_rdma_local);
 
      sctk_net_ibv_allocator_register(dest_process, rc_rdma_entry, IBV_CHAN_RC_RDMA);
-   } else {
-      sctk_nodebug("Already registered");
    }
+   /* else {
+      sctk_nodebug("Already registered");
+   } */
+    sctk_net_ibv_allocator_unlock(dest_process, IBV_CHAN_RC_RDMA);
 
    sctk_net_ibv_comp_rc_rdma_send_request (
        rail,
@@ -176,7 +191,7 @@ sctk_net_ibv_send_ptp_message_driver ( sctk_thread_ptp_message_t * msg,
        rc_rdma_local,
        rc_sr_ptp_send_buff,
        msg,
-       dest_process, size, rc_rdma_entry, need_connection, psn);
+       dest_process, size, rc_rdma_entry, need_connection);
   }
   DBG_E(1);
 }
@@ -200,6 +215,28 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
 
   sctk_nodebug("FREE MSG");
 
+  switch (item->channel_type)
+  {
+    case IBV_RC_SR_ORIGIN:
+      sctk_nodebug("Free RC_SR message");
+
+      break;
+    case IBV_RC_RDMA_ORIGIN:
+      sctk_nodebug("Free RC_RDMA message");
+
+
+      break;
+
+    case IBV_POLL_RC_SR_ORIGIN:
+      sctk_nodebug("Free POLL_RC_SR");
+
+      break;
+
+    default:
+      assume(0);
+        break;
+  }
+
   /* rendezvous message */
   entry_rdma =
     sctk_net_ibv_comp_rc_rdma_free_msg(rail, item);
@@ -216,7 +253,7 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
 
   sctk_nodebug("Free needed from %lu %p", item->header.source, item);
   /* simple message from dynamic allocation */
-  free(item);
+//  free(item);
   sctk_nodebug("End free");
 
   DBG_E(1);
@@ -226,7 +263,6 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
 /*-----------------------------------------------------------
  *  COLLECTIVE FUNCTIONS
  *----------------------------------------------------------*/
-#include "sctk_infiniband_coll.h"
   static void
 sctk_net_ibv_collective_op_driver (sctk_collective_communications_t * com,
     sctk_virtual_processor_t * my_vp,
@@ -237,7 +273,7 @@ sctk_net_ibv_collective_op_driver (sctk_collective_communications_t * com,
       sctk_datatype_t),
     const sctk_datatype_t data_type)
 {
-  sctk_nodebug ("begin collective");
+  sctk_nodebug ("begin collective from root %d", root);
   if (nb_elem == 0)
   {
     sctk_nodebug ("begin collective barrier : %d", com->id);
@@ -260,7 +296,7 @@ sctk_net_ibv_collective_op_driver (sctk_collective_communications_t * com,
     }
     else
     {
-      sctk_nodebug ("begin collective reduce");
+      sctk_nodebug ("begin collective reduce for root %d", root);
       sctk_net_ibv_allreduce ( com, my_vp, elem_size, nb_elem, func,
           data_type );
       //	  sctk_net_reduce_op_driver (com, my_vp, elem_size, nb_elem, func,
@@ -320,22 +356,8 @@ sctk_net_preinit_driver_infiniband ( sctk_net_driver_pointers_functions_t* point
   rc_rdma_local = sctk_net_ibv_comp_rc_rdma_create_local(rail);
 
   /*-----------------------------------------------------------
-   *  RC_SR
-   *----------------------------------------------------------*/
-  /* initialization of queue pairs */
-  sctk_net_ibv_allocator_rc_sr_buffers_init(rail);
-
-
-  /*-----------------------------------------------------------
    *  COLLECTIVE
    *----------------------------------------------------------*/
-  sctk_net_ibv_collective_init();
-
-  /* channel selection */
-  sctk_net_ibv_allocator_new();
-
-  /* message numbering */
-  sctk_net_ibv_sched_init();
 
   /*-----------------------------------------------------------
    *  IB KEYS EXCHANGING

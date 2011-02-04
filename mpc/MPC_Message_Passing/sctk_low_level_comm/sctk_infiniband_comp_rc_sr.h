@@ -102,7 +102,7 @@ typedef struct
   int             slot_nb;
   int             slot_size;
   int             current_nb;
-  sctk_spinlock_t lock;
+  sctk_thread_mutex_t lock;
   uint32_t        wr_begin;
   uint32_t        wr_end;
   sctk_net_ibv_rc_sr_entry_t* headers;
@@ -131,9 +131,9 @@ sctk_net_ibv_comp_rc_sr_pick_header(sctk_net_ibv_rc_sr_buff_t* buff);
 
 void
 sctk_net_ibv_comp_rc_sr_send(
-    sctk_net_ibv_qp_remote_t* remote,
+  sctk_net_ibv_qp_remote_t* remote,
     sctk_net_ibv_rc_sr_entry_t* entry,
-    size_t size, sctk_net_ibv_rc_sr_msg_type_t type);
+ size_t size, sctk_net_ibv_rc_sr_msg_type_t type, uint32_t* psn);
 
 int
 sctk_net_ibv_comp_rc_sr_post_recv(
@@ -153,7 +153,7 @@ void
 sctk_net_ibv_comp_rc_sr_send_ptp_message (
     sctk_net_ibv_qp_local_t* local_rc_sr,
     sctk_net_ibv_rc_sr_buff_t* buff,
-    void* msg, int dest_process, size_t size, sctk_net_ibv_rc_sr_msg_type_t type, uint32_t psn);
+    void* msg, int dest_process, size_t size, sctk_net_ibv_rc_sr_msg_type_t type);
 
 sctk_net_ibv_qp_remote_t*
 sctk_net_ibv_comp_rc_sr_check_and_connect(int dest_process);
