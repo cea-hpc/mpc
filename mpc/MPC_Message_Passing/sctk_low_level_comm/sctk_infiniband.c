@@ -34,6 +34,7 @@
 #include "sctk_infiniband_allocator.h"
 #include "sctk_infiniband_qp.h"
 #include "sctk_infiniband_mmu.h"
+#include "sctk_infiniband_cm.h"
 #include "sctk_infiniband_comp_rc_sr.h"
 #include "sctk_infiniband_comp_rc_rdma.h"
 
@@ -122,7 +123,7 @@ sctk_net_init_driver_infiniband (int *argc, char ***argv)
 
   sctk_net_ibv_update_network_mode();
 
-  sctk_net_ibv_tcp_server();
+  sctk_net_ibv_cm_server();
 //  PMI_Finalize();
 
   PMI_Barrier();

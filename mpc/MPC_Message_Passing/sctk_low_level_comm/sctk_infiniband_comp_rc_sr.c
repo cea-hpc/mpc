@@ -25,6 +25,7 @@
 #include "sctk_infiniband_comp_rc_rdma.h"
 #include "sctk_infiniband_scheduling.h"
 #include "sctk_infiniband_allocator.h"
+#include "sctk_infiniband_cm.h"
 #include "sctk_infiniband_coll.h"
 #include "sctk_infiniband_lib.h"
 #include "sctk_infiniband_qp.h"
@@ -306,8 +307,8 @@ sctk_net_ibv_comp_rc_sr_check_and_connect(int dest_process)
     int port;
 
     sctk_net_ibv_allocator_unlock(dest_process, IBV_CHAN_RC_SR);
-    sctk_net_ibv_tcp_request(dest_process, remote, host, &port);
-    sctk_net_ibv_tcp_client(host, port, dest_process, remote);
+    sctk_net_ibv_cm_request(dest_process, remote, host, &port);
+    sctk_net_ibv_cm_client(host, port, dest_process, remote);
   } else  {
     sctk_net_ibv_allocator_unlock(dest_process, IBV_CHAN_RC_SR);
   }
