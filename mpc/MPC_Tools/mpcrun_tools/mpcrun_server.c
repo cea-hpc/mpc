@@ -332,13 +332,13 @@ sctk_match_hostname(char* host)
   static void
 sctk_get_local_size_and_node_number (int fd, int rank)
 {
-  char hostname[HOSTNAME_PORT_SIZE];
+  char hostname[HOSTNAME_SIZE];
   int index;
   int local_size;
   unsigned long msg_size;
   sctk_client_local_size_and_node_number_message_t msg;
 
-  safe_read (fd, hostname, HOSTNAME_PORT_SIZE);
+  safe_read (fd, hostname, HOSTNAME_SIZE);
 
   sctk_debug("hostname received : %s", hostname);
 
