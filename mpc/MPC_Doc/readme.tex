@@ -288,6 +288,35 @@ The OpenMP standard proposes a directive to create \emph{thread-private} variabl
 The MPC implementation follows the standard and supports this feature.
 Nevertheless, for this feature to work, the application has to be compiled as a dynamic library.
 
+Here are a few steps to compile your program as a dynamic library.
+\begin{enumerate}
+\item change the name of the \texttt{main} of your program to \texttt{realmain}
+\item compile your program to \texttt{.o} with the \texttt{-fPIC} option\\
+\verb!mpc_cc -fPIC -o prog.o -c prog.c!
+\item transform your \texttt{.o} into a dynamic library\\
+\verb!mpc_cc -shared -Wl,-soname,libprog.so -o libprog.so prog.o!
+\item compile the file \texttt{main.c} which should call the function \texttt{realmain} located
+in the dynamic library\\
+\verb!mpc_cc -o prog_exec main.c -L. -lprog!
+\item run your program specifying where is your dynamic library. If your program
+executable and the dynamic library are in the current directory, you can use the command\\
+\verb!LD_LIBRARY_PATH=. mpc_run ./prog_exec!
+\end{enumerate}
+
+A typical \texttt{main.c} file should look like this.
+\begin{verbatim}
+#include "mpc.h"
+
+int realmain (int argc, char **argv) ;
+
+int main (int argc, char **argv)
+{
+  int return_value = 0 ;
+  return_value = realmain(argc,argv) ;
+  return return_value ;
+}
+\end{verbatim}
+
 %%%% Threads %%%%
 \subsection{Threads}
 
@@ -441,6 +470,9 @@ As a conclusion, either you change the prefix path (recommanded version), or you
 
 \subsection*{Q - How can I tune the MPC SHared Memory module (\emph{SHM}) according to my needs ?}
 A - You need to edit the file located there : \\{\tt mpc/MPC\_Message\_Passing/sctk\_low\_level\_comm/sctk\_shm\_consts.h}. In this file, you can modify the number of cells in each queue (PTP queues, collective queues, etc\dots) as well as the size allocated by each cell. Don't forget to recompile MPC after it.
+
+\subsection*{Q - When compiling, I have the error undefined reference to \texttt{mpc\_user\_main\_\_}}
+A - The file containing your \texttt{main} should include \texttt{mpi.h} or \texttt{mpc.h}
 
 \section{Contacts}
 \begin{itemize}

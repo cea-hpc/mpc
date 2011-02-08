@@ -24,7 +24,8 @@
 all:
 	@latex readme.tex && bibtex readme && latex readme.tex &&latex readme.tex &&latex readme .tex
 	@dvips readme.dvi -o readme.ps
-	@ps2pdf readme.ps readme.pdf 
+	@ps2pdf readme.ps readme.pdf
+	@cp readme.pdf ../../README.pdf 
 
 clean:
 	@rm readme.aux  readme.dvi  readme.log  readme.ps  readme.toc
