@@ -26,7 +26,6 @@
 
 #include <sctk_debug.h>
 #include <sctk_spinlock.h>
-#include <sctk_spinlock.h>
 #include "sctk_infiniband.h"
 #include "sctk_infiniband_mmu.h"
 #include "sctk_inter_thread_comm.h"
@@ -50,9 +49,9 @@ typedef enum
 /* number of different msg type (see the list above) */
 
 /* nb entries in buffers */
-  #define IBV_PENDING_SEND_PTP  500
-  #define IBV_PENDING_SEND_COLL 500
-  #define IBV_PENDING_RECV      500
+  #define IBV_PENDING_SEND_PTP  300
+  #define IBV_PENDING_SEND_COLL 300
+  #define IBV_PENDING_RECV      300
 
 /*  EAGER  */
 typedef struct
@@ -74,12 +73,12 @@ typedef enum{
 typedef struct
 {
   int                              id;   /* slot's ID */
+  volatile int                     used;        /* if slot used */
   union
   {
     struct ibv_send_wr             send_wr;
     struct ibv_recv_wr             recv_wr;
   } wr;
-  volatile int                     used; /* if slot used */
   sctk_net_ibv_mmu_entry_t         *mmu_entry; /* MMU entry */
   sctk_net_ibv_rc_sr_msg_header_t  *msg_header;
   struct ibv_sge                   list;
@@ -98,11 +97,11 @@ typedef struct
 
 typedef struct
 {
+  sctk_thread_mutex_t lock;
   int             buff_type;
   int             slot_nb;
   int             slot_size;
   int             current_nb;
-  sctk_thread_mutex_t lock;
   uint32_t        wr_begin;
   uint32_t        wr_end;
   sctk_net_ibv_rc_sr_entry_t* headers;
@@ -129,7 +128,7 @@ sctk_net_ibv_comp_rc_sr_create_local(sctk_net_ibv_qp_rail_t* rail);
 sctk_net_ibv_rc_sr_entry_t*
 sctk_net_ibv_comp_rc_sr_pick_header(sctk_net_ibv_rc_sr_buff_t* buff);
 
-void
+int
 sctk_net_ibv_comp_rc_sr_send(
   sctk_net_ibv_qp_remote_t* remote,
     sctk_net_ibv_rc_sr_entry_t* entry,
@@ -167,7 +166,7 @@ sctk_net_ibv_rc_sr_poll_send(
   sctk_net_ibv_rc_sr_buff_t* ptp_buff,
   sctk_net_ibv_rc_sr_buff_t* coll_buff);
 
-int
+void
 sctk_net_ibv_rc_sr_poll_recv(
   struct ibv_wc* wc,
   sctk_net_ibv_qp_rail_t      *rail,

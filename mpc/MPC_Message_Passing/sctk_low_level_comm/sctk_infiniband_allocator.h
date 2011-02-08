@@ -31,7 +31,7 @@
 #include "sctk_infiniband_qp.h"
 #include "sctk.h"
 
-#define SCTK_EAGER_THRESHOLD ( (8 * 1024) + sizeof(sctk_thread_ptp_message_t) )
+#define SCTK_EAGER_THRESHOLD ( (128 * 1024) + sizeof(sctk_thread_ptp_message_t) )
 
 sctk_net_ibv_qp_rail_t   *rail;
 
@@ -66,11 +66,6 @@ typedef struct
   sctk_thread_mutex_t rc_rdma_lock;
 
 } sctk_net_ibv_allocator_entry_t;
-
-/* pending requests */
-struct sctk_list rc_sr_pending;
-struct sctk_list rc_rdma_pending;
-
 
 typedef struct
 {
@@ -123,21 +118,6 @@ sctk_net_ibv_alloc_rc_rdma_find_from_rank(int rank);
 void sctk_net_ibv_allocator_ptp_poll_all();
 
 int sctk_net_ibv_allocator_ptp_lookup_all(int dest);
-
-/*-----------------------------------------------------------
- *  REORDERING
- *----------------------------------------------------------*/
-
-void
-sctk_net_ibv_allocator_pending_push(
-    void* ptr,
-    size_t size,
-    int allocation_needed,
-    sctk_net_ibv_allocator_type_t type);
-
-void
-sctk_net_ibv_allocator_pending_init(
-    sctk_net_ibv_allocator_type_t type);
 
 void
 sctk_net_ibv_allocator_unlock(

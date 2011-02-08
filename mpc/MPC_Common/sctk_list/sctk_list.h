@@ -40,7 +40,7 @@ struct sctk_list_elem {
 struct sctk_list {
   uint64_t elem_count;
   uint8_t is_collector;
-  sctk_spinlock_t   lock;
+  sctk_thread_mutex_t   lock;
   struct sctk_list_elem *head;
   struct sctk_list_elem *tail;
 };
@@ -71,4 +71,7 @@ void sctk_list_unlock(struct sctk_list* list);
 
   void*
 sctk_list_pop(struct sctk_list* list);
+
+void* sctk_list_search_and_free(struct sctk_list* list,
+    void* elem);
 #endif				/*  */

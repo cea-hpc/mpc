@@ -39,7 +39,7 @@ static uint32_t wr_current = 0;
 extern struct sctk_list broadcast_fifo;
 extern struct sctk_list reduce_fifo;
 
-static restore_buffers(
+static void restore_buffers(
     sctk_net_ibv_qp_local_t* local,
     sctk_net_ibv_rc_sr_buff_t* buff,
     int id)
@@ -111,6 +111,7 @@ sctk_net_ibv_comp_rc_sr_create_local(sctk_net_ibv_qp_rail_t* rail)
 sctk_net_ibv_comp_rc_sr_free_header(sctk_net_ibv_rc_sr_buff_t* buff, sctk_net_ibv_rc_sr_entry_t* entry)
 {
   sctk_thread_mutex_lock(&buff->lock);
+  sctk_nodebug("Free header %p (nb : %d)", entry, buff->current_nb);
   entry->used = 0;
   buff->current_nb--;
   sctk_thread_mutex_unlock(&buff->lock);
@@ -122,34 +123,41 @@ sctk_net_ibv_comp_rc_sr_pick_header(sctk_net_ibv_rc_sr_buff_t* buff)
 {
   int i;
 
-  while (1)
+  for (;;)
   {
-    sctk_thread_mutex_lock(&buff->lock);
-    for (i = 0; i < buff->slot_nb; ++i)
-    {
-      if ( buff->headers[i].used == 0 )
-      {
-        sctk_nodebug("RC_SR slot %d found !", i);
-        buff->headers[i].used = 1;
-        buff->current_nb++;
-        sctk_thread_mutex_unlock(&buff->lock);
-        return &(buff->headers[i]);
-      }
-    }
-    sctk_nodebug("No header found");
 
-    sctk_thread_mutex_unlock(&buff->lock);
-    sctk_thread_yield();
+    if (sctk_thread_mutex_trylock(&buff->lock) == 0)
+    {
+
+      for (i = 0; i < buff->slot_nb; ++i)
+      {
+        sctk_nodebug("Slot %d (used:%d)", i, buff->headers[i].used);
+        if ( buff->headers[i].used == 0 )
+        {
+          sctk_nodebug("RC_SR slot %d found ! (%p) ", i, &buff->headers[i]);
+          buff->headers[i].used = 1;
+          buff->current_nb++;
+          sctk_thread_mutex_unlock(&buff->lock);
+          return &(buff->headers[i]);
+        }
+      }
+      sctk_nodebug("No header found");
+
+      sctk_thread_mutex_unlock(&buff->lock);
+    }
+
+//    sctk_thread_yield();
   }
   assume(0);
 }
 
-void
+int
 sctk_net_ibv_comp_rc_sr_send(
     sctk_net_ibv_qp_remote_t* remote,
     sctk_net_ibv_rc_sr_entry_t* entry,
     size_t size, sctk_net_ibv_rc_sr_msg_type_t type, uint32_t* psn)
 {
+  int ret_psn;
   int rc;
   struct  ibv_send_wr* bad_wr = NULL;
 
@@ -163,6 +171,7 @@ sctk_net_ibv_comp_rc_sr_send(
   {
     sctk_net_ibv_sched_lock();
     *psn = sctk_net_ibv_sched_psn_inc(remote->rank);
+    ret_psn = *psn;
     rc = ibv_post_send(remote->qp , &(entry->wr.send_wr), &bad_wr);
     assume (rc == 0);
     sctk_net_ibv_sched_unlock();
@@ -174,6 +183,13 @@ sctk_net_ibv_comp_rc_sr_send(
     rc = ibv_post_send(remote->qp , &(entry->wr.send_wr), &bad_wr);
     assume (rc == 0);
   }
+
+  if (type == RC_SR_RDVZ_REQUEST)
+  {
+    sctk_nodebug("PSN : %d(%p)", *psn, psn);
+  }
+
+  return ret_psn;
 }
 
 int
@@ -403,7 +419,7 @@ sctk_net_ibv_rc_sr_poll_send(
   sctk_nodebug("Send cq done");
 }
 
-int
+void
 sctk_net_ibv_rc_sr_poll_recv(
     struct ibv_wc* wc,
     sctk_net_ibv_qp_rail_t      *rail,
@@ -417,10 +433,7 @@ sctk_net_ibv_rc_sr_poll_recv(
   sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma;
   int wc_id;
   sctk_net_ibv_rc_sr_msg_type_t msg_type;
-  sctk_net_ibv_rc_rdma_entry_recv_t* entry_recv;
-  int* limit;
   int ret;
-  uint32_t psn_got;
   void* msg;
 
   wc_id = wc->wr_id;
@@ -452,7 +465,7 @@ sctk_net_ibv_rc_sr_poll_recv(
           sctk_nodebug("LOOKUP UNEXPECTED - Found psn %d from %d",
               entry->msg_header->psn, entry->msg_header->src_process);
 
-          sctk_net_ibv_allocator_pending_push(
+          sctk_net_ibv_sched_pending_push(
               entry->msg_header, entry->msg_header->size, 1,
               IBV_CHAN_RC_SR);
 
@@ -472,8 +485,6 @@ sctk_net_ibv_rc_sr_poll_recv(
               (char*) msg + sizeof(sctk_thread_ptp_message_t), entry->msg_header->src_process,
               IBV_RC_SR_ORIGIN, NULL);
         }
-        /* reset buffers */
-        restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
 
         /* normal mode */
       } else {
@@ -507,9 +518,10 @@ sctk_net_ibv_rc_sr_poll_recv(
             (char*) msg + sizeof(sctk_thread_ptp_message_t), entry->msg_header->src_process,
             IBV_RC_SR_ORIGIN, NULL);
 
-        /* reset buffers */
-        restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
       }
+      /* reset buffers */
+      restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
+
       sctk_nodebug("(EAGER) MSG PTP received %lu", entry->msg_header->size);
       break;
 
@@ -538,82 +550,15 @@ sctk_net_ibv_rc_sr_poll_recv(
 
     case RC_SR_RDVZ_DONE:
       assume(0);
-//      sctk_nodebug("RDVZ DONE recv");
-//      entry_recv = sctk_net_ibv_comp_rc_rdma_match_read_msg(
-//          entry);
-//      assume(entry_recv);
-//
-//      sctk_nodebug("RDVZ DONE RECV for process %lu with psn %lu", entry_recv->src_process, entry_recv->psn);
-//
-//      if (lookup_mode) {
-//
-//        ret = sctk_net_ibv_sched_sn_check_and_inc(
-//            entry_recv->src_process,
-//            entry_recv->psn);
-//
-//        if (ret)
-//        {
-//          sctk_nodebug("Push RDVZ msg");
-//          sctk_net_ibv_allocator_pending_push(entry_recv,
-//              sizeof(sctk_net_ibv_rc_rdma_entry_recv_t), 0,
-//              IBV_CHAN_RC_RDMA);
-//          //TODO surround by lock
-//          entry_recv->sent_to_mpc = 1;
-//
-//          restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
-//        } else {
-//          sctk_nodebug("Read the msg");
-//          sctk_net_ibv_comp_rc_rdma_read_msg(entry_recv);
-//
-//          sctk_nodebug("Recv RDVZ message from %d (PSN:%lu)", entry_recv->src_process, entry_recv->psn);
-//
-//          restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
-//
-//          sctk_nodebug("PSN %d FOUND for process %d", entry_recv->psn, entry_recv->src_process);
-//        }
-//
-//      } else {
-//        ret = sctk_net_ibv_sched_sn_check_and_inc(
-//            entry_recv->src_process,
-//            entry_recv->psn);
-//
-//        sctk_nodebug("RET : %d", ret);
-//
-//        if(ret)
-//        {
-//          do {
-//            sctk_net_ibv_allocator_ptp_lookup_all(
-//                entry_recv->src_process);
-//
-//            ret = sctk_net_ibv_sched_sn_check_and_inc(
-//                entry_recv->src_process, entry_recv->psn);
-//
-//            sctk_thread_yield();
-//
-//          } while (ret);
-//        }
-//
-//        sctk_net_ibv_comp_rc_rdma_read_msg(entry_recv);
-//
-//        sctk_nodebug("Recv RDVZ message from %d (PSN:%lu)", entry_recv->src_process, entry_recv->psn);
-//
-//        restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
-//      }
-//
-//      /* process the next RDMA request */
-//      entry_rc_rdma = (sctk_net_ibv_rc_rdma_process_t*)
-//        sctk_net_ibv_allocator_get(entry_recv->src_process, IBV_CHAN_RC_RDMA);
-//      sctk_net_ibv_allocator_rc_rdma_process_next_request(entry_rc_rdma);
-//      break;
-//
+
     case RC_SR_BCAST:
-      sctk_nodebug("Broadcast msg received from %d", entry_recv->src_process);
+      sctk_nodebug("Broadcast msg received");
       sctk_net_ibv_collective_push(&broadcast_fifo, entry->msg_header);
       restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
       break;
 
     case RC_SR_REDUCE:
-      sctk_nodebug("Reduce msg received from %d", entry_recv->src_process);
+      sctk_nodebug("Reduce msg received");
       sctk_net_ibv_collective_push(&reduce_fifo, entry->msg_header);
       restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
       break;
@@ -666,8 +611,8 @@ sctk_net_ibv_comp_rc_sr_allocate_recv(
 /*-----------------------------------------------------------
  *  ERROR HANDLING
  *----------------------------------------------------------*/
-void
-  sctk_net_ibv_comp_rc_sr_error_handler(struct ibv_wc wc)
+  void
+sctk_net_ibv_comp_rc_sr_error_handler(struct ibv_wc wc)
 {
 
 }

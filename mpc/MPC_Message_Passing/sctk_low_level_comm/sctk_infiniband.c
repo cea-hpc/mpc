@@ -79,11 +79,6 @@ extern sctk_net_ibv_rc_sr_buff_t*     rc_sr_recv_buff;
 extern sctk_net_ibv_qp_local_t   *rc_rdma_local;
 /* list where 1 entry <-> 1 process */
 
-static struct sctk_tree_node_s* comm_world_root;
-
-/* number of devices */
-static int num_devices;
-
 /* physical port number */
 #define IBV_ADM_PORT 1
 
@@ -107,11 +102,13 @@ sctk_net_init_driver_infiniband (int *argc, char ***argv)
   assume (argc != NULL);
   assume (argv != NULL);
 
-  /*-----------------------------------------------------------
-   *  RC_SR
-   *----------------------------------------------------------*/
+  /* init soft MMU */
+  sctk_net_ibv_mmu_new(rail);
+
   /* initialization of queue pairs */
-  sctk_net_ibv_allocator_rc_sr_buffers_init(rail);
+  rc_rdma_local = sctk_net_ibv_comp_rc_rdma_create_local(rail);
+
+  PMI_Barrier();
 
   /* channel selection */
   sctk_net_ibv_allocator_new();
@@ -119,12 +116,16 @@ sctk_net_init_driver_infiniband (int *argc, char ***argv)
   /* message numbering */
   sctk_net_ibv_sched_init();
 
+  /* initialization of collective */
   sctk_net_ibv_collective_init();
 
-  sctk_net_ibv_update_network_mode();
 
+  /* initialization of the Connection Manager */
   sctk_net_ibv_cm_server();
 //  PMI_Finalize();
+
+  /* initialization of queue pairs */
+  sctk_net_ibv_allocator_rc_sr_buffers_init(rail);
 
   PMI_Barrier();
 }
@@ -175,16 +176,24 @@ sctk_net_ibv_send_ptp_message_driver ( sctk_thread_ptp_message_t * msg,
    if (!rc_rdma_entry)
    {
      need_connection = 1;
-    sctk_nodebug("Need connection");
+    sctk_nodebug("Need connection to process %d", dest_process);
 
      rc_rdma_entry = sctk_net_ibv_comp_rc_rdma_allocate_init(dest_process, rc_rdma_local);
 
      sctk_net_ibv_allocator_register(dest_process, rc_rdma_entry, IBV_CHAN_RC_RDMA);
+
+     sctk_net_ibv_allocator_unlock(dest_process, IBV_CHAN_RC_RDMA);
+   } else {
+    sctk_net_ibv_allocator_unlock(dest_process, IBV_CHAN_RC_RDMA);
+
+    while (rc_rdma_entry->ready != 1)
+    {
+      sctk_thread_yield();
+    }
    }
    /* else {
       sctk_nodebug("Already registered");
    } */
-    sctk_net_ibv_allocator_unlock(dest_process, IBV_CHAN_RC_RDMA);
 
    sctk_net_ibv_comp_rc_rdma_send_request (
        rail,
@@ -211,52 +220,54 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
   DBG_S(1);
 
   sctk_net_ibv_rc_rdma_process_t *entry_rdma;
-  sctk_net_ibv_rc_sr_entry_t* entry;
-  int ret;
+  sctk_net_ibv_rc_rdma_entry_recv_t *entry_recv = NULL;
+  sctk_net_ibv_rc_rdma_entry_recv_t *removed_entry = NULL;
 
-  sctk_nodebug("FREE MSG");
+  sctk_nodebug("FREE begin");
 
   switch (item->channel_type)
   {
     case IBV_RC_SR_ORIGIN:
       sctk_nodebug("Free RC_SR message");
-
+      sctk_free(item);
       break;
+
     case IBV_RC_RDMA_ORIGIN:
       sctk_nodebug("Free RC_RDMA message");
 
+      entry_recv = (sctk_net_ibv_rc_rdma_entry_recv_t *)  item->struct_ptr;
+      entry_rdma = (sctk_net_ibv_rc_rdma_process_t*)
+        sctk_net_ibv_allocator_get(entry_recv->src_process, IBV_CHAN_RC_RDMA);
 
+      sctk_net_ibv_mmu_unregister (rail->mmu, entry_recv->mmu_entry);
+
+      sctk_free(entry_recv->ptr);
+      sctk_free(entry_recv);
+      sctk_net_ibv_allocator_rc_rdma_process_next_request(entry_rdma);
       break;
 
     case IBV_POLL_RC_SR_ORIGIN:
       sctk_nodebug("Free POLL_RC_SR");
+      sctk_free(item->struct_ptr);
+      break;
 
+    case IBV_POLL_RC_RDMA_ORIGIN:
+      entry_recv = (sctk_net_ibv_rc_rdma_entry_recv_t *)
+        item->struct_ptr;
+
+      sctk_nodebug("POLL_RC_RDMA %p", entry_recv);
+
+      sctk_net_ibv_mmu_unregister (rail->mmu, entry_recv->mmu_entry);
+
+      sctk_free(entry_recv->ptr);
+      sctk_free(entry_recv);
       break;
 
     default:
       assume(0);
-        break;
+      break;
   }
-
-  /* rendezvous message */
-  entry_rdma =
-    sctk_net_ibv_comp_rc_rdma_free_msg(rail, item);
-  if(entry_rdma)
-  {
-    sctk_net_ibv_allocator_rc_rdma_process_next_request(entry_rdma);
-    return;
-  }
-
-  /* eager message */
-  ret =  sctk_net_ibv_sched_rc_sr_free_pending_msg(item);
-  if (ret)
-    return;
-
-  sctk_nodebug("Free needed from %lu %p", item->header.source, item);
-  /* simple message from dynamic allocation */
-  free(item);
-  sctk_nodebug("End free");
-
+  sctk_nodebug("FREE exit");
   DBG_E(1);
 }
 
@@ -284,7 +295,6 @@ sctk_net_ibv_collective_op_driver (sctk_collective_communications_t * com,
     } else {
       not_implemented();
     }
-    //      sctk_net_barrier_op_driver (com, my_vp);
     sctk_nodebug ("end collective barrier");
   }
   else
@@ -300,8 +310,6 @@ sctk_net_ibv_collective_op_driver (sctk_collective_communications_t * com,
       sctk_nodebug ("begin collective reduce for root %d", root);
       sctk_net_ibv_allreduce ( com, my_vp, elem_size, nb_elem, func,
           data_type );
-      //	  sctk_net_reduce_op_driver (com, my_vp, elem_size, nb_elem, func,
-      //				     data_type);
       sctk_nodebug ("end collective reduce");
     }
   }
@@ -332,11 +340,6 @@ sctk_net_ibv_register_pointers_functions (sctk_net_driver_pointers_functions_t* 
   void
 sctk_net_preinit_driver_infiniband ( sctk_net_driver_pointers_functions_t* pointers )
 {
-  /* QP attributes */
-  int i;
-  int res;
-
-//  sctk_pmi_init();
 
   if (sctk_process_rank == 0)
     sctk_nodebug("INIT driver!");
@@ -347,33 +350,14 @@ sctk_net_preinit_driver_infiniband ( sctk_net_driver_pointers_functions_t* point
   //  sctk_net_ibv_qp_rail_init();
   rail = sctk_net_ibv_qp_pick_rail(0);
 
-  /* init soft MMU */
-  sctk_net_ibv_mmu_new(rail);
+  /* initialization of network mode */
+  sctk_net_ibv_update_network_mode();
 
-  /*-----------------------------------------------------------
-   *  RC_RDMA
-   *----------------------------------------------------------*/
-  /* initialization of queue pairs */
-  rc_rdma_local = sctk_net_ibv_comp_rc_rdma_create_local(rail);
-
-  /*-----------------------------------------------------------
-   *  COLLECTIVE
-   *----------------------------------------------------------*/
-
-  /*-----------------------------------------------------------
-   *  IB KEYS EXCHANGING
-   *----------------------------------------------------------*/
-//  res = PMI_KVS_Get_my_name(kvsname,name_max);
-//  assume (res == PMI_SUCCESS);
-  PMI_Barrier();
-
-  int thre = 0;
-  int thre_max = 0;
   if (sctk_process_rank == 0)
     sctk_nodebug("End of driver init!");
 }
 
-void
+  void
 sctk_net_ibv_finalize()
 {
   int i;

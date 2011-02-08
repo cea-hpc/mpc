@@ -22,6 +22,8 @@
 /* ######################################################################## */
 #include <slurm/pmi.h>
 
+#include "sctk_bootstrap.h"
+
 #include "sctk_infiniband_cm.h"
 #include "sctk_infiniband_qp.h"
 
@@ -89,7 +91,6 @@ static void* server(void* arg)
 
   while (1)
   {
-    int rank;
     fd = accept (sockfd, (struct sockaddr *) &cli_addr, &clilen);
     if (fd < 0)
     {
@@ -129,9 +130,10 @@ static void* server(void* arg)
 
     close(fd);
   }
+  return NULL;
 }
 
-int sctk_net_ibv_cm_client(char* host, int port, int dest, sctk_net_ibv_qp_remote_t *remote)
+void sctk_net_ibv_cm_client(char* host, int port, int dest, sctk_net_ibv_qp_remote_t *remote)
 {
   int clientsock_fd;
   struct sockaddr_in serv_addr;
@@ -192,7 +194,6 @@ int sctk_net_ibv_cm_client(char* host, int port, int dest, sctk_net_ibv_qp_remot
   sctk_net_ibv_allocator_unlock(dest, IBV_CHAN_RC_SR);
 
   sctk_nodebug ("Try connection to %s on port %d done", name, port);
-  return clientsock_fd;
 }
 
   void
@@ -201,8 +202,6 @@ sctk_net_ibv_cm_request(int process, sctk_net_ibv_qp_remote_t *remote, char* hos
   char key[256];
   char val[256];
   int key_max;
-  char* kvsname;
-  int res;
 
   key_max = sctk_bootstrap_get_max_key_len();
 

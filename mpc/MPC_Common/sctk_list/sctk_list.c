@@ -30,7 +30,7 @@ void
 sctk_list_new(struct sctk_list* list, uint8_t is_collector)
 {
   list->elem_count = 0;
-  list->lock = SCTK_SPINLOCK_INITIALIZER;
+  sctk_thread_mutex_init(&list->lock, NULL);
   list->is_collector = is_collector;
   list->head = NULL;
   list->tail = NULL;
@@ -64,24 +64,26 @@ sctk_list_remove(struct sctk_list* list, struct sctk_list_elem* elem)
 {
   void* payload;
 
-  if (!list || !elem)
+  if (!list || !elem || !list->head)
     return NULL;
   /* 1st elem */
-  if (list->head == list->tail)
+  if (list->head->p_next == NULL)
   {
-    list->head = list->tail = NULL;
-  }
-  /* first elem */
-  else if (!elem->p_prev)
-  {
+    sctk_nodebug("Removed (1) (%p)", list);
+    list->head = NULL;
+    list->tail = NULL;
+  } else if (!elem->p_prev) {
+    sctk_nodebug("Removed (2) (%p)", list);
     elem->p_next->p_prev = NULL;
     list->head = elem->p_next;
   /* last elem */
   } else if(!elem->p_next) {
+    sctk_nodebug("Removed (3) (%p)", list);
     elem->p_prev->p_next = NULL;
     list->tail = elem->p_prev;
   /* somewhere else */
   } else {
+    sctk_nodebug("Removed (4) (%p)", list);
     elem->p_prev->p_next = elem->p_next;
     elem->p_next->p_prev = elem->p_prev;
   }
@@ -101,24 +103,45 @@ sctk_list_pop(struct sctk_list* list)
 sctk_list_push(struct sctk_list* list, void *elem)
 {
   struct sctk_list_elem *new_elem = NULL;
+  new_elem = sctk_list_alloc_elem(elem);
+  assume(new_elem);
 
   if (list->tail == NULL)
   {
-    new_elem = sctk_list_alloc_elem(elem);
+    sctk_nodebug("Push (1) (%p)", list);
     new_elem->p_prev = NULL;
     new_elem->p_next = NULL;
     list->head = new_elem;
     list->tail = new_elem;
   } else {
-    new_elem = sctk_list_alloc_elem(elem);
+    sctk_nodebug("Push (2) (%p)", list);
     new_elem->p_prev = list->tail;
     new_elem->p_next = NULL;
     list->tail->p_next = new_elem;
     list->tail = new_elem;
   }
 
+  sctk_nodebug("head : %p", list->head->elem);
   list->elem_count++;
   return new_elem;
+}
+
+void* sctk_list_search_and_free(struct sctk_list* list,
+    void* elem)
+{
+  struct sctk_list_elem *tmp = list->head;
+  sctk_nodebug("Free : %p", list->head->elem);
+
+  while (tmp) {
+    sctk_nodebug("CMP %p <-> %p", tmp->elem, elem);
+    if (tmp->elem == elem)
+    {
+        return sctk_list_remove(list, tmp);
+    }
+
+    tmp = tmp->p_next;
+  }
+  return NULL;
 }
 
 void* sctk_list_walk(struct sctk_list* list,
@@ -175,10 +198,10 @@ int sctk_list_is_empty(struct sctk_list* list)
 
 void sctk_list_lock(struct sctk_list* list)
 {
-  sctk_spinlock_lock(&list->lock);
+  sctk_thread_mutex_lock(&list->lock);
 }
 
 void sctk_list_unlock(struct sctk_list* list)
 {
-  sctk_spinlock_unlock(&list->lock);
+  sctk_thread_mutex_unlock(&list->lock);
 }

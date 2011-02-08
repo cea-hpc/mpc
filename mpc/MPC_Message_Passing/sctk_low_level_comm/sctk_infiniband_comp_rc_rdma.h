@@ -57,8 +57,7 @@ typedef struct
   int                             src_process;
 //  sctk_net_ibv_qp_remote_t        *remote_rc_rdma;
   int                             if_qp_connection;
-  int                             used;
-  int                             sent_to_mpc;
+  volatile int                    used;
   uint32_t                        psn;  /* Packet Sequence Number */
 } sctk_net_ibv_rc_rdma_entry_recv_t;
 
@@ -106,7 +105,7 @@ typedef struct
   /* remote infos */
   sctk_net_ibv_qp_remote_t remote;
 
-  sctk_spinlock_t lock;
+  sctk_thread_mutex_t lock;
   /* where are stored send infos */
   struct sctk_list send;
   /* where are stored recv ifos */
@@ -158,12 +157,7 @@ sctk_net_ibv_comp_rc_rdma_match_read_msg(int src_process);
 
 void
 sctk_net_ibv_comp_rc_rdma_read_msg(
-    sctk_net_ibv_rc_rdma_entry_recv_t* entry_recv);
-
-  sctk_net_ibv_rc_rdma_process_t*
-sctk_net_ibv_comp_rc_rdma_free_msg(
-    sctk_net_ibv_qp_rail_t   *rail,
-    sctk_thread_ptp_message_t * item);
+    sctk_net_ibv_rc_rdma_entry_recv_t* entry_recv, int type);
 
 sctk_net_ibv_rc_rdma_entry_recv_t *
 sctk_net_ibv_comp_rc_rdma_check_pending_request(

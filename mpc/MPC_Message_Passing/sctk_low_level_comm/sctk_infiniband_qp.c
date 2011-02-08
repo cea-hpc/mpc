@@ -21,6 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include "sctk_bootstrap.h"
 #include "sctk_infiniband_qp.h"
 #include "sctk_infiniband_const.h"
 #include "sctk_infiniband_allocator.h"
@@ -454,7 +455,7 @@ sctk_net_ibv_cq_poll(struct ibv_cq* cq, int pending_nb, void (*ptr_func)(struct 
 }
 
   void
-sctk_net_ibv_cq_lookup(struct ibv_cq* cq, int (*ptr_func)(struct ibv_wc*, int lookup, int dest), int dest, sctk_net_ibv_allocator_type_t type)
+sctk_net_ibv_cq_lookup(struct ibv_cq* cq, void (*ptr_func)(struct ibv_wc*, int lookup, int dest), int dest, sctk_net_ibv_allocator_type_t type)
 {
    struct ibv_wc wc[20];
   int ne = 0;

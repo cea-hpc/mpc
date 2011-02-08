@@ -55,4 +55,16 @@ sctk_net_ibv_sched_sn_check_and_inc(int dest, uint64_t num);
 
 int
   sctk_net_ibv_sched_rc_sr_free_pending_msg(sctk_thread_ptp_message_t * item );
+
+void
+sctk_net_ibv_sched_pending_init(
+    sctk_net_ibv_allocator_type_t type);
+
+void
+sctk_net_ibv_sched_pending_push(
+    void* ptr,
+    size_t size,
+    int allocation_needed,
+    sctk_net_ibv_allocator_type_t type);
+
 #endif

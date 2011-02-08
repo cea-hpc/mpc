@@ -38,7 +38,7 @@ sctk_net_ibv_cm_server();
 sctk_net_ibv_cm_request(int process,
     sctk_net_ibv_qp_remote_t *remote, char* host, int* port);
 
-  int
+  void
 sctk_net_ibv_cm_client(char* host, int port,
     int dest, sctk_net_ibv_qp_remote_t *remote);
 

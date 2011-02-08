@@ -128,7 +128,6 @@ sctk_net_ibv_broadcast_recv(sctk_virtual_processor_t * my_vp, size_t size, int* 
 sctk_net_ibv_broadcast_send(sctk_collective_communications_t * com,
     void* data, size_t size, int* array, unsigned int relative_rank, int* mask)
 {
-  int i;
   int dest;
 
   sctk_nodebug("Broadcast send, relative_rank %d, mask %d", relative_rank, *mask);

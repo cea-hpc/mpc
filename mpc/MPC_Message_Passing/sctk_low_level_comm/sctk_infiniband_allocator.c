@@ -52,8 +52,8 @@ sctk_net_ibv_allocator_new()
   }
 
   /* init pending queues */
-  sctk_net_ibv_allocator_pending_init(IBV_CHAN_RC_SR);
-  sctk_net_ibv_allocator_pending_init(IBV_CHAN_RC_RDMA);
+  sctk_net_ibv_sched_pending_init(IBV_CHAN_RC_SR);
+  sctk_net_ibv_sched_pending_init(IBV_CHAN_RC_RDMA);
   return sctk_net_ibv_allocator;
 }
 
@@ -82,6 +82,8 @@ sctk_net_ibv_allocator_register(
       sctk_net_ibv_allocator->entry[rank].rc_rdma = entry;
       sctk_nodebug("Registering %p", &sctk_net_ibv_allocator->entry[rank]);
       break;
+
+    default: assume(0); break;
   }
 }
 
@@ -98,6 +100,8 @@ sctk_net_ibv_allocator_lock(
     case IBV_CHAN_RC_RDMA:
       sctk_thread_mutex_lock(&sctk_net_ibv_allocator->entry[rank].rc_rdma_lock);
       break;
+
+    default: assume(0); break;
   }
 }
 
@@ -114,6 +118,8 @@ sctk_net_ibv_allocator_unlock(
     case IBV_CHAN_RC_RDMA:
       sctk_thread_mutex_unlock(&sctk_net_ibv_allocator->entry[rank].rc_rdma_lock);
       break;
+
+    default: assume(0); break;
   }
 }
 
@@ -132,6 +138,8 @@ sctk_net_ibv_allocator_get(
       sctk_nodebug("Allocator get : %p", sctk_net_ibv_allocator->entry[rank].rc_rdma);
       return sctk_net_ibv_allocator->entry[rank].rc_rdma;
       break;
+
+    default: assume(0); break;
   }
   return NULL;
 }
@@ -140,57 +148,6 @@ sctk_net_ibv_allocator_get(
 /*-----------------------------------------------------------
  *  PENGING MESSAGES
  *----------------------------------------------------------*/
-void
-sctk_net_ibv_allocator_pending_init(
-    sctk_net_ibv_allocator_type_t type)
-{
-  switch(type) {
-    case IBV_CHAN_RC_SR:
-      sctk_list_new(&rc_sr_pending, 0);
-      return;
-      break;
-
-    case IBV_CHAN_RC_RDMA:
-      sctk_list_new(&rc_rdma_pending, 0);
-      return;
-      break;
-  }
-}
-
-void
-sctk_net_ibv_allocator_pending_push(
-    void* ptr,
-    size_t size,
-    int allocation_needed,
-    sctk_net_ibv_allocator_type_t type)
-{
-  void* msg;
-
-  if (allocation_needed)
-  {
-    msg = sctk_malloc(size);
-    memcpy(msg, ptr, size);
-  } else {
-    msg = ptr;
-  }
-
-  switch(type) {
-    case IBV_CHAN_RC_SR:
-      sctk_nodebug("New Message RC_SR pushed %p", msg);
-      sctk_list_lock(&rc_sr_pending);
-      sctk_list_push(&rc_sr_pending, msg);
-      sctk_list_unlock(&rc_sr_pending);
-      break;
-
-    case IBV_CHAN_RC_RDMA:
-      sctk_nodebug("New Message RC_RDMA pushed ");
-      sctk_list_lock(&rc_rdma_pending);
-      sctk_list_push(
-          &rc_rdma_pending, msg);
-      sctk_list_unlock(&rc_rdma_pending);
-      break;
-  }
-}
 
 /*-----------------------------------------------------------
  *  RC_SR
@@ -256,14 +213,16 @@ sctk_net_ibv_allocator_rc_rdma_process_next_request(
   sctk_net_ibv_rc_rdma_entry_recv_t *last_entry_recv = NULL;
 
 
-  sctk_net_ibv_allocator_lock(entry_rc_rdma->remote.rank, IBV_CHAN_RC_RDMA);
+  sctk_list_lock(&entry_rc_rdma->recv);
   last_entry_recv = sctk_net_ibv_comp_rc_rdma_check_pending_request(entry_rc_rdma);
 
   /* if we have pop an element */
   if ( last_entry_recv )
   {
+    sctk_nodebug("\t\tEntry with PSN %lu set to used=1", last_entry_recv->psn);
     last_entry_recv->used = 1;
-    sctk_net_ibv_allocator_unlock(entry_rc_rdma->remote.rank, IBV_CHAN_RC_RDMA);
+
+    sctk_list_unlock(&entry_rc_rdma->recv);
 
     sctk_nodebug("there is one message to perform (dest %d PSN %d)!",
         last_entry_recv->src_process, last_entry_recv->psn);
@@ -289,9 +248,9 @@ sctk_net_ibv_allocator_rc_rdma_process_next_request(
     remote_rc_sr = sctk_net_ibv_allocator_get(last_entry_recv->src_process, IBV_CHAN_RC_SR);
 
     sctk_net_ibv_comp_rc_sr_send(remote_rc_sr, entry, sizeof(sctk_thread_ptp_message_t), RC_SR_RDVZ_ACK, NULL);
+  } else {
+    sctk_list_unlock(&entry_rc_rdma->recv);
   }
-
-  sctk_net_ibv_allocator_unlock(entry_rc_rdma->remote.rank, IBV_CHAN_RC_RDMA);
 }
 
 
@@ -379,6 +338,8 @@ void sctk_net_ibv_allocator_ptp_poll(sctk_net_ibv_allocator_type_t type)
       sctk_net_ibv_cq_poll(rc_rdma_local->recv_cq, SCTK_PENDING_IN_NUMBER, sctk_net_ibv_rc_rdma_recv_cq, type | IBV_CHAN_RECV);
       sctk_net_ibv_cq_poll(rc_rdma_local->send_cq, SCTK_PENDING_OUT_NUMBER, sctk_net_ibv_rc_rdma_send_cq, type | IBV_CHAN_SEND);
       break;
+
+    default: assume(0); break;
   }
 }
 
@@ -394,6 +355,8 @@ int sctk_net_ibv_allocator_ptp_lookup(int dest, sctk_net_ibv_allocator_type_t ty
       sctk_net_ibv_cq_lookup(rc_rdma_local->recv_cq, sctk_net_ibv_rc_rdma_recv_cq, dest, type | IBV_CHAN_RECV);
       sctk_net_ibv_cq_lookup(rc_rdma_local->send_cq, sctk_net_ibv_rc_rdma_send_cq, dest, type | IBV_CHAN_SEND);
       break;
+
+    default: assume(0); break;
   }
 }
 

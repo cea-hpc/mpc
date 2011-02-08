@@ -69,7 +69,7 @@ sctk_net_ibv_mmu_new(sctk_net_ibv_qp_rail_t* rail)
     assume(mmu->entry[i]);
   }
 
-  mmu->lock = 0;
+  sctk_thread_mutex_init(&mmu->lock, NULL);
   mmu->entry_nb = 0;
 
   for (i = 0; i < SCTK_MAX_MR_ALLOWED; i++)
@@ -101,11 +101,14 @@ sctk_net_ibv_mmu_register (
     sctk_abort();
   }
 
-  sctk_spinlock_lock (&mmu->lock);
+  sctk_thread_mutex_lock (&mmu->lock);
   for (i = 0; i < SCTK_MAX_MR_ALLOWED; i++)
   {
     if (mmu->entry[i]->status == ibv_entry_free)
     {
+      mmu->entry[i]->status = ibv_entry_used;
+      sctk_thread_mutex_unlock (&mmu->lock);
+
       sctk_nodebug("MMU entry %d is free", i);
 
       sctk_nodebug("\t\t\t\tUse PD %p", local->pd);
@@ -121,14 +124,12 @@ sctk_net_ibv_mmu_register (
       }
       mmu->entry[i]->ptr    = ptr;
       mmu->entry[i]->size   = size;
-      mmu->entry[i]->status = ibv_entry_used;
       mmu->entry_nb++;
-      sctk_spinlock_unlock (&mmu->lock);
 
       return mmu->entry[i];
     }
   }
-  sctk_spinlock_unlock (&mmu->lock);
+  sctk_thread_mutex_unlock (&mmu->lock);
   sctk_error("No more MMU entries are available");
   assume (0);
   return NULL;
@@ -139,16 +140,15 @@ sctk_net_ibv_mmu_unregister ( sctk_net_ibv_mmu_t *mmu,
     sctk_net_ibv_mmu_entry_t *mmu_entry)
 {
   int i;
-  sctk_spinlock_lock (&mmu->lock);
+  sctk_thread_mutex_lock (&mmu->lock);
 
   ibv_dereg_mr (mmu_entry->mr);
 
-  sctk_nodebug("MMU ENTRY FREE");
   mmu->entry_nb--;
   mmu_entry->status = ibv_entry_free;
   mmu_entry->ptr = NULL;
   mmu_entry->size = 0;
-  sctk_spinlock_unlock (&mmu->lock);
+  sctk_thread_mutex_unlock (&mmu->lock);
   return 0;
 }
 
