@@ -341,7 +341,10 @@ void sctk_net_ibv_rc_sr_recv_cq(struct ibv_wc* wc, int lookup, int dest)
 
 void sctk_net_ibv_rc_rdma_recv_cq(struct ibv_wc* wc, int lookup, int dest)
 {
-  sctk_net_ibv_rc_rdma_poll_recv();
+  sctk_net_ibv_rc_rdma_poll_recv(wc,
+      rc_sr_local,
+      rc_sr_ptp_send_buff,
+      lookup);
 }
 
 void sctk_net_ibv_rc_rdma_send_cq(struct ibv_wc* wc, int lookup, int dest)
@@ -368,13 +371,13 @@ void sctk_net_ibv_allocator_ptp_poll(sctk_net_ibv_allocator_type_t type)
 {
   switch (type) {
     case IBV_CHAN_RC_SR :
-      sctk_net_ibv_cq_poll(rc_sr_local->recv_cq, SCTK_PENDING_IN_NUMBER, sctk_net_ibv_rc_sr_recv_cq);
-      sctk_net_ibv_cq_poll(rc_sr_local->send_cq, SCTK_PENDING_OUT_NUMBER, sctk_net_ibv_rc_sr_send_cq);
+      sctk_net_ibv_cq_poll(rc_sr_local->recv_cq, SCTK_PENDING_IN_NUMBER, sctk_net_ibv_rc_sr_recv_cq, type | IBV_CHAN_RECV);
+      sctk_net_ibv_cq_poll(rc_sr_local->send_cq, SCTK_PENDING_OUT_NUMBER, sctk_net_ibv_rc_sr_send_cq, type | IBV_CHAN_SEND);
       break;
 
     case IBV_CHAN_RC_RDMA :
-      sctk_net_ibv_cq_poll(rc_rdma_local->recv_cq, SCTK_PENDING_IN_NUMBER, sctk_net_ibv_rc_rdma_recv_cq);
-      sctk_net_ibv_cq_poll(rc_rdma_local->send_cq, SCTK_PENDING_OUT_NUMBER, sctk_net_ibv_rc_rdma_send_cq);
+      sctk_net_ibv_cq_poll(rc_rdma_local->recv_cq, SCTK_PENDING_IN_NUMBER, sctk_net_ibv_rc_rdma_recv_cq, type | IBV_CHAN_RECV);
+      sctk_net_ibv_cq_poll(rc_rdma_local->send_cq, SCTK_PENDING_OUT_NUMBER, sctk_net_ibv_rc_rdma_send_cq, type | IBV_CHAN_SEND);
       break;
   }
 }
@@ -383,13 +386,13 @@ int sctk_net_ibv_allocator_ptp_lookup(int dest, sctk_net_ibv_allocator_type_t ty
 {
   switch (type) {
     case IBV_CHAN_RC_SR :
-      sctk_net_ibv_cq_lookup(rc_sr_local->recv_cq, sctk_net_ibv_rc_sr_recv_cq, dest);
-      sctk_net_ibv_cq_lookup(rc_sr_local->send_cq, sctk_net_ibv_rc_sr_send_cq, dest);
+      sctk_net_ibv_cq_lookup(rc_sr_local->recv_cq, sctk_net_ibv_rc_sr_recv_cq, dest, type | IBV_CHAN_RECV);
+      sctk_net_ibv_cq_lookup(rc_sr_local->send_cq, sctk_net_ibv_rc_sr_send_cq, dest, type | IBV_CHAN_SEND);
       break;
 
     case IBV_CHAN_RC_RDMA :
-      sctk_net_ibv_cq_lookup(rc_rdma_local->recv_cq, sctk_net_ibv_rc_rdma_recv_cq, dest);
-      sctk_net_ibv_cq_lookup(rc_rdma_local->send_cq, sctk_net_ibv_rc_rdma_send_cq, dest);
+      sctk_net_ibv_cq_lookup(rc_rdma_local->recv_cq, sctk_net_ibv_rc_rdma_recv_cq, dest, type | IBV_CHAN_RECV);
+      sctk_net_ibv_cq_lookup(rc_rdma_local->send_cq, sctk_net_ibv_rc_rdma_send_cq, dest, type | IBV_CHAN_SEND);
       break;
   }
 }

@@ -40,7 +40,6 @@ typedef struct
 {
   struct ibv_send_wr              send_wr;
   /* if the msg can be read */
-  volatile int                    ready;
   sctk_net_ibv_mmu_entry_t        *mmu_entry; /* MMU entry */
   sctk_thread_ptp_message_t       *msg; /* pointer to the msg*/
   size_t                          size;
@@ -87,10 +86,11 @@ typedef struct
 
 typedef struct
 {
-  void*   dest_ptr;
+  void*     dest_ptr;
   uint32_t  dest_rkey;
-  int     src_process;
-  int     if_qp_connection;
+  int       src_process;
+  int       psn;
+  int       if_qp_connection;
   sctk_net_ibv_qp_exchange_keys_t keys;
 } sctk_net_ibv_rc_rdma_request_ack_t;
 
@@ -153,9 +153,8 @@ sctk_net_ibv_comp_rc_rdma_add_request(
     sctk_net_ibv_qp_local_t* local_rc_rdma,
     sctk_net_ibv_rc_sr_entry_t* entry);
 
-sctk_net_ibv_rc_rdma_entry_recv_t*
-sctk_net_ibv_comp_rc_rdma_match_read_msg(
-    sctk_net_ibv_rc_sr_entry_t* entry);
+  sctk_net_ibv_rc_rdma_entry_recv_t*
+sctk_net_ibv_comp_rc_rdma_match_read_msg(int src_process);
 
 void
 sctk_net_ibv_comp_rc_rdma_read_msg(
@@ -168,7 +167,7 @@ sctk_net_ibv_comp_rc_rdma_free_msg(
 
 sctk_net_ibv_rc_rdma_entry_recv_t *
 sctk_net_ibv_comp_rc_rdma_check_pending_request(
-  sctk_net_ibv_rc_rdma_process_t *entry_rc_rdma);
+    sctk_net_ibv_rc_rdma_process_t *entry_rc_rdma);
 
 sctk_net_ibv_rc_rdma_process_t*
 sctk_net_ibv_comp_rc_rdma_send_msg(
@@ -195,7 +194,11 @@ sctk_net_ibv_comp_rc_rdma_post_recv(
  *----------------------------------------------------------*/
 
 void
-sctk_net_ibv_rc_rdma_poll_recv();
+sctk_net_ibv_rc_rdma_poll_recv(
+    struct ibv_wc* wc,
+    sctk_net_ibv_qp_local_t* rc_sr_local,
+    sctk_net_ibv_rc_sr_buff_t   *rc_sr_recv_buff,
+    int lookup_mode);
 
 void sctk_net_ibv_rc_rdma_poll_send(
     struct ibv_wc* wc,
@@ -212,5 +215,13 @@ sctk_net_ibv_comp_rc_rdma_allocate_init(
     unsigned int rank,
     sctk_net_ibv_qp_local_t *local);
 
+/*-----------------------------------------------------------
+ *  ERROR HANDLING
+ *----------------------------------------------------------*/
 
+  void
+  sctk_net_ibv_comp_rc_rdma_error_handler_send(struct ibv_wc wc);
+
+  void
+  sctk_net_ibv_comp_rc_rdma_error_handler_recv(struct ibv_wc wc);
 #endif

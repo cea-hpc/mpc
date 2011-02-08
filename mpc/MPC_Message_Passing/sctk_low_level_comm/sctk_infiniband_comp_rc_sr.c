@@ -537,79 +537,79 @@ sctk_net_ibv_rc_sr_poll_recv(
       break;
 
     case RC_SR_RDVZ_DONE:
-      sctk_nodebug("RDVZ DONE recv");
-      entry_recv = sctk_net_ibv_comp_rc_rdma_match_read_msg(
-          entry);
-      assume(entry_recv);
-
-      sctk_nodebug("RDVZ DONE RECV for process %lu with psn %lu", entry_recv->src_process, entry_recv->psn);
-
-      if (lookup_mode) {
-
-        ret = sctk_net_ibv_sched_sn_check_and_inc(
-            entry_recv->src_process,
-            entry_recv->psn);
-
-        if (ret)
-        {
-          sctk_nodebug("Push RDVZ msg");
-          sctk_net_ibv_allocator_pending_push(entry_recv,
-              sizeof(sctk_net_ibv_rc_rdma_entry_recv_t), 0,
-              IBV_CHAN_RC_RDMA);
-          //TODO surround by lock
-          entry_recv->sent_to_mpc = 1;
-
-          restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
-        } else {
-          sctk_nodebug("Read the msg");
-          sctk_net_ibv_comp_rc_rdma_read_msg(entry_recv);
-
-          sctk_nodebug("Recv RDVZ message from %d (PSN:%lu)", entry_recv->src_process, entry_recv->psn);
-
-          restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
-
-          sctk_nodebug("PSN %d FOUND for process %d", entry_recv->psn, entry_recv->src_process);
-        }
-
-      } else {
-        ret = sctk_net_ibv_sched_sn_check_and_inc(
-            entry_recv->src_process,
-            entry_recv->psn);
-
-        sctk_nodebug("RET : %d", ret);
-
-        if(ret)
-        {
-          do {
-            sctk_net_ibv_allocator_ptp_lookup_all(
-                entry_recv->src_process);
-
-            ret = sctk_net_ibv_sched_sn_check_and_inc(
-                entry_recv->src_process, entry_recv->psn);
-
-            sctk_thread_yield();
-
-          } while (ret);
-        }
-
-        sctk_net_ibv_comp_rc_rdma_read_msg(entry_recv);
-
-        sctk_nodebug("Recv RDVZ message from %d (PSN:%lu)", entry_recv->src_process, entry_recv->psn);
-
-        restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
-      }
-
-      /* process the next RDMA request */
-      entry_rc_rdma = (sctk_net_ibv_rc_rdma_process_t*)
-        sctk_net_ibv_allocator_get(entry_recv->src_process, IBV_CHAN_RC_RDMA);
-      sctk_net_ibv_allocator_rc_rdma_process_next_request(entry_rc_rdma);
-      break;
-
+      assume(0);
+//      sctk_nodebug("RDVZ DONE recv");
+//      entry_recv = sctk_net_ibv_comp_rc_rdma_match_read_msg(
+//          entry);
+//      assume(entry_recv);
+//
+//      sctk_nodebug("RDVZ DONE RECV for process %lu with psn %lu", entry_recv->src_process, entry_recv->psn);
+//
+//      if (lookup_mode) {
+//
+//        ret = sctk_net_ibv_sched_sn_check_and_inc(
+//            entry_recv->src_process,
+//            entry_recv->psn);
+//
+//        if (ret)
+//        {
+//          sctk_nodebug("Push RDVZ msg");
+//          sctk_net_ibv_allocator_pending_push(entry_recv,
+//              sizeof(sctk_net_ibv_rc_rdma_entry_recv_t), 0,
+//              IBV_CHAN_RC_RDMA);
+//          //TODO surround by lock
+//          entry_recv->sent_to_mpc = 1;
+//
+//          restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
+//        } else {
+//          sctk_nodebug("Read the msg");
+//          sctk_net_ibv_comp_rc_rdma_read_msg(entry_recv);
+//
+//          sctk_nodebug("Recv RDVZ message from %d (PSN:%lu)", entry_recv->src_process, entry_recv->psn);
+//
+//          restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
+//
+//          sctk_nodebug("PSN %d FOUND for process %d", entry_recv->psn, entry_recv->src_process);
+//        }
+//
+//      } else {
+//        ret = sctk_net_ibv_sched_sn_check_and_inc(
+//            entry_recv->src_process,
+//            entry_recv->psn);
+//
+//        sctk_nodebug("RET : %d", ret);
+//
+//        if(ret)
+//        {
+//          do {
+//            sctk_net_ibv_allocator_ptp_lookup_all(
+//                entry_recv->src_process);
+//
+//            ret = sctk_net_ibv_sched_sn_check_and_inc(
+//                entry_recv->src_process, entry_recv->psn);
+//
+//            sctk_thread_yield();
+//
+//          } while (ret);
+//        }
+//
+//        sctk_net_ibv_comp_rc_rdma_read_msg(entry_recv);
+//
+//        sctk_nodebug("Recv RDVZ message from %d (PSN:%lu)", entry_recv->src_process, entry_recv->psn);
+//
+//        restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
+//      }
+//
+//      /* process the next RDMA request */
+//      entry_rc_rdma = (sctk_net_ibv_rc_rdma_process_t*)
+//        sctk_net_ibv_allocator_get(entry_recv->src_process, IBV_CHAN_RC_RDMA);
+//      sctk_net_ibv_allocator_rc_rdma_process_next_request(entry_rc_rdma);
+//      break;
+//
     case RC_SR_BCAST:
       sctk_nodebug("Broadcast msg received from %d", entry_recv->src_process);
       sctk_net_ibv_collective_push(&broadcast_fifo, entry->msg_header);
       restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
-
       break;
 
     case RC_SR_REDUCE:
@@ -663,3 +663,11 @@ sctk_net_ibv_comp_rc_sr_allocate_recv(
   sctk_net_ibv_qp_allocate_recv(remote, &keys);
 }
 
+/*-----------------------------------------------------------
+ *  ERROR HANDLING
+ *----------------------------------------------------------*/
+void
+  sctk_net_ibv_comp_rc_sr_error_handler(struct ibv_wc wc)
+{
+
+}

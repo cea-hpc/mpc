@@ -254,7 +254,7 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
 
   sctk_nodebug("Free needed from %lu %p", item->header.source, item);
   /* simple message from dynamic allocation */
-//  free(item);
+  free(item);
   sctk_nodebug("End free");
 
   DBG_E(1);

@@ -26,8 +26,10 @@
 
 typedef enum
 {
-  IBV_CHAN_RC_SR = 0,
-  IBV_CHAN_RC_RDMA = 1,
+  IBV_CHAN_RC_SR    = 1 << 0,
+  IBV_CHAN_RC_RDMA  = 1 << 1,
+  IBV_CHAN_SEND  = 1 << 2,
+  IBV_CHAN_RECV  = 1 << 3,
 } sctk_net_ibv_allocator_type_t;
 
 /* max number of WC extracted for the input

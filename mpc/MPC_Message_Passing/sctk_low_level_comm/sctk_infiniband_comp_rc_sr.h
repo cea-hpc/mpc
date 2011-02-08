@@ -199,4 +199,12 @@ sctk_net_ibv_comp_rc_sr_allocate_recv(
 void
 sctk_net_ibv_comp_rc_sr_free_header(sctk_net_ibv_rc_sr_buff_t* buff, sctk_net_ibv_rc_sr_entry_t* entry);
 
+/*-----------------------------------------------------------
+ *  ERROR HANDLING
+ *----------------------------------------------------------*/
+
+void
+  sctk_net_ibv_comp_rc_sr_error_handler(struct ibv_wc wc);
+
+
 #endif

@@ -26,6 +26,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "sctk_infiniband_const.h"
 #include <infiniband/verbs.h>
 #include <inttypes.h>
 
@@ -135,11 +136,11 @@ sctk_net_ibv_qp_init(sctk_net_ibv_qp_local_t* local,
 struct ibv_cq*
 sctk_net_ibv_cq_init(sctk_net_ibv_qp_rail_t* rail);
 
-void
-sctk_net_ibv_cq_poll(struct ibv_cq* cq, int pending_nb, void (*ptr_func)(struct ibv_wc*, int lookup, int dest) );
+  void
+sctk_net_ibv_cq_poll(struct ibv_cq* cq, int pending_nb, void (*ptr_func)(struct ibv_wc*, int lookup, int dest), sctk_net_ibv_allocator_type_t type);
 
   void
-sctk_net_ibv_cq_lookup(struct ibv_cq* cq, int (*ptr_func)(struct ibv_wc*, int lookup, int dest), int dest );
+sctk_net_ibv_cq_lookup(struct ibv_cq* cq, int (*ptr_func)(struct ibv_wc*, int lookup, int dest), int dest, sctk_net_ibv_allocator_type_t type);
 /*-----------------------------------------------------------
  *  Shared Receive queue
  *----------------------------------------------------------*/

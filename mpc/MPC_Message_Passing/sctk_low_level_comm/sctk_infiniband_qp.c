@@ -395,8 +395,8 @@ sctk_net_ibv_cq_print_status (enum ibv_wc_status status)
 }
 
 
-void
-sctk_net_ibv_poll_check_wc(struct ibv_wc wc) {
+static void
+sctk_net_ibv_poll_check_wc(struct ibv_wc wc, sctk_net_ibv_allocator_type_t type) {
 
   if (wc.status != IBV_WC_SUCCESS)
   {
@@ -407,7 +407,26 @@ sctk_net_ibv_poll_check_wc(struct ibv_wc wc) {
     sctk_error ("ERROR Vendor: %d", wc.vendor_err);
     sctk_error ("Byte_len: %d", wc.byte_len);
 
-    entry = sctk_net_ibv_alloc_rc_sr_find_from_qp_num(wc.qp_num);
+    switch (type)
+    {
+      case IBV_CHAN_RC_SR:
+        sctk_net_ibv_comp_rc_sr_error_handler(wc);
+        break;
+
+      case IBV_CHAN_RC_RDMA | IBV_CHAN_RECV:
+        sctk_net_ibv_comp_rc_rdma_error_handler_recv(wc);
+        break;
+
+      case IBV_CHAN_RC_RDMA | IBV_CHAN_SEND:
+        sctk_net_ibv_comp_rc_rdma_error_handler_send(wc);
+        break;
+
+      default:
+        assume(0);
+        break;
+    }
+
+ //   entry = sctk_net_ibv_alloc_rc_sr_find_from_qp_num(wc.qp_num);
  //   sctk_debug("Rank : %d", entry->rank);
 
     sctk_abort();
@@ -416,7 +435,7 @@ sctk_net_ibv_poll_check_wc(struct ibv_wc wc) {
 
 
   void
-sctk_net_ibv_cq_poll(struct ibv_cq* cq, int pending_nb, void (*ptr_func)(struct ibv_wc*, int lookup, int dest) )
+sctk_net_ibv_cq_poll(struct ibv_cq* cq, int pending_nb, void (*ptr_func)(struct ibv_wc*, int lookup, int dest), sctk_net_ibv_allocator_type_t type)
 {
   struct ibv_wc wc[pending_nb];
   int ne = 0;
@@ -428,14 +447,14 @@ sctk_net_ibv_cq_poll(struct ibv_cq* cq, int pending_nb, void (*ptr_func)(struct 
   {
     sctk_nodebug("%d elements found", ne);
 
-    sctk_net_ibv_poll_check_wc(wc[i]);
+    sctk_net_ibv_poll_check_wc(wc[i], type);
 
     ptr_func(&wc[i], 0, 0);
   }
 }
 
   void
-sctk_net_ibv_cq_lookup(struct ibv_cq* cq, int (*ptr_func)(struct ibv_wc*, int lookup, int dest), int dest )
+sctk_net_ibv_cq_lookup(struct ibv_cq* cq, int (*ptr_func)(struct ibv_wc*, int lookup, int dest), int dest, sctk_net_ibv_allocator_type_t type)
 {
    struct ibv_wc wc[20];
   int ne = 0;
@@ -447,7 +466,7 @@ sctk_net_ibv_cq_lookup(struct ibv_cq* cq, int (*ptr_func)(struct ibv_wc*, int lo
   {
     sctk_nodebug("%d elements found", ne);
 
-    sctk_net_ibv_poll_check_wc(wc[i]);
+    sctk_net_ibv_poll_check_wc(wc[i], type);
 
     ptr_func(&wc[i], 1, dest);
   }
