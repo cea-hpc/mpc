@@ -47,7 +47,9 @@ else
 	
     done
     
-    trap "kill -s 2 0" INT
+    #Need to understand why the sub process did't be killed by SIGINT
+    #is it run into infinite loop. For now, using SIGTERM work
+    trap "kill -s 15 0" INT
     
     piddone=""
     for pid in $MPC_PIDS ; do
