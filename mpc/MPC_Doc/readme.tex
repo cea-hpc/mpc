@@ -33,6 +33,7 @@
 \usepackage{fullpage}
 \usepackage{palatino}
 \usepackage{xspace}
+\usepackage{hyperref}
 
 %%%%%%%%%%
 % MACROS %
@@ -119,7 +120,8 @@ These steps describe the default installation of MPC with its additionnal compon
       cd MPC_2.1_rc2
 \end{verbatim}
 
-\item  Choose an installation directory (the default is \texttt{/usr/local/}):
+\item  Choose an installation directory. Using the default \texttt{/usr/local/}
+will overwrite legacy headers: \emph{choose a custom install path}.
 
 \begin{verbatim}
       mkdir /home/you/mpc-install
