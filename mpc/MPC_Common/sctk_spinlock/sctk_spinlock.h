@@ -33,6 +33,7 @@ extern "C"
 #define SCTK_SPINLOCK_INITIALIZER 0
 #endif
 #define sctk_spinlock_init(a,b) do{*((sctk_spinlock_t*)(a))=b;}while(0)
+  int sctk_spinlock_lock_yield (sctk_spinlock_t * lock);
   int sctk_spinlock_lock (sctk_spinlock_t * lock);
   int sctk_spinlock_unlock (sctk_spinlock_t * lock);
   int sctk_spinlock_trylock (sctk_spinlock_t * lock);

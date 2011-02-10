@@ -175,7 +175,7 @@ sctk_shm_put_ptp_bigmsg ( const unsigned int __dest,
     sctk_assert ( bigmsg_queue != NULL );
 
     /* lock all other writers which want access to the queue */
-    sctk_spinlock_lock ( & ( bigmsg_queue->lock_write ) );
+    sctk_spinlock_lock_yield ( & ( bigmsg_queue->lock_write ) );
     /* compute the total size of the msg. Composed of slot's header size, msg's header and
      * msg's payload */
     total_size =  __size_payload;

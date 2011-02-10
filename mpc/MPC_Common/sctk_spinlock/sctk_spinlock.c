@@ -27,6 +27,25 @@
 #include <stdlib.h>
 #include <math.h>
 
+int sctk_spinlock_lock_yield (sctk_spinlock_t * lock)
+{
+  unsigned int *p = (unsigned int *) lock;
+  while (expect_true (sctk_test_and_set (p)))
+    {
+      do
+	{
+	int i;
+	sctk_thread_yield();
+	for(i = 0; (*p) && (i < 100); i++){
+	  sctk_cpu_relax ();
+	}
+	}
+      while (*p);
+    }
+  
+  return 0 ;
+}
+
 int
 sctk_spinlock_lock (sctk_spinlock_t * lock)
 {
