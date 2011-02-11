@@ -32,7 +32,7 @@ sctk_net_init_driver_init_modules (char *mode)
   sctk_iso_alloc_stat (tmp);
 
   /* different names if we use or not the SHM module */
-  if (sctk_net_hybrid_is_shm_enabled)
+  if (sctk_net_is_shm_enabled())
     sprintf (sctk_net_network_mode, "SHM v%s/%s (RDMA) (%s)", SHM_VERSION, mode, tmp);
   else
     sprintf (sctk_net_network_mode, "%s (RDMA) (%s)", mode, tmp);

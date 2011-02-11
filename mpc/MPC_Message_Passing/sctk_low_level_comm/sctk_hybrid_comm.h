@@ -55,9 +55,6 @@ extern "C"
   int* shm_local_to_global_translation_table;
   int* shm_global_to_local_translation_table;
 
-  /* hybrid modue */
-  int sctk_net_hybrid_is_shm_enabled;
-
   /* hooks called by sctk_low_level_comm when a creation or a destruction
    * of a communicator occures */
   void sctk_net_hybrid_init_new_com(sctk_internal_communicator_t* comm, int nb_involved, int* task_list);
@@ -124,6 +121,7 @@ static inline int sctk_shm_translate_local_to_global(int local_rank, int* global
     return SCTK_SHM_INTER_NODE_COMM;
 }
 
+int sctk_net_is_shm_enabled();
 
 #ifdef __cplusplus
 }

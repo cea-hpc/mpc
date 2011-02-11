@@ -28,6 +28,7 @@
 #include "sctk_debug.h"
 #include "sctk_rpc.h"
 #include "sctk_shm.h"
+#include "sctk_infiniband.h"
 #include "sctk_bootstrap.h"
 #include "sctk_tcp.h"
 #include "sctk_shm_mem_struct_funcs.h"
@@ -37,12 +38,14 @@
 
 /* intra and inter comm counters */
 #if SCTK_HYBRID_DEBUG == 1
-int nb_intra_comm = 0;
-int nb_inter_comm = 0;
+static int nb_intra_comm = 0;
+static int nb_inter_comm = 0;
 #endif
 
 //sctk_net_driver_pointers_functions_t sctk_net_driver_pointers_functions_array[MAX_MODULES_LEVELS];
-int number_modules_levels = 0;
+static int number_modules_levels = 0;
+/* hybrid modue */
+static int shm_enabled = 1;
 
  sctk_net_driver_pointers_functions_t pointers_inter  = INIT_NET_DRIVER_POINTERS_FUNCTIONS;
   sctk_net_driver_pointers_functions_t pointers_hybrid = INIT_NET_DRIVER_POINTERS_FUNCTIONS;
@@ -56,8 +59,11 @@ void sctk_net_hybrid_init_new_com(sctk_internal_communicator_t* comm,
     int nb_involved, int* task_list)
 {
 #ifdef SCTK_SHM
-  if (pointers_intra.net_new_comm != NULL)
-    pointers_intra.net_new_comm(comm, nb_involved, task_list);
+  if (shm_enabled)
+  {
+    if (pointers_intra.net_new_comm != NULL)
+      pointers_intra.net_new_comm(comm, nb_involved, task_list);
+  }
 #endif
   if (pointers_inter.net_new_comm != NULL)
     pointers_inter.net_new_comm(comm, nb_involved, task_list);
@@ -65,8 +71,11 @@ void sctk_net_hybrid_init_new_com(sctk_internal_communicator_t* comm,
 void sctk_net_hybrid_free_com(int com_id)
 {
 #ifdef SCTK_SHM
-  if (pointers_intra.net_free_comm != NULL)
-    pointers_intra.net_free_comm(com_id);
+  if (shm_enabled)
+  {
+    if (pointers_intra.net_free_comm != NULL)
+      pointers_intra.net_free_comm(com_id);
+  }
 #endif
   if (pointers_inter.net_free_comm != NULL)
     pointers_inter.net_free_comm(com_id);
@@ -80,19 +89,25 @@ void sctk_net_hybrid_free_com(int com_id)
   sctk_net_hybrid_ptp_poll(void* arg)
 {
 #ifdef SCTK_SHM
-  if (pointers_intra.net_ptp_poll != NULL)
-    pointers_intra.net_ptp_poll(arg);
+  if (shm_enabled)
+  {
+    if (pointers_intra.net_ptp_poll != NULL)
+      pointers_intra.net_ptp_poll(arg);
+  }
 #endif
   if (pointers_inter.net_ptp_poll != NULL)
     pointers_inter.net_ptp_poll(arg);
 }
+
   void
   sctk_net_hybrid_adm_poll(void* arg)
 {
-
 #ifdef SCTK_SHM
-  if (pointers_intra.net_adm_poll != NULL)
-    pointers_intra.net_adm_poll(arg);
+  if (shm_enabled)
+  {
+    if (pointers_intra.net_adm_poll != NULL)
+      pointers_intra.net_adm_poll(arg);
+  }
 #endif
   /* Commented because the polling function is
    * in a thread */
@@ -101,18 +116,22 @@ void sctk_net_hybrid_free_com(int com_id)
 }
 
 
-#define INTRA_BEGIN(process) \
-  int local_rank; \
-  int com_type; \
-  com_type = sctk_shm_translate_global_to_local(process, &local_rank); \
-  if (com_type == SCTK_SHM_INTRA_NODE_COMM) \
-  { \
+#define INTRA_BEGIN(process)  \
+  int local_rank;             \
+  int com_type;               \
+  if (!shm_enabled)           \
+    goto inter;               \
+                              \
+  com_type = sctk_shm_translate_global_to_local(process, &local_rank);  \
+  if ( (com_type == SCTK_SHM_INTRA_NODE_COMM) )                         \
+  {                                                                     \
 
 #define INTRA_END \
-  } else { \
+  }else {         \
+    inter:        \
 
 #define INTER_END \
-  } \
+  }               \
 
   static void
 sctk_net_rpc_driver (void (*func) (void *), int destination, void *arg,
@@ -193,16 +212,14 @@ sctk_net_collective_op_driver (sctk_collective_communications_t * com,
     const sctk_datatype_t data_type)
 {
 #ifdef SCTK_SHM
-  if (sctk_node_number == 1)
-  {
+    if ( (shm_enabled) && (sctk_node_number == 1) )
+    {
 #if SCTK_HYBRID_DEBUG == 1
-  ++nb_intra_comm;
+      ++nb_intra_comm;
 #endif
-    sctk_nodebug("INTRA collective");
-    pointers_intra.collective(com, my_vp, elem_size, nb_elem, func, data_type);
-  }
-  else
-  {
+      sctk_nodebug("INTRA collective");
+      pointers_intra.collective(com, my_vp, elem_size, nb_elem, func, data_type);
+    } else {
 #endif
 #if SCTK_HYBRID_DEBUG == 1
   ++nb_inter_comm;
@@ -261,7 +278,7 @@ sctk_net_free_func_driver (sctk_thread_ptp_message_t * item)
  *  the structure 'sctk_thread_ptp_message_t' */
 
 #ifdef SCTK_SHM
-  if (item->sent_by_shm = 1)
+  if ( (shm_enabled) && (item->sent_by_shm == 1) )
   {
     sctk_nodebug("INTRA net_free_func");
     pointers_intra.net_free(item);
@@ -294,9 +311,7 @@ sctk_net_hybrid_finalize()
 {
 #ifdef SCTK_SHM
 #if SCTK_HYBRID_DEBUG == 1
- if( sctk_net_hybrid_is_shm_enabled )
- {
-   if (sctk_process_rank == 0)
+   if ( (shm_enabled) && (sctk_process_rank == 0) )
    {
       fprintf(stderr, "\n# ------------------HYBRID FINALIZE-------------------------\n"
           "# Number of intra communications : %d\n"
@@ -304,7 +319,6 @@ sctk_net_hybrid_finalize()
           "# ---------------------------------------------------------\n",
           nb_intra_comm, nb_inter_comm);
    }
- }
 #endif
 #endif
 
@@ -329,6 +343,11 @@ sctk_inter_comm_thread(void *arg)
   return NULL;
 }
 
+int
+sctk_net_is_shm_enabled()
+{
+  return shm_enabled;
+}
 
 /*
  * ===  FUNCTION  ===================================================
@@ -343,35 +362,55 @@ sctk_inter_comm_thread(void *arg)
   void
 sctk_net_preinit_driver_hybrid ()
 {
-
   sctk_bootstrap_init();
+
+#ifdef SCTK_SHM
+  if (strcmp(sctk_module_name, "tcp_only") == 0 ||
+      strcmp(sctk_module_name, "ib_only") == 0 ||
+      strcmp(sctk_module_name, "ib_only") == 0)
+  {
+    shm_enabled = 0;
+  } else {
+    shm_enabled = 1;
+  }
+#else
+  shm_enabled = 0;
+#endif
 
   /* initialize intra communication module with local size and rank as
    * parameters */
 #ifdef SCTK_SHM
-  sctk_nodebug("Init driver SHM");
-  sctk_net_preinit_driver_shm(&pointers_tmp);
-  sctk_net_hybrid_is_shm_enabled = 1;
-  shm_local_to_global_translation_table = sctk_shm_get_local_to_global_process_translation_table();
-  shm_global_to_local_translation_table = sctk_shm_get_global_to_local_process_translation_table();
-  number_modules_levels++;
-  pointers_intra = pointers_tmp;
-  sctk_nodebug("pointer = %p", pointers_intra.rpc_driver);
-#else
-  sctk_net_hybrid_is_shm_enabled = 0;
+  if (shm_enabled)
+  {
+    sctk_nodebug("Init driver SHM");
+    sctk_net_preinit_driver_shm(&pointers_tmp);
+    shm_local_to_global_translation_table = sctk_shm_get_local_to_global_process_translation_table();
+    shm_global_to_local_translation_table = sctk_shm_get_global_to_local_process_translation_table();
+    number_modules_levels++;
+    pointers_intra = pointers_tmp;
+    sctk_nodebug("pointer = %p", pointers_intra.rpc_driver);
+  }
 #endif
 
-  if (strcmp(sctk_module_name, "tcp") == 0)
+  if ( (strcmp(sctk_module_name, "tcp") == 0) ||
+      (strcmp(sctk_module_name, "tcp_only") == 0))
   {
     GENDRIVER(tcp, tcp);
   }
-  else if (strcmp(sctk_module_name, "ipoib") == 0)
+//  else if ( (strcmp(sctk_module_name, "ib") == 0) ||
+//    (strcmp(sctk_module_name, "tcp_only") == 0))
+//  {
+//    GENDRIVER(infiniband, infiniband);
+//  }
+  else if ( (strcmp(sctk_module_name, "ipoib") == 0) ||
+    (strcmp(sctk_module_name, "ipoib_only") == 0))
   {
     GENDRIVER(ipoib, ipoib);
   }
-  else if (strcmp(sctk_module_name, "ib") == 0)
+  else
   {
-    GENDRIVER(infiniband, infiniband);
+    sctk_error ("Network mode |%s| not available", sctk_module_name);
+    sctk_abort ();
   }
 
   number_modules_levels++;
@@ -426,34 +465,39 @@ sctk_net_init_driver_hybrid (int *argc, char ***argv)
 
 
 #ifdef SCTK_SHM
-  sctk_net_init_driver_shm(argc, argv);
+  if (shm_enabled)
+  {
+    sctk_net_init_driver_shm(argc, argv);
+  }
 #endif
 
-  if (strcmp(sctk_module_name, "tcp") == 0)
+  if ( (strcmp(sctk_module_name, "tcp") == 0) ||
+      (strcmp(sctk_module_name, "tcp_only") == 0))
   {
-	  /* thread for TCP/IPoIB DMA
-   * / ! \ : we create a thread instead of polling the function. Interblocking issues.*/
-  sctk_thread_attr_init (&attr_inter_rdma);
-  sctk_thread_attr_setscope (&attr_inter_rdma, SCTK_THREAD_SCOPE_SYSTEM);
-  sctk_user_thread_create (&pidt_inter_rdma, &attr_inter_rdma, sctk_inter_comm_thread,
-      NULL);
+    /* thread for TCP/IPoIB DMA
+     * / ! \ : we create a thread instead of polling the function. Interblocking issues.*/
+    sctk_thread_attr_init (&attr_inter_rdma);
+    sctk_thread_attr_setscope (&attr_inter_rdma, SCTK_THREAD_SCOPE_SYSTEM);
+    sctk_user_thread_create (&pidt_inter_rdma, &attr_inter_rdma, sctk_inter_comm_thread,
+        NULL);
 
     sctk_net_init_driver_tcp(argc, argv);
   }
-  else if (strcmp(sctk_module_name, "ipoib") == 0)
+  else if ( (strcmp(sctk_module_name, "ipoib") == 0) ||
+      (strcmp(sctk_module_name, "ipoib_only") == 0))
   {
-	  /* thread for TCP/IPoIB DMA
-   * / ! \ : we create a thread instead of polling the function. Interblocking issues.*/
-  sctk_thread_attr_init (&attr_inter_rdma);
-  sctk_thread_attr_setscope (&attr_inter_rdma, SCTK_THREAD_SCOPE_SYSTEM);
-  sctk_user_thread_create (&pidt_inter_rdma, &attr_inter_rdma, sctk_inter_comm_thread,
-      NULL);
+    /* thread for TCP/IPoIB DMA
+     * / ! \ : we create a thread instead of polling the function. Interblocking issues.*/
+    sctk_thread_attr_init (&attr_inter_rdma);
+    sctk_thread_attr_setscope (&attr_inter_rdma, SCTK_THREAD_SCOPE_SYSTEM);
+    sctk_user_thread_create (&pidt_inter_rdma, &attr_inter_rdma, sctk_inter_comm_thread,
+        NULL);
 
     sctk_net_init_driver_ipoib(argc, argv);
   }
-  else if (strcmp(sctk_module_name, "ib") == 0)
-  {
-    sctk_net_init_driver_infiniband(argc, argv);
-  }
-
+//  else if ( (strcmp(sctk_module_name, "ib") == 0) ||
+//      (strcmp(sctk_module_name, "ib_only") == 0))
+//  {
+//    sctk_net_init_driver_infiniband(argc, argv);
+//  }
 }

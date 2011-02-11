@@ -796,47 +796,8 @@ sctk_net_init_driver (char *name)
   sctk_set_max_rpc_size_comm (sizeof (sctk_migration_t));
   sctk_set_max_rpc_size_comm (sizeof (sctk_rpc_collective_op_t));
 
-
-  /*-----------------------------------------------------------
-   *                /!\ /!\ /!\ CARE /!\ /!\ /!\
-   *
-   * The implementation of MPC modules has changed in order to
-   * introduce the notion of "hybrid modules".
-   *
-   * Currently, only IPoIB and TCP work. Other modules need
-   * to be patched.
-   *
-   * Contact me for any questions : sdidelot@exascale-computing.eu
-   *
-   *----------------------------------------------------------*/
-
-
   /*Generic drivers */
   TRY_GENDRIVER (none, none);
-  /*   TRY_GENDRIVER (mpi, mpi); */
-  //  TRY_GENDRIVER (ipoib, ipoib);
-  //  TRY_GENDRIVER (tcp, tcp);
-  //  TRY_GENDRIVER (infiniband, infiniband);
-  //  TRY_GENDRIVER (infiniband, ib);
 
-  /* SHM drivers */
-  //  TRY_GENDRIVER (shm_tcp, shm_tcp);
-  //  TRY_GENDRIVER (shm_ipoib, shm_ipoib);
-  //  TRY_GENDRIVER (hybrid, hybrid);
-
-  if(strcmp(name,"tcp") == 0){
-    sctk_net_preinit_driver_hybrid();
-    return;
-  }
-  if(strcmp(name,"ipoib") == 0){
-    sctk_net_preinit_driver_hybrid();
-    return;
-  }
-    if(strcmp(name,"ib") == 0){
-    sctk_net_preinit_driver_hybrid();
-    return;
-  }
-
-  sctk_error ("Network mode |%s| not available", name);
-  sctk_abort ();
+  sctk_net_preinit_driver_hybrid();
 }
