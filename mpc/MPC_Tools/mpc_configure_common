@@ -780,37 +780,6 @@ fi
 }
 
 
-check_net_elan_done=""
-check_net_elan(){
-    check_net_elan_done="1"
-    begin_section "Check elan:"
-    SCTK_CHECK_LDOPTION "-lelan"
-    SCTK_CHECK_LIST=""
-    SCTK_CHECK_LIST_ADD elan_baseInit
-    SCTK_CHECK_LIST_ADD elan_version
-    SCTK_CHECK_LIST_ADD elan_nRails
-    SCTK_CHECK_LIST_ADD elan_gsync
-    SCTK_CHECK_LIST_ADD elan_bcast
-    SCTK_CHECK_LIST_ADD elan_put
-    SCTK_CHECK_LIST_ADD elan_get
-    SCTK_CHECK_LIST_ADD elan_doput
-    SCTK_CHECK_LIST_ADD elan_doget
-    SCTK_CHECK_LIST_ADD elan_link
-    SCTK_CHECK_LIST_ADD elan_poll
-    SCTK_CHECK_LIST_ADD elan_wait
-    SCTK_CHECK_LIST_ADD elan_done
-    SCTK_CHECK_LIST_ADD elan_putgetInit
-    SCTK_CHECK_FUNC_NOFAIL "$SCTK_CHECK_LIST"
-    if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
-	SCTK_CHECK_OPTION "-DMPC_USE_ELAN"
-	SCTK_CHECK_HEADER elan/elan.h
-	SCTK_CHECK_LDOPTION "-lm"
-	SCTK_NET_LIST_EXP="$SCTK_NET_LIST_EXP elan_gen"
-	SCTK_NET_LIST="$SCTK_NET_LIST elan"
-    fi
-    end_section
-}
-
 check_net_mpi_done=""
 check_net_mpi(){
 check_net_mpi_done="1"
@@ -887,11 +856,6 @@ if test "$check_networks_done" = "0" ; then
     for network in $SCTK_NETWORKS ; do
 
 	case $network in
-	    elan|ELAN|elan*)
-		if test "$check_net_elan_done" = "" ; then
-		    check_net_elan
-		fi
-		;;
 	    mpi|MPI)
 		if test "$check_net_mpi_done" = "" ; then
 		    check_net_mpi
@@ -909,7 +873,6 @@ if test "$check_networks_done" = "0" ; then
 		;;
 	    all)
 		if test "$check_net_all_done" = "" ; then
-		    check_net_elan
 		    check_net_infiniband
 		    check_net_mpi
 		    check_net_tcp
