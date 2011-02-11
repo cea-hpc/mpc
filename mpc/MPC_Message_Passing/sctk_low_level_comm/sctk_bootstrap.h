@@ -30,7 +30,7 @@ extern "C"
 
   void sctk_bootstrap_get(char* pkey, char* pval, int size);
 
-  void sctk_bootstrap_register(char* pkey, char* pval);
+  void sctk_bootstrap_register(char* pkey, char* pval, int size);
 
   int sctk_bootstrap_get_max_val_len();
 

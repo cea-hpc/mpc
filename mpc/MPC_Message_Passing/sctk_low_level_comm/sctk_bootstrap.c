@@ -44,8 +44,6 @@ static int spawn;
 static int appnum;
 static int name_max;
 static char* kvsname;
-static char* key;
-static char* val;
 
 #define TCP_KEY_MAX 256
 #define TCP_VAL_MAX 256
@@ -123,11 +121,6 @@ static void sctk_bootstrap_pmi_init()
   res = PMI_KVS_Get_my_name(kvsname,name_max);
   assume (res == PMI_SUCCESS);
   sctk_nodebug("KVS name %s",kvsname);
-
-  key = sctk_malloc(key_max);
-  assume(key);
-  val = sctk_malloc(val_max);
-  assume(val);
 }
 
 void
