@@ -1,25 +1,25 @@
 #!/bin/sh
-############################# MPC License ############################## 
-# Wed Nov 19 15:19:19 CET 2008                                         # 
-# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # 
-#                                                                      # 
-# IDDN.FR.001.230040.000.S.P.2007.000.10000                            # 
-# This file is part of the MPC Runtime.                                # 
-#                                                                      # 
-# This software is governed by the CeCILL-C license under French law   # 
-# and abiding by the rules of distribution of free software.  You can  # 
-# use, modify and/ or redistribute the software under the terms of     # 
-# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # 
-# following URL http://www.cecill.info.                                # 
-#                                                                      # 
-# The fact that you are presently reading this means that you have     # 
-# had knowledge of the CeCILL-C license and that you accept its        # 
-# terms.                                                               # 
-#                                                                      # 
-# Authors:                                                             # 
-#   - PERACHE Marc marc.perache@cea.fr                                 # 
-#                                                                      # 
-######################################################################## 
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - PERACHE Marc marc.perache@cea.fr                                 #
+#                                                                      #
+########################################################################
 OFFSET=""
 
 OFFSET_STEP="4 4 4 4"
@@ -51,9 +51,9 @@ sctk_printf(){
 result(){
 	RESULT="1"
 	printf " $@" >> $LOG_FILE
-	printf " $@" 
+	printf " $@"
 	echo >> $LOG_FILE
-	echo 
+	echo
 }
 
 
@@ -73,7 +73,7 @@ perror(){
 	printf " $@" >> $LOG_FILE
 	printf " $@"
 	echo >> $LOG_FILE
-	echo 
+	echo
 }
 
 begin_section(){
@@ -88,7 +88,7 @@ reduce(){
 
 end_section(){
 	tmp_OFFSET="$OFFSET"
-	OFFSET="`reduce $tmp_OFFSET`"	
+	OFFSET="`reduce $tmp_OFFSET`"
 	if test "$1" != "" ; then
 	sctk_echo "$@"
 	fi
@@ -106,7 +106,7 @@ end_module(){
 need_module(){
 	sctk_printf "Check for required module $1"
 	MODULE_NAME="\$$1"
-	if test "`eval echo $MODULE_NAME`" = "" ; then 
+	if test "`eval echo $MODULE_NAME`" = "" ; then
 		error "Fail"
 	else
 		result "Ok"
@@ -116,8 +116,8 @@ need_module(){
 avail_module(){
 	sctk_printf "Check for optional module $1"
 	MODULE_NAME="\$$1"
-	if test "`eval echo $MODULE_NAME`" = "" ; then 
-		perror "Fail"	
+	if test "`eval echo $MODULE_NAME`" = "" ; then
+		perror "Fail"
 	else
 		result "Ok"
 	fi
@@ -159,7 +159,7 @@ SCTK_CXXFLAGS=""
 SCTK_FFLAGS=""
 
 sctk_add_to_check(){
-TO_CHECK="$TO_CHECK $@"	
+TO_CHECK="$TO_CHECK $@"
 }
 
 
@@ -187,7 +187,7 @@ cat ${SCTK_CONF_C} >> ${LOG_FILE} 2>&1
 sctk_printf "checking ${SCTK_CC} usage: "
 echo "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
 eval "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
-if test "$?" = "0" ; then 
+if test "$?" = "0" ; then
 	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
 	result yes
 else
@@ -209,7 +209,7 @@ cat ${SCTK_CONF_C} >> ${LOG_FILE} 2>&1
 sctk_printf "checking ${SCTK_CC} usage: "
 echo "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
 eval "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
-if test "$?" = "0" ; then 
+if test "$?" = "0" ; then
 	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
 	result yes
 else
@@ -217,7 +217,7 @@ else
 	error no
 fi
 
-if test "$SCTK_FORTRAN" = "1" ; then 
+if test "$SCTK_FORTRAN" = "1" ; then
 SCTK_CHECK_PROG ${SCTK_F77}
 SCTK_F77="$PROG"
 cat  << EOF  > ${SCTK_CONF_F}
@@ -227,7 +227,7 @@ EOF
 sctk_printf "checking ${SCTK_F77} usage: "
 echo "$SCTK_F77 -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_F} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
 eval "$SCTK_F77 -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_F} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
-if test "$?" = "0" ; then 
+if test "$?" = "0" ; then
 	rm ${SCTK_CONF_F} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
 	result yes
 else
@@ -269,7 +269,7 @@ EOF
 sctk_printf "checking keyword __builtin_expect: "
 echo "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
 eval "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
-if test "$?" = "0" ; then 
+if test "$?" = "0" ; then
 	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
 	echo "#define expect_true(expr) __builtin_expect(!!(expr),1)" >> include/sctk_keywords.h
 	echo "#define expect_false(expr) __builtin_expect(!!(expr),0)" >> include/sctk_keywords.h
@@ -282,19 +282,19 @@ else
 fi
 
 	SCTK_CHECK_KEYWORD static
-	if test "$RESULT" = "0" ; then 
-		error "Need keyword static" 
+	if test "$RESULT" = "0" ; then
+		error "Need keyword static"
 	fi
 	SCTK_CHECK_KEYWORD volatile
-	if test "$RESULT" = "0" ; then 
-		error "Need keyword volatile" 
+	if test "$RESULT" = "0" ; then
+		error "Need keyword volatile"
 	fi
 	SCTK_CHECK_KEYWORD const
-	if test "$RESULT" = "0" ; then 
-		error "Need keyword const" 
+	if test "$RESULT" = "0" ; then
+		error "Need keyword const"
 	fi
 	SCTK_CHECK_KEYWORD inline
-	if test "$RESULT" = "0" ; then 
+	if test "$RESULT" = "0" ; then
 		echo "#define mpc_inline" >> include/sctk_keywords.h
 		echo "#define inline" >> include/sctk_keywords.h
 	else
@@ -302,9 +302,9 @@ fi
 	fi
 	SCTK_CHECK_KEYWORD_RESTRICT restrict
 
-	if test "$RESULT" = "0" ; then 
+	if test "$RESULT" = "0" ; then
 	SCTK_CHECK_KEYWORD_RESTRICT __restrict__
-	if test "$RESULT" = "1" ; then 
+	if test "$RESULT" = "1" ; then
 		echo "#define mpc_restrict __restrict__" >> include/sctk_keywords.h
 		echo "#define restrict __restrict__" >> include/sctk_keywords.h
 	fi
@@ -312,25 +312,25 @@ fi
 		echo "#define mpc_restrict restrict" >> include/sctk_keywords.h
 	fi
 
-	if test "$RESULT" = "0" ; then 
+	if test "$RESULT" = "0" ; then
 		echo "#define mpc_restrict" >> include/sctk_keywords.h
 		echo "#define restrict" >> include/sctk_keywords.h
 	fi
 	SCTK_CHECK_KEYWORD __thread
-	if test "$RESULT" = "1" ; then 
+	if test "$RESULT" = "1" ; then
 		echo "#define SCTK_USE_TLS" >> include/sctk_keywords.h
 	fi
-	for type_name_check in char short int float long double size_t; do 
+	for type_name_check in char short int float long double size_t; do
 	    SCTK_CHECK_TYPE $type_name_check
-	    if test "$RESULT" = "0" ; then 
-		error "Need keyword $type_name_check" 
+	    if test "$RESULT" = "0" ; then
+		error "Need keyword $type_name_check"
 	    fi
 	done
 	SCTK_CHECK_TYPE "long long"
-	if test "$RESULT" = "1" ; then 
+	if test "$RESULT" = "1" ; then
 		SCTK_CHECK_OPTION "-DSCTK_HAVE_LONG_LONG"
 	fi
-	
+
 echo "#endif" >> include/sctk_keywords.h
 
 cat  include/sctk_keywords.h >> ${LOG_FILE} 2>&1
@@ -353,9 +353,9 @@ cat << EOF >> include/sctk_config.h
 
 EOF
 
-if test "MPC_Message_Passing" != "" ; then 
-#if test "$SCTK_FORTRAN" = "1" ; then 
-if false ; then 
+if test "MPC_Message_Passing" != "" ; then
+#if test "$SCTK_FORTRAN" = "1" ; then
+if false ; then
 SCTK_MSG_CHECKING "fortran _ interface"
 SCTK_FORTRAN="0"
 cat << EOF > ${SCTK_CONF_C}
@@ -370,7 +370,7 @@ echo "${SCTK_F77} ${SCTK_CONF_OBJ} ${MPC_SOURCE_DIR}MPC_Message_Passing/mpc/mpcf
 eval "${SCTK_F77} ${SCTK_CONF_OBJ} ${MPC_SOURCE_DIR}MPC_Message_Passing/mpc/mpcf.f -o ${SCTK_CONF_BIN}" >> ${SCTK_CONF_LOG} 2>&1
 SCTK_SCTK_CHECK_HEADER_RES="$?"
 rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} ${SCTK_CONF_OBJ} >> ${SCTK_CONF_LOG} 2>&1
-if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then 
+if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
     SCTK_CFLAGS="$SCTK_CFLAGS -DSCTK_FORTRAN_EXT_"
     result yes
     SCTK_FORTRAN="1"
@@ -391,7 +391,7 @@ echo "${SCTK_F77} ${SCTK_CONF_OBJ} ${MPC_SOURCE_DIR}MPC_Message_Passing/mpc/mpcf
 eval "${SCTK_F77} ${SCTK_CONF_OBJ} ${MPC_SOURCE_DIR}MPC_Message_Passing/mpc/mpcf.f -o ${SCTK_CONF_BIN}" >> ${SCTK_CONF_LOG} 2>&1
 SCTK_SCTK_CHECK_HEADER_RES="$?"
 rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} ${SCTK_CONF_OBJ} >> ${SCTK_CONF_LOG} 2>&1
-if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then 
+if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
     SCTK_CFLAGS="$SCTK_CFLAGS"
     result yes
     SCTK_FORTRAN="1"
@@ -400,7 +400,7 @@ else
 fi
 
 SCTK_MSG_CHECKING "fortran interface"
-if test "$SCTK_FORTRAN" != "1" ; then 
+if test "$SCTK_FORTRAN" != "1" ; then
     error "unknown"
 else
     result "defined"
@@ -436,7 +436,7 @@ gen_config
 sctk_printf "compile configuration detection: "
 echo "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS $SCTK_LDFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
 eval "$SCTK_CC -D${SCTK_OS}_SYS $SCTK_CFLAGS $SCTK_LDFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
-if test "$?" = "0" ; then 
+if test "$?" = "0" ; then
 	result yes
 else
 	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
@@ -445,7 +445,7 @@ fi
 sctk_printf "execute configuration detection: "
 chmod 755 ${SCTK_CONF_BIN}
 eval "${SCTK_CROSS_EXEC} ${SCTK_CONF_BIN}"
-if test "$?" = "0" ; then 
+if test "$?" = "0" ; then
 	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
 	result yes
 else
@@ -470,7 +470,7 @@ cat  include/sctk_config.h >> ${LOG_FILE} 2>&1
 
 check_pthread_flags_comp_done="0"
 check_pthread_flags_comp(){
-if test "$check_pthread_flags_comp_done" = "0" ; then 
+if test "$check_pthread_flags_comp_done" = "0" ; then
 case ${SCTK_OS} in
     SunOS)
     sctk_echo "Configuration for ${SCTK_OS}"
@@ -487,21 +487,21 @@ case ${SCTK_OS} in
     sctk_echo "Configuration for default"
     SCTK_CHECK_OPTION "-D_REENTRANT"
     SCTK_CHECK_LDOPTION "-lpthread -lrt"
-    
+
 esac
 else
     sctk_echo "Configuration done (cached)"
-fi 
+fi
 }
 
 check_pthread_flags(){
 check_pthread_flags_comp
 
-if test "$SCTK_OS" = "Linux" ; then 
+if test "$SCTK_OS" = "Linux" ; then
 XOPEN_SOURCE="-D_XOPEN_SOURCE=600 -D_BSD_SOURCE=1"
-else 
+else
 XOPEN_SOURCE=""
-fi 
+fi
 
 for i in SCTK_USE_PTHREAD_RWLOCK SCTK_USE_PTHREAD_SPINLOCK SCTK_USE_PTHREAD_BARRIER SCTK_USE_PTHREAD_MUTEX_REC SCTK_USE_PTHREAD_KEYS_MAX; do
 sctk_printf "checking $i flag:"
@@ -572,11 +572,11 @@ cat ${SCTK_CONF_C} >> ${LOG_FILE} 2>&1
 
 echo "$SCTK_CC -D$i -D${SCTK_OS}_SYS $SCTK_CFLAGS $SCTK_LDFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
 eval "$SCTK_CC -D$i -D${SCTK_OS}_SYS $SCTK_CFLAGS $SCTK_LDFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
-if test "$?" = "0" ; then 
+if test "$?" = "0" ; then
 	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
 	result yes
 	SCTK_CHECK_OPTION "-D$i"
-	if test "$XOPEN_SOURCE" != "" ; then 
+	if test "$XOPEN_SOURCE" != "" ; then
 	    SCTK_CHECK_OPTION "$XOPEN_SOURCE"
 	    XOPEN_SOURCE=""
 	fi
@@ -588,7 +588,7 @@ done
 }
 
 SCTK_CHECK_FUNC_NOFAIL_UNWIND(){
-    for i in $1 ; do 
+    for i in $1 ; do
 	SCTK_MSG_CHECKING $i
 
 cat  << EOF  > ${SCTK_CONF_C}
@@ -596,18 +596,18 @@ cat  << EOF  > ${SCTK_CONF_C}
 
 
 int main(){
-    unw_cursor_t cursor; 
+    unw_cursor_t cursor;
     unw_context_t uc;
     unw_word_t ip, sp;
     unw_word_t offset;
     char func_name_buf[10000];
-    
+
     unw_getcontext(&uc);
     unw_init_local(&cursor, &uc);
 
     unw_get_reg(&cursor, UNW_REG_IP, &ip);
     unw_get_reg(&cursor, UNW_REG_SP, &sp);
-    
+
     unw_get_proc_name(&cursor,func_name_buf,10000,&offset);
     return 0;
 }
@@ -618,17 +618,17 @@ EOF
 	eval "$SCTK_CC $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN} $SCTK_LDFLAGS">> ${SCTK_CONF_LOG} 2>&1
 	SCTK_SCTK_CHECK_FUNC_RES="$?"
 	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
-	if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then 
+	if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
 	    result yes
 	else
 	    perror no
-	    
+
 	fi
     done
 }
 
 SCTK_CHECK_FUNC_NOFAIL_NUMA(){
-    for i in $1 ; do 
+    for i in $1 ; do
 	SCTK_MSG_CHECKING $i
 
 cat  << EOF  > ${SCTK_CONF_C}
@@ -637,15 +637,15 @@ cat  << EOF  > ${SCTK_CONF_C}
 
 int main(int argc, char **argv)
 {
-    int res; 
+    int res;
   if (numa_available () >= 0)
     {
-        res = 0; 
-	printf("1");	
+        res = 0;
+	printf("1");
     }
     else
     {
-        res = 1; 
+        res = 1;
 	printf("0");
     }
     return res;
@@ -657,10 +657,10 @@ EOF
 	eval "$SCTK_CC $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN} $SCTK_LDFLAGS">> ${SCTK_CONF_LOG} 2>&1
 	SCTK_SCTK_CHECK_FUNC_RES="$?"
 
-	if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then 
+	if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
 	    eval "${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
 	    SCTK_SCTK_CHECK_FUNC_RES="$?"
-	    if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then 
+	    if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
 		rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
 		result yes
 	    else
@@ -669,7 +669,7 @@ EOF
 	    fi
 	else
 	    rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
-	    perror no	    
+	    perror no
 	fi
     done
 }
@@ -677,9 +677,9 @@ EOF
 
 check_libunwind_done="0"
 check_libunwind(){
-if test "$check_libunwind_done" = "0" ; then 
+if test "$check_libunwind_done" = "0" ; then
 
-if test "$SCTK_LIBUNWIND" = "0" ; then 
+if test "$SCTK_LIBUNWIND" = "0" ; then
 SCTK_SCTK_CHECK_FUNC_RES="1"
 else
 SCTK_CHECK_HEADER elf.h
@@ -690,7 +690,7 @@ SCTK_CHECK_LIST_ADD libunwind
 SCTK_CHECK_FUNC_NOFAIL_UNWIND "$SCTK_CHECK_LIST"
 fi
 
-if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then 
+if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
 SCTK_CHECK_OPTION "-DSCTK_DEBUG_UNWIND"
 SCTK_CHECK_HEADER libunwind.h
 else
@@ -698,7 +698,7 @@ SCTK_CHECK_LIST=""
 SCTK_CHECK_LIST_ADD backtrace
 SCTK_CHECK_LIST_ADD backtrace_symbols_fd
 SCTK_CHECK_FUNC_NOFAIL "$SCTK_CHECK_LIST"
-if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then 
+if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
 SCTK_CHECK_OPTION "-DSCTK_DEBUG_BACKTRACE"
 SCTK_CHECK_HEADER execinfo.h
 fi
@@ -711,12 +711,12 @@ fi
 
 check_debug_done="0"
 check_debug(){
-if test "$check_debug_done" = "0" ; then 
+if test "$check_debug_done" = "0" ; then
     begin_section "Check Valgrind:"
     SCTK_CHECK_HEADER_NOFAIL "valgrind/valgrind.h valgrind/memcheck.h" sctk_null_func
-    if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then 
+    if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
 	SCTK_CHECK_OPTION "-DSCTK_USE_VALGRIND"
-    fi    
+    fi
     end_section
 check_debug_done="1"
 else
@@ -726,8 +726,8 @@ fi
 
 check_binding_done="0"
 check_binding(){
-if test "$check_binding_done" = "0" ; then 
-if test "$SCTK_LIBCPUSET" = 0 ; then 
+if test "$check_binding_done" = "0" ; then
+if test "$SCTK_LIBCPUSET" = 0 ; then
 SCTK_SCTK_CHECK_FUNC_RES="1"
 else
 SCTK_CHECK_LDOPTION "-lcpuset"
@@ -735,11 +735,11 @@ SCTK_CHECK_LIST=""
 SCTK_CHECK_LIST_ADD cs_create
 SCTK_CHECK_FUNC_NOFAIL "$SCTK_CHECK_LIST"
 fi
-if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then 
+if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
 SCTK_CHECK_OPTION "-DMPC_USE_CPUSET"
 SCTK_CHECK_HEADER cpuset.h
 else
-if test "$SCTK_LIBNUMA" = 0 ; then 
+if test "$SCTK_LIBNUMA" = 0 ; then
 SCTK_SCTK_CHECK_FUNC_RES="1"
 else
 SCTK_CHECK_LDOPTION "-lnuma"
@@ -749,7 +749,7 @@ SCTK_CHECK_FUNC_NOFAIL_NUMA "$SCTK_CHECK_LIST"
 
 fi
 
-if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then 
+if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
 SCTK_CHECK_OPTION "-DMPC_USE_LIBNUMA"
 SCTK_CHECK_HEADER numa.h
 fi
@@ -759,6 +759,26 @@ else
 sctk_echo "Already done"
 fi
 }
+
+check_slurm_done="0"
+check_slurm(){
+if test "$check_slurm_done" = "0" ; then
+check_slurm_done="1"
+if test "$SCTK_SLURM" = "1" ; then
+    begin_section "Check SLURM:"
+    SCTK_CHECK_HEADER_NOFAIL slurm/slurm.h
+    SCTK_CHECK_HEADER_NOFAIL slurm/pmi.h
+    if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
+	SCTK_CHECK_OPTION "-DMPC_USE_SLURM"
+	SCTK_CHECK_LDOPTION "-lpmi"
+    fi
+    end_section
+fi
+else
+sctk_echo "Already done"
+fi
+}
+
 
 check_net_elan_done=""
 check_net_elan(){
@@ -781,7 +801,7 @@ check_net_elan(){
     SCTK_CHECK_LIST_ADD elan_done
     SCTK_CHECK_LIST_ADD elan_putgetInit
     SCTK_CHECK_FUNC_NOFAIL "$SCTK_CHECK_LIST"
-    if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then 
+    if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
 	SCTK_CHECK_OPTION "-DMPC_USE_ELAN"
 	SCTK_CHECK_HEADER elan/elan.h
 	SCTK_CHECK_LDOPTION "-lm"
@@ -794,12 +814,12 @@ check_net_elan(){
 check_net_mpi_done=""
 check_net_mpi(){
 check_net_mpi_done="1"
-if test "$check_net_mpi_disable" != "1"; then 
+if test "$check_net_mpi_disable" != "1"; then
     begin_section "Check MPI:"
     SCTK_CHECK_LIST=""
     SCTK_CHECK_LIST_ADD MPI_Init
     SCTK_CHECK_FUNC_NOFAIL "$SCTK_CHECK_LIST"
-    if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then 
+    if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
 	SCTK_CHECK_OPTION "-DMPC_USE_MPI"
 	SCTK_CHECK_HEADER mpi.h
 	SCTK_NET_LIST="$SCTK_NET_LIST mpi"
@@ -824,7 +844,7 @@ check_net_tcp_done="1"
     SCTK_CHECK_LIST_ADD socket
     SCTK_CHECK_LIST_ADD waitpid
     SCTK_CHECK_FUNC_NOFAIL "$SCTK_CHECK_LIST"
-    if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then 
+    if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
 	SCTK_CHECK_OPTION "-DMPC_USE_TCP"
 	SCTK_CHECK_HEADER "sys/wait.h"
 	SCTK_CHECK_HEADER "sys/resource.h"
@@ -850,9 +870,9 @@ check_net_infiniband(){
 check_net_infiniband_done="1"
     begin_section "Check infiniband:"
     SCTK_CHECK_HEADER_NOFAIL infiniband/verbs.h
-    if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then 
+    if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
 	SCTK_CHECK_OPTION "-DMPC_USE_INFINIBAND"
-	SCTK_CHECK_LDOPTION "-libverbs"	
+	SCTK_CHECK_LDOPTION "-libverbs"
 	SCTK_NET_LIST_EXP="$SCTK_NET_LIST_EXP "
 	SCTK_NET_LIST="$SCTK_NET_LIST infiniband"
     fi
@@ -862,33 +882,33 @@ check_net_infiniband_done="1"
 check_networks_done="0"
 check_net_all_done=""
 check_networks(){
-if test "$check_networks_done" = "0" ; then 
+if test "$check_networks_done" = "0" ; then
     check_net_none
-    for network in $SCTK_NETWORKS ; do 
-	
+    for network in $SCTK_NETWORKS ; do
+
 	case $network in
 	    elan|ELAN|elan*)
-		if test "$check_net_elan_done" = "" ; then 
+		if test "$check_net_elan_done" = "" ; then
 		    check_net_elan
 		fi
 		;;
 	    mpi|MPI)
-		if test "$check_net_mpi_done" = "" ; then 
+		if test "$check_net_mpi_done" = "" ; then
 		    check_net_mpi
 		fi
 		;;
 	    tcp|TCP)
-		if test "$check_net_tcp_done" = "" ; then 
+		if test "$check_net_tcp_done" = "" ; then
 		    check_net_tcp
 		fi
 		;;
 	    INFINIBAND|infiniband|ib|IB)
-		if test "$check_net_infiniband_done" = "" ; then 
+		if test "$check_net_infiniband_done" = "" ; then
 		    check_net_infiniband
 		fi
 		;;
 	    all)
-		if test "$check_net_all_done" = "" ; then 
+		if test "$check_net_all_done" = "" ; then
 		    check_net_elan
 		    check_net_infiniband
 		    check_net_mpi
@@ -897,8 +917,8 @@ if test "$check_networks_done" = "0" ; then
 		check_net_all_done="1"
 		;;
 	    *)
-		perror "$0: error: unrecognized network: $network"    
-		exit 1    
+		perror "$0: error: unrecognized network: $network"
+		exit 1
 		;;
 	esac
     done
@@ -909,7 +929,7 @@ fi
 }
 
 SCTK_CHECK_FUNC_NOFAIL_ZLIB(){
-    for i in $1 ; do 
+    for i in $1 ; do
 	SCTK_MSG_CHECKING $i
 
 cat  << EOF  > ${SCTK_CONF_C}
@@ -944,10 +964,10 @@ EOF
 	eval "$SCTK_CC $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN} $SCTK_LDFLAGS">> ${SCTK_CONF_LOG} 2>&1
 	SCTK_SCTK_CHECK_FUNC_RES="$?"
 
-	if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then 
+	if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
 	    eval "${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
 	    SCTK_SCTK_CHECK_FUNC_RES="$?"
-	    if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then 
+	    if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
 		rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
 		result yes
 	    else
@@ -956,7 +976,7 @@ EOF
 	    fi
 	else
 	    rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
-	    perror no	    
+	    perror no
 	fi
     done
 }
@@ -965,12 +985,12 @@ EOF
 
 check_zlib_done="0"
 check_zlib(){
-if test "$check_zlib_done" = "0" ; then 
+if test "$check_zlib_done" = "0" ; then
 SCTK_CHECK_LDOPTION "-lz"
 SCTK_CHECK_LIST=""
 SCTK_CHECK_LIST_ADD compress
 SCTK_CHECK_FUNC_NOFAIL_ZLIB "$SCTK_CHECK_LIST"
-if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then 
+if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
 SCTK_CHECK_HEADER zlib.h
 SCTK_CHECK_FUNC uncompress
 SCTK_CHECK_OPTION "-DMPC_USE_ZLIB"

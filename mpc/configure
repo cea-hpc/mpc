@@ -167,10 +167,11 @@ cat <<EOF
 Optional Packages:
   --with-PACKAGE          use PACKAGE
   --without-PACKAGE       do not use PACKAGE
-  --with-libunwind        enable libunwind backtraces (default)
-  --with-libnuma          enable libnuma for memory and cpu binding (default)
-  --with-libcpuset        enable libcpuset for memory and cpu binding (default)
-  --without-mpc_mmap      enable mpc mmap/munmap support (default)
+  --without-libunwind     disable libunwind backtraces (default: enabled)
+  --with-libnuma          enable libnuma for memory and cpu binding (default: disabled)
+  --with-libcpuset        enable libcpuset for memory and cpu binding (default: disabled)
+  --without-slurm         disable slurm detection (default: enabled)
+  --without-mpc_mmap      disable mpc mmap/munmap support (default: enabled)
 
 echo "MPCROOT=
 
@@ -193,6 +194,7 @@ mpc_modules_activate_modules
 SCTK_LIBUNWIND="1"
 SCTK_LIBNUMA="0"
 SCTK_LIBCPUSET="0"
+SCTK_SLURM="1"
 SCTK_SHM="1"
 SCTK_SHELL_COLORS="0"
 SCTK_CC_DEP="-M"
@@ -312,6 +314,13 @@ for arg in "$@" ; do
     ;;
     --with-libcpuset)
     SCTK_LIBCPUSET="1"
+    ;;
+
+    --without-slurm)
+    SCTK_SLURM="0"
+    ;;
+    --with-slurm)
+    SCTK_SLURM="1"
     ;;
 
     --disable-all)

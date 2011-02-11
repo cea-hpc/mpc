@@ -20,33 +20,35 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include "sctk_low_level_comm.h"
-#include "sctk_hybrid_comm.h"
 #include "sctk_debug.h"
 #include "sctk_bootstrap.h"
 #include "sctk_thread.h"
 #include "sctk_mpcrun_client.h"
 #include <stdlib.h>
-#include <slurm/pmi.h>
 
 enum bootstrap_mode {
+#ifdef MPC_USE_SLURM
   PMI,
+#endif
   TCP,
 };
 enum bootstrap_mode mode;
 
+#define TCP_KEY_MAX 256
+#define TCP_VAL_MAX 256
+
+#ifdef MPC_USE_SLURM
+#include <slurm/pmi.h>
+
 static int process_size;
 static int process_rank;
 static int local_process_size;
-static int local_process_rank;
 static int key_max;
 static int val_max;
 static int spawn;
 static int appnum;
 static int name_max;
 static char* kvsname;
-
-#define TCP_KEY_MAX 256
-#define TCP_VAL_MAX 256
 
 static void sctk_bootstrap_slurm_env()
 {
@@ -75,7 +77,6 @@ static void sctk_bootstrap_slurm_env()
 static void sctk_bootstrap_pmi_init()
 {
   int res;
-  int i;
 
   /*  get environment variables */
   sctk_bootstrap_slurm_env();
@@ -122,14 +123,19 @@ static void sctk_bootstrap_pmi_init()
   assume (res == PMI_SUCCESS);
   sctk_nodebug("KVS name %s",kvsname);
 }
+#endif
 
 void
 sctk_bootstrap_register(char* pkey, char* pval, int size)
 {
+#ifdef MPC_USE_SLURM
   int res;
+#endif
 
   switch(mode)
   {
+
+#ifdef MPC_USE_SLURM
     case PMI:
       res = PMI_KVS_Put(kvsname, pkey, pval);
       assume(res == PMI_SUCCESS);
@@ -137,29 +143,38 @@ sctk_bootstrap_register(char* pkey, char* pval, int size)
       res = PMI_KVS_Commit(kvsname);
       assume(res == PMI_SUCCESS);
       break;
+#endif
 
     case TCP:
       sctk_mpcrun_client_register_shmfilename (pkey, pval, TCP_KEY_MAX, size);
       break;
+
+    default: assume(0);
   }
 }
 
   void
 sctk_bootstrap_get(char* pkey, char* pval, int size)
 {
+#ifdef MPC_USE_SLURM
   int res;
+#endif
 
   switch(mode)
   {
+#ifdef MPC_USE_SLURM
     case PMI:
       assume(size <= val_max);
       res = PMI_KVS_Get(kvsname, pkey, pval, size);
       assume(res == PMI_SUCCESS);
       break;
+#endif
 
     case TCP:
       sctk_mpcrun_client_get_shmfilename (pkey, pval, TCP_KEY_MAX, size);
       break;
+
+    default: assume(0);
   }
 }
 
@@ -168,14 +183,20 @@ sctk_bootstrap_get_max_key_len()
 {
   switch(mode)
   {
+#ifdef MPC_USE_SLURM
     case PMI:
       return key_max;
       break;
+#endif
 
     case TCP:
       return TCP_KEY_MAX;
       break;
+
+    default: assume(0);
   }
+
+  return -1;
 }
 
   int
@@ -183,14 +204,20 @@ sctk_bootstrap_get_max_val_len()
 {
   switch(mode)
   {
+#ifdef MPC_USE_SLURM
     case PMI:
       return val_max;
       break;
+#endif
 
     case TCP:
       return TCP_VAL_MAX;
       break;
+
+    default: assume(0);
   }
+
+  return -1;
 }
 
 
@@ -198,28 +225,36 @@ void
   sctk_bootstrap_barrier() {
     switch (mode)
     {
+#ifdef MPC_USE_SLURM
       case PMI:
         PMI_Barrier();
         break;
+#endif
 
       case TCP:
         sctk_mpcrun_barrier ();
         break;
+
+      default: assume(0);
     }
 }
 
 void sctk_bootstrap_init() {
+#ifdef MPC_USE_SLURM
   char* env = NULL;
-
   env = getenv("SLURM_JOBID");
   if ( env ) {
     mode = PMI;
   }
   else
     mode = TCP;
+#else
+    mode = TCP;
+#endif
 
   switch (mode)
   {
+#ifdef MPC_USE_SLURM
     case PMI:
       sctk_bootstrap_pmi_init();
       sctk_mpcrun_client_create_recv_socket ();
@@ -233,8 +268,9 @@ void sctk_bootstrap_init() {
       }
       PMI_Barrier();
       if (sctk_process_rank == 0)
-        sctk_debug("Launch mode : PMI Launcher used");
+        fprintf(stderr, "MPC launcher: PMI used\n");
       break;
+#endif
 
     case TCP:
       /* connect the process to the TCP server.
@@ -247,7 +283,9 @@ void sctk_bootstrap_init() {
       /* also grab the number of processes in the node */
       sctk_mpcrun_client_get_local_consts();
       if (sctk_process_rank == 0)
-        sctk_debug("Launch mode : TCP Launcher used");
+        fprintf(stderr, "MPC launcher: TCP used\n");
       break;
+
+    default: assume(0);
   }
 }

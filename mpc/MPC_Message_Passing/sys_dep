@@ -82,4 +82,5 @@ fi
 
 begin_section Networks
 check_networks
+check_slurm
 end_section
