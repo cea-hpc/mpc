@@ -400,11 +400,11 @@ sctk_net_preinit_driver_hybrid ()
   {
     GENDRIVER(tcp, tcp);
   }
-//  else if ( (strcmp(sctk_module_name, "ib") == 0) ||
-//    (strcmp(sctk_module_name, "tcp_only") == 0))
-//  {
-//    GENDRIVER(infiniband, infiniband);
-//  }
+  else if ( (strcmp(sctk_module_name, "ib") == 0) ||
+    (strcmp(sctk_module_name, "tcp_only") == 0))
+  {
+    GENDRIVER(infiniband, infiniband);
+  }
   else if ( (strcmp(sctk_module_name, "ipoib") == 0) ||
     (strcmp(sctk_module_name, "ipoib_only") == 0))
   {
@@ -501,9 +501,9 @@ sctk_net_init_driver_hybrid (int *argc, char ***argv)
 
     sctk_net_init_driver_ipoib(argc, argv);
   }
-//  else if ( (strcmp(sctk_module_name, "ib") == 0) ||
-//      (strcmp(sctk_module_name, "ib_only") == 0))
-//  {
-//    sctk_net_init_driver_infiniband(argc, argv);
-//  }
+  else if ( (strcmp(sctk_module_name, "ib") == 0) ||
+      (strcmp(sctk_module_name, "ib_only") == 0))
+  {
+    sctk_net_init_driver_infiniband(argc, argv);
+  }
 }

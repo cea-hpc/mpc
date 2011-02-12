@@ -88,7 +88,7 @@ static char sctk_net_network_mode[4096];
 void
 sctk_net_ibv_update_network_mode()
 {
-  if (sctk_net_hybrid_is_shm_enabled)
+  if (sctk_net_is_shm_enabled())
     sprintf (sctk_net_network_mode, "SHM v%s/IB-NG", SHM_VERSION);
   else
     sprintf (sctk_net_network_mode, "IB-NG");
