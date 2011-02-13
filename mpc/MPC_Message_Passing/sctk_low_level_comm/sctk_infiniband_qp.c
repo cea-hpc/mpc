@@ -455,13 +455,13 @@ sctk_net_ibv_cq_poll(struct ibv_cq* cq, int pending_nb, void (*ptr_func)(struct 
 }
 
   void
-sctk_net_ibv_cq_lookup(struct ibv_cq* cq, void (*ptr_func)(struct ibv_wc*, int lookup, int dest), int dest, sctk_net_ibv_allocator_type_t type)
+sctk_net_ibv_cq_lookup(struct ibv_cq* cq, int nb_pending, void (*ptr_func)(struct ibv_wc*, int lookup, int dest), int dest, sctk_net_ibv_allocator_type_t type)
 {
-   struct ibv_wc wc[20];
+   struct ibv_wc wc[nb_pending];
   int ne = 0;
   int i;
 
-  ne = ibv_poll_cq (cq, 20, wc);
+  ne = ibv_poll_cq (cq, nb_pending, wc);
 
   for (i = 0; i < ne; ++i)
   {
@@ -472,6 +472,27 @@ sctk_net_ibv_cq_lookup(struct ibv_cq* cq, void (*ptr_func)(struct ibv_wc*, int l
     ptr_func(&wc[i], 1, dest);
   }
 }
+
+sctk_net_ibv_cq_garbage_collector(struct ibv_cq* cq, int nb_pending, void (*ptr_func)(struct ibv_wc*), sctk_net_ibv_allocator_type_t type)
+{
+  struct ibv_wc wc[nb_pending];
+  int ne = 0;
+  int i;
+
+  ne = ibv_poll_cq (cq, nb_pending, wc);
+
+  for (i = 0; i < ne; ++i)
+  {
+    sctk_nodebug("%d elements found", ne);
+
+    sctk_net_ibv_poll_check_wc(wc[i], type);
+
+    ptr_func(&wc[i]);
+  }
+  return ne;
+}
+
+
 
 /*-----------------------------------------------------------
  *  Shared Receive queue

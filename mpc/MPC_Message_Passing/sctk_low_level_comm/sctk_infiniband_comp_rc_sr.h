@@ -49,9 +49,13 @@ typedef enum
 /* number of different msg type (see the list above) */
 
 /* nb entries in buffers */
-  #define IBV_PENDING_SEND_PTP  300
-  #define IBV_PENDING_SEND_COLL 300
+  #define IBV_PENDING_SEND_PTP  150
+  #define IBV_PENDING_SEND_COLL 150
   #define IBV_PENDING_RECV      300
+
+  /* define when the garbage collector has to be
+   * run: 80 -> 80% of the number of buffers */
+  #define CEILING_SEND_BUFFERS  90
 
 /*  EAGER  */
 typedef struct
@@ -99,6 +103,7 @@ typedef struct
 {
   sctk_thread_mutex_t lock;
   int             buff_type;
+  int             ceiling;
   int             slot_nb;
   int             slot_size;
   int             current_nb;
@@ -128,7 +133,7 @@ sctk_net_ibv_comp_rc_sr_create_local(sctk_net_ibv_qp_rail_t* rail);
 sctk_net_ibv_rc_sr_entry_t*
 sctk_net_ibv_comp_rc_sr_pick_header(sctk_net_ibv_rc_sr_buff_t* buff);
 
-int
+uint32_t
 sctk_net_ibv_comp_rc_sr_send(
   sctk_net_ibv_qp_remote_t* remote,
     sctk_net_ibv_rc_sr_entry_t* entry,

@@ -168,11 +168,12 @@ sctk_net_ibv_sched_pending_push(
   void
   sctk_net_ibv_sched_rc_sr_poll_pending()
 {
-  struct sctk_list_elem* tmp = rc_sr_pending.head;
+  struct sctk_list_elem* tmp = NULL;
   sctk_net_ibv_rc_sr_msg_header_t* msg;
   int ret;
 
   sctk_list_lock(&rc_sr_pending);
+  tmp = rc_sr_pending.head;
   while(tmp)
   {
     msg = tmp->elem;
@@ -202,13 +203,14 @@ sctk_net_ibv_sched_pending_push(
   void
 sctk_net_ibv_sched_rc_rdma_poll_pending()
 {
-  struct sctk_list_elem* tmp = rc_rdma_pending.head;
+  struct sctk_list_elem* tmp = NULL;
   sctk_net_ibv_rc_rdma_entry_recv_t* msg;
   sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma;
   int ret;
   int src_process;
 
   sctk_list_lock(&rc_rdma_pending);
+  tmp = rc_rdma_pending.head;
   while(tmp)
   {
     msg = tmp->elem;
@@ -244,16 +246,16 @@ sctk_net_ibv_sched_poll_pending()
 
 }
 
-  int
+  uint32_t
 sctk_net_ibv_sched_get_esn(int dest)
 {
   return sctk_net_ibv_allocator->entry[dest].esn;
 }
 
-  int
+  uint32_t
 sctk_net_ibv_sched_psn_inc (int dest)
 {
-  int i;
+  uint32_t i;
 
   //  sctk_net_ibv_sched_lock();
   i = sctk_net_ibv_allocator->entry[dest].psn;
@@ -263,17 +265,17 @@ sctk_net_ibv_sched_psn_inc (int dest)
   return i;
 }
 
-  int
+  uint32_t
 sctk_net_ibv_sched_esn_inc (int dest)
 {
-  int i;
+  uint32_t i;
   i = sctk_net_ibv_allocator->entry[dest].esn;
   sctk_net_ibv_allocator->entry[dest].esn++;
   return i;
 }
 
 
-  int
+  uint32_t
 sctk_net_ibv_sched_sn_check(int dest, uint64_t num)
 {
   if ( sctk_net_ibv_allocator->entry[dest].esn == num )

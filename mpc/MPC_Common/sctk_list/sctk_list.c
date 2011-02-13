@@ -170,10 +170,12 @@ void* sctk_list_walk(struct sctk_list* list,
 void* sctk_list_walk_on_cond(struct sctk_list* list, int cond,
     void* (*funct) (void* elem, int cond), int remove)
 {
-  struct sctk_list_elem *tmp = list->head;
+  struct sctk_list_elem *tmp = NULL;
   assume(funct);
   void* ret = NULL;
 
+  sctk_list_lock(list);
+  tmp = list->head;
   while (tmp) {
 
     ret = funct(tmp->elem, cond);
@@ -181,11 +183,13 @@ void* sctk_list_walk_on_cond(struct sctk_list* list, int cond,
     {
       if (remove)
         sctk_list_remove(list, tmp);
+      sctk_list_unlock(list);
       return ret;
     }
 
     tmp = tmp->p_next;
   }
+  sctk_list_unlock(list);
   return ret;
 }
 

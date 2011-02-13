@@ -34,7 +34,8 @@ typedef enum
 
 /* max number of WC extracted for the input
  * and the output completion queue */
+/* FIXME cant change 1 to something else */
 #define SCTK_PENDING_IN_NUMBER 1
-#define SCTK_PENDING_OUT_NUMBER 1
+#define SCTK_PENDING_OUT_NUMBER 10
 
 #endif

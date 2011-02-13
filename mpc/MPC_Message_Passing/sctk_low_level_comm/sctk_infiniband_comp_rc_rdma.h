@@ -51,7 +51,7 @@ typedef struct
   size_t                          size;
   struct ibv_sge                  list;
   int                             directly_pinned;
-  int                             psn;
+  uint32_t                        psn;
 } sctk_net_ibv_rc_rdma_entry_send_t;
 
 typedef struct
@@ -93,7 +93,7 @@ typedef struct
   void*     dest_ptr;
   uint32_t  dest_rkey;
   int       src_process;
-  int       psn;
+  uint32_t  psn;
   int       if_qp_connection;
   sctk_net_ibv_qp_exchange_keys_t keys;
 } sctk_net_ibv_rc_rdma_request_ack_t;

@@ -63,7 +63,7 @@ sctk_net_ibv_comp_rc_rdma_post_recv(
   sctk_net_ibv_mmu_entry_t        *mmu_entry; /* MMU entry */
 
   size = entry_recv->requested_size;
-  sctk_debug("Requested size : %lu", size);
+  sctk_nodebug("Requested size : %lu", size);
 
   posix_memalign( ptr, sctk_net_ibv_mmu_get_pagesize(), size);
   assume(*ptr);
@@ -97,6 +97,7 @@ sctk_net_ibv_comp_rc_rdma_post_recv(
 
 }
 
+
 static void
 sctk_net_ibv_comp_rc_rdma_entry_send_init(
     sctk_net_ibv_rc_rdma_entry_send_t *list_entry,
@@ -105,7 +106,7 @@ sctk_net_ibv_comp_rc_rdma_entry_send_init(
     sctk_net_ibv_mmu_entry_t* mmu_entry,
     void* entire_msg,
     void* aligned_ptr,
-    int psn)
+    uint32_t psn)
 {
   /* pointer to msg */
   list_entry->msg = msg;
@@ -289,32 +290,22 @@ sctk_net_ibv_comp_rc_rdma_send_request(
 
   /* if the QP are already connected we realize a RDMA read operation */
   ready = entry_rc_rdma->ready;
-//  ready = 0; //entry_rc_rdma->ready;
+  ready = 0; //entry_rc_rdma->ready;
 
   /* check if the remote is already known. If not, we connect to it */
   rc_sr_remote = sctk_net_ibv_comp_rc_sr_check_and_connect(
       dest_process);
-
-  /* 4 STEP : allocate the memory needed and pine the memory */
-  list_entry = sctk_malloc(sizeof (sctk_net_ibv_rc_rdma_entry_send_t));
 
   /* we register memory before sending the RC_SR message if
    * we will realize a RDMA read operation */
   if (ready == 1)
   {
     /* finally send the request msg */
-    sctk_list_lock(&rdma_entry->send);
+    sctk_list_lock(&rdma_entry->recv);
 
     /* register the memory where the message is stored */
     mmu_entry = sctk_net_ibv_mmu_register (
         rail->mmu, local_rc_rdma, aligned_ptr, aligned_size);
-
-    /* initialize the send descriptor */
-    sctk_net_ibv_comp_rc_rdma_entry_send_init(
-        list_entry, msg, size, mmu_entry, entire_msg,
-        aligned_ptr, psn);
-
-    sctk_list_push(&rdma_entry->send, list_entry);
 
     /* prepare the header */
     size_to_copy = sctk_net_ibv_comp_rc_rdma_prepare_request( rail,
@@ -325,10 +316,13 @@ sctk_net_ibv_comp_rc_rdma_send_request(
     psn = sctk_net_ibv_comp_rc_sr_send(rc_sr_remote, entry, size_to_copy, RC_SR_RDVZ_REQUEST, &request->psn);
     sctk_nodebug("Entry added with PSN %d", psn);
 
-    sctk_list_unlock(&rdma_entry->send);
+    sctk_list_unlock(&rdma_entry->recv);
   }
 
   if (!ready) {
+    /* 4 STEP : allocate the memory needed and pine the memory */
+    list_entry = sctk_malloc(sizeof (sctk_net_ibv_rc_rdma_entry_send_t));
+
     /* prepare the header */
     size_to_copy = sctk_net_ibv_comp_rc_rdma_prepare_request( rail,
         entry_rc_rdma, request, msg, size, need_connection, ready,
@@ -475,7 +469,7 @@ sctk_net_ibv_comp_rc_rdma_analyze_request(
 
   if ( (request->type == RC_RDMA_REQ_WRITE) ||
       (request->type == RC_RDMA_REQ_WRITE_WITH_QP_CREATION)) {
-    sctk_debug("RC_RDMA_WRITE received");
+    sctk_nodebug("RC_RDMA_WRITE received");
 
     sctk_net_ibv_comp_rc_rdma_add_request(
         rail, rc_sr_local, rc_rdma_local,
@@ -486,7 +480,7 @@ sctk_net_ibv_comp_rc_rdma_analyze_request(
 
   if (request->type == RC_RDMA_REQ_READ)
   {
-    sctk_debug("RC_RDMA_READ received");
+    sctk_nodebug("RC_RDMA_READ received");
 
     sctk_net_ibv_comp_rc_rdma_process_rdma_read(
         rail, rc_sr_local, rc_rdma_local,

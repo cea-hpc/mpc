@@ -38,16 +38,16 @@ sctk_net_ibv_sched_lock();
 void
 sctk_net_ibv_sched_unlock();
 
-int
+uint32_t
 sctk_net_ibv_sched_psn_inc (int dest);
 
-int
+uint32_t
 sctk_net_ibv_sched_esn_inc (int dest);
 
-int
+  uint32_t
 sctk_net_ibv_sched_get_esn(int dest);
 
-  int
+  uint32_t
 sctk_net_ibv_sched_sn_check(int dest, uint64_t num);
 
 int

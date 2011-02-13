@@ -119,10 +119,8 @@ sctk_net_init_driver_infiniband (int *argc, char ***argv)
   /* initialization of collective */
   sctk_net_ibv_collective_init();
 
-
   /* initialization of the Connection Manager */
   sctk_net_ibv_cm_server();
-//  PMI_Finalize();
 
   /* initialization of queue pairs */
   sctk_net_ibv_allocator_rc_sr_buffers_init(rail);
@@ -320,10 +318,10 @@ sctk_net_ibv_collective_op_driver (sctk_collective_communications_t * com,
 sctk_net_ibv_register_pointers_functions (sctk_net_driver_pointers_functions_t* pointers)
 {
   /* save all pointers to functions */
+  /* TODO: Use TCP servers for rpc messages */
   //  pointers->rpc_driver          = sctk_net_rpc_driver;
   //  pointers->rpc_driver_retrive  = sctk_net_rpc_retrive_driver;
   //  pointers->rpc_driver_send     = sctk_net_rpc_send_driver;
-  //pointers->net_send_ptp_message= sctk_net_send_ptp_message_driver;
   pointers->net_send_ptp_message= sctk_net_ibv_send_ptp_message_driver;
   pointers->net_copy_message    = sctk_net_ibv_copy_message_func_driver;
   pointers->net_free            = sctk_net_ibv_free_func_driver;

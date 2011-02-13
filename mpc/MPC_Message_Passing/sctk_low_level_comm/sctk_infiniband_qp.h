@@ -139,8 +139,12 @@ sctk_net_ibv_cq_init(sctk_net_ibv_qp_rail_t* rail);
   void
 sctk_net_ibv_cq_poll(struct ibv_cq* cq, int pending_nb, void (*ptr_func)(struct ibv_wc*, int lookup, int dest), sctk_net_ibv_allocator_type_t type);
 
+int
+sctk_net_ibv_cq_garbage_collector(struct ibv_cq* cq, int nb_pending, void (*ptr_func)(struct ibv_wc*), sctk_net_ibv_allocator_type_t type);
+
   void
-sctk_net_ibv_cq_lookup(struct ibv_cq* cq, void (*ptr_func)(struct ibv_wc*, int lookup, int dest), int dest, sctk_net_ibv_allocator_type_t type);
+sctk_net_ibv_cq_lookup(struct ibv_cq* cq, int nb_pending, void (*ptr_func)(struct ibv_wc*, int lookup, int dest), int dest, sctk_net_ibv_allocator_type_t type);
+
 /*-----------------------------------------------------------
  *  Shared Receive queue
  *----------------------------------------------------------*/

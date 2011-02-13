@@ -74,19 +74,20 @@ sctk_net_ibv_collective_lookup_src(struct sctk_list* list, const int src)
   if (!list || src < 0)
     return NULL;
 
+  sctk_list_lock(list);
   elem = list->head;
   while(elem)
   {
     msg = (sctk_net_ibv_rc_sr_msg_header_t*) elem->elem;
     if (msg->src_process == src)
     {
-      sctk_list_lock(list);
       sctk_list_remove(list, elem);
       sctk_list_unlock(list);
       return msg;
     }
     elem = elem->p_next;
   }
+  sctk_list_unlock(list);
   return NULL;
 }
 

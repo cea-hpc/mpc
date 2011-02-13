@@ -75,7 +75,12 @@ sctk_net_ibv_comp_rc_sr_new( int slot_nb, int slot_size)
   wr_current      += slot_nb;
   buff->wr_end    = wr_current;
 
+  buff->ceiling = (slot_nb * CEILING_SEND_BUFFERS / 100);
+//  sctk_debug("Ceiling fixed to %d", buff->ceiling);
+
   //sctk_nodebug("Wr begin %d Wr end %d", buff->wr_begin, buff->wr_end);
+
+  srand(time(NULL));
 
   return buff;
 }
@@ -112,24 +117,47 @@ sctk_net_ibv_comp_rc_sr_free_header(sctk_net_ibv_rc_sr_buff_t* buff, sctk_net_ib
 {
   sctk_thread_mutex_lock(&buff->lock);
   sctk_nodebug("Free header %p (nb : %d)", entry, buff->current_nb);
+  if (buff->current_nb > 280 )
+    sctk_warning("FREE Remaining buffers : %d", buff->current_nb);
   entry->used = 0;
   buff->current_nb--;
   sctk_thread_mutex_unlock(&buff->lock);
 }
 
+static void sctk_net_ibv_rc_sr_send_cq(struct ibv_wc* wc)
+{
+  sctk_net_ibv_rc_sr_poll_send(wc, rc_sr_ptp_send_buff,
+      rc_sr_coll_send_buff);
+}
 
   sctk_net_ibv_rc_sr_entry_t*
 sctk_net_ibv_comp_rc_sr_pick_header(sctk_net_ibv_rc_sr_buff_t* buff)
 {
   int i;
+  int random;
 
   for (;;)
   {
+    random = rand() % buff->slot_nb;
+
+    /* Garbage collector */
+    if (buff->current_nb > buff->ceiling)
+    {
+      int nb_freed;
+      int total_freed = 0;
+      sctk_warning("IB is running out of send buffers.\nStarting Garbage Collector...");
+      do
+      {
+        nb_freed = sctk_net_ibv_cq_garbage_collector(rc_sr_local->send_cq, SCTK_PENDING_OUT_NUMBER, sctk_net_ibv_rc_sr_send_cq, IBV_CHAN_RC_SR | IBV_CHAN_SEND);
+        total_freed+=nb_freed;
+      } while(nb_freed > 0);
+      sctk_warning("Garbage Collector done.\n - Number of buffers freed: %d\n - Number of busy buffers: %d", total_freed, buff->current_nb);
+    }
+
 
     if (sctk_thread_mutex_trylock(&buff->lock) == 0)
     {
-
-      for (i = 0; i < buff->slot_nb; ++i)
+      for (i = random; i < buff->slot_nb; ++i)
       {
         sctk_nodebug("Slot %d (used:%d)", i, buff->headers[i].used);
         if ( buff->headers[i].used == 0 )
@@ -137,6 +165,8 @@ sctk_net_ibv_comp_rc_sr_pick_header(sctk_net_ibv_rc_sr_buff_t* buff)
           sctk_nodebug("RC_SR slot %d found ! (%p) ", i, &buff->headers[i]);
           buff->headers[i].used = 1;
           buff->current_nb++;
+          if (buff->current_nb > 280 )
+            sctk_warning("PICK Remaining buffers : %d", buff->current_nb);
           sctk_thread_mutex_unlock(&buff->lock);
           return &(buff->headers[i]);
         }
@@ -146,18 +176,18 @@ sctk_net_ibv_comp_rc_sr_pick_header(sctk_net_ibv_rc_sr_buff_t* buff)
       sctk_thread_mutex_unlock(&buff->lock);
     }
 
-//    sctk_thread_yield();
+    sctk_thread_yield();
   }
   assume(0);
 }
 
-int
+uint32_t
 sctk_net_ibv_comp_rc_sr_send(
     sctk_net_ibv_qp_remote_t* remote,
     sctk_net_ibv_rc_sr_entry_t* entry,
     size_t size, sctk_net_ibv_rc_sr_msg_type_t type, uint32_t* psn)
 {
-  int ret_psn;
+  uint32_t ret_psn;
   int rc;
   struct  ibv_send_wr* bad_wr = NULL;
 
