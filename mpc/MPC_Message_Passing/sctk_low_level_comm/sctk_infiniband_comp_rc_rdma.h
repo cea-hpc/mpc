@@ -36,10 +36,16 @@
 #include "sctk_list.h"
 #include "sctk_infiniband_qp.h"
 
+typedef enum
+{
+  RC_RDMA_REQ_WRITE                  = 0,
+  RC_RDMA_REQ_WRITE_WITH_QP_CREATION = 1,
+  RC_RDMA_REQ_READ                   = 2,
+} sctk_net_ibv_rc_rdma_request_type_t;
+
 typedef struct
 {
   struct ibv_send_wr              send_wr;
-  /* if the msg can be read */
   sctk_net_ibv_mmu_entry_t        *mmu_entry; /* MMU entry */
   sctk_thread_ptp_message_t       *msg; /* pointer to the msg*/
   size_t                          size;
@@ -50,12 +56,12 @@ typedef struct
 
 typedef struct
 {
+  sctk_net_ibv_rc_rdma_request_type_t type;
   sctk_net_ibv_mmu_entry_t        *mmu_entry; /* MMU entry */
   sctk_thread_ptp_message_t       msg_header;
   void*                           *ptr; /* pointer */
   size_t                          requested_size;
   int                             src_process;
-//  sctk_net_ibv_qp_remote_t        *remote_rc_rdma;
   int                             if_qp_connection;
   volatile int                    used;
   uint32_t                        psn;  /* Packet Sequence Number */
@@ -66,22 +72,21 @@ typedef struct
   size_t                    requested_size;
   sctk_thread_ptp_message_t msg_header;
   int                       src_process;
-  int                       if_qp_connection;
   uint32_t                  psn;  /* Packet Sequence Number */
+  sctk_net_ibv_rc_rdma_request_type_t type;
+  union {
+    /* QP creation request */
+    struct {
+      sctk_net_ibv_qp_exchange_keys_t keys;
+    } qp_connection;
+    /* RDMA read request */
+    struct {
+      uintptr_t   address;
+      size_t      size;
+      uint32_t    rkey;
+    } read_request;
+  };
 } sctk_net_ibv_rc_rdma_request_t;
-
-/* request with qp connection */
-typedef struct
-{
-  size_t                    requested_size;
-  sctk_thread_ptp_message_t msg_header;
-  int                       src_process;
-  int                       if_qp_connection;
-  uint32_t                  psn;  /* Packet Sequence Number */
-  /* QP keys */
-  sctk_net_ibv_qp_exchange_keys_t keys;
-} sctk_net_ibv_rc_rdma_request_with_qp_connection_t;
-
 
 typedef struct
 {
@@ -146,11 +151,19 @@ sctk_net_ibv_comp_rc_rdma_send_request(
     int need_connection);
 
 sctk_net_ibv_rc_rdma_process_t*
-sctk_net_ibv_comp_rc_rdma_add_request(
+sctk_net_ibv_comp_rc_rdma_analyze_request(
     sctk_net_ibv_qp_rail_t   *rail,
     sctk_net_ibv_qp_local_t* local_rc_sr,
     sctk_net_ibv_qp_local_t* local_rc_rdma,
     sctk_net_ibv_rc_sr_entry_t* entry);
+
+sctk_net_ibv_rc_rdma_process_t*
+sctk_net_ibv_comp_rc_rdma_add_request(
+    sctk_net_ibv_qp_rail_t   *rail,
+    sctk_net_ibv_qp_local_t* local_rc_sr,
+    sctk_net_ibv_qp_local_t* local_rc_rdma,
+    sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma,
+    sctk_net_ibv_rc_rdma_request_t* request);
 
   sctk_net_ibv_rc_rdma_entry_recv_t*
 sctk_net_ibv_comp_rc_rdma_match_read_msg(int src_process);

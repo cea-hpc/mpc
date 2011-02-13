@@ -310,24 +310,28 @@ sctk_net_ibv_comp_rc_sr_check_and_connect(int dest_process)
   //FIXME Check connection
   if (!remote)
   {
+    char host[256];
+    int port;
+
     remote = sctk_net_ibv_comp_rc_sr_allocate_init(dest_process, rc_sr_local);
     sctk_net_ibv_allocator_register(dest_process, remote, IBV_CHAN_RC_SR);
+    sctk_net_ibv_allocator_unlock(dest_process, IBV_CHAN_RC_SR);
+
+    sctk_net_ibv_cm_request(dest_process, remote, host, &port);
+    sctk_net_ibv_cm_client(host, port, dest_process, remote);
+
   } else {
+    sctk_net_ibv_allocator_unlock(dest_process, IBV_CHAN_RC_SR);
+
+    while(remote->is_connected != 1)
+    {
+      sctk_thread_yield();
+    }
     sctk_nodebug("Remote known");
   }
   assume(remote);
 
-  if (remote->is_connected == 0)
-  {
-    char host[256];
-    int port;
-
-    sctk_net_ibv_allocator_unlock(dest_process, IBV_CHAN_RC_SR);
-    sctk_net_ibv_cm_request(dest_process, remote, host, &port);
-    sctk_net_ibv_cm_client(host, port, dest_process, remote);
-  } else  {
-    sctk_net_ibv_allocator_unlock(dest_process, IBV_CHAN_RC_SR);
-  }
+  sctk_nodebug("Send message to process %d", dest_process);
 
   return remote;
 }
@@ -529,10 +533,9 @@ sctk_net_ibv_rc_sr_poll_recv(
       sctk_nodebug("RDVZ REQUEST recv");
 
       entry_rc_rdma =
-        sctk_net_ibv_comp_rc_rdma_add_request(
+        sctk_net_ibv_comp_rc_rdma_analyze_request(
             rail, rc_sr_local, rc_rdma_local,
             entry);
-      assume(entry_rc_rdma);
 
       sctk_net_ibv_allocator_rc_rdma_process_next_request(entry_rc_rdma);
 

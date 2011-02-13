@@ -231,8 +231,6 @@ sctk_net_ibv_allocator_rc_rdma_process_next_request(
     entry = sctk_net_ibv_comp_rc_sr_pick_header(rc_sr_ptp_send_buff);
     ack = (sctk_net_ibv_rc_rdma_request_ack_t* ) &(entry->msg_header->payload);
 
-    //TODO reorder post_recv and prepate_ack
-
     /* post buffer and register ptr*/
     sctk_net_ibv_comp_rc_rdma_post_recv(
         rail,

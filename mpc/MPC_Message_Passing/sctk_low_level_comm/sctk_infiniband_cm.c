@@ -114,10 +114,10 @@ static void* server(void* arg)
 
     if (remote->is_connected == 0)
     {
-      remote->is_connected = 1;
       sctk_nodebug("2 Client %d CONNECTED", src);
       keys = sctk_net_ibv_qp_exchange_convert(msg);
       sctk_net_ibv_qp_allocate_recv(remote, &keys);
+      remote->is_connected = 1;
     } else {
       sctk_nodebug("2 Client %d already CONNECTED", src);
     }
@@ -184,10 +184,10 @@ void sctk_net_ibv_cm_client(char* host, int port, int dest, sctk_net_ibv_qp_remo
 
   sctk_net_ibv_allocator_lock(dest, IBV_CHAN_RC_SR);
   if (remote->is_connected == 0) {
-    remote->is_connected = 1;
     sctk_nodebug("1 Client %d CONNECTED", dest);
     keys = sctk_net_ibv_qp_exchange_convert(msg);
     sctk_net_ibv_qp_allocate_recv(remote, &keys);
+    remote->is_connected = 1;
   } else {
     sctk_nodebug("1 Client %d already CONNECTED", dest);
   }

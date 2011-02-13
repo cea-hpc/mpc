@@ -63,7 +63,7 @@ sctk_net_ibv_comp_rc_rdma_post_recv(
   sctk_net_ibv_mmu_entry_t        *mmu_entry; /* MMU entry */
 
   size = entry_recv->requested_size;
-  sctk_nodebug("Requested size : %lu", size);
+  sctk_debug("Requested size : %lu", size);
 
   posix_memalign( ptr, sctk_net_ibv_mmu_get_pagesize(), size);
   assume(*ptr);
@@ -168,32 +168,39 @@ static size_t
 sctk_net_ibv_comp_rc_rdma_prepare_request(
     sctk_net_ibv_qp_rail_t   *rail,
     sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma,
-    sctk_net_ibv_rc_rdma_request_with_qp_connection_t* request,
+    sctk_net_ibv_rc_rdma_request_t* request,
     sctk_thread_ptp_message_t * msg,
     size_t size,
-    int need_connection)
+    int need_connection,
+    int ready,
+    sctk_net_ibv_mmu_entry_t * mmu,
+    void* aligned_ptr,
+    size_t aligned_size)
 {
   size_t size_to_copy;
 
   /* if a new connection is needed */
   if (need_connection == 1)
   {
-    size_to_copy = sizeof(sctk_net_ibv_rc_rdma_request_with_qp_connection_t);
-
-    request->keys.lid         = rail->lid;
-    request->keys.qp_num      = entry_rc_rdma->remote.qp->qp_num;
-    request->keys.psn         = entry_rc_rdma->remote.psn;
-    request->if_qp_connection = 1;
+    request->type                           = RC_RDMA_REQ_WRITE_WITH_QP_CREATION;
+    request->qp_connection.keys.lid         = rail->lid;
+    request->qp_connection.keys.qp_num      = entry_rc_rdma->remote.qp->qp_num;
+    request->qp_connection.keys.psn         = entry_rc_rdma->remote.psn;
     sctk_nodebug("Need connection to process %d", entry_rc_rdma->remote.rank);
+  } else if (ready == 1) {
+    request->type             = RC_RDMA_REQ_READ;
+    request->read_request.address   = aligned_ptr;
+    request->read_request.size      = aligned_size;
+    request->read_request.rkey      = mmu->mr->rkey;
   } else {
-
-    size_to_copy = sizeof(sctk_net_ibv_rc_rdma_request_t);
-    request->if_qp_connection = 0;
+    request->type             = RC_RDMA_REQ_WRITE;
   }
 
   request->requested_size = size;
   request->src_process    = sctk_process_rank;
 
+  size_to_copy            =
+    sizeof(sctk_net_ibv_rc_rdma_request_t);
   return size_to_copy;
 }
 
@@ -225,7 +232,7 @@ sctk_net_ibv_comp_rc_rdma_send_request(
 {
   sctk_net_ibv_rc_sr_entry_t* entry;
   sctk_net_ibv_rc_rdma_process_t* rdma_entry;
-  sctk_net_ibv_rc_rdma_request_with_qp_connection_t* request;
+  sctk_net_ibv_rc_rdma_request_t* request;
   sctk_net_ibv_rc_rdma_entry_send_t  *list_entry;
   sctk_net_ibv_qp_remote_t* rc_sr_remote;
   sctk_net_ibv_mmu_entry_t* mmu_entry = NULL;
@@ -235,6 +242,7 @@ sctk_net_ibv_comp_rc_rdma_send_request(
   void* aligned_ptr = NULL;
   size_t aligned_size;
   uint32_t psn;
+  int ready;
 
   sctk_nodebug("Send RDVZ request");
   sctk_nodebug("Need connection  to process %d? %d", dest_process, need_connection);
@@ -273,15 +281,15 @@ sctk_net_ibv_comp_rc_rdma_send_request(
   sctk_nodebug("PICK UP entry");
   /* 3 STEP : prepare the request msg */
   entry = sctk_net_ibv_comp_rc_sr_pick_header(buff_rc_sr);
-  request = (sctk_net_ibv_rc_rdma_request_with_qp_connection_t* ) &(entry->msg_header->payload);
+  request = (sctk_net_ibv_rc_rdma_request_t* ) &(entry->msg_header->payload);
 
   /* copy the content of the message */
   memcpy (&request->msg_header, msg,
       sizeof ( sctk_thread_ptp_message_t ));
 
-  /* prepare the header */
-  size_to_copy = sctk_net_ibv_comp_rc_rdma_prepare_request( rail, entry_rc_rdma,
-      request, msg, size, need_connection);
+  /* if the QP are already connected we realize a RDMA read operation */
+  ready = entry_rc_rdma->ready;
+//  ready = 0; //entry_rc_rdma->ready;
 
   /* check if the remote is already known. If not, we connect to it */
   rc_sr_remote = sctk_net_ibv_comp_rc_sr_check_and_connect(
@@ -290,42 +298,145 @@ sctk_net_ibv_comp_rc_rdma_send_request(
   /* 4 STEP : allocate the memory needed and pine the memory */
   list_entry = sctk_malloc(sizeof (sctk_net_ibv_rc_rdma_entry_send_t));
 
-  /* finally send the request msg */
-  sctk_list_lock(&rdma_entry->send);
+  /* we register memory before sending the RC_SR message if
+   * we will realize a RDMA read operation */
+  if (ready == 1)
+  {
+    /* finally send the request msg */
+    sctk_list_lock(&rdma_entry->send);
 
-  psn = sctk_net_ibv_comp_rc_sr_send(rc_sr_remote, entry, size_to_copy, RC_SR_RDVZ_REQUEST, &request->psn);
+    /* register the memory where the message is stored */
+    mmu_entry = sctk_net_ibv_mmu_register (
+        rail->mmu, local_rc_rdma, aligned_ptr, aligned_size);
 
-  sctk_nodebug("Entry added with PSN %d", psn);
+    /* initialize the send descriptor */
+    sctk_net_ibv_comp_rc_rdma_entry_send_init(
+        list_entry, msg, size, mmu_entry, entire_msg,
+        aligned_ptr, psn);
 
-  /* register the memory where the message is stored */
-  mmu_entry = sctk_net_ibv_mmu_register (
-      rail->mmu, local_rc_rdma, aligned_ptr, aligned_size);
+    sctk_list_push(&rdma_entry->send, list_entry);
 
-  /* initialize the send descriptor */
-  sctk_net_ibv_comp_rc_rdma_entry_send_init(
-      list_entry, msg, size, mmu_entry, entire_msg,
-      aligned_ptr, psn);
+    /* prepare the header */
+    size_to_copy = sctk_net_ibv_comp_rc_rdma_prepare_request( rail,
+        entry_rc_rdma, request, msg, size, need_connection, ready,
+        mmu_entry, aligned_ptr, aligned_size);
 
-  sctk_list_push(&rdma_entry->send, list_entry);
 
-  sctk_list_unlock(&rdma_entry->send);
+    psn = sctk_net_ibv_comp_rc_sr_send(rc_sr_remote, entry, size_to_copy, RC_SR_RDVZ_REQUEST, &request->psn);
+    sctk_nodebug("Entry added with PSN %d", psn);
+
+    sctk_list_unlock(&rdma_entry->send);
+  }
+
+  if (!ready) {
+    /* prepare the header */
+    size_to_copy = sctk_net_ibv_comp_rc_rdma_prepare_request( rail,
+        entry_rc_rdma, request, msg, size, need_connection, ready,
+        mmu_entry, aligned_ptr, aligned_size);
+
+    /* finally send the request msg */
+    sctk_list_lock(&rdma_entry->send);
+
+    sctk_nodebug("Entry added with PSN %d (request %d)", psn, request->type);
+    psn = sctk_net_ibv_comp_rc_sr_send(rc_sr_remote, entry, size_to_copy, RC_SR_RDVZ_REQUEST, &request->psn);
+
+    /* register the memory where the message is stored */
+    mmu_entry = sctk_net_ibv_mmu_register (
+        rail->mmu, local_rc_rdma, aligned_ptr, aligned_size);
+
+    /* initialize the send descriptor */
+    sctk_net_ibv_comp_rc_rdma_entry_send_init(
+        list_entry, msg, size, mmu_entry, entire_msg,
+        aligned_ptr, psn);
+
+    sctk_list_push(&rdma_entry->send, list_entry);
+    sctk_list_unlock(&rdma_entry->send);
+  }
 }
 
 
+/**
+ *  Create a new receive entry and fill it according to the request content
+ *  \param
+ *  \return
+ */
+static sctk_net_ibv_rc_rdma_entry_recv_t*
+sctk_net_ibv_comp_rc_rdma_entry_recv_new(sctk_net_ibv_rc_rdma_request_t* request)
+{
+  sctk_net_ibv_rc_rdma_entry_recv_t* entry_recv;
+
+    /* fill the receive entry */
+  entry_recv = sctk_malloc(sizeof (sctk_net_ibv_rc_rdma_entry_recv_t));
+  assume(entry_recv);
+  memcpy(&entry_recv->msg_header, &request->msg_header, sizeof(sctk_thread_ptp_message_t));
+  entry_recv->requested_size = request->requested_size;
+  entry_recv->src_process = request->src_process;
+
+  return entry_recv;
+}
+
+void
+sctk_net_ibv_comp_rc_rdma_process_rdma_read(
+    sctk_net_ibv_qp_rail_t   *rail,
+    sctk_net_ibv_qp_local_t* local_rc_sr,
+    sctk_net_ibv_qp_local_t* local_rc_rdma,
+    sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma,
+    sctk_net_ibv_rc_rdma_request_t* request)
+{
+  struct ibv_send_wr    wr;
+  struct ibv_send_wr*   bad_wr;
+  struct ibv_sge        list;
+  sctk_net_ibv_rc_rdma_entry_recv_t                   *entry_recv;
+  void* ptr;
+  uint32_t rkey;
+
+  /* fill the receive entry */
+  entry_recv = sctk_net_ibv_comp_rc_rdma_entry_recv_new(request);
+
+  sctk_list_lock(&entry_rc_rdma->recv);
+  sctk_list_push(&entry_rc_rdma->recv, entry_recv);
+  sctk_list_unlock(&entry_rc_rdma->recv);
+
+  sctk_net_ibv_comp_rc_rdma_post_recv(
+    rail, entry_rc_rdma, local_rc_rdma, entry_recv,
+    &ptr, &rkey);
+
+  list.addr   = (uintptr_t) ptr;
+  list.length = entry_recv->requested_size;
+  list.lkey   = rkey;
+
+  /* wr */
+  wr.wr_id = 1001;
+  wr.sg_list = &(list);
+  wr.num_sge = 1;
+  wr.opcode = IBV_WR_RDMA_READ;
+  wr.send_flags = IBV_SEND_SIGNALED;
+  wr.wr.rdma.remote_addr = request->read_request.address;
+  wr.wr.rdma.rkey        = request->read_request.rkey;
+  wr.next = NULL;
+
+  ibv_post_send(entry_rc_rdma->remote.qp,
+      &wr, &bad_wr);
+}
+
+
+/**
+ *  Analize the request received and call the right functions
+ *  \param
+ *  \return
+ */
 sctk_net_ibv_rc_rdma_process_t*
-sctk_net_ibv_comp_rc_rdma_add_request(
+sctk_net_ibv_comp_rc_rdma_analyze_request(
     sctk_net_ibv_qp_rail_t   *rail,
     sctk_net_ibv_qp_local_t* local_rc_sr,
     sctk_net_ibv_qp_local_t* local_rc_rdma,
     sctk_net_ibv_rc_sr_entry_t* entry)
 {
-  sctk_net_ibv_rc_rdma_entry_recv_t                   *entry_recv;
-  sctk_net_ibv_rc_rdma_request_with_qp_connection_t   *request;
-  sctk_net_ibv_rc_rdma_process_t                      *entry_rc_rdma = NULL;
-  size_t                                              size;
+  sctk_net_ibv_rc_rdma_request_t   *request;
+  sctk_net_ibv_rc_rdma_process_t   *entry_rc_rdma = NULL;
 
-  request = (sctk_net_ibv_rc_rdma_request_with_qp_connection_t*) &(entry->msg_header->payload);
-  size = request->requested_size;
+  request = (sctk_net_ibv_rc_rdma_request_t*)
+    &entry->msg_header->payload;
 
   /* lock the allocator entry for the dest process */
   sctk_net_ibv_allocator_lock(request->src_process, IBV_CHAN_RC_RDMA);
@@ -334,10 +445,7 @@ sctk_net_ibv_comp_rc_rdma_add_request(
   entry_rc_rdma = (sctk_net_ibv_rc_rdma_process_t*)
     sctk_net_ibv_allocator_get(request->src_process, IBV_CHAN_RC_RDMA);
 
-  sctk_nodebug("PSN received : %d (1)", request->psn);
-
-  /* check if a connection is needed by the remote peer */
-  if (request->if_qp_connection)
+  if (request->type == RC_RDMA_REQ_WRITE_WITH_QP_CREATION)
   {
     if (!entry_rc_rdma)
     {
@@ -353,40 +461,77 @@ sctk_net_ibv_comp_rc_rdma_add_request(
 
     if(entry_rc_rdma->ready == 0)
     {
-      sctk_net_ibv_comp_rc_rdma_modify_qp(&entry_rc_rdma->remote, &request->keys);
+      sctk_net_ibv_comp_rc_rdma_modify_qp(&entry_rc_rdma->remote, &request->qp_connection.keys);
       entry_rc_rdma->ready = 1;
       sctk_nodebug("Connected to process %d!", request->src_process);
     }
+    sctk_net_ibv_allocator_unlock(request->src_process, IBV_CHAN_RC_RDMA);
+
+  } else {
+    sctk_net_ibv_allocator_unlock(request->src_process, IBV_CHAN_RC_RDMA);
   }
-  /* TODO sometimes there is a bug there */
-  if (entry_rc_rdma == NULL)
+
+  assume(entry_rc_rdma);
+
+  if ( (request->type == RC_RDMA_REQ_WRITE) ||
+      (request->type == RC_RDMA_REQ_WRITE_WITH_QP_CREATION)) {
+    sctk_debug("RC_RDMA_WRITE received");
+
+    sctk_net_ibv_comp_rc_rdma_add_request(
+        rail, rc_sr_local, rc_rdma_local,
+        entry_rc_rdma, request);
+
+    return entry_rc_rdma;
+  }
+
+  if (request->type == RC_RDMA_REQ_READ)
   {
-    sctk_error("Process %d not known", request->src_process);
-    assume(0);
+    sctk_debug("RC_RDMA_READ received");
+
+    sctk_net_ibv_comp_rc_rdma_process_rdma_read(
+        rail, rc_sr_local, rc_rdma_local,
+        entry_rc_rdma, request);
+
+    return entry_rc_rdma;
   }
-  /* else {
-     sctk_nodebug("Connection already established for process %d",
-     request->src_process);
-     } */
-  sctk_net_ibv_allocator_unlock(request->src_process, IBV_CHAN_RC_RDMA);
+
+  assume(0);
+  return entry_rc_rdma;
+}
+
+
+/**
+ *  Add a new request to the received request list
+ *  \param
+ *  \return
+ */
+sctk_net_ibv_rc_rdma_process_t*
+sctk_net_ibv_comp_rc_rdma_add_request(
+    sctk_net_ibv_qp_rail_t   *rail,
+    sctk_net_ibv_qp_local_t* local_rc_sr,
+    sctk_net_ibv_qp_local_t* local_rc_rdma,
+    sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma,
+    sctk_net_ibv_rc_rdma_request_t* request)
+{
+  sctk_net_ibv_rc_rdma_entry_recv_t                   *entry_recv;
 
   sctk_nodebug("Recv RDVZ REQUEST message from %d (PSN %d)", request->src_process, request->psn);
 
   /* fill the receive entry */
-  entry_recv = sctk_malloc(sizeof (sctk_net_ibv_rc_rdma_entry_recv_t));
-  assume(entry_recv);
-  memcpy(&entry_recv->msg_header, &request->msg_header, sizeof(sctk_thread_ptp_message_t));
-  entry_recv->requested_size = size;
-  entry_recv->src_process = request->src_process;
-  entry_recv->if_qp_connection = request->if_qp_connection;
+  entry_recv = sctk_net_ibv_comp_rc_rdma_entry_recv_new(request);
+
+  if (request->type == RC_RDMA_REQ_WRITE_WITH_QP_CREATION)
+  {
+    entry_recv->if_qp_connection = 1;
+  } else {
+    entry_recv->if_qp_connection = 0;
+  }
+
   sctk_nodebug("PSN received : %d (3)", request->psn);
   entry_recv->psn = request->psn;
   entry_recv->used = 0;
 
-
   sctk_list_lock(&entry_rc_rdma->recv);
-  sctk_nodebug("\t\t\t PUSH RECV entry with PSN %lu (%p)   (%p)",
-      entry_recv->psn, entry_recv, &entry_rc_rdma->recv);
   sctk_list_push(&entry_rc_rdma->recv, entry_recv);
   sctk_list_unlock(&entry_rc_rdma->recv);
 
@@ -396,6 +541,8 @@ sctk_net_ibv_comp_rc_rdma_add_request(
 /*-----------------------------------------------------------
  *  REQUEST PROCESSING
  *----------------------------------------------------------*/
+#define IS_RDMA_WRITE(entry_recv) ((entry_recv->type == RC_RDMA_REQ_WRITE) ||\
+    (entry_recv->type == RC_RDMA_REQ_WRITE_WITH_QP_CREATION))
 sctk_net_ibv_rc_rdma_entry_recv_t *
 sctk_net_ibv_comp_rc_rdma_check_pending_request(
     sctk_net_ibv_rc_rdma_process_t *entry_rc_rdma)
@@ -404,30 +551,19 @@ sctk_net_ibv_comp_rc_rdma_check_pending_request(
   sctk_net_ibv_rc_rdma_entry_recv_t *entry_recv       = NULL;
   sctk_net_ibv_rc_rdma_entry_recv_t *last_entry_recv  = NULL;
 
-  do
+  if (tmp)
   {
-    if (tmp)
-      entry_recv = (sctk_net_ibv_rc_rdma_entry_recv_t*) tmp->elem;
+    entry_recv = (sctk_net_ibv_rc_rdma_entry_recv_t*) tmp->elem;
 
-    if ( (entry_recv) && (entry_recv->used == 1) ) {
-      //FIXME
-      //sctk_warning("Entry with PSN %d not processed, used %d sent_to_mpc : %d", entry_recv->psn, entry_recv->used, entry_recv->sent_to_mpc);
-      last_entry_recv = NULL;
-      break;
-    }
-
-    if ( (entry_recv) && (entry_recv->used == 0))
+    if (entry_recv && IS_RDMA_WRITE(entry_recv))
     {
-      last_entry_recv = entry_recv;
-      break;
+      if (entry_recv->used == 1) {
+        last_entry_recv = NULL;
+      } else {
+        last_entry_recv = entry_recv;
+      }
     }
-
-    if (tmp)
-      tmp = tmp->p_next;
-  }while( (tmp != NULL) );
-
-//  if (last_entry_recv)
-    //sctk_warning("Proceed with with PSN %d not processed, used %d sent_to_mpc : %d", last_entry_recv->psn, last_entry_recv->used, last_entry_recv->sent_to_mpc);
+  }
   return last_entry_recv;
 }
 
@@ -520,16 +656,11 @@ sctk_net_ibv_comp_rc_rdma_match_read_msg(int src_process)
     entry_recv = (sctk_net_ibv_rc_rdma_entry_recv_t*)
       sctk_list_get_from_head(&entry_rc_rdma->recv, i);
 
-    if (entry_recv)
-      sctk_nodebug("Entry found %p %d psn:%d (used %d, sent_to_mpc %d)", entry_recv, entry_rc_rdma->recv.elem_count, entry_recv->psn, entry_recv->used, entry_recv->sent_to_mpc);
-    else
-      sctk_nodebug("Entry void");
-
-
-    if ( (entry_recv) && (entry_recv->used == 1)) {
+    if ( (entry_recv) && (entry_recv->used == 1) && IS_RDMA_WRITE(entry_recv)) {
       sctk_list_unlock(&entry_rc_rdma->recv);
       return entry_recv;
     }
+
     i++;
   } while( (entry_recv != NULL) );
 
@@ -537,6 +668,12 @@ sctk_net_ibv_comp_rc_rdma_match_read_msg(int src_process)
   return NULL;
 }
 
+
+/**
+ *  Read a MPC msg from a recv entry
+ *  \param
+ *  \return
+ */
 void
 sctk_net_ibv_comp_rc_rdma_read_msg(
     sctk_net_ibv_rc_rdma_entry_recv_t* entry_recv, int type)
@@ -631,7 +768,7 @@ sctk_net_ibv_rc_rdma_poll_recv(
   sctk_nodebug("RDVZ DONE RECV for process %d (PSN: %d)", entry_rc_rdma->remote.rank, entry_recv->psn);
 
   if (lookup_mode) {
-//    sctk_nodebug("BEGIN lookup mode");
+    //    sctk_nodebug("BEGIN lookup mode");
 
     ret = sctk_net_ibv_sched_sn_check_and_inc(
         entry_recv->src_process,
@@ -650,21 +787,16 @@ sctk_net_ibv_rc_rdma_poll_recv(
       sctk_net_ibv_comp_rc_rdma_read_msg(entry_recv, IBV_RC_RDMA_ORIGIN);
 
       sctk_nodebug("Recv RDVZ message from %d (PSN:%lu)", entry_recv->src_process, entry_recv->psn);
-      sctk_nodebug("PSN %d FOUND for process %d", entry_recv->psn, entry_recv->src_process);
     }
 
     sctk_list_lock(&entry_rc_rdma->recv);
     sctk_list_search_and_free(&entry_rc_rdma->recv, entry_recv);
     sctk_list_unlock(&entry_rc_rdma->recv);
 
- //   sctk_nodebug("END lookup mode");
-
   } else {
     ret = sctk_net_ibv_sched_sn_check_and_inc(
         entry_recv->src_process,
         entry_recv->psn);
-
-    sctk_nodebug("RET : %d", ret);
 
     if(ret)
     {
@@ -687,7 +819,6 @@ sctk_net_ibv_rc_rdma_poll_recv(
 
     sctk_nodebug("Recv RDVZ message from %d (PSN:%lu)", entry_recv->src_process, entry_recv->psn);
   }
-  //
 
   /* process the next RDMA request */
   entry_rc_rdma = (sctk_net_ibv_rc_rdma_process_t*)
