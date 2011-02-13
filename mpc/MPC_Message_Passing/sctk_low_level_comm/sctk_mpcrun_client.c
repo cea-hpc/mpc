@@ -447,6 +447,18 @@ sctk_mpcrun_client_init_connect ()
   }
 }
 
+static void
+generate_random_filename(char* filename, int size)
+{
+  int i;
+
+  srand(time(0));
+
+  for(i = 0; i < size; i++)
+    filename[i] = (rand()%26)+'A';
+
+  filename[i+1] = '\0';
+}
 
 /*
  * ===  FUNCTION  ===================================================
@@ -458,12 +470,11 @@ sctk_mpcrun_client_init_connect ()
  */
 void sctk_mpcrun_client_forge_shm_filename(char* __string)
 {
-  char template[] = "XXXXXX";
+  char random[7];
 
-  mkstemp(template);
-  sctk_assert(template[0] != '\0');
+  generate_random_filename(random, 6);
 
-  sprintf(__string, "SHM_%s.%s.%s", local_host, template, local_host+HOSTNAME_SIZE);
+  sprintf(__string, "SHM_%s.%s.%s", local_host, random, local_host+HOSTNAME_SIZE);
 }
 
 char* sctk_mpcrun_client_get_hostname()
