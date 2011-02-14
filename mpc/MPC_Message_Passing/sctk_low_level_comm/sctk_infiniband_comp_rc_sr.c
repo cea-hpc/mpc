@@ -145,13 +145,13 @@ sctk_net_ibv_comp_rc_sr_pick_header(sctk_net_ibv_rc_sr_buff_t* buff)
     {
       int nb_freed;
       int total_freed = 0;
-      sctk_warning("IB is running out of send buffers.\nStarting Garbage Collector...");
+//      sctk_warning("IB is running out of send buffers.\nStarting Garbage Collector...");
       do
       {
         nb_freed = sctk_net_ibv_cq_garbage_collector(rc_sr_local->send_cq, SCTK_PENDING_OUT_NUMBER, sctk_net_ibv_rc_sr_send_cq, IBV_CHAN_RC_SR | IBV_CHAN_SEND);
         total_freed+=nb_freed;
       } while(nb_freed > 0);
-      sctk_warning("Garbage Collector done.\n - Number of buffers freed: %d\n - Number of busy buffers: %d", total_freed, buff->current_nb);
+//      sctk_warning("Garbage Collector done.\n - Number of buffers freed: %d\n - Number of busy buffers: %d", total_freed, buff->current_nb);
     }
 
 
@@ -161,7 +161,7 @@ sctk_net_ibv_comp_rc_sr_pick_header(sctk_net_ibv_rc_sr_buff_t* buff)
       {
         sctk_nodebug("Slot %d (used:%d)", i, buff->headers[i].used);
         if ( buff->headers[i].used == 0 )
-        {
+       {
           sctk_nodebug("RC_SR slot %d found ! (%p) ", i, &buff->headers[i]);
           buff->headers[i].used = 1;
           buff->current_nb++;

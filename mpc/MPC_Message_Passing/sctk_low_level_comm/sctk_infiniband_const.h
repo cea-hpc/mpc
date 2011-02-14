@@ -32,6 +32,16 @@ typedef enum
   IBV_CHAN_RECV  = 1 << 3,
 } sctk_net_ibv_allocator_type_t;
 
+/* nb entries in buffers */
+#define IBV_PENDING_SEND_PTP  60
+#define IBV_PENDING_SEND_COLL 30
+#define IBV_PENDING_RECV      60
+
+/* define when the garbage collector has to be
+ * run: 80 -> 80% of the number of buffers */
+#define CEILING_SEND_BUFFERS  90
+
+
 /* max number of WC extracted for the input
  * and the output completion queue */
 /* FIXME cant change 1 to something else */

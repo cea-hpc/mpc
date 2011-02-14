@@ -28,6 +28,7 @@
 #include <sctk_spinlock.h>
 #include "sctk_infiniband.h"
 #include "sctk_infiniband_mmu.h"
+#include "sctk_infiniband_const.h"
 #include "sctk_inter_thread_comm.h"
 #include <stdint.h>
 #include <stdlib.h>
@@ -48,14 +49,6 @@ typedef enum
 } sctk_net_ibv_rc_sr_msg_type_t;
 /* number of different msg type (see the list above) */
 
-/* nb entries in buffers */
-  #define IBV_PENDING_SEND_PTP  150
-  #define IBV_PENDING_SEND_COLL 150
-  #define IBV_PENDING_RECV      300
-
-  /* define when the garbage collector has to be
-   * run: 80 -> 80% of the number of buffers */
-  #define CEILING_SEND_BUFFERS  90
 
 /*  EAGER  */
 typedef struct
