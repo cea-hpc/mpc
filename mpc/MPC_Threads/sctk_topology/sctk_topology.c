@@ -95,8 +95,6 @@ sctk_restrict_topology ()
       sctk_cpuinfo_t current;
       int processor_number;
 
-      sctk_warning ("Disable SMT capabilities");
-
       processor_number = sctk_processor_number_on_node;
       memcpy (&current, &(sctk_cpuinfos[0]), sizeof (sctk_cpuinfo_t));
       for (i = 1; i < sctk_processor_number_on_node;)
@@ -128,6 +126,10 @@ sctk_restrict_topology ()
 	}
 
       sctk_processor_number_on_node = processor_number;
+    }
+    else
+    {
+      sctk_warning ("SMT capabilities ENABLED");
     }
 
   /* Share nodes */
