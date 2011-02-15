@@ -31,8 +31,6 @@
 #include "sctk_infiniband_qp.h"
 #include "sctk.h"
 
-#define SCTK_EAGER_THRESHOLD ( (128 * 1024) + sizeof(sctk_thread_ptp_message_t) )
-
 sctk_net_ibv_qp_rail_t   *rail;
 
 /* RC SR structures */

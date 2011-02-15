@@ -41,6 +41,8 @@ typedef enum
  * run: 80 -> 80% of the number of buffers */
 #define CEILING_SEND_BUFFERS  90
 
+/* Threshould for eager messages */
+#define SCTK_EAGER_THRESHOLD ( (128 * 1024) + sizeof(sctk_thread_ptp_message_t) )
 
 /* max number of WC extracted for the input
  * and the output completion queue */
