@@ -25,7 +25,21 @@
 
 int is_printing = 1;
 
+  static double
+rrrsctk_get_time_stamp ()
+{
+  struct timeval tp;
+  double res;
+  gettimeofday (&tp, NULL);
+
+  res = (double) tp.tv_sec * 1000000.0;
+  res += tp.tv_usec;
+
+  return res;
+}
+
 #define mprintf if(is_printing) fprintf
+#define NB_BARRIER 10000
 
 int
 main (int argc, char **argv)
@@ -33,6 +47,8 @@ main (int argc, char **argv)
   char *printing;
   int my_rank;
   MPC_Comm my_com;
+  int i;
+  double begin, end;
 
   printing = getenv ("MPC_TEST_SILENCE");
   if (printing != NULL)
@@ -44,18 +60,21 @@ main (int argc, char **argv)
   mprintf (stderr, "Avant barrier init %d\n", my_rank);
   MPC_Barrier (my_com);
   mprintf (stderr, "Avant barriers %d\n", my_rank);
-  MPC_Barrier (my_com);
-  MPC_Barrier (my_com);
-  MPC_Barrier (my_com);
-  MPC_Barrier (my_com);
-  MPC_Barrier (my_com);
-  MPC_Barrier (my_com);
-  MPC_Barrier (my_com);
-  MPC_Barrier (my_com);
-  MPC_Barrier (my_com);
-  MPC_Barrier (my_com);
-  MPC_Barrier (my_com);
-  MPC_Barrier (my_com);
+
+  begin = rrrsctk_get_time_stamp();
+  for (i=0; i<NB_BARRIER; ++i)
+  {
+    MPC_Barrier (my_com);
+    if ((my_rank == 0) && !(i%100))
+    {
+      sctk_debug("End of barrier %d", i);
+    }
+  }
+  end = rrrsctk_get_time_stamp();
   mprintf (stderr, "Apres barriers %d\n", my_rank);
+
+  if (my_rank == 0)
+    mprintf (stderr, "Barrier total time %f. Mean time %f\n", end-begin, (end-begin) / NB_BARRIER);
+
   return 0;
 }

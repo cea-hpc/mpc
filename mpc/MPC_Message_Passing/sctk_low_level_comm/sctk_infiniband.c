@@ -105,22 +105,22 @@ sctk_net_init_driver_infiniband (int *argc, char ***argv)
   /* init soft MMU */
   sctk_net_ibv_mmu_new(rail);
 
+  /* channel selection */
+  sctk_net_ibv_allocator_new();
+
+  /* initialization of the Connection Manager */
+  sctk_net_ibv_cm_server();
+
+  /* message numbering */
+  sctk_net_ibv_sched_init();
+
   /* initialization of queue pairs */
   rc_rdma_local = sctk_net_ibv_comp_rc_rdma_create_local(rail);
 
   PMI_Barrier();
 
-  /* channel selection */
-  sctk_net_ibv_allocator_new();
-
-  /* message numbering */
-  sctk_net_ibv_sched_init();
-
   /* initialization of collective */
   sctk_net_ibv_collective_init();
-
-  /* initialization of the Connection Manager */
-  sctk_net_ibv_cm_server();
 
   /* initialization of queue pairs */
   sctk_net_ibv_allocator_rc_sr_buffers_init(rail);
@@ -289,7 +289,8 @@ sctk_net_ibv_collective_op_driver (sctk_collective_communications_t * com,
     sctk_nodebug ("begin collective barrier : %d", com->id);
     if ( (com->id) == MPC_COMM_WORLD)
     {
-      PMI_Barrier();
+      sctk_net_ibv_barrier (com, my_vp );
+//      PMI_Barrier();
     } else {
       not_implemented();
     }

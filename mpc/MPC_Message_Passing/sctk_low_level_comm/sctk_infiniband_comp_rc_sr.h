@@ -45,7 +45,8 @@ typedef enum
   RC_SR_RDVZ_DONE = 3,
   /* collectives */
   RC_SR_BCAST = 4,
-  RC_SR_REDUCE = 5
+  RC_SR_REDUCE = 5,
+  RC_SR_BCAST_INIT_BARRIER = 6
 } sctk_net_ibv_rc_sr_msg_type_t;
 /* number of different msg type (see the list above) */
 

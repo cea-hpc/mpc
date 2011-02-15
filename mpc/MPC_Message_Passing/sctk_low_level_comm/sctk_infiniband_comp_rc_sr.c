@@ -76,7 +76,6 @@ sctk_net_ibv_comp_rc_sr_new( int slot_nb, int slot_size)
   buff->wr_end    = wr_current;
 
   buff->ceiling = (slot_nb * CEILING_SEND_BUFFERS / 100);
-//  sctk_debug("Ceiling fixed to %d", buff->ceiling);
 
   //sctk_nodebug("Wr begin %d Wr end %d", buff->wr_begin, buff->wr_end);
 
@@ -187,7 +186,7 @@ sctk_net_ibv_comp_rc_sr_send(
     sctk_net_ibv_rc_sr_entry_t* entry,
     size_t size, sctk_net_ibv_rc_sr_msg_type_t type, uint32_t* psn)
 {
-  uint32_t ret_psn;
+  uint32_t ret_psn = 0;
   int rc;
   struct  ibv_send_wr* bad_wr = NULL;
 
@@ -209,7 +208,7 @@ sctk_net_ibv_comp_rc_sr_send(
         remote->rank, entry->msg_header->size, *psn);
 
   } else {
-    sctk_nodebug("QP %p dest %d", remote->qp, remote->rank);
+    sctk_nodebug("QP %p dest %d size %lu", remote->qp, remote->rank, size);
     rc = ibv_post_send(remote->qp , &(entry->wr.send_wr), &bad_wr);
     assume (rc == 0);
   }
@@ -234,8 +233,6 @@ sctk_net_ibv_comp_rc_sr_post_recv(
   entry = &(buff->headers[i]);
   assume(entry);
   sctk_nodebug("Header : %p %d", entry, i);
-
-  sctk_nodebug("OK rank %d/%d %p", sctk_process_rank, sctk_process_number, &local->srq->context->ops);
 
   sctk_nodebug("SRQ:%p | RECV_WR:%p, BAD_WR:%p, HEADER:%p",local->srq, &(entry->wr.recv_wr), &bad_wr, entry->msg_header);
 
@@ -399,7 +396,9 @@ sctk_net_ibv_comp_rc_sr_send_ptp_message (
     sctk_nodebug("Send PTP %lu to %d with psn %lu", size, dest_process, psn);
   }
   /* if this is a COLLECTIVE msg */
-  else if ( (type == RC_SR_BCAST) || (type == RC_SR_REDUCE))
+  else if ( (type == RC_SR_BCAST) ||
+      (type == RC_SR_REDUCE) ||
+      (type == RC_SR_BCAST_INIT_BARRIER))
   {
     memcpy (payload, msg, size);
     sctk_net_ibv_comp_rc_sr_send(remote, entry, size, type, NULL);
@@ -447,7 +446,11 @@ sctk_net_ibv_rc_sr_poll_send(
   {
     sctk_nodebug("coll msg");
     sctk_net_ibv_comp_rc_sr_free_header(coll_buff, &coll_buff->headers[wc->wr_id - coll_buff->wr_begin]);
+  } else if (wc->wr_id == 2000)
+  {
+    sctk_nodebug("RDMA barrier");
   } else {
+    sctk_debug("ID not found : %d", wc->wr_id);
     assume(0);
   }
   sctk_nodebug("Send cq done");
@@ -595,6 +598,14 @@ sctk_net_ibv_rc_sr_poll_recv(
       sctk_net_ibv_collective_push(&reduce_fifo, entry->msg_header);
       restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
       break;
+
+    case RC_SR_BCAST_INIT_BARRIER:
+      sctk_nodebug("Broadcast barrier msg received");
+      sctk_net_ibv_collective_push(&init_barrier_fifo, entry->msg_header);
+      restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
+      break;
+
+
   }
 
   if (lookup_mode)
