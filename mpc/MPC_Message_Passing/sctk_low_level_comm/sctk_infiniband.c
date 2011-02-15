@@ -219,7 +219,6 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
 
   sctk_net_ibv_rc_rdma_process_t *entry_rdma;
   sctk_net_ibv_rc_rdma_entry_recv_t *entry_recv = NULL;
-  sctk_net_ibv_rc_rdma_entry_recv_t *removed_entry = NULL;
 
   sctk_nodebug("FREE begin");
 

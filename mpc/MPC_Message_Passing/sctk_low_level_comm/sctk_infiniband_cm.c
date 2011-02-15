@@ -223,7 +223,6 @@ void sctk_net_ibv_cm_server()
   char key[256];
   int key_max;
   int val_max;
-  int res;
 
   key_max = sctk_bootstrap_get_max_key_len();
   val_max = sctk_bootstrap_get_max_val_len();

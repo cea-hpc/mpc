@@ -49,7 +49,7 @@ typedef struct
 
 typedef struct sctk_net_ibv_mmu_s
 {
-  volatile sctk_thread_mutex_t lock;     /* MMU lock */
+  sctk_thread_mutex_t lock;     /* MMU lock */
   int entry_nb;             /* Number of entries */
   sctk_net_ibv_mmu_entry_t** entry;  /* entries */
 } sctk_net_ibv_mmu_t;

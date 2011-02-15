@@ -43,7 +43,6 @@ sctk_net_ibv_mmu_t*
 sctk_net_ibv_mmu_new(sctk_net_ibv_qp_rail_t* rail)
 {
   int i;
-  int maxval = 0;
   sctk_net_ibv_mmu_t* mmu = NULL;
 
   /* get the page-size of the system */
@@ -139,7 +138,6 @@ int
 sctk_net_ibv_mmu_unregister ( sctk_net_ibv_mmu_t *mmu,
     sctk_net_ibv_mmu_entry_t *mmu_entry)
 {
-  int i;
   sctk_thread_mutex_lock (&mmu->lock);
 
   ibv_dereg_mr (mmu_entry->mr);

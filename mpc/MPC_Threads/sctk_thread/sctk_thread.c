@@ -45,6 +45,7 @@ MonoDomain *domain;
 #include "sctk_alloc.h"
 #include "sctk_launch.h"
 #include "sctk_topology.h"
+#include "sctk_asm.h"
 #include "sctk_tls.h"
 #include <unistd.h>
 #include "sctk_posix_thread.h"

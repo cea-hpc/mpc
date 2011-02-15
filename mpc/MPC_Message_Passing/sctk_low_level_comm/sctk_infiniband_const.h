@@ -32,6 +32,13 @@ typedef enum
   IBV_CHAN_RECV  = 1 << 3,
 } sctk_net_ibv_allocator_type_t;
 
+
+#define IBV_RC_SR_ORIGIN        0
+#define IBV_RC_RDMA_ORIGIN      1
+#define IBV_POLL_RC_SR_ORIGIN   2
+#define IBV_POLL_RC_RDMA_ORIGIN 3
+
+
 /* nb entries in buffers */
 #define IBV_PENDING_SEND_PTP  60
 #define IBV_PENDING_SEND_COLL 30

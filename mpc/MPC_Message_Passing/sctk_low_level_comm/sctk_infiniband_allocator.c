@@ -316,14 +316,6 @@ void sctk_net_ibv_rc_rdma_send_cq(struct ibv_wc* wc, int lookup, int dest)
 /*-----------------------------------------------------------
  *  POLLING
  *----------------------------------------------------------*/
-void sctk_net_ibv_allocator_ptp_poll_all()
-{
-  sctk_net_ibv_allocator_ptp_poll(IBV_CHAN_RC_SR);
-  sctk_net_ibv_allocator_ptp_poll(IBV_CHAN_RC_RDMA);
-
-  sctk_net_ibv_sched_poll_pending();
-}
-
 void sctk_net_ibv_allocator_ptp_poll(sctk_net_ibv_allocator_type_t type)
 {
   switch (type) {
@@ -341,7 +333,8 @@ void sctk_net_ibv_allocator_ptp_poll(sctk_net_ibv_allocator_type_t type)
   }
 }
 
-int sctk_net_ibv_allocator_ptp_lookup(int dest, sctk_net_ibv_allocator_type_t type)
+void
+sctk_net_ibv_allocator_ptp_lookup(int dest, sctk_net_ibv_allocator_type_t type)
 {
   switch (type) {
     case IBV_CHAN_RC_SR :
@@ -358,10 +351,17 @@ int sctk_net_ibv_allocator_ptp_lookup(int dest, sctk_net_ibv_allocator_type_t ty
   }
 }
 
-int sctk_net_ibv_allocator_ptp_lookup_all(int dest)
+void sctk_net_ibv_allocator_ptp_poll_all()
 {
-  int ret;
+  sctk_net_ibv_allocator_ptp_poll(IBV_CHAN_RC_SR);
+  sctk_net_ibv_allocator_ptp_poll(IBV_CHAN_RC_RDMA);
 
+  sctk_net_ibv_sched_poll_pending();
+}
+
+
+void sctk_net_ibv_allocator_ptp_lookup_all(int dest)
+{
   /* poll pending messages */
   sctk_net_ibv_sched_poll_pending();
 

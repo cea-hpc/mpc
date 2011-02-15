@@ -27,6 +27,8 @@
 #include "sctk_debug.h"
 #include "sctk_infiniband_coll.h"
 
+static int *sctk_comm_world_array;
+
 /* rail */
 extern  sctk_net_ibv_qp_rail_t   *rail;
 /* RC SR structures */

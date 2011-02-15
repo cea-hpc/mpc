@@ -26,11 +26,6 @@
 #ifndef __SCTK__INFINIBAND_LIB_H_
 #define __SCTK__INFINIBAND_LIB_H_
 
-#define IBV_RC_SR_ORIGIN        0
-#define IBV_RC_RDMA_ORIGIN      1
-#define IBV_POLL_RC_SR_ORIGIN   2
-#define IBV_POLL_RC_RDMA_ORIGIN 3
-
 /* channel selection */
 extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
 

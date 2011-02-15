@@ -25,7 +25,6 @@
 #include <sctk_infiniband_scheduling.h>
 #include <sctk_infiniband_allocator.h>
 #include "sctk_infiniband_const.h"
-#include "sctk_list.h"
 #include "sctk_buffered_fifo.h"
 
 extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;

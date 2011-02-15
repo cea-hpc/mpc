@@ -28,16 +28,6 @@
 #include "sctk_buffered_fifo.h"
 #include "sctk_inter_thread_comm.h"
 #include "sctk.h"
-static void restore_buffers(
-    sctk_net_ibv_qp_local_t* local,
-    sctk_net_ibv_rc_sr_buff_t* buff,
-    int id)
-{
-  sctk_net_ibv_comp_rc_sr_post_recv(local, buff, id);
-  sctk_net_ibv_comp_rc_sr_free_header(buff,
-      &buff->headers[id]);
-}
-
 
 /*-----------------------------------------------------------
  *  STATIC DECLARATION
@@ -190,7 +180,7 @@ sctk_net_ibv_comp_rc_rdma_prepare_request(
     sctk_nodebug("Need connection to process %d", entry_rc_rdma->remote.rank);
   } else if (ready == 1) {
     request->type             = RC_RDMA_REQ_READ;
-    request->read_request.address   = aligned_ptr;
+    request->read_request.address   = (uintptr_t) aligned_ptr;
     request->read_request.size      = aligned_size;
     request->read_request.rkey      = mmu->mr->rkey;
   } else {

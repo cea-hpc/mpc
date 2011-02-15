@@ -635,6 +635,7 @@ sctk_net_free_func_driver ( sctk_thread_ptp_message_t * item ) {
  *  Description:  print informations about the SHM
  * ==================================================================
  */
+#if SCTK_HYBRID_DEBUG == 1
 static void
 sctk_shm_init_printinfos () {
   size_t size_allocated_mem = sctk_shm_get_allocated_mem_size ();
@@ -695,7 +696,7 @@ sctk_shm_init_printinfos () {
   fprintf ( stderr,
       "# --------------------------------------------------------------------------------\n\n" );
 }
-
+#endif
 
 /*
  * ===  FUNCTION  ===================================================

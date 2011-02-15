@@ -32,7 +32,6 @@
 struct sctk_list  broadcast_fifo;
 struct sctk_list  init_barrier_fifo;
 struct sctk_list  reduce_fifo;
-static int *sctk_comm_world_array;
 
 /*-----------------------------------------------------------
  *  COLLECTIVE FUNCTIONS

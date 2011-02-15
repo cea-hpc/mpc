@@ -115,7 +115,7 @@ sctk_net_ibv_alloc_rc_rdma_find_from_rank(int rank);
  *----------------------------------------------------------*/
 void sctk_net_ibv_allocator_ptp_poll_all();
 
-int sctk_net_ibv_allocator_ptp_lookup_all(int dest);
+void sctk_net_ibv_allocator_ptp_lookup_all(int dest);
 
 void
 sctk_net_ibv_allocator_unlock(

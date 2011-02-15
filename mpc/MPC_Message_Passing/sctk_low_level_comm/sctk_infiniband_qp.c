@@ -401,8 +401,6 @@ sctk_net_ibv_poll_check_wc(struct ibv_wc wc, sctk_net_ibv_allocator_type_t type)
 
   if (wc.status != IBV_WC_SUCCESS)
   {
-    sctk_net_ibv_rc_sr_process_t* entry;
-
     sctk_error ("Work ID is %d", wc.wr_id);
     sctk_error ("Status : %s", sctk_net_ibv_cq_print_status(wc.status));
     sctk_error ("ERROR Vendor: %d", wc.vendor_err);
@@ -473,6 +471,7 @@ sctk_net_ibv_cq_lookup(struct ibv_cq* cq, int nb_pending, void (*ptr_func)(struc
   }
 }
 
+int
 sctk_net_ibv_cq_garbage_collector(struct ibv_cq* cq, int nb_pending, void (*ptr_func)(struct ibv_wc*), sctk_net_ibv_allocator_type_t type)
 {
   struct ibv_wc wc[nb_pending];

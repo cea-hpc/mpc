@@ -67,4 +67,7 @@ sctk_net_ibv_sched_pending_push(
     int allocation_needed,
     sctk_net_ibv_allocator_type_t type);
 
+  void
+sctk_net_ibv_sched_poll_pending();
+
 #endif
