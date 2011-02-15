@@ -369,7 +369,7 @@ sctk_net_preinit_driver_hybrid ()
 
 #ifdef SCTK_SHM
   if (strcmp(sctk_module_name, "tcp_only") == 0 ||
-      strcmp(sctk_module_name, "ib_only") == 0 ||
+      strcmp(sctk_module_name, "ipoib_only") == 0 ||
       strcmp(sctk_module_name, "ib_only") == 0)
   {
     shm_enabled = 0;
@@ -401,7 +401,7 @@ sctk_net_preinit_driver_hybrid ()
     GENDRIVER(tcp, tcp);
   }
   else if ( (strcmp(sctk_module_name, "ib") == 0) ||
-    (strcmp(sctk_module_name, "tcp_only") == 0))
+    (strcmp(sctk_module_name, "ib_only") == 0))
   {
     GENDRIVER(infiniband, infiniband);
   }
