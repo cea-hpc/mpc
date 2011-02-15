@@ -32,19 +32,6 @@
 
 #include <string.h>
 
-#define IB_TX_DEPTH 1000
-/* FIXME Why this value is so high? */
-#define IB_RX_DEPTH 1000
-/* decrease this values if many processes */
-#define IB_MAX_SG_SQ 4
-#define IB_MAX_SG_RQ 4
-#define IB_MAX_INLINE 128
-/* maximum number of resources for incoming RDMA requests */
-#define IB_RMDA_DEPTH 4
-#define IB_RMDA_DEST_DEPTH 1
-/* physical port number */
-#define IBV_ADM_PORT 1
-
 static int    dev_nb;
 
 /*-----------------------------------------------------------

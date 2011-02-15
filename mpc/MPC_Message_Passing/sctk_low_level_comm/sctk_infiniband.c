@@ -46,19 +46,6 @@
 #include "sctk_iso_alloc.h"
 #include "sctk_net_tools.h"
 
-#define NO_MEMORY_LIMITATION  0
-
-/* for debug */
-#define DBG_S(x) if (x) \
-  sctk_nodebug("BEGIN %s", __func__); \
-else \
-sctk_nodebug("");
-
-#define DBG_E(x) if (x) \
-  sctk_nodebug("END %s", __func__); \
-else \
-sctk_nodebug("");
-
 /* rail */
 extern  sctk_net_ibv_qp_rail_t   *rail;
 

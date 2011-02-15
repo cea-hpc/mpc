@@ -25,9 +25,8 @@
 #include "sctk_debug.h"
 #include "sctk_infiniband_mmu.h"
 #include "sctk_infiniband_qp.h"
+#include "sctk_infiniband_const.h"
 #include <infiniband/verbs.h>
-
-#define SCTK_MAX_MR_ALLOWED 20000
 
 /*-----------------------------------------------------------
  *  NEW / FREE
