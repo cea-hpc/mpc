@@ -558,7 +558,7 @@ server (void *arg)
     safe_read (fd, req, MPC_ACTION_SIZE);
     safe_read (fd, &rank, sizeof (int));
 
-//    sctk_debug ("Action asked %s\n", req);
+    sctk_debug ("Action asked %s\n", req);
     if (strcmp (req, MPC_SERVER_GET_RANK) == 0)
     {
       sctk_register_rank (fd);
