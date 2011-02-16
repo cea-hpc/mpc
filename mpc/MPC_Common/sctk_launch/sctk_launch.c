@@ -274,8 +274,8 @@ sctk_perform_initialisation (void)
 	  if (SCTK_VERSION_MINOR >= 0)
 	    {
 	      fprintf (stderr,
-		       "MPC version %d.%d%s %s (%d tasks %d processes %d cpus %s/%s) %s%s\n",
-		       SCTK_VERSION_MAJOR, SCTK_VERSION_MINOR,
+		       "MPC version %d.%d.%d%s %s (%d tasks %d processes %d cpus %s/%s) %s%s\n",
+		       SCTK_VERSION_MAJOR, SCTK_VERSION_MINOR, SCTK_VERSION_REVISION,
 		       SCTK_VERSION_PRE, mpc_lang, sctk_task_nb_val,
 		       sctk_process_nb_val, sctk_get_cpu_number (),
 		       sctk_multithreading_mode, sctk_network_mode,

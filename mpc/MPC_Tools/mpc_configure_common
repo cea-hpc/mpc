@@ -460,6 +460,7 @@ cat <<EOF >> include/sctk_config.h
 /* Options: */
 #define SCTK_VERSION_MAJOR ${MAJOR}
 #define SCTK_VERSION_MINOR $MINOR
+#define SCTK_VERSION_REVISION $REVISION
 #define SCTK_VERSION_PRE "$PRE_RELEASE"
 EOF
 
