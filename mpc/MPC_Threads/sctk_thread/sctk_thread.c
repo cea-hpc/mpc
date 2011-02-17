@@ -630,6 +630,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
     int keep[sctk_tls_max_scope];
     memset (keep, 0, sctk_tls_max_scope * sizeof (int));
     keep[sctk_tls_process_scope] = 1;
+    keep[sctk_tls_numa_scope] = 1;
     sctk_tls_keep (keep);
   }
 
@@ -747,6 +748,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
     memset (keep, 0, sctk_tls_max_scope * sizeof (int));
     keep[sctk_tls_process_scope] = 1;
     keep[sctk_tls_task_scope] = 1;
+    keep[sctk_tls_numa_scope] = 1; 
     sctk_tls_keep (keep);
   }
 

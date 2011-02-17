@@ -37,12 +37,12 @@ extern "C"
 #if defined(SCTK_USE_TLS)
 
   typedef enum
-  { sctk_tls_process_scope = 0, sctk_tls_task_scope =
-      1, sctk_tls_thread_scope = 2,
+  { sctk_tls_process_scope = 0, sctk_tls_numa_scope = 1,
+    sctk_tls_task_scope = 2, sctk_tls_thread_scope = 3,
 #if defined (MPC_OpenMP)
-    sctk_tls_openmp_scope = 3, sctk_tls_max_scope = 4
+    sctk_tls_openmp_scope = 4, sctk_tls_max_scope = 5
 #else
-    sctk_tls_max_scope = 3
+    sctk_tls_max_scope = 4
 #endif
   } sctk_tls_scope_t;
   void sctk_tls_duplicate (void **new);

@@ -30,6 +30,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include "sctk_topology.h"
 
 
 #if defined(SCTK_USE_TLS)
@@ -96,6 +97,11 @@ typedef struct
   volatile sctk_tls_module_t *volatile modules;
   sctk_spinlock_t lock;
 } tls_level;
+
+tls_level sctk_tls_numa_level[8] = {
+{0,NULL,0}, {0,NULL,0}, {0,NULL,0}, {0,NULL,0},
+{0,NULL,0}, {0,NULL,0}, {0,NULL,0}, {0,NULL,0}
+} ;
 
 static inline void
 sctk_tls_init_level (tls_level * level)
@@ -330,11 +336,17 @@ sctk_tls_duplicate (void **new)
       new_tls[i] = tls[i];
     }
 
+ 
 }
 
 void
 sctk_tls_keep (int *scopes)
 {
+  sctk_nodebug ( "sctk_tls_keep %d %d %d %d %d on numa node %d",
+    scopes[0],scopes[1],scopes[2],scopes[3],scopes[4],
+    sctk_get_node_from_cpu(sctk_thread_get_vp())
+   ) ;
+
   tls_level **tls;
   int i;
   tls = sctk_hierarchical_tls;
@@ -350,6 +362,15 @@ sctk_tls_keep (int *scopes)
 	  sctk_tls_init_level (tls[i]);
 	}
     }
+  
+  if ( scopes[sctk_tls_numa_scope] == 1 ) {
+    int numa_id = sctk_get_node_from_cpu(sctk_thread_get_vp ()) ;
+    if ( numa_id >= 0 && numa_id < 8 ) {
+      sctk_nodebug ( "sctk_tls_keep get tls from numa node %d %p",
+        numa_id, &sctk_tls_numa_level[numa_id] ) ;
+      tls[sctk_tls_numa_scope] = &sctk_tls_numa_level[numa_id] ;
+    }
+  }
 }
 
 void
@@ -391,6 +412,18 @@ __sctk__tls_get_addr__task_scope (tls_index * tmp)
 }
 
 void *
+__sctk__tls_get_addr__numa_scope (tls_index * tmp)
+{
+  void *res;
+  sctk_nodebug ("__sctk__tls_get_addr__numa_scope on numa node %d",
+    sctk_get_node_from_cpu(sctk_thread_get_vp()));
+  res =
+    __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
+					 sctk_tls_numa_scope);
+  return res;
+}
+
+void *
 __sctk__tls_get_addr__thread_scope (tls_index * tmp)
 {
   void *res;
@@ -399,6 +432,7 @@ __sctk__tls_get_addr__thread_scope (tls_index * tmp)
 					 sctk_tls_thread_scope);
   return res;
 }
+
 
 #if defined (MPC_OpenMP)
 void *
@@ -430,6 +464,14 @@ __sctk__tls_get_addr__task_scope (size_t m, size_t offset)
 {
   void *res;
   res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_tls_task_scope);
+  return res;
+}
+
+void *
+__sctk__tls_get_addr__numa_scope (size_t m, size_t offset)
+{
+  void *res;
+  res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_tls_numa_scope);
   return res;
 }
 
