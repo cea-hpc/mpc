@@ -241,11 +241,8 @@ void
 
 void sctk_bootstrap_init() {
 #ifdef MPC_USE_SLURM
-  char* env = NULL;
-  env = getenv("SLURM_JOBID");
-  if ( env ) {
+  if (strcmp(sctk_get_launcher_mode(), "srun") == 0)
     mode = PMI;
-  }
   else
     mode = TCP;
 #else
