@@ -146,7 +146,7 @@ sctk_bootstrap_register(char* pkey, char* pval, int size)
 #endif
 
     case TCP:
-      sctk_mpcrun_client_register_shmfilename (pkey, pval, TCP_KEY_MAX, size);
+      sctk_mpcrun_client_register_shmfilename (pkey, pval, HOSTNAME_SIZE, size);
       break;
 
     default: assume(0);
@@ -171,7 +171,7 @@ sctk_bootstrap_get(char* pkey, char* pval, int size)
 #endif
 
     case TCP:
-      sctk_mpcrun_client_get_shmfilename (pkey, pval, TCP_KEY_MAX, size);
+      sctk_mpcrun_client_get_shmfilename (pkey, pval, HOSTNAME_SIZE, size);
       break;
 
     default: assume(0);

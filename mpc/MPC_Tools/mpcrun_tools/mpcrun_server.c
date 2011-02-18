@@ -71,7 +71,7 @@ sctk_error (const char *fmt, ...)
 
 typedef struct registered_node_s
 {
-  char  hostname[HOSTNAME_PORT_SIZE];
+  char  hostname[HOSTNAME_SIZE];
   char* shm_filename;     /* filename of the SHM module */
   int   local_rank;
 } registered_node_t;
@@ -121,13 +121,13 @@ safe_write (int fd, const void *buf, size_t count)
     {
      tmp += dcount;
      dcount = write (fd, buf, count - already_written );
-     
+
      if ( dcount < 0 )
        {
          perror ("safe_write");
 	 abort();
        }
-   
+
 	already_written += dcount;
     }
 
@@ -196,7 +196,7 @@ sctk_register_rank (int fd)
     registered_node = malloc(process_nb * sizeof(struct registered_node_s));
     for (i = 0; i < process_nb ; ++i)
     {
-      memset(registered_node[i].hostname, '\0', 4096);
+      memset(registered_node[i].hostname, '\0', HOSTNAME_SIZE);
       registered_node[i].local_rank = 0;
       registered_node[i].shm_filename = NULL;
 
@@ -207,7 +207,7 @@ sctk_register_rank (int fd)
   sctk_debug("Processues number : %d", process_nb);
   for (i=0; i < process_nb; ++i)
   {
-    if ( strncmp(registered_node[i].hostname, hostname_msg.hostname, 4096) == 0)
+    if ( strncmp(registered_node[i].hostname, hostname_msg.hostname, HOSTNAME_SIZE) == 0)
     {
       sctk_debug("Local rank sent : %d",i);
       local_rank = registered_node[i].local_rank;
@@ -217,7 +217,7 @@ sctk_register_rank (int fd)
     }
     else if (strlen(registered_node[i].hostname) == 0)
     {
-      memcpy(registered_node[i].hostname, hostname_msg.hostname, HOSTNAME_PORT_SIZE);
+      memcpy(registered_node[i].hostname, hostname_msg.hostname, HOSTNAME_SIZE);
 
       /* increment the node number */
       ++node_number;
@@ -314,7 +314,7 @@ sctk_match_hostname(char* host)
 
   for (i=0; i < process_nb; ++i)
   {
-    if (strncmp(registered_node[i].hostname, host, 4096) == 0)
+    if (strncmp(registered_node[i].hostname, host, HOSTNAME_SIZE) == 0)
     {
       return i;
     }
@@ -411,11 +411,11 @@ sctk_get_host (int fd, int rank)
 sctk_register_shm_filename (int fd, int rank)
 {
   char shm_name[SHM_FILENAME_SIZE];
-  char host[HOSTNAME_PORT_SIZE];
+  char host[HOSTNAME_SIZE];
   int index;
 
   /* grep the hostname */
-  safe_read (fd, &host, HOSTNAME_PORT_SIZE);
+  safe_read (fd, &host, HOSTNAME_SIZE);
   index = sctk_match_hostname(host);
 
   safe_read (fd, &shm_name, SHM_FILENAME_SIZE);
@@ -434,11 +434,11 @@ sctk_register_shm_filename (int fd, int rank)
   static void
 sctk_get_shm_filename (int fd, int rank)
 {
-  char host[HOSTNAME_PORT_SIZE];
+  char host[HOSTNAME_SIZE];
   int index;
 
   /* grep the hostname */
-  safe_read (fd, &host, HOSTNAME_PORT_SIZE);
+  safe_read (fd, &host, HOSTNAME_SIZE);
 
   sctk_debug("Host received : %s", host);
 

@@ -59,7 +59,7 @@ typedef struct sctk_client_init_message_s
 typedef struct sctk_client_hostname_message_s
 {
   int process_number;
-  char hostname[HOSTNAME_PORT_SIZE];
+  char hostname[HOSTNAME_SIZE];
 } sctk_client_hostname_message_t;
 
 typedef struct sctk_client_local_size_and_node_number_message_s

@@ -71,13 +71,13 @@ sctk_mpcserver_safe_write (int fd,  void *buf, size_t count)
     {
      tmp += dcount;
      dcount = write (fd, buf, count - already_written );
-     
+
      if ( dcount < 0 )
        {
          perror ("safe_write");
 	 abort();
        }
-   
+
 	already_written += dcount;
     }
 
@@ -272,7 +272,7 @@ sctk_mpcrun_client_get_global_consts()
   sctk_process_number = sctk_get_process_nb ();
 
   /* fill the msg */
-  memcpy(hostname_msg.hostname, &local_host, HOSTNAME_PORT_SIZE);
+  memcpy(hostname_msg.hostname, &local_host, HOSTNAME_SIZE);
   hostname_msg.process_number = sctk_process_number;
 
   assume (sctk_mpcrun_client
