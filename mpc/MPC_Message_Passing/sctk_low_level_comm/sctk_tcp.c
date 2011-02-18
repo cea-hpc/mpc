@@ -576,7 +576,6 @@ sctk_net_preinit_driver_tcp(sctk_net_driver_pointers_functions_t* pointers)
 {
   int i;
 
-
   sctk_create_recv_socket ();
   sctk_mpcrun_client_init_connect ();
 

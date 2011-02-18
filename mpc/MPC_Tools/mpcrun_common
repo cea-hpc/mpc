@@ -351,6 +351,10 @@ if test "$THREAD_TYPE" != ""  ; then
 add_arg "$THREAD_TYPE"
 fi
 
+if test "$LAUNCH" != ""  ; then
+add_arg "--launcher=$LAUNCH"
+fi
+
 if test "$NET_TYPE" != ""  ; then
 add_arg "$NET_TYPE"
 fi

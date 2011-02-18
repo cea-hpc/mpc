@@ -256,7 +256,6 @@ void sctk_bootstrap_init() {
       sctk_bootstrap_pmi_init();
       sctk_mpcrun_client_create_recv_socket ();
       sctk_mpcrun_client_init_host_port();
-      sctk_nodebug("Process rank : %d", sctk_process_rank);
       /* we need to send the number of processes to the
        * TCP server */
       if (sctk_process_rank == 0)

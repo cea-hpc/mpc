@@ -258,6 +258,7 @@ sctk_mpcrun_client_create_recv_socket ()
   while (bind (sockfd, (struct sockaddr *) &serv_addr,
 	       sizeof (serv_addr)) < 0);
   sctk_nodebug ("Looking for an available port found %d\n", portno);
+
   sprintf (port, "%d", portno);
 
   listen (sockfd, 10);
@@ -401,9 +402,6 @@ sctk_mpcrun_client_init_host_port()
   assume (tmp);
   sctk_nodebug ("HOSTNAME %s", tmp);
   sctk_mpcrun_client_host = tmp;
-
-  socket_graph = malloc(sctk_process_number*sizeof(int));
-  memset(socket_graph,-1,sctk_process_number*sizeof(int));
 }
 
   void
@@ -416,15 +414,19 @@ sctk_mpcrun_client_init_connect ()
   rank = sctk_process_rank;
   sctk_nodebug("RANK : %d", rank);
 
-  assume(sctk_mpcrun_client(MPC_SERVER_REGISTER_HOST,NULL,0,local_host,(HOSTNAME_SIZE+PORT_SIZE+10)*sizeof(char)) == 0);
+  /* initialize socket graph */
+  socket_graph = malloc(sctk_process_number*sizeof(int));
+  memset(socket_graph,-1,sctk_process_number*sizeof(int));
+
+  assume(sctk_mpcrun_client(MPC_SERVER_REGISTER_HOST,NULL,0,local_host,(HOSTNAME_SIZE+PORT_SIZE)*sizeof(char)) == 0);
   sctk_nodebug("SEND %s %s",local_host,local_host+HOSTNAME_SIZE);
   sctk_nodebug("sctk_process_number : %d", sctk_process_rank);
   for(i = 0; i < sctk_process_number; i++){
     if(i != rank){
       if(i < rank){
-        memset(dist_host,'\0',(HOSTNAME_SIZE+PORT_SIZE+10)*sizeof(char));
+        memset(dist_host,'\0',(HOSTNAME_SIZE+PORT_SIZE)*sizeof(char));
         sctk_nodebug("Wait Recv peer");
-        while(sctk_mpcrun_client(MPC_SERVER_GET_HOST,dist_host,(HOSTNAME_SIZE+PORT_SIZE+10)*sizeof(char),&i,sizeof(int)) != 0){
+        while(sctk_mpcrun_client(MPC_SERVER_GET_HOST,dist_host,(HOSTNAME_SIZE+PORT_SIZE)*sizeof(char),&i,sizeof(int)) != 0){
           sleep(1);
         }
         sctk_nodebug("%d socket %s port %s",i,dist_host,dist_host+HOSTNAME_SIZE);
@@ -436,6 +438,7 @@ sctk_mpcrun_client_init_connect ()
         int remote_rank;
         unsigned int clilen;
         struct sockaddr_in cli_addr;
+        clilen = sizeof(cli_addr);
         sctk_nodebug("Wait for connection");
         fd = accept (sockfd, (struct sockaddr *) &cli_addr, &clilen);
 
