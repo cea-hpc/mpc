@@ -373,10 +373,8 @@ sctk_mpcrun_client_register_shmfilename (char* key, char* in, int key_len, int v
 
   sctk_mpcserver_safe_write (fd, MPC_SERVER_REGISTER_SHM_FILENAME, MPC_ACTION_SIZE);
   sctk_mpcserver_safe_write (fd, &sctk_process_rank, sizeof (int));
-  assume(key_len <= HOSTNAME_PORT_SIZE);
-  assume(val_len <= SHM_FILENAME_SIZE);
-  sctk_mpcserver_safe_write (fd, key, HOSTNAME_PORT_SIZE);
-  sctk_mpcserver_safe_write (fd, in,  SHM_FILENAME_SIZE);
+  sctk_mpcserver_safe_write (fd, key, key_len);
+  sctk_mpcserver_safe_write (fd, in,  val_len);
 
   sctk_nodebug("written shm filename : %s", in);
 
