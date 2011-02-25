@@ -3884,7 +3884,7 @@ sctk_restore_used_pages (int fd, void **user_data,
     }
 
   sctk_mem_assert (read (fd, &page, 1) == 0);
-  SCTK_DEBUG (sctk_mem_error ("RESTORE pages tls %p DONE\n", tls));
+  SCTK_DEBUG (sctk_mem_error ("RESTORE pages tls %p DONE\n", *tls));
 }
 
 void
