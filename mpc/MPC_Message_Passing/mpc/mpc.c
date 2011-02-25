@@ -1376,23 +1376,13 @@ MPC_Move_to (int process, int cpuid)
 	  fprintf (file, "Virtual processor %d\n", vp);
 	  fclose (file);
 
-
-	  sctk_nodebug ("move from process %d to process %d",
-			sctk_process_rank, process);
-	  sctk_net_migration (rank, process);
-	  sctk_nodebug ("move from process %d to process %d send done",
-			sctk_process_rank, process);
-
-	  self = sctk_thread_self ();
 	  memcpy (&self_p, &self, sizeof (long));
 
 	  MPC_Wait_pending_all_comm ();
 
 	  sctk_unregister_thread (rank);
 
-	  sctk_nodebug ("Will Migrate");
-	  sctk_thread_migrate ();
-	  sctk_nodebug ("Migrated");
+	  sctk_net_migration (rank, process);
 
 	  MPC_Processor_rank (&vp);
 
