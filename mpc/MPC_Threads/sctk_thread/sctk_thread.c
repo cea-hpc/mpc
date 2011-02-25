@@ -1793,6 +1793,9 @@ sctk_net_poll (void *arg)
 #endif
 }
 
+#ifdef MPC_Message_Passing
+void sctk_net_migration_check();
+#endif
 
 volatile sctk_timer_t sctk_timer = 0;
 
@@ -1807,6 +1810,9 @@ sctk_thread_timer (void *arg)
     {
       kthread_usleep (sctk_time_interval * 1000);
       sctk_timer++;
+#ifdef MPC_Message_Passing
+      sctk_net_migration_check();
+#endif
     }
   return NULL;
 }
