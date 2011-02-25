@@ -525,6 +525,8 @@ sctk_rpc_collective_op_remote_thread (sctk_rpc_collective_op_t * msg)
   size_t size;
   sctk_nodebug ("sctk_rpc_collective_op_remote_thread");
 
+  sctk_thread_proc_migration (msg->vp);
+
   sctk_nodebug ("Collective operation %p %p %p %lu %lu",
       msg->tmp_data_in, msg->tmp_data_out, msg->func,
       msg->elem_size, msg->nb_elem);
