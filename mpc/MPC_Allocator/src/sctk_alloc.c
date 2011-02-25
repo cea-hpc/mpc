@@ -3947,11 +3947,12 @@ __sctk_restore_tls (sctk_tls_t ** tls, char *file_name)
 
   do
     {
-#ifdef MPC_Threads
-      sctk_thread_yield ();
-#else
-      sched_yield ();
-#endif
+/* #ifdef MPC_Threads */
+/*       sctk_thread_yield (); */
+/* #else */
+/*       sched_yield (); */
+/* #endif */
+      sleep(1); 
       fd = open (file_name, O_RDONLY);
     }
   while (fd == -1);
