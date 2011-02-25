@@ -379,7 +379,7 @@ sctk_net_set_free_communicator (const sctk_communicator_t
 
 /*migration*/
 static int sctk_val_net_migration_available = 0;
-  void
+  void 
 sctk_set_net_migration_available (int val)
 {
   sctk_val_net_migration_available = val;
@@ -391,16 +391,18 @@ sctk_is_net_migration_available ()
   return sctk_val_net_migration_available;
 }
 
-typedef struct
+typedef struct sctk_migration_s
 {
   int task;
   void *ptr;
   int new_proc;
+  volatile struct sctk_migration_s* next;
 } sctk_migration_t;
 
-  static void
-sctk_net_migration_remote (sctk_migration_t * arg)
-{
+static volatile sctk_migration_t* sctk_net_migration_list = NULL;
+static sctk_spinlock_t sctk_net_migration_list_lock = SCTK_SPINLOCK_INITIALIZER;
+
+static void sctk_net_migration_perform(sctk_migration_t * arg){
   void *self_p = NULL;
   int vp;
   char name[SCTK_MAX_FILENAME_SIZE];
@@ -417,6 +419,33 @@ sctk_net_migration_remote (sctk_migration_t * arg)
   sctk_total_number_of_tasks++;
   sctk_thread_mutex_unlock (&sctk_total_number_of_tasks_lock);
   sctk_thread_restore (self_p, name, vp);
+  sctk_debug ("Task Recovered %d thread %p", arg->task, self_p);
+}
+
+void sctk_net_migration_check(){
+  sctk_migration_t* temp;
+  sctk_spinlock_lock(&sctk_net_migration_list_lock);
+  temp = sctk_net_migration_list;
+  sctk_net_migration_list = NULL;
+  sctk_spinlock_unlock(&sctk_net_migration_list_lock);
+
+  while(temp != NULL){
+    sctk_net_migration_perform(temp);
+    temp = temp->next;
+  }
+}
+  static void
+sctk_net_migration_remote (sctk_migration_t * arg)
+{
+  sctk_migration_t* temp;
+  sctk_spinlock_lock(&sctk_net_migration_list_lock);
+  temp = malloc(sizeof(sctk_migration_t));
+  temp->task = arg->task;
+  temp->ptr = arg->ptr;
+  temp->new_proc = arg->new_proc;
+  temp->next = sctk_net_migration_list;
+  sctk_net_migration_list = temp;
+  sctk_spinlock_unlock(&sctk_net_migration_list_lock);
 }
 
   void
@@ -438,6 +467,7 @@ sctk_net_migration (const int rank, const int process)
   sctk_thread_mutex_lock (&sctk_total_number_of_tasks_lock);
   sctk_total_number_of_tasks--;
   sctk_thread_mutex_unlock (&sctk_total_number_of_tasks_lock);
+  sctk_thread_migrate ();
 }
 
 /*rpc_collective_op*/
