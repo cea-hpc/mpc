@@ -949,7 +949,14 @@ sctk_reinit_collective_communicator (const int vp,
 				   const sctk_communicator_t com_id,
 				   const int process)
 {
-  not_implemented();
+  sctk_collective_communications_t *com;
+  com = sctk_get_communicator (com_id)->collective_communications;
+  sctk_nodebug ("%d tasks on %d involved START", com->nb_task_registered,
+		com->nb_task_involved);
+  sctk_init_collective_communicator(vp,task_id,com_id,process);
+  sctk_net_reinit_communicator(task_id,com_id,vp);
+  sctk_nodebug ("%d tasks on %d involved END", com->nb_task_registered,
+		com->nb_task_involved);
 }
 
 void

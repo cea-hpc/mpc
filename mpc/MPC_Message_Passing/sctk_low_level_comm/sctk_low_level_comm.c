@@ -149,7 +149,6 @@ sctk_net_update_communicator (int task, sctk_communicator_t comm, int vp)
   if(comm != 0){
   sctk_nodebug ("%s vp %d task_id %d com %d process %d", SCTK_FUNCTION,
 		vp, task, comm, sctk_process_rank);
-  //TODO
   assume (task >= 0);
   msg.com = comm;
   msg.vp = vp;
@@ -164,6 +163,29 @@ sctk_net_update_communicator (int task, sctk_communicator_t comm, int vp)
 	}
     }
   }
+}
+
+void
+sctk_net_reinit_communicator (int task, sctk_communicator_t comm, int vp)
+{
+  sctk_update_communicator_t msg;
+  int i;
+  sctk_nodebug ("%s vp %d task_id %d com %d process %d", SCTK_FUNCTION,
+		vp, task, comm, sctk_process_rank);
+  assume (task >= 0);
+  msg.com = comm;
+  msg.vp = vp;
+  msg.task_id = task;
+  msg.src = sctk_process_rank;
+  for (i = 0; i < sctk_process_number; i++)
+    {
+      if (i != sctk_process_rank)
+	{
+	  sctk_perform_rpc ((sctk_rpc_t) sctk_net_update_communicator_remote,
+			    i, &msg, sizeof (sctk_update_communicator_t));
+	}
+    }
+  
 }
 
 #warning "Optimize for scalability"

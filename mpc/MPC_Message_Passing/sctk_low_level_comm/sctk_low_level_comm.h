@@ -35,6 +35,8 @@ extern "C"
   void sctk_net_send_task_end (int task, int process);
   void sctk_net_update_communicator (int task, sctk_communicator_t comm,
 				     int vp);
+  void sctk_net_reinit_communicator (int task, sctk_communicator_t comm,
+				     int vp);
   void sctk_net_get_free_communicator (const sctk_communicator_t
 				       origin_communicator);
   void sctk_net_update_new_communicator (const sctk_communicator_t
