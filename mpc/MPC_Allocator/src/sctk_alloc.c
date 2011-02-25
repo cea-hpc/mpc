@@ -4036,6 +4036,11 @@ sctk_mem_reset_heap (sctk_size_t start, sctk_size_t max_size)
 #else
   not_available ();
 #endif
+#if defined(SCTK_ALLOC_INFOS) || 0
+      sctk_mem_error ("RESET INIT BRK %p\n", init_brk_pointer);
+      sctk_mem_error ("RESET BRK %p\n", brk_pointer);
+      sctk_mem_error ("RESET MAX BRK %p\n", max_brk_pointer);
+#endif
 }
 
 void
