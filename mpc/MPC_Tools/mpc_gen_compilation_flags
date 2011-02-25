@@ -176,8 +176,8 @@ SCTK_CHECK_OPTION "-DNO_INTERNAL_ASSERT"
 case $COMPILER_NAME in
     GNU_COMPILER) 
     sctk_echo "Using $COMPILER_NAME options"
-    SCTK_CHECK_OPTION "-O6 -finline-functions -fexpensive-optimizations -fPIC"
-    COMPILER_SPECIFC_FLAGS="-O6 -finline-functions -fexpensive-optimizations"
+    SCTK_CHECK_OPTION "-O6 -finline-functions -fexpensive-optimizations -fPIC -fno-stack-protector"
+    COMPILER_SPECIFC_FLAGS="-O6 -finline-functions -fexpensive-optimizations -fno-stack-protector"
     ;;
     INTEL_COMPILER)
     sctk_echo "Using $COMPILER_NAME options"
