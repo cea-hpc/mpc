@@ -200,6 +200,10 @@ else
 sctk_echo "Using debug options"
 SCTK_CHECK_OPTION "-fPIC"
 case $COMPILER_NAME in
+    GNU_COMPILER) 
+    sctk_echo "Using $COMPILER_NAME options"
+    SCTK_CHECK_OPTION "-g -O0 -DSCTK_NO_INLINE -fno-stack-protector"
+    ;;
     *) 
     sctk_echo "Using standard options"
     SCTK_CHECK_OPTION "-g -O0 -DSCTK_NO_INLINE"
