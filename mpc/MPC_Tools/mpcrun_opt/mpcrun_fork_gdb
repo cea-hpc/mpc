@@ -1,0 +1,73 @@
+#!/bin/sh
+############################# MPC License ############################## 
+# Wed Nov 19 15:19:19 CET 2008                                         # 
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # 
+#                                                                      # 
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            # 
+# This file is part of the MPC Runtime.                                # 
+#                                                                      # 
+# This software is governed by the CeCILL-C license under French law   # 
+# and abiding by the rules of distribution of free software.  You can  # 
+# use, modify and/ or redistribute the software under the terms of     # 
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # 
+# following URL http://www.cecill.info.                                # 
+#                                                                      # 
+# The fact that you are presently reading this means that you have     # 
+# had knowledge of the CeCILL-C license and that you accept its        # 
+# terms.                                                               # 
+#                                                                      # 
+# Authors:                                                             # 
+#   - PERACHE Marc marc.perache@cea.fr                                 # 
+#                                                                      # 
+######################################################################## 
+
+decho(){
+	echo "$0 DEBUG $@" > /dev/null
+}
+
+if test "$MPCRUN_FORK_REAL_LAUNCH" != "1"; then 
+    
+    export MPC_HOST_LIST_TMP
+    export MPC_HOST_LIST
+    export PROCESS_NB
+    export MPC_BIN_DIR
+    export BINARY
+    export USER_ARGS
+    export debug_file
+    
+else
+    NB_PROCESS_TCP="0"
+    MPC_PIDS=""
+    MPC_PWD="`pwd`"
+    while test "$NB_PROCESS_TCP" != "$PROCESS_NB" ; do
+cat <<EOF > $debug_file
+set args $USER_ARGS $SCTK_ARGS
+handle SIGUSR1 pass nostop
+EOF
+
+	xterm -e gdb  $BINARY -x $debug_file &
+
+	MPC_PIDS="$MPC_PIDS $!"
+	NB_PROCESS_TCP="`expr $NB_PROCESS_TCP + 1`"
+	
+    done
+
+    #Need to understand why the sub process did't be killed by SIGINT
+    #is it run into infinite loop. For now, using SIGTERM work    
+    trap "kill -s 15 0" INT
+    
+    
+    for pid in $MPC_PIDS ; do
+	wait $pid
+	res_mpcrun_fork="$?"
+	if test "$res_mpcrun_fork" != "0"; then 
+	    kill -s 2 0
+	    exit $res_mpcrun_fork
+	fi
+    done
+fi
+LAUNCH_COMMAND="${MPC_BIN_DIR}/mpcrun_opt/mpcrun_fork_gdb"
+decho "DONE FORK $MPCRUN_FORK_REAL_LAUNCH"
+MPCRUN_FORK_REAL_LAUNCH="1"
+export MPCRUN_FORK_REAL_LAUNCH
+#exit $RES_FORK_MPCRUN
