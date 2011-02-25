@@ -1289,14 +1289,19 @@ MPC_Restart (int rank)
       void *self_p = NULL;
       int tmp;
       int vp;
+      int res;
       sprintf (name, "%s/Task_%d", sctk_store_dir, rank);
 
       file = fopen (name, "r");
       assume (file != NULL);
-      fscanf (file, "Restart %d\n", &tmp);
-      fscanf (file, "Process %d\n", &tmp);
-      fscanf (file, "Thread %p\n", &self_p);
-      fscanf (file, "Virtual processor %d\n", &vp);
+      res = fscanf (file, "Restart %d\n", &tmp);
+      assume (res == 1);
+      res = fscanf (file, "Process %d\n", &tmp);
+      assume (res == 1);
+      res = fscanf (file, "Thread %p\n", &self_p);
+      assume (res == 1);
+      res = fscanf (file, "Virtual processor %d\n", &vp);
+      assume (res == 1);
       fclose (file);
 
       sctk_nodebug ("Recover task %d thread %p", rank, self_p);

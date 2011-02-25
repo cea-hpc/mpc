@@ -1040,7 +1040,7 @@ sctk_dump_memory_heap_fd (int fd)
   ptr = init_brk_pointer;
   cursor = (sctk_page_t *) ptr;
   sprintf (buf, "\nDUMP PAGES\n");
-  write (fd, buf, strlen (buf));
+  assume(write (fd, buf, strlen (buf)) ==  strlen (buf));
   while ((unsigned long) ptr < (unsigned long) local_brk_pointer)
     {
       if (cursor->page_state == sctk_free_state)
@@ -1049,7 +1049,7 @@ sctk_dump_memory_heap_fd (int fd)
 		   ptr + cursor->real_size,
 		   cursor->real_size / (1024 * 1024), cursor->init_page,
 		   cursor->related);
-	  write (fd, buf, strlen (buf));
+	  assume(write (fd, buf, strlen (buf)) ==  strlen (buf));
 	  nb_free++;
 	}
       else
@@ -1058,7 +1058,7 @@ sctk_dump_memory_heap_fd (int fd)
 		   ptr + cursor->real_size,
 		   cursor->real_size / (1024 * 1024), cursor->init_page,
 		   cursor->related, cursor->page_state, cursor->type);
-	  write (fd, buf, strlen (buf));
+	  assume(write (fd, buf, strlen (buf)) ==  strlen (buf));
 	  nb_used++;
 	  if (cursor->type == sctk_chunk_small_type)
 	    {
@@ -1083,7 +1083,7 @@ sctk_dump_memory_heap_fd (int fd)
 			       i, block, ptr_small,
 			       ptr_small + chunk->cur_size,
 			       chunk->cur_size, chunk->tree);
-		      write (fd, buf, strlen (buf));
+		      assume(write (fd, buf, strlen (buf)) ==  strlen (buf));
 		    }
 		  else
 		    {
@@ -1092,7 +1092,7 @@ sctk_dump_memory_heap_fd (int fd)
 			       i, block, ptr_small,
 			       ptr_small + chunk->cur_size,
 			       chunk->cur_size, chunk->tree);
-		      write (fd, buf, strlen (buf));
+		      assume(write (fd, buf, strlen (buf)) ==  strlen (buf));
 		      mem_used += chunk->cur_size;
 		    }
 		  block++;
@@ -1104,7 +1104,7 @@ sctk_dump_memory_heap_fd (int fd)
 	      sprintf (buf, "[%10d] %p-%p USED %lu LOST nb ref %u\n", i,
 		       ptr, ptr + cursor->real_size,
 		       cursor->real_size - mem_used, cursor->nb_ref);
-	      write (fd, buf, strlen (buf));
+	      assume(write (fd, buf, strlen (buf)) ==  strlen (buf));
 	    }
 	  else
 	    {
@@ -1121,7 +1121,7 @@ sctk_dump_memory_heap_fd (int fd)
 			   i, block, ptr_small,
 			   ptr_small + chunk->cur_size,
 			   chunk->cur_size, chunk->tree);
-		  write (fd, buf, strlen (buf));
+		  assume(write (fd, buf, strlen (buf)) ==  strlen (buf));
 		}
 	      else
 		{
@@ -1130,7 +1130,7 @@ sctk_dump_memory_heap_fd (int fd)
 			   i, block, ptr_small,
 			   ptr_small + chunk->cur_size,
 			   chunk->cur_size, chunk->tree);
-		  write (fd, buf, strlen (buf));
+		  assume(write (fd, buf, strlen (buf)) ==  strlen (buf));
 		  mem_used += chunk->cur_size;
 		}
 	    }
@@ -1140,13 +1140,13 @@ sctk_dump_memory_heap_fd (int fd)
       i++;
     }
   sprintf (buf, "MEM_LOST %lu (%luMo)\n", mem_lost, mem_lost / (1024 * 1024));
-  write (fd, buf, strlen (buf));
+  assume(write (fd, buf, strlen (buf)) ==  strlen (buf));
   sprintf (buf, "FREE %d\n", nb_free);
-  write (fd, buf, strlen (buf));
+  assume(write (fd, buf, strlen (buf)) ==  strlen (buf));
   sprintf (buf, "USED %d\n", nb_used);
-  write (fd, buf, strlen (buf));
+  assume(write (fd, buf, strlen (buf)) ==  strlen (buf));
   sprintf (buf, "TOTAL %d\n", nb_used + nb_free);
-  write (fd, buf, strlen (buf));
+  assume(write (fd, buf, strlen (buf)) ==  strlen (buf));
   if(to_close){
     close (fd);
   }

@@ -875,12 +875,12 @@ sctk_launch_main (int argc, char **argv)
     sctk_nodebug ("Perform restart from protection");
 
     file = fopen (name, "r");
-    fscanf (file, "Job with %d tasks on %d processes\n", &size,
-        &nb_processes);
+    assume(fscanf (file, "Job with %d tasks on %d processes\n", &size,
+		   &nb_processes) == 2);
     sctk_nodebug ("Previous run with params %d tasks %d processes",
         size, nb_processes);
 
-    fscanf (file, "ARGC %d\n", &nb_args);
+    assume(fscanf (file, "ARGC %d\n", &nb_args) == 1);
     sctk_nodebug ("ARGC %d", nb_args);
 
     argv = (char **) sctk_malloc ((nb_args + 1) * sizeof (char *));
@@ -889,7 +889,7 @@ sctk_launch_main (int argc, char **argv)
     for (i = 0; i < nb_args; i++)
     {
       long arg_size;
-      fscanf (file, "%ld ", &arg_size);
+      assume(fscanf (file, "%ld ", &arg_size) == 1);
       argv[i] = (char *) sctk_malloc (arg_size * sizeof (char));
       fscanf (file, "%s\n", argv[i]);
       sctk_nodebug ("Arg read %s", argv[i]);
