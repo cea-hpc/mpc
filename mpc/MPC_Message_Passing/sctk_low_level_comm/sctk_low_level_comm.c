@@ -419,7 +419,7 @@ static void sctk_net_migration_perform(sctk_migration_t * arg){
   sctk_total_number_of_tasks++;
   sctk_thread_mutex_unlock (&sctk_total_number_of_tasks_lock);
   sctk_thread_restore (self_p, name, vp);
-  sctk_debug ("Task Recovered %d thread %p", arg->task, self_p);
+  sctk_nodebug ("Task Recovered %d thread %p", arg->task, self_p);
 }
 
 void sctk_net_migration_check(){
