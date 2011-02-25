@@ -36,8 +36,6 @@
 #ifndef NO_INTERNAL_ASSERT
 #define USE_OWNER_FLAG
 #endif
-/* #warning "To remove" */
-/* #define USE_OWNER_FLAG */
 
 #ifdef __cplusplus
 extern "C"

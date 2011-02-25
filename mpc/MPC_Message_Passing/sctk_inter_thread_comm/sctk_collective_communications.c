@@ -36,8 +36,6 @@
 
 #define SCTK_NUMBER_OF_SONS 2
 
-/* #warning "not threadsafe" */
-/* static sctk_alloc_thread_data_t *tls_col_comm = NULL; */
 static sctk_messages_alloc_thread_data_t collective_comm_allocator;
 
 void
