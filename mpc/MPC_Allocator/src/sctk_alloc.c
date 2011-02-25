@@ -412,8 +412,7 @@ sctk_init_memory_allocation ()
 
 #ifdef MPC_Message_Passing
 #ifdef SCTK_64_BIT_ARCH
-#warning "Disabled dues to errors"
-      sctk_set_net_migration_available (0);
+      sctk_set_net_migration_available (1);
 #else
       sctk_set_net_migration_available (0);
 #endif
