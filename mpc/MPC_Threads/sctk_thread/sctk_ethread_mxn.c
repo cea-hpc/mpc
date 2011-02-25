@@ -168,13 +168,17 @@ sctk_ethread_mxn_sched_dump (char *file)
 static int
 sctk_ethread_mxn_sched_migrate ()
 {
+  int res;
   sctk_ethread_t self;
   self = sctk_ethread_mxn_self ();
   self->status = ethread_dump;
   self->dump_for_migration = 1;
-  return
+  sctk_nodebug("Start migration sctk_ethread_mxn_sched_migrate");
+  res = 
     __sctk_ethread_sched_yield_vp ((sctk_ethread_virtual_processor_t *)
 				   self->vp, self);
+  sctk_nodebug("Start migration sctk_ethread_mxn_sched_migrate DONE");
+  return res;
 }
 static int
 sctk_ethread_mxn_sched_restore (sctk_thread_t thread, char *type, int vp)
@@ -184,6 +188,7 @@ sctk_ethread_mxn_sched_restore (sctk_thread_t thread, char *type, int vp)
   char name[SCTK_MAX_FILENAME_SIZE];
   sctk_nodebug ("Try to restore %p on vp %d", thread, vp);
   __sctk_restore_tls (&tls, type);
+  sctk_nodebug ("Try to restore %p on vp %d DONE", thread, vp);
 
   /*Reinit status */
   cpu = sctk_ethread_mxn_vp_list[vp];
@@ -205,8 +210,9 @@ sctk_ethread_mxn_sched_restore (sctk_thread_t thread, char *type, int vp)
   if (strncmp (type, name, strlen (name)) == 0)
     {
       remove (type);
-      sctk_ethread_mxn_sched_yield ();
+      sctk_nodebug ("%s removed Restored",name);
     }
+  sctk_nodebug ("All done Restored");
   return 0;
 }
 static int
