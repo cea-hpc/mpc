@@ -1362,6 +1362,9 @@ MPC_Move_to (int process, int cpuid)
 	  task_specific = __MPC_get_task_specific ();
 	  __MPC_Comm_rank (MPC_COMM_WORLD, &rank, task_specific);
 
+	  self = sctk_thread_self ();
+	  self_p = self;
+
 	  vp = cpuid;
 
 	  sprintf (name, "%s/Task_%d", sctk_store_dir, rank);
