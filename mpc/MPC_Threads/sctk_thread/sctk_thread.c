@@ -616,7 +616,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   if (tmp.task_id >= 0)
     {
       sctk_ptp_per_task_init (tmp.task_id);
-      sctk_register_thread (tmp.task_id);
+      sctk_register_thread_initial (tmp.task_id);
       sctk_terminaison_barrier (tmp.task_id);
     }
 #endif

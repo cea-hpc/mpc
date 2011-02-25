@@ -943,6 +943,15 @@ static inline void
     }
 }
 
+static void
+sctk_reinit_collective_communicator (const int vp,
+				   const int task_id,
+				   const sctk_communicator_t com_id,
+				   const int process)
+{
+  not_implemented();
+}
+
 void
 sctk_init_collective_communicator (const int vp,
 				   const int task_id,
@@ -1694,8 +1703,8 @@ sctk_perform_collective_communication_migration (sctk_virtual_processor_t *
       return;
     }
 }
-void
-sctk_perform_collective_communication (const size_t elem_size,
+static void
+sctk_perform_collective_communication_init (const size_t elem_size,
 				       const size_t nb_elem,
 				       const void *data_in,
 				       void *const data_out,
@@ -1779,7 +1788,7 @@ sctk_perform_collective_communication_broadcast (const size_t elem_size,
       my_vp->nb_task_registered++;
       sctk_thread_mutex_unlock (&my_vp->lock);
       sctk_net_update_communicator (task_id, com_id, vp);
-      sctk_init_collective_communicator (vp, task_id, com_id,
+      sctk_reinit_collective_communicator (vp, task_id, com_id,
 					 sctk_process_rank);
       sctk_thread_wait_for_value ((int *) &(com->initialized), 1);
     }
@@ -1835,7 +1844,7 @@ sctk_perform_collective_communication_reduction (const size_t elem_size,
       my_vp->nb_task_registered++;
       sctk_thread_mutex_unlock (&my_vp->lock);
       sctk_net_update_communicator (task_id, com_id, vp);
-      sctk_init_collective_communicator (vp, task_id, com_id,
+      sctk_reinit_collective_communicator (vp, task_id, com_id,
 					 sctk_process_rank);
       sctk_thread_wait_for_value ((int *) &(com->initialized), 1);
     }
@@ -1882,7 +1891,7 @@ sctk_perform_collective_communication_barrier (const sctk_communicator_t
       my_vp->nb_task_registered++;
       sctk_thread_mutex_unlock (&my_vp->lock);
       sctk_net_update_communicator (task_id, com_id, vp);
-      sctk_init_collective_communicator (vp, task_id, com_id,
+      sctk_reinit_collective_communicator (vp, task_id, com_id,
 					 sctk_process_rank);
       sctk_thread_wait_for_value ((int *) &(com->initialized), 1);
     }
@@ -1923,9 +1932,9 @@ sctk_terminaison_barrier (const int id)
   vp = sctk_thread_get_vp ();
 
   sctk_nodebug ("sctk_terminaison_barrier %d", id);
-  sctk_perform_collective_communication (0, 0, NULL,
-					 NULL, NULL,
-					 SCTK_COMM_WORLD,
-					 vp, id, sctk_null_data_type);
+  sctk_perform_collective_communication_init (0, 0, NULL,
+					      NULL, NULL,
+					      SCTK_COMM_WORLD,
+					      vp, id, sctk_null_data_type);
   sctk_nodebug ("sctk_terminaison_barrier %d done", id);
 }

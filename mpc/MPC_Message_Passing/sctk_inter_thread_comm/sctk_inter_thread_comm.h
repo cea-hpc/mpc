@@ -348,6 +348,7 @@ extern "C"
   void sctk_send_message (sctk_thread_ptp_message_t * msg);
   void sctk_recv_message (sctk_thread_ptp_message_t * msg);
 
+  void sctk_register_thread_initial (const int i);
   void sctk_register_thread (const int i);
   void sctk_unregister_thread (const int i);
   void sctk_register_distant_thread (const int i, const int pos);

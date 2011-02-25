@@ -96,19 +96,19 @@ extern "C"
     * sctk_collective_communications_create (const int nb_task_involved);
   void sctk_collective_communications_delete
     (sctk_collective_communications_t * com);
-  void sctk_perform_collective_communication (const size_t elem_size,
-					      const size_t nb_elem,
-					      const void *data_in,
-					      void *data_out,
-					      void (*func) (const void *,
-							    void *,
-							    size_t,
-							    sctk_datatype_t),
-					      const sctk_communicator_t
-					      com_id, const int vp,
-					      const int task_id,
-					      const sctk_datatype_t
-					      data_type);
+  /* void sctk_perform_collective_communication (const size_t elem_size, */
+  /* 					      const size_t nb_elem, */
+  /* 					      const void *data_in, */
+  /* 					      void *data_out, */
+  /* 					      void (*func) (const void *, */
+  /* 							    void *, */
+  /* 							    size_t, */
+  /* 							    sctk_datatype_t), */
+  /* 					      const sctk_communicator_t */
+  /* 					      com_id, const int vp, */
+  /* 					      const int task_id, */
+  /* 					      const sctk_datatype_t */
+  /* 					      data_type); */
 
   void
     sctk_perform_collective_communication_barrier (const

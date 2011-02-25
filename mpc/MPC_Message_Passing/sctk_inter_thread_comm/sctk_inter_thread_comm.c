@@ -1992,7 +1992,7 @@ sctk_probe_any_source_any_tag (int destination,
 }
 
 void
-sctk_register_thread (const int i)
+sctk_register_thread_initial (const int i)
 {
   int j, k;
 /*   sctk_ptp_data_t* tmp; */
@@ -2007,7 +2007,6 @@ sctk_register_thread (const int i)
 	}
     }
 
-#warning "Remove dynamic registering"
   {
     static volatile int done = 0;
     static sctk_spinlock_t lock;
@@ -2043,13 +2042,24 @@ sctk_register_thread (const int i)
     sctk_spinlock_unlock(&lock);
   }
 
-#warning "Reenable the following for migration"
-  /*
-    we need to remove first time registration only
-   */
-  /*
-    sctk_net_send_task_location (i, sctk_process_rank);
-  */
+}
+
+void
+sctk_register_thread (const int i)
+{
+  int j, k;
+  sctk_ptp_process_localisation[i] = sctk_process_rank;
+  sctk_nodebug ("task %d on %d", i, sctk_ptp_process_localisation[i]);
+  for (j = 0; j < SCTK_MAX_COMMUNICATOR_NUMBER; j++)
+    {
+      for (k = 0; k < sctk_ptp_list[i].communicators[j].nb_tasks; k++)
+	{
+	  sctk_ptp_list[i].communicators[j].tasks[k].is_usable = 1;
+	}
+    }
+
+  sctk_net_send_task_location (i, sctk_process_rank);
+  
 }
 
 void

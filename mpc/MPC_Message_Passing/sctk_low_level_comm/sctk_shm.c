@@ -338,8 +338,10 @@ sctk_net_rpc_driver ( void ( *func ) ( void * ), int destination, void *arg,
   sctk_thread_mutex_lock ( &lock );
 
 
-  if ( arg_size > SCTK_SHM_RPC_ARGS_MAXLEN )
+  if ( arg_size > SCTK_SHM_RPC_ARGS_MAXLEN ){
+    sctk_error("%d > %d",arg_size,SCTK_SHM_RPC_ARGS_MAXLEN);
     not_implemented ();
+  }
 
   msg.shm_rpc_function = func;
   memcpy ( msg.shm_rpc_args, arg, arg_size );

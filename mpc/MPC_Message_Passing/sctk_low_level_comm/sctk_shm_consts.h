@@ -72,7 +72,7 @@
 #define SCTK_SHM_RDMA_QUEUE_LEN     16
 
 /* max value of functions args */
-#define SCTK_SHM_RPC_ARGS_MAXLEN   128
+#define SCTK_SHM_RPC_ARGS_MAXLEN   256
 /* max number of pointers to functions */
 #define SCTK_SHM_RPC_MAX_FUNCTIONS 64
 /* max of communicators */
