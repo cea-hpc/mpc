@@ -1006,6 +1006,7 @@ sctk_init_collective_communicator (const int vp,
 	{
 	  sctk_deactivate_branche (com->virtual_processors[i]);
 	}
+#if 0
       for (i = 0; i < cpu_number; i++)
 	{
 	  com->virtual_processors[i]->nb_task_involved =
@@ -1019,6 +1020,31 @@ sctk_init_collective_communicator (const int vp,
 		com->virtual_processors[i]->nb_task_involved;
 	    }
 	}
+#else
+      for (i = 0; i < cpu_number; i++)
+	{
+	  com->virtual_processors[i]->nb_task_involved = 0;
+	  com->virtual_processors[i]->nb_task_registered = 0;
+	}
+       for (i = 0; i < com->nb_task_involved; i++)
+	{
+	  if(com->last_process[i] == sctk_process_rank){
+	    com->virtual_processors[com->last_vp[i]]->nb_task_involved++;
+	  }
+	  sctk_debug("Task %d on proc %d vp %d",i,com->last_process[i],com->last_vp[i]);
+	}
+      for (i = 0; i < cpu_number; i++)
+	{
+	  if (com->virtual_processors[i]->nb_task_involved != 0)
+	    {
+	      sctk_nodebug ("Activate branche %d", i);
+	      sctk_activate_branche (com->virtual_processors[i]->father);
+	      nb_thread_involved +=
+		com->virtual_processors[i]->nb_task_involved;
+	    }
+
+	}
+#endif
 
       com->nb_task_involved_in_this_process = nb_thread_involved;
 
