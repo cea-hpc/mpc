@@ -1810,12 +1810,24 @@ sctk_thread_timer (void *arg)
     {
       kthread_usleep (sctk_time_interval * 1000);
       sctk_timer++;
-#ifdef MPC_Message_Passing
-      sctk_net_migration_check();
-#endif
     }
   return NULL;
 }
+
+#ifdef MPC_Message_Passing
+static void *
+sctk_thread_migration (void *arg)
+{
+  sctk_ethread_mxn_init_kethread ();
+  assume (arg == NULL);
+  while (sctk_thread_running)
+    {
+      kthread_usleep (100 * 1000);
+      sctk_net_migration_check();
+    }
+  return NULL;
+}
+#endif
 
 
 static int sctk_first_local = 0;
@@ -1964,6 +1976,10 @@ sctk_start_func (void *(*run) (void *), void *arg)
   int local_threads;
   int start_thread;
   kthread_t timer_thread;
+#ifdef MPC_Message_Passing
+  sctk_thread_t migration_thread;
+  sctk_thread_attr_t migration_thread_attr;
+#endif
   FILE *file;
   struct _sctk_thread_cleanup_buffer *ptr_cleanup;
   char name[SCTK_MAX_FILENAME_SIZE];
@@ -1981,6 +1997,9 @@ sctk_start_func (void *(*run) (void *), void *arg)
   kthread_create (&timer_thread, sctk_thread_timer, NULL);
 
 #ifdef MPC_Message_Passing
+  sctk_thread_attr_init (&migration_thread_attr);
+  sctk_thread_attr_setscope (&migration_thread_attr, SCTK_THREAD_SCOPE_SYSTEM);
+  sctk_user_thread_create (&migration_thread, &migration_thread_attr, sctk_thread_migration, NULL);
   sctk_mpc_init_keys ();
 #endif
 
