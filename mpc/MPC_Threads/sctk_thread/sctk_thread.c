@@ -1934,15 +1934,14 @@ static poff_t dataused(void) {
     long z_starttime;
     unsigned long z_vsize;
     long z_rss;
-    fscanf(f,"%d %s %c %d %d %d %d %d",
-           &z_pid,z_comm,&z_state,&z_ppid,&z_pgrp,&z_session,&z_tty_nr,&z_tpgid);
+    assume(fscanf(f,"%d %s %c %d %d %d %d %d",
+		  &z_pid,z_comm,&z_state,&z_ppid,&z_pgrp,&z_session,&z_tty_nr,&z_tpgid) == 8);
 
-    fscanf(f,"%lu %lu %lu %lu %lu %lu %lu",
-           &z_flags,&z_minflt,&z_cminflt,&z_majflt,&z_cmajflt,&z_utime,&z_stime);
+    assume(fscanf(f,"%lu %lu %lu %lu %lu %lu %lu",
+		  &z_flags,&z_minflt,&z_cminflt,&z_majflt,&z_cmajflt,&z_utime,&z_stime) == 7);
 
-    fscanf(f,"%ld %ld %ld %ld %ld %ld %ld %lu %ld",
-
-           &z_cutime,&z_cstime,&z_priority,&z_nice,&z_zero,&z_itrealvalue,&z_starttime,&z_vsize,&z_rss);
+    assume(fscanf(f,"%ld %ld %ld %ld %ld %ld %ld %lu %ld",
+		  &z_cutime,&z_cstime,&z_priority,&z_nice,&z_zero,&z_itrealvalue,&z_starttime,&z_vsize,&z_rss) == 9);
     int pz =  getpagesize();
 
     mem_used = (poff_t)(z_rss * pz);
@@ -2097,7 +2096,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
       last = fopen (task_name, "r");
       if (last != NULL)
 	{
-	  fscanf (last, "%lu\n", &step);
+	  assume(fscanf (last, "%lu\n", &step) == 1);
 	  fclose (last);
 	}
       else
@@ -2132,10 +2131,10 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	      abort ();
 	    }
 	  assume (file != NULL);
-	  fscanf (file, "Restart %d\n", &restart);
-	  fscanf (file, "Process %d\n", &proc);
-	  fscanf (file, "Thread %p\n", &self_p);
-	  fscanf (file, "Virtual processor %d\n", &vp);
+	  assume(fscanf (file, "Restart %d\n", &restart) == 1);
+	  assume(fscanf (file, "Process %d\n", &proc) == 1);
+	  assume(fscanf (file, "Thread %p\n", &self_p) == 1);
+	  assume(fscanf (file, "Virtual processor %d\n", &vp) == 1);
 	  fclose (file);
 	  sprintf (file_name, "%s/task_%p_%lu", sctk_store_dir, self_p, step);
 	  if (sctk_check_file (file_name) != 0)
@@ -2175,10 +2174,10 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	  sprintf (task_name, "%s/Task_%d", sctk_store_dir, i);
 	  file = fopen (task_name, "r");
 	  assume (file != NULL);
-	  fscanf (file, "Restart %d\n", &restart);
-	  fscanf (file, "Process %d\n", &proc);
-	  fscanf (file, "Thread %p\n", &self_p);
-	  fscanf (file, "Virtual processor %d\n", &vp);
+	  assume(fscanf (file, "Restart %d\n", &restart) == 1);
+	  assume(fscanf (file, "Process %d\n", &proc) == 1);
+	  assume(fscanf (file, "Thread %p\n", &self_p) == 1);
+	  assume(fscanf (file, "Virtual processor %d\n", &vp) == 1);
 	  fclose (file);
 	  sctk_nodebug ("Task %d is in %d with %p on vp %d", i, proc,
 			self_p, vp);
@@ -2209,10 +2208,10 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	  sprintf (task_name, "%s/Task_%d", sctk_store_dir, i);
 	  file = fopen (task_name, "r");
 	  assume (file != NULL);
-	  fscanf (file, "Restart %d\n", &restart);
-	  fscanf (file, "Process %d\n", &proc);
-	  fscanf (file, "Thread %p\n", &self_p);
-	  fscanf (file, "Virtual processor %d\n", &vp);
+	  assume(fscanf (file, "Restart %d\n", &restart) == 1);
+	  assume(fscanf (file, "Process %d\n", &proc) == 1);
+	  assume(fscanf (file, "Thread %p\n", &self_p) == 1);
+	  assume(fscanf (file, "Virtual processor %d\n", &vp) == 1);
 	  fclose (file);
 	  sctk_nodebug ("Task %d is in %d with %p on vp %d", i, proc,
 			self_p, vp);

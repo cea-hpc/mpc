@@ -891,7 +891,7 @@ sctk_launch_main (int argc, char **argv)
       long arg_size;
       assume(fscanf (file, "%ld ", &arg_size) == 1);
       argv[i] = (char *) sctk_malloc (arg_size * sizeof (char));
-      fscanf (file, "%s\n", argv[i]);
+      assume(fscanf (file, "%s\n", argv[i]) == 1);
       sctk_nodebug ("Arg read %s", argv[i]);
     }
     argv[nb_args] = NULL;

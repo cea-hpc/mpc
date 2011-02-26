@@ -111,7 +111,7 @@ sctk_cpuid (sctk_cpuid_t * cpuid, int node_id, int cpu_id)
   fd = fopen (sys_dir, "r");
   if (fd)
     {
-      fread (buffer, 1, 4096, fd);
+      assume(fread (buffer, 1, 4096, fd) > 0);
       cpuid->core_id = atoi (buffer);
       fclose (fd);
     }
@@ -121,7 +121,7 @@ sctk_cpuid (sctk_cpuid_t * cpuid, int node_id, int cpu_id)
   fd = fopen (sys_dir, "r");
   if (fd)
     {
-      fread (buffer, 1, 4096, fd);
+      assume(fread (buffer, 1, 4096, fd) > 0);
       cpuid->socket_id = atoi (buffer);
       fclose (fd);
     }
@@ -139,7 +139,7 @@ sctk_cpuid (sctk_cpuid_t * cpuid, int node_id, int cpu_id)
 	  break;
 	}
       memset (buffer, 0, 4096);
-      fread (buffer, 1, 4096, fd);
+      assume(fread (buffer, 1, 4096, fd) > 0);
       sctk_nodebug("level %d %s",cache->level,buffer);
       fclose (fd);
       if (strcmp (buffer, "Instruction\n") != 0)
@@ -152,7 +152,7 @@ sctk_cpuid (sctk_cpuid_t * cpuid, int node_id, int cpu_id)
 	  cache = malloc (sizeof (sctk_cache_t));
 	  memset (cache, 0, sizeof (sctk_cache_t));
 	  sctk_add_cache (cpuid, cache);
-	  fread (buffer, 1, 4096, fd);
+	  assume(fread (buffer, 1, 4096, fd) > 0);
 	  cache->level = atoi (buffer);
 	  fclose (fd);
 
@@ -160,15 +160,8 @@ sctk_cpuid (sctk_cpuid_t * cpuid, int node_id, int cpu_id)
 		   "/sys/devices/system/node/node%d/cpu%d/cache/index%d/shared_cpu_map",
 		   node_id, cpu_id, i);
 	  fd = fopen (sys_dir, "r");
-	  fread (buffer, 1, 9, fd);
-	  fread (buffer, 1, 9, fd);
-	  fread (buffer, 1, 9, fd);
-	  fread (buffer, 1, 9, fd);
-	  fread (buffer, 1, 9, fd);
-	  fread (buffer, 1, 9, fd);
-	  fread (buffer, 1, 9, fd);
 	  memset (buffer, 0, 4096);
-	  fread (buffer, 1, 8, fd);
+	  while(fread (buffer, 1, 9, fd) == 9);
 	  sscanf (buffer, "%x", (unsigned int *) &tmp);
 	  cache->ident = (long) tmp;
 /*       cache->ident = atol(buffer); */

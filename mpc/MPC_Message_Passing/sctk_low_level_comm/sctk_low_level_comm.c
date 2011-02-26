@@ -447,13 +447,13 @@ static void sctk_net_migration_perform(sctk_migration_t * arg){
 void sctk_net_migration_check(){
   sctk_migration_t* temp;
   sctk_spinlock_lock(&sctk_net_migration_list_lock);
-  temp = sctk_net_migration_list;
+  temp = (sctk_migration_t*)sctk_net_migration_list;
   sctk_net_migration_list = NULL;
   sctk_spinlock_unlock(&sctk_net_migration_list_lock);
 
   while(temp != NULL){
     sctk_net_migration_perform(temp);
-    temp = temp->next;
+    temp = (sctk_migration_t*)(temp->next);
   }
 }
   static void
