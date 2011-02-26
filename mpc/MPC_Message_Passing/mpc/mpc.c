@@ -1410,7 +1410,7 @@ MPC_Move_to (int process, int cpuid)
       else
 	{
 	  MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_NOT_IMPLEMENTED,
-			    "Not available on this architecture");
+			    "Not available on this architecture or thread library (PThread)");
 	}
     }
   sctk_nodebug ("move to %d %d done", process, cpuid);
