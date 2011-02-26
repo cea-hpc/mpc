@@ -986,6 +986,8 @@ sctk_init_collective_communicator (const int vp,
 
   com = sctk_get_communicator (com_id)->collective_communications;
 
+  assume(com->initialized == 0);
+
   com->reinitialize = 0;
 
   sctk_thread_mutex_lock (&com->lock);
@@ -1924,9 +1926,9 @@ sctk_perform_collective_communication_barrier (const sctk_communicator_t
   sctk_virtual_processor_t *my_vp;
   sctk_collective_communications_t *com;
 
-  sctk_nodebug("%d begin barrier",task_id);
 
   com = sctk_get_communicator (com_id)->collective_communications;
+  sctk_nodebug("%d begin barrier init done %d",task_id,com->initialized);
   com->id = com_id;
   my_vp = com->virtual_processors[vp];
 

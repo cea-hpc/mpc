@@ -186,6 +186,8 @@ sctk_net_reinit_communicator (int task, sctk_communicator_t comm, int vp)
 	}
     }
   
+  sctk_nodebug ("%s vp %d task_id %d com %d process %d DONE", SCTK_FUNCTION,
+		vp, task, comm, sctk_process_rank);
 }
 
 #warning "Optimize for scalability"

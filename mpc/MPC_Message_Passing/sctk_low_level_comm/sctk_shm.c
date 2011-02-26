@@ -831,6 +831,7 @@ sctk_shm_init ( int init ) {
  *  Description:  Perform a barrier
  * ==================================================================
  */
+#warning "Have to propagate reinitialize for migration support"
 static inline void
 sctk_shm_barrier ( sctk_collective_communications_t * com,
     sctk_virtual_processor_t * my_vp ) {
@@ -916,6 +917,7 @@ sctk_shm_barrier ( sctk_collective_communications_t * com,
  *  Description:  Perform a broadcast
  * ==================================================================
  */
+#warning "Have to propagate reinitialize for migration support"
 static inline void
 sctk_shm_broadcast ( sctk_collective_communications_t * com,
     sctk_virtual_processor_t * my_vp,
@@ -972,6 +974,7 @@ sctk_shm_broadcast ( sctk_collective_communications_t * com,
  *  Description:  Perform a reduction operation
  * ==================================================================
  */
+#warning "Have to propagate reinitialize for migration support"
 static inline void
 sctk_shm_allreduce ( sctk_collective_communications_t * com,
     sctk_virtual_processor_t * my_vp,
