@@ -1031,7 +1031,7 @@ sctk_init_collective_communicator (const int vp,
 	  if(com->last_process[i] == sctk_process_rank){
 	    com->virtual_processors[com->last_vp[i]]->nb_task_involved++;
 	  }
-	  sctk_debug("Task %d on proc %d vp %d",i,com->last_process[i],com->last_vp[i]);
+	  sctk_nodebug("Task %d on proc %d vp %d",i,com->last_process[i],com->last_vp[i]);
 	}
       for (i = 0; i < cpu_number; i++)
 	{
