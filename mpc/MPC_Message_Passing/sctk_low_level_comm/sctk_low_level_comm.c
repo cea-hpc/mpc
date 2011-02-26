@@ -781,6 +781,26 @@ void* sctk_net_get_collective_op_ptr()
   return sctk_net_collective_op_ptr;
 }
 
+static void
+sctk_net_abort_remote (int * arg)
+{
+  sctk_error("Process %d require aborting",*arg);
+  sctk_abort();
+}
+
+void
+sctk_net_abort ()
+{
+  int process;
+  process = sctk_process_rank;
+  if (0 != sctk_process_rank)
+    {
+      sctk_error("Send abort message to process 0");
+      sctk_perform_rpc ((sctk_rpc_t) sctk_net_abort_remote, 0,
+			&process, sizeof (int));
+    }
+}
+
 
 /* DSM */
 static void (*sctk_net_get_pages_driver) (void *addr, size_t size,
@@ -841,6 +861,7 @@ sctk_net_init_driver (char *name)
   sctk_register_function ((sctk_rpc_t) sctk_net_migration_remote);
   sctk_register_function ((sctk_rpc_t) sctk_rpc_collective_op_remote);
   sctk_register_function ((sctk_rpc_t) sctk_net_sctk_specific_adm_rpc_remote);
+  sctk_register_function ((sctk_rpc_t) sctk_net_abort_remote);
 
 
   sctk_set_max_rpc_size_comm (sizeof (send_task_location_t));

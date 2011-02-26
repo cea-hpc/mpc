@@ -211,6 +211,9 @@ void
 sctk_abort (void)
 {
   sctk_debug_print_backtrace ("Abort\n");
+#ifdef MPC_Message_Passing
+  sctk_net_abort ();
+#endif
   fflush (stderr);
   abort ();
 }

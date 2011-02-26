@@ -94,6 +94,8 @@ extern "C"
 
   void sctk_net_free_func (sctk_thread_ptp_message_t * item);
 
+  void
+  sctk_net_abort ();
   /* DSM */
   void
     sctk_net_get_pages_init (void (*func)
