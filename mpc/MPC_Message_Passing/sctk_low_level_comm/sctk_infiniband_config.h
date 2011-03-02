@@ -17,64 +17,21 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - DIDELOT Sylvain didelot.sylvain@gmail.com                        # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "mpc.h"
-#include <stdlib.h>
-#include <stdio.h>
 
-int is_printing = 1;
+#ifndef __SCTK__INFINIBAND_CONFIG_H_
+#define __SCTK__INFINIBAND_CONFIG_H_
 
-  static double
-rrrsctk_get_time_stamp ()
-{
-  struct timeval tp;
-  double res;
-  gettimeofday (&tp, NULL);
+extern int  ibv_eager_threshold;
+extern int  ibv_qp_tx_depth;
+extern int  ibv_qp_rx_depth;
+extern int  ibv_max_sg_sq;
+extern int  ibv_max_sg_rq;
+extern int  ibv_max_inline;
+extern int  ibv_max_ibufs;
+extern int  ibv_max_srq_ibufs;
+extern int  ibv_srq_credit_limit;
 
-  res = (double) tp.tv_sec * 1000000.0;
-  res += tp.tv_usec;
-
-  return res;
-}
-
-#define mprintf if(is_printing) fprintf
-#define NB_BARRIER 100
-
-int
-main (int argc, char **argv)
-{
-  char *printing;
-  int my_rank;
-  MPC_Comm my_com;
-  int i;
-  double begin, end;
-
-  printing = getenv ("MPC_TEST_SILENCE");
-  if (printing != NULL)
-    is_printing = 0;
-
-  my_com = MPC_COMM_WORLD;
-  MPC_Comm_rank (my_com, &my_rank);
-  MPC_Barrier (my_com);
-  mprintf (stderr, "Avant barrier init %d\n", my_rank);
-  MPC_Barrier (my_com);
-  mprintf (stderr, "Avant barriers %d\n", my_rank);
-
-  begin = rrrsctk_get_time_stamp();
-  for (i=0; i<NB_BARRIER; ++i)
-  {
-    MPC_Barrier (my_com);
-    if ((my_rank == 0) && !(i%100))
-    {
-      sctk_debug("End of barrier %d", i);
-    }
-  }
-  end = rrrsctk_get_time_stamp();
-  mprintf (stderr, "Apres barriers %d\n", my_rank);
-
-  if (my_rank == 0)
-    mprintf (stderr, "Barrier total time %f. Mean time %f\n", end-begin, (end-begin) / NB_BARRIER);
-
-  return 0;
-}
+#endif

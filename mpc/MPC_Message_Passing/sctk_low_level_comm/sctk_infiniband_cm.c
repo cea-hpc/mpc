@@ -149,7 +149,8 @@ void sctk_net_ibv_cm_client(char* host, int port, int dest, sctk_net_ibv_qp_remo
   if (clientsock_fd < 0)
     sctk_error ("ERROR opening socket");
 
-  sprintf(name,"%s-ib0",host);
+//  sprintf(name,"%s-ib0",host);
+  sprintf(name,"%s",host);
   sctk_nodebug("Connect to %s",name);
 
   server = gethostbyname (name);

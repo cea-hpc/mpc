@@ -39,13 +39,6 @@ sctk_net_ibv_qp_local_t *rc_sr_local;
 /* RC RDMA structures */
 sctk_net_ibv_qp_local_t   *rc_rdma_local;
 
-/* ptp send buffers */
-sctk_net_ibv_rc_sr_buff_t*     rc_sr_ptp_send_buff;
-/* collectives send buffers */
-sctk_net_ibv_rc_sr_buff_t*     rc_sr_coll_send_buff;
-/* recv buffers */
-sctk_net_ibv_rc_sr_buff_t*     rc_sr_recv_buff;
-
 typedef struct
 {
   sctk_net_ibv_rc_sr_process_t        *rc_sr;
@@ -89,9 +82,6 @@ void*
 sctk_net_ibv_allocator_get(
     unsigned int rank,
     sctk_net_ibv_allocator_type_t type);
-
-void
-sctk_net_ibv_allocator_rc_sr_buffers_init(sctk_net_ibv_qp_rail_t* rail);
 
 void
 sctk_net_ibv_allocator_rc_rdma_process_next_request(

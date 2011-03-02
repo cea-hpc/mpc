@@ -199,6 +199,7 @@ sctk_net_ibv_sched_pending_push(
   sctk_list_unlock(&rc_sr_pending);
 }
 
+#if 0
   void
 sctk_net_ibv_sched_rc_rdma_poll_pending()
 {
@@ -236,12 +237,13 @@ sctk_net_ibv_sched_rc_rdma_poll_pending()
   }
   sctk_list_unlock(&rc_rdma_pending);
 }
+#endif
 
   void
 sctk_net_ibv_sched_poll_pending()
 {
   sctk_net_ibv_sched_rc_sr_poll_pending();
-  sctk_net_ibv_sched_rc_rdma_poll_pending();
+//  sctk_net_ibv_sched_rc_rdma_poll_pending();
 
 }
 

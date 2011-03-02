@@ -32,6 +32,8 @@
 
 #include "sctk_infiniband_scheduling.h"
 #include "sctk_infiniband_allocator.h"
+#include "sctk_infiniband_ibufs.h"
+#include "sctk_infiniband_config.h"
 #include "sctk_infiniband_qp.h"
 #include "sctk_infiniband_mmu.h"
 #include "sctk_infiniband_cm.h"
@@ -54,13 +56,6 @@ extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
 
 /* RC SR structures */
 extern  sctk_net_ibv_qp_local_t *rc_sr_local;
-
-/* ptp send buffers */
-extern sctk_net_ibv_rc_sr_buff_t*     rc_sr_ptp_send_buff;
-/* collectives send buffers */
-extern sctk_net_ibv_rc_sr_buff_t*     rc_sr_coll_send_buff;
-/* recv buffers */
-extern sctk_net_ibv_rc_sr_buff_t*     rc_sr_recv_buff;
 
 /* RC RDMA structures */
 extern sctk_net_ibv_qp_local_t   *rc_rdma_local;
@@ -102,15 +97,18 @@ sctk_net_init_driver_infiniband (int *argc, char ***argv)
   sctk_net_ibv_sched_init();
 
   /* initialization of queue pairs */
-  rc_rdma_local = sctk_net_ibv_comp_rc_rdma_create_local(rail);
+//  rc_rdma_local = sctk_net_ibv_comp_rc_rdma_create_local(rail);
 
   PMI_Barrier();
 
   /* initialization of collective */
   sctk_net_ibv_collective_init();
 
-  /* initialization of queue pairs */
-  sctk_net_ibv_allocator_rc_sr_buffers_init(rail);
+  /* initialization of buffers  */
+  rc_sr_local = sctk_net_ibv_comp_rc_sr_create_local(rail);
+  sctk_net_ibv_ibuf_new();
+  sctk_net_ibv_ibuf_init(rail, rc_sr_local, ibv_max_ibufs);
+  sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
 
   PMI_Barrier();
 }
@@ -143,14 +141,16 @@ sctk_net_ibv_send_ptp_message_driver ( sctk_thread_ptp_message_t * msg,
  sctk_net_ibv_allocator->entry[dest_process].nb_ptp_msg_transfered++;
 
   /* EAGER MODE */
-  if ( (size + sizeof(sctk_thread_ptp_message_t)) <= SCTK_EAGER_THRESHOLD)  {
+  if ( (size + sizeof(sctk_thread_ptp_message_t)) <= ibv_eager_threshold)
+  {
    sctk_nodebug("Send EAGER message to %d and size %lu", dest_process, size);
     sctk_net_ibv_comp_rc_sr_send_ptp_message (
-        rc_sr_local,
-        rc_sr_ptp_send_buff, msg,
+        rc_sr_local, msg,
         dest_process, size, RC_SR_EAGER);
     /* RDVZ MODE */
   } else {
+    assume(0);
+#if 0
     sctk_net_ibv_allocator_lock(dest_process, IBV_CHAN_RC_RDMA);
     /* check if the dest process exists in the RDVZ remote list.
    * If it doesn't, we initialize a QP creation/connection */
@@ -187,6 +187,7 @@ sctk_net_ibv_send_ptp_message_driver ( sctk_thread_ptp_message_t * msg,
        rc_sr_ptp_send_buff,
        msg,
        dest_process, size, rc_rdma_entry, need_connection);
+#endif
   }
   DBG_E(1);
 }
@@ -227,7 +228,7 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
 
       sctk_free(entry_recv->ptr);
       sctk_free(entry_recv);
-      sctk_net_ibv_allocator_rc_rdma_process_next_request(entry_rdma);
+//      sctk_net_ibv_allocator_rc_rdma_process_next_request(entry_rdma);
       break;
 
     case IBV_POLL_RC_SR_ORIGIN:
@@ -235,6 +236,7 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
       sctk_free(item->struct_ptr);
       break;
 
+#if 0
     case IBV_POLL_RC_RDMA_ORIGIN:
       entry_recv = (sctk_net_ibv_rc_rdma_entry_recv_t *)
         item->struct_ptr;
@@ -246,6 +248,7 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
       sctk_free(entry_recv->ptr);
       sctk_free(entry_recv);
       break;
+#endif
 
     default:
       assume(0);

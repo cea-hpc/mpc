@@ -399,6 +399,7 @@ sctk_net_ibv_poll_check_wc(struct ibv_wc wc, sctk_net_ibv_allocator_type_t type)
         sctk_net_ibv_comp_rc_sr_error_handler(wc);
         break;
 
+#if 0
       case IBV_CHAN_RC_RDMA | IBV_CHAN_RECV:
         sctk_net_ibv_comp_rc_rdma_error_handler_recv(wc);
         break;
@@ -406,6 +407,7 @@ sctk_net_ibv_poll_check_wc(struct ibv_wc wc, sctk_net_ibv_allocator_type_t type)
       case IBV_CHAN_RC_RDMA | IBV_CHAN_SEND:
         sctk_net_ibv_comp_rc_rdma_error_handler_send(wc);
         break;
+#endif
 
       default:
         assume(0);

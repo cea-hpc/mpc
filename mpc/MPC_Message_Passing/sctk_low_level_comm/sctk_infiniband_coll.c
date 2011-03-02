@@ -26,6 +26,7 @@
 #include "sctk_config.h"
 #include "sctk_debug.h"
 #include "sctk_infiniband_coll.h"
+#include "sctk_infiniband_ibufs.h"
 
 static int *sctk_comm_world_array;
 
@@ -33,8 +34,6 @@ static int *sctk_comm_world_array;
 extern  sctk_net_ibv_qp_rail_t   *rail;
 /* RC SR structures */
 extern  sctk_net_ibv_qp_local_t *rc_sr_local;
-/* collectives send buffers */
-extern sctk_net_ibv_rc_sr_buff_t*     rc_sr_coll_send_buff;
 
 /*-----------------------------------------------------------
  *  COLLECTIVE FUNCTIONS
@@ -62,6 +61,7 @@ extern sctk_net_ibv_rc_sr_buff_t*     rc_sr_coll_send_buff;
   void* ptr;
   ptr = sctk_malloc(msg->size);
   memcpy(ptr, msg, msg->size);
+  sctk_nodebug("Push with src %d, size %lu", msg->src_process, msg->size);
 
   sctk_list_lock(list);
   sctk_list_push(list, ptr);
@@ -84,6 +84,7 @@ sctk_net_ibv_collective_lookup_src(struct sctk_list* list, const int src)
   while(elem)
   {
     msg = (sctk_net_ibv_rc_sr_msg_header_t*) elem->elem;
+    //sctk_debug("Found with src %d", msg->src_process);
     if (msg->src_process == src)
     {
       sctk_list_remove(list, elem);
@@ -149,8 +150,7 @@ sctk_net_ibv_broadcast_send(sctk_collective_communications_t * com,
 
       sctk_nodebug("Send broadcast msg to process %d", dest);
       sctk_net_ibv_comp_rc_sr_send_ptp_message (
-          rc_sr_local,
-          rc_sr_coll_send_buff, data,
+          rc_sr_local, data,
           dest, size, type);
     }
   *mask >>= 1;
@@ -269,8 +269,7 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
     {
       sctk_nodebug("Send to parent %d", parent);
       sctk_net_ibv_comp_rc_sr_send_ptp_message (
-          rc_sr_local,
-          rc_sr_coll_send_buff, my_vp->data.data_out,
+          rc_sr_local, my_vp->data.data_out,
           parent, size, RC_SR_REDUCE);
     }
   }
@@ -310,12 +309,9 @@ typedef struct
 typedef struct
 {
   int* entry;
-
   uint32_t rkey;
-  uint32_t lkey;
 
-  struct ibv_send_wr   wr;
-  struct ibv_sge       list;
+  sctk_net_ibv_ibuf_t ibuf;
 
 } remote_entry_t;
 
@@ -386,41 +382,30 @@ sctk_net_ibv_barrier_post_recv(local_entry_t* local)
 
 }
 
-  static void
-sctk_net_ibv_barrier_post_send(local_entry_t* local, remote_entry_t* remote, int i)
-{
-
-  remote[i].list.addr = (uintptr_t) &local->entry[i];
-  remote[i].list.length = sizeof(int);
-  remote[i].list.lkey = local->mmu_entry->mr->lkey;
-
-  /* wr.rdma isn't filled there but when the msg is sent */
-
-  remote[i].wr.wr_id = 2000;
-  remote[i].wr.sg_list = &(remote[i].list);
-  remote[i].wr.num_sge = 1;
-  remote[i].wr.opcode = IBV_WR_RDMA_WRITE;
-  remote[i].wr.send_flags = IBV_SEND_SIGNALED;
-  remote[i].wr.next = NULL;
-}
-
   static inline void
 sctk_net_ibv_barrier_send(local_entry_t* local, remote_entry_t* remote,
     int entry_nb, int dest_process)
 {
   sctk_net_ibv_qp_remote_t* remote_rc_sr;
   struct  ibv_send_wr* bad_wr = NULL;
+  int rc;
 
-  /* fill RMDA infos */
-  remote[dest_process].list.addr = (uintptr_t) &local->entry[entry_nb];
-  remote[dest_process].wr.wr.rdma.remote_addr = (uintptr_t) ((int*)remote[dest_process].entry + entry_nb);
-  remote[dest_process].wr.wr.rdma.rkey      = remote[dest_process].rkey;
+  sctk_net_ibv_ibuf_barrier_send_init(&remote[dest_process].ibuf,
+      &local->entry[entry_nb],
+      local->mmu_entry->mr->lkey,
+      ((int*)remote[dest_process].entry + entry_nb),
+      remote[dest_process].rkey,
+      sizeof(int));
 
   /* TODO FIXME is it really necessary ? */
   remote_rc_sr = sctk_net_ibv_comp_rc_sr_check_and_connect(dest_process);
 
   sctk_nodebug("Entry id %d for process %d", remote[dest_process].wr.wr_id, dest_process);
-  ibv_post_send(remote_rc_sr->qp, &(remote[dest_process].wr), &bad_wr);
+  rc = ibv_post_send(remote_rc_sr->qp, &(remote[dest_process].ibuf.desc.wr.send),
+      &(remote[dest_process].ibuf.desc.bad_wr.send));
+//  assume(rc == 0);
+
+  sctk_nodebug("sent");
 }
 
   void
@@ -452,8 +437,6 @@ sctk_net_ibv_barrier_init ()
 
       remote_entry[i].entry = request_msg.entry;
       remote_entry[i].rkey = request_msg.rkey;
-
-      sctk_net_ibv_barrier_post_send(&local_entry, remote_entry, i);
     }
   }
 
@@ -468,6 +451,7 @@ sctk_net_ibv_barrier ( sctk_collective_communications_t * com,
   uint32_t sendpeer;
   uint32_t recvpeer;
   int i;
+
 
   if (is_barrier_initialized == 0)
   {
@@ -507,10 +491,11 @@ sctk_net_ibv_barrier ( sctk_collective_communications_t * com,
       if (sendpeer != sctk_process_rank)
       {
         local_entry.entry[sctk_process_rank] = counter;
+
+        sctk_nodebug("%d - Send to process %u", i, sendpeer);
         sctk_net_ibv_barrier_send(&local_entry, remote_entry, sctk_process_rank, sendpeer);
 
-        if (sctk_process_rank == 0)
-        sctk_nodebug("%d - Send to process %u", i, sendpeer);
+//        if (sctk_process_rank == 0)
       }
     }
 
@@ -519,7 +504,7 @@ sctk_net_ibv_barrier ( sctk_collective_communications_t * com,
       uint32_t tmp = (sctk_process_number) + ((sctk_process_rank) - i*pow((N_WAY_DISSEMINATION+1), round));
       recvpeer = fmod(tmp, sctk_process_number);
 
-      if (sctk_process_rank == 0)
+//      if (sctk_process_rank == 0)
         sctk_nodebug("%d - Recv from process %u", i, recvpeer);
 
       if (recvpeer != sctk_process_rank)

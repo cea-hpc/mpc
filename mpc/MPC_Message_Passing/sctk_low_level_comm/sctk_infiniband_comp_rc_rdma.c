@@ -21,6 +21,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#if 0
+
 #include "sctk_infiniband_comp_rc_rdma.h"
 #include "sctk_infiniband_allocator.h"
 #include "sctk_infiniband_lib.h"
@@ -901,3 +903,5 @@ sctk_net_ibv_comp_rc_rdma_error_handler_recv(struct ibv_wc wc)
 
   sctk_net_ibv_comp_rc_rdma_print_entry_recv(entry_recv);
 }
+
+#endif

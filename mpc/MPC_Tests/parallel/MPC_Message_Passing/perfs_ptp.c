@@ -134,10 +134,10 @@ main (int argc, char **argv)
   MPC_Comm_rank (MPC_COMM_WORLD, &my_rank);
   MPC_Comm_size (MPC_COMM_WORLD, &my_size);
 
-#ifndef LARGE_TEST
-  message (my_rank, my_size, msg, 1, 100);
-  return 0;
-#endif
+//#ifndef LARGE_TEST
+//  message (my_rank, my_size, msg, 7*1024, 100000);
+//  return 0;
+//#endif
 
   for (size = 1; size < 1024 * 1024; size *= 2)
     {

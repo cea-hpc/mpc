@@ -21,6 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+
 #ifndef __SCTK__INFINIBAND_COMP_RC_RDMA_H_
 #define __SCTK__INFINIBAND_COMP_RC_RDMA_H_
 
@@ -124,6 +125,8 @@ typedef struct
 
 //void
 //sctk_net_ibv_comp_rc_rdma_free(sctk_net_ibv_rc_rdma_process_t* entry);
+
+#if 0
 
 /*-----------------------------------------------------------
  * Functions
@@ -231,4 +234,6 @@ sctk_net_ibv_comp_rc_rdma_allocate_init(
 
   void
   sctk_net_ibv_comp_rc_rdma_error_handler_recv(struct ibv_wc wc);
+#endif
+
 #endif
