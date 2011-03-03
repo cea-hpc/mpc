@@ -47,7 +47,8 @@ typedef enum
   /* collectives */
   RC_SR_BCAST = 4,
   RC_SR_REDUCE = 5,
-  RC_SR_BCAST_INIT_BARRIER = 6
+  RC_SR_BCAST_INIT_BARRIER = 6,
+  RC_SR_RDVZ_READ = 7
 } sctk_net_ibv_rc_sr_msg_type_t;
 /* number of different msg type (see the list above) */
 
@@ -112,9 +113,12 @@ sctk_net_ibv_comp_rc_sr_check_and_connect(int dest_process);
 /*-----------------------------------------------------------
  *  POLLING
  *----------------------------------------------------------*/
+
 void
 sctk_net_ibv_rc_sr_poll_send(
-  struct ibv_wc* wc);
+    struct ibv_wc* wc,
+    sctk_net_ibv_qp_local_t* rc_sr_local,
+    int lookup_mode);
 
 void
 sctk_net_ibv_rc_sr_poll_recv(

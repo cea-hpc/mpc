@@ -27,6 +27,7 @@
 #include "sctk_debug.h"
 #include "sctk_infiniband_coll.h"
 #include "sctk_infiniband_ibufs.h"
+#include "sctk_infiniband_config.h"
 
 static int *sctk_comm_world_array;
 
@@ -164,24 +165,34 @@ sctk_net_ibv_broadcast ( sctk_collective_communications_t * com,
   int size;
   int relative_rank;
   int mask;
+  int root_process;
 
   size = elem_size * nb_elem;
   /* FIXME: Size greather than SCTK_EAGER_THRESHOLD */
-  assume (size <= SCTK_EAGER_THRESHOLD);
+  assume (size <= ibv_eager_threshold);
   /* FIXME: Other communicators */
   assume(com->id == 0);
 
-  sctk_nodebug("Broadcast from root %d", root);
+  /*
+   * we have to compute where the task is located, in which process.
+   * The root argument given to the function returns the rank of the MPI
+   * task
+   */
+  root_process = sctk_get_ptp_process_localisation(root);
+  sctk_debug("Broadcast from root %d", root_process);
+
+  sctk_debug("my_vp->data.data_out %s, my_vp->data.data_in %s", my_vp->data.data_out, my_vp->data.data_in);
 
   mask = 0x1;
   /* compute relative rank for process */
-  relative_rank = (sctk_process_rank >= root) ?
-    sctk_process_rank - root :
-    sctk_process_rank - root + sctk_process_number;
+  relative_rank = (sctk_process_rank >= root_process) ?
+    sctk_process_rank - root_process :
+    sctk_process_rank - root_process + sctk_process_number;
 
   sctk_net_ibv_broadcast_recv(my_vp->data.data_out, size, sctk_comm_world_array, relative_rank, &mask, &broadcast_fifo);
 
-  if ( root == sctk_process_rank )
+
+  if ( root_process == sctk_process_rank )
   {
     if(my_vp->data.data_out)
       memcpy ( my_vp->data.data_out, my_vp->data.data_in, size );
@@ -233,7 +244,7 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
 
   size = elem_size * nb_elem;
   /* FIXME: Size greather than SCTK_EAGER_THRESHOLD */
-  assume (size <= SCTK_EAGER_THRESHOLD);
+  assume (size <= ibv_eager_threshold);
   /* FIXME: Other communicators */
   assume(com->id == 0);
 
@@ -347,7 +358,7 @@ sctk_net_ibv_broadcast_barrier (
   int mask;
 
   /* FIXME: Size greather than SCTK_EAGER_THRESHOLD */
-  assume (size <= SCTK_EAGER_THRESHOLD);
+  assume (size <= ibv_eager_threshold);
 
   sctk_nodebug("Broadcast barrier init from root %d", root);
 

@@ -72,13 +72,13 @@ sctk_net_ibv_sched_queue_msg(void* msg, sctk_net_ibv_allocator_type_t type)
   uint32_t
 sctk_net_ibv_sched_rc_sr_get_tail_psn(int* ret)
 {
-  sctk_net_ibv_rc_rdma_entry_recv_t*  entry_recv;
+  sctk_net_ibv_rc_rdma_entry_t*  entry;
 
-  entry_recv = sctk_buffered_fifo_get_elem_from_tail(&sctk_net_ibv_pending_rc_sr, 0);
-  if (entry_recv)
+  entry = sctk_buffered_fifo_get_elem_from_tail(&sctk_net_ibv_pending_rc_sr, 0);
+  if (entry)
   {
     *ret = 0;
-    return entry_recv->psn;
+    return entry->psn;
   }
   else
   {
@@ -250,6 +250,7 @@ sctk_net_ibv_sched_poll_pending()
   uint32_t
 sctk_net_ibv_sched_get_esn(int dest)
 {
+  sctk_nodebug("ESN : %lu", sctk_net_ibv_allocator->entry[dest].esn);
   return sctk_net_ibv_allocator->entry[dest].esn;
 }
 
@@ -272,6 +273,7 @@ sctk_net_ibv_sched_esn_inc (int dest)
   uint32_t i;
   i = sctk_net_ibv_allocator->entry[dest].esn;
   sctk_net_ibv_allocator->entry[dest].esn++;
+  sctk_nodebug("INC for process %d: %lu", dest, i);
   return i;
 }
 
@@ -288,11 +290,11 @@ sctk_net_ibv_sched_sn_check(int dest, uint64_t num)
   int
 sctk_net_ibv_sched_sn_check_and_inc(int dest, uint64_t num)
 {
-  //  int i;
+    int i;
 
   if (!sctk_net_ibv_sched_sn_check(dest, num)) {
-    //    i = sctk_net_ibv_allocator->entry[dest].esn;
-    //    sctk_error("Wrong Sequence Number received from %d. Expected %d got %d", dest, i, num);
+//        i = sctk_net_ibv_allocator->entry[dest].esn;
+//        sctk_error("Wrong Sequence Number received from %d. Expected %d got %d", dest, i, num);
     return 1;
   }
   else

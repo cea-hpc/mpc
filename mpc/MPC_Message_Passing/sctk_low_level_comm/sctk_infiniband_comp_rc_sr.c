@@ -40,6 +40,8 @@ static uint32_t wr_current = 0;
 extern struct sctk_list broadcast_fifo;
 extern struct sctk_list reduce_fifo;
 
+/* channel selection */
+extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
@@ -66,65 +68,6 @@ sctk_net_ibv_comp_rc_sr_create_local(sctk_net_ibv_qp_rail_t* rail)
   return local;
 }
 
-
-static void sctk_net_ibv_rc_sr_send_cq(struct ibv_wc* wc)
-{
-  sctk_net_ibv_rc_sr_poll_send(wc);
-}
-
-#if 0
-  sctk_net_ibv_rc_sr_entry_t*
-sctk_net_ibv_comp_rc_sr_pick_header(sctk_net_ibv_ibuf_t* buff)
-{
-  int i;
-  int random;
-
-  for (;;)
-  {
-    random = rand() % buff->slot_nb;
-
-    /* Garbage collector */
-    if (buff->current_nb > buff->ceiling)
-    {
-      int nb_freed;
-      int total_freed = 0;
-//      sctk_warning("IB is running out of send buffers.\nStarting Garbage Collector...");
-      do
-      {
-        nb_freed = sctk_net_ibv_cq_garbage_collector(rc_sr_local->send_cq, SCTK_PENDING_OUT_NUMBER, sctk_net_ibv_rc_sr_send_cq, IBV_CHAN_RC_SR | IBV_CHAN_SEND);
-        total_freed+=nb_freed;
-      } while(nb_freed > 0);
-//      sctk_warning("Garbage Collector done.\n - Number of buffers freed: %d\n - Number of busy buffers: %d", total_freed, buff->current_nb);
-    }
-
-
-    if (sctk_thread_mutex_trylock(&buff->lock) == 0)
-    {
-      for (i = random; i < buff->slot_nb; ++i)
-      {
-        sctk_nodebug("Slot %d (used:%d)", i, buff->headers[i].used);
-        if ( buff->headers[i].used == 0 )
-       {
-          sctk_nodebug("RC_SR slot %d found ! (%p) ", i, &buff->headers[i]);
-          buff->headers[i].used = 1;
-          buff->current_nb++;
-          if (buff->current_nb > 280 )
-            sctk_warning("PICK Remaining buffers : %d", buff->current_nb);
-          sctk_thread_mutex_unlock(&buff->lock);
-          return &(buff->headers[i]);
-        }
-      }
-      sctk_nodebug("No header found");
-
-      sctk_thread_mutex_unlock(&buff->lock);
-    }
-
-    sctk_thread_yield();
-  }
-  assume(0);
-}
-#endif
-
 uint32_t
 sctk_net_ibv_comp_rc_sr_send(
     sctk_net_ibv_qp_remote_t* remote,
@@ -135,7 +78,6 @@ sctk_net_ibv_comp_rc_sr_send(
   int rc;
   sctk_net_ibv_rc_sr_msg_header_t* msg_header;
 
-  sctk_net_ibv_ibuf_send_init(ibuf, size + RC_SR_HEADER_SIZE);
   msg_header = ((sctk_net_ibv_rc_sr_msg_header_t*) ibuf->buffer);
   msg_header->msg_type = type;
   msg_header->src_process = sctk_process_rank;
@@ -153,12 +95,11 @@ sctk_net_ibv_comp_rc_sr_send(
     rc = ibv_post_send(remote->qp , &(ibuf->desc.wr.send), &(ibuf->desc.bad_wr.send));
     assume (rc == 0);
     sctk_net_ibv_sched_unlock();
-    sctk_nodebug("Send EAGER message to %d and size %lu (PSN:%d)",
-        remote->rank, entry->msg_header->size, *psn);
-
+//    sctk_nodebug("Send EAGER message size %lu (PSN:%d)",
+//        msg_header->size, ret_psn);
   } else {
     sctk_nodebug("QP %p dest %d size %lu", remote->qp, remote->rank, size);
-//    sctk_debug("lkey : %lu", ibuf->desc.sg_entry.lkey);
+//    sctk_nodebug("lkey : %lu", ibuf->desc.sg_entry.lkey);
     rc = ibv_post_send(remote->qp , &(ibuf->desc.wr.send), &(ibuf->desc.bad_wr.send));
     assume (rc == 0);
   }
@@ -246,6 +187,7 @@ sctk_net_ibv_comp_rc_sr_send_ptp_message (
 
     /* lock to be sure that the message that we send has the good
      * PSN */
+    sctk_net_ibv_ibuf_send_init(ibuf, size + RC_SR_HEADER_SIZE);
     sctk_net_ibv_comp_rc_sr_send(remote, ibuf, size, type, &psn);
     sctk_nodebug("Send PTP %lu to %d with psn %lu", size, dest_process, psn);
   }
@@ -255,6 +197,7 @@ sctk_net_ibv_comp_rc_sr_send_ptp_message (
       (type == RC_SR_BCAST_INIT_BARRIER))
   {
     memcpy (payload, msg, size);
+    sctk_net_ibv_ibuf_send_init(ibuf, size + RC_SR_HEADER_SIZE);
     sctk_net_ibv_comp_rc_sr_send(remote, ibuf, size, type, NULL);
   }
   else
@@ -283,12 +226,14 @@ sctk_net_ibv_comp_rc_sr_prepare_recv(void* msg, size_t size)
  *----------------------------------------------------------*/
 void
 sctk_net_ibv_rc_sr_poll_send(
-    struct ibv_wc* wc)
+    struct ibv_wc* wc,
+    sctk_net_ibv_qp_local_t* rc_sr_local,
+    int lookup_mode)
 {
   sctk_net_ibv_ibuf_t* ibuf;
 
   ibuf = (sctk_net_ibv_ibuf_t*) wc->wr_id;
-  sctk_nodebug("New Send cq %p", ibuf);
+  sctk_nodebug("New Send cq %p, flag %d", ibuf, ibuf->flag);
 
   switch (ibuf->flag)
   {
@@ -300,9 +245,14 @@ sctk_net_ibv_rc_sr_poll_send(
       break;
 
     case RDMA_READ_IBUF_FLAG:
+    sctk_net_ibv_com_rc_rdma_read_finish(
+      ibuf, rc_sr_local, lookup_mode);
+
+    sctk_net_ibv_ibuf_release(ibuf);
       break;
 
     case RDMA_WRITE_IBUF_FLAG:
+      assume(0);
       break;
 
     default: assume(0); break;
@@ -328,6 +278,7 @@ sctk_net_ibv_rc_sr_poll_recv(
 
   ibuf = (sctk_net_ibv_ibuf_t*) wc->wr_id;
   msg_header = ((sctk_net_ibv_rc_sr_msg_header_t*) ibuf->buffer);
+  sctk_nodebug("New Recv cq %p, flag %d", ibuf, ibuf->flag);
 
   msg_type = msg_header->msg_type;
 
@@ -409,28 +360,24 @@ sctk_net_ibv_rc_sr_poll_recv(
             (sctk_thread_ptp_message_t*) msg,
             (char*) msg + sizeof(sctk_thread_ptp_message_t), msg_header->src_process,
             IBV_RC_SR_ORIGIN, NULL);
-
       }
-      /* reset buffers */
-//      restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
 
       sctk_nodebug("(EAGER) MSG PTP received %lu", msg_header->size);
       break;
-#if 0
+
     case RC_SR_RDVZ_REQUEST:
       sctk_nodebug("RDVZ REQUEST recv");
 
       entry_rc_rdma =
         sctk_net_ibv_comp_rc_rdma_analyze_request(
             rail, rc_sr_local, rc_rdma_local,
-            entry);
+            ibuf);
 
-      sctk_net_ibv_allocator_rc_rdma_process_next_request(entry_rc_rdma);
+//      sctk_net_ibv_allocator_rc_rdma_process_next_request(entry_rc_rdma);
 
-      restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
-      sctk_nodebug("exit");
       break;
 
+#if 0
     case RC_SR_RDVZ_ACK:
       sctk_nodebug("RDVZ ACK recv");
       sctk_net_ibv_comp_rc_rdma_send_msg(rail, rc_rdma_local,
@@ -438,11 +385,15 @@ sctk_net_ibv_rc_sr_poll_recv(
 
       restore_buffers(rc_sr_local, rc_sr_recv_buff, wc_id);
       break;
+#endif
 
     case RC_SR_RDVZ_DONE:
-      assume(0);
+      sctk_nodebug("RC_SR_RDVZ_DONE");
 
-#endif
+      sctk_net_ibv_com_rc_rdma_recv_done(rail,
+        rc_sr_local, ibuf);
+      break;
+
 
     case RC_SR_BCAST:
       sctk_nodebug("Broadcast msg received");

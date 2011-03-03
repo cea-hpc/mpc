@@ -93,6 +93,8 @@ typedef struct sctk_net_ibv_ibuf_s
   size_t size;
   int flag;
 
+  void* supp_ptr;
+
 } sctk_net_ibv_ibuf_t;
 
 
@@ -122,7 +124,7 @@ void sctk_net_ibv_ibuf_rdma_write_init(
 void sctk_net_ibv_ibuf_rdma_read_init(
     sctk_net_ibv_ibuf_t* ibuf, void* local_address,
     uint32_t lkey, void* remote_address, uint32_t rkey,
-    int len);
+    int len, void* supp_ptr);
 
 int sctk_net_ibv_ibuf_srq_check_and_post(
     sctk_net_ibv_qp_local_t* local);

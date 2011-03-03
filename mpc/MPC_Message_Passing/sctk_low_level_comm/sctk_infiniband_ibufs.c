@@ -24,6 +24,7 @@
 #include "sctk.h"
 #include "sctk_infiniband_ibufs.h"
 #include "sctk_infiniband_config.h"
+#include "sctk_infiniband_allocator.h"
 #include "sctk_infiniband_mmu.h"
 #include "sctk_spinlock.h"
 
@@ -31,6 +32,9 @@ uint32_t                     ibuf_free_ibuf_nb = 0;
 uint32_t                     ibuf_got_ibuf_nb = 0;
 uint32_t                     ibuf_free_srq_nb = 0;
 uint32_t                     ibuf_got_srq_nb = 0;
+
+/* RC SR structures */
+extern  sctk_net_ibv_qp_local_t *rc_sr_local;
 
 void sctk_net_ibv_ibuf_new()
 {
@@ -116,6 +120,10 @@ sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick()
 {
   int i;
   sctk_net_ibv_ibuf_t* ibuf;
+  int boolean = 1;
+
+  int nb_freed;
+  int total_freed = 0;
 
   while (1)
   {
@@ -124,6 +132,17 @@ sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick()
       if (ibuf_free_header != NULL)
       {
         goto resume;
+      }
+      else if (boolean)
+      {
+        boolean = 0;
+        sctk_nodebug("EMPTY");
+      } else {
+        do
+        {
+          nb_freed = sctk_net_ibv_cq_garbage_collector(rc_sr_local->send_cq, SCTK_PENDING_OUT_NUMBER, sctk_net_ibv_rc_sr_send_cq, IBV_CHAN_RC_SR | IBV_CHAN_SEND);
+          total_freed+=nb_freed;
+        } while(nb_freed > 0);
       }
       sctk_spinlock_unlock(&ibuf_lock);
     }
@@ -161,7 +180,7 @@ int sctk_net_ibv_ibuf_srq_check_and_post(
     size = ibv_max_srq_ibufs - ibuf_free_srq_nb;
     nb_posted =  sctk_net_ibv_ibuf_srq_post
       (local, size);
-    sctk_debug("srq_post: post %d buffers", nb_posted);
+    sctk_nodebug("srq_post: post %d buffers", nb_posted);
     return nb_posted;
   }
 
@@ -275,8 +294,8 @@ void sctk_net_ibv_ibuf_send_init(
   ibuf->desc.sg_entry.lkey = ibuf->region->mmu_entry->mr->lkey;
   ibuf->desc.sg_entry.addr = (uintptr_t) (ibuf->buffer);
 
-//  sctk_debug("lkey : %lu", ibuf->desc.sg_entry.lkey);
-//  sctk_debug("ENTRY : %p", ibuf->buffer);
+  //  sctk_debug("lkey : %lu", ibuf->desc.sg_entry.lkey);
+  //  sctk_debug("ENTRY : %p", ibuf->buffer);
 
   ibuf->flag = NORMAL_IBUF_FLAG;
 }
@@ -309,7 +328,7 @@ void sctk_net_ibv_ibuf_rdma_write_init(
 void sctk_net_ibv_ibuf_rdma_read_init(
     sctk_net_ibv_ibuf_t* ibuf, void* local_address,
     uint32_t lkey, void* remote_address, uint32_t rkey,
-    int len)
+    int len, void* supp_ptr)
 {
   sctk_assert(ibuf);
 
@@ -328,4 +347,6 @@ void sctk_net_ibv_ibuf_rdma_read_init(
   ibuf->desc.sg_entry.addr = (uintptr_t) local_address;
 
   ibuf->flag = RDMA_READ_IBUF_FLAG;
+  ibuf->supp_ptr = supp_ptr;
 }
+

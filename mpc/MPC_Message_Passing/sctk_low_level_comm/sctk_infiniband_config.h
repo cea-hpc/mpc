@@ -33,5 +33,8 @@ extern int  ibv_max_inline;
 extern int  ibv_max_ibufs;
 extern int  ibv_max_srq_ibufs;
 extern int  ibv_srq_credit_limit;
+extern int  ibv_rdvz_protocol;
+#define IBV_RDVZ_WRITE_PROTOCOL (1)
+#define IBV_RDVZ_READ_PROTOCOL (2)
 
 #endif

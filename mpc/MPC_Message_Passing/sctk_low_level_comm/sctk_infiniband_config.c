@@ -22,6 +22,7 @@
 /* ######################################################################## */
 
 #include <sctk.h>
+#include "sctk_infiniband_config.h"
 
 /* default constants */
 #define IBV_EAGER_THRESHOLD (8 * 1024)
@@ -44,6 +45,7 @@ int  ibv_max_inline       = IBV_MAX_INLINE;
 int  ibv_max_ibufs        = IBV_MAX_IBUFS;
 int  ibv_max_srq_ibufs    = IBV_MAX_SRQ_IBUFS;
 int  ibv_srq_credit_limit = IBV_SRQ_CREDIT_LIMIT;
+int  ibv_rdvz_protocol    = IBV_RDVZ_READ_PROTOCOL;
 
 sctk_net_ibv_config_init()
 {
@@ -75,5 +77,10 @@ sctk_net_ibv_config_init()
 
   if ( (value = getenv("MPC_IBV_SRQ_CREDIT_LIMIT")) != NULL )
     ibv_srq_credit_limit = atoi(value);
+
+  if ( (value = getenv("MPC_IBV_RDVZ_WRITE_PROTOCOL")) != NULL )
+    ibv_rdvz_protocol = IBV_RDVZ_WRITE_PROTOCOL;
+  if ( (value = getenv("MPC_IBV_RDVZ_READ_PROTOCOL")) != NULL )
+    ibv_rdvz_protocol = IBV_RDVZ_READ_PROTOCOL;
 }
 
