@@ -168,10 +168,11 @@ sctk_net_ibv_comp_rc_sr_send_ptp_message (
   void* payload;
   uint32_t psn;
 
-  ibuf = sctk_net_ibv_ibuf_pick();
+  ibuf = sctk_net_ibv_ibuf_pick(0);
   payload = RC_SR_PAYLOAD(ibuf);
 
-  sctk_nodebug("Send rc_sr message. type %d, size %d, src_process %lu", type, size);
+  if (sctk_process_rank == 0)
+    sctk_nodebug("Send rc_sr message. type %d, size %d, src_process %lu", type, size, dest_process);
 
   /* check if the TCP connection is active. If not, connect peers */
   remote = sctk_net_ibv_comp_rc_sr_check_and_connect(dest_process);
@@ -233,7 +234,8 @@ sctk_net_ibv_rc_sr_poll_send(
   sctk_net_ibv_ibuf_t* ibuf;
 
   ibuf = (sctk_net_ibv_ibuf_t*) wc->wr_id;
-  sctk_nodebug("New Send cq %p, flag %d", ibuf, ibuf->flag);
+  if (sctk_process_rank == 0)
+    sctk_nodebug("New Send cq %p, flag %d", ibuf, ibuf->flag);
 
   switch (ibuf->flag)
   {
@@ -241,15 +243,20 @@ sctk_net_ibv_rc_sr_poll_send(
       break;
 
     case NORMAL_IBUF_FLAG:
-      sctk_net_ibv_ibuf_release(ibuf);
+      sctk_net_ibv_ibuf_release(ibuf, 0);
       break;
 
     case RDMA_READ_IBUF_FLAG:
+    /* there */
+    sctk_net_ibv_comp_rc_rdma_send_finish(
+        rail, rc_sr_local, rc_rdma_local,
+        ibuf);
+
     sctk_net_ibv_com_rc_rdma_read_finish(
       ibuf, rc_sr_local, lookup_mode);
 
-    sctk_net_ibv_ibuf_release(ibuf);
-      break;
+    sctk_net_ibv_ibuf_release(ibuf, 0);
+    break;
 
     case RDMA_WRITE_IBUF_FLAG:
       assume(0);
@@ -278,7 +285,9 @@ sctk_net_ibv_rc_sr_poll_recv(
 
   ibuf = (sctk_net_ibv_ibuf_t*) wc->wr_id;
   msg_header = ((sctk_net_ibv_rc_sr_msg_header_t*) ibuf->buffer);
-  sctk_nodebug("New Recv cq %p, flag %d", ibuf, ibuf->flag);
+
+  if (sctk_process_rank == 1)
+    sctk_nodebug("New Recv cq %p, flag %d", ibuf, ibuf->flag);
 
   msg_type = msg_header->msg_type;
 
@@ -373,8 +382,6 @@ sctk_net_ibv_rc_sr_poll_recv(
             rail, rc_sr_local, rc_rdma_local,
             ibuf);
 
-//      sctk_net_ibv_allocator_rc_rdma_process_next_request(entry_rc_rdma);
-
       break;
 
 #if 0
@@ -411,9 +418,9 @@ sctk_net_ibv_rc_sr_poll_recv(
       break;
   }
 
-  --ibuf_free_srq_nb;
+//  --ibuf_free_srq_nb;
   sctk_nodebug("Buffer %d posted", ibuf_free_srq_nb);
-  sctk_net_ibv_ibuf_release(ibuf);
+  sctk_net_ibv_ibuf_release(ibuf, 1);
   sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
 
   if (lookup_mode)
@@ -466,5 +473,12 @@ sctk_net_ibv_comp_rc_sr_allocate_recv(
   void
 sctk_net_ibv_comp_rc_sr_error_handler(struct ibv_wc wc)
 {
+  sctk_net_ibv_ibuf_t* ibuf;
 
+  ibuf = (sctk_net_ibv_ibuf_t*) wc.wr_id;
+  sctk_nodebug("New Send cq %p, flag %d", ibuf, ibuf->flag);
 }
+
+
+
+

@@ -116,7 +116,7 @@ void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,
   sctk_nodebug("END ibuf initialization");
 }
 
-sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick()
+sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null)
 {
   int i;
   sctk_net_ibv_ibuf_t* ibuf;
@@ -133,24 +133,36 @@ sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick()
       {
         goto resume;
       }
-      else if (boolean)
+      if (boolean)
       {
         boolean = 0;
-        sctk_nodebug("EMPTY");
-      } else {
-        do
-        {
-          nb_freed = sctk_net_ibv_cq_garbage_collector(rc_sr_local->send_cq, SCTK_PENDING_OUT_NUMBER, sctk_net_ibv_rc_sr_send_cq, IBV_CHAN_RC_SR | IBV_CHAN_SEND);
-          total_freed+=nb_freed;
-        } while(nb_freed > 0);
+        sctk_nodebug("No more buffer available (ibv_got_srq_nb %d, ibv_free_srq_ibufs %d, ibuf_free_ibuf_nb %d, ibuf_got_ibuf_nb %d) ", ibuf_got_srq_nb, ibuf_free_srq_nb, ibuf_free_ibuf_nb, ibuf_got_ibuf_nb);
       }
+
+      if (return_on_null)
+      {
+        return NULL;
+      }
+//      else {
+//        do
+//        {
+//          nb_freed = sctk_net_ibv_cq_garbage_collector(rc_sr_local->send_cq, SCTK_PENDING_OUT_NUMBER, sctk_net_ibv_rc_sr_send_cq, IBV_CHAN_RC_SR | IBV_CHAN_SEND);
+//          total_freed+=nb_freed;
+//          sctk_debug("nb freed : %d", nb_freed);
+//        } while(nb_freed > 0);
+//      }
       sctk_spinlock_unlock(&ibuf_lock);
     }
+//    sctk_debug("Number : %d", ibuf_free_ibuf_nb);
+//    sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
+
+//    sctk_net_ibv_allocator_ptp_poll(IBV_CHAN_RC_SR);
     sctk_thread_yield();
   }
 
 resume:
-  sctk_nodebug("Next free_header: %p, nb %d", ibuf_free_header, ibuf_free_ibuf_nb);
+  if(sctk_process_rank == 0)
+    sctk_nodebug("Next free_header: %p, nb %d (srq %d)", ibuf_free_header, ibuf_free_ibuf_nb, ibuf_free_srq_nb);
 
   ibuf = ibuf_free_header;
   ibuf_free_header = ibuf_free_header->desc.next;
@@ -177,10 +189,18 @@ int sctk_net_ibv_ibuf_srq_check_and_post(
 
   if (ibuf_free_srq_nb < ibv_srq_credit_limit)
   {
-    size = ibv_max_srq_ibufs - ibuf_free_srq_nb;
+    sctk_spinlock_lock(&ibuf_lock);
+    if (ibuf_free_ibuf_nb > ibv_max_srq_ibufs)
+      size = ibv_max_srq_ibufs - ibuf_free_srq_nb;
+    else
+      size = ibuf_free_ibuf_nb - ibuf_free_srq_nb;
+    sctk_spinlock_unlock(&ibuf_lock);
+
     nb_posted =  sctk_net_ibv_ibuf_srq_post
       (local, size);
-    sctk_nodebug("srq_post: post %d buffers", nb_posted);
+
+    if (sctk_process_rank == 0)
+      sctk_nodebug("srq_post: post %d buffers", nb_posted);
     return nb_posted;
   }
 
@@ -198,20 +218,25 @@ int sctk_net_ibv_ibuf_srq_post(
 
   for (i=0; i < nb_ibufs; ++i)
   {
-    ibuf = sctk_net_ibv_ibuf_pick();
+    ibuf = sctk_net_ibv_ibuf_pick(1);
+
+    if (!ibuf)
+      break;
+
     sctk_net_ibv_ibuf_recv_init(ibuf);
 
+    sctk_spinlock_lock(&ibuf_lock);
     rc = ibv_post_srq_recv(local->srq, &(ibuf->desc.wr.recv), &(ibuf->desc.bad_wr.recv));
+    sctk_spinlock_unlock(&ibuf_lock);
     assume(rc == 0);
   }
 
-  ibuf_free_srq_nb+=nb_ibufs;
-
+  ibuf_free_srq_nb+=i;
   return i;
 }
 
 
-void sctk_net_ibv_ibuf_release(sctk_net_ibv_ibuf_t* ibuf)
+void sctk_net_ibv_ibuf_release(sctk_net_ibv_ibuf_t* ibuf, int is_srq)
 {
   sctk_spinlock_lock(&ibuf_lock);
 
@@ -219,10 +244,14 @@ void sctk_net_ibv_ibuf_release(sctk_net_ibv_ibuf_t* ibuf)
   ++ibuf_free_ibuf_nb;
   --ibuf_got_ibuf_nb;
 
+  if (is_srq)
+    --ibuf_free_srq_nb;
+
   ibuf->desc.next = ibuf_free_header;
   ibuf_free_header = ibuf;
 
-  sctk_nodebug("Buffer restored : %d (free header %p)",
+  if(sctk_process_rank == 0)
+    sctk_nodebug("Buffer restored : %d (free header %p)",
       ibuf_free_ibuf_nb, ibuf_free_header);
 
   sctk_spinlock_unlock(&ibuf_lock);
@@ -250,6 +279,23 @@ void sctk_net_ibv_ibuf_recv_init(
   ibuf->flag = NORMAL_IBUF_FLAG;
 }
 
+void sctk_net_ibv_ibuf_rdma_recv_init(
+    sctk_net_ibv_ibuf_t* ibuf, void* local_address,
+    uint32_t lkey)
+{
+  sctk_assert(ibuf);
+
+  ibuf->desc.wr.send.next = NULL;
+  ibuf->desc.wr.send.wr_id = (uintptr_t) ibuf;
+
+  ibuf->desc.wr.send.num_sge = 1;
+  ibuf->desc.wr.send.sg_list = &(ibuf->desc.sg_entry);
+  ibuf->desc.sg_entry.length = ibv_eager_threshold;
+  ibuf->desc.sg_entry.lkey = lkey;
+  ibuf->desc.sg_entry.addr = (uintptr_t) local_address;
+
+  ibuf->flag = NORMAL_IBUF_FLAG;
+}
 
 void sctk_net_ibv_ibuf_barrier_send_init(
     sctk_net_ibv_ibuf_t* ibuf, void* local_address,
@@ -257,7 +303,6 @@ void sctk_net_ibv_ibuf_barrier_send_init(
     int len)
 {
   sctk_assert(ibuf);
-  sctk_nodebug("Send len : %lu", len);
 
   ibuf->desc.wr.send.next = NULL;
   ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE;
@@ -293,9 +338,6 @@ void sctk_net_ibv_ibuf_send_init(
   ibuf->desc.sg_entry.length = size;
   ibuf->desc.sg_entry.lkey = ibuf->region->mmu_entry->mr->lkey;
   ibuf->desc.sg_entry.addr = (uintptr_t) (ibuf->buffer);
-
-  //  sctk_debug("lkey : %lu", ibuf->desc.sg_entry.lkey);
-  //  sctk_debug("ENTRY : %p", ibuf->buffer);
 
   ibuf->flag = NORMAL_IBUF_FLAG;
 }
@@ -333,7 +375,7 @@ void sctk_net_ibv_ibuf_rdma_read_init(
   sctk_assert(ibuf);
 
   ibuf->desc.wr.send.next = NULL;
-  ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE;
+  ibuf->desc.wr.send.opcode = IBV_WR_RDMA_READ;
   ibuf->desc.wr.send.send_flags = IBV_SEND_SIGNALED;
   ibuf->desc.wr.send.wr_id = (uintptr_t) ibuf;
 

@@ -393,10 +393,11 @@ sctk_net_ibv_poll_check_wc(struct ibv_wc wc, sctk_net_ibv_allocator_type_t type)
     sctk_error ("ERROR Vendor: %d", wc.vendor_err);
     sctk_error ("Byte_len: %d", wc.byte_len);
 
+    sctk_net_ibv_comp_rc_sr_error_handler(wc);
+
     switch (type)
     {
       case IBV_CHAN_RC_SR:
-        sctk_net_ibv_comp_rc_sr_error_handler(wc);
         break;
 
 #if 0
@@ -414,9 +415,6 @@ sctk_net_ibv_poll_check_wc(struct ibv_wc wc, sctk_net_ibv_allocator_type_t type)
         break;
     }
 
- //   entry = sctk_net_ibv_alloc_rc_sr_find_from_qp_num(wc.qp_num);
- //   sctk_debug("Rank : %d", entry->rank);
-
     sctk_abort();
   }
 }
@@ -425,19 +423,20 @@ sctk_net_ibv_poll_check_wc(struct ibv_wc wc, sctk_net_ibv_allocator_type_t type)
   void
 sctk_net_ibv_cq_poll(struct ibv_cq* cq, int pending_nb, void (*ptr_func)(struct ibv_wc*, int lookup, int dest), sctk_net_ibv_allocator_type_t type)
 {
-  struct ibv_wc wc[pending_nb];
+  struct ibv_wc wc;
   int ne = 0;
   int i;
 
-  ne = ibv_poll_cq (cq, pending_nb, wc);
-
-  for (i = 0; i < ne; ++i)
+  for (i=0; i < pending_nb; ++i)
   {
-    sctk_nodebug("%d elements found", ne);
-
-    sctk_net_ibv_poll_check_wc(wc[i], type);
-
-    ptr_func(&wc[i], 0, 0);
+    ne = ibv_poll_cq (cq, 1, &wc);
+    if (ne)
+    {
+      sctk_net_ibv_poll_check_wc(wc, type);
+      ptr_func(&wc, 0, 0);
+    } else {
+      return;
+    }
   }
 }
 
@@ -463,21 +462,26 @@ sctk_net_ibv_cq_lookup(struct ibv_cq* cq, int nb_pending, void (*ptr_func)(struc
 int
 sctk_net_ibv_cq_garbage_collector(struct ibv_cq* cq, int nb_pending, void (*ptr_func)(struct ibv_wc*), sctk_net_ibv_allocator_type_t type)
 {
-  struct ibv_wc wc[nb_pending];
+  struct ibv_wc wc;
   int ne = 0;
   int i;
 
-  ne = ibv_poll_cq (cq, nb_pending, wc);
+  sctk_debug("garbage");
 
-  for (i = 0; i < ne; ++i)
+  for (i = 0; i < nb_pending; ++i)
   {
-    sctk_nodebug("%d elements found", ne);
+    ne = ibv_poll_cq (cq, 1, &wc);
+    if (ne)
+    {
+      sctk_debug("%d elements found", ne);
 
-    sctk_net_ibv_poll_check_wc(wc[i], type);
-
-    ptr_func(&wc[i]);
+      sctk_net_ibv_poll_check_wc(wc, type);
+      ptr_func(&wc);
+    } else {
+      return;
+    }
   }
-  return ne;
+return ne;
 }
 
 

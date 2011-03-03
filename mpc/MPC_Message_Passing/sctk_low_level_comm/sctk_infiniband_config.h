@@ -37,4 +37,12 @@ extern int  ibv_rdvz_protocol;
 #define IBV_RDVZ_WRITE_PROTOCOL (1)
 #define IBV_RDVZ_READ_PROTOCOL (2)
 
+extern int  ibv_wc_in_number;
+extern int  ibv_wc_out_number;
+extern int  ibv_max_mr;
+extern int  ibv_adm_port;
+extern int  ibv_rdma_depth;
+extern int  ibv_rdma_dest_depth;
+
+
 #endif

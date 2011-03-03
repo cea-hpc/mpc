@@ -85,7 +85,7 @@ sctk_net_ibv_collective_lookup_src(struct sctk_list* list, const int src)
   while(elem)
   {
     msg = (sctk_net_ibv_rc_sr_msg_header_t*) elem->elem;
-    //sctk_debug("Found with src %d", msg->src_process);
+    //sctk_nodebug("Found with src %d", msg->src_process);
     if (msg->src_process == src)
     {
       sctk_list_remove(list, elem);
@@ -179,9 +179,9 @@ sctk_net_ibv_broadcast ( sctk_collective_communications_t * com,
    * task
    */
   root_process = sctk_get_ptp_process_localisation(root);
-  sctk_debug("Broadcast from root %d", root_process);
+  sctk_nodebug("Broadcast from root %d", root_process);
 
-  sctk_debug("my_vp->data.data_out %s, my_vp->data.data_in %s", my_vp->data.data_out, my_vp->data.data_in);
+  sctk_nodebug("my_vp->data.data_out %s, my_vp->data.data_in %s", my_vp->data.data_out, my_vp->data.data_in);
 
   mask = 0x1;
   /* compute relative rank for process */

@@ -199,13 +199,11 @@ sctk_net_ibv_sched_pending_push(
   sctk_list_unlock(&rc_sr_pending);
 }
 
-#if 0
   void
 sctk_net_ibv_sched_rc_rdma_poll_pending()
 {
   struct sctk_list_elem* tmp = NULL;
-  sctk_net_ibv_rc_rdma_entry_recv_t* msg;
-  sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma;
+  sctk_net_ibv_rc_rdma_entry_t* msg;
   int ret;
   int src_process;
 
@@ -227,9 +225,6 @@ sctk_net_ibv_sched_rc_rdma_poll_pending()
       sctk_net_ibv_comp_rc_rdma_read_msg(msg, IBV_POLL_RC_RDMA_ORIGIN);
       sctk_list_unlock(&rc_rdma_pending);
 
-      entry_rc_rdma = (sctk_net_ibv_rc_rdma_process_t*)
-        sctk_net_ibv_allocator_get(src_process, IBV_CHAN_RC_RDMA);
-      sctk_net_ibv_allocator_rc_rdma_process_next_request(entry_rc_rdma);
       return;
     }
 
@@ -237,13 +232,12 @@ sctk_net_ibv_sched_rc_rdma_poll_pending()
   }
   sctk_list_unlock(&rc_rdma_pending);
 }
-#endif
 
   void
 sctk_net_ibv_sched_poll_pending()
 {
   sctk_net_ibv_sched_rc_sr_poll_pending();
-//  sctk_net_ibv_sched_rc_rdma_poll_pending();
+  sctk_net_ibv_sched_rc_rdma_poll_pending();
 
 }
 

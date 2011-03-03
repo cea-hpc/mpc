@@ -25,15 +25,24 @@
 #include "sctk_infiniband_config.h"
 
 /* default constants */
-#define IBV_EAGER_THRESHOLD (8 * 1024)
-#define IBV_QP_TX_DEPTH     1000
-#define IBV_QP_RC_DEPTH     1000
+#define IBV_EAGER_THRESHOLD (16 * 1024)
+#define IBV_QP_TX_DEPTH     100
+#define IBV_QP_RC_DEPTH     100
 #define IBV_MAX_SG_SQ       4
 #define IBV_MAX_SG_RQ       4
 #define IBV_MAX_INLINE      128
 #define IBV_MAX_IBUFS       600
-#define IBV_MAX_SRQ_IBUFS   300
+#define IBV_MAX_SRQ_IBUFS   100
 #define IBV_SRQ_CREDIT_LIMIT 30
+
+#define IBV_WC_IN_NUMBER    20
+#define IBV_WC_OUT_NUMBER   20
+
+#define IBV_MAX_MR          2000
+#define IBV_ADM_PORT        1
+
+#define IBV_RDMA_DEPTH       4
+#define IBV_RDMA_DEST_DEPTH  1
 
 /* global values */
 int  ibv_eager_threshold  = IBV_EAGER_THRESHOLD;
@@ -46,6 +55,13 @@ int  ibv_max_ibufs        = IBV_MAX_IBUFS;
 int  ibv_max_srq_ibufs    = IBV_MAX_SRQ_IBUFS;
 int  ibv_srq_credit_limit = IBV_SRQ_CREDIT_LIMIT;
 int  ibv_rdvz_protocol    = IBV_RDVZ_READ_PROTOCOL;
+
+int  ibv_wc_in_number     = IBV_WC_IN_NUMBER;
+int  ibv_wc_out_number    = IBV_WC_OUT_NUMBER;
+int  ibv_max_mr           = IBV_MAX_MR;
+int  ibv_adm_port         = IBV_ADM_PORT;
+int  ibv_rdma_depth       = IBV_RDMA_DEPTH;
+int  ibv_rdma_dest_depth  = IBV_RDMA_DEST_DEPTH;
 
 sctk_net_ibv_config_init()
 {
@@ -82,5 +98,23 @@ sctk_net_ibv_config_init()
     ibv_rdvz_protocol = IBV_RDVZ_WRITE_PROTOCOL;
   if ( (value = getenv("MPC_IBV_RDVZ_READ_PROTOCOL")) != NULL )
     ibv_rdvz_protocol = IBV_RDVZ_READ_PROTOCOL;
+
+  if ( (value = getenv("MPC_IBV_WC_IN_NUMBER")) != NULL )
+    ibv_rdvz_protocol = IBV_WC_IN_NUMBER;
+
+  if ( (value = getenv("MPC_IBV_WC_OUT_NUMBER")) != NULL )
+    ibv_rdvz_protocol = IBV_WC_OUT_NUMBER;
+
+  if ( (value = getenv("MPC_IBV_MAX_MR")) != NULL )
+    ibv_rdvz_protocol = IBV_MAX_MR;
+
+  if ( (value = getenv("MPC_IBV_ADM_PORT")) != NULL )
+    ibv_rdvz_protocol = IBV_ADM_PORT;
+
+  if ( (value = getenv("MPC_IBV_RDMA_DEPTH")) != NULL )
+    ibv_rdvz_protocol = IBV_RDMA_DEPTH;
+
+  if ( (value = getenv("MPC_IBV_RDMA_DEST_DEPTH")) != NULL )
+    ibv_rdvz_protocol = IBV_RDMA_DEST_DEPTH;
 }
 

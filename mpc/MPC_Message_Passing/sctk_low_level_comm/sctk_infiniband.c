@@ -143,7 +143,7 @@ sctk_net_ibv_send_ptp_message_driver ( sctk_thread_ptp_message_t * msg,
  sctk_net_ibv_allocator->entry[dest_process].nb_ptp_msg_transfered++;
 
   /* EAGER MODE */
-  if ( (size + sizeof(sctk_thread_ptp_message_t)) <= ibv_eager_threshold)
+  if ( (size + sizeof(sctk_thread_ptp_message_t)) + RC_SR_HEADER_SIZE <= ibv_eager_threshold)
   {
    sctk_nodebug("Send EAGER message to %d and size %lu", dest_process, size);
     sctk_net_ibv_comp_rc_sr_send_ptp_message (
@@ -225,19 +225,16 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
       sctk_free(item->struct_ptr);
       break;
 
-#if 0
     case IBV_POLL_RC_RDMA_ORIGIN:
-      entry_recv = (sctk_net_ibv_rc_rdma_entry_recv_t *)
+      entry = (sctk_net_ibv_rc_rdma_entry_t *)
         item->struct_ptr;
 
-      sctk_nodebug("POLL_RC_RDMA %p", entry_recv);
+      sctk_nodebug("POLL_RC_RDMA %p", entry);
+      sctk_net_ibv_mmu_unregister (rail->mmu, entry->mmu_entry);
 
-      sctk_net_ibv_mmu_unregister (rail->mmu, entry_recv->mmu_entry);
-
-      sctk_free(entry_recv->ptr);
-      sctk_free(entry_recv);
+      sctk_free(entry->ptr);
+      sctk_free(entry);
       break;
-#endif
 
     default:
       assume(0);
@@ -293,14 +290,78 @@ sctk_net_ibv_collective_op_driver (sctk_collective_communications_t * com,
   sctk_nodebug ("end collective");
 }
 
+/*-----------------------------------------------------------
+ *  RPC
+ *----------------------------------------------------------*/
+static void
+sctk_net_rpc_register(void* addr, size_t size)
+{
+  sctk_debug("BEGIN rpc_register");
+
+  sctk_debug("END rpc_register");
+}
+
+static void
+sctk_net_rpc_unregister(void* addr, size_t size)
+{
+  sctk_debug("BEGIN rpc_unregister");
+
+  sctk_debug("END rpc_unregister");
+}
+
+
+static void
+sctk_net_rpc_driver ( void ( *func ) ( void * ), int destination, void *arg, size_t arg_size ) {
+  sctk_debug("BEGIN rpc_driver");
+
+  sctk_debug("END rpc_driver");
+}
+
+static void
+sctk_net_rpc_retrive_driver ( void *dest, void *src, size_t arg_size,
+    int process, int *ack ) {
+  sctk_debug("BEGIN rpc_retrive_driver");
+
+  sctk_debug("END rpc_retrive_driver");
+}
+
+static void
+sctk_net_rpc_send_driver ( void *dest, void *src, size_t arg_size, int process,
+    int *ack ) {
+  sctk_debug("BEGIN rpc_send_driver");
+
+  DBG_S ( 0 );
+   not_reachable ();
+  assume ( dest );
+  assume ( src );
+  assume ( arg_size );
+  assume ( process );
+  assume ( ack );
+  DBG_E ( 0 );
+
+  sctk_debug("END rpc_send_driver");
+}
+
+/*-----------------------------------------------------------
+ *  FUNCTIONS REGISTRATION
+ *----------------------------------------------------------*/
   void
 sctk_net_ibv_register_pointers_functions (sctk_net_driver_pointers_functions_t* pointers)
 {
   /* save all pointers to functions */
   /* TODO: Use TCP servers for rpc messages */
-  //  pointers->rpc_driver          = sctk_net_rpc_driver;
-  //  pointers->rpc_driver_retrive  = sctk_net_rpc_retrive_driver;
-  //  pointers->rpc_driver_send     = sctk_net_rpc_send_driver;
+  pointers->rpc_driver          = sctk_net_rpc_driver;
+  pointers->rpc_driver_retrive  = sctk_net_rpc_retrive_driver;
+  pointers->rpc_driver_send     = sctk_net_rpc_send_driver;
+
+  /*
+   * registration for memory registration/unregistration
+   */
+  sctk_register_ptr(sctk_net_rpc_register, sctk_net_rpc_unregister);
+
+  /*
+   * registration of RPC functions
+   */
   pointers->net_send_ptp_message= sctk_net_ibv_send_ptp_message_driver;
   pointers->net_copy_message    = sctk_net_ibv_copy_message_func_driver;
   pointers->net_free            = sctk_net_ibv_free_func_driver;

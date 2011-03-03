@@ -42,23 +42,12 @@ typedef enum
 /*-----------------------------------------------------------
  *  MMU
  *----------------------------------------------------------*/
-/* nb entries in buffers */
-#define IBV_PENDING_SEND_PTP  60
-#define IBV_PENDING_SEND_COLL 30
-#define IBV_PENDING_RECV      60
-
-/* define when the garbage collector has to be
- * run: 80 -> 80% of the number of buffers */
-#define CEILING_SEND_BUFFERS  90
-
-/* Threshould for eager messages */
-#define SCTK_EAGER_THRESHOLD ( (128 * 1024) + sizeof(sctk_thread_ptp_message_t) )
 
 /* max number of WC extracted for the input
  * and the output completion queue */
 /* FIXME cant change 1 to something else */
-#define SCTK_PENDING_IN_NUMBER 1
-#define SCTK_PENDING_OUT_NUMBER 10
+#define SCTK_PENDING_IN_NUMBER 100
+#define SCTK_PENDING_OUT_NUMBER 100
 
 /*-----------------------------------------------------------
  *  MMU

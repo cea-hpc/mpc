@@ -187,7 +187,6 @@ sctk_net_ibv_allocator_ptp_lookup(int dest, sctk_net_ibv_allocator_type_t type)
 void sctk_net_ibv_allocator_ptp_poll_all()
 {
   sctk_net_ibv_allocator_ptp_poll(IBV_CHAN_RC_SR);
-
   sctk_net_ibv_sched_poll_pending();
 }
 

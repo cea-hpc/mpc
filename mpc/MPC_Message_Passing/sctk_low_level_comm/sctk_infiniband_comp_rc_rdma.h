@@ -69,9 +69,13 @@ typedef struct
   sctk_thread_ptp_message_t       msg_header;
   sctk_net_ibv_mmu_entry_t        *mmu_entry;
   sctk_thread_ptp_message_t       *msg_ptr;
+  void                            *aligned_ptr;
 
   sctk_net_ibv_rc_rdma_process_t  *entry_rc_rdma;
   sctk_net_ibv_rc_rdma_request_type_t type;
+
+  int                             directly_pinned;
+  void*                           remote_entry;
   void*                           *ptr; /* pointer */
   size_t                          requested_size;
   int                             src_process;
