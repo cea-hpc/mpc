@@ -37,7 +37,7 @@ SCTK_USE_PTHREAD=1
 SCTK_USE_MADELEINE=0
 SCTK_USE_MPI=1
 SCTK_USE_MPI2=0
-DISABLE_SMT="1"
+ENABLE_SMT="0"
 
 if test "$MPC_AUTO_KILL_TIMEOUT" = "" ; then
     MPC_AUTO_KILL_TIMEOUT="0"
@@ -88,7 +88,7 @@ Topology:
     --process-nb=n,-p=n Total number of processes
     --cpu-nb=n,-c=n Number of cpus per process
     --node-nb=n,-N=n Total number of nodes
-    --enable-smt Enable SMT capabilities
+    --enable-smt Enable SMT capabilities (disabled by default)
     --share-node Restrict CPU number to share node
 
 Multithreading:
@@ -230,7 +230,7 @@ for arg in "$@" ; do
     REPORT="--report"
     ;;
     --enable-smt)
-    DISABLE_SMT="0"
+    ENABLE_SMT="1"
     ;;
     --share-node)
     SHARE_NODE="1"
@@ -335,8 +335,8 @@ if test "$PROCESS_NB" != ""  ; then
 add_arg "--process-number=$PROCESS_NB"
 fi
 
-if test "$DISABLE_SMT" = "1"  ; then
-add_arg "--disable-smt"
+if test "$ENABLE_SMT" = "1"  ; then
+add_arg "--enable-smt"
 fi
 
 if test "$SHARE_NODE" = "1"  ; then

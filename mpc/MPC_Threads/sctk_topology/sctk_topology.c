@@ -89,7 +89,12 @@ static void
 sctk_restrict_topology ()
 {
   /* Disable SMT capabilities */
-  if (sctk_disable_smt_capabilities)
+  if (sctk_enable_smt_capabilities)
+    {
+	sctk_warning ("SMT capabilities ENABLED");
+
+    }
+  else
     {
       int i;
       sctk_cpuinfo_t current;
@@ -126,10 +131,6 @@ sctk_restrict_topology ()
 	}
 
       sctk_processor_number_on_node = processor_number;
-    }
-    else
-    {
-      sctk_warning ("SMT capabilities ENABLED");
     }
 
   /* Share nodes */

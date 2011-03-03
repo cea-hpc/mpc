@@ -45,7 +45,7 @@ extern "C"
   void sctk_set_net_val (void (*val) (int *, char ***));
 
   extern char *sctk_mono_bin;
-  extern int sctk_disable_smt_capabilities;
+  extern int sctk_enable_smt_capabilities;
   extern int sctk_share_node_capabilities;
 
   void mpc_start_ (void);

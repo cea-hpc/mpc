@@ -68,7 +68,7 @@ static char topology_name[SCTK_MAX_FILENAME_SIZE];
 
 char *sctk_multithreading_mode = "none";
 char *sctk_network_mode = "none";
-int sctk_disable_smt_capabilities = 0;
+int sctk_enable_smt_capabilities = 0;
 int sctk_share_node_capabilities = 0;
 
 double __sctk_profiling__start__sctk_init_MPC;
@@ -416,10 +416,11 @@ sctk_def_node_nb (char *arg)
 {
   sctk_node_nb_val = atoi (arg);
 }
+
   static void
-sctk_def_disable_smt (char *arg)
+sctk_def_enable_smt (char *arg)
 {
-  sctk_disable_smt_capabilities = 1;
+  sctk_enable_smt_capabilities = 1;
 }
 
   static void
@@ -491,7 +492,7 @@ sctk_threat_arg (char *word)
   sctk_add_arg_eq ("--processor-number", sctk_def_processor_nb);
   sctk_add_arg_eq ("--process-number", sctk_def_process_nb);
   sctk_add_arg_eq ("--node-number", sctk_def_node_nb);
-  sctk_add_arg_eq ("--disable-smt", sctk_def_disable_smt);
+  sctk_add_arg_eq ("--enable-smt", sctk_def_enable_smt);
   sctk_add_arg_eq ("--share-node", sctk_def_share_node);
 
   sctk_add_arg_eq ("--launcher", sctk_def_launcher_mode);
