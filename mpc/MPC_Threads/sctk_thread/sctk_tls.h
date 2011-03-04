@@ -87,7 +87,9 @@ extern "C"
 #endif
     tls_save (mpc_user_tls_1);
     tls_save (sctk_hierarchical_tls);
+#ifdef MPC_Message_Passing
     tls_save (sctk_message_passing);
+#endif
     //profiling TLS
     tls_save (tls_args);
     tls_save (tls_trace_module);
@@ -105,7 +107,9 @@ extern "C"
 #endif
     tls_restore (mpc_user_tls_1);
     tls_restore (sctk_hierarchical_tls);
+#ifdef MPC_Message_Passing
     tls_restore (sctk_message_passing);
+#endif
     //profiling TLS
     tls_restore (tls_args);
     tls_restore (tls_trace_module);
@@ -124,7 +128,9 @@ extern "C"
 #endif
     /* tls_init (mpc_user_tls_1); */
     ucp->mpc_user_tls_1 = mpc_user_tls_1 ;
+#ifdef MPC_Message_Passing
     tls_init (sctk_message_passing);
+#endif
     //profiling TLS
     tls_init (tls_args);
     tls_init (tls_trace_module);
