@@ -216,7 +216,7 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
       sctk_list_search_and_free(&entry_rdma->send, entry);
       sctk_list_unlock(&entry_rdma->send);
 
-      sctk_free(entry->ptr);
+      sctk_free(entry->msg_payload_ptr);
       sctk_free(entry);
       break;
 
@@ -232,7 +232,7 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
       sctk_nodebug("POLL_RC_RDMA %p", entry);
       sctk_net_ibv_mmu_unregister (rail->mmu, entry->mmu_entry);
 
-      sctk_free(entry->ptr);
+      sctk_free(entry->msg_payload_ptr);
       sctk_free(entry);
       break;
 

@@ -40,15 +40,15 @@
 typedef enum
 {
   /* ptp */
-  RC_SR_EAGER = 0,
-  RC_SR_RDVZ_REQUEST = 1,
-  RC_SR_RDVZ_ACK = 2,
-  RC_SR_RDVZ_DONE = 3,
+  RC_SR_EAGER =               1 << 0,
+  RC_SR_RDVZ_REQUEST =        1 << 1,
+  RC_SR_RDVZ_ACK =            1 << 2,
+  RC_SR_RDVZ_DONE =           1 << 3,
   /* collectives */
-  RC_SR_BCAST = 4,
-  RC_SR_REDUCE = 5,
-  RC_SR_BCAST_INIT_BARRIER = 6,
-  RC_SR_RDVZ_READ = 7
+  RC_SR_BCAST =               1 << 4,
+  RC_SR_REDUCE =              1 << 5,
+  RC_SR_BCAST_INIT_BARRIER =  1 << 6,
+  RC_SR_RDVZ_READ =           1 << 7
 } sctk_net_ibv_rc_sr_msg_type_t;
 /* number of different msg type (see the list above) */
 
@@ -58,6 +58,7 @@ typedef struct
   sctk_net_ibv_rc_sr_msg_type_t     msg_type;
   uint32_t psn;
   size_t  size;
+  size_t  payload_size;
   unsigned int src_process;
   char payload;
 } sctk_net_ibv_rc_sr_msg_header_t;

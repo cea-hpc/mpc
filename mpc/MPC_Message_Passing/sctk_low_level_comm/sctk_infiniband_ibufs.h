@@ -41,6 +41,18 @@
 #define BUSY_FLAG (1)
 #define FREE_FLAG (0)
 
+static char* sctk_net_ibv_ibuf_print_flag (int flag)
+{
+  switch(flag) {
+    case RDMA_READ_IBUF_FLAG:   return "RDMA_READ_IBUF_FLAG";break;
+    case RDMA_WRITE_IBUF_FLAG:  return "RDMA_WRITE_IBUF_FLAG";break;
+    case NORMAL_IBUF_FLAG:      return "NORMAL_IBUF_FLAG";break;
+    case BARRIER_IBUF_FLAG:     return "BARRIER_IBUF_FLAG";break;
+    case BUSY_FLAG:             return "BUSY_FLAG";break;
+    case FREE_FLAG:             return "FREE_FLAG";break;
+  }
+  return NULL;
+}
 
 /* lock on ibuf interface */
 static sctk_spinlock_t                    ibuf_lock;

@@ -28,6 +28,7 @@
 #include "sctk_infiniband_coll.h"
 #include "sctk_infiniband_ibufs.h"
 #include "sctk_infiniband_config.h"
+#include "sctk_infiniband_comp_rc_rdma.h"
 
 static int *sctk_comm_world_array;
 
@@ -57,25 +58,61 @@ extern  sctk_net_ibv_qp_local_t *rc_sr_local;
 }
 
    void*
-  sctk_net_ibv_collective_push(struct sctk_list* list, sctk_net_ibv_rc_sr_msg_header_t* msg)
+  sctk_net_ibv_collective_push_rc_sr(struct sctk_list* list, sctk_net_ibv_rc_sr_msg_header_t* msg)
 {
-  void* ptr;
-  ptr = sctk_malloc(msg->size);
-  memcpy(ptr, msg, msg->size);
-  sctk_nodebug("Push with src %d, size %lu", msg->src_process, msg->size);
+  sctk_net_ibv_collective_pending_t* pending;
+
+  pending = sctk_malloc(msg->payload_size + sizeof(sctk_net_ibv_collective_pending_t));
+  assume(pending);
+
+  pending->payload = (char*) pending + sizeof(sctk_net_ibv_collective_pending_t);
+  pending->src_process = msg->src_process;
+
+  memcpy(pending->payload, &msg->payload, msg->payload_size);
+  sctk_nodebug("Push with src %d, size %lu", msg->src_process, msg->payload_size);
 
   sctk_list_lock(list);
-  sctk_list_push(list, ptr);
+  sctk_list_push(list, pending);
   sctk_list_unlock(list);
 
-  return ptr;
+  return pending;
 }
 
-  sctk_net_ibv_rc_sr_msg_header_t*
+   void*
+  sctk_net_ibv_collective_push_rc_rdma(struct sctk_list* list, sctk_net_ibv_rc_rdma_entry_t* entry)
+{
+  sctk_net_ibv_collective_pending_t* pending;
+  sctk_net_ibv_rc_rdma_process_t *entry_rdma;
+
+  pending = sctk_malloc(sizeof(sctk_net_ibv_collective_pending_t));
+  assume(pending);
+
+  pending->payload = entry->msg_payload_ptr;
+  pending->src_process = entry->src_process;
+  entry_rdma = entry->entry_rc_rdma;
+  sctk_nodebug("Push with src %d, size %lu, ptr %p", entry->src_process, entry->requested_size, entry->msg_payload_ptr);
+
+  /* we remove the entry... */
+  sctk_list_lock(&entry_rdma->send);
+  sctk_list_search_and_free(&entry_rdma->send, entry);
+  sctk_list_unlock(&entry_rdma->send);
+
+  /* ...and we push the received collective into the pending list */
+  sctk_list_lock(list);
+  sctk_list_push(list, pending);
+  sctk_list_unlock(list);
+
+  sctk_free(entry);
+
+  return pending;
+}
+
+
+  sctk_net_ibv_collective_pending_t*
 sctk_net_ibv_collective_lookup_src(struct sctk_list* list, const int src)
 {
   struct sctk_list_elem* elem;
-  sctk_net_ibv_rc_sr_msg_header_t* msg;
+  sctk_net_ibv_collective_pending_t* msg;
 
   if (!list || src < 0)
     return NULL;
@@ -84,7 +121,7 @@ sctk_net_ibv_collective_lookup_src(struct sctk_list* list, const int src)
   elem = list->head;
   while(elem)
   {
-    msg = (sctk_net_ibv_rc_sr_msg_header_t*) elem->elem;
+    msg = (sctk_net_ibv_collective_pending_t*) elem->elem;
     //sctk_nodebug("Found with src %d", msg->src_process);
     if (msg->src_process == src)
     {
@@ -103,7 +140,7 @@ sctk_net_ibv_broadcast_recv(void* data, size_t size, int* array,
     const int relative_rank, int* mask, struct sctk_list* list)
 {
   int src;
-  sctk_net_ibv_rc_sr_msg_header_t* msg;
+  sctk_net_ibv_collective_pending_t* msg;
 
   sctk_nodebug("Broadcast recv");
 
@@ -123,8 +160,10 @@ sctk_net_ibv_broadcast_recv(void* data, size_t size, int* array,
       } while(msg == NULL);
 
       sctk_nodebug("Broadcast received from process %d size %lu", src, msg->size);
+
+      sctk_nodebug("received : %p", msg->payload);
       memcpy(data,
-        &msg->payload, size);
+        msg->payload, size);
       sctk_free(msg);
       break;
     }
@@ -150,9 +189,10 @@ sctk_net_ibv_broadcast_send(sctk_collective_communications_t * com,
       if (dest >= sctk_process_number) dest -= sctk_process_number;
 
       sctk_nodebug("Send broadcast msg to process %d", dest);
-      sctk_net_ibv_comp_rc_sr_send_ptp_message (
-          rc_sr_local, data,
-          dest, size, type);
+
+    sctk_net_ibv_allocator_send_coll_message(
+     rail, rc_sr_local, data, dest, size, type);
+
     }
   *mask >>= 1;
   }
@@ -169,7 +209,7 @@ sctk_net_ibv_broadcast ( sctk_collective_communications_t * com,
 
   size = elem_size * nb_elem;
   /* FIXME: Size greather than SCTK_EAGER_THRESHOLD */
-  assume (size <= ibv_eager_threshold);
+//  assume (size <= ibv_eager_threshold);
   /* FIXME: Other communicators */
   assume(com->id == 0);
 
@@ -209,8 +249,8 @@ sctk_net_ibv_broadcast ( sctk_collective_communications_t * com,
 static void*
 walk_list(void* elem, int cond)
 {
-  sctk_net_ibv_rc_sr_msg_header_t* msg;
-  msg = (sctk_net_ibv_rc_sr_msg_header_t* ) elem;
+  sctk_net_ibv_collective_pending_t* msg;
+  msg = (sctk_net_ibv_collective_pending_t* ) elem;
 
   if (msg->src_process == cond)
   {
@@ -232,7 +272,7 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
 
   int size;
   int i;
-  sctk_net_ibv_rc_sr_msg_header_t* msg;
+  sctk_net_ibv_collective_pending_t* msg;
   int mask;
   int relative_rank;
   /* root process is process 0 */
@@ -244,7 +284,7 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
 
   size = elem_size * nb_elem;
   /* FIXME: Size greather than SCTK_EAGER_THRESHOLD */
-  assume (size <= ibv_eager_threshold);
+//  assume (size <= ibv_eager_threshold);
   /* FIXME: Other communicators */
   assume(com->id == 0);
 
@@ -268,7 +308,7 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
       sctk_nodebug("Msg from %d", msg->src_process);
 
       /* function execution */
-      func ( &msg->payload, my_vp->data.data_out, nb_elem, data_type );
+      func ( msg->payload, my_vp->data.data_out, nb_elem, data_type );
     }
   }
 
@@ -278,14 +318,18 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
   {
     if (parent != sctk_process_rank)
     {
-      sctk_nodebug("Send to parent %d", parent);
-      sctk_net_ibv_comp_rc_sr_send_ptp_message (
-          rc_sr_local, my_vp->data.data_out,
+    sctk_net_ibv_allocator_send_coll_message(
+      rail, rc_sr_local, my_vp->data.data_out,
           parent, size, RC_SR_REDUCE);
+
+//      sctk_nodebug("Send to parent %d", parent);
+//      sctk_net_ibv_comp_rc_sr_send_ptp_message (
+//          rc_sr_local, my_vp->data.data_out,
+//          parent, size, RC_SR_REDUCE);
     }
   }
 
-  sctk_nodebug("Finished for process");
+  sctk_nodebug("\t\t\t\t  Finished for process");
 
   /* broadcast */
   mask = 0x1;
@@ -506,7 +550,6 @@ sctk_net_ibv_barrier ( sctk_collective_communications_t * com,
         sctk_nodebug("%d - Send to process %u", i, sendpeer);
         sctk_net_ibv_barrier_send(&local_entry, remote_entry, sctk_process_rank, sendpeer);
 
-//        if (sctk_process_rank == 0)
       }
     }
 
@@ -515,8 +558,7 @@ sctk_net_ibv_barrier ( sctk_collective_communications_t * com,
       uint32_t tmp = (sctk_process_number) + ((sctk_process_rank) - i*pow((N_WAY_DISSEMINATION+1), round));
       recvpeer = fmod(tmp, sctk_process_number);
 
-//      if (sctk_process_rank == 0)
-        sctk_nodebug("%d - Recv from process %u", i, recvpeer);
+      sctk_nodebug("%d - Recv from process %u", i, recvpeer);
 
       if (recvpeer != sctk_process_rank)
       {

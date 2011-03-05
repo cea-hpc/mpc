@@ -24,6 +24,7 @@
 #include "sctk_bootstrap.h"
 #include "sctk_infiniband_qp.h"
 #include "sctk_infiniband_const.h"
+#include "sctk_infiniband_config.h"
 #include "sctk_infiniband_allocator.h"
 #include "sctk_infiniband_comp_rc_sr.h"
 #include "sctk_mpcrun_client.h"
@@ -88,7 +89,7 @@ sctk_net_ibv_qp_pick_rail(int rail_nb)
   sctk_nodebug("Max mr : %d",dev_attr.max_mr );
 
   if (ibv_query_port
-      (rail->context, IBV_ADM_PORT, &port_attr))
+      (rail->context, ibv_adm_port, &port_attr))
   {
     sctk_error ("Unable to get port attr");
     sctk_abort();
@@ -170,11 +171,11 @@ sctk_net_ibv_qp_init_attr(struct ibv_cq* send_cq, struct ibv_cq* recv_cq, struct
   attr.send_cq = send_cq;
   attr.recv_cq = recv_cq;
   attr.srq = srq;
-  attr.cap.max_send_wr = IB_TX_DEPTH;
-  attr.cap.max_recv_wr = IB_RX_DEPTH;
-  attr.cap.max_send_sge = IB_MAX_SG_SQ;
-  attr.cap.max_recv_sge = IB_MAX_SG_RQ;
-  attr.cap.max_inline_data = IB_MAX_INLINE;
+  attr.cap.max_send_wr = ibv_qp_tx_depth;
+  attr.cap.max_recv_wr = ibv_qp_rx_depth;
+  attr.cap.max_send_sge = ibv_max_sg_sq;
+  attr.cap.max_recv_sge = ibv_max_sg_rq;
+  attr.cap.max_inline_data = ibv_max_inline;
   /* RC Transport by default */
   attr.qp_type = IBV_QPT_RC;
   /* if this value is set to 1, all work requests (WR) will
@@ -196,7 +197,7 @@ sctk_net_ibv_qp_state_init_attr(int *flags)
   /* pkey index, normally 0 */
   attr.pkey_index = 0;
   /* physical port number (1 .. n) */
-  attr.port_num = IBV_ADM_PORT;
+  attr.port_num = ibv_adm_port;
   attr.qp_access_flags =
     IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE |
     IBV_ACCESS_REMOTE_READ;
@@ -218,7 +219,7 @@ sctk_net_ibv_qp_state_rtr_attr(sctk_net_ibv_qp_exchange_keys_t* keys, int *flags
   attr.path_mtu = IBV_MTU_512;
   /* QP number of remote QP */
   /* maximul number if resiyrces for incoming RDMA request */
-  attr.max_dest_rd_atomic = IB_RMDA_DEST_DEPTH;
+  attr.max_dest_rd_atomic = ibv_rdma_dest_depth;
   /* maximum RNR NAK timer (recommanded value: 12) */
   attr.min_rnr_timer = 12;
 
@@ -233,7 +234,7 @@ sctk_net_ibv_qp_state_rtr_attr(sctk_net_ibv_qp_exchange_keys_t* keys, int *flags
   attr.ah_attr.sl = 0;
   /* source path bits */
   attr.ah_attr.src_path_bits = 0;
-  attr.ah_attr.port_num = IBV_ADM_PORT;
+  attr.ah_attr.port_num = ibv_adm_port;
 
   *flags = IBV_QP_STATE |
     IBV_QP_AV |
@@ -263,7 +264,7 @@ sctk_net_ibv_qp_state_rts_attr( uint32_t psn, int *flags)
   /* packet sequence number */
   attr.sq_psn = psn;
   /* number or outstanding RDMA reads and atomic operations allowed */
-  attr.max_rd_atomic = IB_RMDA_DEST_DEPTH;
+  attr.max_rd_atomic = ibv_rdma_dest_depth;
 
   *flags = IBV_QP_STATE |
     IBV_QP_TIMEOUT |
@@ -296,7 +297,7 @@ sctk_net_ibv_cq_init(sctk_net_ibv_qp_rail_t* rail)
 {
   struct ibv_cq* cq;
 
-  cq = ibv_create_cq (rail->context, IB_TX_DEPTH, NULL, NULL, 0);
+  cq = ibv_create_cq (rail->context, ibv_qp_tx_depth, NULL, NULL, 0);
 
   if (!cq)
   {
@@ -379,7 +380,7 @@ sctk_net_ibv_cq_print_status (enum ibv_wc_status status)
       return ("IBV_WC_GENERAL_ERR: general error");
       break;
   }
-  return ("");
+  return ("ERROR NOT KNOWN");
 }
 
 
@@ -388,19 +389,29 @@ sctk_net_ibv_poll_check_wc(struct ibv_wc wc, sctk_net_ibv_allocator_type_t type)
 
   if (wc.status != IBV_WC_SUCCESS)
   {
-    sctk_error ("Work ID is %d", wc.wr_id);
-    sctk_error ("Status : %s", sctk_net_ibv_cq_print_status(wc.status));
-    sctk_error ("ERROR Vendor: %d", wc.vendor_err);
-    sctk_error ("Byte_len: %d", wc.byte_len);
+    sctk_net_ibv_ibuf_t* ibuf;
 
-    sctk_net_ibv_comp_rc_sr_error_handler(wc);
+    ibuf = (sctk_net_ibv_ibuf_t*) wc.wr_id;
+    assume(ibuf);
 
+    sctk_error ("\033[1;31m\nIB - FATAL ERROR FROM PROCESS %d\n"
+                "################################\033[0m\n"
+                "Work ID is   : %d\n"
+                "Status       : %s\n"
+                "ERROR Vendor : %d\n"
+                "Byte_len     : %d\n"
+                "Flag         : %s\n"
+                "\033[1;31m################################\033[0m\n",
+                sctk_process_rank,
+                wc.wr_id, sctk_net_ibv_cq_print_status(wc.status),
+                wc.vendor_err, wc.byte_len, sctk_net_ibv_ibuf_print_flag(ibuf->flag));
+
+#if 0
     switch (type)
     {
       case IBV_CHAN_RC_SR:
         break;
 
-#if 0
       case IBV_CHAN_RC_RDMA | IBV_CHAN_RECV:
         sctk_net_ibv_comp_rc_rdma_error_handler_recv(wc);
         break;
@@ -408,13 +419,12 @@ sctk_net_ibv_poll_check_wc(struct ibv_wc wc, sctk_net_ibv_allocator_type_t type)
       case IBV_CHAN_RC_RDMA | IBV_CHAN_SEND:
         sctk_net_ibv_comp_rc_rdma_error_handler_send(wc);
         break;
-#endif
 
       default:
         assume(0);
         break;
     }
-
+#endif
     sctk_abort();
   }
 }
@@ -466,19 +476,19 @@ sctk_net_ibv_cq_garbage_collector(struct ibv_cq* cq, int nb_pending, void (*ptr_
   int ne = 0;
   int i;
 
-  sctk_debug("garbage");
+  sctk_nodebug("garbage");
 
   for (i = 0; i < nb_pending; ++i)
   {
     ne = ibv_poll_cq (cq, 1, &wc);
     if (ne)
     {
-      sctk_debug("%d elements found", ne);
+      sctk_nodebug("%d elements found", ne);
 
       sctk_net_ibv_poll_check_wc(wc, type);
       ptr_func(&wc);
     } else {
-      return;
+      return 0;
     }
   }
 return ne;
@@ -511,8 +521,8 @@ sctk_net_ibv_srq_init_attr()
 
   memset (&attr, 0, sizeof (struct ibv_srq_init_attr));
 
-  attr.attr.max_wr = IB_RX_DEPTH;
-  attr.attr.max_sge = IB_MAX_SG_RQ;
+  attr.attr.max_wr = ibv_qp_rx_depth;
+  attr.attr.max_sge = ibv_max_sg_rq;
 
   return attr;
 }

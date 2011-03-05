@@ -23,11 +23,13 @@
 
 #include <sctk.h>
 #include "sctk_infiniband_config.h"
+#include "sctk_infiniband_comp_rc_sr.h"
+#include "sctk_infiniband_comp_rc_rdma.h"
 
 /* default constants */
-#define IBV_EAGER_THRESHOLD (16 * 1024)
-#define IBV_QP_TX_DEPTH     100
-#define IBV_QP_RC_DEPTH     100
+#define IBV_EAGER_THRESHOLD (4 * 1024)
+#define IBV_QP_TX_DEPTH     1000
+#define IBV_QP_RC_DEPTH     1000
 #define IBV_MAX_SG_SQ       4
 #define IBV_MAX_SG_RQ       4
 #define IBV_MAX_INLINE      128
@@ -42,7 +44,7 @@
 #define IBV_ADM_PORT        1
 
 #define IBV_RDMA_DEPTH       4
-#define IBV_RDMA_DEST_DEPTH  1
+#define IBV_RDMA_DEST_DEPTH  4
 
 /* global values */
 int  ibv_eager_threshold  = IBV_EAGER_THRESHOLD;
@@ -63,7 +65,77 @@ int  ibv_adm_port         = IBV_ADM_PORT;
 int  ibv_rdma_depth       = IBV_RDMA_DEPTH;
 int  ibv_rdma_dest_depth  = IBV_RDMA_DEST_DEPTH;
 
-sctk_net_ibv_config_init()
+
+void sctk_net_ibv_config_check()
+{
+
+  if (ibv_eager_threshold < (RC_SR_HEADER_SIZE + sizeof(sctk_net_ibv_rc_rdma_request_t)))
+  {
+      goto error;
+  }
+  if (ibv_eager_threshold < (RC_SR_HEADER_SIZE + sizeof(sctk_net_ibv_rc_rdma_coll_request_t)))
+  {
+      goto error;
+  }
+  if (ibv_eager_threshold < (RC_SR_HEADER_SIZE + sizeof(sctk_net_ibv_rc_rdma_request_ack_t)))
+  {
+      goto error;
+  }
+  if (ibv_eager_threshold < (RC_SR_HEADER_SIZE + sizeof(sctk_net_ibv_rc_rdma_done_t)))
+  {
+      goto error;
+  }
+  return;
+
+error:
+  sctk_error("Wrong IB configuration");
+  sctk_abort();
+  return;
+}
+
+void sctk_net_ibv_config_print()
+{
+  if (sctk_process_rank == 0)
+  {
+    fprintf(stderr,
+        "############# IB CONFIGURATION #############\n"
+        "ibv_eager_threshold  = %d\n"
+        "ibv_qp_tx_depth      = %d\n"
+        "ibv_qp_rx_depth      = %d\n"
+        "ibv_max_sg_sq        = %d\n"
+        "ibv_max_sg_rq        = %d\n"
+        "ibv_max_inline       = %d\n"
+        "ibv_max_ibufs        = %d\n"
+        "ibv_max_srq_ibufs    = %d\n"
+        "ibv_srq_credit_limit = %d\n"
+        "ibv_rdvz_protocol    = %d\n"
+        "ibv_wc_in_number     = %d\n"
+        "ibv_wc_out_number    = %d\n"
+        "ibv_max_mr           = %d\n"
+        "ibv_adm_port         = %d\n"
+        "ibv_rdma_depth       = %d\n"
+        "ibv_rdma_dest_depth  = %d\n"
+        "############# IB CONFIGURATION #############\n",
+        ibv_eager_threshold,
+        ibv_qp_tx_depth,
+        ibv_qp_rx_depth,
+        ibv_max_sg_sq,
+        ibv_max_sg_rq,
+        ibv_max_inline,
+        ibv_max_ibufs,
+        ibv_max_srq_ibufs,
+        ibv_srq_credit_limit,
+        ibv_rdvz_protocol,
+        ibv_wc_in_number,
+        ibv_wc_out_number,
+        ibv_max_mr,
+        ibv_adm_port,
+        ibv_rdma_depth,
+        ibv_rdma_dest_depth);
+  }
+}
+
+void sctk_net_ibv_config_init()
 {
   char* value;
 
@@ -116,5 +188,12 @@ sctk_net_ibv_config_init()
 
   if ( (value = getenv("MPC_IBV_RDMA_DEST_DEPTH")) != NULL )
     ibv_rdvz_protocol = IBV_RDMA_DEST_DEPTH;
+
+
+  /*
+   * Check if the variables are well set and print them
+   * */
+  sctk_net_ibv_config_check();
+  sctk_net_ibv_config_print();
 }
 

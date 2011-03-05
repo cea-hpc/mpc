@@ -118,12 +118,12 @@ void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,
 
 sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null)
 {
-  int i;
+//  int i;
   sctk_net_ibv_ibuf_t* ibuf;
   int boolean = 1;
 
-  int nb_freed;
-  int total_freed = 0;
+//  int nb_freed;
+//  int total_freed = 0;
 
   while (1)
   {
@@ -273,6 +273,7 @@ void sctk_net_ibv_ibuf_recv_init(
   ibuf->desc.wr.send.num_sge = 1;
   ibuf->desc.wr.send.sg_list = &(ibuf->desc.sg_entry);
   ibuf->desc.sg_entry.length = ibv_eager_threshold;
+
   ibuf->desc.sg_entry.lkey = ibuf->region->mmu_entry->mr->lkey;
   ibuf->desc.sg_entry.addr = (uintptr_t) (ibuf->buffer);
 

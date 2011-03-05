@@ -26,6 +26,7 @@
 #include "sctk_infiniband_mmu.h"
 #include "sctk_infiniband_qp.h"
 #include "sctk_infiniband_const.h"
+#include "sctk_infiniband_config.h"
 #include <infiniband/verbs.h>
 
 /*-----------------------------------------------------------
@@ -47,10 +48,11 @@ sctk_net_ibv_mmu_new(sctk_net_ibv_qp_rail_t* rail)
   /* get the page-size of the system */
   page_size = getpagesize ();
 
+  /* TODO move it */
   /* if we ask for more max_mr that the card supports */
-  if (SCTK_MAX_MR_ALLOWED > rail->max_mr)
+  if (ibv_max_mr > rail->max_mr)
   {
-    sctk_error ("The value of SCTK_MAX_MR_ALLOWED is greater that the"
+    sctk_error ("The value of \"ibv_max_mr\"is greater that the"
         "number of mr supported by the card (which is %d)",
         rail->max_mr);
     sctk_abort();
@@ -59,9 +61,9 @@ sctk_net_ibv_mmu_new(sctk_net_ibv_qp_rail_t* rail)
   /*allocate soft mmu entries */
   mmu = sctk_malloc (sizeof(sctk_net_ibv_mmu_t));
   assume(mmu);
-  mmu->entry = sctk_malloc (SCTK_MAX_MR_ALLOWED * sizeof (sctk_net_ibv_mmu_entry_t*));
+  mmu->entry = sctk_malloc (ibv_max_mr * sizeof (sctk_net_ibv_mmu_entry_t*));
   assume(mmu->entry);
-  for (i = 0; i < SCTK_MAX_MR_ALLOWED; ++i)
+  for (i = 0; i < ibv_max_mr; ++i)
   {
     mmu->entry[i] = sctk_malloc(sizeof(sctk_net_ibv_mmu_entry_t));
     assume(mmu->entry[i]);
@@ -70,7 +72,7 @@ sctk_net_ibv_mmu_new(sctk_net_ibv_qp_rail_t* rail)
   sctk_thread_mutex_init(&mmu->lock, NULL);
   mmu->entry_nb = 0;
 
-  for (i = 0; i < SCTK_MAX_MR_ALLOWED; i++)
+  for (i = 0; i < ibv_max_mr; i++)
   {
     mmu->entry[i]->status = ibv_entry_free;
   }
@@ -100,7 +102,7 @@ sctk_net_ibv_mmu_register (
   }
 
   sctk_thread_mutex_lock (&mmu->lock);
-  for (i = 0; i < SCTK_MAX_MR_ALLOWED; i++)
+  for (i = 0; i < ibv_max_mr; i++)
   {
     if (mmu->entry[i]->status == ibv_entry_free)
     {

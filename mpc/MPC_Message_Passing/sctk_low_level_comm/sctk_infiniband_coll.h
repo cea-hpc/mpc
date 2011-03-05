@@ -33,6 +33,13 @@ struct sctk_list  broadcast_fifo;
 struct sctk_list  init_barrier_fifo;
 struct sctk_list  reduce_fifo;
 
+typedef struct
+{
+  unsigned int src_process;
+  size_t size;
+  void* payload;
+} sctk_net_ibv_collective_pending_t;
+
 /*-----------------------------------------------------------
  *  COLLECTIVE FUNCTIONS
  *----------------------------------------------------------*/
@@ -42,7 +49,7 @@ struct sctk_list  reduce_fifo;
   void*
   sctk_net_ibv_collective_push(struct sctk_list* list, sctk_net_ibv_rc_sr_msg_header_t* msg);
 
-  sctk_net_ibv_rc_sr_msg_header_t*
+  sctk_net_ibv_collective_pending_t*
 sctk_net_ibv_collective_lookup_src(struct sctk_list* list, const int src);
 
   void

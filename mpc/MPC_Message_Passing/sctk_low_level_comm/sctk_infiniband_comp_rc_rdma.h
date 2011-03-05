@@ -37,18 +37,21 @@
 #include "sctk_list.h"
 #include "sctk_infiniband_qp.h"
 
+/* define which protocol use for rdnvz messages */
 typedef enum
 {
-  RC_RDMA_REQ_WRITE                  = 0,
-  RC_RDMA_REQ_READ                   = 1,
-} sctk_net_ibv_rc_rdma_request_type_t;
+  RC_RDMA_REQ_WRITE                  = 1 << 0,
+  RC_RDMA_REQ_READ                   = 1 << 1,
+} sctk_net_ibv_rc_rdma_request_protocol_t;
 
+/* define which type is used for a rdvz entry */
 typedef enum
 {
   SEND_ENTRY  = 0,
   RECV_ENTRY  = 1,
 } sctk_net_ibv_rc_rdma_entry_type_t;
 
+/* process entry */
 typedef struct
 {
   sctk_thread_mutex_t lock;
@@ -59,48 +62,50 @@ typedef struct
   int                     ready;     /* if the qp is ready */
 } sctk_net_ibv_rc_rdma_process_t;
 
-
-
-/* RC_RDMA entry */
+/* structure where information about rdvz message are stored */
 typedef struct
 {
   volatile int                    ready;
-  /* MPC message header */
-  sctk_thread_ptp_message_t       msg_header;
-  sctk_net_ibv_mmu_entry_t        *mmu_entry;
-  sctk_thread_ptp_message_t       *msg_ptr;
-  void                            *aligned_ptr;
+  sctk_net_ibv_rc_rdma_request_protocol_t protocol;
+  sctk_net_ibv_rc_sr_msg_type_t           msg_type;
 
+  sctk_thread_ptp_message_t       msg_header;
+  sctk_thread_ptp_message_t       *msg_header_ptr;
+  void                            *msg_payload_aligned_ptr;
+  void                            *msg_payload_ptr;
+
+  sctk_net_ibv_mmu_entry_t        *mmu_entry;
   sctk_net_ibv_rc_rdma_process_t  *entry_rc_rdma;
-  sctk_net_ibv_rc_rdma_request_type_t type;
 
   int                             directly_pinned;
   void*                           remote_entry;
-  void*                           *ptr; /* pointer */
   size_t                          requested_size;
   int                             src_process;
   uint32_t                        psn;  /* Packet Sequence Number */
 
   union
   {
-    int directly_pinned;
+    struct
+    {
 
-  } send;
-  union
-  {
+    } send;
 
-  } recv;
+    struct
+    {
+
+    } recv;
+  };
 } sctk_net_ibv_rc_rdma_entry_t;
 
 
-
+/* TODO: refactor the 2 next structures */
 typedef struct
 {
+  sctk_net_ibv_rc_rdma_request_protocol_t protocol;
+  sctk_net_ibv_rc_sr_msg_type_t           msg_type;
+
   size_t                    requested_size;
-  sctk_thread_ptp_message_t msg_header;
   int                       src_process;
-  uint32_t                  psn;  /* Packet Sequence Number */
-  sctk_net_ibv_rc_rdma_request_type_t type;
 
   sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma;
   sctk_net_ibv_rc_rdma_entry_t* entry;
@@ -109,7 +114,28 @@ typedef struct
       uintptr_t   address;
       uint32_t    rkey;
     } read_req;
+
+  sctk_thread_ptp_message_t msg_header;
+  uint32_t                  psn;  /* Packet Sequence Number */
 } sctk_net_ibv_rc_rdma_request_t;
+
+
+typedef struct
+{
+  sctk_net_ibv_rc_rdma_request_protocol_t protocol;
+  sctk_net_ibv_rc_sr_msg_type_t           msg_type;
+
+  size_t                    requested_size;
+  int                       src_process;
+
+  sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma;
+  sctk_net_ibv_rc_rdma_entry_t* entry;
+
+  struct {
+      uintptr_t   address;
+      uint32_t    rkey;
+    } read_req;
+} sctk_net_ibv_rc_rdma_coll_request_t;
 
 
 typedef struct
@@ -144,8 +170,6 @@ sctk_net_ibv_comp_rc_rdma_allocate_init(
     unsigned int rank,
     sctk_net_ibv_qp_local_t *local);
 
-//void
-//sctk_net_ibv_comp_rc_rdma_free(sctk_net_ibv_rc_rdma_process_t* entry);
 
 void
 sctk_net_ibv_comp_rc_rdma_send_request(
@@ -169,6 +193,17 @@ sctk_net_ibv_com_rc_rdma_read_finish(
     sctk_net_ibv_ibuf_t* ibuf,
     sctk_net_ibv_qp_local_t* rc_sr_local,
     int lookup_mode);
+
+
+void
+sctk_net_ibv_comp_rc_rdma_send_coll_request(
+    sctk_net_ibv_qp_rail_t   *rail,
+    sctk_net_ibv_qp_local_t* local_rc_sr,
+    void *msg,
+    int dest_process,
+    size_t size,
+    sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma,
+    sctk_net_ibv_rc_sr_msg_type_t type);
 #if 0
 
 /*-----------------------------------------------------------

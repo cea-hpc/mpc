@@ -82,6 +82,7 @@ sctk_net_ibv_comp_rc_sr_send(
   msg_header->msg_type = type;
   msg_header->src_process = sctk_process_rank;
   msg_header->size = size + RC_SR_HEADER_SIZE;
+  msg_header->payload_size = size;
 
   /* If the psn variable is != NULL, the PSN has to be computed before
    * sending the message */
@@ -263,8 +264,8 @@ sctk_net_ibv_rc_sr_poll_send(
       break;
 
     default: assume(0); break;
-
   }
+
 }
 
 void
@@ -286,7 +287,7 @@ sctk_net_ibv_rc_sr_poll_recv(
   ibuf = (sctk_net_ibv_ibuf_t*) wc->wr_id;
   msg_header = ((sctk_net_ibv_rc_sr_msg_header_t*) ibuf->buffer);
 
-  if (sctk_process_rank == 1)
+//  if (sctk_process_rank == 1)
     sctk_nodebug("New Recv cq %p, flag %d", ibuf, ibuf->flag);
 
   msg_type = msg_header->msg_type;
@@ -296,6 +297,7 @@ sctk_net_ibv_rc_sr_poll_recv(
     sctk_nodebug("Lookup mode for dest %d and ESN %lu", dest, sctk_net_ibv_sched_get_esn(dest));
   }
 
+  sctk_nodebug("MSG TYPE : %d", msg_type);
   switch(msg_type) {
 
     case RC_SR_EAGER:
@@ -404,21 +406,20 @@ sctk_net_ibv_rc_sr_poll_recv(
 
     case RC_SR_BCAST:
       sctk_nodebug("Broadcast msg received");
-      sctk_net_ibv_collective_push(&broadcast_fifo, msg_header);
+      sctk_net_ibv_collective_push_rc_sr(&broadcast_fifo, msg_header);
       break;
 
     case RC_SR_REDUCE:
       sctk_nodebug("Reduce msg received");
-      sctk_net_ibv_collective_push(&reduce_fifo, msg_header);
+      sctk_net_ibv_collective_push_rc_sr(&reduce_fifo, msg_header);
       break;
 
     case RC_SR_BCAST_INIT_BARRIER:
       sctk_nodebug("Broadcast barrier msg received");
-      sctk_net_ibv_collective_push(&init_barrier_fifo, msg_header);
+      sctk_net_ibv_collective_push_rc_sr(&init_barrier_fifo, msg_header);
       break;
   }
 
-//  --ibuf_free_srq_nb;
   sctk_nodebug("Buffer %d posted", ibuf_free_srq_nb);
   sctk_net_ibv_ibuf_release(ibuf, 1);
   sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
@@ -478,7 +479,3 @@ sctk_net_ibv_comp_rc_sr_error_handler(struct ibv_wc wc)
   ibuf = (sctk_net_ibv_ibuf_t*) wc.wr_id;
   sctk_nodebug("New Send cq %p, flag %d", ibuf, ibuf->flag);
 }
-
-
-
-

@@ -87,6 +87,16 @@ void
 sctk_net_ibv_allocator_rc_rdma_process_next_request(
     sctk_net_ibv_rc_rdma_process_t *entry_rc_rdma);
 
+
+void
+sctk_net_ibv_allocator_send_coll_message(
+    sctk_net_ibv_qp_rail_t   *rail,
+    sctk_net_ibv_qp_local_t* local_rc_sr,
+    void *msg,
+    int dest_process,
+    size_t size,
+    sctk_net_ibv_rc_sr_msg_type_t type);
+
 /*-----------------------------------------------------------
  *  SEARCH FUNCTIONS
  *----------------------------------------------------------*/

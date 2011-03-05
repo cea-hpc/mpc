@@ -28,8 +28,8 @@ typedef enum
 {
   IBV_CHAN_RC_SR    = 1 << 0,
   IBV_CHAN_RC_RDMA  = 1 << 1,
-  IBV_CHAN_SEND  = 1 << 2,
-  IBV_CHAN_RECV  = 1 << 3,
+  IBV_CHAN_SEND     = 1 << 2,
+  IBV_CHAN_RECV     = 1 << 3,
 } sctk_net_ibv_allocator_type_t;
 
 /* source of the message. Simpluy the destruction
@@ -48,26 +48,6 @@ typedef enum
 /* FIXME cant change 1 to something else */
 #define SCTK_PENDING_IN_NUMBER 100
 #define SCTK_PENDING_OUT_NUMBER 100
-
-/*-----------------------------------------------------------
- *  MMU
- *----------------------------------------------------------*/
-/* number of max number of memory entries pinned */
-#define SCTK_MAX_MR_ALLOWED 20000
-
-/*-----------------------------------------------------------
- *  QPs
- *----------------------------------------------------------*/
-#define IB_TX_DEPTH 1000
-#define IB_RX_DEPTH 1000
-#define IB_MAX_SG_SQ 4
-#define IB_MAX_SG_RQ 4
-#define IB_MAX_INLINE 128
-/* maximum number of resources for incoming RDMA requests */
-#define IB_RMDA_DEPTH 4
-#define IB_RMDA_DEST_DEPTH 1
-/* physical port number to use */
-#define IBV_ADM_PORT 1
 
 /*-----------------------------------------------------------
  *  DEBUG

@@ -23,7 +23,9 @@
 
 #include "sctk_list.h"
 #include "sctk_infiniband_allocator.h"
+#include "sctk_infiniband_comp_rc_rdma.h"
 #include "sctk_infiniband_const.h"
+#include "sctk_infiniband_config.h"
 #include "sctk_bootstrap.h"
 #include "sctk.h"
 #include "sctk_thread.h"
@@ -197,4 +199,55 @@ void sctk_net_ibv_allocator_ptp_lookup_all(int dest)
   sctk_net_ibv_sched_poll_pending();
 
   sctk_net_ibv_allocator_ptp_lookup(dest, IBV_CHAN_RC_SR);
+}
+
+
+/**
+ *  Send a collective message to a specific process. According to the size of
+ *  the process, the message will use eager or rdvz protocol
+ *  \param
+ *  \return
+ */
+void
+sctk_net_ibv_allocator_send_coll_message(
+    sctk_net_ibv_qp_rail_t   *rail,
+    sctk_net_ibv_qp_local_t* local_rc_sr,
+    void *msg,
+    int dest_process,
+    size_t size,
+    sctk_net_ibv_rc_sr_msg_type_t type)
+{
+
+  /* EAGER MODE */
+  if ( (size + sizeof(sctk_thread_ptp_message_t)) + RC_SR_HEADER_SIZE <= ibv_eager_threshold)
+  {
+    sctk_nodebug("Send EAGER collective");
+
+    sctk_net_ibv_comp_rc_sr_send_ptp_message (
+        rc_sr_local, msg,
+        dest_process, size, type);
+
+  } else { /* RDVZ MODE */
+//    assume(0);
+    sctk_nodebug("Send RDVZ collective");
+    sctk_net_ibv_rc_rdma_process_t* rc_rdma_entry;
+
+    sctk_net_ibv_allocator_lock(dest_process, IBV_CHAN_RC_RDMA);
+   rc_rdma_entry = sctk_net_ibv_allocator_get(dest_process, IBV_CHAN_RC_RDMA);
+  /*
+   * check if the dest process exists in the RDVZ remote list.
+   * If it doesn't, we create a structure for the RC_RDMA entry
+   */
+   if (!rc_rdma_entry)
+   {
+     rc_rdma_entry = sctk_net_ibv_comp_rc_rdma_allocate_init(dest_process, rc_rdma_local);
+     sctk_net_ibv_allocator_register(dest_process, rc_rdma_entry, IBV_CHAN_RC_RDMA);
+   }
+   sctk_net_ibv_allocator_unlock(dest_process, IBV_CHAN_RC_RDMA);
+
+   sctk_net_ibv_comp_rc_rdma_send_coll_request(
+     rail, local_rc_sr, msg,
+     dest_process, size, rc_rdma_entry, type);
+  }
+  DBG_E(1);
 }
