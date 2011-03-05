@@ -429,6 +429,16 @@ int main(){
 }
 EOF
 fi
+if test "$1" = "fprintf" ; then
+cat  << EOF  > ${SCTK_CONF_C}
+#include <stdio.h>
+
+int main() {
+	fprintf(stdout,"Hello World!!!\n");
+	return 0;
+}
+EOF
+fi
 if test "$1" = "vfprintf" ; then 
 cat  << EOF  > ${SCTK_CONF_C}
 #include <string.h>
@@ -471,6 +481,33 @@ int main(){
     socklen_t* tmp2;
     $1(1,tmp1,tmp2);
     return 0;
+}
+EOF
+fi
+if test "$1" = "longjmp"; then
+cat << EOF > ${SCTK_CONF_C}
+#include <setjmp.h>
+
+int main()
+{
+        jmp_buf buf;
+        if (setjmp(buf) == 0)
+        {
+                longjmp(buf,5);
+        }
+        return 0;
+}
+EOF
+fi
+if test "$1" = "setjmp"; then
+cat << EOF > ${SCTK_CONF_C}
+#include <setjmp.h>
+
+int main()
+{
+        jmp_buf buf;
+        setjmp(buf);
+        return 0;
 }
 EOF
 fi
