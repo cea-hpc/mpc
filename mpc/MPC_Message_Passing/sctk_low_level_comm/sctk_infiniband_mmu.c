@@ -61,21 +61,12 @@ sctk_net_ibv_mmu_new(sctk_net_ibv_qp_rail_t* rail)
   /*allocate soft mmu entries */
   mmu = sctk_malloc (sizeof(sctk_net_ibv_mmu_t));
   assume(mmu);
-  mmu->entry = sctk_malloc (ibv_max_mr * sizeof (sctk_net_ibv_mmu_entry_t*));
+  mmu->entry = sctk_malloc (ibv_max_mr * sizeof (sctk_net_ibv_mmu_entry_t));
   assume(mmu->entry);
-  for (i = 0; i < ibv_max_mr; ++i)
-  {
-    mmu->entry[i] = sctk_malloc(sizeof(sctk_net_ibv_mmu_entry_t));
-    assume(mmu->entry[i]);
-  }
+  memset(mmu->entry, 0, ibv_max_mr * sizeof(sctk_net_ibv_mmu_entry_t));
 
   sctk_thread_mutex_init(&mmu->lock, NULL);
   mmu->entry_nb = 0;
-
-  for (i = 0; i < ibv_max_mr; i++)
-  {
-    mmu->entry[i]->status = ibv_entry_free;
-  }
 
   rail->mmu = mmu;
 
@@ -104,29 +95,29 @@ sctk_net_ibv_mmu_register (
   sctk_thread_mutex_lock (&mmu->lock);
   for (i = 0; i < ibv_max_mr; i++)
   {
-    if (mmu->entry[i]->status == ibv_entry_free)
+    if (mmu->entry[i].status == ibv_entry_free)
     {
-      mmu->entry[i]->status = ibv_entry_used;
+      mmu->entry[i].status = ibv_entry_used;
       sctk_thread_mutex_unlock (&mmu->lock);
 
       sctk_nodebug("MMU entry %d is free", i);
 
       sctk_nodebug("\t\t\t\tUse PD %p", local->pd);
-      mmu->entry[i]->mr = ibv_reg_mr (local->pd,
+      mmu->entry[i].mr = ibv_reg_mr (local->pd,
           ptr, size,
             IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE |
             IBV_ACCESS_REMOTE_READ);
 
-      if (mmu->entry[i]->mr == NULL)
+      if (mmu->entry[i].mr == NULL)
       {
         sctk_error ("Cannot register adm MR.");
         sctk_abort();
       }
-      mmu->entry[i]->ptr    = ptr;
-      mmu->entry[i]->size   = size;
+      mmu->entry[i].ptr    = ptr;
+      mmu->entry[i].size   = size;
       mmu->entry_nb++;
 
-      return mmu->entry[i];
+      return &mmu->entry[i];
     }
   }
   sctk_thread_mutex_unlock (&mmu->lock);

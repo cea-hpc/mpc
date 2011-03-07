@@ -31,9 +31,9 @@
 /* enumeration for entry state  */
 typedef enum
 {
+  ibv_entry_free = 0,
   ibv_entry_used,
 //  ibv_entry_perm,
-  ibv_entry_free
 } sctk_net_ibv_mmu_entry_status_t;
 
 /* entry to the soft MMU */
@@ -51,7 +51,7 @@ typedef struct sctk_net_ibv_mmu_s
 {
   sctk_thread_mutex_t lock;     /* MMU lock */
   int entry_nb;             /* Number of entries */
-  sctk_net_ibv_mmu_entry_t** entry;  /* entries */
+  sctk_net_ibv_mmu_entry_t* entry;  /* entries */
 } sctk_net_ibv_mmu_t;
 
 #include "sctk_infiniband_qp.h"
