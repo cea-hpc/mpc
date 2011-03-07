@@ -22,16 +22,36 @@
 /* ######################################################################## */
 
 #include "sctk.h"
+#include "sctk_list.h"
 #include "sctk_infiniband_ibufs.h"
 #include "sctk_infiniband_config.h"
 #include "sctk_infiniband_allocator.h"
 #include "sctk_infiniband_mmu.h"
 #include "sctk_spinlock.h"
 
+/* lock on ibuf interface */
+static sctk_spinlock_t                    ibuf_lock;
+static struct sctk_net_ibv_ibuf_region_s  *ibuf_begin_region = NULL;
+static struct sctk_net_ibv_ibuf_region_s  *ibuf_last_region = NULL;
+
+/* list of free buffers. Once a buffer is freed, it is added to this list */
+static struct sctk_net_ibv_ibuf_s         *ibuf_free_header = NULL;
+
 uint32_t                     ibuf_free_ibuf_nb = 0;
 uint32_t                     ibuf_got_ibuf_nb = 0;
 uint32_t                     ibuf_free_srq_nb = 0;
 uint32_t                     ibuf_got_srq_nb = 0;
+
+uint32_t                     ibv_got_recv_wqe = 0;
+uint32_t                     ibv_free_recv_wqe = 0;
+
+uint32_t                     ibv_got_send_wqe = 0;
+uint32_t                     ibv_free_send_wqe = 0;
+
+/* pending wqe. These WQE are queued when all
+ * the QP's WQE are busy */
+struct sctk_list  pending_send_wqe;
+
 
 /* RC SR structures */
 extern  sctk_net_ibv_qp_local_t *rc_sr_local;
@@ -44,6 +64,25 @@ void sctk_net_ibv_ibuf_new()
   ibuf_got_ibuf_nb = 0;
   ibuf_free_srq_nb = 0;
   ibuf_got_srq_nb = 0;
+
+  ibv_got_recv_wqe = 0;
+  ibv_free_recv_wqe = 0;
+  ibv_got_send_wqe = 0;
+  ibv_free_send_wqe = 0;
+
+  sctk_list_new(&pending_send_wqe, 1);
+}
+
+void sctk_net_ibv_ibuf_send_get_wqe()
+{
+  ++ibv_got_send_wqe;
+  --ibv_free_send_wqe;
+}
+
+void sctk_net_ibv_ibuf_send_free_wqe()
+{
+  --ibv_got_send_wqe;
+  ++ibv_free_send_wqe;
 }
 
 void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,
@@ -78,7 +117,15 @@ void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,
   region->nb = nb_ibufs;
 
   /* TODO: change for multiple regions */
-  ibuf_begin_region = region;
+  if (ibuf_begin_region == NULL)
+    ibuf_begin_region = region;
+
+  if (!ibuf_last_region)
+  {
+    ibuf_last_region = region;
+  } else {
+    ibuf_last_region = ibuf_last_region->next_region;
+  }
 
   /* TODO: register memory for each region */
   sctk_nodebug("Local : %p", local);
@@ -88,8 +135,7 @@ void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,
   assume (region->mmu_entry);
 
   /* TODO: sourround by locks for multiple function use */
-  ibuf_free_ibuf_nb = nb_ibufs;
-  ibuf_free_header = (sctk_net_ibv_ibuf_t*) ibuf;
+  ibuf_free_ibuf_nb += nb_ibufs;
 
   for(i=0; i < nb_ibufs - 1; ++i)
   {
@@ -107,18 +153,19 @@ void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,
   /* init last ibuf */
   ibuf_ptr = (sctk_net_ibv_ibuf_t*) ibuf + nb_ibufs - 1;
   ibuf_ptr->region = region;
-  ibuf_ptr->desc.next = NULL;
+  ibuf_ptr->desc.next = ibuf_free_header;
   ibuf_ptr->size = 0;
   ibuf_ptr->buffer = (unsigned char*) ((char*) ptr + (nb_ibufs - 1) * ibv_eager_threshold);
   assume(ibuf_ptr->buffer);
   ibuf_ptr->flag = FREE_FLAG;
+
+  ibuf_free_header = (sctk_net_ibv_ibuf_t*) ibuf;
 
   sctk_nodebug("END ibuf initialization");
 }
 
 sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null)
 {
-//  int i;
   sctk_net_ibv_ibuf_t* ibuf;
   int boolean = 1;
 
@@ -132,29 +179,27 @@ sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null)
       if (ibuf_free_header != NULL)
       {
         goto resume;
+      } else if (ibv_no_memory_limitation) {
+        sctk_net_ibv_ibuf_init(rail, rc_sr_local, ibv_size_ibufs_chunk);
+        if (ibv_verbose_level > 0)
+          sctk_debug("[ib] Allocation of %d more buffers (ibuf_free_ibuf_nb %d - ibuf_got_ibuf_nb %d)", ibv_size_ibufs_chunk, ibuf_free_ibuf_nb, ibuf_got_ibuf_nb, ibuf_free_header);
+
+        goto resume;
       }
       if (boolean)
       {
         boolean = 0;
-        sctk_nodebug("No more buffer available (ibv_got_srq_nb %d, ibv_free_srq_ibufs %d, ibuf_free_ibuf_nb %d, ibuf_got_ibuf_nb %d) ", ibuf_got_srq_nb, ibuf_free_srq_nb, ibuf_free_ibuf_nb, ibuf_got_ibuf_nb);
+//        sctk_debug("No more buffer available (ibv_got_srq_nb %d, ibv_free_srq_ibufs %d, ibuf_free_ibuf_nb %d, ibuf_got_ibuf_nb %d, ibuf_free_header %p) ", ibuf_got_srq_nb, ibuf_free_srq_nb, ibuf_free_ibuf_nb, ibuf_got_ibuf_nb, ibuf_free_header);
       }
+
 
       if (return_on_null)
       {
         return NULL;
       }
-//      else {
-//        do
-//        {
-//          nb_freed = sctk_net_ibv_cq_garbage_collector(rc_sr_local->send_cq, SCTK_PENDING_OUT_NUMBER, sctk_net_ibv_rc_sr_send_cq, IBV_CHAN_RC_SR | IBV_CHAN_SEND);
-//          total_freed+=nb_freed;
-//          sctk_debug("nb freed : %d", nb_freed);
-//        } while(nb_freed > 0);
-//      }
+
       sctk_spinlock_unlock(&ibuf_lock);
     }
-//    sctk_debug("Number : %d", ibuf_free_ibuf_nb);
-//    sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
 
 //    sctk_net_ibv_allocator_ptp_poll(IBV_CHAN_RC_SR);
     sctk_thread_yield();
@@ -218,7 +263,7 @@ int sctk_net_ibv_ibuf_srq_post(
 
   for (i=0; i < nb_ibufs; ++i)
   {
-    ibuf = sctk_net_ibv_ibuf_pick(1);
+    ibuf = sctk_net_ibv_ibuf_pick(0);
 
     if (!ibuf)
       break;
@@ -231,7 +276,9 @@ int sctk_net_ibv_ibuf_srq_post(
     assume(rc == 0);
   }
 
+  sctk_spinlock_lock(&ibuf_lock);
   ibuf_free_srq_nb+=i;
+  sctk_spinlock_unlock(&ibuf_lock);
   return i;
 }
 

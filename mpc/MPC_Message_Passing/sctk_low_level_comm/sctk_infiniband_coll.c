@@ -208,8 +208,6 @@ sctk_net_ibv_broadcast ( sctk_collective_communications_t * com,
   int root_process;
 
   size = elem_size * nb_elem;
-  /* FIXME: Size greather than SCTK_EAGER_THRESHOLD */
-//  assume (size <= ibv_eager_threshold);
   /* FIXME: Other communicators */
   assume(com->id == 0);
 
@@ -283,8 +281,6 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
   sctk_nodebug("reduce operation");
 
   size = elem_size * nb_elem;
-  /* FIXME: Size greather than SCTK_EAGER_THRESHOLD */
-//  assume (size <= ibv_eager_threshold);
   /* FIXME: Other communicators */
   assume(com->id == 0);
 
@@ -321,11 +317,6 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
     sctk_net_ibv_allocator_send_coll_message(
       rail, rc_sr_local, my_vp->data.data_out,
           parent, size, RC_SR_REDUCE);
-
-//      sctk_nodebug("Send to parent %d", parent);
-//      sctk_net_ibv_comp_rc_sr_send_ptp_message (
-//          rc_sr_local, my_vp->data.data_out,
-//          parent, size, RC_SR_REDUCE);
     }
   }
 
@@ -401,9 +392,6 @@ sctk_net_ibv_broadcast_barrier (
   int relative_rank;
   int mask;
 
-  /* FIXME: Size greather than SCTK_EAGER_THRESHOLD */
-  assume (size <= ibv_eager_threshold);
-
   sctk_nodebug("Broadcast barrier init from root %d", root);
 
   mask = 0x1;
@@ -452,13 +440,13 @@ sctk_net_ibv_barrier_send(local_entry_t* local, remote_entry_t* remote,
       remote[dest_process].rkey,
       sizeof(int));
 
-  /* TODO FIXME is it really necessary ? */
   remote_rc_sr = sctk_net_ibv_comp_rc_sr_check_and_connect(dest_process);
 
   sctk_nodebug("Entry id %d for process %d", remote[dest_process].wr.wr_id, dest_process);
   rc = ibv_post_send(remote_rc_sr->qp, &(remote[dest_process].ibuf.desc.wr.send),
       &(remote[dest_process].ibuf.desc.bad_wr.send));
-//  assume(rc == 0);
+  //TODO: fix this problem
+  assume(rc == 0);
 
   sctk_nodebug("sent");
 }

@@ -26,6 +26,7 @@
 
 #include "sctk_infiniband_cm.h"
 #include "sctk_infiniband_qp.h"
+#include "sctk_infiniband_config.h"
 
 #ifdef MPC_USE_INFINIBAND
 
@@ -38,6 +39,8 @@
 static int sockfd;
 static int port;
 static char hostname[256];
+
+extern  sctk_net_ibv_qp_local_t *rc_sr_local;
 
 static int
 sctk_create_recv_socket ()
@@ -241,5 +244,102 @@ void sctk_net_ibv_cm_server()
   sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
   sctk_user_thread_create (&pidt, &attr, server, NULL);
 }
+
+/*-----------------------------------------------------------
+ *  ASYNC EVENTS THREAD
+ *----------------------------------------------------------*/
+#define DESC_EVENT(desc)  \
+  if (ibv_verbose_level > 0) sctk_debug("[async thread] "desc)
+
+void async_thread(void* context)
+{
+  struct ibv_async_event event;
+
+  while(1)
+  {
+    if(ibv_get_async_event((struct ibv_context*) context, &event))
+    {
+      sctk_error("[async thread] cannot get event");
+    }
+
+    if (ibv_verbose_level > 0)
+      sctk_debug("[async thread] got event %d", event.event_type);
+
+    switch (event.event_type)
+    {
+      case IBV_EVENT_CQ_ERR:
+        break;
+
+      case IBV_EVENT_QP_FATAL:
+        break;
+
+      case	IBV_EVENT_QP_REQ_ERR:
+        break;
+
+      case	IBV_EVENT_QP_ACCESS_ERR:
+        break;
+
+	    case IBV_EVENT_COMM_EST:
+        break;
+
+      case IBV_EVENT_SQ_DRAINED:
+        break;
+
+      case IBV_EVENT_PATH_MIG:
+        break;
+
+      case IBV_EVENT_PATH_MIG_ERR:
+        break;
+
+      case	IBV_EVENT_DEVICE_FATAL:
+        break;
+
+      case IBV_EVENT_PORT_ACTIVE:
+        break;
+
+      case IBV_EVENT_PORT_ERR:
+        break;
+
+      case	IBV_EVENT_LID_CHANGE:
+        break;
+
+      case IBV_EVENT_PKEY_CHANGE:
+        break;
+
+      case IBV_EVENT_SM_CHANGE:
+        break;
+
+      case IBV_EVENT_SRQ_ERR:
+        break;
+
+      case IBV_EVENT_SRQ_LIMIT_REACHED:
+        DESC_EVENT("SRQ limit was reached");
+        sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
+        break;
+
+      case IBV_EVENT_QP_LAST_WQE_REACHED:
+        DESC_EVENT("Last WQE Reached on a QP associated with an SRQ CQ events");
+        break;
+
+      case IBV_EVENT_CLIENT_REREGISTER:
+        DESC_EVENT("SM sent a CLIENT_REREGISTER request to a port CA events");
+        break;
+    }
+
+    ibv_ack_async_event(&event);
+  }
+}
+
+
+void sctk_net_ibv_async_init(struct ibv_context *context)
+{
+  sctk_thread_attr_t attr;
+  sctk_thread_t pidt;
+
+  sctk_thread_attr_init (&attr);
+  sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
+  sctk_user_thread_create (&pidt, &attr, async_thread, (void*) context);
+}
+
 
 #endif

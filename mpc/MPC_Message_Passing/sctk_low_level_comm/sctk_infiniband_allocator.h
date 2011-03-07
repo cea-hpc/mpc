@@ -87,6 +87,9 @@ void
 sctk_net_ibv_allocator_rc_rdma_process_next_request(
     sctk_net_ibv_rc_rdma_process_t *entry_rc_rdma);
 
+void
+sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
+    int dest_process );
 
 void
 sctk_net_ibv_allocator_send_coll_message(

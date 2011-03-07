@@ -54,12 +54,6 @@ static char* sctk_net_ibv_ibuf_print_flag (int flag)
   return NULL;
 }
 
-/* lock on ibuf interface */
-static sctk_spinlock_t                    ibuf_lock;
-static struct sctk_net_ibv_ibuf_region_s  *ibuf_begin_region;
-/* list of free buffers. Once a buffer is freed, it is added to this list */
-static struct sctk_net_ibv_ibuf_s         *ibuf_free_header;
-
 extern uint32_t                     ibuf_free_ibuf_nb;
 extern uint32_t                     ibuf_got_ibuf_nb;
 extern uint32_t                     ibuf_free_srq_nb;

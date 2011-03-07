@@ -201,6 +201,59 @@ void sctk_net_ibv_allocator_ptp_lookup_all(int dest)
   sctk_net_ibv_allocator_ptp_lookup(dest, IBV_CHAN_RC_SR);
 }
 
+/**
+ *  \brief Fonction which sends a PTP message
+ */
+void
+sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
+    int dest_process ) {
+  DBG_S(1);
+  size_t size;
+  sctk_net_ibv_rc_rdma_process_t*     rc_rdma_entry = NULL;
+  int need_connection = 0;
+
+  size = sctk_net_determine_message_size(msg);
+  /* determine message number */
+
+ sctk_net_ibv_allocator->entry[dest_process].nb_ptp_msg_transfered++;
+
+  /* EAGER MODE */
+  if ( (size + sizeof(sctk_thread_ptp_message_t)) + RC_SR_HEADER_SIZE <= ibv_eager_threshold)
+  {
+   sctk_nodebug("Send EAGER message to %d and size %lu", dest_process, size);
+    sctk_net_ibv_comp_rc_sr_send_ptp_message (
+        rc_sr_local, msg,
+        dest_process, size, RC_SR_EAGER);
+    /* RDVZ MODE */
+  } else {
+
+    sctk_net_ibv_allocator_lock(dest_process, IBV_CHAN_RC_RDMA);
+   rc_rdma_entry = sctk_net_ibv_allocator_get(dest_process, IBV_CHAN_RC_RDMA);
+
+  /*
+   * check if the dest process exists in the RDVZ remote list.
+   * If it doesn't, we create a structure for the RC_RDMA entry
+   */
+   if (!rc_rdma_entry)
+   {
+    sctk_nodebug("Need connection to process %d", dest_process);
+
+     rc_rdma_entry = sctk_net_ibv_comp_rc_rdma_allocate_init(dest_process, rc_rdma_local);
+
+     sctk_net_ibv_allocator_register(dest_process, rc_rdma_entry, IBV_CHAN_RC_RDMA);
+   }
+   sctk_net_ibv_allocator_unlock(dest_process, IBV_CHAN_RC_RDMA);
+
+   sctk_net_ibv_comp_rc_rdma_send_request (
+       rail,
+       rc_sr_local,
+       rc_rdma_local,
+       msg,
+       dest_process, size, rc_rdma_entry);
+  }
+  DBG_E(1);
+}
+
 
 /**
  *  Send a collective message to a specific process. According to the size of
@@ -228,7 +281,6 @@ sctk_net_ibv_allocator_send_coll_message(
         dest_process, size, type);
 
   } else { /* RDVZ MODE */
-//    assume(0);
     sctk_nodebug("Send RDVZ collective");
     sctk_net_ibv_rc_rdma_process_t* rc_rdma_entry;
 

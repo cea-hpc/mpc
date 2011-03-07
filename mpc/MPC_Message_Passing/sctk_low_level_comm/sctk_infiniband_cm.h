@@ -27,6 +27,7 @@
 #include "sctk_infiniband_qp.h"
 #include "sctk_infiniband_const.h"
 #include "sctk_infiniband_allocator.h"
+#include <infiniband/verbs.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <netdb.h>
@@ -42,4 +43,9 @@ sctk_net_ibv_cm_request(int process,
 sctk_net_ibv_cm_client(char* host, int port,
     int dest, sctk_net_ibv_qp_remote_t *remote);
 
+
+void sctk_net_ibv_async_init(struct ibv_context *context);
+/*-----------------------------------------------------------
+ *  ASYNC EVENTS THREAD
+ *----------------------------------------------------------*/
 #endif

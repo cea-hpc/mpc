@@ -255,7 +255,6 @@ sctk_net_ibv_qp_state_rts_attr( uint32_t psn, int *flags)
 
   attr.qp_state = IBV_QPS_RTS;
   /* local ACK timeout (recommanted value: 14) */
-  //FIXME : PB with little values
   attr.timeout = 14;
   /* retry count (recommended value: 7) */
   attr.retry_cnt = 7;

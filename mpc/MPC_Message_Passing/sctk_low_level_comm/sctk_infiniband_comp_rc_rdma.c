@@ -603,10 +603,12 @@ sctk_net_ibv_com_rc_rdma_read_finish(
     case RC_SR_BCAST:
       sctk_nodebug("BCAST");
       sctk_net_ibv_collective_push_rc_rdma(&broadcast_fifo, entry);
+      sctk_net_ibv_mmu_unregister (rail->mmu, entry->mmu_entry);
       break;
 
     case RC_SR_REDUCE:
       sctk_net_ibv_collective_push_rc_rdma(&reduce_fifo, entry);
+      sctk_net_ibv_mmu_unregister (rail->mmu, entry->mmu_entry);
       break;
 
     case RC_SR_BCAST_INIT_BARRIER:

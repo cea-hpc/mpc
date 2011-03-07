@@ -27,24 +27,35 @@
 #include "sctk_infiniband_comp_rc_rdma.h"
 
 /* default constants */
-#define IBV_EAGER_THRESHOLD (4 * 1024)
-#define IBV_QP_TX_DEPTH     1000
-#define IBV_QP_RC_DEPTH     1000
+#define IBV_EAGER_THRESHOLD (8 * 1024)
+/*
+ * should be high values if the event
+ * IBV_EVENT_QP_LAST_WQE_REACHED is triggered
+ */
+#define IBV_QP_TX_DEPTH     5000
+#define IBV_QP_RC_DEPTH     5000
 #define IBV_MAX_SG_SQ       4
 #define IBV_MAX_SG_RQ       4
-#define IBV_MAX_INLINE      128
-#define IBV_MAX_IBUFS       600
-#define IBV_MAX_SRQ_IBUFS   100
-#define IBV_SRQ_CREDIT_LIMIT 30
+#define IBV_MAX_INLINE        128
+//#define IBV_MAX_IBUFS         2000
+#define IBV_MAX_IBUFS         50
+//#define IBV_MAX_SRQ_IBUFS     500
+#define IBV_MAX_SRQ_IBUFS     50
+//#define IBV_SRQ_CREDIT_LIMIT  400
+#define IBV_SRQ_CREDIT_LIMIT  10
+#define IBV_SIZE_IBUFS_CHUNKS 200
 
-#define IBV_WC_IN_NUMBER    20
-#define IBV_WC_OUT_NUMBER   20
+#define IBV_WC_IN_NUMBER    100
+#define IBV_WC_OUT_NUMBER   100
 
 #define IBV_MAX_MR          2000
 #define IBV_ADM_PORT        1
 
 #define IBV_RDMA_DEPTH       4
 #define IBV_RDMA_DEST_DEPTH  4
+
+#define IBV_NO_MEMORY_LIMITATION  1
+#define IBV_VERBOSE_LEVEL         0
 
 /* global values */
 int  ibv_eager_threshold  = IBV_EAGER_THRESHOLD;
@@ -54,9 +65,12 @@ int  ibv_max_sg_sq        = IBV_MAX_SG_SQ;
 int  ibv_max_sg_rq        = IBV_MAX_SG_RQ;
 int  ibv_max_inline       = IBV_MAX_INLINE;
 int  ibv_max_ibufs        = IBV_MAX_IBUFS;
+int  ibv_size_ibufs_chunk = IBV_SIZE_IBUFS_CHUNKS;
 int  ibv_max_srq_ibufs    = IBV_MAX_SRQ_IBUFS;
 int  ibv_srq_credit_limit = IBV_SRQ_CREDIT_LIMIT;
 int  ibv_rdvz_protocol    = IBV_RDVZ_READ_PROTOCOL;
+int  ibv_no_memory_limitation    = IBV_NO_MEMORY_LIMITATION;
+int  ibv_verbose_level    = IBV_VERBOSE_LEVEL;
 
 int  ibv_wc_in_number     = IBV_WC_IN_NUMBER;
 int  ibv_wc_out_number    = IBV_WC_OUT_NUMBER;
