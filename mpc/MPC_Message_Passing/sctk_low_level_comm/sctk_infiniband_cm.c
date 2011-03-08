@@ -248,8 +248,9 @@ void sctk_net_ibv_cm_server()
 /*-----------------------------------------------------------
  *  ASYNC EVENTS THREAD
  *----------------------------------------------------------*/
-#define DESC_EVENT(desc)  \
-  if (ibv_verbose_level > 0) sctk_debug("[async thread] "desc)
+#define DESC_EVENT(event, desc, fatal)  \
+  if ( (ibv_verbose_level > 0) || fatal) sctk_debug("[async thread] "event":\t"desc); \
+  if (fatal) sctk_abort()
 
 void* async_thread(void* context)
 {
@@ -262,67 +263,83 @@ void* async_thread(void* context)
       sctk_error("[async thread] cannot get event");
     }
 
-    if (ibv_verbose_level > 0)
-      sctk_debug("[async thread] got event %d", event.event_type);
-
     switch (event.event_type)
     {
       case IBV_EVENT_CQ_ERR:
+        DESC_EVENT("IBV_EVENT_CQ_ERR", "CQ is in error (CQ overrun)", 1);
         break;
 
       case IBV_EVENT_QP_FATAL:
+        DESC_EVENT("IBV_EVENT_QP_FATAL", "Error occurred on a QP and it transitioned to error state", 1);
         break;
 
       case	IBV_EVENT_QP_REQ_ERR:
+        DESC_EVENT("IBV_EVENT_QP_REQ_ERR", "Invalid Request Local Work Queue Error", 1);
         break;
 
       case	IBV_EVENT_QP_ACCESS_ERR:
+        DESC_EVENT("IBV_EVENT_QP_ACCESS_ERR", "Local access violation error", 1);
         break;
 
 	    case IBV_EVENT_COMM_EST:
+        DESC_EVENT("IBV_EVENT_COMM_EST", "Communication was established on a QP", 0);
         break;
 
       case IBV_EVENT_SQ_DRAINED:
+        DESC_EVENT("IBV_EVENT_SQ_DRAINED", "Send Queue was drained of outstanding messages in progress", 0);
         break;
 
       case IBV_EVENT_PATH_MIG:
+        DESC_EVENT("IBV_EVENT_PATH_MIG", "A connection failed to migrate to the alternate path", 0);
         break;
 
       case IBV_EVENT_PATH_MIG_ERR:
+        DESC_EVENT("IBV_EVENT_PATH_MIG_ERR", "A connection failed to migrate to the alternate path", 0);
         break;
 
       case	IBV_EVENT_DEVICE_FATAL:
+        DESC_EVENT("IBV_EVENT_DEVICE_FATAL", "Error occurred on a QP and it transitioned to error state", 1);
         break;
 
       case IBV_EVENT_PORT_ACTIVE:
+        DESC_EVENT("IBV_EVENT_PORT_ACTIVE", "Link became active on a port", 0);
         break;
 
       case IBV_EVENT_PORT_ERR:
+        DESC_EVENT("IBV_EVENT_PORT_ERR", "Link became unavailable on a port ", 1);
         break;
 
       case	IBV_EVENT_LID_CHANGE:
+        DESC_EVENT("IBV_EVENT_LID_CHANGE", "LID was changed on a port", 0);
         break;
 
       case IBV_EVENT_PKEY_CHANGE:
+        DESC_EVENT("IBV_EVENT_PKEY_CHANGE", "P_Key table was changed on a port", 0);
         break;
 
       case IBV_EVENT_SM_CHANGE:
+        DESC_EVENT("IBV_EVENT_SM_CHANGE", "SM was changed on a port", 0);
         break;
 
       case IBV_EVENT_SRQ_ERR:
+        DESC_EVENT("IBV_EVENT_SRQ_ERR", "Error occurred on an SRQ", 1);
         break;
 
       case IBV_EVENT_SRQ_LIMIT_REACHED:
-        DESC_EVENT("SRQ limit was reached");
+        DESC_EVENT("IBV_EVENT_SRQ_LIMIT_REACHED","SRQ limit was reached", 0);
         sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
         break;
 
       case IBV_EVENT_QP_LAST_WQE_REACHED:
-        DESC_EVENT("Last WQE Reached on a QP associated with an SRQ CQ events");
+        DESC_EVENT("IBV_EVENT_QP_LAST_WQE_REACHED","Last WQE Reached on a QP associated with an SRQ CQ events", 0);
         break;
 
       case IBV_EVENT_CLIENT_REREGISTER:
-        DESC_EVENT("SM sent a CLIENT_REREGISTER request to a port CA events");
+        DESC_EVENT("IBV_EVENT_CLIENT_REREGISTER","SM sent a CLIENT_REREGISTER request to a port CA events", 0);
+        break;
+
+      default:
+        DESC_EVENT("UNKNOWN_EVENT","unknown event received", 0);
         break;
     }
 
