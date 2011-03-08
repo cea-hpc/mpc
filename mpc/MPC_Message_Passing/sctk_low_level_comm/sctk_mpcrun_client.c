@@ -460,7 +460,7 @@ generate_random_filename(char* filename, int size)
   for(i = 0; i < size; i++)
     filename[i] = (rand()%26)+'A';
 
-  filename[i+1] = '\0';
+  filename[i-1] = '\0';
 }
 
 /*
@@ -475,7 +475,7 @@ void sctk_mpcrun_client_forge_shm_filename(char* __string)
 {
   char random[7];
 
-  generate_random_filename(random, 6);
+  generate_random_filename(random, 7);
 
   sprintf(__string, "SHM_%s.%s.%s", local_host, random, local_host+HOSTNAME_SIZE);
 }
