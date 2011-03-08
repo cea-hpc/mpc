@@ -210,10 +210,9 @@ sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
   DBG_S(1);
   size_t size;
   sctk_net_ibv_rc_rdma_process_t*     rc_rdma_entry = NULL;
-  int need_connection = 0;
 
-  size = sctk_net_determine_message_size(msg);
   /* determine message number */
+  size = sctk_net_determine_message_size(msg);
 
  sctk_net_ibv_allocator->entry[dest_process].nb_ptp_msg_transfered++;
 

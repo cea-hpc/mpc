@@ -93,21 +93,17 @@ sctk_net_ibv_comp_rc_sr_send(
     ret_psn = *psn;
     msg_header->psn = ret_psn;
 
-    rc = ibv_post_send(remote->qp , &(ibuf->desc.wr.send), &(ibuf->desc.bad_wr.send));
-    assume (rc == 0);
+  /*
+   * We have to check if there are free slots for the
+   * selected QP
+   */
+  sctk_net_ibv_qp_send_get_wqe(remote, ibuf);
     sctk_net_ibv_sched_unlock();
-//    sctk_nodebug("Send EAGER message size %lu (PSN:%d)",
-//        msg_header->size, ret_psn);
+
   } else {
     sctk_nodebug("QP %p dest %d size %lu", remote->qp, remote->rank, size);
 //    sctk_nodebug("lkey : %lu", ibuf->desc.sg_entry.lkey);
-    rc = ibv_post_send(remote->qp , &(ibuf->desc.wr.send), &(ibuf->desc.bad_wr.send));
-    assume (rc == 0);
-  }
-
-  if (type == RC_SR_RDVZ_REQUEST)
-  {
-    sctk_nodebug("PSN : %d(%p)", *psn, psn);
+  sctk_net_ibv_qp_send_get_wqe(remote, ibuf);
   }
 
   return ret_psn;
@@ -235,6 +231,13 @@ sctk_net_ibv_rc_sr_poll_send(
   sctk_net_ibv_ibuf_t* ibuf;
 
   ibuf = (sctk_net_ibv_ibuf_t*) wc->wr_id;
+  /*
+   * free the WQE from the remote QP and try to post the
+   * queued WQE.
+   */
+  sctk_net_ibv_qp_send_free_wqe(ibuf->remote);
+  sctk_net_ibv_qp_send_post_pending(ibuf->remote);
+
   if (sctk_process_rank == 0)
     sctk_nodebug("New Send cq %p, flag %d", ibuf, ibuf->flag);
 
@@ -265,7 +268,6 @@ sctk_net_ibv_rc_sr_poll_send(
 
     default: assume(0); break;
   }
-
 }
 
 void
@@ -440,6 +442,7 @@ sctk_net_ibv_comp_rc_sr_allocate_init(int rank,
   sctk_net_ibv_qp_remote_t *remote;
 
   remote = sctk_malloc(sizeof (sctk_net_ibv_qp_remote_t));
+  memset(remote, 0, sizeof(sctk_net_ibv_qp_remote_t));
   assume(remote);
   sctk_net_ibv_qp_allocate_init(rank, local, remote);
 

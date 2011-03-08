@@ -99,6 +99,8 @@ typedef struct sctk_net_ibv_ibuf_s
   size_t size;
   int flag;
 
+  /* the following infos aren't transmitted by the network */
+  sctk_net_ibv_qp_remote_t*    remote;
   void* supp_ptr;
 
 } sctk_net_ibv_ibuf_t;
@@ -139,5 +141,9 @@ int sctk_net_ibv_ibuf_srq_post(
     sctk_net_ibv_qp_local_t* local,
     int nb_ibufs);
 
+void sctk_net_ibv_ibuf_barrier_send_init(
+    sctk_net_ibv_ibuf_t* ibuf, void* local_address,
+    uint32_t lkey, void* remote_address, uint32_t rkey,
+    int len);
 
 #endif

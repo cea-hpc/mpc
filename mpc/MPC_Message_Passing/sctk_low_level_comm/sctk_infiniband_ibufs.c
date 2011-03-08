@@ -30,7 +30,7 @@
 #include "sctk_spinlock.h"
 
 /* lock on ibuf interface */
-static sctk_spinlock_t                    ibuf_lock;
+static sctk_spinlock_t                    ibuf_lock = SCTK_SPINLOCK_INITIALIZER;
 static struct sctk_net_ibv_ibuf_region_s  *ibuf_begin_region = NULL;
 static struct sctk_net_ibv_ibuf_region_s  *ibuf_last_region = NULL;
 
@@ -42,47 +42,22 @@ uint32_t                     ibuf_got_ibuf_nb = 0;
 uint32_t                     ibuf_free_srq_nb = 0;
 uint32_t                     ibuf_got_srq_nb = 0;
 
-uint32_t                     ibv_got_recv_wqe = 0;
-uint32_t                     ibv_free_recv_wqe = 0;
-
-uint32_t                     ibv_got_send_wqe = 0;
-uint32_t                     ibv_free_send_wqe = 0;
-
-/* pending wqe. These WQE are queued when all
- * the QP's WQE are busy */
-struct sctk_list  pending_send_wqe;
-
-
 /* RC SR structures */
 extern  sctk_net_ibv_qp_local_t *rc_sr_local;
 
 void sctk_net_ibv_ibuf_new()
 {
   /* TODO: move out lock */
-  ibuf_lock = SCTK_SPINLOCK_INITIALIZER;
-  ibuf_free_ibuf_nb = 0;
-  ibuf_got_ibuf_nb = 0;
-  ibuf_free_srq_nb = 0;
-  ibuf_got_srq_nb = 0;
+//  ibuf_lock = SCTK_SPINLOCK_INITIALIZER;
+//  ibuf_free_ibuf_nb = 0;
+//  ibuf_got_ibuf_nb = 0;
+//  ibuf_free_srq_nb = 0;
+//  ibuf_got_srq_nb = 0;
 
-  ibv_got_recv_wqe = 0;
-  ibv_free_recv_wqe = 0;
-  ibv_got_send_wqe = 0;
-  ibv_free_send_wqe = 0;
-
-  sctk_list_new(&pending_send_wqe, 1);
-}
-
-void sctk_net_ibv_ibuf_send_get_wqe()
-{
-  ++ibv_got_send_wqe;
-  --ibv_free_send_wqe;
-}
-
-void sctk_net_ibv_ibuf_send_free_wqe()
-{
-  --ibv_got_send_wqe;
-  ++ibv_free_send_wqe;
+//  ibv_got_recv_wqe = 0;
+//  ibv_free_recv_wqe = 0;
+//  ibv_got_send_wqe = 0;
+//  ibv_free_send_wqe = 0;
 }
 
 void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,

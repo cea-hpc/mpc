@@ -27,10 +27,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "sctk_infiniband_const.h"
+#include "sctk_infiniband_config.h"
+#include "sctk_list.h"
+#include "sctk_spinlock.h"
 #include <infiniband/verbs.h>
 #include <inttypes.h>
 
 struct sctk_net_ibv_mmu_s;
+struct sctk_net_ibv_ibuf_s;
 
 typedef struct
 {
@@ -63,6 +67,16 @@ typedef struct
   uint8_t                 is_connected;
   uint8_t                 is_usuable;
 
+  /* pending wqe. These WQE are queued when all
+   * the QP's WQE are busy */
+  sctk_thread_mutex_t  send_wqe_lock;
+  struct sctk_list  pending_send_wqe;
+
+  /* WQE */
+  uint32_t                     ibv_got_recv_wqe;
+  uint32_t                     ibv_free_recv_wqe;
+  uint32_t                     ibv_got_send_wqe;
+  uint32_t                     ibv_free_send_wqe;
 } sctk_net_ibv_qp_remote_t;
 
 /*-----------------------------------------------------------
@@ -129,6 +143,7 @@ struct ibv_qp*
 sctk_net_ibv_qp_init(sctk_net_ibv_qp_local_t* local,
     sctk_net_ibv_qp_remote_t* remote, struct ibv_qp_init_attr* attr, int rank);
 
+int sctk_net_ibv_qp_send_post_pending(sctk_net_ibv_qp_remote_t* remote);
 /*-----------------------------------------------------------
  *  Completion queue
  *----------------------------------------------------------*/
@@ -184,5 +199,12 @@ void
 sctk_net_ibv_qp_allocate_recv(
   sctk_net_ibv_qp_remote_t *remote,
   sctk_net_ibv_qp_exchange_keys_t* keys);
+
+/*-----------------------------------------------------------
+ *  WQE
+ *----------------------------------------------------------*/
+int sctk_net_ibv_qp_send_get_wqe(sctk_net_ibv_qp_remote_t* remote, struct sctk_net_ibv_ibuf_s* ibuf);
+
+void sctk_net_ibv_qp_send_free_wqe(sctk_net_ibv_qp_remote_t* remote );
 
 #endif

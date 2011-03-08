@@ -32,8 +32,9 @@
  * should be high values if the event
  * IBV_EVENT_QP_LAST_WQE_REACHED is triggered
  */
-#define IBV_QP_TX_DEPTH     5000
-#define IBV_QP_RC_DEPTH     5000
+#define IBV_QP_TX_DEPTH     1000
+#define IBV_QP_RC_DEPTH     1000
+#define IBV_CQ_DEPTH        1000
 #define IBV_MAX_SG_SQ       4
 #define IBV_MAX_SG_RQ       4
 #define IBV_MAX_INLINE        128
@@ -61,6 +62,7 @@
 int  ibv_eager_threshold  = IBV_EAGER_THRESHOLD;
 int  ibv_qp_tx_depth      = IBV_QP_TX_DEPTH;
 int  ibv_qp_rx_depth      = IBV_QP_RC_DEPTH;
+int  ibv_cq_depth         = IBV_CQ_DEPTH;
 int  ibv_max_sg_sq        = IBV_MAX_SG_SQ;
 int  ibv_max_sg_rq        = IBV_MAX_SG_RQ;
 int  ibv_max_inline       = IBV_MAX_INLINE;
@@ -186,23 +188,25 @@ void sctk_net_ibv_config_init()
     ibv_rdvz_protocol = IBV_RDVZ_READ_PROTOCOL;
 
   if ( (value = getenv("MPC_IBV_WC_IN_NUMBER")) != NULL )
-    ibv_rdvz_protocol = IBV_WC_IN_NUMBER;
+    ibv_wc_in_number = atoi(value);
 
   if ( (value = getenv("MPC_IBV_WC_OUT_NUMBER")) != NULL )
-    ibv_rdvz_protocol = IBV_WC_OUT_NUMBER;
+    ibv_wc_out_number = atoi(value);
 
   if ( (value = getenv("MPC_IBV_MAX_MR")) != NULL )
-    ibv_rdvz_protocol = IBV_MAX_MR;
+    ibv_max_mr = atoi(value);
 
   if ( (value = getenv("MPC_IBV_ADM_PORT")) != NULL )
-    ibv_rdvz_protocol = IBV_ADM_PORT;
+    ibv_adm_port = atoi(value);
 
   if ( (value = getenv("MPC_IBV_RDMA_DEPTH")) != NULL )
-    ibv_rdvz_protocol = IBV_RDMA_DEPTH;
+    ibv_rdma_depth = atoi(value);
 
   if ( (value = getenv("MPC_IBV_RDMA_DEST_DEPTH")) != NULL )
-    ibv_rdvz_protocol = IBV_RDMA_DEST_DEPTH;
+    ibv_rdma_dest_depth = atoi(value);
 
+  if ( (value = getenv("MPC_IBV_QP_TX_DEPTH")) != NULL )
+    ibv_qp_tx_depth = atoi(value);
 
   /*
    * Check if the variables are well set and print them

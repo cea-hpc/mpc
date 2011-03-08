@@ -251,7 +251,7 @@ void sctk_net_ibv_cm_server()
 #define DESC_EVENT(desc)  \
   if (ibv_verbose_level > 0) sctk_debug("[async thread] "desc)
 
-void async_thread(void* context)
+void* async_thread(void* context)
 {
   struct ibv_async_event event;
 
@@ -328,6 +328,7 @@ void async_thread(void* context)
 
     ibv_ack_async_event(&event);
   }
+  return NULL;
 }
 
 

@@ -28,6 +28,7 @@
 #include "sctk_list.h"
 #include "sctk_config.h"
 #include "sctk_infiniband_comp_rc_sr.h"
+#include "sctk_infiniband_comp_rc_rdma.h"
 /* list of broadcast entries */
 struct sctk_list  broadcast_fifo;
 struct sctk_list  init_barrier_fifo;
@@ -66,6 +67,19 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
     void ( *func ) ( const void *, void *, size_t,
       sctk_datatype_t ),
     const sctk_datatype_t data_type );
+
+   void*
+  sctk_net_ibv_collective_push_rc_rdma(struct sctk_list* list, sctk_net_ibv_rc_rdma_entry_t* entry);
+
+  void
+sctk_net_ibv_allocator_send_coll_message(
+    sctk_net_ibv_qp_rail_t   *rail,
+    sctk_net_ibv_qp_local_t* local_rc_sr,
+    void *msg,
+    int dest_process,
+    size_t size,
+    sctk_net_ibv_rc_sr_msg_type_t type);
+
 
 /*-----------------------------------------------------------
  *  BARRIER

@@ -101,10 +101,8 @@ sctk_net_ibv_comp_rc_rdma_send_coll_request(
   sctk_net_ibv_mmu_entry_t* mmu_entry = NULL;
   sctk_net_ibv_qp_remote_t* rc_sr_remote;
   size_t size_to_copy;
-  int directly_pinned = 0;
 
   void *aligned_msg;
-  unsigned long offset;
   size_t aligned_size;
 
   /* list entries */
@@ -244,6 +242,7 @@ sctk_net_ibv_comp_rc_rdma_prepare_ptp(
       sizeof ( sctk_thread_ptp_message_t ));
 }
 
+static int first = 1;
 void
 sctk_net_ibv_comp_rc_rdma_send_request(
     sctk_net_ibv_qp_rail_t   *rail,
@@ -255,7 +254,6 @@ sctk_net_ibv_comp_rc_rdma_send_request(
     sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma)
 {
   sctk_net_ibv_ibuf_t* ibuf;
-  size_t page_size;
   size_t aligned_size;
   sctk_net_ibv_rc_rdma_request_t* request;
   sctk_net_ibv_mmu_entry_t* mmu_entry = NULL;
@@ -283,6 +281,7 @@ sctk_net_ibv_comp_rc_rdma_send_request(
 
   /* check if the connection is opened. If not, we connect processes */
   rc_sr_remote = sctk_net_ibv_comp_rc_sr_check_and_connect(dest_process);
+
 
   size_to_copy = sizeof(sctk_net_ibv_rc_rdma_request_t);
   switch (ibv_rdvz_protocol)
@@ -341,7 +340,11 @@ sctk_net_ibv_comp_rc_rdma_send_request(
       break;
   }
 
-  sctk_nodebug("Request sent");
+//  if (first)
+  {
+    first = 0;
+//    sctk_debug("Request sent : %g (size %d)", e-s, size);
+  }
 }
 
 /* TODO: request vs coll_request */
@@ -426,10 +429,9 @@ sctk_net_ibv_comp_rc_rdma_process_rdma_read(
     sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma,
     sctk_net_ibv_rc_rdma_request_t* request)
 {
-  sctk_net_ibv_ibuf_t   *ibuf, *ibuf_recv;
+  sctk_net_ibv_ibuf_t   *ibuf;
   sctk_net_ibv_rc_rdma_entry_t* entry;
   sctk_net_ibv_qp_remote_t* rc_sr_remote;
-  int rc;
 
   /* fill the receive entry */
   ibuf = sctk_net_ibv_ibuf_pick(0);
@@ -452,8 +454,7 @@ sctk_net_ibv_comp_rc_rdma_process_rdma_read(
 
   sctk_nodebug("Posting RC_RDMA READ with size %lu", request->requested_size);
 
-  rc = ibv_post_send(rc_sr_remote->qp , &(ibuf->desc.wr.send), &(ibuf->desc.bad_wr.send));
-  assume (rc == 0);
+  sctk_net_ibv_qp_send_get_wqe(rc_sr_remote, ibuf);
 
   entry->ready = 1;
 }

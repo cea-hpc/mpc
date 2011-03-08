@@ -103,6 +103,7 @@ sctk_net_ibv_mmu_register (
       sctk_nodebug("MMU entry %d is free", i);
 
       sctk_nodebug("\t\t\t\tUse PD %p", local->pd);
+
       mmu->entry[i].mr = ibv_reg_mr (local->pd,
           ptr, size,
             IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE |
@@ -121,6 +122,7 @@ sctk_net_ibv_mmu_register (
     }
   }
   sctk_thread_mutex_unlock (&mmu->lock);
+
   sctk_error("No more MMU entries are available");
   assume (0);
   return NULL;

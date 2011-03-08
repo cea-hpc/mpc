@@ -430,8 +430,6 @@ sctk_net_ibv_barrier_send(local_entry_t* local, remote_entry_t* remote,
     int entry_nb, int dest_process)
 {
   sctk_net_ibv_qp_remote_t* remote_rc_sr;
-  struct  ibv_send_wr* bad_wr = NULL;
-  int rc;
 
   sctk_net_ibv_ibuf_barrier_send_init(&remote[dest_process].ibuf,
       &local->entry[entry_nb],
@@ -443,10 +441,8 @@ sctk_net_ibv_barrier_send(local_entry_t* local, remote_entry_t* remote,
   remote_rc_sr = sctk_net_ibv_comp_rc_sr_check_and_connect(dest_process);
 
   sctk_nodebug("Entry id %d for process %d", remote[dest_process].wr.wr_id, dest_process);
-  rc = ibv_post_send(remote_rc_sr->qp, &(remote[dest_process].ibuf.desc.wr.send),
-      &(remote[dest_process].ibuf.desc.bad_wr.send));
-  //TODO: fix this problem
-  assume(rc == 0);
+
+  sctk_net_ibv_qp_send_get_wqe(remote_rc_sr, &(remote[dest_process].ibuf));
 
   sctk_nodebug("sent");
 }

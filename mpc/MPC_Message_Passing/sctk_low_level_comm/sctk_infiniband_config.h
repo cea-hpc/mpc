@@ -27,6 +27,7 @@
 extern int  ibv_eager_threshold;
 extern int  ibv_qp_tx_depth;
 extern int  ibv_qp_rx_depth;
+extern int  ibv_cq_depth;
 extern int  ibv_max_sg_sq;
 extern int  ibv_max_sg_rq;
 extern int  ibv_max_inline;
