@@ -179,7 +179,7 @@ sctk_tcp_connect_to (int portno, char *name)
   if (server == NULL)
     {
       fprintf (stderr, "ERROR, no such host\n");
-      exit (0);
+      exit (-1);
     }
   memset ((char *) &serv_addr, 0, sizeof (serv_addr));
   serv_addr.sin_family = AF_INET;

@@ -508,7 +508,7 @@ sctk_threat_arg (char *word)
     return -1;
 
   fprintf (stderr, "Argument %s Unknown\n", word);
-  return 1;
+  return -1;
 }
 
   void
@@ -752,7 +752,7 @@ auto_kill_func (void *arg)
     sleep (timeout);
     sctk_noalloc_fprintf (stderr, "TIMEOUT reached\n");
     abort ();
-    exit (1);
+    exit (-1);
   }
   return NULL;
 }

@@ -117,7 +117,7 @@ sctk_tcp_connect_to (int portno, char *name_init)
   if (server == NULL)
     {
       fprintf (stderr, "ERROR, no such host\n");
-      exit (0);
+      exit (-1);
     }
   ip = (char *) server->h_addr;
 
