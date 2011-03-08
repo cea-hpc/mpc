@@ -37,12 +37,12 @@
 #define IBV_MAX_SG_SQ       4
 #define IBV_MAX_SG_RQ       4
 #define IBV_MAX_INLINE        128
-//#define IBV_MAX_IBUFS         2000
-#define IBV_MAX_IBUFS         50
-//#define IBV_MAX_SRQ_IBUFS     500
-#define IBV_MAX_SRQ_IBUFS     50
-//#define IBV_SRQ_CREDIT_LIMIT  400
-#define IBV_SRQ_CREDIT_LIMIT  10
+#define IBV_MAX_IBUFS         2000
+//#define IBV_MAX_IBUFS         50
+#define IBV_MAX_SRQ_IBUFS     500
+//#define IBV_MAX_SRQ_IBUFS     50
+#define IBV_SRQ_CREDIT_LIMIT  400
+//#define IBV_SRQ_CREDIT_LIMIT  10
 #define IBV_SIZE_IBUFS_CHUNKS 200
 
 #define IBV_WC_IN_NUMBER    100
