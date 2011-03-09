@@ -34,22 +34,28 @@
  */
 #define IBV_QP_TX_DEPTH     1000
 #define IBV_QP_RC_DEPTH     1000
-#define IBV_CQ_DEPTH        8000
+/* Many CQE. In memory, it represents about
+ * 1.22Mb for 40000 entries */
+#define IBV_CQ_DEPTH        40000
 #define IBV_MAX_SG_SQ       4
 #define IBV_MAX_SG_RQ       4
 #define IBV_MAX_INLINE        128
 #define IBV_MAX_IBUFS         3000
 //#define IBV_MAX_IBUFS         50
-#define IBV_MAX_SRQ_IBUFS     2000
+// #define IBV_MAX_SRQ_IBUFS     2000
+#define IBV_MAX_SRQ_IBUFS     2000 /*  > 300 */
+#define IBV_SRQ_CREDIT_LIMIT  1000 /* >=300 */
+#define IBV_SRQ_CREDIT_THREAD_LIMIT  500
+
 //#define IBV_MAX_SRQ_IBUFS     50
-#define IBV_SRQ_CREDIT_LIMIT  800
+// #define IBV_SRQ_CREDIT_LIMIT  800
 //#define IBV_SRQ_CREDIT_LIMIT  10
 #define IBV_SIZE_IBUFS_CHUNKS 200
 
 #define IBV_WC_IN_NUMBER    100
 #define IBV_WC_OUT_NUMBER   100
 
-#define IBV_MAX_MR          2000
+#define IBV_MAX_MR          3000
 #define IBV_ADM_PORT        1
 
 #define IBV_RDMA_DEPTH       4
@@ -70,6 +76,7 @@ int  ibv_max_ibufs        = IBV_MAX_IBUFS;
 int  ibv_size_ibufs_chunk = IBV_SIZE_IBUFS_CHUNKS;
 int  ibv_max_srq_ibufs    = IBV_MAX_SRQ_IBUFS;
 int  ibv_srq_credit_limit = IBV_SRQ_CREDIT_LIMIT;
+int  ibv_srq_credit_thread_limit = IBV_SRQ_CREDIT_THREAD_LIMIT;
 int  ibv_rdvz_protocol    = IBV_RDVZ_READ_PROTOCOL;
 int  ibv_no_memory_limitation    = IBV_NO_MEMORY_LIMITATION;
 int  ibv_verbose_level    = IBV_VERBOSE_LEVEL;
@@ -124,6 +131,7 @@ void sctk_net_ibv_config_print()
         "ibv_max_ibufs        = %d\n"
         "ibv_max_srq_ibufs    = %d\n"
         "ibv_srq_credit_limit = %d\n"
+        "ibv_srq_credit_thread_limit = %d\n"
         "ibv_rdvz_protocol    = %d\n"
         "ibv_wc_in_number     = %d\n"
         "ibv_wc_out_number    = %d\n"
@@ -141,6 +149,7 @@ void sctk_net_ibv_config_print()
         ibv_max_ibufs,
         ibv_max_srq_ibufs,
         ibv_srq_credit_limit,
+        ibv_srq_credit_thread_limit,
         ibv_rdvz_protocol,
         ibv_wc_in_number,
         ibv_wc_out_number,
@@ -181,6 +190,9 @@ void sctk_net_ibv_config_init()
 
   if ( (value = getenv("MPC_IBV_SRQ_CREDIT_LIMIT")) != NULL )
     ibv_srq_credit_limit = atoi(value);
+
+  if ( (value = getenv("MPC_IBV_SRQ_CREDIT_THREAD_LIMIT")) != NULL )
+    ibv_srq_credit_thread_limit = atoi(value);
 
   if ( (value = getenv("MPC_IBV_RDVZ_WRITE_PROTOCOL")) != NULL )
     ibv_rdvz_protocol = IBV_RDVZ_WRITE_PROTOCOL;

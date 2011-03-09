@@ -34,6 +34,7 @@ extern int  ibv_max_inline;
 extern int  ibv_max_ibufs;
 extern int  ibv_max_srq_ibufs;
 extern int  ibv_srq_credit_limit;
+extern int  ibv_srq_credit_thread_limit;
 extern int  ibv_size_ibufs_chunk;;
 
 extern int  ibv_rdvz_protocol;

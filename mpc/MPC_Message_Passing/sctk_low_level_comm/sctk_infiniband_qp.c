@@ -185,7 +185,7 @@ int sctk_net_ibv_qp_send_get_wqe(sctk_net_ibv_qp_remote_t* remote, sctk_net_ibv_
  *  NEW/FREE
  *----------------------------------------------------------*/
   sctk_net_ibv_qp_local_t*
-sctk_net_ibv_qp_new(sctk_net_ibv_qp_rail_t* rail, int in_order)
+sctk_net_ibv_qp_new(sctk_net_ibv_qp_rail_t* rail)
 {
   sctk_net_ibv_qp_local_t *qp;
 
@@ -194,7 +194,6 @@ sctk_net_ibv_qp_new(sctk_net_ibv_qp_rail_t* rail, int in_order)
 
   memset(qp, 0, sizeof(sctk_net_ibv_qp_local_t));
   qp->context = rail->context;
-  qp->in_order = in_order;
 
   return qp;
 }
@@ -604,8 +603,9 @@ sctk_net_ibv_srq_init_attr()
 
   memset (&attr, 0, sizeof (struct ibv_srq_init_attr));
 
-  attr.attr.max_wr = ibv_qp_rx_depth;
+  attr.attr.max_wr = ibv_max_srq_ibufs;
   attr.attr.max_sge = ibv_max_sg_rq;
+  attr.attr.srq_limit = ibv_srq_credit_thread_limit;
 
   return attr;
 }

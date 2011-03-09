@@ -48,7 +48,7 @@ sctk_net_ibv_comp_rc_rdma_create_local(sctk_net_ibv_qp_rail_t* rail)
 {
   sctk_net_ibv_qp_local_t* local;
 
-  local = sctk_net_ibv_qp_new(rail, 0);
+  local = sctk_net_ibv_qp_new(rail);
 
   sctk_net_ibv_pd_init(local);
   sctk_nodebug("New PD %p", local->pd);

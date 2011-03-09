@@ -52,7 +52,7 @@ sctk_net_ibv_comp_rc_sr_create_local(sctk_net_ibv_qp_rail_t* rail)
   sctk_net_ibv_qp_local_t* local;
   struct ibv_srq_init_attr srq_init_attr;
 
-  local = sctk_net_ibv_qp_new(rail, 1);
+  local = sctk_net_ibv_qp_new(rail);
 
   sctk_net_ibv_pd_init(local);
   sctk_nodebug("New PD %p", local->pd);

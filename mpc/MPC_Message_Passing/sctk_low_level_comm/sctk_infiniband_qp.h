@@ -51,7 +51,6 @@ typedef struct sctk_net_ibv_qp_local_s
   struct ibv_srq          *srq;      /* shared received quue */
   struct ibv_cq           *send_cq;  /* outgoing completion queues */
   struct ibv_cq           *recv_cq;  /* incoming completion queues */
-  int                     in_order;  /* if remote structs are stored in order*/
 } sctk_net_ibv_qp_local_t;
 
 typedef struct
@@ -107,7 +106,7 @@ sctk_net_ibv_qp_pick_rail(int rail_nb);
  *----------------------------------------------------------*/
 
   sctk_net_ibv_qp_local_t*
-sctk_net_ibv_qp_new(sctk_net_ibv_qp_rail_t* rail, int in_order);
+sctk_net_ibv_qp_new(sctk_net_ibv_qp_rail_t* rail);
 
 void
 sctk_net_ibv_qp_free(sctk_net_ibv_qp_local_t* qp);
