@@ -35,7 +35,11 @@ int sctk_spinlock_lock_yield (sctk_spinlock_t * lock)
       do
 	{
 	int i;
+#ifdef MPC_Threads
 	sctk_thread_yield();
+#else
+	sched_yield();
+#endif
 	for(i = 0; (*p) && (i < 100); i++){
 	  sctk_cpu_relax ();
 	}
