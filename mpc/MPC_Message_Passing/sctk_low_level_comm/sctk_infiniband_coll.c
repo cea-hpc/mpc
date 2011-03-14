@@ -29,6 +29,7 @@
 #include "sctk_infiniband_ibufs.h"
 #include "sctk_infiniband_config.h"
 #include "sctk_infiniband_comp_rc_rdma.h"
+#include "sctk_infiniband_profiler.h"
 
 static int *sctk_comm_world_array;
 
@@ -64,6 +65,7 @@ extern  sctk_net_ibv_qp_local_t *rc_sr_local;
 
   pending = sctk_malloc(msg->payload_size + sizeof(sctk_net_ibv_collective_pending_t));
   assume(pending);
+  sctk_ibv_profiler_inc(IBV_MEM_TRACE);
 
   pending->payload = (char*) pending + sizeof(sctk_net_ibv_collective_pending_t);
   pending->src_process = msg->src_process;
@@ -83,9 +85,11 @@ extern  sctk_net_ibv_qp_local_t *rc_sr_local;
 {
   sctk_net_ibv_collective_pending_t* pending;
   sctk_net_ibv_rc_rdma_process_t *entry_rdma;
+  struct sctk_list_elem* rc;
 
   pending = sctk_malloc(sizeof(sctk_net_ibv_collective_pending_t));
   assume(pending);
+  sctk_ibv_profiler_inc(IBV_MEM_TRACE);
 
   pending->payload = entry->msg_payload_ptr;
   pending->src_process = entry->src_process;
@@ -94,8 +98,9 @@ extern  sctk_net_ibv_qp_local_t *rc_sr_local;
 
   /* we remove the entry... */
   sctk_list_lock(&entry_rdma->send);
-  sctk_list_search_and_free(&entry_rdma->send, entry);
+  rc = sctk_list_remove(&entry_rdma->send, entry->list_elem);
   sctk_list_unlock(&entry_rdma->send);
+  assume(rc);
 
   /* ...and we push the received collective into the pending list */
   sctk_list_lock(list);
@@ -103,6 +108,7 @@ extern  sctk_net_ibv_qp_local_t *rc_sr_local;
   sctk_list_unlock(list);
 
   sctk_free(entry);
+  sctk_ibv_profiler_dec(IBV_MEM_TRACE);
 
   return pending;
 }
@@ -113,6 +119,7 @@ sctk_net_ibv_collective_lookup_src(struct sctk_list* list, const int src)
 {
   struct sctk_list_elem* elem;
   sctk_net_ibv_collective_pending_t* msg;
+  int i = 0;
 
   if (!list || src < 0)
     return NULL;
@@ -122,13 +129,15 @@ sctk_net_ibv_collective_lookup_src(struct sctk_list* list, const int src)
   while(elem)
   {
     msg = (sctk_net_ibv_collective_pending_t*) elem->elem;
-    //sctk_nodebug("Found with src %d", msg->src_process);
+    sctk_nodebug("Found msg %p", msg);
     if (msg->src_process == src)
     {
       sctk_list_remove(list, elem);
       sctk_list_unlock(list);
       return msg;
     }
+    sctk_nodebug("i=%d", i);
+    i++;
     elem = elem->p_next;
   }
   sctk_list_unlock(list);
@@ -156,7 +165,9 @@ sctk_net_ibv_broadcast_recv(void* data, size_t size, int* array,
       /* received from process src */
       do {
         msg = sctk_net_ibv_collective_lookup_src(list, src);
-        sctk_thread_yield();
+
+        sctk_net_ibv_allocator_ptp_poll_all();
+        //sctk_thread_yield();
       } while(msg == NULL);
 
       sctk_nodebug("Broadcast received from process %d size %lu", src, msg->size);
@@ -165,6 +176,7 @@ sctk_net_ibv_broadcast_recv(void* data, size_t size, int* array,
       memcpy(data,
         msg->payload, size);
       sctk_free(msg);
+      sctk_ibv_profiler_dec(IBV_MEM_TRACE);
       break;
     }
     *mask <<=1;
@@ -294,8 +306,8 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
 
       while(! (msg = sctk_list_walk_on_cond(&reduce_fifo, child, walk_list, 1)))
       {
-//        sctk_net_ibv_allocator_ptp_poll_all();
-        sctk_thread_yield();
+        sctk_net_ibv_allocator_ptp_poll_all();
+//        sctk_thread_yield();
       }
       sctk_nodebug("Done msg from %d", child);
 
@@ -305,6 +317,9 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
 
       /* function execution */
       func ( msg->payload, my_vp->data.data_out, nb_elem, data_type );
+
+      free(msg);
+      sctk_ibv_profiler_dec(IBV_MEM_TRACE);
     }
   }
 
@@ -548,7 +563,8 @@ sctk_net_ibv_barrier ( sctk_collective_communications_t * com,
       {
         while(local_entry.entry[recvpeer] < counter)
         {
-          sctk_thread_yield();
+          sctk_net_ibv_allocator_ptp_poll_all();
+          //sctk_thread_yield();
         }
         sctk_nodebug("Got counter : %d",local_entry.entry[recvpeer]);
       }

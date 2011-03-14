@@ -121,7 +121,7 @@ sctk_list_push(struct sctk_list* list, void *elem)
     list->tail = new_elem;
   }
 
-  sctk_nodebug("head : %p", list->head->elem);
+  sctk_nodebug("head : %p", elem);
   list->elem_count++;
   return new_elem;
 }
@@ -130,17 +130,23 @@ void* sctk_list_search_and_free(struct sctk_list* list,
     void* elem)
 {
   struct sctk_list_elem *tmp = list->head;
+  int i = 0;
   sctk_nodebug("Free : %p", list->head->elem);
 
   while (tmp) {
     sctk_nodebug("CMP %p <-> %p", tmp->elem, elem);
     if (tmp->elem == elem)
     {
+        sctk_nodebug("iter %d", i);
+        sctk_nodebug("Ptr 2: %p", tmp);
         return sctk_list_remove(list, tmp);
     }
 
+    ++i;
     tmp = tmp->p_next;
   }
+
+  sctk_nodebug("iter %d", i);
   return NULL;
 }
 
@@ -150,17 +156,20 @@ void* sctk_list_walk(struct sctk_list* list,
   struct sctk_list_elem *tmp = list->head;
   assume(funct);
   void* ret = NULL;
+  int i = 0;
 
   while (tmp) {
 
     ret = funct(tmp->elem);
     if (ret)
     {
+      sctk_nodebug("iter %d", i);
       if (remove)
         sctk_list_remove(list, tmp);
       return ret;
     }
 
+    ++i;
     tmp = tmp->p_next;
   }
   return ret;
@@ -173,6 +182,7 @@ void* sctk_list_walk_on_cond(struct sctk_list* list, int cond,
   struct sctk_list_elem *tmp = NULL;
   assume(funct);
   void* ret = NULL;
+  int i = 0;
 
   sctk_list_lock(list);
   tmp = list->head;
@@ -184,12 +194,15 @@ void* sctk_list_walk_on_cond(struct sctk_list* list, int cond,
       if (remove)
         sctk_list_remove(list, tmp);
       sctk_list_unlock(list);
+      sctk_nodebug("iter %d", i);
       return ret;
     }
 
+    ++i;
     tmp = tmp->p_next;
   }
   sctk_list_unlock(list);
+  sctk_nodebug("iter %d", i);
   return ret;
 }
 

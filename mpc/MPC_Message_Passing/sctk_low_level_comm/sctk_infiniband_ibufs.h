@@ -115,7 +115,7 @@ void sctk_net_ibv_ibuf_new();
 void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t *rail,
     sctk_net_ibv_qp_local_t* local, int nb_ibufs);
 
-sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null);
+sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null, int need_lock);
 
 void sctk_net_ibv_ibuf_release(sctk_net_ibv_ibuf_t* ibuf, int is_srq);
 

@@ -47,6 +47,7 @@
 #include "sctk_alloc.h"
 #include "sctk_iso_alloc.h"
 #include "sctk_net_tools.h"
+#include "sctk_infiniband_profiler.h"
 
 /* rail */
 extern  sctk_net_ibv_qp_rail_t   *rail;
@@ -106,6 +107,8 @@ sctk_net_init_driver_infiniband (int *argc, char ***argv)
 
   sctk_net_ibv_config_init();
 
+  sctk_ibv_profiler_init();
+
   /* initialization of buffers  */
   rc_sr_local = sctk_net_ibv_comp_rc_sr_create_local(rail);
   sctk_net_ibv_ibuf_new();
@@ -141,6 +144,8 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
 
   sctk_net_ibv_rc_rdma_process_t *entry_rdma;
   sctk_net_ibv_rc_rdma_entry_t *entry = NULL;
+  struct sctk_list_elem* rc;
+  sctk_net_ibv_ibuf_t* ibuf;
 
   sctk_nodebug("FREE begin");
 
@@ -148,7 +153,11 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
   {
     case IBV_RC_SR_ORIGIN:
       sctk_nodebug("Free RC_SR message");
-      sctk_free(item);
+
+      /* release the ibuf */
+      ibuf = (sctk_net_ibv_ibuf_t*)  item->struct_ptr;
+      sctk_net_ibv_ibuf_release(ibuf, 1);
+      sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
       break;
 
     case IBV_RC_RDMA_ORIGIN:
@@ -158,18 +167,21 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
       entry_rdma = entry->entry_rc_rdma;
 
       sctk_net_ibv_mmu_unregister (rail->mmu, entry->mmu_entry);
-
       sctk_list_lock(&entry_rdma->send);
-      sctk_list_search_and_free(&entry_rdma->send, entry);
+      rc = sctk_list_remove(&entry_rdma->send, entry->list_elem);
       sctk_list_unlock(&entry_rdma->send);
+      assume(rc);
 
       sctk_free(entry->msg_payload_ptr);
+      sctk_ibv_profiler_dec(IBV_MEM_TRACE);
       sctk_free(entry);
+      sctk_ibv_profiler_dec(IBV_MEM_TRACE);
       break;
 
     case IBV_POLL_RC_SR_ORIGIN:
       sctk_nodebug("Free POLL_RC_SR");
       sctk_free(item->struct_ptr);
+      sctk_ibv_profiler_dec(IBV_MEM_TRACE);
       break;
 
     case IBV_POLL_RC_RDMA_ORIGIN:
@@ -180,7 +192,9 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
       sctk_net_ibv_mmu_unregister (rail->mmu, entry->mmu_entry);
 
       sctk_free(entry->msg_payload_ptr);
+      sctk_ibv_profiler_dec(IBV_MEM_TRACE);
       sctk_free(entry);
+      sctk_ibv_profiler_dec(IBV_MEM_TRACE);
       break;
 
     default:
@@ -243,39 +257,39 @@ sctk_net_ibv_collective_op_driver (sctk_collective_communications_t * com,
 static void
 sctk_net_rpc_register(void* addr, size_t size)
 {
-  sctk_debug("BEGIN rpc_register");
+  sctk_nodebug("BEGIN rpc_register");
 
-  sctk_debug("END rpc_register");
+  sctk_nodebug("END rpc_register");
 }
 
 static void
 sctk_net_rpc_unregister(void* addr, size_t size)
 {
-  sctk_debug("BEGIN rpc_unregister");
+  sctk_nodebug("BEGIN rpc_unregister");
 
-  sctk_debug("END rpc_unregister");
+  sctk_nodebug("END rpc_unregister");
 }
 
 
 static void
 sctk_net_rpc_driver ( void ( *func ) ( void * ), int destination, void *arg, size_t arg_size ) {
-  sctk_debug("BEGIN rpc_driver");
+  sctk_nodebug("BEGIN rpc_driver");
 
-  sctk_debug("END rpc_driver");
+  sctk_nodebug("END rpc_driver");
 }
 
 static void
 sctk_net_rpc_retrive_driver ( void *dest, void *src, size_t arg_size,
     int process, int *ack ) {
-  sctk_debug("BEGIN rpc_retrive_driver");
+  sctk_nodebug("BEGIN rpc_retrive_driver");
 
-  sctk_debug("END rpc_retrive_driver");
+  sctk_nodebug("END rpc_retrive_driver");
 }
 
 static void
 sctk_net_rpc_send_driver ( void *dest, void *src, size_t arg_size, int process,
     int *ack ) {
-  sctk_debug("BEGIN rpc_send_driver");
+  sctk_nodebug("BEGIN rpc_send_driver");
 
   DBG_S ( 0 );
    not_reachable ();
@@ -286,7 +300,7 @@ sctk_net_rpc_send_driver ( void *dest, void *src, size_t arg_size, int process,
   assume ( ack );
   DBG_E ( 0 );
 
-  sctk_debug("END rpc_send_driver");
+  sctk_nodebug("END rpc_send_driver");
 }
 
 /*-----------------------------------------------------------
@@ -310,6 +324,7 @@ sctk_net_ibv_register_pointers_functions (sctk_net_driver_pointers_functions_t* 
    * registration of RPC functions
    */
   pointers->net_send_ptp_message= sctk_net_ibv_allocator_send_ptp_message;
+
   pointers->net_copy_message    = sctk_net_ibv_copy_message_func_driver;
   pointers->net_free            = sctk_net_ibv_free_func_driver;
 
@@ -345,23 +360,7 @@ sctk_net_preinit_driver_infiniband ( sctk_net_driver_pointers_functions_t* point
   void
 sctk_net_ibv_finalize()
 {
-  int i;
-  int total_rc_rdma = 0;
-  int total_rc_sr = 0;
-
-  for (i=0; i < sctk_process_number; ++i)
-  {
-
-    if (  sctk_net_ibv_allocator->entry[i].rc_sr &&
-        sctk_net_ibv_allocator->entry[i].rc_sr->is_connected)
-      ++total_rc_sr;
-
-    if(sctk_net_ibv_allocator->entry[i].rc_rdma)
-      ++total_rc_rdma;
-  }
-  fprintf(stderr, "%d %d %d\n", sctk_process_rank, total_rc_sr, total_rc_rdma);
-
-  sctk_nodebug("Number of rc_sr connection %d | rc_rdma connection %d", total_rc_sr, total_rc_rdma);
+  sctk_ibv_generate_report();
 }
 
 #else

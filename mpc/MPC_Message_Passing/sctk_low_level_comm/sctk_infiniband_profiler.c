@@ -21,53 +21,78 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __SCTK__INFINIBAND_SCHEDULING_H_
-#define __SCTK__INFINIBAND_SCHEDULING_H_
+#include "sctk_infiniband_profiler.h"
+#include "sctk_infiniband_config.h"
 
-#include <sctk.h>
-#include <stdint.h>
-#include "sctk_infiniband_const.h"
-#include "sctk_infiniband_comp_rc_sr.h"
-#include "sctk_infiniband_comp_rc_rdma.h"
+void sctk_ibv_profiler_init()
+{
+#ifdef IBV_ENABLE_PROFILE
+  int i;
 
-void sctk_net_ibv_sched_init();
-
-void
-sctk_net_ibv_sched_lock();
-
-void
-sctk_net_ibv_sched_unlock();
-
-uint32_t
-sctk_net_ibv_sched_psn_inc (int dest);
-
-uint32_t
-sctk_net_ibv_sched_esn_inc (int dest);
-
-  uint32_t
-sctk_net_ibv_sched_get_esn(int dest);
-
-  uint32_t
-sctk_net_ibv_sched_sn_check(int dest, uint64_t num);
-
-int
-sctk_net_ibv_sched_sn_check_and_inc(int dest, uint64_t num);
-
-int
-  sctk_net_ibv_sched_rc_sr_free_pending_msg(sctk_thread_ptp_message_t * item );
-
-void
-sctk_net_ibv_sched_pending_init(
-    sctk_net_ibv_allocator_type_t type);
-
-void
-sctk_net_ibv_sched_pending_push(
-    void* ptr,
-    size_t size,
-    int allocation_needed,
-    sctk_net_ibv_allocator_type_t type);
-
-  int
-sctk_net_ibv_sched_poll_pending();
-
+  memset(counters, 0, 20 * sizeof(uint64_t));
+  for (i=0; i < NB_PROFILE_ID; ++i)
+  {
+    locks[i] = SCTK_SPINLOCK_INITIALIZER;
+  }
 #endif
+}
+
+void sctk_ibv_profiler_inc(ibv_profiler_id id)
+{
+#ifdef IBV_ENABLE_PROFILE
+  sctk_spinlock_lock(&locks[id]);
+  counters[id].value+=1;
+  sctk_spinlock_unlock(&locks[id]);
+#endif
+}
+
+void sctk_ibv_profiler_dec(ibv_profiler_id id)
+{
+#ifdef IBV_ENABLE_PROFILE
+  sctk_spinlock_lock(&locks[id]);
+  counters[id].value-=1;
+  sctk_spinlock_unlock(&locks[id]);
+#endif
+}
+
+
+void sctk_ibv_profiler_add(ibv_profiler_id id, int c)
+{
+#ifdef IBV_ENABLE_PROFILE
+  sctk_spinlock_lock(&locks[id]);
+  counters[id].value+=c;
+  sctk_spinlock_unlock(&locks[id]);
+#endif
+}
+
+void sctk_ibv_profiler_sub(ibv_profiler_id id, int c)
+{
+#ifdef IBV_ENABLE_PROFILE
+  sctk_spinlock_lock(&locks[id]);
+  counters[id].value-=c;
+  sctk_spinlock_unlock(&locks[id]);
+#endif
+}
+
+void sctk_ibv_generate_report()
+{
+#ifdef IBV_ENABLE_PROFILE
+  FILE* file;
+  char filename[256];
+  char line[1024];
+  int i;
+
+  sprintf(filename, "profile/mpc_profile_%d_%d", sctk_process_rank, sctk_process_number);
+
+  file = fopen(filename, "w+");
+  assume(file);
+
+  for (i=0; i < NB_PROFILE_ID; ++i)
+  {
+   sprintf(line, "%s %lu\n", counters[i].name, counters[i].value);
+   fwrite(line, sizeof(char), strnlen(line, 1024), file);
+//    sctk_debug("line: %s", line);
+  }
+  fclose(file);
+#endif
+}

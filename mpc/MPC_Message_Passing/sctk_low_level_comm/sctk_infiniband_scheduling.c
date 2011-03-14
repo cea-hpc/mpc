@@ -25,6 +25,7 @@
 #include <sctk_infiniband_scheduling.h>
 #include <sctk_infiniband_allocator.h>
 #include "sctk_infiniband_const.h"
+#include "sctk_infiniband_profiler.h"
 #include "sctk_buffered_fifo.h"
 
 extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
@@ -139,6 +140,7 @@ sctk_net_ibv_sched_pending_push(
   if (allocation_needed)
   {
     msg = sctk_malloc(size);
+    sctk_ibv_profiler_inc(IBV_MEM_TRACE);
     memcpy(msg, ptr, size);
   } else {
     msg = ptr;
@@ -164,7 +166,7 @@ sctk_net_ibv_sched_pending_push(
 }
 
 
-  void
+  int
   sctk_net_ibv_sched_rc_sr_poll_pending()
 {
   struct sctk_list_elem* tmp = NULL;
@@ -191,15 +193,16 @@ sctk_net_ibv_sched_pending_push(
       //THERE
       sctk_list_remove(&rc_sr_pending, tmp);
       sctk_list_unlock(&rc_sr_pending);
-      return;
+      return 1;
     }
 
     tmp = tmp->p_next;
   }
   sctk_list_unlock(&rc_sr_pending);
+  return 0;
 }
 
-  void
+  int
 sctk_net_ibv_sched_rc_rdma_poll_pending()
 {
   struct sctk_list_elem* tmp = NULL;
@@ -225,20 +228,30 @@ sctk_net_ibv_sched_rc_rdma_poll_pending()
       sctk_net_ibv_comp_rc_rdma_read_msg(msg, IBV_POLL_RC_RDMA_ORIGIN);
       sctk_list_unlock(&rc_rdma_pending);
 
-      return;
+      return 1;
     }
 
     tmp = tmp->p_next;
   }
   sctk_list_unlock(&rc_rdma_pending);
+
+  return 0;
 }
 
-  void
+  int
 sctk_net_ibv_sched_poll_pending()
 {
-  sctk_net_ibv_sched_rc_sr_poll_pending();
-  sctk_net_ibv_sched_rc_rdma_poll_pending();
+  int tmp, restart = 0;
 
+  tmp = sctk_net_ibv_sched_rc_sr_poll_pending();
+  if (tmp == 1)
+    restart = 1;
+
+  tmp = sctk_net_ibv_sched_rc_rdma_poll_pending();
+  if (tmp == 1)
+    restart = 1;
+
+  return restart;
 }
 
   uint32_t

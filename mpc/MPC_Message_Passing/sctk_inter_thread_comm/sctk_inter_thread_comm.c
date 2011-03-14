@@ -858,6 +858,8 @@ __sctk_memcpy (char *restrict s1, const char *restrict s2, size_t n)
     }
 }
 
+
+/* TODO */
 static inline void
 __sctk_perform_match_for_source_found (sctk_thread_ptp_message_t *
 				       restrict cursor,
@@ -2059,7 +2061,7 @@ sctk_register_thread (const int i)
     }
 
   sctk_net_send_task_location (i, sctk_process_rank);
-  
+
 }
 
 void

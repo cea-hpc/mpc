@@ -100,7 +100,7 @@ sctk_net_ibv_mmu_register (
       mmu->entry[i].status = ibv_entry_used;
       sctk_thread_mutex_unlock (&mmu->lock);
 
-      sctk_nodebug("MMU entry %d is free", i);
+      sctk_nodebug("[mmu] alloc - entry_nb %d", mmu->entry_nb);
 
       sctk_nodebug("\t\t\t\tUse PD %p", local->pd);
 
@@ -137,6 +137,7 @@ sctk_net_ibv_mmu_unregister ( sctk_net_ibv_mmu_t *mmu,
   ibv_dereg_mr (mmu_entry->mr);
 
   mmu->entry_nb--;
+  sctk_nodebug("[mmu] free - entry_nb %d", mmu->entry_nb);
   mmu_entry->status = ibv_entry_free;
   mmu_entry->ptr = NULL;
   mmu_entry->size = 0;

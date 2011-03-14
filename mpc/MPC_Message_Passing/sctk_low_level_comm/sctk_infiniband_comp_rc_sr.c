@@ -33,6 +33,7 @@
 #include "sctk_alloc.h"
 #include "sctk.h"
 #include "sctk_net_tools.h"
+#include "sctk_infiniband_profiler.h"
 
 static uint32_t wr_current = 0;
 
@@ -113,6 +114,7 @@ sctk_net_ibv_comp_rc_sr_send(
 sctk_net_ibv_comp_rc_sr_free(sctk_net_ibv_ibuf_t* entry)
 {
   sctk_free(entry);
+  sctk_ibv_profiler_dec(IBV_MEM_TRACE);
 }
 
   sctk_net_ibv_qp_remote_t*
@@ -165,7 +167,7 @@ sctk_net_ibv_comp_rc_sr_send_ptp_message (
   void* payload;
   uint32_t psn;
 
-  ibuf = sctk_net_ibv_ibuf_pick(0);
+  ibuf = sctk_net_ibv_ibuf_pick(0, 1);
   payload = RC_SR_PAYLOAD(ibuf);
 
   if (sctk_process_rank == 0)
@@ -207,6 +209,7 @@ sctk_net_ibv_comp_rc_sr_send_ptp_message (
   sctk_nodebug("Eager msg sent to process %lu!", dest_process);
 }
 
+#if 0
   void*
 sctk_net_ibv_comp_rc_sr_prepare_recv(void* msg, size_t size)
 {
@@ -218,6 +221,7 @@ sctk_net_ibv_comp_rc_sr_prepare_recv(void* msg, size_t size)
 
   return ptr;
 }
+#endif
 
 /*-----------------------------------------------------------
  *  POLLING FUNCTIONS
@@ -251,13 +255,13 @@ sctk_net_ibv_rc_sr_poll_send(
       break;
 
     case RDMA_READ_IBUF_FLAG:
+    sctk_net_ibv_com_rc_rdma_read_finish(
+      ibuf, rc_sr_local, lookup_mode);
+
     /* there */
     sctk_net_ibv_comp_rc_rdma_send_finish(
         rail, rc_sr_local, rc_rdma_local,
         ibuf);
-
-    sctk_net_ibv_com_rc_rdma_read_finish(
-      ibuf, rc_sr_local, lookup_mode);
 
     sctk_net_ibv_ibuf_release(ibuf, 0);
     break;
@@ -285,6 +289,7 @@ sctk_net_ibv_rc_sr_poll_recv(
   sctk_net_ibv_rc_sr_msg_header_t* msg_header;
   int ret;
   void* msg;
+  int release_buffer = 1;
 
   ibuf = (sctk_net_ibv_ibuf_t*) wc->wr_id;
   msg_header = ((sctk_net_ibv_rc_sr_msg_header_t*) ibuf->buffer);
@@ -296,7 +301,7 @@ sctk_net_ibv_rc_sr_poll_recv(
 
   if (lookup_mode)
   {
-    sctk_nodebug("Lookup mode for dest %d and ESN %lu", dest, sctk_net_ibv_sched_get_esn(dest));
+    sctk_debug("Lookup mode for dest %d and ESN %lu", dest, sctk_net_ibv_sched_get_esn(dest));
   }
 
   sctk_nodebug("MSG TYPE : %d", msg_type);
@@ -330,15 +335,18 @@ sctk_net_ibv_rc_sr_poll_recv(
               msg_header->psn, msg_header->src_process);
 
           /* copy the message to buffer */
-          msg = sctk_net_ibv_comp_rc_sr_prepare_recv(
-              &(msg_header->payload),
-              msg_header->size);
+//          msg = sctk_net_ibv_comp_rc_sr_prepare_recv(
+//              &(msg_header->payload),
+//              msg_header->size);
 
           /* send msg to MPC */
-          sctk_net_ibv_send_msg_to_mpc(
-              (sctk_thread_ptp_message_t*) msg,
-              (char*) msg + sizeof(sctk_thread_ptp_message_t), msg_header->src_process,
-              IBV_RC_SR_ORIGIN, NULL);
+        sctk_net_ibv_send_msg_to_mpc(
+            (sctk_thread_ptp_message_t*) &(msg_header->payload),
+            (char*) &(msg_header->payload) + sizeof(sctk_thread_ptp_message_t), msg_header->src_process,
+            IBV_RC_SR_ORIGIN, ibuf);
+
+        /* we don't release the buffer for now. It will be release when the msg will be freed */
+        release_buffer = 0;
         }
 
         /* normal mode */
@@ -363,16 +371,14 @@ sctk_net_ibv_rc_sr_poll_recv(
 
         sctk_nodebug("Recv EAGER message from %d (PSN %d)", msg_header->src_process, msg_header->psn);
 
-        /* copy the message to buffer */
-        msg = sctk_net_ibv_comp_rc_sr_prepare_recv(
-            &(msg_header->payload),
-            msg_header->size);
-
         /* send msg to MPC */
         sctk_net_ibv_send_msg_to_mpc(
-            (sctk_thread_ptp_message_t*) msg,
-            (char*) msg + sizeof(sctk_thread_ptp_message_t), msg_header->src_process,
-            IBV_RC_SR_ORIGIN, NULL);
+            (sctk_thread_ptp_message_t*) &(msg_header->payload),
+            (char*) &(msg_header->payload) + sizeof(sctk_thread_ptp_message_t), msg_header->src_process,
+            IBV_RC_SR_ORIGIN, ibuf);
+
+        /* we don't release the buffer for now. It will be release when the msg will be freed */
+        release_buffer = 0;
       }
 
       sctk_nodebug("(EAGER) MSG PTP received %lu", msg_header->size);
@@ -422,9 +428,12 @@ sctk_net_ibv_rc_sr_poll_recv(
       break;
   }
 
-  sctk_nodebug("Buffer %d posted", ibuf_free_srq_nb);
-  sctk_net_ibv_ibuf_release(ibuf, 1);
-  sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
+  if (release_buffer)
+  {
+    sctk_nodebug("Buffer %d posted", ibuf_free_srq_nb);
+    sctk_net_ibv_ibuf_release(ibuf, 1);
+    sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
+  }
 
   if (lookup_mode)
     sctk_nodebug("Finished Lookup mode");

@@ -36,6 +36,7 @@
 #include <infiniband/verbs.h>
 #include "sctk_list.h"
 #include "sctk_infiniband_qp.h"
+#include "sctk_list.h"
 
 /* define which protocol use for rdnvz messages */
 typedef enum
@@ -82,6 +83,8 @@ typedef struct
   size_t                          requested_size;
   int                             src_process;
   uint32_t                        psn;  /* Packet Sequence Number */
+  double creation_timestamp;
+  struct sctk_list_elem*          list_elem;;
 
   union
   {

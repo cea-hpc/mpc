@@ -325,6 +325,8 @@ sctk_net_hybrid_finalize()
 #endif
 #endif
 
+   sctk_net_ibv_finalize();
+
 }
 
 /*

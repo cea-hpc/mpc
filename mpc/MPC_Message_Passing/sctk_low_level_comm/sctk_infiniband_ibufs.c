@@ -26,6 +26,7 @@
 #include "sctk_infiniband_ibufs.h"
 #include "sctk_infiniband_config.h"
 #include "sctk_infiniband_allocator.h"
+#include "sctk_infiniband_profiler.h"
 #include "sctk_infiniband_mmu.h"
 #include "sctk_spinlock.h"
 
@@ -97,9 +98,14 @@ void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,
 
   if (!ibuf_last_region)
   {
+    /* first allocation */
     ibuf_last_region = region;
+    sctk_ibv_profiler_add(IBV_IBUF_TOT_SIZE, nb_ibufs * (ibv_eager_threshold+sizeof(sctk_net_ibv_ibuf_t)));
   } else {
+    /* not the first allocation */
     ibuf_last_region = ibuf_last_region->next_region;
+    sctk_ibv_profiler_inc(IBV_IBUF_CHUNKS);
+    sctk_ibv_profiler_add(IBV_IBUF_TOT_SIZE, nb_ibufs * (ibv_eager_threshold+sizeof(sctk_net_ibv_ibuf_t)));
   }
 
   /* TODO: register memory for each region */
@@ -139,7 +145,7 @@ void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,
   sctk_nodebug("END ibuf initialization");
 }
 
-sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null)
+sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null, int need_lock)
 {
   sctk_net_ibv_ibuf_t* ibuf;
   int boolean = 1;
@@ -149,7 +155,7 @@ sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null)
 
   while (1)
   {
-    if (sctk_spinlock_trylock(&ibuf_lock) == 0)
+    if (!need_lock || sctk_spinlock_trylock(&ibuf_lock) == 0)
     {
       if (ibuf_free_header != NULL)
       {
@@ -161,22 +167,16 @@ sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null)
 
         goto resume;
       }
-      if (boolean)
-      {
-        boolean = 0;
-//        sctk_debug("No more buffer available (ibv_got_srq_nb %d, ibv_free_srq_ibufs %d, ibuf_free_ibuf_nb %d, ibuf_got_ibuf_nb %d, ibuf_free_header %p) ", ibuf_got_srq_nb, ibuf_free_srq_nb, ibuf_free_ibuf_nb, ibuf_got_ibuf_nb, ibuf_free_header);
-      }
-
 
       if (return_on_null)
       {
         return NULL;
       }
 
-      sctk_spinlock_unlock(&ibuf_lock);
+      if (need_lock)
+        sctk_spinlock_unlock(&ibuf_lock);
     }
 
-//    sctk_net_ibv_allocator_ptp_poll(IBV_CHAN_RC_SR);
     sctk_thread_yield();
   }
 
@@ -194,7 +194,9 @@ resume:
   --ibuf_free_ibuf_nb;
   ++ibuf_got_ibuf_nb;
 
-  sctk_spinlock_unlock(&ibuf_lock);
+  if (need_lock)
+    sctk_spinlock_unlock(&ibuf_lock);
+
   return ibuf;
 }
 
@@ -235,23 +237,21 @@ int sctk_net_ibv_ibuf_srq_post(
   sctk_net_ibv_ibuf_t* ibuf;
   int rc;
 
+  sctk_spinlock_lock(&ibuf_lock);
 
   for (i=0; i < nb_ibufs; ++i)
   {
-    ibuf = sctk_net_ibv_ibuf_pick(0);
+    ibuf = sctk_net_ibv_ibuf_pick(0, 0);
 
     if (!ibuf)
       break;
 
     sctk_net_ibv_ibuf_recv_init(ibuf);
 
-    sctk_spinlock_lock(&ibuf_lock);
     rc = ibv_post_srq_recv(local->srq, &(ibuf->desc.wr.recv), &(ibuf->desc.bad_wr.recv));
-    sctk_spinlock_unlock(&ibuf_lock);
     assume(rc == 0);
   }
 
-  sctk_spinlock_lock(&ibuf_lock);
   ibuf_free_srq_nb+=i;
   sctk_spinlock_unlock(&ibuf_lock);
   return i;
