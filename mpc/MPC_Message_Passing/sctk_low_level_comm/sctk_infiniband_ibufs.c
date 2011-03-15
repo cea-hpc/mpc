@@ -249,7 +249,11 @@ int sctk_net_ibv_ibuf_srq_post(
     sctk_net_ibv_ibuf_recv_init(ibuf);
 
     rc = ibv_post_srq_recv(local->srq, &(ibuf->desc.wr.recv), &(ibuf->desc.bad_wr.recv));
-    assume(rc == 0);
+    if (rc != 0)
+    {
+      sctk_error("Cannot post more srq buffers. Please increase the value of MPC_IBV_EAGER_THRESHOLD");
+      sctk_abort();
+    }
   }
 
   ibuf_free_srq_nb+=i;

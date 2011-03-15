@@ -33,7 +33,7 @@
  * IBV_EVENT_QP_LAST_WQE_REACHED is triggered
  */
 #define IBV_QP_TX_DEPTH     2000
-#define IBV_QP_RC_DEPTH     2000
+#define IBV_QP_RX_DEPTH     2000
 /* Many CQE. In memory, it represents about
  * 1.22Mb for 40000 entries */
 #define IBV_CQ_DEPTH        40000
@@ -68,7 +68,7 @@
 /* global values */
 int  ibv_eager_threshold  = IBV_EAGER_THRESHOLD;
 int  ibv_qp_tx_depth      = IBV_QP_TX_DEPTH;
-int  ibv_qp_rx_depth      = IBV_QP_RC_DEPTH;
+int  ibv_qp_rx_depth      = IBV_QP_RX_DEPTH;
 int  ibv_cq_depth         = IBV_CQ_DEPTH;
 int  ibv_max_sg_sq        = IBV_MAX_SG_SQ;
 int  ibv_max_sg_rq        = IBV_MAX_SG_RQ;
@@ -109,6 +109,7 @@ void sctk_net_ibv_config_check()
   {
       goto error;
   }
+
   return;
 
 error:
