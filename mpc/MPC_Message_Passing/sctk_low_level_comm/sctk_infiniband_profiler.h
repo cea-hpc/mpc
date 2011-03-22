@@ -66,8 +66,13 @@ typedef enum
   IBV_QP_CONNECTED = 21,
 
   IBV_MEM_TRACE = 22,
+
+  /* FRAG BUFFERS */
+  IBV_FRAG_EAGER_NB = 23,
+  IBV_FRAG_EAGER_SIZE = 24,
+
 } ibv_profiler_id;
-#define NB_PROFILE_ID 23
+#define NB_PROFILE_ID 25
 
 struct sctk_ibv_profiler_entry_s
 {
@@ -113,7 +118,10 @@ static struct sctk_ibv_profiler_entry_s counters[NB_PROFILE_ID] =
 
   ENTRY(IBV_QP_CONNECTED),
 
-  ENTRY(IBV_MEM_TRACE)
+  ENTRY(IBV_MEM_TRACE),
+
+  ENTRY(IBV_FRAG_EAGER_NB),
+  ENTRY(IBV_FRAG_EAGER_SIZE),
 };
 
 void sctk_ibv_profiler_init();

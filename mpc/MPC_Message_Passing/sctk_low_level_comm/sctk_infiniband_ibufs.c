@@ -251,8 +251,15 @@ int sctk_net_ibv_ibuf_srq_post(
     rc = ibv_post_srq_recv(local->srq, &(ibuf->desc.wr.recv), &(ibuf->desc.bad_wr.recv));
     if (rc != 0)
     {
-      sctk_error("Cannot post more srq buffers. Please increase the value of MPC_IBV_EAGER_THRESHOLD");
-      sctk_abort();
+      /* try to post more recv buffers */
+      rc = sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
+
+      /* if it's still impossible, we fail */
+      if (rc != 0)
+      {
+        sctk_error("Cannot post more srq buffers.\n Please increase the value of MPC_IBV_EAGER_THRESHOLD");
+        assume(0);
+      }
     }
   }
 

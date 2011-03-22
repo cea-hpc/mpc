@@ -30,14 +30,17 @@ typedef enum
   IBV_CHAN_RC_RDMA  = 1 << 1,
   IBV_CHAN_SEND     = 1 << 2,
   IBV_CHAN_RECV     = 1 << 3,
+  IBV_CHAN_RC_SR_FRAG  = 1 << 4,
 } sctk_net_ibv_allocator_type_t;
 
 /* source of the message. Simpluy the destruction
  * of the message */
 #define IBV_RC_SR_ORIGIN        0
 #define IBV_RC_RDMA_ORIGIN      1
-#define IBV_POLL_RC_SR_ORIGIN   2
-#define IBV_POLL_RC_RDMA_ORIGIN 3
+#define IBV_RC_SR_FRAG_ORIGIN        2
+#define IBV_POLL_RC_SR_ORIGIN   3
+#define IBV_POLL_RC_RDMA_ORIGIN 4
+#define IBV_POLL_RC_SR_FRAG_ORIGIN   5
 
 /*-----------------------------------------------------------
  *  MMU

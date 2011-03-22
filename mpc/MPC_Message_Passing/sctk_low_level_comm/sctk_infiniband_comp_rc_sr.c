@@ -47,6 +47,80 @@ extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
  *  FUNCTIONS
  *----------------------------------------------------------*/
 
+void sctk_net_ibv_comp_rc_sr_frag_allocate(int src,
+    size_t size, uint32_t psn, sctk_net_ibv_rc_sr_msg_header_t* msg_header)
+{
+  sctk_net_ibv_frag_eager_entry_t* entry;
+  struct sctk_list* list;
+  list = &sctk_net_ibv_allocator->entry[src].frag_eager;
+
+  entry = sctk_malloc((char*) sizeof(sctk_net_ibv_frag_eager_entry_t) +
+      size);
+  assume(entry);
+
+  entry->msg = (char*) entry + sizeof(sctk_net_ibv_frag_eager_entry_t);
+  entry->psn = psn;
+  entry->current_copied = 0;
+  entry->src = src;
+
+  sctk_list_lock(list);
+  entry->list_elem = sctk_list_push(list, entry);
+  sctk_list_unlock(list);
+
+  sctk_nodebug("New entry allocated for msg (size: %lu, PSN %lu, alloc %p)", size, psn, entry);
+
+}
+
+ void
+sctk_net_ibv_comp_rc_sr_free_frag_msg(sctk_net_ibv_frag_eager_entry_t* entry)
+{
+  struct sctk_list* list;
+  list = &sctk_net_ibv_allocator->entry[entry->src].frag_eager;
+
+  sctk_list_lock(list);
+  sctk_list_remove(list, entry->list_elem);
+  sctk_list_unlock(list);
+  sctk_nodebug("Free msg %p", entry);
+  sctk_free(entry);
+}
+
+ sctk_net_ibv_frag_eager_entry_t*
+sctk_net_ibv_comp_rc_sr_copy_msg(void* buffer, int src, size_t size, uint32_t psn)
+{
+  struct sctk_list* list;
+  struct sctk_list_elem *tmp = NULL;
+  sctk_net_ibv_frag_eager_entry_t* entry;
+
+  list = &sctk_net_ibv_allocator->entry[src].frag_eager;
+
+  sctk_list_lock(list);
+  tmp = list->head;
+
+  while (tmp) {
+
+    entry = (sctk_net_ibv_frag_eager_entry_t*) tmp->elem;
+
+
+    if (psn == entry->psn)
+    {
+    sctk_nodebug("Found %lu", entry->psn);
+      memcpy( (char*) entry->msg + entry->current_copied, buffer, size);
+      entry->current_copied+=size;
+
+      sctk_nodebug("Frag msg copied (size: %lu, psn %lu, copied %lu)", size, psn, entry->current_copied);
+
+      sctk_list_unlock(list);
+      return entry;
+    }
+
+    tmp = tmp->p_next;
+  }
+  sctk_list_unlock(list);
+  return NULL;
+}
+
+
+
   sctk_net_ibv_qp_local_t*
 sctk_net_ibv_comp_rc_sr_create_local(sctk_net_ibv_qp_rail_t* rail)
 {
@@ -72,39 +146,59 @@ sctk_net_ibv_comp_rc_sr_create_local(sctk_net_ibv_qp_rail_t* rail)
 uint32_t
 sctk_net_ibv_comp_rc_sr_send(
     sctk_net_ibv_qp_remote_t* remote,
-    sctk_net_ibv_ibuf_t* ibuf, size_t size,
-    sctk_net_ibv_rc_sr_msg_type_t type, uint32_t* psn)
+    sctk_net_ibv_ibuf_t* ibuf, size_t size, size_t buffer_size,
+    sctk_net_ibv_rc_sr_msg_type_t type, uint32_t* psn, const int buff_nb, const int total_buffs)
 {
   uint32_t ret_psn = 0;
   int rc;
+  int locked = 0;
   sctk_net_ibv_rc_sr_msg_header_t* msg_header;
 
   msg_header = ((sctk_net_ibv_rc_sr_msg_header_t*) ibuf->buffer);
   msg_header->msg_type = type;
   msg_header->src_process = sctk_process_rank;
   msg_header->size = size + RC_SR_HEADER_SIZE;
-  msg_header->payload_size = size;
+  msg_header->buffer_size = size + RC_SR_HEADER_SIZE;
+
+  msg_header->payload_size = buffer_size;
+  msg_header->buff_nb = buff_nb;
+  msg_header->total_buffs = total_buffs;
 
   /* If the psn variable is != NULL, the PSN has to be computed before
    * sending the message */
   if (psn != NULL)
   {
-    sctk_net_ibv_sched_lock();
-    *psn = sctk_net_ibv_sched_psn_inc(remote->rank);
-    ret_psn = *psn;
-    msg_header->psn = ret_psn;
+    /* if this is the first buffer from a serial of buffer,
+     * we set the PSN to the right value*/
+    if (buff_nb == 1)
+    {
+      sctk_net_ibv_sched_lock();
+      locked = 1;
+      *psn = sctk_net_ibv_sched_psn_inc(remote->rank);
+      ret_psn = *psn;
+      msg_header->psn = ret_psn;
+    } else {
+      /* in the other case, we just copy the current
+       * value of psn */
+      locked = 0;
+      ret_psn = *psn;
+      msg_header->psn = ret_psn;
+    }
 
-  /*
-   * We have to check if there are free slots for the
-   * selected QP
-   */
-  sctk_net_ibv_qp_send_get_wqe(remote, ibuf);
-    sctk_net_ibv_sched_unlock();
+    /*
+     * We have to check if there are free slots for the
+     * selected QP
+     */
+    sctk_net_ibv_qp_send_get_wqe(remote, ibuf);
+
+    if (locked) {
+      sctk_net_ibv_sched_unlock();
+    }
 
   } else {
     sctk_nodebug("QP %p dest %d size %lu", remote->qp, remote->rank, size);
-//    sctk_nodebug("lkey : %lu", ibuf->desc.sg_entry.lkey);
-  sctk_net_ibv_qp_send_get_wqe(remote, ibuf);
+    //    sctk_nodebug("lkey : %lu", ibuf->desc.sg_entry.lkey);
+    sctk_net_ibv_qp_send_get_wqe(remote, ibuf);
   }
 
   return ret_psn;
@@ -156,10 +250,84 @@ sctk_net_ibv_comp_rc_sr_check_and_connect(int dest_process)
 }
 
 void
+sctk_net_ibv_comp_rc_sr_send_frag_ptp_message(
+    sctk_net_ibv_qp_local_t* local_rc_sr,
+    void* msg, int dest_process, size_t size, sctk_net_ibv_rc_sr_msg_type_t type)
+{
+  sctk_net_ibv_ibuf_t* ibuf;
+  sctk_net_ibv_qp_remote_t* remote;
+  sctk_thread_ptp_message_t* ptp_msg;
+  void* payload;
+  uint32_t psn;
+  size_t offset_buffer = 0;
+  size_t offset_copied = 0;
+  size_t allowed_copy_size = 0;
+  int   nb_buffers = 1;
+  int   total_buffs = 0;
+  size_t size_payload = 0;
+
+  ptp_msg = (sctk_thread_ptp_message_t*) msg;
+
+  size += sizeof(sctk_thread_ptp_message_t);
+
+  /* check if the TCP connection is active. If not, connect peers */
+  remote = sctk_net_ibv_comp_rc_sr_check_and_connect(dest_process);
+
+  total_buffs = ceilf( (float)
+      size/ (ibv_eager_threshold - RC_SR_HEADER_SIZE));
+
+  sctk_nodebug("Send rc_sr message. type %d, size %d, src_process %lu, nb buffs %d", type, size, dest_process, total_buffs);
+
+
+  /* while it reamins slots to copy */
+  while (nb_buffers <= total_buffs)
+  {
+    ibuf = sctk_net_ibv_ibuf_pick(0, 1);
+    payload = RC_SR_PAYLOAD(ibuf);
+
+    /* if this is the first buffer, we  */
+    if (nb_buffers == 1)
+    {
+      sctk_nodebug("Copy header");
+      memcpy (payload, ptp_msg, sizeof ( sctk_thread_ptp_message_t ));
+      offset_buffer = sizeof ( sctk_thread_ptp_message_t);
+    } else {
+      offset_buffer = 0;
+    }
+
+    allowed_copy_size = ibv_eager_threshold
+      - RC_SR_HEADER_SIZE
+      - offset_buffer;
+
+    sctk_nodebug("%d - Allowed size to be copied : %lu", nb_buffers, allowed_copy_size);
+
+    size_payload = offset_copied;
+
+    offset_copied = sctk_net_copy_frag_msg(ptp_msg, payload + offset_buffer, offset_copied, allowed_copy_size);
+
+    size_payload = (offset_copied - size_payload) + offset_buffer;
+
+    sctk_nodebug("Msg copied in buffer");
+
+    /* PSN */
+    sctk_net_ibv_ibuf_send_init(ibuf, size_payload + RC_SR_HEADER_SIZE);
+
+    sctk_net_ibv_comp_rc_sr_send(remote, ibuf, size, size_payload, type, &psn, nb_buffers, total_buffs);
+
+    sctk_nodebug("Send frag PTP %lu to %d with psn %lu", size_payload, dest_process, psn);
+
+    nb_buffers++;
+  }
+
+  ptp_msg->completion_flag = 1;
+
+  sctk_nodebug("Eager msg sent to process %lu!", dest_process);
+}
+
+void
 sctk_net_ibv_comp_rc_sr_send_ptp_message (
     sctk_net_ibv_qp_local_t* local_rc_sr,
     void* msg, int dest_process, size_t size, sctk_net_ibv_rc_sr_msg_type_t type) {
-
 
   sctk_net_ibv_ibuf_t* ibuf;
   sctk_net_ibv_qp_remote_t* remote;
@@ -188,7 +356,7 @@ sctk_net_ibv_comp_rc_sr_send_ptp_message (
     /* lock to be sure that the message that we send has the good
      * PSN */
     sctk_net_ibv_ibuf_send_init(ibuf, size + RC_SR_HEADER_SIZE);
-    sctk_net_ibv_comp_rc_sr_send(remote, ibuf, size, type, &psn);
+    sctk_net_ibv_comp_rc_sr_send(remote, ibuf, size, size, type, &psn, 1, 1);
     sctk_nodebug("Send PTP %lu to %d with psn %lu", size, dest_process, psn);
   }
   /* if this is a COLLECTIVE msg */
@@ -198,7 +366,7 @@ sctk_net_ibv_comp_rc_sr_send_ptp_message (
   {
     memcpy (payload, msg, size);
     sctk_net_ibv_ibuf_send_init(ibuf, size + RC_SR_HEADER_SIZE);
-    sctk_net_ibv_comp_rc_sr_send(remote, ibuf, size, type, NULL);
+    sctk_net_ibv_comp_rc_sr_send(remote, ibuf, size, size, type, NULL, 1, 1);
   }
   else
   {
@@ -208,20 +376,6 @@ sctk_net_ibv_comp_rc_sr_send_ptp_message (
 
   sctk_nodebug("Eager msg sent to process %lu!", dest_process);
 }
-
-#if 0
-  void*
-sctk_net_ibv_comp_rc_sr_prepare_recv(void* msg, size_t size)
-{
-  void* ptr;
-  sctk_nodebug("SIZE : %lu", size);
-
-  ptr = sctk_malloc(size);
-  memcpy(ptr, msg, size);
-
-  return ptr;
-}
-#endif
 
 /*-----------------------------------------------------------
  *  POLLING FUNCTIONS
@@ -255,16 +409,16 @@ sctk_net_ibv_rc_sr_poll_send(
       break;
 
     case RDMA_READ_IBUF_FLAG:
-    sctk_net_ibv_com_rc_rdma_read_finish(
-      ibuf, rc_sr_local, lookup_mode);
+      sctk_net_ibv_com_rc_rdma_read_finish(
+          ibuf, rc_sr_local, lookup_mode);
 
-    /* there */
-    sctk_net_ibv_comp_rc_rdma_send_finish(
-        rail, rc_sr_local, rc_rdma_local,
-        ibuf);
+      /* there */
+      sctk_net_ibv_comp_rc_rdma_send_finish(
+          rail, rc_sr_local, rc_rdma_local,
+          ibuf);
 
-    sctk_net_ibv_ibuf_release(ibuf, 0);
-    break;
+      sctk_net_ibv_ibuf_release(ibuf, 0);
+      break;
 
     case RDMA_WRITE_IBUF_FLAG:
       assume(0);
@@ -294,14 +448,13 @@ sctk_net_ibv_rc_sr_poll_recv(
   ibuf = (sctk_net_ibv_ibuf_t*) wc->wr_id;
   msg_header = ((sctk_net_ibv_rc_sr_msg_header_t*) ibuf->buffer);
 
-//  if (sctk_process_rank == 1)
-    sctk_nodebug("New Recv cq %p, flag %d", ibuf, ibuf->flag);
+  sctk_nodebug("New Recv cq %p, flag %d", ibuf, ibuf->flag);
 
   msg_type = msg_header->msg_type;
 
   if (lookup_mode)
   {
-    sctk_debug("Lookup mode for dest %d and ESN %lu", dest, sctk_net_ibv_sched_get_esn(dest));
+    sctk_nodebug("Lookup mode for dest %d and ESN %lu", dest, sctk_net_ibv_sched_get_esn(dest));
   }
 
   sctk_nodebug("MSG TYPE : %d", msg_type);
@@ -313,75 +466,157 @@ sctk_net_ibv_rc_sr_poll_recv(
       sctk_nodebug("READ EAGER message %lu from %d and size %lu",
           msg_header->psn, msg_header->src_process, msg_header->size);
 
-      if (lookup_mode)
+
+      /* if the buffer received isn't the first, we
+       * create the buffer and copy the message to it */
+      if (msg_header->total_buffs != 1)
       {
-        ret = sctk_net_ibv_sched_sn_check_and_inc(
-            msg_header->src_process,
-            msg_header->psn);
 
-        /* message not expected */
-        if(ret)
+        sctk_nodebug("buff %d on %d (sizepayload %lu)", msg_header->buff_nb, msg_header->total_buffs, msg_header->payload_size);
+
+        sctk_net_ibv_frag_eager_entry_t* entry;
+
+        if (msg_header->buff_nb == 1)
         {
-          sctk_nodebug("LOOKUP UNEXPECTED - Found psn %d from %d",
-              msg_header->psn, msg_header->src_process);
+          sctk_net_ibv_comp_rc_sr_frag_allocate(msg_header->src_process, msg_header->size, msg_header->psn, msg_header);
 
-          sctk_net_ibv_sched_pending_push(
-              msg_header, msg_header->size, 1,
-              IBV_CHAN_RC_SR);
-
-          /* expected message */
+          entry = sctk_net_ibv_comp_rc_sr_copy_msg(&msg_header->payload,
+              msg_header->src_process, msg_header->payload_size,
+              msg_header->psn);
+          assume(entry);
         } else {
-          sctk_nodebug("LOOKUP EXPECTED - Found psn %d from %d",
-              msg_header->psn, msg_header->src_process);
+          entry = sctk_net_ibv_comp_rc_sr_copy_msg(&msg_header->payload,
+              msg_header->src_process, msg_header->payload_size,
+              msg_header->psn);
+          assume(entry);
+        }
 
-          /* copy the message to buffer */
-//          msg = sctk_net_ibv_comp_rc_sr_prepare_recv(
-//              &(msg_header->payload),
-//              msg_header->size);
+        if (msg_header->buff_nb == msg_header->total_buffs)
+        {
+
+          if (lookup_mode)
+          {
+            ret = sctk_net_ibv_sched_sn_check_and_inc(
+                msg_header->src_process,
+                msg_header->psn);
+
+            /* message not expected */
+            if(ret)
+            {
+              sctk_nodebug("LOOKUP UNEXPECTED - Found psn %d from %d",
+                  msg_header->psn, msg_header->src_process);
+
+              sctk_net_ibv_sched_pending_push(
+                  entry, msg_header->size, 0,
+                  IBV_CHAN_RC_SR_FRAG);
+
+              /* expected message */
+            } else {
+              sctk_nodebug("LOOKUP EXPECTED - Found psn %d from %d",
+                  msg_header->psn, msg_header->src_process);
+
+              sctk_net_ibv_send_msg_to_mpc(
+                  (sctk_thread_ptp_message_t*) entry->msg,
+                  (char*) entry->msg + sizeof(sctk_thread_ptp_message_t), msg_header->src_process,
+                  IBV_RC_SR_FRAG_ORIGIN, entry);
+            }
+          } else {
+            ret = sctk_net_ibv_sched_sn_check_and_inc(msg_header->src_process, msg_header->psn);
+
+            if (ret)
+            {
+              sctk_nodebug("EXPECTED %lu but GOT %lu from process %d", sctk_net_ibv_sched_get_esn(msg_header->src_process), msg_header->psn, msg_header->src_process);
+
+              do {
+                /* enter to the lookup mode */
+                sctk_net_ibv_allocator_ptp_lookup_all(
+                    msg_header->src_process);
+
+                ret = sctk_net_ibv_sched_sn_check_and_inc(
+                    msg_header->src_process, msg_header->psn);
+
+//                sctk_thread_yield();
+              } while (ret);
+            }
+
+            sctk_net_ibv_send_msg_to_mpc(
+                (sctk_thread_ptp_message_t*) entry->msg,
+                (char*) entry->msg + sizeof(sctk_thread_ptp_message_t), msg_header->src_process,
+                IBV_RC_SR_FRAG_ORIGIN, entry);
+
+          }
+        }
+      }
+      /* if this is the last buffer of a message */
+      else {
+
+        if (lookup_mode)
+        {
+          ret = sctk_net_ibv_sched_sn_check_and_inc(
+              msg_header->src_process,
+              msg_header->psn);
+
+          /* message not expected */
+          if(ret)
+          {
+            sctk_nodebug("LOOKUP UNEXPECTED - Found psn %d from %d",
+                msg_header->psn, msg_header->src_process);
+
+            sctk_net_ibv_sched_pending_push(
+                msg_header, msg_header->size, 1,
+                IBV_CHAN_RC_SR);
+
+            /* expected message */
+          } else {
+            sctk_nodebug("LOOKUP EXPECTED - Found psn %d from %d",
+                msg_header->psn, msg_header->src_process);
+
+            /* send msg to MPC */
+            sctk_net_ibv_send_msg_to_mpc(
+                (sctk_thread_ptp_message_t*) &(msg_header->payload),
+                (char*) &(msg_header->payload) + sizeof(sctk_thread_ptp_message_t), msg_header->src_process,
+                IBV_RC_SR_ORIGIN, ibuf);
+
+            /* we don't release the buffer for now.
+             * It will be released when the msg will be freed */
+            release_buffer = 0;
+          }
+
+          /* normal mode */
+        } else {
+          sctk_nodebug("NORMAL mode");
+          ret = sctk_net_ibv_sched_sn_check_and_inc(msg_header->src_process, msg_header->psn);
+
+          if (ret)
+          {
+            sctk_nodebug("EXPECTED %lu but GOT %lu from process %d", sctk_net_ibv_sched_get_esn(msg_header->src_process), msg_header->psn, msg_header->src_process);
+
+            do {
+              /* enter to the lookup mode */
+              sctk_net_ibv_allocator_ptp_lookup_all(
+                  msg_header->src_process);
+
+              ret = sctk_net_ibv_sched_sn_check_and_inc(
+                  msg_header->src_process, msg_header->psn);
+
+            } while (ret);
+          }
+
+          sctk_nodebug("Recv EAGER message from %d (PSN %d)", msg_header->src_process, msg_header->psn);
 
           /* send msg to MPC */
-        sctk_net_ibv_send_msg_to_mpc(
-            (sctk_thread_ptp_message_t*) &(msg_header->payload),
-            (char*) &(msg_header->payload) + sizeof(sctk_thread_ptp_message_t), msg_header->src_process,
-            IBV_RC_SR_ORIGIN, ibuf);
+          sctk_net_ibv_send_msg_to_mpc(
+              (sctk_thread_ptp_message_t*) &(msg_header->payload),
+              (char*) &(msg_header->payload) + sizeof(sctk_thread_ptp_message_t), msg_header->src_process,
+              IBV_RC_SR_ORIGIN, ibuf);
 
-        /* we don't release the buffer for now. It will be release when the msg will be freed */
-        release_buffer = 0;
+          /* we don't release the buffer for now.
+           * It will be released when the msg will be freed */
+          release_buffer = 0;
         }
 
-        /* normal mode */
-      } else {
-        sctk_nodebug("NORMAL mode");
-        ret = sctk_net_ibv_sched_sn_check_and_inc(msg_header->src_process, msg_header->psn);
-
-        if (ret)
-        {
-          sctk_nodebug("EXPECTED %lu but GOT %lu from process %d", sctk_net_ibv_sched_get_esn(msg_header->src_process), msg_header->psn, msg_header->src_process);
-          do {
-            /* enter to the lookup mode */
-            sctk_net_ibv_allocator_ptp_lookup_all(
-                msg_header->src_process);
-
-            ret = sctk_net_ibv_sched_sn_check_and_inc(
-                msg_header->src_process, msg_header->psn);
-
-            sctk_thread_yield();
-          } while (ret);
-        }
-
-        sctk_nodebug("Recv EAGER message from %d (PSN %d)", msg_header->src_process, msg_header->psn);
-
-        /* send msg to MPC */
-        sctk_net_ibv_send_msg_to_mpc(
-            (sctk_thread_ptp_message_t*) &(msg_header->payload),
-            (char*) &(msg_header->payload) + sizeof(sctk_thread_ptp_message_t), msg_header->src_process,
-            IBV_RC_SR_ORIGIN, ibuf);
-
-        /* we don't release the buffer for now. It will be release when the msg will be freed */
-        release_buffer = 0;
+        sctk_nodebug("(EAGER) MSG PTP received %lu", msg_header->size);
       }
-
-      sctk_nodebug("(EAGER) MSG PTP received %lu", msg_header->size);
       break;
 
     case RC_SR_RDVZ_REQUEST:
@@ -408,7 +643,7 @@ sctk_net_ibv_rc_sr_poll_recv(
       sctk_nodebug("RC_SR_RDVZ_DONE");
 
       sctk_net_ibv_com_rc_rdma_recv_done(rail,
-        rc_sr_local, ibuf);
+          rc_sr_local, ibuf);
       break;
 
 

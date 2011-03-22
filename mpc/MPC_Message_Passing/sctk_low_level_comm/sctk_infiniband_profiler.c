@@ -24,9 +24,11 @@
 #include "sctk_infiniband_profiler.h"
 #include "sctk_infiniband_config.h"
 
+#define IBV_ENABLE_PROFILE        0
+
 void sctk_ibv_profiler_init()
 {
-#ifdef IBV_ENABLE_PROFILE
+#if IBV_ENABLE_PROFILE == 1
   int i;
 
   memset(counters, 0, 20 * sizeof(uint64_t));
@@ -39,7 +41,7 @@ void sctk_ibv_profiler_init()
 
 void sctk_ibv_profiler_inc(ibv_profiler_id id)
 {
-#ifdef IBV_ENABLE_PROFILE
+#if IBV_ENABLE_PROFILE == 1
   sctk_spinlock_lock(&locks[id]);
   counters[id].value+=1;
   sctk_spinlock_unlock(&locks[id]);
@@ -48,7 +50,7 @@ void sctk_ibv_profiler_inc(ibv_profiler_id id)
 
 void sctk_ibv_profiler_dec(ibv_profiler_id id)
 {
-#ifdef IBV_ENABLE_PROFILE
+#if IBV_ENABLE_PROFILE == 1
   sctk_spinlock_lock(&locks[id]);
   counters[id].value-=1;
   sctk_spinlock_unlock(&locks[id]);
@@ -58,7 +60,7 @@ void sctk_ibv_profiler_dec(ibv_profiler_id id)
 
 void sctk_ibv_profiler_add(ibv_profiler_id id, int c)
 {
-#ifdef IBV_ENABLE_PROFILE
+#if IBV_ENABLE_PROFILE == 1
   sctk_spinlock_lock(&locks[id]);
   counters[id].value+=c;
   sctk_spinlock_unlock(&locks[id]);
@@ -67,7 +69,7 @@ void sctk_ibv_profiler_add(ibv_profiler_id id, int c)
 
 void sctk_ibv_profiler_sub(ibv_profiler_id id, int c)
 {
-#ifdef IBV_ENABLE_PROFILE
+#if IBV_ENABLE_PROFILE == 1
   sctk_spinlock_lock(&locks[id]);
   counters[id].value-=c;
   sctk_spinlock_unlock(&locks[id]);
@@ -76,7 +78,7 @@ void sctk_ibv_profiler_sub(ibv_profiler_id id, int c)
 
 void sctk_ibv_generate_report()
 {
-#ifdef IBV_ENABLE_PROFILE
+#if IBV_ENABLE_PROFILE == 1
   FILE* file;
   char filename[256];
   char line[1024];
@@ -91,7 +93,7 @@ void sctk_ibv_generate_report()
   {
    sprintf(line, "%s %lu\n", counters[i].name, counters[i].value);
    fwrite(line, sizeof(char), strnlen(line, 1024), file);
-//    sctk_debug("line: %s", line);
+//      sctk_debug("line: %s", line);
   }
   fclose(file);
 #endif

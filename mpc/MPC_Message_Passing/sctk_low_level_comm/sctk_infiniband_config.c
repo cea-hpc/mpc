@@ -27,25 +27,26 @@
 #include "sctk_infiniband_comp_rc_rdma.h"
 
 /* default constants */
-#define IBV_EAGER_THRESHOLD (8 * 1024 )
+#define IBV_EAGER_THRESHOLD (32 * 1024 )
+#define IBV_FRAG_EAGER_THRESHOLD (1024 * 1024 * 1024)
 /*
  * should be high values if the event
  * IBV_EVENT_QP_LAST_WQE_REACHED is triggered
  */
-#define IBV_QP_TX_DEPTH     2000
-#define IBV_QP_RX_DEPTH     2000
+#define IBV_QP_TX_DEPTH     6000
+#define IBV_QP_RX_DEPTH     6000
 /* Many CQE. In memory, it represents about
  * 1.22Mb for 40000 entries */
 #define IBV_CQ_DEPTH        40000
 #define IBV_MAX_SG_SQ       8
 #define IBV_MAX_SG_RQ       8
 #define IBV_MAX_INLINE        128
-#define IBV_MAX_IBUFS         3000
+#define IBV_MAX_IBUFS         6000
 //#define IBV_MAX_IBUFS         50
 // #define IBV_MAX_SRQ_IBUFS     2000
-#define IBV_MAX_SRQ_IBUFS     2000 /*  > 300 */
-#define IBV_SRQ_CREDIT_LIMIT  1000 /* >=300 */
-#define IBV_SRQ_CREDIT_THREAD_LIMIT  500
+#define IBV_MAX_SRQ_IBUFS     3000 /*  > 300 */
+#define IBV_SRQ_CREDIT_LIMIT  2000 /* >=300 */
+#define IBV_SRQ_CREDIT_THREAD_LIMIT  2000
 
 //#define IBV_MAX_SRQ_IBUFS     50
 // #define IBV_SRQ_CREDIT_LIMIT  800
@@ -63,10 +64,10 @@
 
 #define IBV_NO_MEMORY_LIMITATION  1
 #define IBV_VERBOSE_LEVEL         1
-#define IBV_ENABLE_PROFILE        0
 
 /* global values */
 int  ibv_eager_threshold  = IBV_EAGER_THRESHOLD;
+int  ibv_frag_eager_threshold  = IBV_FRAG_EAGER_THRESHOLD;
 int  ibv_qp_tx_depth      = IBV_QP_TX_DEPTH;
 int  ibv_qp_rx_depth      = IBV_QP_RX_DEPTH;
 int  ibv_cq_depth         = IBV_CQ_DEPTH;

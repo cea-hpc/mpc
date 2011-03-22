@@ -146,6 +146,7 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
   sctk_net_ibv_rc_rdma_entry_t *entry = NULL;
   struct sctk_list_elem* rc;
   sctk_net_ibv_ibuf_t* ibuf;
+  sctk_net_ibv_frag_eager_entry_t* frag_entry;
 
   sctk_nodebug("FREE begin");
 
@@ -196,6 +197,17 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
       sctk_free(entry);
       sctk_ibv_profiler_dec(IBV_MEM_TRACE);
       break;
+
+    case IBV_POLL_RC_SR_FRAG_ORIGIN:
+    case IBV_RC_SR_FRAG_ORIGIN:
+      frag_entry = (sctk_net_ibv_frag_eager_entry_t*)  item->struct_ptr;
+      sctk_net_ibv_comp_rc_sr_free_frag_msg(frag_entry);
+      break;
+
+      frag_entry = (sctk_net_ibv_frag_eager_entry_t*)  item->struct_ptr;
+      sctk_net_ibv_comp_rc_sr_free_frag_msg(frag_entry);
+      break;
+
 
     default:
       assume(0);

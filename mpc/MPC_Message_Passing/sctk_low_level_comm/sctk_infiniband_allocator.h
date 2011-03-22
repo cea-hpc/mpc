@@ -48,6 +48,9 @@ typedef struct
   uint32_t                esn;    /* expected sequence number */
   uint32_t                psn;    /* packet sequence number */
 
+  /* list for fragmented eager buffers messages */
+  struct sctk_list frag_eager;
+
   /* for debug */
   uint32_t nb_ptp_msg_transfered;
   uint32_t nb_ptp_msg_received;

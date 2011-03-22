@@ -160,7 +160,7 @@ sctk_net_ibv_comp_rc_rdma_send_coll_request(
       sctk_nodebug("%p->%p (%lu->%lu)", msg, aligned_msg, size, aligned_size);
       sctk_net_ibv_ibuf_send_init(ibuf, size_to_copy + RC_SR_HEADER_SIZE);
       sctk_net_ibv_comp_rc_sr_send(
-          rc_sr_remote, ibuf, size_to_copy, RC_SR_RDVZ_REQUEST, NULL);
+          rc_sr_remote, ibuf, size_to_copy, size_to_copy, RC_SR_RDVZ_REQUEST, NULL, 1, 1);
 
       entry->mmu_entry = mmu_entry;
       entry->msg_header_ptr = aligned_msg;
@@ -315,7 +315,7 @@ sctk_net_ibv_comp_rc_rdma_send_request(
 
       sctk_net_ibv_ibuf_send_init(ibuf, size_to_copy + RC_SR_HEADER_SIZE);
       psn = sctk_net_ibv_comp_rc_sr_send(
-          rc_sr_remote, ibuf, size_to_copy, RC_SR_RDVZ_REQUEST, &request->psn);
+          rc_sr_remote, ibuf, size_to_copy, size_to_copy, RC_SR_RDVZ_REQUEST, &request->psn, 1, 1);
 
       entry->mmu_entry = mmu_entry;
       entry->msg_header_ptr = msg;
@@ -423,7 +423,7 @@ sctk_net_ibv_comp_rc_rdma_send_finish(
 
   sctk_net_ibv_ibuf_send_init(ibuf_f, sizeof(sctk_net_ibv_rc_rdma_done_t) + RC_SR_HEADER_SIZE);
   sctk_net_ibv_comp_rc_sr_send(
-      rc_sr_remote, ibuf_f, sizeof(sctk_net_ibv_rc_rdma_done_t), RC_SR_RDVZ_DONE, NULL);
+      rc_sr_remote, ibuf_f, sizeof(sctk_net_ibv_rc_rdma_done_t), sizeof(sctk_net_ibv_rc_rdma_done_t), RC_SR_RDVZ_DONE, NULL, 1, 1);
 }
 
 
@@ -665,7 +665,7 @@ sctk_net_ibv_com_rc_rdma_read_finish(
         if(ret)
         {
 
-          sctk_nodebug("EXPECTED %lu but GOT %lu from process %d", sctk_net_ibv_sched_get_esn(entry_send->src_process), entry_send->psn, entry_send->src_process);
+          sctk_nodebug("EXPECTED %lu but GOT %lu from process %d", sctk_net_ibv_sched_get_esn(entry->src_process), entry->psn, entry->src_process);
           do {
             sctk_net_ibv_allocator_ptp_lookup_all(
                 entry->src_process);
@@ -674,7 +674,7 @@ sctk_net_ibv_com_rc_rdma_read_finish(
                 entry->src_process, entry->psn);
 
             sctk_net_ibv_allocator_ptp_poll_all();
-            //sctk_thread_yield();
+//            sctk_thread_yield();
 
           } while (ret);
         }

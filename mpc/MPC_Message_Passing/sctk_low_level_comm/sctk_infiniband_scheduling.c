@@ -30,6 +30,7 @@
 
 extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
 struct sctk_list rc_sr_pending;
+struct sctk_list rc_sr_frag_pending;
 struct sctk_list rc_rdma_pending;
 
 struct sctk_buffered_fifo sctk_net_ibv_pending_rc_sr;
@@ -124,6 +125,11 @@ sctk_net_ibv_sched_pending_init(
       sctk_list_new(&rc_rdma_pending, 0);
       break;
 
+    case IBV_CHAN_RC_SR_FRAG:
+      sctk_list_new(&rc_sr_frag_pending, 0);
+      break;
+
+
     default: assume(0); break;
   }
 }
@@ -147,6 +153,13 @@ sctk_net_ibv_sched_pending_push(
   }
 
   switch(type) {
+    case IBV_CHAN_RC_SR_FRAG:
+      sctk_nodebug("New Message RC_SR pushed %p", msg);
+      sctk_list_lock(&rc_sr_frag_pending);
+      sctk_list_push(&rc_sr_frag_pending, msg);
+      sctk_list_unlock(&rc_sr_frag_pending);
+      break;
+
     case IBV_CHAN_RC_SR:
       sctk_nodebug("New Message RC_SR pushed %p", msg);
       sctk_list_lock(&rc_sr_pending);
@@ -203,6 +216,42 @@ sctk_net_ibv_sched_pending_push(
 }
 
   int
+  sctk_net_ibv_sched_rc_sr_frag_poll_pending()
+{
+  struct sctk_list_elem* tmp = NULL;
+  sctk_net_ibv_frag_eager_entry_t* msg;
+  int ret;
+
+  sctk_list_lock(&rc_sr_frag_pending);
+  tmp = rc_sr_frag_pending.head;
+  while(tmp)
+  {
+    msg = tmp->elem;
+    ret = sctk_net_ibv_sched_sn_check_and_inc(msg->src, msg->psn);
+
+    if (!ret)
+    {
+      sctk_nodebug("PENDING - Recv FRAG EAGER message from %d (PSN %d)", msg->src, msg->psn );
+
+      sctk_net_ibv_send_msg_to_mpc(
+          (sctk_thread_ptp_message_t*) msg->msg,
+          (char*) msg->msg
+          + sizeof(sctk_thread_ptp_message_t), msg->src,
+          IBV_POLL_RC_SR_FRAG_ORIGIN, msg);
+
+      //THERE
+      sctk_list_remove(&rc_sr_frag_pending, tmp);
+      sctk_list_unlock(&rc_sr_frag_pending);
+      return 1;
+    }
+
+    tmp = tmp->p_next;
+  }
+  sctk_list_unlock(&rc_sr_frag_pending);
+  return 0;
+}
+
+  int
 sctk_net_ibv_sched_rc_rdma_poll_pending()
 {
   struct sctk_list_elem* tmp = NULL;
@@ -247,11 +296,15 @@ sctk_net_ibv_sched_poll_pending()
   if (tmp == 1)
     restart = 1;
 
+  tmp = sctk_net_ibv_sched_rc_sr_frag_poll_pending();
+  if (tmp == 1)
+    restart = 1;
+
   tmp = sctk_net_ibv_sched_rc_rdma_poll_pending();
   if (tmp == 1)
     restart = 1;
 
-  return restart;
+    return restart;
 }
 
   uint32_t

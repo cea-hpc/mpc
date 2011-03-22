@@ -53,15 +53,22 @@ typedef enum
 /* number of different msg type (see the list above) */
 
 /*  EAGER  */
-typedef struct
+struct sctk_net_ibv_rc_sr_msg_header_s
 {
   sctk_net_ibv_rc_sr_msg_type_t     msg_type;
   uint32_t psn;
   size_t  size;
   size_t  payload_size;
+  size_t  buffer_size;
+  int buff_nb;
+  int total_buffs;
   unsigned int src_process;
+
   char payload;
-} sctk_net_ibv_rc_sr_msg_header_t;
+} __attribute__ ((aligned (64)));
+
+typedef struct sctk_net_ibv_rc_sr_msg_header_s
+sctk_net_ibv_rc_sr_msg_header_t;
 
 #define RC_SR_HEADER(ibuf) \
   ((sctk_net_ibv_rc_sr_msg_header_t*) ibuf->buffer)
@@ -78,6 +85,15 @@ typedef enum{
 } sctk_net_ibv_rc_sr_wr_type_t;
 
 
+typedef struct
+{
+  uint32_t psn;
+  int src;
+  void* msg;
+  struct sctk_list_elem *list_elem;
+  size_t current_copied;
+} sctk_net_ibv_frag_eager_entry_t;
+
 typedef sctk_net_ibv_qp_remote_t sctk_net_ibv_rc_sr_process_t;
 
 /*-----------------------------------------------------------
@@ -88,9 +104,9 @@ sctk_net_ibv_comp_rc_sr_create_local(sctk_net_ibv_qp_rail_t* rail);
 
 uint32_t
 sctk_net_ibv_comp_rc_sr_send(
-  sctk_net_ibv_qp_remote_t* remote,
- sctk_net_ibv_ibuf_t* buff, size_t size,
- sctk_net_ibv_rc_sr_msg_type_t type, uint32_t* psn);
+    sctk_net_ibv_qp_remote_t* remote,
+    sctk_net_ibv_ibuf_t* ibuf, size_t size, size_t buffer_size,
+    sctk_net_ibv_rc_sr_msg_type_t type, uint32_t* psn, const int buff_nb, const int total_buffs);
 
 int
 sctk_net_ibv_comp_rc_sr_post_recv(
@@ -156,5 +172,7 @@ sctk_net_ibv_comp_rc_sr_allocate_recv(
 void
   sctk_net_ibv_comp_rc_sr_error_handler(struct ibv_wc wc);
 
+ sctk_net_ibv_frag_eager_entry_t*
+sctk_net_ibv_comp_rc_sr_copy_msg(void* buffer, int src, size_t size, uint32_t psn);
 
 #endif

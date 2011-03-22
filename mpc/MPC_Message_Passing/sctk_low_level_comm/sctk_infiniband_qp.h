@@ -76,6 +76,7 @@ typedef struct
   uint32_t                     ibv_free_recv_wqe;
   uint32_t                     ibv_got_send_wqe;
   uint32_t                     ibv_free_send_wqe;
+
 } sctk_net_ibv_qp_remote_t;
 
 /*-----------------------------------------------------------

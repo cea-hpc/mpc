@@ -167,7 +167,7 @@ sctk_net_ibv_broadcast_recv(void* data, size_t size, int* array,
         msg = sctk_net_ibv_collective_lookup_src(list, src);
 
         sctk_net_ibv_allocator_ptp_poll_all();
-        //sctk_thread_yield();
+//        sctk_thread_yield();
       } while(msg == NULL);
 
       sctk_nodebug("Broadcast received from process %d size %lu", src, msg->size);
@@ -564,7 +564,7 @@ sctk_net_ibv_barrier ( sctk_collective_communications_t * com,
         while(local_entry.entry[recvpeer] < counter)
         {
           sctk_net_ibv_allocator_ptp_poll_all();
-          //sctk_thread_yield();
+//          sctk_thread_yield();
         }
         sctk_nodebug("Got counter : %d",local_entry.entry[recvpeer]);
       }

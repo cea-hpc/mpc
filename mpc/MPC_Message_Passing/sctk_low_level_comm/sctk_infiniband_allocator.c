@@ -52,6 +52,9 @@ sctk_net_ibv_allocator_new()
   {
     sctk_thread_mutex_init(&sctk_net_ibv_allocator->entry[i].rc_sr_lock, NULL);
     sctk_thread_mutex_init(&sctk_net_ibv_allocator->entry[i].rc_rdma_lock, NULL);
+
+    /* FIXME: should be allocate somewhere else*/
+    sctk_list_new(&sctk_net_ibv_allocator->entry[i].frag_eager, 1);
   }
 
   /* init pending queues */
@@ -235,13 +238,26 @@ sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
   /* EAGER MODE */
   if ( (size + sizeof(sctk_thread_ptp_message_t)) + RC_SR_HEADER_SIZE <= ibv_eager_threshold)
   {
-    sctk_nodebug("Send EAGER message to %d and size %lu", dest_process, size);
+    sctk_ibv_profiler_inc(IBV_EAGER_NB);
+
+      sctk_nodebug("Send EAGER message to %d and size %lu", dest_process, size);
     sctk_net_ibv_comp_rc_sr_send_ptp_message (
         rc_sr_local, msg,
         dest_process, size, RC_SR_EAGER);
+
+    /* FRAG EAGER MODE */
+  } else if ( (size + sizeof(sctk_thread_ptp_message_t)) <= ibv_frag_eager_threshold) {
+    sctk_ibv_profiler_inc(IBV_FRAG_EAGER_NB);
+    sctk_nodebug("Send FRAG EAGER message to %d and size %lu", dest_process, size);
+
+    sctk_net_ibv_comp_rc_sr_send_frag_ptp_message (
+        rc_sr_local, msg,
+        dest_process, size, RC_SR_EAGER);
+
     /* RDVZ MODE */
   } else {
 
+    sctk_ibv_profiler_inc(IBV_RDVZ_READ_NB);
     sctk_net_ibv_allocator_lock(dest_process, IBV_CHAN_RC_RDMA);
     rc_rdma_entry = sctk_net_ibv_allocator_get(dest_process, IBV_CHAN_RC_RDMA);
 
@@ -258,6 +274,8 @@ sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
       sctk_net_ibv_allocator_register(dest_process, rc_rdma_entry, IBV_CHAN_RC_RDMA);
     }
     sctk_net_ibv_allocator_unlock(dest_process, IBV_CHAN_RC_RDMA);
+
+    sctk_nodebug("Send RENDEZVOUS message to %d and size %lu", dest_process, size);
 
     sctk_net_ibv_comp_rc_rdma_send_request (
         rail,
