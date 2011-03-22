@@ -24,14 +24,14 @@
 #include "sctk_infiniband_profiler.h"
 #include "sctk_infiniband_config.h"
 
-#define IBV_ENABLE_PROFILE        0
+#define IBV_ENABLE_PROFILE        1
 
 void sctk_ibv_profiler_init()
 {
 #if IBV_ENABLE_PROFILE == 1
   int i;
 
-  memset(counters, 0, 20 * sizeof(uint64_t));
+  memset(counters, 0,NB_PROFILE_ID * sizeof(uint64_t));
   for (i=0; i < NB_PROFILE_ID; ++i)
   {
     locks[i] = SCTK_SPINLOCK_INITIALIZER;

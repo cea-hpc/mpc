@@ -71,8 +71,14 @@ typedef enum
   IBV_FRAG_EAGER_NB = 23,
   IBV_FRAG_EAGER_SIZE = 24,
 
+  /* SCHEDULER */
+  IBV_EXPECTED_MSG_NB = 25,
+  IBV_UNEXPECTED_MSG_NB = 26,
+  IBV_LOOKUP_EXPECTED_MSG_NB = 27,
+  IBV_LOOKUP_UNEXPECTED_MSG_NB = 28,
+
 } ibv_profiler_id;
-#define NB_PROFILE_ID 25
+#define NB_PROFILE_ID 29
 
 struct sctk_ibv_profiler_entry_s
 {
@@ -122,6 +128,12 @@ static struct sctk_ibv_profiler_entry_s counters[NB_PROFILE_ID] =
 
   ENTRY(IBV_FRAG_EAGER_NB),
   ENTRY(IBV_FRAG_EAGER_SIZE),
+
+  ENTRY(IBV_EXPECTED_MSG_NB),
+  ENTRY(IBV_UNEXPECTED_MSG_NB),
+  ENTRY(IBV_LOOKUP_EXPECTED_MSG_NB),
+  ENTRY(IBV_LOOKUP_UNEXPECTED_MSG_NB),
+
 };
 
 void sctk_ibv_profiler_init();

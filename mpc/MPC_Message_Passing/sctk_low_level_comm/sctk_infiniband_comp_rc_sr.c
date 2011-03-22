@@ -503,6 +503,7 @@ sctk_net_ibv_rc_sr_poll_recv(
             /* message not expected */
             if(ret)
             {
+              sctk_ibv_profiler_inc(IBV_LOOKUP_UNEXPECTED_MSG_NB);
               sctk_nodebug("LOOKUP UNEXPECTED - Found psn %d from %d",
                   msg_header->psn, msg_header->src_process);
 
@@ -512,6 +513,7 @@ sctk_net_ibv_rc_sr_poll_recv(
 
               /* expected message */
             } else {
+              sctk_ibv_profiler_inc(IBV_LOOKUP_EXPECTED_MSG_NB);
               sctk_nodebug("LOOKUP EXPECTED - Found psn %d from %d",
                   msg_header->psn, msg_header->src_process);
 
@@ -525,6 +527,7 @@ sctk_net_ibv_rc_sr_poll_recv(
 
             if (ret)
             {
+              sctk_ibv_profiler_inc(IBV_UNEXPECTED_MSG_NB);
               sctk_nodebug("EXPECTED %lu but GOT %lu from process %d", sctk_net_ibv_sched_get_esn(msg_header->src_process), msg_header->psn, msg_header->src_process);
 
               do {
@@ -537,6 +540,8 @@ sctk_net_ibv_rc_sr_poll_recv(
 
 //                sctk_thread_yield();
               } while (ret);
+            } else {
+              sctk_ibv_profiler_inc(IBV_EXPECTED_MSG_NB);
             }
 
             sctk_net_ibv_send_msg_to_mpc(
@@ -559,6 +564,7 @@ sctk_net_ibv_rc_sr_poll_recv(
           /* message not expected */
           if(ret)
           {
+            sctk_ibv_profiler_inc(IBV_LOOKUP_UNEXPECTED_MSG_NB);
             sctk_nodebug("LOOKUP UNEXPECTED - Found psn %d from %d",
                 msg_header->psn, msg_header->src_process);
 
@@ -568,6 +574,7 @@ sctk_net_ibv_rc_sr_poll_recv(
 
             /* expected message */
           } else {
+            sctk_ibv_profiler_inc(IBV_LOOKUP_EXPECTED_MSG_NB);
             sctk_nodebug("LOOKUP EXPECTED - Found psn %d from %d",
                 msg_header->psn, msg_header->src_process);
 
@@ -589,6 +596,7 @@ sctk_net_ibv_rc_sr_poll_recv(
 
           if (ret)
           {
+            sctk_ibv_profiler_inc(IBV_UNEXPECTED_MSG_NB);
             sctk_nodebug("EXPECTED %lu but GOT %lu from process %d", sctk_net_ibv_sched_get_esn(msg_header->src_process), msg_header->psn, msg_header->src_process);
 
             do {
@@ -600,6 +608,8 @@ sctk_net_ibv_rc_sr_poll_recv(
                   msg_header->src_process, msg_header->psn);
 
             } while (ret);
+          } else {
+            sctk_ibv_profiler_inc(IBV_EXPECTED_MSG_NB);
           }
 
           sctk_nodebug("Recv EAGER message from %d (PSN %d)", msg_header->src_process, msg_header->psn);
