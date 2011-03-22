@@ -160,7 +160,7 @@ sctk_net_ibv_comp_rc_rdma_send_coll_request(
       sctk_nodebug("%p->%p (%lu->%lu)", msg, aligned_msg, size, aligned_size);
       sctk_net_ibv_ibuf_send_init(ibuf, size_to_copy + RC_SR_HEADER_SIZE);
       sctk_net_ibv_comp_rc_sr_send(
-          rc_sr_remote, ibuf, size_to_copy, size_to_copy, RC_SR_RDVZ_REQUEST, NULL, 1, 1);
+          rc_sr_remote, -1, ibuf, size_to_copy, size_to_copy, RC_SR_RDVZ_REQUEST, NULL, 1, 1);
 
       entry->mmu_entry = mmu_entry;
       entry->msg_header_ptr = aligned_msg;
@@ -315,7 +315,7 @@ sctk_net_ibv_comp_rc_rdma_send_request(
 
       sctk_net_ibv_ibuf_send_init(ibuf, size_to_copy + RC_SR_HEADER_SIZE);
       psn = sctk_net_ibv_comp_rc_sr_send(
-          rc_sr_remote, ibuf, size_to_copy, size_to_copy, RC_SR_RDVZ_REQUEST, &request->psn, 1, 1);
+          rc_sr_remote, msg->header.destination, ibuf, size_to_copy, size_to_copy, RC_SR_RDVZ_REQUEST, &request->psn, 1, 1);
 
       entry->mmu_entry = mmu_entry;
       entry->msg_header_ptr = msg;
@@ -423,7 +423,7 @@ sctk_net_ibv_comp_rc_rdma_send_finish(
 
   sctk_net_ibv_ibuf_send_init(ibuf_f, sizeof(sctk_net_ibv_rc_rdma_done_t) + RC_SR_HEADER_SIZE);
   sctk_net_ibv_comp_rc_sr_send(
-      rc_sr_remote, ibuf_f, sizeof(sctk_net_ibv_rc_rdma_done_t), sizeof(sctk_net_ibv_rc_rdma_done_t), RC_SR_RDVZ_DONE, NULL, 1, 1);
+      rc_sr_remote, entry->src_task, ibuf_f, sizeof(sctk_net_ibv_rc_rdma_done_t), sizeof(sctk_net_ibv_rc_rdma_done_t), RC_SR_RDVZ_DONE, NULL, 1, 1);
 }
 
 
@@ -643,6 +643,7 @@ sctk_net_ibv_com_rc_rdma_read_finish(
 
         ret = sctk_net_ibv_sched_sn_check_and_inc(
             entry->src_process,
+            entry->src_task,
             entry->psn);
 
         if (ret)
@@ -660,6 +661,7 @@ sctk_net_ibv_com_rc_rdma_read_finish(
       } else {
         ret = sctk_net_ibv_sched_sn_check_and_inc(
             entry->src_process,
+            entry->src_task,
             entry->psn);
 
         if(ret)
@@ -671,7 +673,7 @@ sctk_net_ibv_com_rc_rdma_read_finish(
                 entry->src_process);
 
             ret = sctk_net_ibv_sched_sn_check_and_inc(
-                entry->src_process, entry->psn);
+                entry->src_process, entry->src_task, entry->psn);
 
             sctk_net_ibv_allocator_ptp_poll_all();
 //            sctk_thread_yield();

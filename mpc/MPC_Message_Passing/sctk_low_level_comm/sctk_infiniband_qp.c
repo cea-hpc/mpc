@@ -255,7 +255,7 @@ sctk_net_ibv_qp_init_attr(struct ibv_cq* send_cq, struct ibv_cq* recv_cq, struct
   attr.recv_cq = recv_cq;
   attr.srq = srq;
   attr.cap.max_send_wr = ibv_qp_tx_depth;
-  attr.cap.max_recv_wr = 0;
+  attr.cap.max_recv_wr = ibv_qp_rx_depth;
   attr.cap.max_send_sge = ibv_max_sg_sq;
   attr.cap.max_recv_sge = ibv_max_sg_rq;
   attr.cap.max_inline_data = ibv_max_inline;

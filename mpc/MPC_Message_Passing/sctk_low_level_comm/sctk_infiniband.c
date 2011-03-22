@@ -49,6 +49,8 @@
 #include "sctk_net_tools.h"
 #include "sctk_infiniband_profiler.h"
 
+extern struct sctk_list* frag_eager_list;
+
 /* rail */
 extern  sctk_net_ibv_qp_rail_t   *rail;
 
@@ -364,6 +366,10 @@ sctk_net_preinit_driver_infiniband ( sctk_net_driver_pointers_functions_t* point
 
   /* initialization of network mode */
   sctk_net_ibv_update_network_mode();
+
+  frag_eager_list = sctk_malloc(sctk_get_total_tasks_number() * sizeof(frag_eager_list));
+  memset(frag_eager_list, 0, sctk_get_total_tasks_number() * sizeof(frag_eager_list));
+  sctk_nodebug("nb total of tasks : %d", sctk_get_total_tasks_number());
 
   if (sctk_process_rank == 0)
     sctk_nodebug("End of driver init!");

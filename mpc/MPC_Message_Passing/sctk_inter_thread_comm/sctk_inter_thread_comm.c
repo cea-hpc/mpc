@@ -2288,3 +2288,4 @@ int sctk_get_ptp_process_localisation(int i)
 {
   return sctk_ptp_process_localisation[i];
 }
+

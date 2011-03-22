@@ -26,6 +26,7 @@
 
 #include "sctk_list.h"
 #include "sctk_infiniband_allocator.h"
+#include "sctk_infiniband_scheduling.h"
 #include "sctk_infiniband_comp_rc_rdma.h"
 #include "sctk_infiniband_comp_rc_sr.h"
 #include "sctk_infiniband_qp.h"
@@ -45,8 +46,7 @@ typedef struct
   sctk_net_ibv_rc_rdma_process_t      *rc_rdma;
 
   /* sequence numbers */
-  uint32_t                esn;    /* expected sequence number */
-  uint32_t                psn;    /* packet sequence number */
+  sctk_net_ibv_sched_entry_t          sched[MAX_NB_TASKS_PER_PROCESS];
 
   /* list for fragmented eager buffers messages */
   struct sctk_list frag_eager;

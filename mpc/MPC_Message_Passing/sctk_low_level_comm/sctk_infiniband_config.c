@@ -34,7 +34,9 @@
  * IBV_EVENT_QP_LAST_WQE_REACHED is triggered
  */
 #define IBV_QP_TX_DEPTH     6000
-//#define IBV_QP_RX_DEPTH     6000
+/* don't need recv WQE when using SRQ. Must be put to
+ * 0 */
+#define IBV_QP_RX_DEPTH     0
 /* Many CQE. In memory, it represents about
  * 1.22Mb for 40000 entries */
 #define IBV_CQ_DEPTH        40000
@@ -69,7 +71,7 @@
 int  ibv_eager_threshold  = IBV_EAGER_THRESHOLD;
 int  ibv_frag_eager_threshold  = IBV_FRAG_EAGER_THRESHOLD;
 int  ibv_qp_tx_depth      = IBV_QP_TX_DEPTH;
-//int  ibv_qp_rx_depth      = IBV_QP_RX_DEPTH;
+int  ibv_qp_rx_depth      = IBV_QP_RX_DEPTH;
 int  ibv_cq_depth         = IBV_CQ_DEPTH;
 int  ibv_max_sg_sq        = IBV_MAX_SG_SQ;
 int  ibv_max_sg_rq        = IBV_MAX_SG_RQ;
@@ -127,7 +129,7 @@ void sctk_net_ibv_config_print()
         "############# IB CONFIGURATION #############\n"
         "ibv_eager_threshold  = %d\n"
         "ibv_qp_tx_depth      = %d\n"
-//        "ibv_qp_rx_depth      = %d\n"
+        "ibv_qp_rx_depth      = %d\n"
         "ibv_max_sg_sq        = %d\n"
         "ibv_max_sg_rq        = %d\n"
         "ibv_max_inline       = %d\n"
@@ -145,7 +147,7 @@ void sctk_net_ibv_config_print()
         "############# IB CONFIGURATION #############\n",
         ibv_eager_threshold,
         ibv_qp_tx_depth,
-//        ibv_qp_rx_depth,
+        ibv_qp_rx_depth,
         ibv_max_sg_sq,
         ibv_max_sg_rq,
         ibv_max_inline,
@@ -173,8 +175,8 @@ void sctk_net_ibv_config_init()
   if ( (value = getenv("MPC_IBV_QP_TX_DEPTH")) != NULL )
     ibv_qp_tx_depth = atoi(value);
 
-//  if ( (value = getenv("MPC_IBV_QP_RX_DEPTH")) != NULL )
-//    ibv_qp_rx_depth = atoi(value);
+  if ( (value = getenv("MPC_IBV_QP_RX_DEPTH")) != NULL )
+    ibv_qp_rx_depth = atoi(value);
 
   if ( (value = getenv("MPC_IBV_MAX_SG_SQ")) != NULL )
     ibv_max_sg_sq = atoi(value);

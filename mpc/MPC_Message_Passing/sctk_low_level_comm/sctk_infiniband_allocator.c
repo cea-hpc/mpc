@@ -27,12 +27,14 @@
 #include "sctk_infiniband_const.h"
 #include "sctk_infiniband_config.h"
 #include "sctk_infiniband_profiler.h"
+#include "sctk_infiniband_scheduling.h"
 #include "sctk_bootstrap.h"
 #include "sctk.h"
 #include "sctk_thread.h"
 #include "sctk_config.h"
 
 sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
+extern pending_entry_t pending[MAX_NB_TASKS_PER_PROCESS];
 
   sctk_net_ibv_allocator_t*
 sctk_net_ibv_allocator_new()
@@ -52,14 +54,8 @@ sctk_net_ibv_allocator_new()
   {
     sctk_thread_mutex_init(&sctk_net_ibv_allocator->entry[i].rc_sr_lock, NULL);
     sctk_thread_mutex_init(&sctk_net_ibv_allocator->entry[i].rc_rdma_lock, NULL);
-
-    /* FIXME: should be allocate somewhere else*/
-    sctk_list_new(&sctk_net_ibv_allocator->entry[i].frag_eager, 1);
   }
 
-  /* init pending queues */
-  sctk_net_ibv_sched_pending_init(IBV_CHAN_RC_SR);
-  sctk_net_ibv_sched_pending_init(IBV_CHAN_RC_RDMA);
   return sctk_net_ibv_allocator;
 }
 
@@ -196,13 +192,19 @@ static sctk_spinlock_t ptp_lock = SCTK_SPINLOCK_INITIALIZER;
 void sctk_net_ibv_allocator_ptp_poll_all()
 {
   int ret;
-
+  int i = 0;
   if (sctk_spinlock_trylock(&ptp_lock) == 0)
   {
     sctk_net_ibv_allocator_ptp_poll(IBV_CHAN_RC_SR);
-    do {
-      ret = sctk_net_ibv_sched_poll_pending();
-    } while(ret);
+#if 0
+    while((pending[i].task_nb != -1) && (i < MAX_NB_TASKS_PER_PROCESS))
+    {
+      do {
+        ret = sctk_net_ibv_sched_poll_pending(pending[i].task_nb);
+      } while(ret);
+      ++i;
+    }
+#endif
     sctk_spinlock_unlock(&ptp_lock);
   }
 }
@@ -211,11 +213,19 @@ void sctk_net_ibv_allocator_ptp_poll_all()
 void sctk_net_ibv_allocator_ptp_lookup_all(int dest)
 {
   int ret;
+  int tmp, restart = 0;
+  int i = 0;
 
-  do {
-    /* poll pending messages */
-    ret = sctk_net_ibv_sched_poll_pending();
-  } while(ret);
+#if 0
+  while( (pending[i].task_nb != -1) && (i < MAX_NB_TASKS_PER_PROCESS))
+  {
+    do {
+      /* poll pending messages */
+      ret = sctk_net_ibv_sched_poll_pending(pending[i].task_nb);
+    } while(ret);
+    ++i;
+  }
+#endif
 
   sctk_net_ibv_allocator_ptp_lookup(dest, IBV_CHAN_RC_SR);
 }
@@ -240,15 +250,17 @@ sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
   {
     sctk_ibv_profiler_inc(IBV_EAGER_NB);
 
-      sctk_nodebug("Send EAGER message to %d and size %lu", dest_process, size);
+    sctk_nodebug("Send EAGER message to %d and size %lu", dest_process, size);
+    sctk_nodebug("Destination : %d", ((sctk_thread_ptp_message_t*) msg)->header.local_source);
+    //    sctk_abort();
     sctk_net_ibv_comp_rc_sr_send_ptp_message (
         rc_sr_local, msg,
-        dest_process, size, RC_SR_EAGER);
+        dest_process, ((sctk_thread_ptp_message_t*) msg)->header.destination, size, RC_SR_EAGER);
 
     /* FRAG EAGER MODE */
   } else if ( (size + sizeof(sctk_thread_ptp_message_t)) <= ibv_frag_eager_threshold) {
     sctk_ibv_profiler_inc(IBV_FRAG_EAGER_NB);
-    sctk_nodebug("Send FRAG EAGER message to %d and size %lu", dest_process, size);
+    sctk_nodebug("Send FRAG EAGER message to %d (task %d) and size %lu", dest_process, msg->header.destination, size);
 
     sctk_net_ibv_comp_rc_sr_send_frag_ptp_message (
         rc_sr_local, msg,
@@ -311,7 +323,7 @@ sctk_net_ibv_allocator_send_coll_message(
 
     sctk_net_ibv_comp_rc_sr_send_ptp_message (
         rc_sr_local, msg,
-        dest_process, size, type);
+        dest_process, -1, size, type);
 
   } else { /* RDVZ MODE */
     sctk_nodebug("Send RDVZ collective");

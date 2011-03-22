@@ -74,6 +74,7 @@ MonoDomain *domain;
 #ifdef MPC_Message_Passing
 #include <mpc_internal_thread.h>
 #include "sctk_hybrid_comm.h"
+#include "sctk_infiniband_scheduling.h"
 #endif
 
 typedef unsigned sctk_long_long sctk_timer_t;
@@ -618,6 +619,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
     {
       sctk_ptp_per_task_init (tmp.task_id);
       sctk_register_thread_initial (tmp.task_id);
+      sctk_net_ibv_sched_initialize_threads();
       sctk_terminaison_barrier (tmp.task_id);
     }
 #endif

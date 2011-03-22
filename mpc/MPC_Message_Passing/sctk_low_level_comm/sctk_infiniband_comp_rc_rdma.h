@@ -81,7 +81,8 @@ typedef struct
   int                             directly_pinned;
   void*                           remote_entry;
   size_t                          requested_size;
-  int                             src_process;
+  uint32_t                        src_process;
+  uint32_t                        src_task;
   uint32_t                        psn;  /* Packet Sequence Number */
   double creation_timestamp;
   struct sctk_list_elem*          list_elem;;
