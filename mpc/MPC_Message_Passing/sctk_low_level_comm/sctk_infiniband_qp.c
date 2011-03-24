@@ -299,7 +299,7 @@ sctk_net_ibv_qp_state_rtr_attr(sctk_net_ibv_qp_exchange_keys_t* keys, int *flags
 
   attr.qp_state = IBV_QPS_RTR;
   /* 512 is the recommended value */
-  attr.path_mtu = IBV_MTU_512;
+  attr.path_mtu = IBV_MTU_2048;
   /* QP number of remote QP */
   /* maximul number if resiyrces for incoming RDMA request */
   attr.max_dest_rd_atomic = ibv_rdma_dest_depth;
@@ -488,25 +488,6 @@ sctk_net_ibv_poll_check_wc(struct ibv_wc wc, sctk_net_ibv_allocator_type_t type)
         wc.wr_id, sctk_net_ibv_cq_print_status(wc.status),
         wc.vendor_err, wc.byte_len, sctk_net_ibv_ibuf_print_flag(ibuf->flag));
 
-#if 0
-    switch (type)
-    {
-      case IBV_CHAN_RC_SR:
-        break;
-
-      case IBV_CHAN_RC_RDMA | IBV_CHAN_RECV:
-        sctk_net_ibv_comp_rc_rdma_error_handler_recv(wc);
-        break;
-
-      case IBV_CHAN_RC_RDMA | IBV_CHAN_SEND:
-        sctk_net_ibv_comp_rc_rdma_error_handler_send(wc);
-        break;
-
-      default:
-        assume(0);
-        break;
-    }
-#endif
     sctk_abort();
   }
 }

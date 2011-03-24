@@ -34,27 +34,6 @@ extern "C"
   void sctk_net_preinit_driver_infiniband ( sctk_net_driver_pointers_functions_t* pointers );
 
   void sctk_net_ibv_finalize();
-  /* type of the message */
-//  typedef enum
-//  {
-//    ibv_msg_eager_send,
-//    ibv_msg_rendezvous_request,
-//    ibv_msg_buff_recv,
-//    ibv_msg_rendezvous_request_ack
-//  } ibv_msg_type_t;
-
-//  typedef enum
-//  {
-//    ibv_type_rdma_write,
-//    ibv_type_rdma_read,
-//  } sctk_net_ibv_type_t;
-//
-//  typedef struct
-//  {
-//    sctk_net_ibv_type_t type;
-//    int threshold;
-//  } sctk_net_ibv_buffers_t;
-
 
 #ifdef __cplusplus
 }

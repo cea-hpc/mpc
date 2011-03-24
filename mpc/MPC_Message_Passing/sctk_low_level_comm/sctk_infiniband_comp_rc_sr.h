@@ -60,15 +60,12 @@ struct sctk_net_ibv_rc_sr_msg_header_s
   size_t  size;
   size_t  payload_size;
   size_t  buffer_size;
-  int buff_nb;
-  int total_buffs;
-  unsigned int src_process;
-  unsigned int src_task;
-
-  unsigned int dest_task;
-
-  char payload;
-} __attribute__ ((aligned (64)));
+  uint16_t buff_nb;
+  uint16_t total_buffs;
+  uint32_t src_process;
+  uint32_t src_task;
+  uint32_t dest_task;
+} __attribute__ ((packed));
 
 typedef struct sctk_net_ibv_rc_sr_msg_header_s
 sctk_net_ibv_rc_sr_msg_header_t;
@@ -76,8 +73,8 @@ sctk_net_ibv_rc_sr_msg_header_t;
 #define RC_SR_HEADER(ibuf) \
   ((sctk_net_ibv_rc_sr_msg_header_t*) ibuf->buffer)
 
-#define RC_SR_PAYLOAD(ibuf) \
-  ((void*) &(((sctk_net_ibv_rc_sr_msg_header_t*) ibuf->buffer)->payload))
+#define RC_SR_PAYLOAD(buffer) \
+  ((char*) buffer + sizeof(sctk_net_ibv_rc_sr_msg_header_t))
 
 #define RC_SR_HEADER_SIZE \
   sizeof (sctk_net_ibv_rc_sr_msg_header_t)
@@ -145,12 +142,12 @@ sctk_net_ibv_rc_sr_poll_send(
 
 void
 sctk_net_ibv_rc_sr_poll_recv(
-  struct ibv_wc* wc,
-  sctk_net_ibv_qp_rail_t      *rail,
-  sctk_net_ibv_qp_local_t     *rc_sr_local,
-  sctk_net_ibv_qp_local_t     *rc_rdma_local,
-  int                         lookup_mode,
-  int                         dest);
+    struct ibv_wc* wc,
+    sctk_net_ibv_qp_rail_t      *rail,
+    sctk_net_ibv_qp_local_t     *rc_sr_local,
+    sctk_net_ibv_qp_local_t     *rc_rdma_local,
+    int                         lookup_mode,
+    int                         dest);
 
 /*-----------------------------------------------------------
  *  ALLOCATION
@@ -158,27 +155,27 @@ sctk_net_ibv_rc_sr_poll_recv(
 
 sctk_net_ibv_qp_remote_t *
 sctk_net_ibv_comp_rc_sr_allocate_init(int rank,
-  sctk_net_ibv_qp_local_t* local);
+    sctk_net_ibv_qp_local_t* local);
 
 void
 sctk_net_ibv_comp_rc_sr_allocate_send(
-  sctk_net_ibv_qp_rail_t* rail,
-  sctk_net_ibv_qp_remote_t *remote);
+    sctk_net_ibv_qp_rail_t* rail,
+    sctk_net_ibv_qp_remote_t *remote);
 
 void
 sctk_net_ibv_comp_rc_sr_allocate_recv(
-  sctk_net_ibv_qp_local_t* local,
-  sctk_net_ibv_qp_remote_t *remote,
-  int rank);
+    sctk_net_ibv_qp_local_t* local,
+    sctk_net_ibv_qp_remote_t *remote,
+    int rank);
 
 /*-----------------------------------------------------------
  *  ERROR HANDLING
  *----------------------------------------------------------*/
 
 void
-  sctk_net_ibv_comp_rc_sr_error_handler(struct ibv_wc wc);
+sctk_net_ibv_comp_rc_sr_error_handler(struct ibv_wc wc);
 
- sctk_net_ibv_frag_eager_entry_t*
+sctk_net_ibv_frag_eager_entry_t*
 sctk_net_ibv_comp_rc_sr_copy_msg(void* buffer, int src, int dest_task, size_t size, uint32_t psn);
 
 #endif

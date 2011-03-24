@@ -163,25 +163,13 @@ void sctk_net_ibv_rc_sr_recv_cq(struct ibv_wc* wc, int lookup, int dest)
 /*-----------------------------------------------------------
  *  POLLING
  *----------------------------------------------------------*/
-void sctk_net_ibv_allocator_ptp_poll(sctk_net_ibv_allocator_type_t type)
-{
-  switch (type) {
-    case IBV_CHAN_RC_SR :
-      sctk_net_ibv_cq_poll(rc_sr_local->recv_cq, SCTK_PENDING_IN_NUMBER, sctk_net_ibv_rc_sr_recv_cq, type | IBV_CHAN_RECV);
-      sctk_net_ibv_cq_poll(rc_sr_local->send_cq, SCTK_PENDING_OUT_NUMBER, sctk_net_ibv_rc_sr_send_cq, type | IBV_CHAN_SEND);
-      break;
-
-    default: assume(0); break;
-  }
-}
-
 void
 sctk_net_ibv_allocator_ptp_lookup(int dest, sctk_net_ibv_allocator_type_t type)
 {
   switch (type) {
     case IBV_CHAN_RC_SR :
       sctk_net_ibv_cq_lookup(rc_sr_local->recv_cq, 1, sctk_net_ibv_rc_sr_recv_cq, dest, type | IBV_CHAN_RECV);
-      sctk_net_ibv_cq_lookup(rc_sr_local->send_cq, SCTK_PENDING_OUT_NUMBER, sctk_net_ibv_rc_sr_send_cq, dest, type | IBV_CHAN_SEND);
+      sctk_net_ibv_cq_lookup(rc_sr_local->send_cq, ibv_wc_out_number, sctk_net_ibv_rc_sr_send_cq, dest, type | IBV_CHAN_SEND);
       break;
 
     default: assume(0); break;
@@ -195,7 +183,9 @@ void sctk_net_ibv_allocator_ptp_poll_all()
   int i = 0;
   if (sctk_spinlock_trylock(&ptp_lock) == 0)
   {
-    sctk_net_ibv_allocator_ptp_poll(IBV_CHAN_RC_SR);
+//    sctk_net_ibv_allocator_ptp_poll(IBV_CHAN_RC_SR);
+    sctk_net_ibv_cq_poll(rc_sr_local->recv_cq, ibv_wc_in_number, sctk_net_ibv_rc_sr_recv_cq, IBV_CHAN_RC_SR | IBV_CHAN_RECV);
+    sctk_net_ibv_cq_poll(rc_sr_local->send_cq, ibv_wc_out_number, sctk_net_ibv_rc_sr_send_cq, IBV_CHAN_RC_SR | IBV_CHAN_SEND);
 #if 0
     while((pending[i].task_nb != -1) && (i < MAX_NB_TASKS_PER_PROCESS))
     {
@@ -240,7 +230,18 @@ sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
   size_t size;
   sctk_net_ibv_rc_rdma_process_t*     rc_rdma_entry = NULL;
 
-  /* determine message number */
+  /* profile if message is contigous or not (if we can
+   * use the zerocopy method of not) */
+#if IBV_ENABLE_PROFILE == 1
+  void* entire_msg = NULL;
+  entire_msg = sctk_net_if_one_msg_in_buffer(msg);
+  if (entire_msg) sctk_ibv_profiler_inc(IBV_MSG_DIRECTLY_PINNED);
+  else sctk_ibv_profiler_inc(IBV_MSG_NOT_DIRECTLY_PINNED);
+  sctk_ibv_profiler_add(IBV_PTP_SIZE, (size + sizeof(sctk_thread_ptp_message_t)));
+  sctk_ibv_profiler_inc(IBV_PTP_NB);
+#endif
+
+ /* determine message number */
   size = sctk_net_determine_message_size(msg);
 
   sctk_net_ibv_allocator->entry[dest_process].nb_ptp_msg_transfered++;
@@ -252,7 +253,7 @@ sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
 
     sctk_nodebug("Send EAGER message to %d and size %lu", dest_process, size);
     sctk_nodebug("Destination : %d", ((sctk_thread_ptp_message_t*) msg)->header.local_source);
-    //    sctk_abort();
+
     sctk_net_ibv_comp_rc_sr_send_ptp_message (
         rc_sr_local, msg,
         dest_process, ((sctk_thread_ptp_message_t*) msg)->header.destination, size, RC_SR_EAGER);
@@ -315,6 +316,17 @@ sctk_net_ibv_allocator_send_coll_message(
     size_t size,
     sctk_net_ibv_rc_sr_msg_type_t type)
 {
+  if (type == RC_SR_REDUCE)
+  {
+    sctk_ibv_profiler_add(IBV_REDUCE_SIZE, size);
+    sctk_ibv_profiler_inc(IBV_REDUCE_NB);
+  } else if (type == RC_SR_BCAST)
+  {
+    sctk_ibv_profiler_add(IBV_BCAST_SIZE, size);
+    sctk_ibv_profiler_inc(IBV_BCAST_NB);
+  }
+  sctk_ibv_profiler_add(IBV_COLL_SIZE, size);
+  sctk_ibv_profiler_inc(IBV_COLL_NB);
 
   /* EAGER MODE */
   if ( (size + sizeof(sctk_thread_ptp_message_t)) + RC_SR_HEADER_SIZE <= ibv_eager_threshold)

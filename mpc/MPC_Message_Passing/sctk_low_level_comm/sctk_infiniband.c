@@ -372,7 +372,10 @@ sctk_net_preinit_driver_infiniband ( sctk_net_driver_pointers_functions_t* point
   sctk_nodebug("nb total of tasks : %d", sctk_get_total_tasks_number());
 
   if (sctk_process_rank == 0)
+  {
     sctk_nodebug("End of driver init!");
+    sctk_debug("Size header : %lu", sizeof(sctk_thread_ptp_message_t));
+  }
 }
 
   void

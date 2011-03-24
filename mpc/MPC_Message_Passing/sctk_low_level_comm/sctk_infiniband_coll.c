@@ -70,7 +70,7 @@ extern  sctk_net_ibv_qp_local_t *rc_sr_local;
   pending->payload = (char*) pending + sizeof(sctk_net_ibv_collective_pending_t);
   pending->src_process = msg->src_process;
 
-  memcpy(pending->payload, &msg->payload, msg->payload_size);
+  memcpy(pending->payload, RC_SR_PAYLOAD(msg), msg->payload_size);
   sctk_nodebug("Push with src %d, size %lu", msg->src_process, msg->payload_size);
 
   sctk_list_lock(list);

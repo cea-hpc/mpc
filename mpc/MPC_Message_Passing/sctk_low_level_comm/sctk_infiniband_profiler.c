@@ -24,8 +24,6 @@
 #include "sctk_infiniband_profiler.h"
 #include "sctk_infiniband_config.h"
 
-#define IBV_ENABLE_PROFILE        1
-
 void sctk_ibv_profiler_init()
 {
 #if IBV_ENABLE_PROFILE == 1
@@ -95,6 +93,20 @@ void sctk_ibv_generate_report()
    fwrite(line, sizeof(char), strnlen(line, 1024), file);
 //      sctk_debug("line: %s", line);
   }
+
+  sprintf(line, "IBV_PTP_MEAN_SIZE %f\n", (float) counters[IBV_PTP_SIZE].value/counters[IBV_PTP_NB].value);
+  fwrite(line, sizeof(char), strnlen(line, 1024), file);
+  sctk_nodebug("line: %s", line);
+
+  sprintf(line, "IBV_COLL_MEAN_SIZE %f\n", (float) counters[IBV_COLL_SIZE].value/counters[IBV_COLL_NB].value);
+  fwrite(line, sizeof(char), strnlen(line, 1024), file);
+
+  sprintf(line, "IBV_BCAST_MEAN_SIZE %f\n", (float) counters[IBV_BCAST_SIZE].value/counters[IBV_BCAST_NB].value);
+  fwrite(line, sizeof(char), strnlen(line, 1024), file);
+
+  sprintf(line, "IBV_REDUCE_MEAN_SIZE %f\n", (float) counters[IBV_REDUCE_SIZE].value/counters[IBV_REDUCE_NB].value);
+  fwrite(line, sizeof(char), strnlen(line, 1024), file);
+
   fclose(file);
 #endif
 }

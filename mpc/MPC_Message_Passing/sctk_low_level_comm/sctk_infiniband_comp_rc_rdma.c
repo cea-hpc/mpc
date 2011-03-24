@@ -110,7 +110,7 @@ sctk_net_ibv_comp_rc_rdma_send_coll_request(
   sctk_net_ibv_rc_rdma_entry_t *entry;
 
   ibuf = sctk_net_ibv_ibuf_pick(0, 1);
-  request = (sctk_net_ibv_rc_rdma_coll_request_t* ) RC_SR_PAYLOAD(ibuf);
+  request = (sctk_net_ibv_rc_rdma_coll_request_t* ) RC_SR_PAYLOAD(ibuf->buffer);
 
   page_size = sctk_net_ibv_mmu_get_pagesize();
   aligned_size = size;
@@ -273,7 +273,7 @@ sctk_net_ibv_comp_rc_rdma_send_request(
   sctk_net_ibv_rc_rdma_entry_t *entry;
 
   ibuf = sctk_net_ibv_ibuf_pick(0, 1);
-  request = (sctk_net_ibv_rc_rdma_request_t* ) RC_SR_PAYLOAD(ibuf);
+  request = (sctk_net_ibv_rc_rdma_request_t* ) RC_SR_PAYLOAD(ibuf->buffer);
 
   sctk_net_ibv_comp_rc_rdma_prepare_ptp(
     msg, size, &directly_pinned, &request->msg_header,
@@ -406,7 +406,7 @@ sctk_net_ibv_comp_rc_rdma_send_finish(
 
   /* fill the receive entry */
   ibuf_f = sctk_net_ibv_ibuf_pick(0, 1);
-  finish = (sctk_net_ibv_rc_rdma_done_t*) RC_SR_PAYLOAD(ibuf_f);
+  finish = (sctk_net_ibv_rc_rdma_done_t*) RC_SR_PAYLOAD(ibuf_f->buffer);
 
   finish->psn = entry->psn;
   finish->src_process = sctk_process_rank;
@@ -483,7 +483,7 @@ sctk_net_ibv_comp_rc_rdma_analyze_request(
   sctk_net_ibv_rc_rdma_request_t   *request;
   sctk_net_ibv_rc_rdma_process_t   *entry_rc_rdma = NULL;
 
-  request = (sctk_net_ibv_rc_rdma_request_t*) RC_SR_PAYLOAD(ibuf);
+  request = (sctk_net_ibv_rc_rdma_request_t*) RC_SR_PAYLOAD(ibuf->buffer);
 
   /* lock the allocator entry for the dest process */
   sctk_net_ibv_allocator_lock(request->src_process, IBV_CHAN_RC_RDMA);
@@ -557,7 +557,7 @@ sctk_net_ibv_com_rc_rdma_recv_done(
   void* rc;
 
 
-  done = (sctk_net_ibv_rc_rdma_done_t*) RC_SR_PAYLOAD(ibuf);
+  done = (sctk_net_ibv_rc_rdma_done_t*) RC_SR_PAYLOAD(ibuf->buffer);
   entry = done->entry;
   WAIT_READY(entry);
 

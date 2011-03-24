@@ -38,7 +38,7 @@
     if (sctk_net_ibv_allocator->entry[process].sched[i].task_nb == -1) \
     { entry_nb = 1;   \
       sctk_net_ibv_allocator->entry[process].sched[i].task_nb = task_nb; \
-      sctk_debug("New task %d created for process %d", task, process); \
+      sctk_nodebug("New task %d created for process %d", task, process); \
     } \
     i++;            \
   }}
@@ -65,7 +65,6 @@ sctk_net_ibv_sched_init() {
   }
 
   memset(&pending, -1, MAX_NB_TASKS_PER_PROCESS * sizeof(pending_entry_t));
-  sctk_debug("first value : %d", pending[i].task_nb);
 
   sctk_thread_mutex_init(&lock, NULL);
 }
@@ -89,7 +88,6 @@ sctk_net_ibv_sched_pending_init(
 
     case IBV_CHAN_RC_SR_FRAG:
       sctk_list_new(&pending[entry_nb].rc_sr_frag, 0);
-//      sctk_list_new(&pending[entry_nb].frag_eager, 0);
       break;
 
 
@@ -166,8 +164,8 @@ sctk_net_ibv_sched_rc_sr_poll_pending(int task_nb)
       sctk_nodebug("PENDING - Recv EAGER message from %d (PSN %d)", msg->src_process, msg->psn );
 
       sctk_net_ibv_send_msg_to_mpc(
-          (sctk_thread_ptp_message_t*) &(msg->payload),
-          (char*) &(msg->payload)
+          (sctk_thread_ptp_message_t*) RC_SR_PAYLOAD(msg),
+          (char*) RC_SR_PAYLOAD(msg)
           + sizeof(sctk_thread_ptp_message_t), msg->src_process,
           IBV_POLL_RC_SR_ORIGIN, msg);
 
@@ -370,7 +368,7 @@ sctk_net_ibv_sched_initialize_threads()
     {
       entry_nb = i;
       pending[entry_nb].task_nb = task_id;
-      sctk_debug("%p - Found entry %d -> %d", &pending[entry_nb], i, task_id);
+      sctk_nodebug("%p - Found entry %d -> %d", &pending[entry_nb], i, task_id);
       break;
     }
   }

@@ -48,9 +48,6 @@ typedef struct
   /* sequence numbers */
   sctk_net_ibv_sched_entry_t          sched[MAX_NB_TASKS_PER_PROCESS];
 
-  /* list for fragmented eager buffers messages */
-  struct sctk_list frag_eager;
-
   /* for debug */
   uint32_t nb_ptp_msg_transfered;
   uint32_t nb_ptp_msg_received;

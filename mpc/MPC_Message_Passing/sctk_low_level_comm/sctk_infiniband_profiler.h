@@ -29,6 +29,8 @@
 #define XSTR(X)  STR(X)
 #define STR(X)  #X
 
+#define IBV_ENABLE_PROFILE        1
+
 typedef enum
 {
 
@@ -77,8 +79,23 @@ typedef enum
   IBV_LOOKUP_EXPECTED_MSG_NB = 27,
   IBV_LOOKUP_UNEXPECTED_MSG_NB = 28,
 
+  IBV_MSG_DIRECTLY_PINNED = 29,
+  IBV_MSG_NOT_DIRECTLY_PINNED = 30,
+
+  /*  MSG SIZE */
+  IBV_PTP_NB = 31,
+  IBV_PTP_SIZE = 32,
+
+  /*  MSG SIZE */
+  IBV_COLL_NB = 33,
+  IBV_COLL_SIZE = 34,
+  IBV_BCAST_NB = 35,
+  IBV_BCAST_SIZE = 36,
+  IBV_REDUCE_NB = 37,
+  IBV_REDUCE_SIZE = 38
+
 } ibv_profiler_id;
-#define NB_PROFILE_ID 29
+#define NB_PROFILE_ID 39
 
 struct sctk_ibv_profiler_entry_s
 {
@@ -134,6 +151,18 @@ static struct sctk_ibv_profiler_entry_s counters[NB_PROFILE_ID] =
   ENTRY(IBV_LOOKUP_EXPECTED_MSG_NB),
   ENTRY(IBV_LOOKUP_UNEXPECTED_MSG_NB),
 
+  ENTRY(IBV_MSG_DIRECTLY_PINNED),
+  ENTRY(IBV_MSG_NOT_DIRECTLY_PINNED),
+
+  ENTRY(IBV_PTP_NB),
+  ENTRY(IBV_PTP_SIZE),
+
+  ENTRY(IBV_COLL_NB),
+  ENTRY(IBV_COLL_SIZE),
+  ENTRY(IBV_BCAST_NB),
+  ENTRY(IBV_BCAST_SIZE),
+  ENTRY(IBV_REDUCE_NB),
+  ENTRY(IBV_REDUCE_SIZE)
 };
 
 void sctk_ibv_profiler_init();

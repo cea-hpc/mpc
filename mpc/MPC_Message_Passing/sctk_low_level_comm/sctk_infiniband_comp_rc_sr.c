@@ -44,45 +44,47 @@ extern struct sctk_list reduce_fifo;
 /* channel selection */
 extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
 
-/* TODO: use hashtable */
+/*
+ * List of received fra_eager. Each entry corresponds to
+ * a thread.
+ * TODO: use hashtable */
 struct sctk_list** frag_eager_list;
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
 
-void sctk_net_ibv_comp_rc_sr_frag_allocate(int src, int task_nb,
-    int dest_task, size_t size, uint32_t psn,
+void sctk_net_ibv_comp_rc_sr_frag_allocate(
     sctk_net_ibv_rc_sr_msg_header_t* msg_header)
 {
   sctk_net_ibv_frag_eager_entry_t* entry;
   struct sctk_list* list;
 
-  if (frag_eager_list[task_nb] == NULL)
+  if (frag_eager_list[msg_header->src_task] == NULL)
   {
-    sctk_nodebug("allocate new list");
-    frag_eager_list[task_nb] = sctk_malloc(sizeof(struct sctk_list));
-    sctk_list_new(frag_eager_list[task_nb], 1);
+    sctk_nodebug("Allocate a new list for task %d", msg_header->src_task);
+    frag_eager_list[msg_header->src_task] = sctk_malloc(sizeof(struct sctk_list));
+    sctk_list_new(frag_eager_list[msg_header->src_task], 1);
   }
 
-  list = frag_eager_list[task_nb];
+  list = frag_eager_list[msg_header->src_task];
 
   entry = sctk_malloc((char*) sizeof(sctk_net_ibv_frag_eager_entry_t) +
-      size);
+      msg_header->size);
   assume(entry);
 
   entry->msg = (char*) entry + sizeof(sctk_net_ibv_frag_eager_entry_t);
-  entry->psn = psn;
+  entry->psn          = msg_header->psn;
   entry->current_copied = 0;
-  entry->src_process = src;
-  entry->src_task = task_nb;
-  entry->dest_task = dest_task;
+  entry->src_process  = msg_header->src_process;
+  entry->src_task     = msg_header->src_task;
+  entry->dest_task    = msg_header->dest_task;
 
   sctk_list_lock(list);
   entry->list_elem = sctk_list_push(list, entry);
   sctk_list_unlock(list);
 
-  sctk_nodebug("\t\tNew entry allocated for msg (size: %lu, PSN %lu, alloc %p src_task %d, list %p)", size, psn, entry, task_nb, list);
+  sctk_nodebug("\t\tNew entry allocated for msg (size: %lu, PSN %lu, alloc %p src_task %d, list %p)", msg_header->size, msg_header->psn, entry, msg_header->src_task, list);
 }
 
  void
@@ -114,8 +116,6 @@ sctk_net_ibv_comp_rc_sr_copy_msg(void* buffer, int src, int dest_task, size_t si
   while (tmp) {
 
     entry = (sctk_net_ibv_frag_eager_entry_t*) tmp->elem;
-
-    sctk_nodebug("FOUND POSSIBLE ENTRY %lu", entry->psn);
 
     if (psn == entry->psn)
     {
@@ -199,15 +199,12 @@ sctk_net_ibv_comp_rc_sr_send(
      * we set the PSN to the right value*/
     if (buff_nb == 1)
     {
-      sctk_net_ibv_sched_lock();
-      locked = 1;
       *psn = sctk_net_ibv_sched_psn_inc(remote->rank, task_id);
       ret_psn = *psn;
       msg_header->psn = ret_psn;
     } else {
       /* in the other case, we just copy the current
        * value of psn */
-      locked = 0;
       ret_psn = *psn;
       msg_header->psn = ret_psn;
     }
@@ -217,10 +214,6 @@ sctk_net_ibv_comp_rc_sr_send(
      * selected QP
      */
     sctk_net_ibv_qp_send_get_wqe(remote, ibuf);
-
-    if (locked) {
-      sctk_net_ibv_sched_unlock();
-    }
 
   } else {
     sctk_nodebug("QP %p dest %d size %lu", remote->qp, remote->rank, size);
@@ -311,7 +304,7 @@ sctk_net_ibv_comp_rc_sr_send_frag_ptp_message(
   while (nb_buffers <= total_buffs)
   {
     ibuf = sctk_net_ibv_ibuf_pick(0, 1);
-    payload = RC_SR_PAYLOAD(ibuf);
+    payload = RC_SR_PAYLOAD(ibuf->buffer);
 
     /* if this is the first buffer, we  */
     if (nb_buffers == 1)
@@ -362,7 +355,7 @@ sctk_net_ibv_comp_rc_sr_send_ptp_message (
   uint32_t psn;
 
   ibuf = sctk_net_ibv_ibuf_pick(0, 1);
-  payload = RC_SR_PAYLOAD(ibuf);
+  payload = RC_SR_PAYLOAD(ibuf->buffer);
 
   if (sctk_process_rank == 0)
     sctk_nodebug("Send rc_sr message. type %d, size %d, src_process %lu", type, size, dest_process);
@@ -504,14 +497,14 @@ sctk_net_ibv_rc_sr_poll_recv(
 
         if (msg_header->buff_nb == 1)
         {
-          sctk_net_ibv_comp_rc_sr_frag_allocate(msg_header->src_process, msg_header->src_task, msg_header->dest_task, msg_header->size, msg_header->psn, msg_header);
+          sctk_net_ibv_comp_rc_sr_frag_allocate(msg_header);
 
-          entry = sctk_net_ibv_comp_rc_sr_copy_msg(&msg_header->payload,
+          entry = sctk_net_ibv_comp_rc_sr_copy_msg(RC_SR_PAYLOAD(msg_header),
               msg_header->src_process, msg_header->src_task,
               msg_header->payload_size, msg_header->psn);
           assume(entry);
         } else {
-          entry = sctk_net_ibv_comp_rc_sr_copy_msg(&msg_header->payload,
+          entry = sctk_net_ibv_comp_rc_sr_copy_msg(RC_SR_PAYLOAD(msg_header),
               msg_header->src_process, msg_header->src_task,
               msg_header->payload_size, msg_header->psn);
           assume(entry);
@@ -608,8 +601,8 @@ sctk_net_ibv_rc_sr_poll_recv(
 
             /* send msg to MPC */
             sctk_net_ibv_send_msg_to_mpc(
-                (sctk_thread_ptp_message_t*) &(msg_header->payload),
-                (char*) &(msg_header->payload) + sizeof(sctk_thread_ptp_message_t), msg_header->src_process,
+                (sctk_thread_ptp_message_t*) RC_SR_PAYLOAD(msg_header),
+                (char*) RC_SR_PAYLOAD(msg_header) + sizeof(sctk_thread_ptp_message_t), msg_header->src_process,
                 IBV_RC_SR_ORIGIN, ibuf);
 
             /* we don't release the buffer for now.
@@ -645,8 +638,8 @@ sctk_net_ibv_rc_sr_poll_recv(
 
           /* send msg to MPC */
           sctk_net_ibv_send_msg_to_mpc(
-              (sctk_thread_ptp_message_t*) &(msg_header->payload),
-              (char*) &(msg_header->payload) + sizeof(sctk_thread_ptp_message_t), msg_header->src_process,
+              (sctk_thread_ptp_message_t*) RC_SR_PAYLOAD(msg_header),
+              (char*) RC_SR_PAYLOAD(msg_header) + sizeof(sctk_thread_ptp_message_t), msg_header->src_process,
               IBV_RC_SR_ORIGIN, ibuf);
 
           /* we don't release the buffer for now.

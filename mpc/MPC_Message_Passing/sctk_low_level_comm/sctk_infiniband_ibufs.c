@@ -150,9 +150,6 @@ sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null, int need_lock)
   sctk_net_ibv_ibuf_t* ibuf;
   int boolean = 1;
 
-//  int nb_freed;
-//  int total_freed = 0;
-
   while (1)
   {
     if (!need_lock || sctk_spinlock_trylock(&ibuf_lock) == 0)

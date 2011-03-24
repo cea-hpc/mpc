@@ -26,8 +26,8 @@
 #include "sctk_infiniband_comp_rc_sr.h"
 #include "sctk_infiniband_comp_rc_rdma.h"
 
-/* default constants */
-#define IBV_EAGER_THRESHOLD (32 * 1024 )
+/* 16 seams to be the better value on fortoy */
+#define IBV_EAGER_THRESHOLD ( 16 * 1024 )
 #define IBV_FRAG_EAGER_THRESHOLD (1024 * 1024 * 1024)
 /*
  * should be high values if the event
@@ -42,21 +42,21 @@
 #define IBV_CQ_DEPTH        40000
 #define IBV_MAX_SG_SQ       8
 #define IBV_MAX_SG_RQ       8
-#define IBV_MAX_INLINE        128
-#define IBV_MAX_IBUFS         6000
+#define IBV_MAX_INLINE        0
+#define IBV_MAX_IBUFS         7000
 //#define IBV_MAX_IBUFS         50
 // #define IBV_MAX_SRQ_IBUFS     2000
 #define IBV_MAX_SRQ_IBUFS     3000 /*  > 300 */
-#define IBV_SRQ_CREDIT_LIMIT  2000 /* >=300 */
-#define IBV_SRQ_CREDIT_THREAD_LIMIT  2000
+#define IBV_SRQ_CREDIT_LIMIT  2500 /* >=300 */
+#define IBV_SRQ_CREDIT_THREAD_LIMIT  2500
 
 //#define IBV_MAX_SRQ_IBUFS     50
 // #define IBV_SRQ_CREDIT_LIMIT  800
 //#define IBV_SRQ_CREDIT_LIMIT  10
 #define IBV_SIZE_IBUFS_CHUNKS 200
 
-#define IBV_WC_IN_NUMBER    100
-#define IBV_WC_OUT_NUMBER   100
+#define IBV_WC_IN_NUMBER    1000
+#define IBV_WC_OUT_NUMBER   1000
 
 #define IBV_MAX_MR          3000
 #define IBV_ADM_PORT        1

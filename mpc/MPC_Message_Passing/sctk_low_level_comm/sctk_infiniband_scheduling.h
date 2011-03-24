@@ -34,16 +34,16 @@
 #define LOOKUP_PENDING_TASK_ENTRY(task) \
 int entry_nb = -1;  \
 {int i = 0;          \
-  sctk_debug("Lookup for task %d", task);                    \
+  sctk_nodebug("Lookup for task %d", task);                    \
   for(i=0; i < MAX_NB_TASKS_PER_PROCESS; ++i)  \
   {                   \
-    sctk_debug("Found task %d", pending[i].task_nb); \
+    sctk_nodebug("Found task %d", pending[i].task_nb); \
     if (pending[i].task_nb == task) \
     { entry_nb = i; break;} \
   }assume(entry_nb != 1);}
 
 /* TODO: change it */
-#define MAX_NB_TASKS_PER_PROCESS 32
+#define MAX_NB_TASKS_PER_PROCESS 256
 typedef struct sctk_net_ibv_sched_entry_s
 {
   int                     task_nb;/* task number */

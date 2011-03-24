@@ -43,16 +43,6 @@ typedef enum
 #define IBV_POLL_RC_SR_FRAG_ORIGIN   5
 
 /*-----------------------------------------------------------
- *  MMU
- *----------------------------------------------------------*/
-
-/* max number of WC extracted for the input
- * and the output completion queue */
-/* FIXME cant change 1 to something else */
-#define SCTK_PENDING_IN_NUMBER 100
-#define SCTK_PENDING_OUT_NUMBER 100
-
-/*-----------------------------------------------------------
  *  DEBUG
  *----------------------------------------------------------*/
 #define DBG_S(x) if (x) \
