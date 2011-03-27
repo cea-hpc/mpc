@@ -41,6 +41,7 @@ static int port;
 static char hostname[256];
 
 extern  sctk_net_ibv_qp_local_t *rc_sr_local;
+extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
 
 static int
 sctk_create_recv_socket ()
@@ -105,7 +106,7 @@ static void* server(void* arg)
     read(fd, msg, 256);
     sctk_nodebug("Msg received from %d %s", src, msg);
 
-    sctk_net_ibv_allocator_lock(src, IBV_CHAN_RC_SR);
+    ALLOCATOR_LOCK(src, IBV_CHAN_RC_SR);
     sctk_nodebug("Lock obtained 1");
     remote = sctk_net_ibv_allocator_get(src, IBV_CHAN_RC_SR);
     if (!remote)
@@ -124,8 +125,7 @@ static void* server(void* arg)
     } else {
       sctk_nodebug("2 Client %d already CONNECTED", src);
     }
-
-    sctk_net_ibv_allocator_unlock(src, IBV_CHAN_RC_SR);
+    ALLOCATOR_UNLOCK(src, IBV_CHAN_RC_SR);
 
     snprintf(msg, 256, "%05d:%010d:%010d", rail->lid, remote->qp->qp_num,
         remote->psn);
@@ -152,8 +152,8 @@ void sctk_net_ibv_cm_client(char* host, int port, int dest, sctk_net_ibv_qp_remo
   if (clientsock_fd < 0)
     sctk_error ("ERROR opening socket");
 
-//  sprintf(name,"%s-ib0",host);
-  sprintf(name,"%s",host);
+  sprintf(name,"%s-ib0",host);
+//  sprintf(name,"%s",host);
   sctk_nodebug("Connect to %s",name);
 
   server = gethostbyname (name);
@@ -163,6 +163,7 @@ void sctk_net_ibv_cm_client(char* host, int port, int dest, sctk_net_ibv_qp_remo
     exit (0);
   }
   ip = (char *) server->h_addr;
+  assume(ip);
 
   memset ((char *) &serv_addr, 0, sizeof (serv_addr));
   serv_addr.sin_family = AF_INET;
@@ -186,7 +187,7 @@ void sctk_net_ibv_cm_client(char* host, int port, int dest, sctk_net_ibv_qp_remo
 
   sctk_nodebug("msg received : %s", msg);
 
-  sctk_net_ibv_allocator_lock(dest, IBV_CHAN_RC_SR);
+  ALLOCATOR_LOCK(dest, IBV_CHAN_RC_SR);
   if (remote->is_connected == 0) {
     sctk_nodebug("1 Client %d CONNECTED", dest);
     keys = sctk_net_ibv_qp_exchange_convert(msg);
@@ -195,7 +196,7 @@ void sctk_net_ibv_cm_client(char* host, int port, int dest, sctk_net_ibv_qp_remo
   } else {
     sctk_nodebug("1 Client %d already CONNECTED", dest);
   }
-  sctk_net_ibv_allocator_unlock(dest, IBV_CHAN_RC_SR);
+  ALLOCATOR_UNLOCK(dest, IBV_CHAN_RC_SR);
 
   sctk_nodebug ("Try connection to %s on port %d done", name, port);
 }

@@ -2143,6 +2143,8 @@ sctk_check_for_communicator_poll (sctk_message_wait_t * restrict arg)
   i = arg->communicator;
   communicator = &(tmp->communicators[i]);
 
+  sctk_net_ibv_allocator_ptp_poll_all();
+
   res = __sctk_perform_match_any_source_wait (communicator);
   __sctk_free_message_wait (communicator, tmp);
 
@@ -2166,6 +2168,8 @@ sctk_check_for_communicator_poll_one (sctk_message_wait_t * restrict arg)
   int i;
   sctk_ptp_data_t *restrict tmp;
   sctk_per_communicator_ptp_data_t *restrict communicator;
+
+  sctk_net_ibv_allocator_ptp_poll_all();
 
   tmp = &(sctk_ptp_list[arg->myself]);
   i = arg->communicator;

@@ -55,8 +55,19 @@ void sctk_ibv_profiler_dec(ibv_profiler_id id)
 #endif
 }
 
+void sctk_ibv_profiler_add_double(ibv_profiler_id id, double c)
+{
+#if IBV_ENABLE_PROFILE == 1
+  double value = (double) counters[id].value;
+  sctk_spinlock_lock(&locks[id]);
+  value += c;
+  counters[id].value= (uint64_t) value;
+  sctk_spinlock_unlock(&locks[id]);
+#endif
+}
 
-void sctk_ibv_profiler_add(ibv_profiler_id id, int c)
+
+void sctk_ibv_profiler_add(ibv_profiler_id id, uint64_t c)
 {
 #if IBV_ENABLE_PROFILE == 1
   sctk_spinlock_lock(&locks[id]);
@@ -65,7 +76,7 @@ void sctk_ibv_profiler_add(ibv_profiler_id id, int c)
 #endif
 }
 
-void sctk_ibv_profiler_sub(ibv_profiler_id id, int c)
+void sctk_ibv_profiler_sub(ibv_profiler_id id, uint64_t c)
 {
 #if IBV_ENABLE_PROFILE == 1
   sctk_spinlock_lock(&locks[id]);
@@ -105,7 +116,10 @@ void sctk_ibv_generate_report()
   fwrite(line, sizeof(char), strnlen(line, 1024), file);
 
   sprintf(line, "IBV_REDUCE_MEAN_SIZE %f\n", (float) counters[IBV_REDUCE_SIZE].value/counters[IBV_REDUCE_NB].value);
-  fwrite(line, sizeof(char), strnlen(line, 1024), file);
+fwrite(line, sizeof(char), strnlen(line, 1024), file);
+
+//  sprintf(line, "IBV_BCAST_MEAN_WAIT %g\n", (double) counters[IBV_BCAST_WAIT_SIZE].value/counters[IBV_BCAST_WAIT_NB].value);
+//  fwrite(line, sizeof(char), strnlen(line, 1024), file);
 
   fclose(file);
 #endif

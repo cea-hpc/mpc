@@ -55,7 +55,7 @@ struct sctk_list** frag_eager_list;
  *----------------------------------------------------------*/
 
 void sctk_net_ibv_comp_rc_sr_frag_allocate(
-    sctk_net_ibv_rc_sr_msg_header_t* msg_header)
+    sctk_net_ibv_ibuf_header_t* msg_header)
 {
   sctk_net_ibv_frag_eager_entry_t* entry;
   struct sctk_list* list;
@@ -64,12 +64,12 @@ void sctk_net_ibv_comp_rc_sr_frag_allocate(
   {
     sctk_nodebug("Allocate a new list for task %d", msg_header->src_task);
     frag_eager_list[msg_header->src_task] = sctk_malloc(sizeof(struct sctk_list));
-    sctk_list_new(frag_eager_list[msg_header->src_task], 1);
+    sctk_list_new(frag_eager_list[msg_header->src_task], 0, 0);
   }
 
   list = frag_eager_list[msg_header->src_task];
 
-  entry = sctk_malloc((char*) sizeof(sctk_net_ibv_frag_eager_entry_t) +
+  entry = sctk_malloc(sizeof(sctk_net_ibv_frag_eager_entry_t) +
       msg_header->size);
   assume(entry);
 
@@ -166,12 +166,12 @@ sctk_net_ibv_comp_rc_sr_send(
     sctk_net_ibv_qp_remote_t* remote,
     int dest_task,
     sctk_net_ibv_ibuf_t* ibuf, size_t size, size_t buffer_size,
-    sctk_net_ibv_rc_sr_msg_type_t type, uint32_t* psn, const int buff_nb, const int total_buffs)
+    sctk_net_ibv_ibuf_msg_type_t type, uint32_t* psn, const int buff_nb, const int total_buffs)
 {
   uint32_t ret_psn = 0;
   int rc;
   int locked = 0;
-  sctk_net_ibv_rc_sr_msg_header_t* msg_header;
+  sctk_net_ibv_ibuf_header_t* msg_header;
   int task_id;
   int thread_id;
 
@@ -179,13 +179,12 @@ sctk_net_ibv_comp_rc_sr_send(
   sctk_get_thread_info (&task_id, &thread_id);
   sctk_nodebug("SRC %d DEST %d", task_id, dest_task);
 
-  msg_header = ((sctk_net_ibv_rc_sr_msg_header_t*) ibuf->buffer);
+  msg_header = ((sctk_net_ibv_ibuf_header_t*) ibuf->buffer);
   msg_header->msg_type = type;
   msg_header->src_process = sctk_process_rank;
   msg_header->src_task = task_id;
   msg_header->dest_task = dest_task;
   msg_header->size = size + RC_SR_HEADER_SIZE;
-  msg_header->buffer_size = size + RC_SR_HEADER_SIZE;
 
   msg_header->payload_size = buffer_size;
   msg_header->buff_nb = buff_nb;
@@ -236,7 +235,7 @@ sctk_net_ibv_comp_rc_sr_free(sctk_net_ibv_ibuf_t* entry)
 sctk_net_ibv_comp_rc_sr_check_and_connect(int dest_process)
 {
   sctk_net_ibv_qp_remote_t* remote;
-  sctk_net_ibv_allocator_lock(dest_process, IBV_CHAN_RC_SR);
+  ALLOCATOR_LOCK(dest_process, IBV_CHAN_RC_SR);
 
   remote = sctk_net_ibv_allocator_get(dest_process, IBV_CHAN_RC_SR);
 
@@ -249,13 +248,13 @@ sctk_net_ibv_comp_rc_sr_check_and_connect(int dest_process)
 
     remote = sctk_net_ibv_comp_rc_sr_allocate_init(dest_process, rc_sr_local);
     sctk_net_ibv_allocator_register(dest_process, remote, IBV_CHAN_RC_SR);
-    sctk_net_ibv_allocator_unlock(dest_process, IBV_CHAN_RC_SR);
+    ALLOCATOR_UNLOCK(dest_process, IBV_CHAN_RC_SR);
 
     sctk_net_ibv_cm_request(dest_process, remote, host, &port);
     sctk_net_ibv_cm_client(host, port, dest_process, remote);
 
   } else {
-    sctk_net_ibv_allocator_unlock(dest_process, IBV_CHAN_RC_SR);
+    ALLOCATOR_UNLOCK(dest_process, IBV_CHAN_RC_SR);
 
     while(remote->is_connected != 1)
     {
@@ -273,7 +272,7 @@ sctk_net_ibv_comp_rc_sr_check_and_connect(int dest_process)
 void
 sctk_net_ibv_comp_rc_sr_send_frag_ptp_message(
     sctk_net_ibv_qp_local_t* local_rc_sr,
-    void* msg, int dest_process, size_t size, sctk_net_ibv_rc_sr_msg_type_t type)
+    void* msg, int dest_process, size_t size, sctk_net_ibv_ibuf_msg_type_t type)
 {
   sctk_net_ibv_ibuf_t* ibuf;
   sctk_net_ibv_qp_remote_t* remote;
@@ -346,7 +345,7 @@ sctk_net_ibv_comp_rc_sr_send_frag_ptp_message(
 void
 sctk_net_ibv_comp_rc_sr_send_ptp_message (
     sctk_net_ibv_qp_local_t* local_rc_sr,
-    void* msg, int dest_process, int dest_task, size_t size, sctk_net_ibv_rc_sr_msg_type_t type) {
+    void* msg, int dest_process, int dest_task, size_t size, sctk_net_ibv_ibuf_msg_type_t type) {
 
   sctk_net_ibv_ibuf_t* ibuf;
   sctk_net_ibv_qp_remote_t* remote;
@@ -458,16 +457,18 @@ sctk_net_ibv_rc_sr_poll_recv(
 {
   sctk_net_ibv_ibuf_t* ibuf;
   sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma;
-  sctk_net_ibv_rc_sr_msg_type_t msg_type;
-  sctk_net_ibv_rc_sr_msg_header_t* msg_header;
+  sctk_net_ibv_ibuf_msg_type_t msg_type;
+  sctk_net_ibv_ibuf_header_t* msg_header;
   int ret;
   void* msg;
   int release_buffer = 1;
 
   ibuf = (sctk_net_ibv_ibuf_t*) wc->wr_id;
-  msg_header = ((sctk_net_ibv_rc_sr_msg_header_t*) ibuf->buffer);
+  msg_header = ((sctk_net_ibv_ibuf_header_t*) ibuf->buffer);
 
   sctk_nodebug("New Recv cq %p, flag %d", ibuf, ibuf->flag);
+
+  sctk_nodebug("Message received from proc %d (task %d)", msg_header->src_process, msg_header->src_task);
 
   msg_type = msg_header->msg_type;
 
@@ -529,7 +530,14 @@ sctk_net_ibv_rc_sr_poll_recv(
 
               sctk_net_ibv_sched_pending_push(
                   entry, msg_header->size, 0,
-                  IBV_CHAN_RC_SR_FRAG);
+                  IBV_POLL_RC_SR_FRAG_ORIGIN,
+                  msg_header->src_process,
+                  msg_header->src_task,
+                  msg_header->dest_task,
+                  msg_header->psn,
+                  entry->msg,
+                  (char*) entry->msg + sizeof(sctk_thread_ptp_message_t),
+                  entry);
 
               /* expected message */
             } else {
@@ -558,7 +566,6 @@ sctk_net_ibv_rc_sr_poll_recv(
                 ret = sctk_net_ibv_sched_sn_check_and_inc(
                     msg_header->src_process, msg_header->src_task, msg_header->psn);
 
-//                sctk_thread_yield();
               } while (ret);
             } else {
               sctk_ibv_profiler_inc(IBV_EXPECTED_MSG_NB);
@@ -568,7 +575,6 @@ sctk_net_ibv_rc_sr_poll_recv(
                 (sctk_thread_ptp_message_t*) entry->msg,
                 (char*) entry->msg + sizeof(sctk_thread_ptp_message_t), msg_header->src_process,
                 IBV_RC_SR_FRAG_ORIGIN, entry);
-
           }
         }
       }
@@ -586,12 +592,21 @@ sctk_net_ibv_rc_sr_poll_recv(
           if(ret)
           {
             sctk_ibv_profiler_inc(IBV_LOOKUP_UNEXPECTED_MSG_NB);
-            sctk_nodebug("LOOKUP UNEXPECTED - Found psn %d from %d",
-                msg_header->psn, msg_header->src_process);
+            sctk_nodebug("LOOKUP UNEXPECTED - Found psn %d from %d (task %d)",
+                msg_header->psn, msg_header->src_process, msg_header->src_task);
 
             sctk_net_ibv_sched_pending_push(
-                msg_header, msg_header->size, 1,
-                IBV_CHAN_RC_SR);
+                RC_SR_PAYLOAD(msg_header), msg_header->size, 0,
+                IBV_POLL_RC_SR_ORIGIN,
+                msg_header->src_process,
+                msg_header->src_task,
+                msg_header->dest_task,
+                msg_header->psn,
+                (sctk_thread_ptp_message_t*) RC_SR_PAYLOAD(msg_header),
+                (char*) RC_SR_PAYLOAD(msg_header) + sizeof(sctk_thread_ptp_message_t),
+                ibuf);
+
+            release_buffer = 0;
 
             /* expected message */
           } else {

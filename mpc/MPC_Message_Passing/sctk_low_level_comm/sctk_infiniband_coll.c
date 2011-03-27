@@ -46,9 +46,9 @@ extern  sctk_net_ibv_qp_local_t *rc_sr_local;
 {
   int i;
 
-  sctk_list_new(&broadcast_fifo, 1);
-  sctk_list_new(&reduce_fifo, 1);
-  sctk_list_new(&init_barrier_fifo, 1);
+  sctk_list_new(&broadcast_fifo, 0, 0);
+  sctk_list_new(&reduce_fifo, 0, 0);
+  sctk_list_new(&init_barrier_fifo, 0, 0);
 
   sctk_comm_world_array = sctk_malloc(sctk_process_number * sizeof(unsigned int));
 
@@ -59,7 +59,7 @@ extern  sctk_net_ibv_qp_local_t *rc_sr_local;
 }
 
    void*
-  sctk_net_ibv_collective_push_rc_sr(struct sctk_list* list, sctk_net_ibv_rc_sr_msg_header_t* msg)
+  sctk_net_ibv_collective_push_rc_sr(struct sctk_list* list, sctk_net_ibv_ibuf_header_t* msg)
 {
   sctk_net_ibv_collective_pending_t* pending;
 
@@ -73,6 +73,7 @@ extern  sctk_net_ibv_qp_local_t *rc_sr_local;
   memcpy(pending->payload, RC_SR_PAYLOAD(msg), msg->payload_size);
   sctk_nodebug("Push with src %d, size %lu", msg->src_process, msg->payload_size);
 
+  sctk_nodebug("Push pending : %p", pending);
   sctk_list_lock(list);
   sctk_list_push(list, pending);
   sctk_list_unlock(list);
@@ -150,6 +151,8 @@ sctk_net_ibv_broadcast_recv(void* data, size_t size, int* array,
 {
   int src;
   sctk_net_ibv_collective_pending_t* msg;
+  double s, e;
+
 
   sctk_nodebug("Broadcast recv");
 
@@ -163,16 +166,22 @@ sctk_net_ibv_broadcast_recv(void* data, size_t size, int* array,
 
       sctk_nodebug("Waiting broadcast from process %d", src);
       /* received from process src */
+      s = MPC_Wtime();
       do {
         msg = sctk_net_ibv_collective_lookup_src(list, src);
 
-        sctk_net_ibv_allocator_ptp_poll_all();
-//        sctk_thread_yield();
+//        sctk_net_ibv_allocator_ptp_poll_all();
+        sctk_thread_yield();
       } while(msg == NULL);
+      e = MPC_Wtime();
+      sctk_ibv_profiler_add_double(IBV_BCAST_WAIT_SIZE, (( e - s * 1e6)));
+      sctk_ibv_profiler_inc(IBV_BCAST_WAIT_NB);
+
+//      sctk_debug("Wait : %g", (e - s) * 1e6);
 
       sctk_nodebug("Broadcast received from process %d size %lu", src, msg->size);
 
-      sctk_nodebug("received : %p", msg->payload);
+      sctk_nodebug("received : %p", msg);
       memcpy(data,
         msg->payload, size);
       sctk_free(msg);
@@ -185,7 +194,7 @@ sctk_net_ibv_broadcast_recv(void* data, size_t size, int* array,
 
   static inline void
 sctk_net_ibv_broadcast_send(sctk_collective_communications_t * com,
-    void* data, size_t size, int* array, unsigned int relative_rank, int* mask, sctk_net_ibv_rc_sr_msg_type_t type)
+    void* data, size_t size, int* array, unsigned int relative_rank, int* mask, sctk_net_ibv_ibuf_msg_type_t type)
 {
   int dest;
 
@@ -306,8 +315,8 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
 
       while(! (msg = sctk_list_walk_on_cond(&reduce_fifo, child, walk_list, 1)))
       {
-        sctk_net_ibv_allocator_ptp_poll_all();
-//        sctk_thread_yield();
+//        sctk_net_ibv_allocator_ptp_poll_all();
+        sctk_thread_yield();
       }
       sctk_nodebug("Done msg from %d", child);
 
@@ -563,8 +572,8 @@ sctk_net_ibv_barrier ( sctk_collective_communications_t * com,
       {
         while(local_entry.entry[recvpeer] < counter)
         {
-          sctk_net_ibv_allocator_ptp_poll_all();
-//          sctk_thread_yield();
+ //         sctk_net_ibv_allocator_ptp_poll_all();
+          sctk_thread_yield();
         }
         sctk_nodebug("Got counter : %d",local_entry.entry[recvpeer]);
       }

@@ -237,7 +237,7 @@ sctk_net_ibv_qp_init(sctk_net_ibv_qp_local_t* local,
     sctk_abort();
   }
 
-  sctk_list_new(&remote->pending_send_wqe, 1);
+  sctk_list_new(&remote->pending_send_wqe, 0, 0);
   sctk_thread_mutex_init(&remote->send_wqe_lock, NULL);
   sctk_nodebug("Initialized : %d", remote->rank);
 
@@ -299,7 +299,7 @@ sctk_net_ibv_qp_state_rtr_attr(sctk_net_ibv_qp_exchange_keys_t* keys, int *flags
 
   attr.qp_state = IBV_QPS_RTR;
   /* 512 is the recommended value */
-  attr.path_mtu = IBV_MTU_2048;
+  attr.path_mtu = IBV_MTU_1024;
   /* QP number of remote QP */
   /* maximul number if resiyrces for incoming RDMA request */
   attr.max_dest_rd_atomic = ibv_rdma_dest_depth;

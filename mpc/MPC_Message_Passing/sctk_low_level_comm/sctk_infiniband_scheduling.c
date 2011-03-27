@@ -28,26 +28,11 @@
 #include "sctk_infiniband_profiler.h"
 #include "sctk_buffered_fifo.h"
 
-#define LOOK_AND_CREATE_ENTRY(process, task) \
-{  int entry_nb = -1;  \
-  int i = 0;          \
-  while(entry_nb == -1)  \
-  {                   \
-    if (sctk_net_ibv_allocator->entry[process].sched[i].task_nb == task) \
-    { entry_nb = i; } \
-    if (sctk_net_ibv_allocator->entry[process].sched[i].task_nb == -1) \
-    { entry_nb = 1;   \
-      sctk_net_ibv_allocator->entry[process].sched[i].task_nb = task_nb; \
-      sctk_nodebug("New task %d created for process %d", task, process); \
-    } \
-    i++;            \
-  }}
-
 extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
-static sctk_thread_mutex_t lock;
+/* TODO: can we delete it ? */
+sctk_thread_mutex_t lock;
 
 pending_entry_t pending[MAX_NB_TASKS_PER_PROCESS];
-sctk_spinlock_t pending_lock = SCTK_SPINLOCK_INITIALIZER;
 int pending_task_entry;
 
 void
@@ -58,13 +43,12 @@ sctk_net_ibv_sched_init() {
   {
     for (j=0; j < MAX_NB_TASKS_PER_PROCESS; ++j)
     {
+      //TODO: initialization by macro
       sctk_net_ibv_allocator->entry[i].sched[j].task_nb = -1;
       sctk_net_ibv_allocator->entry[i].sched[j].esn = 0;
       sctk_net_ibv_allocator->entry[i].sched[j].psn = 0;
     }
   }
-
-  memset(&pending, -1, MAX_NB_TASKS_PER_PROCESS * sizeof(pending_entry_t));
 
   sctk_thread_mutex_init(&lock, NULL);
 }
@@ -72,213 +56,118 @@ sctk_net_ibv_sched_init() {
 /*-----------------------------------------------------------
  *  PSN
  *----------------------------------------------------------*/
-void
-sctk_net_ibv_sched_pending_init(
-    sctk_net_ibv_allocator_type_t type, int entry_nb)
-{
 
-  switch(type) {
-    case IBV_CHAN_RC_SR:
-      sctk_list_new(&pending[entry_nb].rc_sr, 0);
-      break;
-
-    case IBV_CHAN_RC_RDMA:
-      sctk_list_new(&pending[entry_nb].rc_rdma, 0);
-      break;
-
-    case IBV_CHAN_RC_SR_FRAG:
-      sctk_list_new(&pending[entry_nb].rc_sr_frag, 0);
-      break;
-
-
-    default: assume(0); break;
-  }
-}
-
-#define LOCK_AND_PUSH(list, msg) \
-  sctk_list_lock(list); \
-sctk_list_push(list, msg); \
-sctk_list_unlock(list);
-
-
+/**
+ *  Push a msg to the pending list. Also fill the header of the
+ *  pending message according to its type.
+ *  \param
+ *  \return
+ */
 void
 sctk_net_ibv_sched_pending_push(
     void* ptr,
     size_t size,
     int allocation_needed,
-    sctk_net_ibv_allocator_type_t type)
+    sctk_net_ibv_allocator_type_t type,
+    uint64_t src_process,
+    uint64_t src_task,
+    uint64_t dest_task,
+    uint64_t psn,
+    sctk_thread_ptp_message_t* msg_header,
+    void* msg_payload,
+    void* struct_ptr)
 {
   void* msg;
-  int task_id;
-  int thread_id;
   int entry_nb = -1;
   int i = 0;
-  sctk_get_thread_info (&task_id, &thread_id);
+  sctk_net_ibv_sched_pending_header header;
+
+  sctk_nodebug("[task %lu] Pushing msg (src_process:%lu, src_task:%lu, psn:%lu, type %d) to pending list",
+      dest_task, src_process, src_task, psn, type);
+
+  /* fill header for msg payload */
+  header.src_process = src_process;
+  header.src_task = src_task;
+  header.psn = psn;
+  header.type = type;
 
   if (allocation_needed)
   {
+    sctk_nodebug("Allocate memory");
     msg = sctk_malloc(size);
     sctk_ibv_profiler_inc(IBV_MEM_TRACE);
     memcpy(msg, ptr, size);
+
+    header.msg_header = msg;
+    header.msg_payload = (char*) msg + sizeof(sctk_thread_ptp_message_t);
+    header.struct_ptr = msg;
   } else {
+    sctk_nodebug("No memory allocated");
     msg = ptr;
+    header.msg_header = msg_header;
+    header.msg_payload = msg_payload;
+    header.struct_ptr = struct_ptr;
   }
 
-  switch(type) {
-    case IBV_CHAN_RC_SR_FRAG:
-      sctk_nodebug("New Message RC_SR pushed %p", msg);
-      LOCK_AND_PUSH(&pending[task_id].rc_sr_frag, msg);
-      break;
 
-    case IBV_CHAN_RC_SR:
-      sctk_nodebug("New Message RC_SR pushed %p", msg);
-      LOCK_AND_PUSH(&pending[task_id].rc_sr, msg);
-      break;
+  /* lookup the local thread entry */
+  LOOKUP_LOCAL_THREAD_ENTRY(dest_task, &entry_nb);
+  sctk_nodebug("Entry nb : %d (header %p, payload %p, size header %lu)", entry_nb, header.msg_header, header.msg_payload, sizeof(header));
 
-    case IBV_CHAN_RC_RDMA:
-      sctk_nodebug("New Message RC_RDMA pushed ");
-      LOCK_AND_PUSH(&pending[task_id].rc_rdma, msg);
-      break;
-
-    default: assume(0); break;
-  }
+  sctk_list_lock(&all_tasks[entry_nb].pending_msg);
+  sctk_list_push(&all_tasks[entry_nb].pending_msg, &header);
+  sctk_list_unlock(&all_tasks[entry_nb].pending_msg);
 }
 
   int
-sctk_net_ibv_sched_rc_sr_poll_pending(int task_nb)
+sctk_net_ibv_sched_poll_pending_msg(int task_nb)
 {
   struct sctk_list_elem* tmp = NULL;
-  sctk_net_ibv_rc_sr_msg_header_t* msg;
+  sctk_net_ibv_sched_pending_header* header;
+  sctk_thread_ptp_message_t* msg_header;
+  void* msg_payload;
   int ret;
 
-  sctk_list_lock(&pending[task_nb].rc_sr);
-  tmp = pending[task_nb].rc_sr.head;
+  sctk_list_lock(&all_tasks[task_nb].pending_msg);
+  tmp = all_tasks[task_nb].pending_msg.head;
+
   while(tmp)
   {
-    msg = tmp->elem;
-    ret = sctk_net_ibv_sched_sn_check_and_inc(msg->src_process,
-        msg->src_task, msg->psn);
+    header = tmp->elem;
+
+    ret = sctk_net_ibv_sched_sn_check_and_inc(header->src_process,
+        header->src_task, header->psn);
 
     if (!ret)
     {
-      sctk_nodebug("PENDING - Recv EAGER message from %d (PSN %d)", msg->src_process, msg->psn );
+      sctk_nodebug("[task %lu] PENDING - Recv EAGER message from %d, task %d (PSN %d, struct ptr %p, type %d, header %p, payload %p)", all_tasks[task_nb].task_nb, header->src_process, header->src_task, header->psn, header->struct_ptr, header->type, header->msg_header, header->msg_payload);
 
       sctk_net_ibv_send_msg_to_mpc(
-          (sctk_thread_ptp_message_t*) RC_SR_PAYLOAD(msg),
-          (char*) RC_SR_PAYLOAD(msg)
-          + sizeof(sctk_thread_ptp_message_t), msg->src_process,
-          IBV_POLL_RC_SR_ORIGIN, msg);
+          header->msg_header,
+          header->msg_payload,
+          header->src_process,
+          header->type, header->struct_ptr);
 
       //THERE
-      sctk_list_remove(&pending[task_nb].rc_sr, tmp);
-      sctk_list_unlock(&pending[task_nb].rc_sr);
-      return 1;
+      sctk_list_remove(&all_tasks[task_nb].pending_msg, tmp);
+      sctk_list_unlock(&all_tasks[task_nb].pending_msg);
+      /*  FIXME there */
+      return 0;
     }
 
     tmp = tmp->p_next;
   }
-  sctk_list_unlock(&pending[task_nb].rc_sr);
+  sctk_list_unlock(&all_tasks[task_nb].pending_msg);
   return 0;
-}
-
-  int
-sctk_net_ibv_sched_rc_sr_frag_poll_pending(int task_nb)
-{
-  struct sctk_list_elem* tmp = NULL;
-  sctk_net_ibv_frag_eager_entry_t* msg;
-  int ret;
-
-  sctk_list_lock(&pending[task_nb].rc_sr_frag);
-  tmp = pending[task_nb].rc_sr_frag.head;
-  while(tmp)
-  {
-    msg = tmp->elem;
-    ret = sctk_net_ibv_sched_sn_check_and_inc(msg->src_process, msg->src_task, msg->psn);
-
-    if (!ret)
-    {
-      sctk_nodebug("PENDING - Recv FRAG EAGER message from %d (PSN %d)", msg->src_process, msg->psn );
-
-      sctk_net_ibv_send_msg_to_mpc(
-          (sctk_thread_ptp_message_t*) msg->msg,
-          (char*) msg->msg
-          + sizeof(sctk_thread_ptp_message_t), msg->src_process,
-          IBV_POLL_RC_SR_FRAG_ORIGIN, msg);
-
-      //THERE
-      sctk_list_remove(&pending[task_nb].rc_sr_frag, tmp);
-      sctk_list_unlock(&pending[task_nb].rc_sr_frag);
-      return 1;
-    }
-
-    tmp = tmp->p_next;
-  }
-  sctk_list_unlock(&pending[task_nb].rc_sr_frag);
-  return 0;
-}
-
-  int
-sctk_net_ibv_sched_rc_rdma_poll_pending(int task_nb)
-{
-  struct sctk_list_elem* tmp = NULL;
-  sctk_net_ibv_rc_rdma_entry_t* msg;
-  int ret;
-  int src_process;
-
-  sctk_list_lock(&pending[task_nb].rc_rdma);
-  tmp = pending[task_nb].rc_rdma.head;
-  while(tmp)
-  {
-    msg = tmp->elem;
-    ret = sctk_net_ibv_sched_sn_check_and_inc(msg->src_process, msg->src_task, msg->psn);
-
-    if (!ret)
-    {
-
-      sctk_nodebug("PENDING - Recv RDVZ message from %d (PSN %d) (%p)", msg->src_process, msg->psn, msg);
-
-      sctk_list_remove(&pending[task_nb].rc_rdma, tmp);
-
-      src_process = msg->src_process;
-      sctk_net_ibv_comp_rc_rdma_read_msg(msg, IBV_POLL_RC_RDMA_ORIGIN);
-      sctk_list_unlock(&pending[task_nb].rc_rdma);
-
-      return 1;
-    }
-
-    tmp = tmp->p_next;
-  }
-  sctk_list_unlock(&pending[task_nb].rc_rdma);
-
-  return 0;
-}
-
-  int
-sctk_net_ibv_sched_poll_pending(int task_nb)
-{
-  int tmp, restart = 0;
-
-  tmp = sctk_net_ibv_sched_rc_sr_poll_pending(task_nb);
-  if (tmp == 1)
-    restart = 1;
-
-  tmp = sctk_net_ibv_sched_rc_sr_frag_poll_pending(task_nb);
-  if (tmp == 1)
-    restart = 1;
-
-  tmp = sctk_net_ibv_sched_rc_rdma_poll_pending(task_nb);
-  if (tmp == 1)
-    restart = 1;
-
-  return restart;
 }
 
   uint32_t
 sctk_net_ibv_sched_get_esn(int dest, int task_nb)
 {
-  LOOK_AND_CREATE_ENTRY(dest, task_nb);
+  int entry_nb;
+  LOOK_AND_CREATE_REMOTE_ENTRY(dest, task_nb, &entry_nb);
   sctk_nodebug("ESN : %lu", sctk_net_ibv_allocator->entry[dest].esn);
-  return sctk_net_ibv_allocator->entry[dest].sched[task_nb].esn;
+  return sctk_net_ibv_allocator->entry[dest].sched[entry_nb].esn;
 }
 
   uint32_t
@@ -286,11 +175,10 @@ sctk_net_ibv_sched_psn_inc (int dest, int task_nb)
 {
   uint32_t i;
 
-  LOOK_AND_CREATE_ENTRY(dest, task_nb);
-  //  sctk_net_ibv_sched_lock();
-  i = sctk_net_ibv_allocator->entry[dest].sched[task_nb].psn;
-  sctk_net_ibv_allocator->entry[dest].sched[task_nb].psn++;
-  //  sctk_net_ibv_sched_unlock();
+  int entry_nb;
+  LOOK_AND_CREATE_REMOTE_ENTRY(dest, task_nb, &entry_nb);
+  i = sctk_net_ibv_allocator->entry[dest].sched[entry_nb].psn;
+  sctk_net_ibv_allocator->entry[dest].sched[entry_nb].psn++;
 
   return i;
 }
@@ -300,10 +188,11 @@ sctk_net_ibv_sched_esn_inc (int dest, int task_nb)
 {
   uint32_t i;
 
-  LOOK_AND_CREATE_ENTRY(dest, task_nb);
-  i = sctk_net_ibv_allocator->entry[dest].sched[task_nb].esn;
-  sctk_net_ibv_allocator->entry[dest].sched[task_nb].esn++;
-  sctk_nodebug("INC for process %d: %lu", dest, i);
+  int entry_nb;
+  LOOK_AND_CREATE_REMOTE_ENTRY(dest, task_nb, &entry_nb);
+  i = sctk_net_ibv_allocator->entry[dest].sched[entry_nb].esn;
+  sctk_net_ibv_allocator->entry[dest].sched[entry_nb].esn++;
+  sctk_nodebug("INC for process %d (task %d): %lu", dest, entry_nb, i);
   return i;
 }
 
@@ -311,8 +200,9 @@ sctk_net_ibv_sched_esn_inc (int dest, int task_nb)
   uint32_t
 sctk_net_ibv_sched_sn_check(int dest, int task_nb, uint64_t num)
 {
-  LOOK_AND_CREATE_ENTRY(dest, task_nb);
-  if ( sctk_net_ibv_allocator->entry[dest].sched[task_nb].esn == num )
+  int entry_nb;
+  LOOK_AND_CREATE_REMOTE_ENTRY(dest, task_nb, &entry_nb);
+  if ( sctk_net_ibv_allocator->entry[dest].sched[entry_nb].esn == num )
     return 1;
   else
     return 0;
@@ -324,59 +214,13 @@ sctk_net_ibv_sched_sn_check_and_inc(int dest, int task_nb, uint64_t num)
   int i;
 
   if (!sctk_net_ibv_sched_sn_check(dest, task_nb, num)) {
-    //        i = sctk_net_ibv_allocator->entry[dest].esn;
-    //        sctk_error("Wrong Sequence Number received from %d. Expected %d got %d", dest, i, num);
     return 1;
   }
   else
   {
-    sctk_net_ibv_sched_lock();
+    SCHED_LOCK;
     sctk_net_ibv_sched_esn_inc (dest, task_nb);
-    sctk_net_ibv_sched_unlock();
+    SCHED_UNLOCK;
     return 0;
   }
-}
-
-
-  void
-sctk_net_ibv_sched_lock()
-{
-  sctk_thread_mutex_lock(&lock);
-}
-
-  void
-sctk_net_ibv_sched_unlock()
-{
-  sctk_thread_mutex_unlock(&lock);
-}
-
-  void
-sctk_net_ibv_sched_initialize_threads()
-{
-  int task_id;
-  int thread_id;
-  int i;
-  int entry_nb = -1;
-  sctk_get_thread_info (&task_id, &thread_id);
-
-  sctk_spinlock_lock(&pending_lock);
-  for (i=0; i < MAX_NB_TASKS_PER_PROCESS; ++i)
-  {
-    sctk_nodebug("Task nb : %d", pending[i].task_nb);
-
-    if (pending[i].task_nb == -1)
-    {
-      entry_nb = i;
-      pending[entry_nb].task_nb = task_id;
-      sctk_nodebug("%p - Found entry %d -> %d", &pending[entry_nb], i, task_id);
-      break;
-    }
-  }
-//  assume (entry_nb != -1);
-  sctk_spinlock_unlock(&pending_lock);
-
-  sctk_net_ibv_sched_pending_init(IBV_CHAN_RC_SR, entry_nb);
-  sctk_net_ibv_sched_pending_init(IBV_CHAN_RC_SR_FRAG, entry_nb);
-  sctk_net_ibv_sched_pending_init(IBV_CHAN_RC_RDMA, entry_nb);
-  sctk_nodebug("Initializing thread %d with entry %d", task_id, entry_nb);
 }

@@ -30,9 +30,6 @@
 #include "infiniband/verbs.h"
 #include "sctk_infiniband_mmu.h"
 
-/* must be a multiple of 64 bytes */
-#define IBUF_SIZE (8 * 1024)
-
 /* type of ibuf */
 #define RDMA_READ_IBUF_FLAG (111)
 #define RDMA_WRITE_IBUF_FLAG (222)
@@ -58,6 +55,20 @@ extern uint32_t                     ibuf_free_ibuf_nb;
 extern uint32_t                     ibuf_got_ibuf_nb;
 extern uint32_t                     ibuf_free_srq_nb;
 extern uint32_t                     ibuf_got_srq_nb;
+
+typedef enum
+{
+  /* ptp */
+  RC_SR_EAGER =               0,
+  RC_SR_RDVZ_REQUEST =        1,
+  RC_SR_RDVZ_ACK =            2,
+  RC_SR_RDVZ_DONE =           3,
+  /* collectives */
+  RC_SR_BCAST =               4,
+  RC_SR_REDUCE =              5,
+  RC_SR_BCAST_INIT_BARRIER =  6,
+  RC_SR_RDVZ_READ =           7
+} sctk_net_ibv_ibuf_msg_type_t;
 
 
 typedef struct sctk_net_ibv_ibuf_region_s
@@ -105,6 +116,35 @@ typedef struct sctk_net_ibv_ibuf_s
 
 } sctk_net_ibv_ibuf_t;
 
+/* generic header between all channels */
+typedef struct
+{
+  sctk_net_ibv_ibuf_msg_type_t     msg_type;
+  size_t  size;
+  size_t  payload_size;
+  uint32_t src_process;
+  uint32_t src_task;
+  uint32_t dest_task;
+  uint32_t psn;
+} sctk_net_ibv_ibuf_generic_header;
+
+struct sctk_net_ibv_ibuf_header_s
+{
+// sctk_net_ibv_ibuf_generic_header gen_header;
+
+  sctk_net_ibv_ibuf_msg_type_t     msg_type;
+  size_t  size;
+  size_t  payload_size;
+  uint32_t src_process;
+  uint32_t src_task;
+  uint32_t dest_task;
+  uint32_t psn;
+  uint16_t buff_nb;
+  uint16_t total_buffs;
+} __attribute__ ((packed));
+
+typedef struct sctk_net_ibv_ibuf_header_s
+sctk_net_ibv_ibuf_header_t;
 
 /*-----------------------------------------------------------
  *  FUNCTIONS

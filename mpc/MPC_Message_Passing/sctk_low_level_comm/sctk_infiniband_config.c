@@ -27,13 +27,15 @@
 #include "sctk_infiniband_comp_rc_rdma.h"
 
 /* 16 seams to be the better value on fortoy */
-#define IBV_EAGER_THRESHOLD ( 16 * 1024 )
-#define IBV_FRAG_EAGER_THRESHOLD (1024 * 1024 * 1024)
+//#define IBV_EAGER_THRESHOLD ( 16 * 1024 )
+//#define IBV_FRAG_EAGER_THRESHOLD ( 256 * 1024)
+#define IBV_EAGER_THRESHOLD ( 32 * 1024 )
+#define IBV_FRAG_EAGER_THRESHOLD ( 512 * 1024)
 /*
  * should be high values if the event
  * IBV_EVENT_QP_LAST_WQE_REACHED is triggered
  */
-#define IBV_QP_TX_DEPTH     6000
+#define IBV_QP_TX_DEPTH     3000
 /* don't need recv WQE when using SRQ. Must be put to
  * 0 */
 #define IBV_QP_RX_DEPTH     0
@@ -42,13 +44,13 @@
 #define IBV_CQ_DEPTH        40000
 #define IBV_MAX_SG_SQ       8
 #define IBV_MAX_SG_RQ       8
-#define IBV_MAX_INLINE        0
-#define IBV_MAX_IBUFS         7000
+#define IBV_MAX_INLINE        128
+#define IBV_MAX_IBUFS         2000
 //#define IBV_MAX_IBUFS         50
 // #define IBV_MAX_SRQ_IBUFS     2000
-#define IBV_MAX_SRQ_IBUFS     3000 /*  > 300 */
-#define IBV_SRQ_CREDIT_LIMIT  2500 /* >=300 */
-#define IBV_SRQ_CREDIT_THREAD_LIMIT  2500
+#define IBV_MAX_SRQ_IBUFS     1000 /*  > 300 */
+#define IBV_SRQ_CREDIT_LIMIT  700 /* >=300 */
+#define IBV_SRQ_CREDIT_THREAD_LIMIT  300
 
 //#define IBV_MAX_SRQ_IBUFS     50
 // #define IBV_SRQ_CREDIT_LIMIT  800
@@ -95,6 +97,10 @@ int  ibv_rdma_dest_depth  = IBV_RDMA_DEST_DEPTH;
 
 void sctk_net_ibv_config_check()
 {
+//  ibv_eager_threshold += (RC_SR_HEADER_SIZE + sizeof(sctk_thread_ptp_message_t));
+//    ibv_eager_threshold += (RC_SR_HEADER_SIZE);
+
+//   ibv_eager_threshold = ( ( ibv_eager_threshold + 4095 ) & ( ~4095 ) );
 
   if (ibv_eager_threshold < (RC_SR_HEADER_SIZE + sizeof(sctk_net_ibv_rc_rdma_request_t)))
   {

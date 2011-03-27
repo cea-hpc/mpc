@@ -92,10 +92,13 @@ typedef enum
   IBV_BCAST_NB = 35,
   IBV_BCAST_SIZE = 36,
   IBV_REDUCE_NB = 37,
-  IBV_REDUCE_SIZE = 38
+  IBV_REDUCE_SIZE = 38,
+
+  IBV_BCAST_WAIT_NB = 39,
+  IBV_BCAST_WAIT_SIZE = 40
 
 } ibv_profiler_id;
-#define NB_PROFILE_ID 39
+#define NB_PROFILE_ID 41
 
 struct sctk_ibv_profiler_entry_s
 {
@@ -162,7 +165,10 @@ static struct sctk_ibv_profiler_entry_s counters[NB_PROFILE_ID] =
   ENTRY(IBV_BCAST_NB),
   ENTRY(IBV_BCAST_SIZE),
   ENTRY(IBV_REDUCE_NB),
-  ENTRY(IBV_REDUCE_SIZE)
+  ENTRY(IBV_REDUCE_SIZE),
+
+  ENTRY(IBV_BCAST_WAIT_NB),
+  ENTRY(IBV_BCAST_WAIT_SIZE)
 };
 
 void sctk_ibv_profiler_init();

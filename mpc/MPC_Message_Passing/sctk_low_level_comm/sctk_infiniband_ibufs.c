@@ -357,6 +357,7 @@ void sctk_net_ibv_ibuf_send_init(
     sctk_net_ibv_ibuf_t* ibuf, size_t size)
 {
   sctk_assert(ibuf);
+//  sctk_debug("Size : %lu", size);
 
   ibuf->desc.wr.send.next = NULL;
   ibuf->desc.wr.send.opcode = IBV_WR_SEND;

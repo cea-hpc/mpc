@@ -48,7 +48,7 @@ typedef struct
   sctk_net_ibv_collective_init();
 
   void*
-  sctk_net_ibv_collective_push(struct sctk_list* list, sctk_net_ibv_rc_sr_msg_header_t* msg);
+  sctk_net_ibv_collective_push(struct sctk_list* list, sctk_net_ibv_ibuf_header_t* msg);
 
   sctk_net_ibv_collective_pending_t*
 sctk_net_ibv_collective_lookup_src(struct sctk_list* list, const int src);
@@ -78,7 +78,7 @@ sctk_net_ibv_allocator_send_coll_message(
     void *msg,
     int dest_process,
     size_t size,
-    sctk_net_ibv_rc_sr_msg_type_t type);
+    sctk_net_ibv_ibuf_msg_type_t type);
 
 
 /*-----------------------------------------------------------

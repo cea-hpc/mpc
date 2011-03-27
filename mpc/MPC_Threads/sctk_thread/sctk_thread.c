@@ -619,7 +619,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
     {
       sctk_ptp_per_task_init (tmp.task_id);
       sctk_register_thread_initial (tmp.task_id);
-      sctk_net_ibv_sched_initialize_threads();
+      sctk_net_ibv_allocator_initialize_threads();
       sctk_terminaison_barrier (tmp.task_id);
     }
 #endif

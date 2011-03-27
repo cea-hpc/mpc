@@ -167,7 +167,9 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
       sctk_nodebug("Free RC_RDMA message");
 
       entry = (sctk_net_ibv_rc_rdma_entry_t *)  item->struct_ptr;
+      sctk_nodebug("entry : %p, mmu : %p", entry, entry->mmu_entry);
       entry_rdma = entry->entry_rc_rdma;
+
 
       sctk_net_ibv_mmu_unregister (rail->mmu, entry->mmu_entry);
       sctk_list_lock(&entry_rdma->send);
@@ -177,14 +179,20 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
 
       sctk_free(entry->msg_payload_ptr);
       sctk_ibv_profiler_dec(IBV_MEM_TRACE);
+      sctk_nodebug("finished");
       sctk_free(entry);
       sctk_ibv_profiler_dec(IBV_MEM_TRACE);
       break;
 
     case IBV_POLL_RC_SR_ORIGIN:
       sctk_nodebug("Free POLL_RC_SR");
-      sctk_free(item->struct_ptr);
-      sctk_ibv_profiler_dec(IBV_MEM_TRACE);
+      ibuf = (sctk_net_ibv_ibuf_t*)  item->struct_ptr;
+      sctk_net_ibv_ibuf_release(ibuf, 1);
+      sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
+
+
+      //      sctk_free(item->struct_ptr);
+//      sctk_ibv_profiler_dec(IBV_MEM_TRACE);
       break;
 
     case IBV_POLL_RC_RDMA_ORIGIN:
@@ -367,6 +375,7 @@ sctk_net_preinit_driver_infiniband ( sctk_net_driver_pointers_functions_t* point
   /* initialization of network mode */
   sctk_net_ibv_update_network_mode();
 
+
   frag_eager_list = sctk_malloc(sctk_get_total_tasks_number() * sizeof(frag_eager_list));
   memset(frag_eager_list, 0, sctk_get_total_tasks_number() * sizeof(frag_eager_list));
   sctk_nodebug("nb total of tasks : %d", sctk_get_total_tasks_number());
@@ -374,7 +383,7 @@ sctk_net_preinit_driver_infiniband ( sctk_net_driver_pointers_functions_t* point
   if (sctk_process_rank == 0)
   {
     sctk_nodebug("End of driver init!");
-    sctk_debug("Size header : %lu", sizeof(sctk_thread_ptp_message_t));
+    sctk_nodebug("Size header : %lu", sizeof(sctk_thread_ptp_message_t));
   }
 }
 

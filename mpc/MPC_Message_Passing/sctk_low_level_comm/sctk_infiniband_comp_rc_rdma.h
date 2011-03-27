@@ -43,6 +43,7 @@ typedef enum
 {
   RC_RDMA_REQ_WRITE                  = 1 << 0,
   RC_RDMA_REQ_READ                   = 1 << 1,
+  RC_FRAG                            = 1 << 2,
 } sctk_net_ibv_rc_rdma_request_protocol_t;
 
 /* define which type is used for a rdvz entry */
@@ -66,38 +67,63 @@ typedef struct
 /* structure where information about rdvz message are stored */
 typedef struct
 {
+  /*  if the message is ready. If not, we wait */
   volatile int                    ready;
+  /* protocol used: rdma read, write, frag msg */
   sctk_net_ibv_rc_rdma_request_protocol_t protocol;
-  sctk_net_ibv_rc_sr_msg_type_t           msg_type;
+  /* type of msg, reduce, bcast, ptp, etc... */
+  sctk_net_ibv_ibuf_msg_type_t           msg_type;
 
+  /* MPC msg header */
   sctk_thread_ptp_message_t       msg_header;
+  /* ptr to a MPC msg header */
   sctk_thread_ptp_message_t       *msg_header_ptr;
+
   void                            *msg_payload_aligned_ptr;
   void                            *msg_payload_ptr;
 
+  /* mmu entry if pinned memory */
   sctk_net_ibv_mmu_entry_t        *mmu_entry;
   sctk_net_ibv_rc_rdma_process_t  *entry_rc_rdma;
 
+  /* if msg directly pinned in memory */
   int                             directly_pinned;
   void*                           remote_entry;
+
+  /* requested size for msg */
   size_t                          requested_size;
+  /* source process */
   uint32_t                        src_process;
+  /* source task */
   uint32_t                        src_task;
-  uint32_t                        psn;  /* Packet Sequence Number */
+  /* source task */
+  uint32_t                        dest_task;
+  /* Packet Sequence Number */
+  uint32_t                        psn;
   double creation_timestamp;
+  /* ptr to the list entry (help for removing an entry from
+   * a list) */
   struct sctk_list_elem*          list_elem;;
 
   union
   {
-    struct
+    union
     {
+      struct
+      {
 
-    } send;
+      } send;
 
-    struct
+      struct
+      {
+
+      } recv;
+    } rdma;
+    union
     {
+      size_t current_copied;
 
-    } recv;
+    } frag_eager;
   };
 } sctk_net_ibv_rc_rdma_entry_t;
 
@@ -106,10 +132,9 @@ typedef struct
 typedef struct
 {
   sctk_net_ibv_rc_rdma_request_protocol_t protocol;
-  sctk_net_ibv_rc_sr_msg_type_t           msg_type;
+  sctk_net_ibv_ibuf_msg_type_t           msg_type;
 
   size_t                    requested_size;
-  int                       src_process;
 
   sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma;
   sctk_net_ibv_rc_rdma_entry_t* entry;
@@ -120,14 +145,13 @@ typedef struct
     } read_req;
 
   sctk_thread_ptp_message_t msg_header;
-  uint32_t                  psn;  /* Packet Sequence Number */
 } sctk_net_ibv_rc_rdma_request_t;
 
 
 typedef struct
 {
   sctk_net_ibv_rc_rdma_request_protocol_t protocol;
-  sctk_net_ibv_rc_sr_msg_type_t           msg_type;
+  sctk_net_ibv_ibuf_msg_type_t           msg_type;
 
   size_t                    requested_size;
   int                       src_process;
@@ -146,17 +170,10 @@ typedef struct
 {
   void*     dest_ptr;
   uint32_t  dest_rkey;
-  int       src_process;
-  uint32_t  psn;
-  int       if_qp_connection;
-  sctk_net_ibv_qp_exchange_keys_t keys;
 } sctk_net_ibv_rc_rdma_request_ack_t;
 
 typedef struct
 {
-  int src_process;
-  int psn;
-
   sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma;
   sctk_net_ibv_rc_rdma_entry_t* entry;
 
@@ -207,5 +224,5 @@ sctk_net_ibv_comp_rc_rdma_send_coll_request(
     int dest_process,
     size_t size,
     sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma,
-    sctk_net_ibv_rc_sr_msg_type_t type);
+    sctk_net_ibv_ibuf_msg_type_t type);
 #endif

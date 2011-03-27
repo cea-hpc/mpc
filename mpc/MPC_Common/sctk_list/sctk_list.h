@@ -40,13 +40,14 @@ struct sctk_list_elem {
 struct sctk_list {
   uint64_t elem_count;
   uint8_t is_collector;
-  sctk_thread_mutex_t   lock;
+  size_t size_payload;
+  sctk_spinlock_t   lock;
   struct sctk_list_elem *head;
   struct sctk_list_elem *tail;
 };
 
 void
-sctk_list_new(struct sctk_list* list, uint8_t is_collector);
+sctk_list_new(struct sctk_list* list, uint8_t is_collector, size_t size_payload);
 
 struct sctk_list_elem*
 sctk_list_push(struct sctk_list* list, void *elem);

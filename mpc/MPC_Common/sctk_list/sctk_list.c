@@ -22,26 +22,40 @@
 /* ######################################################################## */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <sctk.h>
 #include "sctk_list.h"
 
 /* TODO: Collector mode not implemented */
 void
-sctk_list_new(struct sctk_list* list, uint8_t is_collector)
+sctk_list_new(struct sctk_list* list, uint8_t is_collector, size_t size_payload)
 {
   list->elem_count = 0;
-  sctk_thread_mutex_init(&list->lock, NULL);
+  list->lock = SCTK_SPINLOCK_INITIALIZER;
   list->is_collector = is_collector;
   list->head = NULL;
+  list->size_payload = size_payload;
   list->tail = NULL;
 }
 
 
-struct sctk_list_elem*
-sctk_list_alloc_elem(void* elem)
+static struct sctk_list_elem*
+sctk_list_alloc_elem(void* elem, size_t size, uint8_t collector )
 {
-  struct sctk_list_elem *tmp = malloc(sizeof(struct sctk_list_elem));
-  tmp->elem = elem;
+  struct sctk_list_elem *tmp =
+    sctk_malloc(sizeof(struct sctk_list_elem) + size);
+
+  if (collector)
+  {
+    tmp->elem = (char*) tmp + sizeof(struct sctk_list_elem);
+    memcpy(tmp->elem, elem, size);
+  }
+  else
+  {
+    tmp->elem = elem;
+  }
+  sctk_nodebug("Elem : %p (elem %p, size %d collector %d)", tmp->elem, elem, size, collector);
+
   return tmp;
 }
 
@@ -89,6 +103,8 @@ sctk_list_remove(struct sctk_list* list, struct sctk_list_elem* elem)
   }
 
   payload = elem->elem;
+  list->elem_count--;
+  sctk_nodebug("Elem removed : %p", elem->elem);
   sctk_free(elem);
   return payload;
 }
@@ -103,7 +119,7 @@ sctk_list_pop(struct sctk_list* list)
 sctk_list_push(struct sctk_list* list, void *elem)
 {
   struct sctk_list_elem *new_elem = NULL;
-  new_elem = sctk_list_alloc_elem(elem);
+  new_elem = sctk_list_alloc_elem(elem, list->size_payload, list->is_collector);
   assume(new_elem);
 
   if (list->tail == NULL)
@@ -122,6 +138,7 @@ sctk_list_push(struct sctk_list* list, void *elem)
   }
 
   sctk_nodebug("head : %p", elem);
+//  sctk_debug("Count : %d", list->elem_count);
   list->elem_count++;
   return new_elem;
 }
@@ -215,10 +232,10 @@ int sctk_list_is_empty(struct sctk_list* list)
 
 void sctk_list_lock(struct sctk_list* list)
 {
-  sctk_thread_mutex_lock(&list->lock);
+  sctk_spinlock_lock(&list->lock);
 }
 
 void sctk_list_unlock(struct sctk_list* list)
 {
-  sctk_thread_mutex_unlock(&list->lock);
+  sctk_spinlock_unlock(&list->lock);
 }

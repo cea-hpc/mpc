@@ -36,54 +36,20 @@
 #include <stdio.h>
 #include <infiniband/verbs.h>
 
-/* TODO: Don't change the order of entries */
-typedef enum
-{
-  /* ptp */
-  RC_SR_EAGER =               1 << 0,
-  RC_SR_RDVZ_REQUEST =        1 << 1,
-  RC_SR_RDVZ_ACK =            1 << 2,
-  RC_SR_RDVZ_DONE =           1 << 3,
-  /* collectives */
-  RC_SR_BCAST =               1 << 4,
-  RC_SR_REDUCE =              1 << 5,
-  RC_SR_BCAST_INIT_BARRIER =  1 << 6,
-  RC_SR_RDVZ_READ =           1 << 7
-} sctk_net_ibv_rc_sr_msg_type_t;
-/* number of different msg type (see the list above) */
-
 /*  EAGER  */
-struct sctk_net_ibv_rc_sr_msg_header_s
-{
-  sctk_net_ibv_rc_sr_msg_type_t     msg_type;
-  uint32_t psn;
-  size_t  size;
-  size_t  payload_size;
-  size_t  buffer_size;
-  uint16_t buff_nb;
-  uint16_t total_buffs;
-  uint32_t src_process;
-  uint32_t src_task;
-  uint32_t dest_task;
-} __attribute__ ((packed));
-
-typedef struct sctk_net_ibv_rc_sr_msg_header_s
-sctk_net_ibv_rc_sr_msg_header_t;
-
-#define RC_SR_HEADER(ibuf) \
-  ((sctk_net_ibv_rc_sr_msg_header_t*) ibuf->buffer)
+#define RC_SR_HEADER(buffer) \
+  ((sctk_net_ibv_ibuf_header_t*) buffer)
 
 #define RC_SR_PAYLOAD(buffer) \
-  ((char*) buffer + sizeof(sctk_net_ibv_rc_sr_msg_header_t))
+  ((char*) buffer + sizeof(sctk_net_ibv_ibuf_header_t))
 
 #define RC_SR_HEADER_SIZE \
-  sizeof (sctk_net_ibv_rc_sr_msg_header_t)
+  sizeof (sctk_net_ibv_ibuf_header_t)
 
 typedef enum{
   RC_SR_WR_SEND,
   RC_SR_WR_RECV,
 } sctk_net_ibv_rc_sr_wr_type_t;
-
 
 typedef struct
 {
@@ -109,7 +75,7 @@ sctk_net_ibv_comp_rc_sr_send(
     sctk_net_ibv_qp_remote_t* remote,
     int dest_task,
     sctk_net_ibv_ibuf_t* ibuf, size_t size, size_t buffer_size,
-    sctk_net_ibv_rc_sr_msg_type_t type, uint32_t* psn, const int buff_nb, const int total_buffs);
+    sctk_net_ibv_ibuf_msg_type_t type, uint32_t* psn, const int buff_nb, const int total_buffs);
 
 int
 sctk_net_ibv_comp_rc_sr_post_recv(
@@ -125,7 +91,7 @@ sctk_net_ibv_comp_rc_sr_init(
 void
 sctk_net_ibv_comp_rc_sr_send_ptp_message (
     sctk_net_ibv_qp_local_t* local_rc_sr,
-    void* msg, int dest_process, int dest_size, size_t size, sctk_net_ibv_rc_sr_msg_type_t type);
+    void* msg, int dest_process, int dest_size, size_t size, sctk_net_ibv_ibuf_msg_type_t type);
 
 sctk_net_ibv_qp_remote_t*
 sctk_net_ibv_comp_rc_sr_check_and_connect(int dest_process);

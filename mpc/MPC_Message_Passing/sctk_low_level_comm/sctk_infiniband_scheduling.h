@@ -42,8 +42,17 @@ int entry_nb = -1;  \
     { entry_nb = i; break;} \
   }assume(entry_nb != 1);}
 
+
+#define SCHED_LOCK {                \
+  sctk_thread_mutex_lock(&lock);}   \
+
+#define SCHED_UNLOCK {              \
+  sctk_thread_mutex_unlock(&lock); }\
+
+
+
 /* TODO: change it */
-#define MAX_NB_TASKS_PER_PROCESS 256
+#define MAX_NB_TASKS_PER_PROCESS 512
 typedef struct sctk_net_ibv_sched_entry_s
 {
   int                     task_nb;/* task number */
@@ -51,6 +60,21 @@ typedef struct sctk_net_ibv_sched_entry_s
   uint32_t                psn;    /* packet sequence number */
 } sctk_net_ibv_sched_entry_t;
 
+#define INIT_SCHED_ENTRY { -1, 0, 0 }
+
+/* header of pending msg */
+typedef struct
+{
+  /* type of msg pending */
+  sctk_net_ibv_allocator_type_t type;
+
+  uint64_t src_process;
+  uint64_t src_task;
+  uint64_t psn;
+  sctk_thread_ptp_message_t* msg_header;
+  void* msg_payload;
+  void* struct_ptr;
+} sctk_net_ibv_sched_pending_header;
 
 /* pending lists */
 typedef struct
@@ -66,12 +90,6 @@ typedef struct
 
 
 void sctk_net_ibv_sched_init();
-
-void
-sctk_net_ibv_sched_lock();
-
-void
-sctk_net_ibv_sched_unlock();
 
 uint32_t
 sctk_net_ibv_sched_psn_inc (int dest, int task_nb);
@@ -100,10 +118,17 @@ sctk_net_ibv_sched_pending_push(
     void* ptr,
     size_t size,
     int allocation_needed,
-    sctk_net_ibv_allocator_type_t type);
+    sctk_net_ibv_allocator_type_t type,
+    uint64_t src_process,
+    uint64_t src_task,
+    uint64_t dest_task,
+    uint64_t psn,
+    sctk_thread_ptp_message_t* msg_header,
+    void* msg_payload,
+    void* struct_ptr);
 
   int
-sctk_net_ibv_sched_poll_pending();
+sctk_net_ibv_sched_poll_pending_msg(int task_nb);
 
 void
 sctk_net_ibv_sched_initialize_threads();
