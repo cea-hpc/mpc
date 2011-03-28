@@ -42,8 +42,8 @@ extern "C"
 #include <stdlib.h>
 #include <unistd.h>
 
-  int MPC_Main (int argc, char **argv);
-  int MPC_User_Main (int argc, char **argv);
+  int PMPC_Main (int argc, char **argv);
+  int PMPC_User_Main (int argc, char **argv);
 
 #define MPC_THREAD_SINGLE 0
 #define MPC_THREAD_FUNNELED 1
@@ -234,7 +234,8 @@ extern "C"
 /*    struct { double, double }*/
 #define MPC_LOGICAL 22
 #define MPC_DOUBLE_COMPLEX 23
-    /*Initialisation */
+    
+  /*Initialisation */
   int MPC_Init (int *argc, char ***argv);
   int MPC_Init_thread (int *argc, char ***argv, int required, int *provided);
   int MPC_Initialized (int *flag);
@@ -250,6 +251,8 @@ extern "C"
   int MPC_Processor_rank (int *rank);
   int MPC_Processor_number (int *number);
   int MPC_Process_rank (int *rank);
+  int MPC_Local_process_rank (int *rank);
+  int MPC_Local_process_number (int *rank);
   int MPC_Process_number (int *number);
   int MPC_Get_version (int *version, int *subversion);
   int MPC_Get_multithreading (char *name, int size);
@@ -431,11 +434,13 @@ extern "C"
   int MPC_Migrate (void);
   int MPC_Restart (int rank);
   int MPC_Restarted (int *flag);
+  
   typedef struct
   {
     int virtual_cpuid;
     double usage;
   } MPC_Activity_t;
+  
   int MPC_Get_activity (int nb_item, MPC_Activity_t * tab,
 			double *process_act);
   int MPC_Move_to (int process, int cpuid);
@@ -471,12 +476,238 @@ extern "C"
 		      MPC_Request * request);
   void *tmp_malloc (size_t size);
 
-
-/*MPI compatibility*/
+  /*MPI compatibility*/
 #define MPC_BSEND_OVERHEAD 0
 #define MPC_BOTTOM ((void*)0)
 
   typedef long MPC_Aint;
+  
+
+    /* Profiling Functions */
+
+    /*Initialisation */
+  int PMPC_Init (int *argc, char ***argv);
+  int PMPC_Init_thread (int *argc, char ***argv, int required, int *provided);
+  int PMPC_Initialized (int *flag);
+  int PMPC_Finalize (void);
+  int PMPC_Abort (MPC_Comm, int);
+
+  /*Topology informations */
+  int PMPC_Comm_rank (MPC_Comm comm, int *rank);
+  int PMPC_Comm_size (MPC_Comm comm, int *size);
+  int PMPC_Comm_remote_size (MPC_Comm comm, int *size);
+  int PMPC_Node_rank (int *rank);
+  int PMPC_Node_number (int *number);
+  int PMPC_Processor_rank (int *rank);
+  int PMPC_Processor_number (int *number);
+  int PMPC_Process_rank (int *rank);
+  int PMPC_Process_number (int *number);
+  int PMPC_Local_process_rank (int *rank);
+  int PMPC_Local_process_number (int *rank);
+  int PMPC_Get_version (int *version, int *subversion);
+  int PMPC_Get_multithreading (char *name, int size);
+  int PMPC_Get_networking (char *name, int size);
+  int PMPC_Get_processor_name (char *name, int *resultlen);
+
+
+  /*Collective operations */
+  int PMPC_Barrier (MPC_Comm comm);
+  int PMPC_Bcast (void *buffer, mpc_msg_count count, MPC_Datatype datatype,
+		 int root, MPC_Comm comm);
+  int PMPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
+		     MPC_Datatype datatype, MPC_Op op, MPC_Comm comm);
+  int PMPC_Reduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
+		  MPC_Datatype datatype, MPC_Op op, int root, MPC_Comm comm);
+  int PMPC_Op_create (MPC_User_function *, int, MPC_Op *);
+  int PMPC_Op_free (MPC_Op *);
+
+
+
+  /*P-t-P Communications */
+  int PMPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
+		 int dest, int tag, MPC_Comm comm, MPC_Request * request);
+  int PMPC_Ibsend (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
+		  MPC_Request *);
+  int PMPC_Issend (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
+		  MPC_Request *);
+  int PMPC_Irsend (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
+		  MPC_Request *);
+
+  int PMPC_Irecv (void *buf, mpc_msg_count count, MPC_Datatype datatype,
+		 int source, int tag, MPC_Comm comm, MPC_Request * request);
+
+  int PMPC_Wait (MPC_Request * request, MPC_Status * status);
+  int PMPC_Waitall (mpc_msg_count, MPC_Request *, MPC_Status *);
+  int PMPC_Waitsome (mpc_msg_count, MPC_Request *, mpc_msg_count *,
+		    mpc_msg_count *, MPC_Status *);
+  int PMPC_Waitany (mpc_msg_count count, MPC_Request array_of_requests[],
+		   mpc_msg_count * index, MPC_Status * status);
+  int PMPC_Wait_pending (MPC_Comm comm);
+  int PMPC_Wait_pending_all_comm (void);
+
+  int PMPC_Test (MPC_Request *, int *, MPC_Status *);
+  int PMPC_Test_no_check (MPC_Request *, int *, MPC_Status *);
+  int PMPC_Test_check (MPC_Request *, int *, MPC_Status *);
+
+  int PMPC_Iprobe (int, int, MPC_Comm, int *, MPC_Status *);
+  int PMPC_Probe (int, int, MPC_Comm, MPC_Status *);
+  int PMPC_Get_count (MPC_Status *, MPC_Datatype, mpc_msg_count *);
+
+  int PMPC_Send (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm);
+  int PMPC_Bsend (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm);
+  int PMPC_Ssend (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm);
+  int PMPC_Rsend (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm);
+  int PMPC_Recv (void *, mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
+		MPC_Status *);
+
+  int PMPC_Sendrecv (void *, mpc_msg_count, MPC_Datatype, int, int, void *,
+		    mpc_msg_count, MPC_Datatype, int, int, MPC_Comm,
+		    MPC_Status *);
+
+  /*Status */
+  int PMPC_Test_cancelled (MPC_Status *, int *);
+  int PMPC_Cancel (MPC_Request *);
+
+  /*Gather */
+  int PMPC_Gather (void *, mpc_msg_count, MPC_Datatype, void *,
+		  mpc_msg_count, MPC_Datatype, int, MPC_Comm);
+  int PMPC_Gatherv (void *, mpc_msg_count, MPC_Datatype, void *,
+		   mpc_msg_count *, mpc_msg_count *, MPC_Datatype, int,
+		   MPC_Comm);
+  int PMPC_Allgather (void *, mpc_msg_count, MPC_Datatype, void *,
+		     mpc_msg_count, MPC_Datatype, MPC_Comm);
+  int PMPC_Allgatherv (void *, mpc_msg_count, MPC_Datatype, void *,
+		      mpc_msg_count *, mpc_msg_count *, MPC_Datatype,
+		      MPC_Comm);
+
+  /*Scatter */
+  int PMPC_Scatter (void *, mpc_msg_count, MPC_Datatype, void *,
+		   mpc_msg_count, MPC_Datatype, int, MPC_Comm);
+  int PMPC_Scatterv (void *, mpc_msg_count *, mpc_msg_count *,
+		    MPC_Datatype, void *, mpc_msg_count, MPC_Datatype,
+		    int, MPC_Comm);
+
+  /*Alltoall */
+  int PMPC_Alltoall (void *, mpc_msg_count, MPC_Datatype, void *,
+		    mpc_msg_count, MPC_Datatype, MPC_Comm);
+  int PMPC_Alltoallv (void *, mpc_msg_count *, mpc_msg_count *,
+		     MPC_Datatype, void *, mpc_msg_count *,
+		     mpc_msg_count *, MPC_Datatype, MPC_Comm);
+
+  /*Groups */
+  int PMPC_Comm_group (MPC_Comm, MPC_Group *);
+  int PMPC_Comm_remote_group (MPC_Comm, MPC_Group *);
+  int PMPC_Group_free (MPC_Group *);
+  int PMPC_Group_incl (MPC_Group, int, int *, MPC_Group *);
+  int PMPC_Group_difference (MPC_Group, MPC_Group, MPC_Group *);
+
+  /*Communicators */
+  int PMPC_Convert_to_intercomm (MPC_Comm comm, MPC_Group group);
+  int PMPC_Comm_create_list (MPC_Comm, int *list, int nb_elem, MPC_Comm *);
+  int PMPC_Comm_create (MPC_Comm, MPC_Group, MPC_Comm *);
+  int PMPC_Comm_free (MPC_Comm *);
+  int PMPC_Comm_dup (MPC_Comm, MPC_Comm *);
+  int PMPC_Comm_split (MPC_Comm, int, int, MPC_Comm *);
+
+  /*Error_handler */
+  void PMPC_Default_error (MPC_Comm * comm, int *error, char *msg,
+			  char *file, int line);
+  void PMPC_Return_error (MPC_Comm * comm, int *error, ...);
+
+  int PMPC_Errhandler_create (MPC_Handler_function *, MPC_Errhandler *);
+  int PMPC_Errhandler_set (MPC_Comm, MPC_Errhandler);
+  int PMPC_Errhandler_get (MPC_Comm, MPC_Errhandler *);
+  int PMPC_Errhandler_free (MPC_Errhandler *);
+  int PMPC_Error_string (int, char *, int *);
+  int PMPC_Error_class (int, int *);
+
+  /*Timing */
+  double PMPC_Wtime (void);
+  double PMPC_Wtick (void);
+
+  /*Types */
+  int PMPC_Type_size (MPC_Datatype, size_t *);
+  int PMPC_Sizeof_datatype (MPC_Datatype *, size_t);
+  int PMPC_Type_free (MPC_Datatype * datatype);
+
+  /*MPC specific function */
+  int PMPC_Copy_in_buffer (void *inbuffer, void *outbuffer, int count,
+			  MPC_Datatype datatype);
+  int PMPC_Copy_from_buffer (void *inbuffer, void *outbuffer, int count,
+			    MPC_Datatype datatype);
+
+  int PMPC_Derived_datatype (MPC_Datatype * datatype,
+			    mpc_pack_absolute_indexes_t * begins,
+			    mpc_pack_absolute_indexes_t * ends,
+			    unsigned long count,
+			    mpc_pack_absolute_indexes_t lb, int is_lb,
+			    mpc_pack_absolute_indexes_t ub, int is_ub);
+
+  int PMPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
+			       mpc_pack_absolute_indexes_t ** begins,
+			       mpc_pack_absolute_indexes_t ** ends,
+			       unsigned long *count,
+			       mpc_pack_absolute_indexes_t * lb, int *is_lb,
+			       mpc_pack_absolute_indexes_t * ub, int *is_ub);
+
+  int PMPC_Derived_use (MPC_Datatype datatype);
+  int PMPC_Get_keys (void **keys);
+  int PMPC_Set_keys (void *keys);
+  int PMPC_Get_requests (void **requests);
+  int PMPC_Set_requests (void *requests);
+  int PMPC_Get_groups (void **groups);
+  int PMPC_Set_groups (void *groups);
+  int PMPC_Get_errors (void **errors);
+  int PMPC_Set_errors (void *errors);
+  int PMPC_Set_buffers (void *buffers);
+  int PMPC_Get_buffers (void **buffers);
+  int PMPC_Get_comm_type (void **comm_type);
+  int PMPC_Set_comm_type (void *comm_type);
+  int PMPC_Get_op (void **op);
+  int PMPC_Set_op (void *op);
+
+
+  /*Requests */
+  int PMPC_Request_free (MPC_Request *);
+
+  /*Scheduling */
+  int PMPC_Proceed (void);
+  int PMPC_Checkpoint (void);
+  int PMPC_Checkpoint_timed (unsigned int sec, MPC_Comm comm);
+  int PMPC_Migrate (void);
+  int PMPC_Restart (int rank);
+  int PMPC_Restarted (int *flag);
+  
+  int PMPC_Get_activity (int nb_item, MPC_Activity_t * tab,
+			double *process_act);
+  int PMPC_Move_to (int process, int cpuid);
+
+  /*Packs */
+  int PMPC_Open_pack (MPC_Request * request);
+  int PMPC_Default_pack (mpc_msg_count count,
+			mpc_pack_indexes_t * begins,
+			mpc_pack_indexes_t * ends, MPC_Request * request);
+  int PMPC__Default_pack_absolute (mpc_msg_count count,
+			       mpc_pack_absolute_indexes_t * begins,
+			       mpc_pack_absolute_indexes_t * ends,
+			       MPC_Request * request);
+  int PMPC_Add_pack (void *buf, mpc_msg_count count,
+		    mpc_pack_indexes_t * begins,
+		    mpc_pack_indexes_t * ends, MPC_Datatype datatype,
+		    MPC_Request * request);
+  int PMPC__Add_pack_absolute (void *buf, mpc_msg_count count,
+			   mpc_pack_absolute_indexes_t * begins,
+			   mpc_pack_absolute_indexes_t * ends,
+			   MPC_Datatype datatype, MPC_Request * request);
+
+  int PMPC_Add_pack_default (void *buf, MPC_Datatype datatype,
+			    MPC_Request * request);
+  int PMPC__Add_pack_default_absolute (void *buf, MPC_Datatype datatype,
+				   MPC_Request * request);
+  int PMPC_Isend_pack (int dest, int tag, MPC_Comm comm,
+		      MPC_Request * request);
+  int PMPC_Irecv_pack (int source, int tag, MPC_Comm comm,
+		      MPC_Request * request);
 
 
 #ifdef __cplusplus

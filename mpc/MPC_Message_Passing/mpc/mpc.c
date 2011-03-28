@@ -36,7 +36,6 @@
 #include "mpcthread.h"
 #include <sys/time.h>
 
-
 /*#define MPC_LOG_DEBUG*/
 #ifdef MPC_LOG_DEBUG
 #include <stdarg.h>
@@ -153,7 +152,7 @@ __MPC_init_task_specific_t (sctk_task_specific_t * tmp)
   for (i = 0; i < SCTK_MAX_COMMUNICATOR_NUMBER; i++)
     {
       tmp->user_error_handlers.user_error_handlers[i] =
-	(MPC_Handler_function *) MPC_Default_error;
+	(MPC_Handler_function *) PMPC_Default_error;
     }
 
   tmp->keys = NULL;
@@ -331,7 +330,7 @@ sctk_mpc_init_keys ()
 }
 
 int
-MPC_Get_op (void **op)
+PMPC_Get_op (void **op)
 {
   sctk_task_specific_t *task_specific;
   task_specific = __MPC_get_task_specific ();
@@ -340,7 +339,7 @@ MPC_Get_op (void **op)
 }
 
 int
-MPC_Set_op (void *op)
+PMPC_Set_op (void *op)
 {
   sctk_task_specific_t *task_specific;
   task_specific = __MPC_get_task_specific ();
@@ -349,7 +348,7 @@ MPC_Set_op (void *op)
 }
 
 int
-MPC_Get_comm_type (void **comm_type)
+PMPC_Get_comm_type (void **comm_type)
 {
   sctk_task_specific_t *task_specific;
   task_specific = __MPC_get_task_specific ();
@@ -358,7 +357,7 @@ MPC_Get_comm_type (void **comm_type)
 }
 
 int
-MPC_Set_comm_type (void *comm_type)
+PMPC_Set_comm_type (void *comm_type)
 {
   sctk_task_specific_t *task_specific;
   task_specific = __MPC_get_task_specific ();
@@ -367,7 +366,7 @@ MPC_Set_comm_type (void *comm_type)
 }
 
 int
-MPC_Get_keys (void **keys)
+PMPC_Get_keys (void **keys)
 {
   sctk_task_specific_t *task_specific;
   task_specific = __MPC_get_task_specific ();
@@ -376,7 +375,7 @@ MPC_Get_keys (void **keys)
 }
 
 int
-MPC_Set_keys (void *keys)
+PMPC_Set_keys (void *keys)
 {
   sctk_task_specific_t *task_specific;
   task_specific = __MPC_get_task_specific ();
@@ -385,7 +384,7 @@ MPC_Set_keys (void *keys)
 }
 
 int
-MPC_Get_requests (void **requests)
+PMPC_Get_requests (void **requests)
 {
   sctk_task_specific_t *task_specific;
   task_specific = __MPC_get_task_specific ();
@@ -394,7 +393,7 @@ MPC_Get_requests (void **requests)
 }
 
 int
-MPC_Set_requests (void *requests)
+PMPC_Set_requests (void *requests)
 {
   sctk_task_specific_t *task_specific;
   task_specific = __MPC_get_task_specific ();
@@ -403,7 +402,7 @@ MPC_Set_requests (void *requests)
 }
 
 int
-MPC_Get_groups (void **groups)
+PMPC_Get_groups (void **groups)
 {
   sctk_task_specific_t *task_specific;
   task_specific = __MPC_get_task_specific ();
@@ -412,7 +411,7 @@ MPC_Get_groups (void **groups)
 }
 
 int
-MPC_Set_groups (void *groups)
+PMPC_Set_groups (void *groups)
 {
   sctk_task_specific_t *task_specific;
   task_specific = __MPC_get_task_specific ();
@@ -421,7 +420,7 @@ MPC_Set_groups (void *groups)
 }
 
 int
-MPC_Get_errors (void **errors)
+PMPC_Get_errors (void **errors)
 {
   sctk_task_specific_t *task_specific;
   task_specific = __MPC_get_task_specific ();
@@ -430,7 +429,7 @@ MPC_Get_errors (void **errors)
 }
 
 int
-MPC_Set_errors (void *errors)
+PMPC_Set_errors (void *errors)
 {
   sctk_task_specific_t *task_specific;
   task_specific = __MPC_get_task_specific ();
@@ -439,7 +438,7 @@ MPC_Set_errors (void *errors)
 }
 
 int
-MPC_Get_buffers (void **buffers)
+PMPC_Get_buffers (void **buffers)
 {
   sctk_task_specific_t *task_specific;
   task_specific = __MPC_get_task_specific ();
@@ -448,7 +447,7 @@ MPC_Get_buffers (void **buffers)
 }
 
 int
-MPC_Set_buffers (void *buffers)
+PMPC_Set_buffers (void *buffers)
 {
   sctk_task_specific_t *task_specific;
   task_specific = __MPC_get_task_specific ();
@@ -457,7 +456,7 @@ MPC_Set_buffers (void *buffers)
 }
 
 int
-MPC_Get_version (int *version, int *subversion)
+PMPC_Get_version (int *version, int *subversion)
 {
   *version = SCTK_VERSION_MAJOR;
   *subversion = SCTK_VERSION_MINOR;
@@ -465,7 +464,7 @@ MPC_Get_version (int *version, int *subversion)
 }
 
 int
-MPC_Get_multithreading (char *name, int size)
+PMPC_Get_multithreading (char *name, int size)
 {
   memcpy (name, sctk_multithreading_mode, size - 2);
   name[size - 1] = '\0';
@@ -473,7 +472,7 @@ MPC_Get_multithreading (char *name, int size)
 }
 
 int
-MPC_Get_networking (char *name, int size)
+PMPC_Get_networking (char *name, int size)
 {
   memcpy (name, sctk_network_mode, size - 2);
   name[size - 1] = '\0';
@@ -562,7 +561,7 @@ __MPC_Barrier (MPC_Comm comm)
 
 /*Data types*/
 int
-MPC_Type_free (MPC_Datatype * datatype_p)
+PMPC_Type_free (MPC_Datatype * datatype_p)
 {
   sctk_task_specific_t *task_specific;
   MPC_Datatype datatype;
@@ -681,7 +680,7 @@ __MPC_Get_datatype_size (MPC_Datatype datatype,
     }
 }
 int
-MPC_Type_size (MPC_Datatype datatype, size_t * size)
+PMPC_Type_size (MPC_Datatype datatype, size_t * size)
 {
   sctk_task_specific_t *task_specific;
   SCTK_PROFIL_START (MPC_Type_size);
@@ -692,7 +691,7 @@ MPC_Type_size (MPC_Datatype datatype, size_t * size)
 }
 
 int
-MPC_Sizeof_datatype (MPC_Datatype * datatype, size_t size)
+PMPC_Sizeof_datatype (MPC_Datatype * datatype, size_t size)
 {
   int i;
   sctk_datatype_t *user_types;
@@ -720,7 +719,7 @@ MPC_Sizeof_datatype (MPC_Datatype * datatype, size_t size)
 
 
 int
-MPC_Derived_use (MPC_Datatype datatype)
+PMPC_Derived_use (MPC_Datatype datatype)
 {
   sctk_task_specific_t *task_specific;
   if ((datatype >= sctk_user_data_types + sctk_user_data_types_max) &&
@@ -738,7 +737,7 @@ MPC_Derived_use (MPC_Datatype datatype)
 }
 
 int
-MPC_Derived_datatype (MPC_Datatype * datatype,
+PMPC_Derived_datatype (MPC_Datatype * datatype,
 		      mpc_pack_absolute_indexes_t * begins,
 		      mpc_pack_absolute_indexes_t * ends, unsigned long count,
 		      mpc_pack_absolute_indexes_t lb, int is_lb,
@@ -812,7 +811,7 @@ sctk_is_derived_type (MPC_Datatype data_in)
 
 
 int
-MPC_Copy_in_buffer (void *inbuffer, void *outbuffer, int count,
+PMPC_Copy_in_buffer (void *inbuffer, void *outbuffer, int count,
 		    MPC_Datatype datatype)
 {
   if (sctk_is_derived_type (datatype))
@@ -851,7 +850,7 @@ MPC_Copy_in_buffer (void *inbuffer, void *outbuffer, int count,
 }
 
 int
-MPC_Copy_from_buffer (void *inbuffer, void *outbuffer, int count,
+PMPC_Copy_from_buffer (void *inbuffer, void *outbuffer, int count,
 		      MPC_Datatype datatype)
 {
   if (sctk_is_derived_type (datatype))
@@ -890,7 +889,7 @@ MPC_Copy_from_buffer (void *inbuffer, void *outbuffer, int count,
 }
 
 int
-MPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
+PMPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
 			 mpc_pack_absolute_indexes_t ** begins,
 			 mpc_pack_absolute_indexes_t ** ends,
 			 unsigned long *count,
@@ -942,7 +941,7 @@ MPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
 
 /*Initialisation*/
 int
-MPC_Init (int *argc, char ***argv)
+PMPC_Init (int *argc, char ***argv)
 {
   sctk_task_specific_t *task_specific;
   SCTK_PROFIL_START (MPC_Init);
@@ -966,14 +965,14 @@ MPC_Init (int *argc, char ***argv)
 }
 
 int
-MPC_Init_thread (int *argc, char ***argv, int required, int *provided)
+PMPC_Init_thread (int *argc, char ***argv, int required, int *provided)
 {
   *provided = required;
   return MPC_Init (argc, argv);
 }
 
 int
-MPC_Initialized (int *flag)
+PMPC_Initialized (int *flag)
 {
   sctk_task_specific_t *task_specific;
   SCTK_PROFIL_START (MPC_Initialized);
@@ -984,7 +983,7 @@ MPC_Initialized (int *flag)
 }
 
 int
-MPC_Finalize (void)
+PMPC_Finalize (void)
 {
   sctk_task_specific_t *task_specific;
   SCTK_PROFIL_START (MPC_Finalize);
@@ -1007,7 +1006,7 @@ MPC_Finalize (void)
 }
 
 int
-MPC_Abort (MPC_Comm comm, int errorcode)
+PMPC_Abort (MPC_Comm comm, int errorcode)
 {
   SCTK_PROFIL_START (MPC_Abort);
   mpc_check_comm (comm, comm);
@@ -1020,7 +1019,7 @@ MPC_Abort (MPC_Comm comm, int errorcode)
 }
 
 void
-MPC_Default_error (MPC_Comm * comm, int *error, char *msg, char *file,
+PMPC_Default_error (MPC_Comm * comm, int *error, char *msg, char *file,
 		   int line)
 {
   char str[1024];
@@ -1034,7 +1033,7 @@ MPC_Default_error (MPC_Comm * comm, int *error, char *msg, char *file,
 }
 
 void
-MPC_Return_error (MPC_Comm * comm, int *error, ...)
+PMPC_Return_error (MPC_Comm * comm, int *error, ...)
 {
   char str[1024];
   int i;
@@ -1127,7 +1126,7 @@ MPC_Checkpoint_restart_end ()
 }
 
 int
-MPC_Restarted (int *flag)
+PMPC_Restarted (int *flag)
 {
   void *f;
   f = sctk_thread_getspecific_mpc (sctk_check_point_key);
@@ -1139,7 +1138,7 @@ MPC_Restarted (int *flag)
 }
 
 int
-MPC_Checkpoint ()
+PMPC_Checkpoint ()
 {
   if (sctk_check_point_restart_mode)
     {
@@ -1149,7 +1148,7 @@ MPC_Checkpoint ()
 }
 
 int
-MPC_Checkpoint_timed (unsigned int sec, MPC_Comm comm)
+PMPC_Checkpoint_timed (unsigned int sec, MPC_Comm comm)
 {
   if (sctk_check_point_restart_mode)
     {
@@ -1238,7 +1237,7 @@ MPC_Checkpoint_timed (unsigned int sec, MPC_Comm comm)
 }
 
 int
-MPC_Migrate ()
+PMPC_Migrate ()
 {
   if (sctk_check_point_restart_mode)
     {
@@ -1280,7 +1279,7 @@ MPC_Migrate ()
 }
 
 int
-MPC_Restart (int rank)
+PMPC_Restart (int rank)
 {
   if (sctk_check_point_restart_mode)
     {
@@ -1313,7 +1312,7 @@ MPC_Restart (int rank)
 }
 
 int
-MPC_Get_activity (int nb_item, MPC_Activity_t * tab, double *process_act)
+PMPC_Get_activity (int nb_item, MPC_Activity_t * tab, double *process_act)
 {
   int i;
   int nb_proc;
@@ -1341,7 +1340,7 @@ MPC_Get_activity (int nb_item, MPC_Activity_t * tab, double *process_act)
 }
 
 int
-MPC_Move_to (int process, int cpuid)
+PMPC_Move_to (int process, int cpuid)
 {
   int proc;
   proc = sctk_get_processor_rank ();
@@ -1522,7 +1521,7 @@ sctk_user_main (int argc, char **argv)
 
 /*Topology informations*/
 int
-MPC_Comm_rank (MPC_Comm comm, int *rank)
+PMPC_Comm_rank (MPC_Comm comm, int *rank)
 {
   sctk_task_specific_t *task_specific;
   mpc_check_comm (comm, comm);
@@ -1534,7 +1533,7 @@ MPC_Comm_rank (MPC_Comm comm, int *rank)
 }
 
 int
-MPC_Comm_size (MPC_Comm comm, int *size)
+PMPC_Comm_size (MPC_Comm comm, int *size)
 {
   mpc_check_comm (comm, comm);
   __MPC_Comm_size (comm, size);
@@ -1542,7 +1541,7 @@ MPC_Comm_size (MPC_Comm comm, int *size)
 }
 
 int
-MPC_Comm_remote_size (MPC_Comm comm, int *size)
+PMPC_Comm_remote_size (MPC_Comm comm, int *size)
 {
   mpc_check_comm (comm, comm);
   __MPC_Comm_remote_size (comm, size);
@@ -1550,56 +1549,56 @@ MPC_Comm_remote_size (MPC_Comm comm, int *size)
 }
 
 int
-MPC_Node_rank (int *rank)
+PMPC_Node_rank (int *rank)
 {
   *rank = sctk_get_node_rank ();
   MPC_ERROR_SUCESS ();
 }
 
 int
-MPC_Node_number (int *number)
+PMPC_Node_number (int *number)
 {
   *number = sctk_get_node_number ();
   MPC_ERROR_SUCESS ();
 }
 
 int
-MPC_Processor_rank (int *rank)
+PMPC_Processor_rank (int *rank)
 {
   *rank = sctk_get_processor_rank ();
   MPC_ERROR_SUCESS ();
 }
 
 int
-MPC_Processor_number (int *number)
+PMPC_Processor_number (int *number)
 {
   *number = sctk_get_processor_number ();
   MPC_ERROR_SUCESS ();
 }
 
 int
-MPC_Process_rank (int *rank)
+PMPC_Process_rank (int *rank)
 {
   *rank = sctk_get_process_rank ();
   MPC_ERROR_SUCESS ();
 }
 
 int
-MPC_Process_number (int *number)
+PMPC_Process_number (int *number)
 {
   *number = sctk_get_process_number ();
   MPC_ERROR_SUCESS ();
 }
 
 int
-MPC_Local_process_rank (int *rank)
+PMPC_Local_process_rank (int *rank)
 {
   *rank = sctk_get_local_process_rank();
   MPC_ERROR_SUCESS();
 }
 
 int
-MPC_Local_process_number (int *number)
+PMPC_Local_process_number (int *number)
 {
   *number = sctk_get_local_process_number();
   MPC_ERROR_SUCESS();
@@ -1609,7 +1608,7 @@ MPC_Local_process_number (int *number)
 /*Collective operations*/
 
 int
-MPC_Barrier (MPC_Comm comm)
+PMPC_Barrier (MPC_Comm comm)
 {
   int tmp;
   SCTK_PROFIL_START (MPC_Barrier);
@@ -1644,7 +1643,7 @@ __MPC_Bcast (void *buffer, mpc_msg_count count, MPC_Datatype datatype,
 }
 
 int
-MPC_Bcast (void *buffer, mpc_msg_count count, MPC_Datatype datatype,
+PMPC_Bcast (void *buffer, mpc_msg_count count, MPC_Datatype datatype,
 	   int root, MPC_Comm comm)
 {
   int res;
@@ -1831,7 +1830,7 @@ __MPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
 }
 
 int
-MPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
+PMPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
 	       MPC_Datatype datatype, MPC_Op op, MPC_Comm comm)
 {
   int res;
@@ -1852,7 +1851,7 @@ MPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
 
 #define MPC_Reduce_tmp_recvbuf_size 4096
 int
-MPC_Reduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
+PMPC_Reduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
 	    MPC_Datatype datatype, MPC_Op op, int root, MPC_Comm comm)
 {
   unsigned long size;
@@ -1901,7 +1900,7 @@ MPC_Reduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
 }
 
 int
-MPC_Op_create (MPC_User_function * function, int commute, MPC_Op * op)
+PMPC_Op_create (MPC_User_function * function, int commute, MPC_Op * op)
 {
   MPC_Op init = MPC_OP_INIT;
   assume (commute == 1);
@@ -1914,7 +1913,7 @@ MPC_Op_create (MPC_User_function * function, int commute, MPC_Op * op)
 }
 
 int
-MPC_Op_free (MPC_Op * op)
+PMPC_Op_free (MPC_Op * op)
 {
   MPC_Op init = MPC_OP_INIT;
   *op = init;
@@ -2075,7 +2074,7 @@ __MPC_Issend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
 }
 
 int
-MPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
+PMPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
 	   int tag, MPC_Comm comm, MPC_Request * request)
 {
   int res;
@@ -2095,7 +2094,7 @@ MPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
 }
 
 int
-MPC_Ibsend (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
+PMPC_Ibsend (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
 	    int tag, MPC_Comm comm, MPC_Request * request)
 {
   int res;
@@ -2111,7 +2110,7 @@ MPC_Ibsend (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
 }
 
 int
-MPC_Issend (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
+PMPC_Issend (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
 	    int tag, MPC_Comm comm, MPC_Request * request)
 {
   int res;
@@ -2127,7 +2126,7 @@ MPC_Issend (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
 }
 
 int
-MPC_Irsend (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
+PMPC_Irsend (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
 	    int tag, MPC_Comm comm, MPC_Request * request)
 {
   int res;
@@ -2201,7 +2200,7 @@ __MPC_Irecv (void *buf, mpc_msg_count count, MPC_Datatype datatype,
 }
 
 int
-MPC_Irecv (void *buf, mpc_msg_count count, MPC_Datatype datatype,
+PMPC_Irecv (void *buf, mpc_msg_count count, MPC_Datatype datatype,
 	   int source, int tag, MPC_Comm comm, MPC_Request * request)
 {
   int res;
@@ -2359,7 +2358,7 @@ __MPC_Test_no_check (MPC_Request * request, int *flag, MPC_Status * status)
 }
 
 int
-MPC_Wait (MPC_Request * request, MPC_Status * status)
+PMPC_Wait (MPC_Request * request, MPC_Status * status)
 {
   int res;
   SCTK_PROFIL_START (MPC_Wait);
@@ -2443,7 +2442,7 @@ __MPC_Waitall (mpc_msg_count count,
 }
 
 int
-MPC_Waitall (mpc_msg_count count,
+PMPC_Waitall (mpc_msg_count count,
 	     MPC_Request array_of_requests[], MPC_Status array_of_statuses[])
 {
   int res;
@@ -2464,7 +2463,7 @@ MPC_Waitall (mpc_msg_count count,
 }
 
 int
-MPC_Waitsome (mpc_msg_count incount,
+PMPC_Waitsome (mpc_msg_count incount,
 	      MPC_Request array_of_requests[],
 	      mpc_msg_count * outcount,
 	      mpc_msg_count array_of_indices[],
@@ -2504,7 +2503,7 @@ MPC_Waitsome (mpc_msg_count incount,
 }
 
 int
-MPC_Waitany (mpc_msg_count count,
+PMPC_Waitany (mpc_msg_count count,
 	     MPC_Request array_of_requests[], mpc_msg_count * index,
 	     MPC_Status * status)
 {
@@ -2550,7 +2549,7 @@ __MPC_Wait_pending (MPC_Comm comm)
 }
 
 int
-MPC_Wait_pending (MPC_Comm comm)
+PMPC_Wait_pending (MPC_Comm comm)
 {
   int res;
 
@@ -2564,7 +2563,7 @@ MPC_Wait_pending (MPC_Comm comm)
 }
 
 int
-MPC_Wait_pending_all_comm ()
+PMPC_Wait_pending_all_comm ()
 {
   int j;
 
@@ -2582,7 +2581,7 @@ MPC_Wait_pending_all_comm ()
 }
 
 int
-MPC_Test (MPC_Request * request, int *flag, MPC_Status * status)
+PMPC_Test (MPC_Request * request, int *flag, MPC_Status * status)
 {
   int res;
 
@@ -2596,7 +2595,7 @@ MPC_Test (MPC_Request * request, int *flag, MPC_Status * status)
 }
 
 int
-MPC_Test_no_check (MPC_Request * request, int *flag, MPC_Status * status)
+PMPC_Test_no_check (MPC_Request * request, int *flag, MPC_Status * status)
 {
   int res;
   SCTK_PROFIL_START (MPC_Test_no_check);
@@ -2610,7 +2609,7 @@ MPC_Test_no_check (MPC_Request * request, int *flag, MPC_Status * status)
 }
 
 int
-MPC_Test_check (MPC_Request * request, int *flag, MPC_Status * status)
+PMPC_Test_check (MPC_Request * request, int *flag, MPC_Status * status)
 {
   int res;
   SCTK_PROFIL_START (MPC_Test_check);
@@ -2775,7 +2774,7 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
 }
 
 int
-MPC_Ssend (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
+PMPC_Ssend (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
 	   int tag, MPC_Comm comm)
 {
   int res;
@@ -2787,7 +2786,7 @@ MPC_Ssend (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
 }
 
 int
-MPC_Bsend (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
+PMPC_Bsend (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
 	   int tag, MPC_Comm comm)
 {
   int res;
@@ -2799,7 +2798,7 @@ MPC_Bsend (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
 }
 
 int
-MPC_Send (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
+PMPC_Send (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
 	  int tag, MPC_Comm comm)
 {
   int res;
@@ -2811,7 +2810,7 @@ MPC_Send (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
 }
 
 int
-MPC_Rsend (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
+PMPC_Rsend (void *buf, mpc_msg_count count, MPC_Datatype datatype, int dest,
 	   int tag, MPC_Comm comm)
 {
   int res;
@@ -2827,7 +2826,7 @@ __MPC_Probe (int source, int tag, MPC_Comm comm, MPC_Status * status,
 	     sctk_task_specific_t * task_specific);
 
 int
-MPC_Recv (void *buf, mpc_msg_count count, MPC_Datatype datatype, int source,
+PMPC_Recv (void *buf, mpc_msg_count count, MPC_Datatype datatype, int source,
 	  int tag, MPC_Comm comm, MPC_Status * status)
 {
   sctk_request_t request;
@@ -2916,7 +2915,7 @@ MPC_Recv (void *buf, mpc_msg_count count, MPC_Datatype datatype, int source,
 }
 
 int
-MPC_Sendrecv (void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype,
+PMPC_Sendrecv (void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype,
 	      int dest, int sendtag,
 	      void *recvbuf, mpc_msg_count recvcount, MPC_Datatype recvtype,
 	      int source, int recvtag, MPC_Comm comm, MPC_Status * status)
@@ -2963,14 +2962,14 @@ MPC_Sendrecv (void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype,
 }
 
 int
-MPC_Test_cancelled (MPC_Status * status, int *flag)
+PMPC_Test_cancelled (MPC_Status * status, int *flag)
 {
   *flag = (status->cancelled == 1);
   MPC_ERROR_SUCESS ();
 }
 
 int
-MPC_Cancel (MPC_Request * request)
+PMPC_Cancel (MPC_Request * request)
 {
   sctk_cancel_message ((sctk_request_t *) request);
   MPC_ERROR_SUCESS ();
@@ -3033,7 +3032,7 @@ __MPC_Gatherv (void *sendbuf, mpc_msg_count sendcnt, MPC_Datatype sendtype,
 }
 
 int
-MPC_Gatherv (void *sendbuf, mpc_msg_count sendcnt, MPC_Datatype sendtype,
+PMPC_Gatherv (void *sendbuf, mpc_msg_count sendcnt, MPC_Datatype sendtype,
 	     void *recvbuf, mpc_msg_count * recvcnts,
 	     mpc_msg_count * displs, MPC_Datatype recvtype, int root,
 	     MPC_Comm comm)
@@ -3053,7 +3052,7 @@ MPC_Gatherv (void *sendbuf, mpc_msg_count sendcnt, MPC_Datatype sendtype,
 }
 
 int
-MPC_Allgatherv (void *sendbuf, mpc_msg_count sendcount,
+PMPC_Allgatherv (void *sendbuf, mpc_msg_count sendcount,
 		MPC_Datatype sendtype, void *recvbuf,
 		mpc_msg_count * recvcounts, mpc_msg_count * displs,
 		MPC_Datatype recvtype, MPC_Comm comm)
@@ -3148,7 +3147,7 @@ __MPC_Gather (void *sendbuf, mpc_msg_count sendcnt, MPC_Datatype sendtype,
 }
 
 int
-MPC_Gather (void *sendbuf, mpc_msg_count sendcnt, MPC_Datatype sendtype,
+PMPC_Gather (void *sendbuf, mpc_msg_count sendcnt, MPC_Datatype sendtype,
 	    void *recvbuf, mpc_msg_count recvcount, MPC_Datatype recvtype,
 	    int root, MPC_Comm comm)
 {
@@ -3192,7 +3191,7 @@ __MPC_Allgather (void *sendbuf, mpc_msg_count sendcount,
 }
 
 int
-MPC_Allgather (void *sendbuf, mpc_msg_count sendcount,
+PMPC_Allgather (void *sendbuf, mpc_msg_count sendcount,
 	       MPC_Datatype sendtype, void *recvbuf,
 	       mpc_msg_count recvcount, MPC_Datatype recvtype, MPC_Comm comm)
 {
@@ -3211,7 +3210,7 @@ MPC_Allgather (void *sendbuf, mpc_msg_count sendcount,
 }
 
 int
-MPC_Scatterv (void *sendbuf,
+PMPC_Scatterv (void *sendbuf,
 	      mpc_msg_count * sendcnts,
 	      mpc_msg_count * displs,
 	      MPC_Datatype sendtype,
@@ -3282,7 +3281,7 @@ MPC_Scatterv (void *sendbuf,
 }
 
 int
-MPC_Scatter (void *sendbuf,
+PMPC_Scatter (void *sendbuf,
 	     mpc_msg_count sendcnt,
 	     MPC_Datatype sendtype,
 	     void *recvbuf,
@@ -3350,7 +3349,7 @@ MPC_Scatter (void *sendbuf,
 }
 
 int
-MPC_Alltoall (void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype,
+PMPC_Alltoall (void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype,
 	      void *recvbuf, mpc_msg_count recvcnt, MPC_Datatype recvtype,
 	      MPC_Comm comm)
 {
@@ -3397,7 +3396,7 @@ MPC_Alltoall (void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype,
 }
 
 int
-MPC_Alltoallv (void *sendbuf,
+PMPC_Alltoallv (void *sendbuf,
 	       mpc_msg_count * sendcnts,
 	       mpc_msg_count * sdispls,
 	       MPC_Datatype sendtype,
@@ -3501,7 +3500,7 @@ MPC_Iprobe_inter (const int source, const int destination,
 }
 
 int
-MPC_Iprobe (int source, int tag, MPC_Comm comm, int *flag,
+PMPC_Iprobe (int source, int tag, MPC_Comm comm, int *flag,
 	    MPC_Status * status)
 {
   int destination;
@@ -3565,7 +3564,7 @@ __MPC_Probe (int source, int tag, MPC_Comm comm, MPC_Status * status,
 }
 
 int
-MPC_Probe (int source, int tag, MPC_Comm comm, MPC_Status * status)
+PMPC_Probe (int source, int tag, MPC_Comm comm, MPC_Status * status)
 {
   int res;
   sctk_task_specific_t *task_specific;
@@ -3578,7 +3577,7 @@ MPC_Probe (int source, int tag, MPC_Comm comm, MPC_Status * status)
 }
 
 int
-MPC_Get_count (MPC_Status * status, MPC_Datatype datatype,
+PMPC_Get_count (MPC_Status * status, MPC_Datatype datatype,
 	       mpc_msg_count * count)
 {
   size_t size;
@@ -3600,7 +3599,7 @@ MPC_Get_count (MPC_Status * status, MPC_Datatype datatype,
 
 #define HOSTNAME_SIZE 4096
 int
-MPC_Get_processor_name (char *name, int *resultlen)
+PMPC_Get_processor_name (char *name, int *resultlen)
 {
   gethostname (name, HOSTNAME_SIZE);
   *resultlen = strlen (name);
@@ -3642,7 +3641,7 @@ __MPC_Comm_group (MPC_Comm comm, MPC_Group * group)
 }
 
 int
-MPC_Comm_group (MPC_Comm comm, MPC_Group * group)
+PMPC_Comm_group (MPC_Comm comm, MPC_Group * group)
 {
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (comm, "MPC_Comm_group group=%p", group);
@@ -3671,7 +3670,7 @@ __MPC_Comm_remote_group (MPC_Comm comm, MPC_Group * group)
 }
 
 int
-MPC_Comm_remote_group (MPC_Comm comm, MPC_Group * group)
+PMPC_Comm_remote_group (MPC_Comm comm, MPC_Group * group)
 {
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (comm, "MPC_Comm_remote_group group=%p", group);
@@ -3693,14 +3692,14 @@ __MPC_Group_free (MPC_Group * group)
 }
 
 int
-MPC_Convert_to_intercomm (MPC_Comm comm, MPC_Group group)
+PMPC_Convert_to_intercomm (MPC_Comm comm, MPC_Group group)
 {
   not_implemented ();
   MPC_ERROR_SUCESS ();
 }
 
 int
-MPC_Group_free (MPC_Group * group)
+PMPC_Group_free (MPC_Group * group)
 {
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Group_free group=%p", group);
@@ -3709,7 +3708,7 @@ MPC_Group_free (MPC_Group * group)
 }
 
 int
-MPC_Group_incl (MPC_Group group, int n, int *ranks, MPC_Group * newgroup)
+PMPC_Group_incl (MPC_Group group, int n, int *ranks, MPC_Group * newgroup)
 {
   int i;
 #ifdef MPC_LOG_DEBUG
@@ -3736,7 +3735,7 @@ MPC_Group_incl (MPC_Group group, int n, int *ranks, MPC_Group * newgroup)
 }
 
 int
-MPC_Group_difference (MPC_Group group1, MPC_Group group2,
+PMPC_Group_difference (MPC_Group group1, MPC_Group group2,
 		      MPC_Group * newgroup)
 {
   int size;
@@ -3832,7 +3831,7 @@ __MPC_Comm_create (MPC_Comm comm, MPC_Group group, MPC_Comm * comm_out,
 }
 
 int
-MPC_Comm_create (MPC_Comm comm, MPC_Group group, MPC_Comm * comm_out)
+PMPC_Comm_create (MPC_Comm comm, MPC_Group group, MPC_Comm * comm_out)
 {
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (comm, "MPC_Comm_create comm_out=%p", comm_out);
@@ -3841,7 +3840,7 @@ MPC_Comm_create (MPC_Comm comm, MPC_Group group, MPC_Comm * comm_out)
 }
 
 int
-MPC_Comm_create_list (MPC_Comm comm, int *list, int nb_elem,
+PMPC_Comm_create_list (MPC_Comm comm, int *list, int nb_elem,
 		      MPC_Comm * comm_out)
 {
   MPC_Group_t group;
@@ -3876,7 +3875,7 @@ __MPC_Comm_free (MPC_Comm * comm)
 }
 
 int
-MPC_Comm_free (MPC_Comm * comm)
+PMPC_Comm_free (MPC_Comm * comm)
 {
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (*comm, "MPC_Comm_free");
@@ -3885,7 +3884,7 @@ MPC_Comm_free (MPC_Comm * comm)
 }
 
 int
-MPC_Comm_dup (MPC_Comm comm, MPC_Comm * comm_out)
+PMPC_Comm_dup (MPC_Comm comm, MPC_Comm * comm_out)
 {
   MPC_Group group;
   mpc_check_comm (comm, comm);
@@ -3907,7 +3906,7 @@ typedef struct
 } mpc_comm_split_t;
 
 int
-MPC_Comm_split (MPC_Comm comm, int color, int key, MPC_Comm * comm_out)
+PMPC_Comm_split (MPC_Comm comm, int color, int key, MPC_Comm * comm_out)
 {
   mpc_comm_split_t *tab;
   mpc_comm_split_t tab_this;
@@ -4044,7 +4043,7 @@ MPC_Comm_split (MPC_Comm comm, int color, int key, MPC_Comm * comm_out)
 
 /*Error_handler*/
 int
-MPC_Errhandler_create (MPC_Handler_function * function,
+PMPC_Errhandler_create (MPC_Handler_function * function,
 		       MPC_Errhandler * errhandler)
 {
   *errhandler = function;
@@ -4057,7 +4056,7 @@ MPC_Errhandler_create (MPC_Handler_function * function,
 }
 
 int
-MPC_Errhandler_set (MPC_Comm comm, MPC_Errhandler errhandler)
+PMPC_Errhandler_set (MPC_Comm comm, MPC_Errhandler errhandler)
 {
   MPC_Handler_function **user_error_handlers;
   sctk_task_specific_t *task_specific;
@@ -4072,7 +4071,7 @@ MPC_Errhandler_set (MPC_Comm comm, MPC_Errhandler errhandler)
 }
 
 int
-MPC_Errhandler_get (MPC_Comm comm, MPC_Errhandler * errhandler)
+PMPC_Errhandler_get (MPC_Comm comm, MPC_Errhandler * errhandler)
 {
   MPC_Handler_function **user_error_handlers;
   sctk_task_specific_t *task_specific;
@@ -4087,7 +4086,7 @@ MPC_Errhandler_get (MPC_Comm comm, MPC_Errhandler * errhandler)
 }
 
 int
-MPC_Errhandler_free (MPC_Errhandler * errhandler)
+PMPC_Errhandler_free (MPC_Errhandler * errhandler)
 {
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Errhandler_free handler=%p",
@@ -4101,7 +4100,7 @@ MPC_Errhandler_free (MPC_Errhandler * errhandler)
   case code: sprintf(str,msg); break
 
 int
-MPC_Error_string (int code, char *str, int *len)
+PMPC_Error_string (int code, char *str, int *len)
 {
   size_t lngt;
   str[0] = '\0';
@@ -4140,7 +4139,7 @@ MPC_Error_string (int code, char *str, int *len)
 }
 
 int
-MPC_Error_class (int errorcode, int *errorclass)
+PMPC_Error_class (int errorcode, int *errorclass)
 {
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (MPC_COMM_WORLD,
@@ -4153,7 +4152,7 @@ MPC_Error_class (int errorcode, int *errorclass)
 
 /*Timing*/
 double
-MPC_Wtime ()
+PMPC_Wtime ()
 {
   double res;
   struct timeval tp;
@@ -4167,7 +4166,7 @@ MPC_Wtime ()
 }
 
 double
-MPC_Wtick ()
+PMPC_Wtick ()
 {
   /* sctk_warning ("Always return 0"); */
   return 10e-6;
@@ -4175,7 +4174,7 @@ MPC_Wtick ()
 
 /*Requests*/
 int
-MPC_Request_free (MPC_Request * request)
+PMPC_Request_free (MPC_Request * request)
 {
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Request_free req=%p", request);
@@ -4186,7 +4185,7 @@ MPC_Request_free (MPC_Request * request)
 
 
 int
-MPC_Proceed ()
+PMPC_Proceed ()
 {
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Proceed");
@@ -4199,7 +4198,7 @@ MPC_Proceed ()
 
 /*Packs*/
 int
-MPC_Open_pack (MPC_Request * request)
+PMPC_Open_pack (MPC_Request * request)
 {
   sctk_thread_ptp_message_t *msg;
   int src;
@@ -4231,7 +4230,7 @@ MPC_Open_pack (MPC_Request * request)
 }
 
 int
-MPC_Default_pack (mpc_msg_count count,
+PMPC_Default_pack (mpc_msg_count count,
 		  mpc_pack_indexes_t * begins, mpc_pack_indexes_t * ends,
 		  MPC_Request * request)
 {
@@ -4265,7 +4264,7 @@ MPC_Default_pack (mpc_msg_count count,
 }
 
 int
-MPC_Default_pack_absolute (mpc_msg_count count,
+PMPC_Default_pack_absolute (mpc_msg_count count,
 			   mpc_pack_absolute_indexes_t * begins,
 			   mpc_pack_absolute_indexes_t * ends,
 			   MPC_Request * request)
@@ -4398,7 +4397,7 @@ __MPC_Add_pack_absolute (void *buf, mpc_msg_count count,
 }
 
 int
-MPC_Add_pack_absolute (void *buf, mpc_msg_count count,
+PMPC_Add_pack_absolute (void *buf, mpc_msg_count count,
 		       mpc_pack_absolute_indexes_t * begins,
 		       mpc_pack_absolute_indexes_t * ends,
 		       MPC_Datatype datatype, MPC_Request * request)
@@ -4423,7 +4422,7 @@ MPC_Add_pack_absolute (void *buf, mpc_msg_count count,
 }
 
 int
-MPC_Add_pack (void *buf, mpc_msg_count count,
+PMPC_Add_pack (void *buf, mpc_msg_count count,
 	      mpc_pack_indexes_t * begins, mpc_pack_indexes_t * ends,
 	      MPC_Datatype datatype, MPC_Request * request)
 {
@@ -4444,7 +4443,7 @@ MPC_Add_pack (void *buf, mpc_msg_count count,
 }
 
 int
-MPC_Add_pack_default (void *buf, MPC_Datatype datatype, MPC_Request * request)
+PMPC_Add_pack_default (void *buf, MPC_Datatype datatype, MPC_Request * request)
 {
   int res;
   sctk_task_specific_t *task_specific;
@@ -4469,7 +4468,7 @@ MPC_Add_pack_default (void *buf, MPC_Datatype datatype, MPC_Request * request)
 }
 
 int
-MPC_Add_pack_default_absolute (void *buf, MPC_Datatype datatype,
+PMPC_Add_pack_default_absolute (void *buf, MPC_Datatype datatype,
 			       MPC_Request * request)
 {
   int res;
@@ -4495,7 +4494,7 @@ MPC_Add_pack_default_absolute (void *buf, MPC_Datatype datatype,
 }
 
 int
-MPC_Isend_pack (int dest, int tag, MPC_Comm comm, MPC_Request * request)
+PMPC_Isend_pack (int dest, int tag, MPC_Comm comm, MPC_Request * request)
 {
   sctk_thread_ptp_message_t *msg;
   int src;
@@ -4549,7 +4548,7 @@ MPC_Isend_pack (int dest, int tag, MPC_Comm comm, MPC_Request * request)
 }
 
 int
-MPC_Irecv_pack (int source, int tag, MPC_Comm comm, MPC_Request * request)
+PMPC_Irecv_pack (int source, int tag, MPC_Comm comm, MPC_Request * request)
 {
   sctk_thread_ptp_message_t *msg;
   int src;
@@ -4608,13 +4607,17 @@ MPC_Irecv_pack (int source, int tag, MPC_Comm comm, MPC_Request * request)
 
 
 int
-MPC_Main (int argc, char **argv)
+PMPC_Main (int argc, char **argv)
 {
   return sctk_launch_main (argc, argv);
 }
 
 int
-MPC_User_Main (int argc, char **argv)
+PMPC_User_Main (int argc, char **argv)
 {
   return mpc_user_main (argc, argv);
 }
+
+#ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
+#include "mpc_weak.h"
+#endif
