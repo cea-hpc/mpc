@@ -17,6 +17,8 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
+/* #   - TCHIBOUKDJIAN Marc marc.tchiboukdjian@exascale-computing.eu      # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -24,17 +26,18 @@
 #define _GNU_SOURCE
 #include "sctk_config.h"
 #include "sctk_alloc.h"
+#include "sctk_topology.h"
+#include "sctk_accessor.h"
 #include <sctk_debug.h>
 #include <unistd.h>
 #include <sctk_tls.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-#include "sctk_topology.h"
 
 
 #if defined(SCTK_USE_TLS)
-__thread void *sctk_hierarchical_tls = NULL;
+__thread void *sctk_extls = NULL;
 #endif
 
 #if defined(SCTK_USE_TLS) && defined(Linux_SYS)
@@ -98,10 +101,8 @@ typedef struct
   sctk_spinlock_t lock;
 } tls_level;
 
-tls_level sctk_tls_numa_level[8] = {
-{0,NULL,0}, {0,NULL,0}, {0,NULL,0}, {0,NULL,0},
-{0,NULL,0}, {0,NULL,0}, {0,NULL,0}, {0,NULL,0}
-} ;
+static __thread tls_level* sctk_hls[sctk_hls_max_scope];
+static tls_level *sctk_hls_repository ;
 
 static inline void
 sctk_tls_init_level (tls_level * level)
@@ -190,7 +191,7 @@ sctk_get_module_file_decr (size_t m, size_t module_size)
 #endif
 }
 
-char *
+static char *
 sctk_alloc_module (size_t m, tls_level * tls_level)
 {
   char *tls_module;
@@ -243,183 +244,244 @@ sctk_alloc_module (size_t m, tls_level * tls_level)
 
 static inline void *
 __sctk__tls_get_addr__generic_scope (size_t m, size_t offset,
-				     sctk_tls_scope_t scope)
+				     tls_level *tls_level)
 {
   void *res;
-  tls_level **tls;
-  tls_level *tls_level;
   char *tls_module;
 
-  sctk_nodebug ("Module %lu Offset %lu (scope %d)", m, offset, scope);
+  sctk_nodebug ("Module %lu Offset %lu", m, offset);
 
-  tls = sctk_hierarchical_tls;
-  assume (tls != NULL);
-
-  tls_level = tls[scope];
+  assert ( tls_level != NULL ) ;
 
   if (expect_false (tls_level->size < m))
     {
-      goto not_allocated;
+	  size_t i;
+	  sctk_tls_write_level (tls_level);
+  	  if (tls_level->size < m) {
+
+	      tls_level->modules =
+		sctk_realloc ((void *) (tls_level->modules), m * sizeof (char *));
+	      for (i = tls_level->size; i < m; i++)
+		{
+		  tls_level->modules[i] = NULL;
+		  /* sctk_alloc_module (i, tls_level); */
+		}
+	      sctk_nodebug ("Init modules to size %ld->%ld", tls_level->size, m);
+	      tls_level->size = m;
+          }
+	  sctk_tls_unlock_level (tls_level);
+
     }
+   
+  if (expect_false (tls_level->modules[m-1] == NULL ))
+     {
+	  sctk_tls_write_level (tls_level);
+          if ( tls_level->modules[m-1] == NULL )
+            {
+               tls_module = sctk_alloc_module (m, tls_level);
+            }
+	  sctk_tls_unlock_level (tls_level);
+     } 
 
   tls_module = (char *) tls_level->modules[m - 1];
   res = tls_module + offset;
 
   return res;
-
-not_allocated:
-  sctk_tls_write_level (tls_level);
-
-  if (tls_level->size < m)
-    {
-      size_t i;
-      tls_level->modules =
-	sctk_realloc ((void *) (tls_level->modules), m * sizeof (char *));
-      for (i = tls_level->size; i < m; i++)
-	{
-	  tls_level->modules[i] = NULL;
-	  sctk_alloc_module (i, tls_level);
-	}
-      sctk_nodebug ("Init modules to size %ld->%ld", tls_level->size, m);
-      tls_level->size = m;
-    }
-
-  tls_module = sctk_alloc_module (m, tls_level);
-  sctk_tls_unlock_level (tls_level);
-
-  res = tls_module + offset;
-  return res;
 }
 
 
 static void
-sctk_tls_create ()
+sctk_extls_create ()
 {
-  tls_level **tls;
+  tls_level **extls;
   int i;
 
-  page_size = getpagesize ();
+  /* page_size = getpagesize ();
+     has been put in sctk_hls_build_repository() */
 
-  tls = sctk_malloc (sctk_tls_max_scope * sizeof (tls_level *));
+  extls = sctk_malloc (sctk_extls_max_scope * sizeof (tls_level *));
 
-  for (i = 0; i < sctk_tls_max_scope; i++)
+  for (i = 0; i < sctk_extls_max_scope; i++)
     {
-      tls[i] = sctk_malloc (sizeof (tls_level));
-      sctk_tls_init_level (tls[i]);
+      extls[i] = sctk_malloc (sizeof (tls_level));
+      sctk_tls_init_level (extls[i]);
     }
 
-  sctk_nodebug ("Init tls_hierarchical root %p", tls);
-  sctk_hierarchical_tls = tls;
+  sctk_nodebug ("Init extls root %p", extls);
+  sctk_extls = extls;
 }
 
+/*
+  take TLS from father
+*/
 void
-sctk_tls_duplicate (void **new)
+sctk_extls_duplicate (void **new)
 {
-  tls_level *tls;
-  tls_level *new_tls;
+  tls_level *extls;
+  tls_level *new_extls;
   int i;
 
-  tls = sctk_hierarchical_tls;
-  if (tls == NULL)
+  extls = sctk_extls;
+  if (extls == NULL)
     {
-      sctk_tls_create ();
+      sctk_extls_create ();
     }
 
-  new_tls = sctk_malloc (sctk_tls_max_scope * sizeof (tls_level));
-  *new = new_tls;
+  new_extls = sctk_malloc (sctk_extls_max_scope * sizeof (tls_level));
+  *new = new_extls;
 
-  tls = sctk_hierarchical_tls;
-  sctk_nodebug ("Duplicate %p->%p", tls, new_tls);
+  extls = sctk_extls;
+  sctk_nodebug ("Duplicate %p->%p", extls, new_extls);
 
-  for (i = 0; i < sctk_tls_max_scope; i++)
+  for (i = 0; i < sctk_extls_max_scope; i++) 
     {
-      new_tls[i] = tls[i];
+      new_extls[i] = extls[i];
     }
-
- 
 }
 
+/*
+   only keep some tls and create new ones
+*/
 void
-sctk_tls_keep (int *scopes)
+sctk_extls_keep (int *scopes)
 {
-  sctk_nodebug ( "sctk_tls_keep %d %d %d %d %d on numa node %d",
-    scopes[0],scopes[1],scopes[2],scopes[3],scopes[4],
-    sctk_get_node_from_cpu(sctk_thread_get_vp())
-   ) ;
-
-  tls_level **tls;
+  tls_level **extls;
   int i;
-  tls = sctk_hierarchical_tls;
+  extls = sctk_extls;
 
-  assume (tls != NULL);
+  assert (extls != NULL);
 
-  for (i = 0; i < sctk_tls_max_scope; i++)
+  for (i = 0; i < sctk_extls_max_scope; i++)
     {
       if (scopes[i] == 0)
 	{
-	  sctk_nodebug ("Remove %d in %p", i, tls);
-	  tls[i] = sctk_malloc (sizeof (tls_level));
-	  sctk_tls_init_level (tls[i]);
+	  sctk_nodebug ("Remove %d in %p", i, extls);
+	  extls[i] = sctk_malloc (sizeof (tls_level));
+	  sctk_tls_init_level (extls[i]);
 	}
     }
-  
-  if ( scopes[sctk_tls_numa_scope] == 1 ) {
-    int numa_id = sctk_get_node_from_cpu(sctk_thread_get_vp ()) ;
-    if ( numa_id >= 0 && numa_id < 8 ) {
-      sctk_nodebug ( "sctk_tls_keep get tls from numa node %d %p",
-        numa_id, &sctk_tls_numa_level[numa_id] ) ;
-      tls[sctk_tls_numa_scope] = &sctk_tls_numa_level[numa_id] ;
+}
+
+/*
+  used by openmp in MPC_OpenMP/src/mpcomp_internal.h
+*/
+void
+sctk_extls_keep_non_current_thread (void **extls, int *scopes)
+{
+  int i;
+
+  assert (extls != NULL);
+
+  for (i = 0; i < sctk_extls_max_scope; i++)
+    {
+      if (scopes[i] == 0)
+	{
+	  sctk_nodebug ("Remove %d in %p", i, extls);
+	  extls[i] = sctk_malloc (sizeof (tls_level));
+	  sctk_tls_init_level (extls[i]);
+	}
     }
+}
+
+void
+sctk_extls_delete ()
+{
+#warning "Pas de liberation des extls"
+}
+
+/*
+ * At MPC startup, create all HLS levels
+ * Called in sctk_topology_init in sctk_topology.c
+ */
+void sctk_hls_build_repository ()
+{
+  /* TODO: take values from sctk_topology */
+  int i ;
+  const int numa_number   = 2 ;
+  const int socket_number = 2 ;
+  const int cache_number  = 2 ;
+  const int core_number   = 8 ;
+  const int total_level_number = 1 + numa_number + socket_number
+                                 + cache_number + core_number ;
+  sctk_hls_repository = sctk_malloc ( total_level_number*sizeof(tls_level) );
+  for ( i = 0; i < total_level_number; ++i ) {
+    sctk_tls_init_level ( &sctk_hls_repository[i] ) ;
   }
+  
+  page_size = getpagesize ();
 }
 
-void
-sctk_tls_keep_non_current_thread (void **tls, int *scopes)
+/*
+ * During VP initialization, take HLS levels according to the VP topology
+ * from the repository of all HLS levels created by sctk_hls_build_repository
+ * at initialization.
+ * Called in kthread_crate_start_routine in sctk_kernel_thread.c
+ *           init_tls_start_routine_arg  in sctk_pthread.c
+ *           sctk_start_func             in sctk_thread.c 
+ */
+void sctk_hls_checkout_on_vp ()
 {
-  int i;
+  /* TODO: take values from sctk_topology */
+  const int numa_number   = 2 ;
+  const int socket_number = 2 ;
+  const int cache_number  = 2 ;
+  const int core_number   = 8 ;
+  const int core_id       = sctk_thread_get_vp() ;
+  const int numa_id       = sctk_get_node_from_cpu(core_id) ;
+  const int socket_id     = 0 ;
+  const int cache_id      = 0 ;
+  int offset = 0 ;
 
-  assume (tls != NULL);
+  /* check if already initiliazed */  
+  if ( sctk_hls[sctk_hls_node_scope] != NULL )
+    return ; 
 
-  for (i = 0; i < sctk_tls_max_scope; i++)
-    {
-      if (scopes[i] == 0)
-	{
-	  sctk_nodebug ("Remove %d in %p", i, tls);
-	  tls[i] = sctk_malloc (sizeof (tls_level));
-	  sctk_tls_init_level (tls[i]);
-	}
-    }
+  sctk_hls[sctk_hls_node_scope]   = &sctk_hls_repository[0] ;
+  offset += 1 ;
+  sctk_hls[sctk_hls_numa_scope]   = &sctk_hls_repository[offset+numa_id] ;  
+  offset += numa_number ;  
+  sctk_hls[sctk_hls_socket_scope] = &sctk_hls_repository[offset+socket_id] ;  
+  offset += socket_number ;  
+  sctk_hls[sctk_hls_cache_scope]  = &sctk_hls_repository[offset+cache_id] ;  
+  offset += cache_number ;  
+  sctk_hls[sctk_hls_core_scope]   = &sctk_hls_repository[offset+core_id] ;  
 }
 
-void
-sctk_tls_delete ()
+/*
+ * Not yet called
+ */
+void sctk_hls_free ()
 {
-#warning "Pas de liberation des tls"
+  free ( sctk_hls_repository ) ;
 }
 
 #if defined(SCTK_i686_ARCH_SCTK) || defined (SCTK_x86_64_ARCH_SCTK)
 
+void *
+__sctk__tls_get_addr__process_scope (tls_index * tmp)
+{
+  void *res;
+  tls_level **extls;
+  sctk_nodebug ("__sctk__tls_get_addr__process_scope");
+  extls = sctk_extls ;
+  assert (extls != NULL);
+  res =
+    __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
+					 extls[sctk_extls_process_scope]);
+  return res;
+}
 
 void *
 __sctk__tls_get_addr__task_scope (tls_index * tmp)
 {
   void *res;
+  tls_level **extls;
   sctk_nodebug ("__sctk__tls_get_addr__task_scope");
+  extls = sctk_extls ;
+  assert (extls != NULL);
   res =
     __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
-					 sctk_tls_task_scope);
-  return res;
-}
-
-void *
-__sctk__tls_get_addr__numa_scope (tls_index * tmp)
-{
-  void *res;
-  sctk_nodebug ("__sctk__tls_get_addr__numa_scope on numa node %d",
-    sctk_get_node_from_cpu(sctk_thread_get_vp()));
-  res =
-    __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
-					 sctk_tls_numa_scope);
+					 extls[sctk_extls_task_scope]);
   return res;
 }
 
@@ -427,9 +489,13 @@ void *
 __sctk__tls_get_addr__thread_scope (tls_index * tmp)
 {
   void *res;
+  tls_level **extls;
+  sctk_nodebug ("__sctk__tls_get_addr__thread_scope");
+  extls = sctk_extls ;
+  assert (extls != NULL);
   res =
     __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
-					 sctk_tls_thread_scope);
+					 extls[sctk_extls_thread_scope]);
   return res;
 }
 
@@ -439,48 +505,108 @@ void *
 __sctk__tls_get_addr__openmp_scope (tls_index * tmp)
 {
   void *res;
+  tls_level **extls;
   sctk_nodebug ("__sctk__tls_get_addr__openmp_scope");
+  extls = sctk_extls ;
+  assert (extls != NULL);
   res =
     __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
-					 sctk_tls_openmp_scope);
+					 extls[sctk_extls_openmp_scope]);
   return res;
 }
 #endif
 
 void *
-__sctk__tls_get_addr__process_scope (tls_index * tmp)
+__sctk__tls_get_addr__node_scope (tls_index * tmp)
 {
   void *res;
+  sctk_nodebug ("__sctk__tls_get_addr__node_scope %p", &sctk_hls );
   res =
     __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
-					 sctk_tls_process_scope);
+					 sctk_hls[sctk_hls_node_scope]);
+  return res;
+}
+
+void *
+__sctk__tls_get_addr__numa_scope (tls_index * tmp)
+{
+  void *res;
+  tls_level **hls;
+  sctk_nodebug ("__sctk__tls_get_addr__numa_scope on numa node %d",
+    sctk_get_node_from_cpu(sctk_thread_get_vp()));
+  res =
+    __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
+					 sctk_hls[sctk_hls_numa_scope]);
+  return res;
+}
+
+void *
+__sctk__tls_get_addr__socket_scope (tls_index * tmp)
+{
+  void *res;
+  sctk_nodebug ("__sctk__tls_get_addr__socket_scope");
+  res =
+    __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
+					 sctk_hls[sctk_hls_socket_scope]);
+  return res;
+}
+
+void *
+__sctk__tls_get_addr__cache_scope (tls_index * tmp)
+{
+  void *res;
+  sctk_nodebug ("__sctk__tls_get_addr__cache_scope");
+  res =
+    __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
+					 sctk_hls[sctk_hls_cache_scope]);
+  return res;
+}
+
+void *
+__sctk__tls_get_addr__core_scope (tls_index * tmp)
+{
+  void *res;
+  sctk_nodebug ("__sctk__tls_get_addr__core_scope");
+  res =
+    __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
+					 sctk_hls[sctk_hls_core_scope]);
   return res;
 }
 
 #elif defined (SCTK_ia64_ARCH_SCTK)
 
 void *
-__sctk__tls_get_addr__task_scope (size_t m, size_t offset)
+__sctk__tls_get_addr__process_scope (size_t m, size_t offset)
 {
   void *res;
-  res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_tls_task_scope);
+  tls_level **extls ;
+  extls = sctk_extls ;
+  assert (extls != NULL);
+  res = __sctk__tls_get_addr__generic_scope (m, offset, extls[sctk_extls_process_scope]);
   return res;
 }
 
+
 void *
-__sctk__tls_get_addr__numa_scope (size_t m, size_t offset)
+__sctk__tls_get_addr__task_scope (size_t m, size_t offset)
 {
   void *res;
-  res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_tls_numa_scope);
+  tls_level **extls ;
+  extls = sctk_extls ;
+  assert (extls != NULL);
+  res = __sctk__tls_get_addr__generic_scope (m, offset, extls[sctk_extls_task_scope]);
   return res;
 }
+
 
 void *
 __sctk__tls_get_addr__thread_scope (size_t m, size_t offset)
 {
   void *res;
-  res =
-    __sctk__tls_get_addr__generic_scope (m, offset, sctk_tls_thread_scope);
+  tls_level **extls ;
+  extls = sctk_extls ;
+  assert (extls != NULL);
+  res = __sctk__tls_get_addr__generic_scope (m, offset, extls[sctk_extls_thread_scope]);
   return res;
 }
 
@@ -489,49 +615,83 @@ void *
 __sctk__tls_get_addr__openmp_scope (size_t m, size_t offset)
 {
   void *res;
-  res =
-    __sctk__tls_get_addr__generic_scope (m, offset, sctk_tls_openmp_scope);
+  tls_level **extls ;
+  extls = sctk_extls ;
+  assert (extls != NULL);
+  res = __sctk__tls_get_addr__generic_scope (m, offset, extls[sctk_extls_openmp_scope]);
   return res;
 }
 #endif
 
 void *
-__sctk__tls_get_addr__process_scope (size_t m, size_t offset)
+__sctk__tls_get_addr__node_scope (size_t m, size_t offset)
 {
   void *res;
-  res =
-    __sctk__tls_get_addr__generic_scope (m, offset, sctk_tls_process_scope);
+  res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_hls[sctk_hls_node_scope]);
   return res;
 }
+
+void *
+__sctk__tls_get_addr__numa_scope (size_t m, size_t offset)
+{
+  void *res;
+  res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_hls[sctk_hls_numa_scope]);
+  return res;
+}
+
+void *
+__sctk__tls_get_addr__socket_scope (size_t m, size_t offset)
+{
+  void *res;
+  res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_hls[sctk_hls_socket_scope]);
+  return res;
+}
+
+void *
+__sctk__tls_get_addr__cache_scope (size_t m, size_t offset)
+{
+  void *res;
+  res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_hls[sctk_hls_cache_scope]);
+  return res;
+}
+
+void *
+__sctk__tls_get_addr__core_scope (size_t m, size_t offset)
+{
+  void *res;
+  res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_hls[sctk_hls_core_scope]);
+  return res;
+}
+
 #else
 #error "Architecture not available for TLS support"
 #endif
 #else
-#warning "Experimental TLS support desactivated"
+#warning "Experimental Ex-TLS support desactivated"
 
 void
-sctk_tls_create ()
+sctk_extls_create ()
 {
 }
 
 void
-sctk_tls_duplicate (void **new)
+sctk_extls_duplicate (void **new)
 {
   *new = NULL;
 }
 
 void
-sctk_tls_keep (int *scopes)
+sctk_extls_keep (int *scopes)
 {
 }
 
 void
-sctk_tls_keep_non_current_thread (void **tls, int *scopes)
+sctk_extls_keep_non_current_thread (void **tls, int *scopes)
 {
 }
 
 void
-sctk_tls_delete ()
+sctk_extls_delete ()
 {
 }
 

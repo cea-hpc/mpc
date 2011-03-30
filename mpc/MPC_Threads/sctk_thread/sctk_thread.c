@@ -591,6 +591,9 @@ sctk_thread_get_vp ()
   return __sctk_ptr_thread_get_vp ();
 }
 
+/*
+ * Startup for MPI tasks
+ */
 static void *
 sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 {
@@ -626,12 +629,13 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   /* TLS INTIALIZATION */
   sctk_tls_init ();
 
+  sctk_hls_checkout_on_vp() ;
+
   {
-    int keep[sctk_tls_max_scope];
-    memset (keep, 0, sctk_tls_max_scope * sizeof (int));
-    keep[sctk_tls_process_scope] = 1;
-    keep[sctk_tls_numa_scope] = 1;
-    sctk_tls_keep (keep);
+    int keep[sctk_extls_max_scope];
+    memset (keep, 0, sctk_extls_max_scope * sizeof (int));
+    keep[sctk_extls_process_scope] = 1;
+    sctk_extls_keep (keep);
   }
 
   sctk_profiling_init ();
@@ -678,7 +682,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   sctk_thread_remove (&tmp);
   sctk_thread_data_set (NULL);
   sctk_nodebug ("THREAD END");
-  sctk_tls_delete ();
+  sctk_extls_delete ();
   return res;
 }
 
@@ -718,6 +722,9 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
   return res;
 }
 
+/*
+ * Startup for user pthreads or OpenMP microVPs
+ */
 static void *
 sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 {
@@ -743,13 +750,14 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   sctk_thread_add (&tmp,sctk_thread_self());
 
 
+  sctk_hls_checkout_on_vp() ;
+
   {
-    int keep[sctk_tls_max_scope];
-    memset (keep, 0, sctk_tls_max_scope * sizeof (int));
-    keep[sctk_tls_process_scope] = 1;
-    keep[sctk_tls_task_scope] = 1;
-    keep[sctk_tls_numa_scope] = 1; 
-    sctk_tls_keep (keep);
+    int keep[sctk_extls_max_scope];
+    memset (keep, 0, sctk_extls_max_scope * sizeof (int));
+    keep[sctk_extls_process_scope] = 1;
+    keep[sctk_extls_task_scope] = 1;
+    sctk_extls_keep (keep);
   }
 
   sctk_profiling_init ();
@@ -778,7 +786,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 
   sctk_thread_remove (&tmp);
   sctk_thread_data_set (NULL);
-  sctk_tls_delete ();
+  sctk_extls_delete ();
   return res;
 }
 

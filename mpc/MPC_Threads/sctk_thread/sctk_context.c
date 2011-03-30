@@ -432,18 +432,18 @@ sctk_makecontext (sctk_mctx_t * ucp,
 }
 
 int
-sctk_makecontext_hierarchical_tls (sctk_mctx_t * ucp,
+sctk_makecontext_extls (sctk_mctx_t * ucp,
 				   void *arg,
 				   void (*func) (void *), char *stack,
-				   size_t stack_size, void *hierarchical_tls)
+				   size_t stack_size, void *extls)
 {
   int res;
   sctk_mctx_t lucp;
   sctk_context_save_tls (&lucp);
 
-  sctk_context_init_tls_hierarchical_tls (ucp);
+  sctk_context_init_extls (ucp);
 #if defined(SCTK_USE_TLS)
-  ucp->sctk_hierarchical_tls = hierarchical_tls;
+  ucp->sctk_extls = extls;
 #endif
   sctk_context_restore_tls (ucp);
 

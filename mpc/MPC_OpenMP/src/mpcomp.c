@@ -343,7 +343,7 @@ __mpcomp_wrapper_op (void *arg)
 
   if (info->context == 0)
     {
-      sctk_hierarchical_tls = info->hierarchical_tls;
+      sctk_extls = info->extls;
     }
 
   sctk_nodebug
@@ -643,7 +643,7 @@ __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *),
 
 
   /* Restore the TLS for the main thread */
-  sctk_hierarchical_tls = current_info->children[0]->hierarchical_tls;
+  sctk_extls = current_info->children[0]->extls;
 
   SCTK_PROFIL_END (__mpcomp_start_parallel_region);
 }
@@ -940,13 +940,13 @@ mpcomp_fork_when_blocked (sctk_microthread_vp_t * self, long step)
 	      sctk_nodebug( "mpcomp_fork_when_blocked[%d]: Null stack -> mallocing"
 		  , info->rank ) ;
 	    }
-	  res = sctk_makecontext_hierarchical_tls (&(info->uc),
-						   (void *) self->op_list[i].
-						   arg,
-						   (void (*)(void *)) self->
-						   op_list[i].func,
-						   info->stack, STACK_SIZE,
-						   info->hierarchical_tls);
+	  res = sctk_makecontext_extls (&(info->uc),
+				        (void *) self->op_list[i].
+				        arg,
+				        (void (*)(void *)) self->
+				        op_list[i].func,
+				        info->stack, STACK_SIZE,
+				        info->extls);
 	  sctk_assert (res == TRUE);
 
 	  /* Context created */

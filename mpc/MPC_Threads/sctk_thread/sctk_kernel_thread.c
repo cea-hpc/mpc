@@ -23,6 +23,7 @@
 #include "sctk_pthread.h"
 #include "sctk_kernel_thread.h"
 #include "sctk_spinlock.h"
+#include "sctk_tls.h"
 #include <string.h>
 #include <semaphore.h>
 

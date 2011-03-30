@@ -553,7 +553,7 @@ __mpcomp_start_parallel_static_loop (int arg_num_threads, void *(*func)
 
 
   /* Restore the TLS for the main thread */
-  sctk_hierarchical_tls = current_info->children[0]->hierarchical_tls;
+  sctk_extls = current_info->children[0]->extls;
 
   SCTK_PROFIL_END (__mpcomp_start_parallel_region);
 }

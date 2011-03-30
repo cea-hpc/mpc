@@ -37,18 +37,31 @@ extern "C"
 #if defined(SCTK_USE_TLS)
 
   typedef enum
-  { sctk_tls_process_scope = 0, sctk_tls_numa_scope = 1,
-    sctk_tls_task_scope = 2, sctk_tls_thread_scope = 3,
+  { sctk_extls_process_scope = 0,
+    sctk_extls_task_scope    = 1,
+    sctk_extls_thread_scope  = 2,
 #if defined (MPC_OpenMP)
-    sctk_tls_openmp_scope = 4, sctk_tls_max_scope = 5
+    sctk_extls_openmp_scope  = 3,
+    sctk_extls_max_scope     = 4,
 #else
-    sctk_tls_max_scope = 4
+    sctk_extls_max_scope     = 3,
 #endif
-  } sctk_tls_scope_t;
-  void sctk_tls_duplicate (void **new);
-  void sctk_tls_keep (int *scopes);
-  void sctk_tls_keep_non_current_thread (void **tls, int *scopes);
-  void sctk_tls_delete ();
+  } sctk_extls_scope_t;
+
+  typedef enum
+  { sctk_hls_node_scope    = 0,
+    sctk_hls_numa_scope    = 1,
+    sctk_hls_socket_scope  = 2,
+    sctk_hls_cache_scope   = 3,
+    sctk_hls_core_scope    = 4,
+    sctk_hls_max_scope     = 5
+  } sctk_hls_scope_t;
+
+
+  void sctk_extls_duplicate (void **new);
+  void sctk_extls_keep (int *scopes);
+  void sctk_extls_keep_non_current_thread (void **tls, int *scopes);
+  void sctk_extls_delete ();
 
 
 #if defined (MPC_Allocator)
@@ -61,7 +74,7 @@ extern "C"
   extern __thread char *mpc_user_tls_1;
   extern unsigned long mpc_user_tls_1_offset;
   extern unsigned long mpc_user_tls_1_entry_number;
-  extern __thread void *sctk_hierarchical_tls;
+  extern __thread void *sctk_extls;
   //profiling TLS
   extern __thread void *tls_trace_module;
   extern __thread void *tls_args;
@@ -86,7 +99,7 @@ extern "C"
     ucp->sctk_tls_trace_local = sctk_tls_trace;
 #endif
     tls_save (mpc_user_tls_1);
-    tls_save (sctk_hierarchical_tls);
+    tls_save (sctk_extls);
 #ifdef MPC_Message_Passing
     tls_save (sctk_message_passing);
 #endif
@@ -106,7 +119,7 @@ extern "C"
     sctk_tls_trace = ucp->sctk_tls_trace_local;
 #endif
     tls_restore (mpc_user_tls_1);
-    tls_restore (sctk_hierarchical_tls);
+    tls_restore (sctk_extls);
 #ifdef MPC_Message_Passing
     tls_restore (sctk_message_passing);
 #endif
@@ -116,8 +129,7 @@ extern "C"
 #endif
   }
 
-  static inline void sctk_context_init_tls_hierarchical_tls (sctk_mctx_t *
-							     ucp)
+  static inline void sctk_context_init_extls (sctk_mctx_t *ucp)
   {
 #if defined(SCTK_USE_TLS)
 #if defined (MPC_Allocator)
@@ -140,11 +152,14 @@ extern "C"
   static inline void sctk_context_init_tls (sctk_mctx_t * ucp)
   {
 #if defined(SCTK_USE_TLS)
-    sctk_context_init_tls_hierarchical_tls (ucp);
-    tls_init (sctk_hierarchical_tls);
-    sctk_tls_duplicate (&(ucp->sctk_hierarchical_tls));
+    sctk_context_init_extls (ucp);
+    tls_init (sctk_extls);
+    sctk_extls_duplicate (&(ucp->sctk_extls));
 #endif
   }
+
+  void sctk_hls_checkout_on_vp () ;
+  void sctk_hls_build_repository () ;
 
 #ifdef __cplusplus
 }

@@ -286,7 +286,8 @@ sctk_topology_init ()
 
   uname (&utsname);
 
-/*   sctk_print_topology (stderr); */
+  sctk_hls_build_repository();
+  /* sctk_print_topology (stderr); */
 }
 
 /*! \brief Destroy the topology module
