@@ -27,10 +27,10 @@
 #include "sctk_infiniband_comp_rc_rdma.h"
 
 /* 16 seams to be the better value on fortoy */
-//#define IBV_EAGER_THRESHOLD ( 16 * 1024 )
-//#define IBV_FRAG_EAGER_THRESHOLD ( 256 * 1024)
-#define IBV_EAGER_THRESHOLD ( 32 * 1024 )
-#define IBV_FRAG_EAGER_THRESHOLD ( 512 * 1024)
+#define IBV_EAGER_THRESHOLD ( 16 * 1024 )
+#define IBV_FRAG_EAGER_THRESHOLD ( 256 * 1024)
+//#define IBV_EAGER_THRESHOLD ( 32 * 1024 )
+//#define IBV_FRAG_EAGER_THRESHOLD ( 512 * 1024)
 /*
  * should be high values if the event
  * IBV_EVENT_QP_LAST_WQE_REACHED is triggered
@@ -45,22 +45,29 @@
 #define IBV_MAX_SG_SQ       8
 #define IBV_MAX_SG_RQ       8
 #define IBV_MAX_INLINE        128
-#define IBV_MAX_IBUFS         2000
-//#define IBV_MAX_IBUFS         50
-// #define IBV_MAX_SRQ_IBUFS     2000
-#define IBV_MAX_SRQ_IBUFS     1000 /*  > 300 */
-#define IBV_SRQ_CREDIT_LIMIT  700 /* >=300 */
-#define IBV_SRQ_CREDIT_THREAD_LIMIT  300
 
-//#define IBV_MAX_SRQ_IBUFS     50
-// #define IBV_SRQ_CREDIT_LIMIT  800
-//#define IBV_SRQ_CREDIT_LIMIT  10
+#define IBV_MAX_IBUFS         2000
+#define IBV_MAX_SRQ_IBUFS     1500 /*  > 300 */
+#define IBV_SRQ_CREDIT_LIMIT  1000 /* >=300 */
+#define IBV_SRQ_CREDIT_THREAD_LIMIT  500
+
+/* for PN */
+#if 0
+#define IBV_MAX_IBUFS         400
+#define IBV_MAX_SRQ_IBUFS     300 /*  > 300 */
+#define IBV_SRQ_CREDIT_LIMIT  200 /* >=300 */
+#define IBV_SRQ_CREDIT_THREAD_LIMIT  200
+#endif
+
 #define IBV_SIZE_IBUFS_CHUNKS 200
 
 #define IBV_WC_IN_NUMBER    1000
 #define IBV_WC_OUT_NUMBER   1000
 
-#define IBV_MAX_MR          3000
+#define IBV_MAX_MR          100
+/* size of mr chunks */
+#define IBV_SIZE_MR_CHUNKS  200
+
 #define IBV_ADM_PORT        1
 
 #define IBV_RDMA_DEPTH       4
@@ -90,6 +97,7 @@ int  ibv_verbose_level    = IBV_VERBOSE_LEVEL;
 int  ibv_wc_in_number     = IBV_WC_IN_NUMBER;
 int  ibv_wc_out_number    = IBV_WC_OUT_NUMBER;
 int  ibv_max_mr           = IBV_MAX_MR;
+int  ibv_size_mr_chunk    = IBV_SIZE_MR_CHUNKS;
 int  ibv_adm_port         = IBV_ADM_PORT;
 int  ibv_rdma_depth       = IBV_RDMA_DEPTH;
 int  ibv_rdma_dest_depth  = IBV_RDMA_DEST_DEPTH;

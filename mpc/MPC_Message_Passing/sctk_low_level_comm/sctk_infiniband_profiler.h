@@ -29,7 +29,7 @@
 #define XSTR(X)  STR(X)
 #define STR(X)  #X
 
-#define IBV_ENABLE_PROFILE        1
+#define IBV_ENABLE_PROFILE        0
 
 typedef enum
 {
@@ -95,10 +95,12 @@ typedef enum
   IBV_REDUCE_SIZE = 38,
 
   IBV_BCAST_WAIT_NB = 39,
-  IBV_BCAST_WAIT_SIZE = 40
+  IBV_BCAST_WAIT_SIZE = 40,
 
+  IBV_MEM_ALLOCATED = 41,
+  IBV_MEMALIGN_ALLOCATED = 42,
 } ibv_profiler_id;
-#define NB_PROFILE_ID 41
+#define NB_PROFILE_ID 43
 
 struct sctk_ibv_profiler_entry_s
 {
@@ -168,9 +170,30 @@ static struct sctk_ibv_profiler_entry_s counters[NB_PROFILE_ID] =
   ENTRY(IBV_REDUCE_SIZE),
 
   ENTRY(IBV_BCAST_WAIT_NB),
-  ENTRY(IBV_BCAST_WAIT_SIZE)
+  ENTRY(IBV_BCAST_WAIT_SIZE),
+
+  ENTRY(IBV_MEM_ALLOCATED),
+  ENTRY(IBV_MEMALIGN_ALLOCATED)
 };
 
 void sctk_ibv_profiler_init();
+void sctk_ibv_profiler_add(ibv_profiler_id id, uint64_t c);
+
+/* MEMORY ALLOCATION PROFILING */
+#ifndef MPC_Allocator
+#define sctk_malloc sctk_profile_malloc
+static void* sctk_profile_malloc(size_t size)
+{
+  sctk_ibv_profiler_add(IBV_MEM_ALLOCATED, size);
+  return malloc(size);
+}
+
+#define sctk_posix_memalign sctk_profile_memalign
+static int sctk_profile_memalign(void **memptr, size_t alignment, size_t size)
+{
+  sctk_ibv_profiler_add(IBV_MEMALIGN_ALLOCATED, size);
+  return posix_memalign(memptr, alignment, size);
+}
+#endif
 
 #endif

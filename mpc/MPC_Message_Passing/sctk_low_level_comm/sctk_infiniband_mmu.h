@@ -27,19 +27,28 @@
 #include <sctk_spinlock.h>
 #include <sctk_debug.h>
 #include <sctk_config.h>
+#include <stdint.h>
+
+struct sctk_net_ibv_mmu_region_s;
 
 /* enumeration for entry state  */
 typedef enum
 {
   ibv_entry_free = 0,
   ibv_entry_used,
-//  ibv_entry_perm,
 } sctk_net_ibv_mmu_entry_status_t;
 
-/* entry to the soft MMU */
-typedef struct
+typedef struct sctk_net_ibv_mmu_desc_s
 {
+  struct sctk_net_ibv_mmu_entry_s* next;
+} sctk_net_ibv_mmu_desc_t;
+
+/* entry to the soft MMU */
+typedef struct sctk_net_ibv_mmu_entry_s
+{
+  struct sctk_net_ibv_mmu_desc_s desc;
   sctk_net_ibv_mmu_entry_status_t status;     /* status of the slot */
+  struct sctk_net_ibv_mmu_region_s* region;  /* first region */
 
   void *ptr;                /* ptr to the MR */
   size_t size;              /* size of the MR */
@@ -47,11 +56,27 @@ typedef struct
 } sctk_net_ibv_mmu_entry_t;
 
 
+/* region of mmu entries */
+typedef struct sctk_net_ibv_mmu_region_s
+{
+  uint16_t nb;
+
+  sctk_net_ibv_mmu_entry_t* mmu_entry;
+
+  struct sctk_net_ibv_mmu_region_s* next_region;
+} sctk_net_ibv_mmu_region_t;
+
+
+
 typedef struct sctk_net_ibv_mmu_s
 {
-  sctk_thread_mutex_t lock;     /* MMU lock */
-  int entry_nb;             /* Number of entries */
-  sctk_net_ibv_mmu_entry_t* entry;  /* entries */
+  sctk_thread_spinlock_t lock;     /* MMU lock */
+  int free_mmu_entry_nb;    /* Number of free mmu entries */
+  int got_mmu_entry_nb;     /* Number of got mmu entries */
+  int total_mmu_entry_nb;     /* Total Number of  mmu entries */
+  sctk_net_ibv_mmu_region_t* begin_region;  /* first region */
+  sctk_net_ibv_mmu_region_t* last_region;  /* last region */
+  sctk_net_ibv_mmu_entry_t*  free_header;
 } sctk_net_ibv_mmu_t;
 
 #include "sctk_infiniband_qp.h"
@@ -68,8 +93,8 @@ void sctk_net_ibv_mmu_free();
  *----------------------------------------------------------*/
 
 sctk_net_ibv_mmu_entry_t *
-sctk_net_ibv_mmu_register(
-    sctk_net_ibv_mmu_t* mmu,
+sctk_net_ibv_mmu_register (
+    sctk_net_ibv_qp_rail_t* rail,
     sctk_net_ibv_qp_local_t* local,
     void *ptr, size_t size);
 

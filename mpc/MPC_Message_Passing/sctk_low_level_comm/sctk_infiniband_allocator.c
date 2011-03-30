@@ -47,6 +47,7 @@ sctk_net_ibv_allocator_new()
   sctk_net_ibv_allocator = sctk_malloc(sizeof(sctk_net_ibv_allocator_t));
 
   sctk_net_ibv_allocator->entry = sctk_malloc(size);
+
   sctk_nodebug("creation : %p", sctk_net_ibv_allocator->entry);
   memset(sctk_net_ibv_allocator->entry, 0, size);
 
@@ -312,6 +313,7 @@ sctk_net_ibv_allocator_send_coll_message(
     sctk_nodebug("Send RDVZ collective");
     sctk_net_ibv_rc_rdma_process_t* rc_rdma_entry;
 
+    /*  TODO: FIX pending RDVS collective */
     assume(0);
 
     ALLOCATOR_LOCK(dest_process, IBV_CHAN_RC_RDMA);

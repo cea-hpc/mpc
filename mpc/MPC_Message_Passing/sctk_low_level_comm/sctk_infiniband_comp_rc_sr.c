@@ -64,6 +64,7 @@ void sctk_net_ibv_comp_rc_sr_frag_allocate(
   {
     sctk_nodebug("Allocate a new list for task %d", msg_header->src_task);
     frag_eager_list[msg_header->src_task] = sctk_malloc(sizeof(struct sctk_list));
+
     sctk_list_new(frag_eager_list[msg_header->src_task], 0, 0);
   }
 
@@ -696,17 +697,20 @@ sctk_net_ibv_rc_sr_poll_recv(
 
     case RC_SR_BCAST:
       sctk_nodebug("Broadcast msg received");
-      sctk_net_ibv_collective_push_rc_sr(&broadcast_fifo, msg_header);
+      sctk_net_ibv_collective_push_rc_sr(&broadcast_fifo, ibuf);
+      release_buffer = 0;
       break;
 
     case RC_SR_REDUCE:
       sctk_nodebug("Reduce msg received");
-      sctk_net_ibv_collective_push_rc_sr(&reduce_fifo, msg_header);
+      sctk_net_ibv_collective_push_rc_sr(&reduce_fifo, ibuf);
+      release_buffer = 0;
       break;
 
     case RC_SR_BCAST_INIT_BARRIER:
       sctk_nodebug("Broadcast barrier msg received");
-      sctk_net_ibv_collective_push_rc_sr(&init_barrier_fifo, msg_header);
+      sctk_net_ibv_collective_push_rc_sr(&init_barrier_fifo, ibuf);
+      release_buffer = 0;
       break;
   }
 

@@ -46,6 +46,7 @@ extern int  ibv_verbose_level;
 extern int  ibv_wc_in_number;
 extern int  ibv_wc_out_number;
 extern int  ibv_max_mr;
+extern int  ibv_size_mr_chunk;
 extern int  ibv_adm_port;
 extern int  ibv_rdma_depth;
 extern int  ibv_rdma_dest_depth;

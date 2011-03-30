@@ -156,14 +156,22 @@ void sctk_net_ibv_cm_client(char* host, int port, int dest, sctk_net_ibv_qp_remo
 //  sprintf(name,"%s",host);
   sctk_nodebug("Connect to %s",name);
 
+  /* TODO: retry if return NULL */
+//  while (!server || !ip ||
   server = gethostbyname (name);
   if (server == NULL)
   {
     fprintf (stderr, "ERROR, no such host\n");
+    sctk_abort();
     exit (0);
   }
   ip = (char *) server->h_addr;
-  assume(ip);
+  if (!ip)
+  {
+    sctk_debug("ERROR on host %s", name);
+    sctk_abort();
+  }
+//  assume(ip);
 
   memset ((char *) &serv_addr, 0, sizeof (serv_addr));
   serv_addr.sin_family = AF_INET;

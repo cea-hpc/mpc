@@ -126,7 +126,7 @@ sctk_net_ibv_comp_rc_rdma_send_coll_request(
   /* we register the memory where the message is stored, whatever the
    * RDVZ protocol used */
   mmu_entry = sctk_net_ibv_mmu_register (
-      rail->mmu, local_rc_sr, aligned_msg, aligned_size);
+      rail, local_rc_sr, aligned_msg, aligned_size);
 
   /* check if the connection is opened. If not, we connect processes */
   rc_sr_remote = sctk_net_ibv_comp_rc_sr_check_and_connect(dest_process);
@@ -284,7 +284,7 @@ sctk_net_ibv_comp_rc_rdma_send_request(
   /* we register the memory where the message is stored, whatever the
    * RDVZ protocol used */
   mmu_entry = sctk_net_ibv_mmu_register (
-      rail->mmu, local_rc_sr, msg_payload_aligned_ptr, aligned_size);
+      rail, local_rc_sr, msg_payload_aligned_ptr, aligned_size);
 
   /* check if the connection is opened. If not, we connect processes */
   rc_sr_remote = sctk_net_ibv_comp_rc_sr_check_and_connect(dest_process);
@@ -375,7 +375,7 @@ sctk_net_ibv_comp_rc_rdma_entry_send_new(
   sctk_ibv_profiler_inc(IBV_MEM_TRACE);
 
   mmu_entry = sctk_net_ibv_mmu_register (
-      rail->mmu, local_rc_sr,
+      rail, local_rc_sr,
       entry_send->msg_payload_ptr, request->requested_size);
   entry_send->mmu_entry = mmu_entry;
   entry_send->entry_rc_rdma = entry_rc_rdma;

@@ -92,7 +92,6 @@ void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,
   region->next_region = NULL;
   region->nb = nb_ibufs;
 
-  /* TODO: change for multiple regions */
   if (ibuf_begin_region == NULL)
     ibuf_begin_region = region;
 
@@ -110,7 +109,7 @@ void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,
 
   /* TODO: register memory for each region */
   sctk_nodebug("Local : %p", local);
-  region->mmu_entry = sctk_net_ibv_mmu_register(rail->mmu, local, ptr,
+  region->mmu_entry = sctk_net_ibv_mmu_register(rail, local, ptr,
       nb_ibufs * ibv_eager_threshold);
   sctk_nodebug("Reg %p registered. lkey : %lu", ptr, region->mmu_entry->mr->lkey);
   assume (region->mmu_entry);
@@ -143,6 +142,9 @@ void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,
   ibuf_free_header = (sctk_net_ibv_ibuf_t*) ibuf;
 
   sctk_nodebug("END ibuf initialization");
+
+  if (ibv_verbose_level > 0)
+    sctk_debug("[ibuf] Allocation of %d more buffers (ibuf_free_ibuf_nb %d - ibuf_got_ibuf_nb %d)", ibv_size_ibufs_chunk, ibuf_free_ibuf_nb, ibuf_got_ibuf_nb, ibuf_free_header);
 }
 
 sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null, int need_lock)
@@ -157,11 +159,8 @@ sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null, int need_lock)
       if (ibuf_free_header != NULL)
       {
         goto resume;
-      } else if (ibv_no_memory_limitation) {
+      } else {
         sctk_net_ibv_ibuf_init(rail, rc_sr_local, ibv_size_ibufs_chunk);
-        if (ibv_verbose_level > 0)
-          sctk_debug("[ib] Allocation of %d more buffers (ibuf_free_ibuf_nb %d - ibuf_got_ibuf_nb %d)", ibv_size_ibufs_chunk, ibuf_free_ibuf_nb, ibuf_got_ibuf_nb, ibuf_free_header);
-
         goto resume;
       }
 
@@ -282,7 +281,7 @@ void sctk_net_ibv_ibuf_release(sctk_net_ibv_ibuf_t* ibuf, int is_srq)
 
   if(sctk_process_rank == 0)
     sctk_nodebug("Buffer restored : %d (free header %p)",
-      ibuf_free_ibuf_nb, ibuf_free_header);
+        ibuf_free_ibuf_nb, ibuf_free_header);
 
   sctk_spinlock_unlock(&ibuf_lock);
 }
@@ -357,7 +356,6 @@ void sctk_net_ibv_ibuf_send_init(
     sctk_net_ibv_ibuf_t* ibuf, size_t size)
 {
   sctk_assert(ibuf);
-//  sctk_debug("Size : %lu", size);
 
   ibuf->desc.wr.send.next = NULL;
   ibuf->desc.wr.send.opcode = IBV_WR_SEND;

@@ -104,7 +104,7 @@ void sctk_ibv_generate_report()
    fwrite(line, sizeof(char), strnlen(line, 1024), file);
 //      sctk_debug("line: %s", line);
   }
-
+#if 0
   sprintf(line, "IBV_PTP_MEAN_SIZE %f\n", (float) counters[IBV_PTP_SIZE].value/counters[IBV_PTP_NB].value);
   fwrite(line, sizeof(char), strnlen(line, 1024), file);
   sctk_nodebug("line: %s", line);
@@ -120,7 +120,7 @@ fwrite(line, sizeof(char), strnlen(line, 1024), file);
 
 //  sprintf(line, "IBV_BCAST_MEAN_WAIT %g\n", (double) counters[IBV_BCAST_WAIT_SIZE].value/counters[IBV_BCAST_WAIT_NB].value);
 //  fwrite(line, sizeof(char), strnlen(line, 1024), file);
-
+#endif
   fclose(file);
 #endif
 }

@@ -59,21 +59,23 @@ extern  sctk_net_ibv_qp_local_t *rc_sr_local;
 }
 
    void*
-  sctk_net_ibv_collective_push_rc_sr(struct sctk_list* list, sctk_net_ibv_ibuf_header_t* msg)
+  sctk_net_ibv_collective_push_rc_sr(struct sctk_list* list, sctk_net_ibv_ibuf_t* ibuf)
 {
   sctk_net_ibv_collective_pending_t* pending;
+  sctk_net_ibv_ibuf_header_t* msg_header;
 
-  pending = sctk_malloc(msg->payload_size + sizeof(sctk_net_ibv_collective_pending_t));
+  msg_header = ((sctk_net_ibv_ibuf_header_t*) ibuf->buffer);
+
+  pending = sctk_malloc(sizeof(sctk_net_ibv_collective_pending_t));
   assume(pending);
   sctk_ibv_profiler_inc(IBV_MEM_TRACE);
 
-  pending->payload = (char*) pending + sizeof(sctk_net_ibv_collective_pending_t);
-  pending->src_process = msg->src_process;
+  pending->payload = ibuf;
+  pending->size = ibuf->size;
+  pending->src_process = msg_header->src_process;
 
-  memcpy(pending->payload, RC_SR_PAYLOAD(msg), msg->payload_size);
-  sctk_nodebug("Push with src %d, size %lu", msg->src_process, msg->payload_size);
+  sctk_nodebug("Push with src %d", msg_header->src_process);
 
-  sctk_nodebug("Push pending : %p", pending);
   sctk_list_lock(list);
   sctk_list_push(list, pending);
   sctk_list_unlock(list);
@@ -151,6 +153,7 @@ sctk_net_ibv_broadcast_recv(void* data, size_t size, int* array,
 {
   int src;
   sctk_net_ibv_collective_pending_t* msg;
+  sctk_net_ibv_ibuf_t* ibuf;
   double s, e;
 
 
@@ -180,10 +183,13 @@ sctk_net_ibv_broadcast_recv(void* data, size_t size, int* array,
 //      sctk_debug("Wait : %g", (e - s) * 1e6);
 
       sctk_nodebug("Broadcast received from process %d size %lu", src, msg->size);
-
-      sctk_nodebug("received : %p", msg);
+      ibuf = (sctk_net_ibv_ibuf_t*) msg->payload;
       memcpy(data,
-        msg->payload, size);
+        RC_SR_PAYLOAD(ibuf->buffer), size);
+      /* restore buffers */
+      sctk_net_ibv_ibuf_release(ibuf, 1);
+      sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
+
       sctk_free(msg);
       sctk_ibv_profiler_dec(IBV_MEM_TRACE);
       break;
@@ -292,6 +298,7 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
   int size;
   int i;
   sctk_net_ibv_collective_pending_t* msg;
+  sctk_net_ibv_ibuf_t* ibuf;
   int mask;
   int relative_rank;
   /* root process is process 0 */
@@ -318,6 +325,7 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
 //        sctk_net_ibv_allocator_ptp_poll_all();
         sctk_thread_yield();
       }
+      ibuf = (sctk_net_ibv_ibuf_t*) msg->payload;
       sctk_nodebug("Done msg from %d", child);
 
       /* an entry is ready to be read : we pop the element from list */
@@ -325,7 +333,10 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
       sctk_nodebug("Msg from %d", msg->src_process);
 
       /* function execution */
-      func ( msg->payload, my_vp->data.data_out, nb_elem, data_type );
+      func ( RC_SR_PAYLOAD(ibuf->buffer), my_vp->data.data_out, nb_elem, data_type );
+      /* restore buffers */
+      sctk_net_ibv_ibuf_release(ibuf, 1);
+      sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
 
       free(msg);
       sctk_ibv_profiler_dec(IBV_MEM_TRACE);
@@ -437,14 +448,14 @@ sctk_net_ibv_barrier_post_recv(local_entry_t* local)
 {
 
   /* allocate memory */
-  posix_memalign( (void*) &local->entry,
+  sctk_posix_memalign( (void*) &local->entry,
       sctk_net_ibv_mmu_get_pagesize(), sizeof(int) * sctk_process_number);
   assume(local->entry);
   memset(local_entry.entry, 0, sizeof(int) * sctk_process_number);
 
   /* register memory */
   local->mmu_entry =
-    sctk_net_ibv_mmu_register(rail->mmu, rc_sr_local,
+    sctk_net_ibv_mmu_register(rail, rc_sr_local,
         local->entry, sizeof(int) * sctk_process_number);
 
 }
