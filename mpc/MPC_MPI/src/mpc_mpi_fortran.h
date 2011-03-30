@@ -459,107 +459,107 @@ void ffunc (mpi_comm_set_name) (MPI_Comm * a, char *b SCTK_CHAR_MIXED (size),
 				int *res SCTK_CHAR_END (size));
 
 /*Fortran binding*/
-void ffunc (MPI_send) (void *buf, int *count, MPI_Datatype * datatype,
+void ffunc (pmpi_send) (void *buf, int *count, MPI_Datatype * datatype,
 			int *dest, int *tag, MPI_Comm * comm, int *res)
 {
   *res = MPI_Send (buf, *count, *datatype, *dest, *tag, *comm);
 }
 
-void ffunc (MPI_recv) (void *buf, int *count, MPI_Datatype * datatype,
+void ffunc (pmpi_recv) (void *buf, int *count, MPI_Datatype * datatype,
 			int *source, int *tag, MPI_Comm * comm,
 			MPI_Status * status, int *res)
 {
   *res = MPI_Recv (buf, *count, *datatype, *source, *tag, *comm, status);
 }
 
-void ffunc (MPI_get_count) (MPI_Status * status, MPI_Datatype * datatype,
+void ffunc (pmpi_get_count) (MPI_Status * status, MPI_Datatype * datatype,
 			     int *count, int *res)
 {
   *res = MPI_Get_count (status, *datatype, count);
 }
 
-void ffunc (MPI_bsend) (void *buf, int *count, MPI_Datatype * datatype,
+void ffunc (pmpi_bsend) (void *buf, int *count, MPI_Datatype * datatype,
 			 int *dest, int *tag, MPI_Comm * comm, int *res)
 {
   *res = MPI_Bsend (buf, *count, *datatype, *dest, *tag, *comm);
 }
 
-void ffunc (MPI_ssend) (void *buf, int *count, MPI_Datatype * datatype,
+void ffunc (pmpi_ssend) (void *buf, int *count, MPI_Datatype * datatype,
 			 int *dest, int *tag, MPI_Comm * comm, int *res)
 {
   *res = MPI_Ssend (buf, *count, *datatype, *dest, *tag, *comm);
 }
 
-void ffunc (MPI_rsend) (void *buf, int *count, MPI_Datatype * datatype,
+void ffunc (pmpi_rsend) (void *buf, int *count, MPI_Datatype * datatype,
 			 int *dest, int *tag, MPI_Comm * comm, int *res)
 {
   *res = MPI_Rsend (buf, *count, *datatype, *dest, *tag, *comm);
 }
 
-void ffunc (MPI_buffer_attach) (void *buffer, int *size, int *res)
+void ffunc (pmpi_buffer_attach) (void *buffer, int *size, int *res)
 {
   *res = MPI_Buffer_attach (buffer, *size);
 }
 
-void ffunc (MPI_buffer_detach) (void *buffer, int *size, int *res)
+void ffunc (pmpi_buffer_detach) (void *buffer, int *size, int *res)
 {
   *res = MPI_Buffer_detach (buffer, size);
 }
 
-void ffunc (MPI_isend) (void *buf, int *count, MPI_Datatype * datatype,
+void ffunc (pmpi_isend) (void *buf, int *count, MPI_Datatype * datatype,
 			 int *dest, int *tag, MPI_Comm * comm,
 			 MPI_Request * request, int *res)
 {
   *res = MPI_Isend (buf, *count, *datatype, *dest, *tag, *comm, request);
 }
 
-void ffunc (MPI_ibsend) (void *buf, int *count, MPI_Datatype * datatype,
+void ffunc (pmpi_ibsend) (void *buf, int *count, MPI_Datatype * datatype,
 			  int *dest, int *tag, MPI_Comm * comm,
 			  MPI_Request * request, int *res)
 {
   *res = MPI_Ibsend (buf, *count, *datatype, *dest, *tag, *comm, request);
 }
 
-void ffunc (MPI_issend) (void *buf, int *count, MPI_Datatype * datatype,
+void ffunc (pmpi_issend) (void *buf, int *count, MPI_Datatype * datatype,
 			  int *dest, int *tag, MPI_Comm * comm,
 			  MPI_Request * request, int *res)
 {
   *res = MPI_Issend (buf, *count, *datatype, *dest, *tag, *comm, request);
 }
 
-void ffunc (MPI_irsend) (void *buf, int *count, MPI_Datatype * datatype,
+void ffunc (pmpi_irsend) (void *buf, int *count, MPI_Datatype * datatype,
 			  int *dest, int *tag, MPI_Comm * comm,
 			  MPI_Request * request, int *res)
 {
   *res = MPI_Irsend (buf, *count, *datatype, *dest, *tag, *comm, request);
 }
 
-void ffunc (MPI_irecv) (void *buf, int *count, MPI_Datatype * datatype,
+void ffunc (pmpi_irecv) (void *buf, int *count, MPI_Datatype * datatype,
 			 int *source, int *tag, MPI_Comm * comm,
 			 MPI_Request * request, int *res)
 {
   *res = MPI_Irecv (buf, *count, *datatype, *source, *tag, *comm, request);
 }
 
-void ffunc (MPI_wait) (MPI_Request * request, MPI_Status * status, int *res)
+void ffunc (pmpi_wait) (MPI_Request * request, MPI_Status * status, int *res)
 {
   *res = MPI_Wait (request, status);
 }
 
-void ffunc (MPI_test) (MPI_Request * request, int *flag, MPI_Status * status,
+void ffunc (pmpi_test) (MPI_Request * request, int *flag, MPI_Status * status,
 			int *res)
 {
   *res = MPI_Test (request, flag, status);
 
 }
 
-void ffunc (MPI_request_free) (MPI_Request * request, int *res)
+void ffunc (pmpi_request_free) (MPI_Request * request, int *res)
 {
   *res = MPI_Request_free (request);
 
 }
 
-void ffunc (MPI_waitany) (int *count, MPI_Request array_of_requests[],
+void ffunc (pmpi_waitany) (int *count, MPI_Request array_of_requests[],
 			   int *index, MPI_Status * status, int *res)
 {
   *res = MPI_Waitany (*count, array_of_requests, index, status);
@@ -567,7 +567,7 @@ void ffunc (MPI_waitany) (int *count, MPI_Request array_of_requests[],
 
 }
 
-void ffunc (MPI_testany) (int *count, MPI_Request array_of_requests[],
+void ffunc (pmpi_testany) (int *count, MPI_Request array_of_requests[],
 			   int *index, int *flag, MPI_Status * status,
 			   int *res)
 {
@@ -576,13 +576,13 @@ void ffunc (MPI_testany) (int *count, MPI_Request array_of_requests[],
 
 }
 
-void ffunc (MPI_waitall) (int *count, MPI_Request array_of_requests[],
+void ffunc (pmpi_waitall) (int *count, MPI_Request array_of_requests[],
 			   MPI_Status array_of_statuses[], int *res)
 {
   *res = MPI_Waitall (*count, array_of_requests, array_of_statuses);
 }
 
-void ffunc (MPI_testall) (int *count, MPI_Request array_of_requests[],
+void ffunc (pmpi_testall) (int *count, MPI_Request array_of_requests[],
 			   int *flag, MPI_Status array_of_statuses[],
 			   int *res)
 {
@@ -590,7 +590,7 @@ void ffunc (MPI_testall) (int *count, MPI_Request array_of_requests[],
 
 }
 
-void ffunc (MPI_waitsome) (int *incount, MPI_Request array_of_requests[],
+void ffunc (pmpi_waitsome) (int *incount, MPI_Request array_of_requests[],
 			    int *outcount, int array_of_indices[],
 			    MPI_Status array_of_statuses[], int *res)
 {
@@ -604,7 +604,7 @@ void ffunc (MPI_waitsome) (int *incount, MPI_Request array_of_requests[],
     }
 }
 
-void ffunc (MPI_testsome) (int *incount, MPI_Request array_of_requests[],
+void ffunc (pmpi_testsome) (int *incount, MPI_Request array_of_requests[],
 			    int *outcount, int array_of_indices[],
 			    MPI_Status array_of_statuses[], int *res)
 {
@@ -619,31 +619,31 @@ void ffunc (MPI_testsome) (int *incount, MPI_Request array_of_requests[],
 
 }
 
-void ffunc (MPI_iprobe) (int *source, int *tag, MPI_Comm * comm, int *flag,
+void ffunc (pmpi_iprobe) (int *source, int *tag, MPI_Comm * comm, int *flag,
 			  MPI_Status * status, int *res)
 {
   *res = MPI_Iprobe (*source, *tag, *comm, flag, status);
 }
 
-void ffunc (MPI_probe) (int *source, int *tag, MPI_Comm * comm,
+void ffunc (pmpi_probe) (int *source, int *tag, MPI_Comm * comm,
 			 MPI_Status * status, int *res)
 {
   *res = MPI_Probe (*source, *tag, *comm, status);
 }
 
-void ffunc (MPI_cancel) (MPI_Request * request, int *res)
+void ffunc (pmpi_cancel) (MPI_Request * request, int *res)
 {
   *res = MPI_Cancel (request);
 
 }
 
-void ffunc (MPI_test_cancelled) (MPI_Status * status, int *flag, int *res)
+void ffunc (pmpi_test_cancelled) (MPI_Status * status, int *flag, int *res)
 {
   *res = MPI_Test_cancelled (status, flag);
 
 }
 
-void ffunc (MPI_send_init) (void *buf, int *count, MPI_Datatype * datatype,
+void ffunc (pmpi_send_init) (void *buf, int *count, MPI_Datatype * datatype,
 			     int *dest, int *tag, MPI_Comm * comm,
 			     MPI_Request * request, int *res)
 {
@@ -651,7 +651,7 @@ void ffunc (MPI_send_init) (void *buf, int *count, MPI_Datatype * datatype,
 
 }
 
-void ffunc (MPI_bsend_init) (void *buf, int *count, MPI_Datatype * datatype,
+void ffunc (pmpi_bsend_init) (void *buf, int *count, MPI_Datatype * datatype,
 			      int *dest, int *tag, MPI_Comm * comm,
 			      MPI_Request * request, int *res)
 {
@@ -660,7 +660,7 @@ void ffunc (MPI_bsend_init) (void *buf, int *count, MPI_Datatype * datatype,
 
 }
 
-void ffunc (MPI_ssend_init) (void *buf, int *count, MPI_Datatype * datatype,
+void ffunc (pmpi_ssend_init) (void *buf, int *count, MPI_Datatype * datatype,
 			      int *dest, int *tag, MPI_Comm * comm,
 			      MPI_Request * request, int *res)
 {
@@ -669,7 +669,7 @@ void ffunc (MPI_ssend_init) (void *buf, int *count, MPI_Datatype * datatype,
 
 }
 
-void ffunc (MPI_rsend_init) (void *buf, int *count, MPI_Datatype * datatype,
+void ffunc (pmpi_rsend_init) (void *buf, int *count, MPI_Datatype * datatype,
 			      int *dest, int *tag, MPI_Comm * comm,
 			      MPI_Request * request, int *res)
 {
@@ -678,7 +678,7 @@ void ffunc (MPI_rsend_init) (void *buf, int *count, MPI_Datatype * datatype,
 
 }
 
-void ffunc (MPI_recv_init) (void *buf, int *count, MPI_Datatype * datatype,
+void ffunc (pmpi_recv_init) (void *buf, int *count, MPI_Datatype * datatype,
 			     int *source, int *tag, MPI_Comm * comm,
 			     MPI_Request * request, int *res)
 {
@@ -687,20 +687,20 @@ void ffunc (MPI_recv_init) (void *buf, int *count, MPI_Datatype * datatype,
 
 }
 
-void ffunc (MPI_start) (MPI_Request * request, int *res)
+void ffunc (pmpi_start) (MPI_Request * request, int *res)
 {
   *res = MPI_Start (request);
 
 }
 
-void ffunc (MPI_startall) (int *count, MPI_Request array_of_requests[],
+void ffunc (pmpi_startall) (int *count, MPI_Request array_of_requests[],
 			    int *res)
 {
   *res = MPI_Startall (*count, array_of_requests);
 
 }
 
-void ffunc (MPI_sendrecv) (void *sendbuf, int *sendcount,
+void ffunc (pmpi_sendrecv) (void *sendbuf, int *sendcount,
 			    MPI_Datatype * sendtype, int *dest, int *sendtag,
 			    void *recvbuf, int *recvcount,
 			    MPI_Datatype * recvtype, int *source,
@@ -713,7 +713,7 @@ void ffunc (MPI_sendrecv) (void *sendbuf, int *sendcount,
 
 }
 
-void ffunc (MPI_sendrecv_replace) (void *buf, int *count,
+void ffunc (pmpi_sendrecv_replace) (void *buf, int *count,
 				    MPI_Datatype * datatype, int *dest,
 				    int *sendtag, int *source, int *recvtag,
 				    MPI_Comm * comm, MPI_Status * status,
@@ -725,7 +725,7 @@ void ffunc (MPI_sendrecv_replace) (void *buf, int *count,
 
 }
 
-void ffunc (MPI_type_contiguous) (int *count,
+void ffunc (pmpi_type_contiguous) (int *count,
 				   MPI_Datatype * old_type,
 				   MPI_Datatype * new_type_p, int *res)
 {
@@ -733,7 +733,7 @@ void ffunc (MPI_type_contiguous) (int *count,
 
 }
 
-void ffunc (MPI_type_vector) (int *count,
+void ffunc (pmpi_type_vector) (int *count,
 			       int *blocklength,
 			       int *stride, MPI_Datatype * old_type,
 			       MPI_Datatype * newtype_p, int *res)
@@ -743,7 +743,7 @@ void ffunc (MPI_type_vector) (int *count,
 
 }
 
-void ffunc (MPI_type_hvector) (int *count,
+void ffunc (pmpi_type_hvector) (int *count,
 				int *blocklen,
 				MPI_Aint * stride,
 				MPI_Datatype * old_type,
@@ -753,7 +753,7 @@ void ffunc (MPI_type_hvector) (int *count,
 
 }
 
-void ffunc (MPI_type_indexed) (int *count,
+void ffunc (pmpi_type_indexed) (int *count,
 				int blocklens[],
 				int indices[],
 				MPI_Datatype * old_type,
@@ -763,7 +763,7 @@ void ffunc (MPI_type_indexed) (int *count,
 
 }
 
-void ffunc (MPI_type_hindexed) (int *count,
+void ffunc (pmpi_type_hindexed) (int *count,
 				 int blocklens[],
 				 MPI_Aint indices[],
 				 MPI_Datatype * old_type,
@@ -773,7 +773,7 @@ void ffunc (MPI_type_hindexed) (int *count,
 
 }
 
-void ffunc (MPI_type_struct) (int *count,
+void ffunc (pmpi_type_struct) (int *count,
 			       int blocklens[],
 			       MPI_Aint indices[],
 			       MPI_Datatype old_types[],
@@ -783,14 +783,14 @@ void ffunc (MPI_type_struct) (int *count,
 
 }
 
-void ffunc (MPI_address) (void *location, MPI_Aint * address, int *res)
+void ffunc (pmpi_address) (void *location, MPI_Aint * address, int *res)
 {
   *res = MPI_Address (location, address);
 
 }
 
   /* We could add __attribute__((deprecated)) to routines like MPI_Type_extent */
-void ffunc (MPI_type_extent) (MPI_Datatype * datatype, MPI_Aint * extent,
+void ffunc (pmpi_type_extent) (MPI_Datatype * datatype, MPI_Aint * extent,
 			       int *res)
 {
   *res = MPI_Type_extent (*datatype, extent);
@@ -800,47 +800,47 @@ void ffunc (MPI_type_extent) (MPI_Datatype * datatype, MPI_Aint * extent,
   /* See the 1.1 version of the Standard.  The standard made an 
      unfortunate choice here, however, it is the standard.  The size returned 
      by MPI_Type_size is specified as an int, not an MPI_Aint */
-void ffunc (MPI_type_size) (MPI_Datatype * datatype, int *size, int *res)
+void ffunc (pmpi_type_size) (MPI_Datatype * datatype, int *size, int *res)
 {
   *res = MPI_Type_size (*datatype, size);
 
 }
 
   /* MPI_Type_count was withdrawn in MPI 1.1 */
-void ffunc (MPI_type_lb) (MPI_Datatype * datatype, MPI_Aint * displacement,
+void ffunc (pmpi_type_lb) (MPI_Datatype * datatype, MPI_Aint * displacement,
 			   int *res)
 {
   *res = MPI_Type_lb (*datatype, displacement);
 
 }
 
-void ffunc (MPI_type_ub) (MPI_Datatype * datatype, MPI_Aint * displacement,
+void ffunc (pmpi_type_ub) (MPI_Datatype * datatype, MPI_Aint * displacement,
 			   int *res)
 {
   *res = MPI_Type_ub (*datatype, displacement);
 
 }
 
-void ffunc (MPI_type_commit) (MPI_Datatype * datatype, int *res)
+void ffunc (pmpi_type_commit) (MPI_Datatype * datatype, int *res)
 {
   *res = MPI_Type_commit (datatype);
 
 }
 
-void ffunc (MPI_type_free) (MPI_Datatype * datatype, int *res)
+void ffunc (pmpi_type_free) (MPI_Datatype * datatype, int *res)
 {
   *res = MPI_Type_free (datatype);
 
 }
 
-void ffunc (MPI_get_elements) (MPI_Status * status, MPI_Datatype * datatype,
+void ffunc (pmpi_get_elements) (MPI_Status * status, MPI_Datatype * datatype,
 				int *elements, int *res)
 {
   *res = MPI_Get_elements (status, *datatype, elements);
 
 }
 
-void ffunc (MPI_pack) (void *inbuf,
+void ffunc (pmpi_pack) (void *inbuf,
 			int *incount,
 			MPI_Datatype * datatype,
 			void *outbuf, int *outcount, int *position,
@@ -852,7 +852,7 @@ void ffunc (MPI_pack) (void *inbuf,
 
 }
 
-void ffunc (MPI_unpack) (void *inbuf,
+void ffunc (pmpi_unpack) (void *inbuf,
 			  int *insize,
 			  int *position,
 			  void *outbuf, int *outcount,
@@ -864,27 +864,27 @@ void ffunc (MPI_unpack) (void *inbuf,
 
 }
 
-void ffunc (MPI_pack_size) (int *incount, MPI_Datatype * datatype,
+void ffunc (pmpi_pack_size) (int *incount, MPI_Datatype * datatype,
 			     MPI_Comm * comm, int *size, int *res)
 {
   *res = MPI_Pack_size (*incount, *datatype, *comm, size);
 
 }
 
-void ffunc (MPI_barrier) (MPI_Comm * comm, int *res)
+void ffunc (pmpi_barrier) (MPI_Comm * comm, int *res)
 {
   *res = MPI_Barrier (*comm);
 
 }
 
-void ffunc (MPI_bcast) (void *buffer, int *count, MPI_Datatype * datatype,
+void ffunc (pmpi_bcast) (void *buffer, int *count, MPI_Datatype * datatype,
 			 int *root, MPI_Comm * comm, int *res)
 {
   *res = MPI_Bcast (buffer, *count, *datatype, *root, *comm);
 
 }
 
-void ffunc (MPI_gather) (void *sendbuf, int *sendcnt,
+void ffunc (pmpi_gather) (void *sendbuf, int *sendcnt,
 			  MPI_Datatype * sendtype, void *recvbuf,
 			  int *recvcnt, MPI_Datatype * recvtype, int *root,
 			  MPI_Comm * comm, int *res)
@@ -895,7 +895,7 @@ void ffunc (MPI_gather) (void *sendbuf, int *sendcnt,
 
 }
 
-void ffunc (MPI_gatherv) (void *sendbuf, int *sendcnt,
+void ffunc (pmpi_gatherv) (void *sendbuf, int *sendcnt,
 			   MPI_Datatype * sendtype, void *recvbuf,
 			   int *recvcnts, int *displs,
 			   MPI_Datatype * recvtype, int *root,
@@ -907,7 +907,7 @@ void ffunc (MPI_gatherv) (void *sendbuf, int *sendcnt,
 
 }
 
-void ffunc (MPI_scatter) (void *sendbuf, int *sendcnt,
+void ffunc (pmpi_scatter) (void *sendbuf, int *sendcnt,
 			   MPI_Datatype * sendtype, void *recvbuf,
 			   int *recvcnt, MPI_Datatype * recvtype, int *root,
 			   MPI_Comm * comm, int *res)
@@ -918,7 +918,7 @@ void ffunc (MPI_scatter) (void *sendbuf, int *sendcnt,
 
 }
 
-void ffunc (MPI_scatterv) (void *sendbuf, int *sendcnts, int *displs,
+void ffunc (pmpi_scatterv) (void *sendbuf, int *sendcnts, int *displs,
 			    MPI_Datatype * sendtype, void *recvbuf,
 			    int *recvcnt, MPI_Datatype * recvtype, int *root,
 			    MPI_Comm * comm, int *res)
@@ -929,7 +929,7 @@ void ffunc (MPI_scatterv) (void *sendbuf, int *sendcnts, int *displs,
 
 }
 
-void ffunc (MPI_allgather) (void *sendbuf, int *sendcount,
+void ffunc (pmpi_allgather) (void *sendbuf, int *sendcount,
 			     MPI_Datatype * sendtype, void *recvbuf,
 			     int *recvcount, MPI_Datatype * recvtype,
 			     MPI_Comm * comm, int *res)
@@ -940,7 +940,7 @@ void ffunc (MPI_allgather) (void *sendbuf, int *sendcount,
 
 }
 
-void ffunc (MPI_allgatherv) (void *sendbuf, int *sendcount,
+void ffunc (pmpi_allgatherv) (void *sendbuf, int *sendcount,
 			      MPI_Datatype * sendtype, void *recvbuf,
 			      int *recvcounts, int *displs,
 			      MPI_Datatype * recvtype, MPI_Comm * comm,
@@ -951,7 +951,7 @@ void ffunc (MPI_allgatherv) (void *sendbuf, int *sendcount,
 		     displs, *recvtype, *comm);
 }
 
-void ffunc (MPI_alltoall) (void *sendbuf, int *sendcount,
+void ffunc (pmpi_alltoall) (void *sendbuf, int *sendcount,
 			    MPI_Datatype * sendtype, void *recvbuf,
 			    int *recvcount, MPI_Datatype * recvtype,
 			    MPI_Comm * comm, int *res)
@@ -962,7 +962,7 @@ void ffunc (MPI_alltoall) (void *sendbuf, int *sendcount,
 
 }
 
-void ffunc (MPI_alltoallv) (void *sendbuf, int *sendcnts, int *sdispls,
+void ffunc (pmpi_alltoallv) (void *sendbuf, int *sendcnts, int *sdispls,
 			     MPI_Datatype * sendtype, void *recvbuf,
 			     int *recvcnts, int *rdispls,
 			     MPI_Datatype * recvtype, MPI_Comm * comm,
@@ -974,7 +974,7 @@ void ffunc (MPI_alltoallv) (void *sendbuf, int *sendcnts, int *sdispls,
 
 }
 
-void ffunc (MPI_reduce) (void *sendbuf, void *recvbuf, int *count,
+void ffunc (pmpi_reduce) (void *sendbuf, void *recvbuf, int *count,
 			  MPI_Datatype * datatype, MPI_Op * op, int *root,
 			  MPI_Comm * comm, int *res)
 {
@@ -982,20 +982,20 @@ void ffunc (MPI_reduce) (void *sendbuf, void *recvbuf, int *count,
 
 }
 
-void ffunc (MPI_op_create) (MPI_User_function * function, int *commute,
+void ffunc (pmpi_op_create) (MPI_User_function * function, int *commute,
 			     MPI_Op * op, int *res)
 {
   *res = MPI_Op_create (function, *commute, op);
 
 }
 
-void ffunc (MPI_op_free) (MPI_Op * op, int *res)
+void ffunc (pmpi_op_free) (MPI_Op * op, int *res)
 {
   *res = MPI_Op_free (op);
 
 }
 
-void ffunc (MPI_allreduce) (void *sendbuf, void *recvbuf, int *count,
+void ffunc (pmpi_allreduce) (void *sendbuf, void *recvbuf, int *count,
 			     MPI_Datatype * datatype, MPI_Op * op,
 			     MPI_Comm * comm, int *res)
 {
@@ -1003,7 +1003,7 @@ void ffunc (MPI_allreduce) (void *sendbuf, void *recvbuf, int *count,
 
 }
 
-void ffunc (MPI_reduce_scatter) (void *sendbuf, void *recvbuf, int *recvcnts,
+void ffunc (pmpi_reduce_scatter) (void *sendbuf, void *recvbuf, int *recvcnts,
 				  MPI_Datatype * datatype, MPI_Op * op,
 				  MPI_Comm * comm, int *res)
 {
@@ -1012,7 +1012,7 @@ void ffunc (MPI_reduce_scatter) (void *sendbuf, void *recvbuf, int *recvcnts,
 
 }
 
-void ffunc (MPI_scan) (void *sendbuf, void *recvbuf, int *count,
+void ffunc (pmpi_scan) (void *sendbuf, void *recvbuf, int *count,
 			MPI_Datatype * datatype, MPI_Op * op, MPI_Comm * comm,
 			int *res)
 {
@@ -1020,19 +1020,19 @@ void ffunc (MPI_scan) (void *sendbuf, void *recvbuf, int *count,
 
 }
 
-void ffunc (MPI_group_size) (MPI_Group * group, int *size, int *res)
+void ffunc (pmpi_group_size) (MPI_Group * group, int *size, int *res)
 {
   *res = MPI_Group_size (*group, size);
 
 }
 
-void ffunc (MPI_group_rank) (MPI_Group * group, int *rank, int *res)
+void ffunc (pmpi_group_rank) (MPI_Group * group, int *rank, int *res)
 {
   *res = MPI_Group_rank (*group, rank);
 
 }
 
-void ffunc (MPI_group_translate_ranks) (MPI_Group * group1, int *n,
+void ffunc (pmpi_group_translate_ranks) (MPI_Group * group1, int *n,
 					 int *ranks1, MPI_Group * group2,
 					 int *ranks2, int *res)
 {
@@ -1040,55 +1040,55 @@ void ffunc (MPI_group_translate_ranks) (MPI_Group * group1, int *n,
 
 }
 
-void ffunc (MPI_group_compare) (MPI_Group * group1, MPI_Group * group2,
+void ffunc (pmpi_group_compare) (MPI_Group * group1, MPI_Group * group2,
 				 int *result, int *res)
 {
   *res = MPI_Group_compare (*group1, *group2, result);
 
 }
 
-void ffunc (MPI_comm_group) (MPI_Comm * comm, MPI_Group * group, int *res)
+void ffunc (pmpi_comm_group) (MPI_Comm * comm, MPI_Group * group, int *res)
 {
   *res = MPI_Comm_group (*comm, group);
 
 }
 
-void ffunc (MPI_group_union) (MPI_Group * group1, MPI_Group * group2,
+void ffunc (pmpi_group_union) (MPI_Group * group1, MPI_Group * group2,
 			       MPI_Group * newgroup, int *res)
 {
   *res = MPI_Group_union (*group1, *group2, newgroup);
 
 }
 
-void ffunc (MPI_group_intersection) (MPI_Group * group1, MPI_Group * group2,
+void ffunc (pmpi_group_intersection) (MPI_Group * group1, MPI_Group * group2,
 				      MPI_Group * newgroup, int *res)
 {
   *res = MPI_Group_intersection (*group1, *group2, newgroup);
 
 }
 
-void ffunc (MPI_group_difference) (MPI_Group * group1, MPI_Group * group2,
+void ffunc (pmpi_group_difference) (MPI_Group * group1, MPI_Group * group2,
 				    MPI_Group * newgroup, int *res)
 {
   *res = MPI_Group_difference (*group1, *group2, newgroup);
 
 }
 
-void ffunc (MPI_group_incl) (MPI_Group * group, int *n, int *ranks,
+void ffunc (pmpi_group_incl) (MPI_Group * group, int *n, int *ranks,
 			      MPI_Group * newgroup, int *res)
 {
   *res = MPI_Group_incl (*group, *n, ranks, newgroup);
 
 }
 
-void ffunc (MPI_group_excl) (MPI_Group * group, int *n, int *ranks,
+void ffunc (pmpi_group_excl) (MPI_Group * group, int *n, int *ranks,
 			      MPI_Group * newgroup, int *res)
 {
   *res = MPI_Group_excl (*group, *n, ranks, newgroup);
 
 }
 
-void ffunc (MPI_group_range_incl) (MPI_Group * group, int *n,
+void ffunc (pmpi_group_range_incl) (MPI_Group * group, int *n,
 				    int ranges[][3], MPI_Group * newgroup,
 				    int *res)
 {
@@ -1096,7 +1096,7 @@ void ffunc (MPI_group_range_incl) (MPI_Group * group, int *n,
 
 }
 
-void ffunc (MPI_group_range_excl) (MPI_Group * group, int *n,
+void ffunc (pmpi_group_range_excl) (MPI_Group * group, int *n,
 				    int ranges[][3], MPI_Group * newgroup,
 				    int *res)
 {
@@ -1104,74 +1104,74 @@ void ffunc (MPI_group_range_excl) (MPI_Group * group, int *n,
 
 }
 
-void ffunc (MPI_group_free) (MPI_Group * group, int *res)
+void ffunc (pmpi_group_free) (MPI_Group * group, int *res)
 {
   *res = MPI_Group_free (group);
 
 }
 
-void ffunc (MPI_comm_size) (MPI_Comm * comm, int *size, int *res)
+void ffunc (pmpi_comm_size) (MPI_Comm * comm, int *size, int *res)
 {
   *res = MPI_Comm_size (*comm, size);
 }
 
-void ffunc (MPI_comm_rank) (MPI_Comm * comm, int *rank, int *res)
+void ffunc (pmpi_comm_rank) (MPI_Comm * comm, int *rank, int *res)
 {
   *res = MPI_Comm_rank (*comm, rank);
 }
 
-void ffunc (MPI_comm_compare) (MPI_Comm * comm1, MPI_Comm * comm2,
+void ffunc (pmpi_comm_compare) (MPI_Comm * comm1, MPI_Comm * comm2,
 				int *result, int *res)
 {
   *res = MPI_Comm_compare (*comm1, *comm2, result);
 
 }
 
-void ffunc (MPI_comm_dup) (MPI_Comm * comm, MPI_Comm * newcomm, int *res)
+void ffunc (pmpi_comm_dup) (MPI_Comm * comm, MPI_Comm * newcomm, int *res)
 {
   *res = MPI_Comm_dup (*comm, newcomm);
 }
 
-void ffunc (MPI_comm_create) (MPI_Comm * comm, MPI_Group * group,
+void ffunc (pmpi_comm_create) (MPI_Comm * comm, MPI_Group * group,
 			       MPI_Comm * newcomm, int *res)
 {
   *res = MPI_Comm_create (*comm, *group, newcomm);
 
 }
 
-void ffunc (MPI_comm_split) (MPI_Comm * comm, int *color, int *key,
+void ffunc (pmpi_comm_split) (MPI_Comm * comm, int *color, int *key,
 			      MPI_Comm * newcomm, int *res)
 {
   *res = MPI_Comm_split (*comm, *color, *key, newcomm);
 
 }
 
-void ffunc (MPI_comm_free) (MPI_Comm * comm, int *res)
+void ffunc (pmpi_comm_free) (MPI_Comm * comm, int *res)
 {
   *res = MPI_Comm_free (comm);
 
 }
 
-void ffunc (MPI_comm_test_inter) (MPI_Comm * comm, int *flag, int *res)
+void ffunc (pmpi_comm_test_inter) (MPI_Comm * comm, int *flag, int *res)
 {
   *res = MPI_Comm_test_inter (*comm, flag);
 
 }
 
-void ffunc (MPI_comm_remote_size) (MPI_Comm * comm, int *size, int *res)
+void ffunc (pmpi_comm_remote_size) (MPI_Comm * comm, int *size, int *res)
 {
   *res = MPI_Comm_remote_size (*comm, size);
 
 }
 
-void ffunc (MPI_comm_remote_group) (MPI_Comm * comm, MPI_Group * group,
+void ffunc (pmpi_comm_remote_group) (MPI_Comm * comm, MPI_Group * group,
 				     int *res)
 {
   *res = MPI_Comm_remote_group (*comm, group);
 
 }
 
-void ffunc (MPI_intercomm_create) (MPI_Comm * local_comm, int *local_leader,
+void ffunc (pmpi_intercomm_create) (MPI_Comm * local_comm, int *local_leader,
 				    MPI_Comm * peer_comm, int *remote_leader,
 				    int *tag, MPI_Comm * newintercomm,
 				    int *res)
@@ -1182,14 +1182,14 @@ void ffunc (MPI_intercomm_create) (MPI_Comm * local_comm, int *local_leader,
 
 }
 
-void ffunc (MPI_intercomm_merge) (MPI_Comm * intercomm, int *high,
+void ffunc (pmpi_intercomm_merge) (MPI_Comm * intercomm, int *high,
 				   MPI_Comm * newintracomm, int *res)
 {
   *res = MPI_Intercomm_merge (*intercomm, *high, newintracomm);
 
 }
 
-void ffunc (MPI_keyval_create) (MPI_Copy_function * copy_fn,
+void ffunc (pmpi_keyval_create) (MPI_Copy_function * copy_fn,
 				 MPI_Delete_function * delete_fn,
 				 int *keyval, void *extra_state, int *res)
 {
@@ -1197,39 +1197,39 @@ void ffunc (MPI_keyval_create) (MPI_Copy_function * copy_fn,
   __INTERNAL__PMPI_Attr_set_fortran (*keyval);
 }
 
-void ffunc (MPI_keyval_free) (int *keyval, int *res)
+void ffunc (pmpi_keyval_free) (int *keyval, int *res)
 {
   *res = MPI_Keyval_free (keyval);
 
 }
 
-void ffunc (MPI_attr_put) (MPI_Comm * comm, int *keyval, void *attr_value,
+void ffunc (pmpi_attr_put) (MPI_Comm * comm, int *keyval, void *attr_value,
 			    int *res)
 {
   *res = MPI_Attr_put (*comm, *keyval, attr_value);
 
 }
 
-void ffunc (MPI_attr_get) (MPI_Comm * comm, int *keyval, void *attr_value,
+void ffunc (pmpi_attr_get) (MPI_Comm * comm, int *keyval, void *attr_value,
 			    int *flag, int *res)
 {
   *res = MPI_Attr_get (*comm, *keyval, attr_value, flag);
 
 }
 
-void ffunc (MPI_attr_delete) (MPI_Comm * comm, int *keyval, int *res)
+void ffunc (pmpi_attr_delete) (MPI_Comm * comm, int *keyval, int *res)
 {
   *res = MPI_Attr_delete (*comm, *keyval);
 
 }
 
-void ffunc (MPI_topo_test) (MPI_Comm * comm, int *topo_type, int *res)
+void ffunc (pmpi_topo_test) (MPI_Comm * comm, int *topo_type, int *res)
 {
   *res = MPI_Topo_test (*comm, topo_type);
 
 }
 
-void ffunc (MPI_cart_create) (MPI_Comm * comm_old, int *ndims, int *dims,
+void ffunc (pmpi_cart_create) (MPI_Comm * comm_old, int *ndims, int *dims,
 			       int *periods, int *reorder,
 			       MPI_Comm * comm_cart, int *res)
 {
@@ -1238,13 +1238,13 @@ void ffunc (MPI_cart_create) (MPI_Comm * comm_old, int *ndims, int *dims,
 
 }
 
-void ffunc (MPI_dims_create) (int *nnodes, int *ndims, int *dims, int *res)
+void ffunc (pmpi_dims_create) (int *nnodes, int *ndims, int *dims, int *res)
 {
   *res = MPI_Dims_create (*nnodes, *ndims, dims);
 
 }
 
-void ffunc (MPI_graph_create) (MPI_Comm * comm_old, int *nnodes, int *index,
+void ffunc (pmpi_graph_create) (MPI_Comm * comm_old, int *nnodes, int *index,
 				int *edges, int *reorder,
 				MPI_Comm * comm_graph, int *res)
 {
@@ -1254,55 +1254,55 @@ void ffunc (MPI_graph_create) (MPI_Comm * comm_old, int *nnodes, int *index,
 
 }
 
-void ffunc (MPI_graphdims_get) (MPI_Comm * comm, int *nnodes, int *nedges,
+void ffunc (pmpi_graphdims_get) (MPI_Comm * comm, int *nnodes, int *nedges,
 				 int *res)
 {
   *res = MPI_Graphdims_get (*comm, nnodes, nedges);
 
 }
 
-void ffunc (MPI_graph_get) (MPI_Comm * comm, int *maxindex, int *maxedges,
+void ffunc (pmpi_graph_get) (MPI_Comm * comm, int *maxindex, int *maxedges,
 			     int *index, int *edges, int *res)
 {
   *res = MPI_Graph_get (*comm, *maxindex, *maxedges, index, edges);
 
 }
 
-void ffunc (MPI_cartdim_get) (MPI_Comm * comm, int *ndims, int *res)
+void ffunc (pmpi_cartdim_get) (MPI_Comm * comm, int *ndims, int *res)
 {
   *res = MPI_Cartdim_get (*comm, ndims);
 
 }
 
-void ffunc (MPI_cart_get) (MPI_Comm * comm, int *maxdims, int *dims,
+void ffunc (pmpi_cart_get) (MPI_Comm * comm, int *maxdims, int *dims,
 			    int *periods, int *coords, int *res)
 {
   *res = MPI_Cart_get (*comm, *maxdims, dims, periods, coords);
 
 }
 
-void ffunc (MPI_cart_rank) (MPI_Comm * comm, int *coords, int *rank,
+void ffunc (pmpi_cart_rank) (MPI_Comm * comm, int *coords, int *rank,
 			     int *res)
 {
   *res = MPI_Cart_rank (*comm, coords, rank);
 
 }
 
-void ffunc (MPI_cart_coords) (MPI_Comm * comm, int *rank, int *maxdims,
+void ffunc (pmpi_cart_coords) (MPI_Comm * comm, int *rank, int *maxdims,
 			       int *coords, int *res)
 {
   *res = MPI_Cart_coords (*comm, *rank, *maxdims, coords);
 
 }
 
-void ffunc (MPI_graph_neighbors_count) (MPI_Comm * comm, int *rank,
+void ffunc (pmpi_graph_neighbors_count) (MPI_Comm * comm, int *rank,
 					 int *nneighbors, int *res)
 {
   *res = MPI_Graph_neighbors_count (*comm, *rank, nneighbors);
 
 }
 
-void ffunc (MPI_graph_neighbors) (MPI_Comm * comm, int *rank,
+void ffunc (pmpi_graph_neighbors) (MPI_Comm * comm, int *rank,
 				   int *maxneighbors, int *neighbors,
 				   int *res)
 {
@@ -1310,134 +1310,134 @@ void ffunc (MPI_graph_neighbors) (MPI_Comm * comm, int *rank,
 
 }
 
-void ffunc (MPI_cart_shift) (MPI_Comm * comm, int *direction, int *displ,
+void ffunc (pmpi_cart_shift) (MPI_Comm * comm, int *direction, int *displ,
 			      int *source, int *dest, int *res)
 {
   *res = MPI_Cart_shift (*comm, *direction, *displ, source, dest);
 
 }
 
-void ffunc (MPI_cart_sub) (MPI_Comm * comm, int *remain_dims,
+void ffunc (pmpi_cart_sub) (MPI_Comm * comm, int *remain_dims,
 			    MPI_Comm * comm_new, int *res)
 {
   *res = MPI_Cart_sub (*comm, remain_dims, comm_new);
 
 }
 
-void ffunc (MPI_cart_map) (MPI_Comm * comm_old, int *ndims, int *dims,
+void ffunc (pmpi_cart_map) (MPI_Comm * comm_old, int *ndims, int *dims,
 			    int *periods, int *newrank, int *res)
 {
   *res = MPI_Cart_map (*comm_old, *ndims, dims, periods, newrank);
 
 }
 
-void ffunc (MPI_graph_map) (MPI_Comm * comm_old, int *nnodes, int *index,
+void ffunc (pmpi_graph_map) (MPI_Comm * comm_old, int *nnodes, int *index,
 			     int *edges, int *newrank, int *res)
 {
   *res = MPI_Graph_map (*comm_old, *nnodes, index, edges, newrank);
 
 }
 
-void ffunc (MPI_get_processor_name) (char *name, int *resultlen, int *res)
+void ffunc (pmpi_get_processor_name) (char *name, int *resultlen, int *res)
 {
   *res = MPI_Get_processor_name (name, resultlen);
 
 }
 
-void ffunc (MPI_get_version) (int *version, int *subversion, int *res)
+void ffunc (pmpi_get_version) (int *version, int *subversion, int *res)
 {
   *res = MPI_Get_version (version, subversion);
 
 }
 
-void ffunc (MPI_errhandler_create) (MPI_Handler_function * function,
+void ffunc (pmpi_errhandler_create) (MPI_Handler_function * function,
 				     MPI_Errhandler * errhandler, int *res)
 {
   *res = MPI_Errhandler_create (function, errhandler);
 
 }
 
-void ffunc (MPI_errhandler_set) (MPI_Comm * comm,
+void ffunc (pmpi_errhandler_set) (MPI_Comm * comm,
 				  MPI_Errhandler * errhandler, int *res)
 {
   *res = MPI_Errhandler_set (*comm, *errhandler);
 
 }
 
-void ffunc (MPI_errhandler_get) (MPI_Comm * comm,
+void ffunc (pmpi_errhandler_get) (MPI_Comm * comm,
 				  MPI_Errhandler * errhandler, int *res)
 {
   *res = MPI_Errhandler_get (*comm, errhandler);
 
 }
 
-void ffunc (MPI_errhandler_free) (MPI_Errhandler * errhandler, int *res)
+void ffunc (pmpi_errhandler_free) (MPI_Errhandler * errhandler, int *res)
 {
   *res = MPI_Errhandler_free (errhandler);
 
 }
 
-void ffunc (MPI_error_string) (int *errorcode, char *string, int *resultlen,
+void ffunc (pmpi_error_string) (int *errorcode, char *string, int *resultlen,
 				int *res)
 {
   *res = MPI_Error_string (*errorcode, string, resultlen);
 
 }
 
-void ffunc (MPI_error_class) (int *errorcode, int *errorclass, int *res)
+void ffunc (pmpi_error_class) (int *errorcode, int *errorclass, int *res)
 {
   *res = MPI_Error_class (*errorcode, errorclass);
 
 }
 
-double ffunc (MPI_wtime) ()
+double ffunc (pmpi_wtime) ()
 {
   return MPI_Wtime ();
 }
 
-double ffunc (MPI_wtick) ()
+double ffunc (pmpi_wtick) ()
 {
   return MPI_Wtick ();
 }
 
-void ffunc (MPI_init) (int *res)
+void ffunc (pmpi_init) (int *res)
 {
   *res = MPI_Init (NULL, NULL);
 }
 
-void ffunc (MPI_init_thread) (int *required, int *provide, int *res)
+void ffunc (pmpi_init_thread) (int *required, int *provide, int *res)
 {
   *res = MPI_Init_thread (NULL, NULL, *required, provide);
 }
 
-void ffunc (MPI_finalize) (int *res)
+void ffunc (pmpi_finalize) (int *res)
 {
   *res = MPI_Finalize ();
 }
 
-void ffunc (MPI_initialized) (int *flag, int *res)
+void ffunc (pmpi_initialized) (int *flag, int *res)
 {
   *res = MPI_Initialized (flag);
 }
 
-void ffunc (MPI_abort) (MPI_Comm * comm, int *errorcode, int *res)
+void ffunc (pmpi_abort) (MPI_Comm * comm, int *errorcode, int *res)
 {
   *res = MPI_Abort (*comm, *errorcode);
 }
 
-void ffunc (MPI_pcontrol) (const int level, ...)
+void ffunc (pmpi_pcontrol) (const int level, ...)
 {
   not_implemented ();
 }
 
-void ffunc (MPI_comm_get_name) (MPI_Comm * a, char *b SCTK_CHAR_MIXED (size),
+void ffunc (pmpi_comm_get_name) (MPI_Comm * a, char *b SCTK_CHAR_MIXED (size),
 				 int *c, int *res SCTK_CHAR_END (size))
 {
   *res = MPI_Comm_get_name (*a, b, c);
   sctk_char_c_to_fortran (b, size);
 }
 
-void ffunc (MPI_comm_set_name) (MPI_Comm * a, char *b SCTK_CHAR_MIXED (size),
+void ffunc (pmpi_comm_set_name) (MPI_Comm * a, char *b SCTK_CHAR_MIXED (size),
 				 int *res SCTK_CHAR_END (size))
 {
   char *tmp;
