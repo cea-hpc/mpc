@@ -791,7 +791,7 @@ __INTERNAL__PMPI_Get_count (MPI_Status * status, MPI_Datatype datatype,
 
   if (status == MPC_STATUS_IGNORE)
     {
-      PMPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_IN_STATUS, "Invalid status");
+      MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_IN_STATUS, "Invalid status");
     }
 
   res = __INTERNAL__PMPI_Type_size (datatype, &data_size);
