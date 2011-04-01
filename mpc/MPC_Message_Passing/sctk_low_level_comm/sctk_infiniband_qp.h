@@ -203,7 +203,7 @@ sctk_net_ibv_qp_allocate_recv(
 /*-----------------------------------------------------------
  *  WQE
  *----------------------------------------------------------*/
-int sctk_net_ibv_qp_send_get_wqe(sctk_net_ibv_qp_remote_t* remote, struct sctk_net_ibv_ibuf_s* ibuf);
+int sctk_net_ibv_qp_send_get_wqe(int dest_process, struct sctk_net_ibv_ibuf_s* ibuf);
 
 void sctk_net_ibv_qp_send_free_wqe(sctk_net_ibv_qp_remote_t* remote );
 

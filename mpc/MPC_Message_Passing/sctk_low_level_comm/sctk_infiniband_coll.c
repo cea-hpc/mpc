@@ -31,12 +31,13 @@
 #include "sctk_infiniband_comp_rc_rdma.h"
 #include "sctk_infiniband_profiler.h"
 
-static int *sctk_comm_world_array;
 
 /* rail */
 extern  sctk_net_ibv_qp_rail_t   *rail;
 /* RC SR structures */
 extern  sctk_net_ibv_qp_local_t *rc_sr_local;
+
+sctk_net_ibv_com_entry_t* com_entries;
 
 /*-----------------------------------------------------------
  *  COLLECTIVE FUNCTIONS
@@ -44,19 +45,14 @@ extern  sctk_net_ibv_qp_local_t *rc_sr_local;
   inline void
   sctk_net_ibv_collective_init()
 {
-  int i;
-
   sctk_list_new(&broadcast_fifo, 0, 0);
   sctk_list_new(&reduce_fifo, 0, 0);
   sctk_list_new(&init_barrier_fifo, 0, 0);
 
-  sctk_comm_world_array = sctk_malloc(sctk_process_number * sizeof(unsigned int));
-
-  for (i = 0; i < sctk_process_number; ++i)
-  {
-    sctk_comm_world_array[i] = i;
-  }
+  com_entries = sctk_calloc(sizeof(char), SCTK_MAX_COMMUNICATOR_NUMBER * sizeof(sctk_net_ibv_com_entry_t));
+  assume(com_entries);
 }
+
 
    void*
   sctk_net_ibv_collective_push_rc_sr(struct sctk_list* list, sctk_net_ibv_ibuf_t* ibuf)
@@ -71,7 +67,7 @@ extern  sctk_net_ibv_qp_local_t *rc_sr_local;
   sctk_ibv_profiler_inc(IBV_MEM_TRACE);
 
   pending->payload = ibuf;
-  pending->size = ibuf->size;
+  pending->size = msg_header->payload_size;
   pending->src_process = msg_header->src_process;
   pending->type = RC_SR_EAGER;
 
@@ -95,10 +91,11 @@ extern  sctk_net_ibv_qp_local_t *rc_sr_local;
   assume(pending);
   sctk_ibv_profiler_inc(IBV_MEM_TRACE);
 
-  pending->payload = entry->msg_payload_ptr;
-  pending->src_process = entry->src_process;
-  pending->type = RC_SR_RDVZ_READ;
-  entry_rdma = entry->entry_rc_rdma;
+  pending->payload      = entry->msg_payload_ptr;
+  pending->src_process  = entry->src_process;
+  pending->type         = RC_SR_RDVZ_READ;
+  pending->size         = entry->requested_size;
+  entry_rdma            = entry->entry_rc_rdma;
   sctk_nodebug("Push with src %d, size %lu, ptr %p", entry->src_process, entry->requested_size, entry->msg_payload_ptr);
 
   /* we remove the entry... */
@@ -157,7 +154,7 @@ sctk_net_ibv_collective_lookup_src(struct sctk_list* list, const int src)
 }
 
   static inline void
-sctk_net_ibv_broadcast_recv(void* data, size_t size, int* array,
+sctk_net_ibv_broadcast_recv(void* data, size_t size,
     const int relative_rank, int* mask, struct sctk_list* list)
 {
   int src;
@@ -217,7 +214,7 @@ sctk_net_ibv_broadcast_recv(void* data, size_t size, int* array,
 
   static inline void
 sctk_net_ibv_broadcast_send(sctk_collective_communications_t * com,
-    void* data, size_t size, int* array, unsigned int relative_rank, int* mask, sctk_net_ibv_ibuf_msg_type_t type)
+    void* data, size_t size, unsigned int relative_rank, int* mask, sctk_net_ibv_ibuf_type_t type)
 {
   int dest;
 
@@ -242,18 +239,19 @@ sctk_net_ibv_broadcast_send(sctk_collective_communications_t * com,
   }
 }
 
-void
-sctk_net_ibv_broadcast ( sctk_collective_communications_t * com,
+static void
+sctk_net_ibv_broadcast_binomial ( sctk_collective_communications_t * com,
     sctk_virtual_processor_t * my_vp,
-    const size_t elem_size, const size_t nb_elem, const int root) {
+    const size_t elem_size, const size_t nb_elem, const int root)
+{
   int size;
   int relative_rank;
   int mask;
   int root_process;
 
   size = elem_size * nb_elem;
-  /* FIXME: Other communicators */
-  assume(com->id == 0);
+
+  sctk_nodebug("Begin broadcast (size:%lu)", size);
 
   /*
    * we have to compute where the task is located, in which process.
@@ -271,7 +269,7 @@ sctk_net_ibv_broadcast ( sctk_collective_communications_t * com,
     sctk_process_rank - root_process :
     sctk_process_rank - root_process + sctk_process_number;
 
-  sctk_net_ibv_broadcast_recv(my_vp->data.data_out, size, sctk_comm_world_array, relative_rank, &mask, &broadcast_fifo);
+  sctk_net_ibv_broadcast_recv(my_vp->data.data_out, size, relative_rank, &mask, &broadcast_fifo);
 
 
   if ( root_process == sctk_process_rank )
@@ -279,16 +277,192 @@ sctk_net_ibv_broadcast ( sctk_collective_communications_t * com,
     if(my_vp->data.data_out)
       memcpy ( my_vp->data.data_out, my_vp->data.data_in, size );
 
-    sctk_net_ibv_broadcast_send(com, my_vp->data.data_in, size, sctk_comm_world_array, relative_rank, &mask, RC_SR_BCAST);
+    sctk_net_ibv_broadcast_send(com, my_vp->data.data_in, size, relative_rank, &mask, IBV_BCAST);
 
   } else {
-    sctk_net_ibv_broadcast_send(com, my_vp->data.data_out, size, sctk_comm_world_array, relative_rank, &mask, RC_SR_BCAST);
+    sctk_net_ibv_broadcast_send(com, my_vp->data.data_out, size, relative_rank, &mask, IBV_BCAST);
+  }
+}
+
+uint64_t bcast_scatter_nb=0;
+  static void
+sctk_net_ibv_broadcast_scatter ( sctk_collective_communications_t * com,
+    sctk_virtual_processor_t * my_vp,
+    const size_t elem_size, const size_t nb_elem, const int root)
+{
+  int relative_rank, mask;
+  int scatter_size, curr_size, recv_size = 0, send_size;
+  int root_process;
+  int src, dst;
+  sctk_net_ibv_collective_pending_t* msg;
+  sctk_net_ibv_ibuf_t* ibuf;
+  size_t size;
+  struct sctk_list *list = &broadcast_fifo;
+
+  size = elem_size * nb_elem;
+
+  bcast_scatter_nb++;
+
+  /*
+   * we have to compute where the task is located, in which process.
+   * The root argument given to the function returns the rank of the MPI
+   * task
+   */
+  root_process = sctk_get_ptp_process_localisation(root);
+  sctk_nodebug("%d - broadcast scatter bcast from root %d", bcast_scatter_nb,
+      root_process);
+
+  sctk_nodebug("my_vp->data.data_out %s, my_vp->data.data_in %s", my_vp->data.data_out, my_vp->data.data_in);
+
+  mask = 0x1;
+  /* compute relative rank for process */
+  relative_rank = (sctk_process_rank >= root_process) ?
+    sctk_process_rank - root_process :
+    sctk_process_rank - root_process + sctk_process_number;
+
+  /* compute the scatter size */
+  scatter_size = (size + sctk_process_number - 1) / sctk_process_number;
+  sctk_nodebug("Scatter size : %lu (size %lu)", scatter_size, size);
+
+  /* * root starts with the whole data */
+  curr_size = (sctk_process_rank == root_process) ? size : 0;
+
+  while(mask < sctk_process_number)
+  {
+    if (relative_rank & mask)
+    {
+      src = sctk_process_rank - mask;
+      if (src < 0) src += sctk_process_number;
+      recv_size = size - relative_rank * scatter_size;
+
+      if (recv_size <= 0)
+      {
+        /* the process doesn't receive any data because of the uneven
+         * division */
+        curr_size = 0;
+      }
+      else
+      {
+        sctk_nodebug("Received bcast msg from process %d", src);
+        do {
+          msg = sctk_net_ibv_collective_lookup_src(list, src);
+
+          //        sctk_net_ibv_allocator_ptp_poll_all();
+          sctk_thread_yield();
+        } while(msg == NULL);
+
+        sctk_nodebug("Broadcast received from process %d size %lu", src, msg->size);
+
+        curr_size = msg->size;
+        sctk_nodebug("current size : %lu", curr_size);
+
+        if (msg->type == RC_SR_EAGER)
+        {
+          ibuf = (sctk_net_ibv_ibuf_t*) msg->payload;
+
+          memcpy( (char*) my_vp->data.data_out +
+              relative_rank * scatter_size,
+              RC_SR_PAYLOAD(ibuf->buffer), recv_size);
+
+          /* restore buffers */
+          sctk_net_ibv_ibuf_release(ibuf, 1);
+          sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit);
+        } else {
+          assume(recv_size == msg->size);
+//          assume (0);
+          memcpy(
+              (char*) my_vp->data.data_out +
+              relative_rank * scatter_size,
+              msg->payload, recv_size);
+          free(msg->payload);
+        }
+        sctk_free(msg);
+      }
+      break;
+    }
+    sctk_nodebug("New mask %d", mask);
+    mask <<= 1;
+  }
+
+  sctk_nodebug("Sendind phase %d", mask);
+
+  mask >>= 1;
+  while(mask > 0)
+  {
+    sctk_nodebug("%d - %d", relative_rank + mask, sctk_process_number);
+    if (relative_rank + mask < sctk_process_number)
+    {
+      send_size = curr_size - scatter_size * mask;
+
+      sctk_nodebug("Send size : %d", send_size);
+
+      if (send_size > 0)
+      {
+        dst = sctk_process_rank + mask;
+        if (dst >= sctk_process_number) dst -= sctk_process_number;
+
+        if ( root_process == sctk_process_rank )
+        {
+          if(my_vp->data.data_out)
+            memcpy ( my_vp->data.data_out, my_vp->data.data_in, size );
+
+          sctk_nodebug("1 - Send bcast to process %d", dst);
+            sctk_net_ibv_allocator_send_coll_message(
+                rail, rc_sr_local, my_vp->data.data_in,
+                dst, send_size, IBV_BCAST);
+
+        } else {
+          sctk_nodebug("2 - Send bcast to process %d", dst);
+            sctk_net_ibv_allocator_send_coll_message(
+                rail, rc_sr_local, my_vp->data.data_out,
+                dst, send_size, IBV_BCAST);
+        }
+
+        curr_size -= send_size;
+      }
+    }
+    sctk_nodebug("New mask %d", mask);
+    mask >>= 1;
+  }
+  sctk_nodebug("%d Exit bcast", bcast_scatter_nb);
+}
+
+
+/**
+ *  Send a broadcast message to a set of processes. According
+ *  to the size of the message, the broadcast method is different.
+ *  \param
+ *  \return
+ */
+  void
+sctk_net_ibv_broadcast ( sctk_collective_communications_t * com,
+    sctk_virtual_processor_t * my_vp,
+    const size_t elem_size, const size_t nb_elem, const int root)
+{
+  int size;
+
+  /* FIXME: Other communicators */
+  assume(com->id == 0);
+
+  sctk_nodebug("Begin broadcast (size:%lu)", size);
+
+  size = elem_size * nb_elem;
+
+//if (size + RC_SR_HEADER_SIZE <= ibv_eager_threshold)
+    sctk_net_ibv_broadcast_binomial (com, my_vp, elem_size, nb_elem, root);
+///  else
+//    sctk_net_ibv_broadcast_scatter (com, my_vp, elem_size, nb_elem, root);
+
+#warning "Barrier for rendezvous messages"
+  if ((size + RC_SR_HEADER_SIZE) > ibv_eager_threshold)
+  {
+   sctk_net_ibv_barrier(com, my_vp);
   }
 
   sctk_nodebug("Leave broadcast");
 }
 
-static void*
+  static void*
 walk_list(void* elem, int cond)
 {
   sctk_net_ibv_collective_pending_t* msg;
@@ -323,7 +497,7 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
   int child;
   int parent;
 
-  sctk_nodebug("reduce operation");
+  sctk_nodebug("Begin of reduce operation");
 
   size = elem_size * nb_elem;
   /* FIXME: Other communicators */
@@ -339,7 +513,7 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
 
       while(! (msg = sctk_list_walk_on_cond(&reduce_fifo, child, walk_list, 1)))
       {
-//        sctk_net_ibv_allocator_ptp_poll_all();
+        //        sctk_net_ibv_allocator_ptp_poll_all();
         sctk_thread_yield();
       }
       ibuf = (sctk_net_ibv_ibuf_t*) msg->payload;
@@ -375,7 +549,7 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
       sctk_nodebug("Send reduce to msg %d", parent);
       sctk_net_ibv_allocator_send_coll_message(
           rail, rc_sr_local, my_vp->data.data_out,
-          parent, size, RC_SR_REDUCE);
+          parent, size, IBV_REDUCE);
     }
   }
 
@@ -388,16 +562,24 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
     sctk_process_rank - root :
     sctk_process_rank - root + sctk_process_number;
 
-  sctk_net_ibv_broadcast_recv(my_vp->data.data_out, size, sctk_comm_world_array, relative_rank, &mask, &broadcast_fifo);
+  sctk_net_ibv_broadcast_recv(my_vp->data.data_out, size, relative_rank, &mask, &broadcast_fifo);
 
-  sctk_net_ibv_broadcast_send(com, my_vp->data.data_out, size, sctk_comm_world_array, relative_rank, &mask, RC_SR_BCAST);
+  sctk_net_ibv_broadcast_send(com, my_vp->data.data_out, size, relative_rank, &mask, IBV_BCAST);
 
   sctk_nodebug ( "Broadcast received", ((int*) my_vp->data.data_out)[0] );
+
+  sctk_nodebug("End of reduce operation");
+
+#warning "Barrier for rendezvous messages"
+  if ((size + RC_SR_HEADER_SIZE) > ibv_eager_threshold)
+  {
+   sctk_net_ibv_barrier(com, my_vp);
+  }
 
 }
 
 /*-----------------------------------------------------------
- *  BARRIER
+ *                        BARRIER
  *----------------------------------------------------------*/
 typedef struct
 {
@@ -459,10 +641,10 @@ sctk_net_ibv_broadcast_barrier (
     sctk_process_rank - root :
     sctk_process_rank - root + sctk_process_number;
 
-  sctk_net_ibv_broadcast_recv(data, size, sctk_comm_world_array, relative_rank, &mask, &init_barrier_fifo);
+  sctk_net_ibv_broadcast_recv(data, size, relative_rank, &mask, &init_barrier_fifo);
 
   sctk_nodebug("SEND");
-  sctk_net_ibv_broadcast_send(NULL, data, size, sctk_comm_world_array, relative_rank, &mask, RC_SR_BCAST_INIT_BARRIER);
+  sctk_net_ibv_broadcast_send(NULL, data, size, relative_rank, &mask, IBV_BCAST_INIT_BARRIER);
 
   sctk_nodebug("Leave broadcast");
 }
@@ -488,7 +670,6 @@ sctk_net_ibv_barrier_post_recv(local_entry_t* local)
 sctk_net_ibv_barrier_send(local_entry_t* local, remote_entry_t* remote,
     int entry_nb, int dest_process)
 {
-  sctk_net_ibv_qp_remote_t* remote_rc_sr;
 
   sctk_net_ibv_ibuf_barrier_send_init(&remote[dest_process].ibuf,
       &local->entry[entry_nb],
@@ -497,11 +678,9 @@ sctk_net_ibv_barrier_send(local_entry_t* local, remote_entry_t* remote,
       remote[dest_process].rkey,
       sizeof(int));
 
-  remote_rc_sr = sctk_net_ibv_comp_rc_sr_check_and_connect(dest_process);
-
   sctk_nodebug("Entry id %d for process %d", remote[dest_process].wr.wr_id, dest_process);
 
-  sctk_net_ibv_qp_send_get_wqe(remote_rc_sr, &(remote[dest_process].ibuf));
+  sctk_net_ibv_qp_send_get_wqe(dest_process, &(remote[dest_process].ibuf));
 
   sctk_nodebug("sent");
 }
@@ -607,8 +786,8 @@ sctk_net_ibv_barrier ( sctk_collective_communications_t * com,
       {
         while(local_entry.entry[recvpeer] < counter)
         {
-//           sctk_net_ibv_allocator_ptp_poll_all();
-           sctk_thread_yield();
+          //           sctk_net_ibv_allocator_ptp_poll_all();
+          sctk_thread_yield();
         }
         sctk_nodebug("Got counter : %d",local_entry.entry[recvpeer]);
       }

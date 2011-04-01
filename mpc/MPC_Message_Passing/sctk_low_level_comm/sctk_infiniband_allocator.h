@@ -52,7 +52,7 @@ typedef struct
   sctk_net_ibv_rc_rdma_process_t      *rc_rdma;
 
   /* sequence numbers */
-  sctk_net_ibv_sched_entry_t          *sched;
+//  sctk_net_ibv_sched_entry_t          *sched;
   sctk_spinlock_t sched_lock;
 
   /* for debug */
@@ -70,68 +70,25 @@ typedef struct
   sctk_net_ibv_allocator_entry_t* entry;
 } sctk_net_ibv_allocator_t;
 
-/*-----------------------------------------------------------
- *  TASKS
- *----------------------------------------------------------*/
-/* lookup for a local thread id */
-#define LOOKUP_LOCAL_THREAD_ENTRY(id, entry_nb) { \
-  int i;\
-  for (i=0; i<MAX_NB_TASKS_PER_PROCESS && all_tasks[i].task_nb != -1; ++i) { \
-    sctk_nodebug("Search entry : %d", all_tasks[i].task_nb); \
-    if (all_tasks[i].task_nb == id) {*entry_nb = i; break;} \
-  }; if(*entry_nb == -1) {\
-    sctk_nodebug("Thread entry %d not found !", id); abort();};} \
+typedef struct sctk_net_ibv_allocator_request_s
+{
+  sctk_net_ibv_ibuf_type_t      ibuf_type;
+  sctk_net_ibv_ibuf_ptp_type_t  ptp_type;
+  sctk_net_ibv_allocator_type_t channel;
+
+  int dest_process;
+  int dest_task;
+  void* msg;
+  void* msg_header;
+
+  size_t size;
+} sctk_net_ibv_allocator_request_t;
+
 
 /* lookup for a remote thread entry. The only requirement is to know the
  * process where the task is located. Once, we check in the allocator list.
  * The task entry is created if it doesn't exist*/
 extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
-
-  static inline int
-LOOK_AND_CREATE_REMOTE_ENTRY(int process, int task)
-{
-  int i;
-  int rc = -1;
-
-  sctk_spinlock_lock(&sctk_net_ibv_allocator->entry[process].sched_lock);
-
-  if (sctk_net_ibv_allocator->entry[process].sched == NULL) {
-    sctk_net_ibv_allocator->entry[process].sched =
-      sctk_malloc(sctk_get_total_tasks_number() * sizeof(sctk_net_ibv_sched_entry_t));
-
-    sctk_nodebug("Number of tasks : %d", sctk_get_total_tasks_number());
-    for (i=0; i < sctk_get_total_tasks_number(); ++i) {
-      sctk_net_ibv_allocator->entry[process].sched[i].task_nb = -1;
-      sctk_net_ibv_allocator->entry[process].sched[i].esn = 0;
-      sctk_net_ibv_allocator->entry[process].sched[i].psn = 0;
-    }
-  }
-  sctk_nodebug("Number of tasks : %d", sctk_get_total_tasks_number());
-  sctk_nodebug("process %d, task %d", process, task);
-
-  for (i=0; i < sctk_get_total_tasks_number(); ++i)
-  {
-    sctk_nodebug("[%d->%d]Search (process %d, task %d) - found %d", i, sctk_get_total_tasks_number(), process, task, sctk_net_ibv_allocator->entry[process].sched[i].task_nb);
-    if (sctk_net_ibv_allocator->entry[process].sched[i].task_nb == task)
-    {
-      rc = i;
-      sctk_nodebug("New task %d FOUND for process %d (entry %d)", task, process, i);
-      break;
-    }
-
-    if (sctk_net_ibv_allocator->entry[process].sched[i].task_nb == -1)
-    {
-      rc = i;
-      sctk_net_ibv_allocator->entry[process].sched[i].task_nb = task;
-      sctk_nodebug("New task %d created for process %d (entry %d)", task, process, i);
-      break;
-    }
-  }
-  sctk_spinlock_unlock(&sctk_net_ibv_allocator->entry[process].sched_lock);
-  assume(rc != -1);
-
-  return rc;
-}
 
 
 
@@ -139,10 +96,10 @@ LOOK_AND_CREATE_REMOTE_ENTRY(int process, int task)
 {                                                                                   \
   switch(type) {                                                                   \
     case IBV_CHAN_RC_SR:                                                            \
-                                                                                    sctk_thread_mutex_lock(&sctk_net_ibv_allocator->entry[rank].rc_sr_lock);      \
+      sctk_thread_mutex_lock(&sctk_net_ibv_allocator->entry[rank].rc_sr_lock);      \
     break;                                                                        \
     case IBV_CHAN_RC_RDMA:                                                          \
-                                                                                    sctk_thread_mutex_lock(&sctk_net_ibv_allocator->entry[rank].rc_rdma_lock);    \
+      sctk_thread_mutex_lock(&sctk_net_ibv_allocator->entry[rank].rc_rdma_lock);    \
     break;                                                                        \
     default: assume(0); break;                                                      \
   }                                                                                 \
@@ -152,10 +109,10 @@ LOOK_AND_CREATE_REMOTE_ENTRY(int process, int task)
 {                                                                                   \
   switch(type) {                                                                   \
     case IBV_CHAN_RC_SR:                                                            \
-                                                                                    sctk_thread_mutex_unlock(&sctk_net_ibv_allocator->entry[rank].rc_sr_lock);    \
+      sctk_thread_mutex_unlock(&sctk_net_ibv_allocator->entry[rank].rc_sr_lock);    \
     break;                                                                        \
     case IBV_CHAN_RC_RDMA:                                                          \
-                                                                                    sctk_thread_mutex_unlock(&sctk_net_ibv_allocator->entry[rank].rc_rdma_lock);  \
+      sctk_thread_mutex_unlock(&sctk_net_ibv_allocator->entry[rank].rc_rdma_lock);  \
     break;                                                                        \
     default: assume(0); break;                                                      \
   }                                                                                 \
@@ -167,14 +124,70 @@ typedef struct
   /* local task nb */
   int task_nb;
 
+  sched_sn_t* remote;
   /* one pending list for each local task */
   struct sctk_list pending_msg;
-
+  struct sctk_list** frag_eager_list;
 } sctk_net_ibv_allocator_task_t;
 
 
 sctk_net_ibv_allocator_task_t all_tasks[MAX_NB_TASKS_PER_PROCESS];
-static sctk_spinlock_t all_tasks_lock = SCTK_SPINLOCK_INITIALIZER;
+UNUSED static sctk_spinlock_t all_tasks_lock = SCTK_SPINLOCK_INITIALIZER;
+
+/*-----------------------------------------------------------
+ *  TASKS
+ *----------------------------------------------------------*/
+/*
+ * lookup for a local thread id. If the entry isn't found, we lock the
+ * array and create the entry */
+UNUSED static inline int LOOKUP_LOCAL_THREAD_ENTRY(int id) {
+  int i;
+  int entry_nb = -1;
+
+  for (i=0; i<MAX_NB_TASKS_PER_PROCESS; ++i) {
+    sctk_nodebug("(i:%d) Search for entry %d: %d", i, id, all_tasks[i].task_nb);
+
+    if (all_tasks[i].task_nb == -1)
+    {
+      /* We take the lock and verify if the entry hasn't
+       * been modified before locking */
+      sctk_spinlock_lock(&all_tasks_lock);
+      if (all_tasks[i].task_nb == -1) {
+
+        entry_nb = i;
+        /* init list for pending frag eager */
+        all_tasks[i].frag_eager_list =
+          sctk_calloc(sizeof(struct sctk_list*), sctk_get_total_tasks_number());
+        assume(all_tasks[i].frag_eager_list);
+
+        /* init list for pendint messages */
+        sctk_list_new(&all_tasks[i].pending_msg, 1,
+            sizeof(sctk_net_ibv_sched_pending_header));
+
+        all_tasks[i].remote = sctk_calloc(sizeof(sched_sn_t), sctk_get_total_tasks_number());
+        assume(all_tasks[i].remote);
+
+        /* finily, we set the task_nb. Must be done
+         * at the end */
+        all_tasks[i].task_nb = id;
+      }
+      sctk_spinlock_unlock(&all_tasks_lock);
+    }
+
+    if (all_tasks[i].task_nb == id)
+    {
+      entry_nb = i;
+      break;
+    }
+  }
+  /* Check if the entry has been found */
+  if(entry_nb == -1) {
+    sctk_debug("Local thread entry %d not found !", id);
+    abort();
+  }
+
+  return entry_nb;
+}
 
 
 /*-----------------------------------------------------------
@@ -202,26 +215,13 @@ sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
     int dest_process );
 
 void
-sctk_net_ibv_allocator_send_coll_message(
+sctk_net_ibv_allocator_send_coll_message (
     sctk_net_ibv_qp_rail_t   *rail,
     sctk_net_ibv_qp_local_t* local_rc_sr,
     void *msg,
     int dest_process,
     size_t size,
-    sctk_net_ibv_ibuf_msg_type_t type);
-
-/*-----------------------------------------------------------
- *  SEARCH FUNCTIONS
- *----------------------------------------------------------*/
-
-sctk_net_ibv_rc_sr_process_t*
-sctk_net_ibv_alloc_rc_sr_find_from_qp_num(uint32_t qp_num);
-
-sctk_net_ibv_rc_rdma_process_t*
-sctk_net_ibv_alloc_rc_rdma_find_from_qp_num(uint32_t qp_num);
-
-sctk_net_ibv_rc_rdma_process_t*
-sctk_net_ibv_alloc_rc_rdma_find_from_rank(int rank);
+    sctk_net_ibv_ibuf_ptp_type_t type);
 
 /*-----------------------------------------------------------
  *  POLLING RC SR

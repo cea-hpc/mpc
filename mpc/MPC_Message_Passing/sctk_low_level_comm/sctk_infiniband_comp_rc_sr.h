@@ -46,6 +46,8 @@
 #define RC_SR_HEADER_SIZE \
   sizeof (sctk_net_ibv_ibuf_header_t)
 
+struct sctk_net_ibv_allocator_request_s;
+
 typedef enum{
   RC_SR_WR_SEND,
   RC_SR_WR_RECV,
@@ -63,19 +65,48 @@ typedef struct
 } sctk_net_ibv_frag_eager_entry_t;
 
 typedef sctk_net_ibv_qp_remote_t sctk_net_ibv_rc_sr_process_t;
+struct sctk_net_ibv_allocator_request_s;
 
 /*-----------------------------------------------------------
  * Functions
+ *----------------------------------------------------------*/
+
+/*-----------------------------------------------------------
+ *  FRAG MSG
+ *----------------------------------------------------------*/
+void
+sctk_net_ibv_comp_rc_sr_send_frag_ptp_message(
+    sctk_net_ibv_qp_local_t* local_rc_sr,
+    struct sctk_net_ibv_allocator_request_s req);
+
+void
+sctk_net_ibv_comp_rc_sr_send_coll_frag_ptp_message(
+    sctk_net_ibv_qp_local_t* local_rc_sr,
+    struct sctk_net_ibv_allocator_request_s req);
+
+sctk_net_ibv_frag_eager_entry_t*
+sctk_net_ibv_comp_rc_sr_copy_msg(void* buffer, int src, int dest_task, size_t size, uint32_t psn);
+
+void sctk_net_ibv_comp_rc_sr_frag_allocate(
+    sctk_net_ibv_ibuf_header_t* msg_header);
+
+  void
+sctk_net_ibv_comp_rc_sr_free_frag_msg(sctk_net_ibv_frag_eager_entry_t* entry);
+
+/*-----------------------------------------------------------
+ *  NORMAL MSG
  *----------------------------------------------------------*/
 sctk_net_ibv_qp_local_t*
 sctk_net_ibv_comp_rc_sr_create_local(sctk_net_ibv_qp_rail_t* rail);
 
 uint32_t
 sctk_net_ibv_comp_rc_sr_send(
-    sctk_net_ibv_qp_remote_t* remote,
+    int dest_process,
     int dest_task,
     sctk_net_ibv_ibuf_t* ibuf, size_t size, size_t buffer_size,
-    sctk_net_ibv_ibuf_msg_type_t type, uint32_t* psn, const int buff_nb, const int total_buffs);
+    sctk_net_ibv_ibuf_type_t type,
+    sctk_net_ibv_ibuf_ptp_type_t ptp_type,
+    uint32_t* psn, const int buff_nb, const int total_buffs);
 
 int
 sctk_net_ibv_comp_rc_sr_post_recv(
@@ -91,7 +122,7 @@ sctk_net_ibv_comp_rc_sr_init(
 void
 sctk_net_ibv_comp_rc_sr_send_ptp_message (
     sctk_net_ibv_qp_local_t* local_rc_sr,
-    void* msg, int dest_process, int dest_size, size_t size, sctk_net_ibv_ibuf_msg_type_t type);
+    struct sctk_net_ibv_allocator_request_s req);
 
 sctk_net_ibv_qp_remote_t*
 sctk_net_ibv_comp_rc_sr_check_and_connect(int dest_process);
@@ -140,8 +171,5 @@ sctk_net_ibv_comp_rc_sr_allocate_recv(
 
 void
 sctk_net_ibv_comp_rc_sr_error_handler(struct ibv_wc wc);
-
-sctk_net_ibv_frag_eager_entry_t*
-sctk_net_ibv_comp_rc_sr_copy_msg(void* buffer, int src, int dest_task, size_t size, uint32_t psn);
 
 #endif

@@ -25,6 +25,7 @@
 #define __SCTK__INFINIBAND_PROFILER_H_
 #include "sctk.h"
 #include "stdint.h"
+#include "sctk_infiniband_const.h"
 
 #define XSTR(X)  STR(X)
 #define STR(X)  #X
@@ -110,9 +111,9 @@ struct sctk_ibv_profiler_entry_s
 
 #define ENTRY(X) {#X, 0}
 
-static sctk_spinlock_t locks[NB_PROFILE_ID];
+UNUSED static sctk_spinlock_t locks[NB_PROFILE_ID];
 
-static struct sctk_ibv_profiler_entry_s counters[NB_PROFILE_ID] =
+UNUSED static struct sctk_ibv_profiler_entry_s counters[NB_PROFILE_ID] =
 {
   ENTRY(IBV_EAGER_NB),
   ENTRY(IBV_EAGER_REQUEST_NB),
@@ -176,20 +177,26 @@ static struct sctk_ibv_profiler_entry_s counters[NB_PROFILE_ID] =
   ENTRY(IBV_MEMALIGN_ALLOCATED)
 };
 
+void sctk_ibv_generate_report();
 void sctk_ibv_profiler_init();
 void sctk_ibv_profiler_add(ibv_profiler_id id, uint64_t c);
+void sctk_ibv_profiler_inc(ibv_profiler_id id);
+void sctk_ibv_profiler_dec(ibv_profiler_id id);
+void sctk_ibv_profiler_add_double(ibv_profiler_id id, double c);
+void sctk_ibv_profiler_add(ibv_profiler_id id, uint64_t c);
+void sctk_ibv_profiler_sub(ibv_profiler_id id, uint64_t c);
 
 /* MEMORY ALLOCATION PROFILING */
 #ifndef MPC_Allocator
 #define sctk_malloc sctk_profile_malloc
-static void* sctk_profile_malloc(size_t size)
+UNUSED static void* sctk_profile_malloc(size_t size)
 {
   sctk_ibv_profiler_add(IBV_MEM_ALLOCATED, size);
   return malloc(size);
 }
 
 #define sctk_posix_memalign sctk_profile_memalign
-static int sctk_profile_memalign(void **memptr, size_t alignment, size_t size)
+UNUSED static int sctk_profile_memalign(void **memptr, size_t alignment, size_t size)
 {
   sctk_ibv_profiler_add(IBV_MEMALIGN_ALLOCATED, size);
   return posix_memalign(memptr, alignment, size);

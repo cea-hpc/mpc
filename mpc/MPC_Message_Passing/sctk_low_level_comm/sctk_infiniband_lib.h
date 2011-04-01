@@ -29,7 +29,7 @@
 /* channel selection */
 extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
 
-static void
+UNUSED static void
 sctk_net_ibv_send_msg_to_mpc(sctk_thread_ptp_message_t* msg_header, void* msg, int src_process,
     int origin, void* ptr) {
 

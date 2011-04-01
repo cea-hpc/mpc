@@ -52,4 +52,5 @@ extern int  ibv_rdma_depth;
 extern int  ibv_rdma_dest_depth;
 extern int  ibv_no_memory_limitation;
 
+void sctk_net_ibv_config_init();
 #endif

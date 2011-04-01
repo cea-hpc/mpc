@@ -376,7 +376,6 @@ sctk_tls_delete ()
 #warning "Pas de liberation des tls"
 }
 
-
 #if defined(SCTK_i686_ARCH_SCTK) || defined (SCTK_x86_64_ARCH_SCTK)
 
 

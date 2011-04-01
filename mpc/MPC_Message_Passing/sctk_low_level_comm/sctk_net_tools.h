@@ -34,6 +34,12 @@ extern "C"
 
   size_t sctk_net_determine_message_size (sctk_thread_ptp_message_t *msg);
 
+  int sctk_net_copy_frag_msg (
+      const sctk_thread_ptp_message_t * msg,
+     char *buffer,
+      const size_t curr_copy,
+      const size_t max_copy );
+
 #ifdef __cplusplus
 }
 #endif

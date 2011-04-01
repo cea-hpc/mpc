@@ -38,7 +38,7 @@
 #define BUSY_FLAG (1)
 #define FREE_FLAG (0)
 
-static char* sctk_net_ibv_ibuf_print_flag (int flag)
+UNUSED static char* sctk_net_ibv_ibuf_print_flag (int flag)
 {
   switch(flag) {
     case RDMA_READ_IBUF_FLAG:   return "RDMA_READ_IBUF_FLAG";break;
@@ -64,11 +64,17 @@ typedef enum
   RC_SR_RDVZ_ACK =            2,
   RC_SR_RDVZ_DONE =           3,
   /* collectives */
-  RC_SR_BCAST =               4,
-  RC_SR_REDUCE =              5,
-  RC_SR_BCAST_INIT_BARRIER =  6,
-  RC_SR_RDVZ_READ =           7
-} sctk_net_ibv_ibuf_msg_type_t;
+  RC_SR_RDVZ_READ =           4
+} sctk_net_ibv_ibuf_type_t;
+
+typedef enum
+{
+  /* ptp */
+  IBV_PTP =                 0,
+  IBV_BCAST =               1,
+  IBV_REDUCE =              2,
+  IBV_BCAST_INIT_BARRIER =  3
+} sctk_net_ibv_ibuf_ptp_type_t;
 
 
 typedef struct sctk_net_ibv_ibuf_region_s
@@ -119,20 +125,23 @@ typedef struct sctk_net_ibv_ibuf_s
 /* generic header between all channels */
 typedef struct
 {
-  sctk_net_ibv_ibuf_msg_type_t     msg_type;
+  sctk_net_ibv_ibuf_type_t         ibuf_type;
+  sctk_net_ibv_ibuf_ptp_type_t     ptp_type;
   size_t  size;
   size_t  payload_size;
   uint32_t src_process;
   uint32_t src_task;
   uint32_t dest_task;
   uint32_t psn;
+  uint8_t  com_id;
 } sctk_net_ibv_ibuf_generic_header;
 
 struct sctk_net_ibv_ibuf_header_s
 {
 // sctk_net_ibv_ibuf_generic_header gen_header;
 
-  sctk_net_ibv_ibuf_msg_type_t     msg_type;
+  sctk_net_ibv_ibuf_type_t         ibuf_type;
+  sctk_net_ibv_ibuf_ptp_type_t     ptp_type;
   size_t  size;
   size_t  payload_size;
   uint32_t src_process;
@@ -141,6 +150,7 @@ struct sctk_net_ibv_ibuf_header_s
   uint32_t psn;
   uint16_t buff_nb;
   uint16_t total_buffs;
+  uint8_t com_id;
 } __attribute__ ((packed));
 
 typedef struct sctk_net_ibv_ibuf_header_s
@@ -153,7 +163,7 @@ sctk_net_ibv_ibuf_header_t;
 void sctk_net_ibv_ibuf_new();
 
 void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t *rail,
-    sctk_net_ibv_qp_local_t* local, int nb_ibufs);
+    sctk_net_ibv_qp_local_t* local, int nb_ibufs, uint8_t debug);
 
 sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null, int need_lock);
 

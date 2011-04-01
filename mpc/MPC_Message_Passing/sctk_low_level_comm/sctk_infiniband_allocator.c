@@ -47,6 +47,7 @@ sctk_net_ibv_allocator_new()
   sctk_net_ibv_allocator = sctk_malloc(sizeof(sctk_net_ibv_allocator_t));
 
   sctk_net_ibv_allocator->entry = sctk_malloc(size);
+  assume(sctk_net_ibv_allocator->entry);
 
   sctk_nodebug("creation : %p", sctk_net_ibv_allocator->entry);
   memset(sctk_net_ibv_allocator->entry, 0, size);
@@ -168,8 +169,6 @@ void sctk_net_ibv_allocator_ptp_poll_all()
     sctk_net_ibv_cq_poll(rc_sr_local->recv_cq, ibv_wc_in_number, sctk_net_ibv_rc_sr_recv_cq, IBV_CHAN_RECV);
     sctk_net_ibv_cq_poll(rc_sr_local->send_cq, ibv_wc_out_number, sctk_net_ibv_rc_sr_send_cq, IBV_CHAN_SEND);
 
-
-
     sctk_spinlock_unlock(&ptp_lock);
   }
 }
@@ -178,7 +177,6 @@ void sctk_net_ibv_allocator_ptp_poll_all()
 void sctk_net_ibv_allocator_ptp_lookup_all(int dest)
 {
   int ret;
-  int tmp, restart = 0;
   int i = 0;
 
   while( (all_tasks[i].task_nb != -1) && (i < MAX_NB_TASKS_PER_PROCESS))
@@ -201,10 +199,10 @@ sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
     int dest_process ) {
   DBG_S(1);
   size_t size;
-  sctk_net_ibv_rc_rdma_process_t*     rc_rdma_entry = NULL;
+  sctk_net_ibv_allocator_request_t req;
 
   /* profile if message is contigous or not (if we can
-   * use the zerocopy method of not) */
+   * use the zerocopy method or not) */
 #if IBV_ENABLE_PROFILE == 1
   void* entire_msg = NULL;
   entire_msg = sctk_net_if_one_msg_in_buffer(msg);
@@ -217,128 +215,106 @@ sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
   /* determine message number */
   size = sctk_net_determine_message_size(msg);
 
-  sctk_net_ibv_allocator->entry[dest_process].nb_ptp_msg_transfered++;
+  req.size = size;
+  req.msg = msg;
+  req.dest_process = dest_process;
+  req.dest_task = ((sctk_thread_ptp_message_t*) msg)->header.destination;
+  req.ptp_type = IBV_PTP;
 
-  /* EAGER MODE */
-  if ( (size + sizeof(sctk_thread_ptp_message_t)) + RC_SR_HEADER_SIZE <= ibv_eager_threshold)
-  {
+  if ( (size + sizeof(sctk_thread_ptp_message_t)) +
+      RC_SR_HEADER_SIZE <= ibv_eager_threshold) {
     sctk_ibv_profiler_inc(IBV_EAGER_NB);
 
-    sctk_nodebug("Send EAGER message to %d and size %lu", dest_process, size);
-    sctk_nodebug("Destination : %d", ((sctk_thread_ptp_message_t*) msg)->header.local_source);
+    /*
+     * EAGER MSG
+     */
+    req.channel = IBV_CHAN_RC_SR;
 
     sctk_net_ibv_comp_rc_sr_send_ptp_message (
-        rc_sr_local, msg,
-        dest_process, ((sctk_thread_ptp_message_t*) msg)->header.destination, size, RC_SR_EAGER);
+        rc_sr_local, req);
 
-    /* FRAG EAGER MODE */
   } else if ( (size + sizeof(sctk_thread_ptp_message_t)) <= ibv_frag_eager_threshold) {
     sctk_ibv_profiler_inc(IBV_FRAG_EAGER_NB);
     sctk_ibv_profiler_add(IBV_FRAG_EAGER_SIZE, size + sizeof(sctk_thread_ptp_message_t));
-    sctk_nodebug("Send FRAG EAGER message to %d (task %d) and size %lu", dest_process, msg->header.destination, size);
-
-    sctk_net_ibv_comp_rc_sr_send_frag_ptp_message (
-        rc_sr_local, msg,
-        dest_process, size, RC_SR_EAGER);
-
-    /* RDVZ MODE */
-  } else {
-
-    sctk_ibv_profiler_inc(IBV_RDVZ_READ_NB);
-    ALLOCATOR_LOCK(dest_process, IBV_CHAN_RC_RDMA);
-    rc_rdma_entry = sctk_net_ibv_allocator_get(dest_process, IBV_CHAN_RC_RDMA);
 
     /*
-     * check if the dest process exists in the RDVZ remote list.
-     * If it doesn't, we create a structure for the RC_RDMA entry
+     * FRAG MSG
      */
-    if (!rc_rdma_entry)
-    {
-      sctk_nodebug("Need connection to process %d", dest_process);
+    req.channel = IBV_CHAN_RC_SR_FRAG;
 
-      rc_rdma_entry = sctk_net_ibv_comp_rc_rdma_allocate_init(dest_process, rc_rdma_local);
+    sctk_net_ibv_comp_rc_sr_send_frag_ptp_message (rc_sr_local, req);
+  } else {
+    sctk_ibv_profiler_inc(IBV_RDVZ_READ_NB);
 
-      sctk_net_ibv_allocator_register(dest_process, rc_rdma_entry, IBV_CHAN_RC_RDMA);
-    }
-    ALLOCATOR_UNLOCK(dest_process, IBV_CHAN_RC_RDMA);
-
-    sctk_nodebug("Send RENDEZVOUS message to %d and size %lu", dest_process, size);
+    /*
+     * RENDEZVOUS
+     */
+    req.channel = IBV_CHAN_RC_RDMA;
 
     sctk_net_ibv_comp_rc_rdma_send_request (
-        rail,
-        rc_sr_local,
-        rc_rdma_local,
-        msg,
-        dest_process, size, rc_rdma_entry);
+        rail, rc_sr_local, req, 1);
   }
+
+  sctk_net_ibv_allocator->entry[dest_process].nb_ptp_msg_transfered++;
+
   DBG_E(1);
 }
 
 
-/**
- *  Send a collective message to a specific process. According to the size of
- *  the process, the message will use eager or rdvz protocol.
- *  TODO: implement the frag msg channel
- *  \param
- *  \return
- */
 void
-sctk_net_ibv_allocator_send_coll_message(
+sctk_net_ibv_allocator_send_coll_message (
     sctk_net_ibv_qp_rail_t   *rail,
     sctk_net_ibv_qp_local_t* local_rc_sr,
     void *msg,
     int dest_process,
     size_t size,
-    sctk_net_ibv_ibuf_msg_type_t type)
+    sctk_net_ibv_ibuf_ptp_type_t type)
 {
-  if (type == RC_SR_REDUCE)
-  {
-    sctk_ibv_profiler_add(IBV_REDUCE_SIZE, size);
-    sctk_ibv_profiler_inc(IBV_REDUCE_NB);
-  } else if (type == RC_SR_BCAST)
-  {
-    sctk_ibv_profiler_add(IBV_BCAST_SIZE, size);
-    sctk_ibv_profiler_inc(IBV_BCAST_NB);
-  }
-  sctk_ibv_profiler_add(IBV_COLL_SIZE, size);
-  sctk_ibv_profiler_inc(IBV_COLL_NB);
+  DBG_S(1);
+  sctk_net_ibv_allocator_request_t req;
 
-  /* EAGER MODE */
-  if ( (size + sizeof(sctk_thread_ptp_message_t)) + RC_SR_HEADER_SIZE <= ibv_eager_threshold)
-  {
-    sctk_nodebug("Send EAGER collective");
+  req.ptp_type = type;
+  req.size = size;
+  req.msg   = msg;
+  req.dest_process  = dest_process;
+  req.dest_task     = -1;
 
-    sctk_net_ibv_comp_rc_sr_send_ptp_message (
-        rc_sr_local, msg,
-        dest_process, -1, size, type);
+  if ( (size + RC_SR_HEADER_SIZE) <= ibv_eager_threshold) {
+    sctk_ibv_profiler_inc(IBV_EAGER_NB);
 
-  } else { /* RDVZ MODE */
-    sctk_nodebug("Send RDVZ collective");
-    sctk_net_ibv_rc_rdma_process_t* rc_rdma_entry;
-
-    /*  TODO: FIX pending RDVS collective */
-    //    assume(0);
-
-    ALLOCATOR_LOCK(dest_process, IBV_CHAN_RC_RDMA);
-    rc_rdma_entry = sctk_net_ibv_allocator_get(dest_process, IBV_CHAN_RC_RDMA);
     /*
-     * check if the dest process exists in the RDVZ remote list.
-     * If it doesn't, we create a structure for the RC_RDMA entry
+     * EAGER MSG
      */
-    if (!rc_rdma_entry)
-    {
-      rc_rdma_entry = sctk_net_ibv_comp_rc_rdma_allocate_init(dest_process, rc_rdma_local);
-      sctk_net_ibv_allocator_register(dest_process, rc_rdma_entry, IBV_CHAN_RC_RDMA);
-    }
-    ALLOCATOR_UNLOCK(dest_process, IBV_CHAN_RC_RDMA);
+    req.channel = IBV_CHAN_RC_SR;
+    sctk_net_ibv_comp_rc_sr_send_ptp_message (
+        rc_sr_local, req);
+//  } else if ( (size + sizeof(sctk_thread_ptp_message_t)) <= ibv_frag_eager_threshold) {
+#if 0
+  } else {
+    sctk_ibv_profiler_inc(IBV_FRAG_EAGER_NB);
+    sctk_ibv_profiler_add(IBV_FRAG_EAGER_SIZE, size + sizeof(sctk_thread_ptp_message_t));
 
-    sctk_net_ibv_comp_rc_rdma_send_coll_request(
-        rail, local_rc_sr, msg,
-        dest_process, size, rc_rdma_entry, type);
+    assume(0);
+    /*
+     * FRAG MSG
+     */
+    req.channel = IBV_CHAN_RC_SR_FRAG;
+    sctk_net_ibv_comp_rc_sr_send_coll_frag_ptp_message (rc_sr_local, req);
+#endif
   }
+else {
+    sctk_ibv_profiler_inc(IBV_RDVZ_READ_NB);
+
+    /*
+     * RENDEZVOUS
+     */
+    req.channel = IBV_CHAN_RC_RDMA;
+    sctk_net_ibv_comp_rc_rdma_send_request (
+        rail, rc_sr_local, req, 0);
+  }
+
   DBG_E(1);
 }
-
 
 /**
  *  Init thread-specific structures. Each thread init its own structures
@@ -348,6 +324,7 @@ sctk_net_ibv_allocator_send_coll_message(
   void
 sctk_net_ibv_allocator_initialize_threads()
 {
+#if 0
   int task_id;
   int thread_id;
   int i;
@@ -366,13 +343,26 @@ sctk_net_ibv_allocator_initialize_threads()
       entry_nb = i;
       sctk_spinlock_unlock(&all_tasks_lock);
       all_tasks[entry_nb].task_nb = task_id;
+      all_tasks[entry_nb].frag_eager_list =
+        sctk_calloc(sizeof(struct sctk_list*), sctk_get_total_tasks_number());
+      assume(all_tasks[entry_nb].frag_eager_list);
+
+//      sctk_list_new(&all_tasks[entry_nb].frag_eager_list, 0, 0);
       sctk_nodebug("%p - Found entry %d -> %d", &all_tasks[entry_nb], i, task_id);
       break;
     }
   }
 
+#warning "We have to move it to support other modules"
+  if (entry_nb == -1) {
+//    sctk_spinlock_unlock(&all_tasks_lock);
+//    assume(0);
+  }
+
+
   /* init structures */
   sctk_list_new(&all_tasks[entry_nb].pending_msg, 1, sizeof(sctk_net_ibv_sched_pending_header));
 
   sctk_nodebug("Initializing thread %d with entry %d", task_id, entry_nb);
+#endif
 }

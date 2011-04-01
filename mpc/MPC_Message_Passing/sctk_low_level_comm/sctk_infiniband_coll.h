@@ -38,9 +38,15 @@ typedef struct
 {
   unsigned int src_process;
   size_t size;
-  sctk_net_ibv_ibuf_msg_type_t type;
+  sctk_net_ibv_ibuf_type_t type;
   void* payload;
 } sctk_net_ibv_collective_pending_t;
+
+typedef struct
+{
+  sched_sn_t bcast;
+  sched_sn_t reduce;
+} sctk_net_ibv_com_entry_t;
 
 /*-----------------------------------------------------------
  *  COLLECTIVE FUNCTIONS
@@ -50,6 +56,12 @@ typedef struct
 
   void*
   sctk_net_ibv_collective_push(struct sctk_list* list, sctk_net_ibv_ibuf_header_t* msg);
+
+   void*
+  sctk_net_ibv_collective_push_rc_sr(struct sctk_list* list, sctk_net_ibv_ibuf_t* ibuf);
+
+  void*
+  sctk_net_ibv_collective_push_rc_rdma(struct sctk_list* list, sctk_net_ibv_rc_rdma_entry_t* entry);
 
   sctk_net_ibv_collective_pending_t*
 sctk_net_ibv_collective_lookup_src(struct sctk_list* list, const int src);
@@ -79,7 +91,7 @@ sctk_net_ibv_allocator_send_coll_message(
     void *msg,
     int dest_process,
     size_t size,
-    sctk_net_ibv_ibuf_msg_type_t type);
+    sctk_net_ibv_ibuf_ptp_type_t type);
 
 
 /*-----------------------------------------------------------

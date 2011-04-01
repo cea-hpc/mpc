@@ -49,15 +49,18 @@ int entry_nb = -1;  \
 #define SCHED_UNLOCK {              \
   sctk_thread_mutex_unlock(&lock); }\
 
-
+typedef struct {
+    uint32_t                esn;    /* expected sequence number */
+    uint32_t                psn;    /* packet sequence number */
+} sched_sn_t;
 
 /* TODO: change it */
-#define MAX_NB_TASKS_PER_PROCESS 8
+#define MAX_NB_TASKS_PER_PROCESS 32
 typedef struct sctk_net_ibv_sched_entry_s
 {
   int                     task_nb;/* task number */
-  uint32_t                esn;    /* expected sequence number */
-  uint32_t                psn;    /* packet sequence number */
+
+  sched_sn_t eager;
 } sctk_net_ibv_sched_entry_t;
 
 #define INIT_SCHED_ENTRY { -1, 0, 0 }
@@ -91,21 +94,37 @@ typedef struct
 
 void sctk_net_ibv_sched_init();
 
+/*
+ * Sequence number for PTP
+ */
 uint32_t
 sctk_net_ibv_sched_psn_inc (int dest, int task_nb);
-
 uint32_t
 sctk_net_ibv_sched_esn_inc (int dest, int task_nb);
-
   uint32_t
 sctk_net_ibv_sched_get_esn(int dest, int task_nb);
-
   uint32_t
 sctk_net_ibv_sched_sn_check(int dest, int task_nb, uint64_t num);
-
 int
 sctk_net_ibv_sched_sn_check_and_inc(int dest, int task_nb, uint64_t num);
 
+/*
+ * Sequence number for COLL
+ */
+uint32_t
+sctk_net_ibv_sched_coll_psn_inc (sctk_net_ibv_ibuf_ptp_type_t type, int com_id);
+uint32_t
+sctk_net_ibv_sched_coll_esn_inc (int com_id);
+uint32_t
+sctk_net_ibv_sched_coll_get_esn(int com_id);
+uint32_t
+sctk_net_ibv_sched_coll_sn_check(int com_id);
+int
+sctk_net_ibv_sched_coll_sn_check_and_inc(int com_id);
+
+/*
+ * Pending messages
+ */
 int
   sctk_net_ibv_sched_rc_sr_free_pending_msg(sctk_thread_ptp_message_t * item );
 

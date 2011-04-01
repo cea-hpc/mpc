@@ -40,6 +40,7 @@
 #include "sctk_launch.h"
 #include "sctk_debug.h"
 #include "sctk_config.h"
+#include "sctk_asm.h"
 #ifdef MPC_Message_Passing
 #include "sctk_low_level_comm.h"
 #endif
@@ -735,6 +736,11 @@ sctk_disable_addr_randomize (int argc, char **argv)
     if (disable_addr_randomize)
     {
       unsetenv ("SCTK_LINUX_DISABLE_ADDR_RADOMIZE");
+      if (getenv ("MPC_DISABLE_BANNER") == NULL)
+      {
+#warning "Addr randomize disabled for large scale runs"
+//        sctk_warning ("Restart execution to disable addr randomize");
+      }
       THIS__set_personality (ADDR_NO_RANDOMIZE);
       execvp (argv[0], argv);
     }

@@ -62,7 +62,7 @@ void sctk_net_ibv_ibuf_new()
 }
 
 void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,
-    sctk_net_ibv_qp_local_t* local, int nb_ibufs)
+    sctk_net_ibv_qp_local_t* local, int nb_ibufs, uint8_t debug)
 {
   sctk_nodebug("BEGIN ibuf initialization");
 
@@ -143,14 +143,13 @@ void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,
 
   sctk_nodebug("END ibuf initialization");
 
-  if (ibv_verbose_level > 0)
+  if (debug && (ibv_verbose_level > 0))
     sctk_debug("[ibuf] Allocation of %d more buffers (ibuf_free_ibuf_nb %d - ibuf_got_ibuf_nb %d)", ibv_size_ibufs_chunk, ibuf_free_ibuf_nb, ibuf_got_ibuf_nb, ibuf_free_header);
 }
 
 sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null, int need_lock)
 {
   sctk_net_ibv_ibuf_t* ibuf;
-  int boolean = 1;
 
   while (1)
   {
@@ -162,19 +161,12 @@ sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null, int need_lock)
     {
       goto resume;
     } else {
-      sctk_net_ibv_ibuf_init(rail, rc_sr_local, ibv_size_ibufs_chunk);
-      goto resume;
+      sctk_net_ibv_ibuf_init(rail, rc_sr_local, ibv_size_ibufs_chunk, 1);
     }
-
-//    if (return_on_null)
-//    {
-//      return NULL;
-//    }
 
     if (need_lock)
       sctk_spinlock_unlock(&ibuf_lock);
 
-//    sctk_thread_yield();
   }
 
 resume:

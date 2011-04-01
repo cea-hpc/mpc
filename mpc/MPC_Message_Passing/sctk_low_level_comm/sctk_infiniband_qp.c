@@ -151,8 +151,13 @@ void sctk_net_ibv_qp_send_free_wqe(sctk_net_ibv_qp_remote_t* remote )
   sctk_thread_mutex_unlock(&remote->send_wqe_lock);
 }
 
-int sctk_net_ibv_qp_send_get_wqe(sctk_net_ibv_qp_remote_t* remote, sctk_net_ibv_ibuf_t* ibuf)
+int sctk_net_ibv_qp_send_get_wqe(int dest_process, sctk_net_ibv_ibuf_t* ibuf)
 {
+  sctk_net_ibv_qp_remote_t* remote;
+
+    /* check if the TCP connection is active. If not, connect peers */
+  remote = sctk_net_ibv_comp_rc_sr_check_and_connect(dest_process);
+
   ibuf->remote = remote;
   int rc;
 

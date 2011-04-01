@@ -38,6 +38,8 @@
 #include "sctk_infiniband_qp.h"
 #include "sctk_list.h"
 
+struct sctk_net_ibv_allocator_request_s;
+
 /* define which protocol use for rdnvz messages */
 typedef enum
 {
@@ -72,7 +74,7 @@ typedef struct
   /* protocol used: rdma read, write, frag msg */
   sctk_net_ibv_rc_rdma_request_protocol_t protocol;
   /* type of msg, reduce, bcast, ptp, etc... */
-  sctk_net_ibv_ibuf_msg_type_t           msg_type;
+  sctk_net_ibv_ibuf_ptp_type_t    ptp_type;
 
   /* MPC msg header */
   sctk_thread_ptp_message_t       msg_header;
@@ -132,7 +134,7 @@ typedef struct
 typedef struct
 {
   sctk_net_ibv_rc_rdma_request_protocol_t protocol;
-  sctk_net_ibv_ibuf_msg_type_t           msg_type;
+  sctk_net_ibv_ibuf_ptp_type_t           ptp_type;
 
   size_t                    requested_size;
 
@@ -151,7 +153,7 @@ typedef struct
 typedef struct
 {
   sctk_net_ibv_rc_rdma_request_protocol_t protocol;
-  sctk_net_ibv_ibuf_msg_type_t           msg_type;
+  sctk_net_ibv_ibuf_ptp_type_t           ptp_type;
 
   size_t                    requested_size;
 //  int                       src_process;
@@ -191,16 +193,12 @@ sctk_net_ibv_comp_rc_rdma_allocate_init(
     unsigned int rank,
     sctk_net_ibv_qp_local_t *local);
 
-
 void
 sctk_net_ibv_comp_rc_rdma_send_request(
     sctk_net_ibv_qp_rail_t   *rail,
     sctk_net_ibv_qp_local_t* local_rc_sr,
-    sctk_net_ibv_qp_local_t* local_rc_rdma,
-    sctk_thread_ptp_message_t * msg,
-    int dest_process,
-    size_t size,
-    sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma);
+    struct sctk_net_ibv_allocator_request_s req,
+    uint8_t directly_pinned);
 
 sctk_net_ibv_rc_rdma_process_t*
 sctk_net_ibv_comp_rc_rdma_analyze_request(
@@ -215,14 +213,17 @@ sctk_net_ibv_com_rc_rdma_read_finish(
     sctk_net_ibv_qp_local_t* rc_sr_local,
     int lookup_mode);
 
+void
+sctk_net_ibv_com_rc_rdma_recv_done(
+    sctk_net_ibv_qp_rail_t   *rail,
+    sctk_net_ibv_qp_local_t* rc_sr_local,
+    sctk_net_ibv_ibuf_t* ibuf);
 
 void
-sctk_net_ibv_comp_rc_rdma_send_coll_request(
+sctk_net_ibv_comp_rc_rdma_send_finish(
     sctk_net_ibv_qp_rail_t   *rail,
     sctk_net_ibv_qp_local_t* local_rc_sr,
-    void *msg,
-    int dest_process,
-    size_t size,
-    sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma,
-    sctk_net_ibv_ibuf_msg_type_t type);
+    sctk_net_ibv_qp_local_t* local_rc_rdma,
+    sctk_net_ibv_ibuf_t* ibuf);
+
 #endif

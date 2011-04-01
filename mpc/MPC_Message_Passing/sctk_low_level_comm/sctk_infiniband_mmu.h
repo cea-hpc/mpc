@@ -70,7 +70,7 @@ typedef struct sctk_net_ibv_mmu_region_s
 
 typedef struct sctk_net_ibv_mmu_s
 {
-  sctk_thread_spinlock_t lock;     /* MMU lock */
+  sctk_spinlock_t lock;     /* MMU lock */
   int free_mmu_entry_nb;    /* Number of free mmu entries */
   int got_mmu_entry_nb;     /* Number of got mmu entries */
   int total_mmu_entry_nb;     /* Total Number of  mmu entries */

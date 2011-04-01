@@ -42,6 +42,12 @@ typedef enum
 #define IBV_POLL_RC_RDMA_ORIGIN 4
 #define IBV_POLL_RC_SR_FRAG_ORIGIN   5
 
+#ifdef __GNUC__
+#define UNUSED __attribute__ ((unused))
+#else
+#define UNUSED
+#endif
+
 /*-----------------------------------------------------------
  *  DEBUG
  *----------------------------------------------------------*/

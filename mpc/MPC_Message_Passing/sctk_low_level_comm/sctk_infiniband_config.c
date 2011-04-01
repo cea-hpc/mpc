@@ -26,30 +26,40 @@
 #include "sctk_infiniband_comp_rc_sr.h"
 #include "sctk_infiniband_comp_rc_rdma.h"
 
-/* 16 seams to be the better value on fortoy */
-#define IBV_EAGER_THRESHOLD ( 16 * 1024 )
-#define IBV_FRAG_EAGER_THRESHOLD ( 256 * 1024)
-//#define IBV_EAGER_THRESHOLD ( 32 * 1024 )
-//#define IBV_FRAG_EAGER_THRESHOLD ( 512 * 1024)
-/*
- * should be high values if the event
- * IBV_EVENT_QP_LAST_WQE_REACHED is triggered
- */
+/* Maximum message size for each channels (in fact this in
+ * not really a threshold...). Here is the algorithm to
+ * select which channel use:
+ * if x < IBV_EAGER_THRESHOLD -> eager msg
+ * if x < IBV_FRAG_EAGER_THRESHOLD -> frag msg (into several eager buffers)
+ * if x > IBV_FRAG_EAGER_THRESHOLD -> rendezvous msg */
+#define IBV_EAGER_THRESHOLD ( 64 * 1024 )
+#define IBV_FRAG_EAGER_THRESHOLD ( 512 * 1024)
+/* Number of allowed pending Work Queue Elements
+ * for each QP */
 #define IBV_QP_TX_DEPTH     3000
-/* don't need recv WQE when using SRQ. Must be put to
- * 0 */
+/* We don't need recv WQE when using SRQ.
+ * This variable must be set to 0 */
 #define IBV_QP_RX_DEPTH     0
 /* Many CQE. In memory, it represents about
  * 1.22Mb for 40000 entries */
 #define IBV_CQ_DEPTH        40000
 #define IBV_MAX_SG_SQ       8
 #define IBV_MAX_SG_RQ       8
-#define IBV_MAX_INLINE        128
+#define IBV_MAX_INLINE      128
 
-#define IBV_MAX_IBUFS         3000
-#define IBV_MAX_SRQ_IBUFS     2000 /*  > 300 */
-#define IBV_SRQ_CREDIT_LIMIT  1500 /* >=300 */
-#define IBV_SRQ_CREDIT_THREAD_LIMIT  1500
+/* Maximum number of buffers to allocate during the
+ * initialization step */
+#define IBV_MAX_IBUFS         1500
+#define IBV_MAX_SRQ_IBUFS     1000
+/* Minimum number of free recv buffer before
+ * posting of new buffers. This thread is  activated
+ * once a recv buffer is freed */
+#define IBV_SRQ_CREDIT_LIMIT  700
+/* Minimum number of free recv buffer before
+ * the activation of the asynchronous
+ * thread (if this thread is activated too much times,
+ * the performance can be decreased) */
+#define IBV_SRQ_CREDIT_THREAD_LIMIT  600
 
 /* for PN */
 #if 0
@@ -59,13 +69,18 @@
 #define IBV_SRQ_CREDIT_THREAD_LIMIT  200
 #endif
 
+/* Number of new buffers allocated when
+ * no more buffers are available */
 #define IBV_SIZE_IBUFS_CHUNKS 200
 
 #define IBV_WC_IN_NUMBER    1000
 #define IBV_WC_OUT_NUMBER   1000
 
+/* Numer of MMU entries allocated during
+ * the MPC initialization */
 #define IBV_MAX_MR          100
-/* size of mr chunks */
+/* Number of new MMU allocated when
+ * no more MMU entries are available */
 #define IBV_SIZE_MR_CHUNKS  200
 
 #define IBV_ADM_PORT        1
@@ -74,6 +89,9 @@
 #define IBV_RDMA_DEST_DEPTH  4
 
 #define IBV_NO_MEMORY_LIMITATION  1
+/* Verbosity level (some infos can appears on
+ * the terminal during runtime: new ibufs allocated,
+ * new MMu entries allocated, etc...) */
 #define IBV_VERBOSE_LEVEL         1
 
 /* global values */

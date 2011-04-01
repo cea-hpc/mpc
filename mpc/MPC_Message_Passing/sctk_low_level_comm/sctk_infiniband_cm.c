@@ -157,21 +157,29 @@ void sctk_net_ibv_cm_client(char* host, int port, int dest, sctk_net_ibv_qp_remo
   sctk_nodebug("Connect to %s",name);
 
   /* TODO: retry if return NULL */
-//  while (!server || !ip ||
-  server = gethostbyname (name);
-  if (server == NULL)
-  {
-    fprintf (stderr, "ERROR, no such host\n");
-    sctk_abort();
-    exit (0);
-  }
-  ip = (char *) server->h_addr;
-  if (!ip)
-  {
-    sctk_debug("ERROR on host %s", name);
-    sctk_abort();
-  }
-//  assume(ip);
+  int i = 0;
+  do {
+    server = gethostbyname (name);
+    if (server == NULL)
+    {
+      fprintf (stderr, "ERROR, no such host\n");
+      sctk_abort();
+      exit (0);
+    }
+    ip = (char *) server->h_addr;
+#if 0
+    if (!ip)
+    {
+      sctk_debug("ERROR on host %s", name);
+      sctk_abort();
+    }
+#endif
+    if (!ip)
+      usleep(500);
+
+    ++i;
+  } while (!ip && i < 20);
+  assume(ip);
 
   memset ((char *) &serv_addr, 0, sizeof (serv_addr));
   serv_addr.sin_family = AF_INET;
@@ -259,7 +267,7 @@ void sctk_net_ibv_cm_server()
  *----------------------------------------------------------*/
 #define DESC_EVENT(event, desc, fatal)  \
   if ( (ibv_verbose_level > 0) || fatal) sctk_debug("[async thread] "event":\t"desc); \
-  if (fatal) sctk_abort()
+if (fatal) sctk_abort()
 
 void* async_thread(void* context)
 {
@@ -290,7 +298,7 @@ void* async_thread(void* context)
         DESC_EVENT("IBV_EVENT_QP_ACCESS_ERR", "Local access violation error", 1);
         break;
 
-	    case IBV_EVENT_COMM_EST:
+      case IBV_EVENT_COMM_EST:
         DESC_EVENT("IBV_EVENT_COMM_EST", "Communication was established on a QP", 0);
         break;
 

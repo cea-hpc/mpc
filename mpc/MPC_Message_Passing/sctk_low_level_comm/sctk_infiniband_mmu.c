@@ -38,7 +38,7 @@ static unsigned long page_size;
 
 
   static inline void
-sctk_net_ibv_mmu_init(sctk_net_ibv_qp_rail_t* rail, sctk_net_ibv_mmu_t* mmu, int nb_mmu_entries)
+sctk_net_ibv_mmu_init(sctk_net_ibv_qp_rail_t* rail, sctk_net_ibv_mmu_t* mmu, int nb_mmu_entries, uint8_t debug)
 {
   int i;
   sctk_net_ibv_mmu_region_t* region = NULL;
@@ -67,7 +67,7 @@ sctk_net_ibv_mmu_init(sctk_net_ibv_qp_rail_t* rail, sctk_net_ibv_mmu_t* mmu, int
   assume(mmu_entry);
 
   region->next_region = NULL;
-  region->mmu_entry;
+  region->mmu_entry = mmu_entry;
 
   if (!mmu->begin_region)
     mmu->begin_region = region;
@@ -99,7 +99,7 @@ sctk_net_ibv_mmu_init(sctk_net_ibv_qp_rail_t* rail, sctk_net_ibv_mmu_t* mmu, int
   mmu->free_header = (sctk_net_ibv_mmu_entry_t*) mmu_entry;
 
   mmu->total_mmu_entry_nb += nb_mmu_entries;
-  if (ibv_verbose_level > 0)
+  if (debug && (ibv_verbose_level > 0) )
     sctk_debug("[mmu] %d MMU entries allocated (total:%d, free:%d, got:%d)", nb_mmu_entries, mmu->total_mmu_entry_nb, mmu->free_mmu_entry_nb, mmu->got_mmu_entry_nb);
 }
 
@@ -113,11 +113,8 @@ sctk_net_ibv_mmu_init(sctk_net_ibv_qp_rail_t* rail, sctk_net_ibv_mmu_t* mmu, int
   sctk_net_ibv_mmu_t*
 sctk_net_ibv_mmu_new(sctk_net_ibv_qp_rail_t* rail)
 {
-  int i;
   sctk_net_ibv_mmu_t* mmu = NULL;
   sctk_net_ibv_mmu_region_t* region = NULL;
-  sctk_net_ibv_mmu_entry_t* mmu_entry;
-  sctk_net_ibv_mmu_entry_t* mmu_entry_ptr;
 
   /* get the page-size of the system */
   page_size = getpagesize ();
@@ -128,7 +125,7 @@ sctk_net_ibv_mmu_new(sctk_net_ibv_qp_rail_t* rail)
   region = sctk_calloc (1, sizeof(sctk_net_ibv_mmu_region_t));
   assume(region);
 
-  sctk_net_ibv_mmu_init(rail, mmu, ibv_max_mr);
+  sctk_net_ibv_mmu_init(rail, mmu, ibv_max_mr, 0);
 
   rail->mmu = mmu;
 
@@ -148,7 +145,6 @@ sctk_net_ibv_mmu_register (
     sctk_net_ibv_qp_local_t* local,
     void *ptr, size_t size)
 {
-  int i;
   sctk_net_ibv_mmu_entry_t* mmu_entry;
   sctk_net_ibv_mmu_t* mmu;
 
@@ -168,7 +164,7 @@ sctk_net_ibv_mmu_register (
       goto resume;
     } else {
       /* allocate more buffers */
-      sctk_net_ibv_mmu_init(rail, mmu, ibv_size_mr_chunk);
+      sctk_net_ibv_mmu_init(rail, mmu, ibv_size_mr_chunk, 1);
       goto resume;
     }
   }

@@ -114,7 +114,7 @@ sctk_net_init_driver_infiniband (int *argc, char ***argv)
   /* initialization of buffers  */
   rc_sr_local = sctk_net_ibv_comp_rc_sr_create_local(rail);
   sctk_net_ibv_ibuf_new();
-  sctk_net_ibv_ibuf_init(rail, rc_sr_local, ibv_max_ibufs);
+  sctk_net_ibv_ibuf_init(rail, rc_sr_local, ibv_max_ibufs, 0);
   sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit);
 
   sctk_net_ibv_async_init(rc_sr_local->context);
@@ -375,10 +375,6 @@ sctk_net_preinit_driver_infiniband ( sctk_net_driver_pointers_functions_t* point
   /* initialization of network mode */
   sctk_net_ibv_update_network_mode();
 
-
-  frag_eager_list = sctk_malloc(sctk_get_total_tasks_number() * sizeof(frag_eager_list));
-  memset(frag_eager_list, 0, sctk_get_total_tasks_number() * sizeof(frag_eager_list));
-  sctk_nodebug("nb total of tasks : %d", sctk_get_total_tasks_number());
 
   if (sctk_process_rank == 0)
   {
