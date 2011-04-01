@@ -115,7 +115,7 @@ sctk_net_init_driver_infiniband (int *argc, char ***argv)
   rc_sr_local = sctk_net_ibv_comp_rc_sr_create_local(rail);
   sctk_net_ibv_ibuf_new();
   sctk_net_ibv_ibuf_init(rail, rc_sr_local, ibv_max_ibufs);
-  sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
+  sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit);
 
   sctk_net_ibv_async_init(rc_sr_local->context);
 
@@ -160,7 +160,7 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
       /* release the ibuf */
       ibuf = (sctk_net_ibv_ibuf_t*)  item->struct_ptr;
       sctk_net_ibv_ibuf_release(ibuf, 1);
-      sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
+      sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit);
       break;
 
     case IBV_RC_RDMA_ORIGIN:
@@ -188,7 +188,7 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
       sctk_nodebug("Free POLL_RC_SR");
       ibuf = (sctk_net_ibv_ibuf_t*)  item->struct_ptr;
       sctk_net_ibv_ibuf_release(ibuf, 1);
-      sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
+      sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit);
 
 
       //      sctk_free(item->struct_ptr);

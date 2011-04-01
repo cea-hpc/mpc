@@ -52,7 +52,7 @@ int entry_nb = -1;  \
 
 
 /* TODO: change it */
-#define MAX_NB_TASKS_PER_PROCESS 512
+#define MAX_NB_TASKS_PER_PROCESS 8
 typedef struct sctk_net_ibv_sched_entry_s
 {
   int                     task_nb;/* task number */

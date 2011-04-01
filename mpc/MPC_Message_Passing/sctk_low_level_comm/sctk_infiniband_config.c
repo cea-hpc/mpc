@@ -46,10 +46,10 @@
 #define IBV_MAX_SG_RQ       8
 #define IBV_MAX_INLINE        128
 
-#define IBV_MAX_IBUFS         2000
-#define IBV_MAX_SRQ_IBUFS     1500 /*  > 300 */
-#define IBV_SRQ_CREDIT_LIMIT  1000 /* >=300 */
-#define IBV_SRQ_CREDIT_THREAD_LIMIT  500
+#define IBV_MAX_IBUFS         3000
+#define IBV_MAX_SRQ_IBUFS     2000 /*  > 300 */
+#define IBV_SRQ_CREDIT_LIMIT  1500 /* >=300 */
+#define IBV_SRQ_CREDIT_THREAD_LIMIT  1500
 
 /* for PN */
 #if 0

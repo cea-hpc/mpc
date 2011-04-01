@@ -38,6 +38,7 @@ typedef struct
 {
   unsigned int src_process;
   size_t size;
+  sctk_net_ibv_ibuf_msg_type_t type;
   void* payload;
 } sctk_net_ibv_collective_pending_t;
 

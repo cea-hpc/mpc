@@ -25,6 +25,7 @@
 #define __SCTK__INFINIBAND_ALLOCATOR_H_
 
 #include "sctk_list.h"
+#include "sctk_launch.h"
 #include "sctk_infiniband_allocator.h"
 #include "sctk_infiniband_scheduling.h"
 #include "sctk_infiniband_comp_rc_rdma.h"
@@ -51,7 +52,7 @@ typedef struct
   sctk_net_ibv_rc_rdma_process_t      *rc_rdma;
 
   /* sequence numbers */
-  sctk_net_ibv_sched_entry_t          sched[MAX_NB_TASKS_PER_PROCESS];
+  sctk_net_ibv_sched_entry_t          *sched;
   sctk_spinlock_t sched_lock;
 
   /* for debug */
@@ -79,52 +80,83 @@ typedef struct
     sctk_nodebug("Search entry : %d", all_tasks[i].task_nb); \
     if (all_tasks[i].task_nb == id) {*entry_nb = i; break;} \
   }; if(*entry_nb == -1) {\
-    sctk_debug("Thread entry %d not found !", id); abort();};} \
+    sctk_nodebug("Thread entry %d not found !", id); abort();};} \
 
 /* lookup for a remote thread entry. The only requirement is to know the
  * process where the task is located. Once, we check in the allocator list.
  * The task entry is created if it doesn't exist*/
-#define LOOK_AND_CREATE_REMOTE_ENTRY(process, task, entry_nb)             \
-{  int i;                                                                 \
-  sctk_spinlock_lock(&sctk_net_ibv_allocator->entry[process].sched_lock); \
-  for (i=0; i < MAX_NB_TASKS_PER_PROCESS; ++i)                            \
-  {                                                                       \
-    if (sctk_net_ibv_allocator->entry[process].sched[i].task_nb == task)  \
-    { *entry_nb = i; break;}                                               \
-    if (sctk_net_ibv_allocator->entry[process].sched[i].task_nb == -1)    \
-    { *entry_nb = i;                                                       \
-      sctk_net_ibv_allocator->entry[process].sched[i].task_nb = task_nb;  \
-      sctk_nodebug("New task %d created for process %d (entry %d)", task, process, i);  \
-      break;                                                              \
-    }                                                                     \
-    i++;                                                                  \
-  }                                                                       \
-  sctk_spinlock_unlock(&sctk_net_ibv_allocator->entry[process].sched_lock); \
-  assume(*entry_nb != -1);}                                              \
+extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
+
+  static inline int
+LOOK_AND_CREATE_REMOTE_ENTRY(int process, int task)
+{
+  int i;
+  int rc = -1;
+
+  sctk_spinlock_lock(&sctk_net_ibv_allocator->entry[process].sched_lock);
+
+  if (sctk_net_ibv_allocator->entry[process].sched == NULL) {
+    sctk_net_ibv_allocator->entry[process].sched =
+      sctk_malloc(sctk_get_total_tasks_number() * sizeof(sctk_net_ibv_sched_entry_t));
+
+    sctk_nodebug("Number of tasks : %d", sctk_get_total_tasks_number());
+    for (i=0; i < sctk_get_total_tasks_number(); ++i) {
+      sctk_net_ibv_allocator->entry[process].sched[i].task_nb = -1;
+      sctk_net_ibv_allocator->entry[process].sched[i].esn = 0;
+      sctk_net_ibv_allocator->entry[process].sched[i].psn = 0;
+    }
+  }
+  sctk_nodebug("Number of tasks : %d", sctk_get_total_tasks_number());
+  sctk_nodebug("process %d, task %d", process, task);
+
+  for (i=0; i < sctk_get_total_tasks_number(); ++i)
+  {
+    sctk_nodebug("[%d->%d]Search (process %d, task %d) - found %d", i, sctk_get_total_tasks_number(), process, task, sctk_net_ibv_allocator->entry[process].sched[i].task_nb);
+    if (sctk_net_ibv_allocator->entry[process].sched[i].task_nb == task)
+    {
+      rc = i;
+      sctk_nodebug("New task %d FOUND for process %d (entry %d)", task, process, i);
+      break;
+    }
+
+    if (sctk_net_ibv_allocator->entry[process].sched[i].task_nb == -1)
+    {
+      rc = i;
+      sctk_net_ibv_allocator->entry[process].sched[i].task_nb = task;
+      sctk_nodebug("New task %d created for process %d (entry %d)", task, process, i);
+      break;
+    }
+  }
+  sctk_spinlock_unlock(&sctk_net_ibv_allocator->entry[process].sched_lock);
+  assume(rc != -1);
+
+  return rc;
+}
+
 
 
 #define ALLOCATOR_LOCK(rank, type)                                                  \
 {                                                                                   \
-   switch(type) {                                                                   \
+  switch(type) {                                                                   \
     case IBV_CHAN_RC_SR:                                                            \
-      sctk_thread_mutex_lock(&sctk_net_ibv_allocator->entry[rank].rc_sr_lock);      \
-      break;                                                                        \
+                                                                                    sctk_thread_mutex_lock(&sctk_net_ibv_allocator->entry[rank].rc_sr_lock);      \
+    break;                                                                        \
     case IBV_CHAN_RC_RDMA:                                                          \
-      sctk_thread_mutex_lock(&sctk_net_ibv_allocator->entry[rank].rc_rdma_lock);    \
-      break;                                                                        \
+                                                                                    sctk_thread_mutex_lock(&sctk_net_ibv_allocator->entry[rank].rc_rdma_lock);    \
+    break;                                                                        \
     default: assume(0); break;                                                      \
   }                                                                                 \
 }                                                                                   \
 
 #define ALLOCATOR_UNLOCK(rank, type)                                                \
 {                                                                                   \
-   switch(type) {                                                                   \
+  switch(type) {                                                                   \
     case IBV_CHAN_RC_SR:                                                            \
-      sctk_thread_mutex_unlock(&sctk_net_ibv_allocator->entry[rank].rc_sr_lock);    \
-      break;                                                                        \
+                                                                                    sctk_thread_mutex_unlock(&sctk_net_ibv_allocator->entry[rank].rc_sr_lock);    \
+    break;                                                                        \
     case IBV_CHAN_RC_RDMA:                                                          \
-      sctk_thread_mutex_unlock(&sctk_net_ibv_allocator->entry[rank].rc_rdma_lock);  \
-      break;                                                                        \
+                                                                                    sctk_thread_mutex_unlock(&sctk_net_ibv_allocator->entry[rank].rc_rdma_lock);  \
+    break;                                                                        \
     default: assume(0); break;                                                      \
   }                                                                                 \
 }                                                                                   \
@@ -182,13 +214,13 @@ sctk_net_ibv_allocator_send_coll_message(
  *  SEARCH FUNCTIONS
  *----------------------------------------------------------*/
 
-  sctk_net_ibv_rc_sr_process_t*
+sctk_net_ibv_rc_sr_process_t*
 sctk_net_ibv_alloc_rc_sr_find_from_qp_num(uint32_t qp_num);
 
-  sctk_net_ibv_rc_rdma_process_t*
+sctk_net_ibv_rc_rdma_process_t*
 sctk_net_ibv_alloc_rc_rdma_find_from_qp_num(uint32_t qp_num);
 
-  sctk_net_ibv_rc_rdma_process_t*
+sctk_net_ibv_rc_rdma_process_t*
 sctk_net_ibv_alloc_rc_rdma_find_from_rank(int rank);
 
 /*-----------------------------------------------------------
@@ -210,14 +242,14 @@ sctk_net_ibv_allocator_lock(
 
 void sctk_net_ibv_rc_sr_send_cq(struct ibv_wc* wc, int lookup, int dest);
 
-  char*
+char*
 sctk_net_ibv_tcp_request(int process, sctk_net_ibv_qp_remote_t *remote, char* host, int* port);
 
 int sctk_net_ibv_tcp_client(char* host, int port, int dest, sctk_net_ibv_qp_remote_t *remote);
 
-  void sctk_net_ibv_tcp_server();
+void sctk_net_ibv_tcp_server();
 
-  void
+void
 sctk_net_ibv_allocator_initialize_threads();
 
 #endif

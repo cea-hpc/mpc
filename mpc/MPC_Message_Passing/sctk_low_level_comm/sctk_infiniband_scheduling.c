@@ -39,9 +39,10 @@ void
 sctk_net_ibv_sched_init() {
   int i, j;
 
+#if 0
   for(i=0; i < sctk_process_number; ++i)
   {
-    for (j=0; j < MAX_NB_TASKS_PER_PROCESS; ++j)
+    for (j=0; j < MAX_NB_NEIGHBOURS; ++j)
     {
       //TODO: initialization by macro
       sctk_net_ibv_allocator->entry[i].sched[j].task_nb = -1;
@@ -49,6 +50,7 @@ sctk_net_ibv_sched_init() {
       sctk_net_ibv_allocator->entry[i].sched[j].psn = 0;
     }
   }
+#endif
 
   sctk_thread_mutex_init(&lock, NULL);
 }
@@ -165,7 +167,7 @@ sctk_net_ibv_sched_poll_pending_msg(int task_nb)
 sctk_net_ibv_sched_get_esn(int dest, int task_nb)
 {
   int entry_nb;
-  LOOK_AND_CREATE_REMOTE_ENTRY(dest, task_nb, &entry_nb);
+  entry_nb = LOOK_AND_CREATE_REMOTE_ENTRY(dest, task_nb);
   sctk_nodebug("ESN : %lu", sctk_net_ibv_allocator->entry[dest].esn);
   return sctk_net_ibv_allocator->entry[dest].sched[entry_nb].esn;
 }
@@ -174,9 +176,10 @@ sctk_net_ibv_sched_get_esn(int dest, int task_nb)
 sctk_net_ibv_sched_psn_inc (int dest, int task_nb)
 {
   uint32_t i;
-
   int entry_nb;
-  LOOK_AND_CREATE_REMOTE_ENTRY(dest, task_nb, &entry_nb);
+
+  entry_nb = LOOK_AND_CREATE_REMOTE_ENTRY(dest, task_nb);
+
   i = sctk_net_ibv_allocator->entry[dest].sched[entry_nb].psn;
   sctk_net_ibv_allocator->entry[dest].sched[entry_nb].psn++;
 
@@ -187,9 +190,9 @@ sctk_net_ibv_sched_psn_inc (int dest, int task_nb)
 sctk_net_ibv_sched_esn_inc (int dest, int task_nb)
 {
   uint32_t i;
-
   int entry_nb;
-  LOOK_AND_CREATE_REMOTE_ENTRY(dest, task_nb, &entry_nb);
+
+  entry_nb = LOOK_AND_CREATE_REMOTE_ENTRY(dest, task_nb);
   i = sctk_net_ibv_allocator->entry[dest].sched[entry_nb].esn;
   sctk_net_ibv_allocator->entry[dest].sched[entry_nb].esn++;
   sctk_nodebug("INC for process %d (task %d): %lu", dest, entry_nb, i);
@@ -201,7 +204,8 @@ sctk_net_ibv_sched_esn_inc (int dest, int task_nb)
 sctk_net_ibv_sched_sn_check(int dest, int task_nb, uint64_t num)
 {
   int entry_nb;
-  LOOK_AND_CREATE_REMOTE_ENTRY(dest, task_nb, &entry_nb);
+
+  entry_nb = LOOK_AND_CREATE_REMOTE_ENTRY(dest, task_nb);
   if ( sctk_net_ibv_allocator->entry[dest].sched[entry_nb].esn == num )
     return 1;
   else

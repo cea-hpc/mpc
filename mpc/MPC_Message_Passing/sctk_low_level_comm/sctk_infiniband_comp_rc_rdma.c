@@ -125,6 +125,7 @@ sctk_net_ibv_comp_rc_rdma_send_coll_request(
 
   /* we register the memory where the message is stored, whatever the
    * RDVZ protocol used */
+  sctk_nodebug("Aligned msg %p, size : %lu", aligned_msg, aligned_size);
   mmu_entry = sctk_net_ibv_mmu_register (
       rail, local_rc_sr, aligned_msg, aligned_size);
 
@@ -155,7 +156,7 @@ sctk_net_ibv_comp_rc_rdma_send_coll_request(
       request->msg_type       = type;
       sctk_nodebug("Send entry 1: %p", entry);
       request->requested_size = size;
-      request->src_process    = sctk_process_rank;
+//      request->src_process    = sctk_process_rank;
 
       sctk_nodebug("%p->%p (%lu->%lu)", msg, aligned_msg, size, aligned_size);
       sctk_net_ibv_ibuf_send_init(ibuf, size_to_copy + RC_SR_HEADER_SIZE);
@@ -187,7 +188,7 @@ sctk_net_ibv_comp_rc_rdma_send_coll_request(
 
       request->protocol = RC_RDMA_REQ_WRITE;
       request->requested_size = size;
-      request->src_process    = sctk_process_rank;
+//      request->src_process    = sctk_process_rank;
       break;
   }
 
@@ -464,6 +465,8 @@ sctk_net_ibv_comp_rc_rdma_process_rdma_read(
       (void*) request->read_req.address, request->read_req.rkey,
       entry->requested_size, entry);
 
+  sctk_nodebug("Read from %p (size:%lu)", request->read_req.address, entry->requested_size);
+
   sctk_nodebug("Posting RC_RDMA READ with size %lu", request->requested_size);
 
   sctk_net_ibv_qp_send_get_wqe(rc_sr_remote, ibuf);
@@ -640,12 +643,10 @@ sctk_net_ibv_com_rc_rdma_read_finish(
     case RC_SR_BCAST:
       sctk_nodebug("BCAST");
       sctk_net_ibv_collective_push_rc_rdma(&broadcast_fifo, entry);
-      sctk_net_ibv_mmu_unregister (rail->mmu, entry->mmu_entry);
       break;
 
     case RC_SR_REDUCE:
       sctk_net_ibv_collective_push_rc_rdma(&reduce_fifo, entry);
-      sctk_net_ibv_mmu_unregister (rail->mmu, entry->mmu_entry);
       break;
 
     case RC_SR_BCAST_INIT_BARRIER:
@@ -697,8 +698,8 @@ sctk_net_ibv_com_rc_rdma_read_finish(
             ret = sctk_net_ibv_sched_sn_check_and_inc(
                 entry->src_process, entry->src_task, entry->psn);
 
-            sctk_net_ibv_allocator_ptp_poll_all();
-//            sctk_thread_yield();
+//            sctk_net_ibv_allocator_ptp_poll_all();
+            sctk_thread_yield();
 
           } while (ret);
         }

@@ -154,26 +154,27 @@ sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null, int need_lock)
 
   while (1)
   {
-    if (!need_lock || sctk_spinlock_trylock(&ibuf_lock) == 0)
+
+    if (need_lock)
+      sctk_spinlock_lock(&ibuf_lock);
+
+    if (ibuf_free_header != NULL)
     {
-      if (ibuf_free_header != NULL)
-      {
-        goto resume;
-      } else {
-        sctk_net_ibv_ibuf_init(rail, rc_sr_local, ibv_size_ibufs_chunk);
-        goto resume;
-      }
-
-      if (return_on_null)
-      {
-        return NULL;
-      }
-
-      if (need_lock)
-        sctk_spinlock_unlock(&ibuf_lock);
+      goto resume;
+    } else {
+      sctk_net_ibv_ibuf_init(rail, rc_sr_local, ibv_size_ibufs_chunk);
+      goto resume;
     }
 
-    sctk_thread_yield();
+//    if (return_on_null)
+//    {
+//      return NULL;
+//    }
+
+    if (need_lock)
+      sctk_spinlock_unlock(&ibuf_lock);
+
+//    sctk_thread_yield();
   }
 
 resume:
@@ -197,7 +198,7 @@ resume:
 }
 
 int sctk_net_ibv_ibuf_srq_check_and_post(
-    sctk_net_ibv_qp_local_t* local)
+    sctk_net_ibv_qp_local_t* local, int limit)
 {
   int size;
   int nb_posted;
@@ -205,7 +206,7 @@ int sctk_net_ibv_ibuf_srq_check_and_post(
   sctk_nodebug("ibv_max_srq_ibufs %d - ibuf_free_srq_nb %d",
       ibv_max_srq_ibufs, ibuf_free_srq_nb);
 
-  if (ibuf_free_srq_nb < ibv_srq_credit_limit)
+  if (ibuf_free_srq_nb < limit)
   {
     sctk_spinlock_lock(&ibuf_lock);
     if (ibuf_free_ibuf_nb > ibv_max_srq_ibufs)
@@ -248,7 +249,7 @@ int sctk_net_ibv_ibuf_srq_post(
     if (rc != 0)
     {
       /* try to post more recv buffers */
-      rc = sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
+      rc = sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit);
 
       /* if it's still impossible, we fail */
       if (rc != 0)

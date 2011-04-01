@@ -336,11 +336,11 @@ void* async_thread(void* context)
 
       case IBV_EVENT_SRQ_LIMIT_REACHED:
         DESC_EVENT("IBV_EVENT_SRQ_LIMIT_REACHED","SRQ limit was reached", 0);
-        sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
+        sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_thread_limit);
         break;
 
       case IBV_EVENT_QP_LAST_WQE_REACHED:
-        DESC_EVENT("IBV_EVENT_QP_LAST_WQE_REACHED","Last WQE Reached on a QP associated with an SRQ CQ events", 0);
+        DESC_EVENT("IBV_EVENT_QP_LAST_WQE_REACHED","Last WQE Reached on a QP associated with an SRQ CQ events", 1);
         break;
 
       case IBV_EVENT_CLIENT_REREGISTER:

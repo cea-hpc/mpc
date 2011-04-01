@@ -154,7 +154,7 @@ typedef struct
   sctk_net_ibv_ibuf_msg_type_t           msg_type;
 
   size_t                    requested_size;
-  int                       src_process;
+//  int                       src_process;
 
   sctk_net_ibv_rc_rdma_process_t* entry_rc_rdma;
   sctk_net_ibv_rc_rdma_entry_t* entry;

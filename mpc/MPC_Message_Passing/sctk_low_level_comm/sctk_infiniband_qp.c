@@ -566,12 +566,18 @@ sctk_net_ibv_cq_garbage_collector(struct ibv_cq* cq, int nb_pending, void (*ptr_
   struct ibv_srq*
 sctk_net_ibv_srq_init( sctk_net_ibv_qp_local_t* local, struct ibv_srq_init_attr* attr)
 {
+  struct ibv_srq_attr mod_attr;
+
   local->srq = ibv_create_srq(local->pd, attr);
   if (!local->srq)
   {
     sctk_error("Cannot create Shared Received Queue");
     sctk_abort();
   }
+
+  mod_attr.max_wr = ibv_max_srq_ibufs;
+  ibv_modify_srq(local->srq, &mod_attr, IBV_SRQ_LIMIT);
+
 
   sctk_nodebug("SRQ : %p", local->srq);
   return local->srq;

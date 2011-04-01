@@ -428,13 +428,13 @@ sctk_net_ibv_rc_sr_poll_send(
       break;
 
     case RDMA_READ_IBUF_FLAG:
-      sctk_net_ibv_com_rc_rdma_read_finish(
-          ibuf, rc_sr_local, lookup_mode);
-
       /* there */
       sctk_net_ibv_comp_rc_rdma_send_finish(
           rail, rc_sr_local, rc_rdma_local,
           ibuf);
+
+      sctk_net_ibv_com_rc_rdma_read_finish(
+          ibuf, rc_sr_local, lookup_mode);
 
       sctk_net_ibv_ibuf_release(ibuf, 0);
       break;
@@ -696,13 +696,13 @@ sctk_net_ibv_rc_sr_poll_recv(
 
 
     case RC_SR_BCAST:
-      sctk_nodebug("Broadcast msg received");
+      sctk_nodebug("POLL Broadcast msg received");
       sctk_net_ibv_collective_push_rc_sr(&broadcast_fifo, ibuf);
       release_buffer = 0;
       break;
 
     case RC_SR_REDUCE:
-      sctk_nodebug("Reduce msg received");
+      sctk_nodebug("POLL Reduce msg received");
       sctk_net_ibv_collective_push_rc_sr(&reduce_fifo, ibuf);
       release_buffer = 0;
       break;
@@ -718,7 +718,7 @@ sctk_net_ibv_rc_sr_poll_recv(
   {
     sctk_nodebug("Buffer %d posted", ibuf_free_srq_nb);
     sctk_net_ibv_ibuf_release(ibuf, 1);
-    sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local);
+    sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit);
   }
 
   if (lookup_mode)
