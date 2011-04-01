@@ -45,6 +45,7 @@ sctk_char_fortran_to_c (char *buf, long int size)
   char *tmp;
   long int i;
   tmp = sctk_malloc (size + 1);
+#warning "check memory liberation"
 
   for (i = 0; i < size; i++)
     {
