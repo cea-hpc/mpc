@@ -20,32 +20,39 @@
 /* #   - DIDELOT Sylvain didelot.sylvain@gmail.com                        # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "sctk_hybrid_comm.h"
-#include "sctk_infiniband_allocator.h"
+#ifdef MPC_USE_INFINIBAND
 
-#ifndef __SCTK__INFINIBAND_LIB_H_
-#define __SCTK__INFINIBAND_LIB_H_
+#ifndef __SCTK__INFINIBAND_CONFIG_H_
+#define __SCTK__INFINIBAND_CONFIG_H_
 
-/* channel selection */
-extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
+extern int  ibv_eager_threshold;
+extern int  ibv_frag_eager_threshold;
+extern int  ibv_qp_tx_depth;
+extern int  ibv_qp_rx_depth;
+extern int  ibv_cq_depth;
+extern int  ibv_max_sg_sq;
+extern int  ibv_max_sg_rq;
+extern int  ibv_max_inline;
+extern int  ibv_max_ibufs;
+extern int  ibv_max_srq_ibufs;
+extern int  ibv_srq_credit_limit;
+extern int  ibv_srq_credit_thread_limit;
+extern int  ibv_size_ibufs_chunk;;
 
-UNUSED static void
-sctk_net_ibv_send_msg_to_mpc(sctk_thread_ptp_message_t* msg_header, void* msg, int src_process,
-    int origin, void* ptr) {
+extern int  ibv_rdvz_protocol;
+#define IBV_RDVZ_WRITE_PROTOCOL (1)
+#define IBV_RDVZ_READ_PROTOCOL (2)
 
-  sctk_net_ibv_allocator->entry[src_process].nb_ptp_msg_received++;
+extern int  ibv_verbose_level;
+extern int  ibv_wc_in_number;
+extern int  ibv_wc_out_number;
+extern int  ibv_max_mr;
+extern int  ibv_size_mr_chunk;
+extern int  ibv_adm_port;
+extern int  ibv_rdma_depth;
+extern int  ibv_rdma_dest_depth;
+extern int  ibv_no_memory_limitation;
 
-  msg_header->net_mesg = msg;
-  msg_header->channel_type = origin;
-  msg_header->struct_ptr = ptr;
-  sctk_nodebug("\t\t\t\tSent message to mpc (struct_ptr : %p)", msg_header->struct_ptr);
-  sctk_send_message (msg_header);
-
-}
-
-#define max(a,b) \
-  ({ typeof (a) _a = (a); \
-   typeof (b) _b = (b); \
-   _a > _b ? _a : _b; })
-
+void sctk_net_ibv_config_init();
+#endif
 #endif

@@ -74,7 +74,7 @@ MonoDomain *domain;
 #ifdef MPC_Message_Passing
 #include <mpc_internal_thread.h>
 #include "sctk_hybrid_comm.h"
-#include "sctk_infiniband_scheduling.h"
+#include "sctk_ib_scheduling.h"
 #endif
 
 typedef unsigned sctk_long_long sctk_timer_t;

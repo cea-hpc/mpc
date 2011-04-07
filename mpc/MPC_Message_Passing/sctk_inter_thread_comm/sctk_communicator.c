@@ -475,6 +475,7 @@ sctk_create_communicator (const sctk_communicator_t origin_communicator,
 	  i++;
 	  sprintf (name, "%s/communicator_%d_%d", sctk_store_dir,
 		   (int) tmp->communicator_number, i);
+    sctk_nodebug("%s", name);
 	  file = fopen (name, "r");
 	}
       while (file != NULL);
@@ -549,6 +550,7 @@ sctk_get_rank (const sctk_communicator_t communicator,
 {
   int res;
   res = __sctk_get_rank (communicator, comm_world_rank);
+  sctk_nodebug("RANK : %d", res);
   assume (res >= 0);
   return res;
 }

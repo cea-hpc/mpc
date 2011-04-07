@@ -19,14 +19,16 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "sctk_hybrid_comm.h"
+#ifdef MPC_USE_INFINIBAND
 
 #ifndef __SCTK__INFINIBAND_CM_H_
 #define __SCTK__INFINIBAND_CM_H_
 
-#include "sctk_infiniband_qp.h"
-#include "sctk_infiniband_const.h"
-#include "sctk_infiniband_allocator.h"
+#include "sctk_hybrid_comm.h"
+
+#include "sctk_ib_qp.h"
+#include "sctk_ib_const.h"
+#include "sctk_ib_allocator.h"
 #include <infiniband/verbs.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -48,4 +50,5 @@ void sctk_net_ibv_async_init(struct ibv_context *context);
 /*-----------------------------------------------------------
  *  ASYNC EVENTS THREAD
  *----------------------------------------------------------*/
+#endif
 #endif

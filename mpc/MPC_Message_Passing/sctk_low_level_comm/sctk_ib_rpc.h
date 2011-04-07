@@ -21,36 +21,48 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __SCTK__INFINIBAND_CONFIG_H_
-#define __SCTK__INFINIBAND_CONFIG_H_
+#ifdef MPC_USE_INFINIBAND
+#ifndef __SCTK__INFINIBAND_RPC_H_
+#define __SCTK__INFINIBAND_RPC_H_
 
-extern int  ibv_eager_threshold;
-extern int  ibv_frag_eager_threshold;
-extern int  ibv_qp_tx_depth;
-extern int  ibv_qp_rx_depth;
-extern int  ibv_cq_depth;
-extern int  ibv_max_sg_sq;
-extern int  ibv_max_sg_rq;
-extern int  ibv_max_inline;
-extern int  ibv_max_ibufs;
-extern int  ibv_max_srq_ibufs;
-extern int  ibv_srq_credit_limit;
-extern int  ibv_srq_credit_thread_limit;
-extern int  ibv_size_ibufs_chunk;;
+#include <stdint.h>
 
-extern int  ibv_rdvz_protocol;
-#define IBV_RDVZ_WRITE_PROTOCOL (1)
-#define IBV_RDVZ_READ_PROTOCOL (2)
+typedef struct
+{
+  void ( *func ) ( void * );
+  size_t arg_size;
+  void* arg;
+} sctk_net_ibv_rpc_t;
 
-extern int  ibv_verbose_level;
-extern int  ibv_wc_in_number;
-extern int  ibv_wc_out_number;
-extern int  ibv_max_mr;
-extern int  ibv_size_mr_chunk;
-extern int  ibv_adm_port;
-extern int  ibv_rdma_depth;
-extern int  ibv_rdma_dest_depth;
-extern int  ibv_no_memory_limitation;
+typedef struct
+{
+  uint32_t key;
+} sctk_net_ibv_rpc_request_t;
 
-void sctk_net_ibv_config_init();
+typedef struct
+{
+  int src_process;
+  void* ack;
+  int lock;
+} sctk_net_ibv_rpc_ack_t;
+
+void*
+thread_rpc(void* arg);
+  void
+sctk_net_rpc_register(void* addr, size_t size, int process, int is_retrieve, uint32_t* rkey);
+
+  void
+sctk_net_rpc_unregister(void* addr, size_t size, int process, int is_retrieve);
+
+void
+sctk_net_rpc_driver ( void ( *func ) ( void * ), int destination, void *arg, size_t arg_size );
+
+void
+sctk_net_rpc_retrive_driver ( void *dest, void *src, size_t arg_size,
+    int process, int *ack, uint32_t rkey );
+
+ void
+sctk_net_rpc_send_driver ( void *dest, void *src, size_t arg_size, int process,
+    int *ack );
+#endif
 #endif

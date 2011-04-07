@@ -20,15 +20,17 @@
 /* #   - DIDELOT Sylvain didelot.sylvain@gmail.com                        # */
 /* #                                                                      # */
 /* ######################################################################## */
+
+#ifdef MPC_USE_INFINIBAND
+
 #include <slurm/pmi.h>
 
 #include "sctk_bootstrap.h"
 
-#include "sctk_infiniband_cm.h"
-#include "sctk_infiniband_qp.h"
-#include "sctk_infiniband_config.h"
+#include "sctk_ib_cm.h"
+#include "sctk_ib_qp.h"
+#include "sctk_ib_config.h"
 
-#ifdef MPC_USE_INFINIBAND
 
 #include "sctk_rpc.h"
 #include <infiniband/verbs.h>
@@ -266,12 +268,14 @@ void sctk_net_ibv_cm_server()
  *  ASYNC EVENTS THREAD
  *----------------------------------------------------------*/
 #define DESC_EVENT(event, desc, fatal)  \
-  if ( (ibv_verbose_level > 0) || fatal) sctk_debug("[async thread] "event":\t"desc); \
+  if ( (ibv_verbose_level > 0) || fatal) sctk_nodebug("[async thread] "event":\t"desc); \
 if (fatal) sctk_abort()
 
 void* async_thread(void* context)
 {
   struct ibv_async_event event;
+  struct ibv_srq_attr mod_attr;
+  int rc;
 
   while(1)
   {
@@ -344,7 +348,11 @@ void* async_thread(void* context)
 
       case IBV_EVENT_SRQ_LIMIT_REACHED:
         DESC_EVENT("IBV_EVENT_SRQ_LIMIT_REACHED","SRQ limit was reached", 0);
-        sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_thread_limit);
+        sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, 0);
+
+        mod_attr.srq_limit = ibv_srq_credit_thread_limit;
+        rc = ibv_modify_srq(rc_sr_local->srq, &mod_attr, IBV_SRQ_LIMIT);
+        assume(rc == 0);
         break;
 
       case IBV_EVENT_QP_LAST_WQE_REACHED:
@@ -362,6 +370,7 @@ void* async_thread(void* context)
 
     ibv_ack_async_event(&event);
   }
+  sctk_debug("Async thread exits...");
   return NULL;
 }
 

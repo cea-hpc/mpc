@@ -21,13 +21,14 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_INFINIBAND
 #include "sctk_bootstrap.h"
-#include "sctk_infiniband_qp.h"
-#include "sctk_infiniband_const.h"
-#include "sctk_infiniband_config.h"
-#include "sctk_infiniband_allocator.h"
-#include "sctk_infiniband_comp_rc_sr.h"
-#include "sctk_infiniband_config.h"
+#include "sctk_ib_qp.h"
+#include "sctk_ib_const.h"
+#include "sctk_ib_config.h"
+#include "sctk_ib_allocator.h"
+#include "sctk_ib_comp_rc_sr.h"
+#include "sctk_ib_config.h"
 #include "sctk_mpcrun_client.h"
 #include "sctk_alloc.h"
 #include "sctk_debug.h"
@@ -477,9 +478,11 @@ sctk_net_ibv_poll_check_wc(struct ibv_wc wc, sctk_net_ibv_allocator_type_t type)
   if (wc.status != IBV_WC_SUCCESS)
   {
     sctk_net_ibv_ibuf_t* ibuf;
+    sctk_net_ibv_ibuf_header_t* header;
 
     ibuf = (sctk_net_ibv_ibuf_t*) wc.wr_id;
     assume(ibuf);
+    header = ((sctk_net_ibv_ibuf_header_t*) ibuf->buffer);
 
     sctk_error ("\033[1;31m\nIB - FATAL ERROR FROM PROCESS %d\n"
         "################################\033[0m\n"
@@ -488,10 +491,13 @@ sctk_net_ibv_poll_check_wc(struct ibv_wc wc, sctk_net_ibv_allocator_type_t type)
         "ERROR Vendor : %d\n"
         "Byte_len     : %d\n"
         "Flag         : %s\n"
+        "Ibuf type    : %d\n"
+        "Ptp type     : %d\n"
         "\033[1;31m################################\033[0m\n",
         sctk_process_rank,
         wc.wr_id, sctk_net_ibv_cq_print_status(wc.status),
-        wc.vendor_err, wc.byte_len, sctk_net_ibv_ibuf_print_flag(ibuf->flag));
+        wc.vendor_err, wc.byte_len, sctk_net_ibv_ibuf_print_flag(ibuf->flag),
+        header->ibuf_type, header->ptp_type);
 
     sctk_abort();
   }
@@ -571,7 +577,6 @@ sctk_net_ibv_cq_garbage_collector(struct ibv_cq* cq, int nb_pending, void (*ptr_
   struct ibv_srq*
 sctk_net_ibv_srq_init( sctk_net_ibv_qp_local_t* local, struct ibv_srq_init_attr* attr)
 {
-  struct ibv_srq_attr mod_attr;
 
   local->srq = ibv_create_srq(local->pd, attr);
   if (!local->srq)
@@ -579,10 +584,6 @@ sctk_net_ibv_srq_init( sctk_net_ibv_qp_local_t* local, struct ibv_srq_init_attr*
     sctk_error("Cannot create Shared Received Queue");
     sctk_abort();
   }
-
-  mod_attr.max_wr = ibv_max_srq_ibufs;
-  ibv_modify_srq(local->srq, &mod_attr, IBV_SRQ_LIMIT);
-
 
   sctk_nodebug("SRQ : %p", local->srq);
   return local->srq;
@@ -597,7 +598,6 @@ sctk_net_ibv_srq_init_attr()
 
   attr.attr.max_wr = ibv_max_srq_ibufs;
   attr.attr.max_sge = ibv_max_sg_rq;
-  attr.attr.srq_limit = ibv_srq_credit_thread_limit;
 
   return attr;
 }
@@ -720,4 +720,4 @@ sctk_net_ibv_qp_allocate_recv(
   sctk_nodebug("Modify QR RTS for process %d", rank);
   sctk_net_ibv_qp_modify(remote, &attr, flags);
 }
-
+#endif

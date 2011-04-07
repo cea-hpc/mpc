@@ -21,8 +21,9 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_infiniband_profiler.h"
-#include "sctk_infiniband_config.h"
+#ifdef MPC_USE_INFINIBAND
+#include "sctk_ib_profiler.h"
+#include "sctk_ib_config.h"
 
 void sctk_ibv_profiler_init()
 {
@@ -124,3 +125,4 @@ fwrite(line, sizeof(char), strnlen(line, 1024), file);
   fclose(file);
 #endif
 }
+#endif

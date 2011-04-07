@@ -28,7 +28,7 @@
 #include "sctk_debug.h"
 #include "sctk_rpc.h"
 #include "sctk_shm.h"
-#include "sctk_infiniband.h"
+#include "sctk_ib.h"
 #include "sctk_bootstrap.h"
 #include "sctk_tcp.h"
 #include "sctk_shm_mem_struct_funcs.h"
@@ -161,7 +161,7 @@ sctk_net_rpc_driver (void (*func) (void *), int destination, void *arg,
 
   static void
 sctk_net_rpc_send_driver (void *dest, void *src, size_t arg_size, int process,
-    int *ack)
+    int *ack, uint32_t rkey)
 {
 #ifdef SCTK_SHM
   INTRA_BEGIN(process)
@@ -169,14 +169,14 @@ sctk_net_rpc_send_driver (void *dest, void *src, size_t arg_size, int process,
   ++nb_intra_comm;
 #endif
   sctk_nodebug("INTRA net_rpc_send_driver");
-  pointers_intra.rpc_driver_retrive(dest, src, arg_size, local_rank, ack);
+  pointers_intra.rpc_driver_retrive(dest, src, arg_size, local_rank, ack, rkey);
   INTRA_END
 #endif
 #if SCTK_HYBRID_DEBUG == 1
   ++nb_inter_comm;
 #endif
   sctk_nodebug("INTER net_rpc_send_driver");
-  pointers_inter.rpc_driver_retrive(dest, src, arg_size, process, ack);
+  pointers_inter.rpc_driver_retrive(dest, src, arg_size, process, ack, rkey);
 #ifdef SCTK_SHM
   INTER_END
 #endif
@@ -184,7 +184,7 @@ sctk_net_rpc_send_driver (void *dest, void *src, size_t arg_size, int process,
 
   static void
 sctk_net_rpc_retrieve_driver (void *dest, void *src, size_t arg_size,
-    int process, int *ack)
+    int process, int *ack, uint32_t rkey)
 {
 #ifdef SCTK_SHM
   INTRA_BEGIN(process)
@@ -199,7 +199,7 @@ sctk_net_rpc_retrieve_driver (void *dest, void *src, size_t arg_size,
   ++nb_inter_comm;
 #endif
   sctk_nodebug("INTER net_rpc_retrieve_driver");
-  pointers_inter.rpc_driver_retrive(dest, src, arg_size, process, ack);
+  pointers_inter.rpc_driver_retrive(dest, src, arg_size, process, ack, rkey);
 #ifdef SCTK_SHM
   INTER_END
 #endif
@@ -325,7 +325,9 @@ sctk_net_hybrid_finalize()
 #endif
 #endif
 
+#ifdef MPC_USE_INFINIBAND
    sctk_net_ibv_finalize();
+#endif
 
 }
 

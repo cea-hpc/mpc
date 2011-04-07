@@ -415,7 +415,7 @@ sctk_shm_thread_rpc ( void *arg ) {
 
       sctk_nodebug ( "BEGIN sctk_net_adm_poll_shm (slot %p)", rpc_slot );
 
-      args = sctk_malloc ( SCTK_SHM_RPC_ARGS_MAXLEN );
+      args = sctk_malloc (rpc.shm_rpc_size_args);
       memcpy ( args, rpc.shm_rpc_args, rpc.shm_rpc_size_args );
 
       sctk_nodebug ( "Arg size : %d - %d", rpc.shm_rpc_size_args,

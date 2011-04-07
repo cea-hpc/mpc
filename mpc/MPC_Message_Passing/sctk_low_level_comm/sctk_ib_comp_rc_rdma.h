@@ -21,21 +21,22 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_INFINIBAND
 
 #ifndef __SCTK__INFINIBAND_COMP_RC_RDMA_H_
 #define __SCTK__INFINIBAND_COMP_RC_RDMA_H_
 
 #include <sctk_debug.h>
 #include <sctk_spinlock.h>
-#include "sctk_infiniband_mmu.h"
-#include "sctk_infiniband_comp_rc_sr.h"
-#include "sctk_infiniband_scheduling.h"
+#include "sctk_ib_mmu.h"
+#include "sctk_ib_comp_rc_sr.h"
+#include "sctk_ib_scheduling.h"
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
 #include <infiniband/verbs.h>
 #include "sctk_list.h"
-#include "sctk_infiniband_qp.h"
+#include "sctk_ib_qp.h"
 #include "sctk_list.h"
 
 struct sctk_net_ibv_allocator_request_s;
@@ -102,6 +103,8 @@ typedef struct
   uint32_t                        dest_task;
   /* Packet Sequence Number */
   uint32_t                        psn;
+  /* Communicator ID */
+  int                             com_id;
   double creation_timestamp;
   /* ptr to the list entry (help for removing an entry from
    * a list) */
@@ -226,4 +229,5 @@ sctk_net_ibv_comp_rc_rdma_send_finish(
     sctk_net_ibv_qp_local_t* local_rc_rdma,
     sctk_net_ibv_ibuf_t* ibuf);
 
+#endif
 #endif

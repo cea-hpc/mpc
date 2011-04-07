@@ -21,12 +21,13 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "sctk_infiniband_lib.h"
-#include <sctk_infiniband_scheduling.h>
-#include <sctk_infiniband_allocator.h>
-#include <sctk_infiniband_coll.h>
-#include "sctk_infiniband_const.h"
-#include "sctk_infiniband_profiler.h"
+#ifdef MPC_USE_INFINIBAND
+#include "sctk_ib_lib.h"
+#include <sctk_ib_scheduling.h>
+#include <sctk_ib_allocator.h>
+#include <sctk_ib_coll.h>
+#include "sctk_ib_const.h"
+#include "sctk_ib_profiler.h"
 #include "sctk_buffered_fifo.h"
 
 extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
@@ -234,6 +235,13 @@ sctk_net_ibv_sched_sn_check_and_inc(int src_task, int dest_task, uint64_t num)
 /*-----------------------------------------------------------
  *  COLL SEQUENCE NUMBERS
  *----------------------------------------------------------*/
+void
+sctk_net_ibv_sched_coll_reset (int com_id)
+{
+ com_entries[com_id].reduce.psn = 0;
+ com_entries[com_id].bcast.psn = 0;
+ com_entries[com_id].barrier.psn = 0;
+}
 
 uint32_t
 sctk_net_ibv_sched_coll_psn_inc (sctk_net_ibv_ibuf_ptp_type_t type, int com_id)
@@ -242,14 +250,27 @@ sctk_net_ibv_sched_coll_psn_inc (sctk_net_ibv_ibuf_ptp_type_t type, int com_id)
 
   switch (type) {
     case IBV_BCAST:
-      ret = com_entries[com_id].bcast.psn++;
+      ret = com_entries[com_id].bcast.psn;
+      com_entries[com_id].bcast.psn++;
       return ret;
       break;
 
     case IBV_REDUCE:
-      ret = com_entries[com_id].reduce.psn++;
+      ret = com_entries[com_id].reduce.psn;
+      com_entries[com_id].reduce.psn++;
       return ret;
       break;
+
+    case IBV_BARRIER:
+      ret = com_entries[com_id].barrier.psn;
+      com_entries[com_id].barrier.psn++;
+      return ret;
+      break;
+
+      /* don't need a PSN for the barrier init.
+       * Always return 0*/
+    case IBV_BCAST_INIT_BARRIER:
+      return 0;
 
     default:
       assume(0);
@@ -284,3 +305,4 @@ sctk_net_ibv_sched_coll_sn_check_and_inc(int com_id)
   return 0;
 }
 
+#endif

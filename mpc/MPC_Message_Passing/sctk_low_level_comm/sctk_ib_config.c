@@ -21,10 +21,12 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_INFINIBAND
+
 #include <sctk.h>
-#include "sctk_infiniband_config.h"
-#include "sctk_infiniband_comp_rc_sr.h"
-#include "sctk_infiniband_comp_rc_rdma.h"
+#include "sctk_ib_config.h"
+#include "sctk_ib_comp_rc_sr.h"
+#include "sctk_ib_comp_rc_rdma.h"
 
 /* Maximum message size for each channels (in fact this in
  * not really a threshold...). Here is the algorithm to
@@ -32,8 +34,8 @@
  * if x < IBV_EAGER_THRESHOLD -> eager msg
  * if x < IBV_FRAG_EAGER_THRESHOLD -> frag msg (into several eager buffers)
  * if x > IBV_FRAG_EAGER_THRESHOLD -> rendezvous msg */
-#define IBV_EAGER_THRESHOLD ( 64 * 1024 )
-#define IBV_FRAG_EAGER_THRESHOLD ( 512 * 1024)
+#define IBV_EAGER_THRESHOLD ( 32 * 1024 )
+#define IBV_FRAG_EAGER_THRESHOLD ( 256 * 1024)
 /* Number of allowed pending Work Queue Elements
  * for each QP */
 #define IBV_QP_TX_DEPTH     3000
@@ -49,17 +51,17 @@
 
 /* Maximum number of buffers to allocate during the
  * initialization step */
-#define IBV_MAX_IBUFS         1500
+#define IBV_MAX_IBUFS         2000
 #define IBV_MAX_SRQ_IBUFS     1000
 /* Minimum number of free recv buffer before
  * posting of new buffers. This thread is  activated
  * once a recv buffer is freed */
-#define IBV_SRQ_CREDIT_LIMIT  700
+#define IBV_SRQ_CREDIT_LIMIT  650
 /* Minimum number of free recv buffer before
  * the activation of the asynchronous
  * thread (if this thread is activated too much times,
  * the performance can be decreased) */
-#define IBV_SRQ_CREDIT_THREAD_LIMIT  600
+#define IBV_SRQ_CREDIT_THREAD_LIMIT  300
 
 /* for PN */
 #if 0
@@ -263,4 +265,4 @@ void sctk_net_ibv_config_init()
   sctk_net_ibv_config_check();
   sctk_net_ibv_config_print();
 }
-
+#endif

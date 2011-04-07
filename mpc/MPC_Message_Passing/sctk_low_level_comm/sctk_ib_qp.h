@@ -21,13 +21,14 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_INFINIBAND
 #ifndef __SCTK__INFINIBAND_QP_H_
 #define __SCTK__INFINIBAND_QP_H_
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "sctk_infiniband_const.h"
-#include "sctk_infiniband_config.h"
+#include "sctk_ib_const.h"
+#include "sctk_ib_config.h"
 #include "sctk_list.h"
 #include "sctk_spinlock.h"
 #include <infiniband/verbs.h>
@@ -90,7 +91,7 @@ typedef struct
   uint32_t psn;
 } sctk_net_ibv_qp_exchange_keys_t;
 
-#include "sctk_infiniband_mmu.h"
+#include "sctk_ib_mmu.h"
 
 /*-----------------------------------------------------------
  *  RAIL
@@ -207,4 +208,5 @@ int sctk_net_ibv_qp_send_get_wqe(int dest_process, struct sctk_net_ibv_ibuf_s* i
 
 void sctk_net_ibv_qp_send_free_wqe(sctk_net_ibv_qp_remote_t* remote );
 
+#endif
 #endif

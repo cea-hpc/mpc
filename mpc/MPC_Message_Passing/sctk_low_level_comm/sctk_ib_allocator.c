@@ -21,13 +21,14 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_INFINIBAND
 #include "sctk_list.h"
-#include "sctk_infiniband_allocator.h"
-#include "sctk_infiniband_comp_rc_rdma.h"
-#include "sctk_infiniband_const.h"
-#include "sctk_infiniband_config.h"
-#include "sctk_infiniband_profiler.h"
-#include "sctk_infiniband_scheduling.h"
+#include "sctk_ib_allocator.h"
+#include "sctk_ib_comp_rc_rdma.h"
+#include "sctk_ib_const.h"
+#include "sctk_ib_config.h"
+#include "sctk_ib_profiler.h"
+#include "sctk_ib_scheduling.h"
 #include "sctk_bootstrap.h"
 #include "sctk.h"
 #include "sctk_thread.h"
@@ -77,7 +78,7 @@ sctk_net_ibv_allocator_register(
 {
   switch(type) {
     case IBV_CHAN_RC_SR:
-      if (sctk_net_ibv_allocator->entry[rank].rc_sr)
+     if (sctk_net_ibv_allocator->entry[rank].rc_sr)
       {
         sctk_error("Process %d already registered to sctk_net_ibv_allocator RC_SR", rank);
         sctk_abort();
@@ -121,7 +122,7 @@ sctk_net_ibv_allocator_get(
 }
 
 /*-----------------------------------------------------------
- *  POLLING RC SR
+ *  POLLING
  *----------------------------------------------------------*/
 void sctk_net_ibv_rc_sr_send_cq(struct ibv_wc* wc, int lookup, int dest)
 {
@@ -134,10 +135,8 @@ void sctk_net_ibv_rc_sr_recv_cq(struct ibv_wc* wc, int lookup, int dest)
       rc_rdma_local, lookup, dest);
 }
 
-/*-----------------------------------------------------------
- *  POLLING
- *----------------------------------------------------------*/
-void
+
+  void
 sctk_net_ibv_allocator_ptp_lookup(int dest, sctk_net_ibv_allocator_type_t type)
 {
   switch (type) {
@@ -191,8 +190,17 @@ void sctk_net_ibv_allocator_ptp_lookup_all(int dest)
   sctk_net_ibv_allocator_ptp_lookup(dest, IBV_CHAN_RC_SR);
 }
 
+/*-----------------------------------------------------------
+ *  PTP SENDING
+ *----------------------------------------------------------*/
+
+
 /**
- *  \brief Fonction which sends a PTP message
+ *  Function which sends a PTP message to a dest process. The
+ *  channel to use is determinated according to the size of
+ *  the message to send
+ *  \param
+ *  \return
  */
 void
 sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
@@ -200,6 +208,8 @@ sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
   DBG_S(1);
   size_t size;
   sctk_net_ibv_allocator_request_t req;
+  int task_id;
+  int thread_id;
 
   /* profile if message is contigous or not (if we can
    * use the zerocopy method or not) */
@@ -214,12 +224,15 @@ sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
 
   /* determine message number */
   size = sctk_net_determine_message_size(msg);
+  sctk_get_thread_info (&task_id, &thread_id);
 
   req.size = size;
   req.msg = msg;
   req.dest_process = dest_process;
   req.dest_task = ((sctk_thread_ptp_message_t*) msg)->header.destination;
   req.ptp_type = IBV_PTP;
+
+  req.psn = sctk_net_ibv_sched_psn_inc(task_id, req.dest_task);
 
   if ( (size + sizeof(sctk_thread_ptp_message_t)) +
       RC_SR_HEADER_SIZE <= ibv_eager_threshold) {
@@ -260,15 +273,23 @@ sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
   DBG_E(1);
 }
 
-
+/**
+ *  Function which sends a PTP collective message to a dest process. The
+ *  channel to use is determinated according to the size of
+ *  the message to send
+ *  \param
+ *  \return
+ */
 void
 sctk_net_ibv_allocator_send_coll_message (
     sctk_net_ibv_qp_rail_t   *rail,
     sctk_net_ibv_qp_local_t* local_rc_sr,
+    sctk_collective_communications_t * com,
     void *msg,
     int dest_process,
     size_t size,
-    sctk_net_ibv_ibuf_ptp_type_t type)
+    sctk_net_ibv_ibuf_ptp_type_t type,
+    uint32_t psn)
 {
   DBG_S(1);
   sctk_net_ibv_allocator_request_t req;
@@ -278,6 +299,19 @@ sctk_net_ibv_allocator_send_coll_message (
   req.msg   = msg;
   req.dest_process  = dest_process;
   req.dest_task     = -1;
+  req.psn = psn;
+
+  /* copy the comm id if this is a message from a bcast or
+   * a reduce */
+//  assume(com);
+  if (com)
+  {
+    req.com_id = com->id;
+  } else {
+    req.com_id = 0;
+  }
+
+  sctk_nodebug("Send collective message with size %lu", size);
 
   if ( (size + RC_SR_HEADER_SIZE) <= ibv_eager_threshold) {
     sctk_ibv_profiler_inc(IBV_EAGER_NB);
@@ -288,23 +322,20 @@ sctk_net_ibv_allocator_send_coll_message (
     req.channel = IBV_CHAN_RC_SR;
     sctk_net_ibv_comp_rc_sr_send_ptp_message (
         rc_sr_local, req);
-//  } else if ( (size + sizeof(sctk_thread_ptp_message_t)) <= ibv_frag_eager_threshold) {
-#if 0
-  } else {
+  } else if ( (size + sizeof(sctk_thread_ptp_message_t)) <= ibv_frag_eager_threshold) {
     sctk_ibv_profiler_inc(IBV_FRAG_EAGER_NB);
     sctk_ibv_profiler_add(IBV_FRAG_EAGER_SIZE, size + sizeof(sctk_thread_ptp_message_t));
 
-    assume(0);
     /*
      * FRAG MSG
      */
     req.channel = IBV_CHAN_RC_SR_FRAG;
     sctk_net_ibv_comp_rc_sr_send_coll_frag_ptp_message (rc_sr_local, req);
-#endif
   }
-else {
+  else {
     sctk_ibv_profiler_inc(IBV_RDVZ_READ_NB);
 
+    sctk_nodebug("Send rendezvous msg");
     /*
      * RENDEZVOUS
      */
@@ -315,54 +346,4 @@ else {
 
   DBG_E(1);
 }
-
-/**
- *  Init thread-specific structures. Each thread init its own structures
- *  \param
- *  \return
- */
-  void
-sctk_net_ibv_allocator_initialize_threads()
-{
-#if 0
-  int task_id;
-  int thread_id;
-  int i;
-  int entry_nb = -1;
-  sctk_get_thread_info (&task_id, &thread_id);
-
-  sctk_spinlock_lock(&all_tasks_lock);
-
-  /* lookup for a free entry */
-  for (i=0; i < MAX_NB_TASKS_PER_PROCESS; ++i)
-  {
-    sctk_nodebug("Task nb : %d", all_tasks[i].task_nb);
-
-    if (all_tasks[i].task_nb == -1)
-    {
-      entry_nb = i;
-      sctk_spinlock_unlock(&all_tasks_lock);
-      all_tasks[entry_nb].task_nb = task_id;
-      all_tasks[entry_nb].frag_eager_list =
-        sctk_calloc(sizeof(struct sctk_list*), sctk_get_total_tasks_number());
-      assume(all_tasks[entry_nb].frag_eager_list);
-
-//      sctk_list_new(&all_tasks[entry_nb].frag_eager_list, 0, 0);
-      sctk_nodebug("%p - Found entry %d -> %d", &all_tasks[entry_nb], i, task_id);
-      break;
-    }
-  }
-
-#warning "We have to move it to support other modules"
-  if (entry_nb == -1) {
-//    sctk_spinlock_unlock(&all_tasks_lock);
-//    assume(0);
-  }
-
-
-  /* init structures */
-  sctk_list_new(&all_tasks[entry_nb].pending_msg, 1, sizeof(sctk_net_ibv_sched_pending_header));
-
-  sctk_nodebug("Initializing thread %d with entry %d", task_id, entry_nb);
 #endif
-}

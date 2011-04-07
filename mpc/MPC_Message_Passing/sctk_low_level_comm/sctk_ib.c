@@ -20,34 +20,34 @@
 /* #   - DIDELOT Sylvain didelot.sylvain@gmail.com                        # */
 /* #                                                                      # */
 /* ######################################################################## */
+#ifdef MPC_USE_INFINIBAND
+
 #include <slurm/pmi.h>
 
 #include "sctk_low_level_comm.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "sctk_rpc.h"
-#include "sctk_infiniband.h"
+#include "sctk_ib.h"
 #include "sctk_mpcrun_client.h"
 #include "sctk_buffered_fifo.h"
 
-#include "sctk_infiniband_scheduling.h"
-#include "sctk_infiniband_allocator.h"
-#include "sctk_infiniband_ibufs.h"
-#include "sctk_infiniband_config.h"
-#include "sctk_infiniband_qp.h"
-#include "sctk_infiniband_mmu.h"
-#include "sctk_infiniband_cm.h"
-#include "sctk_infiniband_comp_rc_sr.h"
-#include "sctk_infiniband_comp_rc_rdma.h"
+#include "sctk_ib_rpc.h"
+#include "sctk_ib_scheduling.h"
+#include "sctk_ib_allocator.h"
+#include "sctk_ib_ibufs.h"
+#include "sctk_ib_config.h"
+#include "sctk_ib_qp.h"
+#include "sctk_ib_mmu.h"
+#include "sctk_ib_cm.h"
+#include "sctk_ib_comp_rc_sr.h"
+#include "sctk_ib_comp_rc_rdma.h"
 
-#ifdef MPC_USE_INFINIBAND
-
-#include "sctk_rpc.h"
 #include <infiniband/verbs.h>
 #include "sctk_alloc.h"
 #include "sctk_iso_alloc.h"
 #include "sctk_net_tools.h"
-#include "sctk_infiniband_profiler.h"
+#include "sctk_ib_profiler.h"
 
 extern struct sctk_list* frag_eager_list;
 
@@ -62,12 +62,11 @@ extern  sctk_net_ibv_qp_local_t *rc_sr_local;
 
 /* RC RDMA structures */
 extern sctk_net_ibv_qp_local_t   *rc_rdma_local;
-/* list where 1 entry <-> 1 process */
 
 /* physical port number */
 #define IBV_ADM_PORT 1
 
-#include "sctk_infiniband_lib.h"
+#include "sctk_ib_lib.h"
 
 static char sctk_net_network_mode[4096];
 void
@@ -80,10 +79,13 @@ sctk_net_ibv_update_network_mode()
   sctk_network_mode = sctk_net_network_mode;
 }
 
-#include "sctk_infiniband_coll.h"
+#include "sctk_ib_coll.h"
   void
 sctk_net_init_driver_infiniband (int *argc, char ***argv)
 {
+  struct ibv_srq_attr mod_attr;
+  int rc;
+
   assume (argc != NULL);
   assume (argv != NULL);
 
@@ -99,9 +101,6 @@ sctk_net_init_driver_infiniband (int *argc, char ***argv)
   /* message numbering */
   sctk_net_ibv_sched_init();
 
-  /* initialization of queue pairs */
-//  rc_rdma_local = sctk_net_ibv_comp_rc_rdma_create_local(rail);
-
   PMI_Barrier();
 
   /* initialization of collective */
@@ -115,9 +114,17 @@ sctk_net_init_driver_infiniband (int *argc, char ***argv)
   rc_sr_local = sctk_net_ibv_comp_rc_sr_create_local(rail);
   sctk_net_ibv_ibuf_new();
   sctk_net_ibv_ibuf_init(rail, rc_sr_local, ibv_max_ibufs, 0);
+  /* Post all recv buffers... */
   sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit);
+  /* ..and set up the srq limit */
+  mod_attr.srq_limit = ibv_srq_credit_thread_limit;
+  rc = ibv_modify_srq(rc_sr_local->srq, &mod_attr, IBV_SRQ_LIMIT);
+  assume(rc == 0);
 
   sctk_net_ibv_async_init(rc_sr_local->context);
+
+  /* initialization of RPC structures */
+  sctk_net_rpc_init();
 
   PMI_Barrier();
 }
@@ -245,13 +252,13 @@ sctk_net_ibv_collective_op_driver (sctk_collective_communications_t * com,
   if (nb_elem == 0)
   {
     sctk_nodebug ("begin collective barrier : %d", com->id);
-    if ( (com->id) == MPC_COMM_WORLD)
-    {
+//    if ( (com->id) == MPC_COMM_WORLD)
+//    {
       sctk_net_ibv_barrier (com, my_vp );
 //      PMI_Barrier();
-    } else {
-      not_implemented();
-    }
+//    } else {
+//      not_implemented();
+//    }
     sctk_nodebug ("end collective barrier");
   }
   else
@@ -273,57 +280,6 @@ sctk_net_ibv_collective_op_driver (sctk_collective_communications_t * com,
   sctk_nodebug ("end collective");
 }
 
-/*-----------------------------------------------------------
- *  RPC
- *----------------------------------------------------------*/
-static void
-sctk_net_rpc_register(void* addr, size_t size)
-{
-  sctk_nodebug("BEGIN rpc_register");
-
-  sctk_nodebug("END rpc_register");
-}
-
-static void
-sctk_net_rpc_unregister(void* addr, size_t size)
-{
-  sctk_nodebug("BEGIN rpc_unregister");
-
-  sctk_nodebug("END rpc_unregister");
-}
-
-
-static void
-sctk_net_rpc_driver ( void ( *func ) ( void * ), int destination, void *arg, size_t arg_size ) {
-  sctk_nodebug("BEGIN rpc_driver");
-
-  sctk_nodebug("END rpc_driver");
-}
-
-static void
-sctk_net_rpc_retrive_driver ( void *dest, void *src, size_t arg_size,
-    int process, int *ack ) {
-  sctk_nodebug("BEGIN rpc_retrive_driver");
-
-  sctk_nodebug("END rpc_retrive_driver");
-}
-
-static void
-sctk_net_rpc_send_driver ( void *dest, void *src, size_t arg_size, int process,
-    int *ack ) {
-  sctk_nodebug("BEGIN rpc_send_driver");
-
-  DBG_S ( 0 );
-   not_reachable ();
-  assume ( dest );
-  assume ( src );
-  assume ( arg_size );
-  assume ( process );
-  assume ( ack );
-  DBG_E ( 0 );
-
-  sctk_nodebug("END rpc_send_driver");
-}
 
 /*-----------------------------------------------------------
  *  FUNCTIONS REGISTRATION
@@ -352,10 +308,10 @@ sctk_net_ibv_register_pointers_functions (sctk_net_driver_pointers_functions_t* 
 
   pointers->collective          = sctk_net_ibv_collective_op_driver;
 
-  //  pointers->net_adm_poll        = sctk_net_adm_poll_func;	/* RPC */
+  pointers->net_adm_poll        = NULL; //thread_rpc; //sctk_net_adm_poll_func;	/* RPC */
   pointers->net_ptp_poll        = sctk_net_ibv_allocator_ptp_poll_all; /*  PTP */
 
-  pointers->net_new_comm        = NULL;
+  pointers->net_new_comm        = sctk_net_ibv_collective_new_com;
   pointers->net_free_comm       = NULL;
 }
 

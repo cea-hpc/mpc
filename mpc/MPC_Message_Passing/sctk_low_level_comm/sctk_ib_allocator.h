@@ -21,16 +21,17 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_INFINIBAND
 #ifndef __SCTK__INFINIBAND_ALLOCATOR_H_
 #define __SCTK__INFINIBAND_ALLOCATOR_H_
 
 #include "sctk_list.h"
 #include "sctk_launch.h"
-#include "sctk_infiniband_allocator.h"
-#include "sctk_infiniband_scheduling.h"
-#include "sctk_infiniband_comp_rc_rdma.h"
-#include "sctk_infiniband_comp_rc_sr.h"
-#include "sctk_infiniband_qp.h"
+#include "sctk_ib_allocator.h"
+#include "sctk_ib_scheduling.h"
+#include "sctk_ib_comp_rc_rdma.h"
+#include "sctk_ib_comp_rc_sr.h"
+#include "sctk_ib_qp.h"
 #include "sctk.h"
 
 sctk_net_ibv_qp_rail_t   *rail;
@@ -51,8 +52,6 @@ typedef struct
   sctk_net_ibv_rc_sr_process_t        *rc_sr;
   sctk_net_ibv_rc_rdma_process_t      *rc_rdma;
 
-  /* sequence numbers */
-//  sctk_net_ibv_sched_entry_t          *sched;
   sctk_spinlock_t sched_lock;
 
   /* for debug */
@@ -80,10 +79,35 @@ typedef struct sctk_net_ibv_allocator_request_s
   int dest_task;
   void* msg;
   void* msg_header;
-
   size_t size;
+  size_t payload_size;
+
+  /* for collective */
+  uint8_t com_id;
+  uint32_t psn;
+
+  int buff_nb;
+  int total_buffs;
 } sctk_net_ibv_allocator_request_t;
 
+
+UNUSED static void sctk_net_ibv_allocator_request_show(sctk_net_ibv_allocator_request_t* h)
+{
+  sctk_nodebug("#### Request ####"
+      "ibuf_type : %d\n"
+      "ptp_type : %d\n"
+      "dest_process : %d\n"
+      "dest_task : %d\n"
+      "size : %lu\n"
+      "psn : %lu\n"
+      "payload_size : %lu\n"
+      "buff_nb : %d\n"
+      "total_buffs : %d\n"
+      " com_id : %d\n",
+      h->ibuf_type, h->ptp_type, h->dest_process,
+      h->dest_task, h->size, h->psn, h->payload_size,
+      h->buff_nb, h->total_buffs, h->com_id);
+}
 
 /* lookup for a remote thread entry. The only requirement is to know the
  * process where the task is located. Once, we check in the allocator list.
@@ -218,10 +242,12 @@ void
 sctk_net_ibv_allocator_send_coll_message (
     sctk_net_ibv_qp_rail_t   *rail,
     sctk_net_ibv_qp_local_t* local_rc_sr,
+    sctk_collective_communications_t * com,
     void *msg,
     int dest_process,
     size_t size,
-    sctk_net_ibv_ibuf_ptp_type_t type);
+    sctk_net_ibv_ibuf_ptp_type_t type,
+    uint32_t);
 
 /*-----------------------------------------------------------
  *  POLLING RC SR
@@ -252,4 +278,5 @@ void sctk_net_ibv_tcp_server();
 void
 sctk_net_ibv_allocator_initialize_threads();
 
+#endif
 #endif

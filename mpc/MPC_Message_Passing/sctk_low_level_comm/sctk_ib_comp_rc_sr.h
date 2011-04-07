@@ -21,15 +21,17 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_INFINIBAND
+
 #ifndef __SCTK__INFINIBAND_COMP_RC_SR_H_
 #define __SCTK__INFINIBAND_COMP_RC_SR_H_
 
 #include <sctk_debug.h>
 #include <sctk_spinlock.h>
-#include "sctk_infiniband.h"
-#include "sctk_infiniband_mmu.h"
-#include "sctk_infiniband_ibufs.h"
-#include "sctk_infiniband_const.h"
+#include "sctk_ib.h"
+#include "sctk_ib_mmu.h"
+#include "sctk_ib_ibufs.h"
+#include "sctk_ib_const.h"
 #include "sctk_inter_thread_comm.h"
 #include <stdint.h>
 #include <stdlib.h>
@@ -84,10 +86,10 @@ sctk_net_ibv_comp_rc_sr_send_coll_frag_ptp_message(
     sctk_net_ibv_qp_local_t* local_rc_sr,
     struct sctk_net_ibv_allocator_request_s req);
 
-sctk_net_ibv_frag_eager_entry_t*
-sctk_net_ibv_comp_rc_sr_copy_msg(void* buffer, int src, int dest_task, size_t size, uint32_t psn);
+ sctk_net_ibv_frag_eager_entry_t*
+sctk_net_ibv_comp_rc_sr_copy_msg(void* buffer, struct sctk_list *list, size_t size, uint32_t psn);
 
-void sctk_net_ibv_comp_rc_sr_frag_allocate(
+sctk_net_ibv_frag_eager_entry_t* sctk_net_ibv_comp_rc_sr_frag_allocate(
     sctk_net_ibv_ibuf_header_t* msg_header);
 
   void
@@ -99,14 +101,10 @@ sctk_net_ibv_comp_rc_sr_free_frag_msg(sctk_net_ibv_frag_eager_entry_t* entry);
 sctk_net_ibv_qp_local_t*
 sctk_net_ibv_comp_rc_sr_create_local(sctk_net_ibv_qp_rail_t* rail);
 
-uint32_t
+void
 sctk_net_ibv_comp_rc_sr_send(
-    int dest_process,
-    int dest_task,
-    sctk_net_ibv_ibuf_t* ibuf, size_t size, size_t buffer_size,
-    sctk_net_ibv_ibuf_type_t type,
-    sctk_net_ibv_ibuf_ptp_type_t ptp_type,
-    uint32_t* psn, const int buff_nb, const int total_buffs);
+    sctk_net_ibv_ibuf_t* ibuf,
+    struct sctk_net_ibv_allocator_request_s req, sctk_net_ibv_ibuf_type_t type);
 
 int
 sctk_net_ibv_comp_rc_sr_post_recv(
@@ -172,4 +170,5 @@ sctk_net_ibv_comp_rc_sr_allocate_recv(
 void
 sctk_net_ibv_comp_rc_sr_error_handler(struct ibv_wc wc);
 
+#endif
 #endif

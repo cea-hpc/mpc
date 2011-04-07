@@ -21,6 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_INFINIBAND
 #ifndef __SCTK__INFINIBAND_IBUFS_H_
 #define __SCTK__INFINIBAND_IBUFS_H_
 
@@ -28,7 +29,7 @@
 #include "sctk_spinlock.h"
 #include "stdint.h"
 #include "infiniband/verbs.h"
-#include "sctk_infiniband_mmu.h"
+#include "sctk_ib_mmu.h"
 
 /* type of ibuf */
 #define RDMA_READ_IBUF_FLAG (111)
@@ -64,7 +65,12 @@ typedef enum
   RC_SR_RDVZ_ACK =            2,
   RC_SR_RDVZ_DONE =           3,
   /* collectives */
-  RC_SR_RDVZ_READ =           4
+  RC_SR_RDVZ_READ =           4,
+  RC_SR_FRAG_EAGER =          5,
+  RC_SR_RPC        =          6,
+  RC_SR_RPC_REQ    =          7,
+  RC_SR_RPC_ACK    =          8,
+  RC_SR_RPC_READ   =          9,
 } sctk_net_ibv_ibuf_type_t;
 
 typedef enum
@@ -73,7 +79,8 @@ typedef enum
   IBV_PTP =                 0,
   IBV_BCAST =               1,
   IBV_REDUCE =              2,
-  IBV_BCAST_INIT_BARRIER =  3
+  IBV_BCAST_INIT_BARRIER =  3,
+  IBV_BARRIER  =            4
 } sctk_net_ibv_ibuf_ptp_type_t;
 
 
@@ -119,6 +126,7 @@ typedef struct sctk_net_ibv_ibuf_s
   /* the following infos aren't transmitted by the network */
   sctk_net_ibv_qp_remote_t*    remote;
   void* supp_ptr;
+  int dest_process;
 
 } sctk_net_ibv_ibuf_t;
 
@@ -182,7 +190,7 @@ void sctk_net_ibv_ibuf_rdma_write_init(
 void sctk_net_ibv_ibuf_rdma_read_init(
     sctk_net_ibv_ibuf_t* ibuf, void* local_address,
     uint32_t lkey, void* remote_address, uint32_t rkey,
-    int len, void* supp_ptr);
+    int len, void* supp_ptr, int dest_process);
 
 int sctk_net_ibv_ibuf_srq_check_and_post(
     sctk_net_ibv_qp_local_t* local, int limit);
@@ -196,4 +204,5 @@ void sctk_net_ibv_ibuf_barrier_send_init(
     uint32_t lkey, void* remote_address, uint32_t rkey,
     int len);
 
+#endif
 #endif

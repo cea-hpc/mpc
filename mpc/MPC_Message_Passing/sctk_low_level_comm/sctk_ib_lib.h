@@ -17,53 +17,38 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - DIDELOT Sylvain didelot.sylvain@gmail.com                        # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK__RPC_H_
-#define __SCTK__RPC_H_
-#include <stdint.h>
-#ifdef __cplusplus
 
-extern "C"
-{
-#endif
-  typedef void (*sctk_rpc_t) (void *arg);
-  typedef void (*sctk_rpc_function_t) (sctk_rpc_t func, int destination,
-				       void *arg, size_t arg_size);
-  typedef void (*sctk_rpc_retrive_function_t) (void *dest, void *src,
-					       size_t arg_size, int proces,
-					       int *ack, uint32_t rkey);
-  typedef void (*sctk_rpc_send_function_t) (void *dest, void *src,
-					    size_t arg_size, int process,
-					    int *ack);
+#ifdef MPC_USE_INFINIBAND
+#include "sctk_hybrid_comm.h"
+#include "sctk_ib_allocator.h"
 
+#ifndef __SCTK__INFINIBAND_LIB_H_
+#define __SCTK__INFINIBAND_LIB_H_
 
-  void sctk_rpc_init_func (sctk_rpc_function_t func,
-			   sctk_rpc_retrive_function_t func_retrive,
-			   sctk_rpc_send_function_t func_send);
-  void sctk_rpc_execute (sctk_rpc_t func, void *arg);
+/* channel selection */
+extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
 
-  /*RPC call are blocking calls */
-  void sctk_perform_rpc (sctk_rpc_t func, int destination, void *arg,
-			 size_t arg_size);
+UNUSED static void
+sctk_net_ibv_send_msg_to_mpc(sctk_thread_ptp_message_t* msg_header, void* msg, int src_process,
+    int origin, void* ptr) {
 
-  void sctk_perform_rpc_retrive (void *dest, void *src, size_t arg_size, int process,
-			  int *ack, uint32_t rkey);
-  void sctk_perform_rpc_send (void *dest, void *src, size_t arg_size,
-			      int process, int *ack);
+  sctk_net_ibv_allocator->entry[src_process].nb_ptp_msg_received++;
 
-  void sctk_set_max_rpc_size_comm (size_t size);
-  size_t sctk_get_max_rpc_size_comm (void);
-  void *sctk_rpc_get_slot (void *arg);
+  msg_header->net_mesg = msg;
+  msg_header->channel_type = origin;
+  msg_header->struct_ptr = ptr;
+  sctk_nodebug("\t\t\t\tSent message to mpc (struct_ptr : %p)", msg_header->struct_ptr);
+  sctk_send_message (msg_header);
 
-  void* sctk_rpc_get_driver();
-  void* sctk_rpc_get_driver_retrive();
-  void* sctk_rpc_get_driver_send();
-
-
-
-  void sctk_register_function (sctk_rpc_t func);
-#ifdef __cplusplus
 }
+
+#define max(a,b) \
+  ({ typeof (a) _a = (a); \
+   typeof (b) _b = (b); \
+   _a > _b ? _a : _b; })
+
 #endif
 #endif

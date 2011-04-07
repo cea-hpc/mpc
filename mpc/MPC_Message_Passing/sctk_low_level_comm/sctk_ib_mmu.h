@@ -21,6 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_INFINIBAND
 #ifndef __SCTK__INFINIBAND_MMU_H_
 #define __SCTK__INFINIBAND_MMU_H_
 
@@ -79,7 +80,7 @@ typedef struct sctk_net_ibv_mmu_s
   sctk_net_ibv_mmu_entry_t*  free_header;
 } sctk_net_ibv_mmu_t;
 
-#include "sctk_infiniband_qp.h"
+#include "sctk_ib_qp.h"
 
 /*-----------------------------------------------------------
  *  NEW / FREE
@@ -105,4 +106,5 @@ sctk_net_ibv_mmu_unregister (
 
 long unsigned
 sctk_net_ibv_mmu_get_pagesize();
+#endif
 #endif

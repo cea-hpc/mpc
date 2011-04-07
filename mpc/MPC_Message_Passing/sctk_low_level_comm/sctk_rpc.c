@@ -23,6 +23,7 @@
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "sctk_rpc.h"
+#include <stdint.h>
 
 static sctk_rpc_function_t sctk_rpc_driver = NULL;
 static sctk_rpc_retrive_function_t sctk_rpc_driver_retrive = NULL;
@@ -152,10 +153,10 @@ sctk_get_max_rpc_size_comm ()
 
 void
 sctk_perform_rpc_retrive (void *dest, void *src, size_t arg_size, int process,
-			  int *ack)
+			  int *ack, uint32_t rkey)
 {
   sctk_nodebug ("GET %p %p %lu on %d %p", dest, src, arg_size, process, ack);
-  sctk_rpc_driver_retrive (dest, src, arg_size, process, ack);
+  sctk_rpc_driver_retrive (dest, src, arg_size, process, ack, rkey);
   sctk_nodebug ("GET %p %p %lu on %d DONE", dest, src, arg_size, process,
 		ack);
 }

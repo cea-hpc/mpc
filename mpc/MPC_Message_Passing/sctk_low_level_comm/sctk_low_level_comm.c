@@ -30,7 +30,7 @@
 #include "sctk_none.h"
 /* #include "sctk_mpi.h" */
 #include "sctk_tcp.h"
-#include "sctk_infiniband.h"
+#include "sctk_ib.h"
 #include "sctk_shm.h"
 #include "sctk_mpcrun_client.h"
 #include "sctk_hybrid_comm.h"
@@ -40,8 +40,8 @@ void (*sctk_net_ptp_poll) (void *) = NULL;
 int sctk_mpcrun_client_port = 0;
 char *sctk_mpcrun_client_host = NULL;
 
-static void (*sctk_net_register_ptr) (void *addr, size_t size) = NULL;
-static void (*sctk_net_unregister_ptr) (void *addr, size_t size) = NULL;
+static void (*sctk_net_register_ptr) (void *addr, size_t size, int process, int is_retrieve, uint32_t* rkey) = NULL;
+static void (*sctk_net_unregister_ptr) (void *addr, size_t size, int process, int is_retrieve) = NULL;
 
 /*****/
  /*RPC*/
@@ -185,7 +185,7 @@ sctk_net_reinit_communicator (int task, sctk_communicator_t comm, int vp)
 			    i, &msg, sizeof (sctk_update_communicator_t));
 	}
     }
-  
+
   sctk_nodebug ("%s vp %d task_id %d com %d process %d DONE", SCTK_FUNCTION,
 		vp, task, comm, sctk_process_rank);
 }
@@ -256,6 +256,7 @@ typedef struct sctk_update_new_communicator_s
   struct sctk_update_new_communicator_s *msg;
   int src;
   int check;
+  uint32_t rkey;
 } sctk_update_new_communicator_t;
 static void
 sctk_net_update_new_communicator_remote (sctk_update_new_communicator_t * msg)
@@ -273,13 +274,13 @@ sctk_net_update_new_communicator_remote (sctk_update_new_communicator_t * msg)
   sctk_nodebug ("USE %p", msg->addr);
 
   if (sctk_net_register_ptr && task_list)
-    sctk_net_register_ptr (task_list, msg->nb_task_involved * sizeof (int));
+    sctk_net_register_ptr (task_list, msg->nb_task_involved * sizeof (int), msg->src, 0, NULL);
 
   sctk_nodebug(" TEST : %d, %d", ((int*) msg->addr)[0], ((int*) msg->addr)[1]);
 
   sctk_perform_rpc_retrive (task_list, msg->addr,
       msg->nb_task_involved * sizeof (int), msg->src,
-      (int *) &(msg->msg->done));
+      (int *) &(msg->msg->done), msg->rkey);
 
   if (msg->nb_task_involved != 0)
   {
@@ -298,10 +299,9 @@ sctk_net_update_new_communicator_remote (sctk_update_new_communicator_t * msg)
 
     sctk_update_free_communicator (msg->origin_communicator);
   }
-  /* hook for SHM module */
 
   if (sctk_net_unregister_ptr && task_list)
-    sctk_net_unregister_ptr (task_list, msg->nb_task_involved * sizeof (int));
+    sctk_net_unregister_ptr (task_list, msg->nb_task_involved * sizeof (int), msg->src, 0);
   sctk_free (task_list);
 }
 
@@ -320,6 +320,7 @@ sctk_net_update_new_communicator (const sctk_communicator_t
   msg.origin_communicator = origin_communicator;
   msg.nb_task_involved = nb_task_involved;
   msg.process = process;
+  sctk_nodebug("Addr : %p", task_list);
   msg.addr = (void *) task_list;
   msg.done = 0;
   msg.msg = &msg;
@@ -330,9 +331,9 @@ sctk_net_update_new_communicator (const sctk_communicator_t
 
   sctk_nodebug ("PROVIDE %p", msg.addr);
   if (sctk_net_register_ptr && msg.addr)
-    sctk_net_register_ptr (msg.addr, msg.nb_task_involved * sizeof (int));
+    sctk_net_register_ptr (msg.addr, msg.nb_task_involved * sizeof (int), process, 1, &msg.rkey);
   if (sctk_net_register_ptr)
-    sctk_net_register_ptr ((void *) &(msg.done), sizeof (int));
+    sctk_net_register_ptr ((void *) &(msg.done), sizeof (int), process, 1, NULL);
 
   for (i = 0; i < nb_task_involved; i++)
   {
@@ -356,9 +357,9 @@ sctk_net_update_new_communicator (const sctk_communicator_t
   sctk_thread_mutex_unlock (&lock);
 
   if (sctk_net_unregister_ptr && msg.addr)
-    sctk_net_unregister_ptr (msg.addr, nb_task_involved * sizeof (int));
+    sctk_net_unregister_ptr (msg.addr, nb_task_involved * sizeof (int), process, 1);
   if (sctk_net_unregister_ptr)
-    sctk_net_unregister_ptr ((void *) &(msg.done), sizeof (int));
+    sctk_net_unregister_ptr ((void *) &(msg.done), sizeof (int), process, 1);
 }
 
 #warning "Optimize for scalability"
@@ -403,7 +404,7 @@ sctk_net_set_free_communicator (const sctk_communicator_t
 
 /*migration*/
 static int sctk_val_net_migration_available = 0;
-  void 
+  void
 sctk_set_net_migration_available (int val)
 {
   sctk_val_net_migration_available = val;
@@ -519,6 +520,7 @@ typedef struct sctk_rpc_collective_op_s
   struct sctk_rpc_collective_op_s *msg;
   int src;
   size_t size;
+  uint32_t rkey;
 } sctk_rpc_collective_op_t;
 
   static void *
@@ -584,26 +586,26 @@ sctk_rpc_collective_op_remote (sctk_rpc_collective_op_t * msg_t)
     data_in = sctk_malloc (size);
     memset (data_in, 0, size);
     if (sctk_net_register_ptr && data_in)
-      sctk_net_register_ptr (data_in, size);
+      sctk_net_register_ptr (data_in, size, msg->src, 0, NULL);
 
     msg->tmp_data_in = data_in;
     sctk_perform_rpc_retrive (data_in, msg->addr_in, size,
-        msg->src, (int *) &(msg->msg->done_in));
+        msg->src, (int *) &(msg->msg->done_in), 0);
     if (sctk_net_unregister_ptr && data_in)
-      sctk_net_unregister_ptr (data_in, size);
+      sctk_net_unregister_ptr (data_in, size, msg->src, 0);
   }
   if (msg->data_out)
   {
     data_out = sctk_malloc (size);
     memset (data_out, 0, size);
     if (sctk_net_register_ptr && data_out)
-      sctk_net_register_ptr (data_out, size);
+      sctk_net_register_ptr (data_out, size, msg->src, 0, NULL);
 
     msg->tmp_data_out = data_out;
     sctk_perform_rpc_retrive (data_out, msg->addr_out, size,
-        msg->src, (int *) &(msg->msg->done_out));
+        msg->src, (int *) &(msg->msg->done_out), 0);
     if (sctk_net_unregister_ptr && data_out)
-      sctk_net_unregister_ptr (data_out, size);
+      sctk_net_unregister_ptr (data_out, size, msg->src, 0);
   }
   sctk_nodebug ("Buffer size all retrived %lu", size);
 
@@ -641,11 +643,11 @@ sctk_rpc_collective_op (const size_t elem_size,
 
   msg.data_in = (void *) data_in;
   if (sctk_net_register_ptr && data_in)
-    sctk_net_register_ptr ((void *) data_in, elem_size * nb_elem);
+    sctk_net_register_ptr ((void *) data_in, elem_size * nb_elem, process, 0, &msg.rkey);
 
   msg.data_out = (void *) data_out;
   if (sctk_net_register_ptr && data_out)
-    sctk_net_register_ptr ((void *) data_out, elem_size * nb_elem);
+    sctk_net_register_ptr ((void *) data_out, elem_size * nb_elem, process, 0, &msg.rkey);
 
   msg.func = (void (*)(void *, void *, size_t, sctk_datatype_t)) func;
   msg.com_id = com_id;
@@ -669,9 +671,9 @@ sctk_rpc_collective_op (const size_t elem_size,
 
   sctk_thread_wait_for_value (((int *) &(msg.done_end)), 1);
   if (sctk_net_unregister_ptr && data_in)
-    sctk_net_unregister_ptr ((void *) data_in, elem_size * nb_elem);
+    sctk_net_unregister_ptr ((void *) data_in, elem_size * nb_elem, process, 0);
   if (sctk_net_unregister_ptr && data_out)
-    sctk_net_unregister_ptr (data_out, elem_size * nb_elem);
+    sctk_net_unregister_ptr (data_out, elem_size * nb_elem, process, 0);
 }
 
 /*COLLECTIVES*/
@@ -819,17 +821,17 @@ sctk_net_get_pages (void *addr, size_t size, int process)
 {
   sctk_nodebug ("Retrive %p-%p", addr, (char *) addr + size);
   if (sctk_net_register_ptr)
-    sctk_net_register_ptr (addr, size);
+    sctk_net_register_ptr (addr, size, process, 0, NULL);
 
   sctk_net_get_pages_driver (addr, size, process);
 
   if (sctk_net_unregister_ptr)
-    sctk_net_unregister_ptr (addr, size);
+    sctk_net_unregister_ptr (addr, size, process, 0);
 }
 
   void
-sctk_register_ptr (void (*func) (void *addr, size_t size),
-    void (*unfunc) (void *addr, size_t size))
+sctk_register_ptr (void (*func) (void *addr, size_t size, int process, int is_retrieve),
+    void (*unfunc) (void *addr, size_t size, int process, int is_retrieve))
 {
   sctk_net_register_ptr = func;
   sctk_net_unregister_ptr = unfunc;

@@ -21,11 +21,12 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_INFINIBAND
 #ifndef __SCTK__INFINIBAND_PROFILER_H_
 #define __SCTK__INFINIBAND_PROFILER_H_
 #include "sctk.h"
 #include "stdint.h"
-#include "sctk_infiniband_const.h"
+#include "sctk_ib_const.h"
 
 #define XSTR(X)  STR(X)
 #define STR(X)  #X
@@ -203,4 +204,5 @@ UNUSED static int sctk_profile_memalign(void **memptr, size_t alignment, size_t 
 }
 #endif
 
+#endif
 #endif

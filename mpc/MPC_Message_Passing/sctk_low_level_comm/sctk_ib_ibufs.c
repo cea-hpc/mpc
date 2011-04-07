@@ -20,14 +20,15 @@
 /* #   - DIDELOT Sylvain didelot.sylvain@gmail.com                        # */
 /* #                                                                      # */
 /* ######################################################################## */
+#ifdef MPC_USE_INFINIBAND
 
 #include "sctk.h"
 #include "sctk_list.h"
-#include "sctk_infiniband_ibufs.h"
-#include "sctk_infiniband_config.h"
-#include "sctk_infiniband_allocator.h"
-#include "sctk_infiniband_profiler.h"
-#include "sctk_infiniband_mmu.h"
+#include "sctk_ib_ibufs.h"
+#include "sctk_ib_config.h"
+#include "sctk_ib_allocator.h"
+#include "sctk_ib_profiler.h"
+#include "sctk_ib_mmu.h"
 #include "sctk_spinlock.h"
 
 /* lock on ibuf interface */
@@ -198,13 +199,15 @@ int sctk_net_ibv_ibuf_srq_check_and_post(
   sctk_nodebug("ibv_max_srq_ibufs %d - ibuf_free_srq_nb %d",
       ibv_max_srq_ibufs, ibuf_free_srq_nb);
 
-  if (ibuf_free_srq_nb < limit)
+  if (ibuf_free_srq_nb <= limit)
   {
     sctk_spinlock_lock(&ibuf_lock);
-    if (ibuf_free_ibuf_nb > ibv_max_srq_ibufs)
+
+//    if (ibuf_free_ibuf_nb > ibv_max_srq_ibufs)
+//      size = ibv_max_srq_ibufs - ibuf_free_srq_nb;
+//    else
       size = ibv_max_srq_ibufs - ibuf_free_srq_nb;
-    else
-      size = ibuf_free_ibuf_nb - ibuf_free_srq_nb;
+
     sctk_spinlock_unlock(&ibuf_lock);
 
     nb_posted =  sctk_net_ibv_ibuf_srq_post
@@ -393,7 +396,7 @@ void sctk_net_ibv_ibuf_rdma_write_init(
 void sctk_net_ibv_ibuf_rdma_read_init(
     sctk_net_ibv_ibuf_t* ibuf, void* local_address,
     uint32_t lkey, void* remote_address, uint32_t rkey,
-    int len, void* supp_ptr)
+    int len, void* supp_ptr, int dest_process)
 {
   sctk_assert(ibuf);
 
@@ -413,5 +416,6 @@ void sctk_net_ibv_ibuf_rdma_read_init(
 
   ibuf->flag = RDMA_READ_IBUF_FLAG;
   ibuf->supp_ptr = supp_ptr;
+  ibuf->dest_process = dest_process;
 }
-
+#endif

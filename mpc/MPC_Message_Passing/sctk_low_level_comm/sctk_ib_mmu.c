@@ -21,13 +21,14 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_INFINIBAND
 #include "sctk_low_level_comm.h"
 #include "sctk_debug.h"
-#include "sctk_infiniband_mmu.h"
-#include "sctk_infiniband_qp.h"
-#include "sctk_infiniband_profiler.h"
-#include "sctk_infiniband_const.h"
-#include "sctk_infiniband_config.h"
+#include "sctk_ib_mmu.h"
+#include "sctk_ib_qp.h"
+#include "sctk_ib_profiler.h"
+#include "sctk_ib_const.h"
+#include "sctk_ib_config.h"
 #include <infiniband/verbs.h>
 
 /*-----------------------------------------------------------
@@ -220,3 +221,4 @@ sctk_net_ibv_mmu_get_pagesize()
 {
   return page_size;
 }
+#endif

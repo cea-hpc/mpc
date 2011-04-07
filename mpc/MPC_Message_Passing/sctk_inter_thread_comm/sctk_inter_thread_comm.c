@@ -976,7 +976,7 @@ __sctk_perform_matched_messages(sctk_task_ptp_data_t * restrict data){
     while((data->matched == NULL) && (data->busy == 1)){
 //      sctk_thread_yield();
       /* Pool IB messages */
-      sctk_net_ibv_allocator_ptp_poll_all();
+      sctk_net_hybrid_ptp_poll(NULL);
     }
   }
 }
@@ -1135,7 +1135,7 @@ __sctk_perform_match_any_source_wait (sctk_per_communicator_ptp_data_t *
 
     /* Pool IB messages */
 //      sctk_thread_yield();
-    sctk_net_ibv_allocator_ptp_poll_all();
+      sctk_net_hybrid_ptp_poll(NULL);
 
     for (i = 0; i < communicator->nb_tasks; i++)
       {
@@ -1847,7 +1847,7 @@ sctk_send_message (sctk_thread_ptp_message_t * msg)
 	}
       /* Pool IB messages */
 //      sctk_thread_yield();
-      sctk_net_ibv_allocator_ptp_poll_all();
+      sctk_net_hybrid_ptp_poll(NULL);
     }
 
   sctk_nodebug ("Task %d is here", msg->header.destination);
@@ -2076,7 +2076,7 @@ sctk_register_distant_thread (const int i, const int pos)
     {
       /* Pool IB messages */
 //      sctk_thread_yield();
-      sctk_net_ibv_allocator_ptp_poll_all();
+      sctk_net_hybrid_ptp_poll(NULL);
     }
   sctk_ptp_process_localisation[i] = pos;
 }
@@ -2147,7 +2147,7 @@ sctk_check_for_communicator_poll (sctk_message_wait_t * restrict arg)
 
   /* Pool IB messages */
 //  sctk_thread_yield();
-  sctk_net_ibv_allocator_ptp_poll_all();
+  sctk_net_hybrid_ptp_poll(NULL);
 
   res = __sctk_perform_match_any_source_wait (communicator);
   __sctk_free_message_wait (communicator, tmp);
@@ -2175,7 +2175,7 @@ sctk_check_for_communicator_poll_one (sctk_message_wait_t * restrict arg)
 
   /* Pool IB messages */
 //  sctk_thread_yield();
-  sctk_net_ibv_allocator_ptp_poll_all();
+  sctk_net_hybrid_ptp_poll(NULL);
 
   tmp = &(sctk_ptp_list[arg->myself]);
   i = arg->communicator;

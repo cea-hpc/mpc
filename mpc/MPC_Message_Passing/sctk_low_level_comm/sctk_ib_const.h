@@ -21,6 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_INFINIBAND
 #ifndef __SCTK__INFINIBAND_CONST_H_
 #define __SCTK__INFINIBAND_CONST_H_
 
@@ -61,4 +62,5 @@ sctk_nodebug("");
 else \
 sctk_nodebug("");
 
+#endif
 #endif

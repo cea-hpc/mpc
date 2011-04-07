@@ -21,14 +21,15 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_INFINIBAND
 #ifndef __SCTK__INFINIBAND_SCHEDULING_H_
 #define __SCTK__INFINIBAND_SCHEDULING_H_
 
 #include <sctk.h>
 #include <stdint.h>
-#include "sctk_infiniband_const.h"
-#include "sctk_infiniband_comp_rc_sr.h"
-#include "sctk_infiniband_comp_rc_rdma.h"
+#include "sctk_ib_const.h"
+#include "sctk_ib_comp_rc_sr.h"
+#include "sctk_ib_comp_rc_rdma.h"
 
 
 #define LOOKUP_PENDING_TASK_ENTRY(task) \
@@ -65,7 +66,9 @@ typedef struct sctk_net_ibv_sched_entry_s
 
 #define INIT_SCHED_ENTRY { -1, 0, 0 }
 
-/* header of pending msg */
+/*
+ * Header of pending msg
+ **/
 typedef struct
 {
   /* type of msg pending */
@@ -151,4 +154,5 @@ sctk_net_ibv_sched_poll_pending_msg(int task_nb);
 
 void
 sctk_net_ibv_sched_initialize_threads();
+#endif
 #endif
