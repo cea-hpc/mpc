@@ -791,7 +791,7 @@ __INTERNAL__PMPI_Get_count (MPI_Status * status, MPI_Datatype datatype,
 
   if (status == MPC_STATUS_IGNORE)
     {
-      MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_IN_STATUS, "Invalid status");
+      PMPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_IN_STATUS, "Invalid status");
     }
 
   res = __INTERNAL__PMPI_Type_size (datatype, &data_size);
@@ -1555,7 +1555,10 @@ __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests,
 		}
 	      else
 		{
-		  tmp = PMPC_Test (req, &loc_flag, &(array_of_statuses[i]));
+		  if( array_of_statuses != MPI_STATUSES_IGNORE )
+		    tmp = PMPC_Test (req, &loc_flag, &(array_of_statuses[i]));
+                  else
+                    tmp = PMPC_Test (req, &loc_flag, MPC_STATUS_IGNORE);
 		}
 	    }
 	  if (loc_flag)
@@ -1605,7 +1608,10 @@ __INTERNAL__PMPI_Testall (int count, MPI_Request array_of_requests[],
 	    }
 	  else
 	    {
-	      tmp = PMPC_Test (req, &loc_flag, &(array_of_statuses[i]));
+	       if( array_of_statuses != MPI_STATUSES_IGNORE )
+		  tmp = PMPC_Test (req, &loc_flag, &(array_of_statuses[i]));
+               else
+                  tmp = PMPC_Test (req, &loc_flag, MPC_STATUS_IGNORE);
 	    }
 	}
       if (loc_flag)
@@ -1673,7 +1679,11 @@ __INTERNAL__PMPI_Testsome (int incount, MPI_Request * array_of_requests,
 	    }
 	  else
 	    {
-	      tmp = PMPC_Test (req, &loc_flag, &(array_of_statuses[done]));
+	      if( array_of_statuses != MPI_STATUSES_IGNORE )
+		 tmp = PMPC_Test (req, &loc_flag, &(array_of_statuses[done]));
+              else
+                 tmp = PMPC_Test (req, &loc_flag, MPC_STATUS_IGNORE);
+
 	      array_of_indices[done] = i;
 	    }
 	  if (loc_flag)
