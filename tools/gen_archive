@@ -1,3 +1,4 @@
+#!/bin/sh
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -16,31 +17,49 @@
 # terms.                                                               #
 #                                                                      #
 # Authors:                                                             #
-#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
-#   - PERACHE Marc marc.perache@cea.fr                                 #
-#   - DIDELOT Sylvain didelot.sylvain@gmail.com                        #
+#   - Sebastien Valat sebastien.valat@cea.fr                           #
 #                                                                      #
 ########################################################################
 
+##################### FUNCTION ###################
+safe_exec()
+{
+	echo "$*"
+	$* || exit 1
+}
+##################### FUNCTION ###################
+do_check()
+{
+	if test -d MPC_${VERSION}; then safe_exec rm -rf MPC_${VERSION}; fi
+	safe_exec tar -xzf MPC_${VERSION}.tar.gz
+	safe_exec cp -r ./MPC_Test_Suite ./MPC_${VERSION}/
+	safe_exec cd MPC_${VERSION}/MPC_Test_Suite
+	./mpc_validation --build --submit
+	safe_exec ./mpc_validation --test --submit --fast
+}
 
-MPC Version 2.1
-MPC now provides a shared-memory module named SHM. This module has been
-developed to take the advantage of intra-node communications. In the case of
-inter-node communications, MPC automatically combines SHM with the selected
-inter-node communication module (i.e: TCP or IPoIB).
+##################### SECTION ####################
+if test ! -f mpc/.MPC_version && test ! -d tools && test ! -d mpc; then
+	echo "Please run this script from the root directory of MPC" 1>&2
+	exit 1
+fi
 
-New functionalities and bugfixes:
-* new configure option : --enable-shm/--disable-shm
-    Enable or disable the SHM module. SHM is enabled by default.
-* new configure option : --enable-shell-colors/--disable-shell-colors
-    Enable or disable colors in Shell. Shell must be vt100 capable.
-* Elan module has been definitively removed from MPC.
-* MPC checks the prefix given to MPC. Avoid headers (mpi.h, pthread.h, etc...)
-  overwritting. This check can be disable by passing --disable-prefix-check to
-  the top MPC configure.
-* Lib MPC Makefile now supports the DESTDIR variable.
-* When no network module is explicitly used (--net= not set), MPC uses TCP.
-* Libnuma disabled by default
-* Configure option to solve detected of libgmp and libmpfr for GCC :
-    --with-gcc-mpfr=PREFIX --with-gcc-gmp=PREFIX.
-* New launcher.
+##################### SECTION ####################
+if test ! -f .git && test ! -f .gitattributes; then
+	echo "This script only work on a git working copy" 1>&2
+	exit 1
+fi
+
+##################### SECTION ####################
+VERSION=$(cd ./mpc && ./MPC_Tools/mpc_print_version)
+echo "MPC version is $VERSION"
+
+echo "Generate archive..."
+echo "git archive --format=tar --prefix=MPC_${VERSION}/ HEAD | gzip > MPC_${VERSION}.tar.gz"
+git archive --format=tar --prefix=MPC_${VERSION}/ HEAD | gzip > MPC_${VERSION}.tar.gz || exit 1
+
+if test "$1" = "--check"; then
+	do_check
+fi
+
+echo "Done."
