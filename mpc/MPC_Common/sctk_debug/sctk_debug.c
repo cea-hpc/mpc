@@ -250,10 +250,20 @@ sctk_error (const char *fmt, ...)
   sctk_get_thread_info (&task_id, &thread_id);
 
   va_start (ap, fmt);
+#if HAVE_SHELL_COLORS == 1
+  char error_message[SMALL_BUFFER_SIZE];
+  sctk_snprintf (error_message, SMALL_BUFFER_SIZE, SCTK_COLOR_RED_BOLD("%s"), fmt);
+
   sctk_snprintf (buff, SMALL_BUFFER_SIZE,
-		 "%s ERROR %s\n",
-      sctk_print_debug_infos(),
-		 fmt);
+                 "%s ERROR %s\n",
+     sctk_print_debug_infos(),
+                 error_message);
+#else
+  sctk_snprintf (buff, SMALL_BUFFER_SIZE,
+                 "%s ERROR %s\n",
+     sctk_print_debug_infos(),
+                 fmt);
+#endif
   sctk_noalloc_vfprintf (stderr, buff, ap);
   va_end (ap);
 }
@@ -297,10 +307,20 @@ sctk_debug (const char *fmt, ...)
   sctk_get_thread_info (&task_id, &thread_id);
 
   va_start (ap, fmt);
+#if HAVE_SHELL_COLORS == 1
+  char debug_message[SMALL_BUFFER_SIZE];
+  sctk_snprintf (debug_message, SMALL_BUFFER_SIZE, SCTK_COLOR_CYAN_BOLD("%s"), fmt);
+
   sctk_snprintf (buff, SMALL_BUFFER_SIZE,
-		 "%s %s\n",
+                 "%s DEBUG %s\n",
      sctk_print_debug_infos(),
-		 fmt);
+                 debug_message);
+#else
+  sctk_snprintf (buff, SMALL_BUFFER_SIZE,
+                 "%s DEBUG %s\n",
+     sctk_print_debug_infos(),
+                 fmt);
+#endif
   sctk_noalloc_vfprintf (stderr, buff, ap);
   fflush (stderr);
   va_end (ap);
@@ -345,10 +365,20 @@ sctk_warning (const char *fmt, ...)
   sctk_get_thread_info (&task_id, &thread_id);
 
   va_start (ap, fmt);
+#if HAVE_SHELL_COLORS == 1
+  char warning_message[SMALL_BUFFER_SIZE];
+  sctk_snprintf (warning_message, SMALL_BUFFER_SIZE, SCTK_COLOR_YELLOW_BOLD("%s"), fmt);
+
   sctk_snprintf (buff, SMALL_BUFFER_SIZE,
 		 "%s WARNING %s\n",
      sctk_print_debug_infos(),
-		 fmt);
+		 warning_message);
+#else
+  sctk_snprintf (buff, SMALL_BUFFER_SIZE,
+                 "%s WARNING %s\n",
+     sctk_print_debug_infos(),
+                 fmt);
+#endif
   sctk_noalloc_vfprintf (stderr, buff, ap);
   va_end (ap);
   }
