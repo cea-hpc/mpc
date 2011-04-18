@@ -32,6 +32,7 @@ extern "C"
 #include <sctk_config.h>
 #include <assert.h>
 
+
 #define SCTK_MAX_FILENAME_SIZE 1024
 #define SCTK_DBG_INFO stderr,__LINE__,__FILE__,SCTK_FUNCTION
 
@@ -54,7 +55,26 @@ extern "C"
   void sctk_formated_assert_print (FILE * stream, const int line,
 				   const char *file, const char *func,
 				   const char *fmt, ...);
+
+
+  void sctk_printf (const char *fmt, ...);
+#ifdef SCTK_DEBUG_MESSAGES
   void sctk_debug (const char *fmt, ...);
+  void sctk_info (const char *fmt, ...);
+#else
+  #if defined(__GNU_COMPILER) || defined(__INTEL_COMPILER)
+    #define sctk_debug(fmt,...) (void)(0)
+    #define sctk_info(fmt,...) (void)(0)
+  #else
+    static inline void sctk_debug (const char *fmt, ...)
+    {
+    }
+    static inline void sctk_info (const char *fmt, ...)
+    {
+    }
+  #endif
+#endif
+
   void sctk_silent_debug (const char *fmt, ...);
   void sctk_log (FILE * file, const char *fmt, ...);
   void sctk_warning (const char *fmt, ...);

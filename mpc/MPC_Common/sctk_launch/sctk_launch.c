@@ -158,6 +158,7 @@ static int sctk_task_nb_val = 0;
 static int sctk_process_nb_val = 0;
 static int sctk_processor_nb_val = 0;
 static int sctk_node_nb_val = 0;
+static int sctk_verbosity = 0;
 static char* sctk_launcher_mode = "none";
 
   void
@@ -449,6 +450,20 @@ sctk_restart (void)
 }
 
   static void
+sctk_set_verbosity (char *arg)
+{
+  int tmp =  atoi (arg);
+  if( (0 <= tmp) && (sctk_verbosity < tmp) )
+    sctk_verbosity = tmp;
+}
+
+  int
+sctk_get_verbosity ()
+{
+  return sctk_verbosity;
+}
+
+  static void
 sctk_use_network (char *arg)
 {
 #ifdef MPC_Message_Passing
@@ -473,9 +488,8 @@ sctk_def_use_host (char *arg)
 sctk_threat_arg (char *word)
 {
   sctk_add_arg_eq ("--directory", sctk_def_directory);
-
   sctk_add_arg ("--version-details", sctk_version_details);
-
+  sctk_add_arg_eq ("--verbose", sctk_set_verbosity);
   sctk_add_arg ("--use-pthread", sctk_use_pthread);
   sctk_add_arg ("--use-ethread_mxn", sctk_use_ethread_mxn);
   sctk_add_arg ("--use-ethread", sctk_use_ethread);
@@ -720,10 +734,6 @@ sctk_disable_addr_randomize (int argc, char **argv)
     if (disable_addr_randomize)
     {
       unsetenv ("SCTK_LINUX_DISABLE_ADDR_RADOMIZE");
-      if (getenv ("MPC_DISABLE_BANNER") == NULL)
-      {
-        sctk_warning ("Restart execution to disable addr randomize");
-      }
       THIS__set_personality (ADDR_NO_RANDOMIZE);
       execvp (argv[0], argv);
     }
@@ -757,7 +767,6 @@ auto_kill_func (void *arg)
   return NULL;
 }
 
-extern int sctk_print_warnings;
   int
 sctk_launch_main (int argc, char **argv)
 {
@@ -770,10 +779,6 @@ sctk_launch_main (int argc, char **argv)
   void **tofree = NULL;
   int tofree_nb = 0;
   char *auto_kill;
-
-  if(getenv("MPC_DISABLE_WARNINGS") != NULL){
-    sctk_print_warnings = 0;
-  }
 
   sctk_disable_addr_randomize (argc, argv);
 
@@ -864,6 +869,7 @@ sctk_launch_main (int argc, char **argv)
   sctk_nodebug ("init argc %d", argc);
   init_res = sctk_env_init (&argc, &argv);
   sctk_nodebug ("init argc %d", argc);
+
 
   if (init_res == 1)
   {

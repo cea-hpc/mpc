@@ -161,6 +161,7 @@ Optional Features:
   --use-network=*                  select inter-node network type (default: all)
   --enable-fortran                 build MPC fortran API
   --enable-debug                   enable MPC internal debugging features
+  --enable-debug-messages          enable MPC debug message printing in verbose level 3
   --disable-shm                    disable intra-node communication module (SHM)
   --enable-shell-colors            enable support of colors in shell
 EOF
@@ -203,6 +204,8 @@ SCTK_LIBCPUSET="0"
 SCTK_SLURM="1"
 SCTK_SHM="1"
 SCTK_SHELL_COLORS="0"
+SCTK_DEBUG_MESSAGES="0"
+SCTK_DEBUG_MESSAGES_DISABLED="0"
 SCTK_CC_DEP="-M"
 SCTK_CFLAGS_NON_GNU=""
 SCTK_MPC_MMAP="0"
@@ -299,8 +302,18 @@ for arg in "$@" ; do
     --disable-shell-colors)
     SCTK_SHELL_COLORS="0"
     ;;
+    --enable-debug-messages)
+    SCTK_DEBUG_MESSAGES="1"
+    ;;
+    --disable-debug-messages)
+    SCTK_DEBUG_MESSAGES_DISABLED="1"
+    SCTK_DEBUG_MESSAGES="0"
+    ;;
     --enable-debug)
     SCTK_DEBUG="1"
+    if [ "$SCTK_DEBUG_MESSAGES_DISABLED" == "0" ]; then
+      SCTK_DEBUG_MESSAGES="1"
+    fi
     ;;
     --disable-fortran)
     SCTK_FORTRAN="0"
@@ -483,6 +496,7 @@ done
 
 cat <<EOF>> include/mpc.h
 int MPC_check_compatibility_lib(int major, int minor, char* pre);
+void sctk_printf (const char *fmt, ...);
 #define MPC_check_compatibility() MPC_check_compatibility_lib(SCTK_VERSION_MAJOR,SCTK_VERSION_MINOR,SCTK_VERSION_PRE)
 EOF
 

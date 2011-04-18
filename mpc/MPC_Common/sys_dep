@@ -142,6 +142,10 @@ if test "$SCTK_SHELL_COLORS" = 1 ; then
    SCTK_CHECK_OPTION "-DSHELL_COLORS"
 fi
 
+#Check if debug messages are enabled
+if test "$SCTK_DEBUG_MESSAGES" = "1"; then
+  SCTK_CHECK_OPTION "-DSCTK_DEBUG_MESSAGES"
+fi
 
 begin_section Valgrind
 check_debug
