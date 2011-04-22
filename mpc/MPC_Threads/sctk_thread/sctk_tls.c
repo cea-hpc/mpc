@@ -101,8 +101,24 @@ typedef struct
   sctk_spinlock_t lock;
 } tls_level;
 
-static __thread tls_level* sctk_hls[sctk_hls_max_scope];
-static tls_level *sctk_hls_repository ;
+
+#define MAX_ACTIVE_SINGLE (8)
+
+typedef struct
+{
+  tls_level level ;
+  volatile size_t toenter ;
+  /* total number of VPs on this level */
+  volatile size_t barrier_entered ;
+  /* number of VPs that entered the hls barrier */ 
+  volatile size_t single_entered[MAX_ACTIVE_SINGLE];
+  volatile size_t single_generation[MAX_ACTIVE_SINGLE];
+} hls_level;
+
+static __thread hls_level* sctk_hls[sctk_hls_max_scope];
+static hls_level *sctk_hls_repository ;
+
+static __thread size_t single_nowait_counter[sctk_hls_max_scope] ;
 
 static inline void
 sctk_tls_init_level (tls_level * level)
@@ -120,6 +136,19 @@ static inline void
 sctk_tls_unlock_level (tls_level * level)
 {
   sctk_spinlock_unlock (&(level->lock));
+}
+static inline void
+sctk_hls_init_level(hls_level * level)
+{
+	int i ;
+	sctk_tls_init_level(&level->level);
+	level->barrier_entered = 0 ;
+	level->toenter = 0 ;
+	/* toenter is to be filled by sctk_hls_build_repository */
+	for ( i = 0 ; i < MAX_ACTIVE_SINGLE ; ++i ) {
+		level->single_entered[i] = 0 ;
+		level->single_generation[i] = 0 ;
+	}
 }
 
 static inline size_t
@@ -396,17 +425,30 @@ sctk_extls_delete ()
 void sctk_hls_build_repository ()
 {
   /* TODO: take values from sctk_topology */
-  int i ;
+  int i, j ;
   const int numa_number   = 2 ;
   const int socket_number = 2 ;
   const int cache_number  = 2 ;
   const int core_number   = 8 ;
   const int total_level_number = 1 + numa_number + socket_number
                                  + cache_number + core_number ;
-  sctk_hls_repository = sctk_malloc ( total_level_number*sizeof(tls_level) );
-  for ( i = 0; i < total_level_number; ++i ) {
-    sctk_tls_init_level ( &sctk_hls_repository[i] ) ;
-  }
+
+  sctk_hls_repository = sctk_malloc ( total_level_number*sizeof(hls_level) );
+  for ( i = 0; i < total_level_number; ++i )
+    sctk_hls_init_level ( &sctk_hls_repository[i] ) ;
+
+  /* for now we assume 1 VP per core */
+  /* TODO: modify with real values defined at startup */
+  i = 0 ;
+  sctk_hls_repository[i++].toenter = core_number ; 
+  for ( j=0; j < numa_number; ++j)
+	  sctk_hls_repository[i++].toenter = core_number / numa_number ; 
+  for ( j=0; j < socket_number; ++j)
+	  sctk_hls_repository[i++].toenter = core_number / socket_number ; 
+  for ( j=0; j < cache_number; ++j)
+	  sctk_hls_repository[i++].toenter = core_number / cache_number ; 
+  for ( j=0; j < core_number; ++j)
+	  sctk_hls_repository[i++].toenter = 1 ; 
   
   page_size = getpagesize ();
 }
@@ -432,7 +474,7 @@ void sctk_hls_checkout_on_vp ()
   const int cache_id      = 0 ;
   int offset = 0 ;
 
-  /* check if already initiliazed */  
+  /* check if already initialized */  
   if ( sctk_hls[sctk_hls_node_scope] != NULL )
     return ; 
 
@@ -523,7 +565,7 @@ __sctk__tls_get_addr__node_scope (tls_index * tmp)
   sctk_nodebug ("__sctk__tls_get_addr__node_scope %p", &sctk_hls );
   res =
     __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
-					 sctk_hls[sctk_hls_node_scope]);
+					 &sctk_hls[sctk_hls_node_scope]->level);
   return res;
 }
 
@@ -536,7 +578,7 @@ __sctk__tls_get_addr__numa_scope (tls_index * tmp)
     sctk_get_node_from_cpu(sctk_thread_get_vp()));
   res =
     __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
-					 sctk_hls[sctk_hls_numa_scope]);
+					 &sctk_hls[sctk_hls_numa_scope]->level);
   return res;
 }
 
@@ -547,7 +589,7 @@ __sctk__tls_get_addr__socket_scope (tls_index * tmp)
   sctk_nodebug ("__sctk__tls_get_addr__socket_scope");
   res =
     __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
-					 sctk_hls[sctk_hls_socket_scope]);
+					 &sctk_hls[sctk_hls_socket_scope]->level);
   return res;
 }
 
@@ -558,7 +600,7 @@ __sctk__tls_get_addr__cache_scope (tls_index * tmp)
   sctk_nodebug ("__sctk__tls_get_addr__cache_scope");
   res =
     __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
-					 sctk_hls[sctk_hls_cache_scope]);
+					 &sctk_hls[sctk_hls_cache_scope]->level);
   return res;
 }
 
@@ -569,9 +611,10 @@ __sctk__tls_get_addr__core_scope (tls_index * tmp)
   sctk_nodebug ("__sctk__tls_get_addr__core_scope");
   res =
     __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
-					 sctk_hls[sctk_hls_core_scope]);
+					 &sctk_hls[sctk_hls_core_scope]->level);
   return res;
 }
+
 
 #elif defined (SCTK_ia64_ARCH_SCTK)
 
@@ -627,7 +670,7 @@ void *
 __sctk__tls_get_addr__node_scope (size_t m, size_t offset)
 {
   void *res;
-  res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_hls[sctk_hls_node_scope]);
+  res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_hls[sctk_hls_node_scope].level);
   return res;
 }
 
@@ -635,7 +678,7 @@ void *
 __sctk__tls_get_addr__numa_scope (size_t m, size_t offset)
 {
   void *res;
-  res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_hls[sctk_hls_numa_scope]);
+  res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_hls[sctk_hls_numa_scope].level);
   return res;
 }
 
@@ -643,7 +686,7 @@ void *
 __sctk__tls_get_addr__socket_scope (size_t m, size_t offset)
 {
   void *res;
-  res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_hls[sctk_hls_socket_scope]);
+  res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_hls[sctk_hls_socket_scope].level);
   return res;
 }
 
@@ -651,7 +694,7 @@ void *
 __sctk__tls_get_addr__cache_scope (size_t m, size_t offset)
 {
   void *res;
-  res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_hls[sctk_hls_cache_scope]);
+  res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_hls[sctk_hls_cache_scope].level);
   return res;
 }
 
@@ -659,13 +702,113 @@ void *
 __sctk__tls_get_addr__core_scope (size_t m, size_t offset)
 {
   void *res;
-  res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_hls[sctk_hls_core_scope]);
+  res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_hls[sctk_hls_core_scope].level);
   return res;
 }
 
 #else
 #error "Architecture not available for TLS support"
 #endif
+
+void 
+__sctk__hls_barrier ( sctk_hls_scope_t scope ) {
+	/* TODO: synchronize tasks on same VP */
+	/* we assume only one task per VP */
+	hls_level * const level = sctk_hls[scope];
+	
+	sctk_debug ("call to hls barrier with scope %d", scope ) ;
+
+	if ( scope == sctk_hls_core_scope )
+		return ;
+
+	sctk_spinlock_lock ( &level->level.lock ) ;
+	if ( level->barrier_entered == level->toenter - 1 ) {
+		level->barrier_entered = 0 ;
+		sctk_spinlock_unlock ( &level->level.lock ) ;
+	}else{
+		level->barrier_entered += 1 ;
+		sctk_spinlock_unlock ( &level->level.lock ) ;
+		sctk_thread_wait_for_value ( &level->barrier_entered, 0 );
+	}
+}
+ 
+int
+__sctk__hls_single ( sctk_hls_scope_t scope ) {
+	/* TODO: several tasks on same VP ? */
+	hls_level * const level = sctk_hls[scope];
+	volatile size_t	* const entered = &level->single_entered[0];
+	volatile size_t	* const generation = &level->single_generation[0];
+	
+	sctk_debug ("call to hls single with scope %d", scope) ;
+	
+	if ( scope == sctk_hls_core_scope)
+		return 1 ;
+	
+	sctk_spinlock_lock ( &level->level.lock ) ;
+	if ( *entered == 0 ) {
+		*entered = 1 ;
+		sctk_spinlock_unlock ( &level->level.lock ) ;
+		sctk_debug ("hls single executed (first thread)") ;
+		return 1 ;
+	}else if ( *entered == level->toenter-1 ) {
+		*entered = 0 ;
+		sctk_spinlock_unlock ( &level->level.lock ) ;
+		sctk_debug ("hls single not executed (last thread)") ;
+		return 0 ;
+	}else{
+		*entered += 1 ;
+		sctk_spinlock_unlock ( &level->level.lock ) ;
+		sctk_debug ("hls single not executed") ;
+		return 0 ;
+	}
+}
+
+int
+__sctk__hls_single_nowait ( sctk_hls_scope_t scope ) {
+	/* TODO: several tasks on same VP ? */
+	char reacquire_lock = 0 ;
+	hls_level * const level = sctk_hls[scope];
+	const size_t nowait_index = single_nowait_counter[scope] % MAX_ACTIVE_SINGLE ;
+	volatile size_t	* const entered = &level->single_entered[nowait_index];
+	volatile size_t	* const generation = &level->single_generation[nowait_index];
+	++single_nowait_counter[scope] ;
+	sctk_debug ("call to hls single nowait with scope %d", scope) ;
+	
+	if ( scope == sctk_hls_core_scope)
+		return 1 ;
+
+	sctk_spinlock_lock ( &level->level.lock ) ;
+	if ( *entered > 0 && single_nowait_counter[scope] > *generation ) {
+		/* in advance, wait for last thread of corresponding single */
+		sctk_spinlock_unlock ( &level->level.lock ) ;
+		reacquire_lock = 1;
+		sctk_thread_wait_for_value ( entered, 0 );
+		/* this cannot happen twice */
+	}
+
+	if (reacquire_lock)
+		sctk_spinlock_lock ( &level->level.lock ) ;
+
+	if ( *entered == 0 ) {
+		*entered = 1 ;
+		*generation = single_nowait_counter[scope] ;
+		sctk_spinlock_unlock ( &level->level.lock ) ;
+		sctk_debug ("hls single nowait executed") ;
+		return 1 ;
+	}else if ( *entered == level->toenter-1 ) {
+		*entered = 0 ;
+		*generation = 0 ;
+		sctk_spinlock_unlock ( &level->level.lock ) ;
+		sctk_debug ("hls single nowait not executed") ;
+		return 0 ;
+	}else{
+		*entered += 1 ;
+		sctk_spinlock_unlock ( &level->level.lock ) ;
+		sctk_debug ("hls single nowait not executed") ;
+		return 0 ;
+	}
+}
+
 #else
 #warning "Experimental Ex-TLS support desactivated"
 

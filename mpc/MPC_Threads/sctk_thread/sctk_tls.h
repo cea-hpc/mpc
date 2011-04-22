@@ -56,6 +56,9 @@ extern "C"
     sctk_hls_core_scope    = 4,
     sctk_hls_max_scope     = 5
   } sctk_hls_scope_t;
+  /* this numbering should be kept in sync
+	 with the argument given to hls_barrier
+	 and hls_single in gcc */
 
 
   void sctk_extls_duplicate (void **new);
