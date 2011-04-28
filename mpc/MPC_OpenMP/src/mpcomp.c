@@ -224,7 +224,7 @@ __mpcomp_init (void)
 
 
 	  /***** PRINT SUMMARY ******/
-	  if (getenv ("MPC_DISABLE_BANNER") == NULL) {
+	  if ( (getenv ("MPC_DISABLE_BANNER") == NULL) && (sctk_get_process_rank() == 0) ) {
 	    fprintf (stderr,
 		"MPC OpenMP version %d.%d (DEV)\n",
 		SCTK_OMP_VERSION_MAJOR, SCTK_OMP_VERSION_MINOR);
