@@ -1494,11 +1494,17 @@ sctk_user_main (int argc, char **argv)
   __MPC_Barrier (MPC_COMM_WORLD);
 
   MPC_Checkpoint_restart_init ();
+
 #ifdef MPC_OpenMP
   __mpcomp_init() ;
 #endif
-  result = mpc_user_main (argc, argv);
+
   __MPC_Barrier (MPC_COMM_WORLD);
+
+  result = mpc_user_main (argc, argv);
+
+  __MPC_Barrier (MPC_COMM_WORLD);
+
   MPC_Checkpoint_restart_end ();
 
   sctk_nodebug ("Wait for pending messages");
