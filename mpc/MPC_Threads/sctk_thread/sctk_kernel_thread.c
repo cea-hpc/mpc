@@ -93,7 +93,12 @@ kthread_create_start_routine (void *t_arg)
   sem_init(&(slot.sem), 0,0);
 
   sctk_spinlock_lock(&lock);
-  slot.next = list;
+
+  if( list !=  &slot )
+    slot.next = list;
+  else
+    slot.next = NULL;
+
   list = &slot;
   sctk_spinlock_unlock(&lock);
 
