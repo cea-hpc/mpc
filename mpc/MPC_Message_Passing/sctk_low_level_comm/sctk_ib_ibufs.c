@@ -43,6 +43,7 @@ uint32_t                     ibuf_free_ibuf_nb = 0;
 uint32_t                     ibuf_got_ibuf_nb = 0;
 uint32_t                     ibuf_free_srq_nb = 0;
 uint32_t                     ibuf_got_srq_nb = 0;
+uint32_t                     ibuf_thread_activation_nb = 0;
 
 /* RC SR structures */
 extern  sctk_net_ibv_qp_local_t *rc_sr_local;
@@ -195,18 +196,34 @@ int sctk_net_ibv_ibuf_srq_check_and_post(
 {
   int size;
   int nb_posted;
+  int i;
 
   sctk_nodebug("ibv_max_srq_ibufs %d - ibuf_free_srq_nb %d",
       ibv_max_srq_ibufs, ibuf_free_srq_nb);
 
-  if (ibuf_free_srq_nb <= limit)
+  if ( (ibuf_free_srq_nb <= limit) || (limit == -1))
   {
     sctk_spinlock_lock(&ibuf_lock);
 
-//    if (ibuf_free_ibuf_nb > ibv_max_srq_ibufs)
-//      size = ibv_max_srq_ibufs - ibuf_free_srq_nb;
-//    else
-      size = ibv_max_srq_ibufs - ibuf_free_srq_nb;
+
+    if (limit == -1)
+    {
+      ++ibuf_thread_activation_nb;
+      /* register more srq buffers */
+      if (ibuf_thread_activation_nb >= 10)
+      {
+//        sctk_net_ibv_cq_poll(rc_sr_local->recv_cq, ibv_max_srq_ibufs, sctk_net_ibv_rc_sr_recv_cq, IBV_CHAN_RECV);
+
+        ibv_max_srq_ibufs += 100;
+        ibuf_thread_activation_nb = 0;
+        sctk_debug("SRQ entries expanded: %d", ibv_max_srq_ibufs);
+      }
+    }
+
+    //    if (ibuf_free_ibuf_nb > ibv_max_srq_ibufs)
+    //      size = ibv_max_srq_ibufs - ibuf_free_srq_nb;
+    //    else
+    size = ibv_max_srq_ibufs - ibuf_free_srq_nb;
 
     sctk_spinlock_unlock(&ibuf_lock);
 

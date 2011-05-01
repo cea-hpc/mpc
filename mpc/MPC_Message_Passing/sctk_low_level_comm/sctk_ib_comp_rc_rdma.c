@@ -216,8 +216,8 @@ sctk_net_ibv_comp_rc_rdma_send_request(
       aligned_size = req.size;
       sctk_posix_memalign(&msg_payload_aligned_ptr, page_size, req.size);
       assume(msg_payload_aligned_ptr);
-      msg_header_ptr = msg_payload_aligned_ptr;
       sctk_ibv_profiler_inc(IBV_MEM_TRACE);
+      msg_header_ptr = msg_payload_aligned_ptr;
       memcpy(msg_payload_aligned_ptr, req.msg, req.size);
 
       size_to_copy = sizeof(sctk_net_ibv_rc_rdma_request_t)
@@ -513,10 +513,10 @@ sctk_net_ibv_com_rc_rdma_recv_done(
     case IBV_BCAST_INIT_BARRIER:
       sctk_free(entry->msg_payload_aligned_ptr);
       sctk_ibv_profiler_dec(IBV_MEM_TRACE);
+
       sctk_list_lock(&entry_rc_rdma->recv);
       rc = sctk_list_remove(&entry_rc_rdma->recv, entry->list_elem);
       sctk_list_unlock(&entry_rc_rdma->recv);
-      /*   TODO: fixme */
       assume(rc);
 
       sctk_free(entry);

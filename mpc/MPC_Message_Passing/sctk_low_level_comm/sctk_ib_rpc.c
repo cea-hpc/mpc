@@ -89,7 +89,7 @@ sctk_net_rpc_init()
   /* thread for RPC */
   sctk_thread_attr_init ( &attr_rpc );
   sctk_thread_attr_setscope ( &attr_rpc, SCTK_THREAD_SCOPE_SYSTEM );
-  sctk_user_thread_create ( &pidt_rpc, &attr_rpc, thread_rpc, NULL );
+   sctk_user_thread_create ( &pidt_rpc, &attr_rpc, thread_rpc, NULL );
 }
 
 
@@ -101,7 +101,7 @@ sctk_net_rpc_init()
   void
 sctk_net_rpc_register(void* addr, size_t size, int process, int is_retrieve, uint32_t* rkey)
 {
-  sctk_nodebug("BEGIN rpc_register %d %d (addr:%p,rkey:%p)", process, is_retrieve, addr, rkey);
+  sctk_debug("BEGIN rpc_register %d %d (addr:%p,rkey:%p)", process, is_retrieve, addr, rkey);
   size_t aligned_size;
   void*   aligned_ptr;
   size_t page_size;
@@ -152,7 +152,7 @@ sctk_net_rpc_unregister(void* addr, size_t size, int process, int is_retrieve)
   uint8_t found = 0;
   struct sctk_list_elem* rc;
 
-  sctk_nodebug("BEGIN rpc_unregister %d", process, is_retrieve);
+  sctk_debug("BEGIN rpc_unregister %d", process, is_retrieve);
   if (!addr || !is_retrieve) return;
 
   sctk_list_lock(&rpc_reg_mr_list);
@@ -197,7 +197,7 @@ sctk_net_rpc_driver ( void ( *func ) ( void * ), int destination, void *arg, siz
   sctk_net_ibv_rpc_t* rpc;
   sctk_net_ibv_allocator_request_t req;
 
-  sctk_nodebug("BEGIN rpc_driver (size: %lu, dest:%lu)", arg_size, destination);
+  sctk_debug("BEGIN rpc_driver (size: %lu, dest:%lu)", arg_size, destination);
   /* TODO: check if the size doesn't exceed the size of an eager msg */
 
   req.size = sizeof(sctk_net_ibv_allocator_request_t) + arg_size;

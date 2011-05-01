@@ -37,6 +37,63 @@
 sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
 extern pending_entry_t pending[MAX_NB_TASKS_PER_PROCESS];
 
+sctk_net_ibv_allocator_task_t all_tasks[MAX_NB_TASKS_PER_PROCESS];
+sctk_spinlock_t all_tasks_lock = SCTK_SPINLOCK_INITIALIZER;
+
+/*-----------------------------------------------------------
+ *  TASKS
+ *----------------------------------------------------------*/
+/*
+ * lookup for a local thread id. If the entry isn't found, we lock the
+ * array and create the entry */
+int LOOKUP_LOCAL_THREAD_ENTRY(int id) {
+  int i, j;
+  int entry_nb = -1;
+
+  for (i=0; i<MAX_NB_TASKS_PER_PROCESS; ++i) {
+    sctk_nodebug("(i:%d) Search for entry %d: %d", i, id, all_tasks[i].task_nb);
+
+    /* We take the lock and verify if the entry hasn't
+     * been modified before locking */
+    sctk_spinlock_lock(&all_tasks_lock);
+    if (all_tasks[i].task_nb == -1) {
+
+      entry_nb = i;
+      /* init list for pending frag eager */
+      all_tasks[i].frag_eager_list =
+        sctk_calloc(sctk_get_total_tasks_number(), sizeof(struct sctk_list*));
+      assume(all_tasks[i].frag_eager_list);
+
+      /* init list for pendint messages */
+      sctk_list_new(&all_tasks[i].pending_msg, 1,
+          sizeof(sctk_net_ibv_sched_pending_header));
+
+      all_tasks[i].remote = sctk_calloc(sizeof(sched_sn_t), sctk_get_total_tasks_number());
+      assume(all_tasks[i].remote);
+
+      /* finily, we set the task_nb. Must be done
+       * at the end */
+      all_tasks[i].task_nb = id;
+      sctk_nodebug("iENTRY CREATED : %d <-> %d (lock:%p)", i, id, &all_tasks_lock);
+    }
+    sctk_spinlock_unlock(&all_tasks_lock);
+
+    if (all_tasks[i].task_nb == id)
+    {
+      entry_nb = i;
+      break;
+    }
+  }
+  /* Check if the entry has been found */
+  if(entry_nb == -1) {
+    sctk_nodebug("Local thread entry %d not found !", id);
+    abort();
+  }
+
+  return entry_nb;
+}
+
+
   sctk_net_ibv_allocator_t*
 sctk_net_ibv_allocator_new()
 {
@@ -180,10 +237,10 @@ void sctk_net_ibv_allocator_ptp_lookup_all(int dest)
 
   while( (all_tasks[i].task_nb != -1) && (i < MAX_NB_TASKS_PER_PROCESS))
   {
-    //    do {
+        do {
     /* poll pending messages */
     ret = sctk_net_ibv_sched_poll_pending_msg(i);
-    //    } while(ret);
+        } while(ret);
     ++i;
   }
 
@@ -303,7 +360,6 @@ sctk_net_ibv_allocator_send_coll_message (
 
   /* copy the comm id if this is a message from a bcast or
    * a reduce */
-//  assume(com);
   if (com)
   {
     req.com_id = com->id;

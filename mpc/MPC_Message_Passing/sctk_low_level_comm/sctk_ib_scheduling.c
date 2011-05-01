@@ -32,6 +32,7 @@
 
 extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
 extern sctk_net_ibv_com_entry_t* com_entries;
+extern sctk_net_ibv_allocator_task_t all_tasks[MAX_NB_TASKS_PER_PROCESS];
 /* TODO: can we delete it ? */
 sctk_thread_mutex_t lock;
 
@@ -39,6 +40,7 @@ void
 sctk_net_ibv_sched_init() {
   sctk_thread_mutex_init(&lock, NULL);
 }
+
 
 /*-----------------------------------------------------------
  *  PSN

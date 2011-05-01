@@ -188,6 +188,7 @@ void sctk_ibv_profiler_add(ibv_profiler_id id, uint64_t c);
 void sctk_ibv_profiler_sub(ibv_profiler_id id, uint64_t c);
 
 /* MEMORY ALLOCATION PROFILING */
+/*
 #ifndef MPC_Allocator
 #define sctk_malloc sctk_profile_malloc
 UNUSED static void* sctk_profile_malloc(size_t size)
@@ -203,6 +204,6 @@ UNUSED static int sctk_profile_memalign(void **memptr, size_t alignment, size_t 
   return posix_memalign(memptr, alignment, size);
 }
 #endif
-
+*/
 #endif
 #endif

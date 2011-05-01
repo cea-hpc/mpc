@@ -154,5 +154,8 @@ sctk_net_ibv_sched_poll_pending_msg(int task_nb);
 
 void
 sctk_net_ibv_sched_initialize_threads();
+
+inline int LOOKUP_LOCAL_THREAD_ENTRY(int id);
+
 #endif
 #endif

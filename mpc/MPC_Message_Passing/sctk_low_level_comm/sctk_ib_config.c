@@ -34,7 +34,7 @@
  * if x < IBV_EAGER_THRESHOLD -> eager msg
  * if x < IBV_FRAG_EAGER_THRESHOLD -> frag msg (into several eager buffers)
  * if x > IBV_FRAG_EAGER_THRESHOLD -> rendezvous msg */
-#define IBV_EAGER_THRESHOLD ( 32 * 1024 )
+#define IBV_EAGER_THRESHOLD ( 16 * 1024 )
 #define IBV_FRAG_EAGER_THRESHOLD ( 256 * 1024)
 /* Number of allowed pending Work Queue Elements
  * for each QP */
@@ -51,17 +51,19 @@
 
 /* Maximum number of buffers to allocate during the
  * initialization step */
-#define IBV_MAX_IBUFS         2000
-#define IBV_MAX_SRQ_IBUFS     1000
+#define IBV_MAX_IBUFS         6000
+#define IBV_MAX_SRQ_IBUFS     4000
 /* Minimum number of free recv buffer before
  * posting of new buffers. This thread is  activated
- * once a recv buffer is freed */
-#define IBV_SRQ_CREDIT_LIMIT  650
+ * once a recv buffer is freed. If IBV_SRQ_CREDIT_LIMIT ==
+ * IBV_MAX_SRQ_IBUFS, receive buffers are re-post every-time
+ * they are consumned */
+#define IBV_SRQ_CREDIT_LIMIT  4000
 /* Minimum number of free recv buffer before
  * the activation of the asynchronous
  * thread (if this thread is activated too much times,
  * the performance can be decreased) */
-#define IBV_SRQ_CREDIT_THREAD_LIMIT  300
+#define IBV_SRQ_CREDIT_THREAD_LIMIT  400
 
 /* for PN */
 #if 0
@@ -75,8 +77,8 @@
  * no more buffers are available */
 #define IBV_SIZE_IBUFS_CHUNKS 200
 
-#define IBV_WC_IN_NUMBER    1000
-#define IBV_WC_OUT_NUMBER   1000
+#define IBV_WC_IN_NUMBER    1
+#define IBV_WC_OUT_NUMBER   1
 
 /* Numer of MMU entries allocated during
  * the MPC initialization */

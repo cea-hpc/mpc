@@ -155,64 +155,6 @@ typedef struct
 } sctk_net_ibv_allocator_task_t;
 
 
-sctk_net_ibv_allocator_task_t all_tasks[MAX_NB_TASKS_PER_PROCESS];
-UNUSED static sctk_spinlock_t all_tasks_lock = SCTK_SPINLOCK_INITIALIZER;
-
-/*-----------------------------------------------------------
- *  TASKS
- *----------------------------------------------------------*/
-/*
- * lookup for a local thread id. If the entry isn't found, we lock the
- * array and create the entry */
-UNUSED static inline int LOOKUP_LOCAL_THREAD_ENTRY(int id) {
-  int i;
-  int entry_nb = -1;
-
-  for (i=0; i<MAX_NB_TASKS_PER_PROCESS; ++i) {
-    sctk_nodebug("(i:%d) Search for entry %d: %d", i, id, all_tasks[i].task_nb);
-
-    if (all_tasks[i].task_nb == -1)
-    {
-      /* We take the lock and verify if the entry hasn't
-       * been modified before locking */
-      sctk_spinlock_lock(&all_tasks_lock);
-      if (all_tasks[i].task_nb == -1) {
-
-        entry_nb = i;
-        /* init list for pending frag eager */
-        all_tasks[i].frag_eager_list =
-          sctk_calloc(sizeof(struct sctk_list*), sctk_get_total_tasks_number());
-        assume(all_tasks[i].frag_eager_list);
-
-        /* init list for pendint messages */
-        sctk_list_new(&all_tasks[i].pending_msg, 1,
-            sizeof(sctk_net_ibv_sched_pending_header));
-
-        all_tasks[i].remote = sctk_calloc(sizeof(sched_sn_t), sctk_get_total_tasks_number());
-        assume(all_tasks[i].remote);
-
-        /* finily, we set the task_nb. Must be done
-         * at the end */
-        all_tasks[i].task_nb = id;
-      }
-      sctk_spinlock_unlock(&all_tasks_lock);
-    }
-
-    if (all_tasks[i].task_nb == id)
-    {
-      entry_nb = i;
-      break;
-    }
-  }
-  /* Check if the entry has been found */
-  if(entry_nb == -1) {
-    sctk_debug("Local thread entry %d not found !", id);
-    abort();
-  }
-
-  return entry_nb;
-}
-
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
@@ -278,5 +220,6 @@ void sctk_net_ibv_tcp_server();
 void
 sctk_net_ibv_allocator_initialize_threads();
 
+void sctk_net_ibv_rc_sr_recv_cq(struct ibv_wc* wc, int lookup, int dest);
 #endif
 #endif

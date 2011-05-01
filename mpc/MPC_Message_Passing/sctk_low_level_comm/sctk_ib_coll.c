@@ -156,7 +156,9 @@ void sctk_net_ibv_collective_new_com ( const sctk_internal_communicator_t * __co
         if ( (msg_header->psn == pending->psn) && (msg_header->src_process == pending->src_process))
         {
           sctk_nodebug("FOUND %lu", pending->psn);
-          memcpy( (char*) pending->payload + pending->current_copied, RC_SR_PAYLOAD(ibuf->buffer),
+
+          memcpy( (char*) pending->payload + pending->current_copied,
+              RC_SR_PAYLOAD(ibuf->buffer),
               msg_header->payload_size);
           pending->current_copied += msg_header->payload_size;
 
@@ -168,8 +170,16 @@ void sctk_net_ibv_collective_new_com ( const sctk_internal_communicator_t * __co
 
         tmp = tmp->p_next;
       }
+      sctk_list_unlock(list);
+    } else {
+      memcpy( (char*) pending->payload + pending->current_copied,
+          RC_SR_PAYLOAD(ibuf->buffer),
+          msg_header->payload_size);
+      pending->current_copied += msg_header->payload_size;
+
+      sctk_nodebug("%p - Frag msg copied (size: %lu, psn %lu, copied %lu, payload %lu)", list,
+          msg_header->size, msg_header->psn, pending->current_copied, msg_header->payload_size);
     }
-    sctk_list_unlock(list);
 
     if (!pending)
     {
@@ -257,11 +267,11 @@ sctk_net_ibv_collective_push_rc_rdma(struct sctk_list* list, sctk_net_ibv_rc_rdm
 
 
 #define COLLECTIVE_LOOKUP(list, src, psn, msg) \
-do {    \
-  msg = sctk_net_ibv_collective_lookup(list, src, psn);    \
-  sctk_net_ibv_allocator_ptp_poll_all();    \
-/*        sctk_thread_yield(); */   \
-} while(msg == NULL);   \
+  do {    \
+    msg = sctk_net_ibv_collective_lookup(list, src, psn);    \
+    sctk_net_ibv_allocator_ptp_poll_all();  \
+    /*  sctk_thread_yield(); */   \
+  } while(msg == NULL);   \
 
 /**
  *  Look for a pending collective entry according to the src process and the psn
@@ -273,7 +283,6 @@ sctk_net_ibv_collective_lookup(struct sctk_list* list, const int src, const int 
 {
   struct sctk_list_elem* elem;
   sctk_net_ibv_collective_pending_t* msg;
-  int i = 0;
 
   if (!list || src < 0)
     return NULL;
@@ -292,8 +301,6 @@ sctk_net_ibv_collective_lookup(struct sctk_list* list, const int src, const int 
       sctk_list_unlock(list);
       return msg;
     }
-    sctk_nodebug("i=%d", i);
-    i++;
     elem = elem->p_next;
   }
   sctk_list_unlock(list);
@@ -339,6 +346,7 @@ sctk_net_ibv_broadcast_recv(void* data, size_t size,
         memcpy(data,
             msg->payload, size);
         free(msg->payload);
+        sctk_ibv_profiler_dec(IBV_MEM_TRACE);
       }
 
       sctk_free(msg);
@@ -396,6 +404,7 @@ sctk_net_ibv_broadcast_binomial ( sctk_collective_communications_t * com,
    * is a part of the allreduce */
   com_size = com->involved_nb;
   local_ranks = sctk_malloc(com_size * sizeof(int));
+  sctk_ibv_profiler_inc(IBV_MEM_TRACE);
   for (i=0; i < sctk_process_number; ++i)
   {
     if (com->involved_list[i])
@@ -445,6 +454,9 @@ sctk_net_ibv_broadcast_binomial ( sctk_collective_communications_t * com,
     sctk_net_ibv_broadcast_send(com, my_vp->data.data_out, size, relative_rank, &mask, IBV_BCAST, psn, local_ranks, local_rank, com_size);
   }
   sctk_nodebug("End of broadcast %d",psn);
+
+  sctk_free(local_ranks);
+  sctk_ibv_profiler_dec(IBV_MEM_TRACE);
 }
 
 uint64_t bcast_scatter_nb=0;
@@ -535,8 +547,10 @@ sctk_net_ibv_broadcast_scatter ( sctk_collective_communications_t * com,
               relative_rank * scatter_size,
               msg->payload, recv_size);
           free(msg->payload);
+          sctk_ibv_profiler_dec(IBV_MEM_TRACE);
         }
         sctk_free(msg);
+        sctk_ibv_profiler_dec(IBV_MEM_TRACE);
 
         curr_size = msg->size;
         sctk_nodebug("current size : %lu", curr_size);
@@ -656,6 +670,7 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
    * is a part of the allreduce */
   com_size = com->involved_nb;
   local_ranks = sctk_malloc(com_size * sizeof(int));
+  sctk_ibv_profiler_inc(IBV_MEM_TRACE);
   for (i=0; i < sctk_process_number; ++i)
   {
     if (com->involved_list[i])
@@ -714,6 +729,7 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
         } else {
           func ( msg->payload, my_vp->data.data_out, nb_elem, data_type );
           free(msg->payload);
+          sctk_ibv_profiler_dec(IBV_MEM_TRACE);
         }
 
         free(msg);
@@ -747,6 +763,9 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
   sctk_nodebug ( "Broadcast received", ((int*) my_vp->data.data_out)[0] );
 
   sctk_nodebug("End of reduce operation");
+
+  sctk_free(local_ranks);
+  sctk_ibv_profiler_dec(IBV_MEM_TRACE);
 }
 
 /*-----------------------------------------------------------
@@ -891,99 +910,30 @@ sctk_net_ibv_barrier_init ()
 }
 
 static uint64_t counter = 0;
-void
+  void
 sctk_net_ibv_n_way_dissemination_barrier_rc_sr( sctk_collective_communications_t * com,
     sctk_virtual_processor_t * my_vp )
 {
-    int mask;
-    int i;
-    int *local_ranks;
-    sctk_net_ibv_ibuf_t* ibuf;
-    int local_rank = -1;
-    int index = 0;
-    int com_size;
-    uint32_t psn;
-    sctk_net_ibv_collective_pending_t* msg;
-    int dst, src;
-
-    psn = sctk_net_ibv_sched_coll_psn_inc(IBV_BARRIER, com->id);
-    sctk_nodebug("BEGIN barrier %d (com %d)", psn, com->id);
-    /* We convert all global ranks to local ranks
-     * for the current comminucator. If an entry is != in the
-     * array 'involved_nb', the process corresponding to the entry
-     * is a part of the allreduce */
-    com_size = com->involved_nb;
-    local_ranks = sctk_malloc(com_size * sizeof(int));
-    for (i=0; i < sctk_process_number; ++i)
-    {
-      if (com->involved_list[i])
-      {
-        /* We save the local rank of the current process */
-        if (sctk_process_rank == i)
-        {
-          local_rank = index;
-        }
-        local_ranks[index] = i;
-        index++;
-      }
-    }
-    assume(local_rank!=-1);
-
-    sctk_nodebug("Barrier");
-
-    mask = 0x1;
-    while (mask < com_size) {
-      dst = (local_rank + mask) % com_size;
-      src = (local_rank - mask + com_size) % com_size;
-
-      /* send */
-      sctk_net_ibv_allocator_send_coll_message(
-          rail, rc_sr_local, com,
-          NULL,
-          local_ranks[dst], 0, IBV_BCAST_INIT_BARRIER, psn);
-
-      /* receive */
-      sctk_nodebug("Wait from comm %d", com->id);
-      COLLECTIVE_LOOKUP(&com_entries[com->id].init_barrier_fifo, local_ranks[src], psn, msg);
-
-      /* read the content of the message */
-      if (msg->type == RC_SR_EAGER)
-      {
-        ibuf = (sctk_net_ibv_ibuf_t*) msg->payload;
-        /* restore buffers */
-        sctk_net_ibv_ibuf_release(ibuf, 1);
-        sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit);
-      }
-
-      mask <<= 1;
-    }
-    sctk_nodebug("END barrier %d (com:%d)", psn, com->id);
-
-}
-
-
-
-  void
-sctk_net_ibv_n_way_dissemination_barrier_rc_rdma ( sctk_collective_communications_t * com,
-    sctk_virtual_processor_t * my_vp )
-{
-  int round = 0;
-  uint32_t sendpeer;
-  uint32_t recvpeer;
+  int mask;
   int i;
   int *local_ranks;
+  sctk_net_ibv_ibuf_t* ibuf;
   int local_rank = -1;
   int index = 0;
-  int source;
   int com_size;
   uint32_t psn;
+  sctk_net_ibv_collective_pending_t* msg;
+  int dst, src;
 
+  psn = sctk_net_ibv_sched_coll_psn_inc(IBV_BARRIER, com->id);
+  sctk_nodebug("BEGIN barrier %d (com %d)", psn, com->id);
   /* We convert all global ranks to local ranks
    * for the current comminucator. If an entry is != in the
    * array 'involved_nb', the process corresponding to the entry
    * is a part of the allreduce */
   com_size = com->involved_nb;
   local_ranks = sctk_malloc(com_size * sizeof(int));
+  sctk_ibv_profiler_inc(IBV_MEM_TRACE);
   for (i=0; i < sctk_process_number; ++i)
   {
     if (com->involved_list[i])
@@ -999,7 +949,59 @@ sctk_net_ibv_n_way_dissemination_barrier_rc_rdma ( sctk_collective_communication
   }
   assume(local_rank!=-1);
 
+  sctk_nodebug("Barrier");
 
+  mask = 0x1;
+  while (mask < com_size) {
+    dst = (local_rank + mask) % com_size;
+    src = (local_rank - mask + com_size) % com_size;
+
+    /* send */
+    sctk_net_ibv_allocator_send_coll_message(
+        rail, rc_sr_local, com,
+        NULL,
+        local_ranks[dst], 0, IBV_BCAST_INIT_BARRIER, psn);
+
+    /* receive */
+    sctk_nodebug("Wait from comm %d", com->id);
+    COLLECTIVE_LOOKUP(&com_entries[com->id].init_barrier_fifo, local_ranks[src], psn, msg);
+
+    /* read the content of the message */
+    if (msg->type == RC_SR_EAGER)
+    {
+      ibuf = (sctk_net_ibv_ibuf_t*) msg->payload;
+      /* restore buffers */
+      sctk_net_ibv_ibuf_release(ibuf, 1);
+      sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit);
+    }
+
+    mask <<= 1;
+  }
+  sctk_nodebug("END barrier %d (com:%d)", psn, com->id);
+
+  sctk_free(local_ranks);
+  sctk_ibv_profiler_dec(IBV_MEM_TRACE);
+}
+
+
+
+  void
+sctk_net_ibv_n_way_dissemination_barrier_rc_rdma ( sctk_collective_communications_t * com,
+    sctk_virtual_processor_t * my_vp )
+{
+  int round = 0;
+  uint32_t sendpeer;
+  uint32_t recvpeer;
+  int i;
+  int index = 0;
+  int source;
+  int com_size;
+  uint32_t psn;
+
+  /* We convert all global ranks to local ranks
+   * for the current comminucator. If an entry is != in the
+   * array 'involved_nb', the process corresponding to the entry
+   * is a part of the allreduce */
 
   if (is_barrier_initialized == 0)
   {
@@ -1015,47 +1017,46 @@ sctk_net_ibv_n_way_dissemination_barrier_rc_rdma ( sctk_collective_communication
     assume(0);
   }
 
-  int limit = ceil(log(com_size) / log(N_WAY_DISSEMINATION+1));
+  int limit = ceil(log(sctk_process_number) / log(N_WAY_DISSEMINATION+1));
   for( round = 0; round < limit ; ++round)
   {
-    if (local_rank == 0)
-      sctk_nodebug("Round: %d, ceil(log(com->involved_nb) / log(2): %f", round, ceil(log(com_size) / log(N_WAY_DISSEMINATION+1)));
+    if (sctk_process_rank == 0)
+      sctk_nodebug("Round: %d, ceil(log(com->involved_nb) / log(2): %f", round, ceil(log(sctk_process_number) / log(N_WAY_DISSEMINATION+1)));
 
     for (i=1; i <= N_WAY_DISSEMINATION; ++i)
     {
-      uint32_t tmp = (local_rank) + i*pow((N_WAY_DISSEMINATION+1), round);
-      sendpeer = fmod(tmp, com_size);
+      uint32_t tmp = (sctk_process_rank) + i*pow((N_WAY_DISSEMINATION+1), round);
+      sendpeer = fmod(tmp, sctk_process_number);
 
-      if (sendpeer != local_rank)
+      if (sendpeer != sctk_process_rank)
       {
-        local_entry.entry[local_ranks[local_rank]] = counter;
+        local_entry.entry[sctk_process_rank] = counter;
 
         sctk_nodebug("%d - Send to process %u", i, sendpeer);
-        sctk_net_ibv_barrier_send(&local_entry, remote_entry, local_ranks[local_rank], local_ranks[sendpeer]);
+        sctk_net_ibv_barrier_send(&local_entry, remote_entry, sctk_process_rank, sendpeer);
 
       }
     }
 
     for (i=1; i <= N_WAY_DISSEMINATION; ++i)
     {
-      uint32_t tmp = (com_size) + ((local_rank) - i*pow((N_WAY_DISSEMINATION+1), round));
-      recvpeer = fmod(tmp, com_size);
+      uint32_t tmp = (sctk_process_number) + ((sctk_process_rank) - i*pow((N_WAY_DISSEMINATION+1), round));
+      recvpeer = fmod(tmp, sctk_process_number);
 
       sctk_nodebug("%d - Recv from process %u", i, recvpeer);
 
-      if (recvpeer != local_rank)
+      if (recvpeer != sctk_process_rank)
       {
-        while(local_entry.entry[local_ranks[recvpeer]] < counter)
+        while(local_entry.entry[recvpeer] < counter)
         {
-          sctk_net_ibv_allocator_ptp_poll_all();
-          //          sctk_thread_yield();
+          //          sctk_net_ibv_allocator_ptp_poll_all();
+          sctk_thread_yield();
         }
-        sctk_nodebug("Got counter : %d",local_entry.entry[recvpeer]);
+        sctk_nodebug("Got counter : %d", recvpeer);
       }
     }
   }
   sctk_nodebug("End of barrier %d", counter);
-
 }
 
 
@@ -1063,12 +1064,12 @@ sctk_net_ibv_n_way_dissemination_barrier_rc_rdma ( sctk_collective_communication
 sctk_net_ibv_barrier ( sctk_collective_communications_t * com,
     sctk_virtual_processor_t * my_vp )
 {
-  if (com->id == 0)
-  {
-    sctk_net_ibv_n_way_dissemination_barrier_rc_rdma(com, my_vp);
-  } else {
+//  if (com->id == 0)
+//  {
+//    sctk_net_ibv_n_way_dissemination_barrier_rc_rdma(com, my_vp);
+//  } else {
     sctk_net_ibv_n_way_dissemination_barrier_rc_sr(com, my_vp);
-  }
+//  }
 }
 
 #endif

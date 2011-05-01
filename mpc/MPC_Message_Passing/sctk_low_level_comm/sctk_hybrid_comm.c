@@ -192,7 +192,7 @@ sctk_net_rpc_retrieve_driver (void *dest, void *src, size_t arg_size,
   ++nb_intra_comm;
 #endif
   sctk_nodebug("INTRA net_rpc_retrieve_driver");
-  pointers_intra.rpc_driver_retrive(dest, src, arg_size, local_rank, ack);
+  pointers_intra.rpc_driver_retrive(dest, src, arg_size, local_rank, ack, rkey);
   INTRA_END
 #endif
 #if SCTK_HYBRID_DEBUG == 1

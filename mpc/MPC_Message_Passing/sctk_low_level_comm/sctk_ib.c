@@ -49,7 +49,6 @@
 #include "sctk_net_tools.h"
 #include "sctk_ib_profiler.h"
 
-extern struct sctk_list* frag_eager_list;
 
 /* rail */
 extern  sctk_net_ibv_qp_rail_t   *rail;
@@ -133,8 +132,6 @@ sctk_net_init_driver_infiniband (int *argc, char ***argv)
   sctk_nodebug("\t- %s %lu",name_s,(unsigned long)device_list[i].device_attr.name);
 
 
-void sctk_net_ibv_rc_sr_recv_cq(struct ibv_wc* wc);
-
   /*-----------------------------------------------------------
  *  PTP
  *----------------------------------------------------------*/
@@ -199,7 +196,7 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
 
 
       //      sctk_free(item->struct_ptr);
-//      sctk_ibv_profiler_dec(IBV_MEM_TRACE);
+      //      sctk_ibv_profiler_dec(IBV_MEM_TRACE);
       break;
 
     case IBV_POLL_RC_RDMA_ORIGIN:
@@ -221,9 +218,9 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
       sctk_net_ibv_comp_rc_sr_free_frag_msg(frag_entry);
       break;
 
-      frag_entry = (sctk_net_ibv_frag_eager_entry_t*)  item->struct_ptr;
-      sctk_net_ibv_comp_rc_sr_free_frag_msg(frag_entry);
-      break;
+//      frag_entry = (sctk_net_ibv_frag_eager_entry_t*)  item->struct_ptr;
+//      sctk_net_ibv_comp_rc_sr_free_frag_msg(frag_entry);
+//      break;
 
 
     default:
@@ -252,13 +249,13 @@ sctk_net_ibv_collective_op_driver (sctk_collective_communications_t * com,
   if (nb_elem == 0)
   {
     sctk_nodebug ("begin collective barrier : %d", com->id);
-//    if ( (com->id) == MPC_COMM_WORLD)
-//    {
-      sctk_net_ibv_barrier (com, my_vp );
-//      PMI_Barrier();
-//    } else {
-//      not_implemented();
-//    }
+    //    if ( (com->id) == MPC_COMM_WORLD)
+    //    {
+    sctk_net_ibv_barrier (com, my_vp );
+    //      PMI_Barrier();
+    //    } else {
+    //      not_implemented();
+    //    }
     sctk_nodebug ("end collective barrier");
   }
   else
