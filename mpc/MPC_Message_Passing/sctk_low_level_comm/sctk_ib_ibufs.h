@@ -193,7 +193,7 @@ void sctk_net_ibv_ibuf_rdma_read_init(
     int len, void* supp_ptr, int dest_process);
 
 int sctk_net_ibv_ibuf_srq_check_and_post(
-    sctk_net_ibv_qp_local_t* local, int limit);
+    sctk_net_ibv_qp_local_t* local, int limit, int need_lock);
 
 int sctk_net_ibv_ibuf_srq_post(
     sctk_net_ibv_qp_local_t* local,

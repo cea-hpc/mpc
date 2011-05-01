@@ -266,11 +266,12 @@ sctk_net_ibv_collective_push_rc_rdma(struct sctk_list* list, sctk_net_ibv_rc_rdm
 }
 
 
+/* FIXME: deadlock whe call to allocator_ptp...  */
 #define COLLECTIVE_LOOKUP(list, src, psn, msg) \
   do {    \
     msg = sctk_net_ibv_collective_lookup(list, src, psn);    \
-    sctk_net_ibv_allocator_ptp_poll_all();  \
-    /*  sctk_thread_yield(); */   \
+  /*  sctk_net_ibv_allocator_ptp_poll_all();*/ \
+     sctk_thread_yield();   \
   } while(msg == NULL);   \
 
 /**
@@ -339,7 +340,7 @@ sctk_net_ibv_broadcast_recv(void* data, size_t size,
 
         /* restore buffers */
         sctk_net_ibv_ibuf_release(ibuf, 1);
-        sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit);
+        sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit, 1);
       } else if (msg->type == RC_SR_FRAG_EAGER) {
         memcpy(data, msg->payload, size);
       } else {
@@ -533,7 +534,7 @@ sctk_net_ibv_broadcast_scatter ( sctk_collective_communications_t * com,
 
           /* restore buffers */
           sctk_net_ibv_ibuf_release(ibuf, 1);
-          sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit);
+          sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit, 1);
         } else {
           if( recv_size != msg->size)
           {
@@ -723,7 +724,7 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
           func ( RC_SR_PAYLOAD(ibuf->buffer), my_vp->data.data_out, nb_elem, data_type );
           /* restore buffers */
           sctk_net_ibv_ibuf_release(ibuf, 1);
-          sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit);
+          sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit, 1);
         } else if (msg->type == RC_SR_FRAG_EAGER) {
           func ( msg->payload, my_vp->data.data_out, nb_elem, data_type );
         } else {
@@ -972,7 +973,7 @@ sctk_net_ibv_n_way_dissemination_barrier_rc_sr( sctk_collective_communications_t
       ibuf = (sctk_net_ibv_ibuf_t*) msg->payload;
       /* restore buffers */
       sctk_net_ibv_ibuf_release(ibuf, 1);
-      sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit);
+      sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit, 1);
     }
 
     mask <<= 1;

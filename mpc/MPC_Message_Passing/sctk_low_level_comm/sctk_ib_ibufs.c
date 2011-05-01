@@ -25,6 +25,7 @@
 #include "sctk.h"
 #include "sctk_list.h"
 #include "sctk_ib_ibufs.h"
+#include "sctk_ib_cm.h"
 #include "sctk_ib_config.h"
 #include "sctk_ib_allocator.h"
 #include "sctk_ib_profiler.h"
@@ -145,8 +146,10 @@ void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,
 
   sctk_nodebug("END ibuf initialization");
 
-  if (debug && (ibv_verbose_level > 0))
-    sctk_debug("[ibuf] Allocation of %d more buffers (ibuf_free_ibuf_nb %d - ibuf_got_ibuf_nb %d)", ibv_size_ibufs_chunk, ibuf_free_ibuf_nb, ibuf_got_ibuf_nb, ibuf_free_header);
+  if (debug)
+  {
+    PRINT_DEBUG(1, "[ibuf] Allocation of %d more buffers (ibuf_free_ibuf_nb %d - ibuf_got_ibuf_nb %d)", ibv_size_ibufs_chunk, ibuf_free_ibuf_nb, ibuf_got_ibuf_nb, ibuf_free_header);
+  }
 }
 
 sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null, int need_lock)
@@ -192,7 +195,7 @@ resume:
 }
 
 int sctk_net_ibv_ibuf_srq_check_and_post(
-    sctk_net_ibv_qp_local_t* local, int limit)
+    sctk_net_ibv_qp_local_t* local, int limit, int need_lock)
 {
   int size;
   int nb_posted;
@@ -203,20 +206,21 @@ int sctk_net_ibv_ibuf_srq_check_and_post(
 
   if ( (ibuf_free_srq_nb <= limit) || (limit == -1))
   {
-    sctk_spinlock_lock(&ibuf_lock);
+    if (need_lock)
+      sctk_spinlock_lock(&ibuf_lock);
 
 
     if (limit == -1)
     {
       ++ibuf_thread_activation_nb;
       /* register more srq buffers */
-      if (ibuf_thread_activation_nb >= 10)
+      if (ibuf_thread_activation_nb >= 5)
       {
 //        sctk_net_ibv_cq_poll(rc_sr_local->recv_cq, ibv_max_srq_ibufs, sctk_net_ibv_rc_sr_recv_cq, IBV_CHAN_RECV);
 
         ibv_max_srq_ibufs += 100;
         ibuf_thread_activation_nb = 0;
-        sctk_debug("SRQ entries expanded: %d", ibv_max_srq_ibufs);
+        PRINT_DEBUG(1, "[srq] SRQ entries expanded up to: %d", ibv_max_srq_ibufs);
       }
     }
 
@@ -225,7 +229,8 @@ int sctk_net_ibv_ibuf_srq_check_and_post(
     //    else
     size = ibv_max_srq_ibufs - ibuf_free_srq_nb;
 
-    sctk_spinlock_unlock(&ibuf_lock);
+    if (need_lock)
+      sctk_spinlock_unlock(&ibuf_lock);
 
     nb_posted =  sctk_net_ibv_ibuf_srq_post
       (local, size);
@@ -261,7 +266,7 @@ int sctk_net_ibv_ibuf_srq_post(
     if (rc != 0)
     {
       /* try to post more recv buffers */
-      rc = sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit);
+      rc = sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit, 0);
 
       /* if it's still impossible, we fail */
       if (rc != 0)

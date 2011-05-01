@@ -25,6 +25,7 @@
 #include "sctk_low_level_comm.h"
 #include "sctk_debug.h"
 #include "sctk_ib_mmu.h"
+#include "sctk_ib_cm.h"
 #include "sctk_ib_qp.h"
 #include "sctk_ib_profiler.h"
 #include "sctk_ib_const.h"
@@ -53,8 +54,7 @@ sctk_net_ibv_mmu_init(sctk_net_ibv_qp_rail_t* rail, sctk_net_ibv_mmu_t* mmu, int
   if (mmu->total_mmu_entry_nb + nb_mmu_entries >
       rail->max_mr)
   {
-    if (ibv_verbose_level > 0)
-      sctk_debug ("[mmu] Cannot allocate more MMU entries: hardware limit %d reached",
+    PRINT_DEBUG(1, "[mmu] Cannot allocate more MMU entries: hardware limit %d reached",
           rail->max_mr);
     /* TODO: behavior needed there */
     not_implemented();
@@ -100,8 +100,8 @@ sctk_net_ibv_mmu_init(sctk_net_ibv_qp_rail_t* rail, sctk_net_ibv_mmu_t* mmu, int
   mmu->free_header = (sctk_net_ibv_mmu_entry_t*) mmu_entry;
 
   mmu->total_mmu_entry_nb += nb_mmu_entries;
-  if (debug && (ibv_verbose_level > 0) )
-    sctk_debug("[mmu] %d MMU entries allocated (total:%d, free:%d, got:%d)", nb_mmu_entries, mmu->total_mmu_entry_nb, mmu->free_mmu_entry_nb, mmu->got_mmu_entry_nb);
+  if (debug )
+    PRINT_DEBUG(1, "[mmu] %d MMU entries allocated (total:%d, free:%d, got:%d)", nb_mmu_entries, mmu->total_mmu_entry_nb, mmu->free_mmu_entry_nb, mmu->got_mmu_entry_nb);
 }
 
 

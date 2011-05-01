@@ -188,6 +188,8 @@ sctk_net_ibv_comp_rc_sr_frag_recv(sctk_net_ibv_ibuf_header_t* msg_header, int lo
   /* TODO Change entry */
   entry = sctk_net_ibv_comp_rc_sr_copy_msg(RC_SR_PAYLOAD(msg_header),
       list, msg_header->payload_size, msg_header->psn);
+
+#if 0
   if (!entry)
   {
     struct sctk_list_elem *tmp = NULL;
@@ -196,7 +198,6 @@ sctk_net_ibv_comp_rc_sr_frag_recv(sctk_net_ibv_ibuf_header_t* msg_header, int lo
     sctk_debug("Entry with PSN:%d, list:%p, src:%d, dest:%d, buff_nb:%d, total_buffs:%d NOT FOUND", msg_header->psn, list, msg_header->src_task, msg_header->dest_task, msg_header->buff_nb, msg_header->total_buffs);
 
     tmp = list->head;
-    sctk_debug("TMP : %p", tmp);
     while (tmp) {
       entry = (sctk_net_ibv_frag_eager_entry_t*) tmp->elem;
 
@@ -206,6 +207,7 @@ sctk_net_ibv_comp_rc_sr_frag_recv(sctk_net_ibv_ibuf_header_t* msg_header, int lo
     }
 
   }
+#endif
   assume(entry);
 
   if (msg_header->buff_nb == msg_header->total_buffs)
@@ -903,7 +905,7 @@ sctk_net_ibv_rc_sr_poll_recv(
   {
     sctk_nodebug("Buffer %d posted", ibuf_free_srq_nb);
     sctk_net_ibv_ibuf_release(ibuf, 1);
-    sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit);
+    sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit, 1);
   }
 
   if (lookup_mode)

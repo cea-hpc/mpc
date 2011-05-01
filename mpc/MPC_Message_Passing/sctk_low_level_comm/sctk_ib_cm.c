@@ -268,7 +268,7 @@ void sctk_net_ibv_cm_server()
  *  ASYNC EVENTS THREAD
  *----------------------------------------------------------*/
 #define DESC_EVENT(event, desc, fatal)  \
-  if ( (ibv_verbose_level > 0) || fatal) sctk_debug("[async thread] "event":\t"desc); \
+  if ( (ibv_verbose_level > 0) || fatal) PRINT_DEBUG(1, "[async thread] "event":\t"desc); \
 if (fatal) sctk_abort()
 
 void* async_thread(void* context)
@@ -349,7 +349,7 @@ void* async_thread(void* context)
       case IBV_EVENT_SRQ_LIMIT_REACHED:
         DESC_EVENT("IBV_EVENT_SRQ_LIMIT_REACHED","SRQ limit was reached", 0);
         /*  -1: force to post new buffers */
-        sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, -1);
+        sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, -1, 1);
 
         mod_attr.srq_limit  = ibv_srq_credit_thread_limit;
         mod_attr.max_wr     = ibv_max_srq_ibufs;

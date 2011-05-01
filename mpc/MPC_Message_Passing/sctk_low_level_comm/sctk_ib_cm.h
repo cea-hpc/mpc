@@ -34,6 +34,11 @@
 #include <netinet/in.h>
 #include <netdb.h>
 
+
+#define PRINT_DEBUG(level, ...) {\
+  if (level >= ibv_verbose_level)  \
+    sctk_debug(__VA_ARGS__); }
+
   void
 sctk_net_ibv_cm_server();
 

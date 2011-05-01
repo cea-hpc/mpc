@@ -931,7 +931,7 @@ sctk_shm_broadcast ( sctk_collective_communications_t * com,
   sctk_assert ( com_list );
 
   sctk_nodebug ( "BEGIN broadcast" );
-  sctk_debug ( "int : %s, out : %p", my_vp->data.data_in,
+  sctk_nodebug ( "int : %s, out : %p", my_vp->data.data_in,
       my_vp->data.data_out );
 
   size = elem_size * nb_elem;

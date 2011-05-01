@@ -34,7 +34,7 @@
  * if x < IBV_EAGER_THRESHOLD -> eager msg
  * if x < IBV_FRAG_EAGER_THRESHOLD -> frag msg (into several eager buffers)
  * if x > IBV_FRAG_EAGER_THRESHOLD -> rendezvous msg */
-#define IBV_EAGER_THRESHOLD ( 16 * 1024 )
+#define IBV_EAGER_THRESHOLD ( 12 * 1024 )
 #define IBV_FRAG_EAGER_THRESHOLD ( 256 * 1024)
 /* Number of allowed pending Work Queue Elements
  * for each QP */
@@ -51,14 +51,14 @@
 
 /* Maximum number of buffers to allocate during the
  * initialization step */
-#define IBV_MAX_IBUFS         6000
-#define IBV_MAX_SRQ_IBUFS     4000
+#define IBV_MAX_IBUFS         10000
+#define IBV_MAX_SRQ_IBUFS     8000
 /* Minimum number of free recv buffer before
  * posting of new buffers. This thread is  activated
  * once a recv buffer is freed. If IBV_SRQ_CREDIT_LIMIT ==
  * IBV_MAX_SRQ_IBUFS, receive buffers are re-post every-time
  * they are consumned */
-#define IBV_SRQ_CREDIT_LIMIT  4000
+#define IBV_SRQ_CREDIT_LIMIT  8000
 /* Minimum number of free recv buffer before
  * the activation of the asynchronous
  * thread (if this thread is activated too much times,
