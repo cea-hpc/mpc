@@ -447,9 +447,6 @@ printf "\t@chmod 755 ${TEST_RES}">> Makefile; echo "">> Makefile
 
 echo "" >> Makefile
 printf "check_all:$TEST_LIST" >> Makefile
-##### START REMOVE IN OSE ####
-printf " check_private" >> Makefile
-##### END REMOVE IN OSE ####
 echo "">> Makefile
 
 
@@ -487,57 +484,3 @@ end_res_file
 end_section
 
 
-##### START REMOVE IN OSE ####
-#####################################
-#PRIVATE
-#####################################
-if test -d ${MPC_SOURCE_DIR}PRIVATE_MPC_Tests; then
-TEST_LIST=""
-echo "" >> Makefile
-echo "check_private:check_mpich check_all_private" >> Makefile
-echo "" >> Makefile
-
-build_test_private(){
-MPC_TEST_DIR="PRIVATE_MPC_Tests"
-build_test $1
-}
-
-MPC_MODE_EXEC="sequential"
-build_test_private 1
-MPC_MODE_EXEC="parallel"
-build_test_private 4
-
-echo "" >> Makefile
-echo "check_all_private:$TEST_LIST" >> Makefile
-
-
-echo "" >> Makefile
-echo "check_mpich:" >> Makefile
-DIR_TEST="${MPC_SOURCE_DIR}PRIVATE_MPC_Tests/parallel/MPC_Message_Passing/mpich-test/"
-MPC_MODE_EXEC="mpich"
-if test -d $DIR_TEST ; then
-printf "\t@mkdir -p TEST">> Makefile; echo "">> Makefile
-printf "\t@mkdir -p TEST/mpich">> Makefile; echo "">> Makefile
-for i in ${MPC_SOURCE_DIR}PRIVATE_MPC_Tests/parallel/MPC_Message_Passing/mpich-test/coll ${MPC_SOURCE_DIR}PRIVATE_MPC_Tests/parallel/MPC_Message_Passing/mpich-test/pt2pt ; do
-TYPE_OP="`basename $i`"
-for j in $i/*.c ; do
-NAME="`basename $j .c`"
-printf "\t@echo \"${MPC_MODE_EXEC}_$NAME='SUCCESS'\" >> ${TEST_RES}">> Makefile; echo "">> Makefile
-printf "\t@echo \"BENCH_LIST=\\\\\"\\\$\$BENCH_LIST ${MPC_MODE_EXEC}_$NAME\\\\\"\" >> ${TEST_RES}">> Makefile; echo "">> Makefile
-printf "\t@INSTALL/bin/mpc_cc -O0 -g ${MPC_SOURCE_DIR}PRIVATE_MPC_Tests/parallel/MPC_Message_Passing/mpich-test/tools/${TYPE_OP}/*.c -I${MPC_SOURCE_DIR}PRIVATE_MPC_Tests/parallel/MPC_Message_Passing/mpich-test/tools/${TYPE_OP} $j -o ./TEST/${MPC_MODE_EXEC}/$NAME -lm">> Makefile; echo "">> Makefile
-printf "\t@echo ./TEST/${MPC_MODE_EXEC}/$NAME">> Makefile; echo "">> Makefile
-printf "\tINSTALL/bin/mpcrun -l=none -n=4 -m=ethread ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err">> Makefile; no_fail_res; echo "">> Makefile
-printf "\tINSTALL/bin/mpcrun -l=none -n=4 -m=pthread ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err">> Makefile; no_fail_res; echo "">> Makefile
-printf "\tINSTALL/bin/mpcrun -l=none -n=4 -m=ethread_mxn ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err">> Makefile; no_fail_res; echo "">> Makefile
-printf "\tINSTALL/bin/mpcrun -l=fork --share-node -p=2 -n=4 -m=ethread ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err">> Makefile; no_fail_res; echo "">> Makefile
-printf "\tINSTALL/bin/mpcrun -l=fork --share-node -p=2 -n=4 -m=pthread ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err">> Makefile; no_fail_res; echo "">> Makefile
-printf "\tINSTALL/bin/mpcrun -l=fork --share-node -p=2 -n=4 -m=ethread_mxn ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err">> Makefile; no_fail_res; echo "">> Makefile
-printf "\t@rm ./TEST/${MPC_MODE_EXEC}/$NAME">> Makefile; echo "">> Makefile
-printf "\t@echo \"\"">> Makefile; echo "">> Makefile
-done
-done
-fi
-printf "\t@rm -rf  TEST">> Makefile; echo "">> Makefile
-
-fi
-##### END REMOVE IN OSE ####
