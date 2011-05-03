@@ -818,10 +818,6 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
   tmp->father_data = NULL;
 #endif
 
-  /*
-     Décommenter la suite pour permettre aux thread utilisateur de commuiquer via MPC.
-     ATTENTION: MPC n'est pas thread safe pour les threads MPC.
-   */
   if (tmp_father)
     {
       tmp->task_id = tmp_father->task_id;
