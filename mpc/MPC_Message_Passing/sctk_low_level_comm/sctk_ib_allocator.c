@@ -47,8 +47,7 @@ sctk_spinlock_t all_tasks_lock = SCTK_SPINLOCK_INITIALIZER;
  * lookup for a local thread id. If the entry isn't found, we lock the
  * array and create the entry */
 int LOOKUP_LOCAL_THREAD_ENTRY(int id) {
-  int i, j;
-  int entry_nb = -1;
+  int i;
 
   for (i=0; i<MAX_NB_TASKS_PER_PROCESS; ++i) {
     sctk_nodebug("(i:%d) Search for entry %d: %d", i, id, all_tasks[i].task_nb);
@@ -58,7 +57,6 @@ int LOOKUP_LOCAL_THREAD_ENTRY(int id) {
     sctk_spinlock_lock(&all_tasks_lock);
     if (all_tasks[i].task_nb == -1) {
 
-      entry_nb = i;
       /* init list for pending frag eager */
       all_tasks[i].frag_eager_list =
         sctk_calloc(sctk_get_total_tasks_number(), sizeof(struct sctk_list*));
@@ -68,29 +66,30 @@ int LOOKUP_LOCAL_THREAD_ENTRY(int id) {
       sctk_list_new(&all_tasks[i].pending_msg, 1,
           sizeof(sctk_net_ibv_sched_pending_header));
 
-      all_tasks[i].remote = sctk_calloc(sizeof(sched_sn_t), sctk_get_total_tasks_number());
+      all_tasks[i].remote = sctk_calloc(sizeof(sched_sn_t),
+          sctk_get_total_tasks_number());
       assume(all_tasks[i].remote);
 
       /* finily, we set the task_nb. Must be done
        * at the end */
       all_tasks[i].task_nb = id;
-      sctk_nodebug("iENTRY CREATED : %d <-> %d (lock:%p)", i, id, &all_tasks_lock);
+      sctk_nodebug("ENTRY CREATED : %d <-> %d (lock:%p)", i, id, &all_tasks_lock);
     }
     sctk_spinlock_unlock(&all_tasks_lock);
 
     if (all_tasks[i].task_nb == id)
     {
-      entry_nb = i;
+      return i;
       break;
     }
   }
-  /* Check if the entry has been found */
-  if(entry_nb == -1) {
-    sctk_nodebug("Local thread entry %d not found !", id);
-    abort();
-  }
 
-  return entry_nb;
+  /* If we are there, the local entry nb has not been found.
+   * We exit... */
+  sctk_error("Local thread entry %d not found !", id);
+  assume(0);
+
+  return -1;
 }
 
 
@@ -181,19 +180,19 @@ sctk_net_ibv_allocator_get(
 /*-----------------------------------------------------------
  *  POLLING
  *----------------------------------------------------------*/
-void sctk_net_ibv_rc_sr_send_cq(struct ibv_wc* wc, int lookup, int dest)
+static void sctk_net_ibv_rc_sr_send_cq(struct ibv_wc* wc, int lookup, int dest)
 {
   sctk_net_ibv_rc_sr_poll_send(wc, rc_sr_local, lookup);
 }
 
-void sctk_net_ibv_rc_sr_recv_cq(struct ibv_wc* wc, int lookup, int dest)
+static void sctk_net_ibv_rc_sr_recv_cq(struct ibv_wc* wc, int lookup, int dest)
 {
   sctk_net_ibv_rc_sr_poll_recv(wc, rail, rc_sr_local,
       rc_rdma_local, lookup, dest);
 }
 
 
-  void
+static  void
 sctk_net_ibv_allocator_ptp_lookup(int dest, sctk_net_ibv_allocator_type_t type)
 {
   switch (type) {
@@ -206,13 +205,12 @@ sctk_net_ibv_allocator_ptp_lookup(int dest, sctk_net_ibv_allocator_type_t type)
   }
 }
 
-static sctk_spinlock_t ptp_lock = SCTK_SPINLOCK_INITIALIZER;
+static sctk_spinlock_t ptp_recv_lock = SCTK_SPINLOCK_INITIALIZER;
+static sctk_spinlock_t ptp_send_lock = SCTK_SPINLOCK_INITIALIZER;
 void sctk_net_ibv_allocator_ptp_poll_all()
 {
   int ret;
   int i = 0;
-  if (sctk_spinlock_trylock(&ptp_lock) == 0)
-  {
     while((all_tasks[i].task_nb != -1) && (i < MAX_NB_TASKS_PER_PROCESS))
     {
       sctk_nodebug("tasks %d", all_tasks[i].task_nb);
@@ -222,10 +220,16 @@ void sctk_net_ibv_allocator_ptp_poll_all()
       ++i;
     }
 
+  if (sctk_spinlock_trylock(&ptp_recv_lock) == 0)
+  {
     sctk_net_ibv_cq_poll(rc_sr_local->recv_cq, ibv_wc_in_number, sctk_net_ibv_rc_sr_recv_cq, IBV_CHAN_RECV);
-    sctk_net_ibv_cq_poll(rc_sr_local->send_cq, ibv_wc_out_number, sctk_net_ibv_rc_sr_send_cq, IBV_CHAN_SEND);
+    sctk_spinlock_unlock(&ptp_recv_lock);
+  }
 
-    sctk_spinlock_unlock(&ptp_lock);
+  if (sctk_spinlock_trylock(&ptp_send_lock) == 0)
+  {
+    sctk_net_ibv_cq_poll(rc_sr_local->send_cq, ibv_wc_out_number, sctk_net_ibv_rc_sr_send_cq, IBV_CHAN_SEND);
+    sctk_spinlock_unlock(&ptp_send_lock);
   }
 }
 
@@ -237,10 +241,10 @@ void sctk_net_ibv_allocator_ptp_lookup_all(int dest)
 
   while( (all_tasks[i].task_nb != -1) && (i < MAX_NB_TASKS_PER_PROCESS))
   {
-        do {
+//        do {
     /* poll pending messages */
     ret = sctk_net_ibv_sched_poll_pending_msg(i);
-        } while(ret);
+//        } while(ret);
     ++i;
   }
 

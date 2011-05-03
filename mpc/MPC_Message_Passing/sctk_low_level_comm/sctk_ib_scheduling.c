@@ -34,7 +34,7 @@ extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
 extern sctk_net_ibv_com_entry_t* com_entries;
 extern sctk_net_ibv_allocator_task_t all_tasks[MAX_NB_TASKS_PER_PROCESS];
 /* TODO: can we delete it ? */
-sctk_thread_mutex_t lock;
+static sctk_thread_mutex_t lock;
 
 void
 sctk_net_ibv_sched_init() {
@@ -76,6 +76,7 @@ sctk_net_ibv_sched_pending_push(
   /* fill header for msg payload */
   header.src_process = src_process;
   header.src_task = src_task;
+  header.dest_task = dest_task;
   header.psn = psn;
   header.type = type;
 
@@ -122,7 +123,7 @@ sctk_net_ibv_sched_poll_pending_msg(int task_nb)
     header = tmp->elem;
 
     ret = sctk_net_ibv_sched_sn_check_and_inc(
-        header->src_process,
+        header->dest_task,
         header->src_task, header->psn);
 
     if (!ret)
@@ -165,7 +166,9 @@ sctk_net_ibv_sched_get_esn(int src_task, int dest_task)
   int local_nb = -1;
 
   local_nb = LOOKUP_LOCAL_THREAD_ENTRY(src_task);
+//  SCHED_LOCK;
   sn = sched_get_sn(local_nb, dest_task);
+//  SCHED_UNLOCK;
 
   sctk_nodebug("ESN : %lu", sn->esn);
   return sn->esn;
@@ -179,10 +182,12 @@ sctk_net_ibv_sched_psn_inc (int src_task, int dest_task)
   int local_nb = -1;
 
   local_nb = LOOKUP_LOCAL_THREAD_ENTRY(src_task);
+//  SCHED_LOCK;
   sn = sched_get_sn(local_nb, dest_task);
 
   i = sn->psn;
   sn->psn++;
+//  SCHED_UNLOCK;
   return i;
 }
 
@@ -194,10 +199,12 @@ sctk_net_ibv_sched_esn_inc (int src_task, int dest_task)
   int local_nb = -1;
 
   local_nb = LOOKUP_LOCAL_THREAD_ENTRY(src_task);
+//  SCHED_LOCK;
   sn = sched_get_sn(local_nb, dest_task);
 
   i = sn->esn;
   sn->esn++;
+//  SCHED_UNLOCK;
   sctk_nodebug("INC for process %d (task %d): %lu", dest, entry_nb, i);
   return i;
 }
@@ -227,9 +234,7 @@ sctk_net_ibv_sched_sn_check_and_inc(int src_task, int dest_task, uint64_t num)
   }
   else
   {
-    SCHED_LOCK;
     sctk_net_ibv_sched_esn_inc (src_task, dest_task);
-    SCHED_UNLOCK;
     return 0;
   }
 }

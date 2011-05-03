@@ -208,8 +208,6 @@ sctk_net_ibv_allocator_lock(
     unsigned int rank,
     sctk_net_ibv_allocator_type_t type);
 
-void sctk_net_ibv_rc_sr_send_cq(struct ibv_wc* wc, int lookup, int dest);
-
 char*
 sctk_net_ibv_tcp_request(int process, sctk_net_ibv_qp_remote_t *remote, char* host, int* port);
 
@@ -220,6 +218,5 @@ void sctk_net_ibv_tcp_server();
 void
 sctk_net_ibv_allocator_initialize_threads();
 
-void sctk_net_ibv_rc_sr_recv_cq(struct ibv_wc* wc, int lookup, int dest);
 #endif
 #endif

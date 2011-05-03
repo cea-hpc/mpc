@@ -92,6 +92,7 @@ sctk_net_ibv_qp_pick_rail(int rail_nb)
   }
   rail->max_mr = dev_attr.max_mr;
   sctk_nodebug("Max mr : %d",dev_attr.max_mr );
+  sctk_nodebug("Max qp : %d",dev_attr.max_qp );
 
   if (ibv_query_port
       (rail->context, ibv_adm_port, &port_attr))

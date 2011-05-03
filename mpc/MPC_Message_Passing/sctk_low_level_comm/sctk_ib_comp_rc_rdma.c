@@ -598,7 +598,7 @@ sctk_net_ibv_com_rc_rdma_read_finish(
           sctk_net_ibv_sched_pending_push(entry,
               sizeof(sctk_net_ibv_rc_rdma_entry_t), 0,
               IBV_POLL_RC_RDMA_ORIGIN,
-              entry->dest_task,
+              entry->src_process,
               entry->src_task,
               entry->dest_task,
               entry->psn,

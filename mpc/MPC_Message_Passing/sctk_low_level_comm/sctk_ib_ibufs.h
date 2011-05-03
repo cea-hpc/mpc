@@ -156,10 +156,11 @@ struct sctk_net_ibv_ibuf_header_s
   uint32_t src_task;
   uint32_t dest_task;
   uint32_t psn;
-  uint16_t buff_nb;
-  uint16_t total_buffs;
+  int buff_nb;
+  int total_buffs;
   uint8_t com_id;
-} __attribute__ ((packed));
+};
+//} __attribute__ ((packed));
 
 typedef struct sctk_net_ibv_ibuf_header_s
 sctk_net_ibv_ibuf_header_t;

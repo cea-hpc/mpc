@@ -79,6 +79,8 @@ sctk_net_ibv_frag_eager_entry_t* sctk_net_ibv_comp_rc_sr_frag_allocate(
   entry->src_process  = msg_header->src_process;
   entry->src_task     = msg_header->src_task;
   entry->dest_task    = msg_header->dest_task;
+  entry->total_buffs  = msg_header->total_buffs;
+  entry->size         = msg_header->size;
 
   sctk_nodebug("\t\tNew entry allocated for msg (size: %lu, PSN %lu, alloc %p, src_task %d, dest_task %d)", msg_header->size, msg_header->psn, entry, msg_header->src_task, msg_header->dest_task);
 
@@ -94,6 +96,7 @@ sctk_net_ibv_frag_eager_entry_t* sctk_net_ibv_comp_rc_sr_frag_allocate(
  void
 sctk_net_ibv_comp_rc_sr_free_frag_msg(sctk_net_ibv_frag_eager_entry_t* entry)
 {
+#if 0
   struct sctk_list* list;
   int local_nb =-1;
 
@@ -104,12 +107,13 @@ sctk_net_ibv_comp_rc_sr_free_frag_msg(sctk_net_ibv_frag_eager_entry_t* entry)
   sctk_list_remove(list, entry->list_elem);
   sctk_list_unlock(list);
   sctk_nodebug("Free msg %p (dest_task %d, psn %lu)", entry, entry->dest_task, entry->psn);
+#endif
   sctk_free(entry);
   sctk_ibv_profiler_dec(IBV_MEM_TRACE);
 }
 
- sctk_net_ibv_frag_eager_entry_t*
-sctk_net_ibv_comp_rc_sr_copy_msg(void* buffer, struct sctk_list *list, size_t size, uint32_t psn)
+static sctk_net_ibv_frag_eager_entry_t*
+sctk_net_ibv_comp_rc_sr_copy_msg(sctk_net_ibv_ibuf_header_t* msg_header, struct sctk_list *list)
 {
   struct sctk_list_elem *tmp = NULL;
   sctk_net_ibv_frag_eager_entry_t* entry;
@@ -121,12 +125,13 @@ sctk_net_ibv_comp_rc_sr_copy_msg(void* buffer, struct sctk_list *list, size_t si
     entry = (sctk_net_ibv_frag_eager_entry_t*) tmp->elem;
 
     sctk_nodebug("PSN FOUND %lu", entry->psn);
-    if (psn == entry->psn)
+    if (msg_header->psn == entry->psn)
     {
-      memcpy( (char*) entry->msg + entry->current_copied, buffer, size);
-      entry->current_copied+=size;
+      memcpy( (char*) entry->msg + entry->current_copied, RC_SR_PAYLOAD(msg_header), msg_header->payload_size);
+      entry->current_copied+=msg_header->payload_size;
+      entry->buff_nb = msg_header->buff_nb;
 
-      sctk_nodebug("Frag msg copied (size: %lu, psn %lu, copied %lu task %d)", size, psn, entry->current_copied, dest_task);
+      sctk_nodebug("Frag msg copied (size: %lu, psn %lu, copied %lu task %d)", msg_header->payload_size, msg_header->psn, entry->current_copied, dest_task);
 
       sctk_list_unlock(list);
       return entry;
@@ -136,7 +141,7 @@ sctk_net_ibv_comp_rc_sr_copy_msg(void* buffer, struct sctk_list *list, size_t si
   }
   sctk_list_unlock(list);
 
-  sctk_nodebug("Entry with PSN %lu not found for task !", psn);
+  sctk_nodebug("Entry with PSN %lu not found for task !", msg_header->psn);
   return NULL;
 }
 
@@ -173,9 +178,8 @@ sctk_net_ibv_comp_rc_sr_frag_recv(sctk_net_ibv_ibuf_header_t* msg_header, int lo
       list =  sctk_malloc(sizeof(struct sctk_list));
       assume(list);
 
-      all_tasks[local_nb].frag_eager_list[msg_header->src_task]  = list;
+      all_tasks[local_nb].frag_eager_list[msg_header->src_task] = list;
       sctk_list_new(list, 0, 0);
-      /* update the pointer */
     }
 
     entry = sctk_net_ibv_comp_rc_sr_frag_allocate(msg_header);
@@ -186,54 +190,58 @@ sctk_net_ibv_comp_rc_sr_frag_recv(sctk_net_ibv_ibuf_header_t* msg_header, int lo
   }
 
   /* TODO Change entry */
-  entry = sctk_net_ibv_comp_rc_sr_copy_msg(RC_SR_PAYLOAD(msg_header),
-      list, msg_header->payload_size, msg_header->psn);
+  entry = sctk_net_ibv_comp_rc_sr_copy_msg(msg_header, list);
 
-#if 0
   if (!entry)
   {
     struct sctk_list_elem *tmp = NULL;
     sctk_net_ibv_frag_eager_entry_t* entry;
 
-    sctk_debug("Entry with PSN:%d, list:%p, src:%d, dest:%d, buff_nb:%d, total_buffs:%d NOT FOUND", msg_header->psn, list, msg_header->src_task, msg_header->dest_task, msg_header->buff_nb, msg_header->total_buffs);
+    sctk_debug("Entry with PSN:%d, list:%p, src:%d, dest:%d, buff_nb:%d, total_buffs:%d NOT FOUND", msg_header->psn, list, msg_header->src_task,
+        msg_header->dest_task, msg_header->buff_nb, msg_header->total_buffs);
 
     tmp = list->head;
     while (tmp) {
       entry = (sctk_net_ibv_frag_eager_entry_t*) tmp->elem;
 
-      sctk_debug("PSN FOUND %lu", entry->psn);
+      sctk_debug("PSN FOUND %lu (total buffs:%d, buff_nb:%d)", entry->psn,
+          entry->total_buffs, entry->buff_nb);
 
       tmp = tmp->p_next;
     }
-
   }
-#endif
   assume(entry);
 
+  /* all parts of the message have been received */
   if (msg_header->buff_nb == msg_header->total_buffs)
   {
+
+    /* we remove the entry from the list */
+    sctk_list_lock(list);
+    sctk_list_remove(list, entry->list_elem);
+    sctk_list_unlock(list);
 
     if (lookup_mode)
     {
       ret = sctk_net_ibv_sched_sn_check_and_inc(
-          msg_header->dest_task,
-          msg_header->src_task,
-          msg_header->psn);
+          entry->dest_task,
+          entry->src_task,
+          entry->psn);
 
       /* message not expected */
       if(ret)
       {
         sctk_ibv_profiler_inc(IBV_LOOKUP_UNEXPECTED_MSG_NB);
         sctk_nodebug("LOOKUP UNEXPECTED - Found psn %d from %d",
-            msg_header->psn, msg_header->src_process);
+            entry->psn, entry->src_process);
 
         sctk_net_ibv_sched_pending_push(
-            entry, msg_header->size, 0,
+            entry, entry->size, 0,
             IBV_POLL_RC_SR_FRAG_ORIGIN,
-            msg_header->src_process,
-            msg_header->src_task,
-            msg_header->dest_task,
-            msg_header->psn,
+            entry->src_process,
+            entry->src_task,
+            entry->dest_task,
+            entry->psn,
             entry->msg,
             (char*) entry->msg + sizeof(sctk_thread_ptp_message_t),
             entry);
@@ -242,33 +250,33 @@ sctk_net_ibv_comp_rc_sr_frag_recv(sctk_net_ibv_ibuf_header_t* msg_header, int lo
       } else {
         sctk_ibv_profiler_inc(IBV_LOOKUP_EXPECTED_MSG_NB);
         sctk_nodebug("LOOKUP EXPECTED - Found psn %d from %d",
-            msg_header->psn, msg_header->src_process);
+            entry->psn, entry->src_process);
 
         sctk_nodebug("READ %lu", entry->psn);
 
         sctk_net_ibv_send_msg_to_mpc(
             (sctk_thread_ptp_message_t*) entry->msg,
-            (char*) entry->msg + sizeof(sctk_thread_ptp_message_t), msg_header->src_process,
+            (char*) entry->msg + sizeof(sctk_thread_ptp_message_t),
+            entry->src_process,
             IBV_RC_SR_FRAG_ORIGIN, entry);
-
       }
     } else {
       ret = sctk_net_ibv_sched_sn_check_and_inc(
-          msg_header->dest_task, msg_header->src_task, msg_header->psn);
+          entry->dest_task, entry->src_task, entry->psn);
 
       if (ret)
       {
         sctk_ibv_profiler_inc(IBV_UNEXPECTED_MSG_NB);
         sctk_nodebug("EXPECTED %lu but GOT %lu from process %d", sctk_net_ibv_sched_get_esn(
-              msg_header->dest_task, msg_header->src_task), msg_header->psn, msg_header->src_process);
+              entry->dest_task, entry->src_task), entry->psn, entry->src_process);
 
         do {
           /* enter to the lookup mode */
           sctk_net_ibv_allocator_ptp_lookup_all(
-              msg_header->src_process);
+              entry->src_process);
 
           ret = sctk_net_ibv_sched_sn_check_and_inc(
-              msg_header->dest_task, msg_header->src_task, msg_header->psn);
+              entry->dest_task, entry->src_task, entry->psn);
 
         } while (ret);
       } else {
@@ -279,10 +287,10 @@ sctk_net_ibv_comp_rc_sr_frag_recv(sctk_net_ibv_ibuf_header_t* msg_header, int lo
 
       sctk_net_ibv_send_msg_to_mpc(
           (sctk_thread_ptp_message_t*) entry->msg,
-          (char*) entry->msg + sizeof(sctk_thread_ptp_message_t), msg_header->src_process,
+          (char*) entry->msg + sizeof(sctk_thread_ptp_message_t), entry->src_process,
           IBV_RC_SR_FRAG_ORIGIN, entry);
     }
-    sctk_nodebug("READ %lu for task %d", entry->psn, msg_header->dest_task);
+    sctk_nodebug("READ %lu for task %d", entry->psn, entry->dest_task);
   }
 }
 
@@ -360,7 +368,6 @@ sctk_net_ibv_comp_rc_sr_send(
     sctk_net_ibv_ibuf_t* ibuf,
     sctk_net_ibv_allocator_request_t req, sctk_net_ibv_ibuf_type_t type)
 {
-  uint32_t ret_psn = 0;
   sctk_net_ibv_ibuf_header_t* msg_header;
   int task_id;
   int thread_id;
@@ -458,7 +465,6 @@ sctk_net_ibv_comp_rc_sr_send_coll_frag_ptp_message(
   size_t allowed_copy_size = 0;
   int   nb_buffers = 1;
   int   total_buffs = 0;
-  //  int size_payload = 0;
   int remaining_size;
   int size_to_copy = 0;
   int copied_size = 0;
@@ -521,9 +527,7 @@ sctk_net_ibv_comp_rc_sr_send_frag_ptp_message(
 {
   sctk_net_ibv_ibuf_t* ibuf;
   sctk_thread_ptp_message_t* ptp_msg;
-  size_t size;
   void* payload;
-  uint32_t psn;
   size_t offset_buffer = 0;
   size_t offset_copied = 0;
   size_t allowed_copy_size = 0;
@@ -568,8 +572,6 @@ sctk_net_ibv_comp_rc_sr_send_frag_ptp_message(
 
     size_payload = (offset_copied - size_payload) + offset_buffer;
 
-    sctk_nodebug("Msg copied in buffer");
-
     /* PSN */
     sctk_net_ibv_ibuf_send_init(ibuf, size_payload + RC_SR_HEADER_SIZE);
 
@@ -601,7 +603,6 @@ sctk_net_ibv_comp_rc_sr_send_ptp_message (
   sctk_net_ibv_ibuf_t* ibuf;
   sctk_thread_ptp_message_t* ptp_msg;
   void* payload;
-  uint32_t psn;
 
   ibuf = sctk_net_ibv_ibuf_pick(0, 1);
   payload = RC_SR_PAYLOAD(ibuf->buffer);
@@ -630,7 +631,7 @@ sctk_net_ibv_comp_rc_sr_send_ptp_message (
 
   /* send the message */
   sctk_net_ibv_ibuf_send_init(ibuf, req.size + RC_SR_HEADER_SIZE);
-  req.buff_nb       = 1;
+  req.buff_nb     = 1;
   req.total_buffs = 1;
   req.payload_size = req.size;
   sctk_net_ibv_comp_rc_sr_send(ibuf, req, RC_SR_EAGER);
@@ -649,6 +650,7 @@ sctk_net_ibv_comp_rc_sr_ptp_recv(sctk_net_ibv_ibuf_t* ibuf ,sctk_net_ibv_ibuf_he
   if (msg_header->total_buffs != 1)
   {
     sctk_net_ibv_comp_rc_sr_frag_recv(msg_header,lookup_mode);
+    *release_buffer = 1;
   }
   /*
    * If this is a normal eager msg
@@ -693,11 +695,6 @@ sctk_net_ibv_comp_rc_sr_ptp_recv(sctk_net_ibv_ibuf_t* ibuf ,sctk_net_ibv_ibuf_he
             IBV_RC_SR_ORIGIN, ibuf);
       }
 
-      /* we don't release the buffer for now.
-       * It will be released when the msg will be freed */
-      *release_buffer = 0;
-
-
       /* normal mode */
     } else {
       sctk_nodebug("NORMAL mode");
@@ -731,11 +728,11 @@ sctk_net_ibv_comp_rc_sr_ptp_recv(sctk_net_ibv_ibuf_t* ibuf ,sctk_net_ibv_ibuf_he
           (sctk_thread_ptp_message_t*) RC_SR_PAYLOAD(msg_header),
           (char*) RC_SR_PAYLOAD(msg_header) + sizeof(sctk_thread_ptp_message_t), msg_header->src_process,
           IBV_RC_SR_ORIGIN, ibuf);
-
-      /* we don't release the buffer for now.
-       * It will be released when the msg will be freed */
-      *release_buffer = 0;
     }
+
+    /* we don't release the buffer for now.
+     * It will be released when the msg will be freed */
+    *release_buffer = 0;
 
     sctk_nodebug("(EAGER) MSG PTP received %lu", msg_header->size);
   }
@@ -862,6 +859,10 @@ sctk_net_ibv_rc_sr_poll_recv(
           sctk_net_ibv_collective_push_rc_sr(
               &com_entries[msg_header->com_id].init_barrier_fifo, ibuf, &release_buffer);
           release_buffer = 0;
+          break;
+
+        default:
+          assume(0);
           break;
       }
       break;

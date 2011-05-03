@@ -38,7 +38,7 @@
 #define IBV_FRAG_EAGER_THRESHOLD ( 256 * 1024)
 /* Number of allowed pending Work Queue Elements
  * for each QP */
-#define IBV_QP_TX_DEPTH     3000
+#define IBV_QP_TX_DEPTH     4000
 /* We don't need recv WQE when using SRQ.
  * This variable must be set to 0 */
 #define IBV_QP_RX_DEPTH     0

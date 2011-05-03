@@ -64,6 +64,10 @@ typedef struct
   void* msg;
   struct sctk_list_elem *list_elem;
   size_t current_copied;
+  /* FIXME: for debug */
+  int buff_nb;
+  int total_buffs;
+  size_t size;
 } sctk_net_ibv_frag_eager_entry_t;
 
 typedef sctk_net_ibv_qp_remote_t sctk_net_ibv_rc_sr_process_t;
@@ -85,9 +89,6 @@ void
 sctk_net_ibv_comp_rc_sr_send_coll_frag_ptp_message(
     sctk_net_ibv_qp_local_t* local_rc_sr,
     struct sctk_net_ibv_allocator_request_s req);
-
- sctk_net_ibv_frag_eager_entry_t*
-sctk_net_ibv_comp_rc_sr_copy_msg(void* buffer, struct sctk_list *list, size_t size, uint32_t psn);
 
 sctk_net_ibv_frag_eager_entry_t* sctk_net_ibv_comp_rc_sr_frag_allocate(
     sctk_net_ibv_ibuf_header_t* msg_header);

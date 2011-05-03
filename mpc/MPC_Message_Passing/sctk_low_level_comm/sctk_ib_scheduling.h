@@ -31,19 +31,6 @@
 #include "sctk_ib_comp_rc_sr.h"
 #include "sctk_ib_comp_rc_rdma.h"
 
-
-#define LOOKUP_PENDING_TASK_ENTRY(task) \
-int entry_nb = -1;  \
-{int i = 0;          \
-  sctk_nodebug("Lookup for task %d", task);                    \
-  for(i=0; i < MAX_NB_TASKS_PER_PROCESS; ++i)  \
-  {                   \
-    sctk_nodebug("Found task %d", pending[i].task_nb); \
-    if (pending[i].task_nb == task) \
-    { entry_nb = i; break;} \
-  }assume(entry_nb != 1);}
-
-
 #define SCHED_LOCK {                \
   sctk_thread_mutex_lock(&lock);}   \
 
@@ -76,6 +63,7 @@ typedef struct
 
   uint64_t src_process;
   uint64_t src_task;
+  uint64_t dest_task;
   uint64_t psn;
   sctk_thread_ptp_message_t* msg_header;
   void* msg_payload;
