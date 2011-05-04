@@ -218,5 +218,7 @@ void sctk_net_ibv_tcp_server();
 void
 sctk_net_ibv_allocator_initialize_threads();
 
+int LOOKUP_LOCAL_THREAD_ENTRY(int id);
+
 #endif
 #endif

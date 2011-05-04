@@ -137,7 +137,7 @@ typedef struct
   sctk_net_ibv_ibuf_ptp_type_t     ptp_type;
   size_t  size;
   size_t  payload_size;
-  uint32_t src_process;
+  int     src_process;
   uint32_t src_task;
   uint32_t dest_task;
   uint32_t psn;
@@ -152,7 +152,7 @@ struct sctk_net_ibv_ibuf_header_s
   sctk_net_ibv_ibuf_ptp_type_t     ptp_type;
   size_t  size;
   size_t  payload_size;
-  uint32_t src_process;
+  int     src_process;
   uint32_t src_task;
   uint32_t dest_task;
   uint32_t psn;

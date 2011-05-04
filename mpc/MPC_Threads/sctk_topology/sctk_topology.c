@@ -463,7 +463,7 @@ void sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood){
   int max_numa = 0;
   int max_socket = 0;
   int max_core = 0;
-  int neighbor_index = 0; 
+  int neighbor_index = 0;
   sctk_cpuinfo_t * cpuinfo ;
   int n, s, c, i ;
 
@@ -496,14 +496,14 @@ void sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood){
 
     for ( s = 0 ; s < max_socket ; s++ ) {
       int current_socket_id = s ;
-      
+
       /* For the first time, start from the target cpu */
       if ( n == 0 ) {
 	current_socket_id = ( cpuinfo->socket_id + s ) % max_socket ;
       }
 
       /* Compute the number of cores for this socket */
-      max_core = -1 ; 
+      max_core = -1 ;
       for ( i = 0 ; i < nb_cpus ; i++ ) {
 	if ( sctk_cpuinfos[i].numa_id == current_numa_id &&
 	     sctk_cpuinfos[i].socket_id == current_socket_id &&
@@ -529,22 +529,23 @@ void sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood){
 	/* Find the CPU which has the correct coordinates */
 	for ( i = 0 ; i < nb_cpus ; i++ ) {
 
-	  sctk_nodebug( "sctk_get_neighborhood: Checking %d %d %d with current %d %d %d", 
+	  sctk_nodebug( "sctk_get_neighborhood: Checking %d %d %d with current %d %d %d",
 	      sctk_cpuinfos[i].numa_id, sctk_cpuinfos[i].socket_id, sctk_cpuinfos[i].core_id,
 	      current_numa_id, current_socket_id, current_core_id ) ;
 
 	  if ( sctk_cpuinfos[i].numa_id == current_numa_id &&
 	      sctk_cpuinfos[i].socket_id == current_socket_id &&
 	      sctk_cpuinfos[i].core_id == current_core_id ) {
-    	  
+
+#warning "There is a problem here"
           if( neighbor_index < nb_cpus ) ;
 	        neighborhood[ neighbor_index ] = i ;
-	      
+
           neighbor_index++ ;
 	  }
 	}
 
-	
+
       }
     }
 
@@ -556,14 +557,14 @@ void sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood){
   /* Print the final result */
   fprintf( stderr, "Neighborhood result starting with CPU %d: (NUMA:%d, Socket:%d, Core:%d)\n"
       , cpuid, cpuinfo->numa_id, cpuinfo->socket_id, cpuinfo->core_id ) ;
- 	
+
   for ( i = 0 ; i < nb_cpus ; i++ ) {
     fprintf( stderr, "\tNeighbor[%d] -> CPU %d: (NUMA:%d, Socket:%d, Core:%d)\n"
-	, i, neighborhood[i], 
-	sctk_cpuinfos[ neighborhood[i] ].numa_id, 
-	sctk_cpuinfos[ neighborhood[i] ].socket_id, 
+	, i, neighborhood[i],
+	sctk_cpuinfos[ neighborhood[i] ].numa_id,
+	sctk_cpuinfos[ neighborhood[i] ].socket_id,
 	sctk_cpuinfos[ neighborhood[i] ].core_id ) ;
   }
 #endif
-  
+
 }

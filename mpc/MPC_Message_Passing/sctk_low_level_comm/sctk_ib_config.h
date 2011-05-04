@@ -25,33 +25,33 @@
 #ifndef __SCTK__INFINIBAND_CONFIG_H_
 #define __SCTK__INFINIBAND_CONFIG_H_
 
-extern int  ibv_eager_threshold;
-extern int  ibv_frag_eager_threshold;
-extern int  ibv_qp_tx_depth;
-extern int  ibv_qp_rx_depth;
-extern int  ibv_cq_depth;
-extern int  ibv_max_sg_sq;
-extern int  ibv_max_sg_rq;
-extern int  ibv_max_inline;
-extern int  ibv_max_ibufs;
-extern int  ibv_max_srq_ibufs;
-extern int  ibv_srq_credit_limit;
-extern int  ibv_srq_credit_thread_limit;
-extern int  ibv_size_ibufs_chunk;;
+extern unsigned int  ibv_eager_threshold;
+extern unsigned int  ibv_frag_eager_threshold;
+extern unsigned int  ibv_qp_tx_depth;
+extern unsigned int  ibv_qp_rx_depth;
+extern unsigned int  ibv_cq_depth;
+extern unsigned int  ibv_max_sg_sq;
+extern unsigned int  ibv_max_sg_rq;
+extern unsigned int  ibv_max_inline;
+extern unsigned int  ibv_max_ibufs;
+extern unsigned int  ibv_max_srq_ibufs;
+extern unsigned int  ibv_srq_credit_limit;
+extern unsigned int  ibv_srq_credit_thread_limit;
+extern unsigned int  ibv_size_ibufs_chunk;;
 
-extern int  ibv_rdvz_protocol;
+extern unsigned int  ibv_rdvz_protocol;
 #define IBV_RDVZ_WRITE_PROTOCOL (1)
 #define IBV_RDVZ_READ_PROTOCOL (2)
 
-extern int  ibv_verbose_level;
-extern int  ibv_wc_in_number;
-extern int  ibv_wc_out_number;
-extern int  ibv_max_mr;
-extern int  ibv_size_mr_chunk;
-extern int  ibv_adm_port;
-extern int  ibv_rdma_depth;
-extern int  ibv_rdma_dest_depth;
-extern int  ibv_no_memory_limitation;
+extern unsigned int  ibv_verbose_level;
+extern unsigned int  ibv_wc_in_number;
+extern unsigned int  ibv_wc_out_number;
+extern unsigned int  ibv_max_mr;
+extern unsigned int  ibv_size_mr_chunk;
+extern unsigned int  ibv_adm_port;
+extern unsigned int  ibv_rdma_depth;
+extern unsigned int  ibv_rdma_dest_depth;
+extern unsigned int  ibv_no_memory_limitation;
 
 void sctk_net_ibv_config_init();
 #endif

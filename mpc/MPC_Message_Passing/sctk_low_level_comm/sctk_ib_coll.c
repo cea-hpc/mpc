@@ -280,7 +280,7 @@ sctk_net_ibv_collective_push_rc_rdma(struct sctk_list* list, sctk_net_ibv_rc_rdm
  *  \return
  */
   sctk_net_ibv_collective_pending_t*
-sctk_net_ibv_collective_lookup(struct sctk_list* list, const int src, const int psn)
+sctk_net_ibv_collective_lookup(struct sctk_list* list, const int src, const uint32_t psn)
 {
   struct sctk_list_elem* elem;
   sctk_net_ibv_collective_pending_t* msg;
@@ -360,7 +360,7 @@ sctk_net_ibv_broadcast_recv(void* data, size_t size,
 
   static inline void
 sctk_net_ibv_broadcast_send(sctk_collective_communications_t * com,
-    void* data, size_t size, unsigned int relative_rank, int* mask, sctk_net_ibv_ibuf_type_t type, uint32_t psn, int* local_ranks, int local_rank, int com_size)
+    void* data, size_t size, int relative_rank, int* mask, sctk_net_ibv_ibuf_type_t type, uint32_t psn, int* local_ranks, int local_rank, int com_size)
 {
   int dest;
 
@@ -467,7 +467,8 @@ sctk_net_ibv_broadcast_scatter ( sctk_collective_communications_t * com,
     const size_t elem_size, const size_t nb_elem, const int root, const int psn)
 {
   int relative_rank, mask;
-  int scatter_size, curr_size, recv_size = 0, send_size;
+  int scatter_size, curr_size, send_size;
+  int64_t recv_size = 0;
   int root_process;
   int src, dst;
   sctk_net_ibv_collective_pending_t* msg;
@@ -991,13 +992,9 @@ sctk_net_ibv_n_way_dissemination_barrier_rc_rdma ( sctk_collective_communication
     sctk_virtual_processor_t * my_vp )
 {
   int round = 0;
-  uint32_t sendpeer;
-  uint32_t recvpeer;
+  int sendpeer;
+  int recvpeer;
   int i;
-  int index = 0;
-  int source;
-  int com_size;
-  uint32_t psn;
 
   /* We convert all global ranks to local ranks
    * for the current comminucator. If an entry is != in the

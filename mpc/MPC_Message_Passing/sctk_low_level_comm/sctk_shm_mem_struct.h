@@ -94,7 +94,7 @@ struct sctk_shm_reduce_slot_s {
 	uint64_t msg_size[SCTK_SHM_MAX_NB_LOCAL_PROCESSES];
 	char msg_content[SCTK_SHM_MAX_NB_LOCAL_PROCESSES][SCTK_SHM_FASTMSG_REDUCE_MAXLEN];
 	int shm_msg_type;
-	unsigned int shm_is_msg_ready[SCTK_SHM_MAX_NB_LOCAL_PROCESSES];
+	int shm_is_msg_ready[SCTK_SHM_MAX_NB_LOCAL_PROCESSES];
 	int shm_is_broadcast_ready;
 	sctk_spinlock_t lock;
 };
@@ -141,7 +141,7 @@ struct sctk_shm_broadcast_slot_s {
 	char msg_content[SCTK_SHM_FASTMSG_BROADCAST_MAXLEN];
 	unsigned int rank[SCTK_SHM_MAX_NB_LOCAL_PROCESSES];
 	int shm_msg_type;
-	unsigned int shm_is_msg_ready;
+	int shm_is_msg_ready;
 };
 
 

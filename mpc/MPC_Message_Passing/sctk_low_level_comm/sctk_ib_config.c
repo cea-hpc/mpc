@@ -99,30 +99,30 @@
 #define IBV_VERBOSE_LEVEL         1
 
 /* global values */
-int  ibv_eager_threshold  = IBV_EAGER_THRESHOLD;
-int  ibv_frag_eager_threshold  = IBV_FRAG_EAGER_THRESHOLD;
-int  ibv_qp_tx_depth      = IBV_QP_TX_DEPTH;
-int  ibv_qp_rx_depth      = IBV_QP_RX_DEPTH;
-int  ibv_cq_depth         = IBV_CQ_DEPTH;
-int  ibv_max_sg_sq        = IBV_MAX_SG_SQ;
-int  ibv_max_sg_rq        = IBV_MAX_SG_RQ;
-int  ibv_max_inline       = IBV_MAX_INLINE;
-int  ibv_max_ibufs        = IBV_MAX_IBUFS;
-int  ibv_size_ibufs_chunk = IBV_SIZE_IBUFS_CHUNKS;
-int  ibv_max_srq_ibufs    = IBV_MAX_SRQ_IBUFS;
-int  ibv_srq_credit_limit = IBV_SRQ_CREDIT_LIMIT;
-int  ibv_srq_credit_thread_limit = IBV_SRQ_CREDIT_THREAD_LIMIT;
-int  ibv_rdvz_protocol    = IBV_RDVZ_READ_PROTOCOL;
-int  ibv_no_memory_limitation    = IBV_NO_MEMORY_LIMITATION;
-int  ibv_verbose_level    = IBV_VERBOSE_LEVEL;
+unsigned int  ibv_eager_threshold  = IBV_EAGER_THRESHOLD;
+unsigned int  ibv_frag_eager_threshold  = IBV_FRAG_EAGER_THRESHOLD;
+unsigned int  ibv_qp_tx_depth      = IBV_QP_TX_DEPTH;
+unsigned int  ibv_qp_rx_depth      = IBV_QP_RX_DEPTH;
+unsigned int  ibv_cq_depth         = IBV_CQ_DEPTH;
+unsigned int  ibv_max_sg_sq        = IBV_MAX_SG_SQ;
+unsigned int  ibv_max_sg_rq        = IBV_MAX_SG_RQ;
+unsigned int  ibv_max_inline       = IBV_MAX_INLINE;
+unsigned int  ibv_max_ibufs        = IBV_MAX_IBUFS;
+unsigned int  ibv_size_ibufs_chunk = IBV_SIZE_IBUFS_CHUNKS;
+unsigned int  ibv_max_srq_ibufs    = IBV_MAX_SRQ_IBUFS;
+unsigned int  ibv_srq_credit_limit = IBV_SRQ_CREDIT_LIMIT;
+unsigned int  ibv_srq_credit_thread_limit = IBV_SRQ_CREDIT_THREAD_LIMIT;
+unsigned int  ibv_rdvz_protocol    = IBV_RDVZ_READ_PROTOCOL;
+unsigned int  ibv_no_memory_limitation    = IBV_NO_MEMORY_LIMITATION;
+unsigned int  ibv_verbose_level    = IBV_VERBOSE_LEVEL;
 
-int  ibv_wc_in_number     = IBV_WC_IN_NUMBER;
-int  ibv_wc_out_number    = IBV_WC_OUT_NUMBER;
-int  ibv_max_mr           = IBV_MAX_MR;
-int  ibv_size_mr_chunk    = IBV_SIZE_MR_CHUNKS;
-int  ibv_adm_port         = IBV_ADM_PORT;
-int  ibv_rdma_depth       = IBV_RDMA_DEPTH;
-int  ibv_rdma_dest_depth  = IBV_RDMA_DEST_DEPTH;
+unsigned int  ibv_wc_in_number     = IBV_WC_IN_NUMBER;
+unsigned int  ibv_wc_out_number    = IBV_WC_OUT_NUMBER;
+unsigned int  ibv_max_mr           = IBV_MAX_MR;
+unsigned int  ibv_size_mr_chunk    = IBV_SIZE_MR_CHUNKS;
+unsigned int  ibv_adm_port         = IBV_ADM_PORT;
+unsigned int  ibv_rdma_depth       = IBV_RDMA_DEPTH;
+unsigned int  ibv_rdma_dest_depth  = IBV_RDMA_DEST_DEPTH;
 
 
 void sctk_net_ibv_config_check()

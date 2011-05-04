@@ -96,7 +96,7 @@ typedef struct
   /* requested size for msg */
   size_t                          requested_size;
   /* source process */
-  uint32_t                        src_process;
+  int                             src_process;
   /* source task */
   uint32_t                        src_task;
   /* source task */

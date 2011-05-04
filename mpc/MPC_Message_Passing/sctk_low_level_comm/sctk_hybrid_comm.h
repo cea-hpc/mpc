@@ -35,6 +35,8 @@ extern "C"
   void sctk_net_init_driver_hybrid (int *argc, char ***argv);
   void sctk_net_preinit_driver_hybrid ();
 
+  void sctk_net_hybrid_ptp_poll(void* arg);
+
   typedef struct sctk_net_driver_pointers_functions_s
   {
     sctk_rpc_function_t          rpc_driver;

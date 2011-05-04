@@ -199,7 +199,6 @@ int sctk_net_ibv_ibuf_srq_check_and_post(
 {
   int size;
   int nb_posted;
-  int i;
 
   sctk_nodebug("ibv_max_srq_ibufs %d - ibuf_free_srq_nb %d",
       ibv_max_srq_ibufs, ibuf_free_srq_nb);

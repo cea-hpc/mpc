@@ -44,7 +44,7 @@ sctk_buffered_fifo_free(struct sctk_buffered_fifo *fifo,
 {
     struct sctk_buffered_fifo_chunk *tmp = fifo->head;
     struct sctk_buffered_fifo_chunk *to_free = NULL;
-    int i = 0;
+    uint32_t i = 0;
     while (tmp) {
         to_free = tmp;
         if (free_func) {

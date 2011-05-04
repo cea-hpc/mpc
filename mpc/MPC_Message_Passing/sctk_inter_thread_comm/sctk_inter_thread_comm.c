@@ -27,6 +27,7 @@
 #include "sctk_alloc.h"
 #include "sctk_asm.h"
 #include "sctk_low_level_comm.h"
+#include "sctk_hybrid_comm.h"
 #include "sctk_accessor.h"
 
 static sctk_ptp_data_t *sctk_ptp_list;

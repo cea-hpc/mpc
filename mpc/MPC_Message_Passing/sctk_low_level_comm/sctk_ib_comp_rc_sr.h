@@ -58,7 +58,7 @@ typedef enum{
 typedef struct
 {
   uint32_t psn;
-  unsigned int src_process;
+  int src_process;
   unsigned int src_task;
   unsigned int dest_task;
   void* msg;

@@ -58,10 +58,10 @@ sctk_net_ibv_sched_pending_push(
     size_t size,
     int allocation_needed,
     sctk_net_ibv_allocator_type_t type,
-    uint64_t src_process,
+    int src_process,
     uint64_t src_task,
     uint64_t dest_task,
-    uint64_t psn,
+    uint32_t psn,
     sctk_thread_ptp_message_t* msg_header,
     void* msg_payload,
     void* struct_ptr)

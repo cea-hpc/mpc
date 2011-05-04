@@ -465,7 +465,7 @@ sctk_net_ibv_comp_rc_sr_send_coll_frag_ptp_message(
   size_t allowed_copy_size = 0;
   int   nb_buffers = 1;
   int   total_buffs = 0;
-  int remaining_size;
+  size_t remaining_size;
   int size_to_copy = 0;
   int copied_size = 0;
 
@@ -485,7 +485,7 @@ sctk_net_ibv_comp_rc_sr_send_coll_frag_ptp_message(
   while (nb_buffers <= total_buffs)
   {
     ibuf = sctk_net_ibv_ibuf_pick(0, 1);
-    payload = RC_SR_PAYLOAD(ibuf->buffer);
+    payload = (void*) RC_SR_PAYLOAD(ibuf->buffer);
 
 
     sctk_nodebug("%d - Allowed size to be copied : %d %d", nb_buffers, remaining_size, allowed_copy_size);
@@ -548,7 +548,7 @@ sctk_net_ibv_comp_rc_sr_send_frag_ptp_message(
   while (nb_buffers <= total_buffs)
   {
     ibuf = sctk_net_ibv_ibuf_pick(0, 1);
-    payload = RC_SR_PAYLOAD(ibuf->buffer);
+    payload = (void*) RC_SR_PAYLOAD(ibuf->buffer);
 
     /* if this is the first buffer, we copy the PTP header */
     if (nb_buffers == 1)
@@ -605,7 +605,7 @@ sctk_net_ibv_comp_rc_sr_send_ptp_message (
   void* payload;
 
   ibuf = sctk_net_ibv_ibuf_pick(0, 1);
-  payload = RC_SR_PAYLOAD(ibuf->buffer);
+  payload = (void*) RC_SR_PAYLOAD(ibuf->buffer);
 
   if (sctk_process_rank == 0)
     sctk_nodebug("Send rc_sr message. type %d, size %d, src_process %lu", req.type, req.size, req.dest_process);
@@ -891,7 +891,8 @@ sctk_net_ibv_rc_sr_poll_recv(
 
     case RC_SR_RPC_ACK:
       sctk_nodebug("ACK received from %d", msg_header->src_process);
-      ack = RC_SR_PAYLOAD(ibuf->buffer);
+      ack = (sctk_net_ibv_rpc_ack_t*)
+        RC_SR_PAYLOAD(ibuf->buffer);
       assume(ack->ack);
       sctk_nodebug("Write ack to %p", ack->ack);
       *((int*) ack->ack) = 1;

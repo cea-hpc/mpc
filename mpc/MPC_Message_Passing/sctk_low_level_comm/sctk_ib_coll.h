@@ -43,7 +43,7 @@
  */
 typedef struct
 {
-  unsigned int src_process;
+  int src_process;
   size_t size;
   sctk_net_ibv_ibuf_type_t type;
   void* payload;

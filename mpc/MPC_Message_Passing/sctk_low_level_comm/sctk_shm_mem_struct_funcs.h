@@ -1129,7 +1129,7 @@ struct sctk_shm_bigmsg_queue_s *
  */
 struct sctk_shm_mem_struct_s *
             sctk_shm_init_mem_struct ( void *__ptr_shm_base, void* __malloc_base ) {
-    unsigned int i, j;
+    int i, j;
     /* strucuture with infos about the shared memory*/
     struct mmap_infos_s* mem_init;
 

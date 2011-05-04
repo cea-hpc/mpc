@@ -181,7 +181,6 @@ sctk_net_ibv_comp_rc_rdma_send_request(
   sctk_net_ibv_rc_rdma_request_t* request;
   sctk_net_ibv_mmu_entry_t* mmu_entry = NULL;
   size_t size_to_copy = 0;
-  uint32_t psn;
   int is_directly_pinned = 0;
   sctk_thread_ptp_message_t *msg_header_ptr = NULL;
   void *msg_payload_aligned_ptr;
@@ -639,6 +638,8 @@ sctk_net_ibv_com_rc_rdma_read_finish(
         sctk_net_ibv_comp_rc_rdma_read_msg(entry, IBV_RC_RDMA_ORIGIN);
       }
       break;
+
+    default: assume(0); break;
   }
 }
 #endif

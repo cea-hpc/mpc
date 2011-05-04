@@ -108,7 +108,7 @@ extern "C"
   extern void (*sctk_net_ptp_poll) (void *);
 
   void
-sctk_register_ptr (void (*func) (void *addr, size_t size, int process, int is_retrieve),
+sctk_register_ptr (void (*func) (void *addr, size_t size, int process, int is_retrieve, uint32_t* rkey),
     void (*unfunc) (void *addr, size_t size, int process, int is_retrieve));
 
   /*INIT*/ void sctk_net_init_driver (char *name);

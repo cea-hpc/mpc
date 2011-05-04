@@ -830,7 +830,7 @@ sctk_net_get_pages (void *addr, size_t size, int process)
 }
 
   void
-sctk_register_ptr (void (*func) (void *addr, size_t size, int process, int is_retrieve),
+sctk_register_ptr (void (*func) (void *addr, size_t size, int process, int is_retrieve, uint32_t* rkey),
     void (*unfunc) (void *addr, size_t size, int process, int is_retrieve))
 {
   sctk_net_register_ptr = func;

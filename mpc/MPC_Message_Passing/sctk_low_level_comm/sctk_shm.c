@@ -477,7 +477,7 @@ sctk_net_rpc_send_driver ( void *dest, void *src, size_t arg_size, int process,
  */
 static void
 sctk_net_rpc_retrive_driver ( void *dest, void *src, size_t arg_size,
-    int process, int *ack ) {
+    int process, int *ack, uint32_t rkey) {
   sctk_nodebug
     ( "BEGIN - net_rpc_retrive_driver (dest : %p - src : %p - process %d -  size : %d)",
       ( int * ) dest, ( int * ) src, sctk_local_process_rank, arg_size );

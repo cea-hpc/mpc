@@ -52,8 +52,6 @@ struct sctk_list rpc_req_list;
 struct sctk_list rpc_ack_list;
 struct sctk_list rpc_reg_mr_list;
 
-static int lock = 0;
-
 /*-----------------------------------------------------------
  *  RPC
  *----------------------------------------------------------*/
@@ -105,9 +103,6 @@ sctk_net_rpc_register(void* addr, size_t size, int process, int is_retrieve, uin
   size_t aligned_size;
   void*   aligned_ptr;
   size_t page_size;
-  sctk_net_ibv_ibuf_t* ibuf;
-  sctk_net_ibv_rpc_request_t* rpc;
-  sctk_net_ibv_allocator_request_t req;
   sctk_net_ibv_mmu_entry_t *mmu_entry;
   rpc_reg_mr_list_entry_t* reg_mr_entry;
 
@@ -206,7 +201,8 @@ sctk_net_rpc_driver ( void ( *func ) ( void * ), int destination, void *arg, siz
   ibuf = sctk_net_ibv_ibuf_pick(0, 1);
 
   /* fill the RPC request payload */
-  rpc = RC_SR_PAYLOAD(ibuf->buffer);
+  rpc = (sctk_net_ibv_rpc_t*)
+    RC_SR_PAYLOAD(ibuf->buffer);
   memcpy(&rpc->arg, arg, arg_size);
   rpc->func = func;
   rpc->arg_size = arg_size;
@@ -248,7 +244,6 @@ sctk_net_rpc_retrive_driver ( void *dest, void *src, size_t arg_size,
   sctk_net_ibv_allocator_request_t req;
   sctk_net_ibv_mmu_entry_t *mmu_entry;
   sctk_net_ibv_rpc_ack_t* rpc_ack;
-  sctk_net_ibv_ibuf_header_t* msg_header;
   sctk_net_ibv_rpc_ack_t* send_rpc;
   size_t aligned_size;
   void*   aligned_ptr;
@@ -298,7 +293,8 @@ sctk_net_rpc_retrive_driver ( void *dest, void *src, size_t arg_size,
     req.size = sizeof(sctk_net_ibv_rpc_ack_t);
     sctk_net_ibv_ibuf_send_init(ibuf, req.size + RC_SR_HEADER_SIZE);
 
-    send_rpc = RC_SR_PAYLOAD(ibuf->buffer);
+    send_rpc = (sctk_net_ibv_rpc_ack_t*)
+      RC_SR_PAYLOAD(ibuf->buffer);
     send_rpc->ack = ack;
 
     req.dest_process = process;
@@ -334,7 +330,7 @@ sctk_net_rpc_receive(sctk_net_ibv_ibuf_t* ibuf)
   sctk_nodebug("There is an element to the list");
   msg_header = ((sctk_net_ibv_ibuf_header_t*) ibuf->buffer);
 
-  rpc = RC_SR_PAYLOAD(ibuf->buffer);
+  rpc = (sctk_net_ibv_rpc_t*) RC_SR_PAYLOAD(ibuf->buffer);
   sctk_nodebug("Arg size : %lu", rpc->arg_size);
 
   req = sctk_malloc(sizeof(rpc_req_list_entry_t));
@@ -376,7 +372,8 @@ sctk_net_rpc_send_ack(sctk_net_ibv_ibuf_t* ibuf)
   req.size = sizeof(sctk_net_ibv_rpc_ack_t);
   sctk_net_ibv_ibuf_send_init(ibuf_ack, req.size + RC_SR_HEADER_SIZE);
 
-  send_rpc = RC_SR_PAYLOAD(ibuf_ack->buffer);
+  send_rpc = (sctk_net_ibv_rpc_ack_t*)
+    RC_SR_PAYLOAD(ibuf_ack->buffer);
   send_rpc->ack = rpc->ack;
 
   req.dest_process = rpc->src_process;

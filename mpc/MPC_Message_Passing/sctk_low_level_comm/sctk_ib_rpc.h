@@ -26,6 +26,7 @@
 #define __SCTK__INFINIBAND_RPC_H_
 
 #include <stdint.h>
+#include "sctk_ib_ibufs.h"
 
 typedef struct
 {
@@ -46,7 +47,10 @@ typedef struct
   int lock;
 } sctk_net_ibv_rpc_ack_t;
 
-void*
+  void
+sctk_net_rpc_init();
+
+  void*
 thread_rpc(void* arg);
   void
 sctk_net_rpc_register(void* addr, size_t size, int process, int is_retrieve, uint32_t* rkey);
@@ -64,5 +68,11 @@ sctk_net_rpc_retrive_driver ( void *dest, void *src, size_t arg_size,
  void
 sctk_net_rpc_send_driver ( void *dest, void *src, size_t arg_size, int process,
     int *ack );
+
+  void
+sctk_net_rpc_receive(sctk_net_ibv_ibuf_t* ibuf);
+
+  void
+sctk_net_rpc_send_ack(sctk_net_ibv_ibuf_t* ibuf);
 #endif
 #endif
