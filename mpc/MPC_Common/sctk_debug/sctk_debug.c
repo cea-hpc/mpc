@@ -242,7 +242,7 @@ MPC_check_compatibility_lib (int major, int minor, char *pre)
 }
 
   void
-  sctk_printf (const char *fmt, ...)
+  MPC_printf (const char *fmt, ...)
   {
 
     va_list ap;

@@ -496,7 +496,7 @@ done
 
 cat <<EOF>> include/mpc.h
 int MPC_check_compatibility_lib(int major, int minor, char* pre);
-void sctk_printf (const char *fmt, ...);
+void MPC_printf (const char *fmt, ...);
 #define MPC_check_compatibility() MPC_check_compatibility_lib(SCTK_VERSION_MAJOR,SCTK_VERSION_MINOR,SCTK_VERSION_PRE)
 EOF
 
