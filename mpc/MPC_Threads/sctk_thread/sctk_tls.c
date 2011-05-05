@@ -103,6 +103,8 @@ typedef struct
 
 
 #define MAX_ACTIVE_SINGLE (8)
+/* fix -> adapt to hls scope
+   # of VPs in this scope */
 
 typedef struct
 {
@@ -716,7 +718,7 @@ __sctk__hls_barrier ( sctk_hls_scope_t scope ) {
 	/* we assume only one task per VP */
 	hls_level * const level = sctk_hls[scope];
 	
-	sctk_debug ("call to hls barrier with scope %d", scope ) ;
+	sctk_nodebug ("call to hls barrier with scope %d", scope ) ;
 
 	if ( scope == sctk_hls_core_scope )
 		return ;
@@ -731,36 +733,75 @@ __sctk__hls_barrier ( sctk_hls_scope_t scope ) {
 		sctk_thread_wait_for_value ( &level->barrier_entered, 0 );
 	}
 }
- 
+
+#if 0
 int
 __sctk__hls_single ( sctk_hls_scope_t scope ) {
 	/* TODO: several tasks on same VP ? */
 	hls_level * const level = sctk_hls[scope];
 	volatile size_t	* const entered = &level->single_entered[0];
 	volatile size_t	* const generation = &level->single_generation[0];
+	size_t entered_cached ; /* avoid an additional read in last if branch */
 	
-	sctk_debug ("call to hls single with scope %d", scope) ;
+	sctk_nodebug ("call to hls single with scope %d", scope) ;
 	
 	if ( scope == sctk_hls_core_scope)
 		return 1 ;
 	
 	sctk_spinlock_lock ( &level->level.lock ) ;
-	if ( *entered == 0 ) {
+	entered_cached = *entered ;
+	if ( entered_cached == 0 ) {
 		*entered = 1 ;
 		sctk_spinlock_unlock ( &level->level.lock ) ;
-		sctk_debug ("hls single executed (first thread)") ;
+		sctk_nodebug ("hls single executed (first thread)") ;
 		return 1 ;
-	}else if ( *entered == level->toenter-1 ) {
+	}else if ( entered_cached == level->toenter-1 ) {
 		*entered = 0 ;
 		sctk_spinlock_unlock ( &level->level.lock ) ;
-		sctk_debug ("hls single not executed (last thread)") ;
+		sctk_nodebug ("hls single not executed (last thread)") ;
 		return 0 ;
 	}else{
-		*entered += 1 ;
+		*entered = entered_cached + 1 ;
 		sctk_spinlock_unlock ( &level->level.lock ) ;
-		sctk_debug ("hls single not executed") ;
+		sctk_nodebug ("hls single not executed") ;
 		return 0 ;
 	}
+}
+#endif
+
+int
+__sctk__hls_single ( sctk_hls_scope_t scope ) {
+	/* TODO: several tasks on same VP ? */
+	hls_level * const level = sctk_hls[scope];
+	
+	sctk_nodebug ("call to hls single with scope %d", scope) ;
+	
+	if ( scope == sctk_hls_core_scope )
+		return 1;
+
+	sctk_spinlock_lock ( &level->level.lock ) ;
+	if ( level->barrier_entered == level->toenter - 1 ) {
+		sctk_spinlock_unlock ( &level->level.lock ) ;
+		return 1;
+	}else{
+		level->barrier_entered += 1 ;
+		sctk_spinlock_unlock ( &level->level.lock ) ;
+		sctk_thread_wait_for_value ( &level->barrier_entered, 0 );
+		return 0;
+	}
+}
+
+void
+__sctk__hls_single_done ( sctk_hls_scope_t scope ) {
+	hls_level * const level = sctk_hls[scope];
+	
+	sctk_nodebug ("call to hls single done with scope %d", scope) ;
+	
+	if ( scope == sctk_hls_core_scope )
+		return ;
+
+	level->barrier_entered = 0 ;
+	return ;
 }
 
 int
@@ -771,40 +812,48 @@ __sctk__hls_single_nowait ( sctk_hls_scope_t scope ) {
 	const size_t nowait_index = single_nowait_counter[scope] % MAX_ACTIVE_SINGLE ;
 	volatile size_t	* const entered = &level->single_entered[nowait_index];
 	volatile size_t	* const generation = &level->single_generation[nowait_index];
+	size_t entered_cached ; /* avoid an additional read in last if branch */
+	size_t generation_cached ; /* avoid an additional read in while loop */
 	++single_nowait_counter[scope] ;
-	sctk_debug ("call to hls single nowait with scope %d", scope) ;
+
+	sctk_nodebug ("call to hls single nowait with scope %d", scope) ;
 	
 	if ( scope == sctk_hls_core_scope)
 		return 1 ;
 
 	sctk_spinlock_lock ( &level->level.lock ) ;
-	if ( *entered > 0 && single_nowait_counter[scope] > *generation ) {
+	if ( expect_false ( *entered > 0 && single_nowait_counter[scope] > *generation ) ) {
 		/* in advance, wait for last thread of corresponding single */
 		sctk_spinlock_unlock ( &level->level.lock ) ;
 		reacquire_lock = 1;
-		sctk_thread_wait_for_value ( entered, 0 );
+		/* try to use sctk_wait_for_value */
+		/* same as *generation != 0 && *generation != single_nowait_counter[scope] */
+		while ( ( generation_cached = *generation ) != 0 && generation_cached != single_nowait_counter[scope] ) {
+			sctk_thread_yield();
+		}
 		/* this cannot happen twice */
 	}
 
-	if (reacquire_lock)
+	if ( expect_false ( reacquire_lock ) )
 		sctk_spinlock_lock ( &level->level.lock ) ;
 
-	if ( *entered == 0 ) {
+	entered_cached = *entered ;
+	if ( entered_cached == 0 ) {
 		*entered = 1 ;
 		*generation = single_nowait_counter[scope] ;
 		sctk_spinlock_unlock ( &level->level.lock ) ;
-		sctk_debug ("hls single nowait executed") ;
+		sctk_nodebug ("hls single nowait executed (first thread)") ;
 		return 1 ;
-	}else if ( *entered == level->toenter-1 ) {
+	}else if ( entered_cached == level->toenter-1 ) {
 		*entered = 0 ;
 		*generation = 0 ;
 		sctk_spinlock_unlock ( &level->level.lock ) ;
-		sctk_debug ("hls single nowait not executed") ;
+		sctk_nodebug ("hls single nowait not executed (last thread)") ;
 		return 0 ;
 	}else{
-		*entered += 1 ;
+		*entered = entered_cached + 1 ;
 		sctk_spinlock_unlock ( &level->level.lock ) ;
-		sctk_debug ("hls single nowait not executed") ;
+		sctk_nodebug ("hls single nowait not executed") ;
 		return 0 ;
 	}
 }
