@@ -44,6 +44,7 @@
 #include "sctk_low_level_comm.h"
 #endif
 #include "sctk_topology.h"
+#include "sctk_asm.h"
 /* #include "sctk_daemons.h" */
 /* #include "sctk_io.h" */
 

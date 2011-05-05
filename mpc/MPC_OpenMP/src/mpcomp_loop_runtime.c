@@ -32,7 +32,7 @@ __mpcomp_runtime_loop_begin (int lb, int b, int incr, int chunk_size,
 {
   mpcomp_thread_info_t *info;
   omp_sched_t sched;
-  int ret ;
+  int ret = 0;
 
   info =
     (mpcomp_thread_info_t *) sctk_thread_getspecific (mpcomp_thread_info_key);
@@ -66,7 +66,7 @@ __mpcomp_runtime_loop_next (int *from, int *to)
 {
   mpcomp_thread_info_t *info;
   omp_sched_t sched;
-  int ret ;
+  int ret = 0;
 
   info =
     (mpcomp_thread_info_t *) sctk_thread_getspecific (mpcomp_thread_info_key);
@@ -230,7 +230,7 @@ __mpcomp_ordered_runtime_loop_next(int *from, int *to)
 {
   mpcomp_thread_info_t *info;
   omp_sched_t sched;
-  int ret ;
+  int ret = 0;
 
   info =
     (mpcomp_thread_info_t *) sctk_thread_getspecific (mpcomp_thread_info_key);

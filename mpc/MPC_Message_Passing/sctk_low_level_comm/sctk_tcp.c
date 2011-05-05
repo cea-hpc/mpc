@@ -324,8 +324,6 @@ void sctk_net_tcp_init_new_com(sctk_internal_communicator_t* comm,
 }
 void sctk_net_tcp_free_com(int com_id)
 {
-  int i;
-
   sctk_nodebug("Communicator freed : comm id %d",com_id);
   sctk_collective[com_id].coll_nb = 0;
 }

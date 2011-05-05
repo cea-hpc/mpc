@@ -47,6 +47,10 @@
 #include"mpcomp_internal.h"
 #endif
 
+#ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
+#include "mpc_weak.h"
+#endif
+
 /************************************************************************/
 /*GLOBAL VARIABLES                                                      */
 /************************************************************************/
@@ -957,7 +961,7 @@ PMPC_Init (int *argc, char ***argv)
     }
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Init");
 #endif
-  MPC_Barrier (MPC_COMM_WORLD);
+  PMPC_Barrier (MPC_COMM_WORLD);
   task_specific = __MPC_get_task_specific ();
   task_specific->init_done = 1;
   SCTK_PROFIL_END (MPC_Init);
@@ -968,7 +972,7 @@ int
 PMPC_Init_thread (int *argc, char ***argv, int required, int *provided)
 {
   *provided = required;
-  return MPC_Init (argc, argv);
+  return PMPC_Init (argc, argv);
 }
 
 int
@@ -988,7 +992,7 @@ PMPC_Finalize (void)
   sctk_task_specific_t *task_specific;
   SCTK_PROFIL_START (MPC_Finalize);
 
-  MPC_Barrier (MPC_COMM_WORLD);
+  PMPC_Barrier (MPC_COMM_WORLD);
 
   task_specific = __MPC_get_task_specific ();
   task_specific->init_done = 0;
@@ -1024,12 +1028,12 @@ PMPC_Default_error (MPC_Comm * comm, int *error, char *msg, char *file,
 {
   char str[1024];
   int i;
-  MPC_Error_string (*error, str, &i);
+  PMPC_Error_string (*error, str, &i);
   if (i != 0)
     sctk_error ("%s file %s line %d %s", str, file, line, msg);
   else
     sctk_error ("Unknown error");
-  MPC_Abort (*comm, *error);
+  PMPC_Abort (*comm, *error);
 }
 
 void
@@ -1037,7 +1041,7 @@ PMPC_Return_error (MPC_Comm * comm, int *error, ...)
 {
   char str[1024];
   int i;
-  MPC_Error_string (*error, str, &i);
+  PMPC_Error_string (*error, str, &i);
   if (i != 0)
     sctk_error ("Warning: %s on comm %d", str, (int) *comm);
 }
@@ -1059,7 +1063,7 @@ MPC_Checkpoint_restart_init ()
 	  int nb_processes;
 	  char filename[SCTK_MAX_FILENAME_SIZE];
 	  __MPC_Comm_size (MPC_COMM_WORLD, &size);
-	  MPC_Process_number (&nb_processes);
+	  PMPC_Process_number (&nb_processes);
 	  if (sctk_restart_mode == 0)
 	    {
 	      /*Normal start */
@@ -1087,7 +1091,7 @@ MPC_Checkpoint_restart_init ()
 
 	self = sctk_thread_self ();
 	memcpy (&self_p, &self, sizeof (long));
-	MPC_Processor_rank (&vp);
+	PMPC_Processor_rank (&vp);
 	sprintf (name, "%s/Task_%d", sctk_store_dir, rank);
 
 	file = fopen (name, "w+");
@@ -1100,7 +1104,7 @@ MPC_Checkpoint_restart_init ()
       }
       {
 	char name[1024];
-	MPC_Wait_pending_all_comm ();
+	PMPC_Wait_pending_all_comm ();
 	sprintf (name, "task_%p_%lu", sctk_thread_self (), (unsigned long) 0);
 
 	sctk_thread_dump (name);
@@ -1142,7 +1146,7 @@ PMPC_Checkpoint ()
 {
   if (sctk_check_point_restart_mode)
     {
-      MPC_Checkpoint_timed (0, MPC_COMM_WORLD);
+      PMPC_Checkpoint_timed (0, MPC_COMM_WORLD);
     }
   MPC_ERROR_SUCESS ();
 }
@@ -1178,7 +1182,7 @@ PMPC_Checkpoint_timed (unsigned int sec, MPC_Comm comm)
 
 	  sprintf (name, "task_%p_%lu", sctk_thread_self (), perform);
 
-	  MPC_Wait_pending_all_comm ();
+	  PMPC_Wait_pending_all_comm ();
 
 	  if (rank == 0)
 	    {
@@ -1193,7 +1197,7 @@ PMPC_Checkpoint_timed (unsigned int sec, MPC_Comm comm)
 	      remove (name);
 	    }
 	  last_time = sctk_timer;
-	  MPC_Restarted (&restarted);
+	  PMPC_Restarted (&restarted);
 	  if (restarted == 1)
 	    {
 	      sctk_ptp_per_task_init (rank);
@@ -1229,7 +1233,7 @@ PMPC_Checkpoint_timed (unsigned int sec, MPC_Comm comm)
 	    }
 	}
 
-      MPC_Bcast (&tmp_perform, 1, MPC_LONG, 0, comm);
+      PMPC_Bcast (&tmp_perform, 1, MPC_LONG, 0, comm);
 
       perform_check = tmp_perform;
     }
@@ -1254,7 +1258,7 @@ PMPC_Migrate ()
       self = sctk_thread_self ();
       memcpy (&self_p, &self, sizeof (long));
 
-      MPC_Wait_pending_all_comm ();
+      PMPC_Wait_pending_all_comm ();
 
       sctk_unregister_thread (rank);
 
@@ -1262,7 +1266,7 @@ PMPC_Migrate ()
       sctk_thread_migrate ();
       sctk_nodebug ("Migrated");
 
-      MPC_Processor_rank (&vp);
+      PMPC_Processor_rank (&vp);
 
       sprintf (name, "%s/Task_%d", sctk_store_dir, rank);
       file = fopen (name, "w+");
@@ -1382,13 +1386,13 @@ PMPC_Move_to (int process, int cpuid)
 
 	  memcpy (&self_p, &self, sizeof (long));
 
-	  MPC_Wait_pending_all_comm ();
+	  PMPC_Wait_pending_all_comm ();
 
 	  sctk_unregister_thread (rank);
 
 	  sctk_net_migration (rank, process);
 
-	  MPC_Processor_rank (&vp);
+	  PMPC_Processor_rank (&vp);
 
 	  sprintf (name, "%s/Task_%d", sctk_store_dir, rank);
 	  file = fopen (name, "w+");
@@ -4624,6 +4628,3 @@ PMPC_User_Main (int argc, char **argv)
   return mpc_user_main (argc, argv);
 }
 
-#ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
-#include "mpc_weak.h"
-#endif

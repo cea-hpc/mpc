@@ -260,7 +260,6 @@ sctk_collective_communications_t
 
 void sctk_init_comm_world(int sctk_total_task_number){
   int i;
-  int j;
 
   sctk_nodebug ("initalisation of remote COMM_WORLD start");
   {

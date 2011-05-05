@@ -33,6 +33,10 @@
 #include "sctk_alloc.h"
 #include <string.h>
 
+#ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
+#include "mpc_mpi_weak.h"
+#endif
+
 static int __INTERNAL__PMPI_Attr_set_fortran (int keyval);
 
 static char *
@@ -8013,7 +8017,6 @@ PMPI_Comm_set_name (MPI_Comm comm, char *comm_name)
 }
 
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
-#include "mpc_mpi_weak.h"
 #warning "Default mpc_user_main__ has been removed because of TLS compilation..."
 #if 0
 int mpc_user_main__ (int argc, char **argv);

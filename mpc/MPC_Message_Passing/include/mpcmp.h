@@ -367,10 +367,6 @@ extern "C"
   void MPC_Default_error (MPC_Comm * comm, int *error, char *msg,
 			  char *file, int line);
   void MPC_Return_error (MPC_Comm * comm, int *error, ...);
-#define MPC_ERRHANDLER_NULL ((MPC_Handler_function *)MPC_Default_error)
-#define MPC_ERRORS_RETURN ((MPC_Handler_function *)MPC_Return_error)
-#define MPC_ERRORS_ARE_FATAL ((MPC_Handler_function *)MPC_Default_error)
-
   int MPC_Errhandler_create (MPC_Handler_function *, MPC_Errhandler *);
   int MPC_Errhandler_set (MPC_Comm, MPC_Errhandler);
   int MPC_Errhandler_get (MPC_Comm, MPC_Errhandler *);
@@ -613,7 +609,9 @@ extern "C"
   void PMPC_Default_error (MPC_Comm * comm, int *error, char *msg,
 			  char *file, int line);
   void PMPC_Return_error (MPC_Comm * comm, int *error, ...);
-
+#define MPC_ERRHANDLER_NULL ((MPC_Handler_function *)PMPC_Default_error)
+#define MPC_ERRORS_RETURN ((MPC_Handler_function *)PMPC_Return_error)
+#define MPC_ERRORS_ARE_FATAL ((MPC_Handler_function *)PMPC_Default_error)
   int PMPC_Errhandler_create (MPC_Handler_function *, MPC_Errhandler *);
   int PMPC_Errhandler_set (MPC_Comm, MPC_Errhandler);
   int PMPC_Errhandler_get (MPC_Comm, MPC_Errhandler *);
@@ -695,7 +693,7 @@ extern "C"
 		    mpc_pack_indexes_t * begins,
 		    mpc_pack_indexes_t * ends, MPC_Datatype datatype,
 		    MPC_Request * request);
-  int PMPC__Add_pack_absolute (void *buf, mpc_msg_count count,
+  int PMPC_Add_pack_absolute (void *buf, mpc_msg_count count,
 			   mpc_pack_absolute_indexes_t * begins,
 			   mpc_pack_absolute_indexes_t * ends,
 			   MPC_Datatype datatype, MPC_Request * request);

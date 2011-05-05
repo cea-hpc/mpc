@@ -37,7 +37,7 @@ extern "C"
 {
 #endif
 
-  typedef volatile unsigned int sctk_spinlock_t;
+  typedef volatile int sctk_spinlock_t;
 #define SCTK_SPINLOCK_INITIALIZER 0
 
   /*Threads definitions */

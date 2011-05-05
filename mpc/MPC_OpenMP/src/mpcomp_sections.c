@@ -361,7 +361,6 @@ __mpcomp_start_sections_parallel_region (int arg_num_threads, void *(*func) (voi
   /* Bypass if the parallel region contains only 1 thread */
   if (num_threads == 1)
     {
-      int total_nb_chunks ;
       sctk_nodebug
 	("__mpcomp_start_sections_parallel_region: Only 1 thread -> call f");
 
@@ -384,9 +383,11 @@ __mpcomp_start_sections_parallel_region (int arg_num_threads, void *(*func) (voi
       sctk_microthread_t *new_task;
       sctk_microthread_t *current_task;
       int i;
-      int n = num_threads / current_info->icvs.nmicrovps_var;
+      /* 
+      int n = num_threads / current_info->icvs.nmicrovps_var; 
       int index = num_threads % current_info->icvs.nmicrovps_var;
       int vp;
+      */
 
       SCTK_PROFIL_START (__mpcomp_start_parallel_region__creation);
 
@@ -442,7 +443,6 @@ __mpcomp_start_sections_parallel_region (int arg_num_threads, void *(*func) (voi
 	  int microVP;
 	  int val;
 	  int res;
-	  int total_nb_chunks ;
 
 	  /* Compute the VP this thread will be scheduled on and the behavior of
 	   * 'add_task' */

@@ -1589,8 +1589,6 @@ void
 sctk_shm_init_new_com ( const sctk_internal_communicator_t * __com, const int nb_involved,
     const int *task_list ) {
   int com_index = 0;
-  int i;
-  int nb_registered = 0;
   int found_index = -1;
 
   sctk_spinlock_lock ( & ( sctk_shm_mem_struct->com_list_lock ) );
@@ -1676,7 +1674,6 @@ sctk_shm_init_new_com ( const sctk_internal_communicator_t * __com, const int nb
 void
 sctk_shm_free_com ( const int com_id ) {
   int com_index = 0;
-  int i;
 
   sctk_nodebug ( "Freeing communicator %d", com_id );
 

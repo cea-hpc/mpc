@@ -142,7 +142,6 @@ __mpcomp_static_schedule_get_specific_chunk (int lb, int b, int incr,
 {
   mpcomp_thread_info_t *info;
   int trip_count;
-  int nb_chunks_per_thread;
   int nb_threads;
   int rank;
 
@@ -170,7 +169,7 @@ __mpcomp_static_schedule_get_specific_chunk (int lb, int b, int incr,
 							      chunk_size) - 1)
     {
 
-      int last_chunk_size = trip_count % chunk_size;
+      //int last_chunk_size = trip_count % chunk_size;
 
       *from = lb + (trip_count / chunk_size) * chunk_size * incr;
       *to = lb + trip_count * incr;
@@ -213,7 +212,7 @@ __mpcomp_static_loop_begin (int lb, int b, int incr, int chunk_size,
 
   /* Automatic chunk size -> at most one chunk */
   if (chunk_size == -1) {
-      info->static_nb_chunks == 1 ;
+      info->static_nb_chunks = 1 ;
       __mpcomp_static_schedule_get_single_chunk (lb, b, incr, from, to);
     }
   else {
@@ -330,7 +329,6 @@ __mpcomp_start_parallel_static_loop (int arg_num_threads, void *(*func)
   /* Bypass if the parallel region contains only 1 thread */
   if (num_threads == 1)
     {
-      int total_nb_chunks ;
       sctk_nodebug
 	("__mpcomp_start_parallel_static_loop: Only 1 thread -> call f");
 
@@ -358,10 +356,11 @@ __mpcomp_start_parallel_static_loop (int arg_num_threads, void *(*func)
       sctk_microthread_t *new_task;
       sctk_microthread_t *current_task;
       int i;
+      /*
       int n = num_threads / current_info->icvs.nmicrovps_var;
       int index = num_threads % current_info->icvs.nmicrovps_var;
       int vp;
-
+      */
       SCTK_PROFIL_START (__mpcomp_start_parallel_region__creation);
 
       sctk_nodebug
@@ -412,7 +411,6 @@ __mpcomp_start_parallel_static_loop (int arg_num_threads, void *(*func)
 	  int microVP;
 	  int val;
 	  int res;
-	  int total_nb_chunks ;
 
 	  /* Compute the VP this thread will be scheduled on and the behavior of
 	   * 'add_task' */

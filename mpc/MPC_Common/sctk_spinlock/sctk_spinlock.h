@@ -27,9 +27,10 @@ extern "C"
 #endif
 #include "sctk_config.h"
 #if defined (MPC_Threads)
+extern int sctk_thread_yield( void );
 #include "sctk_pthread_compatible_structures.h"
 #else
-  typedef volatile unsigned int sctk_spinlock_t;
+  typedef volatile int sctk_spinlock_t;
 #define SCTK_SPINLOCK_INITIALIZER 0
 #endif
 #define sctk_spinlock_init(a,b) do{*((sctk_spinlock_t*)(a))=b;}while(0)

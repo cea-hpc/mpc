@@ -454,7 +454,7 @@ __mpcomp_dynamic_loop_end_nowait ()
 
   /* If I was the last one (no data race because noone else will exit) */
   if ( nb_exited_threads == num_threads ) {
-    int previous_index = (index-1+MPCOMP_MAX_ALIVE_FOR_DYN+1)%(MPCOMP_MAX_ALIVE_FOR_DYN+1) ;
+    //int previous_index = (index-1+MPCOMP_MAX_ALIVE_FOR_DYN+1)%(MPCOMP_MAX_ALIVE_FOR_DYN+1) ;
 
     sctk_nodebug( "__mpcomp_dynamic_loop_end_nowait[%d]: Reseting dynamic info for index %d"
 	, rank, index ) ;
@@ -727,9 +727,11 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
       sctk_microthread_t *new_task;
       sctk_microthread_t *current_task;
       int i;
+      /*
       int n = num_threads / current_info->icvs.nmicrovps_var;
       int index = num_threads % current_info->icvs.nmicrovps_var;
       int vp;
+      */
 
       SCTK_PROFIL_START (__mpcomp_start_parallel_region__creation);
 

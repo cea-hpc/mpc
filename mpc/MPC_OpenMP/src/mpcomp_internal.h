@@ -259,7 +259,6 @@ extern "C"
   {
     int i, j;
     int keep[sctk_tls_max_scope];
-    sctk_thread_mutex_t init = SCTK_THREAD_MUTEX_INITIALIZER;
 
       info->func = func;
       info->shared = shared;
@@ -419,7 +418,7 @@ extern "C"
   static inline void __mpcomp_reset_team_info
     (struct mpcomp_thread_info_s *info, int num_threads)
   {
-    int i, j;
+    int i;
 
     info->single_first_copyprivate = 0;
 
@@ -569,6 +568,7 @@ extern "C"
   void mpcomp_fork_when_blocked (sctk_microthread_vp_t * self, long step);
   void mpcomp_macro_scheduler (sctk_microthread_vp_t * self, long step);
   void *__mpcomp_wrapper_op (void *arg);
+  void __mpcomp_old_barrier (void);
 
 /* mpcomp_checkpoint.c */
 

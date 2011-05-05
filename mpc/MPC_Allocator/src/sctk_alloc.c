@@ -958,9 +958,7 @@ void sctk_check_address(void* addr, size_t n){
 	    else
 	      {
 		sctk_free_chunk_t *chunk;
-		int block = 0;
 		char *ptr_small;
-		unsigned long mem_used = 0;
 		chunk = sctk_get_chunk_from_page (cursor);
 		ptr_small = (char *) chunk;
 		if (chunk->state == sctk_free_state_use)

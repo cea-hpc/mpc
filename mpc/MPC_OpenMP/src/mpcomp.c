@@ -447,9 +447,11 @@ __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *),
       sctk_microthread_t *new_task;
       sctk_microthread_t *current_task;
       int i;
+      /*
       int n = num_threads / current_info->icvs.nmicrovps_var;
       int index = num_threads % current_info->icvs.nmicrovps_var;
       int vp;
+      */
 
       SCTK_PROFIL_START (__mpcomp_start_parallel_region__creation);
 

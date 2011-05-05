@@ -129,9 +129,7 @@ extern "C"
   int __asm_default_sctk_test_and_set (sctk_atomic_test_t * atomic);
 
   double sctk_get_time_stamp (void);
-
-
-
+  double sctk_get_time_stamp_gettimeofday();
 
 
 
