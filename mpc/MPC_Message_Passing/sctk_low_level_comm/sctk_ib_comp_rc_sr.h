@@ -164,12 +164,5 @@ sctk_net_ibv_comp_rc_sr_allocate_recv(
     sctk_net_ibv_qp_remote_t *remote,
     int rank);
 
-/*-----------------------------------------------------------
- *  ERROR HANDLING
- *----------------------------------------------------------*/
-
-void
-sctk_net_ibv_comp_rc_sr_error_handler(struct ibv_wc wc);
-
 #endif
 #endif

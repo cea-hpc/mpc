@@ -494,11 +494,13 @@ sctk_net_ibv_poll_check_wc(struct ibv_wc wc, sctk_net_ibv_allocator_type_t type)
         "Flag         : %s\n"
         "Ibuf type    : %d\n"
         "Ptp type     : %d\n"
+        "Buff_nb      : %d\n"
+        "Total_buffs  : %d\n"
         "\033[1;31m################################\033[0m\n",
         sctk_process_rank,
         wc.wr_id, sctk_net_ibv_cq_print_status(wc.status),
         wc.vendor_err, wc.byte_len, sctk_net_ibv_ibuf_print_flag(ibuf->flag),
-        header->ibuf_type, header->ptp_type);
+        header->ibuf_type, header->ptp_type, header->buff_nb, header->total_buffs);
 
     sctk_abort();
   }

@@ -205,6 +205,7 @@ sctk_update_new_communicator (const sctk_communicator_t origin_communicator,
 
   sctk_thread_mutex_lock (&sctk_global_communicator_number_lock);
   pos = sctk_communicator_list[origin_communicator]->new_communicator;
+  sctk_nodebug("COM:%d, position:%d", origin_communicator, pos);
   tmp = sctk_communicator_list[pos];
   if (tmp == NULL)
     {

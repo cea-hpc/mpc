@@ -1784,6 +1784,7 @@ sctk_perform_collective_communication_init (const size_t elem_size,
     }
 
   com = sctk_get_communicator (com_id)->collective_communications;
+  sctk_nodebug("Com id : %d", com_id);
   com->id = com_id;
   my_vp = com->virtual_processors[vp];
 

@@ -97,32 +97,39 @@ void sctk_ibv_generate_report()
   sprintf(filename, "profile/mpc_profile_%d_%d", sctk_process_rank, sctk_process_number);
 
   file = fopen(filename, "w+");
-  assume(file);
-
-  for (i=0; i < NB_PROFILE_ID; ++i)
+  if (file)
   {
-   sprintf(line, "%s %lu\n", counters[i].name, counters[i].value);
-   fwrite(line, sizeof(char), strnlen(line, 1024), file);
-//      sctk_debug("line: %s", line);
-  }
+
+    for (i=0; i < NB_PROFILE_ID; ++i)
+    {
+      sprintf(line, "%s %lu\n", counters[i].name, counters[i].value);
+      fwrite(line, sizeof(char), strnlen(line, 1024), file);
+      //      sctk_debug("line: %s", line);
+    }
 #if 0
-  sprintf(line, "IBV_PTP_MEAN_SIZE %f\n", (float) counters[IBV_PTP_SIZE].value/counters[IBV_PTP_NB].value);
-  fwrite(line, sizeof(char), strnlen(line, 1024), file);
-  sctk_nodebug("line: %s", line);
+    sprintf(line, "IBV_PTP_MEAN_SIZE %f\n", (float) counters[IBV_PTP_SIZE].value/counters[IBV_PTP_NB].value);
+    fwrite(line, sizeof(char), strnlen(line, 1024), file);
+    sctk_nodebug("line: %s", line);
 
-  sprintf(line, "IBV_COLL_MEAN_SIZE %f\n", (float) counters[IBV_COLL_SIZE].value/counters[IBV_COLL_NB].value);
-  fwrite(line, sizeof(char), strnlen(line, 1024), file);
+    sprintf(line, "IBV_COLL_MEAN_SIZE %f\n", (float) counters[IBV_COLL_SIZE].value/counters[IBV_COLL_NB].value);
+    fwrite(line, sizeof(char), strnlen(line, 1024), file);
 
-  sprintf(line, "IBV_BCAST_MEAN_SIZE %f\n", (float) counters[IBV_BCAST_SIZE].value/counters[IBV_BCAST_NB].value);
-  fwrite(line, sizeof(char), strnlen(line, 1024), file);
+    sprintf(line, "IBV_BCAST_MEAN_SIZE %f\n", (float) counters[IBV_BCAST_SIZE].value/counters[IBV_BCAST_NB].value);
+    fwrite(line, sizeof(char), strnlen(line, 1024), file);
 
-  sprintf(line, "IBV_REDUCE_MEAN_SIZE %f\n", (float) counters[IBV_REDUCE_SIZE].value/counters[IBV_REDUCE_NB].value);
-fwrite(line, sizeof(char), strnlen(line, 1024), file);
+    sprintf(line, "IBV_REDUCE_MEAN_SIZE %f\n", (float) counters[IBV_REDUCE_SIZE].value/counters[IBV_REDUCE_NB].value);
+    fwrite(line, sizeof(char), strnlen(line, 1024), file);
 
-//  sprintf(line, "IBV_BCAST_MEAN_WAIT %g\n", (double) counters[IBV_BCAST_WAIT_SIZE].value/counters[IBV_BCAST_WAIT_NB].value);
-//  fwrite(line, sizeof(char), strnlen(line, 1024), file);
+    //  sprintf(line, "IBV_BCAST_MEAN_WAIT %g\n", (double) counters[IBV_BCAST_WAIT_SIZE].value/counters[IBV_BCAST_WAIT_NB].value);
+    //  fwrite(line, sizeof(char), strnlen(line, 1024), file);
 #endif
-  fclose(file);
+    fclose(file);
+  } else {
+    if (sctk_process_number == 0)
+    {
+      sctk_error("Profile not generated because no \"profile\" directory available");
+    }
+  }
 #endif
 }
 #endif

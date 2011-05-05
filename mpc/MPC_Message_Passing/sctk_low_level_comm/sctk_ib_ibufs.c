@@ -215,6 +215,7 @@ int sctk_net_ibv_ibuf_srq_check_and_post(
       /* register more srq buffers */
       if (ibuf_thread_activation_nb >= 5)
       {
+        /* FIXME: poll cq AFTER posting buffers */
 //        sctk_net_ibv_cq_poll(rc_sr_local->recv_cq, ibv_max_srq_ibufs, sctk_net_ibv_rc_sr_recv_cq, IBV_CHAN_RECV);
 
         ibv_max_srq_ibufs += 100;
@@ -295,10 +296,6 @@ void sctk_net_ibv_ibuf_release(sctk_net_ibv_ibuf_t* ibuf, int is_srq)
 
   ibuf->desc.next = ibuf_free_header;
   ibuf_free_header = ibuf;
-
-  if(sctk_process_rank == 0)
-    sctk_nodebug("Buffer restored : %d (free header %p)",
-        ibuf_free_ibuf_nb, ibuf_free_header);
 
   sctk_spinlock_unlock(&ibuf_lock);
 }

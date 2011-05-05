@@ -45,10 +45,5 @@ sctk_net_ibv_send_msg_to_mpc(sctk_thread_ptp_message_t* msg_header, void* msg, i
 
 }
 
-#define max(a,b) \
-  ({ typeof (a) _a = (a); \
-   typeof (b) _b = (b); \
-   _a > _b ? _a : _b; })
-
 #endif
 #endif

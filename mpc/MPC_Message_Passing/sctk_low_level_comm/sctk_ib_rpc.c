@@ -60,14 +60,24 @@ struct sctk_list rpc_reg_mr_list;
 thread_rpc(void* arg)
 {
   rpc_req_list_entry_t* req;
+  sctk_update_communicator_t *msg;
 
   while(1)
   {
-    if ((req = sctk_list_pop(&rpc_req_list)))
+    if (!sctk_list_is_empty(&rpc_req_list))
     {
-      sctk_nodebug("Element poped");
+      req = sctk_list_pop(&rpc_req_list);
+      if (req)
+      {
+        sctk_nodebug("Element poped (size:%lu)", req->arg_size);
+        if (req->arg_size == 56)
+        {
+          msg = req->arg;
+          sctk_nodebug("COM ID : %d", msg->com);
+        }
 
-      sctk_rpc_execute(req->func, req->arg);
+        sctk_rpc_execute(req->func, req->arg);
+      }
     }
     usleep(200);
   }
@@ -86,8 +96,10 @@ sctk_net_rpc_init()
 
   /* thread for RPC */
   sctk_thread_attr_init ( &attr_rpc );
-  sctk_thread_attr_setscope ( &attr_rpc, SCTK_THREAD_SCOPE_SYSTEM );
-   sctk_user_thread_create ( &pidt_rpc, &attr_rpc, thread_rpc, NULL );
+  /* / ! \ There are some troubles when we are using
+   * a system thread. Don't decomment the following line. */
+//  sctk_thread_attr_setscope ( &attr_rpc, SCTK_THREAD_SCOPE_SYSTEM );
+  sctk_user_thread_create ( &pidt_rpc, &attr_rpc, thread_rpc, NULL );
 }
 
 
@@ -269,6 +281,8 @@ sctk_net_rpc_retrive_driver ( void *dest, void *src, size_t arg_size,
         ibuf, dest, mmu_entry->mr->lkey,
         src, rkey, arg_size, NULL, process);
 
+    sctk_nodebug("MSG : %d", src);
+
     rpc_ack = sctk_malloc(sizeof(sctk_net_ibv_rpc_ack_t));
     assume(rpc_ack);
     rpc_ack->src_process = process;
@@ -338,6 +352,8 @@ sctk_net_rpc_receive(sctk_net_ibv_ibuf_t* ibuf)
   req->src_process = msg_header->src_process;
   req->arg = sctk_malloc(rpc->arg_size);
   req->func = rpc->func;
+  sctk_nodebug("FUNC : %d", req->func);
+  req->arg_size = rpc->arg_size;
   assume(req->arg);
 
   memcpy(req->arg, &rpc->arg, rpc->arg_size);

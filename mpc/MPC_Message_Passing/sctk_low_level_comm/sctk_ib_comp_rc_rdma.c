@@ -255,15 +255,14 @@ sctk_net_ibv_comp_rc_rdma_send_request(
       request->entry_rc_rdma  = entry_rc_rdma;
       request->entry          = entry;
       request->ptp_type         = req.ptp_type;
-      sctk_nodebug("Send entry 1: %p", entry);
       request->requested_size = req.size;
 
-      /* prepare and send message */
+      /* prepare and send message  request*/
       sctk_net_ibv_ibuf_send_init(ibuf, size_to_copy + RC_SR_HEADER_SIZE);
-      req.size = size_to_copy;
-      req.payload_size = size_to_copy;
-      req.buff_nb = 1;
-      req.total_buffs = 1;
+      req.size          = size_to_copy;
+      req.payload_size  = size_to_copy;
+      req.buff_nb       = 1;
+      req.total_buffs   = 1;
       sctk_net_ibv_comp_rc_sr_send(ibuf, req, RC_SR_RDVZ_REQUEST);
 
       /* prepare rendezvous entry */
@@ -286,7 +285,6 @@ sctk_net_ibv_comp_rc_rdma_send_request(
   }
 }
 
-/* TODO: request vs coll_request */
 static sctk_net_ibv_rc_rdma_entry_t*
 sctk_net_ibv_comp_rc_rdma_entry_send_new(
     sctk_net_ibv_qp_rail_t   *rail,
@@ -387,7 +385,6 @@ sctk_net_ibv_comp_rc_rdma_process_rdma_read(
   entry = sctk_net_ibv_comp_rc_rdma_entry_send_new(
       rail, local_rc_sr, entry_rc_rdma, msg_header, request);
   entry->ready = 0;
-  /* check if the connection is opened. If not, we connect processes */
 
   sctk_list_lock(&entry_rc_rdma->send);
   entry->list_elem = sctk_list_push(&entry_rc_rdma->send, entry);
@@ -450,9 +447,7 @@ sctk_net_ibv_comp_rc_rdma_analyze_request(
   if ( request->protocol == RC_RDMA_REQ_WRITE)
   {
     sctk_nodebug("RC_RDMA_WRITE received");
-
     not_implemented();
-
     return entry_rc_rdma;
   }
 
@@ -523,7 +518,6 @@ sctk_net_ibv_com_rc_rdma_recv_done(
       break;
 
     case IBV_PTP:
-      /* FIXME */
       entry->msg_header_ptr->completion_flag = 1;
 
       /* if the message isnt directly pinned we can
@@ -537,7 +531,6 @@ sctk_net_ibv_com_rc_rdma_recv_done(
       sctk_list_lock(&entry_rc_rdma->recv);
       rc = sctk_list_remove(&entry_rc_rdma->recv, entry->list_elem);
       sctk_list_unlock(&entry_rc_rdma->recv);
-      /*   TODO: fixme */
       assume(rc);
 
       sctk_free(entry);
@@ -562,8 +555,8 @@ sctk_net_ibv_com_rc_rdma_read_finish(
 
   entry = (sctk_net_ibv_rc_rdma_entry_t*)
     ibuf->supp_ptr;
-  entry_rc_rdma = entry->entry_rc_rdma;
   WAIT_READY(entry);
+  entry_rc_rdma = entry->entry_rc_rdma;
 
   sctk_nodebug("RDVZ DONE RECV for process %d (PSN: %d), requested_size %lu", entry->src_process, entry->psn, entry->requested_size);
 

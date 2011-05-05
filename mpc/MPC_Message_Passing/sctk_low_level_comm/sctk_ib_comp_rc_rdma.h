@@ -110,6 +110,7 @@ typedef struct
    * a list) */
   struct sctk_list_elem*          list_elem;;
 
+#if 0
   union
   {
     union
@@ -130,6 +131,7 @@ typedef struct
 
     } frag_eager;
   };
+#endif
 } sctk_net_ibv_rc_rdma_entry_t;
 
 

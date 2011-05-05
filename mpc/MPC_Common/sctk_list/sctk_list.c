@@ -112,7 +112,11 @@ sctk_list_remove(struct sctk_list* list, struct sctk_list_elem* elem)
   void*
 sctk_list_pop(struct sctk_list* list)
 {
-  return sctk_list_remove(list, list->head);
+  void* ret;
+  sctk_list_lock(list);
+  ret = sctk_list_remove(list, list->head);
+  sctk_list_unlock(list);
+  return ret;
 }
 
   struct sctk_list_elem*

@@ -170,8 +170,8 @@ sctk_net_reinit_communicator (int task, sctk_communicator_t comm, int vp)
 {
   sctk_update_communicator_t msg;
   int i;
-  sctk_nodebug ("%s vp %d task_id %d com %d process %d", SCTK_FUNCTION,
-		vp, task, comm, sctk_process_rank);
+  sctk_nodebug ("%s vp %d task_id %d com %d process %d (size:%lu)", SCTK_FUNCTION,
+		vp, task, comm, sctk_process_rank, sizeof(sctk_update_communicator_t));
   assume (task >= 0);
   msg.com = comm;
   msg.vp = vp;
@@ -267,7 +267,7 @@ sctk_net_update_new_communicator_remote (sctk_update_new_communicator_t * msg)
 
   sctk_nodebug ("%s", SCTK_FUNCTION);
 
-  sctk_nodebug ("nb_involved %d", msg->nb_task_involved);
+  sctk_nodebug ("REMOTE: nb_involved %d origin_comm %d", msg->nb_task_involved, msg->origin_communicator);
   task_list = sctk_malloc (msg->nb_task_involved * sizeof (int));
   memset (task_list, 0, msg->nb_task_involved * sizeof (int));
 
@@ -327,7 +327,7 @@ sctk_net_update_new_communicator (const sctk_communicator_t
   msg.src = sctk_process_rank;
   msg.check = 0;
 
-  sctk_nodebug ("nb_involved %d", msg.nb_task_involved);
+  sctk_nodebug ("nb_involved %d ID:%d", msg.nb_task_involved, origin_communicator);
 
   sctk_nodebug ("PROVIDE %p", msg.addr);
   if (sctk_net_register_ptr && msg.addr)

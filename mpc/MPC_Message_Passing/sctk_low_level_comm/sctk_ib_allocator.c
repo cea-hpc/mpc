@@ -268,9 +268,16 @@ sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
     int dest_process ) {
   DBG_S(1);
   size_t size;
+  size_t size_with_header;
   sctk_net_ibv_allocator_request_t req;
   int task_id;
   int thread_id;
+
+  /* determine the message number and the
+   * thread ID of the current thread */
+  size = sctk_net_determine_message_size(msg);
+  size_with_header = size + sizeof(sctk_thread_ptp_message_t);
+  sctk_get_thread_info (&task_id, &thread_id);
 
   /* profile if message is contigous or not (if we can
    * use the zerocopy method or not) */
@@ -279,41 +286,39 @@ sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
   entire_msg = sctk_net_if_one_msg_in_buffer(msg);
   if (entire_msg) sctk_ibv_profiler_inc(IBV_MSG_DIRECTLY_PINNED);
   else sctk_ibv_profiler_inc(IBV_MSG_NOT_DIRECTLY_PINNED);
-  sctk_ibv_profiler_add(IBV_PTP_SIZE, (size + sizeof(sctk_thread_ptp_message_t)));
+  sctk_ibv_profiler_add(IBV_PTP_SIZE, size_with_header);
   sctk_ibv_profiler_inc(IBV_PTP_NB);
 #endif
 
-  /* determine message number */
-  size = sctk_net_determine_message_size(msg);
-  sctk_get_thread_info (&task_id, &thread_id);
-
-  req.size = size;
+  /* fill the request */
   req.msg = msg;
   req.dest_process = dest_process;
   req.dest_task = ((sctk_thread_ptp_message_t*) msg)->header.destination;
   req.ptp_type = IBV_PTP;
+  req.psn = sctk_net_ibv_sched_psn_inc(task_id,
+      req.dest_task);
 
-  req.psn = sctk_net_ibv_sched_psn_inc(task_id, req.dest_task);
-
-  if ( (size + sizeof(sctk_thread_ptp_message_t)) +
+  if ( size_with_header +
       RC_SR_HEADER_SIZE <= ibv_eager_threshold) {
     sctk_ibv_profiler_inc(IBV_EAGER_NB);
 
     /*
      * EAGER MSG
      */
+    req.size = size_with_header;
     req.channel = IBV_CHAN_RC_SR;
 
     sctk_net_ibv_comp_rc_sr_send_ptp_message (
         rc_sr_local, req);
 
-  } else if ( (size + sizeof(sctk_thread_ptp_message_t)) <= ibv_frag_eager_threshold) {
+  } else if ( size_with_header <= ibv_frag_eager_threshold) {
     sctk_ibv_profiler_inc(IBV_FRAG_EAGER_NB);
-    sctk_ibv_profiler_add(IBV_FRAG_EAGER_SIZE, size + sizeof(sctk_thread_ptp_message_t));
+    sctk_ibv_profiler_add(IBV_FRAG_EAGER_SIZE, size_with_header);
 
     /*
      * FRAG MSG
      */
+    req.size = size_with_header;
     req.channel = IBV_CHAN_RC_SR_FRAG;
 
     sctk_net_ibv_comp_rc_sr_send_frag_ptp_message (rc_sr_local, req);
@@ -323,6 +328,7 @@ sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
     /*
      * RENDEZVOUS
      */
+    req.size = size;
     req.channel = IBV_CHAN_RC_RDMA;
 
     sctk_net_ibv_comp_rc_rdma_send_request (
