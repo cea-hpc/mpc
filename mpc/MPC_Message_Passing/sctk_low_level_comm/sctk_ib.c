@@ -21,13 +21,14 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include "sctk_ib.h"
+#include "sctk_low_level_comm.h"
+#include "sctk_hybrid_comm.h"
+#include "sctk_debug.h"
 
 #ifdef MPC_USE_INFINIBAND
 
 #include <slurm/pmi.h>
 
-#include "sctk_low_level_comm.h"
-#include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "sctk_rpc.h"
 #include "sctk_mpcrun_client.h"
@@ -73,9 +74,9 @@ void
 sctk_net_ibv_update_network_mode()
 {
   if (sctk_net_is_shm_enabled())
-    sprintf (sctk_net_network_mode, "SHM v%s/IB-NG", SHM_VERSION);
+    sprintf (sctk_net_network_mode, "SHM v%s/IB-MT", SHM_VERSION);
   else
-    sprintf (sctk_net_network_mode, "IB-NG");
+    sprintf (sctk_net_network_mode, "IB-MT");
   sctk_network_mode = sctk_net_network_mode;
 }
 

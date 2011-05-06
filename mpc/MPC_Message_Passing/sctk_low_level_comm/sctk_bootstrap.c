@@ -26,12 +26,6 @@
 #include "sctk_mpcrun_client.h"
 #include <stdlib.h>
 
-enum bootstrap_mode {
-#ifdef MPC_USE_SLURM
-  PMI,
-#endif
-  TCP,
-};
 enum bootstrap_mode mode;
 
 #define TCP_KEY_MAX 256
@@ -284,4 +278,10 @@ void sctk_bootstrap_init() {
 
     default: assume(0);
   }
+}
+
+
+enum bootstrap_mode sctk_bootstrap_get_mode()
+{
+  return mode;
 }

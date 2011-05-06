@@ -58,6 +58,7 @@ extern "C"
 
 
   void MPC_printf (const char *fmt, ...);
+  void sctk_debug_root(const char *fmt, ...);
 #ifdef SCTK_DEBUG_MESSAGES
   void sctk_debug (const char *fmt, ...);
   void sctk_info (const char *fmt, ...);

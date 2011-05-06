@@ -26,6 +26,13 @@ extern "C"
 {
 #endif
 
+  enum bootstrap_mode {
+#ifdef MPC_USE_SLURM
+    PMI,
+#endif
+    TCP,
+  };
+
   void sctk_bootstrap_init();
 
   void sctk_bootstrap_get(char* pkey, char* pval, int size);
@@ -37,6 +44,8 @@ extern "C"
   int sctk_bootstrap_get_max_key_len();
 
   void sctk_bootstrap_barrier();
+
+  enum bootstrap_mode sctk_bootstrap_get_mode();
 
 #ifdef __cplusplus
 }

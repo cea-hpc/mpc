@@ -667,7 +667,7 @@ sctk_net_init_driver_tcp (int *argc, char ***argv)
 }
 
   void
-sctk_net_preinit_driver_tcp (void)
+sctk_net_preinit_driver_tcp (sctk_net_driver_pointers_functions_t* pointers)
 {
   not_available ();
 }
@@ -679,8 +679,7 @@ sctk_net_init_driver_ipoib (int *argc, char ***argv)
   not_available ();
 }
 
-  void
-sctk_net_preinit_driver_ipoib (void)
+  void sctk_net_preinit_driver_ipoib (sctk_net_driver_pointers_functions_t* pointers)
 {
   not_available ();
 }

@@ -195,7 +195,7 @@ sctk_net_ibv_comp_rc_sr_free_frag_msg(sctk_net_ibv_frag_eager_entry_t* entry)
  *  \param
  *  \return
  */
-void static sctk_net_ibv_frag_eager_print_list(struct sctk_list *list)
+static void sctk_net_ibv_frag_eager_print_list(struct sctk_list *list)
 {
   struct sctk_list_elem *tmp = NULL;
   sctk_net_ibv_frag_eager_entry_t* entry;

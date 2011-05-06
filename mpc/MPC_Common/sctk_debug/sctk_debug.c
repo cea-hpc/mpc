@@ -264,6 +264,32 @@ MPC_check_compatibility_lib (int major, int minor, char *pre)
     va_end (ap);
   }
 
+/* Sometimes it's interesting if only rank 0 show messages... */
+  void
+  sctk_debug_root(const char *fmt, ...)
+  {
+    va_list ap;
+    char buff[SMALL_BUFFER_SIZE];
+    int task_id;
+    int thread_id;
+
+    if (sctk_process_rank!=0)
+      return;
+
+    sctk_get_thread_info (&task_id, &thread_id);
+
+    va_start (ap, fmt);
+  #if HAVE_SHELL_COLORS == 1
+    sctk_snprintf (buff, SMALL_BUFFER_SIZE, SCTK_COLOR_RED_BOLD("%s")"\n", fmt);
+
+  #else
+    sctk_snprintf (buff, SMALL_BUFFER_SIZE, "%s\n", fmt);
+  #endif
+    sctk_noalloc_vfprintf (stderr, buff, ap);
+    fflush (stderr);
+    va_end (ap);
+  }
+
 
 #ifdef SCTK_DEBUG_MESSAGES
   void

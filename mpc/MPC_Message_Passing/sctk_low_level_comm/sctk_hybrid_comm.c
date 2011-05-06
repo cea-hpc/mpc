@@ -25,6 +25,7 @@
 
 #include "sctk_low_level_comm.h"
 #include "sctk_hybrid_comm.h"
+#include "sctk_bootstrap.h"
 #include "sctk_debug.h"
 #include "sctk_rpc.h"
 #include "sctk_shm.h"
@@ -371,6 +372,7 @@ sctk_net_preinit_driver_hybrid ()
 {
   sctk_bootstrap_init();
 
+  /* Determine if SHM module should be activated */
 #ifdef SCTK_SHM
   if (strcmp(sctk_module_name, "tcp_only") == 0 ||
       strcmp(sctk_module_name, "ipoib_only") == 0 ||
@@ -402,22 +404,45 @@ sctk_net_preinit_driver_hybrid ()
   if ( (strcmp(sctk_module_name, "tcp") == 0) ||
       (strcmp(sctk_module_name, "tcp_only") == 0))
   {
+      sctk_error ("ERROR: Network mode |%s| not available.\n"
+          "Please compile MPC with the Infiniband support by passing\n"
+          "the argument \"--network-module=%s\" to the MPC configure script.", sctk_module_name, sctk_module_name);
+    exit(1);
+
     GENDRIVER(tcp, tcp);
   }
   else if ( (strcmp(sctk_module_name, "ib") == 0) ||
     (strcmp(sctk_module_name, "ib_only") == 0))
   {
-    GENDRIVER(infiniband, infiniband);
+#ifdef MPC_USE_INFINIBAND
+    if (sctk_bootstrap_get_mode() == PMI)
+    {
+      GENDRIVER(infiniband, infiniband);
+    } else {
+        sctk_debug_root("ERROR: The Infiniband module _MUST_ be initialized with the SLURM job manager.\n"
+        "Please pass the argument -l=srun to your mpcrun command line. \n"
+        "Other job manager are not currently supported.");
+      exit(1);
+    }
+#else
+      sctk_debug_root ("ERROR: Network mode |%s| not available.\n"
+          "Please compile MPC with the Infiniband support by passing\n"
+          "the argument \"--network-module=%s\" to the MPC configure script.", sctk_module_name, sctk_module_name);
+    exit(1);
+#endif
   }
   else if ( (strcmp(sctk_module_name, "ipoib") == 0) ||
-    (strcmp(sctk_module_name, "ipoib_only") == 0))
+      (strcmp(sctk_module_name, "ipoib_only") == 0))
   {
     GENDRIVER(ipoib, ipoib);
   }
   else
   {
-    sctk_error ("Network mode |%s| not available", sctk_module_name);
-    sctk_abort ();
+    if (sctk_process_rank == 0)
+    {
+      sctk_error ("Network mode |%s| not available", sctk_module_name);
+    }
+    exit(1);
   }
 
   number_modules_levels++;
@@ -495,12 +520,12 @@ sctk_net_init_driver_hybrid (int *argc, char ***argv)
   else if ( (strcmp(sctk_module_name, "ipoib") == 0) ||
       (strcmp(sctk_module_name, "ipoib_only") == 0))
   {
-  	  /* thread for TCP/IPoIB DMA
+    /* thread for TCP/IPoIB DMA
      * / ! \ : we create a thread instead of polling the function. Interblocking issues.*/
     sctk_thread_attr_init (&attr_inter_rdma);
     sctk_thread_attr_setscope (&attr_inter_rdma, SCTK_THREAD_SCOPE_SYSTEM);
     sctk_user_thread_create (&pidt_inter_rdma, &attr_inter_rdma, sctk_inter_comm_thread,
-      NULL);
+        NULL);
     rdma_system_thread_needed = 0;
 
     sctk_net_init_driver_ipoib(argc, argv);
@@ -508,6 +533,8 @@ sctk_net_init_driver_hybrid (int *argc, char ***argv)
   else if ( (strcmp(sctk_module_name, "ib") == 0) ||
       (strcmp(sctk_module_name, "ib_only") == 0))
   {
+#ifdef MPC_USE_INFINIBAND
     sctk_net_init_driver_infiniband(argc, argv);
+#endif
   }
 }
