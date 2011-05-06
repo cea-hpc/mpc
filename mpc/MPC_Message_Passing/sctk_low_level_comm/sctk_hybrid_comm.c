@@ -404,30 +404,33 @@ sctk_net_preinit_driver_hybrid ()
   if ( (strcmp(sctk_module_name, "tcp") == 0) ||
       (strcmp(sctk_module_name, "tcp_only") == 0))
   {
-      sctk_error ("ERROR: Network mode |%s| not available.\n"
-          "Please compile MPC with the Infiniband support by passing\n"
-          "the argument \"--network-module=%s\" to the MPC configure script.", sctk_module_name, sctk_module_name);
-    exit(1);
-
+#ifdef MPC_USE_TCP
     GENDRIVER(tcp, tcp);
+#else
+    sctk_debug_root ("ERROR: Network mode |%s| not available.\n"
+        "Please compile MPC with TCP support by passing\n"
+        "the argument \"--network-module=%s\" to the MPC configure script.", sctk_module_name, sctk_module_name);
+    exit(1);
+#endif
+
   }
   else if ( (strcmp(sctk_module_name, "ib") == 0) ||
-    (strcmp(sctk_module_name, "ib_only") == 0))
+      (strcmp(sctk_module_name, "ib_only") == 0))
   {
 #ifdef MPC_USE_INFINIBAND
     if (sctk_bootstrap_get_mode() == PMI)
     {
       GENDRIVER(infiniband, infiniband);
     } else {
-        sctk_debug_root("ERROR: The Infiniband module _MUST_ be initialized with the SLURM job manager.\n"
-        "Please pass the argument -l=srun to your mpcrun command line. \n"
-        "Other job manager are not currently supported.");
+      sctk_debug_root("ERROR: The Infiniband module _MUST_ be initialized with the SLURM job manager.\n"
+          "Please pass the argument -l=srun to your mpcrun command line. \n"
+          "Other job manager are not currently supported.");
       exit(1);
     }
 #else
-      sctk_debug_root ("ERROR: Network mode |%s| not available.\n"
-          "Please compile MPC with the Infiniband support by passing\n"
-          "the argument \"--network-module=%s\" to the MPC configure script.", sctk_module_name, sctk_module_name);
+    sctk_debug_root ("ERROR: Network mode |%s| not available.\n"
+        "Please compile MPC with Infiniband support by passing\n"
+        "the argument \"--network-module=%s\" to the MPC configure script.", sctk_module_name, sctk_module_name);
     exit(1);
 #endif
   }
