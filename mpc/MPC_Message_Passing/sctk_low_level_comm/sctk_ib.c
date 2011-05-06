@@ -20,6 +20,8 @@
 /* #   - DIDELOT Sylvain didelot.sylvain@gmail.com                        # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include "sctk_ib.h"
+
 #ifdef MPC_USE_INFINIBAND
 
 #include <slurm/pmi.h>
@@ -28,7 +30,6 @@
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "sctk_rpc.h"
-#include "sctk_ib.h"
 #include "sctk_mpcrun_client.h"
 #include "sctk_buffered_fifo.h"
 
