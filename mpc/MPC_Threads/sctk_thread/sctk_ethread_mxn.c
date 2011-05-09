@@ -24,6 +24,7 @@
 #include <string.h>
 #include "sctk_debug.h"
 #include "sctk_thread.h"
+#include "sctk_tls.h"
 #include "sctk_ethread.h"
 #include "sctk_ethread_internal.h"
 #include "sctk_alloc.h"
@@ -433,6 +434,15 @@ sctk_ethread_mxn_create (sctk_ethread_t * threadp,
 				  current, threadp, NULL, start_routine, arg);
 }
 
+int
+sctk_ethread_mxn_atfork(void (*prepare) (void),
+                        void (*parent) (void),
+                        void (*child) (void))
+{
+  return pthread_atfork (prepare, parent, child);
+}
+
+
 static void
 sctk_ethread_mxn_freeze_thread_on_vp (sctk_ethread_mutex_t * lock,
 				      void **list_tmp)
@@ -834,6 +844,10 @@ sctk_ethread_mxn_thread_init (void)
 		      int (*)(sctk_thread_attr_t *));
   sctk_add_func_type (sctk_ethread_mxn, attr_destroy,
 		      int (*)(sctk_thread_attr_t *));
+  
+  sctk_add_func_type (sctk_ethread_mxn, atfork,
+                      int (*)(void (*prepare) (void),
+                      void (*parent) (void), void (*child) (void)));
 
   sctk_ethread_check_size (sctk_ethread_t, sctk_thread_t);
   sctk_add_func_type (sctk_ethread_mxn, self, sctk_thread_t (*)(void));

@@ -27,6 +27,7 @@
 #include "sctk_ethread.h"
 #include "sctk_ethread_internal.h"
 #include "sctk_alloc.h"
+#include "sctk_tls.h"
 #include "sctk_internal_thread.h"
 #include "sctk_context.h"
 #include "sctk_posix_ethread.h"
@@ -311,6 +312,14 @@ sctk_ethread_key_create (int *key,
 }
 
 static int
+sctk_ethread_atfork(void (*prepare) (void),
+                        void (*parent) (void),
+                        void (*child) (void))
+{
+  return pthread_atfork (prepare, parent, child);
+}
+
+static int
 sctk_ethread_key_delete (int key)
 {
   return __sctk_ethread_key_delete (sctk_ethread_self (), key);
@@ -510,6 +519,9 @@ sctk_ethread_thread_init (void)
 		      int (*)(sctk_thread_t *, const sctk_thread_attr_t *,
 			      void *(*)(void *), void *));
 
+  sctk_add_func_type (sctk_ethread, atfork,
+                      int (*)(void (*prepare) (void),
+                      void (*parent) (void), void (*child) (void)));
 
   sctk_ethread_check_size (sctk_ethread_attr_t, sctk_thread_attr_t);
   sctk_add_func_type (sctk_ethread, attr_init, int (*)(sctk_thread_attr_t *));

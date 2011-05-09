@@ -24,6 +24,7 @@
 #include <mpc.h>
 #include <unistd.h>
 #include <string.h>
+#include <errno.h>
 #include <mono/metadata/threads.h>
 
 /*  Global Var*/
@@ -80,6 +81,14 @@ MonoDomain *domain;
 typedef unsigned sctk_long_long sctk_timer_t;
 
 static sctk_thread_key_t _sctk_thread_handler_key;
+
+//Atfork Handling
+#define SCTK_MAX_CHILD_HANDLER 128
+void (*sctk_atfork_child[SCTK_MAX_CHILD_HANDLER]) (void);
+static int sctk_atfork_child_count = 0;
+static int internal_atfork_registered = 0;
+static int sctk_atfork_child_lock = 0;
+
 #ifdef SCTK_USE_MONO
 typedef struct
 {
@@ -163,13 +172,86 @@ sctk_thread_init (void)
   /*Check all types */
 }
 
+
+int sctk_thread_get_atfork_internal_is_registered()
+{
+  int ret = 0;
+  sctk_spinlock_lock(&sctk_atfork_child_lock);
+  ret = internal_atfork_registered;
+  sctk_spinlock_unlock(&sctk_atfork_child_lock);
+  return ret;
+}
+
+void sctk_thread_get_atfork_internal_set(int value)
+{
+  sctk_spinlock_lock(&sctk_atfork_child_lock);
+  internal_atfork_registered = 1;
+  sctk_spinlock_unlock(&sctk_atfork_child_lock);
+}
+
+int sctk_thread_get_atfork_register_child(void (*__child) (void))
+{
+  if( sctk_atfork_child_count == SCTK_MAX_CHILD_HANDLER )
+  {
+    sctk_warning("Could not register atfork handler no more slot available");
+    return 0;
+  }
+  //Mush be called with sctk_atfork_child_lock locked
+  sctk_atfork_child[ sctk_atfork_child_count ] = __child;
+  sctk_atfork_child_count++;
+  
+  return 1;
+}
+
+
+void
+sctk_thread_atfork_internal_child( )
+{
+    /* Here we do mpc internal actions when forking */
+
+
+    sctk_debug("Processing internal actions");
+
+    /* Call the original handler */
+    int i = 0;
+
+    sctk_spinlock_lock(&sctk_atfork_child_lock);
+
+      for ( i = 0 ; i< sctk_atfork_child_count ; i++ )
+      {
+          void (*atfork_child) (void) = sctk_atfork_child[i];
+
+          if ( atfork_child )
+              (atfork_child)();
+      }
+
+    sctk_spinlock_unlock(&sctk_atfork_child_lock);
+}
+
 int
 sctk_thread_atfork (void (*__prepare) (void), void (*__parent) (void),
-		    void (*__child) (void))
+                    void (*__child) (void))
 {
   int res;
+  sctk_spinlock_lock(&sctk_atfork_child_lock);
+  res = sctk_thread_get_atfork_register_child( __child );
+  sctk_spinlock_unlock(&sctk_atfork_child_lock);
 
-  res = __sctk_ptr_thread_atfork (__prepare, __parent, __child);
+  if( !res )
+  {
+    errno = ENOMEM;
+    return ENOMEM;
+  }
+
+  if(  !sctk_thread_get_atfork_internal_is_registered() )
+  {
+    res = __sctk_ptr_thread_atfork (__prepare, __parent, sctk_thread_atfork_internal_child);
+    sctk_thread_get_atfork_internal_set(1);
+  }
+  else
+  {
+    res = __sctk_ptr_thread_atfork (__prepare, __parent, NULL);
+  }
 
   sctk_check (res, 0);
   return res;
