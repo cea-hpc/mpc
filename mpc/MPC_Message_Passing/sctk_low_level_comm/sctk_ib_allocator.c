@@ -101,9 +101,9 @@ sctk_net_ibv_allocator_new()
   /* FIXME: change to HashTables */
   size_t size = sctk_process_number * sizeof(sctk_net_ibv_allocator_entry_t);
 
-  sctk_net_ibv_allocator = sctk_malloc(sizeof(sctk_net_ibv_allocator_t));
+  sctk_net_ibv_allocator = sctk_malloc(sizeof(sctk_net_ibv_allocator_t) + size);
 
-  sctk_net_ibv_allocator->entry = sctk_malloc(size);
+  sctk_net_ibv_allocator->entry = (char*) sctk_net_ibv_allocator + sizeof(sctk_net_ibv_allocator_t);
   assume(sctk_net_ibv_allocator->entry);
 
   sctk_nodebug("creation : %p", sctk_net_ibv_allocator->entry);
@@ -275,7 +275,8 @@ sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
 
   /* determine the message number and the
    * thread ID of the current thread */
-  size = sctk_net_determine_message_size(msg);
+//  size = sctk_net_determine_message_size(msg);
+  size = msg->header.msg_size;
   size_with_header = size + sizeof(sctk_thread_ptp_message_t);
   sctk_get_thread_info (&task_id, &thread_id);
 
@@ -311,12 +312,12 @@ sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
     sctk_net_ibv_comp_rc_sr_send_ptp_message (
         rc_sr_local, req);
 
-  } else if ( size_with_header <= ibv_frag_eager_threshold) {
+  } else if ( size <= ibv_frag_eager_threshold) {
     sctk_ibv_profiler_inc(IBV_FRAG_EAGER_NB);
     sctk_ibv_profiler_add(IBV_FRAG_EAGER_SIZE, size_with_header);
 
     /*
-     * FRAG MSG
+     * FRAG MSG: we don't consider the size of the headers
      */
     req.size = size_with_header;
     req.channel = IBV_CHAN_RC_SR_FRAG;
@@ -388,7 +389,7 @@ sctk_net_ibv_allocator_send_coll_message (
     req.channel = IBV_CHAN_RC_SR;
     sctk_net_ibv_comp_rc_sr_send_ptp_message (
         rc_sr_local, req);
-  } else if ( (size + sizeof(sctk_thread_ptp_message_t)) <= ibv_frag_eager_threshold) {
+  } else if ( size  <= ibv_frag_eager_threshold) {
     sctk_ibv_profiler_inc(IBV_FRAG_EAGER_NB);
     sctk_ibv_profiler_add(IBV_FRAG_EAGER_SIZE, size + sizeof(sctk_thread_ptp_message_t));
 

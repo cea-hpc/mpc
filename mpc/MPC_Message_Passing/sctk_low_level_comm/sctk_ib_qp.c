@@ -627,17 +627,13 @@ sctk_net_ibv_qp_exchange_send(
     sctk_net_ibv_qp_rail_t* rail,
     sctk_net_ibv_qp_remote_t* remote)
 {
-  char *key;
-  char *val;
   int key_max;
   int val_max;
 
   key_max = sctk_bootstrap_get_max_key_len();
   val_max = sctk_bootstrap_get_max_val_len();
-  key = sctk_malloc(key_max);
-  assume(key);
-  val = sctk_malloc(val_max);
-  assume(val);
+  char key[key_max];
+  char val[key_max];
 
   snprintf(key, key_max,"%06d:%06d:%06d", i, sctk_process_rank, remote->rank);
   sctk_nodebug("Send KEY (%d) %s", key_max, key);
@@ -646,26 +642,19 @@ sctk_net_ibv_qp_exchange_send(
   sctk_nodebug("Send VAL (%d) %s", val_max, val);
 
   sctk_bootstrap_register(key, val, val_max);
-
-  free(key);
-  free(val);
 }
 
   sctk_net_ibv_qp_exchange_keys_t
 sctk_net_ibv_qp_exchange_recv(int i, sctk_net_ibv_qp_local_t* qp, int dest_process)
 {
   sctk_net_ibv_qp_exchange_keys_t qp_keys;
-  char *key;
-  char *val;
   int key_max;
   int val_max;
 
   key_max = sctk_bootstrap_get_max_key_len();
   val_max = sctk_bootstrap_get_max_val_len();
-  key = sctk_malloc(key_max);
-  assume(key);
-  val = sctk_malloc(val_max);
-  assume(val);
+  char key[key_max];
+  char val[key_max];
 
   snprintf(key, key_max,"%06d:%06d:%06d", i, dest_process, sctk_process_rank);
   sctk_nodebug("Recv KEY %s", key);
@@ -675,9 +664,6 @@ sctk_net_ibv_qp_exchange_recv(int i, sctk_net_ibv_qp_local_t* qp, int dest_proce
   sctk_nodebug("Recv VAL %s", val);
 
   qp_keys = sctk_net_ibv_qp_exchange_convert(val);
-
-  free(key);
-  free(val);
 
   return qp_keys;
 }

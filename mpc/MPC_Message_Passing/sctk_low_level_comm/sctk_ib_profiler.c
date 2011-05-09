@@ -47,6 +47,29 @@ void sctk_ibv_profiler_inc(ibv_profiler_id id)
 #endif
 }
 
+double sctk_ibv_profiler_get(ibv_profiler_id id)
+{
+#if IBV_ENABLE_PROFILE == 1
+  double d;
+  sctk_spinlock_lock(&locks[id]);
+  d = counters[id].value;
+  sctk_spinlock_unlock(&locks[id]);
+  return d;
+#endif
+}
+
+void sctk_ibv_profiler_set(ibv_profiler_id id, double c)
+{
+#if IBV_ENABLE_PROFILE == 1
+  double d;
+  sctk_spinlock_lock(&locks[id]);
+  counters[id].value = c;
+  sctk_spinlock_unlock(&locks[id]);
+#endif
+}
+
+
+
 void sctk_ibv_profiler_dec(ibv_profiler_id id)
 {
 #if IBV_ENABLE_PROFILE == 1

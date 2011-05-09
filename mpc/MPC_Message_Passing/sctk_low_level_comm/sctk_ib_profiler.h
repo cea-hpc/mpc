@@ -31,7 +31,7 @@
 #define XSTR(X)  STR(X)
 #define STR(X)  #X
 
-#define IBV_ENABLE_PROFILE        0
+#define IBV_ENABLE_PROFILE        1
 
 typedef enum
 {
@@ -101,8 +101,9 @@ typedef enum
 
   IBV_MEM_ALLOCATED = 41,
   IBV_MEMALIGN_ALLOCATED = 42,
+  IBV_IBUF_MAX_USED_NB = 43,
 } ibv_profiler_id;
-#define NB_PROFILE_ID 43
+#define NB_PROFILE_ID 44
 
 struct sctk_ibv_profiler_entry_s
 {
@@ -175,7 +176,8 @@ UNUSED static struct sctk_ibv_profiler_entry_s counters[NB_PROFILE_ID] =
   ENTRY(IBV_BCAST_WAIT_SIZE),
 
   ENTRY(IBV_MEM_ALLOCATED),
-  ENTRY(IBV_MEMALIGN_ALLOCATED)
+  ENTRY(IBV_MEMALIGN_ALLOCATED),
+  ENTRY(IBV_IBUF_MAX_USED_NB)
 };
 
 void sctk_ibv_generate_report();

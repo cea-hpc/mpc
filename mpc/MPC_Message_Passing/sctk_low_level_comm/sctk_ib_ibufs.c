@@ -156,6 +156,13 @@ sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null, int need_lock)
 {
   sctk_net_ibv_ibuf_t* ibuf;
 
+#if IBV_ENABLE_PROFILE == 1
+  if (ibuf_got_ibuf_nb > sctk_ibv_profiler_get(IBV_IBUF_MAX_USED_NB))
+  {
+    sctk_ibv_profiler_set(IBV_IBUF_MAX_USED_NB, ibuf_got_ibuf_nb);
+  }
+#endif
+
   while (1)
   {
 
