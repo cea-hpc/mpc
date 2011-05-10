@@ -314,7 +314,7 @@ extern "C"
     info->next_ordered_offset = -1 ;
 
     /* TODO BEGIN NEW */
-    info->private_current_for_dyn = -1 ;
+    info->private_current_for_dyn = 0 ;
     info->lock_stop_for_dyn = SCTK_SPINLOCK_INITIALIZER ;
     for (i = 0; i < MPCOMP_MAX_THREADS; i++) {
       for ( j = 0 ; j <= MPCOMP_MAX_ALIVE_FOR_DYN ; j++ ) {
@@ -545,7 +545,7 @@ extern "C"
     info->current_single = -1;
 
     /* TODO BEGIN NEW */
-    info->private_current_for_dyn = -1 ; 
+    info->private_current_for_dyn = 0 ; 
     /* TODO END NEW */
 
   }
