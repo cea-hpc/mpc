@@ -27,6 +27,7 @@
 #include <string.h>
 #include <sctk_config.h>
 #include <sctk_spinlock.h>
+#include <sctk_alloc.h>
 
 #ifndef __SCTK__LIST__
 #define __SCTK__LIST__
@@ -40,10 +41,12 @@ struct sctk_list_elem {
 struct sctk_list {
   uint64_t elem_count;
   uint8_t is_collector;
+  uint8_t is_initialized;
   size_t size_payload;
   sctk_spinlock_t   lock;
   struct sctk_list_elem *head;
   struct sctk_list_elem *tail;
+  sctk_alloc_buffer_t alloc_buff;
 };
 
 void
@@ -75,4 +78,7 @@ sctk_list_pop(struct sctk_list* list);
 
 void* sctk_list_search_and_free(struct sctk_list* list,
     void* elem);
+
+int sctk_list_is_initialized(struct sctk_list* list);
+
 #endif				/*  */

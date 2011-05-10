@@ -83,7 +83,7 @@ sctk_net_ibv_comp_rc_sr_send_frag_ptp_message(
 
   /* compute the number of slots needed */
   total_buffs = ceilf( (float)
-      req.size / (ibv_eager_threshold - RC_SR_HEADER_SIZE));
+      req.size / (ibv_eager_limit - RC_SR_HEADER_SIZE));
 
   sctk_nodebug("Send rc_sr message. type %d, size %d, src_process %lu, nb buffs %d", type, req.size, dest_process, total_buffs);
 
@@ -104,7 +104,7 @@ sctk_net_ibv_comp_rc_sr_send_frag_ptp_message(
     }
 
     /* compute the allowed size for the current buffer */
-    allowed_copy_size = ibv_eager_threshold
+    allowed_copy_size = ibv_eager_limit
       - RC_SR_HEADER_SIZE
       - offset_buffer;
 
@@ -280,6 +280,7 @@ sctk_net_ibv_comp_rc_sr_frag_recv(sctk_net_ibv_ibuf_header_t* msg_header, int lo
     {
       sctk_nodebug("Create new entry");
       list =  sctk_malloc(sizeof(struct sctk_list));
+      memset(list, 0, sizeof(struct sctk_list));
       assume(list);
 
       all_tasks[local_nb].frag_eager_list[msg_header->src_task] = list;
@@ -409,51 +410,6 @@ sctk_net_ibv_comp_rc_sr_create_local(sctk_net_ibv_qp_rail_t* rail)
 }
 
 
-/**
- *  Send a collective message to a specific process.
- *  We include the communicator id of the message in
- *  the header
- *  \param
- *  \return
- */
-uint32_t
-sctk_net_ibv_comp_rc_sr_send_coll(
-    int dest_process,
-    int com_id,
-    uint32_t psn,
-    sctk_net_ibv_ibuf_t* ibuf, size_t size, size_t buffer_size,
-    sctk_net_ibv_ibuf_type_t type,
-    sctk_net_ibv_ibuf_ptp_type_t ptp_type,
-    const int buff_nb, const int total_buffs)
-{
-  uint32_t ret_psn = 0;
-  sctk_net_ibv_ibuf_header_t* msg_header;
-
-  msg_header = ((sctk_net_ibv_ibuf_header_t*) ibuf->buffer);
-
-  msg_header->ibuf_type = type;
-  msg_header->ptp_type = ptp_type;
-  msg_header->src_process = sctk_process_rank;
-  msg_header->size = size + RC_SR_HEADER_SIZE;
-  msg_header->payload_size = buffer_size;
-  msg_header->buff_nb = buff_nb;
-  msg_header->total_buffs = total_buffs;
-
-  /* fill the communicator id */
-  msg_header->com_id = com_id;
-  msg_header->psn = psn;
-
-  sctk_nodebug("Send message for coll %d (psn:%lu; size:%lu)", ptp_type, msg_header->psn, size);
-
-  /* We have to check if there are free slots for the
-   * selected QP */
-  sctk_net_ibv_qp_send_get_wqe(dest_process, ibuf);
-
-  sctk_nodebug("Send frag PTP %lu to %d (task %d) with psn %lu",
-      size, dest_process, dest_task, ret_psn);
-  return ret_psn;
-}
-
 void
 sctk_net_ibv_comp_rc_sr_send(
     sctk_net_ibv_ibuf_t* ibuf,
@@ -565,11 +521,11 @@ sctk_net_ibv_comp_rc_sr_send_coll_frag_ptp_message(
   remaining_size = req.size;
 
   total_buffs = ceilf( (float)
-      size/ (ibv_eager_threshold - RC_SR_HEADER_SIZE));
+      size/ (ibv_eager_limit - RC_SR_HEADER_SIZE));
 
   sctk_nodebug("Send rc_sr message. size %d, src_process %lu, nb buffs %d",  size, req.dest_process, total_buffs);
 
-  allowed_copy_size = ibv_eager_threshold
+  allowed_copy_size = ibv_eager_limit
     - RC_SR_HEADER_SIZE;
 
   /* while it reamins slots to copy */
@@ -895,6 +851,7 @@ sctk_net_ibv_rc_sr_poll_recv(
           break;
 
         case IBV_BCAST_INIT_BARRIER:
+          sctk_nodebug("Coll id: %d -> %p", msg_header->com_id, &com_entries[msg_header->com_id].init_barrier_fifo);
           sctk_nodebug("Broadcast barrier msg received from com %d", msg_header->com_id);
           sctk_net_ibv_collective_push_rc_sr(
               &com_entries[msg_header->com_id].init_barrier_fifo, ibuf, &release_buffer);

@@ -33,17 +33,19 @@ sctk_list_new(struct sctk_list* list, uint8_t is_collector, size_t size_payload)
   list->elem_count = 0;
   list->lock = SCTK_SPINLOCK_INITIALIZER;
   list->is_collector = is_collector;
-  list->head = NULL;
   list->size_payload = size_payload;
+  list->is_initialized = 1;
+  sctk_buffered_alloc_create(&list->alloc_buff, size_payload + sizeof(struct sctk_list_elem));
+  list->head = NULL;
   list->tail = NULL;
 }
 
 
 static struct sctk_list_elem*
-sctk_list_alloc_elem(void* elem, size_t size, uint8_t collector )
+sctk_list_alloc_elem(struct sctk_list* list, void* elem, size_t size, uint8_t collector )
 {
   struct sctk_list_elem *tmp =
-    sctk_malloc(sizeof(struct sctk_list_elem) + size);
+    sctk_buffered_malloc(&list->alloc_buff, sizeof(struct sctk_list_elem) + size);
 
   if (collector)
   {
@@ -64,6 +66,8 @@ sctk_list_get_from_head(struct sctk_list* list, uint32_t n)
 {
   struct sctk_list_elem *tmp = list->head;
 
+  assume(list->is_initialized);
+
   while (tmp && n--) {
     tmp = tmp->p_next;
   }
@@ -77,6 +81,8 @@ sctk_list_get_from_head(struct sctk_list* list, uint32_t n)
 sctk_list_remove(struct sctk_list* list, struct sctk_list_elem* elem)
 {
   void* payload;
+
+  assume(list->is_initialized);
 
   if (!list || !elem || !list->head)
     return NULL;
@@ -105,7 +111,7 @@ sctk_list_remove(struct sctk_list* list, struct sctk_list_elem* elem)
   payload = elem->elem;
   list->elem_count--;
   sctk_nodebug("Elem removed : %p", elem->elem);
-  sctk_free(elem);
+  sctk_buffered_free(elem);
   return payload;
 }
 
@@ -113,6 +119,8 @@ sctk_list_remove(struct sctk_list* list, struct sctk_list_elem* elem)
 sctk_list_pop(struct sctk_list* list)
 {
   void* ret;
+  assume(list->is_initialized);
+
   sctk_list_lock(list);
   ret = sctk_list_remove(list, list->head);
   sctk_list_unlock(list);
@@ -123,7 +131,10 @@ sctk_list_pop(struct sctk_list* list)
 sctk_list_push(struct sctk_list* list, void *elem)
 {
   struct sctk_list_elem *new_elem = NULL;
-  new_elem = sctk_list_alloc_elem(elem, list->size_payload, list->is_collector);
+
+  assume(list->is_initialized);
+
+  new_elem = sctk_list_alloc_elem(list, elem, list->size_payload, list->is_collector);
   assume(new_elem);
 
   if (list->tail == NULL)
@@ -142,7 +153,6 @@ sctk_list_push(struct sctk_list* list, void *elem)
   }
 
   sctk_nodebug("head : %p", elem);
-//  sctk_debug("Count : %d", list->elem_count);
   list->elem_count++;
   return new_elem;
 }
@@ -153,6 +163,8 @@ void* sctk_list_search_and_free(struct sctk_list* list,
   struct sctk_list_elem *tmp = list->head;
   int i = 0;
   sctk_nodebug("Free : %p", list->head->elem);
+
+  assume(list->is_initialized);
 
   while (tmp) {
     sctk_nodebug("CMP %p <-> %p", tmp->elem, elem);
@@ -178,6 +190,8 @@ void* sctk_list_walk(struct sctk_list* list,
   assume(funct);
   void* ret = NULL;
   int i = 0;
+
+  assume(list->is_initialized);
 
   while (tmp) {
 
@@ -205,6 +219,8 @@ void* sctk_list_walk_on_cond(struct sctk_list* list, int cond,
   void* ret = NULL;
   int i = 0;
 
+  assume(list->is_initialized);
+
   sctk_list_lock(list);
   tmp = list->head;
   while (tmp) {
@@ -230,16 +246,27 @@ void* sctk_list_walk_on_cond(struct sctk_list* list, int cond,
 
 int sctk_list_is_empty(struct sctk_list* list)
 {
+  assume(list->is_initialized);
+
   if(list->head) return 0;
   else return 1;
 }
 
 void sctk_list_lock(struct sctk_list* list)
 {
+  assume(list->is_initialized);
+
   sctk_spinlock_lock(&list->lock);
 }
 
 void sctk_list_unlock(struct sctk_list* list)
 {
+  assume(list->is_initialized);
+
   sctk_spinlock_unlock(&list->lock);
+}
+
+int sctk_list_is_initialized(struct sctk_list* list)
+{
+  return list->is_initialized;
 }

@@ -29,13 +29,13 @@
 #include "sctk_ib_comp_rc_rdma.h"
 
 /* Maximum message size for each channels (in fact this in
- * not really a threshold...). Here is the algorithm to
+ * not really a limit...). Here is the algorithm to
  * select which channel use:
- * if x < IBV_EAGER_THRESHOLD -> eager msg
- * if x < IBV_FRAG_EAGER_THRESHOLD -> frag msg (into several eager buffers)
- * if x > IBV_FRAG_EAGER_THRESHOLD -> rendezvous msg */
-#define IBV_EAGER_THRESHOLD ( 12 * 1024 )
-#define IBV_FRAG_EAGER_THRESHOLD ( 256 * 1024)
+ * if x < IBV_EAGER_LIMIT -> eager msg
+ * if x < IBV_FRAG_EAGER_LIMIT -> frag msg (into several eager buffers)
+ * if x > IBV_FRAG_EAGER_LIMIT -> rendezvous msg */
+#define IBV_EAGER_LIMIT ( 12 * 1024 )
+#define IBV_FRAG_EAGER_LIMIT ( 256 * 1024)
 /* Number of allowed pending Work Queue Elements
  * for each QP */
 #define IBV_QP_TX_DEPTH     4000
@@ -99,8 +99,8 @@
 #define IBV_VERBOSE_LEVEL         1
 
 /* global values */
-unsigned int  ibv_eager_threshold  = IBV_EAGER_THRESHOLD;
-unsigned int  ibv_frag_eager_threshold  = IBV_FRAG_EAGER_THRESHOLD;
+unsigned int  ibv_eager_limit  = IBV_EAGER_LIMIT;
+unsigned int  ibv_frag_eager_limit  = IBV_FRAG_EAGER_LIMIT;
 unsigned int  ibv_qp_tx_depth      = IBV_QP_TX_DEPTH;
 unsigned int  ibv_qp_rx_depth      = IBV_QP_RX_DEPTH;
 unsigned int  ibv_cq_depth         = IBV_CQ_DEPTH;
@@ -127,24 +127,24 @@ unsigned int  ibv_rdma_dest_depth  = IBV_RDMA_DEST_DEPTH;
 
 void sctk_net_ibv_config_check()
 {
-//  ibv_eager_threshold += (RC_SR_HEADER_SIZE + sizeof(sctk_thread_ptp_message_t));
-//    ibv_eager_threshold += (RC_SR_HEADER_SIZE);
+//  ibv_eager_limit += (RC_SR_HEADER_SIZE + sizeof(sctk_thread_ptp_message_t));
+//    ibv_eager_limit += (RC_SR_HEADER_SIZE);
 
-//   ibv_eager_threshold = ( ( ibv_eager_threshold + 4095 ) & ( ~4095 ) );
+//   ibv_eager_limit = ( ( ibv_eager_limit + 4095 ) & ( ~4095 ) );
 
-  if (ibv_eager_threshold < (RC_SR_HEADER_SIZE + sizeof(sctk_net_ibv_rc_rdma_request_t)))
+  if (ibv_eager_limit < (RC_SR_HEADER_SIZE + sizeof(sctk_net_ibv_rc_rdma_request_t)))
   {
       goto error;
   }
-  if (ibv_eager_threshold < (RC_SR_HEADER_SIZE + sizeof(sctk_net_ibv_rc_rdma_coll_request_t)))
+  if (ibv_eager_limit < (RC_SR_HEADER_SIZE + sizeof(sctk_net_ibv_rc_rdma_coll_request_t)))
   {
       goto error;
   }
-  if (ibv_eager_threshold < (RC_SR_HEADER_SIZE + sizeof(sctk_net_ibv_rc_rdma_request_ack_t)))
+  if (ibv_eager_limit < (RC_SR_HEADER_SIZE + sizeof(sctk_net_ibv_rc_rdma_request_ack_t)))
   {
       goto error;
   }
-  if (ibv_eager_threshold < (RC_SR_HEADER_SIZE + sizeof(sctk_net_ibv_rc_rdma_done_t)))
+  if (ibv_eager_limit < (RC_SR_HEADER_SIZE + sizeof(sctk_net_ibv_rc_rdma_done_t)))
   {
       goto error;
   }
@@ -163,7 +163,8 @@ void sctk_net_ibv_config_print()
   {
     fprintf(stderr,
         "############# IB CONFIGURATION #############\n"
-        "ibv_eager_threshold  = %d\n"
+        "ibv_eager_limit      = %d\n"
+        "ibv_frag_eager_limit = %d\n"
         "ibv_qp_tx_depth      = %d\n"
         "ibv_qp_rx_depth      = %d\n"
         "ibv_max_sg_sq        = %d\n"
@@ -171,6 +172,7 @@ void sctk_net_ibv_config_print()
         "ibv_max_inline       = %d\n"
         "ibv_max_ibufs        = %d\n"
         "ibv_max_srq_ibufs    = %d\n"
+        "ibv_size_ibufs_chunk = %d\n"
         "ibv_srq_credit_limit = %d\n"
         "ibv_srq_credit_thread_limit = %d\n"
         "ibv_rdvz_protocol    = %d\n"
@@ -181,7 +183,8 @@ void sctk_net_ibv_config_print()
         "ibv_rdma_depth       = %d\n"
         "ibv_rdma_dest_depth  = %d\n"
         "############# IB CONFIGURATION #############\n",
-        ibv_eager_threshold,
+        ibv_eager_limit,
+        ibv_frag_eager_limit,
         ibv_qp_tx_depth,
         ibv_qp_rx_depth,
         ibv_max_sg_sq,
@@ -189,6 +192,7 @@ void sctk_net_ibv_config_print()
         ibv_max_inline,
         ibv_max_ibufs,
         ibv_max_srq_ibufs,
+        ibv_size_ibufs_chunk,
         ibv_srq_credit_limit,
         ibv_srq_credit_thread_limit,
         ibv_rdvz_protocol,
@@ -205,8 +209,11 @@ void sctk_net_ibv_config_init()
 {
   char* value;
 
-  if ( (value = getenv("MPC_IBV_EAGER_THRESHOLD")) != NULL )
-    ibv_eager_threshold = atoi(value);
+  if ( (value = getenv("MPC_IBV_EAGER_LIMIT")) != NULL )
+    ibv_eager_limit = atoi(value);
+
+  if ( (value = getenv("MPC_IBV_FRAG_EAGER_LIMIT")) != NULL )
+    ibv_frag_eager_limit = atoi(value);
 
   if ( (value = getenv("MPC_IBV_QP_TX_DEPTH")) != NULL )
     ibv_qp_tx_depth = atoi(value);
@@ -260,6 +267,9 @@ void sctk_net_ibv_config_init()
 
   if ( (value = getenv("MPC_IBV_QP_TX_DEPTH")) != NULL )
     ibv_qp_tx_depth = atoi(value);
+
+  if ( (value = getenv("MPC_IBV_SIZE_IBUFS_CHUNK")) != NULL )
+    ibv_size_ibufs_chunk = atoi(value);
 
   /*
    * Check if the variables are well set and print them

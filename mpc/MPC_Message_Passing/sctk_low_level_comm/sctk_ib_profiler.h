@@ -31,7 +31,7 @@
 #define XSTR(X)  STR(X)
 #define STR(X)  #X
 
-#define IBV_ENABLE_PROFILE        1
+#define IBV_ENABLE_PROFILE        0
 
 typedef enum
 {

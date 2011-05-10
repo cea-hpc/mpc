@@ -25,8 +25,8 @@
 #ifndef __SCTK__INFINIBAND_CONFIG_H_
 #define __SCTK__INFINIBAND_CONFIG_H_
 
-extern unsigned int  ibv_eager_threshold;
-extern unsigned int  ibv_frag_eager_threshold;
+extern unsigned int  ibv_eager_limit;
+extern unsigned int  ibv_frag_eager_limit;
 extern unsigned int  ibv_qp_tx_depth;
 extern unsigned int  ibv_qp_rx_depth;
 extern unsigned int  ibv_cq_depth;

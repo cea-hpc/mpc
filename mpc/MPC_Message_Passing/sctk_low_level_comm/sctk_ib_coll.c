@@ -60,6 +60,10 @@ int* comm_world_ranks;
   {
     comm_world_ranks[i] = i;
   }
+
+  sctk_list_new(&com_entries[0].broadcast_fifo, 0, 0);
+  sctk_list_new(&com_entries[0].reduce_fifo, 0, 0);
+  sctk_list_new(&com_entries[0].init_barrier_fifo, 0, 0);
 }
 
 
@@ -83,17 +87,17 @@ void sctk_net_ibv_collective_new_com ( const sctk_internal_communicator_t * __co
   com_entry = &com_entries[__com->communicator_number];
 
   sctk_spinlock_lock(&com_entry->lock);
-  if (!&com_entry->broadcast_fifo)
+  if (!sctk_list_is_initialized(&com_entry->broadcast_fifo))
   {
     sctk_list_new(&com_entry->broadcast_fifo, 0, 0);
     assume(sctk_list_is_empty(&com_entry->broadcast_fifo));
   }
-  if (!&com_entry->reduce_fifo)
+  if (!sctk_list_is_initialized(&com_entry->reduce_fifo))
   {
     sctk_list_new(&com_entry->reduce_fifo, 0, 0);
     assume(sctk_list_is_empty(&com_entry->reduce_fifo));
   }
-  if (!&com_entry->init_barrier_fifo)
+  if (!sctk_list_is_initialized(&com_entry->init_barrier_fifo))
   {
     sctk_list_new(&com_entry->init_barrier_fifo, 0, 0);
     assume(sctk_list_is_empty(&com_entry->init_barrier_fifo));
@@ -627,7 +631,7 @@ sctk_net_ibv_broadcast ( sctk_collective_communications_t * com,
   size = elem_size * nb_elem;
   psn = sctk_net_ibv_sched_coll_psn_inc(IBV_BCAST, com->id);
 
-  //  if (size + RC_SR_HEADER_SIZE <= ibv_eager_threshold)
+  //  if (size + RC_SR_HEADER_SIZE <= ibv_eager_limit)
   sctk_net_ibv_broadcast_binomial (com, my_vp, elem_size, nb_elem, root, psn);
   //  else
   //    sctk_net_ibv_broadcast_scatter (com, my_vp, elem_size, nb_elem, root, psn);

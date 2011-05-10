@@ -184,8 +184,8 @@ sctk_net_rpc_unregister(void* addr, size_t size, int process, int is_retrieve)
   }
   /* unregister memory and remove list entry */
   rc = sctk_list_remove(&rpc_reg_mr_list, reg_mr_entry->list_elem);
-  sctk_free(reg_mr_entry);
   sctk_net_ibv_mmu_unregister(rail->mmu, reg_mr_entry->mmu_entry);
+  sctk_free(reg_mr_entry);
   assume(rc);
 
   sctk_list_unlock(&rpc_reg_mr_list);

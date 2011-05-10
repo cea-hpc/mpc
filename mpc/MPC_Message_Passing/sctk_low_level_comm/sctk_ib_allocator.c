@@ -300,7 +300,7 @@ sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
       req.dest_task);
 
   if ( size_with_header +
-      RC_SR_HEADER_SIZE <= ibv_eager_threshold) {
+      RC_SR_HEADER_SIZE <= ibv_eager_limit) {
     sctk_ibv_profiler_inc(IBV_EAGER_NB);
 
     /*
@@ -312,7 +312,7 @@ sctk_net_ibv_allocator_send_ptp_message ( sctk_thread_ptp_message_t * msg,
     sctk_net_ibv_comp_rc_sr_send_ptp_message (
         rc_sr_local, req);
 
-  } else if ( size <= ibv_frag_eager_threshold) {
+  } else if ( size <= ibv_frag_eager_limit) {
     sctk_ibv_profiler_inc(IBV_FRAG_EAGER_NB);
     sctk_ibv_profiler_add(IBV_FRAG_EAGER_SIZE, size_with_header);
 
@@ -380,7 +380,7 @@ sctk_net_ibv_allocator_send_coll_message (
 
   sctk_nodebug("Send collective message with size %lu", size);
 
-  if ( (size + RC_SR_HEADER_SIZE) <= ibv_eager_threshold) {
+  if ( (size + RC_SR_HEADER_SIZE) <= ibv_eager_limit) {
     sctk_ibv_profiler_inc(IBV_EAGER_NB);
 
     /*
@@ -389,7 +389,7 @@ sctk_net_ibv_allocator_send_coll_message (
     req.channel = IBV_CHAN_RC_SR;
     sctk_net_ibv_comp_rc_sr_send_ptp_message (
         rc_sr_local, req);
-  } else if ( size  <= ibv_frag_eager_threshold) {
+  } else if ( size  <= ibv_frag_eager_limit) {
     sctk_ibv_profiler_inc(IBV_FRAG_EAGER_NB);
     sctk_ibv_profiler_add(IBV_FRAG_EAGER_SIZE, size + sizeof(sctk_thread_ptp_message_t));
 

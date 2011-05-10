@@ -80,7 +80,7 @@ void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,
   assume(region);
 
   sctk_posix_memalign( (void**) &ptr, page_size,
-      nb_ibufs * ibv_eager_threshold);
+      nb_ibufs * ibv_eager_limit);
   assume(ptr);
 
   sctk_nodebug("size: %lu", nb_ibufs * sizeof(sctk_net_ibv_ibuf_region_t));
@@ -89,7 +89,7 @@ void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,
   assume(ibuf);
 
   memset (ibuf, 0, nb_ibufs * sizeof(sctk_net_ibv_ibuf_t));
-  memset (ptr, 0, nb_ibufs * ibv_eager_threshold);
+  memset (ptr, 0, nb_ibufs * ibv_eager_limit);
 
   region->ibuf = ibuf;
   region->next_region = NULL;
@@ -102,18 +102,18 @@ void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,
   {
     /* first allocation */
     ibuf_last_region = region;
-    sctk_ibv_profiler_add(IBV_IBUF_TOT_SIZE, nb_ibufs * (ibv_eager_threshold+sizeof(sctk_net_ibv_ibuf_t)));
+    sctk_ibv_profiler_add(IBV_IBUF_TOT_SIZE, nb_ibufs * (ibv_eager_limit+sizeof(sctk_net_ibv_ibuf_t)));
   } else {
     /* not the first allocation */
     ibuf_last_region = ibuf_last_region->next_region;
     sctk_ibv_profiler_inc(IBV_IBUF_CHUNKS);
-    sctk_ibv_profiler_add(IBV_IBUF_TOT_SIZE, nb_ibufs * (ibv_eager_threshold+sizeof(sctk_net_ibv_ibuf_t)));
+    sctk_ibv_profiler_add(IBV_IBUF_TOT_SIZE, nb_ibufs * (ibv_eager_limit+sizeof(sctk_net_ibv_ibuf_t)));
   }
 
   /* TODO: register memory for each region */
   sctk_nodebug("Local : %p", local);
   region->mmu_entry = sctk_net_ibv_mmu_register(rail, local, ptr,
-      nb_ibufs * ibv_eager_threshold);
+      nb_ibufs * ibv_eager_limit);
   sctk_nodebug("Reg %p registered. lkey : %lu", ptr, region->mmu_entry->mr->lkey);
   assume (region->mmu_entry);
 
@@ -128,7 +128,7 @@ void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,
     ibuf_ptr->desc.next = ((sctk_net_ibv_ibuf_t*) ibuf + i + 1);
 
     ibuf_ptr->size = 0;
-    ibuf_ptr->buffer = (unsigned char*) ((char*) ptr + (i*ibv_eager_threshold));
+    ibuf_ptr->buffer = (unsigned char*) ((char*) ptr + (i*ibv_eager_limit));
     assume(ibuf_ptr->buffer);
     ibuf_ptr->flag = FREE_FLAG;
   }
@@ -138,7 +138,7 @@ void sctk_net_ibv_ibuf_init( sctk_net_ibv_qp_rail_t  *rail,
   ibuf_ptr->region = region;
   ibuf_ptr->desc.next = ibuf_free_header;
   ibuf_ptr->size = 0;
-  ibuf_ptr->buffer = (unsigned char*) ((char*) ptr + (nb_ibufs - 1) * ibv_eager_threshold);
+  ibuf_ptr->buffer = (unsigned char*) ((char*) ptr + (nb_ibufs - 1) * ibv_eager_limit);
   assume(ibuf_ptr->buffer);
   ibuf_ptr->flag = FREE_FLAG;
 
@@ -278,7 +278,7 @@ int sctk_net_ibv_ibuf_srq_post(
       /* if it's still impossible, we fail */
       if (rc != 0)
       {
-        sctk_error("Cannot post more srq buffers.\n Please increase the value of MPC_IBV_EAGER_THRESHOLD");
+        sctk_error("Cannot post more srq buffers.\n Please increase the value of MPC_IBV_EAGER_LIMIT");
         assume(0);
       }
     }
@@ -322,7 +322,7 @@ void sctk_net_ibv_ibuf_recv_init(
 
   ibuf->desc.wr.send.num_sge = 1;
   ibuf->desc.wr.send.sg_list = &(ibuf->desc.sg_entry);
-  ibuf->desc.sg_entry.length = ibv_eager_threshold;
+  ibuf->desc.sg_entry.length = ibv_eager_limit;
 
   ibuf->desc.sg_entry.lkey = ibuf->region->mmu_entry->mr->lkey;
   ibuf->desc.sg_entry.addr = (uintptr_t) (ibuf->buffer);
@@ -341,7 +341,7 @@ void sctk_net_ibv_ibuf_rdma_recv_init(
 
   ibuf->desc.wr.send.num_sge = 1;
   ibuf->desc.wr.send.sg_list = &(ibuf->desc.sg_entry);
-  ibuf->desc.sg_entry.length = ibv_eager_threshold;
+  ibuf->desc.sg_entry.length = ibv_eager_limit;
   ibuf->desc.sg_entry.lkey = lkey;
   ibuf->desc.sg_entry.addr = (uintptr_t) local_address;
 
