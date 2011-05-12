@@ -201,11 +201,12 @@ static void sctk_net_ibv_frag_eager_print_list(struct sctk_list *list)
   sctk_net_ibv_frag_eager_entry_t* entry;
 
   tmp = list->head;
+  sctk_debug("HEAD : %p", tmp);
   while (tmp) {
     entry = (sctk_net_ibv_frag_eager_entry_t*) tmp->elem;
 
-    sctk_warning("PSN FOUND %lu (total buffs:%d, buff_nb:%d)", entry->psn,
-        entry->total_buffs, entry->buff_nb);
+    sctk_warning("PSN FOUND %lu (total buffs:%d, buff_nb:%d, src:%d, dest:%d) next:%p", entry->psn,
+        entry->total_buffs, entry->buff_nb, entry->src_task, entry->dest_task, tmp->p_next);
 
     tmp = tmp->p_next;
   }
@@ -220,7 +221,7 @@ static void sctk_net_ibv_frag_eager_print_list(struct sctk_list *list)
 sctk_net_ibv_comp_rc_sr_copy_msg(sctk_net_ibv_ibuf_header_t* msg_header, struct sctk_list *list)
 {
   struct sctk_list_elem *tmp = NULL;
-  sctk_net_ibv_frag_eager_entry_t* entry;
+  sctk_net_ibv_frag_eager_entry_t* entry = NULL;
 
   sctk_list_lock(list);
   tmp = list->head;
@@ -231,11 +232,12 @@ sctk_net_ibv_comp_rc_sr_copy_msg(sctk_net_ibv_ibuf_header_t* msg_header, struct 
     sctk_nodebug("PSN FOUND %lu", entry->psn);
     if (msg_header->psn == entry->psn)
     {
-      memcpy( (char*) entry->msg + entry->current_copied, RC_SR_PAYLOAD(msg_header), msg_header->payload_size);
+        memcpy( (char*) entry->msg + entry->current_copied, RC_SR_PAYLOAD(msg_header), msg_header->payload_size);
+
       entry->current_copied+=msg_header->payload_size;
       entry->buff_nb = msg_header->buff_nb;
 
-      sctk_nodebug("Frag msg copied (size: %lu, psn %lu, copied %lu task %d)", msg_header->payload_size, msg_header->psn, entry->current_copied, dest_task);
+      sctk_nodebug("Frag msg copied (size: %lu, psn %lu, copied %lu task %d)", msg_header->payload_size, msg_header->psn, entry->current_copied, msg_header->dest_task);
 
       sctk_list_unlock(list);
       return entry;
@@ -256,6 +258,7 @@ sctk_net_ibv_comp_rc_sr_copy_msg(sctk_net_ibv_ibuf_header_t* msg_header, struct 
  *  \return
  */
 static sctk_spinlock_t frag_lock = SCTK_SPINLOCK_INITIALIZER;
+
   static void
 sctk_net_ibv_comp_rc_sr_frag_recv(sctk_net_ibv_ibuf_header_t* msg_header, int lookup_mode)
 {
@@ -269,24 +272,23 @@ sctk_net_ibv_comp_rc_sr_frag_recv(sctk_net_ibv_ibuf_header_t* msg_header, int lo
 
   sctk_spinlock_lock(&all_tasks_lock);
   list =  all_tasks[local_nb].frag_eager_list[msg_header->src_task];
+  /* FIXME: dynamic list creation */
+  if (!list)
+  {
+    sctk_nodebug("Create new entry");
+    list =  sctk_malloc(sizeof(struct sctk_list));
+    memset(list, 0, sizeof(struct sctk_list));
+    assume(list);
+
+    all_tasks[local_nb].frag_eager_list[msg_header->src_task] = list;
+    sctk_list_new(list, 0, 0);
+  }
   sctk_spinlock_unlock(&all_tasks_lock);
 
   sctk_nodebug("all_tasks:%p, List:%p, local_nb:%d, src_task:%d", all_tasks, list, local_nb, msg_header->src_task);
 
   if (msg_header->buff_nb == 1)
   {
-    /* FIXME: dynamic list creation */
-    if (!list)
-    {
-      sctk_nodebug("Create new entry");
-      list =  sctk_malloc(sizeof(struct sctk_list));
-      memset(list, 0, sizeof(struct sctk_list));
-      assume(list);
-
-      all_tasks[local_nb].frag_eager_list[msg_header->src_task] = list;
-      sctk_list_new(list, 0, 0);
-    }
-
     entry = sctk_net_ibv_comp_rc_sr_frag_allocate(msg_header);
 
     sctk_list_lock(list);
@@ -385,6 +387,7 @@ sctk_net_ibv_comp_rc_sr_frag_recv(sctk_net_ibv_ibuf_header_t* msg_header, int lo
     }
     sctk_nodebug("READ %lu for task %d", entry->psn, entry->dest_task);
   }
+
 }
 
   sctk_net_ibv_qp_local_t*
@@ -743,7 +746,7 @@ sctk_net_ibv_rc_sr_poll_send(
    * queued WQE.
    */
   sctk_net_ibv_qp_send_free_wqe(ibuf->remote);
-  sctk_net_ibv_qp_send_post_pending(ibuf->remote);
+  sctk_net_ibv_qp_send_post_pending(ibuf->remote, 1);
 
   switch (ibuf->flag)
   {

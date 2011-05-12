@@ -144,7 +144,7 @@ struct ibv_qp*
 sctk_net_ibv_qp_init(sctk_net_ibv_qp_local_t* local,
     sctk_net_ibv_qp_remote_t* remote, struct ibv_qp_init_attr* attr, int rank);
 
-int sctk_net_ibv_qp_send_post_pending(sctk_net_ibv_qp_remote_t* remote);
+int sctk_net_ibv_qp_send_post_pending(sctk_net_ibv_qp_remote_t* remote, int need_lock);
 /*-----------------------------------------------------------
  *  Completion queue
  *----------------------------------------------------------*/

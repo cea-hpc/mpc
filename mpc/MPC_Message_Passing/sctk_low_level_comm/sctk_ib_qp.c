@@ -107,20 +107,24 @@ sctk_net_ibv_qp_pick_rail(int rail_nb)
   return rail;
 }
 
-int sctk_net_ibv_qp_send_post_pending(sctk_net_ibv_qp_remote_t* remote)
+int sctk_net_ibv_qp_send_post_pending(sctk_net_ibv_qp_remote_t* remote, int need_lock)
 {
   struct sctk_list_elem *tmp, *to_free;
   sctk_net_ibv_ibuf_t* ibuf;
   int rc;
 
-  sctk_thread_mutex_lock(&remote->send_wqe_lock);
+  if (need_lock)
+    sctk_thread_mutex_lock(&remote->send_wqe_lock);
+
   tmp = remote->pending_send_wqe.head;
   while (tmp) {
 
     if ( (remote->ibv_got_send_wqe + 1) > ibv_qp_tx_depth)
     {
-      sctk_thread_mutex_unlock(&remote->send_wqe_lock);
-      return 0;
+      if (need_lock)
+        sctk_thread_mutex_unlock(&remote->send_wqe_lock);
+
+      return 1;
     }
 
     ibuf = (sctk_net_ibv_ibuf_t*) tmp->elem;
@@ -138,7 +142,9 @@ int sctk_net_ibv_qp_send_post_pending(sctk_net_ibv_qp_remote_t* remote)
     sctk_list_remove(&remote->pending_send_wqe, to_free);
   }
 
-  sctk_thread_mutex_unlock(&remote->send_wqe_lock);
+  if (need_lock)
+    sctk_thread_mutex_unlock(&remote->send_wqe_lock);
+
   return 0;
 }
 
@@ -156,14 +162,17 @@ void sctk_net_ibv_qp_send_free_wqe(sctk_net_ibv_qp_remote_t* remote )
 int sctk_net_ibv_qp_send_get_wqe(int dest_process, sctk_net_ibv_ibuf_t* ibuf)
 {
   sctk_net_ibv_qp_remote_t* remote;
+  int rc;
 
     /* check if the TCP connection is active. If not, connect peers */
   remote = sctk_net_ibv_comp_rc_sr_check_and_connect(dest_process);
 
   ibuf->remote = remote;
-  int rc;
 
   sctk_thread_mutex_lock(&remote->send_wqe_lock);
+  sctk_net_ibv_qp_send_post_pending(remote, 0);
+
+
   if ( (remote->ibv_got_send_wqe + 1) > ibv_qp_tx_depth) {
     sctk_nodebug("No more WQE available");
     sctk_list_push(&remote->pending_send_wqe, ibuf);
