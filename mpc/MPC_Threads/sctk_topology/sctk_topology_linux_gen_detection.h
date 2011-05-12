@@ -23,6 +23,7 @@
 #define __SCTK_TOPOLOGY_LINUX_GEN_DETECTION_H_
 
 #include <stdio.h>
+#include <dirent.h>
 #include "sctk_config.h"
 #include "sctk_launch.h"
 
@@ -338,7 +339,6 @@ sctk_build_topology_tree ()
 {
   char *sys_dir = NULL;
   int nodes = 0;
-  FILE *fd = NULL;
   topology_node_t *system;
 
   sctk_determine_processor_number ();
@@ -346,36 +346,43 @@ sctk_build_topology_tree ()
     realloc (sctk_cpuid_list,
 	     sctk_processor_number_on_node * sizeof (topology_node_t *));
 
-  sys_dir = malloc (SMALL_BUFFER_SIZE);
   system = sctk_create_node ("system", 0);
 
-  do
-    {
-      topology_node_t *node;
-      if (fd)
-	fclose (fd);
+  struct dirent *entry;
+  DIR *dir;
 
-      sprintf (sys_dir, "/sys/devices/system/node/node%d", nodes);
-      fd = fopen (sys_dir, "r");
+  dir = opendir( "/sys/devices/system/node/" );
+  
+  if( !dir )
+  {
+    sctk_error("Failed to open /sys/devices/system/node/ to read topology");
+    abort();
+  }
 
-      if (fd)
-	{
-	  node = sctk_create_node ("node", nodes);
-	  sctk_add_son (system, node);
-	  if (sctk_find_cpus (node))
-	    {
-	      return NULL;
-	    }
-	}
+  int real_node = 0;
 
-      nodes++;
-    }
-  while (fd != NULL);
-  nodes--;
+  while((entry = readdir(dir)))
+  {
+    topology_node_t *node;
+
+    if( !strstr(entry->d_name, "node") || strlen(entry->d_name) < 5 )
+      continue;
+
+    real_node = atoi( strstr(entry->d_name, "node") + 4 );
+
+    node = sctk_create_node ("node", real_node);
+    sctk_add_son (system, node);
+    if (sctk_find_cpus (node))
+      {
+        return NULL;
+      }
 
 
+    nodes++;
+  }
 
-  free (sys_dir);
+  closedir(dir);
+
   return system;
 }
 
@@ -508,7 +515,7 @@ sctk_update_numa_linux_gen ()
       return 0;
     }
 
-/*   sctk_view_tree(system); */
+  /* sctk_view_tree(system); */
   if (sctk_update_numa_topology (system))
     {
       sctk_init_sctk_cpuinfos ();
