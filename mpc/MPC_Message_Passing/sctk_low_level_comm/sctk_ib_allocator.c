@@ -389,9 +389,9 @@ sctk_net_ibv_allocator_send_coll_message (
     req.channel = IBV_CHAN_RC_SR;
     sctk_net_ibv_comp_rc_sr_send_ptp_message (
         rc_sr_local, req);
-  } else if ( size  <= ibv_frag_eager_limit) {
+  } else if ( (size  + RC_SR_HEADER_SIZE )<= ibv_frag_eager_limit) {
     sctk_ibv_profiler_inc(IBV_FRAG_EAGER_NB);
-    sctk_ibv_profiler_add(IBV_FRAG_EAGER_SIZE, size + sizeof(sctk_thread_ptp_message_t));
+    sctk_ibv_profiler_add(IBV_FRAG_EAGER_SIZE, size + RC_SR_HEADER_SIZE);
 
     /*
      * FRAG MSG

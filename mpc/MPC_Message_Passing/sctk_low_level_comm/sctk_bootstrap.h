@@ -27,9 +27,7 @@ extern "C"
 #endif
 
   enum bootstrap_mode {
-#ifdef MPC_USE_SLURM
     PMI,
-#endif
     TCP,
   };
 

@@ -30,10 +30,6 @@
 #include "sctk_config.h"
 #include "sctk_ib_comp_rc_sr.h"
 #include "sctk_ib_comp_rc_rdma.h"
-/* list of broadcast entries */
-//struct sctk_list  broadcast_fifo;
-//struct sctk_list  init_barrier_fifo;
-//struct sctk_list  reduce_fifo;
 
 /*-----------------------------------------------------------
  *  COMMUNICATOR STRUCTURES
@@ -63,6 +59,7 @@ typedef struct
   /* pending msg for collective */
   struct sctk_list  broadcast_fifo;
   struct sctk_list  init_barrier_fifo;
+  struct sctk_list  barrier_fifo;
   struct sctk_list  reduce_fifo;
 
   /* lock between threads */
@@ -81,7 +78,7 @@ void sctk_net_ibv_collective_new_com ( const sctk_internal_communicator_t * __co
   sctk_net_ibv_collective_push(struct sctk_list* list, sctk_net_ibv_ibuf_header_t* msg);
 
   void*
-  sctk_net_ibv_collective_push_rc_sr(struct sctk_list* list, sctk_net_ibv_ibuf_t* ibuf, int *release_buffer);
+  sctk_net_ibv_collective_push_rc_sr(struct sctk_list* list, sctk_net_ibv_ibuf_t* ibuf, int *release_buffer, sctk_net_ibv_ibuf_ptp_type_t ptp_type);
 
   void*
   sctk_net_ibv_collective_push_rc_rdma(struct sctk_list* list, sctk_net_ibv_rc_rdma_entry_t* entry);

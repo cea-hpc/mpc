@@ -64,8 +64,15 @@ int* comm_world_ranks;
   sctk_list_new(&com_entries[0].broadcast_fifo, 0, 0);
   sctk_list_new(&com_entries[0].reduce_fifo, 0, 0);
   sctk_list_new(&com_entries[0].init_barrier_fifo, 0, 0);
+  sctk_list_new(&com_entries[0].barrier_fifo, 0, 0);
 }
 
+#define INIT_LIST(list) \
+if (!list)  \
+{                                 \
+  sctk_list_new(list, 0, 0);        \
+  assume(sctk_list_is_empty(list)); \
+}
 
 /**
  *  Function which updates a communicator. In fact, it resets sequence numbers
@@ -102,6 +109,12 @@ void sctk_net_ibv_collective_new_com ( const sctk_internal_communicator_t * __co
     sctk_list_new(&com_entry->init_barrier_fifo, 0, 0);
     assume(sctk_list_is_empty(&com_entry->init_barrier_fifo));
   }
+  if (!&com_entry->barrier_fifo)
+  {
+    sctk_list_new(&com_entry->barrier_fifo, 0, 0);
+    assume(sctk_list_is_empty(&com_entry->barrier_fifo));
+  }
+
   sctk_spinlock_unlock(&com_entry->lock);
 
 /* We reset counters for the communicator */
@@ -115,7 +128,7 @@ void sctk_net_ibv_collective_new_com ( const sctk_internal_communicator_t * __co
  *  \return
  */
   void*
-  sctk_net_ibv_collective_push_rc_sr(struct sctk_list* list, sctk_net_ibv_ibuf_t* ibuf, int *release_buffer)
+  sctk_net_ibv_collective_push_rc_sr(struct sctk_list* list, sctk_net_ibv_ibuf_t* ibuf, int *release_buffer, sctk_net_ibv_ibuf_ptp_type_t ptp_type)
 {
   sctk_net_ibv_collective_pending_t* pending = NULL;
   sctk_net_ibv_ibuf_header_t* msg_header;
@@ -225,8 +238,15 @@ void sctk_net_ibv_collective_new_com ( const sctk_internal_communicator_t * __co
     sctk_list_push(list, pending);
     sctk_list_unlock(list);
 
-    /* We don't release the current buffer*/
-    *release_buffer = 0;
+    /* if this is a simple message barrier, we
+     * release the buffer */
+    if (ptp_type == IBV_BARRIER)
+    {
+      *release_buffer = 1;
+    } else {
+      /* We don't release the current buffer*/
+      *release_buffer = 0;
+    }
   }
 
   return pending;
@@ -913,7 +933,6 @@ sctk_net_ibv_n_way_dissemination_barrier_rc_sr( sctk_collective_communications_t
 {
   int mask;
   int i;
-  sctk_net_ibv_ibuf_t* ibuf;
   int local_rank = -1;
   int index = 0;
   int com_size;
@@ -956,20 +975,18 @@ sctk_net_ibv_n_way_dissemination_barrier_rc_sr( sctk_collective_communications_t
     sctk_net_ibv_allocator_send_coll_message(
         rail, rc_sr_local, com,
         NULL,
-        local_ranks[dst], 0, IBV_BCAST_INIT_BARRIER, psn);
+        local_ranks[dst], 0, IBV_BARRIER, psn);
 
     /* receive */
     sctk_nodebug("Wait from comm %d", com->id);
-    COLLECTIVE_LOOKUP(&com_entries[com->id].init_barrier_fifo, local_ranks[src], psn, msg);
+    COLLECTIVE_LOOKUP(&com_entries[com->id].barrier_fifo, local_ranks[src], psn, msg);
 
-    /* read the content of the message */
-    if (msg->type == RC_SR_EAGER)
-    {
-      ibuf = (sctk_net_ibv_ibuf_t*) msg->payload;
-      /* restore buffers */
-      sctk_net_ibv_ibuf_release(ibuf, 1);
-      sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit, 1);
-    }
+    /* We assume that the message to receive
+     * is a eager message*/
+    assume (msg->type == RC_SR_EAGER);
+    /* we dont need to release the buffer.
+     * It has been released before */
+    sctk_free(msg);
 
     mask <<= 1;
   }
@@ -1055,12 +1072,12 @@ sctk_net_ibv_n_way_dissemination_barrier_rc_rdma ( sctk_collective_communication
 sctk_net_ibv_barrier ( sctk_collective_communications_t * com,
     sctk_virtual_processor_t * my_vp )
 {
-//  if (com->id == 0)
-//  {
-//    sctk_net_ibv_n_way_dissemination_barrier_rc_rdma(com, my_vp);
-//  } else {
-    sctk_net_ibv_n_way_dissemination_barrier_rc_sr(com, my_vp);
-//  }
+  //  if (com->id == 0)
+  //  {
+  //    sctk_net_ibv_n_way_dissemination_barrier_rc_rdma(com, my_vp);
+  //  } else {
+  sctk_net_ibv_n_way_dissemination_barrier_rc_sr(com, my_vp);
+  //  }
 }
 
 #endif

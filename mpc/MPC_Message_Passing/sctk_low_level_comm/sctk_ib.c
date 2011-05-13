@@ -27,8 +27,6 @@
 
 #ifdef MPC_USE_INFINIBAND
 
-#include <slurm/pmi.h>
-
 #include "sctk_thread.h"
 #include "sctk_rpc.h"
 #include "sctk_mpcrun_client.h"
@@ -102,7 +100,7 @@ sctk_net_init_driver_infiniband (int *argc, char ***argv)
   /* message numbering */
   sctk_net_ibv_sched_init();
 
-  PMI_Barrier();
+  sctk_bootstrap_barrier();
 
   /* initialization of collective */
   sctk_net_ibv_collective_init();
@@ -127,7 +125,7 @@ sctk_net_init_driver_infiniband (int *argc, char ***argv)
   /* initialization of RPC structures */
   sctk_net_rpc_init();
 
-  PMI_Barrier();
+  sctk_bootstrap_barrier();
 }
 
 #define PRINT_ATTR(name_s,name) \

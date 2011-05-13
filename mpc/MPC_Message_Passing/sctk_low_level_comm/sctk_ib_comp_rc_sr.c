@@ -843,24 +843,29 @@ sctk_net_ibv_rc_sr_poll_recv(
           sctk_nodebug("POLL Broadcast msg received for comm %d",
               msg_header->com_id);
           sctk_net_ibv_collective_push_rc_sr(
-              &com_entries[msg_header->com_id].broadcast_fifo, ibuf, &release_buffer);
+              &com_entries[msg_header->com_id].broadcast_fifo, ibuf, &release_buffer, msg_header->ibuf_type);
           break;
 
         case IBV_REDUCE:
           sctk_nodebug("POLL Reduce msg received for comm %d",
               msg_header->com_id);
           sctk_net_ibv_collective_push_rc_sr(
-              &com_entries[msg_header->com_id].reduce_fifo, ibuf, &release_buffer);
+              &com_entries[msg_header->com_id].reduce_fifo, ibuf, &release_buffer, msg_header->ibuf_type);
           break;
 
         case IBV_BCAST_INIT_BARRIER:
           sctk_nodebug("Coll id: %d -> %p", msg_header->com_id, &com_entries[msg_header->com_id].init_barrier_fifo);
           sctk_nodebug("Broadcast barrier msg received from com %d", msg_header->com_id);
           sctk_net_ibv_collective_push_rc_sr(
-              &com_entries[msg_header->com_id].init_barrier_fifo, ibuf, &release_buffer);
-          /* FIXME Commented but is it useful? */
-          //          release_buffer = 0;
+              &com_entries[msg_header->com_id].init_barrier_fifo, ibuf, &release_buffer, msg_header->ibuf_type);
           break;
+
+        case IBV_BARRIER:
+          sctk_nodebug("Barrier msg received from com %d", msg_header->com_id);
+          sctk_net_ibv_collective_push_rc_sr(
+              &com_entries[msg_header->com_id].barrier_fifo, ibuf, &release_buffer, msg_header->ibuf_type);
+          break;
+
 
         default:
           assume(0);

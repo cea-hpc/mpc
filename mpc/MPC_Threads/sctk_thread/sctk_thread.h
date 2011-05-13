@@ -124,7 +124,7 @@ extern "C"
   void __MPC_init_types (void);
 
 #define sctk_user_data_types 50
-#define sctk_user_data_types_max 100
+#define sctk_user_data_types_max 265
 
   extern volatile unsigned sctk_long_long sctk_timer;
 

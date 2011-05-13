@@ -23,8 +23,6 @@
 
 #ifdef MPC_USE_INFINIBAND
 
-#include <slurm/pmi.h>
-
 #include "sctk_bootstrap.h"
 
 #include "sctk_ib_cm.h"
