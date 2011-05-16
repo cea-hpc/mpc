@@ -109,7 +109,7 @@ void sctk_net_ibv_collective_new_com ( const sctk_internal_communicator_t * __co
     sctk_list_new(&com_entry->init_barrier_fifo, 0, 0);
     assume(sctk_list_is_empty(&com_entry->init_barrier_fifo));
   }
-  if (!&com_entry->barrier_fifo)
+  if (!sctk_list_is_initialized(&com_entry->barrier_fifo))
   {
     sctk_list_new(&com_entry->barrier_fifo, 0, 0);
     assume(sctk_list_is_empty(&com_entry->barrier_fifo));
