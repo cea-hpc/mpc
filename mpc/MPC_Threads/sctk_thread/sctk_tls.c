@@ -111,7 +111,8 @@ typedef struct
   tls_level level ;
   volatile size_t toenter ;
   /* total number of VPs on this level */
-  volatile size_t barrier_entered ;
+  volatile size_t barrier_entered[2] ;
+  volatile size_t barrier_generation ;
   /* number of VPs that entered the hls barrier */ 
   volatile size_t single_entered[MAX_ACTIVE_SINGLE];
   volatile size_t single_generation[MAX_ACTIVE_SINGLE];
@@ -144,7 +145,9 @@ sctk_hls_init_level(hls_level * level)
 {
 	int i ;
 	sctk_tls_init_level(&level->level);
-	level->barrier_entered = 0 ;
+	level->barrier_entered[0] = 0 ;
+	level->barrier_entered[1] = 0 ;
+	level->barrier_generation = 0 ;
 	level->toenter = 0 ;
 	/* toenter is to be filled by sctk_hls_build_repository */
 	for ( i = 0 ; i < MAX_ACTIVE_SINGLE ; ++i ) {
@@ -431,7 +434,7 @@ void sctk_hls_build_repository ()
   const int numa_number   = 2 ;
   const int socket_number = 2 ;
   const int cache_number  = 2 ;
-  const int core_number   = 8 ;
+  const int core_number   = 12 ;
   const int total_level_number = 1 + numa_number + socket_number
                                  + cache_number + core_number ;
 
@@ -469,7 +472,7 @@ void sctk_hls_checkout_on_vp ()
   const int numa_number   = 2 ;
   const int socket_number = 2 ;
   const int cache_number  = 2 ;
-  const int core_number   = 8 ;
+  const int core_number   = 12 ;
   const int core_id       = sctk_thread_get_vp() ;
   const int numa_id       = sctk_get_node_from_cpu(core_id) ;
   const int socket_id     = 0 ;
@@ -712,27 +715,6 @@ __sctk__tls_get_addr__core_scope (size_t m, size_t offset)
 #error "Architecture not available for TLS support"
 #endif
 
-void 
-__sctk__hls_barrier ( sctk_hls_scope_t scope ) {
-	/* TODO: synchronize tasks on same VP */
-	/* we assume only one task per VP */
-	hls_level * const level = sctk_hls[scope];
-	
-	sctk_nodebug ("call to hls barrier with scope %d", scope ) ;
-
-	if ( scope == sctk_hls_core_scope )
-		return ;
-
-	sctk_spinlock_lock ( &level->level.lock ) ;
-	if ( level->barrier_entered == level->toenter - 1 ) {
-		level->barrier_entered = 0 ;
-		sctk_spinlock_unlock ( &level->level.lock ) ;
-	}else{
-		level->barrier_entered += 1 ;
-		sctk_spinlock_unlock ( &level->level.lock ) ;
-		sctk_thread_wait_for_value ( &level->barrier_entered, 0 );
-	}
-}
 
 #if 0
 int
@@ -769,24 +751,46 @@ __sctk__hls_single ( sctk_hls_scope_t scope ) {
 }
 #endif
 
+void __sctk__hls_single_done ( sctk_hls_scope_t scope ) ;
+
 int
 __sctk__hls_single ( sctk_hls_scope_t scope ) {
 	/* TODO: several tasks on same VP ? */
 	hls_level * const level = sctk_hls[scope];
+	const size_t generation = level->barrier_generation;
 	
-	sctk_nodebug ("call to hls single with scope %d", scope) ;
+	sctk_debug ("call to hls single with scope %d", scope) ;
 	
 	if ( scope == sctk_hls_core_scope )
 		return 1;
+	
+	if ( scope == sctk_hls_node_scope ) {
+		if ( __sctk__hls_single ( sctk_hls_numa_scope ) ) {
+			sctk_spinlock_lock ( &level->level.lock ) ;
+			if ( level->barrier_entered[generation] == 1 ) {
+				sctk_spinlock_unlock ( &level->level.lock ) ;
+				return 1;
+			}else{
+				level->barrier_entered[generation] = 1 ;
+				sctk_spinlock_unlock ( &level->level.lock ) ;
+				while ( level->barrier_entered[generation] != 0 )
+					sctk_thread_yield();
+				__sctk__hls_single_done ( sctk_hls_numa_scope ) ;
+			}
+		}
+		return ;
+	}
 
 	sctk_spinlock_lock ( &level->level.lock ) ;
-	if ( level->barrier_entered == level->toenter - 1 ) {
+	if ( level->barrier_entered[generation] == level->toenter - 1 ) {
 		sctk_spinlock_unlock ( &level->level.lock ) ;
 		return 1;
 	}else{
-		level->barrier_entered += 1 ;
+		level->barrier_entered[generation] += 1 ;
 		sctk_spinlock_unlock ( &level->level.lock ) ;
-		sctk_thread_wait_for_value ( &level->barrier_entered, 0 );
+		/* sctk_thread_wait_for_value ( &level->barrier_entered[generation], 0 ); */
+		while ( level->barrier_entered[generation] != 0 )
+			sctk_thread_yield() ;
 		return 0;
 	}
 }
@@ -794,14 +798,67 @@ __sctk__hls_single ( sctk_hls_scope_t scope ) {
 void
 __sctk__hls_single_done ( sctk_hls_scope_t scope ) {
 	hls_level * const level = sctk_hls[scope];
+	const size_t generation = level->barrier_generation;
 	
-	sctk_nodebug ("call to hls single done with scope %d", scope) ;
+	sctk_debug ("call to hls single done with scope %d", scope) ;
 	
 	if ( scope == sctk_hls_core_scope )
 		return ;
 
-	level->barrier_entered = 0 ;
+	if ( scope == sctk_hls_node_scope ) {
+		level->barrier_generation = 1 - generation ;
+		level->barrier_entered[generation] = 0 ;
+		__sctk__hls_single_done ( sctk_hls_numa_scope ) ;
+		return ;
+	}
+
+	level->barrier_generation = 1 - generation ;
+	level->barrier_entered[generation] = 0 ;
 	return ;
+}
+
+void 
+__sctk__hls_barrier ( sctk_hls_scope_t scope ) {
+	/* TODO: synchronize tasks on same VP */
+	/* we assume only one task per VP */
+	hls_level * const level = sctk_hls[scope];
+	const size_t generation = level->barrier_generation ;
+	
+	sctk_nodebug ("call to hls barrier with scope %d", scope ) ;
+
+	if ( scope == sctk_hls_core_scope )
+		return ;
+
+	if ( scope == sctk_hls_node_scope ) {
+		if ( __sctk__hls_single ( sctk_hls_numa_scope ) ) {
+			sctk_spinlock_lock ( &level->level.lock ) ;
+			if ( level->barrier_entered[generation] == 1 ) {
+				sctk_spinlock_unlock ( &level->level.lock ) ;
+				level->barrier_generation = 1 - generation ;
+				level->barrier_entered[generation] = 0 ;
+			}else{
+				level->barrier_entered[generation] = 1 ;
+				sctk_spinlock_unlock ( &level->level.lock ) ;
+				while ( level->barrier_entered[generation] != 0 )
+					sctk_thread_yield();
+			}
+			__sctk__hls_single_done ( sctk_hls_numa_scope ) ;
+		}
+		return ;
+	}
+
+	sctk_spinlock_lock ( &level->level.lock ) ;
+	if ( level->barrier_entered[generation] == level->toenter - 1 ) {
+		sctk_spinlock_unlock ( &level->level.lock ) ;
+		level->barrier_generation = 1 - generation ;
+		level->barrier_entered[generation] = 0 ;
+	}else{
+		level->barrier_entered[generation] += 1 ;
+		sctk_spinlock_unlock ( &level->level.lock ) ;
+		/* sctk_thread_wait_for_value ( &level->barrier_entered[generation], 0 ); */
+		while ( level->barrier_entered[generation] != 0 )
+			sctk_thread_yield() ;
+	}
 }
 
 int
@@ -826,7 +883,6 @@ __sctk__hls_single_nowait ( sctk_hls_scope_t scope ) {
 		/* in advance, wait for last thread of corresponding single */
 		sctk_spinlock_unlock ( &level->level.lock ) ;
 		reacquire_lock = 1;
-		/* try to use sctk_wait_for_value */
 		/* same as *generation != 0 && *generation != single_nowait_counter[scope] */
 		while ( ( generation_cached = *generation ) != 0 && generation_cached != single_nowait_counter[scope] ) {
 			sctk_thread_yield();
