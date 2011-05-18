@@ -440,7 +440,6 @@ sctk_is_numa_node ()
 
 /*! \brief Return the number of NUMA nodes
 */
-  int
 sctk_get_numa_node_number ()
 {
   return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) ;
