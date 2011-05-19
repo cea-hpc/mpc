@@ -756,7 +756,6 @@ __sctk__hls_single ( sctk_hls_scope_t scope ) {
 	}else{
 		level->barrier_entered[generation] += 1 ;
 		sctk_spinlock_unlock ( &level->level.lock ) ;
-		/* sctk_thread_wait_for_value ( &level->barrier_entered[generation], 0 ); */
 		while ( level->barrier_entered[generation] != 0 )
 			sctk_thread_yield() ;
 		return 0;
@@ -817,10 +816,10 @@ __sctk__hls_barrier ( sctk_hls_scope_t scope ) {
 
 	sctk_spinlock_lock ( &level->level.lock ) ;
 	if ( level->barrier_entered[generation] == level->toenter - 1 ) {
-		sctk_spinlock_unlock ( &level->level.lock ) ;
 		level->barrier_generation = 1 - generation ;
 		asm volatile("" ::: "memory");
 		level->barrier_entered[generation] = 0 ;
+		sctk_spinlock_unlock ( &level->level.lock ) ;
 	}else{
 		level->barrier_entered[generation] += 1 ;
 		sctk_spinlock_unlock ( &level->level.lock ) ;
