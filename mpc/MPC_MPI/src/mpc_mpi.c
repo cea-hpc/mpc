@@ -5712,18 +5712,12 @@ __INTERNAL__PMPI_Cart_rank (MPI_Comm comm, int *coords, int *rank, int locked)
 	sctk_spinlock_unlock (&(task_specific->lock));
       MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
     }
-
-  for (i = 0; i < task_specific->data[comm].cart.ndims - 1; i++)
-    {
-      dims_coef *= task_specific->data[comm].cart.dims[i];
-    }
-
-  for (i = 0; i < task_specific->data[comm].cart.ndims; i++)
-    {
-      loc_rank += coords[i] * dims_coef;
-      sctk_nodebug ("coords[%d] = %d", i, coords[i]);
-      dims_coef = dims_coef / task_specific->data[comm].cart.dims[i];
-    }
+  
+  for (i = task_specific->data[comm].cart.ndims - 1 ; i >= 0 ; i--)
+	{
+	  loc_rank += coords[i] * dims_coef ;
+	  dims_coef *= task_specific->data[comm].cart.dims[i] ;
+	}
 
   *rank = loc_rank;
   sctk_nodebug ("rank %d", loc_rank);
@@ -5738,7 +5732,8 @@ __INTERNAL__PMPI_Cart_coords (MPI_Comm comm, int init_rank, int maxdims,
 {
   mpi_topology_t *task_specific;
   int i;
-  int dims_coef = 1;
+  int pi = 1;
+  int qi = 1;
   int rank;
 
   rank = init_rank;
@@ -5760,23 +5755,12 @@ __INTERNAL__PMPI_Cart_coords (MPI_Comm comm, int init_rank, int maxdims,
 	sctk_spinlock_unlock (&(task_specific->lock));
       MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid max_dims");
     }
-
-  dims_coef = 1;
-  for (i = 0; i < maxdims - 1; i++)
+  
+  for (i = maxdims-1; i >= 0; --i)
     {
-      dims_coef *= task_specific->data[comm].cart.dims[i];
-    }
-
-  sctk_nodebug ("dims_coef %d", dims_coef);
-
-  assume (dims_coef > 0);
-  for (i = 0; i < maxdims; i++)
-    {
-      coords[i] = rank / dims_coef;
-      sctk_nodebug ("rank %d coords %d = %d = (%d / %d)", init_rank, i,
-		    coords[i], rank, dims_coef);
-      rank = rank % dims_coef;
-      dims_coef /= task_specific->data[comm].cart.dims[i];
+      pi *= task_specific->data[comm].cart.dims[i];
+      coords[i] = ( rank % pi ) / qi ;
+      qi = pi ;
     }
 
   if (!locked)
