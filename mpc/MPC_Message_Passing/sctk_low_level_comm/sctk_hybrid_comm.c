@@ -301,15 +301,6 @@ sctk_net_free_func_driver (sctk_thread_ptp_message_t * item)
 #endif
 }
 
-
-/* hook at the end of the module initialization */
-#pragma weak sctk_hook_driver_init_done
-  void
-sctk_hook_driver_init_done ()
-{
-  //    sctk_abort();
-}
-
 void
 sctk_net_hybrid_finalize()
 {
@@ -481,7 +472,6 @@ sctk_net_preinit_driver_hybrid ()
 
   sctk_set_net_val(sctk_net_init_driver_hybrid);
 
-  sctk_hook_driver_init_done();
   sctk_nodebug("Number of modules initialized : %d", number_modules_levels);
 }
 

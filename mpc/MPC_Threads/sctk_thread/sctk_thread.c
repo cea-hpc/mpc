@@ -1966,6 +1966,14 @@ poff_t dataused(void) {
 }
 #endif
 
+#ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
+#pragma weak MPC_Task_hook
+void  MPC_Process_hook()
+{
+    /*This function is used to intercept MPC process's creation when profiling*/
+}
+#endif
+
 void
 sctk_start_func (void *(*run) (void *), void *arg)
 {
@@ -2062,6 +2070,10 @@ sctk_start_func (void *(*run) (void *), void *arg)
 		  (void *) s, tmp);
 
   }
+
+#ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
+  MPC_Process_hook();
+#endif
 
   if (sctk_restart_mode == 0)
     {

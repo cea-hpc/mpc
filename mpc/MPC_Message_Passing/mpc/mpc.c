@@ -1419,6 +1419,15 @@ PMPC_Move_to (int process, int cpuid)
   MPC_ERROR_SUCESS ();
 }
 
+#ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
+#pragma weak MPC_Task_hook
+void  MPC_Task_hook(int rank)
+{
+    /*This function is used to intercept MPC tasks' creation when profiling*/
+}
+#endif
+
+
 #define mpc_init(name,t) mpc_common_types[name] = sizeof(t)
 
 void
@@ -1496,6 +1505,11 @@ sctk_user_main (int argc, char **argv)
     MPC_Hard_Check();
   }
   __MPC_Barrier (MPC_COMM_WORLD);
+
+
+#ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
+  MPC_Task_hook(sctk_get_task_rank());
+#endif
 
   MPC_Checkpoint_restart_init ();
 
