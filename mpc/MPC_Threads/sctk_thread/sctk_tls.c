@@ -729,11 +729,11 @@ __sctk__hls_single ( sctk_hls_scope_t scope ) {
 	if ( scope == sctk_hls_core_scope )
 		return 1;
 	
-	if ( scope == sctk_hls_node_scope ) {
+	if ( scope == sctk_hls_node_scope && sctk_get_numa_node_number() > 1 ) {
+		const size_t toenter = sctk_get_numa_node_number() ;
 		if ( __sctk__hls_single ( sctk_hls_numa_scope ) ) {
 			sctk_spinlock_lock ( &level->level.lock ) ;
-				/* TODO: replace by toenter-1 */
-			if ( level->barrier_entered[generation] == 1 ) {
+			if ( level->barrier_entered[generation] == toenter - 1 ) {
 				sctk_spinlock_unlock ( &level->level.lock ) ;
 				return 1;
 			}else{
@@ -794,11 +794,11 @@ __sctk__hls_barrier ( sctk_hls_scope_t scope ) {
 	if ( scope == sctk_hls_core_scope )
 		return ;
 
-	if ( scope == sctk_hls_node_scope ) {
+	if ( scope == sctk_hls_node_scope && sctk_get_numa_node_number() > 1 ) {
+		const size_t toenter = sctk_get_numa_node_number() ;
 		if ( __sctk__hls_single ( sctk_hls_numa_scope ) ) {
 			sctk_spinlock_lock ( &level->level.lock ) ;
-			/* TODO: replace by toenter-1*/
-			if ( level->barrier_entered[generation] == 1 ) {
+			if ( level->barrier_entered[generation] == toenter - 1 ) {
 				level->barrier_generation = 1 - generation ;
 				asm volatile("" ::: "memory");
 				level->barrier_entered[generation] = 0 ;
