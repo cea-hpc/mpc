@@ -101,35 +101,57 @@ static void* server(void* arg)
       perror ("accept");
     }
     assert (fd >= 0);
-    read(fd, &src, sizeof(int));
 
+    /* receive RTR */
+    read(fd, &src, sizeof(int));
     read(fd, msg, 256);
     sctk_nodebug("Msg received from %d %s", src, msg);
 
     ALLOCATOR_LOCK(src, IBV_CHAN_RC_SR);
-    sctk_nodebug("Lock obtained 1");
     remote = sctk_net_ibv_allocator_get(src, IBV_CHAN_RC_SR);
     if (!remote)
     {
       remote = sctk_net_ibv_comp_rc_sr_allocate_init(src, rc_sr_local);
       sctk_net_ibv_allocator_register(src, remote, IBV_CHAN_RC_SR);
     }
+    ALLOCATOR_UNLOCK(src, IBV_CHAN_RC_SR);
     assume(remote);
 
-    if (remote->is_connected == 0)
-    {
-      sctk_nodebug("2 Client %d CONNECTED", src);
-      keys = sctk_net_ibv_qp_exchange_convert(msg);
-      sctk_net_ibv_qp_allocate_recv(remote, &keys);
-      remote->is_connected = 1;
-    } else {
-      sctk_nodebug("2 Client %d already CONNECTED", src);
+    /* send RTR */
+    if (remote->is_rtr == 0) {
+      ALLOCATOR_LOCK(src, IBV_CHAN_RC_SR);
+      if (remote->is_rtr == 0) {
+        keys = sctk_net_ibv_qp_exchange_convert(msg);
+        sctk_net_ibv_qp_allocate_rtr(remote, &keys);
+        remote->is_rtr = 1;
+      }
+      ALLOCATOR_UNLOCK(src, IBV_CHAN_RC_SR);
     }
-    ALLOCATOR_UNLOCK(src, IBV_CHAN_RC_SR);
 
-    snprintf(msg, 256, "%05d:%010d:%010d", rail->lid, remote->qp->qp_num,
+    snprintf(msg, 256,"%05"SCNu16":%010"SCNu32":%010"SCNu32, rail->lid, remote->qp->qp_num,
         remote->psn);
     write(fd, msg, 256);
+
+    /* send RTR */
+    int done;
+    read(fd, &done, sizeof(int));
+    if (remote->is_rts == 0) {
+      ALLOCATOR_LOCK(src, IBV_CHAN_RC_SR);
+      if (remote->is_rts == 0) {
+        sctk_net_ibv_qp_allocate_rts(remote);
+        remote->is_rtr = 1;
+      }
+      ALLOCATOR_UNLOCK(src, IBV_CHAN_RC_SR);
+    }
+
+    if (remote->is_connected == 0) {
+      ALLOCATOR_LOCK(src, IBV_CHAN_RC_SR);
+      if (remote->is_connected == 0) {
+        remote->is_connected = 1;
+        sctk_nodebug("2 Client %d CONNECTED", src);
+      }
+      ALLOCATOR_UNLOCK(src, IBV_CHAN_RC_SR);
+    }
 
     close(fd);
   }
@@ -153,11 +175,10 @@ void sctk_net_ibv_cm_client(char* host, int port, int dest, sctk_net_ibv_qp_remo
     sctk_error ("ERROR opening socket");
 
 #warning "Add a policy to choose the right hostname"
-//  sprintf(name,"%s-ib0",host);
+  //  sprintf(name,"%s-ib0",host);
   sprintf(name,"%s",host);
   sctk_nodebug("Connect to %s",name);
 
-  /* TODO: retry if return NULL */
   int i = 0;
   do {
     server = gethostbyname (name);
@@ -168,13 +189,7 @@ void sctk_net_ibv_cm_client(char* host, int port, int dest, sctk_net_ibv_qp_remo
       exit (0);
     }
     ip = (char *) server->h_addr;
-#if 0
-    if (!ip)
-    {
-      sctk_debug("ERROR on host %s", name);
-      sctk_abort();
-    }
-#endif
+
     if (!ip)
       usleep(500);
 
@@ -195,31 +210,50 @@ void sctk_net_ibv_cm_client(char* host, int port, int dest, sctk_net_ibv_qp_remo
     abort ();
   }
 
+  /* send REQ */
   write(clientsock_fd, &sctk_process_rank, sizeof(int));
-
   snprintf(msg, 256, "%05d:%010d:%010d", rail->lid, remote->qp->qp_num, remote->psn);
   write(clientsock_fd, msg, 256);
 
+  /* receive REP */
   read(clientsock_fd, msg, 256);
-
-  sctk_nodebug("msg received : %s", msg);
-
-  ALLOCATOR_LOCK(dest, IBV_CHAN_RC_SR);
-  if (remote->is_connected == 0) {
-    sctk_nodebug("1 Client %d CONNECTED", dest);
-    keys = sctk_net_ibv_qp_exchange_convert(msg);
-    sctk_net_ibv_qp_allocate_recv(remote, &keys);
-    remote->is_connected = 1;
-  } else {
-    sctk_nodebug("1 Client %d already CONNECTED", dest);
+  if (remote->is_rtr == 0) {
+    ALLOCATOR_LOCK(dest, IBV_CHAN_RC_SR);
+    if (remote->is_rtr == 0) {
+      keys = sctk_net_ibv_qp_exchange_convert(msg);
+      sctk_net_ibv_qp_allocate_rtr(remote, &keys);
+      remote->is_rtr = 1;
+    }
+    ALLOCATOR_UNLOCK(dest, IBV_CHAN_RC_SR);
   }
-  ALLOCATOR_UNLOCK(dest, IBV_CHAN_RC_SR);
+
+  if (remote->is_rts == 0) {
+    ALLOCATOR_LOCK(dest, IBV_CHAN_RC_SR);
+    if (remote->is_rts == 0) {
+      sctk_net_ibv_qp_allocate_rts(remote);
+      remote->is_rts = 1;
+    }
+    ALLOCATOR_UNLOCK(dest, IBV_CHAN_RC_SR);
+  }
+
+  if (remote->is_connected == 0) {
+    ALLOCATOR_LOCK(dest, IBV_CHAN_RC_SR);
+    if (remote->is_connected == 0) {
+      remote->is_connected = 1;
+      sctk_nodebug("2 Client %d CONNECTED", dest);
+    }
+    ALLOCATOR_UNLOCK(dest, IBV_CHAN_RC_SR);
+  }
+
+  /* send DONE */
+  int done = 1;
+  write(clientsock_fd, &done, sizeof(int));
 
   sctk_nodebug ("Try connection to %s on port %d done", name, port);
 }
 
   void
-sctk_net_ibv_cm_request(int process, sctk_net_ibv_qp_remote_t *remote, char* host, int* port)
+sctk_net_ibv_cm_request(int process, char* host, int* port)
 {
   char key[256];
   char val[256];
@@ -371,7 +405,7 @@ void* async_thread(void* context)
 
     ibv_ack_async_event(&event);
   }
-  sctk_debug("Async thread exits...");
+  sctk_nodebug("Async thread exits...");
   return NULL;
 }
 

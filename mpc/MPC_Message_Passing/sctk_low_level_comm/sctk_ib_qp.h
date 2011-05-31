@@ -29,7 +29,7 @@
 #include <stdlib.h>
 #include "sctk_ib_const.h"
 #include "sctk_ib_config.h"
-#include "sctk_list.h"
+#include "sctk_ib_list.h"
 #include "sctk_spinlock.h"
 #include <infiniband/verbs.h>
 #include <inttypes.h>
@@ -54,7 +54,7 @@ typedef struct sctk_net_ibv_qp_local_s
   struct ibv_cq           *recv_cq;  /* incoming completion queues */
 } sctk_net_ibv_qp_local_t;
 
-typedef struct
+typedef struct sctk_net_ibv_qp_remote_s
 {
   int                     rank;      /* rank of the remote process */
   struct ibv_qp           *qp;       /* queue pair */
@@ -64,13 +64,15 @@ typedef struct
   uint32_t                psn;       /* packet sequence number */
   uint32_t                dest_qp_num;/* destination qp number */
 
+  uint8_t                 is_rtr;
+  uint8_t                 is_rts;
   uint8_t                 is_connected;
   uint8_t                 is_usuable;
 
   /* pending wqe. These WQE are queued when all
    * the QP's WQE are busy */
   sctk_thread_mutex_t  send_wqe_lock;
-  struct sctk_list  pending_send_wqe;
+  struct sctk_list_header  pending_send_wqe;
 
   /* WQE */
   uint32_t                     ibv_got_recv_wqe;
@@ -91,7 +93,97 @@ typedef struct
   uint32_t psn;
 } sctk_net_ibv_qp_exchange_keys_t;
 
+#include "sctk.h"
+#include "sctk_ib_ibufs.h"
 #include "sctk_ib_mmu.h"
+#include "sctk_config.h"
+
+static char* sctk_net_ibv_ibuf_print_flag (int flag);
+  char *
+sctk_net_ibv_cq_print_status (enum ibv_wc_status status);
+
+  /* FUNCTIONS */
+static void
+sctk_net_ibv_poll_check_wc(struct ibv_wc wc, sctk_net_ibv_allocator_type_t type) {
+
+  sctk_net_ibv_ibuf_header_t* header;
+  struct sctk_net_ibv_ibuf_s* ibuf;
+
+  if (wc.status != IBV_WC_SUCCESS)
+  {
+
+    ibuf = (struct sctk_net_ibv_ibuf_s*) wc.wr_id;
+    assume(ibuf);
+    header = (sctk_net_ibv_ibuf_header_t*) (ibuf->buffer);
+
+    sctk_error ("\033[1;31m\nIB - FATAL ERROR FROM PROCESS %d\n"
+        "################################\033[0m\n"
+        "Work ID is   : %d\n"
+        "Status       : %s\n"
+        "ERROR Vendor : %d\n"
+        "Byte_len     : %d\n"
+        "Flag         : %s\n"
+        "Ibuf type    : %d\n"
+        "Ptp type     : %d\n"
+        "Buff_nb      : %d\n"
+        "Total_buffs  : %d\n"
+        "Dest process : %d\n"
+        "\033[1;31m################################\033[0m\n",
+        sctk_process_rank,
+        wc.wr_id, sctk_net_ibv_cq_print_status(wc.status),
+        wc.vendor_err, wc.byte_len, sctk_net_ibv_ibuf_print_flag(ibuf->flag),
+        header->ibuf_type, header->ptp_type, header->buff_nb, header->total_buffs, ibuf->dest_process);
+
+    sctk_abort();
+  }
+}
+
+
+static sctk_spinlock_t ptp_recv_lock = SCTK_SPINLOCK_INITIALIZER;
+static sctk_spinlock_t ptp_send_lock = SCTK_SPINLOCK_INITIALIZER;
+  static inline int
+sctk_net_ibv_cq_poll(struct ibv_cq* cq, int pending_nb, void (*ptr_func)(struct ibv_wc*, int dest), sctk_net_ibv_allocator_type_t type)
+{
+  struct ibv_wc wc;
+  int ne = 0;
+  int i;
+  int found = 0;
+
+  for (i=0; i < pending_nb; ++i)
+  {
+      ne = ibv_poll_cq (cq, 1, &wc);
+      if (ne)
+      {
+        //        sctk_spinlock_lock(&ptp_recv_lock);
+        sctk_net_ibv_poll_check_wc(wc, type);
+        ptr_func(&wc, 0);
+        found = 1;
+      } else {
+        return found;
+      }
+    }
+  return found;
+}
+
+  static inline void
+sctk_net_ibv_cq_lookup(struct ibv_cq* cq, int nb_pending, void (*ptr_func)(struct ibv_wc*, int dest), int dest, sctk_net_ibv_allocator_type_t type)
+{
+  struct ibv_wc wc[nb_pending];
+  int ne = 0;
+  int i;
+
+  ne = ibv_poll_cq (cq, nb_pending, wc);
+
+  for (i = 0; i < ne; ++i)
+  {
+    sctk_nodebug("%d elements found", ne);
+
+    sctk_net_ibv_poll_check_wc(wc[i], type);
+
+    ptr_func(&wc[i], dest);
+  }
+}
+
 
 /*-----------------------------------------------------------
  *  RAIL
@@ -100,14 +192,14 @@ typedef struct
 void
 sctk_net_ibv_qp_rail_init();
 
-  sctk_net_ibv_qp_rail_t*
+sctk_net_ibv_qp_rail_t*
 sctk_net_ibv_qp_pick_rail(int rail_nb);
 
 /*-----------------------------------------------------------
  *  NEW/FREE
  *----------------------------------------------------------*/
 
-  sctk_net_ibv_qp_local_t*
+sctk_net_ibv_qp_local_t*
 sctk_net_ibv_qp_new(sctk_net_ibv_qp_rail_t* rail);
 
 void
@@ -133,7 +225,7 @@ sctk_net_ibv_qp_state_init_attr(int *flags);
 struct ibv_qp_attr
 sctk_net_ibv_qp_state_rtr_attr(sctk_net_ibv_qp_exchange_keys_t* keys, int *flags);
 
-  struct ibv_qp_attr
+struct ibv_qp_attr
 sctk_net_ibv_qp_state_rts_attr( uint32_t psn, int *flags);
 
 /* functions */
@@ -152,14 +244,12 @@ int sctk_net_ibv_qp_send_post_pending(sctk_net_ibv_qp_remote_t* remote, int need
 struct ibv_cq*
 sctk_net_ibv_cq_init(sctk_net_ibv_qp_rail_t* rail);
 
-  void
-sctk_net_ibv_cq_poll(struct ibv_cq* cq, int pending_nb, void (*ptr_func)(struct ibv_wc*, int lookup, int dest), sctk_net_ibv_allocator_type_t type);
 
 int
 sctk_net_ibv_cq_garbage_collector(struct ibv_cq* cq, int nb_pending, void (*ptr_func)(struct ibv_wc*), sctk_net_ibv_allocator_type_t type);
 
-  void
-sctk_net_ibv_cq_lookup(struct ibv_cq* cq, int nb_pending, void (*ptr_func)(struct ibv_wc*, int lookup, int dest), int dest, sctk_net_ibv_allocator_type_t type);
+void
+sctk_net_ibv_cq_lookup(struct ibv_cq* cq, int nb_pending, void (*ptr_func)(struct ibv_wc*, int dest), int dest, sctk_net_ibv_allocator_type_t type);
 
 /*-----------------------------------------------------------
  *  Shared Receive queue
@@ -175,7 +265,7 @@ sctk_net_ibv_srq_init_attr();
  *  Exchange keys
  *----------------------------------------------------------*/
 
-  sctk_net_ibv_qp_exchange_keys_t
+sctk_net_ibv_qp_exchange_keys_t
 sctk_net_ibv_qp_exchange_convert( char* msg);
 
 void sctk_net_ibv_qp_exchange_send(
@@ -193,13 +283,18 @@ sctk_net_ibv_qp_exchange_recv(int i,
  *----------------------------------------------------------*/
 void
 sctk_net_ibv_qp_allocate_init(int rank,
-  sctk_net_ibv_qp_local_t* local,
-  sctk_net_ibv_qp_remote_t* remote);
+    sctk_net_ibv_qp_local_t* local,
+    sctk_net_ibv_qp_remote_t* remote);
 
 void
-sctk_net_ibv_qp_allocate_recv(
-  sctk_net_ibv_qp_remote_t *remote,
-  sctk_net_ibv_qp_exchange_keys_t* keys);
+sctk_net_ibv_qp_allocate_rtr(
+    sctk_net_ibv_qp_remote_t *remote,
+    sctk_net_ibv_qp_exchange_keys_t* keys);
+
+void
+sctk_net_ibv_qp_allocate_rts(
+    sctk_net_ibv_qp_remote_t *remote);
+
 
 /*-----------------------------------------------------------
  *  WQE
@@ -207,6 +302,7 @@ sctk_net_ibv_qp_allocate_recv(
 int sctk_net_ibv_qp_send_get_wqe(int dest_process, struct sctk_net_ibv_ibuf_s* ibuf);
 
 void sctk_net_ibv_qp_send_free_wqe(sctk_net_ibv_qp_remote_t* remote );
+
 
 #endif
 #endif

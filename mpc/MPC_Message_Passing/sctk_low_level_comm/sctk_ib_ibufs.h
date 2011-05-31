@@ -25,37 +25,12 @@
 #ifndef __SCTK__INFINIBAND_IBUFS_H_
 #define __SCTK__INFINIBAND_IBUFS_H_
 
-#include "sctk_config.h"
-#include "sctk_spinlock.h"
 #include "stdint.h"
 #include "infiniband/verbs.h"
-#include "sctk_ib_mmu.h"
+#include "sctk_ib_list.h"
 
-/* type of ibuf */
-#define RDMA_READ_IBUF_FLAG (111)
-#define RDMA_WRITE_IBUF_FLAG (222)
-#define NORMAL_IBUF_FLAG (333)
-#define BARRIER_IBUF_FLAG (444)
-#define BUSY_FLAG (1)
-#define FREE_FLAG (0)
-
-UNUSED static char* sctk_net_ibv_ibuf_print_flag (int flag)
-{
-  switch(flag) {
-    case RDMA_READ_IBUF_FLAG:   return "RDMA_READ_IBUF_FLAG";break;
-    case RDMA_WRITE_IBUF_FLAG:  return "RDMA_WRITE_IBUF_FLAG";break;
-    case NORMAL_IBUF_FLAG:      return "NORMAL_IBUF_FLAG";break;
-    case BARRIER_IBUF_FLAG:     return "BARRIER_IBUF_FLAG";break;
-    case BUSY_FLAG:             return "BUSY_FLAG";break;
-    case FREE_FLAG:             return "FREE_FLAG";break;
-  }
-  return NULL;
-}
-
-extern uint32_t                     ibuf_free_ibuf_nb;
-extern uint32_t                     ibuf_got_ibuf_nb;
-extern uint32_t                     ibuf_free_srq_nb;
-extern uint32_t                     ibuf_got_srq_nb;
+struct sctk_net_ibv_mmu_entry_s;
+struct sctk_net_ibv_qp_remote_s;
 
 typedef enum
 {
@@ -64,7 +39,7 @@ typedef enum
   RC_SR_RDVZ_REQUEST =        1,
   RC_SR_RDVZ_ACK =            2,
   RC_SR_RDVZ_DONE =           3,
-  /* collectives */
+
   RC_SR_RDVZ_READ =           4,
   RC_SR_FRAG_EAGER =          5,
   RC_SR_RPC        =          6,
@@ -75,7 +50,6 @@ typedef enum
 
 typedef enum
 {
-  /* ptp */
   IBV_PTP =                 0,
   IBV_BCAST =               1,
   IBV_REDUCE =              2,
@@ -84,16 +58,22 @@ typedef enum
 } sctk_net_ibv_ibuf_ptp_type_t;
 
 
-typedef struct sctk_net_ibv_ibuf_region_s
+typedef struct sctk_net_ibv_ibuf_header_s
 {
-  sctk_net_ibv_mmu_entry_t* mmu_entry;
 
-  uint16_t nb;
-
-  struct sctk_net_ibv_ibuf_s* ibuf;
-  struct sctk_net_ibv_ibuf_region_s* next_region;
-} sctk_net_ibv_ibuf_region_t;
-
+  sctk_net_ibv_ibuf_type_t         ibuf_type;
+  sctk_net_ibv_ibuf_ptp_type_t     ptp_type;
+  size_t  size;
+  size_t  payload_size;
+  int     src_process;
+  uint32_t src_task;
+  uint32_t dest_task;
+  uint32_t psn;
+  int buff_nb;
+  int total_buffs;
+  size_t total_copied;
+  uint8_t com_id;
+} sctk_net_ibv_ibuf_header_t;
 
 typedef struct sctk_net_ibv_ibuf_desc_s
 {
@@ -112,6 +92,16 @@ typedef struct sctk_net_ibv_ibuf_desc_s
   struct sctk_net_ibv_ibuf_s* next;
 } sctk_net_ibv_ibuf_desc_t;
 
+typedef struct sctk_net_ibv_ibuf_region_s
+{
+  struct sctk_net_ibv_mmu_entry_s* mmu_entry;
+
+  uint16_t nb;
+
+  struct sctk_net_ibv_ibuf_s* ibuf;
+  struct sctk_net_ibv_ibuf_region_s* next_region;
+} sctk_net_ibv_ibuf_region_t;
+
 
 typedef struct sctk_net_ibv_ibuf_s
 {
@@ -124,46 +114,49 @@ typedef struct sctk_net_ibv_ibuf_s
   int flag;
 
   /* the following infos aren't transmitted by the network */
-  sctk_net_ibv_qp_remote_t*    remote;
+  struct sctk_net_ibv_qp_remote_s*    remote;
   void* supp_ptr;
   int dest_process;
 
+  struct sctk_list_header list_header;
+
 } sctk_net_ibv_ibuf_t;
 
-/* generic header between all channels */
-typedef struct
-{
-  sctk_net_ibv_ibuf_type_t         ibuf_type;
-  sctk_net_ibv_ibuf_ptp_type_t     ptp_type;
-  size_t  size;
-  size_t  payload_size;
-  int     src_process;
-  uint32_t src_task;
-  uint32_t dest_task;
-  uint32_t psn;
-  uint8_t  com_id;
-} sctk_net_ibv_ibuf_generic_header;
 
-struct sctk_net_ibv_ibuf_header_s
-{
-// sctk_net_ibv_ibuf_generic_header gen_header;
+#include "sctk_config.h"
+#include "sctk_spinlock.h"
+#include "sctk_ib_mmu.h"
 
-  sctk_net_ibv_ibuf_type_t         ibuf_type;
-  sctk_net_ibv_ibuf_ptp_type_t     ptp_type;
-  size_t  size;
-  size_t  payload_size;
-  int     src_process;
-  uint32_t src_task;
-  uint32_t dest_task;
-  uint32_t psn;
-  int buff_nb;
-  int total_buffs;
-  uint8_t com_id;
-};
+/* type of ibuf */
+#define RDMA_READ_IBUF_FLAG (111)
+#define RDMA_WRITE_IBUF_FLAG (222)
+#define NORMAL_IBUF_FLAG (333)
+#define BARRIER_IBUF_FLAG (444)
+#define BUSY_FLAG (1)
+#define FREE_FLAG (0)
+
+static char* sctk_net_ibv_ibuf_print_flag (int flag)
+{
+  switch(flag) {
+    case RDMA_READ_IBUF_FLAG:   return "RDMA_READ_IBUF_FLAG";break;
+    case RDMA_WRITE_IBUF_FLAG:  return "RDMA_WRITE_IBUF_FLAG";break;
+    case NORMAL_IBUF_FLAG:      return "NORMAL_IBUF_FLAG";break;
+    case BARRIER_IBUF_FLAG:     return "BARRIER_IBUF_FLAG";break;
+    case BUSY_FLAG:             return "BUSY_FLAG";break;
+    case FREE_FLAG:             return "FREE_FLAG";break;
+  }
+  return NULL;
+}
+
+extern uint32_t                     ibuf_free_ibuf_nb;
+extern uint32_t                     ibuf_got_ibuf_nb;
+extern uint32_t                     ibuf_free_srq_nb;
+extern uint32_t                     ibuf_got_srq_nb;
+
+
 //} __attribute__ ((packed));
 
-typedef struct sctk_net_ibv_ibuf_header_s
-sctk_net_ibv_ibuf_header_t;
+//typedef struct sctk_net_ibv_ibuf_header_s sctk_net_ibv_ibuf_header_t;
 
 /*-----------------------------------------------------------
  *  FUNCTIONS

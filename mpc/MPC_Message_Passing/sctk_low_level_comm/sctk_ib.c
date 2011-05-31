@@ -35,9 +35,11 @@
 #include "sctk_ib_rpc.h"
 #include "sctk_ib_scheduling.h"
 #include "sctk_ib_allocator.h"
+#include "sctk_bootstrap.h"
 #include "sctk_ib_ibufs.h"
 #include "sctk_ib_config.h"
 #include "sctk_ib_qp.h"
+#include "sctk_ib_frag.h"
 #include "sctk_ib_mmu.h"
 #include "sctk_ib_cm.h"
 #include "sctk_ib_comp_rc_sr.h"
@@ -45,9 +47,23 @@
 
 #include <infiniband/verbs.h>
 #include "sctk_alloc.h"
+#include "sctk_alloc.h"
 #include "sctk_iso_alloc.h"
 #include "sctk_net_tools.h"
 #include "sctk_ib_profiler.h"
+
+
+#if defined(Linux_SYS)
+/* for storing times */
+extern __thread double poll_period;
+extern __thread double poll_last_found;
+/* store counters */
+extern __thread int poll_nb_found;
+extern __thread int poll_nb_not_found;
+extern __thread double poll_time_found;
+extern __thread double poll_time_not_found;
+#endif
+
 
 
 /* rail */
@@ -124,13 +140,14 @@ sctk_net_init_driver_infiniband (int *argc, char ***argv)
 
   /* initialization of RPC structures */
   sctk_net_rpc_init();
-
-  sctk_bootstrap_barrier();
-}
-
-#define PRINT_ATTR(name_s,name) \
   sctk_nodebug("\t- %s %lu",name_s,(unsigned long)device_list[i].device_attr.name);
 
+  /* initialization of timers */
+#if defined(Linux_SYS)
+  rc = sctk_net_ibv_timer_linux_open(&cpu_frequency);
+  assume(rc);
+#endif
+}
 
   /*-----------------------------------------------------------
  *  PTP
@@ -150,16 +167,15 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
 
   sctk_net_ibv_rc_rdma_process_t *entry_rdma;
   sctk_net_ibv_rc_rdma_entry_t *entry = NULL;
-  struct sctk_list_elem* rc;
   sctk_net_ibv_ibuf_t* ibuf;
-  sctk_net_ibv_frag_eager_entry_t* frag_entry;
+  sctk_net_ibv_msg_entry_t* frag_entry;
 
   sctk_nodebug("FREE begin");
 
   switch (item->channel_type)
   {
     case IBV_RC_SR_ORIGIN:
-      sctk_nodebug("Free RC_SR message");
+      sctk_nodebug("Free RC_SR message %d", ibuf_free_ibuf_nb);
 
       /* release the ibuf */
       ibuf = (sctk_net_ibv_ibuf_t*)  item->struct_ptr;
@@ -176,10 +192,9 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
 
 
       sctk_net_ibv_mmu_unregister (rail->mmu, entry->mmu_entry);
-      sctk_list_lock(&entry_rdma->send);
-      rc = sctk_list_remove(&entry_rdma->send, entry->list_elem);
-      sctk_list_unlock(&entry_rdma->send);
-      assume(rc);
+      sctk_ib_list_lock(&entry_rdma->send);
+      sctk_ib_list_remove(&entry->list_header);
+      sctk_ib_list_unlock(&entry_rdma->send);
 
       sctk_free(entry->msg_payload_ptr);
       sctk_ibv_profiler_dec(IBV_MEM_TRACE);
@@ -193,10 +208,6 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
       ibuf = (sctk_net_ibv_ibuf_t*)  item->struct_ptr;
       sctk_net_ibv_ibuf_release(ibuf, 1);
       sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit, 1);
-
-
-      //      sctk_free(item->struct_ptr);
-      //      sctk_ibv_profiler_dec(IBV_MEM_TRACE);
       break;
 
     case IBV_POLL_RC_RDMA_ORIGIN:
@@ -214,14 +225,9 @@ sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
 
     case IBV_POLL_RC_SR_FRAG_ORIGIN:
     case IBV_RC_SR_FRAG_ORIGIN:
-      frag_entry = (sctk_net_ibv_frag_eager_entry_t*)  item->struct_ptr;
-      sctk_net_ibv_comp_rc_sr_free_frag_msg(frag_entry);
+      frag_entry = (sctk_net_ibv_msg_entry_t*)  item->struct_ptr;
+      sctk_net_ibv_frag_free_msg(frag_entry);
       break;
-
-//      frag_entry = (sctk_net_ibv_frag_eager_entry_t*)  item->struct_ptr;
-//      sctk_net_ibv_comp_rc_sr_free_frag_msg(frag_entry);
-//      break;
-
 
     default:
       assume(0);
@@ -340,6 +346,11 @@ sctk_net_preinit_driver_infiniband ( sctk_net_driver_pointers_functions_t* point
 sctk_net_ibv_finalize()
 {
   sctk_ibv_generate_report();
+
+#if defined(Linux_SYS)
+  if (poll_nb_not_found)
+    sctk_nodebug("found/not found ratio:%g (%d,%d)", (double)poll_nb_found/poll_nb_not_found, poll_nb_found, poll_nb_not_found);
+#endif
 }
 
 #else

@@ -26,7 +26,7 @@
 #ifndef __SCTK_IB_COLL_H_
 #define __SCTK_IB_COLL_H_
 
-#include "sctk_list.h"
+#include "sctk_ib_list.h"
 #include "sctk_config.h"
 #include "sctk_ib_comp_rc_sr.h"
 #include "sctk_ib_comp_rc_rdma.h"
@@ -34,20 +34,6 @@
 /*-----------------------------------------------------------
  *  COMMUNICATOR STRUCTURES
  *----------------------------------------------------------*/
-/*
- * Structure of a pending collective message
- */
-typedef struct
-{
-  int src_process;
-  size_t size;
-  sctk_net_ibv_ibuf_type_t type;
-  void* payload;
-
-  size_t current_copied;
-  uint8_t ready;
-  uint32_t psn;
-} sctk_net_ibv_collective_pending_t;
 
 typedef struct
 {
@@ -57,10 +43,10 @@ typedef struct
   sched_sn_t barrier;
 
   /* pending msg for collective */
-  struct sctk_list  broadcast_fifo;
-  struct sctk_list  init_barrier_fifo;
-  struct sctk_list  barrier_fifo;
-  struct sctk_list  reduce_fifo;
+  struct sctk_list_header  broadcast_fifo;
+  struct sctk_list_header  init_barrier_fifo;
+  struct sctk_list_header  barrier_fifo;
+  struct sctk_list_header  reduce_fifo;
 
   /* lock between threads */
   sctk_spinlock_t lock;
@@ -75,16 +61,16 @@ typedef struct
 void sctk_net_ibv_collective_new_com ( const sctk_internal_communicator_t * __com, const int nb_involved, const int *task_list );
 
   void*
-  sctk_net_ibv_collective_push(struct sctk_list* list, sctk_net_ibv_ibuf_header_t* msg);
+  sctk_net_ibv_collective_push(struct sctk_list_header* list, sctk_net_ibv_ibuf_header_t* msg);
 
   void*
-  sctk_net_ibv_collective_push_rc_sr(struct sctk_list* list, sctk_net_ibv_ibuf_t* ibuf, int *release_buffer, sctk_net_ibv_ibuf_ptp_type_t ptp_type);
+  sctk_net_ibv_collective_push_rc_sr(struct sctk_list_header* list, sctk_net_ibv_ibuf_t* ibuf, int *release_buffer, sctk_net_ibv_ibuf_ptp_type_t ptp_type);
 
   void*
-  sctk_net_ibv_collective_push_rc_rdma(struct sctk_list* list, sctk_net_ibv_rc_rdma_entry_t* entry);
+  sctk_net_ibv_collective_push_rc_rdma(struct sctk_list_header* list, sctk_net_ibv_rc_rdma_entry_t* entry);
 
-  sctk_net_ibv_collective_pending_t*
-sctk_net_ibv_collective_lookup_src(struct sctk_list* list, const int src);
+  sctk_net_ibv_msg_entry_t*
+sctk_net_ibv_collective_lookup_src(struct sctk_list_header* list, const int src);
 
   void
 sctk_net_ibv_broadcast ( sctk_collective_communications_t * com,
@@ -100,9 +86,6 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
     void ( *func ) ( const void *, void *, size_t,
       sctk_datatype_t ),
     const sctk_datatype_t data_type );
-
-   void*
-  sctk_net_ibv_collective_push_rc_rdma(struct sctk_list* list, sctk_net_ibv_rc_rdma_entry_t* entry);
 
 /*-----------------------------------------------------------
  *  BARRIER

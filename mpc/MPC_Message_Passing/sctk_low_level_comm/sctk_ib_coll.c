@@ -23,12 +23,13 @@
 
 #ifdef MPC_USE_INFINIBAND
 
-#include "sctk_list.h"
+#include "sctk_ib_list.h"
 #include "sctk_config.h"
 #include "sctk_debug.h"
 #include "sctk_ib_coll.h"
 #include "sctk_ib_ibufs.h"
 #include "sctk_ib_config.h"
+#include "sctk_ib_frag.h"
 #include "sctk_ib_comp_rc_rdma.h"
 #include "sctk_ib_profiler.h"
 #include "sctk_ib_allocator.h"
@@ -61,17 +62,10 @@ int* comm_world_ranks;
     comm_world_ranks[i] = i;
   }
 
-  sctk_list_new(&com_entries[0].broadcast_fifo, 0, 0);
-  sctk_list_new(&com_entries[0].reduce_fifo, 0, 0);
-  sctk_list_new(&com_entries[0].init_barrier_fifo, 0, 0);
-  sctk_list_new(&com_entries[0].barrier_fifo, 0, 0);
-}
-
-#define INIT_LIST(list) \
-if (!list)  \
-{                                 \
-  sctk_list_new(list, 0, 0);        \
-  assume(sctk_list_is_empty(list)); \
+  SCTK_LIST_HEAD_INIT(&com_entries[0].broadcast_fifo);
+  SCTK_LIST_HEAD_INIT(&com_entries[0].reduce_fifo);
+  SCTK_LIST_HEAD_INIT(&com_entries[0].init_barrier_fifo);
+  SCTK_LIST_HEAD_INIT(&com_entries[0].barrier_fifo);
 }
 
 /**
@@ -89,37 +83,22 @@ void sctk_net_ibv_collective_new_com ( const sctk_internal_communicator_t * __co
  /* if this assume fail, there is a abnormal RPC transfert */
  assume(__com->communicator_number != (sctk_communicator_t) -1);
 
- /* We create pending msg queues if they don't exist
-  * TODO: Clear all previous entries from queue */
+ /* We create pending msg queues. We assume that all lists
+  * are empty. TODO: Verify that all lists are empty. Memory leaks
+  * possible */
   com_entry = &com_entries[__com->communicator_number];
 
   sctk_spinlock_lock(&com_entry->lock);
-  if (!sctk_list_is_initialized(&com_entry->broadcast_fifo))
-  {
-    sctk_list_new(&com_entry->broadcast_fifo, 0, 0);
-    assume(sctk_list_is_empty(&com_entry->broadcast_fifo));
-  }
-  if (!sctk_list_is_initialized(&com_entry->reduce_fifo))
-  {
-    sctk_list_new(&com_entry->reduce_fifo, 0, 0);
-    assume(sctk_list_is_empty(&com_entry->reduce_fifo));
-  }
-  if (!sctk_list_is_initialized(&com_entry->init_barrier_fifo))
-  {
-    sctk_list_new(&com_entry->init_barrier_fifo, 0, 0);
-    assume(sctk_list_is_empty(&com_entry->init_barrier_fifo));
-  }
-  if (!sctk_list_is_initialized(&com_entry->barrier_fifo))
-  {
-    sctk_list_new(&com_entry->barrier_fifo, 0, 0);
-    assume(sctk_list_is_empty(&com_entry->barrier_fifo));
-  }
-
+  SCTK_LIST_HEAD_INIT(&com_entry->broadcast_fifo);
+  SCTK_LIST_HEAD_INIT(&com_entry->reduce_fifo);
+  SCTK_LIST_HEAD_INIT(&com_entry->init_barrier_fifo);
+  SCTK_LIST_HEAD_INIT(&com_entry->barrier_fifo);
   sctk_spinlock_unlock(&com_entry->lock);
 
 /* We reset counters for the communicator */
  sctk_net_ibv_sched_coll_reset (__com->communicator_number);
 }
+
 
 
 /**
@@ -128,11 +107,11 @@ void sctk_net_ibv_collective_new_com ( const sctk_internal_communicator_t * __co
  *  \return
  */
   void*
-  sctk_net_ibv_collective_push_rc_sr(struct sctk_list* list, sctk_net_ibv_ibuf_t* ibuf, int *release_buffer, sctk_net_ibv_ibuf_ptp_type_t ptp_type)
+sctk_net_ibv_collective_push_rc_sr(struct sctk_list_header* list, sctk_net_ibv_ibuf_t* ibuf, int *release_buffer, sctk_net_ibv_ibuf_ptp_type_t ptp_type)
 {
-  sctk_net_ibv_collective_pending_t* pending = NULL;
+  sctk_net_ibv_msg_entry_t* pending = NULL;
   sctk_net_ibv_ibuf_header_t* msg_header;
-  struct sctk_list_elem *tmp = NULL;
+  int ret;
 
   msg_header = ((sctk_net_ibv_ibuf_header_t*) ibuf->buffer);
 
@@ -141,77 +120,23 @@ void sctk_net_ibv_collective_new_com ( const sctk_internal_communicator_t * __co
   {
     /* we allocate the entry for the split eager if this is
      * the first fragment */
-    if (msg_header->buff_nb == 1)
+    sctk_ib_list_lock(list);
+    pending = sctk_net_ibv_frag_search_msg(msg_header, list);
+    if (!pending)
     {
-      sctk_nodebug("%p - allocated memory and copy msg for psn %d", list, msg_header->psn);
-      pending = sctk_malloc(sizeof(sctk_net_ibv_collective_pending_t) + msg_header->size);
-      assume(pending);
-      sctk_ibv_profiler_inc(IBV_MEM_TRACE);
-
-      pending->payload = (char*) pending + sizeof(sctk_net_ibv_collective_pending_t);
-      pending->size = msg_header->payload_size;
-      pending->src_process = msg_header->src_process;
-      pending->type = RC_SR_FRAG_EAGER;
-      pending->psn = msg_header->psn;
-      pending->current_copied = 0;
-      pending->ready = 0;
-
+      pending = sctk_net_ibv_frag_allocate(msg_header);
       /* push the message to the list */
-      sctk_list_lock(list);
-      sctk_list_push(list, pending);
-      sctk_list_unlock(list);
+      sctk_ib_list_push_tail(list, &pending->list_header);
     }
+    sctk_ib_list_unlock(list);
+    assume(pending);
 
-    /*
-     * if this is the first segment, we don't need to look for the entry
-     */
-    if (!pending)
-    {
-      sctk_list_lock(list);
-      tmp = list->head;
-      while (tmp) {
-
-        pending = (sctk_net_ibv_collective_pending_t*) tmp->elem;
-
-        if ( (msg_header->psn == pending->psn) && (msg_header->src_process == pending->src_process))
-        {
-          sctk_nodebug("FOUND %lu", pending->psn);
-
-          memcpy( (char*) pending->payload + pending->current_copied,
-              RC_SR_PAYLOAD(ibuf->buffer),
-              msg_header->payload_size);
-          pending->current_copied += msg_header->payload_size;
-
-          sctk_nodebug("%p - Frag msg copied (size: %lu, psn %lu, copied %lu, payload %lu)", list,
-              msg_header->size, msg_header->psn, pending->current_copied, msg_header->payload_size);
-
-          break;
-        }
-
-        tmp = tmp->p_next;
-      }
-      sctk_list_unlock(list);
-    } else {
-      memcpy( (char*) pending->payload + pending->current_copied,
-          RC_SR_PAYLOAD(ibuf->buffer),
-          msg_header->payload_size);
-      pending->current_copied += msg_header->payload_size;
-
-      sctk_nodebug("%p - Frag msg copied (size: %lu, psn %lu, copied %lu, payload %lu)", list,
-          msg_header->size, msg_header->psn, pending->current_copied, msg_header->payload_size);
-    }
-
-    if (!pending)
-    {
-      sctk_nodebug("%p - Frag entry not found (size: %lu, psn %lu, payload %lu)",
-          list, msg_header->size, msg_header->psn, msg_header->payload_size);
-      assume(0);
-    }
+    ret = sctk_net_ibv_frag_copy_msg(msg_header, list, pending);
 
     /*
      * If this is the last segment of buffer, we set it as 'ready'
      */
-    if (msg_header->buff_nb == msg_header->total_buffs)
+    if (ret == msg_header->total_buffs)
     {
       sctk_nodebug("Msg ready !! (psn:%lu,src:%lu,list:%p)", pending->psn, pending->src_process, list);
       pending->src_process = msg_header->src_process;
@@ -221,9 +146,10 @@ void sctk_net_ibv_collective_new_com ( const sctk_internal_communicator_t * __co
     /* We release the buffer now */
     *release_buffer = 1;
   } else {
+
     sctk_nodebug("src:%lu,psn:%lu", msg_header->src_process, msg_header->psn);
 
-    pending = sctk_malloc(sizeof(sctk_net_ibv_collective_pending_t));
+    pending = sctk_malloc(sizeof(sctk_net_ibv_msg_entry_t));
     assume(pending);
     sctk_ibv_profiler_inc(IBV_MEM_TRACE);
 
@@ -234,9 +160,9 @@ void sctk_net_ibv_collective_new_com ( const sctk_internal_communicator_t * __co
     pending->psn = msg_header->psn;
     pending->ready = 1;
 
-    sctk_list_lock(list);
-    sctk_list_push(list, pending);
-    sctk_list_unlock(list);
+    sctk_ib_list_lock(list);
+    sctk_ib_list_push_tail(list, &pending->list_header);
+    sctk_ib_list_unlock(list);
 
     /* if this is a simple message barrier, we
      * release the buffer */
@@ -253,13 +179,12 @@ void sctk_net_ibv_collective_new_com ( const sctk_internal_communicator_t * __co
 }
 
   void*
-sctk_net_ibv_collective_push_rc_rdma(struct sctk_list* list, sctk_net_ibv_rc_rdma_entry_t* entry)
+sctk_net_ibv_collective_push_rc_rdma(struct sctk_list_header* list, sctk_net_ibv_rc_rdma_entry_t* entry)
 {
-  sctk_net_ibv_collective_pending_t* pending;
+  sctk_net_ibv_msg_entry_t* pending;
   sctk_net_ibv_rc_rdma_process_t *entry_rdma;
-  struct sctk_list_elem* rc;
 
-  pending = sctk_malloc(sizeof(sctk_net_ibv_collective_pending_t));
+  pending = sctk_malloc(sizeof(sctk_net_ibv_msg_entry_t));
   assume(pending);
   sctk_ibv_profiler_inc(IBV_MEM_TRACE);
 
@@ -268,22 +193,19 @@ sctk_net_ibv_collective_push_rc_rdma(struct sctk_list* list, sctk_net_ibv_rc_rdm
   pending->type         = RC_SR_RDVZ_READ;
   pending->size         = entry->requested_size;
   pending->psn          = entry->psn;
-  pending->ready = 1;
   entry_rdma            = entry->entry_rc_rdma;
-  sctk_nodebug("Push with src %d, size %lu, ptr %p", entry->src_process, entry->requested_size, entry->msg_payload_ptr);
+  pending->ready        = 1;
+  sctk_nodebug("Push with src %d, list %p, size %lu, ptr %p, psn:%lu,", entry->src_process, list, entry->requested_size, entry->msg_payload_ptr, entry->psn);
 
   /* we remove the entry from the rendezvous send list ... */
-  sctk_list_lock(&entry_rdma->send);
-  rc = sctk_list_remove(&entry_rdma->send, entry->list_elem);
-  sctk_list_unlock(&entry_rdma->send);
-  assume(rc);
-
-  sctk_nodebug("pushed");
+  sctk_ib_list_lock(&entry_rdma->send);
+  sctk_ib_list_remove(&entry->list_header);
+  sctk_ib_list_unlock(&entry_rdma->send);
 
   /* ...and we push the received collective into the pending list */
-  sctk_list_lock(list);
-  sctk_list_push(list, pending);
-  sctk_list_unlock(list);
+  sctk_ib_list_lock(list);
+  sctk_ib_list_push_tail(list, &pending->list_header);
+  sctk_ib_list_unlock(list);
 
   sctk_net_ibv_mmu_unregister (rail->mmu, entry->mmu_entry);
   sctk_free(entry);
@@ -297,8 +219,8 @@ sctk_net_ibv_collective_push_rc_rdma(struct sctk_list* list, sctk_net_ibv_rc_rdm
 #define COLLECTIVE_LOOKUP(list, src, psn, msg) \
   do {    \
     msg = sctk_net_ibv_collective_lookup(list, src, psn);    \
-  /*  sctk_net_ibv_allocator_ptp_poll_all();*/ \
-     sctk_thread_yield();   \
+    /*  sctk_net_ibv_allocator_ptp_poll_all();*/ \
+    sctk_thread_yield();   \
   } while(msg == NULL);   \
 
 /**
@@ -306,41 +228,39 @@ sctk_net_ibv_collective_push_rc_rdma(struct sctk_list* list, sctk_net_ibv_rc_rdm
  *  \param
  *  \return
  */
-  sctk_net_ibv_collective_pending_t*
-sctk_net_ibv_collective_lookup(struct sctk_list* list, const int src, const uint32_t psn)
+  sctk_net_ibv_msg_entry_t*
+sctk_net_ibv_collective_lookup(struct sctk_list_header* list, const int src, const uint32_t psn)
 {
-  struct sctk_list_elem* elem;
-  sctk_net_ibv_collective_pending_t* msg;
+  struct sctk_list_header* tmp;
+  sctk_net_ibv_msg_entry_t* msg;
 
   if (!list || src < 0)
     return NULL;
 
-  sctk_list_lock(list);
-  elem = list->head;
-  while(elem)
+  sctk_ib_list_lock(list);
+  sctk_ib_list_foreach(tmp, list)
   {
-    msg = (sctk_net_ibv_collective_pending_t*) elem->elem;
+    msg = sctk_ib_list_get_entry(tmp, sctk_net_ibv_msg_entry_t, list_header);
     sctk_nodebug("THERE msg %p src process %d", msg, src);
 
     if ( (msg->src_process == src) && (msg->psn == psn) && (msg->ready))
     {
       sctk_nodebug("Found msg %p src process %d(src %d), psn %lu(%lu)", msg, msg->src_process, src, msg->psn, psn);
-      sctk_list_remove(list, elem);
-      sctk_list_unlock(list);
+      sctk_ib_list_remove(&msg->list_header);
+      sctk_ib_list_unlock(list);
       return msg;
     }
-    elem = elem->p_next;
   }
-  sctk_list_unlock(list);
+  sctk_ib_list_unlock(list);
   return NULL;
 }
 
   static inline void
 sctk_net_ibv_broadcast_recv(void* data, size_t size,
-    const int relative_rank, int* mask, struct sctk_list* list, uint32_t psn, int* local_ranks, int local_rank, int com_size)
+    const int relative_rank, int* mask, struct sctk_list_header* list, uint32_t psn, int* local_ranks, int local_rank, int com_size)
 {
   int src;
-  sctk_net_ibv_collective_pending_t* msg;
+  sctk_net_ibv_msg_entry_t* msg;
   sctk_net_ibv_ibuf_t* ibuf;
 
   sctk_nodebug("RECV psn; %lu", psn);
@@ -496,10 +416,10 @@ sctk_net_ibv_broadcast_scatter ( sctk_collective_communications_t * com,
   int64_t recv_size = 0;
   int root_process;
   int src, dst;
-  sctk_net_ibv_collective_pending_t* msg;
+  sctk_net_ibv_msg_entry_t* msg;
   sctk_net_ibv_ibuf_t* ibuf;
   size_t size;
-  struct sctk_list *list = &com_entries[com->id].broadcast_fifo;
+  struct sctk_list_header *list = &com_entries[com->id].broadcast_fifo;
 
   size = elem_size * nb_elem;
 
@@ -568,7 +488,7 @@ sctk_net_ibv_broadcast_scatter ( sctk_collective_communications_t * com,
               (char*) my_vp->data.data_out +
               relative_rank * scatter_size,
               msg->payload, recv_size);
-          free(msg->payload);
+          sctk_free(msg->payload);
           sctk_ibv_profiler_dec(IBV_MEM_TRACE);
         }
         sctk_free(msg);
@@ -670,7 +590,7 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
 
   int size;
   int i;
-  sctk_net_ibv_collective_pending_t* msg;
+  sctk_net_ibv_msg_entry_t* msg;
   sctk_net_ibv_ibuf_t* ibuf;
   int mask;
   int relative_rank;
@@ -704,11 +624,6 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
   }
   assume(local_rank!=-1);
 
-  for (i=0; i < com_size; ++i)
-  {
-    sctk_nodebug("local %d - global %d", i, local_ranks[i]);
-  }
-
   /* compute relative rank for the current process */
   relative_rank = (local_rank - root + com_size) % com_size;
   sctk_nodebug("relative rank : %d", relative_rank);
@@ -731,6 +646,12 @@ sctk_net_ibv_allreduce ( sctk_collective_communications_t * com,
 
         COLLECTIVE_LOOKUP(&com_entries[com->id].reduce_fifo, local_ranks[source], psn, msg);
         ibuf = (sctk_net_ibv_ibuf_t*) msg->payload;
+
+        if (msg->size != size)
+        {
+          sctk_nodebug("msg->size:%lu, size:%lu", msg->size, size);
+        }
+        assume (msg->size == size);
 
         sctk_nodebug("GOT %d", msg->psn);
 
@@ -937,7 +858,7 @@ sctk_net_ibv_n_way_dissemination_barrier_rc_sr( sctk_collective_communications_t
   int index = 0;
   int com_size;
   uint32_t psn;
-  sctk_net_ibv_collective_pending_t* msg;
+  sctk_net_ibv_msg_entry_t* msg;
   int dst, src;
 
   psn = sctk_net_ibv_sched_coll_psn_inc(IBV_BARRIER, com->id);

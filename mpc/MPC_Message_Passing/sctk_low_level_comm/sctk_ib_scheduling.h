@@ -28,6 +28,7 @@
 #include <sctk.h>
 #include <stdint.h>
 #include "sctk_ib_const.h"
+#include "sctk_ib_list.h"
 #include "sctk_ib_comp_rc_sr.h"
 #include "sctk_ib_comp_rc_rdma.h"
 
@@ -68,19 +69,8 @@ typedef struct
   sctk_thread_ptp_message_t* msg_header;
   void* msg_payload;
   void* struct_ptr;
+  struct sctk_list_header list_header;
 } sctk_net_ibv_sched_pending_header;
-
-/* pending lists */
-typedef struct
-{
-  int task_nb;
-
-  /* pending lists */
-  struct sctk_list rc_sr;
-  struct sctk_list rc_sr_frag;
-  struct sctk_list rc_rdma;
-
-} pending_entry_t;
 
 
 void sctk_net_ibv_sched_init();
@@ -145,8 +135,6 @@ sctk_net_ibv_sched_initialize_threads();
 
   void
 sctk_net_ibv_sched_coll_reset (int com_id);
-
-//inline int LOOKUP_LOCAL_THREAD_ENTRY(int id);
 
 #endif
 #endif

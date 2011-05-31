@@ -20,40 +20,86 @@
 /* #   - DIDELOT Sylvain didelot.sylvain@gmail.com                        # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifdef MPC_USE_INFINIBAND
 
-#ifndef __SCTK__INFINIBAND_CONFIG_H_
-#define __SCTK__INFINIBAND_CONFIG_H_
+#include <stdio.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include "sctk_spinlock.h"
 
-extern unsigned int  ibv_eager_limit;
-extern unsigned int  ibv_frag_eager_limit;
-extern unsigned int  ibv_qp_tx_depth;
-extern unsigned int  ibv_qp_rx_depth;
-extern unsigned int  ibv_cq_depth;
-extern unsigned int  ibv_max_sg_sq;
-extern unsigned int  ibv_max_sg_rq;
-extern unsigned int  ibv_max_inline;
-extern unsigned int  ibv_max_ibufs;
-extern unsigned int  ibv_max_srq_ibufs;
-extern unsigned int  ibv_srq_credit_limit;
-extern unsigned int  ibv_srq_credit_thread_limit;
-extern unsigned int  ibv_size_ibufs_chunk;;
+#ifndef __SCTK__IB_LIST_H_
+#define __SCTK__IB_LIST_H_
 
-extern unsigned int  ibv_rdvz_protocol;
-#define IBV_RDVZ_WRITE_PROTOCOL (1)
-#define IBV_RDVZ_READ_PROTOCOL (2)
+#define SCTK_LIST_HEAD_INIT(n) {   \
+  (n)->p_prev = n;             \
+  (n)->p_next = n;             \
+  (n)->lock = SCTK_SPINLOCK_INITIALIZER; \
+}
 
-extern unsigned int  ibv_verbose_level;
-extern unsigned int  ibv_wc_in_number;
-extern unsigned int  ibv_wc_out_number;
-extern unsigned int  ibv_max_mr;
-extern unsigned int  ibv_size_mr_chunk;
-extern unsigned int  ibv_adm_port;
-extern unsigned int  ibv_rdma_depth;
-extern unsigned int  ibv_rdma_dest_depth;
-extern unsigned int  ibv_no_memory_limitation;
-extern unsigned int  ibv_adaptive_polling;
 
-void sctk_net_ibv_config_init();
-#endif
+struct sctk_list_header {
+  struct sctk_list_header* p_prev;
+  struct sctk_list_header* p_next;
+  sctk_spinlock_t lock;
+};
+
+#define sctk_ib_list_is_empty(n) \
+  (!(n)->p_prev ? 1 : 0)
+
+static inline void
+__add (struct sctk_list_header *new,
+  struct sctk_list_header *p,
+  struct sctk_list_header *n)
+{
+  n->p_prev = new;
+  new->p_next = n;
+  new->p_prev = p;
+  p->p_next = new;
+}
+
+static inline void
+sctk_ib_list_push_head(struct sctk_list_header* list,
+    struct sctk_list_header *elem)
+{
+  __add(elem, list, (list)->p_next);
+}
+
+  static inline void
+sctk_ib_list_push_tail(struct sctk_list_header* list,
+    struct sctk_list_header *elem)
+{
+  __add(elem, (list)->p_prev, list);
+}
+
+  static inline void
+__remove (struct sctk_list_header* prev,
+    struct sctk_list_header* next)
+{
+  (next)->p_prev = prev;
+  (prev)->p_next = next;
+}
+
+  static inline void
+sctk_ib_list_remove(struct sctk_list_header *elem)
+{
+  __remove((elem)->p_prev, (elem)->p_next);
+}
+
+#define sctk_ib_list_get_entry(ptr, type, header) ({\
+  type * __ptr  = NULL; \
+  (type *) ( (void*) ptr - (unsigned long) (&__ptr->header));})
+
+
+#define sctk_ib_list_foreach(ptr, list) \
+  for (ptr=(list)->p_next; ptr!=list; ptr=ptr->p_next)
+
+#define sctk_ib_list_lock(list) \
+  sctk_spinlock_lock(&(list)->lock)
+
+#define sctk_ib_list_unlock(list) \
+  sctk_spinlock_unlock(&(list)->lock)
+
+#define sctk_ib_list_trylock(list) \
+  sctk_spinlock_trylock(&(list)->lock)
+
 #endif

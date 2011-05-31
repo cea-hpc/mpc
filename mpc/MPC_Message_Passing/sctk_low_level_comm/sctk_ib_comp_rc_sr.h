@@ -32,6 +32,7 @@
 #include "sctk_ib_mmu.h"
 #include "sctk_ib_ibufs.h"
 #include "sctk_ib_const.h"
+#include "sctk_ib_list.h"
 #include "sctk_inter_thread_comm.h"
 #include <stdint.h>
 #include <stdlib.h>
@@ -61,14 +62,16 @@ typedef struct
   int src_process;
   unsigned int src_task;
   unsigned int dest_task;
-  void* msg;
-  struct sctk_list_elem *list_elem;
+  void* payload;
   size_t current_copied;
   /* FIXME: for debug */
   int buff_nb;
   int total_buffs;
   size_t size;
-} sctk_net_ibv_frag_eager_entry_t;
+  int ready;
+  sctk_net_ibv_ibuf_type_t type;
+  struct sctk_list_header list_header;
+} sctk_net_ibv_msg_entry_t;
 
 typedef sctk_net_ibv_qp_remote_t sctk_net_ibv_rc_sr_process_t;
 struct sctk_net_ibv_allocator_request_s;
@@ -76,25 +79,6 @@ struct sctk_net_ibv_allocator_request_s;
 /*-----------------------------------------------------------
  * Functions
  *----------------------------------------------------------*/
-
-/*-----------------------------------------------------------
- *  FRAG MSG
- *----------------------------------------------------------*/
-void
-sctk_net_ibv_comp_rc_sr_send_frag_ptp_message(
-    sctk_net_ibv_qp_local_t* local_rc_sr,
-    struct sctk_net_ibv_allocator_request_s req);
-
-void
-sctk_net_ibv_comp_rc_sr_send_coll_frag_ptp_message(
-    sctk_net_ibv_qp_local_t* local_rc_sr,
-    struct sctk_net_ibv_allocator_request_s req);
-
-sctk_net_ibv_frag_eager_entry_t* sctk_net_ibv_comp_rc_sr_frag_allocate(
-    sctk_net_ibv_ibuf_header_t* msg_header);
-
-  void
-sctk_net_ibv_comp_rc_sr_free_frag_msg(sctk_net_ibv_frag_eager_entry_t* entry);
 
 /*-----------------------------------------------------------
  *  NORMAL MSG
@@ -133,8 +117,7 @@ sctk_net_ibv_comp_rc_sr_check_and_connect(int dest_process);
 void
 sctk_net_ibv_rc_sr_poll_send(
     struct ibv_wc* wc,
-    sctk_net_ibv_qp_local_t* rc_sr_local,
-    int lookup_mode);
+    sctk_net_ibv_qp_local_t* rc_sr_local);
 
 void
 sctk_net_ibv_rc_sr_poll_recv(
@@ -142,7 +125,6 @@ sctk_net_ibv_rc_sr_poll_recv(
     sctk_net_ibv_qp_rail_t      *rail,
     sctk_net_ibv_qp_local_t     *rc_sr_local,
     sctk_net_ibv_qp_local_t     *rc_rdma_local,
-    int                         lookup_mode,
     int                         dest);
 
 /*-----------------------------------------------------------
@@ -157,12 +139,6 @@ void
 sctk_net_ibv_comp_rc_sr_allocate_send(
     sctk_net_ibv_qp_rail_t* rail,
     sctk_net_ibv_qp_remote_t *remote);
-
-void
-sctk_net_ibv_comp_rc_sr_allocate_recv(
-    sctk_net_ibv_qp_local_t* local,
-    sctk_net_ibv_qp_remote_t *remote,
-    int rank);
 
 #endif
 #endif

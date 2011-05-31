@@ -23,7 +23,6 @@
 #ifdef MPC_USE_INFINIBAND
 
 #include "sctk.h"
-#include "sctk_list.h"
 #include "sctk_ib_ibufs.h"
 #include "sctk_ib_cm.h"
 #include "sctk_ib_config.h"
@@ -207,14 +206,13 @@ int sctk_net_ibv_ibuf_srq_check_and_post(
   int size;
   int nb_posted;
 
-  sctk_nodebug("ibv_max_srq_ibufs %d - ibuf_free_srq_nb %d",
-      ibv_max_srq_ibufs, ibuf_free_srq_nb);
+  sctk_nodebug("ibv_max_srq_ibufs %d - ibuf_free_srq_nb %d - got %d",
+      ibv_max_srq_ibufs, ibuf_free_srq_nb, ibuf_got_srq_nb);
 
   if ( (ibuf_free_srq_nb <= limit) || (limit == -1))
   {
     if (need_lock)
       sctk_spinlock_lock(&ibuf_lock);
-
 
     if (limit == -1)
     {
@@ -231,9 +229,6 @@ int sctk_net_ibv_ibuf_srq_check_and_post(
       }
     }
 
-    //    if (ibuf_free_ibuf_nb > ibv_max_srq_ibufs)
-    //      size = ibv_max_srq_ibufs - ibuf_free_srq_nb;
-    //    else
     size = ibv_max_srq_ibufs - ibuf_free_srq_nb;
 
     if (need_lock)
@@ -299,7 +294,9 @@ void sctk_net_ibv_ibuf_release(sctk_net_ibv_ibuf_t* ibuf, int is_srq)
   --ibuf_got_ibuf_nb;
 
   if (is_srq)
+  {
     --ibuf_free_srq_nb;
+  }
 
   ibuf->desc.next = ibuf_free_header;
   ibuf_free_header = ibuf;

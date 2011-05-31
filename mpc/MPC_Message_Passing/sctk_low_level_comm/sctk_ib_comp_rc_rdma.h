@@ -35,9 +35,8 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <infiniband/verbs.h>
-#include "sctk_list.h"
 #include "sctk_ib_qp.h"
-#include "sctk_list.h"
+#include "sctk_ib_list.h"
 
 struct sctk_net_ibv_allocator_request_s;
 
@@ -61,9 +60,9 @@ typedef struct
 {
   sctk_thread_mutex_t lock;
   /* where are stored send infos */
-  struct sctk_list send;
+  struct sctk_list_header send;
   /* where are stored recv ifos */
-  struct sctk_list recv;
+  struct sctk_list_header recv;
   int                     ready;     /* if the qp is ready */
 } sctk_net_ibv_rc_rdma_process_t;
 
@@ -108,30 +107,7 @@ typedef struct
   double creation_timestamp;
   /* ptr to the list entry (help for removing an entry from
    * a list) */
-  struct sctk_list_elem*          list_elem;;
-
-#if 0
-  union
-  {
-    union
-    {
-      struct
-      {
-
-      } send;
-
-      struct
-      {
-
-      } recv;
-    } rdma;
-    union
-    {
-      size_t current_copied;
-
-    } frag_eager;
-  };
-#endif
+  struct sctk_list_header         list_header;
 } sctk_net_ibv_rc_rdma_entry_t;
 
 
@@ -187,10 +163,6 @@ typedef struct
 } sctk_net_ibv_rc_rdma_done_t;
 
 /*-----------------------------------------------------------
- *  NEW / FREE
- *----------------------------------------------------------*/
-
-/*-----------------------------------------------------------
  *  ALLOCATION
  *----------------------------------------------------------*/
 sctk_net_ibv_rc_rdma_process_t*
@@ -215,8 +187,7 @@ sctk_net_ibv_comp_rc_rdma_analyze_request(
 void
 sctk_net_ibv_com_rc_rdma_read_finish(
     sctk_net_ibv_ibuf_t* ibuf,
-    sctk_net_ibv_qp_local_t* rc_sr_local,
-    int lookup_mode);
+    sctk_net_ibv_qp_local_t* rc_sr_local);
 
 void
 sctk_net_ibv_com_rc_rdma_recv_done(

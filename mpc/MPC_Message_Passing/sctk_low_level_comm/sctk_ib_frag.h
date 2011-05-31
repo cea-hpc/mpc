@@ -17,43 +17,56 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - DIDELOT Sylvain didelot.sylvain@gmail.com                        # */
 /* #                                                                      # */
 /* ######################################################################## */
+
 #ifdef MPC_USE_INFINIBAND
 
-#ifndef __SCTK__INFINIBAND_CM_H_
-#define __SCTK__INFINIBAND_CM_H_
+#ifndef __SCTK__INFINIBAND_FRAG_H_
+#define __SCTK__INFINIBAND_FRAG_H_
 
-#include "sctk_hybrid_comm.h"
-
-#include "sctk_ib_qp.h"
+#include <sctk_debug.h>
+#include <sctk_spinlock.h>
+#include "sctk_ib.h"
+#include "sctk_ib_mmu.h"
+#include "sctk_ib_ibufs.h"
 #include "sctk_ib_const.h"
+#include "sctk_inter_thread_comm.h"
 #include "sctk_ib_allocator.h"
+#include "sctk_ib_scheduling.h"
+#include "sctk_ib_coll.h"
+#include <stdint.h>
+#include <stdlib.h>
+#include <stdio.h>
 #include <infiniband/verbs.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
 
+void
+sctk_net_ibv_comp_rc_sr_send_frag_ptp_message(
+    sctk_net_ibv_qp_local_t* local_rc_sr,
+    sctk_net_ibv_allocator_request_t req);
 
-#define PRINT_DEBUG(level, ...) {\
-  if (level >= ibv_verbose_level)  \
-    sctk_debug(__VA_ARGS__); }
+sctk_net_ibv_msg_entry_t* sctk_net_ibv_frag_allocate(
+    sctk_net_ibv_ibuf_header_t* msg_header);
+
+  int
+sctk_net_ibv_frag_copy_msg(sctk_net_ibv_ibuf_header_t* msg_header,
+    struct sctk_list_header* list, sctk_net_ibv_msg_entry_t* entry);
+
+void
+sctk_net_ibv_frag_free_msg(sctk_net_ibv_msg_entry_t* entry);
+
+  sctk_net_ibv_msg_entry_t*
+sctk_net_ibv_frag_search_msg(sctk_net_ibv_ibuf_header_t* msg_header, struct sctk_list_header *list);
 
   void
-sctk_net_ibv_cm_server();
+sctk_net_ibv_comp_rc_sr_frag_recv(sctk_net_ibv_ibuf_header_t* msg_header);
 
-  void
-sctk_net_ibv_cm_request(int process,
-    char* host, int* port);
-
-  void
-sctk_net_ibv_cm_client(char* host, int port,
-    int dest, sctk_net_ibv_qp_remote_t *remote);
+void
+sctk_net_ibv_comp_rc_sr_send_coll_frag_ptp_message(
+    sctk_net_ibv_qp_local_t* local_rc_sr,
+    sctk_net_ibv_allocator_request_t req);
 
 
-void sctk_net_ibv_async_init(struct ibv_context *context);
-/*-----------------------------------------------------------
- *  ASYNC EVENTS THREAD
- *----------------------------------------------------------*/
 #endif
 #endif

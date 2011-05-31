@@ -79,6 +79,8 @@ thread_rpc(void* arg)
         sctk_rpc_execute(req->func, req->arg);
       }
     }
+
+    /* TODO: use pthread_cond_signal instead of usleep */
     usleep(200);
   }
   return NULL;

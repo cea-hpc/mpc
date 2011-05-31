@@ -109,15 +109,16 @@ sctk_net_ibv_qp_pick_rail(int rail_nb)
 
 int sctk_net_ibv_qp_send_post_pending(sctk_net_ibv_qp_remote_t* remote, int need_lock)
 {
-  struct sctk_list_elem *tmp, *to_free;
+  struct sctk_list_header *tmp, *to_free;
   sctk_net_ibv_ibuf_t* ibuf;
   int rc;
 
   if (need_lock)
     sctk_thread_mutex_lock(&remote->send_wqe_lock);
 
-  tmp = remote->pending_send_wqe.head;
-  while (tmp) {
+  sctk_ib_list_foreach(tmp, &remote->pending_send_wqe)
+  {
+    ibuf = sctk_ib_list_get_entry(tmp, sctk_net_ibv_ibuf_t, list_header);
 
     if ( (remote->ibv_got_send_wqe + 1) > ibv_qp_tx_depth)
     {
@@ -126,8 +127,6 @@ int sctk_net_ibv_qp_send_post_pending(sctk_net_ibv_qp_remote_t* remote, int need
 
       return 1;
     }
-
-    ibuf = (sctk_net_ibv_ibuf_t*) tmp->elem;
 
     sctk_nodebug("Got %d", remote->ibv_got_send_wqe);
     rc = ibv_post_send(remote->qp, &(ibuf->desc.wr.send), &(ibuf->desc.bad_wr.send));
@@ -138,8 +137,7 @@ int sctk_net_ibv_qp_send_post_pending(sctk_net_ibv_qp_remote_t* remote, int need
     remote->ibv_free_send_wqe--;
 
     to_free = tmp;
-    tmp = tmp->p_next;
-    sctk_list_remove(&remote->pending_send_wqe, to_free);
+    sctk_ib_list_remove(to_free);
   }
 
   if (need_lock)
@@ -175,7 +173,7 @@ int sctk_net_ibv_qp_send_get_wqe(int dest_process, sctk_net_ibv_ibuf_t* ibuf)
 
   if ( (remote->ibv_got_send_wqe + 1) > ibv_qp_tx_depth) {
     sctk_nodebug("No more WQE available");
-    sctk_list_push(&remote->pending_send_wqe, ibuf);
+    sctk_ib_list_push_tail(&remote->pending_send_wqe, &ibuf->list_header);
     sctk_thread_mutex_unlock(&remote->send_wqe_lock);
 
     return -1;
@@ -253,7 +251,7 @@ sctk_net_ibv_qp_init(sctk_net_ibv_qp_local_t* local,
     sctk_abort();
   }
 
-  sctk_list_new(&remote->pending_send_wqe, 0, 0);
+  SCTK_LIST_HEAD_INIT(&remote->pending_send_wqe);
   sctk_thread_mutex_init(&remote->send_wqe_lock, NULL);
   sctk_nodebug("Initialized : %d", remote->rank);
 
@@ -482,106 +480,6 @@ sctk_net_ibv_cq_print_status (enum ibv_wc_status status)
 }
 
 
-static void
-sctk_net_ibv_poll_check_wc(struct ibv_wc wc, sctk_net_ibv_allocator_type_t type) {
-
-  if (wc.status != IBV_WC_SUCCESS)
-  {
-    sctk_net_ibv_ibuf_t* ibuf;
-    sctk_net_ibv_ibuf_header_t* header;
-
-    ibuf = (sctk_net_ibv_ibuf_t*) wc.wr_id;
-    assume(ibuf);
-    header = ((sctk_net_ibv_ibuf_header_t*) ibuf->buffer);
-
-    sctk_error ("\033[1;31m\nIB - FATAL ERROR FROM PROCESS %d\n"
-        "################################\033[0m\n"
-        "Work ID is   : %d\n"
-        "Status       : %s\n"
-        "ERROR Vendor : %d\n"
-        "Byte_len     : %d\n"
-        "Flag         : %s\n"
-        "Ibuf type    : %d\n"
-        "Ptp type     : %d\n"
-        "Buff_nb      : %d\n"
-        "Total_buffs  : %d\n"
-        "\033[1;31m################################\033[0m\n",
-        sctk_process_rank,
-        wc.wr_id, sctk_net_ibv_cq_print_status(wc.status),
-        wc.vendor_err, wc.byte_len, sctk_net_ibv_ibuf_print_flag(ibuf->flag),
-        header->ibuf_type, header->ptp_type, header->buff_nb, header->total_buffs);
-
-    sctk_abort();
-  }
-}
-
-
-  void
-sctk_net_ibv_cq_poll(struct ibv_cq* cq, int pending_nb, void (*ptr_func)(struct ibv_wc*, int lookup, int dest), sctk_net_ibv_allocator_type_t type)
-{
-  struct ibv_wc wc;
-  int ne = 0;
-  int i;
-
-  for (i=0; i < pending_nb; ++i)
-  {
-    ne = ibv_poll_cq (cq, 1, &wc);
-    if (ne)
-    {
-      sctk_net_ibv_poll_check_wc(wc, type);
-      ptr_func(&wc, 0, 0);
-    } else {
-      return;
-    }
-  }
-}
-
-  void
-sctk_net_ibv_cq_lookup(struct ibv_cq* cq, int nb_pending, void (*ptr_func)(struct ibv_wc*, int lookup, int dest), int dest, sctk_net_ibv_allocator_type_t type)
-{
-  struct ibv_wc wc[nb_pending];
-  int ne = 0;
-  int i;
-
-  ne = ibv_poll_cq (cq, nb_pending, wc);
-
-  for (i = 0; i < ne; ++i)
-  {
-    sctk_nodebug("%d elements found", ne);
-
-    sctk_net_ibv_poll_check_wc(wc[i], type);
-
-    ptr_func(&wc[i], 1, dest);
-  }
-}
-
-  int
-sctk_net_ibv_cq_garbage_collector(struct ibv_cq* cq, int nb_pending, void (*ptr_func)(struct ibv_wc*), sctk_net_ibv_allocator_type_t type)
-{
-  struct ibv_wc wc;
-  int ne = 0;
-  int i;
-
-  sctk_nodebug("garbage");
-
-  for (i = 0; i < nb_pending; ++i)
-  {
-    ne = ibv_poll_cq (cq, 1, &wc);
-    if (ne)
-    {
-      sctk_nodebug("%d elements found", ne);
-
-      sctk_net_ibv_poll_check_wc(wc, type);
-      ptr_func(&wc);
-    } else {
-      return 0;
-    }
-  }
-  return ne;
-}
-
-
-
 /*-----------------------------------------------------------
  *  Shared Receive queue
  *----------------------------------------------------------*/
@@ -703,7 +601,7 @@ sctk_net_ibv_qp_allocate_init(int rank,
 }
 
 void
-sctk_net_ibv_qp_allocate_recv(
+sctk_net_ibv_qp_allocate_rtr(
     sctk_net_ibv_qp_remote_t *remote,
     sctk_net_ibv_qp_exchange_keys_t* keys)
 {
@@ -711,11 +609,23 @@ sctk_net_ibv_qp_allocate_recv(
   int flags;
 
   attr = sctk_net_ibv_qp_state_rtr_attr(keys, &flags);
-  sctk_nodebug("Modify QR RTR for process %d", rank);
+  sctk_nodebug("Modify QR RTR for process %d", remote->rank);
   sctk_net_ibv_qp_modify(remote, &attr, flags);
+  remote->is_rtr = 1;
+}
+
+void
+sctk_net_ibv_qp_allocate_rts(
+    sctk_net_ibv_qp_remote_t *remote)
+{
+  struct ibv_qp_attr       attr;
+  int flags;
 
   attr = sctk_net_ibv_qp_state_rts_attr(remote->psn, &flags);
-  sctk_nodebug("Modify QR RTS for process %d", rank);
+  sctk_nodebug("Modify QR RTS for process %d", remote->rank);
   sctk_net_ibv_qp_modify(remote, &attr, flags);
+  remote->is_rts = 1;
 }
+
+
 #endif

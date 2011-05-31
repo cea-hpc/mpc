@@ -25,7 +25,6 @@
 #ifndef __SCTK__INFINIBAND_ALLOCATOR_H_
 #define __SCTK__INFINIBAND_ALLOCATOR_H_
 
-#include "sctk_list.h"
 #include "sctk_launch.h"
 #include "sctk_ib_allocator.h"
 #include "sctk_ib_scheduling.h"
@@ -81,6 +80,7 @@ typedef struct sctk_net_ibv_allocator_request_s
   void* msg_header;
   size_t size;
   size_t payload_size;
+  size_t total_copied;
 
   /* for collective */
   uint8_t com_id;
@@ -150,8 +150,8 @@ typedef struct
 
   sched_sn_t* remote;
   /* one pending list for each local task */
-  struct sctk_list pending_msg;
-  struct sctk_list** frag_eager_list;
+  struct sctk_list_header pending_msg;
+  struct sctk_list_header** frag_eager_list;
 } sctk_net_ibv_allocator_task_t;
 
 
@@ -219,6 +219,90 @@ void
 sctk_net_ibv_allocator_initialize_threads();
 
 int LOOKUP_LOCAL_THREAD_ENTRY(int id);
+
+#if defined(Linux_SYS)
+UNUSED static uint64_t cpu_frequency = 0;
+
+static char *
+find_info(FILE* fp, char *str, char *buf, size_t buflen)
+{
+    char *tmp;
+
+    rewind(fp);
+    while (NULL != fgets(buf, buflen, fp)) {
+        if (strncmp(buf, str, strlen(str)) == 0) {
+            /* we found the line.  Now eat everything up to,
+               including, and one past the : */
+            for (tmp = buf ; (*tmp != '\0') && (*tmp != ':') ; ++tmp) ;
+            for ( ++tmp ; *tmp == ' ' ; ++tmp);
+            if ('\0' != *tmp) {
+                return tmp;
+            }
+        }
+    }
+
+    return NULL;
+}
+
+
+UNUSED static int sctk_net_ibv_timer_linux_open(uint64_t* frequency)
+{
+    FILE *fp;
+    char *loc;
+    float cpu_f;
+    int ret;
+    char buf[1024];
+
+    fp = fopen("/proc/cpuinfo", "r");
+    if (NULL == fp) {
+        return 0;
+    }
+
+    *frequency = 0;
+
+    if (0 == *frequency) {
+        /* first, look for a timebase field.  probably only on PPC,
+           but one never knows */
+        loc = find_info(fp, "timebase", buf, 1024);
+        if (NULL != loc) {
+            int freq;
+            ret = sscanf(loc, "%d", &freq);
+            if (1 == ret) {
+                *frequency = freq;
+            }
+        }
+    }
+
+    if (0 == *frequency) {
+        /* find the CPU speed - most timers are 1:1 with CPU speed */
+        loc = find_info(fp, "cpu MHz", buf, 1024);
+        if (NULL != loc) {
+            ret = sscanf(loc, "%f", &cpu_f);
+            if (1 == ret) {
+                /* numer is in MHz - convert to Hz and make an integer */
+                *frequency = (uint64_t) cpu_f * 1000000;
+            }
+        }
+    }
+
+    if (0 == *frequency) {
+        /* look for the sparc way of getting cpu frequency */
+        loc = find_info(fp, "Cpu0ClkTck", buf, 1024);
+        if (NULL != loc) {
+            unsigned int freq;
+            ret = sscanf(loc, "%x", &freq);
+            if (1 == ret) {
+                *frequency = freq;
+            }
+        }
+    }
+
+    fclose(fp);
+
+    return 1;
+}
+
+#endif
 
 #endif
 #endif

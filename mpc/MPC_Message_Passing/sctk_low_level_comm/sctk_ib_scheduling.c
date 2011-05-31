@@ -68,17 +68,20 @@ sctk_net_ibv_sched_pending_push(
 {
   void* msg;
   int entry_nb = -1;
-  sctk_net_ibv_sched_pending_header header;
+  sctk_net_ibv_sched_pending_header *header = NULL;
+  struct sctk_list_header *list = NULL;
 
   sctk_nodebug("[task %lu] Pushing msg (src_process:%lu, src_task:%lu, psn:%lu, type %d) to pending list",
       dest_task, src_process, src_task, psn, type);
 
   /* fill header for msg payload */
-  header.src_process = src_process;
-  header.src_task = src_task;
-  header.dest_task = dest_task;
-  header.psn = psn;
-  header.type = type;
+  header = sctk_malloc(sizeof(sctk_net_ibv_sched_pending_header));
+  assume(header);
+  header->src_process = src_process;
+  header->src_task = src_task;
+  header->dest_task = dest_task;
+  header->psn = psn;
+  header->type = type;
 
   if (allocation_needed)
   {
@@ -87,65 +90,64 @@ sctk_net_ibv_sched_pending_push(
     sctk_ibv_profiler_inc(IBV_MEM_TRACE);
     memcpy(msg, ptr, size);
 
-    header.msg_header = msg;
-    header.msg_payload = (char*) msg + sizeof(sctk_thread_ptp_message_t);
-    header.struct_ptr = msg;
+    header->msg_header = msg;
+    header->msg_payload = (char*) msg + sizeof(sctk_thread_ptp_message_t);
+    header->struct_ptr = msg;
   } else {
     sctk_nodebug("No memory allocated");
     msg = ptr;
-    header.msg_header = msg_header;
-    header.msg_payload = msg_payload;
-    header.struct_ptr = struct_ptr;
+    header->msg_header = msg_header;
+    header->msg_payload = msg_payload;
+    header->struct_ptr = struct_ptr;
   }
 
 
   /* lookup the local thread entry */
   entry_nb = LOOKUP_LOCAL_THREAD_ENTRY(dest_task);
-  sctk_nodebug("Entry nb : %d (header %p, payload %p, size header %lu)", entry_nb, header.msg_header, header.msg_payload, sizeof(header));
+  list = &all_tasks[entry_nb].pending_msg;
 
-  sctk_list_lock(&all_tasks[entry_nb].pending_msg);
-  sctk_list_push(&all_tasks[entry_nb].pending_msg, &header);
-  sctk_list_unlock(&all_tasks[entry_nb].pending_msg);
+  sctk_ib_list_lock(list);
+  sctk_ib_list_push_tail(list, &header->list_header);
+  sctk_ib_list_unlock(list);
 }
 
   int
 sctk_net_ibv_sched_poll_pending_msg(int task_nb)
 {
-  struct sctk_list_elem* tmp = NULL;
-  sctk_net_ibv_sched_pending_header* header;
+  struct sctk_list_header* tmp = NULL;
+  sctk_net_ibv_sched_pending_header* header = NULL;
   int ret;
+  struct sctk_list_header *list = &all_tasks[task_nb].pending_msg;
 
-  sctk_list_lock(&all_tasks[task_nb].pending_msg);
-  tmp = all_tasks[task_nb].pending_msg.head;
-
-  while(tmp)
+  if ( sctk_ib_list_trylock(list) == 0)
   {
-    header = tmp->elem;
-
-    ret = sctk_net_ibv_sched_sn_check_and_inc(
-        header->dest_task,
-        header->src_task, header->psn);
-
-    if (!ret)
+    sctk_ib_list_foreach(tmp, list)
     {
-      sctk_nodebug("[task %lu] PENDING - Recv EAGER message from %d, task %d (PSN %d, struct ptr %p, type %d, header %p, payload %p)", all_tasks[task_nb].task_nb, header->src_process, header->src_task, header->psn, header->struct_ptr, header->type, header->msg_header, header->msg_payload);
+      header = sctk_ib_list_get_entry(tmp,
+          sctk_net_ibv_sched_pending_header, list_header);
 
-      sctk_net_ibv_send_msg_to_mpc(
-          header->msg_header,
-          header->msg_payload,
-          header->src_process,
-          header->type, header->struct_ptr);
+      ret = sctk_net_ibv_sched_sn_check_and_inc(
+          header->dest_task,
+          header->src_task, header->psn);
 
-      //THERE
-      sctk_list_remove(&all_tasks[task_nb].pending_msg, tmp);
-      sctk_list_unlock(&all_tasks[task_nb].pending_msg);
-      /*  FIXME there */
-      return 0;
+        if (!ret)
+      {
+        sctk_nodebug("[task %lu] PENDING - Recv EAGER message from %d, task %d (PSN %d, struct ptr %p, type %d, header %p, payload %p)", all_tasks[task_nb].task_nb, header->src_process, header->src_task, header->psn, header->struct_ptr, header->type, header->msg_header, header->msg_payload);
+
+        sctk_net_ibv_send_msg_to_mpc(
+            header->msg_header,
+            header->msg_payload,
+            header->src_process,
+            header->type, header->struct_ptr);
+
+        sctk_ib_list_remove(tmp);
+        sctk_ib_list_unlock(list);
+        return 0;
+      }
     }
-
-    tmp = tmp->p_next;
+    sctk_ib_list_unlock(list);
   }
-  sctk_list_unlock(&all_tasks[task_nb].pending_msg);
+
   return 0;
 }
 
@@ -166,9 +168,9 @@ sctk_net_ibv_sched_get_esn(int src_task, int dest_task)
   int local_nb = -1;
 
   local_nb = LOOKUP_LOCAL_THREAD_ENTRY(src_task);
-//  SCHED_LOCK;
+  //  SCHED_LOCK;
   sn = sched_get_sn(local_nb, dest_task);
-//  SCHED_UNLOCK;
+  //  SCHED_UNLOCK;
 
   sctk_nodebug("ESN : %lu", sn->esn);
   return sn->esn;
@@ -182,12 +184,12 @@ sctk_net_ibv_sched_psn_inc (int src_task, int dest_task)
   int local_nb = -1;
 
   local_nb = LOOKUP_LOCAL_THREAD_ENTRY(src_task);
-//  SCHED_LOCK;
+  //  SCHED_LOCK;
   sn = sched_get_sn(local_nb, dest_task);
 
   i = sn->psn;
   sn->psn++;
-//  SCHED_UNLOCK;
+  //  SCHED_UNLOCK;
   return i;
 }
 
@@ -199,12 +201,12 @@ sctk_net_ibv_sched_esn_inc (int src_task, int dest_task)
   int local_nb = -1;
 
   local_nb = LOOKUP_LOCAL_THREAD_ENTRY(src_task);
-//  SCHED_LOCK;
+  //  SCHED_LOCK;
   sn = sched_get_sn(local_nb, dest_task);
 
   i = sn->esn;
   sn->esn++;
-//  SCHED_UNLOCK;
+  //  SCHED_UNLOCK;
   sctk_nodebug("INC for process %d (task %d): %lu", dest, entry_nb, i);
   return i;
 }
@@ -242,15 +244,15 @@ sctk_net_ibv_sched_sn_check_and_inc(int src_task, int dest_task, uint64_t num)
 /*-----------------------------------------------------------
  *  COLL SEQUENCE NUMBERS
  *----------------------------------------------------------*/
-void
+  void
 sctk_net_ibv_sched_coll_reset (int com_id)
 {
- com_entries[com_id].reduce.psn = 0;
- com_entries[com_id].bcast.psn = 0;
- com_entries[com_id].barrier.psn = 0;
+  com_entries[com_id].reduce.psn = 0;
+  com_entries[com_id].bcast.psn = 0;
+  com_entries[com_id].barrier.psn = 0;
 }
 
-uint32_t
+  uint32_t
 sctk_net_ibv_sched_coll_psn_inc (sctk_net_ibv_ibuf_ptp_type_t type, int com_id)
 {
   int ret;
@@ -285,31 +287,4 @@ sctk_net_ibv_sched_coll_psn_inc (sctk_net_ibv_ibuf_ptp_type_t type, int com_id)
   }
   return 0;
 }
-
-uint32_t
-sctk_net_ibv_sched_coll_esn_inc (int com_id)
-{
-  return 0;
-}
-
-uint32_t
-sctk_net_ibv_sched_coll_get_esn(int com_id)
-{
-  return 0;
-}
-
-uint32_t
-sctk_net_ibv_sched_coll_sn_check(int com_id)
-{
-
-  return 0;
-}
-
-int
-sctk_net_ibv_sched_coll_sn_check_and_inc(int com_id)
-{
-
-  return 0;
-}
-
 #endif

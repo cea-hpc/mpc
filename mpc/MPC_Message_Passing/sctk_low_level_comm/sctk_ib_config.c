@@ -75,7 +75,7 @@
 
 /* Number of new buffers allocated when
  * no more buffers are available */
-#define IBV_SIZE_IBUFS_CHUNKS 200
+#define IBV_SIZE_IBUFS_CHUNKS 400
 
 #define IBV_WC_IN_NUMBER    1
 #define IBV_WC_OUT_NUMBER   1
@@ -97,6 +97,8 @@
  * the terminal during runtime: new ibufs allocated,
  * new MMu entries allocated, etc...) */
 #define IBV_VERBOSE_LEVEL         1
+
+#define IBV_ADAPTIVE_POLLING      1
 
 /* global values */
 unsigned int  ibv_eager_limit  = IBV_EAGER_LIMIT;
@@ -123,6 +125,7 @@ unsigned int  ibv_size_mr_chunk    = IBV_SIZE_MR_CHUNKS;
 unsigned int  ibv_adm_port         = IBV_ADM_PORT;
 unsigned int  ibv_rdma_depth       = IBV_RDMA_DEPTH;
 unsigned int  ibv_rdma_dest_depth  = IBV_RDMA_DEST_DEPTH;
+unsigned int  ibv_adaptive_polling = IBV_ADAPTIVE_POLLING;
 
 
 void sctk_net_ibv_config_check()
@@ -182,6 +185,7 @@ void sctk_net_ibv_config_print()
         "ibv_adm_port         = %d\n"
         "ibv_rdma_depth       = %d\n"
         "ibv_rdma_dest_depth  = %d\n"
+        "ibv_adaptive_polling = %d\n"
         "############# IB CONFIGURATION #############\n",
         ibv_eager_limit,
         ibv_frag_eager_limit,
@@ -201,7 +205,8 @@ void sctk_net_ibv_config_print()
         ibv_max_mr,
         ibv_adm_port,
         ibv_rdma_depth,
-        ibv_rdma_dest_depth);
+        ibv_rdma_dest_depth,
+        ibv_adaptive_polling);
   }
 }
 
@@ -271,6 +276,10 @@ void sctk_net_ibv_config_init()
   if ( (value = getenv("MPC_IBV_SIZE_IBUFS_CHUNK")) != NULL )
     ibv_size_ibufs_chunk = atoi(value);
 
+  if ( (value = getenv("MPC_IBV_ADAPTIVE_POLLING")) != NULL )
+  {
+    ibv_adaptive_polling = atoi(value);
+  }
   /*
    * Check if the variables are well set and print them
    * */

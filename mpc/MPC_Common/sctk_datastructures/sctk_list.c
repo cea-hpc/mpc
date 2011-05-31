@@ -252,21 +252,3 @@ int sctk_list_is_empty(struct sctk_list* list)
   else return 1;
 }
 
-void sctk_list_lock(struct sctk_list* list)
-{
-  assume(list->is_initialized);
-
-  sctk_spinlock_lock(&list->lock);
-}
-
-void sctk_list_unlock(struct sctk_list* list)
-{
-  assume(list->is_initialized);
-
-  sctk_spinlock_unlock(&list->lock);
-}
-
-int sctk_list_is_initialized(struct sctk_list* list)
-{
-  return list->is_initialized;
-}
