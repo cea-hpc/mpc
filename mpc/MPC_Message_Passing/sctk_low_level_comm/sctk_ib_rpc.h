@@ -45,6 +45,7 @@ typedef struct
   int src_process;
   void* ack;
   int lock;
+  struct sctk_list_header list_header;
 } sctk_net_ibv_rpc_ack_t;
 
   void

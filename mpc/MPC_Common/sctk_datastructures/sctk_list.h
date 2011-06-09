@@ -70,6 +70,9 @@ void* sctk_list_walk_on_cond(struct sctk_list* list, int cond,
 void* sctk_list_walk(struct sctk_list* list,
     void* (*funct) (void* elem), int remove);
 
+void*
+  sctk_list_pop(struct sctk_list* list);
+
 #define sctk_list_lock(list)  sctk_spinlock_lock(&(list)->lock)
 #define sctk_list_unlock(list) sctk_spinlock_unlock(&(list)->lock)
 #define sctk_list_trylock(list) sctk_spinlock_trylock(&(list)->lock)

@@ -110,6 +110,10 @@ sctk_net_init_driver_infiniband (int *argc, char ***argv)
   /* channel selection */
   sctk_net_ibv_allocator_new();
 
+  /* initialization of buffers. Must be initialized BEFORE
+   * the Connexion Manager server */
+  rc_sr_local = sctk_net_ibv_comp_rc_sr_create_local(rail);
+
   /* initialization of the Connection Manager */
   sctk_net_ibv_cm_server();
 
@@ -125,8 +129,6 @@ sctk_net_init_driver_infiniband (int *argc, char ***argv)
 
   sctk_ibv_profiler_init();
 
-  /* initialization of buffers  */
-  rc_sr_local = sctk_net_ibv_comp_rc_sr_create_local(rail);
   sctk_net_ibv_ibuf_new();
   sctk_net_ibv_ibuf_init(rail, rc_sr_local, ibv_max_ibufs, 0);
   /* Post all recv buffers... */
@@ -140,7 +142,6 @@ sctk_net_init_driver_infiniband (int *argc, char ***argv)
 
   /* initialization of RPC structures */
   sctk_net_rpc_init();
-  sctk_nodebug("\t- %s %lu",name_s,(unsigned long)device_list[i].device_attr.name);
 
   /* initialization of timers */
 #if defined(Linux_SYS)

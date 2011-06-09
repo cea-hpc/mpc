@@ -26,7 +26,6 @@
 #include "sctk_ib_rpc.h"
 #include "sctk_ib_ibufs.h"
 #include "sctk_ib_allocator.h"
-#include "sctk_list.h"
 
 /* RC SR structures */
 extern  sctk_net_ibv_qp_local_t *rc_sr_local;
@@ -38,6 +37,7 @@ typedef struct
   void* arg;
   size_t arg_size;
   int src_process;
+  struct sctk_list_header list_header;
   void ( *func ) ( void * );
 } rpc_req_list_entry_t;
 
@@ -45,12 +45,12 @@ typedef struct
 {
   void* addr;
   sctk_net_ibv_mmu_entry_t* mmu_entry;
-  struct sctk_list_elem* list_elem;
+  struct sctk_list_header list_header;
 } rpc_reg_mr_list_entry_t;
 
-struct sctk_list rpc_req_list;
-struct sctk_list rpc_ack_list;
-struct sctk_list rpc_reg_mr_list;
+struct sctk_list_header rpc_req_list;
+struct sctk_list_header rpc_ack_list;
+struct sctk_list_header rpc_reg_mr_list;
 
 /*-----------------------------------------------------------
  *  RPC
@@ -59,27 +59,29 @@ struct sctk_list rpc_reg_mr_list;
   void*
 thread_rpc(void* arg)
 {
+  void* ret;
   rpc_req_list_entry_t* req;
   sctk_update_communicator_t *msg;
 
   while(1)
   {
-    if (!sctk_list_is_empty(&rpc_req_list))
+    if (sctk_ib_list_trylock(&rpc_req_list) == 0)
     {
-      req = sctk_list_pop(&rpc_req_list);
-      if (req)
-      {
-        sctk_nodebug("Element poped (size:%lu)", req->arg_size);
-        if (req->arg_size == 56)
+      do {
+        ret = sctk_ib_list_pop(&rpc_req_list);
+        sctk_ib_list_unlock(&rpc_req_list);
+
+        if (ret)
         {
-          msg = req->arg;
-          sctk_nodebug("COM ID : %d", msg->com);
+          req = sctk_ib_list_get_entry(ret, rpc_req_list_entry_t, list_header);
+          sctk_nodebug("POP %p", req);
+          sctk_nodebug("arg_size: %lu", req->arg_size);
+          sctk_nodebug("Element poped (size:%lu)", req->arg_size);
+          sctk_rpc_execute(req->func, req->arg);
+          sctk_free(req);
         }
-
-        sctk_rpc_execute(req->func, req->arg);
-      }
+      } while (ret);
     }
-
     /* TODO: use pthread_cond_signal instead of usleep */
     usleep(200);
   }
@@ -92,15 +94,15 @@ sctk_net_rpc_init()
   sctk_thread_t pidt_rpc;
   sctk_thread_attr_t attr_rpc;
 
-  sctk_list_new(&rpc_req_list, 0, 0);
-  sctk_list_new(&rpc_ack_list, 0, 0);
-  sctk_list_new(&rpc_reg_mr_list, 0, 0);
+  SCTK_LIST_HEAD_INIT(&rpc_req_list);
+  SCTK_LIST_HEAD_INIT(&rpc_ack_list);
+  SCTK_LIST_HEAD_INIT(&rpc_reg_mr_list);
 
   /* thread for RPC */
   sctk_thread_attr_init ( &attr_rpc );
   /* / ! \ There are some troubles when we are using
    * a system thread. Don't decomment the following line. */
-//  sctk_thread_attr_setscope ( &attr_rpc, SCTK_THREAD_SCOPE_SYSTEM );
+  //  sctk_thread_attr_setscope ( &attr_rpc, SCTK_THREAD_SCOPE_SYSTEM );
   sctk_user_thread_create ( &pidt_rpc, &attr_rpc, thread_rpc, NULL );
 }
 
@@ -133,10 +135,9 @@ sctk_net_rpc_register(void* addr, size_t size, int process, int is_retrieve, uin
   assume(reg_mr_entry);
   reg_mr_entry->mmu_entry = mmu_entry;
   reg_mr_entry->addr = addr;
-  sctk_list_lock(&rpc_reg_mr_list);
-  reg_mr_entry->list_elem =
-    sctk_list_push(&rpc_reg_mr_list, reg_mr_entry);
-  sctk_list_unlock(&rpc_reg_mr_list);
+  sctk_ib_list_lock(&rpc_reg_mr_list);
+  sctk_ib_list_push_tail(&rpc_reg_mr_list, &reg_mr_entry->list_header);
+  sctk_ib_list_unlock(&rpc_reg_mr_list);
 
   if (rkey)
   {
@@ -156,41 +157,32 @@ sctk_net_rpc_register(void* addr, size_t size, int process, int is_retrieve, uin
   void
 sctk_net_rpc_unregister(void* addr, size_t size, int process, int is_retrieve)
 {
-  struct sctk_list_elem *tmp = NULL;
   rpc_reg_mr_list_entry_t* reg_mr_entry = NULL;
   uint8_t found = 0;
-  struct sctk_list_elem* rc;
+  struct sctk_list_header* tmp;
 
   sctk_nodebug("BEGIN rpc_unregister %d", process, is_retrieve);
   if (!addr || !is_retrieve) return;
 
-  sctk_list_lock(&rpc_reg_mr_list);
-  tmp = rpc_reg_mr_list.head;
-  while (tmp) {
-
-    reg_mr_entry = (rpc_reg_mr_list_entry_t*) tmp->elem;
+  sctk_ib_list_lock(&rpc_reg_mr_list);
+  sctk_ib_list_foreach(tmp,&rpc_reg_mr_list)
+  {
+    reg_mr_entry = sctk_ib_list_get_entry(tmp, rpc_reg_mr_list_entry_t, list_header);
 
     if( reg_mr_entry->addr == addr)
     {
       sctk_nodebug("Found addr %p <-> %p", reg_mr_entry->addr, addr);
+      sctk_ib_list_remove(tmp);
       found = 1;
       break;
     }
+  }
+  sctk_ib_list_unlock(&rpc_reg_mr_list);
+  assume(found);
 
-    tmp = tmp->p_next;
-  }
-  if (!found)
-  {
-    sctk_nodebug("Addr %p not found !", addr);
-    assume(0);
-  }
   /* unregister memory and remove list entry */
-  rc = sctk_list_remove(&rpc_reg_mr_list, reg_mr_entry->list_elem);
   sctk_net_ibv_mmu_unregister(rail->mmu, reg_mr_entry->mmu_entry);
   sctk_free(reg_mr_entry);
-  assume(rc);
-
-  sctk_list_unlock(&rpc_reg_mr_list);
 
   sctk_nodebug("END rpc_unregister");
 }
@@ -231,25 +223,6 @@ sctk_net_rpc_driver ( void ( *func ) ( void * ), int destination, void *arg, siz
 
   sctk_nodebug("END rpc_driver %d", destination);
 }
-
-  static void*
-walk_list(void* elem, int cond)
-{
-  sctk_net_ibv_rpc_ack_t* ack;
-
-  ack = (sctk_net_ibv_rpc_ack_t* ) elem;
-
-  sctk_nodebug("SRC PROCESS %d-%d", cond, ack->src_process);
-
-  if (ack->src_process == cond)
-  {
-    sctk_nodebug("Found entry for process %d", cond);
-    return ack;
-  }
-
-  return NULL;
-}
-
 
 void
 sctk_net_rpc_retrive_driver ( void *dest, void *src, size_t arg_size,
@@ -292,9 +265,9 @@ sctk_net_rpc_retrive_driver ( void *dest, void *src, size_t arg_size,
     rpc_ack->ack = ack;
     rpc_ack->lock = 0;
 
-    sctk_list_lock(&rpc_ack_list);
-    sctk_list_push(&rpc_ack_list, rpc_ack);
-    sctk_list_unlock(&rpc_ack_list);
+    sctk_ib_list_lock(&rpc_ack_list);
+    sctk_ib_list_push_tail(&rpc_ack_list, &rpc_ack->list_header);
+    sctk_ib_list_unlock(&rpc_ack_list);
 
     sctk_nodebug("\t\t\tread from %p (%p) (dest:%d) with key %lu. size:%lu", src, dest, process, rkey, arg_size);
 
@@ -354,19 +327,20 @@ sctk_net_rpc_receive(sctk_net_ibv_ibuf_t* ibuf)
   assume(req);
   req->src_process = msg_header->src_process;
   req->arg = sctk_malloc(rpc->arg_size);
+  assume(req->arg);
   req->func = rpc->func;
   sctk_nodebug("FUNC : %d", req->func);
   req->arg_size = rpc->arg_size;
-  assume(req->arg);
 
   memcpy(req->arg, &rpc->arg, rpc->arg_size);
 
   /* We don't execute the RPC for now (we can't block
    * the polling thread). We push the request to a list. This list
    * is polled by a system thread */
-  sctk_list_lock(&rpc_req_list);
-  sctk_list_push(&rpc_req_list, req);
-  sctk_list_unlock(&rpc_req_list);
+  sctk_ib_list_lock(&rpc_req_list);
+  sctk_ib_list_push_tail(&rpc_req_list, &req->list_header);
+  sctk_nodebug("NEW %p, arg_size :%d", req, rpc->arg_size);
+  sctk_ib_list_unlock(&rpc_req_list);
 }
 
   void
@@ -374,14 +348,24 @@ sctk_net_rpc_send_ack(sctk_net_ibv_ibuf_t* ibuf)
 {
   sctk_net_ibv_ibuf_t* ibuf_ack;
   sctk_net_ibv_ibuf_header_t* msg_header;
-  sctk_net_ibv_rpc_ack_t* rpc;
+  sctk_net_ibv_rpc_ack_t* rpc = NULL;
   sctk_net_ibv_rpc_ack_t* send_rpc;
   sctk_net_ibv_allocator_request_t req;
+  struct sctk_list_header *tmp;
 
   msg_header = ((sctk_net_ibv_ibuf_header_t*) ibuf->buffer);
 
-  rpc = sctk_list_walk_on_cond(&rpc_ack_list, ibuf->dest_process, walk_list, 1);
-  assume (rpc);
+
+  sctk_ib_list_foreach(tmp, &rpc_ack_list)
+  {
+    rpc = sctk_ib_list_get_entry(tmp, sctk_net_ibv_rpc_ack_t, list_header);
+    if (rpc->src_process == ibuf->dest_process)
+    {
+      sctk_ib_list_remove(tmp);
+      break;
+    }
+  }
+  assume(rpc);
 
   /* We ack the rpc thread */
   rpc->lock = 1;

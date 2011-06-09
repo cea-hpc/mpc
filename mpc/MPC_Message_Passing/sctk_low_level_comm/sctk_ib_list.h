@@ -43,9 +43,6 @@ struct sctk_list_header {
   sctk_spinlock_t lock;
 };
 
-#define sctk_ib_list_is_empty(n) \
-  (!(n)->p_prev ? 1 : 0)
-
 static inline void
 __add (struct sctk_list_header *new,
   struct sctk_list_header *p,
@@ -84,6 +81,25 @@ sctk_ib_list_remove(struct sctk_list_header *elem)
 {
   __remove((elem)->p_prev, (elem)->p_next);
 }
+
+static inline int
+sctk_ib_list_is_empty(struct sctk_list_header* list)
+{
+  return list->p_next == list;
+}
+
+static inline void*
+sctk_ib_list_pop(struct sctk_list_header* list)
+{
+  struct sctk_list_header *elem;
+
+  if (sctk_ib_list_is_empty(list)) return NULL;
+
+  elem = list->p_next;
+  __remove((elem)->p_prev, (elem)->p_next);
+  return elem;
+}
+
 
 #define sctk_ib_list_get_entry(ptr, type, header) ({\
   type * __ptr  = NULL; \
