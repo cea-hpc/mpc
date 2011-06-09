@@ -1434,13 +1434,13 @@ void
 sctk_shm_init_collective_structs ( int init ) {
     int i;
 
-    if (init == sctk_process_rank) {
+    if (init == sctk_local_process_rank) {
       DBG_S ( 0 );
       /* set to null all other pointers to collective comms */
       for (i=0; i<SCTK_SHM_MAX_COMMUNICATORS;++i)
       {
-        sctk_nodebug("Comm %p", &sctk_shm_mem_struct->sctk_shm_com_list[i].com_id);
         sctk_shm_mem_struct->sctk_shm_com_list[i].com_id = -1;
+        sctk_nodebug("Comm %d", sctk_shm_mem_struct->sctk_shm_com_list[i].com_id);
       }
       DBG_E ( 0 );
     }
@@ -1523,7 +1523,7 @@ struct sctk_shm_com_list_s * sctk_shm_init_world_com ( int init ) {
   int i;
   struct sctk_shm_com_list_s *sctk_shm_com_list;
 
-  if ( init == sctk_process_rank ) {
+  if ( init == sctk_local_process_rank ) {
 
     sctk_nodebug ( "Initializing MPC_COMM_WORLD" );
     /* create world com */
@@ -1599,6 +1599,8 @@ sctk_shm_init_new_com ( const sctk_internal_communicator_t * __com, const int nb
 
   while ( com_index < SCTK_SHM_MAX_COMMUNICATORS ) {
 
+    sctk_nodebug("%d <-> %d" ,sctk_shm_mem_struct->sctk_shm_com_list[com_index].com_id, -1);
+
     /*  the current communicator has already been created */
     if ( sctk_shm_mem_struct->sctk_shm_com_list[com_index].com_id != -1 ) {
       sctk_nodebug ( "com id %d __com id %d",
@@ -1625,7 +1627,7 @@ sctk_shm_init_new_com ( const sctk_internal_communicator_t * __com, const int nb
   }
   /* if all communicators entries are filled.
    * The user must increase the variable SCTK_SHM_MAX_COMMUNICATORS */
-  sctk_assert(found_index != -1);
+  assume(found_index != -1);
 
   sctk_nodebug
     ( "Create a new com entry with index %d ((com id : %d - com : %p - involved : %d - found index %d)",

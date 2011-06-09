@@ -1210,7 +1210,7 @@ sctk_net_preinit_driver_shm ( sctk_net_driver_pointers_functions_t* pointers ) {
   /* print informations about the SHM (size of queues,
    * size allocated, etc... */
   sctk_bootstrap_barrier();
-  if ( sctk_process_rank == init ) {
+  if ( sctk_local_process_rank == init ) {
     sctk_shm_init_printinfos ();
   }
   sctk_bootstrap_barrier();
