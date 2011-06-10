@@ -400,7 +400,7 @@ sctk_net_preinit_driver_hybrid ()
 #else
     sctk_debug_root ("ERROR: Network mode |%s| not available.\n"
         "Please compile MPC with TCP support by passing\n"
-        "the argument \"--network-module=%s\" to the MPC configure script.", sctk_module_name, sctk_module_name);
+        "the argument \"--use-network=%s\" to the MPC configure script.", sctk_module_name, sctk_module_name);
     exit(1);
 #endif
 
@@ -421,7 +421,7 @@ sctk_net_preinit_driver_hybrid ()
 #else
     sctk_debug_root ("ERROR: Network mode |%s| not available.\n"
         "Please compile MPC with Infiniband support by passing\n"
-        "the argument \"--network-module=%s\" to the MPC configure script.", sctk_module_name, sctk_module_name);
+        "the argument \"--use-network=%s\" to the MPC configure script.", sctk_module_name, sctk_module_name);
     exit(1);
 #endif
   }
