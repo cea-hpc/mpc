@@ -65,10 +65,6 @@ main (int argc, char **argv)
   for (i=0; i<NB_BARRIER; ++i)
   {
     MPC_Barrier (my_com);
-    if ((my_rank == 0) && !(i%100))
-    {
-      sctk_debug("End of barrier %d", i);
-    }
   }
   end = rrrsctk_get_time_stamp();
   mprintf (stderr, "Apres barriers %d\n", my_rank);
