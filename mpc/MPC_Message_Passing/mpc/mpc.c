@@ -268,7 +268,11 @@ MPC_CREATE_INTERN_FUNC (MAXLOC);
     MPC_ERROR_REPORT(comm,MPC_ERR_COMM,"")
 
 #define mpc_check_buf(buf,comm)					\
-  if((buf == NULL) || (buf == MPC_BOTTOM))			\
+  if((buf == NULL) && (buf != MPC_BOTTOM))			\
+    MPC_ERROR_REPORT(comm,MPC_ERR_BUFFER,"")
+
+#define mpc_check_buf_null(buf,comm)					\
+  if((buf == NULL))			\
     MPC_ERROR_REPORT(comm,MPC_ERR_BUFFER,"")
 
 #define mpc_check_count(count,comm)				\
@@ -1969,7 +1973,7 @@ __MPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
     {
       buf = &tmp;
     }
-  mpc_check_buf (buf, comm);
+  mpc_check_buf_null (buf, comm);
   mpc_check_type (datatype, comm);
   if (tag != MPC_ANY_TAG)
     {
@@ -2185,7 +2189,7 @@ __MPC_Irecv (void *buf, mpc_msg_count count, MPC_Datatype datatype,
     {
       buf = &tmp;
     }
-  mpc_check_buf (buf, comm);
+  mpc_check_buf_null (buf, comm);
   mpc_check_type (datatype, comm);
 
   __MPC_Comm_rank_size (comm, &src, &comm_size, task_specific);
