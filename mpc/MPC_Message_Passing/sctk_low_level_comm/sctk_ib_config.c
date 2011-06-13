@@ -96,7 +96,7 @@
 /* Verbosity level (some infos can appears on
  * the terminal during runtime: new ibufs allocated,
  * new MMu entries allocated, etc...) */
-#define IBV_VERBOSE_LEVEL         1
+#define IBV_VERBOSE_LEVEL         0
 
 #define IBV_ADAPTIVE_POLLING      1
 
@@ -284,6 +284,8 @@ void sctk_net_ibv_config_init()
    * Check if the variables are well set and print them
    * */
   sctk_net_ibv_config_check();
+#if IBV_VERBOSE_LEVEL > 0
   sctk_net_ibv_config_print();
+#endif
 }
 #endif
