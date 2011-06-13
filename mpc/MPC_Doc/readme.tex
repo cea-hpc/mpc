@@ -52,7 +52,7 @@
 %%%%%%%%%%%%%%%
 \title{Getting Started MPC\\Multi-Processor Communications Library\\Version 2.1}
 
-\author{Patrick Carribault \and Marc P\'{e}rache \and Sylvain Didelot}
+\author{Patrick Carribault \and Marc P\'{e}rache}
 
 \date{\today}
 
@@ -237,6 +237,16 @@ arguments while running the \texttt{configure} script :
 In case of conflitcts with \texttt{libgmp}, it may be preferable to avoid the version 4.3.2 which
 broke its ABI due to a mistake in documentation and move to 5.0.1 or higher.
 
+\subsection{Infiniband Support}
+\label{sec:installationInfinibandSupport}
+
+If you want to compile MPC with the Infiniband support, you need the following prerequisites:
+\begin{itemize}
+	\item The library libibverbs
+	\item The Slurm resource manager
+\end{itemize}
+For now, the Infiniband module can only operate using the Slurm Resource Manager.
+
 %%%%%%%%%%%%%%%%%%%%%%
 % MPC SUPPORTED APIS %
 %%%%%%%%%%%%%%%%%%%%%%
@@ -377,7 +387,7 @@ Multithreading:
 
 Network:
     --network=n,-net=n Define Network mode
-        modes:  none tcp ...
+        modes:  none tcp ib ...
         modes (experimental): ...
 
 Checkpoint/Restart and Migration:
@@ -439,6 +449,13 @@ A call to {\tt mpcrun --help} detail all the available implementations and launc
 \subsubsection{Launch with ssh}
 In order to execute an MPC job on multile nodes using \emph{ssh}, you need to fill the {\tt \${HOME}/.mpcrun\_tcp\_host} file with the list of nodes to use.
 
+\subsubsection{Launch with the Infiniband module}
+
+For running application using the Infiniband module, you need to pass the arguments \texttt{-net=ib} and \texttt{-l=srun} to mpcrun. For example:
+\begin{verbatim}
+mpcrun -p=2 -n=16 -net=ib -N=2 -l=srun hello_word
+\end{verbatim}
+
 \section{FAQ}
 \label{sec:faq}
 \subsection*{Q - How can I execute Fortan program on MPC ?}
@@ -473,14 +490,17 @@ As a conclusion, either you change the prefix path (recommanded version), or you
 \subsection*{Q - How can I tune the MPC SHared Memory module (\emph{SHM}) according to my needs ?}
 A - You need to edit the file located there : \\{\tt mpc/MPC\_Message\_Passing/sctk\_low\_level\_comm/sctk\_shm\_consts.h}. In this file, you can modify the number of cells in each queue (PTP queues, collective queues, etc\dots) as well as the size allocated by each cell. Don't forget to recompile MPC after it.
 
-\subsection*{Q - When compiling, I have the error undefined reference to \texttt{mpc\_user\_main\_\_}}
+\subsection*{Q - While compiling, I have the error undefined reference to \texttt{mpc\_user\_main\_\_}}
 A - The file containing your \texttt{main} should include \texttt{mpi.h} or \texttt{mpc.h}
+
+\subsection*{Q - While running MPC, I get the following error: ERROR: Network mode $|$ib$|$ not available.}
+A - Be sure that libibverbs and Slurm libraries (with development headers) are well installed on your machine. (see Section~\ref{sec:installationInfinibandSupport}).
 
 \section{Contacts}
 \begin{itemize}
   \item CARRIBAULT Patrick $\quad$ patrick.carribault@cea.fr
   \item P\'{E}RACHE Marc $\quad$ marc.perache@cea.fr
-  \item DIDELOT Sylvain $\quad$ sdidelot@exascale-computing.eu
+  \item DIDELOT Sylvain $\quad$ sylvain.didelot@exascale-computing.eu
   \item VALAT S\'{e}bastien $\quad$ sebastien.valat@cea.fr
 \end{itemize}
 

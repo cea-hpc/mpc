@@ -853,7 +853,7 @@ check_net_infiniband_done="1"
 	SCTK_CHECK_OPTION "-DMPC_USE_INFINIBAND"
 	SCTK_CHECK_LDOPTION "-libverbs"
 	SCTK_NET_LIST_EXP="$SCTK_NET_LIST_EXP "
-	SCTK_NET_LIST="$SCTK_NET_LIST infiniband"
+	SCTK_NET_LIST="$SCTK_NET_LIST ib"
     fi
     end_section
 }
