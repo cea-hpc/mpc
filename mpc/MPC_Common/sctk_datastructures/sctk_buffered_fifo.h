@@ -62,10 +62,6 @@ struct sctk_buffered_fifo {
 
     ///Is initialized
     uint8_t is_initialized;
-
-    ///Lock
-    pthread_mutex_t lock;
-
 };
 
 /**Ininitalizes a buffered fifo

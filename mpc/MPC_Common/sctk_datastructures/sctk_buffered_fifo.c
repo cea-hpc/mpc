@@ -20,9 +20,6 @@
 /* #   - DIDELOT Sylvain didelot.sylvain@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
-
-//TODO : Implement remaining locks
-
 #include "sctk_buffered_fifo.h"
 
     void
