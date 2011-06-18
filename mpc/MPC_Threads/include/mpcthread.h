@@ -517,10 +517,19 @@ extern "C"
     return sctk_thread_mutex_init (mutex, attr);
   }
 
+#ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
+int user_sctk_thread_mutex_lock (sctk_thread_mutex_t * mutex);
+int user_sctk_thread_mutex_unlock (sctk_thread_mutex_t * mutex);
+#endif
+
 /* pthread_mutex_lock */
   static inline int mpc_thread_mutex_lock (sctk_thread_mutex_t * mutex)
   {
+#ifdef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
     return sctk_thread_mutex_lock (mutex);
+#else
+    return user_sctk_thread_mutex_lock(mutex);
+#endif
   }
 
 
@@ -551,7 +560,11 @@ extern "C"
 /* pthread_mutex_unlock */
   static inline int mpc_thread_mutex_unlock (sctk_thread_mutex_t * mutex)
   {
+#ifdef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
     return sctk_thread_mutex_unlock (mutex);
+#else
+    return user_sctk_thread_mutex_unlock (mutex);
+#endif
   }
 
 

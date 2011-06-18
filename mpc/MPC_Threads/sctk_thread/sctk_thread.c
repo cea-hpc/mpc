@@ -1183,6 +1183,7 @@ sctk_thread_mutex_init (sctk_thread_mutex_t * restrict __mutex,
   return res;
 }
 
+#pragma weak user_sctk_thread_mutex_lock=sctk_thread_mutex_lock
 int
 sctk_thread_mutex_lock (sctk_thread_mutex_t * __mutex)
 {
@@ -1220,6 +1221,7 @@ sctk_thread_mutex_trylock (sctk_thread_mutex_t * __mutex)
   return res;
 }
 
+#pragma weak user_sctk_thread_mutex_unlock=sctk_thread_mutex_unlock
 int
 sctk_thread_mutex_unlock (sctk_thread_mutex_t * __mutex)
 {
