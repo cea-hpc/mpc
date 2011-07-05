@@ -804,7 +804,7 @@ __sctk__hls_barrier ( sctk_hls_scope_t scope ) {
 				level->barrier_entered[generation] = 0 ;
 				sctk_spinlock_unlock ( &level->level.lock ) ;
 			}else{
-				level->barrier_entered[generation] = 1 ;
+				level->barrier_entered[generation] += 1 ;
 				sctk_spinlock_unlock ( &level->level.lock ) ;
 				while ( level->barrier_entered[generation] != 0 )
 					sctk_thread_yield();
