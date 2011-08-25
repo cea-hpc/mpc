@@ -102,7 +102,7 @@ typedef struct
 } tls_level;
 
 
-#define MAX_ACTIVE_SINGLE (16)
+#define MAX_ACTIVE_SINGLE (64)
 /* fix -> adapt to hls scope
    # of VPs in this scope */
 
@@ -737,7 +737,7 @@ __sctk__hls_single ( sctk_hls_scope_t scope ) {
 				sctk_spinlock_unlock ( &level->level.lock ) ;
 				return 1;
 			}else{
-				level->barrier_entered[generation] = 1 ;
+				level->barrier_entered[generation] += 1 ;
 				sctk_spinlock_unlock ( &level->level.lock ) ;
 				while ( level->barrier_entered[generation] != 0 )
 					sctk_thread_yield();
@@ -776,7 +776,7 @@ __sctk__hls_single_done ( sctk_hls_scope_t scope ) {
 	asm volatile("" ::: "memory");
 	level->barrier_entered[generation] = 0 ;
 	
-	if ( scope == sctk_hls_node_scope )
+	if ( scope == sctk_hls_node_scope && sctk_get_numa_node_number() > 1 )
 		__sctk__hls_single_done ( sctk_hls_numa_scope ) ;
 
 	return ;
