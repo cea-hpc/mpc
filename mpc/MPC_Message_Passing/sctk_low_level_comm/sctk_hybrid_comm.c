@@ -211,6 +211,7 @@ sctk_net_collective_op_driver (sctk_collective_communications_t * com,
     sctk_virtual_processor_t * my_vp,
     const size_t elem_size,
     const size_t nb_elem,
+    int root,
     void (*func) (const void *, void *, size_t,
       sctk_datatype_t),
     const sctk_datatype_t data_type)
@@ -222,14 +223,14 @@ sctk_net_collective_op_driver (sctk_collective_communications_t * com,
       ++nb_intra_comm;
 #endif
       sctk_nodebug("INTRA collective");
-      pointers_intra.collective(com, my_vp, elem_size, nb_elem, func, data_type);
+      pointers_intra.collective(com, my_vp, elem_size, nb_elem, root, func, data_type);
     } else {
 #endif
 #if SCTK_HYBRID_DEBUG == 1
   ++nb_inter_comm;
 #endif
     sctk_nodebug("INTER collective");
-    pointers_inter.collective(com, my_vp, elem_size, nb_elem, func, data_type);
+    pointers_inter.collective(com, my_vp, elem_size, nb_elem, root, func, data_type);
 #ifdef SCTK_SHM
   }
 #endif
