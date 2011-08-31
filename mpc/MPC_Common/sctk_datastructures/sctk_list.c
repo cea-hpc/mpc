@@ -61,7 +61,7 @@ sctk_list_alloc_elem(struct sctk_list* list, void* elem, size_t size, uint8_t co
   return tmp;
 }
 
-struct sctk_list_elem*
+void *
 sctk_list_get_from_head(struct sctk_list* list, uint32_t n)
 {
   struct sctk_list_elem *tmp = list->head;
@@ -74,7 +74,8 @@ sctk_list_get_from_head(struct sctk_list* list, uint32_t n)
 
   if (tmp != NULL)
     return tmp->elem;
-  else return NULL;
+  else
+    return NULL;
 }
 
   void*
@@ -127,7 +128,7 @@ sctk_list_pop(struct sctk_list* list)
   return ret;
 }
 
-  struct sctk_list_elem*
+void *
 sctk_list_push(struct sctk_list* list, void *elem)
 {
   struct sctk_list_elem *new_elem = NULL;
@@ -154,7 +155,7 @@ sctk_list_push(struct sctk_list* list, void *elem)
 
   sctk_nodebug("head : %p", elem);
   list->elem_count++;
-  return new_elem;
+  return new_elem->elem;
 }
 
 void* sctk_list_search_and_free(struct sctk_list* list,

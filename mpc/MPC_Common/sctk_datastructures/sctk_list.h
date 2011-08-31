@@ -53,10 +53,10 @@ struct sctk_list {
 void
 sctk_list_new(struct sctk_list* list, uint8_t is_collector, size_t size_payload);
 
-struct sctk_list_elem*
+void *
 sctk_list_push(struct sctk_list* list, void *elem);
 
-struct sctk_list_elem*
+void *
 sctk_list_get_from_head(struct sctk_list* list, uint32_t n);
 
   void*
