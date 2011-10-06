@@ -128,6 +128,19 @@ sctk_net_realloc (sctk_collective_communications_t * com, size_t size)
   sctk_spinlock_unlock(&(collective_comm_allocator.lock));
 }
 
+void sctk_collective_communications_duplicate(sctk_collective_communications_t
+					      * from , sctk_collective_communications_t
+					      *tmp,int nb_task_involved,const sctk_communicator_t com_id){
+  int i;
+  for (i = 0; i < nb_task_involved; i++)
+    {
+      sctk_init_collective_communicator (from->last_vp[i], i, com_id,
+					     from->last_process[i]);
+    }
+
+  sctk_nodebug("Initialized %d", tmp->initialized);
+  
+}
 
 sctk_collective_communications_t
   * sctk_collective_communications_create (const int nb_task_involved)

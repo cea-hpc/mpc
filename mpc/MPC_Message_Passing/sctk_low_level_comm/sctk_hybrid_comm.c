@@ -17,7 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc     marc.perache@cea.fr                             # */
-/* #   - DIDELOT Sylvain  sdidelot@exascale-computing.eu                    # */
+/* #   - DIDELOT Sylvain  sdidelot@exascale-computing.eu                  # */
 /* #                                                                      # */
 /* ######################################################################## */
 

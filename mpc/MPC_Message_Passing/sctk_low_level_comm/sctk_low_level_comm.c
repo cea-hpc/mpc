@@ -212,6 +212,13 @@ sctk_net_get_free_communicator_remote (sctk_get_free_communicator_t * arg)
 }
 
 static void
+sctk_net_get_free_communicator_remote_no_rpc (sctk_get_free_communicator_t * arg)
+{
+  sctk_debug ("%s", SCTK_FUNCTION);
+  sctk_get_free_communicator_on_root_no_rpc (arg->origin_communicator, arg->proc);
+}
+
+static void
 sctk_get_free_communicator_wait (sctk_get_free_communicator_wait_t * arg)
 {
   sctk_internal_communicator_t *tmp = NULL;
@@ -237,6 +244,27 @@ sctk_net_get_free_communicator (const sctk_communicator_t origin_communicator)
   msg.proc = sctk_process_rank;
 
   sctk_perform_rpc ((sctk_rpc_t) sctk_net_get_free_communicator_remote, 0,
+		    &msg, sizeof (sctk_get_free_communicator_t));
+
+  sctk_thread_wait_for_value_and_poll
+    ((int *) &(wait_s.val), 1,
+     (void (*)(void *)) sctk_get_free_communicator_wait, (void *) &wait_s);
+}
+
+void
+sctk_net_get_free_communicator_no_rpc (const sctk_communicator_t origin_communicator)
+{
+  sctk_get_free_communicator_t msg;
+  sctk_get_free_communicator_wait_t wait_s;
+
+  sctk_nodebug ("%s", SCTK_FUNCTION);
+  wait_s.origin_communicator = origin_communicator;
+  wait_s.val = 0;
+
+  msg.origin_communicator = origin_communicator;
+  msg.proc = sctk_process_rank;
+
+  sctk_perform_rpc ((sctk_rpc_t) sctk_net_get_free_communicator_remote_no_rpc, 0,
 		    &msg, sizeof (sctk_get_free_communicator_t));
 
   sctk_thread_wait_for_value_and_poll
@@ -375,10 +403,27 @@ sctk_net_set_free_communicator_remote (sctk_set_free_communicator_t * arg)
 {
   sctk_internal_communicator_t *tmp = NULL;
   sctk_nodebug ("%s", SCTK_FUNCTION);
+  sctk_debug("Set new comm %d on %d",arg->origin_communicator,arg->communicator);
   tmp = sctk_get_communicator (arg->origin_communicator);
   tmp->new_communicator = arg->communicator;
 }
 
+void
+sctk_net_set_free_communicator_one (const sctk_communicator_t
+    origin_communicator,
+				    const sctk_communicator_t communicator, int rank)
+{
+  int i;
+  sctk_set_free_communicator_t msg;
+
+  sctk_nodebug ("%s", SCTK_FUNCTION);
+  msg.origin_communicator = origin_communicator;
+  msg.communicator = communicator;
+
+      sctk_perform_rpc ((sctk_rpc_t)
+          sctk_net_set_free_communicator_remote, rank, &msg,
+          sizeof (sctk_set_free_communicator_t));
+}
 void
 sctk_net_set_free_communicator (const sctk_communicator_t
     origin_communicator,
@@ -401,6 +446,7 @@ sctk_net_set_free_communicator (const sctk_communicator_t
     }
   }
 }
+
 
 /*migration*/
 static int sctk_val_net_migration_available = 0;
@@ -860,6 +906,7 @@ sctk_net_init_driver (char *name)
   sctk_register_function ((sctk_rpc_t) sctk_net_send_task_end_remote);
   sctk_register_function ((sctk_rpc_t) sctk_net_update_communicator_remote);
   sctk_register_function ((sctk_rpc_t) sctk_net_get_free_communicator_remote);
+  sctk_register_function ((sctk_rpc_t) sctk_net_get_free_communicator_remote_no_rpc);
   sctk_register_function ((sctk_rpc_t)
       sctk_net_update_new_communicator_remote);
   sctk_register_function ((sctk_rpc_t) sctk_net_set_free_communicator_remote);
