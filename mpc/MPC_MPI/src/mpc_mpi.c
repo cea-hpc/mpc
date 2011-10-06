@@ -22,6 +22,10 @@
 #include <mpc.h>
 #include <mpc_mpi.h>
 #include <sctk_debug.h>
+#include <sctk_spinlock.h>
+#include "sctk_thread.h"
+#include "sctk_communicator.h"
+#include "sctk_collective_communications.h"
 #include "mpc_reduction.h"
 #include "sctk_debug.h"
 #include "sctk_topology.h"

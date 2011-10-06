@@ -73,8 +73,9 @@ MonoDomain *domain;
 
 #ifdef MPC_Message_Passing
 #include <mpc_internal_thread.h>
-#include "sctk_hybrid_comm.h"
-#include "sctk_ib_scheduling.h"
+#include <sctk_communicator.h>
+/* #include "sctk_hybrid_comm.h" */
+/* #include "sctk_ib_scheduling.h" */
 #endif
 
 typedef unsigned sctk_long_long sctk_timer_t;
@@ -1778,6 +1779,7 @@ volatile int sctk_total_number_of_tasks = 0;
 sctk_thread_mutex_t sctk_total_number_of_tasks_lock =
   SCTK_THREAD_MUTEX_INITIALIZER;
 
+#if 0
 static void
 sctk_net_poll (void *arg)
 {
@@ -1792,6 +1794,7 @@ sctk_net_poll (void *arg)
 /*   } */
 #endif
 }
+#endif
 
 #ifdef MPC_Message_Passing
 void sctk_net_migration_check();
@@ -2285,24 +2288,24 @@ sctk_start_func (void *(*run) (void *), void *arg)
     sctk_nodebug("Init time %f %f",__sctk_profiling__end__sctk_init_MPC-__sctk_profiling__start__sctk_init_MPC,(double)dataused()/(1024.0*1024.0));
   }
 
-#ifdef MPC_Message_Passing
-  if ((sctk_net_adm_poll != NULL) || (sctk_net_ptp_poll != NULL))
-    {
-      sctk_thread_wait_for_value_and_poll ((int *)
-					   &sctk_total_number_of_tasks, 0,
-					   sctk_net_poll, NULL);
-    }
-  else
-    {
-      sctk_thread_wait_for_value_and_poll ((int *)
-					   &sctk_total_number_of_tasks, 0,
-					   NULL, NULL);
-    }
-#else
+/* #ifdef MPC_Message_Passing */
+/*   if ((sctk_net_adm_poll != NULL) || (sctk_net_ptp_poll != NULL)) */
+/*     { */
+/*       sctk_thread_wait_for_value_and_poll ((int *) */
+/* 					   &sctk_total_number_of_tasks, 0, */
+/* 					   sctk_net_poll, NULL); */
+/*     } */
+/*   else */
+/*     { */
+/*       sctk_thread_wait_for_value_and_poll ((int *) */
+/* 					   &sctk_total_number_of_tasks, 0, */
+/* 					   NULL, NULL); */
+/*     } */
+/* #else */
   sctk_thread_wait_for_value_and_poll ((int *)
 				       &sctk_total_number_of_tasks, 0,
 				       NULL, NULL);
-#endif
+/* #endif */
 
   sctk_profiling_commit ();
   sctk_profiling_result ();

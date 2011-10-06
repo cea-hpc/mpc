@@ -36,7 +36,7 @@ extern volatile int sctk_multithreading_initialised;
 
 #ifdef MPC_Message_Passing
 #include "sctk_inter_thread_comm.h"
-#include "sctk_low_level_comm.h"
+/* #include "sctk_low_level_comm.h" */
 #endif
 
 #ifdef MPC_Profiler

@@ -32,9 +32,9 @@
 #include "sctk_config_pthread.h"
 #include "sctk_kernel_thread.h"
 #include <semaphore.h>
-#ifdef MPC_Message_Passing
-#include <sctk_low_level_comm.h>
-#endif
+/* #ifdef MPC_Message_Passing */
+/* #include <sctk_low_level_comm.h> */
+/* #endif */
 
 #define SCTK_LOCAL_VERSION_MAJOR 0
 #define SCTK_LOCAL_VERSION_MINOR 1

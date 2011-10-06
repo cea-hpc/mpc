@@ -30,11 +30,11 @@
 #include "sctk_topology.h"
 #include "sctk_tls.h"
 
-#include "sctk_hybrid_comm.h"
-#include "sctk_shm.h"
-
 #include "mpcthread.h"
 #include <sys/time.h>
+#include <sctk_inter_thread_comm.h>
+#include <sctk_communicator.h>
+#include <sctk_collective_communications.h>
 
 /*#define MPC_LOG_DEBUG*/
 #ifdef MPC_LOG_DEBUG

@@ -29,6 +29,7 @@ extern "C"
 #include "sctk.h"
 #include "sctk_inter_thread_comm.h"
 #include "sctk_collective_communications.h"
+#include "sctk_communicator.h"
 #include "sctk_rpc.h"
 
    /*RPC*/ void sctk_net_send_task_location (int task, int process);
