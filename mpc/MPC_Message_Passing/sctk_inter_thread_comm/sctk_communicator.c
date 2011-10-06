@@ -152,7 +152,7 @@ sctk_get_free_communicator_on_root (const sctk_communicator_t
 				    origin_communicator)
 {
   int i;
-  int done = 0;;
+  int done = 0;
   assume (sctk_process_rank == 0);
   sctk_thread_mutex_lock (&sctk_global_communicator_number_lock);
   if (sctk_communicator_list[origin_communicator]->new_communicator == (sctk_communicator_t)-1)
@@ -188,6 +188,48 @@ sctk_get_free_communicator_on_root (const sctk_communicator_t
       sctk_net_set_free_communicator
 	(origin_communicator,
 	 sctk_communicator_list[origin_communicator]->new_communicator);
+    }
+}
+
+void
+sctk_get_free_communicator_on_root_no_rpc (const sctk_communicator_t
+					   origin_communicator, int rank)
+{
+  int i;
+  int done = 0;
+  assume (sctk_process_rank == 0);
+  sctk_thread_mutex_lock (&sctk_global_communicator_number_lock);
+  if (sctk_communicator_list[origin_communicator]->new_communicator == (sctk_communicator_t)-1)
+    {
+      char name[2048];
+      FILE *file;
+      for (i = 0; i < SCTK_MAX_COMMUNICATOR_NUMBER; i++)
+	{
+	  if (sctk_communicator_list[i] == NULL)
+	    {
+	      sctk_debug ("found rank = %d, origin_communicator %d root process %d",
+			  i, origin_communicator,rank);
+	      sctk_communicator_list[origin_communicator]->
+		new_communicator = i;
+	      done = 1;
+	      break;
+	    }
+	}
+      sprintf (name, "%s/communicators", sctk_store_dir);
+      sctk_nodebug ("Open %s", name);
+      file = fopen (name, "a");
+      assume (file != NULL);
+      fprintf (file, "C %d\n", i);
+      fclose (file);
+    }
+  sctk_thread_mutex_unlock (&sctk_global_communicator_number_lock);
+  assume (sctk_communicator_list[origin_communicator]->new_communicator !=
+	  (sctk_communicator_t)-1);
+  if (sctk_process_rank != rank)
+    {
+      sctk_net_set_free_communicator_one
+	(origin_communicator,
+	 sctk_communicator_list[origin_communicator]->new_communicator,rank);
     }
 }
 
@@ -365,6 +407,107 @@ sctk_update_new_communicator (const sctk_communicator_t origin_communicator,
 }
 
 static void
+sctk_update_new_communicator_all_dup (const sctk_communicator_t
+				      origin_communicator,const sctk_communicator_t dest_comm)
+{
+  sctk_internal_communicator_t *tmp = NULL;
+  sctk_internal_communicator_t *orig = NULL;
+  int nb_task_involved;
+  int pos;
+  int *rank_list;
+  int *glob_list;
+  int i;
+
+  sctk_thread_mutex_lock (&sctk_global_communicator_number_lock);
+  tmp = sctk_communicator_list[dest_comm];
+  if(tmp == NULL){
+    orig = sctk_communicator_list[origin_communicator];
+
+    nb_task_involved = orig->nb_task_involved;
+    pos = dest_comm;
+
+    if(orig->rank_in_communicator != NULL)
+      {
+	tmp = (sctk_internal_communicator_t *)
+	  __sctk_malloc (sctk_aligned_sizeof
+			 (sctk_internal_communicator_t)
+			 +
+			 2 *
+			 sctk_aligned_size (sctk_total_task_number *
+					    sizeof (int)),
+			 sctk_communicator_storage);
+      }
+    else
+      {
+	tmp = (sctk_internal_communicator_t *)
+	  __sctk_malloc (sctk_aligned_sizeof
+			 (sctk_internal_communicator_t),
+			 sctk_communicator_storage);
+      }
+
+    sctk_nodebug("New communicator allocated");
+    sctk_communicator_list[pos] = tmp;
+    if (orig->rank_in_communicator != NULL)
+      {
+	rank_list =
+	  (int *) ((char *) tmp +
+		   sctk_aligned_sizeof (sctk_internal_communicator_t));
+	for (i = 0; i < sctk_total_task_number; i++)
+	  {
+	    rank_list[i] = orig->rank_in_communicator[i];
+	  }
+	glob_list =
+	  (int *) ((char *) tmp +
+		   sctk_aligned_sizeof (sctk_internal_communicator_t)
+		   +
+		   sctk_aligned_size (sctk_total_task_number *
+				      sizeof (int)));
+	for (i = 0; i < sctk_total_task_number; i++)
+	  {
+	    glob_list[i] = tmp->global_in_communicator_local[i];
+	  }
+      }
+    else
+      {
+	rank_list = NULL;
+	glob_list = NULL;
+      }
+    sctk_nodebug("Lists updated");
+    
+
+    tmp->communicator_number = dest_comm;
+    tmp->origin_communicator = origin_communicator;
+    tmp->new_communicator = -1;
+    tmp->nb_task_involved = nb_task_involved;
+    tmp->nb_task_registered = 0;
+    
+    tmp->rank_in_communicator = rank_list;
+    
+    tmp->local_communicator_size = nb_task_involved;
+    tmp->global_in_communicator_local = glob_list;
+    tmp->remote_communicator_size = nb_task_involved;
+    tmp->global_in_communicator_remote = glob_list;
+    
+    sctk_thread_mutex_init (&tmp->lock, NULL);
+    tmp->collective_communications =
+      sctk_collective_communications_create (nb_task_involved);
+    sctk_collective_communications_duplicate(orig->collective_communications,tmp->collective_communications,nb_task_involved,dest_comm);
+    
+    tmp->nb_task_registered = nb_task_involved;
+    
+    sctk_nodebug("Communicator created");
+    
+    sctk_nodebug("Task_list %p %p",rank_list,glob_list);
+#warning "Have to check if rank_list != NULL"
+    sctk_net_hybrid_init_new_com(tmp, nb_task_involved, rank_list);
+    sctk_nodebug("Hybride done");
+
+  }
+
+  sctk_thread_mutex_unlock (&sctk_global_communicator_number_lock);
+}
+
+static void
 sctk_update_new_communicator_all (const sctk_communicator_t
 				  origin_communicator,
 				  const int nb_task_involved,
@@ -417,6 +560,23 @@ sctk_get_free_communicator (const sctk_communicator_t origin_communicator)
 	  (sctk_communicator_t)-1);
 }
 
+static void
+sctk_get_free_communicator_duplicate (const sctk_communicator_t origin_communicator, int rank)
+{
+  int root = 0;
+#warning "Compute optimal root"
+  if(rank == root){
+    if(sctk_process_rank == 0){
+      sctk_get_free_communicator_on_root_no_rpc (origin_communicator, sctk_process_rank);
+    } else {
+      sctk_net_get_free_communicator_no_rpc  (origin_communicator);
+    }
+    assume (sctk_communicator_list[origin_communicator]->
+	    new_communicator != (sctk_communicator_t)-1);
+  }
+  sctk_broadcast (&(sctk_communicator_list[origin_communicator]->new_communicator),sizeof(sctk_communicator_t),root,origin_communicator);
+}
+
 static inline int
 __sctk_get_rank (const sctk_communicator_t communicator,
 		 const int comm_world_rank)
@@ -436,6 +596,78 @@ sctk_is_inter_comm (const sctk_communicator_t communicator)
   return sctk_communicator_list[communicator]->is_inter_comm;
 }
 
+sctk_communicator_t
+sctk_duplicate_communicator (const sctk_communicator_t origin_communicator,
+			     int is_inter_comm, int rank)
+{
+  if(is_inter_comm == 0){
+    sctk_internal_communicator_t *tmp = NULL;
+    sctk_communicator_t res = 0;
+#warning "Optimize this part"
+    sctk_get_free_communicator_duplicate (origin_communicator,rank);
+    sctk_barrier (origin_communicator);
+    res = sctk_communicator_list[origin_communicator]->new_communicator;
+    
+    sctk_update_new_communicator_all_dup (origin_communicator,res);
+
+    tmp = sctk_communicator_list[res];
+
+    sctk_nodebug("sctk_update_new_communicator_all_dup DONE");
+    sctk_barrier (origin_communicator);
+    sctk_communicator_list[origin_communicator]->new_communicator = -1;
+    sctk_barrier (origin_communicator);
+
+    sctk_nodebug("Barrier origin");
+    
+#warning "Have to save comm dup"
+#if 0
+    if (sctk_get_rank (origin_communicator, sctk_get_task_rank ()) ==
+	task_list[0])
+      {
+	char name[2048];
+	FILE *file;
+	int i;
+	i = -1;
+	
+	do
+	  {
+	    i++;
+	    sprintf (name, "%s/communicator_%d_%d", sctk_store_dir,
+		     (int) tmp->communicator_number, i);
+	    sctk_nodebug("%s", name);
+	    file = fopen (name, "r");
+	  }
+	while (file != NULL);
+
+	sprintf (name, "%s/communicator_%d_%d", sctk_store_dir,
+		 (int) tmp->communicator_number, i);
+	file = fopen (name, "w");
+	assume (file != NULL);
+	fprintf (file, "%d\n", (int) origin_communicator);
+	fprintf (file, "%d\n", (int) nb_task_involved);
+	for (i = 0; i < nb_task_involved; i++)
+	  {
+	    fprintf (file, "%d\n", task_list[i]);
+	  }
+	fclose (file);
+      }
+#endif
+
+    tmp->is_inter_comm = is_inter_comm;
+    sctk_barrier (origin_communicator);
+
+    sctk_nodebug("Communicator created");
+
+    sctk_barrier (tmp->communicator_number);
+    sctk_nodebug("Barrier on new communicator done");
+
+
+    return tmp->communicator_number;
+  } else {
+    not_implemented();
+    return 0;
+  }
+}
 sctk_communicator_t
 sctk_create_communicator (const sctk_communicator_t origin_communicator,
 			  const int nb_task_involved, const int *task_list,

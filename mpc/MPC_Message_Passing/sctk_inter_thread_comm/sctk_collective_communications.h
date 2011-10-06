@@ -94,6 +94,9 @@ extern "C"
 									 nb_task_involved);
     sctk_collective_communications_t
     * sctk_collective_communications_create (const int nb_task_involved);
+  void sctk_collective_communications_duplicate(sctk_collective_communications_t
+						* from , sctk_collective_communications_t
+						*tmp,int nb_task_involved,const sctk_communicator_t com_id);
   void sctk_collective_communications_delete
     (sctk_collective_communications_t * com);
   /* void sctk_perform_collective_communication (const size_t elem_size, */
