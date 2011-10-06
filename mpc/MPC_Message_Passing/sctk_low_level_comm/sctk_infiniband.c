@@ -1294,6 +1294,9 @@ sctk_net_preinit_driver_infiniband (void)
 {
   int i;
   int j;
+  char msg[MAX_HOST_SIZE];
+  char sLid[MAX_HOST_SIZE], sPsn[MAX_HOST_SIZE], sRkey[MAX_HOST_SIZE], sLkey[MAX_HOST_SIZE];
+  const char delimiters[] = " :";
   /*
      Do not touch the following variable: infiniband issue if dev_list is global
    */
@@ -1489,11 +1492,32 @@ sctk_net_preinit_driver_infiniband (void)
     }
 /*   ibv_print_ident (ibv_ident_data); */
 
-  assume (sctk_mpcrun_client
-	  (MPC_SERVER_REGISTER, NULL, 0, ibv_ident_data,
-	   sizeof (ibv_ident_data_t) +
-	   SCTK_MAX_RAIL_NUMBER * sctk_process_number * sizeof (uint32_t)) ==
-	  0);
+  /*
+   * Existant :
+   *
+   * assume (sctk_mpcrun_client
+   *   (MPC_SERVER_REGISTER, NULL, 0, ibv_ident_data,
+   *   sizeof (ibv_ident_data_t) +
+   *   SCTK_MAX_RAIL_NUMBER * sctk_process_number * sizeof (uint32_t)) ==
+   *   0);
+   */
+
+  sprintf(msg, "%u : %d : %u", ibv_ident_data->rank, ibv_ident_data->device_nb, *(ibv_ident_data->psn));
+  for (i = 0; i < SCTK_MAX_RAIL_NUMBER; i ++)
+  {
+	  sprintf(sLid, (!i) ? "%u" : "%s : %u", sLid, ibv_ident_data->lid[i]);
+	  sprintf(sPsn, (!i) ? "%u" : "%s : %u", sPsn, ibv_ident_data->psn[i]);
+	  sprintf(sRkey, (!i) ? "%u" : "%s : %u", sRkey, ibv_ident_data->rkey[i]);
+	  sprintf(sLkey, (!i) ? "%u" : "%s : %u", sLkey, ibv_ident_data->lkey[i]);
+  }
+
+  sctk_pmi_put_connection_info(msg, MAX_HOST_SIZE, SCTK_PMI_TAG_INFINIBAND);
+  sctk_pmi_put_connection_info(sLid, MAX_HOST_SIZE, SCTK_PMI_TAG_INFINIBAND + 1);
+  sctk_pmi_put_connection_info(sPsn, MAX_HOST_SIZE, SCTK_PMI_TAG_INFINIBAND + 2);
+  sctk_pmi_put_connection_info(sRkey, MAX_HOST_SIZE, SCTK_PMI_TAG_INFINIBAND + 3);
+  sctk_pmi_put_connection_info(sLkey, MAX_HOST_SIZE, SCTK_PMI_TAG_INFINIBAND + 4);
+
+  sctk_pmi_barrier();
 
   peer_list = sctk_malloc (sctk_process_number * sizeof (ibv_ident_data_t *));
   for (i = 0; i < sctk_process_number; i++)
@@ -1512,13 +1536,34 @@ sctk_net_preinit_driver_infiniband (void)
   /*Implicit barrier */
   for (i = 0; i < sctk_process_number; i++)
     {
-      while (sctk_mpcrun_client
-	     (MPC_SERVER_GET, peer_list[i], sizeof (ibv_ident_data_t) +
-	      SCTK_MAX_RAIL_NUMBER * sctk_process_number * sizeof (uint32_t),
-	      &i, sizeof (int)) != 0)
-	{
-	  sleep(1);
-	}
+	  /*
+	   * Existant :
+	   *
+	   * while (sctk_mpcrun_client
+	   *    (MPC_SERVER_GET, peer_list[i], sizeof (ibv_ident_data_t) +
+	   *    SCTK_MAX_RAIL_NUMBER * sctk_process_number * sizeof (uint32_t),
+	   *    &i, sizeof (int)) != 0)
+	   * {
+	   *    sleep(1);
+	   * }
+	   */
+
+	  sctk_pmi_get_connection_info(msg, MAX_HOST_SIZE, SCTK_PMI_TAG_INFINIBAND, i);
+	  sctk_pmi_get_connection_info(sLid, MAX_HOST_SIZE, SCTK_PMI_TAG_INFINIBAND + 1, i);
+	  sctk_pmi_get_connection_info(sPsn, MAX_HOST_SIZE, SCTK_PMI_TAG_INFINIBAND + 2, i);
+	  sctk_pmi_get_connection_info(sRkey, MAX_HOST_SIZE, SCTK_PMI_TAG_INFINIBAND + 3, i);
+	  sctk_pmi_get_connection_info(sLkey, MAX_HOST_SIZE, SCTK_PMI_TAG_INFINIBAND + 4, i);
+
+	  sscanf(msg, "%hu : %d : %u", &peer_list[i]->rank, &peer_list[i]->device_nb, peer_list[i]->qpn);
+	  for (j = 0; j < SCTK_MAX_RAIL_NUMBER; j ++)
+	  {
+		  sscanf(&peer_list[i]->lid[j], "%u", strtok((!j) ? sLid : NULL, delimiters));
+		  sscanf(&peer_list[i]->psn[j], "%u", strtok((!j) ? sPsn : NULL, delimiters));
+		  sscanf(&peer_list[i]->rkey[j], "%u", strtok((!j) ? sRkey : NULL, delimiters));
+		  sscanf(&peer_list[i]->lkey[j], "%u", strtok((!j) ? sLkey : NULL, delimiters));
+	  }
+	  /** fin modif **/
+
       peer_list[i]->qpn =
 	(void *) (((char *) peer_list[i]) + sizeof (ibv_ident_data_t));
       ibv_print_ident (peer_list[i]);

@@ -23,6 +23,9 @@
 #define __SCTK_ASM_H_
 
 #include "sctk_config.h"
+#include "sctk_atomics.h"
+
+#include <pthread.h>
 #include <stdio.h>
 #include <sched.h>
 
@@ -31,109 +34,16 @@ extern "C"
 {
 #endif
 
+#define sctk_get_time_stamp sctk_atomics_get_timestamp
+#define sctk_get_time_stamp_gettimeofday sctk_atomics_get_timestamp
+
   typedef volatile unsigned int sctk_atomic_test_t;
-/*   typedef struct */
-/*   { */
-/*     volatile int counter; */
-/*   } sctk_atomic_t; */
 
-#if defined(SCTK_COMPILER_ACCEPT_ASM)
-#define LOCK "lock ; "
-#if defined(SCTK_i686_ARCH_SCTK) || defined(SCTK_x86_64_ARCH_SCTK)
-  static __inline__ int __sctk_test_and_set (sctk_atomic_test_t * atomic)
-  {
-    int ret;
-
-    __asm__ __volatile__ ("lock; xchgl %0, %1":"=r" (ret),
-			  "=m" (*atomic):"0" (1), "m" (*atomic):"memory");
-      return ret;
-  }
-  static __inline__ void __sctk_cpu_relax ()
-  {
-    __asm__ __volatile__ ("rep;nop":::"memory");
-  }
-#elif defined(SCTK_ia64_ARCH_SCTK)
-  static __inline__ int __sctk_test_and_set (sctk_atomic_test_t * atomic)
-  {
-    int ret;
-
-    __asm__ __volatile__ ("xchg4 %0=%1, %2":"=r" (ret),
-			  "=m" (*atomic):"0" (1), "m" (*atomic):"memory");
-      return ret;
-  }
-
-  static __inline__ void __sctk_cpu_relax ()
-  {
-    __asm__ __volatile__ ("hint @pause":::"memory");
-  }
-#elif defined(SCTK_sparc_ARCH_SCTK)
-  static __inline__ int __sctk_test_and_set (sctk_atomic_test_t * spinlock)
-  {
-    char ret = 0;
-
-    __asm__ __volatile__ ("ldstub [%0], %1":"=r" (spinlock),
-			  "=r" (ret):"0" (spinlock), "1" (ret):"memory");
-
-      return (unsigned) ret;
-  }
-#warning "to optimize"
-  static __inline__ void __sctk_cpu_relax ()
-  {
-    sched_yield ();
-  }
-#else
-#if defined(__GNU_COMPILER) || defined(__INTEL_COMPILER)
-#warning "Unsupported architecture using default asm"
-#endif
-
-#define SCTK_USE_DEFAULT_ASM
-  static __inline__ int __sctk_test_and_set (sctk_atomic_test_t * atomic)
-  {
-    return __asm_default_sctk_test_and_set (atomic);
-  }
-  static __inline__ void __sctk_cpu_relax ()
-  {
-    sched_yield ();
-  }
-#endif
-
-
-#ifndef __SCTK_ASM_C_
-  static __inline__ int sctk_test_and_set (sctk_atomic_test_t * atomic)
-  {
-    return __sctk_test_and_set (atomic);
-  }
-
-  static __inline__ void sctk_cpu_relax ()
-  {
-    __sctk_cpu_relax ();
-  }
-#endif
-
-
-#else
   int sctk_test_and_set (sctk_atomic_test_t * atomic);
-  void sctk_cpu_relax (void);
-#endif
-
-/*   static inline void sctk_atomic_set (sctk_atomic_t * atomic, int val) */
-/*   { */
-/*     atomic->counter = val; */
-/*   } static inline int sctk_atomic_read (sctk_atomic_t * atomic) */
-/*   { */
-/*     return atomic->counter; */
-/*   } */
+  void sctk_cpu_relax ();
 
 #define sctk_max(a, b)  ((a) > (b) ? (a) : (b))
 #define sctk_min(a, b)  ((a) < (b) ? (a) : (b))
-  int __asm_default_sctk_test_and_set (sctk_atomic_test_t * atomic);
-
-  double sctk_get_time_stamp (void);
-
-
-
-
-
 
 #ifdef __cplusplus
 }

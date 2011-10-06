@@ -49,6 +49,18 @@ for sctk_flags_i in $SCTK_CFLAGS; do
 done
 
 #
+# Populate SCTK_CFLAGS variable for launcher environment
+#
+if [ $SCTK_HYDRA -eq 1 ] && [ $SCTK_SLURM -eq 0 ]; then
+  SCTK_CFLAGS="$SCTK_CFLAGS -DMPC_USE_HYDRA"
+elif [ $SCTK_HYDRA -eq 0 ] && [ $SCTK_SLURM -eq 1 ]; then
+  SCTK_CFLAGS="$SCTK_CFLAGS -DMPC_USE_SLURM"
+else
+  echo -n "Error with launcher....!"
+  exit 1
+fi
+
+#
 # Generate SCTK_MAKE_NO_DEP variable
 #
 if test "$SCTK_NODEP" = "1" ; then
@@ -97,31 +109,118 @@ SCTK_OS=${SCTK_OS}
 SCTK_ARCH=${SCTK_ARCH}
 MPC_AUTO_KILL_TIMEOUT=300
 
-export MPC_SOURCE_DIR
-export SCTK_ARCH_OPTIM
-export CC
-export GCC
-export F77
-export FFLAGS
-export CFLAGS
-export GNU_CFLAGS
-export LDFLAGS
-export M_PWD
-export MPC_MAKEFILE
-export DIR_DEST_EXE
-export SCTK_CC_DEP
-export MPC_AUTO_KILL_TIMEOUT
-
-MAKEFLAGS += --no-print-directory
-
-all:lib/libmpc.a lib/libmpcf.a lib/libmpc_iso_alloc.a lib/libmpc_thread_db.so lib/libmpc_tdb_remote_static.a
-
-
-#
-# Build the list of objects used to construct the main library
-#
-OBJ_LIST=
 EOF
+
+#
+## PMI (HYDRA/SLURM)
+#
+if [ $SCTK_HYDRA -eq 1 ] && [ $SCTK_SLURM -eq 0 ]; then
+  echo "#"  >> Makefile
+  echo "# Include pour le module HYDRA"  >> Makefile
+  echo "#"  >> Makefile
+  echo "HYDRA_MODULE=${PWD}/../mpc-hydra-1.4.0_build/simple"  >> Makefile
+
+  echo "CFLAGS += -I\$(HYDRA_MODULE)"  >> Makefile
+
+  echo "PMI_ARFLAGS += \$(HYDRA_MODULE)/safestr2.o \$(HYDRA_MODULE)/simple_pmiutil.o \$(HYDRA_MODULE)/simple_pmi.o"  >> Makefile
+
+  echo "PMI_LDFLAGS += -Wl,-rpath \$(HYDRA_MODULE) -L\$(HYDRA_MODULE)"  >> Makefile
+  echo "PMI_LDFLAGS += -lsimple" >> Makefile
+
+  echo "" >> Makefile
+elif [ $SCTK_HYDRA -eq 0 ] && [ $SCTK_SLURM -eq 1 ]; then
+  echo "#"  >> Makefile
+  echo "# Include pour le module SLURM"  >> Makefile
+  echo "#"  >> Makefile
+  echo "SLURM_MODULE=$SLURM_PREFIX"  >> Makefile
+
+  echo "CFLAGS += -I\$(SLURM_MODULE)/include"  >> Makefile
+
+  if [ -a $SLURM_PREFIX/lib/libpmi.so ]; then
+  	echo "PMI_ARFLAGS += \$(SLURM_MODULE)/lib/libpmi.so"  >> Makefile
+  	echo "PMI_LDFLAGS = -Wl,-rpath \$(SLURM_MODULE)/lib -L\$(SLURM_MODULE)/lib -lpmi"  >> Makefile
+  elif [ -a $SLURM_PREFIX/lib64/libpmi.so ]; then
+  	echo "PMI_ARFLAGS += \$(SLURM_MODULE)/lib64/libpmi.so"  >> Makefile
+  	echo "PMI_LDFLAGS = -Wl,-rpath \$(SLURM_MODULE)/lib64 -L\$(SLURM_MODULE)/lib64 -lpmi"  >> Makefile
+  else
+  	echo -n "Error: libpmi found neither in \$(SLURM_MODULE)/lib nor \$(SLURM_MODULE)/lib64"
+    exit 1
+   fi
+  echo "" >> Makefile
+fi
+
+#
+## HWLOC
+#
+echo "#"  >> Makefile
+echo "# Include pour le module HWLOC"  >> Makefile
+echo "#"  >> Makefile
+echo "HWLOC_MODULE=$HWLOC_PREFIX"  >> Makefile
+
+if [ $SCTK_HWLOC_EMB -eq 1 ]; then
+  echo "CFLAGS += -I\$(HWLOC_MODULE)/include"  >> Makefile
+  echo "HWLOC_ARFLAGS += \$(HWLOC_MODULE)/src/.libs/libhwloc.so"  >> Makefile
+  echo "HWLOC_LDFLAGS += -Wl,-rpath \$(HWLOC_MODULE)/src/.libs -L\$(HWLOC_MODULE)/src/.libs"  >> Makefile
+else
+  echo "CFLAGS += -I\$(HWLOC_MODULE)/include"  >> Makefile
+  echo "HWLOC_ARFLAGS += \$(HWLOC_MODULE)/lib/libhwloc.so"  >> Makefile
+  echo "HWLOC_LDFLAGS += -Wl,-rpath \$(HWLOC_MODULE)/lib -L\$(HWLOC_MODULE)/lib"  >> Makefile
+fi
+echo "HWLOC_LDFLAGS += -lhwloc"  >> Makefile
+
+echo "" >> Makefile
+
+#
+## OpenPA
+#
+echo "#"  >> Makefile
+echo "# Include pour le module OpenPA"  >> Makefile
+echo "#"  >> Makefile
+echo "OPENPA_MODULE=$OPENPA_PREFIX"  >> Makefile
+
+if [ $SCTK_OPENPA_EMB -eq 1 ]; then
+  echo "CFLAGS += -I\$(OPENPA_MODULE)/src"  >> Makefile
+  echo "GNU_CFLAGS += -I\$(OPENPA_MODULE)/src"  >> Makefile
+  echo "OPENPA_ARFLAGS += \$(OPENPA_MODULE)/src/opa_primitives.o \$(OPENPA_MODULE)/src/opa_queue.o"  >> Makefile
+  echo "OPENPA_LDFLAGS += -Wl,-rpath \$(OPENPA_MODULE)/src -L\$(OPENPA_MODULE)/src"  >> Makefile
+else
+  echo "CFLAGS += -I\$(OPENPA_MODULE)/include"  >> Makefile
+  echo "GNU_CFLAGS += -I\$(OPENPA_MODULE)/include"  >> Makefile
+
+  echo "OPENPA_LDFLAGS += -Wl,-rpath \$(OPENPA_MODULE)/lib -L\$(OPENPA_MODULE)/lib"  >> Makefile
+fi
+echo "OPENPA_LDFLAGS += -lopa"  >> Makefile
+
+echo "" >> Makefile
+
+
+echo "export MPC_SOURCE_DIR"  >> Makefile
+echo "export SCTK_ARCH_OPTIM"  >> Makefile
+echo "export CC"  >> Makefile
+echo "export GCC"  >> Makefile
+echo "export F77"  >> Makefile
+echo "export FFLAGS"  >> Makefile
+echo "export CFLAGS"  >> Makefile
+echo "export GNU_CFLAGS"  >> Makefile
+echo "export LDFLAGS"  >> Makefile
+echo "export M_PWD"  >> Makefile
+echo "export MPC_MAKEFILE"  >> Makefile
+echo "export DIR_DEST_EXE"  >> Makefile
+echo "export SCTK_CC_DEP"  >> Makefile
+echo "export MPC_AUTO_KILL_TIMEOUT"  >> Makefile
+echo "" >> Makefile
+
+echo "MAKEFLAGS += --no-print-directory"  >> Makefile
+echo "" >> Makefile
+
+echo "all:lib/libmpc.a lib/libmpcf.a lib/libmpc_iso_alloc.a lib/libmpc_thread_db.so lib/libmpc_tdb_remote_static.a"  >> Makefile
+echo "" >> Makefile
+
+echo "#"  >> Makefile
+echo "# Build the list of objects used to construct the main library"  >> Makefile
+echo "#"  >> Makefile
+echo "OBJ_LIST="  >> Makefile
+
 for i in $MODULE_LIST; do
   echo "OBJ_LIST += \$(wildcard BUILD_$i/lib/*.o)"  >> Makefile
 done
@@ -142,7 +241,7 @@ echo "" >> Makefile
 echo "lib/libmpc.a: \$(COMPIL_DIR)" >> Makefile
 printf "\t@mkdir -p lib">> Makefile; echo "">> Makefile
 printf "\t@echo Build \$@">> Makefile; echo "">> Makefile
-printf "\t@\$(AR) rcu \$@ \$(COBJ_LIST)">> Makefile; echo "">> Makefile
+printf "\t@\$(AR) rcu \$@ \$(COBJ_LIST) \$(PMI_ARFLAGS) \$(HWLOC_ARFLAGS) \$(OPENPA_ARFLAGS)">> Makefile; echo "">> Makefile
 
 #
 # Rule to build libmpc_iso_alloc.a
@@ -326,7 +425,7 @@ printf "\t@cp -r INSTALL/lib \${DESTDIR}${SCTK_PREFIX}">> Makefile; echo "">> Ma
 printf "\t@cp -r INSTALL/include \${DESTDIR}${SCTK_PREFIX}">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/man \${DESTDIR}${SCTK_PREFIX}">> Makefile; echo "">> Makefile
 printf "\t@echo \"Build dynamic libraries\"">> Makefile; echo "">> Makefile
-printf "\t@\$(CC) \$(COBJ_LIST) -fPIC -shared -o \${DESTDIR}${SCTK_PREFIX}/lib/libmpc.so $SCTK_LDFLAGS|| echo \"Unable to build C shared library\"">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) \$(COBJ_LIST) \$(PMI_LDFLAGS) \$(HWLOC_LDFLAGS) \$(OPENPA_LDFLAGS) -fPIC -shared -o \${DESTDIR}${SCTK_PREFIX}/lib/libmpc.so $SCTK_LDFLAGS|| echo \"Unable to build C shared library\"">> Makefile; echo "">> Makefile
 if test "$SCTK_FORTRAN" = "1"; then
 printf "\t@\$(F77) \$(FOBJ_LIST) -fPIC -shared -o \${DESTDIR}${SCTK_PREFIX}/lib/libmpcf.so $SCTK_LDFLAGS|| echo \"Unable to build Fortran shared library\"">> Makefile; echo "">> Makefile
 fi

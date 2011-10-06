@@ -31,6 +31,8 @@
 #include "sctk_iso_alloc.h"
 #include "sctk_spinlock.h"
 
+#include "sctk_pmi.h"
+
 #ifdef MPC_USE_TCP
 #include "sctk_net_tools.h"
 #include "sctk_mpcrun_client.h"
@@ -166,11 +168,11 @@ sctk_tcp_rdma_init_proceed (sctk_tcp_rdma_t * rdma)
   while (ident->fd < 0)
     sctk_thread_yield ();
   sctk_nodebug ("Write to fd %d size %lu", ident->fd, rdma->size);
-  sctk_mpcserver_safe_write (ident->fd, rdma, sizeof (sctk_tcp_rdma_t));
+  sctk_pmi_send(rdma, sizeof (sctk_tcp_rdma_t),ident->fd);
   if (rdma->mode == SCTK_TCP_RDMA_WRITE)
     {
       sctk_nodebug ("Write to fd %d size %lu", ident->fd, rdma->size);
-      sctk_mpcserver_safe_write (ident->fd, rdma->local_addr, rdma->size);
+      sctk_pmi_send(rdma->local_addr, rdma->size,ident->fd);
     }
   sctk_tcp_rdma_unlock (ident);
   sctk_tcp_rdma_free (rdma);
@@ -235,7 +237,7 @@ sctk_rdma_server (void *arg)
   while (1)
     {
       sctk_tcp_rdma_t rdma;
-      sctk_mpcserver_safe_read (ident->fd, &rdma, sizeof (sctk_tcp_rdma_t));
+      sctk_pmi_recv(&rdma, sizeof (sctk_tcp_rdma_t),ident->fd);
 
       if (rdma.mode == SCTK_TCP_RDMA_READ)
 	{
@@ -258,7 +260,7 @@ sctk_rdma_server (void *arg)
 	      assume (*(rdma.dist_ack) == 0);
 	      *(rdma.dist_ack) = 0;
 	    }
-	  sctk_mpcserver_safe_read (ident->fd, rdma.dist_addr, rdma.size);
+	  sctk_pmi_recv(rdma.dist_addr, rdma.size,ident->fd);
 
 	  if (rdma.dist_ack != NULL)
 	    {
@@ -483,7 +485,7 @@ sctk_server (void *arg)
 	}
       assert (fd >= 0);
 
-      sctk_mpcserver_safe_read (fd, &rank, sizeof (int));
+      sctk_pmi_recv(&rank, sizeof (int),fd);
       sctk_nodebug ("Connection done from %d", rank);
       idents[rank].fd = fd;
     }
@@ -508,8 +510,8 @@ sctk_net_init_driver_tcp (int *argc, char ***argv)
   for (i = sctk_process_rank + 1; i < sctk_process_number; i++)
     {
       idents[i].fd = sctk_tcp_connect_to (idents[i].port, idents[i].name);
-      sctk_mpcserver_safe_write (idents[i].fd, &sctk_process_rank,
-				 sizeof (int));
+      sctk_pmi_send(&sctk_process_rank,
+				 sizeof (int),idents[i].fd);
     }
 
   sctk_nodebug ("sctk_net_init_driver_tcp join thread");
@@ -575,6 +577,7 @@ void
 sctk_net_preinit_driver_tcp(sctk_net_driver_pointers_functions_t* pointers)
 {
   int i;
+  char msg[MAX_HOST_SIZE];
 
   sctk_create_recv_socket ();
   sctk_mpcrun_client_init_connect ();
@@ -587,11 +590,18 @@ sctk_net_preinit_driver_tcp(sctk_net_driver_pointers_functions_t* pointers)
   gethostname (idents[sctk_process_rank].name, MAX_HOST_SIZE);
   idents[sctk_process_rank].lock = 0;
 
+  /*
+   * Existant :
+   *
+   * assume (sctk_mpcrun_client
+   *     (MPC_SERVER_REGISTER, NULL, 0, &(idents[sctk_process_rank]),
+   *     sizeof (tpc_ident_t)) == 0);
+   */
 
-  assume (sctk_mpcrun_client
-	  (MPC_SERVER_REGISTER, NULL, 0, &(idents[sctk_process_rank]),
-	   sizeof (tpc_ident_t)) == 0);
-
+  sprintf(msg,"%d:%d:%d:%d",idents[sctk_process_rank].rank, idents[sctk_process_rank].fd, idents[sctk_process_rank].port, idents[sctk_process_rank].lock);
+  sctk_pmi_put_connection_info(msg, MAX_HOST_SIZE, SCTK_PMI_TAG_TCP);
+  sctk_pmi_put_connection_info(idents[sctk_process_rank].name, MAX_HOST_SIZE, SCTK_PMI_TAG_TCP + 1);
+  /** fin modif **/
 
   sctk_connection_map = sctk_malloc(sctk_process_number*sizeof(sctk_connection_map_t**));
   sctk_connection_map_lock = sctk_malloc(sctk_process_number*sizeof(sctk_thread_mutex_t));
@@ -602,15 +612,28 @@ sctk_net_preinit_driver_tcp(sctk_net_driver_pointers_functions_t* pointers)
       sctk_connection_map_lock[i] = lock;
     }
 
+  sctk_pmi_barrier();
+
   for (i = 0; i < sctk_process_number; i++)
     {
-      while (sctk_mpcrun_client
-	     (MPC_SERVER_GET, &(idents[i]), sizeof (tpc_ident_t), &i,
-	      sizeof (int)) != 0)
-	{
-    /* sleep disabled because of thread API error */
-	  //sleep (1);
-	}
+
+	  /*
+	   * Existant :
+	   *
+	   * while (sctk_mpcrun_client
+	   *     (MPC_SERVER_GET, &(idents[i]), sizeof (tpc_ident_t), &i,
+	   *     sizeof (int)) != 0)
+	   * {
+	   *     // sleep disabled because of thread API error
+	   *     //sleep (1);
+	   * }
+	   */
+
+	  sctk_pmi_get_connection_info(msg, MAX_HOST_SIZE, SCTK_PMI_TAG_TCP, i);
+	  sscanf(msg, "%d:%d:%d:%d", &idents[i].rank, &idents[i].fd, &idents[i].port, &idents[i].lock);
+	  sctk_pmi_get_connection_info(idents[i].name, MAX_HOST_SIZE, SCTK_PMI_TAG_TCP + 1, i);
+	  /** fin modif **/
+
       sctk_nodebug ("Process %d = %s %d", i, idents[i].name, idents[i].fd);
     }
   assume (sctk_process_number <= SCTK_MAX_PROCESS_NUMBER);

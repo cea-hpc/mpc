@@ -24,264 +24,70 @@
 #include "sctk_bootstrap.h"
 #include "sctk_thread.h"
 #include "sctk_mpcrun_client.h"
+#include "sctk_pmi.h"
 #include <stdlib.h>
 
-enum bootstrap_mode {
-#ifdef MPC_USE_SLURM
-  PMI,
-#endif
-  TCP,
-};
-enum bootstrap_mode mode;
-
-#define TCP_KEY_MAX 256
-#define TCP_VAL_MAX 256
-
-#ifdef MPC_USE_SLURM
-#include <slurm/pmi.h>
-
-static int process_size;
-static int process_rank;
-static int local_process_size;
 static int key_max;
 static int val_max;
-static int spawn;
-static int appnum;
-static int name_max;
-static char* kvsname;
-
-static void sctk_bootstrap_slurm_env()
-{
-  char* env;
-
-  env = getenv("SLURM_NODEID");
-  if (env) {
-    sctk_node_rank = atoi(env);
-  } else {
-    sctk_node_rank = -1;
-  }
-  env = getenv("SLURM_NNODES");
-  if (env) {
-    sctk_node_number = atoi(env);
-  } else {
-    sctk_node_number = -1;
-  }
-  env = getenv("SLURM_LOCALID");
-  if (env) {
-    sctk_local_process_rank = atoi(env);
-  } else {
-    sctk_local_process_rank = -1;
-  }
-}
 
 static void sctk_bootstrap_pmi_init()
 {
   int res;
 
-  /*  get environment variables */
-  sctk_bootstrap_slurm_env();
-
   sctk_nodebug("Init PMI");
-  res = PMI_Init(&spawn);
-  assume (res == PMI_SUCCESS);
-
-  res = PMI_Get_size(&process_size);
-  assume (res == PMI_SUCCESS);
-
-  res = PMI_Get_rank(&process_rank);
-  assume (res == PMI_SUCCESS);
-
-  res = PMI_Get_clique_size(&local_process_size);
-  assume (res == PMI_SUCCESS);
-
-  sctk_local_process_number = local_process_size;
-  sctk_process_rank = process_rank;
-  sctk_process_number = process_size;
-
-  res = PMI_Get_appnum(&appnum);
-  assume (res == PMI_SUCCESS);
-
-  if(sctk_process_rank == 0)
-  {
-    sctk_nodebug("spawn %d, size %d, rank %d, appnum %d", spawn, process_size, process_rank, appnum);
-  }
-
-  res = PMI_KVS_Get_name_length_max(&name_max);
-  assume (res == PMI_SUCCESS);
-  sctk_nodebug("Name max : %d", name_max);
+  sctk_mpcrun_client_get_global_consts();
 
   res = PMI_KVS_Get_key_length_max(&key_max);
-  assume (res == PMI_SUCCESS);
+  assume (res == SCTK_PMI_SUCCESS);
   sctk_nodebug("Key max : %d", key_max);
 
   res = PMI_KVS_Get_value_length_max(&val_max);
-  assume(res == PMI_SUCCESS);
+  assume(res == SCTK_PMI_SUCCESS);
   sctk_nodebug("Val max : %d", val_max);
-
-  kvsname = sctk_malloc(name_max);
-  res = PMI_KVS_Get_my_name(kvsname,name_max);
-  assume (res == PMI_SUCCESS);
-  sctk_nodebug("KVS name %s",kvsname);
 }
-#endif
 
 void
 sctk_bootstrap_register(char* pkey, char* pval, int size)
 {
-#ifdef MPC_USE_SLURM
-  int res;
-#endif
-
-  switch(mode)
-  {
-
-#ifdef MPC_USE_SLURM
-    case PMI:
-      res = PMI_KVS_Put(kvsname, pkey, pval);
-      assume(res == PMI_SUCCESS);
-
-      res = PMI_KVS_Commit(kvsname);
-      assume(res == PMI_SUCCESS);
-      break;
-#endif
-
-    case TCP:
-      sctk_mpcrun_client_register_shmfilename (pkey, pval, HOSTNAME_SIZE, size);
-      break;
-
-    default: assume(0);
-  }
+   assume(size <= val_max);
+   sctk_mpcrun_client_register_shmfilename (pkey, pval, HOSTNAME_SIZE, size);
 }
 
   void
 sctk_bootstrap_get(char* pkey, char* pval, int size)
 {
-#ifdef MPC_USE_SLURM
-  int res;
-#endif
-
-  switch(mode)
-  {
-#ifdef MPC_USE_SLURM
-    case PMI:
-      assume(size <= val_max);
-      res = PMI_KVS_Get(kvsname, pkey, pval, size);
-      assume(res == PMI_SUCCESS);
-      break;
-#endif
-
-    case TCP:
-      sctk_mpcrun_client_get_shmfilename (pkey, pval, HOSTNAME_SIZE, size);
-      break;
-
-    default: assume(0);
-  }
+   assume(size <= val_max);
+   sctk_mpcrun_client_get_shmfilename (pkey, pval, HOSTNAME_SIZE, size);
 }
 
   int
 sctk_bootstrap_get_max_key_len()
 {
-  switch(mode)
-  {
-#ifdef MPC_USE_SLURM
-    case PMI:
       return key_max;
-      break;
-#endif
-
-    case TCP:
-      return TCP_KEY_MAX;
-      break;
-
-    default: assume(0);
-  }
-
-  return -1;
 }
 
   int
 sctk_bootstrap_get_max_val_len()
 {
-  switch(mode)
-  {
-#ifdef MPC_USE_SLURM
-    case PMI:
       return val_max;
-      break;
-#endif
-
-    case TCP:
-      return TCP_VAL_MAX;
-      break;
-
-    default: assume(0);
-  }
-
-  return -1;
 }
-
 
 void
   sctk_bootstrap_barrier() {
-    switch (mode)
-    {
-#ifdef MPC_USE_SLURM
-      case PMI:
-        PMI_Barrier();
-        break;
-#endif
-
-      case TCP:
-        sctk_mpcrun_barrier ();
-        break;
-
-      default: assume(0);
-    }
+  int res;
+   res = sctk_pmi_barrier();
+   assume(res == SCTK_PMI_SUCCESS);
 }
 
 void sctk_bootstrap_init() {
-#ifdef MPC_USE_SLURM
-  if (strcmp(sctk_get_launcher_mode(), "srun") == 0)
-    mode = PMI;
-  else
-    mode = TCP;
-#else
-    mode = TCP;
-#endif
-
-  switch (mode)
-  {
-#ifdef MPC_USE_SLURM
-    case PMI:
+	int res;
       sctk_bootstrap_pmi_init();
       sctk_mpcrun_client_create_recv_socket ();
       sctk_mpcrun_client_init_host_port();
-      /* we need to send the number of processes to the
-       * TCP server */
-      if (sctk_process_rank == 0)
-      {
-        sctk_mpcrun_client_set_process_number();
-      }
-      PMI_Barrier();
-      if (sctk_process_rank == 0)
-        fprintf(stderr, "MPC launcher: PMI used\n");
-      break;
-#endif
-
-    case TCP:
-      /* connect the process to the TCP server.
-       * Permits to grab the process_rank, node_number, local_process_rank */
-      sctk_mpcrun_client_create_recv_socket ();
-      sctk_mpcrun_client_init_host_port();
-      sctk_mpcrun_client_get_global_consts();
-      sctk_mpcrun_barrier ();
-
-      /* also grab the number of processes in the node */
+      res = sctk_pmi_barrier();
+      assume(res == SCTK_PMI_SUCCESS);
+       /* also grab the number of processes in the node */
       sctk_mpcrun_client_get_local_consts();
       if (sctk_process_rank == 0)
-        fprintf(stderr, "MPC launcher: TCP used\n");
-      break;
-
-    default: assume(0);
-  }
+        fprintf(stderr, "MPC launcher: PMI used\n");
 }

@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile Mon Nov  2 15:31:01 CET 2009
+# Makefile Generate with ../MPC_Tools/mpc_gen_makefile Mon Nov  2 15:31:01 CET 2009
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -99,6 +99,7 @@ $(DEP_include):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:include/%.c
 
 $(DEP_mpc):$(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d:mpc/%.c
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,mpc/%.c,$@)"
+	@echo "    $(LOCAL_CFLAGS)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,mpc/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
@@ -133,6 +134,7 @@ endif
 
 $(OBJ_include):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,include/%.c,$@)"
+
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,include/%.c,$@) -o $@
 
 $(OBJ_mpc):%.o:%.d

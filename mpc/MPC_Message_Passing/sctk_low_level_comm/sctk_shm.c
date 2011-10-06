@@ -720,7 +720,7 @@ sctk_shm_init ( int init ) {
   char* shm_key;
   char* shm_filename;
 
-  assume(sctk_bootstrap_get_max_key_len() >= SHM_FILENAME_SIZE);
+  //assume(sctk_bootstrap_get_max_key_len() >= SHM_FILENAME_SIZE);
 
   shm_key = sctk_malloc(sctk_bootstrap_get_max_key_len());
   assume(shm_key);

@@ -21,6 +21,9 @@
 /* ######################################################################## */
 #ifndef __SCTK__INFINIBAND_H_
 #define __SCTK__INFINIBAND_H_
+
+#include "sctk_pmi.h"
+
 #ifdef __cplusplus
 extern "C"
 {

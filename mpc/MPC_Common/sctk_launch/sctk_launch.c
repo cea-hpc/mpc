@@ -40,6 +40,7 @@
 #include "sctk_launch.h"
 #include "sctk_debug.h"
 #include "sctk_config.h"
+#include "sctk_asm.h"
 #ifdef MPC_Message_Passing
 #include "sctk_low_level_comm.h"
 #endif
@@ -172,7 +173,7 @@ sctk_perform_initialisation (void)
   mkdir (sctk_store_dir, 0777);
 
   sctk_only_once ();
-  sctk_topology_init ();
+//  sctk_topology_init ();
   sctk_thread_init ();
 
 
@@ -531,6 +532,8 @@ sctk_env_init_intern (int *argc, char ***argv)
   sctk_init ();
   sctk_initial_argc = *argc;
   init_argument = *argv;
+  sctk_pmi_init();
+  sctk_topology_init ();
   sctk_print_version ("Init Launch", SCTK_LOCAL_VERSION_MAJOR,
       SCTK_LOCAL_VERSION_MINOR);
 
@@ -603,6 +606,8 @@ sctk_env_init (int *argc, char ***argv)
   int
 sctk_env_exit ()
 {
+  sctk_pmi_finalize();
+  sctk_topology_destroy();
   sctk_leave ();
   return 0;
 }
