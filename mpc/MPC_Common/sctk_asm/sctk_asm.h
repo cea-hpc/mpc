@@ -23,7 +23,6 @@
 #define __SCTK_ASM_H_
 
 #include "sctk_config.h"
-#include "sctk_atomics.h"
 
 #include <pthread.h>
 #include <stdio.h>

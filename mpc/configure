@@ -322,6 +322,10 @@ for arg in "$@" ; do
     SCTK_SLURM="0"
     SCTK_HYDRA="1"
     ;;
+    --with-slurm)
+    SCTK_SLURM="1"
+    SCTK_HYDRA="0"
+    ;;
     --with-slurm=*)
     SCTK_SLURM="1"
     SCTK_HYDRA="0"

@@ -73,7 +73,6 @@ SCTK_PMI_CHOSEN="0"
 
 # Options for HWLOC
 SCTK_HWLOC_OPTIONS="--with-hwloc"
-SCTK_HWLOC_CHOSEN="0"
 SCTK_HWLOC_EMB="1"
 
 # Options for SCTK_OPENPA
@@ -98,8 +97,6 @@ Installation directories:
 Optional Features:
   --disable-mpc-gcc                   Disable compilation of mpc-gcc
   --disable-mpc-gdb                   Disable compilation of mpc-gdb
-  --disable-mpc-hwloc                 Disable compilation of mpc-hwloc
-  --disable-mpc-openpa                Disable compilation of mpc-openpa
   --disable-prefix-check              Force given prefix
   --with-cpath=DIR1:DIR2:...          Add directories to the CPATH environment variable
                                       for the whole MPC distribution
@@ -144,13 +141,6 @@ for arg in "$@" ; do
     --disable-mpc-gdb)
         MODULES="`echo $MODULES | sed -e 's/mpc-gdb//g'`"
     ;;
-    --disable-mpc-hwloc)
-    	MODULES="`echo $MODULES | sed -e 's/mpc-hwloc//g'`"
-    ;;
-    --disable-mpc-openpa)
-    	MODULES="`echo $MODULES | sed -e 's/mpc-openpa//g'`"
-    	SCTK_OPENPA="0"
-    ;;
     --help)
 	usage
 	exit 1
@@ -181,8 +171,13 @@ for arg in "$@" ; do
       SCTK_PMI_CHOSEN="1"
     ;;
     --with-slurm)
-    echo -n "Error: You must specify a path to SLURM installation..."
-    exit 1
+      if [ $SCTK_PMI_CHOSEN -eq 1 ]; then
+        echo -n "Error: Launcher already chosen..."
+        exit 1
+      fi
+      SCTK_PMI_CHOSEN="1"
+  	  SCTK_PMI_OPTIONS="$arg"
+      MODULES="`echo $MODULES | sed -e 's/mpc-hydra//g'`"
     ;;
     --with-slurm=*)
       if [ $SCTK_PMI_CHOSEN -eq 1 ]; then
@@ -190,23 +185,13 @@ for arg in "$@" ; do
         exit 1
       fi
       SCTK_PMI_CHOSEN="1"
-	  SCTK_PMI_OPTIONS="$arg"
+  	  SCTK_PMI_OPTIONS="$arg"
       MODULES="`echo $MODULES | sed -e 's/mpc-hydra//g'`"
     ;;
     --with-hwloc)
-      if [ $SCTK_HWLOC_CHOSEN -eq 1 ]; then
-        echo -n "Error: HWLOC directory already chosen..."
-        exit 1
-      fi
-      SCTK_HWLOC_CHOSEN="1"
-      SCTK_HWLOC_OPTIONS="$arg"
+      MODULES="`echo $MODULES | sed -e 's/mpc-hwloc//g'`"
     ;;
     --with-hwloc=*)
-      if [ $SCTK_HWLOC_CHOSEN -eq 1 ]; then
-        echo -n "Error: HWLOC directory already chosen..."
-        exit 1
-      fi
-      SCTK_HWLOC_CHOSEN="1"
       MODULES="`echo $MODULES | sed -e 's/mpc-hwloc//g'`"
       SCTK_HWLOC_OPTIONS="$arg"
     ;;
@@ -301,6 +286,11 @@ EOF
 # Variable initialization
 MAKE_ALL_RULE=""
 INSTALL_ALL_RULE=""
+# Dependences to make_mpc rule
+MAKE_MPC_DEPS=""
+
+# Path of the build directory
+printf "BUILD_DIR=\`pwd\`\n" >> Makefile
 
 if test "${ADD_TO_CPATH}" != "" ; then
   printf "ifeq (\${CPATH},)\n" >> Makefile
@@ -400,13 +390,18 @@ if test "$mod" != "#" ; then
     printf "#\n# Module ${mod} / Version ${ver}\n#\n" >> Makefile
     if [ "${mod##*-}" == "openpa" ] || [ "${mod##*-}" == "hwloc" ]
     then
-    	printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX=${TOP_SOURCE_DIR}/${FULL_NAME}_build/${mod##*-}-${ver}\n" >> Makefile
+    	printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX=`pwd`/${FULL_NAME}_build/${mod##*-}-${ver}\n" >> Makefile
     fi
     printf "${FULL_NAME}_build/config.status:\n" >> Makefile
     printf "\tmkdir -p ${FULL_NAME}_build\n" >> Makefile
     printf "\tcd ${FULL_NAME}_build && ${TOP_SOURCE_DIR}/${mod}/configure \
       $ver ${SCTK_PREFIX}/${FULL_NAME} '' '' '' '' '' '${MOD_CONFIGURE_ARGUMENTS}'\n" >> Makefile
     printf "\n" >> Makefile
+
+    # We set all depedences for compiling MPC
+    if [ "${mod##*-}" == "openpa" ] || [ "${mod##*-}" == "hwloc" ] || [ "${mod##*-}" == "hydra"  ]; then
+      MAKE_MPC_DEPS="$MAKE_MPC_DEPS ${FULL_NAME}_make"
+    fi
 
     MAKE_ALL_RULE="${MAKE_ALL_RULE} ${FULL_NAME}_make"
     INSTALL_ALL_RULE="${INSTALL_ALL_RULE} ${FULL_NAME}_install"
@@ -478,7 +473,7 @@ if test "${ADD_TO_LIBRARY_PATH}" != "" ; then
 fi
 
 printf "#\n# Rule for MPC\n#\n" >> Makefile
-printf "mpc_build/config.status:\n" >> Makefile
+printf "mpc_build/config.status:$MAKE_MPC_DEPS\n" >> Makefile
 printf "\tmkdir -p mpc_build\n" >> Makefile
 printf "\tcd mpc_build && ${MPC_SOURCE_DIR}/configure ${ARG_COMPILER_LIST} ${ARG_LIBRARY_PATH} ${MPC_ARGS} \n" >> Makefile
 echo "">> Makefile

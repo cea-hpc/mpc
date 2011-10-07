@@ -132,20 +132,26 @@ elif [ $SCTK_HYDRA -eq 0 ] && [ $SCTK_SLURM -eq 1 ]; then
   echo "#"  >> Makefile
   echo "# Include pour le module SLURM"  >> Makefile
   echo "#"  >> Makefile
-  echo "SLURM_MODULE=$SLURM_PREFIX"  >> Makefile
 
-  echo "CFLAGS += -I\$(SLURM_MODULE)/include"  >> Makefile
+echo "SLURM_MODULE=${SLURM_PREFIX}"  >> Makefile
+	# For the moment, we dont use rpath
+	if [ -w "${SLURM_PREFIX}" ]; then
+	  if [ -a ${SLURM_PREFIX}/lib/libpmi.so ]; then
+  		echo "PMI_ARFLAGS += \$(SLURM_MODULE)/lib/libpmi.so"  >> Makefile
+  		echo "PMI_LDFLAGS = -Wl,-rpath \$(SLURM_MODULE)/lib -L\$(SLURM_MODULE)/lib -lpmi"  >> Makefile
+  	elif [ -a ${SLURM_PREFIX}/lib64/libpmi.so ]; then
+  		echo "PMI_ARFLAGS += \$(SLURM_MODULE)/lib64/libpmi.so"  >> Makefile
+  		echo "PMI_LDFLAGS = -Wl,-rpath \$(SLURM_MODULE)/lib64 -L\$(SLURM_MODULE)/lib64 -lpmi"  >> Makefile
+  	else
+  		echo -n "Error: libpmi found neither in ${SLURM_PREFIX}/lib nor ${SLURM_PREFIX}/lib64"
+    	exit 1
+   	fi
+	echo "PMI_LDFLAGS =  -L\$(SLURM_MODULE)/lib64 -L\$(SLURM_MODULE)/lib -lpmi"  >> Makefile
+  	echo "CFLAGS += -I\$(SLURM_MODULE)/include"  >> Makefile
+	else
+ 		echo "PMI_LDFLAGS = -lpmi"  >> Makefile
+	fi
 
-  if [ -a $SLURM_PREFIX/lib/libpmi.so ]; then
-  	echo "PMI_ARFLAGS += \$(SLURM_MODULE)/lib/libpmi.so"  >> Makefile
-  	echo "PMI_LDFLAGS = -Wl,-rpath \$(SLURM_MODULE)/lib -L\$(SLURM_MODULE)/lib -lpmi"  >> Makefile
-  elif [ -a $SLURM_PREFIX/lib64/libpmi.so ]; then
-  	echo "PMI_ARFLAGS += \$(SLURM_MODULE)/lib64/libpmi.so"  >> Makefile
-  	echo "PMI_LDFLAGS = -Wl,-rpath \$(SLURM_MODULE)/lib64 -L\$(SLURM_MODULE)/lib64 -lpmi"  >> Makefile
-  else
-  	echo -n "Error: libpmi found neither in \$(SLURM_MODULE)/lib nor \$(SLURM_MODULE)/lib64"
-    exit 1
-   fi
   echo "" >> Makefile
 fi
 
@@ -155,7 +161,7 @@ fi
 echo "#"  >> Makefile
 echo "# Include pour le module HWLOC"  >> Makefile
 echo "#"  >> Makefile
-echo "HWLOC_MODULE=$HWLOC_PREFIX"  >> Makefile
+echo "HWLOC_MODULE=${HWLOC_PREFIX}"  >> Makefile
 
 if [ $SCTK_HWLOC_EMB -eq 1 ]; then
   echo "CFLAGS += -I\$(HWLOC_MODULE)/include"  >> Makefile
