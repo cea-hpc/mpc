@@ -288,6 +288,7 @@ MAKE_ALL_RULE=""
 INSTALL_ALL_RULE=""
 # Dependences to make_mpc rule
 MAKE_MPC_DEPS=""
+INSTALL_MPC_DEPS=""
 
 # Path of the build directory
 printf "BUILD_DIR=\`pwd\`\n" >> Makefile
@@ -384,7 +385,7 @@ if test "$mod" != "#" ; then
 
     if [ "${mod##*-}" == "hwloc" ]
 	then
-		HWLOC_LIB="LD_LIBRARY_PATH=`echo A${SCTK_PREFIX} | sed -e 's/A--prefix=//g'`/${FULL_NAME}/lib:\$LD_LIBRARY_PATH"
+		HWLOC_LIB="LD_LIBRARY_PATH=`echo A${SCTK_PREFIX} | sed -e 's/A--prefix=//g'`/${FULL_NAME}/lib:\$(LD_LIBRARY_PATH)"
 	fi
 
     printf "#\n# Module ${mod} / Version ${ver}\n#\n" >> Makefile
@@ -401,6 +402,7 @@ if test "$mod" != "#" ; then
     # We set all depedences for compiling MPC
     if [ "${mod##*-}" == "openpa" ] || [ "${mod##*-}" == "hwloc" ] || [ "${mod##*-}" == "hydra"  ]; then
       MAKE_MPC_DEPS="$MAKE_MPC_DEPS ${FULL_NAME}_make"
+      INSTALL_MPC_DEPS="$INSTALL_MPC_DEPS ${FULL_NAME}_install"
     fi
 
     MAKE_ALL_RULE="${MAKE_ALL_RULE} ${FULL_NAME}_make"
@@ -484,7 +486,7 @@ printf "mpc_make:mpc_build/config.status\n" >> Makefile
 printf "\t\$(MAKE) -C mpc_build \n" >> Makefile
 echo "">> Makefile
 
-printf "mpc_install:\n" >> Makefile
+printf "mpc_install:$INSTALL_MPC_DEPS\n" >> Makefile
 printf "\t$HWLOC_LIB \$(MAKE) -C mpc_build install \n" >> Makefile
 echo "">> Makefile
 
