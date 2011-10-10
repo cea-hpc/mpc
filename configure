@@ -391,7 +391,8 @@ if test "$mod" != "#" ; then
     printf "#\n# Module ${mod} / Version ${ver}\n#\n" >> Makefile
     if [ "${mod##*-}" == "openpa" ] || [ "${mod##*-}" == "hwloc" ]
     then
-    	printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX=`pwd`/${FULL_NAME}_build/${mod##*-}-${ver}\n" >> Makefile
+		  printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_INSTALL=`echo A${SCTK_PREFIX} | sed -e 's/A--prefix=//g'`/${FULL_NAME}\n" >> Makefile
+    	printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_BUILD=`pwd`/${FULL_NAME}_build/${mod##*-}-${ver}\n" >> Makefile
     fi
     printf "${FULL_NAME}_build/config.status:\n" >> Makefile
     printf "\tmkdir -p ${FULL_NAME}_build\n" >> Makefile

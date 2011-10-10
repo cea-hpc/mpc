@@ -336,14 +336,14 @@ for arg in "$@" ; do
     ;;
     --with-hwloc=*)
     SCTK_HWLOC_EMB="0"
-    export HWLOC_PREFIX="`echo A$arg | sed -e 's/A--with-hwloc=//g'`"
+    export HWLOC_PREFIX_INSTALL="`echo A$arg | sed -e 's/A--with-hwloc=//g'`"
     ;;
     --with-openpa)
     SCTK_OPENPA_EMB="1"
     ;;
     --with-openpa=*)
     SCTK_OPENPA_EMB="0"
-    export OPENPA_PREFIX="`echo A$arg | sed -e 's/A--with-openpa=//g'`"
+    export OPENPA_PREFIX_INSTALL="`echo A$arg | sed -e 's/A--with-openpa=//g'`"
     ;;
 
     --disable-all)
