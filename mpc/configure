@@ -379,6 +379,16 @@ for arg in "$@" ; do
 done
 
 SCTK_CFLAGS="$SCTK_CFLAGS $SCTK_CFLAGS_NON_GNU"
+# export launcher information
+if [ $SCTK_HYDRA -eq 1 ]; then
+  SCTK_JOB_MANAGER="HYDRA"
+elif [ $SCTK_SLURM -eq 1 ]; then
+  SCTK_JOB_MANAGER="SLURM"
+else
+  perror "Neither Hydra nor Slurm has been selected"
+  exit 1
+fi
+export SCTK_JOB_MANAGER
 
 tmp_cross_gen(){
     TMP_CROSS="$@"
