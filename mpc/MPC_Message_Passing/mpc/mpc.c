@@ -1208,7 +1208,7 @@ PMPC_Checkpoint_timed (unsigned int sec, MPC_Comm comm)
 	      __MPC_Barrier (MPC_COMM_WORLD);
 
 #if defined(__GNU_COMPILER) || defined(__INTEL_COMPILER)
-#warning "Si on redemarre , recréation des commnicateurs"
+#warning "Si on redemarre , recrï¿½ation des commnicateurs"
 #endif
 	    }
 	}

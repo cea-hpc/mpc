@@ -32,58 +32,62 @@
 #include "sctk_mpcrun_client.h"
 #include "sctk_asm.h"
 
+#include "sctk_pmi.h"
+
+#define MAX_HOST_SIZE 255
+
 /* localhost and disthost of the TCP connection */
 static char local_host[HOSTNAME_PORT_SIZE];
 static char port[PORT_SIZE];
 
-ssize_t
-sctk_mpcserver_safe_read (int fd, void *buf, size_t count)
-{
-  char *tmp;
-  ssize_t already_read = 0;
-  ssize_t dcount = 0;
-
-  tmp = buf;
-  while (already_read < count)
-    {
-      tmp += dcount;
-      dcount = read (fd, tmp, count - already_read);
-      if (dcount < 0)
-	{
-	  perror ("safe_read");
-	  abort();
-	}
-      already_read += dcount;
-    }
-  assert (count == already_read);
-  return already_read;
-}
-
-ssize_t
-sctk_mpcserver_safe_write (int fd,  void *buf, size_t count)
-{
-  ssize_t dcount = 0;
-  ssize_t already_written = 0;
-  char *tmp = (char *)buf;
-
-
-  while( already_written < count )
-    {
-     tmp += dcount;
-     dcount = write (fd, buf, count - already_written );
-
-     if ( dcount < 0 )
-       {
-         perror ("safe_write");
-	 abort();
-       }
-
-	already_written += dcount;
-    }
-
-  assert (already_written == count);
-  return already_written;
-}
+//ssize_t
+//sctk_mpcserver_safe_read (int fd, void *buf, size_t count)
+//{
+//  char *tmp;
+//  ssize_t already_read = 0;
+//  ssize_t dcount = 0;
+//
+//  tmp = buf;
+//  while (already_read < count)
+//    {
+//      tmp += dcount;
+//      dcount = read (fd, tmp, count - already_read);
+//      if (dcount < 0)
+//	{
+//	  perror ("safe_read");
+//	  abort();
+//	}
+//      already_read += dcount;
+//    }
+//  assert (count == already_read);
+//  return already_read;
+//}
+//
+//ssize_t
+//sctk_mpcserver_safe_write (int fd,  void *buf, size_t count)
+//{
+//  ssize_t dcount = 0;
+//  ssize_t already_written = 0;
+//  char *tmp = (char *)buf;
+//
+//
+//  while( already_written < count )
+//    {
+//     tmp += dcount;
+//     dcount = write (fd, buf, count - already_written );
+//
+//     if ( dcount < 0 )
+//       {
+//         perror ("safe_write");
+//	 abort();
+//       }
+//
+//	already_written += dcount;
+//    }
+//
+//  assert (already_written == count);
+//  return already_written;
+//}
 
 
 
@@ -113,6 +117,7 @@ sctk_tcp_connect_to (int portno, char *name_init)
     sprintf(name,"%s",name_init);
   }
   sctk_nodebug("Connect to %s",name);
+
   server = gethostbyname (name);
   if (server == NULL)
     {
@@ -139,46 +144,46 @@ sctk_tcp_connect_to (int portno, char *name_init)
   return clientsock_fd;
 }
 
-int
-sctk_mpcrun_client (char *request, void *in, size_t size_in,
-		    void *out, size_t size_out)
-{
-  int fd;
-  char req[MPC_ACTION_SIZE];
-
-  memset (req, 0, MPC_ACTION_SIZE);
-  assume (strlen (request) + 1 <= MPC_ACTION_SIZE);
-  memcpy (req, request, strlen (request) + 1);
-
-  fd = sctk_tcp_connect_to (sctk_mpcrun_client_port, sctk_mpcrun_client_host);
-  sctk_nodebug ("Connected to host with req %s", req);
-  sctk_mpcserver_safe_write (fd, req, MPC_ACTION_SIZE);
-  sctk_mpcserver_safe_write (fd, &sctk_process_rank, sizeof (int));
-  if (out != NULL)
-    {
-      sctk_mpcserver_safe_write (fd, &size_out, sizeof (unsigned long));
-      sctk_mpcserver_safe_write (fd, out, size_out);
-    }
-  if (in != NULL)
-    {
-      unsigned long size;
-      sctk_mpcserver_safe_read (fd, &size, sizeof (unsigned long));
-      if (size != 0)
-	{
-	  assume (size == size_in);
-	  sctk_mpcserver_safe_read (fd, in, size_in);
-	}
-      else
-	{
-	  sctk_nodebug ("Request fail %s", request);
-	  close (fd);
-	  return 1;
-	}
-    }
-
-  close (fd);
-  return 0;
-}
+//int
+//sctk_mpcrun_client (char *request, void *in, size_t size_in,
+//		    void *out, size_t size_out)
+//{
+//  int fd;
+//  char req[MPC_ACTION_SIZE];
+//
+//  memset (req, 0, MPC_ACTION_SIZE);
+//  assume (strlen (request) + 1 <= MPC_ACTION_SIZE);
+//  memcpy (req, request, strlen (request) + 1);
+//
+//  fd = sctk_tcp_connect_to (sctk_mpcrun_client_port, sctk_mpcrun_client_host);
+//  sctk_nodebug ("Connected to host with req %s", req);
+//  sctk_mpcserver_safe_write (fd, req, MPC_ACTION_SIZE);
+//  sctk_mpcserver_safe_write (fd, &sctk_process_rank, sizeof (int));
+//  if (out != NULL)
+//    {
+//      sctk_mpcserver_safe_write (fd, &size_out, sizeof (unsigned long));
+//      sctk_mpcserver_safe_write (fd, out, size_out);
+//    }
+//  if (in != NULL)
+//    {
+//      unsigned long size;
+//      sctk_mpcserver_safe_read (fd, &size, sizeof (unsigned long));
+//      if (size != 0)
+//	{
+//	  assume (size == size_in);
+//	  sctk_mpcserver_safe_read (fd, in, size_in);
+//	}
+//      else
+//	{
+//	  sctk_nodebug ("Request fail %s", request);
+//	  close (fd);
+//	  return 1;
+//	}
+//    }
+//
+//  close (fd);
+//  return 0;
+//}
 
 
 /*
@@ -191,25 +196,7 @@ sctk_mpcrun_client (char *request, void *in, size_t size_in,
 void
 sctk_mpcrun_barrier ()
 {
-  int total_nb;
-  int done = 0;
-  total_nb = sctk_process_number;
-  sctk_nodebug("number of processes : %d", total_nb);
-
-  do
-    {
-      assume (sctk_mpcrun_client
-	      (MPC_SERVER_BARRIER, &done, sizeof (int), &total_nb,
-	       sizeof (int)) == 0);
-
-      /* /!\ cpu_relax added instead of sched yield.
-       * Allow to perform a barrier when the thread library isn't run */
-      sctk_cpu_relax();
-      //    sched_yield ();
-      sctk_nodebug ("done %d tot %d", done, total_nb);
-    }
-  while (done != total_nb);
-
+	sctk_pmi_barrier();
 }
 
 
@@ -218,14 +205,14 @@ static int* socket_graph;
 void
 sctk_mpcrun_send_to_process (void *buf, size_t count, int process){
   sctk_nodebug("Send write message to %d fd %d",process,socket_graph[process]);
-  sctk_mpcserver_safe_write(socket_graph[process],buf,count);
+  sctk_pmi_send(buf,count,socket_graph[process]);
   sctk_nodebug("Send write message to %d fd %d done",process,socket_graph[process]);
 }
 
 void
 sctk_mpcrun_read_to_process (void *buf, size_t count, int process){
   sctk_nodebug("Send read message to %d fd %d",process,socket_graph[process]);
-  sctk_mpcserver_safe_read(socket_graph[process],buf,count);
+  sctk_pmi_recv(buf,count,socket_graph[process]);
   sctk_nodebug("Send read message to %d fd %d done",process,socket_graph[process]);
 }
 
@@ -267,23 +254,29 @@ sctk_mpcrun_client_create_recv_socket ()
 void
 sctk_mpcrun_client_get_global_consts()
 {
-  sctk_client_hostname_message_t hostname_msg;
-  sctk_client_init_message_t msg;
+//	sctk_client_hostname_message_t hostname_msg;
+//	sctk_client_init_message_t msg;
 
-  sctk_process_number = sctk_get_process_nb ();
+	sctk_pmi_get_process_number(&sctk_process_number);
 
-  /* fill the msg */
-  memcpy(hostname_msg.hostname, &local_host, HOSTNAME_SIZE);
-  hostname_msg.process_number = sctk_process_number;
+	// fill the msg
+//	memcpy(hostname_msg.hostname, &local_host, HOSTNAME_SIZE);
+//	hostname_msg.process_number = sctk_process_number;
 
-  assume (sctk_mpcrun_client
-      (MPC_SERVER_GET_RANK, &msg, sizeof (sctk_client_init_message_t), &hostname_msg,
-      sizeof(sctk_client_hostname_message_t)) == 0);
+	// FIXME Le assume MPC_SERVER_GET_RANK uniquement à mettre le tableau registered_node à jour
+	// pour ce qui concerne le shmfilename... (MPC_Tools/mpcrun_tools/mpcrun_server.c)
+	//	assume (sctk_mpcrun_client
+	//				(MPC_SERVER_GET_RANK, &msg, sizeof (sctk_client_init_message_t), &hostname_msg,
+	//						sizeof(sctk_client_hostname_message_t)) == 0);
 
-  sctk_process_rank = msg.global_process_rank;
-  sctk_node_rank = msg.node_rank;
-  sctk_nodebug("NODE RANK : %d", sctk_node_rank);
-  sctk_local_process_rank = msg.local_process_rank;
+	// Get the node rank, the global & local process ranks
+	sctk_pmi_get_node_rank(&sctk_node_rank);
+	sctk_pmi_get_process_rank(&sctk_process_rank);
+	sctk_pmi_get_process_on_node_rank(&sctk_local_process_rank);
+
+	sctk_nodebug("NODE RANK : %d", sctk_node_rank);
+	sctk_nodebug("PROCESS RANK (global) : %d", sctk_process_rank);
+	sctk_nodebug("PROCESS RANK (local) : %d", sctk_local_process_rank);
 }
 
 
@@ -297,37 +290,10 @@ sctk_mpcrun_client_get_global_consts()
 void
 sctk_mpcrun_client_get_local_consts ()
 {
-  char hostname[HOSTNAME_SIZE];
-  int fd;
-
-  sctk_client_local_size_and_node_number_message_t msg;
-
-  memset(hostname,'\0',(HOSTNAME_SIZE)*sizeof(char));
-  gethostname(hostname, HOSTNAME_SIZE);
-  fd = sctk_tcp_connect_to (sctk_mpcrun_client_port, sctk_mpcrun_client_host);
-
-  sctk_mpcserver_safe_write (fd, MPC_SERVER_GET_LOCAL_SIZE, MPC_ACTION_SIZE);
-  sctk_mpcserver_safe_write (fd, &sctk_process_rank, sizeof (int));
-  sctk_mpcserver_safe_write (fd, hostname, HOSTNAME_SIZE);
-
-  sctk_mpcserver_safe_read (fd, &msg, sizeof(sctk_client_local_size_and_node_number_message_t));
-  sctk_local_process_number = msg.local_process_number;
-  sctk_node_number = msg.node_number;
-  sctk_nodebug("local size received : %d", local_size);
-  sctk_nodebug("Number of nodes : %d", sctk_node_number);
-}
-
-
-void
-sctk_mpcrun_client_set_process_number()
-{
-  int fd;
-
-  fd = sctk_tcp_connect_to (sctk_mpcrun_client_port, sctk_mpcrun_client_host);
-
-  sctk_mpcserver_safe_write (fd, MPC_SERVER_SET_PROCESS_NUMBER, MPC_ACTION_SIZE);
-  sctk_mpcserver_safe_write (fd, &sctk_process_rank, sizeof (int));
-  sctk_mpcserver_safe_write (fd, &sctk_process_number, sizeof (int));
+	sctk_pmi_get_processes_on_node_number(&sctk_local_process_number);
+	sctk_pmi_get_node_number(&sctk_node_number);
+	sctk_nodebug("local size received : %d", local_size);
+	sctk_nodebug("Number of nodes : %d", sctk_node_number);
 }
 
 /*
@@ -342,17 +308,7 @@ sctk_mpcrun_client_set_process_number()
   void
 sctk_mpcrun_client_get_shmfilename (char* key, char* out, int key_len, int val_len)
 {
-  int fd;
-
-  fd = sctk_tcp_connect_to (sctk_mpcrun_client_port, sctk_mpcrun_client_host);
-
-  sctk_mpcserver_safe_write (fd, MPC_SERVER_GET_SHM_FILENAME, MPC_ACTION_SIZE);
-  sctk_mpcserver_safe_write (fd, &sctk_process_rank, sizeof (int));
-  sctk_mpcserver_safe_write (fd, key, key_len);
-
-  /*  filename */
-  sctk_mpcserver_safe_read (fd, out, val_len);
-
+  sctk_pmi_get_connection_info_str(out,val_len,key);
   sctk_nodebug("got %s", out);
 
   return;
@@ -368,15 +324,7 @@ sctk_mpcrun_client_get_shmfilename (char* key, char* out, int key_len, int val_l
   void
 sctk_mpcrun_client_register_shmfilename (char* key, char* in, int key_len, int val_len)
 {
-  int fd;
-
-  fd = sctk_tcp_connect_to (sctk_mpcrun_client_port, sctk_mpcrun_client_host);
-
-  sctk_mpcserver_safe_write (fd, MPC_SERVER_REGISTER_SHM_FILENAME, MPC_ACTION_SIZE);
-  sctk_mpcserver_safe_write (fd, &sctk_process_rank, sizeof (int));
-  sctk_mpcserver_safe_write (fd, key, key_len);
-  sctk_mpcserver_safe_write (fd, in,  val_len);
-
+  sctk_pmi_put_connection_info_str(in,val_len,key);
   sctk_nodebug("written shm filename : %s", in);
 
   return;
@@ -409,7 +357,8 @@ sctk_mpcrun_client_init_connect ()
 {
   int rank;
   int i;
-  char dist_host[HOSTNAME_SIZE+PORT_SIZE];
+  char msg[MAX_HOST_SIZE];
+  char * tok;
 
   rank = sctk_process_rank;
   sctk_nodebug("RANK : %d", rank);
@@ -418,22 +367,56 @@ sctk_mpcrun_client_init_connect ()
   socket_graph = malloc(sctk_process_number*sizeof(int));
   memset(socket_graph,-1,sctk_process_number*sizeof(int));
 
-  assume(sctk_mpcrun_client(MPC_SERVER_REGISTER_HOST,NULL,0,local_host,(HOSTNAME_SIZE+PORT_SIZE)*sizeof(char)) == 0);
+  // Initialize host_list if necessary
+  if (host_list == NULL)
+  {
+	  int index;
+	  host_list = (sctk_pmi_tcp_t *) malloc(sctk_process_number * sizeof(sctk_pmi_tcp_t));
+	  for (index = 0; index < sctk_process_number; index ++)
+	  {
+		  strcpy(host_list[index].name, "");
+		  host_list[index].port_nb = -1;
+	  }
+  }
+  assume(strcmp(host_list[sctk_process_rank].name, "") == 0);
+
+  // Store (hostname, port)
+  assume(strlen(local_host) < SCTK_PMI_NAME_SIZE);
+  strcpy(host_list[sctk_process_rank].name, local_host);
+  host_list[sctk_process_rank].port_nb = atoi(local_host + HOSTNAME_SIZE);
+
+  // Send my (hostname, port) for all others processes
+  sprintf(msg, "%s:%d", host_list[sctk_process_rank].name, host_list[sctk_process_rank].port_nb);
+  sctk_pmi_put_connection_info(msg, MAX_HOST_SIZE, SCTK_PMI_TAG_MPCRUNCLIENT);
+
+  // Wait for all processes
+  sctk_pmi_barrier();
+
+  // Get (hostname, port) of all others processes
+  for (i = 0; i < sctk_process_number; i ++)
+  {
+	  sctk_pmi_get_connection_info(msg, MAX_HOST_SIZE, SCTK_PMI_TAG_MPCRUNCLIENT, i);
+	  tok = strtok(msg,":");
+	  strcpy(host_list[i].name,tok);
+	  tok = strtok(NULL,":");
+	  host_list[i].port_nb = atoi(tok);
+  }
+
   sctk_nodebug("SEND %s %s",local_host,local_host+HOSTNAME_SIZE);
   sctk_nodebug("sctk_process_number : %d", sctk_process_rank);
-  for(i = 0; i < sctk_process_number; i++){
-    if(i != rank){
-      if(i < rank){
-        memset(dist_host,'\0',(HOSTNAME_SIZE+PORT_SIZE)*sizeof(char));
-        sctk_nodebug("Wait Recv peer");
-        while(sctk_mpcrun_client(MPC_SERVER_GET_HOST,dist_host,(HOSTNAME_SIZE+PORT_SIZE)*sizeof(char),&i,sizeof(int)) != 0){
-          sleep(1);
-        }
-        sctk_nodebug("%d socket %s port %s",i,dist_host,dist_host+HOSTNAME_SIZE);
-        socket_graph[i] = sctk_tcp_connect_to(atoi(dist_host+HOSTNAME_SIZE),dist_host);
-        sctk_mpcserver_safe_write (socket_graph[i], &rank, sizeof(int));
+  for(i = 0; i < sctk_process_number; i++)
+  {
+    if(i != rank)
+    {
+      if(i < rank)
+      {
+    	sctk_nodebug("%d socket %s port %d", i, host_list[i].name, host_list[i].port_nb);
+        socket_graph[i] = sctk_tcp_connect_to(host_list[i].port_nb, host_list[i].name);
+        sctk_pmi_send(&rank, sizeof(int),socket_graph[i]);
         sctk_nodebug("CONNECT %d socket %d",i,socket_graph[i]);
-      } else {
+      }
+      else
+      {
         int fd;
         int remote_rank;
         unsigned int clilen;
@@ -442,7 +425,7 @@ sctk_mpcrun_client_init_connect ()
         sctk_nodebug("Wait for connection");
         fd = accept (sockfd, (struct sockaddr *) &cli_addr, &clilen);
 
-        sctk_mpcserver_safe_read (fd, &remote_rank, sizeof(int));
+        sctk_pmi_recv(&remote_rank, sizeof(int),fd);
         socket_graph[remote_rank] = fd;
         sctk_nodebug("ACCEPT %d socket %d",remote_rank,socket_graph[remote_rank]);
       }

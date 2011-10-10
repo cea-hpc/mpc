@@ -436,9 +436,9 @@ A call to {\tt mpcrun --help} details all the available implementations.
 In order to run an MPC job on $2$ node with $8$ processes communicating with \emph{TCP}, you should use one of the following methods (depending on the thread type you want to use). Note that on multiple nodes, MPC automatically switches to the MPC SHared Memory module (\emph{SHM}) when a communication between processes on the same node occurs. This behavior is available with all inter-process communication modules (\emph{TCP} included).
 
 \begin{verbatim}
-      mpcrun -m=ethread      -n=8 -p=8 -net=tcp -N=2 -l=ssh hello_world
-      mpcrun -m=ethread_mxn  -n=8 -p=8 -net=tcp -N=2 -l=ssh hello_world
-      mpcrun -m=pthread      -n=8 -p=8 -net=tcp -N=2 -l=ssh hello_world
+      mpcrun -m=ethread      -n=8 -p=8 -net=tcp -N=2 hello_world
+      mpcrun -m=ethread_mxn  -n=8 -p=8 -net=tcp -N=2 hello_world
+      mpcrun -m=pthread      -n=8 -p=8 -net=tcp -N=2 hello_world
 \end{verbatim}
 
 Of course, this mode supports both MPI and OpenMP standards, enabling the use of hybrid programming.
@@ -447,7 +447,12 @@ There are different implementations of inter-process communications and launch m
 A call to {\tt mpcrun --help} detail all the available implementations and launch methods.
 
 \subsubsection{Launch with ssh}
-In order to execute an MPC job on multile nodes using \emph{ssh}, you need to fill the {\tt \${HOME}/.mpcrun\_tcp\_host} file with the list of nodes to use.
+In order to execute an MPC job on multile nodes using defaut launcher \emph{hydra}, you need to provide the list of nodes in a \emph{hosts} file and set the HYDRA\_HOST\_FILE variable with the path to the file.
+You can also pass the host file as a parameter of the launcher as follow:
+
+\begin{verbatim}
+	mpcrun -m=ethread      -n=8 -p=8 -net=tcp -N=2 --opt="-f hosts" hello_world
+\end{verbatim}
 
 \subsubsection{Launch with the Infiniband module}
 

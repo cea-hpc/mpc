@@ -37,11 +37,11 @@ extern "C"
   extern char *sctk_mpcrun_client_host;
   extern int sctk_use_tcp_o_ib;
 
-  ssize_t sctk_mpcserver_safe_read (int fd, void *buf, size_t count);
-  ssize_t sctk_mpcserver_safe_write (int fd, void *buf, size_t count);
+//  ssize_t sctk_mpcserver_safe_read (int fd, void *buf, size_t count);
+//  ssize_t sctk_mpcserver_safe_write (int fd, void *buf, size_t count);
   int sctk_tcp_connect_to (int portno, char *name);
-  int sctk_mpcrun_client (char *request, void *in, size_t size_in,
-			  void *out, size_t size_out);
+//  int sctk_mpcrun_client (char *request, void *in, size_t size_in,
+//			  void *out, size_t size_out);
   void
   sctk_mpcrun_client_init_connect ();
 
@@ -51,8 +51,8 @@ extern "C"
   void
   sctk_mpcrun_read_to_process (void *buf, size_t count, int process);
 
-  void sctk_mpcrun_client_get_shmfilename (char* key, char* out, int key_len, int val_len);
-  void sctk_mpcrun_client_register_shmfilename (char* key, char* in, int key_len, int val_len);
+  //void sctk_mpcrun_client_get_shmfilename (char* key, char* out, int key_len, int val_len);
+  //void sctk_mpcrun_client_register_shmfilename (char* key, char* in, int key_len, int val_len);
 
   /* return the hostname and the port of the TCP client */
   char* sctk_mpcrun_client_get_hostname();
@@ -68,7 +68,7 @@ extern "C"
 
   void sctk_mpcrun_client_create_recv_socket ();
 
-  void sctk_mpcrun_client_set_process_number();
+//  void sctk_mpcrun_client_set_process_number();
 
 #ifdef __cplusplus
 }

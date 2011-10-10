@@ -21,11 +21,11 @@
 #                                                                      # 
 ######################################################################## 
 #echo "$LAUNCH_COMMAND"
-#LAUNCH_COMMAND="srun $LAUNCH_OPTIONS -n $PROCESS_NB -N $NODE_NB -c $CPU_NB $BINARY $USER_ARGS $SCTK_ARGS"
-if test "$NET_TYPE" = ""  ; then
-LAUNCH_COMMAND="$BINARY $USER_ARGS $SCTK_ARGS"
-else
-LAUNCH_COMMAND="mpiexec.hydra $LAUNCH_OPTIONS -n $PROCESS_NB $BINARY $USER_ARGS $SCTK_ARGS"
-echo $LAUNCH_COMMAND
-fi
 
+
+cat <<EOF > $debug_file
+set args $USER_ARGS $SCTK_ARGS
+handle SIGUSR1 pass nostop
+EOF
+
+LAUNCH_COMMAND="srun $LAUNCH_OPTIONS -n $PROCESS_NB -N $NODE_NB -c $CPU_NB /bin/env DISPLAY=$DISPLAY xterm -e $DEBUG -x $debug_file $BINARY $USER_ARGS $SCTK_ARGS"

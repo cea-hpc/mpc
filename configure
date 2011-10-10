@@ -46,7 +46,7 @@ MPC_VERSION="`${MPC_SOURCE_DIR}/MPC_Tools/mpc_print_version`"
 SCTK_PREFIX_CHECK="1"
 
 # List of all modules to add to MPC distribution
-MODULES="mpc-gdb mpc-gcc"
+MODULES="mpc-gdb mpc-gcc mpc-hydra mpc-hwloc mpc-openpa"
 # List of modules for the 'clean' rule
 MODULES_CLEAN=
 
@@ -64,6 +64,21 @@ CONFIG_FILE=${DEFAULT_CONFIG_FILE}
 # Default options
 GCC_CONFIGURE_ARGUMENTS=""
 GDB_CONFIGURE_ARGUMENTS=""
+HWLOC_CONFIGURE_ARGUMENTS=""
+OPENPA_CONFIGURE_ARGUMENTS=""
+
+# Options for SCTK_PMI
+SCTK_PMI_OPTIONS="--with-hydra"
+SCTK_PMI_CHOSEN="0"
+
+# Options for HWLOC
+SCTK_HWLOC_OPTIONS="--with-hwloc"
+SCTK_HWLOC_EMB="1"
+
+# Options for SCTK_OPENPA
+SCTK_OPENPA_OPTIONS="--with-openpa"
+SCTK_OPENPA_CHOSEN="0"
+SCTK_OPENPA_EMB="1"
 
 echo "'configure' configures MPC Distribution ${MPC_VERSION} to adapt to many kinds of systems."
 echo
@@ -80,19 +95,25 @@ Installation directories:
                                [default value: /usr/local]
 
 Optional Features:
-  --disable-mpc-gcc            Disable compilation of mpc-gcc
-  --disable-mpc-gdb            Disable compilation of mpc-gdb
-  --disable-prefix-check       Force given prefix
-  --with-cpath=DIR1:DIR2:...   Add directories to the CPATH environment variable
-                               for the whole MPC distribution
+  --disable-mpc-gcc                   Disable compilation of mpc-gcc
+  --disable-mpc-gdb                   Disable compilation of mpc-gdb
+  --disable-prefix-check              Force given prefix
+  --with-cpath=DIR1:DIR2:...          Add directories to the CPATH environment variable
+                                      for the whole MPC distribution
   --with-library-path=DIR1:DIR2:...   Add directories to the LD_LIBRARY_PATH environment
                                       variable for the whole MPC distribution
-  --with-config=file           Read the file 'file' for main configuration
-                               [default value: ${DEFAULT_CONFIG_FILE}]
-  --with-mpfr=prefix           Prefix for libmpfr needed to build gcc.
-  --with-gmp=prefix            Prefix for libgmp needed to build gcc.
-  --gcc-{with-mpfr|...}        Options for GCC configure script.
-  --gdb-{prefix|...}           Options for GDB configure script.
+  --with-config=file                  Read the file 'file' for main configuration
+                                      [default value: ${DEFAULT_CONFIG_FILE}]
+  --with-mpfr=prefix                  Prefix for libmpfr needed to build gcc.
+  --with-gmp=prefix                   Prefix for libgmp needed to build gcc.
+  --with-hydra                        Enable HYDRA [default value]
+  --with-slurm=prefix                 Enable SLURM (version located in prefix)
+  --with-hwloc[=prefix]               Enable HWLOC [default value]
+                                      [if given, prefix locates installed version to use]
+  --with-openpa[=prefix]              Enable OpenPA [default value]
+                                      [if given, prefix locates installed version to use]
+  --gcc-{with-mpfr|...}               Options for GCC configure script.
+  --gdb-{prefix|...}                  Options for GDB configure script.
 
 Additional options are passed to the configure script of MPC library.
 See "${MPC_SOURCE_DIR}/configure --help" for more details.
@@ -111,6 +132,7 @@ for arg in "$@" ; do
     --prefix=*)
     SCTK_PREFIX="$arg"
     MPC_ARGS="$arg $MPC_ARGS"
+    MPC_PREFIX="`echo A$arg | sed -e 's/A--prefix=//g'`"
     ;;
     # Usage
     --disable-mpc-gcc)
@@ -141,11 +163,66 @@ for arg in "$@" ; do
     --with-gmp=*)
       GCC_CONFIGURE_ARGUMENTS="${GCC_CONFIGURE_ARGUMENTS} ${arg}"
     ;;
+    --with-hydra)
+      if [ $SCTK_PMI_CHOSEN -eq 1 ]; then
+        echo -n "Error: Launcher already chosen..."
+        exit 1
+      fi
+      SCTK_PMI_CHOSEN="1"
+    ;;
+    --with-slurm)
+      if [ $SCTK_PMI_CHOSEN -eq 1 ]; then
+        echo -n "Error: Launcher already chosen..."
+        exit 1
+      fi
+      SCTK_PMI_CHOSEN="1"
+  	  SCTK_PMI_OPTIONS="$arg"
+      MODULES="`echo $MODULES | sed -e 's/mpc-hydra//g'`"
+    ;;
+    --with-slurm=*)
+      if [ $SCTK_PMI_CHOSEN -eq 1 ]; then
+        echo -n "Error: Launcher already chosen..."
+        exit 1
+      fi
+      SCTK_PMI_CHOSEN="1"
+  	  SCTK_PMI_OPTIONS="$arg"
+      MODULES="`echo $MODULES | sed -e 's/mpc-hydra//g'`"
+    ;;
+    --with-hwloc)
+      MODULES="`echo $MODULES | sed -e 's/mpc-hwloc//g'`"
+    ;;
+    --with-hwloc=*)
+      MODULES="`echo $MODULES | sed -e 's/mpc-hwloc//g'`"
+      SCTK_HWLOC_OPTIONS="$arg"
+    ;;
+    --with-openpa)
+      if [ $SCTK_OPENPA_CHOSEN -eq 1 ]; then
+        echo -n "Error: OpenPA directory already chosen..."
+        exit 1
+      fi
+      SCTK_OPENPA_CHOSEN="1"
+      SCTK_OPENPA_OPTIONS="$arg"
+    ;;
+    --with-openpa=*)
+      if [ $SCTK_OPENPA_CHOSEN -eq 1 ]; then
+        echo -n "Error: OpenPA directory already chosen..."
+        exit 1
+      fi
+      SCTK_OPENPA_CHOSEN="1"
+      MODULES="`echo $MODULES | sed -e 's/mpc-openpa//g'`"
+      SCTK_OPENPA_OPTIONS="$arg"
+    ;;
     --gcc-*)
       GCC_CONFIGURE_ARGUMENTS="${GCC_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--gcc//g'`"
     ;;
     --gdb-*)
       GDB_CONFIGURE_ARGUMENTS="${GDB_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--gdb//g'`"
+    ;;
+    --hwloc-*)
+      HWLOC_CONFIGURE_ARGUMENTS="${HWLOC_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--hwloc//g'`"
+    ;;
+    --openpa-*)
+      OPENPA_CONFIGURE_ARGUMENTS="${OPENPA_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--openpa//g'`"
     ;;
     *)
     MPC_ARGS="$arg $MPC_ARGS"
@@ -153,6 +230,15 @@ for arg in "$@" ; do
     esac
 done
 echo "" >> configure.log
+
+# Add arguments linked to SCTK_PMI
+MPC_ARGS="$SCTK_PMI_OPTIONS $MPC_ARGS"
+
+# Add arguments linked to SCTK_HWLOC
+MPC_ARGS="$SCTK_HWLOC_OPTIONS $MPC_ARGS"
+
+# Add arguments linked to SCTK_OPENPA
+MPC_ARGS="$SCTK_OPENPA_OPTIONS $MPC_ARGS"
 
 if [ $SCTK_PREFIX_CHECK -eq 1 ]; then
   check_overwritten_files
@@ -198,8 +284,14 @@ cat <<EOF > Makefile
 EOF
 
 # Variable initialization
-MAKE_ALL_RULE="mpc_make"
-INSTALL_ALL_RULE="mpc_install"
+MAKE_ALL_RULE=""
+INSTALL_ALL_RULE=""
+# Dependences to make_mpc rule
+MAKE_MPC_DEPS=""
+INSTALL_MPC_DEPS=""
+
+# Path of the build directory
+printf "BUILD_DIR=\`pwd\`\n" >> Makefile
 
 if test "${ADD_TO_CPATH}" != "" ; then
   printf "ifeq (\${CPATH},)\n" >> Makefile
@@ -269,6 +361,15 @@ if test "$mod" != "#" ; then
        mpc-gdb)
          MOD_CONFIGURE_ARGUMENTS="${GDB_CONFIGURE_ARGUMENTS}"
        ;;
+       mpc-hwloc)
+         MOD_CONFIGURE_ARGUMENTS="${HWLOC_CONFIGURE_ARGUMENTS}"
+       ;;
+       mpc-hydra)
+         MOD_CONFIGURE_ARGUMENTS="CFLAGS=-fPIC"
+       ;;
+       mpc-openpa)
+         MOD_CONFIGURE_ARGUMENTS="CFLAGS=-fPIC"
+       ;;
        *)
          MOD_CONFIGURE_ARGUMENTS=''
        ;;
@@ -282,22 +383,67 @@ if test "$mod" != "#" ; then
     FULL_NAME="${mod}-${ver}"
     MODULES_CLEAN="${MODULES_CLEAN} ${FULL_NAME}_build"
 
+    if [ "${mod##*-}" == "hwloc" ]
+	then
+		HWLOC_LIB="LD_LIBRARY_PATH=`echo A${SCTK_PREFIX} | sed -e 's/A--prefix=//g'`/${FULL_NAME}/lib:\$(LD_LIBRARY_PATH)"
+	fi
+
     printf "#\n# Module ${mod} / Version ${ver}\n#\n" >> Makefile
+    if [ "${mod##*-}" == "openpa" ] || [ "${mod##*-}" == "hwloc" ]
+    then
+		  printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_INSTALL=`echo A${SCTK_PREFIX} | sed -e 's/A--prefix=//g'`/${FULL_NAME}\n" >> Makefile
+    	printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_BUILD=`pwd`/${FULL_NAME}_build/${mod##*-}-${ver}\n" >> Makefile
+    fi
     printf "${FULL_NAME}_build/config.status:\n" >> Makefile
     printf "\tmkdir -p ${FULL_NAME}_build\n" >> Makefile
     printf "\tcd ${FULL_NAME}_build && ${TOP_SOURCE_DIR}/${mod}/configure \
       $ver ${SCTK_PREFIX}/${FULL_NAME} '' '' '' '' '' '${MOD_CONFIGURE_ARGUMENTS}'\n" >> Makefile
     printf "\n" >> Makefile
 
+    # We set all depedences for compiling MPC
+    if [ "${mod##*-}" == "openpa" ] || [ "${mod##*-}" == "hwloc" ] || [ "${mod##*-}" == "hydra"  ]; then
+      MAKE_MPC_DEPS="$MAKE_MPC_DEPS ${FULL_NAME}_make"
+      INSTALL_MPC_DEPS="$INSTALL_MPC_DEPS ${FULL_NAME}_install"
+    fi
+
     MAKE_ALL_RULE="${MAKE_ALL_RULE} ${FULL_NAME}_make"
     INSTALL_ALL_RULE="${INSTALL_ALL_RULE} ${FULL_NAME}_install"
 
     printf "${FULL_NAME}_make:${FULL_NAME}_build/config.status\n" >> Makefile
-    printf "\t\$(MAKE) -C ${FULL_NAME}_build \n" >> Makefile
+    if [ "${mod##*-}" != "hydra" ]
+    then
+    	if [ "${mod##*-}" != "openpa" ] && [ "${mod##*-}" != "hwloc" ]
+        then
+	        printf "\t\$(MAKE) -C ${FULL_NAME}_build \n" >> Makefile
+	    else
+	        printf "\t\$(MAKE) -C ${FULL_NAME}_build/${mod##*-}-${ver} \n" >> Makefile
+	    fi
+    else
+      printf "\t\$(MAKE) -C ${FULL_NAME}_build/hydra \n" >> Makefile
+      printf "\t\$(MAKE) -C ${FULL_NAME}_build/simple \n" >> Makefile
+    fi
     printf "\n" >> Makefile
 
-    printf "${FULL_NAME}_install:\n" >> Makefile
-    printf "\t\$(MAKE) -C ${FULL_NAME}_build install \n" >> Makefile
+    if [ "${mod##*-}" != "hydra" ]
+    then
+    	printf "${FULL_NAME}_install:\n" >> Makefile
+    	if [ "${mod##*-}" != "openpa" ] && [ "${mod##*-}" != "hwloc" ]
+        then
+	        printf "\t\$(MAKE) -C ${FULL_NAME}_build install \n" >> Makefile
+	    else
+	    	printf "\t\$(MAKE) -C ${FULL_NAME}_build/${mod##*-}-${ver} install \n" >> Makefile
+	    fi
+	else
+		printf "${FULL_NAME}_install:\n" >> Makefile
+	    printf "\t\$(MAKE) -C ${FULL_NAME}_build/hydra install \n" >> Makefile
+	    printf "\tmkdir -p ${MPC_PREFIX}/bin \n" >> Makefile
+	    printf "\tln -sf ${MPC_PREFIX}/${FULL_NAME}/bin/mpiexec ${MPC_PREFIX}/bin/mpiexec.hydra \n" >> Makefile
+	    printf "\tln -sf ${MPC_PREFIX}/${FULL_NAME}/bin/mpiexec.hydra ${MPC_PREFIX}/bin/mpiexec.hydra \n" >> Makefile
+	    printf "\tln -sf ${MPC_PREFIX}/${FULL_NAME}/bin/hydra_nameserver ${MPC_PREFIX}/bin/hydra_nameserver \n" >> Makefile
+	    printf "\tln -sf ${MPC_PREFIX}/${FULL_NAME}/bin/hydra_persist ${MPC_PREFIX}/bin/hydra_persist \n" >> Makefile
+	    printf "\tln -sf ${MPC_PREFIX}/${FULL_NAME}/bin/hydra_pmi_proxy ${MPC_PREFIX}/bin/hydra_pmi_proxy \n" >> Makefile
+	fi
+
     printf "\n" >> Makefile
   fi
 fi
@@ -330,7 +476,7 @@ if test "${ADD_TO_LIBRARY_PATH}" != "" ; then
 fi
 
 printf "#\n# Rule for MPC\n#\n" >> Makefile
-printf "mpc_build/config.status:\n" >> Makefile
+printf "mpc_build/config.status:$MAKE_MPC_DEPS\n" >> Makefile
 printf "\tmkdir -p mpc_build\n" >> Makefile
 printf "\tcd mpc_build && ${MPC_SOURCE_DIR}/configure ${ARG_COMPILER_LIST} ${ARG_LIBRARY_PATH} ${MPC_ARGS} \n" >> Makefile
 echo "">> Makefile
@@ -341,10 +487,15 @@ printf "mpc_make:mpc_build/config.status\n" >> Makefile
 printf "\t\$(MAKE) -C mpc_build \n" >> Makefile
 echo "">> Makefile
 
-printf "mpc_install:\n" >> Makefile
-printf "\t\$(MAKE) -C mpc_build install \n" >> Makefile
+printf "mpc_install:$INSTALL_MPC_DEPS\n" >> Makefile
+printf "\t$HWLOC_LIB \$(MAKE) -C mpc_build install \n" >> Makefile
 echo "">> Makefile
 
+#
+# Add MPC targets (build & install)
+#
+MAKE_ALL_RULE="${MAKE_ALL_RULE} mpc_make"
+INSTALL_ALL_RULE="${INSTALL_ALL_RULE} mpc_install"
 
 #
 # Rule "make_all"

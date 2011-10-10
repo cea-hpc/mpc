@@ -16,44 +16,28 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - PULVERAIL Sebastien sebastien.pulverail@sogeti.com               # */
+/* #   - COTTRET Maxime maxime.cottret@sogeti.com                         # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "sctk_config.h"
+#include "sctk_atomics.h"
+
 #include <sys/time.h>
 
-#include "sctk_asm.h"
-
-#if ! defined(SCTK_OPENPA_AVAILABLE)
-#include <pthread.h>
-static pthread_mutex_t sctk_atomics_default_mutex = PTHREAD_MUTEX_INITIALIZER;
-#endif
-
-/*! \brief
+/*! \brief Relinquish the CPU moving the current thread at the end of the queue
  *
  */
-int sctk_test_and_set (sctk_atomic_test_t * atomic) {
-#if defined(SCTK_OPENPA_AVAILABLE)
-  return sctk_atomics_swap_int((OPA_int_t *) atomic, 1);
-#else
-  int res;
-  pthread_mutex_lock(&sctk_atomics_default_mutex);
-  res = *atomic;
-  if (*atomic == 0) {
-	  *atomic = 1;
-  }
-  pthread_mutex_unlock(&sctk_atomics_default_mutex);
-  return res;
-#endif /* defined(SCTK_OPENPA_AVAILABLE) */
+void sctk_atomics_pause()
+{
+	OPA_busy_wait();
 }
 
-/*! \brief
+/*! \brief Get the timestamp
  *
  */
-void sctk_cpu_relax () {
-#if defined(SCTK_OPENPA_AVAILABLE)
-	sctk_atomics_pause();
-#else
-	sched_yield();
-#endif
+double sctk_atomics_get_timestamp()
+{
+	struct timeval tp;
+	gettimeofday(&tp, NULL);
+	return tp.tv_usec + tp.tv_sec * 1000000;
 }

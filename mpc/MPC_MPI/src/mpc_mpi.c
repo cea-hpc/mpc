@@ -1560,10 +1560,7 @@ __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests,
 		}
 	      else
 		{
-		  if( array_of_statuses != MPI_STATUSES_IGNORE )
-		    tmp = PMPC_Test (req, &loc_flag, &(array_of_statuses[i]));
-                  else
-                    tmp = PMPC_Test (req, &loc_flag, MPC_STATUS_IGNORE);
+		  tmp = PMPC_Test (req, &loc_flag, &(array_of_statuses[i]));
 		}
 	    }
 	  if (loc_flag)
@@ -1613,10 +1610,7 @@ __INTERNAL__PMPI_Testall (int count, MPI_Request array_of_requests[],
 	    }
 	  else
 	    {
-	       if( array_of_statuses != MPI_STATUSES_IGNORE )
-		  tmp = PMPC_Test (req, &loc_flag, &(array_of_statuses[i]));
-               else
-                  tmp = PMPC_Test (req, &loc_flag, MPC_STATUS_IGNORE);
+	      tmp = PMPC_Test (req, &loc_flag, &(array_of_statuses[i]));
 	    }
 	}
       if (loc_flag)
@@ -1684,11 +1678,7 @@ __INTERNAL__PMPI_Testsome (int incount, MPI_Request * array_of_requests,
 	    }
 	  else
 	    {
-	      if( array_of_statuses != MPI_STATUSES_IGNORE )
-		 tmp = PMPC_Test (req, &loc_flag, &(array_of_statuses[done]));
-              else
-                 tmp = PMPC_Test (req, &loc_flag, MPC_STATUS_IGNORE);
-
+	      tmp = PMPC_Test (req, &loc_flag, &(array_of_statuses[done]));
 	      array_of_indices[done] = i;
 	    }
 	  if (loc_flag)
