@@ -284,9 +284,11 @@ cat <<EOF > Makefile
 EOF
 
 # Variable initialization
+CONFIG_ALL_RULE=""
 MAKE_ALL_RULE=""
 INSTALL_ALL_RULE=""
 # Dependences to make_mpc rule
+CONFIG_MPC_DEPS=""
 MAKE_MPC_DEPS=""
 INSTALL_MPC_DEPS=""
 
@@ -325,6 +327,12 @@ fi
 printf "#\n# Rule 'all'\n#\n" >> Makefile
 printf "all:make_all" >> Makefile
 printf "\n\n" >> Makefile
+
+# Rule 'configure' (a simple link)
+printf "#\n# Rule 'configure'\n#\n" >> Makefile
+printf "configure:make_configure" >> Makefile
+printf "\n\n" >> Makefile
+
 
 # Rule 'install' (a simple link)
 printf "#\n# Rule 'install'\n#\n" >> Makefile
@@ -402,14 +410,18 @@ if test "$mod" != "#" ; then
 
     # We set all depedences for compiling MPC
     if [ "${mod##*-}" == "openpa" ] || [ "${mod##*-}" == "hwloc" ] || [ "${mod##*-}" == "hydra"  ]; then
+      CONFIG_MPC_DEPS="$CONFIG_MPC_DEPS ${FULL_NAME}_config"
       MAKE_MPC_DEPS="$MAKE_MPC_DEPS ${FULL_NAME}_make"
       INSTALL_MPC_DEPS="$INSTALL_MPC_DEPS ${FULL_NAME}_install"
     fi
 
+    CONFIG_ALL_RULE="${CONFIG_ALL_RULE} ${FULL_NAME}_config"
     MAKE_ALL_RULE="${MAKE_ALL_RULE} ${FULL_NAME}_make"
     INSTALL_ALL_RULE="${INSTALL_ALL_RULE} ${FULL_NAME}_install"
 
-    printf "${FULL_NAME}_make:${FULL_NAME}_build/config.status\n" >> Makefile
+    printf "${FULL_NAME}_config:${FULL_NAME}_build/config.status\n" >> Makefile
+    printf "\n" >> Makefile
+    printf "${FULL_NAME}_make:\n" >> Makefile
     if [ "${mod##*-}" != "hydra" ]
     then
     	if [ "${mod##*-}" != "openpa" ] && [ "${mod##*-}" != "hwloc" ]
@@ -476,14 +488,17 @@ if test "${ADD_TO_LIBRARY_PATH}" != "" ; then
 fi
 
 printf "#\n# Rule for MPC\n#\n" >> Makefile
-printf "mpc_build/config.status:$MAKE_MPC_DEPS\n" >> Makefile
+printf "mpc_build/config.status:${CONFIG_MPC_DEPS}\n" >> Makefile
 printf "\tmkdir -p mpc_build\n" >> Makefile
 printf "\tcd mpc_build && ${MPC_SOURCE_DIR}/configure ${ARG_COMPILER_LIST} ${ARG_LIBRARY_PATH} ${MPC_ARGS} \n" >> Makefile
 echo "">> Makefile
 echo "Compiler list for MPC: ${COMPILER_LIST}" >> configure.log
 echo "Additionnal args for MPC ${MPC_ARGS}" >> configure.log
 
-printf "mpc_make:mpc_build/config.status\n" >> Makefile
+printf "mpc_config:mpc_build/config.status\n" >> Makefile
+echo "">> Makefile
+
+printf "mpc_make:${MAKE_MPC_DEPS}\n" >> Makefile
 printf "\t\$(MAKE) -C mpc_build \n" >> Makefile
 echo "">> Makefile
 
@@ -494,6 +509,7 @@ echo "">> Makefile
 #
 # Add MPC targets (build & install)
 #
+CONFIG_ALL_RULE="${CONFIG_ALL_RULE} mpc_config"
 MAKE_ALL_RULE="${MAKE_ALL_RULE} mpc_make"
 INSTALL_ALL_RULE="${INSTALL_ALL_RULE} mpc_install"
 
@@ -502,6 +518,12 @@ INSTALL_ALL_RULE="${INSTALL_ALL_RULE} mpc_install"
 #
 printf "#\n# Rule make_all\n#\n" >> Makefile
 printf "make_all: ${MAKE_ALL_RULE} \n" >> Makefile
+
+#
+# Rule "make_configure"
+#
+printf "#\n# Rule make_all\n#\n" >> Makefile
+printf "make_configure: ${CONFIG_ALL_RULE} \n" >> Makefile
 
 #
 # Rule "install_all"
