@@ -26,6 +26,8 @@ BINS_HOME="${MPC_BIN_DIR}/mpcrun_opt/mpcrun"
 
 GDB_LIBTHREAD_DB="${MPC_LIB_DIR}/libmpc_thread_db.so"
 export GDB_LIBTHREAD_DB
+# Export job manager type: slurm or hydra
+export SCTK_JOB_MANAGER
 
 VERBOSE="0"
 MPC_DISABLE="0"

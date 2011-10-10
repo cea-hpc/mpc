@@ -182,6 +182,9 @@ int sctk_pmi_send(void* info, size_t size, int dest);
 int sctk_pmi_recv(void* info, size_t size, int src);
 
 
+int sctk_pmi_get_max_key_len();
+int sctk_pmi_get_max_val_len();
+
 #ifdef __cplusplus
 }
 #endif

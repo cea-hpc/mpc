@@ -476,7 +476,7 @@ int sctk_pmi_get_node_rank(int* rank) {
 */
 int sctk_pmi_get_processes_on_node_number(int* size) {
     int rc;
-    
+
 #ifdef MPC_USE_HYDRA
 	*size  = sctk_pmi_processes_on_node_number;
 	return PMI_SUCCESS;
@@ -561,3 +561,16 @@ int sctk_pmi_recv(void* info, size_t size, int src) {
 	while (nb_total_read_bytes < size);
 	return rc;
 }
+
+  int
+sctk_pmi_get_max_key_len()
+{
+      return sctk_max_key_len;
+}
+
+  int
+sctk_pmi_get_max_val_len()
+{
+      return sctk_max_val_len;
+}
+
