@@ -23,37 +23,18 @@
 #include <sys/time.h>
 
 #include "sctk_asm.h"
-
-#if ! defined(SCTK_OPENPA_AVAILABLE)
-#include <pthread.h>
-static pthread_mutex_t sctk_atomics_default_mutex = PTHREAD_MUTEX_INITIALIZER;
-#endif
+#include "sctk_atomics.h"
 
 /*! \brief
  *
  */
 int sctk_test_and_set (sctk_atomic_test_t * atomic) {
-#if defined(SCTK_OPENPA_AVAILABLE)
   return sctk_atomics_swap_int((OPA_int_t *) atomic, 1);
-#else
-  int res;
-  pthread_mutex_lock(&sctk_atomics_default_mutex);
-  res = *atomic;
-  if (*atomic == 0) {
-	  *atomic = 1;
-  }
-  pthread_mutex_unlock(&sctk_atomics_default_mutex);
-  return res;
-#endif /* defined(SCTK_OPENPA_AVAILABLE) */
 }
 
 /*! \brief
  *
  */
 void sctk_cpu_relax () {
-#if defined(SCTK_OPENPA_AVAILABLE)
 	sctk_atomics_pause();
-#else
-	sched_yield();
-#endif
 }

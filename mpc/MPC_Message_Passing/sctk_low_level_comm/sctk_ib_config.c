@@ -98,7 +98,7 @@
  * new MMu entries allocated, etc...) */
 #define IBV_VERBOSE_LEVEL         0
 
-#define IBV_ADAPTIVE_POLLING      1
+#define IBV_ADAPTIVE_POLLING      0
 
 /* global values */
 unsigned int  ibv_eager_limit  = IBV_EAGER_LIMIT;

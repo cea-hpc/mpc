@@ -30,7 +30,7 @@
   || defined(OPA_HAVE_GCC_INTRINSIC_ATOMICS) || defined(OPA_HAVE_SUN_ATOMIC_OPS) || defined(OPA_HAVE_NT_INTRINSICS) \
   || defined(OPA_USE_LOCK_BASED_PRIMITIVES)
 
-#define SCTK_OPENPA_AVAILABLE 1
+#define SCTK_OPENPA_AVAILABLE
 
 #include "opa_primitives.h"
 
@@ -64,8 +64,7 @@ typedef OPA_ptr_t sctk_atomics_ptr;
 void sctk_atomics_pause();
 
 #else
-#warning Unsupported architecture using default asm
-#define SCTK_OPENPA_AVAILABLE 0
+#error Unsupported architecture. Cannot compile MPC
 #endif /* defined(OPA_USE_UNSAFE_PRIMITIVES) || defined(OPA_HAVE_GCC_AND_POWERPC_ASM) || defined(OPA_HAVE_GCC_X86_32_64)
   || defined(OPA_HAVE_GCC_X86_32_64_P3) || defined(OPA_HAVE_GCC_AND_IA64_ASM) || defined(OPA_HAVE_GCC_AND_SICORTEX_ASM)
   || defined(OPA_HAVE_GCC_INTRINSIC_ATOMICS) || defined(OPA_HAVE_SUN_ATOMIC_OPS) || defined(OPA_HAVE_NT_INTRINSICS)
