@@ -31,7 +31,7 @@ int sctk_spinlock_lock_yield (sctk_spinlock_t * lock)
 {
   unsigned int *p = (unsigned int *) lock;
   while (expect_true (sctk_test_and_set (p)))
-    {
+	{
       do
 	{
 	int i;
@@ -41,12 +41,12 @@ int sctk_spinlock_lock_yield (sctk_spinlock_t * lock)
 	sched_yield();
 #endif
 	for(i = 0; (*p) && (i < 100); i++){
-	  sctk_cpu_relax ();
+		 sctk_cpu_relax ();
 	}
 	}
       while (*p);
     }
-  
+
   return 0 ;
 }
 
@@ -58,11 +58,11 @@ sctk_spinlock_lock (sctk_spinlock_t * lock)
     {
       do
 	{
-	  sctk_cpu_relax ();
+    	sctk_cpu_relax ();
 	}
       while (*p);
     }
-  
+
   return 0 ;
 }
 

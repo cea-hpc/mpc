@@ -1,0 +1,40 @@
+MPC_SOURCE_DIR="`dirname $0`/"
+VERSION="$1"
+PREFIX="$2"
+ARCHIVE_TYPE="$3"
+ARCHIVE_NAME="$4"
+ARCHIVE_DIR="$5"
+PATCH_NEEDED="$6"
+PATCH_NAME="$7"
+ARGUMENTS="$8"
+
+. ${MPC_SOURCE_DIR}/../common_configure
+
+#
+# ARGUMENTS
+#
+# $0 -> configure name and path
+# $1 -> Version to compile
+# $2 -> Prefix of MPC installation (need to add a suffix per version)
+# $3 -> Archive type (tgz, tbz or directory or download)
+# $4 -> Archive name (file, directory or web address)
+# $5 -> Archive dir
+# $6 -> Should we apply the right patch?
+# From $7 -> Additionnal arguments (for this version and in general for this module)
+
+
+prepare_archive_directory
+
+# Apply patch if needed
+if test "${PATCH_NEEDED}" = "1" ; then
+  CURRENT_WD=`pwd`
+  echo "Applying patch ${FINAL_PATCH_NAME}..."
+  cd ${ARCHIVE_DIR}
+  patch -p1 < ${FINAL_PATCH_NAME}
+  cd ${CURRENT_WD}
+fi
+
+  echo "cd hwloc-$VERSION && Running: ./configure $PREFIX $ARGUMENTS"
+  cd hwloc-$VERSION && ./configure $PREFIX $ARGUMENTS
+
+exit 0

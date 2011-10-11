@@ -20,10 +20,5 @@
 #   - PERACHE Marc marc.perache@cea.fr                                 #
 #                                                                      #
 ########################################################################
-echo "Running MPC with $SCTK_JOB_MANAGER job manager"
 
-if [ "$SCTK_JOB_MANAGER" = "SLURM" ]; then
-  LAUNCH_COMMAND="srun $LAUNCH_OPTIONS -n $PROCESS_NB -N $NODE_NB -c $CPU_NB $BINARY $USER_ARGS $SCTK_ARGS"
-else
-  LAUNCH_COMMAND="mpiexec.hydra $LAUNCH_OPTIONS -n $PROCESS_NB $BINARY $USER_ARGS $SCTK_ARGS"
-fi
+LAUNCH_COMMAND="mpiexec.hydra $LAUNCH_OPTIONS -n $PROCESS_NB $BINARY $USER_ARGS $SCTK_ARGS"

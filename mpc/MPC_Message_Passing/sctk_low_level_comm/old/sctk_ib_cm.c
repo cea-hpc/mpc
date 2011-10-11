@@ -206,14 +206,8 @@ void sctk_net_ibv_cm_client(char* host, int port, int dest, sctk_net_ibv_qp_remo
       (clientsock_fd, (struct sockaddr *) (&serv_addr),
        sizeof (serv_addr)) < 0)
   {
-    perror ("RETRY ERROR connecting (IB cm)");
-    if (connect
-	(clientsock_fd, (struct sockaddr *) (&serv_addr),
-	 sizeof (serv_addr)) < 0)
-      {
-	perror ("ERROR connecting (IB cm)");
-	abort ();
-      }
+    perror ("ERROR connecting");
+    abort ();
   }
 
   /* send REQ */
@@ -265,11 +259,11 @@ sctk_net_ibv_cm_request(int process, char* host, int* port)
   char val[256];
   int key_max;
 
-  key_max = sctk_bootstrap_get_max_key_len();
+  key_max = sctk_pmi_get_max_key_len();
 
   snprintf(key, key_max, "tcp.%d", process);
   sctk_nodebug("GET key %s", key);
-  sctk_bootstrap_get(key, val, key_max);
+  sctk_pmi_get_connection_info_str(val, key_max, key);
   sctk_nodebug("Got for process %d : %s", process, val);
 
   //FIXME
@@ -286,8 +280,8 @@ void sctk_net_ibv_cm_server()
   int key_max;
   int val_max;
 
-  key_max = sctk_bootstrap_get_max_key_len();
-  val_max = sctk_bootstrap_get_max_val_len();
+  key_max = sctk_pmi_get_max_key_len();
+  val_max = sctk_pmi_get_max_val_len();
 
   sockfd = sctk_create_recv_socket();
 
@@ -296,7 +290,7 @@ void sctk_net_ibv_cm_server()
   snprintf(msg, val_max, "%d:%s", port, hostname);
   sctk_nodebug("Send to PMI %s with val %s. kvsname %s", msg, key, kvsname);
 
-  sctk_bootstrap_register(key, msg, val_max);
+  sctk_pmi_put_connection_info_str(msg, val_max, key);
 
   sctk_thread_attr_init (&attr);
   sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);

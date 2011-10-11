@@ -40,8 +40,6 @@ extern "C"
 				     int vp);
   void sctk_net_get_free_communicator (const sctk_communicator_t
 				       origin_communicator);
-  void sctk_net_get_free_communicator_no_rpc (const sctk_communicator_t
-				       origin_communicator);
   void sctk_net_update_new_communicator (const sctk_communicator_t
 					 origin_communicator,
 					 const int nb_task_involved,
@@ -51,10 +49,6 @@ extern "C"
 				       origin_communicator,
 				       const sctk_communicator_t
 				       communicator);
-  void
-  sctk_net_set_free_communicator_one (const sctk_communicator_t
-				      origin_communicator,
-				      const sctk_communicator_t communicator, int rank);
   void sctk_net_migration (const int rank, const int process);
 
   void sctk_rpc_collective_op (const size_t elem_size,

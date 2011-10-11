@@ -201,7 +201,9 @@ mpc_modules_activate_modules
 SCTK_LIBUNWIND="1"
 SCTK_LIBNUMA="0"
 SCTK_LIBCPUSET="0"
-SCTK_SLURM="1"
+SCTK_HYDRA="1"
+SCTK_SLURM="0"
+SCTK_OPENPA="1"
 SCTK_SHM="1"
 SCTK_SHELL_COLORS="0"
 SCTK_DEBUG_MESSAGES="0"
@@ -347,11 +349,32 @@ for arg in "$@" ; do
     SCTK_LIBCPUSET="1"
     ;;
 
-    --without-slurm)
+    --with-hydra)
     SCTK_SLURM="0"
+    SCTK_HYDRA="1"
     ;;
     --with-slurm)
     SCTK_SLURM="1"
+    SCTK_HYDRA="0"
+    ;;
+    --with-slurm=*)
+    SCTK_SLURM="1"
+    SCTK_HYDRA="0"
+    export SLURM_PREFIX="`echo A$arg | sed -e 's/A--with-slurm=//g'`"
+    ;;
+    --with-hwloc)
+    SCTK_HWLOC_EMB="1"
+    ;;
+    --with-hwloc=*)
+    SCTK_HWLOC_EMB="0"
+    export HWLOC_PREFIX_INSTALL="`echo A$arg | sed -e 's/A--with-hwloc=//g'`"
+    ;;
+    --with-openpa)
+    SCTK_OPENPA_EMB="1"
+    ;;
+    --with-openpa=*)
+    SCTK_OPENPA_EMB="0"
+    export OPENPA_PREFIX_INSTALL="`echo A$arg | sed -e 's/A--with-openpa=//g'`"
     ;;
 
     --disable-all)
@@ -390,6 +413,16 @@ done
 post_update_vars
 
 SCTK_CFLAGS="$SCTK_CFLAGS $SCTK_CFLAGS_NON_GNU"
+# export launcher information
+if [ $SCTK_HYDRA -eq 1 ]; then
+  SCTK_JOB_MANAGER="HYDRA"
+elif [ $SCTK_SLURM -eq 1 ]; then
+  SCTK_JOB_MANAGER="SLURM"
+else
+  perror "Neither Hydra nor Slurm has been selected"
+  exit 1
+fi
+export SCTK_JOB_MANAGER
 
 tmp_cross_gen(){
     TMP_CROSS="$@"
