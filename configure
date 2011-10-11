@@ -80,6 +80,7 @@ SCTK_OPENPA_OPTIONS="--with-openpa"
 SCTK_OPENPA_CHOSEN="0"
 SCTK_OPENPA_EMB="1"
 
+cat $TOP_SOURCE_DIR/tools/banner
 echo "'configure' configures MPC Distribution ${MPC_VERSION} to adapt to many kinds of systems."
 echo
 
@@ -333,6 +334,11 @@ printf "#\n# Rule 'configure'\n#\n" >> Makefile
 printf "configure:make_configure" >> Makefile
 printf "\n\n" >> Makefile
 
+# Rule 'build' (a simple link)
+printf "#\n# Rule 'build'\n#\n" >> Makefile
+printf "build:make_build" >> Makefile
+printf "\n\n" >> Makefile
+
 
 # Rule 'install' (a simple link)
 printf "#\n# Rule 'install'\n#\n" >> Makefile
@@ -517,12 +523,20 @@ INSTALL_ALL_RULE="${INSTALL_ALL_RULE} mpc_install"
 # Rule "make_all"
 #
 printf "#\n# Rule make_all\n#\n" >> Makefile
-printf "make_all: ${MAKE_ALL_RULE} \n" >> Makefile
+printf "make_all:\n" >> Makefile
+printf "\t\$(MAKE) make_configure\n" >> Makefile
+printf "\t\$(MAKE) make_build\n" >> Makefile
 
 #
-# Rule "make_configure"
+# Rule "build"
 #
-printf "#\n# Rule make_all\n#\n" >> Makefile
+printf "#\n# Rule make_build\n#\n" >> Makefile
+printf "make_build: ${MAKE_ALL_RULE} \n" >> Makefile
+
+#
+# Rule "configure"
+#
+printf "#\n# Rule make_configure\n#\n" >> Makefile
 printf "make_configure: ${CONFIG_ALL_RULE} \n" >> Makefile
 
 #
