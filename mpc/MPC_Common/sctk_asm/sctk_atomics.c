@@ -31,13 +31,40 @@ void sctk_atomics_pause()
 {
 	OPA_busy_wait();
 }
-
-/*! \brief Get the timestamp
- *
- */
-double sctk_atomics_get_timestamp()
+#if defined(SCTK_ia64_ARCH_SCTK)
+double
+sctk_atomics_get_timestamp ()
 {
-	struct timeval tp;
-	gettimeofday(&tp, NULL);
-	return tp.tv_usec + tp.tv_sec * 1000000;
+  unsigned long t;
+  __asm__ volatile ("mov %0=ar%1":"=r" (t):"i" (44));
+  return (double) t;
 }
+#elif defined(SCTK_i686_ARCH_SCTK)
+double
+sctk_atomics_get_timestamp ()
+{
+  unsigned long long t;
+  __asm__ volatile ("rdtsc":"=A" (t));
+  return (double) t;
+}
+#elif defined(SCTK_x86_64_ARCH_SCTK)
+double
+sctk_atomics_get_timestamp ()
+{
+  unsigned int a;
+  unsigned int d;
+  unsigned long t;
+  __asm__ volatile ("rdtsc":"=a" (a), "=d" (d));
+  t = ((unsigned long) a) | (((unsigned long) d) << 32);
+  return (double) t;
+}
+#else
+#warning "Use get time of day for profiling"
+double
+sctk_atomics_get_timestamp ()
+{
+  struct timeval tp;
+  gettimeofday (&tp, NULL);
+  return tp.tv_usec + tp.tv_sec * 1000000;
+}
+#endif

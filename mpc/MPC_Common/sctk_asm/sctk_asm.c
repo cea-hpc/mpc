@@ -25,16 +25,3 @@
 #include "sctk_asm.h"
 #include "sctk_atomics.h"
 
-/*! \brief
- *
- */
-int sctk_test_and_set (sctk_atomic_test_t * atomic) {
-  return sctk_atomics_swap_int((OPA_int_t *) atomic, 1);
-}
-
-/*! \brief
- *
- */
-void sctk_cpu_relax () {
-	sctk_atomics_pause();
-}
