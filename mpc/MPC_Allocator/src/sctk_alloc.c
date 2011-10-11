@@ -64,9 +64,9 @@
 #include "sctk_topology.h"
 #endif
 
-#ifdef MPC_Message_Passing
-#include "sctk_low_level_comm.h"
-#endif
+/* #ifdef MPC_Message_Passing */
+/* #include "sctk_low_level_comm.h" */
+/* #endif */
 
 /*Page Migration*/
 #ifdef MPC_USE_PAGE_MIGRATION

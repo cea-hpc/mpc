@@ -24,16 +24,21 @@
 
 #include <sctk_config.h>
 #include <sctk_debug.h>
+#include <sctk_communicator.h>
+#include <sctk_collective_communications.h>
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+
   struct sctk_request_s;
 
   typedef struct sctk_thread_message_header_s
   {
-    int src;
+    int local_source;
+    int message_tag;
+    size_t msg_size;
   } sctk_thread_message_header_t;
 
   typedef unsigned int sctk_pack_indexes_t;
@@ -50,18 +55,75 @@ extern "C"
   } sctk_default_pack_t;
 
   typedef struct sctk_thread_ptp_message_s{
+    sctk_thread_message_header_t header;
     volatile int* completion_flag;  
   }sctk_thread_ptp_message_t;
 
   typedef struct sctk_request_s{
-    volatile int completion_flag;
-    sctk_thread_ptp_message_t *msg;
-    sctk_thread_message_header_t header;
-    volatile size_t msg_size;
-    sctk_default_pack_t default_pack;
-    int is_null;
+    int dummy;
+/*     volatile int completion_flag; */
+/*     sctk_thread_ptp_message_t *msg; */
+/*     sctk_thread_message_header_t header; */
+/*     volatile size_t msg_size; */
+/*     sctk_default_pack_t default_pack; */
+/*     int is_null; */
     /*     void *ptr; */
   } sctk_request_t;
+
+  /**
+     Check if the message if completed according to the message passed as a request
+  */
+  void sctk_perform_messages(sctk_request_t* request);
+
+  sctk_thread_ptp_message_t *sctk_create_header (const int myself);
+  sctk_thread_ptp_message_t
+    * sctk_add_adress_in_message (sctk_thread_ptp_message_t *
+				  restrict msg, void *restrict adr,
+				  const size_t size);
+  sctk_thread_ptp_message_t
+    * sctk_add_pack_in_message (sctk_thread_ptp_message_t * msg,
+				void *adr, const sctk_count_t nb_items,
+				const size_t elem_size,
+				sctk_pack_indexes_t * begins,
+				sctk_pack_indexes_t * ends);
+  sctk_thread_ptp_message_t
+    * sctk_add_pack_in_message_absolute (sctk_thread_ptp_message_t *
+					 msg, void *adr,
+					 const sctk_count_t nb_items,
+					 const size_t elem_size,
+					 sctk_pack_absolute_indexes_t *
+					 begins,
+					 sctk_pack_absolute_indexes_t * ends);
+  void sctk_set_header_in_message (sctk_thread_ptp_message_t *
+				   msg, const int message_tag,
+				   const sctk_communicator_t
+				   communicator,
+				   const int source,
+				   const int destination,
+				   sctk_request_t * request,
+				   const size_t count);
+  void sctk_wait_message (sctk_request_t * request);
+  void sctk_wait_all (const int task, const sctk_communicator_t com);
+  void sctk_probe_source_any_tag (int destination, int source,
+				  const sctk_communicator_t comm,
+				  int *status,
+				  sctk_thread_message_header_t * msg);
+  void sctk_probe_any_source_any_tag (int destination,
+				      const sctk_communicator_t comm,
+				      int *status,
+				      sctk_thread_message_header_t * msg);
+  void sctk_probe_source_tag (int destination, int source,
+			      const sctk_communicator_t comm, int *status,
+			      sctk_thread_message_header_t * msg);
+  void sctk_probe_any_source_tag (int destination,
+				  const sctk_communicator_t comm,
+				  int *status,
+				  sctk_thread_message_header_t * msg);
+  void sctk_send_message (sctk_thread_ptp_message_t * msg);
+  void sctk_recv_message (sctk_thread_ptp_message_t * msg);
+  void sctk_cancel_message (sctk_request_t * msg);
+  void sctk_ptp_per_task_init (int i);
+  void sctk_unregister_thread (const int i);
 
 #ifdef __cplusplus
 }

@@ -87,41 +87,18 @@ extern "C"
   } MPC_Op;
 #define MPC_OP_INIT {NULL,NULL}
 
-  typedef struct mpc_thread_message_header_s
-  {
+  typedef struct MPC_Header{
+    int source;
+    int destination;
     int message_tag;
     MPC_Comm communicator;
-
-    int source;
-    int local_source;
-    int destination;
-
-    int myself;
-    int *request;
-    size_t *req_msg_size;
-    long rank;
-    unsigned long rank_recv;
-    size_t msg_size;
-  } mpc_thread_message_header_t;
+  }MPC_Header;
 
   typedef struct
   {
-    mpc_msg_count count;
-    mpc_pack_indexes_t *begins;
-    mpc_pack_indexes_t *ends;
-    mpc_pack_absolute_indexes_t *begins_absolute;
-    mpc_pack_absolute_indexes_t *ends_absolute;
-  } mpc_default_pack_t;
-
-  typedef struct
-  {
-    int completion_flag;
-    void *msg;
-    mpc_thread_message_header_t header;
-    size_t msg_size;
-    mpc_default_pack_t default_pack;
+    MPC_Header header;
+    volatile int completion_flag;
     int is_null;
-    void *ptr;
   } MPC_Request;
 
   extern MPC_Request mpc_request_null;

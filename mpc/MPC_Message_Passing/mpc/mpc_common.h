@@ -25,7 +25,7 @@
 
 typedef struct
 {
-  sctk_request_t request;
+  MPC_Request request;
   long buf[(MAX_MPC_BUFFERED_SIZE / sizeof (long)) + 1];
 } mpc_buffered_msg_t;
 

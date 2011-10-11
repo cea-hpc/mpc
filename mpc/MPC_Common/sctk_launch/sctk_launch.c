@@ -42,7 +42,7 @@
 #include "sctk_config.h"
 #include "sctk_asm.h"
 #ifdef MPC_Message_Passing
-#include "sctk_low_level_comm.h"
+#include "sctk_inter_thread_comm.h"
 #endif
 #include "sctk_topology.h"
 #include "sctk_asm.h"

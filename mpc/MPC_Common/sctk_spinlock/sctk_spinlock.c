@@ -83,6 +83,7 @@ sctk_spinlock_unlock (sctk_spinlock_t * lock)
 int
 sctk_spinlock_read_lock (sctk_spin_rwlock_t * lock)
 {
+#warning "To optimze with atomics"
   sctk_spinlock_lock(&(lock->writer_lock));
   sctk_spinlock_lock(&(lock->lock));
   lock->reader_number ++;
@@ -94,6 +95,7 @@ sctk_spinlock_read_lock (sctk_spin_rwlock_t * lock)
 int
 sctk_spinlock_write_lock (sctk_spin_rwlock_t * lock)
 {
+#warning "To optimze with atomics"
   sctk_spinlock_lock(&(lock->writer_lock));
   while(expect_true (lock->reader_number != 0)) {
     sctk_cpu_relax ();
@@ -104,6 +106,7 @@ sctk_spinlock_write_lock (sctk_spin_rwlock_t * lock)
 int
 sctk_spinlock_read_unlock (sctk_spin_rwlock_t * lock)
 {
+#warning "To optimze with atomics"
   sctk_spinlock_lock(&(lock->lock));
   lock->reader_number --;
   sctk_spinlock_unlock(&(lock->lock));
@@ -113,6 +116,7 @@ sctk_spinlock_read_unlock (sctk_spin_rwlock_t * lock)
 int
 sctk_spinlock_write_unlock (sctk_spin_rwlock_t * lock)
 {
+#warning "To optimze with atomics"
   sctk_spinlock_unlock(&(lock->writer_lock));
   return 0;
 }

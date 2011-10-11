@@ -25,4 +25,9 @@
 typedef unsigned int sctk_datatype_t;
 #define sctk_null_data_type ((sctk_datatype_t)(-1))
 
+void sctk_collectives_init (sctk_communicator_t id);
+void
+sctk_terminaison_barrier (const int id);
+void sctk_barrier(const sctk_communicator_t communicator);
+
 #endif
