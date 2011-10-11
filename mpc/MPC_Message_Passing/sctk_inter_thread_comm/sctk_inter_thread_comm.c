@@ -118,5 +118,7 @@ void sctk_ptp_per_task_init (int i){
 }
 
 void sctk_unregister_thread (const int i){
-  
+  sctk_thread_mutex_lock (&sctk_total_number_of_tasks_lock);
+  sctk_total_number_of_tasks--;
+  sctk_thread_mutex_unlock (&sctk_total_number_of_tasks_lock);  
 }

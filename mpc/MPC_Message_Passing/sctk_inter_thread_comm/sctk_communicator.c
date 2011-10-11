@@ -62,6 +62,7 @@ void sctk_communicator_init(const int nb_task){
 
   sctk_collectives_init(SCTK_COMM_WORLD);
 }
+void sctk_communicator_delete(){}
 
 static int sctk_get_nb_task_local_dup_world(){
   return sctk_local_tasks;
@@ -133,4 +134,8 @@ int sctk_get_rank (const sctk_communicator_t communicator,
       return comm_world_rank;
     }
   }
+}
+
+sctk_communicator_t sctk_delete_communicator (const sctk_communicator_t comm){
+    not_implemented();
 }

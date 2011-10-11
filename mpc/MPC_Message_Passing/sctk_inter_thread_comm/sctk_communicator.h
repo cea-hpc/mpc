@@ -33,5 +33,6 @@ int sctk_get_nb_task_local (const sctk_communicator_t communicator);
 int sctk_get_nb_task_total (const sctk_communicator_t communicator);
 int sctk_get_rank (const sctk_communicator_t communicator,
 		   const int comm_world_rank);
-
+sctk_communicator_t sctk_delete_communicator (const sctk_communicator_t);
+void sctk_communicator_delete();
 #endif
