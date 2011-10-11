@@ -206,14 +206,8 @@ void sctk_net_ibv_cm_client(char* host, int port, int dest, sctk_net_ibv_qp_remo
       (clientsock_fd, (struct sockaddr *) (&serv_addr),
        sizeof (serv_addr)) < 0)
   {
-    perror ("RETRY ERROR connecting (IB cm)");
-    if (connect
-	(clientsock_fd, (struct sockaddr *) (&serv_addr),
-	 sizeof (serv_addr)) < 0)
-      {
-	perror ("ERROR connecting (IB cm)");
-	abort ();
-      }
+    perror ("ERROR connecting");
+    abort ();
   }
 
   /* send REQ */

@@ -81,9 +81,6 @@ extern "C"
 						int is_inter_comm);
   sctk_communicator_t sctk_delete_communicator (const sctk_communicator_t
 						communicator);
-  sctk_communicator_t
-  sctk_duplicate_communicator (const sctk_communicator_t origin_communicator,
-			       int is_inter_comm,int rank);
 
 
   int sctk_is_valid_comm (const sctk_communicator_t communicator);
@@ -92,9 +89,6 @@ extern "C"
   void
     sctk_get_free_communicator_on_root (const sctk_communicator_t
 					origin_communicator);
-  void
-    sctk_get_free_communicator_on_root_no_rpc (const sctk_communicator_t
-					       origin_communicator, int rank);
 
   sctk_internal_communicator_t*
   sctk_update_new_communicator (const sctk_communicator_t

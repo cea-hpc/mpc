@@ -215,10 +215,7 @@ pthread_user_create (pthread_t * thread, pthread_attr_t * attr,
 
       res =
 	pthread_create (thread, &tmp_attr, tls_start_routine,
-			init_tls_start_routine_arg (def_start_routine, arg));      
-      if(res != 0){
-	perror("pthread_create: ");
-      }
+			init_tls_start_routine_arg (def_start_routine, arg));
       pthread_attr_destroy (&tmp_attr);
       return res;
     }
@@ -228,9 +225,9 @@ pthread_user_create (pthread_t * thread, pthread_attr_t * attr,
       res = pthread_create (thread, attr, tls_start_routine,
 			    init_tls_start_routine_arg (def_start_routine,
 							arg));
-      if(res != 0){
-	perror("pthread_create: ");
-      }
+/*       if(res != 0){ */
+/* 	perror("pthread_create: "); */
+/*       } */
       return res;
     }
 }
@@ -283,21 +280,12 @@ local_pthread_create (pthread_t * restrict thread,
       res =
 	pthread_create (thread, &tmp_attr, tls_start_routine,
 			init_tls_start_routine_arg (start_routine, arg));
-      if(res != 0){
-	perror("pthread_create: ");
-      }
       pthread_attr_destroy (&tmp_attr);
       return res;
     }
   else
     {
-      int res; 
-      res = pthread_create (thread, attr, start_routine, arg);
-
-      if(res != 0){
-	perror("pthread_create: ");
-      }
-      return res;
+      return pthread_create (thread, attr, start_routine, arg);
     }
 }
 

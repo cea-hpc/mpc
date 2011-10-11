@@ -3922,17 +3922,9 @@ PMPC_Comm_dup (MPC_Comm comm, MPC_Comm * comm_out)
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (comm, "MPC_Comm_dup out_comm=%p", comm_out);
 #endif
-  if(sctk_is_inter_comm (comm) == 0){
-    sctk_task_specific_t *task_specific;
-    int rank;
-    task_specific = __MPC_get_task_specific ();
-    __MPC_Comm_rank (comm, &rank, task_specific);
-    *comm_out = sctk_duplicate_communicator (comm,sctk_is_inter_comm (comm),rank);
-  } else {
-    __MPC_Comm_group (comm, &group);
-    __MPC_Comm_create (comm, group, comm_out, sctk_is_inter_comm (comm));
-    __MPC_Group_free (&group);
-  }
+  __MPC_Comm_group (comm, &group);
+  __MPC_Comm_create (comm, group, comm_out, sctk_is_inter_comm (comm));
+  __MPC_Group_free (&group);
   MPC_ERROR_SUCESS ();
 }
 
