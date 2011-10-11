@@ -29,6 +29,7 @@
 #include "sctk_debug.h"
 #include "sctk_rpc.h"
 #include "sctk_shm.h"
+#include "sctk_pmi.h"
 #include "sctk_ib.h"
 #include "sctk_bootstrap.h"
 #include "sctk_tcp.h"
@@ -410,7 +411,7 @@ sctk_net_preinit_driver_hybrid ()
       (strcmp(sctk_module_name, "ib_only") == 0))
   {
 #ifdef MPC_USE_INFINIBAND
-    if (sctk_bootstrap_get_mode() == PMI)
+    if (sctk_pmi_is_initialized() == PMI_TRUE)
     {
       GENDRIVER(infiniband, infiniband);
     } else {

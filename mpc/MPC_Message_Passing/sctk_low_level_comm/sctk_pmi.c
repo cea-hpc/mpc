@@ -26,9 +26,6 @@
 
 #ifdef MPC_USE_HYDRA
 #include <pmi.h>
-typedef int PMI_BOOL;
-#define PMI_TRUE     1
-#define PMI_FALSE    0
 
 static int sctk_pmi_process_on_node_rank;
 static int sctk_pmi_node_rank;
@@ -46,6 +43,7 @@ static int sctk_pmi_processes_on_node_number;
 static int sctk_max_val_len;
 static int sctk_max_key_len;
 static char * sctk_kvsname;
+PMI_BOOL initialized;
 
 int spawned;
 /******************************************************************************
@@ -56,7 +54,6 @@ INITIALIZATION/FINALIZE
  */
 int sctk_pmi_init() {
     int rc, max_kvsname_len;
-    PMI_BOOL initialized;
 
     // Initialized PMI/SLURM
     rc = PMI_Init(&spawned);
@@ -574,3 +571,8 @@ sctk_pmi_get_max_val_len()
       return sctk_max_val_len;
 }
 
+PMI_BOOL
+sctk_pmi_is_initialized()
+{
+  return initialized;
+}

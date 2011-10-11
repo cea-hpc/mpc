@@ -91,9 +91,3 @@ void sctk_bootstrap_init() {
       if (sctk_process_rank == 0)
         fprintf(stderr, "MPC launcher: PMI used\n");
 }
-
-
-enum bootstrap_mode sctk_bootstrap_get_mode()
-{
-  return mode;
-}
