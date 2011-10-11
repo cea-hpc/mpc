@@ -36,6 +36,4 @@ void sctk_bootstrap_init() {
       assume(res == SCTK_PMI_SUCCESS);
        /* also grab the number of processes in the node */
       sctk_mpcrun_client_get_local_consts();
-      if (sctk_process_rank == 0)
-        fprintf(stderr, "MPC launcher: PMI used\n");
 }
