@@ -120,7 +120,7 @@ sctk_net_init_driver_infiniband (int *argc, char ***argv)
   /* message numbering */
   sctk_net_ibv_sched_init();
 
-  sctk_bootstrap_barrier();
+  sctk_pmi_barrier();
 
   /* initialization of collective */
   sctk_net_ibv_collective_init();

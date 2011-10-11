@@ -537,8 +537,8 @@ sctk_net_ibv_qp_exchange_send(
   int key_max;
   int val_max;
 
-  key_max = sctk_bootstrap_get_max_key_len();
-  val_max = sctk_bootstrap_get_max_val_len();
+  key_max = sctk_pmi_get_max_key_len();
+  val_max = sctk_pmi_get_max_val_len();
   char key[key_max];
   char val[key_max];
 
@@ -548,7 +548,7 @@ sctk_net_ibv_qp_exchange_send(
   snprintf(val, val_max, "%05"SCNu16":%010"SCNu32":%010"SCNu32, rail->lid, remote->qp->qp_num, remote->psn);
   sctk_nodebug("Send VAL (%d) %s", val_max, val);
 
-  sctk_bootstrap_register(key, val, val_max);
+  sctk_pmi_put_connection_info_str(val, val_max, key);
 }
 
   sctk_net_ibv_qp_exchange_keys_t
@@ -558,15 +558,15 @@ sctk_net_ibv_qp_exchange_recv(int i, sctk_net_ibv_qp_local_t* qp, int dest_proce
   int key_max;
   int val_max;
 
-  key_max = sctk_bootstrap_get_max_key_len();
-  val_max = sctk_bootstrap_get_max_val_len();
+  key_max = sctk_pmi_get_max_key_len();
+  val_max = sctk_pmi_get_max_val_len();
   char key[key_max];
   char val[key_max];
 
   snprintf(key, key_max,"%06d:%06d:%06d", i, dest_process, sctk_process_rank);
   sctk_nodebug("Recv KEY %s", key);
 
-  sctk_bootstrap_get(key, val, val_max);
+  sctk_pmi_get_connection_info_str(val, val_max, key);
 
   sctk_nodebug("Recv VAL %s", val);
 

@@ -723,9 +723,9 @@ sctk_shm_init ( int init ) {
 
   //assume(sctk_bootstrap_get_max_key_len() >= SHM_FILENAME_SIZE);
 
-  shm_key = sctk_malloc(sctk_bootstrap_get_max_key_len());
+  shm_key = sctk_malloc(sctk_pmi_get_max_key_len());
   assume(shm_key);
-  shm_filename = sctk_malloc(sctk_bootstrap_get_max_key_len());
+  shm_filename = sctk_malloc(sctk_pmi_get_max_key_len());
   assume(shm_filename);
 
   local_host = sctk_mpcrun_client_get_hostname();
@@ -748,7 +748,7 @@ sctk_shm_init ( int init ) {
     sctk_mpcrun_client_forge_shm_filename ( shm_filename );
     sctk_nodebug ( "SHM filename generated: %s", shm_filename );
 
-    sctk_bootstrap_register(shm_key, shm_filename, SHM_FILENAME_SIZE);
+    sctk_pmi_put_connection_info_str(shm_filename, SHM_FILENAME_SIZE, shm_key);
 
     /* open shared memory */
     shm_fd =
@@ -772,7 +772,7 @@ sctk_shm_init ( int init ) {
   }
 
   sctk_nodebug ( "Waiting" );
-  sctk_bootstrap_barrier();
+  sctk_pmi_barrier();
 
   sctk_nodebug ( "Barrier 1 for process %d", sctk_local_process_rank );
 
@@ -780,7 +780,7 @@ sctk_shm_init ( int init ) {
     int shm_fd;
     struct mmap_infos_s *mem_init;
 
-    sctk_bootstrap_get(shm_key, shm_filename, SHM_FILENAME_SIZE);
+    sctk_pmi_get_connection_info_str(shm_filename, SHM_FILENAME_SIZE, shm_key);
     sctk_nodebug ( "SHM filename got: %s", shm_filename );
 
     sctk_nodebug ( "Filename : %s", shm_filename );
@@ -808,7 +808,7 @@ sctk_shm_init ( int init ) {
   }
 
   sctk_nodebug ( "Barrier 2 (pre) for process %d", sctk_local_process_rank );
-  sctk_bootstrap_barrier();
+  sctk_pmi_barrier();
   sctk_nodebug ( "Barrier 2 for process %d", sctk_local_process_rank );
 
   /* remove the shm file when all processes have
@@ -1209,11 +1209,11 @@ sctk_net_preinit_driver_shm ( sctk_net_driver_pointers_functions_t* pointers ) {
 #if SCTK_HYBRID_DEBUG == 1
   /* print informations about the SHM (size of queues,
    * size allocated, etc... */
-  sctk_bootstrap_barrier();
+  sctk_pmi_barrier();
   if ( sctk_local_process_rank == init ) {
     sctk_shm_init_printinfos ();
   }
-  sctk_bootstrap_barrier();
+  sctk_pmi_barrier();
 #endif
 
   sctk_nodebug ( "SHM - Module pre-initialized" );

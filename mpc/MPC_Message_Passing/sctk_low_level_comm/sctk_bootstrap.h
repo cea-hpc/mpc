@@ -26,24 +26,7 @@ extern "C"
 {
 #endif
 
-  enum bootstrap_mode {
-    PMI,
-    TCP,
-  };
-
   void sctk_bootstrap_init();
-
-  void sctk_bootstrap_get(char* pkey, char* pval, int size);
-
-  void sctk_bootstrap_register(char* pkey, char* pval, int size);
-
-  int sctk_bootstrap_get_max_val_len();
-
-  int sctk_bootstrap_get_max_key_len();
-
-  void sctk_bootstrap_barrier();
-
-  enum bootstrap_mode sctk_bootstrap_get_mode();
 
 #ifdef __cplusplus
 }
