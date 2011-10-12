@@ -424,41 +424,44 @@ if test "$mod" != "#" ; then
     printf "${FULL_NAME}_config:${FULL_NAME}_build/config.status\n" >> Makefile
     printf "\n" >> Makefile
     printf "${FULL_NAME}_make: ${FULL_NAME}_config\n" >> Makefile
-    if [ "${mod##*-}" != "hydra" ]
-    then
-    	if [ "${mod##*-}" != "openpa" ] && [ "${mod##*-}" != "hwloc" ]
-        then
-	        printf "\t\$(MAKE) -C ${FULL_NAME}_build \n" >> Makefile
-	    else
-	        printf "\t\$(MAKE) -C ${FULL_NAME}_build/${mod##*-}-${ver} \n" >> Makefile
-	    fi
-    else
-      printf "\t\$(MAKE) -C ${FULL_NAME}_build/hydra \n" >> Makefile
-      printf "\t\$(MAKE) -C ${FULL_NAME}_build/simple \n" >> Makefile
-    fi
-    printf "\n" >> Makefile
 
-    if [ "${mod##*-}" != "hydra" ]
-    then
-    	printf "${FULL_NAME}_install:\n" >> Makefile
-    	if [ "${mod##*-}" != "openpa" ] && [ "${mod##*-}" != "hwloc" ]
-        then
-	        printf "\t\$(MAKE) -C ${FULL_NAME}_build install \n" >> Makefile
-	    else
-	    	printf "\t\$(MAKE) -C ${FULL_NAME}_build/${mod##*-}-${ver} install \n" >> Makefile
-	    fi
-	else
-		printf "${FULL_NAME}_install:\n" >> Makefile
-	    printf "\t\$(MAKE) -C ${FULL_NAME}_build/hydra install \n" >> Makefile
-	    printf "\tmkdir -p \$(DESTDIR)/${MPC_PREFIX}/bin \n" >> Makefile
-	    printf "\tln -sf ../${FULL_NAME}/bin/mpiexec \$(DESTDIR)/${MPC_PREFIX}/bin/mpiexec.hydra \n" >> Makefile
-	    printf "\tln -sf ../${FULL_NAME}/bin/mpiexec.hydra \$(DESTDIR)/${MPC_PREFIX}/bin/mpiexec.hydra \n" >> Makefile
-	    printf "\tln -sf ../${FULL_NAME}/bin/hydra_nameserver \$(DESTDIR)/${MPC_PREFIX}/bin/hydra_nameserver \n" >> Makefile
-	    printf "\tln -sf ../${FULL_NAME}/bin/hydra_persist \$(DESTDIR)/${MPC_PREFIX}/bin/hydra_persist \n" >> Makefile
-	    printf "\tln -sf ../${FULL_NAME}/bin/hydra_pmi_proxy \$(DESTDIR)/${MPC_PREFIX}/bin/hydra_pmi_proxy \n" >> Makefile
-	fi
+    #TODO Cleanup this, the cases must be done in modules
+	#This can be done by providing a Makefile template in each modules
+	case "${mod##*-}" in
+		hydra)
+			printf "\t\$(MAKE) -C ${FULL_NAME}_build/hydra \n" >> Makefile
+			printf "\t\$(MAKE) -C ${FULL_NAME}_build/simple \n" >> Makefile
+			;;
+		openpa|hwloc)
+			printf "\t\$(MAKE) -C ${FULL_NAME}_build/${mod##*-}-${ver} \n" >> Makefile
+			;;
+		*)
+			printf "\t\$(MAKE) -C ${FULL_NAME}_build \n" >> Makefile
+			;;
+	esac
+	printf "\n" >> Makefile
 
-    printf "\n" >> Makefile
+	#TODO Cleanup this, the cases must be done in modules
+	#This can be done by providing a Makefile template in each modules
+	printf "${FULL_NAME}_install: ${FULL_NAME}_make\n" >> Makefile
+	case "${mod##*-}" in
+		"hydra")
+			printf "\t\$(MAKE) -C ${FULL_NAME}_build/hydra install \n" >> Makefile
+			printf "\tmkdir -p \$(DESTDIR)/${MPC_PREFIX}/bin \n" >> Makefile
+			printf "\tln -sf ../${FULL_NAME}/bin/mpiexec \$(DESTDIR)/${MPC_PREFIX}/bin/mpiexec.hydra \n" >> Makefile
+			printf "\tln -sf ../${FULL_NAME}/bin/mpiexec.hydra \$(DESTDIR)/${MPC_PREFIX}/bin/mpiexec.hydra \n" >> Makefile
+			printf "\tln -sf ../${FULL_NAME}/bin/hydra_nameserver \$(DESTDIR)/${MPC_PREFIX}/bin/hydra_nameserver \n" >> Makefile
+			printf "\tln -sf ../${FULL_NAME}/bin/hydra_persist \$(DESTDIR)/${MPC_PREFIX}/bin/hydra_persist \n" >> Makefile
+			printf "\tln -sf ../${FULL_NAME}/bin/hydra_pmi_proxy \$(DESTDIR)/${MPC_PREFIX}/bin/hydra_pmi_proxy \n" >> Makefile
+			;;
+		"openpa"|"hwloc")
+			printf "\t\$(MAKE) -C ${FULL_NAME}_build/${mod##*-}-${ver} install \n" >> Makefile
+			;;
+		*)
+			printf "\t\$(MAKE) -C ${FULL_NAME}_build install \n" >> Makefile
+			;;
+	esac
+	printf "\n" >> Makefile
   fi
 fi
 done < ${CONFIG_FILE}
@@ -505,7 +508,7 @@ printf "mpc_make: mpc_build/config.status ${MAKE_MPC_DEPS}\n" >> Makefile
 printf "\t\$(MAKE) -C mpc_build \n" >> Makefile
 echo "">> Makefile
 
-printf "mpc_install:$INSTALL_MPC_DEPS\n" >> Makefile
+printf "mpc_install: mpc_make $INSTALL_MPC_DEPS\n" >> Makefile
 printf "\t\$(MAKE) -C mpc_build install \n" >> Makefile
 echo "">> Makefile
 
