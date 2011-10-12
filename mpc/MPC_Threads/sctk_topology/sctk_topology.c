@@ -63,15 +63,17 @@ sctk_restrict_topology ()
     }
   else
     {
-	  int i, processor_number;
+	  int i, processor_number = 0;
 	  hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
 	  hwloc_obj_t current = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, 0);
 	  hwloc_obj_type_t type = (sctk_is_numa_node()) ? HWLOC_OBJ_NODE : HWLOC_OBJ_MACHINE;
 
+	  hwloc_obj_t root = hwloc_get_root_obj(topology);
 	  hwloc_bitmap_zero(cpuset);
-	  processor_number = sctk_processor_number_on_node;
+	  cpuset = hwloc_bitmap_dup(root->cpuset);
 
-	  for (i = 1; i < sctk_processor_number_on_node;)
+
+	  for (i = 1; i < sctk_processor_number_on_node; ++i)
 	  {
 		  int current_node_id = hwloc_get_ancestor_obj_by_type(topology, type, current)->logical_index;
 		  int current_socket_id = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_SOCKET, current)->logical_index;
@@ -84,22 +86,19 @@ sctk_restrict_topology ()
 
 		  if ((current_node_id == cpu_node_id) && (current_socket_id == cpu_socket_id) && (current_core_id == cpu_core_id))
 		  {
-			  int j;
+			  processor_number++;
 
 			  hwloc_bitmap_clr(cpuset, i);
-			  int err = hwloc_topology_restrict(topology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
-			  sctk_assert(!err);
+//		  	  fprintf(stderr, "current_node_id:%d current_socket_id:%d current_node_id:%d\n", current_socket_id, current_socket_id, current_core_id);
 		  }
 		  else {
 			  current = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
-			  i ++;
-		  }
-
-		  if (i == processor_number)
-		  {
-			  break;
 		  }
 	  }
+
+	  /* restrict the topology to physical CPUs */
+	  int err = hwloc_topology_restrict(topology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
+	  assume(!err);
 
 	  sctk_processor_number_on_node = processor_number;
     }
@@ -279,7 +278,6 @@ sctk_get_cpu ()
 	int ret = hwloc_get_last_cpu_location(topology, set, 0);
 	assert(!ret);
 	assert(!hwloc_bitmap_iszero(set));
-	assert(hwloc_bitmap_isincluded(set, root->cpuset));
 
 	hwloc_bitmap_free(set);
 
