@@ -397,11 +397,6 @@ if test "$mod" != "#" ; then
     FULL_NAME="${mod}-${ver}"
     MODULES_CLEAN="${MODULES_CLEAN} ${FULL_NAME}_build"
 
-    if [ "${mod##*-}" = "hwloc" ]
-	then
-		HWLOC_LIB="LD_LIBRARY_PATH=`echo A${SCTK_PREFIX} | sed -e 's/A--prefix=//g'`/${FULL_NAME}/lib:\$(LD_LIBRARY_PATH)"
-	fi
-
     printf "#\n# Module ${mod} / Version ${ver}\n#\n" >> Makefile
     if [ "${mod##*-}" = "openpa" ] || [ "${mod##*-}" = "hwloc" ]
     then
@@ -455,12 +450,12 @@ if test "$mod" != "#" ; then
 	else
 		printf "${FULL_NAME}_install:\n" >> Makefile
 	    printf "\t\$(MAKE) -C ${FULL_NAME}_build/hydra install \n" >> Makefile
-	    printf "\tmkdir -p ${MPC_PREFIX}/bin \n" >> Makefile
-	    printf "\tln -sf ${MPC_PREFIX}/${FULL_NAME}/bin/mpiexec ${MPC_PREFIX}/bin/mpiexec.hydra \n" >> Makefile
-	    printf "\tln -sf ${MPC_PREFIX}/${FULL_NAME}/bin/mpiexec.hydra ${MPC_PREFIX}/bin/mpiexec.hydra \n" >> Makefile
-	    printf "\tln -sf ${MPC_PREFIX}/${FULL_NAME}/bin/hydra_nameserver ${MPC_PREFIX}/bin/hydra_nameserver \n" >> Makefile
-	    printf "\tln -sf ${MPC_PREFIX}/${FULL_NAME}/bin/hydra_persist ${MPC_PREFIX}/bin/hydra_persist \n" >> Makefile
-	    printf "\tln -sf ${MPC_PREFIX}/${FULL_NAME}/bin/hydra_pmi_proxy ${MPC_PREFIX}/bin/hydra_pmi_proxy \n" >> Makefile
+	    printf "\tmkdir -p \$(DESTDIR)/${MPC_PREFIX}/bin \n" >> Makefile
+	    printf "\tln -sf ../${FULL_NAME}/bin/mpiexec \$(DESTDIR)/${MPC_PREFIX}/bin/mpiexec.hydra \n" >> Makefile
+	    printf "\tln -sf ../${FULL_NAME}/bin/mpiexec.hydra \$(DESTDIR)/${MPC_PREFIX}/bin/mpiexec.hydra \n" >> Makefile
+	    printf "\tln -sf ../${FULL_NAME}/bin/hydra_nameserver \$(DESTDIR)/${MPC_PREFIX}/bin/hydra_nameserver \n" >> Makefile
+	    printf "\tln -sf ../${FULL_NAME}/bin/hydra_persist \$(DESTDIR)/${MPC_PREFIX}/bin/hydra_persist \n" >> Makefile
+	    printf "\tln -sf ../${FULL_NAME}/bin/hydra_pmi_proxy \$(DESTDIR)/${MPC_PREFIX}/bin/hydra_pmi_proxy \n" >> Makefile
 	fi
 
     printf "\n" >> Makefile
@@ -511,7 +506,7 @@ printf "\t\$(MAKE) -C mpc_build \n" >> Makefile
 echo "">> Makefile
 
 printf "mpc_install:$INSTALL_MPC_DEPS\n" >> Makefile
-printf "\t$HWLOC_LIB \$(MAKE) -C mpc_build install \n" >> Makefile
+printf "\t\$(MAKE) -C mpc_build install \n" >> Makefile
 echo "">> Makefile
 
 #
