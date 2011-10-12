@@ -29,12 +29,12 @@ prepare_archive_directory
 if test "${PATCH_NEEDED}" = "1" ; then
   CURRENT_WD=`pwd`
   echo "Applying patch ${FINAL_PATCH_NAME}..."
-  cd ${ARCHIVE_DIR}
-  patch -p1 < ${FINAL_PATCH_NAME}
-  cd ${CURRENT_WD}
+  cd ${ARCHIVE_DIR} || exit 1
+  patch -p1 < ${FINAL_PATCH_NAME} || exit 1
+  cd ${CURRENT_WD} || exit 1
 fi
 
   echo "cd hwloc-$VERSION && Running: ./configure $PREFIX $ARGUMENTS"
-  cd hwloc-$VERSION && ./configure $PREFIX $ARGUMENTS
+  cd hwloc-$VERSION && ./configure $PREFIX $ARGUMENTS || exit 1
 
 exit 0
