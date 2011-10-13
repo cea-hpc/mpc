@@ -41,12 +41,10 @@
 
 #define SCTK_MAX_PROCESSOR_NAME 100
 #define SCTK_MAX_NODE_NAME 512
-#define SCTK_MAX_CPUINFO_NUMBER 512
 #define SCTK_LOCAL_VERSION_MAJOR 0
 #define SCTK_LOCAL_VERSION_MINOR 1
 
 static int sctk_processor_number_on_node = 0;
-static int sctk_real_processor_number_on_node = 0;
 static int sctk_node_number_on_node = 0;
 static char sctk_node_name[SCTK_MAX_NODE_NAME];
 
@@ -63,44 +61,25 @@ sctk_restrict_topology ()
     }
   else
     {
-	  int i, processor_number = 0;
-	  hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
-	  hwloc_obj_t current = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, 0);
-	  hwloc_obj_type_t type = (sctk_is_numa_node()) ? HWLOC_OBJ_NODE : HWLOC_OBJ_MACHINE;
+	    hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
+      unsigned int i;
+      int err;
 
-	  hwloc_obj_t root = hwloc_get_root_obj(topology);
-	  hwloc_bitmap_zero(cpuset);
-	  cpuset = hwloc_bitmap_dup(root->cpuset);
+	    hwloc_bitmap_zero(cpuset);
 
+      for(i=0;i < sctk_processor_number_on_node; ++i)
+      {
+        hwloc_obj_t core = hwloc_get_obj_by_type(topology, HWLOC_OBJ_CORE, i);
+        hwloc_cpuset_t set = hwloc_bitmap_dup(core->cpuset);
+        hwloc_bitmap_singlify(set);
 
-	  for (i = 1; i < sctk_processor_number_on_node; ++i)
-	  {
-		  int current_node_id = hwloc_get_ancestor_obj_by_type(topology, type, current)->logical_index;
-		  int current_socket_id = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_SOCKET, current)->logical_index;
-		  int current_core_id = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, current)->logical_index;
-
-		  hwloc_obj_t cpu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
-		  int cpu_node_id = hwloc_get_ancestor_obj_by_type(topology, type, cpu)->logical_index;
-		  int cpu_socket_id = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_SOCKET, cpu)->logical_index;
-		  int cpu_core_id = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, cpu)->logical_index;
-
-		  if ((current_node_id == cpu_node_id) && (current_socket_id == cpu_socket_id) && (current_core_id == cpu_core_id))
-		  {
-			  processor_number++;
-
-			  hwloc_bitmap_clr(cpuset, i);
-//		  	  fprintf(stderr, "current_node_id:%d current_socket_id:%d current_node_id:%d\n", current_socket_id, current_socket_id, current_core_id);
-		  }
-		  else {
-			  current = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
-		  }
-	  }
+        hwloc_bitmap_or(cpuset, cpuset, set);
+      }
 
 	  /* restrict the topology to physical CPUs */
-	  int err = hwloc_topology_restrict(topology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
+	  err = hwloc_topology_restrict(topology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
 	  assume(!err);
-
-	  sctk_processor_number_on_node = processor_number;
+    hwloc_bitmap_free(cpuset);
     }
 
   /* Share nodes */
@@ -256,15 +235,9 @@ uname (struct utsname *buf)
 #endif
 
 static void
-sctk_determine_processor_number ()
+sctk_determine_processor_number_on_node ()
 {
-	sctk_processor_number_on_node = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
-	if (SCTK_MAX_CPUINFO_NUMBER <= sctk_processor_number_on_node)
-	{
-		fprintf (stderr, "Too many processors\n");
-		sctk_abort ();
-	}
-	sctk_real_processor_number_on_node = sctk_processor_number_on_node;
+  	sctk_processor_number_on_node = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
 }
 
 /*! \brief Return the current core_id
@@ -280,7 +253,6 @@ sctk_get_cpu ()
 	assert(!hwloc_bitmap_iszero(set));
 
 	hwloc_bitmap_free(set);
-
 	return ret;
 }
 
@@ -310,7 +282,7 @@ sctk_topology_init ()
   sctk_print_version ("Topology", SCTK_LOCAL_VERSION_MAJOR,
 		      SCTK_LOCAL_VERSION_MINOR);
 
-  sctk_determine_processor_number ();
+  sctk_determine_processor_number_on_node ();
 
 #ifndef WINDOWS_SYS
   gethostname (sctk_node_name, SCTK_MAX_NODE_NAME);
@@ -421,7 +393,7 @@ sctk_bind_to_cpu (int i)
 
 	if (i >= 0)
 	{
-		hwloc_obj_t cpu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
+		hwloc_obj_t cpu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_CORE, i);
 		int err = hwloc_set_cpubind(topology, cpu->cpuset, HWLOC_CPUBIND_THREAD);
 		if (err)
 		{
@@ -446,7 +418,7 @@ sctk_get_processor_name ()
 int
 sctk_get_node_from_cpu (int cpu)
 {
-	hwloc_obj_t currentCPU = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpu);
+	hwloc_obj_t currentCPU = hwloc_get_obj_by_type(topology, HWLOC_OBJ_CORE, cpu);
 	hwloc_obj_t parentNode = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, currentCPU);
 	if (parentNode)
 	{
@@ -461,14 +433,13 @@ sctk_get_node_from_cpu (int cpu)
 int
 sctk_get_first_cpu_in_node (int node)
 {
-	hwloc_obj_t firstChildNode, currentNode = hwloc_get_obj_by_type(topology, HWLOC_OBJ_NODE, node);
-	hwloc_obj_type_t typeChildren = HWLOC_OBJ_NODE;
+	hwloc_obj_t currentNode = hwloc_get_obj_by_type(topology, HWLOC_OBJ_NODE, node);
 
-	while ((typeChildren != HWLOC_OBJ_PU) && (firstChildNode = currentNode->children[0]))
-	{
-		typeChildren = firstChildNode->type;
-	}
-	return ((typeChildren == HWLOC_OBJ_PU) ? firstChildNode->logical_index : 0);
+  while(currentNode->type != HWLOC_OBJ_CORE) {
+    currentNode = currentNode->children[0];
+  }
+
+  return currentNode->logical_index ;
 }
 
 /*! \brief Return the total number of core for the process
@@ -476,7 +447,7 @@ sctk_get_first_cpu_in_node (int node)
 int
 sctk_get_cpu_number ()
 {
-	return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
+	return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
 }
 
 /*! \brief Set the number of core usable for the current process
@@ -497,6 +468,31 @@ sctk_is_numa_node ()
   return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) != 0;
 }
 
+/* print the neighborhood*/
+static
+print_neighborhood(int cpuid, int nb_cpus, int* neighborhood, hwloc_obj_t* objs)
+{
+  int i;
+	hwloc_obj_t currentCPU = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuid);
+  hwloc_obj_type_t type = (sctk_is_numa_node()) ? HWLOC_OBJ_NODE : HWLOC_OBJ_MACHINE;
+  int currentCPU_node_id = hwloc_get_ancestor_obj_by_type(topology, type, currentCPU)->logical_index;
+  int currentCPU_socket_id = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_SOCKET, currentCPU)->logical_index;
+  int currentCPU_core_id = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, currentCPU)->logical_index;
+   fprintf(stderr, "Neighborhood result starting with CPU %d: (Node:%d, Socket: %d, Core: %d)\n",
+      cpuid, currentCPU_node_id, currentCPU_socket_id, currentCPU_core_id);
+
+   for (i = 0; i < nb_cpus; i++)
+	{
+		hwloc_obj_t current = objs[i];
+
+    fprintf(stderr, "\tNeighbor[%d] -> CPU %d: (Node:%d, Socket: %d, Core: %d)\n",
+        i, neighborhood[i],
+        hwloc_get_ancestor_obj_by_type(topology, type, current)->logical_index,
+        hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_SOCKET, current)->logical_index,
+        hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, current)->logical_index);
+  }
+}
+
 /*! \brief Return the closest core_id
  * @param cpuid Main core_id
  * @param nb_cpus Number of neighbor
@@ -509,98 +505,30 @@ sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood)
 	int neighbor_id = 0;
 	int i;
 
+  hwloc_obj_t *objs;
 	hwloc_obj_t currentCPU = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuid);
-	hwloc_obj_type_t type = (sctk_is_numa_node()) ? HWLOC_OBJ_NODE : HWLOC_OBJ_MACHINE;
-	int currentCPU_node_id = hwloc_get_ancestor_obj_by_type(topology, type, currentCPU)->logical_index;
-	int currentCPU_socket_id = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_SOCKET, currentCPU)->logical_index;
-	int currentCPU_core_id = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, currentCPU)->logical_index;
+  unsigned nb_cpus_found;
 
-	/* Compute the number of nodes on this architecture */
-	int max_node = hwloc_get_nbobjs_by_type(topology, type);
-	sctk_assert(max_node > 0);
-	sctk_nodebug( "sctk_get_neighborhood: Max node = %d\n", max_node );
+  /* alloc size for retreiving objects. We could also use a static array */
+  objs = sctk_malloc(nb_cpus * sizeof(hwloc_obj_t));
+  /* the closest CPU is actually... the current CPU :-). Set the closest CPU as the current
+   * CPU */
+  objs[0] = currentCPU;
 
-	for (n = 0; n < max_node; n ++)
+  /* get closest objects to the current CPU */
+  nb_cpus_found = hwloc_get_closest_objs(topology, currentCPU, &objs[1], (nb_cpus-1));
+  /*  +1 because of the current cpu not returned by hwloc_get_closest_objs */
+  assume( (nb_cpus_found + 1) == nb_cpus);
+
+  /* fill the neighborhood variable */
+  for (i = 0; i < nb_cpus; i++)
 	{
-		int current_node_id = (currentCPU_node_id + n) % max_node;
-		hwloc_obj_t current_node_obj = hwloc_get_obj_by_type(topology, type, current_node_id);
+		hwloc_obj_t current = objs[i];
+    neighborhood[i] = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, current)->logical_index;
+  }
 
-		/* Compute the number of sockets for this node */
-		int max_socket = (current_node_obj->first_child->type == HWLOC_OBJ_SOCKET) ? current_node_obj->arity : 0;
-		sctk_assert(max_socket > 0);
-		sctk_nodebug( "sctk_get_neighborhood: Found %d sockets for node %d", max_socket, current_node_id ) ;
+  /* uncomment for printing the returned result */
+  //print_neighborhood(cpuid, nb_cpus, neighborhood, objs);
 
-		for (s = 0; s < max_socket; s ++)
-		{
-			int current_socket_id = s;
-			/* For the first time, start from the target CPU */
-			if (n == 0)
-			{
-				current_socket_id = (currentCPU_socket_id + s) % max_socket;
-			}
-			hwloc_obj_t current_socket_obj = current_node_obj->children[current_socket_id];
-
-			/* Compute the number of cores for this socket */
-			hwloc_obj_t core = sctk_get_first_child_by_type(current_socket_obj, HWLOC_OBJ_CORE), core_tmp, * core_tab;
-			int max_core = 0;
-			if (core) {
-				core_tab = (hwloc_obj_t *) malloc ((max_core + 1) * sizeof(hwloc_obj_t));
-				core_tab[max_core] = core;
-				max_core ++;
-			}
-			for (core_tmp = core->next_cousin; core_tmp && hwloc_obj_is_in_subtree(topology, core_tmp, current_socket_obj); core_tmp = core_tmp->next_cousin, max_core ++)
-			{
-				core_tab = (hwloc_obj_t *) realloc (core_tab, (max_core + 1) * sizeof(hwloc_obj_t));
-				core_tab[max_core] = core_tmp;
-			}
-			sctk_assert(max_core > 0);
-
-			sctk_nodebug( "sctk_get_neighborhood: Found %d cores for socket %d on node %d",
-				max_core, current_socket_id, current_node_id ) ;
-
-			for (c = 0; c < max_core; c ++)
-			{
-				int current_core_id = c;
-				/* For the first time, start from the target CPU */
-				if (n == 0 && s == 0)
-				{
-					current_core_id = (currentCPU_core_id + c) % max_core;
-				}
-				hwloc_obj_t current_core_obj = core_tab[c];
-
-				/* Compute the number of PU for this core */
-				int max_pu = (current_core_obj->first_child->type == HWLOC_OBJ_PU) ? current_core_obj->arity : 0;
-				sctk_assert (max_pu > 0);
-				sctk_nodebug( "sctk_get_neighborhood: Found %d pu for core %d on socket %d on node %d",
-					max_pu, current_core_id, current_socket_id, current_node_id ) ;
-
-				/* Store the CPU which has the correct coordinates */
-				for (p = 0; p < current_core_obj->arity; p ++)
-				{
-					neighborhood[neighbor_id] = (int) current_core_obj->children[p]->logical_index;
-					neighbor_id ++;
-				}
-			}
-
-			free(core_tab);
-		}
-	}
-
-	sctk_assert (neighbor_id == nb_cpus);
-
-#if 0
-	/* Print the final result */
-	fprintf(stderr, "Neighborhood result starting with CPU %d: (Node:%d, Socket: %d, Core: %d)\n",
-			cpuid, currentCPU_node_id, currentCPU_socket_id, currentCPU_core_id);
-
-	for (i = 0; i < nb_cpus; i ++)
-	{
-		hwloc_obj_t current = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, neighborhood[i]);
-		fprintf(stderr, "\tNeighbor[%d] -> CPU %d: (Node:%d, Socket: %d, Core: %d)\n",
-				i, neighborhood[i],
-				hwloc_get_ancestor_obj_by_type(topology, type, current)->logical_index,
-				hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_SOCKET, current)->logical_index,
-				hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, current)->logical_index);
-	}
-#endif
+  sctk_free(objs);
 }

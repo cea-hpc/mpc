@@ -175,7 +175,7 @@ sctk_perform_initialisation (void)
   mkdir (sctk_store_dir, 0777);
 
   sctk_only_once ();
-//  sctk_topology_init ();
+  sctk_topology_init ();
   sctk_thread_init ();
 
 
@@ -552,7 +552,6 @@ sctk_env_init_intern (int *argc, char ***argv)
   sctk_init ();
   sctk_initial_argc = *argc;
   init_argument = *argv;
-  sctk_topology_init ();
   sctk_print_version ("Init Launch", SCTK_LOCAL_VERSION_MAJOR,
       SCTK_LOCAL_VERSION_MINOR);
 
