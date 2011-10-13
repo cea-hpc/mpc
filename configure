@@ -73,13 +73,12 @@ SCTK_PMI_OPTIONS="--with-hydra"
 SCTK_PMI_CHOSEN="0"
 
 # Options for HWLOC
-SCTK_HWLOC_OPTIONS="--with-hwloc"
-SCTK_HWLOC_EMB="1"
+SCTK_HWLOC_OPTIONS=""
+SCTK_HWLOC_DIR="embeded"
 
 # Options for SCTK_OPENPA
-SCTK_OPENPA_OPTIONS="--with-openpa"
-SCTK_OPENPA_CHOSEN="0"
-SCTK_OPENPA_EMB="1"
+SCTK_OPENPA_OPTIONS=""
+SCTK_OPENPA_DIR="embeded"
 
 cat $TOP_SOURCE_DIR/tools/banner
 echo "'configure' configures MPC Distribution ${MPC_VERSION} to adapt to many kinds of systems."
@@ -110,10 +109,8 @@ Optional Features:
   --with-gmp=prefix                   Prefix for libgmp needed to build gcc.
   --with-hydra                        Enable HYDRA [default value]
   --with-slurm=prefix                 Enable SLURM (version located in prefix)
-  --with-hwloc[=prefix]               Enable HWLOC [default value]
-                                      [if given, prefix locates installed version to use]
-  --with-openpa[=prefix]              Enable OpenPA [default value]
-                                      [if given, prefix locates installed version to use]
+  --with-hwloc=[prefix]               Use the hwloc provided in prefix if not set MPC will buid its own hwloc
+  --with-openpa=[prefix]              Use the OpenPA in this prefix if not set MPC wil build its own OpenPA
   --gcc-{with-mpfr|...}               Options for GCC configure script.
   --gdb-{prefix|...}                  Options for GDB configure script.
   --openpa-{disable-assert|...}       Options for OpenPA configure script.
@@ -197,29 +194,15 @@ for arg in "$@" ; do
   	  SCTK_PMI_OPTIONS="$arg"
       MODULES="`echo $MODULES | sed -e 's/mpc-hydra//g'`"
     ;;
-    --with-hwloc)
-      MODULES="`echo $MODULES | sed -e 's/mpc-hwloc//g'`"
-    ;;
     --with-hwloc=*)
       MODULES="`echo $MODULES | sed -e 's/mpc-hwloc//g'`"
-      SCTK_HWLOC_OPTIONS="$arg"
-    ;;
-    --with-openpa)
-      if [ $SCTK_OPENPA_CHOSEN -eq 1 ]; then
-        echo -n "Error: OpenPA directory already chosen..."
-        exit 1
-      fi
-      SCTK_OPENPA_CHOSEN="1"
-      SCTK_OPENPA_OPTIONS="$arg"
+      SCTK_HWLOC_DIR="`echo A$arg | sed -e 's/A--with-hwloc=//g'`"
+      echo "Using hwloc located in $SCTK_OPENPA_DIR"
     ;;
     --with-openpa=*)
-      if [ $SCTK_OPENPA_CHOSEN -eq 1 ]; then
-        echo -n "Error: OpenPA directory already chosen..."
-        exit 1
-      fi
-      SCTK_OPENPA_CHOSEN="1"
       MODULES="`echo $MODULES | sed -e 's/mpc-openpa//g'`"
-      SCTK_OPENPA_OPTIONS="$arg"
+      SCTK_OPENPA_DIR="`echo A$arg | sed -e 's/A--with-openpa=//g'`"
+      echo "Using OpenPA located in $SCTK_OPENPA_DIR"
     ;;
     --gcc-*)
       GCC_CONFIGURE_ARGUMENTS="${GCC_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--gcc//g'`"
@@ -249,9 +232,11 @@ echo "" >> configure.log
 MPC_ARGS="$SCTK_PMI_OPTIONS $MPC_ARGS"
 
 # Add arguments linked to SCTK_HWLOC
+SCTK_HWLOC_OPTIONS="--with-hwloc=${SCTK_HWLOC_DIR}"
 MPC_ARGS="$SCTK_HWLOC_OPTIONS $MPC_ARGS"
 
 # Add arguments linked to SCTK_OPENPA
+SCTK_OPENPA_OPTIONS="--with-openpa=${SCTK_OPENPA_DIR}"
 MPC_ARGS="$SCTK_OPENPA_OPTIONS $MPC_ARGS"
 
 if [ $SCTK_PREFIX_CHECK -eq 1 ]; then
