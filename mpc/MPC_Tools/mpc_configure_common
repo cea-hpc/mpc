@@ -975,4 +975,32 @@ sctk_echo "Already done"
 fi
 }
 
+#Function to wait a few second
+#useful in configures to allow
+#message reading
 
+# $1 Text to display => Waiting reason
+# $2 Time to wait in seconds
+function sctk_wait
+{
+if test "$#" = "2"; then
+
+	REASON=$1
+	TIME=$2
+	if test "$TIME" -lt "0"; then
+		error "Wrong time value passed to sctk_wait"	
+	fi
+
+	sctk_printf "$REASON will continue in "
+	while test "$TIME" -gt "0"; do
+		echo -n "$TIME "
+		sleep 1
+		TIME=$(($TIME-1))
+	done
+	sctk_echo ""
+
+else
+	error "Wrong number of arguments to sctk_wait"
+fi
+
+}
