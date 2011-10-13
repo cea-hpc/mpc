@@ -120,8 +120,8 @@ Optional Features:
   --hwloc-{enable-debug|...}          Options for hwloc configure script.
   --hydra-{with-ftb|...}              Options for hydra configure script.
 
-Additional options are passed to the configure script of MPC library.
-See "${MPC_SOURCE_DIR}/configure --help" for more details.
+Help of sub modules :
+  --help-mpc                          Display options for MPC library.
 
 EOF
 }
@@ -149,6 +149,10 @@ for arg in "$@" ; do
     --help)
 	usage
 	exit 1
+    ;;
+    --help-mpc)
+      ${TOP_SOURCE_DIR}/mpc/configure --help
+      exit 0
     ;;
     --with-cpath=*)
       ADD_TO_CPATH="`echo A$arg | sed -e 's/A--with-cpath=//g'`"
