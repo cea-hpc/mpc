@@ -981,7 +981,7 @@ fi
 
 # $1 Text to display => Waiting reason
 # $2 Time to wait in seconds
-function sctk_wait
+sctk_wait()
 {
 if test "$#" = "2"; then
 
