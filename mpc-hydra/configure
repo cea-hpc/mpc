@@ -1,3 +1,4 @@
+#!/bin/sh
 MPC_SOURCE_DIR="`dirname $0`/"
 VERSION="$1"
 PREFIX="$2"
@@ -34,9 +35,26 @@ if test "${PATCH_NEEDED}" = "1" ; then
   cd ${CURRENT_WD} || exit 1
 fi
 
-echo "Running cd hydra && ./configure $PREFIX $ARGUMENTS"
-cd hydra && ./configure $PREFIX $ARGUMENTS  || exit 1
-echo "Running cd ../simple && ./configure $PREFIX $ARGUMENTS"
-cd ../simple && ./configure $PREFIX $ARGUMENTS || exit 1
+#separate specific args for hydra and hydra-simple
+for arg in $ARGUMENTS
+do
+	case $arg in
+		--hydra-simple)
+			ARGUMENTS_SIMPLE="${ARGUMENTS_SIMPLE} -`echo A$arg | sed -e 's/A--hydra-simple//g'`"
+			;;
+		--hydra-*)
+			ARGUMENTS_HYDRA="${ARGUMENTS_HYDRA} -`echo A$arg | sed -e 's/A--hydra//g'`"
+			;;
+		*)
+			ARGUMENTS_HYDRA="${ARGUMENTS_HYDRA} $arg"
+			ARGUMENTS_SIMPLE="${ARGUMENTS_SIMPLE} $arg"
+			;;
+	esac
+done
+
+echo "Running cd hydra && ./configure $PREFIX $ARGUMENTS_HYDRA"
+cd hydra && ./configure $PREFIX $ARGUMENTS_HYDRA  || exit 1
+echo "Running cd ../simple && ./configure $PREFIX $ARGUMENTS_SIMPLE"
+cd ../simple && ./configure $PREFIX $ARGUMENTS_SIMPLE || exit 1
 
 exit 0

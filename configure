@@ -66,6 +66,7 @@ GCC_CONFIGURE_ARGUMENTS=""
 GDB_CONFIGURE_ARGUMENTS=""
 HWLOC_CONFIGURE_ARGUMENTS=""
 OPENPA_CONFIGURE_ARGUMENTS=""
+HYDRA_CONFIGURE_ARGUMENTS=""
 
 # Options for SCTK_PMI
 SCTK_PMI_OPTIONS="--with-hydra"
@@ -115,6 +116,9 @@ Optional Features:
                                       [if given, prefix locates installed version to use]
   --gcc-{with-mpfr|...}               Options for GCC configure script.
   --gdb-{prefix|...}                  Options for GDB configure script.
+  --openpa-{disable-assert|...}       Options for OpenPA configure script.
+  --hwloc-{enable-debug|...}          Options for hwloc configure script.
+  --hydra-{with-ftb|...}              Options for hydra configure script.
 
 Additional options are passed to the configure script of MPC library.
 See "${MPC_SOURCE_DIR}/configure --help" for more details.
@@ -224,6 +228,11 @@ for arg in "$@" ; do
     ;;
     --openpa-*)
       OPENPA_CONFIGURE_ARGUMENTS="${OPENPA_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--openpa//g'`"
+    ;;
+    --hydra-*)
+      #caution, we remove the --hydra- in the hydra configure script as it permit to separate
+      #for hydra and simple sub packages
+      HYDRA_CONFIGURE_ARGUMENTS="${HYDRA_CONFIGURE_ARGUMENTS} $arg"
     ;;
     *)
     MPC_ARGS="$arg $MPC_ARGS"
@@ -379,10 +388,10 @@ if test "$mod" != "#" ; then
          MOD_CONFIGURE_ARGUMENTS="${HWLOC_CONFIGURE_ARGUMENTS}"
        ;;
        mpc-hydra)
-         MOD_CONFIGURE_ARGUMENTS="CFLAGS=-fPIC"
+         MOD_CONFIGURE_ARGUMENTS="${HYDRA_CONFIGURE_ARGUMENTS} CFLAGS=-fPIC"
        ;;
        mpc-openpa)
-         MOD_CONFIGURE_ARGUMENTS="CFLAGS=-fPIC"
+         MOD_CONFIGURE_ARGUMENTS="${OPENPA_CONFIGURE_ARGUMENTS} CFLAGS=-fPIC"
        ;;
        *)
          MOD_CONFIGURE_ARGUMENTS=''
