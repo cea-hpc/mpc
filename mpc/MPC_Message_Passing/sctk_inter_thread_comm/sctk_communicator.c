@@ -139,3 +139,21 @@ int sctk_get_rank (const sctk_communicator_t communicator,
 sctk_communicator_t sctk_delete_communicator (const sctk_communicator_t comm){
     not_implemented();
 }
+
+void sctk_get_rank_size_total (const sctk_communicator_t communicator,
+			       int *rank, int *size, int glob_rank){
+  *size = sctk_get_nb_task_total(communicator);
+  *rank = sctk_get_rank(communicator,glob_rank);
+}
+
+int sctk_is_net_message (int dest){
+  if(sctk_communicator_table == NULL){
+    if((dest >= sctk_first_local) && (dest <= sctk_last_local)){
+      return 0;
+    } else {
+      return 1; 
+    }
+  } else {
+    not_implemented();
+  }
+}

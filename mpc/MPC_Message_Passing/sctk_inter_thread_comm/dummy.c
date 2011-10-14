@@ -30,7 +30,7 @@ void sctk_is_net_migration_available(){not_implemented();}
 /* void sctk_barrier(){not_implemented();} */
 void sctk_get_communicator_from_request(){not_implemented();}
 void sctk_is_inter_comm(){not_implemented();}
-void sctk_is_net_message(){not_implemented();}
+/* void sctk_is_net_message(){not_implemented();} */
 /* void sctk_terminaison_barrier(){not_implemented();} */
 /* void sctk_communicator_delete(){not_implemented();} */
 void sctk_net_migration(){not_implemented();}

@@ -31,8 +31,11 @@ typedef int sctk_communicator_t;
 void sctk_communicator_init();
 int sctk_get_nb_task_local (const sctk_communicator_t communicator);
 int sctk_get_nb_task_total (const sctk_communicator_t communicator);
+  void sctk_get_rank_size_total (const sctk_communicator_t communicator,
+				 int *rank, int *size, int glob_rank);
 int sctk_get_rank (const sctk_communicator_t communicator,
 		   const int comm_world_rank);
 sctk_communicator_t sctk_delete_communicator (const sctk_communicator_t);
 void sctk_communicator_delete();
+int sctk_is_net_message (int dest);
 #endif

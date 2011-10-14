@@ -28,8 +28,6 @@
 #include <string.h>
 
 void sctk_perform_messages(sctk_request_t* request){not_implemented();}
-
-sctk_thread_ptp_message_t *sctk_create_header (const int myself){not_implemented();}
 sctk_thread_ptp_message_t
 * sctk_add_adress_in_message (sctk_thread_ptp_message_t *
 			      restrict msg, void *restrict adr,
@@ -103,7 +101,6 @@ typedef struct{
 static sctk_internal_ptp_t* sctk_ptp_table = NULL;
 static sctk_spin_rwlock_t sctk_ptp_table_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 
-
 /*Init data structures used for task i*/
 void sctk_ptp_per_task_init (int i){
   sctk_internal_ptp_t * tmp;
@@ -121,4 +118,22 @@ void sctk_unregister_thread (const int i){
   sctk_thread_mutex_lock (&sctk_total_number_of_tasks_lock);
   sctk_total_number_of_tasks--;
   sctk_thread_mutex_unlock (&sctk_total_number_of_tasks_lock);  
+}
+
+/********************************************************************/
+/*Message creation                                                  */
+/********************************************************************/
+
+
+sctk_thread_ptp_message_t *sctk_create_header (const int myself){
+  sctk_thread_ptp_message_t * tmp;
+  
+#warning "Optimize allocation"
+  tmp = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
+
+  /*Init message struct*/
+  memset(tmp,0,sizeof(sctk_thread_ptp_message_t));
+  
+
+  return tmp;
 }

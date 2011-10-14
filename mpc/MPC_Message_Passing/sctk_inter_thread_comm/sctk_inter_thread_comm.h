@@ -54,9 +54,24 @@ extern "C"
     sctk_pack_absolute_indexes_t *ends_absolute;
   } sctk_default_pack_t;
 
+  typedef struct{
+    size_t size;
+    void* addr;
+  }sctk_message_contiguous_t;
+
+
+  typedef enum {
+    sctk_message_contiguous
+  } sctk_message_type_t;
+
+  typedef union {
+    sctk_message_contiguous_t contiguous;
+  } sctk_message_t;
+
   typedef struct sctk_thread_ptp_message_s{
     sctk_thread_message_header_t header;
-    volatile int* completion_flag;  
+    volatile int* completion_flag; 
+    sctk_message_t message;
   }sctk_thread_ptp_message_t;
 
   typedef struct sctk_request_s{

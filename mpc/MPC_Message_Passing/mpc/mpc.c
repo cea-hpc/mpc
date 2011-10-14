@@ -669,7 +669,7 @@ __MPC_Comm_rank (MPC_Comm comm, int *rank,
 static inline int
 __MPC_Comm_size (MPC_Comm comm, int *size)
 {
-  *size = sctk_get_nb_task_local (comm);
+  *size = sctk_get_nb_task_total (comm);
   return 0;
 }
 
@@ -684,7 +684,7 @@ static inline void
 __MPC_Comm_rank_size (MPC_Comm comm, int *rank, int *size,
 		      sctk_task_specific_t * task_specific)
 {
-  sctk_get_rank_size_local (comm, rank, size, task_specific->task_id);
+  sctk_get_rank_size_total (comm, rank, size, task_specific->task_id);
 }
 
 static void MPC_Set_buffering(int val){

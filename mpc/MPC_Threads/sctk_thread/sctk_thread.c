@@ -1856,7 +1856,7 @@ sctk_get_init_vp (int i)
   cpu_nb = sctk_get_cpu_number ();
 
 #ifdef MPC_Message_Passing
-  THREAD_NUMBER = sctk_get_nb_task_local (SCTK_COMM_WORLD);
+  THREAD_NUMBER = sctk_get_nb_task_total (SCTK_COMM_WORLD);
 #else
   THREAD_NUMBER = 1;
 #endif
@@ -2017,7 +2017,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
   sctk_profiling_init_keys ();
 
 #ifdef MPC_Message_Passing
-  THREAD_NUMBER = sctk_get_nb_task_local (SCTK_COMM_WORLD);
+  THREAD_NUMBER = sctk_get_nb_task_total (SCTK_COMM_WORLD);
 #else
   THREAD_NUMBER = 1;
 #endif
