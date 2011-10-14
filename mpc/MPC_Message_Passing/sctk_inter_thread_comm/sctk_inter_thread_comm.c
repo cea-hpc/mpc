@@ -27,7 +27,6 @@
 #include <utlist.h>
 #include <string.h>
 
-void sctk_perform_messages(sctk_request_t* request){not_implemented();}
 sctk_thread_ptp_message_t
 * sctk_add_pack_in_message (sctk_thread_ptp_message_t * msg,
 			    void *adr, const sctk_count_t nb_items,
@@ -43,7 +42,6 @@ sctk_thread_ptp_message_t
 				     begins,
 				     sctk_pack_absolute_indexes_t * ends){not_implemented();}
 
-void sctk_wait_all (const int task, const sctk_communicator_t com){not_implemented();}
 void sctk_probe_source_any_tag (int destination, int source,
 				const sctk_communicator_t comm,
 				int *status,
@@ -109,8 +107,10 @@ static inline void sctk_message_copy(sctk_message_to_copy_t* tmp){
       recv->request->header.msg_size = size;
     }
     
-    *(recv->completion_flag) = SCTK_MESSAGE_DONE;
-    *(send->completion_flag) = SCTK_MESSAGE_DONE;
+    if(recv->completion_flag)
+      *(recv->completion_flag) = SCTK_MESSAGE_DONE;
+    if(send->completion_flag)
+      *(send->completion_flag) = SCTK_MESSAGE_DONE;
     
     /*Free messages*/
     send->free_memory(send);
@@ -253,14 +253,17 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
 				 sctk_request_t * request,
 				 const size_t count){
   msg->request = request;
-  request->msg = msg;
 
-  request->header.source = source;
-  request->header.destination = destination;
-  request->header.message_tag = message_tag;
-  request->header.communicator = communicator;
+  if(request != NULL){
+    request->msg = msg;
+    
+    request->header.source = source;
+    request->header.destination = destination;
+    request->header.message_tag = message_tag;
+    request->header.communicator = communicator;
 
-  msg->completion_flag = &(request->completion_flag);
+    msg->completion_flag = &(request->completion_flag);
+  }
 
   msg->header.source = source;
   msg->header.destination = destination;
@@ -358,6 +361,60 @@ void sctk_wait_message (sctk_request_t * request){
   }
 }
 
+void sctk_perform_messages(sctk_request_t* request){
+  if(request->completion_flag != SCTK_MESSAGE_DONE){
+    sctk_comm_dest_key_t key;
+    sctk_internal_ptp_t* tmp;
+    sctk_thread_ptp_message_t* msg;
+
+    msg = request->msg;
+    
+    key.comm = msg->header.communicator;
+    key.destination = msg->header.glob_destination;
+    
+    sctk_spinlock_read_lock(&sctk_ptp_table_lock);
+    HASH_FIND(hh,sctk_ptp_table,&key,sizeof(sctk_comm_dest_key_t),tmp);
+    sctk_spinlock_read_unlock(&sctk_ptp_table_lock);
+    
+    if(tmp != NULL){
+      sctk_try_perform_messages_for_pair(tmp);
+    }
+  }
+}
+
+void sctk_wait_all (const int task, const sctk_communicator_t com){
+  sctk_internal_ptp_t* pair;
+  sctk_internal_ptp_t* tmp;
+  int i; 
+
+  do{
+    i = 0;
+    sctk_spinlock_read_lock(&sctk_ptp_table_lock);
+    HASH_ITER(hh,sctk_ptp_table,pair,tmp){
+      sctk_msg_list_t* ptr;
+      sctk_spinlock_lock(&(pair->lock));
+      sctk_perform_messages_for_pair_locked(pair);
+      DL_FOREACH(pair->recv_message_list,ptr){
+	if((ptr->msg->header.destination == task) && 
+	   (ptr->msg->header.communicator == com)){
+	  i++;
+	}
+      }
+      DL_FOREACH(pair->send_message_list,ptr){
+	if((ptr->msg->header.source == task) && 
+	   (ptr->msg->header.communicator == com)){
+	  i++;
+	}
+      }
+      sctk_spinlock_unlock(&(pair->lock));
+    }
+    sctk_spinlock_read_unlock(&sctk_ptp_table_lock);
+
+#warning "To optimize"
+    sctk_thread_yield();
+  } while(i != 0);
+
+}
 /********************************************************************/
 /*Send/Recv messages                                                */
 /********************************************************************/

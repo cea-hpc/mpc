@@ -86,8 +86,8 @@ __thread struct sctk_thread_specific_s *sctk_message_passing;
 
 static inline sctk_mpc_verify_request_compatibility()
   {
-    MPC_Request mpc_req;
-    sctk_request_t sctk_req;
+/*     MPC_Request mpc_req; */
+/*     sctk_request_t sctk_req; */
 
     /*Verify type compatibility*/
 /*     sctk_check_equal_types (MPC_Request, sctk_request_t); */
@@ -121,14 +121,12 @@ static inline void sctk_mpc_commit_status_from_request(MPC_Request * request, MP
 
 static inline 
 sctk_communicator_t sctk_mpc_get_communicator_from_request(MPC_Request * request){
-  not_implemented();
-  /* return ((sctk_request_t *) request)->header.communicator; */
+  return ((sctk_request_t *) request)->header.communicator; 
 }
 
 static inline 
 void sctk_mpc_perform_messages(MPC_Request * request){
-/*   sctk_perform_messages((sctk_request_t *) request); */
-  not_implemented();
+  sctk_perform_messages(request); 
 }
 
 static inline int sctk_mpc_completion_flag(MPC_Request * request){
@@ -141,23 +139,13 @@ static inline void sctk_mpc_init_request_null(){
 
 static inline void sctk_mpc_init_request (MPC_Request * request, MPC_Comm comm,
 					  int src){
-/*       if (request != NULL) */
-/* 	{ */
-/* 	  request->header.source = MPC_PROC_NULL; */
-/* 	  request->header.local_source = MPC_PROC_NULL; */
-/* 	  request->header.destination = MPC_PROC_NULL; */
-/* 	  request->header.message_tag = MPC_ANY_TAG; */
-/* 	  request->header.communicator = comm; */
-/* 	  request->header.myself = src; */
-/* 	  request->completion_flag = SCTK_MESSAGE_DONE; */
-/* 	  request->is_null = 0; */
-/* 	} */  
   if (request != NULL)
     {
       request->header.source = MPC_PROC_NULL;
       request->header.destination = MPC_PROC_NULL;
       request->header.message_tag = MPC_ANY_TAG;
       request->header.communicator = comm;
+      request->header.msg_size = 0;
       request->completion_flag = SCTK_MESSAGE_DONE;
       request->is_null = 0;
       request->msg = NULL;
@@ -192,33 +180,27 @@ static inline void sctk_mpc_init_pack_absolute(MPC_Request * request,mpc_msg_cou
 
 static inline void sctk_mpc_register_message_in_request(MPC_Request * request,
 							sctk_thread_ptp_message_t *msg){
-/*   ((sctk_request_t *) request)->msg = msg; */
-  not_implemented();
+  request->msg = msg; 
 }
 
 static inline sctk_thread_ptp_message_t* sctk_mpc_get_message_in_request(MPC_Request * request){
-/*   return ((sctk_request_t *) request)->msg; */
-  not_implemented();
+  return request->msg; 
 }
 
 static inline void sctk_mpc_init_message_size(MPC_Request * request){
-/* request->msg_size = 0; */
-  not_implemented();
+  request->msg->header.msg_size = 0; 
 }
 
 static inline void sctk_mpc_add_to_message_size(MPC_Request * request, size_t size){
-/* request->msg_size += size; */
-  not_implemented();
+  request->msg->header.msg_size += size; 
 }
 
 static inline size_t sctk_mpc_get_message_size(MPC_Request * request){
-/* return request->msg_size; */
-  not_implemented();
+  return request->msg->header.msg_size; 
 }
 
 static inline int sctk_mpc_get_message_source(MPC_Request * request){
-/* return request->header.source; */
-  not_implemented();
+  return request->header.source;
 }
 
 static inline int sctk_mpc_message_is_null(MPC_Request * request){
@@ -226,8 +208,7 @@ static inline int sctk_mpc_message_is_null(MPC_Request * request){
 }
 
 static inline void sctk_mpc_message_set_is_null(MPC_Request * request,int val){
-/*request->is_null = val; */
-  not_implemented();
+  request->is_null = val; 
 }
 
 static inline void sctk_mpc_set_header_in_message(sctk_thread_ptp_message_t *
@@ -246,7 +227,7 @@ static inline void sctk_mpc_set_header_in_message(sctk_thread_ptp_message_t *
     }
 }
   void sctk_mpc_wait_all (const int task, const sctk_communicator_t com){
-  not_implemented();
+    sctk_wait_all(task,com);
 }
   void sctk_mpc_cancel_message (MPC_Request * msg){not_implemented();}
 
@@ -2177,12 +2158,10 @@ __MPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
 				      &(tmp_buf->request), msg_size);
 	  if (request != NULL)
 	    {
-	      not_implemented();
-/* 	      ((sctk_request_t *) request)->header = msg->header; */
-/* 	      request->completion_flag = SCTK_MESSAGE_DONE; */
-/* 	      request->msg_size = count; */
-/* 	      request->is_null = 0; */
-/* 	      request->msg = NULL; */
+	      request->header.source = src;
+	      request->header.destination = dest;
+	      request->header.message_tag = tag;
+	      request->header.msg_size = msg_size;
 	    }
 	}
       else
@@ -2624,7 +2603,7 @@ __MPC_Wait_pending (MPC_Comm comm)
   mpc_check_comm (comm, comm);
 
   __MPC_Comm_rank (comm, &src, task_specific);
-  sctk_wait_all (src, comm);
+  sctk_mpc_wait_all (src, comm);
 
   MPC_ERROR_SUCESS ();
 }
