@@ -418,36 +418,6 @@ SCTK_CFLAGS="$SCTK_CFLAGS $SCTK_CFLAGS_NON_GNU"
 # root configure Hydra might not be installed hence
 # should not be used => Fallback to slurm if available
 
-begin_module "MPC Launcher"
-
-if test "$SCTK_HYDRA" = "1"; then
-	if test -e "${PWD}/../mpc-hydra"; then
-
-		sctk_echo "Setting MPC launcher to:  Hydra"
-
-	else
-
-		sctk_echo "========================WARNING========================="
-		sctk_echo "Hydra was not found : Use the root configure in order to"
-		sctk_echo "                      install MPC with Hydra support.   "
-		sctk_echo "=> MPC will now try to use Slurm as default launcher <= "
-		sctk_echo "========================================================"
-		sctk_echo "Setting MPC launcher to:   Slurm (if available)"
-		sctk_wait "Configure" 5
-		#Deactivate Hydra
-		SCTK_HYDRA=0
-		#Try to use Slurm
-		SCTK_SLURM=1
-
-	fi
-else
-
-	sctk_echo "Setting MPC launcher to:   Slurm (if available)"
-fi
-
-end_module "MPC Launcher"
-
-
 if [ $SCTK_HYDRA -eq 1 ]; then
   SCTK_JOB_MANAGER="HYDRA"
 elif [ $SCTK_SLURM -eq 1 ]; then

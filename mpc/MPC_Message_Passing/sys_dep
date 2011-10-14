@@ -80,7 +80,9 @@ if test "$SCTK_SHM" != 0 ; then
   SCTK_CHECK_OPTION "-DSCTK_SHM"
 fi
 
+SCTK_CHECK_LIB_PMI
+
 begin_section Networks
 check_networks
-check_slurm
 end_section
+

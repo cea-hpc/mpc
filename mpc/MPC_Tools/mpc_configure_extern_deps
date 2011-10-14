@@ -25,6 +25,116 @@
 EXTERN_NON_TESTED_LIB=""
 HWLOCK_IS_SETUP="no"
 OPENPA_IS_SETUP="no"
+HYDRA_IS_SETUP="no"
+SLURM_IS_SETUP="no"
+HYDRA_MODULE=${PWD}/../mpc-hydra-1.4.0_build/simple
+PMI_LIB=""
+
+# Setup vars to use lib hydra
+# Params:
+# Global variales:
+#   - HYDRA_MODULE: path to hydra build dir
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_ARFLAGS , SCTK_LDFLAGS , HYDRA_IS_SETUP
+sctk_internal_setup_lib_hydra()
+{
+	if [ "$HYDRA_IS_SETUP" != "yes" ]; then
+		HYDRA_MODULE=${PWD}/../mpc-hydra-1.4.0_build/simple
+		SCTK_CFLAGS="${SCTK_CFLAGS} -I${HYDRA_MODULE} -DMPC_USE_HYDRA"
+		SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HYDRA_MODULE}/safestr2.o ${HYDRA_MODULE}/simple_pmiutil.o ${HYDRA_MODULE}/simple_pmi.o"
+		SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${HYDRA_MODULE} -L${HYDRA_MODULE}"
+		EXTERN_NON_TESTED_LIB="-lsimple"
+	fi
+
+	#mark as setup
+	HYDRA_IS_SETUP="yes"
+}
+
+# Setup vars to use lib slurm
+# Params:
+# Global variables:
+#   - SLUTM_PREFIX : path to slurm install dir.
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_ARFLAGS , SCTK_LDFLAGS , SLURM_IS_SETUP
+sctk_internal_setup_lib_slurm()
+{
+	if [ "$SLURM_IS_SETUP" != "yes" ]; then
+		# For the moment, we dont use rpath
+		if [ -w "${SLURM_PREFIX}" ]; then
+			if [ -e ${SLURM_PREFIX}/lib ]; then
+				SLURM_LIB_DIR=${SLURM_PREFIX}/lib
+			elif [ -e ${SLURM_PREFIX}/lib64 ]; then
+				SLURM_LIB_DIR=${SLURM_PREFIX}/lib64
+				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${SLURM_PREFIX}/lib64/libpmi.so"
+				SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${SLURM_PREFIX}/lib64 -L${SLURM_PREFIX}/lib64"
+			else
+				sctk_error "libpmi found neither in ${SLURM_PREFIX}/lib nor ${SLURM_PREFIX}/lib64"
+				exit 1
+			fi
+			#setup vars
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${SLURM_LIBDIR}/libpmi.so"
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${SLURM_LIB_DIR} -L${SLURM_LIB_DIR}"
+			SCTK_CFLAGS="${SCTK_CFLAGS} -I${SLURM_MODULE}/include/slurm"
+		fi
+		#infor source code
+		SCTK_CFLAGS="${SCTK_CFLAGS} -DMPC_USE_SLURM"
+	fi
+
+	#setup PMI_LIB
+	PMI_LIB="-lpmi"
+
+	#mark as setup
+	SLURM_IS_SETUP="yes"
+}
+
+# Fallback to slurm if can't usr the hydra provide by root configure script.
+# Global vars:
+#   - SCTK_HYDRA , SCTK_SLURM , HYDRA_MODULE
+sctk_internal_setup_pmi_slurm_fallback()
+{
+	if test "$SCTK_HYDRA" = "1" && ! test -e "${HYDRA_MODULE}"; then
+		sctk_echo "========================WARNING========================="
+		sctk_echo "Hydra was not found : Use the root configure in order to"
+		sctk_echo "                      install MPC with Hydra support.   "
+		sctk_echo "=> MPC will now try to use Slurm as default launcher <= "
+		sctk_echo "========================================================"
+		sctk_echo "Setting MPC launcher to:   Slurm (if available)"
+		sctk_wait "Configure" 5
+		#Deactivate Hydra
+		SCTK_HYDRA=0
+		#Try to use Slurm
+		SCTK_SLURM=1
+	fi
+}
+
+#Check presence of libPMI (use hydra or slurm depending on the setting)
+#Automatically setup hydra or slurm is not already setup.
+SCTK_CHECK_LIB_PMI()
+{
+	#begin section
+	begin_section PMI
+
+	#fallback
+	sctk_internal_setup_pmi_slurm_fallback
+
+	SCTK_MSG_CHECKING "Launcher"
+	if [ $SCTK_HYDRA -eq 1 ] && [ $SCTK_SLURM -eq 0 ]; then
+		sctk_internal_setup_lib_hydra
+		result 'hydra'
+	elif [ $SCTK_HYDRA -eq 0 ] && [ $SCTK_SLURM -eq 1 ]; then
+		sctk_internal_setup_lib_slurm
+		result 'slurm'
+	else
+		result 'hydra,slurm'
+		sctk_error "Your must use --with-slurm or --with-hydra, but you can't use both at same time."
+	fi
+
+	#checks
+	SCTK_CHECK_HEADER "pmi.h"
+	SCTK_CHECK_LDOPTION $PMI_LIB
+
+	end_section
+}
 
 # Setup vars to use lib hwloc
 # Params :
@@ -33,11 +143,7 @@ OPENPA_IS_SETUP="no"
 #   - HWLOC_PREFIX_BUILD : Build directory where to find the internal hwloc.
 #   - HWLOC_PREFIX_INSTALL : Install directory for hwlock.
 # Will setup:
-#   - SCTK_CFLAGS
-#   - SCTK_LDFLAGS
-#   - SCTK_ARFLAGS
-#   - HWLOCK_LIB
-#   - HWLOCK_IS_SETUP
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS , HWLOCK_LIB , HWLOCK_IS_SETUP
 sctk_internal_setup_lib_hwloc()
 {
 	if [ "$HWLOCK_IS_SETUP" != "yes" ]; then
@@ -85,10 +191,7 @@ sctk_internal_setup_lib_hwloc()
 #   - HWLOC_PREFIX_INSTALL : Install directory for hwlock.
 #   - HWLOCK_IS_SETUP : To know if hwlock is already setup
 # Will setup:
-#   - SCTK_CFLAGS
-#   - SCTK_LDFLAGS
-#   - SCTK_ARFLAGS
-#   - HWLOCK_LIB
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS , HWLOCK_LIB
 SCTK_CHECK_LIB_HWLOC()
 {
 	#mark test section
@@ -116,11 +219,7 @@ SCTK_CHECK_LIB_HWLOC()
 #   - OPENPA_PREFIX_BUILD : Build directory where to find the internal openpa
 #   - OPENPA_PREFIX_INSTALL : Install directory for openpa
 # Will setup:
-#   - SCTK_CFLAGS
-#   - SCTK_LDFLAGS
-#   - SCTK_ARFLAGS
-#   - OPENPA_LIB
-#   - OPENPA_IS_SETUP
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS , OPENPA_LIB , OPENPA_IS_SETUP
 sctk_internal_setup_lib_openpa()
 {
 	if [ "$OPENPA_IS_SETUP" != "yes" ]; then
@@ -142,11 +241,11 @@ sctk_internal_setup_lib_openpa()
 			#setup rpaths and -L
 			if [ -e "${OPENPA_USER_PREFIX}/lib" ]; then
 				SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENPA_USER_PREFIX}/lib -L${OPENPA_USER_PREFIX}/lib"
-				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib/libopa.so"
+				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENPA_USER_PREFIX}/lib/libopa.a"
 			fi
 			if [ -e "${OPENPA_USER_PREFIX}/lib64" ]; then
 				SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENPA_USER_PREFIX}/lib64 -L${OPENPA_USER_PREFIX}/lib64"
-				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib64/libopa.so"
+				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENPA_USER_PREFIX}/lib64/libopa.a"
 			fi
 		fi
 	fi
@@ -168,11 +267,7 @@ sctk_internal_setup_lib_openpa()
 #   - OPENPA_PREFIX_INSTALL : Install directory for openpa
 #   - OPENPA_IS_SETUP : To know is already setup
 # Will setup:
-#   - SCTK_CFLAGS
-#   - SCTK_LDFLAGS
-#   - SCTK_ARFLAGS
-#   - OPENPA_LIB
-#   - 
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS , OPENPA_LIB
 SCTK_CHECK_LIB_OPENPA()
 {
 	#mark test section
