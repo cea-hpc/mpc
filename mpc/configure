@@ -175,10 +175,13 @@ Optional Packages:
   --with-PACKAGE          use PACKAGE
   --without-PACKAGE       do not use PACKAGE
   --without-libunwind     disable libunwind backtraces (default: enabled)
-  --with-libnuma          enable libnuma for memory and cpu binding (default: disabled)
-  --with-libcpuset        enable libcpuset for memory and cpu binding (default: disabled)
   --without-slurm         disable slurm detection (default: enabled)
   --without-mpc_mmap      disable mpc mmap/munmap support (default: enabled)
+  --with-libnuma          enable libnuma for memory and cpu binding (default: disabled)
+  --with-libcpuset        enable libcpuset for memory and cpu binding (default: disabled)
+  --with-openpa=[PREFIX]  enable OpenPA using given prefix
+  --with-hwloc=[PREFIX]   enable hwloc usign given prefix
+
 
 echo "MPCROOT=
 
@@ -211,7 +214,8 @@ SCTK_DEBUG_MESSAGES_DISABLED="0"
 SCTK_CC_DEP="-M"
 SCTK_CFLAGS_NON_GNU=""
 SCTK_MPC_MMAP="0"
-
+HWLOC_USER_PREFIX=""
+OPENPA_USER_PREFIX=""
 
 for arg in "$@" ; do
     case $arg in
@@ -362,19 +366,11 @@ for arg in "$@" ; do
     SCTK_HYDRA="0"
     export SLURM_PREFIX="`echo A$arg | sed -e 's/A--with-slurm=//g'`"
     ;;
-    --with-hwloc)
-    SCTK_HWLOC_EMB="1"
-    ;;
     --with-hwloc=*)
-    SCTK_HWLOC_EMB="0"
-    export HWLOC_PREFIX_INSTALL="`echo A$arg | sed -e 's/A--with-hwloc=//g'`"
-    ;;
-    --with-openpa)
-    SCTK_OPENPA_EMB="1"
+    HWLOC_USER_PREFIX="`echo A$arg | sed -e 's/A--with-hwloc=//g'`"
     ;;
     --with-openpa=*)
-    SCTK_OPENPA_EMB="0"
-    export OPENPA_PREFIX_INSTALL="`echo A$arg | sed -e 's/A--with-openpa=//g'`"
+    OPENPA_USER_PREFIX="`echo A$arg | sed -e 's/A--with-openpa=//g'`"
     ;;
 
     --disable-all)
@@ -413,7 +409,44 @@ done
 post_update_vars
 
 SCTK_CFLAGS="$SCTK_CFLAGS $SCTK_CFLAGS_NON_GNU"
+
 # export launcher information
+
+# Make sure Hydra is present before making it default.
+# If you directly run the mpc configure without the
+# root configure Hydra might not be installed hence
+# should not be used => Fallback to slurm if available
+
+begin_module "MPC Launcher"
+
+if test "$SCTK_HYDRA" = "1"; then
+	if test -e "${PWD}/../mpc-hydra"; then
+
+		sctk_echo "Setting MPC launcher to:  Hydra"
+
+	else
+
+		sctk_echo "========================WARNING========================="
+		sctk_echo "Hydra was not found : Use the root configure in order to"
+		sctk_echo "                      install MPC with Hydra support.   "
+		sctk_echo "=> MPC will now try to use Slurm as default launcher <= "
+		sctk_echo "========================================================"
+		sctk_echo "Setting MPC launcher to:   Slurm (if available)"
+		sctk_wait "Configure" 5
+		#Deactivate Hydra
+		SCTK_HYDRA=0
+		#Try to use Slurm
+		SCTK_SLURM=1
+
+	fi
+else
+
+	sctk_echo "Setting MPC launcher to:   Slurm (if available)"
+fi
+
+end_module "MPC Launcher"
+
+
 if [ $SCTK_HYDRA -eq 1 ]; then
   SCTK_JOB_MANAGER="HYDRA"
 elif [ $SCTK_SLURM -eq 1 ]; then

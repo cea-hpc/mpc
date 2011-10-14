@@ -21,7 +21,7 @@
 #                                                                      #
 ########################################################################
 
-LAUNCH="mpirun"
+LAUNCH="none"
 BINS_HOME="${MPC_BIN_DIR}/mpcrun_opt/mpcrun"
 
 GDB_LIBTHREAD_DB="${MPC_LIB_DIR}/libmpc_thread_db.so"
@@ -120,6 +120,7 @@ EOF
 
 MPC_MONO="0"
 
+#Open MPC configuration file if it exists
 if test "$MPC_USE_MPCRC_FILE" = "" ; then
 	MPC_USE_MPCRC_FILE="${HOME}/.mpcrc"
 fi
@@ -131,11 +132,6 @@ else
 . $MPC_USE_MPCRC_FILE
 fi
 
-#For backward compatibility
-if test "$LAUNCHE" != "" ; then
-    LAUNCH="$LAUNCHE"
-fi
-
 mpi_only=no
 BINARY=""
 USER_ARGS=""
@@ -144,12 +140,9 @@ RESTART=""
 MIGRATION=""
 DEBUG=""
 PROCESS_NB="1"
-
 THREAD_TYPE="--use-$THREAD_TYPE"
-NET_TYPE="--use-$NET_TYPE"
-if test "$NET_TYPE" = "--use-none" ; then
-NET_TYPE="--use-tcp"
-fi
+NET_TYPE="--sctk_use_network=none"
+
 if test "$VERSION_DETAILS" = "yes" ; then
 VERSION_DETAILS="--version-details"
 else
@@ -325,7 +318,15 @@ for arg in "$@" ; do
     fi
 done
 
-#echo "$USER_ARGS"
+# check if we are in a inter-processes configuration
+if test "$PROCESS_NB" != "1"; then
+  if test "$NET_TYPE" = "--sctk_use_network=none"; then
+    NET_TYPE="--sctk_use_network=tcp"
+  fi
+  if test "$LAUNCH" = "none"  ; then
+  	LAUNCH="mpiexec"
+  fi
+fi
 
 SCTK_ARGS="--sctk-args--"
 SCTK_LINUX_DISABLE_ADDR_RADOMIZE="1"
@@ -374,16 +375,9 @@ if test "$NET_TYPE" != ""  ; then
 add_arg "$NET_TYPE"
 fi
 
-if test "$PROCESS_NB" != "1"  ; then
-    if test "$LAUNCH" = "none" ; then
-	LAUNCH="mpiexec"
-    fi
-fi
-
 VERBOSE="--verbose=$VERBOSE"
 
 SCTK_ARGS="$SCTK_ARGS $VERSION_DETAILS $REPORT $CHECKPOINT $RESTART $MIGRATION $TMP_DIR $VERBOSE "
-#echo "$SCTK_ARGS"
 if test "$MPC_MONO" = "1" ; then
 SCTK_ARGS="$SCTK_ARGS --mono=$BINARY"
 BINARY="mpc_mono"

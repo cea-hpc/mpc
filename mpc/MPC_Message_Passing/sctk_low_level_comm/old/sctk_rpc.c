@@ -75,7 +75,7 @@ sctk_rpc_get_driver_send()
 }
 
 
-#define SCTK_RPC_FUNC_NUMBER 10
+#define SCTK_RPC_FUNC_NUMBER 15
 static sctk_rpc_t volatile sctk_rpc_generic_func[SCTK_RPC_FUNC_NUMBER];
 
 void

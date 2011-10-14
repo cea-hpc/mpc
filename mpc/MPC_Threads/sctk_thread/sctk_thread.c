@@ -1839,6 +1839,10 @@ static int sctk_last_local = 0;
 extern double __sctk_profiling__start__sctk_init_MPC;
 extern double __sctk_profiling__end__sctk_init_MPC;
 
+double sctk_profiling_get_init_time() {
+  return (__sctk_profiling__end__sctk_init_MPC-__sctk_profiling__start__sctk_init_MPC)/1000000;
+}
+
 int
 sctk_get_init_vp (int i)
 {
@@ -1970,6 +1974,10 @@ poff_t dataused(void) {
   return 0;
 }
 #endif
+
+double sctk_profiling_get_dataused() {
+  return (double)dataused()/(1024.0*1024.0);
+}
 
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
 #pragma weak MPC_Task_hook
@@ -2284,8 +2292,12 @@ sctk_start_func (void *(*run) (void *), void *arg)
   sctk_nodebug("sctk_total_number_of_tasks %d",sctk_total_number_of_tasks);
 
   __sctk_profiling__end__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
-  if(sctk_process_rank == 0){
-    sctk_nodebug("Init time %f %f",__sctk_profiling__end__sctk_init_MPC-__sctk_profiling__start__sctk_init_MPC,(double)dataused()/(1024.0*1024.0));
+  if (sctk_process_rank == 0)
+  {
+    if (getenv ("MPC_DISABLE_BANNER") == NULL) {
+      fprintf(stderr, "Initialization time: %.1fs - Memory used: %0.fMB\n",
+          sctk_profiling_get_init_time(), sctk_profiling_get_dataused());
+    }
   }
 
 /* #ifdef MPC_Message_Passing */

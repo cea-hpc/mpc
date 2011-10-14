@@ -175,7 +175,7 @@ sctk_perform_initialisation (void)
   mkdir (sctk_store_dir, 0777);
 
   sctk_only_once ();
-//  sctk_topology_init ();
+  sctk_topology_init ();
   sctk_thread_init ();
 
 
@@ -468,9 +468,14 @@ sctk_get_verbosity ()
   static void
 sctk_use_network (char *arg)
 {
+  /* if the network mode is different to none,
+   * we initialize it. */
 #ifdef MPC_Message_Passing
-  sctk_network_mode = arg;
-  sctk_net_init_driver (arg);
+  if (strcmp(arg, "none"))
+  {
+    sctk_network_mode = arg;
+    sctk_net_init_driver (arg);
+  }
 #endif
 }
 
@@ -547,8 +552,6 @@ sctk_env_init_intern (int *argc, char ***argv)
   sctk_init ();
   sctk_initial_argc = *argc;
   init_argument = *argv;
-  sctk_pmi_init();
-  sctk_topology_init ();
   sctk_print_version ("Init Launch", SCTK_LOCAL_VERSION_MAJOR,
       SCTK_LOCAL_VERSION_MINOR);
 

@@ -17,7 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc     marc.perache@cea.fr                             # */
-/* #   - DIDELOT Sylvain  sdidelot@exascale-computing.eu                    # */
+/* #   - DIDELOT Sylvain  sdidelot@exascale-computing.eu                  # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -363,6 +363,7 @@ sctk_net_is_shm_enabled()
   void
 sctk_net_preinit_driver_hybrid ()
 {
+  sctk_pmi_init();
   sctk_bootstrap_init();
 
   /* Determine if SHM module should be activated */
@@ -489,7 +490,6 @@ sctk_net_init_driver_hybrid (int *argc, char ***argv)
 {
   sctk_thread_t pidt_inter_rdma;
   sctk_thread_attr_t attr_inter_rdma;
-
 
 #ifdef SCTK_SHM
   if (shm_enabled)

@@ -124,7 +124,7 @@ if [ $SCTK_HYDRA -eq 1 ] && [ $SCTK_SLURM -eq 0 ]; then
 
   echo "PMI_ARFLAGS += \$(HYDRA_MODULE)/safestr2.o \$(HYDRA_MODULE)/simple_pmiutil.o \$(HYDRA_MODULE)/simple_pmi.o"  >> Makefile
 
-  echo "PMI_LDFLAGS += -Wl,-rpath \$(HYDRA_MODULE) -L\$(HYDRA_MODULE)"  >> Makefile
+  echo "PMI_LDFLAGS += -Wl,-rpath,\$(HYDRA_MODULE) -L\$(HYDRA_MODULE)"  >> Makefile
   echo "PMI_LDFLAGS += -lsimple" >> Makefile
 
   echo "" >> Makefile
@@ -138,10 +138,10 @@ elif [ $SCTK_HYDRA -eq 0 ] && [ $SCTK_SLURM -eq 1 ]; then
 	if [ -w "${SLURM_PREFIX}" ]; then
 	  if [ -e ${SLURM_PREFIX}/lib ]; then
   		echo "PMI_ARFLAGS += \$(SLURM_MODULE)/lib/libpmi.so"  >> Makefile
-  		echo "PMI_LDFLAGS = -Wl,-rpath \$(SLURM_MODULE)/lib -L\$(SLURM_MODULE)/lib -lpmi"  >> Makefile
+  		echo "PMI_LDFLAGS = -Wl,-rpath,\$(SLURM_MODULE)/lib -L\$(SLURM_MODULE)/lib -lpmi"  >> Makefile
   	elif [ -e ${SLURM_PREFIX}/lib64 ]; then
   		echo "PMI_ARFLAGS += \$(SLURM_MODULE)/lib64/libpmi.so"  >> Makefile
-  		echo "PMI_LDFLAGS = -Wl,-rpath \$(SLURM_MODULE)/lib64 -L\$(SLURM_MODULE)/lib64 -lpmi"  >> Makefile
+  		echo "PMI_LDFLAGS = -Wl,-rpath,\$(SLURM_MODULE)/lib64 -L\$(SLURM_MODULE)/lib64 -lpmi"  >> Makefile
   	else
   		echo -n "Error: libpmi found neither in ${SLURM_PREFIX}/lib nor ${SLURM_PREFIX}/lib64"
     	exit 1
@@ -161,26 +161,42 @@ fi
 echo "#"  >> Makefile
 echo "# Include pour le module HWLOC"  >> Makefile
 echo "#"  >> Makefile
-echo "HWLOC_MODULE_INSTALL=${HWLOC_PREFIX_INSTALL}"  >> Makefile
-echo "HWLOC_MODULE_BUILD=${HWLOC_PREFIX_BUILD}"  >> Makefile
 
-if [ $SCTK_HWLOC_EMB -eq 1 ]; then
-  echo "CFLAGS += -I\$(HWLOC_MODULE_BUILD)/include"  >> Makefile
-  echo "HWLOC_ARFLAGS += \$(HWLOC_MODULE_BUILD)/src/.libs/libhwloc.so"  >> Makefile
-  echo "HWLOC_LDFLAGS += -Wl,-rpath \$(HWLOC_MODULE_INSTALL)/lib -L\$(HWLOC_MODULE_BUILD)/src/.libs"  >> Makefile
-#  echo "HWLOC_LDFLAGS += -Wl,-rpath \$(HWLOC_MODULE_INSTALL)/src/.libs -L\$(HWLOC_MODULE_BUILD)/src/.libs"  >> Makefile
+#Generate HWLOC related build parameters
+
+if [ "${HWLOC_USER_PREFIX}" = "embeded" ]; then
+
+	#We are relying on our own HWLOC
+
+	#HWLOC_PREFIX_INSTALL is defined in the root configure
+
+	echo "CFLAGS += -I${HWLOC_PREFIX_BUILD}/include"  >> Makefile
+	echo "HWLOC_ARFLAGS += ${HWLOC_PREFIX_BUILD}/src/.libs/libhwloc.so"  >> Makefile
+	echo "HWLOC_LDFLAGS += -Wl,-rpath,${HWLOC_PREFIX_INSTALL}/lib -L${HWLOC_PREFIX_BUILD}/src/.libs"  >> Makefile
+
 else
-  echo "CFLAGS += -I\$(HWLOC_INSTALL)/include"  >> Makefile
-  echo "HWLOC_ARFLAGS += \$(HWLOC_INSTALL)/lib/libhwloc.so"  >> Makefile
-	if [ -e ${HWLOC_MODULE_INSTALL}/lib ]; then
-	  echo "HWLOC_LDFLAGS += -Wl,-rpath \$(HWLOC_MODULE_INSTALL)/lib -L\$(HWLOC_MODULE_INSTALL)/lib"  >> Makefile
+	#We are relying on a provided HWLOC
+	echo "==>${HWLOC_USER_PREFIX}"
+	if [ -e "${HWLOC_USER_PREFIX}/include/hwloc.h" ]; then
+		echo "CFLAGS += -I${HWLOC_USER_PREFIX}/include"  >> Makefile
+	else
+		sctk_printf "Could not locate hwloc.h header in directory ${HWLOC_USER_PREFIX}/include/"
+		error "You might build using root configure to build the hwloc library"
 	fi
-	if [ -e ${HWLOC_MODULE_INSTALL}/lib64 ]; then
-	  echo "HWLOC_LDFLAGS += -Wl,-rpath \$(HWLOC_MODULE_INSTALL)/lib64 -L\$(HWLOC_MODULE_INSTALL)/lib64"  >> Makefile
+
+
+	echo "HWLOC_ARFLAGS += ${HWLOC_USER_PREFIX}/lib/libhwloc.so"  >> Makefile
+
+	if [ -e "${HWLOC_USER_PREFIX}/lib" ]; then
+		echo "HWLOC_LDFLAGS += -Wl,-rpath,${HWLOC_USER_PREFIX}/lib -L${HWLOC_USER_PREFIX}/lib"  >> Makefile
+	fi
+
+	if [ -e "${HWLOC_USER_PREFIX}/lib64" ]; then
+		echo "HWLOC_LDFLAGS += -Wl,-rpath,${HWLOC_USER_PREFIX}/lib64 -L${HWLOC_USER_PREFIX}/lib64"  >> Makefile
 	fi
 fi
-echo "HWLOC_LDFLAGS += -lhwloc"  >> Makefile
 
+echo "HWLOC_LDFLAGS += -lhwloc"  >> Makefile
 echo "" >> Makefile
 
 #
@@ -189,24 +205,40 @@ echo "" >> Makefile
 echo "#"  >> Makefile
 echo "# Include pour le module OpenPA"  >> Makefile
 echo "#"  >> Makefile
-echo "OPENPA_MODULE_INSTALL=${OPENPA_PREFIX_INSTALL}"  >> Makefile
-echo "OPENPA_MODULE_BUILD=${OPENPA_PREFIX_BUILD}"  >> Makefile
 
-if [ $SCTK_OPENPA_EMB -eq 1 ]; then
-  echo "CFLAGS += -I\$(OPENPA_MODULE_BUILD)/src/"  >> Makefile
-  echo "GNU_CFLAGS += -I\$(OPENPA_MODULE_BUILD)/src"  >> Makefile
-  echo "OPENPA_ARFLAGS += \$(OPENPA_MODULE_BUILD)/src/opa_primitives.o \$(OPENPA_MODULE_BUILD)/src/opa_queue.o"  >> Makefile
-  echo "OPENPA_LDFLAGS += -Wl,-rpath \$(OPENPA_MODULE_INSTALL)/lib  -L\$(OPENPA_MODULE_BUILD)/src"  >> Makefile
+#Generate OpenPA related build parameters
+
+if [ "${OPENPA_USER_PREFIX}" = "embeded"  ]; then
+
+	#we are relying on our own OpenPA
+
+	#OPENPA_PREFIX_INSTALL is defined in the root configure
+
+	echo "CFLAGS += -I${OPENPA_PREFIX_BUILD}/src/"  >> Makefile
+	echo "GNU_CFLAGS += -I${OPENPA_PREFIX_BUILD}/src"  >> Makefile
+	echo "OPENPA_ARFLAGS += ${OPENPA_PREFIX_BUILD}/src/opa_primitives.o ${OPENPA_PREFIX_BUILD}/src/opa_queue.o"  >> Makefile
+	echo "OPENPA_LDFLAGS += -Wl,-rpath,${OPENPA_PREFIX_INSTALL}/lib  -L${OPENPA_PREFIX_BUILD}/src"  >> Makefile
+
 else
-  echo "CFLAGS += -I\$(OPENPA_MODULE_INSTALL)/include"  >> Makefile
-  echo "GNU_CFLAGS += -I\$(OPENPA_MODULE_INSTALL)/include"  >> Makefile
 
-	if [ -e ${OPENPA_MODULE_INSTALL}/lib ]; then
-	  echo "OPENPA_LDFLAGS += -Wl,-rpath \$(OPENPA_MODULE_INSTALL)/lib -L\$(OPENPA_MODULE_INSTALL)/lib"  >> Makefile
+	#We are relying on a provided OpenPA
+
+	if [ -e "${OPENPA_USER_PREFIX}/include/opa_config.h" ]; then
+		echo "CFLAGS += -I${OPENPA_USER_PREFIX}/include"  >> Makefile
+		echo "GNU_CFLAGS += -I${OPENPA_USER_PREFIX}/include"  >> Makefile
+	else
+		sctk_printf "Could not locate opa_config.h header in directory ${OPENPA_USER_PREFIX}/include/"
+		error "You might build using root configure to build the OpenPA library"
 	fi
-	if [ -e ${OPENPA_MODULE_INSTALL}/lib64 ]; then
-  	echo "OPENPA_LDFLAGS += -Wl,-rpath \$(OPENPA_MODULE_INSTALL)/lib64 -L\$(OPENPA_MODULE_INSTALL)/lib64"  >> Makefile
+
+	if [ -e "${OPENPA_USER_PREFIX}/lib" ]; then
+		echo "OPENPA_LDFLAGS += -Wl,-rpath,${OPENPA_USER_PREFIX}/lib -L${OPENPA_USER_PREFIX}/lib"  >> Makefile
 	fi
+
+	if [ -e "${OPENPA_USER_PREFIX}/lib64" ]; then
+		echo "OPENPA_LDFLAGS += -Wl,-rpath,${OPENPA_USER_PREFIX}/lib64 -L${OPENPA_USER_PREFIX}/lib64"  >> Makefile
+	fi
+
 fi
 echo "OPENPA_LDFLAGS += -lopa"  >> Makefile
 
@@ -422,13 +454,13 @@ echo "Preparing includes for Fortran"
 for i in $MODULE_LIST; do
 NAME="fortran_header"
 if test "$SCTK_FORTRAN" = "1" && test "$i" = "MPC_Message_Passing"; then
-printf "\t@\$(CC) -g $SCTK_CFLAGS -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME -LINSTALL/lib -lmpc -lmpc_iso_alloc -lmpc_tdb_remote_static $SCTK_LDFLAGS -lm">> Makefile; echo "">> Makefile
-printf "\t@./$NAME mpc.h > INSTALL/include/mpcf.h 2>/dev/null">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) -g $SCTK_CFLAGS -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME -LINSTALL/lib -lmpc -lmpc_iso_alloc -lmpc_tdb_remote_static $SCTK_LDFLAGS \$(PMI_LDFLAGS) \$(HWLOC_LDFLAGS) \$(OPENPA_LDFLAGS) -lm">> Makefile; echo "">> Makefile
+printf "\t@MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) ./$NAME mpc.h > INSTALL/include/mpcf.h">> Makefile; echo "">> Makefile
 
 DIR_TEST="MPC_MPI"
 check_module
 if test "$FOUND" != "" ; then
-printf "\t@./$NAME mpi.h > INSTALL/include/mpif.h 2>/dev/null">> Makefile; echo "">> Makefile
+printf "\t@MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) ./$NAME mpi.h > INSTALL/include/mpif.h">> Makefile; echo "">> Makefile
 fi
 
 printf "\t@rm ./$NAME">> Makefile; echo "">> Makefile
