@@ -24,13 +24,6 @@
 
 #include <sys/time.h>
 
-/*! \brief Relinquish the CPU moving the current thread at the end of the queue
- *
- */
-void sctk_atomics_pause()
-{
-	OPA_busy_wait();
-}
 #if defined(SCTK_ia64_ARCH_SCTK)
 double
 sctk_atomics_get_timestamp ()

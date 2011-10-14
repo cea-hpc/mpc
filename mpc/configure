@@ -63,6 +63,7 @@ export MPC_SOURCE_DIR
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_determine_config
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_gen_compilation_flags
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_modules
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_extern_deps
 
 # Catch the MPC version
 MPC_VERSION="`${MPC_SOURCE_DIR}MPC_Tools/mpc_print_version`"
@@ -179,8 +180,8 @@ Optional Packages:
   --without-mpc_mmap      disable mpc mmap/munmap support (default: enabled)
   --with-libnuma          enable libnuma for memory and cpu binding (default: disabled)
   --with-libcpuset        enable libcpuset for memory and cpu binding (default: disabled)
-  --with-openpa=[PREFIX]  enable OpenPA using given prefix
-  --with-hwloc=[PREFIX]   enable hwloc usign given prefix
+  --with-openpa=[PREFIX]  enable OpenPA using given prefix (default: system)
+  --with-hwloc=[PREFIX]   enable hwloc usign given prefix (default: system)
 
 
 echo "MPCROOT=
@@ -417,36 +418,6 @@ SCTK_CFLAGS="$SCTK_CFLAGS $SCTK_CFLAGS_NON_GNU"
 # root configure Hydra might not be installed hence
 # should not be used => Fallback to slurm if available
 
-begin_module "MPC Launcher"
-
-if test "$SCTK_HYDRA" = "1"; then
-	if test -e "${PWD}/../mpc-hydra"; then
-
-		sctk_echo "Setting MPC launcher to:  Hydra"
-
-	else
-
-		sctk_echo "========================WARNING========================="
-		sctk_echo "Hydra was not found : Use the root configure in order to"
-		sctk_echo "                      install MPC with Hydra support.   "
-		sctk_echo "=> MPC will now try to use Slurm as default launcher <= "
-		sctk_echo "========================================================"
-		sctk_echo "Setting MPC launcher to:   Slurm (if available)"
-		sctk_wait "Configure" 5
-		#Deactivate Hydra
-		SCTK_HYDRA=0
-		#Try to use Slurm
-		SCTK_SLURM=1
-
-	fi
-else
-
-	sctk_echo "Setting MPC launcher to:   Slurm (if available)"
-fi
-
-end_module "MPC Launcher"
-
-
 if [ $SCTK_HYDRA -eq 1 ]; then
   SCTK_JOB_MANAGER="HYDRA"
 elif [ $SCTK_SLURM -eq 1 ]; then
@@ -524,7 +495,6 @@ case ${SCTK_OS} in
     sctk_echo "No specific libs"
 esac
 end_section
-
 
 begin_section "Check module dependencies:"
 # MPC Module Dependency Check

@@ -57,11 +57,7 @@ typedef OPA_ptr_t sctk_atomics_ptr;
 #define sctk_atomics_write_barrier       OPA_write_barrier
 #define sctk_atomics_read_barrier        OPA_read_barrier
 #define sctk_atomics_read_write_barrier  OPA_read_write_barrier
-
-/*! \brief Relinquish the CPU moving the current thread at the end of the queue
- *
- */
-void sctk_atomics_pause();
+#define sctk_atomics_pause               OPA_busy_wait
 
 #else
 #error Unsupported architecture. Cannot compile MPC

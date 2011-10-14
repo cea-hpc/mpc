@@ -51,7 +51,6 @@ SCTK_CHECK_HEADER sys/pstat.h
 SCTK_CHECK_HEADER sys/param.h
 fi
 SCTK_CHECK_HEADER_NOFAIL windows.h
-
 SCTK_CHECK_FUNC abort
 SCTK_CHECK_FUNC fclose
 SCTK_CHECK_FUNC fopen
@@ -125,6 +124,8 @@ SCTK_CHECK_HEADER_NOFAIL gc.h
 SCTK_CHECK_HEADER_NOFAIL mono/jit/jit.h
 SCTK_CHECK_HEADER_NOFAIL mono/metadata/threads.h
 end_section
+
+SCTK_CHECK_LIB_HWLOC
 
 begin_section Pthread
 check_pthread_flags 

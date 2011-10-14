@@ -51,7 +51,6 @@ SCTK_CHECK_HEADER unistd.h
 SCTK_CHECK_HEADER setjmp.h
 SCTK_CHECK_HEADER signal.h
 
-
 sctk_echo
 
 SCTK_CHECK_FUNC abort
@@ -150,3 +149,5 @@ fi
 begin_section Valgrind
 check_debug
 end_section
+
+SCTK_CHECK_LIB_OPENPA

@@ -770,26 +770,6 @@ sctk_echo "Already done"
 fi
 }
 
-check_slurm_done="0"
-check_slurm(){
-if test "$check_slurm_done" = "0" ; then
-check_slurm_done="1"
-if test "$SCTK_SLURM" = "1" ; then
-    begin_section "Check SLURM:"
-    SCTK_CHECK_HEADER_NOFAIL slurm/slurm.h
-    SCTK_CHECK_HEADER_NOFAIL slurm/pmi.h
-    if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
-	SCTK_CHECK_OPTION "-DMPC_USE_SLURM"
-	SCTK_CHECK_LDOPTION "-lpmi"
-    fi
-    end_section
-fi
-else
-sctk_echo "Already done"
-fi
-}
-
-
 check_net_mpi_done=""
 check_net_mpi(){
 check_net_mpi_done="1"

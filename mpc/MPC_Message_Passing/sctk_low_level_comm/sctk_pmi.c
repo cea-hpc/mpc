@@ -37,7 +37,7 @@ static int sctk_pmi_processes_on_node_number;
 #endif /* MPC_USE_HYDRA */
 
 #ifdef MPC_USE_SLURM
-#include <slurm/pmi.h>
+#include <pmi.h>
 #endif /* MPC_USE_SLURM */
 
 static int sctk_max_val_len;

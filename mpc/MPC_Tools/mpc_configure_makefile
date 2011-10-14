@@ -49,18 +49,6 @@ for sctk_flags_i in $SCTK_CFLAGS; do
 done
 
 #
-# Populate SCTK_CFLAGS variable for launcher environment
-#
-if [ $SCTK_HYDRA -eq 1 ] && [ $SCTK_SLURM -eq 0 ]; then
-  SCTK_CFLAGS="$SCTK_CFLAGS -DMPC_USE_HYDRA"
-elif [ $SCTK_HYDRA -eq 0 ] && [ $SCTK_SLURM -eq 1 ]; then
-  SCTK_CFLAGS="$SCTK_CFLAGS -DMPC_USE_SLURM"
-else
-  echo -n "Error with launcher....!"
-  exit 1
-fi
-
-#
 # Generate SCTK_MAKE_NO_DEP variable
 #
 if test "$SCTK_NODEP" = "1" ; then
@@ -111,139 +99,9 @@ MPC_AUTO_KILL_TIMEOUT=300
 
 EOF
 
-#
-## PMI (HYDRA/SLURM)
-#
-if [ $SCTK_HYDRA -eq 1 ] && [ $SCTK_SLURM -eq 0 ]; then
-  echo "#"  >> Makefile
-  echo "# Include pour le module HYDRA"  >> Makefile
-  echo "#"  >> Makefile
-  echo "HYDRA_MODULE=${PWD}/../mpc-hydra-1.4.0_build/simple"  >> Makefile
-
-  echo "CFLAGS += -I\$(HYDRA_MODULE)"  >> Makefile
-
-  echo "PMI_ARFLAGS += \$(HYDRA_MODULE)/safestr2.o \$(HYDRA_MODULE)/simple_pmiutil.o \$(HYDRA_MODULE)/simple_pmi.o"  >> Makefile
-
-  echo "PMI_LDFLAGS += -Wl,-rpath,\$(HYDRA_MODULE) -L\$(HYDRA_MODULE)"  >> Makefile
-  echo "PMI_LDFLAGS += -lsimple" >> Makefile
-
-  echo "" >> Makefile
-elif [ $SCTK_HYDRA -eq 0 ] && [ $SCTK_SLURM -eq 1 ]; then
-  echo "#"  >> Makefile
-  echo "# Include pour le module SLURM"  >> Makefile
-  echo "#"  >> Makefile
-
-	echo "SLURM_MODULE=${SLURM_PREFIX}"  >> Makefile
-	# For the moment, we dont use rpath
-	if [ -w "${SLURM_PREFIX}" ]; then
-	  if [ -e ${SLURM_PREFIX}/lib ]; then
-  		echo "PMI_ARFLAGS += \$(SLURM_MODULE)/lib/libpmi.so"  >> Makefile
-  		echo "PMI_LDFLAGS = -Wl,-rpath,\$(SLURM_MODULE)/lib -L\$(SLURM_MODULE)/lib -lpmi"  >> Makefile
-  	elif [ -e ${SLURM_PREFIX}/lib64 ]; then
-  		echo "PMI_ARFLAGS += \$(SLURM_MODULE)/lib64/libpmi.so"  >> Makefile
-  		echo "PMI_LDFLAGS = -Wl,-rpath,\$(SLURM_MODULE)/lib64 -L\$(SLURM_MODULE)/lib64 -lpmi"  >> Makefile
-  	else
-  		echo -n "Error: libpmi found neither in ${SLURM_PREFIX}/lib nor ${SLURM_PREFIX}/lib64"
-    	exit 1
-   	fi
-		echo "PMI_LDFLAGS =  -L\$(SLURM_MODULE)/lib64 -L\$(SLURM_MODULE)/lib -lpmi"  >> Makefile
-  	echo "CFLAGS += -I\$(SLURM_MODULE)/include"  >> Makefile
-	else
- 		echo "PMI_LDFLAGS = -lpmi "  >> Makefile
-	fi
-
-  echo "" >> Makefile
-fi
-
-#
-## HWLOC
-#
-echo "#"  >> Makefile
-echo "# Include pour le module HWLOC"  >> Makefile
-echo "#"  >> Makefile
-
-#Generate HWLOC related build parameters
-
-if [ "${HWLOC_USER_PREFIX}" = "embeded" ]; then
-
-	#We are relying on our own HWLOC
-
-	#HWLOC_PREFIX_INSTALL is defined in the root configure
-
-	echo "CFLAGS += -I${HWLOC_PREFIX_BUILD}/include"  >> Makefile
-	echo "HWLOC_ARFLAGS += ${HWLOC_PREFIX_BUILD}/src/.libs/libhwloc.so"  >> Makefile
-	echo "HWLOC_LDFLAGS += -Wl,-rpath,${HWLOC_PREFIX_INSTALL}/lib -L${HWLOC_PREFIX_BUILD}/src/.libs"  >> Makefile
-
-else
-	#We are relying on a provided HWLOC
-	echo "==>${HWLOC_USER_PREFIX}"
-	if [ -e "${HWLOC_USER_PREFIX}/include/hwloc.h" ]; then
-		echo "CFLAGS += -I${HWLOC_USER_PREFIX}/include"  >> Makefile
-	else
-		sctk_printf "Could not locate hwloc.h header in directory ${HWLOC_USER_PREFIX}/include/"
-		error "You might build using root configure to build the hwloc library"
-	fi
-
-
-	echo "HWLOC_ARFLAGS += ${HWLOC_USER_PREFIX}/lib/libhwloc.so"  >> Makefile
-
-	if [ -e "${HWLOC_USER_PREFIX}/lib" ]; then
-		echo "HWLOC_LDFLAGS += -Wl,-rpath,${HWLOC_USER_PREFIX}/lib -L${HWLOC_USER_PREFIX}/lib"  >> Makefile
-	fi
-
-	if [ -e "${HWLOC_USER_PREFIX}/lib64" ]; then
-		echo "HWLOC_LDFLAGS += -Wl,-rpath,${HWLOC_USER_PREFIX}/lib64 -L${HWLOC_USER_PREFIX}/lib64"  >> Makefile
-	fi
-fi
-
-echo "HWLOC_LDFLAGS += -lhwloc"  >> Makefile
-echo "" >> Makefile
-
-#
-## OpenPA
-#
-echo "#"  >> Makefile
-echo "# Include pour le module OpenPA"  >> Makefile
-echo "#"  >> Makefile
-
-#Generate OpenPA related build parameters
-
-if [ "${OPENPA_USER_PREFIX}" = "embeded"  ]; then
-
-	#we are relying on our own OpenPA
-
-	#OPENPA_PREFIX_INSTALL is defined in the root configure
-
-	echo "CFLAGS += -I${OPENPA_PREFIX_BUILD}/src/"  >> Makefile
-	echo "GNU_CFLAGS += -I${OPENPA_PREFIX_BUILD}/src"  >> Makefile
-	echo "OPENPA_ARFLAGS += ${OPENPA_PREFIX_BUILD}/src/opa_primitives.o ${OPENPA_PREFIX_BUILD}/src/opa_queue.o"  >> Makefile
-	echo "OPENPA_LDFLAGS += -Wl,-rpath,${OPENPA_PREFIX_INSTALL}/lib  -L${OPENPA_PREFIX_BUILD}/src"  >> Makefile
-
-else
-
-	#We are relying on a provided OpenPA
-
-	if [ -e "${OPENPA_USER_PREFIX}/include/opa_config.h" ]; then
-		echo "CFLAGS += -I${OPENPA_USER_PREFIX}/include"  >> Makefile
-		echo "GNU_CFLAGS += -I${OPENPA_USER_PREFIX}/include"  >> Makefile
-	else
-		sctk_printf "Could not locate opa_config.h header in directory ${OPENPA_USER_PREFIX}/include/"
-		error "You might build using root configure to build the OpenPA library"
-	fi
-
-	if [ -e "${OPENPA_USER_PREFIX}/lib" ]; then
-		echo "OPENPA_LDFLAGS += -Wl,-rpath,${OPENPA_USER_PREFIX}/lib -L${OPENPA_USER_PREFIX}/lib"  >> Makefile
-	fi
-
-	if [ -e "${OPENPA_USER_PREFIX}/lib64" ]; then
-		echo "OPENPA_LDFLAGS += -Wl,-rpath,${OPENPA_USER_PREFIX}/lib64 -L${OPENPA_USER_PREFIX}/lib64"  >> Makefile
-	fi
-
-fi
-echo "OPENPA_LDFLAGS += -lopa"  >> Makefile
-
-echo "" >> Makefile
-
+#list of extra objects to staticly link in the lib with AR
+#eg : openpa, hwloc...
+echo "SCTK_ARFLAGS += ${SCTK_ARFLAGS}" >> Makefile
 
 echo "export MPC_SOURCE_DIR"  >> Makefile
 echo "export SCTK_ARCH_OPTIM"  >> Makefile
@@ -292,7 +150,7 @@ echo "" >> Makefile
 echo "lib/libmpc.a: \$(COMPIL_DIR)" >> Makefile
 printf "\t@mkdir -p lib">> Makefile; echo "">> Makefile
 printf "\t@echo Build \$@">> Makefile; echo "">> Makefile
-printf "\t@\$(AR) rcu \$@ \$(COBJ_LIST) \$(PMI_ARFLAGS) \$(HWLOC_ARFLAGS) \$(OPENPA_ARFLAGS)">> Makefile; echo "">> Makefile
+printf "\t@\$(AR) rcu \$@ \$(COBJ_LIST) \$(SCTK_ARFLAGS)">> Makefile; echo "">> Makefile
 
 #
 # Rule to build libmpc_iso_alloc.a
@@ -454,7 +312,7 @@ echo "Preparing includes for Fortran"
 for i in $MODULE_LIST; do
 NAME="fortran_header"
 if test "$SCTK_FORTRAN" = "1" && test "$i" = "MPC_Message_Passing"; then
-printf "\t@\$(CC) -g $SCTK_CFLAGS -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME -LINSTALL/lib -lmpc -lmpc_iso_alloc -lmpc_tdb_remote_static $SCTK_LDFLAGS \$(PMI_LDFLAGS) \$(HWLOC_LDFLAGS) \$(OPENPA_LDFLAGS) -lm">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) -g $SCTK_CFLAGS -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME -LINSTALL/lib -lmpc -lmpc_iso_alloc -lmpc_tdb_remote_static $SCTK_LDFLAGS -lm">> Makefile; echo "">> Makefile
 printf "\t@MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) ./$NAME mpc.h > INSTALL/include/mpcf.h">> Makefile; echo "">> Makefile
 
 DIR_TEST="MPC_MPI"
@@ -480,7 +338,7 @@ printf "\t@cp -r INSTALL/lib/* \${DESTDIR}${SCTK_LIB_DIR}">> Makefile; echo "">>
 printf "\t@cp -r INSTALL/include/* \${DESTDIR}${SCTK_INCLUDE_DIR}">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/man/* \${DESTDIR}${SCTK_MAN_DIR}">> Makefile; echo "">> Makefile
 printf "\t@echo \"Build dynamic libraries\"">> Makefile; echo "">> Makefile
-printf "\t@\$(CC) \$(COBJ_LIST) \$(PMI_LDFLAGS) \$(HWLOC_LDFLAGS) \$(OPENPA_LDFLAGS) -fPIC -shared -o \${DESTDIR}${SCTK_PREFIX}/lib/libmpc.so $SCTK_LDFLAGS|| echo \"Unable to build C shared library\"">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) \$(COBJ_LIST) ${EXTERN_NON_TESTED_LIB} -fPIC -shared -o \${DESTDIR}${SCTK_PREFIX}/lib/libmpc.so $SCTK_LDFLAGS|| echo \"Unable to build C shared library\"">> Makefile; echo "">> Makefile
 if test "$SCTK_FORTRAN" = "1"; then
 printf "\t@\$(F77) \$(FOBJ_LIST) -fPIC -shared -o \${DESTDIR}${SCTK_LIB_DIR}/libmpcf.so $SCTK_LDFLAGS|| echo \"Unable to build Fortran shared library\"">> Makefile; echo "">> Makefile
 fi
