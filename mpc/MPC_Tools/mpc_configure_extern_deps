@@ -1,0 +1,125 @@
+#!/bin/sh
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - VALAT Sébastien sebastien.valat@cea.fr                           #
+#                                                                      #
+########################################################################
+
+#Default values
+EXTERN_NON_TESTED_LIB=""
+
+# Setup vars to use lib hwloc
+# Params :
+# Global variables :
+#   - HWLOC_USER_PREFIX : Prefix used to search hwloc, embeded to use the one from MPC package.
+#   - HWLOC_PREFIX_BUILD : Build directory where to find the internal hwloc.
+#   - HWLOC_PREFIX_INSTALL : Install directory for hwlock.
+# Will setup:
+#   - SCTK_CFLAGS
+#   - SCTK_LDFLAGS
+#   - SCTK_ARFLAGS
+#   - HWLOCK_LIB
+SCTK_SETUP_LIB_HWLOC()
+{
+	if [ "${HWLOC_USER_PREFIX}" = "embeded" ]; then
+		#We are relying on our own HWLOC
+		#HWLOC_PREFIX_INSTALL is defined in the root configure
+		SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_PREFIX_BUILD}/src/.libs/libhwloc.so"
+		SCTK_CFLAGS="${SCTK_CFLAGS} -I${HWLOC_PREFIX_BUILD}/include/"
+		SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${HWLOC_PREFIX_INSTALL}/lib -L${HWLOC_PREFIX_BUILD}/src/.libs"
+	elif [ -n "${HWLOC_USER_PREFIX}" ]; then
+		#We are relying on a provided HWLOC
+		if [ -e "${HWLOC_USER_PREFIX}/include/hwloc.h" ]; then
+			SCTK_CFLAGS="${SCTK_CFLAGS} -I${HWLOC_USER_PREFIX}/include/"
+		else
+			sctk_printf "Could not locate hwloc.h header in directory ${HWLOC_USER_PREFIX}/include/"
+			error "You might build using root configure to build the hwloc library"
+		fi
+
+		#setup rpaths and -L
+		if [ -e "${HWLOC_USER_PREFIX}/lib" ]; then
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${HWLOC_USER_PREFIX}/lib -L${HWLOC_USER_PREFIX}/lib"
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib/libhwloc.so"
+		fi
+		if [ -e "${HWLOC_USER_PREFIX}/lib64" ]; then
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${HWLOC_USER_PREFIX}/lib64 -L${HWLOC_USER_PREFIX}/lib64"
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib64/libhwloc.so"
+		fi
+	fi
+
+	#check header
+	SCTK_CHECK_HEADER "hwloc.h"
+
+	#avoid to test -lopa if used embeded as it was not build while calling configure, so will fail
+	if [ "${OPENPA_USER_PREFIX}" = "embeded"  ]; then
+		EXTERN_NON_TESTED_LIB="${EXTERN_NON_TESTED_LIB} -lhwloc"
+	else
+		SCTK_CHECK_LDOPTION "-lhwloc"
+	fi
+}
+
+# Setup vars to use lib openpa
+# Params :
+# Global variables :
+#   - OPENPA_USER_PREFIX : Prefix used to search openpa, embeded to use the one from MPC package.
+#   - OPENPA_PREFIX_BUILD : Build directory where to find the internal openpa
+#   - OPENPA_PREFIX_INSTALL : Install directory for openpa
+# Will setup:
+#   - SCTK_CFLAGS
+#   - SCTK_LDFLAGS
+#   - SCTK_ARFLAGS
+#   - OPENPA_LIB
+SCTK_SETUP_LIB_OPENPA()
+{
+	if [ "${OPENPA_USER_PREFIX}" = "embeded"  ]; then
+		#we are relying on our own OpenPA
+		#OPENPA_PREFIX_INSTALL is defined in the root configure
+		SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENPA_PREFIX_BUILD}/src/opa_primitives.o ${OPENPA_PREFIX_BUILD}/src/opa_queue.o"
+		SCTK_CFLAGS="${SCTK_CFLAGS} -I${OPENPA_PREFIX_BUILD}/src/"
+		SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENPA_PREFIX_INSTALL}/lib  -L${OPENPA_PREFIX_BUILD}/src"
+	elif [ -n "${OPENPA_USER_PREFIX}" ]; then
+		#We are relying on a provided OpenPA
+		if [ -e "${OPENPA_USER_PREFIX}/include/opa_config.h" ]; then
+			SCTK_CFLAGS="${SCTK_CFLAGS} -I${OPENPA_USER_PREFIX}/include/"
+		else
+			sctk_printf "Could not locate opa_config.h header in directory ${OPENPA_USER_PREFIX}/include/"
+			error "You might build using root configure to build the OpenPA library"
+		fi
+
+		#setup rpaths and -L
+		if [ -e "${OPENPA_USER_PREFIX}/lib" ]; then
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENPA_USER_PREFIX}/lib -L${OPENPA_USER_PREFIX}/lib"
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib/libopa.so"
+		fi
+		if [ -e "${OPENPA_USER_PREFIX}/lib64" ]; then
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENPA_USER_PREFIX}/lib64 -L${OPENPA_USER_PREFIX}/lib64"
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib64/libopa.so"
+		fi
+	fi
+
+	#check headers
+	SCTK_CHECK_HEADER "opa_config.h opa_primitives.h"
+
+	#avoid to test -lopa if used embeded as it was not build while calling configure, so will fail
+	if [ "${OPENPA_USER_PREFIX}" = "embeded"  ]; then
+		EXTERN_NON_TESTED_LIB="${EXTERN_NON_TESTED_LIB} -lopa"
+	else
+		SCTK_CHECK_LDOPTION "-lopa"
+	fi
+}

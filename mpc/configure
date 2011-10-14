@@ -63,6 +63,7 @@ export MPC_SOURCE_DIR
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_determine_config
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_gen_compilation_flags
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_modules
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_extern_deps
 
 # Catch the MPC version
 MPC_VERSION="`${MPC_SOURCE_DIR}MPC_Tools/mpc_print_version`"
@@ -179,8 +180,8 @@ Optional Packages:
   --without-mpc_mmap      disable mpc mmap/munmap support (default: enabled)
   --with-libnuma          enable libnuma for memory and cpu binding (default: disabled)
   --with-libcpuset        enable libcpuset for memory and cpu binding (default: disabled)
-  --with-openpa=[PREFIX]  enable OpenPA using given prefix
-  --with-hwloc=[PREFIX]   enable hwloc usign given prefix
+  --with-openpa=[PREFIX]  enable OpenPA using given prefix (default: system)
+  --with-hwloc=[PREFIX]   enable hwloc usign given prefix (default: system)
 
 
 echo "MPCROOT=
@@ -525,6 +526,14 @@ case ${SCTK_OS} in
 esac
 end_section
 
+# Check global deps
+echo
+begin_section "Global dependencies"
+#setup libs
+SCTK_SETUP_LIB_OPENPA
+SCTK_SETUP_LIB_HWLOC
+end_section
+echo
 
 begin_section "Check module dependencies:"
 # MPC Module Dependency Check
