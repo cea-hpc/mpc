@@ -26,6 +26,7 @@
 #include <sctk_debug.h>
 #include <sctk_communicator.h>
 #include <sctk_collective_communications.h>
+#include <mpcmp.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -34,9 +35,17 @@ extern "C"
 
   struct sctk_request_s;
 
+#define SCTK_MESSAGE_PENDING 0
+#define SCTK_MESSAGE_DONE 1
+#define SCTK_MESSAGE_CANCELED 2
+
   typedef struct sctk_thread_message_header_s
   {
-    int local_source;
+    int source;
+    int destination;
+    int glob_source;
+    int glob_destination;
+    sctk_communicator_t communicator;
     int message_tag;
     size_t msg_size;
   } sctk_thread_message_header_t;
@@ -61,39 +70,64 @@ extern "C"
 
 
   typedef enum {
-    sctk_message_contiguous
+    sctk_message_contiguous,
+    sctk_message_pack,
+    sctk_message_pack_absolute
   } sctk_message_type_t;
 
   typedef union {
     sctk_message_contiguous_t contiguous;
   } sctk_message_t;
 
+  typedef MPC_Request sctk_request_t;
+
+  struct sctk_thread_ptp_message_s;
+
+  typedef struct sctk_msg_list_s{
+    struct sctk_thread_ptp_message_s * msg;
+    struct sctk_msg_list_s *prev, *next;
+  }sctk_msg_list_t;
+
+typedef struct sctk_message_to_copy_s{
+  struct sctk_thread_ptp_message_s * msg_send;
+  struct sctk_thread_ptp_message_s * msg_recv;  
+  struct sctk_message_to_copy_s * prev, *next;
+}sctk_message_to_copy_t;
+
   typedef struct sctk_thread_ptp_message_s{
     sctk_thread_message_header_t header;
     volatile int* completion_flag; 
+    sctk_request_t * request;
+
+    sctk_message_type_t message_type;
     sctk_message_t message;
+
+    /*Storage structs*/
+    sctk_msg_list_t distant_list;
+    sctk_message_to_copy_t copy_list;
+
+    /*Destructor*/
+    void (*free_memory)(void*);
+
+    /*Copy operator*/
+    void (*message_copy)(sctk_message_to_copy_t*);
   }sctk_thread_ptp_message_t;
 
-  typedef struct sctk_request_s{
-    int dummy;
-/*     volatile int completion_flag; */
-/*     sctk_thread_ptp_message_t *msg; */
-/*     sctk_thread_message_header_t header; */
-/*     volatile size_t msg_size; */
-/*     sctk_default_pack_t default_pack; */
-/*     int is_null; */
-    /*     void *ptr; */
-  } sctk_request_t;
 
   /**
      Check if the message if completed according to the message passed as a request
   */
   void sctk_perform_messages(sctk_request_t* request);
 
-  sctk_thread_ptp_message_t *sctk_create_header (const int myself);
+  void sctk_init_header (sctk_thread_ptp_message_t *tmp, const int myself,
+			 sctk_message_type_t msg_type, void (*free_memory)(void*),
+			 void (*message_copy)(sctk_message_to_copy_t*));
+  void sctk_reinit_header (sctk_thread_ptp_message_t *tmp, void (*free_memory)(void*),
+			   void (*message_copy)(sctk_message_to_copy_t*));
+  sctk_thread_ptp_message_t *sctk_create_header (const int myself,sctk_message_type_t msg_type);
   sctk_thread_ptp_message_t
     * sctk_add_adress_in_message (sctk_thread_ptp_message_t *
-				  restrict msg, void *restrict adr,
+				  restrict msg, void *restrict addr,
 				  const size_t size);
   sctk_thread_ptp_message_t
     * sctk_add_pack_in_message (sctk_thread_ptp_message_t * msg,

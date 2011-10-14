@@ -135,6 +135,27 @@ int sctk_get_rank (const sctk_communicator_t communicator,
     }
   }
 }
+int sctk_get_comm_world_rank (const sctk_communicator_t communicator,
+			      const int rank){
+  if(sctk_communicator_table == NULL){
+    if(communicator == SCTK_COMM_SELF){
+      return 0;
+    } else {
+      return rank;
+    }
+  } else {
+    sctk_internal_communicator_t* tmp; 
+
+    sctk_spinlock_read_lock(&sctk_communicator_table_lock);
+    HASH_FIND(hh,sctk_communicator_table,&communicator,sizeof(sctk_communicator_t),tmp);
+    sctk_spinlock_read_unlock(&sctk_communicator_table_lock);
+    if(tmp != NULL){
+      not_implemented();
+    } else {
+      return rank;
+    }
+  }
+}
 
 sctk_communicator_t sctk_delete_communicator (const sctk_communicator_t comm){
     not_implemented();

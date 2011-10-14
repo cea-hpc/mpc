@@ -92,12 +92,15 @@ extern "C"
     int destination;
     int message_tag;
     MPC_Comm communicator;
+    mpc_msg_count msg_size;
   }MPC_Header;
 
+  struct sctk_thread_ptp_message_s;
   typedef struct
   {
     MPC_Header header;
     volatile int completion_flag;
+    struct sctk_thread_ptp_message_s* msg;
     int is_null;
   } MPC_Request;
 
