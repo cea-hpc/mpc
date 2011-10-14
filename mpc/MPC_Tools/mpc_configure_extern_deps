@@ -23,6 +23,8 @@
 
 #Default values
 EXTERN_NON_TESTED_LIB=""
+HWLOCK_IS_SETUP="no"
+OPENPA_IS_SETUP="no"
 
 # Setup vars to use lib hwloc
 # Params :
@@ -35,43 +37,76 @@ EXTERN_NON_TESTED_LIB=""
 #   - SCTK_LDFLAGS
 #   - SCTK_ARFLAGS
 #   - HWLOCK_LIB
-SCTK_SETUP_LIB_HWLOC()
+#   - HWLOCK_IS_SETUP
+sctk_internal_setup_lib_hwloc()
 {
-	if [ "${HWLOC_USER_PREFIX}" = "embeded" ]; then
-		#We are relying on our own HWLOC
-		#HWLOC_PREFIX_INSTALL is defined in the root configure
-		SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_PREFIX_BUILD}/src/.libs/libhwloc.so"
-		SCTK_CFLAGS="${SCTK_CFLAGS} -I${HWLOC_PREFIX_BUILD}/include/"
-		SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${HWLOC_PREFIX_INSTALL}/lib -L${HWLOC_PREFIX_BUILD}/src/.libs"
-	elif [ -n "${HWLOC_USER_PREFIX}" ]; then
-		#We are relying on a provided HWLOC
-		if [ -e "${HWLOC_USER_PREFIX}/include/hwloc.h" ]; then
-			SCTK_CFLAGS="${SCTK_CFLAGS} -I${HWLOC_USER_PREFIX}/include/"
-		else
-			sctk_printf "Could not locate hwloc.h header in directory ${HWLOC_USER_PREFIX}/include/"
-			error "You might build using root configure to build the hwloc library"
-		fi
+	if [ "$HWLOCK_IS_SETUP" != "yes" ]; then
+		if [ "${HWLOC_USER_PREFIX}" = "embeded" ]; then
+			#We are relying on our own HWLOC
+			#HWLOC_PREFIX_INSTALL is defined in the root configure
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_PREFIX_BUILD}/src/.libs/libhwloc.so"
+			SCTK_CFLAGS="${SCTK_CFLAGS} -I${HWLOC_PREFIX_BUILD}/include/"
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${HWLOC_PREFIX_INSTALL}/lib -L${HWLOC_PREFIX_BUILD}/src/.libs"
+		elif [ -n "${HWLOC_USER_PREFIX}" ]; then
+			#We are relying on a provided HWLOC
+			if [ -e "${HWLOC_USER_PREFIX}/include/hwloc.h" ]; then
+				SCTK_CFLAGS="${SCTK_CFLAGS} -I${HWLOC_USER_PREFIX}/include/"
+			else
+				sctk_printf "Could not locate hwloc.h header in directory ${HWLOC_USER_PREFIX}/include/"
+				error "You might build using root configure to build the hwloc library"
+			fi
 
-		#setup rpaths and -L
-		if [ -e "${HWLOC_USER_PREFIX}/lib" ]; then
-			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${HWLOC_USER_PREFIX}/lib -L${HWLOC_USER_PREFIX}/lib"
-			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib/libhwloc.so"
-		fi
-		if [ -e "${HWLOC_USER_PREFIX}/lib64" ]; then
-			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${HWLOC_USER_PREFIX}/lib64 -L${HWLOC_USER_PREFIX}/lib64"
-			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib64/libhwloc.so"
+			#setup rpaths and -L
+			if [ -e "${HWLOC_USER_PREFIX}/lib" ]; then
+				SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${HWLOC_USER_PREFIX}/lib -L${HWLOC_USER_PREFIX}/lib"
+				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib/libhwloc.so"
+			fi
+			if [ -e "${HWLOC_USER_PREFIX}/lib64" ]; then
+				SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${HWLOC_USER_PREFIX}/lib64 -L${HWLOC_USER_PREFIX}/lib64"
+				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib64/libhwloc.so"
+			fi
 		fi
 	fi
+
+	#avoid to test -lopa if used embeded as it was not build while calling configure, so will fail
+	if [ "${OPENPA_USER_PREFIX}" = "embeded"  ]; then
+		EXTERN_NON_TESTED_LIB="${EXTERN_NON_TESTED_LIB} -lhwloc"
+	fi
+
+	#mark as setup
+	HWLOCK_IS_SETUP="yes"
+}
+
+# Setup vars to use lib hwloc
+# Params :
+# Global variables :
+#   - HWLOC_USER_PREFIX : Prefix used to search hwloc, embeded to use the one from MPC package.
+#   - HWLOC_PREFIX_BUILD : Build directory where to find the internal hwloc.
+#   - HWLOC_PREFIX_INSTALL : Install directory for hwlock.
+#   - HWLOCK_IS_SETUP : To know if hwlock is already setup
+# Will setup:
+#   - SCTK_CFLAGS
+#   - SCTK_LDFLAGS
+#   - SCTK_ARFLAGS
+#   - HWLOCK_LIB
+SCTK_CHECK_LIB_HWLOC()
+{
+	#mark test section
+	begin_section hwloc
+	
+	#setup if needed
+	sctk_internal_setup_lib_hwloc
 
 	#check header
 	SCTK_CHECK_HEADER "hwloc.h"
 
 	#avoid to test -lopa if used embeded as it was not build while calling configure, so will fail
-	if [ "${OPENPA_USER_PREFIX}" = "embeded"  ]; then
-		EXTERN_NON_TESTED_LIB="${EXTERN_NON_TESTED_LIB} -lhwloc"
-	else
+	if [ "${OPENPA_USER_PREFIX}" != "embeded"  ]; then
 		SCTK_CHECK_LDOPTION "-lhwloc"
 	fi
+
+	#end of section
+	end_section
 }
 
 # Setup vars to use lib openpa
@@ -85,41 +120,75 @@ SCTK_SETUP_LIB_HWLOC()
 #   - SCTK_LDFLAGS
 #   - SCTK_ARFLAGS
 #   - OPENPA_LIB
-SCTK_SETUP_LIB_OPENPA()
+#   - OPENPA_IS_SETUP
+sctk_internal_setup_lib_openpa()
 {
-	if [ "${OPENPA_USER_PREFIX}" = "embeded"  ]; then
-		#we are relying on our own OpenPA
-		#OPENPA_PREFIX_INSTALL is defined in the root configure
-		SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENPA_PREFIX_BUILD}/src/opa_primitives.o ${OPENPA_PREFIX_BUILD}/src/opa_queue.o"
-		SCTK_CFLAGS="${SCTK_CFLAGS} -I${OPENPA_PREFIX_BUILD}/src/"
-		SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENPA_PREFIX_INSTALL}/lib  -L${OPENPA_PREFIX_BUILD}/src"
-	elif [ -n "${OPENPA_USER_PREFIX}" ]; then
-		#We are relying on a provided OpenPA
-		if [ -e "${OPENPA_USER_PREFIX}/include/opa_config.h" ]; then
-			SCTK_CFLAGS="${SCTK_CFLAGS} -I${OPENPA_USER_PREFIX}/include/"
-		else
-			sctk_printf "Could not locate opa_config.h header in directory ${OPENPA_USER_PREFIX}/include/"
-			error "You might build using root configure to build the OpenPA library"
-		fi
+	if [ "$OPENPA_IS_SETUP" != "yes" ]; then
+		if [ "${OPENPA_USER_PREFIX}" = "embeded"  ]; then
+			#we are relying on our own OpenPA
+			#OPENPA_PREFIX_INSTALL is defined in the root configure
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENPA_PREFIX_BUILD}/src/opa_primitives.o ${OPENPA_PREFIX_BUILD}/src/opa_queue.o"
+			SCTK_CFLAGS="${SCTK_CFLAGS} -I${OPENPA_PREFIX_BUILD}/src/"
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENPA_PREFIX_INSTALL}/lib  -L${OPENPA_PREFIX_BUILD}/src"
+		elif [ -n "${OPENPA_USER_PREFIX}" ]; then
+			#We are relying on a provided OpenPA
+			if [ -e "${OPENPA_USER_PREFIX}/include/opa_config.h" ]; then
+				SCTK_CFLAGS="${SCTK_CFLAGS} -I${OPENPA_USER_PREFIX}/include/"
+			else
+				sctk_printf "Could not locate opa_config.h header in directory ${OPENPA_USER_PREFIX}/include/"
+				error "You might build using root configure to build the OpenPA library"
+			fi
 
-		#setup rpaths and -L
-		if [ -e "${OPENPA_USER_PREFIX}/lib" ]; then
-			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENPA_USER_PREFIX}/lib -L${OPENPA_USER_PREFIX}/lib"
-			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib/libopa.so"
-		fi
-		if [ -e "${OPENPA_USER_PREFIX}/lib64" ]; then
-			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENPA_USER_PREFIX}/lib64 -L${OPENPA_USER_PREFIX}/lib64"
-			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib64/libopa.so"
+			#setup rpaths and -L
+			if [ -e "${OPENPA_USER_PREFIX}/lib" ]; then
+				SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENPA_USER_PREFIX}/lib -L${OPENPA_USER_PREFIX}/lib"
+				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib/libopa.so"
+			fi
+			if [ -e "${OPENPA_USER_PREFIX}/lib64" ]; then
+				SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENPA_USER_PREFIX}/lib64 -L${OPENPA_USER_PREFIX}/lib64"
+				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib64/libopa.so"
+			fi
 		fi
 	fi
+
+	#avoid to test -lopa if used embeded as it was not build while calling configure, so will fail
+	if [ "${OPENPA_USER_PREFIX}" = "embeded"  ]; then
+		EXTERN_NON_TESTED_LIB="${EXTERN_NON_TESTED_LIB} -lopa"
+	fi
+
+	#mark as setup
+	OPENPA_IS_SETUP="yes"
+}
+
+# Setup vars to use lib openpa
+# Params :
+# Global variables :
+#   - OPENPA_USER_PREFIX : Prefix used to search openpa, embeded to use the one from MPC package.
+#   - OPENPA_PREFIX_BUILD : Build directory where to find the internal openpa
+#   - OPENPA_PREFIX_INSTALL : Install directory for openpa
+#   - OPENPA_IS_SETUP : To know is already setup
+# Will setup:
+#   - SCTK_CFLAGS
+#   - SCTK_LDFLAGS
+#   - SCTK_ARFLAGS
+#   - OPENPA_LIB
+#   - 
+SCTK_CHECK_LIB_OPENPA()
+{
+	#mark test section
+	begin_section OpenPA
+
+	#setup if needed
+	sctk_internal_setup_lib_openpa
 
 	#check headers
 	SCTK_CHECK_HEADER "opa_config.h opa_primitives.h"
 
 	#avoid to test -lopa if used embeded as it was not build while calling configure, so will fail
-	if [ "${OPENPA_USER_PREFIX}" = "embeded"  ]; then
-		EXTERN_NON_TESTED_LIB="${EXTERN_NON_TESTED_LIB} -lopa"
-	else
+	if [ "${OPENPA_USER_PREFIX}" != "embeded"  ]; then
 		SCTK_CHECK_LDOPTION "-lopa"
 	fi
+
+	#end of test section
+	end_section
 }

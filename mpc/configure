@@ -526,15 +526,6 @@ case ${SCTK_OS} in
 esac
 end_section
 
-# Check global deps
-echo
-begin_section "Global dependencies"
-#setup libs
-SCTK_SETUP_LIB_OPENPA
-SCTK_SETUP_LIB_HWLOC
-end_section
-echo
-
 begin_section "Check module dependencies:"
 # MPC Module Dependency Check
 

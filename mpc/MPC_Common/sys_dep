@@ -50,8 +50,6 @@ SCTK_CHECK_HEADER sys/types.h
 SCTK_CHECK_HEADER unistd.h
 SCTK_CHECK_HEADER setjmp.h
 SCTK_CHECK_HEADER signal.h
-SCTK_CHECK_HEADER opa_config.h
-SCTK_CHECK_HEADER opa_primitives.h
 
 sctk_echo
 
@@ -151,3 +149,5 @@ fi
 begin_section Valgrind
 check_debug
 end_section
+
+SCTK_CHECK_LIB_OPENPA
