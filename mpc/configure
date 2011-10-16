@@ -74,7 +74,7 @@ else
 fi
 
 MODULE="MPC"
-
+cat ${MPC_SOURCE_DIR}/../tools/banner
 sctk_echo "'configure' configures ${MODULE} ${MPC_VERSION} to adapt to many kinds of systems."
 
 sctk_echo
@@ -132,39 +132,41 @@ VAR=VALUE.  See below for descriptions of some of the useful variables.
 Defaults for the options are specified in brackets.
 
 Configuration:
-  -h, --help              display this help and exit
-  -n, --no-create         do not create output files
+  -h, --help              Display this help and exit
+  -n, --no-create         Do not create output files
 
 EOF
 
 cat <<EOF
 Installation directories:
-  --prefix=PREFIX         install architecture-independent files in PREFIX
-                          [/usr/local]
-  --exec-prefix=EPREFIX   install architecture-dependent files in EPREFIX
-                          [same as prefix]
-  --bindir=DIR            User executables in DIR [EPREFIX/bin]
-  --includedir=DIR        C header files in DIR [PREFIX/include]
-  --libdir=DIR            Object code libraries in DIR [EPREFIX/lib]
-  --mandir=DIR            Man documentation in DIR [PREFIX/man]
+  --prefix=PREFIX         Install architecture-independent files in PREFIX [/usr/local]
+  --exec-prefix=EPREFIX   Install architecture-dependent files in EPREFIX [PREFIX]
 
 By default, 'make install' will install all the files in
 '/usr/local/bin', '/usr/local/lib' etc.  You can specify
 an installation prefix other than '/usr/local' using '--prefix',
 for instance '--prefix=\$HOME'.
 
+Fine tuning of the installation directories:
+  --bindir=DIR            User executables in DIR [EPREFIX/bin]
+  --includedir=DIR        C header files in DIR [PREFIX/include]
+  --libdir=DIR            Object code libraries in DIR [EPREFIX/lib]
+  --mandir=DIR            Man documentation in DIR [PREFIX/man]
+
 EOF
 
 cat <<EOF
-Optional Features:
-  --disable-FEATURE                do not include FEATURE
-  --enable-FEATURE                 include FEATURE
-  --use-network=*                  select inter-node network type (default: all)
-  --enable-fortran                 build MPC fortran API
-  --enable-debug                   enable MPC internal debugging features
-  --enable-debug-messages          enable MPC debug message printing in verbose level 3
-  --disable-shm                    disable intra-node communication module (SHM)
-  --enable-shell-colors            enable support of colors in shell
+Optional features:
+  --disable-FEATURE                Do not include FEATURE
+  --enable-FEATURE                 Include FEATURE
+  --enable-fortran                 Build MPC fortran API
+  --use-network=*                  Select inter-node network type [all]
+  --disable-shm                    Disable intra-node communication module (SHM)
+  --enable-debug                   Enable MPC internal debugging features
+  --enable-debug-messages          Enable MPC debug message printing in verbose level 3
+  --enable-shell-colors            Enable support of colors in shell
+
+Module selection:
 EOF
 
 mpc_modules_print_help disabled
@@ -172,28 +174,26 @@ mpc_modules_print_help enabled
 
 cat <<EOF
 
-Optional Packages:
-  --with-PACKAGE          use PACKAGE
-  --without-PACKAGE       do not use PACKAGE
-  --without-libunwind     disable libunwind backtraces (default: enabled)
-  --without-slurm         disable slurm detection (default: enabled)
-  --without-mpc_mmap      disable mpc mmap/munmap support (default: enabled)
-  --with-libnuma          enable libnuma for memory and cpu binding (default: disabled)
-  --with-libcpuset        enable libcpuset for memory and cpu binding (default: disabled)
-  --with-openpa=[PREFIX]  enable OpenPA using given prefix (default: system)
-  --with-hwloc=[PREFIX]   enable hwloc usign given prefix (default: system)
-
-
-echo "MPCROOT=
+Optional packages:
+  --with-PACKAGE          Use PACKAGE
+  --without-PACKAGE       Do not use PACKAGE
+  --without-libunwind     Disable libunwind backtraces [enabled]
+  --with-libnuma          Enable libnuma for memory and cpu binding [disabled]
+  --with-libcpuset        Enable libcpuset for memory and cpu binding [disabled]
+  --without-slurm         Disable slurm detection [enabled]
+  --without-mpc_mmap      Disable mpc mmap/munmap support [enabled]
+  --with-openpa=prefix    Enable OpenPA using given prefix [system default]
+  --with-hwloc=prefix     Enable hwloc usign given prefix [system default]
 
 Some influential environment variables:
   CC                               C compiler command
   CFLAGS                           C compiler flags
   CFLAGS_NON_GNU                   C compiler flags except for gcc
-  LDFLAGS                          linker flags, e.g. -L<lib dir> if you have libraries in a
-                                   nonstandard directory <lib dir>
+  LDFLAGS                          Linker flags, e.g. -L<lib dir> if you have libraries in a
+                                   Nonstandard directory <lib dir>
   CXX                              C++ compiler command
   F77                              Fortran compiler command
+
 EOF
 
 }
@@ -201,6 +201,7 @@ EOF
 begin_section "Module detection:"
 # Activate all modules (look for the directory)
 mpc_modules_activate_modules
+sctk_echo ""
 
 SCTK_LIBUNWIND="1"
 SCTK_LIBNUMA="0"
