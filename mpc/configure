@@ -319,7 +319,7 @@ for arg in "$@" ; do
     ;;
     --enable-debug)
     SCTK_DEBUG="1"
-    if [ "$SCTK_DEBUG_MESSAGES_DISABLED" == "0" ]; then
+    if [ "$SCTK_DEBUG_MESSAGES_DISABLED" -eq "0" ]; then
       SCTK_DEBUG_MESSAGES="1"
     fi
     ;;

@@ -496,7 +496,7 @@ sctk_threat_arg (char *word)
 {
   sctk_add_arg_eq ("--directory", sctk_def_directory);
   sctk_add_arg ("--version-details", sctk_version_details);
-  sctk_add_arg_eq ("--verbose", sctk_set_verbosity);
+  sctk_add_arg_eq ("--mpc-verbose", sctk_set_verbosity);
   sctk_add_arg ("--use-pthread", sctk_use_pthread);
   sctk_add_arg ("--use-ethread_mxn", sctk_use_ethread_mxn);
   sctk_add_arg ("--use-ethread", sctk_use_ethread);
