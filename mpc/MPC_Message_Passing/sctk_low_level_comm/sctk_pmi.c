@@ -43,7 +43,7 @@ static int sctk_pmi_processes_on_node_number;
 static int sctk_max_val_len;
 static int sctk_max_key_len;
 static char * sctk_kvsname;
-PMI_BOOL initialized;
+SCTK_PMI_BOOL initialized;
 
 int spawned;
 /******************************************************************************
@@ -63,13 +63,13 @@ int sctk_pmi_init() {
     }
 
     // Check if PMI/SLURM is initialized
-    initialized = PMI_FALSE;
+    initialized = SCTK_PMI_FALSE;
     rc = PMI_Initialized(&initialized);
 	if (rc != PMI_SUCCESS) {
 		fprintf(stderr, "FAILURE (sctk_pmi): PMI_Initialized: %d\n", rc);
 		return rc;
 	}
-	if (initialized != PMI_TRUE) {
+	if (initialized != SCTK_PMI_TRUE) {
 		fprintf(stderr, "FAILURE (sctk_pmi): PMI_Initialized returned false\n");
 		return rc;
 	}
@@ -571,7 +571,7 @@ sctk_pmi_get_max_val_len()
       return sctk_max_val_len;
 }
 
-PMI_BOOL
+SCTK_PMI_BOOL
 sctk_pmi_is_initialized()
 {
   return initialized;
