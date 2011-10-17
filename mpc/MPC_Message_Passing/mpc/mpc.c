@@ -279,7 +279,7 @@ __MPC_init_task_specific_t (sctk_task_specific_t * tmp)
     {
       tmp->user_types_struct.user_types_struct[i] = 0;
     }
-
+#warning "Put a hashtable instead"
   for (i = 0; i < SCTK_MAX_COMMUNICATOR_NUMBER; i++)
     {
       tmp->user_error_handlers.user_error_handlers[i] =
