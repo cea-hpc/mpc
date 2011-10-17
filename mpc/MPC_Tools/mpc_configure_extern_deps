@@ -60,7 +60,7 @@ sctk_internal_setup_lib_slurm()
 {
 	if [ "$SLURM_IS_SETUP" != "yes" ]; then
 		# For the moment, we dont use rpath
-		if [ -w "${SLURM_PREFIX}" ]; then
+		if [ -d "${SLURM_PREFIX}" ]; then
 			if [ -e ${SLURM_PREFIX}/lib ]; then
 				SLURM_LIB_DIR=${SLURM_PREFIX}/lib
 			elif [ -e ${SLURM_PREFIX}/lib64 ]; then
@@ -74,7 +74,7 @@ sctk_internal_setup_lib_slurm()
 			#setup vars
 			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${SLURM_LIBDIR}/libpmi.so"
 			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${SLURM_LIB_DIR} -L${SLURM_LIB_DIR}"
-			SCTK_CFLAGS="${SCTK_CFLAGS} -I${SLURM_MODULE}/include/slurm"
+			SCTK_CFLAGS="${SCTK_CFLAGS} -I${SLURM_PREFIX}/include/slurm"
 		fi
 		#infor source code
 		SCTK_CFLAGS="${SCTK_CFLAGS} -DMPC_USE_SLURM"
