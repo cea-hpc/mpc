@@ -40,4 +40,15 @@ int sctk_get_comm_world_rank (const sctk_communicator_t communicator,
 sctk_communicator_t sctk_delete_communicator (const sctk_communicator_t);
 void sctk_communicator_delete();
 int sctk_is_net_message (int dest);
+
+
+struct sctk_internal_collectives_struct_s;
+
+struct sctk_internal_collectives_struct_s * 
+sctk_get_internal_collectives(const sctk_communicator_t communicator);
+void
+sctk_set_internal_collectives(const sctk_communicator_t id,
+			      struct sctk_internal_collectives_struct_s * tmp);
+
+
 #endif

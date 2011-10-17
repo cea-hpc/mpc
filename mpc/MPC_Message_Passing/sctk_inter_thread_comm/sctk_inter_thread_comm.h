@@ -54,29 +54,53 @@ extern "C"
   typedef unsigned long sctk_pack_absolute_indexes_t;
   typedef int sctk_count_t;
 
-  typedef struct
-  {
-    sctk_count_t count;
-    sctk_pack_indexes_t *begins;
-    sctk_pack_indexes_t *ends;
-    sctk_pack_absolute_indexes_t *begins_absolute;
-    sctk_pack_absolute_indexes_t *ends_absolute;
-  } sctk_default_pack_t;
-
   typedef struct{
     size_t size;
     void* addr;
   }sctk_message_contiguous_t;
 
+  typedef struct{
+    sctk_count_t count;
+    sctk_pack_indexes_t *begins;
+    sctk_pack_indexes_t *ends;
+    void* addr;
+    size_t elem_size;
+  }sctk_message_pack_std_list_t;
+
+  typedef struct{
+    sctk_count_t count;
+    sctk_pack_absolute_indexes_t *begins;
+    sctk_pack_absolute_indexes_t *ends;
+    void* addr;
+    size_t elem_size;
+  }sctk_message_pack_absolute_list_t;
+
+  typedef union{
+    sctk_message_pack_absolute_list_t* absolute;
+    sctk_message_pack_std_list_t* std;
+  }sctk_message_pack_list_t;
+
+  typedef union{
+    sctk_message_pack_absolute_list_t absolute;
+    sctk_message_pack_std_list_t std;
+  }sctk_message_pack_default_t;
+
+  typedef struct{
+    size_t count;
+    size_t max_count;
+    sctk_message_pack_list_t list;
+  }sctk_message_pack_t;
 
   typedef enum {
     sctk_message_contiguous,
     sctk_message_pack,
-    sctk_message_pack_absolute
+    sctk_message_pack_absolute,
+    sctk_message_pack_undefined
   } sctk_message_type_t;
 
   typedef union {
     sctk_message_contiguous_t contiguous;
+    sctk_message_pack_t pack;
   } sctk_message_t;
 
   typedef MPC_Request sctk_request_t;
@@ -99,8 +123,10 @@ typedef struct sctk_message_to_copy_s{
     volatile int* completion_flag; 
     sctk_request_t * request;
 
+    /*Message data*/
     sctk_message_type_t message_type;
     sctk_message_t message;
+    sctk_message_pack_default_t default_pack;
 
     /*Storage structs*/
     sctk_msg_list_t distant_list;

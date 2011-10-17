@@ -19,94 +19,53 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK_COLLECTIVE_COMMUNICATIONS_H_
-#define __SCTK_COLLECTIVE_COMMUNICATIONS_H_
+#ifndef __SCTK_SIMPLE_COLLECTIVE_COMMUNICATIONS_H_
+#define __SCTK_SIMPLE_COLLECTIVE_COMMUNICATIONS_H_
 
-#include <sctk_inter_thread_comm.h>
-#include <sctk_communicator.h>
-#include <sctk.h>
-#include <sctk_spinlock.h>
-#include <sctk_thread.h>
-
-typedef unsigned int sctk_datatype_t;
-#define sctk_null_data_type ((sctk_datatype_t)(-1))
-struct sctk_internal_collectives_struct_s;
-
-/************************************************************************/
-/*collective communication implementation                               */
-/************************************************************************/
-#include <sctk_simple_collective_communications.h>
 
 /************************************************************************/
 /*Barrier                                                               */
 /************************************************************************/
 
-typedef union {
-  sctk_barrier_simple_t barrier_simple;
-} sctk_barrier_t;
+typedef struct {
+  volatile int done /* = 0 */;
+  sctk_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
+  sctk_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
+} sctk_barrier_simple_t;
 
-void sctk_barrier(const sctk_communicator_t communicator);
+void sctk_barrier_simple_init(struct sctk_internal_collectives_struct_s * tmp);
 
 /************************************************************************/
 /*Broadcast                                                             */
 /************************************************************************/
 
-typedef union {
-  sctk_broadcast_simple_t broadcast_simple;
-} sctk_broadcast_t;
+typedef struct {
+  volatile int done /* = 0 */;
+  sctk_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
+  sctk_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
+  void* buffer;
+  size_t size;
+} sctk_broadcast_simple_t;
 
-void sctk_broadcast (void *buffer, const size_t size,
-		     const int root, const sctk_communicator_t com_id);
+void sctk_broadcast_simple_init(struct sctk_internal_collectives_struct_s * tmp);
 
 /************************************************************************/
 /*Allreduce                                                             */
 /************************************************************************/
 
-typedef union {
-  sctk_allreduce_simple_t allreduce_simple;
-} sctk_allreduce_t;
+typedef struct {
+  volatile int done /* = 0 */;
+  sctk_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
+  sctk_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
+  void* buffer;
+  size_t size;
+} sctk_allreduce_simple_t;
 
-void sctk_all_reduce (const void *buffer_in, void *buffer_out,
-		      const size_t elem_size,
-		      const size_t elem_number,
-		      void (*func) (const void *, void *, size_t,
-				    sctk_datatype_t),
-		      const sctk_communicator_t com_id,
-		      const sctk_datatype_t data_type);
+void sctk_allreduce_simple_init(struct sctk_internal_collectives_struct_s * tmp);
 
 /************************************************************************/
-/*Collectives struct                                                    */
+/*Init                                                                  */
 /************************************************************************/
-
-typedef struct sctk_internal_collectives_struct_s{
-  sctk_barrier_t barrier;
-  void (*barrier_func)(const sctk_communicator_t ,
-		       struct sctk_internal_collectives_struct_s *);
-
-  sctk_broadcast_t broadcast;
-  void (*broadcast_func) (void *, const size_t ,
-			  const int , const sctk_communicator_t,
-			  struct sctk_internal_collectives_struct_s *);
-
-  sctk_allreduce_t allreduce;
-  void (*allreduce_func) (const void *, void *,
-			  const size_t ,
-			  const size_t ,
-			  void (*) (const void *, void *, size_t,
-				    sctk_datatype_t),
-			  const sctk_communicator_t ,
-			  const sctk_datatype_t ,
-			  struct sctk_internal_collectives_struct_s *);
-} sctk_internal_collectives_struct_t;
-
-void sctk_collectives_init (sctk_communicator_t id,
-			    void (*barrier)(sctk_internal_collectives_struct_t *),
-			    void (*broadcast)(sctk_internal_collectives_struct_t *),
-			    void (*allreduce)(sctk_internal_collectives_struct_t *));
-
-extern void (*sctk_collectives_init_hook)(sctk_communicator_t id);
-
-void
-sctk_terminaison_barrier (const int id);
+void sctk_collectives_init_simple (sctk_communicator_t id);
 
 #endif

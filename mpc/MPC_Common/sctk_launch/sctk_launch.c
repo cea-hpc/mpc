@@ -62,6 +62,7 @@ static int sctk_start_argc = 0;
 static char **init_argument = NULL;
 int sctk_restart_mode = 0;
 int sctk_check_point_restart_mode = 0;
+int sctk_migration_mode = 0;
 #define MAX_TERM_LENGTH 80
 #define MAX_NAME_FORMAT 30
 char *sctk_mono_bin = "";
@@ -443,6 +444,7 @@ sctk_checkpoint (void)
 sctk_migration (void)
 {
   sctk_check_point_restart_mode = 1;
+  sctk_migration_mode = 1;
 }
 
   static void

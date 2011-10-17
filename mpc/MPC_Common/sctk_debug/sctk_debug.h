@@ -38,6 +38,7 @@ extern "C"
 
   extern int sctk_restart_mode;
   extern int sctk_check_point_restart_mode;
+  extern int sctk_migration_mode;
   extern char *sctk_multithreading_mode;
   extern char *sctk_network_mode;
   extern char *sctk_store_dir;

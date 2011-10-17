@@ -26,88 +26,100 @@
 #include <sctk_spinlock.h>
 #include <sctk_thread.h>
 #include <uthash.h>
+#include <sctk_pmi.h>
 
+/************************************************************************/
+/*Terminaison Barrier                                                   */
+/************************************************************************/
 void
 sctk_terminaison_barrier (const int id)
 {
-
-  if(sctk_process_number == 1){
-    int local;
-    int total; 
-    static volatile int done = 0;
-    static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
-    static sctk_thread_cond_t cond = SCTK_THREAD_COND_INITIALIZER;
+  int local;
+  int total; 
+  static volatile int done = 0;
+  static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
+  static sctk_thread_cond_t cond = SCTK_THREAD_COND_INITIALIZER;
   
   
-    local = sctk_get_nb_task_local(SCTK_COMM_WORLD);
-    total = sctk_get_nb_task_total(SCTK_COMM_WORLD);
+  local = sctk_get_nb_task_local(SCTK_COMM_WORLD);
+  total = sctk_get_nb_task_total(SCTK_COMM_WORLD);
   
-    sctk_thread_mutex_lock(&lock);
-    done ++; 
-    if(done == local){
-      done = 0; 
-      sctk_thread_cond_broadcast(&cond);
-    } else {
-      sctk_thread_cond_wait(&cond,&lock);
+  sctk_thread_mutex_lock(&lock);
+  done ++; 
+  if(done == local){
+    done = 0; 
+    if(sctk_process_number != 1){
+      sctk_pmi_barrier();
     }
-    sctk_thread_mutex_unlock(&lock);
-  
+    sctk_thread_cond_broadcast(&cond);
   } else {
-    not_implemented();
+    sctk_thread_cond_wait(&cond,&lock);
   }
+  sctk_thread_mutex_unlock(&lock);
 }
 
-typedef struct{
-  sctk_communicator_t id;
-
-  volatile int done /* = 0 */;
-  sctk_thread_mutex_t lock/*  = SCTK_THREAD_MUTEX_INITIALIZER */;
-  sctk_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
-
-  UT_hash_handle hh;
-} sctk_internal_collectives_t;
-
-static sctk_internal_collectives_t* sctk_collectives_table = NULL;
-static sctk_spin_rwlock_t sctk_collectives_table_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
-
-
-/*Init data structures used for task i*/
-void sctk_collectives_init (sctk_communicator_t id){
-  sctk_internal_collectives_t * tmp;
-  tmp = sctk_malloc(sizeof(sctk_internal_collectives_t));
-  memset(tmp,0,sizeof(sctk_internal_collectives_t));
-  tmp->id = SCTK_COMM_WORLD;
-
-  tmp->done = 0;
-  sctk_thread_mutex_init(&(tmp->lock),NULL);
-  sctk_thread_cond_init(&(tmp->cond),NULL);
-
-  sctk_spinlock_write_lock(&sctk_collectives_table_lock);
-  HASH_ADD(hh,sctk_collectives_table,id,sizeof(sctk_communicator_t),tmp);
-  sctk_spinlock_write_unlock(&sctk_collectives_table_lock);
-}
+/************************************************************************/
+/*BARRIER                                                               */
+/************************************************************************/
 
 void sctk_barrier(const sctk_communicator_t communicator){
-  sctk_internal_collectives_t * tmp;
+  sctk_internal_collectives_struct_t * tmp;
   
-  sctk_spinlock_read_lock(&sctk_collectives_table_lock);
-  HASH_FIND(hh,sctk_collectives_table,&communicator,sizeof(sctk_communicator_t),tmp);
-  sctk_spinlock_read_unlock(&sctk_collectives_table_lock);
-  assume(tmp != NULL);
+  tmp = sctk_get_internal_collectives(communicator);
+  
+  tmp->barrier_func(communicator,tmp);
+}
 
-  if(sctk_process_number == 1){
-    int local;
-    local = sctk_get_nb_task_local(communicator);
-    sctk_thread_mutex_lock(&tmp->lock);
-    tmp->done ++; 
-    if(tmp->done == local){
-      tmp->done = 0; 
-      sctk_thread_cond_broadcast(&tmp->cond);
-    } else {
-      sctk_thread_cond_wait(&tmp->cond,&tmp->lock);
-    }
-    sctk_thread_mutex_unlock(&tmp->lock);
-  } else {
-    not_implemented();
-  } 
+/************************************************************************/
+/*Broadcast                                                             */
+/************************************************************************/
+void sctk_broadcast (void *buffer, const size_t size,
+		     const int root, const sctk_communicator_t communicator)
+{
+  sctk_internal_collectives_struct_t * tmp;
+  
+  tmp = sctk_get_internal_collectives(communicator);
+  
+  tmp->broadcast_func(buffer,size,root,communicator,tmp);
+}
+
+/************************************************************************/
+/*Allreduce                                                             */
+/************************************************************************/
+void sctk_all_reduce (const void *buffer_in, void *buffer_out,
+		      const size_t elem_size,
+		      const size_t elem_number,
+		      void (*func) (const void *, void *, size_t,
+				    sctk_datatype_t),
+		      const sctk_communicator_t communicator,
+		      const sctk_datatype_t data_type)
+{
+  sctk_internal_collectives_struct_t * tmp;
+  
+  tmp = sctk_get_internal_collectives(communicator);
+  
+  tmp->allreduce_func(buffer_in,buffer_out,elem_size,
+		      elem_number,func,communicator,data_type,tmp);
+}
+
+/************************************************************************/
+/*INIT                                                                  */
+/************************************************************************/
+
+void (*sctk_collectives_init_hook)(sctk_communicator_t id) = sctk_collectives_init_simple;
+
+/*Init data structures used for task i*/
+void sctk_collectives_init (sctk_communicator_t id,
+			    void (*barrier)(sctk_internal_collectives_struct_t *),
+			    void (*broadcast)(sctk_internal_collectives_struct_t *),
+			    void (*allreduce)(sctk_internal_collectives_struct_t *)){
+  sctk_internal_collectives_struct_t * tmp;
+  tmp = sctk_malloc(sizeof(sctk_internal_collectives_struct_t));
+  memset(tmp,0,sizeof(sctk_internal_collectives_struct_t));
+
+  barrier(tmp);
+  broadcast(tmp);
+  allreduce(tmp);
+  
+  sctk_set_internal_collectives(id,tmp);
 }

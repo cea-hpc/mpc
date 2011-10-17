@@ -36,6 +36,6 @@ void sctk_is_inter_comm(){not_implemented();}
 void sctk_net_migration(){not_implemented();}
 void sctk_net_get_pages(){not_implemented();}
 void sctk_get_nb_task_remote(){not_implemented();}
-void sctk_all_reduce(){not_implemented();}
-void sctk_broadcast(){not_implemented();}
+/* void sctk_all_reduce(){not_implemented();} */
+/* void sctk_broadcast(){not_implemented();} */
 /* void sctk_get_rank(){ not_implemented();} */
