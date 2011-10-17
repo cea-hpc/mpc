@@ -86,37 +86,46 @@ usage() {
 cat <<EOF
 Usage: $0 [OPTION]... [VAR=VALUE]...
 
+Defaults for the options are specified in brackets.
+
 Configuration:
-  -h, --help                   display this help and exit
+  -h, --help                          display this help and exit
 
 Installation directories:
-  --prefix=PREFIX              install architecture-independent files in PREFIX
-                               [default value: /usr/local]
+  --prefix=PREFIX                     Install architecture-independent files in PREFIX [/usr/local]
+  --disable-prefix-check              Force given prefix (in case of file conflicts)
 
 Optional Features:
-  --disable-mpc-gcc                   Disable compilation of mpc-gcc
-  --disable-mpc-gdb                   Disable compilation of mpc-gdb
-  --disable-prefix-check              Force given prefix
   --with-cpath=DIR1:DIR2:...          Add directories to the CPATH environment variable
                                       for the whole MPC distribution
   --with-library-path=DIR1:DIR2:...   Add directories to the LD_LIBRARY_PATH environment
                                       variable for the whole MPC distribution
   --with-config=file                  Read the file 'file' for main configuration
-                                      [default value: ${DEFAULT_CONFIG_FILE}]
+                                      [${DEFAULT_CONFIG_FILE}]
+
+Launcher selection:
+  --with-hydra                        Use (built-in) HYDRA as launcher [enabled]
+  --hydra-{with-ftb|...}              Pass option to hydra configure script
+  --with-slurm[=prefix]               Use SLURM  as launcher [disabled]
+
+MPC gcc options:
+  --disable-mpc-gcc                   Disable compilation of mpc-gcc [enabled]
+  --gcc-{with-mpfr|...}               Pass option to GCC configure script.
   --with-mpfr=prefix                  Prefix for libmpfr needed to build gcc.
   --with-gmp=prefix                   Prefix for libgmp needed to build gcc.
-  --with-hydra                        Enable HYDRA [default value]
-  --with-slurm=prefix                 Enable SLURM (version located in prefix)
-  --with-hwloc[=prefix]               Use the hwloc provided in prefix if not set MPC will buid its own hwloc
-  --with-openpa[=prefix]              Use the OpenPA in this prefix if not set MPC wil build its own OpenPA
-  --gcc-{with-mpfr|...}               Options for GCC configure script.
-  --gdb-{prefix|...}                  Options for GDB configure script.
-  --openpa-{disable-assert|...}       Options for OpenPA configure script.
-  --hwloc-{enable-debug|...}          Options for hwloc configure script.
-  --hydra-{with-ftb|...}              Options for hydra configure script.
 
-Help of sub modules :
-  --help-mpc                          Display options for MPC library.
+MPC gdb options:
+  --disable-mpc-gdb                   Disable compilation of mpc-gdb [enabled]
+  --gdb-{prefix|...}                  Pass option to GDB configure script.  
+
+MPC dependencies:
+  --with-hwloc[=prefix]               Use the hwloc provided in prefix if not set MPC will buid its own hwloc
+  --hwloc-{enable-debug|...}          Pass option to hwloc configure script.
+  --with-openpa[=prefix]              Use the OpenPA in this prefix if not set MPC will build its own OpenPA
+  --openpa-{disable-assert|...}       Pass option to OpenPA configure script.
+
+Help of sub modules:
+  --help-mpc                          Display available options for MPC library.
 
 EOF
 }
@@ -169,14 +178,14 @@ for arg in "$@" ; do
     ;;
     --with-hydra)
       if [ $SCTK_PMI_CHOSEN -eq 1 ]; then
-        echo -n "Error: Launcher already chosen..."
+        echo "Error : You can enable only one launcher"
         exit 1
       fi
       SCTK_PMI_CHOSEN="1"
     ;;
     --with-slurm)
       if [ $SCTK_PMI_CHOSEN -eq 1 ]; then
-        echo -n "Error: Launcher already chosen..."
+        echo "Error : You can enable only one launcher."
         exit 1
       fi
       SCTK_PMI_CHOSEN="1"
@@ -185,7 +194,7 @@ for arg in "$@" ; do
     ;;
     --with-slurm=*)
       if [ $SCTK_PMI_CHOSEN -eq 1 ]; then
-        echo -n "Error: Launcher already chosen..."
+        echo "Error : You can enable only one launcher."
         exit 1
       fi
       SCTK_PMI_CHOSEN="1"

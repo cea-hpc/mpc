@@ -29,7 +29,7 @@ export GDB_LIBTHREAD_DB
 # Export job manager type: slurm or hydra
 export SCTK_JOB_MANAGER
 
-VERBOSE="0"
+MPC_VERBOSE="0"
 MPC_DISABLE="0"
 
 show=${MPC_BIN_DIR}/mpcrun_server
@@ -181,16 +181,16 @@ for arg in "$@" ; do
     exit 0;
     ;;
     -v|--verbose)
-    VERBOSE="1"
+    MPC_VERBOSE="1"
     ;;
     -vv)
-    VERBOSE="2"
+    MPC_VERBOSE="2"
     ;;
     -vvv)
-    VERBOSE="3"
+    MPC_VERBOSE="3"
     ;;
     --verbose=*)
-    VERBOSE="`echo A$arg | sed -e 's/A--verbose=//g'`"
+    MPC_VERBOSE="`echo A$arg | sed -e 's/A--verbose=//g'`"
     ;;
     --show)
     show=echo
@@ -326,6 +326,8 @@ if test "$PROCESS_NB" != "1"; then
   if test "$LAUNCH" = "none"  ; then
   	LAUNCH="mpiexec"
   fi
+else
+	NET_TYPE="--sctk_use_network=none"
 fi
 
 SCTK_ARGS="--sctk-args--"
@@ -375,9 +377,9 @@ if test "$NET_TYPE" != ""  ; then
 add_arg "$NET_TYPE"
 fi
 
-VERBOSE="--verbose=$VERBOSE"
+MPC_VERBOSE="--mpc-verbose=${MPC_VERBOSE}"
 
-SCTK_ARGS="$SCTK_ARGS $VERSION_DETAILS $REPORT $CHECKPOINT $RESTART $MIGRATION $TMP_DIR $VERBOSE "
+SCTK_ARGS="$SCTK_ARGS $VERSION_DETAILS $REPORT $CHECKPOINT $RESTART $MIGRATION $TMP_DIR $MPC_VERBOSE "
 if test "$MPC_MONO" = "1" ; then
 SCTK_ARGS="$SCTK_ARGS --mono=$BINARY"
 BINARY="mpc_mono"
@@ -436,7 +438,7 @@ if test "$TMP_DIR_D" != "" ; then
 fi
 echo "$0 $@" > ${TMP_DIR_D}mpcrun_args
 
-if test "$VERBOSE" != "0" ; then
+if test "$MPC_VERBOSE" != "--mpc-verbose=0" ; then
 if test "${DEBUG}" = "" ; then
 echo "Using $LAUNCH" >&2
 else

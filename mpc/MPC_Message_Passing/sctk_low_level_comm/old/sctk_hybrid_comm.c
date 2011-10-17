@@ -412,7 +412,7 @@ sctk_net_preinit_driver_hybrid ()
       (strcmp(sctk_module_name, "ib_only") == 0))
   {
 #ifdef MPC_USE_INFINIBAND
-    if (sctk_pmi_is_initialized() == PMI_TRUE)
+    if (sctk_pmi_is_initialized() == SCTK_PMI_TRUE)
     {
       GENDRIVER(infiniband, infiniband);
     } else {

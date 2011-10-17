@@ -50,6 +50,21 @@ sctk_internal_setup_lib_hydra()
 	HYDRA_IS_SETUP="yes"
 }
 
+# Find slurm default prefix
+sctk_internal_setup_lib_slurm_default_prefix()
+{
+	if [ -z "$SLURM_PREFIX" ]; then
+		if [ -f "/usr/local/include/slurm/pmi.h" ]; then
+			SLURM_PREFIX="/usr/local"
+		elif [ -f "/usr/include/slurm/pmi.h" ]; then
+			SLURM_PREFIX="/usr"
+		else
+			error "Cannot find include/slurm/pmi.h in /usr or /usr/local, please provide your slurm prefix with --with-slurm=...."
+			exit 1
+		fi
+	fi
+}
+
 # Setup vars to use lib slurm
 # Params:
 # Global variables:
@@ -59,22 +74,25 @@ sctk_internal_setup_lib_hydra()
 sctk_internal_setup_lib_slurm()
 {
 	if [ "$SLURM_IS_SETUP" != "yes" ]; then
+		# Find default if required
+		sctk_internal_setup_lib_slurm_default_prefix
 		# For the moment, we dont use rpath
-		if [ -w "${SLURM_PREFIX}" ]; then
-			if [ -e ${SLURM_PREFIX}/lib ]; then
-				SLURM_LIB_DIR=${SLURM_PREFIX}/lib
-			elif [ -e ${SLURM_PREFIX}/lib64 ]; then
-				SLURM_LIB_DIR=${SLURM_PREFIX}/lib64
-				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${SLURM_PREFIX}/lib64/libpmi.so"
-				SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${SLURM_PREFIX}/lib64 -L${SLURM_PREFIX}/lib64"
+		if [ -d "${SLURM_PREFIX}" ]; then
+			if [ -f ${SLURM_PREFIX}/lib64/libpmi.so ]; then
+				SLURM_LIBDIR=${SLURM_PREFIX}/lib64
+			elif [ -f ${SLURM_PREFIX}/lib/libpmi.so ]; then
+				SLURM_LIBDIR=${SLURM_PREFIX}/lib
 			else
 				sctk_error "libpmi found neither in ${SLURM_PREFIX}/lib nor ${SLURM_PREFIX}/lib64"
 				exit 1
 			fi
 			#setup vars
 			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${SLURM_LIBDIR}/libpmi.so"
-			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${SLURM_LIB_DIR} -L${SLURM_LIB_DIR}"
-			SCTK_CFLAGS="${SCTK_CFLAGS} -I${SLURM_MODULE}/include/slurm"
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${SLURM_LIBDIR} -L${SLURM_LIBDIR}"
+			SCTK_CFLAGS="${SCTK_CFLAGS} -I${SLURM_PREFIX}/include/slurm"
+		else
+			error "Invalid slurm prefix : $SLURM_PREFIX"
+			exit 1
 		fi
 		#infor source code
 		SCTK_CFLAGS="${SCTK_CFLAGS} -DMPC_USE_SLURM"
@@ -124,6 +142,8 @@ SCTK_CHECK_LIB_PMI()
 	elif [ $SCTK_HYDRA -eq 0 ] && [ $SCTK_SLURM -eq 1 ]; then
 		sctk_internal_setup_lib_slurm
 		result 'slurm'
+		SCTK_MSG_CHECKING "slurm prefix"
+		result "$SLURM_PREFIX"
 	else
 		result 'hydra,slurm'
 		sctk_error "Your must use --with-slurm or --with-hydra, but you can't use both at same time."

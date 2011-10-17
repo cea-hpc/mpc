@@ -61,9 +61,9 @@ extern "C"
 #define SCTK_PMI_TAG_PMI				4000
 #define SCTK_PMI_TAG_SHM				5000
 
-typedef int PMI_BOOL;
-#define PMI_TRUE     1
-#define PMI_FALSE    0
+typedef int SCTK_PMI_BOOL;
+#define SCTK_PMI_TRUE     1
+#define SCTK_PMI_FALSE    0
 
 /*! \brief Max size for an hostname
  *
@@ -189,7 +189,7 @@ int sctk_pmi_recv(void* info, size_t size, int src);
 int sctk_pmi_get_max_key_len();
 int sctk_pmi_get_max_val_len();
 
-PMI_BOOL
+SCTK_PMI_BOOL
 sctk_pmi_is_initialized();
 
 #ifdef __cplusplus
