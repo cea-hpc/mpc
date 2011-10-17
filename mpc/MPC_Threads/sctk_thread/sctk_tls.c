@@ -102,10 +102,6 @@ typedef struct
 } tls_level;
 
 
-#define MAX_ACTIVE_SINGLE (64)
-/* fix -> adapt to hls scope
-   # of VPs in this scope */
-
 typedef struct
 {
   tls_level level ;
@@ -114,8 +110,7 @@ typedef struct
   volatile size_t barrier_entered[2] ;
   volatile size_t barrier_generation ;
   /* number of VPs that entered the hls barrier */ 
-  volatile size_t single_entered[MAX_ACTIVE_SINGLE];
-  volatile size_t single_generation[MAX_ACTIVE_SINGLE];
+  volatile size_t single_nowait_generation;
 } hls_level;
 
 static __thread hls_level* sctk_hls[sctk_hls_max_scope];
@@ -150,10 +145,7 @@ sctk_hls_init_level(hls_level * level)
 	level->barrier_generation = 0 ;
 	level->toenter = 0 ;
 	/* toenter is to be filled by sctk_hls_build_repository */
-	for ( i = 0 ; i < MAX_ACTIVE_SINGLE ; ++i ) {
-		level->single_entered[i] = 0 ;
-		level->single_generation[i] = 0 ;
-	}
+	level->single_nowait_generation = 0 ;
 }
 
 static inline size_t
@@ -351,8 +343,8 @@ sctk_extls_create ()
 void
 sctk_extls_duplicate (void **new)
 {
-  tls_level *extls;
-  tls_level *new_extls;
+  tls_level **extls;
+  tls_level **new_extls;
   int i;
 
   extls = sctk_extls;
@@ -361,8 +353,8 @@ sctk_extls_duplicate (void **new)
       sctk_extls_create ();
     }
 
-  new_extls = sctk_malloc (sctk_extls_max_scope * sizeof (tls_level));
-  *new = new_extls;
+  new_extls = sctk_malloc (sctk_extls_max_scope * sizeof (tls_level*));
+  *(tls_level***)new = new_extls;
 
   extls = sctk_extls;
   sctk_nodebug ("Duplicate %p->%p", extls, new_extls);
@@ -832,49 +824,26 @@ int
 __sctk__hls_single_nowait ( sctk_hls_scope_t scope ) {
 	/* TODO: several tasks on same VP ? */
 	hls_level * const level = sctk_hls[scope];
-	const size_t nowait_index = single_nowait_counter[scope] % MAX_ACTIVE_SINGLE ;
-	volatile size_t	* const entered = &level->single_entered[nowait_index];
-	volatile size_t	* const generation = &level->single_generation[nowait_index];
-	size_t entered_cached ; /* avoid an additional read in last if branch */
-	size_t generation_cached ; /* avoid an additional read in while loop */
-	++single_nowait_counter[scope] ;
+	volatile size_t	* const generation = &level->single_nowait_generation;
+	size_t generation_cached ; /* avoid an additional read in increment */
+	int execute = 0 ;
 
 	sctk_nodebug ("call to hls single nowait with scope %d", scope) ;
 	
 	if ( scope == sctk_hls_core_scope)
 		return 1 ;
 
-	sctk_spinlock_lock ( &level->level.lock ) ;
-	if ( *entered > 0 && single_nowait_counter[scope] > *generation ) {
-		/* in advance, wait for last thread of corresponding single */
-		sctk_spinlock_unlock ( &level->level.lock ) ;
-		/* same as *generation != 0 && *generation != single_nowait_counter[scope] */
-		while ( ( generation_cached = *generation ) != 0 && generation_cached != single_nowait_counter[scope] )
-			sctk_thread_yield();
-		/* this cannot happen twice */
+	if ( single_nowait_counter[scope] == *generation ) {
 		sctk_spinlock_lock ( &level->level.lock ) ;
+		generation_cached = *generation ;
+		if ( single_nowait_counter[scope] == generation_cached ) { 
+			*generation = generation_cached + 1 ;
+			execute = 1 ;
+		}
+		sctk_spinlock_unlock ( &level->level.lock ) ;
 	}
-
-	entered_cached = *entered ;
-	if ( entered_cached == 0 ) {
-		*entered = 1 ;
-		*generation = single_nowait_counter[scope] ;
-		sctk_spinlock_unlock ( &level->level.lock ) ;
-		sctk_nodebug ("hls single nowait executed (first thread)") ;
-		return 1 ;
-	}else if ( entered_cached == level->toenter-1 ) {
-		*entered = 0 ;
-		asm volatile("" ::: "memory");
-		*generation = 0 ;
-		sctk_spinlock_unlock ( &level->level.lock ) ;
-		sctk_nodebug ("hls single nowait not executed (last thread)") ;
-		return 0 ;
-	}else{
-		*entered = entered_cached + 1 ;
-		sctk_spinlock_unlock ( &level->level.lock ) ;
-		sctk_nodebug ("hls single nowait not executed") ;
-		return 0 ;
-	}
+	single_nowait_counter[scope] += 1 ;
+	return execute ;
 }
 
 #else
