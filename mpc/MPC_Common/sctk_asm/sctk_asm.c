@@ -19,9 +19,55 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
+#include <pthread.h>
+
+#if !defined(__INTEL_COMPILER) && defined(__GNUC__)
+#define __SCTK_ASM_C_
+#define SCTK_COMPILER_ACCEPT_ASM
+
 #include "sctk_config.h"
 #include <sys/time.h>
 
-#include "sctk_asm.h"
+#if !defined(__INTEL_COMPILER) && defined(__GNUC__)
+#ifndef __GNU_COMPILER
+#define __GNU_COMPILER
+#endif
+#endif
+
 #include "sctk_atomics.h"
+#include "sctk_asm.h"
+
+/*! \brief
+ *
+ */
+void sctk_cpu_relax () {
+  __sctk_cpu_relax ();
+}
+
+#else
+#error "Must be compiled with gcc"
+#endif
+
+
+#if ! defined(SCTK_OPENPA_AVAILABLE)
+static pthread_mutex_t sctk_atomics_default_mutex = PTHREAD_MUTEX_INITIALIZER;
+#endif
+
+/* test_and_set implementation. Fallback to mutex if
+ * openPA not available for the current architecture*/
+int sctk_test_and_set (sctk_atomic_test_t * atomic) {
+#if defined(SCTK_OPENPA_AVAILABLE)
+  return sctk_atomics_swap_int((OPA_int_t *) atomic, 1);
+#else
+  int res;
+  pthread_mutex_lock(&sctk_atomics_default_mutex);
+  res = *atomic;
+  if (*atomic == 0) {
+	  *atomic = 1;
+  }
+  pthread_mutex_unlock(&sctk_atomics_default_mutex);
+  return res;
+#endif /* defined(SCTK_OPENPA_AVAILABLE) */
+}
+
 
