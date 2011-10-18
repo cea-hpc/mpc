@@ -90,6 +90,7 @@ extern "C"
   typedef struct MPC_Header{
     int source;
     int destination;
+    int glob_destination;
     int message_tag;
     MPC_Comm communicator;
     mpc_msg_count msg_size;
@@ -152,6 +153,18 @@ extern "C"
 #define MPC_PROC_NULL -2
 #define MPC_COMM_NULL ((MPC_Comm)(-1))
 #define MPC_MAX_PROCESSOR_NAME 255
+
+
+/********************************************************************/
+/*Special TAGS                                                      */
+/********************************************************************/
+#define MPC_ANY_TAG -1
+#define MPC_GATHERV_TAG -2
+#define MPC_GATHER_TAG -3
+#define MPC_SCATTERV_TAG -4
+#define MPC_SCATTER_TAG -5
+#define MPC_ALLTOALL_TAG -6
+#define MPC_ALLTOALLV_TAG -7
 
   typedef struct
   {

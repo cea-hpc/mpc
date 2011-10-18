@@ -39,6 +39,13 @@ extern "C"
 #define SCTK_MESSAGE_DONE 1
 #define SCTK_MESSAGE_CANCELED 2
 
+  typedef enum {
+    pt2pt_specific_message_tag,
+    barrier_specific_message_tag,
+    broadcast_specific_message_tag,
+    allreduce_specific_message_tag
+  }specific_message_tag_t;
+
   typedef struct sctk_thread_message_header_s
   {
     int source;
@@ -47,6 +54,7 @@ extern "C"
     int glob_destination;
     sctk_communicator_t communicator;
     int message_tag;
+    specific_message_tag_t specific_message_tag;
     size_t msg_size;
   } sctk_thread_message_header_t;
 
@@ -151,18 +159,15 @@ typedef struct sctk_message_to_copy_s{
   void sctk_reinit_header (sctk_thread_ptp_message_t *tmp, void (*free_memory)(void*),
 			   void (*message_copy)(sctk_message_to_copy_t*));
   sctk_thread_ptp_message_t *sctk_create_header (const int myself,sctk_message_type_t msg_type);
-  sctk_thread_ptp_message_t
-    * sctk_add_adress_in_message (sctk_thread_ptp_message_t *
+  void sctk_add_adress_in_message (sctk_thread_ptp_message_t *
 				  restrict msg, void *restrict addr,
 				  const size_t size);
-  sctk_thread_ptp_message_t
-    * sctk_add_pack_in_message (sctk_thread_ptp_message_t * msg,
+  void sctk_add_pack_in_message (sctk_thread_ptp_message_t * msg,
 				void *adr, const sctk_count_t nb_items,
 				const size_t elem_size,
 				sctk_pack_indexes_t * begins,
 				sctk_pack_indexes_t * ends);
-  sctk_thread_ptp_message_t
-    * sctk_add_pack_in_message_absolute (sctk_thread_ptp_message_t *
+  void sctk_add_pack_in_message_absolute (sctk_thread_ptp_message_t *
 					 msg, void *adr,
 					 const sctk_count_t nb_items,
 					 const size_t elem_size,
@@ -176,7 +181,8 @@ typedef struct sctk_message_to_copy_s{
 				   const int source,
 				   const int destination,
 				   sctk_request_t * request,
-				   const size_t count);
+				   const size_t count,
+				   specific_message_tag_t specific_message_tag);
   void sctk_wait_message (sctk_request_t * request);
   void sctk_wait_all (const int task, const sctk_communicator_t com);
   void sctk_probe_source_any_tag (int destination, int source,
@@ -199,6 +205,10 @@ typedef struct sctk_message_to_copy_s{
   void sctk_cancel_message (sctk_request_t * msg);
   void sctk_ptp_per_task_init (int i);
   void sctk_unregister_thread (const int i);
+
+  void sctk_message_copy(sctk_message_to_copy_t* tmp);
+  void sctk_message_copy_pack(sctk_message_to_copy_t* tmp);
+  void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp);
 
 #ifdef __cplusplus
 }

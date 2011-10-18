@@ -36,6 +36,7 @@ struct sctk_internal_collectives_struct_s;
 /*collective communication implementation                               */
 /************************************************************************/
 #include <sctk_simple_collective_communications.h>
+#include <sctk_messages_collective_communications.h>
 
 /************************************************************************/
 /*Barrier                                                               */
@@ -43,6 +44,7 @@ struct sctk_internal_collectives_struct_s;
 
 typedef union {
   sctk_barrier_simple_t barrier_simple;
+  sctk_barrier_messages_t barrier_messages;
 } sctk_barrier_t;
 
 void sctk_barrier(const sctk_communicator_t communicator);
@@ -53,6 +55,7 @@ void sctk_barrier(const sctk_communicator_t communicator);
 
 typedef union {
   sctk_broadcast_simple_t broadcast_simple;
+  sctk_broadcast_messages_t broadcast_messages;
 } sctk_broadcast_t;
 
 void sctk_broadcast (void *buffer, const size_t size,
@@ -64,6 +67,7 @@ void sctk_broadcast (void *buffer, const size_t size,
 
 typedef union {
   sctk_allreduce_simple_t allreduce_simple;
+  sctk_allreduce_messages_t allreduce_messages;
 } sctk_allreduce_t;
 
 void sctk_all_reduce (const void *buffer_in, void *buffer_out,

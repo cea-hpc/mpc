@@ -41,6 +41,10 @@
 #include "mpc_mpi_weak.h"
 #endif
 
+#warning "Optimize algorithme for derived types"
+#warning "Remove communicator number deps"
+
+
 static int __INTERNAL__PMPI_Attr_set_fortran (int keyval);
 
 static char *

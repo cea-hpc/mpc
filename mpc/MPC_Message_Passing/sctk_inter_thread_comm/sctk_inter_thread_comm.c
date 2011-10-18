@@ -140,6 +140,8 @@ static inline void sctk_ptp_copy_tasks_insert(sctk_msg_list_t* ptr_recv,
 static inline void sctk_message_completion_and_free(sctk_thread_ptp_message_t* send,
 				     sctk_thread_ptp_message_t* recv){
   size_t size; 
+  void (*send_free_memory)(void*);
+  void (*recv_free_memory)(void*);
 
   if(recv->request){
     size = send->header.msg_size;
@@ -149,6 +151,9 @@ static inline void sctk_message_completion_and_free(sctk_thread_ptp_message_t* s
   
     recv->request->header.msg_size = size;
   }
+
+  send_free_memory = send->free_memory;
+  recv_free_memory = recv->free_memory;
   
   if(recv->completion_flag)
     *(recv->completion_flag) = SCTK_MESSAGE_DONE;
@@ -156,11 +161,11 @@ static inline void sctk_message_completion_and_free(sctk_thread_ptp_message_t* s
     *(send->completion_flag) = SCTK_MESSAGE_DONE;
   
   /*Free messages*/
-  send->free_memory(send);
-  recv->free_memory(recv);  
+  send_free_memory(send);
+  recv_free_memory(recv);  
 }
 
-static inline void sctk_message_copy(sctk_message_to_copy_t* tmp){
+inline void sctk_message_copy(sctk_message_to_copy_t* tmp){
   sctk_thread_ptp_message_t* send;
   sctk_thread_ptp_message_t* recv;
 
@@ -362,7 +367,7 @@ sctk_copy_buffer_absolute_absolute (sctk_pack_absolute_indexes_t *
     }
 }
 
-static inline void sctk_message_copy_pack(sctk_message_to_copy_t* tmp){
+inline void sctk_message_copy_pack(sctk_message_to_copy_t* tmp){
   sctk_thread_ptp_message_t* send;
   sctk_thread_ptp_message_t* recv;
 
@@ -396,7 +401,7 @@ static inline void sctk_message_copy_pack(sctk_message_to_copy_t* tmp){
   }
 }
 
-static inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp){
+inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp){
   sctk_thread_ptp_message_t* send;
   sctk_thread_ptp_message_t* recv;
 
@@ -498,27 +503,25 @@ sctk_thread_ptp_message_t *sctk_create_header (const int myself,sctk_message_typ
   return tmp;
 }
 
-static inline sctk_thread_ptp_message_t
-* sctk_add_adress_in_message_contiguous (sctk_thread_ptp_message_t *
+static inline void
+sctk_add_adress_in_message_contiguous (sctk_thread_ptp_message_t *
 			      restrict msg, void *restrict addr,
 			      const size_t size){
   msg->message.contiguous.size = size;
   msg->message.contiguous.addr = addr;
-  return msg;
 }
 
-sctk_thread_ptp_message_t
-* sctk_add_adress_in_message (sctk_thread_ptp_message_t *
+void
+sctk_add_adress_in_message (sctk_thread_ptp_message_t *
 			      restrict msg, void *restrict addr,
 			      const size_t size){
   switch(msg->message_type){
   case sctk_message_contiguous: {
-    msg = sctk_add_adress_in_message_contiguous (msg,addr,size);
+    sctk_add_adress_in_message_contiguous (msg,addr,size);
     break;
   }
   default: not_reachable();
   }
-  return msg;
 }
 
 void sctk_set_header_in_message (sctk_thread_ptp_message_t *
@@ -528,19 +531,9 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
 				 const int source,
 				 const int destination,
 				 sctk_request_t * request,
-				 const size_t count){
+				 const size_t count,
+				 specific_message_tag_t specific_message_tag){
   msg->request = request;
-
-  if(request != NULL){
-    request->msg = msg;
-    
-    request->header.source = source;
-    request->header.destination = destination;
-    request->header.message_tag = message_tag;
-    request->header.communicator = communicator;
-
-    msg->completion_flag = &(request->completion_flag);
-  }
 
   msg->header.source = source;
   msg->header.destination = destination;
@@ -548,7 +541,21 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
   msg->header.glob_destination = sctk_get_comm_world_rank (communicator,destination);
   msg->header.communicator = communicator;
   msg->header.message_tag = message_tag;
+  msg->header.specific_message_tag = specific_message_tag;
   msg->header.msg_size = count;
+
+  if(request != NULL){
+    request->msg = msg;
+    
+    request->header.source = source;
+    request->header.destination = destination;
+    request->header.glob_destination = msg->header.glob_destination;
+    request->header.message_tag = message_tag;
+    request->header.communicator = communicator;
+    request->is_null = 0;
+
+    msg->completion_flag = &(request->completion_flag);
+  }
 }
 
 /********************************************************************/
@@ -568,12 +575,12 @@ void sctk_free_pack(void* tmp){
   sctk_free(tmp);
 }
 
-sctk_thread_ptp_message_t
-* sctk_add_pack_in_message (sctk_thread_ptp_message_t * msg,
-			    void *adr, const sctk_count_t nb_items,
-			    const size_t elem_size,
-			    sctk_pack_indexes_t * begins,
-			    sctk_pack_indexes_t * ends){
+void
+sctk_add_pack_in_message (sctk_thread_ptp_message_t * msg,
+			  void *adr, const sctk_count_t nb_items,
+			  const size_t elem_size,
+			  sctk_pack_indexes_t * begins,
+			  sctk_pack_indexes_t * ends){
   int step;
   if(msg->message_type == sctk_message_pack_undefined){
     msg->message_type = sctk_message_pack;
@@ -597,14 +604,14 @@ sctk_thread_ptp_message_t
 
   msg->message.pack.count++;
 }
-sctk_thread_ptp_message_t
-* sctk_add_pack_in_message_absolute (sctk_thread_ptp_message_t *
-				     msg, void *adr,
-				     const sctk_count_t nb_items,
-				     const size_t elem_size,
-				     sctk_pack_absolute_indexes_t *
-				     begins,
-				     sctk_pack_absolute_indexes_t * ends){
+void
+sctk_add_pack_in_message_absolute (sctk_thread_ptp_message_t *
+				   msg, void *adr,
+				   const sctk_count_t nb_items,
+				   const size_t elem_size,
+				   sctk_pack_absolute_indexes_t *
+				   begins,
+				   sctk_pack_absolute_indexes_t * ends){
   int step;
   if(msg->message_type == sctk_message_pack_undefined){
     msg->message_type = sctk_message_pack_absolute;
@@ -636,27 +643,22 @@ sctk_thread_ptp_message_t
 static inline 
 sctk_msg_list_t* sctk_perform_messages_search_matching(sctk_internal_ptp_t* pair,
 					  sctk_thread_message_header_t* header){
-  sctk_msg_list_t* res = (sctk_msg_list_t*)(-1);
-  if(header->source == MPC_ANY_SOURCE){
-    not_implemented();
-  } else if((header->message_tag == MPC_ANY_TAG)){
-    not_implemented();
-  }else if((header->source == MPC_ANY_SOURCE) && (header->message_tag == MPC_ANY_TAG)){
-    not_implemented();
-  }else {
-    sctk_msg_list_t*ptr_send;
-    sctk_msg_list_t* tmp;
-    res = NULL;
-    DL_FOREACH_SAFE(pair->send_message_list,ptr_send,tmp){
-      sctk_thread_message_header_t* header_send;
-      header_send = &(ptr_send->msg->header);
-      sctk_debug("Match? (%d,%d) ?= (%d,%d)",header->source,header->message_tag,
-		 header_send->source,header_send->message_tag);
-      if((header->source == header_send->source) && 
-	 (header->message_tag == header_send->message_tag)){
-	DL_DELETE(pair->send_message_list,ptr_send);
-	return ptr_send;
-      }
+  sctk_msg_list_t* res = NULL;
+  sctk_msg_list_t* ptr_send;
+  sctk_msg_list_t* tmp;
+  res = NULL;
+  DL_FOREACH_SAFE(pair->send_message_list,ptr_send,tmp){
+    sctk_thread_message_header_t* header_send; 
+    sctk_assert(ptr_send->msg != NULL);
+    header_send = &(ptr_send->msg->header);
+    sctk_debug("Match? (%d,%d,%d) ?= (%d,%d,%d)",
+	       header->source,header->message_tag,header->specific_message_tag,
+	       header_send->source,header_send->message_tag,header_send->specific_message_tag);
+    if((header->specific_message_tag == header_send->specific_message_tag) &&
+       ((header->source == header_send->source) || (header->source == MPC_ANY_SOURCE))&& 
+       ((header->message_tag == header_send->message_tag) || (header->message_tag == MPC_ANY_TAG))){
+      DL_DELETE(pair->send_message_list,ptr_send);
+      return ptr_send;
     }
   }
   return res;
@@ -666,7 +668,8 @@ static inline void sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t* pa
   sctk_msg_list_t* ptr_send;
   sctk_msg_list_t* tmp;
 
-  DL_FOREACH_SAFE(pair->recv_message_list,ptr_recv,tmp){    
+  DL_FOREACH_SAFE(pair->recv_message_list,ptr_recv,tmp){  
+    sctk_assert(ptr_recv->msg != NULL);
     ptr_send = sctk_perform_messages_search_matching(pair,&(ptr_recv->msg->header));
     if(ptr_send != NULL){
       sctk_debug("Match %p and %p",ptr_recv,ptr_send);
@@ -693,27 +696,12 @@ static inline void sctk_try_perform_messages_for_pair(sctk_internal_ptp_t* pair)
 }
 
 void sctk_wait_message (sctk_request_t * request){
-  if(request->completion_flag != SCTK_MESSAGE_DONE){
-    sctk_comm_dest_key_t key;
-    sctk_internal_ptp_t* tmp;
-    sctk_thread_ptp_message_t* msg;
+  sctk_perform_messages(request);
 
-    msg = request->msg;
-    
-    key.comm = msg->header.communicator;
-    key.destination = msg->header.glob_destination;
-    
-    sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
-    HASH_FIND(hh,sctk_ptp_table,&key,sizeof(sctk_comm_dest_key_t),tmp);
-    sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
-    
-    if(tmp != NULL){
-      sctk_try_perform_messages_for_pair(tmp);
-    }
-    
+  if(request->completion_flag != SCTK_MESSAGE_DONE){
     sctk_thread_wait_for_value_and_poll
-      ((int *) &(msg->completion_flag),SCTK_MESSAGE_DONE ,
-       NULL,NULL);
+      ((int *) &(request->completion_flag),SCTK_MESSAGE_DONE ,
+       (void(*)(void*))sctk_perform_messages,(void*)request);
   }
 }
 
@@ -721,12 +709,9 @@ void sctk_perform_messages(sctk_request_t* request){
   if(request->completion_flag != SCTK_MESSAGE_DONE){
     sctk_comm_dest_key_t key;
     sctk_internal_ptp_t* tmp;
-    sctk_thread_ptp_message_t* msg;
-
-    msg = request->msg;
     
-    key.comm = msg->header.communicator;
-    key.destination = msg->header.glob_destination;
+    key.comm = request->header.communicator;
+    key.destination = request->header.glob_destination;
     
     sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
     HASH_FIND(hh,sctk_ptp_table,&key,sizeof(sctk_comm_dest_key_t),tmp);
@@ -769,8 +754,8 @@ void sctk_wait_all (const int task, const sctk_communicator_t com){
 #warning "To optimize"
     sctk_thread_yield();
   } while(i != 0);
-
 }
+
 /********************************************************************/
 /*Send/Recv messages                                                */
 /********************************************************************/

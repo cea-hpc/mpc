@@ -106,7 +106,7 @@ void sctk_all_reduce (const void *buffer_in, void *buffer_out,
 /*INIT                                                                  */
 /************************************************************************/
 
-void (*sctk_collectives_init_hook)(sctk_communicator_t id) = sctk_collectives_init_simple;
+void (*sctk_collectives_init_hook)(sctk_communicator_t id) = sctk_collectives_init_messages;
 
 /*Init data structures used for task i*/
 void sctk_collectives_init (sctk_communicator_t id,
