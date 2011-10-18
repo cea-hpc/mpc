@@ -91,13 +91,13 @@ sctk_restrict_topology ()
 {
   int rank ;
 
-  /* Enable SMT capabilities */
   if (sctk_enable_smt_capabilities)
   {
     sctk_warning ("SMT capabilities ENABLED");
   }
   else
   {
+    /* disable SMT capabilities */
     unsigned int i;
     int err;
     hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
@@ -145,7 +145,7 @@ sctk_restrict_topology ()
     {
       /* Determine processor number per process */
       int processor_number = sctk_processor_number_on_node / detected_on_this_host;
-      int remaining_procs = sctk_processor_number_on_node % detected_on_this_host;
+      const int remaining_procs = sctk_processor_number_on_node % detected_on_this_host;
       int start = processor_number * rank;
       if(processor_number < 1){
 	processor_number = 1;
@@ -286,8 +286,7 @@ sctk_topology_init ()
 
   uname (&utsname);
 
-  sctk_hls_build_repository();
-  /* sctk_print_topology (stderr); */
+/*   sctk_print_topology (stderr); */
 }
 
 /*! \brief Destroy the topology module
@@ -440,6 +439,7 @@ sctk_is_numa_node ()
 
 /*! \brief Return the number of NUMA nodes
 */
+  int
 sctk_get_numa_node_number ()
 {
   return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) ;

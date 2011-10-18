@@ -36,7 +36,7 @@ extern "C"
   /*
     Numbering rules
 
-    Core_id are renubered according to a topological numbering. All threads sharing a 
+    Core_id are renumbered according to a topological numbering. All threads sharing a 
     cache level must have continuous numbers.
   */
 
