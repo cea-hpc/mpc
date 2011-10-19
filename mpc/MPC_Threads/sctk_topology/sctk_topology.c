@@ -456,7 +456,7 @@ sctk_get_first_cpu_in_node (int node)
 int
 sctk_get_cpu_number ()
 {
-	return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
+	return sctk_processor_number_on_node;
 }
 
 /*! \brief Set the number of core usable for the current process
