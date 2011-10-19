@@ -61,10 +61,6 @@ extern "C"
 */
   int sctk_is_numa_node (void);
 
-/*! \brief Return the number of NUMA nodes
-*/
-  int sctk_get_numa_node_number (void);
-
 /*! \brief Print the topology tree into a file
  * @param fd Destination file descriptor
 */

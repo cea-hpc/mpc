@@ -85,7 +85,6 @@ callback (struct dl_phdr_info *info, size_t size, void *data)
   return 0;
 }
 
-
 typedef struct
 {
   unsigned long int ti_module;
@@ -101,7 +100,6 @@ typedef struct
   sctk_spinlock_t lock;
 } tls_level;
 
-
 typedef struct
 {
   tls_level level ;
@@ -114,9 +112,9 @@ typedef struct
 } hls_level;
 
 static __thread hls_level* sctk_hls[sctk_hls_max_scope];
-static hls_level *sctk_hls_repository ;
-
 static __thread size_t single_nowait_counter[sctk_hls_max_scope] ;
+static hls_level **sctk_hls_repository ;
+
 
 static inline void
 sctk_tls_init_level (tls_level * level)
@@ -421,32 +419,29 @@ sctk_extls_delete ()
  */
 void sctk_hls_build_repository ()
 {
-  /* TODO: take values from sctk_topology */
-  int i, j ;
-  const int numa_number   = sctk_get_numa_node_number() ;
-  const int socket_number = numa_number ;
-  const int cache_number  = numa_number ;
-  const int core_number   = sctk_get_cpu_number() ;
-  const int total_level_number = 1 + numa_number + socket_number
-                                 + cache_number + core_number ;
+  int i,j ;
+  const int numa_level_2_number   = sctk_get_numa_number(2) ;
+  const int numa_level_1_number   = sctk_get_numa_number(1) ;
+  const int socket_number         = sctk_get_socket_number() ;
+  const int cache_level_3_number  = sctk_get_cache_number(3) ;
+  const int cache_level_2_number  = sctk_get_cache_number(2) ;
+  const int cache_level_1_number  = sctk_get_cache_number(1) ;
+  const int core_number           = sctk_get_core_number() ;
 
-  sctk_hls_repository = sctk_malloc ( total_level_number*sizeof(hls_level) );
-  for ( i = 0; i < total_level_number; ++i )
-    sctk_hls_init_level ( &sctk_hls_repository[i] ) ;
+  const int total_level_below_numa_1 = numa_level_1_number + socket_number 
+	  + cache_level_3_number + cache_level_2_number + cache_level_1_number
+	  + core_number ;
 
-  /* for now we assume 1 VP per core */
-  /* TODO: modify with real values defined at startup */
-  i = 0 ;
-  sctk_hls_repository[i++].toenter = core_number ; 
-  for ( j=0; j < numa_number; ++j)
-	  sctk_hls_repository[i++].toenter = core_number / numa_number ; 
-  for ( j=0; j < socket_number; ++j)
-	  sctk_hls_repository[i++].toenter = core_number / socket_number ; 
-  for ( j=0; j < cache_number; ++j)
-	  sctk_hls_repository[i++].toenter = core_number / cache_number ; 
-  for ( j=0; j < core_number; ++j)
-	  sctk_hls_repository[i++].toenter = 1 ; 
-  
+  sctk_hls_repository = sctk_malloc ( numa_level_1_number*sizeof(hls_level*) );
+
+  for ( i=0 ; i < numa_level_1_number ; ++i ) {
+	  const int n = total_level_below_numa_1 + (i == 0)
+		  + ( numa_level_2_number > 0 && i % numa_level_2_number == 0 ) ;
+	  sctk_hls_repository[i] = sctk_malloc_on_node ( n * sizeof(hls_level), i ) ;
+	  for ( j=0 ; j<n ; ++j )
+		  sctk_hls_init_level ( sctk_hls_repository[i] + j ) ;
+  }
+
   page_size = getpagesize ();
 }
 
@@ -460,30 +455,82 @@ void sctk_hls_build_repository ()
  */
 void sctk_hls_checkout_on_vp ()
 {
-  /* TODO: take values from sctk_topology */
-  const int numa_number   = sctk_get_numa_node_number() ;
-  const int socket_number = numa_number ;
-  const int cache_number  = numa_number ;
-  const int core_number   = sctk_get_cpu_number() ;
-  const int core_id       = sctk_thread_get_vp() ;
-  const int numa_id       = sctk_get_node_from_cpu(core_id) ;
-  const int socket_id     = numa_id ;
-  const int cache_id      = numa_id ;
+  const int numa_level_2_number   = sctk_get_numa_number(2) ;
+  const int numa_level_1_number   = sctk_get_numa_number(1) ;
+  const int socket_number         = sctk_get_socket_number() ;
+  const int cache_level_3_number  = sctk_get_cache_number(3) ;
+  const int cache_level_2_number  = sctk_get_cache_number(2) ;
+  const int cache_level_1_number  = sctk_get_cache_number(1) ;
+  const int core_number           = sctk_get_core_number() ;
+  const int vp                    = sctk_thread_get_vp() ;
+  const int numa_1_id             = sctk_get_numa_id(1,vp) ;
+  int id ;
+  int child_id ;
   int offset = 0 ;
+  int size_below = socket_number + cache_level_3_number
+	  + cache_level_2_number + cache_level_1_number + core_number ;
+  
+  for ( i = 1 ; i < sctk_hls_max_scope ; ++i )
+	  sctk_hls[i] = NULL ;
+  
+  sctk_hls[sctk_hls_node_scope] = sctk_hls_repository[0] ;
 
-  /* check if already initialized */  
-  if ( sctk_hls[sctk_hls_node_scope] != NULL )
-    return ; 
+  offset += (numa_1_id == 0) ;
 
-  sctk_hls[sctk_hls_node_scope]   = &sctk_hls_repository[0] ;
-  offset += 1 ;
-  sctk_hls[sctk_hls_numa_scope]   = &sctk_hls_repository[offset+numa_id] ;  
-  offset += numa_number ;  
-  sctk_hls[sctk_hls_socket_scope] = &sctk_hls_repository[offset+socket_id] ;  
-  offset += socket_number ;  
-  sctk_hls[sctk_hls_cache_scope]  = &sctk_hls_repository[offset+cache_id] ;  
-  offset += cache_number ;  
-  sctk_hls[sctk_hls_core_scope]   = &sctk_hls_repository[offset+core_id] ;  
+  if ( numa_level_2_number > 0 ) {
+	  sctk_hls[sctk_hls_numa_level_2_scope]
+		  = sctk_hls_repository[ numa_1_id / numa_level_2_number ]
+		  + offset ;
+	  offset += (numa_1_id % numa_level_2_number == 0) ;
+  }
+
+  sctk_hls[sctk_hls_numa_level_1_scope]
+	  = sctk_hls_repository[numa_1_id] + offset ;
+  offset += numa_level_1_number ;
+
+  id = sctk_get_socket_id (vp) ;
+  child_id = id % ( socket_number / numa_level_1_number ) ;
+  sctk_hls[sctk_hls_socket_scope] = sctk_hls_repository[numa_1_id]
+	  + offset + child_id * size_below ;  
+  offset += child_id * size_below + 1 ; 
+  size_below -= socket_number ;
+
+  if (cache_level_3_number > 0 ) {
+	  id = sctk_get_cache_id (3, vp) ;
+	  child_id = id % ( cache_level_3_number / socket_number ) ;
+	  sctk_hls[sctk_hls_cache_level_3_scope] = sctk_hls_repository[numa_1_id]
+		  + offset + child_id * size_below ;  
+	  offset += child_id * size_below + 1 ; 
+	  size_below -= cache_level_3_number ;
+  }
+
+  if (cache_level_2_number > 0 ) {
+	  id = sctk_get_cache_id (2, vp) ;
+	  child_id = id % ( cache_level_2_number / cache_level_3_number ) ; 
+	  sctk_hls[sctk_hls_cache_level_2_scope] = sctk_hls_repository[numa_1_id]
+		  + offset + child_id * size_below ;  
+	  offset += child_id * size_below + 1 ; 
+	  size_below -= cache_level_2_number ;
+  }
+
+  if (cache_level_1_number > 0 ) {
+	  id = sctk_get_cache_id (1, vp) ;
+	  child_id = id % ( cache_level_1_number / cache_level_2_number ) ;
+	  sctk_hls[sctk_hls_cache_level_1_scope] = sctk_hls_repository[numa_1_id]
+		  + offset + child_id * size_below ;  
+	  offset += child_id * size_below + 1 ; 
+	  size_below -= cache_level_1_number ;
+  }
+
+  id = sctk_get_core_id(vp) ;
+  child_id = id % ( core_number / cache_level_1_number ) ;
+  sctk_hls[sctk_hls_core_scope] = sctk_hls_repository[numa_1_id]
+	  + offset + child_id * size_below ;
+
+  /* TODO: ATOMIC */
+  for ( i = 0 ; i < sctk_hls_max_scope ; ++i )
+	  if ( sctk_hls[i] != NULL )
+		  sctk_hls[i]->toenter += 1 ;
 }
 
 /*
@@ -491,7 +538,10 @@ void sctk_hls_checkout_on_vp ()
  */
 void sctk_hls_free ()
 {
-  free ( sctk_hls_repository ) ;
+  const int numa_level_1_number   = sctk_get_numa_number(1) ;
+  int i ;
+  for ( i=0 ; i < numa_level_1_number ; ++i )
+	  free ( sctk_hls_repository[i] ) ;
 }
 
 #if defined(SCTK_i686_ARCH_SCTK) || defined (SCTK_x86_64_ARCH_SCTK)
@@ -567,15 +617,28 @@ __sctk__tls_get_addr__node_scope (tls_index * tmp)
 }
 
 void *
-__sctk__tls_get_addr__numa_scope (tls_index * tmp)
+__sctk__tls_get_addr__numa_level_2_scope (tls_index * tmp)
 {
   void *res;
   tls_level **hls;
-  sctk_nodebug ("__sctk__tls_get_addr__numa_scope on numa node %d",
+  sctk_nodebug ("__sctk__tls_get_addr__numa_level_2_scope on numa node %d",
     sctk_get_node_from_cpu(sctk_thread_get_vp()));
   res =
     __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
-					 &sctk_hls[sctk_hls_numa_scope]->level);
+					 &sctk_hls[sctk_hls_numa_level_2_scope]->level);
+  return res;
+}
+
+void *
+__sctk__tls_get_addr__numa_level_1_scope (tls_index * tmp)
+{
+  void *res;
+  tls_level **hls;
+  sctk_nodebug ("__sctk__tls_get_addr__numa_level_1_scope on numa node %d",
+    sctk_get_node_from_cpu(sctk_thread_get_vp()));
+  res =
+    __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
+					 &sctk_hls[sctk_hls_numa_level_1_scope]->level);
   return res;
 }
 
@@ -591,13 +654,35 @@ __sctk__tls_get_addr__socket_scope (tls_index * tmp)
 }
 
 void *
-__sctk__tls_get_addr__cache_scope (tls_index * tmp)
+__sctk__tls_get_addr__cache_level_3_scope (tls_index * tmp)
 {
   void *res;
-  sctk_nodebug ("__sctk__tls_get_addr__cache_scope");
+  sctk_nodebug ("__sctk__tls_get_addr__cache_level_3_scope");
   res =
     __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
-					 &sctk_hls[sctk_hls_cache_scope]->level);
+					 &sctk_hls[sctk_hls_cache_level_3_scope]->level);
+  return res;
+}
+
+void *
+__sctk__tls_get_addr__cache_level_2_scope (tls_index * tmp)
+{
+  void *res;
+  sctk_nodebug ("__sctk__tls_get_addr__cache_level_2_scope");
+  res =
+    __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
+					 &sctk_hls[sctk_hls_cache_level_2_scope]->level);
+  return res;
+}
+
+void *
+__sctk__tls_get_addr__cache_level_1_scope (tls_index * tmp)
+{
+  void *res;
+  sctk_nodebug ("__sctk__tls_get_addr__cache_level_1_scope");
+  res =
+    __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
+					 &sctk_hls[sctk_hls_cache_level_1_scope]->level);
   return res;
 }
 
