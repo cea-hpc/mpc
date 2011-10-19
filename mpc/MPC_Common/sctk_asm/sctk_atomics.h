@@ -24,6 +24,7 @@
 #define __SCTK_ATOMICS_H
 
 #include "opa_config.h"
+#include "sctk_config.h"
 
 #if defined(OPA_USE_UNSAFE_PRIMITIVES) || defined(OPA_HAVE_GCC_AND_POWERPC_ASM) || defined(OPA_HAVE_GCC_X86_32_64) \
   || defined(OPA_HAVE_GCC_X86_32_64_P3) || defined(OPA_HAVE_GCC_AND_IA64_ASM) || defined(OPA_HAVE_GCC_AND_SICORTEX_ASM) \
