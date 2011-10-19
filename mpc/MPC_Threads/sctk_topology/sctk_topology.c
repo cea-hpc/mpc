@@ -25,6 +25,7 @@
 #include "sctk_config.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"
+#include "sctk_spinlock.h"
 #include "sctk_kernel_thread.h"
 #include <dirent.h>
 
@@ -386,6 +387,11 @@ sctk_print_topology (FILE * fd)
 int
 sctk_bind_to_cpu (int i)
 {
+
+        static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+
+        sctk_spinlock_lock( &lock );
+
 	char * msg = "Bind to cpu";
 	int supported = support->cpubind->set_thisthread_cpubind;
 	const char *errmsg = strerror(errno);
@@ -401,6 +407,8 @@ sctk_bind_to_cpu (int i)
 			printf("%-40s: %sFAILED (%d, %s)\n", msg, supported?"":"X", errno, errmsg);
 		}
 	}
+
+        sctk_spinlock_unlock( &lock );
 
 	return ret;
 }
