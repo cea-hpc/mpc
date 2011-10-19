@@ -90,8 +90,8 @@ static ssize_t
 safe_read (int fd, void *buf, size_t count)
 {
   char *tmp;
-  ssize_t already_read = 0;
-  ssize_t dcount = 0;
+  size_t already_read = 0;
+  size_t dcount = 0;
 
   tmp = buf;
   while (already_read < count)
@@ -112,8 +112,8 @@ safe_read (int fd, void *buf, size_t count)
 static ssize_t
 safe_write (int fd, const void *buf, size_t count)
 {
-  ssize_t dcount = 0;
-  ssize_t already_written = 0;
+  size_t dcount = 0;
+  size_t already_written = 0;
   char *tmp = (char *)buf;
 
 
@@ -452,7 +452,7 @@ sctk_get_shm_filename (int fd, int rank)
 }
 
   static void
-sctk_set_process_number (fd, rank)
+sctk_set_process_number (int fd, int rank)
 {
   safe_read (fd, &process_nb, sizeof (int));
   //fprintf(stderr, "NB processes : %d", process_nb);
