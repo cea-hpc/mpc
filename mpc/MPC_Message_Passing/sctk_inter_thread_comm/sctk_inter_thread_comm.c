@@ -52,7 +52,7 @@ void sctk_probe_any_source_tag (int destination,
 /********************************************************************/
 
 typedef struct{
-  sctk_communicator_t comm;
+/*   sctk_communicator_t comm; */
   int destination;
 }sctk_comm_dest_key_t;
 
@@ -446,7 +446,7 @@ void sctk_ptp_per_task_init (int i){
   sctk_internal_ptp_t * tmp;
   tmp = sctk_malloc(sizeof(sctk_internal_ptp_t));
   memset(tmp,0,sizeof(sctk_internal_ptp_t));
-  tmp->key.comm = SCTK_COMM_WORLD;
+/*   tmp->key.comm = SCTK_COMM_WORLD; */
   tmp->key.destination = i;
 
   tmp->recv_message_list = NULL;
@@ -653,7 +653,8 @@ sctk_msg_list_t* sctk_perform_messages_search_matching(sctk_internal_ptp_t* pair
     sctk_thread_message_header_t* header_send; 
     sctk_assert(ptr_send->msg != NULL);
     header_send = &(ptr_send->msg->header);
-    if((header->specific_message_tag == header_send->specific_message_tag) &&
+    if((header->communicator == header_send->communicator) && 
+       (header->specific_message_tag == header_send->specific_message_tag) &&
        ((header->source == header_send->source) || (header->source == MPC_ANY_SOURCE))&& 
        ((header->message_tag == header_send->message_tag) || (header->message_tag == MPC_ANY_TAG))){
       DL_DELETE(pair->send_message_list,ptr_send);
@@ -713,7 +714,7 @@ void sctk_perform_messages(sctk_request_t* request){
     sctk_comm_dest_key_t key;
     sctk_internal_ptp_t* tmp;
     
-    key.comm = request->header.communicator;
+/*     key.comm = request->header.communicator; */
     key.destination = request->header.glob_destination;
     
     sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
@@ -767,7 +768,7 @@ void sctk_send_message (sctk_thread_ptp_message_t * msg){
   sctk_comm_dest_key_t key;
   sctk_internal_ptp_t* tmp;
 
-  key.comm = msg->header.communicator;
+/*   key.comm = msg->header.communicator; */
   key.destination = msg->header.glob_destination;
 
   if(msg->completion_flag != NULL){
@@ -792,7 +793,7 @@ void sctk_recv_message (sctk_thread_ptp_message_t * msg){
   sctk_comm_dest_key_t key;
   sctk_internal_ptp_t* tmp;
 
-  key.comm = msg->header.communicator;
+/*   key.comm = msg->header.communicator; */
   key.destination = msg->header.glob_destination;
 
   if(msg->completion_flag != NULL){
