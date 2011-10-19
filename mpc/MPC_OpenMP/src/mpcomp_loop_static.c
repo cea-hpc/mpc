@@ -439,7 +439,7 @@ __mpcomp_start_parallel_static_loop (int arg_num_threads, void *(*func)
 		 i);
 
 	      new_info =
-		sctk_malloc_on_node (sizeof (mpcomp_thread_info_t), microVP);
+		sctk_malloc_on_node (sizeof (mpcomp_thread_info_t), sctk_get_node_from_cpu(microVP));
 	      sctk_assert (new_info != NULL);
 
 	      current_info->children[i] = new_info;

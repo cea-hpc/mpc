@@ -17,6 +17,8 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
+/* #   - TCHIBOUKDJIAN Marc marc.tchiboukdjian@exascale-computing.eu      # */
 /* #                                                                      # */
 /* ######################################################################## */
 #include "sctk_config.h"
@@ -45,135 +47,162 @@
 #define SCTK_LOCAL_VERSION_MINOR 1
 
 static int sctk_processor_number_on_node = 0;
-static int sctk_node_number_on_node = 0;
 static char sctk_node_name[SCTK_MAX_NODE_NAME];
 
 static hwloc_topology_t topology;
 const struct hwloc_topology_support *support;
 
+/* print a cpuset in a human readable way */
 static void
+print_cpuset(hwloc_bitmap_t cpuset)
+{
+  char buff[256];
+  hwloc_bitmap_list_snprintf(buff, 256, cpuset);
+  fprintf(stdout, "cpuset: %s\n", buff);
+  fflush(stdout);
+}
+
+static void
+sctk_update_topology (
+    const int processor_number,
+    const int index_first_processor
+    ) {
+  sctk_processor_number_on_node = processor_number ;
+  hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
+  unsigned int i;
+  int err;
+  hwloc_bitmap_zero(cpuset);
+  for( i=index_first_processor; i < index_first_processor+processor_number; ++i)
+  {
+    hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
+    hwloc_cpuset_t set = hwloc_bitmap_dup(pu->cpuset);
+    hwloc_bitmap_singlify(set);
+    hwloc_bitmap_or(cpuset, cpuset, set);
+  }
+  err = hwloc_topology_restrict(topology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
+  assume(!err);
+  hwloc_bitmap_free(cpuset);
+}
+
+  static void
 sctk_restrict_topology ()
 {
+  int rank ;
+
   /* Disable SMT capabilities */
   if (sctk_enable_smt_capabilities)
-    {
-	  sctk_warning ("SMT capailities ENABLED");
-    }
+  {
+    sctk_warning ("SMT capailities ENABLED");
+  }
   else
+  {
+    unsigned int i;
+    int err;
+    hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
+    hwloc_bitmap_zero(cpuset);
+    const int core_number = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
+
+    for(i=0;i < core_number; ++i)
     {
-	    hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
-      unsigned int i;
-      int err;
-
-	    hwloc_bitmap_zero(cpuset);
-
-      for(i=0;i < sctk_processor_number_on_node; ++i)
-      {
-        hwloc_obj_t core = hwloc_get_obj_by_type(topology, HWLOC_OBJ_CORE, i);
-        hwloc_cpuset_t set = hwloc_bitmap_dup(core->cpuset);
-        hwloc_bitmap_singlify(set);
-
-        hwloc_bitmap_or(cpuset, cpuset, set);
-      }
-
-	  /* restrict the topology to physical CPUs */
-	  err = hwloc_topology_restrict(topology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
-	  assume(!err);
-    hwloc_bitmap_free(cpuset);
+      hwloc_obj_t core = hwloc_get_obj_by_type(topology, HWLOC_OBJ_CORE, i);
+      hwloc_cpuset_t set = hwloc_bitmap_dup(core->cpuset);
+      hwloc_bitmap_singlify(set);
+      hwloc_bitmap_or(cpuset, cpuset, set);
     }
+    /* restrict the topology to physical CPUs */
+    err = hwloc_topology_restrict(topology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
+    assume(!err);
+    hwloc_bitmap_free(cpuset);
+  }
+
+  sctk_processor_number_on_node = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
 
   /* Share nodes */
   if (sctk_share_node_capabilities == 1
       && strcmp (sctk_store_dir, "/dev/null") != 0)
+  {
+    static char name[4096];
+    static char pattern_name[4096];
+    static char this_name[4096];
+    FILE *file;
+    int detected = 0;
+    int detected_on_this_host = 0;
+
+    /* Determine number of processes on this node */
+    sprintf (name, "%s/use_%s_%d", sctk_store_dir, sctk_node_name,
+        getpid ());
+    sprintf (this_name, "use_%s_%d", sctk_node_name, getpid ());
+    sprintf (pattern_name, "use_%s_", sctk_node_name);
+    sctk_nodebug ("file %s", name);
+    file = fopen (name, "w");
+    assume (file != NULL);
+    fprintf (file, "use\n");
+    fclose (file);
+
+    do
     {
-      static char name[4096];
-      static char pattern_name[4096];
-      static char this_name[4096];
-      FILE *file;
-      int detected = 0;
-      int detected_on_this_host = 0;
-      int processor_number;
-      int rank;
-      int start;
-      int i;
+      DIR *d;
+      struct dirent *direntry;
 
-      /* Determine number of processes on this node */
-      sprintf (name, "%s/use_%s_%d", sctk_store_dir, sctk_node_name,
-	       getpid ());
-      sprintf (this_name, "use_%s_%d", sctk_node_name, getpid ());
-      sprintf (pattern_name, "use_%s_", sctk_node_name);
-      sctk_nodebug ("file %s", name);
-      file = fopen (name, "w");
-      assume (file != NULL);
-      fprintf (file, "use\n");
-      fclose (file);
+      detected = 0;
+      detected_on_this_host = 0;
 
+      d = opendir (sctk_store_dir);
       do
-	{
-	  DIR *d;
-	  struct dirent *direntry;
-
-	  detected = 0;
-	  detected_on_this_host = 0;
-
-	  d = opendir (sctk_store_dir);
-	  do
-	    {
-	      direntry = readdir (d);
-	      if (direntry)
-		{
-		  if (memcmp (direntry->d_name, "use_", 4) == 0)
-		    {
-		      detected++;
-		      sctk_nodebug ("Compare %s and %s", direntry->d_name,
-				    pattern_name);
-		      if (memcmp
-			  (direntry->d_name, pattern_name,
-			   strlen (pattern_name)) == 0)
-			{
-			  detected_on_this_host++;
-			  if (memcmp
-			      (direntry->d_name, this_name,
-			       strlen (this_name)) == 0)
-			    {
-			      rank = detected_on_this_host - 1;
-			    }
-			}
-		    }
-		}
-	    }
-	  while (direntry != NULL);
-	  closedir (d);
-	  usleep (50);
-	}
-      while (detected != sctk_get_process_nb ());
-      sctk_nodebug ("%d/%d host detected %d share %s", detected,
-		    sctk_get_process_nb (), detected_on_this_host,
-		    sctk_node_name);
-
-      /* Determine processor number per process */
-      processor_number =
-	sctk_processor_number_on_node / detected_on_this_host;
-      start = processor_number * rank;
-      if (sctk_processor_number_on_node % detected_on_this_host)
-	{
-	  if (sctk_processor_number_on_node % detected_on_this_host > rank)
-	    {
-	      processor_number++;
-	    }
-	  if (sctk_processor_number_on_node % detected_on_this_host > rank)
-	    {
-	      start += rank;
-	    }
-	  else
-	    {
-	      start += sctk_processor_number_on_node % detected_on_this_host;
-	    }
-	}
-      sctk_processor_number_on_node = processor_number;
-      sctk_nodebug ("Rank %d use %d procs start %d", rank,
-		    sctk_processor_number_on_node, start);
+      {
+        direntry = readdir (d);
+        if (direntry)
+        {
+          if (memcmp (direntry->d_name, "use_", 4) == 0)
+          {
+            detected++;
+            sctk_nodebug ("Compare %s and %s", direntry->d_name,
+                pattern_name);
+            if (memcmp
+                (direntry->d_name, pattern_name,
+                 strlen (pattern_name)) == 0)
+            {
+              detected_on_this_host++;
+              if (memcmp
+                  (direntry->d_name, this_name,
+                   strlen (this_name)) == 0)
+              {
+                rank = detected_on_this_host - 1;
+              }
+            }
+          }
+        }
+      }
+      while (direntry != NULL);
+      closedir (d);
+      usleep (50);
     }
+    while (detected != sctk_get_process_nb ());
+    sctk_nodebug ("%d/%d host detected %d share %s", detected,
+        sctk_get_process_nb (), detected_on_this_host,
+        sctk_node_name);
+
+    {
+      /* Determine processor number per process */
+      int processor_number = sctk_processor_number_on_node / detected_on_this_host;
+      int start = processor_number * rank;
+      int remaining_procs = sctk_processor_number_on_node % detected_on_this_host;
+
+      if ( remaining_procs > 0 )
+      {
+        if ( rank < remaining_procs )
+        {
+          processor_number++;
+          start += rank;
+        } else {
+          start += remaining_procs;
+        }
+      }
+
+      sctk_update_topology ( processor_number, start ) ;
+    }
+
+  } /* share node */
 
   /* Choose the number of processor used */
   {
@@ -181,25 +210,25 @@ sctk_restrict_topology ()
 
     processor_number = sctk_get_processor_nb ();
 
-    if (processor_number > sctk_processor_number_on_node)
-      {
-	sctk_error ("Unable to allocate %d core (%d real cores)",
-		    processor_number, sctk_processor_number_on_node);
-	sctk_abort ();
-      }
-
     if (processor_number > 0)
+    {
+      if (processor_number > sctk_processor_number_on_node)
       {
-	if (sctk_processor_number_on_node > processor_number)
-	  {
-	    sctk_warning ("Do not use the entire node %d on %d",
-			  processor_number, sctk_processor_number_on_node);
-	  }
-
-	sctk_processor_number_on_node = processor_number;
+        sctk_error ("Unable to allocate %d core (%d real cores)",
+            processor_number, sctk_processor_number_on_node);
+        /* we cannot exit with a sctk_abort() because thread
+         * library is not initialized at this moment */
+        /* sctk_abort (); */
+        exit(1);
       }
+      else if ( processor_number < sctk_processor_number_on_node )
+      {
+        sctk_warning ("Do not use the entire node %d on %d",
+            processor_number, sctk_processor_number_on_node);
+        sctk_update_topology ( processor_number, 0 ) ;
+      }
+    }
   }
-   /* sctk_print_topology (stderr); */
 }
 
 #include <sched.h>
@@ -221,7 +250,7 @@ struct utsname
 
 static struct utsname utsname;
 
-static int
+  static int
 uname (struct utsname *buf)
 {
   buf->sysname = "";
@@ -234,55 +263,36 @@ uname (struct utsname *buf)
 
 #endif
 
-static void
-sctk_determine_processor_number_on_node ()
-{
-  	sctk_processor_number_on_node = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
-}
-
 /*! \brief Return the current core_id
 */
-int
+  int
 sctk_get_cpu ()
 {
-	hwloc_obj_t root = hwloc_get_root_obj(topology);
-	hwloc_cpuset_t set = hwloc_bitmap_alloc();
+  hwloc_cpuset_t set = hwloc_bitmap_alloc();
 
-	int ret = hwloc_get_last_cpu_location(topology, set, 0);
-	assert(!ret);
-	assert(!hwloc_bitmap_iszero(set));
+  int ret = hwloc_get_last_cpu_location(topology, set, 0);
+  assert(!ret);
+  assert(!hwloc_bitmap_iszero(set));
 
-	hwloc_bitmap_free(set);
-	return ret;
-}
-
-
-static void
-sctk_update_memory (void)
-{
-}
-
-static void
-sctk_update_numa (void)
-{
-	sctk_restrict_topology();
+  hwloc_bitmap_free(set);
+  return ret;
 }
 
 /*! \brief Initialize the topology module
 */
-void
+  void
 sctk_topology_init ()
 {
-	hwloc_topology_init(&topology);
-	hwloc_topology_load(topology);
+  hwloc_topology_init(&topology);
+  hwloc_topology_load(topology);
 
-	support = hwloc_topology_get_support(topology);
+  support = hwloc_topology_get_support(topology);
 
   sctk_only_once ();
   sctk_print_version ("Topology", SCTK_LOCAL_VERSION_MAJOR,
-		      SCTK_LOCAL_VERSION_MINOR);
+      SCTK_LOCAL_VERSION_MINOR);
 
-  sctk_determine_processor_number_on_node ();
+  sctk_restrict_topology();
 
 #ifndef WINDOWS_SYS
   gethostname (sctk_node_name, SCTK_MAX_NODE_NAME);
@@ -292,23 +302,20 @@ sctk_topology_init ()
 
   uname (&utsname);
 
-  sctk_update_memory ();
-  sctk_update_numa ();
-
-   /* sctk_print_topology (stderr); */
+  /* sctk_print_topology (stderr); */
 }
 
 /*! \brief Destroy the topology module
 */
 void sctk_topology_destroy (void)
 {
-	hwloc_topology_destroy(topology);
+  hwloc_topology_destroy(topology);
 }
 
 
 /*! \brief Return the hostname
 */
-char *
+  char *
 sctk_get_node_name ()
 {
   return sctk_node_name;
@@ -317,123 +324,88 @@ sctk_get_node_name ()
 /*! \brief Return the first child of \p obj of type \p type
  * @param obj Parent object
  * @param type Child type
-*/
-static hwloc_obj_t
+ */
+  static hwloc_obj_t
 sctk_get_first_child_by_type(hwloc_obj_t obj, hwloc_obj_type_t type)
 {
-	hwloc_obj_t child = obj;
-	do
-	{
-		child = child->first_child;
-	}
-	while(child->type != type);
-	return child;
-}
-
-static void
-sctk_print_children(FILE * fd, hwloc_topology_t topology, hwloc_obj_t obj)
-{
-    char string[128];
-    unsigned i;
-
-    if (obj->type == HWLOC_OBJ_MACHINE)
-    {
-    	fprintf(fd, "Node %s(%d): %s %s %s\n", sctk_node_name,obj->logical_index, utsname.sysname,
-    			   utsname.release, utsname.version);
-
-    	hwloc_obj_t first_child_pu;
-    	for (first_child_pu = sctk_get_first_child_by_type(obj, HWLOC_OBJ_PU); first_child_pu;
-    			first_child_pu = first_child_pu->next_cousin)
-    	{
-    		hwloc_obj_t tmp;
-			fprintf(fd, "\tProcessor %4u real %4u (%4u:%4u:%4u)\n", first_child_pu->logical_index, first_child_pu->sibling_rank,
-				( (tmp = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, first_child_pu)) ? tmp->logical_index : 0),
-				( (tmp = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_SOCKET, first_child_pu)) ? tmp->logical_index : 0),
-				( (tmp = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, first_child_pu)) ? tmp->logical_index : 0));
-    	}
-
-    	fprintf (fd, "\tNUMA: %d\n", sctk_is_numa_node ());
-		if (sctk_is_numa_node ())
-		{
-			fprintf (fd, "\t\t* Node nb %d\n", obj->arity);
-		}
-
-		return;
-    }
-    else
-    {
-    	for (i = 0; i < obj->arity; i ++)
-    	{
-    		sctk_print_children(fd, topology, obj->children[i]);
-    	}
-    }
+  hwloc_obj_t child = obj;
+  do
+  {
+    child = child->first_child;
+  }
+  while(child->type != type);
+  return child;
 }
 
 /*! \brief Print the topology tree into a file
  * @param fd Destination file descriptor
-*/
-void
+ */
+  void
 sctk_print_topology (FILE * fd)
 {
+  int i;
+  fprintf(fd, "Node %s: %s %s %s\n", sctk_node_name, utsname.sysname,
+      utsname.release, utsname.version);
+  const int pu_number = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
+  for(i=0;i < pu_number; ++i)
+  {
+    hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
+    hwloc_obj_t tmp[3];
+    tmp[0] = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, pu);
+    tmp[1] = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_SOCKET, pu);
+    tmp[2] = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, pu);
+    fprintf(fd, "\tProcessor %4u real (%4u:%4u:%4u)\n", pu->os_index,
+        tmp[0]->os_index, tmp[1]->logical_index, tmp[2]->logical_index );
+  }
 
-	sctk_print_children(fd, topology, hwloc_get_root_obj(topology));
+  fprintf (fd, "\tNUMA: %d\n", sctk_is_numa_node ());
+  if (sctk_is_numa_node ())
+  {
+    fprintf (fd, "\t\t* Node nb %d\n", sctk_get_numa_node_number());
+  }
+  return;
 }
 
 /*! \brief Bind the current thread
  * @ param i The cpu_id to bind
-*/
-int
+ */
+  int
 sctk_bind_to_cpu (int i)
 {
-	char * msg = "Bind to cpu";
-	int supported = support->cpubind->set_thisthread_cpubind;
-	const char *errmsg = strerror(errno);
+  char * msg = "Bind to cpu";
+  int supported = support->cpubind->set_thisthread_cpubind;
+  const char *errmsg = strerror(errno);
 
-	int ret = sctk_get_cpu();
+  int ret = sctk_get_cpu();
 
-	if (i >= 0)
-	{
-		hwloc_obj_t cpu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_CORE, i);
-		int err = hwloc_set_cpubind(topology, cpu->cpuset, HWLOC_CPUBIND_THREAD);
-		if (err)
-		{
-			printf("%-40s: %sFAILED (%d, %s)\n", msg, supported?"":"X", errno, errmsg);
-		}
-	}
+  if (i >= 0)
+  {
+    hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
+    int err = hwloc_set_cpubind(topology, pu->cpuset, HWLOC_CPUBIND_THREAD);
+    if (err)
+    {
+      printf("%-40s: %sFAILED (%d, %s)\n", msg, supported?"":"X", errno, errmsg);
+    }
+  }
 
-	return ret;
+  return ret;
 }
 
 /*! \brief Return the type of processor (x86, x86_64, ...)
 */
-char *
+  char *
 sctk_get_processor_name ()
 {
   return utsname.machine;
 }
 
-/*! \brief Return the NUMA node according to the code_id number
- * @param cpu core_id
-*/
-int
-sctk_get_node_from_cpu (int cpu)
-{
-	hwloc_obj_t currentCPU = hwloc_get_obj_by_type(topology, HWLOC_OBJ_CORE, cpu);
-	hwloc_obj_t parentNode = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, currentCPU);
-	if (parentNode)
-	{
-		return parentNode->logical_index;
-	}
-	return 0;
-}
-
 /*! \brief Return the first core_id for a NUMA node
  * @ param node NUMA node id.
-*/
-int
+ */
+  int
 sctk_get_first_cpu_in_node (int node)
 {
-	hwloc_obj_t currentNode = hwloc_get_obj_by_type(topology, HWLOC_OBJ_NODE, node);
+  hwloc_obj_t currentNode = hwloc_get_obj_by_type(topology, HWLOC_OBJ_NODE, node);
 
   while(currentNode->type != HWLOC_OBJ_CORE) {
     currentNode = currentNode->children[0];
@@ -444,46 +416,170 @@ sctk_get_first_cpu_in_node (int node)
 
 /*! \brief Return the total number of core for the process
 */
-int
+  int
 sctk_get_cpu_number ()
 {
-	return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
+  return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
 }
 
 /*! \brief Set the number of core usable for the current process
  * @ param n Number of cores
-*/
-int
+ * used in ethread
+ */
+  int
 sctk_set_cpu_number (int n)
 {
-  sctk_processor_number_on_node = n;
+  sctk_update_topology ( n, 0 ) ;
   return n;
 }
 
 /*! \brief Return 1 if the current node is a NUMA node, 0 otherwise
 */
-int
+  int
 sctk_is_numa_node ()
 {
   return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) != 0;
 }
 
+/*! \brief Return the number of NUMA nodes
+*/
+  int
+sctk_get_numa_node_number ()
+{
+  return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) ;
+}
+
+/*! \brief Return the NUMA node according to the code_id number
+ * @param vp VP
+ */
+  int
+sctk_get_node_from_cpu (const int vp)
+{
+  const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
+  const hwloc_obj_t node = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, pu);
+  return node->logical_index;
+}
+
+/*! \brief Return the number of NUMA nodes
+ * @param level NUMA level
+ */
+int sctk_get_numa_number (const int level)
+{
+  if ( level > sctk_get_numa_level_number() ) {
+    return 0 ;
+  }
+  const int socket_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_SOCKET);
+  const int numa_depth = socket_depth - level ;
+  return hwloc_get_nbobjs_by_depth(topology,numa_depth);
+}
+
+/*! \brief Return the number of sockets
+*/
+int sctk_get_socket_number ()
+{
+  return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_SOCKET) ;
+}
+
+/*! \brief Return the number of caches
+ * @param level Cache level
+ */
+int sctk_get_cache_number (const int level)
+{
+  if ( level > sctk_get_cache_level_number() ) {
+    return 0 ;
+  }
+  const int core_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE);
+  const int cache_depth = core_depth - level ;
+  return hwloc_get_nbobjs_by_depth(topology,cache_depth);
+}
+
+/*! \brief Return the number of cores
+*/
+int sctk_get_core_number ()
+{
+  return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE) ;
+}
+
+/*! \brief Return the number of cache levels
+*/
+int sctk_get_cache_level_number ()
+{
+  const int core_depth   = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE);
+  const int socket_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_SOCKET);
+  return core_depth - socket_depth - 1 ;
+}
+
+/*! \brief Return the number of NUMA levels
+*/
+int sctk_get_numa_level_number ()
+{
+  const int machine_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_MACHINE);
+  const int socket_depth  = hwloc_get_type_depth(topology, HWLOC_OBJ_SOCKET);
+  return socket_depth - machine_depth - 1 ;
+}
+
+/*! \brief Return the NUMA id
+ * @param vp VP
+ * @param level NUMA level
+ */
+int sctk_get_numa_id (const int level, const int vp)
+{
+  const int socket_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_SOCKET);
+  const int numa_depth = socket_depth - level ;
+  const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
+  const hwloc_obj_t numa = hwloc_get_ancestor_obj_by_depth(topology, numa_depth, pu);
+  return numa->logical_index;
+}
+
+/*! \brief Return the socket id
+ * @param vp VP
+ */
+int sctk_get_socket_id (const int vp)
+{
+  const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
+  const hwloc_obj_t node = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_SOCKET, pu);
+  return node->logical_index;
+}
+
+/*! \brief Return the cache id
+ * @param vp VP
+ * @param level Cache level
+ */
+int sctk_get_cache_id (const int level, const int vp)
+{
+  const int core_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE);
+  const int cache_depth = core_depth - level ;
+  const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
+  const hwloc_obj_t cache = hwloc_get_ancestor_obj_by_depth(topology, cache_depth, pu);
+  return cache->logical_index;
+}
+
+/*! \brief Return the core id
+ * @param vp VP
+ */
+int sctk_get_core_id (const int vp)
+{
+  const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
+  const hwloc_obj_t core = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, pu);
+  return core->logical_index;
+}
+
 /* print the neighborhood*/
-static
+  static void
 print_neighborhood(int cpuid, int nb_cpus, int* neighborhood, hwloc_obj_t* objs)
 {
   int i;
-	hwloc_obj_t currentCPU = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuid);
+  hwloc_obj_t currentCPU = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuid);
   hwloc_obj_type_t type = (sctk_is_numa_node()) ? HWLOC_OBJ_NODE : HWLOC_OBJ_MACHINE;
   int currentCPU_node_id = hwloc_get_ancestor_obj_by_type(topology, type, currentCPU)->logical_index;
   int currentCPU_socket_id = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_SOCKET, currentCPU)->logical_index;
   int currentCPU_core_id = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, currentCPU)->logical_index;
-   fprintf(stderr, "Neighborhood result starting with CPU %d: (Node:%d, Socket: %d, Core: %d)\n",
+  fprintf(stderr, "Neighborhood result starting with CPU %d: (Node:%d, Socket: %d, Core: %d)\n",
       cpuid, currentCPU_node_id, currentCPU_socket_id, currentCPU_core_id);
 
-   for (i = 0; i < nb_cpus; i++)
-	{
-		hwloc_obj_t current = objs[i];
+  for (i = 0; i < nb_cpus; i++)
+  {
+    hwloc_obj_t current = objs[i];
 
     fprintf(stderr, "\tNeighbor[%d] -> CPU %d: (Node:%d, Socket: %d, Core: %d)\n",
         i, neighborhood[i],
@@ -497,16 +593,14 @@ print_neighborhood(int cpuid, int nb_cpus, int* neighborhood, hwloc_obj_t* objs)
  * @param cpuid Main core_id
  * @param nb_cpus Number of neighbor
  * @param neighborhood Neighbor list
-*/
-void
+ */
+  void
 sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood)
 {
-	int n, s, c, p;
-	int neighbor_id = 0;
-	int i;
+  int i;
 
   hwloc_obj_t *objs;
-	hwloc_obj_t currentCPU = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuid);
+  hwloc_obj_t currentCPU = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuid);
   unsigned nb_cpus_found;
 
   /* alloc size for retreiving objects. We could also use a static array */
@@ -522,9 +616,12 @@ sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood)
 
   /* fill the neighborhood variable */
   for (i = 0; i < nb_cpus; i++)
-	{
-		hwloc_obj_t current = objs[i];
-    neighborhood[i] = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, current)->logical_index;
+  {
+    /*
+       hwloc_obj_t current = objs[i];
+       neighborhood[i] = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, current)->logical_index;
+       */
+    neighborhood[i] = objs[i]->logical_index;
   }
 
   /* uncomment for printing the returned result */

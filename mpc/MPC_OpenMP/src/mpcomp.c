@@ -535,7 +535,7 @@ __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *),
 	      /* Allocate on the correct NUMA node if the MPC allocator is
 	         included */
 	      new_info =
-		sctk_malloc_on_node (sizeof (mpcomp_thread_info_t), vp);
+		sctk_malloc_on_node (sizeof (mpcomp_thread_info_t), sctk_get_node_from_cpu(vp));
 	      sctk_assert (new_info != NULL);
 
 	      current_info->children[i] = new_info;

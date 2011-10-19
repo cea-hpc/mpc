@@ -599,7 +599,7 @@ sctk_rpc_collective_op_remote_thread (sctk_rpc_collective_op_t * msg)
   }
 
   sctk_perform_rpc_send (msg->data_out, msg->tmp_data_out,
-      size, msg->src, (int *) &(msg->msg->done_end));
+      size, msg->src, (int *) &(msg->msg->done_end), msg->rkey);
 
   sctk_free (msg->tmp_data_in);
   sctk_free (msg->tmp_data_out);

@@ -303,7 +303,6 @@ int sctk_pmi_put_connection_info(void* info, size_t size, int tag) {
 		}
 	}
 
-    fn_exit:
     free(sKeyValue);
     return rc;
 }
@@ -330,7 +329,6 @@ int sctk_pmi_get_connection_info(void* info, size_t size, int tag, int rank) {
 		fprintf(stderr, "FAILURE (sctk_pmi): PMI_KVS_Get: %d\n", rc);
 	}
 
-    fn_exit:
     free(sKeyValue);
     return rc;
 }
@@ -472,7 +470,6 @@ int sctk_pmi_get_node_rank(int* rank) {
  * @param size Pointer to store the number of processes
 */
 int sctk_pmi_get_processes_on_node_number(int* size) {
-    int rc;
 
 #ifdef MPC_USE_HYDRA
 	*size  = sctk_pmi_processes_on_node_number;

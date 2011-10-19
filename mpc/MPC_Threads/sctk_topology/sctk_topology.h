@@ -17,6 +17,8 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
+/* #   - TCHIBOUKDJIAN Marc marc.tchiboukdjian@exascale-computing.eu      # */
 /* #                                                                      # */
 /* ######################################################################## */
 #ifndef __SCTK_TOPOLOGY_H_
@@ -51,11 +53,6 @@ extern "C"
 */
   int sctk_get_cpu (void);
 
-/*! \brief Return the NUMA node according to the code_id number
- * @param cpu core_id
-*/
-  int sctk_get_node_from_cpu (const int cpu);
-
 /*! \brief Return the total number of core for the process 
 */
   int sctk_get_cpu_number (void);
@@ -85,6 +82,7 @@ extern "C"
 
 /*! \brief Set the number of core usable for the current process
  * @ param n Number of cores
+ * used for ethread
 */
   int sctk_set_cpu_number (int n);
 
@@ -99,6 +97,63 @@ extern "C"
 */
   void sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood);
 
+/*! \brief Return the number of NUMA nodes
+*/
+  int sctk_get_numa_node_number (void);
+
+/*! \brief Return the NUMA node according to the code_id number
+ * @param vp VP
+*/
+  int sctk_get_node_from_cpu (const int vp);
+
+/*! \brief Return the number of NUMA nodes
+ *@param level NUMA level
+*/
+  int sctk_get_numa_number (const int level);
+
+/*! \brief Return the number of sockets
+*/
+  int sctk_get_socket_number (void);
+  
+/*! \brief Return the number of caches
+ * @param level Cache level
+*/
+  int sctk_get_cache_number (const int level);
+  
+/*! \brief Return the number of cores
+*/
+  int sctk_get_core_number (void);
+
+/*! \brief Return the number of cache levels
+*/
+  int sctk_get_cache_level_number (void);
+  
+/*! \brief Return the number of NUMA levels
+*/
+  int sctk_get_numa_level_number (void);
+  
+/*! \brief Return the NUMA id
+ * @param vp VP
+ * @param level NUMA level
+*/
+  int sctk_get_numa_id (const int level, const int vp);
+
+/*! \brief Return the socket id
+ * @param vp VP
+*/
+  int sctk_get_socket_id (const int vp);
+  
+/*! \brief Return the cache id
+ * @param vp VP
+ * @param level Cache level
+*/
+  int sctk_get_cache_id (const int level, const int vp);
+  
+/*! \brief Return the core id
+ * @param vp VP
+*/
+  int sctk_get_core_id (const int vp);
+  
 #ifdef __cplusplus
 }
 #endif

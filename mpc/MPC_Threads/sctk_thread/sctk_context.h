@@ -56,7 +56,9 @@ extern "C"
 #if defined(SCTK_x86_64_ARCH_SCTK) && (defined(Linux_SYS) && (defined(__GLIBC__) && ((__GLIBC__ <= 2) && (__GLIBC_MINOR__ < 12)) ))
 #undef DONOTHAVE_CONTEXTS
 #define DONOTHAVE_CONTEXTS
-#warning "Disable makecontext/swapcontext"
+/*
+ * we disable makecontext/swapcontext
+ * */
 #endif
 
 #ifdef DONOTHAVE_CONTEXTS

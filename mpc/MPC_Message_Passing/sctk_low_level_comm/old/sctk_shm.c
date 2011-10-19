@@ -28,6 +28,7 @@
 #include "sctk_rpc.h"
 #include "sctk_shm.h"
 #include "sctk_mpcrun_client.h"
+#include "sctk_pmi.h"
 
 #ifdef MPC_USE_SHM
 
@@ -451,7 +452,7 @@ sctk_shm_thread_rpc ( void *arg ) {
  */
 static void
 sctk_net_rpc_send_driver ( void *dest, void *src, size_t arg_size, int process,
-    int *ack ) {
+    int *ack, uint32_t rkey ) {
   DBG_S ( 0 );
   not_reachable ();
   assume ( dest );

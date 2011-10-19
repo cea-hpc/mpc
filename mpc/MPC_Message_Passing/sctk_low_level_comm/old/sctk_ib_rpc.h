@@ -68,7 +68,7 @@ sctk_net_rpc_retrive_driver ( void *dest, void *src, size_t arg_size,
 
  void
 sctk_net_rpc_send_driver ( void *dest, void *src, size_t arg_size, int process,
-    int *ack );
+    int *ack, uint32_t rkey );
 
   void
 sctk_net_rpc_receive(sctk_net_ibv_ibuf_t* ibuf);
