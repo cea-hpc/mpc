@@ -351,13 +351,21 @@ sctk_print_topology (FILE * fd)
   {
     hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
     hwloc_obj_t tmp[3];
+    unsigned int node_os_index;
     tmp[0] = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, pu);
     tmp[1] = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_SOCKET, pu);
     tmp[2] = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, pu);
-    fprintf(fd, "\tProcessor %4u real (%4u:%4u:%4u)\n", pu->os_index,
-        tmp[0]->os_index, tmp[1]->logical_index, tmp[2]->logical_index );
-  }
 
+    if(tmp[0] == NULL){
+      node_os_index = 0; 
+    } else {
+      node_os_index = tmp[0]->os_index;
+    }
+
+    fprintf(fd, "\tProcessor %4u real (%4u:%4u:%4u)\n", pu->os_index,
+	    node_os_index, tmp[1]->logical_index, tmp[2]->logical_index );
+  }
+ 
   fprintf (fd, "\tNUMA: %d\n", sctk_is_numa_node ());
   if (sctk_is_numa_node ())
   {
@@ -455,9 +463,13 @@ sctk_get_numa_node_number ()
   int
 sctk_get_node_from_cpu (const int vp)
 {
-  const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
-  const hwloc_obj_t node = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, pu);
-  return node->logical_index;
+  if(sctk_is_numa_node ()){
+    const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
+    const hwloc_obj_t node = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, pu);
+    return node->logical_index;
+  } else {
+    return 0;
+  }
 }
 
 /*! \brief Return the number of NUMA nodes
