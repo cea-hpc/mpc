@@ -92,10 +92,9 @@ sctk_restrict_topology ()
       FILE *file;
       int detected = 0;
       int detected_on_this_host = 0;
-      int processor_number;
-      int rank;
-      int start;
-      int i;
+      int processor_number = 0;
+      int rank = 0;
+      int start = 0;
 
       /* Determine number of processes on this node */
       sprintf (name, "%s/use_%s_%d", sctk_store_dir, sctk_node_name,
@@ -245,7 +244,6 @@ sctk_determine_processor_number_on_node ()
 int
 sctk_get_cpu ()
 {
-	hwloc_obj_t root = hwloc_get_root_obj(topology);
 	hwloc_cpuset_t set = hwloc_bitmap_alloc();
 
 	int ret = hwloc_get_last_cpu_location(topology, set, 0);
@@ -333,7 +331,6 @@ sctk_get_first_child_by_type(hwloc_obj_t obj, hwloc_obj_type_t type)
 static void
 sctk_print_children(FILE * fd, hwloc_topology_t topology, hwloc_obj_t obj)
 {
-    char string[128];
     unsigned i;
 
     if (obj->type == HWLOC_OBJ_MACHINE)
@@ -345,11 +342,15 @@ sctk_print_children(FILE * fd, hwloc_topology_t topology, hwloc_obj_t obj)
     	for (first_child_pu = sctk_get_first_child_by_type(obj, HWLOC_OBJ_PU); first_child_pu;
     			first_child_pu = first_child_pu->next_cousin)
     	{
-    		hwloc_obj_t tmp;
-			fprintf(fd, "\tProcessor %4u real %4u (%4u:%4u:%4u)\n", first_child_pu->logical_index, first_child_pu->sibling_rank,
-				( (tmp = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, first_child_pu)) ? tmp->logical_index : 0),
-				( (tmp = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_SOCKET, first_child_pu)) ? tmp->logical_index : 0),
-				( (tmp = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, first_child_pu)) ? tmp->logical_index : 0));
+    		hwloc_obj_t node = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, first_child_pu);
+                hwloc_obj_t socket = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_SOCKET, first_child_pu);
+                hwloc_obj_t core = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, first_child_pu);
+                
+                fprintf(fd, "\tProcessor %4u real %4u (%4u:%4u:%4u)\n", first_child_pu->logical_index, first_child_pu->sibling_rank,
+                        node?node->logical_index : 0,
+                        socket?socket->logical_index : 0,
+                        core?core->logical_index : 0 
+                       );
     	}
 
     	fprintf (fd, "\tNUMA: %d\n", sctk_is_numa_node ());
@@ -470,7 +471,7 @@ sctk_is_numa_node ()
 
 /* print the neighborhood*/
 static
-print_neighborhood(int cpuid, int nb_cpus, int* neighborhood, hwloc_obj_t* objs)
+void print_neighborhood(int cpuid, int nb_cpus, int* neighborhood, hwloc_obj_t* objs)
 {
   int i;
 	hwloc_obj_t currentCPU = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuid);
@@ -501,9 +502,8 @@ print_neighborhood(int cpuid, int nb_cpus, int* neighborhood, hwloc_obj_t* objs)
 void
 sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood)
 {
-	int n, s, c, p;
-	int neighbor_id = 0;
-	int i;
+
+  int i;
 
   hwloc_obj_t *objs;
 	hwloc_obj_t currentCPU = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuid);
