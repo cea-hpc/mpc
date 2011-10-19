@@ -28,6 +28,7 @@
 #include "sctk_rpc.h"
 #include "sctk_shm.h"
 #include "sctk_mpcrun_client.h"
+#include "sctk_pmi.h"
 
 #ifdef MPC_USE_SHM
 
