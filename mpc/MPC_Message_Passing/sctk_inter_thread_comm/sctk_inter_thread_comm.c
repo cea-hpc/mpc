@@ -786,6 +786,7 @@ void sctk_send_message (sctk_thread_ptp_message_t * msg){
     DL_APPEND(tmp->send_message_list, &(msg->distant_list));
     sctk_spinlock_unlock(&(tmp->lock));
   } else {
+    /*Entering low level comm*/
     not_implemented();
   }
 }
@@ -812,6 +813,20 @@ void sctk_recv_message (sctk_thread_ptp_message_t * msg){
     sctk_perform_messages_for_pair_locked(tmp);
     sctk_spinlock_unlock(&(tmp->lock));
   } else {
-    not_reachable();
+    /*Entering low level comm*/
+    not_implemented();
   }
+}
+
+int sctk_is_net_message (int dest){
+  sctk_comm_dest_key_t key;
+  sctk_internal_ptp_t* tmp;
+
+  key.destination = dest;
+
+  sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
+  HASH_FIND(hh,sctk_ptp_table,&key,sizeof(sctk_comm_dest_key_t),tmp);
+  sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
+
+  return (tmp == NULL);
 }

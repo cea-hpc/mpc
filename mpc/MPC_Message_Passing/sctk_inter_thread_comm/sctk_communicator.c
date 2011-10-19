@@ -55,11 +55,11 @@ static sctk_internal_communicator_t* sctk_communicator_array[SCTK_MAX_COMMUNICAT
 static sctk_spin_rwlock_t sctk_communicator_table_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 
 /************************************************************************/
-/*Communicator accessors                                                  */
+/*Communicator accessors                                                */
 /************************************************************************/
 static inline 
 sctk_internal_communicator_t * 
-sctk_get_internal_communicator(const sctk_communicator_t communicator){
+sctk_check_internal_communicator(const sctk_communicator_t communicator){
   sctk_internal_communicator_t * tmp;
   
   if(communicator >= SCTK_MAX_COMMUNICATOR_TAB){
@@ -69,6 +69,15 @@ sctk_get_internal_communicator(const sctk_communicator_t communicator){
   } else {
     tmp = sctk_communicator_array[communicator];
   }
+
+  return tmp;
+}
+static inline 
+sctk_internal_communicator_t * 
+sctk_get_internal_communicator(const sctk_communicator_t communicator){
+  sctk_internal_communicator_t * tmp;
+  
+  tmp = sctk_check_internal_communicator(communicator);
 
   assume(tmp != NULL);
 
@@ -257,19 +266,12 @@ void sctk_get_rank_size_total (const sctk_communicator_t communicator,
   *rank = sctk_get_rank(communicator,glob_rank);
 }
 
-int sctk_is_net_message (int dest){
-  sctk_internal_communicator_t * tmp;
-  tmp = sctk_get_internal_communicator(SCTK_COMM_WORLD);
-
-  if(tmp->task_to_process != NULL){
-    sctk_communicator_intern_read_lock(tmp);
-    not_implemented();
-    sctk_communicator_intern_read_unlock(tmp);
-  } else {
-    if((dest >= tmp->first_local) && (dest <= tmp->last_local)){
-      return 0;
-    } else {
-      return 1; 
-    }
-  }
+/************************************************************************/
+/*Communicator creation                                                 */
+/************************************************************************/
+sctk_communicator_t
+sctk_duplicate_communicator (const sctk_communicator_t origin_communicator,
+			     int is_inter_comm,int rank){
+  assume(is_inter_comm == 0);
+  not_implemented();
 }

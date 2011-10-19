@@ -20,7 +20,7 @@ void sctk_create_communicator(){not_implemented();}
 void sctk_register_restart_thread(){not_implemented();}
 void sctk_get_rank_size_local(){not_implemented();}
 /* void sctk_delete_communicator(){not_implemented();} */
-void sctk_duplicate_communicator(){not_implemented();}
+/* void sctk_duplicate_communicator(){not_implemented();} */
 void sctk_mpc_message_get_is_null(){not_implemented();}
 void sctk_commit_status_from_request(){not_implemented();}
 void sctk_is_valid_comm(){not_implemented();}
