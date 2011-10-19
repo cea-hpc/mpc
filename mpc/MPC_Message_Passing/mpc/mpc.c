@@ -2353,7 +2353,7 @@ __MPC_Wait (MPC_Request * request, MPC_Status * status)
       sctk_mpc_wait_message (request);
       sctk_mpc_message_set_is_null(request,1);
     }
-  sctk_commit_status_from_request(request,status);
+  sctk_mpc_commit_status_from_request(request,status);
   MPC_ERROR_SUCESS ();
 }
 
@@ -2361,7 +2361,7 @@ static inline int
 __MPC_Test (MPC_Request * request, int *flag, MPC_Status * status)
 {
 
-  mpc_check_comm (sctk_get_communicator_from_request(request), MPC_COMM_WORLD);
+  mpc_check_comm (sctk_mpc_get_communicator_from_request(request), MPC_COMM_WORLD);
   *flag = 0;
   if (sctk_mpc_completion_flag(request) == SCTK_MESSAGE_PENDING)
     {
@@ -2380,7 +2380,7 @@ __MPC_Test (MPC_Request * request, int *flag, MPC_Status * status)
 static inline int
 __MPC_Test_check (MPC_Request * request, int *flag, MPC_Status * status)
 {
-  mpc_check_comm (sctk_get_communicator_from_request(request), MPC_COMM_WORLD);
+  mpc_check_comm (sctk_mpc_get_communicator_from_request(request), MPC_COMM_WORLD);
   *flag = 0;
 
   sctk_mpc_perform_messages(request);
