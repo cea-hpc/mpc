@@ -207,20 +207,23 @@ sctk_get_free_communicator_on_root_no_rpc (const sctk_communicator_t
 	{
 	  if (sctk_communicator_list[i] == NULL)
 	    {
-	      sctk_debug ("found rank = %d, origin_communicator %d root process %d",
+	      sctk_nodebug ("found rank = %d, origin_communicator %d root process %d",
 			  i, origin_communicator,rank);
 	      sctk_communicator_list[origin_communicator]->
 		new_communicator = i;
 	      done = 1;
 	      break;
 	    }
-	}
+        }
+#warning LOG deactivated ( Comm_dup problem )
+/*
       sprintf (name, "%s/communicators", sctk_store_dir);
       sctk_nodebug ("Open %s", name);
       file = fopen (name, "a");
       assume (file != NULL);
       fprintf (file, "C %d\n", i);
       fclose (file);
+*/
     }
   sctk_thread_mutex_unlock (&sctk_global_communicator_number_lock);
   assume (sctk_communicator_list[origin_communicator]->new_communicator !=
