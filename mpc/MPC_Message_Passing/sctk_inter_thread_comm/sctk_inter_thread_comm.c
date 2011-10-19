@@ -149,6 +149,8 @@ static inline void sctk_message_completion_and_free(sctk_thread_ptp_message_t* s
       recv->request->header.msg_size = size;
     }
   
+    recv->request->header.source = send->header.source;
+    recv->request->header.message_tag = send->header.message_tag;
     recv->request->header.msg_size = size;
   }
 
@@ -651,13 +653,14 @@ sctk_msg_list_t* sctk_perform_messages_search_matching(sctk_internal_ptp_t* pair
     sctk_thread_message_header_t* header_send; 
     sctk_assert(ptr_send->msg != NULL);
     header_send = &(ptr_send->msg->header);
-    sctk_debug("Match? (%d,%d,%d) ?= (%d,%d,%d)",
-	       header->source,header->message_tag,header->specific_message_tag,
-	       header_send->source,header_send->message_tag,header_send->specific_message_tag);
     if((header->specific_message_tag == header_send->specific_message_tag) &&
        ((header->source == header_send->source) || (header->source == MPC_ANY_SOURCE))&& 
        ((header->message_tag == header_send->message_tag) || (header->message_tag == MPC_ANY_TAG))){
       DL_DELETE(pair->send_message_list,ptr_send);
+    sctk_debug("Match? dest %d (%d,%d,%d) == (%d,%d,%d)",
+	       header->destination,
+	       header->source,header->message_tag,header->specific_message_tag,
+	       header_send->source,header_send->message_tag,header_send->specific_message_tag);
       return ptr_send;
     }
   }

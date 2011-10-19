@@ -83,7 +83,6 @@ void sctk_barrier_messages(const sctk_communicator_t communicator,
   sctk_wait_message (&recv_request);
   sctk_wait_message (&send_request);
 
-/*   sctk_terminaison_barrier (thread_data->task_id); */
 }
 
 void sctk_barrier_messages_init(sctk_internal_collectives_struct_t * tmp){
@@ -97,7 +96,61 @@ void sctk_barrier_messages_init(sctk_internal_collectives_struct_t * tmp){
 void sctk_broadcast_messages (void *buffer, const size_t size,
 			    const int root, const sctk_communicator_t communicator,
 			    struct sctk_internal_collectives_struct_s *tmp){
-  not_implemented();
+  sctk_thread_ptp_message_t send_msg;
+  sctk_request_t send_request;
+  sctk_thread_ptp_message_t recv_msg;
+  sctk_request_t recv_request;
+  sctk_thread_data_t *thread_data;
+  int myself;
+  int total;
+  int dest;
+  int src;
+  int i;
+  int start;
+  
+  thread_data = sctk_thread_data_get ();
+  total = sctk_get_nb_task_total(communicator);
+  myself = sctk_get_rank (communicator, thread_data->task_id);
+
+  start = (total / 2) * 2;
+  if(start < total){
+    start = start * 2;
+  }
+  if(root != myself){
+    sctk_init_header(&recv_msg,myself,sctk_message_contiguous,sctk_free_messages,
+		     sctk_message_copy);
+    sctk_add_adress_in_message(&recv_msg,buffer,size);
+    sctk_set_header_in_message (&recv_msg, root, communicator, MPC_ANY_SOURCE, myself,
+				&recv_request, size,broadcast_specific_message_tag);
+    sctk_recv_message (&recv_msg);
+    sctk_wait_message (&recv_request);
+
+    sctk_debug("recv_request.src %d", recv_request.header.source);
+    start = ((myself + total - root) % total - 
+	     (recv_request.header.source + total - root) % total  + total ) % total;
+  }
+
+  sctk_debug("Start %d root %d",start/2,root);
+  for(i = start/2; i >= 1; i = i/2){
+    if((((myself + total - root)% total) + i) < total){
+      if(root != myself){
+	dest = (root + ((myself + total - root)% total) + i) % total;
+      } else {
+	dest = (root + i) % total;
+      }
+      sctk_debug("send to dest %d", dest);
+      sctk_init_header(&send_msg,myself,sctk_message_contiguous,sctk_free_messages,
+		       sctk_message_copy); 
+      sctk_add_adress_in_message(&send_msg,buffer,size); 
+      sctk_set_header_in_message (&send_msg, root, communicator, myself, dest,
+				  &send_request, size,broadcast_specific_message_tag);
+      sctk_send_message (&send_msg);
+      sctk_wait_message (&send_request);    
+    }
+  }
+
+/*   sctk_terminaison_barrier (thread_data->task_id); */
+/*   not_implemented(); */
 }
 
 void sctk_broadcast_messages_init(struct sctk_internal_collectives_struct_s * tmp){
