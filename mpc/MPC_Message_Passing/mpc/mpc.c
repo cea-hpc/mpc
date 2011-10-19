@@ -1141,8 +1141,6 @@ PMPC_Finalize (void)
 #endif
   fflush (stderr);
   fflush (stdout);
-  /* hook when finalize */
-  sctk_net_hybrid_finalize();
   SCTK_PROFIL_END (MPC_Finalize);
   MPC_ERROR_SUCESS ();
 }

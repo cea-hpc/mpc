@@ -306,6 +306,7 @@ sctk_net_free_func_driver (sctk_thread_ptp_message_t * item)
 void
 sctk_net_hybrid_finalize()
 {
+  sctk_pmi_finalize();
 #ifdef SCTK_SHM
 #if SCTK_HYBRID_DEBUG == 1
    if ( (shm_enabled) && (sctk_process_rank == 0) )

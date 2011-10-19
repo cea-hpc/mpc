@@ -40,6 +40,12 @@ SCTK_JOB_MANAGER="$SCTK_JOB_MANAGER"
 
 EOF
 
+#setup complete hydra path. Exported to be used into mpcrun_opt/* scripts
+if [ $SCTK_HYDRA -eq 1 ] && [ ! -z "$SCTK_HYDRA_PREFIX" ]; then
+	echo "export SCTK_HYDRA_BINDIR=${SCTK_HYDRA_PREFIX}/bin/" >> bin/mpcrun
+	echo >> bin/mpcrun
+fi
+
 cat ${MPC_SOURCE_DIR}.MPC_version >> bin/mpcrun
 cat ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_common >> bin/mpcrun
 

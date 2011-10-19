@@ -626,7 +626,6 @@ sctk_env_init (int *argc, char ***argv)
   int
 sctk_env_exit ()
 {
-  sctk_pmi_finalize();
   sctk_topology_destroy();
   sctk_leave ();
   return 0;
