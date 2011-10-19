@@ -184,7 +184,7 @@ sctk_net_rpc_driver (void (*func) (void *), int destination, void *arg,
 
 static void
 sctk_net_rpc_send_driver (void *dest, void *src, size_t arg_size, int process,
-			  int *ack)
+			  int *ack, uint32_t rkey)
 {
   static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
   static int done_dist = 1;
@@ -208,7 +208,7 @@ sctk_net_rpc_send_driver (void *dest, void *src, size_t arg_size, int process,
 
 static void
 sctk_net_rpc_retrive_driver (void *dest, void *src, size_t arg_size,
-			     int process, int *ack)
+			     int process, int *ack, uint32_t rkey)
 {
   static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
   sctk_net_rdma_ack_t done;

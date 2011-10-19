@@ -40,7 +40,7 @@ sctk_net_rpc_driver (void (*func) (void *), int destination, void *arg,
 
 static void
 sctk_net_rpc_send_driver (void *dest, void *src, size_t arg_size, int process,
-			  int *ack)
+			  int *ack, uint32_t rkey)
 {
   not_reachable ();
   assume (dest);

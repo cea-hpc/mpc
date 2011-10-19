@@ -35,7 +35,7 @@ extern "C"
 					       int *ack, uint32_t rkey);
   typedef void (*sctk_rpc_send_function_t) (void *dest, void *src,
 					    size_t arg_size, int process,
-					    int *ack);
+					    int *ack, uint32_t rkey);
 
 
   void sctk_rpc_init_func (sctk_rpc_function_t func,
@@ -50,7 +50,7 @@ extern "C"
   void sctk_perform_rpc_retrive (void *dest, void *src, size_t arg_size, int process,
 			  int *ack, uint32_t rkey);
   void sctk_perform_rpc_send (void *dest, void *src, size_t arg_size,
-			      int process, int *ack);
+			      int process, int *ack, uint32_t rkey);
 
   void sctk_set_max_rpc_size_comm (size_t size);
   size_t sctk_get_max_rpc_size_comm (void);

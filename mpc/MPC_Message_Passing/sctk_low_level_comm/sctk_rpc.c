@@ -163,10 +163,10 @@ sctk_perform_rpc_retrive (void *dest, void *src, size_t arg_size, int process,
 
 void
 sctk_perform_rpc_send (void *dest, void *src, size_t arg_size, int process,
-		       int *ack)
+		       int *ack, uint32_t rkey)
 {
   sctk_nodebug ("PUT %p %p %lu on %d %p", dest, src, arg_size, process, ack);
-  sctk_rpc_driver_send (dest, src, arg_size, process, ack);
+  sctk_rpc_driver_send (dest, src, arg_size, process, ack, rkey);
   sctk_nodebug ("PUT %p %p %lu on %d DONE", dest, src, arg_size, process,
 		ack);
 }
