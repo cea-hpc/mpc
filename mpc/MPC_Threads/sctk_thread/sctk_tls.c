@@ -466,6 +466,7 @@ void sctk_hls_checkout_on_vp ()
   const int numa_1_id             = sctk_get_numa_id(1,vp) ;
   int id ;
   int child_id ;
+  int i ;
   int offset = 0 ;
   int size_below = socket_number + cache_level_3_number
 	  + cache_level_2_number + cache_level_1_number + core_number ;
@@ -808,7 +809,7 @@ __sctk__hls_single ( sctk_hls_scope_t scope ) {
 	
 	if ( scope == sctk_hls_node_scope && sctk_get_numa_node_number() > 1 ) {
 		const size_t toenter = sctk_get_numa_node_number() ;
-		if ( __sctk__hls_single ( sctk_hls_numa_scope ) ) {
+		if ( __sctk__hls_single ( sctk_hls_numa_level_1_scope ) ) {
 			sctk_spinlock_lock ( &level->level.lock ) ;
 			if ( level->barrier_entered[generation] == toenter - 1 ) {
 				sctk_spinlock_unlock ( &level->level.lock ) ;
@@ -818,7 +819,7 @@ __sctk__hls_single ( sctk_hls_scope_t scope ) {
 				sctk_spinlock_unlock ( &level->level.lock ) ;
 				while ( level->barrier_entered[generation] != 0 )
 					sctk_thread_yield();
-				__sctk__hls_single_done ( sctk_hls_numa_scope ) ;
+				__sctk__hls_single_done ( sctk_hls_numa_level_1_scope ) ;
 				return 0 ;
 			}
 		}else{
@@ -854,7 +855,7 @@ __sctk__hls_single_done ( sctk_hls_scope_t scope ) {
 	level->barrier_entered[generation] = 0 ;
 	
 	if ( scope == sctk_hls_node_scope && sctk_get_numa_node_number() > 1 )
-		__sctk__hls_single_done ( sctk_hls_numa_scope ) ;
+		__sctk__hls_single_done ( sctk_hls_numa_level_1_scope ) ;
 
 	return ;
 }
@@ -873,7 +874,7 @@ __sctk__hls_barrier ( sctk_hls_scope_t scope ) {
 
 	if ( scope == sctk_hls_node_scope && sctk_get_numa_node_number() > 1 ) {
 		const size_t toenter = sctk_get_numa_node_number() ;
-		if ( __sctk__hls_single ( sctk_hls_numa_scope ) ) {
+		if ( __sctk__hls_single ( sctk_hls_numa_level_1_scope ) ) {
 			sctk_spinlock_lock ( &level->level.lock ) ;
 			if ( level->barrier_entered[generation] == toenter - 1 ) {
 				level->barrier_generation = 1 - generation ;
@@ -886,7 +887,7 @@ __sctk__hls_barrier ( sctk_hls_scope_t scope ) {
 				while ( level->barrier_entered[generation] != 0 )
 					sctk_thread_yield();
 			}
-			__sctk__hls_single_done ( sctk_hls_numa_scope ) ;
+			__sctk__hls_single_done ( sctk_hls_numa_level_1_scope ) ;
 		}
 		return ;
 	}
