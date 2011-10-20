@@ -34,6 +34,17 @@
 \usepackage{palatino}
 \usepackage{xspace}
 \usepackage{hyperref}
+\usepackage{listings}
+\usepackage[usenames,dvipsnames]{color}
+
+\lstset{ %
+language=bash,
+basicstyle=\footnotesize,
+frame=single,
+tabsize=2,
+escapeinside={\%*}{*)},
+frameround=tttt
+}
 
 %%%%%%%%%%
 % MACROS %
@@ -50,7 +61,7 @@
 %%%%%%%%%%%%%%%
 % MAIN HEADER %
 %%%%%%%%%%%%%%%
-\title{Getting Started MPC\\Multi-Processor Communications Library\\Version 2.2}
+\title{Getting Started MPC\\Multi-Processor Communications Library\\Version {\MPCVERSION}}
 
 \author{Patrick Carribault \and Marc P\'{e}rache}
 
@@ -61,6 +72,8 @@
 \tableofcontents
 
 \section{Introduction}
+
+\paragraph{}
 This \textit{Getting Started} guide details the various ways to install and configure the MPC library
 (Multi-Processor Communications) version {\MPCVERSION} including MPI 1.3, OpenMP 2.5 (with patched GCC) and PThread support.
 Section~\ref{sec:installation} describes the steps to install and setup the library.
@@ -84,7 +97,7 @@ This section takes you through a sequence of steps to get MPC up and running.
 
 The following prerequisites are required to compile MPC:
 \begin{itemize}
-    \item  The main archive file MPC\_\MPCVERSION.tar.gz
+    \item  The main archive file MPC\_{\MPCVERSION}.tar.gz
 
     \item  A C compiler (e.g., gcc)
 
@@ -92,40 +105,46 @@ The following prerequisites are required to compile MPC:
 
     \item  An optional Fortran compiler if Fortran applications are to be used
       (e.g., g77 or gfortran)
+      
+    \item  Optional SLURM, HWLOC and OPENPA libraries installed.
+
+    \item  For Infiniband support libibvers is required
 \end{itemize}
 
-Some additionnal extra libraries are required to compile the patched GCC and GDB.
+Some additional extra libraries are required to compile the patched GCC and GDB.
 See their corresponding website and installation guide to get a list of prerequisites.
 
 
 \subsection{Standard Installation}
 
-These steps describe the default installation of MPC with its additionnal components (GCC and GDB).
+\paragraph{}
+These steps describe the default installation of MPC with its additional components (GCC, GDB, Hydra, HWLOC and OPENPA).
 % The following instructions take you through a sequence of steps to get
 % the default configuration MPC up and running.  Alternate configuration
 % options are described later, in the section \emph{Alternative configurations}.
 
 \begin{enumerate}
 \item  Unpack the main archive (\texttt{tar} format) and go to the top-level directory:
-\begin{verbatim}
-      tar xfz MPC_2.2.0.tar.gz
-      cd MPC_2.2.0
-\end{verbatim}
+
+\begin{lstlisting}
+      tar xfz MPC_%*\MPCVERSION*).tar.gz
+      cd MPC_%*\MPCVERSION*)
+\end{lstlisting}
 
     If your tar program does not accept the 'z' option, use the following commands
 
-\begin{verbatim}
-      gunzip MPC_2.2.0.tar.gz
-      tar xf MPC_2.2.0.tar
-      cd MPC_2.2.0
-\end{verbatim}
+\begin{lstlisting}
+      gunzip MPC_%*\MPCVERSION*).tar.gz
+      tar xf MPC_%*\MPCVERSION*).tar
+      cd MPC_%*\MPCVERSION*)
+\end{lstlisting}
 
 \item  Choose an installation directory. Using the default \texttt{/usr/local/}
 will overwrite legacy headers: \emph{choose a custom install path}.
 
-\begin{verbatim}
-      mkdir /home/you/mpc-install
-\end{verbatim}
+\begin{lstlisting}
+      mkdir $(HOME)/mpc-install
+\end{lstlisting}
 
     The most convenient choice is a directory shared among all the machines you
     want to use the library on.  If such a directory is not accessible, you will
@@ -133,84 +152,99 @@ will overwrite legacy headers: \emph{choose a custom install path}.
 
 \item  Configure MPC, specifying the installation directory:
 
-\begin{verbatim}
-      ./configure --prefix=/home/you/mpc-install
-\end{verbatim}
+\begin{lstlisting}
+      ./configure --prefix=$(HOME)/mpc-install
+\end{lstlisting}
 
 \item  Build MPC:
 
-\begin{verbatim}
+\begin{lstlisting}
       make
-\end{verbatim}
+\end{lstlisting}
 
 \item  Install the MPC commands and library:
 
-\begin{verbatim}
+\begin{lstlisting}
       make install
-\end{verbatim}
+\end{lstlisting}
 
 \item Source the \texttt{mpcvars} script (located inside the \texttt{bin/} directory of the MPC installation) to update environment variables (e.g., \texttt{PATH} and \texttt{LD\_LIBRARY\_PATH}).
 
 For csh and tcsh:
 
-\begin{verbatim}
-      source /home/you/mpc-install/bin/mpcvars.csh
-\end{verbatim}
+\begin{lstlisting}
+      source $(HOME)/mpc-install/bin/mpcvars.csh
+\end{lstlisting}
 
     For bash and sh:
 
-\begin{verbatim}
-      . /home/you/mpc-install/bin/mpcvars.sh
-\end{verbatim}
+\begin{lstlisting}
+      . $(HOME)/mpc-install/bin/mpcvars.sh
+\end{lstlisting}
 
 
     Check that everything went well at this point by running
 
-\begin{verbatim}
+\begin{lstlisting}
       which mpcrun
       which mpc_cc
-\end{verbatim}
+\end{lstlisting}
 
-\item  To compile your first MPC program, you may execute the
-    \texttt{mpc\_cc} compiler:
+\item  To compile your first MPC program, you
+may execute the \texttt{mpc\_cc} compiler:
 
-\begin{verbatim}
-      mpc_cc MPC_Tests/parallel/MPC_Message_Passing/hello_world.c \
+
+\begin{lstlisting}
+      mpc_cc mpc/MPC_Tests/parallel/MPC_Message_Passing/hello_world.c \
              -o hello_world
-\end{verbatim}
+\end{lstlisting}
 
-This command uses the main default patched GCC to compile the code.
+~~~This command uses the main default patched GCC to compile the code.
 If you want to use your favorite compiler instead (loosing some features like
     OpenMP support and global-variable removal), you may use the
 \texttt{mpc\_cflags} and \texttt{mpc\_ldflags} commands:
 
-\begin{verbatim}
+\begin{lstlisting}
       $CC MPC_Tests/parallel/MPC_Message_Passing/hello_world.c \
            -o hello_world `mpc_cflags` `mpc_ldflags`
-\end{verbatim}
+\end{lstlisting}
 
 \item  To execute your MPC program, use the mpcrun command:
 
-\begin{verbatim}
+\begin{lstlisting}
       mpcrun -m=ethread      -n=4 hello_world
       mpcrun -m=ethread_mxn  -n=4 hello_world
       mpcrun -m=pthread      -n=4 hello_world
-\end{verbatim}
+\end{lstlisting}
 
     See the section \emph{Thread types} for details on the '-m' option.
 
 \end{enumerate}
 
 \subsection{Custom Installation}
+
+\paragraph{}
 The previous section described the default installation and configuration of MPC.
 But other alternatives are available. You can find out more details on the
 configuration by running:
 
-\begin{verbatim}
+\begin{lstlisting}
    ./configure --help
-\end{verbatim}
+\end{lstlisting}
 
-The following options are related to additional libraries required to compile the MPC distribution:
+\newpage
+Specify the PMI based launcher to be used by MPC as follows:
+\begin{itemize}
+\item \texttt{--with-hydra} \\
+	Compile MPC with the Hydra launcher (embedded in the MPC distribution).
+	This option is enabled by default.
+\item \texttt{--with-slurm[=prefix]} \\
+	Compile MPC with the SLURM launcher.
+\end{itemize}
+Note that MPC can be compiled with only one launcher.
+\\
+\\
+\indent The following options are related to additional libraries required to compile the MPC distribution:
 \begin{itemize}
 \item \texttt{--with-cpath=DIR1:DIR2:...}   \\
     Add directories to the CPATH environment variable for the whole MPC distribution.
@@ -224,28 +258,18 @@ For more information about options to MPC, run the \texttt{configure} script loc
 \label{sec:installationKnownBugs}
 
 \subsubsection{Error related to mpfr/gmp}
-
+\paragraph{}
 When building \texttt{mpc-gcc}, you may get errors related to  \texttt{libmpfr} or \texttt{libgmp}.
 If those libraries are installed into a non standard prefix, it may be required to use the following
 arguments while running the \texttt{configure} script :
 
-\begin{verbatim}
+\begin{lstlisting}
    ./configure --gcc-with-mpfr=YOUR_PREFIX --gcc-with-gmp=YOUR_PREFIX\
                --with-library-path=YOUR_PREFIX
-\end{verbatim}
+\end{lstlisting}
 
 In case of conflitcts with \texttt{libgmp}, it may be preferable to avoid the version 4.3.2 which
 broke its ABI due to a mistake in documentation and move to 5.0.1 or higher.
-
-\subsection{Infiniband Support}
-\label{sec:installationInfinibandSupport}
-
-If you want to compile MPC with the Infiniband support, you need the following prerequisites:
-\begin{itemize}
-	\item The library libibverbs
-	\item The Slurm resource manager
-\end{itemize}
-For now, the Infiniband module can only operate using the Slurm Resource Manager.
 
 %%%%%%%%%%%%%%%%%%%%%%
 % MPC SUPPORTED APIS %
@@ -257,11 +281,13 @@ For now, the Infiniband module can only operate using the Slurm Resource Manager
 \subsection{Message Passing}
 
 \subsubsection{API}
+\paragraph{}
 MPC is fully MPI-1.3 compliant and supports the \texttt{MPI\_THREAD\_MULTIPLE} level from standard 2.
 See the document \emph{MPI: A Message-Passing Interface Standard} version 1.3
 (May 2008) for more details.
 
 \subsubsection{Warning to Users}
+\paragraph{}
 \textbf{Remove global variables!}
 In MPC, every MPI task is a thread and thus all tasks share global variables
 with each other.
@@ -281,11 +307,13 @@ Note the application has to be compiled as a dynamic library for this solution t
 \subsection{OpenMP}
 
 \subsubsection{API}
+\paragraph{}
 MPC is fully OpenMP-2.5 compliant.
 See the document \emph{OpenMP Application Program Interface} version 2.5
 (May 2005) for more details.
 
 \subsubsection{Compiling and Running OpenMP Programs}
+\paragraph{}
 To compile applications with OpenMP directives (C, C++ or Fortran), you have to
 use the default compiler coming with the MPC Distribution (see
     Section~\ref{sec:installation} for explanation to install MPC).
@@ -296,6 +324,7 @@ with the compiler drivers \texttt{mpc\_cc} (C), \texttt{mpc\_cxx} (C++) or \text
 
 \subsubsection{Threadprivate Variables}
 
+\paragraph{}
 The OpenMP standard proposes a directive to create \emph{thread-private} variables.
 The MPC implementation follows the standard and supports this feature.
 Nevertheless, for this feature to work, the application has to be compiled as a dynamic library.
@@ -316,7 +345,7 @@ executable and the dynamic library are in the current directory, you can use the
 \end{enumerate}
 
 A typical \texttt{main.c} file should look like this.
-\begin{verbatim}
+\begin{lstlisting}[language=c]
 #include "mpc.h"
 
 int realmain (int argc, char **argv) ;
@@ -327,7 +356,7 @@ int main (int argc, char **argv)
   return_value = realmain(argc,argv) ;
   return return_value ;
 }
-\end{verbatim}
+\end{lstlisting}
 
 %%%% Threads %%%%
 \subsection{Threads}
@@ -336,6 +365,8 @@ int main (int argc, char **argv)
 MPC provides a POSIX Thread 2003 compatible API.
 
 \subsubsection{Thread types}
+
+\paragraph{}
 The main command \texttt{mpcrun} accepts the '-m' option to choose between several kind of threads.
 Here is a list of the current available thread types:
 
@@ -351,9 +382,11 @@ The article~\cite{Perache08} contains more details on the multiple thread types 
 
 
 \subsubsection{Warning to Users}
-\textbf{It is dangerous to mix MPC POSIX Threads and system POSIX Threads!}
-This mix may lead to an undefined behavior.
 
+\begin{lstlisting}[basicstyle=\color{BrickRed}]
+It is dangerous to mix MPC POSIX Threads and system POSIX Threads!
+This mix may lead to an undefined behavior.
+\end{lstlisting}
 %%%%%%%%%%
 % MPCRUN %
 %%%%%%%%%%
@@ -362,7 +395,7 @@ This mix may lead to an undefined behavior.
 The \texttt{mpcrun} script drives the launch of MPC programs with different
 types of parallelism.
 Its usage is defined as follows:
-\begin{verbatim}
+\begin{lstlisting}[language=TeX]
 Usage mpcrun [option] [--] binary [user args]
 
 Informations:
@@ -387,7 +420,7 @@ Multithreading:
 
 Network:
     --network=n,-net=n Define Network mode
-        modes:  none tcp ib ...
+        modes:  none tcp ...
         modes (experimental): ...
 
 Checkpoint/Restart and Migration:
@@ -403,29 +436,51 @@ Launcher:
 Debugger:
     --dbg=<debugger_name> to use a debugger
 
-\end{verbatim}
+\end{lstlisting}
+
+\subsection{Launcher options}
+
+\paragraph{}
+Options passed to the launcher options should be compatible with the lauch mode chosen during \texttt{configure}.
+For more informations you might read the documentations of \emph{mpiexec}
+and \emph{srun} respectivelly for Hydra and Slurm.
+
+\subsubsection*{MPC configured with Hydra}
+
+\paragraph{}
+If MPC is configured with Hydra, mpcrun should be used with \texttt{-l=mpiexec} argument. \\
+Note that this argument is used by default if not specified.
+
+\subsubsection*{MPC configured with SLURM}
+\paragraph{}
+If MPC is configured with SLURM, mpcrun should be used with \texttt{-l=srun} argument.
 
 \subsection{Mono-process job}
-In order to run an MPC job in a single process, you should use on of the following methods (depending on the thread type you want to use).
 
-\begin{verbatim}
+\paragraph{}
+In order to run an MPC job in a single process with Hydra, you should use on of the following methods (depending on the thread type you want to use).
+
+\begin{lstlisting}
       mpcrun -m=ethread      -n=4 hello_world
       mpcrun -m=ethread_mxn  -n=4 hello_world
       mpcrun -m=pthread      -n=4 hello_world
-\end{verbatim}
-
-
+\end{lstlisting}
+To use one of the above methods with SLURM, just add \texttt{-l=srun} to the command line.
+\\
 \subsection{Multi-process job on a single node}
-In order to run an MPC job in a $2$-process single-node manner with the SHared Memory module enabled (\emph{SHM}),
+\paragraph{}
+In order to run an MPC job with Hydra in a $2$-process single-node manner with the SHared Memory module enabled (\emph{SHM}),
 you should use one of the following methods (depending on the thread type you want to use).
 Note that on a single node, even if the \emph{TCP} module is explicitly used,
 MPC automatically uses the \emph{SHM} module for all process communications.
 
-\begin{verbatim}
+\begin{lstlisting}
       mpcrun -m=ethread      -n=4 -p=2 -net=tcp hello_world
       mpcrun -m=ethread_mxn  -n=4 -p=2 -net=tcp hello_world
       mpcrun -m=pthread      -n=4 -p=2 -net=tcp hello_world
-\end{verbatim}
+\end{lstlisting}
+To use one of the above methods with SLURM, just add \texttt{-l=srun} to the
+command line. \\
 
 Of course, this mode supports both MPI and OpenMP standards, enabling the use of hybrid programming.
 
@@ -433,47 +488,55 @@ There are different implementations of inter-process communications.
 A call to {\tt mpcrun --help} details all the available implementations.
 
 \subsection{Multi-process job on multiple nodes}
-In order to run an MPC job on $2$ node with $8$ processes communicating with \emph{TCP}, you should use one of the following methods (depending on the thread type you want to use). Note that on multiple nodes, MPC automatically switches to the MPC SHared Memory module (\emph{SHM}) when a communication between processes on the same node occurs. This behavior is available with all inter-process communication modules (\emph{TCP} included).
+\paragraph{}
+In order to run an MPC job on $2$ node with $8$ processes communicating with
+\emph{TCP}, you should use one of the following methods (depending on the thread
+type you want to use). Note that on multiple nodes, MPC automatically switches
+to the MPC SHared Memory module (\emph{SHM}) when a communication between
+processes on the same node occurs. This behavior is available with all
+inter-process communication modules (\emph{TCP} included).
 
-\begin{verbatim}
+\begin{lstlisting}
       mpcrun -m=ethread      -n=8 -p=8 -net=tcp -N=2 hello_world
       mpcrun -m=ethread_mxn  -n=8 -p=8 -net=tcp -N=2 hello_world
       mpcrun -m=pthread      -n=8 -p=8 -net=tcp -N=2 hello_world
-\end{verbatim}
+\end{lstlisting}
 
-Of course, this mode supports both MPI and OpenMP standards, enabling the use of hybrid programming.
+Of course, this mode supports both MPI and OpenMP standards, enabling the use of
+hybrid programming. There are different implementations of inter-process
+communications and launch methods. A call to {\tt mpcrun --help} detail all the
+available implementations and launch methods.
 
-There are different implementations of inter-process communications and launch methods.
-A call to {\tt mpcrun --help} detail all the available implementations and launch methods.
-
-\subsubsection{Launch with ssh}
-In order to execute an MPC job on multile nodes using defaut launcher \emph{hydra}, you need to provide the list of nodes in a \emph{hosts} file and set the HYDRA\_HOST\_FILE variable with the path to the file.
+\subsubsection{Launch with Hydra}
+\paragraph{}
+In order to execute an MPC job on multile nodes using \emph{Hydra}, you need to provide the list of nodes in a \emph{hosts} file and set the HYDRA\_HOST\_FILE variable with the path to the file.
 You can also pass the host file as a parameter of the launcher as follow:
 
-\begin{verbatim}
-	mpcrun -m=ethread      -n=8 -p=8 -net=tcp -N=2 --opt="-f hosts" hello_world
-\end{verbatim}
-
-\subsubsection{Launch with the Infiniband module}
-
-For running application using the Infiniband module, you need to pass the arguments \texttt{-net=ib} and \texttt{-l=srun} to mpcrun. For example:
-\begin{verbatim}
-mpcrun -p=2 -n=16 -net=ib -N=2 -l=srun hello_word
-\end{verbatim}
+\begin{lstlisting}
+	mpcrun -m=ethread -n=8 -p=8 -net=tcp -N=2 --opt="-f hosts" hello_world
+\end{lstlisting}
+see \href{http://wiki.mcs.anl.gov/mpich2/index.php/Using_the_Hydra_Process_Manager}{Using the Hydra Process Manager} for more information about hydra hosts file.
 
 \section{FAQ}
 \label{sec:faq}
 \subsection*{Q - How can I execute Fortan program on MPC ?}
-A - First, be sure that you don't have disabled the fortran support (\texttt{--disable-fortran} of the MPC configure).
-Second, rename your main fortran function by {\tt subroutine mpc\_user\_main}.\\
+\begin{itemize}
+
+ \item First, be sure that you don't have disabled the fortran support
+(\texttt{--disable-fortran} of the MPC configure).
+ \item Second, rename your main fortran function by {\tt subroutine
+mpc\_user\_main}.\\
 For example, change {\tt{\textless}{\textless}program main\_program{\textgreater}{\textgreater}} by {\tt{\textless}{\textless}subroutine mpc\_user\_main{\textgreater}{\textgreater}}\\
 Now, you can execute your fortran program using the \texttt{mpcrun} command.
+\end{itemize}
 
 \subsection*{Q - How can I disable the MPC SHared Memory module (\emph{SHM}) ?}
-A - The \emph{SHM} module is enabled by default. To disable it, pass the argument {\tt--disable-shm} to the MPC configure. Don't forget to recompile MPC.
+\paragraph{}
+The \emph{SHM} module is enabled by default. To disable it, pass the argument
+{\tt--disable-shm} to the MPC configure. Don't forget to recompile MPC.
 
 \subsection*{Q - MPC configure gives me a "FATAL ERROR" message. What can I do ?}
-\begin{verbatim}
+\begin{lstlisting}
 ####################### FATAL ERROR #######################
 MPC *WILL* overwrite the following include file(s):
 include/mpi.h
@@ -487,25 +550,34 @@ flag --disable-prefix-check. Keep in mind that your headers
 will be *DEFINITIVELY* overwritten.
 Configure exiting with no Makefile generated....
 ###########################################################
-\end{verbatim}
-A - You must be careful with this error message. MPC detected that the prefix path you have given already includes header files. I.e: mpi.h, pthread.h, semaphore.h and omp.h.
+\end{lstlisting}
+\paragraph{}
+You must be careful with this error message. MPC detected that the prefix path
+you have given already includes header files. I.e: mpi.h, pthread.h, semaphore.h
+and omp.h.
 If you continue the MPC installation using this prefix path, these files will be *DEFINITIVELY* overwritten.
-As a conclusion, either you change the prefix path (recommanded version), or you pass the argument {\tt --disable-prefix-check} to MPC configure, but your headers *WILL* be overwritten.
+As a conclusion, either you change the prefix path (recommended choice), or you
+pass the argument {\tt --disable-prefix-check} to MPC configure being aware that
+your headers *WILL* be overwritten.
 
-\subsection*{Q - How can I tune the MPC SHared Memory module (\emph{SHM}) according to my needs ?}
-A - You need to edit the file located there : \\{\tt mpc/MPC\_Message\_Passing/sctk\_low\_level\_comm/sctk\_shm\_consts.h}. In this file, you can modify the number of cells in each queue (PTP queues, collective queues, etc\dots) as well as the size allocated by each cell. Don't forget to recompile MPC after it.
+\subsection*{Q - Can I tune the MPC SHared Memory module (\emph{SHM}) according
+to my needs ?}
+You need to edit the file located there : \\{\tt
+mpc/MPC\_Message\_Passing/sctk\_low\_level\_comm/sctk\_shm\_consts.h}.
 
-\subsection*{Q - While compiling, I have the error undefined reference to \texttt{mpc\_user\_main\_\_}}
-A - The file containing your \texttt{main} should include \texttt{mpi.h} or \texttt{mpc.h}
+In this file, you can modify the number of cells in each queue (PTP queues,
+collective queues, etc\dots) as well as the size allocated by each cell. Don't
+forget to recompile MPC after each modification.
 
-\subsection*{Q - While running MPC, I get the following error: ERROR: Network mode $|$ib$|$ not available.}
-A - Be sure that libibverbs and Slurm libraries (with development headers) are well installed on your machine. (see Section~\ref{sec:installationInfinibandSupport}).
+\subsection*{Q - When compiling, I have the error undefined reference to \texttt{mpc\_user\_main\_\_}}
+The file containing your \texttt{main} should include \texttt{mpi.h} or
+\texttt{mpc.h}
 
 \section{Contacts}
 \begin{itemize}
   \item CARRIBAULT Patrick $\quad$ patrick.carribault@cea.fr
   \item P\'{E}RACHE Marc $\quad$ marc.perache@cea.fr
-  \item DIDELOT Sylvain $\quad$ sylvain.didelot@exascale-computing.eu
+  \item DIDELOT Sylvain $\quad$ sdidelot@exascale-computing.eu
   \item VALAT S\'{e}bastien $\quad$ sebastien.valat@cea.fr
 \end{itemize}
 
