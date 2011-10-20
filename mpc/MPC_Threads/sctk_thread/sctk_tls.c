@@ -28,13 +28,13 @@
 #include "sctk_alloc.h"
 #include "sctk_topology.h"
 #include "sctk_accessor.h"
+#include "sctk_atomics.h"
 #include <sctk_debug.h>
 #include <unistd.h>
 #include <sctk_tls.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
-
 
 #if defined(SCTK_USE_TLS)
 __thread void *sctk_extls = NULL;
@@ -103,18 +103,21 @@ typedef struct
 typedef struct
 {
   tls_level level ;
-  size_t toenter ;
-  /* total number of VPs on this level */
-  volatile size_t barrier_entered[2] ;
-  volatile size_t barrier_generation ;
-  /* number of VPs that entered the hls barrier */ 
-  volatile size_t single_nowait_generation;
-} hls_level;
+  sctk_atomics_int toenter ; /* total number of threads on this level */
+  sctk_atomics_int entered ; /* number of VPs that entered the hls barrier */ 
+  volatile int generation ;  /* number of barrier/single encountered */
+  sctk_atomics_int nowait_generation ; /* number of single nowait encountered */
+} hls_level ;
 
-static __thread hls_level* sctk_hls[sctk_hls_max_scope];
-static __thread size_t single_nowait_counter[sctk_hls_max_scope] ;
+typedef struct
+{
+  int wait   ; /* number of barrier/single encountered on this thread */
+  int nowait ; /* number of single nowait encountered on this thread */
+} hls_generation_t ;
+
+static __thread hls_level* sctk_hls[sctk_hls_max_scope] ;
+static __thread hls_generation_t sctk_hls_generation[sctk_hls_max_scope] ;
 static hls_level **sctk_hls_repository ;
-
 
 static inline void
 sctk_tls_init_level (tls_level * level)
@@ -123,27 +126,29 @@ sctk_tls_init_level (tls_level * level)
   level->modules = NULL;
   level->lock = 0;
 }
+
 static inline void
 sctk_tls_write_level (tls_level * level)
 {
   sctk_spinlock_lock (&(level->lock));
 }
+
 static inline void
 sctk_tls_unlock_level (tls_level * level)
 {
   sctk_spinlock_unlock (&(level->lock));
 }
+
 static inline void
 sctk_hls_init_level(hls_level * level)
 {
 	int i ;
 	sctk_tls_init_level(&level->level);
-	level->barrier_entered[0] = 0 ;
-	level->barrier_entered[1] = 0 ;
-	level->barrier_generation = 0 ;
-	level->toenter = 0 ;
-	/* toenter is to be filled by sctk_hls_build_repository */
-	level->single_nowait_generation = 0 ;
+	/* toenter is to be filled by sctk_hls_checkout_on_vp */
+	sctk_atomics_store_int ( &level->toenter, 0 ) ;
+	sctk_atomics_store_int ( &level->entered, 0 ) ;
+	level->generation = 0 ;
+	sctk_atomics_store_int ( &level->nowait_generation, 0 ) ;
 }
 
 static inline size_t
@@ -470,68 +475,87 @@ void sctk_hls_checkout_on_vp ()
   int offset = 0 ;
   int size_below = socket_number + cache_level_3_number
 	  + cache_level_2_number + cache_level_1_number + core_number ;
-  
-  for ( i = 1 ; i < sctk_hls_max_scope ; ++i )
-	  sctk_hls[i] = NULL ;
-  
-  sctk_hls[sctk_hls_node_scope] = sctk_hls_repository[0] ;
 
-  offset += (numa_1_id == 0) ;
+  if ( sctk_hls[0] == NULL ) {
 
-  if ( numa_level_2_number > 0 ) {
-	  sctk_hls[sctk_hls_numa_level_2_scope]
-		  = sctk_hls_repository[ numa_1_id / numa_level_2_number ]
-		  + offset ;
-	  offset += (numa_1_id % numa_level_2_number == 0) ;
-  }
+	  /* if not done already, initialize sctk_hls on this VP */
 
-  sctk_hls[sctk_hls_numa_level_1_scope]
-	  = sctk_hls_repository[numa_1_id] + offset ;
-  offset += numa_level_1_number ;
+	  for ( i = 1 ; i < sctk_hls_max_scope ; ++i )
+		  sctk_hls[i] = NULL ;
+	  
+	  sctk_hls[sctk_hls_node_scope] = sctk_hls_repository[0] ;
 
-  id = sctk_get_socket_id (vp) ;
-  child_id = id % ( socket_number / numa_level_1_number ) ;
-  sctk_hls[sctk_hls_socket_scope] = sctk_hls_repository[numa_1_id]
-	  + offset + child_id * size_below ;  
-  offset += child_id * size_below + 1 ; 
-  size_below -= socket_number ;
+	  offset += (numa_1_id == 0) ;
 
-  if (cache_level_3_number > 0 ) {
-	  id = sctk_get_cache_id (3, vp) ;
-	  child_id = id % ( cache_level_3_number / socket_number ) ;
-	  sctk_hls[sctk_hls_cache_level_3_scope] = sctk_hls_repository[numa_1_id]
+	  if ( numa_level_2_number > 0 ) {
+		  sctk_hls[sctk_hls_numa_level_2_scope]
+			  = sctk_hls_repository[ numa_1_id / numa_level_2_number ]
+			  + offset ;
+		  offset += (numa_1_id % numa_level_2_number == 0) ;
+	  }
+
+	  sctk_hls[sctk_hls_numa_level_1_scope]
+		  = sctk_hls_repository[numa_1_id] + offset ;
+	  offset += numa_level_1_number ;
+
+	  id = sctk_get_socket_id (vp) ;
+	  child_id = id % ( socket_number / numa_level_1_number ) ;
+	  sctk_hls[sctk_hls_socket_scope] = sctk_hls_repository[numa_1_id]
 		  + offset + child_id * size_below ;  
 	  offset += child_id * size_below + 1 ; 
-	  size_below -= cache_level_3_number ;
+	  size_below -= socket_number ;
+
+	  if (cache_level_3_number > 0 ) {
+		  id = sctk_get_cache_id (3, vp) ;
+		  child_id = id % ( cache_level_3_number / socket_number ) ;
+		  sctk_hls[sctk_hls_cache_level_3_scope] = sctk_hls_repository[numa_1_id]
+			  + offset + child_id * size_below ;  
+		  offset += child_id * size_below + 1 ; 
+		  size_below -= cache_level_3_number ;
+	  }
+
+	  if (cache_level_2_number > 0 ) {
+		  id = sctk_get_cache_id (2, vp) ;
+		  child_id = id % ( cache_level_2_number / cache_level_3_number ) ; 
+		  sctk_hls[sctk_hls_cache_level_2_scope] = sctk_hls_repository[numa_1_id]
+			  + offset + child_id * size_below ;  
+		  offset += child_id * size_below + 1 ; 
+		  size_below -= cache_level_2_number ;
+	  }
+
+	  if (cache_level_1_number > 0 ) {
+		  id = sctk_get_cache_id (1, vp) ;
+		  child_id = id % ( cache_level_1_number / cache_level_2_number ) ;
+		  sctk_hls[sctk_hls_cache_level_1_scope] = sctk_hls_repository[numa_1_id]
+			  + offset + child_id * size_below ;  
+		  offset += child_id * size_below + 1 ; 
+		  size_below -= cache_level_1_number ;
+	  }
+
+	  id = sctk_get_core_id(vp) ;
+	  child_id = id % ( core_number / cache_level_1_number ) ;
+	  sctk_hls[sctk_hls_core_scope] = sctk_hls_repository[numa_1_id]
+		  + offset + child_id * size_below ;
+
   }
 
-  if (cache_level_2_number > 0 ) {
-	  id = sctk_get_cache_id (2, vp) ;
-	  child_id = id % ( cache_level_2_number / cache_level_3_number ) ; 
-	  sctk_hls[sctk_hls_cache_level_2_scope] = sctk_hls_repository[numa_1_id]
-		  + offset + child_id * size_below ;  
-	  offset += child_id * size_below + 1 ; 
-	  size_below -= cache_level_2_number ;
-  }
+  /* update the number of threads to enter hls levels */
 
-  if (cache_level_1_number > 0 ) {
-	  id = sctk_get_cache_id (1, vp) ;
-	  child_id = id % ( cache_level_1_number / cache_level_2_number ) ;
-	  sctk_hls[sctk_hls_cache_level_1_scope] = sctk_hls_repository[numa_1_id]
-		  + offset + child_id * size_below ;  
-	  offset += child_id * size_below + 1 ; 
-	  size_below -= cache_level_1_number ;
-  }
-
-  id = sctk_get_core_id(vp) ;
-  child_id = id % ( core_number / cache_level_1_number ) ;
-  sctk_hls[sctk_hls_core_scope] = sctk_hls_repository[numa_1_id]
-	  + offset + child_id * size_below ;
-
-  /* TODO: ATOMIC */
-  for ( i = 0 ; i < sctk_hls_max_scope ; ++i )
+  for ( i = sctk_hls_cache_level_3_scope ; i < sctk_hls_max_scope ; ++i )
 	  if ( sctk_hls[i] != NULL )
-		  sctk_hls[i]->toenter += 1 ;
+		  sctk_atomics_incr_int ( &sctk_hls[i]->toenter ) ;
+
+  const int toenter = sctk_atomics_fetch_and_incr_int ( &sctk_hls[sctk_hls_numa_level_1_scope]->toenter ) ;
+  if ( toenter == 0 ) {
+	  for ( i = 0 ; i < sctk_hls_numa_level_1_scope ; ++i )
+		  if ( sctk_hls[i] != NULL )
+			  sctk_atomics_incr_int ( &sctk_hls[i]->toenter ) ;
+  }
+  
+  for ( i = 0 ; i < sctk_hls_max_scope ; ++i ) {
+	  sctk_hls_generation[i].wait = 0 ;
+	  sctk_hls_generation[i].nowait = 0 ;
+  }
 }
 
 /*
@@ -539,8 +563,8 @@ void sctk_hls_checkout_on_vp ()
  */
 void sctk_hls_free ()
 {
-  const int numa_level_1_number   = sctk_get_numa_number(1) ;
   int i ;
+  const int numa_level_1_number   = sctk_get_numa_number(1) ;
   for ( i=0 ; i < numa_level_1_number ; ++i )
 	  free ( sctk_hls_repository[i] ) ;
 }
@@ -793,32 +817,23 @@ __sctk__tls_get_addr__core_scope (size_t m, size_t offset)
 #error "Architecture not available for TLS support"
 #endif
 
-
 void __sctk__hls_single_done ( sctk_hls_scope_t scope ) ;
 
 int
 __sctk__hls_single ( sctk_hls_scope_t scope ) {
-	/* TODO: several tasks on same VP ? */
-	hls_level * const level = sctk_hls[scope];
-	const size_t generation = level->barrier_generation;
 	
 	sctk_nodebug ("call to hls single with scope %d", scope) ;
+
+	hls_level * const level = sctk_hls[scope];
+	const int mygeneration = ++sctk_hls_generation[scope].wait ;
 	
-	if ( scope == sctk_hls_core_scope )
-		return 1;
-	
-	if ( scope == sctk_hls_node_scope && sctk_get_numa_node_number() > 1 ) {
-		const size_t toenter = sctk_get_numa_node_number() ;
+	if ( scope == sctk_hls_node_scope || scope == sctk_hls_numa_level_2_scope ) {
 		if ( __sctk__hls_single ( sctk_hls_numa_level_1_scope ) ) {
-			sctk_spinlock_lock ( &level->level.lock ) ;
-			if ( level->barrier_entered[generation] == toenter - 1 ) {
-				sctk_spinlock_unlock ( &level->level.lock ) ;
-				return 1;
+			const int entered = sctk_atomics_fetch_and_incr_int ( &level->entered ) ;
+			if ( entered == sctk_atomics_load_int(&level->toenter) - 1 ) {
+				return 1 ;
 			}else{
-				level->barrier_entered[generation] += 1 ;
-				sctk_spinlock_unlock ( &level->level.lock ) ;
-				while ( level->barrier_entered[generation] != 0 )
-					sctk_thread_yield();
+				sctk_thread_wait_for_value ( &level->generation, mygeneration ) ;
 				__sctk__hls_single_done ( sctk_hls_numa_level_1_scope ) ;
 				return 0 ;
 			}
@@ -827,34 +842,27 @@ __sctk__hls_single ( sctk_hls_scope_t scope ) {
 		}
 	}
 
-	sctk_spinlock_lock ( &level->level.lock ) ;
-	if ( level->barrier_entered[generation] == level->toenter - 1 ) {
-		sctk_spinlock_unlock ( &level->level.lock ) ;
-		return 1;
+	const int entered = sctk_atomics_fetch_and_incr_int ( &level->entered ) ;
+	if ( entered == sctk_atomics_load_int(&level->toenter) - 1 ) {
+		return 1 ;
 	}else{
-		level->barrier_entered[generation] += 1 ;
-		sctk_spinlock_unlock ( &level->level.lock ) ;
-		while ( level->barrier_entered[generation] != 0 )
-			sctk_thread_yield() ;
-		return 0;
+		sctk_thread_wait_for_value ( &level->generation, mygeneration ) ;
+		return 0 ;
 	}
 }
 
 void
 __sctk__hls_single_done ( sctk_hls_scope_t scope ) {
-	hls_level * const level = sctk_hls[scope];
-	const size_t generation = level->barrier_generation;
-	
+
 	sctk_nodebug ("call to hls single done with scope %d", scope) ;
 	
-	if ( scope == sctk_hls_core_scope )
-		return ;
-
-	level->barrier_generation = 1 - generation ;
-	asm volatile("" ::: "memory");
-	level->barrier_entered[generation] = 0 ;
+	hls_level * const level = sctk_hls[scope];
 	
-	if ( scope == sctk_hls_node_scope && sctk_get_numa_node_number() > 1 )
+	sctk_atomics_store_int ( &level->entered, 0 ) ;
+	sctk_atomics_read_barrier() ;
+	level->generation = sctk_hls_generation[scope].wait ;
+
+	if ( scope == sctk_hls_node_scope || scope == sctk_hls_numa_level_2_scope )
 		__sctk__hls_single_done ( sctk_hls_numa_level_1_scope ) ;
 
 	return ;
@@ -862,73 +870,50 @@ __sctk__hls_single_done ( sctk_hls_scope_t scope ) {
 
 void 
 __sctk__hls_barrier ( sctk_hls_scope_t scope ) {
-	/* TODO: synchronize tasks on same VP */
-	/* we assume only one task per VP */
-	hls_level * const level = sctk_hls[scope];
-	const size_t generation = level->barrier_generation ;
 	
 	sctk_nodebug ("call to hls barrier with scope %d", scope ) ;
-
-	if ( scope == sctk_hls_core_scope )
-		return ;
-
-	if ( scope == sctk_hls_node_scope && sctk_get_numa_node_number() > 1 ) {
-		const size_t toenter = sctk_get_numa_node_number() ;
+	
+	hls_level * const level = sctk_hls[scope];
+	const int mygeneration = ++sctk_hls_generation[scope].wait ;
+	if ( scope == sctk_hls_node_scope || scope == sctk_hls_numa_level_2_scope ) {
 		if ( __sctk__hls_single ( sctk_hls_numa_level_1_scope ) ) {
-			sctk_spinlock_lock ( &level->level.lock ) ;
-			if ( level->barrier_entered[generation] == toenter - 1 ) {
-				level->barrier_generation = 1 - generation ;
-				asm volatile("" ::: "memory");
-				level->barrier_entered[generation] = 0 ;
-				sctk_spinlock_unlock ( &level->level.lock ) ;
+			const int entered = sctk_atomics_fetch_and_incr_int ( &level->entered ) ;
+			if ( entered == sctk_atomics_load_int(&level->toenter) - 1 ) {
+				sctk_atomics_store_int ( &level->entered, 0 ) ;
+				sctk_atomics_read_barrier() ;
+				level->generation = mygeneration ;
 			}else{
-				level->barrier_entered[generation] += 1 ;
-				sctk_spinlock_unlock ( &level->level.lock ) ;
-				while ( level->barrier_entered[generation] != 0 )
-					sctk_thread_yield();
+				sctk_thread_wait_for_value ( &level->generation, mygeneration ) ;
 			}
 			__sctk__hls_single_done ( sctk_hls_numa_level_1_scope ) ;
 		}
 		return ;
 	}
-
-	sctk_spinlock_lock ( &level->level.lock ) ;
-	if ( level->barrier_entered[generation] == level->toenter - 1 ) {
-		level->barrier_generation = 1 - generation ;
-		asm volatile("" ::: "memory");
-		level->barrier_entered[generation] = 0 ;
-		sctk_spinlock_unlock ( &level->level.lock ) ;
+	
+	const int entered = sctk_atomics_fetch_and_incr_int ( &level->entered ) ;
+	if ( entered == sctk_atomics_load_int(&level->toenter) - 1 ) {
+		sctk_atomics_store_int ( &level->entered, 0 ) ;
+		sctk_atomics_read_barrier() ;
+		level->generation = mygeneration ;
 	}else{
-		level->barrier_entered[generation] += 1 ;
-		sctk_spinlock_unlock ( &level->level.lock ) ;
-		while ( level->barrier_entered[generation] != 0 )
-			sctk_thread_yield() ;
+		sctk_thread_wait_for_value ( &level->generation, mygeneration ) ;
 	}
 }
 
 int
 __sctk__hls_single_nowait ( sctk_hls_scope_t scope ) {
-	/* TODO: several tasks on same VP ? */
-	hls_level * const level = sctk_hls[scope];
-	volatile size_t	* const generation = &level->single_nowait_generation;
-	size_t generation_cached ; /* avoid an additional read in increment */
-	int execute = 0 ;
 
 	sctk_nodebug ("call to hls single nowait with scope %d", scope) ;
-	
-	if ( scope == sctk_hls_core_scope)
-		return 1 ;
 
-	if ( single_nowait_counter[scope] == *generation ) {
-		sctk_spinlock_lock ( &level->level.lock ) ;
-		generation_cached = *generation ;
-		if ( single_nowait_counter[scope] == generation_cached ) { 
-			*generation = generation_cached + 1 ;
-			execute = 1 ;
-		}
-		sctk_spinlock_unlock ( &level->level.lock ) ;
-	}
-	single_nowait_counter[scope] += 1 ;
+	int execute = 0 ;
+	hls_level * const level = sctk_hls[scope];
+	const int generation = sctk_atomics_load_int ( &level->nowait_generation ) ;
+	int * const mygeneration = &sctk_hls_generation[scope].nowait ;
+
+	if ( *mygeneration == generation )
+		execute = sctk_atomics_cas_int ( &level->nowait_generation, generation, generation+1 ) ; 
+
+	*mygeneration = generation ;
 	return execute ;
 }
 
