@@ -54,8 +54,11 @@ extern "C"
     int glob_destination;
     sctk_communicator_t communicator;
     int message_tag;
-    specific_message_tag_t specific_message_tag;
     size_t msg_size;
+
+    specific_message_tag_t specific_message_tag;
+    char remote_source;
+    char remote_destination;
   } sctk_thread_message_header_t;
 
   typedef unsigned int sctk_pack_indexes_t;
@@ -126,15 +129,20 @@ typedef struct sctk_message_to_copy_s{
   struct sctk_message_to_copy_s * prev, *next;
 }sctk_message_to_copy_t;
 
-  typedef struct sctk_thread_ptp_message_s{
+  /*Data to tranfers in inter-process communications*/
+  typedef struct {
     sctk_thread_message_header_t header;
     volatile int* completion_flag; 
-    sctk_request_t * request;
 
     /*Message data*/
     sctk_message_type_t message_type;
     sctk_message_t message;
     sctk_message_pack_default_t default_pack;
+  }sctk_thread_ptp_message_body_t;
+
+  /*Data not to tranfers in inter-process communications*/
+  typedef struct {
+    sctk_request_t * request;
 
     /*Storage structs*/
     sctk_msg_list_t distant_list;
@@ -145,6 +153,11 @@ typedef struct sctk_message_to_copy_s{
 
     /*Copy operator*/
     void (*message_copy)(sctk_message_to_copy_t*);
+  }sctk_thread_ptp_message_tail_t;
+
+  typedef struct sctk_thread_ptp_message_s{
+    sctk_thread_ptp_message_body_t body;
+    sctk_thread_ptp_message_tail_t  tail;
   }sctk_thread_ptp_message_t;
 
 
@@ -210,6 +223,7 @@ typedef struct sctk_message_to_copy_s{
   void sctk_message_copy(sctk_message_to_copy_t* tmp);
   void sctk_message_copy_pack(sctk_message_to_copy_t* tmp);
   void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp);
+  void sctk_notify_idle_message ();
 
 #ifdef __cplusplus
 }

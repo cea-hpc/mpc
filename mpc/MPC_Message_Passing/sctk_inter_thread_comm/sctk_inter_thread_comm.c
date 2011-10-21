@@ -21,6 +21,7 @@
 /* ######################################################################## */
 
 #include <sctk_inter_thread_comm.h>
+#include <sctk_low_level_comm.h>
 #include <sctk.h>
 #include <sctk_debug.h>
 #include <sctk_spinlock.h>
@@ -116,7 +117,7 @@ static inline void sctk_ptp_tasks_perform(){
     }
     sctk_spinlock_unlock(&sctk_ptp_tasks_lock);
 
-    tmp->msg_send->message_copy(tmp);
+    tmp->msg_send->tail.message_copy(tmp);
   }
 }
 
@@ -124,7 +125,7 @@ static inline void sctk_ptp_copy_tasks_insert(sctk_msg_list_t* ptr_recv,
 					      sctk_msg_list_t* ptr_send){
   sctk_message_to_copy_t* tmp; 
 
-  tmp = &(ptr_recv->msg->copy_list);
+  tmp = &(ptr_recv->msg->tail.copy_list);
   tmp->msg_send = ptr_send->msg;
   tmp->msg_recv = ptr_recv->msg;
 
@@ -143,24 +144,24 @@ static inline void sctk_message_completion_and_free(sctk_thread_ptp_message_t* s
   void (*send_free_memory)(void*);
   void (*recv_free_memory)(void*);
 
-  if(recv->request){
-    size = send->header.msg_size;
-    if(recv->request->header.msg_size > size){
-      recv->request->header.msg_size = size;
+  if(recv->tail.request){
+    size = send->body.header.msg_size;
+    if(recv->tail.request->header.msg_size > size){
+      recv->tail.request->header.msg_size = size;
     }
   
-    recv->request->header.source = send->header.source;
-    recv->request->header.message_tag = send->header.message_tag;
-    recv->request->header.msg_size = size;
+    recv->tail.request->header.source = send->body.header.source;
+    recv->tail.request->header.message_tag = send->body.header.message_tag;
+    recv->tail.request->header.msg_size = size;
   }
 
-  send_free_memory = send->free_memory;
-  recv_free_memory = recv->free_memory;
+  send_free_memory = send->tail.free_memory;
+  recv_free_memory = recv->tail.free_memory;
   
-  if(recv->completion_flag)
-    *(recv->completion_flag) = SCTK_MESSAGE_DONE;
-  if(send->completion_flag)
-    *(send->completion_flag) = SCTK_MESSAGE_DONE;
+  if(recv->body.completion_flag)
+    *(recv->body.completion_flag) = SCTK_MESSAGE_DONE;
+  if(send->body.completion_flag)
+    *(send->body.completion_flag) = SCTK_MESSAGE_DONE;
   
   /*Free messages*/
   send_free_memory(send);
@@ -174,17 +175,17 @@ inline void sctk_message_copy(sctk_message_to_copy_t* tmp){
   send = tmp->msg_send;
   recv = tmp->msg_recv;
 
-  assume(send->message_type == recv->message_type);
+  assume(send->body.message_type == recv->body.message_type);
 
-  switch(send->message_type){
+  switch(send->body.message_type){
   case sctk_message_contiguous: {
     size_t size;
-    size = send->message.contiguous.size;
-    if(size > recv->message.contiguous.size){
-      size = recv->message.contiguous.size;
+    size = send->body.message.contiguous.size;
+    if(size > recv->body.message.contiguous.size){
+      size = recv->body.message.contiguous.size;
     }
 
-    memcpy(recv->message.contiguous.addr,send->message.contiguous.addr,
+    memcpy(recv->body.message.contiguous.addr,send->body.message.contiguous.addr,
 	   size);
     
     sctk_message_completion_and_free(send,recv);
@@ -376,24 +377,24 @@ inline void sctk_message_copy_pack(sctk_message_to_copy_t* tmp){
   send = tmp->msg_send;
   recv = tmp->msg_recv;
 
-  assume(send->message_type == recv->message_type);
+  assume(send->body.message_type == recv->body.message_type);
 
-  switch(send->message_type){
+  switch(send->body.message_type){
   case sctk_message_pack: {
     size_t size;
     size_t i;
-    for (i = 0; i < send->message.pack.count; i++)
+    for (i = 0; i < send->body.message.pack.count; i++)
       {	
-	sctk_copy_buffer_std_std (send->message.pack.list.std[i].begins,
-				  send->message.pack.list.std[i].ends,
-				  send->message.pack.list.std[i].count,
-				  send->message.pack.list.std[i].addr,
-				  send->message.pack.list.std[i].elem_size,
-				  recv->message.pack.list.std[i].begins,
-				  recv->message.pack.list.std[i].ends,
-				  recv->message.pack.list.std[i].count,
-				  recv->message.pack.list.std[i].addr,
-				  recv->message.pack.list.std[i].elem_size); 
+	sctk_copy_buffer_std_std (send->body.message.pack.list.std[i].begins,
+				  send->body.message.pack.list.std[i].ends,
+				  send->body.message.pack.list.std[i].count,
+				  send->body.message.pack.list.std[i].addr,
+				  send->body.message.pack.list.std[i].elem_size,
+				  recv->body.message.pack.list.std[i].begins,
+				  recv->body.message.pack.list.std[i].ends,
+				  recv->body.message.pack.list.std[i].count,
+				  recv->body.message.pack.list.std[i].addr,
+				  recv->body.message.pack.list.std[i].elem_size); 
       }
 
     sctk_message_completion_and_free(send,recv);
@@ -410,24 +411,24 @@ inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp){
   send = tmp->msg_send;
   recv = tmp->msg_recv;
 
-  assume(send->message_type == recv->message_type);
+  assume(send->body.message_type == recv->body.message_type);
 
-  switch(send->message_type){
+  switch(send->body.message_type){
   case sctk_message_pack_absolute: {
     size_t size;
     size_t i;
-    for (i = 0; i < send->message.pack.count; i++)
+    for (i = 0; i < send->body.message.pack.count; i++)
       {	
-	sctk_copy_buffer_absolute_absolute (send->message.pack.list.absolute[i].begins,
-					    send->message.pack.list.absolute[i].ends,
-					    send->message.pack.list.absolute[i].count,
-					    send->message.pack.list.absolute[i].addr,
-					    send->message.pack.list.absolute[i].elem_size,
-					    recv->message.pack.list.absolute[i].begins,
-					    recv->message.pack.list.absolute[i].ends,
-					    recv->message.pack.list.absolute[i].count,
-					    recv->message.pack.list.absolute[i].addr,
-					    recv->message.pack.list.absolute[i].elem_size); 
+	sctk_copy_buffer_absolute_absolute (send->body.message.pack.list.absolute[i].begins,
+					    send->body.message.pack.list.absolute[i].ends,
+					    send->body.message.pack.list.absolute[i].count,
+					    send->body.message.pack.list.absolute[i].addr,
+					    send->body.message.pack.list.absolute[i].elem_size,
+					    recv->body.message.pack.list.absolute[i].begins,
+					    recv->body.message.pack.list.absolute[i].ends,
+					    recv->body.message.pack.list.absolute[i].count,
+					    recv->body.message.pack.list.absolute[i].addr,
+					    recv->body.message.pack.list.absolute[i].elem_size); 
       }
 
     sctk_message_completion_and_free(send,recv);
@@ -472,8 +473,8 @@ void sctk_free_pack(void*);
 void sctk_reinit_header (sctk_thread_ptp_message_t *tmp, void (*free_memory)(void*),
 		       void (*message_copy)(sctk_message_to_copy_t*)){
 
-  tmp->free_memory = free_memory;
-  tmp->message_copy = message_copy;
+  tmp->tail.free_memory = free_memory;
+  tmp->tail.message_copy = message_copy;
 }
 
 void sctk_init_header (sctk_thread_ptp_message_t *tmp, const int myself,
@@ -483,13 +484,13 @@ void sctk_init_header (sctk_thread_ptp_message_t *tmp, const int myself,
   /*Init message struct*/
   memset(tmp,0,sizeof(sctk_thread_ptp_message_t));
   
-  tmp->message_type = msg_type;
+  tmp->body.message_type = msg_type;
 
   sctk_reinit_header(tmp,free_memory,message_copy);
-  if(tmp->message_type == sctk_message_pack){
+  if(tmp->body.message_type == sctk_message_pack){
     sctk_reinit_header(tmp,sctk_free_pack,sctk_message_copy_pack);
   }
-  if(tmp->message_type == sctk_message_pack_absolute){
+  if(tmp->body.message_type == sctk_message_pack_absolute){
     sctk_reinit_header(tmp,sctk_free_pack,sctk_message_copy_pack_absolute);
   }
 }
@@ -509,15 +510,15 @@ static inline void
 sctk_add_adress_in_message_contiguous (sctk_thread_ptp_message_t *
 			      restrict msg, void *restrict addr,
 			      const size_t size){
-  msg->message.contiguous.size = size;
-  msg->message.contiguous.addr = addr;
+  msg->body.message.contiguous.size = size;
+  msg->body.message.contiguous.addr = addr;
 }
 
 void
 sctk_add_adress_in_message (sctk_thread_ptp_message_t *
 			      restrict msg, void *restrict addr,
 			      const size_t size){
-  switch(msg->message_type){
+  switch(msg->body.message_type){
   case sctk_message_contiguous: {
     sctk_add_adress_in_message_contiguous (msg,addr,size);
     break;
@@ -535,28 +536,29 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
 				 sctk_request_t * request,
 				 const size_t count,
 				 specific_message_tag_t specific_message_tag){
-  msg->request = request;
+  msg->tail.request = request;
 
-  msg->header.source = source;
-  msg->header.destination = destination;
-  msg->header.glob_source = sctk_get_comm_world_rank (communicator,source);
-  msg->header.glob_destination = sctk_get_comm_world_rank (communicator,destination);
-  msg->header.communicator = communicator;
-  msg->header.message_tag = message_tag;
-  msg->header.specific_message_tag = specific_message_tag;
-  msg->header.msg_size = count;
+  msg->body.header.source = source;
+  msg->body.header.destination = destination;
+  msg->body.header.glob_source = sctk_get_comm_world_rank (communicator,source);
+  msg->body.header.glob_destination = sctk_get_comm_world_rank (communicator,destination);
+  msg->body.header.communicator = communicator;
+  msg->body.header.message_tag = message_tag;
+  msg->body.header.specific_message_tag = specific_message_tag;
+  msg->body.header.msg_size = count;
 
   if(request != NULL){
     request->msg = msg;
     
     request->header.source = source;
     request->header.destination = destination;
-    request->header.glob_destination = msg->header.glob_destination;
+    request->header.glob_destination = msg->body.header.glob_destination;
+    request->header.glob_source = msg->body.header.glob_source;
     request->header.message_tag = message_tag;
     request->header.communicator = communicator;
     request->is_null = 0;
 
-    msg->completion_flag = &(request->completion_flag);
+    msg->body.completion_flag = &(request->completion_flag);
   }
 }
 
@@ -569,10 +571,10 @@ void sctk_free_pack(void* tmp){
 
   msg = tmp;
 
-  if(msg->message_type == sctk_message_pack_absolute){
-    sctk_free(msg->message.pack.list.absolute);
+  if(msg->body.message_type == sctk_message_pack_absolute){
+    sctk_free(msg->body.message.pack.list.absolute);
   } else {
-    sctk_free(msg->message.pack.list.std);
+    sctk_free(msg->body.message.pack.list.std);
   }
   sctk_free(tmp);
 }
@@ -584,27 +586,27 @@ sctk_add_pack_in_message (sctk_thread_ptp_message_t * msg,
 			  sctk_pack_indexes_t * begins,
 			  sctk_pack_indexes_t * ends){
   int step;
-  if(msg->message_type == sctk_message_pack_undefined){
-    msg->message_type = sctk_message_pack;
+  if(msg->body.message_type == sctk_message_pack_undefined){
+    msg->body.message_type = sctk_message_pack;
     sctk_reinit_header(msg,sctk_free_pack,sctk_message_copy_pack);
   }
-  assume(msg->message_type == sctk_message_pack);
+  assume(msg->body.message_type == sctk_message_pack);
 
-  if(msg->message.pack.count >= msg->message.pack.max_count){
-    msg->message.pack.max_count += SCTK_PACK_REALLOC_STEP;
-    msg->message.pack.list.std = sctk_realloc(msg->message.pack.list.std,
-		 msg->message.pack.max_count*sizeof(sctk_message_pack_std_list_t));
+  if(msg->body.message.pack.count >= msg->body.message.pack.max_count){
+    msg->body.message.pack.max_count += SCTK_PACK_REALLOC_STEP;
+    msg->body.message.pack.list.std = sctk_realloc(msg->body.message.pack.list.std,
+		 msg->body.message.pack.max_count*sizeof(sctk_message_pack_std_list_t));
   }
 
-  step = msg->message.pack.count;
+  step = msg->body.message.pack.count;
 
-  msg->message.pack.list.std[step].count = nb_items;
-  msg->message.pack.list.std[step].begins = begins;
-  msg->message.pack.list.std[step].ends = ends;
-  msg->message.pack.list.std[step].addr = adr;
-  msg->message.pack.list.std[step].elem_size = elem_size;
+  msg->body.message.pack.list.std[step].count = nb_items;
+  msg->body.message.pack.list.std[step].begins = begins;
+  msg->body.message.pack.list.std[step].ends = ends;
+  msg->body.message.pack.list.std[step].addr = adr;
+  msg->body.message.pack.list.std[step].elem_size = elem_size;
 
-  msg->message.pack.count++;
+  msg->body.message.pack.count++;
 }
 void
 sctk_add_pack_in_message_absolute (sctk_thread_ptp_message_t *
@@ -615,28 +617,28 @@ sctk_add_pack_in_message_absolute (sctk_thread_ptp_message_t *
 				   begins,
 				   sctk_pack_absolute_indexes_t * ends){
   int step;
-  if(msg->message_type == sctk_message_pack_undefined){
-    msg->message_type = sctk_message_pack_absolute;
+  if(msg->body.message_type == sctk_message_pack_undefined){
+    msg->body.message_type = sctk_message_pack_absolute;
     sctk_reinit_header(msg,sctk_free_pack,sctk_message_copy_pack_absolute);
   }
 
-  assume(msg->message_type == sctk_message_pack_absolute);
+  assume(msg->body.message_type == sctk_message_pack_absolute);
 
-  if(msg->message.pack.count >= msg->message.pack.max_count){
-    msg->message.pack.max_count += SCTK_PACK_REALLOC_STEP;
-    msg->message.pack.list.absolute = sctk_realloc(msg->message.pack.list.absolute,
-		 msg->message.pack.max_count*sizeof(sctk_message_pack_absolute_list_t));
+  if(msg->body.message.pack.count >= msg->body.message.pack.max_count){
+    msg->body.message.pack.max_count += SCTK_PACK_REALLOC_STEP;
+    msg->body.message.pack.list.absolute = sctk_realloc(msg->body.message.pack.list.absolute,
+		 msg->body.message.pack.max_count*sizeof(sctk_message_pack_absolute_list_t));
   }
 
-  step = msg->message.pack.count;
+  step = msg->body.message.pack.count;
 
-  msg->message.pack.list.absolute[step].count = nb_items;
-  msg->message.pack.list.absolute[step].begins = begins;
-  msg->message.pack.list.absolute[step].ends = ends;
-  msg->message.pack.list.absolute[step].addr = adr;
-  msg->message.pack.list.absolute[step].elem_size = elem_size;
+  msg->body.message.pack.list.absolute[step].count = nb_items;
+  msg->body.message.pack.list.absolute[step].begins = begins;
+  msg->body.message.pack.list.absolute[step].ends = ends;
+  msg->body.message.pack.list.absolute[step].addr = adr;
+  msg->body.message.pack.list.absolute[step].elem_size = elem_size;
 
-  msg->message.pack.count++;
+  msg->body.message.pack.count++;
 }
 
 /********************************************************************/
@@ -652,18 +654,18 @@ sctk_msg_list_t* sctk_perform_messages_search_matching(sctk_internal_ptp_t* pair
   DL_FOREACH_SAFE(pair->send_message_list,ptr_send,tmp){
     sctk_thread_message_header_t* header_send; 
     sctk_assert(ptr_send->msg != NULL);
-    header_send = &(ptr_send->msg->header);
+    header_send = &(ptr_send->msg->body.header);
     if((header->communicator == header_send->communicator) && 
        (header->specific_message_tag == header_send->specific_message_tag) &&
        ((header->source == header_send->source) || (header->source == MPC_ANY_SOURCE))&& 
        ((header->message_tag == header_send->message_tag) || (header->message_tag == MPC_ANY_TAG))){
       DL_DELETE(pair->send_message_list,ptr_send);
-    sctk_debug("Match? dest %d (%d,%d,%d) == (%d,%d,%d)",
-	       header->destination,
-	       header->source,header->message_tag,header->specific_message_tag,
-	       header_send->source,header_send->message_tag,header_send->specific_message_tag);
+      sctk_debug("Match? dest %d (%d,%d,%d) == (%d,%d,%d)",
+		 header->destination,
+		 header->source,header->message_tag,header->specific_message_tag,
+		 header_send->source,header_send->message_tag,header_send->specific_message_tag);
       return ptr_send;
-    }
+    } 
   }
   return res;
 }
@@ -674,13 +676,17 @@ static inline void sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t* pa
 
   DL_FOREACH_SAFE(pair->recv_message_list,ptr_recv,tmp){  
     sctk_assert(ptr_recv->msg != NULL);
-    ptr_send = sctk_perform_messages_search_matching(pair,&(ptr_recv->msg->header));
+    ptr_send = sctk_perform_messages_search_matching(pair,&(ptr_recv->msg->body.header));
     if(ptr_send != NULL){
       sctk_debug("Match %p and %p",ptr_recv,ptr_send);
       DL_DELETE(pair->recv_message_list,ptr_recv);
 
       /*Copy message*/
       sctk_ptp_copy_tasks_insert(ptr_recv,ptr_send);
+    } else {
+      if(ptr_recv->msg->body.header.remote_source){
+	sctk_network_notify_matching_message (ptr_recv->msg);
+      }
     }
   }
   sctk_ptp_tasks_perform();
@@ -713,16 +719,26 @@ void sctk_perform_messages(sctk_request_t* request){
   if(request->completion_flag != SCTK_MESSAGE_DONE){
     sctk_comm_dest_key_t key;
     sctk_internal_ptp_t* tmp;
+    sctk_comm_dest_key_t send_key;
+    sctk_internal_ptp_t* send_tmp;
     
 /*     key.comm = request->header.communicator; */
     key.destination = request->header.glob_destination;
+    send_key.destination = request->header.glob_source;
     
     sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
     HASH_FIND(hh,sctk_ptp_table,&key,sizeof(sctk_comm_dest_key_t),tmp);
+    HASH_FIND(hh,sctk_ptp_table,&send_key,sizeof(sctk_comm_dest_key_t),send_tmp);
     sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
     
+    if(send_tmp == NULL){
+      sctk_network_notify_perform_message (request->header.glob_source);
+    }
+
     if(tmp != NULL){
       sctk_try_perform_messages_for_pair(tmp);
+    } else {
+      sctk_network_notify_perform_message (request->header.glob_destination);
     }
   }
 }
@@ -740,14 +756,14 @@ void sctk_wait_all (const int task, const sctk_communicator_t com){
       sctk_spinlock_lock(&(pair->lock));
       sctk_perform_messages_for_pair_locked(pair);
       DL_FOREACH(pair->recv_message_list,ptr){
-	if((ptr->msg->header.destination == task) && 
-	   (ptr->msg->header.communicator == com)){
+	if((ptr->msg->body.header.destination == task) && 
+	   (ptr->msg->body.header.communicator == com)){
 	  i++;
 	}
       }
       DL_FOREACH(pair->send_message_list,ptr){
-	if((ptr->msg->header.source == task) && 
-	   (ptr->msg->header.communicator == com)){
+	if((ptr->msg->body.header.source == task) && 
+	   (ptr->msg->body.header.communicator == com)){
 	  i++;
 	}
       }
@@ -760,6 +776,26 @@ void sctk_wait_all (const int task, const sctk_communicator_t com){
   } while(i != 0);
 }
 
+void sctk_perform_all (){
+  sctk_internal_ptp_t* pair;
+  sctk_internal_ptp_t* tmp;
+
+  sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
+  HASH_ITER(hh,sctk_ptp_table,pair,tmp){
+    sctk_msg_list_t* ptr;
+    sctk_spinlock_lock(&(pair->lock));
+    sctk_perform_messages_for_pair_locked(pair);
+    sctk_spinlock_unlock(&(pair->lock));
+  }
+  sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
+}
+
+void sctk_notify_idle_message (){
+  sctk_perform_all ();
+  if(sctk_process_number > 1){
+    sctk_network_notify_idle_message ();
+  }
+}
 /********************************************************************/
 /*Send/Recv messages                                                */
 /********************************************************************/
@@ -769,53 +805,70 @@ void sctk_send_message (sctk_thread_ptp_message_t * msg){
   sctk_internal_ptp_t* tmp;
 
 /*   key.comm = msg->header.communicator; */
-  key.destination = msg->header.glob_destination;
+  key.destination = msg->body.header.glob_destination;
 
-  if(msg->completion_flag != NULL){
-    *(msg->completion_flag) = SCTK_MESSAGE_PENDING;
+  if(msg->body.completion_flag != NULL){
+    *(msg->body.completion_flag) = SCTK_MESSAGE_PENDING;
   }
+
+  msg->body.header.remote_source = 0;
+  msg->body.header.remote_destination = 0;
 
   sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
   HASH_FIND(hh,sctk_ptp_table,&key,sizeof(sctk_comm_dest_key_t),tmp);
   sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
 
   if(tmp != NULL){
-    msg->distant_list.msg = msg;
+    msg->tail.distant_list.msg = msg;
 
     sctk_spinlock_lock(&(tmp->lock));
-    DL_APPEND(tmp->send_message_list, &(msg->distant_list));
+    DL_APPEND(tmp->send_message_list, &(msg->tail.distant_list));
     sctk_spinlock_unlock(&(tmp->lock));
   } else {
     /*Entering low level comm*/
+    msg->body.header.remote_destination = 1;
+    sctk_network_send_message (msg);
     not_implemented();
   }
 }
 void sctk_recv_message (sctk_thread_ptp_message_t * msg){
   sctk_comm_dest_key_t key;
   sctk_internal_ptp_t* tmp;
+  sctk_comm_dest_key_t send_key;
+  sctk_internal_ptp_t* send_tmp;
 
 /*   key.comm = msg->header.communicator; */
-  key.destination = msg->header.glob_destination;
+  key.destination = msg->body.header.glob_destination;
+  send_key.destination = msg->body.header.glob_source;
 
-  if(msg->completion_flag != NULL){
-    *(msg->completion_flag) = SCTK_MESSAGE_PENDING;
+  if(msg->body.completion_flag != NULL){
+    *(msg->body.completion_flag) = SCTK_MESSAGE_PENDING;
   }
+
+  msg->body.header.remote_source = 0;
+  msg->body.header.remote_destination = 0;
 
   sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
   HASH_FIND(hh,sctk_ptp_table,&key,sizeof(sctk_comm_dest_key_t),tmp);
+  HASH_FIND(hh,sctk_ptp_table,&send_key,sizeof(sctk_comm_dest_key_t),send_tmp);
   sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
 
-  if(tmp != NULL){
-    msg->distant_list.msg = msg;
+  if(send_tmp == NULL){
+    /*Entering low level comm*/
+    msg->body.header.remote_source = 1;
+    sctk_network_notify_recv_message (msg);    
+  }
 
+  if(tmp != NULL){
+    msg->tail.distant_list.msg = msg;
     sctk_spinlock_lock(&(tmp->lock));
-    DL_APPEND(tmp->recv_message_list, &(msg->distant_list));
+    DL_APPEND(tmp->recv_message_list, &(msg->tail.distant_list));
     sctk_perform_messages_for_pair_locked(tmp);
     sctk_spinlock_unlock(&(tmp->lock));
   } else {
-    /*Entering low level comm*/
-    not_implemented();
+    not_reachable();
   }
+
 }
 
 int sctk_is_net_message (int dest){

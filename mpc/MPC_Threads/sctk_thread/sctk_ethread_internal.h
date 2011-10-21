@@ -33,6 +33,9 @@
 #include "sched.h"
 #include "sctk_asm.h"
 #include "sctk.h"
+#ifdef MPC_Message_Passing
+#include <sctk_inter_thread_comm.h>
+#endif
 #ifdef __cplusplus
 extern "C"
 {
@@ -1437,6 +1440,9 @@ extern "C"
 	    (vp->incomming_queue == NULL) &&
 	    (vp->ready_queue == NULL) && (vp->poll_list == NULL))
 	  {
+#ifdef MPC_Message_Passing
+	    sctk_notify_idle_message ();
+#endif
 	    sctk_cpu_relax ();
 	  }
       }

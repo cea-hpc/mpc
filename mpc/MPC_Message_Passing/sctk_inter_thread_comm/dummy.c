@@ -10,7 +10,7 @@ void sctk_register_thread_initial(){}
 void sctk_net_send_task_end(){}
 void sctk_net_migration_check(){}
 
-void sctk_net_init_driver(){}
+/* void sctk_net_init_driver(){} */
 void sctk_net_hybrid_finalize(){}
 
 
@@ -20,7 +20,6 @@ void sctk_create_communicator(){not_implemented();}
 void sctk_register_restart_thread(){not_implemented();}
 void sctk_mpc_message_get_is_null(){not_implemented();}
 void sctk_register_thread(){not_implemented();}
-void sctk_is_net_migration_available(){not_implemented();}
 void sctk_is_inter_comm(){not_implemented();}
 void sctk_net_migration(){not_implemented();}
 void sctk_net_get_pages(){not_implemented();}

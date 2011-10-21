@@ -19,38 +19,27 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK_COMMUNICATOR_H_
-#define __SCTK_COMMUNICATOR_H_
+#ifndef __SCTK_LOW_LEVEL_COMM_H_
+#define __SCTK_LOW_LEVEL_COMM_H_
 
-#warning "To remove and store data per communicators"
-#define SCTK_MAX_COMMUNICATOR_NUMBER 10
-typedef int sctk_communicator_t;
-#define SCTK_COMM_WORLD 0
-#define SCTK_COMM_SELF 1
-
-void sctk_communicator_init();
-int sctk_get_nb_task_local (const sctk_communicator_t communicator);
-int sctk_get_nb_task_total (const sctk_communicator_t communicator);
-  void sctk_get_rank_size_total (const sctk_communicator_t communicator,
-				 int *rank, int *size, int glob_rank);
-int sctk_get_rank (const sctk_communicator_t communicator,
-		   const int comm_world_rank);
-int sctk_get_comm_world_rank (const sctk_communicator_t communicator,
-		   const int rank);
-sctk_communicator_t sctk_delete_communicator (const sctk_communicator_t);
-void sctk_communicator_delete();
-  sctk_communicator_t
-  sctk_duplicate_communicator (const sctk_communicator_t origin_communicator,
-			       int is_inter_comm,int rank);
-
-
-struct sctk_internal_collectives_struct_s;
-
-struct sctk_internal_collectives_struct_s * 
-sctk_get_internal_collectives(const sctk_communicator_t communicator);
+#include <sctk_inter_thread_comm.h>
 void
-sctk_set_internal_collectives(const sctk_communicator_t id,
-			      struct sctk_internal_collectives_struct_s * tmp);
-int sctk_get_process_rank_from_task_rank(int rank);
+sctk_net_init_driver (char *name);
+int sctk_is_net_migration_available();
+
+void sctk_network_send_message (sctk_thread_ptp_message_t * msg);
+void sctk_network_send_message_set(void (*sctk_network_send_message_val) (sctk_thread_ptp_message_t *));
+
+void sctk_network_notify_recv_message (sctk_thread_ptp_message_t * msg);
+void sctk_network_notify_recv_message_set(void (*sctk_network_notify_recv_message_val) (sctk_thread_ptp_message_t *));
+
+void sctk_network_notify_matching_message (sctk_thread_ptp_message_t * msg);
+void sctk_network_notify_matching_message_set(void (*sctk_network_notify_matching_message_val) (sctk_thread_ptp_message_t *));
+
+void sctk_network_notify_perform_message (int remote);
+void sctk_network_notify_perform_message_set(void (*sctk_network_notify_perform_message_val) (int));
+
+void sctk_network_notify_idle_message ();
+void sctk_network_notify_idle_message_set(void (*sctk_network_notify_idle_message_val) ());
 
 #endif

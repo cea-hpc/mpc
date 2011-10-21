@@ -91,6 +91,7 @@ extern "C"
     int source;
     int destination;
     int glob_destination;
+    int glob_source;
     int message_tag;
     MPC_Comm communicator;
     mpc_msg_count msg_size;

@@ -247,6 +247,7 @@ int sctk_get_comm_world_rank (const sctk_communicator_t communicator,
   sctk_internal_communicator_t * tmp;
   
   if(communicator == SCTK_COMM_SELF){
+    not_implemented();
     return 0;
   }
 
@@ -264,6 +265,30 @@ void sctk_get_rank_size_total (const sctk_communicator_t communicator,
 			       int *rank, int *size, int glob_rank){
   *size = sctk_get_nb_task_total(communicator);
   *rank = sctk_get_rank(communicator,glob_rank);
+}
+
+int sctk_get_process_rank_from_task_rank(int rank){
+  sctk_internal_communicator_t * tmp;
+  int proc_rank;
+  
+  tmp = sctk_get_internal_communicator(SCTK_COMM_WORLD);
+  if(tmp->task_to_process != NULL){
+    sctk_communicator_intern_read_lock(tmp);
+    proc_rank = tmp->task_to_process[rank];
+    sctk_communicator_intern_read_unlock(tmp);
+  } else {
+    int local_tasks;
+    int remain_tasks;
+    local_tasks = tmp->nb_task / sctk_process_number;
+    remain_tasks = tmp->nb_task % sctk_process_number;
+    
+    if(rank < (local_tasks + 1) * remain_tasks){
+      proc_rank = rank / (local_tasks + 1);
+    } else {
+      proc_rank = remain_tasks + ((rank - (local_tasks + 1) * remain_tasks) / local_tasks);
+    }  
+  }
+  return proc_rank;
 }
 
 /************************************************************************/

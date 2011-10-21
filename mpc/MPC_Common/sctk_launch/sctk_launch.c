@@ -43,6 +43,7 @@
 #include "sctk_asm.h"
 #ifdef MPC_Message_Passing
 #include "sctk_inter_thread_comm.h"
+#include "sctk_low_level_comm.h"
 #endif
 #include "sctk_topology.h"
 #include "sctk_asm.h"
@@ -156,7 +157,8 @@ __sctk_add_arg_eq (char *arg, char *argeq,
 
 static int sctk_version_details_val = 0;
 static void (*sctk_thread_val) (void) = NULL;
-static void (*sctk_net_val) (int *, char ***) = NULL;
+static void (*sctk_net_val) (char*) = NULL;
+static char* sctk_net_val_arg  = "none";
 static int sctk_task_nb_val = 0;
 static int sctk_process_nb_val = 0;
 static int sctk_processor_nb_val = 0;
@@ -164,11 +166,11 @@ static int sctk_node_nb_val = 0;
 static int sctk_verbosity = 0;
 static char* sctk_launcher_mode = "none";
 
-  void
-sctk_set_net_val (void (*val) (int *, char ***))
-{
-  sctk_net_val = val;
-}
+/*   void */
+/* sctk_set_net_val (void (*val) (int *, char ***)) */
+/* { */
+/*   sctk_net_val = val; */
+/* } */
 
   static void
 sctk_perform_initialisation (void)
@@ -182,11 +184,6 @@ sctk_perform_initialisation (void)
 
   if (sctk_version_details_val)
     sctk_set_version_details ();
-
-
-
-  /*   if (sctk_gdb_val != NULL) */
-  /*     sctk_set_execuatble_name (sctk_gdb_val); */
 
   if (sctk_thread_val != NULL)
   {
@@ -208,7 +205,8 @@ sctk_perform_initialisation (void)
     }
     else
     {
-      fprintf (stderr, "Process number ignored!\n");
+      fprintf (stderr, "No network support specified\n");
+      sctk_abort();
     }
   }
 
@@ -227,16 +225,8 @@ sctk_perform_initialisation (void)
     }
   }
 
-  if (sctk_node_nb_val > 1)
-  {
-    if (sctk_net_val == NULL)
-    {
-      fprintf (stderr, "Node number ignored!\n");
-    }
-  }
-
   if (sctk_net_val != NULL)
-    sctk_net_val (&sctk_initial_argc, &init_argument);
+    sctk_net_val (sctk_net_val_arg);
 
   if (sctk_task_nb_val)
   {
@@ -249,7 +239,7 @@ sctk_perform_initialisation (void)
   else
   {
     fprintf (stderr, "No task number specified!\n");
-    abort ();
+    sctk_abort ();
   }
 
   if (sctk_process_rank == 0)
@@ -334,23 +324,23 @@ sctk_use_ethread_mxn (void)
   sctk_thread_val = sctk_ethread_mxn_thread_init;
 }
 
-  static void
-sctk_use_mpi (void)
-{
-#ifdef MPC_Message_Passing
-  sctk_network_mode = "mpi";
-  sctk_net_init_driver ("mpi");
-#endif
-}
+/*   static void */
+/* sctk_use_mpi (void) */
+/* { */
+/* #ifdef MPC_Message_Passing */
+/*   sctk_network_mode = "mpi"; */
+/*   sctk_net_init_driver ("mpi"); */
+/* #endif */
+/* } */
 
-  static void
-sctk_use_tcp (void)
-{
-#ifdef MPC_Message_Passing
-  sctk_network_mode = "tcp";
-  sctk_net_init_driver ("tcp");
-#endif
-}
+/*   static void */
+/* sctk_use_tcp (void) */
+/* { */
+/* #ifdef MPC_Message_Passing */
+/*   sctk_network_mode = "tcp"; */
+/*   sctk_net_init_driver ("tcp"); */
+/* #endif */
+/* } */
 
   static void
 sctk_def_directory (char *arg)
@@ -470,6 +460,13 @@ sctk_get_verbosity ()
   static void
 sctk_use_network (char *arg)
 {
+#ifdef MPC_Message_Passing
+  sctk_network_mode = arg;
+  sctk_net_val_arg = arg;
+  sctk_net_val = sctk_net_init_driver;
+#endif
+  
+#if 0
   /* if the network mode is different to none,
    * we initialize it. */
 #ifdef MPC_Message_Passing
@@ -478,6 +475,7 @@ sctk_use_network (char *arg)
     sctk_network_mode = arg;
     sctk_net_init_driver (arg);
   }
+#endif
 #endif
 }
 
@@ -503,8 +501,8 @@ sctk_threat_arg (char *word)
   sctk_add_arg ("--use-ethread_mxn", sctk_use_ethread_mxn);
   sctk_add_arg ("--use-ethread", sctk_use_ethread);
 
-  sctk_add_arg ("--use-mpi", sctk_use_mpi);
-  sctk_add_arg ("--use-tcp", sctk_use_tcp);
+/*   sctk_add_arg ("--use-mpi", sctk_use_mpi); */
+/*   sctk_add_arg ("--use-tcp", sctk_use_tcp); */
   sctk_add_arg_eq ("--sctk_use_network", sctk_use_network);
 
   /*FOR COMPATIBILITY */

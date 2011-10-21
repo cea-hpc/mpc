@@ -33,6 +33,7 @@ extern int sctk_process_rank;
 extern int sctk_node_number;
 extern int sctk_node_rank;
 extern volatile int sctk_multithreading_initialised;
+extern int sctk_migration_mode;
 
 #ifdef MPC_Message_Passing
 #include "sctk_inter_thread_comm.h"

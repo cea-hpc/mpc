@@ -32,9 +32,9 @@
 #include "sctk_config_pthread.h"
 #include "sctk_kernel_thread.h"
 #include <semaphore.h>
-/* #ifdef MPC_Message_Passing */
-/* #include <sctk_low_level_comm.h> */
-/* #endif */
+#ifdef MPC_Message_Passing
+#include <sctk_inter_thread_comm.h>
+#endif
 
 #define SCTK_LOCAL_VERSION_MAJOR 0
 #define SCTK_LOCAL_VERSION_MINOR 1
@@ -57,6 +57,9 @@ pthread_wait_for_value_and_poll (int *data, int value,
 	{
 	  if (i >= 10)
 	    {
+#ifdef MPC_Message_Passing
+	      sctk_notify_idle_message ();
+#endif
 	      kthread_usleep (10);
 	      i = 0;
 	    }

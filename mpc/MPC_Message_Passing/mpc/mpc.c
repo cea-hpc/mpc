@@ -162,15 +162,15 @@ static inline sctk_thread_ptp_message_t* sctk_mpc_get_message_in_request(MPC_Req
 }
 
 static inline void sctk_mpc_init_message_size(MPC_Request * request){
-  request->msg->header.msg_size = 0; 
+  request->msg->body.header.msg_size = 0; 
 }
 
 static inline void sctk_mpc_add_to_message_size(MPC_Request * request, size_t size){
-  request->msg->header.msg_size += size; 
+  request->msg->body.header.msg_size += size; 
 }
 
 static inline size_t sctk_mpc_get_message_size(MPC_Request * request){
-  return request->msg->header.msg_size; 
+  return request->msg->body.header.msg_size; 
 }
 
 static inline int sctk_mpc_get_message_source(MPC_Request * request){
@@ -4264,9 +4264,9 @@ PMPC_Default_pack (mpc_msg_count count,
   __MPC_Comm_rank (MPC_COMM_WORLD, &src, task_specific);
 
   msg = sctk_create_header (src,sctk_message_pack);
-  msg->default_pack.std.count = count;
-  msg->default_pack.std.begins = begins;
-  msg->default_pack.std.ends = ends;
+  msg->body.default_pack.std.count = count;
+  msg->body.default_pack.std.begins = begins;
+  msg->body.default_pack.std.ends = ends;
 
   sctk_mpc_register_message_in_request(request,msg);
   sctk_mpc_init_message_size(request);
@@ -4298,9 +4298,9 @@ PMPC_Default_pack_absolute (mpc_msg_count count,
   __MPC_Comm_rank (MPC_COMM_WORLD, &src, task_specific);
 
   msg = sctk_create_header (src,sctk_message_pack_absolute);
-  msg->default_pack.absolute.count = count;
-  msg->default_pack.absolute.begins = begins;
-  msg->default_pack.absolute.ends = ends;
+  msg->body.default_pack.absolute.count = count;
+  msg->body.default_pack.absolute.begins = begins;
+  msg->body.default_pack.absolute.ends = ends;
 
   sctk_mpc_register_message_in_request(request,msg);
   sctk_mpc_init_message_size(request);
@@ -4469,9 +4469,9 @@ PMPC_Add_pack_default (void *buf, MPC_Datatype datatype, MPC_Request * request)
 		 datatype, request);
 #endif
 
-  res = __MPC_Add_pack (buf, request->msg->default_pack.std.count,
-			request->msg->default_pack.std.begins,
-			request->msg->default_pack.std.ends, datatype, request,
+  res = __MPC_Add_pack (buf, request->msg->body.default_pack.std.count,
+			request->msg->body.default_pack.std.begins,
+			request->msg->body.default_pack.std.ends, datatype, request,
 			task_specific);
 
   SCTK_PROFIL_END (MPC_Add_pack_default);
@@ -4497,9 +4497,9 @@ PMPC_Add_pack_default_absolute (void *buf, MPC_Datatype datatype,
 		 datatype, request);
 #endif
 
-  res = __MPC_Add_pack_absolute (buf, request->msg->default_pack.absolute.count,
-				 request->msg->default_pack.absolute.begins,
-				 request->msg->default_pack.absolute.ends,
+  res = __MPC_Add_pack_absolute (buf, request->msg->body.default_pack.absolute.count,
+				 request->msg->body.default_pack.absolute.begins,
+				 request->msg->body.default_pack.absolute.ends,
 				 datatype, request, task_specific);
 
   SCTK_PROFIL_END (MPC_Add_pack_default);
