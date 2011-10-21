@@ -4264,9 +4264,9 @@ PMPC_Default_pack (mpc_msg_count count,
   __MPC_Comm_rank (MPC_COMM_WORLD, &src, task_specific);
 
   msg = sctk_create_header (src,sctk_message_pack);
-  msg->body.default_pack.std.count = count;
-  msg->body.default_pack.std.begins = begins;
-  msg->body.default_pack.std.ends = ends;
+  msg->tail.default_pack.std.count = count;
+  msg->tail.default_pack.std.begins = begins;
+  msg->tail.default_pack.std.ends = ends;
 
   sctk_mpc_register_message_in_request(request,msg);
   sctk_mpc_init_message_size(request);
@@ -4298,9 +4298,9 @@ PMPC_Default_pack_absolute (mpc_msg_count count,
   __MPC_Comm_rank (MPC_COMM_WORLD, &src, task_specific);
 
   msg = sctk_create_header (src,sctk_message_pack_absolute);
-  msg->body.default_pack.absolute.count = count;
-  msg->body.default_pack.absolute.begins = begins;
-  msg->body.default_pack.absolute.ends = ends;
+  msg->tail.default_pack.absolute.count = count;
+  msg->tail.default_pack.absolute.begins = begins;
+  msg->tail.default_pack.absolute.ends = ends;
 
   sctk_mpc_register_message_in_request(request,msg);
   sctk_mpc_init_message_size(request);
@@ -4469,9 +4469,9 @@ PMPC_Add_pack_default (void *buf, MPC_Datatype datatype, MPC_Request * request)
 		 datatype, request);
 #endif
 
-  res = __MPC_Add_pack (buf, request->msg->body.default_pack.std.count,
-			request->msg->body.default_pack.std.begins,
-			request->msg->body.default_pack.std.ends, datatype, request,
+  res = __MPC_Add_pack (buf, request->msg->tail.default_pack.std.count,
+			request->msg->tail.default_pack.std.begins,
+			request->msg->tail.default_pack.std.ends, datatype, request,
 			task_specific);
 
   SCTK_PROFIL_END (MPC_Add_pack_default);
@@ -4497,9 +4497,9 @@ PMPC_Add_pack_default_absolute (void *buf, MPC_Datatype datatype,
 		 datatype, request);
 #endif
 
-  res = __MPC_Add_pack_absolute (buf, request->msg->body.default_pack.absolute.count,
-				 request->msg->body.default_pack.absolute.begins,
-				 request->msg->body.default_pack.absolute.ends,
+  res = __MPC_Add_pack_absolute (buf, request->msg->tail.default_pack.absolute.count,
+				 request->msg->tail.default_pack.absolute.begins,
+				 request->msg->tail.default_pack.absolute.ends,
 				 datatype, request, task_specific);
 
   SCTK_PROFIL_END (MPC_Add_pack_default);

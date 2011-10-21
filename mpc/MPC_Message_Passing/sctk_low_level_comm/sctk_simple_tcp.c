@@ -35,6 +35,7 @@
 #include <netdb.h>
 #include <sctk_spinlock.h>
 #include <sctk_route.h>
+#include <sctk_net_tools.h>
 
 
 #define MAX_STRING_SIZE 2048
@@ -135,12 +136,91 @@ sctk_client_create_recv_socket ()
 }
 
 /************ ROUTES ****************/
+static void* sctk_simple_tcp_thread(sctk_route_table_t* tmp){
+  int fd;
+  fd = tmp->data.simple_tcp.fd;
+  while(1){
+    sctk_thread_ptp_message_t * msg;
+    void* body;
+    size_t size;
+    size_t done;
+    size_t res;
+    res = read(fd,&size,sizeof(size_t));
+    if(res != sizeof(size_t)){
+      if(res == 0){
+	return NULL;
+      }
+      sctk_debug("ERROR %d",res);
+      perror("Read error");
+      sctk_abort();
+    }
+    size = size - sizeof(sctk_thread_ptp_message_body_t) + 
+      sizeof(sctk_thread_ptp_message_t);
+    msg = sctk_malloc(size);
+    body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
+
+    /* Recv header*/
+    sctk_debug("Read %d",sizeof(sctk_thread_ptp_message_body_t));
+    res = read(fd,msg,sizeof(sctk_thread_ptp_message_body_t));
+    if(res != sizeof(sctk_thread_ptp_message_body_t)){
+      sctk_debug("ERROR %d",res);
+      perror("Read error");
+      sctk_abort();
+    }
+    msg->body.completion_flag = NULL;
+    
+    /* Recv body*/
+    done = 0;
+    size = size - sizeof(sctk_thread_ptp_message_t);
+    while(done < size){
+      sctk_debug("Read %d",size - done);
+      res = read(fd,body + done,size - done);
+      if(res < 0){
+	sctk_debug("ERROR %d",res);
+	perror("Read error");
+	sctk_abort();
+      }
+      done += res;
+    }
+    sctk_reinit_header(msg,sctk_free,sctk_net_message_copy);
+
+    sctk_debug("MSG RECV|%s|", (char*)body);    
+
+    sctk_send_message(msg);
+  }
+}
+
+/* static void sctk_simple_tcp_write(size_t size, void* msg, int fd){ */
+/*   size_t res; */
+  
+/*   sctk_debug("Use fd %d",fd); */
+
+/*   res = write(fd,&size,sizeof(size_t)); */
+/*   if(res != sizeof(size_t)){ */
+/*     perror("Write error"); */
+/*     sctk_abort(); */
+/*   } */
+/*   res = write(fd,msg,size); */
+/*   if(res != size){ */
+/*     perror("Write error"); */
+/*     sctk_abort(); */
+/*   } */
+/* } */
+
 static void sctk_simple_tcp_add_route(int dest, int fd){
   sctk_route_table_t* tmp;
+  sctk_thread_t pidt;
+  sctk_thread_attr_t attr;
 
   tmp = sctk_malloc(sizeof(sctk_route_table_t));
   
+  sctk_debug("Register fd %d",fd);
+
   tmp->data.simple_tcp.fd = fd;
+
+  sctk_thread_attr_init (&attr);
+  sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
+  sctk_user_thread_create (&pidt, &attr,(void*(*)(void*))sctk_simple_tcp_thread , tmp);
 
   sctk_add_route(dest,tmp);
 }
@@ -149,38 +229,63 @@ static void sctk_simple_tcp_add_route(int dest, int fd){
 static void 
 sctk_network_send_message_simple_tcp (sctk_thread_ptp_message_t * msg){
   sctk_route_table_t* tmp;
+  size_t size;
+  int res;
+  int fd;
 
   tmp = sctk_get_route(msg->body.header.glob_destination);
-  not_implemented();
+
+  sctk_spinlock_lock(&(tmp->data.simple_tcp.lock));
+
+  fd = tmp->data.simple_tcp.fd;
+
+  size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
+
+  res = write(fd,&size,sizeof(size_t));
+  if(res != sizeof(size_t)){
+    perror("Write error");
+    sctk_abort();
+  }
+
+  res = write(fd,msg,sizeof(sctk_thread_ptp_message_body_t));
+  if(res != sizeof(sctk_thread_ptp_message_body_t)){
+    perror("Write error");
+    sctk_abort();
+  }
+
+  sctk_net_write_in_fd(msg,fd);
+  sctk_spinlock_unlock(&(tmp->data.simple_tcp.lock));
+
+  sctk_complete_and_free_message(msg);
 }
 
 static void 
 sctk_network_notify_recv_message_simple_tcp (sctk_thread_ptp_message_t * msg){
-  sctk_route_table_t* tmp;
+/*   sctk_route_table_t* tmp; */
 
-  tmp = sctk_get_route(msg->body.header.glob_source);
-  not_implemented();
+/*   tmp = sctk_get_route(msg->body.header.glob_source); */
+/*   not_implemented(); */
 }
 
 static void 
 sctk_network_notify_matching_message_simple_tcp (sctk_thread_ptp_message_t * msg){
-  sctk_route_table_t* tmp;
+/*   sctk_route_table_t* tmp; */
 
-  tmp = sctk_get_route(msg->body.header.glob_source);
-  not_implemented();
+/*   tmp = sctk_get_route(msg->body.header.glob_source); */
+/*   not_implemented(); */
 }
 
 static void 
 sctk_network_notify_perform_message_simple_tcp (int remote){
-  sctk_route_table_t* tmp;
+/*   sctk_route_table_t* tmp; */
 
-  tmp = sctk_get_route(remote);
-  not_implemented();
+/*   tmp = sctk_get_route(remote); */
+/*   not_implemented(); */
 }
 
 static void 
 sctk_network_notify_idle_message_simple_tcp (){
-  not_implemented();
+/*   not_implemented(); */
 }
 
 /************ INIT ****************/

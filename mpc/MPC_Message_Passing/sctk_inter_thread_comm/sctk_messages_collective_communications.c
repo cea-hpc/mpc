@@ -51,8 +51,8 @@ void sctk_barrier_messages(const sctk_communicator_t communicator,
   size_t size;
   int dest;
   int src;
-  char send_text = 's';
-  char recv_text = 'r';
+  char send_text = '\0';
+  char recv_text = '\0';
   
   size = 1;
   
@@ -69,6 +69,9 @@ void sctk_barrier_messages(const sctk_communicator_t communicator,
   
   sctk_add_adress_in_message(&send_msg,&send_text,size);
   sctk_add_adress_in_message(&recv_msg,&recv_text,size);
+
+  assume(recv_text == '\0');
+  assume(send_text == '\0');
 
   sctk_set_header_in_message (&send_msg, 0, communicator, myself, dest,
 			      &send_request, size,barrier_specific_message_tag);

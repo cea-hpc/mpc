@@ -19,23 +19,29 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-
-#ifndef __SCTK_SIMPLE_TCP_H_
-#define __SCTK_SIMPLE_TCP_H_
+#ifndef __SCTK__NET_TOOLS_H_
+#define __SCTK__NET_TOOLS_H_
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#include <sctk_spinlock.h>
+#include "sctk_low_level_comm.h"
+  void sctk_net_copy_in_buffer (sctk_thread_ptp_message_t * msg,
+				       char *buffer);
 
-typedef struct {
-  sctk_spinlock_t lock;
-  int fd;
-}sctk_simple_tcp_data_t;
+  void* sctk_net_if_one_msg_in_buffer (sctk_thread_ptp_message_t * msg);
 
-void sctk_network_init_simple_tcp(char* name);
+  size_t sctk_net_determine_message_size (sctk_thread_ptp_message_t *msg);
 
+  int sctk_net_copy_frag_msg (
+      const sctk_thread_ptp_message_t * msg,
+     char *buffer,
+      const size_t curr_copy,
+      const size_t max_copy );
+  void sctk_net_write_in_fd (sctk_thread_ptp_message_t * msg,
+			     int fd);
+  void sctk_net_message_copy(sctk_message_to_copy_t* tmp);
 #ifdef __cplusplus
 }
 #endif
