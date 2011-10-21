@@ -330,25 +330,36 @@ void sctk_network_init_simple_tcp(char* name){
   if(sctk_process_rank % 2 == 0){
     sctk_debug("Connect to %d",dest_rank);
     dest_socket = sctk_tcp_connect_to(dest_connection_infos);
-    sctk_simple_tcp_add_route(dest_rank,dest_socket);
+    if(dest_socket < 0){
+      perror("Connection error");
+      sctk_abort();
+    }
   } else {
-    unsigned int clilen;
-    struct sockaddr_in cli_addr;
     sctk_debug("Wait connection");
-    src_socket = accept (sockfd, (struct sockaddr *) &cli_addr, &clilen);  
-    sctk_simple_tcp_add_route(src_rank,src_socket);     
+    src_socket = accept (sockfd, NULL,0);  
+    if(src_socket < 0){
+      perror("Connection error");
+      sctk_abort();
+    }
   }
   if(sctk_process_rank % 2 == 1){
     sctk_debug("Connect to %d",dest_rank);
     dest_socket = sctk_tcp_connect_to(dest_connection_infos);
-    sctk_simple_tcp_add_route(dest_rank,dest_socket);
+    if(dest_socket < 0){
+      perror("Connection error");
+      sctk_abort();
+    }
   } else {
-    unsigned int clilen;
-    struct sockaddr_in cli_addr;
     sctk_debug("Wait connection");
-    src_socket = accept (sockfd, (struct sockaddr *) &cli_addr, &clilen);  
-    sctk_simple_tcp_add_route(src_rank,src_socket);  
+    src_socket = accept (sockfd, NULL,0);
+    if(src_socket < 0){
+      perror("Connection error");
+      sctk_abort();
+    } 
   }
-  sctk_pmi_barrier();
+  sctk_pmi_barrier(); 
+  sctk_simple_tcp_add_route(dest_rank,dest_socket);
+  sctk_simple_tcp_add_route(src_rank,src_socket);
+  sctk_pmi_barrier();   
 
 }

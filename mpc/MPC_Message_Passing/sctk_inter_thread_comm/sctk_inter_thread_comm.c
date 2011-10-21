@@ -117,7 +117,9 @@ static inline void sctk_ptp_tasks_perform(){
     }
     sctk_spinlock_unlock(&sctk_ptp_tasks_lock);
 
-    tmp->msg_send->tail.message_copy(tmp);
+    if(tmp != NULL){
+      tmp->msg_send->tail.message_copy(tmp);
+    }
   }
 }
 
@@ -440,7 +442,10 @@ inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp){
 
 /*Init data structures used for task i*/
 void sctk_ptp_per_task_init (int i){
+  static sctk_spinlock_t lock;
   sctk_internal_ptp_t * tmp;
+
+  sctk_spinlock_lock(&lock);
   tmp = sctk_malloc(sizeof(sctk_internal_ptp_t));
   memset(tmp,0,sizeof(sctk_internal_ptp_t));
 /*   tmp->key.comm = SCTK_COMM_WORLD; */
@@ -452,6 +457,7 @@ void sctk_ptp_per_task_init (int i){
   sctk_ptp_table_write_lock(&sctk_ptp_table_lock);
   HASH_ADD(hh,sctk_ptp_table,key,sizeof(sctk_comm_dest_key_t),tmp);
   sctk_ptp_table_write_unlock(&sctk_ptp_table_lock);
+  sctk_spinlock_unlock(&lock);
 }
 
 void sctk_unregister_thread (const int i){

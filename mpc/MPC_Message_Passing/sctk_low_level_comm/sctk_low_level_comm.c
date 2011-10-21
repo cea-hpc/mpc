@@ -88,7 +88,7 @@ void sctk_network_notify_perform_message_set(void (*sctk_network_notify_perform_
 
 /********** NOTIFY_IDLE ************/
 static void sctk_network_notify_idle_message_default (){
-  not_implemented();
+  /*not_implemented();*/
 }
 static void (*sctk_network_notify_idle_message_ptr) () = 
   sctk_network_notify_idle_message_default;
