@@ -37,12 +37,11 @@ void sctk_add_route(int dest, sctk_route_table_t* tmp){
   
 }
 
-sctk_route_table_t* sctk_get_route(int dest){
+sctk_route_table_t* sctk_get_route_to_process(int dest){
   sctk_route_key_t key;
   sctk_route_table_t* tmp;
 
-  key.destination = sctk_get_process_rank_from_task_rank(dest);  
-  sctk_debug("%d is in %d",dest,key.destination);
+  key.destination = dest;  
 
   sctk_spinlock_read_lock(&sctk_route_table_lock);
   HASH_FIND(hh,sctk_route_table,&key,sizeof(sctk_route_key_t),tmp);
@@ -50,7 +49,20 @@ sctk_route_table_t* sctk_get_route(int dest){
   
   if(tmp == NULL){
     not_implemented();
+#warning "Insert here the fallback policy: routing or on demand connection"
+    return sctk_get_route_to_process(dest - 1);
   }
+
+  return tmp;
+}
+
+sctk_route_table_t* sctk_get_route(int dest){
+  sctk_route_table_t* tmp;
+  int process;
+
+  process = sctk_get_process_rank_from_task_rank(dest);
+
+  tmp = sctk_get_route_to_process(process);
 
   return tmp;
 }
