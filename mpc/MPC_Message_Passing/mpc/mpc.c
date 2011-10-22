@@ -1494,7 +1494,7 @@ PMPC_Move_to (int process, int cpuid)
     }
   else
     {
-      if (sctk_is_net_migration_available ())
+      if (sctk_is_net_migration_available () && sctk_migration_mode)
 	{
 	  FILE *file;
 	  char name[SCTK_MAX_FILENAME_SIZE];
@@ -1548,7 +1548,7 @@ PMPC_Move_to (int process, int cpuid)
 	}
       else
 	{
-	  sctk_warning ("Inter process migration not available on this architecture or thread library (PThread)");
+	  sctk_warning ("Inter process migration Disabled");
 	}
     }
   sctk_nodebug ("move to %d %d done", process, cpuid);

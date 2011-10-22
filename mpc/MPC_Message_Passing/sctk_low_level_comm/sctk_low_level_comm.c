@@ -49,7 +49,7 @@ void sctk_network_send_message_set(void (*sctk_network_send_message_val) (sctk_t
 
 /********** NOTIFY_RECV ************/
 static void sctk_network_notify_recv_message_default (sctk_thread_ptp_message_t * msg){
-  not_implemented();
+/*   not_implemented(); */
 }
 static void (*sctk_network_notify_recv_message_ptr) (sctk_thread_ptp_message_t *) = 
   sctk_network_notify_recv_message_default;
@@ -62,7 +62,7 @@ void sctk_network_notify_recv_message_set(void (*sctk_network_notify_recv_messag
 
 /********** NOTIFY_MATCHING ************/
 static void sctk_network_notify_matching_message_default (sctk_thread_ptp_message_t * msg){
-  not_implemented();
+/*   not_implemented(); */
 }
 static void (*sctk_network_notify_matching_message_ptr) (sctk_thread_ptp_message_t *) = 
   sctk_network_notify_matching_message_default;
@@ -75,7 +75,7 @@ void sctk_network_notify_matching_message_set(void (*sctk_network_notify_matchin
 
 /********** NOTIFY_PERFORM ************/
 static void sctk_network_notify_perform_message_default (int msg){
-  not_implemented();
+/*   not_implemented(); */
 }
 static void (*sctk_network_notify_perform_message_ptr) (int) = 
   sctk_network_notify_perform_message_default;
