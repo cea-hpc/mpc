@@ -2128,25 +2128,28 @@ __MPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
       tmp_buf = &(thread_specific->buffer_async.buffer_async[buffer_rank]);
       thread_specific->buffer_async.buffer_async_rank =
 	(buffer_rank + 1) % MAX_MPC_BUFFERED_MSG;
-      sctk_spinlock_unlock (&(thread_specific->buffer_async.lock));
+#warning "To optimize"
 
       if (sctk_mpc_completion_flag(&(tmp_buf->request)) == SCTK_MESSAGE_DONE)
 	{
-	  memcpy (tmp_buf->buf, buf, msg_size);
-
 	  sctk_add_adress_in_message (msg, tmp_buf->buf, msg_size);
 	  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
 					  &(tmp_buf->request), msg_size,pt2pt_specific_message_tag);
+	  sctk_spinlock_unlock (&(thread_specific->buffer_async.lock));
+
+	  memcpy (tmp_buf->buf, buf, msg_size);
 	  if (request != NULL)
 	    {
 	      request->header.source = src;
 	      request->header.destination = dest;
 	      request->header.message_tag = tag;
 	      request->header.msg_size = msg_size;
+	      request->completion_flag = SCTK_MESSAGE_DONE;
 	    }
 	}
       else
 	{
+	  sctk_spinlock_unlock (&(thread_specific->buffer_async.lock));
 	  sctk_add_adress_in_message (msg, buf, msg_size);
 	  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
 					  request, msg_size,pt2pt_specific_message_tag);
@@ -2380,6 +2383,13 @@ __MPC_Test (MPC_Request * request, int *flag, MPC_Status * status)
 static inline int
 __MPC_Test_check (MPC_Request * request, int *flag, MPC_Status * status)
 {
+  if (sctk_mpc_completion_flag(request) != SCTK_MESSAGE_PENDING)
+    {
+      *flag = 1;
+      sctk_mpc_commit_status_from_request(request,status);
+      MPC_ERROR_SUCESS ();      
+    }
+
   mpc_check_comm (sctk_mpc_get_communicator_from_request(request), MPC_COMM_WORLD);
   *flag = 0;
 
@@ -2778,22 +2788,33 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
       tmp_buf = &(thread_specific->buffer.buffer[buffer_rank]);
       thread_specific->buffer.buffer_rank =
 	(buffer_rank + 1) % MAX_MPC_BUFFERED_MSG;
-      sctk_spinlock_unlock (&(thread_specific->buffer.lock));
+#warning "To optimize"
 
       if (sctk_mpc_completion_flag(&(tmp_buf->request)) != SCTK_MESSAGE_DONE)
 	{
-	  sctk_mpc_wait_message (&(tmp_buf->request));
+	  sctk_spinlock_unlock (&(thread_specific->buffer.lock));
+	  sctk_mpc_init_request(&request,comm,src);
+	  
+	  sctk_add_adress_in_message(msg,buf,msg_size);
+	  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
+					  &request, msg_size,pt2pt_specific_message_tag);
+	  sctk_send_message (msg);
+	  sctk_nodebug("send request.is_null %d",request.is_null);
+	  sctk_mpc_wait_message (&request);
 	}
-
-      memcpy (tmp_buf->buf, buf, msg_size);
-
-      sctk_nodebug ("Copied message |%s| -> |%s| %d", buf, tmp_buf->buf,
-		    msg_size);
-
-      sctk_add_adress_in_message(msg,tmp_buf->buf,msg_size);
-      sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
-				      &(tmp_buf->request), msg_size,pt2pt_specific_message_tag);
-      sctk_send_message (msg);
+      else 
+	{
+	  sctk_nodebug ("Copied message |%s| -> |%s| %d", buf, tmp_buf->buf,
+			msg_size);
+	  
+	  sctk_add_adress_in_message(msg,tmp_buf->buf,msg_size);
+	  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
+					  &(tmp_buf->request), msg_size,pt2pt_specific_message_tag);
+	  sctk_spinlock_unlock (&(thread_specific->buffer.lock));
+	  
+	  memcpy (tmp_buf->buf, buf, msg_size);	
+	  sctk_send_message (msg);  
+	}
     }
 
 

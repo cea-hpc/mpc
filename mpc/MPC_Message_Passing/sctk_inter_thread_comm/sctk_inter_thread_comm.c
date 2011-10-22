@@ -549,6 +549,7 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
     request->header.message_tag = message_tag;
     request->header.communicator = communicator;
     request->is_null = 0;
+    request->completion_flag = SCTK_MESSAGE_PENDING;
 
     msg->body.completion_flag = &(request->completion_flag);
   }
