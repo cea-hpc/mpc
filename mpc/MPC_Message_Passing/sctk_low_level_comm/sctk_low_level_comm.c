@@ -99,6 +99,19 @@ void sctk_network_notify_idle_message_set(void (*sctk_network_notify_idle_messag
   sctk_network_notify_idle_message_ptr = sctk_network_notify_idle_message_val;
 }
 
+/********** NOTIFY_ANY_SOURCE ************/
+static void sctk_network_notify_any_source_message_default (){
+  /*not_implemented();*/
+}
+static void (*sctk_network_notify_any_source_message_ptr) () = 
+  sctk_network_notify_any_source_message_default;
+void sctk_network_notify_any_source_message (){
+  sctk_network_notify_any_source_message_ptr();
+}
+void sctk_network_notify_any_source_message_set(void (*sctk_network_notify_any_source_message_val) ()){
+  sctk_network_notify_any_source_message_ptr = sctk_network_notify_any_source_message_val;
+}
+
 #define TRY_DRIVER(dr_name,func) if(strcmp(name,SCTK_STRING(dr_name)) == 0){func(name);} else { (void)(0)
 #define DEFAUT_DRIVER() sctk_network_not_implemented(name);}(void)(0)
 

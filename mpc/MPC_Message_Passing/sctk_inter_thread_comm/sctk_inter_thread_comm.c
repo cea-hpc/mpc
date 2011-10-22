@@ -667,6 +667,7 @@ int sctk_perform_messages_probe_matching(sctk_internal_ptp_t* pair,
   sctk_msg_list_t* res = NULL;
   sctk_msg_list_t* ptr_send;
   sctk_msg_list_t* tmp;
+  int remote;
   res = NULL;
   DL_FOREACH_SAFE(pair->send_message_list,ptr_send,tmp){
     sctk_thread_message_header_t* header_send; 
@@ -679,6 +680,16 @@ int sctk_perform_messages_probe_matching(sctk_internal_ptp_t* pair,
       memcpy(header,&(ptr_send->msg->body.header),sizeof(sctk_thread_message_header_t));
       return 1;
     } 
+  }
+
+  if(header->source == MPC_ANY_SOURCE){
+    sctk_network_notify_any_source_message ();
+  } else {
+    int remote;
+    remote = sctk_get_comm_world_rank (header->communicator,header->source);
+    if(remote != sctk_process_rank){
+      sctk_network_notify_perform_message (remote);
+    }
   }
   return 0;
 }
@@ -699,6 +710,9 @@ static inline void sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t* pa
     } else {
       if(ptr_recv->msg->body.header.remote_source){
 	sctk_network_notify_matching_message (ptr_recv->msg);
+      }
+      if(ptr_recv->msg->body.header.source == MPC_ANY_SOURCE){
+	sctk_network_notify_any_source_message ();
       }
     }
   }

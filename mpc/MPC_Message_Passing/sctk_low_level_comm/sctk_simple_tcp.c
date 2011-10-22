@@ -243,6 +243,11 @@ sctk_network_notify_idle_message_simple_tcp (){
 /*   not_implemented(); */
 }
 
+static void 
+sctk_network_notify_any_source_message_simple_tcp (){
+/*   not_implemented(); */
+}
+
 /************ INIT ****************/
 void sctk_network_init_simple_tcp(char* name){
  char connection_infos[MAX_STRING_SIZE];
@@ -260,6 +265,7 @@ void sctk_network_init_simple_tcp(char* name){
   sctk_network_notify_matching_message_set(sctk_network_notify_matching_message_simple_tcp);
   sctk_network_notify_perform_message_set(sctk_network_notify_perform_message_simple_tcp);
   sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_simple_tcp);
+  sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_simple_tcp);
 
   gethostname(connection_infos, MAX_STRING_SIZE-100);
   connection_infos_size = strlen(connection_infos);
