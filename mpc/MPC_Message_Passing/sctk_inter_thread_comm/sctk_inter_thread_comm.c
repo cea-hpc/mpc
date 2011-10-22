@@ -662,7 +662,7 @@ sctk_msg_list_t* sctk_perform_messages_search_matching(sctk_internal_ptp_t* pair
        ((header->source == header_send->source) || (header->source == MPC_ANY_SOURCE))&& 
        ((header->message_tag == header_send->message_tag) || (header->message_tag == MPC_ANY_TAG))){
       DL_DELETE(pair->send_message_list,ptr_send);
-      sctk_debug("Match? dest %d (%d,%d,%d) == (%d,%d,%d)",
+      sctk_nodebug("Match? dest %d (%d,%d,%d) == (%d,%d,%d)",
 		 header->destination,
 		 header->source,header->message_tag,header->specific_message_tag,
 		 header_send->source,header_send->message_tag,header_send->specific_message_tag);
@@ -680,7 +680,7 @@ static inline void sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t* pa
     sctk_assert(ptr_recv->msg != NULL);
     ptr_send = sctk_perform_messages_search_matching(pair,&(ptr_recv->msg->body.header));
     if(ptr_send != NULL){
-      sctk_debug("Match %p and %p",ptr_recv,ptr_send);
+      sctk_nodebug("Match %p and %p",ptr_recv,ptr_send);
       DL_DELETE(pair->recv_message_list,ptr_recv);
 
       /*Copy message*/

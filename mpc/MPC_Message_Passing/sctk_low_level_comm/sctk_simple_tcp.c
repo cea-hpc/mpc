@@ -61,13 +61,13 @@ sctk_tcp_connect_to (char *name_init)
     if(name[i] == ':'){
       name[i] = '\0';
       name_init[i] = '\0';
-      sctk_debug("Port no %s",name + (i+1));
+      sctk_nodebug("Port no %s",name + (i+1));
       portno = atoi(name + (i+1));
       break;
     }
   }
 
-  sctk_debug ("Try connection to |%s| on port %d type %d", name, portno,AF_INET);
+  sctk_nodebug ("Try connection to |%s| on port %d type %d", name, portno,AF_INET);
 
   clientsock_fd = socket (AF_INET, SOCK_STREAM, 0);
   if (clientsock_fd < 0)
@@ -150,7 +150,7 @@ static void* sctk_simple_tcp_thread(sctk_route_table_t* tmp){
       if(res == 0){
 	return NULL;
       }
-      sctk_debug("ERROR %d",res);
+      sctk_nodebug("ERROR %d",res);
       perror("Read error");
       sctk_abort();
     }
@@ -160,10 +160,10 @@ static void* sctk_simple_tcp_thread(sctk_route_table_t* tmp){
     body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
 
     /* Recv header*/
-    sctk_debug("Read %d",sizeof(sctk_thread_ptp_message_body_t));
+    sctk_nodebug("Read %d",sizeof(sctk_thread_ptp_message_body_t));
     res = read(fd,msg,sizeof(sctk_thread_ptp_message_body_t));
     if(res != sizeof(sctk_thread_ptp_message_body_t)){
-      sctk_debug("ERROR %d",res);
+      sctk_nodebug("ERROR %d",res);
       perror("Read error");
       sctk_abort();
     }
@@ -173,10 +173,10 @@ static void* sctk_simple_tcp_thread(sctk_route_table_t* tmp){
     done = 0;
     size = size - sizeof(sctk_thread_ptp_message_t);
     while(done < size){
-      sctk_debug("Read %d",size - done);
+      sctk_nodebug("Read %d",size - done);
       res = read(fd,body + done,size - done);
       if(res < 0){
-	sctk_debug("ERROR %d",res);
+	sctk_nodebug("ERROR %d",res);
 	perror("Read error");
 	sctk_abort();
       }
@@ -193,7 +193,7 @@ static void* sctk_simple_tcp_thread(sctk_route_table_t* tmp){
 /* static void sctk_simple_tcp_write(size_t size, void* msg, int fd){ */
 /*   size_t res; */
   
-/*   sctk_debug("Use fd %d",fd); */
+/*   sctk_nodebug("Use fd %d",fd); */
 
 /*   res = write(fd,&size,sizeof(size_t)); */
 /*   if(res != sizeof(size_t)){ */
@@ -214,7 +214,7 @@ static void sctk_simple_tcp_add_route(int dest, int fd){
 
   tmp = sctk_malloc(sizeof(sctk_route_table_t));
   
-  sctk_debug("Register fd %d",fd);
+  sctk_nodebug("Register fd %d",fd);
 
   tmp->data.simple_tcp.fd = fd;
 
@@ -316,26 +316,26 @@ void sctk_network_init_simple_tcp(char* name){
   dest_rank = (sctk_process_rank + 1) % sctk_process_number;
   src_rank = (sctk_process_rank + sctk_process_number - 1) % sctk_process_number;
 
-  sctk_debug("Connection Infos (%d): %s",sctk_process_rank,connection_infos);
+  sctk_nodebug("Connection Infos (%d): %s",sctk_process_rank,connection_infos);
 
   assume(sctk_pmi_put_connection_info(connection_infos,MAX_STRING_SIZE,0) == 0);
   sctk_pmi_barrier();
 
   assume(sctk_pmi_get_connection_info(dest_connection_infos,MAX_STRING_SIZE,0,dest_rank) == 0);
 
-  sctk_debug("DEST Connection Infos(%d) to %d: %s",sctk_process_rank,dest_rank,dest_connection_infos);
+  sctk_nodebug("DEST Connection Infos(%d) to %d: %s",sctk_process_rank,dest_rank,dest_connection_infos);
 
   sctk_pmi_barrier();
 
   if(sctk_process_rank % 2 == 0){
-    sctk_debug("Connect to %d",dest_rank);
+    sctk_nodebug("Connect to %d",dest_rank);
     dest_socket = sctk_tcp_connect_to(dest_connection_infos);
     if(dest_socket < 0){
       perror("Connection error");
       sctk_abort();
     }
   } else {
-    sctk_debug("Wait connection");
+    sctk_nodebug("Wait connection");
     src_socket = accept (sockfd, NULL,0);  
     if(src_socket < 0){
       perror("Connection error");
@@ -343,14 +343,14 @@ void sctk_network_init_simple_tcp(char* name){
     }
   }
   if(sctk_process_rank % 2 == 1){
-    sctk_debug("Connect to %d",dest_rank);
+    sctk_nodebug("Connect to %d",dest_rank);
     dest_socket = sctk_tcp_connect_to(dest_connection_infos);
     if(dest_socket < 0){
       perror("Connection error");
       sctk_abort();
     }
   } else {
-    sctk_debug("Wait connection");
+    sctk_nodebug("Wait connection");
     src_socket = accept (sockfd, NULL,0);
     if(src_socket < 0){
       perror("Connection error");

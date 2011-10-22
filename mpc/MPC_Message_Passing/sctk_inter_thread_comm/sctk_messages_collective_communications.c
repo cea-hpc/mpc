@@ -128,12 +128,12 @@ void sctk_broadcast_messages (void *buffer, const size_t size,
     sctk_recv_message (&recv_msg);
     sctk_wait_message (&recv_request);
 
-    sctk_debug("recv_request.src %d", recv_request.header.source);
+    sctk_nodebug("recv_request.src %d", recv_request.header.source);
     start = ((myself + total - root) % total - 
 	     (recv_request.header.source + total - root) % total  + total ) % total;
   }
 
-  sctk_debug("Start %d root %d",start/2,root);
+  sctk_nodebug("Start %d root %d",start/2,root);
   for(i = start/2; i >= 1; i = i/2){
     if((((myself + total - root)% total) + i) < total){
       if(root != myself){
@@ -141,7 +141,7 @@ void sctk_broadcast_messages (void *buffer, const size_t size,
       } else {
 	dest = (root + i) % total;
       }
-      sctk_debug("send to dest %d", dest);
+      sctk_nodebug("send to dest %d", dest);
       sctk_init_header(&send_msg,myself,sctk_message_contiguous,sctk_free_messages,
 		       sctk_message_copy); 
       sctk_add_adress_in_message(&send_msg,buffer,size); 

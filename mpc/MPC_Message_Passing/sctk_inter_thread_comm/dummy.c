@@ -20,7 +20,6 @@ void sctk_create_communicator(){not_implemented();}
 void sctk_register_restart_thread(){not_implemented();}
 void sctk_mpc_message_get_is_null(){not_implemented();}
 void sctk_register_thread(){not_implemented();}
-void sctk_is_inter_comm(){not_implemented();}
 void sctk_net_migration(){not_implemented();}
 void sctk_net_get_pages(){not_implemented();}
 void sctk_get_nb_task_remote(){not_implemented();}
