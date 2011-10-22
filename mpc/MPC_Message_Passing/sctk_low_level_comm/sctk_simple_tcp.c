@@ -168,6 +168,7 @@ static void* sctk_simple_tcp_thread(sctk_route_table_t* tmp){
       sctk_abort();
     }
     msg->body.completion_flag = NULL;
+    msg->tail.message_type = sctk_message_network;
     
     /* Recv body*/
     done = 0;
@@ -226,11 +227,11 @@ static void sctk_simple_tcp_add_route(int dest, int fd){
 }
 
 /************ INTER_THEAD_COMM HOOOKS ****************/
+
 static void 
 sctk_network_send_message_simple_tcp (sctk_thread_ptp_message_t * msg){
   sctk_route_table_t* tmp;
   size_t size;
-  int res;
   int fd;
 
   tmp = sctk_get_route(msg->body.header.glob_destination);
@@ -241,17 +242,9 @@ sctk_network_send_message_simple_tcp (sctk_thread_ptp_message_t * msg){
 
   size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
 
-  res = write(fd,&size,sizeof(size_t));
-  if(res != sizeof(size_t)){
-    perror("Write error");
-    sctk_abort();
-  }
+  sctk_safe_write(fd,&size,sizeof(size_t));
 
-  res = write(fd,msg,sizeof(sctk_thread_ptp_message_body_t));
-  if(res != sizeof(sctk_thread_ptp_message_body_t)){
-    perror("Write error");
-    sctk_abort();
-  }
+  sctk_safe_write(fd,msg,sizeof(sctk_thread_ptp_message_body_t));
 
   sctk_net_write_in_fd(msg,fd);
   sctk_spinlock_unlock(&(tmp->data.simple_tcp.lock));
@@ -361,5 +354,7 @@ void sctk_network_init_simple_tcp(char* name){
   sctk_simple_tcp_add_route(dest_rank,dest_socket);
   sctk_simple_tcp_add_route(src_rank,src_socket);
   sctk_pmi_barrier();   
+
+  sctk_network_mode = "TCP simple(ring)";
 
 }

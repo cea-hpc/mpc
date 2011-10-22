@@ -20,6 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include <sctk.h>
 #include <sctk_debug.h>
 #include <sctk_route.h>
 #include <sctk_communicator.h>
@@ -48,9 +49,13 @@ sctk_route_table_t* sctk_get_route_to_process(int dest){
   sctk_spinlock_read_lock(&sctk_route_table_lock);
   
   if(tmp == NULL){
-    not_implemented();
+    int old_dest;
+
+    old_dest = dest;
+    dest = (dest + sctk_process_number -1) % sctk_process_number;
+    sctk_nodebug("Route via dest - 1 %d to %d",dest,old_dest);
 #warning "Insert here the fallback policy: routing or on demand connection"
-    return sctk_get_route_to_process(dest - 1);
+    return sctk_get_route_to_process(dest);
   }
 
   return tmp;

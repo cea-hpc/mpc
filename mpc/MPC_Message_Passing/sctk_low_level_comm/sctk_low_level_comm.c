@@ -114,7 +114,7 @@ sctk_net_init_driver (char *name)
     sctk_pmi_get_process_rank(&sctk_process_rank);
     sctk_pmi_get_process_number(&sctk_process_number);
 
-    sctk_debug("Use network %s",name);
+    sctk_nodebug("Use network %s",name);
 
     TRY_DRIVER(tcp,sctk_network_init_simple_tcp);
     DEFAUT_DRIVER();

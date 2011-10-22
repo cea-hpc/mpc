@@ -23,13 +23,14 @@
 #include "sctk_inter_thread_comm.h"
 #include "sctk_low_level_comm.h"
 #include "sctk_debug.h"
+#include "sctk_net_tools.h"
 #include <string.h>
+#include <stdlib.h>
+#include <unistd.h>
 
   void sctk_net_write_in_fd (sctk_thread_ptp_message_t * msg,
 			     int fd)
-  {
-    int res;
-    
+  {    
     switch(msg->tail.message_type){
     case sctk_message_contiguous: {
       size_t size;
@@ -37,11 +38,49 @@
       size = msg->body.header.msg_size;
 
       sctk_nodebug("MSG SEND |%s|", (char*)msg->tail.message.contiguous.addr);
-      res = write(fd,msg->tail.message.contiguous.addr,size);
-      if(res != size){
-	perror("Write error");
-	sctk_abort();
-      }
+      sctk_safe_write(fd,msg->tail.message.contiguous.addr,size);
+      break;
+    }
+    case sctk_message_network: {
+      size_t size;
+      void* body;
+
+      size = msg->body.header.msg_size;
+      body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
+
+      sctk_safe_write(fd,body,size);
+      break;
+    }
+    case sctk_message_pack: {
+      size_t i;
+      size_t j;
+      size_t size;
+      for (i = 0; i < msg->tail.message.pack.count; i++)
+	for (j = 0; j < msg->tail.message.pack.list.std[i].count; j++)
+	  {
+	    size = (msg->tail.message.pack.list.std[i].ends[j] -
+		    msg->tail.message.pack.list.std[i].begins[j] +
+		    1) * msg->tail.message.pack.list.std[i].elem_size;
+	    sctk_safe_write(fd,((char *) (msg->tail.message.pack.list.std[i].addr)) +
+			    msg->tail.message.pack.list.std[i].begins[j] *
+			    msg->tail.message.pack.list.std[i].elem_size,size);
+	  }
+      break;
+    }
+  case sctk_message_pack_absolute: {
+    size_t i;
+    size_t j;
+    size_t size;
+    for (i = 0; i < msg->tail.message.pack.count; i++)
+      for (j = 0; j < msg->tail.message.pack.list.absolute[i].count; j++)
+	{
+	  size = (msg->tail.message.pack.list.absolute[i].ends[j] -
+		  msg->tail.message.pack.list.absolute[i].begins[j] +
+		  1) * msg->tail.message.pack.list.absolute[i].elem_size;
+	  sctk_safe_write(fd,((char *) (msg->tail.message.pack.list.absolute[i].addr)) +
+			  msg->tail.message.pack.list.absolute[i].begins[j] *
+			  msg->tail.message.pack.list.absolute[i].elem_size,size);
+	}
       break;
     }
     default: not_reachable();
@@ -415,7 +454,7 @@ int sctk_net_copy_frag_msg (
 void sctk_net_message_copy(sctk_message_to_copy_t* tmp){
   sctk_thread_ptp_message_t* send;
   sctk_thread_ptp_message_t* recv;
-  void* body;
+  char* body;
   
   send = tmp->msg_send;
   recv = tmp->msg_recv;
@@ -424,12 +463,10 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp){
 
   send->body.completion_flag = NULL;
 
-  assume(send->tail.message_type == recv->tail.message_type);
-
   sctk_nodebug("MSG |%s|", (char*)body);
 /*   assume(((char*)body)[0] == '\0'); */
 
-  switch(send->tail.message_type){
+  switch(recv->tail.message_type){
   case sctk_message_contiguous: {
     size_t size;
     size = send->body.header.msg_size;
@@ -443,6 +480,53 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp){
     sctk_message_completion_and_free(send,recv);
     break;
   }
+  case sctk_message_pack: {
+    size_t i;
+    size_t j;
+    size_t size;
+    for (i = 0; i < recv->tail.message.pack.count; i++)
+      for (j = 0; j < recv->tail.message.pack.list.std[i].count; j++)
+	{
+	  size = (recv->tail.message.pack.list.std[i].ends[j] -
+		  recv->tail.message.pack.list.std[i].begins[j] +
+		  1) * recv->tail.message.pack.list.std[i].elem_size;
+	  memcpy(((char *) (recv->tail.message.pack.list.std[i].addr)) +
+		 recv->tail.message.pack.list.std[i].begins[j] *
+		 recv->tail.message.pack.list.std[i].elem_size,body,size);
+	  body += size;
+	}
+    break;
+  }
+  case sctk_message_pack_absolute: {
+    size_t i;
+    size_t j;
+    size_t size;
+    for (i = 0; i < recv->tail.message.pack.count; i++)
+      for (j = 0; j < recv->tail.message.pack.list.absolute[i].count; j++)
+	{
+	  size = (recv->tail.message.pack.list.absolute[i].ends[j] -
+		  recv->tail.message.pack.list.absolute[i].begins[j] +
+		  1) * recv->tail.message.pack.list.absolute[i].elem_size;
+	  memcpy(((char *) (recv->tail.message.pack.list.absolute[i].addr)) +
+		 recv->tail.message.pack.list.absolute[i].begins[j] *
+		 recv->tail.message.pack.list.absolute[i].elem_size,body,size);
+	  body += size;
+	}
+    break;
+  }
   default: not_reachable();
   }
+}
+
+void sctk_safe_write(int fd, void* buf,size_t size){
+  size_t done = 0; 
+  int res;
+  do{
+    res = write(fd,buf,size - done);
+    if(res < 0){
+      perror("Write error");
+      sctk_abort();
+    }
+    done += res;
+  }while(done < size);
 }

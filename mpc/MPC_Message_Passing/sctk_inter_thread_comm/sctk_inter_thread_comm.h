@@ -107,7 +107,8 @@ extern "C"
     sctk_message_contiguous,
     sctk_message_pack,
     sctk_message_pack_absolute,
-    sctk_message_pack_undefined
+    sctk_message_pack_undefined,
+    sctk_message_network
   } sctk_message_type_t;
 
   typedef union {

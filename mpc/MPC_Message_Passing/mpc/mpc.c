@@ -1128,7 +1128,7 @@ PMPC_Finalize (void)
   sctk_task_specific_t *task_specific;
   SCTK_PROFIL_START (MPC_Finalize);
 
-  sctk_debug("PMPC_Finalize");
+  sctk_nodebug("PMPC_Finalize");
 
   PMPC_Barrier (MPC_COMM_WORLD);
 
@@ -2766,7 +2766,7 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
       sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
 				      &request, msg_size,pt2pt_specific_message_tag);
       sctk_send_message (msg);
-      sctk_debug("send request.is_null %d",request.is_null);
+      sctk_nodebug("send request.is_null %d",request.is_null);
       sctk_mpc_wait_message (&request);
     }
   else
@@ -2912,7 +2912,7 @@ PMPC_Recv (void *buf, mpc_msg_count count, MPC_Datatype datatype, int source,
 				  msg_size,pt2pt_specific_message_tag);
 
   sctk_recv_message (msg);
-  sctk_debug("recv request.is_null %d",request.is_null);
+  sctk_nodebug("recv request.is_null %d",request.is_null);
   sctk_mpc_wait_message (&request);
 
   sctk_nodebug ("count = %d", msg_size);

@@ -541,6 +541,18 @@ sctk_duplicate_communicator (const sctk_communicator_t origin_communicator,
     not_implemented();
   }
 }
+sctk_communicator_t sctk_create_communicator (const sctk_communicator_t
+					      origin_communicator,
+					      const int
+					      nb_task_involved,
+					      const int *task_list,
+					      int is_inter_comm){
+  if(is_inter_comm == 0){
+    not_implemented();
+  } else {
+    not_implemented();
+  } 
+}
 int sctk_is_inter_comm (const sctk_communicator_t communicator){
   sctk_internal_communicator_t * tmp;
   
