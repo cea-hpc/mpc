@@ -3815,20 +3815,10 @@ __MPC_Comm_create (MPC_Comm comm, MPC_Group group, MPC_Comm * comm_out,
       sctk_nodebug ("%d present", group->task_list[i]);
     }
 
-  if (present == 1)
-    {
-      /*If we are in the new communicator */
-      sctk_nodebug ("Real creation");
-      (*comm_out) =
-	sctk_create_communicator (comm, group->task_nb, group->task_list,
-				  is_inter_comm);
-    }
-  else
-    {
-      sctk_nodebug ("Fake creation");
-      sctk_barrier (comm);
-      (*comm_out) = MPC_COMM_NULL;
-    }
+  (*comm_out) =
+    sctk_create_communicator (comm, group->task_nb, group->task_list,
+			      is_inter_comm);
+
   sctk_nodebug ("MPC_Comm_create done %d ", *comm_out);
   __MPC_Barrier (comm);
   sctk_nodebug ("MPC_Comm_create ended %d ", *comm_out);

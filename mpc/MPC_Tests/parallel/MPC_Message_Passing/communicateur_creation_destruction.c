@@ -54,6 +54,7 @@ run (void *arg)
   MPC_Comm_create_list (my_com, tab, dom_size, &my_com2);
   MPC_Comm_rank (my_com2, &my_rank2);
   mprintf (stderr, "Apres creation %d %d\n", my_rank, my_rank2);
+  assert(my_rank2 == (my_rank + dom_size - 1) % dom_size);
   MPC_Barrier (my_com2);
   mprintf (stderr, "Apres barrier %d\n", my_rank);
   MPC_Comm_free (&my_com2);

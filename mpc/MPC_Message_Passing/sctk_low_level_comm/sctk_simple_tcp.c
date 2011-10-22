@@ -144,7 +144,7 @@ static void* sctk_simple_tcp_thread(sctk_route_table_t* tmp){
     void* body;
     size_t size;
 
-    sctk_safe_read(fd,&size,sizeof(size_t));
+    sctk_safe_read(fd,(char*)&size,sizeof(size_t));
 
     size = size - sizeof(sctk_thread_ptp_message_body_t) + 
       sizeof(sctk_thread_ptp_message_t);
@@ -153,14 +153,14 @@ static void* sctk_simple_tcp_thread(sctk_route_table_t* tmp){
 
     /* Recv header*/
     sctk_nodebug("Read %d",sizeof(sctk_thread_ptp_message_body_t));
-    sctk_safe_read(fd,msg,sizeof(sctk_thread_ptp_message_body_t));
+    sctk_safe_read(fd,(char*)msg,sizeof(sctk_thread_ptp_message_body_t));
 
     msg->body.completion_flag = NULL;
     msg->tail.message_type = sctk_message_network;
     
     /* Recv body*/
     size = size - sizeof(sctk_thread_ptp_message_t);
-    sctk_safe_read(fd,body,size);
+    sctk_safe_read(fd,(char*)body,size);
 
     sctk_reinit_header(msg,sctk_free,sctk_net_message_copy);
 
@@ -169,23 +169,6 @@ static void* sctk_simple_tcp_thread(sctk_route_table_t* tmp){
     sctk_send_message(msg);
   }
 }
-
-/* static void sctk_simple_tcp_write(size_t size, void* msg, int fd){ */
-/*   size_t res; */
-  
-/*   sctk_nodebug("Use fd %d",fd); */
-
-/*   res = write(fd,&size,sizeof(size_t)); */
-/*   if(res != sizeof(size_t)){ */
-/*     perror("Write error"); */
-/*     sctk_abort(); */
-/*   } */
-/*   res = write(fd,msg,size); */
-/*   if(res != size){ */
-/*     perror("Write error"); */
-/*     sctk_abort(); */
-/*   } */
-/* } */
 
 static void sctk_simple_tcp_add_route(int dest, int fd){
   sctk_route_table_t* tmp;
@@ -221,9 +204,9 @@ sctk_network_send_message_simple_tcp (sctk_thread_ptp_message_t * msg){
 
   size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
 
-  sctk_safe_write(fd,&size,sizeof(size_t));
+  sctk_safe_write(fd,(char*)&size,sizeof(size_t));
 
-  sctk_safe_write(fd,msg,sizeof(sctk_thread_ptp_message_body_t));
+  sctk_safe_write(fd,(char*)msg,sizeof(sctk_thread_ptp_message_body_t));
 
   sctk_net_write_in_fd(msg,fd);
   sctk_spinlock_unlock(&(tmp->data.simple_tcp.lock));
