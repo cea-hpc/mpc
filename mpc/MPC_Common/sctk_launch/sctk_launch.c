@@ -175,6 +175,20 @@ sctk_perform_initialisation (void)
   mkdir (sctk_store_dir, 0777);
 
   sctk_only_once ();
+
+  if (sctk_process_nb_val > 1)
+  {
+    if (sctk_net_val != NULL)
+    {
+      sctk_process_number = sctk_process_nb_val;
+      sctk_nodebug ("%d processes", sctk_process_number);
+    }
+    else
+    {
+      fprintf (stderr, "No network support specified\n");
+      sctk_abort();
+    }
+  }
   sctk_topology_init ();
   sctk_thread_init ();
 
@@ -197,19 +211,6 @@ sctk_perform_initialisation (void)
     abort ();
   }
   sctk_init_alloc ();
-
-  if (sctk_process_nb_val > 1)
-  {
-    if (sctk_net_val != NULL)
-    {
-      sctk_process_number = sctk_process_nb_val;
-      sctk_nodebug ("%d processes", sctk_process_number);
-    }
-    else
-    {
-      fprintf (stderr, "Process number ignored!\n");
-    }
-  }
 
   if (sctk_processor_nb_val > 1)
   {
