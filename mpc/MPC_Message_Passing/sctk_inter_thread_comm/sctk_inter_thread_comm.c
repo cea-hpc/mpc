@@ -716,19 +716,20 @@ static inline void sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t* pa
       }
     }
   }
-  sctk_ptp_tasks_perform();
 }
 
 static inline void sctk_perform_messages_for_pair(sctk_internal_ptp_t* pair){
     sctk_spinlock_lock(&(pair->lock));
     sctk_perform_messages_for_pair_locked(pair);
     sctk_spinlock_unlock(&(pair->lock));
+    sctk_ptp_tasks_perform();
 }
 
 static inline void sctk_try_perform_messages_for_pair(sctk_internal_ptp_t* pair){
   if(sctk_spinlock_trylock(&(pair->lock)) == 0){
     sctk_perform_messages_for_pair_locked(pair);
     sctk_spinlock_unlock(&(pair->lock));
+    sctk_ptp_tasks_perform();
   }
 }
 
@@ -797,6 +798,7 @@ void sctk_wait_all (const int task, const sctk_communicator_t com){
       sctk_spinlock_unlock(&(pair->lock));
     }
     sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
+    sctk_ptp_tasks_perform();
 
 #warning "To optimize"
     sctk_thread_yield();
@@ -815,6 +817,7 @@ void sctk_perform_all (){
     sctk_spinlock_unlock(&(pair->lock));
   }
   sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
+  sctk_ptp_tasks_perform();
 }
 
 void sctk_notify_idle_message (){
@@ -892,6 +895,7 @@ void sctk_recv_message (sctk_thread_ptp_message_t * msg){
     DL_APPEND(tmp->recv_message_list, &(msg->tail.distant_list));
     sctk_perform_messages_for_pair_locked(tmp);
     sctk_spinlock_unlock(&(tmp->lock));
+    sctk_ptp_tasks_perform();
   } else {
     not_reachable();
   }

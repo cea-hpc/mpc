@@ -59,33 +59,40 @@ void sctk_barrier_messages(const sctk_communicator_t communicator,
   thread_data = sctk_thread_data_get ();
   total = sctk_get_nb_task_total(communicator);
   myself = sctk_get_rank (communicator, thread_data->task_id);
-  dest = (myself + 1) % total;
-  src = (myself + total - 1) % total;
-
-  sctk_init_header(&send_msg,myself,sctk_message_contiguous,sctk_free_messages,
-		   sctk_message_copy);  
-  sctk_init_header(&recv_msg,myself,sctk_message_contiguous,sctk_free_messages,
-		   sctk_message_copy);
-  
-  sctk_add_adress_in_message(&send_msg,&send_text,size);
-  sctk_add_adress_in_message(&recv_msg,&recv_text,size);
-
-  assume(recv_text == '\0');
-  assume(send_text == '\0');
-
-  sctk_set_header_in_message (&send_msg, 0, communicator, myself, dest,
-			      &send_request, size,barrier_specific_message_tag);
-  sctk_set_header_in_message (&recv_msg, 0, communicator, src, myself,
-			      &recv_request, size,barrier_specific_message_tag);
-
-  sctk_nodebug("Send to %d, recv from %d",dest,src);
-
-  sctk_recv_message (&recv_msg);
-  sctk_send_message (&send_msg);
-
-  sctk_wait_message (&recv_request);
-  sctk_wait_message (&send_request);
-
+  if(total > 1){
+    dest = (myself + 1) % total;
+    src = (myself + total - 1) % total;
+    
+    sctk_init_header(&send_msg,myself,sctk_message_contiguous,sctk_free_messages,
+		     sctk_message_copy);  
+    sctk_init_header(&recv_msg,myself,sctk_message_contiguous,sctk_free_messages,
+		     sctk_message_copy);
+    
+    sctk_add_adress_in_message(&send_msg,&send_text,size);
+    sctk_add_adress_in_message(&recv_msg,&recv_text,size);
+    
+    assume(recv_text == '\0');
+    assume(send_text == '\0');
+    
+    sctk_set_header_in_message (&send_msg, 0, communicator, myself, dest,
+				&send_request, size,barrier_specific_message_tag);
+    sctk_set_header_in_message (&recv_msg, 0, communicator, src, myself,
+				&recv_request, size,barrier_specific_message_tag);
+    
+    sctk_nodebug("Send to %d, recv from %d",dest,src);
+    
+    if(myself != 0){
+      sctk_recv_message (&recv_msg);
+      sctk_wait_message (&recv_request);
+      sctk_send_message (&send_msg);
+      sctk_wait_message (&send_request);
+    } else {
+      sctk_send_message (&send_msg);
+      sctk_wait_message (&send_request);
+      sctk_recv_message (&recv_msg);
+      sctk_wait_message (&recv_request);
+    }
+  }
 }
 
 void sctk_barrier_messages_init(sctk_internal_collectives_struct_t * tmp){

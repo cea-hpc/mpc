@@ -51,7 +51,7 @@ typedef struct sctk_internal_communicator_s{
 
   sctk_spinlock_t creation_lock;
   struct sctk_internal_communicator_s* new_comm;
-  int has_zero;
+  volatile int has_zero;
 
   UT_hash_handle hh;
 } sctk_internal_communicator_t;
@@ -222,6 +222,9 @@ sctk_communicator_get_new_id(int local_root, int rank,
     if((local_root == 1) && (rank != 0)){
       /*Check if available*/
       sctk_internal_communicator_t * tmp_check;
+      
+      sctk_abort();
+
       tmp->id = comm;
       sctk_spinlock_lock(&sctk_communicator_all_table_lock);
       tmp_check = sctk_check_internal_communicator_no_lock(comm);
@@ -240,6 +243,9 @@ sctk_communicator_get_new_id(int local_root, int rank,
     ti = comm;
     sctk_all_reduce(&ti,&comm,sizeof(sctk_communicator_t),1,sctk_comm_reduce,
 		    origin_communicator,0);
+    if(comm == -1){
+      need_clean = 1;
+    }
 
     sctk_nodebug("Every one try %d RES",comm);
     if(comm == -1){
@@ -520,7 +526,6 @@ sctk_duplicate_communicator (const sctk_communicator_t origin_communicator,
     if((tmp->has_zero == 1) && (rank != 0)){
       local_root = 0;
     }
-    
 
     new_tmp = tmp->new_comm;
 
