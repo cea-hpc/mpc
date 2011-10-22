@@ -27,6 +27,7 @@
 #include "sctk_config.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"
+#include "sctk.h"
 #include "sctk_kernel_thread.h"
 #include <dirent.h>
 
@@ -118,17 +119,20 @@ sctk_restrict_topology ()
   sctk_processor_number_on_node = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
 
   /* Share nodes */
-  if (sctk_share_node_capabilities == 1
-      && strcmp (sctk_store_dir, "/dev/null") != 0)
+  sctk_share_node_capabilities = 1;
+  if ((sctk_share_node_capabilities == 1) && 
+      (sctk_process_number > 1))
   {
+    int detected_on_this_host = 0;
+    int detected = 0;
+
+    /* Determine number of processes on this node */
+#if 0
     static char name[4096];
     static char pattern_name[4096];
     static char this_name[4096];
     FILE *file;
-    int detected = 0;
-    int detected_on_this_host = 0;
 
-    /* Determine number of processes on this node */
     sprintf (name, "%s/use_%s_%d", sctk_store_dir, sctk_node_name,
         getpid ());
     sprintf (this_name, "use_%s_%d", sctk_node_name, getpid ());
@@ -177,6 +181,12 @@ sctk_restrict_topology ()
       closedir (d);
       usleep (50);
     }
+#endif
+    sctk_pmi_get_processes_on_node_number(&detected_on_this_host);
+    sctk_pmi_get_process_on_node_rank(&rank);
+    detected = sctk_process_number;
+    sctk_nodebug("Nb process on node %d",detected_on_this_host);
+
     while (detected != sctk_get_process_nb ());
     sctk_nodebug ("%d/%d host detected %d share %s", detected,
         sctk_get_process_nb (), detected_on_this_host,
@@ -283,6 +293,9 @@ sctk_get_cpu ()
   void
 sctk_topology_init ()
 {
+  if(sctk_process_number > 1){
+    sctk_pmi_init();
+  }
   hwloc_topology_init(&topology);
   hwloc_topology_load(topology);
 
@@ -302,7 +315,7 @@ sctk_topology_init ()
 
   uname (&utsname);
 
-  /* sctk_print_topology (stderr); */
+/*   sctk_print_topology (stderr); */
 }
 
 /*! \brief Destroy the topology module

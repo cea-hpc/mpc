@@ -53,7 +53,10 @@ INITIALIZATION/FINALIZE
  *
  */
 int sctk_pmi_init() {
+  static int done = 0;
+  if(done == 0){
     int rc, max_kvsname_len;
+    done = 1;
 
     // Initialized PMI/SLURM
     rc = PMI_Init(&spawned);
@@ -205,6 +208,9 @@ int sctk_pmi_init() {
 #ifdef MPC_USE_SLURM
 		return rc;
 #endif
+  } else {
+    return 0;
+  }
 }
 
 /*! \brief Finalization function
