@@ -223,8 +223,6 @@ sctk_communicator_get_new_id(int local_root, int rank,
       /*Check if available*/
       sctk_internal_communicator_t * tmp_check;
       
-      sctk_abort();
-
       tmp->id = comm;
       sctk_spinlock_lock(&sctk_communicator_all_table_lock);
       tmp_check = sctk_check_internal_communicator_no_lock(comm);
