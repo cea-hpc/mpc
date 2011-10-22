@@ -36,7 +36,7 @@
 
       size = msg->body.header.msg_size;
 
-      sctk_debug("MSG SEND |%s|", (char*)msg->tail.message.contiguous.addr);
+      sctk_nodebug("MSG SEND |%s|", (char*)msg->tail.message.contiguous.addr);
       res = write(fd,msg->tail.message.contiguous.addr,size);
       if(res != size){
 	perror("Write error");
@@ -426,7 +426,7 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp){
 
   assume(send->tail.message_type == recv->tail.message_type);
 
-  sctk_debug("MSG |%s|", (char*)body);
+  sctk_nodebug("MSG |%s|", (char*)body);
 /*   assume(((char*)body)[0] == '\0'); */
 
   switch(send->tail.message_type){

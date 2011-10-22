@@ -184,7 +184,7 @@ static void* sctk_simple_tcp_thread(sctk_route_table_t* tmp){
     }
     sctk_reinit_header(msg,sctk_free,sctk_net_message_copy);
 
-    sctk_debug("MSG RECV|%s|", (char*)body);    
+    sctk_nodebug("MSG RECV|%s|", (char*)body);    
 
     sctk_send_message(msg);
   }

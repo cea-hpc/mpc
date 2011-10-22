@@ -111,7 +111,6 @@ void
 sctk_net_init_driver (char *name)
 {
   if(sctk_process_number > 1){
-    sctk_pmi_init();
     sctk_pmi_get_process_rank(&sctk_process_rank);
     sctk_pmi_get_process_number(&sctk_process_number);
 
