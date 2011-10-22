@@ -193,7 +193,7 @@ echo "lib/libmpcf.a: \$(COMPIL_DIR)" >> Makefile
 printf "\t@mkdir -p lib">> Makefile; echo "">> Makefile
 if test "$SCTK_FORTRAN" = "1"; then
 printf "\t@echo Build \$@">> Makefile; echo "">> Makefile
-printf "\t@\$(AR) rcu \$@ \$(FOBJ_LIST)">> Makefile; echo "">> Makefile
+printf "\t@\$(AR) rcu \$@ \$(FOBJ_LIST) \$(SCTK_ARFLAGS)">> Makefile; echo "">> Makefile
 fi
 
 #
@@ -340,7 +340,7 @@ printf "\t@cp -r INSTALL/man/* \${DESTDIR}${SCTK_MAN_DIR}">> Makefile; echo "">>
 printf "\t@echo \"Build dynamic libraries\"">> Makefile; echo "">> Makefile
 printf "\t@\$(CC) \$(COBJ_LIST) ${EXTERN_NON_TESTED_LIB} -fPIC -shared -o \${DESTDIR}${SCTK_PREFIX}/lib/libmpc.so $SCTK_LDFLAGS|| echo \"Unable to build C shared library\"">> Makefile; echo "">> Makefile
 if test "$SCTK_FORTRAN" = "1"; then
-printf "\t@\$(F77) \$(FOBJ_LIST) -fPIC -shared -o \${DESTDIR}${SCTK_LIB_DIR}/libmpcf.so $SCTK_LDFLAGS|| echo \"Unable to build Fortran shared library\"">> Makefile; echo "">> Makefile
+printf "\t@\$(F77) \$(FOBJ_LIST) ${EXTERN_NON_TESTED_LIB} -fPIC -shared -o \${DESTDIR}${SCTK_LIB_DIR}/libmpcf.so $SCTK_LDFLAGS|| echo \"Unable to build Fortran shared library\"">> Makefile; echo "">> Makefile
 fi
 printf "\t@cp -r INSTALL/bin/* \${DESTDIR}${SCTK_BIN_DIR}">> Makefile; echo "">> Makefile
 
