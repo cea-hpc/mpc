@@ -46,9 +46,11 @@ sctk_terminaison_barrier (const int id)
   
   sctk_thread_mutex_lock(&lock);
   done ++; 
+  sctk_debug("sctk_terminaison_barrier %d %d",done, local);
   if(done == local){
     done = 0; 
-    if(sctk_process_number != 1){
+    if(sctk_process_number > 1){
+      sctk_debug("sctk_pmi_barrier");
       sctk_pmi_barrier();
     }
     sctk_thread_cond_broadcast(&cond);

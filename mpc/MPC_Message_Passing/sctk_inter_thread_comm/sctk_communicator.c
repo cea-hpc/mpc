@@ -102,7 +102,7 @@ sctk_get_internal_communicator(const sctk_communicator_t communicator){
 static inline int
 sctk_set_internal_communicator_no_lock_no_check(const sctk_communicator_t id,
 			       sctk_internal_communicator_t * tmp){
-  sctk_debug("Insert comm %d",id);
+  sctk_nodebug("Insert comm %d",id);
   if(id >= SCTK_MAX_COMMUNICATOR_TAB){
     sctk_spinlock_write_lock(&sctk_communicator_local_table_lock);
     HASH_ADD(hh,sctk_communicator_table,id,sizeof(sctk_communicator_t),tmp);
@@ -117,7 +117,7 @@ static inline int
 sctk_del_internal_communicator_no_lock_no_check(const sctk_communicator_t id){
   sctk_internal_communicator_t * tmp;
 
-  sctk_debug("Remove %d",id);
+  sctk_nodebug("Remove %d",id);
 
   if(id >= SCTK_MAX_COMMUNICATOR_TAB){
     sctk_spinlock_write_lock(&sctk_communicator_local_table_lock);
@@ -211,12 +211,12 @@ sctk_communicator_get_new_id(int local_root, int rank,
       sctk_set_internal_communicator_no_lock_no_check(i,tmp);
 
       sctk_spinlock_unlock(&sctk_communicator_all_table_lock);
-      sctk_debug("Try %d",comm);
+      sctk_nodebug("Try %d",comm);
     }
 
     /* Broadcast comm */
     sctk_broadcast (&comm,sizeof(sctk_communicator_t),0,origin_communicator);
-    sctk_debug("Every one try %d",comm);
+    sctk_nodebug("Every one try %d",comm);
     
     if((local_root == 1) && (rank != 0)){
       /*Check if available*/
@@ -225,7 +225,7 @@ sctk_communicator_get_new_id(int local_root, int rank,
       sctk_spinlock_lock(&sctk_communicator_all_table_lock);
       tmp_check = sctk_check_internal_communicator_no_lock(comm);
       if(tmp_check != NULL){
-	sctk_debug("Try %d fail",comm);
+	sctk_nodebug("Try %d fail",comm);
 	comm = -1;
       } else {
 	need_clean = 1;
@@ -272,7 +272,7 @@ sctk_set_internal_collectives(const sctk_communicator_t id,
 			      struct sctk_internal_collectives_struct_s * coll){
   sctk_internal_communicator_t * tmp;
 
-  sctk_debug("Communicator %d",id);
+  sctk_nodebug("Communicator %d",id);
   tmp = sctk_get_internal_communicator(id);
 
   tmp->collectives = coll;
@@ -368,8 +368,10 @@ void sctk_communicator_init(const int nb_task){
 
   pos = sctk_process_rank;
   local_tasks = nb_task / sctk_process_number;
-  if (local_tasks % sctk_process_number > pos)
+  sctk_nodebug("1: local_tasks %d",local_tasks);
+  if (nb_task % sctk_process_number > pos)
     local_tasks++;
+  sctk_nodebug("2: local_tasks %d",local_tasks);
 
   first_local = sctk_process_rank * local_tasks;
   last_local = first_local + local_tasks - 1;
@@ -526,7 +528,7 @@ sctk_duplicate_communicator (const sctk_communicator_t origin_communicator,
     if(local_root){
       sctk_get_internal_communicator(comm);
       assume(comm >= 0);
-      sctk_debug("Init collectives for comm %d",comm);
+      sctk_nodebug("Init collectives for comm %d",comm);
       sctk_collectives_init_hook(comm);
     }
 
