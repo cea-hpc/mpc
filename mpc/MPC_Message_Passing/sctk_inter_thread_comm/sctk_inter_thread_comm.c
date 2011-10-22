@@ -30,21 +30,6 @@
 #include <string.h>
 #include <sctk_asm.h>
 
-void sctk_probe_source_any_tag (int destination, int source,
-				const sctk_communicator_t comm,
-				int *status,
-				sctk_thread_message_header_t * msg){not_implemented();}
-void sctk_probe_any_source_any_tag (int destination,
-				    const sctk_communicator_t comm,
-				    int *status,
-				    sctk_thread_message_header_t * msg){not_implemented();}
-void sctk_probe_source_tag (int destination, int source,
-			    const sctk_communicator_t comm, int *status,
-			    sctk_thread_message_header_t * msg){not_implemented();}
-void sctk_probe_any_source_tag (int destination,
-				const sctk_communicator_t comm,
-				int *status,
-				sctk_thread_message_header_t * msg){not_implemented();}
 
   void sctk_cancel_message (sctk_request_t * msg){not_implemented();}
 
@@ -542,7 +527,12 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
 
   msg->body.header.source = source;
   msg->body.header.destination = destination;
-  msg->body.header.glob_source = sctk_get_comm_world_rank (communicator,source);
+
+  if(source != MPC_ANY_SOURCE)
+    msg->body.header.glob_source = sctk_get_comm_world_rank (communicator,source);
+  else 
+    msg->body.header.glob_source = -1;
+
   msg->body.header.glob_destination = sctk_get_comm_world_rank (communicator,destination);
   msg->body.header.communicator = communicator;
   msg->body.header.message_tag = message_tag;
@@ -670,6 +660,27 @@ sctk_msg_list_t* sctk_perform_messages_search_matching(sctk_internal_ptp_t* pair
     } 
   }
   return res;
+}
+static inline 
+int sctk_perform_messages_probe_matching(sctk_internal_ptp_t* pair,
+					  sctk_thread_message_header_t* header){
+  sctk_msg_list_t* res = NULL;
+  sctk_msg_list_t* ptr_send;
+  sctk_msg_list_t* tmp;
+  res = NULL;
+  DL_FOREACH_SAFE(pair->send_message_list,ptr_send,tmp){
+    sctk_thread_message_header_t* header_send; 
+    sctk_assert(ptr_send->msg != NULL);
+    header_send = &(ptr_send->msg->body.header);
+    if((header->communicator == header_send->communicator) && 
+       (header->specific_message_tag == header_send->specific_message_tag) &&
+       ((header->source == header_send->source) || (header->source == MPC_ANY_SOURCE))&& 
+       ((header->message_tag == header_send->message_tag) || (header->message_tag == MPC_ANY_TAG))){
+      memcpy(header,&(ptr_send->msg->body.header),sizeof(sctk_thread_message_header_t));
+      return 1;
+    } 
+  }
+  return 0;
 }
 static inline void sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t* pair){ 
   sctk_msg_list_t* ptr_recv;
@@ -836,7 +847,7 @@ void sctk_recv_message (sctk_thread_ptp_message_t * msg){
   sctk_comm_dest_key_t key;
   sctk_internal_ptp_t* tmp;
   sctk_comm_dest_key_t send_key;
-  sctk_internal_ptp_t* send_tmp;
+  sctk_internal_ptp_t* send_tmp = NULL;
 
 /*   key.comm = msg->header.communicator; */
   key.destination = msg->body.header.glob_destination;
@@ -851,7 +862,8 @@ void sctk_recv_message (sctk_thread_ptp_message_t * msg){
 
   sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
   HASH_FIND(hh,sctk_ptp_table,&key,sizeof(sctk_comm_dest_key_t),tmp);
-  HASH_FIND(hh,sctk_ptp_table,&send_key,sizeof(sctk_comm_dest_key_t),send_tmp);
+  if(send_key.destination != -1)
+    HASH_FIND(hh,sctk_ptp_table,&send_key,sizeof(sctk_comm_dest_key_t),send_tmp);
   sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
 
   if(send_tmp == NULL){
@@ -883,4 +895,59 @@ int sctk_is_net_message (int dest){
   sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
 
   return (tmp == NULL);
+}
+
+
+/********************************************************************/
+/*Probe                                                             */
+/********************************************************************/
+
+static inline 
+void sctk_probe_source_tag_func (int destination, int source,int tag,
+				 const sctk_communicator_t comm, int *status,
+				 sctk_thread_message_header_t * msg){
+  sctk_comm_dest_key_t key;
+  sctk_internal_ptp_t* tmp;
+
+  msg->source = source;
+  msg->destination = destination;
+  msg->message_tag = tag;
+  msg->communicator = comm;
+  msg->specific_message_tag = pt2pt_specific_message_tag;
+
+  key.destination = sctk_get_comm_world_rank (comm,destination);
+
+  sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
+  HASH_FIND(hh,sctk_ptp_table,&key,sizeof(sctk_comm_dest_key_t),tmp);
+  sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
+
+  assume(tmp != NULL);
+  sctk_spinlock_lock(&(tmp->lock));
+  *status = sctk_perform_messages_probe_matching(tmp,msg);
+  sctk_nodebug("Find source %d tag %d found ?%d",msg->source,msg->message_tag,*status);
+  sctk_spinlock_unlock(&(tmp->lock));
+}
+void sctk_probe_source_any_tag (int destination, int source,
+				const sctk_communicator_t comm,
+				int *status,
+				sctk_thread_message_header_t * msg){
+  sctk_probe_source_tag_func(destination,source,MPC_ANY_TAG,comm,status,msg);
+}
+
+void sctk_probe_any_source_any_tag (int destination,
+				    const sctk_communicator_t comm,
+				    int *status,
+				    sctk_thread_message_header_t * msg){
+  sctk_probe_source_tag_func(destination,MPC_ANY_SOURCE,MPC_ANY_TAG,comm,status,msg);
+}
+void sctk_probe_source_tag (int destination, int source,
+			    const sctk_communicator_t comm, int *status,
+			    sctk_thread_message_header_t * msg){
+  sctk_probe_source_tag_func(destination,source,msg->message_tag,comm,status,msg);
+}
+void sctk_probe_any_source_tag (int destination,
+				const sctk_communicator_t comm,
+				int *status,
+				sctk_thread_message_header_t * msg){
+  sctk_probe_source_tag_func(destination,MPC_ANY_SOURCE,msg->message_tag,comm,status,msg);
 }
