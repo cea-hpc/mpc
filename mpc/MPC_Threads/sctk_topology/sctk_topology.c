@@ -281,7 +281,7 @@ sctk_get_cpu ()
   hwloc_cpuset_t set = hwloc_bitmap_alloc();
 
   int ret = hwloc_get_last_cpu_location(topology, set, 0);
-  assert(!ret);
+  assert(ret!=-1);
   assert(!hwloc_bitmap_iszero(set));
 
   hwloc_bitmap_free(set);

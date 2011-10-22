@@ -1468,17 +1468,24 @@ sctk_shm_init_new_com_list ( const sctk_internal_communicator_t * __com,
     com_list->shm_reduce_slot.shm_is_msg_ready[i] = -1;
 
     /* init involved list */
-    com_list->involved_task_list[i] = task_list[i];
+    if(task_list){
+      com_list->involved_task_list[i] = task_list[i];
+    } else {
+      com_list->involved_task_list[i] = i;
+    }
 
     /* compute the global rank of a local task */
-    tmp_task = sctk_translate_to_global_rank_local ( task_list[i],
-        __com->origin_communicator );
+    if(task_list){
+      tmp_task = sctk_translate_to_global_rank_local ( task_list[i],
+						       __com->origin_communicator );
+    } else {
+      tmp_task = sctk_translate_to_global_rank_local ( i,
+						       __com->origin_communicator );
+    }
 
     /*  try to get where the task is located, in which process */
     tmp_task = sctk_get_ptp_process_localisation ( tmp_task );
     com_list->match_task_process[i] = tmp_task;
-
-    sctk_nodebug ( "Task %d found in process %d", task_list[i], tmp_task );
   }
 
   /* Number of processes which take part of the communicator  */

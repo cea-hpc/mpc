@@ -476,6 +476,9 @@ int sctk_pmi_get_node_rank(int* rank) {
  * @param size Pointer to store the number of processes
 */
 int sctk_pmi_get_processes_on_node_number(int* size) {
+#ifdef MPC_USE_SLURM
+    int rc;
+#endif
 
 #ifdef MPC_USE_HYDRA
 	*size  = sctk_pmi_processes_on_node_number;
