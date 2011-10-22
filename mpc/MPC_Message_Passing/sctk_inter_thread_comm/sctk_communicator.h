@@ -53,5 +53,11 @@ sctk_set_internal_collectives(const sctk_communicator_t id,
 			      struct sctk_internal_collectives_struct_s * tmp);
 int sctk_get_process_rank_from_task_rank(int rank);
 int sctk_is_inter_comm (const sctk_communicator_t communicator);
+  sctk_communicator_t sctk_create_communicator (const sctk_communicator_t
+						origin_communicator,
+						const int
+						nb_task_involved,
+						const int *task_list,
+						int is_inter_comm);
 
 #endif

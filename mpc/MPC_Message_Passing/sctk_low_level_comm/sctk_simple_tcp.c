@@ -143,17 +143,9 @@ static void* sctk_simple_tcp_thread(sctk_route_table_t* tmp){
     sctk_thread_ptp_message_t * msg;
     void* body;
     size_t size;
-    size_t done;
-    size_t res;
-    res = read(fd,&size,sizeof(size_t));
-    if(res != sizeof(size_t)){
-      if(res == 0){
-	return NULL;
-      }
-      sctk_nodebug("ERROR %d",res);
-      perror("Read error");
-      sctk_abort();
-    }
+
+    sctk_safe_read(fd,&size,sizeof(size_t));
+
     size = size - sizeof(sctk_thread_ptp_message_body_t) + 
       sizeof(sctk_thread_ptp_message_t);
     msg = sctk_malloc(size);
@@ -161,28 +153,15 @@ static void* sctk_simple_tcp_thread(sctk_route_table_t* tmp){
 
     /* Recv header*/
     sctk_nodebug("Read %d",sizeof(sctk_thread_ptp_message_body_t));
-    res = read(fd,msg,sizeof(sctk_thread_ptp_message_body_t));
-    if(res != sizeof(sctk_thread_ptp_message_body_t)){
-      sctk_nodebug("ERROR %d",res);
-      perror("Read error");
-      sctk_abort();
-    }
+    sctk_safe_read(fd,msg,sizeof(sctk_thread_ptp_message_body_t));
+
     msg->body.completion_flag = NULL;
     msg->tail.message_type = sctk_message_network;
     
     /* Recv body*/
-    done = 0;
     size = size - sizeof(sctk_thread_ptp_message_t);
-    while(done < size){
-      sctk_nodebug("Read %d",size - done);
-      res = read(fd,body + done,size - done);
-      if(res < 0){
-	sctk_nodebug("ERROR %d",res);
-	perror("Read error");
-	sctk_abort();
-      }
-      done += res;
-    }
+    sctk_safe_read(fd,body,size);
+
     sctk_reinit_header(msg,sctk_free,sctk_net_message_copy);
 
     sctk_nodebug("MSG RECV|%s|", (char*)body);    

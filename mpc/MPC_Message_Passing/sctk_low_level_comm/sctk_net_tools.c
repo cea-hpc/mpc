@@ -518,13 +518,26 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp){
   }
 }
 
-void sctk_safe_write(int fd, void* buf,size_t size){
+void sctk_safe_write(int fd, char* buf,size_t size){
   size_t done = 0; 
   int res;
   do{
-    res = write(fd,buf,size - done);
+    res = write(fd,buf + done ,size - done);
     if(res < 0){
       perror("Write error");
+      sctk_abort();
+    }
+    done += res;
+  }while(done < size);
+}
+
+void sctk_safe_read(int fd, char* buf,size_t size){
+  size_t done = 0; 
+  int res;
+  do{
+    res = read(fd,buf + done,size - done);
+    if(res < 0){
+      perror("Read error");
       sctk_abort();
     }
     done += res;
