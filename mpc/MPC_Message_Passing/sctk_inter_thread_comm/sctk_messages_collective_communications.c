@@ -40,7 +40,7 @@ static void sctk_free_messages(void* ptr){
 /************************************************************************/
 static 
 void sctk_barrier_messages(const sctk_communicator_t communicator,
-			 sctk_internal_collectives_struct_t * tmp){
+			   sctk_internal_collectives_struct_t * tmp){
   sctk_thread_ptp_message_t send_msg;
   sctk_request_t send_request;
   sctk_thread_ptp_message_t recv_msg;
@@ -53,6 +53,7 @@ void sctk_barrier_messages(const sctk_communicator_t communicator,
   int src;
   char send_text = '\0';
   char recv_text = '\0';
+  int i;
   
   size = 1;
   
@@ -62,35 +63,36 @@ void sctk_barrier_messages(const sctk_communicator_t communicator,
   if(total > 1){
     dest = (myself + 1) % total;
     src = (myself + total - 1) % total;
+    for(i = 0; i < total; i++){    
+      sctk_init_header(&send_msg,myself,sctk_message_contiguous,sctk_free_messages,
+		       sctk_message_copy);  
+      sctk_init_header(&recv_msg,myself,sctk_message_contiguous,sctk_free_messages,
+		       sctk_message_copy);
     
-    sctk_init_header(&send_msg,myself,sctk_message_contiguous,sctk_free_messages,
-		     sctk_message_copy);  
-    sctk_init_header(&recv_msg,myself,sctk_message_contiguous,sctk_free_messages,
-		     sctk_message_copy);
+      sctk_add_adress_in_message(&send_msg,&send_text,size);
+      sctk_add_adress_in_message(&recv_msg,&recv_text,size);
     
-    sctk_add_adress_in_message(&send_msg,&send_text,size);
-    sctk_add_adress_in_message(&recv_msg,&recv_text,size);
+      assume(recv_text == '\0');
+      assume(send_text == '\0');
     
-    assume(recv_text == '\0');
-    assume(send_text == '\0');
+      sctk_set_header_in_message (&send_msg, 0, communicator, myself, dest,
+				  &send_request, size,barrier_specific_message_tag);
+      sctk_set_header_in_message (&recv_msg, 0, communicator, src, myself,
+				  &recv_request, size,barrier_specific_message_tag);
     
-    sctk_set_header_in_message (&send_msg, 0, communicator, myself, dest,
-				&send_request, size,barrier_specific_message_tag);
-    sctk_set_header_in_message (&recv_msg, 0, communicator, src, myself,
-				&recv_request, size,barrier_specific_message_tag);
+      sctk_nodebug("Send to %d, recv from %d",dest,src);
     
-    sctk_nodebug("Send to %d, recv from %d",dest,src);
-    
-    if(myself != 0){
-      sctk_recv_message (&recv_msg);
-      sctk_wait_message (&recv_request);
-      sctk_send_message (&send_msg);
-      sctk_wait_message (&send_request);
-    } else {
-      sctk_send_message (&send_msg);
-      sctk_wait_message (&send_request);
-      sctk_recv_message (&recv_msg);
-      sctk_wait_message (&recv_request);
+      if(myself != i){
+	sctk_recv_message (&recv_msg);
+	sctk_wait_message (&recv_request);
+	sctk_send_message (&send_msg);
+	sctk_wait_message (&send_request);
+      } else {
+	sctk_send_message (&send_msg);
+	sctk_wait_message (&send_request);
+	sctk_recv_message (&recv_msg);
+	sctk_wait_message (&recv_request);
+      }
     }
   }
 }
