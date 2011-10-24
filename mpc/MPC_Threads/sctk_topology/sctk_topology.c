@@ -128,61 +128,6 @@ sctk_restrict_topology ()
     int detected = 0;
 
     /* Determine number of processes on this node */
-#if 0
-    static char name[4096];
-    static char pattern_name[4096];
-    static char this_name[4096];
-    FILE *file;
-
-    sprintf (name, "%s/use_%s_%d", sctk_store_dir, sctk_node_name,
-        getpid ());
-    sprintf (this_name, "use_%s_%d", sctk_node_name, getpid ());
-    sprintf (pattern_name, "use_%s_", sctk_node_name);
-    sctk_nodebug ("file %s", name);
-    file = fopen (name, "w");
-    assume (file != NULL);
-    fprintf (file, "use\n");
-    fclose (file);
-
-    do
-    {
-      DIR *d;
-      struct dirent *direntry;
-
-      detected = 0;
-      detected_on_this_host = 0;
-
-      d = opendir (sctk_store_dir);
-      do
-      {
-        direntry = readdir (d);
-        if (direntry)
-        {
-          if (memcmp (direntry->d_name, "use_", 4) == 0)
-          {
-            detected++;
-            sctk_nodebug ("Compare %s and %s", direntry->d_name,
-                pattern_name);
-            if (memcmp
-                (direntry->d_name, pattern_name,
-                 strlen (pattern_name)) == 0)
-            {
-              detected_on_this_host++;
-              if (memcmp
-                  (direntry->d_name, this_name,
-                   strlen (this_name)) == 0)
-              {
-                rank = detected_on_this_host - 1;
-              }
-            }
-          }
-        }
-      }
-      while (direntry != NULL);
-      closedir (d);
-      usleep (50);
-    }
-#endif
     sctk_pmi_get_processes_on_node_number(&detected_on_this_host);
     sctk_pmi_get_process_on_node_rank(&rank);
     detected = sctk_process_number;
@@ -196,8 +141,13 @@ sctk_restrict_topology ()
     {
       /* Determine processor number per process */
       int processor_number = sctk_processor_number_on_node / detected_on_this_host;
-      int start = processor_number * rank;
       int remaining_procs = sctk_processor_number_on_node % detected_on_this_host;
+      int start = processor_number * rank;
+      if(processor_number < 1){
+	processor_number = 1;
+	remaining_procs = 0;
+	start = (processor_number * rank) % sctk_processor_number_on_node;
+      }
 
       if ( remaining_procs > 0 )
       {
