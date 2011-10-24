@@ -441,10 +441,8 @@ sctk_makecontext_extls (sctk_mctx_t * ucp,
   sctk_mctx_t lucp;
   sctk_context_save_tls (&lucp);
 
-  sctk_context_init_extls (ucp);
-#if defined(SCTK_USE_TLS)
-  ucp->sctk_extls = extls;
-#endif
+  sctk_context_init_tls_with_specified_extls (ucp, extls);
+  // ucp->sctk_extls = extls;
   sctk_context_restore_tls (ucp);
 
 #ifdef SCTK_USE_VALGRIND

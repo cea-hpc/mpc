@@ -27,6 +27,7 @@
 #include "sctk_config.h"
 #include "sctk_context.h"
 #include "sctk_spinlock.h"
+#include "sctk_alloc.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -85,6 +86,8 @@ extern "C"
   extern __thread void *tls_trace_module;
   extern __thread void *tls_args;
 
+  extern __thread void *sctk_hls_generation;
+
 #endif
 
 #ifdef MPC_Message_Passing
@@ -106,6 +109,7 @@ extern "C"
 #endif
     tls_save (mpc_user_tls_1);
     tls_save (sctk_extls);
+	tls_save (sctk_hls_generation);
 #ifdef MPC_Message_Passing
     tls_save (sctk_message_passing);
 #endif
@@ -126,6 +130,7 @@ extern "C"
 #endif
     tls_restore (mpc_user_tls_1);
     tls_restore (sctk_extls);
+    tls_restore (sctk_hls_generation);
 #ifdef MPC_Message_Passing
     tls_restore (sctk_message_passing);
 #endif
@@ -135,7 +140,7 @@ extern "C"
 #endif
   }
 
-  static inline void sctk_context_init_extls (sctk_mctx_t *ucp)
+  static inline void sctk_context_init_tls_without_extls (sctk_mctx_t *ucp)
   {
 #if defined(SCTK_USE_TLS)
 #if defined (MPC_Allocator)
@@ -152,15 +157,24 @@ extern "C"
     //profiling TLS
     tls_init (tls_args);
     tls_init (tls_trace_module);
+	ucp->sctk_hls_generation = sctk_calloc(2*sctk_hls_max_scope,sizeof(int));
 #endif
   }
 
   static inline void sctk_context_init_tls (sctk_mctx_t * ucp)
   {
 #if defined(SCTK_USE_TLS)
-    sctk_context_init_extls (ucp);
+    sctk_context_init_tls_without_extls (ucp);
     tls_init (sctk_extls);
     sctk_extls_duplicate (&(ucp->sctk_extls));
+#endif
+  }
+
+  static inline void sctk_context_init_tls_with_specified_extls (sctk_mctx_t * ucp, void * extls)
+  {
+#if defined(SCTK_USE_TLS)
+    sctk_context_init_tls_without_extls (ucp);
+	ucp->sctk_extls = extls ;
 #endif
   }
 

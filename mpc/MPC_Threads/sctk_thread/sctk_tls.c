@@ -115,9 +115,10 @@ typedef struct
   int nowait ; /* number of single nowait encountered on this thread */
 } hls_generation_t ;
 
-static __thread hls_level* sctk_hls[sctk_hls_max_scope] ;
-static __thread hls_generation_t sctk_hls_generation[sctk_hls_max_scope] ;
-static hls_level **sctk_hls_repository ;
+static hls_level **sctk_hls_repository ; /* global per process */
+static __thread hls_level* sctk_hls[sctk_hls_max_scope] ; /* per VP */
+__thread void* sctk_hls_generation ; /* per thread */
+/* need to be saved and restored at context switch */
 
 static inline void
 sctk_tls_init_level (tls_level * level)
@@ -551,11 +552,6 @@ void sctk_hls_checkout_on_vp ()
 		  if ( sctk_hls[i] != NULL )
 			  sctk_atomics_incr_int ( &sctk_hls[i]->toenter ) ;
   }
-  
-  for ( i = 0 ; i < sctk_hls_max_scope ; ++i ) {
-	  sctk_hls_generation[i].wait = 0 ;
-	  sctk_hls_generation[i].nowait = 0 ;
-  }
 }
 
 /*
@@ -825,7 +821,8 @@ __sctk__hls_single ( sctk_hls_scope_t scope ) {
 	sctk_nodebug ("call to hls single with scope %d", scope) ;
 
 	hls_level * const level = sctk_hls[scope];
-	const int mygeneration = ++sctk_hls_generation[scope].wait ;
+	hls_generation_t * const hls_generation = (hls_generation_t*) sctk_hls_generation ;
+	const int mygeneration = ++hls_generation[scope].wait ;
 	
 	if ( scope == sctk_hls_node_scope || scope == sctk_hls_numa_level_2_scope ) {
 		if ( __sctk__hls_single ( sctk_hls_numa_level_1_scope ) ) {
@@ -856,11 +853,12 @@ __sctk__hls_single_done ( sctk_hls_scope_t scope ) {
 
 	sctk_nodebug ("call to hls single done with scope %d", scope) ;
 	
+	hls_generation_t * const hls_generation = (hls_generation_t*) sctk_hls_generation ;
 	hls_level * const level = sctk_hls[scope];
 	
 	sctk_atomics_store_int ( &level->entered, 0 ) ;
 	sctk_atomics_read_barrier() ;
-	level->generation = sctk_hls_generation[scope].wait ;
+	level->generation = hls_generation[scope].wait ;
 
 	if ( scope == sctk_hls_node_scope || scope == sctk_hls_numa_level_2_scope )
 		__sctk__hls_single_done ( sctk_hls_numa_level_1_scope ) ;
@@ -873,8 +871,9 @@ __sctk__hls_barrier ( sctk_hls_scope_t scope ) {
 	
 	sctk_nodebug ("call to hls barrier with scope %d", scope ) ;
 	
+	hls_generation_t * const hls_generation = (hls_generation_t*) sctk_hls_generation ;
 	hls_level * const level = sctk_hls[scope];
-	const int mygeneration = ++sctk_hls_generation[scope].wait ;
+	const int mygeneration = ++hls_generation[scope].wait ;
 	if ( scope == sctk_hls_node_scope || scope == sctk_hls_numa_level_2_scope ) {
 		if ( __sctk__hls_single ( sctk_hls_numa_level_1_scope ) ) {
 			const int entered = sctk_atomics_fetch_and_incr_int ( &level->entered ) ;
@@ -906,9 +905,10 @@ __sctk__hls_single_nowait ( sctk_hls_scope_t scope ) {
 	sctk_nodebug ("call to hls single nowait with scope %d", scope) ;
 
 	int execute = 0 ;
+	hls_generation_t * const hls_generation = (hls_generation_t*) sctk_hls_generation ;
 	hls_level * const level = sctk_hls[scope];
 	const int generation = sctk_atomics_load_int ( &level->nowait_generation ) ;
-	int * const mygeneration = &sctk_hls_generation[scope].nowait ;
+	int * const mygeneration = &hls_generation[scope].nowait ;
 
 	if ( *mygeneration == generation )
 		execute = sctk_atomics_cas_int ( &level->nowait_generation, generation, generation+1 ) ; 
