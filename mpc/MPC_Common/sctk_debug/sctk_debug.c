@@ -212,9 +212,13 @@ sctk_debug_print_backtrace (const char *format, ...)
 void
 sctk_abort (void)
 {
+  static volatile int done = 0; 
   sctk_debug_print_backtrace ("Abort\n");
 #ifdef MPC_Message_Passing
-  sctk_net_abort ();
+  if(done == 0){
+    done = 1;
+    sctk_net_abort ();
+  }
 #endif
   fflush (stderr);
   abort ();
