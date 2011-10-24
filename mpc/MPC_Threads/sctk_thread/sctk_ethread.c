@@ -223,7 +223,7 @@ sctk_ethread_get_activity (int i)
 
 /*Thread polling*/
 static void
-sctk_ethread_wait_for_value_and_poll (int *data, int value,
+sctk_ethread_wait_for_value_and_poll (volatile int *data, int value,
 				      void (*func) (void *), void *arg)
 {
   sctk_ethread_per_thread_t *current;

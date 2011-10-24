@@ -844,7 +844,7 @@ extern "C"
 	status = (sctk_ethread_status_t *) & (th->status);
 	sctk_nodebug ("TO Join Thread %p", th);
 	__sctk_ethread_wait_for_value_and_poll (vp, cur,
-						(int *) status,
+						(volatile int *) status,
 						ethread_zombie, NULL, NULL);
 	sctk_nodebug ("Joined Thread %p", th);
 	if (val != NULL)

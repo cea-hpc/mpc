@@ -40,7 +40,7 @@
 #define SCTK_LOCAL_VERSION_MINOR 1
 
 static void
-pthread_wait_for_value_and_poll (int *data, int value,
+pthread_wait_for_value_and_poll (volatile int *data, int value,
 				 void (*func) (void *), void *arg)
 {
   volatile int *volatile d;

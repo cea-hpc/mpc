@@ -1164,13 +1164,13 @@ sctk_gen_thread_restore (sctk_thread_t thread, char *type, int vp)
 }
 
 static void
-sctk_gen_thread_wait_for_value (int *data, int value)
+sctk_gen_thread_wait_for_value (volatile int *data, int value)
 {
   sctk_thread_wait_for_value_and_poll (data, value, NULL, NULL);
 }
 
 static void
-sctk_gen_thread_wait_for_value_and_poll (int *data, int value,
+sctk_gen_thread_wait_for_value_and_poll (volatile int *data, int value,
 					 void (*func) (void *), void *arg)
 {
   not_initialized ();
@@ -1607,9 +1607,9 @@ int (*__sctk_ptr_thread_restore) (sctk_thread_t thread, char *type,
 				  int vp) = sctk_gen_thread_restore;
 int (*__sctk_ptr_thread_dump_clean) (void) = sctk_gen_thread_dump_clean;
 
-void (*__sctk_ptr_thread_wait_for_value) (int *data, int value) =
+void (*__sctk_ptr_thread_wait_for_value) (volatile int *data, int value) =
   sctk_gen_thread_wait_for_value;
-void (*__sctk_ptr_thread_wait_for_value_and_poll) (int *data, int value,
+void (*__sctk_ptr_thread_wait_for_value_and_poll) (volatile int *data, int value,
 						   void (*func) (void *),
 						   void *arg) =
   sctk_gen_thread_wait_for_value_and_poll;

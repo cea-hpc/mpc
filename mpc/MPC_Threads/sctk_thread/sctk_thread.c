@@ -1724,14 +1724,14 @@ sctk_thread_dump_clean (void)
 }
 
 void
-sctk_thread_wait_for_value_and_poll (int *data, int value,
+sctk_thread_wait_for_value_and_poll (volatile int *data, int value,
 				     void (*func) (void *), void *arg)
 {
   __sctk_ptr_thread_wait_for_value_and_poll (data, value, func, arg);
 }
 
 void
-sctk_thread_wait_for_value (int *data, int value)
+sctk_thread_wait_for_value (volatile int *data, int value)
 {
   __sctk_ptr_thread_wait_for_value_and_poll (data, value, NULL, NULL);
 }
@@ -2310,18 +2310,18 @@ sctk_start_func (void *(*run) (void *), void *arg)
 #ifdef MPC_Message_Passing
   if ((sctk_net_adm_poll != NULL) || (sctk_net_ptp_poll != NULL))
     {
-      sctk_thread_wait_for_value_and_poll ((int *)
+      sctk_thread_wait_for_value_and_poll (
 					   &sctk_total_number_of_tasks, 0,
 					   sctk_net_poll, NULL);
     }
   else
     {
-      sctk_thread_wait_for_value_and_poll ((int *)
+      sctk_thread_wait_for_value_and_poll (
 					   &sctk_total_number_of_tasks, 0,
 					   NULL, NULL);
     }
 #else
-  sctk_thread_wait_for_value_and_poll ((int *)
+  sctk_thread_wait_for_value_and_poll (
 				       &sctk_total_number_of_tasks, 0,
 				       NULL, NULL);
 #endif
@@ -2351,7 +2351,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 }
 
 void
-sctk_kthread_wait_for_value_and_poll (int *data, int value,
+sctk_kthread_wait_for_value_and_poll (volatile int *data, int value,
 				      void (*func) (void *), void *arg)
 {
   volatile int *volatile d;

@@ -241,7 +241,7 @@ sctk_ethread_mxn_sched_dump_clean ()
 
 /*Thread polling*/
 static void
-sctk_ethread_mxn_wait_for_value_and_poll (int *data, int value,
+sctk_ethread_mxn_wait_for_value_and_poll (volatile int *data, int value,
 					  void (*func) (void *), void *arg)
 {
   sctk_ethread_per_thread_t *current;
