@@ -49,6 +49,7 @@
 
 static int sctk_processor_number_on_node = 0;
 static char sctk_node_name[SCTK_MAX_NODE_NAME];
+static sctk_spinlock_t topology_lock = SCTK_SPINLOCK_INITIALIZER;
 
 static hwloc_topology_t topology;
 const struct hwloc_topology_support *support;
@@ -275,8 +276,9 @@ uname (struct utsname *buf)
 
 /*! \brief Return the current core_id
 */
-  int
-sctk_get_cpu ()
+__thread int sctk_get_cpu_val = -1;
+static inline  int
+sctk_get_cpu_intern ()
 {
   hwloc_cpuset_t set = hwloc_bitmap_alloc();
 
@@ -286,6 +288,17 @@ sctk_get_cpu ()
 
   hwloc_bitmap_free(set);
   return ret;
+}
+
+  int
+sctk_get_cpu ()
+{
+  if(sctk_get_cpu_val >= 0){
+    sctk_spinlock_lock(&topology_lock);
+    sctk_get_cpu_val = sctk_get_cpu_intern();
+    sctk_spinlock_unlock(&topology_lock);
+  }
+  return sctk_get_cpu_val;
 }
 
 /*! \brief Initialize the topology module
@@ -397,7 +410,10 @@ sctk_bind_to_cpu (int i)
   int supported = support->cpubind->set_thisthread_cpubind;
   const char *errmsg = strerror(errno);
 
-  int ret = sctk_get_cpu();
+  sctk_spinlock_lock(&topology_lock);
+
+  int ret = sctk_get_cpu_intern();
+  sctk_get_cpu_val = ret;
 
   if (i >= 0)
   {
@@ -405,10 +421,11 @@ sctk_bind_to_cpu (int i)
     int err = hwloc_set_cpubind(topology, pu->cpuset, HWLOC_CPUBIND_THREAD);
     if (err)
     {
-      printf("%-40s: %sFAILED (%d, %s)\n", msg, supported?"":"X", errno, errmsg);
+      fprintf(stderr,"%-40s: %sFAILED (%d, %s)\n", msg, supported?"":"X", errno, errmsg);
     }
+    sctk_get_cpu_val = i;
   }
-
+  sctk_spinlock_unlock(&topology_lock);
   return ret;
 }
 
