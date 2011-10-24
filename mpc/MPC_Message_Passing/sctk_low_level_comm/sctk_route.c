@@ -38,6 +38,7 @@ void sctk_add_route(int dest, sctk_route_table_t* tmp){
   
 }
 
+#warning "Gestion du multirail"
 sctk_route_table_t* sctk_get_route_to_process(int dest){
   sctk_route_key_t key;
   sctk_route_table_t* tmp;
