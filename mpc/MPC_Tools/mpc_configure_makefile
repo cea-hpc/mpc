@@ -385,9 +385,9 @@ printf "\t@echo \"${MPC_MODE_EXEC}_$NAME='SUCCESS'\" >> ${TEST_RES}">> Makefile;
 printf "\t@echo \"BENCH_LIST=\\\\\"\\\$\$BENCH_LIST ${MPC_MODE_EXEC}_$NAME\\\\\"\" >> ${TEST_RES}">> Makefile; echo "">> Makefile
 printf "\t@INSTALL/bin/mpc_cc -O0 -g $j -o ./TEST/${MPC_MODE_EXEC}/$NAME -lm">> Makefile; echo "">> Makefile
 printf "\t@echo ./TEST/${MPC_MODE_EXEC}/$NAME">> Makefile; echo "">> Makefile
-printf "\tINSTALL/bin/mpcrun  -n=$1 -m=ethread ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
-printf "\tINSTALL/bin/mpcrun  -n=$1 -m=pthread ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
-printf "\tINSTALL/bin/mpcrun  -n=$1 -m=ethread_mxn ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun -n=$1 -m=ethread ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun -n=$1 -m=pthread ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun -n=$1 -m=ethread_mxn ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
 if test "$MPC_MODE_EXEC" = "parallel" ; then
 printf "\tINSTALL/bin/mpcrun --share-node -n=$1 -m=ethread -p=2 -net=tcp ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
 printf "\tINSTALL/bin/mpcrun --share-node -n=$1 -m=pthread -p=2 -net=tcp ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
@@ -415,7 +415,7 @@ printf "\t@INSTALL/bin/mpc_f77 -O0  -g $j -o ./TEST/${MPC_MODE_EXEC}/$NAME -lm">
 printf "\t@echo ./TEST/${MPC_MODE_EXEC}/$NAME">> Makefile; echo "">> Makefile
 printf "\tINSTALL/bin/mpcrun -n=$1 -m=ethread ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
 printf "\tINSTALL/bin/mpcrun -n=$1 -m=pthread ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
-printf "\tINSTALL/bin/mpcrun -n=$1 -m=ethread_mxn ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
+printf "\tINSTALL/bin/mpcrun  -n=$1 -m=ethread_mxn ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
 if test "$MPC_MODE_EXEC" = "parallel" ; then
 printf "\tINSTALL/bin/mpcrun --share-node -n=$1 -m=ethread -p=2 -net=tcp ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile
 printf "\tINSTALL/bin/mpcrun --share-node -n=$1 -m=pthread -p=2 -net=tcp ./TEST/${MPC_MODE_EXEC}/$NAME > results 2> results_err ">> Makefile; no_fail_res; echo "">> Makefile

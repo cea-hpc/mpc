@@ -49,6 +49,7 @@
 
 static int sctk_processor_number_on_node = 0;
 static char sctk_node_name[SCTK_MAX_NODE_NAME];
+static sctk_spinlock_t topology_lock = SCTK_SPINLOCK_INITIALIZER;
 
 static hwloc_topology_t topology;
 const struct hwloc_topology_support *support;
@@ -127,61 +128,6 @@ sctk_restrict_topology ()
     int detected = 0;
 
     /* Determine number of processes on this node */
-#if 0
-    static char name[4096];
-    static char pattern_name[4096];
-    static char this_name[4096];
-    FILE *file;
-
-    sprintf (name, "%s/use_%s_%d", sctk_store_dir, sctk_node_name,
-        getpid ());
-    sprintf (this_name, "use_%s_%d", sctk_node_name, getpid ());
-    sprintf (pattern_name, "use_%s_", sctk_node_name);
-    sctk_nodebug ("file %s", name);
-    file = fopen (name, "w");
-    assume (file != NULL);
-    fprintf (file, "use\n");
-    fclose (file);
-
-    do
-    {
-      DIR *d;
-      struct dirent *direntry;
-
-      detected = 0;
-      detected_on_this_host = 0;
-
-      d = opendir (sctk_store_dir);
-      do
-      {
-        direntry = readdir (d);
-        if (direntry)
-        {
-          if (memcmp (direntry->d_name, "use_", 4) == 0)
-          {
-            detected++;
-            sctk_nodebug ("Compare %s and %s", direntry->d_name,
-                pattern_name);
-            if (memcmp
-                (direntry->d_name, pattern_name,
-                 strlen (pattern_name)) == 0)
-            {
-              detected_on_this_host++;
-              if (memcmp
-                  (direntry->d_name, this_name,
-                   strlen (this_name)) == 0)
-              {
-                rank = detected_on_this_host - 1;
-              }
-            }
-          }
-        }
-      }
-      while (direntry != NULL);
-      closedir (d);
-      usleep (50);
-    }
-#endif
     sctk_pmi_get_processes_on_node_number(&detected_on_this_host);
     sctk_pmi_get_process_on_node_rank(&rank);
     detected = sctk_process_number;
@@ -195,8 +141,13 @@ sctk_restrict_topology ()
     {
       /* Determine processor number per process */
       int processor_number = sctk_processor_number_on_node / detected_on_this_host;
-      int start = processor_number * rank;
       int remaining_procs = sctk_processor_number_on_node % detected_on_this_host;
+      int start = processor_number * rank;
+      if(processor_number < 1){
+	processor_number = 1;
+	remaining_procs = 0;
+	start = (processor_number * rank) % sctk_processor_number_on_node;
+      }
 
       if ( remaining_procs > 0 )
       {
@@ -275,8 +226,9 @@ uname (struct utsname *buf)
 
 /*! \brief Return the current core_id
 */
-  int
-sctk_get_cpu ()
+__thread int sctk_get_cpu_val = -1;
+static inline  int
+sctk_get_cpu_intern ()
 {
   hwloc_cpuset_t set = hwloc_bitmap_alloc();
 
@@ -286,6 +238,17 @@ sctk_get_cpu ()
 
   hwloc_bitmap_free(set);
   return ret;
+}
+
+  int
+sctk_get_cpu ()
+{
+  if(sctk_get_cpu_val >= 0){
+    sctk_spinlock_lock(&topology_lock);
+    sctk_get_cpu_val = sctk_get_cpu_intern();
+    sctk_spinlock_unlock(&topology_lock);
+  }
+  return sctk_get_cpu_val;
 }
 
 /*! \brief Initialize the topology module
@@ -397,7 +360,10 @@ sctk_bind_to_cpu (int i)
   int supported = support->cpubind->set_thisthread_cpubind;
   const char *errmsg = strerror(errno);
 
-  int ret = sctk_get_cpu();
+  sctk_spinlock_lock(&topology_lock);
+
+  int ret = sctk_get_cpu_intern();
+  sctk_get_cpu_val = ret;
 
   if (i >= 0)
   {
@@ -405,10 +371,11 @@ sctk_bind_to_cpu (int i)
     int err = hwloc_set_cpubind(topology, pu->cpuset, HWLOC_CPUBIND_THREAD);
     if (err)
     {
-      printf("%-40s: %sFAILED (%d, %s)\n", msg, supported?"":"X", errno, errmsg);
+      fprintf(stderr,"%-40s: %sFAILED (%d, %s)\n", msg, supported?"":"X", errno, errmsg);
     }
+    sctk_get_cpu_val = i;
   }
-
+  sctk_spinlock_unlock(&topology_lock);
   return ret;
 }
 
