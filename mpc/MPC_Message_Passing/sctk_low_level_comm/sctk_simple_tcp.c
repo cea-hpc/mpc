@@ -67,18 +67,16 @@ void sctk_network_init_simple_tcp(char* name){
 
   sctk_route_set_rail_nb(1);
 
+  rail_0 = sctk_route_get_rail(0);
+  rail_0->rail_number = 0;
+  sctk_network_init_tcp(rail_0);
+  sprintf(net_name,"[0:%s]",rail_0->network_name);
+
   sctk_network_send_message_set(sctk_network_send_message_simple_tcp);
   sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_simple_tcp);
   sctk_network_notify_matching_message_set(sctk_network_notify_matching_message_simple_tcp);
   sctk_network_notify_perform_message_set(sctk_network_notify_perform_message_simple_tcp);
   sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_simple_tcp);
   sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_simple_tcp);
-
-  rail_0 = sctk_route_get_rail(0);
-  rail_0->rail_number = 0;
-  sctk_network_init_tcp(rail_0);
-
-  sprintf(net_name,"[0:%s]",rail_0->network_name);
-
   sctk_network_mode = net_name;
 }
