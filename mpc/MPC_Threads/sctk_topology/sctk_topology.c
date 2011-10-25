@@ -91,10 +91,10 @@ sctk_restrict_topology ()
 {
   int rank ;
 
-  /* Disable SMT capabilities */
+  /* Enable SMT capabilities */
   if (sctk_enable_smt_capabilities)
   {
-    sctk_warning ("SMT capailities ENABLED");
+    sctk_warning ("SMT capabilities ENABLED");
   }
   else
   {
@@ -127,11 +127,15 @@ sctk_restrict_topology ()
     int detected_on_this_host = 0;
     int detected = 0;
 
+#ifdef MPC_Message_Passing
     /* Determine number of processes on this node */
     sctk_pmi_get_processes_on_node_number(&detected_on_this_host);
     sctk_pmi_get_process_on_node_rank(&rank);
     detected = sctk_process_number;
     sctk_nodebug("Nb process on node %d",detected_on_this_host);
+#else
+    detected = 1;
+#endif
 
     while (detected != sctk_get_process_nb ());
     sctk_nodebug ("%d/%d host detected %d share %s", detected,
@@ -256,9 +260,13 @@ sctk_get_cpu ()
   void
 sctk_topology_init ()
 {
+
+#ifdef MPC_Message_Passing
   if(sctk_process_number > 1){
     sctk_pmi_init();
   }
+#endif
+
   hwloc_topology_init(&topology);
   hwloc_topology_load(topology);
 
