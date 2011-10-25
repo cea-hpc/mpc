@@ -44,7 +44,7 @@ extern int sctk_thread_yield( void );
     sctk_spinlock_t writer_lock;
     OPA_int_t reader_number;
   }sctk_spin_rwlock_t;
-#define SCTK_SPIN_RWLOCK_INITIALIZER {SCTK_SPINLOCK_INITIALIZER,0}
+#define SCTK_SPIN_RWLOCK_INITIALIZER {SCTK_SPINLOCK_INITIALIZER,(0)}
 
   int sctk_spinlock_read_lock (sctk_spin_rwlock_t * lock);
   int sctk_spinlock_write_lock (sctk_spin_rwlock_t * lock);

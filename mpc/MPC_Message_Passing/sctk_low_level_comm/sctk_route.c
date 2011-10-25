@@ -26,14 +26,14 @@
 #include <sctk_communicator.h>
 #include <sctk_spinlock.h>
 
-#warning "Use a cache to avoid rw locks"
 static sctk_route_table_t* sctk_dynamic_route_table = NULL;
 static sctk_route_table_t* sctk_static_route_table = NULL;
 static sctk_spin_rwlock_t sctk_route_table_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
+static sctk_rail_info_t* rails = NULL;
 
-void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, int rail){
+void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
   tmp->key.destination = dest;
-  tmp->key.rail = rail;
+  tmp->key.rail = rail->rail_number;
 
   sctk_spinlock_write_lock(&sctk_route_table_lock);
   HASH_ADD(hh,sctk_dynamic_route_table,key,sizeof(sctk_route_key_t),tmp);
@@ -41,19 +41,19 @@ void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, int rail){
   
 }
 
-void sctk_add_static_route(int dest, sctk_route_table_t* tmp, int rail){
+void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
   tmp->key.destination = dest;
-  tmp->key.rail = rail;
+  tmp->key.rail = rail->rail_number;
 
   HASH_ADD(hh,sctk_static_route_table,key,sizeof(sctk_route_key_t),tmp);  
 }
 
-sctk_route_table_t* sctk_get_route_to_process(int dest, int rail){
+sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail){
   sctk_route_key_t key;
   sctk_route_table_t* tmp;
 
   key.destination = dest; 
-  key.rail = rail;  
+  key.rail = rail->rail_number;
 
   
   HASH_FIND(hh,sctk_static_route_table,&key,sizeof(sctk_route_key_t),tmp);
@@ -76,7 +76,7 @@ sctk_route_table_t* sctk_get_route_to_process(int dest, int rail){
   return tmp;
 }
 
-sctk_route_table_t* sctk_get_route(int dest, int rail){
+sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail){
   sctk_route_table_t* tmp;
   int process;
 
@@ -85,4 +85,12 @@ sctk_route_table_t* sctk_get_route(int dest, int rail){
   tmp = sctk_get_route_to_process(process,rail);
 
   return tmp;
+}
+
+void sctk_route_set_rail_nb(int i){
+  rails = sctk_malloc(i*sizeof(sctk_rail_info_t));
+}
+
+sctk_rail_info_t* sctk_route_get_rail(int i){
+  return &(rails[i]);
 }

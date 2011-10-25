@@ -22,8 +22,12 @@
 #ifndef __SCTK_ROUTE_H_
 #define __SCTK_ROUTE_H_
 
-#include <sctk_simple_tcp.h>
+#include <sctk_inter_thread_comm.h>
 #include <uthash.h>
+
+typedef struct sctk_rail_info_s sctk_rail_info_t;
+
+#include <sctk_tcp.h>
 
 typedef struct{
   int destination;
@@ -32,31 +36,42 @@ typedef struct{
 
 
 typedef union{
-  sctk_simple_tcp_data_t simple_tcp;
+  sctk_tcp_data_t tcp;
 }sctk_route_data_t;
+
+typedef union{
+  sctk_tcp_rail_info_t tcp;
+}sctk_rail_info_spec_t;
+
+struct sctk_rail_info_s{
+  sctk_rail_info_spec_t network;
+  void (*send_message) (sctk_thread_ptp_message_t *,struct sctk_rail_info_s*);
+  void (*notify_recv_message) (sctk_thread_ptp_message_t * ,struct sctk_rail_info_s*);
+  void (*notify_matching_message) (sctk_thread_ptp_message_t * ,struct sctk_rail_info_s*);
+  void (*notify_perform_message) (int ,struct sctk_rail_info_s*);
+  void (*notify_idle_message) (struct sctk_rail_info_s*);
+  void (*notify_any_source_message) (struct sctk_rail_info_s*);
+  char* network_name;
+  int rail_number;
+};
 
 typedef struct sctk_route_table_s{
   sctk_route_key_t key;
 
   sctk_route_data_t data;  
 
-  /*
-    This function can be used to store different send functions according to 
-    the destination route (useful for multiple network configuration)
-   */
-  void (*send_func) (sctk_thread_ptp_message_t * ,struct sctk_route_table_s*);
-
   UT_hash_handle hh;
 } sctk_route_table_t;
 
 /*NOT THREAD SAFE use to add a route at initialisation time*/
-void sctk_add_static_route(int dest, sctk_route_table_t* tmp, int rail,
-			   void (*send_func) (sctk_thread_ptp_message_t * ));
+void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail);
 
 /*THREAD SAFE use to add a route at compute time*/
-void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, int rail,
-			    void (*send_func) (sctk_thread_ptp_message_t * ));
+void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail);
 
-sctk_route_table_t* sctk_get_route(int dest, int rail);
-sctk_route_table_t* sctk_get_route_to_process(int dest, int rail);
+sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail);
+sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail);
+
+void sctk_route_set_rail_nb(int i);
+sctk_rail_info_t* sctk_route_get_rail(int i);
 #endif
