@@ -27,6 +27,7 @@
 
  /*Networks*/
 #include <sctk_simple_tcp.h>
+#include <sctk_multirail_tcp.h>
 
 int sctk_is_net_migration_available(){
   if(sctk_migration_mode == 1){
@@ -112,8 +113,9 @@ void sctk_network_notify_any_source_message_set(void (*sctk_network_notify_any_s
   sctk_network_notify_any_source_message_ptr = sctk_network_notify_any_source_message_val;
 }
 
-#define TRY_DRIVER(dr_name,func) if(strcmp(name,SCTK_STRING(dr_name)) == 0){func(name);} else { (void)(0)
-#define DEFAUT_DRIVER() sctk_network_not_implemented(name);}(void)(0)
+#define FIRST_TRY_DRIVER(dr_name,func) if(strcmp(name,SCTK_STRING(dr_name)) == 0){func(name)
+#define TRY_DRIVER(dr_name,func) } else if(strcmp(name,SCTK_STRING(dr_name)) == 0){func(name)
+#define DEFAUT_DRIVER() } else {sctk_network_not_implemented(name);}(void)(0)
 
 static void sctk_network_not_implemented(char* name){
   sctk_error("Network %s not available",name);
@@ -129,7 +131,9 @@ sctk_net_init_driver (char *name)
 
     sctk_nodebug("Use network %s",name);
 
-    TRY_DRIVER(tcp,sctk_network_init_simple_tcp);
+    FIRST_TRY_DRIVER(tcp,sctk_network_init_simple_tcp);
+    TRY_DRIVER(simple_tcp,sctk_network_init_simple_tcp);
+    TRY_DRIVER(multirail_tcp,sctk_network_init_multirail_tcp);
     DEFAUT_DRIVER();
   }
 }

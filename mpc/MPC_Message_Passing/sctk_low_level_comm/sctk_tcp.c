@@ -193,6 +193,8 @@ sctk_network_send_message_tcp (sctk_thread_ptp_message_t * msg,sctk_rail_info_t*
   size_t size;
   int fd;
 
+  sctk_debug("send message through rail %d",rail->rail_number);
+
   tmp = sctk_get_route(msg->body.header.glob_destination,rail);
 
   sctk_spinlock_lock(&(tmp->data.tcp.lock));
@@ -232,7 +234,7 @@ sctk_network_notify_any_source_message_tcp (sctk_rail_info_t* rail){
 }
 
 /************ INIT ****************/
-void sctk_network_init_tcp(sctk_rail_info_t* rail){
+void sctk_network_init_tcp(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib){
   char connection_infos[MAX_STRING_SIZE];
   char dest_connection_infos[MAX_STRING_SIZE];
   size_t connection_infos_size;
@@ -240,7 +242,9 @@ void sctk_network_init_tcp(sctk_rail_info_t* rail){
   int dest_socket;
   int src_rank;
   int src_socket;
-  
+
+  rail->network.tcp.sctk_use_tcp_o_ib = sctk_use_tcp_o_ib;
+
   sctk_client_create_recv_socket (rail);
   
   rail->send_message = sctk_network_send_message_tcp;
@@ -263,10 +267,10 @@ void sctk_network_init_tcp(sctk_rail_info_t* rail){
 
   sctk_nodebug("Connection Infos (%d): %s",sctk_process_rank,connection_infos);
 
-  assume(sctk_pmi_put_connection_info(connection_infos,MAX_STRING_SIZE,0) == 0);
+  assume(sctk_pmi_put_connection_info(connection_infos,MAX_STRING_SIZE,rail->rail_number) == 0);
   sctk_pmi_barrier();
 
-  assume(sctk_pmi_get_connection_info(dest_connection_infos,MAX_STRING_SIZE,0,dest_rank) == 0);
+  assume(sctk_pmi_get_connection_info(dest_connection_infos,MAX_STRING_SIZE,rail->rail_number,dest_rank) == 0);
 
   sctk_nodebug("DEST Connection Infos(%d) to %d: %s",sctk_process_rank,dest_rank,dest_connection_infos);
 

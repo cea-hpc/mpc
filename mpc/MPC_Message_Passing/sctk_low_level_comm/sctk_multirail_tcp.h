@@ -20,32 +20,16 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __SCTK_TCP_H_
-#define __SCTK_TCP_H_
+#ifndef __SCTK_MULTIRAIL_TCP_H_
+#define __SCTK_MULTIRAIL_TCP_H_
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#ifndef __SCTK_ROUTE_H_
-#error "sctk_route must be included before sctk_tcp.h"
-#endif
-
 #include <sctk_spinlock.h>
 
-  typedef struct {
-    sctk_spinlock_t lock;
-    int fd;
-  }sctk_tcp_data_t;
-  
-  typedef struct {
-    int sctk_use_tcp_o_ib;
-    int sockfd;
-    int portno;
-    int rail;
-  }sctk_tcp_rail_info_t;
-
-  void sctk_network_init_tcp(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib);
+void sctk_network_init_multirail_tcp(char* name);
 
 #ifdef __cplusplus
 }
