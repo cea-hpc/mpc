@@ -160,9 +160,6 @@ void sctk_broadcast_messages (void *buffer, const size_t size,
       sctk_wait_message (&send_request);    
     }
   }
-
-/*   sctk_terminaison_barrier (thread_data->task_id); */
-/*   not_implemented(); */
 }
 
 void sctk_broadcast_messages_init(struct sctk_internal_collectives_struct_s * tmp){

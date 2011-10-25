@@ -216,36 +216,22 @@ sctk_network_send_message_simple_tcp (sctk_thread_ptp_message_t * msg){
 
 static void 
 sctk_network_notify_recv_message_simple_tcp (sctk_thread_ptp_message_t * msg){
-/*   sctk_route_table_t* tmp; */
-
-/*   tmp = sctk_get_route(msg->body.header.glob_source); */
-/*   not_implemented(); */
 }
 
 static void 
 sctk_network_notify_matching_message_simple_tcp (sctk_thread_ptp_message_t * msg){
-/*   sctk_route_table_t* tmp; */
-
-/*   tmp = sctk_get_route(msg->body.header.glob_source); */
-/*   not_implemented(); */
 }
 
 static void 
 sctk_network_notify_perform_message_simple_tcp (int remote){
-/*   sctk_route_table_t* tmp; */
-
-/*   tmp = sctk_get_route(remote); */
-/*   not_implemented(); */
 }
 
 static void 
 sctk_network_notify_idle_message_simple_tcp (){
-/*   not_implemented(); */
 }
 
 static void 
 sctk_network_notify_any_source_message_simple_tcp (){
-/*   not_implemented(); */
 }
 
 /************ INIT ****************/
