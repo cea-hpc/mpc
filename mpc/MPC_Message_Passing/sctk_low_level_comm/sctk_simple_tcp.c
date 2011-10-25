@@ -170,7 +170,9 @@ static void* sctk_simple_tcp_thread(sctk_route_table_t* tmp){
   }
 }
 
-static void sctk_simple_tcp_add_route(int dest, int fd){
+static void 
+sctk_network_send_message_simple_tcp (sctk_thread_ptp_message_t * msg);
+static void sctk_simple_tcp_add_static_route(int dest, int fd,int rail){
   sctk_route_table_t* tmp;
   sctk_thread_t pidt;
   sctk_thread_attr_t attr;
@@ -185,18 +187,19 @@ static void sctk_simple_tcp_add_route(int dest, int fd){
   sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
   sctk_user_thread_create (&pidt, &attr,(void*(*)(void*))sctk_simple_tcp_thread , tmp);
 
-  sctk_add_route(dest,tmp);
+  sctk_add_static_route(dest,tmp,rail,NULL);
 }
 
 /************ INTER_THEAD_COMM HOOOKS ****************/
 
 static void 
-sctk_network_send_message_simple_tcp (sctk_thread_ptp_message_t * msg){
+sctk_network_send_message_simple_tcp (sctk_thread_ptp_message_t * msg,
+				      sctk_route_table_t* tmp){
   sctk_route_table_t* tmp;
   size_t size;
   int fd;
 
-  tmp = sctk_get_route(msg->body.header.glob_destination);
+  tmp = sctk_get_route(msg->body.header.glob_destination,0);
 
   sctk_spinlock_lock(&(tmp->data.simple_tcp.lock));
 
@@ -305,8 +308,8 @@ void sctk_network_init_simple_tcp(char* name){
     } 
   }
   sctk_pmi_barrier(); 
-  sctk_simple_tcp_add_route(dest_rank,dest_socket);
-  sctk_simple_tcp_add_route(src_rank,src_socket);
+  sctk_simple_tcp_add_static_route(dest_rank,dest_socket,0);
+  sctk_simple_tcp_add_static_route(src_rank,src_socket,0);
   sctk_pmi_barrier();   
 
   sctk_network_mode = "TCP simple(ring)";

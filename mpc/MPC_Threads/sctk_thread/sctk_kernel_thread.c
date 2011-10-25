@@ -245,7 +245,6 @@ kthread_join (kthread_t th, void **thread_return)
 int
 kthread_kill (kthread_t th, int val)
 {
-  //not_implemented();
   return pthread_kill ((pthread_t) th, val);
 }
 

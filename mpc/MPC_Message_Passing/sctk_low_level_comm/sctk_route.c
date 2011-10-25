@@ -26,28 +26,42 @@
 #include <sctk_communicator.h>
 #include <sctk_spinlock.h>
 
-static sctk_route_table_t* sctk_route_table = NULL;
+#warning "Use a cache to avoid rw locks"
+static sctk_route_table_t* sctk_dynamic_route_table = NULL;
+static sctk_route_table_t* sctk_static_route_table = NULL;
 static sctk_spin_rwlock_t sctk_route_table_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 
-void sctk_add_route(int dest, sctk_route_table_t* tmp){
+void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, int rail){
   tmp->key.destination = dest;
+  tmp->key.rail = rail;
 
   sctk_spinlock_write_lock(&sctk_route_table_lock);
-  HASH_ADD(hh,sctk_route_table,key,sizeof(sctk_route_key_t),tmp);
+  HASH_ADD(hh,sctk_dynamic_route_table,key,sizeof(sctk_route_key_t),tmp);
   sctk_spinlock_write_unlock(&sctk_route_table_lock);
   
 }
 
-#warning "Gestion du multirail"
-sctk_route_table_t* sctk_get_route_to_process(int dest){
+void sctk_add_static_route(int dest, sctk_route_table_t* tmp, int rail){
+  tmp->key.destination = dest;
+  tmp->key.rail = rail;
+
+  HASH_ADD(hh,sctk_static_route_table,key,sizeof(sctk_route_key_t),tmp);  
+}
+
+sctk_route_table_t* sctk_get_route_to_process(int dest, int rail){
   sctk_route_key_t key;
   sctk_route_table_t* tmp;
 
-  key.destination = dest;  
+  key.destination = dest; 
+  key.rail = rail;  
 
-  sctk_spinlock_read_lock(&sctk_route_table_lock);
-  HASH_FIND(hh,sctk_route_table,&key,sizeof(sctk_route_key_t),tmp);
-  sctk_spinlock_read_lock(&sctk_route_table_lock);
+  
+  HASH_FIND(hh,sctk_static_route_table,&key,sizeof(sctk_route_key_t),tmp);
+  if(tmp == NULL){
+    sctk_spinlock_read_lock(&sctk_route_table_lock);
+    HASH_FIND(hh,sctk_dynamic_route_table,&key,sizeof(sctk_route_key_t),tmp);
+    sctk_spinlock_read_lock(&sctk_route_table_lock);
+  }
   
   if(tmp == NULL){
     int old_dest;
@@ -56,19 +70,19 @@ sctk_route_table_t* sctk_get_route_to_process(int dest){
     dest = (dest + sctk_process_number -1) % sctk_process_number;
     sctk_nodebug("Route via dest - 1 %d to %d",dest,old_dest);
 #warning "Insert here the fallback policy: routing or on demand connection"
-    return sctk_get_route_to_process(dest);
+    return sctk_get_route_to_process(dest,rail);
   }
 
   return tmp;
 }
 
-sctk_route_table_t* sctk_get_route(int dest){
+sctk_route_table_t* sctk_get_route(int dest, int rail){
   sctk_route_table_t* tmp;
   int process;
 
   process = sctk_get_process_rank_from_task_rank(dest);
 
-  tmp = sctk_get_route_to_process(process);
+  tmp = sctk_get_route_to_process(process,rail);
 
   return tmp;
 }

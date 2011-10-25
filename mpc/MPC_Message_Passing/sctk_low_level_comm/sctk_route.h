@@ -27,6 +27,7 @@
 
 typedef struct{
   int destination;
+  int rail;
 }sctk_route_key_t;
 
 
@@ -34,14 +35,28 @@ typedef union{
   sctk_simple_tcp_data_t simple_tcp;
 }sctk_route_data_t;
 
-typedef struct{
+typedef struct sctk_route_table_s{
   sctk_route_key_t key;
 
   sctk_route_data_t data;  
 
+  /*
+    This function can be used to store different send functions according to 
+    the destination route (useful for multiple network configuration)
+   */
+  void (*send_func) (sctk_thread_ptp_message_t * ,struct sctk_route_table_s*);
+
   UT_hash_handle hh;
 } sctk_route_table_t;
 
-void sctk_add_route(int dest, sctk_route_table_t* tmp);
-sctk_route_table_t* sctk_get_route(int dest);
+/*NOT THREAD SAFE use to add a route at initialisation time*/
+void sctk_add_static_route(int dest, sctk_route_table_t* tmp, int rail,
+			   void (*send_func) (sctk_thread_ptp_message_t * ));
+
+/*THREAD SAFE use to add a route at compute time*/
+void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, int rail,
+			    void (*send_func) (sctk_thread_ptp_message_t * ));
+
+sctk_route_table_t* sctk_get_route(int dest, int rail);
+sctk_route_table_t* sctk_get_route_to_process(int dest, int rail);
 #endif
