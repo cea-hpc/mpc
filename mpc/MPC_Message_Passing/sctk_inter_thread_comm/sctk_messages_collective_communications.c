@@ -190,7 +190,11 @@ static void sctk_allreduce_messages (const void *buffer_in, void *buffer_out,
   int i;
   void* buffer_tmp;
   
-
+  /*
+    MPI require that the result of the allreduce is the same on all MPI tasks.
+    This is an issue for MPI_SUM, MPI_PROD and user defined operation on floating 
+    point datatypes.
+  */
   size = elem_size * elem_number;
   buffer_tmp = sctk_malloc(size);
   
@@ -227,6 +231,7 @@ static void sctk_allreduce_messages (const void *buffer_in, void *buffer_out,
   }
 
   sctk_free(buffer_tmp);
+  sctk_broadcast_simple(buffer_out,size,0,communicator,tmp);
 }
 
 void sctk_allreduce_messages_init(struct sctk_internal_collectives_struct_s * tmp){
@@ -241,4 +246,7 @@ void sctk_collectives_init_messages (sctk_communicator_t id){
 			sctk_barrier_messages_init,
 			sctk_broadcast_messages_init,
 			sctk_allreduce_messages_init);
+  if(sctk_process_rank == 0){
+    sctk_warning("Use low performances collectives");
+  }
 }
