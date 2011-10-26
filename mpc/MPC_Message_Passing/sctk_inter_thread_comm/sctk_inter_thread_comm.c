@@ -653,6 +653,8 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
   msg->body.header.specific_message_tag = specific_message_tag;
   msg->body.header.msg_size = count;
 
+  msg->sctk_msg_get_use_message_numbering = 1;
+
   if(request != NULL){
     request->msg = msg;
     

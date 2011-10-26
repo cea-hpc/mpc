@@ -56,6 +56,7 @@ extern "C"
     int message_tag;
     int message_number;
 
+    char use_message_numbering;
     specific_message_tag_t specific_message_tag;
 
     size_t msg_size;
@@ -164,6 +165,7 @@ typedef struct sctk_message_to_copy_s{
     sctk_reorder_buffer_t reorder;
   }sctk_thread_ptp_message_tail_t;
 
+#define sctk_msg_get_use_message_numbering body.header.use_message_numbering
 #define sctk_msg_get_source body.header.source
 #define sctk_msg_get_destination body.header.destination
 #define sctk_msg_get_glob_source tail.glob_source

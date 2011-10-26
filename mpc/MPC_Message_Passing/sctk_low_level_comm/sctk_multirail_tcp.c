@@ -36,8 +36,17 @@ static void
 sctk_network_send_message_multirail_tcp (sctk_thread_ptp_message_t * msg){
   int i ; 
   static OPA_int_t rail_to_use;
-  sctk_prepare_send_message_to_network_reorder(msg);
-  i = OPA_fetch_and_incr_int(&(rail_to_use)) % NB_RAILS;
+  if(sctk_prepare_send_message_to_network_reorder(msg) == 0){
+    /*
+      Direct send: we can use multirail
+    */
+    i = OPA_fetch_and_incr_int(&(rail_to_use)) % NB_RAILS;
+  } else {
+    /*
+      Indirect send: we can't use multirail fall back to rail 0
+    */
+    i = 0;
+  }
   rails[i]->send_message(msg,rails[i]);
 }
 
@@ -83,7 +92,12 @@ sctk_network_notify_any_source_message_multirail_tcp (){
 
 static
 void sctk_send_message_from_network_multirail_tcp (sctk_thread_ptp_message_t * msg){
-  sctk_send_message_from_network_reorder(msg);
+  if(sctk_send_message_from_network_reorder(msg) != 0){
+    /*
+      Incoming message from indirect road
+    */
+    sctk_send_message(msg);    
+  }
 }
 
 /************ INIT ****************/

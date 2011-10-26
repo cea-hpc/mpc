@@ -31,8 +31,8 @@ void sctk_add_static_reorder_buffer(int dest);
 /*THREAD SAFE use to add a route at compute time*/
 void sctk_add_dynamic_reorder_buffer(int dest);
 
-void sctk_send_message_from_network_reorder (struct sctk_thread_ptp_message_s * msg);
-void sctk_prepare_send_message_to_network_reorder (struct sctk_thread_ptp_message_s * msg);
+int sctk_send_message_from_network_reorder (struct sctk_thread_ptp_message_s * msg);
+int sctk_prepare_send_message_to_network_reorder (struct sctk_thread_ptp_message_s * msg);
 
 typedef struct {
   int key;

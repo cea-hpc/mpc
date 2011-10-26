@@ -94,8 +94,6 @@ sctk_reorder_table_t* sctk_get_reorder_to_process(int dest){
     sctk_spinlock_read_lock(&sctk_reorder_table_lock);
   }
   
-  assume(tmp != NULL);
-
   return tmp;
 }
 
@@ -111,59 +109,75 @@ sctk_reorder_table_t* sctk_get_reorder(int dest){
   return tmp;
 }
 
-void sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
+int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
   sctk_reorder_table_t* tmp;
   int number;
   
   tmp = sctk_get_reorder(msg->sctk_msg_get_glob_source);
 
-  number = OPA_load_int(&(tmp->message_number_src));
-  sctk_nodebug("wait for %d recv %d",number,msg->sctk_msg_get_message_number);
-
-  if(number == msg->sctk_msg_get_message_number){
-    sctk_nodebug("Send %d",msg->sctk_msg_get_message_number);
-    sctk_send_message(msg);
-    OPA_fetch_and_incr_int(&(tmp->message_number_src));
-    msg = NULL;
-
-    /*Search for pending messages*/
-    if(tmp->buffer != NULL){
-      sctk_reorder_buffer_t* reorder;
-      int key;
-
-      sctk_nodebug("Proceed pending messages");
-
-      sctk_spinlock_lock(&(tmp->lock));
-      do{
-	key = OPA_load_int(&(tmp->message_number_src));
-	HASH_FIND(hh,tmp->buffer,&key,sizeof(int),reorder);
-	if(reorder != NULL){
-	  sctk_nodebug("Send %d",reorder->msg->sctk_msg_get_message_number);
-	  sctk_send_message(reorder->msg);
-	  OPA_fetch_and_incr_int(&(tmp->message_number_src));
-	}
-      } while(reorder != NULL);
-      sctk_spinlock_unlock(&(tmp->lock));
-    }
-  } else {
-    sctk_reorder_buffer_t* reorder;
-
-    sctk_nodebug("Delay wait for %d recv %d",number,msg->sctk_msg_get_message_number);
-
-    reorder = &(msg->tail.reorder);
-
-    reorder->key = msg->sctk_msg_get_message_number;
-    reorder->msg = msg;
+  if(msg->sctk_msg_get_use_message_numbering){
+    assume(tmp != NULL);
     
-    sctk_spinlock_lock(&(tmp->lock));
-    HASH_ADD(hh,tmp->buffer,key,sizeof(int),reorder);    
-    sctk_spinlock_unlock(&(tmp->lock));    
+    number = OPA_load_int(&(tmp->message_number_src));
+    sctk_nodebug("wait for %d recv %d",number,msg->sctk_msg_get_message_number);
+    
+    if(number == msg->sctk_msg_get_message_number){
+      sctk_nodebug("Send %d",msg->sctk_msg_get_message_number);
+      sctk_send_message(msg);
+      OPA_fetch_and_incr_int(&(tmp->message_number_src));
+      msg = NULL;
+      
+      /*Search for pending messages*/
+      if(tmp->buffer != NULL){
+	sctk_reorder_buffer_t* reorder;
+	int key;
+	
+	sctk_nodebug("Proceed pending messages");
+	
+	sctk_spinlock_lock(&(tmp->lock));
+	do{
+	  key = OPA_load_int(&(tmp->message_number_src));
+	  HASH_FIND(hh,tmp->buffer,&key,sizeof(int),reorder);
+	  if(reorder != NULL){
+	    sctk_nodebug("Send %d",reorder->msg->sctk_msg_get_message_number);
+	    sctk_send_message(reorder->msg);
+	    OPA_fetch_and_incr_int(&(tmp->message_number_src));
+	  }
+	} while(reorder != NULL);
+	sctk_spinlock_unlock(&(tmp->lock));
+      }
+    } else {
+      sctk_reorder_buffer_t* reorder;
+      
+      sctk_nodebug("Delay wait for %d recv %d",number,msg->sctk_msg_get_message_number);
+      
+      reorder = &(msg->tail.reorder);
+      
+      reorder->key = msg->sctk_msg_get_message_number;
+      reorder->msg = msg;
+      
+      sctk_spinlock_lock(&(tmp->lock));
+      HASH_ADD(hh,tmp->buffer,key,sizeof(int),reorder);    
+      sctk_spinlock_unlock(&(tmp->lock));    
+    }
+    return 0;
+  } else {
+    return 1;
   }
 }
 
-void sctk_prepare_send_message_to_network_reorder (sctk_thread_ptp_message_t * msg){
+int sctk_prepare_send_message_to_network_reorder (sctk_thread_ptp_message_t * msg){
   sctk_reorder_table_t* tmp;
 
+  if(msg->sctk_msg_get_use_message_numbering == 0){
+    return 1;
+  }
   tmp = sctk_get_reorder(msg->sctk_msg_get_glob_destination);
+  if(tmp == NULL){
+    msg->sctk_msg_get_use_message_numbering = 0;
+    return 1;
+  }
+  msg->sctk_msg_get_use_message_numbering = 1;
   msg->sctk_msg_get_message_number = OPA_fetch_and_incr_int(&(tmp->message_number_dest));
+  return 0;
 }
