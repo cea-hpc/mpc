@@ -231,7 +231,7 @@ static void sctk_allreduce_messages (const void *buffer_in, void *buffer_out,
   }
 
   sctk_free(buffer_tmp);
-  sctk_broadcast_simple(buffer_out,size,0,communicator,tmp);
+  sctk_broadcast_messages(buffer_out,size,0,communicator,tmp);
 }
 
 void sctk_allreduce_messages_init(struct sctk_internal_collectives_struct_s * tmp){
