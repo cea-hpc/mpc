@@ -69,6 +69,7 @@ void sctk_network_init_simple_tcp(char* name){
 
   rail_0 = sctk_route_get_rail(0);
   rail_0->rail_number = 0;
+  rail_0->send_message_from_network = sctk_send_message;
   sctk_network_init_tcp(rail_0,0);
   sprintf(net_name,"[0:%s]",rail_0->network_name);
 

@@ -23,6 +23,7 @@
 #include <sctk.h>
 #include <sctk_debug.h>
 #include <sctk_route.h>
+#include <sctk_reorder.h>
 #include <sctk_communicator.h>
 #include <sctk_spinlock.h>
 
@@ -34,6 +35,9 @@ static sctk_rail_info_t* rails = NULL;
 void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
   tmp->key.destination = dest;
   tmp->key.rail = rail->rail_number;
+  tmp->rail = rail;
+
+  sctk_add_dynamic_reorder_buffer(dest);
 
   sctk_spinlock_write_lock(&sctk_route_table_lock);
   HASH_ADD(hh,sctk_dynamic_route_table,key,sizeof(sctk_route_key_t),tmp);
@@ -44,7 +48,9 @@ void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t*
 void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
   tmp->key.destination = dest;
   tmp->key.rail = rail->rail_number;
+  tmp->rail = rail;
 
+  sctk_add_static_reorder_buffer(dest);
   HASH_ADD(hh,sctk_static_route_table,key,sizeof(sctk_route_key_t),tmp);  
 }
 

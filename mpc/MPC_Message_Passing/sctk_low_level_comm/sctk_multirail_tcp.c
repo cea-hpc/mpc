@@ -27,6 +27,7 @@
 #include <sctk_multirail_tcp.h>
 #include <sctk_route.h>
 #include <sctk_tcp.h>
+#include <opa_primitives.h>
 
 #define NB_RAILS 4
 static sctk_rail_info_t** rails = NULL;
@@ -34,7 +35,9 @@ static sctk_rail_info_t** rails = NULL;
 static void 
 sctk_network_send_message_multirail_tcp (sctk_thread_ptp_message_t * msg){
   int i ; 
-  i = sctk_get_process_rank_from_task_rank(msg->body.header.glob_destination) % NB_RAILS;
+  static OPA_int_t rail_to_use;
+  sctk_prepare_send_message_to_network_reorder(msg);
+  i = OPA_fetch_and_incr_int(&(rail_to_use)) % NB_RAILS;
   rails[i]->send_message(msg,rails[i]);
 }
 
@@ -78,6 +81,10 @@ sctk_network_notify_any_source_message_multirail_tcp (){
   }
 }
 
+static
+void sctk_send_message_from_network_multirail_tcp (sctk_thread_ptp_message_t * msg){
+  sctk_send_message_from_network_reorder(msg);
+}
 
 /************ INIT ****************/
 void sctk_network_init_multirail_tcp(char* name){
@@ -87,13 +94,16 @@ void sctk_network_init_multirail_tcp(char* name){
 
   name_ptr = net_name;
   sctk_route_set_rail_nb(NB_RAILS);
-  rails = sctk_malloc(sizeof(sctk_rail_info_t*));
+  rails = sctk_malloc(NB_RAILS*sizeof(sctk_rail_info_t*));
+  memset(rails, 0, NB_RAILS*sizeof(sctk_rail_info_t*));
 
   for(i = 0; i < NB_RAILS; i++){
     rails[i] = sctk_route_get_rail(i);
     rails[i]->rail_number = i;
+    rails[i]->send_message_from_network = sctk_send_message_from_network_multirail_tcp;
     sctk_network_init_tcp(rails[i],0);
-    sprintf(net_name,"[%d:%s]",i,rails[i]->network_name);
+    sprintf(name_ptr,"[%d:%s]",i,rails[i]->network_name);
+    name_ptr = net_name + strlen(net_name);
   }
 
   sctk_network_send_message_set(sctk_network_send_message_multirail_tcp);

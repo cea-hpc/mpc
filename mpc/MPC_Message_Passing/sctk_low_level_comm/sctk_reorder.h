@@ -19,62 +19,25 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK_ROUTE_H_
-#define __SCTK_ROUTE_H_
+#ifndef __SCTK_REORDER_H_
+#define __SCTK_REORDER_H_
 
-#include <sctk_inter_thread_comm.h>
 #include <uthash.h>
-
-typedef struct sctk_rail_info_s sctk_rail_info_t;
-
-#include <sctk_tcp.h>
-
-typedef struct{
-  int destination;
-  int rail;
-}sctk_route_key_t;
-
-
-typedef union{
-  sctk_tcp_data_t tcp;
-}sctk_route_data_t;
-
-typedef union{
-  sctk_tcp_rail_info_t tcp;
-}sctk_rail_info_spec_t;
-
-struct sctk_rail_info_s{
-  sctk_rail_info_spec_t network;
-  void (*send_message) (sctk_thread_ptp_message_t *,struct sctk_rail_info_s*);
-  void (*notify_recv_message) (sctk_thread_ptp_message_t * ,struct sctk_rail_info_s*);
-  void (*notify_matching_message) (sctk_thread_ptp_message_t * ,struct sctk_rail_info_s*);
-  void (*notify_perform_message) (int ,struct sctk_rail_info_s*);
-  void (*notify_idle_message) (struct sctk_rail_info_s*);
-  void (*notify_any_source_message) (struct sctk_rail_info_s*);
-  void (*send_message_from_network) (sctk_thread_ptp_message_t * );
-  char* network_name;
-  int rail_number;
-};
-
-typedef struct sctk_route_table_s{
-  sctk_route_key_t key;
-
-  sctk_route_data_t data;
-  
-  sctk_rail_info_t* rail;
-
-  UT_hash_handle hh;
-} sctk_route_table_t;
+struct sctk_thread_ptp_message_s;
 
 /*NOT THREAD SAFE use to add a route at initialisation time*/
-void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail);
+void sctk_add_static_reorder_buffer(int dest);
 
 /*THREAD SAFE use to add a route at compute time*/
-void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail);
+void sctk_add_dynamic_reorder_buffer(int dest);
 
-sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail);
-sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail);
+void sctk_send_message_from_network_reorder (struct sctk_thread_ptp_message_s * msg);
+void sctk_prepare_send_message_to_network_reorder (struct sctk_thread_ptp_message_s * msg);
 
-void sctk_route_set_rail_nb(int i);
-sctk_rail_info_t* sctk_route_get_rail(int i);
+typedef struct {
+  int key;
+  struct sctk_thread_ptp_message_s* msg;
+  UT_hash_handle hh;
+}sctk_reorder_buffer_t;
+
 #endif

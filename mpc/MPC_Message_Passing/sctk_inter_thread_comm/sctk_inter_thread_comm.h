@@ -27,6 +27,7 @@
 #include <sctk_communicator.h>
 #include <sctk_collective_communications.h>
 #include <mpcmp.h>
+#include <sctk_reorder.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -135,6 +136,7 @@ typedef struct sctk_message_to_copy_s{
   typedef struct {
     sctk_thread_message_header_t header;
     volatile int* completion_flag;
+    int message_number;
   }sctk_thread_ptp_message_body_t;
 
   /*Data not to tranfers in inter-process communications*/
@@ -155,6 +157,9 @@ typedef struct sctk_message_to_copy_s{
 
     /*Copy operator*/
     void (*message_copy)(sctk_message_to_copy_t*);
+
+    /*Reoder buffer struct*/
+    sctk_reorder_buffer_t reorder;
   }sctk_thread_ptp_message_tail_t;
 
   typedef struct sctk_thread_ptp_message_s{
