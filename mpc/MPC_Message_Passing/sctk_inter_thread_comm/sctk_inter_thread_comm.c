@@ -30,6 +30,7 @@
 #include <string.h>
 #include <sctk_asm.h>
 
+#define SCTK_DISABLE_REENTRANCE
 
   void sctk_cancel_message (sctk_request_t * msg){not_implemented();}
 
@@ -42,17 +43,120 @@ typedef struct{
   int destination;
 }sctk_comm_dest_key_t;
 
+
+typedef struct {
+  sctk_spinlock_t lock;
+  volatile sctk_msg_list_t* list;
+} sctk_internal_ptp_list_incomming_t;
+
+typedef struct {
+  sctk_msg_list_t* list;
+} sctk_internal_ptp_list_pending_t;
+
+static inline void sctk_internal_ptp_list_incomming_init(sctk_internal_ptp_list_incomming_t* list){
+  static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+
+  list->list = NULL;
+  list->lock = lock;
+}
+static inline void sctk_internal_ptp_list_pending_init(sctk_internal_ptp_list_pending_t* list){
+  list->list = NULL;
+}
+typedef struct {
+#ifndef SCTK_DISABLE_REENTRANCE
+  sctk_internal_ptp_list_incomming_t incomming_send;
+  sctk_internal_ptp_list_incomming_t incomming_recv;
+#endif
+
+  sctk_spinlock_t pending_lock;
+  sctk_internal_ptp_list_pending_t pending_send;
+  sctk_internal_ptp_list_pending_t pending_recv;
+}sctk_internal_ptp_message_lists_t;
+
+static inline void sctk_internal_ptp_message_list_init(sctk_internal_ptp_message_lists_t * lists){
+  static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+#ifndef SCTK_DISABLE_REENTRANCE
+  sctk_internal_ptp_list_incomming_init(&(lists->incomming_send));
+  sctk_internal_ptp_list_incomming_init(&(lists->incomming_recv));
+#endif
+  
+  lists->pending_lock = lock;
+  sctk_internal_ptp_list_pending_init(&(lists->pending_send));
+  sctk_internal_ptp_list_pending_init(&(lists->pending_recv));
+}
+
 typedef struct{
   sctk_comm_dest_key_t key;
 
-  sctk_spinlock_t lock;
-  /*list used for send/recv messages*/
-  sctk_msg_list_t* send_message_list;
-  sctk_msg_list_t* recv_message_list;
+  sctk_internal_ptp_message_lists_t lists;
 
   UT_hash_handle hh;
 } sctk_internal_ptp_t;
 
+static inline void sctk_internal_ptp_merge_pending(sctk_internal_ptp_message_lists_t* lists){
+#ifndef SCTK_DISABLE_REENTRANCE
+  if(lists->incomming_send.list != NULL){
+    sctk_spinlock_lock(&(lists->incomming_send.lock));
+    DL_CONCAT(lists->pending_send.list,(sctk_msg_list_t*)lists->incomming_send.list);
+    lists->incomming_send.list = NULL;
+    sctk_spinlock_unlock(&(lists->incomming_send.lock));
+  }
+  if(lists->incomming_recv.list != NULL){
+    sctk_spinlock_lock(&(lists->incomming_recv.lock));
+    DL_CONCAT(lists->pending_recv.list,(sctk_msg_list_t*)lists->incomming_recv.list);
+    lists->incomming_recv.list = NULL;
+    sctk_spinlock_unlock(&(lists->incomming_recv.lock));
+  }
+#endif
+}
+
+static inline void sctk_internal_ptp_lock_pending(sctk_internal_ptp_message_lists_t* lists){
+  sctk_spinlock_lock(&(lists->pending_lock));
+}
+
+static inline int sctk_internal_ptp_trylock_pending(sctk_internal_ptp_message_lists_t* lists){
+  return sctk_spinlock_trylock(&(lists->pending_lock));
+}
+
+static inline void sctk_internal_ptp_unlock_pending(sctk_internal_ptp_message_lists_t* lists){
+  sctk_spinlock_unlock(&(lists->pending_lock));  
+}
+
+#ifndef SCTK_DISABLE_REENTRANCE
+static inline void sctk_internal_ptp_add_recv_incomming(sctk_internal_ptp_t* tmp,
+							sctk_thread_ptp_message_t * msg){
+    msg->tail.distant_list.msg = msg;
+    sctk_spinlock_lock(&(tmp->lists.incomming_recv.lock));
+    DL_APPEND(tmp->lists.incomming_recv.list, &(msg->tail.distant_list));
+    sctk_spinlock_unlock(&(tmp->lists.incomming_recv.lock));
+}
+
+static inline void sctk_internal_ptp_add_send_incomming(sctk_internal_ptp_t* tmp,
+							sctk_thread_ptp_message_t * msg){
+    msg->tail.distant_list.msg = msg;
+    sctk_spinlock_lock(&(tmp->lists.incomming_send.lock));
+    DL_APPEND(tmp->lists.incomming_send.list, &(msg->tail.distant_list));
+    sctk_spinlock_unlock(&(tmp->lists.incomming_send.lock));
+}
+#else
+#warning "Use blocking version of send/recv message"
+static inline void sctk_internal_ptp_add_recv_incomming(sctk_internal_ptp_t* tmp,
+							sctk_thread_ptp_message_t * msg){
+    msg->tail.distant_list.msg = msg;
+    sctk_internal_ptp_lock_pending(&(tmp->lists));
+    DL_APPEND(tmp->lists.pending_recv.list, &(msg->tail.distant_list));
+    sctk_internal_ptp_unlock_pending(&(tmp->lists));
+}
+
+static inline void sctk_internal_ptp_add_send_incomming(sctk_internal_ptp_t* tmp,
+							sctk_thread_ptp_message_t * msg){
+    msg->tail.distant_list.msg = msg;
+    sctk_internal_ptp_lock_pending(&(tmp->lists));
+    DL_APPEND(tmp->lists.pending_send.list, &(msg->tail.distant_list));
+    sctk_internal_ptp_unlock_pending(&(tmp->lists));
+}
+
+#endif
 
 /************************************************************************/
 /*Data structure accessors                                              */
@@ -436,8 +540,7 @@ void sctk_ptp_per_task_init (int i){
 /*   tmp->key.comm = SCTK_COMM_WORLD; */
   tmp->key.destination = i;
 
-  tmp->recv_message_list = NULL;
-  tmp->send_message_list = NULL;
+  sctk_internal_ptp_message_list_init(&(tmp->lists));
 
   sctk_ptp_table_write_lock(&sctk_ptp_table_lock);
   HASH_ADD(hh,sctk_ptp_table,key,sizeof(sctk_comm_dest_key_t),tmp);
@@ -644,7 +747,7 @@ sctk_msg_list_t* sctk_perform_messages_search_matching(sctk_internal_ptp_t* pair
   sctk_msg_list_t* ptr_send;
   sctk_msg_list_t* tmp;
   res = NULL;
-  DL_FOREACH_SAFE(pair->send_message_list,ptr_send,tmp){
+  DL_FOREACH_SAFE(pair->lists.pending_send.list,ptr_send,tmp){
     sctk_thread_message_header_t* header_send; 
     sctk_assert(ptr_send->msg != NULL);
     header_send = &(ptr_send->msg->body.header);
@@ -652,7 +755,7 @@ sctk_msg_list_t* sctk_perform_messages_search_matching(sctk_internal_ptp_t* pair
        (header->specific_message_tag == header_send->specific_message_tag) &&
        ((header->source == header_send->source) || (header->source == MPC_ANY_SOURCE))&& 
        ((header->message_tag == header_send->message_tag) || (header->message_tag == MPC_ANY_TAG))){
-      DL_DELETE(pair->send_message_list,ptr_send);
+      DL_DELETE(pair->lists.pending_send.list,ptr_send);
       sctk_nodebug("Match? dest %d (%d,%d,%d) == (%d,%d,%d)",
 		 header->destination,
 		 header->source,header->message_tag,header->specific_message_tag,
@@ -670,7 +773,9 @@ int sctk_perform_messages_probe_matching(sctk_internal_ptp_t* pair,
   sctk_msg_list_t* tmp;
   int remote;
   res = NULL;
-  DL_FOREACH_SAFE(pair->send_message_list,ptr_send,tmp){
+  sctk_internal_ptp_merge_pending(&(pair->lists));
+
+  DL_FOREACH_SAFE(pair->lists.pending_send.list,ptr_send,tmp){
     sctk_thread_message_header_t* header_send; 
     sctk_assert(ptr_send->msg != NULL);
     header_send = &(ptr_send->msg->body.header);
@@ -699,12 +804,14 @@ static inline void sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t* pa
   sctk_msg_list_t* ptr_send;
   sctk_msg_list_t* tmp;
 
-  DL_FOREACH_SAFE(pair->recv_message_list,ptr_recv,tmp){  
+  sctk_internal_ptp_merge_pending(&(pair->lists));
+
+  DL_FOREACH_SAFE(pair->lists.pending_recv.list,ptr_recv,tmp){  
     sctk_assert(ptr_recv->msg != NULL);
     ptr_send = sctk_perform_messages_search_matching(pair,&(ptr_recv->msg->body.header));
     if(ptr_send != NULL){
       sctk_nodebug("Match %p and %p",ptr_recv,ptr_send);
-      DL_DELETE(pair->recv_message_list,ptr_recv);
+      DL_DELETE(pair->lists.pending_recv.list,ptr_recv);
 
       /*Copy message*/
       sctk_ptp_copy_tasks_insert(ptr_recv,ptr_send);
@@ -720,18 +827,19 @@ static inline void sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t* pa
 }
 
 static inline void sctk_perform_messages_for_pair(sctk_internal_ptp_t* pair){
-    sctk_spinlock_lock(&(pair->lock));
-    sctk_perform_messages_for_pair_locked(pair);
-    sctk_spinlock_unlock(&(pair->lock));
-    sctk_ptp_tasks_perform();
+  sctk_internal_ptp_lock_pending(&(pair->lists));
+  sctk_perform_messages_for_pair_locked(pair);
+  sctk_internal_ptp_unlock_pending(&(pair->lists));
+  sctk_ptp_tasks_perform();
 }
 
 static inline void sctk_try_perform_messages_for_pair(sctk_internal_ptp_t* pair){
-  if(sctk_spinlock_trylock(&(pair->lock)) == 0){
-    sctk_perform_messages_for_pair_locked(pair);
-    sctk_spinlock_unlock(&(pair->lock));
-    sctk_ptp_tasks_perform();
-  }
+/*   if(sctk_internal_ptp_trylock_pending(&(pair->lists)) == 0){ */
+/*     sctk_perform_messages_for_pair_locked(pair); */
+/*     sctk_internal_ptp_unlock_pending(&(pair->lists)); */
+/*     sctk_ptp_tasks_perform(); */
+/*   } */
+  sctk_perform_messages_for_pair(pair);
 }
 
 void sctk_wait_message (sctk_request_t * request){
@@ -782,21 +890,21 @@ void sctk_wait_all (const int task, const sctk_communicator_t com){
     sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
     HASH_ITER(hh,sctk_ptp_table,pair,tmp){
       sctk_msg_list_t* ptr;
-      sctk_spinlock_lock(&(pair->lock));
+      sctk_internal_ptp_lock_pending(&(pair->lists));
       sctk_perform_messages_for_pair_locked(pair);
-      DL_FOREACH(pair->recv_message_list,ptr){
+      DL_FOREACH(pair->lists.pending_recv.list,ptr){
 	if((ptr->msg->body.header.destination == task) && 
 	   (ptr->msg->body.header.communicator == com)){
 	  i++;
 	}
       }
-      DL_FOREACH(pair->send_message_list,ptr){
+      DL_FOREACH(pair->lists.pending_send.list,ptr){
 	if((ptr->msg->body.header.source == task) && 
 	   (ptr->msg->body.header.communicator == com)){
 	  i++;
 	}
       }
-      sctk_spinlock_unlock(&(pair->lock));
+      sctk_internal_ptp_unlock_pending(&(pair->lists));
     }
     sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
     sctk_ptp_tasks_perform();
@@ -812,13 +920,9 @@ void sctk_perform_all (){
 
   sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
   HASH_ITER(hh,sctk_ptp_table,pair,tmp){
-    sctk_msg_list_t* ptr;
-    sctk_spinlock_lock(&(pair->lock));
-    sctk_perform_messages_for_pair_locked(pair);
-    sctk_spinlock_unlock(&(pair->lock));
+    sctk_try_perform_messages_for_pair(pair);
   }
   sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
-  sctk_ptp_tasks_perform();
 }
 
 void sctk_notify_idle_message (){
@@ -850,11 +954,7 @@ void sctk_send_message (sctk_thread_ptp_message_t * msg){
   sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
 
   if(tmp != NULL){
-    msg->tail.distant_list.msg = msg;
-
-    sctk_spinlock_lock(&(tmp->lock));
-    DL_APPEND(tmp->send_message_list, &(msg->tail.distant_list));
-    sctk_spinlock_unlock(&(tmp->lock));
+    sctk_internal_ptp_add_send_incomming(tmp,msg);
   } else {
     /*Entering low level comm*/
     msg->body.header.remote_destination = 1;
@@ -891,12 +991,8 @@ void sctk_recv_message (sctk_thread_ptp_message_t * msg){
   }
 
   if(tmp != NULL){
-    msg->tail.distant_list.msg = msg;
-    sctk_spinlock_lock(&(tmp->lock));
-    DL_APPEND(tmp->recv_message_list, &(msg->tail.distant_list));
-    sctk_perform_messages_for_pair_locked(tmp);
-    sctk_spinlock_unlock(&(tmp->lock));
-    sctk_ptp_tasks_perform();
+    sctk_internal_ptp_add_recv_incomming(tmp,msg);
+    sctk_try_perform_messages_for_pair(tmp);
   } else {
     not_reachable();
   }
@@ -941,10 +1037,10 @@ void sctk_probe_source_tag_func (int destination, int source,int tag,
   sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
 
   assume(tmp != NULL);
-  sctk_spinlock_lock(&(tmp->lock));
+  sctk_internal_ptp_lock_pending(&(tmp->lists));
   *status = sctk_perform_messages_probe_matching(tmp,msg);
   sctk_nodebug("Find source %d tag %d found ?%d",msg->source,msg->message_tag,*status);
-  sctk_spinlock_unlock(&(tmp->lock));
+  sctk_internal_ptp_unlock_pending(&(tmp->lists));
 }
 void sctk_probe_source_any_tag (int destination, int source,
 				const sctk_communicator_t comm,
