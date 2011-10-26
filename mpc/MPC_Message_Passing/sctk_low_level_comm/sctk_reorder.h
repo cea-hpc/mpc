@@ -34,6 +34,8 @@ void sctk_add_dynamic_reorder_buffer(int dest);
 int sctk_send_message_from_network_reorder (struct sctk_thread_ptp_message_s * msg);
 int sctk_prepare_send_message_to_network_reorder (struct sctk_thread_ptp_message_s * msg);
 
+void sctk_set_dynamic_reordering_buffer_creation();
+
 typedef struct {
   int key;
   struct sctk_thread_ptp_message_s* msg;

@@ -106,6 +106,8 @@ void sctk_network_init_multirail_tcp(char* name){
   char* name_ptr;
   int i;
 
+/*   sctk_set_dynamic_reordering_buffer_creation(); */
+
   name_ptr = net_name;
   sctk_route_set_rail_nb(NB_RAILS);
   rails = sctk_malloc(NB_RAILS*sizeof(sctk_rail_info_t*));
@@ -127,4 +129,5 @@ void sctk_network_init_multirail_tcp(char* name){
   sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_multirail_tcp);
   sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_multirail_tcp);
   sctk_network_mode = net_name;
+
 }
