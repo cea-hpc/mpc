@@ -162,6 +162,7 @@ static void* sctk_tcp_thread(sctk_route_table_t* tmp){
     size = size - sizeof(sctk_thread_ptp_message_t);
     sctk_safe_read(fd,(char*)body,size);
 
+    sctk_rebuild_header(msg);
     sctk_reinit_header(msg,sctk_free,sctk_net_message_copy);
 
     sctk_nodebug("MSG RECV|%s|", (char*)body);    
@@ -201,7 +202,7 @@ sctk_network_send_message_tcp (sctk_thread_ptp_message_t * msg,sctk_rail_info_t*
 
   sctk_nodebug("send message through rail %d",rail->rail_number);
 
-  tmp = sctk_get_route(msg->body.header.glob_destination,rail);
+  tmp = sctk_get_route(msg->sctk_msg_get_glob_destination,rail);
 
   sctk_spinlock_lock(&(tmp->data.tcp.lock));
 

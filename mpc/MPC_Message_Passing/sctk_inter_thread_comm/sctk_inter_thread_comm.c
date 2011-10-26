@@ -560,6 +560,17 @@ void sctk_unregister_thread (const int i){
 
 void sctk_free_pack(void*); 
 
+void sctk_rebuild_header (sctk_thread_ptp_message_t * msg){
+  if(msg->sctk_msg_get_source != MPC_ANY_SOURCE)
+    msg->sctk_msg_get_glob_source = 
+      sctk_get_comm_world_rank (msg->sctk_msg_get_communicator,msg->sctk_msg_get_source);
+  else 
+    msg->sctk_msg_get_glob_source = -1;
+
+  msg->sctk_msg_get_glob_destination = 
+    sctk_get_comm_world_rank (msg->sctk_msg_get_communicator,msg->sctk_msg_get_destination);
+}
+
 void sctk_reinit_header (sctk_thread_ptp_message_t *tmp, void (*free_memory)(void*),
 		       void (*message_copy)(sctk_message_to_copy_t*)){
 
@@ -632,11 +643,11 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
   msg->body.header.destination = destination;
 
   if(source != MPC_ANY_SOURCE)
-    msg->body.header.glob_source = sctk_get_comm_world_rank (communicator,source);
+    msg->sctk_msg_get_glob_source = sctk_get_comm_world_rank (communicator,source);
   else 
-    msg->body.header.glob_source = -1;
+    msg->sctk_msg_get_glob_source = -1;
 
-  msg->body.header.glob_destination = sctk_get_comm_world_rank (communicator,destination);
+  msg->sctk_msg_get_glob_destination = sctk_get_comm_world_rank (communicator,destination);
   msg->body.header.communicator = communicator;
   msg->body.header.message_tag = message_tag;
   msg->body.header.specific_message_tag = specific_message_tag;
@@ -647,8 +658,8 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
     
     request->header.source = source;
     request->header.destination = destination;
-    request->header.glob_destination = msg->body.header.glob_destination;
-    request->header.glob_source = msg->body.header.glob_source;
+    request->header.glob_destination = msg->sctk_msg_get_glob_destination;
+    request->header.glob_source = msg->sctk_msg_get_glob_source;
     request->header.message_tag = message_tag;
     request->header.communicator = communicator;
     request->is_null = 0;
@@ -816,7 +827,7 @@ static inline void sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t* pa
       /*Copy message*/
       sctk_ptp_copy_tasks_insert(ptr_recv,ptr_send);
     } else {
-      if(ptr_recv->msg->body.header.remote_source){
+      if(ptr_recv->msg->tail.remote_source){
 	sctk_network_notify_matching_message (ptr_recv->msg);
       }
       if(ptr_recv->msg->body.header.source == MPC_ANY_SOURCE){
@@ -940,14 +951,14 @@ void sctk_send_message (sctk_thread_ptp_message_t * msg){
   sctk_internal_ptp_t* tmp;
 
 /*   key.comm = msg->header.communicator; */
-  key.destination = msg->body.header.glob_destination;
+  key.destination = msg->sctk_msg_get_glob_destination;
 
   if(msg->body.completion_flag != NULL){
     *(msg->body.completion_flag) = SCTK_MESSAGE_PENDING;
   }
 
-  msg->body.header.remote_source = 0;
-  msg->body.header.remote_destination = 0;
+  msg->tail.remote_source = 0;
+  msg->tail.remote_destination = 0;
 
   sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
   HASH_FIND(hh,sctk_ptp_table,&key,sizeof(sctk_comm_dest_key_t),tmp);
@@ -957,7 +968,7 @@ void sctk_send_message (sctk_thread_ptp_message_t * msg){
     sctk_internal_ptp_add_send_incomming(tmp,msg);
   } else {
     /*Entering low level comm*/
-    msg->body.header.remote_destination = 1;
+    msg->tail.remote_destination = 1;
     sctk_network_send_message (msg);
   }
 }
@@ -968,15 +979,15 @@ void sctk_recv_message (sctk_thread_ptp_message_t * msg){
   sctk_internal_ptp_t* send_tmp = NULL;
 
 /*   key.comm = msg->header.communicator; */
-  key.destination = msg->body.header.glob_destination;
-  send_key.destination = msg->body.header.glob_source;
+  key.destination = msg->sctk_msg_get_glob_destination;
+  send_key.destination = msg->sctk_msg_get_glob_source;
 
   if(msg->body.completion_flag != NULL){
     *(msg->body.completion_flag) = SCTK_MESSAGE_PENDING;
   }
 
-  msg->body.header.remote_source = 0;
-  msg->body.header.remote_destination = 0;
+  msg->tail.remote_source = 0;
+  msg->tail.remote_destination = 0;
 
   sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
   HASH_FIND(hh,sctk_ptp_table,&key,sizeof(sctk_comm_dest_key_t),tmp);
@@ -986,7 +997,7 @@ void sctk_recv_message (sctk_thread_ptp_message_t * msg){
 
   if(send_tmp == NULL){
     /*Entering low level comm*/
-    msg->body.header.remote_source = 1;
+    msg->tail.remote_source = 1;
     sctk_network_notify_recv_message (msg);    
   }
 

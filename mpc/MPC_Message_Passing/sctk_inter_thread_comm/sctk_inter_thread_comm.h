@@ -49,16 +49,14 @@ extern "C"
 
   typedef struct sctk_thread_message_header_s
   {
+
     int source;
     int destination;
-    int glob_source;
-    int glob_destination;
     sctk_communicator_t communicator;
     int message_tag;
+    int message_number;
 
     specific_message_tag_t specific_message_tag;
-    char remote_source;
-    char remote_destination;
 
     size_t msg_size;
   } sctk_thread_message_header_t;
@@ -136,11 +134,15 @@ typedef struct sctk_message_to_copy_s{
   typedef struct {
     sctk_thread_message_header_t header;
     volatile int* completion_flag;
-    int message_number;
   }sctk_thread_ptp_message_body_t;
 
   /*Data not to tranfers in inter-process communications*/
   typedef struct {
+    char remote_source;
+    char remote_destination;
+    int glob_source;
+    int glob_destination;
+
     sctk_request_t * request; 
 
     /*Message data*/
@@ -161,6 +163,17 @@ typedef struct sctk_message_to_copy_s{
     /*Reoder buffer struct*/
     sctk_reorder_buffer_t reorder;
   }sctk_thread_ptp_message_tail_t;
+
+#define sctk_msg_get_source body.header.source
+#define sctk_msg_get_destination body.header.destination
+#define sctk_msg_get_glob_source tail.glob_source
+#define sctk_msg_get_glob_destination tail.glob_destination
+#define sctk_msg_get_communicator body.header.communicator
+#define sctk_msg_get_message_tag body.header.message_tag
+#define sctk_msg_get_message_number body.header.message_number
+#define sctk_msg_get_specific_message_tag body.header.specific_message_tag
+#define sctk_msg_get_msg_size body.header.msg_size
+#define sctk_msg_get_completion_flag body.completion_flag
 
   typedef struct sctk_thread_ptp_message_s{
     sctk_thread_ptp_message_body_t body;
@@ -234,6 +247,7 @@ typedef struct sctk_message_to_copy_s{
   void sctk_message_completion_and_free(sctk_thread_ptp_message_t* send,
 					sctk_thread_ptp_message_t* recv);
   void sctk_complete_and_free_message (sctk_thread_ptp_message_t * msg);
+  void sctk_rebuild_header (sctk_thread_ptp_message_t * msg);
 
 #ifdef __cplusplus
 }

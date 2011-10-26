@@ -114,13 +114,14 @@ sctk_reorder_table_t* sctk_get_reorder(int dest){
 void sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
   sctk_reorder_table_t* tmp;
   int number;
-  tmp = sctk_get_reorder(msg->body.header.glob_source);
+  
+  tmp = sctk_get_reorder(msg->sctk_msg_get_glob_source);
 
   number = OPA_load_int(&(tmp->message_number_src));
-  sctk_nodebug("wait for %d recv %d",number,msg->body.message_number);
+  sctk_nodebug("wait for %d recv %d",number,msg->sctk_msg_get_message_number);
 
-  if(number == msg->body.message_number){
-    sctk_nodebug("Send %d",msg->body.message_number);
+  if(number == msg->sctk_msg_get_message_number){
+    sctk_nodebug("Send %d",msg->sctk_msg_get_message_number);
     sctk_send_message(msg);
     OPA_fetch_and_incr_int(&(tmp->message_number_src));
     msg = NULL;
@@ -137,7 +138,7 @@ void sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
 	key = OPA_load_int(&(tmp->message_number_src));
 	HASH_FIND(hh,tmp->buffer,&key,sizeof(int),reorder);
 	if(reorder != NULL){
-	  sctk_nodebug("Send %d",reorder->msg->body.message_number);
+	  sctk_nodebug("Send %d",reorder->msg->sctk_msg_get_message_number);
 	  sctk_send_message(reorder->msg);
 	  OPA_fetch_and_incr_int(&(tmp->message_number_src));
 	}
@@ -147,11 +148,11 @@ void sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
   } else {
     sctk_reorder_buffer_t* reorder;
 
-    sctk_nodebug("Delay wait for %d recv %d",number,msg->body.message_number);
+    sctk_nodebug("Delay wait for %d recv %d",number,msg->sctk_msg_get_message_number);
 
     reorder = &(msg->tail.reorder);
 
-    reorder->key = msg->body.message_number;
+    reorder->key = msg->sctk_msg_get_message_number;
     reorder->msg = msg;
     
     sctk_spinlock_lock(&(tmp->lock));
@@ -163,6 +164,6 @@ void sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
 void sctk_prepare_send_message_to_network_reorder (sctk_thread_ptp_message_t * msg){
   sctk_reorder_table_t* tmp;
 
-  tmp = sctk_get_reorder(msg->body.header.glob_destination);
-  msg->body.message_number = OPA_fetch_and_incr_int(&(tmp->message_number_dest));
+  tmp = sctk_get_reorder(msg->sctk_msg_get_glob_destination);
+  msg->sctk_msg_get_message_number = OPA_fetch_and_incr_int(&(tmp->message_number_dest));
 }
