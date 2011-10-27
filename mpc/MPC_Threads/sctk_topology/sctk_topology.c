@@ -145,7 +145,7 @@ sctk_restrict_topology ()
     {
       /* Determine processor number per process */
       int processor_number = sctk_processor_number_on_node / detected_on_this_host;
-      const int remaining_procs = sctk_processor_number_on_node % detected_on_this_host;
+      int remaining_procs = sctk_processor_number_on_node % detected_on_this_host;
       int start = processor_number * rank;
       if(processor_number < 1){
 	processor_number = 1;

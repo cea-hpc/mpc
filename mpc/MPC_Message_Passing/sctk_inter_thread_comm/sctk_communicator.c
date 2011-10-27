@@ -577,7 +577,7 @@ sctk_get_free_communicator_duplicate (const sctk_communicator_t origin_communica
     assume (sctk_communicator_list[origin_communicator]->
 	    new_communicator != (sctk_communicator_t)-1);
   }
-  sctk_broadcast (&(sctk_communicator_list[origin_communicator]->new_communicator),sizeof(sctk_communicator_t),root,origin_communicator);
+  sctk_broadcast ((void*)&(sctk_communicator_list[origin_communicator]->new_communicator),sizeof(sctk_communicator_t),root,origin_communicator);
 }
 
 static inline int

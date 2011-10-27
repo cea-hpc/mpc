@@ -49,7 +49,7 @@ static inline void __sctk_optimized_memcpy (void * dest, const void * src, size_
 {
 #if !defined(NO_INTERNAL_ASSERT) && defined(MPC_Allocator)
   sctk_check_address(dest,n);
-  sctk_check_address(src,n);
+  sctk_check_address((void*)src,n);
 #endif
   memcpy(dest,src,n);
 }

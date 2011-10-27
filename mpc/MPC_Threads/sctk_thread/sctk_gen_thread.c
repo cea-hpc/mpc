@@ -1174,7 +1174,7 @@ sctk_gen_thread_wait_for_value_and_poll (volatile int *data, int value,
 					 void (*func) (void *), void *arg)
 {
   not_initialized ();
-  sctk_touch_ptr (data);
+  sctk_touch_ptr ((const void*)data);
   sctk_touch_func_n (func);
   sctk_touch_ptr (arg);
   sctk_touch_int (value);
