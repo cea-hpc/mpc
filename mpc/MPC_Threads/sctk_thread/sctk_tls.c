@@ -857,7 +857,7 @@ __sctk__hls_single_done ( sctk_hls_scope_t scope ) {
 	hls_level * const level = sctk_hls[scope];
 	
 	sctk_atomics_store_int ( &level->entered, 0 ) ;
-	sctk_atomics_read_barrier() ;
+	sctk_atomics_write_barrier() ;
 	level->generation = hls_generation[scope].wait ;
 
 	if ( scope == sctk_hls_node_scope || scope == sctk_hls_numa_level_2_scope )
@@ -879,7 +879,7 @@ __sctk__hls_barrier ( sctk_hls_scope_t scope ) {
 			const int entered = sctk_atomics_fetch_and_incr_int ( &level->entered ) ;
 			if ( entered == sctk_atomics_load_int(&level->toenter) - 1 ) {
 				sctk_atomics_store_int ( &level->entered, 0 ) ;
-				sctk_atomics_read_barrier() ;
+				sctk_atomics_write_barrier() ;
 				level->generation = mygeneration ;
 			}else{
 				sctk_thread_wait_for_value ( &level->generation, mygeneration ) ;
@@ -892,7 +892,7 @@ __sctk__hls_barrier ( sctk_hls_scope_t scope ) {
 	const int entered = sctk_atomics_fetch_and_incr_int ( &level->entered ) ;
 	if ( entered == sctk_atomics_load_int(&level->toenter) - 1 ) {
 		sctk_atomics_store_int ( &level->entered, 0 ) ;
-		sctk_atomics_read_barrier() ;
+		sctk_atomics_write_barrier() ;
 		level->generation = mygeneration ;
 	}else{
 		sctk_thread_wait_for_value ( &level->generation, mygeneration ) ;
