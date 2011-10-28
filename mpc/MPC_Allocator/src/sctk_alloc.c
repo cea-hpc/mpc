@@ -34,7 +34,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "sctk.h"
-#include "sctk_debug_io.h"
+#include "sctk_io_helper.h"
 #include <sys/mman.h>
 #include "mpcalloc.h"
 #include "sctk.h"

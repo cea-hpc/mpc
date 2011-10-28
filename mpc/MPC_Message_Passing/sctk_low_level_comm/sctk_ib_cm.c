@@ -35,6 +35,7 @@
 #include "sctk_alloc.h"
 #include "sctk_iso_alloc.h"
 #include "sctk_net_tools.h"
+#include "sctk_io_helper.h"
 
 static int sockfd;
 static int port;
@@ -103,8 +104,8 @@ static void* server(void* arg)
     assert (fd >= 0);
 
     /* receive RTR */
-    read(fd, &src, sizeof(int));
-    read(fd, msg, 256);
+    sctk_safe_checked_read(fd, &src, sizeof(int));
+    sctk_safe_checked_read(fd, msg, 256);
     sctk_nodebug("Msg received from %d %s", src, msg);
 
     ALLOCATOR_LOCK(src, IBV_CHAN_RC_SR);
@@ -130,11 +131,11 @@ static void* server(void* arg)
 
     snprintf(msg, 256,"%05"SCNu16":%010"SCNu32":%010"SCNu32, rail->lid, remote->qp->qp_num,
         remote->psn);
-    write(fd, msg, 256);
+    sctk_safe_checked_write(fd, msg, 256);
 
     /* send RTR */
     int done;
-    read(fd, &done, sizeof(int));
+    sctk_safe_checked_read(fd, &done, sizeof(int));
     if (remote->is_rts == 0) {
       ALLOCATOR_LOCK(src, IBV_CHAN_RC_SR);
       if (remote->is_rts == 0) {
@@ -217,12 +218,12 @@ void sctk_net_ibv_cm_client(char* host, int port, int dest, sctk_net_ibv_qp_remo
   }
 
   /* send REQ */
-  write(clientsock_fd, &sctk_process_rank, sizeof(int));
+  sctk_safe_checked_write(clientsock_fd, &sctk_process_rank, sizeof(int));
   snprintf(msg, 256, "%05d:%010d:%010d", rail->lid, remote->qp->qp_num, remote->psn);
-  write(clientsock_fd, msg, 256);
+  sctk_safe_checked_write(clientsock_fd, msg, 256);
 
   /* receive REP */
-  read(clientsock_fd, msg, 256);
+  sctk_safe_checked_read(clientsock_fd, msg, 256);
   if (remote->is_rtr == 0) {
     ALLOCATOR_LOCK(dest, IBV_CHAN_RC_SR);
     if (remote->is_rtr == 0) {
@@ -253,7 +254,7 @@ void sctk_net_ibv_cm_client(char* host, int port, int dest, sctk_net_ibv_qp_remo
 
   /* send DONE */
   int done = 1;
-  write(clientsock_fd, &done, sizeof(int));
+  sctk_safe_checked_write(clientsock_fd, &done, sizeof(int));
 
   sctk_nodebug ("Try connection to %s on port %d done", name, port);
 }

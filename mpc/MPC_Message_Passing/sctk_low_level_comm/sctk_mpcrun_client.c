@@ -40,58 +40,6 @@
 static char local_host[HOSTNAME_PORT_SIZE];
 static char port[PORT_SIZE];
 
-//ssize_t
-//sctk_mpcserver_safe_read (int fd, void *buf, size_t count)
-//{
-//  char *tmp;
-//  ssize_t already_read = 0;
-//  ssize_t dcount = 0;
-//
-//  tmp = buf;
-//  while (already_read < count)
-//    {
-//      tmp += dcount;
-//      dcount = read (fd, tmp, count - already_read);
-//      if (dcount < 0)
-//	{
-//	  perror ("safe_read");
-//	  abort();
-//	}
-//      already_read += dcount;
-//    }
-//  assert (count == already_read);
-//  return already_read;
-//}
-//
-//ssize_t
-//sctk_mpcserver_safe_write (int fd,  void *buf, size_t count)
-//{
-//  ssize_t dcount = 0;
-//  ssize_t already_written = 0;
-//  char *tmp = (char *)buf;
-//
-//
-//  while( already_written < count )
-//    {
-//     tmp += dcount;
-//     dcount = write (fd, buf, count - already_written );
-//
-//     if ( dcount < 0 )
-//       {
-//         perror ("safe_write");
-//	 abort();
-//       }
-//
-//	already_written += dcount;
-//    }
-//
-//  assert (already_written == count);
-//  return already_written;
-//}
-
-
-
-
 int sctk_use_tcp_o_ib = 0;
 
 int
@@ -143,48 +91,6 @@ sctk_tcp_connect_to (int portno, char *name_init)
   sctk_nodebug ("Try connection to %s on port %d done", name, portno);
   return clientsock_fd;
 }
-
-//int
-//sctk_mpcrun_client (char *request, void *in, size_t size_in,
-//		    void *out, size_t size_out)
-//{
-//  int fd;
-//  char req[MPC_ACTION_SIZE];
-//
-//  memset (req, 0, MPC_ACTION_SIZE);
-//  assume (strlen (request) + 1 <= MPC_ACTION_SIZE);
-//  memcpy (req, request, strlen (request) + 1);
-//
-//  fd = sctk_tcp_connect_to (sctk_mpcrun_client_port, sctk_mpcrun_client_host);
-//  sctk_nodebug ("Connected to host with req %s", req);
-//  sctk_mpcserver_safe_write (fd, req, MPC_ACTION_SIZE);
-//  sctk_mpcserver_safe_write (fd, &sctk_process_rank, sizeof (int));
-//  if (out != NULL)
-//    {
-//      sctk_mpcserver_safe_write (fd, &size_out, sizeof (unsigned long));
-//      sctk_mpcserver_safe_write (fd, out, size_out);
-//    }
-//  if (in != NULL)
-//    {
-//      unsigned long size;
-//      sctk_mpcserver_safe_read (fd, &size, sizeof (unsigned long));
-//      if (size != 0)
-//	{
-//	  assume (size == size_in);
-//	  sctk_mpcserver_safe_read (fd, in, size_in);
-//	}
-//      else
-//	{
-//	  sctk_nodebug ("Request fail %s", request);
-//	  close (fd);
-//	  return 1;
-//	}
-//    }
-//
-//  close (fd);
-//  return 0;
-//}
-
 
 /*
  * ===  FUNCTION  ===================================================
