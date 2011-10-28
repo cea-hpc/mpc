@@ -29,6 +29,13 @@
 #include "sctk_spinlock.h"
 #include "sctk_alloc.h"
 
+/* to set GS register */
+#include <asm/prctl.h>
+#include <sys/prctl.h>
+#include <asm-x86_64/unistd.h>
+
+
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -70,6 +77,26 @@ extern "C"
   void sctk_extls_keep_non_current_thread (void **tls, int *scopes);
   void sctk_extls_delete ();
 
+  void sctk_tls_module_alloc_and_fill (void **tls_module, void *extls);
+
+  static inline void
+  sctk_set_gs_register (void *tls_module)
+  {
+	  if ( tls_module == NULL ) {
+		  fprintf(stderr,"restoring non initialized context\n");
+		  return ;
+	  }
+	  int result;
+	  void *gs = *(void**)tls_module ;
+	  asm volatile ("syscall"
+			  : "=a" (result) 
+			  : "0" ((unsigned long int ) __NR_arch_prctl),     
+			  "D" ((unsigned long int ) ARCH_SET_GS),         
+			  "S" (gs)
+			  : "memory", "cc", "r11", "cx");
+	  assume(result == 0);
+  }
+
 
 #if defined (MPC_Allocator)
   extern __thread void *sctk_tls_key;
@@ -87,6 +114,8 @@ extern "C"
   extern __thread void *tls_args;
 
   extern __thread void *sctk_hls_generation;
+
+  extern __thread void *sctk_tls_module ;
 
 #endif
 
@@ -110,6 +139,7 @@ extern "C"
     tls_save (mpc_user_tls_1);
     tls_save (sctk_extls);
 	tls_save (sctk_hls_generation);
+	tls_save (sctk_tls_module);
 #ifdef MPC_Message_Passing
     tls_save (sctk_message_passing);
 #endif
@@ -131,6 +161,8 @@ extern "C"
     tls_restore (mpc_user_tls_1);
     tls_restore (sctk_extls);
     tls_restore (sctk_hls_generation);
+    tls_restore (sctk_tls_module);
+	sctk_set_gs_register(sctk_tls_module);
 #ifdef MPC_Message_Passing
     tls_restore (sctk_message_passing);
 #endif
@@ -158,23 +190,24 @@ extern "C"
     tls_init (tls_args);
     tls_init (tls_trace_module);
     tls_init (sctk_hls_generation);
+	sctk_tls_module_alloc_and_fill(&(ucp->sctk_tls_module),ucp->sctk_extls) ;
 #endif
   }
 
   static inline void sctk_context_init_tls (sctk_mctx_t * ucp)
   {
 #if defined(SCTK_USE_TLS)
-    sctk_context_init_tls_without_extls (ucp);
     tls_init (sctk_extls);
     sctk_extls_duplicate (&(ucp->sctk_extls));
+    sctk_context_init_tls_without_extls (ucp);
 #endif
   }
 
   static inline void sctk_context_init_tls_with_specified_extls (sctk_mctx_t * ucp, void * extls)
   {
 #if defined(SCTK_USE_TLS)
-    sctk_context_init_tls_without_extls (ucp);
 	ucp->sctk_extls = extls ;
+    sctk_context_init_tls_without_extls (ucp);
 #endif
   }
 

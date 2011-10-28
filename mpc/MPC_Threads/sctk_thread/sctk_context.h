@@ -155,6 +155,7 @@ extern "C"
     void *mpc_user_tls_1;
     void *sctk_extls;
 	void *sctk_hls_generation;
+	void *sctk_tls_module;
     void *sctk_message_passing;
     //profiling TLS
     void *tls_trace_module;

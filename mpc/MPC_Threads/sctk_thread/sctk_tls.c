@@ -121,6 +121,11 @@ static __thread hls_level* sctk_hls[sctk_hls_max_scope] ; /* per VP */
 __thread void* sctk_hls_generation ; /* per thread */
 /* need to be saved and restored at context switch */
 
+__thread void* sctk_tls_module ; /* store a direct pointer to each tls module */
+/* used for tls optimized in the linker */
+/* per thread: need to be saved and restored at context switch */
+/* real type: sctk_tls_module_t** */
+
 static inline void
 sctk_tls_init_level (tls_level * level)
 {
@@ -580,6 +585,33 @@ void sctk_hls_free ()
   }
   free ( sctk_hls_repository ) ;
 }
+
+void
+sctk_tls_module_alloc_and_fill (void **tls_module, void *extls)
+{
+	int i ;
+	tls_level **tls = (tls_level**) extls ;
+	sctk_tls_module_t **module = sctk_calloc(sctk_extls_max_scope+sctk_hls_max_scope,sizeof(sctk_tls_module_t*));
+	for ( i=0 ; i<sctk_extls_max_scope ; ++i ) {
+		if ( tls[i]->modules == NULL )
+			continue ;
+		/* optimized tls access are in the first module */
+		if ( tls[i]->modules[0] == NULL ) {
+			void *dummy = __sctk__tls_get_addr__generic_scope (0,0,tls[i]) ;
+		}
+		module[i] = (sctk_tls_module_t*) &tls[i]->modules[0] ;
+	}
+	for ( i=0 ; i<sctk_hls_max_scope ; ++i ) {
+		if ( sctk_hls[i] == NULL || sctk_hls[i]->level.modules == NULL )
+			continue ;
+		if ( sctk_hls[i]->level.modules[0] == NULL ) {
+			void *dummy = __sctk__tls_get_addr__generic_scope (0,0,&sctk_hls[i]->level) ;
+		}
+		module[sctk_extls_max_scope+i] = (sctk_tls_module_t*) &sctk_hls[i]->level.modules[0] ;
+	}
+	*tls_module = (void*)module ;
+}
+
 
 #if defined(SCTK_i686_ARCH_SCTK) || defined (SCTK_x86_64_ARCH_SCTK)
 
