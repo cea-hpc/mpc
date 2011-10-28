@@ -425,7 +425,6 @@ sctk_extls_delete ()
  */
 void sctk_hls_build_repository ()
 {
-  int i,j ;
   const int numa_level_2_number   = sctk_get_numa_number(2) ;
   const int numa_level_1_number   = sctk_get_numa_number(1) ;
   const int socket_number         = sctk_get_socket_number() ;
@@ -438,14 +437,27 @@ void sctk_hls_build_repository ()
 	  + cache_level_3_number + cache_level_2_number + cache_level_1_number
 	  + core_number ;
 
-  sctk_hls_repository = sctk_malloc ( numa_level_1_number*sizeof(hls_level*) );
+  if ( sctk_is_numa_node() )
+  {
+	  int i,j ;
+	  sctk_hls_repository = sctk_malloc ( numa_level_1_number*sizeof(hls_level*) );
 
-  for ( i=0 ; i < numa_level_1_number ; ++i ) {
-	  const int n = total_level_below_numa_1 + (i == 0)
-		  + ( numa_level_2_number > 0 && i % numa_level_2_number == 0 ) ;
-	  sctk_hls_repository[i] = sctk_malloc_on_node ( n * sizeof(hls_level), i ) ;
+	  for ( i=0 ; i < numa_level_1_number ; ++i ) {
+		  const int n = total_level_below_numa_1 + (i == 0)
+			  + ( numa_level_2_number > 0 && i % numa_level_2_number == 0 ) ;
+		  sctk_hls_repository[i] = sctk_malloc_on_node ( n * sizeof(hls_level), i ) ;
+		  for ( j=0 ; j<n ; ++j )
+			  sctk_hls_init_level ( sctk_hls_repository[i] + j ) ;
+	  }
+  }
+  else
+  {
+	  int j ;
+	  const int n = total_level_below_numa_1 + 1 ; 
+	  sctk_hls_repository = sctk_malloc ( sizeof(hls_level*) ) ;
+	  sctk_hls_repository[0] = sctk_malloc ( n * sizeof(hls_level ) ) ;
 	  for ( j=0 ; j<n ; ++j )
-		  sctk_hls_init_level ( sctk_hls_repository[i] + j ) ;
+		  sctk_hls_init_level ( sctk_hls_repository[0] + j ) ;
   }
 
   page_size = getpagesize ();
@@ -469,7 +481,8 @@ void sctk_hls_checkout_on_vp ()
   const int cache_level_1_number  = sctk_get_cache_number(1) ;
   const int core_number           = sctk_get_core_number() ;
   const int vp                    = sctk_thread_get_vp() ;
-  const int numa_1_id             = sctk_get_numa_id(1,vp) ;
+  const int numa_1_id             = sctk_is_numa_node() ? 
+	                                sctk_get_numa_id(1,vp) : 0 ;
   int id ;
   int child_id ;
   int i ;
@@ -495,12 +508,17 @@ void sctk_hls_checkout_on_vp ()
 		  offset += (numa_1_id % numa_level_2_number == 0) ;
 	  }
 
-	  sctk_hls[sctk_hls_numa_level_1_scope]
-		  = sctk_hls_repository[numa_1_id] + offset ;
-	  offset += numa_level_1_number ;
+	  if ( numa_level_1_number > 0 ) {
+		  sctk_hls[sctk_hls_numa_level_1_scope]
+			  = sctk_hls_repository[numa_1_id] + offset ;
+		  offset += numa_level_1_number ;
+	  }
 
 	  id = sctk_get_socket_id (vp) ;
-	  child_id = id % ( socket_number / numa_level_1_number ) ;
+	  if ( numa_level_1_number > 0 )
+		  child_id = id % ( socket_number / numa_level_1_number ) ;
+	  else
+		  child_id = id ;
 	  sctk_hls[sctk_hls_socket_scope] = sctk_hls_repository[numa_1_id]
 		  + offset + child_id * size_below ;  
 	  offset += child_id * size_below + 1 ; 
@@ -542,15 +560,19 @@ void sctk_hls_checkout_on_vp ()
 
   /* update the number of threads to enter hls levels */
 
-  for ( i = sctk_hls_cache_level_3_scope ; i < sctk_hls_max_scope ; ++i )
+  for ( i = sctk_hls_socket_scope ; i < sctk_hls_max_scope ; ++i )
 	  if ( sctk_hls[i] != NULL )
 		  sctk_atomics_incr_int ( &sctk_hls[i]->toenter ) ;
 
-  const int toenter = sctk_atomics_fetch_and_incr_int ( &sctk_hls[sctk_hls_numa_level_1_scope]->toenter ) ;
-  if ( toenter == 0 ) {
-	  for ( i = 0 ; i < sctk_hls_numa_level_1_scope ; ++i )
-		  if ( sctk_hls[i] != NULL )
-			  sctk_atomics_incr_int ( &sctk_hls[i]->toenter ) ;
+  if ( sctk_is_numa_node() ) {
+	  const int toenter = sctk_atomics_fetch_and_incr_int ( &sctk_hls[sctk_hls_numa_level_1_scope]->toenter ) ;
+	  if ( toenter == 0 ) {
+		  for ( i = 0 ; i < sctk_hls_numa_level_1_scope ; ++i )
+			  if ( sctk_hls[i] != NULL )
+				  sctk_atomics_incr_int ( &sctk_hls[i]->toenter ) ;
+	  }
+  }else{
+	  sctk_atomics_incr_int ( &sctk_hls[sctk_hls_node_scope]->toenter ) ;
   }
 }
 
@@ -560,9 +582,14 @@ void sctk_hls_checkout_on_vp ()
 void sctk_hls_free ()
 {
   int i ;
-  const int numa_level_1_number   = sctk_get_numa_number(1) ;
-  for ( i=0 ; i < numa_level_1_number ; ++i )
-	  free ( sctk_hls_repository[i] ) ;
+  if ( sctk_is_numa_node() ) {
+	  const int numa_level_1_number   = sctk_get_numa_number(1) ;
+	  for ( i=0 ; i < numa_level_1_number ; ++i )
+		  free ( sctk_hls_repository[i] ) ;
+  }else{
+	  free ( sctk_hls_repository[0] ) ;
+  }
+  free ( sctk_hls_repository ) ;
 }
 
 #if defined(SCTK_i686_ARCH_SCTK) || defined (SCTK_x86_64_ARCH_SCTK)
@@ -824,7 +851,9 @@ __sctk__hls_single ( sctk_hls_scope_t scope ) {
 	hls_generation_t * const hls_generation = (hls_generation_t*) sctk_hls_generation ;
 	const int mygeneration = ++hls_generation[scope].wait ;
 	
-	if ( scope == sctk_hls_node_scope || scope == sctk_hls_numa_level_2_scope ) {
+	if ( sctk_is_numa_node() &&
+	   ( scope == sctk_hls_node_scope || scope == sctk_hls_numa_level_2_scope ) )
+	{
 		if ( __sctk__hls_single ( sctk_hls_numa_level_1_scope ) ) {
 			const int entered = sctk_atomics_fetch_and_incr_int ( &level->entered ) ;
 			if ( entered == sctk_atomics_load_int(&level->toenter) - 1 ) {
@@ -860,8 +889,11 @@ __sctk__hls_single_done ( sctk_hls_scope_t scope ) {
 	sctk_atomics_write_barrier() ;
 	level->generation = hls_generation[scope].wait ;
 
-	if ( scope == sctk_hls_node_scope || scope == sctk_hls_numa_level_2_scope )
+	if ( sctk_is_numa_node() && 
+	   ( scope == sctk_hls_node_scope || scope == sctk_hls_numa_level_2_scope ) )
+	{
 		__sctk__hls_single_done ( sctk_hls_numa_level_1_scope ) ;
+	}
 
 	return ;
 }
@@ -874,7 +906,9 @@ __sctk__hls_barrier ( sctk_hls_scope_t scope ) {
 	hls_generation_t * const hls_generation = (hls_generation_t*) sctk_hls_generation ;
 	hls_level * const level = sctk_hls[scope];
 	const int mygeneration = ++hls_generation[scope].wait ;
-	if ( scope == sctk_hls_node_scope || scope == sctk_hls_numa_level_2_scope ) {
+	if ( sctk_is_numa_node() &&
+	   ( scope == sctk_hls_node_scope || scope == sctk_hls_numa_level_2_scope ) )
+	{
 		if ( __sctk__hls_single ( sctk_hls_numa_level_1_scope ) ) {
 			const int entered = sctk_atomics_fetch_and_incr_int ( &level->entered ) ;
 			if ( entered == sctk_atomics_load_int(&level->toenter) - 1 ) {

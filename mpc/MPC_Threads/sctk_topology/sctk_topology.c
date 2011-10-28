@@ -510,6 +510,7 @@ int sctk_get_cache_level_number ()
 }
 
 /*! \brief Return the number of NUMA levels
+ * return 0 if machine is not NUMA
 */
 int sctk_get_numa_level_number ()
 {
