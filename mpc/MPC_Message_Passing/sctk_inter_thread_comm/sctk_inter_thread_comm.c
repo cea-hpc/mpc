@@ -835,6 +835,7 @@ int sctk_perform_messages_probe_matching(sctk_internal_ptp_t* pair,
   }
   return 0;
 }
+
 static inline void sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t* pair){ 
   sctk_msg_list_t* ptr_recv;
   sctk_msg_list_t* ptr_send;
@@ -872,7 +873,7 @@ static inline void sctk_perform_messages_for_pair(sctk_internal_ptp_t* pair){
 	 || (pair->lists.incomming_recv.list != NULL)
 #endif
 	 )){
-    if(pair->lists.changed 
+    if(pair->lists.changed || 1
 #ifndef SCTK_DISABLE_REENTRANCE
        || (pair->lists.incomming_send.list != NULL)
        || (pair->lists.incomming_recv.list != NULL)
@@ -1012,6 +1013,7 @@ void sctk_send_message (sctk_thread_ptp_message_t * msg){
     sctk_network_send_message (msg);
   }
 }
+
 void sctk_recv_message (sctk_thread_ptp_message_t * msg){
   sctk_comm_dest_key_t key;
   sctk_internal_ptp_t* tmp;
