@@ -74,13 +74,19 @@ void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
   sctk_thread_data_t *thread_data;
   int myself;
   int total;
+  int total_max;
   int i; 
   
   thread_data = sctk_thread_data_get ();
   total = sctk_get_nb_task_total(communicator);
   myself = sctk_get_rank (communicator, thread_data->task_id);
+
+  total_max = (total / 2) * 2;
+  if(total_max < total){
+    total_max = total_max * 2;
+  }
   
-  for(i = 2; i <= total; i = i*2){
+  for(i = 2; i <= total_max; i = i*2){
     if(myself % i == 0){
       int src; 
       
@@ -100,7 +106,6 @@ void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
     }
   }
 
-  i = i/2;
   for(; i >=2 ; i = i / 2){
     if(myself % i == 0){
       int dest; 
