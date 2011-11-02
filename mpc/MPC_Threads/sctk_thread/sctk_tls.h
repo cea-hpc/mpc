@@ -29,13 +29,6 @@
 #include "sctk_spinlock.h"
 #include "sctk_alloc.h"
 
-/* to set GS register */
-#include <asm/prctl.h>
-#include <sys/prctl.h>
-#include <asm-x86_64/unistd.h>
-
-
-
 #ifdef __cplusplus
 extern "C"
 {
@@ -77,27 +70,6 @@ extern "C"
   void sctk_extls_keep_non_current_thread (void **tls, int *scopes);
   void sctk_extls_delete ();
 
-  void sctk_tls_module_alloc_and_fill (void **tls_module, void *extls);
-
-  static inline void
-  sctk_set_gs_register (void *tls_module)
-  {
-	  if ( tls_module == NULL ) {
-		  fprintf(stderr,"restoring non initialized context\n");
-		  return ;
-	  }
-	  int result;
-	  void *gs = *(void**)tls_module ;
-	  asm volatile ("syscall"
-			  : "=a" (result) 
-			  : "0" ((unsigned long int ) __NR_arch_prctl),     
-			  "D" ((unsigned long int ) ARCH_SET_GS),         
-			  "S" (gs)
-			  : "memory", "cc", "r11", "cx");
-	  assume(result == 0);
-  }
-
-
 #if defined (MPC_Allocator)
   extern __thread void *sctk_tls_key;
 #endif
@@ -115,7 +87,8 @@ extern "C"
 
   extern __thread void *sctk_hls_generation;
 
-  extern __thread void *sctk_tls_module ;
+  extern __thread void *sctk_tls_module_vp[sctk_extls_max_scope+sctk_hls_max_scope] ;
+  extern __thread void **sctk_tls_module ;
 
 #endif
 
@@ -152,6 +125,7 @@ extern "C"
   static inline void sctk_context_restore_tls (sctk_mctx_t * ucp)
   {
 #if defined(SCTK_USE_TLS)
+	int i ;
 #if defined (MPC_Allocator)
     sctk_tls_key = ucp->sctk_tls_key_local;
 #endif
@@ -162,7 +136,10 @@ extern "C"
     tls_restore (sctk_extls);
     tls_restore (sctk_hls_generation);
     tls_restore (sctk_tls_module);
-	sctk_set_gs_register(sctk_tls_module);
+	if ( sctk_tls_module != NULL ) {
+		for ( i=0; i<sctk_extls_max_scope+sctk_hls_max_scope; ++i )
+			sctk_tls_module_vp[i] = sctk_tls_module[i] ;
+	}
 #ifdef MPC_Message_Passing
     tls_restore (sctk_message_passing);
 #endif
@@ -190,7 +167,6 @@ extern "C"
     tls_init (tls_args);
     tls_init (tls_trace_module);
     tls_init (sctk_hls_generation);
-	sctk_tls_module_alloc_and_fill(&(ucp->sctk_tls_module),ucp->sctk_extls) ;
 #endif
   }
 
@@ -214,6 +190,10 @@ extern "C"
   void sctk_hls_build_repository () ;
   void sctk_hls_checkout_on_vp () ;
   void sctk_hls_register_thread () ;
+  
+  void sctk_tls_module_set_gs_register ();
+  void sctk_tls_module_alloc_and_fill ();
+
 
 #ifdef __cplusplus
 }
