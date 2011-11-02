@@ -134,7 +134,7 @@ typedef struct sctk_message_to_copy_s{
   /*Data to tranfers in inter-process communications*/
   typedef struct {
     sctk_thread_message_header_t header;
-    volatile int* completion_flag;
+    volatile int* volatile completion_flag;
   }sctk_thread_ptp_message_body_t;
 
   /*Data not to tranfers in inter-process communications*/

@@ -132,6 +132,7 @@ sctk_net_init_driver (char *name)
     sctk_nodebug("Use network %s",name);
 
     FIRST_TRY_DRIVER(tcp,sctk_network_init_simple_tcp);
+    TRY_DRIVER(tcpoib,sctk_network_init_simple_tcp_o_ib);
     TRY_DRIVER(simple_tcp,sctk_network_init_simple_tcp);
     TRY_DRIVER(multirail_tcp,sctk_network_init_multirail_tcp);
     DEFAUT_DRIVER();

@@ -34,6 +34,8 @@
 #include <semaphore.h>
 #ifdef MPC_Message_Passing
 #include <sctk_inter_thread_comm.h>
+#include <sctk_communicator.h>
+#include "sctk_asm.h"
 #endif
 
 #define SCTK_LOCAL_VERSION_MAJOR 0
@@ -59,13 +61,18 @@ pthread_wait_for_value_and_poll (int *data, int value,
 	    {
 #ifdef MPC_Message_Passing
 	      sctk_notify_idle_message ();
-#endif
+	      if(sctk_get_processor_number () == sctk_get_nb_task_local(SCTK_COMM_WORLD)){
+		sched_yield();
+	      } else {
+		kthread_usleep (10);
+	      }
+#else
 	      kthread_usleep (10);
+#endif
 	      i = 0;
 	    }
-/* 	  else */
-/* 	    sched_yield (); */
 	  i++;
+	  sctk_cpu_relax();
 	}
     }
 }

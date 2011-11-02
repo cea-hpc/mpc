@@ -151,9 +151,9 @@ main (int argc, char **argv)
   fprintf(stderr,"To next\n");
   for (size = 1; size < 1024 * 1024; size *= 2)
     {
-      message (my_rank, my_size, msg, size, 10000);
+      message (my_rank, 2, msg, size, 10000);
     }
-  message (my_rank, my_size, msg, max_tab_size, 1000);
+  message (my_rank, 2, msg, max_tab_size, 1000);
 
   MPC_Finalize ();
   return 0;

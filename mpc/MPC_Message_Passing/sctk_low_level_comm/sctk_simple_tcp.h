@@ -30,6 +30,7 @@ extern "C"
 #include <sctk_spinlock.h>
 
 void sctk_network_init_simple_tcp(char* name);
+  void sctk_network_init_simple_tcp_o_ib(char* name);
 
 #ifdef __cplusplus
 }

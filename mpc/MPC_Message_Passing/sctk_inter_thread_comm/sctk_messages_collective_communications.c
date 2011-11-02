@@ -75,9 +75,9 @@ void sctk_barrier_messages(const sctk_communicator_t communicator,
       assume(recv_text == '\0');
       assume(send_text == '\0');
     
-      sctk_set_header_in_message (&send_msg, 0, communicator, myself, dest,
+      sctk_set_header_in_message (&send_msg, i, communicator, myself, dest,
 				  &send_request, size,barrier_specific_message_tag);
-      sctk_set_header_in_message (&recv_msg, 0, communicator, src, myself,
+      sctk_set_header_in_message (&recv_msg, i, communicator, src, myself,
 				  &recv_request, size,barrier_specific_message_tag);
     
       sctk_nodebug("Send to %d, recv from %d",dest,src);
@@ -98,7 +98,7 @@ void sctk_barrier_messages(const sctk_communicator_t communicator,
 }
 
 void sctk_barrier_messages_init(sctk_internal_collectives_struct_t * tmp){
-  tmp->barrier_func = sctk_barrier_messages;    
+  tmp->barrier_func = sctk_barrier_messages;   
 }
 
 /************************************************************************/
@@ -108,57 +108,41 @@ void sctk_barrier_messages_init(sctk_internal_collectives_struct_t * tmp){
 void sctk_broadcast_messages (void *buffer, const size_t size,
 			    const int root, const sctk_communicator_t communicator,
 			    struct sctk_internal_collectives_struct_s *tmp){
-  sctk_thread_ptp_message_t send_msg;
-  sctk_request_t send_request;
-  sctk_thread_ptp_message_t recv_msg;
-  sctk_request_t recv_request;
   sctk_thread_data_t *thread_data;
   int myself;
   int total;
-  int dest;
-  int src;
-  int i;
-  int start;
   
   thread_data = sctk_thread_data_get ();
   total = sctk_get_nb_task_total(communicator);
   myself = sctk_get_rank (communicator, thread_data->task_id);
 
-  start = (total / 2) * 2;
-  if(start < total){
-    start = start * 2;
-  }
-  if(root != myself){
+  if(myself == root){
+    int i; 
+    for(i = 0; i < total; i++){
+      if(i != root){
+	sctk_thread_ptp_message_t send_msg;
+	sctk_request_t send_request;
+	
+	sctk_init_header(&send_msg,myself,sctk_message_contiguous,sctk_free_messages,
+			 sctk_message_copy); 
+	sctk_add_adress_in_message(&send_msg,buffer,size); 
+	sctk_set_header_in_message (&send_msg, root, communicator, root, i,
+				    &send_request, size,broadcast_specific_message_tag);
+	sctk_send_message (&send_msg);
+	sctk_wait_message (&send_request);  
+      }
+    }
+  } else {  
+    sctk_thread_ptp_message_t recv_msg;
+    sctk_request_t recv_request;
+
     sctk_init_header(&recv_msg,myself,sctk_message_contiguous,sctk_free_messages,
 		     sctk_message_copy);
     sctk_add_adress_in_message(&recv_msg,buffer,size);
-    sctk_set_header_in_message (&recv_msg, root, communicator, MPC_ANY_SOURCE, myself,
+    sctk_set_header_in_message (&recv_msg, root, communicator, root, myself,
 				&recv_request, size,broadcast_specific_message_tag);
     sctk_recv_message (&recv_msg);
     sctk_wait_message (&recv_request);
-
-    sctk_nodebug("recv_request.src %d", recv_request.header.source);
-    start = ((myself + total - root) % total - 
-	     (recv_request.header.source + total - root) % total  + total ) % total;
-  }
-
-  sctk_nodebug("Start %d root %d",start/2,root);
-  for(i = start/2; i >= 1; i = i/2){
-    if((((myself + total - root)% total) + i) < total){
-      if(root != myself){
-	dest = (root + ((myself + total - root)% total) + i) % total;
-      } else {
-	dest = (root + i) % total;
-      }
-      sctk_nodebug("send to dest %d", dest);
-      sctk_init_header(&send_msg,myself,sctk_message_contiguous,sctk_free_messages,
-		       sctk_message_copy); 
-      sctk_add_adress_in_message(&send_msg,buffer,size); 
-      sctk_set_header_in_message (&send_msg, root, communicator, myself, dest,
-				  &send_request, size,broadcast_specific_message_tag);
-      sctk_send_message (&send_msg);
-      sctk_wait_message (&send_request);    
-    }
   }
 }
 
@@ -189,6 +173,7 @@ static void sctk_allreduce_messages (const void *buffer_in, void *buffer_out,
   int src;
   int i;
   void* buffer_tmp;
+  int root = 0;
   
   /*
     MPI require that the result of the allreduce is the same on all MPI tasks.
@@ -203,35 +188,36 @@ static void sctk_allreduce_messages (const void *buffer_in, void *buffer_out,
   myself = sctk_get_rank (communicator, thread_data->task_id);
 
   memcpy(buffer_out,buffer_in,size);
-  for(i = 1; i < total; i++){
-    dest = (myself + i) % total;
-    src = (myself + total - i) % total;
+  if(myself == root){
+    sctk_thread_ptp_message_t recv_msg;
+    sctk_request_t recv_request;
+
+    for(i = 1; i < total; i++){
+      sctk_init_header(&recv_msg,myself,sctk_message_contiguous,sctk_free_messages,
+		       sctk_message_copy);
+      sctk_add_adress_in_message(&recv_msg,buffer_tmp,size);
+      sctk_set_header_in_message (&recv_msg, root, communicator, i, root,
+				  &recv_request, size,allreduce_specific_message_tag);
+      sctk_recv_message (&recv_msg);
+      sctk_wait_message (&recv_request);
+      
+      func(buffer_tmp,buffer_out,elem_number,data_type);
+    }
+  } else {
+    sctk_thread_ptp_message_t send_msg;
+    sctk_request_t send_request;
+    
     sctk_init_header(&send_msg,myself,sctk_message_contiguous,sctk_free_messages,
-		     sctk_message_copy);  
-    sctk_init_header(&recv_msg,myself,sctk_message_contiguous,sctk_free_messages,
-		     sctk_message_copy);
-    
-    sctk_add_adress_in_message(&send_msg,buffer_in,size);
-    sctk_add_adress_in_message(&recv_msg,buffer_tmp,size);
-    
-    sctk_set_header_in_message (&send_msg, 0, communicator, myself, dest,
+		     sctk_message_copy); 
+    sctk_add_adress_in_message(&send_msg,buffer_out,size); 
+    sctk_set_header_in_message (&send_msg, root, communicator,myself,root,
 				&send_request, size,allreduce_specific_message_tag);
-    sctk_set_header_in_message (&recv_msg, 0, communicator, src, myself,
-				&recv_request, size,allreduce_specific_message_tag);
-    
-    sctk_nodebug("Send to %d, recv from %d",dest,src);
-    
-    sctk_recv_message (&recv_msg);
     sctk_send_message (&send_msg);
-    
-    sctk_wait_message (&recv_request);
-    sctk_wait_message (&send_request);
-    
-    func(buffer_tmp,buffer_out,elem_number,data_type);
+    sctk_wait_message (&send_request);      
   }
 
   sctk_free(buffer_tmp);
-  sctk_broadcast_messages(buffer_out,size,0,communicator,tmp);
+  sctk_broadcast_messages(buffer_out,size,root,communicator,tmp);
 }
 
 void sctk_allreduce_messages_init(struct sctk_internal_collectives_struct_s * tmp){

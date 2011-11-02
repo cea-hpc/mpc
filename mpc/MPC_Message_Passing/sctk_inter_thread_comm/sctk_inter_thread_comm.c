@@ -30,7 +30,7 @@
 #include <string.h>
 #include <sctk_asm.h>
 
-#define SCTK_DISABLE_REENTRANCE
+/* #define SCTK_DISABLE_REENTRANCE */
 
   void sctk_cancel_message (sctk_request_t * msg){not_implemented();}
 
@@ -71,6 +71,7 @@ typedef struct {
   sctk_spinlock_t pending_lock;
   sctk_internal_ptp_list_pending_t pending_send;
   sctk_internal_ptp_list_pending_t pending_recv;
+  char changed;
 }sctk_internal_ptp_message_lists_t;
 
 static inline void sctk_internal_ptp_message_list_init(sctk_internal_ptp_message_lists_t * lists){
@@ -107,6 +108,7 @@ static inline void sctk_internal_ptp_merge_pending(sctk_internal_ptp_message_lis
     lists->incomming_recv.list = NULL;
     sctk_spinlock_unlock(&(lists->incomming_recv.lock));
   }
+  lists->changed = 1;
 #endif
 }
 
@@ -191,11 +193,13 @@ sctk_ptp_table_read_unlock(){
 /********************************************************************/
 /*Task engine                                                       */
 /********************************************************************/
+#define SCTK_DISABLE_TASK_ENGINE
 #warning "To optimize to deal with NUMA effects"
 static sctk_message_to_copy_t* sctk_ptp_task_list = NULL;
 static sctk_spinlock_t sctk_ptp_tasks_lock = SCTK_SPINLOCK_INITIALIZER;
 
 static inline void sctk_ptp_tasks_perform(){
+#ifdef SCTK_DISABLE_TASK_ENGINE
   sctk_message_to_copy_t* tmp;
 
   while(sctk_ptp_task_list != NULL){
@@ -210,6 +214,7 @@ static inline void sctk_ptp_tasks_perform(){
       tmp->msg_send->tail.message_copy(tmp);
     }
   }
+#endif
 }
 
 static inline void sctk_ptp_copy_tasks_insert(sctk_msg_list_t* ptr_recv,
@@ -220,9 +225,13 @@ static inline void sctk_ptp_copy_tasks_insert(sctk_msg_list_t* ptr_recv,
   tmp->msg_send = ptr_send->msg;
   tmp->msg_recv = ptr_recv->msg;
 
+#ifdef SCTK_DISABLE_TASK_ENGINE
+  tmp->msg_send->tail.message_copy(tmp);  
+#else
   sctk_spinlock_lock(&sctk_ptp_tasks_lock);
   DL_APPEND(sctk_ptp_task_list,tmp); 
   sctk_spinlock_unlock(&sctk_ptp_tasks_lock);
+#endif
 }
 
 
@@ -231,9 +240,13 @@ static inline void sctk_ptp_copy_tasks_insert(sctk_msg_list_t* ptr_recv,
 /********************************************************************/
 
 void sctk_complete_and_free_message (sctk_thread_ptp_message_t * msg){
+  void (*free_memory)(void*);
+
+  free_memory = msg->tail.free_memory;
+
   if(msg->body.completion_flag)
     *(msg->body.completion_flag) = SCTK_MESSAGE_DONE;
-  msg->tail.free_memory(msg);  
+  free_memory(msg);  
 }
 
 void sctk_message_completion_and_free(sctk_thread_ptp_message_t* send,
@@ -560,6 +573,17 @@ void sctk_unregister_thread (const int i){
 
 void sctk_free_pack(void*); 
 
+static
+void sctk_free_header(void* tmp){
+  sctk_free(tmp);
+}
+
+static
+void* sctk_alloc_header(){
+#warning "Optimize allocation"
+  return sctk_malloc(sizeof(sctk_thread_ptp_message_t));
+}
+
 void sctk_rebuild_header (sctk_thread_ptp_message_t * msg){
   if(msg->sctk_msg_get_source != MPC_ANY_SOURCE)
     msg->sctk_msg_get_glob_source = 
@@ -599,10 +623,9 @@ void sctk_init_header (sctk_thread_ptp_message_t *tmp, const int myself,
 sctk_thread_ptp_message_t *sctk_create_header (const int myself,sctk_message_type_t msg_type){
   sctk_thread_ptp_message_t * tmp;
   
-#warning "Optimize allocation"
-  tmp = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
+  tmp = sctk_alloc_header();
 
-  sctk_init_header(tmp,myself,msg_type,sctk_free,sctk_message_copy);
+  sctk_init_header(tmp,myself,msg_type,sctk_free_header,sctk_message_copy);
 
   return tmp;
 }
@@ -685,7 +708,7 @@ void sctk_free_pack(void* tmp){
   } else {
     sctk_free(msg->tail.message.pack.list.std);
   }
-  sctk_free(tmp);
+  sctk_free_header(tmp);
 }
 
 void
@@ -840,19 +863,34 @@ static inline void sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t* pa
 }
 
 static inline void sctk_perform_messages_for_pair(sctk_internal_ptp_t* pair){
-  sctk_internal_ptp_lock_pending(&(pair->lists));
-  sctk_perform_messages_for_pair_locked(pair);
-  sctk_internal_ptp_unlock_pending(&(pair->lists));
+  if(((pair->lists.pending_send.list != NULL) 
+#ifndef SCTK_DISABLE_REENTRANCE
+      ||(pair->lists.incomming_send.list != NULL)
+#endif
+      ) && ((pair->lists.pending_recv.list != NULL) 
+#ifndef SCTK_DISABLE_REENTRANCE
+	 || (pair->lists.incomming_recv.list != NULL)
+#endif
+	 )){
+    if(pair->lists.changed 
+#ifndef SCTK_DISABLE_REENTRANCE
+       || (pair->lists.incomming_send.list != NULL)
+       || (pair->lists.incomming_recv.list != NULL)
+#endif
+){
+      sctk_internal_ptp_lock_pending(&(pair->lists));
+      sctk_perform_messages_for_pair_locked(pair);
+      pair->lists.changed = 0;
+      sctk_internal_ptp_unlock_pending(&(pair->lists));
+    }
+  }
   sctk_ptp_tasks_perform();
 }
 
 static inline void sctk_try_perform_messages_for_pair(sctk_internal_ptp_t* pair){
-/*   if(sctk_internal_ptp_trylock_pending(&(pair->lists)) == 0){ */
-/*     sctk_perform_messages_for_pair_locked(pair); */
-/*     sctk_internal_ptp_unlock_pending(&(pair->lists)); */
-/*     sctk_ptp_tasks_perform(); */
-/*   } */
-  sctk_perform_messages_for_pair(pair);
+  if(pair->lists.pending_lock == 0){
+    sctk_perform_messages_for_pair(pair);
+  }
 }
 
 void sctk_wait_message (sctk_request_t * request){

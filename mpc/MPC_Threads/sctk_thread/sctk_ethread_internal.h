@@ -1443,8 +1443,16 @@ extern "C"
 #ifdef MPC_Message_Passing
 	    sctk_notify_idle_message ();
 #endif
-	    sctk_cpu_relax ();
-	  }
+#warning "Optimize to reduce memory BW consumption"
+	    sched_yield();
+	  } else {
+	  if ((vp->ready_queue_used == NULL) &&
+	      (vp->incomming_queue == NULL) &&
+	      (vp->ready_queue == NULL) )
+	    {
+	      sched_yield();
+	    }
+	}
       }
     /** ** **/
     sctk_free_idle_thread_dbg (th_data) ;

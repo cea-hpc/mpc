@@ -2723,6 +2723,10 @@ __MPC_Ssend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
   MPC_ERROR_SUCESS ();
 }
 
+static void sctk_no_free_header(void* tmp){
+
+}
+
 static int
 __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
 	    int dest, int tag, MPC_Comm comm)
@@ -2736,6 +2740,7 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
   int buffer_rank;
   mpc_buffered_msg_t *restrict tmp_buf;
   char tmp;
+  sctk_thread_ptp_message_t header;
 
   task_specific = __MPC_get_task_specific ();
 
@@ -2766,10 +2771,11 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
   msg_size = count * __MPC_Get_datatype_size (datatype, task_specific);
   sctk_nodebug ("Message size %lu", msg_size);
 
-  msg = sctk_create_header (src,sctk_message_contiguous);
 
   if ((msg_size > MAX_MPC_BUFFERED_SIZE) || (sctk_is_net_message (dest)) || mpc_disable_buffering)
     {
+      msg = &header;
+      sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
       sctk_mpc_init_request(&request,comm,src);
 
       sctk_add_adress_in_message(msg,buf,msg_size);
@@ -2792,6 +2798,8 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
 
       if (sctk_mpc_completion_flag(&(tmp_buf->request)) != SCTK_MESSAGE_DONE)
 	{
+	  msg = &header;
+	  sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
 	  sctk_spinlock_unlock (&(thread_specific->buffer.lock));
 	  sctk_mpc_init_request(&request,comm,src);
 	  
@@ -2804,6 +2812,8 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
 	}
       else 
 	{
+	  msg = &(tmp_buf->header);
+	  sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
 	  sctk_nodebug ("Copied message |%s| -> |%s| %d", buf, tmp_buf->buf,
 			msg_size);
 	  

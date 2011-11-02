@@ -25,6 +25,7 @@
 
 typedef struct
 {
+  sctk_thread_ptp_message_t header;
   MPC_Request request;
   long buf[(MAX_MPC_BUFFERED_SIZE / sizeof (long)) + 1];
 } mpc_buffered_msg_t;
@@ -53,6 +54,7 @@ MPC_DECL_TYPE_PROTECTED (sctk_derived_type_t *
 MPC_DECL_TYPE_PROTECTED (MPC_Handler_function *
 			 user_error_handlers[SCTK_MAX_COMMUNICATOR_NUMBER],
 			 user_error_handlers);
+
 MPC_DECL_TYPE_PROTECTED (mpc_buffered_msg_t buffer[MAX_MPC_BUFFERED_MSG];
 			 volatile int buffer_rank, buffer);
 MPC_DECL_TYPE_PROTECTED (mpc_buffered_msg_t
