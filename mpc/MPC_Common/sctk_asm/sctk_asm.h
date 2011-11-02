@@ -35,7 +35,6 @@ extern "C"
 #endif
 
 #define sctk_get_time_stamp               sctk_atomics_get_timestamp
-#define sctk_get_time_stamp_gettimeofday  sctk_atomics_get_timestamp
 
 #define sctk_max(a, b)  ((a) > (b) ? (a) : (b))
 #define sctk_min(a, b)  ((a) < (b) ? (a) : (b))

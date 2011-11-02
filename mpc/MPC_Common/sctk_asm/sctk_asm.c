@@ -70,4 +70,10 @@ int sctk_test_and_set (sctk_atomic_test_t * atomic) {
 #endif /* defined(SCTK_OPENPA_AVAILABLE) */
 }
 
+double sctk_get_time_stamp_gettimeofday()
+{
+  struct timeval tp;
+  gettimeofday (&tp, NULL);
+  return tp.tv_usec + tp.tv_sec * 1000000;
+}
 
