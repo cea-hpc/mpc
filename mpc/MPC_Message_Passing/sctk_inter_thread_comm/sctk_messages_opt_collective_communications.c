@@ -33,6 +33,8 @@
 /************************************************************************/
 static int BARRIER_ARRITY  = 8;
 static int BROADCAST_MAX_SIZE = 1024;
+static int ALLREDUCE_MAX_SIZE = 1024;
+static int ALLREDUCE_MAX_NB_ELEM_SIZE = 1024;
 
 /************************************************************************/
 /*TOOLS                                                                 */
@@ -145,7 +147,6 @@ void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
       dest = (myself / i) * i;
       if(dest >= 0){
 	sctk_opt_messages_send(communicator,myself,dest,0,&c,1,barrier_specific_message_tag,sctk_opt_messages_get_item(&table));
-	sctk_opt_messages_wait(&table);
 	sctk_opt_messages_recv(communicator,dest,myself,1,&c,1,barrier_specific_message_tag,sctk_opt_messages_get_item(&table));
 	sctk_opt_messages_wait(&table);
 	break;
@@ -246,7 +247,7 @@ void sctk_broadcast_opt_messages_init(struct sctk_internal_collectives_struct_s 
 /************************************************************************/
 /*Allreduce                                                             */
 /************************************************************************/
-static void sctk_allreduce_opt_messages (const void *buffer_in, void *buffer_out,
+static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buffer_out,
 				   const size_t elem_size,
 				   const size_t elem_number,
 				   void (*func) (const void *, void *, size_t,
@@ -254,10 +255,6 @@ static void sctk_allreduce_opt_messages (const void *buffer_in, void *buffer_out
 				   const sctk_communicator_t communicator,
 				   const sctk_datatype_t data_type,
 				   struct sctk_internal_collectives_struct_s *tmp){
-  sctk_thread_ptp_message_t send_msg;
-  sctk_request_t send_request;
-  sctk_thread_ptp_message_t recv_msg;
-  sctk_request_t recv_request;
   sctk_thread_data_t *thread_data;
   int myself;
   int total;
@@ -266,53 +263,99 @@ static void sctk_allreduce_opt_messages (const void *buffer_in, void *buffer_out
   int src;
   int i;
   void* buffer_tmp;
-  int root = 0;
+  sctk_opt_messages_table_t table;
+  int ALLREDUCE_ARRITY = 2;
+  int total_max;
   
   /*
     MPI require that the result of the allreduce is the same on all MPI tasks.
     This is an issue for MPI_SUM, MPI_PROD and user defined operation on floating 
     point datatypes.
   */
+  sctk_opt_messages_init_items(&table);
+  
   size = elem_size * elem_number;
+
+  ALLREDUCE_ARRITY = ALLREDUCE_MAX_SIZE / size;
+  if(ALLREDUCE_ARRITY < 2){
+    ALLREDUCE_ARRITY = 2;
+  }
+
   buffer_tmp = sctk_malloc(size);
   
+  memcpy(buffer_out,buffer_in,size);
+
+  assume(size > 0);
+
   thread_data = sctk_thread_data_get ();
   total = sctk_get_nb_task_total(communicator);
   myself = sctk_get_rank (communicator, thread_data->task_id);
-
-  memcpy(buffer_out,buffer_in,size);
-  if(myself == root){
-    sctk_thread_ptp_message_t recv_msg;
-    sctk_request_t recv_request;
-
-    for(i = 1; i < total; i++){
-      sctk_init_header(&recv_msg,myself,sctk_message_contiguous,sctk_free_opt_messages,
-		       sctk_message_copy);
-      sctk_add_adress_in_message(&recv_msg,buffer_tmp,size);
-      sctk_set_header_in_message (&recv_msg, root, communicator, i, root,
-				  &recv_request, size,allreduce_specific_message_tag);
-      sctk_recv_message (&recv_msg);
-      sctk_wait_message (&recv_request);
-      
-      func(buffer_tmp,buffer_out,elem_number,data_type);
-    }
-  } else {
-    sctk_thread_ptp_message_t send_msg;
-    sctk_request_t send_request;
-    
-    sctk_init_header(&send_msg,myself,sctk_message_contiguous,sctk_free_opt_messages,
-		     sctk_message_copy); 
-    sctk_add_adress_in_message(&send_msg,buffer_out,size); 
-    sctk_set_header_in_message (&send_msg, root, communicator,myself,root,
-				&send_request, size,allreduce_specific_message_tag);
-    sctk_send_message (&send_msg);
-    sctk_wait_message (&send_request);      
+  
+  total_max = log(total) / log(ALLREDUCE_ARRITY);
+  total_max = pow(ALLREDUCE_ARRITY,total_max);
+  if(total_max < total){
+    total_max = total_max * ALLREDUCE_ARRITY;
   }
+  assume(total_max >= total);
 
+  for(i = ALLREDUCE_ARRITY; i <= total_max; i = i*ALLREDUCE_ARRITY){
+    if(myself % i == 0){
+      int src; 
+      int j;
+      
+      src = myself;
+      for(j = 1; j < ALLREDUCE_ARRITY; j++){
+	if((src + (j*(i/ALLREDUCE_ARRITY))) < total){
+	  sctk_opt_messages_recv(communicator,src + (j*(i/ALLREDUCE_ARRITY)),myself,0,buffer_tmp,size,allreduce_specific_message_tag,
+				 sctk_opt_messages_get_item(&table));
+	  sctk_opt_messages_wait(&table);
+	  func(buffer_tmp,buffer_out,elem_number,data_type);
+	}
+      }
+      sctk_opt_messages_wait(&table);
+    } else {
+      int dest; 
+
+      dest = (myself / i) * i;
+      if(dest >= 0){
+	sctk_opt_messages_send(communicator,myself,dest,0,buffer_out,size,allreduce_specific_message_tag,sctk_opt_messages_get_item(&table));
+	sctk_opt_messages_wait(&table);
+	sctk_opt_messages_recv(communicator,dest,myself,1,buffer_out,size,allreduce_specific_message_tag,sctk_opt_messages_get_item(&table));
+	sctk_opt_messages_wait(&table);
+	break;
+      }
+    }
+  }
+  sctk_opt_messages_wait(&table);
+
+  for(; i >=ALLREDUCE_ARRITY ; i = i / ALLREDUCE_ARRITY){
+    if(myself % i == 0){
+      int dest; 
+      int j;
+      
+      dest = myself;
+      for(j = 1; j < ALLREDUCE_ARRITY; j++){
+	if((dest + (j*(i/ALLREDUCE_ARRITY))) < total){
+	  sctk_opt_messages_send(communicator,myself,dest+(j*(i/ALLREDUCE_ARRITY)),1,buffer_out,size,allreduce_specific_message_tag,sctk_opt_messages_get_item(&table));
+	}    
+      }
+    }
+  }
+  sctk_opt_messages_wait(&table);
   sctk_free(buffer_tmp);
-  sctk_broadcast_opt_messages(buffer_out,size,root,communicator,tmp);
 }
 
+static void sctk_allreduce_opt_messages (const void *buffer_in, void *buffer_out,
+				   const size_t elem_size,
+				   const size_t elem_number,
+				   void (*func) (const void *, void *, size_t,
+						 sctk_datatype_t),
+				   const sctk_communicator_t communicator,
+				   const sctk_datatype_t data_type,
+				   struct sctk_internal_collectives_struct_s *tmp){
+#warning "Add buffer splitting"
+  sctk_allreduce_opt_messages_intern(buffer_in,buffer_out,elem_size,elem_number,func,communicator,data_type,tmp);
+}
 void sctk_allreduce_opt_messages_init(struct sctk_internal_collectives_struct_s * tmp){
     tmp->allreduce_func = sctk_allreduce_opt_messages;    
 }
