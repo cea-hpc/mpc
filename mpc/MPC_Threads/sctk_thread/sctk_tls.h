@@ -157,7 +157,7 @@ extern "C"
     //profiling TLS
     tls_init (tls_args);
     tls_init (tls_trace_module);
-	ucp->sctk_hls_generation = sctk_calloc(2*sctk_hls_max_scope,sizeof(int));
+    tls_init (sctk_hls_generation);
 #endif
   }
 
@@ -178,8 +178,9 @@ extern "C"
 #endif
   }
 
-  void sctk_hls_checkout_on_vp () ;
   void sctk_hls_build_repository () ;
+  void sctk_hls_checkout_on_vp () ;
+  void sctk_hls_register_thread () ;
 
 #ifdef __cplusplus
 }
