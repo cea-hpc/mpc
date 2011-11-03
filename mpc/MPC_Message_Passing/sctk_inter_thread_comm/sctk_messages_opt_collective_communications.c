@@ -32,9 +32,9 @@
 /*PARAMETERS                                                            */
 /************************************************************************/
 static int BARRIER_ARRITY  = 8;
-static int BROADCAST_ARITY_MAX = 32;
+static int BROADCAST_ARITY_MAX = 8;
 static int BROADCAST_MAX_SIZE = 1024;
-static int ALLREDUCE_ARITY_MAX = 32;
+static int ALLREDUCE_ARITY_MAX = 8;
 static int ALLREDUCE_MAX_SIZE = 1024;
 static int ALLREDUCE_MAX_NB_ELEM_SIZE = 1024;
 #define SCTK_MAX_ASYNC 32
