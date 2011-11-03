@@ -28,6 +28,11 @@
 #include <sctk_thread.h>
 #include <string.h>
 #include <math.h>
+/************************************************************************/
+/*PARAMETERS                                                            */
+/************************************************************************/
+static int BARRIER_ARRITY  = 8;
+static int BROADCAST_MAX_SIZE = 1024;
 
 /************************************************************************/
 /*TOOLS                                                                 */
@@ -98,7 +103,6 @@ static void sctk_opt_messages_init_items(sctk_opt_messages_table_t* tab){
 /************************************************************************/
 /*BARRIER                                                               */
 /************************************************************************/
-#define BARRIER_ARRITY 8
 static 
 void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
 			   sctk_internal_collectives_struct_t * tmp){
@@ -173,7 +177,6 @@ void sctk_barrier_opt_messages_init(sctk_internal_collectives_struct_t * tmp){
 /************************************************************************/
 /*Broadcast                                                             */
 /************************************************************************/
-#define BROADCAST_MAX_SIZE 1024
 void sctk_broadcast_opt_messages (void *buffer, const size_t size,
 			    const int root, const sctk_communicator_t communicator,
 			    struct sctk_internal_collectives_struct_s *tmp){
