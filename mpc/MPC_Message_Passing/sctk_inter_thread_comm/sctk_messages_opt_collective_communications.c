@@ -27,6 +27,7 @@
 #include <sctk_spinlock.h>
 #include <sctk_thread.h>
 #include <string.h>
+#include <math.h>
 
 /************************************************************************/
 /*TOOLS                                                                 */
@@ -68,6 +69,7 @@ static void sctk_barrier_opt_messages_recv(const sctk_communicator_t communicato
   sctk_wait_message (&recv_request); 
 }
 
+#define BARRIER_ARRITY 2
 static 
 void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
 			   sctk_internal_collectives_struct_t * tmp){
@@ -81,23 +83,28 @@ void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
   total = sctk_get_nb_task_total(communicator);
   myself = sctk_get_rank (communicator, thread_data->task_id);
 
-  total_max = (total / 2) * 2;
+  total_max = log(total) / log(BARRIER_ARRITY);
+  total_max = pow(BARRIER_ARRITY,total_max);
   if(total_max < total){
-    total_max = total_max * 2;
+    total_max = total_max * BARRIER_ARRITY;
   }
+  assume(total_max >= total);
   
-  for(i = 2; i <= total_max; i = i*2){
+  for(i = BARRIER_ARRITY; i <= total_max; i = i*BARRIER_ARRITY){
     if(myself % i == 0){
       int src; 
+      int j;
       
-      src = myself + (i/2);
-      if(src < total){
-	sctk_barrier_opt_messages_recv(communicator,src,myself,0);
+      src = myself + (i/BARRIER_ARRITY);
+      for(j = 0; j < BARRIER_ARRITY - 1; j++){
+	if((src + j) < total){
+	  sctk_barrier_opt_messages_recv(communicator,src + j,myself,0);
+	}
       }
     } else {
       int dest; 
 
-      dest = myself - (i/2);
+      dest = (myself / i) * i;
       if(dest >= 0){
 	sctk_barrier_opt_messages_send(communicator,myself,dest,0);
 	sctk_barrier_opt_messages_recv(communicator,dest,myself,1);
@@ -106,14 +113,17 @@ void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
     }
   }
 
-  for(; i >=2 ; i = i / 2){
+  for(; i >=BARRIER_ARRITY ; i = i / BARRIER_ARRITY){
     if(myself % i == 0){
       int dest; 
+      int j;
       
-      dest = myself + (i/2);
-      if(dest < total){
-	sctk_barrier_opt_messages_send(communicator,myself,dest,1);
-      }    
+      dest = myself + (i/BARRIER_ARRITY);
+      for(j = 0; j < BARRIER_ARRITY - 1; j++){
+	if((dest + j) < total){
+	  sctk_barrier_opt_messages_send(communicator,myself,dest+j,1);
+	}    
+      }
     }
   }
 }
