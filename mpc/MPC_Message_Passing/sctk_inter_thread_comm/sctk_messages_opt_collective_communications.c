@@ -69,7 +69,7 @@ static void sctk_barrier_opt_messages_recv(const sctk_communicator_t communicato
   sctk_wait_message (&recv_request); 
 }
 
-#define BARRIER_ARRITY 4
+#define BARRIER_ARRITY 8
 static 
 void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
 			   sctk_internal_collectives_struct_t * tmp){
@@ -135,46 +135,80 @@ void sctk_barrier_opt_messages_init(sctk_internal_collectives_struct_t * tmp){
 /************************************************************************/
 /*Broadcast                                                             */
 /************************************************************************/
+#define BROADCAST_ARRITY 8
+static void sctk_broadcast_opt_messages_send(const sctk_communicator_t communicator,int myself,int dest,int tag, void* buffer,size_t size){
+  sctk_thread_ptp_message_t send_msg;
+  sctk_request_t send_request;
+  
+  sctk_init_header(&send_msg,myself,sctk_message_contiguous,sctk_free_opt_messages,
+		   sctk_message_copy); 
+  sctk_add_adress_in_message(&send_msg,buffer,size); 
+  sctk_set_header_in_message (&send_msg, tag, communicator, myself, dest,
+			      &send_request, size,broadcast_specific_message_tag);
+  sctk_send_message (&send_msg);
+  sctk_wait_message (&send_request); 
+}
+
+static void sctk_broadcast_opt_messages_recv(const sctk_communicator_t communicator,int src, int myself,int tag, void* buffer,size_t size){
+  sctk_thread_ptp_message_t recv_msg;
+  sctk_request_t recv_request;
+  
+  sctk_init_header(&recv_msg,myself,sctk_message_contiguous,sctk_free_opt_messages,
+		   sctk_message_copy); 
+  sctk_add_adress_in_message(&recv_msg,buffer,size); 
+  sctk_set_header_in_message (&recv_msg, tag, communicator,  src,myself,
+			      &recv_request, size,broadcast_specific_message_tag);
+  sctk_recv_message (&recv_msg);
+  sctk_wait_message (&recv_request); 
+}
 
 void sctk_broadcast_opt_messages (void *buffer, const size_t size,
 			    const int root, const sctk_communicator_t communicator,
 			    struct sctk_internal_collectives_struct_s *tmp){
   sctk_thread_data_t *thread_data;
   int myself;
+  int related_myself;
   int total;
+  int total_max;
+  int i; 
   
   thread_data = sctk_thread_data_get ();
   total = sctk_get_nb_task_total(communicator);
   myself = sctk_get_rank (communicator, thread_data->task_id);
+  related_myself = (myself + total - root) % total; 
 
-  if(myself == root){
-    int i; 
-    for(i = 0; i < total; i++){
-      if(i != root){
-	sctk_thread_ptp_message_t send_msg;
-	sctk_request_t send_request;
-	
-	sctk_init_header(&send_msg,myself,sctk_message_contiguous,sctk_free_opt_messages,
-			 sctk_message_copy); 
-	sctk_add_adress_in_message(&send_msg,buffer,size); 
-	sctk_set_header_in_message (&send_msg, root, communicator, root, i,
-				    &send_request, size,broadcast_specific_message_tag);
-	sctk_send_message (&send_msg);
-	sctk_wait_message (&send_request);  
+  total_max = log(total) / log(BROADCAST_ARRITY);
+  total_max = pow(BROADCAST_ARRITY,total_max);
+  if(total_max < total){
+    total_max = total_max * BROADCAST_ARRITY;
+  }
+  assume(total_max >= total);
+
+  for(i = BROADCAST_ARRITY; i <= total_max; i = i*BROADCAST_ARRITY){
+    if(related_myself % i != 0){
+      int dest; 
+
+      dest = (related_myself/i) * i;
+      if(dest >= 0){
+	sctk_broadcast_opt_messages_recv(communicator,(dest+root)%total,myself,root,buffer,size);
+	break;
       }
     }
-  } else {  
-    sctk_thread_ptp_message_t recv_msg;
-    sctk_request_t recv_request;
-
-    sctk_init_header(&recv_msg,myself,sctk_message_contiguous,sctk_free_opt_messages,
-		     sctk_message_copy);
-    sctk_add_adress_in_message(&recv_msg,buffer,size);
-    sctk_set_header_in_message (&recv_msg, root, communicator, root, myself,
-				&recv_request, size,broadcast_specific_message_tag);
-    sctk_recv_message (&recv_msg);
-    sctk_wait_message (&recv_request);
   }
+
+  for(; i >=BROADCAST_ARRITY ; i = i / BROADCAST_ARRITY){
+    if(related_myself % i == 0){
+      int dest; 
+      int j; 
+      
+      dest = related_myself;
+      for(j = 1; j < BROADCAST_ARRITY; j++){
+	if((dest + (j*(i/BROADCAST_ARRITY)))< total){
+	  sctk_broadcast_opt_messages_send(communicator,myself,(dest+root+(j*(i/BROADCAST_ARRITY))) % total,root,buffer,size);
+	}
+      }    
+    }
+  }  
 }
 
 void sctk_broadcast_opt_messages_init(struct sctk_internal_collectives_struct_s * tmp){
