@@ -69,7 +69,7 @@ static void sctk_barrier_opt_messages_recv(const sctk_communicator_t communicato
   sctk_wait_message (&recv_request); 
 }
 
-#define BARRIER_ARRITY 2
+#define BARRIER_ARRITY 4
 static 
 void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
 			   sctk_internal_collectives_struct_t * tmp){
@@ -95,10 +95,10 @@ void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
       int src; 
       int j;
       
-      src = myself + (i/BARRIER_ARRITY);
-      for(j = 0; j < BARRIER_ARRITY - 1; j++){
-	if((src + j) < total){
-	  sctk_barrier_opt_messages_recv(communicator,src + j,myself,0);
+      src = myself;
+      for(j = 1; j < BARRIER_ARRITY; j++){
+	if((src + (j*(i/BARRIER_ARRITY))) < total){
+	  sctk_barrier_opt_messages_recv(communicator,src + (j*(i/BARRIER_ARRITY)),myself,0);
 	}
       }
     } else {
@@ -118,10 +118,10 @@ void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
       int dest; 
       int j;
       
-      dest = myself + (i/BARRIER_ARRITY);
-      for(j = 0; j < BARRIER_ARRITY - 1; j++){
-	if((dest + j) < total){
-	  sctk_barrier_opt_messages_send(communicator,myself,dest+j,1);
+      dest = myself;
+      for(j = 1; j < BARRIER_ARRITY; j++){
+	if((dest + (j*(i/BARRIER_ARRITY))) < total){
+	  sctk_barrier_opt_messages_send(communicator,myself,dest+(j*(i/BARRIER_ARRITY)),1);
 	}    
       }
     }
