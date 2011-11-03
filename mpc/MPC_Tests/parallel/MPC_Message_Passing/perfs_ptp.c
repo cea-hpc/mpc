@@ -85,6 +85,7 @@ message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
 	  MPC_Recv (msg, size, MPC_CHAR, 0, 0, MPC_COMM_WORLD, &status);
 	}
     }
+  MPC_Barrier (MPC_COMM_WORLD);
   end = rrrsctk_get_time_stamp ();
   MPC_Barrier (MPC_COMM_WORLD);
   if (my_rank == 0)
