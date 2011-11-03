@@ -230,7 +230,7 @@ uname (struct utsname *buf)
 
 /*! \brief Return the current core_id
 */
-__thread int sctk_get_cpu_val = -1;
+static __thread int sctk_get_cpu_val = -1;
 static inline  int
 sctk_get_cpu_intern ()
 {
@@ -247,7 +247,7 @@ sctk_get_cpu_intern ()
   int
 sctk_get_cpu ()
 {
-  if(sctk_get_cpu_val >= 0){
+  if(sctk_get_cpu_val < 0){
     sctk_spinlock_lock(&topology_lock);
     sctk_get_cpu_val = sctk_get_cpu_intern();
     sctk_spinlock_unlock(&topology_lock);
