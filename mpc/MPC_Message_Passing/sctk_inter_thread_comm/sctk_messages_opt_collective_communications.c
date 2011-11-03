@@ -32,9 +32,12 @@
 /*PARAMETERS                                                            */
 /************************************************************************/
 static int BARRIER_ARRITY  = 8;
+static int BROADCAST_ARITY_MAX = 32;
 static int BROADCAST_MAX_SIZE = 1024;
+static int ALLREDUCE_ARITY_MAX = 32;
 static int ALLREDUCE_MAX_SIZE = 1024;
 static int ALLREDUCE_MAX_NB_ELEM_SIZE = 1024;
+#define SCTK_MAX_ASYNC 32
 
 /************************************************************************/
 /*TOOLS                                                                 */
@@ -43,7 +46,6 @@ static void sctk_free_opt_messages(void* ptr){
 
 }
 
-#define SCTK_MAX_ASYNC 16
 
 typedef struct {
   sctk_request_t request;
@@ -198,6 +200,9 @@ void sctk_broadcast_opt_messages (void *buffer, const size_t size,
   if(BROADCAST_ARRITY < 2){
     BROADCAST_ARRITY = 2;
   }
+  if(BROADCAST_ARRITY > BROADCAST_ARITY_MAX){
+    BROADCAST_ARRITY = BROADCAST_ARITY_MAX;
+  }
 
   thread_data = sctk_thread_data_get ();
   total = sctk_get_nb_task_total(communicator);
@@ -263,6 +268,7 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
   int src;
   int i;
   void* buffer_tmp;
+  void** buffer_table;
   sctk_opt_messages_table_t table;
   int ALLREDUCE_ARRITY = 2;
   int total_max;
@@ -280,8 +286,18 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
   if(ALLREDUCE_ARRITY < 2){
     ALLREDUCE_ARRITY = 2;
   }
+  if(ALLREDUCE_ARRITY > ALLREDUCE_ARITY_MAX){
+    ALLREDUCE_ARRITY = ALLREDUCE_ARITY_MAX;
+  }
 
-  buffer_tmp = sctk_malloc(size);
+  buffer_tmp = sctk_malloc(size*(ALLREDUCE_ARRITY -1));
+  buffer_table = sctk_malloc((ALLREDUCE_ARRITY -1) * sizeof(void*));
+  {
+    int j;
+    for(j = 1; j < ALLREDUCE_ARRITY; j++){
+      buffer_table[j-1] = ((char*)buffer_tmp) + (size * (j-1));
+    }
+  }
   
   memcpy(buffer_out,buffer_in,size);
 
@@ -306,13 +322,16 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
       src = myself;
       for(j = 1; j < ALLREDUCE_ARRITY; j++){
 	if((src + (j*(i/ALLREDUCE_ARRITY))) < total){
-	  sctk_opt_messages_recv(communicator,src + (j*(i/ALLREDUCE_ARRITY)),myself,0,buffer_tmp,size,allreduce_specific_message_tag,
+	  sctk_opt_messages_recv(communicator,src + (j*(i/ALLREDUCE_ARRITY)),myself,0,buffer_table[j-1],size,allreduce_specific_message_tag,
 				 sctk_opt_messages_get_item(&table));
-	  sctk_opt_messages_wait(&table);
-	  func(buffer_tmp,buffer_out,elem_number,data_type);
 	}
       }
       sctk_opt_messages_wait(&table);
+      for(j = 1; j < ALLREDUCE_ARRITY; j++){
+	if((src + (j*(i/ALLREDUCE_ARRITY))) < total){
+	  func(buffer_table[j-1],buffer_out,elem_number,data_type);	  
+	}
+      }
     } else {
       int dest; 
 
@@ -343,6 +362,7 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
   }
   sctk_opt_messages_wait(&table);
   sctk_free(buffer_tmp);
+  sctk_free(buffer_table);
 }
 
 static void sctk_allreduce_opt_messages (const void *buffer_in, void *buffer_out,
