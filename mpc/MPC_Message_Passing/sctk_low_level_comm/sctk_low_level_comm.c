@@ -126,15 +126,24 @@ void
 sctk_net_init_driver (char *name)
 {
   if(sctk_process_number > 1){
+    char *topo = "ring";
+    int i;
     sctk_pmi_get_process_rank(&sctk_process_rank);
     sctk_pmi_get_process_number(&sctk_process_number);
 
+    for(i= 0; i < strlen(name); i++){
+      if(name[i] == ':'){
+	name[i] = '\0';
+	topo = &(name[i+1]);
+      }
+    }
+
     sctk_nodebug("Use network %s",name);
 
-    FIRST_TRY_DRIVER(tcp,sctk_network_init_simple_tcp,"ring");
-    TRY_DRIVER(tcpoib,sctk_network_init_simple_tcp_o_ib,"ring");
-    TRY_DRIVER(simple_tcp,sctk_network_init_simple_tcp,"ring");
-    TRY_DRIVER(multirail_tcp,sctk_network_init_multirail_tcp,"ring");
+    FIRST_TRY_DRIVER(tcp,sctk_network_init_simple_tcp,topo);
+    TRY_DRIVER(tcpoib,sctk_network_init_simple_tcp_o_ib,topo);
+    TRY_DRIVER(simple_tcp,sctk_network_init_simple_tcp,topo);
+    TRY_DRIVER(multirail_tcp,sctk_network_init_multirail_tcp,topo);
     DEFAUT_DRIVER();
   }
 }

@@ -100,9 +100,13 @@ sctk_rail_info_t* sctk_route_get_rail(int i){
 
 void sctk_route_init_in_rail(sctk_rail_info_t* rail, char* topology){
   if(strcmp("ring",topology) == 0){
-  rail->route = sctk_route_ring;
-  rail->route_init = sctk_route_ring_init;
-  rail->topology_name = "ring";
+    rail->route = sctk_route_ring;
+    rail->route_init = sctk_route_ring_init;
+    rail->topology_name = "ring";
+  } else if(strcmp("tree",topology) == 0){
+    rail->route = sctk_route_tree;
+    rail->route_init = sctk_route_tree_init;
+    rail->topology_name = "tree";
   } else {
     not_reachable();
   }
@@ -113,17 +117,19 @@ void sctk_route_ring_init(){
 }
 
 int sctk_route_ring(int dest, sctk_rail_info_t* rail){
-    int old_dest;
-
-    old_dest = dest;
-    dest = (dest + sctk_process_number -1) % sctk_process_number;
-    sctk_nodebug("Route via dest - 1 %d to %d",dest,old_dest);
-    
-    return dest;
+  int old_dest;
+  
+  old_dest = dest;
+  dest = (dest + sctk_process_number -1) % sctk_process_number;
+  sctk_nodebug("Route via dest - 1 %d to %d",dest,old_dest);
+  
+  return dest;
 }
 
 void sctk_route_tree_init(){
-  not_implemented();
+  if(sctk_process_number > 3){
+    not_implemented();
+  }
 }
 int sctk_route_tree(int dest, sctk_rail_info_t* rail){
   not_implemented();
