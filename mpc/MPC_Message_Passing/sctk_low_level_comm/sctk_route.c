@@ -98,21 +98,7 @@ sctk_rail_info_t* sctk_route_get_rail(int i){
 
 /**** routes *****/
 
-void sctk_route_init_in_rail(sctk_rail_info_t* rail, char* topology){
-  if(strcmp("ring",topology) == 0){
-    rail->route = sctk_route_ring;
-    rail->route_init = sctk_route_ring_init;
-    rail->topology_name = "ring";
-  } else if(strcmp("tree",topology) == 0){
-    rail->route = sctk_route_tree;
-    rail->route_init = sctk_route_tree_init;
-    rail->topology_name = "tree";
-  } else {
-    not_reachable();
-  }
-}
-
-void sctk_route_ring_init(){
+void sctk_route_ring_init(sctk_rail_info_t* rail){
 
 }
 
@@ -126,7 +112,7 @@ int sctk_route_ring(int dest, sctk_rail_info_t* rail){
   return dest;
 }
 
-void sctk_route_tree_init(){
+void sctk_route_tree_init(sctk_rail_info_t* rail){
   if(sctk_process_number > 3){
     not_implemented();
   }
@@ -134,3 +120,37 @@ void sctk_route_tree_init(){
 int sctk_route_tree(int dest, sctk_rail_info_t* rail){
   not_implemented();
 }
+
+void sctk_route_fully_init(sctk_rail_info_t* rail){
+  if(sctk_process_number > 3){
+    int i; 
+    for(i = 0; i < sctk_process_number; i++){
+      if((i < (sctk_process_rank - 1 + sctk_process_number)%sctk_process_number) 
+	 && (i > (sctk_process_rank + 1)%sctk_process_number)){
+	rail->connect_to(sctk_process_rank,i,rail);
+      }
+    }
+  }
+}
+int sctk_route_fully(int dest, sctk_rail_info_t* rail){
+  not_implemented();
+}
+
+void sctk_route_init_in_rail(sctk_rail_info_t* rail, char* topology){
+  if(strcmp("ring",topology) == 0){
+    rail->route = sctk_route_ring;
+    rail->route_init = sctk_route_ring_init;
+    rail->topology_name = "ring";
+  } else if(strcmp("tree",topology) == 0){
+    rail->route = sctk_route_tree;
+    rail->route_init = sctk_route_tree_init;
+    rail->topology_name = "tree";
+  } else if(strcmp("fully",topology) == 0){
+    rail->route = sctk_route_fully;
+    rail->route_init = sctk_route_fully_init;
+    rail->topology_name = "fully connected";
+  } else {
+    not_reachable();
+  }
+}
+

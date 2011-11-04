@@ -240,11 +240,32 @@ static void
 sctk_network_notify_any_source_message_tcp (sctk_rail_info_t* rail){
 }
 
+static void 
+sctk_network_connection_to_tcp(int from, int to,sctk_rail_info_t* rail){
+#if 0
+  int src_socket;
+
+  if(to < from){
+    /*Ask for connection*/
+    not_implemented();
+  } else {
+    src_socket = accept (rail->network.tcp.sockfd, NULL,0);  
+    if(src_socket < 0){
+      perror("Connection error");
+      sctk_abort();
+    }
+    sctk_tcp_add_static_route(to,src_socket,rail,tcp_thread);
+  }
+#else
+  not_implemented();
+#endif
+}
+
 /************ INIT ****************/
 void sctk_network_init_tcp_all(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib,
 			       void* (*tcp_thread)(sctk_route_table_t*),
 			       int (*route)(int , sctk_rail_info_t* ),
-			       void(*route_init)()){
+			       void(*route_init)(sctk_rail_info_t*)){
   char connection_infos[MAX_STRING_SIZE];
   char dest_connection_infos[MAX_STRING_SIZE];
   size_t connection_infos_size;
@@ -256,6 +277,7 @@ void sctk_network_init_tcp_all(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib,
   assume(rail->send_message_from_network != NULL);
 
   rail ->route = route;
+  rail->connect_to = sctk_network_connection_to_tcp;
   rail->network.tcp.sctk_use_tcp_o_ib = sctk_use_tcp_o_ib;
   sctk_client_create_recv_socket (rail);  
 
@@ -334,7 +356,7 @@ void sctk_network_init_tcp_all(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib,
     sctk_tcp_add_static_route(src_rank,src_socket,rail,tcp_thread);
   }
   sctk_pmi_barrier();   
-  route_init();
+  route_init(rail);
   sctk_pmi_barrier();   
 
 
