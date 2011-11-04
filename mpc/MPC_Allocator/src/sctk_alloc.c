@@ -692,14 +692,6 @@ sctk_get_set_tls_init ()
 #endif
 }
 
-#ifdef MPC_Threads
-#ifndef MPC_USE_PAGE_MIGRATION
-#define SCTK_ALLOC_MAX_CPU_NUMBER 512
-static char *sctk_tmp_buffer_relocalise_memory[SCTK_ALLOC_MAX_CPU_NUMBER];
-
-#endif
-#endif
-
 static mpc_inline sctk_tls_t *__sctk_get_tls_init_to_do (void);
 static mpc_inline sctk_tls_t *__sctk_get_tls_init_done (void);
 
@@ -728,21 +720,7 @@ __sctk_get_tls_init_to_do ()
 
   if (sctk_alloc_init_done != 0)
     {
-#ifdef MPC_Threads
-#ifndef MPC_USE_PAGE_MIGRATION
-      int i;
-#endif
-#endif
       __sctk_get_tls_ptr = __sctk_get_tls_init_done;
-#ifdef MPC_Threads
-#ifndef MPC_USE_PAGE_MIGRATION
-      for (i = 0; i < sctk_get_cpu_number (); i++)
-	{
-	  sctk_tmp_buffer_relocalise_memory[i] =
-	    sctk_malloc (SCTK_RELOCALISE_BUFFER_SIZE);
-	}
-#endif
-#endif
     }
 
   return tls;
