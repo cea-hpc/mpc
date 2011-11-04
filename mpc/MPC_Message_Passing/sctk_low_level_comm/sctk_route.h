@@ -53,7 +53,9 @@ struct sctk_rail_info_s{
   void (*notify_any_source_message) (struct sctk_rail_info_s*);
   void (*send_message_from_network) (sctk_thread_ptp_message_t * );
   int (*route)(int , sctk_rail_info_t* );
+  void (*route_init)();
   char* network_name;
+  char* topology_name;
   int rail_number;
 };
 
@@ -80,5 +82,9 @@ void sctk_route_set_rail_nb(int i);
 sctk_rail_info_t* sctk_route_get_rail(int i);
 
 /* Routes */
+void sctk_route_ring_init();
 int sctk_route_ring(int dest, sctk_rail_info_t* rail);
+
+void sctk_route_tree_init();
+int sctk_route_tree(int dest, sctk_rail_info_t* rail);
 #endif

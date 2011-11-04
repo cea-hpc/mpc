@@ -225,8 +225,12 @@ sctk_perform_initialisation (void)
     }
   }
 
-  if (sctk_net_val != NULL)
+#ifdef MPC_Message_Passing
+  if (sctk_net_val != NULL){
+    sctk_ptp_per_task_init(-1);
     sctk_net_val (sctk_net_val_arg);
+  }
+#endif
 
   if (sctk_task_nb_val)
   {

@@ -121,8 +121,11 @@ void sctk_network_init_multirail_tcp(char* name){
   rails[i] = sctk_route_get_rail(i);
   rails[i]->rail_number = i;
   rails[i]->send_message_from_network = sctk_send_message_from_network_multirail_tcp;
+  rails[i]->route = sctk_route_ring;
+  rails[i]->route_init = sctk_route_ring_init;
+  rails[i]->topology_name = "ring";
   sctk_network_init_tcp(rails[i],0);
-  sprintf(name_ptr,"[%d:%s]",i,rails[i]->network_name);
+  sprintf(name_ptr,"[%d:%s (%s)]",i,rails[i]->network_name,rails[i]->topology_name);
   name_ptr = net_name + strlen(net_name);
 
   /* RDMA TCP */
@@ -130,6 +133,9 @@ void sctk_network_init_multirail_tcp(char* name){
   rails[i] = sctk_route_get_rail(i);
   rails[i]->rail_number = i;
   rails[i]->send_message_from_network = sctk_send_message_from_network_multirail_tcp;
+  rails[i]->route = sctk_route_ring;
+  rails[i]->route_init = sctk_route_ring_init;
+  rails[i]->topology_name = "ring";
   sctk_network_init_tcp_rdma(rails[i],0);
   sprintf(name_ptr,"[%d:%s]",i,rails[i]->network_name);
   name_ptr = net_name + strlen(net_name);

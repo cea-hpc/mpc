@@ -185,7 +185,11 @@ void sctk_network_init_tcp_rdma(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib){
   rail->notify_perform_message = sctk_network_notify_perform_message_tcp_rdma;
   rail->notify_idle_message = sctk_network_notify_idle_message_tcp_rdma;
   rail->notify_any_source_message = sctk_network_notify_any_source_message_tcp_rdma;
-  rail->network_name = "TCP RDMA (ring)";
+  if(sctk_use_tcp_o_ib == 0){
+    rail->network_name = "TCP RDMA";
+  } else {
+    rail->network_name = "TCP_O_IB RDMA";
+  }
 
-  sctk_network_init_tcp_all(rail,sctk_use_tcp_o_ib,sctk_tcp_rdma_thread,sctk_route_ring);
+  sctk_network_init_tcp_all(rail,sctk_use_tcp_o_ib,sctk_tcp_rdma_thread,rail->route,rail->route_init);
 }

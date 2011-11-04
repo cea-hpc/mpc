@@ -96,6 +96,10 @@ sctk_rail_info_t* sctk_route_get_rail(int i){
   return &(rails[i]);
 }
 
+void sctk_route_ring_init(){
+
+}
+
 int sctk_route_ring(int dest, sctk_rail_info_t* rail){
     int old_dest;
 
