@@ -76,7 +76,11 @@ sctk_network_send_message_tcp (sctk_thread_ptp_message_t * msg,sctk_rail_info_t*
 
   sctk_nodebug("send message through rail %d",rail->rail_number);
 
-  tmp = sctk_get_route(msg->sctk_msg_get_glob_destination,rail);
+  if(msg->body.header.specific_message_tag == process_specific_message_tag){
+    tmp = sctk_get_route_to_process(msg->sctk_msg_get_destination,rail);
+  } else {
+    tmp = sctk_get_route(msg->sctk_msg_get_glob_destination,rail);
+  }
 
   sctk_spinlock_lock(&(tmp->data.tcp.lock));
 

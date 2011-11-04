@@ -585,14 +585,23 @@ void* sctk_alloc_header(){
 }
 
 void sctk_rebuild_header (sctk_thread_ptp_message_t * msg){
-  if(msg->sctk_msg_get_source != MPC_ANY_SOURCE)
-    msg->sctk_msg_get_glob_source = 
-      sctk_get_comm_world_rank (msg->sctk_msg_get_communicator,msg->sctk_msg_get_source);
-  else 
-    msg->sctk_msg_get_glob_source = -1;
+  if(msg->sctk_msg_get_specific_message_tag == process_specific_message_tag){
+    if(msg->sctk_msg_get_source != MPC_ANY_SOURCE)
+      msg->sctk_msg_get_glob_source = msg->sctk_msg_get_source;
+    else 
+      msg->sctk_msg_get_glob_source = -1;
 
-  msg->sctk_msg_get_glob_destination = 
-    sctk_get_comm_world_rank (msg->sctk_msg_get_communicator,msg->sctk_msg_get_destination);
+    msg->sctk_msg_get_glob_destination = -1;
+  } else {
+    if(msg->sctk_msg_get_source != MPC_ANY_SOURCE)
+      msg->sctk_msg_get_glob_source = 
+	sctk_get_comm_world_rank (msg->sctk_msg_get_communicator,msg->sctk_msg_get_source);
+    else 
+      msg->sctk_msg_get_glob_source = -1;
+    
+    msg->sctk_msg_get_glob_destination = 
+      sctk_get_comm_world_rank (msg->sctk_msg_get_communicator,msg->sctk_msg_get_destination);
+  }
 }
 
 void sctk_reinit_header (sctk_thread_ptp_message_t *tmp, void (*free_memory)(void*),
@@ -665,12 +674,22 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
   msg->body.header.source = source;
   msg->body.header.destination = destination;
 
-  if(source != MPC_ANY_SOURCE)
-    msg->sctk_msg_get_glob_source = sctk_get_comm_world_rank (communicator,source);
-  else 
-    msg->sctk_msg_get_glob_source = -1;
+  if(specific_message_tag == process_specific_message_tag){
+    if(source != MPC_ANY_SOURCE)
+      msg->sctk_msg_get_glob_source = source;
+    else 
+      msg->sctk_msg_get_glob_source = -1;
 
-  msg->sctk_msg_get_glob_destination = sctk_get_comm_world_rank (communicator,destination);
+    msg->sctk_msg_get_glob_destination = -1;
+  } else {
+    if(source != MPC_ANY_SOURCE)
+      msg->sctk_msg_get_glob_source = sctk_get_comm_world_rank (communicator,source);
+    else 
+      msg->sctk_msg_get_glob_source = -1;
+
+    msg->sctk_msg_get_glob_destination = sctk_get_comm_world_rank (communicator,destination);
+  }
+
   msg->body.header.communicator = communicator;
   msg->body.header.message_tag = message_tag;
   msg->body.header.specific_message_tag = specific_message_tag;
@@ -988,29 +1007,35 @@ void sctk_notify_idle_message (){
 /********************************************************************/
 
 void sctk_send_message (sctk_thread_ptp_message_t * msg){
-  sctk_comm_dest_key_t key;
-  sctk_internal_ptp_t* tmp;
-
-/*   key.comm = msg->header.communicator; */
-  key.destination = msg->sctk_msg_get_glob_destination;
-
-  if(msg->body.completion_flag != NULL){
-    *(msg->body.completion_flag) = SCTK_MESSAGE_PENDING;
-  }
-
-  msg->tail.remote_source = 0;
-  msg->tail.remote_destination = 0;
-
-  sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
-  HASH_FIND(hh,sctk_ptp_table,&key,sizeof(sctk_comm_dest_key_t),tmp);
-  sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
-
-  if(tmp != NULL){
-    sctk_internal_ptp_add_send_incomming(tmp,msg);
-  } else {
-    /*Entering low level comm*/
+  if((msg->body.header.specific_message_tag == process_specific_message_tag) &&
+     (msg->sctk_msg_get_destination != sctk_process_rank)){
     msg->tail.remote_destination = 1;
     sctk_network_send_message (msg);
+  } else {
+    sctk_comm_dest_key_t key;
+    sctk_internal_ptp_t* tmp;
+    
+    /*   key.comm = msg->header.communicator; */
+    key.destination = msg->sctk_msg_get_glob_destination;
+    
+    if(msg->body.completion_flag != NULL){
+      *(msg->body.completion_flag) = SCTK_MESSAGE_PENDING;
+    }
+    
+    msg->tail.remote_source = 0;
+    msg->tail.remote_destination = 0;
+    
+    sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
+    HASH_FIND(hh,sctk_ptp_table,&key,sizeof(sctk_comm_dest_key_t),tmp);
+    sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
+    
+    if(tmp != NULL){
+      sctk_internal_ptp_add_send_incomming(tmp,msg);
+    } else {
+      /*Entering low level comm*/
+      msg->tail.remote_destination = 1;
+      sctk_network_send_message (msg);
+    }
   }
 }
 
@@ -1020,7 +1045,7 @@ void sctk_recv_message (sctk_thread_ptp_message_t * msg){
   sctk_comm_dest_key_t send_key;
   sctk_internal_ptp_t* send_tmp = NULL;
 
-/*   key.comm = msg->header.communicator; */
+  /*   key.comm = msg->header.communicator; */
   key.destination = msg->sctk_msg_get_glob_destination;
   send_key.destination = msg->sctk_msg_get_glob_source;
 
@@ -1033,8 +1058,10 @@ void sctk_recv_message (sctk_thread_ptp_message_t * msg){
 
   sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
   HASH_FIND(hh,sctk_ptp_table,&key,sizeof(sctk_comm_dest_key_t),tmp);
-  if(send_key.destination != -1)
-    HASH_FIND(hh,sctk_ptp_table,&send_key,sizeof(sctk_comm_dest_key_t),send_tmp);
+  if(msg->body.header.specific_message_tag != process_specific_message_tag){
+    if(send_key.destination != -1)
+      HASH_FIND(hh,sctk_ptp_table,&send_key,sizeof(sctk_comm_dest_key_t),send_tmp);
+  }
   sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
 
   if(send_tmp == NULL){
@@ -1049,7 +1076,6 @@ void sctk_recv_message (sctk_thread_ptp_message_t * msg){
   } else {
     not_reachable();
   }
-
 }
 
 int sctk_is_net_message (int dest){

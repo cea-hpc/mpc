@@ -44,7 +44,8 @@ extern "C"
     pt2pt_specific_message_tag,
     barrier_specific_message_tag,
     broadcast_specific_message_tag,
-    allreduce_specific_message_tag
+    allreduce_specific_message_tag,
+    process_specific_message_tag
   }specific_message_tag_t;
 
   typedef struct sctk_thread_message_header_s

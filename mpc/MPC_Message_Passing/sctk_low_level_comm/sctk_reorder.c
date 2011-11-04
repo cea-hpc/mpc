@@ -194,6 +194,11 @@ int sctk_prepare_send_message_to_network_reorder (sctk_thread_ptp_message_t * ms
   sctk_reorder_table_t* tmp;
   int process;
 
+  if(msg->body.header.specific_message_tag == process_specific_message_tag){
+    msg->sctk_msg_get_use_message_numbering = 0;
+    return 1;    
+  }
+
   process = sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_glob_source);
 
   if(sctk_process_rank != process){

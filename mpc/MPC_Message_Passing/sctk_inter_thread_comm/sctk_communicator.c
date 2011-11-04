@@ -381,6 +381,7 @@ void sctk_communicator_init(const int nb_task){
 
   sctk_communicator_init_intern(nb_task,SCTK_COMM_WORLD,last_local,
 				first_local,local_tasks,NULL,NULL,NULL);
+  sctk_ptp_per_task_init(-1);
 }
 
 void sctk_communicator_delete(){}

@@ -129,6 +129,9 @@ sctk_network_send_message_tcp_rdma (sctk_thread_ptp_message_t * msg,sctk_rail_in
   sctk_route_table_t* tmp;
   size_t size;
   int fd;
+  if(msg->body.header.specific_message_tag == process_specific_message_tag){
+    not_reachable();
+  }
 
   sctk_nodebug("send message through rail %d",rail->rail_number);
 
