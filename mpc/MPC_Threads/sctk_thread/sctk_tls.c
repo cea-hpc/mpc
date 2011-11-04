@@ -632,21 +632,23 @@ sctk_tls_module_alloc_and_fill ()
 		if ( extls[i] == NULL ) /* this scope is not used */
 			continue ;
 		/* optimized tls access are in the first module */
+		/* generate a dummy access to an ex-tls variable to initialize memory if needed */
 		if ( extls[i]->modules == NULL || extls[i]->modules[0] == NULL ) {
-			/* dummy access to an ex-tls variable to initialize memory if needed */
 			void *dummy = __sctk__tls_get_addr__generic_scope (1,0,extls[i]) ;
 		}
-		tls_module[i] = (sctk_tls_module_t*) &extls[i]->modules[0] ;
+		assert ( extls[i]->modules[0] != NULL ) ;
+		tls_module[i] = (sctk_tls_module_t*) extls[i]->modules[0] ;
 	}
 	for ( i=0 ; i<sctk_hls_max_scope ; ++i ) {
 		if ( sctk_hls[i] == NULL ) /* this scope is not used */
 			continue ;
 		/* optimized tls access are in the first module */
+		/* generate a dummy access to an hls variable to initialize memory if needed */
 		if ( sctk_hls[i]->level.modules == NULL || sctk_hls[i]->level.modules[0] == NULL ) {
-			/* dummy access to an hls variable to initialize memory if needed */
 			void *dummy = __sctk__tls_get_addr__generic_scope (1,0,&sctk_hls[i]->level) ;
 		}
-		tls_module[sctk_extls_max_scope+i] = (sctk_tls_module_t*) &sctk_hls[i]->level.modules[0] ;
+		assert ( sctk_hls[i]->level.modules[0] != NULL ) ;
+		tls_module[sctk_extls_max_scope+i] = (sctk_tls_module_t*) sctk_hls[i]->level.modules[0] ;
 	}
 	sctk_tls_module = (void**)tls_module ;
 }
