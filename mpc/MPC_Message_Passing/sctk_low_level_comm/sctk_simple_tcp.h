@@ -29,8 +29,8 @@ extern "C"
 
 #include <sctk_spinlock.h>
 
-void sctk_network_init_simple_tcp(char* name);
-  void sctk_network_init_simple_tcp_o_ib(char* name);
+  void sctk_network_init_simple_tcp(char* name, char* topology);
+  void sctk_network_init_simple_tcp_o_ib(char* name, char* topology);
 
 #ifdef __cplusplus
 }

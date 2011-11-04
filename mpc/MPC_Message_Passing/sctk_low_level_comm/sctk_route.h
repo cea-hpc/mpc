@@ -82,6 +82,7 @@ void sctk_route_set_rail_nb(int i);
 sctk_rail_info_t* sctk_route_get_rail(int i);
 
 /* Routes */
+void sctk_route_init_in_rail(sctk_rail_info_t* rail, char* topology);
 void sctk_route_ring_init();
 int sctk_route_ring(int dest, sctk_rail_info_t* rail);
 

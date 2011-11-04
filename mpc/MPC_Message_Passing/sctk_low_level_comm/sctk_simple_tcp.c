@@ -62,7 +62,7 @@ sctk_network_notify_any_source_message_simple_tcp (){
 
 
 /************ INIT ****************/
-void sctk_network_init_simple_tcp(char* name){
+void sctk_network_init_simple_tcp(char* name, char* topology){
   static char net_name[4096];
 
   sctk_route_set_rail_nb(1);
@@ -70,9 +70,7 @@ void sctk_network_init_simple_tcp(char* name){
   rail_0 = sctk_route_get_rail(0);
   rail_0->rail_number = 0;
   rail_0->send_message_from_network = sctk_send_message;
-  rail_0->route = sctk_route_ring;
-  rail_0->route_init = sctk_route_ring_init;
-  rail_0->topology_name = "ring";
+  sctk_route_init_in_rail(rail_0,topology);
   sctk_network_init_tcp(rail_0,0);
   sprintf(net_name,"[0:%s (%s)]",rail_0->network_name,rail_0->topology_name);
 
@@ -85,7 +83,7 @@ void sctk_network_init_simple_tcp(char* name){
   sctk_network_mode = net_name;
 }
 
-void sctk_network_init_simple_tcp_o_ib(char* name){
+void sctk_network_init_simple_tcp_o_ib(char* name, char* topology){
   static char net_name[4096];
 
   sctk_route_set_rail_nb(1);
@@ -93,11 +91,9 @@ void sctk_network_init_simple_tcp_o_ib(char* name){
   rail_0 = sctk_route_get_rail(0);
   rail_0->rail_number = 0;
   rail_0->send_message_from_network = sctk_send_message;
-  rail_0->route = sctk_route_ring;
-  rail_0->route_init = sctk_route_ring_init;
-  rail_0->topology_name = "ring";
+  sctk_route_init_in_rail(rail_0,topology);
   sctk_network_init_tcp(rail_0,1);
-  sprintf(net_name,"[0:%s]",rail_0->network_name);
+  sprintf(net_name,"[0:%s (%s)]",rail_0->network_name,rail_0->topology_name);
 
   sctk_network_send_message_set(sctk_network_send_message_simple_tcp);
   sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_simple_tcp);

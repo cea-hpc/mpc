@@ -96,6 +96,18 @@ sctk_rail_info_t* sctk_route_get_rail(int i){
   return &(rails[i]);
 }
 
+/**** routes *****/
+
+void sctk_route_init_in_rail(sctk_rail_info_t* rail, char* topology){
+  if(strcmp("ring",topology) == 0){
+  rail->route = sctk_route_ring;
+  rail->route_init = sctk_route_ring_init;
+  rail->topology_name = "ring";
+  } else {
+    not_reachable();
+  }
+}
+
 void sctk_route_ring_init(){
 
 }
@@ -108,4 +120,11 @@ int sctk_route_ring(int dest, sctk_rail_info_t* rail){
     sctk_nodebug("Route via dest - 1 %d to %d",dest,old_dest);
     
     return dest;
+}
+
+void sctk_route_tree_init(){
+  not_implemented();
+}
+int sctk_route_tree(int dest, sctk_rail_info_t* rail){
+  not_implemented();
 }

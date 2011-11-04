@@ -29,7 +29,7 @@ extern "C"
 
 #include <sctk_spinlock.h>
 
-void sctk_network_init_multirail_tcp(char* name);
+void sctk_network_init_multirail_tcp(char* name, char* topology);
 
 #ifdef __cplusplus
 }
