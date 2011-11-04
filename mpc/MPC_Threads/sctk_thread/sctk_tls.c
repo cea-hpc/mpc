@@ -145,7 +145,6 @@ sctk_hls_init_level(hls_level * level)
 {
 	int i ;
 	sctk_tls_init_level(&level->level);
-	/* toenter is to be filled by sctk_hls_checkout_on_vp */
 	sctk_atomics_store_int ( &level->toenter, 0 ) ;
 	sctk_atomics_store_int ( &level->entered, 0 ) ;
 	level->generation = 0 ;
@@ -502,7 +501,7 @@ void sctk_hls_checkout_on_vp ()
   if ( numa_level_1_number > 0 ) {
 	  sctk_hls[sctk_hls_numa_level_1_scope]
 		  = sctk_hls_repository[numa_1_id] + offset ;
-	  offset += numa_level_1_number ;
+	  offset += 1 ;
   }
 
   id = sctk_get_socket_id (pu_id) ;
