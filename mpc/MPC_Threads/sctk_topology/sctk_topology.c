@@ -53,6 +53,7 @@ static sctk_spinlock_t topology_lock = SCTK_SPINLOCK_INITIALIZER;
 
 static hwloc_topology_t topology;
 const struct hwloc_topology_support *support;
+static int hwloc_initialized = 0;
 
 /* print a cpuset in a human readable way */
 static void
@@ -230,6 +231,7 @@ __thread int sctk_get_cpu_val = -1;
 static inline  int
 sctk_get_cpu_intern ()
 {
+  assume(hwloc_initialized == 1);
   hwloc_cpuset_t set = hwloc_bitmap_alloc();
 
   int ret = hwloc_get_last_cpu_location(topology, set, 0);
@@ -279,12 +281,14 @@ sctk_topology_init ()
   uname (&utsname);
 
 /*   sctk_print_topology (stderr); */
+  hwloc_initialized = 1;
 }
 
 /*! \brief Destroy the topology module
 */
 void sctk_topology_destroy (void)
 {
+  assume(hwloc_initialized == 1);
   hwloc_topology_destroy(topology);
 }
 
@@ -304,6 +308,7 @@ sctk_get_node_name ()
   static hwloc_obj_t
 sctk_get_first_child_by_type(hwloc_obj_t obj, hwloc_obj_type_t type)
 {
+  assume(hwloc_initialized == 1);
   hwloc_obj_t child = obj;
   do
   {
@@ -320,6 +325,7 @@ sctk_get_first_child_by_type(hwloc_obj_t obj, hwloc_obj_type_t type)
 sctk_print_topology (FILE * fd)
 {
   int i;
+  assume(hwloc_initialized == 1);
   fprintf(fd, "Node %s: %s %s %s\n", sctk_node_name, utsname.sysname,
       utsname.release, utsname.version);
   const int pu_number = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
@@ -356,6 +362,7 @@ sctk_print_topology (FILE * fd)
   int
 sctk_bind_to_cpu (int i)
 {
+  assume(hwloc_initialized == 1);
   char * msg = "Bind to cpu";
   int supported = support->cpubind->set_thisthread_cpubind;
   const char *errmsg = strerror(errno);
@@ -384,6 +391,7 @@ sctk_bind_to_cpu (int i)
   char *
 sctk_get_processor_name ()
 {
+  assume(hwloc_initialized == 1);
   return utsname.machine;
 }
 
@@ -393,6 +401,7 @@ sctk_get_processor_name ()
   int
 sctk_get_first_cpu_in_node (int node)
 {
+  assume(hwloc_initialized == 1);
   hwloc_obj_t currentNode = hwloc_get_obj_by_type(topology, HWLOC_OBJ_NODE, node);
 
   while(currentNode->type != HWLOC_OBJ_CORE) {
@@ -407,6 +416,7 @@ sctk_get_first_cpu_in_node (int node)
   int
 sctk_get_cpu_number ()
 {
+  assume(hwloc_initialized == 1);
   return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
 }
 
@@ -417,6 +427,7 @@ sctk_get_cpu_number ()
   int
 sctk_set_cpu_number (int n)
 {
+  assume(hwloc_initialized == 1);
   sctk_update_topology ( n, 0 ) ;
   return n;
 }
@@ -426,6 +437,7 @@ sctk_set_cpu_number (int n)
   int
 sctk_is_numa_node ()
 {
+  assume(hwloc_initialized == 1);
   return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) != 0;
 }
 
@@ -434,6 +446,7 @@ sctk_is_numa_node ()
   int
 sctk_get_numa_node_number ()
 {
+  assume(hwloc_initialized == 1);
   return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) ;
 }
 
@@ -443,6 +456,7 @@ sctk_get_numa_node_number ()
   int
 sctk_get_node_from_cpu (const int vp)
 {
+  assume(hwloc_initialized == 1);
   if(sctk_is_numa_node ()){
     const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
     const hwloc_obj_t node = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, pu);
@@ -457,6 +471,7 @@ sctk_get_node_from_cpu (const int vp)
  */
 int sctk_get_numa_number (const int level)
 {
+  assume(hwloc_initialized == 1);
   if ( level > sctk_get_numa_level_number() ) {
     return 0 ;
   }
@@ -469,6 +484,7 @@ int sctk_get_numa_number (const int level)
 */
 int sctk_get_socket_number ()
 {
+  assume(hwloc_initialized == 1);
   return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_SOCKET) ;
 }
 
@@ -477,6 +493,7 @@ int sctk_get_socket_number ()
  */
 int sctk_get_cache_number (const int level)
 {
+  assume(hwloc_initialized == 1);
   if ( level > sctk_get_cache_level_number() ) {
     return 0 ;
   }
@@ -489,6 +506,7 @@ int sctk_get_cache_number (const int level)
 */
 int sctk_get_core_number ()
 {
+  assume(hwloc_initialized == 1);
   return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE) ;
 }
 
@@ -496,6 +514,7 @@ int sctk_get_core_number ()
 */
 int sctk_get_cache_level_number ()
 {
+  assume(hwloc_initialized == 1);
   const int core_depth   = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE);
   const int socket_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_SOCKET);
   return core_depth - socket_depth - 1 ;
@@ -505,6 +524,7 @@ int sctk_get_cache_level_number ()
 */
 int sctk_get_numa_level_number ()
 {
+  assume(hwloc_initialized == 1);
   const int machine_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_MACHINE);
   const int socket_depth  = hwloc_get_type_depth(topology, HWLOC_OBJ_SOCKET);
   return socket_depth - machine_depth - 1 ;
@@ -516,6 +536,7 @@ int sctk_get_numa_level_number ()
  */
 int sctk_get_numa_id (const int level, const int vp)
 {
+  assume(hwloc_initialized == 1);
   const int socket_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_SOCKET);
   const int numa_depth = socket_depth - level ;
   const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
@@ -528,6 +549,7 @@ int sctk_get_numa_id (const int level, const int vp)
  */
 int sctk_get_socket_id (const int vp)
 {
+  assume(hwloc_initialized == 1);
   const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
   const hwloc_obj_t node = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_SOCKET, pu);
   return node->logical_index;
@@ -539,6 +561,7 @@ int sctk_get_socket_id (const int vp)
  */
 int sctk_get_cache_id (const int level, const int vp)
 {
+  assume(hwloc_initialized == 1);
   const int core_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE);
   const int cache_depth = core_depth - level ;
   const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
@@ -551,6 +574,7 @@ int sctk_get_cache_id (const int level, const int vp)
  */
 int sctk_get_core_id (const int vp)
 {
+  assume(hwloc_initialized == 1);
   const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
   const hwloc_obj_t core = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, pu);
   return core->logical_index;
@@ -560,6 +584,7 @@ int sctk_get_core_id (const int vp)
   static void
 print_neighborhood(int cpuid, int nb_cpus, int* neighborhood, hwloc_obj_t* objs)
 {
+  assume(hwloc_initialized == 1);
   int i;
   hwloc_obj_t currentCPU = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuid);
   hwloc_obj_type_t type = (sctk_is_numa_node()) ? HWLOC_OBJ_NODE : HWLOC_OBJ_MACHINE;
@@ -589,6 +614,7 @@ print_neighborhood(int cpuid, int nb_cpus, int* neighborhood, hwloc_obj_t* objs)
   void
 sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood)
 {
+  assume(hwloc_initialized == 1);
   int i;
 
   hwloc_obj_t *objs;
