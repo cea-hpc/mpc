@@ -728,21 +728,7 @@ __sctk_get_tls_init_to_do ()
 
   if (sctk_alloc_init_done != 0)
     {
-#ifdef MPC_Threads
-#ifndef MPC_USE_PAGE_MIGRATION
-      int i;
-#endif
-#endif
       __sctk_get_tls_ptr = __sctk_get_tls_init_done;
-#ifdef MPC_Threads
-#ifndef MPC_USE_PAGE_MIGRATION
-      for (i = 0; i < sctk_get_cpu_number (); i++)
-	{
-	  sctk_tmp_buffer_relocalise_memory[i] =
-	    sctk_malloc (SCTK_RELOCALISE_BUFFER_SIZE);
-	}
-#endif
-#endif
     }
 
   return tls;
