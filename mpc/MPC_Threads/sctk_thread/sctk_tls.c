@@ -273,49 +273,43 @@ sctk_alloc_module (size_t m, tls_level * tls_level)
 }
 
 static inline void *
-__sctk__tls_get_addr__generic_scope (size_t m, size_t offset,
-				     tls_level *tls_level)
+__sctk__tls_get_addr__generic_scope ( size_t module_id,
+	size_t offset, tls_level *tls_level)
 {
   void *res;
   char *tls_module;
 
-  sctk_nodebug ("Module %lu Offset %lu", m, offset);
+  sctk_nodebug ("Module %lu Offset %lu", module_id, offset);
 
   assert ( tls_level != NULL ) ;
+  assert ( module_id >= 1 ) ;
 
-  if (expect_false (tls_level->size < m))
-    {
+  /* resize modules array if needed */
+  if (expect_false(module_id > tls_level->size))
+  {
 	  size_t i;
 	  sctk_tls_write_level (tls_level);
-  	  if (tls_level->size < m) {
-
-	      tls_level->modules =
-		sctk_realloc ((void *) (tls_level->modules), m * sizeof (char *));
-	      for (i = tls_level->size; i < m; i++)
-		{
-		  tls_level->modules[i] = NULL;
-		  /* sctk_alloc_module (i, tls_level); */
-		}
-	      sctk_nodebug ("Init modules to size %ld->%ld", tls_level->size, m);
-	      tls_level->size = m;
-          }
+	  if (module_id > tls_level->size) {
+		  tls_level->modules = sctk_realloc ((void *) (tls_level->modules), module_id * sizeof (char *));
+		  for (i = tls_level->size; i < module_id; i++)
+			  tls_level->modules[i] = NULL;
+		  sctk_nodebug ("Init modules to size %ld->%ld", tls_level->size, m);
+		  tls_level->size = module_id;
+	  }
 	  sctk_tls_unlock_level (tls_level);
+  }
 
-    }
-   
-  if (expect_false (tls_level->modules[m-1] == NULL ))
-     {
+  /* alloc module if needed */
+  if (expect_false(tls_level->modules[module_id-1] == NULL))
+  {
 	  sctk_tls_write_level (tls_level);
-          if ( tls_level->modules[m-1] == NULL )
-            {
-               tls_module = sctk_alloc_module (m, tls_level);
-            }
+	  if ( tls_level->modules[module_id-1] == NULL )
+		  tls_module = sctk_alloc_module (module_id, tls_level);
 	  sctk_tls_unlock_level (tls_level);
-     } 
+  } 
 
-  tls_module = (char *) tls_level->modules[m - 1];
+  tls_module = (char *) tls_level->modules[module_id - 1];
   res = tls_module + offset;
-
   return res;
 }
 
