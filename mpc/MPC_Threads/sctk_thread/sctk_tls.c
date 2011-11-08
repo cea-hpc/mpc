@@ -48,7 +48,6 @@ __thread void *sctk_extls = NULL;
 
 /* to set GS register */
 #include <asm/prctl.h>
-#include <sys/prctl.h>
 #include <asm-x86_64/unistd.h>
 
 static __thread unsigned long p_memsz;
@@ -627,29 +626,41 @@ sctk_tls_module_alloc_and_fill ()
 {
 	int i ;
 	tls_level **extls = (tls_level**) sctk_extls ;
-	sctk_tls_module_t **tls_module = sctk_calloc(sctk_extls_max_scope+sctk_hls_max_scope,sizeof(sctk_tls_module_t*));
+	sctk_tls_module_t *tls_module = sctk_calloc(sctk_extls_max_scope+sctk_hls_max_scope,sizeof(sctk_tls_module_t));
+
 	for ( i=0 ; i<sctk_extls_max_scope ; ++i ) {
-		if ( extls[i] == NULL ) /* this scope is not used */
+		if ( extls[i] == NULL ) {
+			/* this scope is not used */
+			tls_module[i] = NULL ;
 			continue ;
+		}
 		/* optimized tls access are in the first module */
 		/* generate a dummy access to an ex-tls variable to initialize memory if needed */
 		if ( extls[i]->modules == NULL || extls[i]->modules[0] == NULL ) {
 			void *dummy = __sctk__tls_get_addr__generic_scope (1,0,extls[i]) ;
 		}
 		assert ( extls[i]->modules[0] != NULL ) ;
-		tls_module[i] = (sctk_tls_module_t*) extls[i]->modules[0] ;
+		tls_module[i] = extls[i]->modules[0] ;
 	}
+
 	for ( i=0 ; i<sctk_hls_max_scope ; ++i ) {
-		if ( sctk_hls[i] == NULL ) /* this scope is not used */
+		if ( sctk_hls[i] == NULL ) {
+			/* this scope is not used */
+			tls_module[sctk_extls_max_scope+i] = NULL ;
 			continue ;
+		}
 		/* optimized tls access are in the first module */
 		/* generate a dummy access to an hls variable to initialize memory if needed */
 		if ( sctk_hls[i]->level.modules == NULL || sctk_hls[i]->level.modules[0] == NULL ) {
 			void *dummy = __sctk__tls_get_addr__generic_scope (1,0,&sctk_hls[i]->level) ;
 		}
 		assert ( sctk_hls[i]->level.modules[0] != NULL ) ;
-		tls_module[sctk_extls_max_scope+i] = (sctk_tls_module_t*) sctk_hls[i]->level.modules[0] ;
+		tls_module[sctk_extls_max_scope+i] = sctk_hls[i]->level.modules[0] ;
 	}
+
+	for ( i=0; i<sctk_extls_max_scope+sctk_hls_max_scope; ++i )
+		sctk_tls_module_vp[i] = tls_module[i] ;
+	
 	sctk_tls_module = (void**)tls_module ;
 }
 
