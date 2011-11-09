@@ -67,6 +67,13 @@ void sctk_network_init_simple_tcp(char* name, char* topology){
 
   sctk_route_set_rail_nb(1);
 
+  sctk_network_send_message_set(sctk_network_send_message_simple_tcp);
+  sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_simple_tcp);
+  sctk_network_notify_matching_message_set(sctk_network_notify_matching_message_simple_tcp);
+  sctk_network_notify_perform_message_set(sctk_network_notify_perform_message_simple_tcp);
+  sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_simple_tcp);
+  sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_simple_tcp);
+
   rail_0 = sctk_route_get_rail(0);
   rail_0->rail_number = 0;
   rail_0->send_message_from_network = sctk_send_message;
@@ -74,12 +81,6 @@ void sctk_network_init_simple_tcp(char* name, char* topology){
   sctk_network_init_tcp(rail_0,0);
   sprintf(net_name,"[0:%s (%s)]",rail_0->network_name,rail_0->topology_name);
 
-  sctk_network_send_message_set(sctk_network_send_message_simple_tcp);
-  sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_simple_tcp);
-  sctk_network_notify_matching_message_set(sctk_network_notify_matching_message_simple_tcp);
-  sctk_network_notify_perform_message_set(sctk_network_notify_perform_message_simple_tcp);
-  sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_simple_tcp);
-  sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_simple_tcp);
   sctk_network_mode = net_name;
 }
 
@@ -92,7 +93,6 @@ void sctk_network_init_simple_tcp_o_ib(char* name, char* topology){
   rail_0->rail_number = 0;
   rail_0->send_message_from_network = sctk_send_message;
   sctk_route_init_in_rail(rail_0,topology);
-  sctk_network_init_tcp(rail_0,1);
   sprintf(net_name,"[0:%s (%s)]",rail_0->network_name,rail_0->topology_name);
 
   sctk_network_send_message_set(sctk_network_send_message_simple_tcp);
@@ -101,5 +101,8 @@ void sctk_network_init_simple_tcp_o_ib(char* name, char* topology){
   sctk_network_notify_perform_message_set(sctk_network_notify_perform_message_simple_tcp);
   sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_simple_tcp);
   sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_simple_tcp);
+
+  sctk_network_init_tcp(rail_0,1);
+
   sctk_network_mode = net_name;
 }

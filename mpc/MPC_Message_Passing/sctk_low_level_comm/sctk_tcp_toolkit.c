@@ -38,7 +38,6 @@
 #include <sctk_net_tools.h>
 
 
-#define MAX_STRING_SIZE 2048
 
 /************ SOCKET MANIPULATION ****************/
 static int
@@ -242,33 +241,34 @@ sctk_network_notify_any_source_message_tcp (sctk_rail_info_t* rail){
 
 static void 
 sctk_network_connection_to_tcp(int from, int to,sctk_rail_info_t* rail){
-#if 0
+  int dest_socket;
+  char dest_connection_infos[MAX_STRING_SIZE];
+
+  /*Recv connection informations*/
+  fprintf(stderr,"TO connection form %d to %d\n",from,to);
+  sctk_route_messages_recv(from,to,0,dest_connection_infos,MAX_STRING_SIZE);
+  fprintf(stderr,"Connect to %s\n",dest_connection_infos);
+  
+  /*Recv id from the connected process*/
+  dest_socket = sctk_tcp_connect_to(dest_connection_infos,rail);
+  
+  sctk_tcp_add_static_route(to,dest_socket,rail,(void * (*)(sctk_route_table_t *))(rail->network.tcp.tcp_thread));
+}
+
+static void 
+sctk_network_connection_from_tcp(int from, int to,sctk_rail_info_t* rail){
   int src_socket;
-
-  if(to < from){
-    /*Recv connection from any source*/
-    not_implemented();
-
-    /*Recv id from the connected process*/
-    not_implemented();
-  } else {
-    /*Send connection informations*/
-    not_implemented();
-
-    src_socket = accept (rail->network.tcp.sockfd, NULL,0);  
-    if(src_socket < 0){
-      perror("Connection error");
-      sctk_abort();
-    }
-    /*Recv id from the connected process*/
-    not_implemented();
-    to = ???;
-
-    sctk_tcp_add_static_route(to,src_socket,rail,tcp_thread);
+  /*Send connection informations*/
+  fprintf(stderr,"FROM connection form %d to %d\n",from,to);
+  sctk_route_messages_send(from,to,0,rail->network.tcp.connection_infos,MAX_STRING_SIZE);
+  
+  src_socket = accept (rail->network.tcp.sockfd, NULL,0);  
+  if(src_socket < 0){
+    perror("Connection error");
+    sctk_abort();
   }
-#else
-  not_implemented();
-#endif
+  
+  sctk_tcp_add_static_route(to,src_socket,rail,(void * (*)(sctk_route_table_t *))(rail->network.tcp.tcp_thread));
 }
 
 /************ INIT ****************/
@@ -276,9 +276,7 @@ void sctk_network_init_tcp_all(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib,
 			       void* (*tcp_thread)(sctk_route_table_t*),
 			       int (*route)(int , sctk_rail_info_t* ),
 			       void(*route_init)(sctk_rail_info_t*)){
-  char connection_infos[MAX_STRING_SIZE];
   char dest_connection_infos[MAX_STRING_SIZE];
-  size_t connection_infos_size;
   int dest_rank;
   int dest_socket;
   int src_rank;
@@ -286,24 +284,26 @@ void sctk_network_init_tcp_all(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib,
 
   assume(rail->send_message_from_network != NULL);
 
-  rail ->route = route;
+  rail->route = route;
   rail->connect_to = sctk_network_connection_to_tcp;
+  rail->connect_from = sctk_network_connection_from_tcp;
   rail->network.tcp.sctk_use_tcp_o_ib = sctk_use_tcp_o_ib;
+  rail->network.tcp.tcp_thread = tcp_thread;
   sctk_client_create_recv_socket (rail);  
 
-  gethostname(connection_infos, MAX_STRING_SIZE-100);
-  connection_infos_size = strlen(connection_infos);
+  gethostname(rail->network.tcp.connection_infos, MAX_STRING_SIZE-100);
+  rail->network.tcp.connection_infos_size = strlen(rail->network.tcp.connection_infos);
   
-  sprintf(connection_infos+connection_infos_size,":%d",rail->network.tcp.portno);
-  connection_infos_size = strlen(connection_infos) + 1;
-  assume(connection_infos_size < MAX_STRING_SIZE);
+  sprintf(rail->network.tcp.connection_infos+rail->network.tcp.connection_infos_size,":%d",rail->network.tcp.portno);
+  rail->network.tcp.connection_infos_size = strlen(rail->network.tcp.connection_infos) + 1;
+  assume(rail->network.tcp.connection_infos_size < MAX_STRING_SIZE);
 
   dest_rank = (sctk_process_rank + 1) % sctk_process_number;
   src_rank = (sctk_process_rank + sctk_process_number - 1) % sctk_process_number;
 
-  sctk_nodebug("Connection Infos (%d): %s",sctk_process_rank,connection_infos);
+  sctk_nodebug("Connection Infos (%d): %s",sctk_process_rank,rail->network.tcp.connection_infos);
 
-  assume(sctk_pmi_put_connection_info(connection_infos,MAX_STRING_SIZE,rail->rail_number) == 0);
+  assume(sctk_pmi_put_connection_info(rail->network.tcp.connection_infos,MAX_STRING_SIZE,rail->rail_number) == 0);
   sctk_pmi_barrier();
 
   assume(sctk_pmi_get_connection_info(dest_connection_infos,MAX_STRING_SIZE,rail->rail_number,dest_rank) == 0);
@@ -364,11 +364,7 @@ void sctk_network_init_tcp_all(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib,
   sctk_tcp_add_static_route(dest_rank,dest_socket,rail,tcp_thread);
   if(sctk_process_number > 2){
     sctk_tcp_add_static_route(src_rank,src_socket,rail,tcp_thread);
-  }
-  sctk_pmi_barrier();   
-  route_init(rail);
-  sctk_pmi_barrier();   
-
-
-
+  } 
+  sctk_pmi_barrier();  
+  rail->route_init(rail);
 }
