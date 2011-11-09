@@ -1450,6 +1450,9 @@ extern "C"
 	      (vp->incomming_queue == NULL) &&
 	      (vp->ready_queue == NULL) )
 	    {
+/* #ifdef MPC_Message_Passing */
+/* 	    sctk_notify_idle_message (); */
+/* #endif */
 	      sched_yield();
 	    }
 	}

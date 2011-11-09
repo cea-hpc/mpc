@@ -72,6 +72,9 @@ typedef struct {
   sctk_internal_ptp_list_pending_t pending_send;
   sctk_internal_ptp_list_pending_t pending_recv;
   char changed;
+
+  sctk_message_to_copy_t* sctk_ptp_task_list;
+  sctk_spinlock_t sctk_ptp_tasks_lock;
 }sctk_internal_ptp_message_lists_t;
 
 static inline void sctk_internal_ptp_message_list_init(sctk_internal_ptp_message_lists_t * lists){
@@ -84,6 +87,10 @@ static inline void sctk_internal_ptp_message_list_init(sctk_internal_ptp_message
   lists->pending_lock = lock;
   sctk_internal_ptp_list_pending_init(&(lists->pending_send));
   sctk_internal_ptp_list_pending_init(&(lists->pending_recv));
+
+  
+  lists->sctk_ptp_tasks_lock = lock;
+  lists->sctk_ptp_task_list = NULL;
 }
 
 typedef struct{
@@ -93,6 +100,13 @@ typedef struct{
 
   UT_hash_handle hh;
 } sctk_internal_ptp_t;
+
+static inline void sctk_ptp_tasks_insert(sctk_message_to_copy_t* tmp,
+				    sctk_internal_ptp_t* pair){
+  sctk_spinlock_lock(&(pair->lists.sctk_ptp_tasks_lock));
+  DL_APPEND(pair->lists.sctk_ptp_task_list,tmp); 
+  sctk_spinlock_unlock(&(pair->lists.sctk_ptp_tasks_lock));  
+}
 
 static inline void sctk_internal_ptp_merge_pending(sctk_internal_ptp_message_lists_t* lists){
 #ifndef SCTK_DISABLE_REENTRANCE
@@ -194,31 +208,28 @@ sctk_ptp_table_read_unlock(){
 /*Task engine                                                       */
 /********************************************************************/
 #define SCTK_DISABLE_TASK_ENGINE
-#warning "To optimize to deal with NUMA effects"
-static sctk_message_to_copy_t* sctk_ptp_task_list = NULL;
-static sctk_spinlock_t sctk_ptp_tasks_lock = SCTK_SPINLOCK_INITIALIZER;
 
-static inline void sctk_ptp_tasks_perform(){
-#ifdef SCTK_DISABLE_TASK_ENGINE
+static inline void sctk_ptp_tasks_perform(sctk_internal_ptp_t* pair){
   sctk_message_to_copy_t* tmp;
 
-  while(sctk_ptp_task_list != NULL){
-    sctk_spinlock_lock(&sctk_ptp_tasks_lock);
-    tmp = sctk_ptp_task_list;
-    if(tmp != NULL){
-      DL_DELETE(sctk_ptp_task_list,tmp);
-    }
-    sctk_spinlock_unlock(&sctk_ptp_tasks_lock);
-
+  while(pair->lists.sctk_ptp_task_list != NULL){
+    tmp = NULL;
+    if(sctk_spinlock_trylock(&(pair->lists.sctk_ptp_tasks_lock)) == 0){
+      tmp = pair->lists.sctk_ptp_task_list;
+      if(tmp != NULL){
+	DL_DELETE(pair->lists.sctk_ptp_task_list,tmp);
+      }
+      sctk_spinlock_unlock(&(pair->lists.sctk_ptp_tasks_lock));
+    } 
     if(tmp != NULL){
       tmp->msg_send->tail.message_copy(tmp);
     }
   }
-#endif
 }
 
 static inline void sctk_ptp_copy_tasks_insert(sctk_msg_list_t* ptr_recv,
-					      sctk_msg_list_t* ptr_send){
+					      sctk_msg_list_t* ptr_send,
+					      sctk_internal_ptp_t* pair){
   sctk_message_to_copy_t* tmp; 
 
   tmp = &(ptr_recv->msg->tail.copy_list);
@@ -228,9 +239,7 @@ static inline void sctk_ptp_copy_tasks_insert(sctk_msg_list_t* ptr_recv,
 #ifdef SCTK_DISABLE_TASK_ENGINE
   tmp->msg_send->tail.message_copy(tmp);  
 #else
-  sctk_spinlock_lock(&sctk_ptp_tasks_lock);
-  DL_APPEND(sctk_ptp_task_list,tmp); 
-  sctk_spinlock_unlock(&sctk_ptp_tasks_lock);
+  sctk_ptp_tasks_insert(tmp,pair);
 #endif
 }
 
@@ -870,7 +879,7 @@ static inline void sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t* pa
       DL_DELETE(pair->lists.pending_recv.list,ptr_recv);
 
       /*Copy message*/
-      sctk_ptp_copy_tasks_insert(ptr_recv,ptr_send);
+      sctk_ptp_copy_tasks_insert(ptr_recv,ptr_send,pair);
     } else {
       if(ptr_recv->msg->tail.remote_source){
 	sctk_network_notify_matching_message (ptr_recv->msg);
@@ -904,7 +913,7 @@ static inline void sctk_perform_messages_for_pair(sctk_internal_ptp_t* pair){
       sctk_internal_ptp_unlock_pending(&(pair->lists));
     }
   }
-  sctk_ptp_tasks_perform();
+  sctk_ptp_tasks_perform(pair);
 }
 
 static inline void sctk_try_perform_messages_for_pair(sctk_internal_ptp_t* pair){
@@ -978,7 +987,6 @@ void sctk_wait_all (const int task, const sctk_communicator_t com){
       sctk_internal_ptp_unlock_pending(&(pair->lists));
     }
     sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
-    sctk_ptp_tasks_perform();
 
 #warning "To optimize"
     sctk_thread_yield();
@@ -989,6 +997,7 @@ void sctk_perform_all (){
   sctk_internal_ptp_t* pair;
   sctk_internal_ptp_t* tmp;
 
+#warning "Add topological iterations"
   sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
   HASH_ITER(hh,sctk_ptp_table,pair,tmp){
     sctk_try_perform_messages_for_pair(pair);
@@ -1031,6 +1040,7 @@ void sctk_send_message (sctk_thread_ptp_message_t * msg){
     
     if(tmp != NULL){
       sctk_internal_ptp_add_send_incomming(tmp,msg);
+/*       sctk_try_perform_messages_for_pair(tmp); */
     } else {
       /*Entering low level comm*/
       msg->tail.remote_destination = 1;

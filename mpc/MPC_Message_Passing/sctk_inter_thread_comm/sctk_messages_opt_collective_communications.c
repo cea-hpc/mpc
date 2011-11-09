@@ -338,8 +338,8 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
 
       dest = (myself / i) * i;
       if(dest >= 0){
-	sctk_opt_messages_send(communicator,myself,dest,0,buffer_out,size,allreduce_specific_message_tag,sctk_opt_messages_get_item(&table));
-	sctk_opt_messages_wait(&table);
+	memcpy(buffer_tmp,buffer_out,size);
+	sctk_opt_messages_send(communicator,myself,dest,0,buffer_tmp,size,allreduce_specific_message_tag,sctk_opt_messages_get_item(&table));
 	sctk_opt_messages_recv(communicator,dest,myself,1,buffer_out,size,allreduce_specific_message_tag,sctk_opt_messages_get_item(&table));
 	sctk_opt_messages_wait(&table);
 	break;

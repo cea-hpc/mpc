@@ -246,14 +246,24 @@ sctk_network_connection_to_tcp(int from, int to,sctk_rail_info_t* rail){
   int src_socket;
 
   if(to < from){
-    /*Ask for connection*/
+    /*Recv connection from any source*/
+    not_implemented();
+
+    /*Recv id from the connected process*/
     not_implemented();
   } else {
+    /*Send connection informations*/
+    not_implemented();
+
     src_socket = accept (rail->network.tcp.sockfd, NULL,0);  
     if(src_socket < 0){
       perror("Connection error");
       sctk_abort();
     }
+    /*Recv id from the connected process*/
+    not_implemented();
+    to = ???;
+
     sctk_tcp_add_static_route(to,src_socket,rail,tcp_thread);
   }
 #else
