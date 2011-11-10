@@ -215,8 +215,8 @@ void sctk_route_fully_init(sctk_rail_info_t* rail){
 	  }
 	} 
       }
-      sctk_pmi_barrier();
     }
+    sctk_pmi_barrier();
   }
   rail->route = sav_sctk_route;
   sctk_pmi_barrier();

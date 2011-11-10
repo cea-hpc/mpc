@@ -99,7 +99,6 @@ void sctk_network_init_simple_tcp_o_ib(char* name, char* topology){
   rail_0->rail_number = 0;
   rail_0->send_message_from_network = sctk_send_message;
   sctk_route_init_in_rail(rail_0,topology);
-  sprintf(net_name,"[0:%s (%s)]",rail_0->network_name,rail_0->topology_name);
 
   sctk_network_init_tcp(rail_0,1);
 
@@ -113,6 +112,8 @@ void sctk_network_init_simple_tcp_o_ib(char* name, char* topology){
   sctk_pmi_barrier();  
   rail_0->route_init(rail_0);
   sctk_pmi_barrier();  
+
+  sprintf(net_name,"[0:%s (%s)]",rail_0->network_name,rail_0->topology_name);
 
   sctk_network_mode = net_name;
 }
