@@ -106,13 +106,9 @@ void sctk_send_message_from_network_multirail_tcp (sctk_thread_ptp_message_t * m
 /************ INIT ****************/
 static
 void sctk_network_init_multirail_tcp_all(char* name, char* topology, int tcpoib){
-  static char net_name[4096 * NB_RAILS];
-  char* name_ptr;
   int i;
 
 /*   sctk_set_dynamic_reordering_buffer_creation(); */
-
-  name_ptr = net_name;
   sctk_route_set_rail_nb(NB_RAILS);
   rails = sctk_malloc(NB_RAILS*sizeof(sctk_rail_info_t*));
   memset(rails, 0, NB_RAILS*sizeof(sctk_rail_info_t*));
@@ -139,16 +135,6 @@ void sctk_network_init_multirail_tcp_all(char* name, char* topology, int tcpoib)
   sctk_network_notify_perform_message_set(sctk_network_notify_perform_message_multirail_tcp);
   sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_multirail_tcp);
   sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_multirail_tcp);
-
-  for(i = 0; i < NB_RAILS; i++){
-    rails[i]->route_init(rails[i]);
-    sprintf(name_ptr,"[%d:%s (%s)]",i,rails[i]->network_name,rails[i]->topology_name);
-    name_ptr = net_name + strlen(net_name);
-    sctk_pmi_barrier();  
-  }
-
-  sctk_network_mode = net_name;
-
 }
 void sctk_network_init_multirail_tcp(char* name, char* topology){
   sctk_network_init_multirail_tcp_all(name,topology,0);

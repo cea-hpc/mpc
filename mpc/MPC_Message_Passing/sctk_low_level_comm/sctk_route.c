@@ -31,6 +31,7 @@ static sctk_route_table_t* sctk_dynamic_route_table = NULL;
 static sctk_route_table_t* sctk_static_route_table = NULL;
 static sctk_spin_rwlock_t sctk_route_table_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 static sctk_rail_info_t* rails = NULL;
+static int rail_number = 0;
 static sctk_spin_rwlock_t sctk_route_table_init_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 static int sctk_route_table_init_lock_needed = 0;
 
@@ -107,10 +108,27 @@ sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail){
 
 void sctk_route_set_rail_nb(int i){
   rails = sctk_malloc(i*sizeof(sctk_rail_info_t));
+  rail_number = i;
 }
 
 sctk_rail_info_t* sctk_route_get_rail(int i){
   return &(rails[i]);
+}
+
+void sctk_route_finalize(){
+  char* net_name;
+  int i; 
+  char* name_ptr;
+  
+  net_name = sctk_malloc(rail_number*4096);
+  name_ptr = net_name;
+  for(i = 0; i < rail_number; i++){
+    rails[i].route_init(&(rails[i]));
+    sprintf(name_ptr,"[%d:%s (%s)]",i,rails[i].network_name,rails[i].topology_name);
+    name_ptr = net_name + strlen(net_name);
+    sctk_pmi_barrier();  
+  }  
+  sctk_network_mode = net_name;
 }
 
 /**** routes *****/

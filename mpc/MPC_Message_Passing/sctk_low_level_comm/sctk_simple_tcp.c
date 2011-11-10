@@ -64,8 +64,6 @@ sctk_network_notify_any_source_message_simple_tcp (){
 /************ INIT ****************/
 static 
 void sctk_network_init_simple_tcp_all(char* name, char* topology, int tcpoib){
-  static char net_name[4096];
-
   sctk_route_set_rail_nb(1);
 
   rail_0 = sctk_route_get_rail(0);
@@ -81,14 +79,6 @@ void sctk_network_init_simple_tcp_all(char* name, char* topology, int tcpoib){
   sctk_network_notify_perform_message_set(sctk_network_notify_perform_message_simple_tcp);
   sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_simple_tcp);
   sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_simple_tcp);
-
-  sctk_pmi_barrier();  
-  rail_0->route_init(rail_0);
-  sctk_pmi_barrier();  
-
-  sprintf(net_name,"[0:%s (%s)]",rail_0->network_name,rail_0->topology_name);
-
-  sctk_network_mode = net_name;
 }
 
 void sctk_network_init_simple_tcp(char* name, char* topology){

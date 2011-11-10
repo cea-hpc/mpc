@@ -88,4 +88,5 @@ void sctk_route_messages_send(int myself,int dest,int tag, void* buffer,size_t s
 void sctk_route_messages_recv(int src, int myself,int tag, void* buffer,size_t size);
 
 void sctk_route_init_in_rail(sctk_rail_info_t* rail, char* topology);
+void sctk_route_finalize();
 #endif
