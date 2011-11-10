@@ -39,7 +39,6 @@ void sctk_tcp_rdma_message_copy(sctk_message_to_copy_t* tmp){
   route = tmp->msg_send->tail.route_table;
 
   fd = route->data.tcp.fd;
-  assume(0);
   sctk_spinlock_lock(&(route->data.tcp.lock));
   {
     sctk_tcp_rdma_type_t op_type;
@@ -65,11 +64,8 @@ static void* sctk_tcp_rdma_thread(sctk_route_table_t* tmp){
 
     sctk_safe_read(fd,(char*)&op_type,sizeof(sctk_tcp_rdma_type_t));
     switch(op_type){
-    case sctk_rdma_message_header: {
-      sctk_safe_read(fd,(char*)&size,sizeof(size_t));
-      
-      size = size - sizeof(sctk_thread_ptp_message_body_t) + 
-	sizeof(sctk_thread_ptp_message_t);
+    case sctk_rdma_message_header: {      
+      size = sizeof(sctk_thread_ptp_message_t);
       msg = sctk_malloc(size);
 	
       /* Recv header*/
@@ -111,6 +107,7 @@ static void* sctk_tcp_rdma_thread(sctk_route_table_t* tmp){
       sctk_thread_ptp_message_t* recv = NULL;
 
       sctk_safe_read(fd,(char*)&copy_ptr,sizeof(void*));
+
       sctk_net_read_in_fd(copy_ptr->msg_recv,fd);
 
       send = copy_ptr->msg_send;
@@ -146,8 +143,6 @@ sctk_network_send_message_tcp_rdma (sctk_thread_ptp_message_t * msg,sctk_rail_in
     op_type = sctk_rdma_message_header;
     sctk_safe_write(fd,&op_type,sizeof(sctk_tcp_rdma_type_t));
   }
-
-  sctk_safe_write(fd,(char*)&size,sizeof(size_t));
 
   sctk_safe_write(fd,(char*)msg,sizeof(sctk_thread_ptp_message_body_t));
 
