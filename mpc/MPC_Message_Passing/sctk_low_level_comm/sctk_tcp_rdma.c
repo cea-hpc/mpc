@@ -107,7 +107,6 @@ static void* sctk_tcp_rdma_thread(sctk_route_table_t* tmp){
       sctk_thread_ptp_message_t* recv = NULL;
 
       sctk_safe_read(fd,(char*)&copy_ptr,sizeof(void*));
-
       sctk_net_read_in_fd(copy_ptr->msg_recv,fd);
 
       send = copy_ptr->msg_send;
