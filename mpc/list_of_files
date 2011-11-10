@@ -535,10 +535,6 @@ trunk:
              mpcrun_tcp
              mpcrun_tcp_gdb
          mpcrun_tools:
-             mpcrun_env_var.h
-             mpcrun_env_var_client.c
-             mpcrun_env_var_server.c
-             mpcrun_server.c
      MPC_Virtual_Machines:
          Makefile
          module_dep

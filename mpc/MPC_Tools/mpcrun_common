@@ -32,7 +32,7 @@ export SCTK_JOB_MANAGER
 MPC_VERBOSE="0"
 MPC_DISABLE="0"
 
-show=${MPC_BIN_DIR}/mpcrun_server
+show=
 
 #. ${MPC_BIN_DIR}/mpc_modes
 SCTK_USE_PTHREAD=1

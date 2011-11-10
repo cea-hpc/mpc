@@ -328,8 +328,7 @@ printf "\t@chmod -R 644 INSTALL/lib/*">> Makefile; echo "">> Makefile
 #printf "\t@echo \"Build mpc db\"">> Makefile; echo "">> Makefile
 #printf "\t@\$(CC) $SCTK_CFLAGS ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_tools/mpcdb_client.c -o INSTALL/bin/mpcdb_client $SCTK_LDFLAGS ">> Makefile; echo "">> Makefile
 #printf "\t@\$(CC) $SCTK_CFLAGS ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_tools/mpcdb_server.c -o INSTALL/bin/mpcdb_server $SCTK_LDFLAGS ">> Makefile; echo "">> Makefile
-printf "\t@echo \"Build mpcrun_server\"">> Makefile; echo "">> Makefile
-printf "\t@\$(CC) $SCTK_CFLAGS  -Iinclude_modules ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_tools/mpcrun_server.c -o INSTALL/bin/mpcrun_server $SCTK_LDFLAGS ">> Makefile; echo "">> Makefile
+
 printf "\t@chmod -R 755 INSTALL/bin/*">> Makefile; echo "">> Makefile
 printf "\t@chmod -R 644 INSTALL/include/*">> Makefile; echo "">> Makefile
 printf "\t@chmod 644 INSTALL/man/man1/*.1">> Makefile; echo "">> Makefile
