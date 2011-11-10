@@ -104,7 +104,8 @@ void sctk_send_message_from_network_multirail_tcp (sctk_thread_ptp_message_t * m
 }
 
 /************ INIT ****************/
-void sctk_network_init_multirail_tcp(char* name, char* topology){
+static
+void sctk_network_init_multirail_tcp_all(char* name, char* topology, int tcpoib){
   static char net_name[4096 * NB_RAILS];
   char* name_ptr;
   int i;
@@ -122,7 +123,7 @@ void sctk_network_init_multirail_tcp(char* name, char* topology){
   rails[i]->rail_number = i;
   rails[i]->send_message_from_network = sctk_send_message_from_network_multirail_tcp;
   sctk_route_init_in_rail(rails[i],topology);
-  sctk_network_init_tcp(rails[i],0);
+  sctk_network_init_tcp(rails[i],tcpoib);
 
   /* RDMA TCP */
   i = 1;
@@ -130,7 +131,7 @@ void sctk_network_init_multirail_tcp(char* name, char* topology){
   rails[i]->rail_number = i;
   rails[i]->send_message_from_network = sctk_send_message_from_network_multirail_tcp;
   sctk_route_init_in_rail(rails[i],topology);
-  sctk_network_init_tcp_rdma(rails[i],0);
+  sctk_network_init_tcp_rdma(rails[i],tcpoib);
 
   sctk_network_send_message_set(sctk_network_send_message_multirail_tcp);
   sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_multirail_tcp);
@@ -148,4 +149,10 @@ void sctk_network_init_multirail_tcp(char* name, char* topology){
 
   sctk_network_mode = net_name;
 
+}
+void sctk_network_init_multirail_tcp(char* name, char* topology){
+  sctk_network_init_multirail_tcp_all(name,topology,0);
+}
+void sctk_network_init_multirail_tcpoib(char* name, char* topology){
+  sctk_network_init_multirail_tcp_all(name,topology,1);
 }

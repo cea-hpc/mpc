@@ -144,6 +144,7 @@ sctk_net_init_driver (char *name)
     TRY_DRIVER(tcpoib,sctk_network_init_simple_tcp_o_ib,topo);
     TRY_DRIVER(simple_tcp,sctk_network_init_simple_tcp,topo);
     TRY_DRIVER(multirail_tcp,sctk_network_init_multirail_tcp,topo);
+    TRY_DRIVER(multirail_tcpoib,sctk_network_init_multirail_tcpoib,topo);
     DEFAUT_DRIVER();
   }
 }
