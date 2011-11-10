@@ -153,90 +153,38 @@ static void sctk_tcp_add_static_route(int dest, int fd,sctk_rail_info_t* rail,
 
 /************ INTER_THEAD_COMM HOOOKS ****************/
 static void* sctk_tcp_thread(sctk_route_table_t* tmp){
-  int fd;
-  fd = tmp->data.tcp.fd;
-
-  sctk_nodebug("Rail %d from %d launched",tmp->rail->rail_number,
-	     tmp->key.destination);
-
-  while(1){
-    sctk_thread_ptp_message_t * msg;
-    void* body;
-    size_t size;
-
-    sctk_safe_read(fd,(char*)&size,sizeof(size_t));
-
-    size = size - sizeof(sctk_thread_ptp_message_body_t) + 
-      sizeof(sctk_thread_ptp_message_t);
-    msg = sctk_malloc(size);
-    body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
-
-    /* Recv header*/
-    sctk_nodebug("Read %d",sizeof(sctk_thread_ptp_message_body_t));
-    sctk_safe_read(fd,(char*)msg,sizeof(sctk_thread_ptp_message_body_t));
-
-    msg->body.completion_flag = NULL;
-    msg->tail.message_type = sctk_message_network;
-    
-    /* Recv body*/
-    size = size - sizeof(sctk_thread_ptp_message_t);
-    sctk_safe_read(fd,(char*)body,size);
-
-    sctk_rebuild_header(msg);
-    sctk_reinit_header(msg,sctk_free,sctk_net_message_copy);
-
-    sctk_nodebug("MSG RECV|%s|", (char*)body);    
-
-    sctk_nodebug("Msg recved");
-    tmp->rail->send_message_from_network(msg);
-  }
+  not_reachable();
   return NULL;
 }
 
 static void 
 sctk_network_send_message_tcp (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
-  sctk_route_table_t* tmp;
-  size_t size;
-  int fd;
-
-  sctk_nodebug("send message through rail %d",rail->rail_number);
-
-  tmp = sctk_get_route(msg->sctk_msg_get_glob_destination,rail);
-
-  sctk_spinlock_lock(&(tmp->data.tcp.lock));
-
-  fd = tmp->data.tcp.fd;
-
-  size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
-
-  sctk_safe_write(fd,(char*)&size,sizeof(size_t));
-
-  sctk_safe_write(fd,(char*)msg,sizeof(sctk_thread_ptp_message_body_t));
-
-  sctk_net_write_in_fd(msg,fd);
-  sctk_spinlock_unlock(&(tmp->data.tcp.lock));
-
-  sctk_complete_and_free_message(msg);
+  not_reachable();
 }
 
 static void  
 sctk_network_notify_recv_message_tcp (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
+  not_reachable();
 }
 
 static void 
 sctk_network_notify_matching_message_tcp (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
+  not_reachable();
 }
 
 static void 
 sctk_network_notify_perform_message_tcp (int remote,sctk_rail_info_t* rail){
+  not_reachable();
 }
 
 static void 
 sctk_network_notify_idle_message_tcp (sctk_rail_info_t* rail){
+  not_reachable();
 }
 
 static void 
 sctk_network_notify_any_source_message_tcp (sctk_rail_info_t* rail){
+  not_reachable();
 }
 
 static void 
@@ -245,21 +193,18 @@ sctk_network_connection_to_tcp(int from, int to,sctk_rail_info_t* rail){
   char dest_connection_infos[MAX_STRING_SIZE];
 
   /*Recv connection informations*/
-  fprintf(stderr,"TO connection form %d to %d\n",from,to);
   sctk_route_messages_recv(from,to,0,dest_connection_infos,MAX_STRING_SIZE);
-  fprintf(stderr,"Connect to %s\n",dest_connection_infos);
   
   /*Recv id from the connected process*/
   dest_socket = sctk_tcp_connect_to(dest_connection_infos,rail);
   
-  sctk_tcp_add_static_route(to,dest_socket,rail,(void * (*)(sctk_route_table_t *))(rail->network.tcp.tcp_thread));
+  sctk_tcp_add_static_route(from,dest_socket,rail,(void * (*)(sctk_route_table_t *))(rail->network.tcp.tcp_thread));
 }
 
 static void 
 sctk_network_connection_from_tcp(int from, int to,sctk_rail_info_t* rail){
   int src_socket;
   /*Send connection informations*/
-  fprintf(stderr,"FROM connection form %d to %d\n",from,to);
   sctk_route_messages_send(from,to,0,rail->network.tcp.connection_infos,MAX_STRING_SIZE);
   
   src_socket = accept (rail->network.tcp.sockfd, NULL,0);  
@@ -366,5 +311,4 @@ void sctk_network_init_tcp_all(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib,
     sctk_tcp_add_static_route(src_rank,src_socket,rail,tcp_thread);
   } 
   sctk_pmi_barrier();  
-  rail->route_init(rail);
 }

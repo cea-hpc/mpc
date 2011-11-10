@@ -34,8 +34,8 @@ static sctk_rail_info_t* rails = NULL;
 static sctk_spin_rwlock_t sctk_route_table_init_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 static int sctk_route_table_init_lock_needed = 0;
 
-#define TABLE_LOCK() if(sctk_route_table_init_lock_needed) sctk_spinlock_write_lock(&sctk_route_table_lock);
-#define TABLE_UNLOCK() if(sctk_route_table_init_lock_needed) sctk_spinlock_write_unlock(&sctk_route_table_lock);
+#define TABLE_LOCK() if(sctk_route_table_init_lock_needed) sctk_spinlock_write_lock(&sctk_route_table_init_lock);
+#define TABLE_UNLOCK() if(sctk_route_table_init_lock_needed) sctk_spinlock_write_unlock(&sctk_route_table_init_lock);
 
 
 void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
@@ -189,8 +189,8 @@ int sctk_route_fully(int dest, sctk_rail_info_t* rail){
 void sctk_route_fully_init(sctk_rail_info_t* rail){
   int (*sav_sctk_route)(int , sctk_rail_info_t* );
 
-
-  fprintf(stderr,"INIT \n");
+  sctk_pmi_barrier();   
+  sctk_route_table_init_lock_needed = 1;
   sctk_pmi_barrier();   
   sav_sctk_route = rail->route;
   rail->route = sctk_route_ring;
@@ -204,28 +204,24 @@ void sctk_route_fully_init(sctk_rail_info_t* rail){
 	  if(from == sctk_process_rank){
 	    tmp = sctk_get_route_to_process_no_route(to,rail);
 	    if(tmp == NULL){
-	      rail->connect_to(from,to,rail);
-	    } else {
-	      fprintf(stderr,"SKIP EXISTE %d->%d\n",from,to);
-	    }
+	      rail->connect_from(from,to,rail);
+	    } 
 	  } 
 	  if(to == sctk_process_rank){
 	    tmp = sctk_get_route_to_process_no_route(from,rail);
 	    if(tmp == NULL){
-	      rail->connect_from(from,to,rail);
-	    }else {
-	      fprintf(stderr,"SKIP EXISTE %d->%d\n",from,to);
+	      rail->connect_to(from,to,rail);
 	    }
 	  }
-	} else {
-	  fprintf(stderr,"SKIP == %d->%d\n",from,to);
-	}
+	} 
       }
+      sctk_pmi_barrier();
     }
-    sctk_pmi_barrier();
   }
   rail->route = sav_sctk_route;
   sctk_pmi_barrier();
+  sctk_route_table_init_lock_needed = 0;
+  sctk_pmi_barrier();   
 }
 
 void sctk_route_init_in_rail(sctk_rail_info_t* rail, char* topology){
