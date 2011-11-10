@@ -29,8 +29,6 @@ trunk:
          sctk_alloc:
              sctk_alloc.h
              sctk_alloc_api.h
-             sctk_iso_alloc.c
-             sctk_iso_alloc.h
              sctk_no_alloc.c
              sctk_no_alloc.h
          sctk_asm:

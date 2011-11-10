@@ -33,9 +33,9 @@ header_sh >> bin/mpc_ldflags
 
 cat <<EOF >> bin/mpc_ldflags
 if test "\$1" != "fortran" ; then 
-echo "-L${SCTK_LIB_DIR} -lmpc -lmpc_iso_alloc -lmpc_tdb_remote_static $SCTK_LDFLAGS -Wl,-rpath,${SCTK_LIB_DIR}"
+echo "-L${SCTK_LIB_DIR} -lmpc -lmpc_tdb_remote_static $SCTK_LDFLAGS -Wl,-rpath,${SCTK_LIB_DIR}"
 else 
-echo "-L${SCTK_LIB_DIR} -lmpcf -lmpc_iso_alloc -lmpc_tdb_remote_static $SCTK_LDFLAGS -Wl,-rpath,${SCTK_LIB_DIR}"
+echo "-L${SCTK_LIB_DIR} -lmpcf -lmpc_tdb_remote_static $SCTK_LDFLAGS -Wl,-rpath,${SCTK_LIB_DIR}"
 fi 
 EOF
 
