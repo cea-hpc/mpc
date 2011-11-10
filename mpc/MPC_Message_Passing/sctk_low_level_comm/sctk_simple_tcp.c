@@ -62,7 +62,8 @@ sctk_network_notify_any_source_message_simple_tcp (){
 
 
 /************ INIT ****************/
-void sctk_network_init_simple_tcp(char* name, char* topology){
+static 
+void sctk_network_init_simple_tcp_all(char* name, char* topology, int tcpoib){
   static char net_name[4096];
 
   sctk_route_set_rail_nb(1);
@@ -72,7 +73,7 @@ void sctk_network_init_simple_tcp(char* name, char* topology){
   rail_0->send_message_from_network = sctk_send_message;
   sctk_route_init_in_rail(rail_0,topology);
 
-  sctk_network_init_tcp(rail_0,0);
+  sctk_network_init_tcp(rail_0,tcpoib);
 
   sctk_network_send_message_set(sctk_network_send_message_simple_tcp);
   sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_simple_tcp);
@@ -90,30 +91,9 @@ void sctk_network_init_simple_tcp(char* name, char* topology){
   sctk_network_mode = net_name;
 }
 
+void sctk_network_init_simple_tcp(char* name, char* topology){
+  sctk_network_init_simple_tcp_all(name,topology,0);
+}
 void sctk_network_init_simple_tcp_o_ib(char* name, char* topology){
-  static char net_name[4096];
-
-  sctk_route_set_rail_nb(1);
-
-  rail_0 = sctk_route_get_rail(0);
-  rail_0->rail_number = 0;
-  rail_0->send_message_from_network = sctk_send_message;
-  sctk_route_init_in_rail(rail_0,topology);
-
-  sctk_network_init_tcp(rail_0,1);
-
-  sctk_network_send_message_set(sctk_network_send_message_simple_tcp);
-  sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_simple_tcp);
-  sctk_network_notify_matching_message_set(sctk_network_notify_matching_message_simple_tcp);
-  sctk_network_notify_perform_message_set(sctk_network_notify_perform_message_simple_tcp);
-  sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_simple_tcp);
-  sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_simple_tcp);
-
-  sctk_pmi_barrier();  
-  rail_0->route_init(rail_0);
-  sctk_pmi_barrier();  
-
-  sprintf(net_name,"[0:%s (%s)]",rail_0->network_name,rail_0->topology_name);
-
-  sctk_network_mode = net_name;
+  sctk_network_init_simple_tcp_all(name,topology,1);
 }
