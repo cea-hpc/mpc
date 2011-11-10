@@ -141,7 +141,7 @@ void sctk_network_init_multirail_tcp(char* name, char* topology){
 
   for(i = 0; i < NB_RAILS; i++){
     rails[i]->route_init(rails[i]);
-    sprintf(name_ptr,"[%d:%s]",i,rails[i]->network_name);
+    sprintf(name_ptr,"[%d:%s (%s)]",i,rails[i]->network_name,rails[i]->topology_name);
     name_ptr = net_name + strlen(net_name);
     sctk_pmi_barrier();  
   }
