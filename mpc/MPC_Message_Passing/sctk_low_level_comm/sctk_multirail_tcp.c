@@ -37,7 +37,7 @@ sctk_network_send_message_multirail_tcp (sctk_thread_ptp_message_t * msg){
   int i ; 
   if(sctk_prepare_send_message_to_network_reorder(msg) == 0){
     /*
-      Direct send: we can use multirail
+      Reordering available : we can use multirail
     */
     i = 0;
     if((msg->tail.message_type == sctk_message_contiguous) && 
@@ -46,7 +46,7 @@ sctk_network_send_message_multirail_tcp (sctk_thread_ptp_message_t * msg){
     }
   } else {
     /*
-      Indirect send: we can't use multirail fall back to rail 0
+      No reodering: we can't use multirail fall back to rail 0
     */
     i = 0;
   }
@@ -97,7 +97,7 @@ static
 void sctk_send_message_from_network_multirail_tcp (sctk_thread_ptp_message_t * msg){
   if(sctk_send_message_from_network_reorder(msg) != 0){
     /*
-      Incoming message from indirect road
+      No reordering
     */
     sctk_send_message(msg);    
   }

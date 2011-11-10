@@ -131,7 +131,11 @@ sctk_reorder_table_t* sctk_get_reorder(int dest){
 }
 
 int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
-  if(msg->body.header.specific_message_tag == process_specific_message_tag){
+  if(msg->sctk_msg_get_use_message_numbering == 0){
+    /* Renumbering unused */
+    return 1;
+  } else if(msg->body.header.specific_message_tag == process_specific_message_tag){
+    /* Process specific messages */
     return 1;
   } else {
     sctk_reorder_table_t* tmp;
@@ -143,55 +147,56 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
 
     process = sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_glob_destination);
 
-    if((msg->sctk_msg_get_use_message_numbering) && (sctk_process_rank == process)){
-      assume(tmp != NULL);
-    
-      number = OPA_load_int(&(tmp->message_number_src));
-      sctk_nodebug("wait for %d recv %d",number,msg->sctk_msg_get_message_number);
-    
-      if(number == msg->sctk_msg_get_message_number){
-	sctk_nodebug("Send %d",msg->sctk_msg_get_message_number);
-	sctk_send_message(msg);
-	OPA_fetch_and_incr_int(&(tmp->message_number_src));
-	msg = NULL;
-      
-	/*Search for pending messages*/
-	if(tmp->buffer != NULL){
-	  sctk_reorder_buffer_t* reorder;
-	  int key;
-	
-	  sctk_nodebug("Proceed pending messages");
-	
-	  sctk_spinlock_lock(&(tmp->lock));
-	  do{
-	    key = OPA_load_int(&(tmp->message_number_src));
-	    HASH_FIND(hh,tmp->buffer,&key,sizeof(int),reorder);
-	    if(reorder != NULL){
-	      sctk_nodebug("Send %d",reorder->msg->sctk_msg_get_message_number);
-	      sctk_send_message(reorder->msg);
-	      OPA_fetch_and_incr_int(&(tmp->message_number_src));
-	    }
-	  } while(reorder != NULL);
-	  sctk_spinlock_unlock(&(tmp->lock));
-	}
-      } else {
-	sctk_reorder_buffer_t* reorder;
-      
-	sctk_nodebug("Delay wait for %d recv %d",number,msg->sctk_msg_get_message_number);
-      
-	reorder = &(msg->tail.reorder);
-      
-	reorder->key = msg->sctk_msg_get_message_number;
-	reorder->msg = msg;
-      
-	sctk_spinlock_lock(&(tmp->lock));
-	HASH_ADD(hh,tmp->buffer,key,sizeof(int),reorder);    
-	sctk_spinlock_unlock(&(tmp->lock));    
-      }
-      return 0;
-    } else {
+    /* Indirect messages */
+    if(sctk_process_rank == process){
       return 1;
     }
+
+    assume(tmp != NULL);
+    
+    number = OPA_load_int(&(tmp->message_number_src));
+    sctk_nodebug("wait for %d recv %d",number,msg->sctk_msg_get_message_number);
+    
+    if(number == msg->sctk_msg_get_message_number){
+      sctk_nodebug("Send %d",msg->sctk_msg_get_message_number);
+      sctk_send_message(msg);
+      OPA_fetch_and_incr_int(&(tmp->message_number_src));
+      msg = NULL;
+      
+      /*Search for pending messages*/
+      if(tmp->buffer != NULL){
+	sctk_reorder_buffer_t* reorder;
+	int key;
+	
+	sctk_nodebug("Proceed pending messages");
+	
+	sctk_spinlock_lock(&(tmp->lock));
+	do{
+	  key = OPA_load_int(&(tmp->message_number_src));
+	  HASH_FIND(hh,tmp->buffer,&key,sizeof(int),reorder);
+	  if(reorder != NULL){
+	    sctk_nodebug("Send %d",reorder->msg->sctk_msg_get_message_number);
+	    sctk_send_message(reorder->msg);
+	    OPA_fetch_and_incr_int(&(tmp->message_number_src));
+	  }
+	} while(reorder != NULL);
+	sctk_spinlock_unlock(&(tmp->lock));
+      }
+    } else {
+      sctk_reorder_buffer_t* reorder;
+      
+      sctk_nodebug("Delay wait for %d recv %d",number,msg->sctk_msg_get_message_number);
+      
+      reorder = &(msg->tail.reorder);
+      
+      reorder->key = msg->sctk_msg_get_message_number;
+      reorder->msg = msg;
+      
+      sctk_spinlock_lock(&(tmp->lock));
+      HASH_ADD(hh,tmp->buffer,key,sizeof(int),reorder);    
+      sctk_spinlock_unlock(&(tmp->lock));    
+    }
+    return 0;
   }
 }
 
@@ -199,28 +204,32 @@ int sctk_prepare_send_message_to_network_reorder (sctk_thread_ptp_message_t * ms
   sctk_reorder_table_t* tmp;
   int process;
 
+  /* Process specific messages */
   if(msg->body.header.specific_message_tag == process_specific_message_tag){
     msg->sctk_msg_get_use_message_numbering = 0;
     return 1;    
   }
 
+  /* Indirect messages */
   process = sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_glob_source);
-
   if(sctk_process_rank != process){
     return 0;
   }
+
+  /* Std messages */
   process = sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_glob_destination);
   sctk_nodebug("msg->sctk_msg_get_use_message_numbering %d",msg->sctk_msg_get_use_message_numbering);
-  if(msg->sctk_msg_get_use_message_numbering == 0){
-    return 1;
-  }
+
   tmp = sctk_get_reorder_to_process(process);
-  sctk_nodebug("msg to %d %p",
-	     process,tmp);
+  sctk_nodebug("msg to %d %p", process,tmp);
+
+  /* Unable to find local numbering */
   if(tmp == NULL){
     msg->sctk_msg_get_use_message_numbering = 0;
     return 1;
   }
+
+  /* Local numbering */
   msg->sctk_msg_get_use_message_numbering = 1;
   msg->sctk_msg_get_message_number = OPA_fetch_and_incr_int(&(tmp->message_number_dest));
   return 0;
