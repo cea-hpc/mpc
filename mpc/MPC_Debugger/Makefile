@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile Mon Jan 31 16:28:04 CET 2011
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile Thu Nov 10 18:23:18 CET 2011
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -34,24 +34,6 @@ SOBJ_include=$(SFILES_include:include/%.S=$(M_PWD)/BUILD_MPC_Debugger/lib/%.o)
 SDEP_include=$(SFILES_include:include/%.S=$(M_PWD)/BUILD_MPC_Debugger/lib/%.d)
 
 
-FILES_dbg_message_passing=$(wildcard sctk_dbg_message_passing/*.c)
-OBJ_dbg_message_passing=$(FILES_dbg_message_passing:sctk_dbg_message_passing/%.c=$(M_PWD)/BUILD_MPC_Debugger/lib/%.o)
-DEP_dbg_message_passing=$(FILES_dbg_message_passing:sctk_dbg_message_passing/%.c=$(M_PWD)/BUILD_MPC_Debugger/lib/%.d)
-
-SFILES_dbg_message_passing=$(wildcard sctk_dbg_message_passing/*.S)
-SOBJ_dbg_message_passing=$(SFILES_dbg_message_passing:sctk_dbg_message_passing/%.S=$(M_PWD)/BUILD_MPC_Debugger/lib/%.o)
-SDEP_dbg_message_passing=$(SFILES_dbg_message_passing:sctk_dbg_message_passing/%.S=$(M_PWD)/BUILD_MPC_Debugger/lib/%.d)
-
-
-FILES_dbg_mpc=$(wildcard sctk_dbg_mpc/*.c)
-OBJ_dbg_mpc=$(FILES_dbg_mpc:sctk_dbg_mpc/%.c=$(M_PWD)/BUILD_MPC_Debugger/lib/%.o)
-DEP_dbg_mpc=$(FILES_dbg_mpc:sctk_dbg_mpc/%.c=$(M_PWD)/BUILD_MPC_Debugger/lib/%.d)
-
-SFILES_dbg_mpc=$(wildcard sctk_dbg_mpc/*.S)
-SOBJ_dbg_mpc=$(SFILES_dbg_mpc:sctk_dbg_mpc/%.S=$(M_PWD)/BUILD_MPC_Debugger/lib/%.o)
-SDEP_dbg_mpc=$(SFILES_dbg_mpc:sctk_dbg_mpc/%.S=$(M_PWD)/BUILD_MPC_Debugger/lib/%.d)
-
-
 FILES_dbg_thread=$(wildcard sctk_dbg_thread/*.c)
 OBJ_dbg_thread=$(FILES_dbg_thread:sctk_dbg_thread/%.c=$(M_PWD)/BUILD_MPC_Debugger/lib/%.o)
 DEP_dbg_thread=$(FILES_dbg_thread:sctk_dbg_thread/%.c=$(M_PWD)/BUILD_MPC_Debugger/lib/%.d)
@@ -73,24 +55,16 @@ SDEP_src=$(SFILES_src:src/%.S=$(M_PWD)/BUILD_MPC_Debugger/lib/%.d)
 FFILES_include=$(wildcard include/*.f)
 FOBJ_include=$(FFILES_include:include/%.f=$(M_PWD)/BUILD_MPC_Debugger/lib/%_f.o)
 
-FFILES_dbg_message_passing=$(wildcard sctk_dbg_message_passing/*.f)
-FOBJ_dbg_message_passing=$(FFILES_dbg_message_passing:sctk_dbg_message_passing/%.f=$(M_PWD)/BUILD_MPC_Debugger/lib/%_f.o)
-
-FFILES_dbg_mpc=$(wildcard sctk_dbg_mpc/*.f)
-FOBJ_dbg_mpc=$(FFILES_dbg_mpc:sctk_dbg_mpc/%.f=$(M_PWD)/BUILD_MPC_Debugger/lib/%_f.o)
-
 FFILES_dbg_thread=$(wildcard sctk_dbg_thread/*.f)
 FOBJ_dbg_thread=$(FFILES_dbg_thread:sctk_dbg_thread/%.f=$(M_PWD)/BUILD_MPC_Debugger/lib/%_f.o)
 
 FFILES_src=$(wildcard src/*.f)
 FOBJ_src=$(FFILES_src:src/%.f=$(M_PWD)/BUILD_MPC_Debugger/lib/%_f.o)
 
-all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_dbg_message_passing) $(FOBJ_dbg_message_passing) $(SOBJ_dbg_message_passing) $(OBJ_dbg_mpc) $(FOBJ_dbg_mpc) $(SOBJ_dbg_mpc) $(OBJ_dbg_thread) $(FOBJ_dbg_thread) $(SOBJ_dbg_thread) $(OBJ_src) $(FOBJ_src) $(SOBJ_src) build_sctk_dbg
+all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_dbg_thread) $(FOBJ_dbg_thread) $(SOBJ_dbg_thread) $(OBJ_src) $(FOBJ_src) $(SOBJ_src)
 
 $(M_PWD)/include_modules/MPC_Debugger:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Debugger/include $(M_PWD)/include_modules
-	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Debugger/sctk_dbg_message_passing $(M_PWD)/include_modules
-	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Debugger/sctk_dbg_mpc $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Debugger/sctk_dbg_thread $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Debugger/src $(M_PWD)/include_modules
 	@touch $@
@@ -99,7 +73,7 @@ prepare_includes:$(M_PWD)/include_modules/MPC_Debugger
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-DEPENDS=$(DEP_include) $(DEP_dbg_message_passing) $(DEP_dbg_mpc) $(DEP_dbg_thread) $(DEP_src) 
+DEPENDS=$(DEP_include) $(DEP_dbg_thread) $(DEP_src) 
 
 $(DEPENDS):Makefile 
 endif
@@ -108,16 +82,6 @@ ifneq ($(SCTK_MAKE_NO_DEP),yes)
 $(DEP_include):$(M_PWD)/BUILD_MPC_Debugger/lib/%.d:include/%.c
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,include/%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,include/%.c,$@) | \
-		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
-
-$(DEP_dbg_message_passing):$(M_PWD)/BUILD_MPC_Debugger/lib/%.d:sctk_dbg_message_passing/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,sctk_dbg_message_passing/%.c,$@)"
-	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,sctk_dbg_message_passing/%.c,$@) | \
-		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
-
-$(DEP_dbg_mpc):$(M_PWD)/BUILD_MPC_Debugger/lib/%.d:sctk_dbg_mpc/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,sctk_dbg_mpc/%.c,$@)"
-	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,sctk_dbg_mpc/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_dbg_thread):$(M_PWD)/BUILD_MPC_Debugger/lib/%.d:sctk_dbg_thread/%.c
@@ -135,14 +99,6 @@ $(DEP_include):$(M_PWD)/BUILD_MPC_Debugger/lib/%.d:include/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,include/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,include/%.c,$@)" > $@
 
-$(DEP_dbg_message_passing):$(M_PWD)/BUILD_MPC_Debugger/lib/%.d:sctk_dbg_message_passing/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,sctk_dbg_message_passing/%.c,$@)"
-	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,sctk_dbg_message_passing/%.c,$@)" > $@
-
-$(DEP_dbg_mpc):$(M_PWD)/BUILD_MPC_Debugger/lib/%.d:sctk_dbg_mpc/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,sctk_dbg_mpc/%.c,$@)"
-	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,sctk_dbg_mpc/%.c,$@)" > $@
-
 $(DEP_dbg_thread):$(M_PWD)/BUILD_MPC_Debugger/lib/%.d:sctk_dbg_thread/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,sctk_dbg_thread/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,sctk_dbg_thread/%.c,$@)" > $@
@@ -157,14 +113,6 @@ $(OBJ_include):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,include/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,include/%.c,$@) -o $@
 
-$(OBJ_dbg_message_passing):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,sctk_dbg_message_passing/%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,sctk_dbg_message_passing/%.c,$@) -o $@
-
-$(OBJ_dbg_mpc):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,sctk_dbg_mpc/%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,sctk_dbg_mpc/%.c,$@) -o $@
-
 $(OBJ_dbg_thread):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,sctk_dbg_thread/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,sctk_dbg_thread/%.c,$@) -o $@
@@ -176,16 +124,6 @@ $(OBJ_src):%.o:%.d
 $(SDEP_include):$(M_PWD)/BUILD_MPC_Debugger/lib/%.d:include/%.S
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,include/%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,include/%.S,$@) | \
-		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
-
-$(SDEP_dbg_message_passing):$(M_PWD)/BUILD_MPC_Debugger/lib/%.d:sctk_dbg_message_passing/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,sctk_dbg_message_passing/%.S,$@)"
-	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,sctk_dbg_message_passing/%.S,$@) | \
-		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
-
-$(SDEP_dbg_mpc):$(M_PWD)/BUILD_MPC_Debugger/lib/%.d:sctk_dbg_mpc/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,sctk_dbg_mpc/%.S,$@)"
-	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,sctk_dbg_mpc/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_dbg_thread):$(M_PWD)/BUILD_MPC_Debugger/lib/%.d:sctk_dbg_thread/%.S
@@ -202,14 +140,6 @@ $(SOBJ_include):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,include/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,include/%.S,$@) -o $@
 
-$(SOBJ_dbg_message_passing):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,sctk_dbg_message_passing/%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,sctk_dbg_message_passing/%.S,$@) -o $@
-
-$(SOBJ_dbg_mpc):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,sctk_dbg_mpc/%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,sctk_dbg_mpc/%.S,$@) -o $@
-
 $(SOBJ_dbg_thread):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,sctk_dbg_thread/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%.o,sctk_dbg_thread/%.S,$@) -o $@
@@ -221,14 +151,6 @@ $(SOBJ_src):%.o:%.d
 $(FOBJ_include):$(M_PWD)/BUILD_MPC_Debugger/lib/%_f.o:include/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%_f.o,include/%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%_f.o,include/%.f,$@) -o $@
-
-$(FOBJ_dbg_message_passing):$(M_PWD)/BUILD_MPC_Debugger/lib/%_f.o:sctk_dbg_message_passing/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%_f.o,sctk_dbg_message_passing/%.f,$@)"
-	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%_f.o,sctk_dbg_message_passing/%.f,$@) -o $@
-
-$(FOBJ_dbg_mpc):$(M_PWD)/BUILD_MPC_Debugger/lib/%_f.o:sctk_dbg_mpc/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%_f.o,sctk_dbg_mpc/%.f,$@)"
-	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%_f.o,sctk_dbg_mpc/%.f,$@) -o $@
 
 $(FOBJ_dbg_thread):$(M_PWD)/BUILD_MPC_Debugger/lib/%_f.o:sctk_dbg_thread/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Debugger/lib/%_f.o,sctk_dbg_thread/%.f,$@)"
@@ -244,6 +166,3 @@ ifeq ($(MAKECMDGOALS),all)
 -include $(DEPENDS)
 endif
 endif
-build_sctk_dbg:
-	@mkdir -p $(M_PWD)/BUILD_MPC_Debugger/sctk_dbg
-	@$(MAKE) BUILD_DIR=$(M_PWD)/BUILD_MPC_Debugger/sctk_dbg -C sctk_dbg all

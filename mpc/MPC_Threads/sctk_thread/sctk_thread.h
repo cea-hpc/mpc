@@ -105,7 +105,6 @@ extern "C"
     unsigned long thread_number;
     sctk_thread_t tid;
     volatile sctk_thread_status_t status;
-    volatile int force_stop;
     struct sctk_task_specific_s *father_data;
   } sctk_thread_data_t;
 #define SCTK_THREAD_DATA_INIT { NULL, NULL, NULL, -1, -1, -1 ,\

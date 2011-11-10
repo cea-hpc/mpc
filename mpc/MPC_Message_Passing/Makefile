@@ -1,4 +1,4 @@
-# Makefile Generate with ../MPC_Tools/mpc_gen_makefile Mon Nov  2 15:31:01 CET 2009
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile Thu Nov 10 18:23:18 CET 2011
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -133,7 +133,6 @@ endif
 
 $(OBJ_include):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,include/%.c,$@)"
-
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Message_Passing/lib/%.o,include/%.c,$@) -o $@
 
 $(OBJ_mpc):%.o:%.d

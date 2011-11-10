@@ -357,19 +357,7 @@ extern "C"
 
 	sctk_getcontext (&(cur->ctx));
 	  
-	if (tmp->force_stop == 1)
-	  {
-	    tmp->force_stop = 0;
-	    sctk_debug_printf ("Load thread %p\n", cur);
-
-	    sctk_thread_print_stack_out ();
-	    abort ();
-	  }
-	else
-	  {
-	    tmp->status = s;
-	    return;
-	  }
+	tmp->status = s;
       }
   }
 #else
@@ -452,6 +440,7 @@ extern "C"
   {
     sctk_ethread_per_thread_t *restrict new_task = NULL;
     sctk_ethread_status_t status;
+    int request_migration = 0;
 
 #ifdef SCTK_SCHED_CHECK
     __sctk_ethread_sched_yield_vp_head (vp, cur);
@@ -549,6 +538,7 @@ extern "C"
 	      cur->status = ethread_ready;
 	      vp->migration = cur;
 	      vp->to_check = 1;
+	      request_migration = 1;
 	    }
 	    break;
 	  default:
@@ -590,6 +580,10 @@ extern "C"
       }
 
     __sctk_ethread_sched_yield_vp_tail (vp, cur);
+
+    if(request_migration == 1){
+      sctk_refresh_thread_debug_migration(cur);
+    }
 
     return 1;
   }

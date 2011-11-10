@@ -704,7 +704,6 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
   tmp->__arg = __arg;
   tmp->__start_routine = __start_routine;
   tmp->user_thread = 0;
-  tmp->force_stop = 0;
 
   tmp->task_id = sctk_safe_cast_long_int (task_id);
 
@@ -814,7 +813,6 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
   tmp->__start_routine = __start_routine;
   tmp->task_id = -1;
   tmp->user_thread = user_thread;
-  tmp->force_stop = 0;
 #ifdef MPC_Message_Passing
   tmp->father_data = __MPC_get_task_specific ();
 #else

@@ -244,19 +244,19 @@ extern "C"
   
   static inline tdb_err_e rtdb_update_thread_state (
     volatile tdb_thread_debug_t *thread, td_thr_state_e state){
-    td_thr_state_e old_state ;
+/*     td_thr_state_e old_state ; */
 
-    tdb_assert(thread != NULL) ;
-    if (thread == NULL) return TDB_NO_THR ;
+/*     tdb_assert(thread != NULL) ; */
+/*     if (thread == NULL) return TDB_NO_THR ; */
     
-    rtdb_log("new state for thead %p : %d (old: %d)", thread, state, thread->info.ti_state);
+/*     rtdb_log("new state for thead %p : %d (old: %d)", thread, state, thread->info.ti_state); */
    
     /*ensure that the thread is active for the assert*/
-    old_state = thread->info.ti_state ;
-    thread->info.ti_state = TD_THR_ACTIVE ;
+/*     old_state = thread->info.ti_state ; */
+/*     thread->info.ti_state = TD_THR_ACTIVE ; */
      
-    tdb_assert(old_state != TD_THR_ANY_STATE);
-    tdb_assert(old_state != state);
+/*     tdb_assert(old_state != TD_THR_ANY_STATE); */
+/*     tdb_assert(old_state != state); */
     
     thread->info.ti_state = state ;
     return TDB_OK ;
