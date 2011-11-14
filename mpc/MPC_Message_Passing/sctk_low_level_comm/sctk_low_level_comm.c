@@ -33,11 +33,12 @@ int sctk_is_net_migration_available(){
   if(sctk_migration_mode == 1){
     not_implemented();
   }
+  return sctk_migration_mode;
 }
 
 /********** SEND ************/
 static void sctk_network_send_message_default (sctk_thread_ptp_message_t * msg){
-  not_implemented();
+  not_reachable();
 }
 static void (*sctk_network_send_message_ptr) (sctk_thread_ptp_message_t *) = 
   sctk_network_send_message_default;

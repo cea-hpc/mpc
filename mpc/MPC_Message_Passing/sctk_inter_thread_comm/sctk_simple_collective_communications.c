@@ -182,6 +182,6 @@ void sctk_collectives_init_simple (sctk_communicator_t id){
 			  sctk_broadcast_simple_init,
 			  sctk_allreduce_simple_init);
   } else {
-    not_implemented();
+    not_reachable();
   }
 }
