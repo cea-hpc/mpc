@@ -70,17 +70,18 @@ static int sctk_use_rtdb = 0 ;
 static sctk_spinlock_t sctk_rtdb_lock = 0;
 
 /* Translate a sctk status to a gdb status*/
-static inline
-td_thr_state_e sctk_get_gdb_status (sctk_thread_status_t status) {
-  switch (status) {
-  case sctk_thread_running_status : return TD_THR_ACTIVE   ;
-  case sctk_thread_sleep_status   : return TD_THR_RUN;
-  case sctk_thread_blocked_status : return TD_THR_RUN; //return TD_THR_SLEEP ;
-  case sctk_thread_undef_status   : return TD_THR_ZOMBIE ;
-  case sctk_thread_check_status   : return TD_THR_ACTIVE ;
-  default : return TD_THR_UNKNOWN ;
-  }
-}
+/* static inline */
+/* td_thr_state_e sctk_get_gdb_status (sctk_thread_status_t status) { */
+/*   switch (status) { */
+/*   case sctk_thread_running_status : return TD_THR_ACTIVE   ; */
+/*   case sctk_thread_sleep_status   : return TD_THR_RUN; */
+/*   case sctk_thread_blocked_status : return TD_THR_RUN; //return TD_THR_SLEEP ; */
+/*   case sctk_thread_undef_status   : return TD_THR_ZOMBIE ; */
+/*   case sctk_thread_check_status   : return TD_THR_ACTIVE ; */
+/*   default : return TD_THR_UNKNOWN ; */
+/*   } */
+/* } */
+#define sctk_get_gdb_status(status) status
 
 int sctk_init_thread_debug (sctk_thread_data_t *item) {
   sctk_ethread_per_thread_t *tid;
@@ -134,7 +135,7 @@ void sctk_refresh_thread_debug (sctk_ethread_per_thread_t *tid, sctk_thread_stat
   thread = tid->debug_p;
 
 /*   if (!sctk_use_rtdb) return ; */
-  if (s == sctk_thread_undef_status) return ;
+/*   if (s == sctk_thread_undef_status) return ; */
   
 /*   /\* the kernel threads are not managed bu rtdb *\/ */
 /*   if (thread == NULL) { */

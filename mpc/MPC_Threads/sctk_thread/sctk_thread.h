@@ -82,12 +82,22 @@ extern "C"
 
   extern volatile int sctk_multithreading_initialised;
 
+#ifndef MPC_Debugger
   typedef enum
   {
     sctk_thread_running_status, sctk_thread_blocked_status,
     sctk_thread_sleep_status, sctk_thread_undef_status,
     sctk_thread_check_status
   } sctk_thread_status_t;
+#else
+#include <tdb_remote.h>
+  typedef td_thr_state_e sctk_thread_status_t;
+  #define sctk_thread_running_status TD_THR_ACTIVE
+  #define sctk_thread_blocked_status TD_THR_RUN
+  #define sctk_thread_sleep_status TD_THR_RUN
+  #define sctk_thread_undef_status TD_THR_ZOMBIE
+  #define sctk_thread_check_status TD_THR_ACTIVE
+#endif
 
   struct sctk_task_specific_s;
 
@@ -108,7 +118,7 @@ extern "C"
     struct sctk_task_specific_s *father_data;
   } sctk_thread_data_t;
 #define SCTK_THREAD_DATA_INIT { NULL, NULL, NULL, -1, -1, -1 ,\
-      NULL,NULL,-1,(void*)NULL,sctk_thread_undef_status,0,NULL}
+      NULL,NULL,-1,(void*)NULL,sctk_thread_undef_status,NULL}
 
   void sctk_thread_data_init (void);
   void sctk_thread_data_set (sctk_thread_data_t * task_id);

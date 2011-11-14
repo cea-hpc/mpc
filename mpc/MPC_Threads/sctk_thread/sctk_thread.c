@@ -54,18 +54,6 @@ MonoDomain *domain;
 #endif
 #ifdef MPC_Debugger
 #include "sctk_thread_dbg.h"
-#else
-#define sctk_thread_add(a, b) (void)(0)
-#define sctk_thread_remove(a) (void)(0)
-#define sctk_thread_enable_debug() (void)(0)
-#define sctk_thread_disable_debug() (void)(0)
-#define sctk_thread_list() (void)(0)
-
-/** ** **/
-#define sctk_report_creation(a) (void)(0)
-#define sctk_report_death(a) (void) (0)
-/** **/
-
 #endif
 #include "sctk.h"
 #include "sctk_context.h"

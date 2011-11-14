@@ -236,6 +236,7 @@ static inline void sctk_ptp_copy_tasks_insert(sctk_msg_list_t* ptr_recv,
   tmp->msg_send = ptr_send->msg;
   tmp->msg_recv = ptr_recv->msg;
 
+#warning "Add parapmeter to deal with task engine"
 #ifdef SCTK_DISABLE_TASK_ENGINE
   tmp->msg_send->tail.message_copy(tmp);  
 #else
