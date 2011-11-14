@@ -880,13 +880,20 @@ sctk_thread_exit_cleanup ()
   sctk_thread_data_t *tmp;
   struct _sctk_thread_cleanup_buffer **__head;
 
+
+  /** ** **/
+  sctk_report_death (sctk_thread_self());
+  /** **/
+  tmp = sctk_thread_data_get ();
+
+  sctk_thread_remove (tmp);  
+
   __head = sctk_thread_getspecific (_sctk_thread_handler_key);
 
   _sctk_thread_cleanup_end (__head);
 
   sctk_thread_setspecific (_sctk_thread_handler_key, NULL);
 
-  tmp = sctk_thread_data_get ();
 
   sctk_nodebug ("%p", tmp);
   if (tmp != NULL)

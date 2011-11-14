@@ -1278,7 +1278,8 @@ extern "C"
     __sctk_ethread_sched_yield_vp_head (vp, cur);
 #endif
 
-    sctk_report_death (cur);
+/*     sctk_report_death (cur); */
+/*     sctk_thread_remove (); */
 /*     sctk_ethread_set_status (cur, sctk_thread_undef_status); */
 
     new_task = vp->idle;
