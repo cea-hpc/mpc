@@ -378,8 +378,9 @@ struct sctk_mpi_ops_s;
 
 typedef struct mpc_mpi_data_s{
   /****** ERRORS ******/
-  MPI_Handler_user_function_t user_func[MPC_MPI_MAX_NUMBER_FUNC];
-  
+  MPI_Handler_user_function_t* user_func;
+  int user_func_nb;
+
   /****** Attributes ******/
   MPI_Caching_key_t *attrs_fn;
   int number;
@@ -498,6 +499,9 @@ __sctk_init_mpi_errors ()
   mpc_mpi_data_t* data;
 
   data = mpc_mpc_get_per_task_data();
+
+  data->user_func = sctk_malloc(MPC_MPI_MAX_NUMBER_FUNC*sizeof(MPI_Handler_user_function_t));
+  data->user_func_nb = MPC_MPI_MAX_NUMBER_FUNC;
 
   data->user_func[MPI_ERRHANDLER_NULL].func =
     (MPI_Handler_function *) MPI_Default_error;
@@ -5115,7 +5119,7 @@ __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
     }
   if (tmp->attrs_fn[keyval].used == 0)
     {
-      sctk_thread_mutex_unlock (&(tmp->lock));
+      sctk_spinlock_unlock(&(tmp->lock)); 
       return MPI_ERR_INTERN;
     }
 
@@ -6281,18 +6285,16 @@ static int
 __INTERNAL__PMPI_Errhandler_create (MPI_Handler_function * function,
 				    MPI_Errhandler * errhandler)
 {
-  not_implemented();
-#if 0
-  mpi_errors_handler_t *task_specific;
+  mpc_mpi_data_t* tmp;
   int i;
   int found = 0;
-  PMPC_Get_errors ((void **) &task_specific);
 
-  sctk_thread_mutex_lock (&(task_specific->lock));
+  tmp = mpc_mpc_get_per_task_data();
+  sctk_spinlock_lock(&(tmp->lock));
 
-  for (i = 0; i < task_specific->user_func_nb; i++)
+  for (i = 0; i < tmp->user_func_nb; i++)
     {
-      if (task_specific->user_func[i].status == 0)
+      if (tmp->user_func[i].status == 0)
 	{
 	  found = 1;
 	  break;
@@ -6301,20 +6303,19 @@ __INTERNAL__PMPI_Errhandler_create (MPI_Handler_function * function,
 
   if (found == 0)
     {
-      task_specific->user_func_nb++;
-      task_specific->user_func =
-	sctk_realloc (task_specific->user_func,
-		      task_specific->user_func_nb *
+      tmp->user_func_nb++;
+      tmp->user_func =
+	sctk_realloc (tmp->user_func,
+		      tmp->user_func_nb *
 		      sizeof (MPI_Handler_user_function_t));
     }
 
 
-  task_specific->user_func[i].func = function;
-  task_specific->user_func[i].status = 1;
+  tmp->user_func[i].func = function;
+  tmp->user_func[i].status = 1;
   *errhandler = i;
 
-  sctk_thread_mutex_unlock (&(task_specific->lock));
-#endif
+  sctk_spinlock_unlock(&(tmp->lock));
   MPI_ERROR_SUCESS ();
 }
 
@@ -6337,96 +6338,89 @@ MPI_Return_error (MPI_Comm * comm, int *error, ...)
 {
 }
 
-#if 0
-static mpi_per_communicator_t*__INTERNAL__per_comm(MPI_Comm comm){
-  mpi_errors_handler_t *task_specific;
-  mpi_per_communicator_t* info_comm;
-  PMPC_Get_errors ((void **) &task_specific);
-
-  HASH_FIND(hh,task_specific->per_communicator,&comm,sizeof(MPC_Comm),info_comm);
-  return info_comm;
-}
-#endif
 
 static int
 __INTERNAL__PMPI_Errhandler_set (MPI_Comm comm, MPI_Errhandler errhandler)
 {
-  not_implemented();
-#if 0
-  mpi_errors_handler_t *task_specific;
-  PMPC_Get_errors ((void **) &task_specific);
+  mpc_mpi_data_t* tmp;
+  mpc_mpi_per_communicator_t* tmp_per_comm;
 
-  sctk_thread_mutex_lock (&(task_specific->lock));
-  if ((errhandler < 0) || (errhandler >= task_specific->user_func_nb))
+  tmp = mpc_mpc_get_per_task_data();
+
+  sctk_spinlock_lock(&(tmp->lock));
+  if ((errhandler < 0) || (errhandler >= tmp->user_func_nb))
     {
-      sctk_thread_mutex_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock(&(tmp->lock));
       MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_OTHER, "Invalid errhandler");
     }
 
 
-  if (task_specific->user_func[errhandler].status == 0)
+  if (tmp->user_func[errhandler].status == 0)
     {
-      sctk_thread_mutex_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock(&(tmp->lock));
       MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_OTHER, "Invalid errhandler");
     }
 
-  __INTERNAL__per_comm(comm)->func = task_specific->user_func[errhandler].func;
-  __INTERNAL__per_comm(comm)->func_ident = errhandler;
+  tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
+  sctk_spinlock_lock(&(tmp_per_comm->lock));
 
-  sctk_thread_mutex_unlock (&(task_specific->lock));
-#endif
+  tmp_per_comm->func = tmp->user_func[errhandler].func;
+  tmp_per_comm->func_ident = errhandler;
+
+  sctk_spinlock_unlock(&(tmp_per_comm->lock));
+  sctk_spinlock_unlock(&(tmp->lock));
   MPI_ERROR_SUCESS ();
 }
 
 static int
 __INTERNAL__PMPI_Errhandler_get (MPI_Comm comm, MPI_Errhandler * errhandler)
 {
-  not_implemented();
-#if 0
-  mpi_errors_handler_t *task_specific;
-  PMPC_Get_errors ((void **) &task_specific);
+  mpc_mpi_data_t* tmp;
+  mpc_mpi_per_communicator_t* tmp_per_comm;
 
-  sctk_thread_mutex_lock (&(task_specific->lock));
-  *errhandler = __INTERNAL__per_comm(comm)->func_ident;
-/*   task_specific->user_func[*errhandler].status++;  */
-  sctk_thread_mutex_unlock (&(task_specific->lock));
-#endif
+  tmp = mpc_mpc_get_per_task_data();
+
+  sctk_spinlock_lock(&(tmp->lock));
+  tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
+  sctk_spinlock_lock(&(tmp_per_comm->lock));
+
+  *errhandler = tmp_per_comm->func_ident;
+
+  sctk_spinlock_unlock(&(tmp_per_comm->lock));
+  sctk_spinlock_unlock(&(tmp->lock));
   MPI_ERROR_SUCESS ();
 }
 
 static int
 __INTERNAL__PMPI_Errhandler_free (MPI_Errhandler * errhandler)
 {
-  not_implemented();
-#if 0
-  mpi_errors_handler_t *task_specific;
-  PMPC_Get_errors ((void **) &task_specific);
+  mpc_mpi_data_t* tmp;
 
-  sctk_thread_mutex_lock (&(task_specific->lock));
+  tmp = mpc_mpc_get_per_task_data();
+  sctk_spinlock_lock(&(tmp->lock));
 
-  if ((*errhandler < 0) || (*errhandler >= task_specific->user_func_nb))
+  if ((*errhandler < 0) || (*errhandler >= tmp->user_func_nb))
     {
-      sctk_thread_mutex_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock(&(tmp->lock));
       MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_OTHER, "Invalid errhandler");
     }
 
-  if (task_specific->user_func[*errhandler].status == 0)
+  if (tmp->user_func[*errhandler].status == 0)
     {
-      sctk_thread_mutex_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock(&(tmp->lock));
       MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_OTHER, "Invalid errhandler");
     }
 
-/*   task_specific->user_func[*errhandler].status--;  */
+  tmp->user_func[*errhandler].status--;
 
-/*   if(task_specific->user_func[*errhandler].status <= 0){ */
-/*     task_specific->user_func[*errhandler].status = 0; */
-/*     task_specific->user_func[*errhandler].func = NULL; */
-/*   } */
+  if(tmp->user_func[*errhandler].status <= 0){
+    tmp->user_func[*errhandler].status = 0;
+    tmp->user_func[*errhandler].func = NULL;
+  }
 
-  sctk_thread_mutex_unlock (&(task_specific->lock));
 
   *errhandler = MPI_ERRHANDLER_NULL;
-#endif
+  sctk_spinlock_unlock(&(tmp->lock));
   MPI_ERROR_SUCESS ();
 }
 
