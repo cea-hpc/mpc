@@ -132,6 +132,7 @@ void sctk_refresh_thread_debug (sctk_ethread_per_thread_t *tid, sctk_thread_stat
   lwpid_t lid ;
   tdb_thread_debug_t *thread ;
 
+  if (!sctk_use_rtdb) return ;
   thread = tid->debug_p;
 
 /*   if (!sctk_use_rtdb) return ; */
@@ -150,6 +151,7 @@ void sctk_refresh_thread_debug_migration (sctk_ethread_per_thread_t *tid) {
   lwpid_t lid ;
   tdb_thread_debug_t *thread ;
 
+  if (!sctk_use_rtdb) return ;
   thread = tid->debug_p;
 
 /*   if (!sctk_use_rtdb) return ; */
