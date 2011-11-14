@@ -22,6 +22,7 @@
 
 #define MAX_MPC_BUFFERED_MSG 16
 #define MAX_MPC_BUFFERED_SIZE (128 * sizeof(long))
+#include <uthash.h>
 
 typedef struct
 {
@@ -51,9 +52,9 @@ MPC_DECL_TYPE_PROTECTED (sctk_datatype_t user_types[sctk_user_data_types_max],
 MPC_DECL_TYPE_PROTECTED (sctk_derived_type_t *
 			 user_types_struct[sctk_user_data_types_max],
 			 user_types_struct);
-MPC_DECL_TYPE_PROTECTED (MPC_Handler_function *
-			 user_error_handlers[SCTK_MAX_COMMUNICATOR_NUMBER],
-			 user_error_handlers);
+/* MPC_DECL_TYPE_PROTECTED (MPC_Handler_function * */
+/* 			 user_error_handlers[SCTK_MAX_COMMUNICATOR_NUMBER], */
+/* 			 user_error_handlers); */
 
 MPC_DECL_TYPE_PROTECTED (mpc_buffered_msg_t buffer[MAX_MPC_BUFFERED_MSG];
 			 volatile int buffer_rank, buffer);
@@ -61,13 +62,30 @@ MPC_DECL_TYPE_PROTECTED (mpc_buffered_msg_t
 			 buffer_async[MAX_MPC_BUFFERED_MSG];
 			 volatile int buffer_async_rank, buffer_async);
 
+struct mpc_mpi_per_communicator_s;
+
+typedef struct {
+  sctk_communicator_t key;
+
+  MPC_Handler_function*  err_handler;
+  sctk_spinlock_t err_handler_lock;
+
+  struct mpc_mpi_per_communicator_s* mpc_mpi_per_communicator;
+  void (*mpc_mpi_per_communicator_copy)(struct mpc_mpi_per_communicator_s*,struct mpc_mpi_per_communicator_s*);
+
+  UT_hash_handle hh;
+}mpc_per_communicator_t;
+
 struct sctk_task_specific_s
 {
   int task_id;
 
     MPC_USE_TYPE (user_types);
     MPC_USE_TYPE (user_types_struct);
-    MPC_USE_TYPE (user_error_handlers);
+/*     MPC_USE_TYPE (user_error_handlers); */
+
+  mpc_per_communicator_t*per_communicator;
+  sctk_spinlock_t per_communicator_lock;
 
   void *keys;
   void *requests;
@@ -79,6 +97,8 @@ struct sctk_task_specific_s
 
   int init_done;
 };
+
+mpc_per_communicator_t* sctk_thread_getspecific_mpc_per_comm(sctk_task_specific_t* task_specific,sctk_communicator_t comm);
 
 typedef struct sctk_task_specific_s sctk_task_specific_t;
 

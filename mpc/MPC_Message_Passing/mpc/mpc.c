@@ -31,6 +31,7 @@
 #include "sctk_tls.h"
 
 #include "mpcthread.h"
+#include <mpcmp.h>
 #include <sys/time.h>
 #include <sctk_inter_thread_comm.h>
 #include <sctk_communicator.h>
@@ -78,7 +79,68 @@ MPC_Request mpc_request_null;
 
 __thread struct sctk_thread_specific_s *sctk_message_passing;
 
+inline mpc_per_communicator_t* sctk_thread_getspecific_mpc_per_comm(sctk_task_specific_t* task_specific,sctk_communicator_t comm){
+  mpc_per_communicator_t*per_communicator;
 
+  sctk_spinlock_lock(&(task_specific->per_communicator_lock));
+  HASH_FIND(hh,task_specific->per_communicator,&comm,sizeof(sctk_communicator_t),per_communicator);
+  sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
+  return per_communicator; 
+}
+
+static inline void sctk_thread_addspecific_mpc_per_comm(sctk_task_specific_t* task_specific,mpc_per_communicator_t* mpc_per_comm,sctk_communicator_t comm){
+  mpc_per_communicator_t*per_communicator;
+  sctk_spinlock_lock(&(task_specific->per_communicator_lock));
+  HASH_FIND(hh,task_specific->per_communicator,&comm,sizeof(sctk_communicator_t),per_communicator);
+  assume(per_communicator == NULL);
+  mpc_per_comm->key = comm;
+  HASH_ADD(hh,task_specific->per_communicator,key,sizeof(sctk_communicator_t),mpc_per_comm);  
+  sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
+  return ; 
+}
+
+static inline void sctk_thread_removespecific_mpc_per_comm(sctk_task_specific_t* task_specific,sctk_communicator_t comm){
+  mpc_per_communicator_t*per_communicator;
+  sctk_spinlock_lock(&(task_specific->per_communicator_lock));
+  HASH_FIND(hh,task_specific->per_communicator,&comm,sizeof(sctk_communicator_t),per_communicator);
+  assume(per_communicator != NULL);
+  sctk_free(per_communicator);
+  sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
+}
+
+static inline mpc_per_communicator_t* sctk_thread_createspecific_mpc_per_comm(){
+  mpc_per_communicator_t* tmp;
+  sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+
+  tmp = sctk_malloc(sizeof(mpc_per_communicator_t));
+  
+  tmp->err_handler = (MPC_Handler_function *)PMPC_Default_error;
+  tmp->err_handler_lock = lock;
+  tmp->mpc_mpi_per_communicator = NULL;
+  tmp->mpc_mpi_per_communicator_copy = NULL;
+  
+  return tmp;
+}
+
+static inline void sctk_thread_createspecific_mpc_per_comm_from_existing(sctk_task_specific_t* task_specific,sctk_communicator_t new_comm,sctk_communicator_t old_comm){
+  mpc_per_communicator_t*per_communicator;
+  mpc_per_communicator_t* per_communicator_new;
+
+  sctk_spinlock_lock(&(task_specific->per_communicator_lock));
+  HASH_FIND(hh,task_specific->per_communicator,&old_comm,sizeof(sctk_communicator_t),per_communicator);
+  assume(per_communicator != NULL);
+
+  per_communicator_new = sctk_thread_createspecific_mpc_per_comm();
+  memcpy(per_communicator_new,per_communicator,sizeof(mpc_per_communicator_t));
+
+  if(per_communicator->mpc_mpi_per_communicator_copy != NULL){
+    per_communicator->mpc_mpi_per_communicator_copy(per_communicator_new->mpc_mpi_per_communicator,per_communicator->mpc_mpi_per_communicator); 
+  }
+
+  sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
+
+  sctk_thread_addspecific_mpc_per_comm(task_specific,per_communicator_new,new_comm);
+}
 
 /************************************************************************/
 /*ACCESSORS                                                             */
@@ -272,6 +334,7 @@ static inline void
 __MPC_init_task_specific_t (sctk_task_specific_t * tmp)
 {
   unsigned long i;
+  mpc_per_communicator_t* per_comm_tmp;
 
   tmp->task_id = sctk_get_task_rank ();
 
@@ -284,12 +347,11 @@ __MPC_init_task_specific_t (sctk_task_specific_t * tmp)
     {
       tmp->user_types_struct.user_types_struct[i] = 0;
     }
-#warning "Put a hashtable instead"
-  for (i = 0; i < SCTK_MAX_COMMUNICATOR_NUMBER; i++)
-    {
-      tmp->user_error_handlers.user_error_handlers[i] =
-	(MPC_Handler_function *) PMPC_Default_error;
-    }
+
+  per_comm_tmp = sctk_thread_createspecific_mpc_per_comm();
+  sctk_thread_addspecific_mpc_per_comm(tmp,per_comm_tmp,MPC_COMM_WORLD);
+  per_comm_tmp = sctk_thread_createspecific_mpc_per_comm();
+  sctk_thread_addspecific_mpc_per_comm(tmp,per_comm_tmp,MPC_COMM_SELF);
 
   tmp->keys = NULL;
   tmp->requests = NULL;
@@ -358,14 +420,20 @@ __MPC_ERROR_REPORT__ (MPC_Comm comm, int error, char *message, char *file,
   int error_id;
   MPC_Handler_function *func;
   sctk_task_specific_t *task_specific;
+  mpc_per_communicator_t* tmp;
   task_specific = __MPC_get_task_specific ();
   comm_id = comm;
-  if (!(comm_id < SCTK_MAX_COMMUNICATOR_NUMBER))
+  tmp = sctk_thread_getspecific_mpc_per_comm(task_specific,comm_id);
+
+  if (tmp == NULL){
     comm_id = MPC_COMM_WORLD;
+    tmp = sctk_thread_getspecific_mpc_per_comm(task_specific,comm_id);
+  }
+
   error_id = error;
-  sctk_spinlock_lock (&(task_specific->user_error_handlers.lock));
-  func = task_specific->user_error_handlers.user_error_handlers[comm_id];
-  sctk_spinlock_unlock (&(task_specific->user_error_handlers.lock));
+  sctk_spinlock_lock (&(tmp->err_handler_lock));
+  func = tmp->err_handler;
+  sctk_spinlock_unlock (&(tmp->err_handler_lock));
   func (&comm_id, &error_id, message, file, line);
   return error;
 }
@@ -395,8 +463,9 @@ MPC_CREATE_INTERN_FUNC (MAXLOC);
   if (datatype >= sctk_user_data_types_max)	\
     MPC_ERROR_REPORT (comm, MPC_ERR_TYPE, "");
 
+#warning "To optimize"
 #define mpc_check_comm(com,comm)		\
-  if(!((com < SCTK_MAX_COMMUNICATOR_NUMBER)))	\
+  if(sctk_thread_getspecific_mpc_per_comm(__MPC_get_task_specific (),com) == NULL)	\
     MPC_ERROR_REPORT(comm,MPC_ERR_COMM,"")
 
 #define mpc_check_buf(buf,comm)			\
@@ -2617,16 +2686,23 @@ int
 PMPC_Wait_pending_all_comm ()
 {
   int j;
+  sctk_task_specific_t *task_specific;
+  mpc_per_communicator_t*per_communicator;
+  mpc_per_communicator_t*per_communicator_tmp;
+  task_specific = __MPC_get_task_specific ();
 
   SCTK_PROFIL_START (MPC_Wait_pending_all_comm);
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Wait_pending_all_comm");
 #endif
-  for (j = 0; j < SCTK_MAX_COMMUNICATOR_NUMBER; j++)
+  sctk_spinlock_lock(&(task_specific->per_communicator_lock));
+  HASH_ITER(hh,task_specific->per_communicator,per_communicator,per_communicator_tmp)
     {
+      j = per_communicator->key;
       if (sctk_is_valid_comm (j))
 	__MPC_Wait_pending (j);
     }
+  sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
   SCTK_PROFIL_END (MPC_Wait_pending_all_comm);
   MPC_ERROR_SUCESS ();
 }
@@ -3856,6 +3932,7 @@ __MPC_Comm_create (MPC_Comm comm, MPC_Group group, MPC_Comm * comm_out,
   if (present == 1)
     {
       __MPC_Barrier (*comm_out);
+      sctk_thread_createspecific_mpc_per_comm_from_existing(task_specific,* comm_out,comm);
       sctk_nodebug ("MPC_Comm_create ended %d on newly", *comm_out);
     }
   MPC_ERROR_SUCESS ();
@@ -3890,6 +3967,8 @@ PMPC_Comm_create_list (MPC_Comm comm, int *list, int nb_elem,
 static inline int
 __MPC_Comm_free (MPC_Comm * comm)
 {
+  sctk_task_specific_t *task_specific;
+  task_specific = __MPC_get_task_specific ();
   if (*comm == MPC_COMM_WORLD)
     {
       MPC_ERROR_SUCESS ();
@@ -3901,6 +3980,7 @@ __MPC_Comm_free (MPC_Comm * comm)
   sctk_nodebug ("Delete Comm %d", *comm);
   sctk_delete_communicator (*comm);
   sctk_nodebug ("Comm free done %d", *comm);
+  sctk_thread_removespecific_mpc_per_comm(task_specific,* comm);
   *comm = MPC_COMM_NULL;
   MPC_ERROR_SUCESS ();
 }
@@ -3917,15 +3997,16 @@ PMPC_Comm_free (MPC_Comm * comm)
 int
 PMPC_Comm_dup (MPC_Comm comm, MPC_Comm * comm_out)
 {
+  sctk_task_specific_t *task_specific;
   MPC_Group group;
   mpc_check_comm (comm, comm);
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (comm, "MPC_Comm_dup out_comm=%p", comm_out);
 #endif
+
+  task_specific = __MPC_get_task_specific ();
   if(sctk_is_inter_comm (comm) == 0){
-    sctk_task_specific_t *task_specific;
     int rank;
-    task_specific = __MPC_get_task_specific ();
     __MPC_Comm_rank (comm, &rank, task_specific);
     *comm_out = sctk_duplicate_communicator (comm,sctk_is_inter_comm (comm),rank);
   } else {
@@ -3933,6 +4014,7 @@ PMPC_Comm_dup (MPC_Comm comm, MPC_Comm * comm_out)
     __MPC_Comm_create (comm, group, comm_out, sctk_is_inter_comm (comm));
     __MPC_Group_free (&group);
   }
+  sctk_thread_createspecific_mpc_per_comm_from_existing(task_specific,* comm_out,comm);
   MPC_ERROR_SUCESS ();
 }
 
@@ -4077,6 +4159,7 @@ PMPC_Comm_split (MPC_Comm comm, int color, int key, MPC_Comm * comm_out)
   sctk_free (tab);
   sctk_nodebug ("Split done");
   *comm_out = comm_res;
+  sctk_thread_createspecific_mpc_per_comm_from_existing(task_specific,* comm_out,comm);
   MPC_ERROR_SUCESS ();
 }
 
@@ -4099,13 +4182,13 @@ PMPC_Errhandler_set (MPC_Comm comm, MPC_Errhandler errhandler)
 {
   MPC_Handler_function **user_error_handlers;
   sctk_task_specific_t *task_specific;
+  mpc_per_communicator_t* tmp;
   task_specific = __MPC_get_task_specific ();
+  tmp = sctk_thread_getspecific_mpc_per_comm(task_specific,comm);
 
-  sctk_spinlock_lock (&(task_specific->user_error_handlers.lock));
-  user_error_handlers =
-    task_specific->user_error_handlers.user_error_handlers;
-  user_error_handlers[comm] = errhandler;
-  sctk_spinlock_unlock (&(task_specific->user_error_handlers.lock));
+  sctk_spinlock_lock (&(tmp->err_handler_lock));
+  tmp->err_handler = errhandler;
+  sctk_spinlock_unlock (&(tmp->err_handler_lock));
   MPC_ERROR_SUCESS ();
 }
 
@@ -4114,13 +4197,13 @@ PMPC_Errhandler_get (MPC_Comm comm, MPC_Errhandler * errhandler)
 {
   MPC_Handler_function **user_error_handlers;
   sctk_task_specific_t *task_specific;
+  mpc_per_communicator_t* tmp;
   task_specific = __MPC_get_task_specific ();
+  tmp = sctk_thread_getspecific_mpc_per_comm(task_specific,comm);
 
-  sctk_spinlock_lock (&(task_specific->user_error_handlers.lock));
-  user_error_handlers =
-    task_specific->user_error_handlers.user_error_handlers;
-  *errhandler = user_error_handlers[comm];
-  sctk_spinlock_unlock (&(task_specific->user_error_handlers.lock));
+  sctk_spinlock_lock (&(tmp->err_handler_lock));
+  *errhandler = tmp->err_handler;
+  sctk_spinlock_unlock (&(tmp->err_handler_lock));
   MPC_ERROR_SUCESS ();
 }
 

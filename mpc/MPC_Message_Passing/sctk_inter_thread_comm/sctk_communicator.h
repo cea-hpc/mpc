@@ -22,8 +22,8 @@
 #ifndef __SCTK_COMMUNICATOR_H_
 #define __SCTK_COMMUNICATOR_H_
 
-#warning "To remove and store data per communicators"
-#define SCTK_MAX_COMMUNICATOR_NUMBER 10
+/* #warning "To remove and store data per communicators" */
+/* #define SCTK_MAX_COMMUNICATOR_NUMBER 10 */
 typedef int sctk_communicator_t;
 #define SCTK_COMM_WORLD 0
 #define SCTK_COMM_SELF 1
