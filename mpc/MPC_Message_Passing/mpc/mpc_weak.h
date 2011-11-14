@@ -123,20 +123,20 @@
 #pragma weak MPC_Derived_datatype = PMPC_Derived_datatype
 #pragma weak MPC_Is_derived_datatype = PMPC_Is_derived_datatype
 #pragma weak MPC_Derived_use = PMPC_Derived_use
-#pragma weak MPC_Get_keys = PMPC_Get_keys
-#pragma weak MPC_Set_keys = PMPC_Set_keys
-#pragma weak MPC_Get_requests = PMPC_Get_requests
-#pragma weak MPC_Set_requests = PMPC_Set_requests
-#pragma weak MPC_Get_groups = PMPC_Get_groups
-#pragma weak MPC_Set_groups = PMPC_Set_groups
-#pragma weak MPC_Get_errors = PMPC_Get_errors
-#pragma weak MPC_Set_errors = PMPC_Set_errors
-#pragma weak MPC_Set_buffers = PMPC_Set_buffers
-#pragma weak MPC_Get_buffers = PMPC_Get_buffers
-#pragma weak MPC_Get_comm_type = PMPC_Get_comm_type
-#pragma weak MPC_Set_comm_type = PMPC_Set_comm_type
-#pragma weak MPC_Get_op = PMPC_Get_op
-#pragma weak MPC_Set_op = PMPC_Set_op
+/* #pragma weak MPC_Get_keys = PMPC_Get_keys */
+/* #pragma weak MPC_Set_keys = PMPC_Set_keys */
+/* #pragma weak MPC_Get_requests = PMPC_Get_requests */
+/* #pragma weak MPC_Set_requests = PMPC_Set_requests */
+/* #pragma weak MPC_Get_groups = PMPC_Get_groups */
+/* #pragma weak MPC_Set_groups = PMPC_Set_groups */
+/* #pragma weak MPC_Get_errors = PMPC_Get_errors */
+/* #pragma weak MPC_Set_errors = PMPC_Set_errors */
+/* #pragma weak MPC_Set_buffers = PMPC_Set_buffers */
+/* #pragma weak MPC_Get_buffers = PMPC_Get_buffers */
+/* #pragma weak MPC_Get_comm_type = PMPC_Get_comm_type */
+/* #pragma weak MPC_Set_comm_type = PMPC_Set_comm_type */
+/* #pragma weak MPC_Get_op = PMPC_Get_op */
+/* #pragma weak MPC_Set_op = PMPC_Set_op */
   /*Requests */
 #pragma weak MPC_Request_free = PMPC_Request_free
   /*Scheduling */

@@ -398,20 +398,20 @@ extern "C"
 			       mpc_pack_absolute_indexes_t * ub, int *is_ub);
 
   int MPC_Derived_use (MPC_Datatype datatype);
-  int MPC_Get_keys (void **keys);
-  int MPC_Set_keys (void *keys);
-  int MPC_Get_requests (void **requests);
-  int MPC_Set_requests (void *requests);
-  int MPC_Get_groups (void **groups);
-  int MPC_Set_groups (void *groups);
-  int MPC_Get_errors (void **errors);
-  int MPC_Set_errors (void *errors);
-  int MPC_Set_buffers (void *buffers);
-  int MPC_Get_buffers (void **buffers);
-  int MPC_Get_comm_type (void **comm_type);
-  int MPC_Set_comm_type (void *comm_type);
-  int MPC_Get_op (void **op);
-  int MPC_Set_op (void *op);
+/*   int MPC_Get_keys (void **keys); */
+/*   int MPC_Set_keys (void *keys); */
+/*   int MPC_Get_requests (void **requests); */
+/*   int MPC_Set_requests (void *requests); */
+/*   int MPC_Get_groups (void **groups); */
+/*   int MPC_Set_groups (void *groups); */
+/*   int MPC_Get_errors (void **errors); */
+/*   int MPC_Set_errors (void *errors); */
+/*   int MPC_Set_buffers (void *buffers); */
+/*   int MPC_Get_buffers (void **buffers); */
+/*   int MPC_Get_comm_type (void **comm_type); */
+/*   int MPC_Set_comm_type (void *comm_type); */
+/*   int MPC_Get_op (void **op); */
+/*   int MPC_Set_op (void *op); */
 
 
   /*Requests */
@@ -643,20 +643,20 @@ extern "C"
 			       mpc_pack_absolute_indexes_t * ub, int *is_ub);
 
   int PMPC_Derived_use (MPC_Datatype datatype);
-  int PMPC_Get_keys (void **keys);
-  int PMPC_Set_keys (void *keys);
-  int PMPC_Get_requests (void **requests);
-  int PMPC_Set_requests (void *requests);
-  int PMPC_Get_groups (void **groups);
-  int PMPC_Set_groups (void *groups);
-  int PMPC_Get_errors (void **errors);
-  int PMPC_Set_errors (void *errors);
-  int PMPC_Set_buffers (void *buffers);
-  int PMPC_Get_buffers (void **buffers);
-  int PMPC_Get_comm_type (void **comm_type);
-  int PMPC_Set_comm_type (void *comm_type);
-  int PMPC_Get_op (void **op);
-  int PMPC_Set_op (void *op);
+/*   int PMPC_Get_keys (void **keys); */
+/*   int PMPC_Set_keys (void *keys); */
+/*   int PMPC_Get_requests (void **requests); */
+/*   int PMPC_Set_requests (void *requests); */
+/*   int PMPC_Get_groups (void **groups); */
+/*   int PMPC_Set_groups (void *groups); */
+/*   int PMPC_Get_errors (void **errors); */
+/*   int PMPC_Set_errors (void *errors); */
+/*   int PMPC_Set_buffers (void *buffers); */
+/*   int PMPC_Get_buffers (void **buffers); */
+/*   int PMPC_Get_comm_type (void **comm_type); */
+/*   int PMPC_Set_comm_type (void *comm_type); */
+/*   int PMPC_Get_op (void **op); */
+/*   int PMPC_Set_op (void *op); */
 
 
   /*Requests */

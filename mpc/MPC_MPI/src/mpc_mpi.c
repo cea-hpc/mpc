@@ -36,6 +36,7 @@
 #include "sctk_communicator.h"
 #include "sctk_alloc.h"
 #include <string.h>
+#include <uthash.h>
 
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
 #include "mpc_mpi_weak.h"
@@ -296,24 +297,168 @@ sctk_is_derived_type (MPI_Datatype data_in)
     }
 }
 
-/*
-  ERRORS HANDELING
-*/
+typedef struct
+{
+  void *attr;
+  int flag;
+} MPI_Caching_key_value_t;
+
+typedef struct
+{
+  int ndims;
+  int *dims;
+  int *periods;
+  int reorder;
+} mpi_topology_cart_t;
+
+typedef struct
+{
+  int nnodes;
+  int nedges;
+  int nindex;
+
+  int *edges;
+  int *index;
+  int reorder;
+} mpi_topology_graph_t;
+
+typedef union
+{
+  mpi_topology_cart_t cart;
+  mpi_topology_graph_t graph;
+} mpi_topology_info_t;
+
+typedef struct
+{
+  int type;
+  mpi_topology_info_t data;
+  char names[MPI_MAX_NAME_STRING + 1];
+  sctk_spinlock_t lock;
+} mpi_topology_per_comm_t;
+
+#define MPC_MPI_MAX_NUMBER_FUNC 3
+
+typedef struct mpc_mpi_per_communicator_s{
+  /****** ERRORS ******/
+  MPI_Handler_function *func;
+  int func_ident;
+
+  /****** Attributes ******/
+  MPI_Caching_key_value_t* key_vals;
+  int max_number;
+
+  /****** Topologies ******/
+  mpi_topology_per_comm_t topo;
+
+  /****** LOCK ******/
+  sctk_spinlock_t lock;
+}mpc_mpi_per_communicator_t;
+
+#define MPC_MPI_MAX_NUMBER_FUNC 3
+
+typedef struct
+{
+  MPI_Copy_function *copy_fn;
+  MPI_Delete_function *delete_fn;
+  void *extra_state;
+  int used;
+  int fortran_key;
+} MPI_Caching_key_t;
+
 typedef struct
 {
   MPI_Handler_function *func;
   int status;
 } MPI_Handler_user_function_t;
 
-typedef struct
-{
-  MPI_Handler_function *func[SCTK_MAX_COMMUNICATOR_NUMBER];
-  int func_ident[SCTK_MAX_COMMUNICATOR_NUMBER];
-  mpc_thread_mutex_t lock;
-  MPI_Handler_user_function_t *user_func;
-  int user_func_nb;
-} mpi_errors_handler_t;
+struct MPI_request_struct_s;
+struct MPI_group_struct_s;
+struct MPI_buffer_struct_s;
+struct sctk_mpi_ops_s;
 
+typedef struct mpc_mpi_data_s{
+  /****** ERRORS ******/
+  MPI_Handler_user_function_t user_func[MPC_MPI_MAX_NUMBER_FUNC];
+  
+  /****** Attributes ******/
+  MPI_Caching_key_t *attrs_fn;
+  int number;
+  int max_number;
+
+  /****** REQUESTS ******/
+  struct MPI_request_struct_s *requests;
+
+  /****** GROUPS ******/
+  struct MPI_group_struct_s *groups;
+
+  /****** BUFFERS ******/
+  struct MPI_buffer_struct_s *buffers;
+
+  /****** OP ******/
+  struct sctk_mpi_ops_s *ops;
+
+  /****** LOCK ******/
+  sctk_spinlock_t lock;
+}mpc_mpi_data_t;
+
+static
+void mpc_mpi_per_communicator_copy_func(mpc_mpi_per_communicator_t* to, mpc_mpi_per_communicator_t* from){
+  memcpy(to,from,sizeof(mpc_mpi_per_communicator_t));
+}
+
+static inline
+mpc_mpi_per_communicator_t* mpc_mpc_get_per_comm_data(sctk_communicator_t comm){
+  struct sctk_task_specific_s * task_specific;
+  mpc_per_communicator_t* tmp;
+
+  task_specific = __MPC_get_task_specific ();
+  tmp = sctk_thread_getspecific_mpc_per_comm(task_specific,comm);
+  return tmp->mpc_mpi_per_communicator;
+}
+
+static inline
+mpc_mpi_data_t* mpc_mpc_get_per_task_data(){
+  struct sctk_task_specific_s * task_specific;
+  task_specific = __MPC_get_task_specific ();
+
+  return task_specific->mpc_mpi_data;
+}
+
+static inline void PMPC_Get_requests(struct MPI_request_struct_s **requests){
+  *requests = mpc_mpc_get_per_task_data()->requests;
+}
+
+static inline void PMPC_Set_requests(struct MPI_request_struct_s *requests){
+  mpc_mpc_get_per_task_data()->requests = requests;
+}
+
+static inline void PMPC_Get_groups(struct MPI_group_struct_s **groups){
+  *groups = mpc_mpc_get_per_task_data()->groups;
+}
+
+static inline void PMPC_Set_groups(struct MPI_group_struct_s *groups){
+  mpc_mpc_get_per_task_data()->groups = groups;
+}
+
+static inline void PMPC_Get_buffers(struct MPI_buffer_struct_s **buffers){
+  *buffers = mpc_mpc_get_per_task_data()->buffers;
+}
+
+static inline void PMPC_Set_buffers(struct MPI_buffer_struct_s *buffers){
+  mpc_mpc_get_per_task_data()->buffers = buffers;
+}
+
+static inline void PMPC_Get_op(struct sctk_mpi_ops_s **ops){
+  *ops = mpc_mpc_get_per_task_data()->ops;
+}
+
+static inline void PMPC_Set_op(struct sctk_mpi_ops_s *ops){
+  mpc_mpc_get_per_task_data()->ops = ops;
+}
+
+/*
+  ERRORS HANDELING
+*/
 static inline int
 SCTK__MPI_ERROR_REPORT__ (MPC_Comm comm, int error, char *message, char *file,
 			  int line)
@@ -321,51 +466,48 @@ SCTK__MPI_ERROR_REPORT__ (MPC_Comm comm, int error, char *message, char *file,
   MPI_Comm comm_id;
   int error_id;
   MPI_Handler_function *func;
-  mpi_errors_handler_t *task_specific;
-  PMPC_Get_errors ((void **) &task_specific);
+  mpc_mpi_per_communicator_t* tmp;
 
-  sctk_thread_mutex_lock (&(task_specific->lock));
+  tmp = mpc_mpc_get_per_comm_data(comm);
+
+  if(tmp == NULL){
+    comm = MPC_COMM_WORLD;
+    tmp = mpc_mpc_get_per_comm_data(comm);
+  }
+
   comm_id = comm;
-  if (!(comm_id < SCTK_MAX_COMMUNICATOR_NUMBER))
-    comm_id = MPI_COMM_WORLD;
+
   error_id = error;
-  func = task_specific->func[comm_id];
+  func = tmp->func;
   func (&comm_id, &error_id, message, file, line);
-  sctk_thread_mutex_unlock (&(task_specific->lock));
 
   return error;
+}
+
+static void
+__sctk_init_mpi_errors_per_comm (mpc_mpi_per_communicator_t* tmp)
+{
+  tmp->func = (MPI_Handler_function *)MPI_Default_error;
+  tmp->func_ident = MPI_ERRORS_ARE_FATAL;
 }
 
 static void
 __sctk_init_mpi_errors ()
 {
   int i;
-  mpi_errors_handler_t *task_specific;
-  task_specific = sctk_malloc (sizeof (mpi_errors_handler_t));
-  sctk_thread_mutex_init (&(task_specific->lock), NULL);
-  task_specific->user_func =
-    sctk_malloc (3 * sizeof (MPI_Handler_user_function_t));
-  task_specific->user_func_nb = 3;
+  mpc_mpi_data_t* data;
 
-  task_specific->user_func[MPI_ERRHANDLER_NULL].func =
+  data = mpc_mpc_get_per_task_data();
+
+  data->user_func[MPI_ERRHANDLER_NULL].func =
     (MPI_Handler_function *) MPI_Default_error;
-  task_specific->user_func[MPI_ERRHANDLER_NULL].status = 1;
-  task_specific->user_func[MPI_ERRORS_RETURN].func =
+  data->user_func[MPI_ERRHANDLER_NULL].status = 1;
+  data->user_func[MPI_ERRORS_RETURN].func =
     (MPI_Handler_function *) MPI_Return_error;
-  task_specific->user_func[MPI_ERRORS_RETURN].status = 1;
-  task_specific->user_func[MPI_ERRORS_ARE_FATAL].func =
+  data->user_func[MPI_ERRORS_RETURN].status = 1;
+  data->user_func[MPI_ERRORS_ARE_FATAL].func =
     (MPI_Handler_function *) MPI_Default_error;
-  task_specific->user_func[MPI_ERRORS_ARE_FATAL].status = 1;
-
-  for (i = 0; i < SCTK_MAX_COMMUNICATOR_NUMBER; i++)
-    {
-      task_specific->func[i] =
-	task_specific->user_func[MPI_ERRORS_ARE_FATAL].func;
-      task_specific->func_ident[i] = MPI_ERRORS_ARE_FATAL;
-    }
-
-
-  PMPC_Set_errors (task_specific);
+  data->user_func[MPI_ERRORS_ARE_FATAL].status = 1;
 }
 
 #define MPI_ERROR_REPORT(comm, error,message) return SCTK__MPI_ERROR_REPORT__(comm, error,message,__FILE__, __LINE__)
@@ -376,8 +518,9 @@ __sctk_init_mpi_errors ()
   if ((datatype >= sctk_user_data_types_max) && (sctk_is_derived_type(datatype) != 1)) \
     MPI_ERROR_REPORT (comm, MPI_ERR_TYPE, "");
 
+#warning "to optimize"
 #define mpi_check_comm(com,comm)		\
-  if(!((com < SCTK_MAX_COMMUNICATOR_NUMBER)))	\
+  if(mpc_mpc_get_per_comm_data(com) == NULL)	\
     MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"")
 
 #define mpi_check_status(status,comm)		\
@@ -3557,7 +3700,7 @@ typedef struct
   int commute;
 } sctk_op_t;
 
-typedef struct
+typedef struct sctk_mpi_ops_s
 {
   sctk_op_t *ops;
   int size;
@@ -4722,30 +4865,6 @@ __INTERNAL__PMPI_Intercomm_merge (MPI_Comm intercomm, int high,
 /*
   Attributes
 */
-typedef struct
-{
-  MPI_Copy_function *copy_fn;
-  MPI_Delete_function *delete_fn;
-  void *extra_state;
-  volatile int used;
-  volatile int fortran_key;
-} MPI_Caching_key_t;
-
-typedef struct
-{
-  void *attr;
-  int flag;
-} MPI_Caching_key_value_t;
-
-typedef struct
-{
-  volatile MPI_Caching_key_t *attrs_fn;
-  volatile MPI_Caching_key_value_t *value[SCTK_MAX_COMMUNICATOR_NUMBER];
-  sctk_thread_mutex_t lock;
-  volatile int number;
-  volatile int max_number;
-} MPI_Caching_struct_t;
-
 #define MPI_MAX_KEY_DEFINED 7
 const int MPI_TAG_UB = 0;
 const int MPI_HOST = 1;
@@ -4773,53 +4892,31 @@ static void *defines_attr_tab[MPI_MAX_KEY_DEFINED] = {
 };
 
 static sctk_thread_mutex_t sctk_attr_lock = SCTK_THREAD_MUTEX_INITIALIZER;
+
 static int
 __INTERNAL__PMPI_Keyval_create (MPI_Copy_function * copy_fn,
 				MPI_Delete_function * delete_fn,
 				int *keyval, void *extra_state)
 {
-  MPI_Caching_struct_t *keys;
+  not_implemented();
+#if 0
   int i;
-  sctk_thread_mutex_lock (&sctk_attr_lock);
-  PMPC_Get_keys ((void *) &keys);
-  if (keys == NULL)
-    {
-      keys = sctk_malloc (sizeof (MPI_Caching_struct_t));
-      PMPC_Set_keys (keys);
-      keys->number = 0;
-      keys->max_number = 0;
-      sctk_thread_mutex_init (&(keys->lock), NULL);
-      for (i = 0; i < SCTK_MAX_COMMUNICATOR_NUMBER; i++)
-	{
-	  keys->value[i] = NULL;
-	}
-      keys->attrs_fn = NULL;
-    }
-  sctk_thread_mutex_unlock (&sctk_attr_lock);
+  mpc_mpi_data_t* tmp;
 
-  sctk_thread_mutex_lock (&(keys->lock));
-  if (keys->number >= keys->max_number)
+  tmp = mpc_mpc_get_per_task_data();
+
+  sctk_spinlock_lock(&(tmp->lock));
+  if (tmp->number >= tmp->max_number)
     {
       int j;
-      keys->max_number += 100;
+      tmp->max_number += 100;
 
-      for (i = 0; i < SCTK_MAX_COMMUNICATOR_NUMBER; i++)
+      tmp->attrs_fn =
+	sctk_realloc ((void *) (tmp->attrs_fn),
+		      tmp->max_number * sizeof (MPI_Caching_key_t));
+      for (i = tmp->number; i < tmp->max_number; i++)
 	{
-	  keys->value[i] =
-	    sctk_realloc ((void *) (keys->value[i]),
-			  keys->max_number *
-			  sizeof (MPI_Caching_key_value_t));
-	  for (j = keys->number; j < keys->max_number; j++)
-	    {
-	      keys->value[i][j].flag = 0;
-	    }
-	}
-      keys->attrs_fn =
-	sctk_realloc ((void *) (keys->attrs_fn),
-		      keys->max_number * sizeof (MPI_Caching_key_t));
-      for (i = keys->number; i < keys->max_number; i++)
-	{
-	  keys->attrs_fn[i].used = 0;
+	  tmp->attrs_fn[i].used = 0;
 	}
     }
 
@@ -4832,14 +4929,17 @@ __INTERNAL__PMPI_Keyval_create (MPI_Copy_function * copy_fn,
   keys->attrs_fn[*keyval].used = 1;
   keys->attrs_fn[*keyval].fortran_key = 0;
 
-  sctk_thread_mutex_unlock (&(keys->lock));
+  sctk_spinlock_unlock(&(tmp->lock));
   *keyval += MPI_MAX_KEY_DEFINED;
+#endif
   return MPI_SUCCESS;
 }
 
 static int
 __INTERNAL__PMPI_Keyval_free (int *keyval)
 {
+  not_implemented();
+#if 0
   MPI_Caching_struct_t *keys;
   PMPC_Get_keys ((void *) &keys);
   if ((keys == NULL) || (*keyval < 0))
@@ -4848,14 +4948,17 @@ __INTERNAL__PMPI_Keyval_free (int *keyval)
     }
 
   *keyval = MPI_KEYVAL_INVALID;
+#endif
   return MPI_SUCCESS;
 }
 
 static int
 __INTERNAL__PMPI_Attr_set_fortran (int keyval)
 {
-  MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_SUCCESS;
+  not_implemented();
+#if 0
+  MPI_Comm comm = MPI_COMM_WORLD;
   MPI_Caching_struct_t *keys;
   if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
     {
@@ -4876,15 +4979,16 @@ __INTERNAL__PMPI_Attr_set_fortran (int keyval)
 
   keys->attrs_fn[keyval].fortran_key = 1;
   sctk_thread_mutex_unlock (&(keys->lock));
-
+#endif
   return res;
 }
-
 
 static int
 __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
 {
   int res = MPI_SUCCESS;
+  not_implemented();
+#if 0
   MPI_Caching_struct_t *keys;
   if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
     {
@@ -4892,23 +4996,23 @@ __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
     }
   keyval -= MPI_MAX_KEY_DEFINED;
 
-  PMPC_Get_keys ((void *) &keys);
   if ((keys == NULL) || (keyval < 0))
     {
       MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
     }
+
   sctk_thread_mutex_lock (&(keys->lock));
   if (keys->attrs_fn[keyval].used == 0)
     {
       MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
     }
-  if (keys->value[comm][keyval].flag == 1)
+  if (__INTERNAL__get_keyval(comm)[keyval].flag == 1)
     {
       res = __INTERNAL__PMPI_Attr_delete (comm, keyval);
     }
   if (keys->attrs_fn[keyval].fortran_key == 0)
     {
-      keys->value[comm][keyval].attr = attr_value;
+      __INTERNAL__get_keyval(comm)[keyval].attr = attr_value;
     }
   else
     {
@@ -4916,10 +5020,11 @@ __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
       long long_val;
       val = (*((int *) attr_value));
       long_val = (long) val;
-      keys->value[comm][keyval].attr = (void *) long_val;
+      __INTERNAL__get_keyval(comm)[keyval].attr = (void *) long_val;
     }
-  keys->value[comm][keyval].flag = 1;
+  __INTERNAL__get_keyval(comm)[keyval].flag = 1;
   sctk_thread_mutex_unlock (&(keys->lock));
+#endif
   return res;
 }
 
@@ -4927,6 +5032,8 @@ static int
 __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value,
 			   int *flag)
 {
+  not_implemented();
+#if 0
   MPI_Caching_struct_t *keys;
   void **attr;
 
@@ -4952,27 +5059,30 @@ __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value,
       return MPI_ERR_INTERN;
     }
 
-  *flag = keys->value[comm][keyval].flag;
+  *flag = __INTERNAL__get_keyval(comm)[keyval].flag;
   if (keys->attrs_fn[keyval].fortran_key == 0)
     {
-      *attr = keys->value[comm][keyval].attr;
+      *attr = __INTERNAL__get_keyval(comm)[keyval].attr;
     }
   else
     {
-      *attr = keys->value[comm][keyval].attr;
+      *attr = __INTERNAL__get_keyval(comm)[keyval].attr;
     }
 
   sctk_thread_mutex_unlock (&(keys->lock));
   sctk_nodebug ("Get %d = %ld", keyval + MPI_MAX_KEY_DEFINED,
 		*((unsigned long *) attr), *((unsigned long *) attr_value));
+#endif
   return MPI_SUCCESS;
 }
 
 static int
 __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
 {
-  MPI_Caching_struct_t *keys;
   int res;
+  not_implemented();
+#if 0
+  MPI_Caching_struct_t *keys;
   if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
     {
       return MPI_ERR_INTERN;
@@ -4990,7 +5100,7 @@ __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
       return MPI_ERR_INTERN;
     }
 
-  if (keys->value[comm][keyval].flag == 1)
+  if (__INTERNAL__get_keyval(comm)[keyval].flag == 1)
     {
       if (keys->attrs_fn[keyval].delete_fn != NULL)
 	{
@@ -5000,7 +5110,7 @@ __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
 		keys->attrs_fn[keyval].delete_fn (comm,
 						  keyval +
 						  MPI_MAX_KEY_DEFINED,
-						  keys->value[comm][keyval].
+						  __INTERNAL__get_keyval(comm)[keyval].
 						  attr,
 						  keys->attrs_fn[keyval].
 						  extra_state);
@@ -5011,7 +5121,7 @@ __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
 	      int val;
 	      long long_val;
 	      int *ext;
-	      long_val = (long) (keys->value[comm][keyval].attr);
+	      long_val = (long) (__INTERNAL__get_keyval(comm)[keyval].attr);
 	      val = (int) long_val;
 	      fort_key = keyval + MPI_MAX_KEY_DEFINED;
 	      ext = (int *) (keys->attrs_fn[keyval].extra_state);
@@ -5022,18 +5132,21 @@ __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
 	}
     }
 
-  keys->value[comm][keyval].attr = NULL;
-  keys->value[comm][keyval].flag = 0;
+  __INTERNAL__get_keyval(comm)[keyval].attr = NULL;
+  __INTERNAL__get_keyval(comm)[keyval].flag = 0;
   sctk_thread_mutex_unlock (&(keys->lock));
+#endif
   return res;
 }
 
 static int
 SCTK__MPI_Attr_clean_communicator (MPI_Comm comm)
 {
+  int res = MPI_SUCCESS;
+  not_implemented();
+#if 0
   MPI_Caching_struct_t *keys;
   int i;
-  int res = MPI_SUCCESS;
   PMPC_Get_keys ((void *) &keys);
   if (keys == NULL)
     {
@@ -5042,7 +5155,7 @@ SCTK__MPI_Attr_clean_communicator (MPI_Comm comm)
   sctk_thread_mutex_lock (&sctk_attr_lock);
   for (i = 0; i < keys->max_number; i++)
     {
-      if (keys->value[comm][i].flag == 1)
+      if (__INTERNAL__get_keyval(comm)[i].flag == 1)
 	{
 	  res = __INTERNAL__PMPI_Attr_delete (comm, i + MPI_MAX_KEY_DEFINED);
 
@@ -5055,6 +5168,7 @@ SCTK__MPI_Attr_clean_communicator (MPI_Comm comm)
 	}
     }
   sctk_thread_mutex_unlock (&sctk_attr_lock);
+#endif
   return res;
 }
 
@@ -5072,8 +5186,10 @@ MPI_DUP_FN (MPI_Comm oldcom, int keyval, void *extra_state,
 static int
 SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new)
 {
-  MPI_Caching_struct_t *keys;
   int res = MPI_SUCCESS;
+  not_implemented();
+#if 0
+  MPI_Caching_struct_t *keys;
   int i;
   PMPC_Get_keys ((void *) &keys);
   if (keys == NULL)
@@ -5085,7 +5201,7 @@ SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new)
     {
       if (keys->attrs_fn[i].copy_fn != NULL)
 	{
-	  if (keys->value[old][i].flag == 1)
+	  if (__INTERNAL__get_keyval(old)[i].flag == 1)
 	    {
 	      void *arg;
 	      int flag;
@@ -5098,7 +5214,7 @@ SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new)
 		  res =
 		    cpy (old, i + MPI_MAX_KEY_DEFINED,
 			 keys->attrs_fn[i].extra_state,
-			 keys->value[old][i].attr, (void *) (&arg), &flag);
+			 __INTERNAL__get_keyval(old)[i].attr, (void *) (&arg), &flag);
 		}
 	      else
 		{
@@ -5107,7 +5223,7 @@ SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new)
 		  int *ext;
 		  int val_out;
 		  long long_val;
-		  long_val = (long) (keys->value[old][i].attr);
+		  long_val = (long) (__INTERNAL__get_keyval(old)[i].attr);
 		  val = (int) long_val;
 		  fort_key = i + MPI_MAX_KEY_DEFINED;
 		  ext = (int *) (keys->attrs_fn[i].extra_state);
@@ -5137,129 +5253,95 @@ SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new)
 	}
     }
   sctk_thread_mutex_unlock (&sctk_attr_lock);
+#endif
   return res;
 }
 
-typedef struct
-{
-  int ndims;
-  int *dims;
-  int *periods;
-  int reorder;
-} mpi_topology_cart_t;
 
-typedef struct
-{
-  int nnodes;
-  int nedges;
-  int nindex;
-
-  int *edges;
-  int *index;
-  int reorder;
-} mpi_topology_graph_t;
-
-typedef union
-{
-  mpi_topology_cart_t cart;
-  mpi_topology_graph_t graph;
-} mpi_topology_info_t;
-
-typedef struct
-{
-  int type[SCTK_MAX_COMMUNICATOR_NUMBER];
-  mpi_topology_info_t data[SCTK_MAX_COMMUNICATOR_NUMBER];
-  char names[SCTK_MAX_COMMUNICATOR_NUMBER][MPI_MAX_NAME_STRING + 1];
-  sctk_spinlock_t lock;
-} mpi_topology_t;
+static void __sctk_init_mpi_topo_per_comm (mpc_mpi_per_communicator_t* tmp){
+  tmp->topo.type = MPI_UNDEFINED;
+  sprintf (tmp->topo.names, "undefined");
+}
 
 static void
 __sctk_init_mpi_topo ()
 {
-  int i;
-  mpi_topology_t *task_specific;
-  task_specific = sctk_malloc (sizeof (mpi_topology_t));
-  for (i = 0; i < SCTK_MAX_COMMUNICATOR_NUMBER; i++)
-    {
-      task_specific->type[i] = MPI_UNDEFINED;
-      sprintf (task_specific->names[i], "undefined");
-    }
-  sprintf (task_specific->names[0], "MPI_COMM_WORLD");
-  PMPC_Set_comm_type (task_specific);
 }
 
 static int
 SCTK__MPI_Comm_communicator_dup (MPI_Comm comm, MPI_Comm newcomm)
 {
-  mpi_topology_t *task_specific;
-  PMPC_Get_comm_type ((void *) (&task_specific));
-  sctk_spinlock_lock (&(task_specific->lock));
+/*   mpi_topology_t *task_specific; */
+/*   PMPC_Get_comm_type ((void *) (&task_specific)); */
+/*   sctk_spinlock_lock (&(task_specific->lock)); */
 
-  if (task_specific->type[comm] == MPI_CART)
-    {
-      task_specific->type[newcomm] = MPI_CART;
-      task_specific->data[newcomm].cart.ndims =
-	task_specific->data[comm].cart.ndims;
-      task_specific->data[newcomm].cart.reorder =
-	task_specific->data[comm].cart.reorder;
-      task_specific->data[newcomm].cart.dims =
-	sctk_malloc (task_specific->data[comm].cart.ndims * sizeof (int));
-      memcpy (task_specific->data[newcomm].cart.dims,
-	      task_specific->data[comm].cart.dims,
-	      task_specific->data[comm].cart.ndims * sizeof (int));
-      task_specific->data[newcomm].cart.periods =
-	sctk_malloc (task_specific->data[comm].cart.ndims * sizeof (int));
-      memcpy (task_specific->data[newcomm].cart.periods,
-	      task_specific->data[comm].cart.periods,
-	      task_specific->data[comm].cart.ndims * sizeof (int));
-    }
+/*   if (task_specific->type[comm] == MPI_CART) */
+/*     { */
+/*       task_specific->type[newcomm] = MPI_CART; */
+/*       task_specific->data[newcomm].cart.ndims = */
+/* 	task_specific->data[comm].cart.ndims; */
+/*       task_specific->data[newcomm].cart.reorder = */
+/* 	task_specific->data[comm].cart.reorder; */
+/*       task_specific->data[newcomm].cart.dims = */
+/* 	sctk_malloc (task_specific->data[comm].cart.ndims * sizeof (int)); */
+/*       memcpy (task_specific->data[newcomm].cart.dims, */
+/* 	      task_specific->data[comm].cart.dims, */
+/* 	      task_specific->data[comm].cart.ndims * sizeof (int)); */
+/*       task_specific->data[newcomm].cart.periods = */
+/* 	sctk_malloc (task_specific->data[comm].cart.ndims * sizeof (int)); */
+/*       memcpy (task_specific->data[newcomm].cart.periods, */
+/* 	      task_specific->data[comm].cart.periods, */
+/* 	      task_specific->data[comm].cart.ndims * sizeof (int)); */
+/*     } */
 
-  if (task_specific->type[comm] == MPI_GRAPH)
-    {
-      task_specific->type[newcomm] = MPI_GRAPH;
+/*   if (task_specific->type[comm] == MPI_GRAPH) */
+/*     { */
+/*       task_specific->type[newcomm] = MPI_GRAPH; */
 
-      task_specific->data[newcomm].graph.nnodes =
-	task_specific->data[comm].graph.nnodes;
-      task_specific->data[newcomm].graph.reorder =
-	task_specific->data[comm].graph.reorder;
-      task_specific->data[newcomm].graph.index =
-	sctk_malloc (task_specific->data[comm].graph.nnodes * sizeof (int));
-      memcpy (task_specific->data[newcomm].graph.index,
-	      task_specific->data[comm].graph.index,
-	      task_specific->data[comm].graph.nnodes * sizeof (int));
-      task_specific->data[newcomm].graph.edges =
-	sctk_malloc (task_specific->data[comm].graph.nnodes * sizeof (int));
-      memcpy (task_specific->data[newcomm].graph.edges,
-	      task_specific->data[comm].graph.edges,
-	      task_specific->data[comm].graph.nnodes * sizeof (int));
+/*       task_specific->data[newcomm].graph.nnodes = */
+/* 	task_specific->data[comm].graph.nnodes; */
+/*       task_specific->data[newcomm].graph.reorder = */
+/* 	task_specific->data[comm].graph.reorder; */
+/*       task_specific->data[newcomm].graph.index = */
+/* 	sctk_malloc (task_specific->data[comm].graph.nnodes * sizeof (int)); */
+/*       memcpy (task_specific->data[newcomm].graph.index, */
+/* 	      task_specific->data[comm].graph.index, */
+/* 	      task_specific->data[comm].graph.nnodes * sizeof (int)); */
+/*       task_specific->data[newcomm].graph.edges = */
+/* 	sctk_malloc (task_specific->data[comm].graph.nnodes * sizeof (int)); */
+/*       memcpy (task_specific->data[newcomm].graph.edges, */
+/* 	      task_specific->data[comm].graph.edges, */
+/* 	      task_specific->data[comm].graph.nnodes * sizeof (int)); */
 
-      task_specific->data[newcomm].graph.nedges =
-	task_specific->data[comm].graph.nedges;
-      task_specific->data[newcomm].graph.nindex =
-	task_specific->data[comm].graph.nindex;
-    }
-  sctk_spinlock_unlock (&(task_specific->lock));
+/*       task_specific->data[newcomm].graph.nedges = */
+/* 	task_specific->data[comm].graph.nedges; */
+/*       task_specific->data[newcomm].graph.nindex = */
+/* 	task_specific->data[comm].graph.nindex; */
+/*     } */
+/*   sctk_spinlock_unlock (&(task_specific->lock)); */
+  not_implemented();
   return MPI_SUCCESS;
 }
 
 static int
 SCTK__MPI_Comm_communicator_free (MPI_Comm comm)
 {
-  mpi_topology_t *task_specific;
-  PMPC_Get_comm_type ((void *) (&task_specific));
-  sctk_spinlock_lock (&(task_specific->lock));
+/*   mpi_topology_t *task_specific; */
+/*   PMPC_Get_comm_type ((void *) (&task_specific)); */
+/*   sctk_spinlock_lock (&(task_specific->lock)); */
 
-  if (task_specific->type[comm] == MPI_CART)
-    {
-      sctk_free (task_specific->data[comm].cart.dims);
-      sctk_free (task_specific->data[comm].cart.periods);
-    }
-  if (task_specific->type[comm] == MPI_GRAPH)
-    {
-      sctk_free (task_specific->data[comm].graph.index);
-      sctk_free (task_specific->data[comm].graph.edges);
-    }
-  sctk_spinlock_unlock (&(task_specific->lock));
+/*   if (task_specific->type[comm] == MPI_CART) */
+/*     { */
+/*       sctk_free (task_specific->data[comm].cart.dims); */
+/*       sctk_free (task_specific->data[comm].cart.periods); */
+/*     } */
+/*   if (task_specific->type[comm] == MPI_GRAPH) */
+/*     { */
+/*       sctk_free (task_specific->data[comm].graph.index); */
+/*       sctk_free (task_specific->data[comm].graph.edges); */
+/*     } */
+/*   sctk_spinlock_unlock (&(task_specific->lock));*/
+  not_implemented();
   return MPI_SUCCESS;
 }
 
@@ -5267,54 +5349,57 @@ static int
 __INTERNAL__PMPI_Comm_get_name (MPI_Comm comm, char *comm_name,
 				int *resultlen)
 {
-  mpi_topology_t *task_specific;
-  int len;
+/*   mpi_topology_t *task_specific; */
+/*   int len; */
 
-  PMPC_Get_comm_type ((void *) (&task_specific));
-  sctk_spinlock_lock (&(task_specific->lock));
+/*   PMPC_Get_comm_type ((void *) (&task_specific)); */
+/*   sctk_spinlock_lock (&(task_specific->lock)); */
 
-  len = strlen (task_specific->names[comm]);
+/*   len = strlen (task_specific->names[comm]); */
 
-  memcpy (comm_name, task_specific->names[comm], len + 1);
+/*   memcpy (comm_name, task_specific->names[comm], len + 1); */
 
-  *resultlen = len;
+/*   *resultlen = len; */
 
-  sctk_spinlock_unlock (&(task_specific->lock));
+/*   sctk_spinlock_unlock (&(task_specific->lock));*/
+  not_implemented();
   return MPI_SUCCESS;
 }
 static int
 __INTERNAL__PMPI_Comm_set_name (MPI_Comm comm, char *comm_name)
 {
-  mpi_topology_t *task_specific;
-  int len;
-  PMPC_Get_comm_type ((void *) (&task_specific));
-  sctk_spinlock_lock (&(task_specific->lock));
+  not_implemented();
+/*   mpi_topology_t *task_specific; */
+/*   int len; */
+/*   PMPC_Get_comm_type ((void *) (&task_specific)); */
+/*   sctk_spinlock_lock (&(task_specific->lock)); */
 
-  memset (task_specific->names[comm], '\0', MPI_MAX_NAME_STRING + 1);
+/*   memset (task_specific->names[comm], '\0', MPI_MAX_NAME_STRING + 1); */
 
-  len = strlen (comm_name);
-  if (len > MPI_MAX_NAME_STRING)
-    {
-      len = MPI_MAX_NAME_STRING;
-    }
-  memcpy (task_specific->names[comm], comm_name, len);
+/*   len = strlen (comm_name); */
+/*   if (len > MPI_MAX_NAME_STRING) */
+/*     { */
+/*       len = MPI_MAX_NAME_STRING; */
+/*     } */
+/*   memcpy (task_specific->names[comm], comm_name, len); */
 
-  sctk_spinlock_unlock (&(task_specific->lock));
+/*   sctk_spinlock_unlock (&(task_specific->lock)); */
   return MPI_SUCCESS;
 }
 
 static int
 __INTERNAL__PMPI_Topo_test (MPI_Comm comm, int *topo_type)
 {
-  mpi_topology_t *task_specific;
-  PMPC_Get_comm_type ((void *) (&task_specific));
-  sctk_spinlock_lock (&(task_specific->lock));
+  not_implemented();
+/*   mpi_topology_t *task_specific; */
+/*   PMPC_Get_comm_type ((void *) (&task_specific)); */
+/*   sctk_spinlock_lock (&(task_specific->lock)); */
 
-  *topo_type = task_specific->type[comm];
+/*   *topo_type = task_specific->type[comm]; */
 
-  sctk_nodebug ("type %d", *topo_type);
+/*   sctk_nodebug ("type %d", *topo_type); */
 
-  sctk_spinlock_unlock (&(task_specific->lock));
+/*   sctk_spinlock_unlock (&(task_specific->lock)); */
   return MPI_SUCCESS;
 }
 
@@ -5322,10 +5407,12 @@ static int
 __INTERNAL__PMPI_Cart_create (MPI_Comm comm_old, int ndims, int *dims,
 			      int *periods, int reorder, MPI_Comm * comm_cart)
 {
+  int res = MPI_ERR_INTERN;
+  not_implemented();
+#if 0
   mpi_topology_t *task_specific;
   int nb_tasks = 1;
   int size;
-  int res = MPI_ERR_INTERN;
   int i;
   int rank;
 
@@ -5414,6 +5501,7 @@ __INTERNAL__PMPI_Cart_create (MPI_Comm comm_old, int ndims, int *dims,
 	  ndims * sizeof (int));
 
   sctk_spinlock_unlock (&(task_specific->lock));
+#endif
   return res;
 }
 
@@ -5510,8 +5598,10 @@ static int
 __INTERNAL__PMPI_Graph_create (MPI_Comm comm_old, int nnodes, int *index,
 			       int *edges, int reorder, MPI_Comm * comm_graph)
 {
-  int size;
   int res;
+  not_implemented();
+#if 0
+  int size;
   mpi_topology_t *task_specific;
   __INTERNAL__PMPI_Comm_size (comm_old, &size);
 
@@ -5586,12 +5676,15 @@ __INTERNAL__PMPI_Graph_create (MPI_Comm comm_old, int nnodes, int *index,
   task_specific->data[*comm_graph].graph.nedges = index[nnodes - 1];
   task_specific->data[*comm_graph].graph.nindex = nnodes;
   sctk_spinlock_unlock (&(task_specific->lock));
+#endif
   return MPI_SUCCESS;
 }
 
 static int
 __INTERNAL__PMPI_Graphdims_get (MPI_Comm comm, int *nnodes, int *nedges)
 {
+  not_implemented();
+#if 0
   mpi_topology_t *task_specific;
   PMPC_Get_comm_type ((void *) (&task_specific));
   sctk_spinlock_lock (&(task_specific->lock));
@@ -5604,8 +5697,8 @@ __INTERNAL__PMPI_Graphdims_get (MPI_Comm comm, int *nnodes, int *nedges)
 
   *nnodes = task_specific->data[comm].graph.nnodes;
   *nedges = task_specific->data[comm].graph.nedges;
-
   sctk_spinlock_unlock (&(task_specific->lock));
+#endif
   return MPI_SUCCESS;
 }
 
@@ -5613,6 +5706,8 @@ static int
 __INTERNAL__PMPI_Graph_get (MPI_Comm comm, int maxindex, int maxedges,
 			    int *index, int *edges)
 {
+  not_implemented();
+#if 0
   int i;
   mpi_topology_t *task_specific;
   PMPC_Get_comm_type ((void *) (&task_specific));
@@ -5636,12 +5731,15 @@ __INTERNAL__PMPI_Graph_get (MPI_Comm comm, int maxindex, int maxedges,
     }
 
   sctk_spinlock_unlock (&(task_specific->lock));
+#endif
   return MPI_SUCCESS;
 }
 
 static int
 __INTERNAL__PMPI_Cartdim_get (MPI_Comm comm, int *ndims)
 {
+  not_implemented();
+#if 0
   mpi_topology_t *task_specific;
   PMPC_Get_comm_type ((void *) (&task_specific));
   sctk_spinlock_lock (&(task_specific->lock));
@@ -5655,6 +5753,7 @@ __INTERNAL__PMPI_Cartdim_get (MPI_Comm comm, int *ndims)
   *ndims = task_specific->data[comm].cart.ndims;
 
   sctk_spinlock_unlock (&(task_specific->lock));
+#endif
   return MPI_SUCCESS;
 }
 
@@ -5662,9 +5761,11 @@ static int
 __INTERNAL__PMPI_Cart_get (MPI_Comm comm, int maxdims, int *dims,
 			   int *periods, int *coords)
 {
+  int res;
+  not_implemented();
+#if 0
   mpi_topology_t *task_specific;
   int rank;
-  int res;
 
   PMPC_Get_comm_type ((void *) (&task_specific));
   sctk_spinlock_lock (&(task_specific->lock));
@@ -5690,12 +5791,15 @@ __INTERNAL__PMPI_Cart_get (MPI_Comm comm, int maxdims, int *dims,
 
   res = __INTERNAL__PMPI_Cart_coords (comm, rank, maxdims, coords, 1);
   sctk_spinlock_unlock (&(task_specific->lock));
+#endif
   return res;
 }
 
 static int
 __INTERNAL__PMPI_Cart_rank (MPI_Comm comm, int *coords, int *rank, int locked)
 {
+  not_implemented();
+#if 0
   mpi_topology_t *task_specific;
   int loc_rank = 0;
   int dims_coef = 1;
@@ -5721,6 +5825,7 @@ __INTERNAL__PMPI_Cart_rank (MPI_Comm comm, int *coords, int *rank, int locked)
   sctk_nodebug ("rank %d", loc_rank);
   if (!locked)
     sctk_spinlock_unlock (&(task_specific->lock));
+#endif
   return MPI_SUCCESS;
 }
 
@@ -5728,6 +5833,8 @@ static int
 __INTERNAL__PMPI_Cart_coords (MPI_Comm comm, int init_rank, int maxdims,
 			      int *coords, int locked)
 {
+  not_implemented();
+#if 0
   mpi_topology_t *task_specific;
   int i;
   int pi = 1;
@@ -5763,6 +5870,7 @@ __INTERNAL__PMPI_Cart_coords (MPI_Comm comm, int init_rank, int maxdims,
 
   if (!locked)
     sctk_spinlock_unlock (&(task_specific->lock));
+#endif
   return MPI_SUCCESS;
 }
 
@@ -5770,6 +5878,8 @@ static int
 __INTERNAL__PMPI_Graph_neighbors_count (MPI_Comm comm, int rank,
 					int *nneighbors)
 {
+  not_implemented();
+#if 0
   mpi_topology_t *task_specific;
   int start;
   int end;
@@ -5793,6 +5903,7 @@ __INTERNAL__PMPI_Graph_neighbors_count (MPI_Comm comm, int rank,
 
 
   sctk_spinlock_unlock (&(task_specific->lock));
+#endif
   return MPI_SUCCESS;
 }
 
@@ -5800,6 +5911,8 @@ static int
 __INTERNAL__PMPI_Graph_neighbors (MPI_Comm comm, int rank, int maxneighbors,
 				  int *neighbors)
 {
+  not_implemented();
+#if 0
   mpi_topology_t *task_specific;
   int start;
   int end;
@@ -5828,6 +5941,7 @@ __INTERNAL__PMPI_Graph_neighbors (MPI_Comm comm, int rank, int maxneighbors,
     }
 
   sctk_spinlock_unlock (&(task_specific->lock));
+#endif
   return MPI_SUCCESS;
 }
 
@@ -5835,6 +5949,8 @@ static int
 __INTERNAL__PMPI_Cart_shift (MPI_Comm comm, int direction, int displ,
 			     int *source, int *dest)
 {
+  not_implemented();
+#if 0
   mpi_topology_t *task_specific;
   int *coords;
   int res;
@@ -5965,6 +6081,7 @@ __INTERNAL__PMPI_Cart_shift (MPI_Comm comm, int direction, int displ,
   sctk_nodebug ("dest %d src %d rank %d dir %d", *dest, *source, rank,
 		direction);
   sctk_spinlock_unlock (&(task_specific->lock));
+#endif
   return MPI_SUCCESS;
 }
 
@@ -5972,6 +6089,8 @@ static int
 __INTERNAL__PMPI_Cart_sub (MPI_Comm comm, int *remain_dims,
 			   MPI_Comm * comm_new)
 {
+  not_implemented();
+#if 0
   mpi_topology_t *task_specific;
   int res;
   int nb_comm;
@@ -6066,6 +6185,7 @@ __INTERNAL__PMPI_Cart_sub (MPI_Comm comm, int *remain_dims,
   __INTERNAL__PMPI_Comm_rank (*comm_new, &rank);
   sctk_nodebug ("%d on %d new rank", rank, size);
   sctk_spinlock_unlock (&(task_specific->lock));
+#endif
   return MPI_SUCCESS;
 }
 
@@ -6126,6 +6246,8 @@ static int
 __INTERNAL__PMPI_Errhandler_create (MPI_Handler_function * function,
 				    MPI_Errhandler * errhandler)
 {
+  not_implemented();
+#if 0
   mpi_errors_handler_t *task_specific;
   int i;
   int found = 0;
@@ -6157,7 +6279,7 @@ __INTERNAL__PMPI_Errhandler_create (MPI_Handler_function * function,
   *errhandler = i;
 
   sctk_thread_mutex_unlock (&(task_specific->lock));
-
+#endif
   MPI_ERROR_SUCESS ();
 }
 
@@ -6180,9 +6302,22 @@ MPI_Return_error (MPI_Comm * comm, int *error, ...)
 {
 }
 
+#if 0
+static mpi_per_communicator_t*__INTERNAL__per_comm(MPI_Comm comm){
+  mpi_errors_handler_t *task_specific;
+  mpi_per_communicator_t* info_comm;
+  PMPC_Get_errors ((void **) &task_specific);
+
+  HASH_FIND(hh,task_specific->per_communicator,&comm,sizeof(MPC_Comm),info_comm);
+  return info_comm;
+}
+#endif
+
 static int
 __INTERNAL__PMPI_Errhandler_set (MPI_Comm comm, MPI_Errhandler errhandler)
 {
+  not_implemented();
+#if 0
   mpi_errors_handler_t *task_specific;
   PMPC_Get_errors ((void **) &task_specific);
 
@@ -6200,31 +6335,35 @@ __INTERNAL__PMPI_Errhandler_set (MPI_Comm comm, MPI_Errhandler errhandler)
       MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_OTHER, "Invalid errhandler");
     }
 
-  task_specific->func[comm] = task_specific->user_func[errhandler].func;
-  task_specific->func_ident[comm] = errhandler;
+  __INTERNAL__per_comm(comm)->func = task_specific->user_func[errhandler].func;
+  __INTERNAL__per_comm(comm)->func_ident = errhandler;
 
   sctk_thread_mutex_unlock (&(task_specific->lock));
-
+#endif
   MPI_ERROR_SUCESS ();
 }
 
 static int
 __INTERNAL__PMPI_Errhandler_get (MPI_Comm comm, MPI_Errhandler * errhandler)
 {
+  not_implemented();
+#if 0
   mpi_errors_handler_t *task_specific;
   PMPC_Get_errors ((void **) &task_specific);
 
   sctk_thread_mutex_lock (&(task_specific->lock));
-  *errhandler = task_specific->func_ident[comm];
+  *errhandler = __INTERNAL__per_comm(comm)->func_ident;
 /*   task_specific->user_func[*errhandler].status++;  */
   sctk_thread_mutex_unlock (&(task_specific->lock));
-
+#endif
   MPI_ERROR_SUCESS ();
 }
 
 static int
 __INTERNAL__PMPI_Errhandler_free (MPI_Errhandler * errhandler)
 {
+  not_implemented();
+#if 0
   mpi_errors_handler_t *task_specific;
   PMPC_Get_errors ((void **) &task_specific);
 
@@ -6252,6 +6391,7 @@ __INTERNAL__PMPI_Errhandler_free (MPI_Errhandler * errhandler)
   sctk_thread_mutex_unlock (&(task_specific->lock));
 
   *errhandler = MPI_ERRHANDLER_NULL;
+#endif
   MPI_ERROR_SUCESS ();
 }
 
@@ -6339,17 +6479,49 @@ __INTERNAL__PMPI_Init (int *argc, char ***argv)
 {
   int res;
   int rank;
+  sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+  struct sctk_task_specific_s * task_specific;
+  mpc_per_communicator_t*per_communicator;
+  mpc_per_communicator_t*per_communicator_tmp;
   res = PMPC_Init (argc, argv);
   if (res != MPI_SUCCESS)
     {
       return res;
     }
+
+  task_specific = __MPC_get_task_specific ();
+  task_specific->mpc_mpi_data = malloc(sizeof(struct mpc_mpi_data_s));
+  task_specific->mpc_mpi_data->lock = lock;
+  task_specific->mpc_mpi_data->requests = NULL;
+  task_specific->mpc_mpi_data->groups = NULL;
+  task_specific->mpc_mpi_data->buffers = NULL;
+  task_specific->mpc_mpi_data->ops = NULL;
+
   __sctk_init_mpc_request ();
   __sctk_init_mpi_buffer ();
   __sctk_init_mpi_errors ();
   __sctk_init_mpi_topo ();
   __sctk_init_mpi_op ();
   __sctk_init_mpc_group ();
+
+  sctk_spinlock_lock(&(task_specific->per_communicator_lock));
+  HASH_ITER(hh,task_specific->per_communicator,per_communicator,per_communicator_tmp)
+    {
+      mpc_mpi_per_communicator_t* tmp;
+      per_communicator->mpc_mpi_per_communicator = sctk_malloc(sizeof(struct mpc_mpi_per_communicator_s));
+      per_communicator->mpc_mpi_per_communicator_copy = mpc_mpi_per_communicator_copy_func;
+      per_communicator->mpc_mpi_per_communicator->lock = lock;
+      
+      tmp = per_communicator->mpc_mpi_per_communicator;
+
+/*       __sctk_init_mpc_request_per_comm (tmp); */
+/*       __sctk_init_mpi_buffer_per_comm (tmp); */
+      __sctk_init_mpi_errors_per_comm (tmp);
+      __sctk_init_mpi_topo_per_comm (tmp);
+/*       __sctk_init_mpi_op_per_comm (tmp); */
+/*       __sctk_init_mpc_group_per_comm (tmp); */
+    }
+  sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
 
   __INTERNAL__PMPI_Comm_rank (MPI_COMM_WORLD, &rank);
   __INTERNAL__PMPI_Barrier (MPI_COMM_WORLD);

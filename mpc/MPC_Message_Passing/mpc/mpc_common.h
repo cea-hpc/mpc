@@ -52,9 +52,6 @@ MPC_DECL_TYPE_PROTECTED (sctk_datatype_t user_types[sctk_user_data_types_max],
 MPC_DECL_TYPE_PROTECTED (sctk_derived_type_t *
 			 user_types_struct[sctk_user_data_types_max],
 			 user_types_struct);
-/* MPC_DECL_TYPE_PROTECTED (MPC_Handler_function * */
-/* 			 user_error_handlers[SCTK_MAX_COMMUNICATOR_NUMBER], */
-/* 			 user_error_handlers); */
 
 MPC_DECL_TYPE_PROTECTED (mpc_buffered_msg_t buffer[MAX_MPC_BUFFERED_MSG];
 			 volatile int buffer_rank, buffer);
@@ -82,23 +79,17 @@ struct sctk_task_specific_s
 
     MPC_USE_TYPE (user_types);
     MPC_USE_TYPE (user_types_struct);
-/*     MPC_USE_TYPE (user_error_handlers); */
 
   mpc_per_communicator_t*per_communicator;
   sctk_spinlock_t per_communicator_lock;
 
-  void *keys;
-  void *requests;
-  void *buffers;
-  void *errors;
-  void *comm_type;
-  void *op;
-  void *groups;
+  struct mpc_mpi_data_s* mpc_mpi_data;
 
   int init_done;
 };
 
-mpc_per_communicator_t* sctk_thread_getspecific_mpc_per_comm(sctk_task_specific_t* task_specific,sctk_communicator_t comm);
+mpc_per_communicator_t* sctk_thread_getspecific_mpc_per_comm(struct sctk_task_specific_s* task_specific,sctk_communicator_t comm);
+struct sctk_task_specific_s *__MPC_get_task_specific ();
 
 typedef struct sctk_task_specific_s sctk_task_specific_t;
 

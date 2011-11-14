@@ -353,13 +353,13 @@ __MPC_init_task_specific_t (sctk_task_specific_t * tmp)
   per_comm_tmp = sctk_thread_createspecific_mpc_per_comm();
   sctk_thread_addspecific_mpc_per_comm(tmp,per_comm_tmp,MPC_COMM_SELF);
 
-  tmp->keys = NULL;
-  tmp->requests = NULL;
-  tmp->buffers = NULL;
-  tmp->errors = NULL;
-  tmp->comm_type = NULL;
-  tmp->op = NULL;
-  tmp->groups = NULL;
+/*   tmp->keys = NULL; */
+/*   tmp->requests = NULL; */
+/*   tmp->buffers = NULL; */
+/*   tmp->errors = NULL; */
+/*   tmp->comm_type = NULL; */
+/*   tmp->op = NULL; */
+/*   tmp->groups = NULL; */
 
   __MPC_init_thread_specific();
 
@@ -538,131 +538,131 @@ sctk_mpc_init_keys ()
   sctk_thread_key_create (&sctk_task_specific, NULL);
 }
 
-int
-PMPC_Get_op (void **op)
-{
-  sctk_task_specific_t *task_specific;
-  task_specific = __MPC_get_task_specific ();
-  *op = task_specific->op;
-  MPC_ERROR_SUCESS ();
-}
+/* int */
+/* PMPC_Get_op (void **op) */
+/* { */
+/*   sctk_task_specific_t *task_specific; */
+/*   task_specific = __MPC_get_task_specific (); */
+/*   *op = task_specific->op; */
+/*   MPC_ERROR_SUCESS (); */
+/* } */
 
-int
-PMPC_Set_op (void *op)
-{
-  sctk_task_specific_t *task_specific;
-  task_specific = __MPC_get_task_specific ();
-  task_specific->op = op;
-  MPC_ERROR_SUCESS ();
-}
+/* int */
+/* PMPC_Set_op (void *op) */
+/* { */
+/*   sctk_task_specific_t *task_specific; */
+/*   task_specific = __MPC_get_task_specific (); */
+/*   task_specific->op = op; */
+/*   MPC_ERROR_SUCESS (); */
+/* } */
 
-int
-PMPC_Get_comm_type (void **comm_type)
-{
-  sctk_task_specific_t *task_specific;
-  task_specific = __MPC_get_task_specific ();
-  *comm_type = task_specific->comm_type;
-  MPC_ERROR_SUCESS ();
-}
+/* int */
+/* PMPC_Get_comm_type (void **comm_type) */
+/* { */
+/*   sctk_task_specific_t *task_specific; */
+/*   task_specific = __MPC_get_task_specific (); */
+/*   *comm_type = task_specific->comm_type; */
+/*   MPC_ERROR_SUCESS (); */
+/* } */
 
-int
-PMPC_Set_comm_type (void *comm_type)
-{
-  sctk_task_specific_t *task_specific;
-  task_specific = __MPC_get_task_specific ();
-  task_specific->comm_type = comm_type;
-  MPC_ERROR_SUCESS ();
-}
+/* int */
+/* PMPC_Set_comm_type (void *comm_type) */
+/* { */
+/*   sctk_task_specific_t *task_specific; */
+/*   task_specific = __MPC_get_task_specific (); */
+/*   task_specific->comm_type = comm_type; */
+/*   MPC_ERROR_SUCESS (); */
+/* } */
 
-int
-PMPC_Get_keys (void **keys)
-{
-  sctk_task_specific_t *task_specific;
-  task_specific = __MPC_get_task_specific ();
-  *keys = task_specific->keys;
-  MPC_ERROR_SUCESS ();
-}
+/* int */
+/* PMPC_Get_keys (void **keys) */
+/* { */
+/*   sctk_task_specific_t *task_specific; */
+/*   task_specific = __MPC_get_task_specific (); */
+/*   *keys = task_specific->keys; */
+/*   MPC_ERROR_SUCESS (); */
+/* } */
 
-int
-PMPC_Set_keys (void *keys)
-{
-  sctk_task_specific_t *task_specific;
-  task_specific = __MPC_get_task_specific ();
-  task_specific->keys = keys;
-  MPC_ERROR_SUCESS ();
-}
+/* int */
+/* PMPC_Set_keys (void *keys) */
+/* { */
+/*   sctk_task_specific_t *task_specific; */
+/*   task_specific = __MPC_get_task_specific (); */
+/*   task_specific->keys = keys; */
+/*   MPC_ERROR_SUCESS (); */
+/* } */
 
-int
-PMPC_Get_requests (void **requests)
-{
-  sctk_task_specific_t *task_specific;
-  task_specific = __MPC_get_task_specific ();
-  *requests = task_specific->requests;
-  MPC_ERROR_SUCESS ();
-}
+/* int */
+/* PMPC_Get_requests (void **requests) */
+/* { */
+/*   sctk_task_specific_t *task_specific; */
+/*   task_specific = __MPC_get_task_specific (); */
+/*   *requests = task_specific->requests; */
+/*   MPC_ERROR_SUCESS (); */
+/* } */
 
-int
-PMPC_Set_requests (void *requests)
-{
-  sctk_task_specific_t *task_specific;
-  task_specific = __MPC_get_task_specific ();
-  task_specific->requests = requests;
-  MPC_ERROR_SUCESS ();
-}
+/* int */
+/* PMPC_Set_requests (void *requests) */
+/* { */
+/*   sctk_task_specific_t *task_specific; */
+/*   task_specific = __MPC_get_task_specific (); */
+/*   task_specific->requests = requests; */
+/*   MPC_ERROR_SUCESS (); */
+/* } */
 
-int
-PMPC_Get_groups (void **groups)
-{
-  sctk_task_specific_t *task_specific;
-  task_specific = __MPC_get_task_specific ();
-  *groups = task_specific->groups;
-  MPC_ERROR_SUCESS ();
-}
+/* int */
+/* PMPC_Get_groups (void **groups) */
+/* { */
+/*   sctk_task_specific_t *task_specific; */
+/*   task_specific = __MPC_get_task_specific (); */
+/*   *groups = task_specific->groups; */
+/*   MPC_ERROR_SUCESS (); */
+/* } */
 
-int
-PMPC_Set_groups (void *groups)
-{
-  sctk_task_specific_t *task_specific;
-  task_specific = __MPC_get_task_specific ();
-  task_specific->groups = groups;
-  MPC_ERROR_SUCESS ();
-}
+/* int */
+/* PMPC_Set_groups (void *groups) */
+/* { */
+/*   sctk_task_specific_t *task_specific; */
+/*   task_specific = __MPC_get_task_specific (); */
+/*   task_specific->groups = groups; */
+/*   MPC_ERROR_SUCESS (); */
+/* } */
 
-int
-PMPC_Get_errors (void **errors)
-{
-  sctk_task_specific_t *task_specific;
-  task_specific = __MPC_get_task_specific ();
-  *errors = task_specific->errors;
-  MPC_ERROR_SUCESS ();
-}
+/* int */
+/* PMPC_Get_errors (void **errors) */
+/* { */
+/*   sctk_task_specific_t *task_specific; */
+/*   task_specific = __MPC_get_task_specific (); */
+/*   *errors = task_specific->errors; */
+/*   MPC_ERROR_SUCESS (); */
+/* } */
 
-int
-PMPC_Set_errors (void *errors)
-{
-  sctk_task_specific_t *task_specific;
-  task_specific = __MPC_get_task_specific ();
-  task_specific->errors = errors;
-  MPC_ERROR_SUCESS ();
-}
+/* int */
+/* PMPC_Set_errors (void *errors) */
+/* { */
+/*   sctk_task_specific_t *task_specific; */
+/*   task_specific = __MPC_get_task_specific (); */
+/*   task_specific->errors = errors; */
+/*   MPC_ERROR_SUCESS (); */
+/* } */
 
-int
-PMPC_Get_buffers (void **buffers)
-{
-  sctk_task_specific_t *task_specific;
-  task_specific = __MPC_get_task_specific ();
-  *buffers = task_specific->buffers;
-  MPC_ERROR_SUCESS ();
-}
+/* int */
+/* PMPC_Get_buffers (void **buffers) */
+/* { */
+/*   sctk_task_specific_t *task_specific; */
+/*   task_specific = __MPC_get_task_specific (); */
+/*   *buffers = task_specific->buffers; */
+/*   MPC_ERROR_SUCESS (); */
+/* } */
 
-int
-PMPC_Set_buffers (void *buffers)
-{
-  sctk_task_specific_t *task_specific;
-  task_specific = __MPC_get_task_specific ();
-  task_specific->buffers = buffers;
-  MPC_ERROR_SUCESS ();
-}
+/* int */
+/* PMPC_Set_buffers (void *buffers) */
+/* { */
+/*   sctk_task_specific_t *task_specific; */
+/*   task_specific = __MPC_get_task_specific (); */
+/*   task_specific->buffers = buffers; */
+/*   MPC_ERROR_SUCESS (); */
+/* } */
 
 int
 PMPC_Get_version (int *version, int *subversion)
