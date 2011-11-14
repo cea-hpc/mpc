@@ -4898,8 +4898,6 @@ __INTERNAL__PMPI_Keyval_create (MPI_Copy_function * copy_fn,
 				MPI_Delete_function * delete_fn,
 				int *keyval, void *extra_state)
 {
-  not_implemented();
-#if 0
   int i;
   mpc_mpi_data_t* tmp;
 
@@ -4920,35 +4918,25 @@ __INTERNAL__PMPI_Keyval_create (MPI_Copy_function * copy_fn,
 	}
     }
 
-  *keyval = keys->number;
-  keys->number++;
+  *keyval = tmp->number;
+  tmp->number++;
 
-  keys->attrs_fn[*keyval].copy_fn = copy_fn;
-  keys->attrs_fn[*keyval].delete_fn = delete_fn;
-  keys->attrs_fn[*keyval].extra_state = extra_state;
-  keys->attrs_fn[*keyval].used = 1;
-  keys->attrs_fn[*keyval].fortran_key = 0;
+  tmp->attrs_fn[*keyval].copy_fn = copy_fn;
+  tmp->attrs_fn[*keyval].delete_fn = delete_fn;
+  tmp->attrs_fn[*keyval].extra_state = extra_state;
+  tmp->attrs_fn[*keyval].used = 1;
+  tmp->attrs_fn[*keyval].fortran_key = 0;
 
   sctk_spinlock_unlock(&(tmp->lock));
   *keyval += MPI_MAX_KEY_DEFINED;
-#endif
   return MPI_SUCCESS;
 }
 
 static int
 __INTERNAL__PMPI_Keyval_free (int *keyval)
 {
-  not_implemented();
-#if 0
-  MPI_Caching_struct_t *keys;
-  PMPC_Get_keys ((void *) &keys);
-  if ((keys == NULL) || (*keyval < 0))
-    {
-      return MPI_ERR_INTERN;
-    }
-
+  #warning "Optimize to free memory"
   *keyval = MPI_KEYVAL_INVALID;
-#endif
   return MPI_SUCCESS;
 }
 
@@ -4956,30 +4944,27 @@ static int
 __INTERNAL__PMPI_Attr_set_fortran (int keyval)
 {
   int res = MPI_SUCCESS;
-  not_implemented();
-#if 0
   MPI_Comm comm = MPI_COMM_WORLD;
-  MPI_Caching_struct_t *keys;
+  mpc_mpi_data_t* tmp;
+
   if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
     {
       MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
     }
   keyval -= MPI_MAX_KEY_DEFINED;
 
-  PMPC_Get_keys ((void *) &keys);
-  if ((keys == NULL) || (keyval < 0))
+  if (keyval < 0)
     {
       MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
     }
-  sctk_thread_mutex_lock (&(keys->lock));
-  if (keys->attrs_fn[keyval].used == 0)
+  sctk_spinlock_lock(&(tmp->lock));
+  if (tmp->attrs_fn[keyval].used == 0)
     {
       MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
     }
 
-  keys->attrs_fn[keyval].fortran_key = 1;
-  sctk_thread_mutex_unlock (&(keys->lock));
-#endif
+  tmp->attrs_fn[keyval].fortran_key = 1;
+  sctk_spinlock_unlock(&(tmp->lock));
   return res;
 }
 
@@ -4987,32 +4972,50 @@ static int
 __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
 {
   int res = MPI_SUCCESS;
-  not_implemented();
-#if 0
-  MPI_Caching_struct_t *keys;
+  mpc_mpi_data_t* tmp;
+  mpc_mpi_per_communicator_t* tmp_per_comm;
+
+  tmp = mpc_mpc_get_per_task_data();
+
   if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
     {
       MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
     }
   keyval -= MPI_MAX_KEY_DEFINED;
 
-  if ((keys == NULL) || (keyval < 0))
+  if (keyval < 0)
     {
       MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
     }
 
-  sctk_thread_mutex_lock (&(keys->lock));
-  if (keys->attrs_fn[keyval].used == 0)
+  sctk_spinlock_lock(&(tmp->lock));
+  if (tmp->attrs_fn[keyval].used == 0)
     {
       MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
     }
-  if (__INTERNAL__get_keyval(comm)[keyval].flag == 1)
+
+  tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
+  sctk_spinlock_lock(&(tmp_per_comm->lock));
+
+  if(tmp_per_comm->max_number >= keyval){
+    int i; 
+    tmp_per_comm->key_vals = sctk_realloc(tmp_per_comm->key_vals,keyval*sizeof(MPI_Caching_key_value_t));
+
+    for(i = tmp_per_comm->max_number; i < keyval; i++){
+      tmp_per_comm->key_vals[i].flag = 0;
+      tmp_per_comm->key_vals[i].attr = NULL;
+    }
+
+    tmp_per_comm->max_number = keyval;
+  }
+
+  if (tmp_per_comm->key_vals[keyval].flag == 1)
     {
       res = __INTERNAL__PMPI_Attr_delete (comm, keyval);
     }
-  if (keys->attrs_fn[keyval].fortran_key == 0)
+  if (tmp->attrs_fn[keyval].fortran_key == 0)
     {
-      __INTERNAL__get_keyval(comm)[keyval].attr = attr_value;
+      tmp_per_comm->key_vals[keyval].attr = attr_value;
     }
   else
     {
@@ -5020,11 +5023,12 @@ __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
       long long_val;
       val = (*((int *) attr_value));
       long_val = (long) val;
-      __INTERNAL__get_keyval(comm)[keyval].attr = (void *) long_val;
+      tmp_per_comm->key_vals[keyval].attr = (void *) long_val;
     }
-  __INTERNAL__get_keyval(comm)[keyval].flag = 1;
-  sctk_thread_mutex_unlock (&(keys->lock));
-#endif
+  tmp_per_comm->key_vals[keyval].flag = 1;
+
+  sctk_spinlock_unlock(&(tmp_per_comm->lock));
+  sctk_spinlock_unlock(&(tmp->lock));
   return res;
 }
 
@@ -5032,13 +5036,15 @@ static int
 __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value,
 			   int *flag)
 {
-  not_implemented();
-#if 0
-  MPI_Caching_struct_t *keys;
+  int res = MPI_SUCCESS;
+  mpc_mpi_data_t* tmp;
+  mpc_mpi_per_communicator_t* tmp_per_comm;
   void **attr;
 
   *flag = 0;
   attr = (void **) attr_value;
+  tmp = mpc_mpc_get_per_task_data();
+
   if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
     {
       *flag = 1;
@@ -5047,72 +5053,88 @@ __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value,
     }
   keyval -= MPI_MAX_KEY_DEFINED;
 
-  PMPC_Get_keys ((void *) &keys);
-  if ((keys == NULL) || (keyval < 0))
+  if (keyval < 0)
     {
-      return MPI_ERR_INTERN;
-    }
-  sctk_thread_mutex_lock (&(keys->lock));
-  if (keys->attrs_fn[keyval].used == 0)
-    {
-      sctk_thread_mutex_unlock (&(keys->lock));
-      return MPI_ERR_INTERN;
+      MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
     }
 
-  *flag = __INTERNAL__get_keyval(comm)[keyval].flag;
-  if (keys->attrs_fn[keyval].fortran_key == 0)
+  sctk_spinlock_lock(&(tmp->lock));
+  if (tmp->attrs_fn[keyval].used == 0)
     {
-      *attr = __INTERNAL__get_keyval(comm)[keyval].attr;
+      MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
+    }
+
+  tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
+  sctk_spinlock_lock(&(tmp_per_comm->lock));
+
+  if(tmp_per_comm->max_number >= keyval){
+    int i; 
+    tmp_per_comm->key_vals = sctk_realloc(tmp_per_comm->key_vals,keyval*sizeof(MPI_Caching_key_value_t));
+
+    for(i = tmp_per_comm->max_number; i < keyval; i++){
+      tmp_per_comm->key_vals[i].flag = 0;
+      tmp_per_comm->key_vals[i].attr = NULL;
+    }
+
+    tmp_per_comm->max_number = keyval;
+  }
+
+  *flag = tmp_per_comm->key_vals[keyval].flag;
+  if (tmp->attrs_fn[keyval].fortran_key == 0)
+    {
+      *attr = tmp_per_comm->key_vals[keyval].attr;
     }
   else
     {
-      *attr = __INTERNAL__get_keyval(comm)[keyval].attr;
+      *attr = tmp_per_comm->key_vals[keyval].attr;
     }
 
-  sctk_thread_mutex_unlock (&(keys->lock));
-  sctk_nodebug ("Get %d = %ld", keyval + MPI_MAX_KEY_DEFINED,
-		*((unsigned long *) attr), *((unsigned long *) attr_value));
-#endif
-  return MPI_SUCCESS;
+  sctk_spinlock_unlock(&(tmp_per_comm->lock));
+  sctk_spinlock_unlock(&(tmp->lock));
+  return res;
 }
 
 static int
 __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
 {
   int res;
-  not_implemented();
-#if 0
-  MPI_Caching_struct_t *keys;
+  mpc_mpi_data_t* tmp;
+  mpc_mpi_per_communicator_t* tmp_per_comm;
   if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
     {
       return MPI_ERR_INTERN;
     }
   keyval -= MPI_MAX_KEY_DEFINED;
-  PMPC_Get_keys ((void *) &keys);
-  if ((keys == NULL) || (keyval < 0))
+
+  tmp = mpc_mpc_get_per_task_data(); 
+  sctk_spinlock_lock(&(tmp->lock)); 
+
+  if ((tmp == NULL) || (keyval < 0))
     {
       return MPI_ERR_INTERN;
     }
-  sctk_thread_mutex_lock (&(keys->lock));
-  if (keys->attrs_fn[keyval].used == 0)
+  if (tmp->attrs_fn[keyval].used == 0)
     {
-      sctk_thread_mutex_unlock (&(keys->lock));
+      sctk_thread_mutex_unlock (&(tmp->lock));
       return MPI_ERR_INTERN;
     }
 
-  if (__INTERNAL__get_keyval(comm)[keyval].flag == 1)
+  tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
+  sctk_spinlock_lock(&(tmp_per_comm->lock));
+
+  if (tmp_per_comm->key_vals[keyval].flag == 1)
     {
-      if (keys->attrs_fn[keyval].delete_fn != NULL)
+      if (tmp->attrs_fn[keyval].delete_fn != NULL)
 	{
-	  if (keys->attrs_fn[keyval].fortran_key == 0)
+	  if (tmp->attrs_fn[keyval].fortran_key == 0)
 	    {
 	      res =
-		keys->attrs_fn[keyval].delete_fn (comm,
+		tmp->attrs_fn[keyval].delete_fn (comm,
 						  keyval +
 						  MPI_MAX_KEY_DEFINED,
-						  __INTERNAL__get_keyval(comm)[keyval].
+						  tmp_per_comm->key_vals[keyval].
 						  attr,
-						  keys->attrs_fn[keyval].
+						  tmp->attrs_fn[keyval].
 						  extra_state);
 	    }
 	  else
@@ -5121,21 +5143,21 @@ __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
 	      int val;
 	      long long_val;
 	      int *ext;
-	      long_val = (long) (__INTERNAL__get_keyval(comm)[keyval].attr);
+	      long_val = (long) (tmp_per_comm->key_vals[keyval].attr);
 	      val = (int) long_val;
 	      fort_key = keyval + MPI_MAX_KEY_DEFINED;
-	      ext = (int *) (keys->attrs_fn[keyval].extra_state);
+	      ext = (int *) (tmp->attrs_fn[keyval].extra_state);
 
-	      ((MPI_Delete_function_fortran *) keys->attrs_fn[keyval].
+	      ((MPI_Delete_function_fortran *) tmp->attrs_fn[keyval].
 	       delete_fn) (&comm, &fort_key, &val, ext, &res);
 	    }
 	}
     }
 
-  __INTERNAL__get_keyval(comm)[keyval].attr = NULL;
-  __INTERNAL__get_keyval(comm)[keyval].flag = 0;
-  sctk_thread_mutex_unlock (&(keys->lock));
-#endif
+  tmp_per_comm->key_vals[keyval].attr = NULL;
+  tmp_per_comm->key_vals[keyval].flag = 0;
+  sctk_spinlock_unlock(&(tmp_per_comm->lock));
+  sctk_spinlock_unlock(&(tmp->lock));
   return res;
 }
 
@@ -5143,32 +5165,33 @@ static int
 SCTK__MPI_Attr_clean_communicator (MPI_Comm comm)
 {
   int res = MPI_SUCCESS;
-  not_implemented();
-#if 0
-  MPI_Caching_struct_t *keys;
   int i;
-  PMPC_Get_keys ((void *) &keys);
-  if (keys == NULL)
+  mpc_mpi_data_t* tmp;
+  mpc_mpi_per_communicator_t* tmp_per_comm;
+
+
+  tmp = mpc_mpc_get_per_task_data();
+  sctk_spinlock_lock(&(tmp->lock));
+  tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
+  sctk_spinlock_lock(&(tmp_per_comm->lock));
+
+  for (i = 0; i < tmp_per_comm->max_number; i++)
     {
-      return res;
-    }
-  sctk_thread_mutex_lock (&sctk_attr_lock);
-  for (i = 0; i < keys->max_number; i++)
-    {
-      if (__INTERNAL__get_keyval(comm)[i].flag == 1)
+      if (tmp_per_comm->key_vals[i].flag == 1)
 	{
 	  res = __INTERNAL__PMPI_Attr_delete (comm, i + MPI_MAX_KEY_DEFINED);
 
 	  if (res != MPI_SUCCESS)
 	    {
-	      sctk_thread_mutex_unlock (&sctk_attr_lock);
+	      sctk_spinlock_unlock(&(tmp_per_comm->lock));
+	      sctk_spinlock_unlock(&(tmp->lock));
 	      return res;
 	    }
 
 	}
     }
-  sctk_thread_mutex_unlock (&sctk_attr_lock);
-#endif
+  sctk_spinlock_unlock(&(tmp_per_comm->lock));
+  sctk_spinlock_unlock(&(tmp->lock));
   return res;
 }
 
@@ -5187,34 +5210,45 @@ static int
 SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new)
 {
   int res = MPI_SUCCESS;
-  not_implemented();
-#if 0
-  MPI_Caching_struct_t *keys;
+  mpc_mpi_data_t* tmp;
+  mpc_mpi_per_communicator_t* tmp_per_comm_old;
+  mpc_mpi_per_communicator_t* tmp_per_comm_new;
   int i;
-  PMPC_Get_keys ((void *) &keys);
-  if (keys == NULL)
+
+  tmp = mpc_mpc_get_per_task_data();
+  sctk_spinlock_lock(&(tmp->lock));
+  tmp_per_comm_old = mpc_mpc_get_per_comm_data(old);
+  sctk_spinlock_lock(&(tmp_per_comm_old->lock));
+
+  tmp_per_comm_new = mpc_mpc_get_per_comm_data(new);
+
+  tmp_per_comm_new = sctk_malloc(tmp_per_comm_old->max_number*sizeof(MPI_Caching_key_value_t));
+  
+  tmp_per_comm_new->max_number = tmp_per_comm_old->max_number;
+
+  for(i = 0; i < tmp_per_comm_old->max_number; i++){
+    tmp_per_comm_new->key_vals[i].flag = 0;
+    tmp_per_comm_new->key_vals[i].attr = NULL;
+  }
+
+  for (i = 0; i < tmp_per_comm_old->max_number; i++)
     {
-      return res;
-    }
-  sctk_thread_mutex_lock (&sctk_attr_lock);
-  for (i = 0; i < keys->max_number; i++)
-    {
-      if (keys->attrs_fn[i].copy_fn != NULL)
+      if (tmp->attrs_fn[i].copy_fn != NULL)
 	{
-	  if (__INTERNAL__get_keyval(old)[i].flag == 1)
+	  if (tmp_per_comm_old->key_vals[i].flag == 1)
 	    {
 	      void *arg;
 	      int flag;
 	      MPI_Copy_function *cpy;
 
-	      cpy = keys->attrs_fn[i].copy_fn;
+	      cpy = tmp->attrs_fn[i].copy_fn;
 
-	      if (keys->attrs_fn[i].fortran_key == 0)
+	      if (tmp->attrs_fn[i].fortran_key == 0)
 		{
 		  res =
 		    cpy (old, i + MPI_MAX_KEY_DEFINED,
-			 keys->attrs_fn[i].extra_state,
-			 __INTERNAL__get_keyval(old)[i].attr, (void *) (&arg), &flag);
+			 tmp->attrs_fn[i].extra_state,
+			 tmp_per_comm_old->key_vals[i].attr, (void *) (&arg), &flag);
 		}
 	      else
 		{
@@ -5223,10 +5257,10 @@ SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new)
 		  int *ext;
 		  int val_out;
 		  long long_val;
-		  long_val = (long) (__INTERNAL__get_keyval(old)[i].attr);
+		  long_val = (long) (tmp_per_comm_old->key_vals[i].attr);
 		  val = (int) long_val;
 		  fort_key = i + MPI_MAX_KEY_DEFINED;
-		  ext = (int *) (keys->attrs_fn[i].extra_state);
+		  ext = (int *) (tmp->attrs_fn[i].extra_state);
 		  sctk_nodebug ("%d val", val);
 		  ((MPI_Copy_function_fortran *) cpy) (&old, &fort_key, ext,
 						       &val, &val_out, &flag,
@@ -5236,7 +5270,7 @@ SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new)
 		}
 	      sctk_nodebug ("Copy %d %ld->%ld flag %d",
 			    i + MPI_MAX_KEY_DEFINED,
-			    (unsigned long) keys->value[old][i].attr,
+			    (unsigned long) tmp->value[old][i].attr,
 			    (unsigned long) arg, flag);
 	      if (flag)
 		{
@@ -5245,15 +5279,16 @@ SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new)
 		}
 	      if (res != MPI_SUCCESS)
 		{
-		  sctk_thread_mutex_unlock (&sctk_attr_lock);
+		  sctk_spinlock_unlock(&(tmp_per_comm_old->lock));
+		  sctk_spinlock_unlock(&(tmp->lock));
 		  return res;
 		}
 
 	    }
 	}
     }
-  sctk_thread_mutex_unlock (&sctk_attr_lock);
-#endif
+  sctk_spinlock_unlock(&(tmp_per_comm_old->lock));
+  sctk_spinlock_unlock(&(tmp->lock));
   return res;
 }
 
@@ -6491,6 +6526,7 @@ __INTERNAL__PMPI_Init (int *argc, char ***argv)
 
   task_specific = __MPC_get_task_specific ();
   task_specific->mpc_mpi_data = malloc(sizeof(struct mpc_mpi_data_s));
+  memset(task_specific->mpc_mpi_data,0,sizeof(struct mpc_mpi_data_s));
   task_specific->mpc_mpi_data->lock = lock;
   task_specific->mpc_mpi_data->requests = NULL;
   task_specific->mpc_mpi_data->groups = NULL;
