@@ -36,11 +36,12 @@
 #include "sctk_ethread.h"
 #include "sctk_context.h"
 
-#include <thread_db.h>
-
 #if defined(SCTK_USE_THREAD_DEBUG)
-/** ***************************************************************************** **/
+#include <thread_db.h>
+#include <sys/syscall.h>
+#include "tdb_remote.h"
 
+/** ***************************************************************************** **/
 void
 sctk_thread_add (sctk_thread_data_t * item, void *tid)
 {
@@ -132,14 +133,14 @@ void sctk_refresh_thread_debug (sctk_ethread_per_thread_t *tid, sctk_thread_stat
 
   thread = tid->debug_p;
 
-  if (!sctk_use_rtdb) return ;
+/*   if (!sctk_use_rtdb) return ; */
   if (s == sctk_thread_undef_status) return ;
   
-  /* the kernel threads are not managed bu rtdb */
-  if (thread == NULL) {
-    sctk_nodebug("(NO THREAD/Thread %p NOT) IN THE LIST", tid);
-    return ;
-  }
+/*   /\* the kernel threads are not managed bu rtdb *\/ */
+/*   if (thread == NULL) { */
+/*     sctk_nodebug("(NO THREAD/Thread %p NOT) IN THE LIST", tid); */
+/*     return ; */
+/*   } */
  
   rtdb_update_thread_state (thread, sctk_get_gdb_status (s));
 }
@@ -150,13 +151,13 @@ void sctk_refresh_thread_debug_migration (sctk_ethread_per_thread_t *tid) {
 
   thread = tid->debug_p;
 
-  if (!sctk_use_rtdb) return ;
+/*   if (!sctk_use_rtdb) return ; */
   
-  /* the kernel threads are not managed bu rtdb */
-  if (thread == NULL) {
-    sctk_nodebug("(NO THREAD/Thread %p NOT) IN THE LIST", tid);
-    return ;
-  }
+/*   /\* the kernel threads are not managed bu rtdb *\/ */
+/*   if (thread == NULL) { */
+/*     sctk_nodebug("(NO THREAD/Thread %p NOT) IN THE LIST", tid); */
+/*     return ; */
+/*   } */
  
 #if defined (TDB_Linux_SYS)
   lid = syscall(SYS_gettid);

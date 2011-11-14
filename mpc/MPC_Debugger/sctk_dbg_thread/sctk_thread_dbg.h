@@ -35,9 +35,9 @@ extern "C"
 #if defined(SCTK_USE_THREAD_DEBUG)
 
   /** ** **/
-  #include <thread_db.h>
-  #include <sys/syscall.h>
-  #include "tdb_remote.h"
+/*   #include <thread_db.h> */
+/*   #include <sys/syscall.h> */
+/*   #include "tdb_remote.h" */
   /** **/
 
   void sctk_thread_add (sctk_thread_data_t * item, void* tid);
