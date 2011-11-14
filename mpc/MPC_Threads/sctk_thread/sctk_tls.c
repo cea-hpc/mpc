@@ -468,11 +468,11 @@ void sctk_hls_checkout_on_vp ()
 	  return ;
 
   const int numa_level_2_number   = sctk_get_numa_number(2) ;
-  const int numa_level_1_number   = sctk_get_numa_number(1) ;
+  int numa_level_1_number   = sctk_get_numa_number(1) ;
   const int socket_number         = sctk_get_socket_number() ;
-  const int cache_level_3_number  = sctk_get_cache_number(3) ;
-  const int cache_level_2_number  = sctk_get_cache_number(2) ;
-  const int cache_level_1_number  = sctk_get_cache_number(1) ;
+  int cache_level_3_number  = sctk_get_cache_number(3) ;
+  int cache_level_2_number  = sctk_get_cache_number(2) ;
+  int cache_level_1_number  = sctk_get_cache_number(1) ;
   const int core_number           = sctk_get_core_number() ;
   const int pu_id                 = sctk_get_cpu() ;
   const int numa_1_id             = sctk_is_numa_node() ? 
@@ -502,13 +502,12 @@ void sctk_hls_checkout_on_vp ()
 	  sctk_hls[sctk_hls_numa_level_1_scope]
 		  = sctk_hls_repository[numa_1_id] + offset ;
 	  offset += 1 ;
+  }else{
+	  numa_level_1_number = 1 ;
   }
 
   id = sctk_get_socket_id (pu_id) ;
-  if ( numa_level_1_number > 0 )
-	  child_id = id % ( socket_number / numa_level_1_number ) ;
-  else
-	  child_id = id ;
+  child_id = id % ( socket_number / numa_level_1_number ) ;
   sctk_hls[sctk_hls_socket_scope] = sctk_hls_repository[numa_1_id]
 	  + offset + child_id * size_below ;  
   offset += child_id * size_below + 1 ; 
@@ -521,6 +520,8 @@ void sctk_hls_checkout_on_vp ()
 		  + offset + child_id * size_below ;  
 	  offset += child_id * size_below + 1 ; 
 	  size_below -= cache_level_3_number ;
+  }else{
+	  cache_level_3_number = 1 ;
   }
 
   if (cache_level_2_number > 0 ) {
@@ -530,6 +531,8 @@ void sctk_hls_checkout_on_vp ()
 		  + offset + child_id * size_below ;  
 	  offset += child_id * size_below + 1 ; 
 	  size_below -= cache_level_2_number ;
+  }else{
+	  cache_level_2_number = 1 ;
   }
 
   if (cache_level_1_number > 0 ) {
@@ -539,6 +542,8 @@ void sctk_hls_checkout_on_vp ()
 		  + offset + child_id * size_below ;  
 	  offset += child_id * size_below + 1 ; 
 	  size_below -= cache_level_1_number ;
+  }else{
+	  cache_level_1_number = 1 ;
   }
 
   id = sctk_get_core_id(pu_id) ;
