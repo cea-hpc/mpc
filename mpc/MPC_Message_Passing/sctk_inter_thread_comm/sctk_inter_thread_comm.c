@@ -93,7 +93,7 @@ static inline void sctk_internal_ptp_message_list_init(sctk_internal_ptp_message
   lists->sctk_ptp_task_list = NULL;
 }
 
-typedef struct{
+typedef struct sctk_internal_ptp_s{
   sctk_comm_dest_key_t key;
 
   sctk_internal_ptp_message_lists_t lists;
@@ -1071,14 +1071,10 @@ void sctk_send_message (sctk_thread_ptp_message_t * msg){
   }
 }
 
-void sctk_recv_message (sctk_thread_ptp_message_t * msg){
-  sctk_comm_dest_key_t key;
-  sctk_internal_ptp_t* tmp;
+void sctk_recv_message (sctk_thread_ptp_message_t * msg,sctk_internal_ptp_t* tmp){
   sctk_comm_dest_key_t send_key;
   sctk_internal_ptp_t* send_tmp = NULL;
 
-  /*   key.comm = msg->header.communicator; */
-  key.destination = msg->sctk_msg_get_glob_destination;
   send_key.destination = msg->sctk_msg_get_glob_source;
 
   if(msg->body.completion_flag != NULL){
@@ -1089,7 +1085,13 @@ void sctk_recv_message (sctk_thread_ptp_message_t * msg){
   msg->tail.remote_destination = 0;
 
   sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
-  sctk_ptp_table_find(key,tmp);
+  {
+    if(tmp == NULL){
+      sctk_comm_dest_key_t key;
+      key.destination = msg->sctk_msg_get_glob_destination;
+      sctk_ptp_table_find(key,tmp);
+    }
+  }
   if(msg->body.header.specific_message_tag != process_specific_message_tag){
     if(send_key.destination != -1){
       sctk_ptp_table_find(send_key,send_tmp);
@@ -1111,6 +1113,17 @@ void sctk_recv_message (sctk_thread_ptp_message_t * msg){
   }
 }
 
+struct sctk_internal_ptp_s* sctk_get_internal_ptp(int glob_id){
+  sctk_internal_ptp_t* tmp = NULL;
+  if(!sctk_migration_mode){
+    sctk_comm_dest_key_t key;
+    key.destination = glob_id;
+    sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
+    sctk_ptp_table_find(key,tmp);
+    sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
+  }
+  return tmp;
+}
 int sctk_is_net_message (int dest){
   sctk_comm_dest_key_t key;
   sctk_internal_ptp_t* tmp;

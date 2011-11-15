@@ -241,7 +241,9 @@ typedef struct sctk_message_to_copy_s{
 				  int *status,
 				  sctk_thread_message_header_t * msg);
   void sctk_send_message (sctk_thread_ptp_message_t * msg);
-  void sctk_recv_message (sctk_thread_ptp_message_t * msg);
+  struct sctk_internal_ptp_s;
+  void sctk_recv_message (sctk_thread_ptp_message_t * msg, struct sctk_internal_ptp_s* tmp);
+  struct sctk_internal_ptp_s* sctk_get_internal_ptp(int glob_id);
   int sctk_is_net_message (int dest);
   void sctk_cancel_message (sctk_request_t * msg);
   void sctk_ptp_per_task_init (int i);

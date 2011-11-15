@@ -85,6 +85,8 @@ struct sctk_task_specific_s
 
   struct mpc_mpi_data_s* mpc_mpi_data;
 
+  struct sctk_internal_ptp_s* my_ptp_internal;
+
   int init_done;
 };
 
