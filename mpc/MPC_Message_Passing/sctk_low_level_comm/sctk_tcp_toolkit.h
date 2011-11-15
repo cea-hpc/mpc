@@ -19,33 +19,19 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK__NET_TOOLS_H_
-#define __SCTK__NET_TOOLS_H_
+
+#ifndef __SCTK_TCP_TOOLKIT_H_
+#define __SCTK_TCP_TOOLKIT_H_
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#include "sctk_low_level_comm.h"
-  void sctk_net_copy_in_buffer (sctk_thread_ptp_message_t * msg,
-				       char *buffer);
+#include <sctk_route.h>
+void sctk_network_init_tcp_all(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib,
+			       void* (*tcp_thread)(sctk_route_table_t*),
+			       int (*route)(int , sctk_rail_info_t* ));
 
-  void* sctk_net_if_one_msg_in_buffer (sctk_thread_ptp_message_t * msg);
-
-  size_t sctk_net_determine_message_size (sctk_thread_ptp_message_t *msg);
-
-  int sctk_net_copy_frag_msg (
-      const sctk_thread_ptp_message_t * msg,
-     char *buffer,
-      const size_t curr_copy,
-      const size_t max_copy );
-  void sctk_net_write_in_fd (sctk_thread_ptp_message_t * msg,
-			     int fd);
-  void sctk_net_read_in_fd (sctk_thread_ptp_message_t * msg,
-			    int fd);
-  void sctk_net_message_copy(sctk_message_to_copy_t* tmp);
-  void sctk_safe_write(int fd, char* buf,size_t size);
-  void sctk_safe_read(int fd, char* buf,size_t size);
 #ifdef __cplusplus
 }
 #endif

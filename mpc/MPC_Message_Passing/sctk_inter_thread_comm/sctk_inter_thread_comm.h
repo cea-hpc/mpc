@@ -163,6 +163,10 @@ typedef struct sctk_message_to_copy_s{
 
     /*Reoder buffer struct*/
     sctk_reorder_buffer_t reorder;
+
+    /* RDMA infos */
+    void* rdma_src;
+    void* route_table;
   }sctk_thread_ptp_message_tail_t;
 
 #define sctk_msg_get_use_message_numbering body.header.use_message_numbering

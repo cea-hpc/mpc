@@ -28,6 +28,66 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+  void sctk_net_read_in_fd (sctk_thread_ptp_message_t * msg,
+			     int fd)
+  {    
+#warning "Deal with partial reception"
+    switch(msg->tail.message_type){
+    case sctk_message_contiguous: {
+      size_t size;
+
+      size = msg->body.header.msg_size;
+
+      sctk_nodebug("MSG SEND |%s|", (char*)msg->tail.message.contiguous.addr);
+      sctk_safe_read(fd,msg->tail.message.contiguous.addr,size);
+      break;
+    }
+    case sctk_message_network: {
+      size_t size;
+      void* body;
+
+      size = msg->body.header.msg_size;
+      body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
+
+      sctk_safe_read(fd,body,size);
+      break;
+    }
+    case sctk_message_pack: {
+      size_t i;
+      size_t j;
+      size_t size;
+      for (i = 0; i < msg->tail.message.pack.count; i++)
+	for (j = 0; j < msg->tail.message.pack.list.std[i].count; j++)
+	  {
+	    size = (msg->tail.message.pack.list.std[i].ends[j] -
+		    msg->tail.message.pack.list.std[i].begins[j] +
+		    1) * msg->tail.message.pack.list.std[i].elem_size;
+	    sctk_safe_read(fd,((char *) (msg->tail.message.pack.list.std[i].addr)) +
+			    msg->tail.message.pack.list.std[i].begins[j] *
+			    msg->tail.message.pack.list.std[i].elem_size,size);
+	  }
+      break;
+    }
+  case sctk_message_pack_absolute: {
+    size_t i;
+    size_t j;
+    size_t size;
+    for (i = 0; i < msg->tail.message.pack.count; i++)
+      for (j = 0; j < msg->tail.message.pack.list.absolute[i].count; j++)
+	{
+	  size = (msg->tail.message.pack.list.absolute[i].ends[j] -
+		  msg->tail.message.pack.list.absolute[i].begins[j] +
+		  1) * msg->tail.message.pack.list.absolute[i].elem_size;
+	  sctk_safe_read(fd,((char *) (msg->tail.message.pack.list.absolute[i].addr)) +
+			  msg->tail.message.pack.list.absolute[i].begins[j] *
+			  msg->tail.message.pack.list.absolute[i].elem_size,size);
+	}
+      break;
+    }
+    default: not_reachable();
+    }
+  }
+
   void sctk_net_write_in_fd (sctk_thread_ptp_message_t * msg,
 			     int fd)
   {    
@@ -206,43 +266,7 @@
   size_t sctk_net_determine_message_size (sctk_thread_ptp_message_t *
 						 msg)
   {
-    not_implemented();
-/*     size_t total_size = 0; */
-/*     size_t i; */
-
-/*     for (i = 0; i < msg->message.nb_items; i++) */
-/*       { */
-/* 	if (msg->message.begins_absolute[i] != NULL) */
-/* 	  { */
-/* 	    size_t j; */
-/* 	    for (j = 0; j < msg->message.sizes[i]; j++) */
-/* 	      { */
-/* 		total_size += */
-/* 		  (msg->message.ends_absolute[i][j] - */
-/* 		   msg->message.begins_absolute[i][j] + */
-/* 		   1) * msg->message.elem_sizes[i]; */
-/* 	      } */
-/* 	  } */
-/* 	else */
-/* 	  { */
-/* 	    if (msg->message.begins[i] == NULL) */
-/* 	      { */
-/* 		total_size += msg->message.sizes[i]; */
-/* 	      } */
-/* 	    else */
-/* 	      { */
-/* 		size_t j; */
-/* 		for (j = 0; j < msg->message.sizes[i]; j++) */
-/* 		  { */
-/* 		    total_size += */
-/* 		      (msg->message.ends[i][j] - msg->message.begins[i][j] + */
-/* 		       1) * msg->message.elem_sizes[i]; */
-/* 		  } */
-/* 	      } */
-/* 	  } */
-/*       } */
-
-/*     return total_size; */
+    return msg->body.header.msg_size;
   }
 
 #if 0
@@ -510,6 +534,7 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp){
 		 recv->tail.message.pack.list.std[i].elem_size,body,size);
 	  body += size;
 	}
+    sctk_message_completion_and_free(send,recv);
     break;
   }
   case sctk_message_pack_absolute: {
@@ -527,6 +552,7 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp){
 		 recv->tail.message.pack.list.absolute[i].elem_size,body,size);
 	  body += size;
 	}
+    sctk_message_completion_and_free(send,recv);
     break;
   }
   default: not_reachable();

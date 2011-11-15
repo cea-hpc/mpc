@@ -29,18 +29,21 @@
 #include <sctk_tcp.h>
 #include <opa_primitives.h>
 
-#define NB_RAILS 4
+#define NB_RAILS 2
 static sctk_rail_info_t** rails = NULL;
 
 static void 
 sctk_network_send_message_multirail_tcp (sctk_thread_ptp_message_t * msg){
   int i ; 
-  static OPA_int_t rail_to_use;
   if(sctk_prepare_send_message_to_network_reorder(msg) == 0){
     /*
       Direct send: we can use multirail
     */
-    i = OPA_fetch_and_incr_int(&(rail_to_use)) % NB_RAILS;
+    i = 0;
+    if((msg->tail.message_type == sctk_message_contiguous) && 
+       (msg->sctk_msg_get_msg_size > 512)){
+      i = 1;
+    }
   } else {
     /*
       Indirect send: we can't use multirail fall back to rail 0
@@ -113,14 +116,23 @@ void sctk_network_init_multirail_tcp(char* name){
   rails = sctk_malloc(NB_RAILS*sizeof(sctk_rail_info_t*));
   memset(rails, 0, NB_RAILS*sizeof(sctk_rail_info_t*));
 
-  for(i = 0; i < NB_RAILS; i++){
-    rails[i] = sctk_route_get_rail(i);
-    rails[i]->rail_number = i;
-    rails[i]->send_message_from_network = sctk_send_message_from_network_multirail_tcp;
-    sctk_network_init_tcp(rails[i],0);
-    sprintf(name_ptr,"[%d:%s]",i,rails[i]->network_name);
-    name_ptr = net_name + strlen(net_name);
-  }
+  /* STANDARD TCP */
+  i = 0;
+  rails[i] = sctk_route_get_rail(i);
+  rails[i]->rail_number = i;
+  rails[i]->send_message_from_network = sctk_send_message_from_network_multirail_tcp;
+  sctk_network_init_tcp(rails[i],0);
+  sprintf(name_ptr,"[%d:%s]",i,rails[i]->network_name);
+  name_ptr = net_name + strlen(net_name);
+
+  /* RDMA TCP */
+  i = 1;
+  rails[i] = sctk_route_get_rail(i);
+  rails[i]->rail_number = i;
+  rails[i]->send_message_from_network = sctk_send_message_from_network_multirail_tcp;
+  sctk_network_init_tcp_rdma(rails[i],0);
+  sprintf(name_ptr,"[%d:%s]",i,rails[i]->network_name);
+  name_ptr = net_name + strlen(net_name);
 
   sctk_network_send_message_set(sctk_network_send_message_multirail_tcp);
   sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_multirail_tcp);

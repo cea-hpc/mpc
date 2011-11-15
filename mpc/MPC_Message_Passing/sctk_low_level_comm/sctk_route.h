@@ -52,6 +52,7 @@ struct sctk_rail_info_s{
   void (*notify_idle_message) (struct sctk_rail_info_s*);
   void (*notify_any_source_message) (struct sctk_rail_info_s*);
   void (*send_message_from_network) (sctk_thread_ptp_message_t * );
+  int (*route)(int , sctk_rail_info_t* );
   char* network_name;
   int rail_number;
 };
@@ -77,4 +78,7 @@ sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail);
 
 void sctk_route_set_rail_nb(int i);
 sctk_rail_info_t* sctk_route_get_rail(int i);
+
+/* Routes */
+int sctk_route_ring(int dest, sctk_rail_info_t* rail);
 #endif

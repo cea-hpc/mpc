@@ -70,12 +70,7 @@ sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail){
   }
   
   if(tmp == NULL){
-    int old_dest;
-
-    old_dest = dest;
-    dest = (dest + sctk_process_number -1) % sctk_process_number;
-    sctk_nodebug("Route via dest - 1 %d to %d",dest,old_dest);
-#warning "Insert here the fallback policy: routing or on demand connection"
+    dest = rail->route(dest,rail);
     return sctk_get_route_to_process(dest,rail);
   }
 
@@ -99,4 +94,14 @@ void sctk_route_set_rail_nb(int i){
 
 sctk_rail_info_t* sctk_route_get_rail(int i){
   return &(rails[i]);
+}
+
+int sctk_route_ring(int dest, sctk_rail_info_t* rail){
+    int old_dest;
+
+    old_dest = dest;
+    dest = (dest + sctk_process_number -1) % sctk_process_number;
+    sctk_nodebug("Route via dest - 1 %d to %d",dest,old_dest);
+    
+    return dest;
 }
