@@ -4162,7 +4162,6 @@ PMPC_Comm_split (MPC_Comm comm, int color, int key, MPC_Comm * comm_out)
   sctk_free (tab);
   sctk_nodebug ("Split done");
   *comm_out = comm_res;
-  sctk_thread_createspecific_mpc_per_comm_from_existing(task_specific,* comm_out,comm);
   MPC_ERROR_SUCESS ();
 }
 
