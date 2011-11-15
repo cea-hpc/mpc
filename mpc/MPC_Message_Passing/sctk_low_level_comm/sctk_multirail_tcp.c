@@ -98,7 +98,7 @@ void sctk_send_message_from_network_multirail_tcp (sctk_thread_ptp_message_t * m
     /*
       No reordering
     */
-    sctk_send_message(msg);    
+    sctk_send_message_try_check(msg,1);    
   }
 }
 

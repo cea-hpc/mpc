@@ -159,7 +159,7 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
     
     if(number == msg->sctk_msg_get_message_number){
       sctk_nodebug("Send %d",msg->sctk_msg_get_message_number);
-      sctk_send_message(msg);
+      sctk_send_message_try_check(msg,1);
       OPA_fetch_and_incr_int(&(tmp->message_number_src));
       msg = NULL;
       
@@ -176,7 +176,7 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
 	  HASH_FIND(hh,tmp->buffer,&key,sizeof(int),reorder);
 	  if(reorder != NULL){
 	    sctk_nodebug("Send %d",reorder->msg->sctk_msg_get_message_number);
-	    sctk_send_message(reorder->msg);
+	    sctk_send_message_try_check(reorder->msg,1);
 	    OPA_fetch_and_incr_int(&(tmp->message_number_src));
 	  }
 	} while(reorder != NULL);

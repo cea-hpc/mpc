@@ -677,6 +677,7 @@ void sctk_rebuild_header (sctk_thread_ptp_message_t * msg){
     msg->sctk_msg_get_glob_destination = 
       sctk_get_comm_world_rank (msg->sctk_msg_get_communicator,msg->sctk_msg_get_destination);
   }
+  msg->tail.need_check_in_wait = 1;
 }
 
 void sctk_reinit_header (sctk_thread_ptp_message_t *tmp, void (*free_memory)(void*),
@@ -786,6 +787,7 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
 
     msg->body.completion_flag = &(request->completion_flag);
   }
+  msg->tail.need_check_in_wait = 1;
 }
 
 /********************************************************************/
@@ -1021,7 +1023,9 @@ void sctk_perform_messages(sctk_request_t* request){
     }
 
     if(tmp != NULL){
-      sctk_try_perform_messages_for_pair(tmp);
+      if(request->msg->tail.need_check_in_wait == 1){
+	sctk_try_perform_messages_for_pair(tmp);
+      }
     } else {
       sctk_network_notify_perform_message (request->header.glob_destination);
     }
@@ -1083,7 +1087,7 @@ void sctk_notify_idle_message (){
 /*Send/Recv messages                                                */
 /********************************************************************/
 
-void sctk_send_message (sctk_thread_ptp_message_t * msg){
+void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_check){
   if((msg->body.header.specific_message_tag == process_specific_message_tag) &&
      (msg->sctk_msg_get_destination != sctk_process_rank)){
     msg->tail.remote_destination = 1;
@@ -1108,7 +1112,9 @@ void sctk_send_message (sctk_thread_ptp_message_t * msg){
     
     if(tmp != NULL){
       sctk_internal_ptp_add_send_incomming(tmp,msg);
-/*       sctk_try_perform_messages_for_pair(tmp); */
+      if(perform_check){
+	sctk_try_perform_messages_for_pair(tmp);
+      }
     } else {
       /*Entering low level comm*/
       msg->tail.remote_destination = 1;
@@ -1117,7 +1123,12 @@ void sctk_send_message (sctk_thread_ptp_message_t * msg){
   }
 }
 
-void sctk_recv_message (sctk_thread_ptp_message_t * msg,sctk_internal_ptp_t* tmp){
+void sctk_send_message (sctk_thread_ptp_message_t * msg){
+  msg->tail.need_check_in_wait = 0;
+  sctk_send_message_try_check(msg,0);
+}
+
+void sctk_recv_message_try_check (sctk_thread_ptp_message_t * msg,sctk_internal_ptp_t* tmp,int perform_check){
   sctk_comm_dest_key_t send_key;
   sctk_internal_ptp_t* send_tmp = NULL;
 
@@ -1151,10 +1162,16 @@ void sctk_recv_message (sctk_thread_ptp_message_t * msg,sctk_internal_ptp_t* tmp
 
   if(tmp != NULL){
     sctk_internal_ptp_add_recv_incomming(tmp,msg);
-    sctk_try_perform_messages_for_pair(tmp);
+    if(perform_check){
+      sctk_try_perform_messages_for_pair(tmp);
+    }
   } else {
     not_reachable();
   }
+}
+void sctk_recv_message (sctk_thread_ptp_message_t * msg,sctk_internal_ptp_t* tmp){
+  msg->tail.need_check_in_wait = 1;
+  sctk_recv_message_try_check(msg,tmp,1);
 }
 
 struct sctk_internal_ptp_s* sctk_get_internal_ptp(int glob_id){
