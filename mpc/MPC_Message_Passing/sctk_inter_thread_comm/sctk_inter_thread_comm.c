@@ -1155,6 +1155,7 @@ void sctk_recv_message_try_check (sctk_thread_ptp_message_t * msg,sctk_internal_
   sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
 
   if(send_tmp == NULL){
+    msg->tail.need_check_in_wait = 1;
     /*Entering low level comm*/
     msg->tail.remote_source = 1;
     sctk_network_notify_recv_message (msg);    
