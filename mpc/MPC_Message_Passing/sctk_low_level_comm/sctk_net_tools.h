@@ -27,6 +27,7 @@ extern "C"
 #endif
 
 #include "sctk_low_level_comm.h"
+#include "sctk_io_helper.h"
   void sctk_net_copy_in_buffer (sctk_thread_ptp_message_t * msg,
 				       char *buffer);
 
@@ -44,8 +45,6 @@ extern "C"
   void sctk_net_read_in_fd (sctk_thread_ptp_message_t * msg,
 			    int fd);
   void sctk_net_message_copy(sctk_message_to_copy_t* tmp);
-  void sctk_safe_write(int fd, char* buf,size_t size);
-  void sctk_safe_read(int fd, char* buf,size_t size);
 #ifdef __cplusplus
 }
 #endif

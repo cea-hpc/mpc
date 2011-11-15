@@ -111,6 +111,9 @@ __mpcomp_init (void)
 	  OMP_VP_NUMBER = sctk_get_processor_number (); /* DEFAULT */
 #ifdef MPC_Message_Passing
 	  OMP_VP_NUMBER = OMP_VP_NUMBER /  sctk_get_nb_task_local(SCTK_COMM_WORLD); /* DEFAULT */
+	  if(OMP_VP_NUMBER < 1){
+	    OMP_VP_NUMBER = 1;
+	  }
 #endif
 	  if (env != NULL)
 	    {
