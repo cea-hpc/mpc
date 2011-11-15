@@ -42,7 +42,7 @@
 #define SCTK_LOCAL_VERSION_MINOR 1
 
 static void
-pthread_wait_for_value_and_poll (int *data, int value,
+pthread_wait_for_value_and_poll (volatile int *data, int value,
 				 void (*func) (void *), void *arg)
 {
   volatile int *volatile d;
@@ -152,7 +152,7 @@ tls_start_routine (void *arg)
   void *res;
   tmp = arg;
 #if defined(SCTK_USE_TLS)
-  sctk_hierarchical_tls = tmp->tls;
+  sctk_extls = tmp->tls;
 #endif
 
   res = tmp->start_routine (tmp->arg);
@@ -169,7 +169,7 @@ init_tls_start_routine_arg (void *(*start_routine) (void *), void *arg)
 
   tmp->arg = arg;
   tmp->start_routine = start_routine;
-  sctk_tls_duplicate (&(tmp->tls));
+  sctk_extls_duplicate (&(tmp->tls));
 
   return tmp;
 }

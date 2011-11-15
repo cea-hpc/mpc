@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile Thu Nov 10 18:23:17 CET 2011
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile Fri Oct 28 11:19:50 CEST 2011
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -61,6 +61,15 @@ SOBJ_debug=$(SFILES_debug:sctk_debug/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.o)
 SDEP_debug=$(SFILES_debug:sctk_debug/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
 
 
+FILES_helpers=$(wildcard sctk_helpers/*.c)
+OBJ_helpers=$(FILES_helpers:sctk_helpers/%.c=$(M_PWD)/BUILD_MPC_Common/lib/%.o)
+DEP_helpers=$(FILES_helpers:sctk_helpers/%.c=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
+
+SFILES_helpers=$(wildcard sctk_helpers/*.S)
+SOBJ_helpers=$(SFILES_helpers:sctk_helpers/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.o)
+SDEP_helpers=$(SFILES_helpers:sctk_helpers/%.S=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
+
+
 FILES_launch=$(wildcard sctk_launch/*.c)
 OBJ_launch=$(FILES_launch:sctk_launch/%.c=$(M_PWD)/BUILD_MPC_Common/lib/%.o)
 DEP_launch=$(FILES_launch:sctk_launch/%.c=$(M_PWD)/BUILD_MPC_Common/lib/%.d)
@@ -109,6 +118,9 @@ FOBJ_datastructures=$(FFILES_datastructures:sctk_datastructures/%.f=$(M_PWD)/BUI
 FFILES_debug=$(wildcard sctk_debug/*.f)
 FOBJ_debug=$(FFILES_debug:sctk_debug/%.f=$(M_PWD)/BUILD_MPC_Common/lib/%_f.o)
 
+FFILES_helpers=$(wildcard sctk_helpers/*.f)
+FOBJ_helpers=$(FFILES_helpers:sctk_helpers/%.f=$(M_PWD)/BUILD_MPC_Common/lib/%_f.o)
+
 FFILES_launch=$(wildcard sctk_launch/*.f)
 FOBJ_launch=$(FFILES_launch:sctk_launch/%.f=$(M_PWD)/BUILD_MPC_Common/lib/%_f.o)
 
@@ -121,13 +133,14 @@ FOBJ_options=$(FFILES_options:sctk_options/%.f=$(M_PWD)/BUILD_MPC_Common/lib/%_f
 FFILES_spinlock=$(wildcard sctk_spinlock/*.f)
 FOBJ_spinlock=$(FFILES_spinlock:sctk_spinlock/%.f=$(M_PWD)/BUILD_MPC_Common/lib/%_f.o)
 
-all: $(OBJ_alloc) $(FOBJ_alloc) $(SOBJ_alloc) $(OBJ_asm) $(FOBJ_asm) $(SOBJ_asm) $(OBJ_datastructures) $(FOBJ_datastructures) $(SOBJ_datastructures) $(OBJ_debug) $(FOBJ_debug) $(SOBJ_debug) $(OBJ_launch) $(FOBJ_launch) $(SOBJ_launch) $(OBJ_optim) $(FOBJ_optim) $(SOBJ_optim) $(OBJ_options) $(FOBJ_options) $(SOBJ_options) $(OBJ_spinlock) $(FOBJ_spinlock) $(SOBJ_spinlock)
+all: $(OBJ_alloc) $(FOBJ_alloc) $(SOBJ_alloc) $(OBJ_asm) $(FOBJ_asm) $(SOBJ_asm) $(OBJ_datastructures) $(FOBJ_datastructures) $(SOBJ_datastructures) $(OBJ_debug) $(FOBJ_debug) $(SOBJ_debug) $(OBJ_helpers) $(FOBJ_helpers) $(SOBJ_helpers) $(OBJ_launch) $(FOBJ_launch) $(SOBJ_launch) $(OBJ_optim) $(FOBJ_optim) $(SOBJ_optim) $(OBJ_options) $(FOBJ_options) $(SOBJ_options) $(OBJ_spinlock) $(FOBJ_spinlock) $(SOBJ_spinlock)
 
 $(M_PWD)/include_modules/MPC_Common:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_alloc $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_asm $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_datastructures $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_debug $(M_PWD)/include_modules
+	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_helpers $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_launch $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_optim/$(SCTK_ARCH_OPTIM) $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Common/sctk_options $(M_PWD)/include_modules
@@ -138,7 +151,7 @@ prepare_includes:$(M_PWD)/include_modules/MPC_Common
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-DEPENDS=$(DEP_alloc) $(DEP_asm) $(DEP_datastructures) $(DEP_debug) $(DEP_launch) $(DEP_optim) $(DEP_options) $(DEP_spinlock) 
+DEPENDS=$(DEP_alloc) $(DEP_asm) $(DEP_datastructures) $(DEP_debug) $(DEP_helpers) $(DEP_launch) $(DEP_optim) $(DEP_options) $(DEP_spinlock) 
 
 $(DEPENDS):Makefile 
 endif
@@ -162,6 +175,11 @@ $(DEP_datastructures):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_datastructures/%.c
 $(DEP_debug):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_debug/%.c
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_debug/%.c,$@)"
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_debug/%.c,$@) | \
+		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
+
+$(DEP_helpers):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_helpers/%.c
+	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_helpers/%.c,$@)"
+	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_helpers/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_launch):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_launch/%.c
@@ -201,6 +219,10 @@ $(DEP_debug):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_debug/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_debug/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_debug/%.c,$@)" > $@
 
+$(DEP_helpers):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_helpers/%.c
+	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_helpers/%.c,$@)"
+	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_helpers/%.c,$@)" > $@
+
 $(DEP_launch):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_launch/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_launch/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_launch/%.c,$@)" > $@
@@ -234,6 +256,10 @@ $(OBJ_datastructures):%.o:%.d
 $(OBJ_debug):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_debug/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_debug/%.c,$@) -o $@
+
+$(OBJ_helpers):%.o:%.d
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_helpers/%.c,$@)"
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_helpers/%.c,$@) -o $@
 
 $(OBJ_launch):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_launch/%.c,$@)"
@@ -269,6 +295,11 @@ $(SDEP_datastructures):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_datastructures/%.S
 $(SDEP_debug):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_debug/%.S
 	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_debug/%.S,$@)"
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_debug/%.S,$@) | \
+		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
+
+$(SDEP_helpers):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_helpers/%.S
+	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_helpers/%.S,$@)"
+	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,sctk_helpers/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_launch):$(M_PWD)/BUILD_MPC_Common/lib/%.d:sctk_launch/%.S
@@ -307,6 +338,10 @@ $(SOBJ_debug):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_debug/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_debug/%.S,$@) -o $@
 
+$(SOBJ_helpers):%.o:%.d
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_helpers/%.S,$@)"
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_helpers/%.S,$@) -o $@
+
 $(SOBJ_launch):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_launch/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%.o,sctk_launch/%.S,$@) -o $@
@@ -338,6 +373,10 @@ $(FOBJ_datastructures):$(M_PWD)/BUILD_MPC_Common/lib/%_f.o:sctk_datastructures/%
 $(FOBJ_debug):$(M_PWD)/BUILD_MPC_Common/lib/%_f.o:sctk_debug/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,sctk_debug/%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,sctk_debug/%.f,$@) -o $@
+
+$(FOBJ_helpers):$(M_PWD)/BUILD_MPC_Common/lib/%_f.o:sctk_helpers/%.f
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,sctk_helpers/%.f,$@)"
+	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,sctk_helpers/%.f,$@) -o $@
 
 $(FOBJ_launch):$(M_PWD)/BUILD_MPC_Common/lib/%_f.o:sctk_launch/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Common/lib/%_f.o,sctk_launch/%.f,$@)"

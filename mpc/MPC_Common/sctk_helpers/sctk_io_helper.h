@@ -16,52 +16,18 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - VALAT Sébastien sebastien.valat@cea.fr                           # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK__MPCRUN_CLIENT_H_
-#define __SCTK__MPCRUN_CLIENT_H_
-#include <stdlib.h>
-#include <stdlib.h>
 
-#include <string.h>
-#include <sys/socket.h>
-#include <netinet/in.h>
-#include <netdb.h>
-#include "sctk_mpcserver_actions.h"
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-  extern int sctk_mpcrun_client_port;
-  extern char *sctk_mpcrun_client_host;
-  extern int sctk_use_tcp_o_ib;
+#ifndef __SCTK_IO_HELPER__
+#define __SCTK_IO_HELPER__
 
-  int sctk_tcp_connect_to (int portno, char *name);
-  
-  void sctk_mpcrun_client_init_connect ();
+#include <unistd.h>
 
-  void sctk_mpcrun_barrier (void);
-  void
-  sctk_mpcrun_send_to_process (void *buf, size_t count, int process);
-  void
-  sctk_mpcrun_read_to_process (void *buf, size_t count, int process);
+ssize_t sctk_safe_read(int fd,void * buf,size_t count);
+ssize_t sctk_safe_write(int fd,const void * buf,size_t count);
+ssize_t sctk_safe_checked_read(int fd,void * buf,size_t count);
+ssize_t sctk_safe_checked_write(int fd,void * buf,size_t count);
 
-  /* return the hostname and the port of the TCP client */
-  char* sctk_mpcrun_client_get_hostname();
-  void sctk_mpcrun_client_get_local_size_and_node_number();
-
-  /* forge a string with the SHM filename */
-  void sctk_mpcrun_client_forge_shm_filename(char* __string);
-
-  void sctk_mpcrun_client_init_host_port();
-
-  void sctk_mpcrun_client_get_global_consts();
-  void sctk_mpcrun_client_get_local_consts ();
-
-  void sctk_mpcrun_client_create_recv_socket ();
-
-#ifdef __cplusplus
-}
-#endif
-#endif
+#endif //__SCTK_IO_HELPER__

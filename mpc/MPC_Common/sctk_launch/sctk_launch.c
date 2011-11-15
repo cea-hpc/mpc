@@ -193,6 +193,7 @@ sctk_perform_initialisation (void)
     }
   }
   sctk_topology_init ();
+  sctk_hls_build_repository();
   sctk_thread_init ();
 
 

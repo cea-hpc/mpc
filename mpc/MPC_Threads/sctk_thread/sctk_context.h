@@ -153,7 +153,8 @@ extern "C"
     void *sctk_tls_key_local;
     void *sctk_tls_trace_local;
     void *mpc_user_tls_1;
-    void *sctk_hierarchical_tls;
+    void *sctk_extls;
+	void *sctk_hls_generation;
     void *sctk_message_passing;
     //profiling TLS
     void *tls_trace_module;
@@ -168,11 +169,11 @@ extern "C"
 			void (*func) (void *),
 			char *stack, size_t stack_size);
   int
-    sctk_makecontext_hierarchical_tls (sctk_mctx_t * ucp,
-				       void *arg,
-				       void (*func) (void *), char *stack,
-				       size_t stack_size,
-				       void *hierarchical_tls);
+    sctk_makecontext_extls (sctk_mctx_t * ucp,
+		            void *arg,
+		            void (*func) (void *), char *stack,
+		            size_t stack_size,
+		            void *extls);
   void sctk_tls_init (void);
 
 

@@ -36,7 +36,7 @@ extern "C"
   /*
     Numbering rules
 
-    Core_id are renubered according to a topological numbering. All threads sharing a 
+    Core_id are renumbered according to a topological numbering. All threads sharing a 
     cache level must have continuous numbers.
   */
 
@@ -129,6 +129,7 @@ extern "C"
   int sctk_get_cache_level_number (void);
   
 /*! \brief Return the number of NUMA levels
+ * return 0 if machine is not NUMA
 */
   int sctk_get_numa_level_number (void);
   

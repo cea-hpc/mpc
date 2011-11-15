@@ -364,8 +364,8 @@ extern "C"
   extern int (*__sctk_ptr_thread_restore) (sctk_thread_t thread,
 					   char *type, int vp);
 
-  extern void (*__sctk_ptr_thread_wait_for_value) (int *data, int value);
-  extern void (*__sctk_ptr_thread_wait_for_value_and_poll) (int *data,
+  extern void (*__sctk_ptr_thread_wait_for_value) (volatile int *data, int value);
+  extern void (*__sctk_ptr_thread_wait_for_value_and_poll) (volatile int *data,
 							    int value,
 							    void (*func)
 							    (void *),

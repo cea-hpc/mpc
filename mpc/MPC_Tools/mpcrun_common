@@ -39,6 +39,7 @@ SCTK_USE_PTHREAD=1
 SCTK_USE_MADELEINE=0
 SCTK_USE_MPI=1
 SCTK_USE_MPI2=0
+SHARE_NODE='1'
 ENABLE_SMT="0"
 
 if test "$MPC_AUTO_KILL_TIMEOUT" = "" ; then
@@ -92,7 +93,7 @@ Topology:
     --cpu-nb=n,-c=n Number of cpus per process
     --node-nb=n,-N=n Total number of nodes
     --enable-smt Enable SMT capabilities (disabled by default)
-    --share-node Restrict CPU number to share node
+    --disable-share-node Do not restrict on CPU number to share node
 
 Multithreading:
     --multithreading=n,-m=n Define multithreading mode
@@ -236,6 +237,9 @@ for arg in "$@" ; do
     ;;
     --enable-smt)
     ENABLE_SMT="1"
+    ;;
+    --disable-share-node)
+    SHARE_NODE="0"
     ;;
     --share-node)
     SHARE_NODE="1"

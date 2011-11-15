@@ -126,7 +126,7 @@ extern "C"
     /* TODO add macros for 'running'? */
     struct sctk_microthread_s *task;	/* Corresponding microthread "task" */
 
-    void *hierarchical_tls;
+    void *extls;
 
     /* Private info on the current loop (whatever its schedule is)  */
     int loop_lb;		/* Lower bound */
@@ -258,7 +258,7 @@ extern "C"
      sctk_microthread_t * task)
   {
     int i, j;
-    int keep[sctk_tls_max_scope];
+    int keep[sctk_extls_max_scope];
 
       info->func = func;
       info->shared = shared;
@@ -284,19 +284,19 @@ extern "C"
     if (rank == 0)
       {
 	sctk_nodebug ("__mpcomp_init_thread_info: keep everything \n");
-	info->hierarchical_tls = sctk_hierarchical_tls;
+	info->extls = sctk_extls;
       }
     else
       {
-	sctk_tls_duplicate (&info->hierarchical_tls);
+	sctk_extls_duplicate (&info->extls);
 	/* memset (keep, 1, sctk_tls_max_scope * sizeof (int)); */
-	for (i = 0; i < sctk_tls_max_scope; i++)
+	for (i = 0; i < sctk_extls_max_scope; i++)
 	  {
 	    keep[i] = 1;
 	  }
 	sctk_nodebug ("__mpcomp_init_thread_info: keep[1] = %d\n", keep[1]);
-	keep[sctk_tls_openmp_scope] = 0;
-	sctk_tls_keep_non_current_thread (info->hierarchical_tls, keep);
+	keep[sctk_extls_openmp_scope] = 0;
+	sctk_extls_keep_non_current_thread (info->extls, keep);
       }
 
 #if 0

@@ -27,6 +27,7 @@
 #include "sctk_config.h"
 #include "sctk_context.h"
 #include "sctk_spinlock.h"
+#include "sctk_alloc.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -37,18 +38,37 @@ extern "C"
 #if defined(SCTK_USE_TLS)
 
   typedef enum
-  { sctk_tls_process_scope = 0, sctk_tls_task_scope =
-      1, sctk_tls_thread_scope = 2,
+  { sctk_extls_process_scope = 0,
+    sctk_extls_task_scope    = 1,
+    sctk_extls_thread_scope  = 2,
 #if defined (MPC_OpenMP)
-    sctk_tls_openmp_scope = 3, sctk_tls_max_scope = 4
+    sctk_extls_openmp_scope  = 3,
+    sctk_extls_max_scope     = 4,
 #else
-    sctk_tls_max_scope = 3
+    sctk_extls_max_scope     = 3,
 #endif
-  } sctk_tls_scope_t;
-  void sctk_tls_duplicate (void **new);
-  void sctk_tls_keep (int *scopes);
-  void sctk_tls_keep_non_current_thread (void **tls, int *scopes);
-  void sctk_tls_delete ();
+  } sctk_extls_scope_t;
+
+  typedef enum
+  { sctk_hls_node_scope          = 0,
+    sctk_hls_numa_level_2_scope  = 1,
+    sctk_hls_numa_level_1_scope  = 2,
+    sctk_hls_socket_scope        = 3,
+    sctk_hls_cache_level_3_scope = 4,
+    sctk_hls_cache_level_2_scope = 5,
+    sctk_hls_cache_level_1_scope = 6,
+    sctk_hls_core_scope          = 7,
+    sctk_hls_max_scope           = 8
+  } sctk_hls_scope_t;
+  /* this numbering should be kept in sync
+	 with the argument given to hls_barrier
+	 and hls_single in gcc */
+
+
+  void sctk_extls_duplicate (void **new);
+  void sctk_extls_keep (int *scopes);
+  void sctk_extls_keep_non_current_thread (void **tls, int *scopes);
+  void sctk_extls_delete ();
 
 
 #if defined (MPC_Allocator)
@@ -61,10 +81,12 @@ extern "C"
   extern __thread char *mpc_user_tls_1;
   extern unsigned long mpc_user_tls_1_offset;
   extern unsigned long mpc_user_tls_1_entry_number;
-  extern __thread void *sctk_hierarchical_tls;
+  extern __thread void *sctk_extls;
   //profiling TLS
   extern __thread void *tls_trace_module;
   extern __thread void *tls_args;
+
+  extern __thread void *sctk_hls_generation;
 
 #endif
 
@@ -86,7 +108,8 @@ extern "C"
     ucp->sctk_tls_trace_local = sctk_tls_trace;
 #endif
     tls_save (mpc_user_tls_1);
-    tls_save (sctk_hierarchical_tls);
+    tls_save (sctk_extls);
+	tls_save (sctk_hls_generation);
 #ifdef MPC_Message_Passing
     tls_save (sctk_message_passing);
 #endif
@@ -106,7 +129,8 @@ extern "C"
     sctk_tls_trace = ucp->sctk_tls_trace_local;
 #endif
     tls_restore (mpc_user_tls_1);
-    tls_restore (sctk_hierarchical_tls);
+    tls_restore (sctk_extls);
+    tls_restore (sctk_hls_generation);
 #ifdef MPC_Message_Passing
     tls_restore (sctk_message_passing);
 #endif
@@ -116,8 +140,7 @@ extern "C"
 #endif
   }
 
-  static inline void sctk_context_init_tls_hierarchical_tls (sctk_mctx_t *
-							     ucp)
+  static inline void sctk_context_init_tls_without_extls (sctk_mctx_t *ucp)
   {
 #if defined(SCTK_USE_TLS)
 #if defined (MPC_Allocator)
@@ -134,17 +157,29 @@ extern "C"
     //profiling TLS
     tls_init (tls_args);
     tls_init (tls_trace_module);
+	ucp->sctk_hls_generation = sctk_calloc(2*sctk_hls_max_scope,sizeof(int));
 #endif
   }
 
   static inline void sctk_context_init_tls (sctk_mctx_t * ucp)
   {
 #if defined(SCTK_USE_TLS)
-    sctk_context_init_tls_hierarchical_tls (ucp);
-    tls_init (sctk_hierarchical_tls);
-    sctk_tls_duplicate (&(ucp->sctk_hierarchical_tls));
+    sctk_context_init_tls_without_extls (ucp);
+    tls_init (sctk_extls);
+    sctk_extls_duplicate (&(ucp->sctk_extls));
 #endif
   }
+
+  static inline void sctk_context_init_tls_with_specified_extls (sctk_mctx_t * ucp, void * extls)
+  {
+#if defined(SCTK_USE_TLS)
+    sctk_context_init_tls_without_extls (ucp);
+	ucp->sctk_extls = extls ;
+#endif
+  }
+
+  void sctk_hls_checkout_on_vp () ;
+  void sctk_hls_build_repository () ;
 
 #ifdef __cplusplus
 }

@@ -23,6 +23,7 @@
 #include "sctk_alloc.h"
 #include "sctk_pmi.h"
 #include "sctk_launch.h"
+#include "sctk_io_helper.h"
 
 #ifdef MPC_USE_HYDRA
 #include <pmi.h>
@@ -531,18 +532,13 @@ PT2PT COMMUNICATIONS
  * @param dest Destination of the message
 */
 int sctk_pmi_send(void* info, size_t size, int dest) {
-	int nb_sent_bytes, nb_total_sent_bytes = 0;
-	int rc = PMI_SUCCESS;
-	do {
-	  nb_sent_bytes = write(dest, (char *) info + nb_total_sent_bytes, size - nb_total_sent_bytes);
-	  if (nb_sent_bytes < 0) {
-		  fprintf(stderr, "FAILURE (sctk_pmi): sock write error\n");
-		  rc = PMI_FAIL;
-	  }
-	  nb_total_sent_bytes += nb_sent_bytes;
+	if (sctk_safe_write(dest,info,size) == -1)
+	{
+		fprintf(stderr, "FAILURE (sctk_pmi): sock write error\n");
+		return PMI_FAIL;
+	} else {
+		return PMI_SUCCESS;
 	}
-	while (nb_total_sent_bytes < size);
-	return rc;
 }
 
 /*! \brief Receive a message
@@ -551,18 +547,13 @@ int sctk_pmi_send(void* info, size_t size, int dest) {
  * @param src Source of the message
 */
 int sctk_pmi_recv(void* info, size_t size, int src) {
-	int nb_read_bytes, nb_total_read_bytes = 0;
-	int rc = PMI_SUCCESS;
-	do {
-	  nb_read_bytes = read(src, (char *) info + nb_total_read_bytes, size - nb_total_read_bytes);
-	  if (nb_read_bytes < 0) {
-		  fprintf(stderr, "FAILURE (sctk_pmi): sock read error\n");
-		  rc = PMI_FAIL;
-	  }
-	  nb_total_read_bytes += nb_read_bytes;
+	if (sctk_safe_read(src,info,size) == -1)
+	{
+		fprintf(stderr, "FAILURE (sctk_pmi): sock read error\n");
+		return PMI_FAIL;
+	} else {
+		return PMI_SUCCESS;
 	}
-	while (nb_total_read_bytes < size);
-	return rc;
 }
 
   int

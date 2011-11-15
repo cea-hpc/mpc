@@ -40,11 +40,11 @@ typedef OPA_int_t sctk_atomics_int;
 typedef OPA_ptr_t sctk_atomics_ptr;
 
 // Rename the OPA functions into sctk_atomics ones
-#define sctk_atomics_mov_int             OPA_store_int
+#define sctk_atomics_store_int           OPA_store_int
 #define sctk_atomics_swap_int            OPA_swap_int
 #define sctk_atomics_load_int            OPA_load_int
 #define sctk_atomics_load_ptr            OPA_load_ptr
-#define sctk_atomics_mov_ptr             OPA_store_ptr
+#define sctk_atomics_store_ptr           OPA_store_ptr
 #define sctk_atomics_add_int             OPA_add_int
 #define sctk_atomics_incr_int            OPA_incr_int
 #define sctk_atomics_decr_int            OPA_decr_int

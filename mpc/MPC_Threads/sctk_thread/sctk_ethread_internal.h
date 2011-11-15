@@ -728,7 +728,7 @@ extern "C"
     __sctk_ethread_wait_for_value_and_poll
     (sctk_ethread_virtual_processor_t * restrict vp,
      sctk_ethread_per_thread_t * restrict cur,
-     int *restrict volatile data, int value, void (*func) (void *), void *arg)
+     volatile int *restrict data, int value, void (*func) (void *), void *arg)
   {
     sctk_ethread_polling_t cell;
     sctk_ethread_status_t stat_sav;
@@ -841,7 +841,7 @@ extern "C"
 	status = (sctk_ethread_status_t *) & (th->status);
 	sctk_nodebug ("TO Join Thread %p", th);
 	__sctk_ethread_wait_for_value_and_poll (vp, cur,
-						(int *) status,
+						(volatile int *) status,
 						ethread_zombie, NULL, NULL);
 	sctk_nodebug ("Joined Thread %p", th);
 	if (val != NULL)

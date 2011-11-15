@@ -65,11 +65,11 @@ extern "C"
   void sctk_ethread_thread_init (void);
   void sctk_ethread_mxn_thread_init (void);
 
-  void sctk_thread_wait_for_value (int *data, int value);
-  void sctk_thread_wait_for_value_and_poll (int *data, int value,
+  void sctk_thread_wait_for_value (volatile int *data, int value);
+  void sctk_thread_wait_for_value_and_poll (volatile int *data, int value,
 					    void (*func) (void *), void *arg);
   void
-    sctk_kthread_wait_for_value_and_poll (int *data, int value,
+    sctk_kthread_wait_for_value_and_poll (volatile int *data, int value,
 					  void (*func) (void *), void *arg);
 
   void sctk_thread_freeze_thread_on_vp (sctk_thread_mutex_t * lock,
