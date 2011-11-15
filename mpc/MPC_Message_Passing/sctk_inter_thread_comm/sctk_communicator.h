@@ -30,6 +30,8 @@ typedef int sctk_communicator_t;
 
 void sctk_communicator_init();
 int sctk_get_nb_task_local (const sctk_communicator_t communicator);
+int sctk_get_first_task_local (const sctk_communicator_t communicator);
+int sctk_get_last_task_local (const sctk_communicator_t communicator);
 int sctk_get_nb_task_total (const sctk_communicator_t communicator);
   void sctk_get_rank_size_total (const sctk_communicator_t communicator,
 				 int *rank, int *size, int glob_rank);

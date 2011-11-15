@@ -178,6 +178,10 @@ static inline void sctk_internal_ptp_add_send_incomming(sctk_internal_ptp_t* tmp
 /*Data structure accessors                                              */
 /************************************************************************/
 static sctk_internal_ptp_t* sctk_ptp_table = NULL;
+static sctk_internal_ptp_t** sctk_ptp_array = NULL;
+static sctk_internal_ptp_t* sctk_ptp_admin = NULL;
+static int sctk_ptp_array_start = 0;
+static int sctk_ptp_array_end = 0;
 static sctk_spin_rwlock_t sctk_ptp_table_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 
 static inline void
@@ -214,16 +218,58 @@ sctk_ptp_table_read_unlock(){
 
 static inline void sctk_ptp_table_insert(sctk_internal_ptp_t * tmp){
   static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+  static volatile int done = 0; 
+
+  if(tmp->key.destination == -1){
+    sctk_ptp_admin = tmp;
+    return;
+  }
+
   sctk_spinlock_lock(&lock);
+  if(done == 0){
+    if(!sctk_migration_mode){
+      sctk_ptp_array_start = sctk_get_first_task_local (SCTK_COMM_WORLD);
+      sctk_ptp_array_end = sctk_get_last_task_local (SCTK_COMM_WORLD);
+      sctk_ptp_array = sctk_malloc((sctk_ptp_array_end - sctk_ptp_array_start + 1)*sizeof(sctk_internal_ptp_t*));
+      memset(sctk_ptp_array,0,(sctk_ptp_array_end - sctk_ptp_array_start + 1)*sizeof(sctk_internal_ptp_t*));
+    } 
+    done = 1;
+  }
 
   sctk_ptp_table_write_lock(&sctk_ptp_table_lock);
   HASH_ADD(hh,sctk_ptp_table,key,sizeof(sctk_comm_dest_key_t),tmp);
+  if(sctk_migration_mode){
+    if(sctk_ptp_array != NULL){
+      sctk_free(sctk_ptp_array);
+      sctk_ptp_array = NULL;
+    }
+  }
+  if(sctk_ptp_array){
+    assume(sctk_ptp_array[tmp->key.destination - sctk_ptp_array_start] == NULL);
+    sctk_ptp_array[tmp->key.destination - sctk_ptp_array_start] = tmp;
+  }
   sctk_ptp_table_write_unlock(&sctk_ptp_table_lock);
-
   sctk_spinlock_unlock(&lock);
 }
 
-#define sctk_ptp_table_find(key,tmp)  HASH_FIND(hh,sctk_ptp_table,&(key),sizeof(sctk_comm_dest_key_t),(tmp))
+#define sctk_ptp_table_find(key,tmp)  do{				\
+    if(key.destination == -1){						\
+      tmp = sctk_ptp_admin;						\
+    } else {								\
+      if(sctk_migration_mode){						\
+	HASH_FIND(hh,sctk_ptp_table,&(key),sizeof(sctk_comm_dest_key_t),(tmp)); \
+      } else {								\
+	int __dest__id;							\
+	__dest__id = key.destination - sctk_ptp_array_start;		\
+	if((sctk_ptp_array != NULL) && (__dest__id >= 0)		\
+	   && (__dest__id <= sctk_ptp_array_end)){			\
+	  tmp = sctk_ptp_array[__dest__id];				\
+	} else {							\
+	  tmp = NULL;							\
+	}								\
+      }									\
+    }									\
+  }while(0)
    
 
 /********************************************************************/
@@ -1085,12 +1131,10 @@ void sctk_recv_message (sctk_thread_ptp_message_t * msg,sctk_internal_ptp_t* tmp
   msg->tail.remote_destination = 0;
 
   sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
-  {
-    if(tmp == NULL){
-      sctk_comm_dest_key_t key;
-      key.destination = msg->sctk_msg_get_glob_destination;
-      sctk_ptp_table_find(key,tmp);
-    }
+  if(tmp == NULL){
+    sctk_comm_dest_key_t key;
+    key.destination = msg->sctk_msg_get_glob_destination;
+    sctk_ptp_table_find(key,tmp);
   }
   if(msg->body.header.specific_message_tag != process_specific_message_tag){
     if(send_key.destination != -1){
