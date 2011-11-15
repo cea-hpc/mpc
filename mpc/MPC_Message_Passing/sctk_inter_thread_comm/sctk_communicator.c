@@ -151,26 +151,34 @@ sctk_set_internal_communicator(const sctk_communicator_t id,
 
 static inline void
 sctk_communicator_intern_write_lock(sctk_internal_communicator_t * tmp){
+#ifndef SCTK_MIGRATION_DISABLED
   if(sctk_migration_mode)
     sctk_spinlock_write_lock(&(tmp->lock));
+#endif
 }
 
 static inline void
 sctk_communicator_intern_write_unlock(sctk_internal_communicator_t * tmp){
+#ifndef SCTK_MIGRATION_DISABLED
   if(sctk_migration_mode)
     sctk_spinlock_write_unlock(&(tmp->lock));
+#endif
 }
 
 static inline void
 sctk_communicator_intern_read_lock(sctk_internal_communicator_t * tmp){
+#ifndef SCTK_MIGRATION_DISABLED
   if(sctk_migration_mode)
     sctk_spinlock_read_lock(&(tmp->lock));
+#endif
 }
 
 static inline void
 sctk_communicator_intern_read_unlock(sctk_internal_communicator_t * tmp){
+#ifndef SCTK_MIGRATION_DISABLED
   if(sctk_migration_mode)
     sctk_spinlock_read_unlock(&(tmp->lock));
+#endif
 }
 
 static inline void sctk_comm_reduce(const sctk_communicator_t* mpc_restrict  in ,
