@@ -69,7 +69,7 @@ thread_rpc(void* arg)
   while(1)
   {
     sctk_thread_sem_wait(&sem);
-    sctk_ib_list_lock(&rpc_req_list)
+    sctk_ib_list_lock(&rpc_req_list);
       ret = sctk_ib_list_pop(&rpc_req_list);
     sctk_ib_list_unlock(&rpc_req_list);
     /* the list *MUST* have an element */
