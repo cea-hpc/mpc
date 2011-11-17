@@ -824,20 +824,6 @@ check_net_none_done="1"
     end_section
 }
 
-check_net_infiniband_done=""
-check_net_infiniband(){
-check_net_infiniband_done="1"
-    begin_section "Check infiniband:"
-    SCTK_CHECK_HEADER_NOFAIL infiniband/verbs.h
-    if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
-	SCTK_CHECK_OPTION "-DMPC_USE_INFINIBAND"
-	SCTK_CHECK_LDOPTION "-libverbs"
-	SCTK_NET_LIST_EXP="$SCTK_NET_LIST_EXP "
-	SCTK_NET_LIST="$SCTK_NET_LIST ib"
-    fi
-    end_section
-}
-
 check_networks_done="0"
 check_net_all_done=""
 check_networks(){
@@ -857,13 +843,11 @@ if test "$check_networks_done" = "0" ; then
 		fi
 		;;
 	    INFINIBAND|infiniband|ib|IB)
-		if test "$check_net_infiniband_done" = "" ; then
-		    check_net_infiniband
-		fi
+      SCTK_CHECK_LIB_OPENIB
 		;;
 	    all)
 		if test "$check_net_all_done" = "" ; then
-		    check_net_infiniband
+		    SCTK_CHECK_LIB_OPENIB
 		    check_net_mpi
 		    check_net_tcp
 		fi
@@ -968,7 +952,7 @@ if test "$#" = "2"; then
 	REASON=$1
 	TIME=$2
 	if test "$TIME" -lt "0"; then
-		error "Wrong time value passed to sctk_wait"	
+		error "Wrong time value passed to sctk_wait"
 	fi
 
 	sctk_printf "$REASON will continue in "

@@ -218,6 +218,7 @@ SCTK_CFLAGS_NON_GNU=""
 SCTK_MPC_MMAP="0"
 HWLOC_USER_PREFIX=""
 OPENPA_USER_PREFIX=""
+OPENIB_USER_PREFIX=""
 
 for arg in "$@" ; do
     case $arg in
@@ -373,6 +374,9 @@ for arg in "$@" ; do
     ;;
     --with-openpa=*)
     OPENPA_USER_PREFIX="`echo A$arg | sed -e 's/A--with-openpa=//g'`"
+    ;;
+    --with-openib=*)
+    OPENIB_USER_PREFIX="`echo A$arg | sed -e 's/A--with-openib=//g'`"
     ;;
 
     --disable-all)
