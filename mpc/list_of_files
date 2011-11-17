@@ -760,10 +760,6 @@
     mpc_mpi.h
     mpi.h
 
-./mpc/MPC_MPI/mpirun
-    Makefile
-    mpirun
-
 ./mpc/MPC_MPI/src
     mpc_mpi.c
     mpc_mpi_fortran.h
@@ -1110,9 +1106,6 @@
     mpcrun_hydra
     mpcrun_mpiexec
     mpcrun_mpiexec_gdb
-    mpcrun_mpirun
-    mpcrun_mpirun_ddd
-    mpcrun_mpirun_gdb
     mpcrun_none
     mpcrun_none_ddd
     mpcrun_none_gdb

@@ -49,7 +49,7 @@ FOBJ_include=$(FFILES_include:include/%.f=$(M_PWD)/BUILD_MPC_MPI/lib/%_f.o)
 FFILES_src=$(wildcard src/*.f)
 FOBJ_src=$(FFILES_src:src/%.f=$(M_PWD)/BUILD_MPC_MPI/lib/%_f.o)
 
-all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_src) $(FOBJ_src) $(SOBJ_src) build_mpirun
+all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_src) $(FOBJ_src) $(SOBJ_src) 
 
 $(M_PWD)/include_modules/MPC_MPI:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_MPI/include $(M_PWD)/include_modules
@@ -127,6 +127,3 @@ ifeq ($(MAKECMDGOALS),all)
 -include $(DEPENDS)
 endif
 endif
-build_mpirun:
-	@mkdir -p $(M_PWD)/BUILD_MPC_MPI/mpirun
-	@$(MAKE) BUILD_DIR=$(M_PWD)/BUILD_MPC_MPI/mpirun -C mpirun all
