@@ -31,7 +31,7 @@
 #include "sctk_spinlock.h"
 #include "sctk_ib_mmu.h"
 
-struct sctk_rail_info_ib_s;
+struct sctk_ib_rail_info_s;
 
 /*-----------------------------------------------------------
  *  STRUCTURES
@@ -86,7 +86,7 @@ typedef struct sctk_ibuf_region_s
   /* Number of buffer for the region */
   uint16_t nb;
   /* A region is associated to a rail */
-  struct sctk_rail_info_ib_s* rail;
+  struct sctk_ib_rail_info_s* rail;
   /* MMU entry */
   struct sctk_ib_mmu_entry_s* mmu_entry;
 
@@ -156,7 +156,7 @@ typedef struct sctk_ibuf_s
  *  FUNCTIONS
  *----------------------------------------------------------*/
 
-void sctk_ibuf_pool_init(struct sctk_rail_info_ib_s *rail);
+void sctk_ibuf_pool_init(struct sctk_ib_rail_info_s *rail);
 
 #endif
 #endif

@@ -26,6 +26,7 @@
 #include "sctk_ib_config.h"
 #define SCTK_IB_MODULE_NAME "CONFIG"
 #include "sctk_ib_toolkit.h"
+#include "sctk_ib.h"
 
 /*-----------------------------------------------------------
  *  CONSTS
@@ -135,7 +136,7 @@ char* steal_names[3] = {
  *  FUNCTIONS
  *----------------------------------------------------------*/
 
-void sctk_ib_config_check(sctk_rail_info_ib_t *rail_ib)
+void sctk_ib_config_check(sctk_ib_rail_info_t *rail_ib)
 {
   sctk_ib_config_t *c = rail_ib->config;
 
@@ -161,7 +162,7 @@ error:
 }
 
 #define EXPERIMENTAL(str) #str" (experimental)"
-void sctk_ib_config_print(sctk_rail_info_ib_t *rail_ib)
+void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
 {
   LOAD_CONFIG(rail_ib);
   if (sctk_process_rank == 0) {
@@ -222,7 +223,7 @@ void sctk_ib_config_print(sctk_rail_info_ib_t *rail_ib)
   }
 }
 
-void load_ib_default_config(sctk_rail_info_ib_t *rail_ib)
+void load_ib_default_config(sctk_ib_rail_info_t *rail_ib)
 {
   LOAD_CONFIG(rail_ib);
 
@@ -260,7 +261,7 @@ void load_ib_default_config(sctk_rail_info_ib_t *rail_ib)
 }
 
 /* Set IB configure with env variables */
-void set_ib_env(sctk_rail_info_ib_t *rail_ib)
+void set_ib_env(sctk_ib_rail_info_t *rail_ib)
 {
   char* value;
   sctk_ib_config_t* c = rail_ib->config;
@@ -346,7 +347,7 @@ void set_ib_env(sctk_rail_info_ib_t *rail_ib)
     c->ibv_match = atoi(value);
 }
 
-void sctk_ib_config_init(sctk_rail_info_ib_t *rail_ib)
+void sctk_ib_config_init(sctk_ib_rail_info_t *rail_ib)
 {
   LOAD_CONFIG(rail_ib);
 

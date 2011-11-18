@@ -70,8 +70,8 @@ typedef struct sctk_ib_config_s
   struct ibv_device_attr *device_attr;
 } sctk_ib_config_t;
 
-struct sctk_rail_info_ib_s;
-void sctk_ib_config_init(struct sctk_rail_info_ib_s *rail_ib);
+struct sctk_ib_rail_info_s;
+void sctk_ib_config_init(struct sctk_ib_rail_info_s *rail_ib);
 
 
 #endif

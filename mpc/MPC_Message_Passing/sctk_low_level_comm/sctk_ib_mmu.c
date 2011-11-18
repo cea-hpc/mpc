@@ -26,7 +26,9 @@
 #include <infiniband/verbs.h>
 #define SCTK_IB_MODULE_NAME "MMU"
 #include "sctk_ib_toolkit.h"
+#include "sctk_ib.h"
 #include "sctk_ib_config.h"
+#include "sctk_ib_qp.h"
 #include "utlist.h"
 
 
@@ -41,7 +43,7 @@
  *----------------------------------------------------------*/
 
 void
-check_nb_entries(sctk_rail_info_ib_t *rail_ib, const unsigned int nb_entries)
+check_nb_entries(sctk_ib_rail_info_t *rail_ib, const unsigned int nb_entries)
 {
   sctk_ib_mmu_t* mmu = rail_ib->mmu;
   sctk_ib_config_t *config = rail_ib->config;
@@ -56,7 +58,7 @@ check_nb_entries(sctk_rail_info_ib_t *rail_ib, const unsigned int nb_entries)
 }
 
  void
-sctk_ib_mmu_init(struct sctk_rail_info_ib_s *rail_ib)
+sctk_ib_mmu_init(struct sctk_ib_rail_info_s *rail_ib)
 {
   sctk_ib_mmu_t* mmu;
 
@@ -68,7 +70,7 @@ sctk_ib_mmu_init(struct sctk_rail_info_ib_s *rail_ib)
 }
 
  void
-sctk_ib_mmu_alloc(struct sctk_rail_info_ib_s *rail_ib, const unsigned int nb_entries)
+sctk_ib_mmu_alloc(struct sctk_ib_rail_info_s *rail_ib, const unsigned int nb_entries)
 {
   int i;
   sctk_ib_mmu_t* mmu = rail_ib->mmu;
@@ -106,11 +108,12 @@ sctk_ib_mmu_alloc(struct sctk_rail_info_ib_s *rail_ib, const unsigned int nb_ent
 
 /* Register a new memory */
 sctk_ib_mmu_entry_t *sctk_ib_mmu_register (
-    sctk_rail_info_ib_t *rail_ib,
+    sctk_ib_rail_info_t *rail_ib,
     void *ptr, size_t size)
 {
-  sctk_ib_mmu_t* mmu = rail_ib->mmu;
-  sctk_ib_config_t *config = rail_ib->config;
+  LOAD_MMU(rail_ib);
+  LOAD_DEVICE(rail_ib);
+  LOAD_CONFIG(rail_ib);
   sctk_ib_mmu_entry_t* mmu_entry;
 
 #ifdef DEBUG_IB_MMU
@@ -134,13 +137,10 @@ sctk_ib_mmu_entry_t *sctk_ib_mmu_register (
   sctk_spinlock_unlock (&mmu->lock);
   mmu_entry->status = ibv_entry_used;
 
-  /* FIXME: allocate PD */
-#if 0
-  mmu_entry->mr = ibv_reg_mr (local->pd,
+  mmu_entry->mr = ibv_reg_mr (device->pd,
       ptr, size,
       IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE |
       IBV_ACCESS_REMOTE_READ);
-#endif
 
 #ifdef DEBUG_IB_MMU
   if (!mmu_entry->mr) {
@@ -155,7 +155,7 @@ sctk_ib_mmu_entry_t *sctk_ib_mmu_register (
 }
 
 void
-sctk_ib_mmu_unregister (sctk_rail_info_ib_t *rail_ib,
+sctk_ib_mmu_unregister (sctk_ib_rail_info_t *rail_ib,
     sctk_ib_mmu_entry_t *mmu_entry)
 {
   sctk_ib_mmu_t* mmu = rail_ib->mmu;

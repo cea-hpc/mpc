@@ -17,34 +17,38 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - DIDELOT Sylvain didelot.sylvain@gmail.com                        # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "sctk.h"
-#include "string.h"
 
-#include "sctk_shell_colors.h"
-
-#define SMALL_BUFFER_SIZE (4*1024)
-#define HAVE_SHELL_COLORS
-
-#ifndef SCTK_IB_MODULE_NAME
-#define SCTK_IB_MODULE_NAME "NONE"
+#ifndef __SCTK_IB_H_
+#define __SCTK_IB_H_
+#ifdef __cplusplus
+extern "C"
+{
 #endif
 
-void sctk_ib_debug(const char *fmt, ...);
+  struct sctk_ibuf_pool_s;
+  struct sctk_ib_mmu_s;
+  struct sctk_ib_config_s;
+  struct sctk_ib_device_s;
 
-#if defined(__GNU_COMPILER) || defined(__INTEL_COMPILER)
-#define sctk_ib_nodebug(fmt,...) (void)(0)
-#else
-  static inline void sctk_ib_nodebug (const char *fmt, ...)
-  {
-  }
+  typedef struct sctk_ib_rail_info_s {
+    struct sctk_ibuf_pool_s *pool_buffers;
+    struct sctk_ib_mmu_s    *mmu;
+    struct sctk_ib_config_s *config;
+    struct sctk_ib_device_s *device;
+  } sctk_ib_rail_info_t;
+
+  typedef struct sctk_ib_data_s {
+
+  } sctk_ib_data_t;
+
+#include <sctk_route.h>
+
+  void sctk_network_init_ib_all(sctk_rail_info_t* rail,
+			       int (*route)(int , sctk_rail_info_t* ),
+			       void(*route_init)(sctk_rail_info_t*));
+#ifdef __cplusplus
+}
 #endif
-
-#define LOAD_CONFIG(x) sctk_ib_config_t *config = (x)->config;
-#define LOAD_MMU(x)    sctk_ib_mmu_t* mmu = (x)->mmu;
-#define LOAD_DEVICE(x)    sctk_ib_device_t* device = (x)->device;
-
-/* const for debugging IB */
-#define DEBUG_IB_MMU
+#endif

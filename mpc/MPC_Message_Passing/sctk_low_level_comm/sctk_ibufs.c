@@ -26,6 +26,7 @@
 
 #define SCTK_IB_MODULE_NAME "IBUF"
 #include "sctk_ib_toolkit.h"
+#include "sctk_ib.h"
 #include "sctk_ib_config.h"
 #include "utlist.h"
 /**
@@ -37,7 +38,7 @@
 /* FIXME: use malloc_on_node instead of memalign
  * This function is *NOT* thread-safe */
 static inline void
-init_node(struct sctk_rail_info_ib_s *rail_ib,
+init_node(struct sctk_ib_rail_info_s *rail_ib,
     struct sctk_ibuf_numa_s* node, int nb_ibufs)
 {
   LOAD_CONFIG(rail_ib);
@@ -93,7 +94,7 @@ init_node(struct sctk_rail_info_ib_s *rail_ib,
 }
 
 void
-sctk_ibuf_pool_init(struct sctk_rail_info_ib_s *rail_ib)
+sctk_ibuf_pool_init(struct sctk_ib_rail_info_s *rail_ib)
 {
   LOAD_CONFIG(rail_ib);
   sctk_ibuf_pool_t *pool;
@@ -101,7 +102,6 @@ sctk_ibuf_pool_init(struct sctk_rail_info_ib_s *rail_ib)
   unsigned int nodes_nb = sctk_get_numa_node_number();
   /* FIXME: get_numa_node_number which returns 0 when SMP */
   nodes_nb = (nodes_nb == 0) ? 1 : nodes_nb;
-  sctk_debug("%d nodes", nodes_nb);
 
   pool = sctk_malloc(sizeof(sctk_ibuf_pool_t) +
       nodes_nb * sizeof(sctk_ibuf_numa_t));
@@ -123,22 +123,6 @@ sctk_ibuf_pool_init(struct sctk_rail_info_ib_s *rail_ib)
 
 
 #if 0
-static sctk_net_ibv_ibuf_numa_t *ibuf_on_node;
-static int nodes_nb;
-
-void sctk_net_ibv_ibuf_new()
-{
-  int i;
-
-  nodes_nb = sctk_get_numa_node_number();
-  ibuf_on_node = sctk_malloc(nodes_nb * sizeof(struct sctk_net_ibv_ibuf_numa_s));
-  memset(ibuf_on_node, 0, nodes_nb * sizeof(struct sctk_net_ibv_ibuf_numa_s));
-
-  for (i=0; i < nodes_nb; ++i)
-  {
-  }
-}
-
 sctk_net_ibv_ibuf_numa_t* get_numa_node(const int core_id)
 {
   return &ibuf_on_node[sctk_get_node_from_cpu(core_id)];

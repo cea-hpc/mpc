@@ -26,15 +26,12 @@
 #include <sctk_route.h>
 #include <sctk_net_tools.h>
 
-#define SCTK_IB_MODULE_NAME "NONE"
 #include <sctk_ib_fallback.h>
+#include "sctk_ib.h"
 #include <sctk_ibufs.h>
 #include <sctk_ib_mmu.h>
 #include <sctk_ib_config.h>
-
-
-#define IBUF_INIT_NB 300
-#define MMU_INIT_NB 200
+#include "sctk_ib_qp.h"
 
 static void
 sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
@@ -71,11 +68,24 @@ void sctk_network_init_ib(sctk_rail_info_t* rail){
   rail->network_name = "IB";
 
   /* Infiniband Init */
-  sctk_rail_info_ib_t rail_ib;
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  sctk_ib_device_t *device;
+  /* Open config */
+  sctk_ib_config_init(rail_ib);
+  /* Open device */
+  device = sctk_ib_device_open(rail_ib, 0);
+  /* Init Proctection Domain */
+  sctk_ib_pd_init(device);
+  /* Init Completion Queues */
+  device->send_cq = sctk_ib_cq_init(device, rail_ib->config);
+  device->recv_cq = sctk_ib_cq_init(device, rail_ib->config);
 
-  sctk_ib_config_init(&rail_ib);
   /* Print config */
-  sctk_ib_config_print(&rail_ib);
-  sctk_ib_mmu_init(&rail_ib);
-  sctk_ibuf_pool_init(&rail_ib);
+  sctk_ib_config_print(rail_ib);
+  sctk_ib_mmu_init(rail_ib);
+  sctk_ibuf_pool_init(rail_ib);
+
+
+  /* Initialize network */
+  sctk_network_init_ib_all(rail, rail->route, rail->route_init);
 }

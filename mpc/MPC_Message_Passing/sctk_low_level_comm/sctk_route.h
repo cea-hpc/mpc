@@ -26,8 +26,10 @@
 #include <uthash.h>
 
 typedef struct sctk_rail_info_s sctk_rail_info_t;
+struct sctk_ib_data_s;
 
 #include <sctk_tcp.h>
+#include <sctk_ib.h>
 
 typedef struct{
   int destination;
@@ -36,11 +38,17 @@ typedef struct{
 
 
 typedef union{
+  /* TCP */
   sctk_tcp_data_t tcp;
+  /* IB */
+  sctk_ib_data_t ib;
 }sctk_route_data_t;
 
 typedef union{
+  /* TCP */
   sctk_tcp_rail_info_t tcp;
+  /* IB */
+  sctk_ib_rail_info_t ib;
 }sctk_rail_info_spec_t;
 
 struct sctk_rail_info_s{
@@ -65,7 +73,7 @@ typedef struct sctk_route_table_s{
   sctk_route_key_t key;
 
   sctk_route_data_t data;
-  
+
   sctk_rail_info_t* rail;
 
   UT_hash_handle hh;

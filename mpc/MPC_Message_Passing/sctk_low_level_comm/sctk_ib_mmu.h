@@ -30,7 +30,7 @@
 #include <sctk_config.h>
 #include <stdint.h>
 
-struct sctk_rail_info_ib_s;
+struct sctk_ib_rail_info_s;
 
 /* Enumeration for entry status  */
 typedef enum sctk_ib_mmu_entry_status_e
@@ -78,15 +78,15 @@ typedef struct sctk_ib_mmu_s
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
-void sctk_ib_mmu_init(struct sctk_rail_info_ib_s *rail_ib);
+void sctk_ib_mmu_init(struct sctk_ib_rail_info_s *rail_ib);
 
- void sctk_ib_mmu_alloc(struct sctk_rail_info_ib_s *rail_ib,
+ void sctk_ib_mmu_alloc(struct sctk_ib_rail_info_s *rail_ib,
      const unsigned int nb_entries);
 
 sctk_ib_mmu_entry_t *sctk_ib_mmu_register (
-  struct sctk_rail_info_ib_s *rail_ib, void *ptr, size_t size);
+  struct sctk_ib_rail_info_s *rail_ib, void *ptr, size_t size);
 
-void ctk_ib_mmu_unregister (struct sctk_rail_info_ib_s *rail_ib,
+void ctk_ib_mmu_unregister (struct sctk_ib_rail_info_s *rail_ib,
     sctk_ib_mmu_entry_t *mmu_entry);
 
 #endif

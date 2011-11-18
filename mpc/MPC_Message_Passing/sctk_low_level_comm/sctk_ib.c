@@ -17,34 +17,45 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - DIDELOT Sylvain didelot.sylvain@gmail.com                        # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "sctk.h"
-#include "string.h"
 
-#include "sctk_shell_colors.h"
 
-#define SMALL_BUFFER_SIZE (4*1024)
-#define HAVE_SHELL_COLORS
+#include <sctk_debug.h>
+#include <sctk_net_tools.h>
+#include <sctk_ib.h>
+#include <sctk_pmi.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/types.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <sctk.h>
+#include <netdb.h>
+#include <sctk_spinlock.h>
+#include <sctk_net_tools.h>
 
-#ifndef SCTK_IB_MODULE_NAME
-#define SCTK_IB_MODULE_NAME "NONE"
-#endif
+#define MAX_STRING_SIZE  2048
 
-void sctk_ib_debug(const char *fmt, ...);
+void sctk_network_init_ib_all(sctk_rail_info_t* rail,
+			       int (*route)(int , sctk_rail_info_t* ),
+			       void(*route_init)(sctk_rail_info_t*)){
 
-#if defined(__GNU_COMPILER) || defined(__INTEL_COMPILER)
-#define sctk_ib_nodebug(fmt,...) (void)(0)
-#else
-  static inline void sctk_ib_nodebug (const char *fmt, ...)
-  {
-  }
-#endif
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  int dest_rank;
+  int src_rank;
+  char src_connection_infos[MAX_STRING_SIZE];
+  char dest_connection_infos[MAX_STRING_SIZE];
 
-#define LOAD_CONFIG(x) sctk_ib_config_t *config = (x)->config;
-#define LOAD_MMU(x)    sctk_ib_mmu_t* mmu = (x)->mmu;
-#define LOAD_DEVICE(x)    sctk_ib_device_t* device = (x)->device;
+  assume(rail->send_message_from_network != NULL);
 
-/* const for debugging IB */
-#define DEBUG_IB_MMU
+  /* FIXME: register pointers */
+
+  dest_rank = (sctk_process_rank + 1) % sctk_process_number;
+  src_rank = (sctk_process_rank + sctk_process_number - 1) % sctk_process_number;
+
+  sctk_debug("Recv from %d, send to %d", src_rank, dest_rank);
+
+  sctk_pmi_barrier();
+}
+
