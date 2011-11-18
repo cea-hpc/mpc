@@ -60,6 +60,8 @@ extern "C"
 
   void MPC_printf (const char *fmt, ...);
   void sctk_debug_root(const char *fmt, ...);
+  /* Print infos on processus and threads */
+  char* sctk_print_debug_infos();
 #ifdef SCTK_DEBUG_MESSAGES
   void sctk_debug (const char *fmt, ...);
   void sctk_info (const char *fmt, ...);
@@ -109,15 +111,15 @@ extern "C"
 
 /** ** **/
 #define sctk_enable_lib_thread_db() (void)(0)
-  
+
 #define sctk_init_thread_debug(a) (void)(0)
 #define sctk_refresh_thread_debug(a,b) (void)(0)
 #define sctk_refresh_thread_debug_migration(a) (void)(0)
 
 #define sctk_init_idle_thread_dbg(a,b) (void)(0)
 #define sctk_free_idle_thread_dbg(a) (void)(0)
-  
-#define sctk_report_creation(a) (void)(0) 
+
+#define sctk_report_creation(a) (void)(0)
 #define sctk_report_death(a) (void) (0)
   /** **/
 #endif
