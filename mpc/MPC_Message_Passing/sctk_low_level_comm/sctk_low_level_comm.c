@@ -40,7 +40,7 @@ int sctk_is_net_migration_available(){
 static void sctk_network_send_message_default (sctk_thread_ptp_message_t * msg){
   not_reachable();
 }
-static void (*sctk_network_send_message_ptr) (sctk_thread_ptp_message_t *) = 
+static void (*sctk_network_send_message_ptr) (sctk_thread_ptp_message_t *) =
   sctk_network_send_message_default;
 void sctk_network_send_message (sctk_thread_ptp_message_t * msg){
   sctk_network_send_message_ptr(msg);
@@ -53,7 +53,7 @@ void sctk_network_send_message_set(void (*sctk_network_send_message_val) (sctk_t
 static void sctk_network_notify_recv_message_default (sctk_thread_ptp_message_t * msg){
 
 }
-static void (*sctk_network_notify_recv_message_ptr) (sctk_thread_ptp_message_t *) = 
+static void (*sctk_network_notify_recv_message_ptr) (sctk_thread_ptp_message_t *) =
   sctk_network_notify_recv_message_default;
 void sctk_network_notify_recv_message (sctk_thread_ptp_message_t * msg){
   sctk_network_notify_recv_message_ptr(msg);
@@ -66,7 +66,7 @@ void sctk_network_notify_recv_message_set(void (*sctk_network_notify_recv_messag
 static void sctk_network_notify_matching_message_default (sctk_thread_ptp_message_t * msg){
 
 }
-static void (*sctk_network_notify_matching_message_ptr) (sctk_thread_ptp_message_t *) = 
+static void (*sctk_network_notify_matching_message_ptr) (sctk_thread_ptp_message_t *) =
   sctk_network_notify_matching_message_default;
 void sctk_network_notify_matching_message (sctk_thread_ptp_message_t * msg){
   sctk_network_notify_matching_message_ptr(msg);
@@ -79,7 +79,7 @@ void sctk_network_notify_matching_message_set(void (*sctk_network_notify_matchin
 static void sctk_network_notify_perform_message_default (int msg){
 
 }
-static void (*sctk_network_notify_perform_message_ptr) (int) = 
+static void (*sctk_network_notify_perform_message_ptr) (int) =
   sctk_network_notify_perform_message_default;
 void sctk_network_notify_perform_message (int msg){
   sctk_network_notify_perform_message_ptr(msg);
@@ -90,9 +90,9 @@ void sctk_network_notify_perform_message_set(void (*sctk_network_notify_perform_
 
 /********** NOTIFY_IDLE ************/
 static void sctk_network_notify_idle_message_default (){
-  
+
 }
-static void (*sctk_network_notify_idle_message_ptr) () = 
+static void (*sctk_network_notify_idle_message_ptr) () =
   sctk_network_notify_idle_message_default;
 void sctk_network_notify_idle_message (){
   sctk_network_notify_idle_message_ptr();
@@ -103,9 +103,9 @@ void sctk_network_notify_idle_message_set(void (*sctk_network_notify_idle_messag
 
 /********** NOTIFY_ANY_SOURCE ************/
 static void sctk_network_notify_any_source_message_default (){
-  
+
 }
-static void (*sctk_network_notify_any_source_message_ptr) () = 
+static void (*sctk_network_notify_any_source_message_ptr) () =
   sctk_network_notify_any_source_message_default;
 void sctk_network_notify_any_source_message (){
   sctk_network_notify_any_source_message_ptr();
@@ -146,6 +146,9 @@ sctk_net_init_driver (char *name)
     TRY_DRIVER(simple_tcp,sctk_network_init_simple_tcp,topo);
     TRY_DRIVER(multirail_tcp,sctk_network_init_multirail_tcp,topo);
     TRY_DRIVER(multirail_tcpoib,sctk_network_init_multirail_tcpoib,topo);
+
+    /* Driver for Infiniband */
+    TRY_DRIVER(multirail_ib,sctk_network_init_multirail_ib,topo);
     DEFAUT_DRIVER();
 
     sctk_route_finalize();
