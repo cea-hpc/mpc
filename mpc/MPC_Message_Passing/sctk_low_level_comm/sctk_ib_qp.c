@@ -26,6 +26,7 @@
 #include "sctk_ib_toolkit.h"
 #include "sctk_ib.h"
 #include "sctk_ib_config.h"
+#include "sctk_ibufs.h"
 #include "sctk_ib_qp.h"
 #include "sctk_pmi.h"
 #include "utlist.h"
@@ -278,7 +279,7 @@ sctk_ib_qp_init(struct sctk_ib_rail_info_s* rail_ib,
     sctk_error("Cannot create QP for rank %d", rank);
     sctk_abort();
   }
-  sctk_ib_nodebug("QP Initialized for rank %d", remote->rank);
+  sctk_debug("QP Initialized for rank %d %p", remote->rank, remote->qp);
   return remote->qp;
 }
 
@@ -409,6 +410,8 @@ sctk_ib_qp_modify( sctk_ib_qp_t* remote, struct ibv_qp_attr* attr, int flags)
   if (ibv_modify_qp(remote->qp, attr, flags) != 0)
   {
     sctk_error("Cannot modify Queue Pair");
+    sctk_debug("flags:%d %p %p", flags, attr, remote->qp);
+    perror("Error");
     sctk_abort();
   }
 }
@@ -492,6 +495,19 @@ sctk_ib_qp_allocate_rts(struct sctk_ib_rail_info_s* rail_ib,
   sctk_ib_qp_modify(remote, &attr, flags);
   remote->is_rts = 1;
 }
+
+
+void
+sctk_ib_qp_send_ibuf(sctk_ib_qp_t *remote,
+    sctk_ibuf_t* ibuf)
+{
+  int rc;
+  sctk_debug("Send message to process %d %p", remote->rank, remote->qp);
+
+  rc = ibv_post_send(remote->qp, &(ibuf->desc.wr.send), &(ibuf->desc.bad_wr.send));
+  assume(rc == 0);
+}
+
 
 #if 0
 int sctk_ib_qp_send_post_pending(sctk_ib_qp_remote_t* remote, int need_lock)

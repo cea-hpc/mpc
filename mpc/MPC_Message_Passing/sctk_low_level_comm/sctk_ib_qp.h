@@ -27,6 +27,7 @@
 
 #include "sctk_ib_config.h"
 #include "sctk_spinlock.h"
+#include "sctk_ibufs.h"
 
 #include <infiniband/verbs.h>
 #include <inttypes.h>
@@ -136,6 +137,9 @@ sctk_ib_srq_init(struct sctk_ib_rail_info_s* rail_ib,
 
   struct ibv_srq_init_attr
 sctk_ib_srq_init_attr(struct sctk_ib_rail_info_s* rail_ib);
+
+void sctk_ib_qp_send_ibuf(sctk_ib_qp_t *remote,
+    struct sctk_ibuf_s* ibuf);
 
 #endif
 #endif
