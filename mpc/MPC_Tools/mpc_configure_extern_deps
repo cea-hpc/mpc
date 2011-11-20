@@ -319,12 +319,11 @@ SCTK_CHECK_LIB_OPENPA()
 sctk_internal_setup_lib_openib()
 {
   if [ "$OPENIB_IS_SETUP" != "yes" ]; then
-    #We are relying on a provided HWLOC
+    #Check candidate prefix for OpenIB
     if [ -e "${OPENIB_USER_PREFIX}/include/infiniband/verbs.h" ]; then
       SCTK_CFLAGS="${SCTK_CFLAGS} -I${OPENIB_USER_PREFIX}/include/"
     else
-      sctk_printf "Could not locate infiniband/verbs.h header in directory ${OPENIB_USER_PREFIX}/include/"
-      error "You might build using root configure to build the hwloc library"
+      error "Could not locate infiniband/verbs.h header in directory ${OPENIB_USER_PREFIX}/include/"
     fi
 
     #setup rpaths and -L
@@ -353,14 +352,20 @@ SCTK_CHECK_LIB_OPENIB()
 {
   # if prefix set
   if [ "$OPENIB_USER_PREFIX" != "" ]; then
-    #setup if needed
+    #Lets check the provided prefix for correctness
     sctk_internal_setup_lib_openib;
   fi
 
   begin_section "Check OpenIB:"
-  SCTK_CHECK_HEADER infiniband/verbs.h
-  SCTK_CHECK_OPTION "-DMPC_USE_INFINIBAND"
-  SCTK_CHECK_LDOPTION "-libverbs"
+
+  # Lets ty to detec OpenIB in the current environement
+  SCTK_CHECK_HEADER_NOFAIL infiniband/verbs.h
+  if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
+    SCTK_CHECK_OPTION "-DMPC_USE_INFINIBAND"
+    SCTK_CHECK_LDOPTION "-libverbs"
+  fi
+
+
 
 	SCTK_NET_LIST="$SCTK_NET_LIST ib"
   end_section
