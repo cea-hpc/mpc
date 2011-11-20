@@ -35,10 +35,27 @@
 
 static void
 sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  sctk_route_table_t* tmp;
+  sctk_ibuf_t *ibuf;
+
+  sctk_debug("send message through rail %d",rail->rail_number);
+
+  if(msg->body.header.specific_message_tag == process_specific_message_tag){
+    tmp = sctk_get_route_to_process(msg->sctk_msg_get_destination,rail);
+    sctk_debug("1 Route to %d", msg->sctk_msg_get_destination);
+  } else {
+    tmp = sctk_get_route(msg->sctk_msg_get_glob_destination,rail);
+    sctk_debug("2 Route to %d", msg->sctk_msg_get_glob_destination);
+  }
+
+  ibuf = sctk_ibuf_pick(rail_ib, 1, 0);
+  sctk_debug("Picked buffer %p", ibuf);
 }
 
 static void
 sctk_network_notify_recv_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
+  sctk_debug("Recv_message");
 }
 
 static void
@@ -70,6 +87,7 @@ void sctk_network_init_ib(sctk_rail_info_t* rail){
   /* Infiniband Init */
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   sctk_ib_device_t *device;
+  struct ibv_srq_init_attr srq_attr;
   /* Open config */
   sctk_ib_config_init(rail_ib);
   /* Open device */
@@ -79,12 +97,15 @@ void sctk_network_init_ib(sctk_rail_info_t* rail){
   /* Init Completion Queues */
   device->send_cq = sctk_ib_cq_init(device, rail_ib->config);
   device->recv_cq = sctk_ib_cq_init(device, rail_ib->config);
-
+  /* Init SRQ */
+  srq_attr = sctk_ib_srq_init_attr(rail_ib);
+  sctk_ib_srq_init(rail_ib, &srq_attr);
   /* Print config */
   sctk_ib_config_print(rail_ib);
   sctk_ib_mmu_init(rail_ib);
   sctk_ibuf_pool_init(rail_ib);
-
+  /* Fill SRQ with buffers */
+  sctk_ibuf_srq_check_and_post(rail_ib, rail_ib->config->ibv_max_srq_ibufs);
 
   /* Initialize network */
   sctk_network_init_ib_all(rail, rail->route, rail->route_init);

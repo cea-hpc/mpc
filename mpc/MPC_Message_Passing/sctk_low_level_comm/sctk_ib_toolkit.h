@@ -45,6 +45,8 @@ void sctk_ib_debug(const char *fmt, ...);
 #define LOAD_CONFIG(x) sctk_ib_config_t *config = (x)->config;
 #define LOAD_MMU(x)    sctk_ib_mmu_t* mmu = (x)->mmu;
 #define LOAD_DEVICE(x)    sctk_ib_device_t* device = (x)->device;
+#define LOAD_POOL(x)    sctk_ibuf_pool_t* pool = (x)->pool_buffers;
 
 /* const for debugging IB */
 #define DEBUG_IB_MMU
+#define DEBUG_IB_BUFS

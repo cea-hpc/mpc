@@ -28,6 +28,7 @@
 #include "sctk_ib_toolkit.h"
 #include "sctk_ib.h"
 #include "sctk_ib_config.h"
+#include "sctk_ib_qp.h"
 #include "utlist.h"
 /**
    Description: NUMA aware buffers poll interface.
@@ -49,6 +50,8 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
   sctk_ibuf_t* ibuf_ptr;
   int i;
 
+  sctk_ib_debug("Allocating %d buffers", nb_ibufs);
+
   region = sctk_malloc_on_node(sizeof(sctk_ibuf_region_t), 0);
   assume(region);
 
@@ -60,7 +63,6 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
   /* XXX: replaced by memalign_on_node */
    sctk_posix_memalign(&ibuf, mmu->page_size, nb_ibufs * sizeof(sctk_ibuf_t));
   assume(ibuf);
-
   memset (ibuf, 0, nb_ibufs * sizeof(sctk_ibuf_t));
   /* XXX: memset disabled for optimizing launch
    * memset (ptr, 0, nb_ibufs * ibv_eager_limit); */
@@ -68,6 +70,7 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
   region->ibuf = ibuf;
   region->nb = nb_ibufs;
   region->node = node;
+  region->rail = rail_ib;
   DL_APPEND(node->regions, region);
 
   /* register buffers at once */
@@ -76,7 +79,7 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
   sctk_nodebug("Reg %p registered. lkey : %lu", ptr, region->mmu_entry->mr->lkey);
 
   /* init all buffers - the last one */
-  for(i=0; i < nb_ibufs - 1; ++i) {
+  for(i=0; i < nb_ibufs; ++i) {
     ibuf_ptr = (sctk_ibuf_t*) ibuf + i;
     ibuf_ptr->region = region;
     ibuf_ptr->size = 0;
@@ -105,6 +108,8 @@ sctk_ibuf_pool_init(struct sctk_ib_rail_info_s *rail_ib)
 
   pool = sctk_malloc(sizeof(sctk_ibuf_pool_t) +
       nodes_nb * sizeof(sctk_ibuf_numa_t));
+  memset(pool, 0, sizeof(sctk_ibuf_pool_t) +
+      nodes_nb * sizeof(sctk_ibuf_numa_t));
   assume (pool);
   pool->nodes_nb = nodes_nb;
   pool->nodes = (sctk_ibuf_numa_t*)
@@ -116,10 +121,98 @@ sctk_ibuf_pool_init(struct sctk_ib_rail_info_s *rail_ib)
     pool->nodes[i].lock = SCTK_SPINLOCK_INITIALIZER;
     init_node(rail_ib, &pool->nodes[i], config->ibv_init_ibufs);
   }
-
   /* update pool buffer */
   rail_ib->pool_buffers = pool;
 }
+
+/* pick a new buffer from the ibuf list. Function *MUST* be locked to avoid
+ * multiple calls*/
+sctk_ibuf_t*
+sctk_ibuf_pick(struct sctk_ib_rail_info_s *rail_ib,
+    int need_lock, int n)
+{
+  LOAD_POOL(rail_ib);
+  LOAD_CONFIG(rail_ib);
+  sctk_ibuf_t* ibuf;
+  sctk_ibuf_numa_t *node = &pool->nodes[n];
+  sctk_spinlock_t *lock = &node->lock;
+
+  if (need_lock) sctk_spinlock_lock(lock);
+
+  if (!node->free_header)
+      init_node(rail_ib, node, config->ibv_size_ibufs_chunk);
+
+  /* update pointers from buffer pool */
+  ibuf = node->free_header;
+  DL_DELETE(node->free_header, node->free_header);
+  node->free_nb--;
+
+ if (need_lock) sctk_spinlock_unlock(lock);
+
+#ifdef DEBUG_IB_BUFS
+  assume(ibuf);
+  if (ibuf->flag != FREE_FLAG)
+  {sctk_error("Wrong flag (%d) got from ibuf", ibuf->flag);}
+#endif
+
+  sctk_nodebug("ibuf: %p, lock:%p, need_lock:%d next free_header: %p, nb_free %d, nb_got %d, nb_free_srq %d, node %d)", ibuf, lock, need_lock, node->free_header, node->nb_free, node->nb_got, node->nb_free_srq, n);
+
+  return ibuf;
+}
+
+static int srq_post(
+    struct sctk_ib_rail_info_s *rail_ib,
+    int nb_ibufs, sctk_ibuf_numa_t *node)
+{
+  LOAD_DEVICE(rail_ib);
+  int i;
+  int nb_posted = 0;
+  sctk_ibuf_t* ibuf;
+  int rc;
+  sctk_spinlock_t *lock = &node->lock;
+
+  sctk_spinlock_lock(lock);
+  for (i=0; i < nb_ibufs; ++i)
+  {
+    ibuf = sctk_ibuf_pick(rail_ib, 0, node->id);
+#ifdef DEBUG_IB_BUFS
+    assume(ibuf);
+#endif
+
+    sctk_ibuf_recv_init(ibuf);
+
+    rc = ibv_post_srq_recv(device->srq, &(ibuf->desc.wr.recv), &(ibuf->desc.bad_wr.recv));
+
+    if (rc != 0)
+    {
+      ibuf->flag = FREE_FLAG;
+
+      /* change counters */
+      node->free_nb--;
+      DL_PREPEND(node->free_header, ibuf);
+      break;
+    }
+    else nb_posted++;
+  }
+
+  node->free_srq_nb+=nb_posted;
+  sctk_spinlock_unlock(lock);
+
+  sctk_nodebug("posted: %d on nb_ibufs %d (free_srq %d, got_srq %d)", nb_posted, nb_ibufs, node->nb_free_srq, node->nb_got_srq);
+  return nb_posted;
+}
+
+/* FIXME: check with buffers near IB card */
+int sctk_ibuf_srq_check_and_post(
+    struct sctk_ib_rail_info_s *rail_ib,
+    int limit)
+{
+  LOAD_POOL(rail_ib);
+  int node = 0;
+
+  return srq_post(rail_ib, limit, &pool->nodes[node]);
+}
+
 
 
 #if 0
@@ -128,92 +221,6 @@ sctk_net_ibv_ibuf_numa_t* get_numa_node(const int core_id)
   return &ibuf_on_node[sctk_get_node_from_cpu(core_id)];
 }
 
-/* pick a new buffer from the ibuf list. Function *MUST* be locked to avoid
- * multiple calls*/
-sctk_net_ibv_ibuf_t* sctk_net_ibv_ibuf_pick(int return_on_null, int need_lock, int n)
-{
-  sctk_net_ibv_ibuf_t* ibuf;
-  sctk_net_ibv_ibuf_numa_t *node = &ibuf_on_node[n];
-  sctk_spinlock_t *lock = &node->lock;
-
-  if (need_lock) sctk_spinlock_lock(lock);
-
-  if (!node->free_header)
-      init_numa_node(node, rail, rc_sr_local, ibv_size_ibufs_chunk, 1);
-
-  /* update pointers from buffer pool */
-  ibuf = node->free_header;
-  node->free_header = node->free_header->desc.next;
-
- if (need_lock) sctk_spinlock_unlock(lock);
-
-  assume(node->free_header);
-  assume(ibuf);
-  if (ibuf->flag != FREE_FLAG)
-  {sctk_error("Wrong flag (%d) got from ibuf", ibuf->flag);}
-
-  sctk_nodebug("ibuf: %p, lock:%p, need_lock:%d next free_header: %p, nb_free %d, nb_got %d, nb_free_srq %d, node %d)", ibuf, lock, need_lock, node->free_header, node->nb_free, node->nb_got, node->nb_free_srq, n);
-
-  /* increment counters */
-  sctk_atomics_decr_int((OPA_int_t*) &node->nb_free);
-  sctk_atomics_incr_int((OPA_int_t*) &node->nb_got);
-
-  return ibuf;
-}
-
-static int srq_post(
-    sctk_net_ibv_qp_local_t* local,
-    int need_lock,
-    int nb_ibufs, sctk_net_ibv_ibuf_numa_t *node)
-{
-  int i;
-  int nb_posted = 0;
-  sctk_net_ibv_ibuf_t* ibuf;
-  int rc;
-  sctk_spinlock_t *lock = &node->lock;
-
-  for (i=0; i < nb_ibufs; ++i)
-  {
-    ibuf = sctk_net_ibv_ibuf_pick(0, need_lock, node->id);
-    assume(ibuf);
-
-    sctk_net_ibv_ibuf_recv_init(ibuf);
-
-    rc = ibv_post_srq_recv(local->srq, &(ibuf->desc.wr.recv), &(ibuf->desc.bad_wr.recv));
-
-    if (rc != 0)
-    {
-      ibuf->flag = FREE_FLAG;
-
-      /* change counters */
-      sctk_atomics_incr_int((OPA_int_t*) &node->nb_free);
-      sctk_atomics_decr_int((OPA_int_t*) &node->nb_got);
-
-      /* move flags */
-      if (need_lock) sctk_spinlock_lock(lock);
-      ibuf->desc.next = node->free_header;
-      node->free_header = ibuf;
-      if (need_lock) sctk_spinlock_unlock(lock);
-      break;
-    }
-    else
-      ++nb_posted;
-  }
-
-  sctk_atomics_add_int((OPA_int_t*) &node->nb_free_srq, nb_posted);
-
-  sctk_nodebug("posted: %d on nb_ibufs %d (free_srq %d, got_srq %d)", nb_posted, nb_ibufs, node->nb_free_srq, node->nb_got_srq);
-  return nb_posted;
-}
-
-/* FIXME: check with buffers near IB card */
-int sctk_net_ibv_ibuf_srq_check_and_post(
-    sctk_net_ibv_qp_local_t* local, int limit, int need_lock)
-{
-  int node = 0;
-
-  return srq_post(local, need_lock, limit, &ibuf_on_node[node]);
-}
 
 /* release one buffer given as parameter.
  * is_srq: if the buffer is released from the SRQ */

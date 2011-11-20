@@ -155,8 +155,38 @@ typedef struct sctk_ibuf_s
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
-
 void sctk_ibuf_pool_init(struct sctk_ib_rail_info_s *rail);
 
+sctk_ibuf_t*
+sctk_ibuf_pick(struct sctk_ib_rail_info_s *rail_ib,
+    int need_lock, int n);
+
+int sctk_ibuf_srq_check_and_post(
+    struct sctk_ib_rail_info_s *rail_ib, int limit);
+
+/*-----------------------------------------------------------
+ *  WR INITIALIZATION
+ *----------------------------------------------------------*/
+void sctk_ibuf_recv_init(sctk_ibuf_t* ibuf);
+
+void sctk_ibuf_rdma_recv_init(sctk_ibuf_t* ibuf, void* local_address,
+    uint32_t lkey);
+
+void sctk_ibuf_barrier_send_init(sctk_ibuf_t* ibuf, void* local_address,
+    uint32_t lkey, void* remote_address, uint32_t rkey,
+    int len);
+
+void sctk_ibuf_send_init(
+    sctk_ibuf_t* ibuf, size_t size);
+
+void sctk_ibuf_rdma_write_init(
+    sctk_ibuf_t* ibuf, void* local_address,
+    uint32_t lkey, void* remote_address, uint32_t rkey,
+    int len);
+
+void sctk_ibuf_rdma_read_init(
+    sctk_ibuf_t* ibuf, void* local_address,
+    uint32_t lkey, void* remote_address, uint32_t rkey,
+    int len, void* supp_ptr, int dest_process);
 #endif
 #endif

@@ -49,7 +49,7 @@ void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t*
   sctk_spinlock_write_lock(&sctk_route_table_lock);
   HASH_ADD(hh,sctk_dynamic_route_table,key,sizeof(sctk_route_key_t),tmp);
   sctk_spinlock_write_unlock(&sctk_route_table_lock);
-  
+
 }
 
 void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
@@ -59,21 +59,21 @@ void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* 
 
   sctk_add_static_reorder_buffer(dest);
   TABLE_LOCK();
-  HASH_ADD(hh,sctk_static_route_table,key,sizeof(sctk_route_key_t),tmp); 
-  TABLE_UNLOCK(); 
+  HASH_ADD(hh,sctk_static_route_table,key,sizeof(sctk_route_key_t),tmp);
+  TABLE_UNLOCK();
 }
 
-static inline 
+static inline
 sctk_route_table_t* sctk_get_route_to_process_no_route(int dest, sctk_rail_info_t* rail){
   sctk_route_key_t key;
   sctk_route_table_t* tmp;
 
-  key.destination = dest; 
+  key.destination = dest;
   key.rail = rail->rail_number;
 
-  TABLE_LOCK();  
+  TABLE_LOCK();
   HASH_FIND(hh,sctk_static_route_table,&key,sizeof(sctk_route_key_t),tmp);
-  TABLE_UNLOCK(); 
+  TABLE_UNLOCK();
   if(tmp == NULL){
     sctk_spinlock_read_lock(&sctk_route_table_lock);
     HASH_FIND(hh,sctk_dynamic_route_table,&key,sizeof(sctk_route_key_t),tmp);
@@ -117,17 +117,17 @@ sctk_rail_info_t* sctk_route_get_rail(int i){
 
 void sctk_route_finalize(){
   char* net_name;
-  int i; 
+  int i;
   char* name_ptr;
-  
+
   net_name = sctk_malloc(rail_number*4096);
   name_ptr = net_name;
   for(i = 0; i < rail_number; i++){
     rails[i].route_init(&(rails[i]));
     sprintf(name_ptr,"[%d:%s (%s)]",i,rails[i].network_name,rails[i].topology_name);
     name_ptr = net_name + strlen(net_name);
-    sctk_pmi_barrier();  
-  }  
+    sctk_pmi_barrier();
+  }
   sctk_network_mode = net_name;
 }
 
@@ -151,8 +151,8 @@ void sctk_route_messages_send(int myself,int dest,int tag, void* buffer,size_t s
   msg_req = &msg;
 
   sctk_init_header(&(msg_req->msg),myself,sctk_message_contiguous,sctk_free_route_messages,
-		   sctk_message_copy); 
-  sctk_add_adress_in_message(&(msg_req->msg),buffer,size); 
+		   sctk_message_copy);
+  sctk_add_adress_in_message(&(msg_req->msg),buffer,size);
   sctk_set_header_in_message (&(msg_req->msg), tag, communicator, myself, dest,
 			      &(msg_req->request), size,specific_message_tag);
   sctk_send_message (&(msg_req->msg));
@@ -164,12 +164,12 @@ void sctk_route_messages_recv(int src, int myself,int tag, void* buffer,size_t s
   specific_message_tag_t specific_message_tag = process_specific_message_tag;
   sctk_route_messages_t msg;
   sctk_route_messages_t* msg_req;
-  
+
   msg_req = &msg;
 
   sctk_init_header(&(msg_req->msg),myself,sctk_message_contiguous,sctk_free_route_messages,
-		   sctk_message_copy); 
-  sctk_add_adress_in_message(&(msg_req->msg),buffer,size); 
+		   sctk_message_copy);
+  sctk_add_adress_in_message(&(msg_req->msg),buffer,size);
   sctk_set_header_in_message (&(msg_req->msg), tag, communicator,  src,myself,
 			      &(msg_req->request), size,specific_message_tag);
   sctk_recv_message (&(msg_req->msg),NULL);
@@ -183,11 +183,11 @@ void sctk_route_ring_init(sctk_rail_info_t* rail){
 
 int sctk_route_ring(int dest, sctk_rail_info_t* rail){
   int old_dest;
-  
+
   old_dest = dest;
   dest = (dest + sctk_process_number -1) % sctk_process_number;
   sctk_nodebug("Route via dest - 1 %d to %d",dest,old_dest);
-  
+
   return dest;
 }
 
@@ -199,31 +199,31 @@ int sctk_route_fully(int dest, sctk_rail_info_t* rail){
 void sctk_route_fully_init(sctk_rail_info_t* rail){
   int (*sav_sctk_route)(int , sctk_rail_info_t* );
 
-  sctk_pmi_barrier();   
+  sctk_pmi_barrier();
   sctk_route_table_init_lock_needed = 1;
-  sctk_pmi_barrier();   
+  sctk_pmi_barrier();
   sav_sctk_route = rail->route;
   rail->route = sctk_route_ring;
   if(sctk_process_number > 3){
-    int from; 
+    int from;
     int to;
     for(from = 0; from < sctk_process_number; from++){
       for(to = 0; to < sctk_process_number; to ++){
 	if(to != from){
-	  sctk_route_table_t* tmp;	
+	  sctk_route_table_t* tmp;
 	  if(from == sctk_process_rank){
 	    tmp = sctk_get_route_to_process_no_route(to,rail);
 	    if(tmp == NULL){
 	      rail->connect_from(from,to,rail);
-	    } 
-	  } 
+	    }
+	  }
 	  if(to == sctk_process_rank){
 	    tmp = sctk_get_route_to_process_no_route(from,rail);
 	    if(tmp == NULL){
 	      rail->connect_to(from,to,rail);
 	    }
 	  }
-	} 
+	}
       }
     }
     sctk_pmi_barrier();
@@ -231,7 +231,7 @@ void sctk_route_fully_init(sctk_rail_info_t* rail){
   rail->route = sav_sctk_route;
   sctk_pmi_barrier();
   sctk_route_table_init_lock_needed = 0;
-  sctk_pmi_barrier();   
+  sctk_pmi_barrier();
 }
 
 void sctk_route_init_in_rail(sctk_rail_info_t* rail, char* topology){

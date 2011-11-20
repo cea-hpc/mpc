@@ -31,6 +31,7 @@ extern "C"
   struct sctk_ib_mmu_s;
   struct sctk_ib_config_s;
   struct sctk_ib_device_s;
+  struct sctk_ib_qp_s;
 
   typedef struct sctk_ib_rail_info_s {
     struct sctk_ibuf_pool_s *pool_buffers;
@@ -40,7 +41,7 @@ extern "C"
   } sctk_ib_rail_info_t;
 
   typedef struct sctk_ib_data_s {
-
+    struct sctk_ib_qp_s* remote;
   } sctk_ib_data_t;
 
 #include <sctk_route.h>

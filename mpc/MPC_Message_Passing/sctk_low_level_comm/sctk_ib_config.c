@@ -61,14 +61,14 @@
 /* Maximum number of buffers which can be posted to the SRQ.
  * This number cannot be higher than than the number fixed by the HW.
  * The verification is done during the config_check function */
-#define IBV_MAX_SRQ_IBUFS_POSTED     18000
+#define IBV_MAX_SRQ_IBUFS_POSTED     12000
 /* When the async thread wakes, it means that the SRQ is full. We
  * allows the async thread to extract IBV_MAX_SRQ_WR_HANDLE_BY_THREAD messages
  * before posting new buffers .*/
 #define IBV_MAX_SRQ_WR_HANDLE_BY_THREAD 50
 /* Maximum number of buffers which can be used by SRQ. This number
  * is not fixed by the HW */
-#define IBV_MAX_SRQ_IBUFS            18000
+#define IBV_MAX_SRQ_IBUFS            12000
 /* Minimum number of free recv buffer before
  * posting of new buffers. This thread is  activated
  * once a recv buffer is freed. If IBV_SRQ_CREDIT_LIMIT ==
