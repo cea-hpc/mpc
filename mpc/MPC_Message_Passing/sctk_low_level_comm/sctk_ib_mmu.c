@@ -134,7 +134,7 @@ sctk_ib_mmu_entry_t *sctk_ib_mmu_register (
   /* pop the first element */
   DL_DELETE(mmu->free_header, mmu->free_header);
   mmu->free_nb--;
-  sctk_ib_debug("entry reserved (free:%d)", mmu->free_nb);
+  sctk_ib_debug("Entry reserved (free_nb:%d size:%lu)", mmu->free_nb, size);
   sctk_spinlock_unlock (&mmu->lock);
   mmu_entry->status = ibv_entry_used;
 

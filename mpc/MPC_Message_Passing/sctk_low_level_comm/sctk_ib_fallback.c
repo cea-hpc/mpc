@@ -59,7 +59,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   /* XXX: switch on message sending protocols */
 
   ibuf = sctk_ib_sr_prepare_msg(rail_ib, remote, msg);
-  sctk_ib_qp_send_ibuf(remote, ibuf);
+  sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
 
   sctk_complete_and_free_message(msg);
 }
@@ -141,6 +141,7 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc)
   assume(ibuf);
 
   sctk_ibuf_release(&rail->network.ib, ibuf, 1);
+  sctk_ib_qp_release_entry(&rail->network.ib, ibuf->remote);
   return 0;
 }
 

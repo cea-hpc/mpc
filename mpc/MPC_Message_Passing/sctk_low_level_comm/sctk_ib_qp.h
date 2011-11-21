@@ -66,6 +66,10 @@ typedef struct sctk_ib_qp_s
   uint8_t                 is_rts;
   /* QP connected */
   uint8_t                 is_connected;
+  /* Number of pending entries free in QP */
+  unsigned int            free_nb;
+  /* Lock when posting an element */
+  sctk_spinlock_t         post_lock;
 } sctk_ib_qp_t;
 
 /*-----------------------------------------------------------
@@ -138,8 +142,12 @@ sctk_ib_srq_init(struct sctk_ib_rail_info_s* rail_ib,
   struct ibv_srq_init_attr
 sctk_ib_srq_init_attr(struct sctk_ib_rail_info_s* rail_ib);
 
-void sctk_ib_qp_send_ibuf(sctk_ib_qp_t *remote,
-    struct sctk_ibuf_s* ibuf);
+void
+sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
+    sctk_ib_qp_t *remote, sctk_ibuf_t* ibuf);
+
+void sctk_ib_qp_release_entry(struct sctk_ib_rail_info_s* rail_ib,
+    sctk_ib_qp_t *remote);
 
 #endif
 #endif

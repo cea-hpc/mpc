@@ -93,7 +93,7 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
   node->free_nb += nb_ibufs;
   node->nb += nb_ibufs;
 
-  sctk_ib_debug("[node:%d] Allocation of %d buffers (free_nb %d)", node->id, nb_ibufs, node->free_nb);
+  sctk_ib_debug("[node:%d] Allocation of %d buffers (free_nb:%u got:%u)", node->id, nb_ibufs, node->free_nb, node->nb - node->free_nb);
 }
 
 void
@@ -188,7 +188,7 @@ static int srq_post(
       ibuf->flag = FREE_FLAG;
 
       /* change counters */
-      node->free_nb--;
+      node->free_nb++;
       DL_PREPEND(node->free_header, ibuf);
       break;
     }

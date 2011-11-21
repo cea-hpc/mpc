@@ -143,7 +143,7 @@ typedef struct sctk_ibuf_s
   enum sctk_ibuf_status flag;
 
   /* the following infos aren't transmitted by the network */
-  struct sctk_net_ibv_qp_remote_s*    remote;
+  struct sctk_ib_qp_t*    remote;
   void* supp_ptr;
   int dest_process;
 

@@ -274,8 +274,7 @@ sctk_ib_qp_init(struct sctk_ib_rail_info_s* rail_ib,
   LOAD_DEVICE(rail_ib);
 
   remote->qp = ibv_create_qp (device->pd, attr);
-  if (!remote->qp)
-  {
+  if (!remote->qp) {
     sctk_error("Cannot create QP for rank %d", rank);
     sctk_abort();
   }
@@ -453,6 +452,7 @@ sctk_ib_srq_init_attr(struct sctk_ib_rail_info_s* rail_ib)
 sctk_ib_qp_allocate_init(struct sctk_ib_rail_info_s* rail_ib,
     int rank, sctk_ib_qp_t* remote)
 {
+  LOAD_CONFIG(rail_ib);
   struct ibv_qp_init_attr  init_attr;
   struct ibv_qp_attr       attr;
   int flags;
@@ -460,6 +460,8 @@ sctk_ib_qp_allocate_init(struct sctk_ib_rail_info_s* rail_ib,
   remote->psn = lrand48 () & 0xffffff;
   remote->rank = rank;
   remote->is_connected = 0;
+  remote->free_nb = config->ibv_qp_tx_depth;
+  remote->post_lock = SCTK_SPINLOCK_INITIALIZER;
 
   init_attr = sctk_ib_qp_init_attr(rail_ib);
   sctk_ib_qp_init(rail_ib, remote, &init_attr, rank);
@@ -494,16 +496,70 @@ sctk_ib_qp_allocate_rts(struct sctk_ib_rail_info_s* rail_ib,
   remote->is_rts = 1;
 }
 
+struct wait_send_s {
+  int flag;
+  sctk_ib_qp_t *remote;
+  sctk_ibuf_t *ibuf;
+};
 
-void
-sctk_ib_qp_send_ibuf(sctk_ib_qp_t *remote,
-    sctk_ibuf_t* ibuf)
-{
+void sctk_ib_qp_release_entry(struct sctk_ib_rail_info_s* rail_ib,
+    sctk_ib_qp_t *remote) {
+
+  sctk_spinlock_lock(&remote->post_lock);
+  remote->free_nb++;
+  sctk_spinlock_unlock(&remote->post_lock);
+}
+
+static void* wait_send(void *arg){
+  struct wait_send_s *a = (struct wait_send_s*) arg;
   int rc;
+
+  if (a->remote->free_nb > 0) {
+    if (sctk_spinlock_trylock(&a->remote->post_lock) == 0) {
+      if (a->remote->free_nb > 0) {
+        rc = ibv_post_send(a->remote->qp, &(a->ibuf->desc.wr.send),
+            &(a->ibuf->desc.bad_wr.send));
+        assume(rc == 0);
+        a->remote->free_nb--;
+        a->flag = 1;
+      }
+      sctk_spinlock_unlock(&a->remote->post_lock);
+    }
+  }
+  return NULL;
+}
+
+  void
+sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
+    sctk_ib_qp_t *remote, sctk_ibuf_t* ibuf)
+{
+  int rc, need_wait = 1;
+  struct wait_send_s wait_send_arg;
   sctk_nodebug("Send message to process %d %p", remote->rank, remote->qp);
 
-  rc = ibv_post_send(remote->qp, &(ibuf->desc.wr.send), &(ibuf->desc.bad_wr.send));
-  assume(rc == 0);
+  ibuf->remote = remote;
+
+  if (remote->free_nb > 0) {
+    sctk_spinlock_lock(&remote->post_lock);
+    if (remote->free_nb > 0) {
+      rc = ibv_post_send(remote->qp, &(ibuf->desc.wr.send), &(ibuf->desc.bad_wr.send));
+      assume(rc == 0);
+      remote->free_nb--;
+      need_wait = 0;
+    }
+    sctk_spinlock_unlock(&remote->post_lock);
+  }
+
+  if (need_wait)
+  {
+    wait_send_arg.flag = 0;
+    wait_send_arg.remote = remote;
+    wait_send_arg.ibuf = ibuf;
+
+    sctk_ib_nodebug("QP full, waiting for posting message...");
+    sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
+        (void (*)(void *)) wait_send, &wait_send_arg);
+  }
 }
 
 
