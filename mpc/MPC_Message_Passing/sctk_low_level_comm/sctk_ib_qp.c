@@ -200,7 +200,7 @@ sctk_ib_qp_keys_t sctk_ib_qp_keys_convert( char* msg)
 {
   sctk_ib_qp_keys_t keys;
   sscanf(msg, "%05"SCNu16":%010"SCNu32":%010"SCNu32, &keys.lid, &keys.qp_num, &keys.psn);
-  sctk_debug("LID : %lu|psn : %lu|qp_num : %lu", keys.lid, keys.psn, keys.qp_num);
+  sctk_nodebug("LID : %lu|psn : %lu|qp_num : %lu", keys.lid, keys.psn, keys.qp_num);
 
   return keys;
 }
@@ -222,7 +222,7 @@ void sctk_ib_qp_keys_send(
   /* FIXME: Change 0 if several rails at the same time */
   snprintf(key, key_max,"IB%02d:%06d:%06d", 0, sctk_process_rank, remote->rank);
   snprintf(val, val_max, "%05"SCNu16":%010"SCNu32":%010"SCNu32, device->port_attr.lid, remote->qp->qp_num, remote->psn);
-  sctk_debug("Send KEY %s\t%s", key, val);
+  sctk_nodebug("Send KEY %s\t%s", key, val);
   sctk_pmi_put_connection_info_str(val, val_max, key);
 }
 
@@ -237,7 +237,7 @@ sctk_ib_qp_keys_recv(sctk_ib_qp_t *remote, int dest_process)
 
   snprintf(key, key_max,"IB%02d:%06d:%06d", 0, dest_process, sctk_process_rank);
   sctk_pmi_get_connection_info_str(val, val_max, key);
-  sctk_debug("Got KEY %s\t%s", key, val);
+  sctk_nodebug("Got KEY %s\t%s", key, val);
   qp_keys = sctk_ib_qp_keys_convert(val);
 
   return qp_keys;
@@ -279,7 +279,7 @@ sctk_ib_qp_init(struct sctk_ib_rail_info_s* rail_ib,
     sctk_error("Cannot create QP for rank %d", rank);
     sctk_abort();
   }
-  sctk_debug("QP Initialized for rank %d %p", remote->rank, remote->qp);
+  sctk_nodebug("QP Initialized for rank %d %p", remote->rank, remote->qp);
   return remote->qp;
 }
 
@@ -410,8 +410,6 @@ sctk_ib_qp_modify( sctk_ib_qp_t* remote, struct ibv_qp_attr* attr, int flags)
   if (ibv_modify_qp(remote->qp, attr, flags) != 0)
   {
     sctk_error("Cannot modify Queue Pair");
-    sctk_debug("flags:%d %p %p", flags, attr, remote->qp);
-    perror("Error");
     sctk_abort();
   }
 }
@@ -478,7 +476,7 @@ sctk_ib_qp_allocate_rtr(struct sctk_ib_rail_info_s* rail_ib,
   int flags;
 
   attr = sctk_ib_qp_state_rtr_attr(rail_ib, keys, &flags);
-  sctk_debug("Modify QR RTR for rank %d", remote->rank);
+  sctk_nodebug("Modify QR RTR for rank %d", remote->rank);
   sctk_ib_qp_modify(remote, &attr, flags);
   remote->is_rtr = 1;
 }
@@ -491,7 +489,7 @@ sctk_ib_qp_allocate_rts(struct sctk_ib_rail_info_s* rail_ib,
   int flags;
 
   attr = sctk_ib_qp_state_rts_attr(rail_ib, remote->psn, &flags);
-  sctk_debug("Modify QR RTS for rank %d", remote->rank);
+  sctk_nodebug("Modify QR RTS for rank %d", remote->rank);
   sctk_ib_qp_modify(remote, &attr, flags);
   remote->is_rts = 1;
 }
@@ -502,7 +500,7 @@ sctk_ib_qp_send_ibuf(sctk_ib_qp_t *remote,
     sctk_ibuf_t* ibuf)
 {
   int rc;
-  sctk_debug("Send message to process %d %p", remote->rank, remote->qp);
+  sctk_nodebug("Send message to process %d %p", remote->rank, remote->qp);
 
   rc = ibv_post_send(remote->qp, &(ibuf->desc.wr.send), &(ibuf->desc.bad_wr.send));
   assume(rc == 0);

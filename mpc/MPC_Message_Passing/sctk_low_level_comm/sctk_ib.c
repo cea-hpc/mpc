@@ -55,12 +55,10 @@ sctk_ib_create_remote(int dest, sctk_rail_info_t* rail){
   tmp = sctk_malloc(sizeof(sctk_route_table_t));
   memset(tmp,0,sizeof(sctk_route_table_t));
 
-  sctk_debug("Creating QP for dest %d", dest);
+  sctk_nodebug("Creating QP for dest %d", dest);
   route_ib=&tmp->data.ib;
   route_ib->remote = sctk_ib_qp_new();
   sctk_ib_qp_allocate_init(rail_ib, dest, route_ib->remote);
-
-  sctk_ib_add_static_route(dest, tmp, rail);
 
   return tmp;
 }
@@ -74,7 +72,7 @@ void sctk_network_init_ib_all(sctk_rail_info_t* rail,
   int src_rank;
   char src_connection_infos[MAX_STRING_SIZE];
   char dest_connection_infos[MAX_STRING_SIZE];
-  sctk_route_table_t* route_table;
+  sctk_route_table_t *route_table_src, *route_table_dest;
   sctk_ib_data_t *route_dest, *route_src;
   sctk_ib_qp_keys_t keys;
 
@@ -86,11 +84,11 @@ void sctk_network_init_ib_all(sctk_rail_info_t* rail,
   src_rank = (sctk_process_rank + sctk_process_number - 1) % sctk_process_number;
 
   /* create remote for dest */
-  route_table = sctk_ib_create_remote(dest_rank, rail);
-  route_dest=&route_table->data.ib;
+  route_table_dest = sctk_ib_create_remote(dest_rank, rail);
+  route_dest=&route_table_dest->data.ib;
   /* create remote for src */
-  route_table = sctk_ib_create_remote(src_rank, rail);
-  route_src=&route_table->data.ib;
+  route_table_src = sctk_ib_create_remote(src_rank, rail);
+  route_src=&route_table_src->data.ib;
 
   /* XXX: Set QP in a Ready-To-Send mode. Ideally, we should check that
    * the remote QP has sent an ack */
@@ -108,6 +106,9 @@ void sctk_network_init_ib_all(sctk_rail_info_t* rail,
   sctk_ib_qp_allocate_rtr(rail_ib, route_dest->remote, &keys);
   sctk_ib_qp_allocate_rts(rail_ib, route_dest->remote);
   sctk_pmi_barrier();
+
+  sctk_ib_add_static_route(dest_rank, route_table_dest, rail);
+  sctk_ib_add_static_route(src_rank, route_table_src, rail);
 
   sctk_debug("Recv from %d, send to %d", src_rank, dest_rank);
 }

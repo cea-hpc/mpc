@@ -43,7 +43,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   sctk_ib_qp_t *remote;
   sctk_ibuf_t *ibuf;
 
-  sctk_debug("send message through rail %d",rail->rail_number);
+  sctk_nodebug("send message through rail %d",rail->rail_number);
 
   if(msg->body.header.specific_message_tag == process_specific_message_tag){
     tmp = sctk_get_route_to_process(msg->sctk_msg_get_destination,rail);
@@ -53,11 +53,15 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
   route_data=&tmp->data.ib;
   remote=route_data->remote;
-  sctk_debug("Sending message to %d for %d (%p)", remote->rank, msg->sctk_msg_get_glob_destination, tmp);
+  sctk_debug("Sending message to %d for %d (task:%d,number:%d) (%p)", remote->rank,
+      sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_glob_destination),
+      msg->sctk_msg_get_glob_destination, msg->sctk_msg_get_message_number, tmp);
   /* XXX: switch on message sending protocols */
 
   ibuf = sctk_ib_sr_prepare_msg(rail_ib, remote, msg);
   sctk_ib_qp_send_ibuf(remote, ibuf);
+
+  sctk_complete_and_free_message(msg);
 }
 
 static int sctk_network_poll(sctk_rail_info_t* rail, struct ibv_wc* wc)
@@ -69,29 +73,37 @@ static int sctk_network_poll(sctk_rail_info_t* rail, struct ibv_wc* wc)
   void* body;
 
   ibuf = (sctk_ibuf_t*) wc->wr_id;
-  sctk_debug("Ibuf ptr: %p", ibuf);
   assume(ibuf);
 
   sr_header = IBUF_SR_HEADER(ibuf->buffer);
   size = sr_header->eager.payload_size;
-  sctk_debug("Size: %lu", size);
-
-  msg = sctk_malloc(size + sizeof(sctk_thread_ptp_message_t));
+  size = size - sizeof(sctk_thread_ptp_message_body_t) +
+      sizeof(sctk_thread_ptp_message_t);
+  sctk_debug("Malloc size :%lu", size);
+  msg = sctk_malloc(size);
   assume(msg);
   body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
+
+  /* Copy the header of the message */
+  sctk_debug("Read header %d",sizeof(sctk_thread_ptp_message_body_t));
+  memcpy(msg, IBUF_MSG_HEADER(ibuf->buffer), sizeof(sctk_thread_ptp_message_body_t));
 
   msg->body.completion_flag = NULL;
   msg->tail.message_type = sctk_message_network;
 
-  /* Copy the header of the message */
-  memcpy(msg, IBUF_MSG_HEADER(ibuf->buffer), sizeof(sctk_thread_ptp_message_body_t));
   /* Copy the body of the message */
+  size = size - sizeof(sctk_thread_ptp_message_t);
+  sctk_debug("Read body %d",size);
   memcpy(body, IBUF_MSG_PAYLOAD(ibuf->buffer), size);
 
+  sctk_debug("Message received for %d from %d (task:%d,size:%lu), glob_dest:%d",
+      sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_glob_source),
+      sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_source),
+      msg->sctk_msg_get_glob_source,size,
+      msg->sctk_msg_get_glob_destination);
   sctk_rebuild_header(msg);
   sctk_reinit_header(msg,sctk_free,sctk_net_message_copy);
   rail->send_message_from_network(msg);
-
 
   return 0;
 }
@@ -102,13 +114,13 @@ sctk_network_notify_recv_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_i
   LOAD_CONFIG(rail_ib);
   LOAD_DEVICE(rail_ib);
 
-  sctk_debug("Recv_message");
+  sctk_nodebug("Recv_message");
   sctk_ib_cq_poll(rail_ib, device->recv_cq, config->ibv_wc_in_number, sctk_network_poll);
 }
 
 static void
 sctk_network_notify_matching_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
-  sctk_debug("Matching");
+  sctk_nodebug("Matching");
 }
 
 static void
@@ -126,12 +138,12 @@ sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){
   LOAD_CONFIG(rail_ib);
   LOAD_DEVICE(rail_ib);
 
-  sctk_debug("Ici");
   sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, sctk_network_poll);
 }
 
 static void
 sctk_network_notify_any_source_message_ib (sctk_rail_info_t* rail){
+
 }
 
 static void

@@ -179,8 +179,6 @@ static int srq_post(
     assume(ibuf);
 #endif
 
-    if (sctk_process_rank == 0)
-      sctk_debug("\t\t\tPost buffer %p", ibuf);
     sctk_ibuf_recv_init(ibuf);
 
     rc = ibv_post_srq_recv(device->srq, &(ibuf->desc.wr.recv), &(ibuf->desc.bad_wr.recv));

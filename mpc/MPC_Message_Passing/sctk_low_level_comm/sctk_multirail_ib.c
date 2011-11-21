@@ -40,9 +40,9 @@ sctk_network_send_message_multirail_ib (sctk_thread_ptp_message_t * msg){
       Reordering available : we can use multirail
     */
     i = 0;
-    if(msg->sctk_msg_get_msg_size > 32768){
-      i = 1;
-    }
+//  if(msg->sctk_msg_get_msg_size > 32768){
+//    i = 1;
+//  }
   } else {
     /*
       No reodering: we can't use multirail fall back to rail 0
