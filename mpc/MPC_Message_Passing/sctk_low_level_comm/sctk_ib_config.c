@@ -129,7 +129,7 @@ char* steal_names[3] = {
   "Collaborative-polling w/o WS",
   "Collaborative-polling w/ WS"};
 
-#define IBV_QUIET_CRASH           1
+#define IBV_QUIET_CRASH           0
 #define IBV_MATCH                 1
 
 /*-----------------------------------------------------------

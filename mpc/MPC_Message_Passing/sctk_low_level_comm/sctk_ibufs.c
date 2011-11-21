@@ -93,7 +93,7 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
   node->free_nb += nb_ibufs;
   node->nb += nb_ibufs;
 
-  sctk_ib_debug("[node:%d] Allocation of %d buffers (free_nb %d)", node->id, nb_ibufs, node->free_nb, node->free_header);
+  sctk_ib_debug("[node:%d] Allocation of %d buffers (free_nb %d)", node->id, nb_ibufs, node->free_nb);
 }
 
 void
@@ -162,7 +162,7 @@ sctk_ibuf_pick(struct sctk_ib_rail_info_s *rail_ib,
 
 static int srq_post(
     struct sctk_ib_rail_info_s *rail_ib,
-    int nb_ibufs, sctk_ibuf_numa_t *node)
+    int nb_ibufs, sctk_ibuf_numa_t *node, int need_lock)
 {
   LOAD_DEVICE(rail_ib);
   int i;
@@ -171,7 +171,7 @@ static int srq_post(
   int rc;
   sctk_spinlock_t *lock = &node->lock;
 
-  sctk_spinlock_lock(lock);
+  if(need_lock) sctk_spinlock_lock(lock);
   for (i=0; i < nb_ibufs; ++i)
   {
     ibuf = sctk_ibuf_pick(rail_ib, 0, node->id);
@@ -196,7 +196,7 @@ static int srq_post(
   }
 
   node->free_srq_nb+=nb_posted;
-  sctk_spinlock_unlock(lock);
+  if (need_lock) sctk_spinlock_unlock(lock);
 
   sctk_nodebug("posted: %d on nb_ibufs %d (free_srq %d, got_srq %d)", nb_posted, nb_ibufs, node->nb_free_srq, node->nb_got_srq);
   return nb_posted;
@@ -210,9 +210,41 @@ int sctk_ibuf_srq_check_and_post(
   LOAD_POOL(rail_ib);
   int node = 0;
 
-  return srq_post(rail_ib, limit, &pool->nodes[node]);
+  return srq_post(rail_ib, limit, &pool->nodes[node], 1);
 }
 
+/* release one buffer given as parameter.
+ * is_srq: if the buffer is released from the SRQ */
+void sctk_ibuf_release(
+    struct sctk_ib_rail_info_s *rail_ib,
+    sctk_ibuf_t* ibuf, int is_srq)
+{
+  assume(ibuf);
+  LOAD_CONFIG(rail_ib);
+  sctk_ibuf_numa_t *node = ibuf->region->node;
+  sctk_spinlock_t *lock = &node->lock;
+
+  ibuf->flag = FREE_FLAG;
+
+  sctk_spinlock_lock(lock);
+  node->free_nb++;
+  DL_APPEND(node->free_header, ibuf);
+  /* If SRQ, we check and try to post more messages to SRQ */
+  if (is_srq) {
+    /* limit of buffer posted */
+    int limit;
+
+    node->free_srq_nb--;
+
+    limit = config->ibv_max_srq_ibufs - node->free_srq_nb;
+    sctk_debug("Post new buffer !!!!!!!!!!! : %d (%d - %d)", limit, config->ibv_max_srq_ibufs, node->free_srq_nb);
+    if (limit > 0) {
+      srq_post(rail_ib, limit, node, 0);
+    }
+  }
+  sctk_debug("Buffer %p free (%d)", ibuf, is_srq);
+  sctk_spinlock_unlock(lock);
+}
 
 
 #if 0
@@ -222,53 +254,6 @@ sctk_net_ibv_ibuf_numa_t* get_numa_node(const int core_id)
 }
 
 
-/* release one buffer given as parameter.
- * is_srq: if the buffer is released from the SRQ */
-void sctk_net_ibv_ibuf_release(sctk_net_ibv_ibuf_t* ibuf, int is_srq, int need_lock)
-{
-  sctk_net_ibv_ibuf_numa_t *node = ibuf->region->node;
-  int nb_got;
-  sctk_spinlock_t *lock = &node->lock;
-
-  ibuf->flag = FREE_FLAG;
-  sctk_ibv_profiler_inc(IBV_IBUF_RELEASED_NB);
-
-  /* set counters */
-  sctk_atomics_incr_int((OPA_int_t*) &node->nb_free);
-  sctk_atomics_decr_int((OPA_int_t*) &node->nb_got);
-
-  sctk_nodebug("ibuf_free_nb %d - got %d",
-      node->nb_free, node->nb_got);
-
-  if (need_lock) sctk_spinlock_lock(lock);
-  /*TODO: number max of buffer got */
-  nb_got = sctk_atomics_load_int((OPA_int_t*) &node->nb_got);
-  if (nb_got > node->max_taken)
-    node->max_taken = nb_got;
-  /* TODO: end */
-  ibuf->desc.next = node->free_header;
-  node->free_header = ibuf;
-  if (need_lock) sctk_spinlock_unlock(lock);
-
-  /* if SRQ, so we check and try to post more messages to the srq */
-  if (is_srq)
-  {
-    /* limit of buffer posted */
-    int limit;
-
-    sctk_nodebug("ibuf_free_nb %d - got %d",
-      node->nb_free_srq, node->nb_got_srq);
-
-    sctk_atomics_decr_int((OPA_int_t*) &node->nb_free_srq);
-    sctk_atomics_incr_int((OPA_int_t*) &node->nb_got_srq);
-
-    sctk_nodebug("max_srq:%d, free_srq:%d", ibv_max_srq_ibufs, node->nb_free_srq);
-    /* we do not need to take the lock again */
-    limit = ibv_max_srq_ibufs - node->nb_free_srq;
-    if (limit > 0)
-      srq_post(rc_sr_local, 1, limit, node);
-  }
-}
 #endif
 
 /*-----------------------------------------------------------

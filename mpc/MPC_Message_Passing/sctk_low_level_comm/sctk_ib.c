@@ -34,14 +34,19 @@
 #include <netdb.h>
 #include <sctk_spinlock.h>
 #include <sctk_net_tools.h>
+#include <sctk_route.h>
 #include <sctk_ib.h>
 #include <sctk_ib_qp.h>
 #include <sctk_ib_toolkit.h>
+#include <sctk_ib_sr.h>
 
 #define MAX_STRING_SIZE  2048
-static void sctk_ib_add_static_route(int dest, sctk_route_table_t *tmp,
-    sctk_rail_info_t* rail){
-  sctk_add_static_route(dest,tmp,rail);
+
+
+sctk_rail_info_t* rail_0 = NULL;
+
+static void sctk_ib_add_static_route(int dest, sctk_route_table_t *tmp){
+  sctk_add_static_route(dest,tmp,rail_0);
 }
 
 static sctk_route_table_t *
@@ -63,6 +68,20 @@ sctk_ib_create_remote(int dest, sctk_rail_info_t* rail){
   return tmp;
 }
 
+void sctk_network_free_msg(sctk_thread_ptp_message_t *msg)
+{
+#if 0
+  sctk_ib_rail_info_t *rail_ib = &rail_0->network.ib;
+
+  switch(msg->tail.ib_protocol) {
+    case eager_protocol:
+      sctk_ib_sr_free_msg(rail_ib, msg);
+      break;
+    default: assume(0);
+  }
+#endif
+}
+
 void sctk_network_init_ib_all(sctk_rail_info_t* rail,
 			       int (*route)(int , sctk_rail_info_t* ),
 			       void(*route_init)(sctk_rail_info_t*)){
@@ -77,6 +96,7 @@ void sctk_network_init_ib_all(sctk_rail_info_t* rail,
   sctk_ib_qp_keys_t keys;
 
   assume(rail->send_message_from_network != NULL);
+  rail_0 = rail;
 
   /* FIXME: register pointers */
 
@@ -107,9 +127,9 @@ void sctk_network_init_ib_all(sctk_rail_info_t* rail,
   sctk_ib_qp_allocate_rts(rail_ib, route_dest->remote);
   sctk_pmi_barrier();
 
-  sctk_ib_add_static_route(dest_rank, route_table_dest, rail);
-  sctk_ib_add_static_route(src_rank, route_table_src, rail);
+  sctk_ib_add_static_route(dest_rank, route_table_dest);
+  sctk_ib_add_static_route(src_rank, route_table_src);
 
-  sctk_debug("Recv from %d, send to %d", src_rank, dest_rank);
+  sctk_nodebug("Recv from %d, send to %d", src_rank, dest_rank);
 }
 

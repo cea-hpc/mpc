@@ -80,7 +80,7 @@ static void
 sctk_network_notify_idle_message_multirail_ib (){
   int i;
   for(i = 0; i < NB_RAILS; i++){
-    rails[i]->notify_any_source_message(rails[i]);
+    rails[i]->notify_idle_message(rails[i]);
   }
 }
 

@@ -31,22 +31,4 @@
 #define HAVE_SHELL_COLORS
 
 
-void sctk_ib_debug(const char *fmt, ...)
-{
-  va_list ap;
-  char buff[SMALL_BUFFER_SIZE];
 
-  va_start (ap, fmt);
-#ifdef HAVE_SHELL_COLORS
-  snprintf (buff, SMALL_BUFFER_SIZE,
-      "%s "SCTK_COLOR_RED_BOLD([%s])" %s\n", sctk_print_debug_infos(),
-      SCTK_IB_MODULE_NAME, fmt);
-#else
-  snprintf (buff, SMALL_BUFFER_SIZE,
-      "%s [%s] %s\n", sctk_print_debug_infos(),
-      SCTK_IB_MODULE_NAME, fmt);
-#endif
-
-  sctk_noalloc_vfprintf (stderr, buff, ap);
-  va_end (ap);
-}

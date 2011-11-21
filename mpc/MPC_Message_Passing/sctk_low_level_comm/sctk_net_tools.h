@@ -45,6 +45,8 @@ extern "C"
   void sctk_net_read_in_fd (sctk_thread_ptp_message_t * msg,
 			    int fd);
   void sctk_net_message_copy(sctk_message_to_copy_t* tmp);
+
+  void sctk_net_message_copy_from_buffer(sctk_message_to_copy_t* tmp, char* body);
 #ifdef __cplusplus
 }
 #endif

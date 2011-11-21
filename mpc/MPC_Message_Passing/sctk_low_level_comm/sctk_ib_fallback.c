@@ -64,7 +64,72 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   sctk_complete_and_free_message(msg);
 }
 
-static int sctk_network_poll(sctk_rail_info_t* rail, struct ibv_wc* wc)
+static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc)
+{
+  sctk_ibuf_t *ibuf = NULL;
+  size_t size;
+  sctk_ib_sr_t *sr_header;
+  sctk_thread_ptp_message_t * msg;
+  void* body;
+  /* XXX: select if a recopy is needed for the message */
+  int recopy = 0;
+
+  ibuf = (sctk_ibuf_t*) wc->wr_id;
+  assume(ibuf);
+
+  sr_header = IBUF_SR_HEADER(ibuf->buffer);
+  size = sr_header->eager.payload_size;
+
+  /* If recopy required */
+  if (recopy)
+  {
+    size = size - sizeof(sctk_thread_ptp_message_body_t) +
+        sizeof(sctk_thread_ptp_message_t);
+    msg = sctk_malloc(size);
+
+    assume(msg);
+    body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
+
+    /* Copy the header of the message */
+    memcpy(msg, IBUF_MSG_HEADER(ibuf->buffer), sizeof(sctk_thread_ptp_message_body_t));
+
+    /* Copy the body of the message */
+    size = size - sizeof(sctk_thread_ptp_message_t);
+    memcpy(body, IBUF_MSG_PAYLOAD(ibuf->buffer), size);
+  } else {
+    msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
+    assume(msg);
+
+    /* Copy the header of the message */
+    memcpy(msg, IBUF_MSG_HEADER(ibuf->buffer), sizeof(sctk_thread_ptp_message_body_t));
+
+    msg->tail.ib.protocol = eager_protocol;
+    msg->tail.ib.eager.ibuf = ibuf;
+  }
+  msg->body.completion_flag = NULL;
+  msg->tail.message_type = sctk_message_network;
+  msg->tail.ib.eager.recopied = recopy;
+
+  sctk_debug("Message received for %d from %d (task:%d,size:%lu), glob_dest:%d",
+      sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_glob_source),
+      sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_source),
+      msg->sctk_msg_get_glob_source,size,
+      msg->sctk_msg_get_glob_destination);
+  sctk_rebuild_header(msg);
+    /* Read from network buffer  */
+  if (!recopy){
+    sctk_reinit_header(msg, sctk_ib_sr_free_msg_no_recopy, sctk_ib_sr_recv_msg_no_recopy);
+    /* Read from recopied buffer */
+  } else {
+    sctk_reinit_header(msg,sctk_free,sctk_net_message_copy);
+    sctk_ibuf_release(&rail->network.ib, ibuf, 1);
+  }
+  rail->send_message_from_network(msg);
+
+  return 0;
+}
+
+static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc)
 {
   sctk_ibuf_t *ibuf = NULL;
   size_t size;
@@ -75,85 +140,59 @@ static int sctk_network_poll(sctk_rail_info_t* rail, struct ibv_wc* wc)
   ibuf = (sctk_ibuf_t*) wc->wr_id;
   assume(ibuf);
 
-  sr_header = IBUF_SR_HEADER(ibuf->buffer);
-  size = sr_header->eager.payload_size;
-  size = size - sizeof(sctk_thread_ptp_message_body_t) +
-      sizeof(sctk_thread_ptp_message_t);
-  sctk_debug("Malloc size :%lu", size);
-  msg = sctk_malloc(size);
-  assume(msg);
-  body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
-
-  /* Copy the header of the message */
-  sctk_debug("Read header %d",sizeof(sctk_thread_ptp_message_body_t));
-  memcpy(msg, IBUF_MSG_HEADER(ibuf->buffer), sizeof(sctk_thread_ptp_message_body_t));
-
-  msg->body.completion_flag = NULL;
-  msg->tail.message_type = sctk_message_network;
-
-  /* Copy the body of the message */
-  size = size - sizeof(sctk_thread_ptp_message_t);
-  sctk_debug("Read body %d",size);
-  memcpy(body, IBUF_MSG_PAYLOAD(ibuf->buffer), size);
-
-  sctk_debug("Message received for %d from %d (task:%d,size:%lu), glob_dest:%d",
-      sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_glob_source),
-      sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_source),
-      msg->sctk_msg_get_glob_source,size,
-      msg->sctk_msg_get_glob_destination);
-  sctk_rebuild_header(msg);
-  sctk_reinit_header(msg,sctk_free,sctk_net_message_copy);
-  rail->send_message_from_network(msg);
-
+  sctk_ibuf_release(&rail->network.ib, ibuf, 1);
   return 0;
+}
+
+
+static void sctk_network_poll_all (sctk_rail_info_t* rail) {
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  LOAD_CONFIG(rail_ib);
+  LOAD_DEVICE(rail_ib);
+
+  /* Poll received messages */
+  sctk_ib_cq_poll(rail_ib, device->recv_cq, config->ibv_wc_in_number, sctk_network_poll_recv);
+  /* Poll sent messages */
+  sctk_ib_cq_poll(rail_ib, device->send_cq, config->ibv_wc_out_number, sctk_network_poll_send);
+
 }
 
 static void
 sctk_network_notify_recv_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  LOAD_CONFIG(rail_ib);
-  LOAD_DEVICE(rail_ib);
-
-  sctk_nodebug("Recv_message");
-  sctk_ib_cq_poll(rail_ib, device->recv_cq, config->ibv_wc_in_number, sctk_network_poll);
 }
 
 static void
 sctk_network_notify_matching_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
-  sctk_nodebug("Matching");
+  /* POLLING */
+  sctk_network_poll_all(rail);
 }
 
 static void
 sctk_network_notify_perform_message_ib (int remote,sctk_rail_info_t* rail){
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  LOAD_CONFIG(rail_ib);
-  LOAD_DEVICE(rail_ib);
-
-  sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, sctk_network_poll);
+  /* POLLING */
+  sctk_network_poll_all(rail);
 }
 
 static void
 sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  LOAD_CONFIG(rail_ib);
-  LOAD_DEVICE(rail_ib);
-
-  sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, sctk_network_poll);
+  /* POLLING */
+  sctk_network_poll_all(rail);
 }
 
 static void
 sctk_network_notify_any_source_message_ib (sctk_rail_info_t* rail){
-
+  /* POLLING */
+  sctk_network_poll_all(rail);
 }
 
 static void
 sctk_network_connection_to_ib(int from, int to,sctk_rail_info_t* rail){
-  sctk_debug("Connection TO from %d to %d", from, to);
+  sctk_nodebug("Connection TO from %d to %d", from, to);
 }
 
 static void
 sctk_network_connection_from_ib(int from, int to,sctk_rail_info_t* rail){
-  sctk_debug("Connection FROM from %d to %d", from, to);
+  sctk_nodebug("Connection FROM from %d to %d", from, to);
 }
 
 /************ INIT ****************/

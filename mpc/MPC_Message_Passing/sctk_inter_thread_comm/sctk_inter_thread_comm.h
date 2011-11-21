@@ -28,6 +28,7 @@
 #include <sctk_collective_communications.h>
 #include <mpcmp.h>
 #include <sctk_reorder.h>
+#include <sctk_ib.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -35,6 +36,7 @@ extern "C"
 #endif
 
   struct sctk_request_s;
+  struct sctk_ib_msg_header_s;
 
 #define SCTK_MESSAGE_PENDING 0
 #define SCTK_MESSAGE_DONE 1
@@ -128,7 +130,7 @@ extern "C"
 
 typedef struct sctk_message_to_copy_s{
   struct sctk_thread_ptp_message_s * msg_send;
-  struct sctk_thread_ptp_message_s * msg_recv;  
+  struct sctk_thread_ptp_message_s * msg_recv;
   struct sctk_message_to_copy_s * prev, *next;
 }sctk_message_to_copy_t;
 
@@ -147,7 +149,7 @@ typedef struct sctk_message_to_copy_s{
 
     int need_check_in_wait;
 
-    sctk_request_t * request; 
+    sctk_request_t * request;
 
     /*Message data*/
     sctk_message_type_t message_type;
@@ -170,6 +172,10 @@ typedef struct sctk_message_to_copy_s{
     /* RDMA infos */
     void* rdma_src;
     void* route_table;
+
+    /* XXX:Specific to IB */
+    struct sctk_ib_msg_header_s ib;
+
   }sctk_thread_ptp_message_tail_t;
 
 #define sctk_msg_get_use_message_numbering body.header.use_message_numbering

@@ -28,10 +28,13 @@ extern "C"
 #endif
 
   struct sctk_ibuf_pool_s;
+  struct sctk_ibuf_s;
   struct sctk_ib_mmu_s;
   struct sctk_ib_config_s;
   struct sctk_ib_device_s;
   struct sctk_ib_qp_s;
+  struct sctk_thread_ptp_message_s;
+  struct sctk_rail_info_s;
 
   typedef struct sctk_ib_rail_info_s {
     struct sctk_ibuf_pool_s *pool_buffers;
@@ -44,11 +47,36 @@ extern "C"
     struct sctk_ib_qp_s* remote;
   } sctk_ib_data_t;
 
-#include <sctk_route.h>
+  /* ib protocol used */
+  typedef enum sctk_ib_protocol_e{
+    eager_protocol        = 0,
+    buffered_protocol     = 1,
+    rendezvous_protocol   = 2,
+  } sctk_ib_protocol_t;
 
-  void sctk_network_init_ib_all(sctk_rail_info_t* rail,
-			       int (*route)(int , sctk_rail_info_t* ),
-			       void(*route_init)(sctk_rail_info_t*));
+  /* Structure included in msg header */
+  typedef struct sctk_ib_msg_header_s{
+    sctk_ib_protocol_t protocol;
+
+    union
+    {
+      struct {
+        /* If msg has been recopied (do not read msg
+         * from network buffer */
+        int recopied;
+        /* Ibuf to release */
+        struct sctk_ibuf_s *ibuf;
+      } eager;
+
+    };
+
+  } sctk_ib_msg_header_t;
+
+  void sctk_network_init_ib_all(struct sctk_rail_info_s* rail,
+			       int (*route)(int , struct sctk_rail_info_s* ),
+			       void(*route_init)(struct sctk_rail_info_s*));
+
+  void sctk_network_free_msg(struct sctk_thread_ptp_message_s *msg);
 #ifdef __cplusplus
 }
 #endif

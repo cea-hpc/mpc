@@ -63,6 +63,7 @@ sctk_ib_mmu_init(struct sctk_ib_rail_info_s *rail_ib)
   sctk_ib_mmu_t* mmu;
 
   mmu = sctk_malloc (sizeof(sctk_ib_mmu_t));
+  memset(mmu, 0, sizeof(sctk_ib_mmu_t));
   assume(mmu);
   rail_ib->mmu = mmu;
 

@@ -23,6 +23,10 @@
 #include "sctk.h"
 #include "string.h"
 
+#ifdef MPC_USE_INFINIBAND
+#ifndef __SCTK__IB_TOOLKIT_H_
+#define __SCTK__IB_TOOLKIT_H_
+
 #include "sctk_shell_colors.h"
 
 #define SMALL_BUFFER_SIZE (4*1024)
@@ -32,7 +36,25 @@
 #define SCTK_IB_MODULE_NAME "NONE"
 #endif
 
-void sctk_ib_debug(const char *fmt, ...);
+static void sctk_ib_debug(const char *fmt, ...)
+{
+  va_list ap;
+  char buff[SMALL_BUFFER_SIZE];
+
+  va_start (ap, fmt);
+#ifdef HAVE_SHELL_COLORS
+  snprintf (buff, SMALL_BUFFER_SIZE,
+      "%s "SCTK_COLOR_RED_BOLD([%s])" %s\n", sctk_print_debug_infos(),
+      SCTK_IB_MODULE_NAME, fmt);
+#else
+  snprintf (buff, SMALL_BUFFER_SIZE,
+      "%s [%s] %s\n", sctk_print_debug_infos(),
+      SCTK_IB_MODULE_NAME_STR), fmt);
+#endif
+
+  sctk_noalloc_vfprintf (stderr, buff, ap);
+  va_end (ap);
+}
 
 #if defined(__GNU_COMPILER) || defined(__INTEL_COMPILER)
 #define sctk_ib_nodebug(fmt,...) (void)(0)
@@ -50,3 +72,6 @@ void sctk_ib_debug(const char *fmt, ...);
 /* const for debugging IB */
 #define DEBUG_IB_MMU
 #define DEBUG_IB_BUFS
+
+#endif
+#endif
