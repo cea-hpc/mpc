@@ -336,11 +336,11 @@ extern "C"
     sctk_thread_data_t *tmp;
     tmp = (sctk_thread_data_t *) cur->tls[stck_task_data];
     sctk_nodebug ("TMP = %p", tmp);
-    
+
     /** ** **/
     sctk_refresh_thread_debug (cur, s);
     /** */
-    
+
     if (tmp != NULL)
       {
 	if (s == sctk_thread_check_status)
@@ -356,7 +356,7 @@ extern "C"
 	  }
 
 	sctk_getcontext (&(cur->ctx));
-	  
+
 	tmp->status = s;
       }
   }
@@ -817,9 +817,9 @@ extern "C"
   {
     /*
        ERRORS:
-       ESRCH  No  thread could be found corresponding to that specified by th.  
-       EINVAL The th thread has been detached.  
-       EINVAL Another thread is already waiting on termination of th.  
+       ESRCH  No  thread could be found corresponding to that specified by th.
+       EINVAL The th thread has been detached.
+       EINVAL Another thread is already waiting on termination of th.
        EDEADLK The th argument refers to the calling thread.
      */
     sctk_ethread_status_t *status;
@@ -1086,8 +1086,8 @@ extern "C"
        In order to limit contention
      */
     /*
-       On met ce test pour limiter au maximum la contention sur le spinlock. 
-       Si on arrive pas à prendre le spinlock, c'est qu'il y a du mon et donc que l'on est 
+       On met ce test pour limiter au maximum la contention sur le spinlock.
+       Si on arrive pas à prendre le spinlock, c'est qu'il y a du mon et donc que l'on est
        pas prioritaire.
      */
     if (sctk_spinlock_trylock (&lock->spinlock))
@@ -1446,9 +1446,9 @@ extern "C"
 	      (vp->incomming_queue == NULL) &&
 	      (vp->ready_queue == NULL) )
 	    {
-/* #ifdef MPC_Message_Passing */
-/* 	    sctk_notify_idle_message (); */
-/* #endif */
+#ifdef MPC_Message_Passing
+ 	    sctk_notify_idle_message ();
+#endif
 	      sched_yield();
 	    }
 	}
@@ -1623,7 +1623,7 @@ extern "C"
 	th_data->stack = stack;
 	th_data->stack_size = stack_size;
 /*
-	th_data->attr.stack = stack; 
+	th_data->attr.stack = stack;
 	th_data->attr.stack_size = stack_size;
 */
 	stack[stack_size] = 123;
@@ -1639,7 +1639,7 @@ extern "C"
 	th_data->stack = stack;
 	th_data->stack_size = stack_size;
 /*
-	th_data->attr.stack = stack; 
+	th_data->attr.stack = stack;
 	th_data->attr.stack_size = stack_size;
 */
       }
