@@ -40,6 +40,12 @@ typedef struct sctk_ib_sr_s {
     struct {
       size_t payload_size;
     } eager;
+    struct {
+
+    } buffered;
+    struct {
+
+    } rdma;
   };
 } sctk_ib_sr_t;
 

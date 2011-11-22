@@ -74,13 +74,13 @@
  * once a recv buffer is freed. If IBV_SRQ_CREDIT_LIMIT ==
  * IBV_MAX_SRQ_IBUFS_POSTED, receive buffers are re-post every-time
  * they are consumned */
-#define IBV_SRQ_CREDIT_LIMIT  18000
+#define IBV_SRQ_CREDIT_LIMIT  1000
 //#define IBV_SRQ_CREDIT_LIMIT  10
 /* Minimum number of free recv buffer before
  * the activation of the asynchronous
  * thread (if this thread is activated too much times,
  * the performance can be decreased) */
-#define IBV_SRQ_CREDIT_THREAD_LIMIT  100
+#define IBV_SRQ_CREDIT_THREAD_LIMIT  1
 
 /* threshold before using dynamic allocation. For example, when
  * 80% of the SRQ buffers are busy, we make a copy of the message

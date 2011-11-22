@@ -237,12 +237,12 @@ void sctk_ibuf_release(
     node->free_srq_nb--;
 
     limit = config->ibv_max_srq_ibufs - node->free_srq_nb;
-    sctk_debug("Post new buffer !!!!!!!!!!! : %d (%d - %d)", limit, config->ibv_max_srq_ibufs, node->free_srq_nb);
+    sctk_nodebug("Post new buffer %d (%d - %d)", limit, config->ibv_max_srq_ibufs, node->free_srq_nb);
     if (limit > 0) {
       srq_post(rail_ib, limit, node, 0);
     }
   }
-  sctk_debug("Buffer %p free (%d)", ibuf, is_srq);
+  sctk_nodebug("Buffer %p free (%d)", ibuf, is_srq);
   sctk_spinlock_unlock(lock);
 }
 

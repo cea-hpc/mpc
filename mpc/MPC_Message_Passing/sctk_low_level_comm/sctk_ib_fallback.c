@@ -34,6 +34,7 @@
 #include "sctk_ib_qp.h"
 #include "sctk_ib_sr.h"
 #include "sctk_ib_polling.h"
+#include "sctk_ib_async.h"
 
 static void
 sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
@@ -53,7 +54,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
   route_data=&tmp->data.ib;
   remote=route_data->remote;
-  sctk_debug("Sending message to %d for %d (task:%d,number:%d) (%p)", remote->rank,
+  sctk_nodebug("Sending message to %d for %d (task:%d,number:%d) (%p)", remote->rank,
       sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_glob_destination),
       msg->sctk_msg_get_glob_destination, msg->sctk_msg_get_message_number, tmp);
   /* XXX: switch on message sending protocols */
@@ -110,7 +111,7 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc)
   msg->tail.message_type = sctk_message_network;
   msg->tail.ib.eager.recopied = recopy;
 
-  sctk_debug("Message received for %d from %d (task:%d,size:%lu), glob_dest:%d",
+  sctk_nodebug("Message received for %d from %d (task:%d,size:%lu), glob_dest:%d",
       sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_glob_source),
       sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_source),
       msg->sctk_msg_get_glob_source,size,
@@ -230,6 +231,8 @@ void sctk_network_init_ib(sctk_rail_info_t* rail){
   sctk_ibuf_pool_init(rail_ib);
   /* Fill SRQ with buffers */
   sctk_ibuf_srq_check_and_post(rail_ib, rail_ib->config->ibv_max_srq_ibufs);
+  /* Initialize Async thread */
+  sctk_ib_async_init(rail_ib);
 
   /* Initialize network */
   sctk_network_init_ib_all(rail, rail->route, rail->route_init);

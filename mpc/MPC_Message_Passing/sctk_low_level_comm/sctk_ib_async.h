@@ -20,68 +20,15 @@
 /* #   - DIDELOT Sylvain didelot.sylvain@gmail.com                        # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "sctk.h"
-#include "string.h"
-
 #ifdef MPC_USE_INFINIBAND
-#ifndef __SCTK__IB_TOOLKIT_H_
-#define __SCTK__IB_TOOLKIT_H_
 
-#include "sctk_shell_colors.h"
+#ifndef __SCTK__IB_ASYNC_H_
+#define __SCTK__IB_ASYNC_H_
 
-#define SMALL_BUFFER_SIZE (4*1024)
-#define HAVE_SHELL_COLORS
+#include "infiniband/verbs.h"
+#include "sctk_ib.h"
 
-#ifndef SCTK_IB_MODULE_NAME
-#define SCTK_IB_MODULE_NAME "NONE"
-#endif
-
-#ifdef SCTK_IB_MODULE_DEBUG
-static void sctk_ib_debug(const char *fmt, ...)
-{
-  va_list ap;
-  char buff[SMALL_BUFFER_SIZE];
-
-  va_start (ap, fmt);
-#ifdef HAVE_SHELL_COLORS
-  snprintf (buff, SMALL_BUFFER_SIZE,
-      "%s "SCTK_COLOR_RED_BOLD([%5s])" %s\n", sctk_print_debug_infos(),
-      SCTK_IB_MODULE_NAME, fmt);
-#else
-  snprintf (buff, SMALL_BUFFER_SIZE,
-      "%s [%5s] %s\n", sctk_print_debug_infos(),
-      SCTK_IB_MODULE_NAME_STR), fmt);
-#endif
-
-  sctk_noalloc_vfprintf (stderr, buff, ap);
-  va_end (ap);
-}
-#else
-#if defined(__GNU_COMPILER) || defined(__INTEL_COMPILER)
-#define sctk_ib_debug(fmt,...) (void)(0)
-#else
-  static inline void sctk_ib_debug (const char *fmt, ...)
-  {
-  }
-#endif
-#endif
-
-#if defined(__GNU_COMPILER) || defined(__INTEL_COMPILER)
-#define sctk_ib_nodebug(fmt,...) (void)(0)
-#else
-  static inline void sctk_ib_nodebug (const char *fmt, ...)
-  {
-  }
-#endif
-
-#define LOAD_CONFIG(x) sctk_ib_config_t *config = (x)->config;
-#define LOAD_MMU(x)    sctk_ib_mmu_t* mmu = (x)->mmu;
-#define LOAD_DEVICE(x)    sctk_ib_device_t* device = (x)->device;
-#define LOAD_POOL(x)    sctk_ibuf_pool_t* pool = (x)->pool_buffers;
-
-/* const for debugging IB */
-#define DEBUG_IB_MMU
-#define DEBUG_IB_BUFS
+void sctk_ib_async_init(sctk_ib_rail_info_t *rail_ib);
 
 #endif
 #endif
