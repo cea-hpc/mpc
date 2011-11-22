@@ -26,6 +26,7 @@
 extern "C"
 {
 #endif
+#include "sctk_spinlock.h"
 
   struct sctk_ibuf_pool_s;
   struct sctk_ibuf_s;
@@ -49,10 +50,16 @@ extern "C"
 
   /* ib protocol used */
   typedef enum sctk_ib_protocol_e{
-    eager_protocol        = 0,
-    buffered_protocol     = 1,
-    rendezvous_protocol   = 2,
+    eager_protocol        = 111,
+    buffered_protocol     = 222,
+    rdma_protocol   = 333,
   } sctk_ib_protocol_t;
+
+  typedef enum  sctk_ib_rdma_status_e {
+    not_set = 111,
+    zerocopy = 222,
+    recopy = 333,
+  } sctk_ib_rdma_status_t;
 
   /* Structure included in msg header */
   typedef struct sctk_ib_msg_header_s{
@@ -67,14 +74,54 @@ extern "C"
         /* Ibuf to release */
         struct sctk_ibuf_s *ibuf;
       } eager;
-
+      struct {
+        sctk_ib_rdma_status_t status;
+        void *addr_remote;
+        void *aligned_addr_remote;
+        size_t size_remote;
+        size_t aligned_size_remote;
+        sctk_spinlock_t lock;
+      } rdma;
     };
-
   } sctk_ib_msg_header_t;
 
   void sctk_network_init_ib_all(struct sctk_rail_info_s* rail,
 			       int (*route)(int , struct sctk_rail_info_s* ),
 			       void(*route_init)(struct sctk_rail_info_s*));
+
+/* IB header: generic */
+#define IBUF_GET_EAGER_HEADER(buffer) \
+  (sctk_ib_eager_t*) ((char*) buffer + sizeof(sctk_ibuf_header_t))
+#define IBUF_GET_RDMA_HEADER(buffer) \
+  (sctk_ib_rdma_t*) ((char*) buffer + sizeof(sctk_ibuf_header_t))
+
+/* IB payload: generic */
+#define IBUF_GET_EAGER_PAYLOAD(buffer) \
+  (void*) ((char*) IBUF_GET_EAGER_HEADER(buffer) + sizeof(sctk_ib_eager_t))
+#define IBUF_GET_RDMA_PAYLOAD(buffer) \
+  (void*) ((char*) IBUF_GET_RDMA_HEADER(buffer) + sizeof(sctk_ib_rdma_t))
+
+/* MPC header */
+#define IBUF_GET_EAGER_MSG_HEADER(buffer) \
+  (sctk_thread_ptp_message_body_t*) IBUF_GET_EAGER_PAYLOAD(buffer)
+
+/* MPC payload */
+#define IBUF_GET_EAGER_MSG_PAYLOAD(buffer) \
+  (void*) ((char*) IBUF_GET_EAGER_PAYLOAD(buffer) + sizeof(sctk_thread_ptp_message_body_t))
+#define IBUF_GET_RDMA_MSG_PAYLOAD(buffer) \
+  (void*) ((char*) IBUF_GET_RDMA_PAYLOAD(buffer) + sizeof(sctk_thread_ptp_message_body_t))
+
+  /* Different types of messages */
+#define IBUF_GET_RDMA_REQ(buffer) ((sctk_ib_rdma_req_t*) IBUF_GET_RDMA_PAYLOAD(buffer))
+#define IBUF_GET_RDMA_ACK(buffer) ((sctk_ib_rdma_ack_t*) IBUF_GET_RDMA_PAYLOAD(buffer))
+#define IBUF_GET_RDMA_DONE(buffer) ((sctk_ib_rdma_ack_t*) IBUF_GET_RDMA_PAYLOAD(buffer))
+
+/* Size */
+#define IBUF_GET_EAGER_SIZE (sizeof(IBUF_GET_HEADER_SIZE) + sizeof(sctk_ib_eager_t))
+#define IBUF_GET_RDMA_SIZE (sizeof(IBUF_GET_HEADER_SIZE) + sizeof(sctk_ib_rdma_t))
+#define IBUF_GET_RDMA_REQ_SIZE (IBUF_GET_RDMA_SIZE + sizeof(sctk_ib_rdma_req_t))
+
+#define IBUF
 
   void sctk_network_free_msg(struct sctk_thread_ptp_message_s *msg);
 #ifdef __cplusplus

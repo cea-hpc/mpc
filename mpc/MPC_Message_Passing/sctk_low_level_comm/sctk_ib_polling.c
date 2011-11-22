@@ -128,7 +128,7 @@ sctk_ib_polling_check_wc(struct sctk_ib_rail_info_s* rail_ib,
           "ERROR Vendor : %d\n"
           "Byte_len     : %d\n"
           "Dest process : %d\n"
-          "\033[1;31m################################\033[0m\n",
+          "\033[1;31m################################\033[0m",
           sctk_process_rank, host,
           wc.wr_id, sctk_ib_polling_print_status(wc.status),
           wc.vendor_err, wc.byte_len,

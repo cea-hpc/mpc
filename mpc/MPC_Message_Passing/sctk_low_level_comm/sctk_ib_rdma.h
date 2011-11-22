@@ -22,8 +22,8 @@
 /* ######################################################################## */
 
 #ifdef MPC_USE_INFINIBAND
-#ifndef __SCTK__IB_POLLING_H_
-#define __SCTK__IB_POLLING_H_
+#ifndef __SCTK__IB_RDMA_H_
+#define __SCTK__IB_RDMA_H_
 
 #define SCTK_IB_MODULE_NAME "POLLING"
 #include <infiniband/verbs.h>
@@ -33,26 +33,47 @@
 #include "sctk_ibufs.h"
 #include "sctk_ib_qp.h"
 #include "sctk_pmi.h"
+#include "sctk_route.h"
 #include "utlist.h"
 
-struct sctk_rail_info_s;
-
-typedef struct sctk_ib_eager_s {
-  size_t payload_size;
+/* XXX: Packed structures */
+typedef enum sctk_ib_rdma_type_e {
+  rdma_req_type = 111,
+  rdma_ack_type = 222,
+  rdma_done_type = 333,
 } __attribute__ ((packed))
- sctk_ib_eager_t;
+sctk_ib_rdma_type_t;
+
+typedef struct sctk_ib_rdma_s {
+  size_t payload_size;
+  sctk_ib_rdma_type_t type;
+} __attribute__ ((packed))
+sctk_ib_rdma_t;
+
+typedef struct sctk_ib_rdma_req_s {
+  /* MPC header of msg */
+  sctk_thread_ptp_message_body_t msg_header;
+  size_t requested_size;
+} __attribute__ ((packed))
+sctk_ib_rdma_req_t;
+
+typedef struct sctk_ib_rdma_ack_s {
+} __attribute__ ((packed))
+sctk_ib_rdma_ack_t;
+
+typedef struct sctk_ib_rdma_end_s {
+} __attribute__ ((packed))
+sctk_ib_rdma_done_t;
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
-sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
+
+sctk_ibuf_t* sctk_ib_rdma_prepare_msg(sctk_ib_rail_info_t* rail_ib,
     sctk_ib_qp_t* route_data, sctk_thread_ptp_message_t * msg, size_t size);
 
-void sctk_ib_sr_free_msg_no_recopy(sctk_thread_ptp_message_t * msg);
-
-void sctk_ib_sr_recv_msg_no_recopy(sctk_message_to_copy_t* tmp);
-
-sctk_thread_ptp_message_t* sctk_ib_sr_recv(struct sctk_rail_info_s* rail, sctk_ibuf_t *ibuf);
+sctk_thread_ptp_message_t *
+sctk_ib_rdma_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf);
 
 #endif
 #endif

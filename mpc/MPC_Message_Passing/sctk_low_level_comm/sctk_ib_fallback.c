@@ -35,14 +35,17 @@
 #include "sctk_ib_sr.h"
 #include "sctk_ib_polling.h"
 #include "sctk_ib_async.h"
+#include "sctk_ib_rdma.h"
 
 static void
 sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  LOAD_CONFIG(rail_ib);
   sctk_route_table_t* tmp;
   sctk_ib_data_t *route_data;
   sctk_ib_qp_t *remote;
   sctk_ibuf_t *ibuf;
+  size_t size;
 
   sctk_nodebug("send message through rail %d",rail->rail_number);
 
@@ -57,9 +60,16 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   sctk_nodebug("Sending message to %d for %d (task:%d,number:%d) (%p)", remote->rank,
       sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_glob_destination),
       msg->sctk_msg_get_glob_destination, msg->sctk_msg_get_message_number, tmp);
-  /* XXX: switch on message sending protocols */
 
-  ibuf = sctk_ib_sr_prepare_msg(rail_ib, remote, msg);
+  /* XXX: switch on message sending protocols */
+  size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
+
+  if (size < config->ibv_eager_limit)  {
+    ibuf = sctk_ib_sr_prepare_msg(rail_ib, remote, msg, size);
+  } else {
+    ibuf = sctk_ib_rdma_prepare_msg(rail_ib, remote, msg, size);
+  }
+  /* Send message */
   sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
 
   sctk_complete_and_free_message(msg);
@@ -69,63 +79,32 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc)
 {
   sctk_ibuf_t *ibuf = NULL;
   size_t size;
-  sctk_ib_sr_t *sr_header;
-  sctk_thread_ptp_message_t * msg;
-  void* body;
-  /* XXX: select if a recopy is needed for the message */
-  int recopy = 0;
+  sctk_ib_eager_t *eager_header;
+  sctk_thread_ptp_message_t * msg = NULL;
 
   ibuf = (sctk_ibuf_t*) wc->wr_id;
   assume(ibuf);
 
-  sr_header = IBUF_SR_HEADER(ibuf->buffer);
-  size = sr_header->eager.payload_size;
+  /* Switch on the protocol of the received message */
+  switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
+    case eager_protocol:
+      msg = sctk_ib_sr_recv(rail, ibuf);
+      rail->send_message_from_network(msg);
+      break;
 
-  /* If recopy required */
-  if (recopy)
-  {
-    size = size - sizeof(sctk_thread_ptp_message_body_t) +
-        sizeof(sctk_thread_ptp_message_t);
-    msg = sctk_malloc(size);
+    case rdma_protocol:
+      sctk_debug("RDMA message received");
+      msg = sctk_ib_rdma_recv(rail, ibuf);
+      break;
 
-    assume(msg);
-    body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
-
-    /* Copy the header of the message */
-    memcpy(msg, IBUF_MSG_HEADER(ibuf->buffer), sizeof(sctk_thread_ptp_message_body_t));
-
-    /* Copy the body of the message */
-    size = size - sizeof(sctk_thread_ptp_message_t);
-    memcpy(body, IBUF_MSG_PAYLOAD(ibuf->buffer), size);
-  } else {
-    msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
-    assume(msg);
-
-    /* Copy the header of the message */
-    memcpy(msg, IBUF_MSG_HEADER(ibuf->buffer), sizeof(sctk_thread_ptp_message_body_t));
-
-    msg->tail.ib.protocol = eager_protocol;
-    msg->tail.ib.eager.ibuf = ibuf;
+    default: assume(0);
   }
-  msg->body.completion_flag = NULL;
-  msg->tail.message_type = sctk_message_network;
-  msg->tail.ib.eager.recopied = recopy;
 
   sctk_nodebug("Message received for %d from %d (task:%d,size:%lu), glob_dest:%d",
       sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_glob_source),
       sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_source),
       msg->sctk_msg_get_glob_source,size,
       msg->sctk_msg_get_glob_destination);
-  sctk_rebuild_header(msg);
-    /* Read from network buffer  */
-  if (!recopy){
-    sctk_reinit_header(msg, sctk_ib_sr_free_msg_no_recopy, sctk_ib_sr_recv_msg_no_recopy);
-    /* Read from recopied buffer */
-  } else {
-    sctk_reinit_header(msg,sctk_free,sctk_net_message_copy);
-    sctk_ibuf_release(&rail->network.ib, ibuf, 1);
-  }
-  rail->send_message_from_network(msg);
 
   return 0;
 }
@@ -134,7 +113,6 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc)
 {
   sctk_ibuf_t *ibuf = NULL;
   size_t size;
-  sctk_ib_sr_t *sr_header;
   sctk_thread_ptp_message_t * msg;
   void* body;
 
@@ -161,6 +139,8 @@ static void sctk_network_poll_all (sctk_rail_info_t* rail) {
 
 static void
 sctk_network_notify_recv_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
+  /* POLLING */
+  sctk_network_poll_all(rail);
 }
 
 static void

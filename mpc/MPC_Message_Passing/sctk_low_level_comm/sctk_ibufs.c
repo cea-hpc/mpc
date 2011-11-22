@@ -246,6 +246,13 @@ void sctk_ibuf_release(
   sctk_spinlock_unlock(lock);
 }
 
+void sctk_ibuf_set_protocol(sctk_ibuf_t* ibuf, sctk_ib_protocol_t protocol)
+{
+  sctk_ibuf_header_t *ibuf_header;
+
+  ibuf_header = IBUF_GET_HEADER(ibuf->buffer);
+  ibuf_header->protocol = protocol;
+}
 
 #if 0
 sctk_net_ibv_ibuf_numa_t* get_numa_node(const int core_id)

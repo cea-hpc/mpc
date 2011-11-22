@@ -30,12 +30,22 @@
 
 #include "sctk_spinlock.h"
 #include "sctk_ib_mmu.h"
+#include "sctk_ib.h"
 
 struct sctk_ib_rail_info_s;
 
 /*-----------------------------------------------------------
  *  STRUCTURES
  *----------------------------------------------------------*/
+typedef struct sctk_ibuf_header_s
+{
+  /* Protocol used */
+  sctk_ib_protocol_t protocol;
+} __attribute__ ((packed))
+sctk_ibuf_header_t;
+#define IBUF_GET_HEADER(buffer) ((sctk_ibuf_header_t*) buffer)
+#define IBUF_GET_HEADER_SIZE (sizeof(sctk_ibuf_header_t))
+#define IBUF_GET_PROTOCOL(buffer) (IBUF_GET_HEADER(buffer)->protocol)
 
 /* Description of an ibuf */
 typedef struct sctk_ibuf_desc_s
@@ -193,5 +203,6 @@ void sctk_ibuf_release(
     struct sctk_ib_rail_info_s *rail_ib,
     sctk_ibuf_t* ibuf, int is_srq);
 
+void sctk_ibuf_set_protocol(sctk_ibuf_t* ibuf, sctk_ib_protocol_t protocol);
 #endif
 #endif

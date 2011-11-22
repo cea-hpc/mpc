@@ -92,8 +92,8 @@
  * no more buffers are available */
 #define IBV_SIZE_IBUFS_CHUNKS 1000
 
-#define IBV_WC_IN_NUMBER    20
-#define IBV_WC_OUT_NUMBER   20
+#define IBV_WC_IN_NUMBER    1
+#define IBV_WC_OUT_NUMBER   1
 
 /* Numer of MMU entries allocated during
  * the MPC initialization */
