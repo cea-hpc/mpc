@@ -329,11 +329,11 @@ sctk_internal_setup_lib_openib()
     #setup rpaths and -L
     if [ -e "${OPENIB_USER_PREFIX}/lib" ]; then
       SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENIB_USER_PREFIX}/lib -L${OPENIB_USER_PREFIX}/lib"
-      SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENIB_USER_PREFIX}/lib/libhwloc.so"
+      SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENIB_USER_PREFIX}/lib/libibverbs.so"
     fi
     if [ -e "${OPENIB_USER_PREFIX}/lib64" ]; then
       SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENIB_USER_PREFIX}/lib64 -L${OPENIB_USER_PREFIX}/lib64"
-      SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENIB_USER_PREFIX}/lib64/libhwloc.so"
+      SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENIB_USER_PREFIX}/lib64/libibverbs.so"
     fi
   fi
 
