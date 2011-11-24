@@ -27,6 +27,7 @@ extern "C"
 {
 #endif
 #include "sctk_spinlock.h"
+#include <stdint.h>
 
   struct sctk_ibuf_pool_s;
   struct sctk_ibuf_s;
@@ -36,12 +37,15 @@ extern "C"
   struct sctk_ib_qp_s;
   struct sctk_thread_ptp_message_s;
   struct sctk_rail_info_s;
+  struct sctk_message_to_copy_s;
 
   typedef struct sctk_ib_rail_info_s {
     struct sctk_ibuf_pool_s *pool_buffers;
     struct sctk_ib_mmu_s    *mmu;
     struct sctk_ib_config_s *config;
     struct sctk_ib_device_s *device;
+    /* HashTable where all QPs are stored */
+    struct sctk_ib_qp_s *qps;
   } sctk_ib_rail_info_t;
 
   typedef struct sctk_ib_data_s {
@@ -55,10 +59,12 @@ extern "C"
     rdma_protocol   = 333,
   } sctk_ib_protocol_t;
 
-  typedef enum  sctk_ib_rdma_status_e {
+  typedef volatile enum sctk_ib_rdma_status_e {
     not_set = 111,
     zerocopy = 222,
     recopy = 333,
+    done = 444,
+    allocating = 555,
   } sctk_ib_rdma_status_t;
 
   /* Structure included in msg header */
@@ -76,11 +82,32 @@ extern "C"
       } eager;
       struct {
         sctk_ib_rdma_status_t status;
-        void *addr_remote;
-        void *aligned_addr_remote;
-        size_t size_remote;
-        size_t aligned_size_remote;
+        size_t requested_size;
         sctk_spinlock_t lock;
+        struct sctk_rail_info_s *rail;
+        struct sctk_route_table_s* route_table;
+        struct sctk_message_to_copy_s *copy_ptr;
+        struct sctk_thread_ptp_message_s *remote_msg_header;
+
+        /* Local structure */
+        struct {
+          struct sctk_ib_mmu_entry_s *mmu_entry;
+          void  *addr;
+          size_t size;
+          void  *aligned_addr;
+          size_t aligned_size;
+          char ready;
+        } local;
+        /* Remote structure */
+        struct {
+          /* msg_header of the remote peer */
+          struct sctk_thread_ptp_message_s *msg_header;
+          void  *addr;
+          size_t size;
+          uint32_t rkey;
+          void  *aligned_addr;
+          size_t aligned_size;
+        } remote;
       } rdma;
     };
   } sctk_ib_msg_header_t;
@@ -114,12 +141,18 @@ extern "C"
   /* Different types of messages */
 #define IBUF_GET_RDMA_REQ(buffer) ((sctk_ib_rdma_req_t*) IBUF_GET_RDMA_PAYLOAD(buffer))
 #define IBUF_GET_RDMA_ACK(buffer) ((sctk_ib_rdma_ack_t*) IBUF_GET_RDMA_PAYLOAD(buffer))
-#define IBUF_GET_RDMA_DONE(buffer) ((sctk_ib_rdma_ack_t*) IBUF_GET_RDMA_PAYLOAD(buffer))
+#define IBUF_GET_RDMA_DONE(buffer) ((sctk_ib_rdma_done_t*) IBUF_GET_RDMA_PAYLOAD(buffer))
+#define IBUF_GET_RDMA_DATA_READ(buffer) ((sctk_ib_rdma_data_read_t*) IBUF_GET_RDMA_PAYLOAD(buffer))
+#define IBUF_GET_RDMA_DATA_WRITE(buffer) ((sctk_ib_rdma_data_write_t*) IBUF_GET_RDMA_PAYLOAD(buffer))
 
 /* Size */
 #define IBUF_GET_EAGER_SIZE (sizeof(IBUF_GET_HEADER_SIZE) + sizeof(sctk_ib_eager_t))
 #define IBUF_GET_RDMA_SIZE (sizeof(IBUF_GET_HEADER_SIZE) + sizeof(sctk_ib_rdma_t))
 #define IBUF_GET_RDMA_REQ_SIZE (IBUF_GET_RDMA_SIZE + sizeof(sctk_ib_rdma_req_t))
+#define IBUF_GET_RDMA_ACK_SIZE (IBUF_GET_RDMA_SIZE + sizeof(sctk_ib_rdma_ack_t))
+#define IBUF_GET_RDMA_DONE_SIZE (IBUF_GET_RDMA_SIZE + sizeof(sctk_ib_rdma_done_t))
+#define IBUF_GET_RDMA_DATA_READ_SIZE (IBUF_GET_RDMA_SIZE + sizeof(sctk_ib_rdma_data_read_t))
+#define IBUF_GET_RDMA_DATA_WRITE_SIZE (IBUF_GET_RDMA_SIZE + sizeof(sctk_ib_rdma_data_write_t))
 
 #define IBUF
 

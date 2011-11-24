@@ -70,6 +70,9 @@ typedef struct sctk_ib_qp_s
   unsigned int            free_nb;
   /* Lock when posting an element */
   sctk_spinlock_t         post_lock;
+
+  struct sctk_ib_qp_s *prev;
+  struct sctk_ib_qp_s *next;
 } sctk_ib_qp_t;
 
 /*-----------------------------------------------------------

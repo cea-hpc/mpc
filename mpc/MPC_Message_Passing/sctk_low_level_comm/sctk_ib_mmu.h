@@ -89,5 +89,8 @@ sctk_ib_mmu_entry_t *sctk_ib_mmu_register (
 void ctk_ib_mmu_unregister (struct sctk_ib_rail_info_s *rail_ib,
     sctk_ib_mmu_entry_t *mmu_entry);
 
+void
+sctk_ib_mmu_unregister (struct sctk_ib_rail_info_s *rail_ib,
+    sctk_ib_mmu_entry_t *mmu_entry);
 #endif
 #endif

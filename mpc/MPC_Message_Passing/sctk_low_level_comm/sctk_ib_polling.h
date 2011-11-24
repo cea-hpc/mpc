@@ -25,7 +25,6 @@
 #ifndef __SCTK__IB_POLLING_H_
 #define __SCTK__IB_POLLING_H_
 
-#define SCTK_IB_MODULE_NAME "POLLING"
 #include <infiniband/verbs.h>
 #include "sctk_ib_toolkit.h"
 #include "sctk_ib.h"
@@ -37,7 +36,7 @@
 int sctk_ib_cq_poll(struct sctk_rail_info_s* rail,
     struct ibv_cq *cq, const int poll_nb, int (*ptr_func)(struct sctk_rail_info_s* rail, struct ibv_wc*));
 
-static void
+void
 sctk_ib_polling_check_wc(struct sctk_ib_rail_info_s* rail_ib,
     struct ibv_wc wc);
 

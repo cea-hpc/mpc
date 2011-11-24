@@ -22,12 +22,10 @@
 /* ######################################################################## */
 
 #ifdef MPC_USE_INFINIBAND
-#ifndef __SCTK__IB_POLLING_H_
-#define __SCTK__IB_POLLING_H_
+#ifndef __SCTK__IB_SR_H_
+#define __SCTK__IB_SR_H_
 
-#define SCTK_IB_MODULE_NAME "POLLING"
 #include <infiniband/verbs.h>
-#include "sctk_ib_toolkit.h"
 #include "sctk_ib.h"
 #include "sctk_ib_config.h"
 #include "sctk_ibufs.h"
@@ -48,7 +46,7 @@ typedef struct sctk_ib_eager_s {
 sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
     sctk_ib_qp_t* route_data, sctk_thread_ptp_message_t * msg, size_t size);
 
-void sctk_ib_sr_free_msg_no_recopy(sctk_thread_ptp_message_t * msg);
+void sctk_ib_sr_free_msg_no_recopy(void* arg);
 
 void sctk_ib_sr_recv_msg_no_recopy(sctk_message_to_copy_t* tmp);
 

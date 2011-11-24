@@ -56,7 +56,8 @@ sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
   return ibuf;
 }
 
-void sctk_ib_sr_free_msg_no_recopy(sctk_thread_ptp_message_t * msg) {
+void sctk_ib_sr_free_msg_no_recopy(void* arg) {
+  sctk_thread_ptp_message_t *msg = (sctk_thread_ptp_message_t*) arg;
   sctk_ibuf_t *ibuf = NULL;
 
   /* Assume msg not recopies */
@@ -74,10 +75,7 @@ sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   /* XXX: select if a recopy is needed for the message */
   int recopy = 0;
 
-  sctk_ib_eager_t *eager_header;
-  size = eager_header->payload_size;
-
-  /* If recopy required */
+   /* If recopy required */
   if (recopy)
   {
     size = size - sizeof(sctk_thread_ptp_message_body_t) +
@@ -122,12 +120,9 @@ sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
 
 void sctk_ib_sr_recv_msg_no_recopy(sctk_message_to_copy_t* tmp){
   sctk_thread_ptp_message_t* send;
-  sctk_thread_ptp_message_t* recv;
-  int recopy;
   sctk_ibuf_t *ibuf;
 
   send = tmp->msg_send;
-  recv = tmp->msg_recv;
 
   /* Assume msg not recopied */
   assume(!send->tail.ib.eager.recopied);
