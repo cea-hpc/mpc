@@ -247,6 +247,10 @@ static inline void sctk_mpc_message_set_is_null(MPC_Request * request,int val){
   request->is_null = val; 
 }
 
+static inline int sctk_mpc_message_get_is_null(MPC_Request * request){
+  return request->is_null; 
+}
+
 static inline void sctk_mpc_set_header_in_message(sctk_thread_ptp_message_t *
 						  msg, const int message_tag,
 						  const sctk_communicator_t
@@ -510,7 +514,7 @@ __mpc_check_task_msg__ (int task, int max_rank)
     MPC_ERROR_REPORT(comm,MPC_ERR_RANK,msg)
 
 #define mpc_check_tag(tag,comm)						\
-  if(!((tag >= 0) || (tag == -2)|| (tag == -3) || (tag == MPC_ANY_TAG))) \
+  if(!(tag >= MPC_ALLTOALLV_TAG))					\
     MPC_ERROR_REPORT(comm,MPC_ERR_TAG,"")
 
 #define mpc_check_msg(src,dest,tag,comm,comm_size)		\
@@ -2438,7 +2442,7 @@ __MPC_Test (MPC_Request * request, int *flag, MPC_Status * status)
 
   mpc_check_comm (sctk_mpc_get_communicator_from_request(request), MPC_COMM_WORLD);
   *flag = 0;
-  if (sctk_mpc_completion_flag(request) == SCTK_MESSAGE_PENDING)
+  if ((sctk_mpc_completion_flag(request) == SCTK_MESSAGE_PENDING) && (!sctk_mpc_message_is_null(request)))
     {
       sctk_mpc_perform_messages(request);
       sctk_thread_yield ();

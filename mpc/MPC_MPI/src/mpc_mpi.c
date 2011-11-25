@@ -43,7 +43,6 @@
 #endif
 
 #warning "Optimize algorithme for derived types"
-#warning "Remove communicator number deps"
 
 
 static int __INTERNAL__PMPI_Attr_set_fortran (int keyval);
@@ -5310,77 +5309,89 @@ __sctk_init_mpi_topo ()
 static int
 SCTK__MPI_Comm_communicator_dup (MPI_Comm comm, MPI_Comm newcomm)
 {
-/*   mpi_topology_t *task_specific; */
-/*   PMPC_Get_comm_type ((void *) (&task_specific)); */
-/*   sctk_spinlock_lock (&(task_specific->lock)); */
+  mpc_mpi_per_communicator_t* tmp;
+  mpi_topology_per_comm_t* topo_old;
+  mpi_topology_per_comm_t* topo_new;
 
-/*   if (task_specific->type[comm] == MPI_CART) */
-/*     { */
-/*       task_specific->type[newcomm] = MPI_CART; */
-/*       task_specific->data[newcomm].cart.ndims = */
-/* 	task_specific->data[comm].cart.ndims; */
-/*       task_specific->data[newcomm].cart.reorder = */
-/* 	task_specific->data[comm].cart.reorder; */
-/*       task_specific->data[newcomm].cart.dims = */
-/* 	sctk_malloc (task_specific->data[comm].cart.ndims * sizeof (int)); */
-/*       memcpy (task_specific->data[newcomm].cart.dims, */
-/* 	      task_specific->data[comm].cart.dims, */
-/* 	      task_specific->data[comm].cart.ndims * sizeof (int)); */
-/*       task_specific->data[newcomm].cart.periods = */
-/* 	sctk_malloc (task_specific->data[comm].cart.ndims * sizeof (int)); */
-/*       memcpy (task_specific->data[newcomm].cart.periods, */
-/* 	      task_specific->data[comm].cart.periods, */
-/* 	      task_specific->data[comm].cart.ndims * sizeof (int)); */
-/*     } */
+  tmp = mpc_mpc_get_per_comm_data(comm);
+  topo_old = &(tmp->topo);
+  tmp = mpc_mpc_get_per_comm_data(newcomm);
+  topo_new = &(tmp->topo);
+  
+  sctk_spinlock_lock (&(topo_old->lock));
+  
+  if (topo_old->type == MPI_CART)
+    {
+      topo_new->type = MPI_CART;
+      topo_new->data.cart.ndims =
+	topo_old->data.cart.ndims;
+      topo_new->data.cart.reorder =
+	topo_old->data.cart.reorder;
+      topo_new->data.cart.dims =
+	sctk_malloc (topo_old->data.cart.ndims * sizeof (int));
+      memcpy (topo_new->data.cart.dims,
+	      topo_old->data.cart.dims,
+	      topo_old->data.cart.ndims * sizeof (int));
+      topo_new->data.cart.periods =
+	sctk_malloc (topo_old->data.cart.ndims * sizeof (int));
+      memcpy (topo_new->data.cart.periods,
+	      topo_old->data.cart.periods,
+	      topo_old->data.cart.ndims * sizeof (int));
+    }
 
-/*   if (task_specific->type[comm] == MPI_GRAPH) */
-/*     { */
-/*       task_specific->type[newcomm] = MPI_GRAPH; */
+  if (topo_old->type == MPI_GRAPH)
+    {
+      topo_new->type = MPI_GRAPH;
 
-/*       task_specific->data[newcomm].graph.nnodes = */
-/* 	task_specific->data[comm].graph.nnodes; */
-/*       task_specific->data[newcomm].graph.reorder = */
-/* 	task_specific->data[comm].graph.reorder; */
-/*       task_specific->data[newcomm].graph.index = */
-/* 	sctk_malloc (task_specific->data[comm].graph.nnodes * sizeof (int)); */
-/*       memcpy (task_specific->data[newcomm].graph.index, */
-/* 	      task_specific->data[comm].graph.index, */
-/* 	      task_specific->data[comm].graph.nnodes * sizeof (int)); */
-/*       task_specific->data[newcomm].graph.edges = */
-/* 	sctk_malloc (task_specific->data[comm].graph.nnodes * sizeof (int)); */
-/*       memcpy (task_specific->data[newcomm].graph.edges, */
-/* 	      task_specific->data[comm].graph.edges, */
-/* 	      task_specific->data[comm].graph.nnodes * sizeof (int)); */
+      topo_new->data.graph.nnodes =
+	topo_old->data.graph.nnodes;
+      topo_new->data.graph.reorder =
+	topo_old->data.graph.reorder;
+      topo_new->data.graph.index =
+	sctk_malloc (topo_old->data.graph.nnodes * sizeof (int));
+      memcpy (topo_new->data.graph.index,
+	      topo_old->data.graph.index,
+	      topo_old->data.graph.nnodes * sizeof (int));
+      topo_new->data.graph.edges =
+	sctk_malloc (topo_old->data.graph.nnodes * sizeof (int));
+      memcpy (topo_new->data.graph.edges,
+	      topo_old->data.graph.edges,
+	      topo_old->data.graph.nnodes * sizeof (int));
 
-/*       task_specific->data[newcomm].graph.nedges = */
-/* 	task_specific->data[comm].graph.nedges; */
-/*       task_specific->data[newcomm].graph.nindex = */
-/* 	task_specific->data[comm].graph.nindex; */
-/*     } */
-/*   sctk_spinlock_unlock (&(task_specific->lock)); */
-  not_implemented();
+      topo_new->data.graph.nedges =
+	topo_old->data.graph.nedges;
+      topo_new->data.graph.nindex =
+	topo_old->data.graph.nindex;
+    }
+  
+  sctk_spinlock_unlock (&(topo_old->lock));
+  
   return MPI_SUCCESS;
 }
 
 static int
 SCTK__MPI_Comm_communicator_free (MPI_Comm comm)
 {
-/*   mpi_topology_t *task_specific; */
-/*   PMPC_Get_comm_type ((void *) (&task_specific)); */
-/*   sctk_spinlock_lock (&(task_specific->lock)); */
+  mpc_mpi_per_communicator_t* tmp;
+  mpi_topology_per_comm_t* topo;
 
-/*   if (task_specific->type[comm] == MPI_CART) */
-/*     { */
-/*       sctk_free (task_specific->data[comm].cart.dims); */
-/*       sctk_free (task_specific->data[comm].cart.periods); */
-/*     } */
-/*   if (task_specific->type[comm] == MPI_GRAPH) */
-/*     { */
-/*       sctk_free (task_specific->data[comm].graph.index); */
-/*       sctk_free (task_specific->data[comm].graph.edges); */
-/*     } */
-/*   sctk_spinlock_unlock (&(task_specific->lock));*/
-  not_implemented();
+  tmp = mpc_mpc_get_per_comm_data(comm);
+  topo = &(tmp->topo);
+  
+  sctk_spinlock_lock (&(topo->lock));
+  
+  if (topo->type == MPI_CART)
+    {
+      sctk_free (topo->data.cart.dims);
+      sctk_free (topo->data.cart.periods);
+    }
+  if (topo->type == MPI_GRAPH)
+    {
+      sctk_free (topo->data.graph.index);
+      sctk_free (topo->data.graph.edges);
+    }
+  
+  sctk_spinlock_unlock (&(topo->lock));
   return MPI_SUCCESS;
 }
 

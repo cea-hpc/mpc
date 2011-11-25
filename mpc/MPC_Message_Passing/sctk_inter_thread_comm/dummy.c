@@ -15,7 +15,6 @@ void sctk_net_hybrid_finalize(){}
 
 
 void sctk_register_restart_thread(){not_implemented();}
-void sctk_mpc_message_get_is_null(){not_implemented();}
 void sctk_register_thread(){not_implemented();}
 void sctk_net_migration(){not_implemented();}
 void sctk_net_get_pages(){not_implemented();}
