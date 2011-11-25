@@ -60,6 +60,9 @@ typedef OPA_ptr_t sctk_atomics_ptr;
 #define sctk_atomics_read_write_barrier  OPA_read_write_barrier
 #define sctk_atomics_pause               OPA_busy_wait
 
+#define SCTK_ATOMICS_INT_T_INIT	OPA_INT_T_INITIALIZER
+#define SCTK_ATOMICS_PTR_T_INIT	OPA_PTR_T_INITIALIZER
+
 #else
 #error Unsupported architecture. Cannot compile MPC
 #endif /* defined(OPA_USE_UNSAFE_PRIMITIVES) || defined(OPA_HAVE_GCC_AND_POWERPC_ASM) || defined(OPA_HAVE_GCC_X86_32_64)

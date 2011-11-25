@@ -32,6 +32,9 @@ extern  sctk_net_ibv_qp_local_t *rc_sr_local;
 /* rail */
 extern  sctk_net_ibv_qp_rail_t   *rail;
 
+/* semaphore for RPC. If posted, new rpc to handle */
+static sctk_thread_sem_t sem;
+
 typedef struct
 {
   void* arg;
@@ -65,25 +68,19 @@ thread_rpc(void* arg)
 
   while(1)
   {
-    if (sctk_ib_list_trylock(&rpc_req_list) == 0)
-    {
-      do {
-        ret = sctk_ib_list_pop(&rpc_req_list);
-        sctk_ib_list_unlock(&rpc_req_list);
+    sctk_thread_sem_wait(&sem);
+    sctk_ib_list_lock(&rpc_req_list);
+      ret = sctk_ib_list_pop(&rpc_req_list);
+    sctk_ib_list_unlock(&rpc_req_list);
+    /* the list *MUST* have an element */
+    assume(ret);
 
-        if (ret)
-        {
-          req = sctk_ib_list_get_entry(ret, rpc_req_list_entry_t, list_header);
-          sctk_nodebug("POP %p", req);
-          sctk_nodebug("arg_size: %lu", req->arg_size);
-          sctk_nodebug("Element poped (size:%lu)", req->arg_size);
-          sctk_rpc_execute(req->func, req->arg);
-          sctk_free(req);
-        }
-      } while (ret);
-    }
-    /* TODO: use pthread_cond_signal instead of usleep */
-    usleep(200);
+    req = sctk_ib_list_get_entry(ret, rpc_req_list_entry_t, list_header);
+    sctk_nodebug("POP %p", req);
+    sctk_nodebug("arg_size: %lu", req->arg_size);
+    sctk_nodebug("Element poped (size:%lu)", req->arg_size);
+    sctk_rpc_execute(req->func, req->arg);
+    sctk_free(req);
   }
   return NULL;
 }
@@ -99,6 +96,7 @@ sctk_net_rpc_init()
   SCTK_LIST_HEAD_INIT(&rpc_reg_mr_list);
 
   /* thread for RPC */
+  sctk_thread_sem_init(&sem, 0, 0);
   sctk_thread_attr_init ( &attr_rpc );
   /* / ! \ There are some troubles when we are using
    * a system thread. Don't decomment the following line. */
@@ -341,6 +339,7 @@ sctk_net_rpc_receive(sctk_net_ibv_ibuf_t* ibuf)
   sctk_ib_list_push_tail(&rpc_req_list, &req->list_header);
   sctk_nodebug("NEW %p, arg_size :%d", req, rpc->arg_size);
   sctk_ib_list_unlock(&rpc_req_list);
+  sctk_thread_sem_post(&sem);
 }
 
   void

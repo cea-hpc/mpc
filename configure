@@ -78,6 +78,9 @@ SCTK_HWLOC_OPTIONS="--with-hwloc=embeded"
 # Options for SCTK_OPENPA
 SCTK_OPENPA_OPTIONS="--with-openpa=embeded"
 
+# Options for OpenIB
+SCTK_OPENIB_OPTIONS=""
+
 cat $TOP_SOURCE_DIR/tools/banner
 echo "'configure' configures MPC Distribution ${MPC_VERSION} to adapt to many kinds of systems."
 echo
@@ -116,13 +119,14 @@ MPC gcc options:
 
 MPC gdb options:
   --disable-mpc-gdb                   Disable compilation of mpc-gdb [enabled]
-  --gdb-{prefix|...}                  Pass option to GDB configure script.  
+  --gdb-{prefix|...}                  Pass option to GDB configure script.
 
 MPC dependencies:
   --with-hwloc[=prefix]               Use the hwloc provided in prefix if not set MPC will buid its own hwloc
   --hwloc-{enable-debug|...}          Pass option to hwloc configure script.
   --with-openpa[=prefix]              Use the OpenPA in this prefix if not set MPC will build its own OpenPA
   --openpa-{disable-assert|...}       Pass option to OpenPA configure script.
+  --with-openib=prefix                Use the OpenFabrics librairies provided in prefix.
 
 Help of sub modules:
   --help-mpc                          Display available options for MPC library.
@@ -209,7 +213,7 @@ for arg in "$@" ; do
     --with-hwloc=*)
       MODULES="`echo $MODULES | sed -e 's/mpc-hwloc//g'`"
       SCTK_HWLOC_OPTIONS="$arg"
-      echo "Using hwloc located given by $arg"
+      echo "Using hwloc given by $arg"
     ;;
     --with-openpa)
       MODULES="`echo $MODULES | sed -e 's/mpc-openpa//g'`"
@@ -219,7 +223,11 @@ for arg in "$@" ; do
     --with-openpa=*)
       MODULES="`echo $MODULES | sed -e 's/mpc-openpa//g'`"
       SCTK_OPENPA_OPTIONS="$arg"
-      echo "Using OpenPA located given by $arg"
+      echo "Using OpenPA given by $arg"
+    ;;
+    --with-openib=*)
+      SCTK_OPENIB_OPTIONS="$arg"
+      echo "Using OpenIB located by $arg"
     ;;
     --gcc-*)
       GCC_CONFIGURE_ARGUMENTS="${GCC_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--gcc//g'`"
@@ -253,6 +261,9 @@ MPC_ARGS="$SCTK_HWLOC_OPTIONS $MPC_ARGS"
 
 # Add arguments linked to SCTK_OPENPA
 MPC_ARGS="$SCTK_OPENPA_OPTIONS $MPC_ARGS"
+
+# Add arguments linked to OpenIB
+MPC_ARGS="$SCTK_OPENIB_OPTIONS $MPC_ARGS"
 
 if [ $SCTK_PREFIX_CHECK -eq 1 ]; then
   check_overwritten_files

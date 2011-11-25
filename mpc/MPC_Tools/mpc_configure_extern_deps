@@ -27,6 +27,7 @@ HWLOCK_IS_SETUP="no"
 OPENPA_IS_SETUP="no"
 HYDRA_IS_SETUP="no"
 SLURM_IS_SETUP="no"
+OPENIB_IS_SETUP="no"
 HYDRA_MODULE=${PWD}/../mpc-hydra-1.4.0_build/simple
 PMI_LIB=""
 
@@ -217,7 +218,7 @@ SCTK_CHECK_LIB_HWLOC()
 {
 	#mark test section
 	begin_section hwloc
-	
+
 	#setup if needed
 	sctk_internal_setup_lib_hwloc
 
@@ -308,3 +309,65 @@ SCTK_CHECK_LIB_OPENPA()
 	#end of test section
 	end_section
 }
+
+# Setup vars to use lib OpenIB
+# Params :
+# Global variables :
+#   - OPENIB_USER_PREFIX : Prefix used to search openib, embeded to use the one from MPC package.
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS , OPENIB_IS_SETUP
+sctk_internal_setup_lib_openib()
+{
+  if [ "$OPENIB_IS_SETUP" != "yes" ]; then
+    #Check candidate prefix for OpenIB
+    if [ -e "${OPENIB_USER_PREFIX}/include/infiniband/verbs.h" ]; then
+      SCTK_CFLAGS="${SCTK_CFLAGS} -I${OPENIB_USER_PREFIX}/include/"
+    else
+      error "Could not locate infiniband/verbs.h header in directory ${OPENIB_USER_PREFIX}/include/"
+    fi
+
+    #setup rpaths and -L
+    if [ -e "${OPENIB_USER_PREFIX}/lib" ]; then
+      SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENIB_USER_PREFIX}/lib -L${OPENIB_USER_PREFIX}/lib"
+      SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENIB_USER_PREFIX}/lib/libibverbs.so"
+    fi
+    if [ -e "${OPENIB_USER_PREFIX}/lib64" ]; then
+      SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENIB_USER_PREFIX}/lib64 -L${OPENIB_USER_PREFIX}/lib64"
+      SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENIB_USER_PREFIX}/lib64/libibverbs.so"
+    fi
+  fi
+
+  #mark as setup
+  OPENIB_IS_SETUP="yes"
+}
+
+# Setup vars to use lib openib
+# Params :
+# Global variables :
+#   - OPENIB_USER_PREFIX : Prefix used to search openib.
+#   - OPENIB_IS_SETUP : To know if openib is already setup
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS
+SCTK_CHECK_LIB_OPENIB()
+{
+  # if prefix set
+  if [ "$OPENIB_USER_PREFIX" != "" ]; then
+    #Lets check the provided prefix for correctness
+    sctk_internal_setup_lib_openib;
+  fi
+
+  begin_section "Check OpenIB:"
+
+  # Lets ty to detec OpenIB in the current environement
+  SCTK_CHECK_HEADER_NOFAIL infiniband/verbs.h
+  if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
+    SCTK_CHECK_OPTION "-DMPC_USE_INFINIBAND"
+    SCTK_CHECK_LDOPTION "-libverbs"
+  fi
+
+
+
+	SCTK_NET_LIST="$SCTK_NET_LIST ib"
+  end_section
+}
+

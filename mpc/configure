@@ -183,7 +183,8 @@ Optional packages:
   --without-slurm         Disable slurm detection [enabled]
   --without-mpc_mmap      Disable mpc mmap/munmap support [enabled]
   --with-openpa=prefix    Enable OpenPA using given prefix [system default]
-  --with-hwloc=prefix     Enable hwloc usign given prefix [system default]
+  --with-hwloc=prefix     Enable hwloc using given prefix [system default]
+  --with-openib=prefix    Enable OpenFabrics using given prefix [system default]
 
 Some influential environment variables:
   CC                               C compiler command
@@ -218,6 +219,7 @@ SCTK_CFLAGS_NON_GNU=""
 SCTK_MPC_MMAP="0"
 HWLOC_USER_PREFIX=""
 OPENPA_USER_PREFIX=""
+OPENIB_USER_PREFIX=""
 
 for arg in "$@" ; do
     case $arg in
@@ -373,6 +375,9 @@ for arg in "$@" ; do
     ;;
     --with-openpa=*)
     OPENPA_USER_PREFIX="`echo A$arg | sed -e 's/A--with-openpa=//g'`"
+    ;;
+    --with-openib=*)
+    OPENIB_USER_PREFIX="`echo A$arg | sed -e 's/A--with-openib=//g'`"
     ;;
 
     --disable-all)
