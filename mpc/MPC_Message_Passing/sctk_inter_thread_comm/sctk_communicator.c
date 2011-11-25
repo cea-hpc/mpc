@@ -53,6 +53,8 @@ typedef struct sctk_internal_communicator_s{
   struct sctk_internal_communicator_s* new_comm;
   volatile int has_zero;
 
+  volatile int is_master_delete;
+
   UT_hash_handle hh;
 } sctk_internal_communicator_t;
 
@@ -394,8 +396,31 @@ void sctk_communicator_init(const int nb_task){
 void sctk_communicator_delete(){}
 
 sctk_communicator_t sctk_delete_communicator (const sctk_communicator_t comm){
-    sctk_barrier (comm);
-#warning "Perform communicator delete"
+  sctk_internal_communicator_t * tmp;
+  int is_master = 0;
+  sctk_barrier (comm);
+  tmp = sctk_get_internal_communicator(comm);
+  sctk_barrier (comm);
+  sctk_spinlock_lock(&(tmp->creation_lock));
+  if(tmp->is_master_delete == 0){
+    tmp->is_master_delete = 1;
+    is_master = 1;
+  } else {
+    is_master = 0;
+  }
+  sctk_spinlock_unlock(&(tmp->creation_lock));
+  sctk_barrier (comm);
+
+  sctk_spinlock_lock(&sctk_communicator_all_table_lock);
+  if(is_master == 1){
+    sctk_free(tmp->local_to_global);
+    sctk_free(tmp->global_to_local);
+    sctk_free(tmp->task_to_process);
+    
+    sctk_del_internal_communicator_no_lock_no_check(comm);
+    sctk_free(tmp);
+  }
+  sctk_spinlock_unlock(&sctk_communicator_all_table_lock);
 }
 
 /************************************************************************/
