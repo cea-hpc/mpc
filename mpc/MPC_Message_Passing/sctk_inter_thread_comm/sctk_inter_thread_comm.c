@@ -340,6 +340,9 @@ void sctk_message_completion_and_free(sctk_thread_ptp_message_t* send,
     recv->tail.request->header.source = send->body.header.source;
     recv->tail.request->header.message_tag = send->body.header.message_tag;
     recv->tail.request->header.msg_size = size;
+
+    recv->tail.request->msg = NULL;
+    send->tail.request->msg = NULL;
   }
 
   sctk_complete_and_free_message(send);
@@ -736,6 +739,28 @@ sctk_add_adress_in_message (sctk_thread_ptp_message_t *
   }
 }
 
+static inline
+void sctk_request_init_request(sctk_request_t * request, int completion,
+			       sctk_thread_ptp_message_t * msg,
+			       const int source,
+			       const int destination, 
+			       const int message_tag,
+			       const sctk_communicator_t
+			       communicator,
+			       const size_t count){
+  assume(msg != NULL);
+  request->msg = msg;
+  request->header.source = source;
+  request->header.destination = destination;
+  request->header.glob_destination = msg->sctk_msg_get_glob_destination;
+  request->header.glob_source = msg->sctk_msg_get_glob_source;
+  request->header.message_tag = message_tag;
+  request->header.communicator = communicator;
+  request->header.msg_size = count;
+  request->is_null = 0;
+  request->completion_flag = completion;
+}
+
 void sctk_set_header_in_message (sctk_thread_ptp_message_t *
 				 msg, const int message_tag,
 				 const sctk_communicator_t
@@ -774,16 +799,9 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
   msg->sctk_msg_get_use_message_numbering = 1;
 
   if(request != NULL){
-    request->msg = msg;
     
-    request->header.source = source;
-    request->header.destination = destination;
-    request->header.glob_destination = msg->sctk_msg_get_glob_destination;
-    request->header.glob_source = msg->sctk_msg_get_glob_source;
-    request->header.message_tag = message_tag;
-    request->header.communicator = communicator;
-    request->is_null = 0;
-    request->completion_flag = SCTK_MESSAGE_PENDING;
+    sctk_request_init_request(request,SCTK_MESSAGE_PENDING,msg,source,destination,message_tag,communicator,
+			      count);
 
     msg->body.completion_flag = &(request->completion_flag);
   }
@@ -1023,7 +1041,7 @@ void sctk_perform_messages(sctk_request_t* request){
     }
 
     if(tmp != NULL){
-      if(request->msg->tail.need_check_in_wait == 1){
+      if(request->need_check_in_wait == 1){
 	sctk_try_perform_messages_for_pair(tmp);
       }
     } else {
@@ -1103,6 +1121,10 @@ void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_ch
       *(msg->body.completion_flag) = SCTK_MESSAGE_PENDING;
     }
     
+    if(msg->tail.request != NULL){
+      msg->tail.request->need_check_in_wait = msg->tail.need_check_in_wait;
+    }
+
     msg->tail.remote_source = 0;
     msg->tail.remote_destination = 0;
     
@@ -1136,6 +1158,10 @@ void sctk_recv_message_try_check (sctk_thread_ptp_message_t * msg,sctk_internal_
 
   if(msg->body.completion_flag != NULL){
     *(msg->body.completion_flag) = SCTK_MESSAGE_PENDING;
+  }
+
+  if(msg->tail.request != NULL){
+    msg->tail.request->need_check_in_wait = msg->tail.need_check_in_wait;
   }
 
   msg->tail.remote_source = 0;

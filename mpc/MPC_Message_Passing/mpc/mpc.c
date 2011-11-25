@@ -94,7 +94,26 @@ static inline void sctk_thread_addspecific_mpc_per_comm(sctk_task_specific_t* ta
   HASH_FIND(hh,task_specific->per_communicator,&comm,sizeof(sctk_communicator_t),per_communicator);
   assume(per_communicator == NULL);
   mpc_per_comm->key = comm;
-  HASH_ADD(hh,task_specific->per_communicator,key,sizeof(sctk_communicator_t),mpc_per_comm);  
+  sctk_nodebug("Add %d %p (%d)",comm,mpc_per_comm,task_specific->task_id);
+
+  /* { */
+  /*   mpc_per_communicator_t* pair; */
+  /*   mpc_per_communicator_t* tmp; */
+  /*   HASH_ITER(hh,task_specific->per_communicator,pair,tmp){ */
+  /*     sctk_debug("Key before INS %d",pair->key); */
+  /*   } */
+  /* } */
+
+  HASH_ADD(hh,task_specific->per_communicator,key,sizeof(sctk_communicator_t),mpc_per_comm); 
+
+  /* { */
+  /*   mpc_per_communicator_t* pair; */
+  /*   mpc_per_communicator_t* tmp; */
+  /*   HASH_ITER(hh,task_specific->per_communicator,pair,tmp){ */
+  /*     sctk_debug("Key after INS %d",pair->key); */
+  /*   } */
+  /* } */
+
   sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
   return ; 
 }
@@ -102,8 +121,30 @@ static inline void sctk_thread_addspecific_mpc_per_comm(sctk_task_specific_t* ta
 static inline void sctk_thread_removespecific_mpc_per_comm(sctk_task_specific_t* task_specific,sctk_communicator_t comm){
   mpc_per_communicator_t*per_communicator;
   sctk_spinlock_lock(&(task_specific->per_communicator_lock));
+  /* { */
+  /*   mpc_per_communicator_t* pair; */
+  /*   mpc_per_communicator_t* tmp; */
+  /*   HASH_ITER(hh,task_specific->per_communicator,pair,tmp){ */
+  /*     sctk_debug("Before DEL Key %d",pair->key); */
+  /*   } */
+  /* } */
+
   HASH_FIND(hh,task_specific->per_communicator,&comm,sizeof(sctk_communicator_t),per_communicator);
+
   assume(per_communicator != NULL);
+  assume(per_communicator->key == comm);
+
+  HASH_DELETE(hh,task_specific->per_communicator,per_communicator);
+
+  /* { */
+  /*   mpc_per_communicator_t* pair; */
+  /*   mpc_per_communicator_t* tmp; */
+  /*   HASH_ITER(hh,task_specific->per_communicator,pair,tmp){ */
+  /*     sctk_debug("After DEL Key %d",pair->key); */
+  /*   } */
+  /* } */
+
+  sctk_nodebug("Remove %d %p (%d)",comm,per_communicator,task_specific->task_id);
   sctk_free(per_communicator);
   sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
 }
@@ -119,12 +160,16 @@ static inline mpc_per_communicator_t* sctk_thread_createspecific_mpc_per_comm(){
   tmp->mpc_mpi_per_communicator = NULL;
   tmp->mpc_mpi_per_communicator_copy = NULL;
   
+  sctk_nodebug("Allocate new per comm %p",tmp);
+
   return tmp;
 }
 
 static inline void sctk_thread_createspecific_mpc_per_comm_from_existing(sctk_task_specific_t* task_specific,sctk_communicator_t new_comm,sctk_communicator_t old_comm){
   mpc_per_communicator_t*per_communicator;
   mpc_per_communicator_t* per_communicator_new;
+  
+  assume(new_comm != old_comm);
 
   sctk_spinlock_lock(&(task_specific->per_communicator_lock));
   HASH_FIND(hh,task_specific->per_communicator,&old_comm,sizeof(sctk_communicator_t),per_communicator);
@@ -134,7 +179,7 @@ static inline void sctk_thread_createspecific_mpc_per_comm_from_existing(sctk_ta
   memcpy(per_communicator_new,per_communicator,sizeof(mpc_per_communicator_t));
 
   if(per_communicator->mpc_mpi_per_communicator_copy != NULL){
-    per_communicator->mpc_mpi_per_communicator_copy(per_communicator_new->mpc_mpi_per_communicator,per_communicator->mpc_mpi_per_communicator); 
+    per_communicator->mpc_mpi_per_communicator_copy(&(per_communicator_new->mpc_mpi_per_communicator),per_communicator->mpc_mpi_per_communicator); 
   }
 
   sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
@@ -2211,15 +2256,13 @@ __MPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
 	  sctk_add_adress_in_message (msg, tmp_buf->buf, msg_size);
 	  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
 					  &(tmp_buf->request), msg_size,pt2pt_specific_message_tag);
+	  
 	  sctk_spinlock_unlock (&(thread_specific->buffer_async.lock));
 
 	  memcpy (tmp_buf->buf, buf, msg_size);
 	  if (request != NULL)
 	    {
-	      request->header.source = src;
-	      request->header.destination = dest;
-	      request->header.message_tag = tag;
-	      request->header.msg_size = msg_size;
+	      memcpy(request,&(tmp_buf->request),sizeof(sctk_request_t));
 	      request->completion_flag = SCTK_MESSAGE_DONE;
 	    }
 	}
@@ -3733,34 +3776,21 @@ PMPC_Get_processor_name (char *name, int *resultlen)
 static inline int
 __MPC_Comm_group (MPC_Comm comm, MPC_Group * group)
 {
-  /*   int size; */
-  /*   int i; */
-  /*   sctk_internal_communicator_t *tmp = NULL; */
-  /*   __MPC_Comm_size (comm, &size); */
+    int size;
+    int i;
+    __MPC_Comm_size (comm, &size);
 
-  /*   sctk_nodebug ("MPC_Comm_group"); */
+    sctk_nodebug ("MPC_Comm_group");
 
-  /*   *group = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t)); */
+    *group = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
 
-  /*   (*group)->task_nb = size; */
-  /*   (*group)->task_list = (int *) sctk_malloc (size * sizeof (int)); */
+    (*group)->task_nb = size;
+    (*group)->task_list = (int *) sctk_malloc (size * sizeof (int));
 
-  /*   tmp = sctk_get_communicator (comm); */
-  /*   if (tmp->rank_in_communicator != NULL) */
-  /*     { */
-  /*       for (i = 0; i < size; i++) */
-  /* 	{ */
-  /* 	  (*group)->task_list[i] = tmp->rank_in_communicator[i]; */
-  /* 	} */
-  /*     } */
-  /*   else */
-  /*     { */
-  /*       for (i = 0; i < size; i++) */
-  /* 	{ */
-  /* 	  (*group)->task_list[i] = i; */
-  /* 	} */
-  /*     } */
-  not_implemented();
+    for (i = 0; i < size; i++)
+      {
+	(*group)->task_list[i] = sctk_get_comm_world_rank(comm,i);
+      }
   MPC_ERROR_SUCESS ();
 }
 

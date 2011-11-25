@@ -64,11 +64,11 @@ struct mpc_mpi_per_communicator_s;
 typedef struct {
   sctk_communicator_t key;
 
-  MPC_Handler_function*  err_handler;
   sctk_spinlock_t err_handler_lock;
+  MPC_Handler_function*  err_handler;
 
   struct mpc_mpi_per_communicator_s* mpc_mpi_per_communicator;
-  void (*mpc_mpi_per_communicator_copy)(struct mpc_mpi_per_communicator_s*,struct mpc_mpi_per_communicator_s*);
+  void (*mpc_mpi_per_communicator_copy)(struct mpc_mpi_per_communicator_s**,struct mpc_mpi_per_communicator_s*);
 
   UT_hash_handle hh;
 }mpc_per_communicator_t;

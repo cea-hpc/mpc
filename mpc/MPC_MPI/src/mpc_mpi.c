@@ -402,8 +402,12 @@ typedef struct mpc_mpi_data_s{
 }mpc_mpi_data_t;
 
 static
-void mpc_mpi_per_communicator_copy_func(mpc_mpi_per_communicator_t* to, mpc_mpi_per_communicator_t* from){
-  memcpy(to,from,sizeof(mpc_mpi_per_communicator_t));
+void mpc_mpi_per_communicator_copy_func(mpc_mpi_per_communicator_t** to, mpc_mpi_per_communicator_t* from){
+  sctk_spinlock_lock (&(from->lock));
+  *to = sctk_malloc(sizeof(struct mpc_mpi_per_communicator_s));
+  memcpy(*to,from,sizeof(mpc_mpi_per_communicator_t));
+  sctk_spinlock_unlock (&(from->lock));
+  sctk_spinlock_unlock (&((*to)->lock));
 }
 
 static inline
@@ -5392,6 +5396,8 @@ SCTK__MPI_Comm_communicator_free (MPI_Comm comm)
     }
   
   sctk_spinlock_unlock (&(topo->lock));
+
+  sctk_free(tmp);
   return MPI_SUCCESS;
 }
 
@@ -6550,6 +6556,7 @@ __INTERNAL__PMPI_Init (int *argc, char ***argv)
     {
       mpc_mpi_per_communicator_t* tmp;
       per_communicator->mpc_mpi_per_communicator = sctk_malloc(sizeof(struct mpc_mpi_per_communicator_s));
+      memset(per_communicator->mpc_mpi_per_communicator,0,sizeof(struct mpc_mpi_per_communicator_s));
       per_communicator->mpc_mpi_per_communicator_copy = mpc_mpi_per_communicator_copy_func;
       per_communicator->mpc_mpi_per_communicator->lock = lock;
       
@@ -6559,6 +6566,8 @@ __INTERNAL__PMPI_Init (int *argc, char ***argv)
 /*       __sctk_init_mpi_buffer_per_comm (tmp); */
       __sctk_init_mpi_errors_per_comm (tmp);
       __sctk_init_mpi_topo_per_comm (tmp);
+      tmp->max_number = 0;
+      tmp->topo.lock = lock;
 /*       __sctk_init_mpi_op_per_comm (tmp); */
 /*       __sctk_init_mpc_group_per_comm (tmp); */
     }
