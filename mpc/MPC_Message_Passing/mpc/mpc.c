@@ -3459,6 +3459,7 @@ PMPC_Scatter (void *sendbuf,
   int rank;
   int size;
   MPC_Request request;
+  size_t dsize;
   MPC_Request sendrequest[MPC_MAX_CONCURENT];
   sctk_task_specific_t *task_specific;
   SCTK_PROFIL_START (MPC_Scatter);
@@ -3486,14 +3487,13 @@ PMPC_Scatter (void *sendbuf,
   if (rank == root)
     {
       i = 0;
+      dsize = __MPC_Get_datatype_size (sendtype, task_specific);
       while (i < size)
 	{
 	  for (j = 0; (i < size) && (j < MPC_MAX_CONCURENT);)
 	    {
 	      __MPC_Isend (((char *) sendbuf) +
-			   (i * sendcnt *
-			    __MPC_Get_datatype_size (sendtype,
-						     task_specific)),
+			   (i * sendcnt *dsize),
 			   sendcnt, sendtype, i, MPC_SCATTER_TAG, comm,
 			   &(sendrequest[j]), task_specific);
 	      i++;
