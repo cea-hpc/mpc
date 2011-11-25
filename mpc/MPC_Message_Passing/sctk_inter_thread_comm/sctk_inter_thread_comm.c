@@ -1146,7 +1146,11 @@ void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_ch
 }
 
 void sctk_send_message (sctk_thread_ptp_message_t * msg){
-  msg->tail.need_check_in_wait = 0;
+#warning "To optimize"
+  /*  
+      msg->tail.need_check_in_wait should be optimize by adding self polling in wait and test on myself
+   */
+  msg->tail.need_check_in_wait = 1;
   sctk_send_message_try_check(msg,0);
 }
 
