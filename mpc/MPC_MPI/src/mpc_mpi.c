@@ -371,9 +371,13 @@ typedef struct
 } MPI_Handler_user_function_t;
 
 struct MPI_request_struct_s;
+typedef struct MPI_request_struct_s MPI_request_struct_t;
 struct MPI_group_struct_s;
+typedef struct MPI_group_struct_s MPI_group_struct_t;
 struct MPI_buffer_struct_s;
+typedef struct MPI_buffer_struct_s MPI_buffer_struct_t;
 struct sctk_mpi_ops_s;
+typedef struct sctk_mpi_ops_s sctk_mpi_ops_t;
 
 typedef struct mpc_mpi_data_s{
   /****** ERRORS ******/
@@ -595,7 +599,7 @@ typedef struct MPI_internal_request_s
   void *saved_datatype;
 } MPI_internal_request_t;
 
-typedef struct
+ struct MPI_request_struct_s
 {
   sctk_spinlock_t lock;
   /*Number of resquests*/
@@ -603,7 +607,7 @@ typedef struct
   MPI_internal_request_t **tab;
   volatile MPI_internal_request_t *free_list;
   sctk_alloc_buffer_t buf;
-} MPI_request_struct_t;
+} ;
 
 
 static inline void
@@ -1033,7 +1037,7 @@ __INTERNAL__PMPI_Rsend (void *buf, int count, MPI_Datatype datatype, int dest,
 /*
   BUFFERS
 */
-typedef struct
+typedef struct MPI_buffer_struct_s
 {
   void *buffer;
   int size;
@@ -1134,7 +1138,7 @@ __INTERNAL__PMPI_Buffer_attach (void *buf, int count)
 {
   mpi_buffer_t *tmp;
   mpi_buffer_overhead_t *head;
-  PMPC_Get_buffers ((void **) &tmp);
+  PMPC_Get_buffers (&tmp);
 
   sctk_spinlock_lock (&(tmp->lock));
   assume (tmp->buffer == NULL);
@@ -1154,7 +1158,7 @@ static int
 __INTERNAL__PMPI_Buffer_detach (void *bufferptr, int *size)
 {
   mpi_buffer_t *tmp;
-  PMPC_Get_buffers ((void **) &tmp);
+  PMPC_Get_buffers (&tmp);
   sctk_spinlock_lock (&(tmp->lock));
 
   /* Flush pending messages */
@@ -1229,7 +1233,7 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
 
   sctk_nodebug ("MSG size %d", size);
 
-  PMPC_Get_buffers ((void **) &tmp);
+  PMPC_Get_buffers (&tmp);
   sctk_spinlock_lock (&(tmp->lock));
 
   if (tmp->buffer == NULL)
@@ -3707,12 +3711,12 @@ typedef struct
   int commute;
 } sctk_op_t;
 
-typedef struct sctk_mpi_ops_s
+ struct sctk_mpi_ops_s
 {
   sctk_op_t *ops;
   int size;
   sctk_spinlock_t lock;
-} sctk_mpi_ops_t;
+} ;
 
 #define MAX_MPI_DEFINED_OP 12
 
@@ -3773,7 +3777,7 @@ sctk_convert_to_mpc_op (MPI_Op op)
       assume (defined_op[op].used == 1);
       return &(defined_op[op]);
     }
-  PMPC_Get_op ((void **) &ops);
+  PMPC_Get_op ( &ops);
   sctk_spinlock_lock (&(ops->lock));
 
   op -= MAX_MPI_DEFINED_OP;
@@ -3900,7 +3904,7 @@ __INTERNAL__PMPI_Op_create (MPI_User_function * function, int commute,
   sctk_mpi_ops_t *ops;
   int i;
 
-  PMPC_Get_op ((void **) &ops);
+  PMPC_Get_op ( &ops);
   sctk_spinlock_lock (&(ops->lock));
 
   for (i = 0; i < ops->size; i++)
@@ -3945,7 +3949,7 @@ __INTERNAL__PMPI_Op_free (MPI_Op * op)
   MPC_Op *mpc_op = NULL;
   sctk_mpi_ops_t *ops;
 
-  PMPC_Get_op ((void **) &ops);
+  PMPC_Get_op ( &ops);
   sctk_spinlock_lock (&(ops->lock));
 
   assume (*op >= MAX_MPI_DEFINED_OP);
@@ -4115,14 +4119,14 @@ typedef struct MPI_internal_group_s
   int rank;
 } MPI_internal_group_t;
 
-typedef struct
+struct MPI_group_struct_s
 {
   sctk_spinlock_t lock;
   long max_size;
   MPI_internal_group_t **tab;
   volatile MPI_internal_group_t *free_list;
   sctk_alloc_buffer_t buf;
-} MPI_group_struct_t;
+} ;
 
 
 static inline MPI_internal_group_t *
