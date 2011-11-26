@@ -418,6 +418,9 @@ sctk_communicator_t sctk_delete_communicator (const sctk_communicator_t comm){
   sctk_spinlock_unlock(&(tmp->creation_lock));
   sctk_barrier (comm);
 
+#warning "Unable to free communciator"
+  return;
+
   sctk_spinlock_lock(&sctk_communicator_all_table_lock);
   if(is_master == 1){
     sctk_free(tmp->local_to_global);
