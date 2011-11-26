@@ -245,6 +245,8 @@ static inline void sctk_ptp_table_insert(sctk_internal_ptp_t * tmp){
     }
   }
   if(sctk_ptp_array){
+    assume(tmp->key.destination >= sctk_ptp_array_start);
+    assume(tmp->key.destination <= sctk_ptp_array_end);
     assume(sctk_ptp_array[tmp->key.destination - sctk_ptp_array_start] == NULL);
     sctk_ptp_array[tmp->key.destination - sctk_ptp_array_start] = tmp;
   }

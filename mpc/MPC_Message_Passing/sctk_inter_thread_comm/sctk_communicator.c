@@ -387,6 +387,11 @@ void sctk_communicator_init(const int nb_task){
   sctk_nodebug("2: local_tasks %d",local_tasks);
 
   first_local = sctk_process_rank * local_tasks;
+
+  if(nb_task % sctk_process_number <= pos){
+    first_local += nb_task % sctk_process_number;
+  }
+
   last_local = first_local + local_tasks - 1;
 
   sctk_communicator_init_intern(nb_task,SCTK_COMM_WORLD,last_local,
