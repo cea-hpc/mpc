@@ -433,27 +433,23 @@ sctk_communicator_t sctk_delete_communicator (const sctk_communicator_t comm){
     tmp = sctk_get_internal_communicator(comm);
     sctk_barrier (comm);
   
-    val = OPA_fetch_and_incr_int(&(tmp->nb_to_delete));
     max_val = tmp->local_tasks;
+    val = OPA_fetch_and_incr_int(&(tmp->nb_to_delete));
 
     if(val == max_val - 1){
       is_master = 1;
       sctk_spinlock_lock(&sctk_communicator_all_table_lock);
-    } else {
-      is_master = 0;
-    }
-
-    if(is_master == 1){
       sctk_free(tmp->local_to_global);
       sctk_free(tmp->global_to_local);
       sctk_free(tmp->task_to_process);
     
       sctk_del_internal_communicator_no_lock_no_check(comm);
       sctk_free(tmp);
+      sctk_spinlock_unlock(&sctk_communicator_all_table_lock);
     } else {
-      sctk_spinlock_lock(&sctk_communicator_all_table_lock);
+      is_master = 0;
     }
-    sctk_spinlock_unlock(&sctk_communicator_all_table_lock);
+
     return MPC_COMM_NULL;
   }
 }
