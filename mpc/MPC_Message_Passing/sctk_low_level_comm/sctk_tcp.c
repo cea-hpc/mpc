@@ -41,7 +41,10 @@ static void* sctk_tcp_thread(sctk_route_table_t* tmp){
     ssize_t res;
 
     res = sctk_safe_read(fd,(char*)&size,sizeof(size_t));
-    if(res == -1){
+    if(res < sizeof(size_t)){
+      return NULL;
+    }
+    if(size < sizeof(sctk_thread_ptp_message_body_t)){
       return NULL;
     }
 

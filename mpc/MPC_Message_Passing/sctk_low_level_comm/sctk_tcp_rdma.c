@@ -64,7 +64,7 @@ static void* sctk_tcp_rdma_thread(sctk_route_table_t* tmp){
     ssize_t res;
 
     res = sctk_safe_read(fd,(char*)&op_type,sizeof(sctk_tcp_rdma_type_t));
-    if(res == -1){
+    if(res < sizeof(sctk_tcp_rdma_type_t)){
       return NULL;
     }
     switch(op_type){
