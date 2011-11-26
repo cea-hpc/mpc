@@ -684,6 +684,7 @@ void sctk_rebuild_header (sctk_thread_ptp_message_t * msg){
       sctk_get_comm_world_rank (msg->sctk_msg_get_communicator,msg->sctk_msg_get_destination);
   }
   msg->tail.need_check_in_wait = 1;
+  msg->tail.request = NULL;
 }
 
 void sctk_reinit_header (sctk_thread_ptp_message_t *tmp, void (*free_memory)(void*),

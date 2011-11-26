@@ -38,8 +38,12 @@ static void* sctk_tcp_thread(sctk_route_table_t* tmp){
     sctk_thread_ptp_message_t * msg;
     void* body;
     size_t size;
+    ssize_t res;
 
-    sctk_safe_read(fd,(char*)&size,sizeof(size_t));
+    res = sctk_safe_read(fd,(char*)&size,sizeof(size_t));
+    if(res == -1){
+      return NULL;
+    }
 
     size = size - sizeof(sctk_thread_ptp_message_body_t) + 
       sizeof(sctk_thread_ptp_message_t);

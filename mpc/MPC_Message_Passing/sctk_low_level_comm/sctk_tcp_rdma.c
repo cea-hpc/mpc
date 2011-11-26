@@ -61,8 +61,12 @@ static void* sctk_tcp_rdma_thread(sctk_route_table_t* tmp){
     sctk_thread_ptp_message_t * msg;
     size_t size;
     sctk_tcp_rdma_type_t op_type;
+    ssize_t res;
 
-    sctk_safe_read(fd,(char*)&op_type,sizeof(sctk_tcp_rdma_type_t));
+    res = sctk_safe_read(fd,(char*)&op_type,sizeof(sctk_tcp_rdma_type_t));
+    if(res == -1){
+      return NULL;
+    }
     switch(op_type){
     case sctk_rdma_message_header: {      
       size = sizeof(sctk_thread_ptp_message_t);
