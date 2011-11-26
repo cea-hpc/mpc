@@ -636,7 +636,7 @@ sctk_communicator_t sctk_create_communicator (const sctk_communicator_t
       task_to_process = sctk_malloc(nb_task_involved*sizeof(int));
 
       for(i = 0; i < nb_task_involved; i++){
-	local_to_global[i] = sctk_get_comm_world_rank(origin_communicator,task_list[i]);
+	local_to_global[i] = task_list[i];
 	global_to_local[local_to_global[i]] = i;
 	task_to_process[i] = sctk_get_process_rank_from_task_rank(local_to_global[i]);
 	if(task_to_process[i] == sctk_process_rank){
@@ -686,7 +686,6 @@ sctk_communicator_t sctk_create_communicator (const sctk_communicator_t
     assume(new_tmp->id != origin_communicator);
 
     /*If not involved return MPC_COMM_NULL*/
-    rank = sctk_get_rank(origin_communicator,rank);
     for(i = 0; i < nb_task_involved; i++){
       if(task_list[i] == rank){
 	sctk_barrier (new_tmp->id);

@@ -59,7 +59,8 @@ extern "C"
   typedef struct
   {
     int task_nb;
-    int *task_list;
+    /* Task list rank are valid in COMM_WORLD  */
+    int *task_list_in_global_ranks;
   } MPC_Group_t;
   typedef MPC_Group_t *MPC_Group;
 

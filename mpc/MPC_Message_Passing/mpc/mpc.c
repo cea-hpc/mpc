@@ -3785,11 +3785,11 @@ __MPC_Comm_group (MPC_Comm comm, MPC_Group * group)
     *group = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
 
     (*group)->task_nb = size;
-    (*group)->task_list = (int *) sctk_malloc (size * sizeof (int));
+    (*group)->task_list_in_global_ranks = (int *) sctk_malloc (size * sizeof (int));
 
     for (i = 0; i < size; i++)
       {
-	(*group)->task_list[i] = sctk_get_comm_world_rank(comm,i);
+	(*group)->task_list_in_global_ranks[i] = sctk_get_comm_world_rank(comm,i);
       }
   MPC_ERROR_SUCESS ();
 }
@@ -3838,7 +3838,7 @@ __MPC_Group_free (MPC_Group * group)
 {
   if (*group != MPC_GROUP_NULL)
     {
-      sctk_free ((*group)->task_list);
+      sctk_free ((*group)->task_list_in_global_ranks);
       sctk_free (*group);
       *group = MPC_GROUP_NULL;
     }
@@ -3877,12 +3877,12 @@ PMPC_Group_incl (MPC_Group group, int n, int *ranks, MPC_Group * newgroup)
   (*newgroup) = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
 
   (*newgroup)->task_nb = n;
-  (*newgroup)->task_list = (int *) sctk_malloc (n * sizeof (int));
+  (*newgroup)->task_list_in_global_ranks = (int *) sctk_malloc (n * sizeof (int));
 
   for (i = 0; i < n; i++)
     {
-      (*newgroup)->task_list[i] = group->task_list[ranks[i]];
-      sctk_nodebug ("%d", group->task_list[ranks[i]]);
+      (*newgroup)->task_list_in_global_ranks[i] = group->task_list_in_global_ranks[ranks[i]];
+      sctk_nodebug ("%d", group->task_list_in_global_ranks[ranks[i]]);
     }
 
   MPC_ERROR_SUCESS ();
@@ -3907,7 +3907,7 @@ PMPC_Group_difference (MPC_Group group1, MPC_Group group2,
   *newgroup = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
 
   (*newgroup)->task_nb = size;
-  (*newgroup)->task_list = (int *) sctk_malloc (size * sizeof (int));
+  (*newgroup)->task_list_in_global_ranks = (int *) sctk_malloc (size * sizeof (int));
 
   k = 0;
   for (i = 0; i < group1->task_nb; i++)
@@ -3915,7 +3915,7 @@ PMPC_Group_difference (MPC_Group group1, MPC_Group group2,
       pos = -1;
       for (j = 0; j < group2->task_nb; j++)
 	{
-	  if (group1->task_list[i] == group2->task_list[j])
+	  if (group1->task_list_in_global_ranks[i] == group2->task_list_in_global_ranks[j])
 	    {
 	      pos = j;
 	      break;
@@ -3923,7 +3923,7 @@ PMPC_Group_difference (MPC_Group group1, MPC_Group group2,
 	}
       if (pos == -1)
 	{
-	  (*newgroup)->task_list[k] = group1->task_list[i];
+	  (*newgroup)->task_list_in_global_ranks[k] = group1->task_list_in_global_ranks[i];
 	  k++;
 	}
     }
@@ -3945,22 +3945,22 @@ __MPC_Comm_create (MPC_Comm comm, MPC_Group group, MPC_Comm * comm_out,
   __MPC_Barrier (comm);
 
   sctk_nodebug ("MPC_Comm_create %d", group->task_nb);
-  __MPC_Comm_rank (comm, &rank, task_specific);
+  __MPC_Comm_rank (MPC_COMM_WORLD, &rank, task_specific);
   sctk_assert (comm != MPC_COMM_NULL);
 
   for (i = 0; i < group->task_nb; i++)
     {
-      if (group->task_list[i] == rank)
+      if (group->task_list_in_global_ranks[i] == rank)
 	{
 	  sctk_nodebug ("%d present", i);
 	  present = 1;
 	  break;
 	}
-      sctk_nodebug ("%d present", group->task_list[i]);
+      sctk_nodebug ("%d present", group->task_list_in_global_ranks[i]);
     }
 
   (*comm_out) =
-    sctk_create_communicator (comm, group->task_nb, group->task_list,
+    sctk_create_communicator (comm, group->task_nb, group->task_list_in_global_ranks,
 			      is_inter_comm);
 
   sctk_nodebug ("MPC_Comm_create done %d ", *comm_out);
@@ -3989,14 +3989,21 @@ PMPC_Comm_create_list (MPC_Comm comm, int *list, int nb_elem,
 		       MPC_Comm * comm_out)
 {
   MPC_Group_t group;
+  int i;
 
   group.task_nb = nb_elem;
-  group.task_list = list;
+  group.task_list_in_global_ranks = sctk_malloc(nb_elem*sizeof(int));
+
+  for(i = 0; i < nb_elem; i++){
+    group.task_list_in_global_ranks[i] = sctk_get_comm_world_rank(comm,list[i]);
+  }
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (comm, "MPC_Comm_create_list nb_elem=%d comm_out=%p",
 		 nb_elem, comm_out);
 #endif
   __MPC_Comm_create (comm, &group, comm_out, 0);
+
+  sctk_free(group.task_list_in_global_ranks);
 
   MPC_ERROR_SUCESS ();
 }
@@ -4167,14 +4174,14 @@ PMPC_Comm_split (MPC_Comm comm, int color, int key, MPC_Comm * comm_out)
 
 
 	  group.task_nb = group_size;
-	  group.task_list = (int *) sctk_malloc (group_size * sizeof (int));
+	  group.task_list_in_global_ranks = (int *) sctk_malloc (group_size * sizeof (int));
 
 	  j = 0;
 	  for (i = 0; i < size; i++)
 	    {
 	      if (tab[i].color == tmp_color)
 		{
-		  group.task_list[j] = tab[i].rank;
+		  group.task_list_in_global_ranks[j] = sctk_get_comm_world_rank(comm,tab[i].rank);
 		  sctk_nodebug ("Threat %d color (%d) size %d on %d rank %d",
 				tmp_color, k, j, group_size, tab[i].rank);
 		  j++;
@@ -4187,7 +4194,7 @@ PMPC_Comm_split (MPC_Comm comm, int color, int key, MPC_Comm * comm_out)
 	      comm_res = *comm_out;
 	    }
 
-	  sctk_free (group.task_list);
+	  sctk_free (group.task_list_in_global_ranks);
 	  sctk_nodebug ("Split color %d done", tmp_color);
 	}
     }
