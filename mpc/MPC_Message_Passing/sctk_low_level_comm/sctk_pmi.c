@@ -169,6 +169,7 @@ int sctk_pmi_init() {
 	}
 
 	nodes = sctk_malloc((size_t)process_nb*sctk_max_val_len);
+	memset(nodes,'\0',(size_t)process_nb*sctk_max_val_len);
 	// build nodes list and compute local ranks and size
 	for(i=0; i<process_nb;i++){
 		j=0;

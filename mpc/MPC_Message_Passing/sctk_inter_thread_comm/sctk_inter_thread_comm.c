@@ -262,7 +262,7 @@ static inline void sctk_ptp_table_insert(sctk_internal_ptp_t * tmp){
 	int __dest__id;							\
 	__dest__id = key.destination - sctk_ptp_array_start;		\
 	if((sctk_ptp_array != NULL) && (__dest__id >= 0)		\
-	   && (__dest__id <= sctk_ptp_array_end)){			\
+	   && (__dest__id <= sctk_ptp_array_end- sctk_ptp_array_start)){ \
 	  tmp = sctk_ptp_array[__dest__id];				\
 	} else {							\
 	  tmp = NULL;							\
