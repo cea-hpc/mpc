@@ -93,6 +93,7 @@ sctk_check_internal_communicator(const sctk_communicator_t communicator){
 
   return tmp;
 }
+extern volatile int sctk_online_program;
 static inline 
 sctk_internal_communicator_t * 
 sctk_get_internal_communicator(const sctk_communicator_t communicator){
@@ -102,6 +103,9 @@ sctk_get_internal_communicator(const sctk_communicator_t communicator){
 
   if(tmp == NULL){
     sctk_error("Communicator %d doesn't existe",communicator);
+    if(sctk_online_program == 0){
+      exit(0);
+    }
     assume(tmp != NULL);
   }
 
@@ -427,11 +431,11 @@ sctk_communicator_t sctk_delete_communicator (const sctk_communicator_t comm){
     int max_val;
     sctk_barrier (comm);
     tmp = sctk_get_internal_communicator(comm);
+    sctk_barrier (comm);
   
     val = OPA_fetch_and_incr_int(&(tmp->nb_to_delete));
     max_val = tmp->local_tasks;
 
-    sctk_barrier (comm);
     if(val == max_val - 1){
       is_master = 1;
       sctk_spinlock_lock(&sctk_communicator_all_table_lock);

@@ -26,6 +26,7 @@
 #include <errno.h>
 #include <stdio.h>
 
+extern volatile int sctk_online_program;
 /*!
  * Call read in loop to avoid problem with splitted messages.
  * Also support EINTR error if interrupted.
@@ -61,6 +62,9 @@ ssize_t sctk_safe_read(int fd, void* buf, size_t count) {
 		nb_total_sent_bytes += tmp;
 	};
 	
+	if(sctk_online_program == 0){
+	  exit(0);
+	}
 	return res;
 }
 

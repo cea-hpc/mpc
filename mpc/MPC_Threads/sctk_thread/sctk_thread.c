@@ -611,6 +611,8 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
       sctk_ptp_per_task_init (tmp.task_id);
       sctk_register_thread_initial (tmp.task_id);
       sctk_terminaison_barrier (tmp.task_id);
+      sctk_online_program = 1;
+      sctk_terminaison_barrier (tmp.task_id);
     }
 #endif
 
@@ -650,6 +652,8 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   if (tmp.task_id >= 0)
     {
       sctk_nodebug ("sctk_terminaison_barrier");
+      sctk_terminaison_barrier (tmp.task_id);
+      sctk_online_program = 0;
       sctk_terminaison_barrier (tmp.task_id);
       sctk_nodebug ("sctk_terminaison_barrier done");
       sctk_unregister_thread (tmp.task_id);
@@ -2309,16 +2313,14 @@ sctk_start_func (void *(*run) (void *), void *arg)
 /* 					   NULL, NULL); */
 /*     } */
 /* #else */
-  sctk_online_program = 1;
   sctk_thread_wait_for_value_and_poll ((int *)
 				       &sctk_total_number_of_tasks, 0,
 				       NULL, NULL);
-#ifdef MPC_Message_Passing
-  if(sctk_process_number > 1){
-    sctk_pmi_barrier();
-  }
-#endif
-  sctk_online_program = 0;
+/* #ifdef MPC_Message_Passing */
+/*   if(sctk_process_number > 1){ */
+/*     sctk_pmi_barrier(); */
+/*   } */
+/* #endif */
 
 /* #endif */
 
