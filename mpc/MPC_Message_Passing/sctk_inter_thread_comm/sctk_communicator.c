@@ -25,6 +25,7 @@
 #include <sctk_communicator.h>
 #include <sctk.h>
 #include <uthash.h>
+#include <opa_primitives.h>
 
 /************************************************************************/
 /*Data structure accessors                                              */
@@ -53,7 +54,7 @@ typedef struct sctk_internal_communicator_s{
   struct sctk_internal_communicator_s* new_comm;
   volatile int has_zero;
 
-  volatile int is_master_delete;
+  OPA_int_t nb_to_delete;
 
   UT_hash_handle hh;
 } sctk_internal_communicator_t;
@@ -329,6 +330,7 @@ sctk_communicator_init_intern_init_only(const int nb_task, const sctk_communicat
   tmp->new_comm = NULL;
   tmp->has_zero = 0;
 
+  OPA_store_int(&(tmp->nb_to_delete),0);
 }
 
 static inline void
@@ -405,23 +407,22 @@ void sctk_communicator_delete(){}
 sctk_communicator_t sctk_delete_communicator (const sctk_communicator_t comm){
   sctk_internal_communicator_t * tmp;
   int is_master = 0;
+  int val;
+  int max_val;
   sctk_barrier (comm);
   tmp = sctk_get_internal_communicator(comm);
+  
+  val = OPA_fetch_and_incr_int(&(tmp->nb_to_delete));
+  max_val = tmp->local_tasks;
+
   sctk_barrier (comm);
-  sctk_spinlock_lock(&(tmp->creation_lock));
-  if(tmp->is_master_delete == 0){
-    tmp->is_master_delete = 1;
+  if(val == max_val - 1){
     is_master = 1;
+    sctk_spinlock_lock(&sctk_communicator_all_table_lock);
   } else {
     is_master = 0;
   }
-  sctk_spinlock_unlock(&(tmp->creation_lock));
-  sctk_barrier (comm);
 
-#warning "Unable to free communciator"
-  return;
-
-  sctk_spinlock_lock(&sctk_communicator_all_table_lock);
   if(is_master == 1){
     sctk_free(tmp->local_to_global);
     sctk_free(tmp->global_to_local);
@@ -429,6 +430,8 @@ sctk_communicator_t sctk_delete_communicator (const sctk_communicator_t comm){
     
     sctk_del_internal_communicator_no_lock_no_check(comm);
     sctk_free(tmp);
+  } else {
+    sctk_spinlock_lock(&sctk_communicator_all_table_lock);
   }
   sctk_spinlock_unlock(&sctk_communicator_all_table_lock);
 }
