@@ -342,6 +342,9 @@ void sctk_message_completion_and_free(sctk_thread_ptp_message_t* send,
     recv->tail.request->header.msg_size = size;
 
     recv->tail.request->msg = NULL;
+  }
+
+  if(send->tail.request){
     send->tail.request->msg = NULL;
   }
 
