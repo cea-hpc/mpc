@@ -92,6 +92,8 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
     sctk_ib_rdma_align_msg(msg->tail.message.contiguous.addr,
         msg->tail.message.contiguous.size,
         &aligned_addr, &aligned_size);
+    msg->tail.ib.rdma.local.addr = msg->tail.message.contiguous.addr;
+    msg->tail.ib.rdma.local.size = msg->tail.message.contiguous.size;
   } else {
     sctk_nodebug("Sending NOT contiguous message");
     not_implemented();
@@ -127,7 +129,7 @@ sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
   rdma_req->dest_msg_header = msg;
 
   /* Initialization of the msg header */
-  memcpy(&rdma_req->msg_header, msg, sizeof(sctk_thread_ptp_message_body_t));
+  memcpy(&rdma_req->msg_header, &msg->body, sizeof(sctk_thread_ptp_message_body_t));
   /* Message not ready: memory not pinned */
   msg->tail.ib.rdma.local.ready = 0;
   msg->tail.ib.rdma.rail = rail;
@@ -159,7 +161,7 @@ inline sctk_ibuf_t* sctk_ib_rdma_prepare_ack(sctk_ib_rail_info_t* rail_ib,
 
   rdma_ack    = IBUF_GET_RDMA_ACK(ibuf->buffer);
 
-  rdma_ack->addr = msg->tail.ib.rdma.local.aligned_addr;
+  rdma_ack->addr = msg->tail.ib.rdma.local.addr;
   rdma_ack->rkey = msg->tail.ib.rdma.local.mmu_entry->mr->rkey;
   rdma_ack->dest_msg_header = msg->tail.ib.rdma.remote.msg_header;
   rdma_ack->src_msg_header = msg;
@@ -194,8 +196,15 @@ sctk_ib_rdma_prepare_data_write(sctk_rail_info_t* rail,
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_data_write_type);
   sctk_ibuf_set_protocol(ibuf, rdma_protocol);
 
+  sctk_nodebug("Write from %p (%lu) to %p (%lu)",
+      src_msg_header->tail.ib.rdma.local.addr,
+      src_msg_header->tail.ib.rdma.local.size,
+      src_msg_header->tail.ib.rdma.remote.addr,
+      src_msg_header->tail.ib.rdma.remote.size);
+
+
   sctk_ibuf_rdma_write_init(ibuf,
-      src_msg_header->tail.ib.rdma.local.aligned_addr,
+      src_msg_header->tail.ib.rdma.local.addr,
       src_msg_header->tail.ib.rdma.local.mmu_entry->mr->lkey,
       src_msg_header->tail.ib.rdma.remote.addr,
       src_msg_header->tail.ib.rdma.remote.rkey,
@@ -263,6 +272,8 @@ void sctk_ib_rdma_net_copy(sctk_message_to_copy_t* tmp){
     } else { /* not contiguous message */
       send_header->rdma.status       = recopy;
       /*XXX Get page_size from device */
+      sctk_error("Not checked");
+      assume(0);
       size_t page_size;
       page_size = getpagesize();
       send_header->rdma.local.aligned_size = send_header->rdma.requested_size;
@@ -333,7 +344,7 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ib_rdma_req_t *rdma_req) {
   sctk_route_table_t* route;
 
   msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
-  memcpy(msg, &rdma_req->msg_header, sizeof(sctk_thread_ptp_message_t));
+  memcpy(&msg->body, &rdma_req->msg_header, sizeof(sctk_thread_ptp_message_body_t));
 
   /* determine the route to the source */
   route = sctk_get_route(msg->sctk_msg_get_glob_source, rail);
