@@ -100,7 +100,10 @@ sctk_get_internal_communicator(const sctk_communicator_t communicator){
   
   tmp = sctk_check_internal_communicator(communicator);
 
-  assume(tmp != NULL);
+  if(tmp == NULL){
+    sctk_error("Communicator %d doesn't existe",communicator);
+    assume(tmp != NULL);
+  }
 
   return tmp;
 }
@@ -402,9 +405,16 @@ void sctk_communicator_init(const int nb_task){
 
   sctk_communicator_init_intern(nb_task,SCTK_COMM_WORLD,last_local,
 				first_local,local_tasks,NULL,NULL,NULL);
+  if(sctk_process_number > 1){
+    sctk_pmi_barrier();
+  }
 }
 
-void sctk_communicator_delete(){}
+void sctk_communicator_delete(){
+  if(sctk_process_number > 1){
+    sctk_pmi_barrier();
+  }
+}
 
 sctk_communicator_t sctk_delete_communicator (const sctk_communicator_t comm){
   if(comm == SCTK_COMM_WORLD){
