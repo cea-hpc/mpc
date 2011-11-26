@@ -68,7 +68,7 @@ static void sctk_opt_messages_send(const sctk_communicator_t communicator,int my
   sctk_add_adress_in_message(&(msg_req->msg),buffer,size); 
   sctk_set_header_in_message (&(msg_req->msg), tag, communicator, myself, dest,
 			      &(msg_req->request), size,specific_message_tag);
-  msg_req->msg.tail.need_check_in_wait = copy_in_send;
+  msg_req->msg.tail.need_check_in_wait = /* copy_in_send */1;
   sctk_send_message_try_check (&(msg_req->msg),check);
 }
 
@@ -81,7 +81,7 @@ static void sctk_opt_messages_recv(const sctk_communicator_t communicator,int sr
   sctk_add_adress_in_message(&(msg_req->msg),buffer,size); 
   sctk_set_header_in_message (&(msg_req->msg), tag, communicator,  src,myself,
 			      &(msg_req->request), size,specific_message_tag);
-  msg_req->msg.tail.need_check_in_wait = copy_in_recv;
+  msg_req->msg.tail.need_check_in_wait = /* copy_in_recv */1;
   sctk_recv_message_try_check (&(msg_req->msg),ptp_internal,check);
 }
 
@@ -342,6 +342,7 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
 	src = myself;
 	for(j = 1; j < ALLREDUCE_ARRITY; j++){
 	  if((src + (j*(i/ALLREDUCE_ARRITY))) < total){
+	    sctk_nodebug("Recv from %d",src + (j*(i/ALLREDUCE_ARRITY)));
 	    sctk_opt_messages_recv(communicator,src + (j*(i/ALLREDUCE_ARRITY)),myself,0,buffer_table[j-1],size,allreduce_specific_message_tag,
 				   sctk_opt_messages_get_item(&table),ptp_internal,0,0);
 	  }
@@ -358,7 +359,9 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
 	dest = (myself / i) * i;
 	if(dest >= 0){
 	  memcpy(buffer_tmp,buffer_out,size);
+	  sctk_nodebug("Leaf send to %d",dest);
 	  sctk_opt_messages_send(communicator,myself,dest,0,buffer_tmp,size,allreduce_specific_message_tag,sctk_opt_messages_get_item(&table),1,1);
+	  sctk_nodebug("Leaf Recv from %d",dest);
 	  sctk_opt_messages_recv(communicator,dest,myself,1,buffer_out,size,allreduce_specific_message_tag,sctk_opt_messages_get_item(&table),ptp_internal,1,1);
 	  sctk_opt_messages_wait(&table);
 	  break;
@@ -375,6 +378,7 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
 	dest = myself;
 	for(j = 1; j < ALLREDUCE_ARRITY; j++){
 	  if((dest + (j*(i/ALLREDUCE_ARRITY))) < total){
+	    sctk_nodebug("send to %d",dest+(j*(i/ALLREDUCE_ARRITY)));
 	    sctk_opt_messages_send(communicator,myself,dest+(j*(i/ALLREDUCE_ARRITY)),1,buffer_out,size,allreduce_specific_message_tag,sctk_opt_messages_get_item(&table),
 				   (size<ALLREDUCE_CHECK_THREASHOLD),(size<ALLREDUCE_CHECK_THREASHOLD));
 	  }    
