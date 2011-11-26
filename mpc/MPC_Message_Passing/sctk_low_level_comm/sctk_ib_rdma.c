@@ -186,6 +186,10 @@ sctk_ib_rdma_prepare_data_write(sctk_rail_info_t* rail,
 
   rdma_data_write = IBUF_GET_RDMA_DATA_WRITE(ibuf->buffer);
   sctk_nodebug("msg: %p - Rail: %p (%p-%p)", src_msg_header, rail, ibuf, rdma_data_write);
+  sctk_nodebug("Write msg %p %lu (mmu:%p)",
+      src_msg_header->tail.ib.rdma.remote.addr,
+      src_msg_header->tail.ib.rdma.remote.rkey,
+      src_msg_header->tail.ib.rdma.local.mmu_entry);
   rdma_data_write->src_msg_header = src_msg_header;
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_data_write_type);
   sctk_ibuf_set_protocol(ibuf, rdma_protocol);
@@ -258,7 +262,6 @@ void sctk_ib_rdma_net_copy(sctk_message_to_copy_t* tmp){
           &send_header->rdma.local.aligned_size);
     } else { /* not contiguous message */
       send_header->rdma.status       = recopy;
-
       /*XXX Get page_size from device */
       size_t page_size;
       page_size = getpagesize();
@@ -311,8 +314,7 @@ sctk_ib_rdma_recv_ack(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   dest_msg_header = rdma_ack->src_msg_header;
 
   /* Wait while the message become ready */
-  while (src_msg_header->tail.ib.rdma.local.ready != 1)
-    sctk_thread_yield();
+  sctk_thread_wait_for_value((int*) &src_msg_header->tail.ib.rdma.local.ready, 1);
 
   src_msg_header->tail.ib.rdma.remote.addr = rdma_ack->addr;
   src_msg_header->tail.ib.rdma.remote.rkey = rdma_ack->rkey;
@@ -363,15 +365,6 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ib_rdma_req_t *rdma_req) {
 #if 0
   if (status == done)
   {
-    sctk_debug("DONE msg");
-    /*XXX Get page_size from device */
-    size_t page_size;
-    page_size = getpagesize();
-    msg->tail.ib.rdma.aligned_size_remote = msg->tail.ib.rdma.requested_size;
-    /* Allocating memory according to the requested size */
-    posix_memalign((void**) &msg->tail.ib.rdma.aligned_addr_remote,
-        page_size, msg->tail.ib.rdma.aligned_size_remote );
-    sctk_debug("Allocating memory (size:%lu)", msg->tail.ib.rdma.requested_size);
   }
 #endif
 
@@ -403,6 +396,7 @@ sctk_ib_rdma_recv_done_remote(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   sctk_nodebug("msg: %p - Rail: %p (%p-%p) copy_ptr:%p (send:%p recv:%p)", dest_msg_header, rail, ibuf, rdma_done, dest_msg_header->tail.ib.rdma.copy_ptr, send, recv);
 
   sctk_message_completion_and_free(send,recv);
+  sctk_nodebug("MSG REMOTE FREE");
   return NULL;
 }
 
@@ -413,6 +407,7 @@ static inline void
 sctk_ib_rdma_recv_done_local(sctk_rail_info_t* rail, sctk_thread_ptp_message_t* msg)
 {
   sctk_complete_and_free_message(msg);
+  sctk_nodebug("MSG LOCAL FREE");
 }
 
 int
@@ -435,6 +430,7 @@ sctk_ib_rdma_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
       header = sctk_ib_rdma_recv_ack(rail, ibuf);
 
       sctk_ib_rdma_prepare_data_write(rail, header, ibuf);
+      sctk_ibuf_release_from_srq(&rail->network.ib, ibuf);
 
       sctk_ib_qp_send_ibuf(&rail->network.ib,
       header->tail.ib.rdma.route_table->data.ib.remote,  ibuf);

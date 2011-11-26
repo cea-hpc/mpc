@@ -63,7 +63,7 @@ void sctk_ib_sr_free_msg_no_recopy(void* arg) {
   /* Assume msg not recopies */
   assume(!msg->tail.ib.eager.recopied);
   ibuf = msg->tail.ib.eager.ibuf;
-  sctk_ibuf_release(ibuf->region->rail, ibuf, 1);
+  sctk_ibuf_release(ibuf->region->rail, ibuf);
 }
 
 
@@ -112,7 +112,7 @@ sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     /* Read from recopied buffer */
   } else {
     sctk_reinit_header(msg,sctk_free,sctk_net_message_copy);
-    sctk_ibuf_release(&rail->network.ib, ibuf, 1);
+    sctk_ibuf_release(&rail->network.ib, ibuf);
   }
   return msg;
 }

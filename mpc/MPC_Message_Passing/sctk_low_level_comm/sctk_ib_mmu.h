@@ -39,6 +39,12 @@ typedef enum sctk_ib_mmu_entry_status_e
   ibv_entry_used = 222,
 } sctk_ib_mmu_entry_status_t;
 
+typedef enum sctk_ib_mmu_cached_status_e
+{
+  not_cached = 111,
+  cached = 222,
+} sctk_ib_mmu_cached_status_t;
+
 /* Entry to the soft MMU */
 typedef struct sctk_ib_mmu_entry_s
 {
@@ -51,6 +57,11 @@ typedef struct sctk_ib_mmu_entry_s
   void *ptr;                /* ptr to the MR */
   size_t size;              /* size of the MR */
   struct ibv_mr *mr;        /* MR */
+
+  /* Status of the entry in cache */
+  sctk_ib_mmu_cached_status_t cache_status;
+  /* Number of registration. If 0, the entry can be erased from cache  */
+  unsigned int registrations_nb;
 } sctk_ib_mmu_entry_t;
 
 
@@ -65,6 +76,14 @@ typedef struct sctk_ib_mmu_region_s
   sctk_ib_mmu_entry_t* mmu_entry;
 } sctk_ib_mmu_region_t;
 
+typedef struct sctk_ib_cache_s
+{
+  /* MMU entries in cache */
+  sctk_ib_mmu_entry_t* entries;
+  sctk_spinlock_t lock;
+  unsigned int entries_nb;
+} sctk_ib_cache_t;
+
 typedef struct sctk_ib_mmu_s
 {
   struct sctk_ib_mmu_region_s *regions;
@@ -72,7 +91,8 @@ typedef struct sctk_ib_mmu_s
   unsigned int nb;     /* Total Number of  mmu entries */
   int free_nb;    /* Number of free mmu entries */
   size_t page_size; /* size of a system page */
-  sctk_ib_mmu_entry_t*  free_header;
+  sctk_ib_mmu_entry_t*  free_entry;
+  sctk_ib_cache_t cache;
 } sctk_ib_mmu_t;
 
 /*-----------------------------------------------------------
@@ -84,6 +104,8 @@ void sctk_ib_mmu_init(struct sctk_ib_rail_info_s *rail_ib);
      const unsigned int nb_entries);
 
 sctk_ib_mmu_entry_t *sctk_ib_mmu_register (
+  struct sctk_ib_rail_info_s *rail_ib, void *ptr, size_t size);
+sctk_ib_mmu_entry_t *sctk_ib_mmu_register_no_cache(
   struct sctk_ib_rail_info_s *rail_ib, void *ptr, size_t size);
 
 void ctk_ib_mmu_unregister (struct sctk_ib_rail_info_s *rail_ib,

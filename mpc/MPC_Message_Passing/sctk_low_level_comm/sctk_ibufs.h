@@ -74,7 +74,7 @@ typedef struct sctk_ibuf_numa_s
   /* DL list of regions */
   struct sctk_ibuf_region_s  *regions;
   /* flag to the first free header */
-  struct sctk_ibuf_s         *free_header;
+  struct sctk_ibuf_s         *free_entry;
   /* lock when moving pointers */
   sctk_spinlock_t lock;
   /* Number of buffers created and free in total,
@@ -156,6 +156,8 @@ typedef struct sctk_ibuf_s
   struct sctk_ib_qp_s*    remote;
   void* supp_ptr;
   int dest_process;
+  /* If the buffer is in a shaed receive queue */
+  char in_srq;
 
   struct sctk_ibuf_s* next;
   struct sctk_ibuf_s* prev;
@@ -201,7 +203,7 @@ void sctk_ibuf_rdma_read_init(
 
 void sctk_ibuf_release(
     struct sctk_ib_rail_info_s *rail_ib,
-    sctk_ibuf_t* ibuf, int is_srq);
+    sctk_ibuf_t* ibuf);
 
 void sctk_ibuf_set_protocol(sctk_ibuf_t* ibuf, sctk_ib_protocol_t protocol);
 #endif

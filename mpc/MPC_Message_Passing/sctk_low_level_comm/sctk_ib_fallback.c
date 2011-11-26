@@ -112,7 +112,7 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc)
   if (release_ibuf)
   {
     /* sctk_ib_qp_release_entry(&rail->network.ib, ibuf->remote); */
-    sctk_ibuf_release(&rail->network.ib, ibuf, 1);
+    sctk_ibuf_release(&rail->network.ib, ibuf);
   }
   return 0;
 }
@@ -142,7 +142,7 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc)
 
   if(release_ibuf) {
     /* sctk_ib_qp_release_entry(&rail->network.ib, ibuf->remote); */
-    sctk_ibuf_release(&rail->network.ib, ibuf, 0);
+    sctk_ibuf_release(&rail->network.ib, ibuf);
   }
 
   return 0;

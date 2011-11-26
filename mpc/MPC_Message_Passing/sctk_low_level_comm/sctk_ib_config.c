@@ -101,6 +101,8 @@
 /* Number of new MMU allocated when
  * no more MMU entries are available */
 #define IBV_SIZE_MR_CHUNKS  200
+#define IBV_MMU_CACHE_ENABLED 0
+#define IBV_MMU_CACHE_ENTRIES 20
 
 #define IBV_ADM_PORT        1
 
@@ -184,7 +186,9 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         "ibv_rdvz_protocol    = %d\n"
         "ibv_wc_in_number     = %d\n"
         "ibv_wc_out_number    = %d\n"
-        "ibv_init_mr           = %d\n"
+        "ibv_init_mr          = %d\n"
+        "ibv_mmu_cache_enabled = %d\n"
+        "ibv_mmu_cache_entries = %d\n"
         "ibv_adm_port         = %d\n"
         "ibv_rdma_depth       = %d\n"
         "ibv_rdma_dest_depth  = %d\n"
@@ -212,6 +216,8 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         config->ibv_wc_in_number,
         config->ibv_wc_out_number,
         config->ibv_init_mr,
+        config->ibv_mmu_cache_enabled,
+        config->ibv_mmu_cache_entries,
         config->ibv_adm_port,
         config->ibv_rdma_depth,
         config->ibv_rdma_dest_depth,
@@ -250,6 +256,8 @@ void load_ib_default_config(sctk_ib_rail_info_t *rail_ib)
   config->ibv_wc_in_number = IBV_WC_IN_NUMBER;
   config->ibv_wc_out_number = IBV_WC_OUT_NUMBER;
   config->ibv_init_mr = IBV_INIT_MR;
+  config->ibv_mmu_cache_enabled = IBV_MMU_CACHE_ENABLED;
+  config->ibv_mmu_cache_entries = IBV_MMU_CACHE_ENTRIES;
   config->ibv_adm_port = IBV_ADM_PORT;
   config->ibv_rdma_depth = IBV_RDMA_DEPTH;
   config->ibv_rdma_dest_depth = IBV_RDMA_DEST_DEPTH;
@@ -315,6 +323,12 @@ void set_ib_env(sctk_ib_rail_info_t *rail_ib)
 
   if ( (value = getenv("MPC_IBV_INIT_MR")) != NULL )
     c->ibv_init_mr = atoi(value);
+
+  if ( (value = getenv("MPC_IBV_MMU_CACHE_ENTRIES")) != NULL )
+    c->ibv_mmu_cache_entries = atoi(value);
+
+  if ( (value = getenv("MPC_IBV_MMU_CACHE_ENABLED")) != NULL )
+    c->ibv_mmu_cache_enabled = atoi(value);
 
   if ( (value = getenv("MPC_IBV_ADM_PORT")) != NULL )
     c->ibv_adm_port = atoi(value);

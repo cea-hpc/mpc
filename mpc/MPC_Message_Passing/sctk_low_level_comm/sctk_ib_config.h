@@ -33,6 +33,8 @@ typedef struct sctk_ib_config_s
 {
   /* MMU */
   unsigned int  ibv_size_mr_chunk;
+  unsigned int  ibv_mmu_cache_enabled;
+  unsigned int  ibv_mmu_cache_entries;
   /* IBUFS */
   unsigned int  ibv_init_ibufs;
 

@@ -1089,10 +1089,11 @@ void sctk_wait_all (const int task, const sctk_communicator_t com){
   } while(i != 0);
 }
 
+
 void sctk_perform_all (){
   sctk_internal_ptp_t* pair;
   sctk_internal_ptp_t* tmp;
-
+#warning "Collaborative polling"
 #warning "Add topological iterations"
   sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
   HASH_ITER(hh,sctk_ptp_table,pair,tmp){
