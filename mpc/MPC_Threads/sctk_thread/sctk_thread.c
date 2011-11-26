@@ -62,6 +62,7 @@ MonoDomain *domain;
 #ifdef MPC_Message_Passing
 #include <mpc_internal_thread.h>
 #include <sctk_communicator.h>
+#include "sctk_pmi.h"
 /* #include "sctk_hybrid_comm.h" */
 /* #include "sctk_ib_scheduling.h" */
 #endif
@@ -139,6 +140,7 @@ sctk_mono_end ()
 #endif
 
 static volatile long sctk_nb_user_threads = 0;
+volatile int sctk_online_program = -1;
 
 sctk_alloc_thread_data_t *sctk_thread_tls = NULL;
 
@@ -2307,9 +2309,17 @@ sctk_start_func (void *(*run) (void *), void *arg)
 /* 					   NULL, NULL); */
 /*     } */
 /* #else */
+  sctk_online_program = 1;
   sctk_thread_wait_for_value_and_poll ((int *)
 				       &sctk_total_number_of_tasks, 0,
 				       NULL, NULL);
+#ifdef MPC_Message_Passing
+  if(sctk_process_number > 1){
+    sctk_pmi_barrier();
+  }
+#endif
+  sctk_online_program = 0;
+
 /* #endif */
 
   sctk_profiling_commit ();

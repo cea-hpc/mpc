@@ -50,6 +50,7 @@ void sctk_tcp_rdma_message_copy(sctk_message_to_copy_t* tmp){
   sctk_spinlock_unlock(&(route->data.tcp.lock));
 }
 /************ INTER_THEAD_COMM HOOOKS ****************/
+extern volatile int sctk_online_program;
 static void* sctk_tcp_rdma_thread(sctk_route_table_t* tmp){
   int fd;
   fd = tmp->data.tcp.fd;
@@ -67,6 +68,13 @@ static void* sctk_tcp_rdma_thread(sctk_route_table_t* tmp){
     if(res < sizeof(sctk_tcp_rdma_type_t)){
       return NULL;
     }
+    if(sctk_online_program == 0){
+      return NULL;
+    }
+    while(sctk_online_program == -1){
+      sched_yield();
+    }
+
     switch(op_type){
     case sctk_rdma_message_header: {      
       size = sizeof(sctk_thread_ptp_message_t);

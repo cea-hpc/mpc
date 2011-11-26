@@ -24,7 +24,7 @@
 #include <sctk_debug.h>
 #include <sctk_net_tools.h>
 #include <sctk_tcp_toolkit.h>
-
+extern volatile int sctk_online_program;
 
 /************ INTER_THEAD_COMM HOOOKS ****************/
 static void* sctk_tcp_thread(sctk_route_table_t* tmp){
@@ -47,6 +47,12 @@ static void* sctk_tcp_thread(sctk_route_table_t* tmp){
     if(size < sizeof(sctk_thread_ptp_message_body_t)){
       return NULL;
     }
+    if(sctk_online_program == 0){
+      return NULL;
+    }
+    while(sctk_online_program == -1){
+      sched_yield();
+    }
 
     size = size - sizeof(sctk_thread_ptp_message_body_t) + 
       sizeof(sctk_thread_ptp_message_t);
@@ -55,10 +61,16 @@ static void* sctk_tcp_thread(sctk_route_table_t* tmp){
 
     /* Recv header*/
     sctk_nodebug("Read %d",sizeof(sctk_thread_ptp_message_body_t));
-    sctk_safe_read(fd,(char*)msg,sizeof(sctk_thread_ptp_message_body_t));
+    res = sctk_safe_read(fd,(char*)msg,sizeof(sctk_thread_ptp_message_body_t));
+    if(res != sizeof(sctk_thread_ptp_message_body_t)){
+      return NULL;
+    }
 
     msg->body.completion_flag = NULL;
     msg->tail.message_type = sctk_message_network;
+    if(msg->sctk_msg_get_communicator < 0){
+      return NULL;
+    }
     
     /* Recv body*/
     size = size - sizeof(sctk_thread_ptp_message_t);
