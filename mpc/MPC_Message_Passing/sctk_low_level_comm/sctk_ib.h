@@ -116,7 +116,12 @@ extern "C"
 			       int (*route)(int , struct sctk_rail_info_s* ),
 			       void(*route_init)(struct sctk_rail_info_s*));
 
-/* IB header: generic */
+  /* XXX: Should not be declared here but in CM */
+  struct sctk_route_table_s *
+    sctk_ib_create_remote(int dest, struct sctk_rail_info_s* rail);
+  void sctk_ib_add_static_route(int dest, struct sctk_route_table_s *tmp);
+
+  /* IB header: generic */
 #define IBUF_GET_EAGER_HEADER(buffer) \
   (sctk_ib_eager_t*) ((char*) buffer + sizeof(sctk_ibuf_header_t))
 #define IBUF_GET_RDMA_HEADER(buffer) \
@@ -146,8 +151,8 @@ extern "C"
 #define IBUF_GET_RDMA_DATA_WRITE(buffer) ((sctk_ib_rdma_data_write_t*) IBUF_GET_RDMA_PAYLOAD(buffer))
 
 /* Size */
-#define IBUF_GET_EAGER_SIZE (sizeof(IBUF_GET_HEADER_SIZE) + sizeof(sctk_ib_eager_t))
-#define IBUF_GET_RDMA_SIZE (sizeof(IBUF_GET_HEADER_SIZE) + sizeof(sctk_ib_rdma_t))
+#define IBUF_GET_EAGER_SIZE (IBUF_GET_HEADER_SIZE + sizeof(sctk_ib_eager_t))
+#define IBUF_GET_RDMA_SIZE (IBUF_GET_HEADER_SIZE + sizeof(sctk_ib_rdma_t))
 #define IBUF_GET_RDMA_REQ_SIZE (IBUF_GET_RDMA_SIZE + sizeof(sctk_ib_rdma_req_t))
 #define IBUF_GET_RDMA_ACK_SIZE (IBUF_GET_RDMA_SIZE + sizeof(sctk_ib_rdma_ack_t))
 #define IBUF_GET_RDMA_DONE_SIZE (IBUF_GET_RDMA_SIZE + sizeof(sctk_ib_rdma_done_t))

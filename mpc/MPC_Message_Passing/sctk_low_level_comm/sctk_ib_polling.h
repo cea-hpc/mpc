@@ -26,7 +26,6 @@
 #define __SCTK__IB_POLLING_H_
 
 #include <infiniband/verbs.h>
-#include "sctk_ib_toolkit.h"
 #include "sctk_ib.h"
 #include "sctk_ib_config.h"
 #include "sctk_ib_qp.h"

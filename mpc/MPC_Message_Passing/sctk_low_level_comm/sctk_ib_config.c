@@ -24,9 +24,14 @@
 #ifdef MPC_USE_INFINIBAND
 
 #include "sctk_ib_config.h"
+#include "sctk_ib.h"
+
+/* IB debug macros */
+#if defined SCTK_IB_MODULE_NAME
+#error "SCTK_IB_MODULE already defined"
+#endif
 #define SCTK_IB_MODULE_NAME "CONFIG"
 #include "sctk_ib_toolkit.h"
-#include "sctk_ib.h"
 
 /*-----------------------------------------------------------
  *  CONSTS

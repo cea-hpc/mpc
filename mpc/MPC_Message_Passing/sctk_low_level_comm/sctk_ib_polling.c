@@ -26,6 +26,14 @@
 #include "sctk_ib_polling.h"
 #include "sctk_ibufs.h"
 
+/* IB debug macros */
+#if defined SCTK_IB_MODULE_NAME
+#error "SCTK_IB_MODULE already defined"
+#endif
+#define SCTK_IB_MODULE_DEBUG
+#define SCTK_IB_MODULE_NAME "POLLING"
+#include "sctk_ib_toolkit.h"
+
 #define HOSTNAME 2048
 /*-----------------------------------------------------------
  *  FUNCTION

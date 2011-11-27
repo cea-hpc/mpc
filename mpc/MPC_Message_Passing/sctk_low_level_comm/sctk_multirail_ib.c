@@ -20,7 +20,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-
 #include <sctk_debug.h>
 #include <sctk_inter_thread_comm.h>
 #include <sctk_low_level_comm.h>
@@ -119,6 +118,7 @@ void sctk_network_init_multirail_ib_all(char* name, char* topology){
   rails[i]->send_message_from_network = sctk_send_message_from_network_multirail_ib;
   sctk_route_init_in_rail(rails[i],topology);
   sctk_network_init_ib(rails[i]);
+  sctk_network_init_polling_thread (rails[i], topology);
 
   sctk_network_send_message_set(sctk_network_send_message_multirail_ib);
   sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_multirail_ib);

@@ -22,8 +22,6 @@
 /* ######################################################################## */
 
 #ifdef MPC_USE_INFINIBAND
-#define SCTK_IB_MODULE_NAME "QP"
-#include "sctk_ib_toolkit.h"
 #include "sctk_ib.h"
 #include "sctk_ib_config.h"
 #include "sctk_ibufs.h"
@@ -31,6 +29,13 @@
 #include "sctk_pmi.h"
 #include "utlist.h"
 #include <errno.h>
+
+/* IB debug macros */
+#if defined SCTK_IB_MODULE_NAME
+#error "SCTK_IB_MODULE already defined"
+#endif
+#define SCTK_IB_MODULE_NAME "QP"
+#include "sctk_ib_toolkit.h"
 
 /*-----------------------------------------------------------
  *  DEVICE
@@ -341,7 +346,7 @@ sctk_ib_qp_state_rtr_attr(struct sctk_ib_rail_info_s* rail_ib,
 
   attr.qp_state = IBV_QPS_RTR;
   /* 512 is the recommended value */
-  attr.path_mtu = IBV_MTU_1024;
+  attr.path_mtu = IBV_MTU_2048;
   /* QP number of remote QP */
   /* maximul number if resiyrces for incoming RDMA request */
   attr.max_dest_rd_atomic = config->ibv_rdma_dest_depth;

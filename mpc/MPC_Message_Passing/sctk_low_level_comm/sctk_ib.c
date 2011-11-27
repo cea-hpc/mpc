@@ -45,11 +45,11 @@
 
 sctk_rail_info_t* rail_0 = NULL;
 
-static void sctk_ib_add_static_route(int dest, sctk_route_table_t *tmp){
+void sctk_ib_add_static_route(int dest, sctk_route_table_t *tmp){
   sctk_add_static_route(dest,tmp,rail_0);
 }
 
-static sctk_route_table_t *
+sctk_route_table_t *
 sctk_ib_create_remote(int dest, sctk_rail_info_t* rail){
   sctk_route_table_t* tmp;
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;

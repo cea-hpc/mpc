@@ -29,6 +29,11 @@
 #include "sctk_ibufs.h"
 #include "sctk_ib_mmu.h"
 #include "sctk_net_tools.h"
+
+/* IB debug macros */
+#if defined SCTK_IB_MODULE_NAME
+#error "SCTK_IB_MODULE already defined"
+#endif
 #define SCTK_IB_MODULE_DEBUG
 #define SCTK_IB_MODULE_NAME "RDMA"
 #include "sctk_ib_toolkit.h"

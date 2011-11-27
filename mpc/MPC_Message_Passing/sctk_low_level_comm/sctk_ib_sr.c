@@ -37,7 +37,9 @@ sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
     sctk_ib_qp_t* route_data, sctk_thread_ptp_message_t * msg, size_t size) {
   sctk_ibuf_t *ibuf;
   sctk_ib_eager_t *eager_header;
+  void* body;
 
+  body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
   ibuf = sctk_ibuf_pick(rail_ib, 1, 0);
   sctk_nodebug("Picked buffer %p", ibuf);
 
@@ -51,7 +53,9 @@ sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
   sctk_ibuf_set_protocol(ibuf, eager_protocol);
 
   eager_header = IBUF_GET_EAGER_HEADER(ibuf->buffer);
-  eager_header->payload_size = size;
+  eager_header->payload_size = size - sizeof(sctk_thread_ptp_message_body_t);
+
+  sctk_nodebug("TO SEND: %s %lu to %d", IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer), size - sizeof(sctk_thread_ptp_message_body_t), route_data->rank);
 
   return ibuf;
 }
@@ -73,14 +77,18 @@ sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   sctk_thread_ptp_message_t * msg;
   void* body;
   /* XXX: select if a recopy is needed for the message */
-  int recopy = 0;
+  /* XXX: recopy is not compatible with CM */
+  int recopy = 1;
 
    /* If recopy required */
   if (recopy)
   {
-    size = size - sizeof(sctk_thread_ptp_message_body_t) +
-      sizeof(sctk_thread_ptp_message_t);
-    msg = sctk_malloc(size);
+    sctk_ib_eager_t *eager_header;
+
+    eager_header = IBUF_GET_EAGER_HEADER(ibuf->buffer);
+
+    size = eager_header->payload_size;
+    msg = sctk_malloc(size + sizeof(sctk_thread_ptp_message_t));
     assume(msg);
 
     body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
@@ -88,8 +96,9 @@ sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     memcpy(msg, IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer), sizeof(sctk_thread_ptp_message_body_t));
 
     /* Copy the body of the message */
-    size = size - sizeof(sctk_thread_ptp_message_t);
     memcpy(body, IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer), size);
+    sctk_nodebug("RECV:%s", body);
+    sctk_nodebug("RECV:%s %lu %s", body, size, IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer));
   } else {
     msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
     assume(msg);
@@ -120,16 +129,19 @@ sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
 
 void sctk_ib_sr_recv_msg_no_recopy(sctk_message_to_copy_t* tmp){
   sctk_thread_ptp_message_t* send;
+  sctk_thread_ptp_message_t* recv;
   sctk_ibuf_t *ibuf;
+  void* body;
 
+  recv = tmp->msg_recv;
   send = tmp->msg_send;
-
   /* Assume msg not recopied */
   assume(!send->tail.ib.eager.recopied);
-
   ibuf = send->tail.ib.eager.ibuf;
   assume(ibuf);
-  sctk_net_message_copy_from_buffer(tmp, IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer));
+  body = (sctk_thread_ptp_message_t*)IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer);
+
+  sctk_net_message_copy_from_buffer(body, tmp);
 }
 
 #endif

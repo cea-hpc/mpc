@@ -234,15 +234,22 @@ void sctk_route_fully_init(sctk_rail_info_t* rail){
   sctk_pmi_barrier();
 }
 
+
+void sctk_route_set_on_demand_in_rail(sctk_rail_info_t* rail) {
+    rail->on_demand = 1;
+}
+
 void sctk_route_init_in_rail(sctk_rail_info_t* rail, char* topology){
   if(strcmp("ring",topology) == 0){
     rail->route = sctk_route_ring;
     rail->route_init = sctk_route_ring_init;
     rail->topology_name = "ring";
+    rail->on_demand = 0;
   } else if(strcmp("fully",topology) == 0){
     rail->route = sctk_route_fully;
     rail->route_init = sctk_route_fully_init;
     rail->topology_name = "fully connected";
+    rail->on_demand = 0;
   } else {
     not_reachable();
   }

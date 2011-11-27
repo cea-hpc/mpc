@@ -25,9 +25,7 @@
 #ifndef __SCTK__IB_RDMA_H_
 #define __SCTK__IB_RDMA_H_
 
-#define SCTK_IB_MODULE_NAME "POLLING"
 #include <infiniband/verbs.h>
-#include "sctk_ib_toolkit.h"
 #include "sctk_ib.h"
 #include "sctk_ib_config.h"
 #include "sctk_ibufs.h"

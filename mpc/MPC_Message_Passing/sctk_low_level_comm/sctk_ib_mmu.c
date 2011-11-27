@@ -22,15 +22,20 @@
 /* ######################################################################## */
 
 #ifdef MPC_USE_INFINIBAND
-#include "sctk_ib_mmu.h"
 #include <infiniband/verbs.h>
-#define SCTK_IB_MODULE_DEBUG
-#define SCTK_IB_MODULE_NAME "MMU"
-#include "sctk_ib_toolkit.h"
+#include "sctk_ib_mmu.h"
 #include "sctk_ib.h"
 #include "sctk_ib_config.h"
 #include "sctk_ib_qp.h"
 #include "utlist.h"
+
+/* IB debug macros */
+#if defined SCTK_IB_MODULE_NAME
+#error "SCTK_IB_MODULE already defined"
+#endif
+#define SCTK_IB_MODULE_DEBUG
+#define SCTK_IB_MODULE_NAME "MMU"
+#include "sctk_ib_toolkit.h"
 
 
 /**

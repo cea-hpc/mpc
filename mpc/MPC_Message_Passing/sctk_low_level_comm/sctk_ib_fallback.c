@@ -57,11 +57,8 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
   route_data=&tmp->data.ib;
   remote=route_data->remote;
-  sctk_nodebug("Sending message to %d for %d (task:%d,number:%d) (%p)", remote->rank,
-      sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_glob_destination),
-      msg->sctk_msg_get_glob_destination, msg->sctk_msg_get_message_number, tmp);
+  sctk_nodebug("Sending message to %d (tas_destk:%d,task_src;%d,number:%d) (%p)", remote->rank, msg->sctk_msg_get_destination, msg->sctk_msg_get_source,msg->sctk_msg_get_message_number, tmp);
 
-  /* XXX: switch on message sending protocols */
   size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
 
   if (size < config->ibv_eager_limit)  {
@@ -69,7 +66,10 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
     sctk_complete_and_free_message(msg);
+//  } else if (size < config->ibv_frag_eager_limit)  {
+//    sctk_ib_buffered_prepare_msg(rail, tmp, msg, size);
   } else {
+    /* XXX: Check if size is correct. Seems OK */
     ibuf = sctk_ib_rdma_prepare_req(rail, tmp, msg, size);
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
@@ -103,10 +103,10 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc)
     default: assume(0);
   }
 
-  sctk_nodebug("Message received for %d from %d (task:%d,size:%lu), glob_dest:%d",
+  sctk_nodebug("Message received for %d from %d (task:%d), glob_dest:%d",
       sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_glob_source),
       sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_source),
-      msg->sctk_msg_get_glob_source,size,
+      msg->sctk_msg_get_glob_source,
       msg->sctk_msg_get_glob_destination);
 
   if (release_ibuf)
@@ -193,15 +193,33 @@ sctk_network_notify_any_source_message_ib (sctk_rail_info_t* rail){
 
 static void
 sctk_network_connection_to_ib(int from, int to,sctk_rail_info_t* rail){
-  sctk_nodebug("Connection TO from %d to %d", from, to);
+  sctk_ib_cm_connect_to(from,to,rail);
 }
 
 static void
 sctk_network_connection_from_ib(int from, int to,sctk_rail_info_t* rail){
-  sctk_nodebug("Connection FROM from %d to %d", from, to);
+  sctk_ib_cm_connect_from(from,to,rail);
 }
 
 /************ INIT ****************/
+static void* __polling_thread(void *arg) {
+  sctk_rail_info_t* rail = (sctk_rail_info_t*) arg;
+  while(1) {
+    sctk_network_poll_all(rail);
+  }
+  return NULL;
+}
+
+/* XXX: polling thread used for 'fully-connected' topology initialization */
+void sctk_network_init_polling_thread (sctk_rail_info_t* rail, char* topology) {
+  sctk_thread_t pidt;
+  sctk_thread_attr_t attr;
+
+  sctk_thread_attr_init (&attr);
+  sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
+  sctk_user_thread_create (&pidt, &attr, __polling_thread, (void*) rail);
+}
+
 void sctk_network_init_ib(sctk_rail_info_t* rail){
   rail->connect_to = sctk_network_connection_to_ib;
   rail->connect_from = sctk_network_connection_from_ib;
