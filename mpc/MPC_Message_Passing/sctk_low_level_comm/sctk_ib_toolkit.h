@@ -21,6 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include "sctk.h"
+#include "sctk_launch.h"
 #include "string.h"
 
 #ifdef MPC_USE_INFINIBAND
@@ -42,19 +43,22 @@ static void sctk_ib_debug(const char *fmt, ...)
   va_list ap;
   char buff[SMALL_BUFFER_SIZE];
 
-  va_start (ap, fmt);
+  if (sctk_get_verbosity() >= 2)
+  {
+    va_start (ap, fmt);
 #ifdef HAVE_SHELL_COLORS
-  snprintf (buff, SMALL_BUFFER_SIZE,
-      "%s "SCTK_COLOR_RED_BOLD([%5s])" %s\n", sctk_print_debug_infos(),
-      SCTK_IB_MODULE_NAME, fmt);
+    snprintf (buff, SMALL_BUFFER_SIZE,
+        "%s "SCTK_COLOR_RED_BOLD([%5s])" %s\n", sctk_print_debug_infos(),
+        SCTK_IB_MODULE_NAME, fmt);
 #else
-  snprintf (buff, SMALL_BUFFER_SIZE,
-      "%s [%5s] %s\n", sctk_print_debug_infos(),
-      SCTK_IB_MODULE_NAME_STR), fmt);
+    snprintf (buff, SMALL_BUFFER_SIZE,
+        "%s [%5s] %s\n", sctk_print_debug_infos(),
+        SCTK_IB_MODULE_NAME_STR), fmt);
 #endif
 
-  sctk_noalloc_vfprintf (stderr, buff, ap);
-  va_end (ap);
+    sctk_noalloc_vfprintf (stderr, buff, ap);
+    va_end (ap);
+  }
 }
 #else
 #if defined(__GNU_COMPILER) || defined(__INTEL_COMPILER)
