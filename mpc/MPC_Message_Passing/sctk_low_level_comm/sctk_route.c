@@ -287,22 +287,30 @@ void sctk_route_fully_init(sctk_rail_info_t* rail){
   sctk_pmi_barrier();
 }
 
+/* ONDEMAND */
+int sctk_route_ondemand(int dest, sctk_rail_info_t* rail){
+  not_reachable();
+}
 
-void sctk_route_set_on_demand_in_rail(sctk_rail_info_t* rail) {
-    rail->on_demand = 1;
+void sctk_route_ondemand_init(sctk_rail_info_t* rail){
+  rail->route = sctk_route_ring;
+  rail->on_demand=1;
 }
 
 void sctk_route_init_in_rail(sctk_rail_info_t* rail, char* topology){
+  rail->on_demand = 0;
   if(strcmp("ring",topology) == 0){
     rail->route = sctk_route_ring;
     rail->route_init = sctk_route_ring_init;
     rail->topology_name = "ring";
-    rail->on_demand = 0;
   } else if(strcmp("fully",topology) == 0){
     rail->route = sctk_route_fully;
     rail->route_init = sctk_route_fully_init;
     rail->topology_name = "fully connected";
-    rail->on_demand = 0;
+  } else if(strcmp("ondemand",topology) == 0){
+    rail->route = sctk_route_ondemand;
+    rail->route_init = sctk_route_ondemand_init;
+    rail->topology_name = "on demand connexion";
   } else {
     not_reachable();
   }

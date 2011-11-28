@@ -104,7 +104,4 @@ void sctk_route_messages_recv(int src, int myself,int tag, void* buffer,size_t s
 
 void sctk_route_init_in_rail(sctk_rail_info_t* rail, char* topology);
 void sctk_route_finalize();
-
-/* Allows on demand connexions on rail */
-void sctk_route_set_on_demand_in_rail(sctk_rail_info_t* rail);
 #endif
