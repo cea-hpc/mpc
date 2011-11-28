@@ -148,7 +148,7 @@ sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail){
 
   process = sctk_get_process_rank_from_task_rank(dest);
   if (rail->on_demand) {
-    tmp = sctk_get_route_to_process_no_route(dest,rail);
+    tmp = sctk_get_route_to_process_no_route(process,rail);
     if (tmp == NULL) {
       sctk_ib_cm_on_demand_request(process,rail);
     }
