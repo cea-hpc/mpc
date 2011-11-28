@@ -22,39 +22,29 @@
 /* ######################################################################## */
 
 #ifdef MPC_USE_INFINIBAND
-#ifndef __SCTK__IB_SR_H_
-#define __SCTK__IB_SR_H_
-
-#include <infiniband/verbs.h>
 #include "sctk_ib.h"
-#include "sctk_ib_config.h"
+#include "sctk_ib_buffered.h"
+#include "sctk_ib_sr.h"
+#include "sctk_ib_polling.h"
 #include "sctk_ibufs.h"
-#include "sctk_ib_qp.h"
-#include "sctk_pmi.h"
-#include "utlist.h"
+#include "sctk_ib_mmu.h"
+#include "sctk_net_tools.h"
 
-struct sctk_rail_info_s;
-
-typedef struct sctk_ib_eager_s {
-  size_t payload_size;
-} __attribute__ ((packed))
- sctk_ib_eager_t;
+#if defined SCTK_IB_MODULE_NAME
+#error "SCTK_IB_MODULE already defined"
+#endif
+#define SCTK_IB_MODULE_DEBUG
+#define SCTK_IB_MODULE_NAME "BUFF"
+#include "sctk_ib_toolkit.h"
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
-sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
-    sctk_ib_qp_t* route_data, sctk_thread_ptp_message_t * msg, size_t size);
+sctk_ibuf_t* sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
+    sctk_route_table_t* route_table, sctk_thread_ptp_message_t * msg, size_t size) {
 
-void sctk_ib_sr_free_msg_no_recopy(void* arg);
+}
 
-void sctk_ib_sr_recv_msg_no_recopy(sctk_message_to_copy_t* tmp);
 
-sctk_thread_ptp_message_t* sctk_ib_sr_recv(struct sctk_rail_info_s* rail, sctk_ibuf_t *ibuf, int *recopy);
 
-void
-sctk_ib_sr_recv_free(struct sctk_rail_info_s* rail, sctk_thread_ptp_message_t *msg,
-    sctk_ibuf_t *ibuf, int recopy);
-
-#endif
 #endif

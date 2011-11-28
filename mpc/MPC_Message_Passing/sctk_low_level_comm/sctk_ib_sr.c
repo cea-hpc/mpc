@@ -70,23 +70,34 @@ void sctk_ib_sr_free_msg_no_recopy(void* arg) {
   sctk_ibuf_release(ibuf->region->rail, ibuf);
 }
 
+void
+sctk_ib_sr_recv_free(sctk_rail_info_t* rail, sctk_thread_ptp_message_t *msg,
+    sctk_ibuf_t *ibuf, int recopy) {
+  /* Read from network buffer  */
+  if (!recopy){
+    sctk_reinit_header(msg, sctk_ib_sr_free_msg_no_recopy, sctk_ib_sr_recv_msg_no_recopy);
+    /* Read from recopied buffer */
+  } else {
+    sctk_reinit_header(msg,sctk_free,sctk_net_message_copy);
+    sctk_ibuf_release(&rail->network.ib, ibuf);
+  }
+}
 
 sctk_thread_ptp_message_t*
-sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
+sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int *recopy) {
   size_t size;
   sctk_thread_ptp_message_t * msg;
   void* body;
   /* XXX: select if a recopy is needed for the message */
   /* XXX: recopy is not compatible with CM */
-  int recopy = 1;
+  *recopy=1;
 
    /* If recopy required */
-  if (recopy)
+  if (*recopy)
   {
     sctk_ib_eager_t *eager_header;
 
     eager_header = IBUF_GET_EAGER_HEADER(ibuf->buffer);
-
     size = eager_header->payload_size;
     msg = sctk_malloc(size + sizeof(sctk_thread_ptp_message_t));
     assume(msg);
@@ -97,8 +108,6 @@ sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
 
     /* Copy the body of the message */
     memcpy(body, IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer), size);
-    sctk_nodebug("RECV:%s", body);
-    sctk_nodebug("RECV:%s %lu %s", body, size, IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer));
   } else {
     msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
     assume(msg);
@@ -112,17 +121,9 @@ sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
 
   msg->body.completion_flag = NULL;
   msg->tail.message_type = sctk_message_network;
-  msg->tail.ib.eager.recopied = recopy;
+  msg->tail.ib.eager.recopied = *recopy;
 
   sctk_rebuild_header(msg);
-  /* Read from network buffer  */
-  if (!recopy){
-    sctk_reinit_header(msg, sctk_ib_sr_free_msg_no_recopy, sctk_ib_sr_recv_msg_no_recopy);
-    /* Read from recopied buffer */
-  } else {
-    sctk_reinit_header(msg,sctk_free,sctk_net_message_copy);
-    sctk_ibuf_release(&rail->network.ib, ibuf);
-  }
   return msg;
 }
 

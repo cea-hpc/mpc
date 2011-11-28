@@ -49,6 +49,14 @@ void sctk_ib_add_static_route(int dest, sctk_route_table_t *tmp){
   sctk_add_static_route(dest,tmp,rail_0);
 }
 
+void sctk_ib_add_dynamic_route(int dest, sctk_route_table_t *tmp){
+  sctk_add_dynamic_route(dest,tmp,rail_0);
+}
+
+void sctk_ib_route_dynamic_set_connected(sctk_route_table_t *tmp, int connected){
+  sctk_route_dynamic_set_connected(tmp, connected);
+}
+
 sctk_route_table_t *
 sctk_ib_create_remote(int dest, sctk_rail_info_t* rail){
   sctk_route_table_t* tmp;

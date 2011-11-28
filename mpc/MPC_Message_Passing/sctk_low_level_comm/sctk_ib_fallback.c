@@ -32,6 +32,7 @@
 #include <sctk_ib_mmu.h>
 #include <sctk_ib_config.h>
 #include "sctk_ib_qp.h"
+#include "sctk_ib_cm.h"
 #include "sctk_ib_sr.h"
 #include "sctk_ib_polling.h"
 #include "sctk_ib_async.h"
@@ -49,7 +50,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
   sctk_nodebug("send message through rail %d",rail->rail_number);
 
-  if(msg->body.header.specific_message_tag == process_specific_message_tag){
+  if( msg->body.header.specific_message_tag == process_specific_message_tag) {
     tmp = sctk_get_route_to_process(msg->sctk_msg_get_destination,rail);
   } else {
     tmp = sctk_get_route(msg->sctk_msg_get_glob_destination,rail);
@@ -83,6 +84,8 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc)
   sctk_thread_ptp_message_t * msg = NULL;
   sctk_route_table_t* tmp;
   int release_ibuf = 1;
+  int recopy = 0;
+  int ondemand = 0;
 
   ibuf = (sctk_ibuf_t*) wc->wr_id;
   assume(ibuf);
@@ -90,8 +93,15 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc)
   /* Switch on the protocol of the received message */
   switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
     case eager_protocol:
-      msg = sctk_ib_sr_recv(rail, ibuf);
-      rail->send_message_from_network(msg);
+      msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
+      /* If on demand, handle message before sending it to high-layers */
+      ondemand = sctk_ib_cm_on_demand_recv_check(msg, IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer));
+      if(ondemand) {
+        sctk_ib_cm_on_demand_recv(rail, msg, ibuf, recopy);
+      }else{
+        sctk_ib_sr_recv_free(rail, msg, ibuf, recopy);
+        rail->send_message_from_network(msg);
+      }
       release_ibuf = 0;
       break;
 
@@ -212,12 +222,15 @@ static void* __polling_thread(void *arg) {
 
 /* XXX: polling thread used for 'fully-connected' topology initialization */
 void sctk_network_init_polling_thread (sctk_rail_info_t* rail, char* topology) {
-  sctk_thread_t pidt;
-  sctk_thread_attr_t attr;
+  if (strcmp("fully", topology) == 0)
+  {
+    sctk_thread_t pidt;
+    sctk_thread_attr_t attr;
 
-  sctk_thread_attr_init (&attr);
-  sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
-  sctk_user_thread_create (&pidt, &attr, __polling_thread, (void*) rail);
+    sctk_thread_attr_init (&attr);
+    sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
+    sctk_user_thread_create (&pidt, &attr, __polling_thread, (void*) rail);
+  }
 }
 
 void sctk_network_init_ib(sctk_rail_info_t* rail){

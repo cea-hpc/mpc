@@ -22,39 +22,30 @@
 /* ######################################################################## */
 
 #ifdef MPC_USE_INFINIBAND
-#ifndef __SCTK__IB_SR_H_
-#define __SCTK__IB_SR_H_
+#ifndef __SCTK__IB_CM_H_
+#define __SCTK__IB_CM_H_
 
-#include <infiniband/verbs.h>
-#include "sctk_ib.h"
-#include "sctk_ib_config.h"
-#include "sctk_ibufs.h"
-#include "sctk_ib_qp.h"
-#include "sctk_pmi.h"
-#include "utlist.h"
-
-struct sctk_rail_info_s;
-
-typedef struct sctk_ib_eager_s {
-  size_t payload_size;
-} __attribute__ ((packed))
- sctk_ib_eager_t;
+#include "sctk_route.h"
+/*-----------------------------------------------------------
+ *  MACROS
+ *----------------------------------------------------------*/
+#define ONDEMAND_MASK_TAG (1<<3)
+#define ONDEMAN_REQ_TAG (1)
+#define ONDEMAN_ACK_TAG (2)
+#define ONDEMAN_DONE_TAG (3)
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
-sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
-    sctk_ib_qp_t* route_data, sctk_thread_ptp_message_t * msg, size_t size);
 
-void sctk_ib_sr_free_msg_no_recopy(void* arg);
+/* Fully-connected */
+void sctk_ib_cm_connect_to(int from, int to, struct sctk_rail_info_s* rail);
+void sctk_ib_cm_connect_from(int from, int to,sctk_rail_info_t* rail);
 
-void sctk_ib_sr_recv_msg_no_recopy(sctk_message_to_copy_t* tmp);
-
-sctk_thread_ptp_message_t* sctk_ib_sr_recv(struct sctk_rail_info_s* rail, sctk_ibuf_t *ibuf, int *recopy);
-
-void
-sctk_ib_sr_recv_free(struct sctk_rail_info_s* rail, sctk_thread_ptp_message_t *msg,
-    sctk_ibuf_t *ibuf, int recopy);
-
+/* On-demand connexions */
+int sctk_ib_cm_on_demand_recv_check(sctk_thread_ptp_message_t *msg, void* request);
+int sctk_ib_cm_on_demand_recv(struct sctk_rail_info_s *rail,
+    sctk_thread_ptp_message_t *msg, struct sctk_ibuf_s* ibuf, int recopy);
+sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail, sctk_route_table_t* (*func)(int dest, sctk_rail_info_t* rail), int *added);
 #endif
 #endif

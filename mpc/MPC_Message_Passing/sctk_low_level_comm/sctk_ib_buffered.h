@@ -22,8 +22,8 @@
 /* ######################################################################## */
 
 #ifdef MPC_USE_INFINIBAND
-#ifndef __SCTK__IB_SR_H_
-#define __SCTK__IB_SR_H_
+#ifndef __SCTK__IB_BUFFERED_H_
+#define __SCTK__IB_BUFFERED_H_
 
 #include <infiniband/verbs.h>
 #include "sctk_ib.h"
@@ -31,30 +31,12 @@
 #include "sctk_ibufs.h"
 #include "sctk_ib_qp.h"
 #include "sctk_pmi.h"
+#include "sctk_route.h"
 #include "utlist.h"
-
-struct sctk_rail_info_s;
-
-typedef struct sctk_ib_eager_s {
-  size_t payload_size;
-} __attribute__ ((packed))
- sctk_ib_eager_t;
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
-sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
-    sctk_ib_qp_t* route_data, sctk_thread_ptp_message_t * msg, size_t size);
-
-void sctk_ib_sr_free_msg_no_recopy(void* arg);
-
-void sctk_ib_sr_recv_msg_no_recopy(sctk_message_to_copy_t* tmp);
-
-sctk_thread_ptp_message_t* sctk_ib_sr_recv(struct sctk_rail_info_s* rail, sctk_ibuf_t *ibuf, int *recopy);
-
-void
-sctk_ib_sr_recv_free(struct sctk_rail_info_s* rail, sctk_thread_ptp_message_t *msg,
-    sctk_ibuf_t *ibuf, int recopy);
 
 #endif
 #endif

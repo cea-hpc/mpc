@@ -61,9 +61,11 @@ typedef struct sctk_ib_qp_s
   uint32_t                dest_qp_num;/* destination qp number */
   int                     rank;
   /* If QP in Ready-to-Receive mode*/
-  uint8_t                 is_rtr;
+  OPA_int_t               is_rtr;
+  sctk_spinlock_t         lock_rtr;
   /* If QP in Ready-to-Send mode */
-  uint8_t                 is_rts;
+  OPA_int_t               is_rts;
+  sctk_spinlock_t         lock_rts;
   /* QP connected */
   uint8_t                 is_connected;
   /* Number of pending entries free in QP */
@@ -151,6 +153,12 @@ sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
 
 void sctk_ib_qp_release_entry(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t *remote);
+
+int
+sctk_ib_qp_allocate_get_rtr(sctk_ib_qp_t *remote);
+
+int
+sctk_ib_qp_allocate_get_rts(sctk_ib_qp_t *remote);
 
 #endif
 #endif

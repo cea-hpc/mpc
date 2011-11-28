@@ -453,6 +453,24 @@ sctk_ib_srq_init_attr(struct sctk_ib_rail_info_s* rail_ib)
 /*-----------------------------------------------------------
  *  ALLOCATION
  *----------------------------------------------------------*/
+static void
+sctk_ib_qp_allocate_set_rtr(sctk_ib_qp_t *remote, int enabled) {
+  OPA_store_int(&remote->is_rtr, enabled);
+}
+static void
+sctk_ib_qp_allocate_set_rts(sctk_ib_qp_t *remote, int enabled) {
+  OPA_store_int(&remote->is_rts, enabled);
+}
+int
+sctk_ib_qp_allocate_get_rtr(sctk_ib_qp_t *remote) {
+  return (int) OPA_load_int(&remote->is_rtr);
+}
+int
+sctk_ib_qp_allocate_get_rts(sctk_ib_qp_t *remote) {
+  return (int) OPA_load_int(&remote->is_rts);
+}
+
+
   void
 sctk_ib_qp_allocate_init(struct sctk_ib_rail_info_s* rail_ib,
     int rank, sctk_ib_qp_t* remote)
@@ -470,6 +488,10 @@ sctk_ib_qp_allocate_init(struct sctk_ib_rail_info_s* rail_ib,
 
   init_attr = sctk_ib_qp_init_attr(rail_ib);
   sctk_ib_qp_init(rail_ib, remote, &init_attr, rank);
+  sctk_ib_qp_allocate_set_rtr(remote, 0);
+  sctk_ib_qp_allocate_set_rts(remote, 0);
+  remote->lock_rtr = SCTK_SPINLOCK_INITIALIZER;
+  remote->lock_rts = SCTK_SPINLOCK_INITIALIZER;
 
   attr = sctk_ib_qp_state_init_attr(rail_ib, &flags);
   sctk_ib_qp_modify(remote, &attr, flags);
@@ -485,7 +507,7 @@ sctk_ib_qp_allocate_rtr(struct sctk_ib_rail_info_s* rail_ib,
   attr = sctk_ib_qp_state_rtr_attr(rail_ib, keys, &flags);
   sctk_nodebug("Modify QR RTR for rank %d", remote->rank);
   sctk_ib_qp_modify(remote, &attr, flags);
-  remote->is_rtr = 1;
+  sctk_ib_qp_allocate_set_rtr(remote, 1);
 }
 
 void
@@ -498,7 +520,7 @@ sctk_ib_qp_allocate_rts(struct sctk_ib_rail_info_s* rail_ib,
   attr = sctk_ib_qp_state_rts_attr(rail_ib, remote->psn, &flags);
   sctk_nodebug("Modify QR RTS for rank %d", remote->rank);
   sctk_ib_qp_modify(remote, &attr, flags);
-  remote->is_rts = 1;
+  sctk_ib_qp_allocate_set_rts(remote, 1);
 }
 
 struct wait_send_s {

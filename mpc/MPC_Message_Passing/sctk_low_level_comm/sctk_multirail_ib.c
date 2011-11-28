@@ -117,6 +117,8 @@ void sctk_network_init_multirail_ib_all(char* name, char* topology){
   rails[i]->rail_number = i;
   rails[i]->send_message_from_network = sctk_send_message_from_network_multirail_ib;
   sctk_route_init_in_rail(rails[i],topology);
+  /* Allows on-demand connexions on rail */
+  sctk_route_set_on_demand_in_rail(rails[i]);
   sctk_network_init_ib(rails[i]);
   sctk_network_init_polling_thread (rails[i], topology);
 

@@ -38,18 +38,62 @@ static int sctk_route_table_init_lock_needed = 0;
 #define TABLE_LOCK() if(sctk_route_table_init_lock_needed) sctk_spinlock_write_lock(&sctk_route_table_init_lock);
 #define TABLE_UNLOCK() if(sctk_route_table_init_lock_needed) sctk_spinlock_write_unlock(&sctk_route_table_init_lock);
 
+void sctk_route_dynamic_set_connected(sctk_route_table_t* tmp, int connected){
+  OPA_store_int(&tmp->connected, connected);
+}
+
+int sctk_route_dynamic_is_connected(sctk_route_table_t* tmp){
+  return (int) OPA_load_int(&tmp->connected);
+}
+
+sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail, sctk_route_table_t* (*func)(int dest, sctk_rail_info_t* rail), int *added) {
+  sctk_route_key_t key;
+  sctk_route_table_t* tmp;
+  *added = 0;
+
+  key.destination = dest;
+  key.rail = rail->rail_number;
+
+  sctk_spinlock_write_lock(&sctk_route_table_lock);
+  HASH_FIND(hh,sctk_dynamic_route_table,&key,sizeof(sctk_route_key_t),tmp);
+  if (tmp == NULL) {
+    tmp = func(dest, rail);
+    tmp->key.destination = dest;
+    tmp->key.rail = rail->rail_number;
+    tmp->rail = rail;
+    sctk_route_dynamic_set_connected(tmp, 0);
+    HASH_ADD(hh,sctk_dynamic_route_table,key,sizeof(sctk_route_key_t),tmp);
+    *added = 1;
+  }
+  sctk_spinlock_write_unlock(&sctk_route_table_lock);
+  return tmp;
+}
+
+sctk_route_table_t *sctk_route_dynamic_search(int dest, sctk_rail_info_t* rail){
+  sctk_route_key_t key;
+  sctk_route_table_t* tmp;
+
+  key.destination = dest;
+  key.rail = rail->rail_number;
+  sctk_spinlock_read_lock(&sctk_route_table_lock);
+  HASH_FIND(hh,sctk_dynamic_route_table,&key,sizeof(sctk_route_key_t),tmp);
+  sctk_spinlock_read_unlock(&sctk_route_table_lock);
+  return tmp;
+}
 
 void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
   tmp->key.destination = dest;
   tmp->key.rail = rail->rail_number;
   tmp->rail = rail;
 
+  /* XXX: For debug only. Assume that entry not already added */
+  assume (sctk_route_dynamic_search(dest, rail) == NULL);
+
   sctk_add_dynamic_reorder_buffer(dest);
 
   sctk_spinlock_write_lock(&sctk_route_table_lock);
   HASH_ADD(hh,sctk_dynamic_route_table,key,sizeof(sctk_route_key_t),tmp);
   sctk_spinlock_write_unlock(&sctk_route_table_lock);
-
 }
 
 void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
@@ -77,9 +121,12 @@ sctk_route_table_t* sctk_get_route_to_process_no_route(int dest, sctk_rail_info_
   if(tmp == NULL){
     sctk_spinlock_read_lock(&sctk_route_table_lock);
     HASH_FIND(hh,sctk_dynamic_route_table,&key,sizeof(sctk_route_key_t),tmp);
-    sctk_spinlock_read_lock(&sctk_route_table_lock);
+    sctk_spinlock_read_unlock(&sctk_route_table_lock);
+    /* If the route is deconnected, we do not use it*/
+    if (tmp && !sctk_route_dynamic_is_connected(tmp)) {
+      tmp = NULL;
+    }
   }
-
   return tmp;
 }
 
@@ -100,6 +147,12 @@ sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail){
   int process;
 
   process = sctk_get_process_rank_from_task_rank(dest);
+  if (rail->on_demand) {
+    tmp = sctk_get_route_to_process_no_route(dest,rail);
+    if (tmp == NULL) {
+      sctk_ib_cm_on_demand_request(process,rail);
+    }
+  }
 
   tmp = sctk_get_route_to_process(process,rail);
 
