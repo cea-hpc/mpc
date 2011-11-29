@@ -212,15 +212,18 @@ sctk_network_connection_from_ib(int from, int to,sctk_rail_info_t* rail){
 }
 
 /************ INIT ****************/
+/* XXX: polling thread used for 'fully-connected' topology initialization. Because
+ * of PMI lib, when a barrier occurs, the IB polling cannot be executed.
+ * This thread is disbaled when the route is initialized */
 static void* __polling_thread(void *arg) {
   sctk_rail_info_t* rail = (sctk_rail_info_t*) arg;
   while(1) {
+    if (sctk_route_is_finalized()) break;
     sctk_network_poll_all(rail);
   }
   return NULL;
 }
 
-/* XXX: polling thread used for 'fully-connected' topology initialization */
 void sctk_network_init_polling_thread (sctk_rail_info_t* rail, char* topology) {
   if (strcmp("fully", topology) == 0)
   {

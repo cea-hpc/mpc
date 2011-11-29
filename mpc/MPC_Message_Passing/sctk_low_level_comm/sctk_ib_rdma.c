@@ -149,7 +149,7 @@ sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
   rdma_req->dest_msg_header = msg;
 
   /* Initialization of the msg header */
-  memcpy(&rdma_req->msg_header, &msg->body, sizeof(sctk_thread_ptp_message_body_t));
+  memcpy(&rdma_req->msg_header, msg, sizeof(sctk_thread_ptp_message_body_t));
   /* Message not ready: memory not pinned */
   msg->tail.ib.rdma.local.ready = 0;
   msg->tail.ib.rdma.rail = rail;
@@ -222,7 +222,6 @@ sctk_ib_rdma_prepare_data_write(sctk_rail_info_t* rail,
       src_msg_header->tail.ib.rdma.local.size,
       src_msg_header->tail.ib.rdma.remote.addr,
       src_msg_header->tail.ib.rdma.remote.size);
-
 
   sctk_ibuf_rdma_write_init(ibuf,
       src_msg_header->tail.ib.rdma.local.addr,
@@ -396,6 +395,9 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ib_rdma_req_t *rdma_req) {
   msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
   memcpy(&msg->body, &rdma_req->msg_header, sizeof(sctk_thread_ptp_message_body_t));
 
+  /* We reinit header before calculating the source */
+  sctk_rebuild_header(msg);
+  sctk_reinit_header(msg, sctk_ib_rdma_net_free_recv, sctk_ib_rdma_net_copy);
   /* determine the route to the source */
   route = sctk_get_route(msg->sctk_msg_get_glob_source, rail);
 
@@ -409,9 +411,6 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ib_rdma_req_t *rdma_req) {
   msg->tail.ib.rdma.route_table = route;
   msg->tail.ib.rdma.local.addr  = NULL;
   msg->tail.ib.rdma.remote.msg_header = rdma_req->dest_msg_header;
-
-  sctk_rebuild_header(msg);
-  sctk_reinit_header(msg, sctk_ib_rdma_net_free_recv, sctk_ib_rdma_net_copy);
 
   /* Send message to MPC. The message can be matched at the end
    * of function. */

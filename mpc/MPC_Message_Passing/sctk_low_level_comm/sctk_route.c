@@ -34,6 +34,7 @@ static sctk_rail_info_t* rails = NULL;
 static int rail_number = 0;
 static sctk_spin_rwlock_t sctk_route_table_init_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 static int sctk_route_table_init_lock_needed = 0;
+static int is_route_finalized = 0;
 
 #define TABLE_LOCK() if(sctk_route_table_init_lock_needed) sctk_spinlock_write_lock(&sctk_route_table_init_lock);
 #define TABLE_UNLOCK() if(sctk_route_table_init_lock_needed) sctk_spinlock_write_unlock(&sctk_route_table_init_lock);
@@ -168,6 +169,10 @@ sctk_rail_info_t* sctk_route_get_rail(int i){
   return &(rails[i]);
 }
 
+int sctk_route_is_finalized() {
+  return is_route_finalized;
+}
+
 void sctk_route_finalize(){
   char* net_name;
   int i;
@@ -182,6 +187,7 @@ void sctk_route_finalize(){
     sctk_pmi_barrier();
   }
   sctk_network_mode = net_name;
+  is_route_finalized = 1;
 }
 
 /**** routes *****/
