@@ -74,7 +74,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
     ibuf = sctk_ib_rdma_prepare_req(rail, tmp, msg, size);
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
-    sctk_ib_rdma_prepare_send_msg(rail_ib, msg);
+    sctk_ib_rdma_prepare_send_msg(rail_ib, msg, size);
   }
 }
 

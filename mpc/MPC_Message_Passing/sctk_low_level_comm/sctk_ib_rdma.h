@@ -55,6 +55,7 @@ sctk_ib_rdma_t;
  */
 typedef struct sctk_ib_rdma_ack_s {
   void* addr;
+  size_t size;
   uint32_t  rkey;
   sctk_thread_ptp_message_t* src_msg_header;
   sctk_thread_ptp_message_t* dest_msg_header;
@@ -112,6 +113,6 @@ int
 sctk_ib_rdma_poll_send(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf);
 
 void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
-    sctk_thread_ptp_message_t * msg);
+    sctk_thread_ptp_message_t * msg, size_t size);
 #endif
 #endif

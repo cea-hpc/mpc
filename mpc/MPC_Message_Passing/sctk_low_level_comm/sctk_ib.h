@@ -81,7 +81,6 @@ extern "C"
         struct sctk_ibuf_s *ibuf;
       } eager;
       struct {
-        sctk_ib_rdma_status_t status;
         size_t requested_size;
         sctk_spinlock_t lock;
         struct sctk_rail_info_s *rail;
@@ -91,11 +90,13 @@ extern "C"
 
         /* Local structure */
         struct {
+          sctk_ib_rdma_status_t status;
           struct sctk_ib_mmu_entry_s *mmu_entry;
           void  *addr;
           size_t size;
           void  *aligned_addr;
           size_t aligned_size;
+          /* Local structure ready to be read */
           char ready;
         } local;
         /* Remote structure */
