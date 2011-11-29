@@ -533,28 +533,18 @@ void sctk_ib_qp_release_entry(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t *remote) {
   not_implemented();
 
-  sctk_spinlock_lock(&remote->post_lock);
-  remote->free_nb++;
-  sctk_spinlock_unlock(&remote->post_lock);
+//  sctk_spinlock_lock(&remote->post_lock);
+//  remote->free_nb++;
+//  sctk_spinlock_unlock(&remote->post_lock);
 }
 
 static void* wait_send(void *arg){
   struct wait_send_s *a = (struct wait_send_s*) arg;
   int rc;
 
-  not_implemented();
-  if (a->remote->free_nb > 0) {
-    if (sctk_spinlock_trylock(&a->remote->post_lock) == 0) {
-      if (a->remote->free_nb > 0) {
-        rc = ibv_post_send(a->remote->qp, &(a->ibuf->desc.wr.send),
-            &(a->ibuf->desc.bad_wr.send));
-        assume(rc == 0);
-        a->remote->free_nb--;
-        a->flag = 1;
-      }
-      sctk_spinlock_unlock(&a->remote->post_lock);
-    }
-  }
+  rc = ibv_post_send(a->remote->qp, &(a->ibuf->desc.wr.send),
+      &(a->ibuf->desc.bad_wr.send));
+  if (rc == 0) a->flag = 1;
   return NULL;
 }
 
@@ -562,29 +552,14 @@ static void* wait_send(void *arg){
 sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t *remote, sctk_ibuf_t* ibuf)
 {
-  int rc, need_wait = 1;
+  int rc;
   struct wait_send_s wait_send_arg;
   sctk_nodebug("Send message to process %d %p", remote->rank, remote->qp);
 
   ibuf->remote = remote;
 
-//  if (remote->free_nb > 0) {
-//    sctk_spinlock_lock(&remote->post_lock);
-//    if (remote->free_nb > 0) {
-      rc = ibv_post_send(remote->qp, &(ibuf->desc.wr.send), &(ibuf->desc.bad_wr.send));
-      if( rc != 0) {
-        not_implemented();
-      }
-//      assume(rc == 0);
-//      remote->free_nb--;
-//      need_wait = 0;
-//    }
-//    sctk_spinlock_unlock(&remote->post_lock);
-//  }
-
-#if 0
-  if (need_wait)
-  {
+  rc = ibv_post_send(remote->qp, &(ibuf->desc.wr.send), &(ibuf->desc.bad_wr.send));
+  if( rc != 0) {
     wait_send_arg.flag = 0;
     wait_send_arg.remote = remote;
     wait_send_arg.ibuf = ibuf;
@@ -593,7 +568,6 @@ sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
         (void (*)(void *)) wait_send, &wait_send_arg);
   }
-#endif
 }
 
 

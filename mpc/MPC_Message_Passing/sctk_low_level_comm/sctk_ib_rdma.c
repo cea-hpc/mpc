@@ -66,16 +66,20 @@ static inline void sctk_ib_rdma_align_msg(void *addr, size_t  size,
 /* Functions to free messages used in transmission and reception */
 void sctk_ib_rdma_net_free_send(void* arg) {
   sctk_thread_ptp_message_t * msg = (sctk_thread_ptp_message_t*) arg;
-
+  /* XXX: Free memory here if not contiguous */
   /* Unregister MMU and free message */
+#if 0
+  assume(msg->tail.ib.rdma.local.mmu_entry);
   sctk_ib_mmu_unregister( &msg->tail.ib.rdma.rail->network.ib,
       msg->tail.ib.rdma.local.mmu_entry);
+#endif
 }
 
 void sctk_ib_rdma_net_free_recv(void* arg) {
   sctk_thread_ptp_message_t * msg = (sctk_thread_ptp_message_t*) arg;
 
   /* Unregister MMU and free message */
+  assume(msg->tail.ib.rdma.local.mmu_entry);
   sctk_ib_mmu_unregister( &msg->tail.ib.rdma.rail->network.ib,
       msg->tail.ib.rdma.local.mmu_entry);
   sctk_free(msg);
@@ -93,7 +97,7 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
   /* Allocate memory if not contiguous*/
   if (msg->tail.message_type == sctk_message_contiguous)
   {
-    sctk_nodebug("Sending contiguous message");
+    sctk_nodebug("Sending contiguous message; %p", msg);
     sctk_ib_rdma_align_msg(msg->tail.message.contiguous.addr,
         msg->tail.message.contiguous.size,
         &aligned_addr, &aligned_size);
@@ -104,10 +108,10 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
     not_implemented();
   }
 
-  sctk_reinit_header(msg, sctk_ib_rdma_net_free_send, NULL);
-  /* Register MMU */
   msg->tail.ib.rdma.local.mmu_entry =  sctk_ib_mmu_register (
       rail_ib, aligned_addr, aligned_size);
+  sctk_reinit_header(msg, sctk_ib_rdma_net_free_send, NULL);
+  /* Register MMU */
   /* Save addr and size */
   msg->tail.ib.rdma.local.aligned_addr = aligned_addr;
   msg->tail.ib.rdma.local.aligned_size = aligned_size;
@@ -329,7 +333,7 @@ sctk_ib_rdma_recv_ack(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   src_msg_header  = rdma_ack->dest_msg_header;
   dest_msg_header = rdma_ack->src_msg_header;
 
-  /* Wait while the message become ready */
+  /* Wait while the message becomes ready */
   sctk_thread_wait_for_value((int*) &src_msg_header->tail.ib.rdma.local.ready, 1);
 
   src_msg_header->tail.ib.rdma.remote.addr = rdma_ack->addr;
@@ -412,7 +416,7 @@ sctk_ib_rdma_recv_done_remote(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   sctk_nodebug("msg: %p - Rail: %p (%p-%p) copy_ptr:%p (send:%p recv:%p)", dest_msg_header, rail, ibuf, rdma_done, dest_msg_header->tail.ib.rdma.copy_ptr, send, recv);
 
   sctk_message_completion_and_free(send,recv);
-  sctk_nodebug("MSG REMOTE FREE");
+  sctk_nodebug("MSG REMOTE FREE %p", send, recv);
   return NULL;
 }
 
@@ -422,8 +426,13 @@ sctk_ib_rdma_recv_done_remote(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
 static inline void
 sctk_ib_rdma_recv_done_local(sctk_rail_info_t* rail, sctk_thread_ptp_message_t* msg)
 {
+  /* Unregister MMU and free message */
+  assume(msg->tail.ib.rdma.local.mmu_entry);
+  sctk_ib_mmu_unregister( &msg->tail.ib.rdma.rail->network.ib,
+      msg->tail.ib.rdma.local.mmu_entry);
+
+  sctk_nodebug("MSG LOCAL FREE %p", msg);
   sctk_complete_and_free_message(msg);
-  sctk_nodebug("MSG LOCAL FREE");
 }
 
 int
