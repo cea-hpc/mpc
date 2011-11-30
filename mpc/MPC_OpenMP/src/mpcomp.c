@@ -21,28 +21,22 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <mpcomp.h>
 #include "sctk.h"
-#include "sctk_alloc.h"
-#include "sctk_asm.h"
 #include "sctk_debug.h"
 #include "sctk_topology.h"
 #include "sctk_runtime_config.h"
-#include "mpcmicrothread_internal.h"
-#include "mpcomp_internal.h"
-#include <sys/time.h>
-
 #ifdef MPC_Message_Passing
 #include <sctk_communicator.h>
 #endif
 
-#define SCTK_OMP_VERSION_MAJOR 2
-#define SCTK_OMP_VERSION_MINOR 5
 
+/*******************
+       MACROS 
+********************/
+#define SCTK_OMP_VERSION_MAJOR 3
+#define SCTK_OMP_VERSION_MINOR 0
 
-/*
- * Environment variable used to fill the ICVs (OpenMP 2.5) 
- */
+__thread void *sctk_openmp_thread_tls = NULL;
 
 /* Schedule type */
 static omp_sched_t OMP_SCHEDULE = 1;
@@ -55,1314 +49,967 @@ static int OMP_DYNAMIC = 0;
 /* Is nested parallelism handled or flaterned? */
 static int OMP_NESTED = 0;
 /* Number of VPs for each OpenMP team */
-static int OMP_VP_NUMBER = 0;
+static int OMP_MICROVP_NUMBER = 0;
 
-/* OpenMP information of the current thread */
-sctk_thread_key_t mpcomp_thread_info_key;
 
-static mpc_thread_once_t mpcomp_thread_info_key_is_initialized =
-  SCTK_THREAD_ONCE_INIT;
+/*********************
+       STRUCTURES
+**********************/
 
-/* Initialization of the key named 'mpcomp_thread_info_key' */
-void
-mpcomp_thread_info_key_init ()
-{
-  sctk_thread_key_create (&mpcomp_thread_info_key, NULL);
-}
+/******** ICV ********/
+struct icv_s {
+  int nthreads_var;		/* Number of threads for the next team creation */
+  int dyn_var;			/* Is dynamic thread adjustement on? */
+  int nest_var;			/* Is nested OpenMP handled? */
+  omp_sched_t run_sched_var;	/* Schedule to use when 'schedule' clause is set to 'runtime' */
+  int modifier_sched_var;	/* Size of chunks for loop schedule */
+  omp_sched_t def_sched_var;	/* Default schedule when no 'schedule' clause is present */
+  int nmicrovps_var;		/* Number of VPs */
+};
+ 
+typedef struct icv_s icv_t;
 
-/* Runtime OpenMP Initialization 
- Can be called several times without any side effects */
-void
-__mpcomp_init (void)
-{
-  static volatile int done = 0;
-  static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
-  mpcomp_thread_info_t *init_info;
-  char *env;
+/******** OPENMP THREAD *********/
+struct mpcomp_thread_s {
+  sctk_mctx_t uc;				/* Context: register initialization, etc. Initialized when another thread is blocked */
+  char *stack;					/* Stack: initialized when another thread is blocked */
+  int depth;					/* Depth of the current thread (0 =sequential region) */
+  icv_t icvs;					/* Set of the ICVs for the child team */
+  long rank;					/* OpenMP rank. 0 for master thread per team */
+  long num_threads;				/* Current number of threads in the team */
+  struct mpcomp_mvp_s *mvp;			/* Openmp microvp */
+  int index_in_mvp;	
+  volatile int done;
+  struct mpcomp_instance_s *children_instance; 	/* Instance for nested parallelism */
+  struct mpcomp_thread_s *father; 		/* TODO: check if this is useful */
+  void *hierarchical_tls;			/* Local variables */
+};
+
+typedef struct mpcomp_thread_s mpcomp_thread_t;
+
+/******* INSTANCE OF OPENMP ********/
+struct mpcomp_instance_s {
+  int nb_mvps;
+  struct mpcomp_mvp_s **mvps;
+  struct mpcomp_node_s *root;
+};
+
+typedef struct mpcomp_instance_s mpcomp_instance_t;
+
+/********* OPENMP MICRO VP **********/
+struct mpcomp_mvp_s {
+  sctk_mctx_t vp_context;			/* Context including registers, stack pointer, etc. */
+  sctk_thread_t pid;				/* Thread ID */
   int nb_threads;
-  sctk_microthread_t *self;
-  int res;
+  int next_nb_threads;				/* TODO: maybe we don't need it. Probably used for parallel nesting */
+  struct mpcomp_thread_s threads[128];
+  int *tree_rank;				/* Array of rank in every node of the tree */
+  int rank;					/* Rank within the microVPs */
+  char pad0[64];
+  volatile int enable;
+  char pad1[64];
+  struct mpcomp_node_s *root;
+  struct mpcomp_node_s *father;
+  int region_id;				/* TODO: 0 or 1. To be checked */
+  struct mpcomp_node_s *to_run;			/* Specify where is the spin waiting for a new parallel region */
+  char pad2[64];
+  volatile int slave_running[2];
+  char pad3[64];
+  void *(*func) (void*);			/* Function to call by every thread */
+  void *shared;					/* Shared variables for every thread */
+};
 
-  /* Initialization of the sctk_microthread key (only once) */
-  res = mpc_thread_once (&mpcomp_thread_info_key_is_initialized,
-			 mpcomp_thread_info_key_init);
-  sctk_assert (res == 0);
+typedef struct mpcomp_mvp_s mpcomp_mvp_t;
 
-  sctk_nodebug ("__mpcomp_init: Enter init");
+typedef enum children_s {
+  CHILDREN_NODE = 1,
+  CHILDREN_LEAF = 2,
+}children_t;
+
+typedef enum context_t {
+  MPCOMP_CONTEXT_IN_ORDER = 1,
+  MPCOMP_CONTEXT_OUT_OF_ORDER_MAIN = 2,
+  MPCOMP_CONTEXT_OUT_OF_ORDER_SUB = 3,
+} context_t;
 
 
-  init_info = sctk_thread_getspecific (mpcomp_thread_info_key);
+/******** OPENMP INFO NODE ********/
+struct mpcomp_node_s {
+  struct mpcomp_node_s *father;
+  long rank;					/* Rank among children of my father */
+  int depth;					/* Depth in the tree */
+  int nb_children;				/* Number of children */
+  int min_index;				/* Flat min index of leaves in this subtree */
+  int max_index;				/* Flat max index of leaves in this subtree */
+  children_t child_type;			/* Am I a node or a leaf? */ 
+  union node_or_leaf {
+    struct mpcomp_node_s **node;
+    struct mpcomp_mvp_s **leaf;
+  } children;
+  sctk_spinlock_t lock;				/* Lock for structure update */
+  char pad0[64];
+  volatile int slave_running[2];
+  char pad1[64];
+  volatile long barrier;			/* Barrier for the child team */
+  char pad2[64];
+  volatile long barrier_done;			/* Is the barrier for the child team is over? */
+  char pad3[64];
+  volatile long barrier_num_threads;		/* Number of threads involved in the barrier */
+  char pad4[64];
+  int num_threads;				/* Number of threads in the current team */ 
+  void *(*func) (void*);
+  void *shared;
+};
 
-  if (init_info == NULL)
-    {
-      icv_t icvs;
-      sctk_thread_mutex_lock (&lock);
+typedef struct mpcomp_node_s mpcomp_node_t;
 
-      sctk_nodebug ("__mpcomp_init: Enter init w/ lock");
 
-      /* Read the environment variables only once per process */
-      if (done == 0)
-	{
+/*********************
+       FUNCTIONS
+**********************/
+//void __mpcomp_start_parallel_region(int num_threads, void *(* func) (void *), void *shared);
+//void __mpcomp_init();
+//void __new_mpcomp_init();
+void __mpcomp_instance_init(mpcomp_instance_t *instance, int nb_mvps);
+void __mpcomp_thread_init(mpcomp_thread_t *t);
+void *mpcomp_slave_mvp_node(void *arg);
+void *mpcomp_slave_mvp_leaf(void *arg);
+void in_order_scheduler(mpcomp_mvp_t *mvp);
+//int mpcomp_get_num_threads();
+//int mpcomp_get_thread_num();
 
-	  sctk_nodebug ("__mpcomp_init: Read env vars (MPC rank: %d)",
-			sctk_get_task_rank ());
-
-	  /******* OMP_VP_NUMBER *********/
-	  env = getenv ("OMP_VP_NUMBER");
-	  OMP_VP_NUMBER = sctk_get_processor_number (); /* DEFAULT */
-#ifdef MPC_Message_Passing
+/* 
+  Read the environment variables. Once per process 
+*/
+inline void __mpcomp_read_env_variables() 
 	  OMP_VP_NUMBER = OMP_VP_NUMBER /  sctk_get_nb_task_local(SCTK_COMM_WORLD); /* DEFAULT */
 	  if(OMP_VP_NUMBER < 1){
 	    OMP_VP_NUMBER = 1;
 	  }
 #endif
-	  if (env != NULL)
-	    {
-	      int arg = atoi( env ) ;
-	      if ( arg <= 0 ) {
-		fprintf( stderr, 
-			  "Warning: Incorrect number of microVPs (OMP_VP_NUMBER=<%s>) -> "
-			  "Switching to default value %d\n", env, OMP_VP_NUMBER ) ;
-	      } else {
-		OMP_VP_NUMBER = arg ;
-	      }
+{
+  char *env;
+  int nb_threads;
+
+  sctk_nodebug("__mpcomp_init: Read environment variables / MPC tank %d",sctk_get_task_rank());  
+
+  /******* OMP_MICROVP_NUMBER *********/
+  env = getenv ("OMP_MICROVP_NUMBER");
+  /*DEFAULT */
+  OMP_MICROVP_NUMBER = sctk_get_processor_number ();
+  if (env != NULL) {
+      int arg = atoi( env ) ;
+      if ( arg <= 0 ) {
+	fprintf( stderr, "Warning: Incorrect number of microVPs (OMP_VP_NUMBER=<%s>) -> "
+		         "Switching to default value %d\n", env, OMP_MICROVP_NUMBER ) ;
+      } 
+      else {
+	OMP_MICROVP_NUMBER = arg ;
+      }
+  }
+
+  /******* OMP_SCHEDULE *********/
+  env = getenv ("OMP_SCHEDULE");
+  /* DEFAULT */
+  OMP_SCHEDULE = 1 ;					
+  if (env != NULL) {
+      int ok = 0 ;
+      int offset = 0 ;
+      if ( strncmp (env, "static", 6) == 0 ) {
+	OMP_SCHEDULE = 1 ;
+	offset = 6 ;
+	ok = 1 ;
+      } 
+      if ( strncmp (env, "dynamic", 7) == 0 ) {
+	OMP_SCHEDULE = 2 ;
+	offset = 7 ;
+	ok = 1 ;
+      } 
+      if ( strncmp (env, "guided", 6) == 0 ) {
+	OMP_SCHEDULE = 3 ;
+	offset = 6 ;
+	ok = 1 ;
+      } 
+      if ( strncmp (env, "auto", 4) == 0 ) {
+	OMP_SCHEDULE = 4 ;
+	offset = 4 ;
+	ok = 1 ;
+      } 
+      if ( ok ) {
+	int chunk_size = 0 ;
+	/* Check for chunk size, if present */
+	sctk_debug( "Remaining string for schedule: <%s>", &env[offset] ) ;
+	switch( env[offset] ) {
+	  case ',':
+	    sctk_nodebug( "There is a chunk size -> <%s>", &env[offset+1] ) ;
+	    chunk_size = atoi( &env[offset+1] ) ;
+	    if ( chunk_size <= 0 ) {
+	      fprintf (stderr, "Warning: Incorrect chunk size within OMP_SCHEDULE variable: <%s>\n", env ) ;
+	      chunk_size = 0 ;
+	    } 
+	    else {
+	      OMP_MODIFIER_SCHEDULE = chunk_size ;
 	    }
+	    break ;
+	  case '\0':
+	    sctk_nodebug( "No chunk size\n" ) ;
+	    break ;
+	  default:
+	  fprintf (stderr, "Syntax error with envorinment variable OMP_SCHEDULE <%s>,"
+		           " should be \"static|dynamic|guided|auto[,chunk_size]\"\n", env ) ;
+	  exit( 1 ) ;
+	}
+      }  
+      else {
+	  fprintf (stderr, "Warning: Unknown schedule <%s> (must be static, guided or dynamic),"
+		           " fallback to default schedule <%d>\n", env,
+		           OMP_SCHEDULE);
+      }
+    }
 
-	  /******* OMP_SCHEDULE *********/
-	  env = getenv ("OMP_SCHEDULE");
-	  OMP_SCHEDULE = 1 ;	/* DEFAULT */
-	  if (env != NULL)
-	    {
-	      int ok = 0 ;
-	      int offset = 0 ;
-	      if ( strncmp (env, "static", 6) == 0 ) {
-		OMP_SCHEDULE = 1 ;
-		offset = 6 ;
-		ok = 1 ;
-	      } 
-	      if ( strncmp (env, "dynamic", 7) == 0 ) {
-		OMP_SCHEDULE = 2 ;
-		offset = 7 ;
-		ok = 1 ;
-	      } 
-	      if ( strncmp (env, "guided", 6) == 0 ) {
-		OMP_SCHEDULE = 3 ;
-		offset = 6 ;
-		ok = 1 ;
-	      } 
-	      if ( strncmp (env, "auto", 4) == 0 ) {
-		OMP_SCHEDULE = 4 ;
-		offset = 4 ;
-		ok = 1 ;
-	      } 
-	      if ( ok ) {
-		int chunk_size = 0 ;
-		/* Check for chunk size, if present */
-		sctk_debug( "Remaining string for schedule: <%s>", &env[offset] ) ;
-		switch( env[offset] ) {
-		  case ',':
-		    sctk_nodebug( "There is a chunk size -> <%s>", &env[offset+1] ) ;
-		    chunk_size = atoi( &env[offset+1] ) ;
-		    if ( chunk_size <= 0 ) {
-		      fprintf (stderr,
-			  "Warning: Incorrect chunk size within OMP_SCHEDULE variable: <%s>\n", env ) ;
-		      chunk_size = 0 ;
-		    } else {
-		      OMP_MODIFIER_SCHEDULE = chunk_size ;
-		    }
-		    break ;
-		  case '\0':
-		    sctk_nodebug( "No chunk size\n" ) ;
-		    break ;
-		  default:
-		  fprintf (stderr,
-			   "Syntax error with envorinment variable OMP_SCHEDULE <%s>,"
-			   " should be \"static|dynamic|guided|auto[,chunk_size]\"\n", env ) ;
-		  exit( 1 ) ;
-		}
-	      }  else {
-		  fprintf (stderr,
-			   "Warning: Unknown schedule <%s> (must be static, guided or dynamic),"
-			   " fallback to default schedule <%d>\n", env,
-			   OMP_SCHEDULE);
-	      }
-	    }
+  /******* OMP_NUM_THREADS *********/
+  env = getenv ("OMP_NUM_THREADS");
+  /* DEFAULT */
+  OMP_NUM_THREADS = OMP_MICROVP_NUMBER;
+  if (env != NULL) {
+      nb_threads = atoi (env);
+      if (nb_threads > 0) {
+	  OMP_NUM_THREADS = nb_threads;
+      }
+  }
 
+  /******* OMP_DYNAMIC *********/
+  env = getenv ("OMP_DYNAMIC");
+  /* DEFAULT */
+  OMP_DYNAMIC = 0;
+  if (env != NULL) {
+      if (strcmp (env, "true") == 0) {
+	  OMP_DYNAMIC = 1;
+      }
+  }
 
-	  /******* OMP_NUM_THREADS *********/
-	  env = getenv ("OMP_NUM_THREADS");
-	  OMP_NUM_THREADS = OMP_VP_NUMBER;	/* DEFAULT */
-	  if (env != NULL)
-	    {
-	      nb_threads = atoi (env);
-	      if (nb_threads > 0)
-		{
-		  OMP_NUM_THREADS = nb_threads;
-		}
-	    }
+  /******* OMP_NESTED *********/
+  env = getenv ("OMP_NESTED");
+  /* DEFAULT */
+  OMP_NESTED = 0;	
+  if (env != NULL) {
+      if (strcmp (env, "1") == 0 || strcmp (env, "TRUE") == 0 || strcmp (env, "true") == 0 ) {
+	  OMP_NESTED = 1;
+      }
+  }
 
-
-	  /******* OMP_DYNAMIC *********/
-	  env = getenv ("OMP_DYNAMIC");
-	  OMP_DYNAMIC = 0;	/* DEFAULT */
-	  if (env != NULL)
-	    {
-	      if (strcmp (env, "true") == 0)
-		{
-		  OMP_DYNAMIC = 1;
-		}
-	    }
-
-
-
-	  /******* OMP_NESTED *********/
-	  env = getenv ("OMP_NESTED");
-	  OMP_NESTED = 0;	/* DEFAULT */
-	  if (env != NULL)
-	    {
-	      if (strcmp (env, "1") == 0 || strcmp (env, "TRUE") == 0 || strcmp (env, "true") == 0 )
-		{
-		  OMP_NESTED = 1;
-		}
-	    }
-
-
-
-	  /******* ADDITIONAL VARIABLES *******/
-	  /* NONE */
-
-
-
-
-	  /***** PRINT SUMMARY ******/
+  /***** PRINT SUMMARY ******/
 	  if ( (sctk_runtime_config_get()->modules.launcher.banner) && (sctk_get_process_rank() == 0) ) {
-	    fprintf (stderr,
-		"MPC OpenMP version %d.%d (DEV)\n",
-		SCTK_OMP_VERSION_MAJOR, SCTK_OMP_VERSION_MINOR);
-	    fprintf (stderr, "\tOMP_SCHEDULE %d\n", OMP_SCHEDULE);
-	    fprintf (stderr, "\tOMP_NUM_THREADS %d\n", OMP_NUM_THREADS);
-	    fprintf (stderr, "\tOMP_DYNAMIC %d\n", OMP_DYNAMIC);
-	    fprintf (stderr, "\tOMP_NESTED %d\n", OMP_NESTED);
-	    fprintf (stderr, "\t%d VPs (OMP_VP_NUMBER)\n", OMP_VP_NUMBER);
-	  }
-
-	  done = 1;
-
-
-	}
-
-      /* Initialize the microthread structure that will be used for the first
-       * level of OpenMP multithreading */
-      self = sctk_malloc (sizeof (sctk_microthread_t));
-      sctk_assert (self != NULL);
-
-      sctk_microthread_init (OMP_VP_NUMBER, self);
-      res = sctk_thread_setspecific (sctk_microthread_key, self);
-      sctk_assert (res == 0);
-
-      sctk_nodebug( "mpcomp_init: allocation of thread_info size %d and microVP %d"
-	  , sizeof( mpcomp_thread_info_t ), sizeof( sctk_microthread_vp_t ) ) ;
-     	
-
-      /* Thread-info structure allocation and assignment */
-      init_info = sctk_malloc (sizeof (mpcomp_thread_info_t));
-      sctk_assert (init_info != NULL);
-
-      icvs.nthreads_var = OMP_NUM_THREADS;
-      icvs.dyn_var = OMP_DYNAMIC;
-      icvs.nest_var = OMP_NESTED;
-      icvs.run_sched_var = OMP_SCHEDULE;
-      icvs.modifier_sched_var = OMP_MODIFIER_SCHEDULE ;
-      icvs.def_sched_var = "static";
-      icvs.nmicrovps_var = OMP_VP_NUMBER;
-
-      __mpcomp_init_thread_info (init_info, NULL, NULL, 0, 1, icvs,
-				 0, 0, 0, NULL, -1, self);
-
-      res = sctk_thread_setspecific (mpcomp_thread_info_key, init_info);
-      sctk_assert (res == 0);
-
-      sctk_nodebug ("__mpcomp_init: Exit init w/ Lock");
-
-      sctk_thread_mutex_unlock (&lock);
-
-    }
+    fprintf (stderr, "MPC OpenMP version %d.%d (DEV)\n",
+		     SCTK_OMP_VERSION_MAJOR, SCTK_OMP_VERSION_MINOR);
+    fprintf (stderr, "\tOMP_SCHEDULE %d\n", OMP_SCHEDULE);
+    fprintf (stderr, "\tOMP_NUM_THREADS %d\n", OMP_NUM_THREADS);
+    fprintf (stderr, "\tOMP_DYNAMIC %d\n", OMP_DYNAMIC);
+    fprintf (stderr, "\tOMP_NESTED %d\n", OMP_NESTED);
+    fprintf (stderr, "\t%d microVPs (OMP_MICROVP_NUMBER)\n", OMP_MICROVP_NUMBER);
+  }
+ 
 }
 
-void
-mpcomp_macro_scheduler (sctk_microthread_vp_t * self, long step)
+/*
+   Entry point for microVP in charge of passing information to other microVPs.
+   Spinning on a specific node to wake up.
+*/
+void *mpcomp_slave_mvp_node (void *arg)
 {
-  long i;
-  long to_do;
-  mpcomp_thread_info_t *info;
-  mpcomp_thread_info_t *info_init;
+   int index;
+   mpcomp_mvp_t *mvp;	/* Current microVP */
+   mpcomp_node_t *n;	/* Spinning node + Traversing node */
+   mpcomp_node_t *root;	/* Tree root */ 
+   mpcomp_node_t *numa_node;
 
-  info_init = (mpcomp_thread_info_t *) self->op_list[step].arg;
+   mvp = (mpcomp_mvp_t *)arg;
 
-  sctk_nodebug( "mpcomp_macro_scheduler[%d]: Enter with context %d", info_init->rank, info_init->context ) ;
+   n = mvp->to_run;
 
-  to_do = self->to_do_list;
-  i = (step + 1) % to_do;
-  info = (mpcomp_thread_info_t *) self->op_list[i].arg;
-  /*
-     context -> 0 when there is no context related to this microthread (no stack has been created)
-     is_running -> 0 when the current thread is blocked due to a lock
-     done -> 1 when this microthread has successfully executed
-   */
-  /* TODO update numbers to macros */
-  while ((info->context == 0) || (info->is_running == 0) || (info->done == 1))
-    {
-      i = (i + 1) % to_do;
-      info = (mpcomp_thread_info_t *) self->op_list[i].arg;
-      if (step == i)
-	{
-	  sctk_thread_yield ();
+   root = mvp->root;
+
+   numa_node = root->children.node[mvp->tree_rank[0]];
+
+   sctk_nodebug("mpcomp_slave_mvp_node: Polling address %p -> father %p",
+		&(mvp->slave_running[0]), mvp->father);
+
+   while (mvp->enable) {
+     int i;
+     int num_threads_mvp;
+
+     sctk_nodebug("mpcomp_slave_mvp_node: Polling address %p ith ID %d",
+		&(n->slave_running[0]),0); 
+
+     /* Spinning on the designed node */
+     sctk_thread_wait_for_value_and_poll((int *)&(n->slave_running[0]), 1 , NULL , NULL);
+     n->slave_running[0] = 0;
+
+     sctk_nodebug("mpcomp_slave_mvp_node: wake_up -> go to children using function %p", n->func);
+
+     /* Wake up children node */
+     while (n->child_type != CHILDREN_LEAF) {
+
+        sctk_nodebug("mpcomp_slave_mvp_node: children node passing function %p", n->func);
+
+        for (i=1 ; i<n->nb_children ; i++) {
+	  n->children.node[i]->func = n->func;
+	  n->children.node[i]->shared = n->shared;
+	  n->children.node[i]->num_threads = n->num_threads;
+	  n->children.node[i]->slave_running[0] = 1;
 	}
-    }
-  if (i != step)
-    {
-      sctk_assert (info->done == 0);
-      sctk_assert (info->is_running != 0);
-      sctk_assert (info->context != 0);
 
-      sctk_nodebug ("mpcomp_macro_scheduler: Swap to %d", i);
+#warning "TODO put the real barrier_num_threads"
+        n->barrier_num_threads = n->nb_children;
+        n = n->children.node[0];
+     }
 
-      sctk_swapcontext (&(info_init->uc), &(info->uc));
+     /* Wake up children leaf */
+     sctk_assert(n->child_type == CHILDREN_LEAF);
+     sctk_nodebug("mpcomp_slave_mvp_node: children leaf will use %p",n->func);
 
-      sctk_nodebug ("mpcomp_macro_scheduler: Restore Swap to %d", i);
+     for (i=1 ; i<n->nb_children ; i++) {
+       n->children.leaf[i]->slave_running[0] = 1;
+     }
 
-      sctk_thread_setspecific (mpcomp_thread_info_key, info_init);
-    }
-}
+     n->barrier_num_threads = n->nb_children;
+     
+     n = mvp->to_run;
+     mvp->func = n->func;
+     mvp->shared = n->shared;
 
-void *
-__mpcomp_wrapper_op (void *arg)
-{
-  mpcomp_thread_info_t *info;
-  void *res;
+     /* TODO: Didn't understand this part */
+     /* Compute the number of threads for this microVP */
+     int fetched_num_threads = n->num_threads;
+     num_threads_mvp = 1;
+     if (fetched_num_threads <= mvp->rank) 
+       num_threads_mvp = 0;
 
-  /* Retrieve and store the OpenMP thread-specific information */
-  info = (mpcomp_thread_info_t *) arg;
-  sctk_thread_setspecific (mpcomp_thread_info_key, info);
+     for (i=0 ; i<num_threads_mvp ; i++) {
+       int rank;
+       /* Compute the rank of this thread */
+       rank = mvp->rank;
+       mvp->threads[i].rank = rank;
 
-  sctk_nodebug( "__mpcomp_wrapper_op[%d]: Enter with context %d", info->rank, info->context ) ;
+       /* Copy information */
+       mvp->threads[i].num_threads = n->num_threads;
+       
+       sctk_nodebug("mpcomp_slave_mvp: Got num threads %d",
+		mvp->threads[i].num_threads);
+     }
+     /* TODO finish*/
 
-  sctk_nodebug ("__mpcomp_wrapper_op: Key for microthread = %d",
-		sctk_microthread_key);
-  res = sctk_thread_getspecific (sctk_microthread_key);
-  sctk_assert (res != NULL);
+     /* Update the total number of threads for this microVP */
+     mvp->nb_threads = num_threads_mvp;
 
-  if (info->context == 0)
-    {
-      sctk_extls = info->extls;
+     /* Run */
+     in_order_scheduler(mvp);
+
+     /* Barrier */
+     mpcomp_node_t *c;
+     int b;
+
+     c = mvp->father;
+
+     sctk_spinlock_lock(&(c->lock));
 #if defined (SCTK_USE_OPTIMIZED_TLS)
 	  sctk_tls_module = info->tls_module;
 	  sctk_context_restore_tls_module_vp() ;
 #endif
-    }
 
-  sctk_nodebug
-    ("__mpcomp_wrapper_op: Op #%d started on VP %d -  %p->%p (depth:%d)",
-     info->step, info->vp, __mpcomp_wrapper_op, info->func, info->depth);
+     b = c->barrier;
+     b++;
+     c->barrier = b;
 
+     sctk_spinlock_unlock(&(c->lock));
 
-  /* Call the function extracted by OpenMP */
-  info->func (info->shared);
+     /* TODO: Didn't understand that barrier */
+     while ((b == c->barrier_num_threads || b == c->nb_children) && c->father != NULL) {
+        c->barrier = 0;
+	c = c->father;
 
-  sctk_nodebug ("__mpcomp_wrapper_op: Op #%d done on VP %d", info->step,
-		info->vp);
+	sctk_spinlock_lock(&(c->lock));
 
-  /* This function is done */
-  info->done = 1;
+        b = c->barrier;
+        b++;
+        c->barrier = b;
 
-  /* 'context' is updated to 1 when a context is created with a fork from
-   * another thread in the same VP (see mpcomp_fork_when_blocked) */
-  /* while (info->context == 1) -> previous code */
-  if (info->context == 1)
-    {
-      sctk_microthread_vp_t *my_vp;
-      /* Continue to schedule other microthreads on behalf of the main thread */
-      my_vp = &(info->task->__list[info->vp]);
-      mpcomp_macro_scheduler (my_vp, info->step);
-    }
+	sctk_spinlock_unlock(&(c->lock));
+     }
 
-  /* If we've been through dummy func ('context' is updated to 3 inside this
-   * function) */
-  if (info->context == 3)
-    {
-      sctk_microthread_vp_t *my_vp;
+     sctk_nodebug("node val %d out of %d", b, c->barrier_num_threads);
+
 TODO("to translate")
-      /* Pour repasser la main à la pile principale de dummy_func */
-      my_vp = &(info->task->__list[info->vp]);
-      sctk_nodebug ("__mpcomp_wrapper_op: Restore main (context=3)");
-      sctk_setcontext (&(my_vp->vp_context));
-    }
+   }
 
-  return NULL;
+   return NULL;
+}
+
+/*
+   Entry point for microVP working on their own
+   Spinning on a variable inside the microVP
+*/
+void *mpcomp_slave_mvp_leaf (void *arg)
+{
+   mpcomp_mvp_t *mvp;
+   
+   /* Grab the current microVP */
+   mvp = (mpcomp_mvp_t *)arg;
+
+   sctk_nodebug("mpcomp_slave_mvp_leaf: Polling address %p -> father is %p",
+		&(mvp->slave_running[0]),mvp->father);
+   sctk_nodebug("mpcomp_slave_mvp_leaf: Will get value from father %p", mvp->father);
+ 
+   /* Spin while this microVP is alive */  
+   while (mvp->enable) {
+     int i;
+     int num_threads_mvp;
+
+     sctk_nodebug("mpcomp_slave_mvp_leaf: Polling address %p with ID %d",
+			&(mvp->slave_running[0]),0);
+
+     /* Spin for new parallel region */
+     sctk_thread_wait_for_value_and_poll((int*)&(mvp->slave_running[0]),1,NULL,NULL);
+     mvp->slave_running[0] = 0;
+
+     sctk_nodebug("mpcomp_slave_mvp_leaf: wake up");
+
+     mvp->func = mvp->father->func;
+     mvp->shared = mvp->father->shared;
+
+     sctk_nodebug("mpcomp_slave_mvp_leaf: Function for this mvp %p, #threads %d (father %p)",
+		mvp->func, mvp->father->num_threads, mvp->father);
+
+     /* Compute the number of threads for this microVP */
+     int fetched_num_threads = mvp->father->num_threads;
+     num_threads_mvp = 1;
+     if (fetched_num_threads <= mvp->rank) 
+       num_threads_mvp = 0;
+
+     for (i=0 ; i<num_threads_mvp ; i++) {
+       int rank;
+       /* Compute the rank of this thread */
+       rank = mvp->rank;
+       mvp->threads[i].rank = rank;
+
+       /* Copy information */
+       mvp->threads[i].num_threads = mvp->father->num_threads;
+       
+       sctk_nodebug("mpcomp_slave_mvp: Got num threads %d",
+		mvp->threads[i].num_threads);
+     }
+     /* TODO finish*/
+
+     /* Update the total number of threads for this microVP */
+     mvp->nb_threads = num_threads_mvp;
+
+     /* Run */
+     in_order_scheduler(mvp);
+
+     /* Barrier */
+     mpcomp_node_t *c;
+     int b;
+
+     c = mvp->father;
+
+     sctk_spinlock_lock(&(c->lock));
+
+     b = c->barrier;
+     b++;
+     c->barrier = b;
+
+     sctk_spinlock_unlock(&(c->lock));
+
+     /* TODO: Didn't understand that barrier */
+     while (b == c->barrier_num_threads && c->father != NULL) {
+        c->barrier = 0;
+	c = c->father;
+
+	sctk_spinlock_lock(&(c->lock));
+
+        b = c->barrier;
+        b++;
+        c->barrier = b;
+
+	sctk_spinlock_unlock(&(c->lock));
+     }
+
+   }
+
+   return NULL;
+}
+
+/*
+   Initialize an OpenMP thread
+*/
+void __mpcomp_thread_init (mpcomp_thread_t *t)
+{
+
+   t->depth = 0;
+   t->rank = 0;
+   t->num_threads = 1;
+   t->mvp = NULL;
+   t->index_in_mvp = 0;
+   t->done = 0;
+   t->father = t;
+   t->hierarchical_tls = NULL;
 }
 
 
-/* 
-   Start a new parallel region (Compiler ABI).
-
-   The new parallel region will be executed by 'arg_num_threads' thread(s) or
- the default number if 'arg_num_threads' == -1. Each thread will call the
- function 'func' with the argument 'shared'.
- */
-void
-__mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *),
-				void *shared)
+/*
+   Initialize the OpenMP instance
+*/
+void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 {
-  mpcomp_thread_info_t *current_info;
-  int num_threads;
+  int *order;
+  int i;
+  int current_mvp;
+  int flag_level;
+  mpcomp_node_t *root;
+  int current_mpc_vp;
 
-  SCTK_PROFIL_START (__mpcomp_start_parallel_region);
+  /* Alloc memory for 'nb_mvps' microVPs */
+  instance->mvps = (mpcomp_mvp_t **)sctk_malloc(nb_mvps*sizeof(mpcomp_mvp_t *));
+  sctk_assert(instance->mvps != NULL);
 
-  /* Initialize the OpenMP environment (call several times, but really executed
-   * once) */
-  __mpcomp_init ();
+  instance->nb_mvps = nb_mvps;
 
-  /* Retrieve the information (microthread structure and current region) */
-  /* TODO Use TLS if available */
-  current_info = sctk_thread_getspecific (mpcomp_thread_info_key);
-  sctk_assert (current_info != NULL);
+  /* Get the current VP number */
+  current_mpc_vp = sctk_thread_get_vp();
 
-  /* Grab the number of threads */
-  num_threads = current_info->icvs.nthreads_var;
-  if (arg_num_threads > 0 && arg_num_threads <= MPCOMP_MAX_THREADS)
-    {
-      num_threads = arg_num_threads;
-    }
+  /* TODO: so far, we don't fully support when OpenMP instance is created from any VP */
+  sctk_assert(current_mpc_vp == 0);
 
-  /* Bypass if the parallel region contains only 1 thread */
-  if (num_threads == 1)
-    {
-      sctk_nodebug
-	("__mpcomp_start_parallel_region: Only 1 thread -> call f");
-      
-      /* Simulate a parallel region by incrementing the depth */
-      current_info->depth++ ;
+  /* Grab the right order to allocate microVPs */
+  order = sctk_malloc(sctk_get_cpu_number()*sizeof(int));
+  sctk_assert(order != NULL);
+  
+  sctk_get_neighborhood(current_mpc_vp,sctk_get_cpu_number(),order);
 
-      func (shared);
+  /* Build the tree of the OpenMP instance */
+  root = (mpcomp_node_t *)sctk_malloc(sizeof(mpcomp_node_t));
+  sctk_assert(root != NULL);
 
-      current_info->depth-- ;
+  instance->root = root;
 
-      SCTK_PROFIL_END (__mpcomp_start_parallel_region);
-      return;
-    }
+  current_mvp = 0;
+  flag_level = 0;
 
-  sctk_nodebug
-    ("__mpcomp_start_parallel_region: -> Final num threads = %d",
-     num_threads);
+  switch (sctk_get_cpu_number()) {
+	case 32: /* NUMA tree */
+#if 1
+#warning "OpenMp compiling w/ NUMA tree 32 cores"	    
+	  root->father = NULL;
+	  root->rank = -1;
+	  root->depth = 0;
+	  root->nb_children = 4;
+	  root->min_index = 0;
+	  root->max_index = 31;
+	  root->child_type = CHILDREN_NODE;
+	  root->slave_running[0] = 0;
+	  root->slave_running[1] = 0;
+	  root->barrier = 0;
+	  root->barrier_done = 0;
+	  root->children.node = (mpcomp_node_t **)sctk_malloc(root->nb_children*sizeof(mpcomp_node_t *));
+	  sctk_assert(root->children.node != NULL);
 
-  /* Creation of a new microthread structure if the current region is
-   * sequential or if nesting is allowed */
-  if (current_info->depth == 0 || mpcomp_get_nested ())
-    {
-      sctk_microthread_t *new_task;
-      sctk_microthread_t *current_task;
-      int i;
-      /*
-      int n = num_threads / current_info->icvs.nmicrovps_var;
-      int index = num_threads % current_info->icvs.nmicrovps_var;
-      int vp;
-      */
+	  for (i=0 ; i<root->nb_children ; i++) {
+	    mpcomp_node_t *n;
+	    int j;
 
-      SCTK_PROFIL_START (__mpcomp_start_parallel_region__creation);
+	    if (flag_level == -1) flag_level = 1;
 
-      sctk_nodebug
-	("__mpcomp_start_parallel_region: starting new team at depth %d on %d VP(s)",
-	 current_info->depth, current_info->icvs.nmicrovps_var);
+	    n = (mpcomp_node_t *)sctk_malloc_on_node(sizeof(mpcomp_node_t),i);
+	    sctk_assert(n != NULL);
 
-      current_task = current_info->task;
-
-      /* Initialize a new microthread structure if needed */
-      if (current_info->depth == 0)
-	{
-	  new_task = current_task;
-
-	  sctk_nodebug
-	    ("__mpcomp_start_parallel_region: reusing the thread_info depth 0");
-	}
-      else
-	{
-
-	  sctk_nodebug
-	    ("__mpcomp_start_parallel_region: Nesting");
-
-	  /* If the first child has already been created, get the
-	   * corresponding thread-info structure */
-	  if (current_info->children[0] != NULL)
-	    {
-	      sctk_nodebug
-		("__mpcomp_start_parallel_region: reusing thread_info new depth");
-
-	      new_task = current_info->children[0]->task;
-	      sctk_assert (new_task != NULL);
-
-	    }
-	  else
-	    {
-
-	      sctk_nodebug
-		("__mpcomp_start_parallel_region: allocating thread_info new depth");
-
-	      new_task = sctk_malloc (sizeof (sctk_microthread_t));
-	      sctk_assert (new_task != NULL);
-	      sctk_microthread_init (OMP_VP_NUMBER, new_task);
-	    }
-	}
-
-
-      /* Fill the microthread structure with these new threads */
-      for (i = num_threads - 1; i >= 0; i--)
-	{
-	  mpcomp_thread_info_t *new_info;
-	  int vp;
-	  int val;
-	  int res;
-
-	  /* Compute the VP this thread will be scheduled on and the behavior of
-	   * 'add_task' */
-	  if (i < current_info->icvs.nmicrovps_var)
-	    {
-	      vp = i;
-	      val = MPC_MICROTHREAD_LAST_TASK;
-	    }
-	  else
-	    {
-	      vp = i % (current_info->icvs.nmicrovps_var);
-	      val = MPC_MICROTHREAD_NO_TASK_INFO;
-	    }
-
-	  /* Get the structure of the i-th children */
-	  new_info = current_info->children[i];
-
-	  /* If this is the first time that such a child exists
-	     -> allocate memory once and initialize once */
-	  if (new_info == NULL)
-	    {
-
-	      sctk_nodebug
-		("__mpcomp_start_parallel_region: Child %d is NULL -> allocating thread_info",
-		 i);
-
-	      /* Allocate on the correct NUMA node if the MPC allocator is
-	         included */
-	      new_info =
-		sctk_malloc_on_node (sizeof (mpcomp_thread_info_t), sctk_get_node_from_cpu(vp));
-	      sctk_assert (new_info != NULL);
-
-	      current_info->children[i] = new_info;
-
-	      __mpcomp_init_thread_info (new_info, func, shared, i,
-					 num_threads, current_info->icvs,
-					 current_info->depth + 1, vp, 0,
-					 current_info, 0, new_task);
-	    }
-	  else
-	    {
-	      __mpcomp_reset_thread_info (new_info, func, shared, num_threads,
-					  current_info->icvs, 0, 0, vp);
-	    }
-
-
-	  new_info->task = new_task;
-
-	  sctk_nodebug
-	    ("__mpcomp_start_parallel_region: Adding op %d on VP %d", i, vp);
-
-	  res = sctk_microthread_add_task (__mpcomp_wrapper_op, new_info, vp,
-					   &(new_info->step), new_task, val);
-	  sctk_assert (res == 0);
-
-
-	}
-
-      SCTK_PROFIL_END (__mpcomp_start_parallel_region__creation);
-
-      /* Launch the execution of this microthread structure */
-      sctk_microthread_parallel_exec (new_task,
-				      MPC_MICROTHREAD_DONT_WAKE_VPS);
-
-      sctk_nodebug
-	("__mpcomp_start_parallel_region: Microthread execution done");
-
-      /* Restore the key value (microthread structure & OpenMP info) */
-      sctk_thread_setspecific (mpcomp_thread_info_key, current_info);
-      sctk_thread_setspecific (sctk_microthread_key, current_task);
-
-      /* Free the memory allocated for the new microthread structure */
-      /*
-      if (current_info->depth != 0)
-	{
-	  sctk_free (new_task);
-	}
-	*/
-
-      /* TODO free the memory allocated for the OpenMP-thread info 
-         maybe not because this is stored in current_info->children[] */
-
-
-    }
-  else
-    {
-      mpcomp_thread_info_t *new_info;
-
-      sctk_nodebug
-	("__mpcomp_start_parallel_region: Serialize a new team at depth %d",
-	 current_info->depth);
-
-      /* TODO only flatterned nested supported for now */
-
-      num_threads = 1;
-
-
-      new_info = current_info->children[0];
-      if (new_info == NULL)
-	{
-
-	  sctk_nodebug
-	    ("__mpcomp_start_parallel_region: Allocating new thread_info");
-
-	  new_info = sctk_malloc (sizeof (mpcomp_thread_info_t));
-	  sctk_assert (new_info != NULL);
-	  current_info->children[0] = new_info;
-	  __mpcomp_init_thread_info (new_info, func, shared,
-				     0, 1,
-				     current_info->icvs,
-				     current_info->depth + 1,
-				     current_info->vp, 0,
-				     current_info, 0, current_info->task);
-	}
-      else
-	{
-	  sctk_nodebug
-	    ("__mpcomp_start_parallel_region: Reusing older thread_info");
-	  __mpcomp_reset_thread_info (new_info, func, shared, 0,
-				      current_info->icvs, 0, 0,
-				      current_info->vp);
-	}
-
-      __mpcomp_wrapper_op (new_info);
-
-      sctk_nodebug ("__mpcomp_start_parallel_region: after flat nested");
-
-      sctk_thread_setspecific (mpcomp_thread_info_key, current_info);
-
-      /* sctk_free (new_info); */
-    }
-
-  /* Re-initializes team info for this thread */
-  __mpcomp_reset_team_info (current_info, num_threads);
-
-
-  /* Restore the TLS for the main thread */
-  sctk_extls = current_info->children[0]->extls;
+	    root->children.node[i] = n;
 #if defined (SCTK_USE_OPTIMIZED_TLS)
   sctk_tls_module = current_info->children[0]->tls_module;
   sctk_context_restore_tls_module_vp() ;
 #endif
 
-  SCTK_PROFIL_END (__mpcomp_start_parallel_region);
-}
+	    n->father = root;
+	    n->rank = i;
+	    n->depth = 1;
+	    n->nb_children = 8;
+	    n->min_index = i*8;
+	    n->max_index = (i+1)*8;
+	    n->child_type = CHILDREN_LEAF;
+	    n->slave_running[0] = 0;
+	    n->slave_running[1] = 0;
+	    n->barrier = 0;
+	    n->barrier_done = 0;
+	    n->children.leaf = (mpcomp_mvp_t **)sctk_malloc_on_node(n->nb_children*sizeof(mpcomp_mvp_t *),i);
 
+	    for (j=0 ; j<n->nb_children ; j++) {
+	      /* These are leaves -> create the microVP */
+	      int target_vp;
 
-/*
- * Update the number of threads that will be used for the next
- * parallel region.
- * If an incorrect number is passed as argument (<=0 or > than the max), the
- * number of threads remain unchanged.
- * (See OpenMP API 2.5 Section 3.2.1)
- */
-void
-mpcomp_set_num_threads (int num_threads)
-{
-  mpcomp_thread_info_t *self;
+	      target_vp = order[8*i+j];
 
-  __mpcomp_init ();
+	      if (flag_level == -1) flag_level = 2;
 
-  if (num_threads > 0 && num_threads <= MPCOMP_MAX_THREADS)
-    {
-      /* TODO use TLS */
-      self = (mpcomp_thread_info_t *)
-	sctk_thread_getspecific (mpcomp_thread_info_key);
-      sctk_assert (self != NULL);
-      self->icvs.nthreads_var = num_threads;
-    }
-}
+	      /* Allocate memory on the right NUMA node */
+	      instance->mvps[current_mvp] = (mpcomp_mvp_t *)sctk_malloc_on_node(sizeof(mpcomp_mvp_t),i);
 
+	      /* Get the set of registers */
+	      sctk_getcontext(&(instance->mvps[current_mvp]->vp_context));
 
-/*
- * Return the number of threads used in the current team (direct enclosing
- * parallel region).
- * If called from a sequential part of the program, this function returns 1.
- * (See OpenMP API 2.5 Section 3.2.2)
- */
-int
-mpcomp_get_num_threads (void)
-{
-  mpcomp_thread_info_t *self;
+	      /* Initialize the corresponding microVP. all but tree-related variables */
+	      instance->mvps[current_mvp]->nb_threads = 0;
+	      instance->mvps[current_mvp]->next_nb_threads = 0;
+	      instance->mvps[current_mvp]->rank = current_mvp;
+	      instance->mvps[current_mvp]->enable = 1;
+	      instance->mvps[current_mvp]->region_id = 0;
+	      instance->mvps[current_mvp]->tree_rank = (int *)sctk_malloc_on_node(2*sizeof(int),i);
+	      sctk_assert(instance->mvps[current_mvp]->tree_rank != NULL);
+	      instance->mvps[current_mvp]->tree_rank[0] = n->rank;
+	      instance->mvps[current_mvp]->tree_rank[1] = j;
+	      instance->mvps[current_mvp]->root = root;
+	      instance->mvps[current_mvp]->father = n;
 
-  __mpcomp_init ();
+	      n->children.leaf[j] = instance->mvps[current_mvp];
 
-  /* TODO use TLS */
-  self = (mpcomp_thread_info_t *)
-    sctk_thread_getspecific (mpcomp_thread_info_key);
-  sctk_assert (self != NULL);
+	      sctk_thread_attr_t __attr;
+	      size_t stack_size;
+	      int res;
 
-  return self->num_threads;
-}
+	      sctk_thread_attr_init(&__attr);
 
-/*
- * Return the maximum number of threads that can be used inside a parallel region.
- * This function may be called either from serial or parallel parts of the program.
- * See OpenMP API 2.5 Section 3.2.3
- */
-int
-mpcomp_get_max_threads (void)
-{
-  mpcomp_thread_info_t *self;
+	      sctk_thread_attr_setbinding(&__attr,target_vp);
 
-  __mpcomp_init ();
-  /* TODO use TLS */
-  self = (mpcomp_thread_info_t *)
-    sctk_thread_getspecific (mpcomp_thread_info_key);
-  sctk_assert (self != NULL);
-  return self->icvs.nthreads_var;
-}
+	      if (sctk_is_in_fortran == 1)
+	         stack_size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
+	      else
+	         stack_size = SCTK_ETHREAD_STACK_SIZE;
 
-/*
- * Return the thread number (ID) of the current thread whitin its team.
- * The master thread of each team has a thread ID equals to 0.
- * This function returns 0 if called from a serial part of the code (or from a
- * flatterned nested parallel region).
- * See OpenMP API 2.5 Section 3.2.4
- */
-int
-mpcomp_get_thread_num (void)
-{
-  mpcomp_thread_info_t *self;
+	      sctk_thread_attr_setstacksize(&__attr,stack_size);
 
-  __mpcomp_init ();
+	      switch (flag_level) {
+	         case 0: /* Root */
+	           sctk_debug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d", current_mvp, target_vp, i, i);
+	           instance->mvps[current_mvp]->to_run = root;
 
-  /* TODO use TLS */
-  self = (mpcomp_thread_info_t *)
-    sctk_thread_getspecific (mpcomp_thread_info_key);
-  sctk_assert (self != NULL);
+	           res = sctk_user_thread_create(&(instance->mvps[current_mvp]->pid), &__attr,
+					mpcomp_slave_mvp_node,
+					instance->mvps[current_mvp]);
 
-  sctk_nodebug ("Rank %d on cpu %d", self->rank, sctk_get_cpu ());
+	           sctk_assert(res == 0);
+	           break;
 
-  return self->rank;
-}
+	         case 1: /* Numa */
+	           sctk_debug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d", current_mvp, target_vp, i, i);
+	           instance->mvps[current_mvp]->to_run = root->children.node[i];
 
-/*
- * Return the maximum number of processors.
- * See OpenMP API 1.0 Section 3.2.5
- */
-int
-mpcomp_get_num_procs (void)
-{
-  mpcomp_thread_info_t *self;
+	           res = sctk_user_thread_create(&(instance->mvps[current_mvp]->pid), &__attr,
+					mpcomp_slave_mvp_node,
+					instance->mvps[current_mvp]);
 
-  __mpcomp_init ();
+	           sctk_assert(res == 0);
+	           break;
 
-  /* TODO use TLS */
-  self = (mpcomp_thread_info_t *)
-    sctk_thread_getspecific (mpcomp_thread_info_key);
-  sctk_assert (self != NULL);
+	         case 2: /* MicroVP */
+	           sctk_debug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d", current_mvp, target_vp, i, i);
 
-  return self->icvs.nmicrovps_var;
-}
+	           res = sctk_user_thread_create(&(instance->mvps[current_mvp]->pid), &__attr,
+					mpcomp_slave_mvp_leaf,
+					instance->mvps[current_mvp]);
 
-/*
- * Check whether the current flow is located inside a parallel region or not.
- * See OpenMP API 2.5 Section 3.2.6
- */
-int
-mpcomp_in_parallel (void)
-{
-  mpcomp_thread_info_t *info;
-  __mpcomp_init ();
-  /* TODO use TLS */
-  info = (mpcomp_thread_info_t *)
-    sctk_thread_getspecific (mpcomp_thread_info_key);
-  sctk_assert (info != NULL);
-  return (info->depth != 0);
-}
+	           sctk_assert(res == 0);
+	           break;
 
-/**
-  * Set or unset the dynamic adaptation of the thread number.
-  * See OpenMP API 2.5 Section 3.1.7
-  */
-void
-mpcomp_set_dynamic (int dynamic_threads)
-{
-  mpcomp_thread_info_t *info;
-  __mpcomp_init ();
-  /* TODO use TLS */
-  info = (mpcomp_thread_info_t *)
-    sctk_thread_getspecific (mpcomp_thread_info_key);
-  sctk_assert (info != NULL);
-  info->icvs.dyn_var = dynamic_threads;
-}
+	         default:
+	           break;
+	      }
+	      
+	      sctk_thread_attr_destroy(&__attr);
 
-/**
-  * Retrieve the current dynamic adaptation of the program.
-  * See OpenMP API 2.5 Section 3.2.8
-  */
-int
-mpcomp_get_dynamic (void)
-{
-  mpcomp_thread_info_t *info;
-  __mpcomp_init ();
-  /* TODO use TLS */
-  info = (mpcomp_thread_info_t *)
-    sctk_thread_getspecific (mpcomp_thread_info_key);
-  sctk_assert (info != NULL);
-  return info->icvs.dyn_var;
-}
-
-/**
-  *
-  * See OpenMP API 2.5 Section 3.2.9
-  */
-void
-mpcomp_set_nested (int nested)
-{
-  mpcomp_thread_info_t *info;
-  __mpcomp_init ();
-  /* TODO use TLS */
-  info = (mpcomp_thread_info_t *)
-    sctk_thread_getspecific (mpcomp_thread_info_key);
-  sctk_assert (info != NULL);
-  info->icvs.nest_var = nested;
-}
-
-/**
-  *
-  * See OpenMP API 2.5 Section 3.2.10
-  */
-int
-mpcomp_get_nested (void)
-{
-  mpcomp_thread_info_t *info;
-  __mpcomp_init ();
-  /* TODO use TLS */
-  info = (mpcomp_thread_info_t *)
-    sctk_thread_getspecific (mpcomp_thread_info_key);
-  sctk_assert (info != NULL);
-  return info->icvs.nest_var;
-}
-
-
-/**
-  *
-  * See OpenMP API 3.0 Section 3.2.11
-  */
-void omp_set_schedule( omp_sched_t kind, int modifier ) {
-  mpcomp_thread_info_t *info;
-
-  __mpcomp_init ();
-
-  /* TODO use TLS */
-  info = (mpcomp_thread_info_t *)
-    sctk_thread_getspecific (mpcomp_thread_info_key);
-  sctk_assert (info != NULL);
-
-  info->icvs.run_sched_var = kind ;
-  info->icvs.modifier_sched_var = modifier ;
-}
-
-/**
-  *
-  * See OpenMP API 3.0 Section 3.2.12
-  */
-void omp_get_schedule( omp_sched_t * kind, int * modifier ) {
-  mpcomp_thread_info_t *info;
-
-  __mpcomp_init ();
-
-  /* TODO use TLS */
-  info = (mpcomp_thread_info_t *)
-    sctk_thread_getspecific (mpcomp_thread_info_key);
-  sctk_assert (info != NULL);
-
-  *kind = info->icvs.run_sched_var ;
-  *modifier = info->icvs.modifier_sched_var ;
-}
-
-/* Function called the first time a stack has been created for a specific micro
- * thread */
-static void *
-mpcomp_macro_wrapper (void *arg)
-{
-  mpcomp_thread_info_t *info;
-
-  info = (mpcomp_thread_info_t *) arg;
-
-  sctk_nodebug ("mpcomp_macro_wrapper: Entering");
-
-  if (info->done == 0)
-    {
-      sctk_microthread_vp_t *my_vp;
-
-      my_vp = &(info->task->__list[info->vp]);
-      sctk_thread_setspecific (mpcomp_thread_info_key, info);
-      sctk_assert (info->context == 1);	/* TODO macro for context==1 */
-      info->context = 3;	/* TODO macro for context==3 */
-
-      sctk_nodebug ("mpcomp_macro_wrapper: Will save %d %p", info->vp, my_vp);
-
-      sctk_swapcontext (&(my_vp->vp_context), &(info->uc));
-    }
-
-  sctk_nodebug ("mpcomp_macro_wrapper: Leaving");
-
-  return arg;
-}
-
-/* Create stacks for other micro thread when the current micro thread is
- * blocked (due to a barrier, mutex, etc) */
-void
-mpcomp_fork_when_blocked (sctk_microthread_vp_t * self, long step)
-{
-  long i;
-  long to_do;
-  mpcomp_thread_info_t *info;
-
-  /* Get the information about the currently-scheduled microthread */
-  info = (mpcomp_thread_info_t *) self->op_list[step].arg;
-
-  sctk_nodebug( "mpcomp_fork_when_blocked[%d]: Enter", info->rank ) ;
-
-  /* If the current micro thread has no context (e.g., no stack) */
-  /* TODO replace the 'context' w/ macros */
-  if (info->context == 0)
-    {
-      to_do = self->to_do_list;
-      for (i = step + 1; i < to_do; i++)
-	{
-	  int res;
-
-	  info = (mpcomp_thread_info_t *) self->op_list[i].arg;
-
-	  sctk_nodebug
-	    ("mpcomp_fork_when_blocked: Fork thread (op:%d) %p->%p", i,
-	     self->op_list[i].func, info->func);
-	  if (info->stack == NULL)
-	    {
-	      /* TODO free this stack when the thread_info is re-used? */
-	      /* TODO Use stack size specified by the user (OMP 3.0)? */
-	      info->stack = sctk_malloc (STACK_SIZE);
-
-	      sctk_nodebug( "mpcomp_fork_when_blocked[%d]: Null stack -> mallocing"
-		  , info->rank ) ;
+	      current_mvp++;
+	      flag_level = -1;
 	    }
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-	  res = sctk_makecontext_extls (&(info->uc),
-				        (void *) self->op_list[i].
-				        arg,
-				        (void (*)(void *)) self->
+	  }
+#endif
+	  break;
+	default:
+      	    break;
+  }
+  
+  sctk_free(order);
+}
+
+/* 
+   Runtime OpenMP Initialization. 
+   Can be called several times without any side effects.
+   Called during the initialization of MPC 
+*/
+void __mpcomp_init (void)
+{
+  static volatile int done = 0;
+  static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
+
+  /* Need to initialize the current team */
+  if (sctk_openmp_thread_tls == NULL) {
+     mpcomp_instance_t *instance;
+     mpcomp_thread_t *t;
+     icv_t icvs;
+
+     sctk_thread_mutex_lock(&lock);
+
+     /* Initialize the whole runtime (ie. environement variables) */
+     if (done == 0) {
+        __mpcomp_read_env_variables();
+        done = 1;
+     }
+
+     /* Allocate an instance of OpenMP */
+     instance = (mpcomp_instance_t *)sctk_malloc(sizeof(mpcomp_instance_t));
+     sctk_assert(instance != NULL);
+
+     /* Initialization of the OpenMP instance */
+     __mpcomp_instance_init(instance,OMP_MICROVP_NUMBER);
+
+     /* Allocate informations for the sequential region */
+     t = (mpcomp_thread_t *)sctk_malloc(sizeof(mpcomp_thread_t));
+     sctk_assert(t != NULL);
+
+     /* Initialize default ICVs */
+     icvs.nthreads_var = OMP_NUM_THREADS;
+     icvs.dyn_var = OMP_DYNAMIC;
+     icvs.nest_var = OMP_NESTED;
+     icvs.run_sched_var = OMP_SCHEDULE;
+     icvs.modifier_sched_var = OMP_MODIFIER_SCHEDULE;
+     icvs.def_sched_var = omp_sched_static;
+     icvs.nmicrovps_var = OMP_MICROVP_NUMBER;
 				        op_list[i].func,
 				        info->stack, STACK_SIZE,
 				        info->extls, info->tls_module);
 #else
-	  res = sctk_makecontext_extls (&(info->uc),
-				        (void *) self->op_list[i].
-				        arg,
-				        (void (*)(void *)) self->
-				        op_list[i].func,
-				        info->stack, STACK_SIZE,
-				        info->extls);
 #endif
-	  sctk_assert (res == TRUE);
 
-	  /* Context created */
-	  info->context = 1;
+     /* Initialize the OpenMP thread */
+     __mpcomp_thread_init(t);
+     t->icvs = icvs;
+     t->children_instance = instance;
 
-	  /* Bypass the first call to mpcomp_macro_wrapper
-	     The 'real' function will be called by swapping the context to the
-	     previously-created one
-	   */
-	  self->op_list[i].func = MPC_MICROTHREAD_FUNC_T mpcomp_macro_wrapper;
-	}
+     /* Current thread information is 't' */
+     sctk_openmp_thread_tls = t;
 
-      i = step;
-      info = (mpcomp_thread_info_t *) self->op_list[i].arg;
-      info->context = 2;	/* TODO update number to macros */
+     sctk_thread_mutex_unlock(&lock);
 
-      sctk_getcontext (&(info->uc));
-    }
+     sctk_debug("__mpcomp_init: Init done...");
+  }
 }
 
 
 /*
-   OpenMP barrier.
-   All threads of the same team must meet.
-   This barrier uses some optimizations for threads inside the same microVP.
- */
-void
-__mpcomp_barrier (void)
+   Parallel region creation
+*/
+void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *), void *shared)
 {
+  mpcomp_thread_t *t;
+  mpcomp_node_t *root;
+  int num_threads;
+  int i;
 
-  mpcomp_thread_info_t *info;
+  __mpcomp_init();
 
-  __mpcomp_init ();
+  sctk_debug("__mpcomp_start_parallel_region: **** NEW PARALLE REGION (f %p) (arg %p) ****",func,shared);
 
-  /* TODO Use TLS if available */
-  info = sctk_thread_getspecific (mpcomp_thread_info_key);
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
 
-  sctk_nodebug( "__mpcomp_barrier[%d]: Enter", info->rank ) ;
+  /* Compute the number of threads for this parallel region */
+  num_threads = t->icvs.nthreads_var;
+  if (arg_num_threads > 0)
+    num_threads = arg_num_threads;
 
-  /* Block only if I'm not the only thread in the team */
-  if (info->num_threads > 1)
-    {
+  sctk_debug("__mpcomp_start_parallel_region: Final number of threads %d (default %d)",num_threads,t->icvs.nthreads_var);
 
-      sctk_microthread_vp_t *my_vp;
-      long micro_vp_barrier;
-      long micro_vp_barrier_done;
-      int num_omp_threads_micro_vp;
+  /* Bypass if the parallel region contains only 1 thread */
+  if (num_threads == 1) {
+    fprintf(stderr,"Parallel Region with 1 Thread. Not Implemented.");
+    return;
+  }
 
-      /* Grab the microVP */
-      my_vp = &(info->task->__list[info->vp]);
+  /* First level of parallel region. No nesting */  
+  if (t->depth == 0) {
+    mpcomp_instance_t *instance;
 
-      /* Get the total number of OpenMP threads on this microVP */
-      num_omp_threads_micro_vp = my_vp->to_do_list;
+    /* Grab the OpenMP instance already allocated during the initialization */
+    instance = t->children_instance;
+    sctk_assert(instance != NULL);
 
-      /* Is there only 1 OpenMP thread on this microVP? */
-      if (num_omp_threads_micro_vp == 1)
-	{
-	  mpcomp_thread_info_t *father;
-	  long barrier_done_init;
-	  long barrier;
+    /* Get the root node of the main tree */
+    root = instance->root;
+    sctk_assert(root != NULL);
 
-	  /* Grab the father region */
-	  father = info->father;
+    /* Root is awake -> propagate the values to children */
+    mpcomp_node_t *n;
+    int num_threads_per_child;
+    int max_index_with_more_threads;
 
-	  /* Update info on the barrier (father region) */
-	  sctk_spinlock_lock (&(father->lock2));
-	  barrier_done_init = father->barrier_done;
-	  barrier = father->barrier + 1;
-	  father->barrier = barrier;
+    num_threads_per_child = num_threads / instance->nb_mvps;
+    max_index_with_more_threads = (num_threads % instance->nb_mvps)-1;
 
-	  /* If I am the last thread of the team to enter this barrier */
-	  if (barrier == info->num_threads)
-	    {
-	      father->barrier = 0;
-	      father->barrier_done++;
-	      sctk_spinlock_unlock (&(father->lock2));
-	    }
-	  else
-	    {
-	      sctk_spinlock_unlock (&(father->lock2));
+    sctk_debug("__mpcomp_start_parallel_region: #threads_per_mvp %d. %d mvps have an additional thread",num_threads_per_child,max_index_with_more_threads);
 
-	      /* Wait for the barrier to be done */
-	      while (father->barrier_done == barrier_done_init)
-		{
-		  sctk_thread_yield ();
-		}
-	    }
-	}
-      else
-	{
+    n = root;
 
-	  sctk_nodebug
-	    ("__mpcomp_barrier[mVP=%d]: number of threads on this vp: %d",
-	     info->vp, num_omp_threads_micro_vp);
+    while(n->child_type != CHILDREN_LEAF) {
+       int nb_children_involved = 1;
 
-	  /* Get the barrier number for this microVP */
-	  micro_vp_barrier = my_vp->barrier;
-	  micro_vp_barrier_done = my_vp->barrier_done;
+       for (i=1 ; i<n->nb_children ; i++) {
+         int temp_num_threads;
 
-	  sctk_nodebug
-	    ("__mpcomp_barrier[mVP=%d]: number of threads blocked on this vp: %ld",
-	     info->vp, micro_vp_barrier);
+         sctk_debug("__mpcomp_start_parallel_region: Testing child %d with min_index = %d, #threads = %d",i,n->children.node[i]->min_index,num_threads);
 
-	  /* Create a context for the next microthreads on the same VP (only the
-	   * first time) */
-	  if (micro_vp_barrier == 0)
-	    {
-	      mpcomp_fork_when_blocked (my_vp, info->step);
-	    }
+         /* Compute the number of threads for the smallest child of the subtree 'n' */
+         temp_num_threads = num_threads_per_child;
+         if (n->children.node[i]->min_index < max_index_with_more_threads)
+           temp_num_threads++;
 
-	  /* Increment the barrier counter for this microVP */
-	  my_vp->barrier = micro_vp_barrier + 1;
+         if (temp_num_threads > 0) {
+           n->children.node[i]->func = func;
+           n->children.node[i]->shared = shared;
+           n->children.node[i]->num_threads = num_threads;
+           n->children.node[i]->slave_running[0] = 1;
+           nb_children_involved++;
+         }
+       }
 
-	  if (my_vp->barrier == num_omp_threads_micro_vp)
-	    {
-	      /* The barrier on this microVP is done, only the barrier between
-	         microVPs has to be done */
-	      mpcomp_thread_info_t *father;
-	      long barrier_done_init;
-	      long barrier;
-
-	      sctk_nodebug
-		("__mpcomp_barrier[mVP=%d]: barrier done for this microVP",
-		 info->vp);
-
-	      /* Grab the father region */
-	      father = info->father;
-
-	      sctk_spinlock_lock (&(father->lock2));
-
-	      barrier_done_init = father->barrier_done;
-	      barrier = father->barrier + num_omp_threads_micro_vp;
-	      father->barrier = barrier;
-
-	      sctk_nodebug
-		("__mpcomp_barrier[mVP=%d]: %d threads have entered (out of %d)",
-		 info->vp, barrier, info->num_threads);
-
-	      /* If I am the last microVP of the current team to finish this barrier */
-	      if (barrier == info->num_threads)
-		{
-		  father->barrier = 0;
-		  father->barrier_done++;
-		  sctk_spinlock_unlock (&(father->lock2));
-		}
-	      else
-		{
-		  sctk_spinlock_unlock (&(father->lock2));
-
-		  while (father->barrier_done == barrier_done_init)
-		    {
-		      sctk_thread_yield ();
-		    }
-		}
-
-	      /* Release each microVP internally */
-	      my_vp->barrier = 0;
-	      my_vp->barrier_done++;
-
-	    }
-	  else
-	    {
-
-	      sctk_nodebug
-		("__mpcomp_barrier[mVP=%d]: waiting on this microVP",
-		 info->vp);
-
-	      /* Spin while the barrier is not done */
-	      mpcomp_macro_scheduler (my_vp, info->step);
-	      while (my_vp->barrier_done == micro_vp_barrier_done)
-		{
-		  mpcomp_macro_scheduler (my_vp, info->step);
-		  if (my_vp->barrier_done == micro_vp_barrier_done)
-		    {
-		      sctk_thread_yield ();
-		    }
-		}
-	    }
-
-	}
-
+       sctk_debug("__mpcomp_start_parallel_region: nb_children_invloved = %d",nb_children_involved);
+       n->barrier_num_threads = nb_children_involved;
+       n = n->children.node[0];
     }
 
-  sctk_nodebug ("__mpcomp_barrier: Leaving");
-}
+    n->func = func;
+    n->shared = shared;
+    n->num_threads = num_threads;
 
-/*
-   OpenMP barrier.
-   All threads of the same team must meet
- */
-void
-__mpcomp_old_barrier (void)
-{
-  mpcomp_thread_info_t *info;
+    /* Wake up children leaf */
+    sctk_assert(n->child_type == CHILDREN_LEAF);
+    int nb_leaves_involved = 1;
 
-  __mpcomp_init ();
+    for (i=1 ; i<n->nb_children ; i++) {
+      int num_threads_leaf;
+      num_threads_leaf = num_threads / instance->nb_mvps;
 
-  /* TODO Use TLS if available */
-  info = sctk_thread_getspecific (mpcomp_thread_info_key);
-  sctk_assert (info != NULL);
-
-  sctk_nodebug ("__mpcomp_old_barrier[%d]: Entering (on microVP %d)",
-		info->rank, info->vp);
-
-  /* Block only if I'm not the only thread in the team */
-  if (info->num_threads > 1)
-    {
-      mpcomp_thread_info_t *father;
-      sctk_microthread_vp_t *my_vp;
-      long barrier_done_init;
-      long barrier;
-
-      /* Grab the father region */
-      father = info->father;
-      // sctk_assert (father != NULL);
-
-      /* Catch the VP */
-      my_vp = &(info->task->__list[info->vp]);
-
-      /* Create a context for the next microthread on the same VP */
-      mpcomp_fork_when_blocked (my_vp, info->step);
-
-      // sctk_nodebug ("__mpcomp_barrier: Using %p %d", my_vp, info->vp);
-
-      /* Update info on the barrier (father region) */
-      // sctk_thread_mutex_lock (&(father->lock));
-      sctk_spinlock_lock (&(father->lock2));
-      barrier_done_init = father->barrier_done;
-      barrier = father->barrier + 1;
-      father->barrier = barrier;
-
-      /* TODO temp to re-initialize internal information about current for dyn */
-      info->private_current_for_dyn = -1 ;
-
-      /* father->chunk_info_for_dyn[info->rank][0].remain = -1 ; */
-
-      /* If I am the last thread of the team to enter this barrier */
-      if (barrier == info->num_threads)
-	{
-
-	  /**********************
-	    Release counters related to special parallel constructs 
-	   ***********************/
-
-
-	  /* TODO remove some updates and put them inside the corresponding part
-	     e.g., reinitialization of dyn schedule in specialized barrier (?) */
-	  __mpcomp_reset_team_info (father, info->num_threads);
-
-
-	  /**********************
-	    Release other threads of the team 
-	   ***********************/
-
-	  father->barrier = 0;
-	  father->barrier_done++;
-
-	}
-      // sctk_thread_mutex_unlock (&(father->lock));
-      sctk_spinlock_unlock (&(father->lock2));
-
-      /* Run the macro scheduler overloading the micro one */
-      mpcomp_macro_scheduler (my_vp, info->step);
-      while (father->barrier_done == barrier_done_init)
-	{
-	  mpcomp_macro_scheduler (my_vp, info->step);
-	  if (father->barrier_done == barrier_done_init)
-	    {
-	      sctk_thread_yield ();
-	    }
-	}
-    }
-
-  sctk_nodebug ("__mpcomp_barrier: Leaving");
-}
-
-
-
-
-/* timing routines */
-double
-mpcomp_get_wtime (void)
-{
-  double res;
-  struct timeval tp;
-
-  gettimeofday (&tp, NULL);
-  res = tp.tv_sec + tp.tv_usec * 0.000001;
-
-  sctk_nodebug ("Wtime = %f", res);
-  return res;
-}
-
-double
-mpcomp_get_wtick (void)
-{
-  return 10e-6;
-}
-
-
-
-/* TODO mode this function to an appropriate file */
-
-void __mpcomp_flush() {
-  mpcomp_thread_info_t *info;
-  sctk_microthread_vp_t *my_vp;
-
-  __mpcomp_init ();
-
-INFO("__mpcomp_flush: need to call mpcomp_macro_scheduler")
-
-  sctk_nodebug( "__mpcomp_flush: entering..." ) ;
-
-  /* TODO Use TLS if available */
-  info = sctk_thread_getspecific (mpcomp_thread_info_key);
-
-  /* Grab the microVP */
-  my_vp = &(info->task->__list[info->vp]);
-
-  mpcomp_fork_when_blocked (my_vp, info->step);
-
-  sctk_nodebug( "__mpcomp_flush: towards thread_yield" ) ;
-
-  sctk_thread_yield ();
-}
-
-
-void __mpcomp_ordered_begin() {
-  mpcomp_thread_info_t *info;
-  mpcomp_thread_info_t *team;
-
-  __mpcomp_init ();
-
-  /* TODO Use TLS if available */
-  info = sctk_thread_getspecific (mpcomp_thread_info_key);
-
-  team = info->father ;
-
-  /* First iteration of the loop -> initialize 'next_ordered_offset' */
-  if ( info->current_ordered_iteration == info->loop_lb ) {
-    team->next_ordered_offset = 0 ;
-  } else {
-    /* Do we have to wait for the right iteration? */
-    if ( info->current_ordered_iteration != 
-	(info->loop_lb + info->loop_incr * team->next_ordered_offset) ) {
-      sctk_microthread_vp_t *my_vp;
-
-      sctk_nodebug( "__mpcomp_ordered_begin[%d]: Waiting to schedule iteration %d",
-	  info->rank, info->current_ordered_iteration ) ;
-
-      /* Grab the microVP */
-      my_vp = &(info->task->__list[info->vp]);
-
-      mpcomp_fork_when_blocked (my_vp, info->step);
-
-      /* Spin while the condition is not satisfied */
-      mpcomp_macro_scheduler (my_vp, info->step);
-      while ( info->current_ordered_iteration != 
-	  (info->loop_lb + info->loop_incr * team->next_ordered_offset) ) {
-	mpcomp_macro_scheduler (my_vp, info->step);
-	if ( info->current_ordered_iteration != 
-	    (info->loop_lb + info->loop_incr * team->next_ordered_offset) ) {
-	  sctk_thread_yield ();
-	}
+      if (n->children.leaf[i]->rank < (num_threads%instance->nb_mvps)) num_threads_leaf++;
+      if (num_threads_leaf > 0) {
+        n->children.leaf[i]->slave_running[0] = 1;
+        nb_leaves_involved++;
       }
     }
-  }
 
-  sctk_nodebug( "__mpcomp_ordered_begin[%d]: Allowed to schedule iteration %d",
-      info->rank, info->current_ordered_iteration ) ;
+    sctk_debug("__mpcomp_start_parallel_region: nb_leaves_involved=%d",nb_leaves_involved);
+    n->barrier_num_threads = nb_leaves_involved;
+
+    instance->mvps[0]->func = func;
+    instance->mvps[0]->shared = shared;
+    instance->mvps[0]->nb_threads = 1;
+
+    /* Compute the number of OpenMP threads and their rank running on microVP #0 */
+    instance->mvps[0]->threads[0].num_threads = num_threads;
+    instance->mvps[0]->threads[0].rank = 0;
+
+    /* Start scheduling */
+    in_order_scheduler(instance->mvps[0]);
+
+    /*Barrier to wait for the other microVPs*/
+    mpcomp_node_t *c;
+    c = instance->mvps[0]->father;
+
+    int b;
+
+    sctk_nodebug("__mpcomp_start_parallel_region: Entering the implicit final barrier");
+
+    sctk_spinlock_lock(&(c->lock));
+
+    b = c->barrier;
+    b++;
+    c->barrier = b;
+
+    sctk_spinlock_unlock(&(c->lock));
+
+    while(b == c->barrier_num_threads && c->father != NULL) {
+       c->barrier = 0;
+       c = c->father;
+
+       sctk_spinlock_lock(&(c->lock));
+  
+       b = c->barrier;
+       b++;
+       c->barrier = b;
+  
+       sctk_spinlock_unlock(&(c->lock));
+    }
+
+    b = root->barrier;
+
+    sctk_nodebug("__mpcomp_start_parallel_region: Master waiting on the root node from %d to %d",b,root->barrier_num_threads);
+
+    while(b != root->barrier_num_threads) {
+       sctk_thread_yield();
+       b = root->barrier;
+    }
+    root->barrier = 0;
+
+    /* Restore the previous OpenMP info */
+    sctk_openmp_thread_tls = t;
+   
+  }
+  else {
+    fprintf(stderr,"Nesting in not implemented.");
+  }
 }
 
-void __mpcomp_ordered_end() {
-  mpcomp_thread_info_t *info;
-  mpcomp_thread_info_t *team;
+/*
+   Run the parallel code function
+*/
+void in_order_scheduler (mpcomp_mvp_t *mvp)
+{
+  int i;
 
-  /* TODO Use TLS if available */
-  info = sctk_thread_getspecific (mpcomp_thread_info_key);
+  sctk_debug("in_order_scheduler: Starting to schedule %d thread(s) with rank %d", mvp->nb_threads, mvp->rank);
 
-  team = info->father ;
-
-  info->current_ordered_iteration += info->loop_incr ;
-  if ( (info->loop_incr > 0 && info->current_ordered_iteration >= info->loop_b) ||
-      (info->loop_incr < 0 && info->current_ordered_iteration <= info->loop_b) ) {
-    team->next_ordered_offset = -1 ;
-  } else {
-    team->next_ordered_offset++ ;
+  /* TODO: handle out of order */
+  for (i=0 ; i<mvp->nb_threads ; i++) {
+    sctk_openmp_thread_tls = &mvp->threads[i];
+    sctk_debug("in_order_scheduler: func %p shared %p",mvp->func,mvp->shared);
+    mvp->func(mvp->shared);
+    mvp->threads[i].done = 1;
   }
-
+  
+INFO("__mpcomp_flush: need to call mpcomp_macro_scheduler")
 }
+
+/*
+   Grab the total number of threads
+*/
+int mpcomp_get_num_threads ()
+{
+  mpcomp_thread_t *t;
+
+  sctk_nodebug("mpcomp_get_num_threads: entering...");
+
+  t = sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  return t->num_threads;
+}
+
+/*
+   Grab the rank of the current thread
+*/
+int mpcomp_get_thread_num ()
+{
+  mpcomp_thread_t *t;
+
+  sctk_nodebug("mpcomp_get_thread_num: entering...");
+
+  t = sctk_openmp_thread_tls;
+  sctk_assert(t != NULL );
+
+  return t->rank;
+}
+
