@@ -25,14 +25,32 @@
 #ifndef __SCTK__IB_BUFFERED_H_
 #define __SCTK__IB_BUFFERED_H_
 
-#include <infiniband/verbs.h>
-#include "sctk_ib.h"
-#include "sctk_ib_config.h"
-#include "sctk_ibufs.h"
-#include "sctk_ib_qp.h"
-#include "sctk_pmi.h"
-#include "sctk_route.h"
-#include "utlist.h"
+#include <sctk_spinlock.h>
+#include <uthash.h>
+#include <sctk_inter_thread_comm.h>
+
+/*-----------------------------------------------------------
+ *  Structures
+ *----------------------------------------------------------*/
+
+typedef struct sctk_ib_buffered_s {
+  struct sctk_thread_ptp_message_s msg;
+  int index;
+  int nb;
+  size_t payload_size;
+  size_t copied;
+} sctk_ib_buffered_t;
+
+typedef struct sctk_ib_buffered_entry_s {
+  struct sctk_thread_ptp_message_s msg;
+  int key;
+  UT_hash_handle hh;
+  OPA_int_t current;
+  int total;
+  void* payload;
+} sctk_ib_buffered_entry_t;
+
+
 
 /*-----------------------------------------------------------
  *  FUNCTIONS

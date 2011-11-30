@@ -38,6 +38,7 @@ extern "C"
   struct sctk_thread_ptp_message_s;
   struct sctk_rail_info_s;
   struct sctk_message_to_copy_s;
+  struct sctk_ib_buffered_entry_s;
 
   typedef struct sctk_ib_rail_info_s {
     struct sctk_ibuf_pool_s *pool_buffers;
@@ -80,6 +81,11 @@ extern "C"
         /* Ibuf to release */
         struct sctk_ibuf_s *ibuf;
       } eager;
+      struct {
+        struct sctk_reorder_table_s* reorder_table;
+        struct sctk_ib_buffered_entry_s* entry;
+        struct sctk_rail_info_s* rail;
+      } buffered;
       struct {
         size_t requested_size;
         sctk_spinlock_t lock;
@@ -126,12 +132,16 @@ extern "C"
   /* IB header: generic */
 #define IBUF_GET_EAGER_HEADER(buffer) \
   (sctk_ib_eager_t*) ((char*) buffer + sizeof(sctk_ibuf_header_t))
+#define IBUF_GET_BUFFERED_HEADER(buffer) \
+  (sctk_ib_buffered_t*) ((char*) buffer + sizeof(sctk_ibuf_header_t))
 #define IBUF_GET_RDMA_HEADER(buffer) \
   (sctk_ib_rdma_t*) ((char*) buffer + sizeof(sctk_ibuf_header_t))
 
 /* IB payload: generic */
 #define IBUF_GET_EAGER_PAYLOAD(buffer) \
   (void*) ((char*) IBUF_GET_EAGER_HEADER(buffer) + sizeof(sctk_ib_eager_t))
+#define IBUF_GET_BUFFERED_PAYLOAD(buffer) \
+  (void*) ((char*) IBUF_GET_BUFFERED_HEADER(buffer) + sizeof(sctk_ib_buffered_t))
 #define IBUF_GET_RDMA_PAYLOAD(buffer) \
   (void*) ((char*) IBUF_GET_RDMA_HEADER(buffer) + sizeof(sctk_ib_rdma_t))
 
@@ -154,14 +164,15 @@ extern "C"
 
 /* Size */
 #define IBUF_GET_EAGER_SIZE (IBUF_GET_HEADER_SIZE + sizeof(sctk_ib_eager_t))
+
+#define IBUF_GET_BUFFERED_SIZE (IBUF_GET_HEADER_SIZE + sizeof(sctk_ib_buffered_t))
+
 #define IBUF_GET_RDMA_SIZE (IBUF_GET_HEADER_SIZE + sizeof(sctk_ib_rdma_t))
 #define IBUF_GET_RDMA_REQ_SIZE (IBUF_GET_RDMA_SIZE + sizeof(sctk_ib_rdma_req_t))
 #define IBUF_GET_RDMA_ACK_SIZE (IBUF_GET_RDMA_SIZE + sizeof(sctk_ib_rdma_ack_t))
 #define IBUF_GET_RDMA_DONE_SIZE (IBUF_GET_RDMA_SIZE + sizeof(sctk_ib_rdma_done_t))
 #define IBUF_GET_RDMA_DATA_READ_SIZE (IBUF_GET_RDMA_SIZE + sizeof(sctk_ib_rdma_data_read_t))
 #define IBUF_GET_RDMA_DATA_WRITE_SIZE (IBUF_GET_RDMA_SIZE + sizeof(sctk_ib_rdma_data_write_t))
-
-#define IBUF
 
   void sctk_network_free_msg(struct sctk_thread_ptp_message_s *msg);
 #ifdef __cplusplus

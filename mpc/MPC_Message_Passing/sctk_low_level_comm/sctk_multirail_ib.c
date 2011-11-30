@@ -106,7 +106,7 @@ static
 void sctk_network_init_multirail_ib_all(char* name, char* topology){
   int i;
 
-/*   sctk_set_dynamic_reordering_buffer_creation(); */
+  sctk_set_dynamic_reordering_buffer_creation();
   sctk_route_set_rail_nb(NB_RAILS);
   rails = sctk_malloc(NB_RAILS*sizeof(sctk_rail_info_t*));
   memset(rails, 0, NB_RAILS*sizeof(sctk_rail_info_t*));

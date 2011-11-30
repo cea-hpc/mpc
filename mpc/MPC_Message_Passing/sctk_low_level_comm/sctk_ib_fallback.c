@@ -67,8 +67,9 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
     sctk_complete_and_free_message(msg);
-//  } else if (size < config->ibv_frag_eager_limit)  {
-//    sctk_ib_buffered_prepare_msg(rail, tmp, msg, size);
+  } else if (size < config->ibv_frag_eager_limit)  {
+    sctk_ib_buffered_prepare_msg(rail, tmp, msg, size);
+    sctk_complete_and_free_message(msg);
   } else {
     /* XXX: Check if size is correct. Seems OK */
     ibuf = sctk_ib_rdma_prepare_req(rail, tmp, msg, size);
@@ -78,13 +79,21 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   }
 }
 
+static int __is_specific_mesage_tag(sctk_thread_ptp_message_body_t *msg)
+{
+  if (msg->header.specific_message_tag == process_specific_message_tag)
+    return 1;
+  return 0;
+}
+
 static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc)
 {
   sctk_ibuf_t *ibuf = NULL;
   sctk_thread_ptp_message_t * msg = NULL;
+  sctk_thread_ptp_message_body_t * msg_ibuf = NULL;
   sctk_route_table_t* tmp;
   int release_ibuf = 1;
-  int recopy = 0;
+  int recopy = 1;
   int ondemand = 0;
 
   ibuf = (sctk_ibuf_t*) wc->wr_id;
@@ -93,12 +102,22 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc)
   /* Switch on the protocol of the received message */
   switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
     case eager_protocol:
-      msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
-      /* If on demand, handle message before sending it to high-layers */
-      ondemand = sctk_ib_cm_on_demand_recv_check(msg, IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer));
-      if(ondemand) {
-        sctk_ib_cm_on_demand_recv(rail, msg, ibuf, recopy);
-      }else{
+      msg_ibuf = IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer);
+      if (__is_specific_mesage_tag(msg_ibuf)) {
+        recopy = 1;
+        ondemand = sctk_ib_cm_on_demand_recv_check(msg_ibuf);
+        /* If on demand, handle message before sending it to high-layers */
+        if(ondemand) {
+          msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
+          sctk_ib_cm_on_demand_recv(rail, msg, ibuf, recopy);
+        }else{
+          msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
+          sctk_ib_sr_recv_free(rail, msg, ibuf, recopy);
+          rail->send_message_from_network(msg);
+        }
+      } else {
+        recopy = 0;
+        msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
         sctk_ib_sr_recv_free(rail, msg, ibuf, recopy);
         rail->send_message_from_network(msg);
       }
@@ -110,7 +129,15 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc)
       release_ibuf = sctk_ib_rdma_poll_recv(rail, ibuf);
       break;
 
-    default: assume(0);
+    case buffered_protocol:
+      sctk_nodebug("Buffered protocol");
+      sctk_ib_buffered_poll_recv(rail, ibuf);
+      release_ibuf = 1;
+      break;
+
+    default:
+      sctk_error("Got protocol: %d", IBUF_GET_PROTOCOL(ibuf->buffer));
+      assume(0);
   }
 
   sctk_nodebug("Message received for %d from %d (task:%d), glob_dest:%d",
@@ -145,6 +172,10 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc)
     case rdma_protocol:
       sctk_nodebug("RDMA message received");
       release_ibuf = sctk_ib_rdma_poll_send(rail, ibuf);
+      break;
+
+    case buffered_protocol:
+      release_ibuf = 1;
       break;
 
     default: assume(0);

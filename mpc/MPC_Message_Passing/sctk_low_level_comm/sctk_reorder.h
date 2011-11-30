@@ -23,7 +23,10 @@
 #define __SCTK_REORDER_H_
 
 #include <uthash.h>
+#include <opa_primitives.h>
+#include <sctk_spinlock.h>
 struct sctk_thread_ptp_message_s;
+struct sctk_ib_buffered_table_s;
 
 /*NOT THREAD SAFE use to add a route at initialisation time*/
 void sctk_add_static_reorder_buffer(int dest);
@@ -36,10 +39,40 @@ int sctk_prepare_send_message_to_network_reorder (struct sctk_thread_ptp_message
 
 void sctk_set_dynamic_reordering_buffer_creation();
 
+#ifdef MPC_USE_INFINIBAND
+typedef struct sctk_ib_buffered_table_s {
+  struct sctk_ib_buffered_entry_s* entries;
+  sctk_spinlock_t lock;
+} sctk_ib_buffered_table_t;
+#endif
+
 typedef struct {
   int key;
   struct sctk_thread_ptp_message_s* msg;
   UT_hash_handle hh;
 }sctk_reorder_buffer_t;
+
+typedef struct{
+  int destination;
+}sctk_reorder_key_t;
+
+typedef struct sctk_reorder_table_s{
+  sctk_reorder_key_t key;
+
+  OPA_int_t message_number_src;
+  OPA_int_t message_number_dest;
+
+  sctk_spinlock_t lock;
+  volatile sctk_reorder_buffer_t* buffer;
+
+  /* Only for Infiniband */
+#ifdef MPC_USE_INFINIBAND
+  struct sctk_ib_buffered_table_s ib_buffered;
+#endif
+
+  UT_hash_handle hh;
+} sctk_reorder_table_t;
+
+sctk_reorder_table_t* sctk_get_reorder(int dest);
 
 #endif

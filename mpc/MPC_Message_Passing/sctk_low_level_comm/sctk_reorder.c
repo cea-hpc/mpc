@@ -29,24 +29,9 @@
 #include <uthash.h>
 #include <opa_primitives.h>
 #include <sctk_inter_thread_comm.h>
+#include <sctk_ib_buffered.h>
 
 static int dynamic_reordering_buffer_creation = 0;
-
-typedef struct{
-  int destination;
-}sctk_reorder_key_t;
-
-typedef struct sctk_reorder_table_s{
-  sctk_reorder_key_t key;
-
-  OPA_int_t message_number_src;
-  OPA_int_t message_number_dest;
-
-  sctk_spinlock_t lock;
-  volatile sctk_reorder_buffer_t* buffer;
-
-  UT_hash_handle hh;
-} sctk_reorder_table_t;
 
 static sctk_reorder_table_t* sctk_dynamic_reorder_table = NULL;
 static sctk_reorder_table_t* sctk_static_reorder_table = NULL;
@@ -57,58 +42,66 @@ void sctk_add_static_reorder_buffer(int dest){
   sctk_reorder_table_t* tmp;
   sctk_reorder_key_t key;
 
-  key.destination = dest; 
+  key.destination = dest;
 
   HASH_FIND(hh,sctk_static_reorder_table,&key,sizeof(sctk_reorder_key_t),tmp);
   if(tmp == NULL){
     tmp = sctk_malloc(sizeof(sctk_reorder_table_t));
-    
+
     tmp->key.destination = dest;
     OPA_store_int(&(tmp->message_number_src),0);
     OPA_store_int(&(tmp->message_number_dest),0);
     tmp->lock = SCTK_SPINLOCK_INITIALIZER;
     tmp->buffer = NULL;
-    HASH_ADD(hh,sctk_static_reorder_table,key,sizeof(sctk_reorder_key_t),tmp); 
+#ifdef MPC_USE_INFINIBAND
+    tmp->ib_buffered.entries = NULL;
+    tmp->ib_buffered.lock = SCTK_SPINLOCK_INITIALIZER;
+#endif
+    HASH_ADD(hh,sctk_static_reorder_table,key,sizeof(sctk_reorder_key_t),tmp);
   }
 }
 
 /*THREAD SAFE use to add a reorder at compute time*/
-void sctk_add_dynamic_reorder_buffer(int dest){ 
+void sctk_add_dynamic_reorder_buffer(int dest){
   sctk_reorder_table_t* tmp;
   sctk_reorder_key_t key;
 
-  key.destination = dest; 
+  key.destination = dest;
 
   sctk_spinlock_write_lock(&sctk_reorder_table_lock);
   HASH_FIND(hh,sctk_dynamic_reorder_table,&key,sizeof(sctk_reorder_key_t),tmp);
   if(tmp == NULL){
     tmp = sctk_malloc(sizeof(sctk_reorder_table_t));
-    
+
     tmp->key.destination = dest;
     OPA_store_int(&(tmp->message_number_src),0);
     OPA_store_int(&(tmp->message_number_dest),0);
     tmp->lock = SCTK_SPINLOCK_INITIALIZER;
     tmp->buffer = NULL;
-    
+#ifdef MPC_USE_INFINIBAND
+    tmp->ib_buffered.entries = NULL;
+    tmp->ib_buffered.lock = SCTK_SPINLOCK_INITIALIZER;
+#endif
+
     HASH_ADD(hh,sctk_dynamic_reorder_table,key,sizeof(sctk_reorder_key_t),tmp);
   }
   sctk_spinlock_write_unlock(&sctk_reorder_table_lock);
 }
 
-static 
+static
 sctk_reorder_table_t* sctk_get_reorder_to_process(int dest){
   sctk_reorder_key_t key;
   sctk_reorder_table_t* tmp;
 
-  key.destination = dest; 
-  
+  key.destination = dest;
+
   HASH_FIND(hh,sctk_static_reorder_table,&key,sizeof(sctk_reorder_key_t),tmp);
   if(tmp == NULL){
     sctk_spinlock_read_lock(&sctk_reorder_table_lock);
     HASH_FIND(hh,sctk_dynamic_reorder_table,&key,sizeof(sctk_reorder_key_t),tmp);
     sctk_spinlock_read_unlock(&sctk_reorder_table_lock);
   }
-  
+
   if((tmp == NULL) && (dynamic_reordering_buffer_creation == 1)){
     sctk_add_dynamic_reorder_buffer(dest);
     sctk_nodebug("Create reordering buffer for %d",dest);
@@ -118,7 +111,6 @@ sctk_reorder_table_t* sctk_get_reorder_to_process(int dest){
   return tmp;
 }
 
-static 
 sctk_reorder_table_t* sctk_get_reorder(int dest){
   sctk_reorder_table_t* tmp;
   int process;
@@ -148,28 +140,29 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
     process = sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_glob_destination);
 
     /* Indirect messages */
-    if(sctk_process_rank == process){
+    /* XXX: == or != ? */
+    if(sctk_process_rank != process){
       return 1;
     }
 
     assume(tmp != NULL);
-    
+
     number = OPA_load_int(&(tmp->message_number_src));
     sctk_nodebug("wait for %d recv %d",number,msg->sctk_msg_get_message_number);
-    
+
     if(number == msg->sctk_msg_get_message_number){
       sctk_nodebug("Send %d",msg->sctk_msg_get_message_number);
       sctk_send_message_try_check(msg,1);
       OPA_fetch_and_incr_int(&(tmp->message_number_src));
       msg = NULL;
-      
+
       /*Search for pending messages*/
       if(tmp->buffer != NULL){
 	sctk_reorder_buffer_t* reorder;
 	int key;
-	
+
 	sctk_nodebug("Proceed pending messages");
-	
+
 	sctk_spinlock_lock(&(tmp->lock));
 	do{
 	  key = OPA_load_int(&(tmp->message_number_src));
@@ -184,17 +177,17 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
       }
     } else {
       sctk_reorder_buffer_t* reorder;
-      
+
       sctk_nodebug("Delay wait for %d recv %d",number,msg->sctk_msg_get_message_number);
-      
+
       reorder = &(msg->tail.reorder);
-      
+
       reorder->key = msg->sctk_msg_get_message_number;
       reorder->msg = msg;
-      
+
       sctk_spinlock_lock(&(tmp->lock));
-      HASH_ADD(hh,tmp->buffer,key,sizeof(int),reorder);    
-      sctk_spinlock_unlock(&(tmp->lock));    
+      HASH_ADD(hh,tmp->buffer,key,sizeof(int),reorder);
+      sctk_spinlock_unlock(&(tmp->lock));
     }
     return 0;
   }
@@ -207,7 +200,7 @@ int sctk_prepare_send_message_to_network_reorder (sctk_thread_ptp_message_t * ms
   /* Process specific messages */
   if(msg->body.header.specific_message_tag == process_specific_message_tag){
     msg->sctk_msg_get_use_message_numbering = 0;
-    return 1;    
+    return 1;
   }
 
   /* Indirect messages */

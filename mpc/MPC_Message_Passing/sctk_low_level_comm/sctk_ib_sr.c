@@ -90,7 +90,6 @@ sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int *recopy) {
   void* body;
   /* XXX: select if a recopy is needed for the message */
   /* XXX: recopy is not compatible with CM */
-  *recopy=1;
 
    /* If recopy required */
   if (*recopy)
@@ -109,6 +108,7 @@ sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int *recopy) {
     /* Copy the body of the message */
     memcpy(body, IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer), size);
   } else {
+    sctk_nodebug("not recopy");
     msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
     assume(msg);
 

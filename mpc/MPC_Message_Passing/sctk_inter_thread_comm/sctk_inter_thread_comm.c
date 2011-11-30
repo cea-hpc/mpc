@@ -258,7 +258,7 @@ static inline void sctk_ptp_table_insert(sctk_internal_ptp_t * tmp){
     if(key.destination == -1){						\
       tmp = sctk_ptp_admin;						\
     } else {								\
-      if(sctk_migration_mode || 1){						\
+      if(sctk_migration_mode){						\
 	HASH_FIND(hh,sctk_ptp_table,&(key),sizeof(sctk_comm_dest_key_t),(tmp)); \
       } else {								\
 	int __dest__id;							\

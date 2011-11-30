@@ -45,7 +45,7 @@
  * if x > IBV_FRAG_EAGER_LIMIT -> rendezvous msg */
 //#define IBV_EAGER_LIMIT ( 12 * 1024 )
 #define IBV_EAGER_LIMIT       ( 12 * 1024)
-#define IBV_FRAG_EAGER_LIMIT  ( 128 * 1024)
+#define IBV_FRAG_EAGER_LIMIT  (0)
 /* Number of allowed pending Work Queue Elements
  * for each QP */
 #define IBV_QP_TX_DEPTH     15000

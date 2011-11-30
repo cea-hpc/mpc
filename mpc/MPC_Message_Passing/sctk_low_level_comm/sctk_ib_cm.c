@@ -237,12 +237,10 @@ int sctk_ib_cm_on_demand_recv(sctk_rail_info_t *rail,
   }
 }
 
-int sctk_ib_cm_on_demand_recv_check(sctk_thread_ptp_message_t *msg, void* request) {
+int sctk_ib_cm_on_demand_recv_check(sctk_thread_ptp_message_body_t *msg) {
   /* If on demand, handle message before sending it to high-layers */
-  if (msg->body.header.specific_message_tag == process_specific_message_tag) {
-    if (msg->body.header.message_tag && ONDEMAND_MASK_TAG)
-      return 1;
-  }
+  if (msg->header.message_tag && ONDEMAND_MASK_TAG)
+    return 1;
   return 0;
 }
 
