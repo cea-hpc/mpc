@@ -47,7 +47,7 @@ extern "C"
   void sctk_net_message_copy(sctk_message_to_copy_t* tmp);
 
 void sctk_net_message_copy_from_buffer(char* body,
-  sctk_message_to_copy_t* tmp);
+  sctk_message_to_copy_t* tmp, char free_headers);
 #ifdef __cplusplus
 }
 #endif

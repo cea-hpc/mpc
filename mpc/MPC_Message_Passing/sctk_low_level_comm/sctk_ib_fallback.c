@@ -98,6 +98,7 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc)
 
   ibuf = (sctk_ibuf_t*) wc->wr_id;
   assume(ibuf);
+  sctk_nodebug("Recv ibuf:%p", ibuf);
 
   /* Switch on the protocol of the received message */
   switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
@@ -118,7 +119,7 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc)
           rail->send_message_from_network(msg);
         }
       } else {
-        recopy = 0;
+        recopy = 1;
         msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
         sctk_ib_sr_recv_free(rail, msg, ibuf, recopy);
         rail->send_message_from_network(msg);
@@ -152,6 +153,8 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc)
   {
     /* sctk_ib_qp_release_entry(&rail->network.ib, ibuf->remote); */
     sctk_ibuf_release(&rail->network.ib, ibuf);
+  } else {
+    sctk_ibuf_release_from_srq(&rail->network.ib, ibuf);
   }
   return 0;
 }
@@ -186,6 +189,8 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc)
   if(release_ibuf) {
     /* sctk_ib_qp_release_entry(&rail->network.ib, ibuf->remote); */
     sctk_ibuf_release(&rail->network.ib, ibuf);
+  } else {
+    sctk_ibuf_release_from_srq(&rail->network.ib, ibuf);
   }
 
   return 0;

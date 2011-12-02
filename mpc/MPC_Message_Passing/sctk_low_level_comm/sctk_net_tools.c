@@ -560,7 +560,7 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp){
 }
 
 void sctk_net_message_copy_from_buffer(char* body,
-  sctk_message_to_copy_t* tmp) {
+  sctk_message_to_copy_t* tmp, char free_headers) {
   sctk_thread_ptp_message_t* send;
   sctk_thread_ptp_message_t* recv;
 
@@ -578,7 +578,7 @@ void sctk_net_message_copy_from_buffer(char* body,
     memcpy(recv->tail.message.contiguous.addr,body,
 	   size);
 
-    sctk_message_completion_and_free(send,recv);
+    if(free_headers) sctk_message_completion_and_free(send,recv);
     break;
   }
   case sctk_message_pack: {
@@ -596,7 +596,7 @@ void sctk_net_message_copy_from_buffer(char* body,
 		 recv->tail.message.pack.list.std[i].elem_size,body,size);
 	  body += size;
 	}
-    sctk_message_completion_and_free(send,recv);
+    if(free_headers) sctk_message_completion_and_free(send,recv);
     break;
   }
   case sctk_message_pack_absolute: {
@@ -614,7 +614,7 @@ void sctk_net_message_copy_from_buffer(char* body,
 		 recv->tail.message.pack.list.absolute[i].elem_size,body,size);
 	  body += size;
 	}
-    sctk_message_completion_and_free(send,recv);
+    if(free_headers) sctk_message_completion_and_free(send,recv);
     break;
   }
   default: not_reachable();

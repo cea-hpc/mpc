@@ -106,8 +106,12 @@ void sctk_ib_buffered_free_msg(void* arg) {
   assume(msg->tail.ib.buffered.entry);
   assume(msg->tail.ib.buffered.reorder_table);
 
+  sctk_reorder_table_t* reorder_table = msg->tail.ib.buffered.reorder_table;
+
+  sctk_spinlock_lock(&reorder_table->ib_buffered.lock);
   HASH_DEL(msg->tail.ib.buffered.reorder_table->ib_buffered.entries,
      msg->tail.ib.buffered.entry);
+  sctk_spinlock_unlock(&reorder_table->ib_buffered.lock);
   sctk_free(msg->tail.ib.buffered.entry);
 }
 
@@ -126,7 +130,7 @@ void sctk_ib_buffered_copy(sctk_message_to_copy_t* tmp){
 
   assume(entry);
   body = entry->payload;
-  sctk_net_message_copy_from_buffer(body, tmp);
+  sctk_net_message_copy_from_buffer(body, tmp, 1);
 }
 
 

@@ -142,7 +142,7 @@ void sctk_ib_sr_recv_msg_no_recopy(sctk_message_to_copy_t* tmp){
   assume(ibuf);
   body = (sctk_thread_ptp_message_t*)IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer);
 
-  sctk_net_message_copy_from_buffer(body, tmp);
+  sctk_net_message_copy_from_buffer(body, tmp, 1);
 }
 
 #endif
