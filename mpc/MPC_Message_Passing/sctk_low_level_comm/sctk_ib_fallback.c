@@ -52,13 +52,13 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
   if( msg->body.header.specific_message_tag == process_specific_message_tag) {
     tmp = sctk_get_route_to_process(msg->sctk_msg_get_destination,rail);
+    sctk_nodebug("Sending message to %d (process_destk:%d,process_src;%d,number:%d) (%p)", remote->rank, msg->sctk_msg_get_destination, msg->sctk_msg_get_source,msg->sctk_msg_get_message_number, tmp);
   } else {
     tmp = sctk_get_route(msg->sctk_msg_get_glob_destination,rail);
   }
 
   route_data=&tmp->data.ib;
   remote=route_data->remote;
-  sctk_nodebug("Sending message to %d (tas_destk:%d,task_src;%d,number:%d) (%p)", remote->rank, msg->sctk_msg_get_destination, msg->sctk_msg_get_source,msg->sctk_msg_get_message_number, tmp);
 
   size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
 
@@ -103,9 +103,11 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc)
   switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
     case eager_protocol:
       msg_ibuf = IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer);
+      msg = msg_ibuf;
       if (__is_specific_mesage_tag(msg_ibuf)) {
         recopy = 1;
         ondemand = sctk_ib_cm_on_demand_recv_check(msg_ibuf);
+        sctk_nodebug("received src:%d, dest:%d, od:%d", msg->sctk_msg_get_source, msg->sctk_msg_get_destination, ondemand);
         /* If on demand, handle message before sending it to high-layers */
         if(ondemand) {
           msg = sctk_ib_sr_recv(rail, ibuf, &recopy);

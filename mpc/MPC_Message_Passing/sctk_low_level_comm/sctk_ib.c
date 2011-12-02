@@ -39,6 +39,7 @@
 #include <sctk_ib_qp.h>
 #include <sctk_ib_toolkit.h>
 #include <sctk_ib_sr.h>
+#include <sctk_route.h>
 
 #define MAX_STRING_SIZE  2048
 
@@ -55,6 +56,10 @@ void sctk_ib_add_dynamic_route(int dest, sctk_route_table_t *tmp){
 
 void sctk_ib_route_dynamic_set_connected(sctk_route_table_t *tmp, int connected){
   sctk_route_dynamic_set_connected(tmp, connected);
+}
+
+int sctk_ib_route_dynamic_is_connected(sctk_route_table_t *tmp){
+  return sctk_route_dynamic_is_connected(tmp);
 }
 
 sctk_route_table_t *

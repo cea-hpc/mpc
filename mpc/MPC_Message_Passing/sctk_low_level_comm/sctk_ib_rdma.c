@@ -108,7 +108,7 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
     msg->tail.ib.rdma.local.status = zerocopy;
   } else {
     size_t page_size;
-    sctk_nodebug("Sending NOT contiguous message");
+    sctk_debug("Sending NOT contiguous message of size: %lu, type:%d", size, msg->tail.message_type);
     not_implemented();
     page_size = getpagesize();
     posix_memalign((void**) &aligned_addr, page_size,

@@ -24,7 +24,6 @@
 #ifdef MPC_USE_INFINIBAND
 
 #include "sctk_ib_config.h"
-#include "sctk_ib.h"
 
 /* IB debug macros */
 #if defined SCTK_IB_MODULE_NAME
@@ -32,6 +31,9 @@
 #endif
 #define SCTK_IB_MODULE_NAME "CONFIG"
 #include "sctk_ib_toolkit.h"
+#include "sctk_ib.h"
+#include "sctk_ib_sr.h"
+#include "sctk_ib_buffered.h"
 
 /*-----------------------------------------------------------
  *  CONSTS
@@ -241,8 +243,8 @@ void load_ib_default_config(sctk_ib_rail_info_t *rail_ib)
   config->ibv_size_mr_chunk = IBV_SIZE_MR_CHUNKS;
   config->ibv_init_ibufs = IBV_INIT_IBUFS;
 
-  config->ibv_eager_limit = IBV_EAGER_LIMIT;
-  config->ibv_frag_eager_limit = IBV_FRAG_EAGER_LIMIT;
+  config->ibv_eager_limit = IBV_EAGER_LIMIT + IBUF_GET_EAGER_SIZE;
+  config->ibv_frag_eager_limit = IBV_FRAG_EAGER_LIMIT + IBUF_GET_BUFFERED_SIZE ;
   config->ibv_qp_tx_depth = IBV_QP_TX_DEPTH;
   config->ibv_qp_rx_depth = IBV_QP_RX_DEPTH;
   config->ibv_cq_depth = IBV_CQ_DEPTH;
@@ -280,10 +282,10 @@ void set_ib_env(sctk_ib_rail_info_t *rail_ib)
   sctk_ib_config_t* c = rail_ib->config;
 
   if ( (value = getenv("MPC_IBV_EAGER_LIMIT")) != NULL )
-    c->ibv_eager_limit = atoi(value);
+    c->ibv_eager_limit = atoi(value) + IBUF_GET_EAGER_SIZE;
 
   if ( (value = getenv("MPC_IBV_FRAG_EAGER_LIMIT")) != NULL )
-    c->ibv_frag_eager_limit = atoi(value);
+    c->ibv_frag_eager_limit = atoi(value) + IBUF_GET_BUFFERED_SIZE;
 
   if ( (value = getenv("MPC_IBV_QP_TX_DEPTH")) != NULL )
     c->ibv_qp_tx_depth = atoi(value);

@@ -122,6 +122,28 @@ sctk_reorder_table_t* sctk_get_reorder(int dest){
   return tmp;
 }
 
+inline void __send_pending_messages(sctk_reorder_table_t* tmp) {
+  if(tmp->buffer != NULL){
+    sctk_reorder_buffer_t* reorder;
+    int key;
+    sctk_nodebug("Proceed pending messages");
+    do{
+      sctk_spinlock_lock(&(tmp->lock));
+      key = OPA_load_int(&(tmp->message_number_src));
+      HASH_FIND(hh,tmp->buffer,&key,sizeof(int),reorder);
+      if(reorder != NULL){
+        sctk_nodebug("Pending Send %d for %p",reorder->msg->sctk_msg_get_message_number, tmp);
+        HASH_DELETE(hh, tmp->buffer, reorder);
+        sctk_spinlock_unlock(&(tmp->lock));
+        /* We can not keep the lock during sending the message to MPC or the
+         * code will deadlock */
+        sctk_send_message_try_check(reorder->msg,1);
+        OPA_fetch_and_incr_int(&(tmp->message_number_src));
+      } else sctk_spinlock_unlock(&(tmp->lock));
+    } while(reorder != NULL);
+  }
+}
+
 int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
   if(msg->sctk_msg_get_use_message_numbering == 0){
     /* Renumbering unused */
@@ -134,13 +156,12 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
     int number;
     int process;
     tmp = sctk_get_reorder(msg->sctk_msg_get_glob_source);
-    sctk_nodebug("Recv message from %d to %d",msg->sctk_msg_get_glob_source,
-		 msg->sctk_msg_get_glob_destination);
+    sctk_nodebug("Recv message from %d to %d (number:%d)",msg->sctk_msg_get_glob_source,
+		 msg->sctk_msg_get_glob_destination, msg->sctk_msg_get_message_number);
 
     process = sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_glob_destination);
 
-    /* Indirect messages */
-    /* XXX: == or != ? */
+    /* Indirect messages, we do not check PSN */
     if(sctk_process_rank != process){
       return 1;
     }
@@ -151,34 +172,15 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
     sctk_nodebug("wait for %d recv %d",number,msg->sctk_msg_get_message_number);
 
     if(number == msg->sctk_msg_get_message_number){
-      sctk_nodebug("Send %d",msg->sctk_msg_get_message_number);
+      sctk_nodebug("Direct Send %d from %p",msg->sctk_msg_get_message_number, tmp);
       sctk_send_message_try_check(msg,1);
       OPA_fetch_and_incr_int(&(tmp->message_number_src));
       msg = NULL;
 
       /*Search for pending messages*/
-      if(tmp->buffer != NULL){
-	sctk_reorder_buffer_t* reorder;
-	int key;
-
-	sctk_nodebug("Proceed pending messages");
-
-	sctk_spinlock_lock(&(tmp->lock));
-	do{
-	  key = OPA_load_int(&(tmp->message_number_src));
-	  HASH_FIND(hh,tmp->buffer,&key,sizeof(int),reorder);
-	  if(reorder != NULL){
-	    sctk_nodebug("Send %d",reorder->msg->sctk_msg_get_message_number);
-	    sctk_send_message_try_check(reorder->msg,1);
-	    OPA_fetch_and_incr_int(&(tmp->message_number_src));
-	  }
-	} while(reorder != NULL);
-	sctk_spinlock_unlock(&(tmp->lock));
-      }
+      __send_pending_messages(tmp);
     } else {
       sctk_reorder_buffer_t* reorder;
-
-      sctk_nodebug("Delay wait for %d recv %d",number,msg->sctk_msg_get_message_number);
 
       reorder = &(msg->tail.reorder);
 
@@ -188,6 +190,12 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
       sctk_spinlock_lock(&(tmp->lock));
       HASH_ADD(hh,tmp->buffer,key,sizeof(int),reorder);
       sctk_spinlock_unlock(&(tmp->lock));
+      sctk_nodebug("Delay wait for %d recv %d (expecting:%d, tmp:%p)",number,msg->sctk_msg_get_message_number, number, tmp);
+
+      /* XXX: we *MUST* check once again if there is no pending messages. During
+       * adding a msg to the pending list, a new message with a good PSN could be
+        * received. If we omit this line, the code can deadlock */
+      __send_pending_messages(tmp);
     }
     return 0;
   }
@@ -214,7 +222,6 @@ int sctk_prepare_send_message_to_network_reorder (sctk_thread_ptp_message_t * ms
   sctk_nodebug("msg->sctk_msg_get_use_message_numbering %d",msg->sctk_msg_get_use_message_numbering);
 
   tmp = sctk_get_reorder_to_process(process);
-  sctk_nodebug("msg to %d %p", process,tmp);
 
   /* Unable to find local numbering */
   if(tmp == NULL){
@@ -225,6 +232,7 @@ int sctk_prepare_send_message_to_network_reorder (sctk_thread_ptp_message_t * ms
   /* Local numbering */
   msg->sctk_msg_get_use_message_numbering = 1;
   msg->sctk_msg_get_message_number = OPA_fetch_and_incr_int(&(tmp->message_number_dest));
+  sctk_nodebug("msg to %d (number:%d)", process,msg->sctk_msg_get_message_number);
   return 0;
 }
 

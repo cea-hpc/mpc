@@ -128,6 +128,7 @@ extern "C"
     sctk_ib_create_remote(int dest, struct sctk_rail_info_s* rail);
   void sctk_ib_add_static_route(int dest, struct sctk_route_table_s *tmp);
   void sctk_ib_add_dynamic_route(int dest, struct sctk_route_table_s *tmp);
+  int sctk_ib_route_dynamic_is_connected(struct sctk_route_table_s *tmp);
 
   /* IB header: generic */
 #define IBUF_GET_EAGER_HEADER(buffer) \

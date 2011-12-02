@@ -26,6 +26,7 @@
 #include <sctk_reorder.h>
 #include <sctk_communicator.h>
 #include <sctk_spinlock.h>
+#include <sctk_ib_cm.h>
 
 static sctk_route_table_t* sctk_dynamic_route_table = NULL;
 static sctk_route_table_t* sctk_static_route_table = NULL;
@@ -143,6 +144,18 @@ sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail){
   return tmp;
 }
 
+struct wait_connexion_args_s {
+  sctk_route_table_t* route_table;
+  int done;
+};
+
+void* __wait_connexion(void* a) {
+  struct wait_connexion_args_s *args = (struct wait_connexion_args_s*) a;
+
+  if (sctk_route_dynamic_is_connected(args->route_table) == 1)
+    args->done = 1;
+}
+
 sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail){
   sctk_route_table_t* tmp;
   int process;
@@ -151,7 +164,18 @@ sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail){
   if (rail->on_demand) {
     tmp = sctk_get_route_to_process_no_route(process,rail);
     if (tmp == NULL) {
-      sctk_ib_cm_on_demand_request(process,rail);
+      tmp = sctk_ib_cm_on_demand_request(process,rail);
+      assume(tmp);
+      /* If route not connected, so we wait for until it is connected */
+      sctk_nodebug("Trying to connect to process %d (remote:%p)", process, tmp);
+      if (sctk_route_dynamic_is_connected(tmp) == 0) {
+        struct wait_connexion_args_s args;
+        args.route_table = tmp;
+        args.done = 0;
+        sctk_thread_wait_for_value_and_poll((int*) &args.done, 1,
+            (void (*)(void*)) __wait_connexion, &args);
+      }
+      sctk_nodebug("Cconnected to process %d", process);
     }
   }
 
