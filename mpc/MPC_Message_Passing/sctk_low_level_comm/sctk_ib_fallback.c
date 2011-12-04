@@ -37,6 +37,7 @@
 #include "sctk_ib_polling.h"
 #include "sctk_ib_async.h"
 #include "sctk_ib_rdma.h"
+#include "sctk_ib_buffered.h"
 
 static void
 sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
@@ -62,15 +63,17 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
   size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
 
-  if (size < config->ibv_eager_limit)  {
+  if (size+IBUF_GET_EAGER_SIZE < config->ibv_eager_limit)  {
     ibuf = sctk_ib_sr_prepare_msg(rail_ib, remote, msg, size);
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
     sctk_complete_and_free_message(msg);
-  } else if (size < config->ibv_frag_eager_limit)  {
-    sctk_ib_buffered_prepare_msg(rail, tmp, msg, size);
+  } else if (size+IBUF_GET_BUFFERED_SIZE < config->ibv_frag_eager_limit)  {
+    /* Fallback to RDMA if buffered not available */
+    if (sctk_ib_buffered_prepare_msg(rail, tmp, msg, size) == 1) goto rdma;
     sctk_complete_and_free_message(msg);
   } else {
+rdma:
     /* XXX: Check if size is correct. Seems OK */
     ibuf = sctk_ib_rdma_prepare_req(rail, tmp, msg, size);
     /* Send message */
@@ -98,7 +101,7 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc)
 
   ibuf = (sctk_ibuf_t*) wc->wr_id;
   assume(ibuf);
-  sctk_nodebug("Recv ibuf:%p", ibuf);
+  sctk_nodebug("Recv ibuf:%p (len:%lu)", ibuf, wc->byte_len);
 
   /* Switch on the protocol of the received message */
   switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {

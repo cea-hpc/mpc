@@ -27,6 +27,7 @@
 #include <sctk_route.h>
 #include <sctk_tcp.h>
 #include <opa_primitives.h>
+#include <sctk_checksum.h>
 
 #define NB_RAILS 1
 static sctk_rail_info_t** rails = NULL;
@@ -34,6 +35,8 @@ static sctk_rail_info_t** rails = NULL;
 static void
 sctk_network_send_message_multirail_ib (sctk_thread_ptp_message_t * msg){
   int i ;
+  /* XXX:Calculating checksum */
+  sctk_checksum_register(msg);
   if(sctk_prepare_send_message_to_network_reorder(msg) == 0){
     /*
       Reordering available : we can use multirail

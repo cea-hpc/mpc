@@ -306,7 +306,7 @@ void sctk_ibuf_recv_init(sctk_ibuf_t* ibuf)
   ibuf->desc.sg_entry.lkey = ibuf->region->mmu_entry->mr->lkey;
   ibuf->desc.sg_entry.addr = (uintptr_t) (ibuf->buffer);
 
-  ibuf->flag = NORMAL_IBUF_FLAG;
+  ibuf->flag = RECV_IBUF_FLAG;
 }
 
 void sctk_ibuf_rdma_recv_init(sctk_ibuf_t* ibuf, void* local_address,
@@ -373,7 +373,7 @@ void sctk_ibuf_send_init(
   ibuf->desc.sg_entry.lkey = ibuf->region->mmu_entry->mr->lkey;
   ibuf->desc.sg_entry.addr = (uintptr_t) (ibuf->buffer);
 
-  ibuf->flag = NORMAL_IBUF_FLAG;
+  ibuf->flag = SEND_IBUF_FLAG;
 }
 
 void sctk_ibuf_rdma_write_init(
@@ -426,5 +426,29 @@ void sctk_ibuf_rdma_read_init(
   ibuf->flag = RDMA_READ_IBUF_FLAG;
   ibuf->supp_ptr = supp_ptr;
   ibuf->dest_process = dest_process;
+}
+
+void sctk_ibuf_print(sctk_ibuf_t *ibuf, char* desc) {
+  sprintf(desc,
+      "region       :%p\n"
+      "buffer       :%p\n"
+      "size         :%lu\n"
+      "flag         :%s\n"
+      "remote       :%p\n"
+      "dest_process :%d\n"
+      "in_srq       :%d\n"
+      "next         :%p\n"
+      "prev         :%p\n"
+      "sg_entry.length :%u",
+      ibuf->region,
+      ibuf->buffer,
+      ibuf->size,
+      sctk_ibuf_print_flag(ibuf->flag),
+      ibuf->remote,
+      ibuf->dest_process,
+      ibuf->in_srq,
+      ibuf->next,
+      ibuf->prev,
+      ibuf->desc.sg_entry.length);
 }
 #endif

@@ -119,6 +119,7 @@ sctk_ib_polling_check_wc(struct sctk_ib_rail_info_s* rail_ib,
   LOAD_CONFIG(rail_ib);
   struct sctk_ibuf_s* ibuf;
   char host[HOSTNAME];
+  char ibuf_desc[4096];
 
   if (wc.status != IBV_WC_SUCCESS) {
     ibuf = (struct sctk_ibuf_s*) wc.wr_id;
@@ -129,6 +130,7 @@ sctk_ib_polling_check_wc(struct sctk_ib_rail_info_s* rail_ib,
       sctk_error ("\033[1;31mIB - FATAL ERROR FROM PROCESS %d (%s)",
           sctk_process_rank, host);
     } else {
+      sctk_ibuf_print(ibuf, ibuf_desc);
       sctk_error ("\033[1;31m\nIB - FATAL ERROR FROM PROCESS %d (%s)\n"
           "################################\033[0m\n"
           "Work ID is   : %d\n"
@@ -136,11 +138,13 @@ sctk_ib_polling_check_wc(struct sctk_ib_rail_info_s* rail_ib,
           "ERROR Vendor : %d\n"
           "Byte_len     : %d\n"
           "Dest process : %d\n"
+          "\033[1;31m######### IBUF DESC ############\033[0m\n"
+          "%s\n"
           "\033[1;31m################################\033[0m",
           sctk_process_rank, host,
           wc.wr_id, sctk_ib_polling_print_status(wc.status),
           wc.vendor_err, wc.byte_len,
-          ibuf->dest_process);
+          ibuf->dest_process, ibuf_desc);
     }
     sctk_abort();
   }

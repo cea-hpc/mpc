@@ -123,7 +123,9 @@ enum sctk_ibuf_status
   RDMA_READ_IBUF_FLAG   = 333,
   RDMA_WRITE_IBUF_FLAG  = 444,
   NORMAL_IBUF_FLAG      = 555,
-  BARRIER_IBUF_FLAG     = 666
+  SEND_IBUF_FLAG        = 666,
+  RECV_IBUF_FLAG        = 777,
+  BARRIER_IBUF_FLAG     = 888
 };
 
 static char* sctk_ibuf_print_flag (enum sctk_ibuf_status flag)
@@ -132,6 +134,8 @@ static char* sctk_ibuf_print_flag (enum sctk_ibuf_status flag)
     case RDMA_READ_IBUF_FLAG:   return "RDMA_READ_IBUF_FLAG";break;
     case RDMA_WRITE_IBUF_FLAG:  return "RDMA_WRITE_IBUF_FLAG";break;
     case NORMAL_IBUF_FLAG:      return "NORMAL_IBUF_FLAG";break;
+    case RECV_IBUF_FLAG:        return "RECV_IBUF_FLAG";break;
+    case SEND_IBUF_FLAG:        return "SEND_IBUF_FLAG";break;
     case BARRIER_IBUF_FLAG:     return "BARRIER_IBUF_FLAG";break;
     case BUSY_FLAG:             return "BUSY_FLAG";break;
     case FREE_FLAG:             return "FREE_FLAG";break;

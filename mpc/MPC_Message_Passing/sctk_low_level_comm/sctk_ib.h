@@ -92,8 +92,6 @@ extern "C"
         struct sctk_rail_info_s *rail;
         struct sctk_route_table_s* route_table;
         struct sctk_message_to_copy_s *copy_ptr;
-        struct sctk_thread_ptp_message_s *remote_msg_header;
-
         /* Local structure */
         struct {
           sctk_ib_rdma_status_t status;
@@ -103,7 +101,7 @@ extern "C"
           void  *aligned_addr;
           size_t aligned_size;
           /* Local structure ready to be read */
-          char ready;
+          int ready;
         } local;
         /* Remote structure */
         struct {

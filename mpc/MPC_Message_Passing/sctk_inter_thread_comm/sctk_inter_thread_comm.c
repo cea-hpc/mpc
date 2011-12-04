@@ -29,6 +29,7 @@
 #include <utlist.h>
 #include <string.h>
 #include <sctk_asm.h>
+#include <sctk_checksum.h>
 
 /* #define SCTK_DISABLE_REENTRANCE */
 
@@ -349,6 +350,9 @@ void sctk_message_completion_and_free(sctk_thread_ptp_message_t* send,
   if(send->tail.request){
     send->tail.request->msg = NULL;
   }
+
+  /* XXX: Specific to checksum*/
+  sctk_checksum_verify(send, recv);
 
   sctk_complete_and_free_message(send);
   sctk_complete_and_free_message(recv);

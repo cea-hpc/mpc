@@ -43,7 +43,7 @@
  *  FUNCTIONS
  *----------------------------------------------------------*/
 
-void sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
+int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
     sctk_route_table_t* route_table, sctk_thread_ptp_message_t * msg, size_t size) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
@@ -61,7 +61,8 @@ void sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
   sctk_ib_data_t *route_data;
   sctk_ib_qp_t *remote;
 
-  if (msg->tail.message_type != sctk_message_contiguous) not_implemented();
+  /* Sometimes it should be interresting to fallback to RDMA :-) */
+  if (msg->tail.message_type != sctk_message_contiguous) return 1;
 
   payload = msg->tail.message.contiguous.addr;
   route_data=&route_table->data.ib;
@@ -99,6 +100,7 @@ void sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
 
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
   }
+  return 0;
 }
 
 void sctk_ib_buffered_free_msg(void* arg) {
@@ -173,6 +175,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   if (current == entry->total-1) {
     /* Copy the message header */
     memcpy(&entry->msg, msg, sizeof(sctk_thread_ptp_message_body_t));
+    entry->msg.tail.ib.protocol = buffered_protocol;
     entry->msg.tail.ib.buffered.entry = entry;
     entry->msg.tail.ib.buffered.rail = rail;
     entry->msg.tail.ib.buffered.reorder_table = reorder_table;

@@ -138,6 +138,8 @@ typedef struct sctk_message_to_copy_s{
   typedef struct {
     sctk_thread_message_header_t header;
     volatile int* volatile completion_flag;
+    /* XXX:Specific to checksum */
+    unsigned long checksum;
   }sctk_thread_ptp_message_body_t;
 
   /*Data not to tranfers in inter-process communications*/

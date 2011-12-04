@@ -95,6 +95,35 @@ void sctk_network_free_msg(sctk_thread_ptp_message_t *msg)
 #endif
 }
 
+char *sctk_ib_print_procotol(sctk_ib_protocol_t p)
+{
+  switch (p) {
+    case eager_protocol:
+      return "eager_protocol";
+    case rdma_protocol:
+      return "rdma_protocol";
+    case buffered_protocol:
+      return "buffered_protocol";
+    default: not_reachable();
+  }
+  return NULL;
+}
+
+void sctk_ib_print_msg(sctk_thread_ptp_message_t *msg) {
+  sctk_debug("IB protocol: %s", sctk_ib_print_procotol(msg->tail.ib.protocol));
+  switch (msg->tail.ib.protocol) {
+    case eager_protocol:
+      break;
+    case rdma_protocol:
+      sctk_ib_rdma_print(msg);
+      break;
+    case buffered_protocol:
+      break;
+    default: not_reachable();
+  }
+
+}
+
 void sctk_network_init_ib_all(sctk_rail_info_t* rail,
 			       int (*route)(int , sctk_rail_info_t* ),
 			       void(*route_init)(sctk_rail_info_t*)){
