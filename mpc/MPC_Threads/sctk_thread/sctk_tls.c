@@ -35,6 +35,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include "hwloc.h"
 
 #if defined(SCTK_USE_TLS)
 __thread void *sctk_extls = NULL;
@@ -416,43 +417,67 @@ sctk_extls_delete ()
  * At MPC startup, create all HLS levels
  * Called in sctk_perform_initialisation in sctk_launch.c
  */
+
+#define MAX(a,b) ((a)>=(b)?(a):(b))
+
 void sctk_hls_build_repository ()
 {
   page_size = getpagesize ();
 
-  const int numa_level_2_number   = sctk_get_numa_number(2) ;
-  const int numa_level_1_number   = sctk_get_numa_number(1) ;
-  const int socket_number         = sctk_get_socket_number() ;
-  const int cache_level_3_number  = sctk_get_cache_number(3) ;
-  const int cache_level_2_number  = sctk_get_cache_number(2) ;
-  const int cache_level_1_number  = sctk_get_cache_number(1) ;
-  const int core_number           = sctk_get_core_number() ;
+  hwloc_topology_t topology = sctk_get_topology_object() ;
+  const int topodepth = hwloc_topology_get_depth(topology);
+  const int numa_node_number = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) ;
+  int * level_number ; /* per numa node */
+  hwloc_obj_t* stack ;
+  int stack_idx ;
+  const int is_numa_node = ( numa_node_number != 0 ) ;
+  int i;
 
-  const int total_level_below_numa_1 = numa_level_1_number + socket_number 
-	  + cache_level_3_number + cache_level_2_number + cache_level_1_number
-	  + core_number ;
+  level_number = alloca(MAX(1,numa_node_number)*sizeof(int)) ;
+  for ( i = 0 ; i < MAX(1,numa_node_number) ; ++i )
+	  level_number[i] = 0 ;
 
-  if ( sctk_is_numa_node() )
-  {
-	  int i,j ;
-	  sctk_hls_repository = sctk_malloc ( numa_level_1_number*sizeof(hls_level*) );
+  stack = alloca( (topodepth+1) * sizeof(hwloc_obj_t) );
+  stack_idx = 0 ;
+  stack[stack_idx]   = hwloc_get_root_obj ( topology ) ;
+  stack[stack_idx+1] = NULL ;
 
-	  for ( i=0 ; i < numa_level_1_number ; ++i ) {
-		  const int n = total_level_below_numa_1 + (i == 0)
-			  + ( numa_level_2_number > 0 && i % numa_level_2_number == 0 ) ;
-		  sctk_hls_repository[i] = sctk_malloc_on_node ( n * sizeof(hls_level), i ) ;
-		  for ( j=0 ; j<n ; ++j )
-			  sctk_hls_init_level ( sctk_hls_repository[i] + j ) ;
+  do{
+	  assert(stack_idx < topodepth+1 ) ;
+	  hwloc_obj_t cur_obj    = stack[stack_idx] ;
+	  hwloc_obj_t prev_child = stack[stack_idx+1] ;
+	  hwloc_obj_t next_child = hwloc_get_next_child(topology,cur_obj,prev_child);
+
+	  if ( prev_child == NULL ) {
+		  char level_id[8] ;
+		  int numa_id = 0 ;
+		  if ( is_numa_node && cur_obj->type != HWLOC_OBJ_MACHINE ) {
+			  if ( cur_obj->type == HWLOC_OBJ_NODE )
+				  numa_id = cur_obj->logical_index ;
+			  else
+			      numa_id = hwloc_get_ancestor_obj_by_type(topology,HWLOC_OBJ_NODE,cur_obj)->logical_index ;
+		  }
+		  sprintf ( level_id, "%d", level_number[numa_id] ) ;
+		  hwloc_obj_add_info ( cur_obj, "hls_level", level_id ) ; 
+		  level_number[numa_id] += 1 ; 
 	  }
-  }
-  else
-  {
+
+	  if ( next_child != NULL && next_child->type != HWLOC_OBJ_PU ) {
+		  stack_idx += 1 ;
+		  stack[stack_idx] = next_child ;
+		  stack[stack_idx+1] = NULL ;
+	  }else{
+		  stack_idx -= 1 ;
+	  }
+
+  }while ( stack_idx >= 0 ) ;
+
+  sctk_hls_repository = sctk_malloc(MAX(1,numa_node_number)*sizeof(hls_level*));
+  for ( i = 0 ; i < MAX(1,numa_node_number) ; ++i ) {
 	  int j ;
-	  const int n = total_level_below_numa_1 + 1 ; 
-	  sctk_hls_repository = sctk_malloc ( sizeof(hls_level*) ) ;
-	  sctk_hls_repository[0] = sctk_malloc ( n * sizeof(hls_level ) ) ;
-	  for ( j=0 ; j<n ; ++j )
-		  sctk_hls_init_level ( sctk_hls_repository[0] + j ) ;
+	  sctk_hls_repository[i] = sctk_malloc_on_node ( level_number[i]*sizeof(hls_level), i ) ;
+	  for ( j=0 ; j<level_number[i] ; ++j )
+		  sctk_hls_init_level ( sctk_hls_repository[i] + j ) ;
   }
 }
 
@@ -464,92 +489,51 @@ void sctk_hls_build_repository ()
 void sctk_hls_checkout_on_vp ()
 {
   /* check if this has already been done */
-  if ( sctk_hls[sctk_hls_node_scope] != NULL )
-	  return ;
+  if ( sctk_hls[sctk_hls_node_scope] == NULL ) {
+	
+  hwloc_topology_t topology = sctk_get_topology_object() ;
+  const int socket_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_SOCKET);
+  const int core_depth   = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE);
+  hwloc_obj_t pu = hwloc_get_obj_by_type(topology,HWLOC_OBJ_PU,sctk_get_cpu());
+  const int numa_id = sctk_is_numa_node() ?
+	  				  hwloc_get_ancestor_obj_by_type(topology,HWLOC_OBJ_NODE,pu)->logical_index
+					  : 0 ;
 
-  const int numa_level_2_number   = sctk_get_numa_number(2) ;
-  int numa_level_1_number   = sctk_get_numa_number(1) ;
-  const int socket_number         = sctk_get_socket_number() ;
-  int cache_level_3_number  = sctk_get_cache_number(3) ;
-  int cache_level_2_number  = sctk_get_cache_number(2) ;
-  int cache_level_1_number  = sctk_get_cache_number(1) ;
-  const int core_number           = sctk_get_core_number() ;
-  const int pu_id                 = sctk_get_cpu() ;
-  const int numa_1_id             = sctk_is_numa_node() ? 
-	                                sctk_get_numa_id(1,pu_id) : 0 ;
-  int id ;
-  int child_id ;
   int i ;
-  int offset = 0 ;
-  int size_below = socket_number + cache_level_3_number
-	  + cache_level_2_number + cache_level_1_number + core_number ;
+  int level_id ;
+  hwloc_obj_t obj ;
 
+  sctk_hls[sctk_hls_node_scope] = sctk_hls_repository[0] ;
   for ( i = 1 ; i < sctk_hls_max_scope ; ++i )
 	  sctk_hls[i] = NULL ;
+
+  obj = hwloc_get_ancestor_obj_by_depth (topology, socket_depth-1, pu) ;
+  if ( obj != NULL && obj->type == HWLOC_OBJ_NODE ) {
+	  level_id = atol ( hwloc_obj_get_info_by_name (obj, "hls_level") ) ; 
+	  sctk_hls[sctk_hls_numa_level_1_scope] = sctk_hls_repository[numa_id] + level_id ;
+  }
   
-  sctk_hls[sctk_hls_node_scope] = sctk_hls_repository[0] ;
-
-  offset += (numa_1_id == 0) ;
-
-  if ( numa_level_2_number > 0 ) {
-	  sctk_hls[sctk_hls_numa_level_2_scope]
-		  = sctk_hls_repository[ numa_1_id / numa_level_2_number ]
-		  + offset ;
-	  offset += (numa_1_id % numa_level_2_number == 0) ;
+  obj = hwloc_get_ancestor_obj_by_type (topology, HWLOC_OBJ_SOCKET, pu) ;
+  if ( obj != NULL ) {
+	  level_id = atol ( hwloc_obj_get_info_by_name (obj, "hls_level") ) ; 
+	  sctk_hls[sctk_hls_socket_scope] = sctk_hls_repository[numa_id] + level_id ;
   }
-
-  if ( numa_level_1_number > 0 ) {
-	  sctk_hls[sctk_hls_numa_level_1_scope]
-		  = sctk_hls_repository[numa_1_id] + offset ;
-	  offset += 1 ;
-  }else{
-	  numa_level_1_number = 1 ;
+ 
+  for ( i = 1 ; i <= 3 ; ++i ) {
+	  obj = hwloc_get_ancestor_obj_by_depth (topology, core_depth-i, pu) ;
+	  if ( obj != NULL && obj->type == HWLOC_OBJ_CACHE ) {
+		  level_id = atol ( hwloc_obj_get_info_by_name (obj, "hls_level") ) ; 
+		  sctk_hls[sctk_hls_core_scope-i] = sctk_hls_repository[numa_id] + level_id ;
+	  }
   }
-
-  id = sctk_get_socket_id (pu_id) ;
-  child_id = id % ( socket_number / numa_level_1_number ) ;
-  sctk_hls[sctk_hls_socket_scope] = sctk_hls_repository[numa_1_id]
-	  + offset + child_id * size_below ;  
-  offset += child_id * size_below + 1 ; 
-  size_below -= socket_number ;
-
-  if (cache_level_3_number > 0 ) {
-	  id = sctk_get_cache_id (3, pu_id) ;
-	  child_id = id % ( cache_level_3_number / socket_number ) ;
-	  sctk_hls[sctk_hls_cache_level_3_scope] = sctk_hls_repository[numa_1_id]
-		  + offset + child_id * size_below ;  
-	  offset += child_id * size_below + 1 ; 
-	  size_below -= cache_level_3_number ;
-  }else{
-	  cache_level_3_number = 1 ;
+  
+  obj = hwloc_get_ancestor_obj_by_type (topology, HWLOC_OBJ_CORE, pu) ;
+  if ( obj != NULL ) {
+	  level_id = atol ( hwloc_obj_get_info_by_name (obj, "hls_level") ) ; 
+	  sctk_hls[sctk_hls_core_scope] = sctk_hls_repository[numa_id] + level_id ;
   }
-
-  if (cache_level_2_number > 0 ) {
-	  id = sctk_get_cache_id (2, pu_id) ;
-	  child_id = id % ( cache_level_2_number / cache_level_3_number ) ; 
-	  sctk_hls[sctk_hls_cache_level_2_scope] = sctk_hls_repository[numa_1_id]
-		  + offset + child_id * size_below ;  
-	  offset += child_id * size_below + 1 ; 
-	  size_below -= cache_level_2_number ;
-  }else{
-	  cache_level_2_number = 1 ;
+  
   }
-
-  if (cache_level_1_number > 0 ) {
-	  id = sctk_get_cache_id (1, pu_id) ;
-	  child_id = id % ( cache_level_1_number / cache_level_2_number ) ;
-	  sctk_hls[sctk_hls_cache_level_1_scope] = sctk_hls_repository[numa_1_id]
-		  + offset + child_id * size_below ;  
-	  offset += child_id * size_below + 1 ; 
-	  size_below -= cache_level_1_number ;
-  }else{
-	  cache_level_1_number = 1 ;
-  }
-
-  id = sctk_get_core_id(pu_id) ;
-  child_id = id % ( core_number / cache_level_1_number ) ;
-  sctk_hls[sctk_hls_core_scope] = sctk_hls_repository[numa_1_id]
-		  + offset + child_id * size_below ;
 }
 
 /*
@@ -588,7 +572,7 @@ void sctk_hls_free ()
 {
   int i ;
   if ( sctk_is_numa_node() ) {
-	  const int numa_level_1_number   = sctk_get_numa_number(1) ;
+	  const int numa_level_1_number   = sctk_get_numa_node_number() ;
 	  for ( i=0 ; i < numa_level_1_number ; ++i )
 		  free ( sctk_hls_repository[i] ) ;
   }else{

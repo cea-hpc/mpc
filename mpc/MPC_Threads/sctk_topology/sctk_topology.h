@@ -106,54 +106,9 @@ extern "C"
 */
   int sctk_get_node_from_cpu (const int vp);
 
-/*! \brief Return the number of NUMA nodes
- *@param level NUMA level
+/*! \brief Return the hwloc topology object
 */
-  int sctk_get_numa_number (const int level);
-
-/*! \brief Return the number of sockets
-*/
-  int sctk_get_socket_number (void);
-  
-/*! \brief Return the number of caches
- * @param level Cache level
-*/
-  int sctk_get_cache_number (const int level);
-  
-/*! \brief Return the number of cores
-*/
-  int sctk_get_core_number (void);
-
-/*! \brief Return the number of cache levels
-*/
-  int sctk_get_cache_level_number (void);
-  
-/*! \brief Return the number of NUMA levels
- * return 0 if machine is not NUMA
-*/
-  int sctk_get_numa_level_number (void);
-  
-/*! \brief Return the NUMA id
- * @param vp VP
- * @param level NUMA level
-*/
-  int sctk_get_numa_id (const int level, const int vp);
-
-/*! \brief Return the socket id
- * @param vp VP
-*/
-  int sctk_get_socket_id (const int vp);
-  
-/*! \brief Return the cache id
- * @param vp VP
- * @param level Cache level
-*/
-  int sctk_get_cache_id (const int level, const int vp);
-  
-/*! \brief Return the core id
- * @param vp VP
-*/
-  int sctk_get_core_id (const int vp);
+  hwloc_topology_t sctk_get_topology_object (void);
   
 #ifdef __cplusplus
 }
