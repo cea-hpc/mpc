@@ -71,6 +71,7 @@ typedef struct sctk_ib_rdma_req_s {
   /* remote MPC header */
   sctk_thread_ptp_message_t* dest_msg_header;
   size_t requested_size;
+  sctk_message_type_t message_type;
 } __attribute__ ((packed))
 sctk_ib_rdma_req_t;
 

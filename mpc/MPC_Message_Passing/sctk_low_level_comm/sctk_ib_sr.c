@@ -34,7 +34,7 @@
  *  FUNCTIONS
  *----------------------------------------------------------*/
 sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
-    sctk_ib_qp_t* route_data, sctk_thread_ptp_message_t * msg, size_t size) {
+    sctk_ib_qp_t* route_data, sctk_thread_ptp_message_t * msg, size_t size, int dest_task) {
   sctk_ibuf_t *ibuf;
   sctk_ib_eager_t *eager_header;
   void* body;
@@ -54,10 +54,17 @@ sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
 
   eager_header = IBUF_GET_EAGER_HEADER(ibuf->buffer);
   eager_header->payload_size = size - sizeof(sctk_thread_ptp_message_body_t);
+  eager_header->dest_task = dest_task;
 
   sctk_nodebug("TO SEND: %s %lu to %d", IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer), size - sizeof(sctk_thread_ptp_message_body_t), route_data->rank);
 
   return ibuf;
+}
+
+int sctk_ib_sr_determine_dest_task(sctk_ibuf_t *ibuf) {
+  sctk_ib_eager_t *eager_header;
+  eager_header = IBUF_GET_EAGER_HEADER(ibuf->buffer);
+  return eager_header->dest_task;
 }
 
 void sctk_ib_sr_free_msg_no_recopy(void* arg) {

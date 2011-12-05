@@ -39,12 +39,17 @@
 #include "sctk_ib_toolkit.h"
 #include "math.h"
 
+/* XXX: Modifications required:
+ * - copy in user buffer if the message has already been posted
+ *
+ * */
+
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
 
 int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
-    sctk_route_table_t* route_table, sctk_thread_ptp_message_t * msg, size_t size) {
+    sctk_route_table_t* route_table, sctk_thread_ptp_message_t * msg, size_t size, int dest_task) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
   /* Maximum size for an eager buffer */
@@ -94,6 +99,7 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
     buffered->payload_size = payload_size;
     buffered->copied = msg_copied;
     buffered->nb = buffer_nb;
+    buffered->dest_task = dest_task;
     sctk_ibuf_send_init(ibuf, IBUF_GET_BUFFERED_SIZE + buffer_size);
     sctk_ibuf_set_protocol(ibuf, buffered_protocol);
     msg_copied += payload_size;
@@ -135,6 +141,13 @@ void sctk_ib_buffered_copy(sctk_message_to_copy_t* tmp){
   sctk_net_message_copy_from_buffer(body, tmp, 1);
 }
 
+  int
+sctk_ib_buffered_determine_dest_task(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
+  sctk_ib_buffered_t *buffered;
+  buffered = IBUF_GET_BUFFERED_HEADER(ibuf->buffer);
+
+  return (buffered->dest_task);
+}
 
   void
 sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
@@ -186,7 +199,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     sctk_rebuild_header(&entry->msg);
     sctk_reinit_header(&entry->msg, sctk_ib_buffered_free_msg,
         sctk_ib_buffered_copy);
-  rail->send_message_from_network(&entry->msg);
+    rail->send_message_from_network(&entry->msg);
   }
 }
 #endif

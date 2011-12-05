@@ -40,11 +40,11 @@ static int is_route_finalized = 0;
 #define TABLE_LOCK() if(sctk_route_table_init_lock_needed) sctk_spinlock_write_lock(&sctk_route_table_init_lock);
 #define TABLE_UNLOCK() if(sctk_route_table_init_lock_needed) sctk_spinlock_write_unlock(&sctk_route_table_init_lock);
 
-void sctk_route_dynamic_set_connected(sctk_route_table_t* tmp, int connected){
+void sctk_route_set_connected(sctk_route_table_t* tmp, int connected){
   OPA_store_int(&tmp->connected, connected);
 }
 
-int sctk_route_dynamic_is_connected(sctk_route_table_t* tmp){
+int sctk_route_is_connected(sctk_route_table_t* tmp){
   return (int) OPA_load_int(&tmp->connected);
 }
 
@@ -63,7 +63,7 @@ sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail
     tmp->key.destination = dest;
     tmp->key.rail = rail->rail_number;
     tmp->rail = rail;
-    sctk_route_dynamic_set_connected(tmp, 0);
+    sctk_route_set_connected(tmp, 0);
     HASH_ADD(hh,sctk_dynamic_route_table,key,sizeof(sctk_route_key_t),tmp);
     *added = 1;
   }
@@ -102,6 +102,7 @@ void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* 
   tmp->key.destination = dest;
   tmp->key.rail = rail->rail_number;
   tmp->rail = rail;
+  sctk_route_set_connected(tmp, 1);
 
   sctk_add_static_reorder_buffer(dest);
   TABLE_LOCK();
@@ -125,7 +126,7 @@ sctk_route_table_t* sctk_get_route_to_process_no_route(int dest, sctk_rail_info_
     HASH_FIND(hh,sctk_dynamic_route_table,&key,sizeof(sctk_route_key_t),tmp);
     sctk_spinlock_read_unlock(&sctk_route_table_lock);
     /* If the route is deconnected, we do not use it*/
-    if (tmp && !sctk_route_dynamic_is_connected(tmp)) {
+    if (tmp && !sctk_route_is_connected(tmp)) {
       tmp = NULL;
     }
   }
@@ -152,7 +153,7 @@ struct wait_connexion_args_s {
 void* __wait_connexion(void* a) {
   struct wait_connexion_args_s *args = (struct wait_connexion_args_s*) a;
 
-  if (sctk_route_dynamic_is_connected(args->route_table) == 1)
+  if (sctk_route_is_connected(args->route_table))
     args->done = 1;
 }
 
@@ -163,25 +164,34 @@ sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail){
   process = sctk_get_process_rank_from_task_rank(dest);
   if (rail->on_demand) {
     tmp = sctk_get_route_to_process_no_route(process,rail);
+    sctk_nodebug("Trying to connect to process %d (task:%d remote:%p)", process, dest, tmp);
     if (tmp == NULL) {
       tmp = sctk_ib_cm_on_demand_request(process,rail);
       assume(tmp);
       /* If route not connected, so we wait for until it is connected */
-      sctk_nodebug("Trying to connect to process %d (remote:%p)", process, tmp);
-      if (sctk_route_dynamic_is_connected(tmp) == 0) {
-        struct wait_connexion_args_s args;
-        args.route_table = tmp;
-        args.done = 0;
-        sctk_thread_wait_for_value_and_poll((int*) &args.done, 1,
-            (void (*)(void*)) __wait_connexion, &args);
-      }
-      sctk_nodebug("Cconnected to process %d", process);
     }
+
+    if (sctk_route_is_connected(tmp) == 0) {
+      struct wait_connexion_args_s args;
+      args.route_table = tmp;
+      args.done = 0;
+      sctk_thread_wait_for_value_and_poll((int*) &args.done, 1,
+          (void (*)(void*)) __wait_connexion, &args);
+      assume(sctk_route_is_connected(tmp));
+    }
+    sctk_nodebug("Connected to process %d (task:%d)", process, dest);
+//    tmp = sctk_get_route_to_process_no_route(process,rail);
+//    if (!tmp) {
+//      sctk_error("Could not find dest task %d", dest);
+//      assume(tmp);
+//    }
+
+    sctk_nodebug("Connected to process %d (task:%d", process, dest);
+    return tmp;
+  } else {
+    tmp = sctk_get_route_to_process(process,rail);
+    return tmp;
   }
-
-  tmp = sctk_get_route_to_process(process,rail);
-
-  return tmp;
 }
 
 void sctk_route_set_rail_nb(int i){

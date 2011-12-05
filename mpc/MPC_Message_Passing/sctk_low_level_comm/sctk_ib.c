@@ -55,11 +55,11 @@ void sctk_ib_add_dynamic_route(int dest, sctk_route_table_t *tmp){
 }
 
 void sctk_ib_route_dynamic_set_connected(sctk_route_table_t *tmp, int connected){
-  sctk_route_dynamic_set_connected(tmp, connected);
+  sctk_route_set_connected(tmp, connected);
 }
 
 int sctk_ib_route_dynamic_is_connected(sctk_route_table_t *tmp){
-  return sctk_route_dynamic_is_connected(tmp);
+  return sctk_route_is_connected(tmp);
 }
 
 sctk_route_table_t *

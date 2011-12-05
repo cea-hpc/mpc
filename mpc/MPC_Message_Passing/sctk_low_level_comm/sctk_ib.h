@@ -35,6 +35,7 @@ extern "C"
   struct sctk_ib_config_s;
   struct sctk_ib_device_s;
   struct sctk_ib_qp_s;
+  struct sctk_ib_cp_s;
   struct sctk_thread_ptp_message_s;
   struct sctk_rail_info_s;
   struct sctk_message_to_copy_s;
@@ -45,6 +46,9 @@ extern "C"
     struct sctk_ib_mmu_s    *mmu;
     struct sctk_ib_config_s *config;
     struct sctk_ib_device_s *device;
+    struct sctk_ib_prof_s   *profiler;
+    /* Collaborative polling */
+    struct sctk_ib_cp_s *cp;
     /* HashTable where all QPs are stored */
     struct sctk_ib_qp_s *qps;
   } sctk_ib_rail_info_t;
@@ -85,6 +89,7 @@ extern "C"
         struct sctk_reorder_table_s* reorder_table;
         struct sctk_ib_buffered_entry_s* entry;
         struct sctk_rail_info_s* rail;
+        int ready;
       } buffered;
       struct {
         size_t requested_size;
@@ -101,7 +106,7 @@ extern "C"
           void  *aligned_addr;
           size_t aligned_size;
           /* Local structure ready to be read */
-          int ready;
+          volatile int ready;
         } local;
         /* Remote structure */
         struct {

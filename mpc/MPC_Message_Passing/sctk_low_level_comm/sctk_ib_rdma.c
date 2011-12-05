@@ -139,6 +139,8 @@ sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
   rdma_req    = IBUF_GET_RDMA_REQ(ibuf->buffer);
   rdma_req->requested_size = size - sizeof(sctk_thread_ptp_message_body_t);
   rdma_req->dest_msg_header = msg;
+  /* Register the type of the message */
+  rdma_req->message_type = msg->tail.message_type;
 
   /* Initialization of the msg header */
   memcpy(&rdma_req->msg_header, msg, sizeof(sctk_thread_ptp_message_body_t));
@@ -259,7 +261,6 @@ static void sctk_ib_rdma_prepare_recv_zerocopy(sctk_rail_info_t* rail, sctk_thre
 
 static void sctk_ib_rdma_prepare_recv_recopy(sctk_rail_info_t* rail, sctk_thread_ptp_message_t* msg) {
   sctk_ib_msg_header_t *send_header;
-  sctk_ib_qp_t *remote;
   size_t page_size;
 
   page_size = getpagesize();
@@ -318,25 +319,30 @@ void sctk_ib_rdma_net_copy(sctk_message_to_copy_t* tmp){
       send_header->rdma.local.status       = zerocopy;
       sctk_nodebug("Zerocopy. (Send:%p Recv:%p)", send, recv);
       sctk_ib_rdma_prepare_recv_zerocopy(send_header->rdma.rail, send);
-
+      sctk_ib_rdma_send_ack(send_header->rdma.rail, send);
+      send_header->rdma.copy_ptr = tmp;
+      send_header->rdma.local.ready = 1;
     } else { /* not contiguous message */
       send_header->rdma.local.status       = recopy;
       sctk_ib_rdma_prepare_recv_recopy(send_header->rdma.rail, send);
       sctk_nodebug("Msg %p recopied from buffer %p", tmp->msg_send, send_header->rdma.local.addr);
+      send_header->rdma.copy_ptr = tmp;
+      sctk_ib_rdma_send_ack(send_header->rdma.rail, send);
+      send_header->rdma.local.ready = 1;
     }
+#if 0
+    else not_reachable();
+#endif
 
     sctk_nodebug("Copy_ptr: %p (free:%p, ptr:%p)", tmp, send->tail.free_memory,
         send_header->rdma.local.addr);
-    send_header->rdma.copy_ptr = tmp;
-    sctk_ib_rdma_send_ack(send_header->rdma.rail, send);
     /* XXX: Check if the size requested is the size of the message posted */
     // assume(send_header->rdma.requested_size == msg->tail.ib.rdma.size_remote);
-  } else {
-    assume(0);
-    sctk_nodebug("Message recopy");
-    sctk_net_message_copy_from_buffer(send_header->rdma.local.addr, tmp, 0);
-    sctk_spinlock_unlock(&send_header->rdma.lock);
-  }
+  } else if (send_header->rdma.local.status == recopy) {
+      send_header->rdma.copy_ptr = tmp;
+      send_header->rdma.local.ready = 1;
+  } else not_reachable();
+  sctk_spinlock_unlock(&send_header->rdma.lock);
 }
 
 /*-----------------------------------------------------------
@@ -374,7 +380,6 @@ sctk_ib_rdma_recv_ack(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
 static inline sctk_thread_ptp_message_t *
 sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ib_rdma_req_t *rdma_req) {
   sctk_thread_ptp_message_t *msg;
-  sctk_ib_rdma_status_t status;
   sctk_route_table_t* route;
 
   msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
@@ -398,6 +403,18 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ib_rdma_req_t *rdma_req) {
   msg->tail.ib.rdma.route_table = route;
   msg->tail.ib.rdma.local.addr  = NULL;
   msg->tail.ib.rdma.remote.msg_header = rdma_req->dest_msg_header;
+  msg->tail.ib.rdma.local.ready = 0;
+
+  /* XXX: If the message is not contiguous, we allocate a tmp buffer.
+   * XXX: message_type not in body */
+#if 0
+  sctk_debug("Message type: %d", rdma_req->message_type);
+  if (rdma_req->message_type != sctk_message_contiguous) {
+    msg->tail.ib.rdma.local.status       = recopy;
+    sctk_ib_rdma_prepare_recv_recopy(rail, msg);
+    sctk_ib_rdma_send_ack(rail, msg);
+  }
+#endif
 
   /* Send message to MPC. The message can be matched at the end
    * of function. */
@@ -438,11 +455,12 @@ sctk_ib_rdma_recv_done_remote(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   rdma_done = IBUF_GET_RDMA_DONE(ibuf->buffer);
   dest_msg_header = rdma_done->dest_msg_header;
 
+  sctk_thread_wait_for_value((int*) &dest_msg_header->tail.ib.rdma.local.ready, 1);
+
   send = dest_msg_header->tail.ib.rdma.copy_ptr->msg_send;
   recv = dest_msg_header->tail.ib.rdma.copy_ptr->msg_recv;
 
   sctk_nodebug("msg: %p - Rail: %p (%p-%p) copy_ptr:%p (send:%p recv:%p)", dest_msg_header, rail, ibuf, rdma_done, dest_msg_header->tail.ib.rdma.copy_ptr, send, recv);
-
 
   /* If recopy, we delete the temporary msg copy */
   sctk_nodebug("MSG DONE REMOTE %p ", dest_msg_header);

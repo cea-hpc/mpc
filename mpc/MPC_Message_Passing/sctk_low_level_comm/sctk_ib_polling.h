@@ -32,8 +32,18 @@
 #include "sctk_pmi.h"
 #include "utlist.h"
 
+typedef struct sctk_ib_polling_s{
+  int recv_found_own;
+  int recv_found_other;
+
+  int send_found_own;
+  int send_found_other;
+} sctk_ib_polling_t;
+
+#define POLL_INIT(x) memset((x), 0, sizeof(sctk_ib_polling_t));
+
 int sctk_ib_cq_poll(struct sctk_rail_info_s* rail,
-    struct ibv_cq *cq, const int poll_nb, int (*ptr_func)(struct sctk_rail_info_s* rail, struct ibv_wc*));
+    struct ibv_cq *cq, const int poll_nb, struct sctk_ib_polling_s *poll, int (*ptr_func)(struct sctk_rail_info_s* rail, struct ibv_wc*, struct sctk_ib_polling_s *poll));
 
 void
 sctk_ib_polling_check_wc(struct sctk_ib_rail_info_s* rail_ib,

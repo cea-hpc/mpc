@@ -38,6 +38,7 @@
 #include "sctk_ib_async.h"
 #include "sctk_ib_rdma.h"
 #include "sctk_ib_buffered.h"
+#include "sctk_ib_cp.h"
 
 static void
 sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
@@ -48,12 +49,13 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   sctk_ib_qp_t *remote;
   sctk_ibuf_t *ibuf;
   size_t size;
+  int dest_task;
 
   sctk_nodebug("send message through rail %d",rail->rail_number);
+  dest_task =  msg->sctk_msg_get_glob_destination;
 
   if( msg->body.header.specific_message_tag == process_specific_message_tag) {
     tmp = sctk_get_route_to_process(msg->sctk_msg_get_destination,rail);
-    sctk_nodebug("Sending message to %d (process_destk:%d,process_src;%d,number:%d) (%p)", remote->rank, msg->sctk_msg_get_destination, msg->sctk_msg_get_source,msg->sctk_msg_get_message_number, tmp);
   } else {
     tmp = sctk_get_route(msg->sctk_msg_get_glob_destination,rail);
   }
@@ -64,17 +66,17 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
 
   if (size+IBUF_GET_EAGER_SIZE < config->ibv_eager_limit)  {
-    ibuf = sctk_ib_sr_prepare_msg(rail_ib, remote, msg, size);
+    ibuf = sctk_ib_sr_prepare_msg(rail_ib, remote, msg, size,dest_task);
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
     sctk_complete_and_free_message(msg);
   } else if (size+IBUF_GET_BUFFERED_SIZE < config->ibv_frag_eager_limit)  {
+    sctk_nodebug("Sending message to %d (process_destk:%d,process_src;%d,number:%d) (%p)", remote->rank, msg->sctk_msg_get_destination, msg->sctk_msg_get_source,msg->sctk_msg_get_message_number, tmp);
     /* Fallback to RDMA if buffered not available */
-    if (sctk_ib_buffered_prepare_msg(rail, tmp, msg, size) == 1) goto rdma;
+    if (sctk_ib_buffered_prepare_msg(rail, tmp, msg, size,dest_task) == 1) goto rdma;
     sctk_complete_and_free_message(msg);
   } else {
 rdma:
-    /* XXX: Check if size is correct. Seems OK */
     ibuf = sctk_ib_rdma_prepare_req(rail, tmp, msg, size);
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
@@ -89,25 +91,44 @@ static int __is_specific_mesage_tag(sctk_thread_ptp_message_body_t *msg)
   return 0;
 }
 
-static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc)
+#define CHECK_CP() do {\
+  if (dest_task >= 0 && (steal > 0) && !from_cp &&  \
+        sctk_ib_cp_handle_message(rail, ibuf, dest_task) == 1){  \
+      poll->recv_found_other++;               \
+      return 1;                   \
+  } else  poll->recv_found_own++; \
+} while(0)
+
+static int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
+    const char from_cp, struct sctk_ib_polling_s* poll)
 {
-  sctk_ibuf_t *ibuf = NULL;
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  LOAD_CONFIG(rail_ib);
+  int steal = config->ibv_steal;
   sctk_thread_ptp_message_t * msg = NULL;
   sctk_thread_ptp_message_body_t * msg_ibuf = NULL;
   sctk_route_table_t* tmp;
   int release_ibuf = 1;
   int recopy = 1;
   int ondemand = 0;
+  int dest_task;
 
-  ibuf = (sctk_ibuf_t*) wc->wr_id;
-  assume(ibuf);
+  sctk_nodebug("Poll ibuf:%p from_cp:%c", ibuf, '0'+from_cp);
+
   sctk_nodebug("Recv ibuf:%p (len:%lu)", ibuf, wc->byte_len);
 
   /* Switch on the protocol of the received message */
   switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
     case eager_protocol:
       msg_ibuf = IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer);
-      msg = msg_ibuf;
+      dest_task = sctk_ib_sr_determine_dest_task(ibuf);
+
+      /* XXX: Check if the Collaborative polling is activated and handle
+       * the message
+       * - dest_task can be equal to -1
+       * - If the message is from CP, do not handle it*/
+      CHECK_CP();
+
       if (__is_specific_mesage_tag(msg_ibuf)) {
         recopy = 1;
         ondemand = sctk_ib_cm_on_demand_recv_check(msg_ibuf);
@@ -122,7 +143,7 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc)
           rail->send_message_from_network(msg);
         }
       } else {
-        recopy = 1;
+        recopy = 0;
         msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
         sctk_ib_sr_recv_free(rail, msg, ibuf, recopy);
         rail->send_message_from_network(msg);
@@ -136,6 +157,8 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc)
       break;
 
     case buffered_protocol:
+      dest_task = sctk_ib_buffered_determine_dest_task(rail, ibuf);
+      CHECK_CP();
       sctk_nodebug("Buffered protocol");
       sctk_ib_buffered_poll_recv(rail, ibuf);
       release_ibuf = 1;
@@ -162,9 +185,18 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc)
   return 0;
 }
 
-static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc)
-{
 
+static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc,
+    struct sctk_ib_polling_s *poll){
+  sctk_ibuf_t *ibuf = NULL;
+
+  ibuf = (sctk_ibuf_t*) wc->wr_id;
+  assume(ibuf);
+  return sctk_network_poll_recv_ibuf(rail, ibuf, 0, poll);
+}
+
+static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,
+    struct sctk_ib_polling_s *poll){
   sctk_ibuf_t *ibuf = NULL;
   int release_ibuf = 1;
 
@@ -200,46 +232,65 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc)
 }
 
 
-static void sctk_network_poll_all (sctk_rail_info_t* rail) {
+static int sctk_network_poll_all (sctk_rail_info_t* rail) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
   LOAD_DEVICE(rail_ib);
+  int steal = config->ibv_steal;
+  sctk_ib_polling_t poll;
+  POLL_INIT(&poll);
+
+  /* First try to poll pending */
+  if (steal > 0)
+    sctk_ib_cp_poll(rail, &poll, sctk_network_poll_recv_ibuf);
 
   /* Poll received messages */
-  sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, sctk_network_poll_recv);
+  sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, &poll, sctk_network_poll_recv);
   /* Poll sent messages */
-  sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, sctk_network_poll_send);
+  sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, &poll, sctk_network_poll_send);
 
+  return poll.recv_found_own;
 }
 
 static void
 sctk_network_notify_recv_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
   /* POLLING */
-  sctk_network_poll_all(rail);
+//  sctk_network_poll_all(rail);
 }
 
 static void
 sctk_network_notify_matching_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
   /* POLLING */
-  sctk_network_poll_all(rail);
+//  sctk_network_poll_all(rail);
 }
 
 static void
 sctk_network_notify_perform_message_ib (int remote,sctk_rail_info_t* rail){
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+
   /* POLLING */
   sctk_network_poll_all(rail);
 }
 
 static void
 sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  LOAD_CONFIG(rail_ib);
+  int steal = config->ibv_steal;
+  sctk_ib_polling_t poll;
+  POLL_INIT(&poll);
+
   /* POLLING */
-  sctk_network_poll_all(rail);
+  if (sctk_network_poll_all(rail)==0 && steal > 1){
+    /* If no message has been found -> steal*/
+    sctk_ib_cp_steal(rail, &poll, sctk_network_poll_recv_ibuf);
+  }
 }
 
 static void
 sctk_network_notify_any_source_message_ib (sctk_rail_info_t* rail){
   /* POLLING */
-  sctk_network_poll_all(rail);
+//  sctk_network_poll_all(rail);
 }
 
 static void
@@ -286,10 +337,12 @@ void sctk_network_init_ib(sctk_rail_info_t* rail){
   rail->notify_perform_message = sctk_network_notify_perform_message_ib;
   rail->notify_idle_message = sctk_network_notify_idle_message_ib;
   rail->notify_any_source_message = sctk_network_notify_any_source_message_ib;
-  rail->network_name = "IB";
+  rail->network_name = "IB-MT(v2.0)";
 
   /* Infiniband Init */
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  /* Profiler init */
+  sctk_ib_prof_init(rail_ib);
   sctk_ib_device_t *device;
   struct ibv_srq_init_attr srq_attr;
   /* Open config */
@@ -312,6 +365,8 @@ void sctk_network_init_ib(sctk_rail_info_t* rail){
   sctk_ibuf_srq_check_and_post(rail_ib, rail_ib->config->ibv_max_srq_ibufs);
   /* Initialize Async thread */
   sctk_ib_async_init(rail_ib);
+  /* Initialize collaborative polling */
+  sctk_ib_cp_init(rail_ib);
 
   /* Initialize network */
   sctk_network_init_ib_all(rail, rail->route, rail->route_init);
