@@ -85,6 +85,7 @@ extern "C"
         struct sctk_reorder_table_s* reorder_table;
         struct sctk_ib_buffered_entry_s* entry;
         struct sctk_rail_info_s* rail;
+        int ready;
       } buffered;
       struct {
         size_t requested_size;
@@ -101,7 +102,7 @@ extern "C"
           void  *aligned_addr;
           size_t aligned_size;
           /* Local structure ready to be read */
-          int ready;
+          volatile int ready;
         } local;
         /* Remote structure */
         struct {

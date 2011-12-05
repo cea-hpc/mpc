@@ -286,7 +286,7 @@ void sctk_network_init_ib(sctk_rail_info_t* rail){
   rail->notify_perform_message = sctk_network_notify_perform_message_ib;
   rail->notify_idle_message = sctk_network_notify_idle_message_ib;
   rail->notify_any_source_message = sctk_network_notify_any_source_message_ib;
-  rail->network_name = "IB";
+  rail->network_name = "IB-MT(v2.0)";
 
   /* Infiniband Init */
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
