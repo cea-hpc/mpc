@@ -169,6 +169,7 @@ typedef struct mpcomp_node_s mpcomp_node_t;
 **********************/
 void __mpcomp_instance_init(mpcomp_instance_t *instance, int nb_mvps);
 void __mpcomp_thread_init(mpcomp_thread_t *t);
+void __mpcomp_barrier(mpcomp_mvp_t *mvp);
 void *mpcomp_slave_mvp_node(void *arg);
 void *mpcomp_slave_mvp_leaf(void *arg);
 void in_order_scheduler(mpcomp_mvp_t *mvp);
@@ -233,7 +234,7 @@ inline void __mpcomp_read_env_variables()
       if ( ok ) {
 	int chunk_size = 0 ;
 	/* Check for chunk size, if present */
-	sctk_debug( "Remaining string for schedule: <%s>", &env[offset] ) ;
+	sctk_nodebug( "Remaining string for schedule: <%s>", &env[offset] ) ;
 	switch( env[offset] ) {
 	  case ',':
 	    sctk_nodebug( "There is a chunk size -> <%s>", &env[offset+1] ) ;
@@ -400,88 +401,13 @@ void *mpcomp_slave_mvp_node (void *arg)
      /* Run */
      in_order_scheduler(mvp);
 
-     /*Barrier to wait for the other microVPs*/
-     volatile mpcomp_node_t *c;
-     c = mvp->father;
-
-     /* Step 1: Climb in the tree */
-     volatile long b_done;
-     b_done = c->barrier_done;
-
-     volatile int b;
-
-     sctk_spinlock_lock(&(c->lock));
-     b = c->barrier;
-     b++;
-     c->barrier = b;
-     sctk_spinlock_unlock(&(c->lock));
-
-
-     while ((b == c->barrier_num_threads) && (c->father != NULL)) {
-        c->barrier = 0;
-        c = c->father;
-
-        sctk_spinlock_lock(&(c->lock));
-        b = c->barrier;
-        b++;
-        c->barrier = b;
-        sctk_spinlock_unlock(&(c->lock));
-     }
-
-     /* Step 2: Wait for the barrier to be done */
-     if (c->father != NULL) {
-       /* Wait for c->barrier == c->barrier_num_threads */ 
-       sctk_nodebug("mpcomp_slave_mvp_node: if thread %d",mvp->rank);
-       while (b_done == c->barrier_done) {
-          sctk_thread_yield();
-       }
-     }
-     else {
-       /* TODO: not sure that we need that. If we do need it, maybe we need to lock */
-       sctk_nodebug("mpcomp_slave_mvp_node: else thread %d",mvp->rank);
-       c->barrier_done++;
-       c->barrier = 0;
-     }
-
-     /* Step 3: Go down in the tree to wake up the children */
-     while (c->child_type != CHILDREN_LEAF) {
-         sctk_nodebug("mpcomp_slave_mvp_node: step3 thread %d",mvp->rank);
-         c = c->children.node[mvp->tree_rank[c->depth]];
-         c->barrier_done++;
-     }
-
-#if 0
-     mpcomp_node_t *c;
-     int b;
-
-     c = mvp->father;
-
-     sctk_spinlock_lock(&(c->lock));
+     /* Barrier to wait for the other microVPs */
+     __mpcomp_barrier(mvp);
 #if defined (SCTK_USE_OPTIMIZED_TLS)
 	  sctk_tls_module = info->tls_module;
 	  sctk_context_restore_tls_module_vp() ;
 #endif
 
-     b = c->barrier;
-     b++;
-     c->barrier = b;
-
-     sctk_spinlock_unlock(&(c->lock));
-
-     /* TODO: Didn't understand that barrier */
-     while ((b == c->barrier_num_threads || b == c->nb_children) && c->father != NULL) {
-        c->barrier = 0;
-	c = c->father;
-
-	sctk_spinlock_lock(&(c->lock));
-
-        b = c->barrier;
-        b++;
-        c->barrier = b;
-
-	sctk_spinlock_unlock(&(c->lock));
-     }
-#endif
      sctk_nodebug("node val %d out of %d", b, c->barrier_num_threads);
 
 TODO("to translate")
@@ -552,87 +478,10 @@ void *mpcomp_slave_mvp_leaf (void *arg)
      /* Run */
      in_order_scheduler(mvp);
 
-     /*Barrier to wait for the other microVPs*/
-     volatile mpcomp_node_t *c;
-     c = mvp->father;
-
-     /* Step 1: Climb in the tree */
-     volatile long b_done;
-     b_done = c->barrier_done;
-
-     volatile int b;
-
-     sctk_spinlock_lock(&(c->lock));
-     b = c->barrier;
-     b++;
-     c->barrier = b;
-     sctk_spinlock_unlock(&(c->lock));
-
-     while ((b == c->barrier_num_threads) && (c->father != NULL)) {
-        c->barrier = 0;
-        c = c->father;
-
-        sctk_spinlock_lock(&(c->lock));
-        b = c->barrier;
-        b++;
-        c->barrier = b;
-        sctk_spinlock_unlock(&(c->lock));
-     }
-
-     /* Step 2: Wait for the barrier to be done */
-     if (c->father != NULL) {
-       /* Wait for c->barrier == c->barrier_num_threads */ 
-       sctk_nodebug("mpcomp_slave_mvp_leaf: if thread %d",mvp->rank);
-       while (b_done == c->barrier_done) {
-          sctk_thread_yield();
-       }
-     }
-     else {
-       /* TODO: not sure that we need that. If we do need it, maybe we need to lock */
-       sctk_nodebug("mpcomp_slave_mvp_leaf: else thread %d",mvp->rank);
-       c->barrier_done++;
-       c->barrier = 0;
-     }
-
-     /* Step 3: Go down in the tree to wake up the children */
-     while (c->child_type != CHILDREN_LEAF) {
-         sctk_nodebug("mpcomp_slave_mvp_leaf: step3 thread %d",mvp->rank);
-         c = c->children.node[mvp->tree_rank[c->depth]];
-         c->barrier_done++;
-     }
-
-#if 0
-     mpcomp_node_t *c;
-     int b;
-
-     c = mvp->father;
-
-     sctk_spinlock_lock(&(c->lock));
-
-     b = c->barrier;
-     b++;
-     c->barrier = b;
-
-     sctk_spinlock_unlock(&(c->lock));
-
-     /* TODO: Didn't understand that barrier */
-     while (b == c->barrier_num_threads && c->father != NULL) {
-        c->barrier = 0;
-	c = c->father;
-
-	sctk_spinlock_lock(&(c->lock));
-
-        b = c->barrier;
-        b++;
-        c->barrier = b;
-
-	sctk_spinlock_unlock(&(c->lock));
-     }
-#endif
-
+     /* Barrier to wait for the other microVPs */
+     __mpcomp_barrier(mvp);
 
    }
-
 
    return NULL;
 }
@@ -787,7 +636,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 
 	      switch (flag_level) {
 	         case 0: /* Root */
-	           sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d", current_mvp, target_vp, i, i);
+	           sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d. Spinning on NUMA node %d", current_mvp, target_vp, i, i);
 	           instance->mvps[current_mvp]->to_run = root;
 
 	           res = sctk_user_thread_create(&(instance->mvps[current_mvp]->pid), &__attr,
@@ -798,7 +647,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	           break;
 
 	         case 1: /* Numa */
-	           sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d", current_mvp, target_vp, i, i);
+	           sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d. Spinning on NUMA node %d", current_mvp, target_vp, i, i);
 	           instance->mvps[current_mvp]->to_run = root->children.node[i];
 
 	           res = sctk_user_thread_create(&(instance->mvps[current_mvp]->pid), &__attr,
@@ -809,7 +658,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	           break;
 
 	         case 2: /* MicroVP */
-	           sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d", current_mvp, target_vp, i, i);
+	           sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d. Spinning on NUMA node %d", current_mvp, target_vp, i, i);
 
 	           res = sctk_user_thread_create(&(instance->mvps[current_mvp]->pid), &__attr,
 					mpcomp_slave_mvp_leaf,
@@ -1015,96 +864,8 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
     /* Start scheduling */
     in_order_scheduler(instance->mvps[0]);
 
-    /*Barrier to wait for the other microVPs*/
-    volatile mpcomp_node_t *c;
-    c = instance->mvps[0]->father;
-
-    /* Step 1: Climb in the tree */
-    volatile long b_done;
-    b_done = c->barrier_done;
-
-    volatile int b;
-
-    sctk_spinlock_lock(&(c->lock));
-    b = c->barrier;
-    b++;
-    c->barrier = b;
-    sctk_spinlock_unlock(&(c->lock));
-
-    while ((b == c->barrier_num_threads) && (c->father != NULL)) {
-        c->barrier = 0;
-        c = c->father;
-
-        sctk_spinlock_lock(&(c->lock));
-        b = c->barrier;
-        b++;
-        c->barrier = b;
-        sctk_spinlock_unlock(&(c->lock));
-    }
-
-    /* Step 2: Wait for the barrier to be done */
-    if (c->father != NULL) {
-      /* Wait for c->barrier == c->barrier_num_threads */ 
-      sctk_nodebug("mpcomp_start_parallel: if thread %d",instance->mvps[0]->rank);
-      while (b_done == c->barrier_done) {
-         sctk_thread_yield();
-      }
-    }
-    else {
-      /* TODO: not sure that we need that. If we do need it, maybe we need to lock */
-      sctk_nodebug("mpcomp_start_parallel: else thread %d",instance->mvps[0]->rank);
-      c->barrier_done++;
-      c->barrier = 0;
-    }
-
-    /* Step 3: Go down in the tree to wake up the children */
-    while (c->child_type != CHILDREN_LEAF) {
-        sctk_nodebug("mpcomp_start_parallel: step3 thread %d",instance->mvps[0]->rank);
-        c = c->children.node[instance->mvps[0]->tree_rank[c->depth]];
-        c->barrier_done++;
-    }
-
-#if 0
-    mpcomp_node_t *c;
-    c = instance->mvps[0]->father;
-
-    int b;
-
-    sctk_nodebug("__mpcomp_start_parallel_region: Entering the implicit final barrier");
-
-    sctk_spinlock_lock(&(c->lock));
-
-    b = c->barrier;
-    b++;
-    c->barrier = b;
-
-    sctk_spinlock_unlock(&(c->lock));
-
-    while(b == c->barrier_num_threads && c->father != NULL) {
-       c->barrier = 0;
-       c = c->father;
-
-       sctk_spinlock_lock(&(c->lock));
-  
-       b = c->barrier;
-       b++;
-       c->barrier = b;
-  
-       sctk_spinlock_unlock(&(c->lock));
-    }
-
-    sctk_nodebug("mpcomp_start_parallel_region: thread %d before root barrier",instance->mvps[0]->rank);    
-
-    b = root->barrier;
-
-    sctk_nodebug("__mpcomp_start_parallel_region: Master waiting on the root node from %d to %d",b,root->barrier_num_threads);
-
-    while(b != root->barrier_num_threads) {
-       sctk_thread_yield();
-       b = root->barrier;
-    }
-    root->barrier = 0;
-#endif
+    /* Barrier to wait for the other microVPs */
+    __mpcomp_barrier(instance->mvps[0]);
 
     /* Restore the previous OpenMP info */
     sctk_openmp_thread_tls = t;
@@ -1113,6 +874,63 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
   else {
     fprintf(stderr,"Nesting in not implemented.");
   }
+}
+
+
+/*
+   Implicit barrier
+*/
+void __mpcomp_barrier(mpcomp_mvp_t *mvp)
+{
+
+     /*Barrier to wait for the other microVPs*/
+     volatile mpcomp_node_t *c;
+     c = mvp->father;
+
+     /* Step 1: Climb in the tree */
+     volatile long b_done;
+     b_done = c->barrier_done;
+
+     volatile int b;
+
+     sctk_spinlock_lock(&(c->lock));
+     b = c->barrier;
+     b++;
+     c->barrier = b;
+     sctk_spinlock_unlock(&(c->lock));
+
+     while ((b == c->barrier_num_threads) && (c->father != NULL)) {
+        c->barrier = 0;
+        c = c->father;
+
+        sctk_spinlock_lock(&(c->lock));
+        b = c->barrier;
+        b++;
+        c->barrier = b;
+        sctk_spinlock_unlock(&(c->lock));
+     }
+
+     /* Step 2: Wait for the barrier to be done */
+     if (c->father != NULL) {
+       /* Wait for c->barrier == c->barrier_num_threads */ 
+       sctk_nodebug("mpcomp_barrier: if thread %d",mvp->rank);
+       while (b_done == c->barrier_done) {
+          sctk_thread_yield();
+       }
+     }
+     else {
+       /* TODO: not sure that we need that. If we do need it, maybe we need to lock */
+       sctk_nodebug("mpcomp_barrier: else thread %d",mvp->rank);
+       c->barrier_done++;
+       c->barrier = 0;
+     }
+
+     /* Step 3: Go down in the tree to wake up the children */
+     while (c->child_type != CHILDREN_LEAF) {
+         sctk_nodebug("mpcomp_barrier: step3 thread %d",mvp->rank);
+         c = c->children.node[mvp->tree_rank[c->depth]];
+         c->barrier_done++;
+     }
 }
 
 /*
@@ -1124,11 +942,9 @@ void in_order_scheduler (mpcomp_mvp_t *mvp)
 
   sctk_nodebug("in_order_scheduler: Starting to schedule %d thread(s) with rank %d", mvp->nb_threads, mvp->rank);
 
-
   /* TODO: handle out of order */
   for (i=0 ; i<mvp->nb_threads ; i++) {
     sctk_openmp_thread_tls = &mvp->threads[i];
-    sctk_nodebug("in_order_scheduler: func %p shared %p",mvp->func,mvp->shared);
     mvp->func(mvp->shared);
     mvp->threads[i].done = 1;
   }

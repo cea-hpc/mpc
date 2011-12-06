@@ -981,7 +981,7 @@ mpcomp_fork_when_blocked (sctk_microthread_vp_t * self, long step)
    This barrier uses some optimizations for threads inside the same microVP.
  */
 void
-__mpcomp_barrier (void)
+__rename_mpcomp_barrier (void)
 {
 
   mpcomp_thread_info_t *info;

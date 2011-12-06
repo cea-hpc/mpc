@@ -68,7 +68,7 @@ extern "C"
    ->
    __mpcomp_barrier() ;
  */
-  void __mpcomp_barrier (void);
+  void __rename_mpcomp_barrier (void);
 
 /*
    CRITICAL construct
