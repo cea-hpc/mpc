@@ -543,8 +543,233 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
   flag_level = 0;
 
   switch (sctk_get_cpu_number()) {
-	case 32: /* NUMA tree */
-#if 1
+	case 8: 
+#if 1  /* NUMA tree 8 cores */
+#warning "OpenMp compiling w/ NUMA tree 8 cores"	    
+	  root->father = NULL;
+	  root->rank = -1;
+	  root->depth = 0;
+	  root->nb_children = 2;
+	  root->child_type = CHILDREN_NODE;
+	  root->lock = SCTK_SPINLOCK_INITIALIZER;
+	  root->slave_running[0] = 0;
+	  root->slave_running[1] = 0;
+	  root->barrier = 0;
+	  root->barrier_done = 0;
+	  root->children.node = (mpcomp_node_t **)sctk_malloc(root->nb_children*sizeof(mpcomp_node_t *));
+	  sctk_assert(root->children.node != NULL);
+
+	  for (i=0 ; i<root->nb_children ; i++) {
+	    mpcomp_node_t *n;
+	    int j;
+
+	    if (flag_level == -1) flag_level = 1;
+
+	    n = (mpcomp_node_t *)sctk_malloc_on_node(sizeof(mpcomp_node_t),i);
+	    sctk_assert(n != NULL);
+
+	    root->children.node[i] = n;
+
+	    n->father = root;
+	    n->rank = i;
+	    n->depth = 1;
+	    n->nb_children = 4;
+	    n->child_type = CHILDREN_LEAF;
+	    n->lock = SCTK_SPINLOCK_INITIALIZER;
+	    n->slave_running[0] = 0;
+	    n->slave_running[1] = 0;
+	    n->barrier = 0;
+	    n->barrier_done = 0;
+	    n->children.leaf = (mpcomp_mvp_t **)sctk_malloc_on_node(n->nb_children*sizeof(mpcomp_mvp_t *),i);
+
+	    for (j=0 ; j<n->nb_children ; j++) {
+	      /* These are leaves -> create the microVP */
+	      int target_vp;
+
+	      target_vp = order[4*i+j];
+
+	      if (flag_level == -1) flag_level = 2;
+
+	      /* Allocate memory on the right NUMA node */
+	      instance->mvps[current_mvp] = (mpcomp_mvp_t *)sctk_malloc_on_node(sizeof(mpcomp_mvp_t),i);
+
+	      /* Get the set of registers */
+	      sctk_getcontext(&(instance->mvps[current_mvp]->vp_context));
+
+	      /* Initialize the corresponding microVP. all but tree-related variables */
+	      instance->mvps[current_mvp]->nb_threads = 0;
+	      instance->mvps[current_mvp]->next_nb_threads = 0;
+	      instance->mvps[current_mvp]->rank = current_mvp;
+	      instance->mvps[current_mvp]->enable = 1;
+	      instance->mvps[current_mvp]->region_id = 0;
+	      instance->mvps[current_mvp]->tree_rank = (int *)sctk_malloc_on_node(2*sizeof(int),i);
+	      sctk_assert(instance->mvps[current_mvp]->tree_rank != NULL);
+	      instance->mvps[current_mvp]->tree_rank[0] = n->rank;
+	      instance->mvps[current_mvp]->tree_rank[1] = j;
+	      instance->mvps[current_mvp]->root = root;
+	      instance->mvps[current_mvp]->father = n;
+
+	      n->children.leaf[j] = instance->mvps[current_mvp];
+
+	      sctk_thread_attr_t __attr;
+	      size_t stack_size;
+	      int res;
+
+	      sctk_thread_attr_init(&__attr);
+
+	      sctk_thread_attr_setbinding(&__attr,target_vp);
+
+	      if (sctk_is_in_fortran == 1)
+	         stack_size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
+	      else
+	         stack_size = SCTK_ETHREAD_STACK_SIZE;
+
+	      sctk_thread_attr_setstacksize(&__attr,stack_size);
+
+	      switch (flag_level) {
+	         case 0: /* Root */
+	           sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d. Spinning on root", current_mvp, target_vp, i);
+	           instance->mvps[current_mvp]->to_run = root;
+	           break;
+
+	         case 1: /* Numa */
+	           sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d. Spinning on NUMA node %d", current_mvp, target_vp, i, i);
+	           instance->mvps[current_mvp]->to_run = root->children.node[i];
+
+	           res = sctk_user_thread_create(&(instance->mvps[current_mvp]->pid), &__attr,
+					mpcomp_slave_mvp_node,
+					instance->mvps[current_mvp]);
+
+	           sctk_assert(res == 0);
+	           break;
+
+	         case 2: /* MicroVP */
+	           sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d. w/ internal spinning", current_mvp, target_vp, i);
+
+	           res = sctk_user_thread_create(&(instance->mvps[current_mvp]->pid), &__attr,
+					mpcomp_slave_mvp_leaf,
+					instance->mvps[current_mvp]);
+
+	           sctk_assert(res == 0);
+	           break;
+
+	         default:
+	           break;
+	      }
+	      
+	      sctk_thread_attr_destroy(&__attr);
+
+	      current_mvp++;
+	      flag_level = -1;
+	    }
+	  }
+#endif
+
+#if 0  /* Flat tree */
+#warning "OpenMp compiling w/flat tree 8 cores"	    
+	  root->father = NULL;
+	  root->rank = -1;
+	  root->depth = 0;
+	  root->nb_children = 8;
+	  root->child_type = CHILDREN_LEAF;
+	  root->lock = SCTK_SPINLOCK_INITIALIZER;
+	  root->slave_running[0] = 0;
+	  root->slave_running[1] = 0;
+	  root->barrier = 0;
+	  root->barrier_done = 0;
+	  root->children.node = (mpcomp_node_t **)sctk_malloc(root->nb_children*sizeof(mpcomp_node_t *));
+	  sctk_assert(root->children.node != NULL);
+
+	  for (i=0 ; i<root->nb_children ; i++) {
+	    mpcomp_node_t *n;
+	    int j;
+
+            n = root;
+
+            if (flag_level == -1) flag_level = 2;
+
+            /* These are leaves ->create the microVP */
+            int target_vp;
+
+            target_vp = order[i];
+
+            /* Allocate memory on the right NUMA node */
+            instance->mvps[current_mvp] = (mpcomp_mvp_t *)sctk_malloc_on_node(sizeof(mpcomp_mvp_t),target_vp);
+
+            /* Get the set of registers */
+            sctk_getcontext(&(instance->mvps[current_mvp]->vp_context));
+
+            /* Initialize the corresponding microVP (all but the tree-related variables) */
+            instance->mvps[current_mvp]->nb_threads = 0;
+            instance->mvps[current_mvp]->next_nb_threads = 0;
+            instance->mvps[current_mvp]->rank = current_mvp;
+            instance->mvps[current_mvp]->enable = 1;
+            instance->mvps[current_mvp]->region_id = 0;
+            instance->mvps[current_mvp]->tree_rank = (int *)sctk_malloc_on_node(sizeof(int),target_vp);
+            sctk_assert(instance->mvps[current_mvp]->tree_rank != NULL);
+            instance->mvps[current_mvp]->tree_rank[0] = i;
+            instance->mvps[current_mvp]->root = root;
+            instance->mvps[current_mvp]->father = n;
+
+            n2->children.leaf[i] = instance->mvps[current_mvp];
+
+            sctk_thread_attr_t __attr;
+            size_t stack_size;
+            int res;
+
+            sctk_thread_attr_init(&__attr);
+
+            sctk_thread_attr_setbinding(& __attr, target_vp);
+
+            if (sctk_is_in_fortran == 1)
+               stack_size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
+            else
+               stack_size = SCTK_ETHREAD_STACK_SIZE;
+
+            sctk_thread_attr_setstacksize(&__attr, stack_size);
+
+	    switch (flag_level) {
+	       case 0: /* Root */
+	         sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. Spinning on root", current_mvp);
+	         instance->mvps[current_mvp]->to_run = root;
+	         break;
+
+	       case 1: /* Numa */
+	         sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. Spinning on NUMA node %d", current_mvp, target_vp, i);
+	         instance->mvps[current_mvp]->to_run = root->children.node[i];
+
+	         res = sctk_user_thread_create(&(instance->mvps[current_mvp]->pid), &__attr,
+	    			    mpcomp_slave_mvp_node,
+	          		    instance->mvps[current_mvp]);
+
+	         sctk_assert(res == 0);
+	         break;
+
+	       case 2: /* MicroVP */
+	         sctk_nodebug("__mpcomp_instance_init: Creation microVP %d w/ internal spinning", current_mvp);
+
+	         res = sctk_user_thread_create(&(instance->mvps[current_mvp]->pid), &__attr,
+	          		    mpcomp_slave_mvp_leaf,
+	          		    instance->mvps[current_mvp]);
+
+	         sctk_assert(res == 0);
+	         break;
+
+	       default:
+	         break;
+	    }
+
+  	    sctk_thread_attr_destroy(&__attr);
+
+	    current_mvp++;
+	    flag_level = -1;
+          }	
+#endif
+
+	  break;
+
+	case 32: 
+#if 1  /* NUMA tree 32 cores */
 #warning "OpenMp compiling w/ NUMA tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -636,14 +861,8 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 
 	      switch (flag_level) {
 	         case 0: /* Root */
-	           sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d. Spinning on NUMA node %d", current_mvp, target_vp, i, i);
+	           sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d. Spinning on root", current_mvp, target_vp, i);
 	           instance->mvps[current_mvp]->to_run = root;
-
-	           res = sctk_user_thread_create(&(instance->mvps[current_mvp]->pid), &__attr,
-					mpcomp_slave_mvp_node,
-					instance->mvps[current_mvp]);
-
-	           sctk_assert(res == 0);
 	           break;
 
 	         case 1: /* Numa */
@@ -658,7 +877,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	           break;
 
 	         case 2: /* MicroVP */
-	           sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d. Spinning on NUMA node %d", current_mvp, target_vp, i, i);
+	           sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d. w/ internal spinning", current_mvp, target_vp, i);
 
 	           res = sctk_user_thread_create(&(instance->mvps[current_mvp]->pid), &__attr,
 					mpcomp_slave_mvp_leaf,
@@ -677,6 +896,274 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	      flag_level = -1;
 	    }
 	  }
+#endif
+
+#if 0  /* NUMA tree degree 4 */
+#warning "OpenMp compiling w/2-level NUMA tree 32 cores"	    
+	  root->father = NULL;
+	  root->rank = -1;
+	  root->depth = 0;
+	  root->nb_children = 4;
+	  root->min_index = 0;
+	  root->max_index = 31;
+	  root->child_type = CHILDREN_NODE;
+	  root->lock = SCTK_SPINLOCK_INITIALIZER;
+	  root->slave_running[0] = 0;
+	  root->slave_running[1] = 0;
+	  root->barrier = 0;
+	  root->barrier_done = 0;
+	  root->children.node = (mpcomp_node_t **)sctk_malloc(root->nb_children*sizeof(mpcomp_node_t *));
+	  sctk_assert(root->children.node != NULL);
+
+          /* Depth 1 -> output degree 2 */
+	  for (i=0 ; i<root->nb_children ; i++) {
+	    mpcomp_node_t *n;
+	    int j;
+
+	    if (flag_level == -1) flag_level = 1;
+
+	    n = (mpcomp_node_t *)sctk_malloc_on_node(sizeof(mpcomp_node_t),i);
+	    sctk_assert(n != NULL);
+
+	    root->children.node[i] = n;
+
+	    n->father = root;
+	    n->rank = i;
+	    n->depth = 1;
+	    n->nb_children = 2;
+	    n->min_index = i*8;
+	    n->max_index = (i+1)*8-1;
+	    n->child_type = CHILDREN_NODE;
+	    n->lock = SCTK_SPINLOCK_INITIALIZER;
+	    n->slave_running[0] = 0;
+	    n->slave_running[1] = 0;
+	    n->barrier = 0;
+	    n->barrier_done = 0;
+	    n->children.leaf = (mpcomp_mvp_t **)sctk_malloc_on_node(n->nb_children*sizeof(mpcomp_mvp_t *),i);
+
+            /* Depth 2 -> output degree 4 */
+	    for (j=0 ; j<n->nb_children ; j++) {
+               mpcomp_node_t *n2;
+	       int k;
+
+               if (flag_level == -1) flag_level = 2;
+
+               n2 = (mpcomp_node_t *)sctk_malloc_on_node(n2->nb_children*sizeof(mpcomp_mvp_t *),i);
+               sctk_assert(n2 != NULL);
+
+               n->children.node[j] = n2;
+               
+               n2->father = n;
+               n2->rank = j;
+               n2->depth = 2;
+               n2->nb_children = 4;
+               n2->min_index = i*8 + j*4;
+               n2->max_index = i*8 + (j+1)*4 - 1;
+               n2->child_type = CHILDREN_LEAF;
+               n2->lock = SCTK_SPINLOCK_INITIALIZER;
+               n2->slave_running[0] = 0;
+               n2->slave_running[1] = 0;
+               n2->barrier = 0;
+               n2->barrier_done = 0;
+               n2->children.leaf = (mpcomp_mvp_t **)sctk_malloc_on_node(n2->nb_children*sizeof(mpcomp_mvp_t *),i);
+
+               /* Depth 3 -> leaves*/
+               for (k=0 ; k<n2->nb_children ; k++) {
+                  /* These are leaves -> create the microVP */
+                  int target_vp;
+
+                  target_vp = order[8*i+4*j+k];
+
+                  if (flag_level == -1) flag_level = 3;
+
+                  /* Allocate memory on the right NUMA node */
+                  instance->mvps[current_mvp] = (mpcomp_mvp_t *)sctk_malloc_on_node(sizeof(mpcomp_mvp_t),i);
+
+                  /* Get the set of registers */
+                  sctk_getcontext(&(instance->mvps[current_mvp]->vp_context));
+
+                  /* Initialize the corresponding microVP (all but the tree-related variables) */
+                  instance->mvps[current_mvp]->nb_threads = 0;
+                  instance->mvps[current_mvp]->next_nb_threads = 0;
+                  instance->mvps[current_mvp]->rank = current_mvp;
+                  instance->mvps[current_mvp]->enable = 1;
+                  instance->mvps[current_mvp]->region_id = 0;
+                  instance->mvps[current_mvp]->tree_rank = (int *)sctk_malloc_on_node(3*sizeof(int),i);
+                  sctk_assert(instance->mvps[current_mvp]->tree_rank != NULL);
+                  instance->mvps[current_mvp]->tree_rank[0] = i;
+                  instance->mvps[current_mvp]->tree_rank[1] = j;
+                  instance->mvps[current_mvp]->tree_rank[2] = k;
+                  instance->mvps[current_mvp]->root = root;
+                  instance->mvps[current_mvp]->father = n2;
+
+                  n2->children.leaf[k] = instance->mvps[current_mvp];
+
+                  sctk_thread_attr_t __attr;
+                  size_t stack_size;
+                  int res;
+
+                  sctk_thread_attr_init(&__attr);
+
+                  sctk_thread_attr_setbinding(& __attr, target_vp);
+
+                  if (sctk_is_in_fortran == 1)
+                     stack_size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
+                  else
+                     stack_size = SCTK_ETHREAD_STACK_SIZE;
+
+                  sctk_thread_attr_setstacksize(&__attr, stack_size);
+
+	          switch (flag_level) {
+	             case 0: /* Root */
+	               sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d. Spinning on root (%d, %d, %d)", current_mvp, target_vp, i, i, j, k);
+	               instance->mvps[current_mvp]->to_run = root;
+	               break;
+
+	             case 1: /* Numa */
+	               sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d. Spinning on NUMA node %d (%d, %d, %d)", current_mvp, target_vp, i, i, i, j, k);
+	               instance->mvps[current_mvp]->to_run = root->children.node[i];
+
+	               res = sctk_user_thread_create(&(instance->mvps[current_mvp]->pid), &__attr,
+		  			    mpcomp_slave_mvp_node,
+					    instance->mvps[current_mvp]);
+
+	               sctk_assert(res == 0);
+	               break;
+
+	             case 2: /* Numa */
+	               sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d. Spinning on NUMA node %d (level 2) (%d, %d, %d)", current_mvp, target_vp, i, i, i, j, k);
+	               instance->mvps[current_mvp]->to_run = root->children.node[i]->children.node[j];
+
+	               res = sctk_user_thread_create(&(instance->mvps[current_mvp]->pid), &__attr,
+		  			    mpcomp_slave_mvp_node,
+					    instance->mvps[current_mvp]);
+
+	               sctk_assert(res == 0);
+	               break;
+
+	             case 3: /* MicroVP */
+	               sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. VP %d, NUMA %d. w/ internal spinning (%d,%d,%d)", current_mvp, target_vp, i, i, j, k);
+
+	               res = sctk_user_thread_create(&(instance->mvps[current_mvp]->pid), &__attr,
+					    mpcomp_slave_mvp_leaf,
+					    instance->mvps[current_mvp]);
+
+	               sctk_assert(res == 0);
+	               break;
+
+	             default:
+	               break;
+	          }
+
+  	          sctk_thread_attr_destroy(&__attr);
+
+	          current_mvp++;
+	          flag_level = -1;
+               }
+            }
+           }
+          
+#endif
+
+#if 0  /* Flat tree */
+#warning "OpenMp compiling w/flat tree 32 cores"	    
+	  root->father = NULL;
+	  root->rank = -1;
+	  root->depth = 0;
+	  root->nb_children = 32;
+	  root->child_type = CHILDREN_LEAF;
+	  root->lock = SCTK_SPINLOCK_INITIALIZER;
+	  root->slave_running[0] = 0;
+	  root->slave_running[1] = 0;
+	  root->barrier = 0;
+	  root->barrier_done = 0;
+	  root->children.node = (mpcomp_node_t **)sctk_malloc(root->nb_children*sizeof(mpcomp_node_t *));
+	  sctk_assert(root->children.node != NULL);
+
+	  for (i=0 ; i<root->nb_children ; i++) {
+	    mpcomp_node_t *n;
+	    int j;
+
+            n = root;
+
+            if (flag_level == -1) flag_level = 2;
+
+            /* These are leaves ->create the microVP */
+            int target_vp;
+
+            target_vp = order[i];
+
+            /* Allocate memory on the right NUMA node */
+            instance->mvps[current_mvp] = (mpcomp_mvp_t *)sctk_malloc_on_node(sizeof(mpcomp_mvp_t),target_vp/8);
+
+            /* Get the set of registers */
+            sctk_getcontext(&(instance->mvps[current_mvp]->vp_context));
+
+            /* Initialize the corresponding microVP (all but the tree-related variables) */
+            instance->mvps[current_mvp]->nb_threads = 0;
+            instance->mvps[current_mvp]->next_nb_threads = 0;
+            instance->mvps[current_mvp]->rank = current_mvp;
+            instance->mvps[current_mvp]->enable = 1;
+            instance->mvps[current_mvp]->region_id = 0;
+            instance->mvps[current_mvp]->tree_rank = (int *)sctk_malloc_on_node(sizeof(int),target_vp/8);
+            sctk_assert(instance->mvps[current_mvp]->tree_rank != NULL);
+            instance->mvps[current_mvp]->tree_rank[0] = i;
+            instance->mvps[current_mvp]->root = root;
+            instance->mvps[current_mvp]->father = n;
+
+            n2->children.leaf[i] = instance->mvps[current_mvp];
+
+            sctk_thread_attr_t __attr;
+            size_t stack_size;
+            int res;
+
+            sctk_thread_attr_init(&__attr);
+
+            sctk_thread_attr_setbinding(& __attr, target_vp);
+
+            if (sctk_is_in_fortran == 1)
+               stack_size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
+            else
+               stack_size = SCTK_ETHREAD_STACK_SIZE;
+
+            sctk_thread_attr_setstacksize(&__attr, stack_size);
+
+	    switch (flag_level) {
+	       case 0: /* Root */
+	         sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. Spinning on root", current_mvp);
+	         instance->mvps[current_mvp]->to_run = root;
+	         break;
+
+	       case 1: /* Numa */
+	         sctk_nodebug("__mpcomp_instance_init: Creation microVP %d. Spinning on NUMA node %d", current_mvp, target_vp, i);
+	         instance->mvps[current_mvp]->to_run = root->children.node[i];
+
+	         res = sctk_user_thread_create(&(instance->mvps[current_mvp]->pid), &__attr,
+	    			    mpcomp_slave_mvp_node,
+	          		    instance->mvps[current_mvp]);
+
+	         sctk_assert(res == 0);
+	         break;
+
+	       case 2: /* MicroVP */
+	         sctk_nodebug("__mpcomp_instance_init: Creation microVP %d w/ internal spinning", current_mvp);
+
+	         res = sctk_user_thread_create(&(instance->mvps[current_mvp]->pid), &__attr,
+	          		    mpcomp_slave_mvp_leaf,
+	          		    instance->mvps[current_mvp]);
+
+	         sctk_assert(res == 0);
+	         break;
+
+	       default:
+	         break;
+	    }
+
+  	    sctk_thread_attr_destroy(&__attr);
+
+	    current_mvp++;
+	    flag_level = -1;
+          }	
 #endif
 	  break;
 	default:
