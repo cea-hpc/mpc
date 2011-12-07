@@ -5,5 +5,5 @@
 mpc-gcc 440
 mpc-gdb 6.8
 mpc-hydra 1.4.0
-mpc-hwloc 1.2
+mpc-hwloc 1.3
 mpc-openpa 1.0.2

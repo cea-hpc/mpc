@@ -54,6 +54,11 @@ static sctk_spinlock_t topology_lock = SCTK_SPINLOCK_INITIALIZER;
 static hwloc_topology_t topology;
 const struct hwloc_topology_support *support;
 
+hwloc_topology_t sctk_get_topology_object(void)
+{
+	return topology ;
+}
+
 /* print a cpuset in a human readable way */
 static void
 print_cpuset(hwloc_bitmap_t cpuset)
@@ -458,111 +463,6 @@ sctk_get_node_from_cpu (const int vp)
   } else {
     return 0;
   }
-}
-
-/*! \brief Return the number of NUMA nodes
- * @param level NUMA level
- */
-int sctk_get_numa_number (const int level)
-{
-  if ( level > sctk_get_numa_level_number() ) {
-    return 0 ;
-  }
-  const int socket_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_SOCKET);
-  const int numa_depth = socket_depth - level ;
-  return hwloc_get_nbobjs_by_depth(topology,numa_depth);
-}
-
-/*! \brief Return the number of sockets
-*/
-int sctk_get_socket_number ()
-{
-  return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_SOCKET) ;
-}
-
-/*! \brief Return the number of caches
- * @param level Cache level
- */
-int sctk_get_cache_number (const int level)
-{
-  if ( level > sctk_get_cache_level_number() ) {
-    return 0 ;
-  }
-  const int core_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE);
-  const int cache_depth = core_depth - level ;
-  return hwloc_get_nbobjs_by_depth(topology,cache_depth);
-}
-
-/*! \brief Return the number of cores
-*/
-int sctk_get_core_number ()
-{
-  return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE) ;
-}
-
-/*! \brief Return the number of cache levels
-*/
-int sctk_get_cache_level_number ()
-{
-  const int core_depth   = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE);
-  const int socket_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_SOCKET);
-  return core_depth - socket_depth - 1 ;
-}
-
-/*! \brief Return the number of NUMA levels
- * return 0 if machine is not NUMA
-*/
-int sctk_get_numa_level_number ()
-{
-  const int machine_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_MACHINE);
-  const int socket_depth  = hwloc_get_type_depth(topology, HWLOC_OBJ_SOCKET);
-  return socket_depth - machine_depth - 1 ;
-}
-
-/*! \brief Return the NUMA id
- * @param vp VP
- * @param level NUMA level
- */
-int sctk_get_numa_id (const int level, const int vp)
-{
-  const int socket_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_SOCKET);
-  const int numa_depth = socket_depth - level ;
-  const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
-  const hwloc_obj_t numa = hwloc_get_ancestor_obj_by_depth(topology, numa_depth, pu);
-  return numa->logical_index;
-}
-
-/*! \brief Return the socket id
- * @param vp VP
- */
-int sctk_get_socket_id (const int vp)
-{
-  const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
-  const hwloc_obj_t node = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_SOCKET, pu);
-  return node->logical_index;
-}
-
-/*! \brief Return the cache id
- * @param vp VP
- * @param level Cache level
- */
-int sctk_get_cache_id (const int level, const int vp)
-{
-  const int core_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE);
-  const int cache_depth = core_depth - level ;
-  const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
-  const hwloc_obj_t cache = hwloc_get_ancestor_obj_by_depth(topology, cache_depth, pu);
-  return cache->logical_index;
-}
-
-/*! \brief Return the core id
- * @param vp VP
- */
-int sctk_get_core_id (const int vp)
-{
-  const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
-  const hwloc_obj_t core = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, pu);
-  return core->logical_index;
 }
 
 /* print the neighborhood*/
