@@ -159,6 +159,7 @@ typedef struct sctk_ibuf_s
   /* the following infos aren't transmitted by the network */
   struct sctk_ib_qp_s*    remote;
   void* supp_ptr;
+  int dest_task;
   int dest_process;
   /* If the buffer is in a shaed receive queue */
   char in_srq;
