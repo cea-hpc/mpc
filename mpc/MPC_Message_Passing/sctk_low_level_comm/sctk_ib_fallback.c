@@ -106,12 +106,13 @@ static int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
   LOAD_CONFIG(rail_ib);
   int steal = config->ibv_steal;
   int release_ibuf = 1;
-  int dest_task = ibuf->dest_task;
+  int dest_task;
 
-  CHECK_CP(send_cq);
   /* Switch on the protocol of the received message */
   switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
     case eager_protocol:
+      dest_task = sctk_ib_sr_determine_dest_task(ibuf);
+//      CHECK_CP(send_cq);
       release_ibuf = 1;
       break;
 
@@ -121,6 +122,8 @@ static int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
       break;
 
     case buffered_protocol:
+      dest_task = sctk_ib_buffered_determine_dest_task(rail, ibuf);
+//      CHECK_CP(send_cq);
       release_ibuf = 1;
       break;
 
@@ -148,7 +151,7 @@ static int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
   int release_ibuf = 1;
   int recopy = 1;
   int ondemand = 0;
-  int dest_task;
+  int dest_task = -1;
   sctk_ib_cp_task_t *polling_task;
   double s, e;
 
@@ -161,7 +164,6 @@ static int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
     case eager_protocol:
       msg_ibuf = IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer);
       dest_task = sctk_ib_sr_determine_dest_task(ibuf);
-      ibuf->dest_task = dest_task;
 
       /* XXX: Check if the Collaborative polling is activated and handle
        * the message
@@ -198,7 +200,6 @@ static int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
 
     case buffered_protocol:
       dest_task = sctk_ib_buffered_determine_dest_task(rail, ibuf);
-      ibuf->dest_task = dest_task;
       CHECK_CP(recv_cq);
       sctk_nodebug("Buffered protocol");
       sctk_ib_buffered_poll_recv(rail, ibuf);
