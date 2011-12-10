@@ -607,6 +607,10 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   if (tmp.task_id >= 0)
     {
       sctk_ptp_per_task_init (tmp.task_id);
+#ifdef MPC_USE_INFINIBAND
+      /* Register task for collaborative polling */
+      sctk_ib_cp_init_task(tmp.task_id, tmp.virtual_processor);
+#endif
       sctk_register_thread_initial (tmp.task_id);
       sctk_terminaison_barrier (tmp.task_id);
     }
@@ -650,6 +654,10 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
       sctk_nodebug ("sctk_terminaison_barrier");
       sctk_terminaison_barrier (tmp.task_id);
       sctk_nodebug ("sctk_terminaison_barrier done");
+#ifdef MPC_USE_INFINIBAND
+      /* Register task for collaborative polling */
+      sctk_ib_cp_finalize_task(tmp.task_id);
+#endif
       sctk_unregister_thread (tmp.task_id);
       sctk_net_send_task_end (tmp.task_id, sctk_process_rank);
     }
@@ -886,7 +894,7 @@ sctk_thread_exit_cleanup ()
   /** **/
   tmp = sctk_thread_data_get ();
 
-  sctk_thread_remove (tmp);  
+  sctk_thread_remove (tmp);
 
   __head = sctk_thread_getspecific (_sctk_thread_handler_key);
 
@@ -2321,7 +2329,6 @@ sctk_start_func (void *(*run) (void *), void *arg)
 
 #ifdef MPC_Message_Passing
   sctk_communicator_delete ();
-  sctk_net_hybrid_finalize();
 #endif
 
 /*   for (i = 0; i < thread_to_join; i++) */

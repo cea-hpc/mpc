@@ -92,7 +92,7 @@ void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* 
 void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail);
 struct sctk_route_table_s *sctk_route_dynamic_search(int dest, sctk_rail_info_t* rail);
 
-int sctk_route_dynamic_is_connected(sctk_route_table_t* tmp);
+int sctk_route_is_connected(sctk_route_table_t* tmp);
 
   sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail);
 sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail);

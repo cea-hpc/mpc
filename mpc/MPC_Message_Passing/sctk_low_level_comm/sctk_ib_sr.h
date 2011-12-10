@@ -37,6 +37,7 @@ struct sctk_rail_info_s;
 
 typedef struct sctk_ib_eager_s {
   size_t payload_size;
+  int dest_task;
 } __attribute__ ((packed))
  sctk_ib_eager_t;
 
@@ -44,7 +45,7 @@ typedef struct sctk_ib_eager_s {
  *  FUNCTIONS
  *----------------------------------------------------------*/
 sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
-    sctk_ib_qp_t* route_data, sctk_thread_ptp_message_t * msg, size_t size);
+    sctk_ib_qp_t* route_data, sctk_thread_ptp_message_t * msg, size_t size, int dest_task);
 
 void sctk_ib_sr_free_msg_no_recopy(void* arg);
 
@@ -55,6 +56,8 @@ sctk_thread_ptp_message_t* sctk_ib_sr_recv(struct sctk_rail_info_s* rail, sctk_i
 void
 sctk_ib_sr_recv_free(struct sctk_rail_info_s* rail, sctk_thread_ptp_message_t *msg,
     sctk_ibuf_t *ibuf, int recopy);
+
+int sctk_ib_sr_determine_dest_task(sctk_ibuf_t *ibuf);
 
 #endif
 #endif

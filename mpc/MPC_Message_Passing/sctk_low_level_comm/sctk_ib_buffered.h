@@ -34,6 +34,7 @@
  *----------------------------------------------------------*/
 
 typedef struct sctk_ib_buffered_s {
+  int dest_task;
   struct sctk_thread_ptp_message_s msg;
   int index;
   int nb;
@@ -48,15 +49,21 @@ typedef struct sctk_ib_buffered_entry_s {
   OPA_int_t current;
   int total;
   void* payload;
+  sctk_ib_rdma_status_t status;
+  sctk_spinlock_t lock;
+  struct sctk_message_to_copy_s *copy_ptr;
 } sctk_ib_buffered_entry_t;
 
+struct sctk_ibuf_s;
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
 
 int sctk_ib_buffered_prepare_msg(struct sctk_rail_info_s *rail,
-    struct sctk_route_table_s* route_table, struct sctk_thread_ptp_message_s * msg, size_t size);
+    struct sctk_route_table_s* route_table, struct sctk_thread_ptp_message_s * msg, size_t size, int dest_task);
 
+  int
+sctk_ib_buffered_determine_dest_task(struct sctk_rail_info_s* rail, struct sctk_ibuf_s *ibuf);
 #endif
 #endif

@@ -127,8 +127,8 @@ sctk_ib_polling_check_wc(struct sctk_ib_rail_info_s* rail_ib,
     gethostname(host, HOSTNAME);
 
     if (config->ibv_quiet_crash){
-      sctk_error ("\033[1;31mIB - FATAL ERROR FROM PROCESS %d (%s)",
-          sctk_process_rank, host);
+      sctk_error ("\033[1;31mIB - PROCESS %d CRASHED (%s)\033[0m: %s",
+          sctk_process_rank, host, sctk_ib_polling_print_status(wc.status));
     } else {
       sctk_ibuf_print(ibuf, ibuf_desc);
       sctk_error ("\033[1;31m\nIB - FATAL ERROR FROM PROCESS %d (%s)\n"
@@ -151,7 +151,8 @@ sctk_ib_polling_check_wc(struct sctk_ib_rail_info_s* rail_ib,
 }
 
 int sctk_ib_cq_poll(sctk_rail_info_t* rail,
-    struct ibv_cq *cq, const int poll_nb, int (*ptr_func)(sctk_rail_info_t* rail, struct ibv_wc*))
+    struct ibv_cq *cq, const int poll_nb, struct sctk_ib_polling_s *poll,
+    int (*ptr_func)(sctk_rail_info_t* rail, struct ibv_wc*, struct sctk_ib_polling_s *poll))
 {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   struct ibv_wc wc;
@@ -163,7 +164,7 @@ int sctk_ib_cq_poll(sctk_rail_info_t* rail,
       res = ibv_poll_cq (cq, 1, &wc);
       if (res) {
         sctk_ib_polling_check_wc(rail_ib, wc);
-        ptr_func(rail, &wc);
+        ptr_func(rail, &wc, poll);
         found_nb++;
       }
   }

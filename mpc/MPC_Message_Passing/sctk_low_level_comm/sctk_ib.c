@@ -37,6 +37,7 @@
 #include <sctk_route.h>
 #include <sctk_ib.h>
 #include <sctk_ib_qp.h>
+#include <sctk_ib_cp.h>
 #include <sctk_ib_toolkit.h>
 #include <sctk_ib_sr.h>
 #include <sctk_route.h>
@@ -55,11 +56,11 @@ void sctk_ib_add_dynamic_route(int dest, sctk_route_table_t *tmp){
 }
 
 void sctk_ib_route_dynamic_set_connected(sctk_route_table_t *tmp, int connected){
-  sctk_route_dynamic_set_connected(tmp, connected);
+  sctk_route_set_connected(tmp, connected);
 }
 
 int sctk_ib_route_dynamic_is_connected(sctk_route_table_t *tmp){
-  return sctk_route_dynamic_is_connected(tmp);
+  return sctk_route_is_connected(tmp);
 }
 
 sctk_route_table_t *
@@ -175,3 +176,23 @@ void sctk_network_init_ib_all(sctk_rail_info_t* rail,
   sctk_nodebug("Recv from %d, send to %d", src_rank, dest_rank);
 }
 
+sctk_network_stats_ib (struct MPC_Network_stats_s* stats) {
+  sctk_ib_cp_task_t *task = NULL;
+  int task_id;
+  int thread_id;
+  uint8_t activate = 1;
+
+  sctk_get_thread_info (&task_id, &thread_id);
+  task = sctk_ib_cp_get_task(task_id);
+  stats->matched = CP_PROF_PRINT(task, matched);
+  stats->not_matched = CP_PROF_PRINT(task, not_matched);
+  stats->poll_own = CP_PROF_PRINT(task, poll_own);
+  stats->poll_stolen = CP_PROF_PRINT(task, poll_stolen);
+  stats->poll_steals = CP_PROF_PRINT(task, poll_steals);
+  stats->time_stolen = task->time_stolen;
+  stats->time_steals = task->time_steals;
+  stats->time_own = task->time_own;
+
+
+//  stats->matched = cp->matched;
+}

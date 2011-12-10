@@ -35,6 +35,7 @@ extern "C"
   struct sctk_ib_config_s;
   struct sctk_ib_device_s;
   struct sctk_ib_qp_s;
+  struct sctk_ib_cp_s;
   struct sctk_thread_ptp_message_s;
   struct sctk_rail_info_s;
   struct sctk_message_to_copy_s;
@@ -45,6 +46,9 @@ extern "C"
     struct sctk_ib_mmu_s    *mmu;
     struct sctk_ib_config_s *config;
     struct sctk_ib_device_s *device;
+    struct sctk_ib_prof_s   *profiler;
+    /* Collaborative polling */
+    struct sctk_ib_cp_s *cp;
     /* HashTable where all QPs are stored */
     struct sctk_ib_qp_s *qps;
   } sctk_ib_rail_info_t;
@@ -60,13 +64,21 @@ extern "C"
     rdma_protocol   = 333,
   } sctk_ib_protocol_t;
 
+  /* 2 first bits: not_set, zerocopy, recopy */
+  /* third bit: if matched */
+  /* forth bit: if done  */
+  /* free from 1<<4 */
   typedef volatile enum sctk_ib_rdma_status_e {
-    not_set = 111,
-    zerocopy = 222,
-    recopy = 333,
-    done = 444,
-    allocating = 555,
+    not_set = 1,
+    zerocopy = 2,
+    recopy = 3,
+    match = 4,
+    done = 8,
+    allocating = 1<<4,
   } sctk_ib_rdma_status_t;
+#define MASK_BASE   0x03
+#define MASK_MATCH  0x04
+#define MASK_DONE   0x08
 
   /* Structure included in msg header */
   typedef struct sctk_ib_msg_header_s{
