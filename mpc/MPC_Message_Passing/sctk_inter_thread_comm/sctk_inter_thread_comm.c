@@ -351,8 +351,10 @@ void sctk_message_completion_and_free(sctk_thread_ptp_message_t* send,
     send->tail.request->msg = NULL;
   }
 
+#ifdef SCTK_USE_ADLER
   /* XXX: Specific to checksum*/
   sctk_checksum_verify(send, recv);
+#endif
 
   sctk_complete_and_free_message(send);
   sctk_complete_and_free_message(recv);

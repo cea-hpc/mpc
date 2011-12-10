@@ -49,6 +49,9 @@ typedef struct sctk_ib_buffered_entry_s {
   OPA_int_t current;
   int total;
   void* payload;
+  sctk_ib_rdma_status_t status;
+  sctk_spinlock_t lock;
+  struct sctk_message_to_copy_s *copy_ptr;
 } sctk_ib_buffered_entry_t;
 
 struct sctk_ibuf_s;

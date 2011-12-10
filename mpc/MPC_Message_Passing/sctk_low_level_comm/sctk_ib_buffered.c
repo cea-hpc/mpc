@@ -111,16 +111,24 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
 
 void sctk_ib_buffered_free_msg(void* arg) {
   sctk_thread_ptp_message_t *msg = (sctk_thread_ptp_message_t*) arg;
-  assume(msg->tail.ib.buffered.entry);
-  assume(msg->tail.ib.buffered.reorder_table);
+  sctk_ib_buffered_entry_t *entry = NULL;
+  sctk_reorder_table_t* reorder_table;
 
-  sctk_reorder_table_t* reorder_table = msg->tail.ib.buffered.reorder_table;
+  reorder_table = msg->tail.ib.buffered.reorder_table;
+  entry = msg->tail.ib.buffered.entry;
+  assume(entry);
 
-  sctk_spinlock_lock(&reorder_table->ib_buffered.lock);
-  HASH_DEL(msg->tail.ib.buffered.reorder_table->ib_buffered.entries,
-     msg->tail.ib.buffered.entry);
-  sctk_spinlock_unlock(&reorder_table->ib_buffered.lock);
-  sctk_free(msg->tail.ib.buffered.entry);
+  switch(entry->status & MASK_BASE) {
+    case recopy:
+      sctk_free(entry->payload);
+      break;
+
+    case zerocopy:
+    /* Nothing to do */
+      break;
+
+    default: not_reachable();
+  }
 }
 
 void sctk_ib_buffered_copy(sctk_message_to_copy_t* tmp){
@@ -132,13 +140,38 @@ void sctk_ib_buffered_copy(sctk_message_to_copy_t* tmp){
 
   recv = tmp->msg_recv;
   send = tmp->msg_send;
-  /* Assume msg not recopied */
   rail = send->tail.ib.buffered.rail;
   entry = send->tail.ib.buffered.entry;
-
   assume(entry);
-  body = entry->payload;
-  sctk_net_message_copy_from_buffer(body, tmp, 1);
+  assume(recv->tail.message_type == sctk_message_contiguous);
+
+  sctk_spinlock_lock(&entry->lock);
+  entry->copy_ptr = tmp;
+  sctk_nodebug("Copy status (%p): %d", entry, entry->status);
+  switch (entry->status & MASK_BASE) {
+    case not_set:
+      sctk_nodebug("Message directly copied (entry:%p)", entry);
+      entry->payload = recv->tail.message.contiguous.addr;
+      /* Add matching OK */
+      entry->status = zerocopy | match;
+      sctk_spinlock_unlock(&entry->lock);
+      break;
+    case recopy:
+      sctk_nodebug("Message directly recopied");
+      /* transfer done */
+      if ( (entry->status & MASK_DONE) == done) {
+        sctk_spinlock_unlock(&entry->lock);
+        /* The message is done. All buffers have been received */
+        sctk_nodebug("Message recopied free from copy %d (%p)", entry->status, entry);
+        sctk_net_message_copy_from_buffer(entry->payload, tmp, 1);
+      } else {
+        /* Add matching OK */
+        entry->status |= match;
+        sctk_spinlock_unlock(&entry->lock);
+      }
+      break;
+    default: not_reachable();
+  }
 }
 
   int
@@ -167,14 +200,42 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   sctk_spinlock_lock(&reorder_table->ib_buffered.lock);
   HASH_FIND(hh,reorder_table->ib_buffered.entries,&key,sizeof(int),entry);
   if (!entry) {
-    sctk_nodebug("Allocating memory %lu", msg->sctk_msg_get_msg_size);
-    entry = sctk_malloc(msg->sctk_msg_get_msg_size + sizeof(sctk_ib_buffered_entry_t));
+    /* Allocate memory for message header */
+    entry = sctk_malloc(sizeof(sctk_ib_buffered_entry_t));
     assume(entry);
+    /* Copy message header */
+    memcpy(&entry->msg, msg, sizeof(sctk_thread_ptp_message_body_t));
+    entry->msg.tail.ib.protocol = buffered_protocol;
+    entry->msg.tail.ib.buffered.entry = entry;
+    entry->msg.tail.ib.buffered.rail = rail;
+    entry->msg.tail.ib.buffered.reorder_table = reorder_table;
+    /* Prepare matching */
+    entry->msg.body.completion_flag = NULL;
+    entry->msg.tail.message_type = sctk_message_network;
+    sctk_rebuild_header(&entry->msg);
+    sctk_reinit_header(&entry->msg, sctk_ib_buffered_free_msg,
+        sctk_ib_buffered_copy);
+    OPA_store_int(&entry->current, 0);
+    /* Add msg to hashtable */
     entry->key = key;
     entry->total = buffered->nb;
-    OPA_store_int(&entry->current, 0);
-    entry->payload = (char*) entry + sizeof(sctk_ib_buffered_entry_t);
+    entry->status = not_set;
+    sctk_nodebug("Not set: %d (%p)", entry->status, entry);
+    entry->lock = SCTK_SPINLOCK_INITIALIZER;
+    entry->payload = NULL;
+    entry->copy_ptr = NULL;
     HASH_ADD(hh,reorder_table->ib_buffered.entries,key,sizeof(int),entry);
+    /* Send message to high level MPC */
+    rail->send_message_from_network(&entry->msg);
+
+    sctk_spinlock_lock(&entry->lock);
+    /* Should be 'not_set' or 'zerocopy' */
+    if ( (entry->status & MASK_BASE) == not_set) {
+      entry->payload = sctk_malloc(msg->sctk_msg_get_msg_size);
+      assume(entry->payload);
+      entry->status = recopy;
+    } else if ( (entry->status & MASK_BASE) != zerocopy) not_reachable();
+    sctk_spinlock_unlock(&entry->lock);
   }
   sctk_spinlock_unlock(&reorder_table->ib_buffered.lock);
 
@@ -184,22 +245,48 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
    buffered->payload_size);
 
   /* If last entry, we send it to MPC */
+  /* XXX: horrible use of locks. but we do not have the choice */
   current = OPA_fetch_and_incr_int(&(entry->current));
+  sctk_nodebug("%p; %d on %d", entry, current, entry->total);
   if (current == entry->total-1) {
-    /* Copy the message header */
-    memcpy(&entry->msg, msg, sizeof(sctk_thread_ptp_message_body_t));
-    entry->msg.tail.ib.protocol = buffered_protocol;
-    entry->msg.tail.ib.buffered.entry = entry;
-    entry->msg.tail.ib.buffered.rail = rail;
-    entry->msg.tail.ib.buffered.reorder_table = reorder_table;
+    /* remove entry from HT.
+     * XXX: We have to do this before marking message as done */
+    sctk_spinlock_lock(&reorder_table->ib_buffered.lock);
+    HASH_DEL(reorder_table->ib_buffered.entries, entry);
+    sctk_spinlock_unlock(&reorder_table->ib_buffered.lock);
 
-    entry->msg.body.completion_flag = NULL;
-    entry->msg.tail.message_type = sctk_message_network;
-
-    sctk_rebuild_header(&entry->msg);
-    sctk_reinit_header(&entry->msg, sctk_ib_buffered_free_msg,
-        sctk_ib_buffered_copy);
-    rail->send_message_from_network(&entry->msg);
+    sctk_spinlock_lock(&entry->lock);
+    switch(entry->status & MASK_BASE) {
+      case recopy:
+        /* Message matched */
+        if ( (entry->status & MASK_MATCH) == match) {
+          sctk_spinlock_unlock(&entry->lock);
+          assume(entry->copy_ptr);
+          /* The message is done. All buffers have been received */
+          sctk_net_message_copy_from_buffer(entry->payload, entry->copy_ptr, 1);
+          sctk_nodebug("Message recopied free from done");
+        } else {
+          sctk_nodebug("Free done:%p", entry);
+          entry->status |= done;
+          sctk_spinlock_unlock(&entry->lock);
+        }
+        break;
+      case zerocopy:
+        /* Message matched */
+        if ( (entry->status & MASK_MATCH) == match) {
+          sctk_spinlock_unlock(&entry->lock);
+          assume(entry->copy_ptr);
+          sctk_message_completion_and_free(entry->copy_ptr->msg_send,
+              entry->copy_ptr->msg_recv);
+          sctk_nodebug("Message zerocpy free from done");
+        } else {
+          sctk_spinlock_unlock(&entry->lock);
+          not_reachable();
+        }
+        break;
+      default: not_reachable();
+    }
+    sctk_free(msg->tail.ib.buffered.entry);
   }
 }
 #endif

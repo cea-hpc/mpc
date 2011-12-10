@@ -399,6 +399,77 @@ int sctk_net_copy_frag_msg (
     char *buffer,
     const size_t curr_copy,
     const size_t max_copy ) {
+  size_t tmp_size;
+
+  switch(msg->tail.message_type){
+    case sctk_message_contiguous:
+      {
+        size_t size;
+        size = msg->body.header.msg_size;
+
+        if ( (size - curr_copy) > max_copy)
+          tmp_size = max_copy;
+        else tmp_size = (size - curr_copy);
+
+        memcpy((char*) buffer + curr_copy,
+            (char*) msg->tail.message.contiguous.addr + curr_copy,
+            tmp_size);
+        break;
+      }
+    case sctk_message_network:
+      {
+        size_t size;
+        void* body;
+        not_implemented();
+
+        size = msg->body.header.msg_size;
+        body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
+
+        memcpy(buffer,body,size);
+        buffer += size;
+        break;
+      }
+    case sctk_message_pack:
+      {
+        size_t i;
+        size_t j;
+        size_t size;
+        not_implemented();
+        for (i = 0; i < msg->tail.message.pack.count; i++)
+          for (j = 0; j < msg->tail.message.pack.list.std[i].count; j++)
+          {
+            size = (msg->tail.message.pack.list.std[i].ends[j] -
+                msg->tail.message.pack.list.std[i].begins[j] +
+                1) * msg->tail.message.pack.list.std[i].elem_size;
+            memcpy(buffer,((char *) (msg->tail.message.pack.list.std[i].addr)) +
+                msg->tail.message.pack.list.std[i].begins[j] *
+                msg->tail.message.pack.list.std[i].elem_size,size);
+            buffer += size;
+          }
+        break;
+      }
+    case sctk_message_pack_absolute:
+      {
+        size_t i;
+        size_t j;
+        size_t size;
+        not_implemented();
+        for (i = 0; i < msg->tail.message.pack.count; i++)
+          for (j = 0; j < msg->tail.message.pack.list.absolute[i].count; j++)
+          {
+            size = (msg->tail.message.pack.list.absolute[i].ends[j] -
+                msg->tail.message.pack.list.absolute[i].begins[j] +
+                1) * msg->tail.message.pack.list.absolute[i].elem_size;
+            memcpy(buffer,((char *) (msg->tail.message.pack.list.absolute[i].addr)) +
+                msg->tail.message.pack.list.absolute[i].begins[j] *
+                msg->tail.message.pack.list.absolute[i].elem_size,size);
+            buffer += size;
+          }
+        break;
+      }
+    default: not_reachable();
+  }
+
 /* 	size_t i; */
 /* 	size_t j; */
 /* 	size_t size; */

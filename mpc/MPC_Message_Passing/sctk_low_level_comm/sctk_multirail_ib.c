@@ -36,7 +36,9 @@ static void
 sctk_network_send_message_multirail_ib (sctk_thread_ptp_message_t * msg){
   int i ;
   /* XXX:Calculating checksum */
+#ifdef SCTK_USE_ADLER
   sctk_checksum_register(msg);
+#endif
   if(sctk_prepare_send_message_to_network_reorder(msg) == 0){
     /*
       Reordering available : we can use multirail

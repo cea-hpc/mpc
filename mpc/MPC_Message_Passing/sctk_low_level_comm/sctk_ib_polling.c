@@ -127,8 +127,8 @@ sctk_ib_polling_check_wc(struct sctk_ib_rail_info_s* rail_ib,
     gethostname(host, HOSTNAME);
 
     if (config->ibv_quiet_crash){
-      sctk_error ("\033[1;31mIB - FATAL ERROR FROM PROCESS %d (%s)",
-          sctk_process_rank, host);
+      sctk_error ("\033[1;31mIB - PROCESS %d CRASHED (%s)\033[0m: %s",
+          sctk_process_rank, host, sctk_ib_polling_print_status(wc.status));
     } else {
       sctk_ibuf_print(ibuf, ibuf_desc);
       sctk_error ("\033[1;31m\nIB - FATAL ERROR FROM PROCESS %d (%s)\n"

@@ -230,7 +230,7 @@ extern "C"
 /*    struct { double, double }*/
 #define MPC_LOGICAL 22
 #define MPC_DOUBLE_COMPLEX 23
-    
+
   /*Initialisation */
   int MPC_Init (int *argc, char ***argv);
   int MPC_Init_thread (int *argc, char ***argv, int required, int *provided);
@@ -426,13 +426,13 @@ extern "C"
   int MPC_Migrate (void);
   int MPC_Restart (int rank);
   int MPC_Restarted (int *flag);
-  
+
   typedef struct
   {
     int virtual_cpuid;
     double usage;
   } MPC_Activity_t;
-  
+
   int MPC_Get_activity (int nb_item, MPC_Activity_t * tab,
 			double *process_act);
   int MPC_Move_to (int process, int cpuid);
@@ -473,7 +473,7 @@ extern "C"
 #define MPC_BOTTOM ((void*)0)
 
   typedef long MPC_Aint;
-  
+
 
     /* Profiling Functions */
 
@@ -671,7 +671,7 @@ extern "C"
   int PMPC_Migrate (void);
   int PMPC_Restart (int rank);
   int PMPC_Restarted (int *flag);
-  
+
   int PMPC_Get_activity (int nb_item, MPC_Activity_t * tab,
 			double *process_act);
   int PMPC_Move_to (int process, int cpuid);
@@ -703,6 +703,26 @@ extern "C"
   int PMPC_Irecv_pack (int source, int tag, MPC_Comm comm,
 		      MPC_Request * request);
 
+/********************************************************************/
+/*Netowk statistics                                                 */
+/********************************************************************/
+  struct MPC_Network_stats_s {
+    int matched;
+    int not_matched;
+
+    int poll_own;
+    /* Number of msg stolen by another task */
+    int poll_stolen;
+
+    /* Number of msg stolen by the current task */
+    int poll_steals;
+
+    double time_stolen;
+    double time_steals;
+    double time_own;
+  };
+
+  struct MPC_Network_stats_s MPC_Network_stats();
 
 #ifdef __cplusplus
 }

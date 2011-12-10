@@ -85,7 +85,7 @@ inline mpc_per_communicator_t* sctk_thread_getspecific_mpc_per_comm(sctk_task_sp
   sctk_spinlock_lock(&(task_specific->per_communicator_lock));
   HASH_FIND(hh,task_specific->per_communicator,&comm,sizeof(sctk_communicator_t),per_communicator);
   sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
-  return per_communicator; 
+  return per_communicator;
 }
 
 static inline void sctk_thread_addspecific_mpc_per_comm(sctk_task_specific_t* task_specific,mpc_per_communicator_t* mpc_per_comm,sctk_communicator_t comm){
@@ -104,7 +104,7 @@ static inline void sctk_thread_addspecific_mpc_per_comm(sctk_task_specific_t* ta
   /*   } */
   /* } */
 
-  HASH_ADD(hh,task_specific->per_communicator,key,sizeof(sctk_communicator_t),mpc_per_comm); 
+  HASH_ADD(hh,task_specific->per_communicator,key,sizeof(sctk_communicator_t),mpc_per_comm);
 
   /* { */
   /*   mpc_per_communicator_t* pair; */
@@ -115,7 +115,7 @@ static inline void sctk_thread_addspecific_mpc_per_comm(sctk_task_specific_t* ta
   /* } */
 
   sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
-  return ; 
+  return ;
 }
 
 static inline void sctk_thread_removespecific_mpc_per_comm(sctk_task_specific_t* task_specific,sctk_communicator_t comm){
@@ -154,12 +154,12 @@ static inline mpc_per_communicator_t* sctk_thread_createspecific_mpc_per_comm(){
   sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
 
   tmp = sctk_malloc(sizeof(mpc_per_communicator_t));
-  
+
   tmp->err_handler = (MPC_Handler_function *)PMPC_Default_error;
   tmp->err_handler_lock = lock;
   tmp->mpc_mpi_per_communicator = NULL;
   tmp->mpc_mpi_per_communicator_copy = NULL;
-  
+
   sctk_nodebug("Allocate new per comm %p",tmp);
 
   return tmp;
@@ -168,7 +168,7 @@ static inline mpc_per_communicator_t* sctk_thread_createspecific_mpc_per_comm(){
 static inline void sctk_thread_createspecific_mpc_per_comm_from_existing(sctk_task_specific_t* task_specific,sctk_communicator_t new_comm,sctk_communicator_t old_comm){
   mpc_per_communicator_t*per_communicator;
   mpc_per_communicator_t* per_communicator_new;
-  
+
   assume(new_comm != old_comm);
 
   sctk_spinlock_lock(&(task_specific->per_communicator_lock));
@@ -179,7 +179,7 @@ static inline void sctk_thread_createspecific_mpc_per_comm_from_existing(sctk_ta
   memcpy(per_communicator_new,per_communicator,sizeof(mpc_per_communicator_t));
 
   if(per_communicator->mpc_mpi_per_communicator_copy != NULL){
-    per_communicator->mpc_mpi_per_communicator_copy(&(per_communicator_new->mpc_mpi_per_communicator),per_communicator->mpc_mpi_per_communicator); 
+    per_communicator->mpc_mpi_per_communicator_copy(&(per_communicator_new->mpc_mpi_per_communicator),per_communicator->mpc_mpi_per_communicator);
   }
 
   sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
@@ -226,14 +226,14 @@ static inline void sctk_mpc_commit_status_from_request(MPC_Request * request, MP
     }
 }
 
-static inline 
+static inline
 sctk_communicator_t sctk_mpc_get_communicator_from_request(MPC_Request * request){
-  return ((sctk_request_t *) request)->header.communicator; 
+  return ((sctk_request_t *) request)->header.communicator;
 }
 
-static inline 
+static inline
 void sctk_mpc_perform_messages(MPC_Request * request){
-  sctk_perform_messages(request); 
+  sctk_perform_messages(request);
 }
 
 static inline int sctk_mpc_completion_flag(MPC_Request * request){
@@ -261,23 +261,23 @@ static inline void sctk_mpc_init_request (MPC_Request * request, MPC_Comm comm,
 
 static inline void sctk_mpc_register_message_in_request(MPC_Request * request,
 							sctk_thread_ptp_message_t *msg){
-  request->msg = msg; 
+  request->msg = msg;
 }
 
 static inline sctk_thread_ptp_message_t* sctk_mpc_get_message_in_request(MPC_Request * request){
-  return request->msg; 
+  return request->msg;
 }
 
 static inline void sctk_mpc_init_message_size(MPC_Request * request){
-  request->msg->body.header.msg_size = 0; 
+  request->msg->body.header.msg_size = 0;
 }
 
 static inline void sctk_mpc_add_to_message_size(MPC_Request * request, size_t size){
-  request->msg->body.header.msg_size += size; 
+  request->msg->body.header.msg_size += size;
 }
 
 static inline size_t sctk_mpc_get_message_size(MPC_Request * request){
-  return request->msg->body.header.msg_size; 
+  return request->msg->body.header.msg_size;
 }
 
 static inline int sctk_mpc_get_message_source(MPC_Request * request){
@@ -285,15 +285,15 @@ static inline int sctk_mpc_get_message_source(MPC_Request * request){
 }
 
 static inline int sctk_mpc_message_is_null(MPC_Request * request){
-  return request->is_null; 
+  return request->is_null;
 }
 
 static inline void sctk_mpc_message_set_is_null(MPC_Request * request,int val){
-  request->is_null = val; 
+  request->is_null = val;
 }
 
 static inline int sctk_mpc_message_get_is_null(MPC_Request * request){
-  return request->is_null; 
+  return request->is_null;
 }
 
 static inline void sctk_mpc_set_header_in_message(sctk_thread_ptp_message_t *
@@ -312,7 +312,7 @@ static inline void sctk_mpc_set_header_in_message(sctk_thread_ptp_message_t *
 static inline void sctk_mpc_wait_message (MPC_Request * request){
   if(sctk_mpc_message_is_null(request) == 0){
     sctk_wait_message(request);
-  } 
+  }
 }
 
 static inline void sctk_mpc_wait_all (const int task, const sctk_communicator_t com){
@@ -2256,7 +2256,7 @@ __MPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
 	  sctk_add_adress_in_message (msg, tmp_buf->buf, msg_size);
 	  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
 					  &(tmp_buf->request), msg_size,pt2pt_specific_message_tag);
-	  
+
 	  sctk_spinlock_unlock (&(thread_specific->buffer_async.lock));
 
 	  memcpy (tmp_buf->buf, buf, msg_size);
@@ -2506,7 +2506,7 @@ __MPC_Test_check (MPC_Request * request, int *flag, MPC_Status * status)
     {
       *flag = 1;
       sctk_mpc_commit_status_from_request(request,status);
-      MPC_ERROR_SUCESS ();      
+      MPC_ERROR_SUCESS ();
     }
 
   mpc_check_comm (sctk_mpc_get_communicator_from_request(request), MPC_COMM_WORLD);
@@ -2928,7 +2928,7 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
 	  sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
 	  sctk_spinlock_unlock (&(thread_specific->buffer.lock));
 	  sctk_mpc_init_request(&request,comm,src);
-	  
+
 	  sctk_add_adress_in_message(msg,buf,msg_size);
 	  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
 					  &request, msg_size,pt2pt_specific_message_tag);
@@ -2936,20 +2936,20 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
 	  sctk_nodebug("send request.is_null %d",request.is_null);
 	  sctk_mpc_wait_message (&request);
 	}
-      else 
+      else
 	{
 	  msg = &(tmp_buf->header);
 	  sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
 	  sctk_nodebug ("Copied message |%s| -> |%s| %d", buf, tmp_buf->buf,
 			msg_size);
-	  
+
 	  sctk_add_adress_in_message(msg,tmp_buf->buf,msg_size);
 	  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
 					  &(tmp_buf->request), msg_size,pt2pt_specific_message_tag);
 	  sctk_spinlock_unlock (&(thread_specific->buffer.lock));
-	  
-	  memcpy (tmp_buf->buf, buf, msg_size);	
-	  sctk_send_message (msg);  
+
+	  memcpy (tmp_buf->buf, buf, msg_size);
+	  sctk_send_message (msg);
 	}
     }
 
@@ -4687,7 +4687,7 @@ PMPC_Isend_pack (int dest, int tag, MPC_Comm comm, MPC_Request * request)
 				  comm,
 				  src,
 				  dest,
-				  request, 
+				  request,
 				  sctk_mpc_get_message_size(request),pt2pt_specific_message_tag);
   sctk_send_message (msg);
   SCTK_PROFIL_END (MPC_Isend_pack);
@@ -4733,7 +4733,7 @@ PMPC_Irecv_pack (int source, int tag, MPC_Comm comm, MPC_Request * request)
 				  comm,
 				  source,
 				  src,
-				  request, 
+				  request,
 				  sctk_mpc_get_message_size(request),pt2pt_specific_message_tag);
 
   sctk_recv_message (msg,task_specific->my_ptp_internal);
@@ -4754,3 +4754,11 @@ PMPC_User_Main (int argc, char **argv)
   return mpc_user_main (argc, argv);
 }
 
+/********************************************************************/
+/*Netowk statistics                                                 */
+/********************************************************************/
+struct MPC_Network_stats_s MPC_Network_stats() {
+  struct MPC_Network_stats_s stats;
+  sctk_network_stats_ib(&stats);
+  return stats;
+}
