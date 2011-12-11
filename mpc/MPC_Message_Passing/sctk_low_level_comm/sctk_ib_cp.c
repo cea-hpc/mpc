@@ -253,8 +253,9 @@ int sctk_ib_cp_handle_message(sctk_rail_info_t* rail,
   /* XXX: Do not support thread migration */
   HASH_FIND(hh_all,all_tasks,&dest_task, sizeof(int),task);
   if (!task) {
-    sctk_error("Task %d not found !", dest_task);
-    not_reachable();
+//    sctk_error("Task %d not found !", dest_task);
+    /* We return without error -> indirect message */
+    return 0;
   }
   CP_PROF_INC(task,not_matched);
 

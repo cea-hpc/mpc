@@ -41,11 +41,18 @@ typedef struct sctk_ibuf_header_s
 {
   /* Protocol used */
   sctk_ib_protocol_t protocol;
+  int dest_task;
 } __attribute__ ((packed))
 sctk_ibuf_header_t;
 #define IBUF_GET_HEADER(buffer) ((sctk_ibuf_header_t*) buffer)
 #define IBUF_GET_HEADER_SIZE (sizeof(sctk_ibuf_header_t))
 #define IBUF_GET_PROTOCOL(buffer) (IBUF_GET_HEADER(buffer)->protocol)
+
+/* XXX: take an ibuf and not a buffer */
+#define IBUF_SET_DEST_TASK(ibuf,x) (IBUF_GET_HEADER(ibuf->buffer)->dest_task = x)
+#define IBUF_GET_DEST_TASK(ibuf) (IBUF_GET_HEADER(ibuf->buffer)->dest_task)
+#define IBUF_SET_SRC_TASK(ibuf,x) (ibuf->src_task = x)
+#define IBUF_GET_SRC_TASK(ibuf) (ibuf->src_task)
 
 /* Description of an ibuf */
 typedef struct sctk_ibuf_desc_s
@@ -159,7 +166,7 @@ typedef struct sctk_ibuf_s
   /* the following infos aren't transmitted by the network */
   struct sctk_ib_qp_s*    remote;
   void* supp_ptr;
-  int dest_task;
+  int src_task;
   int dest_process;
   /* If the buffer is in a shaed receive queue */
   char in_srq;
