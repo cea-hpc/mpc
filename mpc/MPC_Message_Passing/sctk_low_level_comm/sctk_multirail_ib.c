@@ -112,6 +112,7 @@ static
 void sctk_network_init_multirail_ib_all(char* name, char* topology){
   int i;
 
+  sctk_nodebug("Topo: %s\n", topology);
   sctk_set_dynamic_reordering_buffer_creation();
   sctk_route_set_rail_nb(NB_RAILS);
   rails = sctk_malloc(NB_RAILS*sizeof(sctk_rail_info_t*));
@@ -138,5 +139,5 @@ void sctk_network_init_multirail_ib(char* name, char* topology){
 }
 
 void sctk_network_init_ib(char* name, char* topology){
-  sctk_network_init_multirail_ib_all("mutirail_ib","ondemand");
+  sctk_network_init_multirail_ib_all("mutirail_ib",topology);
 }

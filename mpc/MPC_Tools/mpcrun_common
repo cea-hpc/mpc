@@ -335,11 +335,17 @@ else
 fi
 
 
-if test "$PROCESS_NB" = "0" ; then 
+if test "$PROCESS_NB" = "0" ; then
     PROCESS_NB=1
 fi
-if test "$NODE_NB" = "0" ; then 
+if test "$NODE_NB" = "0" ; then
     NODE_NB=1
+fi
+
+result=`echo "$PROCESS_NB > $TASK_NB" | bc`
+if test "$result" = "1"; then
+  PROCESS_NB=$TASK_NB
+  echo "WARNING: Process number reduced to $PROCESS_NB"
 fi
 
 SCTK_ARGS="--sctk-args--"

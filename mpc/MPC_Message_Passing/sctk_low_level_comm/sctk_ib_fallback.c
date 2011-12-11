@@ -57,6 +57,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   if( msg->body.header.specific_message_tag == process_specific_message_tag) {
     tmp = sctk_get_route_to_process(msg->sctk_msg_get_destination,rail);
   } else {
+    sctk_nodebug("Connexion to %d", msg->sctk_msg_get_glob_destination);
     tmp = sctk_get_route(msg->sctk_msg_get_glob_destination,rail);
   }
 
@@ -106,8 +107,10 @@ static int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
   int steal = config->ibv_steal;
   int release_ibuf = 1;
   int src_task;
-  src_task = IBUF_GET_SRC_TASK(ibuf);
-  CHECK_CP(src_task, send_cq);
+  if (steal > 0) {
+    src_task = IBUF_GET_SRC_TASK(ibuf);
+    CHECK_CP(src_task, send_cq);
+  }
 
   /* Switch on the protocol of the received message */
   switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
@@ -148,20 +151,20 @@ static int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
   int recopy = 1;
   int ondemand = 0;
   int dest_task = -1;
-  sctk_ib_cp_task_t *polling_task;
-  double s, e;
+  sctk_ib_cp_task_t *polling_task = NULL;
+  double s=0, e=0;
 
-  dest_task = IBUF_GET_DEST_TASK(ibuf);
-  /* XXX: Check if the Collaborative polling is activated and handle
-   * the message
-   * - dest_task can be equal to -1
-   * - If the message is from CP, do not handle it*/
-  CHECK_CP(dest_task, recv_cq);
-
-  sctk_nodebug("Recv ibuf:%p (len:%lu)", ibuf, wc->byte_len);
-
-  polling_task = sctk_ib_cp_get_polling_task();
-  s = sctk_atomics_get_timestamp();
+  if (steal > 0) {
+    dest_task = IBUF_GET_DEST_TASK(ibuf);
+    /* XXX: Check if the Collaborative polling is activated and handle
+     * the message
+     * - dest_task can be equal to -1
+     * - If the message is from CP, do not handle it*/
+    CHECK_CP(dest_task, recv_cq);
+    polling_task = sctk_ib_cp_get_polling_task();
+    s = sctk_atomics_get_timestamp();
+  }
+   sctk_nodebug("Recv ibuf:%p", ibuf);
   /* Switch on the protocol of the received message */
   switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
     case eager_protocol:
@@ -219,7 +222,7 @@ static int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
     sctk_ibuf_release_from_srq(&rail->network.ib, ibuf);
   }
 
-  if (from_cp == 1 || from_cp == 0) {
+  if (steal > 0 && (from_cp == 1 || from_cp == 0) ) {
     e = sctk_atomics_get_timestamp();
     sctk_spinlock_lock(&polling_task->lock_timers);
     polling_task->time_own += e-s;
