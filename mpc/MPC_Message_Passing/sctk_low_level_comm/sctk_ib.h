@@ -28,6 +28,7 @@ extern "C"
 #endif
 #include "sctk_spinlock.h"
 #include <stdint.h>
+#include <mpcmp.h>
 
   struct sctk_ibuf_pool_s;
   struct sctk_ibuf_s;
@@ -140,6 +141,7 @@ extern "C"
   void sctk_ib_add_static_route(int dest, struct sctk_route_table_s *tmp);
   void sctk_ib_add_dynamic_route(int dest, struct sctk_route_table_s *tmp);
   int sctk_ib_route_dynamic_is_connected(struct sctk_route_table_s *tmp);
+  void sctk_ib_route_dynamic_set_connected(struct sctk_route_table_s *tmp, int connected);
 
   /* IB header: generic */
 #define IBUF_GET_EAGER_HEADER(buffer) \
@@ -187,6 +189,16 @@ extern "C"
 #define IBUF_GET_RDMA_DATA_WRITE_SIZE (IBUF_GET_RDMA_SIZE + sizeof(sctk_ib_rdma_data_write_t))
 
   void sctk_network_free_msg(struct sctk_thread_ptp_message_s *msg);
+  /* For getting stats from network usage */
+  void sctk_network_stats_ib (struct MPC_Network_stats_s* stats);
+
+/* For not used fuctions (disable compiler warning */
+#ifdef __GNUC__
+#define __UNUSED__ __attribute__ ((__unused__))
+#else
+#define __UNUSED__
+#endif
+
 #ifdef __cplusplus
 }
 #endif

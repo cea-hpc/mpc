@@ -147,7 +147,7 @@ char* steal_names[3] = {
 
 void sctk_ib_config_check(sctk_ib_rail_info_t *rail_ib)
 {
-  sctk_ib_config_t *c = rail_ib->config;
+//  sctk_ib_config_t *c = rail_ib->config;
 
   /* FIXME: fix here */
 #if 0
@@ -164,7 +164,7 @@ void sctk_ib_config_check(sctk_ib_rail_info_t *rail_ib)
   /* Good conf, we return */
   return;
 
-error:
+//error:
   sctk_error("Wrong IB configuration");
   sctk_abort();
   return;

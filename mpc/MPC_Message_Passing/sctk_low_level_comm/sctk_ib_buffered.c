@@ -40,7 +40,8 @@
 #include "math.h"
 
 /* XXX: Modifications required:
- * - copy in user buffer if the message has already been posted
+ * - copy in user buffer if the message has already been posted - DONE
+ * - Support of fragmented copy
  *
  * */
 
@@ -121,6 +122,7 @@ void sctk_ib_buffered_free_msg(void* arg) {
 
   switch(entry->status & MASK_BASE) {
     case recopy:
+      sctk_debug("Free payload %p from entry %p", entry->payload, entry);
       sctk_free(entry->payload);
       break;
 
@@ -137,7 +139,6 @@ void sctk_ib_buffered_copy(sctk_message_to_copy_t* tmp){
   sctk_rail_info_t* rail;
   sctk_thread_ptp_message_t* send;
   sctk_thread_ptp_message_t* recv;
-  void* body;
 
   recv = tmp->msg_recv;
   send = tmp->msg_send;
@@ -165,13 +166,16 @@ void sctk_ib_buffered_copy(sctk_message_to_copy_t* tmp){
         /* The message is done. All buffers have been received */
         sctk_nodebug("Message recopied free from copy %d (%p)", entry->status, entry);
         sctk_net_message_copy_from_buffer(entry->payload, tmp, 1);
+        sctk_free(entry);
       } else {
         /* Add matching OK */
         entry->status |= match;
         sctk_spinlock_unlock(&entry->lock);
       }
       break;
-    default: not_reachable();
+    default:
+      sctk_error("Got mask %d", entry->status);
+      not_reachable();
   }
 }
 
@@ -213,7 +217,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     entry->key = key;
     entry->total = buffered->nb;
     entry->status = not_set;
-    sctk_nodebug("Not set: %d (%p)", entry->status, entry);
+    sctk_debug("Not set: %d (%p)", entry->status, entry);
     entry->lock = SCTK_SPINLOCK_INITIALIZER;
     entry->payload = NULL;
     entry->copy_ptr = NULL;
@@ -240,7 +244,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   /* If last entry, we send it to MPC */
   /* XXX: horrible use of locks. but we do not have the choice */
   current = OPA_fetch_and_incr_int(&(entry->current));
-  sctk_nodebug("%p; %d on %d", entry, current, entry->total);
+  sctk_debug("%p - %d on %d", entry, current, entry->total);
   if (current == entry->total-1) {
     /* remove entry from HT.
      * XXX: We have to do this before marking message as done */
@@ -258,6 +262,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
           /* The message is done. All buffers have been received */
           sctk_net_message_copy_from_buffer(entry->payload, entry->copy_ptr, 1);
           sctk_nodebug("Message recopied free from done");
+          sctk_free(entry);
         } else {
           sctk_nodebug("Free done:%p", entry);
           entry->status |= done;
@@ -271,6 +276,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
           assume(entry->copy_ptr);
           sctk_message_completion_and_free(entry->copy_ptr->msg_send,
               entry->copy_ptr->msg_recv);
+          sctk_free(entry);
           sctk_nodebug("Message zerocpy free from done");
         } else {
           sctk_spinlock_unlock(&entry->lock);
@@ -279,7 +285,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
         break;
       default: not_reachable();
     }
-    sctk_free(msg->tail.ib.buffered.entry);
+    sctk_debug("Free done:%p", entry);
   }
 }
 #endif

@@ -47,6 +47,7 @@ enum sctk_ib_prof_counters_e {
   OPA_incr_int(&rail_ib->profiler->counters[x]);         \
 } while(0)
 
+void sctk_ib_prof_init(sctk_ib_rail_info_t *rail_ib);
 
 #endif
 #endif

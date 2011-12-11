@@ -135,7 +135,7 @@ enum sctk_ibuf_status
   BARRIER_IBUF_FLAG     = 888
 };
 
-static char* sctk_ibuf_print_flag (enum sctk_ibuf_status flag)
+__UNUSED__ static char* sctk_ibuf_print_flag (enum sctk_ibuf_status flag)
 {
   switch(flag) {
     case RDMA_READ_IBUF_FLAG:   return "RDMA_READ_IBUF_FLAG";break;
@@ -187,6 +187,11 @@ sctk_ibuf_pick(struct sctk_ib_rail_info_s *rail_ib,
 
 int sctk_ibuf_srq_check_and_post(
     struct sctk_ib_rail_info_s *rail_ib, int limit);
+
+void sctk_ibuf_release_from_srq( struct sctk_ib_rail_info_s *rail_ib,
+    sctk_ibuf_t* ibuf);
+
+void sctk_ibuf_print(sctk_ibuf_t *ibuf, char* desc);
 
 /*-----------------------------------------------------------
  *  WR INITIALIZATION

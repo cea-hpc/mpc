@@ -56,7 +56,7 @@ void
 sctk_ib_sr_recv_free(struct sctk_rail_info_s* rail, sctk_thread_ptp_message_t *msg,
     sctk_ibuf_t *ibuf, int recopy);
 
-int sctk_ib_sr_determine_dest_task(sctk_ibuf_t *ibuf);
+void sctk_ib_buffered_poll_recv(struct sctk_rail_info_s* rail, sctk_ibuf_t *ibuf);
 
 #endif
 #endif

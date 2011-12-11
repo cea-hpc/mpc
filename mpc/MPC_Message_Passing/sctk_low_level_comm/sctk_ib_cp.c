@@ -126,7 +126,6 @@ void sctk_ib_cp_finalize_task(int rank) {
 
 int __cp_poll(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll, sctk_ibuf_t** volatile list, sctk_ib_cp_task_t *task,
     int (*func) (struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf, const char from_cp, struct sctk_ib_polling_s *poll)){
-  int vp = sctk_thread_get_vp();
   sctk_ibuf_t *ibuf = NULL;
   int nb_found = 0;
 
@@ -157,7 +156,6 @@ int sctk_ib_cp_poll(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll
     int (*func) (struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf, const char from_cp, struct sctk_ib_polling_s *poll)){
   int vp = sctk_thread_get_vp();
   sctk_ib_cp_task_t *task = NULL;
-  sctk_ibuf_t *ibuf = NULL, *list = NULL;
   int nb_found = 0;
 
   if (cq == recv_cq) {
@@ -241,7 +239,6 @@ int sctk_ib_cp_handle_message(sctk_rail_info_t* rail,
     sctk_ibuf_t *ibuf, int dest_task, enum sctk_ib_cp_poll_cq_e cq) {
   sctk_ib_cp_task_t *task = NULL;
   int vp = sctk_thread_get_vp();
-  char added = 0;
 
   HASH_FIND(hh_vp,vps[vp].tasks,&dest_task, sizeof(int),task);
   /* The task is on the current VP, we handle the message */

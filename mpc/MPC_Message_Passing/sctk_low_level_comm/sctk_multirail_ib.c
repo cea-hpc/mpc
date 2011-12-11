@@ -28,6 +28,7 @@
 #include <sctk_tcp.h>
 #include <opa_primitives.h>
 #include <sctk_checksum.h>
+#include "sctk_ib_fallback.h"
 
 #define NB_RAILS 1
 static sctk_rail_info_t** rails = NULL;

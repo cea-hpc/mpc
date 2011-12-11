@@ -127,6 +127,7 @@ int sctk_ib_cm_on_demand_recv_done(sctk_rail_info_t *rail, void* done, int src) 
   sctk_spinlock_unlock(&route->remote->lock_rts);
   sctk_ib_route_dynamic_set_connected(route_table, 1);
   sctk_ib_debug("OD QP connected to process %d", src);
+  return 0;
 }
 
 int sctk_ib_cm_on_demand_recv_ack(sctk_rail_info_t *rail, void* ack, int src) {
@@ -158,6 +159,7 @@ int sctk_ib_cm_on_demand_recv_ack(sctk_rail_info_t *rail, void* ack, int src) {
       &done,sizeof(char));
   sctk_ib_route_dynamic_set_connected(route_table, 1);
   sctk_ib_debug("OD QP connected to process %d", src);
+  return 0;
 }
 
 int sctk_ib_cm_on_demand_recv_request(sctk_rail_info_t *rail, void* request, int src) {

@@ -39,6 +39,7 @@
 #include "sctk_ib_rdma.h"
 #include "sctk_ib_buffered.h"
 #include "sctk_ib_cp.h"
+#include "sctk_ib_prof.h"
 #include "sctk_atomics.h"
 
 static void

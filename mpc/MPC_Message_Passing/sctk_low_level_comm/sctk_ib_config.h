@@ -74,6 +74,7 @@ typedef struct sctk_ib_config_s
 
 struct sctk_ib_rail_info_s;
 void sctk_ib_config_init(struct sctk_ib_rail_info_s *rail_ib);
+void sctk_ib_config_print(struct sctk_ib_rail_info_s *rail_ib);
 
 
 #endif

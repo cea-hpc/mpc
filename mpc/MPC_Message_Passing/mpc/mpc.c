@@ -4017,6 +4017,8 @@ __MPC_Comm_free (MPC_Comm * comm)
     {
       MPC_ERROR_SUCESS ();
     }
+#warning "Comm free disabled"
+  MPC_ERROR_SUCESS();
   sctk_nodebug ("Comm free %d", *comm);
   mpc_check_comm (*comm, MPC_COMM_WORLD);
   sctk_assert (*comm != MPC_COMM_NULL);

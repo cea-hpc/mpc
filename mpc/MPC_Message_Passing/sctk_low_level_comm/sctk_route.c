@@ -27,6 +27,7 @@
 #include <sctk_communicator.h>
 #include <sctk_spinlock.h>
 #include <sctk_ib_cm.h>
+#include <sctk_pmi.h>
 
 static sctk_route_table_t* sctk_dynamic_route_table = NULL;
 static sctk_route_table_t* sctk_static_route_table = NULL;
@@ -155,6 +156,7 @@ void* __wait_connexion(void* a) {
 
   if (sctk_route_is_connected(args->route_table))
     args->done = 1;
+  return NULL;
 }
 
 sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail){
@@ -287,6 +289,7 @@ int sctk_route_ring(int dest, sctk_rail_info_t* rail){
 /* FULLY CONNECTED */
 int sctk_route_fully(int dest, sctk_rail_info_t* rail){
   not_reachable();
+  return -1;
 }
 
 void sctk_route_fully_init(sctk_rail_info_t* rail){
@@ -330,6 +333,7 @@ void sctk_route_fully_init(sctk_rail_info_t* rail){
 /* ONDEMAND */
 int sctk_route_ondemand(int dest, sctk_rail_info_t* rail){
   not_reachable();
+  return -1;
 }
 
 void sctk_route_ondemand_init(sctk_rail_info_t* rail){
@@ -350,7 +354,7 @@ void sctk_route_init_in_rail(sctk_rail_info_t* rail, char* topology){
   } else if(strcmp("ondemand",topology) == 0){
     rail->route = sctk_route_ondemand;
     rail->route_init = sctk_route_ondemand_init;
-    rail->topology_name = "on demand connexion";
+    rail->topology_name = "OD connexion";
   } else {
     not_reachable();
   }

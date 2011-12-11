@@ -39,6 +39,7 @@
 #include <sctk_ib_qp.h>
 #include <sctk_ib_cp.h>
 #include <sctk_ib_toolkit.h>
+#include <sctk_ib_rdma.h>
 #include <sctk_ib_sr.h>
 #include <sctk_route.h>
 
@@ -68,8 +69,6 @@ sctk_ib_create_remote(int dest, sctk_rail_info_t* rail){
   sctk_route_table_t* tmp;
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   sctk_ib_data_t *route_ib;
-  LOAD_CONFIG(rail_ib);
-  LOAD_DEVICE(rail_ib);
 
   tmp = sctk_malloc(sizeof(sctk_route_table_t));
   memset(tmp,0,sizeof(sctk_route_table_t));
@@ -132,8 +131,6 @@ void sctk_network_init_ib_all(sctk_rail_info_t* rail,
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   int dest_rank;
   int src_rank;
-  char src_connection_infos[MAX_STRING_SIZE];
-  char dest_connection_infos[MAX_STRING_SIZE];
   sctk_route_table_t *route_table_src, *route_table_dest;
   sctk_ib_data_t *route_dest, *route_src;
   sctk_ib_qp_keys_t keys;
@@ -176,11 +173,10 @@ void sctk_network_init_ib_all(sctk_rail_info_t* rail,
   sctk_nodebug("Recv from %d, send to %d", src_rank, dest_rank);
 }
 
-sctk_network_stats_ib (struct MPC_Network_stats_s* stats) {
+void sctk_network_stats_ib (struct MPC_Network_stats_s* stats) {
   sctk_ib_cp_task_t *task = NULL;
   int task_id;
   int thread_id;
-  uint8_t activate = 1;
 
   sctk_get_thread_info (&task_id, &thread_id);
   task = sctk_ib_cp_get_task(task_id);
@@ -192,7 +188,4 @@ sctk_network_stats_ib (struct MPC_Network_stats_s* stats) {
   stats->time_stolen = task->time_stolen;
   stats->time_steals = task->time_steals;
   stats->time_own = task->time_own;
-
-
-//  stats->matched = cp->matched;
 }

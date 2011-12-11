@@ -38,7 +38,7 @@
 #endif
 
 #ifdef SCTK_IB_MODULE_DEBUG
-static void sctk_ib_debug(const char *fmt, ...)
+__UNUSED__ static void sctk_ib_debug(const char *fmt, ...)
 {
   va_list ap;
   char buff[SMALL_BUFFER_SIZE];
