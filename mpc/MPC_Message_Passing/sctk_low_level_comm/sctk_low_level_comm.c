@@ -149,6 +149,8 @@ sctk_net_init_driver (char *name)
 
     /* Driver for Infiniband */
     TRY_DRIVER(multirail_ib,sctk_network_init_multirail_ib,topo);
+    /* FIXME: For backward compatibility. Should not more be used */
+    TRY_DRIVER(ib,sctk_network_init_multirail_ib,topo);
     DEFAUT_DRIVER();
 
     sctk_route_finalize();

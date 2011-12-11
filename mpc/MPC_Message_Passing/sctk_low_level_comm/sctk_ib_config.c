@@ -47,7 +47,7 @@
  * if x > IBV_FRAG_EAGER_LIMIT -> rendezvous msg */
 //#define IBV_EAGER_LIMIT ( 12 * 1024 )
 #define IBV_EAGER_LIMIT       ( 12 * 1024)
-#define IBV_FRAG_EAGER_LIMIT  (512 * 1024)
+#define IBV_FRAG_EAGER_LIMIT  (256 * 1024)
 /* Number of allowed pending Work Queue Elements
  * for each QP */
 #define IBV_QP_TX_DEPTH     15000
@@ -123,10 +123,6 @@
 #define IBV_VERBOSE_LEVEL         2
 
 #define IBV_ADAPTIVE_POLLING      0
-/* Define if the polling function must be run in a
- * secure mode. In this mode, only one task at the same
- * moment can make a call to the polling function*/
-#define IBV_SECURE_POLLING        1
 
 #define IBV_STEAL                 0
 /*  0 -> MPC in normal mode, without work-stealing */
@@ -202,7 +198,6 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         "ibv_adaptive_polling = %d\n"
         "ibv_quiet_crash      = %d\n"
         "ibv_match            = %d\n"
-        EXPERIMENTAL(ibv_secure_polling)"   = %d\n"
         EXPERIMENTAL(ibv_steal)"            = %d\n"
         "Stealing desc        = %s\n"
         "############# IB CONFIGURATION #############\n",
@@ -231,7 +226,6 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         config->ibv_adaptive_polling,
         config->ibv_quiet_crash,
         config->ibv_match,
-        config->ibv_secure_polling,
         config->ibv_steal, steal_names[config->ibv_steal]);
   }
 }
@@ -269,7 +263,6 @@ void load_ib_default_config(sctk_ib_rail_info_t *rail_ib)
   config->ibv_rdma_depth = IBV_RDMA_DEPTH;
   config->ibv_rdma_dest_depth = IBV_RDMA_DEST_DEPTH;
   config->ibv_adaptive_polling = IBV_ADAPTIVE_POLLING;
-  config->ibv_secure_polling = IBV_SECURE_POLLING;
   config->ibv_steal = IBV_STEAL;
   config->ibv_quiet_crash = IBV_QUIET_CRASH;
   config->ibv_match = IBV_MATCH;
@@ -355,9 +348,6 @@ void set_ib_env(sctk_ib_rail_info_t *rail_ib)
   if ( (value = getenv("MPC_IBV_ADAPTIVE_POLLING")) != NULL )
     c->ibv_adaptive_polling = atoi(value);
 
-  if ( (value = getenv("MPC_IBV_SECURE_POLLING")) != NULL )
-    c->ibv_secure_polling = atoi(value);
-
   if ( (value = getenv("MPC_IBV_STEAL")) != NULL )
     c->ibv_steal = atoi(value);
 
@@ -385,10 +375,5 @@ void sctk_ib_config_init(sctk_ib_rail_info_t *rail_ib)
    * */
   sctk_ib_config_check(rail_ib);
 }
-
-
-#if 0
-
-#endif
 
 #endif

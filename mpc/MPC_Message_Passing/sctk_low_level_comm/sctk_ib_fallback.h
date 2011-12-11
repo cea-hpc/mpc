@@ -34,7 +34,7 @@ extern "C"
 #include <sctk_spinlock.h>
 
 #define MAX_STRING_SIZE 2048
-  void sctk_network_init_ib(sctk_rail_info_t* rail);
+  void sctk_network_init_fallback_ib(sctk_rail_info_t* rail);
   void sctk_network_init_polling_thread (sctk_rail_info_t* rail, char* topology);
 
 #ifdef __cplusplus

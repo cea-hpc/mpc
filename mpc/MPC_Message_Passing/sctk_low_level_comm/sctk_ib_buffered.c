@@ -122,7 +122,7 @@ void sctk_ib_buffered_free_msg(void* arg) {
 
   switch(entry->status & MASK_BASE) {
     case recopy:
-      sctk_debug("Free payload %p from entry %p", entry->payload, entry);
+      sctk_nodebug("Free payload %p from entry %p", entry->payload, entry);
       sctk_free(entry->payload);
       break;
 
@@ -217,7 +217,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     entry->key = key;
     entry->total = buffered->nb;
     entry->status = not_set;
-    sctk_debug("Not set: %d (%p)", entry->status, entry);
+    sctk_nodebug("Not set: %d (%p)", entry->status, entry);
     entry->lock = SCTK_SPINLOCK_INITIALIZER;
     entry->payload = NULL;
     entry->copy_ptr = NULL;
@@ -244,7 +244,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   /* If last entry, we send it to MPC */
   /* XXX: horrible use of locks. but we do not have the choice */
   current = OPA_fetch_and_incr_int(&(entry->current));
-  sctk_debug("%p - %d on %d", entry, current, entry->total);
+  sctk_nodebug("%p - %d on %d", entry, current, entry->total);
   if (current == entry->total-1) {
     /* remove entry from HT.
      * XXX: We have to do this before marking message as done */
@@ -285,7 +285,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
         break;
       default: not_reachable();
     }
-    sctk_debug("Free done:%p", entry);
+    sctk_nodebug("Free done:%p", entry);
   }
 }
 #endif

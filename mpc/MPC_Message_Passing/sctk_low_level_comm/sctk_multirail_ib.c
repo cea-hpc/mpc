@@ -123,7 +123,7 @@ void sctk_network_init_multirail_ib_all(char* name, char* topology){
   rails[i]->rail_number = i;
   rails[i]->send_message_from_network = sctk_send_message_from_network_multirail_ib;
   sctk_route_init_in_rail(rails[i],topology);
-  sctk_network_init_ib(rails[i]);
+  sctk_network_init_fallback_ib(rails[i]);
   sctk_network_init_polling_thread (rails[i], topology);
 
   sctk_network_send_message_set(sctk_network_send_message_multirail_ib);
@@ -135,4 +135,8 @@ void sctk_network_init_multirail_ib_all(char* name, char* topology){
 }
 void sctk_network_init_multirail_ib(char* name, char* topology){
   sctk_network_init_multirail_ib_all(name,topology);
+}
+
+void sctk_network_init_ib(char* name, char* topology){
+  sctk_network_init_multirail_ib_all("mutirail_ib","ondemand");
 }

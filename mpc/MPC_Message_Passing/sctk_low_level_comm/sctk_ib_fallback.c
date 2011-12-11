@@ -355,7 +355,7 @@ void sctk_network_init_polling_thread (sctk_rail_info_t* rail, char* topology) {
   }
 }
 
-void sctk_network_init_ib(sctk_rail_info_t* rail){
+void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   rail->connect_to = sctk_network_connection_to_ib;
   rail->connect_from = sctk_network_connection_from_ib;
   rail->send_message = sctk_network_send_message_ib;
