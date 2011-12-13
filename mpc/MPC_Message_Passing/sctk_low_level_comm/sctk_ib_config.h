@@ -31,6 +31,8 @@
 #define IBV_RDVZ_READ_PROTOCOL (2)
 typedef struct sctk_ib_config_s
 {
+  /* Network name */
+  char *network_name;
   /* MMU */
   unsigned int  ibv_size_mr_chunk;
   unsigned int  ibv_mmu_cache_enabled;
@@ -73,7 +75,7 @@ typedef struct sctk_ib_config_s
 } sctk_ib_config_t;
 
 struct sctk_ib_rail_info_s;
-void sctk_ib_config_init(struct sctk_ib_rail_info_s *rail_ib);
+void sctk_ib_config_init(struct sctk_ib_rail_info_s *rail_ib, char *network_name);
 void sctk_ib_config_print(struct sctk_ib_rail_info_s *rail_ib);
 
 

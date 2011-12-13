@@ -40,20 +40,21 @@ sctk_network_send_message_multirail_ib (sctk_thread_ptp_message_t * msg){
 #ifdef SCTK_USE_ADLER
   sctk_checksum_register(msg);
 #endif
+
   if(sctk_prepare_send_message_to_network_reorder(msg) == 0){
     /*
       Reordering available : we can use multirail
-    */
-    i = 0;
-//  if(msg->sctk_msg_get_msg_size > 32768){
-//    i = 1;
-//  }
+      */
+    if (msg->sctk_msg_get_message_number % 2)
+      i = 0;
+    else
+      i = 0;
   } else {
-    /*
-      No reodering: we can't use multirail fall back to rail 0
-    */
     i = 0;
   }
+  sctk_nodebug("msg number: %d, rail %d", msg->sctk_msg_get_message_number, i);
+
+
   rails[i]->send_message(msg,rails[i]);
 }
 
@@ -112,7 +113,6 @@ static
 void sctk_network_init_multirail_ib_all(char* name, char* topology){
   int i;
 
-  sctk_nodebug("Topo: %s\n", topology);
   sctk_set_dynamic_reordering_buffer_creation();
   sctk_route_set_rail_nb(NB_RAILS);
   rails = sctk_malloc(NB_RAILS*sizeof(sctk_rail_info_t*));
@@ -133,6 +133,24 @@ void sctk_network_init_multirail_ib_all(char* name, char* topology){
   sctk_network_notify_perform_message_set(sctk_network_notify_perform_message_multirail_ib);
   sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_multirail_ib);
   sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_multirail_ib);
+
+  /* MPI IB network */
+#if 0
+  i = 1;
+  rails[i] = sctk_route_get_rail(i);
+  rails[i]->rail_number = i;
+  rails[i]->send_message_from_network = sctk_send_message_from_network_multirail_ib;
+  sctk_route_init_in_rail(rails[i],topology);
+  sctk_network_init_mpi_ib(rails[i]);
+  sctk_route_init_in_rail(rails[i],topology);
+
+  sctk_network_send_message_set(sctk_network_send_message_multirail_ib);
+  sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_multirail_ib);
+  sctk_network_notify_matching_message_set(sctk_network_notify_matching_message_multirail_ib);
+  sctk_network_notify_perform_message_set(sctk_network_notify_perform_message_multirail_ib);
+  sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_multirail_ib);
+  sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_multirail_ib);
+#endif
 }
 void sctk_network_init_multirail_ib(char* name, char* topology){
   sctk_network_init_multirail_ib_all(name,topology);

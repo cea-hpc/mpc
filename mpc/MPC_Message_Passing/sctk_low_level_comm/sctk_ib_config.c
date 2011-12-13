@@ -172,7 +172,7 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
   LOAD_CONFIG(rail_ib);
   if (sctk_process_rank == 0) {
     fprintf(stderr,
-        "############# IB CONFIGURATION #############\n"
+        "############# IB configuration for %s\n"
         "ibv_eager_limit      = %d\n"
         "ibv_frag_eager_limit = %d\n"
         "ibv_qp_tx_depth      = %d\n"
@@ -200,7 +200,8 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         "ibv_match            = %d\n"
         EXPERIMENTAL(ibv_steal)"            = %d\n"
         "Stealing desc        = %s\n"
-        "############# IB CONFIGURATION #############\n",
+        "#############\n",
+        config->network_name,
         config->ibv_eager_limit,
         config->ibv_frag_eager_limit,
         config->ibv_qp_tx_depth,
@@ -358,7 +359,7 @@ void set_ib_env(sctk_ib_rail_info_t *rail_ib)
     c->ibv_match = atoi(value);
 }
 
-void sctk_ib_config_init(sctk_ib_rail_info_t *rail_ib)
+void sctk_ib_config_init(sctk_ib_rail_info_t *rail_ib, char* network_name)
 {
   LOAD_CONFIG(rail_ib);
 
@@ -366,6 +367,7 @@ void sctk_ib_config_init(sctk_ib_rail_info_t *rail_ib)
   assume(config);
   memset(config, 0, sizeof(sctk_ib_config_t));
   rail_ib->config = config;
+  rail_ib->config->network_name = strdup(network_name);
 
   load_ib_default_config(rail_ib);
   set_ib_env(rail_ib);

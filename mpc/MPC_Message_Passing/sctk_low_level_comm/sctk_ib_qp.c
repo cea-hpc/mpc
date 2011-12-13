@@ -40,10 +40,7 @@
 /*-----------------------------------------------------------
  *  DEVICE
  *----------------------------------------------------------*/
-
-sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int rail_nb) {
-    /*XXX Do not touch the following variable:
-      Infiniband issue if dev_list is global */
+sctk_ib_device_t *sctk_ib_device_init(struct sctk_ib_rail_info_s* rail_ib) {
   struct ibv_device** dev_list;
   sctk_ib_device_t* device;
   int devices_nb;
@@ -55,6 +52,21 @@ sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int r
     sctk_error ("No IB devices found");
     sctk_abort();
   }
+ device = sctk_malloc(sizeof(sctk_ib_device_t));
+  assume(device);
+
+  rail_ib->device = device;
+  rail_ib->device->dev_list = dev_list;
+  rail_ib->device->dev_nb = devices_nb;
+
+  return device;
+}
+
+sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int rail_nb) {
+  LOAD_DEVICE(rail_ib);
+  struct ibv_device** dev_list = device->dev_list;
+  int devices_nb = device->dev_nb;
+
   if (rail_nb >= devices_nb)
   {
     sctk_error("Cannot open rail. You asked rail %d on %d", rail_nb, devices_nb);
@@ -62,8 +74,6 @@ sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int r
   }
 
   sctk_ib_debug("Opening rail %d on %d", rail_nb, devices_nb);
-  device = sctk_malloc(sizeof(sctk_ib_device_t));
-  assume(device);
 
   device->context = ibv_open_device (dev_list[rail_nb]);
   if (!device->context)
@@ -86,7 +96,8 @@ sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int r
 
 //  rail->lid = device->port_attr.lid;
   srand48 (getpid () * time (NULL));
-  rail_ib->device = device;
+  rail_ib->device->dev_index = rail_nb;
+  rail_ib->device->dev = dev_list[rail_nb];
   return device;
 }
 

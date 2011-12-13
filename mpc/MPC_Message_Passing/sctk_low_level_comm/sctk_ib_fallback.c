@@ -164,7 +164,7 @@ static int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
     polling_task = sctk_ib_cp_get_polling_task();
     s = sctk_atomics_get_timestamp();
   }
-   sctk_nodebug("Recv ibuf:%p", ibuf);
+   sctk_nodebug("[%d] Recv ibuf:%p", rail->rail_number,ibuf);
   /* Switch on the protocol of the received message */
   switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
     case eager_protocol:
@@ -177,6 +177,7 @@ static int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
         /* If on demand, handle message before sending it to high-layers */
         if(ondemand) {
           msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
+          sctk_nodebug("[%d]", rail->rail_number);
           sctk_ib_cm_on_demand_recv(rail, msg, ibuf, recopy);
         }else{
           msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
@@ -359,15 +360,8 @@ void sctk_network_init_polling_thread (sctk_rail_info_t* rail, char* topology) {
 }
 
 void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
-  rail->connect_to = sctk_network_connection_to_ib;
-  rail->connect_from = sctk_network_connection_from_ib;
-  rail->send_message = sctk_network_send_message_ib;
-  rail->notify_recv_message = sctk_network_notify_recv_message_ib;
-  rail->notify_matching_message = sctk_network_notify_matching_message_ib;
-  rail->notify_perform_message = sctk_network_notify_perform_message_ib;
-  rail->notify_idle_message = sctk_network_notify_idle_message_ib;
-  rail->notify_any_source_message = sctk_network_notify_any_source_message_ib;
-  rail->network_name = "IB-MT (v2.0) fallback";
+  /* XXX: memory never free */
+  char *network_name = sctk_malloc(256);
 
   /* Infiniband Init */
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
@@ -376,9 +370,10 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   sctk_ib_device_t *device;
   struct ibv_srq_init_attr srq_attr;
   /* Open config */
-  sctk_ib_config_init(rail_ib);
+  sctk_ib_config_init(rail_ib, "fallback");
   /* Open device */
-  device = sctk_ib_device_open(rail_ib, 0);
+  device = sctk_ib_device_init(rail_ib);
+  sctk_ib_device_open(rail_ib, 0);
   /* Init Proctection Domain */
   sctk_ib_pd_init(device);
   /* Init Completion Queues */
@@ -399,5 +394,17 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   sctk_ib_cp_init(rail_ib);
 
   /* Initialize network */
+  sprintf(network_name, "IB-MT (v2.0) fallback %d/%d:%s]",
+    device->dev_index, device->dev_nb, ibv_get_device_name(device->dev));
+  rail->connect_to = sctk_network_connection_to_ib;
+  rail->connect_from = sctk_network_connection_from_ib;
+  rail->send_message = sctk_network_send_message_ib;
+  rail->notify_recv_message = sctk_network_notify_recv_message_ib;
+  rail->notify_matching_message = sctk_network_notify_matching_message_ib;
+  rail->notify_perform_message = sctk_network_notify_perform_message_ib;
+  rail->notify_idle_message = sctk_network_notify_idle_message_ib;
+  rail->notify_any_source_message = sctk_network_notify_any_source_message_ib;
+  rail->network_name = network_name;
+
   sctk_network_init_ib_all(rail, rail->route, rail->route_init);
 }

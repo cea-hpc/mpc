@@ -56,7 +56,7 @@ void sctk_ib_cm_connect_to(int from, int to,sctk_rail_info_t* rail){
   /* create remote for dest */
   route_table = sctk_ib_create_remote(to, rail);
   route=&route_table->data.ib;
-  sctk_ib_debug("QP connection request to process %d", route->remote->rank);
+  sctk_ib_debug("[%d] QP connection request to process %d", rail->rail_number, route->remote->rank);
 
   sctk_route_messages_recv(from,to,0,msg,MSG_STRING_SIZE);
   sctk_nodebug("TO: Recv %s", msg);
@@ -72,8 +72,8 @@ void sctk_ib_cm_connect_to(int from, int to,sctk_rail_info_t* rail){
   sctk_nodebug("TO: Received done from %d",from);
   sctk_ib_qp_allocate_rts(rail_ib, route->remote);
   /* Add route */
-  sctk_ib_add_static_route(from, route_table);
-  sctk_ib_debug("QP connected to process %d", route->remote->rank);
+  sctk_ib_add_static_route(from, route_table, rail);
+  sctk_ib_debug("[%d] QP connected to process %d", rail->rail_number,route->remote->rank);
 }
 
 void sctk_ib_cm_connect_from(int from, int to,sctk_rail_info_t* rail){
@@ -90,7 +90,7 @@ void sctk_ib_cm_connect_from(int from, int to,sctk_rail_info_t* rail){
   /* create remote for dest */
   route_table = sctk_ib_create_remote(to, rail);
   route=&route_table->data.ib;
-  sctk_ib_debug("QP connection  request to process %d", route->remote->rank);
+  sctk_ib_debug("[%d] QP connection  request to process %d", rail->rail_number, route->remote->rank);
 
   snprintf(msg, MSG_STRING_SIZE,
       "%05"SCNu16":%010"SCNu32":%010"SCNu32,
@@ -106,8 +106,8 @@ void sctk_ib_cm_connect_from(int from, int to,sctk_rail_info_t* rail){
   sctk_nodebug("FROM: Ready to send to %d", to);
   sctk_route_messages_send(from,to,0,&done,sizeof(char));
   /* Add route */
-  sctk_ib_add_static_route(to, route_table);
-  sctk_ib_debug("QP connected to process %d", route->remote->rank);
+  sctk_ib_add_static_route(to, route_table, rail);
+  sctk_ib_debug("[%d] QP connected to process %d", rail->rail_number,route->remote->rank);
 }
 
 /*-----------------------------------------------------------
@@ -126,7 +126,7 @@ int sctk_ib_cm_on_demand_recv_done(sctk_rail_info_t *rail, void* done, int src) 
   }
   sctk_spinlock_unlock(&route->remote->lock_rts);
   sctk_ib_route_dynamic_set_connected(route_table, 1);
-  sctk_ib_debug("OD QP connected to process %d", src);
+  sctk_ib_debug("[%d] OD QP connected to process %d", rail->rail_number,src);
   return 0;
 }
 
@@ -158,7 +158,7 @@ int sctk_ib_cm_on_demand_recv_ack(sctk_rail_info_t *rail, void* ack, int src) {
   sctk_route_messages_send(sctk_process_rank,src,ONDEMAN_DONE_TAG+ONDEMAND_MASK_TAG,
       &done,sizeof(char));
   sctk_ib_route_dynamic_set_connected(route_table, 1);
-  sctk_ib_debug("OD QP connected to process %d", src);
+  sctk_ib_debug("[%d] OD QP connected to process %d", rail->rail_number,src);
   return 0;
 }
 
@@ -171,14 +171,15 @@ int sctk_ib_cm_on_demand_recv_request(sctk_rail_info_t *rail, void* request, int
   char msg[MSG_STRING_SIZE];
   int added;
 
+  sctk_nodebug("[%d] HERE", rail->rail_number);
   /* create remote for source */
   route_table = sctk_route_dynamic_safe_add(src, rail, sctk_ib_create_remote, &added);
   assume(route_table);
 //  if (added == 0) return 1;
   route=&route_table->data.ib;
 
-  sctk_ib_nodebug("OD QP connexion request to process %d: %s",
-      route->remote->rank, request);
+  sctk_ib_debug("[%d] OD QP connexion request to process %d: %s",
+      rail->rail_number, route->remote->rank, request);
   keys = sctk_ib_qp_keys_convert(request);
 
   sctk_spinlock_lock(&route->remote->lock_rtr);
@@ -209,7 +210,7 @@ int sctk_ib_cm_on_demand_recv(sctk_rail_info_t *rail,
   process_src = msg->sctk_msg_get_source;
   /* If destination of the message */
   if (process_dest == sctk_process_rank) {
-    sctk_nodebug("Receiving OD connexion from %d to %d", process_src, process_dest);
+    sctk_nodebug("[%d] Receiving OD connexion from %d to %d (%d)", rail->rail_number, process_src, process_dest, msg->body.header.message_tag ^ ONDEMAND_MASK_TAG);
     switch (msg->body.header.message_tag ^ ONDEMAND_MASK_TAG) {
 
       case ONDEMAN_REQ_TAG:
@@ -264,7 +265,7 @@ sctk_route_table_t *sctk_ib_cm_on_demand_request(int dest,sctk_rail_info_t* rail
   snprintf(msg, MSG_STRING_SIZE,
       "%05"SCNu16":%010"SCNu32":%010"SCNu32,
       device->port_attr.lid, route->remote->qp->qp_num, route->remote->psn);
-  sctk_ib_debug("OD QP connexion requested to %d", route->remote->rank);
+  sctk_ib_debug("[%d] OD QP connexion requested to %d", rail->rail_number, route->remote->rank);
   sctk_route_messages_send(sctk_process_rank,dest,ONDEMAN_REQ_TAG+ONDEMAND_MASK_TAG,
       msg,MSG_STRING_SIZE);
   return route_table;

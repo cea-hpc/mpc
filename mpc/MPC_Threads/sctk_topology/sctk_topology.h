@@ -27,6 +27,10 @@
 #include <stdio.h>
 
 #include "hwloc.h"
+#ifdef MPC_USE_INFINIBAND
+#include <infiniband/verbs.h>
+#include <hwloc/openfabrics-verbs.h>
+#endif
 
 #ifdef __cplusplus
 extern "C"
@@ -36,7 +40,7 @@ extern "C"
   /*
     Numbering rules
 
-    Core_id are renumbered according to a topological numbering. All threads sharing a 
+    Core_id are renumbered according to a topological numbering. All threads sharing a
     cache level must have continuous numbers.
   */
 
@@ -49,11 +53,11 @@ extern "C"
 */
   void sctk_topology_destroy (void);
 
-/*! \brief Return the current core_id 
+/*! \brief Return the current core_id
 */
   int sctk_get_cpu (void);
 
-/*! \brief Return the total number of core for the process 
+/*! \brief Return the total number of core for the process
 */
   int sctk_get_cpu_number (void);
 
@@ -66,7 +70,7 @@ extern "C"
 */
   void sctk_print_topology (FILE * fd);
 
-/*! \brief Bind the current thread 
+/*! \brief Bind the current thread
  * @ param i The cpu_id to bind
 */
   int sctk_bind_to_cpu (int i);
@@ -90,7 +94,7 @@ extern "C"
 */
   char *sctk_get_node_name (void);
 
-/*! \brief Return the closest core_id 
+/*! \brief Return the closest core_id
  * @param cpuid Main core_id
  * @param nb_cpus Number of neighbor
  * @param neighborhood Neighbor list
@@ -109,7 +113,7 @@ extern "C"
 /*! \brief Return the hwloc topology object
 */
   hwloc_topology_t sctk_get_topology_object (void);
-  
+
 #ifdef __cplusplus
 }
 #endif

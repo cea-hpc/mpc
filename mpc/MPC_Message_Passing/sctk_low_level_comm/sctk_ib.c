@@ -46,14 +46,12 @@
 #define MAX_STRING_SIZE  2048
 
 
-sctk_rail_info_t* rail_0 = NULL;
-
-void sctk_ib_add_static_route(int dest, sctk_route_table_t *tmp){
-  sctk_add_static_route(dest,tmp,rail_0);
+void sctk_ib_add_static_route(int dest, sctk_route_table_t *tmp, sctk_rail_info_t* rail){
+  sctk_add_static_route(dest,tmp,rail);
 }
 
-void sctk_ib_add_dynamic_route(int dest, sctk_route_table_t *tmp){
-  sctk_add_dynamic_route(dest,tmp,rail_0);
+void sctk_ib_add_dynamic_route(int dest, sctk_route_table_t *tmp, sctk_rail_info_t* rail){
+  sctk_add_dynamic_route(dest,tmp,rail);
 }
 
 void sctk_ib_route_dynamic_set_connected(sctk_route_table_t *tmp, int connected){
@@ -136,7 +134,6 @@ void sctk_network_init_ib_all(sctk_rail_info_t* rail,
   sctk_ib_qp_keys_t keys;
 
   assume(rail->send_message_from_network != NULL);
-  rail_0 = rail;
 
   /* FIXME: register pointers */
 
@@ -167,8 +164,8 @@ void sctk_network_init_ib_all(sctk_rail_info_t* rail,
   sctk_ib_qp_allocate_rts(rail_ib, route_dest->remote);
   sctk_pmi_barrier();
 
-  sctk_ib_add_static_route(dest_rank, route_table_dest);
-  sctk_ib_add_static_route(src_rank, route_table_src);
+  sctk_ib_add_static_route(dest_rank, route_table_dest, rail);
+  sctk_ib_add_static_route(src_rank, route_table_src, rail);
 
   sctk_nodebug("Recv from %d, send to %d", src_rank, dest_rank);
 }

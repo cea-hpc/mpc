@@ -36,6 +36,14 @@
 /* XXX: Put it in a file called sctk_ib_device.c */
 typedef struct sctk_ib_device_s
 {
+  /* Devices */
+  struct ibv_device        **dev_list;
+  /* Number of devices */
+  int                     dev_nb;
+  /* Selected device */
+  struct ibv_device       *dev;
+  /* Selected device index */
+  int                     dev_index;
   struct ibv_context      *context;  /* context */
   /* Attributs of the device */
   struct ibv_device_attr  dev_attr;
@@ -90,6 +98,7 @@ typedef struct
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
+sctk_ib_device_t *sctk_ib_device_init(struct sctk_ib_rail_info_s* rail_ib);
 sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int rail_nb);
 
 struct ibv_pd* sctk_ib_pd_init(sctk_ib_device_t *device);

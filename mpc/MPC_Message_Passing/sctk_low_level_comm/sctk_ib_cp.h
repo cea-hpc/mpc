@@ -31,7 +31,6 @@
 #include <sctk_ibufs.h>
 #include "sctk_ib_polling.h"
 
-#define MAX_VP_PER_NODE 32
 enum cp_counters_e{
   matched = 0,
   not_matched,
@@ -49,6 +48,8 @@ typedef struct sctk_ib_cp_task_s{
   UT_hash_handle hh_vp;
   UT_hash_handle hh_all;
   int vp;
+  /* numa node */
+  int node;
   /* rank is the key of HT */
   int rank;
   /* pending ibufs for the current task  */
