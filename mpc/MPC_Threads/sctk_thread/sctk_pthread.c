@@ -35,6 +35,7 @@
 #ifdef MPC_Message_Passing
 #include <sctk_low_level_comm.h>
 #endif
+#include "sctk_asm.h"
 
 #define SCTK_LOCAL_VERSION_MAJOR 0
 #define SCTK_LOCAL_VERSION_MINOR 1
@@ -55,12 +56,15 @@ pthread_wait_for_value_and_poll (volatile int *data, int value,
 /*       sctk_thread_yield(); */
       if ((*data) != value)
 	{
-	  if (i >= 10)
+	  if (i >= 100)
 	    {
-	      kthread_usleep (10);
+	      /* kthread_usleep (10); */
+	    sched_yield ();
 	      i = 0;
-	    }
-/* 	  else */
+	    } else {
+		 sctk_cpu_relax ();	    
+	  }
+	  /* 	  else */
 /* 	    sched_yield (); */
 	  i++;
 	}
