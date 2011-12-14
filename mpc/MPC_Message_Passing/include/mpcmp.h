@@ -55,7 +55,7 @@ extern "C"
   typedef unsigned int mpc_pack_indexes_t;
   typedef unsigned long mpc_pack_absolute_indexes_t;
 
-  typedef unsigned int MPC_Comm;
+  typedef int MPC_Comm;
   typedef struct
   {
     int task_nb;

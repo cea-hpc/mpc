@@ -72,6 +72,8 @@ sctk_internal_communicator_t *
 sctk_check_internal_communicator_no_lock(const sctk_communicator_t communicator){
   sctk_internal_communicator_t * tmp;
   
+  assume(communicator >= 0);
+
   if(communicator >= SCTK_MAX_COMMUNICATOR_TAB){
     sctk_spinlock_read_lock(&sctk_communicator_local_table_lock);
     HASH_FIND(hh,sctk_communicator_table,&communicator,sizeof(sctk_communicator_t),tmp);
@@ -91,6 +93,7 @@ sctk_check_internal_communicator(const sctk_communicator_t communicator){
 
   return tmp;
 }
+extern volatile int sctk_online_program;
 static inline 
 sctk_internal_communicator_t * 
 sctk_get_internal_communicator(const sctk_communicator_t communicator){
@@ -98,7 +101,13 @@ sctk_get_internal_communicator(const sctk_communicator_t communicator){
   
   tmp = sctk_check_internal_communicator(communicator);
 
-  assume(tmp != NULL);
+  if(tmp == NULL){
+    sctk_error("Communicator %d doesn't existe",communicator);
+    if(sctk_online_program == 0){
+      exit(0);
+    }
+    assume(tmp != NULL);
+  }
 
   return tmp;
 }
@@ -400,40 +409,49 @@ void sctk_communicator_init(const int nb_task){
 
   sctk_communicator_init_intern(nb_task,SCTK_COMM_WORLD,last_local,
 				first_local,local_tasks,NULL,NULL,NULL);
+  if(sctk_process_number > 1){
+    sctk_pmi_barrier();
+  }
 }
 
-void sctk_communicator_delete(){}
+void sctk_communicator_delete(){
+  if(sctk_process_number > 1){
+    sctk_pmi_barrier();
+  }
+}
 
 sctk_communicator_t sctk_delete_communicator (const sctk_communicator_t comm){
-  sctk_internal_communicator_t * tmp;
-  int is_master = 0;
-  int val;
-  int max_val;
-  sctk_barrier (comm);
-  tmp = sctk_get_internal_communicator(comm);
+  if(comm == SCTK_COMM_WORLD){
+    assume(0);
+    return comm;
+  } else {
+    sctk_internal_communicator_t * tmp;
+    int is_master = 0;
+    int val;
+    int max_val;
+    sctk_barrier (comm);
+    tmp = sctk_get_internal_communicator(comm);
+    sctk_barrier (comm);
   
-  val = OPA_fetch_and_incr_int(&(tmp->nb_to_delete));
-  max_val = tmp->local_tasks;
+    max_val = tmp->local_tasks;
+    val = OPA_fetch_and_incr_int(&(tmp->nb_to_delete));
 
-  sctk_barrier (comm);
-  if(val == max_val - 1){
-    is_master = 1;
-    sctk_spinlock_lock(&sctk_communicator_all_table_lock);
-  } else {
-    is_master = 0;
-  }
-
-  if(is_master == 1){
-    sctk_free(tmp->local_to_global);
-    sctk_free(tmp->global_to_local);
-    sctk_free(tmp->task_to_process);
+    if(val == max_val - 1){
+      is_master = 1;
+      sctk_spinlock_lock(&sctk_communicator_all_table_lock);
+      sctk_free(tmp->local_to_global);
+      sctk_free(tmp->global_to_local);
+      sctk_free(tmp->task_to_process);
     
-    sctk_del_internal_communicator_no_lock_no_check(comm);
-    sctk_free(tmp);
-  } else {
-    sctk_spinlock_lock(&sctk_communicator_all_table_lock);
+      sctk_del_internal_communicator_no_lock_no_check(comm);
+      sctk_free(tmp);
+      sctk_spinlock_unlock(&sctk_communicator_all_table_lock);
+    } else {
+      is_master = 0;
+    }
+
+    return MPC_COMM_NULL;
   }
-  sctk_spinlock_unlock(&sctk_communicator_all_table_lock);
 }
 
 /************************************************************************/

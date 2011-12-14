@@ -1130,6 +1130,8 @@ void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_ch
     /*   key.comm = msg->header.communicator; */
     key.destination = msg->sctk_msg_get_glob_destination;
 
+    assume(msg->sctk_msg_get_communicator >= 0);
+
     if(msg->body.completion_flag != NULL){
       *(msg->body.completion_flag) = SCTK_MESSAGE_PENDING;
     }

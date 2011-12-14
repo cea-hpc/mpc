@@ -62,6 +62,7 @@ MonoDomain *domain;
 #ifdef MPC_Message_Passing
 #include <mpc_internal_thread.h>
 #include <sctk_communicator.h>
+#include "sctk_pmi.h"
 /* #include "sctk_hybrid_comm.h" */
 /* #include "sctk_ib_scheduling.h" */
 #endif
@@ -139,6 +140,7 @@ sctk_mono_end ()
 #endif
 
 static volatile long sctk_nb_user_threads = 0;
+volatile int sctk_online_program = -1;
 
 sctk_alloc_thread_data_t *sctk_thread_tls = NULL;
 
@@ -613,6 +615,8 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 #endif
       sctk_register_thread_initial (tmp.task_id);
       sctk_terminaison_barrier (tmp.task_id);
+      sctk_online_program = 1;
+      sctk_terminaison_barrier (tmp.task_id);
     }
 #endif
 
@@ -652,6 +656,8 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   if (tmp.task_id >= 0)
     {
       sctk_nodebug ("sctk_terminaison_barrier");
+      sctk_terminaison_barrier (tmp.task_id);
+      sctk_online_program = 0;
       sctk_terminaison_barrier (tmp.task_id);
       sctk_nodebug ("sctk_terminaison_barrier done");
 #ifdef MPC_USE_INFINIBAND
@@ -1988,6 +1994,21 @@ void  MPC_Process_hook()
 }
 #endif
 
+static int sctk_ignore_sigpipe() 
+{
+    struct sigaction act ;
+ 
+    if (sigaction(SIGPIPE, (struct sigaction *)NULL, &act) == -1)
+        return -1 ;
+ 
+    if (act.sa_handler == SIG_DFL) {
+        act.sa_handler = SIG_IGN ;
+        if (sigaction(SIGPIPE, &act, (struct sigaction *)NULL) == -1)
+            return -1 ;
+    }
+ 
+    return 0 ;
+}
 void
 sctk_start_func (void *(*run) (void *), void *arg)
 {
@@ -2318,6 +2339,12 @@ sctk_start_func (void *(*run) (void *), void *arg)
   sctk_thread_wait_for_value_and_poll ((int *)
 				       &sctk_total_number_of_tasks, 0,
 				       NULL, NULL);
+/* #ifdef MPC_Message_Passing */
+/*   if(sctk_process_number > 1){ */
+/*     sctk_pmi_barrier(); */
+/*   } */
+/* #endif */
+
 /* #endif */
 
   sctk_profiling_commit ();
@@ -2328,6 +2355,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
   sctk_thread_running = 0;
 
 #ifdef MPC_Message_Passing
+  sctk_ignore_sigpipe(); 
   sctk_communicator_delete ();
 #endif
 
