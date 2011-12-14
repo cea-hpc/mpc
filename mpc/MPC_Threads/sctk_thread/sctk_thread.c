@@ -1986,6 +1986,21 @@ void  MPC_Process_hook()
 }
 #endif
 
+static int sctk_ignore_sigpipe() 
+{
+    struct sigaction act ;
+ 
+    if (sigaction(SIGPIPE, (struct sigaction *)NULL, &act) == -1)
+        return -1 ;
+ 
+    if (act.sa_handler == SIG_DFL) {
+        act.sa_handler = SIG_IGN ;
+        if (sigaction(SIGPIPE, &act, (struct sigaction *)NULL) == -1)
+            return -1 ;
+    }
+ 
+    return 0 ;
+}
 void
 sctk_start_func (void *(*run) (void *), void *arg)
 {
@@ -2332,6 +2347,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
   sctk_thread_running = 0;
 
 #ifdef MPC_Message_Passing
+  sctk_ignore_sigpipe(); 
   sctk_communicator_delete ();
   sctk_net_hybrid_finalize();
 #endif
