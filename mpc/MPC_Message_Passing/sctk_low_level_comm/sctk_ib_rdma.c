@@ -29,6 +29,7 @@
 #include "sctk_ibufs.h"
 #include "sctk_ib_mmu.h"
 #include "sctk_net_tools.h"
+#include "sctk_ib_cp.h"
 
 /* IB debug macros */
 #if defined SCTK_IB_MODULE_NAME
@@ -131,7 +132,7 @@ sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
   sctk_ib_rdma_t *rdma_header;
   sctk_ib_rdma_req_t *rdma_req;
 
-  ibuf = sctk_ibuf_pick(&rail->network.ib, 1, 0);
+  ibuf = sctk_ibuf_pick(&rail->network.ib, 1, task_node_number);
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_req_type);
 
@@ -169,7 +170,7 @@ inline sctk_ibuf_t* sctk_ib_rdma_prepare_ack(sctk_ib_rail_info_t* rail_ib,
   sctk_ib_rdma_t *rdma_header;
   sctk_ib_rdma_ack_t *rdma_ack;
 
-  ibuf = sctk_ibuf_pick(rail_ib, 1, 0);
+  ibuf = sctk_ibuf_pick(rail_ib, 1, task_node_number);
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_ack_type);
 

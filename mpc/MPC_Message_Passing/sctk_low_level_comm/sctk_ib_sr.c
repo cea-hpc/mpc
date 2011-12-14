@@ -27,6 +27,7 @@
 #include "sctk_ib_polling.h"
 #include "sctk_ibufs.h"
 #include "sctk_net_tools.h"
+#include "sctk_ib_cp.h"
 
 #define HOSTNAME 2048
 
@@ -40,7 +41,7 @@ sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
   void* body;
 
   body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
-  ibuf = sctk_ibuf_pick(rail_ib, 1, 0);
+  ibuf = sctk_ibuf_pick(rail_ib, 1, task_node_number);
   IBUF_SET_DEST_TASK(ibuf, msg->sctk_msg_get_glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->sctk_msg_get_glob_source);
   sctk_nodebug("Picked buffer %p", ibuf);

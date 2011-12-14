@@ -41,8 +41,13 @@ enum cp_counters_e{
 
   /* Number of msg stolen by the current task */
   poll_steals,
+  /* Numer of msg stolen on the same node */
+  poll_steal_same_node,
+  /* Number of msg stolen on other nodes */
+  poll_steal_other_node,
 };
 
+extern __thread int task_node_number;
 
 typedef struct sctk_ib_cp_task_s{
   UT_hash_handle hh_vp;

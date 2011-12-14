@@ -132,6 +132,9 @@ sctk_ibuf_t*
 sctk_ibuf_pick(struct sctk_ib_rail_info_s *rail_ib,
     int need_lock, int n)
 {
+  /* XX: If node number = -1, it is not already set.
+   * Take ibuf from node 0*/
+  if (n == -1) n=0;
   LOAD_POOL(rail_ib);
   LOAD_CONFIG(rail_ib);
   sctk_ibuf_t* ibuf;

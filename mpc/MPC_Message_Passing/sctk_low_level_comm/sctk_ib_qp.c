@@ -357,7 +357,7 @@ sctk_ib_qp_state_rtr_attr(struct sctk_ib_rail_info_s* rail_ib,
 
   attr.qp_state = IBV_QPS_RTR;
   /* 512 is the recommended value */
-  attr.path_mtu = IBV_MTU_2048;
+  attr.path_mtu = IBV_MTU_1024;
   /* QP number of remote QP */
   /* maximul number if resiyrces for incoming RDMA request */
   attr.max_dest_rd_atomic = config->ibv_rdma_dest_depth;

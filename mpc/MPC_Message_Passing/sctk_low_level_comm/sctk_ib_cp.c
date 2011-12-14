@@ -70,6 +70,8 @@ typedef struct numa_s{
   struct numa_s *next;
   /* If the NODE has already been added */
   char  added;
+  /* Padding for avoiding false sharing */
+  char pad[64];
 } numa_t;
 
 /* CDL list of numa nodes */
@@ -83,6 +85,8 @@ static int vp_number = -1;
 static sctk_spinlock_t vps_lock = SCTK_SPINLOCK_INITIALIZER;
 static sctk_ib_cp_task_t* all_tasks = NULL;
 __thread unsigned int seed;
+__thread int task_node_number = -1;
+static const ibv_cp_profiler = 1;
 
 #define CHECK_AND_QUIT(rail_ib) do {  \
   LOAD_CONFIG(rail_ib);                             \
@@ -116,6 +120,7 @@ void sctk_ib_cp_init(struct sctk_ib_rail_info_s* rail_ib) {
 void sctk_ib_cp_init_task(int rank, int vp) {
   sctk_ib_cp_task_t *task = NULL;
   int node =  sctk_get_node_from_cpu(vp);
+  task_node_number = sctk_get_node_from_cpu(vp);
 
   task = sctk_malloc(sizeof(sctk_ib_cp_task_t));
   assume(task);
@@ -166,13 +171,17 @@ void sctk_ib_cp_finalize_task(int rank) {
   HASH_FIND(hh_all,all_tasks,&rank, sizeof(int),task);
   assume(task);
 
-//  fprintf(stderr, "[%2d] matched:%d not_matched:%d poll_own:%d poll_stolen:%d poll_steals:%d\n", rank,
-//      CP_PROF_PRINT(task, matched),
-//      CP_PROF_PRINT(task, not_matched),
-//      CP_PROF_PRINT(task, poll_own),
-//      CP_PROF_PRINT(task, poll_stolen),
-//      CP_PROF_PRINT(task, poll_steals)
-//      );
+  if (ibv_cp_profiler) {
+    fprintf(stderr, "[%2d] matched:%d not_matched:%d poll_own:%d poll_stolen:%d poll_steals:%d same_node:%d other_node:%d\n", rank,
+        CP_PROF_PRINT(task, matched),
+        CP_PROF_PRINT(task, not_matched),
+        CP_PROF_PRINT(task, poll_own),
+        CP_PROF_PRINT(task, poll_stolen),
+        CP_PROF_PRINT(task, poll_steals),
+        CP_PROF_PRINT(task, poll_steal_same_node),
+        CP_PROF_PRINT(task, poll_steal_other_node)
+        );
+  }
 }
 
 int __cp_poll(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll, sctk_ibuf_t** volatile list, sctk_ib_cp_task_t *task,
@@ -190,8 +199,9 @@ retry:
         sctk_spinlock_unlock(&task->lock);
         /* Run the polling function */
         func(rail, ibuf, 1, poll);
-
-        CP_PROF_INC(task,poll_own);
+        if (ibv_cp_profiler) {
+          CP_PROF_INC(task,poll_own);
+        }
         nb_found++;
         poll->recv_found_own++;
         goto retry;
@@ -240,17 +250,24 @@ retry:
         func(rail, ibuf, 2, poll);
         e = sctk_atomics_get_timestamp();
 
-        /* Set timers */
-        sctk_spinlock_lock(&task->lock_timers);
-        task->time_stolen += e - s;
-        sctk_spinlock_unlock(&task->lock_timers);
-        /* End of set timers */
-        sctk_spinlock_lock(&stealing_task->lock_timers);
-        stealing_task->time_steals += e - s;
-        sctk_spinlock_unlock(&stealing_task->lock_timers);
+        if (ibv_cp_profiler) {
+          /* Set timers */
+          sctk_spinlock_lock(&task->lock_timers);
+          task->time_stolen += e - s;
+          sctk_spinlock_unlock(&task->lock_timers);
+          /* End of set timers */
+          sctk_spinlock_lock(&stealing_task->lock_timers);
+          stealing_task->time_steals += e - s;
+          sctk_spinlock_unlock(&stealing_task->lock_timers);
 
-        CP_PROF_INC(task,poll_stolen);
-        CP_PROF_INC(stealing_task,poll_steals);
+          CP_PROF_INC(task,poll_stolen);
+          CP_PROF_INC(stealing_task,poll_steals);
+          /* Same node */
+          if (task->node == stealing_task->node)
+            CP_PROF_INC(stealing_task,poll_steal_same_node);
+          else
+            CP_PROF_INC(stealing_task,poll_steal_other_node);
+        }
         nb_found++;
         goto retry;
       }
@@ -272,13 +289,14 @@ retry:
 
 #define STEAL_OTHER_NODE(x) do { \
     CDL_FOREACH(numa_list, tmp_numa) {  \
+    if(i >= max_numa_to_steal) return nb_found;  \
       CDL_FOREACH(tmp_numa->vps, tmp_vp) {  \
         for (task=tmp_vp->tasks; task; task=task->hh_vp.next) { \
           nb_found += __cp_steal(rail, poll, x, task, stealing_task, func);  \
         } \
       } \
       /* steal a restricted number of NUMA nodes */ \
-      ++i; if(i >= max_numa_to_steal) return nb_found;  \
+      ++i; \
       /* Return if message stolen */  \
       if (nb_found) return nb_found;  \
     } \

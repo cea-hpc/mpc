@@ -30,6 +30,7 @@
 #include "sctk_ib_mmu.h"
 #include "sctk_net_tools.h"
 #include "sctk_ib_sr.h"
+#include "sctk_ib_cp.h"
 
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"
@@ -77,7 +78,7 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
   sctk_nodebug("Sending buffered message (buffer:nb:%lu, size:%lu)", buffer_nb, size);
   /* While it reamins slots to copy */
   for (buffer_index = 0; buffer_index < buffer_nb; ++buffer_index) {
-    ibuf = sctk_ibuf_pick(rail_ib, 1, 0);
+    ibuf = sctk_ibuf_pick(rail_ib, 1, task_node_number);
     buffered = IBUF_GET_BUFFERED_HEADER(ibuf->buffer);
 
     assume(buffer_size >= sizeof( sctk_thread_ptp_message_body_t));
