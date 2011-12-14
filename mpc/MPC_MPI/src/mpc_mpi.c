@@ -5409,57 +5409,55 @@ static int
 __INTERNAL__PMPI_Comm_get_name (MPI_Comm comm, char *comm_name,
 				int *resultlen)
 {
-/*   mpi_topology_t *task_specific; */
-/*   int len; */
+  mpc_mpi_per_communicator_t* tmp;
+  mpi_topology_per_comm_t* topo;
+  int len;
 
-/*   PMPC_Get_comm_type ((void *) (&task_specific)); */
-/*   sctk_spinlock_lock (&(task_specific->lock)); */
+  tmp = mpc_mpc_get_per_comm_data(comm);
+  topo = &(tmp->topo);
+  
+  sctk_spinlock_lock (&(topo->lock));
+  len = strlen (topo->names);
 
-/*   len = strlen (task_specific->names[comm]); */
+  memcpy (comm_name, topo->names, len + 1);
 
-/*   memcpy (comm_name, task_specific->names[comm], len + 1); */
-
-/*   *resultlen = len; */
-
-/*   sctk_spinlock_unlock (&(task_specific->lock));*/
-  not_implemented();
+  *resultlen = len;
+  sctk_spinlock_unlock (&(topo->lock));
   return MPI_SUCCESS;
 }
 static int
 __INTERNAL__PMPI_Comm_set_name (MPI_Comm comm, char *comm_name)
 {
-  not_implemented();
-/*   mpi_topology_t *task_specific; */
-/*   int len; */
-/*   PMPC_Get_comm_type ((void *) (&task_specific)); */
-/*   sctk_spinlock_lock (&(task_specific->lock)); */
+  mpc_mpi_per_communicator_t* tmp;
+  mpi_topology_per_comm_t* topo;
+  int len;
+  tmp = mpc_mpc_get_per_comm_data(comm);
+  topo = &(tmp->topo);
+  
+  sctk_spinlock_lock (&(topo->lock));
+  memset (topo->names, '\0', MPI_MAX_NAME_STRING + 1);
 
-/*   memset (task_specific->names[comm], '\0', MPI_MAX_NAME_STRING + 1); */
+  len = strlen (comm_name);
+  if (len > MPI_MAX_NAME_STRING)
+    {
+      len = MPI_MAX_NAME_STRING;
+    }
+  memcpy (topo->names, comm_name, len);
 
-/*   len = strlen (comm_name); */
-/*   if (len > MPI_MAX_NAME_STRING) */
-/*     { */
-/*       len = MPI_MAX_NAME_STRING; */
-/*     } */
-/*   memcpy (task_specific->names[comm], comm_name, len); */
-
-/*   sctk_spinlock_unlock (&(task_specific->lock)); */
+  sctk_spinlock_unlock (&(topo->lock));
   return MPI_SUCCESS;
 }
 
 static int
 __INTERNAL__PMPI_Topo_test (MPI_Comm comm, int *topo_type)
 {
-  not_implemented();
-/*   mpi_topology_t *task_specific; */
-/*   PMPC_Get_comm_type ((void *) (&task_specific)); */
-/*   sctk_spinlock_lock (&(task_specific->lock)); */
-
-/*   *topo_type = task_specific->type[comm]; */
-
-/*   sctk_nodebug ("type %d", *topo_type); */
-
-/*   sctk_spinlock_unlock (&(task_specific->lock)); */
+  mpc_mpi_per_communicator_t* tmp;
+  mpi_topology_per_comm_t* topo;
+  tmp = mpc_mpc_get_per_comm_data(comm);
+  topo = &(tmp->topo);
+  sctk_spinlock_lock (&(topo->lock));
+ *topo_type = topo->type;
+  sctk_spinlock_unlock (&(topo->lock));
   return MPI_SUCCESS;
 }
 
@@ -5467,14 +5465,14 @@ static int
 __INTERNAL__PMPI_Cart_create (MPI_Comm comm_old, int ndims, int *dims,
 			      int *periods, int reorder, MPI_Comm * comm_cart)
 {
+  mpc_mpi_per_communicator_t* tmp;
+  mpi_topology_per_comm_t* topo;
   int res = MPI_ERR_INTERN;
-  not_implemented();
-#if 0
-  mpi_topology_t *task_specific;
   int nb_tasks = 1;
   int size;
   int i;
   int rank;
+
 
   __INTERNAL__PMPI_Comm_rank (comm_old, &rank);
 
@@ -5545,23 +5543,23 @@ __INTERNAL__PMPI_Cart_create (MPI_Comm comm_old, int ndims, int *dims,
     }
 
 
-  PMPC_Get_comm_type ((void *) (&task_specific));
-  sctk_spinlock_lock (&(task_specific->lock));
+  tmp = mpc_mpc_get_per_comm_data(*comm_cart);
+  topo = &(tmp->topo);
+  sctk_spinlock_lock (&(topo->lock));
 
-  task_specific->type[*comm_cart] = MPI_CART;
-  task_specific->data[*comm_cart].cart.ndims = ndims;
-  task_specific->data[*comm_cart].cart.reorder = reorder;
-  task_specific->data[*comm_cart].cart.dims =
+  topo->type = MPI_CART;
+  topo->data.cart.ndims = ndims;
+  topo->data.cart.reorder = reorder;
+  topo->data.cart.dims =
     sctk_malloc (ndims * sizeof (int));
-  memcpy (task_specific->data[*comm_cart].cart.dims, dims,
+  memcpy (topo->data.cart.dims, dims,
 	  ndims * sizeof (int));
-  task_specific->data[*comm_cart].cart.periods =
+  topo->data.cart.periods =
     sctk_malloc (ndims * sizeof (int));
-  memcpy (task_specific->data[*comm_cart].cart.periods, periods,
+  memcpy (topo->data.cart.periods, periods,
 	  ndims * sizeof (int));
 
-  sctk_spinlock_unlock (&(task_specific->lock));
-#endif
+  sctk_spinlock_lock (&(topo->lock));
   return res;
 }
 
@@ -5658,11 +5656,10 @@ static int
 __INTERNAL__PMPI_Graph_create (MPI_Comm comm_old, int nnodes, int *index,
 			       int *edges, int reorder, MPI_Comm * comm_graph)
 {
+  mpc_mpi_per_communicator_t* tmp;
+  mpi_topology_per_comm_t* topo;
   int res;
-  not_implemented();
-#if 0
   int size;
-  mpi_topology_t *task_specific;
   __INTERNAL__PMPI_Comm_size (comm_old, &size);
 
 #warning "Very simple approach never reorder nor take care of hardware topology"
@@ -5716,49 +5713,48 @@ __INTERNAL__PMPI_Graph_create (MPI_Comm comm_old, int nnodes, int *index,
 	}
     }
 
-  PMPC_Get_comm_type ((void *) (&task_specific));
-  sctk_spinlock_lock (&(task_specific->lock));
+  tmp = mpc_mpc_get_per_comm_data(*comm_graph);
+  topo = &(tmp->topo);
+  sctk_spinlock_lock (&(topo->lock));
 
-  task_specific->type[*comm_graph] = MPI_GRAPH;
 
-
-  task_specific->data[*comm_graph].graph.nnodes = nnodes;
-  task_specific->data[*comm_graph].graph.reorder = reorder;
-  task_specific->data[*comm_graph].graph.index =
+  topo->data.graph.nnodes = nnodes;
+  topo->data.graph.reorder = reorder;
+  topo->data.graph.index =
     sctk_malloc (nnodes * sizeof (int));
-  memcpy (task_specific->data[*comm_graph].graph.index, index,
+  memcpy (topo->data.graph.index, index,
 	  nnodes * sizeof (int));
-  task_specific->data[*comm_graph].graph.edges =
+  topo->data.graph.edges =
     sctk_malloc (index[nnodes - 1] * sizeof (int));
-  memcpy (task_specific->data[*comm_graph].graph.edges, edges,
+  memcpy (topo->data.graph.edges, edges,
 	  index[nnodes - 1] * sizeof (int));
 
-  task_specific->data[*comm_graph].graph.nedges = index[nnodes - 1];
-  task_specific->data[*comm_graph].graph.nindex = nnodes;
-  sctk_spinlock_unlock (&(task_specific->lock));
-#endif
+  topo->data.graph.nedges = index[nnodes - 1];
+  topo->data.graph.nindex = nnodes;
+  sctk_spinlock_lock (&(topo->lock));
   return MPI_SUCCESS;
 }
 
 static int
 __INTERNAL__PMPI_Graphdims_get (MPI_Comm comm, int *nnodes, int *nedges)
 {
-  not_implemented();
-#if 0
-  mpi_topology_t *task_specific;
-  PMPC_Get_comm_type ((void *) (&task_specific));
-  sctk_spinlock_lock (&(task_specific->lock));
+  mpc_mpi_per_communicator_t* tmp;
+  mpi_topology_per_comm_t* topo;
 
-  if (task_specific->type[comm] != MPI_GRAPH)
+  tmp = mpc_mpc_get_per_comm_data(comm);
+  topo = &(tmp->topo);
+
+  sctk_spinlock_lock (&(topo->lock));
+
+  if (topo->type != MPI_GRAPH)
     {
-      sctk_spinlock_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock (&(topo->lock));
       MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
     }
 
-  *nnodes = task_specific->data[comm].graph.nnodes;
-  *nedges = task_specific->data[comm].graph.nedges;
-  sctk_spinlock_unlock (&(task_specific->lock));
-#endif
+  *nnodes = topo->data.graph.nnodes;
+  *nedges = topo->data.graph.nedges;
+  sctk_spinlock_lock (&(topo->lock));
   return MPI_SUCCESS;
 }
 
@@ -5766,54 +5762,56 @@ static int
 __INTERNAL__PMPI_Graph_get (MPI_Comm comm, int maxindex, int maxedges,
 			    int *index, int *edges)
 {
-  not_implemented();
-#if 0
+  mpc_mpi_per_communicator_t* tmp;
+  mpi_topology_per_comm_t* topo;
   int i;
-  mpi_topology_t *task_specific;
-  PMPC_Get_comm_type ((void *) (&task_specific));
-  sctk_spinlock_lock (&(task_specific->lock));
 
-  if (task_specific->type[comm] != MPI_GRAPH)
+  tmp = mpc_mpc_get_per_comm_data(comm);
+  topo = &(tmp->topo);
+
+  sctk_spinlock_lock (&(topo->lock));
+
+  if (topo->type != MPI_GRAPH)
     {
-      sctk_spinlock_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock (&(topo->lock));
       MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
     }
 
-  for (i = 0; (i < maxindex) && (i < task_specific->data[comm].graph.nindex);
+  for (i = 0; (i < maxindex) && (i < topo->data.graph.nindex);
        i++)
     {
-      index[i] = task_specific->data[comm].graph.index[i];
+      index[i] = topo->data.graph.index[i];
     }
-  for (i = 0; (i < maxedges) && (i < task_specific->data[comm].graph.nedges);
+  for (i = 0; (i < maxedges) && (i < topo->data.graph.nedges);
        i++)
     {
-      edges[i] = task_specific->data[comm].graph.edges[i];
+      edges[i] = topo->data.graph.edges[i];
     }
 
-  sctk_spinlock_unlock (&(task_specific->lock));
-#endif
+  sctk_spinlock_unlock (&(topo->lock));
   return MPI_SUCCESS;
 }
 
 static int
 __INTERNAL__PMPI_Cartdim_get (MPI_Comm comm, int *ndims)
 {
-  not_implemented();
-#if 0
-  mpi_topology_t *task_specific;
-  PMPC_Get_comm_type ((void *) (&task_specific));
-  sctk_spinlock_lock (&(task_specific->lock));
+  mpc_mpi_per_communicator_t* tmp;
+  mpi_topology_per_comm_t* topo;
 
-  if (task_specific->type[comm] != MPI_CART)
+  tmp = mpc_mpc_get_per_comm_data(comm);
+  topo = &(tmp->topo);
+  
+  sctk_spinlock_lock (&(topo->lock));
+
+  if (topo->type != MPI_CART)
     {
-      sctk_spinlock_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock (&(topo->lock));
       MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
     }
 
-  *ndims = task_specific->data[comm].cart.ndims;
+  *ndims = topo->data.cart.ndims;
 
-  sctk_spinlock_unlock (&(task_specific->lock));
-#endif
+  sctk_spinlock_unlock (&(topo->lock));
   return MPI_SUCCESS;
 }
 
@@ -5821,71 +5819,73 @@ static int
 __INTERNAL__PMPI_Cart_get (MPI_Comm comm, int maxdims, int *dims,
 			   int *periods, int *coords)
 {
+  mpc_mpi_per_communicator_t* tmp;
+  mpi_topology_per_comm_t* topo;
   int res;
-  not_implemented();
-#if 0
-  mpi_topology_t *task_specific;
   int rank;
 
-  PMPC_Get_comm_type ((void *) (&task_specific));
-  sctk_spinlock_lock (&(task_specific->lock));
+  tmp = mpc_mpc_get_per_comm_data(comm);
+  topo = &(tmp->topo);
+  
+  sctk_spinlock_lock (&(topo->lock));
+
   __INTERNAL__PMPI_Comm_rank (comm, &rank);
 
-  if (task_specific->type[comm] != MPI_CART)
+  if (topo->type != MPI_CART)
     {
-      sctk_spinlock_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock (&(topo->lock));
       MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
     }
 
-  if (maxdims != task_specific->data[comm].cart.ndims)
+  if (maxdims != topo->data.cart.ndims)
     {
-      sctk_spinlock_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock (&(topo->lock));
       MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid max_dims");
     }
 
-  memcpy (dims, task_specific->data[comm].cart.dims, maxdims * sizeof (int));
+  memcpy (dims, topo->data.cart.dims, maxdims * sizeof (int));
   memcpy (periods,
-	  task_specific->data[comm].cart.periods, maxdims * sizeof (int));
+	  topo->data.cart.periods, maxdims * sizeof (int));
 
 
 
   res = __INTERNAL__PMPI_Cart_coords (comm, rank, maxdims, coords, 1);
-  sctk_spinlock_unlock (&(task_specific->lock));
-#endif
+  sctk_spinlock_unlock (&(topo->lock));
   return res;
 }
 
 static int
 __INTERNAL__PMPI_Cart_rank (MPI_Comm comm, int *coords, int *rank, int locked)
 {
-  not_implemented();
-#if 0
-  mpi_topology_t *task_specific;
   int loc_rank = 0;
   int dims_coef = 1;
   int i;
-  PMPC_Get_comm_type ((void *) (&task_specific));
-  if (!locked)
-    sctk_spinlock_lock (&(task_specific->lock));
+  mpc_mpi_per_communicator_t* tmp;
+  mpi_topology_per_comm_t* topo;
 
-  if (task_specific->type[comm] != MPI_CART)
+  tmp = mpc_mpc_get_per_comm_data(comm);
+  topo = &(tmp->topo);
+  
+  if (!locked)
+    sctk_spinlock_lock (&(topo->lock));
+
+  if (topo->type != MPI_CART)
     {
       if (!locked)
-	sctk_spinlock_unlock (&(task_specific->lock));
+	sctk_spinlock_unlock (&(topo->lock));
       MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
     }
   
-  for (i = task_specific->data[comm].cart.ndims - 1 ; i >= 0 ; i--)
+  for (i = topo->data.cart.ndims - 1 ; i >= 0 ; i--)
 	{
 	  loc_rank += coords[i] * dims_coef ;
-	  dims_coef *= task_specific->data[comm].cart.dims[i] ;
+	  dims_coef *= topo->data.cart.dims[i] ;
 	}
 
   *rank = loc_rank;
   sctk_nodebug ("rank %d", loc_rank);
   if (!locked)
-    sctk_spinlock_unlock (&(task_specific->lock));
-#endif
+    sctk_spinlock_unlock (&(topo->lock));
   return MPI_SUCCESS;
 }
 
@@ -5893,44 +5893,44 @@ static int
 __INTERNAL__PMPI_Cart_coords (MPI_Comm comm, int init_rank, int maxdims,
 			      int *coords, int locked)
 {
-  not_implemented();
-#if 0
-  mpi_topology_t *task_specific;
   int i;
   int pi = 1;
   int qi = 1;
   int rank;
+  mpc_mpi_per_communicator_t* tmp;
+  mpi_topology_per_comm_t* topo;
+
+  tmp = mpc_mpc_get_per_comm_data(comm);
+  topo = &(tmp->topo);
 
   rank = init_rank;
 
-  PMPC_Get_comm_type ((void *) (&task_specific));
   if (!locked)
-    sctk_spinlock_lock (&(task_specific->lock));
+    sctk_spinlock_lock (&(topo->lock));
 
-  if (task_specific->type[comm] != MPI_CART)
+  if (topo->type != MPI_CART)
     {
       if (!locked)
-	sctk_spinlock_unlock (&(task_specific->lock));
+	sctk_spinlock_unlock (&(topo->lock));
       MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
     }
 
-  if (maxdims != task_specific->data[comm].cart.ndims)
+  if (maxdims != topo->data.cart.ndims)
     {
       if (!locked)
-	sctk_spinlock_unlock (&(task_specific->lock));
+	sctk_spinlock_unlock (&(topo->lock));
       MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid max_dims");
     }
   
   for (i = maxdims-1; i >= 0; --i)
     {
-      pi *= task_specific->data[comm].cart.dims[i];
+      pi *= topo->data.cart.dims[i];
       coords[i] = ( rank % pi ) / qi ;
       qi = pi ;
     }
 
   if (!locked)
-    sctk_spinlock_unlock (&(task_specific->lock));
-#endif
+    sctk_spinlock_unlock (&(topo->lock));
   return MPI_SUCCESS;
 }
 
@@ -5938,32 +5938,33 @@ static int
 __INTERNAL__PMPI_Graph_neighbors_count (MPI_Comm comm, int rank,
 					int *nneighbors)
 {
-  not_implemented();
-#if 0
-  mpi_topology_t *task_specific;
   int start;
   int end;
-  PMPC_Get_comm_type ((void *) (&task_specific));
-  sctk_spinlock_lock (&(task_specific->lock));
+  mpc_mpi_per_communicator_t* tmp;
+  mpi_topology_per_comm_t* topo;
 
-  if (task_specific->type[comm] != MPI_GRAPH)
+  tmp = mpc_mpc_get_per_comm_data(comm);
+  topo = &(tmp->topo);
+
+  sctk_spinlock_lock (&(topo->lock));
+
+  if (topo->type != MPI_GRAPH)
     {
-      sctk_spinlock_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock (&(topo->lock));
       MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
     }
 
-  end = task_specific->data[comm].graph.index[rank];
+  end = topo->data.graph.index[rank];
   start = 0;
   if (rank)
     {
-      start = task_specific->data[comm].graph.index[rank - 1];
+      start = topo->data.graph.index[rank - 1];
     }
 
   *nneighbors = end - start;
 
 
-  sctk_spinlock_unlock (&(task_specific->lock));
-#endif
+  sctk_spinlock_unlock (&(topo->lock));
   return MPI_SUCCESS;
 }
 
@@ -5971,37 +5972,38 @@ static int
 __INTERNAL__PMPI_Graph_neighbors (MPI_Comm comm, int rank, int maxneighbors,
 				  int *neighbors)
 {
-  not_implemented();
-#if 0
-  mpi_topology_t *task_specific;
   int start;
   int end;
   int i;
-  PMPC_Get_comm_type ((void *) (&task_specific));
-  sctk_spinlock_lock (&(task_specific->lock));
+  mpc_mpi_per_communicator_t* tmp;
+  mpi_topology_per_comm_t* topo;
 
-  if (task_specific->type[comm] != MPI_GRAPH)
+  tmp = mpc_mpc_get_per_comm_data(comm);
+  topo = &(tmp->topo);
+
+  sctk_spinlock_lock (&(topo->lock));
+
+  if (topo->type != MPI_GRAPH)
     {
-      sctk_spinlock_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock (&(topo->lock));
       MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
     }
 
-  end = task_specific->data[comm].graph.index[rank];
+  end = topo->data.graph.index[rank];
   start = 0;
   if (rank)
     {
-      start = task_specific->data[comm].graph.index[rank - 1];
+      start = topo->data.graph.index[rank - 1];
     }
 
   for (i = 0;
-       i < maxneighbors && i + start < task_specific->data[comm].graph.nedges;
+       i < maxneighbors && i + start < topo->data.graph.nedges;
        i++)
     {
-      neighbors[i] = task_specific->data[comm].graph.edges[i + start];
+      neighbors[i] = topo->data.graph.edges[i + start];
     }
 
-  sctk_spinlock_unlock (&(task_specific->lock));
-#endif
+  sctk_spinlock_unlock (&(topo->lock));
   return MPI_SUCCESS;
 }
 
@@ -6009,39 +6011,41 @@ static int
 __INTERNAL__PMPI_Cart_shift (MPI_Comm comm, int direction, int displ,
 			     int *source, int *dest)
 {
-  not_implemented();
-#if 0
-  mpi_topology_t *task_specific;
   int *coords;
   int res;
   int rank;
   int maxdims;
   int new_val;
-  PMPC_Get_comm_type ((void *) (&task_specific));
-  sctk_spinlock_lock (&(task_specific->lock));
+  mpc_mpi_per_communicator_t* tmp;
+  mpi_topology_per_comm_t* topo;
+
+  tmp = mpc_mpc_get_per_comm_data(comm);
+  topo = &(tmp->topo);
+
+  sctk_spinlock_lock (&(topo->lock));
 
   __INTERNAL__PMPI_Comm_rank (comm, &rank);
 
-  if (task_specific->type[comm] != MPI_CART)
+  if (topo->type != MPI_CART)
     {
-      sctk_spinlock_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock (&(topo->lock));
       MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
     }
 
-  if (direction >= task_specific->data[comm].cart.ndims)
+  if (direction >= topo->data.cart.ndims)
     {
-      sctk_spinlock_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock (&(topo->lock));
       MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid direction");
     }
 
-  maxdims = task_specific->data[comm].cart.ndims;
+  maxdims = topo->data.cart.ndims;
 
   coords = sctk_malloc (maxdims * sizeof (int));
 
   res = __INTERNAL__PMPI_Cart_coords (comm, rank, maxdims, coords, 1);
   if (res != MPI_SUCCESS)
     {
-      sctk_spinlock_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock (&(topo->lock));
       return res;
     }
 
@@ -6050,9 +6054,9 @@ __INTERNAL__PMPI_Cart_shift (MPI_Comm comm, int direction, int displ,
   sctk_nodebug ("New val + %d", coords[direction]);
   if (coords[direction] < 0)
     {
-      if (task_specific->data[comm].cart.periods[direction])
+      if (topo->data.cart.periods[direction])
 	{
-	  coords[direction] += task_specific->data[comm].cart.dims[direction];
+	  coords[direction] += topo->data.cart.dims[direction];
 	  res = __INTERNAL__PMPI_Cart_rank (comm, coords, &new_val, 1);
 	}
       else
@@ -6061,11 +6065,11 @@ __INTERNAL__PMPI_Cart_shift (MPI_Comm comm, int direction, int displ,
 	}
     }
   else if (coords[direction] >=
-	   task_specific->data[comm].cart.dims[direction])
+	   topo->data.cart.dims[direction])
     {
-      if (task_specific->data[comm].cart.periods[direction])
+      if (topo->data.cart.periods[direction])
 	{
-	  coords[direction] -= task_specific->data[comm].cart.dims[direction];
+	  coords[direction] -= topo->data.cart.dims[direction];
 	  res = __INTERNAL__PMPI_Cart_rank (comm, coords, &new_val, 1);
 	}
       else
@@ -6081,7 +6085,7 @@ __INTERNAL__PMPI_Cart_shift (MPI_Comm comm, int direction, int displ,
 
   if (res != MPI_SUCCESS)
     {
-      sctk_spinlock_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock (&(topo->lock));
       return res;
     }
 
@@ -6090,7 +6094,7 @@ __INTERNAL__PMPI_Cart_shift (MPI_Comm comm, int direction, int displ,
   res = __INTERNAL__PMPI_Cart_coords (comm, rank, maxdims, coords, 1);
   if (res != MPI_SUCCESS)
     {
-      sctk_spinlock_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock (&(topo->lock));
       return res;
     }
 
@@ -6099,9 +6103,9 @@ __INTERNAL__PMPI_Cart_shift (MPI_Comm comm, int direction, int displ,
   sctk_nodebug ("New val - %d", coords[direction]);
   if (coords[direction] < 0)
     {
-      if (task_specific->data[comm].cart.periods[direction])
+      if (topo->data.cart.periods[direction])
 	{
-	  coords[direction] += task_specific->data[comm].cart.dims[direction];
+	  coords[direction] += topo->data.cart.dims[direction];
 	  res = __INTERNAL__PMPI_Cart_rank (comm, coords, &new_val, 1);
 	}
       else
@@ -6110,11 +6114,11 @@ __INTERNAL__PMPI_Cart_shift (MPI_Comm comm, int direction, int displ,
 	}
     }
   else if (coords[direction] >=
-	   task_specific->data[comm].cart.dims[direction])
+	   topo->data.cart.dims[direction])
     {
-      if (task_specific->data[comm].cart.periods[direction])
+      if (topo->data.cart.periods[direction])
 	{
-	  coords[direction] -= task_specific->data[comm].cart.dims[direction];
+	  coords[direction] -= topo->data.cart.dims[direction];
 	  res = __INTERNAL__PMPI_Cart_rank (comm, coords, &new_val, 1);
 	}
       else
@@ -6130,7 +6134,7 @@ __INTERNAL__PMPI_Cart_shift (MPI_Comm comm, int direction, int displ,
 
   if (res != MPI_SUCCESS)
     {
-      sctk_spinlock_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock (&(topo->lock));
       return res;
     }
 
@@ -6140,8 +6144,7 @@ __INTERNAL__PMPI_Cart_shift (MPI_Comm comm, int direction, int displ,
 
   sctk_nodebug ("dest %d src %d rank %d dir %d", *dest, *source, rank,
 		direction);
-  sctk_spinlock_unlock (&(task_specific->lock));
-#endif
+  sctk_spinlock_unlock (&(topo->lock));
   return MPI_SUCCESS;
 }
 
@@ -6149,9 +6152,6 @@ static int
 __INTERNAL__PMPI_Cart_sub (MPI_Comm comm, int *remain_dims,
 			   MPI_Comm * comm_new)
 {
-  not_implemented();
-#if 0
-  mpi_topology_t *task_specific;
   int res;
   int nb_comm;
   int i;
@@ -6161,37 +6161,43 @@ __INTERNAL__PMPI_Cart_sub (MPI_Comm comm, int *remain_dims,
   int size;
   int ndims = 0;
   int j;
+  mpc_mpi_per_communicator_t* tmp;
+  mpc_mpi_per_communicator_t* tmp_new;
+  mpi_topology_per_comm_t* topo;
+  mpi_topology_per_comm_t* topo_new;
 
-  PMPC_Get_comm_type ((void *) (&task_specific));
-  sctk_spinlock_lock (&(task_specific->lock));
+  tmp = mpc_mpc_get_per_comm_data(comm);
+  topo = &(tmp->topo);
+
+  sctk_spinlock_lock (&(topo->lock));
   __INTERNAL__PMPI_Comm_rank (comm, &rank);
 
-  if (task_specific->type[comm] != MPI_CART)
+  if (topo->type != MPI_CART)
     {
-      sctk_spinlock_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock (&(topo->lock));
       MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
     }
 
   coords_in_new =
-    malloc (task_specific->data[comm].cart.ndims * sizeof (int));
+    malloc (topo->data.cart.ndims * sizeof (int));
 
   res =
     __INTERNAL__PMPI_Cart_coords (comm, rank,
-				  task_specific->data[comm].cart.ndims,
+				  topo->data.cart.ndims,
 				  coords_in_new, 1);
   if (res != MPI_SUCCESS)
     {
-      sctk_spinlock_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock (&(topo->lock));
       return res;
     }
 
   nb_comm = 1;
-  for (i = 0; i < task_specific->data[comm].cart.ndims; i++)
+  for (i = 0; i < topo->data.cart.ndims; i++)
     {
       sctk_nodebug ("Remain %d %d", i, remain_dims[i]);
       if (remain_dims[i] == 0)
 	{
-	  nb_comm *= task_specific->data[comm].cart.dims[i];
+	  nb_comm *= topo->data.cart.dims[i];
 	  coords_in_new[i] = 0;
 	}
       else
@@ -6205,7 +6211,7 @@ __INTERNAL__PMPI_Cart_sub (MPI_Comm comm, int *remain_dims,
   res = __INTERNAL__PMPI_Cart_rank (comm, coords_in_new, &color, 1);
   if (res != MPI_SUCCESS)
     {
-      sctk_spinlock_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock (&(topo->lock));
       return res;
     }
 
@@ -6213,29 +6219,32 @@ __INTERNAL__PMPI_Cart_sub (MPI_Comm comm, int *remain_dims,
   res = __INTERNAL__PMPI_Comm_split (comm, color, rank, comm_new);
   if (res != MPI_SUCCESS)
     {
-      sctk_spinlock_unlock (&(task_specific->lock));
+      sctk_spinlock_unlock (&(topo->lock));
       return res;
     }
 
   sctk_free (coords_in_new);
 
-  task_specific->type[*comm_new] = MPI_CART;
-  task_specific->data[*comm_new].cart.ndims = ndims;
-  task_specific->data[*comm_new].cart.reorder = 0;
-  task_specific->data[*comm_new].cart.dims =
+  tmp_new = mpc_mpc_get_per_comm_data(*comm_new);
+  topo_new = &(tmp->topo);
+
+  topo_new->type = MPI_CART;
+  topo_new->data.cart.ndims = ndims;
+  topo_new->data.cart.reorder = 0;
+  topo_new->data.cart.dims =
     sctk_malloc (ndims * sizeof (int));
-  task_specific->data[*comm_new].cart.periods =
+  topo_new->data.cart.periods =
     sctk_malloc (ndims * sizeof (int));
 
   j = 0;
-  for (i = 0; i < task_specific->data[comm].cart.ndims; i++)
+  for (i = 0; i < topo->data.cart.ndims; i++)
     {
       if (remain_dims[i])
 	{
-	  task_specific->data[*comm_new].cart.dims[j] =
-	    task_specific->data[comm].cart.dims[i];
-	  task_specific->data[*comm_new].cart.periods[j] =
-	    task_specific->data[comm].cart.periods[i];
+	  topo_new->data.cart.dims[j] =
+	    topo->data.cart.dims[i];
+	  topo_new->data.cart.periods[j] =
+	    topo->data.cart.periods[i];
 	  j++;
 	}
     }
@@ -6244,8 +6253,7 @@ __INTERNAL__PMPI_Cart_sub (MPI_Comm comm, int *remain_dims,
   __INTERNAL__PMPI_Comm_size (*comm_new, &size);
   __INTERNAL__PMPI_Comm_rank (*comm_new, &rank);
   sctk_nodebug ("%d on %d new rank", rank, size);
-  sctk_spinlock_unlock (&(task_specific->lock));
-#endif
+  sctk_spinlock_unlock (&(topo->lock));
   return MPI_SUCCESS;
 }
 
