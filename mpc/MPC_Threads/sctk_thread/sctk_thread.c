@@ -1993,6 +1993,21 @@ void  MPC_Process_hook()
 }
 #endif
 
+static int sctk_ignore_sigpipe() 
+{
+    struct sigaction act ;
+ 
+    if (sigaction(SIGPIPE, (struct sigaction *)NULL, &act) == -1)
+        return -1 ;
+ 
+    if (act.sa_handler == SIG_DFL) {
+        act.sa_handler = SIG_IGN ;
+        if (sigaction(SIGPIPE, &act, (struct sigaction *)NULL) == -1)
+            return -1 ;
+    }
+ 
+    return 0 ;
+}
 void
 sctk_start_func (void *(*run) (void *), void *arg)
 {
@@ -2319,6 +2334,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 					   &sctk_total_number_of_tasks, 0,
 					   NULL, NULL);
     }
+  sctk_ignore_sigpipe(); 
 #else
   sctk_thread_wait_for_value_and_poll (
 				       &sctk_total_number_of_tasks, 0,
