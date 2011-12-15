@@ -803,7 +803,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  break;
 
 	case 32: 
-#if 1  /* NUMA tree 32 cores */
+#if 0 /* NUMA tree 32 cores */
 #warning "OpenMp compiling w/ NUMA tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -932,7 +932,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  }
 #endif
 
-#if 0  /* NUMA tree degree 4 */
+#if 1  /* NUMA tree degree 4 */
 #warning "OpenMp compiling w/2-level NUMA tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -982,7 +982,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 
                if (flag_level == -1) flag_level = 2;
 
-               n2 = (mpcomp_node_t *)sctk_malloc_on_node(n2->nb_children*sizeof(mpcomp_mvp_t *),i);
+               n2 = (mpcomp_node_t *)sctk_malloc_on_node(sizeof(mpcomp_mvp_t *),i);
                sctk_assert(n2 != NULL);
 
                n->children.node[j] = n2;
