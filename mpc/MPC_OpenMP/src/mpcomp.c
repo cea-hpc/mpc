@@ -1448,31 +1448,9 @@ void __mpcomp_internal_half_barrier(mpcomp_mvp_t *mvp)
         sctk_spinlock_unlock(&(c->lock));
         sctk_nodebug("mpcomp_internal_barrier: else thread %d",mvp->rank);
      }
-
-     /* Step 2: Wait for the barrier to be done */
-     if ((c->father != NULL) || (b != c->barrier_num_threads)) {
-       /* Wait for c->barrier == c->barrier_num_threads */ 
-       sctk_nodebug("mpcomp_internal_barrier: if thread %d",mvp->rank);
-       while (b_done == c->barrier_done) {
-          sctk_thread_yield();
-       }
-     }
-     else {
-       c->barrier = 0;
-       c->barrier_done++;
-       /* TODO: not sure that we need that. If we do need it, maybe we need to lock */
-       sctk_nodebug("mpcomp_internal_barrier: else thread %d",mvp->rank);
-     }
-
-     /* Step 3: Go down in the tree to wake up the children */
-     while (c->child_type != CHILDREN_LEAF) {
-         sctk_nodebug("mpcomp_internal_barrier: step3 thread %d",mvp->rank);
-         c = c->children.node[mvp->tree_rank[c->depth]];
-         c->barrier_done++;
-     }
 }
 /*
-   Implicit barrier
+   Full barrier
 */
 void __mpcomp_internal_barrier(mpcomp_mvp_t *mvp)
 {
