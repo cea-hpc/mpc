@@ -171,6 +171,7 @@ typedef struct mpcomp_node_s mpcomp_node_t;
 void __mpcomp_instance_init(mpcomp_instance_t *instance, int nb_mvps);
 void __mpcomp_thread_init(mpcomp_thread_t *t);
 void __mpcomp_internal_barrier(mpcomp_mvp_t *mvp);
+void __mpcomp_internal_half_barrier(mpcomp_mvp_t *mvp);
 void __mpcomp_barrier(void);
 void *mpcomp_slave_mvp_node(void *arg);
 void *mpcomp_slave_mvp_leaf(void *arg);
@@ -356,6 +357,10 @@ void *mpcomp_slave_mvp_node (void *arg)
 
         sctk_nodebug("mpcomp_slave_mvp_node: children node passing function %p", n->func);
 
+        n->children.node[0]->func = n->func;
+        n->children.node[0]->shared = n->shared;
+        n->children.node[0]->num_threads = n->num_threads;
+
         for (i=1 ; i<n->nb_children ; i++) {
 
           num_threads_per_child = n->num_threads / OMP_MICROVP_NUMBER; 
@@ -430,7 +435,7 @@ void *mpcomp_slave_mvp_node (void *arg)
      in_order_scheduler(mvp);
 
      /* Barrier to wait for the other microVPs */
-     __mpcomp_internal_barrier(mvp);
+     __mpcomp_internal_half_barrier(mvp);
 #if defined (SCTK_USE_OPTIMIZED_TLS)
 	  sctk_tls_module = info->tls_module;
 	  sctk_context_restore_tls_module_vp() ;
@@ -508,7 +513,7 @@ void *mpcomp_slave_mvp_leaf (void *arg)
      in_order_scheduler(mvp);
 
      /* Barrier to wait for the other microVPs */
-     __mpcomp_internal_barrier(mvp);
+     __mpcomp_internal_half_barrier(mvp);
 
    }
 
@@ -1389,10 +1394,13 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
     in_order_scheduler(instance->mvps[0]);
 
     /* Barrier to wait for the other microVPs */
-    __mpcomp_internal_barrier(instance->mvps[0]);
+    __mpcomp_internal_half_barrier(instance->mvps[0]);
 
-    /* Grab the current microVP */
-    t->mvp = instance->mvps[0];
+    /* Finish the half barrier by spinning ton the root value */
+    while (root->barrier != root->barrier_num_threads){
+       sctk_thread_yield();
+    }
+    root->barrier = 0;
 
     /* Restore the previous OpenMP info */
     sctk_openmp_thread_tls = t;
@@ -1403,6 +1411,66 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
   }
 }
 
+/*
+   Implicit barrier = half barrier = no step 3
+*/
+void __mpcomp_internal_half_barrier(mpcomp_mvp_t *mvp)
+{
+
+     sctk_nodebug("__mpcomp_internal_barrier: mvp rank %d",mvp->rank);
+
+     /*Barrier to wait for the other microVPs*/
+     mpcomp_node_t *c;
+     c = mvp->father;
+
+     /* Step 1: Climb in the tree */
+     long b_done;
+     b_done = c->barrier_done;
+
+     long b;
+
+     sctk_spinlock_lock(&(c->lock));
+     b = c->barrier;
+     b++;
+     c->barrier = b;
+     sctk_spinlock_unlock(&(c->lock));
+
+     while ((b == c->barrier_num_threads) && (c->father != NULL)) {
+        c->barrier = 0;
+        c = c->father;
+
+        b_done = c->barrier_done;      
+
+        sctk_spinlock_lock(&(c->lock));
+        b = c->barrier;
+        b++;
+        c->barrier = b;
+        sctk_spinlock_unlock(&(c->lock));
+        sctk_nodebug("mpcomp_internal_barrier: else thread %d",mvp->rank);
+     }
+
+     /* Step 2: Wait for the barrier to be done */
+     if ((c->father != NULL) || (b != c->barrier_num_threads)) {
+       /* Wait for c->barrier == c->barrier_num_threads */ 
+       sctk_nodebug("mpcomp_internal_barrier: if thread %d",mvp->rank);
+       while (b_done == c->barrier_done) {
+          sctk_thread_yield();
+       }
+     }
+     else {
+       c->barrier = 0;
+       c->barrier_done++;
+       /* TODO: not sure that we need that. If we do need it, maybe we need to lock */
+       sctk_nodebug("mpcomp_internal_barrier: else thread %d",mvp->rank);
+     }
+
+     /* Step 3: Go down in the tree to wake up the children */
+     while (c->child_type != CHILDREN_LEAF) {
+         sctk_nodebug("mpcomp_internal_barrier: step3 thread %d",mvp->rank);
+         c = c->children.node[mvp->tree_rank[c->depth]];
+         c->barrier_done++;
+     }
+}
 /*
    Implicit barrier
 */
