@@ -5233,7 +5233,7 @@ SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new)
 
   tmp_per_comm_new = mpc_mpc_get_per_comm_data(new);
 
-  tmp_per_comm_new = sctk_malloc(tmp_per_comm_old->max_number*sizeof(MPI_Caching_key_value_t));
+  tmp_per_comm_new->key_vals = sctk_malloc(tmp_per_comm_old->max_number*sizeof(MPI_Caching_key_value_t));
   
   tmp_per_comm_new->max_number = tmp_per_comm_old->max_number;
 
@@ -5401,6 +5401,7 @@ SCTK__MPI_Comm_communicator_free (MPI_Comm comm)
   
   sctk_spinlock_unlock (&(topo->lock));
 
+  sctk_free(tmp->key_vals);
   sctk_free(tmp);
   return MPI_SUCCESS;
 }
