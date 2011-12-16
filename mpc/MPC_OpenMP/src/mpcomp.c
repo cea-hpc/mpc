@@ -25,10 +25,8 @@
 #include "sctk_debug.h"
 #include "sctk_topology.h"
 #include "sctk_runtime_config.h"
-#ifdef MPC_Message_Passing
-#include <sctk_communicator.h>
-#endif
-
+#include "sctk_atomics.h"
+#include <mpcomp.h>
 
 /*******************
        MACROS 
@@ -150,12 +148,13 @@ struct mpcomp_node_s {
   char pad0[64];
   volatile int slave_running[2];
   char pad1[64];
-  volatile long barrier;			/* Barrier for the child team */
+  //volatile int barrier;				/* Barrier for the child team */
+  sctk_atomics_int barrier;				/* Barrier for the child team */
   char pad2[64];
-  volatile long barrier_done;			/* Is the barrier for the child team is over? */
+  volatile int barrier_done;			/* Is the barrier for the child team is over? */
   char pad3[64];
   /* TODO: check if it should be volatile or not */
-  long barrier_num_threads;		/* Number of threads involved in the barrier */
+  int barrier_num_threads;			/* Number of threads involved in the barrier */
   char pad4[64];
   int num_threads;				/* Number of threads in the current team */ 
   void *(*func) (void*);
@@ -181,11 +180,6 @@ void in_order_scheduler(mpcomp_mvp_t *mvp);
   Read the environment variables. Once per process 
 */
 inline void __mpcomp_read_env_variables() 
-	  OMP_VP_NUMBER = OMP_VP_NUMBER /  sctk_get_nb_task_local(SCTK_COMM_WORLD); /* DEFAULT */
-	  if(OMP_VP_NUMBER < 1){
-	    OMP_VP_NUMBER = 1;
-	  }
-#endif
 {
   char *env;
   int nb_threads;
@@ -588,7 +582,8 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  root->lock = SCTK_SPINLOCK_INITIALIZER;
 	  root->slave_running[0] = 0;
 	  root->slave_running[1] = 0;
-	  root->barrier = 0;
+	  //root->barrier = 0;
+	  sctk_atomics_store_int (&root->barrier,0) ;
 	  root->barrier_done = 0;
 	  root->children.node = (mpcomp_node_t **)sctk_malloc(root->nb_children*sizeof(mpcomp_node_t *));
 	  sctk_assert(root->children.node != NULL);
@@ -612,7 +607,8 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	    n->lock = SCTK_SPINLOCK_INITIALIZER;
 	    n->slave_running[0] = 0;
 	    n->slave_running[1] = 0;
-	    n->barrier = 0;
+	    //n->barrier = 0;
+	    sctk_atomics_store_int (&n->barrier,0) ;
 	    n->barrier_done = 0;
 	    n->children.leaf = (mpcomp_mvp_t **)sctk_malloc_on_node(n->nb_children*sizeof(mpcomp_mvp_t *),i);
 
@@ -944,7 +940,8 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  root->lock = SCTK_SPINLOCK_INITIALIZER;
 	  root->slave_running[0] = 0;
 	  root->slave_running[1] = 0;
-	  root->barrier = 0;
+	  //root->barrier = 0;
+	  sctk_atomics_store_int (&root->barrier,0) ;
 	  root->barrier_done = 0;
 	  root->children.node = (mpcomp_node_t **)sctk_malloc(root->nb_children*sizeof(mpcomp_node_t *));
 	  sctk_assert(root->children.node != NULL);
@@ -971,7 +968,8 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	    n->lock = SCTK_SPINLOCK_INITIALIZER;
 	    n->slave_running[0] = 0;
 	    n->slave_running[1] = 0;
-	    n->barrier = 0;
+	    //n->barrier = 0;
+	    sctk_atomics_store_int (&n->barrier,0) ;
 	    n->barrier_done = 0;
 	    n->children.leaf = (mpcomp_mvp_t **)sctk_malloc_on_node(n->nb_children*sizeof(mpcomp_mvp_t *),i);
 
@@ -997,7 +995,8 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
                n2->lock = SCTK_SPINLOCK_INITIALIZER;
                n2->slave_running[0] = 0;
                n2->slave_running[1] = 0;
-               n2->barrier = 0;
+               //n2->barrier = 0;
+	       sctk_atomics_store_int (&n2->barrier,0) ;
                n2->barrier_done = 0;
                n2->children.leaf = (mpcomp_mvp_t **)sctk_malloc_on_node(n2->nb_children*sizeof(mpcomp_mvp_t *),i);
 
@@ -1397,10 +1396,11 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
     __mpcomp_internal_half_barrier(instance->mvps[0]);
 
     /* Finish the half barrier by spinning ton the root value */
-    while (root->barrier != root->barrier_num_threads){
+    while (root->barrier_num_threads != sctk_atomics_load_int(&root->barrier)){
        sctk_thread_yield();
     }
-    root->barrier = 0;
+    //root->barrier = 0;
+    sctk_atomics_store_int (&root->barrier,0) ;
 
     /* Restore the previous OpenMP info */
     sctk_openmp_thread_tls = t;
@@ -1424,28 +1424,31 @@ void __mpcomp_internal_half_barrier(mpcomp_mvp_t *mvp)
      c = mvp->father;
 
      /* Step 1: Climb in the tree */
-     long b_done;
+     int b_done;
      b_done = c->barrier_done;
 
-     long b;
+     int b;
 
-     sctk_spinlock_lock(&(c->lock));
+     b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
+     /*sctk_spinlock_lock(&(c->lock));
      b = c->barrier;
      b++;
      c->barrier = b;
-     sctk_spinlock_unlock(&(c->lock));
+     sctk_spinlock_unlock(&(c->lock));*/
 
-     while ((b == c->barrier_num_threads) && (c->father != NULL)) {
-        c->barrier = 0;
+     while ((b == (c->barrier_num_threads-1)) && (c->father != NULL)) {
+        //c->barrier = 0;
+        sctk_atomics_store_int (&c->barrier,0) ;
         c = c->father;
 
         b_done = c->barrier_done;      
 
-        sctk_spinlock_lock(&(c->lock));
+        b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
+        /*sctk_spinlock_lock(&(c->lock));
         b = c->barrier;
         b++;
         c->barrier = b;
-        sctk_spinlock_unlock(&(c->lock));
+        sctk_spinlock_unlock(&(c->lock));*/
         sctk_nodebug("mpcomp_internal_barrier: else thread %d",mvp->rank);
      }
 }
@@ -1462,33 +1465,37 @@ void __mpcomp_internal_barrier(mpcomp_mvp_t *mvp)
      c = mvp->father;
 
      /* Step 1: Climb in the tree */
-     long b_done;
+     int b_done;
      b_done = c->barrier_done;
 
-     long b;
+     int b;
 
-     sctk_spinlock_lock(&(c->lock));
+     b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
+
+     /*sctk_spinlock_lock(&(c->lock));
      b = c->barrier;
      b++;
      c->barrier = b;
-     sctk_spinlock_unlock(&(c->lock));
+     sctk_spinlock_unlock(&(c->lock));*/
 
-     while ((b == c->barrier_num_threads) && (c->father != NULL)) {
-        c->barrier = 0;
+     while ((b == (c->barrier_num_threads-1)) && (c->father != NULL)) {
+        //c->barrier = 0;
+        sctk_atomics_store_int (&c->barrier,0) ;
         c = c->father;
 
         b_done = c->barrier_done;      
 
-        sctk_spinlock_lock(&(c->lock));
+        b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
+        /*sctk_spinlock_lock(&(c->lock));
         b = c->barrier;
         b++;
         c->barrier = b;
-        sctk_spinlock_unlock(&(c->lock));
+        sctk_spinlock_unlock(&(c->lock));*/
         sctk_nodebug("mpcomp_internal_barrier: else thread %d",mvp->rank);
      }
 
      /* Step 2: Wait for the barrier to be done */
-     if ((c->father != NULL) || (b != c->barrier_num_threads)) {
+     if ((c->father != NULL) || (b != (c->barrier_num_threads-1))) {
        /* Wait for c->barrier == c->barrier_num_threads */ 
        sctk_nodebug("mpcomp_internal_barrier: if thread %d",mvp->rank);
        while (b_done == c->barrier_done) {
@@ -1496,7 +1503,8 @@ void __mpcomp_internal_barrier(mpcomp_mvp_t *mvp)
        }
      }
      else {
-       c->barrier = 0;
+       //c->barrier = 0;
+       sctk_atomics_store_int (&c->barrier,0) ;
        c->barrier_done++;
        /* TODO: not sure that we need that. If we do need it, maybe we need to lock */
        sctk_nodebug("mpcomp_internal_barrier: else thread %d",mvp->rank);
