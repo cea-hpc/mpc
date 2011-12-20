@@ -46,6 +46,10 @@ __thread void *sctk_extls = NULL;
 #include <stdlib.h>
 #include <stdio.h>
 
+/* to set GS register */
+#include <asm/prctl.h>
+#include <asm-x86_64/unistd.h>
+
 static __thread unsigned long p_memsz;
 static __thread unsigned long p_filesz;
 static __thread void *p_vaddr;
@@ -120,6 +124,14 @@ static hls_level **sctk_hls_repository ; /* global per process */
 static __thread hls_level* sctk_hls[sctk_hls_max_scope] ; /* per VP */
 __thread void* sctk_hls_generation ; /* per thread */
 /* need to be saved and restored at context switch */
+  
+__thread void *sctk_tls_module_vp[sctk_extls_max_scope+sctk_hls_max_scope] ;
+/* store a direct pointer to each tls module */
+/* used by tls optimized in the linker */
+/* gs register contains the address of this array */
+/* per thread: need to be updated at context switch */
+/* real type: sctk_tls_module_t** */
+__thread void **sctk_tls_module ;
 
 static inline void
 sctk_tls_init_level (tls_level * level)
@@ -580,6 +592,78 @@ void sctk_hls_free ()
   }
   free ( sctk_hls_repository ) ;
 }
+
+/*
+ * Set the GS register to contain the address 
+ * of the tls_module array
+ * to be called on each VP
+ */
+void
+sctk_tls_module_set_gs_register ()
+{
+	static __thread int done_on_this_vp = 0 ;
+	if ( done_on_this_vp == 1 )
+		return ;
+
+	int result;
+	void *gs = (void*)sctk_tls_module_vp ;
+	asm volatile ("syscall"
+			: "=a" (result) 
+			: "0" ((unsigned long int ) __NR_arch_prctl),     
+			"D" ((unsigned long int ) ARCH_SET_GS),         
+			"S" (gs)
+			: "memory", "cc", "r11", "cx");
+	assume(result == 0);
+	done_on_this_vp = 1 ;
+}
+
+/*
+ * Allocate and fill the tls_module for a thread
+ * to be called before the user code starts
+ */
+void
+sctk_tls_module_alloc_and_fill ()
+{
+	int i ;
+	tls_level **extls = (tls_level**) sctk_extls ;
+	sctk_tls_module_t *tls_module = sctk_calloc(sctk_extls_max_scope+sctk_hls_max_scope,sizeof(sctk_tls_module_t));
+
+	for ( i=0 ; i<sctk_extls_max_scope ; ++i ) {
+		if ( extls[i] == NULL ) {
+			/* this scope is not used */
+			tls_module[i] = NULL ;
+			continue ;
+		}
+		/* optimized tls access are in the first module */
+		/* generate a dummy access to an ex-tls variable to initialize memory if needed */
+		if ( extls[i]->modules == NULL || extls[i]->modules[0] == NULL ) {
+			void *dummy = __sctk__tls_get_addr__generic_scope (1,0,extls[i]) ;
+		}
+		assert ( extls[i]->modules[0] != NULL ) ;
+		tls_module[i] = extls[i]->modules[0] ;
+	}
+
+	for ( i=0 ; i<sctk_hls_max_scope ; ++i ) {
+		if ( sctk_hls[i] == NULL ) {
+			/* this scope is not used */
+			tls_module[sctk_extls_max_scope+i] = NULL ;
+			continue ;
+		}
+		/* optimized tls access are in the first module */
+		/* generate a dummy access to an hls variable to initialize memory if needed */
+		if ( sctk_hls[i]->level.modules == NULL || sctk_hls[i]->level.modules[0] == NULL ) {
+			void *dummy = __sctk__tls_get_addr__generic_scope (1,0,&sctk_hls[i]->level) ;
+		}
+		assert ( sctk_hls[i]->level.modules[0] != NULL ) ;
+		tls_module[sctk_extls_max_scope+i] = sctk_hls[i]->level.modules[0] ;
+	}
+
+	for ( i=0; i<sctk_extls_max_scope+sctk_hls_max_scope; ++i )
+		sctk_tls_module_vp[i] = tls_module[i] ;
+	
+	sctk_tls_module = (void**)tls_module ;
+}
+
 
 #if defined(SCTK_i686_ARCH_SCTK) || defined (SCTK_x86_64_ARCH_SCTK)
 

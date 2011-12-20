@@ -70,7 +70,6 @@ extern "C"
   void sctk_extls_keep_non_current_thread (void **tls, int *scopes);
   void sctk_extls_delete ();
 
-
 #if defined (MPC_Allocator)
   extern __thread void *sctk_tls_key;
 #endif
@@ -87,6 +86,9 @@ extern "C"
   extern __thread void *tls_args;
 
   extern __thread void *sctk_hls_generation;
+
+  extern __thread void *sctk_tls_module_vp[sctk_extls_max_scope+sctk_hls_max_scope] ;
+  extern __thread void **sctk_tls_module ;
 
 #endif
 
@@ -110,6 +112,7 @@ extern "C"
     tls_save (mpc_user_tls_1);
     tls_save (sctk_extls);
 	tls_save (sctk_hls_generation);
+	tls_save (sctk_tls_module);
 #ifdef MPC_Message_Passing
     tls_save (sctk_message_passing);
 #endif
@@ -122,6 +125,7 @@ extern "C"
   static inline void sctk_context_restore_tls (sctk_mctx_t * ucp)
   {
 #if defined(SCTK_USE_TLS)
+	int i ;
 #if defined (MPC_Allocator)
     sctk_tls_key = ucp->sctk_tls_key_local;
 #endif
@@ -131,6 +135,11 @@ extern "C"
     tls_restore (mpc_user_tls_1);
     tls_restore (sctk_extls);
     tls_restore (sctk_hls_generation);
+    tls_restore (sctk_tls_module);
+	if ( sctk_tls_module != NULL ) {
+		for ( i=0; i<sctk_extls_max_scope+sctk_hls_max_scope; ++i )
+			sctk_tls_module_vp[i] = sctk_tls_module[i] ;
+	}
 #ifdef MPC_Message_Passing
     tls_restore (sctk_message_passing);
 #endif
@@ -164,23 +173,27 @@ extern "C"
   static inline void sctk_context_init_tls (sctk_mctx_t * ucp)
   {
 #if defined(SCTK_USE_TLS)
-    sctk_context_init_tls_without_extls (ucp);
     tls_init (sctk_extls);
     sctk_extls_duplicate (&(ucp->sctk_extls));
+    sctk_context_init_tls_without_extls (ucp);
 #endif
   }
 
   static inline void sctk_context_init_tls_with_specified_extls (sctk_mctx_t * ucp, void * extls)
   {
 #if defined(SCTK_USE_TLS)
-    sctk_context_init_tls_without_extls (ucp);
 	ucp->sctk_extls = extls ;
+    sctk_context_init_tls_without_extls (ucp);
 #endif
   }
 
   void sctk_hls_build_repository () ;
   void sctk_hls_checkout_on_vp () ;
   void sctk_hls_register_thread () ;
+  
+  void sctk_tls_module_set_gs_register ();
+  void sctk_tls_module_alloc_and_fill ();
+
 
 #ifdef __cplusplus
 }

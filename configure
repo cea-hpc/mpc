@@ -46,7 +46,7 @@ MPC_VERSION="`${MPC_SOURCE_DIR}/MPC_Tools/mpc_print_version`"
 SCTK_PREFIX_CHECK="1"
 
 # List of all modules to add to MPC distribution
-MODULES="mpc-gdb mpc-gcc mpc-hydra mpc-hwloc mpc-openpa"
+MODULES="mpc-gdb mpc-gcc mpc-hydra mpc-hwloc mpc-openpa mpc-binutils"
 # List of modules for the 'clean' rule
 MODULES_CLEAN=
 
@@ -112,10 +112,13 @@ Launcher selection:
   --with-slurm[=prefix]               Use SLURM  as launcher [disabled]
 
 MPC gcc options:
-  --disable-mpc-gcc                   Disable compilation of mpc-gcc [enabled]
+  --disable-mpc-gcc                   Disable compilation of mpc-gcc and mpc-binutils [enabled]
   --gcc-{with-mpfr|...}               Pass option to GCC configure script.
   --with-mpfr=prefix                  Prefix for libmpfr needed to build gcc.
   --with-gmp=prefix                   Prefix for libgmp needed to build gcc.
+
+MPC binutils options:
+  --disable-mpc-binutils              Disable compilation of mpc-binutils [enabled]
 
 MPC gdb options:
   --disable-mpc-gdb                   Disable compilation of mpc-gdb [enabled]
@@ -149,7 +152,10 @@ for arg in "$@" ; do
     ;;
     # Usage
     --disable-mpc-gcc)
-       MODULES="`echo $MODULES | sed -e 's/mpc-gcc//g'`"
+       MODULES="`echo $MODULES | sed -e 's/mpc-gcc//g' | sed -e 's/mpc-binutils//g'`"
+	;;
+	--disable-mpc-binutils)
+       MODULES="`echo $MODULES | sed -e 's/mpc-binutils//g'`"
     ;;
     --disable-mpc-gdb)
         MODULES="`echo $MODULES | sed -e 's/mpc-gdb//g'`"
@@ -422,7 +428,7 @@ if test "$mod" != "#" ; then
     MODULES_CLEAN="${MODULES_CLEAN} ${FULL_NAME}_build"
 
     printf "#\n# Module ${mod} / Version ${ver}\n#\n" >> Makefile
-    if [ "${mod##*-}" = "openpa" ] || [ "${mod##*-}" = "hwloc" ]
+    if [ "${mod##*-}" = "openpa" ] || [ "${mod##*-}" = "hwloc" ] || [ "${mod##*-}" = "binutils" ]
     then
 		  printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_INSTALL=`echo A${SCTK_PREFIX} | sed -e 's/A--prefix=//g'`/${FULL_NAME}\n" >> Makefile
     	printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_BUILD=`pwd`/${FULL_NAME}_build/${mod##*-}-${ver}\n" >> Makefile
@@ -456,7 +462,7 @@ if test "$mod" != "#" ; then
 			printf "\t\$(MAKE) -C ${FULL_NAME}_build/hydra \n" >> Makefile
 			printf "\t\$(MAKE) -C ${FULL_NAME}_build/simple \n" >> Makefile
 			;;
-		openpa|hwloc)
+		openpa|hwloc|binutils)
 			printf "\t\$(MAKE) -C ${FULL_NAME}_build/${mod##*-}-${ver} \n" >> Makefile
 			;;
 		*)
@@ -472,7 +478,7 @@ if test "$mod" != "#" ; then
 		"hydra")
 			printf "\t\$(MAKE) -C ${FULL_NAME}_build/hydra install \n" >> Makefile
 			;;
-		"openpa"|"hwloc")
+		"openpa"|"hwloc"|"binutils")
 			printf "\t\$(MAKE) -C ${FULL_NAME}_build/${mod##*-}-${ver} install \n" >> Makefile
 			;;
 		*)
