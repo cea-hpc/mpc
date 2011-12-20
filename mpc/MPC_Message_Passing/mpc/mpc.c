@@ -521,7 +521,7 @@ MPC_CREATE_INTERN_FUNC (MAXLOC);
 #define mpc_check_comm(com,comm)		\
   if(com < 0)					\
     MPC_ERROR_REPORT(comm,MPC_ERR_COMM,"")
-    
+
 #define mpc_check_buf(buf,comm)			\
   if((buf == NULL) && (buf != MPC_BOTTOM))	\
     MPC_ERROR_REPORT(comm,MPC_ERR_BUFFER,"")
@@ -4761,8 +4761,6 @@ PMPC_User_Main (int argc, char **argv)
 /********************************************************************/
 /*Netowk statistics                                                 */
 /********************************************************************/
-struct MPC_Network_stats_s MPC_Network_stats() {
-  struct MPC_Network_stats_s stats;
-  sctk_network_stats_ib(&stats);
-  return stats;
+void MPC_Network_stats(struct MPC_Network_stats_s *stats) {
+  sctk_network_stats_ib(stats);
 }

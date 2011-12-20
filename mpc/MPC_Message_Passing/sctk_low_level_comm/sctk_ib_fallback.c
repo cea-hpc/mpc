@@ -291,6 +291,7 @@ static int sctk_network_poll_all_and_steal(sctk_rail_info_t *rail) {
   return nb_found;
 }
 
+extern __thread OPA_int_t poll_counters;
 static void
 sctk_network_notify_recv_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
   /* POLLING */
@@ -315,13 +316,14 @@ static void
 sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){
   /* POLLING */
   sctk_network_poll_all_and_steal(rail);
+  OPA_incr_int(&poll_counters);
 }
 
 static void
 sctk_network_notify_any_source_message_ib (sctk_rail_info_t* rail){
   /* POLLING */
   /* XXX: do not add polling here */
- // sctk_network_poll_all_and_steal(rail);
+  //sctk_network_poll_all_and_steal(rail);
 }
 
 static void

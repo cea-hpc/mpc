@@ -1091,7 +1091,7 @@ void sctk_wait_all (const int task, const sctk_communicator_t com){
     sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
 
 #warning "To optimize"
-    sctk_thread_yield();
+    if (i != 0) sctk_thread_yield();
   } while(i != 0);
 }
 

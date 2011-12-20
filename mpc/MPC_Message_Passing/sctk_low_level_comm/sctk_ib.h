@@ -106,6 +106,9 @@ extern "C"
         struct sctk_rail_info_s *rail;
         struct sctk_route_table_s* route_table;
         struct sctk_message_to_copy_s *copy_ptr;
+        /* For collaborative polling: src and dest of msg */
+        int glob_source;
+        int glob_destination;
         /* Local structure */
         struct {
           sctk_ib_rdma_status_t status;

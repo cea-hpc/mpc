@@ -722,7 +722,7 @@ extern "C"
     double time_own;
   };
 
-  struct MPC_Network_stats_s MPC_Network_stats();
+  void MPC_Network_stats(struct MPC_Network_stats_s *stats);
 
 #ifdef __cplusplus
 }

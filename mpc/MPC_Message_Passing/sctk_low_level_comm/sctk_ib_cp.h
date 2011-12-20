@@ -45,6 +45,8 @@ enum cp_counters_e{
   poll_steal_same_node,
   /* Number of msg stolen on other nodes */
   poll_steal_other_node,
+  /* Number of steals tried */
+  poll_steal_try,
 };
 
 extern __thread int task_node_number;

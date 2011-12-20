@@ -70,6 +70,7 @@ typedef struct numa_s{
   struct numa_s *next;
   /* If the NODE has already been added */
   char  added;
+  int tasks_nb;
   /* Padding for avoiding false sharing */
   char pad[64];
 } numa_t;
@@ -81,12 +82,14 @@ static numa_t *numas = NULL;
 static int numa_number = -1;
 /* Array of vps */
 static vp_t   *vps = NULL;
+static int ready = 0;
 static int vp_number = -1;
 static sctk_spinlock_t vps_lock = SCTK_SPINLOCK_INITIALIZER;
 static sctk_ib_cp_task_t* all_tasks = NULL;
 __thread unsigned int seed;
 __thread int task_node_number = -1;
-static const ibv_cp_profiler = 1;
+static const int ibv_cp_profiler = 1;
+__thread OPA_int_t poll_counters ;
 
 #define CHECK_AND_QUIT(rail_ib) do {  \
   LOAD_CONFIG(rail_ib);                             \
@@ -145,12 +148,15 @@ void sctk_ib_cp_init_task(int rank, int vp) {
     memset(vps, 0, sizeof(vp_t) * vp_number);
     assume(vps);
     sctk_nodebug("vp: %d - numa: %d", sctk_get_cpu_number(), numa_number);
+    ready = 1;
   }
   /* Add the VP to the CDL list of the correct NUMA node if it not already done */
   if (vps[vp].added == 0) {
     vps[vp].node = &numas[node];
     CDL_PREPEND( numas[node].vps, &(vps[vp]));
+    OPA_store_int(&poll_counters,0);
     vps[vp].added = 1;
+    numas[node].tasks_nb++;
   }
   if (numas[node].added == 0) {
     CDL_PREPEND( numa_list, &(numas[node]));
@@ -159,7 +165,7 @@ void sctk_ib_cp_init_task(int rank, int vp) {
   HASH_ADD(hh_vp, vps[vp].tasks,rank,sizeof(int),task);
   HASH_ADD(hh_all, all_tasks,rank,sizeof(int),task);
   sctk_spinlock_unlock(&vps_lock);
-  sctk_ib_debug("Task %d registered on VP %d (numa:%d)", rank, vp, node);
+  sctk_ib_debug("Task %d registered on VP %d (numa:%d:tasks_nb:%d)", rank, vp, node, numas[node].tasks_nb);
 
   /* Initialize seed for steal */
   seed = getpid() * time(NULL);
@@ -172,14 +178,16 @@ void sctk_ib_cp_finalize_task(int rank) {
   assume(task);
 
   if (ibv_cp_profiler) {
-    fprintf(stderr, "[%2d] matched:%d not_matched:%d poll_own:%d poll_stolen:%d poll_steals:%d same_node:%d other_node:%d\n", rank,
+    fprintf(stderr, "[%2d] matched:%d not_matched:%d poll_own:%d poll_stolen:%d poll_steals:%d same_node:%d other_node:%d steal_try:%d, c:%d\n", rank,
         CP_PROF_PRINT(task, matched),
         CP_PROF_PRINT(task, not_matched),
         CP_PROF_PRINT(task, poll_own),
         CP_PROF_PRINT(task, poll_stolen),
         CP_PROF_PRINT(task, poll_steals),
         CP_PROF_PRINT(task, poll_steal_same_node),
-        CP_PROF_PRINT(task, poll_steal_other_node)
+        CP_PROF_PRINT(task, poll_steal_other_node),
+        CP_PROF_PRINT(task, poll_steal_try),
+        OPA_load_int(&poll_counters)
         );
   }
 }
@@ -219,7 +227,7 @@ int sctk_ib_cp_poll(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll
   sctk_ib_cp_task_t *task = NULL;
   int nb_found = 0;
 
-  if (vps == NULL) return 0;
+  if (ready == 0) return 0;
 
   if (cq == recv_cq) {
     for (task=vps[vp].tasks; task; task=task->hh_vp.next)
@@ -313,10 +321,11 @@ int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll, en
   numa_t* tmp_numa;
   int i = 0;
 
-  if (vps == NULL) return 0;
+  if (ready == 0) return 0;
 
   /* XXX: Not working with oversubscribing */
-  stealing_task = vps[sctk_thread_get_vp()].tasks;
+  stealing_task = vps[vp].tasks;
+  if (stealing_task) CP_PROF_INC(stealing_task,poll_steal_try);
   if (cq == recv_cq) {
     /* First, try to steal from the same NUMA node*/
     STEAL_CURRENT_NODE(&task->recv_ibufs);

@@ -119,6 +119,8 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
   /* Save addr and size */
   msg->tail.ib.rdma.local.aligned_addr = aligned_addr;
   msg->tail.ib.rdma.local.aligned_size = aligned_size;
+  msg->tail.ib.rdma.glob_source = msg->sctk_msg_get_glob_source;
+  msg->tail.ib.rdma.glob_destination = msg->sctk_msg_get_glob_destination;
   /* Message is now ready ready */
   msg->tail.ib.rdma.local.ready = 1;
 }
@@ -133,6 +135,8 @@ sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
   sctk_ib_rdma_req_t *rdma_req;
 
   ibuf = sctk_ibuf_pick(&rail->network.ib, 1, task_node_number);
+  IBUF_SET_DEST_TASK(ibuf, msg->sctk_msg_get_glob_destination);
+  IBUF_SET_SRC_TASK(ibuf, msg->sctk_msg_get_glob_source);
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_req_type);
 
@@ -171,6 +175,9 @@ inline sctk_ibuf_t* sctk_ib_rdma_prepare_ack(sctk_ib_rail_info_t* rail_ib,
   sctk_ib_rdma_ack_t *rdma_ack;
 
   ibuf = sctk_ibuf_pick(rail_ib, 1, task_node_number);
+  /* XXX: Source and dest inverted */
+  IBUF_SET_DEST_TASK(ibuf, msg->tail.ib.rdma.glob_source);
+  IBUF_SET_SRC_TASK(ibuf, msg->tail.ib.rdma.glob_destination);
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_ack_type);
 
@@ -203,6 +210,8 @@ sctk_ib_rdma_prepare_data_write(sctk_rail_info_t* rail,
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
   rdma_data_write = IBUF_GET_RDMA_DATA_WRITE(ibuf->buffer);
 
+  IBUF_SET_DEST_TASK(ibuf, src_msg_header->tail.ib.rdma.glob_destination);
+  IBUF_SET_SRC_TASK(ibuf, src_msg_header->tail.ib.rdma.glob_source);
   rdma_data_write->src_msg_header = src_msg_header;
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_data_write_type);
   sctk_ibuf_set_protocol(ibuf, rdma_protocol);
@@ -241,6 +250,8 @@ sctk_ib_rdma_prepare_done_write(sctk_rail_info_t* rail,
   /* At this time, we can rewrite informations on the ibuf */
   rdma_done = IBUF_GET_RDMA_DONE(ibuf->buffer);
   rdma_done->dest_msg_header = dest_msg_header;
+  IBUF_SET_DEST_TASK(ibuf, src_msg_header->tail.ib.rdma.glob_destination);
+  IBUF_SET_SRC_TASK(ibuf, src_msg_header->tail.ib.rdma.glob_source);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_done_type);
   sctk_ibuf_send_init(ibuf, IBUF_GET_RDMA_DONE_SIZE);
   sctk_ibuf_set_protocol(ibuf, rdma_protocol);
@@ -379,9 +390,10 @@ sctk_ib_rdma_recv_ack(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
  * RECV REQ
  */
 static inline sctk_thread_ptp_message_t *
-sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ib_rdma_req_t *rdma_req) {
+sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   sctk_thread_ptp_message_t *msg;
   sctk_route_table_t* route;
+  sctk_ib_rdma_req_t *rdma_req = IBUF_GET_RDMA_REQ(ibuf->buffer);
 
   msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
   memcpy(&msg->body, &rdma_req->msg_header, sizeof(sctk_thread_ptp_message_body_t));
@@ -405,6 +417,9 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ib_rdma_req_t *rdma_req) {
   msg->tail.ib.rdma.local.addr  = NULL;
   msg->tail.ib.rdma.remote.msg_header = rdma_req->dest_msg_header;
   msg->tail.ib.rdma.local.ready = 0;
+  /* XXX: Only for collaborative polling */
+  msg->tail.ib.rdma.glob_source = IBUF_GET_SRC_TASK(ibuf);
+  msg->tail.ib.rdma.glob_destination = IBUF_GET_DEST_TASK(ibuf);
 
   /* XXX: If the message is not contiguous, we allocate a tmp buffer.
    * XXX: message_type not in body */
@@ -513,7 +528,7 @@ sctk_ib_rdma_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   switch(IBUF_GET_RDMA_TYPE(rdma_header)) {
     case rdma_req_type:
       sctk_nodebug("Poll recv: message RDMA req received");
-      sctk_ib_rdma_recv_req(rail, IBUF_GET_RDMA_REQ(ibuf->buffer));
+      sctk_ib_rdma_recv_req(rail, ibuf);
       return 1;
       break;
 

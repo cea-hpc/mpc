@@ -1186,7 +1186,7 @@ __INTERNAL__PMPI_Buffer_detach (void *bufferptr, int *size)
 	    head_next = SCTK__buffer_next_header (head, tmp);
 	    head = head_next;
 	  }
-	sctk_thread_yield ();
+	if (pending != 0) sctk_thread_yield ();
       }
     while (pending != 0);
   }
@@ -1657,7 +1657,7 @@ __INTERNAL__PMPI_Waitany (int count, MPI_Request * array_of_requests,
     {
       __INTERNAL__PMPI_Testany (count, array_of_requests, index, &flag,
 				status);
-      sctk_thread_yield ();
+      if (!flag) sctk_thread_yield ();
     }
   return MPI_SUCCESS;
 }
@@ -1698,6 +1698,7 @@ __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests,
   while (!flag)
     {
       int i;
+      int old_done = 0;
       int done = 0;
       int loc_flag;
       for (i = 0; i < count; i++)
@@ -1735,9 +1736,15 @@ __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests,
 	      return tmp;
 	    }
 	}
-      sctk_nodebug ("done %d tot %d", done, count);
+//      sctk_debug ("done %d tot %d", done, count);
       flag = (done == count);
-      sctk_thread_yield ();
+      /* XXX: we should place it at another place */
+      if (!flag) sctk_thread_yield ();
+//      if (done == old_done) {
+//        sctk_network_notify_idle_message ();
+//      } else {
+//        old_done = done;
+//      }
     }
   return MPI_SUCCESS;
 }
@@ -1811,7 +1818,7 @@ __INTERNAL__PMPI_Waitsome (int incount, MPI_Request * array_of_requests,
       __INTERNAL__PMPI_Testsome (incount, array_of_requests, outcount,
 				 array_of_indices, array_of_statuses);
       flag = *outcount;
-      sctk_thread_yield ();
+      if (!flag) sctk_thread_yield ();
     }
   return MPI_SUCCESS;
 }
@@ -1872,8 +1879,7 @@ __INTERNAL__PMPI_Iprobe (int source, int tag, MPI_Comm comm, int *flag,
 {
   int res;
   res = PMPC_Iprobe (source, tag, comm, flag, status);
-  if (!(*flag))
-    sctk_thread_yield ();
+  if (!(*flag)) sctk_thread_yield ();
   return res;
 }
 
@@ -2921,8 +2927,8 @@ __INTERNAL__PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * extent)
   return MPI_SUCCESS;
 }
 
-/* See the 1.1 version of the Standard.  The standard made an 
-   unfortunate choice here, however, it is the standard.  The size returned 
+/* See the 1.1 version of the Standard.  The standard made an
+   unfortunate choice here, however, it is the standard.  The size returned
    by MPI_Type_size is specified as an int, not an MPI_Aint */
 static int
 __INTERNAL__PMPI_Type_size (MPI_Datatype datatype, int *size)
@@ -5009,7 +5015,7 @@ __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
   sctk_spinlock_lock(&(tmp_per_comm->lock));
 
   if(tmp_per_comm->max_number >= keyval){
-    int i; 
+    int i;
     tmp_per_comm->key_vals = sctk_realloc(tmp_per_comm->key_vals,keyval*sizeof(MPI_Caching_key_value_t));
 
     for(i = tmp_per_comm->max_number; i < keyval; i++){
@@ -5079,7 +5085,7 @@ __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value,
   sctk_spinlock_lock(&(tmp_per_comm->lock));
 
   if(tmp_per_comm->max_number >= keyval){
-    int i; 
+    int i;
     tmp_per_comm->key_vals = sctk_realloc(tmp_per_comm->key_vals,keyval*sizeof(MPI_Caching_key_value_t));
 
     for(i = tmp_per_comm->max_number; i < keyval; i++){
@@ -5117,8 +5123,8 @@ __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
     }
   keyval -= MPI_MAX_KEY_DEFINED;
 
-  tmp = mpc_mpc_get_per_task_data(); 
-  sctk_spinlock_lock(&(tmp->lock)); 
+  tmp = mpc_mpc_get_per_task_data();
+  sctk_spinlock_lock(&(tmp->lock));
 
   if ((tmp == NULL) || (keyval < 0))
     {
@@ -5126,7 +5132,7 @@ __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
     }
   if (tmp->attrs_fn[keyval].used == 0)
     {
-      sctk_spinlock_unlock(&(tmp->lock)); 
+      sctk_spinlock_unlock(&(tmp->lock));
       return MPI_ERR_INTERN;
     }
 
@@ -5234,7 +5240,7 @@ SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new)
   tmp_per_comm_new = mpc_mpc_get_per_comm_data(new);
 
   tmp_per_comm_new->key_vals = sctk_malloc(tmp_per_comm_old->max_number*sizeof(MPI_Caching_key_value_t));
-  
+
   tmp_per_comm_new->max_number = tmp_per_comm_old->max_number;
 
   for(i = 0; i < tmp_per_comm_old->max_number; i++){
@@ -5325,9 +5331,9 @@ SCTK__MPI_Comm_communicator_dup (MPI_Comm comm, MPI_Comm newcomm)
   topo_old = &(tmp->topo);
   tmp = mpc_mpc_get_per_comm_data(newcomm);
   topo_new = &(tmp->topo);
-  
+
   sctk_spinlock_lock (&(topo_old->lock));
-  
+
   if (topo_old->type == MPI_CART)
     {
       topo_new->type = MPI_CART;
@@ -5371,9 +5377,9 @@ SCTK__MPI_Comm_communicator_dup (MPI_Comm comm, MPI_Comm newcomm)
       topo_new->data.graph.nindex =
 	topo_old->data.graph.nindex;
     }
-  
+
   sctk_spinlock_unlock (&(topo_old->lock));
-  
+
   return MPI_SUCCESS;
 }
 
@@ -5385,9 +5391,9 @@ SCTK__MPI_Comm_communicator_free (MPI_Comm comm)
 
   tmp = mpc_mpc_get_per_comm_data(comm);
   topo = &(tmp->topo);
-  
+
   sctk_spinlock_lock (&(topo->lock));
-  
+
   if (topo->type == MPI_CART)
     {
       sctk_free (topo->data.cart.dims);
@@ -5398,7 +5404,7 @@ SCTK__MPI_Comm_communicator_free (MPI_Comm comm)
       sctk_free (topo->data.graph.index);
       sctk_free (topo->data.graph.edges);
     }
-  
+
   sctk_spinlock_unlock (&(topo->lock));
 
   sctk_free(tmp->key_vals);
@@ -5416,7 +5422,7 @@ __INTERNAL__PMPI_Comm_get_name (MPI_Comm comm, char *comm_name,
 
   tmp = mpc_mpc_get_per_comm_data(comm);
   topo = &(tmp->topo);
-  
+
   sctk_spinlock_lock (&(topo->lock));
   len = strlen (topo->names);
 
@@ -5434,7 +5440,7 @@ __INTERNAL__PMPI_Comm_set_name (MPI_Comm comm, char *comm_name)
   int len;
   tmp = mpc_mpc_get_per_comm_data(comm);
   topo = &(tmp->topo);
-  
+
   sctk_spinlock_lock (&(topo->lock));
   memset (topo->names, '\0', MPI_MAX_NAME_STRING + 1);
 
@@ -5560,7 +5566,7 @@ __INTERNAL__PMPI_Cart_create (MPI_Comm comm_old, int ndims, int *dims,
   memcpy (topo->data.cart.periods, periods,
 	  ndims * sizeof (int));
 
-  sctk_spinlock_lock (&(topo->lock));
+  sctk_spinlock_unlock (&(topo->lock));
   return res;
 }
 
@@ -5801,7 +5807,7 @@ __INTERNAL__PMPI_Cartdim_get (MPI_Comm comm, int *ndims)
 
   tmp = mpc_mpc_get_per_comm_data(comm);
   topo = &(tmp->topo);
-  
+
   sctk_spinlock_lock (&(topo->lock));
 
   if (topo->type != MPI_CART)
@@ -5827,7 +5833,7 @@ __INTERNAL__PMPI_Cart_get (MPI_Comm comm, int maxdims, int *dims,
 
   tmp = mpc_mpc_get_per_comm_data(comm);
   topo = &(tmp->topo);
-  
+
   sctk_spinlock_lock (&(topo->lock));
 
   __INTERNAL__PMPI_Comm_rank (comm, &rank);
@@ -5866,7 +5872,7 @@ __INTERNAL__PMPI_Cart_rank (MPI_Comm comm, int *coords, int *rank, int locked)
 
   tmp = mpc_mpc_get_per_comm_data(comm);
   topo = &(tmp->topo);
-  
+
   if (!locked)
     sctk_spinlock_lock (&(topo->lock));
 
@@ -5876,7 +5882,7 @@ __INTERNAL__PMPI_Cart_rank (MPI_Comm comm, int *coords, int *rank, int locked)
 	sctk_spinlock_unlock (&(topo->lock));
       MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
     }
-  
+
   for (i = topo->data.cart.ndims - 1 ; i >= 0 ; i--)
 	{
 	  loc_rank += coords[i] * dims_coef ;
@@ -5922,7 +5928,7 @@ __INTERNAL__PMPI_Cart_coords (MPI_Comm comm, int init_rank, int maxdims,
 	sctk_spinlock_unlock (&(topo->lock));
       MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid max_dims");
     }
-  
+
   for (i = maxdims-1; i >= 0; --i)
     {
       pi *= topo->data.cart.dims[i];
@@ -6572,7 +6578,7 @@ __INTERNAL__PMPI_Init (int *argc, char ***argv)
       memset(per_communicator->mpc_mpi_per_communicator,0,sizeof(struct mpc_mpi_per_communicator_s));
       per_communicator->mpc_mpi_per_communicator_copy = mpc_mpi_per_communicator_copy_func;
       per_communicator->mpc_mpi_per_communicator->lock = lock;
-      
+
       tmp = per_communicator->mpc_mpi_per_communicator;
 
 /*       __sctk_init_mpc_request_per_comm (tmp); */
@@ -7336,8 +7342,8 @@ PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * extent)
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
-  /* See the 1.1 version of the Standard.  The standard made an 
-     unfortunate choice here, however, it is the standard.  The size returned 
+  /* See the 1.1 version of the Standard.  The standard made an
+     unfortunate choice here, however, it is the standard.  The size returned
      by MPI_Type_size is specified as an int, not an MPI_Aint */
 int
 PMPI_Type_size (MPI_Datatype datatype, int *size)
@@ -8207,7 +8213,7 @@ PMPI_Abort (MPI_Comm comm, int errorcode)
 }
 
 
-  /* Note that we may need to define a @PCONTROL_LIST@ depending on whether 
+  /* Note that we may need to define a @PCONTROL_LIST@ depending on whether
      stdargs are supported */
 int
 PMPI_Pcontrol (const int level, ...)
