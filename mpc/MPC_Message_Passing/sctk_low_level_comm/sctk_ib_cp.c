@@ -73,6 +73,8 @@ typedef struct numa_s{
   int tasks_nb;
   /* Padding for avoiding false sharing */
   char pad[64];
+  /* CDL of tasks for a NUMA node */
+  sctk_ib_cp_task_t *tasks;
 } numa_t;
 
 /* CDL list of numa nodes */
@@ -123,7 +125,7 @@ void sctk_ib_cp_init(struct sctk_ib_rail_info_s* rail_ib) {
 void sctk_ib_cp_init_task(int rank, int vp) {
   sctk_ib_cp_task_t *task = NULL;
   int node =  sctk_get_node_from_cpu(vp);
-  task_node_number = sctk_get_node_from_cpu(vp);
+  task_node_number = node;
 
   task = sctk_malloc(sizeof(sctk_ib_cp_task_t));
   assume(task);
@@ -164,6 +166,7 @@ void sctk_ib_cp_init_task(int rank, int vp) {
   }
   HASH_ADD(hh_vp, vps[vp].tasks,rank,sizeof(int),task);
   HASH_ADD(hh_all, all_tasks,rank,sizeof(int),task);
+  CDL_PREPEND(numas[node].tasks, task);
   sctk_spinlock_unlock(&vps_lock);
   sctk_ib_debug("Task %d registered on VP %d (numa:%d:tasks_nb:%d)", rank, vp, node, numas[node].tasks_nb);
 
@@ -187,10 +190,10 @@ void sctk_ib_cp_finalize_task(int rank) {
         CP_PROF_PRINT(task, poll_steal_same_node),
         CP_PROF_PRINT(task, poll_steal_other_node),
         CP_PROF_PRINT(task, poll_steal_try),
-        OPA_load_int(&poll_counters)
-//        task->time_stolen/CYCLES_PER_SEC,
-//        task->time_steals/CYCLES_PER_SEC,
-//        task->time_own/CYCLES_PER_SEC
+        OPA_load_int(&poll_counters),
+        task->time_stolen/CYCLES_PER_SEC,
+        task->time_steals/CYCLES_PER_SEC,
+        task->time_own/CYCLES_PER_SEC
         );
   }
 }
@@ -371,8 +374,17 @@ int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll, en
 
 sctk_ib_cp_task_t *sctk_ib_cp_get_polling_task() {
   sctk_ib_cp_task_t* task;
-  /* XXX: Not working with oversubscribing */
+  /* XXX: Not working with oversubscribing. The first task
+   * registered will be the only one to poll */
   task = vps[sctk_thread_get_vp()].tasks;
+  /* XXX Support for steal from OpenMP tasks */
+  if (!task) {
+    task = numas[task_node_number].tasks;
+    if (task) return task;
+    /* If we are here, there is no MPI task on the current node. Take the
+     * first MPI task on whatever NUMA node */
+    task = all_tasks;
+  }
   assume(task);
   return task;
 }

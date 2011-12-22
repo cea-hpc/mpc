@@ -70,6 +70,9 @@ typedef struct sctk_ib_cp_task_s{
   double time_stolen;
   double time_steals;
   double time_own;
+  /* Tasks linked together on NUMA */
+  struct sctk_ib_cp_task_s* prev;
+  struct sctk_ib_cp_task_s* next;
 } sctk_ib_cp_task_t;
 #define CP_PROF_INC(t,x) do {   \
   OPA_incr_int(&t->c[x]);        \
