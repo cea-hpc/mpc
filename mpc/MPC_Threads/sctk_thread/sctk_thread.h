@@ -40,7 +40,7 @@ extern "C"
 #define SCTK_MO * 1024 * 1024
 
   extern int sctk_is_in_fortran;
-#define SCTK_ETHREAD_STACK_SIZE 10 SCTK_MO
+#define SCTK_ETHREAD_STACK_SIZE 64 SCTK_MO
 #define SCTK_ETHREAD_THREAD_STACK_SIZE 1 SCTK_MO
 
 #ifdef USER_FORTRAN_STACK_SIZE
