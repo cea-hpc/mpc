@@ -67,7 +67,7 @@ kthread_getspecific (kthread_key_t key)
 #endif
 
 
-#define kthread_stack_size (1*1024*1024)
+#define kthread_stack_size (1024*1024*1024)
 
 typedef void *(*start_routine_t) (void *) ;
 
@@ -77,7 +77,7 @@ typedef struct kthread_create_start_s
   volatile void *arg;
   volatile int started;
   volatile int used;
-  volatile struct kthread_create_start_s* next;  
+  volatile struct kthread_create_start_s* next;
   sem_t sem;
 } kthread_create_start_t;
 
@@ -107,13 +107,13 @@ kthread_create_start_routine (void *t_arg)
     void *(*start_routine) (void *);
     void *arg;
     void* res;
-    
+
     start_routine = (void *(*) (void *))slot.start_routine;
     arg = (void*)slot.arg;
 
     res = start_routine (arg);
 
-    slot.used = 0; 
+    slot.used = 0;
 
     sctk_nodebug("Kernel thread done");
 
@@ -121,7 +121,7 @@ kthread_create_start_routine (void *t_arg)
 
     while(slot.used != 1){
       sched_yield();
-    }   
+    }
 
     sctk_nodebug("Kernel thread reuse");
   }
@@ -137,11 +137,11 @@ kthread_create (kthread_t * thread, void *(*start_routine) (void *),
 
   sctk_nodebug("Scan already started kthreads");
   sctk_spinlock_lock(&lock);
-  cursor = (kthread_create_start_t*)list; 
+  cursor = (kthread_create_start_t*)list;
   while(cursor != NULL){
     if(cursor->used == 0){
       found = (kthread_create_start_t*)cursor;
-      found->used = 1; 
+      found->used = 1;
       break;
     }
     cursor = (kthread_create_start_t*)cursor->next;
@@ -175,21 +175,21 @@ kthread_create (kthread_t * thread, void *(*start_routine) (void *),
       {
 	res = pthread_attr_setstacksize (&attr, PTHREAD_STACK_MIN);
 
-	sctk_nodebug( "kthread_create: value returned by attr_setstacksize(PTHREAD %d) %d", 
+	sctk_nodebug( "kthread_create: value returned by attr_setstacksize(PTHREAD %d) %d",
 		      PTHREAD_STACK_MIN, res ) ;
       }
     else
       {
 	res = pthread_attr_setstacksize (&attr, kthread_stack_size);
 
-	sctk_nodebug( "kthread_create: value returned by attr_setstacksize(KTHREAD %d) %d", 
+	sctk_nodebug( "kthread_create: value returned by attr_setstacksize(KTHREAD %d) %d",
 		      kthread_stack_size, res ) ;
 
       }
 #else
     res = pthread_attr_setstacksize (&attr, kthread_stack_size);
 
-    sctk_nodebug( "kthread_create: value returned by attr_setstacksize(KTHREAD_NO_PTHREAD %d) %d", 
+    sctk_nodebug( "kthread_create: value returned by attr_setstacksize(KTHREAD_NO_PTHREAD %d) %d",
 		  kthread_stack_size, res ) ;
 
 #endif
@@ -215,7 +215,7 @@ kthread_create (kthread_t * thread, void *(*start_routine) (void *),
 			&tmp);
     }
     assume(res == 0);
-    
+
     sctk_nodebug( "kthread_create: after pthread_create with res = %d", res) ;
 
     pthread_attr_destroy (&attr);

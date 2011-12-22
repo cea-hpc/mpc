@@ -178,7 +178,7 @@ void sctk_ib_cp_finalize_task(int rank) {
   assume(task);
 
   if (ibv_cp_profiler) {
-    fprintf(stderr, "[%2d] matched:%d not_matched:%d poll_own:%d poll_stolen:%d poll_steals:%d same_node:%d other_node:%d steal_try:%d, c:%d\n", rank,
+    fprintf(stderr, "[%2d] matched:%d not_matched:%d poll_own:%d poll_stolen:%d poll_steals:%d same_node:%d other_node:%d steal_try:%d c:%d t_stolen:%0.2f t_steals:%0.2f t_own:%0.2f\n", rank,
         CP_PROF_PRINT(task, matched),
         CP_PROF_PRINT(task, not_matched),
         CP_PROF_PRINT(task, poll_own),
@@ -188,6 +188,9 @@ void sctk_ib_cp_finalize_task(int rank) {
         CP_PROF_PRINT(task, poll_steal_other_node),
         CP_PROF_PRINT(task, poll_steal_try),
         OPA_load_int(&poll_counters)
+//        task->time_stolen/CYCLES_PER_SEC,
+//        task->time_steals/CYCLES_PER_SEC,
+//        task->time_own/CYCLES_PER_SEC
         );
   }
 }
@@ -196,6 +199,8 @@ int __cp_poll(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll, sctk
     int (*func) (struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf, const char from_cp, struct sctk_ib_polling_s *poll)){
   sctk_ibuf_t *ibuf = NULL;
   int nb_found = 0;
+  int update_timers=0;
+  int _poll_own=0;
 
 retry:
   if ( *list != NULL) {
@@ -208,7 +213,8 @@ retry:
         /* Run the polling function */
         func(rail, ibuf, 1, poll);
         if (ibv_cp_profiler) {
-          CP_PROF_INC(task,poll_own);
+          update_timers=1;
+          _poll_own++;
         }
         nb_found++;
         poll->recv_found_own++;
@@ -216,6 +222,9 @@ retry:
       }
       sctk_spinlock_unlock(&task->lock);
     }
+  }
+  if(update_timers) {
+    CP_PROF_ADD(task,poll_own,_poll_own);
   }
   return nb_found;
 }
@@ -244,7 +253,15 @@ static inline int __cp_steal(struct sctk_rail_info_s* rail,struct sctk_ib_pollin
     int (*func) (struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf, const char from_cp, struct sctk_ib_polling_s *poll)){
   sctk_ibuf_t *ibuf = NULL;
   int nb_found = 0;
+  /* For CP profiling */
   double s, e;
+  double _time_steals = 0;
+  double _time_stolen = 0;
+  int _poll_steals=0;
+  int _poll_stolen=0;
+  int _poll_steal_same_node=0;
+  int _poll_steal_other_node=0;
+  char update_timers=0;
 
 retry:
   if (*list != NULL) {
@@ -259,22 +276,19 @@ retry:
         e = sctk_atomics_get_timestamp();
 
         if (ibv_cp_profiler) {
+          update_timers|=1;
           /* Set timers */
-          sctk_spinlock_lock(&task->lock_timers);
-          task->time_stolen += e - s;
-          sctk_spinlock_unlock(&task->lock_timers);
+          _time_stolen += e - s;
           /* End of set timers */
-          sctk_spinlock_lock(&stealing_task->lock_timers);
-          stealing_task->time_steals += e - s;
-          sctk_spinlock_unlock(&stealing_task->lock_timers);
+          _time_steals += e - s;
 
-          CP_PROF_INC(task,poll_stolen);
-          CP_PROF_INC(stealing_task,poll_steals);
+          _poll_stolen++;
+          _poll_steals++;
           /* Same node */
           if (task->node == stealing_task->node)
-            CP_PROF_INC(stealing_task,poll_steal_same_node);
+            _poll_steal_same_node++;
           else
-            CP_PROF_INC(stealing_task,poll_steal_other_node);
+            _poll_steal_other_node++;
         }
         nb_found++;
         goto retry;
@@ -282,6 +296,21 @@ retry:
       sctk_spinlock_unlock(&task->lock);
     }
   }
+
+  if(update_timers) {
+    sctk_spinlock_lock(&task->lock_timers);
+    task->time_stolen += _time_stolen;
+    sctk_spinlock_unlock(&task->lock_timers);
+
+    sctk_spinlock_lock(&stealing_task->lock_timers);
+    stealing_task->time_steals += _time_steals;
+    sctk_spinlock_unlock(&stealing_task->lock_timers);
+    CP_PROF_ADD(task,poll_stolen, _poll_stolen);
+    CP_PROF_ADD(stealing_task,poll_steals, _poll_steals);
+    CP_PROF_ADD(stealing_task,poll_steal_same_node,_poll_steal_same_node);
+    CP_PROF_ADD(stealing_task,poll_steal_other_node,_poll_steal_other_node);
+  }
+
   return nb_found;
 }
 

@@ -74,7 +74,14 @@ typedef struct sctk_ib_cp_task_s{
 #define CP_PROF_INC(t,x) do {   \
   OPA_incr_int(&t->c[x]);        \
 } while(0)
+
+#define CP_PROF_ADD(t,x,y) do {   \
+  OPA_add_int(&t->c[x],y);        \
+} while(0)
+
 #define CP_PROF_PRINT(t,x) ((int) OPA_load_int(&t->c[x]))
+/* XXX:should be determined dynamically */
+#define CYCLES_PER_SEC (2261.000*1e6)
 
 enum sctk_ib_cp_poll_cq_e {
   send_cq,
