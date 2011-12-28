@@ -810,7 +810,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  break;
 
 	case 32: 
-#if 1 /* NUMA tree 32 cores */
+#if 0 /* NUMA tree 32 cores */
 #warning "OpenMp compiling w/ NUMA tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -942,7 +942,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  }
 #endif
 
-#if 0  /* NUMA tree degree 4 */
+#if 1  /* NUMA tree degree 4 */
 #warning "OpenMp compiling w/2-level NUMA tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
