@@ -164,9 +164,9 @@ struct mpcomp_node_s {
 typedef struct mpcomp_node_s mpcomp_node_t;
 
 
-/*********************
-       FUNCTIONS
-**********************/
+/************************************
+       OMP PARALLEL FUNCTIONS 
+*************************************/
 void __mpcomp_instance_init(mpcomp_instance_t *instance, int nb_mvps);
 void __mpcomp_thread_init(mpcomp_thread_t *t);
 void __mpcomp_internal_barrier(mpcomp_mvp_t *mvp);
@@ -175,6 +175,15 @@ void __mpcomp_barrier(void);
 void *mpcomp_slave_mvp_node(void *arg);
 void *mpcomp_slave_mvp_leaf(void *arg);
 void in_order_scheduler(mpcomp_mvp_t *mvp);
+
+/******************************************
+       DYNAMIC SCHEDULING FUNCTIONS 
+*******************************************/
+void __mpcomp_barrier_for_dyn(void);
+int __mpcomp_dynamic_loop_begin(int lb, int b, int incr, int chunk_size, int *from, int *to);
+int __mpcomp_dynamic_loop_next(int *from, int *to);
+void __mpcomp_dynamic_loop_end_nowait();
+
 
 /* 
   Read the environment variables. Once per process 
@@ -684,6 +693,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	           break;
 
 	         default:
+		   not_reachable();
 	           break;
 	      }
 	      
@@ -786,6 +796,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	         break;
 
 	       default:
+		 not_reachable();
 	         break;
 	    }
 
@@ -919,6 +930,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	           break;
 
 	         default:
+		   not_reachable();
 	           break;
 	      }
 
@@ -1087,6 +1099,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	               break;
 
 	             default:
+		       not_reachable();
 	               break;
 	          }
 
@@ -1196,6 +1209,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	         break;
 
 	       default:
+		 not_reachable();
 	         break;
 	    }
 
@@ -1410,7 +1424,7 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
    
   }
   else {
-    fprintf(stderr,"Nesting in not implemented.");
+    not_implemented();
   }
 }
 
@@ -1600,4 +1614,16 @@ int mpcomp_get_thread_num ()
 
   return t->rank;
 }
+
+
+void __mpcomp_barrier_for_dyn(void);
+
+int __mpcomp_dynamic_loop_begin(int lb, int b, int incr, int chunk_size, int *from, int *to);
+
+int __mpcomp_dynamic_loop_next(int *from, int *to);
+
+void __mpcomp_dynamic_loop_end_nowait();
+
+
+
 

@@ -72,7 +72,6 @@ int __mpcomp_dynamic_loop_begin (int lb, int b, int incr,
   father = self->father;
   sctk_assert (father != NULL);
 
-
   /* Get the rank of the current thread */
   rank = self->rank;
 
