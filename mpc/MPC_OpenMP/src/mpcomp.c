@@ -1402,7 +1402,15 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
 
   /* Bypass if the parallel region contains only 1 thread */
   if (num_threads == 1) {
-    fprintf(stderr,"Parallel Region with 1 Thread. Not Implemented.");
+    sctk_nodebug("__mpcomp_start_parallel_region: Only 1 thread -> call f");
+      
+    /* Simulate a parallel region by incrementing the depth */
+    t->depth++ ;
+
+    func(shared);
+
+    t->depth-- ;
+
     return;
   }
 
