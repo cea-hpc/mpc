@@ -31,7 +31,7 @@
 /*******************
        MACROS 
 ********************/
-#define ATOMICS 1
+//#define ATOMICS
 
 #define SCTK_OMP_VERSION_MAJOR 3
 #define SCTK_OMP_VERSION_MINOR 0
@@ -1015,7 +1015,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  }
 #endif
 
-#if 0  /* NUMA tree degree 4 */
+#if 1  /* NUMA tree degree 4 */
 #warning "OpenMp compiling w/2-level NUMA tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -1195,7 +1195,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
           
 #endif
 
-#if 1  /* Flat tree */	      /*  */
+#if 0  /* Flat tree */	      /*  */
 #warning "OpenMp compiling w/flat tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -1595,6 +1595,7 @@ void __mpcomp_internal_barrier(mpcomp_mvp_t *mvp)
 
 
 #ifdef ATOMICS
+#warning "ATOMICS defined"
      b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
 
      while ((b+1 == c->barrier_num_threads) && (c->father != NULL)) {
@@ -1610,7 +1611,8 @@ void __mpcomp_internal_barrier(mpcomp_mvp_t *mvp)
      }
 
      /* Step 2: Wait for the barrier to be done */
-     if ((c->father != NULL) || (c->father == NULL && b+1 != c->barrier_num_threads)) {
+     //if ((c->father != NULL) || (c->father == NULL && b+1 != c->barrier_num_threads)) {
+     if ((c->father != NULL) || (b+1 != c->barrier_num_threads)) {
        /* Wait for c->barrier == c->barrier_num_threads */ 
        sctk_nodebug("mpcomp_internal_barrier: if thread %d",mvp->rank);
        while (b_done == c->barrier_done) {
@@ -1688,13 +1690,17 @@ void __mpcomp_barrier(void)
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
-  sctk_nodebug("thread rank %d",t->rank);
+  sctk_nodebug("thread rank %d",t->icvs.nthreads_var);
 
-  /* Grab the corresponding microVP */
-  mvp = t->mvp;
-  sctk_assert(mvp != NULL);
+  fprintf(stderr,"nb threads %d\n",t->icvs.nthreads_var);
 
-  __mpcomp_internal_barrier(mvp);
+  //if (t->icvs.nthreads_var > 1) {
+    /* Grab the corresponding microVP */
+    mvp = t->mvp;
+    sctk_assert(mvp != NULL);
+
+    __mpcomp_internal_barrier(mvp);
+  //}
 }
 
 /*
