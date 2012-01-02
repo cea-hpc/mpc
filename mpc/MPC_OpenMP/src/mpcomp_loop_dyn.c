@@ -28,9 +28,9 @@
 #include "mpcmicrothread_internal.h"
 
 void
-__mpcomp_barrier_for_dyn (void) ;
+__old_mpcomp_barrier_for_dyn (void) ;
 
-int __mpcomp_dynamic_loop_begin (int lb, int b, int incr,
+int __old_mpcomp_dynamic_loop_begin (int lb, int b, int incr,
 			     int chunk_size, int *from, int *to)
 {
   mpcomp_thread_info_t *self;	/* Info on the current thread */
@@ -220,7 +220,7 @@ INFO("OpenMP: For/Dyn: Check which barrier is used")
 }
 
 int
-__mpcomp_dynamic_loop_next (int *from, int *to)
+__old_mpcomp_dynamic_loop_next (int *from, int *to)
 {
   mpcomp_thread_info_t *self;
   mpcomp_thread_info_t *father;
@@ -405,7 +405,7 @@ __mpcomp_dynamic_loop_end ()
 }
 
 void
-__mpcomp_dynamic_loop_end_nowait ()
+__old_mpcomp_dynamic_loop_end_nowait ()
 {
   mpcomp_thread_info_t *self;	/* Info on the current thread */
   mpcomp_thread_info_t *father;	/* Info on the team */
@@ -485,7 +485,7 @@ __mpcomp_dynamic_loop_end_nowait ()
 
 /* TODO temp barrier to test faster overloading */
 void
-__mpcomp_barrier_for_dyn (void)
+__old_mpcomp_barrier_for_dyn (void)
 {
   mpcomp_thread_info_t *info;
 
