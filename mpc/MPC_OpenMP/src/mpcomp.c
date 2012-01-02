@@ -31,7 +31,6 @@
 /*******************
        MACROS 
 ********************/
-#define ATOMICS
 
 #define SCTK_OMP_VERSION_MAJOR 3
 #define SCTK_OMP_VERSION_MINOR 0
@@ -567,7 +566,7 @@ void __mpcomp_thread_init (mpcomp_thread_t *t)
 
    t->depth = 0;
    t->rank = 0;
-   t->num_threads = 1;
+   t->num_threads = OMP_NUM_THREADS;
    t->mvp = NULL;
    t->index_in_mvp = 0;
    t->done = 0;
@@ -1370,32 +1369,10 @@ void __mpcomp_init (void)
      sctk_openmp_thread_tls = t;
 
      sctk_thread_mutex_unlock(&lock);
-  }
-  else {
-     sctk_thread_mutex_lock(&lock);
-
-     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-     sctk_assert(t != NULL);
-
-     /* Initialize default ICVs */
-     icvs.nthreads_var = OMP_NUM_THREADS;
-     icvs.dyn_var = OMP_DYNAMIC;
-     icvs.nest_var = OMP_NESTED;
-     icvs.run_sched_var = OMP_SCHEDULE;
-     icvs.modifier_sched_var = OMP_MODIFIER_SCHEDULE;
-     icvs.def_sched_var = omp_sched_static;
-     icvs.nmicrovps_var = OMP_MICROVP_NUMBER;
-
-     /* Initialize the OpenMP thread */
-     t->icvs = icvs;
-
-     /* Current thread information is 't' */
-     sctk_openmp_thread_tls = t;
-
-     sctk_thread_mutex_unlock(&lock);
-  }
 
      sctk_nodebug("__mpcomp_init: Init done...");
+  }
+
 }
 
 
@@ -1618,7 +1595,6 @@ void __mpcomp_internal_barrier(mpcomp_mvp_t *mvp)
 
 
 #ifdef ATOMICS
-#warning "ATOMICS defined"
      b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
 
      while ((b+1 == c->barrier_num_threads) && (c->father != NULL)) {
@@ -1713,8 +1689,7 @@ void __mpcomp_barrier(void)
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
-  if (t->icvs.nthreads_var > 1) {
-    sctk_debug("#threads > 1");
+  if (t->num_threads > 1) {
     /* Grab the corresponding microVP */
     mvp = t->mvp;
     sctk_assert(mvp != NULL);
