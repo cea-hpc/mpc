@@ -31,7 +31,7 @@
 /*******************
        MACROS 
 ********************/
-//#define ATOMICS
+#define ATOMICS
 
 #define SCTK_OMP_VERSION_MAJOR 3
 #define SCTK_OMP_VERSION_MINOR 0
@@ -1319,14 +1319,14 @@ void __mpcomp_init (void)
 {
   static volatile int done = 0;
   static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
+  mpcomp_instance_t *instance;
+  mpcomp_thread_t *t;
+  icv_t icvs;
 
   sctk_nodebug("__mpcomp_init: sctk_openmp_thread_tls");
 
   /* Need to initialize the current team */
   if (sctk_openmp_thread_tls == NULL) {
-     mpcomp_instance_t *instance;
-     mpcomp_thread_t *t;
-     icv_t icvs;
 
      sctk_thread_mutex_lock(&lock);
 
@@ -1370,9 +1370,32 @@ void __mpcomp_init (void)
      sctk_openmp_thread_tls = t;
 
      sctk_thread_mutex_unlock(&lock);
+  }
+  else {
+     sctk_thread_mutex_lock(&lock);
+
+     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+     sctk_assert(t != NULL);
+
+     /* Initialize default ICVs */
+     icvs.nthreads_var = OMP_NUM_THREADS;
+     icvs.dyn_var = OMP_DYNAMIC;
+     icvs.nest_var = OMP_NESTED;
+     icvs.run_sched_var = OMP_SCHEDULE;
+     icvs.modifier_sched_var = OMP_MODIFIER_SCHEDULE;
+     icvs.def_sched_var = omp_sched_static;
+     icvs.nmicrovps_var = OMP_MICROVP_NUMBER;
+
+     /* Initialize the OpenMP thread */
+     t->icvs = icvs;
+
+     /* Current thread information is 't' */
+     sctk_openmp_thread_tls = t;
+
+     sctk_thread_mutex_unlock(&lock);
+  }
 
      sctk_nodebug("__mpcomp_init: Init done...");
-  }
 }
 
 
@@ -1690,17 +1713,14 @@ void __mpcomp_barrier(void)
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
-  sctk_nodebug("thread rank %d",t->icvs.nthreads_var);
-
-  fprintf(stderr,"nb threads %d\n",t->icvs.nthreads_var);
-
-  //if (t->icvs.nthreads_var > 1) {
+  if (t->icvs.nthreads_var > 1) {
+    sctk_debug("#threads > 1");
     /* Grab the corresponding microVP */
     mvp = t->mvp;
     sctk_assert(mvp != NULL);
 
     __mpcomp_internal_barrier(mvp);
-  //}
+  }
 }
 
 /*
