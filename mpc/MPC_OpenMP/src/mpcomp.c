@@ -1521,105 +1521,88 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
 */
 void __mpcomp_internal_half_barrier(mpcomp_mvp_t *mvp)
 {
+     mpcomp_node_t *c;
+     int b_done;
+     int b;
 
      sctk_nodebug("__mpcomp_internal_barrier: mvp rank %d",mvp->rank);
 
      /*Barrier to wait for the other microVPs*/
-     mpcomp_node_t *c;
      c = mvp->father;
 
      /* Step 1: Climb in the tree */
-     int b_done;
      b_done = c->barrier_done;
 
-     int b;
-
 #ifdef ATOMICS
+
      b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
+
+     while ((b+1 == c->barrier_num_threads) && (c->father != NULL)) {
+        sctk_atomics_store_int (&c->barrier,0) ;
+        c = c->father;
+
+        b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
+
+        sctk_nodebug("mpcomp_internal_barrier: else thread %d",mvp->rank);
+     }
 #else
+
      sctk_spinlock_lock(&(c->lock));
      b = c->barrier;
      b++;
      c->barrier = b;
      sctk_spinlock_unlock(&(c->lock));
-#endif
 
-     while ((b+1 == c->barrier_num_threads) && (c->father != NULL)) {
-#ifdef ATOMICS
-        sctk_atomics_store_int (&c->barrier,0) ;
-#else
+     while ((b == c->barrier_num_threads) && (c->father != NULL)) {
         c->barrier = 0;
-#endif
         c = c->father;
 
-        b_done = c->barrier_done;      
-
-#ifdef ATOMICS
-        b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
-#else
         sctk_spinlock_lock(&(c->lock));
         b = c->barrier;
         b++;
         c->barrier = b;
         sctk_spinlock_unlock(&(c->lock));
-#endif
 
         sctk_nodebug("mpcomp_internal_barrier: else thread %d",mvp->rank);
      }
+#endif
 }
+
 /*
    Full barrier
 */
 void __mpcomp_internal_barrier(mpcomp_mvp_t *mvp)
 {
+     mpcomp_node_t *c;
+     int b_done;
+     int b;
 
      sctk_nodebug("__mpcomp_internal_barrier: mvp rank %d",mvp->rank);
 
      /*Barrier to wait for the other microVPs*/
-     mpcomp_node_t *c;
      c = mvp->father;
 
      /* Step 1: Climb in the tree */
-     int b_done;
      b_done = c->barrier_done;
 
-     int b;
 
 #ifdef ATOMICS
      b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
-#else
-     sctk_spinlock_lock(&(c->lock));
-     b = c->barrier;
-     b++;
-     c->barrier = b;
-     sctk_spinlock_unlock(&(c->lock));
-#endif
 
      while ((b+1 == c->barrier_num_threads) && (c->father != NULL)) {
-#ifdef ATOMICS
         sctk_atomics_store_int (&c->barrier,0) ;
-#else
-        c->barrier = 0;
-#endif
+
         c = c->father;
 
         b_done = c->barrier_done;      
 
-#ifdef ATOMICS
         b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
-#else
-        sctk_spinlock_lock(&(c->lock));
-        b = c->barrier;
-        b++;
-        c->barrier = b;
-        sctk_spinlock_unlock(&(c->lock));
-#endif
 
         sctk_nodebug("mpcomp_internal_barrier: else thread %d",mvp->rank);
      }
 
      /* Step 2: Wait for the barrier to be done */
-     if ((c->father != NULL) || (b+1 != c->barrier_num_threads)) {
+     if ((c->father != NULL) || (c->father == NULL && b+1 != c->barrier_num_threads)) {
        /* Wait for c->barrier == c->barrier_num_threads */ 
        sctk_nodebug("mpcomp_internal_barrier: if thread %d",mvp->rank);
        while (b_done == c->barrier_done) {
@@ -1627,15 +1610,50 @@ void __mpcomp_internal_barrier(mpcomp_mvp_t *mvp)
        }
      }
      else {
-#ifdef ATOMICS
        sctk_atomics_store_int (&c->barrier,0);
-#else
-       c->barrier = 0;
-#endif
        c->barrier_done++;
        /* TODO: not sure that we need that. If we do need it, maybe we need to lock */
        sctk_nodebug("mpcomp_internal_barrier: else thread %d",mvp->rank);
      }
+
+#else
+     sctk_spinlock_lock(&(c->lock));
+     b = c->barrier;
+     b++;
+     c->barrier = b;
+     sctk_spinlock_unlock(&(c->lock));
+
+     while ((b == c->barrier_num_threads) && (c->father != NULL)) {
+        c->barrier = 0;
+
+        c = c->father;
+
+        b_done = c->barrier_done;      
+
+        sctk_spinlock_lock(&(c->lock));
+        b = c->barrier;
+        b++;
+        c->barrier = b;
+        sctk_spinlock_unlock(&(c->lock));
+
+        sctk_nodebug("mpcomp_internal_barrier: else thread %d",mvp->rank);
+     }
+
+     /* Step 2: Wait for the barrier to be done */
+     if ((c->father != NULL) || (c->father == NULL && b != c->barrier_num_threads)) {
+       /* Wait for c->barrier == c->barrier_num_threads */ 
+       sctk_nodebug("mpcomp_internal_barrier: if thread %d",mvp->rank);
+       while (b_done == c->barrier_done) {
+          sctk_thread_yield();
+       }
+     }
+     else {
+       c->barrier = 0;
+       c->barrier_done++;
+       /* TODO: not sure that we need that. If we do need it, maybe we need to lock */
+       sctk_nodebug("mpcomp_internal_barrier: else thread %d",mvp->rank);
+     }
+#endif
 
      /* Step 3: Go down in the tree to wake up the children */
      while (c->child_type != CHILDREN_LEAF) {
