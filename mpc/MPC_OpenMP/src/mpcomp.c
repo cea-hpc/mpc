@@ -179,8 +179,10 @@ struct mpcomp_node_s {
   volatile int slave_running[2];
   char pad1[64];
 #ifdef ATOMICS
+#warning "OpenMp compiling w/atomics"	    
   sctk_atomics_int barrier;				/* Barrier for the child team */
 #else
+#warning "OpenMp compiling without atomics"	    
   volatile int barrier;				/* Barrier for the child team */
 #endif
   char pad2[64];
