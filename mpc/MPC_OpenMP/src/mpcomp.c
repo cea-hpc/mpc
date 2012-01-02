@@ -635,7 +635,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 
   switch (sctk_get_cpu_number()) {
 	case 8: 
-#if 1  /* NUMA tree 8 cores */
+#if 0  /* NUMA tree 8 cores */
 #warning "OpenMp compiling w/ NUMA tree 8 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -765,7 +765,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  }
 #endif
 
-#if 0  /* Flat tree */
+#if 1  /* Flat tree */
 #warning "OpenMp compiling w/flat tree 8 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -816,7 +816,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
             instance->mvps[current_mvp]->root = root;
             instance->mvps[current_mvp]->father = n;
 
-            n2->children.leaf[i] = instance->mvps[current_mvp];
+            n->children.leaf[i] = instance->mvps[current_mvp];
 
             sctk_thread_attr_t __attr;
             size_t stack_size;
@@ -1013,7 +1013,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  }
 #endif
 
-#if 1  /* NUMA tree degree 4 */
+#if 0  /* NUMA tree degree 4 */
 #warning "OpenMp compiling w/2-level NUMA tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -1193,12 +1193,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
           
 #endif
 
-#if 0  /* Flat tree */	      /*  */
-	      sctk_thread_mutex_lock(&lock);
-    	      t->mvp = (mpcomp_mpc_t *)sctk_malloc_on_node(sizeof(mpcomp_mvp_t),i);
-	      t->mvp = instance->mvps[current_mvp]; 
-	      sctk_thread_mutex_unlock(&lock);
-
+#if 1  /* Flat tree */	      /*  */
 #warning "OpenMp compiling w/flat tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -1248,7 +1243,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
             instance->mvps[current_mvp]->root = root;
             instance->mvps[current_mvp]->father = n;
 
-            n2->children.leaf[i] = instance->mvps[current_mvp];
+            n->children.leaf[i] = instance->mvps[current_mvp];
 
             sctk_thread_attr_t __attr;
             size_t stack_size;
@@ -1306,7 +1301,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  break;
 
 	default:
-            not_implemented();
+            //not_implemented();
       	    break;
   }
   
