@@ -1317,7 +1317,8 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 void __mpcomp_init (void)
 {
   static volatile int done = 0;
-  static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
+  //static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
+  static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
   mpcomp_instance_t *instance;
   mpcomp_thread_t *t;
   icv_t icvs;
@@ -1327,7 +1328,8 @@ void __mpcomp_init (void)
   /* Need to initialize the current team */
   if (sctk_openmp_thread_tls == NULL) {
 
-     sctk_thread_mutex_lock(&lock);
+     sctk_spinlock_lock(&lock);
+     //sctk_thread_mutex_lock(&lock);
 
      /* Initialize the whole runtime (ie. environement variables) */
      if (done == 0) {
@@ -1368,7 +1370,8 @@ void __mpcomp_init (void)
      /* Current thread information is 't' */
      sctk_openmp_thread_tls = t;
 
-     sctk_thread_mutex_unlock(&lock);
+     //sctk_thread_mutex_unlock(&lock);
+     sctk_spinlock_unlock(&lock);
 
      sctk_nodebug("__mpcomp_init: Init done...");
   }
