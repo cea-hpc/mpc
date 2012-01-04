@@ -575,7 +575,7 @@ extern "C"
 
 
 /* mpcomp.c */
-  void __mpcomp_init (void);
+  //void __mpcomp_init (void);
   void mpcomp_fork_when_blocked (sctk_microthread_vp_t * self, long step);
   void mpcomp_macro_scheduler (sctk_microthread_vp_t * self, long step);
   void *__mpcomp_wrapper_op (void *arg);

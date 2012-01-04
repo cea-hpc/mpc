@@ -1842,4 +1842,22 @@ void __mpcomp_dynamic_loop_end_nowait()
 }
 
 
+/*
+ * Return the maximum number of threads that can be used inside a parallel region.
+ * This function may be called either from serial or parallel parts of the program.
+ * See OpenMP API 2.5 Section 3.2.3
+ */
+int
+mpcomp_get_max_threads (void)
+{
+  mpcomp_thread_t *t;
+
+  __mpcomp_init ();
+
+  /* Grab the info of the current thread */    
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  return t->num_threads;
+}
 
