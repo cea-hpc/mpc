@@ -38,6 +38,7 @@ __mpcomp_sections_begin (int nb_sections)
   int index;
   int num_threads;
 
+  not_implemented();
   __mpcomp_init() ;
 
   sctk_nodebug( "Entering __mpcomp_sections_begin w/ %d section(s)", nb_sections ) ;
@@ -183,6 +184,7 @@ __mpcomp_sections_next ()
   int return_section;
   int n;
 
+  not_implemented();
   /* Grab the thread info */
   self = (mpcomp_thread_info_t *) sctk_thread_getspecific
     (mpcomp_thread_info_key);
@@ -246,12 +248,14 @@ __mpcomp_sections_end ()
   /* TODO need a dedicated barrier re-initializing only values related to
      in-flight sections */
   /* FIXME use good barrier instead of OLD! */
+  not_implemented();
   __mpcomp_old_barrier ();
 }
 
 void
 __mpcomp_sections_end_nowait ()
 {
+  not_implemented();
   mpcomp_thread_info_t *self;	/* Info on the current thread */
   mpcomp_thread_info_t *father;	/* Info on the team */
   long rank;
@@ -330,6 +334,7 @@ __mpcomp_start_sections_parallel_region (int arg_num_threads, void *(*func) (voi
   mpcomp_thread_info_t *current_info;
   int num_threads;
 
+  not_implemented();
   SCTK_PROFIL_START (__mpcomp_start_parallel_region);
 
   /* Initialize the OpenMP environment (call several times, but really executed

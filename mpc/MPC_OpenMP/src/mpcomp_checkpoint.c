@@ -50,6 +50,7 @@ mpcomp_master_checkpointing (void *s)
   int restarted;
   unsigned long perform;
 
+  not_implemented();
   perform = perform_check;
 
   sctk_nodebug
@@ -150,6 +151,7 @@ mpcomp_slave_checkpointing (void *s)
   sctk_thread_t pid;
   unsigned long perform;
 
+  not_implemented();
   pid = ((sctk_microthread_vp_t *) s)->pid;
 
   perform = perform_check;
@@ -181,6 +183,7 @@ mpcomp_slave_checkpointing (void *s)
 int
 __mpcomp_checkpoint ()
 {
+  not_implemented();
   if (sctk_check_point_restart_mode)
     {
       mpcomp_thread_info_t *current_info;

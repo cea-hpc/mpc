@@ -35,6 +35,7 @@
 int
 __mpcomp_do_single (void)
 {
+  not_implemented();
   mpcomp_thread_info_t *self;	/* Info on the current thread */
   mpcomp_thread_info_t *father;	/* Info on the team */
   long rank;
@@ -195,6 +196,7 @@ __mpcomp_do_single (void)
 void *
 __mpcomp_do_single_copyprivate_begin (void)
 {
+  not_implemented();
   mpcomp_thread_info_t *self;	/* Info on the current thread */
   mpcomp_thread_info_t *father;	/* Info on the team */
   int num_threads;
@@ -244,6 +246,7 @@ __mpcomp_do_single_copyprivate_begin (void)
 void
 __mpcomp_do_single_copyprivate_end (void *data)
 {
+  not_implemented();
   mpcomp_thread_info_t *self;	/* Info on the current thread */
   mpcomp_thread_info_t *father;	/* Info on the team */
 
