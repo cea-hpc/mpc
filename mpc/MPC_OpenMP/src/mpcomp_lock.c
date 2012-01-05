@@ -29,7 +29,6 @@
 void
 mpcomp_init_lock (mpcomp_lock_t * lock)
 {
-  not_implemented();
   mpcomp_lock_t init = MPCOMP_LOCK_INIT;
   *lock = init;
 }
@@ -37,14 +36,12 @@ mpcomp_init_lock (mpcomp_lock_t * lock)
 void
 mpcomp_destroy_lock (mpcomp_lock_t * lock)
 {
-  not_implemented();
   sctk_assert (lock->status == 0);
 }
 
 void
 mpcomp_set_lock (mpcomp_lock_t * lock)
 {
-  not_implemented();
   sctk_nodebug ("mpcomp_set_lock: Req lock");
   sctk_spinlock_lock(&lock->lock);
   if (lock->status == 0)
@@ -121,7 +118,6 @@ mpcomp_unset_lock (mpcomp_lock_t * lock)
 /*
   sctk_thread_mutex_lock (&lock->lock);
 */
-  not_implemented();
   sctk_spinlock_lock(&lock->lock);
   if (lock->first == NULL)
     {
@@ -153,7 +149,6 @@ mpcomp_test_lock (mpcomp_lock_t * lock)
 /*
   sctk_thread_mutex_lock (&lock->lock);
 */
-  not_implemented();
   sctk_spinlock_lock(&lock->lock);
   if (lock->status == 0)
     {
@@ -178,7 +173,6 @@ mpcomp_test_lock (mpcomp_lock_t * lock)
 void
 mpcomp_init_nest_lock (mpcomp_nest_lock_t * lock)
 {
-  not_implemented();
   mpcomp_lock_t init = MPCOMP_LOCK_INIT;
   *lock = init;
 }
@@ -186,14 +180,12 @@ mpcomp_init_nest_lock (mpcomp_nest_lock_t * lock)
 void
 mpcomp_destroy_nest_lock (mpcomp_nest_lock_t * lock)
 {
-  not_implemented();
   sctk_assert (lock->status == 0);
 }
 
 void
 mpcomp_set_nest_lock (mpcomp_nest_lock_t * lock)
 {
-  not_implemented();
   mpcomp_thread_info_t *info;
   info = sctk_thread_getspecific (mpcomp_thread_info_key);
 /*
@@ -273,7 +265,6 @@ mpcomp_unset_nest_lock (mpcomp_nest_lock_t * lock)
 /*
   sctk_thread_mutex_lock (&lock->lock);
 */
-  not_implemented();
   sctk_spinlock_lock(&lock->lock);
   if ((lock->first == NULL) && (lock->iter == 0))
     {
@@ -310,7 +301,6 @@ mpcomp_unset_nest_lock (mpcomp_nest_lock_t * lock)
 int
 mpcomp_test_nest_lock (mpcomp_nest_lock_t * lock)
 {
-  not_implemented();
   mpcomp_thread_info_t *info;
   info = sctk_thread_getspecific (mpcomp_thread_info_key);
 /*
