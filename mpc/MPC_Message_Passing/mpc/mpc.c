@@ -3524,8 +3524,10 @@ PMPC_Alltoall (void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype,
   int i;
   int size;
   int rank;
-  MPC_Request sendrequest;
-  MPC_Request recvrequest;
+  int bblock = MPC_MAX_CONCURENT;
+  MPC_Request requests[2*bblock*sizeof(MPC_Request)];
+  int ss, ii;
+  int dst;
   size_t d_send;
   size_t d_recv;
   sctk_task_specific_t *task_specific;
@@ -3546,18 +3548,23 @@ PMPC_Alltoall (void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype,
 #endif
   d_send = __MPC_Get_datatype_size (sendtype, task_specific);
   d_recv = __MPC_Get_datatype_size (recvtype, task_specific);
-  for (i = 0; i < size; i++)
-    {
-      __MPC_Isend (((char *) sendbuf) +
-		   (i * sendcount * d_send),
-		   sendcount, sendtype, i, MPC_ALLTOALL_TAG, comm, &sendrequest,
-		   task_specific);
-      __MPC_Irecv (((char *) recvbuf) + (i * recvcnt * d_recv), recvcnt,
-		   recvtype, i, MPC_ALLTOALL_TAG, comm, &recvrequest, task_specific);
 
-      __MPC_Wait (&(sendrequest), MPC_STATUS_IGNORE);
-      __MPC_Wait (&(recvrequest), MPC_STATUS_IGNORE);
+  for (ii=0; ii<size;ii+=bblock) {
+    ss = size-ii < bblock ? size-ii : bblock;
+    for (i=0; i<ss; ++i) {
+      dst = (rank+i+ii) % size;
+      __MPC_Irecv (((char *) recvbuf) + (dst * recvcnt * d_recv), recvcnt,
+		   recvtype, dst, MPC_ALLTOALL_TAG, comm, &requests[i], task_specific);
     }
+    for (i=0; i<ss; ++i) {
+      dst = (rank-i-ii+size) % size;
+      __MPC_Isend (((char *) sendbuf) +
+		   (dst * sendcount * d_send),
+		   sendcount, sendtype, dst, MPC_ALLTOALL_TAG, comm, &requests[i+ss],
+		   task_specific);
+    }
+    __MPC_Waitall(2*ss,requests,MPC_STATUS_IGNORE);
+  }
 
   SCTK_PROFIL_END (MPC_Alltoall);
   MPC_ERROR_SUCESS ();
@@ -3575,8 +3582,10 @@ PMPC_Alltoallv (void *sendbuf,
   int i;
   int size;
   int rank;
-  MPC_Request sendrequest;
-  MPC_Request recvrequest;
+  int bblock = MPC_MAX_CONCURENT;
+  MPC_Request requests[2*bblock*sizeof(MPC_Request)];
+  int ss, ii;
+  int dst;
   size_t d_send;
   size_t d_recv;
   sctk_task_specific_t *task_specific;
@@ -3596,19 +3605,23 @@ PMPC_Alltoallv (void *sendbuf,
 
   d_send = __MPC_Get_datatype_size (sendtype, task_specific);
   d_recv = __MPC_Get_datatype_size (recvtype, task_specific);
-  for (i = 0; i < size; i++)
-    {
-      __MPC_Isend (((char *) sendbuf) +
-		   (sdispls[i] * d_send),
-		   sendcnts[i], sendtype, i, MPC_ALLTOALLV_TAG, comm, &sendrequest,
+  for (ii=0; ii<size;ii+=bblock) {
+    ss = size-ii < bblock ? size-ii : bblock;
+    for (i=0; i<ss; ++i) {
+      dst = (rank+i+ii) % size;
+      __MPC_Irecv (((char *) recvbuf) + (rdispls[dst] * d_recv),
+		   recvcnts[dst], recvtype, dst, MPC_ALLTOALLV_TAG, comm, &requests[dst],
 		   task_specific);
-      __MPC_Irecv (((char *) recvbuf) + (rdispls[i] * d_recv),
-		   recvcnts[i], recvtype, i, MPC_ALLTOALLV_TAG, comm, &recvrequest,
-		   task_specific);
-
-      __MPC_Wait (&(sendrequest), MPC_STATUS_IGNORE);
-      __MPC_Wait (&(recvrequest), MPC_STATUS_IGNORE);
     }
+    for (i=0; i<ss; ++i) {
+      dst = (rank-i-ii+size) % size;
+      __MPC_Isend (((char *) sendbuf) +
+		   (sdispls[dst] * d_send),
+		   sendcnts[dst], sendtype, dst, MPC_ALLTOALLV_TAG, comm, &requests[i+ss],
+		   task_specific);
+    }
+    __MPC_Waitall(2*ss,requests,MPC_STATUS_IGNORE);
+  }
 
   SCTK_PROFIL_END (MPC_Alltoallv);
   MPC_ERROR_SUCESS ();

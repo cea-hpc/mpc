@@ -3626,6 +3626,7 @@ __INTERNAL__PMPI_Alltoall (void *sendbuf, int sendcount,
 {
   if (sctk_is_derived_type (sendtype) || sctk_is_derived_type (recvtype))
     {
+#warning "Should be optimized like PMPC_Alltoall"
       int i;
       int size;
       int rank;
@@ -3672,6 +3673,7 @@ __INTERNAL__PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 {
   if (sctk_is_derived_type (sendtype) || sctk_is_derived_type (recvtype))
     {
+#warning "Should be optimized like PMPC_Alltoallv"
       int i;
       int size;
       int rank;
