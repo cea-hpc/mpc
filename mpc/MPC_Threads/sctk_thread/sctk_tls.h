@@ -165,6 +165,7 @@ extern "C"
 #endif
     //profiling TLS
     tls_init (tls_args);
+    tls_init (sctk_tls_module);
     tls_init (tls_trace_module);
     tls_init (sctk_hls_generation);
 #endif
@@ -190,7 +191,7 @@ extern "C"
   void sctk_hls_build_repository () ;
   void sctk_hls_checkout_on_vp () ;
   void sctk_hls_register_thread () ;
-  
+
   void sctk_tls_module_set_gs_register ();
   void sctk_tls_module_alloc_and_fill ();
 
