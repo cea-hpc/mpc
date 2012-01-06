@@ -35,20 +35,20 @@ void
 sctk_terminaison_barrier (const int id)
 {
   int local;
-  int total; 
+  int total;
   static volatile int done = 0;
   static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
   static sctk_thread_cond_t cond = SCTK_THREAD_COND_INITIALIZER;
-  
-  
+
+
   local = sctk_get_nb_task_local(SCTK_COMM_WORLD);
   total = sctk_get_nb_task_total(SCTK_COMM_WORLD);
-  
+
   sctk_thread_mutex_lock(&lock);
-  done ++; 
+  done ++;
   sctk_nodebug("sctk_terminaison_barrier %d %d",done, local);
   if(done == local){
-    done = 0; 
+    done = 0;
     if(sctk_process_number > 1){
       sctk_nodebug("sctk_pmi_barrier");
       sctk_pmi_barrier();
@@ -66,9 +66,9 @@ sctk_terminaison_barrier (const int id)
 
 void sctk_barrier(const sctk_communicator_t communicator){
   sctk_internal_collectives_struct_t * tmp;
-  
+
   tmp = sctk_get_internal_collectives(communicator);
-  
+
   tmp->barrier_func(communicator,tmp);
 }
 
@@ -79,9 +79,9 @@ void sctk_broadcast (void *buffer, const size_t size,
 		     const int root, const sctk_communicator_t communicator)
 {
   sctk_internal_collectives_struct_t * tmp;
-  
+
   tmp = sctk_get_internal_collectives(communicator);
-  
+
   tmp->broadcast_func(buffer,size,root,communicator,tmp);
 }
 
@@ -97,9 +97,9 @@ void sctk_all_reduce (const void *buffer_in, void *buffer_out,
 		      const sctk_datatype_t data_type)
 {
   sctk_internal_collectives_struct_t * tmp;
-  
+
   tmp = sctk_get_internal_collectives(communicator);
-  
+
   tmp->allreduce_func(buffer_in,buffer_out,elem_size,
 		      elem_number,func,communicator,data_type,tmp);
 }
@@ -122,6 +122,6 @@ void sctk_collectives_init (sctk_communicator_t id,
   barrier(tmp);
   broadcast(tmp);
   allreduce(tmp);
-  
+
   sctk_set_internal_collectives(id,tmp);
 }

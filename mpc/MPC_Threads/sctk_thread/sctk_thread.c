@@ -610,8 +610,11 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
     {
       sctk_ptp_per_task_init (tmp.task_id);
 #ifdef MPC_USE_INFINIBAND
-      /* Register task for collaborative polling */
-      sctk_ib_cp_init_task(tmp.task_id, tmp.virtual_processor);
+    /* XXX Also check if IB enabled */
+    if(sctk_process_number > 1){
+        /* Register task for collaborative polling */
+        sctk_ib_cp_init_task(tmp.task_id, tmp.virtual_processor);
+    }
 #endif
       sctk_register_thread_initial (tmp.task_id);
       sctk_terminaison_barrier (tmp.task_id);
@@ -629,7 +632,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
     keep[sctk_extls_process_scope] = 1;
     sctk_extls_keep (keep);
   }
-  
+
   sctk_tls_module_set_gs_register() ;
   sctk_tls_module_alloc_and_fill() ;
 
@@ -665,7 +668,10 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
       sctk_nodebug ("sctk_terminaison_barrier done");
 #ifdef MPC_USE_INFINIBAND
       /* Register task for collaborative polling */
-      sctk_ib_cp_finalize_task(tmp.task_id);
+      /* XXX Also check if IB enabled */
+      if(sctk_process_number > 1){
+        sctk_ib_cp_finalize_task(tmp.task_id);
+      }
 #endif
       sctk_unregister_thread (tmp.task_id);
       sctk_net_send_task_end (tmp.task_id, sctk_process_rank);
@@ -1997,19 +2003,19 @@ void  MPC_Process_hook()
 }
 #endif
 
-static int sctk_ignore_sigpipe() 
+static int sctk_ignore_sigpipe()
 {
     struct sigaction act ;
- 
+
     if (sigaction(SIGPIPE, (struct sigaction *)NULL, &act) == -1)
         return -1 ;
- 
+
     if (act.sa_handler == SIG_DFL) {
         act.sa_handler = SIG_IGN ;
         if (sigaction(SIGPIPE, &act, (struct sigaction *)NULL) == -1)
             return -1 ;
     }
- 
+
     return 0 ;
 }
 void
@@ -2358,7 +2364,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
   sctk_thread_running = 0;
 
 #ifdef MPC_Message_Passing
-  sctk_ignore_sigpipe(); 
+  sctk_ignore_sigpipe();
   sctk_communicator_delete ();
 #endif
 

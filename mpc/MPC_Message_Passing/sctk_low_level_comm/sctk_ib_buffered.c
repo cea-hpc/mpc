@@ -69,8 +69,9 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
   sctk_ib_qp_t *remote;
 
   /* Sometimes it should be interresting to fallback to RDMA :-) */
-  if (msg->tail.message_type != sctk_message_contiguous) return 1;
-
+  if (msg->tail.message_type != sctk_message_contiguous) {
+    return 1;
+  }
   payload = msg->tail.message.contiguous.addr;
   route_data=&route_table->data.ib;
   remote=route_data->remote;

@@ -3524,7 +3524,7 @@ PMPC_Alltoall (void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype,
   int i;
   int size;
   int rank;
-  int bblock = MPC_MAX_CONCURENT;
+  int bblock = 2;
   MPC_Request requests[2*bblock*sizeof(MPC_Request)];
   int ss, ii;
   int dst;
@@ -3552,12 +3552,14 @@ PMPC_Alltoall (void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype,
   for (ii=0; ii<size;ii+=bblock) {
     ss = size-ii < bblock ? size-ii : bblock;
     for (i=0; i<ss; ++i) {
-      dst = (rank+i+ii) % size;
+      dst = i+ii;
+      //dst = (rank+i+ii) % size;
       __MPC_Irecv (((char *) recvbuf) + (dst * recvcnt * d_recv), recvcnt,
 		   recvtype, dst, MPC_ALLTOALL_TAG, comm, &requests[i], task_specific);
     }
     for (i=0; i<ss; ++i) {
-      dst = (rank-i-ii+size) % size;
+      dst = i+ii;
+      //dst = (rank-i-ii+size) % size;
       __MPC_Isend (((char *) sendbuf) +
 		   (dst * sendcount * d_send),
 		   sendcount, sendtype, dst, MPC_ALLTOALL_TAG, comm, &requests[i+ss],
@@ -3582,7 +3584,7 @@ PMPC_Alltoallv (void *sendbuf,
   int i;
   int size;
   int rank;
-  int bblock = MPC_MAX_CONCURENT;
+  int bblock = 2;
   MPC_Request requests[2*bblock*sizeof(MPC_Request)];
   int ss, ii;
   int dst;
@@ -3599,6 +3601,7 @@ PMPC_Alltoallv (void *sendbuf,
   mpc_check_type (recvtype, comm);
   mpc_check_buf (recvbuf, comm);
 
+  sctk_nodebug("[%d] Start all to all, size %d", rank, size);
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (comm, "MPC_Alltoallv");
 #endif
@@ -3608,13 +3611,17 @@ PMPC_Alltoallv (void *sendbuf,
   for (ii=0; ii<size;ii+=bblock) {
     ss = size-ii < bblock ? size-ii : bblock;
     for (i=0; i<ss; ++i) {
-      dst = (rank+i+ii) % size;
+      dst = i+ii;
+      //dst = (rank+i+ii) % size;
+      sctk_nodebug("[%d] Send to %d", rank, dst);
       __MPC_Irecv (((char *) recvbuf) + (rdispls[dst] * d_recv),
-		   recvcnts[dst], recvtype, dst, MPC_ALLTOALLV_TAG, comm, &requests[dst],
+		   recvcnts[dst], recvtype, dst, MPC_ALLTOALLV_TAG, comm, &requests[i],
 		   task_specific);
     }
     for (i=0; i<ss; ++i) {
-      dst = (rank-i-ii+size) % size;
+      dst = i+ii;
+      //dst = (rank-i-ii+size) % size;
+      sctk_nodebug("[%d] Recv from %d", rank, dst);
       __MPC_Isend (((char *) sendbuf) +
 		   (sdispls[dst] * d_send),
 		   sendcnts[dst], sendtype, dst, MPC_ALLTOALLV_TAG, comm, &requests[i+ss],
@@ -3623,6 +3630,7 @@ PMPC_Alltoallv (void *sendbuf,
     __MPC_Waitall(2*ss,requests,MPC_STATUS_IGNORE);
   }
 
+  sctk_nodebug("[%d] end all to all", rank);
   SCTK_PROFIL_END (MPC_Alltoallv);
   MPC_ERROR_SUCESS ();
 }

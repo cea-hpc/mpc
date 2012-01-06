@@ -42,6 +42,13 @@
 #include "sctk_ib_toolkit.h"
 #include "math.h"
 
+/* XXX: Should be removed */
+extern OPA_int_t c_eager;
+extern OPA_int_t c_buffered;
+extern OPA_int_t c_rdma;
+
+extern OPA_int_t s_rdma;
+
 typedef struct sctk_ib_cp_s{
   /* Void for now */
 } sctk_ib_cp_t;
@@ -181,7 +188,7 @@ void sctk_ib_cp_finalize_task(int rank) {
   assume(task);
 
   if (ibv_cp_profiler) {
-    fprintf(stderr, "[%2d] matched:%d not_matched:%d poll_own:%d poll_stolen:%d poll_steals:%d same_node:%d other_node:%d steal_try:%d c:%d t_stolen:%0.2f t_steals:%0.2f t_own:%0.2f\n", rank,
+    fprintf(stderr, "[%2d] matched:%d not_matched:%d poll_own:%d poll_stolen:%d poll_steals:%d same_node:%d other_node:%d steal_try:%d c:%d t_stolen:%0.2f t_steals:%0.2f t_own:%0.2f (%d:%d:%d-%u)\n", rank,
         CP_PROF_PRINT(task, matched),
         CP_PROF_PRINT(task, not_matched),
         CP_PROF_PRINT(task, poll_own),
@@ -193,7 +200,12 @@ void sctk_ib_cp_finalize_task(int rank) {
         OPA_load_int(&poll_counters),
         task->time_stolen/CYCLES_PER_SEC,
         task->time_steals/CYCLES_PER_SEC,
-        task->time_own/CYCLES_PER_SEC
+        task->time_own/CYCLES_PER_SEC,
+        OPA_load_int(&c_eager),
+        OPA_load_int(&c_buffered),
+        OPA_load_int(&c_rdma),
+        OPA_load_int(&c_rdma) == 0 ? 0:
+ (unsigned int)OPA_load_int(&s_rdma) / OPA_load_int(&c_rdma)
         );
   }
 }
@@ -265,6 +277,8 @@ static inline int __cp_steal(struct sctk_rail_info_s* rail,struct sctk_ib_pollin
   int _poll_steal_same_node=0;
   int _poll_steal_other_node=0;
   char update_timers=0;
+//  int max_retry = 4;
+  int max_retry = 99999;
 
 retry:
   if (*list != NULL) {
@@ -294,12 +308,16 @@ retry:
             _poll_steal_other_node++;
         }
         nb_found++;
-        goto retry;
+        /* We can retry once again */
+        if (nb_found < max_retry)
+          goto retry;
+        else goto exit;
       }
       sctk_spinlock_unlock(&task->lock);
     }
   }
 
+exit:
   if(update_timers) {
     sctk_spinlock_lock(&task->lock_timers);
     task->time_stolen += _time_stolen;

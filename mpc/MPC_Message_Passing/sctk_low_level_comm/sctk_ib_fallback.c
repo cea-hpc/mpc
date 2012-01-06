@@ -42,6 +42,13 @@
 #include "sctk_ib_prof.h"
 #include "sctk_atomics.h"
 
+/* XXX: Should be removed */
+OPA_int_t c_eager;
+OPA_int_t c_buffered;
+OPA_int_t c_rdma;
+
+OPA_int_t s_rdma;
+
 static void
 sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
@@ -71,17 +78,22 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
     sctk_complete_and_free_message(msg);
+    OPA_incr_int(&c_eager);
   } else if (size+IBUF_GET_BUFFERED_SIZE < config->ibv_frag_eager_limit)  {
     sctk_nodebug("Sending message to %d (process_destk:%d,process_src;%d,number:%d) (%p)", remote->rank, msg->sctk_msg_get_destination, msg->sctk_msg_get_source,msg->sctk_msg_get_message_number, tmp);
     /* Fallback to RDMA if buffered not available */
     if (sctk_ib_buffered_prepare_msg(rail, tmp, msg, size) == 1) goto rdma;
     sctk_complete_and_free_message(msg);
+    OPA_incr_int(&c_buffered);
   } else {
 rdma:
+    assume(0);
     ibuf = sctk_ib_rdma_prepare_req(rail, tmp, msg, size);
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
     sctk_ib_rdma_prepare_send_msg(rail_ib, msg, size);
+    OPA_incr_int(&c_rdma);
+    OPA_add_int(&s_rdma, size);
   }
 }
 
@@ -342,8 +354,18 @@ sctk_network_connection_from_ib(int from, int to,sctk_rail_info_t* rail){
  * This thread is disbaled when the route is initialized */
 static void* __polling_thread(void *arg) {
   sctk_rail_info_t* rail = (sctk_rail_info_t*) arg;
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  LOAD_CONFIG(rail_ib);
+  int steal = config->ibv_steal;
+
+  /* XXX hack to disable CP when fully is used */
+  config->ibv_steal = -1;
   while(1) {
-    if (sctk_route_is_finalized()) break;
+    if (sctk_route_is_finalized())
+    {
+      config->ibv_steal = steal;
+      break;
+    }
     sctk_network_poll_all(rail);
   }
   return NULL;
@@ -364,6 +386,11 @@ void sctk_network_init_polling_thread (sctk_rail_info_t* rail, char* topology) {
 void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   /* XXX: memory never free */
   char *network_name = sctk_malloc(256);
+
+  /* XXX: should be removed */
+  OPA_store_int(&c_eager, 0);
+  OPA_store_int(&c_buffered, 0);
+  OPA_store_int(&c_rdma, 0);
 
   /* Infiniband Init */
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
