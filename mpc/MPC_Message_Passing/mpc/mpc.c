@@ -2557,6 +2557,25 @@ PMPC_Wait (MPC_Request * request, MPC_Status * status)
   return res;
 }
 
+struct wfv_waitall_s{
+  int ret;
+  mpc_msg_count count;
+  MPC_Request *array_of_requests;
+};
+
+static inline void wfv_waitall (void *arg) {
+  struct wfv_waitall_s *args = (struct wfv_waitall_s*) arg;
+  int flag = 1;
+  int i;
+
+  for (i = 0; i < args->count; i++)
+  {
+    flag = flag & __MPC_Test_check_light (&(args->array_of_requests[i]));
+  }
+
+  if (flag) args->ret = 1;
+}
+
 static inline int
 __MPC_Waitall (mpc_msg_count count,
 	       MPC_Request array_of_requests[],
@@ -2583,7 +2602,11 @@ __MPC_Waitall (mpc_msg_count count,
       flag = flag & tmp_flag;
     }
 
-  while (!flag)
+  /* XXX: Waitall has been ported for using wait_for_value_and_poll
+   * because it provides better results than thread_yield.
+   * It performs well at least on Infiniband on NAS  */
+#if 0
+    while (!flag)
     {
       flag = 1;
 
@@ -2592,9 +2615,19 @@ __MPC_Waitall (mpc_msg_count count,
 	  flag = flag & __MPC_Test_check_light (&(array_of_requests[i]));
 	}
 
-      if (flag == 0)
-	sctk_thread_yield ();
+      if (flag == 0) {
+      	sctk_thread_yield ();
+      }
     }
+#endif
+
+  struct wfv_waitall_s wfv;
+    wfv.ret = 0;
+    wfv.array_of_requests = array_of_requests;
+    wfv.count = count;
+    sctk_thread_wait_for_value_and_poll
+      ((int *) &(wfv.ret), 1 ,
+       (void(*)(void*))wfv_waitall,(void*)&wfv);
 
   for (i = 0; i < count; i++)
     {
@@ -2666,6 +2699,7 @@ PMPC_Waitsome (mpc_msg_count incount,
 	}
       if (done == 0)
 	{
+#warning "wait_for_value_and_poll should be used here"
 	  sctk_thread_yield ();
 	}
     }
@@ -2702,6 +2736,7 @@ PMPC_Waitany (mpc_msg_count count,
 		}
 	    }
 	}
+#warning "wait_for_value_and_poll should be used here"
       sctk_thread_yield ();
     }
 }
@@ -3524,7 +3559,7 @@ PMPC_Alltoall (void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype,
   int i;
   int size;
   int rank;
-  int bblock = 2;
+  int bblock = 4;
   MPC_Request requests[2*bblock*sizeof(MPC_Request)];
   int ss, ii;
   int dst;
@@ -3552,14 +3587,12 @@ PMPC_Alltoall (void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype,
   for (ii=0; ii<size;ii+=bblock) {
     ss = size-ii < bblock ? size-ii : bblock;
     for (i=0; i<ss; ++i) {
-      dst = i+ii;
-      //dst = (rank+i+ii) % size;
+      dst = (rank+i+ii) % size;
       __MPC_Irecv (((char *) recvbuf) + (dst * recvcnt * d_recv), recvcnt,
 		   recvtype, dst, MPC_ALLTOALL_TAG, comm, &requests[i], task_specific);
     }
     for (i=0; i<ss; ++i) {
-      dst = i+ii;
-      //dst = (rank-i-ii+size) % size;
+      dst = (rank-i-ii+size) % size;
       __MPC_Isend (((char *) sendbuf) +
 		   (dst * sendcount * d_send),
 		   sendcount, sendtype, dst, MPC_ALLTOALL_TAG, comm, &requests[i+ss],
@@ -3584,7 +3617,7 @@ PMPC_Alltoallv (void *sendbuf,
   int i;
   int size;
   int rank;
-  int bblock = 2;
+  int bblock = 4;
   MPC_Request requests[2*bblock*sizeof(MPC_Request)];
   int ss, ii;
   int dst;
@@ -3611,16 +3644,14 @@ PMPC_Alltoallv (void *sendbuf,
   for (ii=0; ii<size;ii+=bblock) {
     ss = size-ii < bblock ? size-ii : bblock;
     for (i=0; i<ss; ++i) {
-      dst = i+ii;
-      //dst = (rank+i+ii) % size;
+      dst = (rank+i+ii) % size;
       sctk_nodebug("[%d] Send to %d", rank, dst);
       __MPC_Irecv (((char *) recvbuf) + (rdispls[dst] * d_recv),
 		   recvcnts[dst], recvtype, dst, MPC_ALLTOALLV_TAG, comm, &requests[i],
 		   task_specific);
     }
     for (i=0; i<ss; ++i) {
-      dst = i+ii;
-      //dst = (rank-i-ii+size) % size;
+      dst = (rank-i-ii+size) % size;
       sctk_nodebug("[%d] Recv from %d", rank, dst);
       __MPC_Isend (((char *) sendbuf) +
 		   (sdispls[dst] * d_send),
