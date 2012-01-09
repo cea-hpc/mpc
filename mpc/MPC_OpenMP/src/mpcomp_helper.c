@@ -69,6 +69,7 @@ mpcomp_thread_info_key_init ()
 void
 mpcomp_macro_scheduler (sctk_microthread_vp_t * self, long step)
 {
+  not_implemented();
   long i;
   long to_do;
   mpcomp_thread_info_t *info;
@@ -115,6 +116,7 @@ mpcomp_macro_scheduler (sctk_microthread_vp_t * self, long step)
 void *
 __mpcomp_wrapper_op (void *arg)
 {
+  not_implemented();
   mpcomp_thread_info_t *info;
   void *res;
 
@@ -185,6 +187,7 @@ __mpcomp_wrapper_op (void *arg)
 void
 mpcomp_set_num_threads (int num_threads)
 {
+  not_implemented();
   mpcomp_thread_info_t *self;
 
   __mpcomp_init ();
@@ -277,6 +280,7 @@ mpcomp_get_num_procs (void)
 {
   mpcomp_thread_info_t *self;
 
+  not_implemented();
   __mpcomp_init ();
 
   /* TODO use TLS */
@@ -294,6 +298,7 @@ mpcomp_get_num_procs (void)
 int
 mpcomp_in_parallel (void)
 {
+  not_implemented();
   mpcomp_thread_info_t *info;
   __mpcomp_init ();
   /* TODO use TLS */
@@ -310,6 +315,7 @@ mpcomp_in_parallel (void)
 void
 mpcomp_set_dynamic (int dynamic_threads)
 {
+  not_implemented();
   mpcomp_thread_info_t *info;
   __mpcomp_init ();
   /* TODO use TLS */
@@ -326,6 +332,7 @@ mpcomp_set_dynamic (int dynamic_threads)
 int
 mpcomp_get_dynamic (void)
 {
+  not_implemented();
   mpcomp_thread_info_t *info;
   __mpcomp_init ();
   /* TODO use TLS */
@@ -342,6 +349,7 @@ mpcomp_get_dynamic (void)
 void
 mpcomp_set_nested (int nested)
 {
+  not_implemented();
   mpcomp_thread_info_t *info;
   __mpcomp_init ();
   /* TODO use TLS */
@@ -358,6 +366,7 @@ mpcomp_set_nested (int nested)
 int
 mpcomp_get_nested (void)
 {
+  not_implemented();
   mpcomp_thread_info_t *info;
   __mpcomp_init ();
   /* TODO use TLS */
@@ -375,6 +384,7 @@ mpcomp_get_nested (void)
 void omp_set_schedule( omp_sched_t kind, int modifier ) {
   mpcomp_thread_info_t *info;
 
+  not_implemented();
   __mpcomp_init ();
 
   /* TODO use TLS */
@@ -393,6 +403,7 @@ void omp_set_schedule( omp_sched_t kind, int modifier ) {
 void omp_get_schedule( omp_sched_t * kind, int * modifier ) {
   mpcomp_thread_info_t *info;
 
+  not_implemented();
   __mpcomp_init ();
 
   /* TODO use TLS */
@@ -409,6 +420,7 @@ void omp_get_schedule( omp_sched_t * kind, int * modifier ) {
 static void *
 mpcomp_macro_wrapper (void *arg)
 {
+  not_implemented();
   mpcomp_thread_info_t *info;
 
   info = (mpcomp_thread_info_t *) arg;
@@ -443,6 +455,7 @@ mpcomp_fork_when_blocked (sctk_microthread_vp_t * self, long step)
   long to_do;
   mpcomp_thread_info_t *info;
 
+  not_implemented();
   /* Get the information about the currently-scheduled microthread */
   info = (mpcomp_thread_info_t *) self->op_list[step].arg;
 
@@ -508,6 +521,7 @@ void
 __rename_mpcomp_barrier (void)
 {
 
+  not_implemented();
   mpcomp_thread_info_t *info;
 
   __mpcomp_init ();
@@ -673,6 +687,7 @@ __mpcomp_old_barrier (void)
 {
   mpcomp_thread_info_t *info;
 
+  not_implemented();
   __mpcomp_init ();
 
   /* TODO Use TLS if available */
@@ -785,6 +800,7 @@ void __mpcomp_flush() {
   mpcomp_thread_info_t *info;
   sctk_microthread_vp_t *my_vp;
 
+  not_implemented();
   __mpcomp_init ();
 
 #warning "__mpcomp_flush: need to call mpcomp_macro_scheduler"
@@ -809,6 +825,7 @@ void __mpcomp_ordered_begin() {
   mpcomp_thread_info_t *info;
   mpcomp_thread_info_t *team;
 
+  not_implemented();
   __mpcomp_init ();
 
   /* TODO Use TLS if available */
@@ -854,6 +871,7 @@ void __mpcomp_ordered_end() {
   mpcomp_thread_info_t *info;
   mpcomp_thread_info_t *team;
 
+  not_implemented();
   /* TODO Use TLS if available */
   info = sctk_thread_getspecific (mpcomp_thread_info_key);
 

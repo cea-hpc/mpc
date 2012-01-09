@@ -47,6 +47,8 @@ static volatile unsigned long perform_check = 1;
 static void *
 mpcomp_master_checkpointing (void *s)
 {
+  not_implemented();
+
   int restarted;
   unsigned long perform;
 
@@ -146,6 +148,7 @@ mpcomp_master_checkpointing (void *s)
 static void *
 mpcomp_slave_checkpointing (void *s)
 {
+  not_implemented();
   char name[1024];
   sctk_thread_t pid;
   unsigned long perform;
@@ -181,6 +184,7 @@ mpcomp_slave_checkpointing (void *s)
 int
 __mpcomp_checkpoint ()
 {
+  not_implemented();
   if (sctk_check_point_restart_mode)
     {
       mpcomp_thread_info_t *current_info;

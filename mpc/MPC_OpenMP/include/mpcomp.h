@@ -106,8 +106,8 @@ extern "C"
   int mpcomp_test_nest_lock (mpcomp_nest_lock_t * lock);
 
 /* Timing Routines */
-  //double mpcomp_get_wtime (void);
-  //double mpcomp_get_wtick (void);
+  double mpcomp_get_wtime (void);
+  double mpcomp_get_wtick (void);
 
 /* OpenMP 3.0 API */
   typedef enum omp_sched_t {
