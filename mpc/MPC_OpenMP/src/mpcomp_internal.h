@@ -38,6 +38,7 @@ extern "C"
 #include <mpcmicrothread.h>
 #include <mpcomp_abi.h>
 
+
 /* Max size of each stack */
 /* TODO Make it dynamic to be compilant w/ OpenMP 3.0? */
 #define STACK_SIZE 16*1024
