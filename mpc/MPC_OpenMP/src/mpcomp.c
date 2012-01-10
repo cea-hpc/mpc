@@ -266,6 +266,7 @@ void *mpcomp_slave_mvp_node (void *arg)
        rank = mvp->rank;
        mvp->threads[i].rank = rank;
        mvp->threads[i].mvp = mvp;
+       mvp->threads[i].is_running = 1;
 
        /* Copy information */
        mvp->threads[i].num_threads = n->num_threads;
@@ -344,6 +345,7 @@ void *mpcomp_slave_mvp_leaf (void *arg)
        rank = mvp->rank;
        mvp->threads[i].rank = rank;
        mvp->threads[i].mvp = mvp;
+       mvp->threads[i].is_running = 1;
 
        /* Copy information */
        mvp->threads[i].num_threads = mvp->father->num_threads;
@@ -372,8 +374,6 @@ void *mpcomp_slave_mvp_leaf (void *arg)
 */
 void __mpcomp_thread_init (mpcomp_thread_t *t)
 {
-   int i,j;
-
    t->depth = 0;
    t->rank = 0;
    t->num_threads = OMP_NUM_THREADS;
@@ -381,29 +381,48 @@ void __mpcomp_thread_init (mpcomp_thread_t *t)
    t->index_in_mvp = 0;
    t->done = 0;
    t->hierarchical_tls = NULL;
+}
 
+/*
+   Initialize an OpenMP thread father
+*/
+void __mpcomp_thread_father_init (mpcomp_thread_father_t *father)
+{
+   int i,j;
+
+   father->depth = 0;
+   father->rank = 0;
+   father->num_threads = OMP_NUM_THREADS;
+   father->hierarchical_tls = NULL;
+
+   /* Init for dynamic scheduling construct */
    for (i=0 ; i<MPCOMP_MAX_THREADS ; i++) {
      for (j=0 ; j<MPCOMP_MAX_ALIVE_FOR_DYN ; j++) {
-       t->lock_for_dyn[i][j] = SCTK_SPINLOCK_INITIALIZER;
-       t->chunk_info_for_dyn[i][j].remain = -1 ;
+       father->lock_for_dyn[i][j] = SCTK_SPINLOCK_INITIALIZER;
+       father->chunk_info_for_dyn[i][j].remain = -1 ;
      }
    }
 
-   t->lock_stop_for_dyn = SCTK_SPINLOCK_INITIALIZER;
+   father->lock_stop_for_dyn = SCTK_SPINLOCK_INITIALIZER;
 
    for (i=0 ; i<MPCOMP_MAX_ALIVE_FOR_DYN ; i++) {
-      t->lock_exited_for_dyn[i] = SCTK_SPINLOCK_INITIALIZER;
-      t->nthread_exited_for_dyn[i] = 0;
+      father->lock_exited_for_dyn[i] = SCTK_SPINLOCK_INITIALIZER;
+      father->nthread_exited_for_dyn[i] = 0;
    }
 
-   for (i=0 ; i<MPCOMP_MAX_ALIVE_FOR_DYN-1 ; i++) t->stop[i] = OK;				
-   t->stop[MPCOMP_MAX_ALIVE_FOR_DYN-1] = STOP;
+   for (i=0 ; i<MPCOMP_MAX_ALIVE_FOR_DYN-1 ; i++) father->stop[i] = OK;				
+     father->stop[MPCOMP_MAX_ALIVE_FOR_DYN-1] = STOP;
 
-   t->private_current_for_dyn = 0;
+   father->private_current_for_dyn = 0;
 
-   t->father = t;
+   /* Init for single construct */
+   for (i = 0; i <= MPCOMP_MAX_ALIVE_SINGLE; i++) {
+	father->lock_enter_single[i] = SCTK_SPINLOCK_INITIALIZER;
+	father->nb_threads_entered_single[i] = 0;
+   }
+
+   father->nb_threads_entered_single[MPCOMP_MAX_ALIVE_SINGLE] = -1;
 }
-
 
 /*
    Initialize the OpenMP instance
@@ -686,7 +705,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  break;
 
 	case 32: 
-#if 0 /* NUMA tree 32 cores */
+#if 1 /* NUMA tree 32 cores */
 #warning "OpenMp compiling w/ NUMA tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -1004,7 +1023,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
           
 #endif
 
-#if 1  /* Flat tree */	      /*  */
+#if 0  /* Flat tree */	      /*  */
 #warning "OpenMp compiling w/flat tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -1131,6 +1150,7 @@ void __mpcomp_init (void)
   static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
   mpcomp_instance_t *instance;
   mpcomp_thread_t *t;
+  mpcomp_thread_father_t *father;
   icv_t icvs;
 
   sctk_nodebug("__mpcomp_init: sctk_openmp_thread_tls");
@@ -1177,6 +1197,16 @@ void __mpcomp_init (void)
      t->icvs = icvs;
      t->children_instance = instance;
 
+     /* Allocate informations for the thread father of the team */
+     father = (mpcomp_thread_father_t *)sctk_malloc(sizeof(mpcomp_thread_father_t));
+     sctk_assert(father != NULL);
+ 
+     __mpcomp_thread_father_init(father);
+     father->icvs = icvs;
+     father->children_instance = instance;
+
+     t->father = father;
+
      /* Current thread information is 't' */
      sctk_openmp_thread_tls = t;
 
@@ -1197,14 +1227,15 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
   mpcomp_thread_t *t;
   mpcomp_node_t *root;
   int num_threads;
-  int i;
+  int num_threads_mvp;
+  int i,j;
 
   __mpcomp_init();
 
   sctk_nodebug("__mpcomp_start_parallel_region: **** NEW PARALLE REGION (f %p) (arg %p) ****",func,shared);
 
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);
+  sctk_assert(t != NULL);      
 
   /* Compute the number of threads for this parallel region */
   num_threads = t->icvs.nthreads_var;
@@ -1235,6 +1266,12 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
     instance = t->children_instance;
     sctk_assert(instance != NULL);
 
+    /* Init the father in each thread of the team */
+    num_threads_mvp = 1;
+    for (i=0 ; i<OMP_MICROVP_NUMBER ; i++)
+      for (j=0 ; j<num_threads_mvp ; j++)
+        instance->mvps[i]->threads[j].father = t->father;
+ 
     /* Get the root node of the main tree */
     root = instance->root;
     sctk_assert(root != NULL);
@@ -1307,6 +1344,7 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
     /* Compute the number of OpenMP threads and their rank running on microVP #0 */
     instance->mvps[0]->threads[0].num_threads = num_threads;
     instance->mvps[0]->threads[0].rank = 0;
+    instance->mvps[0]->threads[0].is_running = 1;
     instance->mvps[0]->threads[0].mvp = instance->mvps[0];
 
     /* Start scheduling */
@@ -1596,7 +1634,7 @@ void __mpcomp_barrier_for_dyn(void)
 int __mpcomp_dynamic_loop_begin(int lb, int b, int incr, int chunk_size, int *from, int *to)
 {
   mpcomp_thread_t *t;
-  mpcomp_thread_t *father;
+  mpcomp_thread_father_t *father;
   int rank;
   int index;
 
@@ -1614,7 +1652,7 @@ int __mpcomp_dynamic_loop_begin(int lb, int b, int incr, int chunk_size, int *fr
   rank = t->rank;  
 
   /* Index of the next loop */
-  index = (t->private_current_for_dyn + 1) % MPCOMP_MAX_ALIVE_FOR_DYN;
+  index = (father->private_current_for_dyn + 1) % MPCOMP_MAX_ALIVE_FOR_DYN;
 
   /* If it is a barrier */
   if (father->stop[index] != OK) {

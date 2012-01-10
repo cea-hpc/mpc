@@ -55,9 +55,12 @@ extern "C"
 #define STOPPED 3
 
 /* Maximum number of threads for each team of a parallel region */
-#define MPCOMP_MAX_THREADS 64
+#define MPCOMP_MAX_THREADS 		64
 /* Maximum number of shared for loops w/ dynamic schedule alive */
-#define MPCOMP_MAX_ALIVE_FOR_DYN 7
+#define MPCOMP_MAX_ALIVE_FOR_DYN 	7
+/* Maximum number of alive 'single' construct */
+#define MPCOMP_MAX_ALIVE_SINGLE 	3
+
 
 __thread void *sctk_openmp_thread_tls = NULL;
 
@@ -110,25 +113,44 @@ struct mpcomp_thread_s {
   int rank;					/* OpenMP rank. 0 for master thread per team */
   int num_threads;				/* Current number of threads in the team */
   struct mpcomp_mvp_s *mvp;			/* Openmp microvp */
+  int is_running;				
   int index_in_mvp;	
   volatile int done;
   struct mpcomp_instance_s *children_instance; 	/* Instance for nested parallelism */
   struct mpcomp_thread_s *father; 		/* TODO: check if this is useful */
   void *hierarchical_tls;			/* Local variables */
- 
-  /* DYNAMIC SCHEDULING */
-  sctk_spinlock_t lock_for_dyn[MPCOMP_MAX_THREADS][MPCOMP_MAX_ALIVE_FOR_DYN];	/* Lock for dynamic scheduling. A lock for each loop */
-  sctk_spinlock_t lock_stop_for_dyn;		
-  sctk_spinlock_t lock_exited_for_dyn[MPCOMP_MAX_ALIVE_FOR_DYN];		/* Lock for dynamic scheduling. A lock for each loop */
+};
 
-  volatile int stop[MPCOMP_MAX_ALIVE_FOR_DYN];				
+typedef struct mpcomp_thread_s mpcomp_thread_t;
+
+/******** OPENMP THREAD FATHER *********/
+struct mpcomp_thread_father_s {
+  int depth;                                    /* Depth of the current thread (0 =sequential region) */
+  icv_t icvs;                                   /* Set of the ICVs for the child team */
+  int rank;                                     /* OpenMP rank. 0 for master thread per team */
+  int num_threads;                              /* Current number of threads in the team */
+  struct mpcomp_instance_s *children_instance;  /* Instance for nested parallelism */
+  void *hierarchical_tls;                       /* Local variables */
+
+  /* DYNAMIC SCHEDULING */
+  sctk_spinlock_t lock_for_dyn[MPCOMP_MAX_THREADS][MPCOMP_MAX_ALIVE_FOR_DYN];   /* Lock for dynamic scheduling. A lock for each loop */
+  sctk_spinlock_t lock_stop_for_dyn;
+  sctk_spinlock_t lock_exited_for_dyn[MPCOMP_MAX_ALIVE_FOR_DYN];                /* Lock for dynamic scheduling. A lock for each loop */
+
+  volatile int stop[MPCOMP_MAX_ALIVE_FOR_DYN];
   volatile int nthread_exited_for_dyn[MPCOMP_MAX_ALIVE_FOR_DYN];
   volatile mpcomp_chunk_t chunk_info_for_dyn[MPCOMP_MAX_THREADS][MPCOMP_MAX_ALIVE_FOR_DYN];
 
   int private_current_for_dyn;
+
+  /* SINGLE CONSTRUCT */
+  sctk_spinlock_t lock_enter_single[MPCOMP_MAX_ALIVE_SINGLE];
+  volatile int nb_threads_entered_single[MPCOMP_MAX_ALIVE_SINGLE];
+
 };
 
-typedef struct mpcomp_thread_s mpcomp_thread_t;
+typedef struct mpcomp_thread_father_s mpcomp_thread_father_t;
+
 
 /******* INSTANCE OF OPENMP ********/
 struct mpcomp_instance_s {
@@ -219,6 +241,7 @@ typedef struct mpcomp_node_s mpcomp_node_t;
 *************************************/
 void __mpcomp_instance_init(mpcomp_instance_t *instance, int nb_mvps);
 void __mpcomp_thread_init(mpcomp_thread_t *t);
+void __mpcomp_thread_father_init(mpcomp_thread_father_t *father);
 void __mpcomp_internal_barrier(mpcomp_mvp_t *mvp);
 void __mpcomp_internal_half_barrier(mpcomp_mvp_t *mvp);
 void __mpcomp_barrier(void);
