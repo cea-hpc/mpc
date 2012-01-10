@@ -62,7 +62,7 @@ extern "C"
 #define MPCOMP_MAX_ALIVE_SINGLE 	3
 
 
-__thread void *sctk_openmp_thread_tls = NULL;
+extern __thread void *sctk_openmp_thread_tls;
 
 /* Schedule type */
 static omp_sched_t OMP_SCHEDULE = 1;

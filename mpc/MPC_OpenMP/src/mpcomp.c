@@ -29,6 +29,8 @@
 #include <mpcomp.h>
 #include <mpcomp_structures.h>
 
+__thread void * sctk_openmp_thread_tls = NULL;
+
 /* 
   Read the environment variables. Once per process 
 */
