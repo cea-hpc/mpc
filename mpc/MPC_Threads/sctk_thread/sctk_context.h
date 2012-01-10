@@ -68,7 +68,7 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 #endif
 */
 
-//#if defined(SCTK_x86_64_ARCH_SCTK)
+#if defined(SCTK_x86_64_ARCH_SCTK)
 #undef DONOTHAVE_CONTEXTS
 #define DONOTHAVE_CONTEXTS
 /*

@@ -117,8 +117,10 @@ struct mpcomp_thread_s {
   int index_in_mvp;	
   volatile int done;
   struct mpcomp_instance_s *children_instance; 	/* Instance for nested parallelism */
-  struct mpcomp_thread_s *father; 		/* TODO: check if this is useful */
+  struct mpcomp_thread_father_s *father; 	/* TODO: check if this is useful */
   void *hierarchical_tls;			/* Local variables */
+
+  int current_single				/* Which single construct */
 };
 
 typedef struct mpcomp_thread_s mpcomp_thread_t;

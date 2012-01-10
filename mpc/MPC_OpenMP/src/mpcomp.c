@@ -267,6 +267,7 @@ void *mpcomp_slave_mvp_node (void *arg)
        mvp->threads[i].rank = rank;
        mvp->threads[i].mvp = mvp;
        mvp->threads[i].is_running = 1;
+       mvp->threads[i].current_single = -1;
 
        /* Copy information */
        mvp->threads[i].num_threads = n->num_threads;
@@ -346,6 +347,7 @@ void *mpcomp_slave_mvp_leaf (void *arg)
        mvp->threads[i].rank = rank;
        mvp->threads[i].mvp = mvp;
        mvp->threads[i].is_running = 1;
+       mvp->threads[i].current_single = -1;
 
        /* Copy information */
        mvp->threads[i].num_threads = mvp->father->num_threads;
@@ -381,6 +383,7 @@ void __mpcomp_thread_init (mpcomp_thread_t *t)
    t->index_in_mvp = 0;
    t->done = 0;
    t->hierarchical_tls = NULL;
+   t->current_single = -1;
 }
 
 /*
@@ -1345,6 +1348,7 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
     instance->mvps[0]->threads[0].num_threads = num_threads;
     instance->mvps[0]->threads[0].rank = 0;
     instance->mvps[0]->threads[0].is_running = 1;
+    instance->mvps[0]->threads[0].current_single = -1;
     instance->mvps[0]->threads[0].mvp = instance->mvps[0];
 
     /* Start scheduling */
