@@ -623,3 +623,4 @@ __mpcomp_ordered_static_loop_end_nowait()
 {
   __mpcomp_static_loop_end() ;
 }
+

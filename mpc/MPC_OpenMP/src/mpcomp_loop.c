@@ -21,7 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include <mpcomp.h>
-#include "mpcomp_internal.h"
+#include "mpcomp_structures.h"
 #include <sctk_debug.h>
 
 /* Return the number of chunks that a static schedule will create */
