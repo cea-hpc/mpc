@@ -797,27 +797,8 @@ mpcomp_get_wtick (void)
 /* TODO mode this function to an appropriate file */
 
 void __mpcomp_flush() {
-  mpcomp_thread_info_t *info;
-  sctk_microthread_vp_t *my_vp;
 
-  not_implemented();
-  __mpcomp_init ();
-
-#warning "__mpcomp_flush: need to call mpcomp_macro_scheduler"
-
-  sctk_nodebug( "__mpcomp_flush: entering..." ) ;
-
-  /* TODO Use TLS if available */
-  info = sctk_thread_getspecific (mpcomp_thread_info_key);
-
-  /* Grab the microVP */
-  my_vp = &(info->task->__list[info->vp]);
-
-  mpcomp_fork_when_blocked (my_vp, info->step);
-
-  sctk_nodebug( "__mpcomp_flush: towards thread_yield" ) ;
-
-  sctk_thread_yield ();
+  return ;
 }
 
 
