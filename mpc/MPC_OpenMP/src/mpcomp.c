@@ -629,7 +629,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
             target_vp = order[i];
 
             /* Allocate memory on the right NUMA node */
-            instance->mvps[current_mvp] = (mpcomp_mvp_t *)sctk_malloc_on_node(sizeof(mpcomp_mvp_t),target_vp);
+            instance->mvps[current_mvp] = (mpcomp_mvp_t *)sctk_malloc_on_node(sizeof(mpcomp_mvp_t),target_vp/4);
 
             /* Get the set of registers */
             sctk_getcontext(&(instance->mvps[current_mvp]->vp_context));
@@ -640,7 +640,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
             instance->mvps[current_mvp]->rank = current_mvp;
             instance->mvps[current_mvp]->enable = 1;
             instance->mvps[current_mvp]->region_id = 0;
-            instance->mvps[current_mvp]->tree_rank = (int *)sctk_malloc_on_node(sizeof(int),target_vp);
+            instance->mvps[current_mvp]->tree_rank = (int *)sctk_malloc_on_node(sizeof(int),target_vp/4);
             sctk_assert(instance->mvps[current_mvp]->tree_rank != NULL);
             instance->mvps[current_mvp]->tree_rank[0] = i;
             instance->mvps[current_mvp]->root = root;
@@ -705,7 +705,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  break;
 
 	case 32: 
-#if 1 /* NUMA tree 32 cores */
+#if 0 /* NUMA tree 32 cores */
 #warning "OpenMp compiling w/ NUMA tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -843,7 +843,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  }
 #endif
 
-#if 0  /* NUMA tree degree 4 */
+#if 1  /* NUMA tree degree 4 */
 #warning "OpenMp compiling w/2-level NUMA tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
