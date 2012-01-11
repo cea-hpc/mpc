@@ -23,8 +23,8 @@
 #include <mpcomp.h>
 #include <mpcomp_abi.h>
 #include "mpcmicrothread_internal.h"
+#include <mpcomp_structures.h>
 #include "mpcomp_internal.h"
-#include "mpcomp_structures.h"
 #include "sctk.h"
 #include <sctk_debug.h>
 
@@ -291,6 +291,7 @@ __mpcomp_start_parallel_static_loop (int arg_num_threads, void *(*func)
 				     (void *), void *shared, int lb, int b,
 				     int incr, int chunk_size)
 {
+#if 0
   mpcomp_thread_info_t *current_info;
   int num_threads;
   int n;			/* Number of iterations */
@@ -560,6 +561,7 @@ __mpcomp_start_parallel_static_loop (int arg_num_threads, void *(*func)
 #endif
 
   SCTK_PROFIL_END (__mpcomp_start_parallel_region);
+#endif
 }
 
 int
