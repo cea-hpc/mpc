@@ -24,6 +24,7 @@
 #include <mpcomp_abi.h>
 #include "mpcmicrothread_internal.h"
 #include "mpcomp_internal.h"
+#include "mpcomp_structures.h"
 #include "sctk.h"
 #include <sctk_debug.h>
 
@@ -40,12 +41,12 @@ __mpcomp_static_schedule_get_single_chunk (int lb, int b, int incr, int *from,
   int trip_count;
   int chunk_size;
   int num_threads;
-  mpcomp_thread_info_t *info;
+  mpcomp_thread_t *info;
   int rank;
 
-  /* TODO use TLS if available */
-  info =
-    (mpcomp_thread_info_t *) mpc_thread_getspecific (mpcomp_thread_info_key);
+  info = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);      
+
 
   num_threads = info->num_threads;
   rank = info->rank;
@@ -87,14 +88,13 @@ __mpcomp_static_schedule_get_nb_chunks (int lb, int b, int incr,
   int trip_count;
   int nb_chunks_per_thread;
   int nb_threads;
-  mpcomp_thread_info_t *info;
+  mpcomp_thread_t *info;
   int rank;
 
   /* Original loop: lb -> b step incr */
 
-  /* TODO Use TLS if available */
-  info =
-    (mpcomp_thread_info_t *) mpc_thread_getspecific (mpcomp_thread_info_key);
+  info = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);   
 
   /* Retrieve the number of threads and the rank of the current thread */
   nb_threads = info->num_threads;
@@ -140,14 +140,14 @@ __mpcomp_static_schedule_get_specific_chunk (int lb, int b, int incr,
 					     int chunk_size, int chunk_num,
 					     int *from, int *to)
 {
-  mpcomp_thread_info_t *info;
+  mpcomp_thread_t *info;
   int trip_count;
   int nb_threads;
   int rank;
 
-  /* TODO Use TLS if available */
-  info =
-    (mpcomp_thread_info_t *) mpc_thread_getspecific (mpcomp_thread_info_key);
+
+  info = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);  
 
   /* Retrieve the number of threads and the rank of this thread */
   nb_threads = info->num_threads;
@@ -202,13 +202,13 @@ int
 __mpcomp_static_loop_begin (int lb, int b, int incr, int chunk_size,
 			    int *from, int *to)
 {
-  mpcomp_thread_info_t *info;
+  mpcomp_thread_t *info;
 
   __mpcomp_init ();
 
-  /* TODO Use TLS if available */
-  info =
-    (mpcomp_thread_info_t *) mpc_thread_getspecific (mpcomp_thread_info_key);
+  info = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);  
+
 
   /* Automatic chunk size -> at most one chunk */
   if (chunk_size == -1) {
@@ -247,13 +247,13 @@ __mpcomp_static_loop_begin (int lb, int b, int incr, int chunk_size,
 int
 __mpcomp_static_loop_next (int *from, int *to)
 {
-  mpcomp_thread_info_t *info;
+  mpcomp_thread_t *info;
   int nb_threads;
   int rank;
 
-  /* TODO Use TLS if available */
-  info =
-    (mpcomp_thread_info_t *) mpc_thread_getspecific (mpcomp_thread_info_key);
+  info = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);  
+
 
   /* Retrieve the number of threads and the rank of this thread */
   nb_threads = info->num_threads;
@@ -581,14 +581,13 @@ int
 __mpcomp_ordered_static_loop_begin (int lb, int b, int incr, int chunk_size,
 			    int *from, int *to)
 {
-  mpcomp_thread_info_t *info;
+  mpcomp_thread_t *info;
   int res ;
 
   res = __mpcomp_static_loop_begin(lb, b, incr, chunk_size, from, to ) ;
 
-  /* TODO Use TLS if available */
-  info =
-    (mpcomp_thread_info_t *) mpc_thread_getspecific (mpcomp_thread_info_key);
+  info = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);  
 
   info->current_ordered_iteration = *from ;
 
@@ -598,14 +597,13 @@ __mpcomp_ordered_static_loop_begin (int lb, int b, int incr, int chunk_size,
 int
 __mpcomp_ordered_static_loop_next(int *from, int *to)
 {
-  mpcomp_thread_info_t *info;
+  mpcomp_thread_t *info;
   int res ;
 
   res = __mpcomp_static_loop_next(from, to) ;
 
-  /* TODO Use TLS if available */
-  info =
-    (mpcomp_thread_info_t *) mpc_thread_getspecific (mpcomp_thread_info_key);
+  info = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);  
 
   info->current_ordered_iteration = *from ;
 

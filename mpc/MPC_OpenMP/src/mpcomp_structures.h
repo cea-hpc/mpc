@@ -120,7 +120,24 @@ struct mpcomp_thread_s {
   struct mpcomp_thread_father_s *father; 	/* TODO: check if this is useful */
   void *hierarchical_tls;			/* Local variables */
 
-  int current_single				/* Which single construct */
+  /* Private info on the current loop (whatever its schedule is)  */
+  int loop_lb;					/* Lower bound */
+  int loop_b;					/* Upper bound */
+  int loop_incr;				/* Step */
+  int loop_chunk_size;				/* Size of each chunk */
+
+  /* FOR LOOPS - STATIC SCHEDULE */
+  int static_nb_chunks;
+
+  /* What is the currently scheduled chunk for static loops and/or ordered loops */
+  int static_current_chunk ;
+
+  /* SINGLE CONSTRUCT */
+  int current_single;				/* Which 'single' construct did we already go through? */
+
+  /* ORDERED CONSTRUCT */
+  int current_ordered_iteration ; 
+
 };
 
 typedef struct mpcomp_thread_s mpcomp_thread_t;
