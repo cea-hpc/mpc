@@ -2561,6 +2561,7 @@ struct wfv_waitall_s{
   int ret;
   mpc_msg_count count;
   MPC_Request *array_of_requests;
+  MPC_Status *array_of_statuses;
 };
 
 static inline void wfv_waitall (void *arg) {
@@ -2573,7 +2574,24 @@ static inline void wfv_waitall (void *arg) {
     flag = flag & __MPC_Test_check_light (&(args->array_of_requests[i]));
   }
 
-  if (flag) args->ret = 1;
+  /* All requests received */
+  if (flag) {
+    for (i = 0; i < args->count; i++)
+    {
+      MPC_Status *status;
+      MPC_Request *request;
+
+      request = &(args->array_of_requests[i]);
+      if(args->array_of_statuses != NULL){
+        status = &(args->array_of_statuses[i]);
+
+        sctk_mpc_commit_status_from_request(request,status);
+        sctk_nodebug ("source %d\n", status->MPC_SOURCE);
+        sctk_mpc_message_set_is_null(request ,1);
+      }
+    }
+    args->ret = 1;
+  }
 }
 
 static inline int
@@ -2582,68 +2600,59 @@ __MPC_Waitall (mpc_msg_count count,
 	       MPC_Status array_of_statuses[])
 {
   int i;
-  int flag = 0;
+  int flag = 1;
 
-  flag = 1;
+  for (i = 0; i < count; i++) {
+    MPC_Status *status;
+    if(array_of_statuses != NULL){
+      status = &(array_of_statuses[i]);
+    } else {
+      status = MPC_STATUS_IGNORE;
+    }
 
+    __MPC_Wait(&array_of_requests[i], status);
+  }
+  MPC_ERROR_SUCESS();
+#if 0
   sctk_nodebug ("waitall count %d\n", count);
 
   for (i = 0; i < count; i++)
-    {
-      int tmp_flag = 0;
-      MPC_Status *status;
-      if(array_of_statuses != NULL){
-	status = &(array_of_statuses[i]);
-      } else {
-	status = MPC_STATUS_IGNORE;
-      }
-      __MPC_Test_check (&(array_of_requests[i]), &tmp_flag,
-			status);
-      flag = flag & tmp_flag;
+  {
+    int tmp_flag = 0;
+    MPC_Status *status;
+    MPC_Request *request;
+    if(array_of_statuses != NULL){
+      status = &(array_of_statuses[i]);
+    } else {
+      status = MPC_STATUS_IGNORE;
     }
+    request = &(array_of_requests[i]);
+    __MPC_Test_check (request, &tmp_flag,
+        status);
+
+    if (tmp_flag && status != MPC_STATUS_IGNORE) {
+      sctk_mpc_message_set_is_null(request,1);
+    }
+
+    flag = flag & tmp_flag;
+  }
+
+  if (flag == 1) MPC_ERROR_SUCESS();
 
   /* XXX: Waitall has been ported for using wait_for_value_and_poll
    * because it provides better results than thread_yield.
    * It performs well at least on Infiniband on NAS  */
-#if 0
-    while (!flag)
-    {
-      flag = 1;
-
-      for (i = 0; i < count; i++)
-	{
-	  flag = flag & __MPC_Test_check_light (&(array_of_requests[i]));
-	}
-
-      if (flag == 0) {
-      	sctk_thread_yield ();
-      }
-    }
-#endif
-
   struct wfv_waitall_s wfv;
-    wfv.ret = 0;
-    wfv.array_of_requests = array_of_requests;
-    wfv.count = count;
-    sctk_thread_wait_for_value_and_poll
-      ((int *) &(wfv.ret), 1 ,
-       (void(*)(void*))wfv_waitall,(void*)&wfv);
+  wfv.ret = 0;
+  wfv.array_of_requests = array_of_requests;
+  wfv.array_of_statuses = array_of_statuses;
+  wfv.count = count;
+  sctk_thread_wait_for_value_and_poll
+    ((int *) &(wfv.ret), 1 ,
+     (void(*)(void*))wfv_waitall,(void*)&wfv);
 
-  for (i = 0; i < count; i++)
-    {
-      MPC_Status *status;
-      MPC_Request *request;
-
-      request = &(array_of_requests[i]);
-      if(array_of_statuses != NULL){
-	status = &(array_of_statuses[i]);
-
-	sctk_mpc_commit_status_from_request(request,status);
-	sctk_nodebug ("source %d\n", status->MPC_SOURCE);
-      }
-      sctk_mpc_message_set_is_null(&(array_of_requests[i]),1);
-    }
   MPC_ERROR_SUCESS ();
+#endif
 }
 
 int
