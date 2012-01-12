@@ -61,6 +61,11 @@ extern "C"
 /* Maximum number of alive 'single' construct */
 #define MPCOMP_MAX_ALIVE_SINGLE 	3
 
+#define MPCOMP_NOWAIT_STOP_SYMBOL    	-1
+#define MPCOMP_NOWAIT_STOP_CONSUMED    	-2
+#define MPCOMP_NOWAIT_OK_SYMBOL        	-3	
+
+#define MPCOMP_LOCK_INIT {0,0,NULL,NULL,NULL,SCTK_SPINLOCK_INITIALIZER}
 
 extern __thread void *sctk_openmp_thread_tls;
 
@@ -103,6 +108,14 @@ struct mpcomp_chunk_s {
 };
 
 typedef struct mpcomp_chunk_s mpcomp_chunk_t ;
+
+/****** Linked list of locks (per lock structure, who is blocked with this lock) ******/
+
+struct mpcomp_slot_s {
+   struct mpcomp_thread_s *t;
+   struct mpcomp_slot_s *next;
+};
+typedef struct mpcomp_slot_s mpcomp_slot_t;
 
 /******** OPENMP THREAD *********/
 struct mpcomp_thread_s {

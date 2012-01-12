@@ -291,6 +291,7 @@ __mpcomp_start_parallel_static_loop (int arg_num_threads, void *(*func)
 				     (void *), void *shared, int lb, int b,
 				     int incr, int chunk_size)
 {
+  not_implemented();
 #if 0
   mpcomp_thread_info_t *current_info;
   int num_threads;

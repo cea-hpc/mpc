@@ -42,7 +42,8 @@ __mpcomp_do_single (void)
   int index;
   int num_threads;
   int nb_entered_threads;
-
+  
+  not_implemented();
 #if 0
   __mpcomp_init();
  

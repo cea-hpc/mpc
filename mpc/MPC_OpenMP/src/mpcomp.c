@@ -1644,6 +1644,7 @@ int __mpcomp_dynamic_loop_begin(int lb, int b, int incr, int chunk_size, int *fr
   int rank;
   int index;
 
+  fprintf(stderr,"__mpcomp_dynamic_loop_begin: Entering...\n");
   /* Grab the info of the current thread */    
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
