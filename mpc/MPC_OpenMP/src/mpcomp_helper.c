@@ -802,6 +802,7 @@ void __mpcomp_flush() {
 }
 
 
+#if 0
 void __mpcomp_ordered_begin() {
   mpcomp_thread_info_t *info;
   mpcomp_thread_info_t *team;
@@ -867,3 +868,4 @@ void __mpcomp_ordered_end() {
   }
 
 }
+#endif

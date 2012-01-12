@@ -29,7 +29,8 @@
 #include <mpcomp.h>
 #include <mpcomp_structures.h>
 
-__thread void * sctk_openmp_thread_tls = NULL;
+
+__thread void *sctk_openmp_thread_tls = NULL;
 
 /* 
   Read the environment variables. Once per process 
@@ -1719,3 +1720,78 @@ mpcomp_get_max_threads (void)
   return t->num_threads;
 }
 
+
+void __mpcomp_ordered_begin() {
+  //mpcomp_thread_info_t *info;
+  //mpcomp_thread_info_t *team;
+
+  mpcomp_thread_t *t;
+  mpcomp_thread_t *team;
+
+  __mpcomp_init ();
+
+  /* Grab the info of the current thread */    
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  team = t->father ;
+
+  /* First iteration of the loop -> initialize 'next_ordered_offset' */
+  if ( t->current_ordered_iteration == t->loop_lb ) {
+    team->next_ordered_offset = 0 ;
+  } else {
+    /* Do we have to wait for the right iteration? */
+    if ( t->current_ordered_iteration != 
+	(t->loop_lb + t->loop_incr * team->next_ordered_offset) ) {
+      //sctk_microthread_vp_t *my_vp;
+
+      sctk_nodebug( "__mpcomp_ordered_begin[%d]: Waiting to schedule iteration %d",
+	  t->rank, t->current_ordered_iteration ) ;
+
+      /* Grab the microVP */
+      //my_vp = &(info->task->__list[info->vp]);
+
+      //mpcomp_fork_when_blocked (my_vp, info->step);
+
+      /* Spin while the condition is not satisfied */
+      //mpcomp_macro_scheduler (my_vp, info->step);
+      while ( t->current_ordered_iteration != 
+	  (t->loop_lb + t->loop_incr * team->next_ordered_offset) ) {
+	//mpcomp_macro_scheduler (my_vp, info->step);
+	if ( t->current_ordered_iteration != 
+	    (t->loop_lb + t->loop_incr * team->next_ordered_offset) ) {
+	  sctk_thread_yield ();
+	}
+      }
+    }
+  }
+
+  sctk_nodebug( "__mpcomp_ordered_begin[%d]: Allowed to schedule iteration %d",
+      t->rank, t->current_ordered_iteration ) ;
+}
+
+void __mpcomp_ordered_end() {
+  //mpcomp_thread_info_t *info;
+  //mpcomp_thread_info_t *team;
+
+  mpcomp_thread_t *t;
+  mpcomp_thread_t *team;
+
+  /* TODO Use TLS if available */
+  //info = sctk_thread_getspecific (mpcomp_thread_info_key);
+
+   /* Grab the info of the current thread */    
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  team = t->father ;
+
+  t->current_ordered_iteration += t->loop_incr ;
+  if ( (t->loop_incr > 0 && t->current_ordered_iteration >= t->loop_b) ||
+      (t->loop_incr < 0 && t->current_ordered_iteration <= t->loop_b) ) {
+    team->next_ordered_offset = -1 ;
+  } else {
+    team->next_ordered_offset++ ;
+  }
+
+}

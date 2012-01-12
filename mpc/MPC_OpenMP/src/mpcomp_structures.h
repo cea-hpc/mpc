@@ -61,9 +61,9 @@ extern "C"
 /* Maximum number of alive 'single' construct */
 #define MPCOMP_MAX_ALIVE_SINGLE 	3
 
-#define MPCOMP_NOWAIT_STOP_SYMBOL    	-1
-#define MPCOMP_NOWAIT_STOP_CONSUMED    	-2
-#define MPCOMP_NOWAIT_OK_SYMBOL        	-3	
+#define MPCOMP_NOWAIT_STOP_SYMBOL	(-1)
+#define MPCOMP_NOWAIT_STOP_CONSUMED	(-2)
+#define MPCOMP_NOWAIT_OK_SYMBOL		(-3)
 
 #define MPCOMP_LOCK_INIT {0,0,NULL,NULL,NULL,SCTK_SPINLOCK_INITIALIZER}
 
@@ -133,19 +133,19 @@ struct mpcomp_thread_s {
   struct mpcomp_thread_father_s *father; 	/* TODO: check if this is useful */
   void *hierarchical_tls;			/* Local variables */
 
+  int current_single;				/* Which single construct */
+
+  /* -- ORDERED CONSTRUCT -- */
+  int current_ordered_iteration ; 
+
   /* Private info on the current loop (whatever its schedule is)  */
-  int loop_lb;					/* Lower bound */
-  int loop_b;					/* Upper bound */
-  int loop_incr;				/* Step */
-  int loop_chunk_size;				/* Size of each chunk */
+  int loop_lb;		/* Lower bound */
+  int loop_b;			/* Upper bound */
+  int loop_incr;		/* Step */
+  int loop_chunk_size;	/* Size of each chunk */
 
-  /* FOR LOOPS - STATIC SCHEDULE */
-  int static_nb_chunks;
-
-  /* What is the currently scheduled chunk for static loops and/or ordered loops */
-  int static_current_chunk ;
-
-  /* SINGLE CONSTRUCT */
+  /* -- ORDERED CONSTRUCT -- */
+  volatile int next_ordered_offset ; 
   int current_single;				/* Which 'single' construct did we already go through? */
 
   /* ORDERED CONSTRUCT */
@@ -176,8 +176,8 @@ struct mpcomp_thread_father_s {
   int private_current_for_dyn;
 
   /* SINGLE CONSTRUCT */
-  sctk_spinlock_t lock_enter_single[MPCOMP_MAX_ALIVE_SINGLE];
-  volatile int nb_threads_entered_single[MPCOMP_MAX_ALIVE_SINGLE];
+  sctk_spinlock_t lock_enter_single[MPCOMP_MAX_ALIVE_SINGLE+1];
+  volatile int nb_threads_entered_single[MPCOMP_MAX_ALIVE_SINGLE+1];
 
 };
 
@@ -267,6 +267,15 @@ struct mpcomp_node_s {
 
 typedef struct mpcomp_node_s mpcomp_node_t;
 
+  /* Linked list of locks 
+     (per lock structure, who is blocked with this lock)
+   */
+  typedef struct mpcomp_slot_s
+  {
+    //struct mpcomp_thread_info_s *thread;
+    mpcomp_thread_t *t; 
+    struct mpcomp_slot_s *next;
+  } mpcomp_slot_t;
 
 /************************************
        OMP PARALLEL FUNCTIONS 
