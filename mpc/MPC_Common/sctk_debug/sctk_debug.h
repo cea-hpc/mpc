@@ -45,6 +45,8 @@ extern "C"
   extern int sctk_is_in_fortran;
   extern int sctk_local_process_rank;
   extern int sctk_local_process_number;
+  extern int sctk_node_rank;
+  extern int sctk_node_number;
 
   void sctk_init (void);
   void sctk_leave (void);

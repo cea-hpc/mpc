@@ -207,6 +207,13 @@ int sctk_pmi_init() {
 		return rc;
 #endif
 
+
+  sctk_pmi_get_node_rank(&sctk_node_rank);
+  sctk_pmi_get_node_number(&sctk_node_number);
+  sctk_pmi_get_process_on_node_rank(&sctk_local_process_rank);
+  sctk_pmi_get_processes_on_node_number(&sctk_local_process_number);
+
+
 #ifdef MPC_USE_SLURM
 		return rc;
 #endif
