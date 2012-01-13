@@ -1721,11 +1721,9 @@ mpcomp_get_max_threads (void)
 
 
 void __mpcomp_ordered_begin() {
-  //mpcomp_thread_info_t *info;
-  //mpcomp_thread_info_t *team;
 
   mpcomp_thread_t *t;
-  mpcomp_thread_t *team;
+  mpcomp_thread_father_t *team;
 
   __mpcomp_init ();
 
@@ -1742,21 +1740,13 @@ void __mpcomp_ordered_begin() {
     /* Do we have to wait for the right iteration? */
     if ( t->current_ordered_iteration != 
 	(t->loop_lb + t->loop_incr * team->next_ordered_offset) ) {
-      //sctk_microthread_vp_t *my_vp;
 
       sctk_nodebug( "__mpcomp_ordered_begin[%d]: Waiting to schedule iteration %d",
 	  t->rank, t->current_ordered_iteration ) ;
 
-      /* Grab the microVP */
-      //my_vp = &(info->task->__list[info->vp]);
-
-      //mpcomp_fork_when_blocked (my_vp, info->step);
-
       /* Spin while the condition is not satisfied */
-      //mpcomp_macro_scheduler (my_vp, info->step);
       while ( t->current_ordered_iteration != 
 	  (t->loop_lb + t->loop_incr * team->next_ordered_offset) ) {
-	//mpcomp_macro_scheduler (my_vp, info->step);
 	if ( t->current_ordered_iteration != 
 	    (t->loop_lb + t->loop_incr * team->next_ordered_offset) ) {
 	  sctk_thread_yield ();
@@ -1770,14 +1760,9 @@ void __mpcomp_ordered_begin() {
 }
 
 void __mpcomp_ordered_end() {
-  //mpcomp_thread_info_t *info;
-  //mpcomp_thread_info_t *team;
 
   mpcomp_thread_t *t;
-  mpcomp_thread_t *team;
-
-  /* TODO Use TLS if available */
-  //info = sctk_thread_getspecific (mpcomp_thread_info_key);
+  mpcomp_thread_father_t *team;
 
    /* Grab the info of the current thread */    
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;

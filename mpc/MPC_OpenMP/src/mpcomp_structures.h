@@ -133,11 +133,6 @@ struct mpcomp_thread_s {
   struct mpcomp_thread_father_s *father; 	/* TODO: check if this is useful */
   void *hierarchical_tls;			/* Local variables */
 
-  int current_single;				/* Which single construct */
-
-  /* -- ORDERED CONSTRUCT -- */
-  int current_ordered_iteration ; 
-
   /* Private info on the current loop (whatever its schedule is)  */
   int loop_lb;		/* Lower bound */
   int loop_b;			/* Upper bound */
@@ -178,6 +173,9 @@ struct mpcomp_thread_father_s {
   /* SINGLE CONSTRUCT */
   sctk_spinlock_t lock_enter_single[MPCOMP_MAX_ALIVE_SINGLE+1];
   volatile int nb_threads_entered_single[MPCOMP_MAX_ALIVE_SINGLE+1];
+
+  /* ORDERED CONSTRUCT */
+  volatile int next_ordered_offset ; 
 
 };
 
