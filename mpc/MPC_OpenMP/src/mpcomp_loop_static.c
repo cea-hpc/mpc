@@ -45,7 +45,7 @@ __mpcomp_static_schedule_get_single_chunk (int lb, int b, int incr, int *from,
   int rank;
 
   info = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);      
+  sctk_assert(info != NULL);      
 
 
   num_threads = info->num_threads;
@@ -94,7 +94,7 @@ __mpcomp_static_schedule_get_nb_chunks (int lb, int b, int incr,
   /* Original loop: lb -> b step incr */
 
   info = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);   
+  sctk_assert(info != NULL);   
 
   /* Retrieve the number of threads and the rank of the current thread */
   nb_threads = info->num_threads;
@@ -147,7 +147,7 @@ __mpcomp_static_schedule_get_specific_chunk (int lb, int b, int incr,
 
 
   info = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);  
+  sctk_assert(info != NULL);  
 
   /* Retrieve the number of threads and the rank of this thread */
   nb_threads = info->num_threads;
@@ -207,11 +207,11 @@ __mpcomp_static_loop_begin (int lb, int b, int incr, int chunk_size,
   __mpcomp_init ();
 
   info = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);  
+  sctk_assert(info != NULL);  
 
 
   /* Automatic chunk size -> at most one chunk */
-  if (chunk_size == -1) {
+  if (chunk_size == 0) {
       info->static_nb_chunks = 1 ;
       __mpcomp_static_schedule_get_single_chunk (lb, b, incr, from, to);
     }
@@ -252,7 +252,7 @@ __mpcomp_static_loop_next (int *from, int *to)
   int rank;
 
   info = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);  
+  sctk_assert(info != NULL);  
 
 
   /* Retrieve the number of threads and the rank of this thread */
@@ -590,7 +590,7 @@ __mpcomp_ordered_static_loop_begin (int lb, int b, int incr, int chunk_size,
   res = __mpcomp_static_loop_begin(lb, b, incr, chunk_size, from, to ) ;
 
   info = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);  
+  sctk_assert(info != NULL);  
 
   info->current_ordered_iteration = *from ;
 
@@ -606,7 +606,7 @@ __mpcomp_ordered_static_loop_next(int *from, int *to)
   res = __mpcomp_static_loop_next(from, to) ;
 
   info = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);  
+  sctk_assert(info != NULL);  
 
   info->current_ordered_iteration = *from ;
 
