@@ -23,8 +23,7 @@
 #include <mpcomp.h>
 #include <mpcomp_abi.h>
 #include "mpcmicrothread_internal.h"
-#include <mpcomp_structures.h>
-#include "mpcomp_internal.h"
+#include <mpcomp_internal.h>
 #include "sctk.h"
 #include <sctk_debug.h>
 
@@ -210,10 +209,16 @@ __mpcomp_static_loop_begin (int lb, int b, int incr, int chunk_size,
   sctk_assert(info != NULL);  
 
 
+
   /* Automatic chunk size -> at most one chunk */
   if (chunk_size == 0) {
       info->static_nb_chunks = 1 ;
       __mpcomp_static_schedule_get_single_chunk (lb, b, incr, from, to);
+
+      info->loop_lb = lb ;
+      info->loop_b = b ;
+      info->loop_incr = incr ;
+      info->loop_chunk_size = 1 ;
     }
   else {
     int nb_threads;
@@ -286,292 +291,10 @@ __mpcomp_static_loop_end_nowait ()
   /* Nothing to do */
 }
 
-void
-__mpcomp_start_parallel_static_loop (int arg_num_threads, void *(*func)
-				     (void *), void *shared, int lb, int b,
-				     int incr, int chunk_size)
-{
-  not_implemented();
-#if 0
-  mpcomp_thread_info_t *current_info;
-  int num_threads;
-  int n;			/* Number of iterations */
-
-  SCTK_PROFIL_START (__mpcomp_start_parallel_region);
-
-  /* Compute the total number iterations */
-  n = (b - lb) / incr;
-
-  /* If this loop contains no iterations then exit */
-  if ( n <= 0 ) {
-    return ;
-  }
-
-  /* Initialize the OpenMP environment (call several times, but really executed
-   * once) */
-  __mpcomp_init ();
-
-  /* Retrieve the information (microthread structure and current region) */
-  /* TODO Use TLS if available */
-  current_info = sctk_thread_getspecific (mpcomp_thread_info_key);
-  sctk_assert (current_info != NULL);
-
-  sctk_nodebug
-    ("__mpcomp_start_parallel_static_loop: "
-     "Entering w/ loop %d -> %d step %d [cs=%d]",
-     lb, b, incr, chunk_size);
-
-  /* Grab the number of threads */
-  num_threads = current_info->icvs.nthreads_var;
-  if (arg_num_threads > 0 && arg_num_threads <= MPCOMP_MAX_THREADS)
-    {
-      num_threads = arg_num_threads;
-    }
-
-  /* Bypass if the parallel region contains only 1 thread */
-  if (num_threads == 1)
-    {
-      sctk_nodebug
-	("__mpcomp_start_parallel_static_loop: Only 1 thread -> call f");
-
-      current_info->loop_lb = lb ;
-      current_info->loop_b = b ;
-      current_info->loop_incr = incr ;
-      current_info->loop_chunk_size = chunk_size ;
-
-      current_info->static_current_chunk = -1 ;
-      current_info->static_nb_chunks = __mpcomp_get_static_nb_chunks_per_rank( 0, num_threads, lb, b, incr, chunk_size ) ;
-
-      func (shared);
-      SCTK_PROFIL_END (__mpcomp_start_parallel_region);
-      return;
-    }
-
-  sctk_nodebug
-    ("__mpcomp_start_parallel_static_loop: -> Final num threads = %d",
-     num_threads);
-
-  /* Creation of a new microthread structure if the current region is
-   * sequential or if nesting is allowed */
-  if (current_info->depth == 0 || mpcomp_get_nested ())
-    {
-      sctk_microthread_t *new_task;
-      sctk_microthread_t *current_task;
-      int i;
-      /*
-      int n = num_threads / current_info->icvs.nmicrovps_var;
-      int index = num_threads % current_info->icvs.nmicrovps_var;
-      int vp;
-      */
-      SCTK_PROFIL_START (__mpcomp_start_parallel_region__creation);
-
-      sctk_nodebug
-	("__mpcomp_start_parallel_static_loop: starting new team at depth %d on %d microVP(s)",
-	 current_info->depth, current_info->icvs.nmicrovps_var);
-
-      current_task = current_info->task;
-
-      /* Initialize a new microthread structure if needed */
-      if (current_info->depth == 0)
-	{
-	  new_task = current_task;
-
-	  sctk_nodebug
-	    ("__mpcomp_start_parallel_static_loop: reusing the thread_info depth 0");
-	}
-      else
-	{
-
-	  /* If the first child has already been created, get the
-	   * corresponding thread-info structure */
-	  if (current_info->children[0] != NULL)
-	    {
-	      sctk_nodebug
-		("__mpcomp_start_parallel_static_loop: reusing thread_info new depth");
-
-	      new_task = current_info->children[0]->task;
-	      sctk_assert (new_task != NULL);
-
-	    }
-	  else
-	    {
-
-	      sctk_nodebug
-		("__mpcomp_start_parallel_static_loop: allocating thread_info new depth");
-
-	      new_task = sctk_malloc (sizeof (sctk_microthread_t));
-	      sctk_assert (new_task != NULL);
-	      sctk_microthread_init (current_info->icvs.nmicrovps_var, new_task);
-	    }
-	}
-
-
-      /* Fill the microthread structure with these new threads */
-      for (i = num_threads - 1; i >= 0; i--)
-	{
-	  mpcomp_thread_info_t *new_info;
-	  int microVP;
-	  int val;
-	  int res;
-
-	  /* Compute the VP this thread will be scheduled on and the behavior of
-	   * 'add_task' */
-	  if (i < current_info->icvs.nmicrovps_var)
-	    {
-	      microVP = i;
-	      val = MPC_MICROTHREAD_LAST_TASK;
-	    }
-	  else
-	    {
-	      microVP = i % (current_info->icvs.nmicrovps_var);
-	      val = MPC_MICROTHREAD_NO_TASK_INFO;
-	    }
-
-	  /* Get the structure of the i-th children */
-	  new_info = current_info->children[i];
-
-	  /* If this is the first time that such a child exists
-	     -> allocate memory once and initialize once */
-	  if (new_info == NULL)
-	    {
-
-	      sctk_nodebug
-		("__mpcomp_start_parallel_static_loop: "
-		 "Child %d is NULL -> allocating thread_info",
-		 i);
-
-	      new_info =
-		sctk_malloc_on_node (sizeof (mpcomp_thread_info_t), sctk_get_node_from_cpu(microVP));
-	      sctk_assert (new_info != NULL);
-
-	      current_info->children[i] = new_info;
-
-	      __mpcomp_init_thread_info (new_info, func, shared, i,
-					 num_threads, current_info->icvs,
-					 current_info->depth + 1, microVP, 0,
-					 current_info, 0, new_task);
-	    }
-	  else
-	    {
-	      __mpcomp_reset_thread_info (new_info, func, shared, num_threads,
-					  current_info->icvs, 0, 0, microVP);
-	    }
-
-
-	  new_info->task = new_task;
-
-	  /* Update private information about dynamic schedule */
-	  new_info->loop_lb = lb ;
-	  new_info->loop_b = b ;
-	  new_info->loop_incr = incr ;
-	  new_info->loop_chunk_size = chunk_size ;
-	  new_info->static_current_chunk = -1 ;
-	  new_info->static_nb_chunks = __mpcomp_get_static_nb_chunks_per_rank( i, num_threads, lb, b, incr, chunk_size ) ;
-
-	  sctk_nodebug
-	    ("__mpcomp_start_parallel_static_loop: "
-	     "Adding op %d on microVP %d", i, microVP);
-
-	  res = sctk_microthread_add_task (__mpcomp_wrapper_op, new_info, microVP,
-					   &(new_info->step), new_task, val);
-	  sctk_assert (res == 0);
-
-
-	}
-
-      SCTK_PROFIL_END (__mpcomp_start_parallel_region__creation);
-
-      /* Launch the execution of this microthread structure */
-      sctk_microthread_parallel_exec (new_task,
-				      MPC_MICROTHREAD_DONT_WAKE_VPS);
-
-      sctk_nodebug
-	("__mpcomp_start_parallel_static_loop: Microthread execution done");
-
-      /* Restore the key value (microthread structure & OpenMP info) */
-      sctk_thread_setspecific (mpcomp_thread_info_key, current_info);
-      sctk_thread_setspecific (sctk_microthread_key, current_task);
-
-      /* Free the memory allocated for the new microthread structure */
-      if (current_info->depth != 0)
-	{
-	  sctk_free (new_task);
-	}
-
-      /* TODO free the memory allocated for the OpenMP-thread info 
-         maybe not because this is stored in current_info->children[] */
-
-
-    }
-  else
-    {
-      mpcomp_thread_info_t *new_info;
-
-      sctk_nodebug
-	("__mpcomp_start_parallel_static_loop: Serialize a new team at depth %d",
-	 current_info->depth);
-
-      /* TODO only flatterned nested supported for now */
-
-      num_threads = 1;
-
-
-      new_info = current_info->children[0];
-      if (new_info == NULL)
-	{
-
-	  sctk_nodebug
-	    ("__mpcomp_start_parallel_static_loop: Allocating new thread_info");
-
-	  new_info = sctk_malloc (sizeof (mpcomp_thread_info_t));
-	  sctk_assert (new_info != NULL);
-	  current_info->children[0] = new_info;
-	  __mpcomp_init_thread_info (new_info, func, shared,
-				     0, 1,
-				     current_info->icvs,
-				     current_info->depth + 1,
-				     current_info->vp, 0,
-				     current_info, 0, current_info->task);
-	}
-      else
-	{
-	  sctk_nodebug
-	    ("__mpcomp_start_parallel_static_loop: Reusing older thread_info");
-	  __mpcomp_reset_thread_info (new_info, func, shared, 0,
-				      current_info->icvs, 0, 0,
-				      current_info->vp);
-	}
-
-      __mpcomp_wrapper_op (new_info);
-
-      sctk_nodebug ("__mpcomp_start_parallel_dynamic_loop: after flat nested");
-
-      sctk_thread_setspecific (mpcomp_thread_info_key, current_info);
-
-      sctk_free (new_info);
-    }
-
-  /* No need to re-initialize team info for this thread */
-
-
-  /* Restore the TLS for the main thread */
-  sctk_extls = current_info->children[0]->extls;
 #if defined (SCTK_USE_OPTIMIZED_TLS)
   sctk_tls_module = current_info->children[0]->tls_module;
   sctk_context_restore_tls_module_vp ();
 #endif
-
-  SCTK_PROFIL_END (__mpcomp_start_parallel_region);
-#endif
-}
-
-int
-__mpcomp_static_loop_next_ignore_nowait (int *from, int *to)
-{
-  not_implemented ();
-  return 0;
-}
-
 
 /****
   *

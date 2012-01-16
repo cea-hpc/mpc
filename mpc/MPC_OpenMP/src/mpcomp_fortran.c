@@ -27,7 +27,7 @@
 
 /* LIB FUNCTIONS */
 
-void
+/*void
 omp_set_num_threads_ (int *num_threads)
 {
   sctk_nodebug ("Fortran: omp_set_num_threads_ %d", *num_threads);
@@ -39,7 +39,7 @@ omp_set_num_threads__ (int *num_threads)
 {
   sctk_nodebug ("Fortran: omp_set_num_threads__ %d", *num_threads);
   mpcomp_set_num_threads (*num_threads);
-}
+}*/
 
 int
 omp_get_num_threads_ ()
@@ -77,7 +77,7 @@ omp_get_thread_num__ ()
   return mpcomp_get_thread_num ();
 }
 
-int
+/*int
 omp_get_num_procs_ ()
 {
   return mpcomp_get_num_procs ();
@@ -87,9 +87,9 @@ int
 omp_get_num_procs__ ()
 {
   return mpcomp_get_num_procs ();
-}
+}*/
 
-int
+/*int
 omp_in_parallel_ ()
 {
   return mpcomp_in_parallel ();
@@ -99,10 +99,10 @@ int
 omp_in_parallel__ ()
 {
   return mpcomp_in_parallel ();
-}
+}*/
 
 /* DYNAMIC FUNCTIONS */
-void
+/*void
 omp_set_dynamic_ (int *dynamic_threads)
 {
   mpcomp_set_dynamic (*dynamic_threads);
@@ -124,10 +124,10 @@ int
 omp_get_dynamic__ ()
 {
   return mpcomp_get_dynamic ();
-}
+}*/
 
 /* NESTED FUNCTIONS */
-void
+/*void
 omp_set_nested_ (int *nested)
 {
   mpcomp_set_nested (*nested);
@@ -137,9 +137,9 @@ void
 omp_set_nested__ (int *nested)
 {
   mpcomp_set_nested (*nested);
-}
+}*/
 
-int
+/*int
 omp_get_nested_ ()
 {
   return mpcomp_get_nested ();
@@ -149,7 +149,7 @@ int
 omp_get_nested__ ()
 {
   return mpcomp_get_nested ();
-}
+}*/
 
 /* TIME FUNCTIONS */
 double

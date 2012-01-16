@@ -21,7 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include <mpcomp.h>
-#include "mpcomp_structures.h"
+#include "mpcomp_internal.h"
 #include "mpcmicrothread_internal.h"
 #include <sctk_debug.h>
 

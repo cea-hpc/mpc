@@ -27,7 +27,7 @@
 #include "sctk_runtime_config.h"
 #include "sctk_atomics.h"
 #include <mpcomp.h>
-#include <mpcomp_structures.h>
+#include <mpcomp_internal.h>
 
 
 __thread void *sctk_openmp_thread_tls = NULL;
@@ -390,44 +390,44 @@ void __mpcomp_thread_init (mpcomp_thread_t *t)
 }
 
 /*
-   Initialize an OpenMP thread father
+   Initialize an OpenMP thread team
 */
-void __mpcomp_thread_father_init (mpcomp_thread_father_t *father)
+void __mpcomp_thread_team_init (mpcomp_thread_team_t *team)
 {
    int i,j;
 
-   father->depth = 0;
-   father->rank = 0;
-   father->num_threads = OMP_NUM_THREADS;
-   father->hierarchical_tls = NULL;
+   team->depth = 0;
+   team->rank = 0;
+   team->num_threads = OMP_NUM_THREADS;
+   team->hierarchical_tls = NULL;
 
    /* Init for dynamic scheduling construct */
    for (i=0 ; i<MPCOMP_MAX_THREADS ; i++) {
      for (j=0 ; j<MPCOMP_MAX_ALIVE_FOR_DYN ; j++) {
-       father->lock_for_dyn[i][j] = SCTK_SPINLOCK_INITIALIZER;
-       father->chunk_info_for_dyn[i][j].remain = -1 ;
+       team->lock_for_dyn[i][j] = SCTK_SPINLOCK_INITIALIZER;
+       team->chunk_info_for_dyn[i][j].remain = -1 ;
      }
    }
 
-   father->lock_stop_for_dyn = SCTK_SPINLOCK_INITIALIZER;
+   team->lock_stop_for_dyn = SCTK_SPINLOCK_INITIALIZER;
 
    for (i=0 ; i<MPCOMP_MAX_ALIVE_FOR_DYN ; i++) {
-      father->lock_exited_for_dyn[i] = SCTK_SPINLOCK_INITIALIZER;
-      father->nthread_exited_for_dyn[i] = 0;
+      team->lock_exited_for_dyn[i] = SCTK_SPINLOCK_INITIALIZER;
+      team->nthread_exited_for_dyn[i] = 0;
    }
 
-   for (i=0 ; i<MPCOMP_MAX_ALIVE_FOR_DYN-1 ; i++) father->stop[i] = OK;				
-     father->stop[MPCOMP_MAX_ALIVE_FOR_DYN-1] = STOP;
+   for (i=0 ; i<MPCOMP_MAX_ALIVE_FOR_DYN-1 ; i++) team->stop[i] = OK;				
+     team->stop[MPCOMP_MAX_ALIVE_FOR_DYN-1] = STOP;
 
-   father->private_current_for_dyn = 0;
+   team->private_current_for_dyn = 0;
 
    /* Init for single construct */
    for (i = 0; i <= MPCOMP_MAX_ALIVE_SINGLE; i++) {
-	father->lock_enter_single[i] = SCTK_SPINLOCK_INITIALIZER;
-	father->nb_threads_entered_single[i] = 0;
+	team->lock_enter_single[i] = SCTK_SPINLOCK_INITIALIZER;
+	team->nb_threads_entered_single[i] = 0;
    }
 
-   father->nb_threads_entered_single[MPCOMP_MAX_ALIVE_SINGLE] = -1;
+   team->nb_threads_entered_single[MPCOMP_MAX_ALIVE_SINGLE] = -1;
 }
 
 /*
@@ -1156,7 +1156,7 @@ void __mpcomp_init (void)
   static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
   mpcomp_instance_t *instance;
   mpcomp_thread_t *t;
-  mpcomp_thread_father_t *father;
+  mpcomp_thread_team_t *team;
   icv_t icvs;
 
   sctk_nodebug("__mpcomp_init: sctk_openmp_thread_tls");
@@ -1203,15 +1203,15 @@ void __mpcomp_init (void)
      t->icvs = icvs;
      t->children_instance = instance;
 
-     /* Allocate informations for the thread father of the team */
-     father = (mpcomp_thread_father_t *)sctk_malloc(sizeof(mpcomp_thread_father_t));
-     sctk_assert(father != NULL);
+     /* Allocate informations for the thread team */
+     team = (mpcomp_thread_team_t *)sctk_malloc(sizeof(mpcomp_thread_team_t));
+     sctk_assert(team != NULL);
  
-     __mpcomp_thread_father_init(father);
-     father->icvs = icvs;
-     father->children_instance = instance;
+     __mpcomp_thread_team_init(team);
+     team->icvs = icvs;
+     team->children_instance = instance;
 
-     t->father = father;
+     t->team = team;
 
      /* Current thread information is 't' */
      sctk_openmp_thread_tls = t;
@@ -1272,11 +1272,11 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
     instance = t->children_instance;
     sctk_assert(instance != NULL);
 
-    /* Init the father in each thread of the team */
+    /* Init the team information in each thread of the team */
     num_threads_mvp = 1;
     for (i=0 ; i<OMP_MICROVP_NUMBER ; i++)
       for (j=0 ; j<num_threads_mvp ; j++)
-        instance->mvps[i]->threads[j].father = t->father;
+        instance->mvps[i]->threads[j].team = t->team;
  
     /* Get the root node of the main tree */
     root = instance->root;
@@ -1612,92 +1612,6 @@ int mpcomp_get_thread_num ()
   return t->rank;
 }
 
-void __mpcomp_barrier_for_dyn(void)
-{
-  mpcomp_thread_t *t;
-  mpcomp_mvp_t *mvp;
-
-  /* Grab the info of the current thread */    
-  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);
-
-  /* Grab the corresponding microVP */
-  mvp = t->mvp;
-  sctk_assert(mvp != NULL);
-
-  /* Block only if I am not the only thread in the team */
-  if (t->num_threads > 1) {
-    /* If there only 1 OpenMP threads on this microVP? */
-    if (mvp->nb_threads == 1) {
-      __mpcomp_internal_barrier(mvp);
-    }    
-  }
-
-  
-  
-  sctk_nodebug("__mpcomp_barrier_for_dyn: Leaving");
-}
-
-int __mpcomp_dynamic_loop_begin(int lb, int b, int incr, int chunk_size, int *from, int *to)
-{
-  mpcomp_thread_t *t;
-  mpcomp_thread_father_t *father;
-  int rank;
-  int index;
-
-  /* Grab the info of the current thread */    
-  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);
-
-  sctk_nodebug("thread rank %d",t->rank);
-
-  /* Get the father info */
-  father = t->father;
-  sctk_assert(father != NULL);
-
-  /* Get the rank of the current thread */
-  rank = t->rank;  
-
-  /* Index of the next loop */
-  index = (father->private_current_for_dyn + 1) % MPCOMP_MAX_ALIVE_FOR_DYN;
-
-  /* If it is a barrier */
-  if (father->stop[index] != OK) {
-
-    sctk_spinlock_lock(&(father->lock_stop_for_dyn));
-
-    /* Is it the last loop to perform before synchronization? */
-    if (father->stop[index] == STOP) {
-      father->stop[index] = STOPPED;
-      sctk_spinlock_unlock(&(father->lock_stop_for_dyn));
-
-      /* Call barrier */
-      __mpcomp_barrier_for_dyn();
-
-      return __mpcomp_dynamic_loop_begin(lb, b, incr, chunk_size, from, to);       
-    }
-   
-    /* This loop has been the last loop before synchronization */ 
-    if (father->stop[index] == STOPPED) {
-      sctk_spinlock_unlock(&(father->lock_stop_for_dyn));
-
-      /* Call barrier */
-      __mpcomp_barrier_for_dyn();
-
-      return __mpcomp_dynamic_loop_begin(lb, b, incr, chunk_size, from, to);       
-    }
-
-    sctk_spinlock_unlock(&(father->lock_stop_for_dyn));
-  }
-}
-
-int __mpcomp_dynamic_loop_next(int *from, int *to)
-{
-}
-
-void __mpcomp_dynamic_loop_end_nowait()
-{
-}
 
 
 /*
@@ -1720,62 +1634,26 @@ mpcomp_get_max_threads (void)
 }
 
 
-void __mpcomp_ordered_begin() {
+/* timing routines */
+double
+mpcomp_get_wtime (void)
+{
+  double res;
+  struct timeval tp;
 
-  mpcomp_thread_t *t;
-  mpcomp_thread_father_t *team;
+  gettimeofday (&tp, NULL);
+  res = tp.tv_sec + tp.tv_usec * 0.000001;
 
-  __mpcomp_init ();
-
-  /* Grab the info of the current thread */    
-  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);
-
-  team = t->father ;
-
-  /* First iteration of the loop -> initialize 'next_ordered_offset' */
-  if ( t->current_ordered_iteration == t->loop_lb ) {
-    team->next_ordered_offset = 0 ;
-  } else {
-    /* Do we have to wait for the right iteration? */
-    if ( t->current_ordered_iteration != 
-	(t->loop_lb + t->loop_incr * team->next_ordered_offset) ) {
-
-      sctk_nodebug( "__mpcomp_ordered_begin[%d]: Waiting to schedule iteration %d",
-	  t->rank, t->current_ordered_iteration ) ;
-
-      /* Spin while the condition is not satisfied */
-      while ( t->current_ordered_iteration != 
-	  (t->loop_lb + t->loop_incr * team->next_ordered_offset) ) {
-	if ( t->current_ordered_iteration != 
-	    (t->loop_lb + t->loop_incr * team->next_ordered_offset) ) {
-	  sctk_thread_yield ();
-	}
-      }
-    }
-  }
-
-  sctk_nodebug( "__mpcomp_ordered_begin[%d]: Allowed to schedule iteration %d",
-      t->rank, t->current_ordered_iteration ) ;
+  sctk_nodebug ("Wtime = %f", res);
+  return res;
 }
 
-void __mpcomp_ordered_end() {
-
-  mpcomp_thread_t *t;
-  mpcomp_thread_father_t *team;
-
-   /* Grab the info of the current thread */    
-  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);
-
-  team = t->father ;
-
-  t->current_ordered_iteration += t->loop_incr ;
-  if ( (t->loop_incr > 0 && t->current_ordered_iteration >= t->loop_b) ||
-      (t->loop_incr < 0 && t->current_ordered_iteration <= t->loop_b) ) {
-    team->next_ordered_offset = -1 ;
-  } else {
-    team->next_ordered_offset++ ;
-  }
-
+double
+mpcomp_get_wtick (void)
+{
+  return 10e-6;
 }
+
+
+
+
