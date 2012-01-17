@@ -1257,7 +1257,13 @@ PMPC_Finalize (void)
 
   task_specific = __MPC_get_task_specific ();
   task_specific->init_done = 0;
+  int rank;
+  __MPC_Comm_rank (MPC_COMM_WORLD, &rank, task_specific);
   /*   __MPC_delete_task_specific (); */
+
+  if(sctk_process_number > 1){
+    sctk_ib_cp_finalize_task(rank);
+  }
 
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Finalize");

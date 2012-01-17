@@ -86,11 +86,6 @@ typedef struct sctk_ib_cp_task_s{
 /* XXX:should be determined dynamically */
 #define CYCLES_PER_SEC (2270.000*1e6)
 
-enum sctk_ib_cp_poll_cq_e {
-  send_cq,
-  recv_cq
-};
-
 extern __thread double time_steals;
 extern __thread double time_own;
 /*-----------------------------------------------------------

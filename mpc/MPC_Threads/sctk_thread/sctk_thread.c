@@ -669,9 +669,9 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 #ifdef MPC_USE_INFINIBAND
       /* Register task for collaborative polling */
       /* XXX Also check if IB enabled */
-      if(sctk_process_number > 1){
-        sctk_ib_cp_finalize_task(tmp.task_id);
-      }
+//      if(sctk_process_number > 1){
+//        sctk_ib_cp_finalize_task(tmp.task_id);
+//      }
 #endif
       sctk_unregister_thread (tmp.task_id);
       sctk_net_send_task_end (tmp.task_id, sctk_process_rank);

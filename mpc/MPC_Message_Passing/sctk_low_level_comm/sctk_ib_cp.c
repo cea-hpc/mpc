@@ -216,7 +216,7 @@ void sctk_ib_cp_finalize_task(int rank) {
       fprintf(stderr, "#poll_own poll_stolen poll_steals poll_steal_same_node poll_steal_other_node time_stolen time_steals time_own\n");
 
     }
-    fprintf(stderr, "%2d %d %d %d %d %d %0.5f 0 %0.5f %d %d\n", rank,
+    fprintf(stderr, "%2d %d %d %d %d %d %0.5f 0 %0.5f\n", rank,
         CP_PROF_PRINT(task, poll_own),
         CP_PROF_PRINT(task, poll_stolen),
         CP_PROF_PRINT(task, poll_steals),
@@ -227,14 +227,12 @@ void sctk_ib_cp_finalize_task(int rank) {
         task->time_own/CYCLES_PER_SEC);
 #endif
         time_steals/CYCLES_PER_SEC,
-        time_own/CYCLES_PER_SEC,
-        CP_PROF_PRINT(task, poll_steal_same_node),
-        CP_PROF_PRINT(task, poll_steal_other_node));
+        time_own/CYCLES_PER_SEC);
   }
 
 }
 
-int __cp_poll(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll, sctk_ibuf_t** volatile list, sctk_ib_cp_task_t *task,
+static inline int __cp_poll(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll, sctk_ibuf_t** volatile list, sctk_ib_cp_task_t *task,
     int (*func) (struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf, const char from_cp, struct sctk_ib_polling_s *poll)){
   sctk_ibuf_t *ibuf = NULL;
   int nb_found = 0;
@@ -249,7 +247,11 @@ retry:
         sctk_nodebug("Found ibuf %p", ibuf);
         sctk_spinlock_unlock(&task->lock);
         /* Run the polling function */
-        func(rail, ibuf, 1, poll);
+        if (ibuf->cq == recv_cq) {
+          sctk_network_poll_recv_ibuf(rail, ibuf, 1, poll);
+        } else {
+          sctk_network_poll_send_ibuf(rail, ibuf, 1, poll);
+        }
         nb_found++;
         poll->recv_found_own++;
         goto retry;
@@ -273,6 +275,7 @@ int sctk_ib_cp_poll(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll
     for (task=vps[vp].tasks; task; task=task->hh_vp.next)
       nb_found += __cp_poll(rail, poll, &(task->recv_ibufs), task, func);
   } else if (cq == send_cq) {
+    assume(0);
     for (task=vps[vp].tasks; task; task=task->hh_vp.next)
       nb_found += __cp_poll(rail, poll, &(task->send_ibufs), task, func);
   } else not_reachable();
@@ -305,7 +308,11 @@ retry:
         sctk_spinlock_unlock(&task->lock);
         /* Run the polling function */
         s = sctk_atomics_get_timestamp();
-        func(rail, ibuf, 2, poll);
+        if (ibuf->cq == recv_cq) {
+          sctk_network_poll_recv_ibuf(rail, ibuf, 2, poll);
+        } else {
+          sctk_network_poll_send_ibuf(rail, ibuf, 2, poll);
+        }
         e = sctk_atomics_get_timestamp();
 
         if (ibv_cp_profiler) {
@@ -366,9 +373,9 @@ exit:
 #define STEAL_OTHER_NODE(x) do { \
   int rand = rand_r(&seed) % numa_registered; \
   tmp_numa = &numas[(task_node_number+rand)%numa_registered]; \
-  CDL_FOREACH(tmp_numa->vps, tmp_vp) {  \
+   CDL_FOREACH(tmp_numa->vps, tmp_vp) {  \
     for (task=tmp_vp->tasks; task; task=task->hh_vp.next) { \
-      nb_found += __cp_steal(rail, poll, x, task, stealing_task, func);  \
+     nb_found += __cp_steal(rail, poll, x, task, stealing_task, func);  \
     } \
   } \
   if (nb_found) return nb_found;  \

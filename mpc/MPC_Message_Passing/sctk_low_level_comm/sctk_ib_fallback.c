@@ -112,7 +112,7 @@ static int __is_specific_mesage_tag(sctk_thread_ptp_message_body_t *msg)
   } else  poll->recv_found_own++; \
 } while(0)
 
-static int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
+int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
     const char from_cp, struct sctk_ib_polling_s* poll) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
@@ -123,7 +123,8 @@ static int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
   int src_task;
   if (steal > 0) {
     src_task = IBUF_GET_SRC_TASK(ibuf);
-    CHECK_CP(src_task, send_cq);
+    ibuf->cq = send_cq;
+    CHECK_CP(src_task, recv_cq);
     polling_task = sctk_ib_cp_get_polling_task();
     s = sctk_atomics_get_timestamp();
   }
@@ -165,7 +166,7 @@ static int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
   }
   return 0;
 }
-static int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
+int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
     const char from_cp, struct sctk_ib_polling_s* poll)
 {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
@@ -186,6 +187,7 @@ static int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
      * the message
      * - dest_task can be equal to -1
      * - If the message is from CP, do not handle it*/
+    ibuf->cq = recv_cq;
     CHECK_CP(dest_task, recv_cq);
     polling_task = sctk_ib_cp_get_polling_task();
     s = sctk_atomics_get_timestamp();
@@ -293,7 +295,7 @@ static int sctk_network_poll_all (sctk_rail_info_t* rail) {
   /* First try to poll pending */
   if (steal > 0) {
     sctk_ib_cp_poll(rail, &poll, recv_cq, sctk_network_poll_recv_ibuf);
-    sctk_ib_cp_poll(rail, &poll, send_cq, sctk_network_poll_send_ibuf);
+//    sctk_ib_cp_poll(rail, &poll, send_cq, sctk_network_poll_send_ibuf);
   }
 
   /* Poll received messages */
@@ -313,10 +315,11 @@ static int sctk_network_poll_all_and_steal(sctk_rail_info_t *rail) {
   int nb_found = 0;
 
   /* POLLING */
+  /* XXX: MODIFY */
   if (sctk_network_poll_all(rail)==0 && steal > 1){
     /* If no message has been found -> steal*/
     nb_found += sctk_ib_cp_steal(rail, &poll, recv_cq, sctk_network_poll_recv_ibuf);
-    nb_found += sctk_ib_cp_steal(rail, &poll, send_cq, sctk_network_poll_send_ibuf);
+//    nb_found += sctk_ib_cp_steal(rail, &poll, send_cq, sctk_network_poll_send_ibuf);
   }
   return nb_found;
 }
@@ -437,6 +440,14 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   sctk_ib_async_init(rail_ib);
   /* Initialize collaborative polling */
   sctk_ib_cp_init(rail_ib);
+
+  LOAD_CONFIG(rail_ib);
+  struct ibv_srq_attr mod_attr;
+  int rc;
+  mod_attr.srq_limit  = config->ibv_srq_credit_thread_limit;
+  rc = ibv_modify_srq(device->srq, &mod_attr, IBV_SRQ_LIMIT);
+  assume(rc == 0);
+
 
   /* Initialize network */
   sprintf(network_name, "IB-MT (v2.0) fallback %d/%d:%s]",

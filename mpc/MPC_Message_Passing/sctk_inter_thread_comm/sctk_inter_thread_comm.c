@@ -1108,6 +1108,14 @@ void sctk_perform_all (){
   sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
 }
 
+
+void sctk_notify_idle_message_inter (){
+  if(sctk_process_number > 1){
+    sctk_network_notify_idle_message ();
+  }
+}
+
+
 void sctk_notify_idle_message (){
   sctk_perform_all ();
   if(sctk_process_number > 1){

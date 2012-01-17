@@ -134,7 +134,7 @@ void* async_thread(void* arg)
         /* We re-arm the limit for the SRQ. */
         mod_attr.srq_limit  = config->ibv_srq_credit_thread_limit;
         mod_attr.max_wr     = config->ibv_max_srq_ibufs_posted;
-        rc = ibv_modify_srq(device->srq, &mod_attr, IBV_SRQ_LIMIT | IBV_SRQ_LIMIT);
+        rc = ibv_modify_srq(device->srq, &mod_attr, IBV_SRQ_LIMIT);
         assume(rc == 0);
         break;
 

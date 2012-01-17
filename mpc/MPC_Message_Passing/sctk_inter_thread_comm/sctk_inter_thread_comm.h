@@ -265,6 +265,7 @@ typedef struct sctk_message_to_copy_s{
   void sctk_message_copy_pack(sctk_message_to_copy_t* tmp);
   void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp);
   void sctk_notify_idle_message ();
+  void sctk_notify_idle_message_inter ();
   void sctk_message_completion_and_free(sctk_thread_ptp_message_t* send,
 					sctk_thread_ptp_message_t* recv);
   void sctk_complete_and_free_message (sctk_thread_ptp_message_t * msg);

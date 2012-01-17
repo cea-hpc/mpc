@@ -438,12 +438,14 @@ sctk_ib_srq_init(struct sctk_ib_rail_info_s* rail_ib,
 {
   LOAD_DEVICE(rail_ib);
   device->srq = ibv_create_srq(device->pd, attr);
+
   if (!device->srq)
   {
     perror("error");
     sctk_error("Cannot create Shared Received Queue");
     sctk_abort();
   }
+
   return device->srq;
 }
 
@@ -455,6 +457,7 @@ sctk_ib_srq_init_attr(struct sctk_ib_rail_info_s* rail_ib)
 
   memset (&attr, 0, sizeof (struct ibv_srq_init_attr));
 
+  attr.attr.srq_limit = config->ibv_srq_credit_thread_limit;
   attr.attr.max_wr = config->ibv_max_srq_ibufs_posted;
   attr.attr.max_sge = config->ibv_max_sg_rq;
 
@@ -574,6 +577,8 @@ sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
     wait_send_arg.flag = 0;
     wait_send_arg.remote = remote;
     wait_send_arg.ibuf = ibuf;
+
+    assume(0);
 
     sctk_ib_nodebug("QP full, waiting for posting message...");
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,

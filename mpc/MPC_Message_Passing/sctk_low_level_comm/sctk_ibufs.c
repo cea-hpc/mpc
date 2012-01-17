@@ -59,14 +59,14 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
   /* XXX: replaced by memalign_on_node */
   sctk_posix_memalign( (void**) &ptr, mmu->page_size, nb_ibufs * config->ibv_eager_limit);
   assume(ptr);
-  memset(ptr, 0, nb_ibufs * config->ibv_eager_limit);
+  /* FIXME: should be done by the a task on same VP
+  memset(ptr, 0, nb_ibufs * config->ibv_eager_limit); */
 
   /* XXX: replaced by memalign_on_node */
    sctk_posix_memalign(&ibuf, mmu->page_size, nb_ibufs * sizeof(sctk_ibuf_t));
   assume(ibuf);
-  memset (ibuf, 0, nb_ibufs * sizeof(sctk_ibuf_t));
-  /* XXX: memset disabled for optimizing launch
-   * memset (ptr, 0, nb_ibufs * ibv_eager_limit); */
+  /* FIXME: should be done by the a task on same VP
+  memset (ibuf, 0, nb_ibufs * sizeof(sctk_ibuf_t)); */
 
   region->ibuf = ibuf;
   region->nb = nb_ibufs;
@@ -74,7 +74,8 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
   region->rail = rail_ib;
   DL_APPEND(node->regions, region);
 
-  /* register buffers at once */
+  /* register buffers at once
+   * FIXME: Always task on NUMA node 0 which firs-touch all pages... really bad */
   region->mmu_entry = sctk_ib_mmu_register_no_cache(rail_ib, ptr,
       nb_ibufs * config->ibv_eager_limit);
   sctk_nodebug("Reg %p registered. lkey : %lu", ptr, region->mmu_entry->mr->lkey);
@@ -103,21 +104,28 @@ sctk_ibuf_pool_init(struct sctk_ib_rail_info_s *rail_ib)
   LOAD_CONFIG(rail_ib);
   sctk_ibuf_pool_t *pool;
   int i;
-  unsigned int nodes_nb = sctk_get_numa_node_number();
-  /* FIXME: get_numa_node_number which returns 0 when SMP */
+  int alloc_nb;
+  unsigned int nodes_nb;
+
+  nodes_nb = sctk_get_numa_node_number();
+ /* FIXME: get_numa_node_number which returns 0 when SMP */
   nodes_nb = (nodes_nb == 0) ? 1 : nodes_nb;
+  /* We alloc an additional pool of buffer where all buffers for SRQ will
+   * be allocated */
+  alloc_nb = nodes_nb+1;
+
 
   pool = sctk_malloc(sizeof(sctk_ibuf_pool_t) +
-      nodes_nb * sizeof(sctk_ibuf_numa_t));
+      alloc_nb * sizeof(sctk_ibuf_numa_t));
   memset(pool, 0, sizeof(sctk_ibuf_pool_t) +
-      nodes_nb * sizeof(sctk_ibuf_numa_t));
+      alloc_nb * sizeof(sctk_ibuf_numa_t));
   assume (pool);
   pool->nodes_nb = nodes_nb;
   pool->nodes = (sctk_ibuf_numa_t*)
     ((char*) pool + sizeof(sctk_ibuf_pool_t));
 
   /* loop on nodes and create buffers */
-  for (i=0; i < nodes_nb; ++i) {
+  for (i=0; i < alloc_nb; ++i) {
     pool->nodes[i].id = i;
     pool->nodes[i].lock = SCTK_SPINLOCK_INITIALIZER;
     init_node(rail_ib, &pool->nodes[i], config->ibv_init_ibufs);
@@ -213,7 +221,7 @@ int sctk_ibuf_srq_check_and_post(
     int limit)
 {
   LOAD_POOL(rail_ib);
-  int node = 0;
+  int node = pool->nodes_nb;
 
   return srq_post(rail_ib, limit, &pool->nodes[node], 1);
 }

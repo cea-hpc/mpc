@@ -28,6 +28,11 @@
 #include "stdint.h"
 #include "infiniband/verbs.h"
 
+enum sctk_ib_cp_poll_cq_e {
+  send_cq,
+  recv_cq
+};
+
 #include "sctk_spinlock.h"
 #include "sctk_ib_mmu.h"
 #include "sctk_ib.h"
@@ -173,6 +178,8 @@ typedef struct sctk_ibuf_s
 
   struct sctk_ibuf_s* next;
   struct sctk_ibuf_s* prev;
+
+  enum sctk_ib_cp_poll_cq_e cq;
 } sctk_ibuf_t;
 
 
