@@ -29,6 +29,8 @@
 #include "sctk_thread.h"
 #include "sctk.h"
 #include "sctk_kernel_thread.h"
+#include "sctk_pmi.h"
+
 #include <dirent.h>
 
 #include <stdio.h>
@@ -60,7 +62,7 @@ hwloc_topology_t sctk_get_topology_object(void)
 }
 
 /* print a cpuset in a human readable way */
-static void
+void
 print_cpuset(hwloc_bitmap_t cpuset)
 {
   char buff[256];
@@ -314,7 +316,7 @@ sctk_get_node_name ()
  * @param obj Parent object
  * @param type Child type
  */
-  static hwloc_obj_t
+hwloc_obj_t
 sctk_get_first_child_by_type(hwloc_obj_t obj, hwloc_obj_type_t type)
 {
   hwloc_obj_t child = obj;
@@ -466,7 +468,7 @@ sctk_get_node_from_cpu (const int vp)
 }
 
 /* print the neighborhood*/
-  static void
+void
 print_neighborhood(int cpuid, int nb_cpus, int* neighborhood, hwloc_obj_t* objs)
 {
   int i;

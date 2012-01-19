@@ -413,7 +413,6 @@ sctk_net_set_free_communicator_one (const sctk_communicator_t
     origin_communicator,
 				    const sctk_communicator_t communicator, int rank)
 {
-  int i;
   sctk_set_free_communicator_t msg;
 
   sctk_nodebug ("%s", SCTK_FUNCTION);
@@ -424,6 +423,7 @@ sctk_net_set_free_communicator_one (const sctk_communicator_t
           sctk_net_set_free_communicator_remote, rank, &msg,
           sizeof (sctk_set_free_communicator_t));
 }
+
 void
 sctk_net_set_free_communicator (const sctk_communicator_t
     origin_communicator,

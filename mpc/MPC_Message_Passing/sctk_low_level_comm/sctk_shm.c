@@ -84,7 +84,7 @@ static void sctk_shm_fill_translation_tables() {
  *  communication
  * ==================================================================
  */
-static int sctk_shm_is_shm_com ( sctk_collective_communications_t* com ) {
+int sctk_shm_is_shm_com ( sctk_collective_communications_t* com ) {
   int i;
   int com_type;
 

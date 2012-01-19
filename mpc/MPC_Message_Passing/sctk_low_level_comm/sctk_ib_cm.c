@@ -33,6 +33,7 @@
 #include "sctk_rpc.h"
 #include <infiniband/verbs.h>
 #include "sctk_alloc.h"
+#include "sctk_pmi.h"
 #include "sctk_iso_alloc.h"
 #include "sctk_net_tools.h"
 #include "sctk_io_helper.h"

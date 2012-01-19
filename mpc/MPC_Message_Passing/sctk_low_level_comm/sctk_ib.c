@@ -24,6 +24,7 @@
 #include "sctk_low_level_comm.h"
 #include "sctk_hybrid_comm.h"
 #include "sctk_debug.h"
+#include "sctk_pmi.h"
 
 #ifdef MPC_USE_INFINIBAND
 

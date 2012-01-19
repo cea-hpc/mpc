@@ -46,7 +46,7 @@ extern "C"
   /*
    * CPU relax implemtation
    * */
-  typedef volatile unsigned int sctk_atomic_test_t;
+  typedef volatile int sctk_atomic_test_t;
 
 #if defined(SCTK_COMPILER_ACCEPT_ASM)
 #define LOCK "lock ; "
@@ -89,6 +89,8 @@ extern "C"
 #else
   void sctk_cpu_relax (void);
 #endif
+  
+  int sctk_test_and_set (sctk_atomic_test_t * atomic);
 
 #ifdef __cplusplus
 }

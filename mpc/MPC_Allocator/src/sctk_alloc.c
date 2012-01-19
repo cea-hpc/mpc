@@ -695,7 +695,7 @@ sctk_get_set_tls_init ()
 #ifdef MPC_Threads
 #ifndef MPC_USE_PAGE_MIGRATION
 #define SCTK_ALLOC_MAX_CPU_NUMBER 512
-static char *sctk_tmp_buffer_relocalise_memory[SCTK_ALLOC_MAX_CPU_NUMBER];
+char *sctk_tmp_buffer_relocalise_memory[SCTK_ALLOC_MAX_CPU_NUMBER];
 
 #endif
 #endif

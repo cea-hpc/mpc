@@ -46,6 +46,7 @@
 #endif
 #include "sctk_topology.h"
 #include "sctk_asm.h"
+#include "sctk_tls.h"
 /* #include "sctk_daemons.h" */
 /* #include "sctk_io.h" */
 
@@ -76,7 +77,7 @@ int sctk_share_node_capabilities = 0;
 double __sctk_profiling__start__sctk_init_MPC;
 double __sctk_profiling__end__sctk_init_MPC;
 
-  static void
+void
 format_output (char *name, char *def)
 {
   char n[MAX_NAME_FORMAT];

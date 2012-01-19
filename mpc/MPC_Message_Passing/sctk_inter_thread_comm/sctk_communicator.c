@@ -25,6 +25,7 @@
 #include "sctk_inter_thread_comm.h"
 #include "sctk_topology.h"
 #include "sctk_low_level_comm.h"
+#include "sctk_hybrid_comm.h"
 #include "sctk_accessor.h"
 
 #define SCTK_LOCAL_VERSION_MAJOR 0
@@ -201,8 +202,6 @@ sctk_get_free_communicator_on_root_no_rpc (const sctk_communicator_t
   sctk_thread_mutex_lock (&sctk_global_communicator_number_lock);
   if (sctk_communicator_list[origin_communicator]->new_communicator == (sctk_communicator_t)-1)
     {
-      char name[2048];
-      FILE *file;
       for (i = 0; i < SCTK_MAX_COMMUNICATOR_NUMBER; i++)
 	{
 	  if (sctk_communicator_list[i] == NULL)

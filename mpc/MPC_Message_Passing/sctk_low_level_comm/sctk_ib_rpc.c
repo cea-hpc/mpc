@@ -64,7 +64,6 @@ thread_rpc(void* arg)
 {
   void* ret;
   rpc_req_list_entry_t* req;
-  sctk_update_communicator_t *msg;
 
   while(1)
   {

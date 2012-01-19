@@ -32,6 +32,7 @@
 #include "sctk_mpcrun_client.h"
 #include "sctk_alloc.h"
 #include "sctk_debug.h"
+#include "sctk_pmi.h"
 
 #include <string.h>
 #include <inttypes.h>

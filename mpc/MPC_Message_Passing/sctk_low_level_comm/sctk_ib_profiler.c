@@ -55,6 +55,8 @@ double sctk_ibv_profiler_get(ibv_profiler_id id)
   d = counters[id].value;
   sctk_spinlock_unlock(&locks[id]);
   return d;
+#else
+  return 0;
 #endif
 }
 

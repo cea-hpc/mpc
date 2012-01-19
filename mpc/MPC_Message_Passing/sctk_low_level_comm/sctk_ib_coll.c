@@ -406,7 +406,8 @@ sctk_net_ibv_broadcast_binomial ( sctk_collective_communications_t * com,
 }
 
 uint64_t bcast_scatter_nb=0;
-  static void
+
+  void
 sctk_net_ibv_broadcast_scatter ( sctk_collective_communications_t * com,
     sctk_virtual_processor_t * my_vp,
     const size_t elem_size, const size_t nb_elem, const int root, const int psn)
