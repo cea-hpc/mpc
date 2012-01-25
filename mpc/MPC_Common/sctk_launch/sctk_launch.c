@@ -336,6 +336,13 @@ sctk_use_ethread_mxn (void)
 }
 
   static void
+sctk_use_ethread_mxn_ng (void)
+{
+  sctk_multithreading_mode = "ethread_mxn_ng";
+  sctk_thread_val = sctk_ethread_mxn_ng_thread_init;
+}
+
+  static void
 sctk_use_mpi (void)
 {
 #ifdef MPC_Message_Passing
@@ -501,6 +508,7 @@ sctk_threat_arg (char *word)
   sctk_add_arg_eq ("--mpc-verbose", sctk_set_verbosity);
   sctk_add_arg ("--use-pthread", sctk_use_pthread);
   sctk_add_arg ("--use-ethread_mxn", sctk_use_ethread_mxn);
+  sctk_add_arg ("--use-ethread_mxn_ng", sctk_use_ethread_mxn_ng);
   sctk_add_arg ("--use-ethread", sctk_use_ethread);
 
   sctk_add_arg ("--use-mpi", sctk_use_mpi);
@@ -808,6 +816,7 @@ sctk_launch_main (int argc, char **argv)
   }
 
   sctk_use_ethread_mxn ();
+  sctk_use_ethread_mxn_ng ();
   sctk_def_task_nb ("1");
   sctk_def_process_nb ("1");
   /*   sctk_exception_catch (11); */
