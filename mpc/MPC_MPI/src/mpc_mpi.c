@@ -1723,7 +1723,7 @@ __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests,
 		}
 	      else
 		{
-		  tmp = PMPC_Test (req, &loc_flag, &(array_of_statuses[i]));
+		  tmp = PMPC_Test (req, &loc_flag, (array_of_statuses == MPC_STATUS_IGNORE) ? MPC_STATUS_IGNORE:&(array_of_statuses[i]));
 		}
 	    }
 	  if (loc_flag)
@@ -1736,15 +1736,9 @@ __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests,
 	      return tmp;
 	    }
 	}
-//      sctk_debug ("done %d tot %d", done, count);
       flag = (done == count);
       /* XXX: we should place it at another place */
       if (!flag) sctk_thread_yield ();
-//      if (done == old_done) {
-//        sctk_network_notify_idle_message ();
-//      } else {
-//        old_done = done;
-//      }
     }
   return MPI_SUCCESS;
 }
@@ -1779,7 +1773,7 @@ __INTERNAL__PMPI_Testall (int count, MPI_Request array_of_requests[],
 	    }
 	  else
 	    {
-	      tmp = PMPC_Test (req, &loc_flag, &(array_of_statuses[i]));
+	      tmp = PMPC_Test (req, &loc_flag, (array_of_statuses == MPC_STATUS_IGNORE) ? MPC_STATUS_IGNORE:&(array_of_statuses[i]));
 	    }
 	}
       if (loc_flag)
@@ -1847,7 +1841,7 @@ __INTERNAL__PMPI_Testsome (int incount, MPI_Request * array_of_requests,
 	    }
 	  else
 	    {
-	      tmp = PMPC_Test (req, &loc_flag, &(array_of_statuses[done]));
+	      tmp = PMPC_Test (req, &loc_flag,(array_of_statuses == MPC_STATUS_IGNORE) ? MPC_STATUS_IGNORE:&(array_of_statuses[done]));
 	      array_of_indices[done] = i;
 	    }
 	  if (loc_flag)
