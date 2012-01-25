@@ -385,6 +385,8 @@ extern "C"
 #define sctk_remove_func(func) __sctk_ptr_thread_##func = sctk_gen_thread_##func
 
 
+#define sctk_thread_generic_check_size(a,b) sctk_size_checking(sizeof(a),sizeof(b),SCTK_STRING(a),SCTK_STRING(b),__FILE__,__LINE__)
+
 #ifdef __cplusplus
 }
 #endif

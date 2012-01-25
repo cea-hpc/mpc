@@ -19,26 +19,29 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include <stdio.h>
-#include <unistd.h>
+#ifndef __SCTK_THREAD_KEYS_H_
+#define __SCTK_THREAD_KEYS_H_
+
+#include <stdlib.h>
 #include <string.h>
-#include <signal.h>
-#include "sctk_pthread.h"
+#include "sctk_config.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"
-#include "sctk_tls.h"
 #include "sctk_internal_thread.h"
-#include "sctk_posix_pthread.h"
-#include "sctk_config_pthread.h"
-#include "sctk_kernel_thread.h"
-#include <semaphore.h>
 
+typedef struct {
+  void* keys[SCTK_THREAD_KEYS_MAX];
+}sctk_thread_generic_keys_t;
 
-void
-sctk_ethread_mxn_ng_thread_init (void){
-  sctk_only_once ();
+void sctk_thread_generic_keys_init(); 
+int
+sctk_thread_generic_keys_setspecific (sctk_thread_key_t __key, const void *__pointer,sctk_thread_generic_keys_t* keys);
+void *
+sctk_thread_generic_keys_getspecific (sctk_thread_key_t __key,sctk_thread_generic_keys_t* keys);
+int
+sctk_thread_generic_keys_key_create (sctk_thread_key_t * __key,
+				void (*__destr_function) (void *),sctk_thread_generic_keys_t* keys);
+int
+sctk_thread_generic_keys_key_delete (sctk_thread_key_t __key,sctk_thread_generic_keys_t* keys);
 
-  sctk_multithreading_initialised = 1;
-
-  sctk_thread_data_init ();
-}
+#endif
