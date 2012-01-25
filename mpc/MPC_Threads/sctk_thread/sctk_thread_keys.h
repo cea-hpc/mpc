@@ -34,6 +34,7 @@ typedef struct {
 }sctk_thread_generic_keys_t;
 
 void sctk_thread_generic_keys_init(); 
+void sctk_thread_generic_keys_init_thread(sctk_thread_generic_keys_t* keys);
 int
 sctk_thread_generic_keys_setspecific (sctk_thread_key_t __key, const void *__pointer,sctk_thread_generic_keys_t* keys);
 void *

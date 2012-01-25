@@ -90,6 +90,7 @@ sctk_thread_generic_thread_init (void){
 		      int (*)(sctk_thread_key_t, const void *));
   sctk_add_func_type (sctk_thread_generic, getspecific,
 		      void *(*)(sctk_thread_key_t));
+  sctk_thread_generic_keys_init_thread(&(sctk_thread_generic_self()->keys));
 
   sctk_multithreading_initialised = 1;
 
@@ -99,14 +100,33 @@ sctk_thread_generic_thread_init (void){
 /***************************************/
 /* IMPLEMENTATION SPECIFIC             */
 /***************************************/
+
+/********* ETHREAD MXN ************/
+static __thread sctk_thread_generic_p_t* ethread_mxn_self_data;
 static
-sctk_thread_generic_t sctk_thread_ethread_mxm_ng_self(){
-  not_implemented();
-  return NULL;
+sctk_thread_generic_t sctk_thread_ethread_mxn_ng_self(){
+  return ethread_mxn_self_data;
 }
 
 void
 sctk_ethread_mxn_ng_thread_init (void){
-  sctk_thread_generic_self_p = sctk_thread_ethread_mxm_ng_self;
+  sctk_thread_generic_self_p = sctk_thread_ethread_mxn_ng_self;
+  ethread_mxn_self_data = sctk_malloc(sizeof(sctk_thread_generic_p_t));
+  assume(ethread_mxn_self_data != NULL);
+
+  sctk_thread_generic_thread_init ();
+}
+
+/********* PTHREAD ************/
+static __thread sctk_thread_generic_p_t pthread_self_data;
+static
+sctk_thread_generic_t sctk_thread_pthread_ng_self(){
+  return &(pthread_self_data);
+}
+
+void
+sctk_pthread_ng_thread_init (void){
+  sctk_thread_generic_self_p = sctk_thread_pthread_ng_self;
+
   sctk_thread_generic_thread_init ();
 }
