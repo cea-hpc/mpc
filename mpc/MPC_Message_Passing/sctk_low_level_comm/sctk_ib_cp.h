@@ -97,11 +97,9 @@ void sctk_ib_cp_init(struct sctk_ib_rail_info_s* rail_ib);
 
 int sctk_ib_cp_handle_message(struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf, int dest_task, enum sctk_ib_cp_poll_cq_e cq);
 
-int sctk_ib_cp_poll(struct sctk_rail_info_s* rail, struct sctk_ib_polling_s *poll, enum sctk_ib_cp_poll_cq_e cq,
-    int (*func) (struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf, const char from_cp, struct sctk_ib_polling_s *poll));
+int sctk_ib_cp_poll(struct sctk_rail_info_s* rail, struct sctk_ib_polling_s *poll);
 
-int sctk_ib_cp_steal(struct sctk_rail_info_s* rail, struct sctk_ib_polling_s *poll, enum sctk_ib_cp_poll_cq_e cq,
-    int (*func) (struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf, const char from_cp, struct sctk_ib_polling_s *poll));
+int sctk_ib_cp_steal(struct sctk_rail_info_s* rail, struct sctk_ib_polling_s *poll);
 
 sctk_ib_cp_task_t *sctk_ib_cp_get_task(int rank);
 

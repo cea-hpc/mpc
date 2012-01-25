@@ -166,6 +166,7 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
   }
   return 0;
 }
+
 int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
     const char from_cp, struct sctk_ib_polling_s* poll)
 {
@@ -294,8 +295,7 @@ static int sctk_network_poll_all (sctk_rail_info_t* rail) {
 
   /* First try to poll pending */
   if (steal > 0) {
-    sctk_ib_cp_poll(rail, &poll, recv_cq, sctk_network_poll_recv_ibuf);
-//    sctk_ib_cp_poll(rail, &poll, send_cq, sctk_network_poll_send_ibuf);
+    sctk_ib_cp_poll(rail, &poll);
   }
 
   /* Poll received messages */
@@ -315,11 +315,9 @@ static int sctk_network_poll_all_and_steal(sctk_rail_info_t *rail) {
   int nb_found = 0;
 
   /* POLLING */
-  /* XXX: MODIFY */
   if (sctk_network_poll_all(rail)==0 && steal > 1){
     /* If no message has been found -> steal*/
-    nb_found += sctk_ib_cp_steal(rail, &poll, recv_cq, sctk_network_poll_recv_ibuf);
-//    nb_found += sctk_ib_cp_steal(rail, &poll, send_cq, sctk_network_poll_send_ibuf);
+    nb_found += sctk_ib_cp_steal(rail, &poll);
   }
   return nb_found;
 }

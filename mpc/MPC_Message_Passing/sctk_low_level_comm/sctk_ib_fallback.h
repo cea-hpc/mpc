@@ -33,10 +33,18 @@ extern "C"
 
 #include <sctk_spinlock.h>
 
+  struct sctk_ibuf_s;
+  struct sctk_ib_polling_s;
+
 #define MAX_STRING_SIZE 2048
   void sctk_network_init_fallback_ib(sctk_rail_info_t* rail);
   void sctk_network_init_polling_thread (sctk_rail_info_t* rail, char* topology);
 
+  int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, struct sctk_ibuf_s *ibuf,
+  const char from_cp, struct sctk_ib_polling_s* poll);
+
+  int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, struct sctk_ibuf_s *ibuf,
+    const char from_cp, struct sctk_ib_polling_s* poll);
 #ifdef __cplusplus
 }
 #endif

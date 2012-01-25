@@ -232,8 +232,7 @@ void sctk_ib_cp_finalize_task(int rank) {
 
 }
 
-static inline int __cp_poll(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll, sctk_ibuf_t** volatile list, sctk_ib_cp_task_t *task,
-    int (*func) (struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf, const char from_cp, struct sctk_ib_polling_s *poll)){
+static inline int __cp_poll(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll, sctk_ibuf_t** volatile list, sctk_ib_cp_task_t *task){
   sctk_ibuf_t *ibuf = NULL;
   int nb_found = 0;
   int update_timers=0;
@@ -263,28 +262,20 @@ retry:
 }
 
 
-int sctk_ib_cp_poll(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll, enum sctk_ib_cp_poll_cq_e cq,
-    int (*func) (struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf, const char from_cp, struct sctk_ib_polling_s *poll)){
+int sctk_ib_cp_poll(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll){
   int vp = sctk_thread_get_vp();
   sctk_ib_cp_task_t *task = NULL;
   int nb_found = 0;
 
   if (ready == 0) return 0;
 
-  if (cq == recv_cq) {
-    for (task=vps[vp].tasks; task; task=task->hh_vp.next)
-      nb_found += __cp_poll(rail, poll, &(task->recv_ibufs), task, func);
-  } else if (cq == send_cq) {
-    assume(0);
-    for (task=vps[vp].tasks; task; task=task->hh_vp.next)
-      nb_found += __cp_poll(rail, poll, &(task->send_ibufs), task, func);
-  } else not_reachable();
+  for (task=vps[vp].tasks; task; task=task->hh_vp.next)
+    nb_found += __cp_poll(rail, poll, &(task->recv_ibufs), task);
 
   return nb_found;
 }
 
-static inline int __cp_steal(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll, sctk_ibuf_t** volatile list, sctk_ib_cp_task_t *task, sctk_ib_cp_task_t* stealing_task,
-    int (*func) (struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf, const char from_cp, struct sctk_ib_polling_s *poll)){
+static inline int __cp_steal(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll, sctk_ibuf_t** volatile list, sctk_ib_cp_task_t *task, sctk_ib_cp_task_t* stealing_task) {
   sctk_ibuf_t *ibuf = NULL;
   int nb_found = 0;
   /* For CP profiling */
@@ -363,7 +354,7 @@ exit:
 #define STEAL_CURRENT_NODE(x) do {  \
     CDL_FOREACH(&vps[vp], tmp_vp) { \
       for (task=tmp_vp->tasks; task; task=task->hh_vp.next) { \
-        nb_found += __cp_steal(rail, poll, x, task, stealing_task, func);  \
+        nb_found += __cp_steal(rail, poll, x, task, stealing_task);  \
       } \
       /* Return if message stolen */  \
       if (nb_found) return nb_found;  \
@@ -375,7 +366,7 @@ exit:
   tmp_numa = &numas[(task_node_number+rand)%numa_registered]; \
    CDL_FOREACH(tmp_numa->vps, tmp_vp) {  \
     for (task=tmp_vp->tasks; task; task=task->hh_vp.next) { \
-     nb_found += __cp_steal(rail, poll, x, task, stealing_task, func);  \
+     nb_found += __cp_steal(rail, poll, x, task, stealing_task);  \
     } \
   } \
   if (nb_found) return nb_found;  \
@@ -386,7 +377,7 @@ exit:
     if(i >= max_numa_to_steal) return nb_found;  \
       CDL_FOREACH(tmp_numa->vps, tmp_vp) {  \
         for (task=tmp_vp->tasks; task; task=task->hh_vp.next) { \
-          nb_found += __cp_steal(rail, poll, x, task, stealing_task, func);  \
+          nb_found += __cp_steal(rail, poll, x, task, stealing_task);  \
         } \
       } \
       /* steal a restricted number of NUMA nodes */ \
@@ -396,8 +387,7 @@ exit:
     } \
 } while (0)
 
-int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll, enum sctk_ib_cp_poll_cq_e cq,
-    int (*func) (sctk_rail_info_t *rail, sctk_ibuf_t *ibuf, const char from_cp, struct sctk_ib_polling_s *poll)) {
+int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll) {
   int nb_found = 0;
   int vp = sctk_thread_get_vp();
   sctk_ib_cp_task_t *stealing_task = NULL;
@@ -412,17 +402,11 @@ int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll, en
   /* XXX: Not working with oversubscribing */
   stealing_task = vps[vp].tasks;
   if (stealing_task) CP_PROF_INC(stealing_task,poll_steal_try);
-  if (cq == recv_cq) {
-    /* First, try to steal from the same NUMA node*/
-    STEAL_CURRENT_NODE(&task->recv_ibufs);
-    /* Secondly, try to steal from another NUMA node  */
-    STEAL_OTHER_NODE(&task->recv_ibufs);
-  } else if (cq == send_cq) {
-    /* First, try to steal from the same NUMA node*/
-    STEAL_CURRENT_NODE(&task->send_ibufs);
-    /* Secondly, try to steal from another NUMA node  */
-    STEAL_OTHER_NODE(&task->send_ibufs);
-  }
+
+  /* First, try to steal from the same NUMA node*/
+  STEAL_CURRENT_NODE(&task->recv_ibufs);
+  /* Secondly, try to steal from another NUMA node  */
+  STEAL_OTHER_NODE(&task->recv_ibufs);
   return nb_found;
 }
 
