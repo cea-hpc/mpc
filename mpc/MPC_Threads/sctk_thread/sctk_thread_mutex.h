@@ -28,12 +28,47 @@
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "sctk_internal_thread.h"
+#include "sctk_thread_scheduler.h"
+#include "sctk_spinlock.h"
+#include <utlist.h>
 
-typedef int sctk_thread_generic_mutex_t;
-#define SCTK_THREAD_GENERIC_MUTEX_INIT 0
+typedef struct sctk_thread_generic_mutex_cell_s{ 
+  sctk_thread_generic_scheduler_t* sched;
+  struct sctk_thread_generic_mutex_cell_s *prev, *next;
+}sctk_thread_generic_mutex_cell_t;
+
+typedef struct sctk_thread_generic_mutex_s{  
+  volatile sctk_thread_generic_scheduler_t* owner;
+  sctk_spinlock_t lock;
+  int type;
+  int nb_call;
+  sctk_thread_generic_mutex_cell_t* blocked;
+}sctk_thread_generic_mutex_t;
+#define SCTK_THREAD_GENERIC_MUTEX_INIT {NULL,SCTK_SPINLOCK_INITIALIZER,0,0,NULL}
 
 typedef int sctk_thread_generic_mutexattr_t;
 
+
+int
+sctk_thread_generic_mutexes_mutex_init (sctk_thread_generic_mutex_t * lock,
+					const  sctk_thread_generic_mutexattr_t* attr,
+					sctk_thread_generic_scheduler_t* sched);
+
+int
+sctk_thread_generic_mutexes_mutex_lock (sctk_thread_generic_mutex_t * lock,
+					sctk_thread_generic_scheduler_t* sched);
+
+int
+sctk_thread_generic_mutexes_mutex_trylock (sctk_thread_generic_mutex_t * lock,
+					   sctk_thread_generic_scheduler_t* sched);
+
+int
+sctk_thread_generic_mutexes_mutex_spinlock (sctk_thread_generic_mutex_t * lock,
+					    sctk_thread_generic_scheduler_t* sched);
+
+int
+sctk_thread_generic_mutexes_mutex_unlock (sctk_thread_generic_mutex_t * lock,
+					  sctk_thread_generic_scheduler_t* sched);
 
 void sctk_thread_generic_mutexes_init(); 
 #endif

@@ -22,21 +22,11 @@
 #include <stdio.h>
 #include <sctk_config.h>
 #include <sctk_thread.h>
-#include <sctk_thread_keys.h>
-#include <sctk_thread_mutex.h>
-#include <sctk_thread_scheduler.h>
+#include <sctk_thread_generic.h>
 
 /***************************************/
 /* THREADS                             */
 /***************************************/
-
-typedef struct{
-  sctk_thread_generic_keys_t keys;
-  sctk_thread_generic_scheduler_t sched;
-} sctk_thread_generic_p_t;
-
-typedef sctk_thread_generic_p_t* sctk_thread_generic_t;
-
 static inline 
 sctk_thread_generic_t sctk_thread_generic_self_default(){
   not_implemented();
@@ -84,35 +74,122 @@ static int
 sctk_thread_generic_mutex_init (sctk_thread_mutex_t * lock,
 				const sctk_thread_mutexattr_t * attr)
 {
-  not_implemented();
-  return 0;
+  return sctk_thread_generic_mutexes_mutex_init((sctk_thread_generic_mutex_t *)lock,
+						(sctk_thread_generic_mutexattr_t*)attr,
+						&(sctk_thread_generic_self()->sched));
 }
 
 static int
 sctk_thread_generic_mutex_lock (sctk_thread_mutex_t * lock)
 {
-  not_implemented();
-  return 0;
+  return sctk_thread_generic_mutexes_mutex_lock((sctk_thread_generic_mutex_t *)lock,
+						&(sctk_thread_generic_self()->sched));
 }
 
 static int
 sctk_thread_generic_mutex_trylock (sctk_thread_mutex_t * lock)
 {
-  not_implemented();
-  return 0;
+  return sctk_thread_generic_mutexes_mutex_trylock((sctk_thread_generic_mutex_t *)lock,
+						&(sctk_thread_generic_self()->sched));
 }
 
 static int
 sctk_thread_generic_mutex_spinlock (sctk_thread_mutex_t * lock)
 {
-  not_implemented();
-  return 0;
+  return sctk_thread_generic_mutexes_mutex_spinlock((sctk_thread_generic_mutex_t *)lock,
+						&(sctk_thread_generic_self()->sched));
 }
 
 static int
 sctk_thread_generic_mutex_unlock (sctk_thread_mutex_t * lock)
 {
-  not_implemented();
+  return sctk_thread_generic_mutexes_mutex_unlock((sctk_thread_generic_mutex_t *)lock,
+						&(sctk_thread_generic_self()->sched));
+}
+
+/***************************************/
+/* THREAD CREATION                     */
+/***************************************/
+
+static int
+sctk_thread_generic_attr_init (sctk_thread_generic_attr_t * attr)
+{
+  sctk_thread_generic_intern_attr_t init = sctk_thread_generic_intern_attr_init;
+  attr->ptr = (sctk_thread_generic_intern_attr_t *)
+    sctk_malloc (sizeof (sctk_thread_generic_intern_attr_t));
+
+  *(attr->ptr) = init;
+  return 0;
+}
+
+static int
+sctk_thread_generic_attr_destroy (sctk_thread_generic_attr_t * attr)
+{
+  sctk_free (attr->ptr);
+  return 0;
+}
+
+static int
+sctk_thread_generic_attr_getscope (const sctk_thread_generic_attr_t * attr, int *scope)
+{
+  sctk_thread_generic_intern_attr_t init = sctk_thread_generic_intern_attr_init;
+  sctk_thread_generic_intern_attr_t * ptr;
+
+  ptr = attr->ptr;
+
+  if(ptr == NULL){
+    ptr = &init;
+  }
+  *scope = ptr->scope;
+  return 0;
+}
+
+static int
+sctk_thread_generic_attr_setscope (sctk_thread_generic_attr_t * attr, int scope)
+{
+  if(attr->ptr == NULL){
+    sctk_thread_generic_attr_init(attr);
+  }
+  attr->ptr->scope = scope;
+  return 0;
+}
+
+static int
+sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
+				 sctk_thread_generic_attr_t * attr,
+				 void *(*start_routine) (void *), void *arg)
+{
+  sctk_thread_generic_intern_attr_t init = sctk_thread_generic_intern_attr_init;
+  sctk_thread_generic_intern_attr_t * ptr;
+  sctk_thread_data_t tmp;
+  sctk_thread_generic_t thread_id;
+
+  ptr = attr->ptr;
+
+  if(ptr == NULL){
+    ptr = &init;
+  }
+
+  /*Create data struct*/
+  {
+    thread_id = NULL;
+    not_implemented();
+  }
+
+  /*Allocate stack*/
+  {
+    not_implemented();
+  }
+  
+
+  /*Create context*/
+  {
+    not_implemented();
+  }
+
+
+  *threadp = thread_id;
+  sctk_thread_generic_create(thread_id);
   return 0;
 }
 
@@ -154,6 +231,21 @@ sctk_thread_generic_thread_init (char* scheduler_type){
 		      int (*)(sctk_thread_mutex_t *));
   __sctk_ptr_thread_mutex_init = sctk_thread_generic_mutex_init;
 
+  /****** THREAD CREATION ******/  
+  sctk_thread_generic_check_size (sctk_thread_generic_attr_t, sctk_thread_attr_t);
+  sctk_add_func_type (sctk_thread_generic, attr_init,
+		      int (*)(sctk_thread_attr_t *));
+  sctk_add_func_type (sctk_thread_generic, attr_destroy,
+		      int (*)(sctk_thread_attr_t *));
+  sctk_add_func_type (sctk_thread_generic, attr_getscope,
+		      int (*)(const sctk_thread_attr_t *, int *));
+  sctk_add_func_type (sctk_thread_generic, attr_setscope,
+		      int (*)(sctk_thread_attr_t *, int));
+  sctk_add_func_type (sctk_thread_generic, user_create,
+		      int (*)(sctk_thread_t *, const sctk_thread_attr_t *,
+			      void *(*)(void *), void *));
+  
+
   sctk_multithreading_initialised = 1;
 
   sctk_thread_data_init ();
@@ -162,6 +254,11 @@ sctk_thread_generic_thread_init (char* scheduler_type){
 /***************************************/
 /* IMPLEMENTATION SPECIFIC             */
 /***************************************/
+static char sched_type[4096];
+void sctk_register_thread_type(char* type){
+  sprintf(sched_type,"[%s:%s]",type,sctk_thread_generic_scheduler_get_name());
+  sctk_multithreading_mode = sched_type;
+}
 
 /********* ETHREAD MXN ************/
 static __thread sctk_thread_generic_p_t* ethread_mxn_self_data;
@@ -177,6 +274,7 @@ sctk_ethread_mxn_ng_thread_init (void){
   assume(ethread_mxn_self_data != NULL);
 
   sctk_thread_generic_thread_init ("centralized");
+  sctk_register_thread_type("ethread_mxn_ng");
 }
 
 /********* PTHREAD ************/
@@ -191,4 +289,5 @@ sctk_pthread_ng_thread_init (void){
   sctk_thread_generic_self_p = sctk_thread_pthread_ng_self;
 
   sctk_thread_generic_thread_init ("centralized");
+  sctk_register_thread_type("pthread_ng");
 }
