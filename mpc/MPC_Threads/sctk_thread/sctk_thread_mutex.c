@@ -30,6 +30,155 @@
 #include "sctk_thread_scheduler.h"
 #include "sctk_spinlock.h"
 
+int
+sctk_thread_generic_mutexes_mutex_init (sctk_thread_generic_mutex_t * lock,
+					const  sctk_thread_generic_mutexattr_t* attr,
+					sctk_thread_generic_scheduler_t* sched)
+{
+  sctk_thread_generic_mutex_t local_lock = SCTK_THREAD_GENERIC_MUTEX_INIT;
+  if(attr != NULL){
+    not_implemented();
+  }
+  *lock = local_lock;
+  return 0;
+}
+
+int
+sctk_thread_generic_mutexes_mutex_lock (sctk_thread_generic_mutex_t * lock,
+					sctk_thread_generic_scheduler_t* sched)
+{
+  int ret = 0;
+  sctk_thread_generic_mutex_cell_t cell;
+  sctk_spinlock_lock(&(lock->lock));
+  if(lock->owner == NULL){
+    lock->owner = sched;
+    sctk_spinlock_unlock(&(lock->lock));
+    return ret;
+  } else {
+    if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE){
+      lock->nb_call ++;
+      sctk_spinlock_unlock(&(lock->lock));
+      return ret;
+    } 
+    if (lock->type == SCTK_THREAD_MUTEX_ERRORCHECK){
+      if(lock->owner == sched){
+	ret = SCTK_EDEADLK;
+	sctk_spinlock_unlock(&(lock->lock));
+	return ret;
+      }
+    }
+
+    cell.sched = sched;
+    DL_APPEND(lock->blocked,&cell);
+    
+    sctk_thread_generic_thread_status(sched,sctk_thread_generic_blocked);
+    sctk_thread_generic_register_spinlock_unlock(sched,&(lock->lock));
+    sctk_thread_generic_sched_yield(sched);
+  }
+  return ret;
+}
+
+int
+sctk_thread_generic_mutexes_mutex_trylock (sctk_thread_generic_mutex_t * lock,
+					   sctk_thread_generic_scheduler_t* sched)
+{
+  int ret = 0;
+  sctk_spinlock_lock(&(lock->lock));
+  if(lock->owner == NULL){
+    lock->owner = sched;
+    sctk_spinlock_unlock(&(lock->lock));
+    return ret;
+  } else {
+    if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE){
+      lock->nb_call ++;
+      sctk_spinlock_unlock(&(lock->lock));
+      return ret;
+    } 
+    if (lock->type == SCTK_THREAD_MUTEX_ERRORCHECK){
+      if(lock->owner == sched){
+	ret = SCTK_EDEADLK;
+	sctk_spinlock_unlock(&(lock->lock));
+	return ret;
+      }
+    }
+    ret = SCTK_EBUSY;
+    sctk_spinlock_unlock(&(lock->lock));
+  }
+  return ret;
+}
+
+int
+sctk_thread_generic_mutexes_mutex_spinlock (sctk_thread_generic_mutex_t * lock,
+					    sctk_thread_generic_scheduler_t* sched)
+{
+  int ret = 0;
+  sctk_thread_generic_mutex_cell_t cell;
+  sctk_spinlock_lock(&(lock->lock));
+  if(lock->owner == NULL){
+    lock->owner = sched;
+    lock->nb_call = 1;
+    sctk_spinlock_unlock(&(lock->lock));
+    return ret;
+  } else {
+    if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE){
+      lock->nb_call ++;
+      sctk_spinlock_unlock(&(lock->lock));
+      return ret;
+    } 
+    if (lock->type == SCTK_THREAD_MUTEX_ERRORCHECK){
+      if(lock->owner == sched){
+	ret = SCTK_EDEADLK;
+	sctk_spinlock_unlock(&(lock->lock));
+	return ret;
+      }
+    }
+
+    cell.sched = sched;
+    DL_APPEND(lock->blocked,&cell);
+    
+    sctk_spinlock_unlock(&(lock->lock));
+    do{
+      sctk_thread_generic_sched_yield(sched);
+    }while(lock->owner != sched);
+  }
+  return ret;
+}
+
+int
+sctk_thread_generic_mutexes_mutex_unlock (sctk_thread_generic_mutex_t * lock,
+					  sctk_thread_generic_scheduler_t* sched)
+{
+  if (lock->owner != sched)
+    {
+      return SCTK_EPERM;
+    }
+  if (lock->type == SCTK_THREAD_MUTEX_RECURSIVE)
+    {
+      if (lock->nb_call > 1)
+	{
+	  lock->nb_call --;
+	  return 0;
+	}
+    }
+
+  sctk_spinlock_lock(&(lock->lock));
+  {
+    sctk_thread_generic_mutex_cell_t * head;
+    head = lock->blocked;
+    if(head == NULL){
+      lock->owner = NULL;
+      lock->nb_call = 0;
+    } else {
+      lock->owner = head->sched;
+      lock->nb_call = 1;
+      DL_DELETE(lock->blocked,head);
+      sctk_thread_generic_wake(head->sched);
+    }
+  }
+  sctk_spinlock_unlock(&(lock->lock));
+  return 0;
+}
+
 void sctk_thread_generic_mutexes_init(){ 
   sctk_thread_generic_check_size (sctk_thread_generic_mutex_t, sctk_thread_mutex_t);
   sctk_thread_generic_check_size (sctk_thread_generic_mutexattr_t, sctk_thread_mutexattr_t);

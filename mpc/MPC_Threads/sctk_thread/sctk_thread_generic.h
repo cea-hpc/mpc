@@ -19,44 +19,33 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK_THREAD_SCHEDULER_H_
-#define __SCTK_THREAD_SCHEDULER_H_
+#ifndef __SCTK_THREAD_GENERIC_H_
+#define __SCTK_THREAD_GENERIC_H_
 
-#include <stdlib.h>
-#include <string.h>
 #include "sctk_config.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"
-#include "sctk_internal_thread.h"
-#include <utlist.h>
+#include <sctk_thread_keys.h>
+#include <sctk_thread_mutex.h>
+#include <sctk_thread_scheduler.h>
 
-typedef enum{
-  sctk_thread_generic_blocked,
-  sctk_thread_generic_running
-}sctk_thread_generic_thread_status_t;
+typedef struct{
+  int scope;
+  int detachstate; 
+  int schedpolicy; 
+  int inheritsched;
+}sctk_thread_generic_intern_attr_t;
+#define sctk_thread_generic_intern_attr_init {SCTK_THREAD_SCOPE_PROCESS,SCTK_THREAD_CREATE_JOINABLE,0,SCTK_THREAD_EXPLICIT_SCHED}
 
-typedef struct sctk_thread_generic_scheduler_centralized_s{
-  struct sctk_thread_generic_scheduler_centralized_s *prev, *next;
-} sctk_thread_generic_scheduler_centralized_t;
+typedef struct{
+  sctk_thread_generic_intern_attr_t* ptr;
+} sctk_thread_generic_attr_t;
 
-typedef struct sctk_thread_generic_scheduler_s{
-  union{
-    sctk_thread_generic_scheduler_centralized_t centralized;
-  };
-  sctk_thread_generic_thread_status_t status;
-} sctk_thread_generic_scheduler_t;
+typedef struct sctk_thread_generic_p_s{
+  sctk_thread_generic_keys_t keys;
+  sctk_thread_generic_scheduler_t sched;
+  sctk_thread_generic_intern_attr_t attr;
+} sctk_thread_generic_p_t;
 
-extern void (*sctk_thread_generic_sched_yield)(sctk_thread_generic_scheduler_t*);
-extern void (*sctk_thread_generic_thread_status)(sctk_thread_generic_scheduler_t*,
-						sctk_thread_generic_thread_status_t);
-extern void (*sctk_thread_generic_register_spinlock_unlock)(sctk_thread_generic_scheduler_t*,
-							   sctk_spinlock_t*);
-extern void (*sctk_thread_generic_wake)(sctk_thread_generic_scheduler_t*);
-
-struct sctk_thread_generic_p_s;
-extern void (*sctk_thread_generic_create)(struct sctk_thread_generic_p_s*);
-
-void sctk_thread_generic_scheduler_init(char* scheduler_type); 
-void sctk_thread_generic_scheduler_init_thread(sctk_thread_generic_scheduler_t* sched); 
-char* sctk_thread_generic_scheduler_get_name();
+typedef sctk_thread_generic_p_t* sctk_thread_generic_t;
 #endif

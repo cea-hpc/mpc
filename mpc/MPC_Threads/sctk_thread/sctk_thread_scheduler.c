@@ -28,20 +28,75 @@
 #include "sctk_internal_thread.h"
 #include "sctk_thread_scheduler.h"
 #include "sctk_spinlock.h"
+#include "sctk_thread_generic.h"
 
 void (*sctk_thread_generic_sched_yield)(sctk_thread_generic_scheduler_t*) = NULL;
+void (*sctk_thread_generic_thread_status)(sctk_thread_generic_scheduler_t*,
+					  sctk_thread_generic_thread_status_t) = NULL;
+void (*sctk_thread_generic_register_spinlock_unlock)(sctk_thread_generic_scheduler_t*,
+						     sctk_spinlock_t*) = NULL;
+void (*sctk_thread_generic_wake)(sctk_thread_generic_scheduler_t*) = NULL;
+
+void (*sctk_thread_generic_scheduler_init_thread_p)(sctk_thread_generic_scheduler_t* ) = NULL;
+
+void (*sctk_thread_generic_create)(sctk_thread_generic_p_t*) = NULL;;
+/***************************************/
+/* CENTRALIZED SCHEDULER               */
+/***************************************/
 
 static void sctk_centralized_sched_yield(sctk_thread_generic_scheduler_t*sched){
   not_implemented();
 }
 
+static 
+void sctk_centralized_thread_status(sctk_thread_generic_scheduler_t* sched,
+				    sctk_thread_generic_thread_status_t status){
+  not_implemented();
+}
+
+static void sctk_centralized_register_spinlock_unlock(sctk_thread_generic_scheduler_t* sched,
+						      sctk_spinlock_t* lock){
+  not_implemented();
+}
+
+static void sctk_centralized_wake(sctk_thread_generic_scheduler_t* sched){
+  not_implemented();
+}
+
+static sctk_centralized_create(sctk_thread_generic_p_t*thread){
+  not_implemented();
+}
+
+static void sctk_centralized_scheduler_init_thread(sctk_thread_generic_scheduler_t* sched){
+  sched->centralized.next = NULL;
+  sched->centralized.prev = NULL;
+}
+
+
+/***************************************/
+/* INIT                                */
+/***************************************/
+static char sched_type[4096];
 void sctk_thread_generic_scheduler_init(char* scheduler_type){ 
+  sprintf(sched_type,"%s",scheduler_type);
+  
   if(strcmp("centralized",scheduler_type) ==0){
     sctk_thread_generic_sched_yield = sctk_centralized_sched_yield;
+    sctk_thread_generic_thread_status = sctk_centralized_thread_status;
+    sctk_thread_generic_register_spinlock_unlock = sctk_centralized_register_spinlock_unlock;
+    sctk_thread_generic_wake = sctk_centralized_wake;
+    sctk_thread_generic_scheduler_init_thread_p = sctk_centralized_scheduler_init_thread;
+    sctk_thread_generic_create = sctk_centralized_create;
   } else {
     not_reachable();
   }
 }
 
-void sctk_thread_generic_scheduler_init_thread(sctk_thread_generic_scheduler_t* scheduler_type){ 
+void sctk_thread_generic_scheduler_init_thread(sctk_thread_generic_scheduler_t* sched){
+  sched->status = sctk_thread_generic_running;
+  sctk_centralized_scheduler_init_thread(sched);
+}
+
+char* sctk_thread_generic_scheduler_get_name(){
+  return sched_type;
 }
