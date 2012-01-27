@@ -27,25 +27,36 @@
 #include "sctk_config.h"
 #include "sctk_debug.h"
 #include "sctk_thread.h"
+#include "sctk_spinlock.h"
 #include "sctk_internal_thread.h"
 #include "sctk_context.h"
 #include <utlist.h>
 
+/***************************************/
+/* THREAD SCHEDULING                   */
+/***************************************/
 typedef enum{
   sctk_thread_generic_blocked,
-  sctk_thread_generic_running
+  sctk_thread_generic_running,
+  sctk_thread_generic_zombie
 }sctk_thread_generic_thread_status_t;
 
+struct sctk_thread_generic_scheduler_s;
+
 typedef struct sctk_thread_generic_scheduler_centralized_s{
+  int vp_type;
+  struct sctk_thread_generic_scheduler_s* sched;
   struct sctk_thread_generic_scheduler_centralized_s *prev, *next;
 } sctk_thread_generic_scheduler_centralized_t;
 
 typedef struct sctk_thread_generic_scheduler_s{
   sctk_mctx_t ctx;
+  sctk_mctx_t ctx_bootstrap;
   union{
     sctk_thread_generic_scheduler_centralized_t centralized;
   };
   sctk_thread_generic_thread_status_t status;
+  struct sctk_thread_generic_p_s* th;
 } sctk_thread_generic_scheduler_t;
 
 extern void (*sctk_thread_generic_sched_yield)(sctk_thread_generic_scheduler_t*);
@@ -56,9 +67,25 @@ extern void (*sctk_thread_generic_register_spinlock_unlock)(sctk_thread_generic_
 extern void (*sctk_thread_generic_wake)(sctk_thread_generic_scheduler_t*);
 
 struct sctk_thread_generic_p_s;
-extern void (*sctk_thread_generic_create)(struct sctk_thread_generic_p_s*);
+extern void (*sctk_thread_generic_sched_create)(struct sctk_thread_generic_p_s*);
 
-void sctk_thread_generic_scheduler_init(char* scheduler_type); 
-void sctk_thread_generic_scheduler_init_thread(sctk_thread_generic_scheduler_t* sched); 
+void sctk_thread_generic_scheduler_init(char* scheduler_type, int vp_number); 
+void sctk_thread_generic_scheduler_init_thread(sctk_thread_generic_scheduler_t* sched,
+					       struct sctk_thread_generic_p_s* th); 
 char* sctk_thread_generic_scheduler_get_name();
+
+/***************************************/
+/* TASK SCHEDULING                     */
+/***************************************/
+typedef struct sctk_thread_generic_task_s{
+  volatile int *data;
+  int value;
+  void (*func) (void *);
+  void *arg;
+  int is_blocking;
+  sctk_thread_generic_scheduler_t* sched;
+  struct sctk_thread_generic_task_s *prev, *next;
+}sctk_thread_generic_task_t;
+
+extern void (*sctk_thread_generic_add_task)(sctk_thread_generic_task_t*);
 #endif

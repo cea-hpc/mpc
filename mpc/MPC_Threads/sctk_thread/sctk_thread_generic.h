@@ -38,18 +38,22 @@ typedef struct{
   size_t stack_size;
   void *(*start_routine) (void *);
   void *arg;
+  void* return_value;
+  int bind_to;
 }sctk_thread_generic_intern_attr_t;
-#define sctk_thread_generic_intern_attr_init {SCTK_THREAD_SCOPE_PROCESS,SCTK_THREAD_CREATE_JOINABLE,0,SCTK_THREAD_EXPLICIT_SCHED,NULL,0,NULL,NULL}
+#define sctk_thread_generic_intern_attr_init {SCTK_THREAD_SCOPE_PROCESS,SCTK_THREAD_CREATE_JOINABLE,0,SCTK_THREAD_EXPLICIT_SCHED,NULL,0,NULL,NULL,-1}
 
 typedef struct{
   sctk_thread_generic_intern_attr_t* ptr;
 } sctk_thread_generic_attr_t;
 
 typedef struct sctk_thread_generic_p_s{
-  sctk_thread_generic_keys_t keys;
   sctk_thread_generic_scheduler_t sched;
+  sctk_thread_generic_keys_t keys;
   sctk_thread_generic_intern_attr_t attr;
 } sctk_thread_generic_p_t;
 
 typedef sctk_thread_generic_p_t* sctk_thread_generic_t;
+void sctk_thread_generic_set_self(sctk_thread_generic_t th);
+sctk_thread_generic_t sctk_thread_generic_self();
 #endif

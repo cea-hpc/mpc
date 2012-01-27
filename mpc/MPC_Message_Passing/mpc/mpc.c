@@ -331,10 +331,9 @@ sctk_get_check_point_key ()
 void
 sctk_mpc_init_keys ()
 {
-  sctk_thread_key_create (&sctk_func_key, NULL);
-  sctk_thread_key_create (&sctk_check_point_key, NULL);
-
-  sctk_thread_key_create (&sctk_task_specific, NULL);
+  assume(sctk_thread_key_create (&sctk_func_key, NULL) == 0);
+  assume(sctk_thread_key_create (&sctk_check_point_key, NULL) == 0);
+  assume(sctk_thread_key_create (&sctk_task_specific, NULL) == 0);
 }
 
 int
