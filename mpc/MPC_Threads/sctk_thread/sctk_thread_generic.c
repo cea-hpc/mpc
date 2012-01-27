@@ -154,6 +154,10 @@ sctk_thread_generic_attr_setscope (sctk_thread_generic_attr_t * attr, int scope)
   return 0;
 }
 
+static  void __sctk_start_routine (void * arg){
+  not_implemented();
+}
+
 static int
 sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
 				 sctk_thread_generic_attr_t * attr,
@@ -163,6 +167,8 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
   sctk_thread_generic_intern_attr_t * ptr;
   sctk_thread_data_t tmp;
   sctk_thread_generic_t thread_id;
+  char* stack;
+  size_t stack_size;
 
   ptr = attr->ptr;
 
@@ -170,21 +176,71 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
     ptr = &init;
   }
 
+  if (arg != NULL)
+    {
+      tmp = *((sctk_thread_data_t *) arg);
+      if (tmp.tls == NULL)
+	{
+	  tmp.tls = sctk_thread_tls;
+	}
+    }
+  else
+    {
+      tmp.tls = sctk_thread_tls;
+    }
+
   /*Create data struct*/
   {
-    thread_id = NULL;
-    not_implemented();
+    thread_id = 
+      __sctk_malloc (sizeof (sctk_thread_generic_p_t), tmp.tls);
+
+    thread_id->attr = *ptr;
+
+    sctk_thread_generic_scheduler_init_thread(&(thread_id->sched));
+    sctk_thread_generic_keys_init_thread(&(thread_id->keys));
   }
 
   /*Allocate stack*/
   {
-    not_implemented();
+    stack = thread_id->attr.stack;
+    stack_size = thread_id->attr.stack_size;
+    
+    if (stack == NULL)
+      {
+	if (sctk_is_in_fortran == 1 && stack_size <= 0)
+	  stack_size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
+	else if (stack_size <= 0)
+	  stack_size = SCTK_ETHREAD_STACK_SIZE;
+	if (stack == NULL)
+	  {
+	    stack = (char *) __sctk_malloc (stack_size + 8, tmp.tls);
+	    if (stack == NULL)
+	      {
+		sctk_free(thread_id);
+		return SCTK_EAGAIN;
+	      }
+	  }
+	stack[stack_size] = 123;
+
+      }
+    else if (stack_size <= 0)
+      {
+	sctk_free(thread_id);
+	return SCTK_EINVAL;
+      }
+
+    thread_id->attr.stack = stack;
+    thread_id->attr.stack_size = stack_size;
   }
   
 
   /*Create context*/
   {
-    not_implemented();
+    thread_id->attr.start_routine = start_routine;
+    thread_id->attr.arg = arg;
+    sctk_makecontext (&(thread_id->sched.ctx),
+		      (void *) thread_id,
+		      __sctk_start_routine, stack, stack_size);
   }
 
 

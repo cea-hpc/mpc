@@ -28,6 +28,7 @@
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "sctk_internal_thread.h"
+#include "sctk_context.h"
 #include <utlist.h>
 
 typedef enum{
@@ -40,6 +41,7 @@ typedef struct sctk_thread_generic_scheduler_centralized_s{
 } sctk_thread_generic_scheduler_centralized_t;
 
 typedef struct sctk_thread_generic_scheduler_s{
+  sctk_mctx_t ctx;
   union{
     sctk_thread_generic_scheduler_centralized_t centralized;
   };
