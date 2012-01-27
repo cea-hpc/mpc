@@ -34,8 +34,12 @@ typedef struct{
   int detachstate; 
   int schedpolicy; 
   int inheritsched;
+  char* stack;
+  size_t stack_size;
+  void *(*start_routine) (void *);
+  void *arg;
 }sctk_thread_generic_intern_attr_t;
-#define sctk_thread_generic_intern_attr_init {SCTK_THREAD_SCOPE_PROCESS,SCTK_THREAD_CREATE_JOINABLE,0,SCTK_THREAD_EXPLICIT_SCHED}
+#define sctk_thread_generic_intern_attr_init {SCTK_THREAD_SCOPE_PROCESS,SCTK_THREAD_CREATE_JOINABLE,0,SCTK_THREAD_EXPLICIT_SCHED,NULL,0,NULL,NULL}
 
 typedef struct{
   sctk_thread_generic_intern_attr_t* ptr;
