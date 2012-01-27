@@ -68,13 +68,15 @@ sctk_thread_generic_keys_key_create (sctk_thread_key_t * __key,
     if(sctk_key_used[i] == 0){
       sctk_key_used[i] = 1;
       __destr_function_key[i] = __destr_function;
-      __key = i;
+      *__key = i;
+      break;
     }
   }
   sctk_spinlock_unlock(&key_lock);
   if(i == SCTK_THREAD_KEYS_MAX){
     return SCTK_EAGAIN;
   }
+  
   return 0;
 }
 
