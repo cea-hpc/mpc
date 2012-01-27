@@ -1,4 +1,4 @@
-/* ############################# MPC License ############################## */
+ /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
 /* #                                                                      # */
@@ -22,11 +22,485 @@
 /* ######################################################################## */
 #include <mpcomp.h>
 #include <mpcomp_abi.h>
+#include <sctk_debug.h>
 #include "mpcomp_internal.h"
 #include "sctk.h"
-#include <sctk_debug.h>
 #include "mpcmicrothread_internal.h"
 
+
+/*
+  Barrier for for dynamic construct
+*/
+void __mpcomp_barrier_for_dyn(void)
+{
+  mpcomp_thread_t *t;
+
+  /* Grab the info of the current thread */    
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  /* Block only if I am not the only thread in the team */
+  if (t->team->num_threads > 1) {
+    __mpcomp_internal_barrier_for_dyn(t);
+  }
+  
+}
+
+/*
+  Internal barrier called in the for dynamic barrier
+*/
+void __mpcomp_internal_barrier_for_dyn(mpcomp_thread_t *t)
+{
+   mpcomp_thread_team_t *team;
+   mpcomp_mvp_t *mvp;
+   mpcomp_node_t *c;
+   int index;
+   int b_done;
+   int b;
+
+   /* Grab the team info */
+   team = t->team;
+   sctk_assert(team != NULL);
+ 
+   /* Grab the corresponding microVP */
+   mvp = t->mvp;
+   sctk_assert(mvp != NULL);
+  
+   /* Grab the index of the current loop */
+   index = (t->private_current_for_dyn) % MPCOMP_MAX_ALIVE_FOR_DYN;
+ 
+   /*Barrier to wait for the other microVPs*/
+   c = mvp->father; 
+   sctk_assert(c != NULL);
+
+   /* Step 1: Climb in the tree */
+   b_done = c->barrier_done;
+
+#ifdef ATOMICS
+   b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
+   //sctk_atomics_write_barrier(); 
+
+   while ((b+1 == c->barrier_num_threads) && (c->father != NULL)) {
+      sctk_atomics_store_int (&c->barrier,0) ;
+
+      c = c->father;
+
+      b_done = c->barrier_done;      
+
+      b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
+      //sctk_atomics_write_barrier(); 
+   }
+
+   /* Step 2: Wait for the barrier to be done */
+   if ((c->father != NULL) || (c->father == NULL && b+1 != c->barrier_num_threads)) {
+     /* Wait for c->barrier == c->barrier_num_threads */ 
+     while (b_done == c->barrier_done) {
+        sctk_thread_yield();
+     }
+
+   }
+   else {
+     /* Reinitialize some information */
+     sctk_spinlock_lock(&(team->lock_stop_for_dyn));
+     team->stop[index] = MPCOMP_OK;
+
+     if (index == 0) 
+         team->stop[MPCOMP_MAX_ALIVE_FOR_DYN-1] = MPCOMP_STOP;
+     else	      
+         team->stop[index-1] = MPCOMP_STOP;
+
+     sctk_spinlock_unlock(&(team->lock_stop_for_dyn));
+
+     sctk_spinlock_lock(&(team->lock_exited_for_dyn[index]));
+     team->nthread_exited_for_dyn[index] = 0;
+     sctk_spinlock_unlock(&(team->lock_exited_for_dyn[index]));
+
+     sctk_atomics_store_int (&c->barrier,0);
+     c->barrier_done++;
+     /* TODO: not sure that we need that. If we do need it, maybe we need to lock */
+   }
+
+#else
+   sctk_spinlock_lock(&(c->lock));
+   b = c->barrier;
+   b++;
+   c->barrier = b;
+   sctk_spinlock_unlock(&(c->lock));
+
+   while ((b == c->barrier_num_threads) && (c->father != NULL)) {
+      c->barrier = 0;
+
+      c = c->father;
+
+      b_done = c->barrier_done;      
+
+      sctk_spinlock_lock(&(c->lock));
+      b = c->barrier;
+      b++;
+      c->barrier = b;
+      sctk_spinlock_unlock(&(c->lock));
+   }
+
+   /* Step 2: Wait for the barrier to be done */
+   if ((c->father != NULL) || (c->father == NULL && b != c->barrier_num_threads)) {
+
+     /* Wait for c->barrier == c->barrier_num_threads */ 
+     while (b_done == c->barrier_done) {
+        sctk_thread_yield();
+     }
+   }
+   else {
+     c->barrier = 0;
+     c->barrier_done++;
+     /* TODO: not sure that we need that. If we do need it, maybe we need to lock */
+   }
+#endif
+
+
+   /* Step 3: Go down in the tree to wake up the children */
+   while (c->child_type != CHILDREN_LEAF) {
+       c = c->children.node[mvp->tree_rank[c->depth]];
+       c->barrier_done++;
+   }
+}
+
+
+/* 
+  Start a new for dynamic construct
+*/
+int __mpcomp_dynamic_loop_begin(int lb, int b, int incr, int chunk_size, int *from, int *to)
+{
+  mpcomp_thread_t *t;
+  mpcomp_thread_team_t *team;
+  int rank;
+  int index;
+  int num_threads;
+  int remain;
+  int chunk_id;
+
+  /* Grab the info of the current thread */    
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  /* Number of threads in the current team */
+  num_threads = t->team->num_threads;
+
+  /* If this function is called from a sequential part (orphaned directive) or
+   * if this thread is the only one of its team -> it executes the whole loop */
+  if (num_threads == 1){
+    *from = lb;
+    *to = b;
+    return 1;
+  }
+
+  /* Get the team info */
+  team = t->team;
+  sctk_assert(team != NULL);
+
+  /* Get the rank of the current thread */
+  rank = t->rank;  
+
+  /* Grab the index of the current loop */
+  index = (t->private_current_for_dyn) % MPCOMP_MAX_ALIVE_FOR_DYN;
+
+  /* If it is a barrier */
+  if (team->stop[index] != MPCOMP_OK) {
+
+    sctk_spinlock_lock(&(team->lock_stop_for_dyn));
+
+    /* Is it the last loop to perform before synchronization? */
+    if (team->stop[index] == MPCOMP_STOP) {
+
+      team->stop[index] = MPCOMP_CONSUMED;
+      sctk_spinlock_unlock(&(team->lock_stop_for_dyn));
+
+      /* Call barrier */
+      __mpcomp_barrier_for_dyn();
+
+      return __mpcomp_dynamic_loop_begin(lb, b, incr, chunk_size, from, to);       
+
+    }
+   
+    /* This loop has been the last loop before synchronization */ 
+    if (team->stop[index] == MPCOMP_CONSUMED) {
+
+      sctk_spinlock_unlock(&(team->lock_stop_for_dyn));
+
+      /* Call barrier */
+      __mpcomp_barrier_for_dyn();
+
+      return __mpcomp_dynamic_loop_begin(lb, b, incr, chunk_size, from, to);       
+    }
+
+    sctk_spinlock_unlock(&(team->lock_stop_for_dyn));
+
+  }
+
+  /* Index of the next loop */
+  t->private_current_for_dyn = index + 1;
+
+  /* Check the number of remaining chunk for this index and this rank */
+  sctk_spinlock_lock(&(t->lock_for_dyn[rank][index]));
+
+  remain = t->chunk_info_for_dyn[rank][index].remain;
+
+  /* remain == -1 -> nobody stole my work */
+  if (remain == -1) {
+
+    int total_nb_chunks;
+
+    /* Compute the number of chunks for the thread "rank"  */
+    total_nb_chunks = __mpcomp_get_static_nb_chunks_per_rank(rank, num_threads, lb, b, incr, chunk_size); 
+    t->chunk_info_for_dyn[rank][index].total = total_nb_chunks;
+    
+    /* First chunk is been scheduled */
+    t->chunk_info_for_dyn[rank][index].remain = total_nb_chunks - 1;
+
+    sctk_spinlock_unlock(&(t->lock_for_dyn[rank][index]));
+
+    if (total_nb_chunks == 0) {
+      sctk_nodebug("__mpcomp_dynamic_loop_begin[%d]: No chunk 0",rank);
+      return 0;
+    }
+ 
+    /* Fill private information about the current loop */
+    t->loop_lb = lb;
+    t->loop_b = b;
+    t->loop_incr = incr;
+    t->loop_chunk_size = chunk_size;
+
+    /* Current chunk */
+    chunk_id = 0;
+
+    __mpcomp_get_specific_chunk_per_rank(rank, num_threads, lb, b, incr, chunk_size, chunk_id, from, to);
+
+    sctk_openmp_thread_tls = t; 
+
+    return 1+chunk_id;
+  }
+
+  /* remain == 0 -> somebody stole everything */
+  if (remain == 0) {
+
+    sctk_spinlock_unlock(&(t->lock_for_dyn[rank][index]));
+
+    /* TODO: this thread has no more chunks for this loop. Should we fill the private info about the loop anyway ? Maybe not. */
+    /* Fill private information about the current loop */
+    t->loop_lb = lb;
+    t->loop_b = b;
+    t->loop_incr = incr;
+    t->loop_chunk_size = chunk_size;
+
+    /* TODO: Try to steal someone ? */
+
+    sctk_openmp_thread_tls = t; 
+
+    return 0;
+  }
+
+  /* remain > 0 -> somebody stole at least one chunk and there is still at least one chunk to schedule */ 
+  chunk_id =  t->chunk_info_for_dyn[rank][index].total - remain;
+
+  /* TODO use atomics to decrement */
+  t->chunk_info_for_dyn[rank][index].remain--;
+
+  sctk_spinlock_unlock(&(t->lock_for_dyn[rank][index]));
+
+  /* Fill the private information about the current loop */  
+  t->loop_lb = lb;
+  t->loop_b = b;
+  t->loop_incr = incr;
+  t->loop_chunk_size = chunk_size;
+
+  __mpcomp_get_specific_chunk_per_rank(rank, num_threads, lb, b, incr, chunk_size, chunk_id, from, to);
+
+  sctk_openmp_thread_tls = t;
+
+  return 1+chunk_id;
+  
+}
+
+
+/*
+  Check if there is still chunks to execute for this for dynamic construct
+*/
+int __mpcomp_dynamic_loop_next(int *from, int *to)
+{
+  mpcomp_thread_t *t;
+  mpcomp_thread_team_t *team;
+  int rank;
+  int index;
+  int num_threads;
+  int remain;
+  int chunk_id;
+  int total_nb_chunks;
+
+  /* Grab the info of the current thread */    
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  /* Number of threads in the current team */
+  num_threads = t->team->num_threads;
+
+  if (num_threads == 1) {
+    return 0;
+  }  
+
+  /* Grab the rank of the current thread */
+  rank = t->rank;
+
+  /* Grab the team info */
+  team = t->team;
+  sctk_assert(team != NULL);
+
+  /* Index of the current loop */
+  index = t->private_current_for_dyn-1;
+
+  sctk_spinlock_lock(&(t->lock_for_dyn[rank][index]));
+
+  /* Grab the remaining chunks for rank for index */
+  remain = t->chunk_info_for_dyn[rank][index].remain;
+
+  /* Is there remaining chunks? */
+  if (remain == 0) {
+    sctk_spinlock_unlock(&(t->lock_for_dyn[rank][index]));
+
+    /* TODO steal a chunk for other threads */
+
+    return 0;    
+  }
+
+  /* Grab the total number of chunks for rank for loop "index" */
+  total_nb_chunks = t->chunk_info_for_dyn[rank][index].total;
+  
+  /* Current chunk id */
+  chunk_id = total_nb_chunks - remain;
+
+  /* TODO use atomics to decrement */
+  t->chunk_info_for_dyn[rank][index].remain--;
+
+  sctk_spinlock_unlock(&(t->lock_for_dyn[rank][index]));
+
+  __mpcomp_get_specific_chunk_per_rank(rank, num_threads, t->loop_lb, t->loop_b, t->loop_incr, t->loop_chunk_size, chunk_id, from, to);
+ 
+  sctk_openmp_thread_tls = t; 
+
+  return 1+chunk_id;
+}
+
+
+/*
+  End of the for dynamic
+*/
+void __mpcomp_dynamic_loop_end()
+{
+  mpcomp_thread_t *t;
+  mpcomp_thread_team_t *team; 
+  int rank;
+  int index;
+
+  /* Grab the info of the current thread */
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  /* Grab the rank of the thread */
+  rank = t->rank;
+
+  /* Index of the current loop */
+  index = t->private_current_for_dyn-1;
+
+  /* Grab the team info */
+  team = t->team;
+  sctk_assert(team != NULL);
+
+  __mpcomp_barrier_for_dyn();
+
+  /* Reinitialize some information */
+  t->chunk_info_for_dyn[rank][index].remain = -1;
+}
+
+
+/*
+  End of the for dynamic nowait
+*/
+void __mpcomp_dynamic_loop_end_nowait()
+{
+  mpcomp_thread_t *t;
+  mpcomp_thread_team_t *team;
+  int i;
+  int rank;
+  int index;
+  int prev_index;
+  int num_threads;
+  int nb_exited_threads;
+
+  /* Grab the info of the current thread */    
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  /* Grab the team info */
+  team = t->team;
+  sctk_assert(team != NULL);
+
+  /* Number of threads of the current team */  
+  num_threads = t->team->num_threads;
+
+  if (num_threads == 1) {
+    return;
+  }
+
+  /* Grab the rank of the current thread */
+  rank = t->rank;
+
+  /* Grab the index of the current loop */
+  index = t->private_current_for_dyn-1;
+
+  sctk_spinlock_lock(&(team->lock_exited_for_dyn[index]));
+
+  /* TODO use atomics here */
+  nb_exited_threads = team->nthread_exited_for_dyn[index];
+  nb_exited_threads++;
+  team->nthread_exited_for_dyn[index] = nb_exited_threads;
+
+  sctk_spinlock_unlock(&(team->lock_exited_for_dyn[index]));
+
+  if (nb_exited_threads == num_threads) {
+    /* Change the index of the last dynamic for to process before synchronization */
+    sctk_spinlock_lock(&(team->lock_stop_for_dyn));
+
+    team->stop[index] = MPCOMP_STOP;
+    /* Set to OK the previous STOP index */
+    prev_index = index-1;
+    if (index == 0) prev_index = MPCOMP_MAX_ALIVE_FOR_DYN-1;
+
+    if (team->stop[prev_index] != MPCOMP_CONSUMED)
+      team->stop[prev_index] = MPCOMP_OK;
+
+    sctk_spinlock_unlock(&(team->lock_stop_for_dyn));
+
+    /* Reinitialize some information */
+    sctk_spinlock_lock(&(team->lock_exited_for_dyn[index]));
+    team->nthread_exited_for_dyn[index] = 0;
+    sctk_spinlock_unlock(&(team->lock_exited_for_dyn[index]));
+
+    /* TODO free the threads that are waiting on a barrier. Set their t->barrier to t->barrier_num_threads */
+    /* TODO to know who is waiting on a barrier add a table that contains the rank of each waiting thread */
+    /* TODO this table should be reset (to -1) at the end of the barrier */
+  }
+
+  sctk_spinlock_lock(&(t->lock_for_dyn[rank][index]));
+
+  t->chunk_info_for_dyn[rank][index].remain = -1;
+
+  sctk_spinlock_unlock(&(t->lock_for_dyn[rank][index]));
+ 
+  sctk_openmp_thread_tls = t;
+
+}
+
+
+
+#if 0
 void
 __old_mpcomp_barrier_for_dyn (void) ;
 
@@ -934,10 +1408,6 @@ TODO("can we only reset dynamic-team info?")
 
   /* Restore the TLS for the main thread */
   sctk_extls = current_info->children[0]->extls;
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-  sctk_tls_module = current_info->children[0]->tls_module;
-  sctk_context_restore_tls_module_vp ();
-#endif
 
   SCTK_PROFIL_END (__mpcomp_start_parallel_region);
 } /* __mpcomp_start_parallel_dynamic_loop */
@@ -1187,3 +1657,4 @@ __mpcomp_ordered_dynamic_loop_end_nowait()
 {
   __mpcomp_dynamic_loop_end() ;
 }
+#endif

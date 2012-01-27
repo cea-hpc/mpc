@@ -207,11 +207,11 @@ extern "C"
    '__mpcomp_dynamic_loop_end' with a call to
    '__mpcomp_dynamic_loop_end_nowait'.
  */
-  /*int __old_mpcomp_dynamic_loop_begin (int lb, int b, int incr, int chunk_size,
+  int __mpcomp_dynamic_loop_begin (int lb, int b, int incr, int chunk_size,
 				   int *from, int *to);
-  int __old_mpcomp_dynamic_loop_next (int *from, int *to);
+  int __mpcomp_dynamic_loop_next (int *from, int *to);
   void __mpcomp_dynamic_loop_end ();
-  void __old_mpcomp_dynamic_loop_end_nowait ();*/
+  void __mpcomp_dynamic_loop_end_nowait ();
 
 /*
    ORDERED clause/construct

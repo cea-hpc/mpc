@@ -29,7 +29,7 @@
 #include <mpcomp.h>
 #include <mpcomp_internal.h>
 
-
+int cpt=0;
 __thread void *sctk_openmp_thread_tls = NULL;
 
 /* 
@@ -180,23 +180,15 @@ void *mpcomp_slave_mvp_node (void *arg)
 
    numa_node = root->children.node[mvp->tree_rank[0]];
 
-   sctk_nodebug("mpcomp_slave_mvp_node: Polling address %p -> father %p",
-		&(mvp->slave_running[0]), mvp->father);
-
    while (mvp->enable) {
-     int i;
+     int i,j,k;
      int num_threads_mvp;
      int num_threads_per_child;
      int max_index_with_more_threads;
 
-     sctk_nodebug("mpcomp_slave_mvp_node: Polling address %p ith ID %d",
-		&(n->slave_running[0]),0); 
-
      /* Spinning on the designed node */
-     sctk_thread_wait_for_value_and_poll((int *)&(n->slave_running[0]), 1 , NULL , NULL);
-     n->slave_running[0] = 0;
-
-     sctk_nodebug("mpcomp_slave_mvp_node: wake_up -> go to children using function %p", n->func);
+     sctk_thread_wait_for_value_and_poll((int *)&(n->slave_running), 1 , NULL , NULL);
+     n->slave_running = 0;
 
      /* Used in case of nb_threads < nb_mvps */
      max_index_with_more_threads = n->num_threads%OMP_MICROVP_NUMBER;
@@ -204,8 +196,6 @@ void *mpcomp_slave_mvp_node (void *arg)
      /* Wake up children node */
      while (n->child_type != CHILDREN_LEAF) {
         int nb_children_involved = 1;
-
-        sctk_nodebug("mpcomp_slave_mvp_node: children node passing function %p", n->func);
 
         n->children.node[0]->func = n->func;
         n->children.node[0]->shared = n->shared;
@@ -222,7 +212,7 @@ void *mpcomp_slave_mvp_node (void *arg)
   	    n->children.node[i]->func = n->func;
 	    n->children.node[i]->shared = n->shared;
 	    n->children.node[i]->num_threads = n->num_threads;
-	    n->children.node[i]->slave_running[0] = 1;
+	    n->children.node[i]->slave_running = 1;
             nb_children_involved++;
           }
 	}
@@ -233,7 +223,6 @@ void *mpcomp_slave_mvp_node (void *arg)
 
      /* Wake up children leaf */
      sctk_assert(n->child_type == CHILDREN_LEAF);
-     sctk_nodebug("mpcomp_slave_mvp_node: children leaf will use %p",n->func);
 
      int nb_leaves_involved = 1;
 
@@ -245,7 +234,7 @@ void *mpcomp_slave_mvp_node (void *arg)
           num_threads_per_child++;
 
        if (num_threads_per_child > 0) {
-         n->children.leaf[i]->slave_running[0] = 1;
+         n->children.leaf[i]->slave_running = 1;
          nb_leaves_involved++;
        }
      }
@@ -269,14 +258,20 @@ void *mpcomp_slave_mvp_node (void *arg)
        rank = mvp->rank;
        mvp->threads[i].rank = rank;
        mvp->threads[i].mvp = mvp;
-       mvp->threads[i].is_running = 1;
+       mvp->threads[i].index_in_mvp = i;
+       mvp->threads[i].done = 0;
+       mvp->threads[i].hierarchical_tls = NULL;
        mvp->threads[i].current_single = -1;
+       mvp->threads[i].private_current_for_dyn = 0;
 
-       /* Copy information */
-       mvp->threads[i].num_threads = n->num_threads;
-       
-       sctk_nodebug("mpcomp_slave_mvp: Got num threads %d",
-		mvp->threads[i].num_threads);
+       for (j=0 ; j<MPCOMP_MAX_THREADS ; j++) {
+         for (k=0 ; k<MPCOMP_MAX_ALIVE_FOR_DYN ; k++) {
+           mvp->threads[i].lock_for_dyn[j][k] = SCTK_SPINLOCK_INITIALIZER;
+           mvp->threads[i].chunk_info_for_dyn[j][k].remain = -1 ;
+         }
+       }
+
+       mvp->threads[i].is_running = 1;
      }
      /* TODO finish*/
 
@@ -287,13 +282,11 @@ void *mpcomp_slave_mvp_node (void *arg)
      in_order_scheduler(mvp);
 
      /* Barrier to wait for the other microVPs */
-     __mpcomp_internal_half_barrier(mvp);
+     __mpcomp_half_barrier();
 #if defined (SCTK_USE_OPTIMIZED_TLS)
 	  sctk_tls_module = info->tls_module;
 	  sctk_context_restore_tls_module_vp() ;
 #endif
-
-     sctk_nodebug("node val %d out of %d", b, c->barrier_num_threads);
 
 TODO("to translate")
    }
@@ -313,29 +306,17 @@ void *mpcomp_slave_mvp_leaf (void *arg)
    /* Grab the current microVP */
    mvp = (mpcomp_mvp_t *)arg;
 
-   sctk_nodebug("mpcomp_slave_mvp_leaf: Polling address %p -> father is %p",
-		&(mvp->slave_running[0]),mvp->father);
-   sctk_nodebug("mpcomp_slave_mvp_leaf: Will get value from father %p", mvp->father);
- 
    /* Spin while this microVP is alive */  
    while (mvp->enable) {
-     int i;
+     int i,j,k;
      int num_threads_mvp;
 
-     sctk_nodebug("mpcomp_slave_mvp_leaf: Polling address %p with ID %d",
-			&(mvp->slave_running[0]),0);
-
      /* Spin for new parallel region */
-     sctk_thread_wait_for_value_and_poll((int*)&(mvp->slave_running[0]),1,NULL,NULL);
-     mvp->slave_running[0] = 0;
-
-     sctk_nodebug("mpcomp_slave_mvp_leaf: wake up");
+     sctk_thread_wait_for_value_and_poll((int*)&(mvp->slave_running),1,NULL,NULL);
+     mvp->slave_running = 0;
 
      mvp->func = mvp->father->func;
      mvp->shared = mvp->father->shared;
-
-     sctk_nodebug("mpcomp_slave_mvp_leaf: Function for this mvp %p, #threads %d (father %p)",
-		mvp->func, mvp->father->num_threads, mvp->father);
 
      /* Compute the number of threads for this microVP */
      int fetched_num_threads = mvp->father->num_threads;
@@ -349,14 +330,20 @@ void *mpcomp_slave_mvp_leaf (void *arg)
        rank = mvp->rank;
        mvp->threads[i].rank = rank;
        mvp->threads[i].mvp = mvp;
-       mvp->threads[i].is_running = 1;
+       mvp->threads[i].index_in_mvp = i;
+       mvp->threads[i].done = 0;
+       mvp->threads[i].hierarchical_tls = NULL;
        mvp->threads[i].current_single = -1;
+       mvp->threads[i].private_current_for_dyn = 0;
 
-       /* Copy information */
-       mvp->threads[i].num_threads = mvp->father->num_threads;
-       
-       sctk_nodebug("mpcomp_slave_mvp: Got num threads %d",
-		mvp->threads[i].num_threads);
+       for (j=0 ; j<MPCOMP_MAX_THREADS ; j++) {
+         for (k=0 ; k<MPCOMP_MAX_ALIVE_FOR_DYN ; k++) {
+           mvp->threads[i].lock_for_dyn[j][k] = SCTK_SPINLOCK_INITIALIZER;
+           mvp->threads[i].chunk_info_for_dyn[j][k].remain = -1 ;
+         }
+       }
+
+       mvp->threads[i].is_running = 1;
      }
      /* TODO finish*/
 
@@ -367,7 +354,7 @@ void *mpcomp_slave_mvp_leaf (void *arg)
      in_order_scheduler(mvp);
 
      /* Barrier to wait for the other microVPs */
-     __mpcomp_internal_half_barrier(mvp);
+     __mpcomp_half_barrier();
 
    }
 
@@ -379,14 +366,24 @@ void *mpcomp_slave_mvp_leaf (void *arg)
 */
 void __mpcomp_thread_init (mpcomp_thread_t *t)
 {
-   t->depth = 0;
+   int i,j;
+
    t->rank = 0;
-   t->num_threads = OMP_NUM_THREADS;
    t->mvp = NULL;
    t->index_in_mvp = 0;
    t->done = 0;
    t->hierarchical_tls = NULL;
    t->current_single = -1;
+   t->private_current_for_dyn = 0;
+
+   /* Init for dynamic scheduling construct */
+   for (i=0 ; i<MPCOMP_MAX_THREADS ; i++) {
+     for (j=0 ; j<MPCOMP_MAX_ALIVE_FOR_DYN ; j++) {
+       t->lock_for_dyn[i][j] = SCTK_SPINLOCK_INITIALIZER;
+       t->chunk_info_for_dyn[i][j].remain = -1 ;
+     }
+   }
+
 }
 
 /*
@@ -402,13 +399,6 @@ void __mpcomp_thread_team_init (mpcomp_thread_team_t *team)
    team->hierarchical_tls = NULL;
 
    /* Init for dynamic scheduling construct */
-   for (i=0 ; i<MPCOMP_MAX_THREADS ; i++) {
-     for (j=0 ; j<MPCOMP_MAX_ALIVE_FOR_DYN ; j++) {
-       team->lock_for_dyn[i][j] = SCTK_SPINLOCK_INITIALIZER;
-       team->chunk_info_for_dyn[i][j].remain = -1 ;
-     }
-   }
-
    team->lock_stop_for_dyn = SCTK_SPINLOCK_INITIALIZER;
 
    for (i=0 ; i<MPCOMP_MAX_ALIVE_FOR_DYN ; i++) {
@@ -416,10 +406,10 @@ void __mpcomp_thread_team_init (mpcomp_thread_team_t *team)
       team->nthread_exited_for_dyn[i] = 0;
    }
 
-   for (i=0 ; i<MPCOMP_MAX_ALIVE_FOR_DYN-1 ; i++) team->stop[i] = OK;				
-     team->stop[MPCOMP_MAX_ALIVE_FOR_DYN-1] = STOP;
+   for (i=0 ; i<MPCOMP_MAX_ALIVE_FOR_DYN-1 ; i++) 
+     team->stop[i] = MPCOMP_OK;				
 
-   team->private_current_for_dyn = 0;
+   team->stop[MPCOMP_MAX_ALIVE_FOR_DYN-1] = MPCOMP_STOP;
 
    /* Init for single construct */
    for (i = 0; i <= MPCOMP_MAX_ALIVE_SINGLE; i++) {
@@ -479,8 +469,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  root->nb_children = 2;
 	  root->child_type = CHILDREN_NODE;
 	  root->lock = SCTK_SPINLOCK_INITIALIZER;
-	  root->slave_running[0] = 0;
-	  root->slave_running[1] = 0;
+	  root->slave_running = 0;
 #ifdef ATOMICS
 	  sctk_atomics_store_int (&root->barrier,0) ;
 #else
@@ -507,8 +496,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	    n->nb_children = 4;
 	    n->child_type = CHILDREN_LEAF;
 	    n->lock = SCTK_SPINLOCK_INITIALIZER;
-	    n->slave_running[0] = 0;
-	    n->slave_running[1] = 0;
+	    n->slave_running = 0;
 #ifdef ATOMICS
 	    sctk_atomics_store_int (&n->barrier,0) ;
 #else
@@ -609,8 +597,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  root->nb_children = 8;
 	  root->child_type = CHILDREN_LEAF;
 	  root->lock = SCTK_SPINLOCK_INITIALIZER;
-	  root->slave_running[0] = 0;
-	  root->slave_running[1] = 0;
+	  root->slave_running = 0;
 #ifdef ATOMICS
 	  sctk_atomics_store_int (&root->barrier,0) ;
 #else
@@ -711,7 +698,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  break;
 
 	case 32: 
-#if 0 /* NUMA tree 32 cores */
+#if 1  /* NUMA tree 32 cores */
 #warning "OpenMp compiling w/ NUMA tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -721,8 +708,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  root->max_index = 31;
 	  root->child_type = CHILDREN_NODE;
 	  root->lock = SCTK_SPINLOCK_INITIALIZER;
-	  root->slave_running[0] = 0;
-	  root->slave_running[1] = 0;
+	  root->slave_running = 0;
 #ifdef ATOMICS
 	  sctk_atomics_store_int (&root->barrier,0) ;
 #else
@@ -753,8 +739,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	    n->max_index = (i+1)*8;
 	    n->child_type = CHILDREN_LEAF;
 	    n->lock = SCTK_SPINLOCK_INITIALIZER;
-	    n->slave_running[0] = 0;
-	    n->slave_running[1] = 0;
+	    n->slave_running = 0;
 #ifdef ATOMICS
 	    sctk_atomics_store_int (&n->barrier,0) ;
 #else
@@ -849,7 +834,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  }
 #endif
 
-#if 1  /* NUMA tree degree 4 */
+#if 0   /* NUMA tree degree 4 */
 #warning "OpenMp compiling w/2-level NUMA tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -859,8 +844,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  root->max_index = 31;
 	  root->child_type = CHILDREN_NODE;
 	  root->lock = SCTK_SPINLOCK_INITIALIZER;
-	  root->slave_running[0] = 0;
-	  root->slave_running[1] = 0;
+	  root->slave_running = 0;
 #ifdef ATOMICS
 	  sctk_atomics_store_int (&root->barrier,0) ;
 #else
@@ -890,8 +874,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	    n->max_index = (i+1)*8-1;
 	    n->child_type = CHILDREN_NODE;
 	    n->lock = SCTK_SPINLOCK_INITIALIZER;
-	    n->slave_running[0] = 0;
-	    n->slave_running[1] = 0;
+	    n->slave_running = 0;
 #ifdef ATOMICS
 	    sctk_atomics_store_int (&n->barrier,0) ;
 #else
@@ -920,8 +903,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
                n2->max_index = i*8 + (j+1)*4 - 1;
                n2->child_type = CHILDREN_LEAF;
                n2->lock = SCTK_SPINLOCK_INITIALIZER;
-               n2->slave_running[0] = 0;
-               n2->slave_running[1] = 0;
+               n2->slave_running = 0;
 #ifdef ATOMICS
 	       sctk_atomics_store_int (&n2->barrier,0) ;
 #else
@@ -1037,8 +1019,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  root->nb_children = 32;
 	  root->child_type = CHILDREN_LEAF;
 	  root->lock = SCTK_SPINLOCK_INITIALIZER;
-	  root->slave_running[0] = 0;
-	  root->slave_running[1] = 0;
+	  root->slave_running = 0;
 #ifdef ATOMICS
 	    sctk_atomics_store_int (&root->barrier,0) ;
 #else
@@ -1152,20 +1133,17 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 void __mpcomp_init (void)
 {
   static volatile int done = 0;
-  //static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
   static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
   mpcomp_instance_t *instance;
   mpcomp_thread_t *t;
   mpcomp_thread_team_t *team;
   icv_t icvs;
 
-  sctk_nodebug("__mpcomp_init: sctk_openmp_thread_tls");
 
   /* Need to initialize the current team */
   if (sctk_openmp_thread_tls == NULL) {
 
      sctk_spinlock_lock(&lock);
-     //sctk_thread_mutex_lock(&lock);
 
      /* Initialize the whole runtime (ie. environement variables) */
      if (done == 0) {
@@ -1179,6 +1157,7 @@ void __mpcomp_init (void)
 
      /* Initialization of the OpenMP instance */
      __mpcomp_instance_init(instance,OMP_MICROVP_NUMBER);
+     sctk_assert(instance != NULL);
 
      /* Allocate informations for the sequential region */
      t = (mpcomp_thread_t *)sctk_malloc(sizeof(mpcomp_thread_t));
@@ -1218,8 +1197,6 @@ void __mpcomp_init (void)
 
      //sctk_thread_mutex_unlock(&lock);
      sctk_spinlock_unlock(&lock);
-
-     sctk_nodebug("__mpcomp_init: Init done...");
   }
 
 }
@@ -1234,11 +1211,9 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
   mpcomp_node_t *root;
   int num_threads;
   int num_threads_mvp;
-  int i,j;
+  int i,j,k;
 
   __mpcomp_init();
-
-  sctk_nodebug("__mpcomp_start_parallel_region: **** NEW PARALLE REGION (f %p) (arg %p) ****",func,shared);
 
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);      
@@ -1248,36 +1223,38 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
   if (arg_num_threads > 0)
     num_threads = arg_num_threads;
 
-  sctk_nodebug("__mpcomp_start_parallel_region: Final number of threads %d (default %d)",num_threads,t->icvs.nthreads_var);
-
   /* Bypass if the parallel region contains only 1 thread */
   if (num_threads == 1) {
-    sctk_nodebug("__mpcomp_start_parallel_region: Only 1 thread -> call f");
-      
     /* Simulate a parallel region by incrementing the depth */
-    t->depth++ ;
+    t->team->depth++ ;
 
     func(shared);
 
-    t->depth-- ;
+    t->team->depth-- ;
 
     return;
   }
 
+  sctk_debug("__mpcomp_start_parallel_region: depth %d",t->team->depth);
+ 
   /* First level of parallel region. No nesting */  
-  if (t->depth == 0) {
+  if (t->team->depth == 0) {
+
     mpcomp_instance_t *instance;
 
     /* Grab the OpenMP instance already allocated during the initialization */
     instance = t->children_instance;
     sctk_assert(instance != NULL);
 
-    /* Init the team information in each thread of the team */
+    /* Init the team information and the instance in each thread of the team */
     num_threads_mvp = 1;
-    for (i=0 ; i<OMP_MICROVP_NUMBER ; i++)
-      for (j=0 ; j<num_threads_mvp ; j++)
+    for (i=0 ; i<OMP_MICROVP_NUMBER ; i++) {
+      for (j=0 ; j<num_threads_mvp ; j++) {
         instance->mvps[i]->threads[j].team = t->team;
- 
+        instance->mvps[i]->threads[j].children_instance = t->children_instance;
+      }
+    }
+
     /* Get the root node of the main tree */
     root = instance->root;
     sctk_assert(root != NULL);
@@ -1289,16 +1266,12 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
 
     max_index_with_more_threads = num_threads % instance->nb_mvps;
 
-    sctk_nodebug("__mpcomp_start_parallel_region: #threads_per_mvp %d. %d mvps have an additional thread",num_threads_per_child,max_index_with_more_threads);
-
     n = root;
 
     while (n->child_type != CHILDREN_LEAF) {
        int nb_children_involved = 1;
 
        for (i=1 ; i<n->nb_children ; i++) {
-
-         sctk_nodebug("__mpcomp_start_parallel_region: Testing child %d with min_index = %d, #threads = %d",i,n->children.node[i]->min_index,num_threads);
 
     	 num_threads_per_child = num_threads/instance->nb_mvps;
 
@@ -1310,12 +1283,11 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
            n->children.node[i]->func = func;
            n->children.node[i]->shared = shared;
            n->children.node[i]->num_threads = num_threads;
-           n->children.node[i]->slave_running[0] = 1;
+           n->children.node[i]->slave_running = 1;
            nb_children_involved++;
          }
        }
 
-       sctk_nodebug("__mpcomp_start_parallel_region: nb_children_invloved = %d",nb_children_involved);
        n->barrier_num_threads = nb_children_involved;
        n = n->children.node[0];
     }
@@ -1328,7 +1300,6 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
     sctk_assert(n->child_type == CHILDREN_LEAF);
     int nb_leaves_involved = 1;
 
-
     for (i=1 ; i<n->nb_children ; i++) {
       num_threads_per_child = num_threads / instance->nb_mvps;
 
@@ -1336,7 +1307,7 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
 	num_threads_per_child++;
 
       if (num_threads_per_child > 0) {
-        n->children.leaf[i]->slave_running[0] = 1;
+        n->children.leaf[i]->slave_running = 1;
         nb_leaves_involved++;
       }
     }
@@ -1347,18 +1318,31 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
     instance->mvps[0]->shared = shared;
     instance->mvps[0]->nb_threads = 1;
 
-    /* Compute the number of OpenMP threads and their rank running on microVP #0 */
-    instance->mvps[0]->threads[0].num_threads = num_threads;
-    instance->mvps[0]->threads[0].rank = 0;
-    instance->mvps[0]->threads[0].is_running = 1;
-    instance->mvps[0]->threads[0].current_single = -1;
-    instance->mvps[0]->threads[0].mvp = instance->mvps[0];
+    for (i=0 ; i<num_threads_mvp ; i++) {
+      instance->mvps[0]->threads[i].rank = 0;
+      instance->mvps[0]->threads[i].mvp = instance->mvps[0];
+      instance->mvps[0]->threads[i].index_in_mvp = i;
+      instance->mvps[0]->threads[i].done = 0;
+      instance->mvps[0]->threads[i].hierarchical_tls = NULL;
+      instance->mvps[0]->threads[i].current_single = -1;
+      instance->mvps[0]->threads[i].private_current_for_dyn = 0;
+
+      /* Compute the number of OpenMP threads and their rank running on microVP #0 */
+      for (j=0 ; j<MPCOMP_MAX_THREADS ; j++) {
+        for (k=0 ; k<MPCOMP_MAX_ALIVE_FOR_DYN ; k++) {
+          instance->mvps[0]->threads[0].lock_for_dyn[j][k] = SCTK_SPINLOCK_INITIALIZER;
+          instance->mvps[0]->threads[0].chunk_info_for_dyn[j][k].remain = -1 ;
+        }
+      }
+
+      instance->mvps[0]->threads[i].is_running = 1;
+    }
 
     /* Start scheduling */
     in_order_scheduler(instance->mvps[0]);
 
     /* Barrier to wait for the other microVPs */
-    __mpcomp_internal_half_barrier(instance->mvps[0]);
+    __mpcomp_half_barrier();
 
     /* Finish the half barrier by spinning ton the root value */
 #ifdef ATOMICS
@@ -1375,6 +1359,11 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
 
     /* Restore the previous OpenMP info */
     sctk_openmp_thread_tls = t;
+
+#if 0
+    /* Check if the barrier info is correct at the end of the parallel region */
+    check_parallel_region_correctness();
+#endif
    
   }
   else {
@@ -1383,158 +1372,168 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
 }
 
 /*
-   Implicit barrier = half barrier = no step 3
+   Half barrier
 */
 void __mpcomp_internal_half_barrier(mpcomp_mvp_t *mvp)
 {
-     mpcomp_node_t *c;
-     int b_done;
-     int b;
+   mpcomp_node_t *c;
+   int b_done;
+   int b;
 
-     sctk_nodebug("__mpcomp_internal_barrier: mvp rank %d",mvp->rank);
-
-     /*Barrier to wait for the other microVPs*/
-     c = mvp->father;
-
-     /* Step 1: Climb in the tree */
-     b_done = c->barrier_done;
+   /*Barrier to wait for the other microVPs*/
+   c = mvp->father;
 
 #ifdef ATOMICS
+   b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
+   //sctk_atomics_write_barrier(); 
 
-     b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
-     //sctk_atomics_write_barrier(); 
+   while ((b+1 == c->barrier_num_threads) && (c->father != NULL)) {
+      sctk_atomics_store_int (&c->barrier,0) ;
+      //sctk_atomics_write_barrier(); 
 
-     while ((b+1 == c->barrier_num_threads) && (c->father != NULL)) {
-        sctk_atomics_store_int (&c->barrier,0) ;
-        c = c->father;
+      c = c->father;
 
-        b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
-        //sctk_atomics_write_barrier(); 
-
-        sctk_nodebug("mpcomp_internal_barrier: else thread %d",mvp->rank);
-     }
+      b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
+      sctk_atomics_write_barrier(); 
+   }
 #else
 
-     sctk_spinlock_lock(&(c->lock));
-     b = c->barrier;
-     b++;
-     c->barrier = b;
-     sctk_spinlock_unlock(&(c->lock));
+   sctk_spinlock_lock(&(c->lock));
+   b = c->barrier;
+   b++;
+   c->barrier = b;
+   sctk_spinlock_unlock(&(c->lock));
 
-     while ((b == c->barrier_num_threads) && (c->father != NULL)) {
-        c->barrier = 0;
-        c = c->father;
+   while ((b == c->barrier_num_threads) && (c->father != NULL)) {
+      c->barrier = 0;
+      c = c->father;
 
-        sctk_spinlock_lock(&(c->lock));
-        b = c->barrier;
-        b++;
-        c->barrier = b;
-        sctk_spinlock_unlock(&(c->lock));
-
-        sctk_nodebug("mpcomp_internal_barrier: else thread %d",mvp->rank);
-     }
+      sctk_spinlock_lock(&(c->lock));
+      b = c->barrier;
+      b++;
+      c->barrier = b;
+      sctk_spinlock_unlock(&(c->lock));
+   }
 #endif
 }
+
+/*
+   OpenMP implicit barrier - half barrier)
+*/
+void __mpcomp_half_barrier()
+{
+  mpcomp_thread_t *t;
+  mpcomp_mvp_t *mvp;
+
+  /* Grab the info of the current thread */    
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  mvp = t->mvp;
+  sctk_assert(mvp != NULL);
+
+  sctk_nodebug("__mpcomp_half_barrier: Entering mvp %d",mvp->rank);
+
+  __mpcomp_internal_half_barrier(mvp);
+
+  t = sctk_openmp_thread_tls;
+
+  sctk_nodebug("__mpcomp_half_barrier: Leaving mvp %d",mvp->rank);
+
+}
+
 
 /*
    Full barrier
 */
 void __mpcomp_internal_barrier(mpcomp_mvp_t *mvp)
 {
-     mpcomp_node_t *c;
-     int b_done;
-     int b;
+   mpcomp_node_t *c;
+   int b_done;
+   int b;
 
-     sctk_nodebug("__mpcomp_internal_barrier: mvp rank %d",mvp->rank);
+   /*Barrier to wait for the other microVPs*/
+   c = mvp->father;
 
-     /*Barrier to wait for the other microVPs*/
-     c = mvp->father;
-
-     /* Step 1: Climb in the tree */
-     b_done = c->barrier_done;
+   /* Step 1: Climb in the tree */
+   b_done = c->barrier_done;
 
 
 #ifdef ATOMICS
-     b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
-     //sctk_atomics_write_barrier(); 
+   b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
+   //sctk_atomics_write_barrier(); 
 
-     while ((b+1 == c->barrier_num_threads) && (c->father != NULL)) {
-        sctk_atomics_store_int (&c->barrier,0) ;
+   while ((b+1 == c->barrier_num_threads) && (c->father != NULL)) {
+      sctk_atomics_store_int (&c->barrier,0) ;
 
-        c = c->father;
+      c = c->father;
 
-        b_done = c->barrier_done;      
+      b_done = c->barrier_done;      
 
-        b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
-        //sctk_atomics_write_barrier(); 
+      b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
+      //sctk_atomics_write_barrier(); 
+   }
 
-        sctk_nodebug("mpcomp_internal_barrier: else thread %d",mvp->rank);
+   /* Step 2: Wait for the barrier to be done */
+   if ((c->father != NULL) || (c->father == NULL && b+1 != c->barrier_num_threads)) {
+     /* Wait for c->barrier == c->barrier_num_threads */ 
+     while (b_done == c->barrier_done) {
+        sctk_thread_yield();
      }
 
-     /* Step 2: Wait for the barrier to be done */
-     if ((c->father != NULL) || (c->father == NULL && b+1 != c->barrier_num_threads)) {
-       /* Wait for c->barrier == c->barrier_num_threads */ 
-       sctk_nodebug("mpcomp_internal_barrier: if thread %d",mvp->rank);
-       while (b_done == c->barrier_done) {
-          sctk_thread_yield();
-       }
-     }
-     else {
-       sctk_atomics_store_int (&c->barrier,0);
-       c->barrier_done++;
-       /* TODO: not sure that we need that. If we do need it, maybe we need to lock */
-       sctk_nodebug("mpcomp_internal_barrier: else thread %d",mvp->rank);
-     }
+   }
+   else {
+     sctk_atomics_store_int (&c->barrier,0);
+     c->barrier_done++;
+     /* TODO: not sure that we need that. If we do need it, maybe we need to lock */
+   }
 
 #else
-     sctk_spinlock_lock(&(c->lock));
-     b = c->barrier;
-     b++;
-     c->barrier = b;
-     sctk_spinlock_unlock(&(c->lock));
+   sctk_spinlock_lock(&(c->lock));
+   b = c->barrier;
+   b++;
+   c->barrier = b;
+   sctk_spinlock_unlock(&(c->lock));
 
-     while ((b == c->barrier_num_threads) && (c->father != NULL)) {
-        c->barrier = 0;
+   while ((b == c->barrier_num_threads) && (c->father != NULL)) {
+      c->barrier = 0;
 
-        c = c->father;
+      c = c->father;
 
-        b_done = c->barrier_done;      
+      b_done = c->barrier_done;      
 
-        sctk_spinlock_lock(&(c->lock));
-        b = c->barrier;
-        b++;
-        c->barrier = b;
-        sctk_spinlock_unlock(&(c->lock));
+      sctk_spinlock_lock(&(c->lock));
+      b = c->barrier;
+      b++;
+      c->barrier = b;
+      sctk_spinlock_unlock(&(c->lock));
+   }
 
-        sctk_nodebug("mpcomp_internal_barrier: else thread %d",mvp->rank);
+   /* Step 2: Wait for the barrier to be done */
+   if ((c->father != NULL) || (c->father == NULL && b != c->barrier_num_threads)) {
+
+     /* Wait for c->barrier == c->barrier_num_threads */ 
+     while (b_done == c->barrier_done) {
+        sctk_thread_yield();
      }
-
-     /* Step 2: Wait for the barrier to be done */
-     if ((c->father != NULL) || (c->father == NULL && b != c->barrier_num_threads)) {
-       /* Wait for c->barrier == c->barrier_num_threads */ 
-       sctk_nodebug("mpcomp_internal_barrier: if thread %d",mvp->rank);
-       while (b_done == c->barrier_done) {
-          sctk_thread_yield();
-       }
-     }
-     else {
-       c->barrier = 0;
-       c->barrier_done++;
-       /* TODO: not sure that we need that. If we do need it, maybe we need to lock */
-       sctk_nodebug("mpcomp_internal_barrier: else thread %d",mvp->rank);
-     }
+   }
+   else {
+     c->barrier = 0;
+     c->barrier_done++;
+     /* TODO: not sure that we need that. If we do need it, maybe we need to lock */
+   }
 #endif
 
-     /* Step 3: Go down in the tree to wake up the children */
-     while (c->child_type != CHILDREN_LEAF) {
-         sctk_nodebug("mpcomp_internal_barrier: step3 thread %d",mvp->rank);
-         c = c->children.node[mvp->tree_rank[c->depth]];
-         c->barrier_done++;
-     }
+
+   /* Step 3: Go down in the tree to wake up the children */
+   while (c->child_type != CHILDREN_LEAF) {
+       c = c->children.node[mvp->tree_rank[c->depth]];
+       c->barrier_done++;
+   }
 }
 
 /*
-   OpenMP barrier
+   OpenMP explicit barrier
 */
 void __mpcomp_barrier(void)
 {
@@ -1550,12 +1549,13 @@ void __mpcomp_barrier(void)
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
-  if (t->num_threads > 1) {
+  if (t->team->num_threads > 1) {
     /* Grab the corresponding microVP */
     mvp = t->mvp;
     sctk_assert(mvp != NULL);
 
     __mpcomp_internal_barrier(mvp);
+
   }
 }
 
@@ -1572,9 +1572,7 @@ void in_order_scheduler (mpcomp_mvp_t *mvp)
   for (i=0 ; i<mvp->nb_threads ; i++) {
     sctk_openmp_thread_tls = &mvp->threads[i];
 
-    //sctk_spinlock_lock(&(mvp->father->lock));
     mvp->func(mvp->shared);
-    //sctk_spinlock_unlock(&(mvp->father->lock));
 
     mvp->threads[i].done = 1;
   }
@@ -1594,7 +1592,7 @@ int mpcomp_get_num_threads ()
   t = sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
-  return t->num_threads;
+  return t->team->num_threads;
 }
 
 /*
@@ -1630,7 +1628,7 @@ mpcomp_get_max_threads (void)
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
-  return t->num_threads;
+  return t->team->num_threads;
 }
 
 
@@ -1654,6 +1652,48 @@ mpcomp_get_wtick (void)
   return 10e-6;
 }
 
+/* 
+  Check if the barrier info is correct at the end of the parallel region 
+*/
+void check_parallel_region_correctness(void)
+{
+
+  mpcomp_thread_t *t;
+  mpcomp_node_t *root;  
+  mpcomp_node_t *n;
+  mpcomp_node_t *n1;
+  int i;
+
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  mpcomp_instance_t *instance;
+
+  /* Grab the OpenMP instance already allocated during the initialization */
+  instance = t->children_instance;
+  sctk_assert(instance != NULL);
+
+  /* Get the root node of the main tree */
+  root = instance->root;
+  sctk_assert(root != NULL);
+
+  n = root;
+
+  sctk_nodebug("root barrier %d",sctk_atomics_load_int(&n->barrier));
+  sctk_nodebug("root barrier done %d",n->barrier_done);
+
+  sctk_assert(sctk_atomics_load_int(&n->barrier) == 0);
+
+  for (i=0 ; i<n->nb_children ; i++) {
+    n1 = n->children.node[i];
+    sctk_nodebug("numa node %d",i);
+    sctk_nodebug("numa barrier %d",sctk_atomics_load_int(&n1->barrier));
+    sctk_nodebug("numa barrier done %d",n1->barrier_done);
+
+    sctk_assert(sctk_atomics_load_int(&n1->barrier) == 0);
+  }
+
+}
 
 
 

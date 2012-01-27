@@ -45,7 +45,7 @@ __mpcomp_do_single (void)
   assert (self != NULL);
 
 
-  num_threads = self->num_threads;
+  num_threads = self->team->num_threads;
 
   if( num_threads == 1)
   {

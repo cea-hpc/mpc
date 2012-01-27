@@ -47,7 +47,7 @@ __mpcomp_static_schedule_get_single_chunk (int lb, int b, int incr, int *from,
   sctk_assert(info != NULL);      
 
 
-  num_threads = info->num_threads;
+  num_threads = info->team->num_threads;
   rank = info->rank;
 
   trip_count = (b - lb) / incr;
@@ -96,7 +96,7 @@ __mpcomp_static_schedule_get_nb_chunks (int lb, int b, int incr,
   sctk_assert(info != NULL);   
 
   /* Retrieve the number of threads and the rank of the current thread */
-  nb_threads = info->num_threads;
+  nb_threads = info->team->num_threads;
   rank = info->rank;
 
   /* Compute the trip count (total number of iterations of the original loop) */
@@ -149,7 +149,7 @@ __mpcomp_static_schedule_get_specific_chunk (int lb, int b, int incr,
   sctk_assert(info != NULL);  
 
   /* Retrieve the number of threads and the rank of this thread */
-  nb_threads = info->num_threads;
+  nb_threads = info->team->num_threads;
   rank = info->rank;
 
   /* Compute the trip count (total number of iterations of the original loop) */
@@ -226,7 +226,7 @@ __mpcomp_static_loop_begin (int lb, int b, int incr, int chunk_size,
 
 
     /* Retrieve the number of threads and the rank of this thread */
-    nb_threads = info->num_threads;
+    nb_threads = info->team->num_threads;
     rank = info->rank;
 
     info->static_nb_chunks = 
@@ -261,7 +261,7 @@ __mpcomp_static_loop_next (int *from, int *to)
 
 
   /* Retrieve the number of threads and the rank of this thread */
-  nb_threads = info->num_threads;
+  nb_threads = info->team->num_threads;
   rank = info->rank;
 
   /* Next chunk */
