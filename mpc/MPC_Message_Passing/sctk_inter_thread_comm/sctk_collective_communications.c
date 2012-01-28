@@ -1322,7 +1322,7 @@ __sctk_perform_collective_comm_intern (const size_t elem_size,
   my_vp->data.data_out_tab[nb_registered] = data_out;
   nb_registered++;
   my_vp->nb_task_registered = nb_registered;
-  sctk_nodebug ("%d registered on %d involved", nb_registered,
+  sctk_debug ("%d registered on %d involved", nb_registered,
 		my_vp->nb_task_involved);
 
   if (nb_registered == my_vp->nb_task_involved)
@@ -1330,7 +1330,7 @@ __sctk_perform_collective_comm_intern (const size_t elem_size,
       int i;
       /*Last one */
       /*Perform evaluation tree */
-      sctk_nodebug ("Entering tree");
+      sctk_debug ("Entering tree");
       sctk_perform_collective_communication_tree (com, my_vp, elem_size,
 						  nb_elem, func, data_type);
 
@@ -1356,9 +1356,9 @@ __sctk_perform_collective_comm_intern (const size_t elem_size,
       my_vp->nb_task_registered = 0;
       sctk_nodebug("REINIT %d %s",my_vp->nb_task_registered,__func__);
       /*Wake */
-      sctk_nodebug ("Wake %p", my_vp->list);
+      sctk_debug ("Wake %p", my_vp->list);
       sctk_thread_wake_thread_on_vp ((void **) &(my_vp->list));
-      sctk_nodebug ("Wake %p done", my_vp->list);
+      sctk_debug ("Wake %p done", my_vp->list);
       sctk_thread_mutex_unlock (&my_vp->lock);
       return 0;
     }
@@ -1578,14 +1578,14 @@ __sctk_perform_collective_comm_intern_barrier (const sctk_communicator_t
   com = sctk_get_communicator (com_id)->collective_communications;
   com->id = com_id;
   my_vp = com->virtual_processors[vp];
-  sctk_nodebug ("BARRIER Use comm id %d vp %d", com_id, vp);
+  sctk_debug ("BARRIER Use comm id %d vp %d", com_id, vp);
 
   sctk_thread_mutex_lock (&my_vp->lock);
   /*Contribute */
   nb_registered = my_vp->nb_task_registered;
   nb_registered++;
   my_vp->nb_task_registered = nb_registered;
-  sctk_nodebug ("%d registered on %d involved", nb_registered,
+  sctk_debug ("%d registered on %d involved", nb_registered,
 		my_vp->nb_task_involved);
 
   if (expect_false (nb_registered == my_vp->nb_task_involved))
@@ -1598,9 +1598,9 @@ __sctk_perform_collective_comm_intern_barrier (const sctk_communicator_t
       my_vp->nb_task_registered = 0;
       sctk_nodebug("REINIT %d %s",my_vp->nb_task_registered,__func__);
       /*Wake */
-      sctk_nodebug ("Wake %p", my_vp->list);
+      sctk_debug ("Wake %p", my_vp->list);
       sctk_thread_wake_thread_on_vp ((void **) &(my_vp->list));
-      sctk_nodebug ("Wake %p done", my_vp->list);
+      sctk_debug ("Wake %p done", my_vp->list);
       sctk_thread_mutex_unlock (&my_vp->lock);
       return 0;
     }
@@ -1797,9 +1797,9 @@ sctk_perform_collective_communication_init (const size_t elem_size,
     }
 
   com = sctk_get_communicator (com_id)->collective_communications;
-  sctk_nodebug("Com id : %d", com_id);
   com->id = com_id;
   my_vp = com->virtual_processors[vp];
+  sctk_debug("Com id : %d vp %d init %d", com_id,vp,com->initialized);
 
   if (com->initialized == 0)
     {
@@ -1811,12 +1811,14 @@ sctk_perform_collective_communication_init (const size_t elem_size,
 					 sctk_process_rank);
       sctk_thread_wait_for_value ((int *) &(com->initialized), 1);
     }
+  sctk_debug("Init done");
 
   my_vp = com->virtual_processors[vp];
 
   if ((vp != com->last_vp[task_id]) ||
       (sctk_process_rank != com->last_process[task_id]))
     {
+      sctk_debug("Migration");
       sctk_perform_collective_communication_migration (my_vp, com,
 						       elem_size, nb_elem,
 						       data_in, data_out,
