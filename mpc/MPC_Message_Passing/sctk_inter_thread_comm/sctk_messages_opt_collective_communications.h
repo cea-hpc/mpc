@@ -28,7 +28,8 @@
 /************************************************************************/
 
 typedef struct {
-  int dummy;
+  OPA_int_t tasks_entered_in_node;
+  volatile unsigned int generation;
 } sctk_barrier_opt_messages_t;
 
 void sctk_barrier_opt_messages_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id);

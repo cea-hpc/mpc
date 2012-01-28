@@ -119,6 +119,135 @@ static void sctk_opt_messages_init_items(sctk_opt_messages_table_t* tab){
 /************************************************************************/
 /*BARRIER                                                               */
 /************************************************************************/
+static int int_cmp(const void *a, const void *b) {
+  const int *ia = (const int *)a;
+  const int *ib = (const int *)b;
+  return *ia  - *ib;
+}
+
+static
+void sctk_barrier_opt_messages_hetero_inter(const sctk_communicator_t communicator,
+    sctk_internal_collectives_struct_t * tmp){
+  sctk_thread_data_t *thread_data;
+  int myself;
+  int my_rank;
+  int *process_array;
+  int total = sctk_get_process_nb_in_array(communicator);
+  int total_max;
+  int i;
+  sctk_opt_messages_table_t table;
+  char c = 'c';
+  struct sctk_internal_ptp_s* ptp_internal;
+  int specific_tag = barrier_hetero_specific_message_tage;
+
+  /* If only one process involved, we return */
+  if (total == 1) return;
+
+  sctk_nodebug("Start inter");
+  sctk_opt_messages_init_items(&table);
+
+  thread_data = sctk_thread_data_get ();
+  my_rank = sctk_get_rank (communicator, thread_data->task_id);
+  process_array = sctk_get_process_array(communicator),
+  myself = *((int*) bsearch((void*) &sctk_process_rank,
+        process_array,
+        total,sizeof(int), int_cmp));
+
+  ptp_internal = sctk_get_internal_ptp(-1);
+
+  total_max = log(total) / log(BARRIER_ARRITY);
+  total_max = pow(BARRIER_ARRITY,total_max);
+  if(total_max < total){
+    total_max = total_max * BARRIER_ARRITY;
+  }
+  assume(total_max >= total);
+
+  for(i = BARRIER_ARRITY; i <= total_max; i = i*BARRIER_ARRITY){
+    if(myself % i == 0){
+      int src;
+      int j;
+
+      src = myself;
+      for(j = 1; j < BARRIER_ARRITY; j++){
+        if((src + (j*(i/BARRIER_ARRITY))) < total){
+          sctk_nodebug("Recv %d to %d", src + (j*(i/BARRIER_ARRITY)), myself);
+          sctk_opt_messages_recv(communicator,
+              process_array[src + (j*(i/BARRIER_ARRITY))],
+              process_array[myself],
+              0,&c,1,barrier_hetero_specific_message_tage,sctk_opt_messages_get_item(&table),ptp_internal,1,1);
+        }
+      }
+      sctk_opt_messages_wait(&table);
+    } else {
+      int dest;
+
+      dest = (myself / i) * i;
+      if(dest >= 0){
+        sctk_nodebug("send %d to %d", myself, dest);
+        sctk_opt_messages_send(communicator,
+            process_array[myself],
+            process_array[dest],
+            0,&c,1,barrier_hetero_specific_message_tage,sctk_opt_messages_get_item(&table),0,1);
+        sctk_nodebug("recv %d to %d", dest, myself);
+        sctk_opt_messages_recv(communicator,
+            process_array[dest],
+            process_array[myself],
+            1,&c,1,barrier_hetero_specific_message_tage,sctk_opt_messages_get_item(&table),ptp_internal,0,1);
+        sctk_opt_messages_wait(&table);
+        break;
+      }
+    }
+  }
+  sctk_opt_messages_wait(&table);
+
+  for(; i >=BARRIER_ARRITY ; i = i / BARRIER_ARRITY){
+    if(myself % i == 0){
+      int dest;
+      int j;
+
+      dest = myself;
+      for(j = 1; j < BARRIER_ARRITY; j++){
+        if((dest + (j*(i/BARRIER_ARRITY))) < total){
+          sctk_opt_messages_send(communicator,
+              process_array[myself],
+              process_array[dest+(j*(i/BARRIER_ARRITY))],
+              1,&c,1,barrier_hetero_specific_message_tage,sctk_opt_messages_get_item(&table),1,1);
+        }
+      }
+    }
+  }
+  sctk_opt_messages_wait(&table);
+  sctk_nodebug("End inter");
+}
+
+static
+void sctk_barrier_opt_messages_hetero(const sctk_communicator_t communicator,
+			   sctk_internal_collectives_struct_t * tmp){
+  int nb_tasks_in_node;
+  sctk_barrier_opt_messages_t *barrier;
+  unsigned int generation;
+  int task_id_in_node;
+
+  nb_tasks_in_node = sctk_get_nb_task_local(communicator);
+  barrier = &tmp->barrier.barrier_opt_messages;
+  generation = barrier->generation;
+  task_id_in_node =
+      OPA_fetch_and_incr_int(&barrier->tasks_entered_in_node);
+
+  if (task_id_in_node == nb_tasks_in_node - 1) {
+
+    sctk_barrier_opt_messages_hetero_inter(communicator, tmp);
+
+    OPA_store_int(&barrier->tasks_entered_in_node, 0);
+      barrier->generation = generation + 1;
+      sctk_atomics_write_barrier();
+  } else {
+    while (barrier->generation < generation + 1)
+        sctk_thread_yield();
+  }
+}
+
+
 static
 void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
 			   sctk_internal_collectives_struct_t * tmp){
@@ -188,18 +317,22 @@ void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
 }
 
 void sctk_barrier_opt_messages_init(sctk_internal_collectives_struct_t * tmp, sctk_communicator_t id){
-  tmp->barrier_func = sctk_barrier_opt_messages;
+//  tmp->barrier_func = sctk_barrier_opt_messages;
+  tmp->barrier_func = sctk_barrier_opt_messages_hetero;
+
+  {
+    /* for heterogeneous mode */
+    sctk_barrier_opt_messages_t *barrier;
+
+    barrier = &tmp->barrier.barrier_opt_messages;
+    OPA_store_int(&barrier->tasks_entered_in_node, 0);
+    barrier->generation = 0;
+  }
 }
 
 /************************************************************************/
 /*Broadcast                                                             */
 /************************************************************************/
-static int int_cmp(const void *a, const void *b) {
-  const int *ia = (const int *)a;
-  const int *ib = (const int *)b;
-  return *ia  - *ib;
-}
-
 void sctk_broadcast_opt_messages_inter (void *buffer, const size_t size,
     const int root_process, const sctk_communicator_t communicator,
     struct sctk_internal_collectives_struct_s *tmp){
@@ -309,7 +442,7 @@ void sctk_broadcast_opt_messages_hetero (void *buffer, const size_t size,
   int *task_to_process;
 
   if(size == 0)  {
-    sctk_barrier_opt_messages(communicator,tmp);
+    sctk_barrier_opt_messages_hetero(communicator,tmp);
     return;
   }
 
@@ -439,9 +572,7 @@ void sctk_broadcast_opt_messages_init(struct sctk_internal_collectives_struct_s 
     {
       /* for heterogeneous mode */
       sctk_broadcast_opt_messages_t *bcast;
-      int nb_tasks_in_node;
 
-      nb_tasks_in_node = sctk_get_nb_task_local(id);
       bcast = &tmp->broadcast.broadcast_opt_messages;
       OPA_store_int(&bcast->tasks_entered_in_node, 0);
       OPA_store_int(&bcast->tasks_exited_in_node, 0);
@@ -611,7 +742,7 @@ static void sctk_allreduce_opt_messages_hetero_intern (const void *buffer_in, vo
 						const sctk_datatype_t data_type,
 						struct sctk_internal_collectives_struct_s *tmp){
   if(elem_number == 0){
-    sctk_barrier_opt_messages(communicator,tmp);
+    sctk_barrier_opt_messages_hetero(communicator,tmp);
   } else {
     sctk_nodebug("Starting allreduce");
     int task_id_in_node;

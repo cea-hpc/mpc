@@ -68,7 +68,8 @@ extern "C"
     process_specific_message_tag = MASK_PROCESS_SPECIFIC,
     ondemand_specific_message_tag =  MASK_PROCESS_SPECIFIC_ONDEMAND,
     allreduce_hetero_specific_message_tage = MASK_PROCESS_SPECIFIC_W_ORDERING | allreduce_specific_message_tag,
-    broadcast_hetero_specific_message_tage = MASK_PROCESS_SPECIFIC_W_ORDERING | broadcast_specific_message_tag
+    broadcast_hetero_specific_message_tage = MASK_PROCESS_SPECIFIC_W_ORDERING | broadcast_specific_message_tag,
+    barrier_hetero_specific_message_tage = MASK_PROCESS_SPECIFIC_W_ORDERING | broadcast_specific_message_tag
   }specific_message_tag_t;
 
   typedef struct sctk_thread_message_header_s

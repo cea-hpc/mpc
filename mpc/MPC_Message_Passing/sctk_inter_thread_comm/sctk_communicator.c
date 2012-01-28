@@ -285,7 +285,6 @@ sctk_communicator_get_new_id(int local_root, int rank,
     }
   }  while(comm == -1);
 
-  sctk_debug("Comm ? %d", comm);
   assume(comm != SCTK_COMM_WORLD);
   assume(comm != SCTK_COMM_SELF);
   assume(comm > 0);
