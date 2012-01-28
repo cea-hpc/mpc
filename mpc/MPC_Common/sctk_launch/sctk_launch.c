@@ -356,6 +356,20 @@ sctk_use_ethread_mxn_ng (void)
 /* } */
 
   static void
+sctk_use_ethread_ng (void)
+{
+  sctk_multithreading_mode = "ethread_ng";
+  sctk_thread_val = sctk_ethread_ng_thread_init;
+}
+
+  static void
+sctk_use_pthread_ng (void)
+{
+  sctk_multithreading_mode = "pthread_ng";
+  sctk_thread_val = sctk_pthread_ng_thread_init;
+}
+
+  static void
 sctk_def_directory (char *arg)
 {
   sctk_store_dir = arg;
@@ -510,9 +524,11 @@ sctk_threat_arg (char *word)
   sctk_add_arg_eq ("--directory", sctk_def_directory);
   sctk_add_arg ("--version-details", sctk_version_details);
   sctk_add_arg_eq ("--mpc-verbose", sctk_set_verbosity);
+  sctk_add_arg ("--use-pthread_ng", sctk_use_pthread_ng);
   sctk_add_arg ("--use-pthread", sctk_use_pthread);
-  sctk_add_arg ("--use-ethread_mxn", sctk_use_ethread_mxn);
   sctk_add_arg ("--use-ethread_mxn_ng", sctk_use_ethread_mxn_ng);
+  sctk_add_arg ("--use-ethread_mxn", sctk_use_ethread_mxn);
+  sctk_add_arg ("--use-ethread_ng", sctk_use_ethread_ng);
   sctk_add_arg ("--use-ethread", sctk_use_ethread);
 
 /*   sctk_add_arg ("--use-mpi", sctk_use_mpi); */
@@ -819,7 +835,6 @@ sctk_launch_main (int argc, char **argv)
     pthread_create (&pid, NULL, auto_kill_func, auto_kill);
   }
 
-  sctk_use_ethread_mxn ();
   sctk_use_ethread_mxn_ng ();
   sctk_def_task_nb ("1");
   sctk_def_process_nb ("1");

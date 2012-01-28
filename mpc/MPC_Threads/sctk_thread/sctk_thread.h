@@ -64,7 +64,9 @@ extern "C"
   void sctk_pthread_thread_init (void);
   void sctk_ethread_thread_init (void);
   void sctk_ethread_mxn_thread_init (void);
+  void sctk_ethread_ng_thread_init (void);
   void sctk_ethread_mxn_ng_thread_init (void);
+  void sctk_pthread_ng_thread_init (void);
 
   void sctk_thread_wait_for_value ( int *data, int value);
   void sctk_thread_wait_for_value_and_poll ( int *data, int value,
