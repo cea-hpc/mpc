@@ -159,3 +159,14 @@ void sctk_network_init_multirail_ib(char* name, char* topology){
 void sctk_network_init_ib(char* name, char* topology){
   sctk_network_init_multirail_ib_all("mutirail_ib",topology);
 }
+
+/************ FINALIZE ****************/
+void sctk_network_finalize_multirail_ib (){
+  int i;
+  if (rails) {
+    for(i = 0; i < NB_RAILS; i++){
+      sctk_ib_prof_print(rails[i]);
+    }
+  }
+}
+

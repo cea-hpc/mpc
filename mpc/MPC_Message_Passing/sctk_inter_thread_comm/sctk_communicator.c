@@ -25,6 +25,7 @@
 #include <sctk_communicator.h>
 #include <sctk.h>
 #include <uthash.h>
+#include "utarray.h"
 #include <opa_primitives.h>
 
 /************************************************************************/
@@ -47,6 +48,8 @@ typedef struct sctk_internal_communicator_s{
   int* local_to_global;
   int* global_to_local;
   int* task_to_process;
+  int *process;
+  int process_nb;
 
   sctk_spin_rwlock_t lock;
 
@@ -58,6 +61,11 @@ typedef struct sctk_internal_communicator_s{
 
   UT_hash_handle hh;
 } sctk_internal_communicator_t;
+
+typedef struct sctk_process_ht_s {
+  int process_id;
+  UT_hash_handle hh;
+} sctk_process_ht_t;
 
 static sctk_internal_communicator_t* sctk_communicator_table = NULL;
 static sctk_internal_communicator_t* sctk_communicator_array[SCTK_MAX_COMMUNICATOR_TAB];
@@ -277,6 +285,7 @@ sctk_communicator_get_new_id(int local_root, int rank,
     }
   }  while(comm == -1);
 
+  sctk_debug("Comm ? %d", comm);
   assume(comm != SCTK_COMM_WORLD);
   assume(comm != SCTK_COMM_SELF);
   assume(comm > 0);
@@ -310,12 +319,21 @@ sctk_set_internal_collectives(const sctk_communicator_t id,
 /************************************************************************/
 /*INIT/DELETE                                                           */
 /************************************************************************/
+static int int_cmp(const void *a, const void *b)
+{
+  const int *ia = (const int *)a;
+  const int *ib = (const int *)b;
+  return *ia  - *ib;
+}
+
 static inline void
 sctk_communicator_init_intern_init_only(const int nb_task, const sctk_communicator_t comm,
 						  int last_local,
 						 int first_local, int local_tasks,
 						 int* local_to_global, int* global_to_local,
 						 int* task_to_process,
+             int *process_array,
+             int process_nb,
 						 sctk_internal_communicator_t * tmp){
   sctk_spin_rwlock_t lock = SCTK_SPIN_RWLOCK_INITIALIZER;
   sctk_spinlock_t spinlock = SCTK_SPINLOCK_INITIALIZER;
@@ -327,6 +345,11 @@ sctk_communicator_init_intern_init_only(const int nb_task, const sctk_communicat
   tmp->last_local = last_local;
   tmp->first_local = first_local;
   tmp->local_tasks = local_tasks;
+  tmp->process = process_array;
+  tmp->process_nb = process_nb;
+  if (process_array != NULL) {
+    qsort(process_array, process_nb, sizeof(int), int_cmp);
+  }
 
   tmp->local_to_global = local_to_global;
   tmp->global_to_local = global_to_local;
@@ -348,6 +371,8 @@ sctk_communicator_init_intern_no_alloc(const int nb_task, const sctk_communicato
 				       int first_local, int local_tasks,
 				       int* local_to_global, int* global_to_local,
 				       int* task_to_process,
+               int *process_array,
+               int process_nb,
 				       sctk_internal_communicator_t * tmp){
 
   sctk_communicator_init_intern_init_only(nb_task,
@@ -358,6 +383,8 @@ sctk_communicator_init_intern_no_alloc(const int nb_task, const sctk_communicato
 					  local_to_global,
 					  global_to_local,
 					  task_to_process,
+            process_array,
+            process_nb,
 					  tmp);
   assume(sctk_set_internal_communicator(comm,tmp) == 0);
 
@@ -369,7 +396,9 @@ sctk_communicator_init_intern(const int nb_task, const sctk_communicator_t comm,
 			       int last_local,
 			      int first_local, int local_tasks,
 			      int* local_to_global, int* global_to_local,
-			      int* task_to_process){
+			      int* task_to_process,
+            int *process_array,
+            int process_nb){
   sctk_internal_communicator_t * tmp;
   tmp = sctk_malloc(sizeof(sctk_internal_communicator_t));
   memset(tmp,0,sizeof(sctk_internal_communicator_t));
@@ -382,6 +411,8 @@ sctk_communicator_init_intern(const int nb_task, const sctk_communicator_t comm,
 					 local_to_global,
 					 global_to_local,
 					 task_to_process,
+           process_array,
+           process_nb,
 					 tmp);
 }
 
@@ -391,6 +422,7 @@ void sctk_communicator_init(const int nb_task){
   int last_local;
   int first_local;
   int local_tasks;
+  int *process_array;
 
   pos = sctk_process_rank;
   local_tasks = nb_task / sctk_process_number;
@@ -406,9 +438,12 @@ void sctk_communicator_init(const int nb_task){
   }
 
   last_local = first_local + local_tasks - 1;
+  /* Construct the list of processes */
+  process_array = sctk_malloc (sctk_process_number * sizeof(int));
+  for (i=0; i < sctk_process_number; ++i) process_array[i] = i;
 
   sctk_communicator_init_intern(nb_task,SCTK_COMM_WORLD,last_local,
-				first_local,local_tasks,NULL,NULL,NULL);
+				first_local,local_tasks,NULL,NULL,NULL,process_array,sctk_process_number);
   if(sctk_process_number > 1){
     sctk_pmi_barrier();
   }
@@ -482,6 +517,24 @@ int sctk_get_first_task_local (const sctk_communicator_t communicator){
   tmp = sctk_get_internal_communicator(communicator);
 
   return tmp->first_local;
+}
+
+inline
+int sctk_get_process_nb_in_array (const sctk_communicator_t communicator){
+  sctk_internal_communicator_t * tmp;
+
+  tmp = sctk_get_internal_communicator(communicator);
+
+  return tmp->process_nb;
+}
+
+inline
+int *sctk_get_process_array (const sctk_communicator_t communicator){
+  sctk_internal_communicator_t * tmp;
+
+  tmp = sctk_get_internal_communicator(communicator);
+
+  return tmp->process;
 }
 
 inline
@@ -594,6 +647,10 @@ sctk_duplicate_communicator (const sctk_communicator_t origin_communicator,
 					      tmp->local_to_global,
 					      tmp->global_to_local,
 					      tmp->task_to_process,
+                /* FIXME: process and process_nb have not been
+                 * tested for now. Could aim to trouble */
+                tmp->process,
+                tmp->process_nb,
 					      tmp->new_comm);
     }
     sctk_spinlock_unlock(&(tmp->creation_lock));
@@ -656,6 +713,11 @@ sctk_communicator_t sctk_create_communicator (const sctk_communicator_t
       int* local_to_global;
       int* global_to_local;
       int* task_to_process;
+      sctk_process_ht_t *process = NULL;
+      sctk_process_ht_t *tmp_process = NULL;
+      sctk_process_ht_t *current_process = NULL;
+      int *process_array;
+      int process_nb = 0;
 
       local_root = 1;
       tmp->has_zero = 0;
@@ -667,16 +729,31 @@ sctk_communicator_t sctk_create_communicator (const sctk_communicator_t
       task_to_process = sctk_malloc(nb_task_involved*sizeof(int));
 
       for(i = 0; i < nb_task_involved; i++){
-	local_to_global[i] = task_list[i];
-	global_to_local[local_to_global[i]] = i;
-	task_to_process[i] = sctk_get_process_rank_from_task_rank(local_to_global[i]);
-	if(task_to_process[i] == sctk_process_rank){
-	  local_tasks++;
-	}
+        local_to_global[i] = task_list[i];
+        global_to_local[local_to_global[i]] = i;
+        task_to_process[i] = sctk_get_process_rank_from_task_rank(local_to_global[i]);
+        if(task_to_process[i] == sctk_process_rank){
+          local_tasks++;
+        }
+        /* build list of processes */
+        HASH_FIND_INT(process, &task_to_process[i], tmp_process);
+        if (tmp_process == NULL) {
+          tmp_process = sctk_malloc (sizeof(sctk_process_ht_t));
+          tmp_process->process_id = task_to_process[i];
+          HASH_ADD_INT(process, process_id, tmp_process);
+          process_nb ++;
+        }
+      }
+      process_array = sctk_malloc (process_nb * sizeof(int));
+      i = 0;
+      HASH_ITER(hh, process, current_process, tmp_process) {
+        process_array[i++] = current_process->process_id;
+        HASH_DEL(process, current_process);
+        free(current_process);
       }
 
       tmp->new_comm = new_tmp;
-      sctk_communicator_init_intern_init_only(nb_task_involved,
+     sctk_communicator_init_intern_init_only(nb_task_involved,
 					      comm,
 					      -1,
 					      -1,
@@ -684,6 +761,8 @@ sctk_communicator_t sctk_create_communicator (const sctk_communicator_t
 					      local_to_global,
 					      global_to_local,
 					      task_to_process,
+                process_array,
+                process_nb,
 					      tmp->new_comm);
     }
     sctk_spinlock_unlock(&(tmp->creation_lock));

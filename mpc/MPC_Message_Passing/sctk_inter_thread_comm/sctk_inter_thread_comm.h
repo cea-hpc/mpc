@@ -42,12 +42,33 @@ extern "C"
 #define SCTK_MESSAGE_DONE 1
 #define SCTK_MESSAGE_CANCELED 2
 
+  /* Message for a process */
+#define MASK_PROCESS_SPECIFIC 1<<9
+  /* Message for a process with ordering */
+#define MASK_PROCESS_SPECIFIC_W_ORDERING (1<<31 | MASK_PROCESS_SPECIFIC)
+  /* Message for a process without ordering */
+#define MASK_PROCESS_SPECIFIC_WO_ORDERING (1<<30 | MASK_PROCESS_SPECIFIC)
+
+#define IS_PROCESS_SPECIFIC_MESSAGE_TAG_WITH_ORDERING(x) ( (MASK_PROCESS_SPECIFIC_W_ORDERING & x) == (MASK_PROCESS_SPECIFIC_W_ORDERING))
+
+#define IS_PROCESS_SPECIFIC_MESSAGE_TAG(x) ( (MASK_PROCESS_SPECIFIC & x) == (MASK_PROCESS_SPECIFIC) )
+
+/* For ondemand connexions */
+#define MASK_PROCESS_SPECIFIC_ONDEMAND (1<<29 | MASK_PROCESS_SPECIFIC)
+#define IS_PROCESS_SPECIFIC_ONDEMAND(x) ( (MASK_PROCESS_SPECIFIC_ONDEMAND & x) == (MASK_PROCESS_SPECIFIC_ONDEMAND) )
+
+
+
   typedef enum {
-    pt2pt_specific_message_tag,
-    barrier_specific_message_tag,
-    broadcast_specific_message_tag,
-    allreduce_specific_message_tag,
-    process_specific_message_tag
+    pt2pt_specific_message_tag = 1,
+    barrier_specific_message_tag = 2,
+    broadcast_specific_message_tag = 3,
+    allreduce_specific_message_tag = 4,
+
+    process_specific_message_tag = MASK_PROCESS_SPECIFIC,
+    ondemand_specific_message_tag =  MASK_PROCESS_SPECIFIC_ONDEMAND,
+    allreduce_hetero_specific_message_tage = MASK_PROCESS_SPECIFIC_W_ORDERING | allreduce_specific_message_tag,
+    broadcast_hetero_specific_message_tage = MASK_PROCESS_SPECIFIC_W_ORDERING | broadcast_specific_message_tag
   }specific_message_tag_t;
 
   typedef struct sctk_thread_message_header_s

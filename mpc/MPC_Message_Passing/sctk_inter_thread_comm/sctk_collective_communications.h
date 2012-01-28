@@ -23,7 +23,7 @@
 #define __SCTK_COLLECTIVE_COMMUNICATIONS_H_
 
 #include <sctk_inter_thread_comm.h>
-#include <sctk_communicator.h>
+//#include <sctk_communicator.h>
 #include <sctk.h>
 #include <sctk_spinlock.h>
 #include <sctk_thread.h>
@@ -73,7 +73,7 @@ typedef union {
 void sctk_all_reduce (const void *buffer_in, void *buffer_out,
 		      const size_t elem_size,
 		      const size_t elem_number,
-		      void (*func) (const void *, void *, size_t,
+		      void (*func) (const sctk_communicator_t *, sctk_communicator_t *, size_t,
 				    sctk_datatype_t),
 		      const sctk_communicator_t com_id,
 		      const sctk_datatype_t data_type);
@@ -104,9 +104,9 @@ typedef struct sctk_internal_collectives_struct_s{
 } sctk_internal_collectives_struct_t;
 
 void sctk_collectives_init (sctk_communicator_t id,
-			    void (*barrier)(sctk_internal_collectives_struct_t *),
-			    void (*broadcast)(sctk_internal_collectives_struct_t *),
-			    void (*allreduce)(sctk_internal_collectives_struct_t *));
+			    void (*barrier)(sctk_internal_collectives_struct_t *, sctk_communicator_t id),
+			    void (*broadcast)(sctk_internal_collectives_struct_t *, sctk_communicator_t id),
+			    void (*allreduce)(sctk_internal_collectives_struct_t *, sctk_communicator_t id));
 
 extern void (*sctk_collectives_init_hook)(sctk_communicator_t id);
 

@@ -91,7 +91,7 @@ void sctk_broadcast (void *buffer, const size_t size,
 void sctk_all_reduce (const void *buffer_in, void *buffer_out,
 		      const size_t elem_size,
 		      const size_t elem_number,
-		      void (*func) (const void *, void *, size_t,
+		      void (*func) (const sctk_communicator_t *, sctk_communicator_t *, size_t,
 				    sctk_datatype_t),
 		      const sctk_communicator_t communicator,
 		      const sctk_datatype_t data_type)
@@ -112,16 +112,16 @@ void (*sctk_collectives_init_hook)(sctk_communicator_t id) = sctk_collectives_in
 
 /*Init data structures used for task i*/
 void sctk_collectives_init (sctk_communicator_t id,
-			    void (*barrier)(sctk_internal_collectives_struct_t *),
-			    void (*broadcast)(sctk_internal_collectives_struct_t *),
-			    void (*allreduce)(sctk_internal_collectives_struct_t *)){
+			    void (*barrier)(sctk_internal_collectives_struct_t *, sctk_communicator_t id),
+			    void (*broadcast)(sctk_internal_collectives_struct_t *, sctk_communicator_t id),
+			    void (*allreduce)(sctk_internal_collectives_struct_t *, sctk_communicator_t id)){
   sctk_internal_collectives_struct_t * tmp;
   tmp = sctk_malloc(sizeof(sctk_internal_collectives_struct_t));
   memset(tmp,0,sizeof(sctk_internal_collectives_struct_t));
 
-  barrier(tmp);
-  broadcast(tmp);
-  allreduce(tmp);
+  barrier(tmp, id);
+  broadcast(tmp, id);
+  allreduce(tmp, id);
 
   sctk_set_internal_collectives(id,tmp);
 }

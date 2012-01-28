@@ -97,13 +97,14 @@ void sctk_route_set_connected(sctk_route_table_t* tmp, int connected);
 
   sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail);
 sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail);
+inline sctk_route_table_t* sctk_get_route_to_process_no_ondemand(int dest, sctk_rail_info_t* rail);
 
 void sctk_route_set_rail_nb(int i);
 sctk_rail_info_t* sctk_route_get_rail(int i);
 
 /* Routes */
-void sctk_route_messages_send(int myself,int dest,int tag, void* buffer,size_t size);
-void sctk_route_messages_recv(int src, int myself,int tag, void* buffer,size_t size);
+void sctk_route_messages_send(int myself,int dest, specific_message_tag_t specific_message_tag, int tag, void* buffer,size_t size);
+void sctk_route_messages_recv(int src, int myself,specific_message_tag_t specific_message_tag, int tag, void* buffer,size_t size);
 
 void sctk_route_init_in_rail(sctk_rail_info_t* rail, char* topology);
 void sctk_route_finalize();

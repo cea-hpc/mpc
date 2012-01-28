@@ -26,6 +26,7 @@
 #include "sctk_ib_config.h"
 #include "sctk_ibufs.h"
 #include "sctk_ib_qp.h"
+#include "sctk_ib_prof.h"
 #include "sctk_pmi.h"
 #include "utlist.h"
 #include <errno.h>
@@ -290,6 +291,7 @@ sctk_ib_qp_init(struct sctk_ib_rail_info_s* rail_ib,
   LOAD_DEVICE(rail_ib);
 
   remote->qp = ibv_create_qp (device->pd, attr);
+  PROF_INC_RAIL_IB(rail_ib, qp_created);
   if (!remote->qp) {
     sctk_error("Cannot create QP for rank %d", rank);
     sctk_abort();

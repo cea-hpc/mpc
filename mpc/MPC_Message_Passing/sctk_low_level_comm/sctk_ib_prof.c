@@ -57,4 +57,14 @@ void sctk_ib_prof_init(sctk_ib_rail_info_t *rail_ib) {
   memset(rail_ib->profiler, 0, sizeof(sctk_ib_prof_t));
 }
 
+void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib) {
+  fprintf(stderr, "[%d] %d %d %d %d %d %d \n", sctk_process_rank,
+      PROF_LOAD(rail_ib, alloc_mem),
+      PROF_LOAD(rail_ib, free_mem),
+      PROF_LOAD(rail_ib, qp_created),
+      PROF_LOAD(rail_ib, eager_nb),
+      PROF_LOAD(rail_ib, buffered_nb),
+      PROF_LOAD(rail_ib, rdma_nb));
+}
+
 #endif

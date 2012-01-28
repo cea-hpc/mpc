@@ -134,18 +134,6 @@ sctk_route_table_t* sctk_get_route_to_process_no_route(int dest, sctk_rail_info_
   return tmp;
 }
 
-sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail){
-  sctk_route_table_t* tmp;
-  tmp = sctk_get_route_to_process_no_route(dest,rail);
-
-  if(tmp == NULL){
-    dest = rail->route(dest,rail);
-    return sctk_get_route_to_process(dest,rail);
-  }
-
-  return tmp;
-}
-
 struct wait_connexion_args_s {
   sctk_route_table_t* route_table;
   int done;
@@ -159,41 +147,57 @@ void* __wait_connexion(void* a) {
   return NULL;
 }
 
+
+inline sctk_route_table_t* sctk_get_route_to_process_no_ondemand(int dest, sctk_rail_info_t* rail){
+  sctk_route_table_t* tmp;
+  tmp = sctk_get_route_to_process_no_route(dest,rail);
+
+  if(tmp == NULL){
+    dest = rail->route(dest,rail);
+    return sctk_get_route_to_process_no_ondemand(dest,rail);
+  }
+
+  return tmp;
+}
+
+sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail){
+  sctk_route_table_t* tmp;
+  tmp = sctk_get_route_to_process_no_route(dest,rail);
+
+  if(tmp == NULL){
+    if (rail->on_demand) {
+      sctk_nodebug("%d Trying to connect to process %d (remote:%p)", sctk_process_rank, dest, tmp);
+      tmp = sctk_ib_cm_on_demand_request(dest,rail);
+      assume(tmp);
+      /* If route not connected, so we wait for until it is connected */
+
+      if (sctk_route_is_connected(tmp) == 0) {
+        struct wait_connexion_args_s args;
+        args.route_table = tmp;
+        args.done = 0;
+        sctk_thread_wait_for_value_and_poll((int*) &args.done, 1,
+            (void (*)(void*)) __wait_connexion, &args);
+        assume(sctk_route_is_connected(tmp));
+      }
+
+      sctk_nodebug("Connected to process %d", dest);
+      return tmp;
+    } else {
+      dest = rail->route(dest,rail);
+      return sctk_get_route_to_process_no_ondemand(dest,rail);
+    }
+  }
+
+  return tmp;
+}
+
 sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail){
   sctk_route_table_t* tmp;
   int process;
 
   process = sctk_get_process_rank_from_task_rank(dest);
-  if (rail->on_demand) {
-    tmp = sctk_get_route_to_process_no_route(process,rail);
-    sctk_nodebug("%d Trying to connect to process %d (task:%d remote:%p)", sctk_process_rank, process, dest, tmp);
-    if (tmp == NULL) {
-      tmp = sctk_ib_cm_on_demand_request(process,rail);
-      assume(tmp);
-      /* If route not connected, so we wait for until it is connected */
-    }
-
-    if (sctk_route_is_connected(tmp) == 0) {
-      struct wait_connexion_args_s args;
-      args.route_table = tmp;
-      args.done = 0;
-      sctk_thread_wait_for_value_and_poll((int*) &args.done, 1,
-          (void (*)(void*)) __wait_connexion, &args);
-      assume(sctk_route_is_connected(tmp));
-    }
-    sctk_nodebug("Connected to process %d (task:%d)", process, dest);
-//    tmp = sctk_get_route_to_process_no_route(process,rail);
-//    if (!tmp) {
-//      sctk_error("Could not find dest task %d", dest);
-//      assume(tmp);
-//    }
-
-    sctk_nodebug("Connected to process %d (task:%d", process, dest);
-    return tmp;
-  } else {
-    tmp = sctk_get_route_to_process(process,rail);
-    return tmp;
-  }
+  tmp = sctk_get_route_to_process(process,rail);
+  return tmp;
 }
 
 void sctk_route_set_rail_nb(int i){
@@ -237,14 +241,12 @@ typedef struct {
   sctk_thread_ptp_message_t msg;
 }sctk_route_messages_t;
 
-void sctk_route_messages_send(int myself,int dest,int tag, void* buffer,size_t size){
+void sctk_route_messages_send(int myself,int dest, specific_message_tag_t specific_message_tag, int tag, void* buffer,size_t size){
   sctk_communicator_t communicator = SCTK_COMM_WORLD;
-  specific_message_tag_t specific_message_tag = process_specific_message_tag;
   sctk_route_messages_t msg;
   sctk_route_messages_t* msg_req;
 
   msg_req = &msg;
-
   sctk_init_header(&(msg_req->msg),myself,sctk_message_contiguous,sctk_free_route_messages,
 		   sctk_message_copy);
   sctk_add_adress_in_message(&(msg_req->msg),buffer,size);
@@ -254,9 +256,8 @@ void sctk_route_messages_send(int myself,int dest,int tag, void* buffer,size_t s
   sctk_wait_message (&(msg_req->request));
 }
 
-void sctk_route_messages_recv(int src, int myself,int tag, void* buffer,size_t size){
+void sctk_route_messages_recv(int src, int myself,specific_message_tag_t specific_message_tag, int tag, void* buffer,size_t size){
   sctk_communicator_t communicator = SCTK_COMM_WORLD;
-  specific_message_tag_t specific_message_tag = process_specific_message_tag;
   sctk_route_messages_t msg;
   sctk_route_messages_t* msg_req;
 

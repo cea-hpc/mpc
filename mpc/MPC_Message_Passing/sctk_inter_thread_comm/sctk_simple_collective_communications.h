@@ -33,7 +33,7 @@ typedef struct {
   sctk_thread_cond_t cond/* = SCTK_THREAD_COND_INITIALIZER */;
 } sctk_barrier_simple_t;
 
-void sctk_barrier_simple_init(struct sctk_internal_collectives_struct_s * tmp);
+void sctk_barrier_simple_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id);
 
 /************************************************************************/
 /*Broadcast                                                             */
@@ -47,7 +47,7 @@ typedef struct {
   size_t size;
 } sctk_broadcast_simple_t;
 
-void sctk_broadcast_simple_init(struct sctk_internal_collectives_struct_s * tmp);
+void sctk_broadcast_simple_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id);
 
 /************************************************************************/
 /*Allreduce                                                             */
@@ -61,7 +61,7 @@ typedef struct {
   size_t size;
 } sctk_allreduce_simple_t;
 
-void sctk_allreduce_simple_init(struct sctk_internal_collectives_struct_s * tmp);
+void sctk_allreduce_simple_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id);
 
 /************************************************************************/
 /*Init                                                                  */

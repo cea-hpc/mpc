@@ -30,10 +30,10 @@
 /*-----------------------------------------------------------
  *  MACROS
  *----------------------------------------------------------*/
-#define ONDEMAND_MASK_TAG (1<<4)
-#define ONDEMAN_REQ_TAG (2)
-#define ONDEMAN_ACK_TAG (3)
-#define ONDEMAN_DONE_TAG (4)
+#define ONDEMAND_MASK_TAG (1<<8)
+#define ONDEMAND_REQ_TAG (2)
+#define ONDEMAND_ACK_TAG (3)
+#define ONDEMAND_DONE_TAG (4)
 
 struct sctk_thread_ptp_message_body_s;
 

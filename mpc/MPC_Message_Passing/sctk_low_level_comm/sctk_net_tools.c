@@ -635,6 +635,7 @@ void sctk_net_message_copy_from_buffer(char* body,
   sctk_thread_ptp_message_t* send;
   sctk_thread_ptp_message_t* recv;
 
+  sctk_nodebug("MSG RECV |%s|", (char*)body);
   send = tmp->msg_send;
   recv = tmp->msg_recv;
 

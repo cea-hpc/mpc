@@ -67,7 +67,7 @@ kthread_getspecific (kthread_key_t key)
 #endif
 
 
-#define kthread_stack_size (1900*1024*1024)
+#define kthread_stack_size (10*1024*1024)
 
 typedef void *(*start_routine_t) (void *) ;
 

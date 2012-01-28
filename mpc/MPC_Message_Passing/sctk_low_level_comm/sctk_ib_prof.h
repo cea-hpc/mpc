@@ -40,6 +40,12 @@ enum sctk_ib_prof_counters_e {
   cp_not_matched = 1,
   poll_found = 2,
   poll_not_found = 3,
+  alloc_mem = 4,
+  free_mem = 5,
+  qp_created = 6,
+  eager_nb = 7,
+  buffered_nb = 8,
+  rdma_nb = 9,
 };
 
 #define PROF_INC(r,x) do {                              \
@@ -47,7 +53,15 @@ enum sctk_ib_prof_counters_e {
   OPA_incr_int(&rail_ib->profiler->counters[x]);         \
 } while(0)
 
+#define PROF_INC_RAIL_IB(r,x) do {                      \
+  OPA_incr_int(&r->profiler->counters[x]);        \
+} while(0)
+
+
+#define PROF_LOAD(r,x) OPA_load_int(&r->profiler->counters[x])
+
 void sctk_ib_prof_init(sctk_ib_rail_info_t *rail_ib);
 
+void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib);
 #endif
 #endif

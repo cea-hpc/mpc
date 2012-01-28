@@ -31,6 +31,7 @@
 #include "sctk_net_tools.h"
 #include "sctk_ib_sr.h"
 #include "sctk_ib_cp.h"
+#include "sctk_ib_prof.h"
 
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"
@@ -117,15 +118,18 @@ void sctk_ib_buffered_free_msg(void* arg) {
   sctk_thread_ptp_message_t *msg = (sctk_thread_ptp_message_t*) arg;
   sctk_ib_buffered_entry_t *entry = NULL;
   sctk_reorder_table_t* reorder_table;
+  sctk_rail_info_t* rail;
 
   reorder_table = msg->tail.ib.buffered.reorder_table;
   entry = msg->tail.ib.buffered.entry;
+  rail = entry->msg.tail.ib.buffered.rail;
   assume(entry);
 
   switch(entry->status & MASK_BASE) {
     case recopy:
       sctk_nodebug("Free payload %p from entry %p", entry->payload, entry);
       sctk_free(entry->payload);
+      PROF_INC(rail, free_mem);
       break;
 
     case zerocopy:
@@ -169,6 +173,7 @@ void sctk_ib_buffered_copy(sctk_message_to_copy_t* tmp){
         sctk_nodebug("Message recopied free from copy %d (%p)", entry->status, entry);
         sctk_net_message_copy_from_buffer(entry->payload, tmp, 1);
         sctk_free(entry);
+        PROF_INC(rail, free_mem);
       } else {
         /* Add matching OK */
         entry->status |= match;
@@ -192,7 +197,12 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
 
   buffered = IBUF_GET_BUFFERED_HEADER(ibuf->buffer);
   msg = &buffered->msg;
-  reorder_table = sctk_get_reorder(msg->sctk_msg_get_source);
+  if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag)) {
+    reorder_table = sctk_get_reorder_to_process(msg->sctk_msg_get_source);
+  } else {
+    reorder_table = sctk_get_reorder_to_process(msg->sctk_msg_get_source);
+//    reorder_table = sctk_get_reorder(msg->sctk_msg_get_glob_source);
+  }
   assume(reorder_table);
   key = msg->sctk_msg_get_message_number;
 
@@ -202,6 +212,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     /* Allocate memory for message header */
     entry = sctk_malloc(sizeof(sctk_ib_buffered_entry_t));
     assume(entry);
+    PROF_INC(rail, alloc_mem);
     /* Copy message header */
     memcpy(&entry->msg, msg, sizeof(sctk_thread_ptp_message_body_t));
     entry->msg.tail.ib.protocol = buffered_protocol;
@@ -225,6 +236,8 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     entry->copy_ptr = NULL;
     HASH_ADD(hh,reorder_table->ib_buffered.entries,key,sizeof(int),entry);
     /* Send message to high level MPC */
+
+    sctk_nodebug("Read msg with number %d", msg->sctk_msg_get_message_number);
     rail->send_message_from_network(&entry->msg);
 
     sctk_spinlock_lock(&entry->lock);
@@ -232,6 +245,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     if ( (entry->status & MASK_BASE) == not_set) {
       entry->payload = sctk_malloc(msg->sctk_msg_get_msg_size);
       assume(entry->payload);
+      PROF_INC(rail, alloc_mem);
       entry->status = recopy;
     } else if ( (entry->status & MASK_BASE) != zerocopy) not_reachable();
     sctk_spinlock_unlock(&entry->lock);
@@ -265,6 +279,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
           sctk_net_message_copy_from_buffer(entry->payload, entry->copy_ptr, 1);
           sctk_nodebug("Message recopied free from done");
           sctk_free(entry);
+          PROF_INC(rail, free_mem);
         } else {
           sctk_nodebug("Free done:%p", entry);
           entry->status |= done;
@@ -279,6 +294,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
           sctk_message_completion_and_free(entry->copy_ptr->msg_send,
               entry->copy_ptr->msg_recv);
           sctk_free(entry);
+          PROF_INC(rail, free_mem);
           sctk_nodebug("Message zerocpy free from done");
         } else {
           sctk_spinlock_unlock(&entry->lock);

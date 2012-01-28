@@ -54,7 +54,7 @@ static void* sctk_tcp_thread(sctk_route_table_t* tmp){
       sched_yield();
     }
 
-    size = size - sizeof(sctk_thread_ptp_message_body_t) + 
+    size = size - sizeof(sctk_thread_ptp_message_body_t) +
       sizeof(sctk_thread_ptp_message_t);
     msg = sctk_malloc(size);
     body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
@@ -71,7 +71,7 @@ static void* sctk_tcp_thread(sctk_route_table_t* tmp){
     if(msg->sctk_msg_get_communicator < 0){
       return NULL;
     }
-    
+
     /* Recv body*/
     size = size - sizeof(sctk_thread_ptp_message_t);
     sctk_safe_read(fd,(char*)body,size);
@@ -79,7 +79,7 @@ static void* sctk_tcp_thread(sctk_route_table_t* tmp){
     sctk_rebuild_header(msg);
     sctk_reinit_header(msg,sctk_free,sctk_net_message_copy);
 
-    sctk_nodebug("MSG RECV|%s|", (char*)body);    
+    sctk_nodebug("MSG RECV|%s|", (char*)body);
 
     sctk_nodebug("Msg recved");
     tmp->rail->send_message_from_network(msg);
@@ -87,7 +87,7 @@ static void* sctk_tcp_thread(sctk_route_table_t* tmp){
   return NULL;
 }
 
-static void 
+static void
 sctk_network_send_message_tcp (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
   sctk_route_table_t* tmp;
   size_t size;
@@ -95,7 +95,7 @@ sctk_network_send_message_tcp (sctk_thread_ptp_message_t * msg,sctk_rail_info_t*
 
   sctk_nodebug("send message through rail %d",rail->rail_number);
 
-  if(msg->body.header.specific_message_tag == process_specific_message_tag){
+  if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag)){
     tmp = sctk_get_route_to_process(msg->sctk_msg_get_destination,rail);
   } else {
     tmp = sctk_get_route(msg->sctk_msg_get_glob_destination,rail);
@@ -117,23 +117,23 @@ sctk_network_send_message_tcp (sctk_thread_ptp_message_t * msg,sctk_rail_info_t*
   sctk_complete_and_free_message(msg);
 }
 
-static void  
+static void
 sctk_network_notify_recv_message_tcp (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
 }
 
-static void 
+static void
 sctk_network_notify_matching_message_tcp (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
 }
 
-static void 
+static void
 sctk_network_notify_perform_message_tcp (int remote,sctk_rail_info_t* rail){
 }
 
-static void 
+static void
 sctk_network_notify_idle_message_tcp (sctk_rail_info_t* rail){
 }
 
-static void 
+static void
 sctk_network_notify_any_source_message_tcp (sctk_rail_info_t* rail){
 }
 

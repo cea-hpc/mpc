@@ -75,4 +75,6 @@ typedef struct sctk_reorder_table_s{
 
 sctk_reorder_table_t* sctk_get_reorder(int dest);
 
+sctk_reorder_table_t* sctk_get_reorder_to_process(int dest);
+
 #endif

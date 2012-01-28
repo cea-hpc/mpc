@@ -42,11 +42,6 @@
 #include "sctk_ib_prof.h"
 #include "sctk_atomics.h"
 
-/* XXX: Should be removed */
-OPA_int_t c_eager;
-OPA_int_t c_buffered;
-OPA_int_t c_rdma;
-
 OPA_int_t s_rdma;
 
 static void
@@ -61,8 +56,16 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
   sctk_nodebug("send message through rail %d",rail->rail_number);
 
-  if( msg->body.header.specific_message_tag == process_specific_message_tag) {
-    tmp = sctk_get_route_to_process(msg->sctk_msg_get_destination,rail);
+  sctk_nodebug("Send message with tag %d", msg->sctk_msg_get_specific_message_tag);
+  if( IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag)) {
+    if (sctk_ib_cm_on_demand_recv_check(&msg->body))
+    {
+      tmp = sctk_get_route_to_process_no_ondemand(msg->sctk_msg_get_destination,rail);
+      sctk_nodebug("Send to process %d", msg->sctk_msg_get_destination);
+    } else {
+      tmp = sctk_get_route_to_process(msg->sctk_msg_get_destination,rail);
+      sctk_nodebug("Send to process %d", msg->sctk_msg_get_destination);
+    }
   } else {
     sctk_nodebug("Connexion to %d", msg->sctk_msg_get_glob_destination);
     tmp = sctk_get_route(msg->sctk_msg_get_glob_destination,rail);
@@ -78,28 +81,28 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
     sctk_complete_and_free_message(msg);
-    OPA_incr_int(&c_eager);
+    PROF_INC_RAIL_IB(rail_ib, eager_nb);
   } else if (size+IBUF_GET_BUFFERED_SIZE < config->ibv_frag_eager_limit)  {
     sctk_nodebug("Sending message to %d (process_destk:%d,process_src;%d,number:%d) (%p)", remote->rank, msg->sctk_msg_get_destination, msg->sctk_msg_get_source,msg->sctk_msg_get_message_number, tmp);
     /* Fallback to RDMA if buffered not available */
     if (sctk_ib_buffered_prepare_msg(rail, tmp, msg, size) == 1) goto rdma;
     sctk_complete_and_free_message(msg);
-    OPA_incr_int(&c_buffered);
+    PROF_INC_RAIL_IB(rail_ib, buffered_nb);
   } else {
 rdma:
-    assume(0);
+    sctk_nodebug("Send RDMA message");
     ibuf = sctk_ib_rdma_prepare_req(rail, tmp, msg, size);
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
     sctk_ib_rdma_prepare_send_msg(rail_ib, msg, size);
-    OPA_incr_int(&c_rdma);
+    PROF_INC_RAIL_IB(rail_ib, rdma_nb);
     OPA_add_int(&s_rdma, size);
   }
 }
 
 static int __is_specific_mesage_tag(sctk_thread_ptp_message_body_t *msg)
 {
-  if (msg->header.specific_message_tag == process_specific_message_tag)
+  if (IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->header.specific_message_tag))
     return 1;
   return 0;
 }
@@ -199,18 +202,23 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
     case eager_protocol:
       msg_ibuf = IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer);
 
-      if (__is_specific_mesage_tag(msg_ibuf)) {
-        recopy = 1;
+      if (IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg_ibuf->header.specific_message_tag)) {
         ondemand = sctk_ib_cm_on_demand_recv_check(msg_ibuf);
-        sctk_nodebug("received src:%d, dest:%d, od:%d", msg->sctk_msg_get_source, msg->sctk_msg_get_destination, ondemand);
+        sctk_nodebug("Received specific message");
+        sctk_nodebug("received src:%d, dest:%d, od:%d", msg_ibuf->sctk_msg_get_source, msg_ibuf->sctk_msg_get_destination, ondemand);
+
         /* If on demand, handle message before sending it to high-layers */
         if(ondemand) {
+          sctk_nodebug("Received OD message");
+          recopy = 1;
           msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
-          sctk_nodebug("[%d]", rail->rail_number);
           sctk_ib_cm_on_demand_recv(rail, msg, ibuf, recopy);
         }else{
+          recopy = 0;
           msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
           sctk_ib_sr_recv_free(rail, msg, ibuf, recopy);
+          sctk_nodebug("PSN: %d src:%d glob_src:%d", msg->sctk_msg_get_message_number,
+              msg->sctk_msg_get_source, msg->sctk_msg_get_glob_source);
           rail->send_message_from_network(msg);
         }
       } else {
@@ -403,11 +411,6 @@ void sctk_network_init_polling_thread (sctk_rail_info_t* rail, char* topology) {
 void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   /* XXX: memory never free */
   char *network_name = sctk_malloc(256);
-
-  /* XXX: should be removed */
-  OPA_store_int(&c_eager, 0);
-  OPA_store_int(&c_buffered, 0);
-  OPA_store_int(&c_rdma, 0);
 
   /* Infiniband Init */
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;

@@ -30,6 +30,7 @@
 #include "sctk_ib_mmu.h"
 #include "sctk_net_tools.h"
 #include "sctk_ib_cp.h"
+#include "sctk_ib_prof.h"
 
 /* IB debug macros */
 #if defined SCTK_IB_MODULE_NAME
@@ -68,13 +69,15 @@ static inline void sctk_ib_rdma_align_msg(void *addr, size_t  size,
  *----------------------------------------------------------*/
 void sctk_ib_rdma_net_free_recv(void* arg) {
   sctk_thread_ptp_message_t * msg = (sctk_thread_ptp_message_t*) arg;
+  sctk_rail_info_t* rail = msg->tail.ib.rdma.rail;
   /* Unregister MMU and free message */
   sctk_nodebug("Free MMu for msg: %p", msg);
   assume(msg->tail.ib.rdma.local.mmu_entry);
-  sctk_ib_mmu_unregister( &msg->tail.ib.rdma.rail->network.ib,
+  sctk_ib_mmu_unregister( &rail->network.ib,
       msg->tail.ib.rdma.local.mmu_entry);
     sctk_nodebug("FREE: %p", msg);
   sctk_free(msg);
+  PROF_INC(rail, free_mem);
 }
 
 /*-----------------------------------------------------------
@@ -104,6 +107,7 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
     page_size = getpagesize();
     /* XXX: NOT FREE for the moment */
     posix_memalign((void**) &aligned_addr, page_size, aligned_size);
+    PROF_INC_RAIL_IB(rail_ib, alloc_mem);
     sctk_net_copy_in_buffer(msg, aligned_addr);
     sctk_nodebug("Sending NOT contiguous message %p of size: %lu, add:%p, type:%d (src cs:%lu, dest cs:%lu)", msg, aligned_size, aligned_addr, msg->tail.message_type, msg->body.checksum, sctk_checksum_buffer(aligned_addr,msg));
 
@@ -281,6 +285,7 @@ static void sctk_ib_rdma_prepare_recv_recopy(sctk_rail_info_t* rail, sctk_thread
   /* Allocating memory according to the requested size */
   posix_memalign((void**) &send_header->rdma.local.aligned_addr,
       page_size, send_header->rdma.requested_size );
+  PROF_INC(rail, alloc_mem);
 
   send_header->rdma.local.aligned_size  = send_header->rdma.requested_size;
   send_header->rdma.local.size          = send_header->rdma.requested_size;
@@ -396,6 +401,7 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   sctk_ib_rdma_req_t *rdma_req = IBUF_GET_RDMA_REQ(ibuf->buffer);
 
   msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
+  PROF_INC(rail, alloc_mem);
   memcpy(&msg->body, &rdma_req->msg_header, sizeof(sctk_thread_ptp_message_body_t));
   sctk_nodebug("Checksum:%lu", msg->body.checksum);
 
@@ -404,7 +410,12 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   sctk_reinit_header(msg, sctk_ib_rdma_net_free_recv, sctk_ib_rdma_net_copy);
   msg->tail.ib.protocol = rdma_protocol;
   /* determine the route to the source */
-  route = sctk_get_route(msg->sctk_msg_get_glob_source, rail);
+  if( IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag)) {
+    route = sctk_get_route_to_process(msg->sctk_msg_get_source,rail);
+  } else {
+    sctk_nodebug("Connexion to %d", msg->sctk_msg_get_glob_destination);
+    route = sctk_get_route(msg->sctk_msg_get_glob_source,rail);
+  }
 
   msg->body.completion_flag = NULL;
   msg->tail.message_type = sctk_message_network;
@@ -489,6 +500,7 @@ sctk_ib_rdma_recv_done_remote(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     sctk_nodebug("FREE: %p", dest_msg_header->tail.ib.rdma.local.addr);
     /* If we recopy, we can delete the temp buffer */
     sctk_free(dest_msg_header->tail.ib.rdma.local.addr);
+    PROF_INC(rail, free_mem);
    }
   sctk_message_completion_and_free(send,recv);
 
@@ -509,6 +521,7 @@ sctk_ib_rdma_recv_done_local(sctk_rail_info_t* rail, sctk_thread_ptp_message_t* 
     /* Unregister MMU and free message */
     sctk_nodebug("FREE PTR: %p", msg->tail.ib.rdma.local.addr);
     sctk_free(msg->tail.ib.rdma.local.addr);
+    PROF_INC(rail, free_mem);
   }
 
   sctk_nodebug("MSG LOCAL FREE %p", msg);

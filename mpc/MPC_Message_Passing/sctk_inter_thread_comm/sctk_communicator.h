@@ -35,6 +35,8 @@ int sctk_get_last_task_local (const sctk_communicator_t communicator);
 int sctk_get_nb_task_total (const sctk_communicator_t communicator);
   void sctk_get_rank_size_total (const sctk_communicator_t communicator,
 				 int *rank, int *size, int glob_rank);
+inline int *sctk_get_process_array (const sctk_communicator_t communicator);
+inline int sctk_get_process_nb_in_array (const sctk_communicator_t communicator);
 int sctk_get_rank (const sctk_communicator_t communicator,
 		   const int comm_world_rank);
 int sctk_get_comm_world_rank (const sctk_communicator_t communicator,
@@ -48,7 +50,7 @@ void sctk_communicator_delete();
 
 struct sctk_internal_collectives_struct_s;
 
-struct sctk_internal_collectives_struct_s * 
+struct sctk_internal_collectives_struct_s *
 sctk_get_internal_collectives(const sctk_communicator_t communicator);
 void
 sctk_set_internal_collectives(const sctk_communicator_t id,

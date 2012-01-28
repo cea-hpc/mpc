@@ -27,8 +27,8 @@
 
 typedef enum {
   sctk_rdma_message_header,
-  sctk_rdma_read,  
-  sctk_rdma_write,  
+  sctk_rdma_read,
+  sctk_rdma_write,
 }sctk_tcp_rdma_type_t;
 
 static
@@ -76,28 +76,28 @@ static void* sctk_tcp_rdma_thread(sctk_route_table_t* tmp){
     }
 
     switch(op_type){
-    case sctk_rdma_message_header: {      
+    case sctk_rdma_message_header: {
       size = sizeof(sctk_thread_ptp_message_t);
       msg = sctk_malloc(size);
-	
+
       /* Recv header*/
       sctk_nodebug("Read %d",sizeof(sctk_thread_ptp_message_body_t));
       sctk_safe_read(fd,(char*)msg,sizeof(sctk_thread_ptp_message_body_t));
       sctk_safe_read(fd,&(msg->tail.rdma_src),sizeof(void*));
       msg->tail.route_table = tmp;
-	
+
       msg->body.completion_flag = NULL;
       msg->tail.message_type = sctk_message_network;
-	
+
       sctk_rebuild_header(msg);
       sctk_reinit_header(msg,sctk_free,sctk_tcp_rdma_message_copy);
-	
-      sctk_nodebug("MSG RECV|%s|", (char*)body);    
-	
+
+      sctk_nodebug("MSG RECV|%s|", (char*)body);
+
       sctk_nodebug("Msg recved");
       tmp->rail->send_message_from_network(msg);
       break;
-    } 
+    }
     case sctk_rdma_read :{
       sctk_message_to_copy_t* copy_ptr;
       sctk_safe_read(fd,(char*)&msg,sizeof(void*));
@@ -106,7 +106,7 @@ static void* sctk_tcp_rdma_thread(sctk_route_table_t* tmp){
       sctk_spinlock_lock(&(tmp->data.tcp.lock));
       op_type = sctk_rdma_write;
       sctk_safe_write(fd,&op_type,sizeof(sctk_tcp_rdma_type_t));
-      sctk_safe_write(fd,&(copy_ptr),sizeof(void*));          
+      sctk_safe_write(fd,&(copy_ptr),sizeof(void*));
       sctk_net_write_in_fd(msg,fd);
       sctk_spinlock_unlock(&(tmp->data.tcp.lock));
 
@@ -132,12 +132,12 @@ static void* sctk_tcp_rdma_thread(sctk_route_table_t* tmp){
   return NULL;
 }
 
-static void 
+static void
 sctk_network_send_message_tcp_rdma (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
   sctk_route_table_t* tmp;
   size_t size;
   int fd;
-  if(msg->body.header.specific_message_tag == process_specific_message_tag){
+  if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag)){
     not_reachable();
   }
 
@@ -163,23 +163,23 @@ sctk_network_send_message_tcp_rdma (sctk_thread_ptp_message_t * msg,sctk_rail_in
 
 }
 
-static void  
+static void
 sctk_network_notify_recv_message_tcp_rdma (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
 }
 
-static void 
+static void
 sctk_network_notify_matching_message_tcp_rdma (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
 }
 
-static void 
+static void
 sctk_network_notify_perform_message_tcp_rdma (int remote,sctk_rail_info_t* rail){
 }
 
-static void 
+static void
 sctk_network_notify_idle_message_tcp_rdma (sctk_rail_info_t* rail){
 }
 
-static void 
+static void
 sctk_network_notify_any_source_message_tcp_rdma (sctk_rail_info_t* rail){
 }
 

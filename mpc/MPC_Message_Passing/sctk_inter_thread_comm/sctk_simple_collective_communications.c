@@ -30,15 +30,15 @@
 /************************************************************************/
 /*BARRIER                                                               */
 /************************************************************************/
-static 
+static
 void sctk_barrier_simple(const sctk_communicator_t communicator,
 			 sctk_internal_collectives_struct_t * tmp){
   int local;
   local = sctk_get_nb_task_local(communicator);
   sctk_thread_mutex_lock(&tmp->barrier.barrier_simple.lock);
-  tmp->barrier.barrier_simple.done ++; 
+  tmp->barrier.barrier_simple.done ++;
   if(tmp->barrier.barrier_simple.done == local){
-    tmp->barrier.barrier_simple.done = 0; 
+    tmp->barrier.barrier_simple.done = 0;
     sctk_thread_cond_broadcast(&tmp->barrier.barrier_simple.cond);
   } else {
     sctk_thread_cond_wait(&tmp->barrier.barrier_simple.cond,
@@ -47,15 +47,15 @@ void sctk_barrier_simple(const sctk_communicator_t communicator,
   sctk_thread_mutex_unlock(&tmp->barrier.barrier_simple.lock);
 }
 
-void sctk_barrier_simple_init(sctk_internal_collectives_struct_t * tmp){
+void sctk_barrier_simple_init(sctk_internal_collectives_struct_t * tmp, sctk_communicator_t id){
   if(sctk_process_number == 1){
     tmp->barrier.barrier_simple.done = 0;
     sctk_thread_mutex_init(&(tmp->barrier.barrier_simple.lock),NULL);
     sctk_thread_cond_init(&(tmp->barrier.barrier_simple.cond),NULL);
-    tmp->barrier_func = sctk_barrier_simple;    
+    tmp->barrier_func = sctk_barrier_simple;
   } else {
     not_reachable();
-  } 
+  }
 }
 
 /************************************************************************/
@@ -76,18 +76,18 @@ void sctk_broadcast_simple (void *buffer, const size_t size,
   sctk_thread_mutex_lock(&tmp->broadcast.broadcast_simple.lock);
   {
     if(size > tmp->broadcast.broadcast_simple.size){
-      tmp->broadcast.broadcast_simple.buffer = 
+      tmp->broadcast.broadcast_simple.buffer =
 	sctk_realloc(tmp->broadcast.broadcast_simple.buffer,size);
       tmp->broadcast.broadcast_simple.size = size;
     }
-    tmp->broadcast.broadcast_simple.done ++; 
+    tmp->broadcast.broadcast_simple.done ++;
 
     if(root == id){
       memcpy(tmp->broadcast.broadcast_simple.buffer,buffer,size);
     }
 
     if(tmp->broadcast.broadcast_simple.done == local){
-      tmp->broadcast.broadcast_simple.done = 0; 
+      tmp->broadcast.broadcast_simple.done = 0;
       sctk_thread_cond_broadcast(&tmp->broadcast.broadcast_simple.cond);
     } else {
       sctk_thread_cond_wait(&tmp->broadcast.broadcast_simple.cond,
@@ -101,17 +101,17 @@ void sctk_broadcast_simple (void *buffer, const size_t size,
   sctk_barrier_simple(com_id,tmp);
 }
 
-void sctk_broadcast_simple_init(struct sctk_internal_collectives_struct_s * tmp){
+void sctk_broadcast_simple_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id){
   if(sctk_process_number == 1){
     tmp->broadcast.broadcast_simple.buffer = NULL;
     tmp->broadcast.broadcast_simple.size = 0;
     tmp->broadcast.broadcast_simple.done = 0;
     sctk_thread_mutex_init(&(tmp->broadcast.broadcast_simple.lock),NULL);
     sctk_thread_cond_init(&(tmp->broadcast.broadcast_simple.cond),NULL);
-    tmp->broadcast_func = sctk_broadcast_simple;    
+    tmp->broadcast_func = sctk_broadcast_simple;
   } else {
     not_reachable();
-  } 
+  }
 }
 
 /************************************************************************/
@@ -134,20 +134,20 @@ static void sctk_allreduce_simple (const void *buffer_in, void *buffer_out,
   sctk_thread_mutex_lock(&tmp->allreduce.allreduce_simple.lock);
   {
     if(size > tmp->allreduce.allreduce_simple.size){
-      tmp->allreduce.allreduce_simple.buffer = 
+      tmp->allreduce.allreduce_simple.buffer =
 	sctk_realloc(tmp->allreduce.allreduce_simple.buffer,size);
       tmp->allreduce.allreduce_simple.size = size;
     }
-    
+
     if(tmp->allreduce.allreduce_simple.done == 0){
       memcpy(tmp->allreduce.allreduce_simple.buffer,buffer_in,size);
     } else {
       func(buffer_in,tmp->allreduce.allreduce_simple.buffer,elem_number,data_type);
     }
 
-    tmp->allreduce.allreduce_simple.done ++; 
+    tmp->allreduce.allreduce_simple.done ++;
     if(tmp->allreduce.allreduce_simple.done == local){
-      tmp->allreduce.allreduce_simple.done = 0;       
+      tmp->allreduce.allreduce_simple.done = 0;
       sctk_thread_cond_broadcast(&tmp->allreduce.allreduce_simple.cond);
     } else {
       sctk_thread_cond_wait(&tmp->allreduce.allreduce_simple.cond,
@@ -159,17 +159,17 @@ static void sctk_allreduce_simple (const void *buffer_in, void *buffer_out,
   sctk_barrier_simple(com_id,tmp);
 }
 
-void sctk_allreduce_simple_init(struct sctk_internal_collectives_struct_s * tmp){
+void sctk_allreduce_simple_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id){
   if(sctk_process_number == 1){
     tmp->allreduce.allreduce_simple.buffer = NULL;
     tmp->allreduce.allreduce_simple.size = 0;
     tmp->allreduce.allreduce_simple.done = 0;
     sctk_thread_mutex_init(&(tmp->allreduce.allreduce_simple.lock),NULL);
     sctk_thread_cond_init(&(tmp->allreduce.allreduce_simple.cond),NULL);
-    tmp->allreduce_func = sctk_allreduce_simple;    
+    tmp->allreduce_func = sctk_allreduce_simple;
   } else {
     not_reachable();
-  } 
+  }
 }
 
 /************************************************************************/

@@ -108,7 +108,6 @@ static inline void sctk_ptp_tasks_insert(sctk_message_to_copy_t* tmp,
   DL_APPEND(pair->lists.sctk_ptp_task_list,tmp);
   sctk_spinlock_unlock(&(pair->lists.sctk_ptp_tasks_lock));
 }
-
 static inline void sctk_internal_ptp_merge_pending(sctk_internal_ptp_message_lists_t* lists){
 #ifndef SCTK_DISABLE_REENTRANCE
   if(lists->incomming_send.list != NULL){
@@ -180,6 +179,7 @@ static inline void sctk_internal_ptp_add_send_incomming(sctk_internal_ptp_t* tmp
 /************************************************************************/
 static sctk_internal_ptp_t* sctk_ptp_table = NULL;
 static sctk_internal_ptp_t** sctk_ptp_array = NULL;
+/* List for process specific messages */
 static sctk_internal_ptp_t* sctk_ptp_admin = NULL;
 static int sctk_ptp_array_start = 0;
 static int sctk_ptp_array_end = 0;
@@ -639,12 +639,12 @@ void sctk_ptp_per_task_init (int i){
   static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
   sctk_internal_ptp_t * tmp;
 
-  sctk_spinlock_lock(&lock);
   tmp = sctk_malloc(sizeof(sctk_internal_ptp_t));
   memset(tmp,0,sizeof(sctk_internal_ptp_t));
 /*   tmp->key.comm = SCTK_COMM_WORLD; */
   tmp->key.destination = i;
 
+  sctk_spinlock_lock(&lock);
   sctk_internal_ptp_message_list_init(&(tmp->lists));
   sctk_ptp_table_insert(tmp);
   sctk_spinlock_unlock(&lock);
@@ -674,7 +674,7 @@ void* sctk_alloc_header(){
 }
 
 void sctk_rebuild_header (sctk_thread_ptp_message_t * msg){
-  if(msg->sctk_msg_get_specific_message_tag == process_specific_message_tag){
+  if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->sctk_msg_get_specific_message_tag)){
     if(msg->sctk_msg_get_source != MPC_ANY_SOURCE)
       msg->sctk_msg_get_glob_source = msg->sctk_msg_get_source;
     else
@@ -784,12 +784,13 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
 				 specific_message_tag_t specific_message_tag){
   msg->tail.request = request;
 
-  msg->body.header.source = source;
-  msg->body.header.destination = destination;
+  msg->sctk_msg_get_source = source;
+  msg->sctk_msg_get_destination = destination;
 
-  if(specific_message_tag == process_specific_message_tag){
-    if(source != MPC_ANY_SOURCE)
+  if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(specific_message_tag)){
+    if(source != MPC_ANY_SOURCE) {
       msg->sctk_msg_get_glob_source = source;
+    }
     else
       msg->sctk_msg_get_glob_source = -1;
 
@@ -913,6 +914,7 @@ sctk_msg_list_t* sctk_perform_messages_search_matching(sctk_internal_ptp_t* pair
     sctk_thread_message_header_t* header_send;
     sctk_assert(ptr_send->msg != NULL);
     header_send = &(ptr_send->msg->body.header);
+
     if((header->communicator == header_send->communicator) &&
        (header->specific_message_tag == header_send->specific_message_tag) &&
        ((header->source == header_send->source) || (header->source == MPC_ANY_SOURCE))&&
@@ -973,7 +975,6 @@ static inline void sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t* pa
     sctk_assert(ptr_recv->msg != NULL);
     ptr_send = sctk_perform_messages_search_matching(pair,&(ptr_recv->msg->body.header));
     if(ptr_send != NULL){
-      sctk_nodebug("Match %p and %p",ptr_recv,ptr_send);
       DL_DELETE(pair->lists.pending_recv.list,ptr_recv);
 
       /*Copy message*/
@@ -1005,6 +1006,7 @@ static inline void sctk_perform_messages_for_pair(sctk_internal_ptp_t* pair){
        || (pair->lists.incomming_recv.list != NULL)
 #endif
 ){
+
       sctk_internal_ptp_lock_pending(&(pair->lists));
       sctk_perform_messages_for_pair_locked(pair);
       pair->lists.changed = 0;
@@ -1127,7 +1129,7 @@ void sctk_notify_idle_message (){
 /********************************************************************/
 
 void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_check){
-  if((msg->body.header.specific_message_tag == process_specific_message_tag) &&
+  if((IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag)) &&
      (msg->sctk_msg_get_destination != sctk_process_rank)){
     msg->tail.remote_destination = 1;
     sctk_network_send_message (msg);
@@ -1137,6 +1139,7 @@ void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_ch
 
     /*   key.comm = msg->header.communicator; */
     key.destination = msg->sctk_msg_get_glob_destination;
+    sctk_nodebug("glob dest: %d", key.destination);
 
     assume(msg->sctk_msg_get_communicator >= 0);
 
@@ -1200,7 +1203,7 @@ void sctk_recv_message_try_check (sctk_thread_ptp_message_t * msg,sctk_internal_
     key.destination = msg->sctk_msg_get_glob_destination;
     sctk_ptp_table_find(key,tmp);
   }
-  if(msg->body.header.specific_message_tag != process_specific_message_tag){
+  if(!IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag)){
     if(send_key.destination != -1){
       sctk_ptp_table_find(send_key,send_tmp);
     }

@@ -48,9 +48,8 @@ __thread void *sctk_extls = NULL;
 
 /* to set GS register */
 #include <asm/prctl.h>
-/* XXX: not portable */
-#include <asm/unistd_64.h>
-//#include <asm-x86_64/unistd.h>
+#include <asm/unistd.h>
+//#include <asm/unistd_64.h>
 
 static __thread unsigned long p_memsz;
 static __thread unsigned long p_filesz;

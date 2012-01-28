@@ -63,6 +63,7 @@ MonoDomain *domain;
 #include <mpc_internal_thread.h>
 #include <sctk_communicator.h>
 #include "sctk_pmi.h"
+#include "sctk_multirail_ib.h"
 /* #include "sctk_hybrid_comm.h" */
 /* #include "sctk_ib_scheduling.h" */
 #endif
@@ -2364,6 +2365,8 @@ sctk_start_func (void *(*run) (void *), void *arg)
   sctk_thread_running = 0;
 
 #ifdef MPC_Message_Passing
+#warning "Need macros"
+  sctk_network_finalize_multirail_ib();
   sctk_ignore_sigpipe();
   sctk_communicator_delete ();
 #endif

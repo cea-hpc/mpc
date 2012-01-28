@@ -31,6 +31,7 @@ extern "C"
 
 void sctk_network_init_multirail_ib(char* name, char* topology);
 void sctk_network_init_ib(char* name, char* topology);
+void sctk_network_finalize_multirail_ib ();
 
 #ifdef __cplusplus
 }

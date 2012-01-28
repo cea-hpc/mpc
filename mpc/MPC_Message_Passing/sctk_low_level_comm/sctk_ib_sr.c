@@ -28,6 +28,7 @@
 #include "sctk_ibufs.h"
 #include "sctk_net_tools.h"
 #include "sctk_ib_cp.h"
+#include "sctk_ib_prof.h"
 
 #define HOSTNAME 2048
 
@@ -71,6 +72,17 @@ void sctk_ib_sr_free_msg_no_recopy(void* arg) {
   assume(!msg->tail.ib.eager.recopied);
   ibuf = msg->tail.ib.eager.ibuf;
   sctk_ibuf_release(ibuf->region->rail, ibuf);
+  PROF_INC_RAIL_IB(ibuf->region->rail, free_mem);
+  sctk_free(msg);
+}
+
+static void __free(void *arg) {
+  sctk_thread_ptp_message_t *msg = (sctk_thread_ptp_message_t*) arg;
+  sctk_ibuf_t *ibuf = NULL;
+
+  ibuf = msg->tail.ib.eager.ibuf;
+  PROF_INC_RAIL_IB(ibuf->region->rail, free_mem);
+  sctk_free(msg);
 }
 
 void
@@ -81,7 +93,7 @@ sctk_ib_sr_recv_free(sctk_rail_info_t* rail, sctk_thread_ptp_message_t *msg,
     sctk_reinit_header(msg, sctk_ib_sr_free_msg_no_recopy, sctk_ib_sr_recv_msg_no_recopy);
     /* Read from recopied buffer */
   } else {
-    sctk_reinit_header(msg,sctk_free,sctk_net_message_copy);
+    sctk_reinit_header(msg,__free,sctk_net_message_copy);
     sctk_ibuf_release(&rail->network.ib, ibuf);
   }
 }
@@ -102,6 +114,7 @@ sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int *recopy) {
     eager_header = IBUF_GET_EAGER_HEADER(ibuf->buffer);
     size = eager_header->payload_size;
     msg = sctk_malloc(size + sizeof(sctk_thread_ptp_message_t));
+    PROF_INC(rail, alloc_mem);
     assume(msg);
 
     body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
@@ -113,18 +126,19 @@ sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int *recopy) {
   } else {
     sctk_nodebug("not recopy");
     msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
+    PROF_INC(rail, alloc_mem);
     assume(msg);
 
     /* Copy the header of the message */
     memcpy(msg, IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer), sizeof(sctk_thread_ptp_message_body_t));
 
     msg->tail.ib.protocol = eager_protocol;
-    msg->tail.ib.eager.ibuf = ibuf;
   }
 
   msg->body.completion_flag = NULL;
   msg->tail.message_type = sctk_message_network;
   msg->tail.ib.eager.recopied = *recopy;
+  msg->tail.ib.eager.ibuf = ibuf;
 
   sctk_rebuild_header(msg);
   return msg;

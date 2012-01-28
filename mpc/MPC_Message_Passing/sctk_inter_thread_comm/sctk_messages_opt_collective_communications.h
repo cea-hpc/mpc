@@ -31,27 +31,34 @@ typedef struct {
   int dummy;
 } sctk_barrier_opt_messages_t;
 
-void sctk_barrier_opt_messages_init(struct sctk_internal_collectives_struct_s * tmp);
+void sctk_barrier_opt_messages_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id);
 
 /************************************************************************/
 /*Broadcast                                                             */
 /************************************************************************/
 
 typedef struct {
-  int dummy;
+  OPA_int_t tasks_entered_in_node;
+  OPA_int_t tasks_exited_in_node;
+  volatile unsigned int generation;
+  OPA_ptr_t buff_root;
 } sctk_broadcast_opt_messages_t;
 
-void sctk_broadcast_opt_messages_init(struct sctk_internal_collectives_struct_s * tmp);
+void sctk_broadcast_opt_messages_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id);
 
 /************************************************************************/
 /*Allreduce                                                             */
 /************************************************************************/
 
 typedef struct {
-  int dummy;
+  /* TODO: initialization */
+  OPA_int_t tasks_entered_in_node;
+  volatile unsigned int generation;
+  volatile void * volatile* buff_in;
+  volatile void * volatile* buff_out;
 } sctk_allreduce_opt_messages_t;
 
-void sctk_allreduce_opt_messages_init(struct sctk_internal_collectives_struct_s * tmp);
+void sctk_allreduce_opt_messages_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id);
 
 /************************************************************************/
 /*Init                                                                  */
