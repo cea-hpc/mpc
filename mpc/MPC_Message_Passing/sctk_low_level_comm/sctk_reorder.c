@@ -166,11 +166,8 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
     /* With message reordering */
     process = msg->sctk_msg_get_destination;
     sctk_nodebug("Receives process specific with message reordering from %d to %d %d", msg->sctk_msg_get_source, process, msg->sctk_msg_get_message_number);
+    /* The message must not be indirect */
     assume (process == sctk_process_rank);
-    /* Indirect messages, we do not check PSN */
-//    if(sctk_process_rank != process){
-//      return 1;
-//    }
 
     tmp = sctk_get_reorder_to_process(msg->sctk_msg_get_source);
     assume(tmp);
@@ -180,7 +177,6 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
       sctk_nodebug("PS recv %d to %d (msg ng:%d)", msg->sctk_msg_get_source, msg->sctk_msg_get_destination, msg->sctk_msg_get_message_number);
       sctk_send_message_try_check(msg,1);
       OPA_fetch_and_incr_int(&(tmp->message_number_src));
-      msg = NULL;
 
       /*Search for pending messages*/
       __send_pending_messages(tmp);
@@ -199,7 +195,7 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
 
       /* XXX: we *MUST* check once again if there is no pending messages. During
        * adding a msg to the pending list, a new message with a good PSN could be
-        * received. If we omit this line, the code can deadlock */
+       * received. If we omit this line, the code can deadlock */
       __send_pending_messages(tmp);
     }
     return 0;
@@ -227,7 +223,6 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
       sctk_nodebug("Direct Send %d from %p",msg->sctk_msg_get_message_number, tmp);
       sctk_send_message_try_check(msg,1);
       OPA_fetch_and_incr_int(&(tmp->message_number_src));
-      msg = NULL;
 
       /*Search for pending messages*/
       __send_pending_messages(tmp);
@@ -272,22 +267,20 @@ int sctk_prepare_send_message_to_network_reorder (sctk_thread_ptp_message_t * ms
       msg->sctk_msg_get_use_message_numbering = 0;
       return 1;
     }
+    /* The source process must be the current process */
+    assume(msg->sctk_msg_get_source == sctk_process_rank);
 
     /* With message reordering */
     dest_process = msg->sctk_msg_get_destination;
+    /* Must require numbering */
     tmp = sctk_get_reorder_to_process(dest_process);
-    /* Unable to find local numbering */
-    if(tmp == NULL){
-      assume (0);
-      msg->sctk_msg_get_use_message_numbering = 0;
-      return 1;
-    }
+    assume (tmp);
+
     /* Local numbering */
     msg->sctk_msg_get_use_message_numbering = 1;
     msg->sctk_msg_get_message_number = OPA_fetch_and_incr_int(&(tmp->message_number_dest));
 
     sctk_nodebug("PS send %d to %d (number:%d)", msg->sctk_msg_get_source, dest_process, msg->sctk_msg_get_message_number);
-    assume(msg->sctk_msg_get_source == sctk_process_rank);
     return 0;
   }
 

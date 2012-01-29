@@ -19,8 +19,8 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK_MESSAGES_OPT_COLLECTIVE_COMMUNICATIONS_H_
-#define __SCTK_MESSAGES_OPT_COLLECTIVE_COMMUNICATIONS_H_
+#ifndef __SCTK_MESSAGES_HETERO_COLLECTIVE_COMMUNICATIONS_H_
+#define __SCTK_MESSAGES_HETERO_COLLECTIVE_COMMUNICATIONS_H_
 
 
 /************************************************************************/
@@ -28,34 +28,42 @@
 /************************************************************************/
 
 typedef struct {
-  int dummy;
-} sctk_barrier_opt_messages_t;
+  OPA_int_t tasks_entered_in_node;
+  volatile unsigned int generation;
+} sctk_barrier_hetero_messages_t;
 
-void sctk_barrier_opt_messages_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id);
+void sctk_barrier_hetero_messages_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id);
 
 /************************************************************************/
 /*Broadcast                                                             */
 /************************************************************************/
 
 typedef struct {
-  int dummy;
-} sctk_broadcast_opt_messages_t;
+  OPA_int_t tasks_entered_in_node;
+  OPA_int_t tasks_exited_in_node;
+  volatile unsigned int generation;
+  OPA_ptr_t buff_root;
+} sctk_broadcast_hetero_messages_t;
 
-void sctk_broadcast_opt_messages_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id);
+void sctk_broadcast_hetero_messages_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id);
 
 /************************************************************************/
 /*Allreduce                                                             */
 /************************************************************************/
 
 typedef struct {
-  int dummy;
-} sctk_allreduce_opt_messages_t;
+  /* TODO: initialization */
+  OPA_int_t tasks_entered_in_node;
+  volatile unsigned int generation;
+  volatile void * volatile* buff_in;
+  volatile void * volatile* buff_out;
+} sctk_allreduce_hetero_messages_t;
 
-void sctk_allreduce_opt_messages_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id);
+void sctk_allreduce_hetero_messages_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id);
 
 /************************************************************************/
 /*Init                                                                  */
 /************************************************************************/
-void sctk_collectives_init_opt_messages (sctk_communicator_t id);
+void sctk_collectives_init_hetero_messages (sctk_communicator_t id);
 
 #endif

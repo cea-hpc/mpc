@@ -44,6 +44,10 @@
  *----------------------------------------------------------*/
 
 
+/*-----------------------------------------------------------
+ *  STATIC CONNEXIONS : process to process connexions during intialization
+ *  time
+ *----------------------------------------------------------*/
 void sctk_ib_cm_connect_to(int from, int to,sctk_rail_info_t* rail){
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_DEVICE(rail_ib);
@@ -112,7 +116,7 @@ void sctk_ib_cm_connect_from(int from, int to,sctk_rail_info_t* rail){
 }
 
 /*-----------------------------------------------------------
- *  ON DEMAND CONNEXIONS
+ *  ON DEMAND CONNEXIONS: process to process connexions during run time
  *----------------------------------------------------------*/
 int sctk_ib_cm_on_demand_recv_done(sctk_rail_info_t *rail, void* done, int src) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
@@ -246,7 +250,6 @@ int sctk_ib_cm_on_demand_recv(sctk_rail_info_t *rail,
 
 int sctk_ib_cm_on_demand_recv_check(sctk_thread_ptp_message_body_t *msg) {
   /* If on demand, handle message before sending it to high-layers */
-#warning "from & to &&"
   if (msg->header.message_tag & ONDEMAND_MASK_TAG)
   {
    return 1;
