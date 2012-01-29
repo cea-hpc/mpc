@@ -3889,16 +3889,20 @@ static inline int
 __MPC_Comm_free (MPC_Comm * comm)
 {
   if (*comm == MPC_COMM_WORLD)
-    {
+  {
       MPC_ERROR_SUCESS ();
-    }
-  sctk_nodebug ("Comm free %d", *comm);
-  mpc_check_comm (*comm, MPC_COMM_WORLD);
-  sctk_assert (*comm != MPC_COMM_NULL);
-  __MPC_Barrier (*comm);
-  sctk_nodebug ("Delete Comm %d", *comm);
-  sctk_delete_communicator (*comm);
-  sctk_nodebug ("Comm free done %d", *comm);
+  }
+  
+  MPC_Comm old_comm = *comm;  
+    
+  sctk_nodebug ("Comm free %d", old_comm);
+  mpc_check_comm (old_comm, MPC_COMM_WORLD);
+  sctk_assert (old_comm != MPC_COMM_NULL);
+  __MPC_Barrier (old_comm);
+  sctk_nodebug ("Delete Comm %d", old_comm);
+  sctk_delete_communicator (old_comm);
+  sctk_nodebug ("Comm free done %d", old_comm);
+
   *comm = MPC_COMM_NULL;
   MPC_ERROR_SUCESS ();
 }
