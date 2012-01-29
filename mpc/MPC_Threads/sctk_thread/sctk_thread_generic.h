@@ -56,4 +56,10 @@ typedef struct sctk_thread_generic_p_s{
 typedef sctk_thread_generic_p_t* sctk_thread_generic_t;
 void sctk_thread_generic_set_self(sctk_thread_generic_t th);
 sctk_thread_generic_t sctk_thread_generic_self();
+int
+sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
+				 sctk_thread_generic_attr_t * attr,
+				 void *(*start_routine) (void *), void *arg);
+int
+sctk_thread_generic_attr_init (sctk_thread_generic_attr_t * attr);
 #endif

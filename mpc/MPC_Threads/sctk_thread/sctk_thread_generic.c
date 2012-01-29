@@ -110,7 +110,7 @@ sctk_thread_generic_mutex_unlock (sctk_thread_mutex_t * lock)
 /* THREAD CREATION                     */
 /***************************************/
 
-static int
+int
 sctk_thread_generic_attr_init (sctk_thread_generic_attr_t * attr)
 {
   sctk_thread_generic_intern_attr_t init = sctk_thread_generic_intern_attr_init;
@@ -159,10 +159,11 @@ static  void __sctk_start_routine (void * arg){
   thread = arg;
 
   sctk_thread_generic_scheduler_init_thread(&(sctk_thread_generic_self()->sched),thread);
+  sctk_thread_generic_sched_yield(&(thread->sched));
 
-  fprintf(stderr,"Start %p\n",thread->attr.arg);
+  sctk_debug("Start %p",thread->attr.arg);
   thread->attr.return_value = thread->attr.start_routine(thread->attr.arg);
-  fprintf(stderr,"End %p\n",thread->attr.arg);
+  sctk_debug("End %p",thread->attr.arg);
 
   /* Handel Exit */
   if(thread->attr.scope == SCTK_THREAD_SCOPE_SYSTEM){
@@ -174,7 +175,7 @@ static  void __sctk_start_routine (void * arg){
   not_reachable();
 }
 
-static int
+int
 sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
 				 sctk_thread_generic_attr_t * attr,
 				 void *(*start_routine) (void *), void *arg)
@@ -196,7 +197,7 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
     }
   }
 
-  fprintf(stderr,"Create %p\n",arg);
+  sctk_debug("Create %p",arg);
 
   if (arg != NULL)
     {
