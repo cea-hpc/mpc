@@ -306,9 +306,6 @@ void in_order_scheduler(mpcomp_mvp_t *mvp);
 *******************************************/
 void __mpcomp_barrier_for_dyn(void);
 void __mpcomp_internal_barrier_for_dyn(mpcomp_thread_t *t);
-/*int __mpcomp_dynamic_loop_begin(int lb, int b, int incr, int chunk_size, int *from, int *to);
-int __mpcomp_dynamic_loop_next(int *from, int *to);
-void __mpcomp_dynamic_loop_end_nowait();*/
 
 /*************************************************
 *************************************************

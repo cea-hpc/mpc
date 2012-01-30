@@ -29,7 +29,6 @@
 #include <mpcomp.h>
 #include <mpcomp_internal.h>
 
-int cpt=0;
 __thread void *sctk_openmp_thread_tls = NULL;
 
 /* 
@@ -698,7 +697,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  break;
 
 	case 32: 
-#if 1  /* NUMA tree 32 cores */
+#if 0  /* NUMA tree 32 cores */
 #warning "OpenMp compiling w/ NUMA tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -834,7 +833,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  }
 #endif
 
-#if 0   /* NUMA tree degree 4 */
+#if 1   /* NUMA tree degree 4 */
 #warning "OpenMp compiling w/2-level NUMA tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -890,7 +889,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 
                if (flag_level == -1) flag_level = 2;
 
-               n2 = (mpcomp_node_t *)sctk_malloc_on_node(sizeof(mpcomp_mvp_t *),i);
+               n2 = (mpcomp_node_t *)sctk_malloc_on_node(sizeof(mpcomp_mvp_t),i);
                sctk_assert(n2 != NULL);
 
                n->children.node[j] = n2;
@@ -1235,7 +1234,7 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
     return;
   }
 
-  sctk_debug("__mpcomp_start_parallel_region: depth %d",t->team->depth);
+  sctk_nodebug("__mpcomp_start_parallel_region: depth %d",t->team->depth);
  
   /* First level of parallel region. No nesting */  
   if (t->team->depth == 0) {
@@ -1457,7 +1456,6 @@ void __mpcomp_internal_barrier(mpcomp_mvp_t *mvp)
 
    /* Step 1: Climb in the tree */
    b_done = c->barrier_done;
-
 
 #ifdef ATOMICS
    b = sctk_atomics_fetch_and_incr_int (&c->barrier) ;
