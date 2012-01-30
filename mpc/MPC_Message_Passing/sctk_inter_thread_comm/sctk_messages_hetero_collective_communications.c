@@ -133,6 +133,7 @@ void sctk_barrier_hetero_messages_inter(const sctk_communicator_t communicator,
   int my_rank;
   int *process_array;
   int total = sctk_get_process_nb_in_array(communicator);
+  int *myself_ptr = NULL;
   int total_max;
   int i;
   sctk_hetero_messages_table_t table;
@@ -149,9 +150,12 @@ void sctk_barrier_hetero_messages_inter(const sctk_communicator_t communicator,
   thread_data = sctk_thread_data_get ();
   my_rank = sctk_get_rank (communicator, thread_data->task_id);
   process_array = sctk_get_process_array(communicator),
-  myself = *((int*) bsearch((void*) &sctk_process_rank,
+  myself_ptr = ((int*) bsearch((void*) &sctk_process_rank,
         process_array,
         total,sizeof(int), int_cmp));
+  sctk_nodebug("rank : %d, myself_ptr: %p", sctk_process_rank, myself_ptr);
+  assume(myself_ptr);
+  myself = (myself_ptr - process_array);
 
   ptp_internal = sctk_get_internal_ptp(-1);
 
@@ -271,6 +275,7 @@ void sctk_broadcast_hetero_messages_inter (void *buffer, const size_t size,
   {
     sctk_thread_data_t *thread_data;
     int myself;
+    int* myself_ptr = NULL;
     int my_rank;
     int related_myself;
     int total_max;
@@ -295,12 +300,19 @@ void sctk_broadcast_hetero_messages_inter (void *buffer, const size_t size,
     thread_data = sctk_thread_data_get ();
     my_rank = sctk_get_rank (communicator, thread_data->task_id);
     process_array = sctk_get_process_array(communicator);
-    myself = *((int*) bsearch((void*) &sctk_process_rank,
+    myself_ptr = ((int*) bsearch((void*) &sctk_process_rank,
         process_array,
         total,sizeof(int), int_cmp));
-    root = *((int*) bsearch((void*) &root_process,
+    assume(myself_ptr);
+    myself = (myself_ptr - process_array);
+
+    myself_ptr = ((int*) bsearch((void*) &root_process,
         process_array,
         total,sizeof(int), int_cmp));
+    assume(myself_ptr);
+    root = (myself_ptr - process_array);
+
+
     related_myself = (myself + total - root) % total;
     ptp_internal = sctk_get_internal_ptp(-1);
 
@@ -452,6 +464,7 @@ static void sctk_allreduce_hetero_messages_intern_inter (const void *buffer_in, 
   void** buffer_table;
   int my_rank;
   int myself;
+  int *myself_ptr;
   size_t size = elem_size * elem_number;
   int specific_tag = allreduce_hetero_specific_message_tage;
   int total = sctk_get_process_nb_in_array(communicator);
@@ -490,9 +503,11 @@ static void sctk_allreduce_hetero_messages_intern_inter (const void *buffer_in, 
   thread_data = sctk_thread_data_get ();
   my_rank = sctk_get_rank (communicator, thread_data->task_id);
   process_array = sctk_get_process_array(communicator),
-  myself = *((int*) bsearch((void*) &sctk_process_rank,
+  myself_ptr = ((int*) bsearch((void*) &sctk_process_rank,
         process_array,
         total,sizeof(int), int_cmp));
+  assume(myself_ptr);
+  myself = (myself_ptr - process_array);
 
   /* We get the PTP list -1  */
   ptp_internal = sctk_get_internal_ptp(-1);
