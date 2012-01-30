@@ -154,5 +154,6 @@ sctk_net_init_driver (char *name)
     DEFAUT_DRIVER();
 
     sctk_route_finalize();
+    sctk_checksum_init();
   }
 }

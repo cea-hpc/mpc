@@ -84,5 +84,14 @@ SCTK_CHECK_LIB_PMI
 
 begin_section Networks
 check_networks
+if test "$SCTK_CHECKSUM" != 0 ; then
+  begin_section Checksum
+  SCTK_CHECK_OPTION "-DSCTK_USE_CHECKSUM"
+  SCTK_CHECK_HEADER zlib.h
+  SCTK_CHECK_LDOPTION "-lz"
+  SCTK_CHECK_FUNC adler32
+  end_section
+fi
 end_section
+
 

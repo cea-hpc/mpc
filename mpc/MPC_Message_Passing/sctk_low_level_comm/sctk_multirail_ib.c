@@ -37,7 +37,7 @@ static void
 sctk_network_send_message_multirail_ib (sctk_thread_ptp_message_t * msg){
   int i ;
   /* XXX:Calculating checksum */
-#ifdef SCTK_USE_ADLER
+#ifdef SCTK_USE_CHECKSUM
   sctk_checksum_register(msg);
 #endif
 

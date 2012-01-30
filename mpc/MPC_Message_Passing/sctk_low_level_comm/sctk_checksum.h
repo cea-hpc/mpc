@@ -32,3 +32,4 @@ unsigned long sctk_checksum_verify(sctk_thread_ptp_message_t *send, sctk_thread_
 void sctk_checksum_register(sctk_thread_ptp_message_t *msg);
 void sctk_checksum_unregister(sctk_thread_ptp_message_t *msg);
 #endif
+void sctk_checksum_init();

@@ -161,6 +161,7 @@ Optional features:
   --enable-FEATURE                 Include FEATURE
   --enable-fortran                 Build MPC fortran API
   --use-network=*                  Select inter-node network type [all]
+  --enable-checksum                Enable checksum for inter-processes messages
   --disable-shm                    Disable intra-node communication module (SHM)
   --enable-debug                   Enable MPC internal debugging features
   --enable-debug-messages          Enable MPC debug message printing in verbose level 3
@@ -211,6 +212,7 @@ SCTK_HYDRA="1"
 SCTK_SLURM="0"
 SCTK_OPENPA="1"
 SCTK_SHM="1"
+SCTK_CHECKSUM="0"
 SCTK_SHELL_COLORS="0"
 SCTK_DEBUG_MESSAGES="0"
 SCTK_DEBUG_MESSAGES_DISABLED="0"
@@ -305,6 +307,12 @@ for arg in "$@" ; do
     ;;
     --disable-shm)
     SCTK_SHM="0"
+    ;;
+    --enable-checksum)
+    SCTK_CHECKSUM="1"
+    ;;
+    --disable-checksum)
+    SCTK_CHECKSUM="0"
     ;;
     --enable-shell-colors)
     SCTK_SHELL_COLORS="1"

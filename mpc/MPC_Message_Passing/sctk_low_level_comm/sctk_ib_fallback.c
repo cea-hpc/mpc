@@ -432,7 +432,9 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   srq_attr = sctk_ib_srq_init_attr(rail_ib);
   sctk_ib_srq_init(rail_ib, &srq_attr);
   /* Print config */
-  sctk_ib_config_print(rail_ib);
+  if (sctk_get_verbosity() >= 2) {
+    sctk_ib_config_print(rail_ib);
+  }
   sctk_ib_mmu_init(rail_ib);
   sctk_ibuf_pool_init(rail_ib);
   /* Fill SRQ with buffers */

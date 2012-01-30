@@ -834,7 +834,7 @@ sctk_net_ibv_allocator_send_coll_message (
 
   sctk_nodebug("Collective type: %d", type);
 
-#ifdef SCTK_USE_ADLER
+#ifdef SCTK_USE_CHECKSUM
   req.crc_full_payload = sctk_adler32_buffer(msg, size, 0);
 #endif
   /* copy the comm id if this is a message from a bcast or

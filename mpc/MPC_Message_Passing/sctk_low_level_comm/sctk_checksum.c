@@ -21,10 +21,9 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-//#define SCTK_USE_ADLER
-
-#ifdef SCTK_USE_ADLER
+#ifdef SCTK_USE_CHECKSUM
 #include "sctk_checksum.h"
+#include "sctk_shell_colors.h"
 #include <zlib.h>
 
 static char checksum_enabled = 1;
@@ -167,5 +166,13 @@ unsigned long sctk_checksum_verify(sctk_thread_ptp_message_t *send, sctk_thread_
   }
   return adler;
 }
+
+void sctk_checksum_init() {
+  if (sctk_process_rank == 0) {
+    fprintf(stderr, SCTK_COLOR_RED_BOLD(WARNING: inter-node message checking enabled!)"\n");
+  }
+}
+#else
+void sctk_checksum_init() { /* nothing to do */ }
 
 #endif

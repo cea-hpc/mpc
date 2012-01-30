@@ -70,7 +70,7 @@ typedef struct sctk_net_ibv_allocator_request_s
   /* for collective */
   uint8_t com_id;
   uint32_t psn;
-#ifdef SCTK_USE_ADLER
+#ifdef SCTK_USE_CHECKSUM
   uint32_t crc_full_payload;
 #endif
 
