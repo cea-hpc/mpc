@@ -35,6 +35,7 @@
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"
 #endif
+#define SCTK_IB_MODULE_DEBUG
 #define SCTK_IB_MODULE_NAME "QP"
 #include "sctk_ib_toolkit.h"
 
@@ -74,7 +75,7 @@ sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int r
     sctk_abort();
   }
 
-  sctk_ib_debug("Opening rail %d on %d", rail_nb, devices_nb);
+  sctk_ib_nodebug("Opening rail %d on %d", rail_nb, devices_nb);
 
   device->context = ibv_open_device (dev_list[rail_nb]);
   if (!device->context)
@@ -580,116 +581,10 @@ sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
     wait_send_arg.remote = remote;
     wait_send_arg.ibuf = ibuf;
 
-    assume(0);
-
     sctk_ib_nodebug("QP full, waiting for posting message...");
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
         (void (*)(void *)) wait_send, &wait_send_arg);
   }
 }
-
-
-#if 0
-int sctk_ib_qp_send_post_pending(sctk_ib_qp_remote_t* remote, int need_lock)
-{
-  struct sctk_list_header *tmp;
-  sctk_ib_ibuf_t* ibuf;
-  int rc;
-
-  if (sctk_ib_list_is_empty(&remote->pending_send_wqe))
-    return 0;
-
-  if (need_lock)
-    sctk_spinlock_lock(&remote->send_wqe_lock);
-
-  do {
-    tmp = sctk_ib_list_pop(&remote->pending_send_wqe);
-
-    if (tmp) {
-      ibuf = sctk_ib_list_get_entry(tmp, sctk_ib_ibuf_t, list_header);
-
-      if ( (remote->ibv_got_send_wqe + 1) > ibv_qp_tx_depth)
-      {
-        if (need_lock)
-          sctk_spinlock_unlock(&remote->send_wqe_lock);
-
-        return 1;
-      }
-
-      sctk_nodebug("Got %d", remote->ibv_got_send_wqe);
-      rc = ibv_post_send(remote->qp, &(ibuf->desc.wr.send), &(ibuf->desc.bad_wr.send));
-      sctk_assert(rc == 0);
-      sctk_nodebug("Found ibuf %p pending", ibuf);
-
-      remote->ibv_got_send_wqe++;
-      remote->ibv_free_send_wqe--;
-    }
-  } while (tmp);
-
-    if (need_lock)
-      sctk_spinlock_unlock(&remote->send_wqe_lock);
-
-    return 0;
-}
-
-void sctk_ib_qp_send_free_wqe(sctk_ib_qp_remote_t* remote )
-{
-  sctk_assert(remote);
-  sctk_spinlock_lock(&remote->send_wqe_lock);
-  remote->ibv_got_send_wqe --;
-  remote->ibv_free_send_wqe ++;
-
-  sctk_nodebug("FREE ibv_got_send_wqe : %d", remote->ibv_got_send_wqe);
-  sctk_spinlock_unlock(&remote->send_wqe_lock);
-}
-
-int sctk_ib_qp_send_get_wqe(int dest_process, sctk_ib_ibuf_t* ibuf)
-{
-  sctk_ib_qp_remote_t* remote;
-  int rc;
-
-  /* check if the TCP connection is active. If not, connect peers */
-  remote = sctk_ib_comp_rc_sr_check_and_connect(dest_process);
-
-  ibuf->remote = remote;
-
-  sctk_spinlock_lock(&remote->send_wqe_lock);
-  sctk_ib_qp_send_post_pending(remote, 0);
-
-
-//#if 0
-  /* TODO: do not post buffer if QP is full */
-  while ( (remote->ibv_got_send_wqe + 1) > ibv_qp_tx_depth) {
-    sctk_spinlock_unlock(&remote->send_wqe_lock);
-    sctk_thread_yield();
-    sctk_spinlock_lock(&remote->send_wqe_lock);
-  }
-//#endif
-
-  if ( (remote->ibv_got_send_wqe + 1) > ibv_qp_tx_depth) {
-    sctk_nodebug("No more WQE available");
-    sctk_ib_list_push_tail(&remote->pending_send_wqe, &ibuf->list_header);
-    sctk_spinlock_unlock(&remote->send_wqe_lock);
-
-    return -1;
-  } else {
-    remote->ibv_got_send_wqe++;
-    remote->ibv_free_send_wqe--;
-    sctk_nodebug("GET ibv_got_send_wqe : %d", remote->ibv_got_send_wqe);
-
-    /*
-     * we can post the message to the queue because we are sure that there
-     * is a free slot.
-     */
-    sctk_spinlock_unlock(&remote->send_wqe_lock);
-
-    rc = ibv_post_send(remote->qp, &(ibuf->desc.wr.send), &(ibuf->desc.bad_wr.send));
-    assume(rc == 0);
-
-    return remote->ibv_got_send_wqe;
-  }
-}
-
-#endif
 
 #endif
