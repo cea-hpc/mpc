@@ -104,8 +104,8 @@ int sctk_pmi_init() {
 
 #ifdef MPC_USE_HYDRA
 	int rank, process_nb, nodes_nb = 0, i, j, size;
-	char * value;
-	char * nodes;
+	char * value = NULL;
+	char * nodes = NULL;
 	char hostname[SCTK_PMI_NAME_SIZE];
 
 	// check if PMI_Get_size is equal to 1 (could mean application launched without mpiexec)

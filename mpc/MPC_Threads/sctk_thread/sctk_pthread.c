@@ -37,6 +37,7 @@
 #include <sctk_communicator.h>
 #include "sctk_asm.h"
 #endif
+#include "sctk_asm.h"
 
 #define SCTK_LOCAL_VERSION_MAJOR 0
 #define SCTK_LOCAL_VERSION_MINOR 1
@@ -57,7 +58,7 @@ pthread_wait_for_value_and_poll (volatile int *data, int value,
 /*       sctk_thread_yield(); */
       if ((*data) != value)
 	{
-	  if (i >= 10)
+	  if (i >= 100)
 	    {
 #ifdef MPC_Message_Passing
 	      sctk_notify_idle_message ();
@@ -70,9 +71,12 @@ pthread_wait_for_value_and_poll (volatile int *data, int value,
 	      kthread_usleep (10);
 #endif
 	      i = 0;
-	    }
+	    } else {
+		 sctk_cpu_relax ();
+	  }
+	  /* 	  else */
+/* 	    sched_yield (); */
 	  i++;
-	  sctk_cpu_relax();
 	}
     }
 }
@@ -225,7 +229,7 @@ pthread_user_create (pthread_t * thread, pthread_attr_t * attr,
 
       res =
 	pthread_create (thread, &tmp_attr, tls_start_routine,
-			init_tls_start_routine_arg (def_start_routine, arg));      
+			init_tls_start_routine_arg (def_start_routine, arg));
       if(res != 0){
 	perror("pthread_create: ");
       }
@@ -301,7 +305,7 @@ local_pthread_create (pthread_t * restrict thread,
     }
   else
     {
-      int res; 
+      int res;
       res = pthread_create (thread, attr, start_routine, arg);
 
       if(res != 0){

@@ -98,7 +98,7 @@ int SCTK_FULL_PAGE_NUMBER = SCTK_FULL_PAGE_NUMBER_DEFAULT;
 static char *global_address_start = NULL;
 static char *global_address_end = (char *) -1;
 
- /*BRK*/ 
+ /*BRK*/
 static char *init_pre_brk_pointer = NULL;
 static char *max_pre_brk_pointer = NULL;
 
@@ -839,7 +839,7 @@ sctk_refresh_page_alloc (sctk_page_t * page)
 /***************    BRK        *************/
 /*******************************************/
 static void
-sctk_dump_memory_heap_fd (int fd); 
+sctk_dump_memory_heap_fd (int fd);
 
 static int sctk_check_address_range(void* addr, size_t n,void*  a_start_block, void* a_end_block){
   unsigned long start;
@@ -851,7 +851,7 @@ static int sctk_check_address_range(void* addr, size_t n,void*  a_start_block, v
   start = (unsigned long)addr;
   end = (unsigned long)addr + n;
   start_block = (unsigned long)a_start_block;
-  end_block = (unsigned long)a_end_block; 
+  end_block = (unsigned long)a_end_block;
 
 
   if((start >= start_block) && (start < end_block)){
@@ -873,7 +873,7 @@ void sctk_check_address(void* addr, size_t n){
 
   sctk_nodebug("Check %p-%p",addr,(char*)addr + n);
 
-  sctk_spinlock_read_lock(&sctk_sbrk_rwlock);  
+  sctk_spinlock_read_lock(&sctk_sbrk_rwlock);
 
   local_brk_pointer = (char *) brk_pointer;
 
@@ -892,9 +892,9 @@ void sctk_check_address(void* addr, size_t n){
 	else
 	  {
 	    sctk_tls_t * tls;
-	  
+
 	    tls = cursor->related;
-	  
+
 	    sctk_spinlock_lock(&(tls->spinlock));
 	    if (cursor->type == sctk_chunk_small_type)
 	      {
@@ -963,7 +963,7 @@ void sctk_check_address(void* addr, size_t n){
       ptr = (char *) cursor;
       i++;
     }
-  
+
 #warning "We miss somme cases"
   /*
     We miss:
@@ -976,9 +976,9 @@ void sctk_check_address(void* addr, size_t n){
   sctk_nodebug("Check %p-%p VALID",addr,(char*)addr + n);
 /*   sctk_alloc_spinlock_unlock (&sctk_sbrk_lock); */
   sctk_spinlock_read_unlock(&sctk_sbrk_rwlock);
-  
+
   return ;
-  
+
  error_found:
 /*   sctk_alloc_spinlock_unlock (&sctk_sbrk_lock); */
   sctk_spinlock_read_unlock(&sctk_sbrk_rwlock);
@@ -3014,19 +3014,19 @@ __intern_sctk_realloc (void *ptr, sctk_size_t size, sctk_tls_t * tls)
 #endif
 	      return ptr;
 	    }
-	  } 
+	  }
 	  SCTK_DEBUG (sctk_mem_error
 		      ("Realloc pointer %lu -> %lu\n", old_size, size));
 
 	  tmp = __intern_sctk_malloc__ (size, tls);
 	  SCTK_DEBUG (sctk_mem_error
 			    ("Old size %lu New size %lu \n", old_size,sctk_get_chunk (tmp)->cur_size));
-	  
+
 #ifdef SCTK_COHERENCY_CHECK
 	  ptr = (char *) ptr + sctk_sizeof (sctk_coherency_check_t);
 #endif
 	  memcpy (tmp, ptr, old_size);
-	  
+
 	  __intern_sctk_free__ (ptr, tls);
 	  SCTK_MALLOCLIKE_BLOCK (tmp, size, sizeof (sctk_malloc_chunk_t), 0);
 	}
@@ -3928,7 +3928,7 @@ __sctk_restore_tls (sctk_tls_t ** tls, char *file_name)
 /* #else */
 /*       sched_yield (); */
 /* #endif */
-      sleep(1); 
+      sleep(1);
       fd = open (file_name, O_RDONLY);
     }
   while (fd == -1);

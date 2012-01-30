@@ -2016,7 +2016,6 @@ static int sctk_ignore_sigpipe()
         if (sigaction(SIGPIPE, &act, (struct sigaction *)NULL) == -1)
             return -1 ;
     }
-
     return 0 ;
 }
 void

@@ -29,7 +29,7 @@
 
 int sctk_spinlock_lock_yield (sctk_spinlock_t * lock)
 {
-  volatile unsigned int *p = (volatile unsigned int *) lock;
+  volatile int *p = (volatile int *) lock;
   while (expect_true (sctk_test_and_set (p)))
 	{
       do
@@ -53,7 +53,7 @@ int sctk_spinlock_lock_yield (sctk_spinlock_t * lock)
 int
 sctk_spinlock_lock (sctk_spinlock_t * lock)
 {
-  volatile unsigned int *p = (volatile unsigned int *) lock;
+  volatile int *p = lock;
   while (expect_true (sctk_test_and_set (p)))
     {
       do

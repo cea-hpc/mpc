@@ -4083,19 +4083,22 @@ __MPC_Comm_free (MPC_Comm * comm)
   sctk_task_specific_t *task_specific;
   task_specific = __MPC_get_task_specific ();
   if (*comm == MPC_COMM_WORLD)
-    {
+  {
       MPC_ERROR_SUCESS ();
     }
+  MPC_Comm old_comm = *comm;
+
 #warning "Comm free disabled"
   MPC_ERROR_SUCESS();
-  sctk_nodebug ("Comm free %d", *comm);
-  mpc_check_comm (*comm, MPC_COMM_WORLD);
-  sctk_assert (*comm != MPC_COMM_NULL);
-  __MPC_Barrier (*comm);
-  sctk_nodebug ("Delete Comm %d", *comm);
-  sctk_delete_communicator (*comm);
-  sctk_nodebug ("Comm free done %d", *comm);
-  sctk_thread_removespecific_mpc_per_comm(task_specific,* comm);
+  sctk_nodebug ("Comm free %d", old_comm);
+  mpc_check_comm (old_comm, MPC_COMM_WORLD);
+  sctk_assert (old_comm != MPC_COMM_NULL);
+  __MPC_Barrier (old_comm);
+  sctk_nodebug ("Delete Comm %d", old_comm);
+  sctk_delete_communicator (old_comm);
+  sctk_nodebug ("Comm free done %d",  ld_comm);
+  sctk_thread_removespecific_mpc_per_comm(task_specific, old_comm);
+
   *comm = MPC_COMM_NULL;
   MPC_ERROR_SUCESS ();
 }
