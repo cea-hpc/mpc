@@ -39,6 +39,7 @@
 #define SCTK_IB_MODULE_NAME "PROF"
 #include "sctk_ib_toolkit.h"
 
+#ifdef SCTK_IB_PROF
 int sctk_ib_counters[128];
 
 /**
@@ -66,5 +67,5 @@ void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib) {
       PROF_LOAD(rail_ib, buffered_nb),
       PROF_LOAD(rail_ib, rdma_nb));
 }
-
+#endif
 #endif

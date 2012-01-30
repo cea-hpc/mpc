@@ -31,10 +31,7 @@
 #include <stdint.h>
 #include "opa_primitives.h"
 
-typedef struct sctk_ib_prof_s {
-  OPA_int_t counters[128];
-} sctk_ib_prof_t;
-
+//#define SCTK_IB_PROF
 enum sctk_ib_prof_counters_e {
   cp_matched = 0,
   cp_not_matched = 1,
@@ -47,6 +44,12 @@ enum sctk_ib_prof_counters_e {
   buffered_nb = 8,
   rdma_nb = 9,
 };
+
+
+#ifdef SCTK_IB_PROF
+typedef struct sctk_ib_prof_s {
+  OPA_int_t counters[128];
+} sctk_ib_prof_t;
 
 #define PROF_INC(r,x) do {                              \
   sctk_ib_rail_info_t *rail_ib = &(r)->network.ib;      \
@@ -61,7 +64,15 @@ enum sctk_ib_prof_counters_e {
 #define PROF_LOAD(r,x) OPA_load_int(&r->profiler->counters[x])
 
 void sctk_ib_prof_init(sctk_ib_rail_info_t *rail_ib);
-
 void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib);
+#else
+
+#define PROF_INC
+#define PROF_INC_RAIL_IB
+#define PROF_LOAD
+#define sctk_ib_prof_init(x) (void)(0)
+#define sctk_ib_prof_print(x) (void)(0)
+
+#endif
 #endif
 #endif

@@ -98,7 +98,7 @@ static sctk_spinlock_t vps_lock = SCTK_SPINLOCK_INITIALIZER;
 static sctk_ib_cp_task_t* all_tasks = NULL;
 __thread unsigned int seed;
 __thread int task_node_number = -1;
-static const int ibv_cp_profiler = 1;
+static const int ibv_cp_profiler = 0;
 __thread double time_steals = 0;
 __thread double time_own = 0;
 
