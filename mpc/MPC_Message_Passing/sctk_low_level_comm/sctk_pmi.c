@@ -24,6 +24,7 @@
 #include "sctk_pmi.h"
 #include "sctk_launch.h"
 #include "sctk_io_helper.h"
+#include "sctk_debug.h"
 
 #ifdef MPC_USE_HYDRA
 #include <pmi.h>
