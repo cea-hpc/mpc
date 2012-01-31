@@ -761,6 +761,9 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
     keep[sctk_extls_task_scope] = 1;
     sctk_extls_keep (keep);
   }
+  
+  sctk_tls_module_set_gs_register() ;
+  sctk_tls_module_alloc_and_fill() ;
 
   sctk_profiling_init ();
   SCTK_TRACE_START (user_thread, tmp.task_id, NULL, NULL, NULL);

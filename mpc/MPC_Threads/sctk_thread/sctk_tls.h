@@ -168,6 +168,7 @@ extern "C"
     tls_init (sctk_tls_module);
     tls_init (tls_trace_module);
     tls_init (sctk_hls_generation);
+    tls_init (sctk_tls_module);
 #endif
   }
 
