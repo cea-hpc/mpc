@@ -20,7 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-
+#ifdef MPC_USE_INFINIBAND
 #include <sctk_debug.h>
 #include <sctk_net_tools.h>
 #include <sctk_ib.h>
@@ -186,3 +186,4 @@ void sctk_network_stats_ib (struct MPC_Network_stats_s* stats) {
   stats->time_steals = task->time_steals;
   stats->time_own = task->time_own;
 }
+#endif

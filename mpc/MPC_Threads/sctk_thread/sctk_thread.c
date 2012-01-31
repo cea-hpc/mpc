@@ -2364,8 +2364,9 @@ sctk_start_func (void *(*run) (void *), void *arg)
   sctk_thread_running = 0;
 
 #ifdef MPC_Message_Passing
-#warning "Need macros"
+#ifdef MPC_USE_INFINIBAND
   sctk_network_finalize_multirail_ib();
+#endif
   sctk_ignore_sigpipe();
   sctk_communicator_delete ();
 #endif

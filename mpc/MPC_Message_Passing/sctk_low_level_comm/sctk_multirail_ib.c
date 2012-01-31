@@ -20,6 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_INFINIBAND
 #include <sctk_debug.h>
 #include <sctk_inter_thread_comm.h>
 #include <sctk_low_level_comm.h>
@@ -171,3 +172,10 @@ void sctk_network_finalize_multirail_ib (){
   }
 }
 
+/************ FINALIZE ****************/
+void sctk_network_finalize_task_multirail_ib (int rank){
+  if(sctk_process_number > 1){
+    sctk_ib_cp_finalize_task(rank);
+  }
+}
+#endif

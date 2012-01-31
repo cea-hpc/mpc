@@ -165,6 +165,7 @@ sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail){
   tmp = sctk_get_route_to_process_no_route(dest,rail);
 
   if(tmp == NULL){
+#if MPC_USE_INFINIBAND
     if (rail->on_demand) {
       sctk_nodebug("%d Trying to connect to process %d (remote:%p)", sctk_process_rank, dest, tmp);
       tmp = sctk_ib_cm_on_demand_request(dest,rail);
@@ -183,9 +184,12 @@ sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail){
       sctk_nodebug("Connected to process %d", dest);
       return tmp;
     } else {
+#endif
       dest = rail->route(dest,rail);
       return sctk_get_route_to_process_no_ondemand(dest,rail);
+#if MPC_USE_INFINIBAND
     }
+#endif
   }
 
   return tmp;

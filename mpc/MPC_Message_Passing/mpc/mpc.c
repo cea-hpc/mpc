@@ -1257,13 +1257,14 @@ PMPC_Finalize (void)
 
   task_specific = __MPC_get_task_specific ();
   task_specific->init_done = 0;
-  int rank;
-  __MPC_Comm_rank (MPC_COMM_WORLD, &rank, task_specific);
   /*   __MPC_delete_task_specific (); */
-
-  if(sctk_process_number > 1){
-    sctk_ib_cp_finalize_task(rank);
-  }
+#ifdef MPC_Message_Passing
+#if MPC_USE_INFINIBAND
+int rank;
+__MPC_Comm_rank (MPC_COMM_WORLD, &rank, task_specific);
+sctk_network_finalize_task_multirail_ib (rank);
+#endif
+#endif
 
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Finalize");
@@ -4832,5 +4833,9 @@ PMPC_User_Main (int argc, char **argv)
 /*Netowk statistics                                                 */
 /********************************************************************/
 void MPC_Network_stats(struct MPC_Network_stats_s *stats) {
+#ifdef MPC_Message_Passing
+#ifdef MPC_USE_INFINIBAND
   sctk_network_stats_ib(stats);
+#endif
+#endif
 }

@@ -20,6 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_INFINIBAND
 #ifndef __SCTK_IB_FALLBACK_H_
 #define __SCTK_IB_FALLBACK_H_
 #ifdef __cplusplus
@@ -47,5 +48,6 @@ extern "C"
     const char from_cp, struct sctk_ib_polling_s* poll);
 #ifdef __cplusplus
 }
+#endif
 #endif
 #endif

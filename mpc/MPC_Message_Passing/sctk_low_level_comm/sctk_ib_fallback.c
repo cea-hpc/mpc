@@ -20,7 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-
+#ifdef MPC_USE_INFINIBAND
 #include <sctk_debug.h>
 #include <sctk_ib_toolkit.h>
 #include <sctk_route.h>
@@ -467,3 +467,4 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
 
   sctk_network_init_ib_all(rail, rail->route, rail->route_init);
 }
+#endif

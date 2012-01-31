@@ -20,6 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPC_USE_INFINIBAND
 #ifndef __SCTK_MULTIRAIL_IB_H_
 #define __SCTK_MULTIRAIL_IB_H_
 #ifdef __cplusplus
@@ -32,8 +33,10 @@ extern "C"
 void sctk_network_init_multirail_ib(char* name, char* topology);
 void sctk_network_init_ib(char* name, char* topology);
 void sctk_network_finalize_multirail_ib ();
+void sctk_network_finalize_task_multirail_ib (int rank);
 
 #ifdef __cplusplus
 }
+#endif
 #endif
 #endif

@@ -147,10 +147,13 @@ sctk_net_init_driver (char *name)
     TRY_DRIVER(multirail_tcp,sctk_network_init_multirail_tcp,topo);
     TRY_DRIVER(multirail_tcpoib,sctk_network_init_multirail_tcpoib,topo);
 
+#ifdef MPC_USE_INFINIBAND
     /* Driver for Infiniband */
     TRY_DRIVER(multirail_ib,sctk_network_init_multirail_ib,topo);
     /* FIXME: For backward compatibility. Should not more be used */
     TRY_DRIVER(ib,sctk_network_init_ib,"ondemand");
+#endif
+
     DEFAUT_DRIVER();
 
     sctk_route_finalize();

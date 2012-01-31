@@ -130,7 +130,14 @@ void* async_thread(void* arg)
         /* event triggered when the limit given by ibv_srq_credit_thread_limit is reached */
       case IBV_EVENT_SRQ_LIMIT_REACHED:
         DESC_EVENT(config, "IBV_EVENT_SRQ_LIMIT_REACHED","SRQ limit was reached", 2, 0);
-        not_implemented();
+
+        int limit;
+        limit = config->ibv_max_srq_ibufs;
+        if (limit > 0) {
+          sctk_ibuf_srq_check_and_post(rail_ib, limit);
+        }
+
+//        not_implemented();
         /* We re-arm the limit for the SRQ. */
         mod_attr.srq_limit  = config->ibv_srq_credit_thread_limit;
         mod_attr.max_wr     = config->ibv_max_srq_ibufs_posted;
