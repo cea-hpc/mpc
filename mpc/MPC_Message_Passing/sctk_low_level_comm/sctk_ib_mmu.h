@@ -22,89 +22,97 @@
 /* ######################################################################## */
 
 #ifdef MPC_USE_INFINIBAND
-#ifndef __SCTK__INFINIBAND_MMU_H_
-#define __SCTK__INFINIBAND_MMU_H_
+#ifndef __SCTK__IB_MMU_H_
+#define __SCTK__IB_MMU_H_
 
 #include <sctk_spinlock.h>
 #include <sctk_debug.h>
 #include <sctk_config.h>
 #include <stdint.h>
 
-struct sctk_net_ibv_mmu_region_s;
+struct sctk_ib_rail_info_s;
 
-/* enumeration for entry state  */
-typedef enum
+/* Enumeration for entry status  */
+typedef enum sctk_ib_mmu_entry_status_e
 {
-  ibv_entry_free = 0,
-  ibv_entry_used,
-} sctk_net_ibv_mmu_entry_status_t;
+  ibv_entry_free = 111,
+  ibv_entry_used = 222,
+} sctk_ib_mmu_entry_status_t;
 
-typedef struct sctk_net_ibv_mmu_desc_s
+typedef enum sctk_ib_mmu_cached_status_e
 {
-  struct sctk_net_ibv_mmu_entry_s* next;
-} sctk_net_ibv_mmu_desc_t;
+  not_cached = 111,
+  cached = 222,
+} sctk_ib_mmu_cached_status_t;
 
-/* entry to the soft MMU */
-typedef struct sctk_net_ibv_mmu_entry_s
+/* Entry to the soft MMU */
+typedef struct sctk_ib_mmu_entry_s
 {
-  struct sctk_net_ibv_mmu_desc_s desc;
-  sctk_net_ibv_mmu_entry_status_t status;     /* status of the slot */
-  struct sctk_net_ibv_mmu_region_s* region;  /* first region */
-
+  /* For DL list */
+  struct sctk_ib_mmu_entry_s* prev;
+  struct sctk_ib_mmu_entry_s* next;
+  /* status of the slot */
+  sctk_ib_mmu_entry_status_t status;     /* status of entry */
+  struct sctk_ib_mmu_region_s* region;  /* first region */
   void *ptr;                /* ptr to the MR */
   size_t size;              /* size of the MR */
   struct ibv_mr *mr;        /* MR */
-} sctk_net_ibv_mmu_entry_t;
+
+  /* Status of the entry in cache */
+  sctk_ib_mmu_cached_status_t cache_status;
+  /* Number of registration. If 0, the entry can be erased from cache  */
+  unsigned int registrations_nb;
+} sctk_ib_mmu_entry_t;
 
 
-/* region of mmu entries */
-typedef struct sctk_net_ibv_mmu_region_s
+/* Region of mmu entries */
+typedef struct sctk_ib_mmu_region_s
 {
-  uint16_t nb;
+  /* For DL list */
+  struct sctk_ib_mmu_region_s* next;
+  struct sctk_ib_mmu_region_s* prev;
+  /* Number of MMU entries in region */
+  unsigned int nb;
+  sctk_ib_mmu_entry_t* mmu_entry;
+} sctk_ib_mmu_region_t;
 
-  sctk_net_ibv_mmu_entry_t* mmu_entry;
-
-  struct sctk_net_ibv_mmu_region_s* next_region;
-} sctk_net_ibv_mmu_region_t;
-
-
-
-typedef struct sctk_net_ibv_mmu_s
+typedef struct sctk_ib_cache_s
 {
+  /* MMU entries in cache */
+  sctk_ib_mmu_entry_t* entries;
+  sctk_spinlock_t lock;
+  unsigned int entries_nb;
+} sctk_ib_cache_t;
+
+typedef struct sctk_ib_mmu_s
+{
+  struct sctk_ib_mmu_region_s *regions;
   sctk_spinlock_t lock;     /* MMU lock */
-  int free_mmu_entry_nb;    /* Number of free mmu entries */
-  int got_mmu_entry_nb;     /* Number of got mmu entries */
-  unsigned int total_mmu_entry_nb;     /* Total Number of  mmu entries */
-  sctk_net_ibv_mmu_region_t* begin_region;  /* first region */
-  sctk_net_ibv_mmu_region_t* last_region;  /* last region */
-  sctk_net_ibv_mmu_entry_t*  free_header;
-} sctk_net_ibv_mmu_t;
-
-#include "sctk_ib_qp.h"
+  unsigned int nb;     /* Total Number of  mmu entries */
+  int free_nb;    /* Number of free mmu entries */
+  size_t page_size; /* size of a system page */
+  sctk_ib_mmu_entry_t*  free_entry;
+  sctk_ib_cache_t cache;
+} sctk_ib_mmu_t;
 
 /*-----------------------------------------------------------
- *  NEW / FREE
+ *  FUNCTIONS
  *----------------------------------------------------------*/
-sctk_net_ibv_mmu_t* sctk_net_ibv_mmu_new();
+void sctk_ib_mmu_init(struct sctk_ib_rail_info_s *rail_ib);
 
-void sctk_net_ibv_mmu_free();
+ void sctk_ib_mmu_alloc(struct sctk_ib_rail_info_s *rail_ib,
+     const unsigned int nb_entries);
 
-/*-----------------------------------------------------------
- *  Register / Unregister
- *----------------------------------------------------------*/
+sctk_ib_mmu_entry_t *sctk_ib_mmu_register (
+  struct sctk_ib_rail_info_s *rail_ib, void *ptr, size_t size);
+sctk_ib_mmu_entry_t *sctk_ib_mmu_register_no_cache(
+  struct sctk_ib_rail_info_s *rail_ib, void *ptr, size_t size);
 
-sctk_net_ibv_mmu_entry_t *
-sctk_net_ibv_mmu_register (
-    sctk_net_ibv_qp_rail_t* rail,
-    sctk_net_ibv_qp_local_t* local,
-    void *ptr, size_t size);
+void ctk_ib_mmu_unregister (struct sctk_ib_rail_info_s *rail_ib,
+    sctk_ib_mmu_entry_t *mmu_entry);
 
-int
-sctk_net_ibv_mmu_unregister (
-    sctk_net_ibv_mmu_t *mmu,
-    sctk_net_ibv_mmu_entry_t *mmu_entry);
-
-long unsigned
-sctk_net_ibv_mmu_get_pagesize();
+void
+sctk_ib_mmu_unregister (struct sctk_ib_rail_info_s *rail_ib,
+    sctk_ib_mmu_entry_t *mmu_entry);
 #endif
 #endif

@@ -54,18 +54,6 @@ MonoDomain *domain;
 #endif
 #ifdef MPC_Debugger
 #include "sctk_thread_dbg.h"
-#else
-#define sctk_thread_add(a, b) (void)(0)
-#define sctk_thread_remove(a) (void)(0)
-#define sctk_thread_enable_debug() (void)(0)
-#define sctk_thread_disable_debug() (void)(0)
-#define sctk_thread_list() (void)(0)
-
-/** ** **/
-#define sctk_report_creation(a) (void)(0)
-#define sctk_report_death(a) (void) (0)
-/** **/
-
 #endif
 #include "sctk.h"
 #include "sctk_context.h"
@@ -73,8 +61,11 @@ MonoDomain *domain;
 
 #ifdef MPC_Message_Passing
 #include <mpc_internal_thread.h>
-#include "sctk_hybrid_comm.h"
-#include "sctk_ib_scheduling.h"
+#include <sctk_communicator.h>
+#include "sctk_pmi.h"
+#include "sctk_multirail_ib.h"
+/* #include "sctk_hybrid_comm.h" */
+/* #include "sctk_ib_scheduling.h" */
 #endif
 
 typedef unsigned sctk_long_long sctk_timer_t;
@@ -150,6 +141,7 @@ sctk_mono_end ()
 #endif
 
 static volatile long sctk_nb_user_threads = 0;
+volatile int sctk_online_program = -1;
 
 sctk_alloc_thread_data_t *sctk_thread_tls = NULL;
 
@@ -591,9 +583,6 @@ sctk_thread_get_vp ()
   return __sctk_ptr_thread_get_vp ();
 }
 
-/*
- * Startup for MPI tasks
- */
 static void *
 sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 {
@@ -621,7 +610,16 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   if (tmp.task_id >= 0)
     {
       sctk_ptp_per_task_init (tmp.task_id);
+#ifdef MPC_USE_INFINIBAND
+    /* XXX Also check if IB enabled */
+    if(sctk_process_number > 1){
+        /* Register task for collaborative polling */
+        sctk_ib_cp_init_task(tmp.task_id, tmp.virtual_processor);
+    }
+#endif
       sctk_register_thread_initial (tmp.task_id);
+      sctk_terminaison_barrier (tmp.task_id);
+      sctk_online_program = 1;
       sctk_terminaison_barrier (tmp.task_id);
     }
 #endif
@@ -629,15 +627,15 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   /* TLS INTIALIZATION */
   sctk_tls_init ();
 
-  sctk_hls_checkout_on_vp() ;
-  sctk_hls_register_thread() ;
-
   {
     int keep[sctk_extls_max_scope];
     memset (keep, 0, sctk_extls_max_scope * sizeof (int));
     keep[sctk_extls_process_scope] = 1;
     sctk_extls_keep (keep);
   }
+
+  sctk_tls_module_set_gs_register() ;
+  sctk_tls_module_alloc_and_fill() ;
 
   sctk_profiling_init ();
   SCTK_TRACE_START (task, tmp.task_id, NULL, NULL, NULL);
@@ -666,7 +664,16 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
     {
       sctk_nodebug ("sctk_terminaison_barrier");
       sctk_terminaison_barrier (tmp.task_id);
+      sctk_online_program = 0;
+      sctk_terminaison_barrier (tmp.task_id);
       sctk_nodebug ("sctk_terminaison_barrier done");
+#ifdef MPC_USE_INFINIBAND
+      /* Register task for collaborative polling */
+      /* XXX Also check if IB enabled */
+//      if(sctk_process_number > 1){
+//        sctk_ib_cp_finalize_task(tmp.task_id);
+//      }
+#endif
       sctk_unregister_thread (tmp.task_id);
       sctk_net_send_task_end (tmp.task_id, sctk_process_rank);
     }
@@ -709,7 +716,6 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
   tmp->__arg = __arg;
   tmp->__start_routine = __start_routine;
   tmp->user_thread = 0;
-  tmp->force_stop = 0;
 
   tmp->task_id = sctk_safe_cast_long_int (task_id);
 
@@ -723,9 +729,6 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
   return res;
 }
 
-/*
- * Startup for user pthreads or OpenMP microVPs
- */
 static void *
 sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 {
@@ -758,6 +761,9 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
     keep[sctk_extls_task_scope] = 1;
     sctk_extls_keep (keep);
   }
+
+  sctk_tls_module_set_gs_register() ;
+  sctk_tls_module_alloc_and_fill() ;
 
   sctk_profiling_init ();
   SCTK_TRACE_START (user_thread, tmp.task_id, NULL, NULL, NULL);
@@ -822,7 +828,6 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
   tmp->__start_routine = __start_routine;
   tmp->task_id = -1;
   tmp->user_thread = user_thread;
-  tmp->force_stop = 0;
 #ifdef MPC_Message_Passing
   tmp->father_data = __MPC_get_task_specific ();
 #else
@@ -902,13 +907,20 @@ sctk_thread_exit_cleanup ()
   sctk_thread_data_t *tmp;
   struct _sctk_thread_cleanup_buffer **__head;
 
+
+  /** ** **/
+  sctk_report_death (sctk_thread_self());
+  /** **/
+  tmp = sctk_thread_data_get ();
+
+  sctk_thread_remove (tmp);
+
   __head = sctk_thread_getspecific (_sctk_thread_handler_key);
 
   _sctk_thread_cleanup_end (__head);
 
   sctk_thread_setspecific (_sctk_thread_handler_key, NULL);
 
-  tmp = sctk_thread_data_get ();
 
   sctk_nodebug ("%p", tmp);
   if (tmp != NULL)
@@ -1723,14 +1735,14 @@ sctk_thread_dump_clean (void)
 }
 
 void
-sctk_thread_wait_for_value_and_poll (volatile int *data, int value,
+sctk_thread_wait_for_value_and_poll (int *data, int value,
 				     void (*func) (void *), void *arg)
 {
   __sctk_ptr_thread_wait_for_value_and_poll (data, value, func, arg);
 }
 
 void
-sctk_thread_wait_for_value (volatile int *data, int value)
+sctk_thread_wait_for_value (int *data, int value)
 {
   __sctk_ptr_thread_wait_for_value_and_poll (data, value, NULL, NULL);
 }
@@ -1787,6 +1799,7 @@ volatile int sctk_total_number_of_tasks = 0;
 sctk_thread_mutex_t sctk_total_number_of_tasks_lock =
   SCTK_THREAD_MUTEX_INITIALIZER;
 
+#if 0
 static void
 sctk_net_poll (void *arg)
 {
@@ -1801,6 +1814,7 @@ sctk_net_poll (void *arg)
 /*   } */
 #endif
 }
+#endif
 
 #ifdef MPC_Message_Passing
 void sctk_net_migration_check();
@@ -1866,7 +1880,7 @@ sctk_get_init_vp (int i)
   cpu_nb = sctk_get_cpu_number ();
 
 #ifdef MPC_Message_Passing
-  THREAD_NUMBER = sctk_get_nb_task_local (SCTK_COMM_WORLD);
+  THREAD_NUMBER = sctk_get_nb_task_total (SCTK_COMM_WORLD);
 #else
   THREAD_NUMBER = 1;
 #endif
@@ -1993,19 +2007,18 @@ void  MPC_Process_hook()
 }
 #endif
 
-static int sctk_ignore_sigpipe() 
+static int sctk_ignore_sigpipe()
 {
     struct sigaction act ;
- 
+
     if (sigaction(SIGPIPE, (struct sigaction *)NULL, &act) == -1)
         return -1 ;
- 
+
     if (act.sa_handler == SIG_DFL) {
         act.sa_handler = SIG_IGN ;
         if (sigaction(SIGPIPE, &act, (struct sigaction *)NULL) == -1)
             return -1 ;
     }
- 
     return 0 ;
 }
 void
@@ -2046,7 +2059,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
   sctk_profiling_init_keys ();
 
 #ifdef MPC_Message_Passing
-  THREAD_NUMBER = sctk_get_nb_task_local (SCTK_COMM_WORLD);
+  THREAD_NUMBER = sctk_get_nb_task_total (SCTK_COMM_WORLD);
 #else
   THREAD_NUMBER = 1;
 #endif
@@ -2321,25 +2334,30 @@ sctk_start_func (void *(*run) (void *), void *arg)
     }
   }
 
-#ifdef MPC_Message_Passing
-  if ((sctk_net_adm_poll != NULL) || (sctk_net_ptp_poll != NULL))
-    {
-      sctk_thread_wait_for_value_and_poll (
-					   &sctk_total_number_of_tasks, 0,
-					   sctk_net_poll, NULL);
-    }
-  else
-    {
-      sctk_thread_wait_for_value_and_poll (
-					   &sctk_total_number_of_tasks, 0,
-					   NULL, NULL);
-    }
-  sctk_ignore_sigpipe(); 
-#else
-  sctk_thread_wait_for_value_and_poll (
+/* #ifdef MPC_Message_Passing */
+/*   if ((sctk_net_adm_poll != NULL) || (sctk_net_ptp_poll != NULL)) */
+/*     { */
+/*       sctk_thread_wait_for_value_and_poll ((int *) */
+/* 					   &sctk_total_number_of_tasks, 0, */
+/* 					   sctk_net_poll, NULL); */
+/*     } */
+/*   else */
+/*     { */
+/*       sctk_thread_wait_for_value_and_poll ((int *) */
+/* 					   &sctk_total_number_of_tasks, 0, */
+/* 					   NULL, NULL); */
+/*     } */
+/* #else */
+  sctk_thread_wait_for_value_and_poll ((int *)
 				       &sctk_total_number_of_tasks, 0,
 				       NULL, NULL);
-#endif
+/* #ifdef MPC_Message_Passing */
+/*   if(sctk_process_number > 1){ */
+/*     sctk_pmi_barrier(); */
+/*   } */
+/* #endif */
+
+/* #endif */
 
   sctk_profiling_commit ();
   sctk_profiling_result ();
@@ -2349,8 +2367,11 @@ sctk_start_func (void *(*run) (void *), void *arg)
   sctk_thread_running = 0;
 
 #ifdef MPC_Message_Passing
+#ifdef MPC_USE_INFINIBAND
+  sctk_network_finalize_multirail_ib();
+#endif
+  sctk_ignore_sigpipe();
   sctk_communicator_delete ();
-  sctk_net_hybrid_finalize();
 #endif
 
 /*   for (i = 0; i < thread_to_join; i++) */
@@ -2366,7 +2387,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 }
 
 void
-sctk_kthread_wait_for_value_and_poll (volatile int *data, int value,
+sctk_kthread_wait_for_value_and_poll (int *data, int value,
 				      void (*func) (void *), void *arg)
 {
   volatile int *volatile d;

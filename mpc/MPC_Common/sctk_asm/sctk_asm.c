@@ -28,6 +28,11 @@
 #include "sctk_config.h"
 #include <sys/time.h>
 
+double sctk_get_time_stamp_gettimeofday(){
+  struct timeval t;
+  gettimeofday(&t,NULL);
+  return t.tv_usec + t.tv_sec * 1000000;
+}
 #if !defined(__INTEL_COMPILER) && defined(__GNUC__)
 #ifndef __GNU_COMPILER
 #define __GNU_COMPILER
@@ -70,10 +75,4 @@ int sctk_test_and_set (sctk_atomic_test_t * atomic) {
 #endif /* defined(SCTK_OPENPA_AVAILABLE) */
 }
 
-double sctk_get_time_stamp_gettimeofday()
-{
-  struct timeval tp;
-  gettimeofday (&tp, NULL);
-  return tp.tv_usec + tp.tv_sec * 1000000;
-}
 

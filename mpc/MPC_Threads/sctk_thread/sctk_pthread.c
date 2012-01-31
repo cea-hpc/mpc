@@ -33,7 +33,9 @@
 #include "sctk_kernel_thread.h"
 #include <semaphore.h>
 #ifdef MPC_Message_Passing
-#include <sctk_low_level_comm.h>
+#include <sctk_inter_thread_comm.h>
+#include <sctk_communicator.h>
+#include "sctk_asm.h"
 #endif
 #include "sctk_asm.h"
 
@@ -58,11 +60,19 @@ pthread_wait_for_value_and_poll (volatile int *data, int value,
 	{
 	  if (i >= 100)
 	    {
-	      /* kthread_usleep (10); */
-	    sched_yield ();
+#ifdef MPC_Message_Passing
+	      sctk_notify_idle_message ();
+	      if(sctk_get_processor_number () == sctk_get_nb_task_local(SCTK_COMM_WORLD)){
+		sched_yield();
+	      } else {
+		kthread_usleep (10);
+	      }
+#else
+	      kthread_usleep (10);
+#endif
 	      i = 0;
 	    } else {
-		 sctk_cpu_relax ();	    
+		 sctk_cpu_relax ();
 	  }
 	  /* 	  else */
 /* 	    sched_yield (); */
@@ -219,7 +229,7 @@ pthread_user_create (pthread_t * thread, pthread_attr_t * attr,
 
       res =
 	pthread_create (thread, &tmp_attr, tls_start_routine,
-			init_tls_start_routine_arg (def_start_routine, arg));      
+			init_tls_start_routine_arg (def_start_routine, arg));
       if(res != 0){
 	perror("pthread_create: ");
       }
@@ -295,7 +305,7 @@ local_pthread_create (pthread_t * restrict thread,
     }
   else
     {
-      int res; 
+      int res;
       res = pthread_create (thread, attr, start_routine, arg);
 
       if(res != 0){

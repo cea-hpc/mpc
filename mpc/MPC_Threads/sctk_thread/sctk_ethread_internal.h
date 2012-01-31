@@ -33,6 +33,9 @@
 #include "sched.h"
 #include "sctk_asm.h"
 #include "sctk.h"
+#ifdef MPC_Message_Passing
+#include <sctk_inter_thread_comm.h>
+#endif
 #ifdef __cplusplus
 extern "C"
 {
@@ -333,11 +336,11 @@ extern "C"
     sctk_thread_data_t *tmp;
     tmp = (sctk_thread_data_t *) cur->tls[stck_task_data];
     sctk_nodebug ("TMP = %p", tmp);
-    
+
     /** ** **/
     sctk_refresh_thread_debug (cur, s);
     /** */
-    
+
     if (tmp != NULL)
       {
 	if (s == sctk_thread_check_status)
@@ -353,20 +356,8 @@ extern "C"
 	  }
 
 	sctk_getcontext (&(cur->ctx));
-	  
-	if (tmp->force_stop == 1)
-	  {
-	    tmp->force_stop = 0;
-	    sctk_debug_printf ("Load thread %p\n", cur);
 
-	    sctk_thread_print_stack_out ();
-	    abort ();
-	  }
-	else
-	  {
-	    tmp->status = s;
-	    return;
-	  }
+	tmp->status = s;
       }
   }
 #else
@@ -449,6 +440,7 @@ extern "C"
   {
     sctk_ethread_per_thread_t *restrict new_task = NULL;
     sctk_ethread_status_t status;
+    int request_migration = 0;
 
 #ifdef SCTK_SCHED_CHECK
     __sctk_ethread_sched_yield_vp_head (vp, cur);
@@ -546,6 +538,7 @@ extern "C"
 	      cur->status = ethread_ready;
 	      vp->migration = cur;
 	      vp->to_check = 1;
+	      request_migration = 1;
 	    }
 	    break;
 	  default:
@@ -587,6 +580,10 @@ extern "C"
       }
 
     __sctk_ethread_sched_yield_vp_tail (vp, cur);
+
+    if(request_migration == 1){
+      sctk_refresh_thread_debug_migration(cur);
+    }
 
     return 1;
   }
@@ -820,9 +817,9 @@ extern "C"
   {
     /*
        ERRORS:
-       ESRCH  No  thread could be found corresponding to that specified by th.  
-       EINVAL The th thread has been detached.  
-       EINVAL Another thread is already waiting on termination of th.  
+       ESRCH  No  thread could be found corresponding to that specified by th.
+       EINVAL The th thread has been detached.
+       EINVAL Another thread is already waiting on termination of th.
        EDEADLK The th argument refers to the calling thread.
      */
     sctk_ethread_status_t *status;
@@ -1089,8 +1086,8 @@ extern "C"
        In order to limit contention
      */
     /*
-       On met ce test pour limiter au maximum la contention sur le spinlock. 
-       Si on arrive pas à prendre le spinlock, c'est qu'il y a du mon et donc que l'on est 
+       On met ce test pour limiter au maximum la contention sur le spinlock.
+       Si on arrive pas à prendre le spinlock, c'est qu'il y a du mon et donc que l'on est
        pas prioritaire.
      */
     if (sctk_spinlock_trylock (&lock->spinlock))
@@ -1281,7 +1278,9 @@ extern "C"
     __sctk_ethread_sched_yield_vp_head (vp, cur);
 #endif
 
-    sctk_ethread_set_status (cur, sctk_thread_undef_status);
+/*     sctk_report_death (cur); */
+/*     sctk_thread_remove (); */
+/*     sctk_ethread_set_status (cur, sctk_thread_undef_status); */
 
     new_task = vp->idle;
 
@@ -1433,12 +1432,34 @@ extern "C"
 	    vp->activity = 1;
 	    last_timer = sctk_timer;
 	  }
+/* Idle function is called here to avoid deadlocks.
+ * Actually, when calling sctk_thread_yield(), the polling
+ * function is not called. */
+#ifdef MPC_Message_Passing
+	    sctk_notify_idle_message ();
+#endif
+#if 0
 	if ((vp->ready_queue_used == NULL) &&
 	    (vp->incomming_queue == NULL) &&
 	    (vp->ready_queue == NULL) && (vp->poll_list == NULL))
 	  {
-	    sctk_cpu_relax ();
-	  }
+#ifdef MPC_Message_Passing
+	    sctk_notify_idle_message ();
+#endif
+#warning "Optimize to reduce memory BW consumption"
+	    sched_yield();
+	  } else {
+	  if ((vp->ready_queue_used == NULL) &&
+	      (vp->incomming_queue == NULL) &&
+	      (vp->ready_queue == NULL) )
+	    {
+#ifdef MPC_Message_Passing
+ 	    sctk_notify_idle_message ();
+#endif
+	      sched_yield();
+	    }
+	}
+#endif
       }
     /** ** **/
     sctk_free_idle_thread_dbg (th_data) ;
@@ -1610,7 +1631,7 @@ extern "C"
 	th_data->stack = stack;
 	th_data->stack_size = stack_size;
 /*
-	th_data->attr.stack = stack; 
+	th_data->attr.stack = stack;
 	th_data->attr.stack_size = stack_size;
 */
 	stack[stack_size] = 123;
@@ -1626,7 +1647,7 @@ extern "C"
 	th_data->stack = stack;
 	th_data->stack_size = stack_size;
 /*
-	th_data->attr.stack = stack; 
+	th_data->attr.stack = stack;
 	th_data->attr.stack_size = stack_size;
 */
       }

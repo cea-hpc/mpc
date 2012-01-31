@@ -27,6 +27,7 @@ extern "C"
 #endif
 
 #include "sctk_low_level_comm.h"
+#include "sctk_io_helper.h"
   void sctk_net_copy_in_buffer (sctk_thread_ptp_message_t * msg,
 				       char *buffer);
 
@@ -39,7 +40,14 @@ extern "C"
      char *buffer,
       const size_t curr_copy,
       const size_t max_copy );
+  void sctk_net_write_in_fd (sctk_thread_ptp_message_t * msg,
+			     int fd);
+  void sctk_net_read_in_fd (sctk_thread_ptp_message_t * msg,
+			    int fd);
+  void sctk_net_message_copy(sctk_message_to_copy_t* tmp);
 
+void sctk_net_message_copy_from_buffer(char* body,
+  sctk_message_to_copy_t* tmp, char free_headers);
 #ifdef __cplusplus
 }
 #endif

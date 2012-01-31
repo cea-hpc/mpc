@@ -46,6 +46,10 @@ __thread void *sctk_extls = NULL;
 #include <stdlib.h>
 #include <stdio.h>
 
+/* to set GS register */
+#include <asm/prctl.h> /* ARCH_SET_GS */
+#include <sys/prctl.h> /* arch_prctl */
+
 static __thread unsigned long p_memsz;
 static __thread unsigned long p_filesz;
 static __thread void *p_vaddr;
@@ -105,7 +109,7 @@ typedef struct
 {
   tls_level level ;
   sctk_atomics_int toenter ; /* total number of threads on this level */
-  sctk_atomics_int entered ; /* number of VPs that entered the hls barrier */ 
+  sctk_atomics_int entered ; /* number of VPs that entered the hls barrier */
   volatile int generation ;  /* number of barrier/single encountered */
   sctk_atomics_int nowait_generation ; /* number of single nowait encountered */
 } hls_level ;
@@ -120,6 +124,14 @@ static hls_level **sctk_hls_repository ; /* global per process */
 static __thread hls_level* sctk_hls[sctk_hls_max_scope] ; /* per VP */
 __thread void* sctk_hls_generation ; /* per thread */
 /* need to be saved and restored at context switch */
+
+__thread void *sctk_tls_module_vp[sctk_extls_max_scope+sctk_hls_max_scope] ;
+/* store a direct pointer to each tls module */
+/* used by tls optimized in the linker */
+/* gs register contains the address of this array */
+/* per thread: need to be updated at context switch */
+/* real type: sctk_tls_module_t** */
+__thread void **sctk_tls_module ;
 
 static inline void
 sctk_tls_init_level (tls_level * level)
@@ -306,7 +318,7 @@ __sctk__tls_get_addr__generic_scope ( size_t module_id,
 	  if ( tls_level->modules[module_id-1] == NULL )
 		  tls_module = sctk_alloc_module (module_id, tls_level);
 	  sctk_tls_unlock_level (tls_level);
-  } 
+  }
 
   tls_module = (char *) tls_level->modules[module_id - 1];
   res = tls_module + offset;
@@ -357,7 +369,7 @@ sctk_extls_duplicate (void **new)
   extls = sctk_extls;
   sctk_nodebug ("Duplicate %p->%p", extls, new_extls);
 
-  for (i = 0; i < sctk_extls_max_scope; i++) 
+  for (i = 0; i < sctk_extls_max_scope; i++)
     {
       new_extls[i] = extls[i];
     }
@@ -458,8 +470,8 @@ void sctk_hls_build_repository ()
 			      numa_id = hwloc_get_ancestor_obj_by_type(topology,HWLOC_OBJ_NODE,cur_obj)->logical_index ;
 		  }
 		  sprintf ( level_id, "%d", level_number[numa_id] ) ;
-		  hwloc_obj_add_info ( cur_obj, "hls_level", level_id ) ; 
-		  level_number[numa_id] += 1 ; 
+		  hwloc_obj_add_info ( cur_obj, "hls_level", level_id ) ;
+		  level_number[numa_id] += 1 ;
 	  }
 
 	  if ( next_child != NULL && next_child->type != HWLOC_OBJ_PU ) {
@@ -490,7 +502,7 @@ void sctk_hls_checkout_on_vp ()
 {
   /* check if this has already been done */
   if ( sctk_hls[sctk_hls_node_scope] == NULL ) {
-	
+
   hwloc_topology_t topology = sctk_get_topology_object() ;
   const int socket_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_SOCKET);
   const int core_depth   = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE);
@@ -509,30 +521,30 @@ void sctk_hls_checkout_on_vp ()
 
   obj = hwloc_get_ancestor_obj_by_depth (topology, socket_depth-1, pu) ;
   if ( obj != NULL && obj->type == HWLOC_OBJ_NODE ) {
-	  level_id = atol ( hwloc_obj_get_info_by_name (obj, "hls_level") ) ; 
+	  level_id = atol ( hwloc_obj_get_info_by_name (obj, "hls_level") ) ;
 	  sctk_hls[sctk_hls_numa_level_1_scope] = sctk_hls_repository[numa_id] + level_id ;
   }
-  
+
   obj = hwloc_get_ancestor_obj_by_type (topology, HWLOC_OBJ_SOCKET, pu) ;
   if ( obj != NULL ) {
-	  level_id = atol ( hwloc_obj_get_info_by_name (obj, "hls_level") ) ; 
+	  level_id = atol ( hwloc_obj_get_info_by_name (obj, "hls_level") ) ;
 	  sctk_hls[sctk_hls_socket_scope] = sctk_hls_repository[numa_id] + level_id ;
   }
- 
+
   for ( i = 1 ; i <= 3 ; ++i ) {
 	  obj = hwloc_get_ancestor_obj_by_depth (topology, core_depth-i, pu) ;
 	  if ( obj != NULL && obj->type == HWLOC_OBJ_CACHE ) {
-		  level_id = atol ( hwloc_obj_get_info_by_name (obj, "hls_level") ) ; 
+		  level_id = atol ( hwloc_obj_get_info_by_name (obj, "hls_level") ) ;
 		  sctk_hls[sctk_hls_core_scope-i] = sctk_hls_repository[numa_id] + level_id ;
 	  }
   }
-  
+
   obj = hwloc_get_ancestor_obj_by_type (topology, HWLOC_OBJ_CORE, pu) ;
   if ( obj != NULL ) {
-	  level_id = atol ( hwloc_obj_get_info_by_name (obj, "hls_level") ) ; 
+	  level_id = atol ( hwloc_obj_get_info_by_name (obj, "hls_level") ) ;
 	  sctk_hls[sctk_hls_core_scope] = sctk_hls_repository[numa_id] + level_id ;
   }
-  
+
   }
 }
 
@@ -561,7 +573,7 @@ void sctk_hls_register_thread ()
   {
 	  sctk_atomics_incr_int ( &sctk_hls[sctk_hls_node_scope]->toenter ) ;
   }
-  
+
   sctk_hls_generation = sctk_calloc(sctk_hls_max_scope,sizeof(hls_generation_t));
 }
 
@@ -580,6 +592,81 @@ void sctk_hls_free ()
   }
   free ( sctk_hls_repository ) ;
 }
+
+/*
+ * Set the GS register to contain the address
+ * of the tls_module array
+ * to be called on each VP
+ */
+void
+sctk_tls_module_set_gs_register ()
+{
+	static __thread int done_on_this_vp = 0 ;
+	if ( done_on_this_vp == 1 )
+		return ;
+
+	int result = arch_prctl(ARCH_SET_GS,(unsigned long)sctk_tls_module_vp);
+	/*
+	int result;
+	void *gs = (void*)sctk_tls_module_vp ;
+	asm volatile ("syscall"
+			: "=a" (result)
+			: "0" ((unsigned long int ) __NR_arch_prctl),
+			"D" ((unsigned long int ) ARCH_SET_GS),
+			"S" (gs)
+			: "memory", "cc", "r11", "cx");
+	*/
+	assume(result == 0);
+	done_on_this_vp = 1 ;
+}
+
+/*
+ * Allocate and fill the tls_module for a thread
+ * to be called before the user code starts
+ */
+void
+sctk_tls_module_alloc_and_fill ()
+{
+	int i ;
+	tls_level **extls = (tls_level**) sctk_extls ;
+	sctk_tls_module_t *tls_module = sctk_calloc(sctk_extls_max_scope+sctk_hls_max_scope,sizeof(sctk_tls_module_t));
+
+	for ( i=0 ; i<sctk_extls_max_scope ; ++i ) {
+		if ( extls[i] == NULL ) {
+			/* this scope is not used */
+			tls_module[i] = NULL ;
+			continue ;
+		}
+		/* optimized tls access are in the first module */
+		/* generate a dummy access to an ex-tls variable to initialize memory if needed */
+		if ( extls[i]->modules == NULL || extls[i]->modules[0] == NULL ) {
+			void *dummy = __sctk__tls_get_addr__generic_scope (1,0,extls[i]) ;
+		}
+		assert ( extls[i]->modules[0] != NULL ) ;
+		tls_module[i] = extls[i]->modules[0] ;
+	}
+
+	for ( i=0 ; i<sctk_hls_max_scope ; ++i ) {
+		if ( sctk_hls[i] == NULL ) {
+			/* this scope is not used */
+			tls_module[sctk_extls_max_scope+i] = NULL ;
+			continue ;
+		}
+		/* optimized tls access are in the first module */
+		/* generate a dummy access to an hls variable to initialize memory if needed */
+		if ( sctk_hls[i]->level.modules == NULL || sctk_hls[i]->level.modules[0] == NULL ) {
+			void *dummy = __sctk__tls_get_addr__generic_scope (1,0,&sctk_hls[i]->level) ;
+		}
+		assert ( sctk_hls[i]->level.modules[0] != NULL ) ;
+		tls_module[sctk_extls_max_scope+i] = sctk_hls[i]->level.modules[0] ;
+	}
+
+	for ( i=0; i<sctk_extls_max_scope+sctk_hls_max_scope; ++i )
+		sctk_tls_module_vp[i] = tls_module[i] ;
+
+	sctk_tls_module = (void**)tls_module ;
+}
+
 
 #if defined(SCTK_i686_ARCH_SCTK) || defined (SCTK_x86_64_ARCH_SCTK)
 
@@ -833,13 +920,13 @@ void __sctk__hls_single_done ( sctk_hls_scope_t scope ) ;
 
 int
 __sctk__hls_single ( sctk_hls_scope_t scope ) {
-	
+
 	sctk_nodebug ("call to hls single with scope %d", scope) ;
 
 	hls_level * const level = sctk_hls[scope];
 	hls_generation_t * const hls_generation = (hls_generation_t*) sctk_hls_generation ;
 	const int mygeneration = ++hls_generation[scope].wait ;
-	
+
 	if ( sctk_is_numa_node() &&
 	   ( scope == sctk_hls_node_scope || scope == sctk_hls_numa_level_2_scope ) )
 	{
@@ -870,15 +957,15 @@ void
 __sctk__hls_single_done ( sctk_hls_scope_t scope ) {
 
 	sctk_nodebug ("call to hls single done with scope %d", scope) ;
-	
+
 	hls_generation_t * const hls_generation = (hls_generation_t*) sctk_hls_generation ;
 	hls_level * const level = sctk_hls[scope];
-	
+
 	sctk_atomics_store_int ( &level->entered, 0 ) ;
 	sctk_atomics_write_barrier() ;
 	level->generation = hls_generation[scope].wait ;
 
-	if ( sctk_is_numa_node() && 
+	if ( sctk_is_numa_node() &&
 	   ( scope == sctk_hls_node_scope || scope == sctk_hls_numa_level_2_scope ) )
 	{
 		__sctk__hls_single_done ( sctk_hls_numa_level_1_scope ) ;
@@ -887,11 +974,11 @@ __sctk__hls_single_done ( sctk_hls_scope_t scope ) {
 	return ;
 }
 
-void 
+void
 __sctk__hls_barrier ( sctk_hls_scope_t scope ) {
-	
+
 	sctk_nodebug ("call to hls barrier with scope %d", scope ) ;
-	
+
 	hls_generation_t * const hls_generation = (hls_generation_t*) sctk_hls_generation ;
 	hls_level * const level = sctk_hls[scope];
 	const int mygeneration = ++hls_generation[scope].wait ;
@@ -911,7 +998,7 @@ __sctk__hls_barrier ( sctk_hls_scope_t scope ) {
 		}
 		return ;
 	}
-	
+
 	const int entered = sctk_atomics_fetch_and_incr_int ( &level->entered ) ;
 	if ( entered == sctk_atomics_load_int(&level->toenter) - 1 ) {
 		sctk_atomics_store_int ( &level->entered, 0 ) ;
@@ -934,7 +1021,7 @@ __sctk__hls_single_nowait ( sctk_hls_scope_t scope ) {
 	int * const mygeneration = &hls_generation[scope].nowait ;
 
 	if ( *mygeneration == generation )
-		execute = sctk_atomics_cas_int ( &level->nowait_generation, generation, generation+1 ) ; 
+		execute = sctk_atomics_cas_int ( &level->nowait_generation, generation, generation+1 ) ;
 
 	*mygeneration = generation ;
 	return execute ;

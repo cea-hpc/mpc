@@ -99,7 +99,7 @@ sctk_thread_get_vp ()
 }
 #endif
 
-static char*
+char*
 sctk_print_debug_infos()
 {
   int task_id;
@@ -212,7 +212,7 @@ sctk_debug_print_backtrace (const char *format, ...)
 void
 sctk_abort (void)
 {
-  static volatile int done = 0; 
+  static volatile int done = 0;
   sctk_debug_print_backtrace ("Abort\n");
 #ifdef MPC_Message_Passing
   if(done == 0){

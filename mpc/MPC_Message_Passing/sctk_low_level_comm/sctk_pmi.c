@@ -24,6 +24,7 @@
 #include "sctk_pmi.h"
 #include "sctk_launch.h"
 #include "sctk_io_helper.h"
+#include "sctk_debug.h"
 
 #ifdef MPC_USE_HYDRA
 #include <pmi.h>
@@ -169,6 +170,7 @@ int sctk_pmi_init() {
 	}
 
 	nodes = sctk_malloc((size_t)process_nb*sctk_max_val_len);
+	memset(nodes,'\0',(size_t)process_nb*sctk_max_val_len);
 	// build nodes list and compute local ranks and size
 	for(i=0; i<process_nb;i++){
 		j=0;
@@ -205,6 +207,13 @@ int sctk_pmi_init() {
 		free(nodes);
 		return rc;
 #endif
+
+
+  sctk_pmi_get_node_rank(&sctk_node_rank);
+  sctk_pmi_get_node_number(&sctk_node_number);
+  sctk_pmi_get_process_on_node_rank(&sctk_local_process_rank);
+  sctk_pmi_get_processes_on_node_number(&sctk_local_process_number);
+
 
 #ifdef MPC_USE_SLURM
 		return rc;

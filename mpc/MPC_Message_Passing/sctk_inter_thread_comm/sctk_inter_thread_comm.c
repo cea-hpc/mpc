@@ -16,214 +16,374 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - PERACHE Marc    marc.perache@cea.fr                              # */
 /* #                                                                      # */
 /* ######################################################################## */
+
+#include <sctk_inter_thread_comm.h>
+#include <sctk_low_level_comm.h>
+#include <sctk.h>
+#include <sctk_debug.h>
+#include <sctk_spinlock.h>
+#include <uthash.h>
+#include <utlist.h>
 #include <string.h>
-#include <sched.h>
-#include "sctk_debug.h"
-#include "sctk_inter_thread_comm.h"
-#include "sctk_thread.h"
-#include "sctk_alloc.h"
-#include "sctk_asm.h"
-#include "sctk_low_level_comm.h"
-#include "sctk_hybrid_comm.h"
-#include "sctk_accessor.h"
+#include <sctk_asm.h>
+#include <sctk_checksum.h>
 
-#define YIELD \
-  /* sctk_thread_yield(); */  \
-  /* Pool IB messages */  \
-  sctk_net_hybrid_ptp_poll(NULL);
+/* #define SCTK_DISABLE_REENTRANCE */
 
-static sctk_ptp_data_t *sctk_ptp_list;
-static volatile int *volatile sctk_ptp_process_localisation = NULL;
-static int sctk_total_task_number = 0;
+  void sctk_cancel_message (sctk_request_t * msg){not_implemented();}
 
-static sctk_messages_alloc_thread_data_t inter_thread_comm_allocator;
+/********************************************************************/
+/*Structres                                                         */
+/********************************************************************/
 
-#define SCTK_LOCAL_VERSION_MAJOR 0
-#define SCTK_LOCAL_VERSION_MINOR 1
+typedef struct{
+/*   sctk_communicator_t comm; */
+  int destination;
+}sctk_comm_dest_key_t;
 
 
-static inline void __sctk_optimized_memcpy (void * dest, const void * src, size_t n)
-{
-#if !defined(NO_INTERNAL_ASSERT) && defined(MPC_Allocator)
-  sctk_check_address(dest,n);
-  sctk_check_address((void*)src,n);
+typedef struct {
+  sctk_spinlock_t lock;
+  volatile sctk_msg_list_t* list;
+} sctk_internal_ptp_list_incomming_t;
+
+typedef struct {
+  sctk_msg_list_t* list;
+} sctk_internal_ptp_list_pending_t;
+
+static inline void sctk_internal_ptp_list_incomming_init(sctk_internal_ptp_list_incomming_t* list){
+  static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+
+  list->list = NULL;
+  list->lock = lock;
+}
+static inline void sctk_internal_ptp_list_pending_init(sctk_internal_ptp_list_pending_t* list){
+  list->list = NULL;
+}
+typedef struct {
+#ifndef SCTK_DISABLE_REENTRANCE
+  sctk_internal_ptp_list_incomming_t incomming_send;
+  sctk_internal_ptp_list_incomming_t incomming_recv;
 #endif
-  memcpy(dest,src,n);
+
+  sctk_spinlock_t pending_lock;
+  sctk_internal_ptp_list_pending_t pending_send;
+  sctk_internal_ptp_list_pending_t pending_recv;
+  char changed;
+
+  sctk_message_to_copy_t* sctk_ptp_task_list;
+  sctk_spinlock_t sctk_ptp_tasks_lock;
+}sctk_internal_ptp_message_lists_t;
+
+static inline void sctk_internal_ptp_message_list_init(sctk_internal_ptp_message_lists_t * lists){
+  static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+#ifndef SCTK_DISABLE_REENTRANCE
+  sctk_internal_ptp_list_incomming_init(&(lists->incomming_send));
+  sctk_internal_ptp_list_incomming_init(&(lists->incomming_recv));
+#endif
+
+  lists->pending_lock = lock;
+  sctk_internal_ptp_list_pending_init(&(lists->pending_send));
+  sctk_internal_ptp_list_pending_init(&(lists->pending_recv));
+
+
+  lists->sctk_ptp_tasks_lock = lock;
+  lists->sctk_ptp_task_list = NULL;
 }
 
-static inline void
-sctk_thread_ptp_message_list_init (sctk_thread_ptp_message_list_t * list)
-{
-  list->head = NULL;
-  list->tail = NULL;
-#ifdef USE_OWNER_FLAG
-  list->owner = NULL;
-#endif
-  list->lock = SCTK_SPINLOCK_INITIALIZER;
+typedef struct sctk_internal_ptp_s{
+  sctk_comm_dest_key_t key;
+
+  sctk_internal_ptp_message_lists_t lists;
+
+  UT_hash_handle hh;
+} sctk_internal_ptp_t;
+
+static inline void sctk_ptp_tasks_insert(sctk_message_to_copy_t* tmp,
+				    sctk_internal_ptp_t* pair){
+  sctk_spinlock_lock(&(pair->lists.sctk_ptp_tasks_lock));
+  DL_APPEND(pair->lists.sctk_ptp_task_list,tmp);
+  sctk_spinlock_unlock(&(pair->lists.sctk_ptp_tasks_lock));
 }
-
-static inline void
-sctk_thread_ptp_message_list_lock (sctk_thread_ptp_message_list_t * list)
-{
-  sctk_spinlock_lock (&(list->lock));
-#ifdef USE_OWNER_FLAG
-  list->owner = sctk_thread_self ();
-#endif
-}
-
-static inline int
-sctk_thread_ptp_message_list_trylock (sctk_thread_ptp_message_list_t * list)
-{
-  int tmp;
-
-  tmp = sctk_spinlock_trylock (&(list->lock));
-#ifdef USE_OWNER_FLAG
-  if(tmp == 0){
-    list->owner = sctk_thread_self ();
+static inline void sctk_internal_ptp_merge_pending(sctk_internal_ptp_message_lists_t* lists){
+#ifndef SCTK_DISABLE_REENTRANCE
+  if(lists->incomming_send.list != NULL){
+    sctk_spinlock_lock(&(lists->incomming_send.lock));
+    DL_CONCAT(lists->pending_send.list,(sctk_msg_list_t*)lists->incomming_send.list);
+    lists->incomming_send.list = NULL;
+    sctk_spinlock_unlock(&(lists->incomming_send.lock));
   }
+  if(lists->incomming_recv.list != NULL){
+    sctk_spinlock_lock(&(lists->incomming_recv.lock));
+    DL_CONCAT(lists->pending_recv.list,(sctk_msg_list_t*)lists->incomming_recv.list);
+    lists->incomming_recv.list = NULL;
+    sctk_spinlock_unlock(&(lists->incomming_recv.lock));
+  }
+  lists->changed = 1;
 #endif
-  return tmp;
+}
+
+static inline void sctk_internal_ptp_lock_pending(sctk_internal_ptp_message_lists_t* lists){
+  sctk_spinlock_lock(&(lists->pending_lock));
+}
+
+static inline int sctk_internal_ptp_trylock_pending(sctk_internal_ptp_message_lists_t* lists){
+  return sctk_spinlock_trylock(&(lists->pending_lock));
+}
+
+static inline void sctk_internal_ptp_unlock_pending(sctk_internal_ptp_message_lists_t* lists){
+  sctk_spinlock_unlock(&(lists->pending_lock));
+}
+
+#ifndef SCTK_DISABLE_REENTRANCE
+static inline void sctk_internal_ptp_add_recv_incomming(sctk_internal_ptp_t* tmp,
+							sctk_thread_ptp_message_t * msg){
+    msg->tail.distant_list.msg = msg;
+    sctk_spinlock_lock(&(tmp->lists.incomming_recv.lock));
+    DL_APPEND(tmp->lists.incomming_recv.list, &(msg->tail.distant_list));
+    sctk_spinlock_unlock(&(tmp->lists.incomming_recv.lock));
+}
+
+static inline void sctk_internal_ptp_add_send_incomming(sctk_internal_ptp_t* tmp,
+							sctk_thread_ptp_message_t * msg){
+    msg->tail.distant_list.msg = msg;
+    sctk_spinlock_lock(&(tmp->lists.incomming_send.lock));
+    DL_APPEND(tmp->lists.incomming_send.list, &(msg->tail.distant_list));
+    sctk_spinlock_unlock(&(tmp->lists.incomming_send.lock));
+}
+#else
+#warning "Use blocking version of send/recv message"
+static inline void sctk_internal_ptp_add_recv_incomming(sctk_internal_ptp_t* tmp,
+							sctk_thread_ptp_message_t * msg){
+    msg->tail.distant_list.msg = msg;
+    sctk_internal_ptp_lock_pending(&(tmp->lists));
+    DL_APPEND(tmp->lists.pending_recv.list, &(msg->tail.distant_list));
+    sctk_internal_ptp_unlock_pending(&(tmp->lists));
+}
+
+static inline void sctk_internal_ptp_add_send_incomming(sctk_internal_ptp_t* tmp,
+							sctk_thread_ptp_message_t * msg){
+    msg->tail.distant_list.msg = msg;
+    sctk_internal_ptp_lock_pending(&(tmp->lists));
+    DL_APPEND(tmp->lists.pending_send.list, &(msg->tail.distant_list));
+    sctk_internal_ptp_unlock_pending(&(tmp->lists));
+}
+
+#endif
+
+/************************************************************************/
+/*Data structure accessors                                              */
+/************************************************************************/
+static sctk_internal_ptp_t* sctk_ptp_table = NULL;
+static sctk_internal_ptp_t** sctk_ptp_array = NULL;
+/* List for process specific messages */
+static sctk_internal_ptp_t* sctk_ptp_admin = NULL;
+static int sctk_ptp_array_start = 0;
+static int sctk_ptp_array_end = 0;
+static sctk_spin_rwlock_t sctk_ptp_table_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
+
+static inline void
+sctk_ptp_table_write_lock(){
+#ifndef SCTK_MIGRATION_DISABLED
+  if(sctk_migration_mode)
+    sctk_spinlock_write_lock(&sctk_ptp_table_lock);
+#endif
 }
 
 static inline void
-sctk_thread_ptp_message_list_unlock (sctk_thread_ptp_message_list_t * list)
-{
-#ifdef USE_OWNER_FLAG
-  assume(list->owner == sctk_thread_self ());
-  list->owner = NULL;
+sctk_ptp_table_write_unlock(){
+#ifndef SCTK_MIGRATION_DISABLED
+  if(sctk_migration_mode)
+    sctk_spinlock_write_unlock(&sctk_ptp_table_lock);
 #endif
-  sctk_spinlock_unlock (&(list->lock));
 }
 
 static inline void
-sctk_thread_ptp_message_list_assert_locked (sctk_thread_ptp_message_list_t *
-					    list)
-{
-  assume ((list->lock != SCTK_SPINLOCK_INITIALIZER)
-#ifdef USE_OWNER_FLAG
-	  && (list->owner == sctk_thread_self ())
+sctk_ptp_table_read_lock(){
+#ifndef SCTK_MIGRATION_DISABLED
+  if(sctk_migration_mode)
+    sctk_spinlock_read_lock(&sctk_ptp_table_lock);
 #endif
-    );
 }
 
-static void
-sctk_ptp_per_task_init_com (sctk_task_ptp_data_t * task, int k)
-{
-
-  task->source_task = k;
-
-  sctk_thread_ptp_message_list_init (&(task->sctk_send_list));
-/*   task->send_list = NULL; */
-/*   task->send_list_tail = NULL; */
-
-  sctk_thread_ptp_message_list_init (&(task->sctk_recv_list));
-/*   task->recv_list = NULL; */
-/*   task->recv_list_tail = NULL; */
-
-  task->busy = 0;
-  task->matched = NULL;
-  task->spinlock_matched = 0;
-
-  task->is_usable = 1;
-  task->spinlock = 0;
-
-  task->rank_send = 0;
-  task->rank_recv = 0;
+static inline void
+sctk_ptp_table_read_unlock(){
+#ifndef SCTK_MIGRATION_DISABLED
+  if(sctk_migration_mode)
+    sctk_spinlock_read_unlock(&sctk_ptp_table_lock);
+#endif
 }
 
-void
-sctk_ptp_per_task_init (int i)
-{
-  int j, k;
-  int nb_task;
+static inline void sctk_ptp_table_insert(sctk_internal_ptp_t * tmp){
+  static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+  static volatile int done = 0;
 
-  sctk_ptp_list[i].allocator.alloc = __sctk_create_thread_memory_area ();
-  sctk_ptp_list[i].allocator.lock = 0;
+  if(tmp->key.destination == -1){
+    sctk_ptp_admin = tmp;
+    return;
+  }
 
-  sctk_spinlock_lock(&(sctk_ptp_list[i].allocator.lock));
-
-  nb_task = sctk_total_task_number;
-
-  for (j = 0; j < SCTK_MAX_COMMUNICATOR_NUMBER; j++)
-    {
-      sctk_thread_ptp_message_list_init (&
-					 (sctk_ptp_list[i].communicators[j].
-					  sctk_wait_list));
-      sctk_thread_ptp_message_list_init (&
-					 (sctk_ptp_list[i].communicators[j].
-					  sctk_wait_send_list));
-      sctk_thread_ptp_message_list_init (&
-					 (sctk_ptp_list[i].communicators[j].
-					  sctk_any_source_list));
-      sctk_ptp_list[i].communicators[j].rank_recv = 0;
-      sctk_ptp_list[i].communicators[j].tasks = (sctk_task_ptp_data_t *)
-	__sctk_calloc (nb_task, sizeof (sctk_task_ptp_data_t), sctk_ptp_list[i].allocator.alloc);
-      assume (sctk_ptp_list[i].communicators[j].tasks != NULL);
-
-      sctk_ptp_list[i].communicators[j].nb_tasks = nb_task;
-      for (k = 0; k < nb_task; k++)
-	{
-	  sctk_ptp_per_task_init_com (&
-				      (sctk_ptp_list[i].communicators[j].
-				       tasks[k]), k);
-	}
+  sctk_spinlock_lock(&lock);
+  if(done == 0){
+    if(!sctk_migration_mode){
+      sctk_ptp_array_start = sctk_get_first_task_local (SCTK_COMM_WORLD);
+      sctk_ptp_array_end = sctk_get_last_task_local (SCTK_COMM_WORLD);
+      sctk_ptp_array = sctk_malloc((sctk_ptp_array_end - sctk_ptp_array_start + 1)*sizeof(sctk_internal_ptp_t*));
+      memset(sctk_ptp_array,0,(sctk_ptp_array_end - sctk_ptp_array_start + 1)*sizeof(sctk_internal_ptp_t*));
     }
-  sctk_ptp_list[i].is_usable = 1;
-  sctk_spinlock_unlock(&(sctk_ptp_list[i].allocator.lock));
+    done = 1;
+  }
+
+  sctk_ptp_table_write_lock(&sctk_ptp_table_lock);
+  HASH_ADD(hh,sctk_ptp_table,key,sizeof(sctk_comm_dest_key_t),tmp);
+  if(sctk_migration_mode){
+    if(sctk_ptp_array != NULL){
+      sctk_free(sctk_ptp_array);
+      sctk_ptp_array = NULL;
+    }
+  }
+  if(sctk_ptp_array){
+    assume(tmp->key.destination >= sctk_ptp_array_start);
+    assume(tmp->key.destination <= sctk_ptp_array_end);
+    assume(sctk_ptp_array[tmp->key.destination - sctk_ptp_array_start] == NULL);
+    sctk_ptp_array[tmp->key.destination - sctk_ptp_array_start] = tmp;
+  }
+  sctk_ptp_table_write_unlock(&sctk_ptp_table_lock);
+  sctk_spinlock_unlock(&lock);
 }
 
-void
-sctk_ptp_init (const int nb_task)
-{
-  int i;
-  sctk_only_once ();
-  sctk_total_task_number = nb_task;
-  sctk_print_version ("PtP", SCTK_LOCAL_VERSION_MAJOR,
-		      SCTK_LOCAL_VERSION_MINOR);
-  inter_thread_comm_allocator.alloc = __sctk_create_thread_memory_area ();
-  inter_thread_comm_allocator.lock = 0;
+#define sctk_ptp_table_find(key,tmp)  do{				\
+    if(key.destination == -1){						\
+      tmp = sctk_ptp_admin;						\
+    } else {								\
+      if(sctk_migration_mode){						\
+	HASH_FIND(hh,sctk_ptp_table,&(key),sizeof(sctk_comm_dest_key_t),(tmp)); \
+      } else {								\
+	int __dest__id;							\
+	__dest__id = key.destination - sctk_ptp_array_start;		\
+	if((sctk_ptp_array != NULL) && (__dest__id >= 0)		\
+	   && (__dest__id <= sctk_ptp_array_end- sctk_ptp_array_start)){ \
+	  tmp = sctk_ptp_array[__dest__id];				\
+	} else {							\
+	  tmp = NULL;							\
+	}								\
+      }									\
+    }									\
+  }while(0)
 
-  sctk_spinlock_lock(&inter_thread_comm_allocator.lock);
-  sctk_ptp_list =
-    (sctk_ptp_data_t *) __sctk_calloc (nb_task, sizeof (sctk_ptp_data_t),
-				       inter_thread_comm_allocator.alloc);
-  assume (sctk_ptp_list != NULL);
 
-  sctk_ptp_process_localisation =
-    (int *) __sctk_calloc (nb_task, sizeof (int), inter_thread_comm_allocator.alloc);
-  assume (sctk_ptp_process_localisation != NULL);
-  sctk_spinlock_unlock(&inter_thread_comm_allocator.lock);
+/********************************************************************/
+/*Task engine                                                       */
+/********************************************************************/
+#define SCTK_DISABLE_TASK_ENGINE
 
-  for (i = 0; i < nb_task; i++)
-    {
-      sctk_ptp_process_localisation[i] = -1;
+static inline void sctk_ptp_tasks_perform(sctk_internal_ptp_t* pair){
+  sctk_message_to_copy_t* tmp;
+
+  while(pair->lists.sctk_ptp_task_list != NULL){
+    tmp = NULL;
+    if(sctk_spinlock_trylock(&(pair->lists.sctk_ptp_tasks_lock)) == 0){
+      tmp = pair->lists.sctk_ptp_task_list;
+      if(tmp != NULL){
+	DL_DELETE(pair->lists.sctk_ptp_task_list,tmp);
+      }
+      sctk_spinlock_unlock(&(pair->lists.sctk_ptp_tasks_lock));
     }
-  for (i = 0; i < nb_task; i++)
-    {
-      sctk_ptp_list[i].allocator.alloc = NULL;
-      sctk_ptp_list[i].allocator.lock = 0;
-      sctk_ptp_list[i].free_list.free_list = NULL;
-      sctk_ptp_list[i].free_list.lock = 0;
-      sctk_ptp_list[i].is_usable = 0;
+    if(tmp != NULL){
+      tmp->msg_send->tail.message_copy(tmp);
     }
+  }
 }
 
-void
-sctk_ptp_delete ()
-{
-  int i, j;
-  for (i = 0; i < sctk_total_task_number; i++)
-    {
-      for (j = 0; j < SCTK_MAX_COMMUNICATOR_NUMBER; j++)
-	{
-	  sctk_free ((void *) (sctk_ptp_list[i].communicators[j].tasks));
-	}
+static inline void sctk_ptp_copy_tasks_insert(sctk_msg_list_t* ptr_recv,
+					      sctk_msg_list_t* ptr_send,
+					      sctk_internal_ptp_t* pair){
+  sctk_message_to_copy_t* tmp;
+
+  tmp = &(ptr_recv->msg->tail.copy_list);
+  tmp->msg_send = ptr_send->msg;
+  tmp->msg_recv = ptr_recv->msg;
+
+#warning "Add parapmeter to deal with task engine"
+#ifdef SCTK_DISABLE_TASK_ENGINE
+  tmp->msg_send->tail.message_copy(tmp);
+#else
+  sctk_ptp_tasks_insert(tmp,pair);
+#endif
+}
+
+
+/********************************************************************/
+/*copy engine                                                       */
+/********************************************************************/
+
+void sctk_complete_and_free_message (sctk_thread_ptp_message_t * msg){
+  void (*free_memory)(void*);
+
+  free_memory = msg->tail.free_memory;
+
+  if(msg->body.completion_flag)
+    *(msg->body.completion_flag) = SCTK_MESSAGE_DONE;
+  free_memory(msg);
+}
+
+void sctk_message_completion_and_free(sctk_thread_ptp_message_t* send,
+				     sctk_thread_ptp_message_t* recv){
+  size_t size;
+
+  if(recv->tail.request){
+    size = send->body.header.msg_size;
+    if(recv->tail.request->header.msg_size > size){
+      recv->tail.request->header.msg_size = size;
     }
-  sctk_free (sctk_ptp_list);
-  sctk_free ((void *) sctk_ptp_process_localisation);
+
+    recv->tail.request->header.source = send->body.header.source;
+    recv->tail.request->header.message_tag = send->body.header.message_tag;
+    recv->tail.request->header.msg_size = size;
+
+    recv->tail.request->msg = NULL;
+  }
+
+  if(send->tail.request){
+    send->tail.request->msg = NULL;
+  }
+
+#ifdef SCTK_USE_CHECKSUM
+  sctk_checksum_verify(send, recv);
+#endif
+
+  sctk_complete_and_free_message(send);
+  sctk_complete_and_free_message(recv);
+}
+
+inline void sctk_message_copy(sctk_message_to_copy_t* tmp){
+  sctk_thread_ptp_message_t* send;
+  sctk_thread_ptp_message_t* recv;
+
+  send = tmp->msg_send;
+  recv = tmp->msg_recv;
+
+  assume(send->tail.message_type == recv->tail.message_type);
+
+  switch(send->tail.message_type){
+  case sctk_message_contiguous: {
+    size_t size;
+    size = send->tail.message.contiguous.size;
+    if(size > recv->tail.message.contiguous.size){
+      size = recv->tail.message.contiguous.size;
+    }
+
+    memcpy(recv->tail.message.contiguous.addr,send->tail.message.contiguous.addr,
+	   size);
+
+    sctk_message_completion_and_free(send,recv);
+    break;
+  }
+  default: not_reachable();
+  }
 }
 
 static inline void
@@ -243,7 +403,7 @@ sctk_copy_buffer_std_std (sctk_pack_indexes_t * restrict in_begins,
     {
       sctk_nodebug ("sctk_copy_buffer_std_std no mpc_pack");
       sctk_nodebug ("%s == %s", out_adress, in_adress);
-      __sctk_optimized_memcpy (out_adress, in_adress, in_sizes);
+      memcpy (out_adress, in_adress, in_sizes);
       sctk_nodebug ("%s == %s", out_adress, in_adress);
     }
   else
@@ -295,7 +455,7 @@ sctk_copy_buffer_std_std (sctk_pack_indexes_t * restrict in_begins,
 			  (in_ends[in_i] * in_elem_size - in_j +
 			   in_elem_size));
 
-	      __sctk_optimized_memcpy (&(((char *) out_adress)[j]),
+	      memcpy (&(((char *) out_adress)[j]),
 		      &(((char *) in_adress)[in_j]), max_length);
 	      sctk_nodebug ("Copy out[%d-%d]%s == in[%d-%d]%s", j,
 			    j + max_length, &(((char *) out_adress)[j]),
@@ -330,7 +490,7 @@ sctk_copy_buffer_absolute_absolute (sctk_pack_absolute_indexes_t *
     {
       sctk_nodebug ("sctk_copy_buffer_absolute_absolute no mpc_pack");
       sctk_nodebug ("%s == %s", out_adress, in_adress);
-      __sctk_optimized_memcpy (out_adress, in_adress, in_sizes);
+      memcpy (out_adress, in_adress, in_sizes);
       sctk_nodebug ("%s == %s", out_adress, in_adress);
     }
   else
@@ -361,15 +521,6 @@ sctk_copy_buffer_absolute_absolute (sctk_pack_absolute_indexes_t *
       in_i = 0;
       in_j = in_begins[in_i] * in_elem_size;
 
-/*       { */
-/* 	for(i = 0 ; i < in_sizes; i++){ */
-/* 	  sctk_debug("in %lu %lu-%lu",i, in_begins[i],in_ends[i]); */
-/* 	} */
-/* 	for(i = 0 ; i < out_sizes; i++){ */
-/* 	  sctk_debug("out %lu %lu-%lu",i, out_begins[i],out_ends[i]); */
-/* 	} */
-/*       } */
-
       for (i = 0; i < out_sizes; i++)
 	{
 	  for (j = out_begins[i] * out_elem_size;
@@ -396,7 +547,7 @@ sctk_copy_buffer_absolute_absolute (sctk_pack_absolute_indexes_t *
 			    j + max_length, &(((char *) out_adress)[j]),
 			    in_j, in_j + max_length,
 			    &(((char *) in_adress)[in_j]));
-	      __sctk_optimized_memcpy (&(((char *) out_adress)[j]),
+	      memcpy (&(((char *) out_adress)[j]),
 		      &(((char *) in_adress)[in_j]), max_length);
 	      sctk_nodebug ("Copy out[%d-%d]%d == in[%d-%d]%d", j,
 			    j + max_length, (((char *) out_adress)[j]),
@@ -410,1886 +561,750 @@ sctk_copy_buffer_absolute_absolute (sctk_pack_absolute_indexes_t *
     }
 }
 
-static inline void
-sctk_copy_buffer_absolute_std (sctk_pack_absolute_indexes_t *
-			       restrict in_begins,
-			       sctk_pack_absolute_indexes_t *
-			       restrict in_ends, size_t in_sizes,
-			       void *restrict in_adress,
-			       size_t in_elem_size,
-			       sctk_pack_indexes_t * restrict out_begins,
-			       sctk_pack_indexes_t * restrict out_ends,
-			       size_t out_sizes, void *restrict out_adress,
-			       size_t out_elem_size)
-{
-  sctk_pack_indexes_t tmp_begin[1];
-  sctk_pack_indexes_t tmp_end[1];
-  sctk_pack_absolute_indexes_t tmp_begin_absolute[1];
-  sctk_pack_absolute_indexes_t tmp_end_absolute[1];
-  if ((in_begins == NULL) && (out_begins == NULL))
-    {
-      sctk_nodebug ("sctk_copy_buffer_absolute_std no mpc_pack");
-      sctk_nodebug ("%s == %s", out_adress, in_adress);
-      __sctk_optimized_memcpy (out_adress, in_adress, in_sizes);
-      sctk_nodebug ("%s == %s", out_adress, in_adress);
-    }
-  else
-    {
-      unsigned long i;
-      unsigned long j;
-      unsigned long in_i;
-      unsigned long in_j;
-      sctk_nodebug ("sctk_copy_buffer_absolute_std  mpc_pack");
-      if (in_begins == NULL)
-	{
-	  in_begins = tmp_begin_absolute;
-	  in_begins[0] = 0;
-	  in_ends = tmp_end_absolute;
-	  in_ends[0] = in_sizes - 1;
-	  in_elem_size = 1;
-	  in_sizes = 1;
-	}
-      if (out_begins == NULL)
-	{
-	  out_begins = tmp_begin;
-	  out_begins[0] = 0;
-	  out_ends = tmp_end;
-	  out_ends[0] = out_sizes - 1;
-	  out_elem_size = 1;
-	  out_sizes = 1;
-	}
-      in_i = 0;
-      in_j = in_begins[in_i] * in_elem_size;
+inline void sctk_message_copy_pack(sctk_message_to_copy_t* tmp){
+  sctk_thread_ptp_message_t* send;
+  sctk_thread_ptp_message_t* recv;
 
-      for (i = 0; i < out_sizes; i++)
-	{
-	  sctk_nodebug ("Step %lu/%lu in out size", i, out_sizes);
-	  for (j = out_begins[i] * out_elem_size;
-	       j <= out_ends[i] * out_elem_size;)
-	    {
-	      size_t max_length;
-	      if (in_j > in_ends[in_i] * in_elem_size)
-		{
-		  in_i++;
-		  if (in_i >= in_sizes)
-		    {
-		      return;
-		    }
-		  in_j = in_begins[in_i] * in_elem_size;
-		}
+  send = tmp->msg_send;
+  recv = tmp->msg_recv;
 
-	      max_length =
-		sctk_min ((out_ends[i] * out_elem_size - j +
-			   out_elem_size),
-			  (in_ends[in_i] * in_elem_size - in_j +
-			   in_elem_size));
+  assume(send->tail.message_type == recv->tail.message_type);
 
-	      __sctk_optimized_memcpy (&(((char *) out_adress)[j]),
-		      &(((char *) in_adress)[in_j]), max_length);
-	      sctk_nodebug ("Copy out[%d-%d]%s == in[%d-%d]%s", j,
-			    j + max_length, &(((char *) out_adress)[j]),
-			    in_j, in_j + max_length,
-			    &(((char *) in_adress)[in_j]));
-
-	      j += max_length;
-	      in_j += max_length;
-	    }
-	}
-    }
-}
-
-static inline void
-sctk_copy_buffer_std_absolute (sctk_pack_indexes_t * restrict in_begins,
-			       sctk_pack_indexes_t * restrict in_ends,
-			       size_t in_sizes,
-			       void *restrict in_adress,
-			       size_t in_elem_size,
-			       sctk_pack_absolute_indexes_t *
-			       restrict out_begins,
-			       sctk_pack_absolute_indexes_t *
-			       restrict out_ends, size_t out_sizes,
-			       void *restrict out_adress,
-			       size_t out_elem_size)
-{
-  sctk_pack_indexes_t tmp_begin[1];
-  sctk_pack_indexes_t tmp_end[1];
-  sctk_pack_absolute_indexes_t tmp_begin_absolute[1];
-  sctk_pack_absolute_indexes_t tmp_end_absolute[1];
-  if ((in_begins == NULL) && (out_begins == NULL))
-    {
-      sctk_nodebug ("sctk_copy_buffer_std_absolute no mpc_pack");
-      sctk_nodebug ("%s == %s", out_adress, in_adress);
-      __sctk_optimized_memcpy (out_adress, in_adress, in_sizes);
-      sctk_nodebug ("%s == %s", out_adress, in_adress);
-    }
-  else
-    {
-      unsigned long i;
-      unsigned long j;
-      unsigned long in_i;
-      unsigned long in_j;
-      sctk_nodebug ("sctk_copy_buffer_std_absolute mpc_pack");
-      if (in_begins == NULL)
-	{
-	  in_begins = tmp_begin;
-	  in_begins[0] = 0;
-	  in_ends = tmp_end;
-	  in_ends[0] = in_sizes - 1;
-	  in_elem_size = 1;
-	  in_sizes = 1;
-	}
-      if (out_begins == NULL)
-	{
-	  out_begins = tmp_begin_absolute;
-	  out_begins[0] = 0;
-	  out_ends = tmp_end_absolute;
-	  out_ends[0] = out_sizes - 1;
-	  out_elem_size = 1;
-	  out_sizes = 1;
-	}
-      in_i = 0;
-      in_j = in_begins[in_i] * in_elem_size;
-      for (i = 0; i < out_sizes; i++)
-	{
-	  sctk_nodebug ("i = %d", i);
-	  for (j = out_begins[i] * out_elem_size;
-	       j <= out_ends[i] * out_elem_size;)
-	    {
-	      size_t max_length;
-	      sctk_nodebug ("j = %d in _j %d in_sizes %lu", j, in_j,
-			    in_sizes);
-	      if (in_j > in_ends[in_i] * in_elem_size)
-		{
-		  in_i++;
-		  if (in_i >= in_sizes)
-		    {
-		      return;
-		    }
-		  in_j = in_begins[in_i] * in_elem_size;
-		}
-
-	      max_length =
-		sctk_min ((out_ends[i] * out_elem_size - j +
-			   out_elem_size),
-			  (in_ends[in_i] * in_elem_size - in_j +
-			   in_elem_size));
-
-	      __sctk_optimized_memcpy (&(((char *) out_adress)[j]),
-		      &(((char *) in_adress)[in_j]), max_length);
-	      sctk_nodebug ("Copy out[%d-%d]%s == in[%d-%d]%s", j,
-			    j + max_length, &(((char *) out_adress)[j]),
-			    in_j, in_j + max_length,
-			    &(((char *) in_adress)[in_j]));
-	      sctk_nodebug ("%d, %d", max_length, out_sizes);
-
-	      j += max_length;
-	      in_j += max_length;
-	    }
-	}
-    }
-}
-
-static inline void
-sctk_copy_buffer (sctk_pack_indexes_t * restrict in_begins,
-		  sctk_pack_indexes_t * restrict in_ends,
-		  sctk_pack_absolute_indexes_t *
-		  restrict in_begins_absolute,
-		  sctk_pack_absolute_indexes_t * restrict in_ends_absolute,
-		  size_t in_sizes, void *restrict in_adress,
-		  size_t in_elem_size,
-		  sctk_pack_indexes_t * restrict out_begins,
-		  sctk_pack_indexes_t * restrict out_ends,
-		  sctk_pack_absolute_indexes_t *
-		  restrict out_begins_absolute,
-		  sctk_pack_absolute_indexes_t * restrict out_ends_absolute,
-		  size_t out_sizes, void *restrict out_adress,
-		  size_t out_elem_size)
-{
-  sctk_nodebug ("in %p out %p", in_adress, out_adress);
-  if ((in_begins_absolute == NULL) && (out_begins_absolute == NULL))
-    {
-      sctk_copy_buffer_std_std (in_begins,
-				in_ends,
-				in_sizes,
-				in_adress,
-				in_elem_size,
-				out_begins,
-				out_ends,
-				out_sizes, out_adress, out_elem_size);
-    }
-  else if ((in_begins_absolute != NULL) && (out_begins_absolute != NULL))
-    {
-      sctk_copy_buffer_absolute_absolute (in_begins_absolute,
-					  in_ends_absolute, in_sizes,
-					  in_adress, in_elem_size,
-					  out_begins_absolute,
-					  out_ends_absolute, out_sizes,
-					  out_adress, out_elem_size);
-    }
-  else if ((in_begins_absolute == NULL) && (out_begins_absolute != NULL))
-    {
-      sctk_copy_buffer_std_absolute (in_begins, in_ends, in_sizes,
-				     in_adress, in_elem_size,
-				     out_begins_absolute,
-				     out_ends_absolute, out_sizes,
-				     out_adress, out_elem_size);
-    }
-  else
-    {
-      sctk_copy_buffer_absolute_std (in_begins_absolute,
-				     in_ends_absolute,
-				     in_sizes,
-				     in_adress,
-				     in_elem_size,
-				     out_begins,
-				     out_ends,
-				     out_sizes, out_adress, out_elem_size);
-    }
-}
-
-static inline void
-sctk_copy_message_net (sctk_thread_ptp_message_t * restrict dest,
-		       sctk_thread_ptp_message_t * restrict src)
-{
-  size_t i;
-  char *cursor;
-  size_t done = 0;
-  sctk_nodebug ("Copy a message");
-  cursor = src->net_mesg;
-
-  if (cursor != (char *) (-1))
-    {
-      for (i = 0; i < dest->message.nb_items; i++)
-	{
-	  if (dest->message.begins_absolute[i] != NULL)
-	    {
-	      size_t j;
-	      char *tmp;
-	      size_t offset;
-	      size_t size;
-	      sctk_nodebug ("Copy a message pack");
-	      for (j = 0; j < dest->message.sizes[i]; j++)
-		{
-		  tmp = dest->message.adresses[i];
-		  offset = dest->message.begins_absolute[i][j] *
-		    dest->message.elem_sizes[i];
-
-		  size =
-		    (dest->message.ends_absolute[i][j] -
-		     dest->message.begins_absolute[i][j] + 1) *
-		    (dest->message.elem_sizes[i]);
-
-		  if (done + size > src->header.msg_size)
-		    {
-		      size = src->header.msg_size - done;
-		    }
-
-		  __sctk_optimized_memcpy (&(tmp[offset]), cursor, size);
-		  cursor += size;
-		  done += size;
-		}
-	    }
-	  else
-	    {
-	      if (dest->message.begins[i] == NULL)
-		{
-		  size_t size;
-		  sctk_nodebug ("Copy a message no pack");
-		  sctk_nodebug ("%s == %s", dest->message.adresses[i],
-				cursor);
-
-		  size = dest->message.sizes[i];
-
-		  if (done + size > src->header.msg_size)
-		    {
-		      size = src->header.msg_size - done;
-		    }
-
-		  __sctk_optimized_memcpy (dest->message.adresses[i], cursor, size);
-		  cursor += size;
-		  done += size;
-		}
-	      else
-		{
-		  size_t j;
-		  char *tmp;
-		  size_t offset;
-		  size_t size;
-		  sctk_nodebug ("Copy a message pack");
-		  for (j = 0; j < dest->message.sizes[i]; j++)
-		    {
-		      tmp = dest->message.adresses[i];
-		      offset = dest->message.begins[i][j] *
-			dest->message.elem_sizes[i];
-
-		      size =
-			(dest->message.ends[i][j] -
-			 dest->message.begins[i][j] + 1) *
-			(dest->message.elem_sizes[i]);
-
-		      if (done + size > src->header.msg_size)
-			{
-			  size = src->header.msg_size - done;
-			}
-
-		      __sctk_optimized_memcpy (&(tmp[offset]), cursor, size);
-		      cursor += size;
-		      done += size;
-		    }
-		}
-	    }
-	}
-      sctk_nodebug ("Free %p", src);
-      sctk_net_free_func ((sctk_thread_ptp_message_t *) src);
-    }
-  else
-    {
-      sctk_net_copy_message_func (dest, src);
-    }
-}
-
-static inline void
-sctk_remove_canceled (sctk_task_ptp_data_t * restrict data)
-{
-  register sctk_thread_ptp_message_t *restrict cursor;
-  sctk_thread_ptp_message_t *restrict tmp;
-  sctk_thread_ptp_message_t *restrict new_list_head = NULL;
-  sctk_thread_ptp_message_t *restrict new_list_tail = NULL;
-
-  cursor = (sctk_thread_ptp_message_t *) data->sctk_send_list.head;
-
-  while (cursor != NULL)
-    {
-      tmp = (sctk_thread_ptp_message_t *)(cursor->next);
-      if (cursor->completion_flag != 3)
-	{
-	  if (new_list_head == NULL)
-	    {
-	      new_list_head = cursor;
-	    }
-	  cursor->next = NULL;
-	  new_list_tail = cursor;
-	}
-      else
-	{
-	  cursor->completion_flag = 2;
-	}
-      cursor = tmp;
-    }
-  data->sctk_send_list.head = new_list_head;
-  data->sctk_send_list.tail = new_list_tail;
-}
-
-static inline sctk_thread_ptp_message_t *
-sctk_find_matching (const
-		    sctk_thread_ptp_message_t
-		    * restrict dest, sctk_task_ptp_data_t * restrict data)
-{
-  register sctk_thread_ptp_message_t *restrict cursor;
-  sctk_thread_ptp_message_t *restrict tmp;
-  sctk_thread_ptp_message_t *restrict last;
-  register int dest_tag;
-
-restart:
-
-  if (dest->completion_flag == 2)
-    {
-      return NULL;
-    }
-
-  dest_tag = dest->header.message_tag;
-
-  sctk_thread_ptp_message_list_assert_locked (&(data->sctk_send_list));
-
-  cursor = (sctk_thread_ptp_message_t *) data->sctk_send_list.head;
-
-  if (cursor != NULL)
-    {
-      tmp = (sctk_thread_ptp_message_t *)cursor->next;
-      if (cursor->completion_flag == 3)
-	{
-	  sctk_remove_canceled (data);
-	  goto restart;
-	}
-      assume (cursor->completion_flag == 0);
-      if ((dest_tag == cursor->header.message_tag) || (dest_tag == -1))
-	{
-	  cursor->next = NULL;
-	  if (tmp == NULL)
-	    {
-	      data->sctk_send_list.tail = NULL;
-	    }
-	  data->sctk_send_list.head = tmp;
-	  return cursor;
-	}
-      last = cursor;
-      cursor = tmp;
-    }
-  else
-    {
-      return NULL;
-    }
-
-  while (cursor != NULL)
-    {
-      tmp = (sctk_thread_ptp_message_t *)cursor->next;
-      if (cursor->completion_flag == 3)
-	{
-	  sctk_remove_canceled (data);
-	  goto restart;
-	}
-      assume (cursor->completion_flag == 0);
-      if ((dest_tag == cursor->header.message_tag) || (dest_tag == -1))
-	{
-	  cursor->next = NULL;
-	  last->next = tmp;
-	  if (tmp == NULL)
-	    {
-	      data->sctk_send_list.tail = last;
-	    }
-	  return cursor;
-	}
-      last = cursor;
-      cursor = tmp;
-    }
-  return NULL;
-}
-
-static inline void
-__sctk_memcpy (char *restrict s1, const char *restrict s2, size_t n)
-{
-  if (s1 != s2)
-    {
-      __sctk_optimized_memcpy (s1, s2, n);
-    }
-}
-
-
-/* TODO */
-static inline void
-__sctk_perform_match_for_source_found (sctk_thread_ptp_message_t *
-				       restrict cursor,
-				       sctk_thread_ptp_message_t *
-				       restrict src)
-{
-
-  assume (cursor->completion_flag == 0);
-  assume (src->completion_flag == 0);
-
-  sctk_nodebug ("Match %p(%p) -> %p(%p)", src, src->request, cursor,
-		cursor->request);
-
-  sctk_nodebug ("%p, %lu -> %lu", cursor, cursor->header.msg_size,
-		src->header.msg_size);
-  cursor->header.msg_size = src->header.msg_size;
-  cursor->header.message_tag = src->header.message_tag;
-  cursor->header.local_source = src->header.local_source;
-  if (cursor->request != NULL)
-    {
-      cursor->request->header.msg_size = src->header.msg_size;
-      cursor->request->header.message_tag = src->header.message_tag;
-      cursor->request->header.local_source = src->header.local_source;
-      sctk_nodebug ("%p, %lu -> %lu", cursor->request,
-		    cursor->request->header.msg_size, src->header.msg_size);
-    }
-
-  sctk_nodebug ("Copy message");
-
-  /*Message match */
-  if (src->net_mesg == NULL)
-    {
-      sctk_nodebug ("There are %d parts", cursor->message.nb_items);
-      if ((cursor->message.nb_items == 1)
-	  && (src->message.begins[0] == NULL)
-	  && (cursor->message.begins[0] == NULL)
-	  && (src->message.begins_absolute[0] == NULL)
-	  && (cursor->message.begins_absolute[0] == NULL))
-	{
-	  __sctk_optimized_memcpy (cursor->message.adresses[0],
-				   src->message.adresses[0], src->message.sizes[0]);
-	}
-      else
-	{
-	  size_t i;
-	  for (i = 0; i < cursor->message.nb_items; i++)
-	    {
-	      sctk_copy_buffer (src->message.begins[i],
-				src->message.ends[i],
-				src->message.
-				begins_absolute[i],
-				src->message.ends_absolute[i],
-				src->message.sizes[i],
-				src->message.adresses[i],
-				src->message.elem_sizes[i],
-				cursor->message.begins[i],
-				cursor->message.ends[i],
-				cursor->message.
-				begins_absolute[i],
-				cursor->message.
-				ends_absolute[i],
-				cursor->message.sizes[i],
-				cursor->message.adresses[i],
-				cursor->message.elem_sizes[i]);
-	    }
-	}
-      sctk_nodebug ("Wake send part %p", &(src->completion_flag));
-      src->completion_flag = 1;
-    }
-  else
-    {
-      sctk_copy_message_net (cursor, src);
-    }
-
-  /*Just flip the completion flag, memory liberation
-     will be performed by the caller */
-  sctk_nodebug ("Wake %p", &(cursor->completion_flag));
-  cursor->completion_flag = 1;
-}
-
-static inline void
-__sctk_perform_match_for_source_found_register(sctk_thread_ptp_message_t *
-					       restrict cursor,
-					       sctk_thread_ptp_message_t *
-					       restrict src,sctk_task_ptp_data_t * restrict data,
-					       sctk_thread_ptp_message_t *restrict target){
-#warning "Add a policy to select witch method is used for copy"
-  if(((target == cursor) || (target == src)) && 0){
-      __sctk_perform_match_for_source_found (cursor,src);
-  } else {
-    cursor->pair = src;
-    sctk_spinlock_lock (&(data->spinlock_matched));
-    cursor->next = data->matched;
-    data->matched = cursor;
-    sctk_spinlock_unlock (&(data->spinlock_matched));
-  }
-}
-
-static inline void
-__sctk_perform_matched_messages(sctk_task_ptp_data_t * restrict data){
-  while((data->matched != NULL) || (data->busy == 1)){
-    sctk_thread_ptp_message_t *restrict cursor;
-    sctk_spinlock_lock (&(data->spinlock_matched));
-
-    cursor = (sctk_thread_ptp_message_t *)data->matched;
-    if(cursor != NULL){
-      data->matched = cursor->next;
-      sctk_spinlock_unlock (&(data->spinlock_matched));
-      __sctk_perform_match_for_source_found (cursor,(sctk_thread_ptp_message_t *)cursor->pair);
-    } else {
-      sctk_spinlock_unlock (&(data->spinlock_matched));
-    }
-
-    while((data->matched == NULL) && (data->busy == 1)){
-      YIELD
-    }
-  }
-}
-
-static inline int
-__sctk_perform_match_for_source (sctk_task_ptp_data_t * restrict data,
-				 sctk_per_communicator_ptp_data_t *
-				 communicator,sctk_thread_ptp_message_t *restrict target)
-{
-  int res = 0;
-  sctk_thread_ptp_message_t *restrict cursor;
-  sctk_thread_ptp_message_t *restrict cursor_any_wait;
-  sctk_thread_ptp_message_t *restrict src;
-  sctk_thread_ptp_message_t *restrict new_list = NULL;
-  sctk_thread_ptp_message_t *restrict new_list_tail = NULL;
-  sctk_thread_ptp_message_t *restrict new_any_source_list = NULL;
-  sctk_thread_ptp_message_t *restrict new_any_source_list_tail = NULL;
-
-  if ((((data->sctk_recv_list.head != NULL)
-       || (communicator->sctk_any_source_list.head != NULL))
-       && (data->sctk_send_list.head != NULL)) && (data->busy == 0))
-    {
-      sctk_spinlock_lock (&(data->spinlock));
-      data->busy = 1;
-
-      sctk_thread_ptp_message_list_lock (&(data->sctk_recv_list));
-      sctk_thread_ptp_message_list_lock (&
-					 (communicator->
-					  sctk_any_source_list));
-      sctk_thread_ptp_message_list_lock (&(data->sctk_send_list));
-
-      cursor = (sctk_thread_ptp_message_t *) (data->sctk_recv_list.head);
-      cursor_any_wait =
-	(sctk_thread_ptp_message_t *) (communicator->sctk_any_source_list.
-				       head);
-
-      data->sctk_recv_list.head = NULL;
-      data->sctk_recv_list.tail = NULL;
-
-      communicator->sctk_any_source_list.head = NULL;
-      communicator->sctk_any_source_list.tail = NULL;
-
-      while ((cursor != NULL) || (cursor_any_wait != NULL))
-	{
-	  sctk_thread_ptp_message_t *restrict tmp;
-	  int is_any_wait = 0;
-
-	  if (cursor_any_wait != NULL)
-	    {
-	      if (cursor == NULL)
-		{
-		  is_any_wait = 1;
-		}
-	      else
-		{
-		  if (cursor_any_wait->header.rank_recv <
-		      cursor->header.rank_recv)
-		    {
-		      is_any_wait = 1;
-		    }
-		}
-	    }
-
-	  if (is_any_wait)
-	    {
-	      tmp = (sctk_thread_ptp_message_t *)cursor_any_wait->next;
-	      cursor_any_wait->next = NULL;
-	      if (cursor_any_wait->completion_flag == 0)
-		{
-		  src = sctk_find_matching (cursor_any_wait, data);
-		  if (src != NULL)
-		    {
-		      __sctk_perform_match_for_source_found_register (cursor_any_wait,
-								      src,data,target);
-		    }
-		  else
-		    {
-		      res++;
-		      /*Message not ready */
-		      if (new_any_source_list == NULL)
-			{
-			  new_any_source_list = cursor_any_wait;
-			}
-		      else
-			{
-			  new_any_source_list_tail->next = cursor_any_wait;
-			}
-		      new_any_source_list_tail = cursor_any_wait;
-		    }
-		}
-	      cursor_any_wait = tmp;
-	    }
-	  else
-	    {
-	      tmp = (sctk_thread_ptp_message_t *)cursor->next;
-	      cursor->next = NULL;
-	      if (cursor->completion_flag == 0)
-		{
-		  src = sctk_find_matching (cursor, data);
-		  if (src != NULL)
-		    {
-		      __sctk_perform_match_for_source_found_register (cursor, src,data,target);
-		    }
-		  else
-		    {
-		      res++;
-		      /*Message not ready */
-		      if (new_list == NULL)
-			{
-			  new_list = cursor;
-			}
-		      else
-			{
-			  new_list_tail->next = cursor;
-			}
-		      new_list_tail = cursor;
-		    }
-		}
-	      cursor = tmp;
-	    }
-	}
-
-      assert(data->sctk_recv_list.head == NULL);
-      assert(data->sctk_recv_list.tail == NULL);
-      assert(communicator->sctk_any_source_list.head == NULL);
-      assert(communicator->sctk_any_source_list.tail == NULL);
-
-      data->sctk_recv_list.head = new_list;
-      data->sctk_recv_list.tail = new_list_tail;
-
-      communicator->sctk_any_source_list.head = new_any_source_list;
-      communicator->sctk_any_source_list.tail = new_any_source_list_tail;
-
-      sctk_thread_ptp_message_list_unlock (&(data->sctk_recv_list));
-      sctk_thread_ptp_message_list_unlock (&
-					   (communicator->
-					    sctk_any_source_list));
-      sctk_thread_ptp_message_list_unlock (&(data->sctk_send_list));
-      data->busy = 0;
-      sctk_spinlock_unlock (&(data->spinlock));
-    }
-
-  return res;
-}
-
-static inline int
-__sctk_perform_match_any_source_wait (sctk_per_communicator_ptp_data_t *
-				      communicator)
-{
-  sctk_thread_ptp_message_t *cursor;
-  int res = 0;
-
-  while(sctk_thread_ptp_message_list_trylock (&(communicator->sctk_wait_list))){
-    int i;
-    sctk_task_ptp_data_t *data;
-
-    YIELD
-
-    for (i = 0; i < communicator->nb_tasks; i++)
+  switch(send->tail.message_type){
+  case sctk_message_pack: {
+    size_t size;
+    size_t i;
+    for (i = 0; i < send->tail.message.pack.count; i++)
       {
-	data = &(communicator->tasks[i]);
-	__sctk_perform_matched_messages(data);
+	sctk_copy_buffer_std_std (send->tail.message.pack.list.std[i].begins,
+				  send->tail.message.pack.list.std[i].ends,
+				  send->tail.message.pack.list.std[i].count,
+				  send->tail.message.pack.list.std[i].addr,
+				  send->tail.message.pack.list.std[i].elem_size,
+				  recv->tail.message.pack.list.std[i].begins,
+				  recv->tail.message.pack.list.std[i].ends,
+				  recv->tail.message.pack.list.std[i].count,
+				  recv->tail.message.pack.list.std[i].addr,
+				  recv->tail.message.pack.list.std[i].elem_size);
       }
+
+    sctk_message_completion_and_free(send,recv);
+    break;
   }
-
-  cursor = (sctk_thread_ptp_message_t *) (communicator->sctk_wait_list.head);
-  while (cursor != NULL)
-    {
-      if (cursor->completion_flag == 0)
-	{
-	  if (cursor->data != NULL)
-	    {
-	      __sctk_perform_matched_messages(cursor->data);
-	      if ((cursor->data->sctk_recv_list.head != NULL) &&
-		  (cursor->data->sctk_send_list.head != NULL))
-		{
-		  __sctk_perform_match_for_source (cursor->data,
-						   communicator,cursor);
-		}
-	      __sctk_perform_matched_messages(cursor->data);
-	    }
-	  else
-	    {
-	      int i;
-	      sctk_task_ptp_data_t *data;
-	      for (i = 0; i < communicator->nb_tasks; i++)
-		{
-		  data = &(communicator->tasks[i]);
-		  __sctk_perform_matched_messages(data);
-		  if (data->sctk_send_list.head != NULL)
-		    {
-		      __sctk_perform_match_for_source (data, communicator,cursor);
-		    }
-		  __sctk_perform_matched_messages(data);
-		}
-	    }
-	}
-      if (cursor->completion_flag == 0)
-	{
-	  res++;
-	}
-      cursor = (sctk_thread_ptp_message_t *)cursor->wait_next;
-    }
-  sctk_thread_ptp_message_list_unlock (&(communicator->sctk_wait_list));
-  return res;
+  default: not_reachable();
+  }
 }
-static inline void
-__sctk_free_message_wait (sctk_per_communicator_ptp_data_t *
-			  restrict communicator,
-			  sctk_ptp_data_t * restrict from)
-{
-  sctk_thread_ptp_message_t *restrict cursor;
-  sctk_thread_ptp_message_t *restrict new_list = NULL;
-  sctk_thread_ptp_message_t *restrict new_list_tail = NULL;
-  sctk_thread_ptp_message_t *restrict new_free_list = NULL;
-  sctk_thread_ptp_message_t *restrict new_free_list_tail = NULL;
 
-  sctk_thread_ptp_message_list_lock (&(communicator->sctk_wait_list));
+inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp){
+  sctk_thread_ptp_message_t* send;
+  sctk_thread_ptp_message_t* recv;
 
+  send = tmp->msg_send;
+  recv = tmp->msg_recv;
 
-  cursor = (sctk_thread_ptp_message_t *) (communicator->sctk_wait_list.head);
-  communicator->sctk_wait_list.head = NULL;
-  communicator->sctk_wait_list.tail = NULL;
-  while (cursor != NULL)
-    {
-      sctk_thread_ptp_message_t *restrict tmp = NULL;
-      tmp = (sctk_thread_ptp_message_t *)cursor->wait_next;
-      cursor->wait_next = NULL;
-      if (cursor->completion_flag == 0)
-	{
-	  if (new_list == NULL)
-	    {
-	      new_list = cursor;
-	      new_list_tail = cursor;
-	    }
-	  else
-	    {
-	      new_list_tail->wait_next = cursor;
-	      new_list_tail = cursor;
-	    }
-	}
-      else
-	{
-	  sctk_nodebug ("free recv %p %d", cursor, cursor->completion_flag);
-	  if (cursor->header.request != NULL && cursor->completion_flag != 2)
-	    {
-	      *(cursor->header.req_msg_size) = cursor->header.msg_size;
-	      *(cursor->header.request) = cursor->completion_flag;
-	    }
-	  if (cursor->completion_flag == 2)
-	    {
-	      sctk_free (cursor);
-	    }
-	  else if (cursor->allocator_p != NULL)
-	    {
-	      if (new_free_list == NULL)
-		{
-		  new_free_list = cursor;
-		  new_free_list_tail = cursor;
-		}
-	      else
-		{
-		  new_free_list_tail->wait_next = cursor;
-		  new_free_list_tail = cursor;
-		}
-	    }
-	}
-      cursor = tmp;
-    }
-  assert(communicator->sctk_wait_list.head == NULL);
-  assert(communicator->sctk_wait_list.tail == NULL);
-  communicator->sctk_wait_list.head = new_list;
-  communicator->sctk_wait_list.tail = new_list_tail;
-  sctk_thread_ptp_message_list_unlock (&(communicator->sctk_wait_list));
-/*   if (new_free_list_tail != NULL) */
-/*     { */
-/*       sctk_spinlock_lock (&(from->free_list.lock)); */
-/*       new_free_list_tail->wait_next = from->free_list.free_list; */
-/*       from->free_list.free_list = new_free_list; */
-/*       sctk_spinlock_unlock (&(from->free_list.lock)); */
-/*     } */
+  assume(send->tail.message_type == recv->tail.message_type);
 
-  new_list = NULL;
-  new_list_tail = NULL;
-/*   new_free_list = NULL; */
-/*   new_free_list_tail = NULL; */
+  switch(send->tail.message_type){
+  case sctk_message_pack_absolute: {
+    size_t size;
+    size_t i;
+    for (i = 0; i < send->tail.message.pack.count; i++)
+      {
+	sctk_copy_buffer_absolute_absolute (send->tail.message.pack.list.absolute[i].begins,
+					    send->tail.message.pack.list.absolute[i].ends,
+					    send->tail.message.pack.list.absolute[i].count,
+					    send->tail.message.pack.list.absolute[i].addr,
+					    send->tail.message.pack.list.absolute[i].elem_size,
+					    recv->tail.message.pack.list.absolute[i].begins,
+					    recv->tail.message.pack.list.absolute[i].ends,
+					    recv->tail.message.pack.list.absolute[i].count,
+					    recv->tail.message.pack.list.absolute[i].addr,
+					    recv->tail.message.pack.list.absolute[i].elem_size);
+      }
 
-  sctk_thread_ptp_message_list_lock (&(communicator->sctk_wait_send_list));
-  cursor =
-    (sctk_thread_ptp_message_t *) (communicator->sctk_wait_send_list.head);
+    sctk_message_completion_and_free(send,recv);
+    break;
+  }
+  default: not_reachable();
+  }
+}
 
-  communicator->sctk_wait_send_list.head = NULL;
-  communicator->sctk_wait_send_list.tail = NULL;
+/********************************************************************/
+/*INIT                                                              */
+/********************************************************************/
 
-  while (cursor != NULL)
-    {
-      sctk_thread_ptp_message_t *restrict tmp = NULL;
-      tmp = (sctk_thread_ptp_message_t *)cursor->wait_next;
-      cursor->wait_next = NULL;
-      if ((cursor->completion_flag == 0) || (cursor->completion_flag == 3))
-	{
-	  if (new_list == NULL)
-	    {
-	      new_list = cursor;
-	      new_list_tail = cursor;
-	    }
-	  else
-	    {
-	      new_list_tail->wait_next = cursor;
-	      new_list_tail = cursor;
-	    }
-	}
-      else
-	{
-	  sctk_nodebug ("free send %p %d", cursor, cursor->completion_flag);
-	  if (cursor->header.request != NULL && cursor->completion_flag != 2)
-	    {
-	      *(cursor->header.req_msg_size) = cursor->header.msg_size;
-	      *(cursor->header.request) = cursor->completion_flag;
-	    }
-	  if (cursor->completion_flag == 2)
-	    {
-	      sctk_free (cursor);
-	    }
-	  else if (cursor-> allocator_p!= NULL)
-	    {
-	      if (new_free_list == NULL)
-		{
-		  new_free_list = cursor;
-		  new_free_list_tail = cursor;
-		}
-	      else
-		{
-		  new_free_list_tail->wait_next = cursor;
-		  new_free_list_tail = cursor;
-		}
-	    }
-	}
-      cursor = tmp;
-    }
-  assert(communicator->sctk_wait_send_list.head == NULL);
-  assert(communicator->sctk_wait_send_list.tail == NULL);
-  communicator->sctk_wait_send_list.head = new_list;
-  communicator->sctk_wait_send_list.tail = new_list_tail;
-  sctk_thread_ptp_message_list_unlock (&(communicator->sctk_wait_send_list));
-  if (new_free_list_tail != NULL)
-    {
-      sctk_spinlock_lock (&(from->free_list.lock));
-      new_free_list_tail->wait_next = from->free_list.free_list;
-      from->free_list.free_list = new_free_list;
-      sctk_spinlock_unlock (&(from->free_list.lock));
-    }
+/*Init data structures used for task i*/
+void sctk_ptp_per_task_init (int i){
+  static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+  sctk_internal_ptp_t * tmp;
+
+  tmp = sctk_malloc(sizeof(sctk_internal_ptp_t));
+  memset(tmp,0,sizeof(sctk_internal_ptp_t));
+/*   tmp->key.comm = SCTK_COMM_WORLD; */
+  tmp->key.destination = i;
+
+  sctk_spinlock_lock(&lock);
+  sctk_internal_ptp_message_list_init(&(tmp->lists));
+  sctk_ptp_table_insert(tmp);
+  sctk_spinlock_unlock(&lock);
+}
+
+void sctk_unregister_thread (const int i){
+  sctk_thread_mutex_lock (&sctk_total_number_of_tasks_lock);
+  sctk_total_number_of_tasks--;
+  sctk_thread_mutex_unlock (&sctk_total_number_of_tasks_lock);
+}
+
+/********************************************************************/
+/*Message creation                                                  */
+/********************************************************************/
+
+void sctk_free_pack(void*);
+
+static
+void sctk_free_header(void* tmp){
+  sctk_free(tmp);
+}
+
+static
+void* sctk_alloc_header(){
+#warning "Optimize allocation"
+  return sctk_malloc(sizeof(sctk_thread_ptp_message_t));
+}
+
+void sctk_rebuild_header (sctk_thread_ptp_message_t * msg){
+  if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->sctk_msg_get_specific_message_tag)){
+    if(msg->sctk_msg_get_source != MPC_ANY_SOURCE)
+      msg->sctk_msg_get_glob_source = msg->sctk_msg_get_source;
+    else
+      msg->sctk_msg_get_glob_source = -1;
+
+    msg->sctk_msg_get_glob_destination = -1;
+  } else {
+    if(msg->sctk_msg_get_source != MPC_ANY_SOURCE)
+      msg->sctk_msg_get_glob_source =
+	sctk_get_comm_world_rank (msg->sctk_msg_get_communicator,msg->sctk_msg_get_source);
+    else
+      msg->sctk_msg_get_glob_source = -1;
+
+    msg->sctk_msg_get_glob_destination =
+      sctk_get_comm_world_rank (msg->sctk_msg_get_communicator,msg->sctk_msg_get_destination);
+  }
+  msg->tail.need_check_in_wait = 1;
+  msg->tail.request = NULL;
+}
+
+void sctk_reinit_header (sctk_thread_ptp_message_t *tmp, void (*free_memory)(void*),
+		       void (*message_copy)(sctk_message_to_copy_t*)){
+
+  tmp->tail.free_memory = free_memory;
+  tmp->tail.message_copy = message_copy;
+}
+
+void sctk_init_header (sctk_thread_ptp_message_t *tmp, const int myself,
+		       sctk_message_type_t msg_type, void (*free_memory)(void*),
+		       void (*message_copy)(sctk_message_to_copy_t*)){
+
+  /*Init message struct*/
+  memset(tmp,0,sizeof(sctk_thread_ptp_message_t));
+
+  tmp->tail.message_type = msg_type;
+
+  sctk_reinit_header(tmp,free_memory,message_copy);
+  if(tmp->tail.message_type == sctk_message_pack){
+    sctk_reinit_header(tmp,sctk_free_pack,sctk_message_copy_pack);
+  }
+  if(tmp->tail.message_type == sctk_message_pack_absolute){
+    sctk_reinit_header(tmp,sctk_free_pack,sctk_message_copy_pack_absolute);
+  }
+}
+
+sctk_thread_ptp_message_t *sctk_create_header (const int myself,sctk_message_type_t msg_type){
+  sctk_thread_ptp_message_t * tmp;
+
+  tmp = sctk_alloc_header();
+
+  sctk_init_header(tmp,myself,msg_type,sctk_free_header,sctk_message_copy);
+
+  return tmp;
 }
 
 static inline void
-__sctk_probe_for_source (sctk_task_ptp_data_t * data,
-			 sctk_thread_message_header_t * msg, int *state)
-{
-  *state = 0;
-  if (data->sctk_send_list.head != NULL)
-    {
-      sctk_thread_ptp_message_list_lock (&(data->sctk_send_list));
-      if (data->sctk_send_list.head != NULL)
-	{
-	  *state = 1;
-	  *msg = data->sctk_send_list.head->header;
-	}
-      sctk_thread_ptp_message_list_unlock (&(data->sctk_send_list));
-    }
-}
-
-static inline void
-__sctk_probe_for_source_tag (sctk_task_ptp_data_t * data,
-			     sctk_thread_message_header_t * msg, int *state)
-{
-  int message_tag;
-  volatile sctk_thread_ptp_message_t *tmp;
-  sctk_spinlock_lock (&(data->spinlock));
-
-  message_tag = msg->message_tag;
-  *state = 0;
-  sctk_thread_ptp_message_list_lock (&(data->sctk_send_list));
-  tmp = data->sctk_send_list.head;
-  while (tmp != NULL)
-    {
-      if (tmp->header.message_tag == message_tag)
-	{
-	  *state = 1;
-	  *msg = tmp->header;
-	  break;
-	}
-      tmp = tmp->next;
-    }
-  sctk_thread_ptp_message_list_unlock (&(data->sctk_send_list));
-
-  sctk_spinlock_unlock (&(data->spinlock));
-}
-
-static inline void
-__sctk_probe_any_source (sctk_per_communicator_ptp_data_t * communicator,
-			 sctk_thread_message_header_t * msg, int *state)
-{
-  int i;
-  int nb_task;
-  int found;
-  nb_task = communicator->nb_tasks;
-  for (i = 0; i < nb_task; i++)
-    {
-      __sctk_probe_for_source (&(communicator->tasks[i]), msg, &found);
-      if (found == 1)
-	{
-	  *state = 1;
-	  return;
-	}
-    }
-  *state = 0;
-}
-
-static inline int
-sctk_place_message_send (sctk_ptp_data_t * dest,
-			 sctk_thread_ptp_message_t * msg)
-{
-  sctk_task_ptp_data_t *data;
-  int res = 0;
-
-  sctk_nodebug
-    ("TRY TO PLACE in comm %d in task %d with tag %d form %d is usable %d",
-     msg->header.communicator, msg->header.destination,
-     msg->header.message_tag, msg->header.source, dest->is_usable);
-  if (dest->is_usable == 0)
-    return 1;
-
-  if (msg->header.communicator == (sctk_communicator_t)-1 ||
-      msg->header.destination == -1 ||
-      msg->header.message_tag == -1 || msg->header.source == -1)
-    {
-      sctk_nodebug ("PLACE in comm %d in task %d with tag %d form %d",
-		    msg->header.communicator, msg->header.destination,
-		    msg->header.message_tag, msg->header.source);
-    }
-
-  data =
-    &(dest->communicators[msg->header.communicator].
-      tasks[msg->header.source]);
-  msg->data = NULL;
-
-  sctk_spinlock_lock (&(data->spinlock));
-
-  if (data->is_usable)
-    {
-      msg->data = data;
-
-      sctk_thread_ptp_message_list_lock (&(data->sctk_send_list));
-      msg->header.rank = data->rank_send;
-      data->rank_send++;
-
-      if (data->sctk_send_list.head != NULL)
-	{
-	  data->sctk_send_list.tail->next = msg;
-	}
-      else
-	{
-	  data->sctk_send_list.head = msg;
-	}
-      data->sctk_send_list.tail = msg;
-      sctk_thread_ptp_message_list_unlock (&(data->sctk_send_list));
-    }
-  else
-    {
-      res = 1;
-    }
-
-  sctk_spinlock_unlock (&(data->spinlock));
-
-  sctk_nodebug ("Message send in %p %d return %d", data, data->is_usable,
-		res);
-
-  return res;
+sctk_add_adress_in_message_contiguous (sctk_thread_ptp_message_t *
+			      restrict msg, void *restrict addr,
+			      const size_t size){
+  msg->tail.message.contiguous.size = size;
+  msg->tail.message.contiguous.addr = addr;
 }
 
 void
-sctk_check_messages (int destination, int source,
-		     sctk_communicator_t communicator)
-{
-  sctk_ptp_data_t *dest;
-  sctk_task_ptp_data_t *data;
-  sctk_per_communicator_ptp_data_t *ptp_communicator;
-
-  dest = &(sctk_ptp_list[destination]);
-
-  if (dest->is_usable == 0)
-    return;
-
-  data = &(dest->communicators[communicator].tasks[source]);
-  ptp_communicator = &(dest->communicators[communicator]);
-
-  sctk_thread_ptp_message_list_lock (&(ptp_communicator->sctk_wait_list));
-  __sctk_perform_match_for_source (data, ptp_communicator,NULL);
-  sctk_thread_ptp_message_list_unlock (&(ptp_communicator->sctk_wait_list));
+sctk_add_adress_in_message (sctk_thread_ptp_message_t *
+			      restrict msg, void *restrict addr,
+			      const size_t size){
+  switch(msg->tail.message_type){
+  case sctk_message_contiguous: {
+    sctk_add_adress_in_message_contiguous (msg,addr,size);
+    break;
+  }
+  default: not_reachable();
+  }
 }
 
-static inline int
-sctk_place_message_recv (sctk_ptp_data_t * dest,
-			 sctk_thread_ptp_message_t * msg,
-			 sctk_per_communicator_ptp_data_t * communicator)
-{
-  sctk_task_ptp_data_t *data;
-/*   assume(dest->is_usable != 0); */
+static inline
+void sctk_request_init_request(sctk_request_t * request, int completion,
+			       sctk_thread_ptp_message_t * msg,
+			       const int source,
+			       const int destination,
+			       const int message_tag,
+			       const sctk_communicator_t
+			       communicator,
+			       const size_t count){
+  assume(msg != NULL);
+  request->msg = msg;
+  request->header.source = source;
+  request->header.destination = destination;
+  request->header.glob_destination = msg->sctk_msg_get_glob_destination;
+  request->header.glob_source = msg->sctk_msg_get_glob_source;
+  request->header.message_tag = message_tag;
+  request->header.communicator = communicator;
+  request->header.msg_size = count;
+  request->is_null = 0;
+  request->completion_flag = completion;
+}
 
-  if (msg->header.source == -1)
-    {
-      sctk_thread_ptp_message_list_lock (&
-					 (communicator->
-					  sctk_any_source_list));
-      if (communicator->sctk_any_source_list.head != NULL)
-	{
-	  communicator->sctk_any_source_list.tail->next = msg;
-	}
-      else
-	{
-	  communicator->sctk_any_source_list.head = msg;
-	}
-      communicator->sctk_any_source_list.tail = msg;
-      msg->header.rank_recv = communicator->rank_recv;
-      communicator->rank_recv++;
-      sctk_thread_ptp_message_list_unlock (&
-					   (communicator->
-					    sctk_any_source_list));
-      msg->data = NULL;
+void sctk_set_header_in_message (sctk_thread_ptp_message_t *
+				 msg, const int message_tag,
+				 const sctk_communicator_t
+				 communicator,
+				 const int source,
+				 const int destination,
+				 sctk_request_t * request,
+				 const size_t count,
+				 specific_message_tag_t specific_message_tag){
+  msg->tail.request = request;
+
+  msg->sctk_msg_get_source = source;
+  msg->sctk_msg_get_destination = destination;
+
+  if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(specific_message_tag)){
+    if(source != MPC_ANY_SOURCE) {
+      msg->sctk_msg_get_glob_source = source;
     }
-  else
-    {
-      data =
-	&(dest->communicators[msg->header.communicator].
-	  tasks[msg->header.source]);
+    else
+      msg->sctk_msg_get_glob_source = -1;
 
-      sctk_thread_ptp_message_list_lock (&(data->sctk_recv_list));
-      sctk_thread_ptp_message_list_lock (&
-					 (communicator->
-					  sctk_any_source_list));
-      msg->header.rank_recv = communicator->rank_recv;
-      communicator->rank_recv++;
-      sctk_thread_ptp_message_list_unlock (&
-					   (communicator->
-					    sctk_any_source_list));
+    msg->sctk_msg_get_glob_destination = -1;
+  } else {
+    if(source != MPC_ANY_SOURCE)
+      msg->sctk_msg_get_glob_source = sctk_get_comm_world_rank (communicator,source);
+    else
+      msg->sctk_msg_get_glob_source = -1;
 
-      msg->header.rank = data->rank_recv;
-      data->rank_recv++;
+    msg->sctk_msg_get_glob_destination = sctk_get_comm_world_rank (communicator,destination);
+  }
 
-      sctk_nodebug ("Message recv in %p", data);
-      msg->data = data;
+  msg->body.header.communicator = communicator;
+  msg->body.header.message_tag = message_tag;
+  msg->body.header.specific_message_tag = specific_message_tag;
+  msg->body.header.msg_size = count;
 
-      if (data->sctk_recv_list.head != NULL)
-	{
-	  data->sctk_recv_list.tail->next = msg;
-	}
-      else
-	{
-	  data->sctk_recv_list.head = msg;
-	}
-      data->sctk_recv_list.tail = msg;
-      sctk_thread_ptp_message_list_unlock (&(data->sctk_recv_list));
+  msg->sctk_msg_get_use_message_numbering = 1;
 
+  if(request != NULL){
 
+    sctk_request_init_request(request,SCTK_MESSAGE_PENDING,msg,source,destination,message_tag,communicator,
+			      count);
+
+    msg->body.completion_flag = &(request->completion_flag);
+  }
+  msg->tail.need_check_in_wait = 1;
+}
+
+/********************************************************************/
+/*Message pack creation                                             */
+/********************************************************************/
+#define SCTK_PACK_REALLOC_STEP 10
+void sctk_free_pack(void* tmp){
+  sctk_thread_ptp_message_t * msg;
+
+  msg = tmp;
+
+  if(msg->tail.message_type == sctk_message_pack_absolute){
+    sctk_free(msg->tail.message.pack.list.absolute);
+  } else {
+    sctk_free(msg->tail.message.pack.list.std);
+  }
+  sctk_free_header(tmp);
+}
+
+void
+sctk_add_pack_in_message (sctk_thread_ptp_message_t * msg,
+			  void *adr, const sctk_count_t nb_items,
+			  const size_t elem_size,
+			  sctk_pack_indexes_t * begins,
+			  sctk_pack_indexes_t * ends){
+  int step;
+  if(msg->tail.message_type == sctk_message_pack_undefined){
+    msg->tail.message_type = sctk_message_pack;
+    sctk_reinit_header(msg,sctk_free_pack,sctk_message_copy_pack);
+  }
+  assume(msg->tail.message_type == sctk_message_pack);
+
+  if(msg->tail.message.pack.count >= msg->tail.message.pack.max_count){
+    msg->tail.message.pack.max_count += SCTK_PACK_REALLOC_STEP;
+    msg->tail.message.pack.list.std = sctk_realloc(msg->tail.message.pack.list.std,
+		 msg->tail.message.pack.max_count*sizeof(sctk_message_pack_std_list_t));
+  }
+
+  step = msg->tail.message.pack.count;
+
+  msg->tail.message.pack.list.std[step].count = nb_items;
+  msg->tail.message.pack.list.std[step].begins = begins;
+  msg->tail.message.pack.list.std[step].ends = ends;
+  msg->tail.message.pack.list.std[step].addr = adr;
+  msg->tail.message.pack.list.std[step].elem_size = elem_size;
+
+  msg->tail.message.pack.count++;
+}
+void
+sctk_add_pack_in_message_absolute (sctk_thread_ptp_message_t *
+				   msg, void *adr,
+				   const sctk_count_t nb_items,
+				   const size_t elem_size,
+				   sctk_pack_absolute_indexes_t *
+				   begins,
+				   sctk_pack_absolute_indexes_t * ends){
+  int step;
+  if(msg->tail.message_type == sctk_message_pack_undefined){
+    msg->tail.message_type = sctk_message_pack_absolute;
+    sctk_reinit_header(msg,sctk_free_pack,sctk_message_copy_pack_absolute);
+  }
+
+  assume(msg->tail.message_type == sctk_message_pack_absolute);
+
+  if(msg->tail.message.pack.count >= msg->tail.message.pack.max_count){
+    msg->tail.message.pack.max_count += SCTK_PACK_REALLOC_STEP;
+    msg->tail.message.pack.list.absolute = sctk_realloc(msg->tail.message.pack.list.absolute,
+		 msg->tail.message.pack.max_count*sizeof(sctk_message_pack_absolute_list_t));
+  }
+
+  step = msg->tail.message.pack.count;
+
+  msg->tail.message.pack.list.absolute[step].count = nb_items;
+  msg->tail.message.pack.list.absolute[step].begins = begins;
+  msg->tail.message.pack.list.absolute[step].ends = ends;
+  msg->tail.message.pack.list.absolute[step].addr = adr;
+  msg->tail.message.pack.list.absolute[step].elem_size = elem_size;
+
+  msg->tail.message.pack.count++;
+}
+
+/********************************************************************/
+/*Perform messages                                                  */
+/********************************************************************/
+static inline
+sctk_msg_list_t* sctk_perform_messages_search_matching(sctk_internal_ptp_t* pair,
+					  sctk_thread_message_header_t* header){
+  sctk_msg_list_t* res = NULL;
+  sctk_msg_list_t* ptr_send;
+  sctk_msg_list_t* tmp;
+  res = NULL;
+  DL_FOREACH_SAFE(pair->lists.pending_send.list,ptr_send,tmp){
+    sctk_thread_message_header_t* header_send;
+    sctk_assert(ptr_send->msg != NULL);
+    header_send = &(ptr_send->msg->body.header);
+
+    if((header->communicator == header_send->communicator) &&
+       (header->specific_message_tag == header_send->specific_message_tag) &&
+       ((header->source == header_send->source) || (header->source == MPC_ANY_SOURCE))&&
+       ((header->message_tag == header_send->message_tag) || (header->message_tag == MPC_ANY_TAG))){
+      DL_DELETE(pair->lists.pending_send.list,ptr_send);
+      sctk_nodebug("Match? dest %d (%d,%d,%d) == (%d,%d,%d)",
+		 header->destination,
+		 header->source,header->message_tag,header->specific_message_tag,
+		 header_send->source,header_send->message_tag,header_send->specific_message_tag);
+      return ptr_send;
     }
+  }
+  return res;
+}
+static inline
+int sctk_perform_messages_probe_matching(sctk_internal_ptp_t* pair,
+					  sctk_thread_message_header_t* header){
+  sctk_msg_list_t* res = NULL;
+  sctk_msg_list_t* ptr_send;
+  sctk_msg_list_t* tmp;
+  int remote;
+  res = NULL;
+  sctk_internal_ptp_merge_pending(&(pair->lists));
 
+  DL_FOREACH_SAFE(pair->lists.pending_send.list,ptr_send,tmp){
+    sctk_thread_message_header_t* header_send;
+    sctk_assert(ptr_send->msg != NULL);
+    header_send = &(ptr_send->msg->body.header);
+    if((header->communicator == header_send->communicator) &&
+       (header->specific_message_tag == header_send->specific_message_tag) &&
+       ((header->source == header_send->source) || (header->source == MPC_ANY_SOURCE))&&
+       ((header->message_tag == header_send->message_tag) || (header->message_tag == MPC_ANY_TAG))){
+      memcpy(header,&(ptr_send->msg->body.header),sizeof(sctk_thread_message_header_t));
+      return 1;
+    }
+  }
+
+  if(header->source == MPC_ANY_SOURCE){
+    sctk_network_notify_any_source_message ();
+  } else {
+    int remote;
+    remote = sctk_get_comm_world_rank (header->communicator,header->source);
+    if(remote != sctk_process_rank){
+      sctk_network_notify_perform_message (remote);
+    }
+  }
   return 0;
 }
 
-static inline sctk_thread_ptp_message_t *
-__sctk_message_alloc (int old_size, sctk_messages_alloc_thread_data_t * allocator)
-{
-  static int max_size = 0;
-  int size;
-  sctk_thread_ptp_message_t *tmp;
-  char *ptr;
+static inline void sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t* pair){
+  sctk_msg_list_t* ptr_recv;
+  sctk_msg_list_t* ptr_send;
+  sctk_msg_list_t* tmp;
 
-  size = old_size;
+  sctk_internal_ptp_merge_pending(&(pair->lists));
 
-  if (max_size < old_size)
-    {
-      max_size = old_size;
-    }
-  if (max_size > old_size)
-    {
-      old_size = max_size;
-    }
+  DL_FOREACH_SAFE(pair->lists.pending_recv.list,ptr_recv,tmp){
+    sctk_assert(ptr_recv->msg != NULL);
+    ptr_send = sctk_perform_messages_search_matching(pair,&(ptr_recv->msg->body.header));
+    if(ptr_send != NULL){
+      DL_DELETE(pair->lists.pending_recv.list,ptr_recv);
 
-  size = sctk_max (old_size, size);
-
-  size = ((size / SCTK_MESSAGE_UNIT_NUMBER) + 1) * SCTK_MESSAGE_UNIT_NUMBER;
-  sctk_spinlock_lock(&(allocator->lock));
-  tmp = (sctk_thread_ptp_message_t *)
-    __sctk_calloc (SCTK_MESSAGE_UNIT_SIZE (size), 1, allocator->alloc);
-  sctk_spinlock_unlock(&(allocator->lock));
-  ptr = (char *) tmp;
-  ptr += sctk_aligned_sizeof (sctk_thread_ptp_message_t);
-
-  tmp->message.begins = (sctk_pack_indexes_t **) ptr;
-  ptr += sctk_aligned_size (size * sizeof (sctk_pack_indexes_t *));
-  tmp->message.ends = (sctk_pack_indexes_t **) ptr;
-  ptr += sctk_aligned_size (size * sizeof (sctk_pack_indexes_t *));
-
-  tmp->message.begins_absolute = (sctk_pack_absolute_indexes_t **) ptr;
-  ptr += sctk_aligned_size (size * sizeof (sctk_pack_absolute_indexes_t *));
-  tmp->message.ends_absolute = (sctk_pack_absolute_indexes_t **) ptr;
-  ptr += sctk_aligned_size (size * sizeof (sctk_pack_absolute_indexes_t *));
-
-  tmp->message.sizes = (size_t *) ptr;
-  ptr += sctk_aligned_size (size * sizeof (size_t));
-  tmp->message.elem_sizes = (size_t *) ptr;
-  ptr += sctk_aligned_size (size * sizeof (size_t));
-  tmp->message.adresses = (void **) ptr;
-
-  tmp->message.nb_items_max = size;
-  tmp->message.max_count = 0;
-  tmp->message.nb_items = 0;
-  tmp->message.message_size = 0;
-
-  return tmp;
-}
-
-
-static inline sctk_thread_ptp_message_t *
-__sctk_message_realloc (size_t new_size, sctk_thread_ptp_message_t * orig)
-{
-  sctk_nodebug ("Size %d, cur size %d", new_size, orig->message.nb_items_max);
-  if (orig->message.nb_items_max > new_size)
-    {
-      return orig;
-    }
-  else
-    {
-      sctk_thread_ptp_message_t *tmp;
-      int size;
-      size = orig->message.nb_items_max;
-
-      tmp = __sctk_message_alloc (new_size, orig->allocator_p);
-
-      __sctk_optimized_memcpy (tmp->message.begins, orig->message.begins,
-	      sctk_aligned_size (size * sizeof (sctk_pack_indexes_t *)));
-      __sctk_optimized_memcpy (tmp->message.ends, orig->message.ends,
-	      sctk_aligned_size (size * sizeof (sctk_pack_indexes_t *)));
-
-      __sctk_optimized_memcpy (tmp->message.begins_absolute, orig->message.begins_absolute,
-	      sctk_aligned_size (size *
-				 sizeof (sctk_pack_absolute_indexes_t *)));
-      __sctk_optimized_memcpy (tmp->message.ends_absolute, orig->message.ends_absolute,
-	      sctk_aligned_size (size *
-				 sizeof (sctk_pack_absolute_indexes_t *)));
-
-      __sctk_optimized_memcpy (tmp->message.sizes, orig->message.sizes,
-	      sctk_aligned_size (size * sizeof (size_t)));
-      __sctk_optimized_memcpy (tmp->message.elem_sizes, orig->message.elem_sizes,
-	      sctk_aligned_size (size * sizeof (size_t)));
-      __sctk_optimized_memcpy (tmp->message.adresses, orig->message.adresses,
-	      sctk_aligned_size (size * sizeof (void *)));
-
-      tmp->header = orig->header;
-      tmp->allocator_p = orig->allocator_p;
-
-      tmp->message.nb_items = orig->message.nb_items;
-      tmp->message.message_size = orig->message.message_size;
-      tmp->message.max_count = orig->message.max_count;
-
-      tmp->header.myself = orig->header.myself;
-      sctk_free (orig);
-      return tmp;
-    }
-}
-
-
-
-sctk_thread_ptp_message_t *
-sctk_create_header (const int myself)
-{
-  sctk_thread_ptp_message_t *restrict tmp;
-  sctk_messages_alloc_thread_data_t*restrict allocator_p;
-  int rank_comm_world;
-
-  rank_comm_world = sctk_get_rank (SCTK_COMM_WORLD, sctk_get_task_rank ());
-
-  sctk_nodebug ("Myself create %d glob %d ", myself, rank_comm_world);
-  if (sctk_ptp_list[rank_comm_world].free_list.free_list != NULL){
-    sctk_spinlock_lock (&(sctk_ptp_list[rank_comm_world].free_list.lock));
-    if (sctk_ptp_list[rank_comm_world].free_list.free_list != NULL)
-      {
-	tmp = (sctk_thread_ptp_message_t *)(sctk_ptp_list[rank_comm_world].free_list.free_list);
-	sctk_ptp_list[rank_comm_world].free_list.free_list = tmp->wait_next;
-	sctk_spinlock_unlock (&(sctk_ptp_list[rank_comm_world].free_list.lock));
-	sctk_init_thread_ptp_message (tmp, myself);
-	return tmp;
+      /*Copy message*/
+      sctk_ptp_copy_tasks_insert(ptr_recv,ptr_send,pair);
+    } else {
+      if(ptr_recv->msg->tail.remote_source){
+	sctk_network_notify_matching_message (ptr_recv->msg);
       }
-    sctk_spinlock_unlock (&(sctk_ptp_list[rank_comm_world].free_list.lock));
+      if(ptr_recv->msg->body.header.source == MPC_ANY_SOURCE){
+	sctk_network_notify_any_source_message ();
+      }
+    }
+  }
+}
+
+static inline void sctk_perform_messages_for_pair(sctk_internal_ptp_t* pair){
+  if(((pair->lists.pending_send.list != NULL)
+#ifndef SCTK_DISABLE_REENTRANCE
+      ||(pair->lists.incomming_send.list != NULL)
+#endif
+      ) && ((pair->lists.pending_recv.list != NULL)
+#ifndef SCTK_DISABLE_REENTRANCE
+	 || (pair->lists.incomming_recv.list != NULL)
+#endif
+	 )){
+    if(pair->lists.changed || 1
+#ifndef SCTK_DISABLE_REENTRANCE
+       || (pair->lists.incomming_send.list != NULL)
+       || (pair->lists.incomming_recv.list != NULL)
+#endif
+){
+
+      sctk_internal_ptp_lock_pending(&(pair->lists));
+      sctk_perform_messages_for_pair_locked(pair);
+      pair->lists.changed = 0;
+      sctk_internal_ptp_unlock_pending(&(pair->lists));
+    }
+  }
+  sctk_ptp_tasks_perform(pair);
+}
+
+static inline void sctk_try_perform_messages_for_pair(sctk_internal_ptp_t* pair){
+  if(pair->lists.pending_lock == 0){
+    sctk_perform_messages_for_pair(pair);
+  }
+}
+
+void sctk_wait_message (sctk_request_t * request){
+  sctk_perform_messages(request);
+
+  if(request->completion_flag != SCTK_MESSAGE_DONE){
+    sctk_thread_wait_for_value_and_poll
+      ((int *) &(request->completion_flag),SCTK_MESSAGE_DONE ,
+       (void(*)(void*))sctk_perform_messages,(void*)request);
+  }
+}
+
+void sctk_perform_messages(sctk_request_t* request){
+  if(request->completion_flag != SCTK_MESSAGE_DONE){
+     sctk_internal_ptp_t* tmp;
+     sctk_internal_ptp_t* send_tmp;
+
+     {
+       sctk_comm_dest_key_t key;
+       sctk_comm_dest_key_t send_key;
+       /*     key.comm = request->header.communicator; */
+       key.destination = request->header.glob_destination;
+       send_key.destination = request->header.glob_source;
+
+       sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
+       sctk_ptp_table_find(key,tmp);
+       sctk_ptp_table_find(send_key,send_tmp);
+       sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
+     }
+
+    if(send_tmp == NULL){
+      sctk_network_notify_perform_message (request->header.glob_source);
+    }
+
+    if(tmp != NULL){
+      if(request->need_check_in_wait == 1){
+	sctk_try_perform_messages_for_pair(tmp);
+      }
+    } else {
+      sctk_network_notify_perform_message (request->header.glob_destination);
+    }
+  }
+}
+
+void sctk_wait_all (const int task, const sctk_communicator_t com){
+  sctk_internal_ptp_t* pair;
+  sctk_internal_ptp_t* tmp;
+  int i;
+
+  do{
+    i = 0;
+    sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
+    HASH_ITER(hh,sctk_ptp_table,pair,tmp){
+      sctk_msg_list_t* ptr;
+      sctk_internal_ptp_lock_pending(&(pair->lists));
+      sctk_perform_messages_for_pair_locked(pair);
+      DL_FOREACH(pair->lists.pending_recv.list,ptr){
+	if((ptr->msg->body.header.destination == task) &&
+	   (ptr->msg->body.header.communicator == com)){
+	  i++;
+	}
+      }
+      DL_FOREACH(pair->lists.pending_send.list,ptr){
+	if((ptr->msg->body.header.source == task) &&
+	   (ptr->msg->body.header.communicator == com)){
+	  i++;
+	}
+      }
+      sctk_internal_ptp_unlock_pending(&(pair->lists));
+    }
+    sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
+
+#warning "To optimize"
+    if (i != 0) sctk_thread_yield();
+  } while(i != 0);
+}
+
+
+void sctk_perform_all (){
+  sctk_internal_ptp_t* pair;
+  sctk_internal_ptp_t* tmp;
+#warning "Collaborative polling"
+#warning "Add topological iterations"
+  sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
+  HASH_ITER(hh,sctk_ptp_table,pair,tmp){
+    sctk_try_perform_messages_for_pair(pair);
+  }
+  sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
+}
+
+
+void sctk_notify_idle_message_inter (){
+  if(sctk_process_number > 1){
+    sctk_network_notify_idle_message ();
+  }
+}
+
+
+void sctk_notify_idle_message (){
+  sctk_perform_all ();
+  if(sctk_process_number > 1){
+    sctk_network_notify_idle_message ();
+  }
+}
+/********************************************************************/
+/*Send/Recv messages                                                */
+/********************************************************************/
+
+void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_check){
+  if((IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag)) &&
+     (msg->sctk_msg_get_destination != sctk_process_rank)){
+    msg->tail.remote_destination = 1;
+    sctk_network_send_message (msg);
+  } else {
+    sctk_comm_dest_key_t key;
+    sctk_internal_ptp_t* tmp;
+
+    /*   key.comm = msg->header.communicator; */
+    key.destination = msg->sctk_msg_get_glob_destination;
+    sctk_nodebug("glob dest: %d", key.destination);
+
+    assume(msg->sctk_msg_get_communicator >= 0);
+
+    if(msg->body.completion_flag != NULL){
+      *(msg->body.completion_flag) = SCTK_MESSAGE_PENDING;
+    }
+
+    if(msg->tail.request != NULL){
+      msg->tail.request->need_check_in_wait = msg->tail.need_check_in_wait;
+    }
+
+    msg->tail.remote_source = 0;
+    msg->tail.remote_destination = 0;
+
+    sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
+    sctk_ptp_table_find(key,tmp);
+    sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
+
+    if(tmp != NULL){
+      sctk_internal_ptp_add_send_incomming(tmp,msg);
+      if(perform_check){
+	sctk_try_perform_messages_for_pair(tmp);
+      }
+    } else {
+      /*Entering low level comm*/
+      msg->tail.remote_destination = 1;
+      sctk_network_send_message (msg);
+    }
+  }
+}
+
+void sctk_send_message (sctk_thread_ptp_message_t * msg){
+#warning "To optimize"
+  /*
+      msg->tail.need_check_in_wait should be optimize by adding self polling in wait and test on myself
+   */
+  msg->tail.need_check_in_wait = 1;
+  sctk_send_message_try_check(msg,0);
+}
+
+void sctk_recv_message_try_check (sctk_thread_ptp_message_t * msg,sctk_internal_ptp_t* tmp,int perform_check){
+  sctk_comm_dest_key_t send_key;
+  sctk_internal_ptp_t* send_tmp = NULL;
+
+  send_key.destination = msg->sctk_msg_get_glob_source;
+
+  if(msg->body.completion_flag != NULL){
+    *(msg->body.completion_flag) = SCTK_MESSAGE_PENDING;
   }
 
-  allocator_p = &(sctk_ptp_list[rank_comm_world].allocator);
-  sctk_nodebug ("Myself create %d tls %p glob %d", myself, tls,
-		rank_comm_world);
-
-  tmp = __sctk_message_alloc (1, allocator_p);
-  tmp->allocator_p = allocator_p;
-  sctk_init_thread_ptp_message (tmp, myself);
-  return tmp;
-}
-
-sctk_thread_ptp_message_t
-  * sctk_add_adress_in_message (sctk_thread_ptp_message_t * restrict msg,
-				void *restrict adr, const size_t size)
-{
-  register int nb_items;
-  nb_items = msg->message.nb_items;
-  msg = __sctk_message_realloc (nb_items + 1, msg);
-
-  msg->message.begins[nb_items] = NULL;
-  msg->message.ends[nb_items] = NULL;
-
-  msg->message.begins_absolute[nb_items] = NULL;
-  msg->message.ends_absolute[nb_items] = NULL;
-
-  msg->message.sizes[nb_items] = size;
-  msg->message.elem_sizes[nb_items] = 1;
-  msg->message.adresses[nb_items] = adr;
-
-  msg->message.nb_items = nb_items + 1;
-  if (msg->message.max_count < 1)
-    {
-      msg->message.max_count = 1;
-    }
-  return msg;
-}
-
-sctk_thread_ptp_message_t
-  * sctk_add_pack_in_message (sctk_thread_ptp_message_t * msg, void *adr,
-			      const sctk_count_t nb_items,
-			      const size_t elem_size,
-			      sctk_pack_indexes_t * begins,
-			      sctk_pack_indexes_t * ends)
-{
-  register int nb_items_in_msg;
-  nb_items_in_msg = msg->message.nb_items;
-  msg = __sctk_message_realloc (nb_items_in_msg + 1, msg);
-
-  msg->message.begins[nb_items_in_msg] = begins;
-  msg->message.ends[nb_items_in_msg] = ends;
-
-  msg->message.begins_absolute[nb_items_in_msg] = NULL;
-  msg->message.ends_absolute[nb_items_in_msg] = NULL;
-
-  msg->message.sizes[nb_items_in_msg] = nb_items;
-  msg->message.elem_sizes[nb_items_in_msg] = elem_size;
-  msg->message.adresses[nb_items_in_msg] = adr;
-
-  msg->message.nb_items = nb_items_in_msg + 1;
-  if (msg->message.max_count < (size_t)nb_items)
-    {
-      msg->message.max_count = nb_items;
-    }
-  sctk_nodebug ("msg->message.max_count = %d", msg->message.max_count);
-  return msg;
-}
-
-sctk_thread_ptp_message_t
-  * sctk_add_pack_in_message_absolute (sctk_thread_ptp_message_t * msg,
-				       void *adr,
-				       const sctk_count_t nb_items,
-				       const size_t elem_size,
-				       sctk_pack_absolute_indexes_t *
-				       begins,
-				       sctk_pack_absolute_indexes_t * ends)
-{
-  register int nb_items_in_msg;
-  nb_items_in_msg = msg->message.nb_items;
-  msg = __sctk_message_realloc (nb_items_in_msg + 1, msg);
-
-  msg->message.begins[nb_items_in_msg] = NULL;
-  msg->message.ends[nb_items_in_msg] = NULL;
-
-  msg->message.begins_absolute[nb_items_in_msg] = begins;
-  msg->message.ends_absolute[nb_items_in_msg] = ends;
-
-  msg->message.sizes[nb_items_in_msg] = nb_items;
-  msg->message.elem_sizes[nb_items_in_msg] = elem_size;
-  msg->message.adresses[nb_items_in_msg] = adr;
-
-  msg->message.nb_items = nb_items_in_msg + 1;
-  if (msg->message.max_count < (size_t)nb_items)
-    {
-      msg->message.max_count = nb_items;
-    }
-  sctk_nodebug ("msg->message.max_count = %d", msg->message.max_count);
-  return msg;
-}
-
-typedef struct
-{
-  int val;
-  int task;
-} sctk_placement_status_t;
-
-static void
-sctk_placement_test (sctk_placement_status_t * arg)
-{
-  if (sctk_ptp_process_localisation[arg->task] != -1)
-    arg->val = 1;
-
-}
-
-int
-sctk_is_net_message (int dest)
-{
-  sctk_ptp_data_t *tmp;
-  int pos;
-  tmp = &(sctk_ptp_list[dest]);
-  if (tmp->is_usable == 0)
-    return 0;
-
-  pos = sctk_ptp_process_localisation[dest];
-
-  if ((pos != sctk_process_rank) && (pos != -1))
-    {
-      return 1;
-    }
-  else
-    {
-      return 0;
-    }
-}
-
-void
-sctk_send_message (sctk_thread_ptp_message_t * msg)
-{
-  sctk_ptp_data_t *tmp;
-  sctk_per_communicator_ptp_data_t *communicator;
-  int is_net = 0;
-  sctk_placement_status_t state;
-
-  msg->wait_next = NULL;
-  msg->next = NULL;
-
-  sctk_nodebug ("send message %p to %d->%d", msg,
-		msg->header.source, msg->header.destination);
-  if (msg->net_mesg != NULL)
-    {
-      is_net = 1;
-    }
-
-  tmp = &(sctk_ptp_list[msg->header.destination]);
-  while (sctk_place_message_send (tmp, msg) == 1)
-    {
-      int pos;
-      if (sctk_ptp_process_localisation[msg->header.destination] == -1)
-	{
-	  state.val = 0;
-	  state.task = msg->header.destination;
-	  sctk_thread_wait_for_value_and_poll (&(state.val), 1,
-					       (void (*)(void *))
-					       sctk_placement_test, &state);
-	}
-      pos = sctk_ptp_process_localisation[msg->header.destination];
-      if ((pos != sctk_process_rank) && (pos != -1))
-	{
-	  sctk_nodebug ("Task %d on %d", msg->header.destination, pos);
-	  sctk_net_send_ptp_message (msg, pos);
-	  break;
-	}
-      YIELD
-    }
-
-  sctk_nodebug ("Task %d is here", msg->header.destination);
-
-  if (is_net == 0)
-    {
-      /*Network messages are threated during copy */
-      sctk_nodebug ("insert %p", msg);
-      tmp = &(sctk_ptp_list[msg->header.myself]);
-      communicator = &(tmp->communicators[msg->header.communicator]);
-
-      sctk_thread_ptp_message_list_lock (&
-					 (communicator->sctk_wait_send_list));
-      if (communicator->sctk_wait_send_list.head != NULL)
-	{
-	  communicator->sctk_wait_send_list.tail->wait_next = msg;
-	}
-      else
-	{
-	  communicator->sctk_wait_send_list.head = msg;
-	}
-      communicator->sctk_wait_send_list.tail = msg;
-      sctk_thread_ptp_message_list_unlock (&
-					   (communicator->
-					    sctk_wait_send_list));
-    }
-  sctk_nodebug ("send message %p done", msg);
-}
-
-void
-sctk_recv_message (sctk_thread_ptp_message_t * msg)
-{
-  sctk_ptp_data_t *tmp;
-  sctk_per_communicator_ptp_data_t *communicator;
-
-  msg->wait_next = NULL;
-  msg->next = NULL;
-  sctk_nodebug ("recv message %p to %d->%d", msg,
-		msg->header.source, msg->header.destination);
-
-  tmp = &(sctk_ptp_list[msg->header.myself]);
-  communicator = &(tmp->communicators[msg->header.communicator]);
-
-  tmp = &(sctk_ptp_list[msg->header.destination]);
-
-  sctk_place_message_recv (tmp, msg, communicator);
-
-  sctk_thread_ptp_message_list_lock (&(communicator->sctk_wait_list));
-
-  tmp = &(sctk_ptp_list[msg->header.myself]);
-  if (communicator->sctk_wait_list.head != NULL)
-    {
-      communicator->sctk_wait_list.tail->wait_next = msg;
-    }
-  else
-    {
-      communicator->sctk_wait_list.head = msg;
-    }
-  communicator->sctk_wait_list.tail = msg;
-  sctk_thread_ptp_message_list_unlock (&(communicator->sctk_wait_list));
-
-
-  __sctk_perform_match_any_source_wait (communicator);
-  __sctk_free_message_wait (communicator, tmp);
-}
-
-void
-sctk_probe_source_any_tag (int destination, int source,
-			   const sctk_communicator_t comm, int *status,
-			   sctk_thread_message_header_t * msg)
-{
-  sctk_ptp_data_t *tmp;
-  sctk_task_ptp_data_t *data;
-/*   sctk_per_communicator_ptp_data_t * communicator; */
-
-  tmp =
-    &(sctk_ptp_list
-      [sctk_translate_to_global_rank_remote (destination, comm)]);
-  data =
-    &(tmp->communicators[comm].
-      tasks[sctk_translate_to_global_rank_local (source, comm)]);
-/*   communicator = &(tmp->communicators[comm]); */
-
-  __sctk_probe_for_source (data, msg, status);
-}
-
-void
-sctk_probe_source_tag (int destination, int source,
-		       const sctk_communicator_t comm, int *status,
-		       sctk_thread_message_header_t * msg)
-{
-  sctk_ptp_data_t *tmp;
-  sctk_task_ptp_data_t *data;
-/*   sctk_per_communicator_ptp_data_t * communicator; */
-
-  tmp =
-    &(sctk_ptp_list
-      [sctk_translate_to_global_rank_remote (destination, comm)]);
-  data =
-    &(tmp->communicators[comm].
-      tasks[sctk_translate_to_global_rank_local (source, comm)]);
-/*   communicator = &(tmp->communicators[comm]); */
-
-  __sctk_probe_for_source_tag (data, msg, status);
-}
-
-void
-sctk_probe_any_source_tag (int destination,
-			   const sctk_communicator_t comm, int *status,
-			   sctk_thread_message_header_t * msg)
-{
-  sctk_ptp_data_t *tmp;
-  sctk_task_ptp_data_t *data;
-  int i;
-  sctk_per_communicator_ptp_data_t *communicator;
-
-  tmp =
-    &(sctk_ptp_list
-      [sctk_translate_to_global_rank_remote (destination, comm)]);
-  communicator = &(tmp->communicators[comm]);
-
-  for (i = 0; i < communicator->nb_tasks; i++)
-    {
-      data =
-	&(communicator->tasks[sctk_translate_to_global_rank_local (i, comm)]);
-      __sctk_probe_for_source_tag (data, msg, status);
-      if (*status == 1)
-	{
-	  return;
-	}
-    }
-}
-
-void
-sctk_probe_any_source_any_tag (int destination,
-			       const sctk_communicator_t comm, int *status,
-			       sctk_thread_message_header_t * msg)
-{
-  sctk_ptp_data_t *tmp;
-  sctk_per_communicator_ptp_data_t *communicator;
-
-  tmp =
-    &(sctk_ptp_list
-      [sctk_translate_to_global_rank_remote (destination, comm)]);
-  communicator = &(tmp->communicators[comm]);
-
-  __sctk_probe_any_source (communicator, msg, status);
-}
-
-void
-sctk_register_thread_initial (const int i)
-{
-  int j, k;
-/*   sctk_ptp_data_t* tmp; */
-/*   tmp = &(sctk_ptp_list[i]); */
-  sctk_ptp_process_localisation[i] = sctk_process_rank;
-  sctk_nodebug ("task %d on %d", i, sctk_ptp_process_localisation[i]);
-  for (j = 0; j < SCTK_MAX_COMMUNICATOR_NUMBER; j++)
-    {
-      for (k = 0; k < sctk_ptp_list[i].communicators[j].nb_tasks; k++)
-	{
-	  sctk_ptp_list[i].communicators[j].tasks[k].is_usable = 1;
-	}
-    }
-
-  {
-    static volatile int done = 0;
-    static sctk_spinlock_t lock;
-    int THREAD_NUMBER;
-
-    sctk_spinlock_lock(&lock);
-
-    if(done == 0){
-      for(j = 0; j < sctk_total_task_number; j++){
-	int pos = -1;
-	int local_threads;
-	int start_thread;
-	THREAD_NUMBER = sctk_total_task_number;
-
-	do{
-	  pos ++;
-	  local_threads = THREAD_NUMBER / sctk_process_number;
-	  if (THREAD_NUMBER % sctk_process_number > pos)
-	    local_threads++;
-
-	  start_thread = local_threads * pos;
-	  if (THREAD_NUMBER % sctk_process_number <= pos)
-	    start_thread += THREAD_NUMBER % sctk_process_number;
-	  sctk_nodebug("Start %d end %d on %d thread %d",start_thread,start_thread + local_threads,pos,j);
-	}while(j >= start_thread + local_threads);
-
-	sctk_ptp_process_localisation[j] = pos;
-	sctk_nodebug("%d/%d is on %d/%d",j,THREAD_NUMBER,pos,sctk_process_number);
-      }
-      done = 1;
-    }
-
-    sctk_spinlock_unlock(&lock);
+  if(msg->tail.request != NULL){
+    msg->tail.request->need_check_in_wait = msg->tail.need_check_in_wait;
   }
 
-}
+  msg->tail.remote_source = 0;
+  msg->tail.remote_destination = 0;
 
-void
-sctk_register_thread (const int i)
-{
-  int j, k;
-  sctk_ptp_process_localisation[i] = sctk_process_rank;
-  sctk_nodebug ("task %d on %d", i, sctk_ptp_process_localisation[i]);
-  for (j = 0; j < SCTK_MAX_COMMUNICATOR_NUMBER; j++)
-    {
-      for (k = 0; k < sctk_ptp_list[i].communicators[j].nb_tasks; k++)
-	{
-	  sctk_ptp_list[i].communicators[j].tasks[k].is_usable = 1;
-	}
+  sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
+  if(tmp == NULL){
+    sctk_comm_dest_key_t key;
+    key.destination = msg->sctk_msg_get_glob_destination;
+    sctk_ptp_table_find(key,tmp);
+  }
+  if(!IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag)){
+    if(send_key.destination != -1){
+      sctk_ptp_table_find(send_key,send_tmp);
     }
+  }
+  sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
 
-  sctk_net_send_task_location (i, sctk_process_rank);
+  if(send_tmp == NULL){
+    msg->tail.need_check_in_wait = 1;
+    /*Entering low level comm*/
+    msg->tail.remote_source = 1;
+    sctk_network_notify_recv_message (msg);
+  }
 
-}
-
-void
-sctk_register_distant_thread (const int i, const int pos)
-{
-  sctk_nodebug ("set task %d on %d really done", i, pos);
-  while (sctk_ptp_process_localisation == NULL)
-    {
-      YIELD
+  if(tmp != NULL){
+    sctk_internal_ptp_add_recv_incomming(tmp,msg);
+    if(perform_check){
+      sctk_try_perform_messages_for_pair(tmp);
     }
-  sctk_ptp_process_localisation[i] = pos;
+  } else {
+    not_reachable();
+  }
+}
+void sctk_recv_message (sctk_thread_ptp_message_t * msg,sctk_internal_ptp_t* tmp){
+  msg->tail.need_check_in_wait = 1;
+  sctk_recv_message_try_check(msg,tmp,1);
 }
 
-void
-sctk_register_restart_thread (const int i, const int pos)
-{
-  sctk_ptp_process_localisation[i] = pos;
-  sctk_nodebug ("task %d on %d", i, sctk_ptp_process_localisation[i]);
+struct sctk_internal_ptp_s* sctk_get_internal_ptp(int glob_id){
+  sctk_internal_ptp_t* tmp = NULL;
+  if(!sctk_migration_mode){
+    sctk_comm_dest_key_t key;
+    key.destination = glob_id;
+    sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
+    sctk_ptp_table_find(key,tmp);
+    sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
+  }
+  return tmp;
+}
+int sctk_is_net_message (int dest){
+  sctk_comm_dest_key_t key;
+  sctk_internal_ptp_t* tmp;
+
+  key.destination = dest;
+
+  sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
+  sctk_ptp_table_find(key,tmp);
+  sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
+
+  return (tmp == NULL);
 }
 
-void
-sctk_unregister_distant_thread (const int i)
-{
-  sctk_ptp_process_localisation[i] = -1;
+
+/********************************************************************/
+/*Probe                                                             */
+/********************************************************************/
+
+static inline
+void sctk_probe_source_tag_func (int destination, int source,int tag,
+				 const sctk_communicator_t comm, int *status,
+				 sctk_thread_message_header_t * msg){
+  sctk_comm_dest_key_t key;
+  sctk_internal_ptp_t* tmp;
+
+  msg->source = source;
+  msg->destination = destination;
+  msg->message_tag = tag;
+  msg->communicator = comm;
+  msg->specific_message_tag = pt2pt_specific_message_tag;
+
+  key.destination = sctk_get_comm_world_rank (comm,destination);
+
+  sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
+  sctk_ptp_table_find(key,tmp);
+  sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
+
+  assume(tmp != NULL);
+  sctk_internal_ptp_lock_pending(&(tmp->lists));
+  *status = sctk_perform_messages_probe_matching(tmp,msg);
+  sctk_nodebug("Find source %d tag %d found ?%d",msg->source,msg->message_tag,*status);
+  sctk_internal_ptp_unlock_pending(&(tmp->lists));
+}
+void sctk_probe_source_any_tag (int destination, int source,
+				const sctk_communicator_t comm,
+				int *status,
+				sctk_thread_message_header_t * msg){
+  sctk_probe_source_tag_func(destination,source,MPC_ANY_TAG,comm,status,msg);
 }
 
-void
-sctk_unregister_thread (const int i)
-{
-  int j, k;
-  sctk_nodebug ("unregister task %d on %d", i,
-		sctk_ptp_process_localisation[i]);
-  sctk_ptp_process_localisation[i] = -1;
-  for (j = 0; j < SCTK_MAX_COMMUNICATOR_NUMBER; j++)
-    {
-      for (k = 0; k < sctk_ptp_list[i].communicators[j].nb_tasks; k++)
-	{
-	  sctk_spinlock_lock (&
-			      (sctk_ptp_list[i].communicators[j].
-			       tasks[k].spinlock));
-	  sctk_ptp_list[i].communicators[j].tasks[k].is_usable = 0;
-	  if (sctk_ptp_list[i].communicators[j].tasks[k].sctk_send_list.
-	      head != NULL)
-	    {
-	      /*clean dues to migration */
-	      sctk_error
-		("There's some pending messages from %d to %d on communicator %d",
-		 i, j, k);
-	      /*            sctk_error("Migration part of ptp communication not implemented"); */
-	      not_reachable ();
-	    }
-	  sctk_spinlock_unlock (&(sctk_ptp_list[i].communicators[j].
-				  tasks[k].spinlock));
-	}
-    }
+void sctk_probe_any_source_any_tag (int destination,
+				    const sctk_communicator_t comm,
+				    int *status,
+				    sctk_thread_message_header_t * msg){
+  sctk_probe_source_tag_func(destination,MPC_ANY_SOURCE,MPC_ANY_TAG,comm,status,msg);
 }
-
-typedef struct
-{
-  int myself;
-  sctk_communicator_t communicator;
-  int *res;
-} sctk_message_wait_t;
-
-static void
-sctk_check_for_communicator_poll (sctk_message_wait_t * restrict arg)
-{
-  int i;
-  sctk_ptp_data_t *restrict tmp;
-  sctk_per_communicator_ptp_data_t *restrict communicator;
-  int val = 0;
-  int res;
-
-  tmp = &(sctk_ptp_list[arg->myself]);
-  i = arg->communicator;
-  communicator = &(tmp->communicators[i]);
-
-  YIELD
-
-  res = __sctk_perform_match_any_source_wait (communicator);
-  __sctk_free_message_wait (communicator, tmp);
-
-  if (arg->res != NULL)
-    {
-      if (communicator->sctk_wait_send_list.head != NULL)
-	val++;
-      if (communicator->sctk_wait_list.head != NULL)
-	val++;
-      sctk_nodebug ("%d message on %d on com %d (recv %d)", val,
-		    arg->myself, i, res);
-
-      *(arg->res) = val + res;
-    }
-
+void sctk_probe_source_tag (int destination, int source,
+			    const sctk_communicator_t comm, int *status,
+			    sctk_thread_message_header_t * msg){
+  sctk_probe_source_tag_func(destination,source,msg->message_tag,comm,status,msg);
 }
-
-static void
-sctk_check_for_communicator_poll_one (sctk_message_wait_t * restrict arg)
-{
-  int i;
-  sctk_ptp_data_t *restrict tmp;
-  sctk_per_communicator_ptp_data_t *restrict communicator;
-
-  YIELD
-
-  tmp = &(sctk_ptp_list[arg->myself]);
-  i = arg->communicator;
-  communicator = &(tmp->communicators[i]);
-
-  __sctk_perform_match_any_source_wait (communicator);
-  __sctk_free_message_wait (communicator, tmp);
-
+void sctk_probe_any_source_tag (int destination,
+				const sctk_communicator_t comm,
+				int *status,
+				sctk_thread_message_header_t * msg){
+  sctk_probe_source_tag_func(destination,MPC_ANY_SOURCE,msg->message_tag,comm,status,msg);
 }
-
-void
-sctk_wait_message (sctk_request_t * msg)
-{
-  sctk_message_wait_t req;
-  req.myself = msg->header.myself;
-  req.communicator = msg->header.communicator;
-  req.res = NULL;
-
-  sctk_nodebug ("Wait message from %d to %d %p(%p) (%d)", msg->header.source,
-		msg->header.destination, msg->msg, msg, msg->completion_flag);
-
-  if (msg->completion_flag == 2)
-    {
-      sctk_check_for_communicator_poll_one (&req);
-    }
-  else
-    {
-      if (msg->completion_flag != 1)
-	{
-	  sctk_check_for_communicator_poll_one (&req);
-
-	  if (msg->completion_flag != 1)
-	    {
-	      sctk_thread_wait_for_value_and_poll
-		((int *) &(msg->completion_flag), 1,
-		 (void (*)(void *)) sctk_check_for_communicator_poll_one,
-		 (void *) (&req));
-	    }
-	}
-    }
-  sctk_nodebug ("Wait message from %d to %d %p done", msg->header.source,
-		msg->header.destination, &(msg->completion_flag));
-}
-
-void
-sctk_cancel_message (sctk_request_t * msg)
-{
-  sctk_nodebug ("Cancel message from %d to %d %p (%d)", msg->header.source,
-		msg->header.destination, &(msg->completion_flag),
-		msg->completion_flag);
-  if (msg->completion_flag == 0)
-    {
-      if (msg->header.myself == msg->header.destination)
-	{
-	  /* Recv part */
-	  msg->completion_flag = 2;
-	  if (msg->msg != NULL)
-	    {
-	      if (msg->msg->completion_flag == 0)
-		{
-		  msg->msg->completion_flag = 2;
-		}
-	    }
-	}
-      else
-	{
-	  /*Send Part */
-	  msg->completion_flag = 2;
-	  if (msg->msg != NULL)
-	    {
-	      if (msg->msg->completion_flag == 0)
-		{
-		  msg->msg->completion_flag = 3;
-		}
-	    }
-	}
-    }
-}
-
-void
-sctk_perform_messages (const int task, const sctk_communicator_t com)
-{
-  sctk_message_wait_t req;
-  int val = 0;
-  req.myself = task;
-  req.communicator = com;
-  req.res = &val;
-  sctk_check_for_communicator_poll (&req);
-}
-
-void
-sctk_wait_all (const int task, const sctk_communicator_t com)
-{
-  sctk_message_wait_t req;
-  sctk_ptp_data_t *tmp;
-  sctk_per_communicator_ptp_data_t *communicator;
-  int val = 0;
-  req.myself = sctk_translate_to_global_rank_local (task, com);
-  req.communicator = com;
-  req.res = &val;
-
-  tmp = &(sctk_ptp_list[task]);
-  communicator = &(tmp->communicators[com]);
-  if (communicator->sctk_wait_send_list.head != NULL)
-    val++;
-  if (communicator->sctk_wait_list.head != NULL)
-    val++;
-  sctk_nodebug ("Start %d message on %d %p\n", val, task, &val);
-
-  sctk_check_for_communicator_poll (&req);
-  sctk_thread_wait_for_value_and_poll (&val, 0, (void (*)(void *))
-				       sctk_check_for_communicator_poll,
-				       (void *) (&req));
-  sctk_assert (communicator->sctk_wait_send_list.head == NULL);
-  sctk_assert (communicator->sctk_wait_list.head == NULL);
-  sctk_nodebug ("Start %d message on %d done %p\n", val, task, &val);
-}
-
-int sctk_get_ptp_process_localisation(int i)
-{
-  return sctk_ptp_process_localisation[i];
-}
-

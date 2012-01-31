@@ -46,14 +46,22 @@ extern "C"
 #define SCTK_MCTX_DSP_use SCTK_MCTX_DSP_sc
 
 #if defined(SCTK_i686_ARCH_SCTK)
+#ifndef DONOTHAVE_CONTEXTS
+#define SCTK_USE_CONTEXT_FOR_CREATION
+#endif
+
 #undef DONOTHAVE_CONTEXTS
 #define DONOTHAVE_CONTEXTS
-#ifdef __INTEL_COMPILER
-#undef DONOTHAVE_CONTEXTS
+#endif
+
+#if defined(SCTK_x86_64_ARCH_SCTK)
+
+#ifndef DONOTHAVE_CONTEXTS
+#if (defined(Linux_SYS) && (defined(__GLIBC__) && ((__GLIBC__ >= 2) &&  (__GLIBC_MINOR__ >= 12)) ))
+#define SCTK_USE_CONTEXT_FOR_CREATION
 #endif
 #endif
 
-#if defined(SCTK_x86_64_ARCH_SCTK) && (defined(Linux_SYS) && (defined(__GLIBC__) && ((__GLIBC__ <= 2) && (__GLIBC_MINOR__ < 12)) ))
 #undef DONOTHAVE_CONTEXTS
 #define DONOTHAVE_CONTEXTS
 /*
@@ -155,6 +163,7 @@ extern "C"
     void *mpc_user_tls_1;
     void *sctk_extls;
 	void *sctk_hls_generation;
+	void *sctk_tls_module;
     void *sctk_message_passing;
     //profiling TLS
     void *tls_trace_module;

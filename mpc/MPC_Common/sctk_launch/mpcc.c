@@ -24,10 +24,6 @@
 #include "sctk_debug.h"
 #include <string.h>
 
-#if defined(MPC_Allocator)
-#include "sctk_iso_alloc.h"
-#endif
-
 #if defined(MPC_Message_Passing) || defined(MPC_Threads)
 #include "mpc.h"
 
@@ -39,12 +35,6 @@ static int
 intern_main (int argc, char **argv)
 {
   int tmp;
-
-
-#if defined(MPC_Allocator)
-  sctk_iso_init ();
-#endif
-
 
 #if defined(WINDOWS_SYS)
   pthread_win32_process_attach_np ();

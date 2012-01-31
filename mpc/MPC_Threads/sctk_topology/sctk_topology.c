@@ -128,7 +128,7 @@ sctk_restrict_topology ()
 
   /* Share nodes */
   sctk_share_node_capabilities = 1;
-  if ((sctk_share_node_capabilities == 1) && 
+  if ((sctk_share_node_capabilities == 1) &&
       (sctk_process_number > 1))
   {
     int detected_on_this_host = 0;
@@ -348,7 +348,7 @@ sctk_print_topology (FILE * fd)
     tmp[2] = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, pu);
 
     if(tmp[0] == NULL){
-      node_os_index = 0; 
+      node_os_index = 0;
     } else {
       node_os_index = tmp[0]->os_index;
     }
@@ -356,7 +356,7 @@ sctk_print_topology (FILE * fd)
     fprintf(fd, "\tProcessor %4u real (%4u:%4u:%4u)\n", pu->os_index,
 	    node_os_index, tmp[1]->logical_index, tmp[2]->logical_index );
   }
- 
+
   fprintf (fd, "\tNUMA: %d\n", sctk_is_numa_node ());
   if (sctk_is_numa_node ())
   {
@@ -532,3 +532,11 @@ sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood)
 
   sctk_free(objs);
 }
+
+
+/*
+ * For OpenFabrics
+ */
+#ifdef MPC_USE_INFINIBAND
+/* Add functions here for IB */
+#endif

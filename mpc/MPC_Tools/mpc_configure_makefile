@@ -122,7 +122,7 @@ echo "" >> Makefile
 echo "MAKEFLAGS += --no-print-directory"  >> Makefile
 echo "" >> Makefile
 
-echo "all:lib/libmpc.a lib/libmpcf.a lib/libmpc_iso_alloc.a lib/libmpc_thread_db.so lib/libmpc_tdb_remote_static.a"  >> Makefile
+echo "all:lib/libmpc.a lib/libmpcf.a lib/libmpc_thread_db.so lib/libmpc_tdb_remote_static.a"  >> Makefile
 echo "" >> Makefile
 
 echo "#"  >> Makefile
@@ -151,17 +151,6 @@ echo "lib/libmpc.a: \$(COMPIL_DIR)" >> Makefile
 printf "\t@mkdir -p lib">> Makefile; echo "">> Makefile
 printf "\t@echo Build \$@">> Makefile; echo "">> Makefile
 printf "\t@\$(AR) rcu \$@ \$(COBJ_LIST) \$(SCTK_ARFLAGS)">> Makefile; echo "">> Makefile
-
-#
-# Rule to build libmpc_iso_alloc.a
-#
-echo "" >> Makefile
-echo "lib/libmpc_iso_alloc.a: \$(COMPIL_DIR)" >> Makefile
-printf "\t@mkdir -p lib">> Makefile; echo "">> Makefile
-printf "\t@echo Build \$@">> Makefile; echo "">> Makefile
-printf "\t@mkdir -p lib_isoalloc">> Makefile; echo "">> Makefile
-printf "\t@\$(CC) -Iinclude_modules -DSCTK_ISO_ALLOC_LIB -c \$(CFLAGS) ${MPC_SOURCE_DIR}MPC_Common/sctk_alloc/sctk_iso_alloc.c -o lib_isoalloc/sctk_iso_alloc.o">> Makefile; echo "">> Makefile
-printf "\t@\$(AR) rcu \$@ lib_isoalloc/sctk_iso_alloc.o">> Makefile; echo "">> Makefile
 
 #
 # Rule to build libmpc_tdb_remote_static.a
@@ -312,7 +301,7 @@ echo "Preparing includes for Fortran"
 for i in $MODULE_LIST; do
 NAME="fortran_header"
 if test "$SCTK_FORTRAN" = "1" && test "$i" = "MPC_Message_Passing"; then
-printf "\t@\$(CC) -g $SCTK_CFLAGS -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME -LINSTALL/lib -lmpc -lmpc_iso_alloc -lmpc_tdb_remote_static $SCTK_LDFLAGS -lm">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) -g $SCTK_CFLAGS -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME -LINSTALL/lib -lmpc -lmpc_tdb_remote_static $SCTK_LDFLAGS -lm">> Makefile; echo "">> Makefile
 printf "\t@MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) ./$NAME mpc.h > INSTALL/include/mpcf.h">> Makefile; echo "">> Makefile
 
 DIR_TEST="MPC_MPI"
@@ -328,8 +317,7 @@ printf "\t@chmod -R 644 INSTALL/lib/*">> Makefile; echo "">> Makefile
 #printf "\t@echo \"Build mpc db\"">> Makefile; echo "">> Makefile
 #printf "\t@\$(CC) $SCTK_CFLAGS ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_tools/mpcdb_client.c -o INSTALL/bin/mpcdb_client $SCTK_LDFLAGS ">> Makefile; echo "">> Makefile
 #printf "\t@\$(CC) $SCTK_CFLAGS ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_tools/mpcdb_server.c -o INSTALL/bin/mpcdb_server $SCTK_LDFLAGS ">> Makefile; echo "">> Makefile
-printf "\t@echo \"Build mpcrun_server\"">> Makefile; echo "">> Makefile
-printf "\t@\$(CC) $SCTK_CFLAGS  -Iinclude_modules ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_tools/mpcrun_server.c -o INSTALL/bin/mpcrun_server $SCTK_LDFLAGS ">> Makefile; echo "">> Makefile
+
 printf "\t@chmod -R 755 INSTALL/bin/*">> Makefile; echo "">> Makefile
 printf "\t@chmod -R 644 INSTALL/include/*">> Makefile; echo "">> Makefile
 printf "\t@chmod 644 INSTALL/man/man1/*.1">> Makefile; echo "">> Makefile

@@ -85,6 +85,7 @@ message (int my_rank, int my_size, char *msg, size_t size, size_t iters)
 	  MPC_Recv (msg, size, MPC_CHAR, 0, 0, MPC_COMM_WORLD, &status);
 	}
     }
+  MPC_Barrier (MPC_COMM_WORLD);
   end = rrrsctk_get_time_stamp ();
   MPC_Barrier (MPC_COMM_WORLD);
   if (my_rank == 0)
@@ -139,11 +140,21 @@ main (int argc, char **argv)
 //  return 0;
 //#endif
 
+  if(my_rank == 0)
+  fprintf(stderr,"To last\n");
   for (size = 1; size < 1024 * 1024; size *= 2)
     {
       message (my_rank, my_size, msg, size, 10000);
     }
   message (my_rank, my_size, msg, max_tab_size, 1000);
+
+  if(my_rank == 0)
+  fprintf(stderr,"To next\n");
+  for (size = 1; size < 1024 * 1024; size *= 2)
+    {
+      message (my_rank, 2, msg, size, 50000);
+    }
+  message (my_rank, 2, msg, max_tab_size, 1000);
 
   MPC_Finalize ();
   return 0;

@@ -19,19 +19,37 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK__TCP_H_
-#define __SCTK__TCP_H_
-#include "sctk_hybrid_comm.h"
+
+#ifndef __SCTK_TCP_H_
+#define __SCTK_TCP_H_
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-  void sctk_net_init_driver_tcp (int *argc, char ***argv);
-  void sctk_net_preinit_driver_tcp (sctk_net_driver_pointers_functions_t* pointers);
-  void sctk_net_init_driver_ipoib (int *argc, char ***argv);
-  void sctk_net_preinit_driver_ipoib (sctk_net_driver_pointers_functions_t* pointers);
-  void* sctk_tcp_net_get_adm_poll_func();
+#ifndef __SCTK_ROUTE_H_
+#error "sctk_route must be included before sctk_tcp.h"
+#endif
+
+#include <sctk_spinlock.h>
+
+#define MAX_STRING_SIZE 2048
+  typedef struct {
+    sctk_spinlock_t lock;
+    int fd;
+  }sctk_tcp_data_t;
+  
+  typedef struct {
+    int sctk_use_tcp_o_ib;
+    int sockfd;
+    int portno;
+    int rail;
+    char connection_infos[MAX_STRING_SIZE];
+    size_t connection_infos_size;
+    void* (*tcp_thread)(void*);
+  }sctk_tcp_rail_info_t;
+
+  void sctk_network_init_tcp(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib);
 
 #ifdef __cplusplus
 }

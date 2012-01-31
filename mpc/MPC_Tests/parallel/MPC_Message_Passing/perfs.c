@@ -96,6 +96,7 @@ main (int argc, char **argv)
     {
       MPC_Barrier (MPC_COMM_WORLD);
     }
+  MPC_Barrier (MPC_COMM_WORLD);
   end = rrrsctk_get_time_stamp ();
   if (my_rank == 0)
     fprintf (stderr, "Barrier %fus %f\n", (end - start) / iters,
@@ -110,6 +111,7 @@ main (int argc, char **argv)
     {
       MPC_Bcast (msg, 1, MPC_CHAR, 0, MPC_COMM_WORLD);
     }
+  MPC_Barrier (MPC_COMM_WORLD);
   end = rrrsctk_get_time_stamp ();
   if (my_rank == 0)
     fprintf (stderr, "Broadcast %fus %f\n", (end - start) / iters,
@@ -125,6 +127,7 @@ main (int argc, char **argv)
     {
       MPC_Allreduce (sendbuf, recvbuf, 1, MPC_INT, MPC_SUM, MPC_COMM_WORLD);
     }
+  MPC_Barrier (MPC_COMM_WORLD);
   end = rrrsctk_get_time_stamp ();
   if (my_rank == 0)
     fprintf (stderr, "Reduce %fus %f\n", (end - start) / iters,
@@ -139,6 +142,7 @@ main (int argc, char **argv)
     {
       MPC_Bcast (msg, 512, MPC_CHAR, 0, MPC_COMM_WORLD);
     }
+  MPC_Barrier (MPC_COMM_WORLD);
   end = rrrsctk_get_time_stamp ();
   if (my_rank == 0)
     fprintf (stderr, "Broadcast 512 %fus %f\n", (end - start) / iters,
@@ -154,6 +158,7 @@ main (int argc, char **argv)
     {
       MPC_Allreduce (sendbuf, recvbuf, 128, MPC_INT, MPC_SUM, MPC_COMM_WORLD);
     }
+  MPC_Barrier (MPC_COMM_WORLD);
   end = rrrsctk_get_time_stamp ();
   if (my_rank == 0)
     fprintf (stderr, "Reduce 512 %fus %f\n", (end - start) / iters,
@@ -168,6 +173,7 @@ main (int argc, char **argv)
     {
       MPC_Bcast (msg, 8 * 1024, MPC_CHAR, 0, MPC_COMM_WORLD);
     }
+  MPC_Barrier (MPC_COMM_WORLD);
   end = rrrsctk_get_time_stamp ();
   if (my_rank == 0)
     fprintf (stderr, "Broadcast %d %fus %f\n", 8 * 1024,
@@ -184,6 +190,7 @@ main (int argc, char **argv)
       MPC_Allreduce (sendbuf, recvbuf, 8 * 1024 / 4,
 		     MPC_INT, MPC_SUM, MPC_COMM_WORLD);
     }
+  MPC_Barrier (MPC_COMM_WORLD);
   end = rrrsctk_get_time_stamp ();
   if (my_rank == 0)
     fprintf (stderr, "Reduce %d %fus %f\n", 8 * 1024, (end - start) / iters,
@@ -198,6 +205,7 @@ main (int argc, char **argv)
     {
       MPC_Bcast (msg, 1024 * 1024, MPC_CHAR, 0, MPC_COMM_WORLD);
     }
+  MPC_Barrier (MPC_COMM_WORLD);
   end = rrrsctk_get_time_stamp ();
   if (my_rank == 0)
     fprintf (stderr, "Broadcast %d %fus %f\n", 1024 * 1024,
@@ -214,6 +222,7 @@ main (int argc, char **argv)
       MPC_Allreduce (sendbuf, recvbuf, 1024 * 1024 / 4,
 		     MPC_INT, MPC_SUM, MPC_COMM_WORLD);
     }
+  MPC_Barrier (MPC_COMM_WORLD);
   end = rrrsctk_get_time_stamp ();
   if (my_rank == 0)
     fprintf (stderr, "Reduce %d %fus %f\n", 1024 * 1024,

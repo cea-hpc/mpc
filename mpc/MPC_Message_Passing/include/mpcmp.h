@@ -55,11 +55,12 @@ extern "C"
   typedef unsigned int mpc_pack_indexes_t;
   typedef unsigned long mpc_pack_absolute_indexes_t;
 
-  typedef unsigned int MPC_Comm;
+  typedef int MPC_Comm;
   typedef struct
   {
     int task_nb;
-    int *task_list;
+    /* Task list rank are valid in COMM_WORLD  */
+    int *task_list_in_global_ranks;
   } MPC_Group_t;
   typedef MPC_Group_t *MPC_Group;
 
@@ -87,41 +88,24 @@ extern "C"
   } MPC_Op;
 #define MPC_OP_INIT {NULL,NULL}
 
-  typedef struct mpc_thread_message_header_s
-  {
+  typedef struct MPC_Header{
+    int source;
+    int destination;
+    int glob_destination;
+    int glob_source;
     int message_tag;
     MPC_Comm communicator;
+    mpc_msg_count msg_size;
+  }MPC_Header;
 
-    int source;
-    int local_source;
-    int destination;
-
-    int myself;
-    int *request;
-    size_t *req_msg_size;
-    long rank;
-    unsigned long rank_recv;
-    size_t msg_size;
-  } mpc_thread_message_header_t;
-
+  struct sctk_thread_ptp_message_s;
   typedef struct
   {
-    mpc_msg_count count;
-    mpc_pack_indexes_t *begins;
-    mpc_pack_indexes_t *ends;
-    mpc_pack_absolute_indexes_t *begins_absolute;
-    mpc_pack_absolute_indexes_t *ends_absolute;
-  } mpc_default_pack_t;
-
-  typedef struct
-  {
-    int completion_flag;
-    void *msg;
-    mpc_thread_message_header_t header;
-    size_t msg_size;
-    mpc_default_pack_t default_pack;
+    MPC_Header header;
+    volatile int completion_flag;
+    struct sctk_thread_ptp_message_s* msg;
     int is_null;
-    void *ptr;
+    int need_check_in_wait;
   } MPC_Request;
 
   extern MPC_Request mpc_request_null;
@@ -172,6 +156,18 @@ extern "C"
 #define MPC_PROC_NULL -2
 #define MPC_COMM_NULL ((MPC_Comm)(-1))
 #define MPC_MAX_PROCESSOR_NAME 255
+
+
+/********************************************************************/
+/*Special TAGS                                                      */
+/********************************************************************/
+#define MPC_ANY_TAG -1
+#define MPC_GATHERV_TAG -2
+#define MPC_GATHER_TAG -3
+#define MPC_SCATTERV_TAG -4
+#define MPC_SCATTER_TAG -5
+#define MPC_ALLTOALL_TAG -6
+#define MPC_ALLTOALLV_TAG -7
 
   typedef struct
   {
@@ -234,7 +230,7 @@ extern "C"
 /*    struct { double, double }*/
 #define MPC_LOGICAL 22
 #define MPC_DOUBLE_COMPLEX 23
-    
+
   /*Initialisation */
   int MPC_Init (int *argc, char ***argv);
   int MPC_Init_thread (int *argc, char ***argv, int required, int *provided);
@@ -404,20 +400,20 @@ extern "C"
 			       mpc_pack_absolute_indexes_t * ub, int *is_ub);
 
   int MPC_Derived_use (MPC_Datatype datatype);
-  int MPC_Get_keys (void **keys);
-  int MPC_Set_keys (void *keys);
-  int MPC_Get_requests (void **requests);
-  int MPC_Set_requests (void *requests);
-  int MPC_Get_groups (void **groups);
-  int MPC_Set_groups (void *groups);
-  int MPC_Get_errors (void **errors);
-  int MPC_Set_errors (void *errors);
-  int MPC_Set_buffers (void *buffers);
-  int MPC_Get_buffers (void **buffers);
-  int MPC_Get_comm_type (void **comm_type);
-  int MPC_Set_comm_type (void *comm_type);
-  int MPC_Get_op (void **op);
-  int MPC_Set_op (void *op);
+/*   int MPC_Get_keys (void **keys); */
+/*   int MPC_Set_keys (void *keys); */
+/*   int MPC_Get_requests (void **requests); */
+/*   int MPC_Set_requests (void *requests); */
+/*   int MPC_Get_groups (void **groups); */
+/*   int MPC_Set_groups (void *groups); */
+/*   int MPC_Get_errors (void **errors); */
+/*   int MPC_Set_errors (void *errors); */
+/*   int MPC_Set_buffers (void *buffers); */
+/*   int MPC_Get_buffers (void **buffers); */
+/*   int MPC_Get_comm_type (void **comm_type); */
+/*   int MPC_Set_comm_type (void *comm_type); */
+/*   int MPC_Get_op (void **op); */
+/*   int MPC_Set_op (void *op); */
 
 
   /*Requests */
@@ -430,13 +426,13 @@ extern "C"
   int MPC_Migrate (void);
   int MPC_Restart (int rank);
   int MPC_Restarted (int *flag);
-  
+
   typedef struct
   {
     int virtual_cpuid;
     double usage;
   } MPC_Activity_t;
-  
+
   int MPC_Get_activity (int nb_item, MPC_Activity_t * tab,
 			double *process_act);
   int MPC_Move_to (int process, int cpuid);
@@ -477,7 +473,7 @@ extern "C"
 #define MPC_BOTTOM ((void*)0)
 
   typedef long MPC_Aint;
-  
+
 
     /* Profiling Functions */
 
@@ -649,20 +645,20 @@ extern "C"
 			       mpc_pack_absolute_indexes_t * ub, int *is_ub);
 
   int PMPC_Derived_use (MPC_Datatype datatype);
-  int PMPC_Get_keys (void **keys);
-  int PMPC_Set_keys (void *keys);
-  int PMPC_Get_requests (void **requests);
-  int PMPC_Set_requests (void *requests);
-  int PMPC_Get_groups (void **groups);
-  int PMPC_Set_groups (void *groups);
-  int PMPC_Get_errors (void **errors);
-  int PMPC_Set_errors (void *errors);
-  int PMPC_Set_buffers (void *buffers);
-  int PMPC_Get_buffers (void **buffers);
-  int PMPC_Get_comm_type (void **comm_type);
-  int PMPC_Set_comm_type (void *comm_type);
-  int PMPC_Get_op (void **op);
-  int PMPC_Set_op (void *op);
+/*   int PMPC_Get_keys (void **keys); */
+/*   int PMPC_Set_keys (void *keys); */
+/*   int PMPC_Get_requests (void **requests); */
+/*   int PMPC_Set_requests (void *requests); */
+/*   int PMPC_Get_groups (void **groups); */
+/*   int PMPC_Set_groups (void *groups); */
+/*   int PMPC_Get_errors (void **errors); */
+/*   int PMPC_Set_errors (void *errors); */
+/*   int PMPC_Set_buffers (void *buffers); */
+/*   int PMPC_Get_buffers (void **buffers); */
+/*   int PMPC_Get_comm_type (void **comm_type); */
+/*   int PMPC_Set_comm_type (void *comm_type); */
+/*   int PMPC_Get_op (void **op); */
+/*   int PMPC_Set_op (void *op); */
 
 
   /*Requests */
@@ -675,7 +671,7 @@ extern "C"
   int PMPC_Migrate (void);
   int PMPC_Restart (int rank);
   int PMPC_Restarted (int *flag);
-  
+
   int PMPC_Get_activity (int nb_item, MPC_Activity_t * tab,
 			double *process_act);
   int PMPC_Move_to (int process, int cpuid);
@@ -707,6 +703,26 @@ extern "C"
   int PMPC_Irecv_pack (int source, int tag, MPC_Comm comm,
 		      MPC_Request * request);
 
+/********************************************************************/
+/*Netowk statistics                                                 */
+/********************************************************************/
+  struct MPC_Network_stats_s {
+    int matched;
+    int not_matched;
+
+    int poll_own;
+    /* Number of msg stolen by another task */
+    int poll_stolen;
+
+    /* Number of msg stolen by the current task */
+    int poll_steals;
+
+    double time_stolen;
+    double time_steals;
+    double time_own;
+  };
+
+  void MPC_Network_stats(struct MPC_Network_stats_s *stats);
 
 #ifdef __cplusplus
 }

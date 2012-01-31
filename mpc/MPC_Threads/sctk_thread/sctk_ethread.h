@@ -34,6 +34,8 @@
 #include "sctk_spinlock.h"
 #include "sctk_alloc.h"
 #include "sctk_pthread_compatible_structures.h"
+#include <asm/prctl.h>
+#include <asm/unistd.h>
 
 #ifdef MPC_Debugger
 #include "sctk_thread_dbg.h"

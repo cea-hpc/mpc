@@ -17,356 +17,172 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - DIDELOT Sylvain didelot.sylvain@gmail.com                        # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "sctk_ib.h"
-#include "sctk_low_level_comm.h"
-#include "sctk_hybrid_comm.h"
-#include "sctk_debug.h"
-#include "sctk_pmi.h"
-
 #ifdef MPC_USE_INFINIBAND
+#include <sctk_debug.h>
+#include <sctk_net_tools.h>
+#include <sctk_ib.h>
+#include <sctk_pmi.h>
+#include <unistd.h>
+#include <string.h>
+#include <sys/types.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <sctk.h>
+#include <netdb.h>
+#include <sctk_spinlock.h>
+#include <sctk_net_tools.h>
+#include <sctk_route.h>
+#include <sctk_ib.h>
+#include <sctk_ib_qp.h>
+#include <sctk_ib_cp.h>
+#include <sctk_ib_toolkit.h>
+#include <sctk_ib_rdma.h>
+#include <sctk_ib_sr.h>
+#include <sctk_route.h>
 
-#include "sctk_thread.h"
-#include "sctk_rpc.h"
-#include "sctk_mpcrun_client.h"
-#include "sctk_buffered_fifo.h"
-
-#include "sctk_ib_rpc.h"
-#include "sctk_ib_scheduling.h"
-#include "sctk_ib_allocator.h"
-#include "sctk_bootstrap.h"
-#include "sctk_ib_ibufs.h"
-#include "sctk_ib_config.h"
-#include "sctk_ib_qp.h"
-#include "sctk_ib_frag.h"
-#include "sctk_ib_mmu.h"
-#include "sctk_ib_cm.h"
-#include "sctk_ib_comp_rc_sr.h"
-#include "sctk_ib_comp_rc_rdma.h"
-
-#include <infiniband/verbs.h>
-#include "sctk_alloc.h"
-#include "sctk_alloc.h"
-#include "sctk_iso_alloc.h"
-#include "sctk_net_tools.h"
-#include "sctk_ib_profiler.h"
+#define MAX_STRING_SIZE  2048
 
 
-#if defined(Linux_SYS)
-/* for storing times */
-extern __thread double poll_period;
-extern __thread double poll_last_found;
-/* store counters */
-extern __thread int poll_nb_found;
-extern __thread int poll_nb_not_found;
-extern __thread double poll_time_found;
-extern __thread double poll_time_not_found;
-#endif
-
-
-
-/* rail */
-extern  sctk_net_ibv_qp_rail_t   *rail;
-
-/* channel selection */
-extern sctk_net_ibv_allocator_t* sctk_net_ibv_allocator;
-
-/* RC SR structures */
-extern  sctk_net_ibv_qp_local_t *rc_sr_local;
-
-/* RC RDMA structures */
-extern sctk_net_ibv_qp_local_t   *rc_rdma_local;
-
-/* physical port number */
-#define IBV_ADM_PORT 1
-
-#include "sctk_ib_lib.h"
-
-static char sctk_net_network_mode[4096];
-void
-sctk_net_ibv_update_network_mode()
-{
-  if (sctk_net_is_shm_enabled())
-    sprintf (sctk_net_network_mode, "SHM v%s/IB-MT", SHM_VERSION);
-  else
-    sprintf (sctk_net_network_mode, "IB-MT");
-  sctk_network_mode = sctk_net_network_mode;
+void sctk_ib_add_static_route(int dest, sctk_route_table_t *tmp, sctk_rail_info_t* rail){
+  sctk_add_static_route(dest,tmp,rail);
 }
 
-#include "sctk_ib_coll.h"
-  void
-sctk_net_init_driver_infiniband (int *argc, char ***argv)
+void sctk_ib_add_dynamic_route(int dest, sctk_route_table_t *tmp, sctk_rail_info_t* rail){
+  sctk_add_dynamic_route(dest,tmp,rail);
+}
+
+void sctk_ib_route_dynamic_set_connected(sctk_route_table_t *tmp, int connected){
+  sctk_route_set_connected(tmp, connected);
+}
+
+int sctk_ib_route_dynamic_is_connected(sctk_route_table_t *tmp){
+  return sctk_route_is_connected(tmp);
+}
+
+sctk_route_table_t *
+sctk_ib_create_remote(int dest, sctk_rail_info_t* rail){
+  sctk_route_table_t* tmp;
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  sctk_ib_data_t *route_ib;
+
+  tmp = sctk_malloc(sizeof(sctk_route_table_t));
+  memset(tmp,0,sizeof(sctk_route_table_t));
+
+  sctk_nodebug("Creating QP for dest %d", dest);
+  route_ib=&tmp->data.ib;
+  route_ib->remote = sctk_ib_qp_new();
+  sctk_ib_qp_allocate_init(rail_ib, dest, route_ib->remote);
+
+  return tmp;
+}
+
+void sctk_network_free_msg(sctk_thread_ptp_message_t *msg)
 {
-  struct ibv_srq_attr mod_attr;
-  int rc;
+#if 0
+  sctk_ib_rail_info_t *rail_ib = &rail_0->network.ib;
 
-  assume (argc != NULL);
-  assume (argv != NULL);
+  switch(msg->tail.ib_protocol) {
+    case eager_protocol:
+      sctk_ib_sr_free_msg(rail_ib, msg);
+      break;
+    default: assume(0);
+  }
+#endif
+}
 
-  /* init soft MMU */
-  sctk_net_ibv_mmu_new(rail);
+char *sctk_ib_print_procotol(sctk_ib_protocol_t p)
+{
+  switch (p) {
+    case eager_protocol:
+      return "eager_protocol";
+    case rdma_protocol:
+      return "rdma_protocol";
+    case buffered_protocol:
+      return "buffered_protocol";
+    default: not_reachable();
+  }
+  return NULL;
+}
 
-  /* channel selection */
-  sctk_net_ibv_allocator_new();
+void sctk_ib_print_msg(sctk_thread_ptp_message_t *msg) {
+  sctk_debug("IB protocol: %s", sctk_ib_print_procotol(msg->tail.ib.protocol));
+  switch (msg->tail.ib.protocol) {
+    case eager_protocol:
+      break;
+    case rdma_protocol:
+      sctk_ib_rdma_print(msg);
+      break;
+    case buffered_protocol:
+      break;
+    default: not_reachable();
+  }
 
-  /* initialization of buffers. Must be initialized BEFORE
-   * the Connexion Manager server */
-  rc_sr_local = sctk_net_ibv_comp_rc_sr_create_local(rail);
+}
 
-  /* initialization of the Connection Manager */
-  sctk_net_ibv_cm_server();
+void sctk_network_init_ib_all(sctk_rail_info_t* rail,
+			       int (*route)(int , sctk_rail_info_t* ),
+			       void(*route_init)(sctk_rail_info_t*)){
 
-  /* message numbering */
-  sctk_net_ibv_sched_init();
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  int dest_rank;
+  int src_rank;
+  sctk_route_table_t *route_table_src, *route_table_dest;
+  sctk_ib_data_t *route_dest, *route_src;
+  sctk_ib_qp_keys_t keys;
 
+  assume(rail->send_message_from_network != NULL);
+
+  /* FIXME: register pointers */
+
+  dest_rank = (sctk_process_rank + 1) % sctk_process_number;
+  src_rank = (sctk_process_rank + sctk_process_number - 1) % sctk_process_number;
+
+  /* create remote for dest */
+  route_table_dest = sctk_ib_create_remote(dest_rank, rail);
+  route_dest=&route_table_dest->data.ib;
+  /* create remote for src */
+  route_table_src = sctk_ib_create_remote(src_rank, rail);
+  route_src=&route_table_src->data.ib;
+
+  /* XXX: Set QP in a Ready-To-Send mode. Ideally, we should check that
+   * the remote QP has sent an ack */
+  sctk_ib_qp_keys_send(rail_ib, route_dest->remote);
   sctk_pmi_barrier();
 
-  /* initialization of collective */
-  sctk_net_ibv_collective_init();
+  /* change state to RTR */
+  keys = sctk_ib_qp_keys_recv(route_dest->remote, src_rank);
+  sctk_ib_qp_allocate_rtr(rail_ib, route_src->remote, &keys);
+  sctk_ib_qp_allocate_rts(rail_ib, route_src->remote);
+  sctk_ib_qp_keys_send(rail_ib, route_src->remote);
+  sctk_pmi_barrier();
 
-  sctk_net_ibv_config_init();
+  keys = sctk_ib_qp_keys_recv(route_src->remote, dest_rank);
+  sctk_ib_qp_allocate_rtr(rail_ib, route_dest->remote, &keys);
+  sctk_ib_qp_allocate_rts(rail_ib, route_dest->remote);
+  sctk_pmi_barrier();
 
-  sctk_ibv_profiler_init();
+  sctk_ib_add_static_route(dest_rank, route_table_dest, rail);
+  sctk_ib_add_static_route(src_rank, route_table_src, rail);
 
-  sctk_net_ibv_ibuf_new();
-  sctk_net_ibv_ibuf_init(rail, rc_sr_local, ibv_max_ibufs, 0);
-  /* Post all recv buffers... */
-  sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit, 1);
-  /* ..and set up the srq limit */
-  mod_attr.srq_limit = ibv_srq_credit_thread_limit;
-  rc = ibv_modify_srq(rc_sr_local->srq, &mod_attr, IBV_SRQ_LIMIT);
-  assume(rc == 0);
-
-  sctk_net_ibv_async_init(rc_sr_local->context);
-
-  /* initialization of RPC structures */
-  sctk_net_rpc_init();
-
-  /* initialization of timers */
-#if defined(Linux_SYS)
-  rc = sctk_net_ibv_timer_linux_open(&cpu_frequency);
-  assume(rc);
-#endif
+  sctk_nodebug("Recv from %d, send to %d", src_rank, dest_rank);
 }
 
-  /*-----------------------------------------------------------
- *  PTP
- *----------------------------------------------------------*/
+void sctk_network_stats_ib (struct MPC_Network_stats_s* stats) {
+  sctk_ib_cp_task_t *task = NULL;
+  int task_id;
+  int thread_id;
 
-static void
-sctk_net_ibv_copy_message_func_driver ( sctk_thread_ptp_message_t * restrict dest, sctk_thread_ptp_message_t * restrict src ) {
-  not_reachable ();
-  assume ( dest );
-  assume ( src );
-}
-
-
-static void
-sctk_net_ibv_free_func_driver ( sctk_thread_ptp_message_t * item ) {
-  DBG_S(1);
-
-  sctk_net_ibv_rc_rdma_process_t *entry_rdma;
-  sctk_net_ibv_rc_rdma_entry_t *entry = NULL;
-  sctk_net_ibv_ibuf_t* ibuf;
-  sctk_net_ibv_msg_entry_t* frag_entry;
-
-  sctk_nodebug("FREE begin");
-
-  switch (item->channel_type)
-  {
-    case IBV_RC_SR_ORIGIN:
-      sctk_nodebug("Free RC_SR message %d", ibuf_free_ibuf_nb);
-
-      /* release the ibuf */
-      ibuf = (sctk_net_ibv_ibuf_t*)  item->struct_ptr;
-      sctk_net_ibv_ibuf_release(ibuf, 1);
-      sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit, 1);
-      break;
-
-    case IBV_RC_RDMA_ORIGIN:
-      sctk_nodebug("Free RC_RDMA message");
-
-      entry = (sctk_net_ibv_rc_rdma_entry_t *)  item->struct_ptr;
-      sctk_nodebug("entry : %p, mmu : %p", entry, entry->mmu_entry);
-      entry_rdma = entry->entry_rc_rdma;
-
-
-      sctk_net_ibv_mmu_unregister (rail->mmu, entry->mmu_entry);
-      sctk_ib_list_lock(&entry_rdma->send);
-      sctk_ib_list_remove(&entry->list_header);
-      sctk_ib_list_unlock(&entry_rdma->send);
-
-      sctk_free(entry->msg_payload_ptr);
-      sctk_ibv_profiler_dec(IBV_MEM_TRACE);
-      sctk_nodebug("finished");
-      sctk_free(entry);
-      sctk_ibv_profiler_dec(IBV_MEM_TRACE);
-      break;
-
-    case IBV_POLL_RC_SR_ORIGIN:
-      sctk_nodebug("Free POLL_RC_SR");
-      ibuf = (sctk_net_ibv_ibuf_t*)  item->struct_ptr;
-      sctk_net_ibv_ibuf_release(ibuf, 1);
-      sctk_net_ibv_ibuf_srq_check_and_post(rc_sr_local, ibv_srq_credit_limit, 1);
-      break;
-
-    case IBV_POLL_RC_RDMA_ORIGIN:
-      entry = (sctk_net_ibv_rc_rdma_entry_t *)
-        item->struct_ptr;
-
-      sctk_nodebug("POLL_RC_RDMA %p", entry);
-      sctk_net_ibv_mmu_unregister (rail->mmu, entry->mmu_entry);
-
-      sctk_free(entry->msg_payload_ptr);
-      sctk_ibv_profiler_dec(IBV_MEM_TRACE);
-      sctk_free(entry);
-      sctk_ibv_profiler_dec(IBV_MEM_TRACE);
-      break;
-
-    case IBV_POLL_RC_SR_FRAG_ORIGIN:
-    case IBV_RC_SR_FRAG_ORIGIN:
-      frag_entry = (sctk_net_ibv_msg_entry_t*)  item->struct_ptr;
-      sctk_net_ibv_frag_free_msg(frag_entry);
-      break;
-
-    default:
-      assume(0);
-      break;
-  }
-  sctk_nodebug("FREE exit");
-  DBG_E(1);
-}
-
-
-/*-----------------------------------------------------------
- *  COLLECTIVE FUNCTIONS
- *----------------------------------------------------------*/
-  static void
-sctk_net_ibv_collective_op_driver (sctk_collective_communications_t * com,
-    sctk_virtual_processor_t * my_vp,
-    const size_t elem_size,
-    const size_t nb_elem,
-    const int root,
-    void (*func) (const void *, void *, size_t,
-      sctk_datatype_t),
-    const sctk_datatype_t data_type)
-{
-  sctk_nodebug ("begin collective from root %d", root);
-  if (nb_elem == 0)
-  {
-    sctk_nodebug ("begin collective barrier : %d", com->id);
-    //    if ( (com->id) == MPC_COMM_WORLD)
-    //    {
-    sctk_net_ibv_barrier (com, my_vp );
-    //      PMI_Barrier();
-    //    } else {
-    //      not_implemented();
-    //    }
-    sctk_nodebug ("end collective barrier");
-  }
-  else
-  {
-    if (func == NULL)
-    {
-      sctk_nodebug ("begin collective broadcast %d", root);
-      sctk_net_ibv_broadcast (com, my_vp, elem_size, nb_elem, root);
-      sctk_nodebug ("end collective broadcast");
-    }
-    else
-    {
-      sctk_nodebug ("begin collective reduce for root %d", root);
-      sctk_net_ibv_allreduce ( com, my_vp, elem_size, nb_elem, func,
-          data_type );
-      sctk_nodebug ("end collective reduce");
-    }
-  }
-  sctk_nodebug ("end collective");
-}
-
-
-/*-----------------------------------------------------------
- *  FUNCTIONS REGISTRATION
- *----------------------------------------------------------*/
-  void
-sctk_net_ibv_register_pointers_functions (sctk_net_driver_pointers_functions_t* pointers)
-{
-  /* save all pointers to functions */
-  /* TODO: Use TCP servers for rpc messages */
-  pointers->rpc_driver          = sctk_net_rpc_driver;
-  pointers->rpc_driver_retrive  = sctk_net_rpc_retrive_driver;
-  pointers->rpc_driver_send     = sctk_net_rpc_send_driver;
-
-  /*
-   * registration for memory registration/unregistration
-   */
-  sctk_register_ptr(sctk_net_rpc_register, sctk_net_rpc_unregister);
-
-  /*
-   * registration of RPC functions
-   */
-  pointers->net_send_ptp_message= sctk_net_ibv_allocator_send_ptp_message;
-
-  pointers->net_copy_message    = sctk_net_ibv_copy_message_func_driver;
-  pointers->net_free            = sctk_net_ibv_free_func_driver;
-
-  pointers->collective          = sctk_net_ibv_collective_op_driver;
-
-  pointers->net_adm_poll        = NULL; //thread_rpc; //sctk_net_adm_poll_func;	/* RPC */
-  pointers->net_ptp_poll        = sctk_net_ibv_allocator_ptp_poll_all; /*  PTP */
-
-  pointers->net_new_comm        = sctk_net_ibv_collective_new_com;
-  pointers->net_free_comm       = NULL;
-}
-
-  void
-sctk_net_preinit_driver_infiniband ( sctk_net_driver_pointers_functions_t* pointers )
-{
-
-  if (sctk_process_rank == 0)
-    sctk_nodebug("INIT driver!");
-
-  /* register pointers to functions */
-  sctk_net_ibv_register_pointers_functions(pointers);
-
-  //  sctk_net_ibv_qp_rail_init();
-  rail = sctk_net_ibv_qp_pick_rail(0);
-
-  /* initialization of network mode */
-  sctk_net_ibv_update_network_mode();
-
-
-  if (sctk_process_rank == 0)
-  {
-    sctk_nodebug("End of driver init!");
-    sctk_nodebug("Size header : %lu", sizeof(sctk_thread_ptp_message_t));
-  }
-}
-
-  void
-sctk_net_ibv_finalize()
-{
-  sctk_ibv_generate_report();
-
-#if defined(Linux_SYS)
-  if (poll_nb_not_found)
-    sctk_nodebug("found/not found ratio:%g (%d,%d)", (double)poll_nb_found/poll_nb_not_found, poll_nb_found, poll_nb_not_found);
-#endif
-}
-
-#else
-  void
-sctk_net_init_driver_infiniband (int *argc, char ***argv)
-{
-  assume (argc != NULL);
-  assume (argv != NULL);
-  not_available ();
-}
-
-  void
-sctk_net_preinit_driver_infiniband ( sctk_net_driver_pointers_functions_t* pointers )
-{
-  not_available ();
+  sctk_get_thread_info (&task_id, &thread_id);
+  task = sctk_ib_cp_get_task(task_id);
+  stats->matched = CP_PROF_PRINT(task, matched);
+  stats->not_matched = CP_PROF_PRINT(task, not_matched);
+  stats->poll_own = CP_PROF_PRINT(task, poll_own);
+  stats->poll_stolen = CP_PROF_PRINT(task, poll_stolen);
+  stats->poll_steals = CP_PROF_PRINT(task, poll_steals);
+  stats->time_stolen = task->time_stolen;
+  stats->time_steals = task->time_steals;
+  stats->time_own = task->time_own;
 }
 #endif

@@ -84,9 +84,7 @@ int
 sctk_spinlock_read_lock (sctk_spin_rwlock_t * lock)
 {
   sctk_spinlock_lock(&(lock->writer_lock));
-  sctk_spinlock_lock(&(lock->lock));
-  lock->reader_number ++;
-  sctk_spinlock_unlock(&(lock->lock));
+  OPA_incr_int(&(lock->reader_number));
   sctk_spinlock_unlock(&(lock->writer_lock));
   return 0;
 }
@@ -95,7 +93,7 @@ int
 sctk_spinlock_write_lock (sctk_spin_rwlock_t * lock)
 {
   sctk_spinlock_lock(&(lock->writer_lock));
-  while(expect_true (lock->reader_number != 0)) {
+  while(expect_true (OPA_load_int(&(lock->reader_number)) != 0)) {
     sctk_cpu_relax ();
   }
   return 0;
@@ -104,9 +102,7 @@ sctk_spinlock_write_lock (sctk_spin_rwlock_t * lock)
 int
 sctk_spinlock_read_unlock (sctk_spin_rwlock_t * lock)
 {
-  sctk_spinlock_lock(&(lock->lock));
-  lock->reader_number --;
-  sctk_spinlock_unlock(&(lock->lock));
+  OPA_decr_int(&(lock->reader_number));
   return 0;
 }
 

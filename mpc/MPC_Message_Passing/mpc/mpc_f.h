@@ -280,6 +280,8 @@ extern "C"
   void ffunc (mpc_io_get_unit) (int *unit);
   void ffunc (mpc_io_free_unit) (int *unit);
 
+  /* Other */
+  void ffunc (mpc_network_stats) (int *matched, int *not_matched, int *poll_own, int *poll_stolen, int *poll_steals, double *time_stolen, double *time_steals, double *time_own);
 #ifdef __cplusplus
 }				/* end of extern "C" */
 #endif

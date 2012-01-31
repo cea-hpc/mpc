@@ -38,12 +38,15 @@ extern "C"
 
   extern int sctk_restart_mode;
   extern int sctk_check_point_restart_mode;
+  extern int sctk_migration_mode;
   extern char *sctk_multithreading_mode;
   extern char *sctk_network_mode;
   extern char *sctk_store_dir;
   extern int sctk_is_in_fortran;
   extern int sctk_local_process_rank;
   extern int sctk_local_process_number;
+  extern int sctk_node_rank;
+  extern int sctk_node_number;
 
   void sctk_init (void);
   void sctk_leave (void);
@@ -59,6 +62,8 @@ extern "C"
 
   void MPC_printf (const char *fmt, ...);
   void sctk_debug_root(const char *fmt, ...);
+  /* Print infos on processus and threads */
+  char* sctk_print_debug_infos();
 #ifdef SCTK_DEBUG_MESSAGES
   void sctk_debug (const char *fmt, ...);
   void sctk_info (const char *fmt, ...);
@@ -105,14 +110,20 @@ extern "C"
 #ifndef MPC_Debugger
 #define sctk_thread_add(a, b) (void)(0)
 #define sctk_thread_remove(a) (void)(0)
-#define sctk_thread_enable_debug() (void)(0)
-#define sctk_thread_disable_debug() (void)(0)
-#define sctk_thread_list() (void)(0)
+
 /** ** **/
-#define sctk_init_idle_thread_dbg(a, b) (void)(0)
+#define sctk_enable_lib_thread_db() (void)(0)
+
+#define sctk_init_thread_debug(a) (void)(0)
+#define sctk_refresh_thread_debug(a,b) (void)(0)
+#define sctk_refresh_thread_debug_migration(a) (void)(0)
+
+#define sctk_init_idle_thread_dbg(a,b) (void)(0)
 #define sctk_free_idle_thread_dbg(a) (void)(0)
-#define sctk_refresh_thread_debug(a, b) (void)(0)
-/** **/
+
+#define sctk_report_creation(a) (void)(0)
+#define sctk_report_death(a) (void) (0)
+  /** **/
 #endif
 
 #ifdef SCTK_64_BIT_ARCH
