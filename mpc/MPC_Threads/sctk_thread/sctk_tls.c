@@ -47,9 +47,8 @@ __thread void *sctk_extls = NULL;
 #include <stdio.h>
 
 /* to set GS register */
-#include <asm/prctl.h>
-#include <asm/unistd.h>
-//#include <asm/unistd_64.h>
+#include <asm/prctl.h> /* ARCH_SET_GS */
+#include <sys/prctl.h> /* arch_prctl */
 
 static __thread unsigned long p_memsz;
 static __thread unsigned long p_filesz;
@@ -606,6 +605,8 @@ sctk_tls_module_set_gs_register ()
 	if ( done_on_this_vp == 1 )
 		return ;
 
+	int result = arch_prctl(ARCH_SET_GS,(unsigned long)sctk_tls_module_vp);
+	/*
 	int result;
 	void *gs = (void*)sctk_tls_module_vp ;
 	asm volatile ("syscall"
@@ -614,6 +615,7 @@ sctk_tls_module_set_gs_register ()
 			"D" ((unsigned long int ) ARCH_SET_GS),
 			"S" (gs)
 			: "memory", "cc", "r11", "cx");
+	*/
 	assume(result == 0);
 	done_on_this_vp = 1 ;
 }
