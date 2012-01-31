@@ -40,8 +40,9 @@ typedef struct{
   void *arg;
   void* return_value;
   int bind_to;
+  int polling;
 }sctk_thread_generic_intern_attr_t;
-#define sctk_thread_generic_intern_attr_init {SCTK_THREAD_SCOPE_PROCESS,SCTK_THREAD_CREATE_JOINABLE,0,SCTK_THREAD_EXPLICIT_SCHED,NULL,0,NULL,NULL,-1}
+#define sctk_thread_generic_intern_attr_init {SCTK_THREAD_SCOPE_PROCESS,SCTK_THREAD_CREATE_JOINABLE,0,SCTK_THREAD_EXPLICIT_SCHED,NULL,0,NULL,NULL,-1,0}
 
 typedef struct{
   sctk_thread_generic_intern_attr_t* ptr;
