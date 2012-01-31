@@ -115,6 +115,13 @@ static
 void sctk_network_init_multirail_ib_all(char* name, char* topology){
   int i;
 
+  /* FIXME: for the moment, IB requires an ondemand connexion.
+   * Exiting else... */
+  if (strcmp(topology, "ondemand")) {
+      sctk_error("IB requires the 'ondemand' topology! Exiting...");
+      sctk_abort();
+  }
+
   sctk_set_dynamic_reordering_buffer_creation();
   sctk_route_set_rail_nb(NB_RAILS);
   rails = sctk_malloc(NB_RAILS*sizeof(sctk_rail_info_t*));
