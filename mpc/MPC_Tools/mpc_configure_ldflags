@@ -31,7 +31,7 @@ EOF
 
 header_sh >> bin/mpc_ldflags
 
-FLAGS="-lmpc_iso_alloc -lmpc_tdb_remote_static $SCTK_LDFLAGS -Wl,-rpath,${SCTK_LIB_DIR}"
+FLAGS="-lmpc_tdb_remote_static $SCTK_LDFLAGS -Wl,-rpath,${SCTK_LIB_DIR}"
 
 if test ! -z "${BINUTILS_PREFIX_INSTALL}"
 then
