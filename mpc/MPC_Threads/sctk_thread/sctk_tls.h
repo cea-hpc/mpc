@@ -160,7 +160,6 @@ extern "C"
 #endif
     //profiling TLS
     tls_init (tls_args);
-    tls_init (sctk_tls_module);
     tls_init (tls_trace_module);
     tls_init (sctk_hls_generation);
     tls_init (sctk_tls_module);
