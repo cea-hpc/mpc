@@ -44,18 +44,18 @@ typedef enum{
 
 struct sctk_thread_generic_scheduler_s;
 
-typedef struct sctk_thread_generic_scheduler_centralized_s{
+typedef struct sctk_thread_generic_scheduler_generic_s{
   int vp_type;
   struct sctk_thread_generic_scheduler_s* sched;
-  struct sctk_thread_generic_scheduler_centralized_s *prev, *next;
+  struct sctk_thread_generic_scheduler_generic_s *prev, *next;
   sem_t sem;
-} sctk_thread_generic_scheduler_centralized_t;
+} sctk_thread_generic_scheduler_generic_t;
 
 typedef struct sctk_thread_generic_scheduler_s{
   sctk_mctx_t ctx;
   sctk_mctx_t ctx_bootstrap;
   union{
-    sctk_thread_generic_scheduler_centralized_t centralized;
+    sctk_thread_generic_scheduler_generic_t generic;
   };
   sctk_thread_generic_thread_status_t status;
   struct sctk_thread_generic_p_s* th;

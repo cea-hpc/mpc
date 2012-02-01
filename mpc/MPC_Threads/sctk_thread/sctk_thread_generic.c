@@ -469,20 +469,20 @@ int sctk_get_env_cpu_nuber(){
 void
 sctk_ethread_mxn_ng_thread_init (void){
   
-  sctk_thread_generic_thread_init ("ethread_mxn","centralized",sctk_get_env_cpu_nuber());
+  sctk_thread_generic_thread_init ("ethread_mxn","generic/centralized",sctk_get_env_cpu_nuber());
   sctk_register_thread_type("ethread_mxn_ng");
 }
 
 /********* ETHREAD ************/
 void
 sctk_ethread_ng_thread_init (void){
-  sctk_thread_generic_thread_init ("ethread_mxn","centralized",1);
+  sctk_thread_generic_thread_init ("ethread_mxn","generic/centralized",1);
   sctk_register_thread_type("ethread_ng");
 }
 
 /********* PTHREAD ************/
 void
 sctk_pthread_ng_thread_init (void){
-  sctk_thread_generic_thread_init ("pthread","centralized",sctk_get_env_cpu_nuber());
+  sctk_thread_generic_thread_init ("pthread","generic/centralized",sctk_get_env_cpu_nuber());
   sctk_register_thread_type("pthread_ng");
 }
