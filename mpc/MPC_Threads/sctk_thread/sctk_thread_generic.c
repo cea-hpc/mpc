@@ -159,7 +159,6 @@ static  void __sctk_start_routine (void * arg){
 
   thread = arg;
 
-  sctk_thread_generic_scheduler_init_thread(&(sctk_thread_generic_self()->sched),thread);
   sctk_thread_generic_sched_yield(&(thread->sched));
 
   sctk_debug("Start %p",thread->attr.arg);
@@ -379,7 +378,7 @@ sctk_thread_generic_once (sctk_thread_generic_once_t * once_control,
 /* INIT                                */
 /***************************************/
 static void
-sctk_thread_generic_thread_init (char* scheduler_type, int vp_number){
+sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_number){
   sctk_only_once ();
   sctk_thread_generic_self_data = sctk_malloc(sizeof(sctk_thread_generic_p_t));
 
@@ -387,7 +386,7 @@ sctk_thread_generic_thread_init (char* scheduler_type, int vp_number){
   sctk_add_func_type (sctk_thread_generic, self, sctk_thread_t (*)(void));
 
   /****** SCHEDULER ******/
-  sctk_thread_generic_scheduler_init(scheduler_type,vp_number);
+  sctk_thread_generic_scheduler_init(thread_type,scheduler_type,vp_number);
   sctk_thread_generic_scheduler_init_thread(&(sctk_thread_generic_self()->sched),
 					    sctk_thread_generic_self());
 
@@ -470,20 +469,20 @@ int sctk_get_env_cpu_nuber(){
 void
 sctk_ethread_mxn_ng_thread_init (void){
   
-  sctk_thread_generic_thread_init ("centralized",sctk_get_env_cpu_nuber());
+  sctk_thread_generic_thread_init ("ethread_mxn","centralized",sctk_get_env_cpu_nuber());
   sctk_register_thread_type("ethread_mxn_ng");
 }
 
 /********* ETHREAD ************/
 void
 sctk_ethread_ng_thread_init (void){
-  sctk_thread_generic_thread_init ("centralized",1);
+  sctk_thread_generic_thread_init ("ethread_mxn","centralized",1);
   sctk_register_thread_type("ethread_ng");
 }
 
 /********* PTHREAD ************/
 void
 sctk_pthread_ng_thread_init (void){
-  sctk_thread_generic_thread_init ("centralized",sctk_get_env_cpu_nuber());
+  sctk_thread_generic_thread_init ("pthread","centralized",sctk_get_env_cpu_nuber());
   sctk_register_thread_type("pthread_ng");
 }

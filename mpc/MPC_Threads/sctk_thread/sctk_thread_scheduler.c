@@ -177,7 +177,9 @@ static inline sctk_thread_generic_scheduler_t* sctk_centralized_get_from_list(){
     sctk_thread_generic_scheduler_centralized_t* res;
     sctk_spinlock_lock(&sctk_centralized_sched_list_lock);
     res = sctk_centralized_sched_list;
-    DL_DELETE(sctk_centralized_sched_list,res);
+    if(res != NULL){
+      DL_DELETE(sctk_centralized_sched_list,res);
+    }
     sctk_spinlock_unlock(&sctk_centralized_sched_list_lock);
     return res->sched;
   } else {
@@ -195,8 +197,9 @@ static void sctk_centralized_sched_idle_start(){
 }
 
 static void sctk_centralized_sched_yield(sctk_thread_generic_scheduler_t*sched){
+  sctk_thread_generic_scheduler_t* next;
+  assume(sched->centralized.vp_type != 0);
   if(sched->centralized.vp_type == 0){
-    sctk_thread_generic_scheduler_t* next;
 
     if(sched->status == sctk_thread_generic_running){
       sctk_centralized_add_to_list(sched);
@@ -214,7 +217,7 @@ static void sctk_centralized_sched_yield(sctk_thread_generic_scheduler_t*sched){
 	sctk_thread_generic_scheduler_swapcontext(sched,next);
       } else {
 	/* Idle function */
-
+	sctk_cpu_relax ();
 	goto retry;
       }
 
@@ -222,7 +225,7 @@ static void sctk_centralized_sched_yield(sctk_thread_generic_scheduler_t*sched){
       /*     if(sctk_centralized_delegated_zombie_list != NULL){ */
       /*       not_implemented(); */
       /*     } */
-    
+
       if(sctk_centralized_delegated_task_list != NULL){ 
 	sctk_spinlock_lock(&sctk_centralized_task_list_lock);
 	DL_APPEND(sctk_centralized_task_list,sctk_centralized_delegated_task_list);
@@ -231,18 +234,51 @@ static void sctk_centralized_sched_yield(sctk_thread_generic_scheduler_t*sched){
       }
     }
   } else {
-    if(sched->status == sctk_thread_generic_zombie){
-      not_implemented();
-    }
     if(sctk_centralized_delegated_task_list != NULL){ 
       sctk_spinlock_lock(&sctk_centralized_task_list_lock);
       DL_APPEND(sctk_centralized_task_list,sctk_centralized_delegated_task_list);
       sctk_spinlock_unlock(&sctk_centralized_task_list_lock);
       sctk_centralized_delegated_task_list = NULL;
     }
-    if(sched->status == sctk_thread_generic_blocked){
-      not_implemented();
-    }    
+
+    if(sched->centralized.vp_type == 1){
+      if(sched->status == sctk_thread_generic_zombie){
+	pthread_exit(NULL);
+	not_implemented();
+      }
+
+      if(sched->status == sctk_thread_generic_blocked){
+	not_implemented();
+      }
+    } else {
+      if(sched->centralized.vp_type == 4){
+	sched->centralized.vp_type = 3;
+	sem_wait(&(sched->centralized.sem));	
+      }
+
+      if(sched->status == sctk_thread_generic_running){
+	sctk_centralized_add_to_list(sched);
+      }
+
+    retry_system:
+      next = sctk_centralized_get_from_list();
+      
+      if(next != sched){
+	if(next != NULL){
+	  sctk_debug("SLEEP %p WAKE %p",sched,next);
+	  sem_post(&(next->centralized.sem));
+	  sem_wait(&(sched->centralized.sem));
+	} else {
+	  /* Idle function */
+	  sctk_cpu_relax ();
+	  goto retry_system;
+	}	
+      }
+      if(sched->status == sctk_thread_generic_zombie){
+	pthread_exit(NULL);
+	not_implemented();
+      }
+    }
   }
 }
 
@@ -262,7 +298,12 @@ static void sctk_centralized_wake(sctk_thread_generic_scheduler_t* sched){
     sched->status = sctk_thread_generic_running;
     sctk_centralized_add_to_list(sched);
   } else {
-    not_implemented();
+    sched->status = sctk_thread_generic_running;
+    if(sched->centralized.vp_type == 1){
+      sem_post(&(sched->centralized.sem));
+    } else {
+      sctk_centralized_add_to_list(sched);
+    }
   }
 }
 
@@ -296,19 +337,41 @@ sctk_centralized_wake_thread_on_vp (void **list)
   }
 }
 
-static void sctk_centralized_create(sctk_thread_generic_p_t*thread){
-  sctk_thread_generic_scheduler_init_thread(&(thread->sched),thread);
-
-  sctk_debug("Create thread scope %d = %d SYSTEM",thread->attr.scope,SCTK_THREAD_SCOPE_SYSTEM);
+static inline 
+void sctk_centralized_create_common(sctk_thread_generic_p_t*thread){
   if(thread->attr.scope == SCTK_THREAD_SCOPE_SYSTEM){
     thread->sched.centralized.vp_type = 1;
+   
+    sctk_debug("Create thread scope %d (%d SYSTEM) vp _type %d",
+	       thread->attr.scope,SCTK_THREAD_SCOPE_SYSTEM,thread->sched.centralized.vp_type);
     sctk_thread_generic_scheduler_create_vp(thread,thread->attr.bind_to);
   } else {
+    sctk_debug("Create thread scope %d (%d SYSTEM) vp _type %d",
+	       thread->attr.scope,SCTK_THREAD_SCOPE_SYSTEM,thread->sched.centralized.vp_type);
     sctk_centralized_add_to_list(&(thread->sched));
   }
 }
 
+
+static void sctk_centralized_create(sctk_thread_generic_p_t*thread){
+  sctk_thread_generic_scheduler_init_thread(&(thread->sched),thread);
+  sctk_centralized_create_common(thread);
+}
+
+static void sctk_centralized_create_pthread(sctk_thread_generic_p_t*thread){
+  sctk_thread_generic_scheduler_init_thread(&(thread->sched),thread);
+  thread->sched.centralized.vp_type = 4;
+
+  if(thread->attr.scope != SCTK_THREAD_SCOPE_SYSTEM){
+    sctk_centralized_add_to_list(&(thread->sched));
+    sctk_thread_generic_scheduler_create_vp(thread,thread->attr.bind_to);    
+  } else {
+    sctk_centralized_create_common(thread);
+  }
+}
+
 static void sctk_centralized_add_task(sctk_thread_generic_task_t* task){
+  sctk_debug("ADD task %p FROM %p",task,task->sched);
   if(task->is_blocking){
     sctk_centralized_thread_status(task->sched,sctk_thread_generic_blocked);
     assume(sctk_centralized_delegated_task_list == NULL);
@@ -347,6 +410,7 @@ static void* sctk_centralized_polling_func(void*arg){
     DL_FOREACH_SAFE(sctk_centralized_task_list,task,task_tmp){
       if(sctk_thread_generic_scheduler_check_task(task) == 1){
 	DL_DELETE(sctk_centralized_task_list,task);
+	sctk_debug("WAKE task %p",task);
 	sctk_thread_generic_wake(task->sched);
       }
     }
@@ -356,11 +420,21 @@ static void* sctk_centralized_polling_func(void*arg){
   }while(1);
 }
 
-static void sctk_centralized_scheduler_init_thread(sctk_thread_generic_scheduler_t* sched){
-  sched->centralized.vp_type = 0;
+static void sctk_centralized_scheduler_init_thread_common(sctk_thread_generic_scheduler_t* sched){
   sched->centralized.sched = sched;
   sched->centralized.next = NULL;
   sched->centralized.prev = NULL;
+  sem_init(&(sched->centralized.sem),0,0);
+}
+
+static void sctk_centralized_scheduler_init_thread(sctk_thread_generic_scheduler_t* sched){
+  sched->centralized.vp_type = 0;
+  sctk_centralized_scheduler_init_thread_common(sched);
+}
+
+static void sctk_centralized_scheduler_init_pthread(sctk_thread_generic_scheduler_t* sched){
+  sched->centralized.vp_type = 3;
+  sctk_centralized_scheduler_init_thread_common(sched);
 }
 
 
@@ -379,7 +453,7 @@ static void* sctk_thread_generic_polling_func_bootstrap(void* attr){
 }
 
 static char sched_type[4096];
-void sctk_thread_generic_scheduler_init(char* scheduler_type, int vp_number){ 
+void sctk_thread_generic_scheduler_init(char* thread_type,char* scheduler_type, int vp_number){ 
   int i;
 
   if(vp_number > sctk_get_cpu_number ()){
@@ -405,6 +479,10 @@ void sctk_thread_generic_scheduler_init(char* scheduler_type, int vp_number){
 		      void (*)(sctk_thread_mutex_t *, void **));
     sctk_add_func (sctk_centralized, wake_thread_on_vp);
     sctk_thread_generic_polling_func = sctk_centralized_polling_func;
+    if(strcmp("pthread",thread_type) == 0){
+      sctk_thread_generic_sched_create = sctk_centralized_create_pthread;
+    sctk_thread_generic_scheduler_init_thread_p = sctk_centralized_scheduler_init_pthread;
+    }
   } else {
     not_reachable();
   }
@@ -433,7 +511,7 @@ void sctk_thread_generic_scheduler_init_thread(sctk_thread_generic_scheduler_t* 
 					       struct sctk_thread_generic_p_s* th){
   sched->th = th;
   sched->status = sctk_thread_generic_running;
-  sctk_centralized_scheduler_init_thread(sched);
+  sctk_thread_generic_scheduler_init_thread_p(sched);
 }
 
 char* sctk_thread_generic_scheduler_get_name(){
