@@ -524,13 +524,7 @@ void sctk_hls_checkout_on_vp ()
 	  level_id = atol ( hwloc_obj_get_info_by_name (obj, "hls_level") ) ;
 	  sctk_hls[sctk_hls_numa_level_1_scope] = sctk_hls_repository[numa_id] + level_id ;
   }
-
-  obj = hwloc_get_ancestor_obj_by_type (topology, HWLOC_OBJ_SOCKET, pu) ;
-  if ( obj != NULL ) {
-	  level_id = atol ( hwloc_obj_get_info_by_name (obj, "hls_level") ) ;
-	  sctk_hls[sctk_hls_socket_scope] = sctk_hls_repository[numa_id] + level_id ;
-  }
-
+  
   for ( i = 1 ; i <= 3 ; ++i ) {
 	  obj = hwloc_get_ancestor_obj_by_depth (topology, core_depth-i, pu) ;
 	  if ( obj != NULL && obj->type == HWLOC_OBJ_CACHE ) {
@@ -556,7 +550,7 @@ void sctk_hls_checkout_on_vp ()
 void sctk_hls_register_thread ()
 {
   int i ;
-  for ( i = sctk_hls_socket_scope ; i < sctk_hls_max_scope ; ++i )
+  for ( i = sctk_hls_cache_level_3_scope ; i < sctk_hls_max_scope ; ++i )
 	  if ( sctk_hls[i] != NULL )
 		  sctk_atomics_incr_int ( &sctk_hls[i]->toenter ) ;
 
@@ -767,17 +761,6 @@ __sctk__tls_get_addr__numa_level_1_scope (tls_index * tmp)
 }
 
 void *
-__sctk__tls_get_addr__socket_scope (tls_index * tmp)
-{
-  void *res;
-  sctk_nodebug ("__sctk__tls_get_addr__socket_scope");
-  res =
-    __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
-					 &sctk_hls[sctk_hls_socket_scope]->level);
-  return res;
-}
-
-void *
 __sctk__tls_get_addr__cache_level_3_scope (tls_index * tmp)
 {
   void *res;
@@ -885,14 +868,6 @@ __sctk__tls_get_addr__numa_scope (size_t m, size_t offset)
 {
   void *res;
   res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_hls[sctk_hls_numa_scope].level);
-  return res;
-}
-
-void *
-__sctk__tls_get_addr__socket_scope (size_t m, size_t offset)
-{
-  void *res;
-  res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_hls[sctk_hls_socket_scope].level);
   return res;
 }
 

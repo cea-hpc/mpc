@@ -41,24 +41,19 @@ extern "C"
   { sctk_extls_process_scope = 0,
     sctk_extls_task_scope    = 1,
     sctk_extls_thread_scope  = 2,
-#if defined (MPC_OpenMP)
     sctk_extls_openmp_scope  = 3,
     sctk_extls_max_scope     = 4,
-#else
-    sctk_extls_max_scope     = 3,
-#endif
   } sctk_extls_scope_t;
 
   typedef enum
   { sctk_hls_node_scope          = 0,
     sctk_hls_numa_level_2_scope  = 1,
     sctk_hls_numa_level_1_scope  = 2,
-    sctk_hls_socket_scope        = 3,
-    sctk_hls_cache_level_3_scope = 4,
-    sctk_hls_cache_level_2_scope = 5,
-    sctk_hls_cache_level_1_scope = 6,
-    sctk_hls_core_scope          = 7,
-    sctk_hls_max_scope           = 8
+    sctk_hls_cache_level_3_scope = 3,
+    sctk_hls_cache_level_2_scope = 4,
+    sctk_hls_cache_level_1_scope = 5,
+    sctk_hls_core_scope          = 6,
+    sctk_hls_max_scope           = 7
   } sctk_hls_scope_t;
   /* this numbering should be kept in sync
 	 with the argument given to hls_barrier
