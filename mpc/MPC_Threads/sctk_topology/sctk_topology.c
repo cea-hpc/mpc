@@ -425,7 +425,9 @@ sctk_get_cpu_number ()
   int
 sctk_set_cpu_number (int n)
 {
-  sctk_update_topology ( n, 0 ) ;
+  if(n <= sctk_get_cpu_number ()){
+    sctk_update_topology ( n, 0 ) ;
+  }
   return n;
 }
 

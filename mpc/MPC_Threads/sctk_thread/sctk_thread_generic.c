@@ -23,6 +23,7 @@
 #include <sctk_config.h>
 #include <sctk_thread.h>
 #include <sctk_thread_generic.h>
+#include <stdlib.h>
 
 /***************************************/
 /* THREADS                             */
@@ -453,10 +454,23 @@ void sctk_register_thread_type(char* type){
   sctk_multithreading_mode = sched_type;
 }
 
+int sctk_get_env_cpu_nuber(){
+  int cpu_number; 
+  char* env;
+  cpu_number = sctk_get_cpu_number ();
+  env = getenv("SCTK_SET_CORE_NUMBER");
+  if(env != NULL){
+    cpu_number = atoi(env);
+    assume(cpu_number > 0);
+  }
+  return cpu_number;
+}
+
 /********* ETHREAD MXN ************/
 void
 sctk_ethread_mxn_ng_thread_init (void){
-  sctk_thread_generic_thread_init ("centralized",1);
+  
+  sctk_thread_generic_thread_init ("centralized",sctk_get_env_cpu_nuber());
   sctk_register_thread_type("ethread_mxn_ng");
 }
 
@@ -470,6 +484,6 @@ sctk_ethread_ng_thread_init (void){
 /********* PTHREAD ************/
 void
 sctk_pthread_ng_thread_init (void){
-  sctk_thread_generic_thread_init ("centralized",1);
+  sctk_thread_generic_thread_init ("centralized",sctk_get_env_cpu_nuber());
   sctk_register_thread_type("pthread_ng");
 }

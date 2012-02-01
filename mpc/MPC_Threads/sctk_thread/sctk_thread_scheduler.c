@@ -31,6 +31,7 @@
 #include "sctk_thread_generic.h"
 #include "sctk_kernel_thread.h"
 
+static void (*sctk_thread_generic_sched_idle_start)(void);
 void (*sctk_thread_generic_sched_yield)(sctk_thread_generic_scheduler_t*) = NULL;
 void (*sctk_thread_generic_thread_status)(sctk_thread_generic_scheduler_t*,
 					  sctk_thread_generic_thread_status_t) = NULL;
@@ -51,13 +52,20 @@ typedef struct {
   int core;
 } sctk_thread_generic_scheduler_task_t;
 static __thread int core_id = -1;
+static int sctk_thread_generic_scheduler_use_binding = 1;
+
+static void sctk_thread_generic_scheduler_bind_to_cpu (int core){
+  if(sctk_thread_generic_scheduler_use_binding == 1){
+    sctk_bind_to_cpu (core);
+  }
+}
 
 static void* sctk_thread_generic_scheduler_idle_task(sctk_thread_generic_scheduler_task_t* arg){
   int core;
   sctk_thread_generic_t th;
   core = arg->core;
   if(arg->core >= 0){
-    sctk_bind_to_cpu (arg->core);
+    sctk_thread_generic_scheduler_bind_to_cpu (arg->core);
   }
   core_id = arg->core;
   sctk_free(arg);
@@ -68,7 +76,7 @@ static void* sctk_thread_generic_scheduler_idle_task(sctk_thread_generic_schedul
   sctk_thread_generic_keys_init_thread(&(sctk_thread_generic_self()->keys));
 
   /* Start Idle*/
-  not_implemented();
+  sctk_thread_generic_sched_idle_start();
 
   not_reachable();
   return NULL;
@@ -77,7 +85,7 @@ static void* sctk_thread_generic_scheduler_idle_task(sctk_thread_generic_schedul
 static void* sctk_thread_generic_scheduler_bootstrap_task(sctk_thread_generic_scheduler_task_t* arg){
   sctk_thread_generic_p_t*thread;
   if(arg->core >= 0){
-    sctk_bind_to_cpu (arg->core);
+    sctk_thread_generic_scheduler_bind_to_cpu (arg->core);
   }
   core_id = arg->core;
   thread = arg->thread;
@@ -117,7 +125,14 @@ void sctk_thread_generic_scheduler_create_vp(sctk_thread_generic_p_t*thread,int 
 void sctk_thread_generic_scheduler_swapcontext(sctk_thread_generic_scheduler_t* old_th,
 					       sctk_thread_generic_scheduler_t* new_th){
   sctk_thread_generic_set_self(new_th->th);
+  sctk_nodebug("SWAP %p -> %p",&(old_th->ctx),&(new_th->ctx));
   sctk_swapcontext(&(old_th->ctx),&(new_th->ctx));
+  
+}
+void sctk_thread_generic_scheduler_setcontext(sctk_thread_generic_scheduler_t* new_th){
+  sctk_thread_generic_set_self(new_th->th);
+  sctk_debug("SET %p",&(new_th->ctx));
+  sctk_setcontext(&(new_th->ctx));
   
 }
 
@@ -168,6 +183,15 @@ static inline sctk_thread_generic_scheduler_t* sctk_centralized_get_from_list(){
   } else {
     return NULL;
   }
+}
+
+static void sctk_centralized_sched_idle_start(){
+  sctk_thread_generic_scheduler_t* next;
+  do{
+    sched_yield();
+    next = sctk_centralized_get_from_list();
+  }while(next == NULL);
+  sctk_thread_generic_scheduler_setcontext(next);
 }
 
 static void sctk_centralized_sched_yield(sctk_thread_generic_scheduler_t*sched){
@@ -263,7 +287,12 @@ static void
 sctk_centralized_wake_thread_on_vp (void **list)
 {
   if(*list != NULL){
-    not_implemented();
+    sctk_thread_generic_scheduler_centralized_t*s_list;
+    s_list = *list;
+    sctk_spinlock_lock(&sctk_centralized_sched_list_lock);
+    DL_CONCAT(sctk_centralized_sched_list,s_list);
+    *list = NULL;
+    sctk_spinlock_unlock(&sctk_centralized_sched_list_lock);    
   }
 }
 
@@ -275,7 +304,7 @@ static void sctk_centralized_create(sctk_thread_generic_p_t*thread){
     thread->sched.centralized.vp_type = 1;
     sctk_thread_generic_scheduler_create_vp(thread,thread->attr.bind_to);
   } else {
-      sctk_centralized_add_to_list(&(thread->sched));
+    sctk_centralized_add_to_list(&(thread->sched));
   }
 }
 
@@ -353,13 +382,18 @@ static char sched_type[4096];
 void sctk_thread_generic_scheduler_init(char* scheduler_type, int vp_number){ 
   int i;
 
+  if(vp_number > sctk_get_cpu_number ()){
+    sctk_thread_generic_scheduler_use_binding = 0;
+  }
+
   __sctk_ptr_thread_get_vp = sctk_thread_generic_scheduler_get_vp;
 
   sprintf(sched_type,"%s",scheduler_type);
   core_id = 0;
-  sctk_bind_to_cpu (0);
+  sctk_thread_generic_scheduler_bind_to_cpu (0);
   
   if(strcmp("centralized",scheduler_type) == 0){
+    sctk_thread_generic_sched_idle_start = sctk_centralized_sched_idle_start;
     sctk_thread_generic_sched_yield = sctk_centralized_sched_yield;
     sctk_thread_generic_thread_status = sctk_centralized_thread_status;
     sctk_thread_generic_register_spinlock_unlock = sctk_centralized_register_spinlock_unlock;
