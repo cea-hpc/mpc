@@ -122,6 +122,22 @@ void sctk_thread_generic_scheduler_swapcontext(sctk_thread_generic_scheduler_t* 
 }
 
 /***************************************/
+/* TASKS MANAGEMENT                    */
+/***************************************/
+static inline int sctk_thread_generic_scheduler_check_task(sctk_thread_generic_task_t* task){
+  if(*(task->data) == task->value){
+    return 1;
+  } 
+  if(task->func){
+    task->func(task->arg);
+    if(*(task->data) == task->value){
+      return 1;
+    } 
+  }
+  return 0;
+}
+
+/***************************************/
 /* CENTRALIZED SCHEDULER               */
 /***************************************/
 static sctk_spinlock_t sctk_centralized_sched_list_lock = SCTK_SPINLOCK_INITIALIZER;
@@ -300,17 +316,10 @@ static void* sctk_centralized_polling_func(void*arg){
     sctk_spinlock_lock(&sctk_centralized_task_list_lock);
     /* Exec polling */
     DL_FOREACH_SAFE(sctk_centralized_task_list,task,task_tmp){
-      if(*(task->data) == task->value){
+      if(sctk_thread_generic_scheduler_check_task(task) == 1){
 	DL_DELETE(sctk_centralized_task_list,task);
 	sctk_thread_generic_wake(task->sched);
-      } 
-      if(task->func){
-	task->func(task->arg);
       }
-      if(*(task->data) == task->value){
-	DL_DELETE(sctk_centralized_task_list,task);
-	sctk_thread_generic_wake(task->sched);
-      } 
     }
     
     sctk_spinlock_unlock(&sctk_centralized_task_list_lock);
