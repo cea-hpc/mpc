@@ -62,6 +62,7 @@ static void sctk_thread_generic_scheduler_bind_to_cpu (int core){
 
 static void* sctk_thread_generic_scheduler_idle_task(sctk_thread_generic_scheduler_task_t* arg){
   int core;
+  sctk_thread_generic_p_t p_th;
   sctk_thread_generic_t th;
   core = arg->core;
   if(arg->core >= 0){
@@ -70,6 +71,8 @@ static void* sctk_thread_generic_scheduler_idle_task(sctk_thread_generic_schedul
   core_id = arg->core;
   sctk_free(arg);
   arg = NULL;
+
+  th = &p_th;
   
   sctk_thread_generic_set_self(th);
   sctk_thread_generic_scheduler_init_thread(&(sctk_thread_generic_self()->sched),th);
@@ -190,7 +193,11 @@ static sctk_thread_generic_scheduler_t* sctk_centralized_get_from_list(){
       DL_DELETE(sctk_centralized_sched_list,res);
     }
     sctk_spinlock_unlock(&sctk_centralized_sched_list_lock);
-    return res->sched;
+    if(res != NULL){
+      return res->sched;
+    } else {
+      return NULL;
+    }
   } else {
     return NULL;
   }
@@ -200,8 +207,10 @@ static sctk_thread_generic_task_t* sctk_centralized_get_task(){
   sctk_thread_generic_task_t* task = NULL;
   if(sctk_centralized_task_list != NULL){
     sctk_spinlock_lock(&sctk_centralized_task_list_lock);
-    task = sctk_centralized_task_list;
-    DL_DELETE(sctk_centralized_task_list,task);
+    if(sctk_centralized_task_list != NULL){
+      task = sctk_centralized_task_list;
+      DL_DELETE(sctk_centralized_task_list,task);
+    }
     sctk_spinlock_unlock(&sctk_centralized_task_list_lock);
   }
   return task;

@@ -761,6 +761,7 @@ run (sctk_startup_args_t * arg)
 sctk_disable_addr_randomize (int argc, char **argv)
 {
   char *disable_addr_randomize;
+return;
   assume (argc > 0);
   if (getenv ("SCTK_LINUX_KEEP_ADDR_RADOMIZE") == NULL)
   {
@@ -831,7 +832,7 @@ sctk_launch_main (int argc, char **argv)
     pthread_create (&pid, NULL, auto_kill_func, auto_kill);
   }
 
-  sctk_use_ethread_mxn_ng ();
+  sctk_use_ethread_mxn ();
   sctk_def_task_nb ("1");
   sctk_def_process_nb ("1");
   /*   sctk_exception_catch (11); */
