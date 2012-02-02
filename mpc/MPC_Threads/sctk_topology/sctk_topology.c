@@ -29,7 +29,10 @@
 #include "sctk_thread.h"
 #include "sctk.h"
 #include "sctk_kernel_thread.h"
+
+#ifdef MPC_Message_Passing
 #include "sctk_pmi.h"
+#endif
 
 #include <dirent.h>
 
