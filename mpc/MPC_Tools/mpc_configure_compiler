@@ -91,11 +91,20 @@ EOF
 fi
 
 # Regular flags and compiler (C, C++ or fortran)
+if test ! -z "${BINUTILS_PREFIX_INSTALL}"
+then
+cat <<EOF >> $1
+CFLAGS="\`$SCTK_BIN_DIR/mpc_cflags $2\` -fmpc-privatize"
+LDFLAGS="\`$SCTK_BIN_DIR/mpc_ldflags $2\` -B$BINUTILS_PREFIX_INSTALL/bin"
+CC=$CC
+EOF
+else
 cat <<EOF >> $1
 CFLAGS="\`$SCTK_BIN_DIR/mpc_cflags $2\`"
 LDFLAGS="\`$SCTK_BIN_DIR/mpc_ldflags $2\`"
 CC=$CC
 EOF
+fi
 
 
 # More variable definitions (Library path, show and different shades of args)

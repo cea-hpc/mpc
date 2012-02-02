@@ -35,11 +35,6 @@ for i in $MODULE_LIST; do
 FLAGS="$FLAGS -DMPC_MODULE_$i"
 done
 
-if test ! -z "${BINUTILS_PREFIX_INSTALL}"
-then
-	FLAGS="$FLAGS -fmpc-privatize"
-fi
-
 cat <<EOF >> bin/mpc_cflags
 if test "\$1" != "fortran" ; then
 echo "-I${SCTK_INCLUDE_DIR} $FLAGS"
