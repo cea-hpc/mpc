@@ -24,6 +24,7 @@
 #ifdef MPC_USE_INFINIBAND
 
 #include "sctk_ib_config.h"
+#include <sctk_route.h>
 
 /* IB debug macros */
 #if defined SCTK_IB_MODULE_NAME
@@ -36,6 +37,7 @@
 #include "sctk_ib.h"
 #include "sctk_ib_async.h"
 #include "sctk_ib_qp.h"
+#include <errno.h>
 
 /*-----------------------------------------------------------
  *  CONSTS
@@ -51,7 +53,8 @@
  *----------------------------------------------------------*/
 void* async_thread(void* arg)
 {
-  sctk_ib_rail_info_t *rail_ib = (sctk_ib_rail_info_t*) arg;
+  sctk_rail_info_t *rail = (sctk_rail_info_t*) arg;
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
   LOAD_DEVICE(rail_ib);
   struct ibv_async_event event;
@@ -129,19 +132,35 @@ void* async_thread(void* arg)
 
         /* event triggered when the limit given by ibv_srq_credit_thread_limit is reached */
       case IBV_EVENT_SRQ_LIMIT_REACHED:
-        DESC_EVENT(config, "IBV_EVENT_SRQ_LIMIT_REACHED","SRQ limit was reached", 2, 0);
+        DESC_EVENT(config, "IBV_EVENT_SRQ_LIMIT_REACHED","SRQ limit was reached", 4, 0);
 
         int limit;
+        int ret;
         limit = config->ibv_max_srq_ibufs;
-        if (limit > 0) {
-          sctk_ibuf_srq_check_and_post(rail_ib, limit);
+
+        sctk_debug("Resizing ? : %d",
+            sctk_ib_qp_get_cap_flags(rail_ib) & IBV_DEVICE_SRQ_RESIZE);
+
+        /* We first try to poll and steal from SRQ */
+        sctk_network_poll_all_and_steal(rail_ib);
+        /* We try to post new buffers */
+        ret = sctk_ibuf_srq_check_and_post(rail_ib, limit);
+        /* If no buffers posted */
+        if (ret == 0) {
+          limit = config->ibv_max_srq_ibufs_posted += 100;
+          ret = sctk_ibuf_srq_check_and_post(rail_ib, limit);
         }
 
-//        not_implemented();
         /* We re-arm the limit for the SRQ. */
-        mod_attr.srq_limit  = config->ibv_srq_credit_thread_limit;
-        mod_attr.max_wr     = config->ibv_max_srq_ibufs_posted;
-        rc = ibv_modify_srq(device->srq, &mod_attr, IBV_SRQ_LIMIT);
+//        memset (&mod_attr, 0, sizeof (struct ibv_srq_init_attr));
+        mod_attr.srq_limit    = config->ibv_srq_credit_thread_limit;
+        mod_attr.max_sge      = config->ibv_max_sg_rq;
+        mod_attr.max_wr       = config->ibv_max_srq_ibufs_posted;
+        rc = ibv_modify_srq(device->srq, &mod_attr,
+            IBV_SRQ_LIMIT | IBV_SRQ_MAX_WR);
+        if (rc != 0) {
+          sctk_error("ibv_modify_srq: %s (%d)", strerror(errno), mod_attr.max_wr);
+        }
         assume(rc == 0);
         break;
 
@@ -165,7 +184,7 @@ void* async_thread(void* arg)
 }
 
 
-void sctk_ib_async_init(sctk_ib_rail_info_t *rail_ib)
+void sctk_ib_async_init(sctk_rail_info_t *rail)
 {
   sctk_thread_attr_t attr;
   sctk_thread_t pidt;
@@ -173,7 +192,7 @@ void sctk_ib_async_init(sctk_ib_rail_info_t *rail_ib)
   sctk_thread_attr_init (&attr);
   /* The thread *MUST* be in a system scope */
   sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
-  sctk_user_thread_create (&pidt, &attr, async_thread, rail_ib);
+  sctk_user_thread_create (&pidt, &attr, async_thread, rail);
 }
 
 #endif

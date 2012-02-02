@@ -169,5 +169,7 @@ sctk_ib_qp_allocate_get_rtr(sctk_ib_qp_t *remote);
 int
 sctk_ib_qp_allocate_get_rts(sctk_ib_qp_t *remote);
 
+int sctk_ib_qp_get_cap_flags(struct sctk_ib_rail_info_s* rail_ib);
+
 #endif
 #endif

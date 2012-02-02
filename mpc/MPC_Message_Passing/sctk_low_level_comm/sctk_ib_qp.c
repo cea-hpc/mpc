@@ -440,7 +440,11 @@ sctk_ib_srq_init(struct sctk_ib_rail_info_s* rail_ib,
     struct ibv_srq_init_attr* attr)
 {
   LOAD_DEVICE(rail_ib);
+  LOAD_CONFIG(rail_ib);
   device->srq = ibv_create_srq(device->pd, attr);
+  sctk_ib_debug("Initializing SRQ with %d entries (max:%d)",
+      attr->attr.max_wr, sctk_ib_srq_get_max_srq_wr(rail_ib));
+  config->ibv_max_srq_ibufs_posted = attr->attr.max_wr;
 
   if (!device->srq)
   {
@@ -466,6 +470,20 @@ sctk_ib_srq_init_attr(struct sctk_ib_rail_info_s* rail_ib)
 
   return attr;
 }
+
+int
+sctk_ib_srq_get_max_srq_wr (struct sctk_ib_rail_info_s* rail_ib)
+{
+  LOAD_DEVICE(rail_ib);
+  return device->dev_attr.max_srq_wr;
+}
+
+int
+sctk_ib_qp_get_cap_flags(struct sctk_ib_rail_info_s* rail_ib) {
+  LOAD_DEVICE(rail_ib);
+  return device->dev_attr.device_cap_flags;
+}
+
 
 /*-----------------------------------------------------------
  *  ALLOCATION

@@ -27,8 +27,8 @@
 
 #include "infiniband/verbs.h"
 #include "sctk_ib.h"
-
-void sctk_ib_async_init(sctk_ib_rail_info_t *rail_ib);
+struct sctk_rail_info_s;
+void sctk_ib_async_init(struct sctk_rail_info_s *rail_ib);
 
 #endif
 #endif
