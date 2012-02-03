@@ -32,6 +32,7 @@
 #include "sctk_kernel_thread.h"
 
 static void (*sctk_thread_generic_sched_idle_start)(void);
+
 void (*sctk_thread_generic_sched_yield)(sctk_thread_generic_scheduler_t*) = NULL;
 void (*sctk_thread_generic_thread_status)(sctk_thread_generic_scheduler_t*,
 					  sctk_thread_generic_thread_status_t) = NULL;
@@ -205,6 +206,31 @@ static sctk_thread_generic_scheduler_t* sctk_centralized_get_from_list(){
   }
 }
 
+static sctk_thread_generic_scheduler_t* sctk_centralized_get_from_list_pthread_init(){
+  if(sctk_centralized_sched_list != NULL){
+    sctk_thread_generic_scheduler_generic_t* res_tmp;
+    sctk_thread_generic_scheduler_generic_t* res;
+    sctk_spinlock_lock(&sctk_centralized_sched_list_lock);
+    DL_FOREACH_SAFE(sctk_centralized_sched_list,res,res_tmp){    
+    if((res != NULL) && (res->vp_type == 4)){
+      DL_DELETE(sctk_centralized_sched_list,res);
+      break;
+    }
+    }
+    sctk_spinlock_unlock(&sctk_centralized_sched_list_lock);
+    if(res != NULL){
+      sctk_debug("REMOVE Thread %p",res->sched);
+      return res->sched;
+    } else {
+      return NULL;
+    }
+  } else {
+    return NULL;
+  }
+}
+
+
+
 static sctk_thread_generic_task_t* sctk_centralized_get_task(){
   sctk_thread_generic_task_t* task = NULL;
   if(sctk_centralized_task_list != NULL){
@@ -246,6 +272,7 @@ void sctk_centralized_poll_tasks(sctk_thread_generic_scheduler_t* sched){
 /***************************************/
 static void (*sctk_generic_add_to_list)(sctk_thread_generic_scheduler_t* ) = NULL;
 static sctk_thread_generic_scheduler_t* (*sctk_generic_get_from_list)(void) = NULL;
+static sctk_thread_generic_scheduler_t* (*sctk_generic_get_from_list_pthread_init)(void) = NULL;
 static sctk_thread_generic_task_t* (*sctk_generic_get_task)(void) = NULL;
 static void (*sctk_generic_add_task_to_threat)(sctk_thread_generic_task_t* ) = NULL;
 static void (*sctk_generic_concat_to_list)(sctk_thread_generic_scheduler_t* ,
@@ -278,6 +305,16 @@ static void sctk_generic_sched_idle_start(){
     next = sctk_generic_get_from_list();
   }while(next == NULL);
   sctk_debug("Launch %p",next);
+  sctk_swapcontext(&(next->ctx_bootstrap),&(next->ctx));
+  not_reachable();
+}
+static void sctk_generic_sched_idle_start_pthread(){
+  sctk_thread_generic_scheduler_t* next;
+  do{
+    sched_yield();
+    next = sctk_generic_get_from_list_pthread_init();
+  }while(next == NULL);
+  sctk_debug("Launch PTHREAD %p",next);
   sctk_swapcontext(&(next->ctx_bootstrap),&(next->ctx));
   not_reachable();
 }
@@ -475,6 +512,8 @@ static void* sctk_generic_polling_func(void*arg){
 
   sched = &(sctk_thread_generic_self()->sched);
 
+  sctk_debug("Start polling func %p",sched);
+
   do{
     sctk_generic_poll_tasks(sched);
     sctk_generic_sched_yield(sched);
@@ -549,7 +588,10 @@ void sctk_thread_generic_scheduler_init(char* thread_type,char* scheduler_type, 
     sctk_thread_generic_polling_func = sctk_generic_polling_func;
     if(strcmp("pthread",thread_type) == 0){
       sctk_thread_generic_sched_create = sctk_generic_create_pthread;
-    sctk_thread_generic_scheduler_init_thread_p = sctk_generic_scheduler_init_pthread;
+      sctk_thread_generic_scheduler_init_thread_p = sctk_generic_scheduler_init_pthread;
+      sctk_generic_get_from_list_pthread_init = sctk_centralized_get_from_list_pthread_init;
+      sctk_thread_generic_sched_idle_start = sctk_generic_sched_idle_start_pthread;
+
     }
   } else {
     not_reachable();
