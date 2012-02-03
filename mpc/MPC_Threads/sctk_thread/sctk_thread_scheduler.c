@@ -253,6 +253,7 @@ static void (*sctk_generic_poll_tasks)(sctk_thread_generic_scheduler_t* ) = NULL
 
 static __thread sctk_thread_generic_task_t* sctk_generic_delegated_task_list = NULL;
 static __thread volatile sctk_thread_generic_scheduler_t* sctk_generic_delegated_zombie_list = NULL;
+static __thread volatile sctk_thread_generic_scheduler_t* sctk_generic_delegated_add = NULL;
 
 static void sctk_generic_add_task(sctk_thread_generic_task_t* task){
   sctk_debug("ADD task %p FROM %p",task,task->sched);
@@ -283,7 +284,8 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
   if(sched->generic.vp_type == 0){
 
     if(sched->status == sctk_thread_generic_running){
-      sctk_generic_add_to_list(sched);
+      assume(sctk_generic_delegated_add == NULL);
+      sctk_generic_delegated_add = sched;
     } else {
       if(sched->status == sctk_thread_generic_zombie){
 	assume(sctk_generic_delegated_zombie_list == NULL);
@@ -313,6 +315,11 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
       if(sctk_generic_delegated_task_list != NULL){ 
 	sctk_centralized_add_task_to_threat(sctk_generic_delegated_task_list);
 	sctk_generic_delegated_task_list = NULL;
+      }
+
+      if(sctk_generic_delegated_add){
+	sctk_generic_add_to_list(sctk_generic_delegated_add);
+	sctk_generic_delegated_add = NULL;
       }
     }
   } else {
