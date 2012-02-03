@@ -824,7 +824,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  }
 #endif
 
-#if 0   /* NUMA tree degree 4 */
+#if 1   /* NUMA tree degree 4 */
 #warning "OpenMp compiling w/2-level NUMA tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -1001,7 +1001,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
           
 #endif
 
-#if 1  /* Flat tree */	      /*  */
+#if 0  /* Flat tree */	      /*  */
 #warning "OpenMp compiling w/flat tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -1199,6 +1199,7 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
 {
   mpcomp_thread_t *t;
   mpcomp_node_t *root;
+  mpcomp_node_t *new_root;
   int num_threads;
   int num_threads_mvp;
   int i,j,k;
@@ -1248,7 +1249,18 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
 
     max_index_with_more_threads = num_threads % instance->nb_mvps;
 
+    new_root = root;
     n = root;
+
+    /* TODO should be done differently to manage the fact the number 
+       of threads can change during the execution of the program */
+#if 0
+    if (num_threads <= 8) {
+      n = n->children.node[0];
+      n->father = NULL;
+      new_root = n;
+    }
+#endif
 
     while (n->child_type != CHILDREN_LEAF) {
        int nb_children_involved = 1;
@@ -1325,15 +1337,15 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
 
     /* Finish the half barrier by spinning ton the root value */
 #ifdef ATOMICS
-    while (root->barrier_num_threads != sctk_atomics_load_int(&root->barrier)){
+    while (new_root->barrier_num_threads != sctk_atomics_load_int(&new_root->barrier)){
        sctk_thread_yield();
     }
-    sctk_atomics_store_int (&root->barrier,0) ;
+    sctk_atomics_store_int (&new_root->barrier,0) ;
 #else
-    while (root->barrier_num_threads != root->barrier){
+    while (new_root->barrier_num_threads != new_root->barrier){
        sctk_thread_yield();
     }
-    root->barrier = 0;
+    new_root->barrier = 0;
 #endif
 
     /* Restore the previous OpenMP info */
