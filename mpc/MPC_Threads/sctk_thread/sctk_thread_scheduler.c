@@ -288,7 +288,9 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
   if(sched->generic.vp_type == 0){
 
     if(sched->status == sctk_thread_generic_running){
-      assume(sctk_generic_delegated_add == NULL);
+     if(sctk_generic_delegated_task_list != NULL){ 
+	sctk_centralized_add_task_to_threat(sctk_generic_delegated_task_list);
+      }
       sctk_generic_delegated_add = sched;
     } else {
       if(sched->status == sctk_thread_generic_zombie){
@@ -299,7 +301,11 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
 
   retry:
     next = sctk_generic_get_from_list();
-
+    
+    if((next == NULL) && (sched->status == sctk_thread_generic_running)){
+      sctk_generic_delegated_add = NULL;
+      next = sched;
+    } 
     if(next != sched){
       if(next != NULL){
 	sctk_thread_generic_scheduler_swapcontext(sched,next);
@@ -308,6 +314,7 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
 	sctk_cpu_relax ();
 	goto retry;
       }
+    }
 
       /* Deal with zombie threads */
       if(sctk_generic_delegated_zombie_list != NULL){
@@ -325,7 +332,7 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
 	sctk_generic_add_to_list(sctk_generic_delegated_add);
 	sctk_generic_delegated_add = NULL;
       }
-    }
+
   } else {
     if(sctk_generic_delegated_task_list != NULL){ 
       sctk_centralized_add_task_to_threat(sctk_generic_delegated_task_list);

@@ -163,9 +163,9 @@ static  void __sctk_start_routine (void * arg){
 
   sctk_thread_generic_sched_yield(&(thread->sched));
 
-  sctk_debug("Start %p",thread->attr.arg);
+  sctk_debug("Start %p %p",&(thread->sched),thread->attr.arg);
   thread->attr.return_value = thread->attr.start_routine(thread->attr.arg);
-  sctk_debug("End %p",thread->attr.arg);
+  sctk_debug("End %p %p",&(thread->sched),thread->attr.arg);
 
   /* Handel Exit */
   if(thread->attr.scope == SCTK_THREAD_SCOPE_SYSTEM){
