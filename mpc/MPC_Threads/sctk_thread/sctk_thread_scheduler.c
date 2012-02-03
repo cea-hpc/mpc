@@ -134,7 +134,7 @@ void sctk_thread_generic_scheduler_create_vp(sctk_thread_generic_p_t*thread,int 
 void sctk_thread_generic_scheduler_swapcontext(sctk_thread_generic_scheduler_t* old_th,
 					       sctk_thread_generic_scheduler_t* new_th){
   sctk_thread_generic_set_self(new_th->th);
-  sctk_nodebug("SWAP %p -> %p",&(old_th->ctx),&(new_th->ctx));
+  sctk_debug("SWAP %p -> %p",&(old_th->ctx),&(new_th->ctx));
   sctk_swapcontext(&(old_th->ctx),&(new_th->ctx));
   
 }
@@ -173,6 +173,7 @@ static sctk_spinlock_t sctk_centralized_task_list_lock = SCTK_SPINLOCK_INITIALIZ
 static void sctk_centralized_add_to_list(sctk_thread_generic_scheduler_t* sched){
   sctk_spinlock_lock(&sctk_centralized_sched_list_lock);
   DL_APPEND(sctk_centralized_sched_list,&(sched->generic));
+  sctk_debug("ADD Thread %p",sched);
   sctk_spinlock_unlock(&sctk_centralized_sched_list_lock);
 }
 
@@ -194,6 +195,7 @@ static sctk_thread_generic_scheduler_t* sctk_centralized_get_from_list(){
     }
     sctk_spinlock_unlock(&sctk_centralized_sched_list_lock);
     if(res != NULL){
+      sctk_debug("REMOVE Thread %p",res->sched);
       return res->sched;
     } else {
       return NULL;
@@ -275,7 +277,9 @@ static void sctk_generic_sched_idle_start(){
     sched_yield();
     next = sctk_generic_get_from_list();
   }while(next == NULL);
+  sctk_debug("Launch %p",next);
   sctk_swapcontext(&(next->ctx_bootstrap),&(next->ctx));
+  not_reachable();
 }
 
 static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){

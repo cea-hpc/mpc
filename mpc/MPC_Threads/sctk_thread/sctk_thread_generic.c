@@ -159,6 +159,8 @@ static  void __sctk_start_routine (void * arg){
 
   thread = arg;
 
+  sctk_debug("Before yield");
+
   sctk_thread_generic_sched_yield(&(thread->sched));
 
   sctk_debug("Start %p",thread->attr.arg);
