@@ -153,8 +153,6 @@ struct mpcomp_thread_s {
 
   /* DYNAMIC CONSTRUCT */
   volatile int private_current_for_dyn;
-  sctk_spinlock_t lock_for_dyn[MPCOMP_MAX_THREADS][MPCOMP_MAX_ALIVE_FOR_DYN];   /* Lock for dynamic scheduling. A lock for each loop */
-  volatile mpcomp_chunk_t chunk_info_for_dyn[MPCOMP_MAX_THREADS][MPCOMP_MAX_ALIVE_FOR_DYN];
 };
 
 typedef struct mpcomp_thread_s mpcomp_thread_t;
@@ -171,7 +169,9 @@ struct mpcomp_thread_team_s {
   /* DYNAMIC SCHEDULING */
   sctk_spinlock_t lock_stop_for_dyn;
   sctk_spinlock_t lock_exited_for_dyn[MPCOMP_MAX_ALIVE_FOR_DYN];                /* Lock for dynamic scheduling. A lock for each loop */
+  sctk_spinlock_t lock_for_dyn[MPCOMP_MAX_THREADS][MPCOMP_MAX_ALIVE_FOR_DYN];   /* Lock for dynamic scheduling. A lock for each loop */
 
+  volatile mpcomp_chunk_t chunk_info_for_dyn[MPCOMP_MAX_THREADS][MPCOMP_MAX_ALIVE_FOR_DYN];
   volatile int stop[MPCOMP_MAX_ALIVE_FOR_DYN];
   volatile int nthread_exited_for_dyn[MPCOMP_MAX_ALIVE_FOR_DYN];
 
@@ -244,6 +244,7 @@ typedef enum context_t {
 /******** OPENMP INFO NODE ********/
 struct mpcomp_node_s {
   struct mpcomp_node_s *father;
+  struct mpcomp_thread_team_s *team;
   int rank;					/* Rank among children of my father */
   int depth;					/* Depth in the tree */
   int nb_children;				/* Number of children */

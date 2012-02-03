@@ -198,6 +198,7 @@ void *mpcomp_slave_mvp_node (void *arg)
 
         n->children.node[0]->func = n->func;
         n->children.node[0]->shared = n->shared;
+        n->children.node[0]->team = n->team;
         n->children.node[0]->num_threads = n->num_threads;
 
         for (i=1 ; i<n->nb_children ; i++) {
@@ -210,6 +211,7 @@ void *mpcomp_slave_mvp_node (void *arg)
           if (num_threads_per_child > 0) {
   	    n->children.node[i]->func = n->func;
 	    n->children.node[i]->shared = n->shared;
+	    n->children.node[i]->team = n->team;
 	    n->children.node[i]->num_threads = n->num_threads;
 	    n->children.node[i]->slave_running = 1;
             nb_children_involved++;
@@ -259,16 +261,10 @@ void *mpcomp_slave_mvp_node (void *arg)
        mvp->threads[i].mvp = mvp;
        mvp->threads[i].index_in_mvp = i;
        mvp->threads[i].done = 0;
+       mvp->threads[i].team = mvp->father->team;
        mvp->threads[i].hierarchical_tls = NULL;
        mvp->threads[i].current_single = -1;
        mvp->threads[i].private_current_for_dyn = 0;
-
-       for (j=0 ; j<MPCOMP_MAX_THREADS ; j++) {
-         for (k=0 ; k<MPCOMP_MAX_ALIVE_FOR_DYN ; k++) {
-           mvp->threads[i].lock_for_dyn[j][k] = SCTK_SPINLOCK_INITIALIZER;
-           mvp->threads[i].chunk_info_for_dyn[j][k].remain = -1 ;
-         }
-       }
 
        mvp->threads[i].is_running = 1;
      }
@@ -331,16 +327,10 @@ void *mpcomp_slave_mvp_leaf (void *arg)
        mvp->threads[i].mvp = mvp;
        mvp->threads[i].index_in_mvp = i;
        mvp->threads[i].done = 0;
+       mvp->threads[i].team = mvp->father->team;
        mvp->threads[i].hierarchical_tls = NULL;
        mvp->threads[i].current_single = -1;
        mvp->threads[i].private_current_for_dyn = 0;
-
-       for (j=0 ; j<MPCOMP_MAX_THREADS ; j++) {
-         for (k=0 ; k<MPCOMP_MAX_ALIVE_FOR_DYN ; k++) {
-           mvp->threads[i].lock_for_dyn[j][k] = SCTK_SPINLOCK_INITIALIZER;
-           mvp->threads[i].chunk_info_for_dyn[j][k].remain = -1 ;
-         }
-       }
 
        mvp->threads[i].is_running = 1;
      }
@@ -374,14 +364,6 @@ void __mpcomp_thread_init (mpcomp_thread_t *t)
    t->hierarchical_tls = NULL;
    t->current_single = -1;
    t->private_current_for_dyn = 0;
-
-   /* Init for dynamic scheduling construct */
-   for (i=0 ; i<MPCOMP_MAX_THREADS ; i++) {
-     for (j=0 ; j<MPCOMP_MAX_ALIVE_FOR_DYN ; j++) {
-       t->lock_for_dyn[i][j] = SCTK_SPINLOCK_INITIALIZER;
-       t->chunk_info_for_dyn[i][j].remain = -1 ;
-     }
-   }
 
 }
 
@@ -417,6 +399,15 @@ void __mpcomp_thread_team_init (mpcomp_thread_team_t *team)
    }
 
    team->nb_threads_entered_single[MPCOMP_MAX_ALIVE_SINGLE] = -1;
+
+   /* Init for dynamic scheduling construct */
+   for (i=0 ; i<MPCOMP_MAX_THREADS ; i++) {
+     for (j=0 ; j<MPCOMP_MAX_ALIVE_FOR_DYN ; j++) {
+       team->lock_for_dyn[i][j] = SCTK_SPINLOCK_INITIALIZER;
+       team->chunk_info_for_dyn[i][j].remain = -1 ;
+     }
+   }
+
 }
 
 /*
@@ -833,7 +824,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  }
 #endif
 
-#if 1   /* NUMA tree degree 4 */
+#if 0   /* NUMA tree degree 4 */
 #warning "OpenMp compiling w/2-level NUMA tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -1010,7 +1001,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
           
 #endif
 
-#if 0  /* Flat tree */	      /*  */
+#if 1  /* Flat tree */	      /*  */
 #warning "OpenMp compiling w/flat tree 32 cores"	    
 	  root->father = NULL;
 	  root->rank = -1;
@@ -1216,6 +1207,7 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
 
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);      
+  sctk_assert(t->team != NULL);
 
   /* Compute the number of threads for this parallel region */
   num_threads = t->icvs.nthreads_var;
@@ -1245,15 +1237,6 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
     instance = t->children_instance;
     sctk_assert(instance != NULL);
 
-    /* Init the team information and the instance in each thread of the team */
-    num_threads_mvp = 1;
-    for (i=0 ; i<OMP_MICROVP_NUMBER ; i++) {
-      for (j=0 ; j<num_threads_mvp ; j++) {
-        instance->mvps[i]->threads[j].team = t->team;
-        instance->mvps[i]->threads[j].children_instance = t->children_instance;
-      }
-    }
-
     /* Get the root node of the main tree */
     root = instance->root;
     sctk_assert(root != NULL);
@@ -1281,6 +1264,7 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
          if (num_threads_per_child > 0) {
            n->children.node[i]->func = func;
            n->children.node[i]->shared = shared;
+           n->children.node[i]->team = t->team;
            n->children.node[i]->num_threads = num_threads;
            n->children.node[i]->slave_running = 1;
            nb_children_involved++;
@@ -1294,6 +1278,7 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
     n->func = func;
     n->shared = shared;
     n->num_threads = num_threads;
+    n->team = t->team;
 
     /* Wake up children leaf */
     sctk_assert(n->child_type == CHILDREN_LEAF);
@@ -1313,6 +1298,8 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
 
     n->barrier_num_threads = nb_leaves_involved;
 
+    num_threads_mvp = 1;
+
     instance->mvps[0]->func = func;
     instance->mvps[0]->shared = shared;
     instance->mvps[0]->nb_threads = 1;
@@ -1322,17 +1309,10 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
       instance->mvps[0]->threads[i].mvp = instance->mvps[0];
       instance->mvps[0]->threads[i].index_in_mvp = i;
       instance->mvps[0]->threads[i].done = 0;
+      instance->mvps[0]->threads[i].team = t->team;
       instance->mvps[0]->threads[i].hierarchical_tls = NULL;
       instance->mvps[0]->threads[i].current_single = -1;
       instance->mvps[0]->threads[i].private_current_for_dyn = 0;
-
-      /* Compute the number of OpenMP threads and their rank running on microVP #0 */
-      for (j=0 ; j<MPCOMP_MAX_THREADS ; j++) {
-        for (k=0 ; k<MPCOMP_MAX_ALIVE_FOR_DYN ; k++) {
-          instance->mvps[0]->threads[0].lock_for_dyn[j][k] = SCTK_SPINLOCK_INITIALIZER;
-          instance->mvps[0]->threads[0].chunk_info_for_dyn[j][k].remain = -1 ;
-        }
-      }
 
       instance->mvps[0]->threads[i].is_running = 1;
     }
