@@ -337,24 +337,6 @@ sctk_use_ethread_mxn_ng (void)
   sctk_thread_val = sctk_ethread_mxn_ng_thread_init;
 }
 
-/*   static void */
-/* sctk_use_mpi (void) */
-/* { */
-/* #ifdef MPC_Message_Passing */
-/*   sctk_network_mode = "mpi"; */
-/*   sctk_net_init_driver ("mpi"); */
-/* #endif */
-/* } */
-
-/*   static void */
-/* sctk_use_tcp (void) */
-/* { */
-/* #ifdef MPC_Message_Passing */
-/*   sctk_network_mode = "tcp"; */
-/*   sctk_net_init_driver ("tcp"); */
-/* #endif */
-/* } */
-
   static void
 sctk_use_ethread_ng (void)
 {
