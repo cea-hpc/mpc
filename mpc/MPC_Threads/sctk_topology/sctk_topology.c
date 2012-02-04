@@ -265,6 +265,10 @@ sctk_get_cpu ()
   return sctk_get_cpu_val;
 }
 
+void sctk_topology_init_cpu(){
+  sctk_get_cpu_val = -1;
+}
+
 /*! \brief Initialize the topology module
 */
   void

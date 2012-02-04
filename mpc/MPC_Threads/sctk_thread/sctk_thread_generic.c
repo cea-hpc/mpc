@@ -159,7 +159,7 @@ static  void __sctk_start_routine (void * arg){
 
   thread = arg;
 
-  sctk_debug("Before yield");
+  sctk_debug("Before yield %p",&(thread->sched));
 
   sctk_thread_generic_sched_yield(&(thread->sched));
 
@@ -263,6 +263,7 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
   {
     thread_id->attr.start_routine = start_routine;
     thread_id->attr.arg = arg;
+    sctk_debug("STACK %p STACK SIZE %lu",stack,stack_size);
     sctk_makecontext (&(thread_id->sched.ctx),
 		      (void *) thread_id,
 		      __sctk_start_routine, stack, stack_size);

@@ -54,11 +54,11 @@ typedef struct sctk_thread_generic_scheduler_generic_s{
 typedef struct sctk_thread_generic_scheduler_s{
   sctk_mctx_t ctx;
   sctk_mctx_t ctx_bootstrap;
+  sctk_thread_generic_thread_status_t status;
+  struct sctk_thread_generic_p_s* th;
   union{
     sctk_thread_generic_scheduler_generic_t generic;
   };
-  sctk_thread_generic_thread_status_t status;
-  struct sctk_thread_generic_p_s* th;
 } sctk_thread_generic_scheduler_t;
 
 extern void (*sctk_thread_generic_sched_yield)(sctk_thread_generic_scheduler_t*);
