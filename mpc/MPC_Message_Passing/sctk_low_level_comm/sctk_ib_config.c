@@ -64,12 +64,12 @@
 
 /* Maximum number of buffers to allocate during the
  * initialization step */
-#define IBV_INIT_IBUFS         6000
+#define IBV_INIT_IBUFS         2000
 
 /* Maximum number of buffers which can be posted to the SRQ.
  * This number cannot be higher than than the number fixed by the HW.
  * The verification is done during the config_check function */
-#define IBV_MAX_SRQ_IBUFS_POSTED     100
+#define IBV_MAX_SRQ_IBUFS_POSTED     2000
 /* When the async thread wakes, it means that the SRQ is full. We
  * allows the async thread to extract IBV_MAX_SRQ_WR_HANDLE_BY_THREAD messages
  * before posting new buffers .*/
@@ -125,7 +125,7 @@
 
 #define IBV_ADAPTIVE_POLLING      0
 
-#define IBV_STEAL                 0
+#define IBV_STEAL                 1
 /*  0 -> MPC in normal mode, without work-stealing */
 /*  1 -> MPC in collaborative-polling mode, without work-stealing */
 /*  2 -> MPC in collaborative-polling mode, with work-stealing */

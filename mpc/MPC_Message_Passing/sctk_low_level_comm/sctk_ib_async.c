@@ -135,32 +135,29 @@ void* async_thread(void* arg)
         DESC_EVENT(config, "IBV_EVENT_SRQ_LIMIT_REACHED","SRQ limit was reached", 4, 0);
 
         int limit;
-        int ret;
-        limit = config->ibv_max_srq_ibufs;
-
-        sctk_debug("Resizing ? : %d",
-            sctk_ib_qp_get_cap_flags(rail_ib) & IBV_DEVICE_SRQ_RESIZE);
+        int ret, polled;
+        limit = config->ibv_max_srq_ibufs_posted;
 
         /* We first try to poll and steal from SRQ */
-        sctk_network_poll_all_and_steal(rail_ib);
+//        polled = sctk_network_poll_all_entries(rail_ib);
         /* We try to post new buffers */
-        ret = sctk_ibuf_srq_check_and_post(rail_ib, limit);
+//        ret = sctk_ibuf_srq_check_and_post(rail_ib, limit);
+#if 0
+        sctk_debug("Posted: %d %d", ret, polled);
         /* If no buffers posted */
         if (ret == 0) {
-          limit = config->ibv_max_srq_ibufs_posted += 100;
-          ret = sctk_ibuf_srq_check_and_post(rail_ib, limit);
+          if (limit + 128 < sctk_ib_srq_get_max_srq_wr(rail_ib)) {
+            limit = (config->ibv_max_srq_ibufs_posted += 128);
+            ret = sctk_ibuf_srq_check_and_post(rail_ib, limit);
+            sctk_debug("Number of ibufs_posted expanded to %d",
+              config->ibv_max_srq_ibufs_posted);
+          }
         }
+#endif
 
         /* We re-arm the limit for the SRQ. */
-//        memset (&mod_attr, 0, sizeof (struct ibv_srq_init_attr));
         mod_attr.srq_limit    = config->ibv_srq_credit_thread_limit;
-        mod_attr.max_sge      = config->ibv_max_sg_rq;
-        mod_attr.max_wr       = config->ibv_max_srq_ibufs_posted;
-        rc = ibv_modify_srq(device->srq, &mod_attr,
-            IBV_SRQ_LIMIT | IBV_SRQ_MAX_WR);
-        if (rc != 0) {
-          sctk_error("ibv_modify_srq: %s (%d)", strerror(errno), mod_attr.max_wr);
-        }
+        rc = ibv_modify_srq(device->srq, &mod_attr, IBV_SRQ_LIMIT);
         assume(rc == 0);
         break;
 

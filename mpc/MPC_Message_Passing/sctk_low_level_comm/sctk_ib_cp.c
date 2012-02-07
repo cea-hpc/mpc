@@ -93,13 +93,12 @@ static int numa_number = -1;
 int numa_registered = 0;
 /* Array of vps */
 static vp_t   *vps = NULL;
-static int ready = 0;
 static int vp_number = -1;
 static sctk_spinlock_t vps_lock = SCTK_SPINLOCK_INITIALIZER;
 static sctk_ib_cp_task_t* all_tasks = NULL;
 __thread unsigned int seed;
 __thread int task_node_number = -1;
-static const int ibv_cp_profiler = 0;
+static const int ibv_cp_profiler = 1;
 __thread double time_steals = 0;
 __thread double time_own = 0;
 
@@ -108,6 +107,10 @@ __thread double time_own = 0;
   int steal = config->ibv_steal;                    \
   if (steal < 0) return; }while(0)
 
+extern volatile int sctk_online_program;
+#define CHECK_ONLINE_PROGRAM do {         \
+  if (sctk_online_program != 1) return 0; \
+}while(0);
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
@@ -145,6 +148,7 @@ void sctk_ib_cp_init_task(int rank, int vp) {
   task->rank = rank;
   task->lock = SCTK_SPINLOCK_INITIALIZER;
   task->lock_timers = SCTK_SPINLOCK_INITIALIZER;
+  task->ready = 0;
 
   sctk_spinlock_lock(&vps_lock);
   /* Initial allocation of structures */
@@ -160,7 +164,6 @@ void sctk_ib_cp_init_task(int rank, int vp) {
     memset(vps, 0, sizeof(vp_t) * vp_number);
     assume(vps);
     sctk_nodebug("vp: %d - numa: %d", sctk_get_cpu_number(), numa_number);
-    ready = 1;
   }
   /* Add the VP to the CDL list of the correct NUMA node if it not already done */
   if (vps[vp].added == 0) {
@@ -182,6 +185,8 @@ void sctk_ib_cp_init_task(int rank, int vp) {
 
   /* Initialize seed for steal */
   seed = getpid() * time(NULL);
+
+  task->ready = 1;
 }
 
 void sctk_ib_cp_finalize_task(int rank) {
@@ -190,43 +195,16 @@ void sctk_ib_cp_finalize_task(int rank) {
   HASH_FIND(hh_all,all_tasks,&rank, sizeof(int),task);
   assume(task);
 
-#if 0
-  if (ibv_cp_profiler) {
-    fprintf(stderr, "[%2d] matched:%d not_matched:%d poll_own:%d poll_stolen:%d poll_steals:%d same_node:%d other_node:%d steal_try:%d stolen:%0.2f t_steals:%0.2f t_own:%0.2f (%d:%d:%d-%u)\n", rank,
-        CP_PROF_PRINT(task, matched),
-        CP_PROF_PRINT(task, not_matched),
-        CP_PROF_PRINT(task, poll_own),
-        CP_PROF_PRINT(task, poll_stolen),
-        CP_PROF_PRINT(task, poll_steals),
-        CP_PROF_PRINT(task, poll_steal_same_node),
-        CP_PROF_PRINT(task, poll_steal_other_node),
-        CP_PROF_PRINT(task, poll_steal_try),
-        task->time_stolen/CYCLES_PER_SEC,
-        task->time_steals/CYCLES_PER_SEC,
-        task->time_own/CYCLES_PER_SEC,
-        OPA_load_int(&c_eager),
-        OPA_load_int(&c_buffered),
-        OPA_load_int(&c_rdma),
-        OPA_load_int(&c_rdma) == 0 ? 0:
- (unsigned int)OPA_load_int(&s_rdma) / OPA_load_int(&c_rdma)
-        );
-  }
-#endif
   if (ibv_cp_profiler) {
     if (rank == 0) {
       fprintf(stderr, "#poll_own poll_stolen poll_steals poll_steal_same_node poll_steal_other_node time_stolen time_steals time_own\n");
 
     }
-    fprintf(stderr, "%2d %d %d %d %d %d %0.5f 0 %0.5f\n", rank,
+    fprintf(stderr, "%2d %d %d %d %d %0.5f %0.5f\n", rank,
         CP_PROF_PRINT(task, poll_own),
-        CP_PROF_PRINT(task, poll_stolen),
         CP_PROF_PRINT(task, poll_steals),
         CP_PROF_PRINT(task, poll_steal_same_node),
         CP_PROF_PRINT(task, poll_steal_other_node),
-#if 0
-        task->time_steals/CYCLES_PER_SEC,
-        task->time_own/CYCLES_PER_SEC);
-#endif
         time_steals/CYCLES_PER_SEC,
         time_own/CYCLES_PER_SEC);
   }
@@ -236,7 +214,11 @@ void sctk_ib_cp_finalize_task(int rank) {
 static inline int __cp_poll(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll, sctk_ibuf_t** volatile list, sctk_ib_cp_task_t *task){
   sctk_ibuf_t *ibuf = NULL;
   int nb_found = 0;
-  int update_timers=0;
+  char update_timers=0;
+  double s, e;
+  double _time_own = 0;
+  int _poll_own = 0;
+
 
 retry:
   if ( *list != NULL) {
@@ -244,21 +226,55 @@ retry:
       if ( *list != NULL) {
         ibuf = *list;
         DL_DELETE(*list, ibuf);
-        sctk_nodebug("Found ibuf %p", ibuf);
         sctk_spinlock_unlock(&task->lock);
+
+        if (ibv_cp_profiler) {
+          s = sctk_atomics_get_timestamp();
+        }
+
         /* Run the polling function */
         if (ibuf->cq == recv_cq) {
           sctk_network_poll_recv_ibuf(rail, ibuf, 1, poll);
         } else {
           sctk_network_poll_send_ibuf(rail, ibuf, 1, poll);
         }
+
+        if (ibv_cp_profiler) {
+          update_timers=1;
+          e = sctk_atomics_get_timestamp();
+          _time_own += e - s;
+          _poll_own++;
+        }
         nb_found++;
-        poll->recv_found_own++;
         goto retry;
       }
       sctk_spinlock_unlock(&task->lock);
     }
   }
+
+  if (update_timers) {
+    time_own += _time_own;
+    CP_PROF_ADD(task, poll_own, _poll_own);
+  }
+  return nb_found;
+}
+
+int sctk_ib_cp_poll_all(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll){
+  int vp = sctk_thread_get_vp();
+  sctk_ib_cp_task_t *task = NULL;
+  sctk_ib_cp_task_t *tmp_task = NULL;
+  sctk_ib_cp_task_t *current_task = NULL;
+  int nb_found = 0;
+  vp_t* tmp_vp;
+
+  CHECK_ONLINE_PROGRAM;
+
+ HASH_ITER(hh_all, all_tasks, current_task, tmp_task) {
+    for (task=current_task; task; task=task->hh_vp.next) {
+      nb_found += __cp_poll(rail, poll, &(task->recv_ibufs), task);
+    }
+  }
+
   return nb_found;
 }
 
@@ -268,7 +284,7 @@ int sctk_ib_cp_poll(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll
   sctk_ib_cp_task_t *task = NULL;
   int nb_found = 0;
 
-  if (ready == 0) return 0;
+  CHECK_ONLINE_PROGRAM;
 
   for (task=vps[vp].tasks; task; task=task->hh_vp.next)
     nb_found += __cp_poll(rail, poll, &(task->recv_ibufs), task);
@@ -288,7 +304,6 @@ static inline int __cp_steal(struct sctk_rail_info_s* rail,struct sctk_ib_pollin
   int _poll_steal_same_node=0;
   int _poll_steal_other_node=0;
   char update_timers=0;
-//  int max_retry = 4;
   int max_retry = 1;
 
 retry:
@@ -298,16 +313,20 @@ retry:
         ibuf = *list;
         DL_DELETE(*list, ibuf);
         sctk_spinlock_unlock(&task->lock);
+
+        if (ibv_cp_profiler) {
+          s = sctk_atomics_get_timestamp();
+        }
+
         /* Run the polling function */
-        s = sctk_atomics_get_timestamp();
         if (ibuf->cq == recv_cq) {
           sctk_network_poll_recv_ibuf(rail, ibuf, 2, poll);
         } else {
           sctk_network_poll_send_ibuf(rail, ibuf, 2, poll);
         }
-        e = sctk_atomics_get_timestamp();
 
         if (ibv_cp_profiler) {
+          e = sctk_atomics_get_timestamp();
           update_timers=1;
           /* Set timers */
           _time_stolen += e - s;
@@ -334,15 +353,6 @@ retry:
 
 exit:
   if(update_timers) {
-#if 0
-    sctk_spinlock_lock(&task->lock_timers);
-    task->time_stolen += _time_stolen;
-    sctk_spinlock_unlock(&task->lock_timers);
-    sctk_spinlock_lock(&stealing_task->lock_timers);
-    stealing_task->time_steals += _time_steals;
-    sctk_spinlock_unlock(&stealing_task->lock_timers);
-#endif
-
     time_steals += _time_steals;
     CP_PROF_ADD(stealing_task,poll_steals, _poll_steals);
     CP_PROF_ADD(stealing_task,poll_steal_same_node,_poll_steal_same_node);
@@ -398,7 +408,7 @@ int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll) {
   numa_t* tmp_numa;
   int i = 0;
 
-  if (ready == 0) return 0;
+  CHECK_ONLINE_PROGRAM;
 
   /* XXX: Not working with oversubscribing */
   stealing_task = vps[vp].tasks;
@@ -411,6 +421,7 @@ int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll) {
   return nb_found;
 }
 
+#if 0
 sctk_ib_cp_task_t *sctk_ib_cp_get_polling_task() {
   sctk_ib_cp_task_t* task;
   /* XXX: Not working with oversubscribing. The first task
@@ -427,23 +438,31 @@ sctk_ib_cp_task_t *sctk_ib_cp_get_polling_task() {
   assume(task);
   return task;
 }
+#endif
+
+#define CHECK_IS_READY(x)  do {\
+  if (task->ready != 1) return 0; \
+}while(0);
+
 
 int sctk_ib_cp_handle_message(sctk_rail_info_t* rail,
     sctk_ibuf_t *ibuf, int dest_task, enum sctk_ib_cp_poll_cq_e cq) {
   sctk_ib_cp_task_t *task = NULL;
   int vp = sctk_thread_get_vp();
 
+  CHECK_ONLINE_PROGRAM;
+
+  /* If the task is on the current VP */
   HASH_FIND(hh_vp,vps[vp].tasks,&dest_task, sizeof(int),task);
-  /* The task is on the current VP, we handle the message */
   if (task) {
-    sctk_nodebug("Task %d found on VP %d", task->rank, vp);
     CP_PROF_INC(task,matched);
-    return 0;
+    goto enqueue;
   }
+
   /* XXX: Do not support thread migration */
   HASH_FIND(hh_all,all_tasks,&dest_task, sizeof(int),task);
   if (!task) {
-    /* We return without error -> indirect message */
+    /* We return without error -> indirect message that we need to handle */
     return 0;
   }
   CP_PROF_INC(task,not_matched);
@@ -451,13 +470,17 @@ int sctk_ib_cp_handle_message(sctk_rail_info_t* rail,
   sctk_nodebug("Ibuf %p added (dest (rank:%d,vp:%d) polling vp:%d)", ibuf, task->rank, task->vp, vp);
   /* Add the ibuf to the pending list */
   /* Choose the right ibufs pending list */
-  sctk_spinlock_lock(&task->lock);
+
+enqueue:
   if (cq == recv_cq) {
+    sctk_spinlock_lock(&task->lock);
     DL_APPEND(task->recv_ibufs, ibuf);
+    sctk_spinlock_unlock(&task->lock);
   } else if (cq == send_cq) {
+    sctk_spinlock_lock(&task->lock);
     DL_APPEND(task->send_ibufs, ibuf);
+    sctk_spinlock_unlock(&task->lock);
   }
-  sctk_spinlock_unlock(&task->lock);
   return 1;
 }
 

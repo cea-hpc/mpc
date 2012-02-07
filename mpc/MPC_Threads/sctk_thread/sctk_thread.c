@@ -676,6 +676,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
       sctk_terminaison_barrier (tmp.task_id);
       sctk_nodebug ("sctk_terminaison_barrier done");
 #ifdef MPC_USE_INFINIBAND
+      sctk_network_finalize_task_multirail_ib (tmp.task_id);
       /* Register task for collaborative polling */
       /* XXX Also check if IB enabled */
 //      if(sctk_process_number > 1){

@@ -442,9 +442,10 @@ sctk_ib_srq_init(struct sctk_ib_rail_info_s* rail_ib,
   LOAD_DEVICE(rail_ib);
   LOAD_CONFIG(rail_ib);
   device->srq = ibv_create_srq(device->pd, attr);
+  config->ibv_max_srq_ibufs_posted = attr->attr.max_wr;
+
   sctk_ib_debug("Initializing SRQ with %d entries (max:%d)",
       attr->attr.max_wr, sctk_ib_srq_get_max_srq_wr(rail_ib));
-  config->ibv_max_srq_ibufs_posted = attr->attr.max_wr;
 
   if (!device->srq)
   {
@@ -465,7 +466,7 @@ sctk_ib_srq_init_attr(struct sctk_ib_rail_info_s* rail_ib)
   memset (&attr, 0, sizeof (struct ibv_srq_init_attr));
 
   attr.attr.srq_limit = config->ibv_srq_credit_thread_limit;
-  attr.attr.max_wr = config->ibv_max_srq_ibufs_posted;
+  attr.attr.max_wr = config->ibv_max_srq_ibufs;
   attr.attr.max_sge = config->ibv_max_sg_rq;
 
   return attr;

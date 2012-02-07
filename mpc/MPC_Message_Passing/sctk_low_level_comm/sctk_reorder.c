@@ -144,6 +144,8 @@ inline void __send_pending_messages(sctk_reorder_table_t* tmp) {
 }
 
 
+extern __thread double t_recv;
+extern __thread int nb_recv_tst;
 /*
  * Receive message from network
  * */
@@ -151,6 +153,7 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
   int process;
   int number;
   sctk_reorder_table_t* tmp;
+  double s=0, e=0;
 
   if(msg->sctk_msg_get_use_message_numbering == 0){
     /* Renumbering unused */
@@ -221,7 +224,9 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
 
     if(number == msg->sctk_msg_get_message_number){
       sctk_nodebug("Direct Send %d from %p",msg->sctk_msg_get_message_number, tmp);
+    s = sctk_atomics_get_timestamp();
       sctk_send_message_try_check(msg,1);
+  e = sctk_atomics_get_timestamp();
       OPA_fetch_and_incr_int(&(tmp->message_number_src));
 
       /*Search for pending messages*/
@@ -245,6 +250,8 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
         * received. If we omit this line, the code can deadlock */
       __send_pending_messages(tmp);
     }
+  t_recv += e-s;
+  nb_recv_tst++;
     return 0;
   }
 }
@@ -253,10 +260,15 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
 /*
  * Send message to network
  * */
+
+extern __thread double t_recv;
+extern __thread int nb_recv_tst;
 int sctk_prepare_send_message_to_network_reorder (sctk_thread_ptp_message_t * msg){
   sctk_reorder_table_t* tmp;
   int src_process;
   int dest_process;
+  double s=0, e=0;
+  s = sctk_atomics_get_timestamp();
 
   sctk_nodebug("Send message with tag: %d %d %d", msg->body.header.specific_message_tag, (MASK_PROCESS_SPECIFIC | MASK_PROCESS_SPECIFIC_W_ORDERING) & msg->body.header.specific_message_tag, MASK_PROCESS_SPECIFIC | MASK_PROCESS_SPECIFIC_W_ORDERING);
 
@@ -306,6 +318,7 @@ int sctk_prepare_send_message_to_network_reorder (sctk_thread_ptp_message_t * ms
   msg->sctk_msg_get_use_message_numbering = 1;
   msg->sctk_msg_get_message_number = OPA_fetch_and_incr_int(&(tmp->message_number_dest));
   sctk_nodebug("send %d to %d (number:%d)", src_process, dest_process, msg->sctk_msg_get_message_number);
+
   return 0;
 }
 

@@ -31,7 +31,7 @@
 #include <stdint.h>
 #include "opa_primitives.h"
 
-//#define SCTK_IB_PROF
+#define SCTK_IB_PROF
 enum sctk_ib_prof_counters_e {
   cp_matched = 0,
   cp_not_matched = 1,

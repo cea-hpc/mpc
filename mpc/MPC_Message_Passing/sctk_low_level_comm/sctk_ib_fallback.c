@@ -41,8 +41,15 @@
 #include "sctk_ib_cp.h"
 #include "sctk_ib_prof.h"
 #include "sctk_atomics.h"
+#include "sctk_asm.h"
 
 OPA_int_t s_rdma;
+
+
+__thread double t_send = 0;
+__thread double t_recv = 0;
+__thread int nb_recv_tst = 0;
+__thread int nb_send_tst = 0;
 
 static void
 sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
@@ -53,6 +60,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   sctk_ib_qp_t *remote;
   sctk_ibuf_t *ibuf;
   size_t size;
+  double e, s;
 
   sctk_nodebug("send message through rail %d",rail->rail_number);
 
@@ -77,10 +85,14 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
 
   if (size+IBUF_GET_EAGER_SIZE < config->ibv_eager_limit)  {
+  s = sctk_get_time_stamp();
     ibuf = sctk_ib_sr_prepare_msg(rail_ib, remote, msg, size);
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
+  e = sctk_get_time_stamp();
     sctk_complete_and_free_message(msg);
+  t_send += (e - s);
+  nb_send_tst++;
     PROF_INC_RAIL_IB(rail_ib, eager_nb);
   } else if (size+IBUF_GET_BUFFERED_SIZE < config->ibv_frag_eager_limit)  {
     sctk_nodebug("Sending message to %d (process_destk:%d,process_src;%d,number:%d) (%p)", remote->rank, msg->sctk_msg_get_destination, msg->sctk_msg_get_source,msg->sctk_msg_get_message_number, tmp);
@@ -98,6 +110,7 @@ rdma:
     PROF_INC_RAIL_IB(rail_ib, rdma_nb);
     OPA_add_int(&s_rdma, size);
   }
+
 }
 
 static int __is_specific_mesage_tag(sctk_thread_ptp_message_body_t *msg)
@@ -107,30 +120,12 @@ static int __is_specific_mesage_tag(sctk_thread_ptp_message_body_t *msg)
   return 0;
 }
 
-#define CHECK_CP(task_nb, x) do {\
-  if (task_nb >= 0 && (steal > 0) && !from_cp &&  \
-        sctk_ib_cp_handle_message(rail, ibuf, task_nb, x) == 1){  \
-      poll->recv_found_other++;               \
-      return 1;                   \
-  } else  poll->recv_found_own++; \
-} while(0)
-
 int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
     const char from_cp, struct sctk_ib_polling_s* poll) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
   int steal = config->ibv_steal;
   int release_ibuf = 1;
-  sctk_ib_cp_task_t *polling_task = NULL;
-  double s=0, e=0;
-  int src_task;
-  if (steal > 0) {
-    src_task = IBUF_GET_SRC_TASK(ibuf);
-    ibuf->cq = send_cq;
-    CHECK_CP(src_task, recv_cq);
-    polling_task = sctk_ib_cp_get_polling_task();
-    s = sctk_atomics_get_timestamp();
-  }
 
   /* Switch on the protocol of the received message */
   switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
@@ -156,17 +151,6 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
   } else {
     sctk_ibuf_release_from_srq(&rail->network.ib, ibuf);
   }
-
-  if (steal > 0 && (from_cp == 1 || from_cp == 0) ) {
-    e = sctk_atomics_get_timestamp();
-#if 0
-    sctk_spinlock_lock(&polling_task->lock_timers);
-    polling_task->time_own += e-s;
-    sctk_spinlock_unlock(&polling_task->lock_timers);
-#endif
-    time_own += e-s;
-    CP_PROF_INC(polling_task,poll_own);
-  }
   return 0;
 }
 
@@ -181,22 +165,8 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
   int release_ibuf = 1;
   int recopy = 1;
   int ondemand = 0;
-  int dest_task = -1;
-  sctk_ib_cp_task_t *polling_task = NULL;
-  double s=0, e=0;
 
-  if (steal > 0) {
-    dest_task = IBUF_GET_DEST_TASK(ibuf);
-    /* XXX: Check if the Collaborative polling is activated and handle
-     * the message
-     * - dest_task can be equal to -1
-     * - If the message is from CP, do not handle it*/
-    ibuf->cq = recv_cq;
-    CHECK_CP(dest_task, recv_cq);
-    polling_task = sctk_ib_cp_get_polling_task();
-    s = sctk_atomics_get_timestamp();
-  }
-   sctk_nodebug("[%d] Recv ibuf:%p", rail->rail_number,ibuf);
+  sctk_nodebug("[%d] Recv ibuf:%p", rail->rail_number,ibuf);
   /* Switch on the protocol of the received message */
   switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
     case eager_protocol:
@@ -214,7 +184,7 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
           msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
           sctk_ib_cm_on_demand_recv(rail, msg, ibuf, recopy);
         }else{
-          recopy = 0;
+      recopy = 0;
           msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
           sctk_ib_sr_recv_free(rail, msg, ibuf, recopy);
           sctk_nodebug("PSN: %d src:%d glob_src:%d", msg->sctk_msg_get_message_number,
@@ -257,64 +227,111 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
     /* sctk_ib_qp_release_entry(&rail->network.ib, ibuf->remote); */
     sctk_ibuf_release(&rail->network.ib, ibuf);
   } else {
-    sctk_ibuf_release_from_srq(&rail->network.ib, ibuf);
-  }
-
-  if (steal > 0 && (from_cp == 1 || from_cp == 0) ) {
-    e = sctk_atomics_get_timestamp();
-#if 0
-    sctk_spinlock_lock(&polling_task->lock_timers);
-    polling_task->time_own += e-s;
-    sctk_spinlock_unlock(&polling_task->lock_timers);
-#endif
-    time_own += e-s;
-    CP_PROF_INC(polling_task,poll_own);
+    sctk_ibuf_release_from_srq2(&rail->network.ib, ibuf);
   }
   return 0;
 }
 
+#define CHECK_CP(task_nb, x, ret) do {\
+  if (task_nb >= 0 &&  sctk_ib_cp_handle_message(rail, ibuf, task_nb, x) == 1){  \
+      ret = 1;                   \
+  } else { \
+    ret = 0; \
+  } \
+} while(0)
 
 static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc,
     struct sctk_ib_polling_s *poll){
   sctk_ibuf_t *ibuf = NULL;
-
   ibuf = (sctk_ibuf_t*) wc->wr_id;
   assume(ibuf);
-  return sctk_network_poll_recv_ibuf(rail, ibuf, 0, poll);
+  int dest_task = -1;
+  int ret;
+
+  dest_task = IBUF_GET_DEST_TASK(ibuf);
+  ibuf->cq = recv_cq;
+  CHECK_CP(dest_task, recv_cq, ret);
+
+  /* If the return value is 0, we need to handle the message */
+  if (ret == 0) {
+    return sctk_network_poll_recv_ibuf(rail, ibuf, 0, poll);
+  }
+  return 0;
 }
 
 static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,
     struct sctk_ib_polling_s *poll){
   sctk_ibuf_t *ibuf = NULL;
-
   ibuf = (sctk_ibuf_t*) wc->wr_id;
   assume(ibuf);
-  return sctk_network_poll_send_ibuf(rail, ibuf, 0, poll);
+  int src_task = -1;
+  int ret;
+
+  src_task = IBUF_GET_SRC_TASK(ibuf);
+  ibuf->cq = send_cq;
+  CHECK_CP(src_task, recv_cq, ret);
+
+  /* If the return value is 0, we need to handle the message */
+  if (ret == 0) {
+    return sctk_network_poll_send_ibuf(rail, ibuf, 0, poll);
+  }
+  return 1;
 }
-
-
-static int sctk_network_poll_all (sctk_rail_info_t* rail) {
+#if 0
+int sctk_network_poll_all_entries (sctk_rail_info_t* rail) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
   LOAD_DEVICE(rail_ib);
   int steal = config->ibv_steal;
   sctk_ib_polling_t poll;
   POLL_INIT(&poll);
+  static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+  int found_nb = 0;
 
-  /* First try to poll pending */
-  if (steal > 0) {
-    sctk_ib_cp_poll(rail, &poll);
-  }
+  sctk_spinlock_lock(&lock);
+    /* Poll received messages */
+    found_nb += sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_cq_depth, &poll, sctk_network_poll_recv);
+    /* Poll sent messages */
+    found_nb += sctk_ib_cq_poll(rail, device->send_cq, config->ibv_cq_depth, &poll, sctk_network_poll_send);
+  sctk_spinlock_unlock(&lock);
 
+  POLL_INIT(&poll);
+  sctk_ib_cp_poll_all(rail, &poll);
+
+  return poll.recv_found_own;
+}
+#endif
+
+#define MAX_TASKS_ALLOWED 4
+static OPA_int_t polling_lock;
+
+int sctk_network_poll_all (sctk_rail_info_t* rail) {
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  LOAD_CONFIG(rail_ib);
+  LOAD_DEVICE(rail_ib);
+  int steal = config->ibv_steal;
+  sctk_ib_polling_t poll;
+  POLL_INIT(&poll);
+  static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+
+  /* Only one task is allowed to poll new messages from QP */
+  int ret = OPA_fetch_and_incr_int(&polling_lock);
+  if (ret < MAX_TASKS_ALLOWED) {
   /* Poll received messages */
-  sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, &poll, sctk_network_poll_recv);
-  /* Poll sent messages */
-  sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, &poll, sctk_network_poll_send);
+    sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, &poll, sctk_network_poll_recv);
+    /* Poll sent messages */
+    sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, &poll, sctk_network_poll_send);
+  }
+  OPA_decr_int(&polling_lock);
+
+  /* Try to poll incomming messages */
+  POLL_INIT(&poll);
+  sctk_ib_cp_poll(rail, &poll);
 
   return poll.recv_found_own;
 }
 
-static int sctk_network_poll_all_and_steal(sctk_rail_info_t *rail) {
+int sctk_network_poll_all_and_steal(sctk_rail_info_t *rail) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
   int steal = config->ibv_steal;
@@ -412,6 +429,7 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   /* XXX: memory never free */
   char *network_name = sctk_malloc(256);
 
+  OPA_store_int(&polling_lock, 0);
   /* Infiniband Init */
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   /* Profiler init */
@@ -438,9 +456,9 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   sctk_ib_mmu_init(rail_ib);
   sctk_ibuf_pool_init(rail_ib);
   /* Fill SRQ with buffers */
-  sctk_ibuf_srq_check_and_post(rail_ib, rail_ib->config->ibv_max_srq_ibufs);
+  sctk_ibuf_srq_check_and_post(rail_ib, rail_ib->config->ibv_max_srq_ibufs_posted);
   /* Initialize Async thread */
-  sctk_ib_async_init(rail_ib);
+  sctk_ib_async_init(rail);
   /* Initialize collaborative polling */
   sctk_ib_cp_init(rail_ib);
 

@@ -54,6 +54,7 @@ extern __thread int task_node_number;
 typedef struct sctk_ib_cp_task_s{
   UT_hash_handle hh_vp;
   UT_hash_handle hh_all;
+  int ready;
   int vp;
   /* numa node */
   int node;
@@ -102,6 +103,8 @@ void sctk_ib_cp_finalize_task(int rank);
 int sctk_ib_cp_handle_message(struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf, int dest_task, enum sctk_ib_cp_poll_cq_e cq);
 
 int sctk_ib_cp_poll(struct sctk_rail_info_s* rail, struct sctk_ib_polling_s *poll);
+
+int sctk_ib_cp_poll_all(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll);
 
 int sctk_ib_cp_steal(struct sctk_rail_info_s* rail, struct sctk_ib_polling_s *poll);
 
