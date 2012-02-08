@@ -143,7 +143,6 @@ void* async_thread(void* arg)
         /* We try to post new buffers */
 //        ret = sctk_ibuf_srq_check_and_post(rail_ib, limit);
 #if 0
-        sctk_debug("Posted: %d %d", ret, polled);
         /* If no buffers posted */
         if (ret == 0) {
           if (limit + 128 < sctk_ib_srq_get_max_srq_wr(rail_ib)) {

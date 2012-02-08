@@ -250,8 +250,6 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
         * received. If we omit this line, the code can deadlock */
       __send_pending_messages(tmp);
     }
-  t_recv += e-s;
-  nb_recv_tst++;
     return 0;
   }
 }

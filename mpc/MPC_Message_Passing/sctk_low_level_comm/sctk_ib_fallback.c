@@ -45,12 +45,6 @@
 
 OPA_int_t s_rdma;
 
-
-__thread double t_send = 0;
-__thread double t_recv = 0;
-__thread int nb_recv_tst = 0;
-__thread int nb_send_tst = 0;
-
 static void
 sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
@@ -60,7 +54,6 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   sctk_ib_qp_t *remote;
   sctk_ibuf_t *ibuf;
   size_t size;
-  double e, s;
 
   sctk_nodebug("send message through rail %d",rail->rail_number);
 
@@ -85,14 +78,10 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
 
   if (size+IBUF_GET_EAGER_SIZE < config->ibv_eager_limit)  {
-  s = sctk_get_time_stamp();
     ibuf = sctk_ib_sr_prepare_msg(rail_ib, remote, msg, size);
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
-  e = sctk_get_time_stamp();
     sctk_complete_and_free_message(msg);
-  t_send += (e - s);
-  nb_send_tst++;
     PROF_INC_RAIL_IB(rail_ib, eager_nb);
   } else if (size+IBUF_GET_BUFFERED_SIZE < config->ibv_frag_eager_limit)  {
     sctk_nodebug("Sending message to %d (process_destk:%d,process_src;%d,number:%d) (%p)", remote->rank, msg->sctk_msg_get_destination, msg->sctk_msg_get_source,msg->sctk_msg_get_message_number, tmp);
@@ -108,9 +97,7 @@ rdma:
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
     sctk_ib_rdma_prepare_send_msg(rail_ib, msg, size);
     PROF_INC_RAIL_IB(rail_ib, rdma_nb);
-    OPA_add_int(&s_rdma, size);
   }
-
 }
 
 static int __is_specific_mesage_tag(sctk_thread_ptp_message_body_t *msg)
@@ -183,20 +170,17 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
           recopy = 1;
           msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
           sctk_ib_cm_on_demand_recv(rail, msg, ibuf, recopy);
-        }else{
-      recopy = 0;
-          msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
-          sctk_ib_sr_recv_free(rail, msg, ibuf, recopy);
-          sctk_nodebug("PSN: %d src:%d glob_src:%d", msg->sctk_msg_get_message_number,
-              msg->sctk_msg_get_source, msg->sctk_msg_get_glob_source);
-          rail->send_message_from_network(msg);
+          goto release;
         }
-      } else {
-        recopy = 0;
-        msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
-        sctk_ib_sr_recv_free(rail, msg, ibuf, recopy);
-        rail->send_message_from_network(msg);
       }
+
+      /* Normal message: we handle it */
+      recopy = 0;
+      msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
+      sctk_ib_sr_recv_free(rail, msg, ibuf, recopy);
+      rail->send_message_from_network(msg);
+
+release:
       release_ibuf = 0;
       break;
 
@@ -302,7 +286,7 @@ int sctk_network_poll_all_entries (sctk_rail_info_t* rail) {
 }
 #endif
 
-#define MAX_TASKS_ALLOWED 4
+#define MAX_TASKS_ALLOWED 1
 static OPA_int_t polling_lock;
 
 int sctk_network_poll_all (sctk_rail_info_t* rail) {
