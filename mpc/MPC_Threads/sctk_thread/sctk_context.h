@@ -45,6 +45,10 @@ extern "C"
 #define SCTK_MCTX_MTH_use SCTK_MCTX_MTH_mcsc
 #define SCTK_MCTX_DSP_use SCTK_MCTX_DSP_sc
 
+#warning "Gros Hack"
+#undef DONOTHAVE_CONTEXTS
+#define DONOTHAVE_CONTEXTS
+
 #if defined(SCTK_i686_ARCH_SCTK)
 #ifndef DONOTHAVE_CONTEXTS
 #define SCTK_USE_CONTEXT_FOR_CREATION

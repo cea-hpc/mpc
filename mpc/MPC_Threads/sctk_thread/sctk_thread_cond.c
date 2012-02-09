@@ -40,5 +40,13 @@ sctk_thread_generic_conds_cond_init (sctk_thread_generic_cond_t * lock,
 }
 
 void sctk_thread_generic_conds_init(){ 
-  not_implemented();
+  sctk_thread_generic_check_size (sctk_thread_generic_cond_t, sctk_thread_cond_t);
+  sctk_thread_generic_check_size (sctk_thread_generic_condattr_t, sctk_thread_condattr_t);
+
+  {
+    static sctk_thread_generic_cond_t loc = SCTK_THREAD_GENERIC_COND_INIT;
+    static sctk_thread_cond_t glob = SCTK_THREAD_COND_INITIALIZER;
+    assume (memcmp (&loc, &glob, sizeof (sctk_thread_generic_cond_t)) == 0);
+  }
+ 
 }

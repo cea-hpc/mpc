@@ -226,7 +226,8 @@ sctk_mctx_set (sctk_mctx_t * mctx,
 #ifdef SCTK_USE_CONTEXT_FOR_CREATION
 #include <ucontext.h>
 
-static inline void sctk_bootstrap_func(void (*func) (void*), void *arg, ucontext_t* root_uc,sctk_mctx_t *mctx) {
+static inline void sctk_bootstrap_func(void (*func) (void*), void *arg, 
+				       ucontext_t* root_uc,sctk_mctx_t *mctx) {
   if (sctk_setjmp((mctx->jb)) == 0) {
     setcontext(root_uc);
   } else {
@@ -253,7 +254,8 @@ sctk_mctx_set(sctk_mctx_t* mctx,
   uc.uc_stack.ss_flags = 0;
 
   (mctx)->restored = 0;
-  makecontext (&(uc), (void (*)(void)) sctk_bootstrap_func, 1 + 4, (void*)func, arg, &root_uc, mctx);
+  makecontext (&(uc), (void (*)(void)) sctk_bootstrap_func, 1 + 4, (void*)func, arg, 
+	       &root_uc, mctx);
 
   swapcontext(&(root_uc), &(uc));
   return TRUE;
