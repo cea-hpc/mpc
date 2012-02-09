@@ -417,6 +417,9 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
 		      int (*)(sctk_thread_mutex_t *));
   __sctk_ptr_thread_mutex_init = sctk_thread_generic_mutex_init;
 
+  /****** COND ******/
+  sctk_thread_generic_conds_init();
+
   /****** THREAD CREATION ******/  
   sctk_thread_generic_check_size (sctk_thread_generic_attr_t, sctk_thread_attr_t);
   sctk_add_func_type (sctk_thread_generic, attr_init,
