@@ -602,9 +602,9 @@ inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp){
   send = tmp->msg_send;
   recv = tmp->msg_recv;
 
-  assume(send->tail.message_type == recv->tail.message_type);
+  assume(send->tail.message_type == sctk_message_pack_absolute); 
 
-  switch(send->tail.message_type){
+  switch(recv->tail.message_type){
   case sctk_message_pack_absolute: {
     size_t size;
     size_t i;
@@ -622,6 +622,33 @@ inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp){
 					    recv->tail.message.pack.list.absolute[i].elem_size);
       }
 
+    sctk_message_completion_and_free(send,recv);
+    break;
+  }
+  case sctk_message_contiguous: {
+    size_t i;
+    size_t j;
+    size_t size;
+    char* body;
+
+    body = recv->tail.message.contiguous.addr; 
+
+    sctk_nodebug("COUNT %lu",send->tail.message.pack.count);
+
+    for (i = 0; i < send->tail.message.pack.count; i++)
+      for (j = 0; j < send->tail.message.pack.list.absolute[i].count; j++)
+        {
+          size = (send->tail.message.pack.list.absolute[i].ends[j] -
+                  send->tail.message.pack.list.absolute[i].begins[j] +
+                  1) * send->tail.message.pack.list.absolute[i].elem_size;
+          memcpy(body,((char *) (send->tail.message.pack.list.absolute[i].addr)) +
+                 send->tail.message.pack.list.absolute[i].begins[j] *
+                 send->tail.message.pack.list.absolute[i].elem_size,size);
+          sctk_nodebug("COPY %lu in %p %f <- %p %lu %lu %f",size,body,((double*)body)[0],send->tail.message.pack.list.absolute[i].addr,send->tail.message.pack.list.absolute[i].begins[j],send->tail.message.pack.list.absolute[i].elem_size,(double*)(((char *) (send->tail.message.pack.list.absolute[i].addr)) +
+                 send->tail.message.pack.list.absolute[i].begins[j] *
+                 send->tail.message.pack.list.absolute[i].elem_size)[0]);
+          body += size;
+        }
     sctk_message_completion_and_free(send,recv);
     break;
   }
