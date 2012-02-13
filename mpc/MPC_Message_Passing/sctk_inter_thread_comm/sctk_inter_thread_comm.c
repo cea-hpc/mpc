@@ -657,11 +657,16 @@ inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp){
 /********************************************************************/
 /*INIT                                                              */
 /********************************************************************/
+/* For message creation: a set of buffered ptp_message entries is allocated during init */
+__thread sctk_thread_ptp_message_t* buffered_ptp_message = NULL;
+__thread sctk_spinlock_t lock_buffered_ptp_message = SCTK_SPINLOCK_INITIALIZER;
+#define BUFFERED_PTP_MESSAGE_NUMBER 50
 
 /*Init data structures used for task i*/
 void sctk_ptp_per_task_init (int i){
   static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
   sctk_internal_ptp_t * tmp;
+  int j;
 
   tmp = sctk_malloc(sizeof(sctk_internal_ptp_t));
   memset(tmp,0,sizeof(sctk_internal_ptp_t));
@@ -672,6 +677,21 @@ void sctk_ptp_per_task_init (int i){
   sctk_internal_ptp_message_list_init(&(tmp->lists));
   sctk_ptp_table_insert(tmp);
   sctk_spinlock_unlock(&lock);
+
+  if (buffered_ptp_message == NULL) {
+    sctk_spinlock_lock(&lock_buffered_ptp_message);
+    /* List not already allocated */
+    if (buffered_ptp_message == NULL) {
+      for (j = 0; j < BUFFERED_PTP_MESSAGE_NUMBER; ++j) {
+        sctk_thread_ptp_message_t* entry = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
+        assume(entry);
+        entry->from_buffered = 1;
+        /* Add it to the list */
+        LL_PREPEND(buffered_ptp_message, entry);
+      }
+    }
+    sctk_spinlock_unlock(&lock_buffered_ptp_message);
+  }
 }
 
 void sctk_unregister_thread (const int i){
@@ -683,18 +703,41 @@ void sctk_unregister_thread (const int i){
 /********************************************************************/
 /*Message creation                                                  */
 /********************************************************************/
-
 void sctk_free_pack(void*);
 
 static
 void sctk_free_header(void* tmp){
-  sctk_free(tmp);
+  sctk_thread_ptp_message_t *header = (sctk_thread_ptp_message_t*) tmp;
+  /* Header is from the buffered list */
+  if (header->from_buffered) {
+    sctk_spinlock_lock(&lock_buffered_ptp_message);
+    LL_PREPEND(buffered_ptp_message, header);
+    sctk_spinlock_unlock(&lock_buffered_ptp_message);
+  } else {
+    sctk_free(tmp);
+  }
 }
 
 static
 void* sctk_alloc_header(){
-#warning "Optimize allocation"
-  return sctk_malloc(sizeof(sctk_thread_ptp_message_t));
+  sctk_thread_ptp_message_t *tmp;
+
+  /* We first look at the buffered list if a header is available */
+  if (buffered_ptp_message != NULL) {
+    sctk_spinlock_lock(&lock_buffered_ptp_message);
+    if (buffered_ptp_message != NULL) {
+      LL_DELETE(buffered_ptp_message, tmp);
+    }
+    sctk_spinlock_unlock(&lock_buffered_ptp_message);
+  }
+
+  /* If no more entries available in the buffered list, we allocate */
+  if (tmp == NULL) {
+    tmp = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
+    /* Header must be freed after use */
+    tmp->from_buffered = 0;
+  }
+  return tmp;
 }
 
 void sctk_rebuild_header (sctk_thread_ptp_message_t * msg){

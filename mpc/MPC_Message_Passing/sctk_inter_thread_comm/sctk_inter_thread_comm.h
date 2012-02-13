@@ -217,6 +217,12 @@ typedef struct sctk_message_to_copy_s{
   typedef struct sctk_thread_ptp_message_s{
     sctk_thread_ptp_message_body_t body;
     sctk_thread_ptp_message_tail_t  tail;
+
+    /* Pointers for chaining elements */
+    struct sctk_thread_ptp_message_s* prev;
+    struct sctk_thread_ptp_message_s* next;
+    /* If the entry comes from a buffered list */
+    char from_buffered;
   }sctk_thread_ptp_message_t;
 
 
