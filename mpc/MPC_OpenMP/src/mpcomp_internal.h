@@ -62,9 +62,9 @@ extern "C"
 #define MPCOMP_STOP 2
 #define MPCOMP_CONSUMED 3
 
-#define MPCOMP_NOWAIT_STOP_SYMBOL	(-1)
-#define MPCOMP_NOWAIT_STOP_CONSUMED	(-2)
-#define MPCOMP_NOWAIT_OK_SYMBOL		(-3)
+#define MPCOMP_NOWAIT_STOP_SYMBOL	(-2)
+#define MPCOMP_NOWAIT_STOP_CONSUMED	(-3)
+#define MPCOMP_NOWAIT_OK_SYMBOL		(-4)
 
 
 #define MPCOMP_LOCK_INIT {0,0,NULL,NULL,NULL,SCTK_SPINLOCK_INITIALIZER}
@@ -147,9 +147,12 @@ struct mpcomp_thread_s {
 
   /* SINGLE CONSTRUCT */
   volatile int current_single;							/* Which 'single' construct did we already go through? */
+  int stop_index;
 
   /* ORDERED CONSTRUCT */
   volatile int current_ordered_iteration ; 
+
+  
 
   /* DYNAMIC CONSTRUCT */
   volatile int private_current_for_dyn;
@@ -178,6 +181,7 @@ struct mpcomp_thread_team_s {
   /* SINGLE CONSTRUCT */
   sctk_spinlock_t lock_enter_single[MPCOMP_MAX_ALIVE_SINGLE+1];
   volatile int nb_threads_entered_single[MPCOMP_MAX_ALIVE_SINGLE+1];
+  volatile int nb_threads_stop;                                        /* To know how many threads are spinning on STOP_SYMBOL case  */
 
   /* ORDERED CONSTRUCT */
   volatile int next_ordered_offset ; 
