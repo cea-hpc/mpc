@@ -734,9 +734,14 @@ extern "C"
     /* Number of msg stolen by the current task */
     int poll_steals;
 
+    int poll_steal_same_node;
+    int poll_steal_other_node;
+
     double time_stolen;
     double time_steals;
     double time_own;
+
+    int steal;
   };
 
   void MPC_Network_stats(struct MPC_Network_stats_s *stats);

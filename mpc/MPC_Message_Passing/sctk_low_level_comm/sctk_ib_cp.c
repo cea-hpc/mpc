@@ -195,6 +195,7 @@ void sctk_ib_cp_finalize_task(int rank) {
   HASH_FIND(hh_all,all_tasks,&rank, sizeof(int),task);
   assume(task);
 
+#if 0
   if (ibv_cp_profiler) {
     if (rank == 0) {
       fprintf(stderr, "#poll_own poll_stolen poll_steals poll_steal_same_node poll_steal_other_node time_stolen time_steals time_own\n");
@@ -208,6 +209,7 @@ void sctk_ib_cp_finalize_task(int rank) {
         time_steals/CYCLES_PER_SEC,
         time_own/CYCLES_PER_SEC);
   }
+#endif
 
 }
 

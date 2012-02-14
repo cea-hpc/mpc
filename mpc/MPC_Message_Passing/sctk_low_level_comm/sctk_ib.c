@@ -196,10 +196,11 @@ void sctk_network_stats_ib (struct MPC_Network_stats_s* stats) {
   stats->matched = CP_PROF_PRINT(task, matched);
   stats->not_matched = CP_PROF_PRINT(task, not_matched);
   stats->poll_own = CP_PROF_PRINT(task, poll_own);
-  stats->poll_stolen = CP_PROF_PRINT(task, poll_stolen);
   stats->poll_steals = CP_PROF_PRINT(task, poll_steals);
-  stats->time_stolen = task->time_stolen;
-  stats->time_steals = task->time_steals;
-  stats->time_own = task->time_own;
+
+  stats->poll_steal_same_node = CP_PROF_PRINT(task, poll_steal_same_node);
+  stats->poll_steal_other_node = CP_PROF_PRINT(task, poll_steal_other_node);
+  stats->time_steals = time_steals;
+  stats->time_own = time_own;
 }
 #endif
