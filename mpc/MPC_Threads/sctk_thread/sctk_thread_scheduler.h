@@ -46,6 +46,7 @@ struct sctk_thread_generic_scheduler_s;
 
 typedef struct sctk_thread_generic_scheduler_generic_s{
   int vp_type;
+  volatile int is_idle_mode;
   struct sctk_thread_generic_scheduler_s* sched;
   struct sctk_thread_generic_scheduler_generic_s *prev, *next;
   sem_t sem;
@@ -54,7 +55,7 @@ typedef struct sctk_thread_generic_scheduler_generic_s{
 typedef struct sctk_thread_generic_scheduler_s{
   sctk_mctx_t ctx;
   sctk_mctx_t ctx_bootstrap;
-  sctk_thread_generic_thread_status_t status;
+  volatile sctk_thread_generic_thread_status_t status;
   struct sctk_thread_generic_p_s* th;
   union{
     sctk_thread_generic_scheduler_generic_t generic;
@@ -81,12 +82,12 @@ char* sctk_thread_generic_scheduler_get_name();
 /***************************************/
 typedef struct sctk_thread_generic_task_s{
   volatile int *data;
-  int value;
   void (*func) (void *);
   void *arg;
-  int is_blocking;
   sctk_thread_generic_scheduler_t* sched;
   struct sctk_thread_generic_task_s *prev, *next;
+  int value;
+  int is_blocking;
 }sctk_thread_generic_task_t;
 
 extern void (*sctk_thread_generic_add_task)(sctk_thread_generic_task_t*);

@@ -271,7 +271,7 @@ void sctk_centralized_poll_tasks(sctk_thread_generic_scheduler_t* sched){
 /***************************************/
 /* GENERIC SCHEDULER                   */
 /***************************************/
-static void (*sctk_generic_add_to_list)(sctk_thread_generic_scheduler_t* ) = NULL;
+static void (*sctk_generic_add_to_list_intern)(sctk_thread_generic_scheduler_t* ) = NULL;
 static sctk_thread_generic_scheduler_t* (*sctk_generic_get_from_list)(void) = NULL;
 static sctk_thread_generic_scheduler_t* (*sctk_generic_get_from_list_pthread_init)(void) = NULL;
 static sctk_thread_generic_task_t* (*sctk_generic_get_task)(void) = NULL;
@@ -285,6 +285,13 @@ static __thread volatile sctk_thread_generic_task_t* sctk_generic_delegated_task
 static __thread volatile sctk_thread_generic_scheduler_t* sctk_generic_delegated_zombie_list = NULL;
 static __thread volatile sctk_thread_generic_scheduler_t* sctk_generic_delegated_add = NULL;
 static __thread volatile sctk_spinlock_t* sctk_generic_delegated_spinlock = NULL;
+
+
+static void sctk_generic_add_to_list(sctk_thread_generic_scheduler_t* sched){
+  if(sched->generic.is_idle_mode == 0){
+    sctk_generic_add_to_list_intern(sched);
+  }
+}
 
 static void sctk_generic_add_task(sctk_thread_generic_task_t* task){
   sctk_debug("ADD task %p FROM %p",task,task->sched);
@@ -330,6 +337,8 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
   sctk_thread_generic_scheduler_t* next;
 /*   assume(sched->generic.vp_type != 0); */
   if(sched->generic.vp_type == 0){
+    int have_spinlock_registered = 0;
+    static __thread sctk_thread_generic_scheduler_t*sched_idle = NULL;
 
     if(sched->status == sctk_thread_generic_running){
      if(sctk_generic_delegated_task_list != NULL){ 
@@ -343,6 +352,8 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
       }
     }
 
+    sched->generic.is_idle_mode = 0;
+
   retry:
     next = sctk_generic_get_from_list();
     
@@ -352,12 +363,37 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
     } 
     if(next != sched){
       if(next != NULL){
+	if(sched->generic.is_idle_mode == 1){
+	  if(have_spinlock_registered == 1){
+	    sched_idle = sched;
+	  }
+	}	
 	sctk_thread_generic_scheduler_swapcontext(sched,next);
       } else {
 	/* Idle function */
+	sched->generic.is_idle_mode = 1;
+
+	if(sctk_generic_delegated_spinlock != NULL){
+	  have_spinlock_registered = 1;
+	  sctk_spinlock_unlock(sctk_generic_delegated_spinlock);
+	  sctk_generic_delegated_spinlock = NULL;
+	}
+
 	sctk_cpu_relax ();
 	goto retry;
       }
+    }
+
+    sched->generic.is_idle_mode = 0;
+
+    if(sched_idle != NULL){
+      not_implemented();
+      sched_idle = NULL;
+    }
+
+    if(sctk_generic_delegated_spinlock != NULL){
+      sctk_spinlock_unlock(sctk_generic_delegated_spinlock);
+      sctk_generic_delegated_spinlock = NULL;
     }
 
       /* Deal with zombie threads */
@@ -382,6 +418,11 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
       sctk_generic_add_task_to_threat(sctk_generic_delegated_task_list);
       sctk_generic_delegated_task_list = NULL;
     }
+    if(sctk_generic_delegated_spinlock != NULL){
+      sctk_spinlock_unlock(sctk_generic_delegated_spinlock);
+      sctk_generic_delegated_spinlock = NULL;
+    }
+
 
     if(sched->generic.vp_type == 1){
       if(sched->status == sctk_thread_generic_zombie){
@@ -432,7 +473,7 @@ void sctk_generic_thread_status(sctk_thread_generic_scheduler_t* sched,
 
 static void sctk_generic_register_spinlock_unlock(sctk_thread_generic_scheduler_t* sched,
 						      sctk_spinlock_t* lock){
-  not_implemented();
+  sctk_generic_delegated_spinlock = lock;
 }
 
 static void sctk_generic_wake(sctk_thread_generic_scheduler_t* sched){
@@ -574,7 +615,7 @@ void sctk_thread_generic_scheduler_init(char* thread_type,char* scheduler_type, 
   sctk_thread_generic_scheduler_bind_to_cpu (0);
   
   if(strcmp("generic/centralized",scheduler_type) == 0){
-    sctk_generic_add_to_list = sctk_centralized_add_to_list;
+    sctk_generic_add_to_list_intern = sctk_centralized_add_to_list;
     sctk_generic_get_from_list = sctk_centralized_get_from_list;
     sctk_generic_get_task = sctk_centralized_get_task;
     sctk_generic_add_task_to_threat = sctk_centralized_add_task_to_threat;

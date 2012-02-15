@@ -461,7 +461,7 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
 		      int (*)(sctk_thread_cond_t *));
    sctk_add_func_type (sctk_thread_generic, cond_broadcast,
 		      int (*)(sctk_thread_cond_t *));
-#warning "ADD destroy and trywait"
+#warning "ADD destroy and timedwait"
 
   /****** THREAD CREATION ******/  
   sctk_thread_generic_check_size (sctk_thread_generic_attr_t, sctk_thread_attr_t);
