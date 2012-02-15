@@ -25,7 +25,7 @@
 #include "sctk_debug.h"
 #include <errno.h>
 #include <stdio.h>
-#include <unistd.h>
+#include <stdlib.h>
 #ifdef MPC_Threads
 volatile int sctk_online_program = -1;
 #else

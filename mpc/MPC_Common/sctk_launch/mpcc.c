@@ -23,7 +23,7 @@
 #include "sctk_config.h"
 #include "sctk_debug.h"
 #include <string.h>
-#include <unistd.h>
+#include <stdlib.h>
 #if defined(MPC_Message_Passing) || defined(MPC_Threads)
 #include "mpc.h"
 
