@@ -141,7 +141,7 @@ sctk_mono_end ()
 #endif
 
 static volatile long sctk_nb_user_threads = 0;
-volatile int sctk_online_program = -1;
+extern volatile int sctk_online_program;
 
 sctk_alloc_thread_data_t *sctk_thread_tls = NULL;
 

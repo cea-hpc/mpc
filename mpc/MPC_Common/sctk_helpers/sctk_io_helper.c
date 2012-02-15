@@ -26,7 +26,12 @@
 #include <errno.h>
 #include <stdio.h>
 
-extern volatile int sctk_online_program;
+#ifdef MPC_Threads
+volatile int sctk_online_program = -1;
+#else
+volatile int sctk_online_program = 1;
+#endif
+
 /*!
  * Call read in loop to avoid problem with splitted messages.
  * Also support EINTR error if interrupted.
