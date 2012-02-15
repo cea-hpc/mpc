@@ -113,6 +113,7 @@ sctk_thread_generic_mutexes_mutex_spinlock (sctk_thread_generic_mutex_t * lock,
 {
   int ret = 0;
   sctk_thread_generic_mutex_cell_t cell;
+
   sctk_spinlock_lock(&(lock->lock));
   if(lock->owner == NULL){
     lock->owner = sched;
@@ -172,7 +173,9 @@ sctk_thread_generic_mutexes_mutex_unlock (sctk_thread_generic_mutex_t * lock,
       lock->owner = head->sched;
       lock->nb_call = 1;
       DL_DELETE(lock->blocked,head);
-      sctk_thread_generic_wake(head->sched);
+      if(head->sched->status != sctk_thread_generic_running){
+	sctk_thread_generic_wake(head->sched);
+      }
     }
   }
   sctk_spinlock_unlock(&(lock->lock));

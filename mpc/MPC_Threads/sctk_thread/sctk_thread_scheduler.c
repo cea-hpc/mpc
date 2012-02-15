@@ -339,6 +339,7 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
   if(sched->generic.vp_type == 0){
     int have_spinlock_registered = 0;
     static __thread sctk_thread_generic_scheduler_t*sched_idle = NULL;
+    static __thread sctk_spinlock_t*registered_spin_unlock = NULL;
 
     if(sched->status == sctk_thread_generic_running){
      if(sctk_generic_delegated_task_list != NULL){ 
@@ -363,11 +364,6 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
     } 
     if(next != sched){
       if(next != NULL){
-	if(sched->generic.is_idle_mode == 1){
-	  if(have_spinlock_registered == 1){
-	    sched_idle = sched;
-	  }
-	}	
 	sctk_thread_generic_scheduler_swapcontext(sched,next);
       } else {
 	/* Idle function */
@@ -375,6 +371,11 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
 
 	if(sctk_generic_delegated_spinlock != NULL){
 	  have_spinlock_registered = 1;
+	  assume(registered_spin_unlock == NULL);
+
+	  sched_idle = sched;
+	  registered_spin_unlock = sctk_generic_delegated_spinlock;
+
 	  sctk_spinlock_unlock(sctk_generic_delegated_spinlock);
 	  sctk_generic_delegated_spinlock = NULL;
 	}
@@ -387,7 +388,15 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
     sched->generic.is_idle_mode = 0;
 
     if(sched_idle != NULL){
-      not_implemented();
+      if(registered_spin_unlock != NULL){
+	sctk_spinlock_lock(registered_spin_unlock);
+	if(sched_idle->status == sctk_thread_generic_running){
+	  sctk_generic_add_to_list(sched_idle);
+	}
+	sched_idle->generic.is_idle_mode = 0;
+	sctk_spinlock_unlock(registered_spin_unlock);	
+      }
+      registered_spin_unlock = NULL;
       sched_idle = NULL;
     }
 
@@ -404,7 +413,7 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
       }
 
       if(sctk_generic_delegated_task_list != NULL){ 
-	sctk_centralized_add_task_to_threat(sctk_generic_delegated_task_list);
+	sctk_generic_add_task_to_threat(sctk_generic_delegated_task_list);
 	sctk_generic_delegated_task_list = NULL;
       }
 

@@ -413,6 +413,16 @@ sctk_thread_generic_once (sctk_thread_generic_once_t * once_control,
 }
 
 /***************************************/
+/* YIELD                               */
+/***************************************/
+static int
+sctk_thread_generic_thread_sched_yield ()
+{
+  sctk_thread_generic_sched_yield(&(sctk_thread_generic_self()->sched));
+  return 0;
+}
+
+/***************************************/
 /* INIT                                */
 /***************************************/
 static void
@@ -487,6 +497,9 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
   sctk_thread_generic_check_size (sctk_thread_generic_once_t, sctk_thread_once_t);
   sctk_add_func_type (sctk_thread_generic, once,
 		      int (*)(sctk_thread_once_t *, void (*)(void)));
+
+  /****** YIELD ******/ 
+  __sctk_ptr_thread_yield = sctk_thread_generic_thread_sched_yield;
 
   sctk_multithreading_initialised = 1;
 

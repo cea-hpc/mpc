@@ -26,6 +26,7 @@
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "sctk_internal_thread.h"
+#include "sctk_thread_mutex.h"
 #include "sctk_thread_cond.h"
 #include "sctk_thread_scheduler.h"
 #include "sctk_spinlock.h"
@@ -46,6 +47,7 @@ int sctk_thread_generic_conds_cond_wait (sctk_thread_generic_cond_t * cond,
   int ret = 0;
   sctk_thread_generic_cond_cell_t cell;
   sctk_spinlock_lock(&(cond->lock));
+  sctk_thread_generic_mutexes_mutex_unlock(mutex,sched);
   cell.sched = sched;
   DL_APPEND(cond->blocked,&cell);
     
@@ -60,15 +62,29 @@ int sctk_thread_generic_conds_cond_wait (sctk_thread_generic_cond_t * cond,
 int sctk_thread_generic_conds_cond_signal (sctk_thread_generic_cond_t * cond,
                                          sctk_thread_generic_scheduler_t* sched)
 {
-  not_implemented();
+  sctk_thread_generic_cond_cell_t* task;
+  sctk_spinlock_lock(&(cond->lock));
+  task = cond->blocked; 
+  if(task != NULL){
+    DL_DELETE(cond->blocked,task);
+    sctk_thread_generic_wake(task->sched);  
+  }
+  sctk_spinlock_unlock(&(cond->lock));
   return 0;
 }
 
 
 int sctk_thread_generic_conds_cond_broadcast (sctk_thread_generic_cond_t * cond,
-                                         sctk_thread_generic_scheduler_t* sched)
+					      sctk_thread_generic_scheduler_t* sched)
 {
-  not_implemented();
+  sctk_thread_generic_cond_cell_t* task;
+  sctk_thread_generic_cond_cell_t* task_tmp;
+  sctk_spinlock_lock(&(cond->lock));
+  DL_FOREACH_SAFE(cond->blocked,task,task_tmp){
+    DL_DELETE(cond->blocked,task);
+    sctk_thread_generic_wake(task->sched);    
+  }
+  sctk_spinlock_unlock(&(cond->lock));
   return 0;
 }
 
