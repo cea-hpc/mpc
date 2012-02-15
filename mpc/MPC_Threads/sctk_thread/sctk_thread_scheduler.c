@@ -284,6 +284,7 @@ static void (*sctk_generic_poll_tasks)(sctk_thread_generic_scheduler_t* ) = NULL
 static __thread volatile sctk_thread_generic_task_t* sctk_generic_delegated_task_list = NULL;
 static __thread volatile sctk_thread_generic_scheduler_t* sctk_generic_delegated_zombie_list = NULL;
 static __thread volatile sctk_thread_generic_scheduler_t* sctk_generic_delegated_add = NULL;
+static __thread volatile sctk_spinlock_t* sctk_generic_delegated_spinlock = NULL;
 
 static void sctk_generic_add_task(sctk_thread_generic_task_t* task){
   sctk_debug("ADD task %p FROM %p",task,task->sched);

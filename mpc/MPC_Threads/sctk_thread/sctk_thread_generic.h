@@ -28,6 +28,7 @@
 #include <sctk_thread_keys.h>
 #include <sctk_thread_mutex.h>
 #include <sctk_thread_scheduler.h>
+#include <sctk_thread_cond.h>
 
 typedef struct{
   int scope;

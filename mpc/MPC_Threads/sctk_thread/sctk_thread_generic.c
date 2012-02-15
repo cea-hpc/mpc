@@ -108,6 +108,41 @@ sctk_thread_generic_mutex_unlock (sctk_thread_mutex_t * lock)
 }
 
 /***************************************/
+/* CONDITIONS                          */
+/***************************************/
+static int
+sctk_thread_generic_cond_init (sctk_thread_cond_t * lock,
+				const sctk_thread_condattr_t * attr)
+{
+  return sctk_thread_generic_conds_cond_init((sctk_thread_generic_cond_t *)lock,
+						(sctk_thread_generic_condattr_t*)attr,
+						&(sctk_thread_generic_self()->sched));
+}
+
+static int
+sctk_thread_generic_cond_wait (sctk_thread_cond_t * cond,
+				sctk_thread_mutex_t * mutex)
+{
+  return sctk_thread_generic_conds_cond_wait((sctk_thread_generic_cond_t *)cond,
+						(sctk_thread_generic_mutex_t*)mutex,
+						&(sctk_thread_generic_self()->sched));
+}
+
+static int
+sctk_thread_generic_cond_signal (sctk_thread_cond_t * lock)
+{
+  return sctk_thread_generic_conds_cond_signal((sctk_thread_generic_cond_t *)lock,
+						&(sctk_thread_generic_self()->sched));
+}
+
+static int
+sctk_thread_generic_cond_broadcast (sctk_thread_cond_t * lock)
+{
+  return sctk_thread_generic_conds_cond_broadcast((sctk_thread_generic_cond_t *)lock,
+						&(sctk_thread_generic_self()->sched));
+}
+
+/***************************************/
 /* THREAD CREATION                     */
 /***************************************/
 
@@ -419,6 +454,14 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
 
   /****** COND ******/
   sctk_thread_generic_conds_init();
+  __sctk_ptr_thread_cond_init = sctk_thread_generic_cond_init;
+   sctk_add_func_type (sctk_thread_generic, cond_wait,
+		      int (*)(sctk_thread_cond_t*,sctk_thread_mutex_t *));
+   sctk_add_func_type (sctk_thread_generic, cond_signal,
+		      int (*)(sctk_thread_cond_t *));
+   sctk_add_func_type (sctk_thread_generic, cond_broadcast,
+		      int (*)(sctk_thread_cond_t *));
+#warning "ADD destroy and trywait"
 
   /****** THREAD CREATION ******/  
   sctk_thread_generic_check_size (sctk_thread_generic_attr_t, sctk_thread_attr_t);

@@ -39,6 +39,41 @@ sctk_thread_generic_conds_cond_init (sctk_thread_generic_cond_t * lock,
   return 0;
 }
 
+int sctk_thread_generic_conds_cond_wait (sctk_thread_generic_cond_t * cond,
+                                         sctk_thread_generic_mutex_t* mutex,
+                                         sctk_thread_generic_scheduler_t* sched)
+{
+  int ret = 0;
+  sctk_thread_generic_cond_cell_t cell;
+  sctk_spinlock_lock(&(cond->lock));
+  cell.sched = sched;
+  DL_APPEND(cond->blocked,&cell);
+    
+  sctk_thread_generic_thread_status(sched,sctk_thread_generic_blocked);
+  sctk_thread_generic_register_spinlock_unlock(sched,&(cond->lock));
+  sctk_thread_generic_sched_yield(sched);
+
+  return ret;
+}
+
+
+int sctk_thread_generic_conds_cond_signal (sctk_thread_generic_cond_t * cond,
+                                         sctk_thread_generic_scheduler_t* sched)
+{
+  not_implemented();
+  return 0;
+}
+
+
+int sctk_thread_generic_conds_cond_broadcast (sctk_thread_generic_cond_t * cond,
+                                         sctk_thread_generic_scheduler_t* sched)
+{
+  not_implemented();
+  return 0;
+}
+
+
+
 void sctk_thread_generic_conds_init(){ 
   sctk_thread_generic_check_size (sctk_thread_generic_cond_t, sctk_thread_cond_t);
   sctk_thread_generic_check_size (sctk_thread_generic_condattr_t, sctk_thread_condattr_t);
