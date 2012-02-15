@@ -741,7 +741,13 @@ extern "C"
     double time_steals;
     double time_own;
 
-    int steal;
+    int alloc_mem;
+    int free_mem;
+    int qp_created;
+
+    int eager_nb;
+    int buffered_nb;
+    int rdma_nb;
   };
 
   void MPC_Network_stats(struct MPC_Network_stats_s *stats);

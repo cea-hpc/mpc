@@ -512,7 +512,7 @@ void sctk_hls_checkout_on_vp ()
 	  level_id = atol ( hwloc_obj_get_info_by_name (obj, "hls_level") ) ;
 	  sctk_hls[sctk_hls_numa_level_1_scope] = sctk_hls_repository[numa_id] + level_id ;
   }
-  
+
   for ( i = 1 ; i <= 3 ; ++i ) {
 	  obj = hwloc_get_ancestor_obj_by_depth (topology, core_depth-i, pu) ;
 	  if ( obj != NULL && obj->type == HWLOC_OBJ_CACHE ) {
@@ -638,6 +638,7 @@ sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( vo
 		/* generate a dummy access to an hls variable to initialize memory if needed */
 		if ( sctk_hls[i]->level.modules == NULL || sctk_hls[i]->level.modules[0] == NULL ) {
 			void *dummy = __sctk__tls_get_addr__generic_scope (1,0,&sctk_hls[i]->level) ;
+      assert ( dummy != NULL ) ;
 		}
 		assert ( sctk_hls[i]->level.modules[0] != NULL ) ;
 		tls_module[sctk_extls_max_scope+i] = sctk_hls[i]->level.modules[0] ;

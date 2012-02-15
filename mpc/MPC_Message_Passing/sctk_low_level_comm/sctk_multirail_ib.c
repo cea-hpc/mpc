@@ -36,6 +36,10 @@
 #define NB_RAILS 1
 static sctk_rail_info_t** rails = NULL;
 
+struct sctk_rail_info_s** sctk_network_get_rails() {
+  return rails;
+}
+
 static void
 sctk_network_send_message_multirail_ib (sctk_thread_ptp_message_t * msg){
   int i ;
@@ -172,12 +176,15 @@ void sctk_network_init_ib(char* name, char* topology){
 
 /************ FINALIZE ****************/
 void sctk_network_finalize_multirail_ib (){
+/* Do not report timers */
+#if 0
   int i;
   if (rails) {
     for(i = 0; i < NB_RAILS; i++){
       sctk_ib_prof_print(rails[i]);
     }
   }
+#endif
 }
 
 /************ FINALIZE ****************/

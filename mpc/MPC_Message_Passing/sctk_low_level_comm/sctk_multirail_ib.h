@@ -30,10 +30,13 @@ extern "C"
 
 #include <sctk_spinlock.h>
 
+struct sctk_rail_info_s;
+
 void sctk_network_init_multirail_ib(char* name, char* topology);
 void sctk_network_init_ib(char* name, char* topology);
 void sctk_network_finalize_multirail_ib ();
 void sctk_network_finalize_task_multirail_ib (int rank);
+struct sctk_rail_info_s** sctk_network_get_rails();
 
 #ifdef __cplusplus
 }

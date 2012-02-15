@@ -40,7 +40,9 @@
 #include <sctk_ib_toolkit.h>
 #include <sctk_ib_rdma.h>
 #include <sctk_ib_sr.h>
+#include <sctk_ib_prof.h>
 #include <sctk_route.h>
+#include <sctk_multirail_ib.h>
 
 #define MAX_STRING_SIZE  2048
 
@@ -190,6 +192,8 @@ void sctk_network_stats_ib (struct MPC_Network_stats_s* stats) {
   sctk_ib_cp_task_t *task = NULL;
   int task_id;
   int thread_id;
+  sctk_rail_info_t** rails = sctk_network_get_rails();
+  sctk_ib_rail_info_t* r;
 
   sctk_get_thread_info (&task_id, &thread_id);
   task = sctk_ib_cp_get_task(task_id);
@@ -202,5 +206,20 @@ void sctk_network_stats_ib (struct MPC_Network_stats_s* stats) {
   stats->poll_steal_other_node = CP_PROF_PRINT(task, poll_steal_other_node);
   stats->time_steals = time_steals;
   stats->time_own = time_own;
+  stats->time_own = time_own;
+
+  if (rails) {
+    if (rails[0]) {
+      r = &rails[0]->network.ib;
+
+      stats->alloc_mem = PROF_LOAD(r, alloc_mem);
+      stats->free_mem = PROF_LOAD(r, free_mem);
+      stats->qp_created = PROF_LOAD(r, qp_created);
+
+      stats->eager_nb = PROF_LOAD(r, eager_nb);
+      stats->buffered_nb = PROF_LOAD(r, buffered_nb);
+      stats->rdma_nb = PROF_LOAD(r, rdma_nb);
+    }
+  }
 }
 #endif
