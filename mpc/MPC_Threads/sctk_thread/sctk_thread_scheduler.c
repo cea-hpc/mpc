@@ -335,16 +335,23 @@ static void sctk_generic_sched_idle_start_pthread(){
 
 static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
   sctk_thread_generic_scheduler_t* next;
-/*   assume(sched->generic.vp_type != 0); */
+  sctk_debug("TASK %p status %d type %d",sched,sched->status,sched->generic.vp_type);
+
   if(sched->generic.vp_type == 0){
     int have_spinlock_registered = 0;
     static __thread sctk_thread_generic_scheduler_t*sched_idle = NULL;
     static __thread sctk_spinlock_t*registered_spin_unlock = NULL;
 
+    if(sctk_generic_delegated_add){
+      sctk_generic_add_to_list(sctk_generic_delegated_add);
+      sctk_generic_delegated_add = NULL;
+    }
+
     if(sched->status == sctk_thread_generic_running){
-     if(sctk_generic_delegated_task_list != NULL){ 
+      if(sctk_generic_delegated_task_list != NULL){ 
 	sctk_generic_add_task_to_threat(sctk_generic_delegated_task_list);
       }
+      assume(sctk_generic_delegated_add == NULL);
       sctk_generic_delegated_add = sched;
     } else {
       if(sched->status == sctk_thread_generic_zombie){
@@ -405,22 +412,22 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
       sctk_generic_delegated_spinlock = NULL;
     }
 
-      /* Deal with zombie threads */
-      if(sctk_generic_delegated_zombie_list != NULL){
-	(void)(0);
+    /* Deal with zombie threads */
+    if(sctk_generic_delegated_zombie_list != NULL){
+      (void)(0);
 #warning "Handel Zombies"
-	sctk_generic_delegated_zombie_list = NULL;
-      }
+      sctk_generic_delegated_zombie_list = NULL;
+    }
 
-      if(sctk_generic_delegated_task_list != NULL){ 
-	sctk_generic_add_task_to_threat(sctk_generic_delegated_task_list);
-	sctk_generic_delegated_task_list = NULL;
-      }
+    if(sctk_generic_delegated_task_list != NULL){ 
+      sctk_generic_add_task_to_threat(sctk_generic_delegated_task_list);
+      sctk_generic_delegated_task_list = NULL;
+    }
 
-      if(sctk_generic_delegated_add){
-	sctk_generic_add_to_list(sctk_generic_delegated_add);
-	sctk_generic_delegated_add = NULL;
-      }
+    if(sctk_generic_delegated_add){
+      sctk_generic_add_to_list(sctk_generic_delegated_add);
+      sctk_generic_delegated_add = NULL;
+    }
 
   } else {
     if(sctk_generic_delegated_task_list != NULL){ 
@@ -581,6 +588,7 @@ static void sctk_generic_scheduler_init_thread_common(sctk_thread_generic_schedu
   sched->generic.sched = sched;
   sched->generic.next = NULL;
   sched->generic.prev = NULL;
+  sched->generic.is_idle_mode = 0;
   sem_init(&(sched->generic.sem),0,0);
 }
 
