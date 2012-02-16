@@ -27,7 +27,7 @@
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 #include "sctk_config_sources.h"
-#include "../sctk_config_struct.h"
+#include "../generated/sctk_config_struct.h"
 
 /*********************  STRUCT  *********************/
 /**

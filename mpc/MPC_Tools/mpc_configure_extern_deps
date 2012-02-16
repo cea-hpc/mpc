@@ -372,16 +372,36 @@ SCTK_CHECK_LIB_OPENIB()
   end_section
 }
 
-# Setup vars to use lib hwloc
+#setup libxml2 by using given prefix
 # Params :
 # Global variables :
-#   - HWLOC_USER_PREFIX : Prefix used to search hwloc, embeded to use the one from MPC package.
-#   - HWLOC_PREFIX_BUILD : Build directory where to find the internal hwloc.
-#   - HWLOC_PREFIX_INSTALL : Install directory for hwlock.
-#   - HWLOCK_IS_SETUP : To know if hwlock is already setup
+#   - SCTK_LIBXML2_PREFIX : Prefix of libxml, if empty, try pkg-config or default /usr.
 # Will setup:
-#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS , HWLOCK_LIB
-SCTK_CHECK_LIBXML()
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS
+sctk_internal_setup_libxml()
+{
+	if [ -f ${SCTK_LIBXML2_PREFIX}/lib64/libxml2.so ]; then
+			LIBXML_LIBDIR=${SCTK_LIBXML2_PREFIX}/lib64
+	elif [ -f ${SCTK_LIBXML2_PREFIX}/lib/libxml2.so ]; then
+		LIBXML_LIBDIR=${SCTK_LIBXML2_PREFIX}/lib
+	else
+		sctk_error "libxml2.so found neither in ${SCTK_LIBXML2_PREFIX}/lib nor ${SCTK_LIBXML2_PREFIX}/lib64"
+		exit 1
+	fi
+	#setup vars
+	SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBXML_LIBDIR}/libxml2.so"
+	SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${LIBXML_LIBDIR} -L${LIBXML_LIBDIR}"
+	SCTK_CFLAGS="${SCTK_CFLAGS} -I${SCTK_LIBXML2_PREFIX}/include/libxml2"
+}
+
+# Setup vars to use libxml2
+# Params :
+# Global variables :
+#   - SCTK_LIBXML2_PREFIX : Prefix of libxml, if empty, try pkg-config or default /usr.
+#   - LIBXML_IS_SETUP : To know if libxml is already setup
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS , LIBXML_IS_SETUP
+SCTK_CHECK_LIBXML2()
 {
 	#mark test section
 	begin_section libxml
@@ -389,27 +409,21 @@ SCTK_CHECK_LIBXML()
 	#Find paths
 	if [ "$LIBXML_IS_SETUP" != "yes" ]; then
 		# For the moment, we dont use rpath
-		if [ -d "${LIBXML_PREFIX}" ]; then
-			if [ -f ${LIBXML_PREFIX}/lib64/libxml2.so ]; then
-				LIBXML_LIBDIR=${LIBXML_PREFIX}/lib64
-			elif [ -f ${LIBXML_PREFIX}/lib/libxml2.so ]; then
-				LIBXML_LIBDIR=${LIBXML_PREFIX}/lib
-			else
-				sctk_error "libxml2 found neither in ${LIBXML_PREFIX}/lib nor ${LIBXML_PREFIX}/lib64"
-				exit 1
-			fi
-			#setup vars
-			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBXML_LIBDIR}/libxml2.so"
-			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${LIBXML_LIBDIR} -L${LIBXML_LIBDIR}"
-			SCTK_CFLAGS="${SCTK_CFLAGS} -I${LIBXML_PREFIX}/include/libxml2"
-		elif [ ! -z "$(pkg-config --cflags libxml-2.0)" ]; then
-			LIBXML_PREFIX="$(pkg-config --libs libxml-2.0 | cut -f 1 -d ' ' | sed -e 's#/include$##' -e 's/^-I//')"
-			LIBXML_LIBDIR="$(pkg-config --libs libxml-2.0 | cut -f 1 -d ' ' | sed -e 's#/libxml2.so$##' -e 's/^-L//')"
-			SCTK_CFLAGS="${SCTK_CFLAGS} $(pkg-config --cflags libxml-2.0)"
-			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBXML_LIBDIR}/libxml2.so"
-			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${LIBXML_LIBDIR} -L${LIBXML_LIBDIR}"
+		if [ -d "${SCTK_LIBXML2_PREFIX}" ]; then
+			SCTK_MSG_CHECKING "Search in ${SCTK_LIBXML2_PREFIX}"; result yes
+			sctk_internal_setup_libxml
+			SCTK_CHECK_LDOPTION "-lxml2"
+		elif pkg-config --exists libxml-2.0; then
+			SCTK_MSG_CHECKING "Find with pkg-config"; result yes
+			SCTK_CHECK_OPTION "$(pkg-config --cflags libxml-2.0)"
+			SCTK_CHECK_LDOPTION "$(pkg-config --libs libxml-2.0)"
+		elif [ -f /usr/include/libxml2/libxml/tree.h ]; then
+			SCTK_LIBXML2_PREFIX="/usr/"
+			SCTK_MSG_CHECKING "Search in /usr"; result yes
+			sctk_internal_setup_libxml
+			SCTK_CHECK_LDOPTION "-lxml2"
 		else
-			error "Invalid libxml prefix : $LIBXML_PREFIX"
+			error "Invalid libxml prefix : $SCTK_LIBXML2_PREFIX, please provide installation directory with --with-libxml2={PREFIX}."
 			exit 1
 		fi
 	fi
@@ -417,9 +431,6 @@ SCTK_CHECK_LIBXML()
 	#check header
 	SCTK_CHECK_HEADER "libxml/tree.h"
 	SCTK_CHECK_HEADER "libxml/parser.h"
-
-	#avoid to test -lopa if used embeded as it was not build while calling configure, so will fail
-	SCTK_CHECK_LDOPTION "-lxml2"
 
 	#end of section
 	end_section

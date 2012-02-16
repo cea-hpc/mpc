@@ -22,7 +22,7 @@
 /* ######################################################################## */
 
 #include "sctk_config_struct.h"
-#include "src/sctk_config_mapper.h"
+#include "../src/sctk_config_mapper.h"
 
 /*********************  CONSTS  *********************/
 const struct sctk_config_entry_meta sctk_config_db[] = {
