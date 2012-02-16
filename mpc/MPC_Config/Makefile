@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile jeu. févr. 16 18:20:11 CET 2012
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile jeu. févr. 16 19:46:17 CET 2012
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -52,13 +52,13 @@ SOBJ_generated=$(SFILES_generated:generated/%.S=$(M_PWD)/BUILD_MPC_Config/lib/%.
 SDEP_generated=$(SFILES_generated:generated/%.S=$(M_PWD)/BUILD_MPC_Config/lib/%.d)
 
 
-FILES_generator=$(wildcard generator/*.c)
-OBJ_generator=$(FILES_generator:generator/%.c=$(M_PWD)/BUILD_MPC_Config/lib/%.o)
-DEP_generator=$(FILES_generator:generator/%.c=$(M_PWD)/BUILD_MPC_Config/lib/%.d)
+FILES_generators=$(wildcard generators/*.c)
+OBJ_generators=$(FILES_generators:generators/%.c=$(M_PWD)/BUILD_MPC_Config/lib/%.o)
+DEP_generators=$(FILES_generators:generators/%.c=$(M_PWD)/BUILD_MPC_Config/lib/%.d)
 
-SFILES_generator=$(wildcard generator/*.S)
-SOBJ_generator=$(SFILES_generator:generator/%.S=$(M_PWD)/BUILD_MPC_Config/lib/%.o)
-SDEP_generator=$(SFILES_generator:generator/%.S=$(M_PWD)/BUILD_MPC_Config/lib/%.d)
+SFILES_generators=$(wildcard generators/*.S)
+SOBJ_generators=$(SFILES_generators:generators/%.S=$(M_PWD)/BUILD_MPC_Config/lib/%.o)
+SDEP_generators=$(SFILES_generators:generators/%.S=$(M_PWD)/BUILD_MPC_Config/lib/%.d)
 
 
 FILES_src=$(wildcard src/*.c)
@@ -79,19 +79,19 @@ FOBJ_extra=$(FFILES_extra:extra/%.f=$(M_PWD)/BUILD_MPC_Config/lib/%_f.o)
 FFILES_generated=$(wildcard generated/*.f)
 FOBJ_generated=$(FFILES_generated:generated/%.f=$(M_PWD)/BUILD_MPC_Config/lib/%_f.o)
 
-FFILES_generator=$(wildcard generator/*.f)
-FOBJ_generator=$(FFILES_generator:generator/%.f=$(M_PWD)/BUILD_MPC_Config/lib/%_f.o)
+FFILES_generators=$(wildcard generators/*.f)
+FOBJ_generators=$(FFILES_generators:generators/%.f=$(M_PWD)/BUILD_MPC_Config/lib/%_f.o)
 
 FFILES_src=$(wildcard src/*.f)
 FOBJ_src=$(FFILES_src:src/%.f=$(M_PWD)/BUILD_MPC_Config/lib/%_f.o)
 
-all: $(OBJ_doc) $(FOBJ_doc) $(SOBJ_doc) $(OBJ_extra) $(FOBJ_extra) $(SOBJ_extra) $(OBJ_generated) $(FOBJ_generated) $(SOBJ_generated) $(OBJ_generator) $(FOBJ_generator) $(SOBJ_generator) $(OBJ_src) $(FOBJ_src) $(SOBJ_src)
+all: $(OBJ_doc) $(FOBJ_doc) $(SOBJ_doc) $(OBJ_extra) $(FOBJ_extra) $(SOBJ_extra) $(OBJ_generated) $(FOBJ_generated) $(SOBJ_generated) $(OBJ_generators) $(FOBJ_generators) $(SOBJ_generators) $(OBJ_src) $(FOBJ_src) $(SOBJ_src)
 
 $(M_PWD)/include_modules/MPC_Config:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Config/doc $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Config/extra $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Config/generated $(M_PWD)/include_modules
-	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Config/generator $(M_PWD)/include_modules
+	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Config/generators $(M_PWD)/include_modules
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Config/src $(M_PWD)/include_modules
 	@touch $@
 
@@ -99,7 +99,7 @@ prepare_includes:$(M_PWD)/include_modules/MPC_Config
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-DEPENDS=$(DEP_doc) $(DEP_extra) $(DEP_generated) $(DEP_generator) $(DEP_src) 
+DEPENDS=$(DEP_doc) $(DEP_extra) $(DEP_generated) $(DEP_generators) $(DEP_src) 
 
 $(DEPENDS):Makefile 
 endif
@@ -120,9 +120,9 @@ $(DEP_generated):$(M_PWD)/BUILD_MPC_Config/lib/%.d:generated/%.c
 	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,generated/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
-$(DEP_generator):$(M_PWD)/BUILD_MPC_Config/lib/%.d:generator/%.c
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,generator/%.c,$@)"
-	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,generator/%.c,$@) | \
+$(DEP_generators):$(M_PWD)/BUILD_MPC_Config/lib/%.d:generators/%.c
+	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,generators/%.c,$@)"
+	@$(CC) $(SCTK_CC_DEP) $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,generators/%.c,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(DEP_src):$(M_PWD)/BUILD_MPC_Config/lib/%.d:src/%.c
@@ -143,9 +143,9 @@ $(DEP_generated):$(M_PWD)/BUILD_MPC_Config/lib/%.d:generated/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,generated/%.c,$@)"
 	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,generated/%.c,$@)" > $@
 
-$(DEP_generator):$(M_PWD)/BUILD_MPC_Config/lib/%.d:generator/%.c
-	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,generator/%.c,$@)"
-	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,generator/%.c,$@)" > $@
+$(DEP_generators):$(M_PWD)/BUILD_MPC_Config/lib/%.d:generators/%.c
+	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,generators/%.c,$@)"
+	@echo "$(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,generators/%.c,$@)" > $@
 
 $(DEP_src):$(M_PWD)/BUILD_MPC_Config/lib/%.d:src/%.c
 	@echo "    Generate fake dependencies $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,src/%.c,$@)"
@@ -165,9 +165,9 @@ $(OBJ_generated):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,generated/%.c,$@)"
 	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,generated/%.c,$@) -o $@
 
-$(OBJ_generator):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,generator/%.c,$@)"
-	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,generator/%.c,$@) -o $@
+$(OBJ_generators):%.o:%.d
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,generators/%.c,$@)"
+	@$(CC) -c $(LOCAL_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,generators/%.c,$@) -o $@
 
 $(OBJ_src):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,src/%.c,$@)"
@@ -188,9 +188,9 @@ $(SDEP_generated):$(M_PWD)/BUILD_MPC_Config/lib/%.d:generated/%.S
 	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,generated/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
-$(SDEP_generator):$(M_PWD)/BUILD_MPC_Config/lib/%.d:generator/%.S
-	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,generator/%.S,$@)"
-	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,generator/%.S,$@) | \
+$(SDEP_generators):$(M_PWD)/BUILD_MPC_Config/lib/%.d:generators/%.S
+	@echo "    Generate dependencies $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,generators/%.S,$@)"
+	@$(GCC) -M $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,generators/%.S,$@) | \
 		sed 's,$(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.d,%.o,$@):,$(patsubst %.d,%.o,$@) $@:,g'> $@ 2> /dev/null
 
 $(SDEP_src):$(M_PWD)/BUILD_MPC_Config/lib/%.d:src/%.S
@@ -210,9 +210,9 @@ $(SOBJ_generated):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,generated/%.S,$@)"
 	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,generated/%.S,$@) -o $@
 
-$(SOBJ_generator):%.o:%.d
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,generator/%.S,$@)"
-	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,generator/%.S,$@) -o $@
+$(SOBJ_generators):%.o:%.d
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,generators/%.S,$@)"
+	@$(GCC) -c $(GNU_CFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,generators/%.S,$@) -o $@
 
 $(SOBJ_src):%.o:%.d
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%.o,src/%.S,$@)"
@@ -230,9 +230,9 @@ $(FOBJ_generated):$(M_PWD)/BUILD_MPC_Config/lib/%_f.o:generated/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%_f.o,generated/%.f,$@)"
 	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%_f.o,generated/%.f,$@) -o $@
 
-$(FOBJ_generator):$(M_PWD)/BUILD_MPC_Config/lib/%_f.o:generator/%.f
-	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%_f.o,generator/%.f,$@)"
-	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%_f.o,generator/%.f,$@) -o $@
+$(FOBJ_generators):$(M_PWD)/BUILD_MPC_Config/lib/%_f.o:generators/%.f
+	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%_f.o,generators/%.f,$@)"
+	@$(F77) -c $(FFLAGS) $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%_f.o,generators/%.f,$@) -o $@
 
 $(FOBJ_src):$(M_PWD)/BUILD_MPC_Config/lib/%_f.o:src/%.f
 	@echo "    Build $(patsubst $(M_PWD)/BUILD_MPC_Config/lib/%_f.o,src/%.f,$@)"

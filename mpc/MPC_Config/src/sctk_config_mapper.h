@@ -107,6 +107,6 @@ bool sctk_config_map_entry_to_bool(xmlNodePtr node);
 
 /*******************  FUNCTION  *********************/
 void sctk_config_reset(sctk_config_struct_ptr config);
-void sctk_config_cleanup(struct sctk_config * config);
+void sctk_config_do_cleanup(struct sctk_config * config);
 
 #endif //SCTK_CONFIG_MAPPER_H
