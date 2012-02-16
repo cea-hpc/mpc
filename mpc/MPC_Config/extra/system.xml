@@ -182,7 +182,7 @@
 		<!-- another one -->
 		<mapping>
 			<selectors>
-				<env name="DEBUG">true</env>
+				<env name="MPC_DEBUG">true</env>
 			</selectors>
 			<profiles>
 				<profile>debug</profile>
