@@ -1,0 +1,33 @@
+<?xml version="1.0"?>
+<config>
+	<usertypes>
+		<struct>
+			<name>launcher</name>
+			<doc>Options for MPC launcher.</doc>
+			<param>
+				<name>smt</name>
+				<type>bool</type>
+				<default>false</default>
+				<doc>blabla</doc>
+			</param>
+			<param>
+				<name>cores</name>
+				<type>int</type>
+				<default>16</default>
+				<doc>blabla</doc>
+			</param>
+			<param>
+				<name>verbosity</name>
+				<type>int</type>
+				<default>0</default>
+				<doc>blabla</doc>
+			</param>
+		</struct>
+	</usertypes>
+	<modules>
+		<module>
+			<name>launcher</name>
+			<type>launcher</type>
+		</module>
+	</modules>
+</config>
