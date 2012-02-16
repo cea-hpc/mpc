@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdbool.h>
+#include <sctk_config.h>
 #include "sctk_config_debug.h"
 #include "sctk_config_selectors.h"
 #include "sctk_libxml_helper.h"
@@ -240,7 +241,7 @@ void sctk_config_sources_select_profile_nodes(struct sctk_config_sources * confi
 	//warning
 	/** @TODO To discuss, this may be an error. **/
 	if (!find_once)
-		warning("Can't find requested profile %s in configuration files.",name);
+		warning("Can't find requested profile %s in configuration files.\n",name);
 
 	//error
 	assume(config_sources->cnt_profile_nodes < SCTK_CONFIG_MAX_PROFILES,"Reach maximum number of profile : SCTK_CONFIG_MAX_PROFILES = %d.",SCTK_CONFIG_MAX_PROFILES);
@@ -299,7 +300,7 @@ void sctk_config_sources_select_profiles(struct sctk_config_sources * config_sou
  * @param source Define the struct to setup while openning the file.
  * @param filename Define the XML file to open.
 **/
-void sctk_config_source_xml_open(struct sctk_config_source_xml * source,const char * filename)
+void sctk_config_source_xml_open(struct sctk_config_source_xml * source,const char * filename,enum sctk_config_open_error_level level)
 {
 	//errors
 	assert(source != NULL);
@@ -311,7 +312,20 @@ void sctk_config_source_xml_open(struct sctk_config_source_xml * source,const ch
 
 	//open file
 	source->document = xmlParseFile(filename);
-	assume (source->document != NULL,"Cannot open XML file : %s\n",filename);
+	if (source->document == NULL)
+	{
+		switch(level)
+		{
+			case SCTK_CONFIG_OPEN_WARNING:
+				warning("Cannot open XML file : %s\n",filename);
+				return;
+			case SCTK_CONFIG_OPEN_ERROR:
+				fatal("Cannot open XML file : %s\n",filename);
+				return;
+			case SCTK_CONFIG_OPEN_SILENT:
+				return;
+		}
+	}
 
 	//get root node
 	source->root_node = xmlDocGetRootElement(source->document);
@@ -331,17 +345,24 @@ void sctk_config_source_xml_open(struct sctk_config_source_xml * source,const ch
 **/
 void sctk_config_sources_open(struct sctk_config_sources * config_sources, const char * application_config_file)
 {
+	//vars
+	#warning Allocate dynamically
+	char user_file[1024];
+
 	//errors
 	assert(config_sources != NULL);
 
 	//set to default
 	memset(config_sources,0,sizeof(*config_sources));
 
+	//calc user file path
+	sprintf(user_file,"%s/.mpc/config.xml",getenv("HOME"));
+
 	//open system config
-	sctk_config_source_xml_open(&config_sources->system,"system.xml");
-	sctk_config_source_xml_open(&config_sources->user,"user.xml");
+	sctk_config_source_xml_open(&config_sources->system,SCTK_INSTALL_PREFIX "/share/mpc/system.xml",SCTK_CONFIG_OPEN_WARNING);
+	sctk_config_source_xml_open(&config_sources->user,user_file,SCTK_CONFIG_OPEN_SILENT);
 	if (application_config_file != NULL && application_config_file[0] != '\0')
-		sctk_config_source_xml_open(&config_sources->application,application_config_file);
+		sctk_config_source_xml_open(&config_sources->application,application_config_file,SCTK_CONFIG_OPEN_ERROR);
 
 	//find profiles to use and sort them depeding on priority
 	sctk_config_sources_select_profiles(config_sources);

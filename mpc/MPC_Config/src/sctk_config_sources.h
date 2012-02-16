@@ -48,6 +48,14 @@ struct sctk_config_source_xml
 };
 
 /*********************  STRUCT  *********************/
+enum sctk_config_open_error_level
+{
+	SCTK_CONFIG_OPEN_WARNING,
+	SCTK_CONFIG_OPEN_ERROR,
+	SCTK_CONFIG_OPEN_SILENT
+};
+
+/*********************  STRUCT  *********************/
 /**
  * Structure to aggregate pointers to all source of configuration.
  * It will be used to fill the configuration C structure at end point.
@@ -79,7 +87,7 @@ void sctk_config_sources_close(struct sctk_config_sources * config_sources);
 
 /*******************  FUNCTION  *********************/
 //function to manage open operations of a specific xml file.
-void sctk_config_source_xml_open(struct sctk_config_source_xml * source,const char * filename);
+void sctk_config_source_xml_open(struct sctk_config_source_xml * source,const char * filename,enum sctk_config_open_error_level level);
 
 /*******************  FUNCTION  *********************/
 //functions to manage selection of profiles in XML DOM tree

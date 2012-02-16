@@ -283,11 +283,14 @@ printf "\t@mkdir -p \${DESTDIR}${SCTK_BIN_DIR}">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p \${DESTDIR}${SCTK_MAN_DIR}">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p \${DESTDIR}${SCTK_INCLUDE_DIR}">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p \${DESTDIR}${SCTK_LIB_DIR}">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p \${DESTDIR}${SCTK_SHARE_DIR}">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL/man">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL/man/man1">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL/man/man3">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p INSTALL/share/mpc">> Makefile; echo "">> Makefile
 printf "\t@cp ${MPC_SOURCE_DIR}MPC_Doc/man1/*.1 INSTALL/man/man1">> Makefile; echo "">> Makefile
 printf "\t@cp ${MPC_SOURCE_DIR}MPC_Doc/man3/*.3 INSTALL/man/man3">> Makefile; echo "">> Makefile
+printf "\t@cp ${MPC_SOURCE_DIR}MPC_Config/extra/system.xml INSTALL/share/mpc">> Makefile; echo "">> Makefile
 
 DIR_TEST="MPC_Threads"
 check_module
@@ -331,6 +334,7 @@ if test "$SCTK_FORTRAN" = "1"; then
 printf "\t@\$(F77) \$(FOBJ_LIST) ${EXTERN_NON_TESTED_LIB} -fPIC -shared -o \${DESTDIR}${SCTK_LIB_DIR}/libmpcf.so $SCTK_LDFLAGS|| echo \"Unable to build Fortran shared library\"">> Makefile; echo "">> Makefile
 fi
 printf "\t@cp -r INSTALL/bin/* \${DESTDIR}${SCTK_BIN_DIR}">> Makefile; echo "">> Makefile
+printf "\t@cp -r INSTALL/share/mpc/* \${DESTDIR}${SCTK_SHARE_DIR}">> Makefile; echo "">> Makefile
 
 #
 # Rule 'uninstall'
@@ -342,6 +346,7 @@ printf "\t@for i in  INSTALL/bin/* ; do rm -rf \${DESTDIR}${SCTK_BIN_DIR}/\`base
 printf "\t@for i in  INSTALL/include/* ; do rm -rf \${DESTDIR}${SCTK_INCLUDE_DIR}/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
 printf "\t@for i in  INSTALL/man/man1/* ; do rm -rf \${DESTDIR}${SCTK_MAN_DIR}/man1/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
 printf "\t@for i in  INSTALL/man/man3/* ; do rm -rf \${DESTDIR}${SCTK_MAN_DIR}/man3/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
+printf "\t@for i in  INSTALL/share/mpc/* ; do rm -rf \${DESTDIR}${SCTK_SHARE_DIR}/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
 
 
 TEST_RES="check_results"

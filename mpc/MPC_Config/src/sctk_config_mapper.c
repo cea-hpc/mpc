@@ -338,7 +338,7 @@ void sctk_config_map_sources_to_c_struct(struct sctk_config * config,struct sctk
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_config_cleanup(struct sctk_config* config)
+void sctk_config_do_cleanup(struct sctk_config* config)
 {
 
 }

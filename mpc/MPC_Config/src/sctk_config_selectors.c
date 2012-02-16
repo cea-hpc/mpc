@@ -23,7 +23,7 @@
 /********************  HEADERS  *********************/
 #include <assert.h>
 #include "sctk_config_selectors.h"
-#include "sctk_debug.h"
+#include "sctk_config_debug.h"
 
 /*********************  CONSTS  *********************/
 /** @TODO place all of them at same place. **/

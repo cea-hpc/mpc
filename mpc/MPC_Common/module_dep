@@ -21,4 +21,4 @@
 #                                                                      #
 ########################################################################
 # MPC Common Dependency Check
-
+need_module MPC_Config

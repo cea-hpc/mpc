@@ -178,6 +178,7 @@ if test "$SCTK_BIN_DIR" = "" ; then SCTK_BIN_DIR="${SCTK_EPREFIX}/bin"; fi
 if test "$SCTK_LIB_DIR" = "" ; then SCTK_LIB_DIR="${SCTK_EPREFIX}/lib"; fi
 if test "$SCTK_INCLUDE_DIR" = "" ; then SCTK_INCLUDE_DIR="${SCTK_PREFIX}/include"; fi
 if test "$SCTK_MAN_DIR" = "" ; then SCTK_MAN_DIR="${SCTK_EPREFIX}/man"; fi
+if test "$SCTK_SHARE_DIR" = "" ; then SCTK_SHARE_DIR="${SCTK_EPREFIX}/share/mpc"; fi
 }
 
 check_compilers(){
@@ -471,6 +472,9 @@ cat <<EOF >> include/sctk_config.h
 #define SCTK_VERSION_MINOR $MINOR
 #define SCTK_VERSION_REVISION $REVISION
 #define SCTK_VERSION_PRE "$PRE_RELEASE"
+
+/*  Install prefix */
+#define SCTK_INSTALL_PREFIX "${SCTK_PREFIX}"
 EOF
 
 echo "#endif" >> include/sctk_config.h
