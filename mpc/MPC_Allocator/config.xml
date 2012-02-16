@@ -1,0 +1,70 @@
+<?xml version="1.0"?>
+<config>
+	<usertypes>
+		<struct>
+			<name>test</name>
+			<param><name>tt</name><type>int</type><default>10</default></param>
+		</struct>
+		<struct>
+			<name>rail</name>
+			<param><name>tt</name><type>int</type><default>10</default></param>
+			<param><name>tt2</name><type>int</type><default>20</default></param>
+		</struct>
+		<struct>
+			<name>allocator</name>
+			<doc>Options for MPC allocator.</doc>
+			<param>
+				<name>numa</name>
+				<default>false</default>
+				<type>bool</type>
+				<doc>Permit to enable of disable NUMA support in MPC Allocator.</doc>
+			</param>
+			<param>
+				<name>profile</name>
+				<type>bool</type>
+				<default>false</default>
+				<doc>Enable of disable usage of allocator profiler.</doc>
+			</param>
+			<param>
+				<name>warnings</name>
+				<type>bool</type>
+				<default>false</default>
+				<doc>Permit to enable of disable allocator warnings.</doc>
+			</param>
+			<param>
+				<name>test</name>
+				<type>test</type>
+				<doc></doc>
+			</param>
+			<array>
+				<name>classes</name>
+				<entry-name>class</entry-name>
+				<type>int</type>
+				<doc>Permit to list all available size classes.</doc>
+			</array>
+			<array>
+				<name>classes2</name>
+				<entry-name>class2</entry-name>
+				<type>int</type>
+				<doc>Permit to list all available size classes.</doc>
+				<default>
+					<value>0</value>
+					<value>1</value>
+					<value>10</value>
+				</default>
+			</array>
+			<array>
+				<name>rails</name>
+				<entry-name>rail</entry-name>
+				<doc>blablabla</doc>
+				<type>rail</type>
+			</array>
+		</struct>
+	</usertypes>
+	<modules>
+		<module>
+			<name>allocator</name>
+			<type>allocator</type>
+		</module>
+	</modules>
+</config>

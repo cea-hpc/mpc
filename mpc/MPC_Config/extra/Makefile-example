@@ -1,0 +1,80 @@
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - VALAT Sebastien sebastien.valat@cea.fr                           #
+#                                                                      #
+########################################################################
+
+#compil options
+CC=gcc
+CFLAGS=-Wall -g `xml2-config --cflags`
+LDFLAGS=`xml2-config --libs`
+
+#commands
+CAT=cat
+GREP=grep
+XSLTPROC=xsltproc
+RM=rm -f
+
+#files
+CONFIG_FILES=$(wildcard MPC_*/config.xml)
+GENERATED_SOURCES=MPC_Config/sctk_config_struct_defaults.c MPC_Config/sctk_config_struct_defaults.h MPC_Config/sctk_config_struct_meta.c
+GENERATED_HEADERS=MPC_Config/sctk_config_struct.h
+GENERATED_FILES=$(GENERATED_HEADERS) $(GENERATED_SOURCES)
+SCTK_CONFIG_SOURCES=$(wildcard MPC_Config/src/*.c)
+SCTK_CONFIG_HEADERS=$(wildcard MPC_Config/src/*.c)
+
+#generic target
+all: $(GENERATED_SOURCES) test
+
+#merge all config files in one big XML file
+MPC_Config/global-config.xml: $(CONFIG_FILES) Makefile
+	echo "Generate $@"
+	echo "<?xml version=\"1.0\"?>" > $@
+	echo "<all>" >> $@
+	$(CAT) MPC_*/config.xml | $(GREP) -v "<?xml version=\"1.0\"?>" >> $@
+	echo "</all>" >> $@
+
+#gen struct from XML config file
+MPC_Config/sctk_config_struct.h: MPC_Config/global-config.xml MPC_Config/generator/gen-structs.xsl
+	echo "Generate $@"
+	$(XSLTPROC) MPC_Config/generator/gen-structs.xsl $< > $@
+
+#gen reset function to default values from XML file
+MPC_Config/sctk_config_struct_defaults.c: MPC_Config/global-config.xml MPC_Config/generator/gen-defaults.xsl
+	echo "Generate $@"
+	$(XSLTPROC) MPC_Config/generator/gen-defaults.xsl $< > $@
+
+#gen reset function to default values from XML file
+MPC_Config/sctk_config_struct_defaults.h: MPC_Config/global-config.xml MPC_Config/generator/gen-defaults-h.xsl
+	echo "Generate $@"
+	$(XSLTPROC) MPC_Config/generator/gen-defaults-h.xsl $< > $@
+
+#gen native meta description to bind in library
+MPC_Config/sctk_config_struct_meta.c: MPC_Config/global-config.xml MPC_Config/generator/gen-meta.xsl
+	echo "Generate $@"
+	$(XSLTPROC) MPC_Config/generator/gen-meta.xsl $< > $@
+
+test: $(GENERATED_FILES) $(SCTK_CONFIG_SOURCES) $(SCTK_CONFIG_HEADER) main.c
+	$(CC) $(CFLAGS) $(LDFLAGS) $(SCTK_CONFIG_SOURCES) $(GENERATED_SOURCES) main.c -o $@
+
+clean:
+	$(RM) $(GENERATED_FILES)
+	$(RM) MPC_Config/global-config.xml
+
+.PHONY: all clean

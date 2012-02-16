@@ -1,0 +1,193 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - VALAT Sebastien sebastien.valat@cea.fr                           #
+#                                                                      #
+########################################################################
+-->
+<!-- Or usage of YAML : http://docs.behat.org/guides/7.config.html  / http://www.yaml.org/ -->
+
+<!-- Global MPC config -->
+<mpc>
+	<!-- List of profiles -->
+	<profiles>
+		<!-- Declare a first profile -->
+		<profile>
+			<!-- It is the default one -->
+			<name>default</name>
+			<!-- Configur some modules -->
+			<modules>
+				<!-- Config for MPC Allocator -->
+				<allocator>
+					<!-- Enable some features -->
+					<numa>true</numa>
+					<profile>true</profile>
+					<test>
+						<tt>22</tt>
+					</test>
+					<classes>
+						<class>0</class>
+						<class>1</class>
+						<class>2</class>
+						<class>42</class>
+					</classes>
+					<rails>
+						<rail>
+							<tt>1</tt>
+							<tt2>2</tt2>
+						</rail>
+						<rail>
+							<tt>3</tt>
+							<tt2>4</tt2>
+						</rail>
+						<rail>
+							<tt>33</tt>
+						</rail>
+					</rails>
+				</allocator>
+				<!-- Config for MPC launcher -->
+				<launcher>
+					<!-- Enable SMT by default -->
+					<smt>true</smt>
+					<!-- Use 16 cores per nodes by default -->
+					<cores>16</cores>
+				</launcher>
+			</modules>
+			<!-- network modules -->
+			<networks>
+				<!-- Configure network drivers -->
+				<drivers>
+					<!-- Config for IB driver -->
+					<infiniband>
+						<!-- Define a first config named 'conf1' -->
+						<config>
+							<name>conf1</name>
+							<buffer>1M</buffer>
+							<steal>true</steal>
+						</config>
+						<!-- Define a second config named 'conf2' -->
+						<config>
+							<name>conf2</name>
+							<buffer>2M</buffer>
+							<steal>false</steal>
+						</config>
+					</infiniband>
+				</drivers>
+				<!-- Setup all available rails -->
+				<rails>
+					<!-- First IB rail -->
+					<rail>
+						<!-- name of config to be referenced -->
+						<name>ib1</name>
+						<!-- Use IB card one -->
+						<device>1</device>
+						<!-- Driver is IB -->
+						<driver>infiniband</driver>
+						<!-- Internal topology is tore -->
+						<topology>tore</topology>
+						<!-- It use conf1 from ib driver -->
+						<config>conf1</config>
+					</rail>
+					<!-- Same to use the second card, with different config -->
+					<rail>
+						<name>ib2</name>
+						<device>2</device>
+						<driver>infiniband</driver>
+						<topology>tore</topology>
+						<config>conf2</config>
+					</rail>
+					<!-- Define TCP network -->
+					<rail>
+						<name>tcp</name>
+						<driver>tcp</driver>
+						<device>eth0</device>
+						<topology>ring</topology>	
+					</rail>
+				</rails>
+				<!-- Define routing rules, rail will be realy setup only if used here -->
+				<routing>
+					<!-- Need to discuss what is needed to make bridge or routing rules between rails -->
+					<network>ib1</network>
+					<network>ib2</network>
+					<network>tcp</network>
+				</routing>
+			</networks>
+		</profile>
+		<profile>
+			<name>cuda</name>
+		</profile>
+		<!-- Declare another profile -->
+		<profile>
+			<!-- Specific profile for EulerMHD -->
+			<name>EulerMHD</name>
+			<!-- Maybe we can inherit from another profile -->
+			<!-- <inherit>my_own_apps</inherit>-->
+			<!-- Override some configs -->
+			<modules>
+				<allocator>
+					<profile>false</profile>
+				</allocator>
+				<launcher>
+					<smt>false</smt>
+				</launcher>
+			</modules>
+		</profile>
+		<!-- Declare another profile for debugging -->
+		<profile>
+			<name>debug</name>
+			<modules>
+				<launcher>
+					<verbosity>2</verbosity>
+				</launcher>
+				<allocator>
+					<warnings>true</warnings>
+				</allocator>
+			</modules>
+		</profile>
+	</profiles>
+	<!-- Define some default mapping rules for profiles usage -->
+	<!-- Profile may also be override by option "profile" via mpcrun, but can use default rules -->
+	<!-- Mapping is optional, if none, simply take the profile marked as default -->
+	<mappings>
+		<!-- first profile mapping -->
+		<mapping>
+			<!-- some filters -->
+			<selectors>
+				<env name="partition">cuda</env>
+				<env name="executable">EulerMHD</env>
+			</selectors>
+			<!-- list of profiles to apply -->
+			<profiles>
+				<profile>cuda</profile>
+				<profile>EulerMHD</profile>
+			</profiles>
+		</mapping>
+		<!-- another one -->
+		<mapping>
+			<selectors>
+				<env name="DEBUG">true</env>
+			</selectors>
+			<profiles>
+				<profile>debug</profile>
+				<profile>EulerMHD</profile>
+			</profiles>
+		</mapping>
+	</mappings>
+</mpc>
