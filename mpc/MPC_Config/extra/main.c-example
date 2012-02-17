@@ -26,29 +26,6 @@
 #include "MPC_Config/src/sctk_config_mapper.h"
 #include "MPC_Config/src/sctk_config_printer.h"
 
-/**
- * @TODO Add generation of set_default function for struct-array to permit to note define all inner elements.
- * @TODO Add support of string type.
- * @TODO Add suppotr of float type.
- * @TODO Add support of enum type.
- * @TODO Add option to add members in struct but not exported to XML config file (hidden fields)
- * @TODO Add support for user functions to call after loading the config.
- * @TODO Generate config file DTD.
- * @TODO Write DTD for config.xml format.
- * @TODO Generate manpage of options
- * @TODO write XSL to display the config in a friendly way.
- * @TODO check some assert/assume choices.
- * @TODO generate some tests to check the mapping validity.
- * @TODO support for "inherit" property on struct/arrays fields.
- * @TODO provide a clean sctk_config.h/sctk_config.c for final integration.
- * @TODO finish to document.
- * @TODO Support a "hidden" option to not export some field into user XML.
- * @TODO Support of union in arrays ?
- * @TODO Add more selector (node number, hostname, partition, executable... ?)
- * @TODO Add file header in generated files (insert in XSLT files).
- * @TODO Ustiliser <xsl:include> pour mettre en commun et éviter les duplication dans les fichiers XSL.
-**/
-
 /*******************  FUNCTION  *********************/
 int main(void)
 {

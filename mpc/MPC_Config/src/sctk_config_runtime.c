@@ -37,7 +37,7 @@
 **/
 struct sctk_config __sctk_global_config_runtime__;
 /** To know if aldready init. **/
-static bool sctk_global_config_init = false;
+bool __sctk_global_config_init__ = false;
 
 /*******************  FUNCTION  *********************/
 void sctk_config_runtime_init(void)
@@ -46,7 +46,7 @@ void sctk_config_runtime_init(void)
 	struct sctk_config_sources config_sources;
 
 	//if already done do nothing
-	if (sctk_global_config_init == false)
+	if (__sctk_global_config_init__ == false)
 	{
 		//init libxml (safer to manually call it in multi-thread environnement as not threadsafe)
 		xmlInitParser();
@@ -65,7 +65,7 @@ void sctk_config_runtime_init(void)
 		sctk_config_display(&__sctk_global_config_runtime__);
 
 		//mark as init
-		sctk_global_config_init = true;
+		__sctk_global_config_init__ = true;
 	}
 }
 
@@ -74,28 +74,6 @@ void sctk_config_runtime_cleanup(void)
 {
 	//ceanlup struct
 	sctk_config_do_cleanup(&__sctk_global_config_runtime__);
-}
-
-/*******************  FUNCTION  *********************/
-bool sctk_config_runtime_is_init(void)
-{
-	return sctk_global_config_init;
-}
-
-/*******************  FUNCTION  *********************/
-const struct sctk_config * sctk_config_runtime_get(void)
-{
-	if ( ! sctk_global_config_init )
-		sctk_config_runtime_init();
-
-	return &__sctk_global_config_runtime__;
-}
-
-/*******************  FUNCTION  *********************/
-const struct sctk_config * sctk_config_runtime_get_fast_checked(void)
-{
-	assume(sctk_global_config_init,"sctk_config_runtime_get_fast() cannot be used here, the structure is not yet initialized.");
-	return &__sctk_global_config_runtime__;
 }
 
 #endif

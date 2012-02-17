@@ -32,19 +32,26 @@
  * Caution for quick static access, prefer usage of macro sctk_config_runtime_get_fast().
 **/
 extern const struct sctk_config __sctk_global_config_runtime__;
+/** To know if aldready init. **/
+extern const bool __sctk_global_config_init__;
 
 /*******************  FUNCTION  *********************/
 void sctk_config_runtime_init(void);
 bool sctk_config_runtime_is_init(void);
-void sctk_config_runtime_cleanup(void);
-const struct sctk_config * sctk_config_runtime_get(void);
-const struct sctk_config * sctk_config_runtime_get_fast_checked(void);
 
-/********************  MACRO  ***********************/
-#ifdef DEBUG
-#define sctk_config_runtime_get_fast() (*sctk_config_get_fast_checked())
-#else
-#define sctk_config_runtime_get_fast() __sctk_global_config_runtime__
-#endif
+/*******************  FUNCTION  *********************/
+bool sctk_config_runtime_is_init(void)
+{
+	return __sctk_global_config_init__;
+}
+
+/*******************  FUNCTION  *********************/
+const struct sctk_config * sctk_config_runtime_get(void)
+{
+	if ( ! __sctk_global_config_init__ )
+		sctk_config_runtime_init();
+
+	return &__sctk_global_config_runtime__;
+}
 
 #endif
