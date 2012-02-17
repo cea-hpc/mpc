@@ -22,46 +22,23 @@
 #                                                                      #
 ########################################################################
 -->
-
 <xsl:stylesheet version="1.0" xmlns:xsl="http://www.w3.org/1999/XSL/Transform">
 	<xsl:output method="text"/>
 
 	<!-- ********************************************************* -->
 	<xsl:template match="all">
 		<xsl:call-template name="gen-mpc-header"/>
-		<xsl:text>#include &lt;stdbool.h&gt;&#10;</xsl:text>
-		<xsl:text>#include "sctk_config_struct_defaults.h"&#10;&#10;</xsl:text>
-		<xsl:text>#ifndef SCTK_CONFIG_STRUCT_H&#10;</xsl:text>
-		<xsl:text>#define SCTK_CONFIG_STRUCT_H&#10;</xsl:text>
+		<xsl:text>#include &lt;stdlib.h&gt;&#10;&#10;</xsl:text>
+		<xsl:text>#ifndef SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H&#10;</xsl:text>
+		<xsl:text>#define SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H&#10;</xsl:text>
+		<xsl:call-template name="gen-reset-function"/>
+		<xsl:text>&#10;#endif //SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H&#10;</xsl:text>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="gen-reset-function">
+		<xsl:text>&#10;/*******************  FUNCTION  *********************/&#10;</xsl:text>
 		<xsl:apply-templates select="config"/>
-		<xsl:call-template name="gen-final-module-struct"/>
-		<xsl:call-template name="gen-config-struct"/>
-		<xsl:text>&#10;#endif // SCTK_CONFIG_STRUCT_H&#10;</xsl:text>
-		<xsl:text>&#10;</xsl:text>
-	</xsl:template>
-
-	<!-- ********************************************************* -->
-	<xsl:template name="gen-config-struct">
-		<xsl:text>&#10;/*********************  STRUCT  *********************/&#10;</xsl:text>
-		<xsl:text>struct sctk_config&#10;</xsl:text>
-		<xsl:text>{&#10;</xsl:text>
-		<xsl:text>&#09;struct sctk_config_modules modules;&#10;</xsl:text>
-		<xsl:text>};&#10;</xsl:text>
-	</xsl:template>
-
-	<!-- ********************************************************* -->
-	<xsl:template name="gen-final-module-struct">
-		<xsl:text>&#10;/*********************  STRUCT  *********************/&#10;</xsl:text>
-		<xsl:text>struct sctk_config_modules&#10;</xsl:text>
-		<xsl:text>{</xsl:text>
-		<xsl:for-each select="config">
-			<xsl:for-each select="modules">
-				<xsl:for-each select="module">
-					<xsl:value-of select="concat('&#10;&#9;struct sctk_config_module_',type,' ',name,';')"/>
-				</xsl:for-each>
-			</xsl:for-each>
-		</xsl:for-each>
-		<xsl:text>&#10;};&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -76,54 +53,12 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template match="struct">
-		<xsl:text>&#10;/*********************  STRUCT  *********************/&#10;</xsl:text>
-		<xsl:value-of select="concat('/**',doc,'**/&#10;')"/>
-		<xsl:value-of select="concat('struct sctk_config_module_',name,'&#10;')"/>
-		<xsl:text>{</xsl:text>
-		<xsl:apply-templates select="param"/>
-		<xsl:apply-templates select="array"/>
-		<xsl:text>};&#10;</xsl:text>
+		<xsl:call-template name="gen-reset-func-name"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
-	<xsl:template match="param">
-		<xsl:value-of select="concat('&#9;/**',doc,'**/&#10;')"/>
-		<xsl:text>&#9;</xsl:text>
-		<xsl:call-template name="gen-type-name"/>
-		<xsl:value-of select="concat(' ',name)"/>
-		<xsl:text>;&#10;</xsl:text>
-	</xsl:template>
-
-	<!-- ********************************************************* -->
-	<xsl:template match="array">
-		<xsl:value-of select="concat('&#9;/**',doc,'**/&#10;')"/>
-		<xsl:text>&#9;</xsl:text>
-		<xsl:call-template name="gen-type-name"/>
-		<xsl:value-of select="concat(' * ',name)"/>
-		<xsl:text>;&#10;</xsl:text>
-		<xsl:value-of select="concat('&#9;/** Number of elements in ',name,' array. **/&#10;')"/>
-		<xsl:value-of select="concat('&#9;int ',name,'_size;&#10;')"/>
-	</xsl:template>
-
-	<!-- ********************************************************* -->
-	<xsl:template name="gen-type-name">
-		<xsl:choose>
-			<xsl:when test="type = 'int'">int</xsl:when>
-			<xsl:when test="type = 'bool'">bool</xsl:when>
-			<xsl:otherwise>
-				<xsl:call-template name="gen-user-type-name">
-					<xsl:with-param name="type"><xsl:value-of select='type'/></xsl:with-param>
-				</xsl:call-template>
-			</xsl:otherwise>
-		</xsl:choose>
-	</xsl:template>
-
-	<!-- ********************************************************* -->
-	<xsl:template name="gen-user-type-name">
-		<xsl:param name="type"/>
-		<xsl:for-each select="//struct[name = $type]">
-			<xsl:value-of select="concat('struct sctk_config_module_',$type)"/>
-		</xsl:for-each>
+	<xsl:template name="gen-reset-func-name">
+		<xsl:value-of select="concat('void sctk_runtime_config_module_init_',name,'(void * struct_ptr);&#10;')"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -153,4 +88,5 @@
 
 </xsl:text>
 	</xsl:template>
+	
 </xsl:stylesheet>

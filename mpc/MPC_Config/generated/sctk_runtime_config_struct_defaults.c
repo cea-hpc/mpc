@@ -22,34 +22,34 @@
 /* ######################################################################## */
 
 #include <stdlib.h>
-#include "sctk_config_struct.h"
+#include "sctk_runtime_config_struct.h"
 
 /*******************  FUNCTION  *********************/
-void sctk_config_module_init_test(void * struct_ptr)
+void sctk_runtime_config_module_init_test(void * struct_ptr)
 {
-	struct sctk_config_module_test * obj = struct_ptr;
+	struct sctk_runtime_config_module_test * obj = struct_ptr;
 	//Simple params :
 	obj->tt = 10;
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_config_module_init_rail(void * struct_ptr)
+void sctk_runtime_config_module_init_rail(void * struct_ptr)
 {
-	struct sctk_config_module_rail * obj = struct_ptr;
+	struct sctk_runtime_config_module_rail * obj = struct_ptr;
 	//Simple params :
 	obj->tt = 10;
 	obj->tt2 = 20;
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_config_module_init_allocator(void * struct_ptr)
+void sctk_runtime_config_module_init_allocator(void * struct_ptr)
 {
-	struct sctk_config_module_allocator * obj = struct_ptr;
+	struct sctk_runtime_config_module_allocator * obj = struct_ptr;
 	//Simple params :
 	obj->numa = false;
 	obj->profile = false;
 	obj->warnings = false;
-	sctk_config_module_init_test(&obj->test);
+	sctk_runtime_config_module_init_test(&obj->test);
 	//array
 	obj->classes = NULL;
 	obj->classes_size = 0;
@@ -65,9 +65,9 @@ void sctk_config_module_init_allocator(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_config_module_init_launcher(void * struct_ptr)
+void sctk_runtime_config_module_init_launcher(void * struct_ptr)
 {
-	struct sctk_config_module_launcher * obj = struct_ptr;
+	struct sctk_runtime_config_module_launcher * obj = struct_ptr;
 	//Simple params :
 	obj->smt = false;
 	obj->cores = 16;
@@ -75,9 +75,9 @@ void sctk_config_module_init_launcher(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_config_reset(struct sctk_config * config)
+void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 {
-	sctk_config_module_init_allocator(&config->modules.allocator);
-	sctk_config_module_init_launcher(&config->modules.launcher);
+	sctk_runtime_config_module_init_allocator(&config->modules.allocator);
+	sctk_runtime_config_module_init_launcher(&config->modules.launcher);
 };
 

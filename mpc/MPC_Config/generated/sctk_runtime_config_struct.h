@@ -22,21 +22,21 @@
 /* ######################################################################## */
 
 #include <stdbool.h>
-#include "sctk_config_struct_defaults.h"
+#include "sctk_runtime_config_struct_defaults.h"
 
-#ifndef SCTK_CONFIG_STRUCT_H
-#define SCTK_CONFIG_STRUCT_H
+#ifndef SCTK_RUNTIME_CONFIG_STRUCT_H
+#define SCTK_RUNTIME_CONFIG_STRUCT_H
 
 /*********************  STRUCT  *********************/
 /****/
-struct sctk_config_module_test
+struct sctk_runtime_config_module_test
 {	/****/
 	int tt;
 };
 
 /*********************  STRUCT  *********************/
 /****/
-struct sctk_config_module_rail
+struct sctk_runtime_config_module_rail
 {	/****/
 	int tt;
 	/****/
@@ -45,7 +45,7 @@ struct sctk_config_module_rail
 
 /*********************  STRUCT  *********************/
 /**Options for MPC allocator.**/
-struct sctk_config_module_allocator
+struct sctk_runtime_config_module_allocator
 {	/**Permit to enable of disable NUMA support in MPC Allocator.**/
 	bool numa;
 	/**Enable of disable usage of allocator profiler.**/
@@ -53,7 +53,7 @@ struct sctk_config_module_allocator
 	/**Permit to enable of disable allocator warnings.**/
 	bool warnings;
 	/****/
-	struct sctk_config_module_test test;
+	struct sctk_runtime_config_module_test test;
 	/**Permit to list all available size classes.**/
 	int * classes;
 	/** Number of elements in classes array. **/
@@ -63,14 +63,14 @@ struct sctk_config_module_allocator
 	/** Number of elements in classes2 array. **/
 	int classes2_size;
 	/**blablabla**/
-	struct sctk_config_module_rail * rails;
+	struct sctk_runtime_config_module_rail * rails;
 	/** Number of elements in rails array. **/
 	int rails_size;
 };
 
 /*********************  STRUCT  *********************/
 /**Options for MPC launcher.**/
-struct sctk_config_module_launcher
+struct sctk_runtime_config_module_launcher
 {	/**blabla**/
 	bool smt;
 	/**blabla**/
@@ -80,17 +80,17 @@ struct sctk_config_module_launcher
 };
 
 /*********************  STRUCT  *********************/
-struct sctk_config_modules
+struct sctk_runtime_config_modules
 {
-	struct sctk_config_module_allocator allocator;
-	struct sctk_config_module_launcher launcher;
+	struct sctk_runtime_config_module_allocator allocator;
+	struct sctk_runtime_config_module_launcher launcher;
 };
 
 /*********************  STRUCT  *********************/
-struct sctk_config
+struct sctk_runtime_config
 {
-	struct sctk_config_modules modules;
+	struct sctk_runtime_config_modules modules;
 };
 
-#endif // SCTK_CONFIG_STRUCT_H
+#endif // SCTK_RUNTIME_CONFIG_STRUCT_H
 

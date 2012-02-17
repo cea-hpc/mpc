@@ -17,22 +17,19 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - VALAT Sebastien sebastien.valat@cea.fr                           # */
+/* #   - AUTOMATIC GENERATION                                             # */
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_DEBUG_H
-#define SCTK_DEBUG_H
-
-/********************  HEADERS  *********************/
 #include <stdlib.h>
-#include <stdio.h>
 
-/************************** MACROS *************************/
-/** Print some warning into error output, it use the printf standard parameters. **/
-#define warning(...) {fprintf(stderr,"Warning at %s!%d\n",__FILE__,__LINE__); fprintf(stderr,__VA_ARGS__);}
-/** Assert a value, and display a user readable message if invalide. It will be keep with NDEBUG on the contrary of assert(). **/
-#define assume(x,...) if (!(x)) { fprintf(stderr,"Error at %s!%d\n%s\n",__FILE__,__LINE__,#x); fprintf(stderr,__VA_ARGS__); abort(); }
-/** Print an error message and exit. It use the print formatting convention. **/
-#define fatal(...) { fprintf(stderr,"Fatal error at %s!%d\n",__FILE__,__LINE__); fprintf(stderr,__VA_ARGS__); abort(); }
+#ifndef SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H
+#define SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H
 
-#endif
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_module_init_test(void * struct_ptr);
+void sctk_runtime_config_module_init_rail(void * struct_ptr);
+void sctk_runtime_config_module_init_allocator(void * struct_ptr);
+void sctk_runtime_config_module_init_launcher(void * struct_ptr);
+
+#endif //SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H

@@ -29,15 +29,15 @@
 	<!-- ********************************************************* -->
 	<xsl:template match="all">
 		<xsl:call-template name="gen-mpc-header"/>
-		<xsl:text>#include "sctk_config_struct.h"&#10;</xsl:text>
-		<xsl:text>#include "../src/sctk_config_mapper.h"&#10;</xsl:text>
+		<xsl:text>#include "sctk_runtime_config_struct.h"&#10;</xsl:text>
+		<xsl:text>#include "../src/sctk_runtime_config_mapper.h"&#10;</xsl:text>
 		<xsl:call-template name="gen-meta"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-meta">
 		<xsl:text>&#10;/*********************  CONSTS  *********************/&#10;</xsl:text>
-		<xsl:text>const struct sctk_config_entry_meta sctk_config_db[] = {&#10;</xsl:text>
+		<xsl:text>const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {&#10;</xsl:text>
 		<xsl:call-template name="profile-meta"/>
 		<xsl:call-template name="modules-meta"/>
 		<xsl:apply-templates select="config"/>
@@ -58,11 +58,11 @@
 	<!-- ********************************************************* -->
 	<xsl:template match="struct">
 		<xsl:text>&#09;//struct&#10;</xsl:text>
-		<xsl:text>&#09;{"sctk_config_module_</xsl:text>
+		<xsl:text>&#09;{"sctk_runtime_config_module_</xsl:text>
 		<xsl:value-of select="name"/>
-		<xsl:text>" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_config_module_</xsl:text>
+		<xsl:text>" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_module_</xsl:text>
 		<xsl:value-of select="name"/>
-		<xsl:text>) , NULL , sctk_config_module_init_</xsl:text>
+		<xsl:text>) , NULL , sctk_runtime_config_module_init_</xsl:text>
 		<xsl:value-of select="name"/>
 		<xsl:text>},&#10;</xsl:text>
 		<xsl:apply-templates select="param"/>
@@ -74,7 +74,7 @@
 		<xsl:text>&#09;{"</xsl:text>
 		<xsl:value-of select="name"/>
 		<xsl:text>"     , SCTK_CONFIG_META_TYPE_PARAM  , </xsl:text>
-		<xsl:value-of select="concat('sctk_config_get_offset_of_member(struct sctk_config_module_',../name,',',name,')')"/>
+		<xsl:value-of select="concat('sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_',../name,',',name,')')"/>
 		<xsl:text>  , sizeof(</xsl:text>
 		<xsl:call-template name="gen-type-name"/>
 		<xsl:text>) , "</xsl:text>
@@ -89,7 +89,7 @@
 		<xsl:text>&#09;{"</xsl:text>
 		<xsl:value-of select="name"/>
 		<xsl:text>"     , SCTK_CONFIG_META_TYPE_ARRAY  , </xsl:text>
-		<xsl:value-of select="concat('sctk_config_get_offset_of_member(struct sctk_config_module_',../name,',',name,')')"/>
+		<xsl:value-of select="concat('sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_',../name,',',name,')')"/>
 		<xsl:text> , sizeof(</xsl:text>
 		<xsl:call-template name="gen-type-name"/>
 		<xsl:text>) , "</xsl:text>
@@ -105,7 +105,7 @@
 			<xsl:when test="type = 'int'">NULL</xsl:when>
 			<xsl:when test="type = 'bool'">NULL</xsl:when>
 			<xsl:otherwise>
-				<xsl:value-of select="concat('sctk_config_module_init_',type)"/>
+				<xsl:value-of select="concat('sctk_runtime_config_module_init_',type)"/>
 			</xsl:otherwise>
 		</xsl:choose>
 	</xsl:template>
@@ -140,7 +140,7 @@
 	<xsl:template name="gen-user-type-name">
 		<xsl:param name="type"/>
 		<xsl:for-each select="//struct[name = $type]">
-			<xsl:value-of select="concat('struct sctk_config_module_',$type)"/>
+			<xsl:value-of select="concat('struct sctk_runtime_config_module_',$type)"/>
 		</xsl:for-each>
 	</xsl:template>
 
@@ -148,7 +148,7 @@
 	<xsl:template name="gen-user-type-name2">
 		<xsl:param name="type"/>
 		<xsl:for-each select="//struct[name = $type]">
-			<xsl:value-of select="concat('sctk_config_module_',$type)"/>
+			<xsl:value-of select="concat('sctk_runtime_config_module_',$type)"/>
 		</xsl:for-each>
 	</xsl:template>
 
@@ -160,15 +160,15 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template name="profile-meta">
-		<xsl:text>&#09;//sctk_config&#10;</xsl:text>
-		<xsl:text>&#09;{"sctk_config" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_config) , NULL , sctk_config_reset},&#10;</xsl:text>
-		<xsl:text>&#09;{"modules"     , SCTK_CONFIG_META_TYPE_PARAM  , 0  , sizeof(struct sctk_config_modules) , "sctk_config_modules" , NULL},&#10;</xsl:text>
+		<xsl:text>&#09;//sctk_runtime_config&#10;</xsl:text>
+		<xsl:text>&#09;{"sctk_runtime_config" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config) , NULL , sctk_runtime_config_reset},&#10;</xsl:text>
+		<xsl:text>&#09;{"modules"     , SCTK_CONFIG_META_TYPE_PARAM  , 0  , sizeof(struct sctk_runtime_config_modules) , "sctk_runtime_config_modules" , NULL},&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template name="modules-meta">
-		<xsl:text>&#09;//sctk_config_modules&#10;</xsl:text>
-		<xsl:text>&#09;{"sctk_config_modules" , SCTK_CONFIG_META_TYPE_STRUCT , 0 , sizeof(struct sctk_config) , NULL , NULL},&#10;</xsl:text>
+		<xsl:text>&#09;//sctk_runtime_config_modules&#10;</xsl:text>
+		<xsl:text>&#09;{"sctk_runtime_config_modules" , SCTK_CONFIG_META_TYPE_STRUCT , 0 , sizeof(struct sctk_runtime_config) , NULL , NULL},&#10;</xsl:text>
 		<xsl:for-each select="config">
 			<xsl:apply-templates select="modules"/>
 		</xsl:for-each>
@@ -184,12 +184,12 @@
 		<xsl:text>&#09;{"</xsl:text>
 		<xsl:value-of select="name"/>
 		<xsl:text>"     , SCTK_CONFIG_META_TYPE_PARAM , </xsl:text>
-		<xsl:value-of select="concat('sctk_config_get_offset_of_member(struct sctk_config_modules',../name,',',name,')')"/>
-		<xsl:text>  , sizeof(struct sctk_config_module_</xsl:text>
+		<xsl:value-of select="concat('sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules',../name,',',name,')')"/>
+		<xsl:text>  , sizeof(struct sctk_runtime_config_module_</xsl:text>
 		<xsl:value-of select="type"/>
-		<xsl:text>) , "sctk_config_module_</xsl:text>
+		<xsl:text>) , "sctk_runtime_config_module_</xsl:text>
 		<xsl:value-of select="type"/>
-		<xsl:text>" , sctk_config_module_init_</xsl:text>
+		<xsl:text>" , sctk_runtime_config_module_init_</xsl:text>
 		<xsl:value-of select="type"/>
 		<xsl:text>},&#10;</xsl:text>
 	</xsl:template>

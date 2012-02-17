@@ -20,39 +20,40 @@
 /* #                                                                      # */
 /* ######################################################################## */ 
 
-#ifndef SCTK_CONFIG_RUNTIME
-#define SCTK_CONFIG_RUNTIME
+#ifndef SCTK_RUNTIME_CONFIG
+#define SCTK_RUNTIME_CONFIG
 
 /********************  HEADERS  *********************/
-#include "sctk_config_struct.h"
+#include "sctk_runtime_config_struct.h"
+#include "sctk_runtime_config.h"
 
 /*********************  GLOBAL  *********************/
 /**
  * Global variable to store mpc runtime configuration loaded from XML.
- * Caution for quick static access, prefer usage of macro sctk_config_runtime_get_fast().
+ * Caution for quick static access, prefer usage of macro sctk_runtime_config_get().
 **/
-extern struct sctk_config __sctk_global_config_runtime__;
+extern struct sctk_runtime_config __sctk_global_runtime_config__;
 /** To know if aldready init. **/
-extern bool __sctk_global_config_init__;
+extern bool __sctk_global_runtime_config_init__;
 
 
 /*******************  FUNCTION  *********************/
-void sctk_config_runtime_init(void);
-void sctk_config_runtime_display(struct sctk_config * config);
+void sctk_runtime_config_init(void);
+void sctk_runtime_config_runtime_display(struct sctk_runtime_config * config);
 
 /*******************  FUNCTION  *********************/
-static inline bool sctk_config_runtime_init_done(void)
+static inline bool sctk_runtime_config_init_done(void)
 {
-	return __sctk_global_config_init__;
+	return __sctk_global_runtime_config_init__;
 }
 
 /*******************  FUNCTION  *********************/
-static inline const struct sctk_config * sctk_config_runtime_get(void)
+static inline const struct sctk_runtime_config * sctk_config_runtime_get(void)
 {
-	if ( ! __sctk_global_config_init__ )
-		sctk_config_runtime_init();
+	if ( ! __sctk_global_runtime_config_init__ )
+		sctk_runtime_config_init();
 
-	return &__sctk_global_config_runtime__;
+	return &__sctk_global_runtime_config__;
 }
 
 #endif

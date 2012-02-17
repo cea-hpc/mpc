@@ -22,8 +22,8 @@
 
 /********************  HEADERS  *********************/
 #include <assert.h>
-#include "sctk_config_selectors.h"
-#include "sctk_config_debug.h"
+#include "sctk_runtime_config_selectors.h"
+#include "sctk_runtime_config_debug.h"
 
 /*********************  CONSTS  *********************/
 /** @TODO place all of them at same place. **/
@@ -36,7 +36,7 @@ static const xmlChar * SCKT_CONFIG_XML_NODE_SELECTOR_ENV = BAD_CAST("env");
  * @param selector Define the XML node to validation as a selector.
  * @return True if valid, false otherwise.
 **/
-bool sctk_config_xml_selector_env_check(xmlNodePtr selector)
+bool sctk_runtime_config_xml_selector_env_check(xmlNodePtr selector)
 {
 	//vars
 	xmlChar * env_name;
@@ -68,11 +68,11 @@ bool sctk_config_xml_selector_env_check(xmlNodePtr selector)
 /*******************  FUNCTION  *********************/
 /**
  * Check status on a given selector. It currently support :
- *    - env : Check value of an environnement variable, see sctk_config_xml_selector_env_check().
+ *    - env : Check value of an environnement variable, see sctk_runtime_config_xml_selector_env_check().
  * @param selector Define the XML node to validation as a selector.
  * @return True if valid, false otherwise.
 **/
-bool sctk_config_xml_selector_check(xmlNodePtr selector)
+bool sctk_runtime_config_xml_selector_check(xmlNodePtr selector)
 {
 	//errors
 	assert(selector != NULL);
@@ -80,7 +80,7 @@ bool sctk_config_xml_selector_check(xmlNodePtr selector)
 
 	//switches
 	if (xmlStrcmp(selector->name,BAD_CAST("env")) == 0)
-		return sctk_config_xml_selector_env_check(selector);
+		return sctk_runtime_config_xml_selector_env_check(selector);
 	else
 		fatal("Invalid selector in mappings : %s.",selector->name);
 }
@@ -91,7 +91,7 @@ bool sctk_config_xml_selector_check(xmlNodePtr selector)
  * @param selectors Define the &lt;selectors&gt; node to check. It must contain some selector elements.
  * @return True if find one valid, false otherwise.
 **/
-bool sctk_config_xml_selectors_check(xmlNodePtr selectors)
+bool sctk_runtime_config_xml_selectors_check(xmlNodePtr selectors)
 {
 	//vars
 	xmlNodePtr selector;
@@ -105,7 +105,7 @@ bool sctk_config_xml_selectors_check(xmlNodePtr selectors)
 	selector = xmlFirstElementChild(selectors);
 	while (selector != NULL)
 	{
-		if (sctk_config_xml_selector_check(selector) == 0)
+		if (sctk_runtime_config_xml_selector_check(selector) == 0)
 			return false;
 		selector = xmlNextElementSibling(selector);
 	}

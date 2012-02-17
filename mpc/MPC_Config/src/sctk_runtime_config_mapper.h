@@ -20,21 +20,21 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_CONFIG_MAPPER_H
-#define SCTK_CONFIG_MAPPER_H
+#ifndef SCTK_RUNTIME_CONFIG_MAPPER_H
+#define SCTK_RUNTIME_CONFIG_MAPPER_H
 
 /********************  HEADERS  *********************/
 #include <libxml/tree.h>
 #include <libxml/parser.h>
-#include "sctk_config_sources.h"
-#include "../generated/sctk_config_struct.h"
+#include "sctk_runtime_config_sources.h"
+#include "../generated/sctk_runtime_config_struct.h"
 
 /*********************  STRUCT  *********************/
 /**
  * Enum to define internal types supported for meta-data structure.
  * @brief Types supported for meta-description entries.
 **/
-enum sctk_config_meta_entry_type
+enum sctk_runtime_config_meta_entry_type
 {
 	/** The entry describe a parameter of struct. **/
 	SCTK_CONFIG_META_TYPE_PARAM,
@@ -47,21 +47,21 @@ enum sctk_config_meta_entry_type
 };
 
 /******************** TYPEDEF  **********************/
-typedef void * sctk_config_struct_ptr;
+typedef void * sctk_runtime_config_struct_ptr;
 /** Declare handler init type function on struct. **/
-typedef void(*sctk_config_struct_init_handler)(sctk_config_struct_ptr struct_ptr);
+typedef void(*sctk_runtime_config_struct_init_handler)(sctk_runtime_config_struct_ptr struct_ptr);
 
 /*********************  STRUCT  *********************/
 /**
  * Structure used to instanciate the meta-description table to map the XML file onto the C struct.
  * @brief Structure for the entries of meta-description table.
 **/
-struct sctk_config_entry_meta
+struct sctk_runtime_config_entry_meta
 {
 	/** Name of the field. **/
 	const char * name;
 	/** Type of the field. **/
-	enum sctk_config_meta_entry_type type;
+	enum sctk_runtime_config_meta_entry_type type;
 	/** Offset of the field in parent structure (in bytes). **/
 	unsigned long offset;
 	/** Size of the field type (size of the pointer for arrays).**/
@@ -77,32 +77,30 @@ struct sctk_config_entry_meta
 
 /********************  MACRO  ***********************/
 /** @TODO remove this by the one from standard, offsetof or similar. **/
-#define sctk_config_get_offset_of_member(type,member) ((unsigned long)&(((type*)NULL)->member))
+#define sctk_runtime_config_get_offset_of_member(type,member) ((unsigned long)&(((type*)NULL)->member))
 
 
 /*******************  FUNCTION  *********************/
 //mappgin functions
-const struct sctk_config_entry_meta * sctk_config_get_meta_type_entry( const struct sctk_config_entry_meta *config_meta, const char * name);
-const struct sctk_config_entry_meta * sctk_config_meta_get_first_child(const struct sctk_config_entry_meta * current);
-const struct sctk_config_entry_meta * sctk_config_meta_get_next_child(const struct sctk_config_entry_meta * current);
-const struct sctk_config_entry_meta * sctk_config_get_child_meta(const struct sctk_config_entry_meta * current,const xmlChar * name);
-void * sctk_config_get_entry(sctk_config_struct_ptr struct_ptr,const struct sctk_config_entry_meta * current);
-void sctk_config_apply_init_handler(const struct sctk_config_entry_meta *config_meta, sctk_config_struct_ptr struct_ptr,const char * type_name);
-void sctk_config_apply_node_array(const struct sctk_config_entry_meta *config_meta, struct sctk_config * config,
-                                  sctk_config_struct_ptr struct_ptr,const struct sctk_config_entry_meta * current,xmlNodePtr node);
-void sctk_config_apply_node_value( const struct sctk_config_entry_meta *config_meta, struct sctk_config * config,sctk_config_struct_ptr struct_ptr, const char * type_name,xmlNodePtr node);
-void sctk_config_map_node_to_c_struct( const struct sctk_config_entry_meta *config_meta, struct sctk_config * config,
-                                       sctk_config_struct_ptr struct_ptr,const struct sctk_config_entry_meta * current,xmlNodePtr node);
-void sctk_config_map_profile_to_c_struct( const struct sctk_config_entry_meta *config_meta, struct sctk_config * config, xmlNodePtr node);
-void sctk_config_map_sources_to_c_struct( const struct sctk_config_entry_meta *config_meta, struct sctk_config * config,struct sctk_config_sources * config_sources);
+const struct sctk_runtime_config_entry_meta * sctk_runtime_config_get_meta_type_entry( const struct sctk_runtime_config_entry_meta *config_meta, const char * name);
+const struct sctk_runtime_config_entry_meta * sctk_runtime_config_meta_get_first_child(const struct sctk_runtime_config_entry_meta * current);
+const struct sctk_runtime_config_entry_meta * sctk_runtime_config_meta_get_next_child(const struct sctk_runtime_config_entry_meta * current);
+const struct sctk_runtime_config_entry_meta * sctk_runtime_config_get_child_meta(const struct sctk_runtime_config_entry_meta * current,const xmlChar * name);
+void * sctk_runtime_config_get_entry(sctk_runtime_config_struct_ptr struct_ptr,const struct sctk_runtime_config_entry_meta * current);
+void sctk_runtime_config_apply_init_handler(const struct sctk_runtime_config_entry_meta *config_meta, sctk_runtime_config_struct_ptr struct_ptr,const char * type_name);
+void sctk_runtime_config_apply_node_array(const struct sctk_runtime_config_entry_meta *config_meta, struct sctk_runtime_config * config,
+                                  sctk_runtime_config_struct_ptr struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
+void sctk_runtime_config_apply_node_value( const struct sctk_runtime_config_entry_meta *config_meta, struct sctk_runtime_config * config,sctk_runtime_config_struct_ptr struct_ptr, const char * type_name,xmlNodePtr node);
+void sctk_runtime_config_map_node_to_c_struct( const struct sctk_runtime_config_entry_meta *config_meta, struct sctk_runtime_config * config,
+                                       sctk_runtime_config_struct_ptr struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
 
 /*******************  FUNCTION  *********************/
 //type supports
-int sctk_config_map_entry_to_int(xmlNodePtr node);
-bool sctk_config_map_entry_to_bool(xmlNodePtr node);
+int sctk_runtime_config_map_entry_to_int(xmlNodePtr node);
+bool sctk_runtime_config_map_entry_to_bool(xmlNodePtr node);
 
 /*******************  FUNCTION  *********************/
-void sctk_config_reset(sctk_config_struct_ptr config);
-void sctk_config_do_cleanup(struct sctk_config * config);
+void sctk_runtime_config_reset(sctk_runtime_config_struct_ptr config);
+void sctk_runtime_config_do_cleanup(struct sctk_runtime_config * config);
 
 #endif //SCTK_CONFIG_MAPPER_H

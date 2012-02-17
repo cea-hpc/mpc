@@ -25,10 +25,10 @@
 #include <string.h>
 #include <stdbool.h>
 #include <sctk_config.h>
-#include "sctk_config_debug.h"
-#include "sctk_config_selectors.h"
+#include "sctk_runtime_config_debug.h"
+#include "sctk_runtime_config_selectors.h"
 #include "sctk_libxml_helper.h"
-#include "sctk_config_sources.h"
+#include "sctk_runtime_config_sources.h"
 
 /*********************  CONSTS  *********************/
 /** Tag name of the root node of XML document. **/
@@ -48,7 +48,7 @@ static const xmlChar * SCKT_CONFIG_XML_NODE_SELECTORS = BAD_CAST("selectors");
 
 /*******************  FUNCTION  *********************/
 /** @TODO doc **/
-void sctk_config_sources_select_profiles_in_mapping(struct sctk_config_sources * config_sources,struct sctk_config_source_xml * source,xmlNodePtr mapping)
+void sctk_runtime_config_sources_select_profiles_in_mapping(struct sctk_runtime_config_sources * config_sources,struct sctk_runtime_config_source_xml * source,xmlNodePtr mapping)
 {
 	//vars
 	xmlNodePtr selectors;
@@ -65,7 +65,7 @@ void sctk_config_sources_select_profiles_in_mapping(struct sctk_config_sources *
 	selectors = sctk_libxml_find_child_node(mapping,SCKT_CONFIG_XML_NODE_SELECTORS);
 	if (selectors != NULL)
 	{
-		if (sctk_config_xml_selectors_check(selectors))
+		if (sctk_runtime_config_xml_selectors_check(selectors))
 		{
 			//get profiles
 			profile = sctk_libxml_find_child_node(mapping,SCKT_CONFIG_XML_NODE_PROFILES);
@@ -83,7 +83,7 @@ void sctk_config_sources_select_profiles_in_mapping(struct sctk_config_sources *
 					config_sources->profile_names[config_sources->cnt_profile_names] = xmlNodeGetContent(profile);
 					printf("DEBUG : add profile %s\n",config_sources->profile_names[config_sources->cnt_profile_names]);
 					config_sources->cnt_profile_names++;
-					assume(config_sources->cnt_profile_names < SCTK_CONFIG_MAX_PROFILES,"Reach maximum number of profiles : SCTK_CONFIG_MAX_PROFILES = %d.",SCTK_CONFIG_MAX_PROFILES);
+					assume(config_sources->cnt_profile_names < SCTK_RUNTIME_CONFIG_MAX_PROFILES,"Reach maximum number of profiles : SCTK_RUNTIME_CONFIG_MAX_PROFILES = %d.",SCTK_RUNTIME_CONFIG_MAX_PROFILES);
 				}
 				//move to next one
 				profile = xmlNextElementSibling(profile);
@@ -94,7 +94,7 @@ void sctk_config_sources_select_profiles_in_mapping(struct sctk_config_sources *
 
 /*******************  FUNCTION  *********************/
 /** @TODO doc **/
-void sctk_config_sources_select_profiles_in_file(struct sctk_config_sources * config_sources,struct sctk_config_source_xml * source)
+void sctk_runtime_config_sources_select_profiles_in_file(struct sctk_runtime_config_sources * config_sources,struct sctk_runtime_config_source_xml * source)
 {
 	//vars
 	xmlNodePtr mappings;
@@ -116,7 +116,7 @@ void sctk_config_sources_select_profiles_in_file(struct sctk_config_sources * co
 		mapping = xmlFirstElementChild(mappings);
 		while (mapping != NULL)
 		{
-			sctk_config_sources_select_profiles_in_mapping(config_sources,source,mapping);
+			sctk_runtime_config_sources_select_profiles_in_mapping(config_sources,source,mapping);
 			mapping = xmlNextElementSibling(mapping);
 		}
 	}
@@ -129,7 +129,7 @@ void sctk_config_sources_select_profiles_in_file(struct sctk_config_sources * co
  * @param name Define the name of the profile to find.
  * @return Return a pointer to the requested node if found, NULL otherwise.
 **/
-xmlNodePtr sctk_config_sources_find_profile_node(struct sctk_config_source_xml * source,const xmlChar * name)
+xmlNodePtr sctk_runtime_config_sources_find_profile_node(struct sctk_runtime_config_source_xml * source,const xmlChar * name)
 {
 	//vars
 	xmlNodePtr profiles;
@@ -173,7 +173,7 @@ xmlNodePtr sctk_config_sources_find_profile_node(struct sctk_config_source_xml *
  * @param config_sources Define the configuration sources to use.
  * @param node Define the profile node to insert.
 **/
-void sctk_config_sources_insert_profile_node(struct sctk_config_sources * config_sources,xmlNodePtr node)
+void sctk_runtime_config_sources_insert_profile_node(struct sctk_runtime_config_sources * config_sources,xmlNodePtr node)
 {
 	//vars
 	int i;
@@ -204,7 +204,7 @@ void sctk_config_sources_insert_profile_node(struct sctk_config_sources * config
  * @param name Define the name of the profile to find.
  * @TODO Can replace this function by a simple loop if xml files are in a list instead of being members of a struct.
 **/
-void sctk_config_sources_select_profile_nodes(struct sctk_config_sources * config_sources,const xmlChar * name)
+void sctk_runtime_config_sources_select_profile_nodes(struct sctk_runtime_config_sources * config_sources,const xmlChar * name)
 {
 	//vars
 	xmlNodePtr node;
@@ -215,27 +215,27 @@ void sctk_config_sources_select_profile_nodes(struct sctk_config_sources * confi
 	assert(name != NULL);
 
 	//find system
-	node = sctk_config_sources_find_profile_node(&config_sources->system,name);
+	node = sctk_runtime_config_sources_find_profile_node(&config_sources->system,name);
 	if (node != NULL)
 	{
 		find_once = true;
-		sctk_config_sources_insert_profile_node(config_sources,node);
+		sctk_runtime_config_sources_insert_profile_node(config_sources,node);
 	}
 
 	//find user
-	node = sctk_config_sources_find_profile_node(&config_sources->user,name);
+	node = sctk_runtime_config_sources_find_profile_node(&config_sources->user,name);
 	if (node != NULL)
 	{
 		find_once = true;
-		sctk_config_sources_insert_profile_node(config_sources,node);
+		sctk_runtime_config_sources_insert_profile_node(config_sources,node);
 	}
 
 	//find application
-	node = sctk_config_sources_find_profile_node(&config_sources->application,name);
+	node = sctk_runtime_config_sources_find_profile_node(&config_sources->application,name);
 	if (node != NULL)
 	{
 		find_once = true;
-		sctk_config_sources_insert_profile_node(config_sources,node);
+		sctk_runtime_config_sources_insert_profile_node(config_sources,node);
 	}
 
 	//warning
@@ -244,7 +244,7 @@ void sctk_config_sources_select_profile_nodes(struct sctk_config_sources * confi
 		warning("Can't find requested profile %s in configuration files.\n",name);
 
 	//error
-	assume(config_sources->cnt_profile_nodes < SCTK_CONFIG_MAX_PROFILES,"Reach maximum number of profile : SCTK_CONFIG_MAX_PROFILES = %d.",SCTK_CONFIG_MAX_PROFILES);
+	assume(config_sources->cnt_profile_nodes < SCTK_RUNTIME_CONFIG_MAX_PROFILES,"Reach maximum number of profile : SCTK_RUNTIME_CONFIG_MAX_PROFILES = %d.",SCTK_RUNTIME_CONFIG_MAX_PROFILES);
 }
 
 /*******************  FUNCTION  *********************/
@@ -256,7 +256,7 @@ void sctk_config_sources_select_profile_nodes(struct sctk_config_sources * confi
  * option overriding between config files.
  * @param config_sources Define the configuration sources to use.
 **/
-void sctk_config_sources_select_profiles_nodes(struct sctk_config_sources * config_sources)
+void sctk_runtime_config_sources_select_profiles_nodes(struct sctk_runtime_config_sources * config_sources)
 {
 	//vars
 	unsigned int i;
@@ -265,11 +265,11 @@ void sctk_config_sources_select_profiles_nodes(struct sctk_config_sources * conf
 	assert(config_sources != NULL);
 
 	//search special one : default
-	sctk_config_sources_select_profile_nodes(config_sources,BAD_CAST("default"));
+	sctk_runtime_config_sources_select_profile_nodes(config_sources,BAD_CAST("default"));
 
 	//loop on names to get profile related xml nodes
 	for (i = 0 ; i < config_sources->cnt_profile_names ; i++)
-		sctk_config_sources_select_profile_nodes(config_sources,config_sources->profile_names[i]);
+		sctk_runtime_config_sources_select_profile_nodes(config_sources,config_sources->profile_names[i]);
 }
 
 /*******************  FUNCTION  *********************/
@@ -278,19 +278,19 @@ void sctk_config_sources_select_profiles_nodes(struct sctk_config_sources * conf
  * It will sort them on priority orider in profile_nodes member.
  * @param config_sources Define the configuration sources to use.
 **/
-void sctk_config_sources_select_profiles(struct sctk_config_sources * config_sources)
+void sctk_runtime_config_sources_select_profiles(struct sctk_runtime_config_sources * config_sources)
 {
 	//errors
 	assert(config_sources != NULL);
 
 	//select in all sources
-	sctk_config_sources_select_profiles_in_file(config_sources,&config_sources->system);
-	sctk_config_sources_select_profiles_in_file(config_sources,&config_sources->user);
+	sctk_runtime_config_sources_select_profiles_in_file(config_sources,&config_sources->system);
+	sctk_runtime_config_sources_select_profiles_in_file(config_sources,&config_sources->user);
 	if (config_sources->application.root_node != NULL)
-		sctk_config_sources_select_profiles_in_file(config_sources,&config_sources->application);
+		sctk_runtime_config_sources_select_profiles_in_file(config_sources,&config_sources->application);
 
 	//select all profile nodes
-	sctk_config_sources_select_profiles_nodes(config_sources);
+	sctk_runtime_config_sources_select_profiles_nodes(config_sources);
 }
 
 /*******************  FUNCTION  *********************/
@@ -300,7 +300,7 @@ void sctk_config_sources_select_profiles(struct sctk_config_sources * config_sou
  * @param source Define the struct to setup while openning the file.
  * @param filename Define the XML file to open.
 **/
-void sctk_config_source_xml_open(struct sctk_config_source_xml * source,const char * filename,enum sctk_config_open_error_level level)
+void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml * source,const char * filename,enum sctk_runtime_config_open_error_level level)
 {
 	//errors
 	assert(source != NULL);
@@ -343,7 +343,7 @@ void sctk_config_source_xml_open(struct sctk_config_source_xml * source,const ch
  * @param config_sources Define the structure to init.
  * @param application_config_file Define the application config filename if any. Use NULL for none.
 **/
-void sctk_config_sources_open(struct sctk_config_sources * config_sources, const char * application_config_file)
+void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * config_sources, const char * application_config_file)
 {
 	//vars
 	#warning Allocate dynamically
@@ -359,13 +359,13 @@ void sctk_config_sources_open(struct sctk_config_sources * config_sources, const
 	sprintf(user_file,"%s/.mpc/config.xml",getenv("HOME"));
 
 	//open system config
-	sctk_config_source_xml_open(&config_sources->system,SCTK_INSTALL_PREFIX "/share/mpc/system.xml",SCTK_CONFIG_OPEN_WARNING);
-	sctk_config_source_xml_open(&config_sources->user,user_file,SCTK_CONFIG_OPEN_SILENT);
+	sctk_runtime_config_source_xml_open(&config_sources->system,SCTK_INSTALL_PREFIX "/share/mpc/system.xml",SCTK_CONFIG_OPEN_WARNING);
+	sctk_runtime_config_source_xml_open(&config_sources->user,user_file,SCTK_CONFIG_OPEN_SILENT);
 	if (application_config_file != NULL && application_config_file[0] != '\0')
-		sctk_config_source_xml_open(&config_sources->application,application_config_file,SCTK_CONFIG_OPEN_ERROR);
+		sctk_runtime_config_source_xml_open(&config_sources->application,application_config_file,SCTK_CONFIG_OPEN_ERROR);
 
 	//find profiles to use and sort them depeding on priority
-	sctk_config_sources_select_profiles(config_sources);
+	sctk_runtime_config_sources_select_profiles(config_sources);
 }
 
 /*******************  FUNCTION  *********************/
@@ -373,7 +373,7 @@ void sctk_config_sources_open(struct sctk_config_sources * config_sources, const
  * Close all XML files and free dynamic memories pointed by config_sources.
  * @param config_sources Define the structure to close and cleanup.
 **/
-void sctk_config_sources_close(struct sctk_config_sources * config_sources)
+void sctk_runtime_config_sources_close(struct sctk_runtime_config_sources * config_sources)
 {
 	//vars
 	int i;

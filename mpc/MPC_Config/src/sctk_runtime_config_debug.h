@@ -20,20 +20,19 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_CONFIG_PRINTER
-#define SCTK_CONFIG_PRINTER
+#ifndef SCTK_RUNTIME_CONFIG_DEBUG_H
+#define SCTK_RUNTIME_CONFIG_DEBUG_H
 
 /********************  HEADERS  *********************/
-#include "sctk_config_mapper.h"
+#include <stdlib.h>
+#include <stdio.h>
 
-/*******************  FUNCTION  *********************/
-const struct sctk_config_entry_meta * sctk_config_array_get_inner_type(const struct sctk_config_entry_meta * current);
-void sctk_config_display_array(const struct sctk_config_entry_meta * config_meta, struct sctk_config * config,
-                               void ** value,const struct sctk_config_entry_meta * current,int level);
-void sctk_config_display_entry(const struct sctk_config_entry_meta * config_meta, struct sctk_config * config,sctk_config_struct_ptr struct_ptr,
-                               const struct sctk_config_entry_meta * current,int level);
-void sctk_config_display_struct(const struct sctk_config_entry_meta * config_meta, struct sctk_config * config,sctk_config_struct_ptr struct_ptr,const char * type_name,int level);
-void sctk_config_display_indent(int level);
+/************************** MACROS *************************/
+/** Print some warning into error output, it use the printf standard parameters. **/
+#define warning(...) {fprintf(stderr,"Warning at %s!%d\n",__FILE__,__LINE__); fprintf(stderr,__VA_ARGS__);}
+/** Assert a value, and display a user readable message if invalide. It will be keep with NDEBUG on the contrary of assert(). **/
+#define assume(x,...) if (!(x)) { fprintf(stderr,"Error at %s!%d\n%s\n",__FILE__,__LINE__,#x); fprintf(stderr,__VA_ARGS__); abort(); }
+/** Print an error message and exit. It use the print formatting convention. **/
+#define fatal(...) { fprintf(stderr,"Fatal error at %s!%d\n",__FILE__,__LINE__); fprintf(stderr,__VA_ARGS__); abort(); }
 
-
-#endif //SCTK_CONFIG_PRINTER
+#endif //SCTK_RUNTIME_CONFIG_DEBUG_H

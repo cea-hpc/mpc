@@ -24,15 +24,15 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include "sctk_config_printer.h"
-#include "sctk_config_mapper.h"
+#include "sctk_runtime_config_printer.h"
+#include "sctk_runtime_config_mapper.h"
 
 /*******************  FUNCTION  *********************/
 /**
  * Display tabulation for indentation.
  * @param level Number indentation step.
 **/
-void sctk_config_display_indent(int level)
+void sctk_runtime_config_display_indent(int level)
 {
 	while (level > 0)
 	{
@@ -49,11 +49,11 @@ void sctk_config_display_indent(int level)
  * @param current Define the meta description for current element.
  * @param level Define the indentation level to apply to current element.
 **/
-void sctk_config_display_struct(const struct sctk_config_entry_meta * config_meta, struct sctk_config * config,sctk_config_struct_ptr struct_ptr,const char * type_name,int level)
+void sctk_runtime_config_display_struct(const struct sctk_runtime_config_entry_meta * config_meta, struct sctk_runtime_config * config,sctk_runtime_config_struct_ptr struct_ptr,const char * type_name,int level)
 {
 	//vars
-	const struct sctk_config_entry_meta * entry;
-	const struct sctk_config_entry_meta * child;
+	const struct sctk_runtime_config_entry_meta * entry;
+	const struct sctk_runtime_config_entry_meta * child;
 // 	void * value = struct_ptr;
 
 	//error
@@ -62,22 +62,22 @@ void sctk_config_display_struct(const struct sctk_config_entry_meta * config_met
 	assert(struct_ptr != NULL);
 
 	//find meta entry for type
-	entry = sctk_config_get_meta_type_entry(config_meta, type_name);
+	entry = sctk_runtime_config_get_meta_type_entry(config_meta, type_name);
 	assert(entry != NULL);
 
 	//display childs if any
 	//only struct has child and we have child only if next entry has level+1
 	if (entry->type == SCTK_CONFIG_META_TYPE_STRUCT)
 	{
-		child = sctk_config_meta_get_first_child(entry);
+		child = sctk_runtime_config_meta_get_first_child(entry);
 		while (child != NULL)
 		{
 			//get value
-// 			value = sctk_config_get_entry(struct_ptr,child);
+// 			value = sctk_runtime_config_get_entry(struct_ptr,child);
 // 			assert(value != NULL);
-			sctk_config_display_entry(config_meta, config,struct_ptr,child,level);
+			sctk_runtime_config_display_entry(config_meta, config,struct_ptr,child,level);
 			//move to next
-			child = sctk_config_meta_get_next_child(child);
+			child = sctk_runtime_config_meta_get_next_child(child);
 		}
 	}
 }
@@ -90,8 +90,8 @@ void sctk_config_display_struct(const struct sctk_config_entry_meta * config_met
  * @param current Define the current meta description, must by of type SCTK_CONFIG_TYPE_ARRAY.
  * @param level Define the indentation level to apply to current element.
 **/
-void sctk_config_display_array(const struct sctk_config_entry_meta * config_meta, struct sctk_config * config,
-                               void ** value,const struct sctk_config_entry_meta * current,int level)
+void sctk_runtime_config_display_array(const struct sctk_runtime_config_entry_meta * config_meta, struct sctk_runtime_config * config,
+                               void ** value,const struct sctk_runtime_config_entry_meta * current,int level)
 {
 	int size;
 	int element_size;
@@ -112,12 +112,12 @@ void sctk_config_display_array(const struct sctk_config_entry_meta * config_meta
 	if (*value == NULL)
 	{
 		assert(size == 0);
-		sctk_config_display_indent(level);
+		sctk_runtime_config_display_indent(level);
 		printf("%s: {}\n",current->name);
 	} else {
 		assert(size >= 0);
 		//loop on all values, we know that next meta entry define the type.
-		sctk_config_display_indent(level);
+		sctk_runtime_config_display_indent(level);
 		if (strcmp(current->inner_type,"int") == 0 || strcmp(current->inner_type,"bool") == 0)
 			printf("%s: {",current->name);
 		else
@@ -132,11 +132,11 @@ void sctk_config_display_array(const struct sctk_config_entry_meta * config_meta
 				printf("%s, ",(((bool*)(*value))[i])?"true":"false");
 			} else {
 				//get element size, we know that it's the next element
-				sctk_config_display_indent(level+1);
+				sctk_runtime_config_display_indent(level+1);
 				printf("%s :\n",(const char*)current->extra);
 				element_size = current->size;
 				assert(element_size > 0);
-				sctk_config_display_struct(config_meta, config,((char*)(*value))+i*element_size,current->inner_type,level+2);
+				sctk_runtime_config_display_struct(config_meta, config,((char*)(*value))+i*element_size,current->inner_type,level+2);
 			}		
 		}
 		if (strcmp(current->inner_type,"int") == 0 || strcmp(current->inner_type,"bool") == 0)
@@ -145,8 +145,8 @@ void sctk_config_display_array(const struct sctk_config_entry_meta * config_meta
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_config_display_entry(const struct sctk_config_entry_meta * config_meta, struct sctk_config * config,sctk_config_struct_ptr struct_ptr,
-                               const struct sctk_config_entry_meta * current,int level)
+void sctk_runtime_config_display_entry(const struct sctk_runtime_config_entry_meta * config_meta, struct sctk_runtime_config * config,sctk_runtime_config_struct_ptr struct_ptr,
+                               const struct sctk_runtime_config_entry_meta * current,int level)
 {
 	//vars
 	void * value;
@@ -156,22 +156,22 @@ void sctk_config_display_entry(const struct sctk_config_entry_meta * config_meta
 	assert(current->type == SCTK_CONFIG_META_TYPE_PARAM || current->type == SCTK_CONFIG_META_TYPE_ARRAY);
 
 	//get value
-	value = sctk_config_get_entry(struct_ptr,current);
+	value = sctk_runtime_config_get_entry(struct_ptr,current);
 	assert(value != NULL);
 
 	if (current->type == SCTK_CONFIG_META_TYPE_ARRAY)
 	{
-		sctk_config_display_array(config_meta, config,value,current,level);
+		sctk_runtime_config_display_array(config_meta, config,value,current,level);
 	} else if (strcmp(current->inner_type,"int") == 0) {
-		sctk_config_display_indent(level);
+		sctk_runtime_config_display_indent(level);
 		printf("%s: %d\n",current->name,*(int*)value);
 	} else if (strcmp(current->inner_type,"bool") == 0) {
-		sctk_config_display_indent(level);
+		sctk_runtime_config_display_indent(level);
 		printf("%s: %s\n",current->name,(*(bool*)value)?"true":"false");
 	} else {
-		sctk_config_display_indent(level);
+		sctk_runtime_config_display_indent(level);
 		printf("%s: \n",current->name);
-		sctk_config_display_struct(config_meta, config,value,current->inner_type,level+1);
+		sctk_runtime_config_display_struct(config_meta, config,value,current->inner_type,level+1);
 	}
 }
 

@@ -20,21 +20,20 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_CONFIG_SELECTORS_H
-#define SCTK_CONFIG_SELECTORS_H
+#ifndef SCTK_RUNTIME_CONFIG_PRINTER
+#define SCTK_RUNTIME_CONFIG_PRINTER
 
 /********************  HEADERS  *********************/
-#include <libxml/tree.h>
-#include <libxml/parser.h>
-#include <stdbool.h>
+#include "sctk_runtime_config_mapper.h"
 
 /*******************  FUNCTION  *********************/
-//selector functions
-bool sctk_config_xml_selectors_check(xmlNodePtr selectors);
-bool sctk_config_xml_selector_check(xmlNodePtr selector);
+const struct sctk_runtime_config_entry_meta * sctk_runtime_config_array_get_inner_type(const struct sctk_runtime_config_entry_meta * current);
+void sctk_runtime_config_display_array(const struct sctk_runtime_config_entry_meta * config_meta, struct sctk_runtime_config * config,
+                               void ** value,const struct sctk_runtime_config_entry_meta * current,int level);
+void sctk_runtime_config_display_entry(const struct sctk_runtime_config_entry_meta * config_meta, struct sctk_runtime_config * config,sctk_runtime_config_struct_ptr struct_ptr,
+                               const struct sctk_runtime_config_entry_meta * current,int level);
+void sctk_runtime_config_display_struct(const struct sctk_runtime_config_entry_meta * config_meta, struct sctk_runtime_config * config,sctk_runtime_config_struct_ptr struct_ptr,const char * type_name,int level);
+void sctk_runtime_config_display_indent(int level);
 
-/*******************  FUNCTION  *********************/
-//specific selector rules implementation.
-bool sctk_config_xml_selector_env_check(xmlNodePtr selector);
 
-#endif
+#endif //SCTK_CONFIG_PRINTER

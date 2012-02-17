@@ -23,13 +23,13 @@
 /********************  HEADERS  *********************/
 #include <assert.h>
 #include <string.h>
-#include "sctk_config_debug.h"
+#include "sctk_runtime_config_debug.h"
 #include "sctk_libxml_helper.h"
-#include "sctk_config_mapper.h"
-#include "sctk_config_printer.h"
+#include "sctk_runtime_config_mapper.h"
+#include "sctk_runtime_config_printer.h"
 
 /*******************  FUNCTION  *********************/
-bool sctk_config_map_entry_to_bool(xmlNodePtr node)
+bool sctk_runtime_config_map_entry_to_bool(xmlNodePtr node)
 {
 	bool res;
 	xmlChar * value = xmlNodeGetContent(node);
@@ -48,7 +48,7 @@ bool sctk_config_map_entry_to_bool(xmlNodePtr node)
 
 /*******************  FUNCTION  *********************/
 /** @todo avoid to usr xmlNodeGetContent which made a copy. **/
-int sctk_config_map_entry_to_int(xmlNodePtr node)
+int sctk_runtime_config_map_entry_to_int(xmlNodePtr node)
 {
 	int res;
 	xmlChar * value = xmlNodeGetContent(node);
@@ -58,7 +58,7 @@ int sctk_config_map_entry_to_int(xmlNodePtr node)
 }
 
 /*******************  FUNCTION  *********************/
-const struct sctk_config_entry_meta * sctk_config_meta_get_first_child(const struct sctk_config_entry_meta * current)
+const struct sctk_runtime_config_entry_meta * sctk_runtime_config_meta_get_first_child(const struct sctk_runtime_config_entry_meta * current)
 {
 	//error
 	assert(current != NULL);
@@ -75,7 +75,7 @@ const struct sctk_config_entry_meta * sctk_config_meta_get_first_child(const str
 }
 
 /*******************  FUNCTION  *********************/
-const struct sctk_config_entry_meta * sctk_config_meta_get_next_child(const struct sctk_config_entry_meta * current)
+const struct sctk_runtime_config_entry_meta * sctk_runtime_config_meta_get_next_child(const struct sctk_runtime_config_entry_meta * current)
 {
 	//error
 	assert(current != NULL);
@@ -92,7 +92,7 @@ const struct sctk_config_entry_meta * sctk_config_meta_get_next_child(const stru
 }
 
 /*******************  FUNCTION  *********************/
-const struct sctk_config_entry_meta * sctk_config_get_child_meta(const struct sctk_config_entry_meta * current,const xmlChar * name)
+const struct sctk_runtime_config_entry_meta * sctk_runtime_config_get_child_meta(const struct sctk_runtime_config_entry_meta * current,const xmlChar * name)
 {
 	//errors
 	assert(current != NULL);
@@ -100,19 +100,19 @@ const struct sctk_config_entry_meta * sctk_config_get_child_meta(const struct sc
 	assert(current->type == SCTK_CONFIG_META_TYPE_STRUCT);
 
 	//loop on childs to get entry
-	current = sctk_config_meta_get_first_child(current);
+	current = sctk_runtime_config_meta_get_first_child(current);
 	while (current != NULL)
 	{
 		if (xmlStrcmp(name,BAD_CAST(current->name)) == 0)
 			break;
-		current = sctk_config_meta_get_next_child(current);
+		current = sctk_runtime_config_meta_get_next_child(current);
 	}
 
 	return current;
 }
 
 /*******************  FUNCTION  *********************/
-void * sctk_config_get_entry(sctk_config_struct_ptr struct_ptr,const struct sctk_config_entry_meta * current)
+void * sctk_runtime_config_get_entry(sctk_runtime_config_struct_ptr struct_ptr,const struct sctk_runtime_config_entry_meta * current)
 {
 	//errors
 	assert(current->offset >= 0);
@@ -123,22 +123,22 @@ void * sctk_config_get_entry(sctk_config_struct_ptr struct_ptr,const struct sctk
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_config_apply_init_handler(const struct sctk_config_entry_meta *config_meta, sctk_config_struct_ptr struct_ptr,const char * type_name)
+void sctk_runtime_config_apply_init_handler(const struct sctk_runtime_config_entry_meta *config_meta, sctk_runtime_config_struct_ptr struct_ptr,const char * type_name)
 {
 	//error
 	assert(struct_ptr != NULL);
 	assert(type_name != NULL);
 
 	//search definition
-	const struct sctk_config_entry_meta * entry;
-	entry = sctk_config_get_meta_type_entry(config_meta, type_name);
+	const struct sctk_runtime_config_entry_meta * entry;
+	entry = sctk_runtime_config_get_meta_type_entry(config_meta, type_name);
 	if (entry != NULL && entry->type == SCTK_CONFIG_META_TYPE_STRUCT && entry->extra != NULL)
-		((sctk_config_struct_init_handler)entry->extra)(struct_ptr);
+		((sctk_runtime_config_struct_init_handler)entry->extra)(struct_ptr);
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_config_apply_node_array(const struct sctk_config_entry_meta *config_meta, struct sctk_config * config,
-                                  sctk_config_struct_ptr struct_ptr,const struct sctk_config_entry_meta * current,xmlNodePtr node)
+void sctk_runtime_config_apply_node_array(const struct sctk_runtime_config_entry_meta *config_meta, struct sctk_runtime_config * config,
+                                  sctk_runtime_config_struct_ptr struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node)
 {
 	//vars
 	const xmlChar * entry_name;
@@ -190,8 +190,8 @@ void sctk_config_apply_node_array(const struct sctk_config_entry_meta *config_me
 		{
 			//must only find nodes with tage_name = entry_name
 			assume(xmlStrcmp(node->name,entry_name) == 0,"Invalid child node in array alement, expect %s -> %s but get %s.",current->name,(const char*)current->extra,node->name);
-			sctk_config_apply_init_handler(config_meta, (*array)+i*current->size,current->inner_type);
-			sctk_config_apply_node_value(config_meta, config,(*array)+i*current->size,current->inner_type,node);
+			sctk_runtime_config_apply_init_handler(config_meta, (*array)+i*current->size,current->inner_type);
+			sctk_runtime_config_apply_node_value(config_meta, config,(*array)+i*current->size,current->inner_type,node);
 			node = xmlNextElementSibling(node);
 			i++;
 		}
@@ -199,10 +199,10 @@ void sctk_config_apply_node_array(const struct sctk_config_entry_meta *config_me
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_config_apply_node_value( const struct sctk_config_entry_meta *config_meta, struct sctk_config * config,sctk_config_struct_ptr struct_ptr, const char * type_name,xmlNodePtr node)
+void sctk_runtime_config_apply_node_value( const struct sctk_runtime_config_entry_meta *config_meta, struct sctk_runtime_config * config,sctk_runtime_config_struct_ptr struct_ptr, const char * type_name,xmlNodePtr node)
 {
 	//vars
-	const struct sctk_config_entry_meta * entry;
+	const struct sctk_runtime_config_entry_meta * entry;
 
 	//errors
 	assert(config != NULL);
@@ -213,16 +213,16 @@ void sctk_config_apply_node_value( const struct sctk_config_entry_meta *config_m
 	//check type name
 	if (strcmp(type_name,"int") == 0)
 	{
-		*(int*)struct_ptr = sctk_config_map_entry_to_int(node);
+		*(int*)struct_ptr = sctk_runtime_config_map_entry_to_int(node);
 	} else if (strcmp(type_name,"bool") == 0) {
-		*(bool*)struct_ptr = sctk_config_map_entry_to_bool(node);
+		*(bool*)struct_ptr = sctk_runtime_config_map_entry_to_bool(node);
 	} else {
-		entry = sctk_config_get_meta_type_entry(config_meta, type_name);
+		entry = sctk_runtime_config_get_meta_type_entry(config_meta, type_name);
 		if (entry == NULL)
 		{
 			fatal("Can't find type information for : %s.",type_name);
 		} else if (entry->type == SCTK_CONFIG_META_TYPE_STRUCT) {
-			sctk_config_map_node_to_c_struct(config_meta,config,struct_ptr,entry,node);
+			sctk_runtime_config_map_node_to_c_struct(config_meta,config,struct_ptr,entry,node);
 		} else {
 			fatal("Unknown custom type : %s (%d)",type_name,entry->type);
 		}
@@ -231,12 +231,12 @@ void sctk_config_apply_node_value( const struct sctk_config_entry_meta *config_m
 
 /*******************  FUNCTION  *********************/
 /** @TODO cleanup this method. **/
-void sctk_config_map_node_to_c_struct( const struct sctk_config_entry_meta *config_meta, struct sctk_config * config,
-                                       sctk_config_struct_ptr struct_ptr,const struct sctk_config_entry_meta * current,xmlNodePtr node)
+void sctk_runtime_config_map_node_to_c_struct( const struct sctk_runtime_config_entry_meta *config_meta, struct sctk_runtime_config * config,
+                                       sctk_runtime_config_struct_ptr struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node)
 {
 	//child
-	const struct sctk_config_entry_meta * child;
-	sctk_config_struct_ptr child_ptr;
+	const struct sctk_runtime_config_entry_meta * child;
+	sctk_runtime_config_struct_ptr child_ptr;
 
 	//errors
 	assert(config != NULL);
@@ -248,17 +248,17 @@ void sctk_config_map_node_to_c_struct( const struct sctk_config_entry_meta *conf
 	node = xmlFirstElementChild(node);
 	while (node != NULL)
 	{
-		child = sctk_config_get_child_meta(current,node->name);
+		child = sctk_runtime_config_get_child_meta(current,node->name);
 		assume(child != NULL,"Can't find meta data for node : %s",node->name);
-		child_ptr = sctk_config_get_entry(struct_ptr,child);
+		child_ptr = sctk_runtime_config_get_entry(struct_ptr,child);
 		assume(child_ptr != NULL,"Can't find meta data for node entry : %s",node->name);
 		switch(child->type)
 		{
 			case SCTK_CONFIG_META_TYPE_ARRAY:
-				sctk_config_apply_node_array(config_meta,config,child_ptr,child,node);
+				sctk_runtime_config_apply_node_array(config_meta,config,child_ptr,child,node);
 				break;
 			case SCTK_CONFIG_META_TYPE_PARAM:
-				sctk_config_apply_node_value(config_meta,config,child_ptr,child->inner_type,node);
+				sctk_runtime_config_apply_node_value(config_meta,config,child_ptr,child->inner_type,node);
 				break;
 			default:
 				fatal("Invalid current meta entry type : %d",current->type);				
@@ -268,10 +268,10 @@ void sctk_config_map_node_to_c_struct( const struct sctk_config_entry_meta *conf
 }
 
 /*******************  FUNCTION  *********************/
-const struct sctk_config_entry_meta * sctk_config_get_meta_type_entry( const struct sctk_config_entry_meta *config_meta, const char * name)
+const struct sctk_runtime_config_entry_meta * sctk_runtime_config_get_meta_type_entry( const struct sctk_runtime_config_entry_meta *config_meta, const char * name)
 {
 	//vars
-	const struct sctk_config_entry_meta * entry = config_meta;
+	const struct sctk_runtime_config_entry_meta * entry = config_meta;
 
 	//error
 	assert(name != NULL);
@@ -292,7 +292,7 @@ const struct sctk_config_entry_meta * sctk_config_get_meta_type_entry( const str
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_config_do_cleanup(struct sctk_config* config)
+void sctk_runtime_config_do_cleanup(struct sctk_runtime_config* config)
 {
 
 }

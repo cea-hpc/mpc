@@ -28,7 +28,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
-#include <sctk_config_runtime.h>
+#include <sctk_runtime_config.h>
 #include "sctk.h"
 
 #if !defined(NO_INTERNAL_ASSERT)
@@ -812,7 +812,7 @@ sctk_launch_main (int argc, char **argv)
   __sctk_profiling__start__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
 
   //load mpc configuration from XML files if not already done.
-  sctk_config_runtime_init();
+  sctk_runtime_config_init();
   
 
   auto_kill = getenv ("MPC_AUTO_KILL_TIMEOUT");

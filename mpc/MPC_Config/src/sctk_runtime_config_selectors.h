@@ -17,19 +17,24 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - VALAT Sebastien sebastien.valat@cea.fr                           # */
-/* #   - AUTOMATIC GENERATION                                             # */
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <stdlib.h>
+#ifndef SCTK_RUNTIME_CONFIG_SELECTORS_H
+#define SCTK_RUNTIME_CONFIG_SELECTORS_H
 
-#ifndef SCTK_CONFIG_STRUCT_DEFAULTS_H
-#define SCTK_CONFIG_STRUCT_DEFAULTS_H
+/********************  HEADERS  *********************/
+#include <libxml/tree.h>
+#include <libxml/parser.h>
+#include <stdbool.h>
 
 /*******************  FUNCTION  *********************/
-void sctk_config_module_init_test(void * struct_ptr);
-void sctk_config_module_init_rail(void * struct_ptr);
-void sctk_config_module_init_allocator(void * struct_ptr);
-void sctk_config_module_init_launcher(void * struct_ptr);
+//selector functions
+bool sctk_runtime_config_xml_selectors_check(xmlNodePtr selectors);
+bool sctk_runtime_config_xml_selector_check(xmlNodePtr selector);
 
-#endif //SCTK_CONFIG_STRUCT_DEFAULTS_H
+/*******************  FUNCTION  *********************/
+//specific selector rules implementation.
+bool sctk_runtime_config_xml_selector_env_check(xmlNodePtr selector);
+
+#endif
