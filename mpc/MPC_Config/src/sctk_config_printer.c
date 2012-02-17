@@ -49,7 +49,7 @@ void sctk_config_display_indent(int level)
  * @param current Define the meta description for current element.
  * @param level Define the indentation level to apply to current element.
 **/
-void sctk_config_display_struct(struct sctk_config * config,sctk_config_struct_ptr struct_ptr,const char * type_name,int level)
+void sctk_config_display_struct(const struct sctk_config_entry_meta * config_meta, struct sctk_config * config,sctk_config_struct_ptr struct_ptr,const char * type_name,int level)
 {
 	//vars
 	const struct sctk_config_entry_meta * entry;
@@ -62,7 +62,7 @@ void sctk_config_display_struct(struct sctk_config * config,sctk_config_struct_p
 	assert(struct_ptr != NULL);
 
 	//find meta entry for type
-	entry = sctk_config_get_meta_type_entry(sctk_config_db, type_name);
+	entry = sctk_config_get_meta_type_entry(config_meta, type_name);
 	assert(entry != NULL);
 
 	//display childs if any
@@ -75,7 +75,7 @@ void sctk_config_display_struct(struct sctk_config * config,sctk_config_struct_p
 			//get value
 // 			value = sctk_config_get_entry(struct_ptr,child);
 // 			assert(value != NULL);
-			sctk_config_display_entry(config,struct_ptr,child,level);
+			sctk_config_display_entry(config_meta, config,struct_ptr,child,level);
 			//move to next
 			child = sctk_config_meta_get_next_child(child);
 		}
@@ -90,7 +90,8 @@ void sctk_config_display_struct(struct sctk_config * config,sctk_config_struct_p
  * @param current Define the current meta description, must by of type SCTK_CONFIG_TYPE_ARRAY.
  * @param level Define the indentation level to apply to current element.
 **/
-void sctk_config_display_array(struct sctk_config * config,void ** value,const struct sctk_config_entry_meta * current,int level)
+void sctk_config_display_array(const struct sctk_config_entry_meta * config_meta, struct sctk_config * config,
+                               void ** value,const struct sctk_config_entry_meta * current,int level)
 {
 	int size;
 	int element_size;
@@ -135,7 +136,7 @@ void sctk_config_display_array(struct sctk_config * config,void ** value,const s
 				printf("%s :\n",(const char*)current->extra);
 				element_size = current->size;
 				assert(element_size > 0);
-				sctk_config_display_struct(config,((char*)(*value))+i*element_size,current->inner_type,level+2);
+				sctk_config_display_struct(config_meta, config,((char*)(*value))+i*element_size,current->inner_type,level+2);
 			}		
 		}
 		if (strcmp(current->inner_type,"int") == 0 || strcmp(current->inner_type,"bool") == 0)
@@ -144,7 +145,8 @@ void sctk_config_display_array(struct sctk_config * config,void ** value,const s
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_config_display_entry(struct sctk_config * config,sctk_config_struct_ptr struct_ptr,const struct sctk_config_entry_meta * current,int level)
+void sctk_config_display_entry(const struct sctk_config_entry_meta * config_meta, struct sctk_config * config,sctk_config_struct_ptr struct_ptr,
+                               const struct sctk_config_entry_meta * current,int level)
 {
 	//vars
 	void * value;
@@ -159,7 +161,7 @@ void sctk_config_display_entry(struct sctk_config * config,sctk_config_struct_pt
 
 	if (current->type == SCTK_CONFIG_META_TYPE_ARRAY)
 	{
-		sctk_config_display_array(config,value,current,level);
+		sctk_config_display_array(config_meta, config,value,current,level);
 	} else if (strcmp(current->inner_type,"int") == 0) {
 		sctk_config_display_indent(level);
 		printf("%s: %d\n",current->name,*(int*)value);
@@ -169,18 +171,7 @@ void sctk_config_display_entry(struct sctk_config * config,sctk_config_struct_pt
 	} else {
 		sctk_config_display_indent(level);
 		printf("%s: \n",current->name);
-		sctk_config_display_struct(config,value,current->inner_type,level+1);
+		sctk_config_display_struct(config_meta, config,value,current->inner_type,level+1);
 	}
 }
 
-/*******************  FUNCTION  *********************/
-void sctk_config_display(struct sctk_config * config)
-{
-	//error
-	assert(config != NULL);
-
-	//separator
-	printf("====================== MPC CONFIG ======================\n");
-	sctk_config_display_struct(config,&config->modules,"sctk_config_modules",0);
-	printf("========================================================\n");
-}

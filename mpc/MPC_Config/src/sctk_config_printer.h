@@ -27,11 +27,12 @@
 #include "sctk_config_mapper.h"
 
 /*******************  FUNCTION  *********************/
-void sctk_config_display(struct sctk_config * config);
 const struct sctk_config_entry_meta * sctk_config_array_get_inner_type(const struct sctk_config_entry_meta * current);
-void sctk_config_display_array(struct sctk_config * config,void ** value,const struct sctk_config_entry_meta * current,int level);
-void sctk_config_display_entry(struct sctk_config * config,sctk_config_struct_ptr struct_ptr,const struct sctk_config_entry_meta * current,int level);
-void sctk_config_display_struct(struct sctk_config * config,sctk_config_struct_ptr struct_ptr,const char * type_name,int level);
+void sctk_config_display_array(const struct sctk_config_entry_meta * config_meta, struct sctk_config * config,
+                               void ** value,const struct sctk_config_entry_meta * current,int level);
+void sctk_config_display_entry(const struct sctk_config_entry_meta * config_meta, struct sctk_config * config,sctk_config_struct_ptr struct_ptr,
+                               const struct sctk_config_entry_meta * current,int level);
+void sctk_config_display_struct(const struct sctk_config_entry_meta * config_meta, struct sctk_config * config,sctk_config_struct_ptr struct_ptr,const char * type_name,int level);
 void sctk_config_display_indent(int level);
 
 

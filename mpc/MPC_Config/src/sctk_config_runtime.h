@@ -31,22 +31,23 @@
  * Global variable to store mpc runtime configuration loaded from XML.
  * Caution for quick static access, prefer usage of macro sctk_config_runtime_get_fast().
 **/
-extern const struct sctk_config __sctk_global_config_runtime__;
+extern struct sctk_config __sctk_global_config_runtime__;
 /** To know if aldready init. **/
-extern const bool __sctk_global_config_init__;
+extern bool __sctk_global_config_init__;
+
 
 /*******************  FUNCTION  *********************/
 void sctk_config_runtime_init(void);
-bool sctk_config_runtime_is_init(void);
+void sctk_config_runtime_display(struct sctk_config * config);
 
 /*******************  FUNCTION  *********************/
-bool sctk_config_runtime_is_init(void)
+static inline bool sctk_config_runtime_init_done(void)
 {
 	return __sctk_global_config_init__;
 }
 
 /*******************  FUNCTION  *********************/
-const struct sctk_config * sctk_config_runtime_get(void)
+static inline const struct sctk_config * sctk_config_runtime_get(void)
 {
 	if ( ! __sctk_global_config_init__ )
 		sctk_config_runtime_init();
