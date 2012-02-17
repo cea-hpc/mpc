@@ -23,13 +23,13 @@
 
 # Doc :
 # This script aims to help MPC developer to re-generate MPC runtime config file management sources.
-# It will use the files config.xml in modules to generate the source code used for managing
+# It will use the files config-meta.xml in modules to generate the source code used for managing
 # config loading, displaying and documentation.
 #
 # Used :
 #    - command xsltproc
 #    - files in MPC_Config/generators
-#    - files MPC_*/config.xml
+#    - files MPC_*/config-meta.xml
 #
 # Generate
 #    - Files in MPC_Config/generated
@@ -38,9 +38,9 @@
 XSLTPROC=xsltproc
 
 #get files
-CONFIG_FILES=MPC_*/config.xml
+CONFIG_FILES=MPC_*/config-meta.xml
 GENERATORS=MPC_Config/generators/*.xsl
-GLOBAL_CONFIG_FILE=MPC_Config/generated/global_config.xml
+GLOBAL_CONFIG_FILE=MPC_Config/generated/global-config-meta.xml
 
 #check current dir
 if [ ! -f ./MPC_Tools/mpc_gen_runtime_config ]; then
