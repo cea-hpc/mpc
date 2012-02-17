@@ -262,7 +262,9 @@ void sctk_centralized_poll_tasks(sctk_thread_generic_scheduler_t* sched){
     if(sctk_thread_generic_scheduler_check_task(task) == 1){
       DL_DELETE(sctk_centralized_task_list,task);
       sctk_debug("WAKE task %p",task);
+      sctk_spinlock_lock(&(sched->generic.lock));
       sctk_thread_generic_wake(task->sched);
+      sctk_spinlock_unlock(&(sched->generic.lock));
     }
   }
   sctk_spinlock_unlock(&sctk_centralized_task_list_lock);  
@@ -293,11 +295,7 @@ static void sctk_generic_add_to_list(sctk_thread_generic_scheduler_t* sched){
   sctk_debug("ADD TASK idle mode %d",sched->generic.is_idle_mode);
   if(sched->generic.is_idle_mode == 0){
     sctk_generic_add_to_list_intern(sched);
-  } /*else {
-    sctk_spinlock_lock(&(sched->generic.lock));
-    sctk_generic_add_to_list_intern(sched);
-    sctk_spinlock_unlock(&(sched->generic.lock));
-  }*/
+  } 
 }
 
 static void sctk_generic_add_task(sctk_thread_generic_task_t* task){
@@ -306,6 +304,8 @@ static void sctk_generic_add_task(sctk_thread_generic_task_t* task){
     sctk_thread_generic_thread_status(task->sched,sctk_thread_generic_blocked);
     assume(sctk_generic_delegated_task_list == NULL);
     DL_APPEND(sctk_generic_delegated_task_list,task);
+    sctk_spinlock_lock(&(task->sched->generic.lock));
+    sctk_thread_generic_register_spinlock_unlock(task->sched,&(task->sched->generic.lock));
     sctk_thread_generic_sched_yield(task->sched);
   } else {
     sctk_generic_add_task_to_threat(task);
