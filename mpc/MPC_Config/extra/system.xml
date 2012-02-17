@@ -158,6 +158,13 @@
 				</launcher>
 				<allocator>
 					<warnings>true</warnings>
+					<classes></classes>
+					<rails>
+						<rail>
+							<tt>20</tt>
+							<tt2>30</tt2>
+						</rail>
+					</rails>
 				</allocator>
 			</modules>
 		</profile>
