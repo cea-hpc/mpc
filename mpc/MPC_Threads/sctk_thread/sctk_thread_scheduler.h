@@ -57,6 +57,7 @@ typedef struct sctk_thread_generic_scheduler_s{
   sctk_mctx_t ctx;
   sctk_mctx_t ctx_bootstrap;
   volatile sctk_thread_generic_thread_status_t status;
+  sctk_spinlock_t debug_lock;
   struct sctk_thread_generic_p_s* th;
   union{
     sctk_thread_generic_scheduler_generic_t generic;

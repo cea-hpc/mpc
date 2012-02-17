@@ -136,14 +136,16 @@ void sctk_thread_generic_scheduler_swapcontext(sctk_thread_generic_scheduler_t* 
 					       sctk_thread_generic_scheduler_t* new_th){
   sctk_thread_generic_set_self(new_th->th);
   sctk_debug("SWAP %p -> %p",&(old_th->ctx),&(new_th->ctx));
+  sctk_spinlock_unlock(&(old_th->debug_lock));
+  assume(sctk_spinlock_trylock(&(new_th->debug_lock)) == 0);
   sctk_swapcontext(&(old_th->ctx),&(new_th->ctx));
-  
 }
 void sctk_thread_generic_scheduler_setcontext(sctk_thread_generic_scheduler_t* new_th){
   sctk_thread_generic_set_self(new_th->th);
   sctk_nodebug("SET %p",&(new_th->ctx));
   sctk_setcontext(&(new_th->ctx));
-  
+   assume(sctk_spinlock_trylock(&(new_th->debug_lock)) == 0);
+	
 }
 
 /***************************************/
@@ -708,6 +710,7 @@ void sctk_thread_generic_scheduler_init_thread(sctk_thread_generic_scheduler_t* 
 					       struct sctk_thread_generic_p_s* th){
   sched->th = th;
   sched->status = sctk_thread_generic_running;
+  sched->debug_lock = SCTK_SPINLOCK_INITIALIZER;
   sctk_thread_generic_scheduler_init_thread_p(sched);
 }
 
