@@ -293,7 +293,11 @@ static void sctk_generic_add_to_list(sctk_thread_generic_scheduler_t* sched){
   sctk_debug("ADD TASK idle mode %d",sched->generic.is_idle_mode);
   if(sched->generic.is_idle_mode == 0){
     sctk_generic_add_to_list_intern(sched);
-  }
+  } /*else {
+    sctk_spinlock_lock(&(sched->generic.lock));
+    sctk_generic_add_to_list_intern(sched);
+    sctk_spinlock_unlock(&(sched->generic.lock));
+  }*/
 }
 
 static void sctk_generic_add_task(sctk_thread_generic_task_t* task){
@@ -378,6 +382,14 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
       } else {
 	/* Idle function */
 
+	if(sctk_generic_delegated_task_list != NULL){
+          sctk_spinlock_lock(&(sched->generic.lock));
+	  sched->generic.is_idle_mode = 1;
+          sctk_generic_add_task_to_threat(sctk_generic_delegated_task_list);
+          sctk_generic_delegated_task_list = NULL;
+          sctk_generic_delegated_spinlock = &(sched->generic.lock);
+  	}
+
 	if(sctk_generic_delegated_spinlock != NULL){
           sched->generic.is_idle_mode = 1;
 
@@ -391,12 +403,7 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
 	  sctk_spinlock_unlock(sctk_generic_delegated_spinlock);
 	  sctk_generic_delegated_spinlock = NULL;
 	}
-/*
-	if(sctk_generic_delegated_task_list != NULL){
-          sctk_spinlock(&(sched->));
-	  not_implemented();
-        }
-*/
+
 	sctk_cpu_relax ();
 	goto retry;
       }
@@ -414,6 +421,7 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
 	}
 	sctk_spinlock_unlock(registered_spin_unlock);	
       }
+
       registered_spin_unlock = NULL;
       sched_idle = NULL;
     }
