@@ -56,7 +56,7 @@ void sctk_config_runtime_init(void)
 
 		//map to c struct
 		//sctk_config_reset(&config);
-		sctk_config_map_sources_to_c_struct(&__sctk_global_config_runtime__,&config_sources);
+		sctk_config_map_sources_to_c_struct(sctk_config_db, &__sctk_global_config_runtime__,&config_sources);
 
 		//close
 		sctk_config_sources_close(&config_sources);

@@ -88,17 +88,19 @@ extern const struct sctk_config_entry_meta sctk_config_db[];
 
 /*******************  FUNCTION  *********************/
 //mappgin functions
-const struct sctk_config_entry_meta * sctk_config_get_meta_type_entry(const char * name);
+const struct sctk_config_entry_meta * sctk_config_get_meta_type_entry( const struct sctk_config_entry_meta *sctk_config_db, const char * name);
 const struct sctk_config_entry_meta * sctk_config_meta_get_first_child(const struct sctk_config_entry_meta * current);
 const struct sctk_config_entry_meta * sctk_config_meta_get_next_child(const struct sctk_config_entry_meta * current);
 const struct sctk_config_entry_meta * sctk_config_get_child_meta(const struct sctk_config_entry_meta * current,const xmlChar * name);
 void * sctk_config_get_entry(sctk_config_struct_ptr struct_ptr,const struct sctk_config_entry_meta * current);
-void sctk_config_apply_init_handler(sctk_config_struct_ptr struct_ptr,const char * type_name);
-void sctk_config_apply_node_array(struct sctk_config * config,sctk_config_struct_ptr struct_ptr,const struct sctk_config_entry_meta * current,xmlNodePtr node);
-void sctk_config_apply_node_value(struct sctk_config * config,sctk_config_struct_ptr struct_ptr,const char * type_name,xmlNodePtr node);
-void sctk_config_map_node_to_c_struct(struct sctk_config * config,sctk_config_struct_ptr struct_ptr,const struct sctk_config_entry_meta * current,xmlNodePtr node);
-void sctk_config_map_profile_to_c_struct(struct sctk_config * config,xmlNodePtr node);
-void sctk_config_map_sources_to_c_struct(struct sctk_config * config,struct sctk_config_sources * config_sources);
+void sctk_config_apply_init_handler(const struct sctk_config_entry_meta *sctk_config_db, sctk_config_struct_ptr struct_ptr,const char * type_name);
+void sctk_config_apply_node_array(const struct sctk_config_entry_meta *sctk_config_db, struct sctk_config * config,
+                                  sctk_config_struct_ptr struct_ptr,const struct sctk_config_entry_meta * current,xmlNodePtr node);
+void sctk_config_apply_node_value( const struct sctk_config_entry_meta *sctk_config_db, struct sctk_config * config,sctk_config_struct_ptr struct_ptr, const char * type_name,xmlNodePtr node);
+void sctk_config_map_node_to_c_struct( const struct sctk_config_entry_meta *sctk_config_db, struct sctk_config * config,
+                                       sctk_config_struct_ptr struct_ptr,const struct sctk_config_entry_meta * current,xmlNodePtr node);
+void sctk_config_map_profile_to_c_struct( const struct sctk_config_entry_meta *sctk_config_db, struct sctk_config * config, xmlNodePtr node);
+void sctk_config_map_sources_to_c_struct( const struct sctk_config_entry_meta *sctk_config_db, struct sctk_config * config,struct sctk_config_sources * config_sources);
 
 /*******************  FUNCTION  *********************/
 //type supports

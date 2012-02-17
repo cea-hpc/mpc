@@ -123,7 +123,7 @@ void * sctk_config_get_entry(sctk_config_struct_ptr struct_ptr,const struct sctk
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_config_apply_init_handler(sctk_config_struct_ptr struct_ptr,const char * type_name)
+void sctk_config_apply_init_handler(const struct sctk_config_entry_meta *sctk_config_db, sctk_config_struct_ptr struct_ptr,const char * type_name)
 {
 	//error
 	assert(struct_ptr != NULL);
@@ -131,13 +131,14 @@ void sctk_config_apply_init_handler(sctk_config_struct_ptr struct_ptr,const char
 
 	//search definition
 	const struct sctk_config_entry_meta * entry;
-	entry = sctk_config_get_meta_type_entry(type_name);
+	entry = sctk_config_get_meta_type_entry(sctk_config_db, type_name);
 	if (entry != NULL && entry->type == SCTK_CONFIG_META_TYPE_STRUCT && entry->extra != NULL)
 		((sctk_config_struct_init_handler)entry->extra)(struct_ptr);
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_config_apply_node_array(struct sctk_config * config,sctk_config_struct_ptr struct_ptr,const struct sctk_config_entry_meta * current,xmlNodePtr node)
+void sctk_config_apply_node_array(const struct sctk_config_entry_meta *sctk_config_db, struct sctk_config * config,
+                                  sctk_config_struct_ptr struct_ptr,const struct sctk_config_entry_meta * current,xmlNodePtr node)
 {
 	//vars
 	const xmlChar * entry_name;
@@ -189,8 +190,8 @@ void sctk_config_apply_node_array(struct sctk_config * config,sctk_config_struct
 		{
 			//must only find nodes with tage_name = entry_name
 			assume(xmlStrcmp(node->name,entry_name) == 0,"Invalid child node in array alement, expect %s -> %s but get %s.",current->name,(const char*)current->extra,node->name);
-			sctk_config_apply_init_handler((*array)+i*current->size,current->inner_type);
-			sctk_config_apply_node_value(config,(*array)+i*current->size,current->inner_type,node);
+			sctk_config_apply_init_handler(sctk_config_db, (*array)+i*current->size,current->inner_type);
+			sctk_config_apply_node_value(sctk_config_db, config,(*array)+i*current->size,current->inner_type,node);
 			node = xmlNextElementSibling(node);
 			i++;
 		}
@@ -198,7 +199,7 @@ void sctk_config_apply_node_array(struct sctk_config * config,sctk_config_struct
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_config_apply_node_value(struct sctk_config * config,sctk_config_struct_ptr struct_ptr,const char * type_name,xmlNodePtr node)
+void sctk_config_apply_node_value( const struct sctk_config_entry_meta *sctk_config_db, struct sctk_config * config,sctk_config_struct_ptr struct_ptr, const char * type_name,xmlNodePtr node)
 {
 	//vars
 	const struct sctk_config_entry_meta * entry;
@@ -216,12 +217,12 @@ void sctk_config_apply_node_value(struct sctk_config * config,sctk_config_struct
 	} else if (strcmp(type_name,"bool") == 0) {
 		*(bool*)struct_ptr = sctk_config_map_entry_to_bool(node);
 	} else {
-		entry = sctk_config_get_meta_type_entry(type_name);
+		entry = sctk_config_get_meta_type_entry(sctk_config_db, type_name);
 		if (entry == NULL)
 		{
 			fatal("Can't find type information for : %s.",type_name);
 		} else if (entry->type == SCTK_CONFIG_META_TYPE_STRUCT) {
-			sctk_config_map_node_to_c_struct(config,struct_ptr,entry,node);
+			sctk_config_map_node_to_c_struct(sctk_config_db,config,struct_ptr,entry,node);
 		} else {
 			fatal("Unknown custom type : %s (%d)",type_name,entry->type);
 		}
@@ -230,7 +231,8 @@ void sctk_config_apply_node_value(struct sctk_config * config,sctk_config_struct
 
 /*******************  FUNCTION  *********************/
 /** @TODO cleanup this method. **/
-void sctk_config_map_node_to_c_struct(struct sctk_config * config,sctk_config_struct_ptr struct_ptr,const struct sctk_config_entry_meta * current,xmlNodePtr node)
+void sctk_config_map_node_to_c_struct( const struct sctk_config_entry_meta *sctk_config_db, struct sctk_config * config,
+                                       sctk_config_struct_ptr struct_ptr,const struct sctk_config_entry_meta * current,xmlNodePtr node)
 {
 	//child
 	const struct sctk_config_entry_meta * child;
@@ -253,10 +255,10 @@ void sctk_config_map_node_to_c_struct(struct sctk_config * config,sctk_config_st
 		switch(child->type)
 		{
 			case SCTK_CONFIG_META_TYPE_ARRAY:
-				sctk_config_apply_node_array(config,child_ptr,child,node);
+				sctk_config_apply_node_array(sctk_config_db,config,child_ptr,child,node);
 				break;
 			case SCTK_CONFIG_META_TYPE_PARAM:
-				sctk_config_apply_node_value(config,child_ptr,child->inner_type,node);
+				sctk_config_apply_node_value(sctk_config_db,config,child_ptr,child->inner_type,node);
 				break;
 			default:
 				fatal("Invalid current meta entry type : %d",current->type);				
@@ -266,7 +268,7 @@ void sctk_config_map_node_to_c_struct(struct sctk_config * config,sctk_config_st
 }
 
 /*******************  FUNCTION  *********************/
-const struct sctk_config_entry_meta * sctk_config_get_meta_type_entry(const char * name)
+const struct sctk_config_entry_meta * sctk_config_get_meta_type_entry( const struct sctk_config_entry_meta *sctk_config_db, const char * name)
 {
 	//vars
 	const struct sctk_config_entry_meta * entry = sctk_config_db;
@@ -290,7 +292,7 @@ const struct sctk_config_entry_meta * sctk_config_get_meta_type_entry(const char
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_config_map_profile_to_c_struct(struct sctk_config * config,xmlNodePtr node)
+void sctk_config_map_profile_to_c_struct( const struct sctk_config_entry_meta *sctk_config_db, struct sctk_config * config, xmlNodePtr node)
 {
 	//vars
 	xmlNodePtr modules;
@@ -309,14 +311,14 @@ void sctk_config_map_profile_to_c_struct(struct sctk_config * config,xmlNodePtr 
 		return;
 
 	//another way to map
-	entry = sctk_config_get_meta_type_entry("sctk_config_modules");
+	entry = sctk_config_get_meta_type_entry(sctk_config_db, "sctk_config_modules");
 	if (entry == NULL)
 		fatal("Invalid type name : %s.","sctk_config_modules");
-	sctk_config_map_node_to_c_struct(config,&config->modules,entry,modules);
+	sctk_config_map_node_to_c_struct(sctk_config_db, config,&config->modules,entry,modules);
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_config_map_sources_to_c_struct(struct sctk_config * config,struct sctk_config_sources * config_sources)
+void sctk_config_map_sources_to_c_struct( const struct sctk_config_entry_meta *sctk_config_db, struct sctk_config * config,struct sctk_config_sources * config_sources)
 {
 	//vars
 	int i;
@@ -333,7 +335,7 @@ void sctk_config_map_sources_to_c_struct(struct sctk_config * config,struct sctk
 	for (i = 0 ; i < config_sources->cnt_profile_nodes ; ++i)
 	{
 		//sctk_config_map_profile_to_c_struct_other_way(config,config_sources->profile_nodes[i]);
-		sctk_config_map_profile_to_c_struct(config,config_sources->profile_nodes[i]);
+		sctk_config_map_profile_to_c_struct(sctk_config_db, config,config_sources->profile_nodes[i]);
 	}
 }
 

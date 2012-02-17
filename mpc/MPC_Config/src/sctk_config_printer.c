@@ -62,7 +62,7 @@ void sctk_config_display_struct(struct sctk_config * config,sctk_config_struct_p
 	assert(struct_ptr != NULL);
 
 	//find meta entry for type
-	entry = sctk_config_get_meta_type_entry(type_name);
+	entry = sctk_config_get_meta_type_entry(sctk_config_db, type_name);
 	assert(entry != NULL);
 
 	//display childs if any
