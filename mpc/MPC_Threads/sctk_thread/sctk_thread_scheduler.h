@@ -47,6 +47,7 @@ struct sctk_thread_generic_scheduler_s;
 typedef struct sctk_thread_generic_scheduler_generic_s{
   int vp_type;
   volatile int is_idle_mode;
+  sctk_spinlock_t lock;
   struct sctk_thread_generic_scheduler_s* sched;
   struct sctk_thread_generic_scheduler_generic_s *prev, *next;
   sem_t sem;

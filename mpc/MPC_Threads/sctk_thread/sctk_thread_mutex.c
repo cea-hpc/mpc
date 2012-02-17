@@ -72,6 +72,7 @@ sctk_thread_generic_mutexes_mutex_lock (sctk_thread_generic_mutex_t * lock,
     DL_APPEND(lock->blocked,&cell);
     
     sctk_thread_generic_thread_status(sched,sctk_thread_generic_blocked);
+    sctk_debug("WAIT MUTEX LOCK sleep %p",sched);
     sctk_thread_generic_register_spinlock_unlock(sched,&(lock->lock));
     sctk_thread_generic_sched_yield(sched);
   }
@@ -174,6 +175,7 @@ sctk_thread_generic_mutexes_mutex_unlock (sctk_thread_generic_mutex_t * lock,
       lock->nb_call = 1;
       DL_DELETE(lock->blocked,head);
       if(head->sched->status != sctk_thread_generic_running){
+	sctk_debug("ADD MUTEX UNLOCK wake %p",head->sched);
 	sctk_thread_generic_wake(head->sched);
       }
     }

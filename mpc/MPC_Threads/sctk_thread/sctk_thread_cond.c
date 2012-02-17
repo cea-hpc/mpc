@@ -55,6 +55,7 @@ int sctk_thread_generic_conds_cond_wait (sctk_thread_generic_cond_t * cond,
   sctk_thread_generic_register_spinlock_unlock(sched,&(cond->lock));
   sctk_thread_generic_sched_yield(sched);
 
+  sctk_thread_generic_mutexes_mutex_lock(mutex,sched);
   return ret;
 }
 
@@ -82,6 +83,7 @@ int sctk_thread_generic_conds_cond_broadcast (sctk_thread_generic_cond_t * cond,
   sctk_spinlock_lock(&(cond->lock));
   DL_FOREACH_SAFE(cond->blocked,task,task_tmp){
     DL_DELETE(cond->blocked,task);
+    sctk_debug("ADD BCAST cond wake %p from %p",task->sched,sched);
     sctk_thread_generic_wake(task->sched);    
   }
   sctk_spinlock_unlock(&(cond->lock));

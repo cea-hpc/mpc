@@ -141,7 +141,7 @@ void sctk_thread_generic_scheduler_swapcontext(sctk_thread_generic_scheduler_t* 
 }
 void sctk_thread_generic_scheduler_setcontext(sctk_thread_generic_scheduler_t* new_th){
   sctk_thread_generic_set_self(new_th->th);
-  sctk_debug("SET %p",&(new_th->ctx));
+  sctk_nodebug("SET %p",&(new_th->ctx));
   sctk_setcontext(&(new_th->ctx));
   
 }
@@ -197,7 +197,7 @@ static sctk_thread_generic_scheduler_t* sctk_centralized_get_from_list(){
     }
     sctk_spinlock_unlock(&sctk_centralized_sched_list_lock);
     if(res != NULL){
-      sctk_debug("REMOVE Thread %p",res->sched);
+      sctk_nodebug("REMOVE Thread %p",res->sched);
       return res->sched;
     } else {
       return NULL;
@@ -256,7 +256,7 @@ void sctk_centralized_poll_tasks(sctk_thread_generic_scheduler_t* sched){
   sctk_thread_generic_task_t* task;
   sctk_thread_generic_task_t* task_tmp;
   
-  sctk_spinlock_lock(&sctk_centralized_task_list_lock);
+  if(sctk_spinlock_trylock(&sctk_centralized_task_list_lock) == 0){
   /* Exec polling */
   DL_FOREACH_SAFE(sctk_centralized_task_list,task,task_tmp){
     if(sctk_thread_generic_scheduler_check_task(task) == 1){
@@ -266,6 +266,7 @@ void sctk_centralized_poll_tasks(sctk_thread_generic_scheduler_t* sched){
     }
   }
   sctk_spinlock_unlock(&sctk_centralized_task_list_lock);  
+}
 }
 
 /***************************************/
@@ -288,6 +289,8 @@ static __thread volatile sctk_spinlock_t* sctk_generic_delegated_spinlock = NULL
 
 
 static void sctk_generic_add_to_list(sctk_thread_generic_scheduler_t* sched){
+  assume(sched->status == sctk_thread_generic_running);
+  sctk_debug("ADD TASK idle mode %d",sched->generic.is_idle_mode);
   if(sched->generic.is_idle_mode == 0){
     sctk_generic_add_to_list_intern(sched);
   }
@@ -335,7 +338,6 @@ static void sctk_generic_sched_idle_start_pthread(){
 
 static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
   sctk_thread_generic_scheduler_t* next;
-  sctk_debug("TASK %p status %d type %d",sched,sched->status,sched->generic.vp_type);
 
   if(sched->generic.vp_type == 0){
     int have_spinlock_registered = 0;
@@ -354,6 +356,7 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
       assume(sctk_generic_delegated_add == NULL);
       sctk_generic_delegated_add = sched;
     } else {
+      sctk_debug("TASK %p status %d type %d",sched,sched->status,sched->generic.vp_type);
       if(sched->status == sctk_thread_generic_zombie){
 	assume(sctk_generic_delegated_zombie_list == NULL);
 	sctk_generic_delegated_zombie_list = sched;
@@ -374,19 +377,26 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
 	sctk_thread_generic_scheduler_swapcontext(sched,next);
       } else {
 	/* Idle function */
-	sched->generic.is_idle_mode = 1;
 
 	if(sctk_generic_delegated_spinlock != NULL){
+          sched->generic.is_idle_mode = 1;
+
 	  have_spinlock_registered = 1;
 	  assume(registered_spin_unlock == NULL);
 
+	  sctk_debug("REGISTER delegated IDLE %p",sched);
 	  sched_idle = sched;
 	  registered_spin_unlock = sctk_generic_delegated_spinlock;
 
 	  sctk_spinlock_unlock(sctk_generic_delegated_spinlock);
 	  sctk_generic_delegated_spinlock = NULL;
 	}
-
+/*
+	if(sctk_generic_delegated_task_list != NULL){
+          sctk_spinlock(&(sched->));
+	  not_implemented();
+        }
+*/
 	sctk_cpu_relax ();
 	goto retry;
       }
@@ -397,10 +407,11 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
     if(sched_idle != NULL){
       if(registered_spin_unlock != NULL){
 	sctk_spinlock_lock(registered_spin_unlock);
+	sched_idle->generic.is_idle_mode = 0;
 	if(sched_idle->status == sctk_thread_generic_running){
+	  sctk_debug("ADD FROM delegated spinlock %p",sched_idle);
 	  sctk_generic_add_to_list(sched_idle);
 	}
-	sched_idle->generic.is_idle_mode = 0;
 	sctk_spinlock_unlock(registered_spin_unlock);	
       }
       registered_spin_unlock = NULL;
@@ -589,6 +600,7 @@ static void sctk_generic_scheduler_init_thread_common(sctk_thread_generic_schedu
   sched->generic.next = NULL;
   sched->generic.prev = NULL;
   sched->generic.is_idle_mode = 0;
+  sched->generic.lock = SCTK_SPINLOCK_INITIALIZER;
   sem_init(&(sched->generic.sem),0,0);
 }
 

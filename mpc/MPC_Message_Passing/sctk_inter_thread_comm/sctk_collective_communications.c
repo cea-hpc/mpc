@@ -53,8 +53,10 @@ sctk_terminaison_barrier (const int id)
       sctk_nodebug("sctk_pmi_barrier");
       sctk_pmi_barrier();
     }
+    sctk_debug("WAKE ALL in sctk_terminaison_barrier");
     sctk_thread_cond_broadcast(&cond);
   } else {
+    sctk_debug("WAIT in sctk_terminaison_barrier");
     sctk_thread_cond_wait(&cond,&lock);
   }
   sctk_thread_mutex_unlock(&lock);
