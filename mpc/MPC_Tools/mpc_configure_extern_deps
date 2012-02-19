@@ -409,6 +409,7 @@ SCTK_CHECK_LIBXML2()
 	#Find paths
 	if [ "$LIBXML_IS_SETUP" != "yes" ]; then
 		# For the moment, we dont use rpath
+		
 		if [ -d "${SCTK_LIBXML2_PREFIX}" ]; then
 			SCTK_MSG_CHECKING "Search in ${SCTK_LIBXML2_PREFIX}"; result yes
 			sctk_internal_setup_libxml
@@ -423,7 +424,11 @@ SCTK_CHECK_LIBXML2()
 			sctk_internal_setup_libxml
 			SCTK_CHECK_LDOPTION "-lxml2"
 		else
-			error "Invalid libxml prefix : $SCTK_LIBXML2_PREFIX, please provide installation directory with --with-libxml2={PREFIX}."
+			if [ "x${SCTK_LIBXML2_PREFIX}" != "x" ]; then
+				error "the prefix ${SCTK_LIBXML2_PREFIX} does not seem to contain libxlm2"
+			fi
+			
+			error "please check if libxml2 is installed or provide its prefix with --with-libxml2={PREFIX}."
 			exit 1
 		fi
 	fi
