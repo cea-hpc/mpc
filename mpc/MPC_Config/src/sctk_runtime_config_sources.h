@@ -47,13 +47,26 @@ struct sctk_runtime_config_source_xml
 	xmlNodePtr root_node;
 };
 
-/*********************  STRUCT  *********************/
+/*********************  ENUMS  *********************/
 enum sctk_runtime_config_open_error_level
 {
 	SCTK_CONFIG_OPEN_WARNING,
 	SCTK_CONFIG_OPEN_ERROR,
 	SCTK_CONFIG_OPEN_SILENT
 };
+
+enum sctk_xml_config_type
+{
+	/** System level XML configuration file identifier. **/
+	SCTK_CONFIG_SYSTEM_LEVEL,
+	/** User level XML configuration file identifier. **/
+	SCTK_CONFIG_USER_LEVEL,
+	/** Application level XML configuration file identifier. **/
+	SCTK_CONFIG_APPLICATION_LEVEL,
+	/** Number of configuration types. **/
+	SCTK_CONFIG_LEVEL_COUNT
+};
+
 
 /*********************  STRUCT  *********************/
 /**
@@ -63,13 +76,8 @@ enum sctk_runtime_config_open_error_level
 **/
 struct sctk_runtime_config_sources
 {
-	/** @todo merge this in array of sctk_xml_source. **/
-	/** System level XML configuration file. **/
-	struct sctk_runtime_config_source_xml system;
-	/** User level XML configuration file. **/
-	struct sctk_runtime_config_source_xml user;
-	/** Application level XML configuration file. **/
-	struct sctk_runtime_config_source_xml application;
+	/** Array storing the config source associated with each level **/
+	struct sctk_runtime_config_source_xml sources[SCTK_CONFIG_LEVEL_COUNT];
 	/** List of selected XML profile names. **/
 	xmlChar * profile_names[SCTK_RUNTIME_CONFIG_MAX_PROFILES];
 	/** List of selected XML profile nodes. **/
@@ -88,6 +96,7 @@ void sctk_runtime_config_sources_close(struct sctk_runtime_config_sources * conf
 /*******************  FUNCTION  *********************/
 //function to manage open operations of a specific xml file.
 void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml * source,const char * filename,enum sctk_runtime_config_open_error_level level);
+int sctk_runtime_config_source_xml_is_open( struct sctk_runtime_config_source_xml * source );
 
 /*******************  FUNCTION  *********************/
 //functions to manage selection of profiles in XML DOM tree
@@ -97,6 +106,6 @@ void sctk_runtime_config_sources_select_profile_nodes(struct sctk_runtime_config
 void sctk_runtime_config_sources_insert_profile_node(struct sctk_runtime_config_sources * config_sources,xmlNodePtr node);
 xmlNodePtr sctk_runtime_config_sources_find_profile_node(struct sctk_runtime_config_source_xml * source,const xmlChar * name);
 void sctk_runtime_config_sources_select_profiles_in_file(struct sctk_runtime_config_sources * config_sources,struct sctk_runtime_config_source_xml * source);
-void sctk_runtime_config_sources_select_profiles_in_mapping(struct sctk_runtime_config_sources * config_sources,struct sctk_runtime_config_source_xml * source,xmlNodePtr mapping);
+void sctk_runtime_config_sources_select_profiles_in_mapping(struct sctk_runtime_config_sources * config_sources, xmlNodePtr mapping);
 
 #endif //SCTK_CONFIG_FILES_H
