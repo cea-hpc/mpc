@@ -192,11 +192,14 @@ xmlNodePtr sctk_runtime_config_sources_find_profile_node(struct sctk_runtime_con
 	while (profile != NULL)
 	{
 		profile_name = sctk_libxml_find_child_node_content(profile,BAD_CAST("name"));
-		if (profile_name != NULL && xmlStrcmp(name,profile_name) == 0)
+		if (profile_name != NULL )
 		{
-			printf("DEBUG : ok find node for %s in %p.\n",name,source);
-			free(profile_name);
-			break;
+			if( xmlStrcmp(name,profile_name) == 0 )
+			{
+				printf("DEBUG : ok find node for %s in %p.\n",name,source);
+				free(profile_name);
+				break;
+			}
 		} else {
 			free(profile_name);
 		}

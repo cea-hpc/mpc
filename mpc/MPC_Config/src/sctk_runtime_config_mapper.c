@@ -132,7 +132,9 @@ void sctk_runtime_config_apply_init_handler(const struct sctk_runtime_config_ent
 	//search definition
 	const struct sctk_runtime_config_entry_meta * entry;
 	entry = sctk_runtime_config_get_meta_type_entry(config_meta, type_name);
-	if (entry != NULL && entry->type == SCTK_CONFIG_META_TYPE_STRUCT && entry->extra != NULL)
+	if (entry != NULL 
+            && entry->type == SCTK_CONFIG_META_TYPE_STRUCT 
+            && entry->extra != NULL)
 		((sctk_runtime_config_struct_init_handler)entry->extra)(struct_ptr);
 }
 
