@@ -26,7 +26,7 @@
 	<xsl:output method="text"/>
 
 	<!-- ********************************************************* -->
-	<xsl:template match="all">
+	<xsl:template match="/">
 		<xsl:call-template name="gen-mpc-header"/>
 		<xsl:text>#include &lt;stdlib.h&gt;&#10;&#10;</xsl:text>
 		<xsl:text>#ifndef SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H&#10;</xsl:text>
