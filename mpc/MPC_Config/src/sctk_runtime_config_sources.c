@@ -50,7 +50,7 @@ static const xmlChar * SCKT_CONFIG_XML_NODE_SELECTORS = BAD_CAST("selectors");
  * @param config_sources Define the XML source in which to search for previous profile.
  * @param candidate Define the name of the profile to find.
 **/
-int sctk_runtime_config_sources_profile_name_is_unique( struct sctk_runtime_config_sources * config_sources, char *candidate )
+static int sctk_runtime_config_sources_profile_name_is_unique( struct sctk_runtime_config_sources * config_sources, const xmlChar *candidate )
 {
 	assert( candidate != NULL );
 	assert( config_sources != NULL );
@@ -59,7 +59,7 @@ int sctk_runtime_config_sources_profile_name_is_unique( struct sctk_runtime_conf
 	
 	for( i = 0 ; i < config_sources->cnt_profile_names; i++ )
 	{
-		if( !strcmp( (char *)&config_sources->profile_names[i], BAD_CAST(candidate) ) )
+		if( !xmlStrcmp( (const xmlChar *)&config_sources->profile_names[i], candidate ) )
 			return 0;
 	}
 	
@@ -109,7 +109,7 @@ void sctk_runtime_config_sources_select_profiles_in_mapping(struct sctk_runtime_
 				if (xmlStrcmp(profile->name,SCKT_CONFIG_XML_NODE_PROFILE) == 0)
 				{
 
-					char *profile_name = xmlNodeGetContent(profile);
+					xmlChar *profile_name = xmlNodeGetContent(profile);
 
 					//Check if the profile name is unique and store its name if so
 					if( sctk_runtime_config_sources_profile_name_is_unique( config_sources, profile_name ) )
@@ -120,7 +120,7 @@ void sctk_runtime_config_sources_select_profiles_in_mapping(struct sctk_runtime_
 						assume(config_sources->cnt_profile_names < SCTK_RUNTIME_CONFIG_MAX_PROFILES,
 						       "Reach maximum number of profiles : SCTK_RUNTIME_CONFIG_MAX_PROFILES = %d.",SCTK_RUNTIME_CONFIG_MAX_PROFILES);
 					} else {
-						fatal( "Mutilple occurences of profile %s were defined in configuration file", profile_name );
+						xmlFree( profile_name );
 					}
 
 				}
@@ -439,7 +439,7 @@ void sctk_runtime_config_sources_close(struct sctk_runtime_config_sources * conf
 
 	//free selected names (as xmlNodeGetContent done copies)
 	for (i = 0 ; i < config_sources->cnt_profile_names ; i++)
-		free(config_sources->profile_names[i]);
+		xmlFree(config_sources->profile_names[i]);
 
 	//reset to default
 	memset(config_sources,0,sizeof(*config_sources));
