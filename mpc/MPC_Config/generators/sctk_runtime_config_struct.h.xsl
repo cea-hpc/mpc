@@ -27,7 +27,7 @@
 	<xsl:output method="text"/>
 
 	<!-- ********************************************************* -->
-	<xsl:template match="/">
+	<xsl:template match="all">
 		<xsl:call-template name="gen-mpc-header"/>
 		<xsl:text>#include &lt;stdbool.h&gt;&#10;</xsl:text>
 		<xsl:text>#include "sctk_runtime_config_struct_defaults.h"&#10;&#10;</xsl:text>
