@@ -228,7 +228,15 @@ void sctk_runtime_config_display_entry(const struct sctk_runtime_config_entry_me
 		//If not plain type we are here
 		sctk_runtime_config_display_indent(level);
 		printf("%s: \n",current->name);
-		sctk_runtime_config_display_struct(config_meta, config,value,current->inner_type,level+1);
+		entry = sctk_runtime_config_get_meta_type_entry(config_meta, current->inner_type);
+		assert(entry != NULL);
+		/** @TODO avoid this duplication of code **/
+		if (entry->type == SCTK_CONFIG_META_TYPE_STRUCT)
+			sctk_runtime_config_display_struct(config_meta, config,value,current->inner_type,level+1);
+		else if (entry->type == SCTK_CONFIG_META_TYPE_UNION)
+			sctk_runtime_config_display_union(config_meta, config,value,current->inner_type,level+1);
+		else
+			fatal("Invalid type.");
 	}
 }
 
