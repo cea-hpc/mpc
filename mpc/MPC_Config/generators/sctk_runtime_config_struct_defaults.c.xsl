@@ -83,6 +83,9 @@
 		<xsl:choose>
 			<xsl:when test="type = 'int'"><xsl:call-template name='gent-default-param-int'/></xsl:when>
 			<xsl:when test="type = 'bool'"><xsl:call-template name='gent-default-param-bool'/></xsl:when>
+			<xsl:when test="type = 'string'"><xsl:call-template name='gent-default-param-null-pointer'/></xsl:when>
+			<xsl:when test="type = 'float'"><xsl:call-template name='gent-default-param-decimal'/></xsl:when>
+			<xsl:when test="type = 'double'"><xsl:call-template name='gent-default-param-decimal'/></xsl:when>
 			<xsl:otherwise><xsl:call-template name="gent-default-param-usertype"/></xsl:otherwise>
 		</xsl:choose>
 	</xsl:template>
@@ -107,6 +110,29 @@
 		<xsl:choose>
 			<xsl:when test='default'><xsl:value-of select="default"/></xsl:when>
 			<xsl:otherwise>false</xsl:otherwise>
+		</xsl:choose>
+		<xsl:text>;&#10;</xsl:text>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="gent-default-param-decimal">
+		<xsl:text>&#09;obj-></xsl:text>
+		<xsl:value-of select='name'/>
+		<xsl:text> = </xsl:text>
+		<xsl:choose>
+			<xsl:when test='default'><xsl:value-of select="default"/></xsl:when>
+			<xsl:otherwise>0.0</xsl:otherwise>
+		</xsl:choose>
+		<xsl:text>;&#10;</xsl:text>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="gent-default-param-null-pointer">
+		<xsl:text>&#09;obj-></xsl:text>
+		<xsl:value-of select='name'/>
+		<xsl:choose>
+			<xsl:when test='default'><xsl:text>= "</xsl:text><xsl:value-of select="default"/><xsl:text>"</xsl:text></xsl:when>
+			<xsl:otherwise>NULL</xsl:otherwise>
 		</xsl:choose>
 		<xsl:text>;&#10;</xsl:text>
 	</xsl:template>

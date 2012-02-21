@@ -104,6 +104,9 @@
 		<xsl:choose>
 			<xsl:when test="type = 'int'">NULL</xsl:when>
 			<xsl:when test="type = 'bool'">NULL</xsl:when>
+			<xsl:when test="type = 'float'">NULL</xsl:when>
+			<xsl:when test="type = 'double'">NULL</xsl:when>
+			<xsl:when test="type = 'string'">NULL</xsl:when>
 			<xsl:otherwise>
 				<xsl:value-of select="concat('sctk_runtime_config_module_init_',type)"/>
 			</xsl:otherwise>
@@ -115,6 +118,9 @@
 		<xsl:choose>
 			<xsl:when test="type = 'int'">int</xsl:when>
 			<xsl:when test="type = 'bool'">bool</xsl:when>
+			<xsl:when test="type = 'float'">float</xsl:when>
+			<xsl:when test="type = 'double'">double</xsl:when>
+			<xsl:when test="type = 'string'">char *</xsl:when>
 			<xsl:otherwise>
 				<xsl:call-template name="gen-user-type-name">
 					<xsl:with-param name="type"><xsl:value-of select='type'/></xsl:with-param>
@@ -128,6 +134,9 @@
 		<xsl:choose>
 			<xsl:when test="type = 'int'">int</xsl:when>
 			<xsl:when test="type = 'bool'">bool</xsl:when>
+			<xsl:when test="type = 'float'">float</xsl:when>
+			<xsl:when test="type = 'double'">double</xsl:when>
+			<xsl:when test="type = 'string'">char *</xsl:when>
 			<xsl:otherwise>
 				<xsl:call-template name="gen-user-type-name2">
 					<xsl:with-param name="type"><xsl:value-of select='type'/></xsl:with-param>

@@ -26,6 +26,24 @@
 				<doc>Enable of disable usage of allocator profiler.</doc>
 			</param>
 			<param>
+				<name>alstring</name>
+				<type>string</type>
+				<default>TestTestTest</default>
+				<doc>Sample string</doc>
+			</param>
+			<param>
+				<name>aldouble</name>
+				<type>double</type>
+				<default>42.42</default>
+				<doc>Sample double</doc>
+			</param>
+			<param>
+				<name>alfloat</name>
+				<type>float</type>
+				<default>42.42</default>
+				<doc>Sample float</doc>
+			</param>
+			<param>
 				<name>warnings</name>
 				<type>bool</type>
 				<default>false</default>

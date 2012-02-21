@@ -82,6 +82,8 @@ void sctk_runtime_config_display_struct(const struct sctk_runtime_config_entry_m
 	}
 }
 
+static int _sctk_runtime_config_display_plain_type( const struct sctk_runtime_config_entry_meta * current,void *value, int level);
+
 /*******************  FUNCTION  *********************/
 /**
  * Display element of an array from configuration structure.
@@ -96,6 +98,8 @@ void sctk_runtime_config_display_array(const struct sctk_runtime_config_entry_me
 	int size;
 	int element_size;
 	int i;
+
+	printf("PLOP\n");
 
 	//error
 	assert(config != NULL);
@@ -118,26 +122,29 @@ void sctk_runtime_config_display_array(const struct sctk_runtime_config_entry_me
 		assert(size >= 0);
 		//loop on all values, we know that next meta entry define the type.
 		sctk_runtime_config_display_indent(level);
+
 		if (strcmp(current->inner_type,"int") == 0 || strcmp(current->inner_type,"bool") == 0)
 			printf("%s: {",current->name);
 		else
 			printf("%s:\n",current->name);
+
+		element_size = current->size;
 		for (i = 0 ; i < size ; i++)
 		{
-			/** @TODO Avoid code duplication here with next method. **/
-			if (strcmp(current->inner_type,"int") == 0)
+			void * element = ((char*)(*value))+i*element_size;
+			if( !_sctk_runtime_config_display_plain_type(current, element, level) )
 			{
-				printf("%d, ",((int*)(*value))[i]);
-			} else if (strcmp(current->inner_type,"bool") == 0) {
-				printf("%s, ",(((bool*)(*value))[i])?"true":"false");
-			} else {
+				//If its not a plain type we are here
 				//get element size, we know that it's the next element
 				sctk_runtime_config_display_indent(level+1);
 				printf("%s :\n",(const char*)current->extra);
-				element_size = current->size;
 				assert(element_size > 0);
-				sctk_runtime_config_display_struct(config_meta, config,((char*)(*value))+i*element_size,current->inner_type,level+2);
-			}		
+				sctk_runtime_config_display_struct(config_meta, config,element,current->inner_type,level+2);
+			}
+			else
+			{
+				printf(", ");
+			}
 		}
 		if (strcmp(current->inner_type,"int") == 0 || strcmp(current->inner_type,"bool") == 0)
 			printf("}\n");
@@ -145,8 +152,9 @@ void sctk_runtime_config_display_array(const struct sctk_runtime_config_entry_me
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_display_entry(const struct sctk_runtime_config_entry_meta * config_meta, struct sctk_runtime_config * config,sctk_runtime_config_struct_ptr struct_ptr,
-                               const struct sctk_runtime_config_entry_meta * current,int level)
+void sctk_runtime_config_display_entry(const struct sctk_runtime_config_entry_meta * config_meta, struct sctk_runtime_config * config,
+                                       sctk_runtime_config_struct_ptr struct_ptr,
+                                       const struct sctk_runtime_config_entry_meta * current, int level)
 {
 	//vars
 	void * value;
@@ -159,19 +167,50 @@ void sctk_runtime_config_display_entry(const struct sctk_runtime_config_entry_me
 	value = sctk_runtime_config_get_entry(struct_ptr,current);
 	assert(value != NULL);
 
+
 	if (current->type == SCTK_CONFIG_META_TYPE_ARRAY)
 	{
 		sctk_runtime_config_display_array(config_meta, config,value,current,level);
-	} else if (strcmp(current->inner_type,"int") == 0) {
-		sctk_runtime_config_display_indent(level);
-		printf("%s: %d\n",current->name,*(int*)value);
-	} else if (strcmp(current->inner_type,"bool") == 0) {
-		sctk_runtime_config_display_indent(level);
-		printf("%s: %s\n",current->name,(*(bool*)value)?"true":"false");
-	} else {
+	}
+	else if ( !_sctk_runtime_config_display_plain_type( current, value, level) )
+	{
+		//If not plain type we are here
 		sctk_runtime_config_display_indent(level);
 		printf("%s: \n",current->name);
 		sctk_runtime_config_display_struct(config_meta, config,value,current->inner_type,level+1);
 	}
+}
+
+
+static int _sctk_runtime_config_display_plain_type( const struct sctk_runtime_config_entry_meta * current,void *value, int level)
+{
+	if (strcmp(current->inner_type,"int") == 0)
+	{
+		sctk_runtime_config_display_indent(level);
+		printf("%s: %d\n",current->name,*(int*)value);
+		return 1;
+	} else if (strcmp(current->inner_type,"bool") == 0)
+	{
+		sctk_runtime_config_display_indent(level);
+		printf("%s: %s\n",current->name,(*(bool*)value)?"true":"false");
+		return 1;
+	} else if (strcmp(current->inner_type,"float") == 0)
+	{
+		sctk_runtime_config_display_indent(level);
+		printf("%s: %f\n",current->name,*(float*)value);
+		return 1;
+	} else if (strcmp(current->inner_type,"double") == 0)
+	{
+		sctk_runtime_config_display_indent(level);
+		printf("%s: %g\n",current->name,*(double*)value);
+		return 1;
+	} else if (strcmp(current->inner_type,"char *") == 0)
+	{
+		sctk_runtime_config_display_indent(level);
+		printf("%s: %s\n",current->name,*((char **)value));
+		return 1;
+	}
+
+	return 0;
 }
 

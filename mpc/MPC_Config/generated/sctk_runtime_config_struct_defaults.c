@@ -48,6 +48,9 @@ void sctk_runtime_config_module_init_allocator(void * struct_ptr)
 	//Simple params :
 	obj->numa = false;
 	obj->profile = false;
+	obj->alstring= "TestTestTest";
+	obj->aldouble = 42.42;
+	obj->alfloat = 42.42;
 	obj->warnings = false;
 	sctk_runtime_config_module_init_test(&obj->test);
 	//array

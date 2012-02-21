@@ -143,6 +143,9 @@
 			<modules>
 				<allocator>
 					<profile>false</profile>
+					<alstring>Allocator overrided EulerMHD string</alstring>
+					<aldouble>123.123</aldouble>
+					<alfloat>456.456</alfloat>
 				</allocator>
 				<launcher>
 					<smt>false</smt>

@@ -42,7 +42,7 @@ bool sctk_runtime_config_map_entry_to_bool(xmlNodePtr node)
 		fprintf(stderr,"Invalid boolean value (true|false) : %s\n",value);
 		abort();
 	}
-	free(value);
+	xmlFree(value);
 	return res;
 }
 
@@ -55,6 +55,33 @@ int sctk_runtime_config_map_entry_to_int(xmlNodePtr node)
 	res = atoi((char*)value);
 	free(value);
 	return res;
+}
+
+/*******************  FUNCTION  *********************/
+double sctk_runtime_config_map_entry_to_double(xmlNodePtr node)
+{
+	double res;
+	xmlChar * value = xmlNodeGetContent(node);
+	res = atof((char*)value);
+	xmlFree(value);
+	return res;
+}
+
+/*******************  FUNCTION  *********************/
+float sctk_runtime_config_map_entry_to_float(xmlNodePtr node)
+{
+	return (float)sctk_runtime_config_map_entry_to_double(node);
+}
+
+/*******************  FUNCTION  *********************/
+char * sctk_runtime_config_map_entry_to_string(xmlNodePtr node)
+{
+	char *ret = NULL;
+	xmlChar * value = xmlNodeGetContent(node);
+	printf("Mapping %s \n", BAD_CAST( value ) );
+	ret = strdup( BAD_CAST( value ) );
+	xmlFree(value);
+	return ret;
 }
 
 /*******************  FUNCTION  *********************/
@@ -212,12 +239,19 @@ void sctk_runtime_config_apply_node_value( const struct sctk_runtime_config_entr
 	assert(node != NULL);
 	assert(type_name != NULL);
 
+
 	//check type name
 	if (strcmp(type_name,"int") == 0)
 	{
 		*(int*)struct_ptr = sctk_runtime_config_map_entry_to_int(node);
 	} else if (strcmp(type_name,"bool") == 0) {
 		*(bool*)struct_ptr = sctk_runtime_config_map_entry_to_bool(node);
+	} else if (strcmp(type_name,"double") == 0) {
+		*(double*)struct_ptr = sctk_runtime_config_map_entry_to_double(node);
+	} else if (strcmp(type_name,"float") == 0) {
+		*(float*)struct_ptr = sctk_runtime_config_map_entry_to_float(node);
+	} else if (strcmp(type_name,"char *") == 0) {
+		*((char **)struct_ptr) = sctk_runtime_config_map_entry_to_string(node);
 	} else {
 		entry = sctk_runtime_config_get_meta_type_entry(config_meta, type_name);
 		if (entry == NULL)

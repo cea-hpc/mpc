@@ -50,6 +50,12 @@ struct sctk_runtime_config_module_allocator
 	bool numa;
 	/**Enable of disable usage of allocator profiler.**/
 	bool profile;
+	/**Sample string**/
+	char * alstring;
+	/**Sample double**/
+	double aldouble;
+	/**Sample float**/
+	float alfloat;
 	/**Permit to enable of disable allocator warnings.**/
 	bool warnings;
 	/****/

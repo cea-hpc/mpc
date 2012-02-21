@@ -98,6 +98,8 @@ void sctk_runtime_config_map_node_to_c_struct( const struct sctk_runtime_config_
 //type supports
 int sctk_runtime_config_map_entry_to_int(xmlNodePtr node);
 bool sctk_runtime_config_map_entry_to_bool(xmlNodePtr node);
+double sctk_runtime_config_map_entry_to_double(xmlNodePtr node);
+float sctk_runtime_config_map_entry_to_float(xmlNodePtr node);
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_reset(sctk_runtime_config_struct_ptr config);
