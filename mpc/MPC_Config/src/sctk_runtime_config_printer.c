@@ -74,11 +74,14 @@ void sctk_runtime_config_display_union(const struct sctk_runtime_config_entry_me
 
 	if (*union_type_id == 0)
 	{
-		sctk_runtime_config_display_indent(level);
 		printf("NONE\n");
 	} else {
 		//check
 		assume(entry->type == SCTK_CONFIG_META_TYPE_UNION_ENTRY,"Invalid union entry type : %d.",entry->type);
+		//display entry name
+		printf("\n");
+		sctk_runtime_config_display_indent(level);
+		printf("%s :",entry->name);
 		//display it
 		sctk_runtime_config_display_entry(config_meta,config,union_data,entry,level);
 	}
@@ -97,7 +100,7 @@ void sctk_runtime_config_display_struct(const struct sctk_runtime_config_entry_m
 	//vars
 	const struct sctk_runtime_config_entry_meta * entry;
 	const struct sctk_runtime_config_entry_meta * child;
-// 	void * value = struct_ptr;
+	void * value = struct_ptr;
 
 	//error
 	assert(config != NULL);
@@ -117,9 +120,17 @@ void sctk_runtime_config_display_struct(const struct sctk_runtime_config_entry_m
 		while (child != NULL)
 		{
 			//get value
-// 			value = sctk_runtime_config_get_entry(struct_ptr,child);
-// 			assert(value != NULL);
-			sctk_runtime_config_display_entry(config_meta, config,struct_ptr,child,level);
+			value = sctk_runtime_config_get_entry(struct_ptr,child);
+			assert(value != NULL);
+			//display name
+			printf("\n");
+			sctk_runtime_config_display_indent(level);
+			printf("%s: ",child->name);
+			//display value
+			if (child->type == SCTK_CONFIG_META_TYPE_ARRAY)
+				sctk_runtime_config_display_array(config_meta, config,value,child,level);
+			else
+				sctk_runtime_config_display_entry(config_meta, config,value,child,level);
 			//move to next
 			child = sctk_runtime_config_meta_get_next_child(child);
 		}
@@ -144,8 +155,7 @@ void sctk_runtime_config_display_array(const struct sctk_runtime_config_entry_me
 	int size;
 	int element_size;
 	int i;
-
-	printf("PLOP\n");
+	bool is_basic_type;
 
 	//error
 	assert(config != NULL);
@@ -162,72 +172,52 @@ void sctk_runtime_config_display_array(const struct sctk_runtime_config_entry_me
 	if (*value == NULL)
 	{
 		assert(size == 0);
-		sctk_runtime_config_display_indent(level);
-		printf("%s: {}\n",current->name);
+		printf("{}");
 	} else {
 		assert(size >= 0);
-		//loop on all values, we know that next meta entry define the type.
-		sctk_runtime_config_display_indent(level);
 
-		if (strcmp(current->inner_type,"int") == 0 || strcmp(current->inner_type,"bool") == 0)
-			printf("%s: {",current->name);
-		else
-			printf("%s:\n",current->name);
+		is_basic_type = sctk_runtime_config_is_basic_type(current->inner_type);
+		if (is_basic_type)
+			printf("{ ");
 
 		element_size = current->size;
 		for (i = 0 ; i < size ; i++)
 		{
 			void * element = ((char*)(*value))+i*element_size;
-			if( !_sctk_runtime_config_display_plain_type(current, element, level) )
+
+			//add some separators
+			if (is_basic_type == false)
 			{
-				//If its not a plain type we are here
-				//get element size, we know that it's the next element
+				printf("\n");
 				sctk_runtime_config_display_indent(level+1);
-				printf("%s :\n",(const char*)current->extra);
-				assert(element_size > 0);
-				entry = sctk_runtime_config_get_meta_type_entry(config_meta, current->inner_type);
-				if (entry->type == SCTK_CONFIG_META_TYPE_STRUCT)
-					sctk_runtime_config_display_struct(config_meta, config,((char*)(*value))+i*element_size,current->inner_type,level+2);
-				else if (entry->type == SCTK_CONFIG_META_TYPE_UNION)
-					sctk_runtime_config_display_union(config_meta, config,((char*)(*value))+i*element_size,current->inner_type,level+2);
-				else
-					fatal("Invalid type.");
-			} else {
+				printf("%s :",(const char *)current->extra);
+			} else if (i > 0) {
 				printf(", ");
 			}
+
+			//display the value
+			sctk_runtime_config_display_entry(config_meta,config,element,current,level+1);
 		}
-		if (strcmp(current->inner_type,"int") == 0 || strcmp(current->inner_type,"bool") == 0)
-			printf("}\n");
+
+		if (is_basic_type)
+			printf(" }");
 	}
 }
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_display_entry(const struct sctk_runtime_config_entry_meta * config_meta, struct sctk_runtime_config * config,
-                                       sctk_runtime_config_struct_ptr struct_ptr,
+                                       sctk_runtime_config_struct_ptr value,
                                        const struct sctk_runtime_config_entry_meta * current, int level)
 {
 	//vars
-	void * value;
 	const struct sctk_runtime_config_entry_meta * entry;
 
 	//error
 	assert(current != NULL);
 	assert(current->type == SCTK_CONFIG_META_TYPE_PARAM || current->type == SCTK_CONFIG_META_TYPE_ARRAY || current->type == SCTK_CONFIG_META_TYPE_UNION_ENTRY);
 
-	//get value
-	value = sctk_runtime_config_get_entry(struct_ptr,current);
-	assert(value != NULL);
-
-
-	if (current->type == SCTK_CONFIG_META_TYPE_ARRAY)
+	if ( !sctk_runtime_config_display_plain_type( current->inner_type, value, level) )
 	{
-		sctk_runtime_config_display_array(config_meta, config,value,current,level);
-	}
-	else if ( !_sctk_runtime_config_display_plain_type( current, value, level) )
-	{
-		//If not plain type we are here
-		sctk_runtime_config_display_indent(level);
-		printf("%s: \n",current->name);
 		entry = sctk_runtime_config_get_meta_type_entry(config_meta, current->inner_type);
 		assert(entry != NULL);
 		/** @TODO avoid this duplication of code **/
@@ -240,36 +230,43 @@ void sctk_runtime_config_display_entry(const struct sctk_runtime_config_entry_me
 	}
 }
 
-
-static int _sctk_runtime_config_display_plain_type( const struct sctk_runtime_config_entry_meta * current,void *value, int level)
+/*******************  FUNCTION  *********************/
+bool sctk_runtime_config_is_basic_type(const char * type_name)
 {
-	if (strcmp(current->inner_type,"int") == 0)
-	{
-		sctk_runtime_config_display_indent(level);
-		printf("%s: %d\n",current->name,*(int*)value);
-		return 1;
-	} else if (strcmp(current->inner_type,"bool") == 0)
-	{
-		sctk_runtime_config_display_indent(level);
-		printf("%s: %s\n",current->name,(*(bool*)value)?"true":"false");
-		return 1;
-	} else if (strcmp(current->inner_type,"float") == 0)
-	{
-		sctk_runtime_config_display_indent(level);
-		printf("%s: %f\n",current->name,*(float*)value);
-		return 1;
-	} else if (strcmp(current->inner_type,"double") == 0)
-	{
-		sctk_runtime_config_display_indent(level);
-		printf("%s: %g\n",current->name,*(double*)value);
-		return 1;
-	} else if (strcmp(current->inner_type,"char *") == 0)
-	{
-		sctk_runtime_config_display_indent(level);
-		printf("%s: %s\n",current->name,*((char **)value));
-		return 1;
-	}
+	return (strcmp(type_name,"int")    == 0   || strcmp(type_name,"bool")   == 0
+	    ||  strcmp(type_name,"double") == 0   || strcmp(type_name,"char *") == 0 );
+}
 
-	return 0;
+/*******************  FUNCTION  *********************/
+/**
+ * Display simple values.
+ * @param current Define the current meta entry to display.
+ * @param value Define the indentation level.
+**/
+bool sctk_runtime_config_display_plain_type( const char * type_name,void *value, int level)
+{
+	if (strcmp(type_name,"int") == 0)
+	{
+		printf("%d",*(int*)value);
+		return true;
+	} else if (strcmp(type_name,"bool") == 0)
+	{
+		printf("%s",(*(bool*)value)?"true":"false");
+		return true;
+	} else if (strcmp(type_name,"float") == 0)
+	{
+		printf("%f",*(float*)value);
+		return true;
+	} else if (strcmp(type_name,"double") == 0)
+	{
+		printf("%g",*(double*)value);
+		return true;
+	} else if (strcmp(type_name,"char *") == 0)
+	{
+		printf("%s",*((char **)value));
+		return true;
+	} else {
+		return false;
+	}
 }
 

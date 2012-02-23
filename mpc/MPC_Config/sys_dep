@@ -24,6 +24,7 @@
 SCTK_CHECK_HEADER stdio.h
 SCTK_CHECK_HEADER stdlib.h
 SCTK_CHECK_HEADER string.h
+SCTK_CHECK_HEADER stdbool.h
 
 sctk_echo
 

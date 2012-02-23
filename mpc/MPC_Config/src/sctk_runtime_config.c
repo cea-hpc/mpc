@@ -136,6 +136,7 @@ void sctk_runtime_config_runtime_display(struct sctk_runtime_config * config)
 	//separator
 	printf("====================== MPC CONFIG ======================\n");
 	sctk_runtime_config_display_struct(sctk_runtime_config_db, config,&config->modules,"sctk_runtime_config_modules",0);
+	printf("\n");
 	printf("========================================================\n");
 }
 

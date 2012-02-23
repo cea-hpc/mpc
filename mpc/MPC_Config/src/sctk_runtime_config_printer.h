@@ -34,6 +34,8 @@ void sctk_runtime_config_display_entry(const struct sctk_runtime_config_entry_me
                                const struct sctk_runtime_config_entry_meta * current,int level);
 void sctk_runtime_config_display_struct(const struct sctk_runtime_config_entry_meta * config_meta, struct sctk_runtime_config * config,sctk_runtime_config_struct_ptr struct_ptr,const char * type_name,int level);
 void sctk_runtime_config_display_indent(int level);
+bool sctk_runtime_config_display_plain_type( const char * type_name,void *value, int level);
+bool sctk_runtime_config_is_basic_type(const char * type_name);
 
 
 #endif //SCTK_CONFIG_PRINTER
