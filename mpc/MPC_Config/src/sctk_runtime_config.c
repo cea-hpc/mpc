@@ -46,11 +46,93 @@ bool __sctk_global_runtime_config_init__ = false;
 extern const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[];
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_map_profile_to_c_struct( struct sctk_runtime_config * config, xmlNodePtr node);
-void sctk_runtime_config_map_sources_to_c_struct( struct sctk_runtime_config * config,struct sctk_runtime_config_sources * config_sources);
-void sctk_runtime_config_runtime_map_sources_to_c_struct( struct sctk_runtime_config * config,struct sctk_runtime_config_sources * config_sources);
+/**
+ * Map the content of a profile XML node on MPC configuration structure.
+ * @param config Define the configration structure to use.
+ * @param node Define the XML node of the profile. Must be a &lt;profile&gt; balisis.
+**/
+void sctk_runtime_config_map_profile_to_c_struct( struct sctk_runtime_config * config, xmlNodePtr node)
+{
+	//vars
+	xmlNodePtr modules;
+	const struct sctk_runtime_config_entry_meta * entry;
+
+	//errors
+	assert(config != NULL);
+	assert(node != NULL);
+	assert(xmlStrcmp(node->name,SCTK_RUNTIME_CONFIG_XML_NODE_PROFILE) == 0);
+
+	//get modules entry
+	modules = sctk_libxml_find_child_node(node,SCTK_RUNTIME_CONFIG_XML_NODE_MODULES);
+
+	//nothing to do
+	if (modules == NULL)
+		return;
+
+	//another way to map
+	entry = sctk_runtime_config_get_meta_type_entry(sctk_runtime_config_db, "sctk_runtime_config_modules");
+	if (entry == NULL)
+		fatal("Invalid type name : %s.","sctk_runtime_config_modules");
+	sctk_runtime_config_map_node_to_c_struct(sctk_runtime_config_db, config,&config->modules,entry,modules);
+}
 
 /*******************  FUNCTION  *********************/
+/**
+ * Run over all configuration sources to map them onto the C configuration structure.
+ * @param config Define the configuration structure to use.
+ * @param config_sources Define the configuration source the use.
+**/
+void sctk_runtime_config_runtime_map_sources_to_c_struct( struct sctk_runtime_config * config,struct sctk_runtime_config_sources * config_sources)
+{
+	//vars
+	int i;
+
+	//errors
+	assert(config != NULL);
+	assert(config_sources != NULL);
+
+	//apply default
+	memset(config,0,sizeof(*config));
+	sctk_runtime_config_reset(config);
+
+	//run over profiles
+	for (i = 0 ; i < config_sources->cnt_profile_nodes ; ++i)
+		sctk_runtime_config_map_profile_to_c_struct(config,config_sources->profile_nodes[i]);
+}
+
+
+/*******************  FUNCTION  *********************/
+/**
+ * Display the configuration structure in standard output.
+**/
+void sctk_runtime_config_runtime_display(void)
+{
+	//error
+	assert(__sctk_global_runtime_config_init__);
+
+	//separator
+	printf("====================== MPC CONFIG ======================\n");
+	sctk_runtime_config_display_struct(sctk_runtime_config_db,&__sctk_global_runtime_config__.modules,"sctk_runtime_config_modules",0);
+	printf("\n");
+	printf("========================================================\n");
+}
+
+
+/*******************  FUNCTION  *********************/
+/**
+ * Function to cleanup the structure. Caution, be sure that it will not serve anymore.
+**/
+void sctk_runtime_config_runtime_cleanup(void)
+{
+	//ceanlup struct
+	sctk_runtime_config_do_cleanup(&__sctk_global_runtime_config__);
+}
+
+/*******************  FUNCTION  *********************/
+/**
+ * Function used to initilized the MPC configuration structure. It load the XML files, parse them and
+ * map the content on the global C structure.
+**/
 void sctk_runtime_config_init(void)
 {
 	//declare temp storage
@@ -72,79 +154,10 @@ void sctk_runtime_config_init(void)
 		//close
 		sctk_runtime_config_sources_close(&config_sources);
 
-		//display
-		sctk_runtime_config_runtime_display(&__sctk_global_runtime_config__);
-
 		//mark as init
 		__sctk_global_runtime_config_init__ = true;
+
+		//display
+		sctk_runtime_config_runtime_display();
 	}
 }
-
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_map_profile_to_c_struct( struct sctk_runtime_config * config, xmlNodePtr node)
-{
-	//vars
-	xmlNodePtr modules;
-	const struct sctk_runtime_config_entry_meta * entry;
-
-	//errors
-	assert(config != NULL);
-	assert(node != NULL);
-	assert(xmlStrcmp(node->name,BAD_CAST("profile")) == 0);
-
-	//get modules entry
-	modules = sctk_libxml_find_child_node(node,BAD_CAST("modules"));
-
-	//nothing to do
-	if (modules == NULL)
-		return;
-
-	//another way to map
-	entry = sctk_runtime_config_get_meta_type_entry(sctk_runtime_config_db, "sctk_runtime_config_modules");
-	if (entry == NULL)
-		fatal("Invalid type name : %s.","sctk_runtime_config_modules");
-	sctk_runtime_config_map_node_to_c_struct(sctk_runtime_config_db, config,&config->modules,entry,modules);
-}
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_runtime_map_sources_to_c_struct( struct sctk_runtime_config * config,struct sctk_runtime_config_sources * config_sources)
-{
-	//vars
-	int i;
-
-	//errors
-	assert(config != NULL);
-	assert(config_sources != NULL);
-
-	//apply default
-	memset(config,0,sizeof(*config));
-	sctk_runtime_config_reset(config);
-
-	//run over profiles
-	for (i = 0 ; i < config_sources->cnt_profile_nodes ; ++i)
-		sctk_runtime_config_map_profile_to_c_struct(config,config_sources->profile_nodes[i]);
-}
-
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_runtime_display(struct sctk_runtime_config * config)
-{
-	//error
-	assert(config != NULL);
-
-	//separator
-	printf("====================== MPC CONFIG ======================\n");
-	sctk_runtime_config_display_struct(sctk_runtime_config_db, config,&config->modules,"sctk_runtime_config_modules",0);
-	printf("\n");
-	printf("========================================================\n");
-}
-
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_runtime_cleanup(void)
-{
-	//ceanlup struct
-	sctk_runtime_config_do_cleanup(&__sctk_global_runtime_config__);
-}
-

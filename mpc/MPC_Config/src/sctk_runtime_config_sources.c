@@ -30,20 +30,6 @@
 #include "sctk_libxml_helper.h"
 #include "sctk_runtime_config_sources.h"
 
-/*********************  CONSTS  *********************/
-/** Tag name of the root node of XML document. **/
-static const xmlChar * SCKT_CONFIG_XML_NODE_MPC = BAD_CAST("mpc");
-/** Tag name of profile node in XML document. **/
-static const xmlChar * SCKT_CONFIG_XML_NODE_PROFILES = BAD_CAST("profiles");
-/** Tag name of profile node in XML document. **/
-static const xmlChar * SCKT_CONFIG_XML_NODE_PROFILE = BAD_CAST("profile");
-/** Tag name of mappings node in XML document. **/
-static const xmlChar * SCKT_CONFIG_XML_NODE_MAPPINGS = BAD_CAST("mappings");
-/** Tag name of mapping node in XML document. **/
-static const xmlChar * SCKT_CONFIG_XML_NODE_MAPPING = BAD_CAST("mapping");
-/** Tag name of selectors node in XML document. **/
-static const xmlChar * SCKT_CONFIG_XML_NODE_SELECTORS = BAD_CAST("selectors");
-
 /*******************  FUNCTION  *********************/
 /**
  * Checks if a given profile name is not already in the profile name array
@@ -86,27 +72,27 @@ void sctk_runtime_config_sources_select_profiles_in_mapping(struct sctk_runtime_
 	assert(config_sources != NULL);
 	assert(mapping != NULL);
 	assert(mapping->type == XML_ELEMENT_NODE);
-	assert(xmlStrcmp(mapping->name,BAD_CAST(SCKT_CONFIG_XML_NODE_MAPPING)) == 0);
+	assert(xmlStrcmp(mapping->name,SCTK_RUNTIME_CONFIG_XML_NODE_MAPPING) == 0);
 
 	//check selectors
-	selectors = sctk_libxml_find_child_node(mapping,SCKT_CONFIG_XML_NODE_SELECTORS);
+	selectors = sctk_libxml_find_child_node(mapping,SCTK_RUNTIME_CONFIG_XML_NODE_SELECTORS);
 	if (selectors != NULL)
 	{
 		if (sctk_runtime_config_xml_selectors_check(selectors))
 		{
 			//get profiles
-			profile = sctk_libxml_find_child_node(mapping,SCKT_CONFIG_XML_NODE_PROFILES);
+			profile = sctk_libxml_find_child_node(mapping,SCTK_RUNTIME_CONFIG_XML_NODE_PROFILES);
 			//down to first profile child
 			profile = xmlFirstElementChild(profile);
 
 			assert(profile != NULL);
-			assert(xmlStrcmp(profile->name,SCKT_CONFIG_XML_NODE_PROFILE) == 0);
+			assert(xmlStrcmp(profile->name,SCTK_RUNTIME_CONFIG_XML_NODE_PROFILE) == 0);
 
 			//loop on childs
 			while (profile != NULL)
 			{
 				//if profile, ok add it
-				if (xmlStrcmp(profile->name,SCKT_CONFIG_XML_NODE_PROFILE) == 0)
+				if (xmlStrcmp(profile->name,SCTK_RUNTIME_CONFIG_XML_NODE_PROFILE) == 0)
 				{
 
 					xmlChar *profile_name = xmlNodeGetContent(profile);
@@ -144,12 +130,12 @@ void sctk_runtime_config_sources_select_profiles_in_file(struct sctk_runtime_con
 	assert(source != NULL);
 
 	//search "mappings" balise
-	mappings = sctk_libxml_find_child_node(source->root_node,SCKT_CONFIG_XML_NODE_MAPPINGS);
+	mappings = sctk_libxml_find_child_node(source->root_node,SCTK_RUNTIME_CONFIG_XML_NODE_MAPPINGS);
 	if (mappings != NULL)
 	{
 		//errors
 		assert(mappings->type == XML_ELEMENT_NODE);
-		assert(xmlStrcmp(mappings->name,SCKT_CONFIG_XML_NODE_MAPPINGS) == 0);
+		assert(xmlStrcmp(mappings->name,SCTK_RUNTIME_CONFIG_XML_NODE_MAPPINGS) == 0);
 
 		//loop on mappings to extract names
 		mapping = xmlFirstElementChild(mappings);
@@ -183,7 +169,7 @@ xmlNodePtr sctk_runtime_config_sources_find_profile_node(struct sctk_runtime_con
 		return NULL;
 
 	//find node "profiles"
-	profiles = sctk_libxml_find_child_node(source->root_node,SCKT_CONFIG_XML_NODE_PROFILES);
+	profiles = sctk_libxml_find_child_node(source->root_node,SCTK_RUNTIME_CONFIG_XML_NODE_PROFILES);
 	if (profiles == NULL)
 		return NULL;
 
@@ -226,7 +212,7 @@ void sctk_runtime_config_sources_insert_profile_node(struct sctk_runtime_config_
 		return;
 
 	//errors
-	assert(xmlStrcmp(node->name,SCKT_CONFIG_XML_NODE_PROFILE) == 0 );
+	assert(xmlStrcmp(node->name,SCTK_RUNTIME_CONFIG_XML_NODE_PROFILE) == 0 );
 
 	//search to check if already in list
 	for (i = 0 ; i < config_sources->cnt_profile_nodes ; ++i)
@@ -258,7 +244,7 @@ void sctk_runtime_config_sources_select_profile_nodes(struct sctk_runtime_config
 
 	int i = 0;
 	
-	for( i = 0 ; i < SCTK_CONFIG_LEVEL_COUNT ; i++ )
+	for( i = 0 ; i < SCTK_RUNTIME_CONFIG_LEVEL_COUNT ; i++ )
 	{
 		if( sctk_runtime_config_source_xml_is_open(&config_sources->sources[i]) )
 		{
@@ -320,7 +306,7 @@ void sctk_runtime_config_sources_select_profiles(struct sctk_runtime_config_sour
 	int i = 0;
 	
 	//select in all sources
-	for( i = 0 ; i < SCTK_CONFIG_LEVEL_COUNT ; i++ )
+	for( i = 0 ; i < SCTK_RUNTIME_CONFIG_LEVEL_COUNT ; i++ )
 	{
 		if(  sctk_runtime_config_source_xml_is_open(&config_sources->sources[i])  )
 		{
@@ -356,13 +342,13 @@ void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml *
 	{
 		switch(level)
 		{
-			case SCTK_CONFIG_OPEN_WARNING:
+			case SCTK_RUNTIME_CONFIG_OPEN_WARNING:
 				warning("Cannot open XML file : %s\n",filename);
 				return;
-			case SCTK_CONFIG_OPEN_ERROR:
+			case SCTK_RUNTIME_CONFIG_OPEN_ERROR:
 				fatal("Cannot open XML file : %s\n",filename);
 				return;
-			case SCTK_CONFIG_OPEN_SILENT:
+			case SCTK_RUNTIME_CONFIG_OPEN_SILENT:
 				return;
 		}
 	}
@@ -372,7 +358,7 @@ void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml *
 	assume (source->root_node != NULL,"Config file is empty : %s\n",filename);
 
 	//check root node name
-	assume (xmlStrcmp(source->root_node->name,SCKT_CONFIG_XML_NODE_MPC) == 0,"Bad root node name %s in config file : %s\n",source->root_node->name,filename);
+	assume (xmlStrcmp(source->root_node->name,SCTK_RUNTIME_CONFIG_XML_NODE_MPC) == 0,"Bad root node name %s in config file : %s\n",source->root_node->name,filename);
 }
 
 
@@ -405,13 +391,13 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 	sprintf(user_file,"%s/.mpc/config.xml",getenv("HOME"));
 
 	//open system config
-	sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_CONFIG_SYSTEM_LEVEL],SCTK_INSTALL_PREFIX "/share/mpc/system.xml",SCTK_CONFIG_OPEN_WARNING);
-	sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_CONFIG_USER_LEVEL],user_file,SCTK_CONFIG_OPEN_SILENT);
+	sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_RUNTIME_CONFIG_SYSTEM_LEVEL],SCTK_INSTALL_PREFIX "/share/mpc/system.xml",SCTK_RUNTIME_CONFIG_OPEN_WARNING);
+	sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_RUNTIME_CONFIG_USER_LEVEL],user_file,SCTK_RUNTIME_CONFIG_OPEN_SILENT);
 
 	if (application_config_file != NULL )
 	{
 		if( application_config_file[0] != '\0')
-			sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_CONFIG_APPLICATION_LEVEL],application_config_file,SCTK_CONFIG_OPEN_ERROR);
+			sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_RUNTIME_CONFIG_APPLICATION_LEVEL],application_config_file,SCTK_RUNTIME_CONFIG_OPEN_ERROR);
 	}
 
 	//find profiles to use and sort them depeding on priority
@@ -432,7 +418,7 @@ void sctk_runtime_config_sources_close(struct sctk_runtime_config_sources * conf
 	assert(config_sources != NULL);
 
 	//close XML documents
-	for( i = 0 ; i < SCTK_CONFIG_LEVEL_COUNT ; i++ )
+	for( i = 0 ; i < SCTK_RUNTIME_CONFIG_LEVEL_COUNT ; i++ )
 	{
 		if( sctk_runtime_config_source_xml_is_open(&config_sources->sources[i]) )
 		{

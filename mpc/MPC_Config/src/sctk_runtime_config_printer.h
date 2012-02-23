@@ -27,12 +27,13 @@
 #include "sctk_runtime_config_mapper.h"
 
 /*******************  FUNCTION  *********************/
-const struct sctk_runtime_config_entry_meta * sctk_runtime_config_array_get_inner_type(const struct sctk_runtime_config_entry_meta * current);
-void sctk_runtime_config_display_array(const struct sctk_runtime_config_entry_meta * config_meta, struct sctk_runtime_config * config,
+void sctk_runtime_config_display_union(const struct sctk_runtime_config_entry_meta * config_meta, void * value,const char * type_name,int level);
+void sctk_runtime_config_display_array(const struct sctk_runtime_config_entry_meta * config_meta,
                                void ** value,const struct sctk_runtime_config_entry_meta * current,int level);
-void sctk_runtime_config_display_entry(const struct sctk_runtime_config_entry_meta * config_meta, struct sctk_runtime_config * config,sctk_runtime_config_struct_ptr struct_ptr,
-                               const struct sctk_runtime_config_entry_meta * current,int level);
-void sctk_runtime_config_display_struct(const struct sctk_runtime_config_entry_meta * config_meta, struct sctk_runtime_config * config,sctk_runtime_config_struct_ptr struct_ptr,const char * type_name,int level);
+void sctk_runtime_config_display_value(const struct sctk_runtime_config_entry_meta * config_meta,
+                                       void * value,
+                                       const char * type_name, int level);
+void sctk_runtime_config_display_struct(const struct sctk_runtime_config_entry_meta * config_meta, void * struct_ptr,const char * type_name,int level);
 void sctk_runtime_config_display_indent(int level);
 bool sctk_runtime_config_display_plain_type( const char * type_name,void *value, int level);
 bool sctk_runtime_config_is_basic_type(const char * type_name);

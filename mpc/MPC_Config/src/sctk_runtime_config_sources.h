@@ -20,8 +20,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_RUNTIME_CONFIG_FILES_H
-#define SCTK_RUNTIME_CONFIG_FILES_H
+#ifndef SCTK_RUNTIME_CONFIG_SOURCES_H
+#define SCTK_RUNTIME_CONFIG_SOURCES_H
 
 /********************  HEADERS  *********************/
 #include <libxml/tree.h>
@@ -33,6 +33,22 @@
  * @todo Maybe replace those static arrays by UTList elements.
 **/
 #define SCTK_RUNTIME_CONFIG_MAX_PROFILES 16
+
+/*********************  CONSTS  *********************/
+/** Tag name of the root node of XML document. **/
+#define SCTK_RUNTIME_CONFIG_XML_NODE_MPC BAD_CAST("mpc")
+/** Tag name of profile node in XML document. **/
+#define SCTK_RUNTIME_CONFIG_XML_NODE_PROFILES BAD_CAST("profiles")
+/** Tag name of profile node in XML document. **/
+#define SCTK_RUNTIME_CONFIG_XML_NODE_PROFILE BAD_CAST("profile")
+/** Tag name of mappings node in XML document. **/
+#define SCTK_RUNTIME_CONFIG_XML_NODE_MAPPINGS BAD_CAST("mappings")
+/** Tag name of mapping node in XML document. **/
+#define SCTK_RUNTIME_CONFIG_XML_NODE_MAPPING BAD_CAST("mapping")
+/** Tag name of selectors node in XML document. **/
+#define SCTK_RUNTIME_CONFIG_XML_NODE_SELECTORS BAD_CAST("selectors")
+/** Tag name of modules node in XML document. **/
+#define SCTK_RUNTIME_CONFIG_XML_NODE_MODULES BAD_CAST("modules")
 
 /*********************  STRUCT  *********************/
 /**
@@ -48,23 +64,34 @@ struct sctk_runtime_config_source_xml
 };
 
 /*********************  ENUMS  *********************/
+/**
+ * Define some warning levels for errors appening in configuration routines.
+ * This is mostly for file not found at loading time depending on the level.
+**/
 enum sctk_runtime_config_open_error_level
 {
-	SCTK_CONFIG_OPEN_WARNING,
-	SCTK_CONFIG_OPEN_ERROR,
-	SCTK_CONFIG_OPEN_SILENT
+	/** Only print a warning and continue. **/
+	SCTK_RUNTIME_CONFIG_OPEN_WARNING,
+	/** This is an error, print and exit. **/
+	SCTK_RUNTIME_CONFIG_OPEN_ERROR,
+	/** Do not display anything and continue. **/
+	SCTK_RUNTIME_CONFIG_OPEN_SILENT
 };
 
+/*********************  ENUMS  *********************/
+/**
+ * Define all configuration levels. Loaded in direct order.
+**/
 enum sctk_xml_config_type
 {
 	/** System level XML configuration file identifier. **/
-	SCTK_CONFIG_SYSTEM_LEVEL,
+	SCTK_RUNTIME_CONFIG_SYSTEM_LEVEL,
 	/** User level XML configuration file identifier. **/
-	SCTK_CONFIG_USER_LEVEL,
+	SCTK_RUNTIME_CONFIG_USER_LEVEL,
 	/** Application level XML configuration file identifier. **/
-	SCTK_CONFIG_APPLICATION_LEVEL,
+	SCTK_RUNTIME_CONFIG_APPLICATION_LEVEL,
 	/** Number of configuration types. **/
-	SCTK_CONFIG_LEVEL_COUNT
+	SCTK_RUNTIME_CONFIG_LEVEL_COUNT
 };
 
 
@@ -77,7 +104,7 @@ enum sctk_xml_config_type
 struct sctk_runtime_config_sources
 {
 	/** Array storing the config source associated with each level **/
-	struct sctk_runtime_config_source_xml sources[SCTK_CONFIG_LEVEL_COUNT];
+	struct sctk_runtime_config_source_xml sources[SCTK_RUNTIME_CONFIG_LEVEL_COUNT];
 	/** List of selected XML profile names. **/
 	xmlChar * profile_names[SCTK_RUNTIME_CONFIG_MAX_PROFILES];
 	/** List of selected XML profile nodes. **/
@@ -108,4 +135,4 @@ xmlNodePtr sctk_runtime_config_sources_find_profile_node(struct sctk_runtime_con
 void sctk_runtime_config_sources_select_profiles_in_file(struct sctk_runtime_config_sources * config_sources,struct sctk_runtime_config_source_xml * source);
 void sctk_runtime_config_sources_select_profiles_in_mapping(struct sctk_runtime_config_sources * config_sources, xmlNodePtr mapping);
 
-#endif //SCTK_CONFIG_FILES_H
+#endif //SCTK_RUNTIME_CONFIG_FILES_H
