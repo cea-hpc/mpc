@@ -1214,6 +1214,7 @@ __old_mpcomp_barrier_for_dyn (void)
 
   sctk_nodebug ("__mpcomp_barrier: Leaving");
 }
+//#endif
 
 void
 __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,

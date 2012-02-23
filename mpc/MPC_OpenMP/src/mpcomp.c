@@ -398,7 +398,8 @@ void __mpcomp_thread_team_init (mpcomp_thread_team_t *team)
 	team->nb_threads_entered_single[i] = 0;
    }
 
-   team->nb_threads_entered_single[MPCOMP_MAX_ALIVE_SINGLE] = -1;
+   team->nb_threads_entered_single[MPCOMP_MAX_ALIVE_SINGLE] = MPCOMP_NOWAIT_STOP_SYMBOL;
+   
    team->nb_threads_stop = 0;
 
    /* Init for dynamic scheduling construct */

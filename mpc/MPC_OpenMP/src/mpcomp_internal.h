@@ -62,9 +62,9 @@ extern "C"
 #define MPCOMP_STOP 2
 #define MPCOMP_CONSUMED 3
 
-#define MPCOMP_NOWAIT_STOP_SYMBOL	(-2)
-#define MPCOMP_NOWAIT_STOP_CONSUMED	(-3)
-#define MPCOMP_NOWAIT_OK_SYMBOL		(-4)
+#define MPCOMP_NOWAIT_STOP_SYMBOL	(-1)
+#define MPCOMP_NOWAIT_STOP_CONSUMED	(-2)
+#define MPCOMP_NOWAIT_OK_SYMBOL		(-3)
 
 
 #define MPCOMP_LOCK_INIT {0,0,NULL,NULL,NULL,SCTK_SPINLOCK_INITIALIZER}
@@ -146,7 +146,7 @@ struct mpcomp_thread_s {
   int static_current_chunk ;
 
   /* SINGLE CONSTRUCT */
-  volatile int current_single;							/* Which 'single' construct did we already go through? */
+  int current_single;							/* Which 'single' construct did we already go through? */
   int stop_index;
 
   /* ORDERED CONSTRUCT */

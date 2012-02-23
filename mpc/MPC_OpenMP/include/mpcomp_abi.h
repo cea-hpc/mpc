@@ -257,11 +257,11 @@ void __mpcomp_ordered_static_loop_end_nowait() ;
 
 /* COMBINED PARALLEL REGION + IGNORE-NOWAIT VERSIONS */
 
-/*  void __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
+ void __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
 					     void *(*func) (void *),
 					     void *shared, int lb, int b,
-					     int incr, int chunk_size);
-  int __mpcomp_dynamic_loop_next_ignore_nowait (int *from, int *to);*/
+					     int incr, int chunk_size); 
+/*  int __mpcomp_dynamic_loop_next_ignore_nowait (int *from, int *to);*/
 
 #ifdef __cplusplus
 }
