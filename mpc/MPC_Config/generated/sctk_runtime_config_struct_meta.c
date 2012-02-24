@@ -40,6 +40,10 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"sctk_runtime_config_module_rail" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_module_rail) , NULL , sctk_runtime_config_module_init_rail},
 	{"tt"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_rail,tt)  , sizeof(int) , "int" , NULL},
 	{"tt2"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_rail,tt2)  , sizeof(int) , "int" , NULL},
+	//union
+	{"sctk_runtime_config_module_driver" , SCTK_CONFIG_META_TYPE_UNION , 0  , sizeof(struct sctk_runtime_config_module_driver) , NULL , sctk_runtime_config_module_init_driver},
+	{"test"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_driver_test  , sizeof(struct sctk_runtime_config_module_test) , "sctk_runtime_config_module_test" , sctk_runtime_config_module_init_test},
+	{"rail"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , SCTK_RTCFG_driver_rail  , sizeof(struct sctk_runtime_config_module_rail) , "sctk_runtime_config_module_rail" , sctk_runtime_config_module_init_rail},
 	//struct
 	{"sctk_runtime_config_module_allocator" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_module_allocator) , NULL , sctk_runtime_config_module_init_allocator},
 	{"numa"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_allocator,numa)  , sizeof(bool) , "bool" , NULL},
@@ -49,9 +53,11 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"alfloat"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_allocator,alfloat)  , sizeof(float) , "float" , NULL},
 	{"warnings"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_allocator,warnings)  , sizeof(bool) , "bool" , NULL},
 	{"test"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_allocator,test)  , sizeof(struct sctk_runtime_config_module_test) , "sctk_runtime_config_module_test" , sctk_runtime_config_module_init_test},
+	{"driver"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_allocator,driver)  , sizeof(struct sctk_runtime_config_module_driver) , "sctk_runtime_config_module_driver" , sctk_runtime_config_module_init_driver},
 	{"classes"     , SCTK_CONFIG_META_TYPE_ARRAY  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_allocator,classes) , sizeof(int) , "int" , "class"},
 	{"classes2"     , SCTK_CONFIG_META_TYPE_ARRAY  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_allocator,classes2) , sizeof(int) , "int" , "class2"},
 	{"rails"     , SCTK_CONFIG_META_TYPE_ARRAY  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_allocator,rails) , sizeof(struct sctk_runtime_config_module_rail) , "sctk_runtime_config_module_rail" , "rail"},
+	{"driverlist"     , SCTK_CONFIG_META_TYPE_ARRAY  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_allocator,driverlist) , sizeof(struct sctk_runtime_config_module_driver) , "sctk_runtime_config_module_driver" , "driver"},
 	//struct
 	{"sctk_runtime_config_module_launcher" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_module_launcher) , NULL , sctk_runtime_config_module_init_launcher},
 	{"smt"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_launcher,smt)  , sizeof(bool) , "bool" , NULL},

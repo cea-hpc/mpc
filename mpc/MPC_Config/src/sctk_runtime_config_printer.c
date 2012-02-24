@@ -24,6 +24,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
+#include "sctk_runtime_config_debug.h"
 #include "sctk_runtime_config_printer.h"
 #include "sctk_runtime_config_mapper.h"
 
@@ -38,6 +39,48 @@ void sctk_runtime_config_display_indent(int level)
 	{
 		printf("\t");
 		level--;
+	}
+}
+
+/*******************  FUNCTION  *********************/
+/**
+ * Display all child of a composed configuration union.
+ * @param config Define the configuration root structure.
+ * @param struct_ptr Define the current element pointer.
+ * @param current Define the meta description for current element.
+ * @param level Define the indentation level to apply to current element.
+**/
+void sctk_runtime_config_display_union(const struct sctk_runtime_config_entry_meta * config_meta, struct sctk_runtime_config * config,sctk_runtime_config_struct_ptr struct_ptr,const char * type_name,int level)
+{
+	//vars
+	const struct sctk_runtime_config_entry_meta * entry;
+	int * union_type_id = struct_ptr;
+	void * union_data = struct_ptr + sizeof(int);
+
+	//error
+	assert(config != NULL);
+	assert(type_name != NULL);
+	assert(struct_ptr != NULL);
+	assert(sizeof(enum sctk_runtime_config_meta_entry_type) == sizeof(int));
+	assert(*union_type_id < 64);
+
+	//find meta entry for type
+	entry = sctk_runtime_config_get_meta_type_entry(config_meta, type_name);
+	assert(entry != NULL);
+	assert(entry->type == SCTK_CONFIG_META_TYPE_UNION);
+
+	//get real child
+	entry += *union_type_id;
+
+	if (*union_type_id == 0)
+	{
+		sctk_runtime_config_display_indent(level);
+		printf("NONE\n");
+	} else {
+		//check
+		assume(entry->type == SCTK_CONFIG_META_TYPE_UNION_ENTRY,"Invalid union entry type : %d.",entry->type);
+		//display it
+		sctk_runtime_config_display_entry(config_meta,config,union_data,entry,level);
 	}
 }
 
@@ -64,6 +107,7 @@ void sctk_runtime_config_display_struct(const struct sctk_runtime_config_entry_m
 	//find meta entry for type
 	entry = sctk_runtime_config_get_meta_type_entry(config_meta, type_name);
 	assert(entry != NULL);
+	assert(entry->type == SCTK_CONFIG_META_TYPE_STRUCT);
 
 	//display childs if any
 	//only struct has child and we have child only if next entry has level+1
@@ -95,6 +139,8 @@ static int _sctk_runtime_config_display_plain_type( const struct sctk_runtime_co
 void sctk_runtime_config_display_array(const struct sctk_runtime_config_entry_meta * config_meta, struct sctk_runtime_config * config,
                                void ** value,const struct sctk_runtime_config_entry_meta * current,int level)
 {
+	//vars
+	const struct sctk_runtime_config_entry_meta * entry;
 	int size;
 	int element_size;
 	int i;
@@ -139,10 +185,14 @@ void sctk_runtime_config_display_array(const struct sctk_runtime_config_entry_me
 				sctk_runtime_config_display_indent(level+1);
 				printf("%s :\n",(const char*)current->extra);
 				assert(element_size > 0);
-				sctk_runtime_config_display_struct(config_meta, config,element,current->inner_type,level+2);
-			}
-			else
-			{
+				entry = sctk_runtime_config_get_meta_type_entry(config_meta, current->inner_type);
+				if (entry->type == SCTK_CONFIG_META_TYPE_STRUCT)
+					sctk_runtime_config_display_struct(config_meta, config,((char*)(*value))+i*element_size,current->inner_type,level+2);
+				else if (entry->type == SCTK_CONFIG_META_TYPE_UNION)
+					sctk_runtime_config_display_union(config_meta, config,((char*)(*value))+i*element_size,current->inner_type,level+2);
+				else
+					fatal("Invalid type.");
+			} else {
 				printf(", ");
 			}
 		}
@@ -158,10 +208,11 @@ void sctk_runtime_config_display_entry(const struct sctk_runtime_config_entry_me
 {
 	//vars
 	void * value;
+	const struct sctk_runtime_config_entry_meta * entry;
 
 	//error
 	assert(current != NULL);
-	assert(current->type == SCTK_CONFIG_META_TYPE_PARAM || current->type == SCTK_CONFIG_META_TYPE_ARRAY);
+	assert(current->type == SCTK_CONFIG_META_TYPE_PARAM || current->type == SCTK_CONFIG_META_TYPE_ARRAY || current->type == SCTK_CONFIG_META_TYPE_UNION_ENTRY);
 
 	//get value
 	value = sctk_runtime_config_get_entry(struct_ptr,current);

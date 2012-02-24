@@ -52,7 +52,7 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template match="usertypes">
-		<xsl:apply-templates select="struct"/>
+		<xsl:apply-templates select="struct|union"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -97,6 +97,35 @@
 		<xsl:text>" , "</xsl:text>
 		<xsl:value-of select="entry-name"/>
 		<xsl:text>"},&#10;</xsl:text>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template match="union">
+		<xsl:text>&#09;//union&#10;</xsl:text>
+		<xsl:text>&#09;{"sctk_runtime_config_module_</xsl:text>
+		<xsl:value-of select="name"/>
+		<xsl:text>" , SCTK_CONFIG_META_TYPE_UNION , 0  , sizeof(struct sctk_runtime_config_module_</xsl:text>
+		<xsl:value-of select="name"/>
+		<xsl:text>) , NULL , sctk_runtime_config_module_init_</xsl:text>
+		<xsl:value-of select="name"/>
+		<xsl:text>},&#10;</xsl:text>
+		<xsl:apply-templates select="choice"/>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template match="choice">
+		<!-- TODO : reuse gen-* function, but need to extend parameters -->
+		<xsl:text>&#09;{"</xsl:text>
+		<xsl:value-of select="name"/>
+		<xsl:text>"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , </xsl:text>
+		<xsl:value-of select="concat('SCTK_RTCFG_',../name,'_',name)"/>
+		<xsl:text>  , sizeof(</xsl:text>
+		<xsl:call-template name="gen-type-name"/>
+		<xsl:text>) , "</xsl:text>
+		<xsl:call-template name="gen-type-name2"/>
+		<xsl:text>" , </xsl:text>
+		<xsl:call-template name="gen-init-name"/>
+		<xsl:text>},&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -151,12 +180,18 @@
 		<xsl:for-each select="//struct[name = $type]">
 			<xsl:value-of select="concat('struct sctk_runtime_config_module_',$type)"/>
 		</xsl:for-each>
+		<xsl:for-each select="//union[name = $type]">
+			<xsl:value-of select="concat('struct sctk_runtime_config_module_',$type)"/>
+		</xsl:for-each>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-user-type-name2">
 		<xsl:param name="type"/>
 		<xsl:for-each select="//struct[name = $type]">
+			<xsl:value-of select="concat('sctk_runtime_config_module_',$type)"/>
+		</xsl:for-each>
+		<xsl:for-each select="//union[name = $type]">
 			<xsl:value-of select="concat('sctk_runtime_config_module_',$type)"/>
 		</xsl:for-each>
 	</xsl:template>

@@ -72,7 +72,36 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template match="usertypes">
-		<xsl:apply-templates select="struct"/>
+		<xsl:apply-templates select="struct|union"/>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template match="union">
+		<xsl:text>&#10;/**********************  ENUM  **********************/&#10;</xsl:text>
+		<xsl:value-of select="concat('/**',doc,'**/&#10;')"/>
+		<xsl:value-of select="concat('enum sctk_runtime_config_module_',name,'_type&#10;')"/>
+		<xsl:text>{&#10;</xsl:text>
+		<xsl:value-of select="concat('&#09;SCTK_RTCFG_',name,'_NONE,&#10;')"/>
+		<xsl:for-each select="choice">
+			<xsl:value-of select="concat('&#09;SCTK_RTCFG_',../name,'_',name,',&#10;')"/>
+		</xsl:for-each>
+		<xsl:text>};&#10;</xsl:text>
+
+		<xsl:text>&#10;/*********************  STRUCT  *********************/&#10;</xsl:text>
+		<xsl:value-of select="concat('/**',doc,'**/&#10;')"/>
+		<xsl:value-of select="concat('struct sctk_runtime_config_module_',name,'&#10;')"/>
+		<xsl:text>{&#10;</xsl:text>
+			<xsl:value-of select="concat('&#9;enum sctk_runtime_config_module_',name,'_type type;&#10;')"/>
+			<xsl:text>&#09;union {&#10;</xsl:text>
+			<xsl:apply-templates select="choice"/>
+			<xsl:text>&#09;} value;&#10;</xsl:text>
+		<xsl:text>};&#10;</xsl:text>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template match="choice">
+		<xsl:text>&#9;</xsl:text>
+		<xsl:call-template name="param"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -87,8 +116,10 @@
 	</xsl:template>
 
 	<!-- ********************************************************* -->
-	<xsl:template match="param">
-		<xsl:value-of select="concat('&#9;/**',doc,'**/&#10;')"/>
+	<xsl:template match="param" name="param">
+		<xsl:if test="doc">
+			<xsl:value-of select="concat('&#9;/**',doc,'**/&#10;')"/>
+		</xsl:if>
 		<xsl:text>&#9;</xsl:text>
 		<xsl:call-template name="gen-type-name"/>
 		<xsl:value-of select="concat(' ',name)"/>
@@ -126,6 +157,9 @@
 	<xsl:template name="gen-user-type-name">
 		<xsl:param name="type"/>
 		<xsl:for-each select="//struct[name = $type]">
+			<xsl:value-of select="concat('struct sctk_runtime_config_module_',$type)"/>
+		</xsl:for-each>
+		<xsl:for-each select="//union[name = $type]">
 			<xsl:value-of select="concat('struct sctk_runtime_config_module_',$type)"/>
 		</xsl:for-each>
 	</xsl:template>

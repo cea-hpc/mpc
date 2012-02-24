@@ -61,6 +61,11 @@
 							<tt>33</tt>
 						</rail>
 					</rails>
+					<driver>
+						<rail>
+							<tt>3</tt>
+						</rail>
+					</driver>
 				</allocator>
 				<!-- Config for MPC launcher -->
 				<launcher>
@@ -168,6 +173,19 @@
 							<tt2>30</tt2>
 						</rail>
 					</rails>
+					<driver>
+						<test>
+							<tt>2556</tt>
+						</test>
+					</driver>
+					<driverlist>
+						<driver>
+							<test></test>
+						</driver>
+						<driver>
+							<rail></rail>
+						</driver>
+					</driverlist>
 				</allocator>
 			</modules>
 		</profile>

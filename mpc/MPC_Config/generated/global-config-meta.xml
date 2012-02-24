@@ -11,6 +11,18 @@
 			<param><name>tt</name><type>int</type><default>10</default></param>
 			<param><name>tt2</name><type>int</type><default>20</default></param>
 		</struct>
+		<union>
+				<name>driver</name>
+				<doc></doc>
+				<choice>
+					<name>test</name>
+					<type>test</type>
+				</choice>
+				<choice>
+					<name>rail</name>
+					<type>rail</type>
+				</choice>
+		</union>
 		<struct>
 			<name>allocator</name>
 			<doc>Options for MPC allocator.</doc>
@@ -77,6 +89,17 @@
 				<entry-name>rail</entry-name>
 				<doc>blablabla</doc>
 				<type>rail</type>
+			</array>
+			<param>
+				<name>driver</name>
+				<type>driver</type>
+				<doc>azertyuy</doc>
+			</param>
+			<array>
+				<name>driverlist</name>
+				<type>driver</type>
+				<entry-name>driver</entry-name>
+				<doc>azertyuy</doc>
 			</array>
 		</struct>
 	</usertypes>

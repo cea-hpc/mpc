@@ -30,6 +30,7 @@
 	<xsl:template match="all">
 		<xsl:call-template name="gen-mpc-header"/>
 		<xsl:text>#include &lt;stdlib.h&gt;&#10;</xsl:text>
+		<xsl:text>#include &lt;string.h&gt;&#10;</xsl:text>
 		<xsl:text>#include "sctk_runtime_config_struct.h"&#10;</xsl:text>
 		<xsl:apply-templates select='config'/>
 		<xsl:call-template name="gen-main-reset-function"/>
@@ -57,7 +58,7 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template match="usertypes">
-		<xsl:apply-templates select='struct'/>
+		<xsl:apply-templates select='struct|union'/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -76,6 +77,23 @@
 		<xsl:apply-templates select="param"/>
  		<xsl:apply-templates select="array"/>
 		<xsl:text>}&#10;</xsl:text>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template match="union">
+			<xsl:text>&#10;/*******************  FUNCTION  *********************/&#10;</xsl:text>
+		<xsl:value-of select="concat('void sctk_runtime_config_module_init_',name,'(void * struct_ptr)&#10;')"/>
+		<xsl:text>{&#10;&#09;</xsl:text>
+		<xsl:call-template name="gen-struct-name"/>
+		<xsl:text> * obj = struct_ptr;&#10;</xsl:text>
+		<xsl:call-template name="union-no-default"/>
+		<xsl:text>}&#10;</xsl:text>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="union-no-default">
+		<xsl:value-of select="concat('&#09;obj->type = SCTK_RTCFG_',name,'_NONE;&#10;')"/>
+		<xsl:text>&#09;memset(&amp;obj->value,0,sizeof(obj->value));&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->

@@ -42,6 +42,10 @@ enum sctk_runtime_config_meta_entry_type
 	SCTK_CONFIG_META_TYPE_ARRAY,
 	/** Composed C structure. **/
 	SCTK_CONFIG_META_TYPE_STRUCT,
+	/** Define a union type. **/
+	SCTK_CONFIG_META_TYPE_UNION,
+	/** Define an entry in union type. **/
+	SCTK_CONFIG_META_TYPE_UNION_ENTRY,
 	/** Last entry to close the meta description table. **/
 	SCTK_CONFIG_META_TYPE_END
 };
@@ -92,6 +96,8 @@ void sctk_runtime_config_apply_node_array(const struct sctk_runtime_config_entry
                                   sctk_runtime_config_struct_ptr struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
 void sctk_runtime_config_apply_node_value( const struct sctk_runtime_config_entry_meta *config_meta, struct sctk_runtime_config * config,sctk_runtime_config_struct_ptr struct_ptr, const char * type_name,xmlNodePtr node);
 void sctk_runtime_config_map_node_to_c_struct( const struct sctk_runtime_config_entry_meta *config_meta, struct sctk_runtime_config * config,
+                                       sctk_runtime_config_struct_ptr struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
+void sctk_runtime_config_map_node_to_c_union( const struct sctk_runtime_config_entry_meta *config_meta, struct sctk_runtime_config * config,
                                        sctk_runtime_config_struct_ptr struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
 
 /*******************  FUNCTION  *********************/

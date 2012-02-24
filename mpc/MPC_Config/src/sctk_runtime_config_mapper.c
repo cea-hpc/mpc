@@ -143,10 +143,13 @@ void * sctk_runtime_config_get_entry(sctk_runtime_config_struct_ptr struct_ptr,c
 {
 	//errors
 	assert(current->offset >= 0);
-	assert(current->type == SCTK_CONFIG_META_TYPE_PARAM || current->type == SCTK_CONFIG_META_TYPE_ARRAY);
+	assert(current->type == SCTK_CONFIG_META_TYPE_PARAM || current->type == SCTK_CONFIG_META_TYPE_ARRAY || current->type == SCTK_CONFIG_META_TYPE_UNION_ENTRY);
 
 	//compute address and return
-	return ((void*)struct_ptr)+current->offset;
+	if (current->type == SCTK_CONFIG_META_TYPE_UNION_ENTRY)
+		return struct_ptr;
+	else
+		return ((void*)struct_ptr)+current->offset;
 }
 
 /*******************  FUNCTION  *********************/
@@ -228,6 +231,44 @@ void sctk_runtime_config_apply_node_array(const struct sctk_runtime_config_entry
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_map_node_to_c_union( const struct sctk_runtime_config_entry_meta *config_meta, struct sctk_runtime_config * config,
+                                       sctk_runtime_config_struct_ptr struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node)
+{
+	//vars
+	const struct sctk_runtime_config_entry_meta * entry;
+	xmlNodePtr child;
+
+	//errors
+	assert(config != NULL);
+	assert(current != NULL);
+	assert(node != NULL);
+	assert(current->type == SCTK_CONFIG_META_TYPE_UNION);
+	//by default enum is based on int, checking this in case of ....
+	assert(sizeof(enum sctk_runtime_config_meta_entry_type) == sizeof(int));
+
+	//get first child
+	child = xmlFirstElementChild(node);
+
+	//search corresponding type
+	entry = current+1;
+	while (entry->type == SCTK_CONFIG_META_TYPE_UNION_ENTRY && xmlStrcmp(child->name,BAD_CAST(entry->name)) != 0)
+		entry++;
+
+	//not found
+	if (entry->type != SCTK_CONFIG_META_TYPE_UNION_ENTRY)
+		fatal("Invalid entry type in enum %s : %s.",current->name,child->name);
+
+	//setup type
+	*(int*)struct_ptr = entry->offset;
+
+	//skip enum to go to bas adress of next element
+	struct_ptr += sizeof(int);
+
+	//call function to apply to good struct
+	sctk_runtime_config_apply_node_value(config_meta,config,struct_ptr,entry->inner_type,child);
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_apply_node_value( const struct sctk_runtime_config_entry_meta *config_meta, struct sctk_runtime_config * config,sctk_runtime_config_struct_ptr struct_ptr, const char * type_name,xmlNodePtr node)
 {
 	//vars
@@ -259,6 +300,8 @@ void sctk_runtime_config_apply_node_value( const struct sctk_runtime_config_entr
 			fatal("Can't find type information for : %s.",type_name);
 		} else if (entry->type == SCTK_CONFIG_META_TYPE_STRUCT) {
 			sctk_runtime_config_map_node_to_c_struct(config_meta,config,struct_ptr,entry,node);
+		} else if (entry->type == SCTK_CONFIG_META_TYPE_UNION) {
+			sctk_runtime_config_map_node_to_c_union(config_meta,config,struct_ptr,entry,node);
 		} else {
 			fatal("Unknown custom type : %s (%d)",type_name,entry->type);
 		}
@@ -313,7 +356,9 @@ const struct sctk_runtime_config_entry_meta * sctk_runtime_config_get_meta_type_
 	assert(name != NULL);
 
 	//search
-	while (entry->type != SCTK_CONFIG_META_TYPE_END && (entry->type != SCTK_CONFIG_META_TYPE_STRUCT || strcmp(name,entry->name) != 0))
+	while (entry->type != SCTK_CONFIG_META_TYPE_END &&
+		((entry->type != SCTK_CONFIG_META_TYPE_STRUCT && entry->type != SCTK_CONFIG_META_TYPE_UNION)
+			|| strcmp(name,entry->name) != 0))
 		entry++;
 
 	//if end, not found
@@ -322,7 +367,7 @@ const struct sctk_runtime_config_entry_meta * sctk_runtime_config_get_meta_type_
 		return NULL;
 	} else {
 		assert(strcmp(name,entry->name) == 0);
-		assert(entry->type == SCTK_CONFIG_META_TYPE_STRUCT);
+		assert(entry->type == SCTK_CONFIG_META_TYPE_STRUCT || entry->type == SCTK_CONFIG_META_TYPE_UNION);
 		return entry;
 	}
 }

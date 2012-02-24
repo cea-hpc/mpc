@@ -29,6 +29,7 @@
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_module_init_test(void * struct_ptr);
 void sctk_runtime_config_module_init_rail(void * struct_ptr);
+void sctk_runtime_config_module_init_driver(void * struct_ptr);
 void sctk_runtime_config_module_init_allocator(void * struct_ptr);
 void sctk_runtime_config_module_init_launcher(void * struct_ptr);
 

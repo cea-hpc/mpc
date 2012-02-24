@@ -48,11 +48,11 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template match="usertypes">
-		<xsl:apply-templates select="struct"/>
+		<xsl:apply-templates select="struct|union"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
-	<xsl:template match="struct">
+	<xsl:template match="struct|union">
 		<xsl:call-template name="gen-reset-func-name"/>
 	</xsl:template>
 

@@ -22,6 +22,7 @@
 /* ######################################################################## */
 
 #include <stdlib.h>
+#include <string.h>
 #include "sctk_runtime_config_struct.h"
 
 /*******************  FUNCTION  *********************/
@@ -42,6 +43,14 @@ void sctk_runtime_config_module_init_rail(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_module_init_driver(void * struct_ptr)
+{
+	struct sctk_runtime_config_module_driver * obj = struct_ptr;
+	obj->type = SCTK_RTCFG_driver_NONE;
+	memset(&obj->value,0,sizeof(obj->value));
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_module_init_allocator(void * struct_ptr)
 {
 	struct sctk_runtime_config_module_allocator * obj = struct_ptr;
@@ -53,6 +62,7 @@ void sctk_runtime_config_module_init_allocator(void * struct_ptr)
 	obj->alfloat = 42.42;
 	obj->warnings = false;
 	sctk_runtime_config_module_init_test(&obj->test);
+	sctk_runtime_config_module_init_driver(&obj->driver);
 	//array
 	obj->classes = NULL;
 	obj->classes_size = 0;
@@ -65,6 +75,9 @@ void sctk_runtime_config_module_init_allocator(void * struct_ptr)
 	//array
 	obj->rails = NULL;
 	obj->rails_size = 0;
+	//array
+	obj->driverlist = NULL;
+	obj->driverlist_size = 0;
 }
 
 /*******************  FUNCTION  *********************/

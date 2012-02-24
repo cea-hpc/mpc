@@ -30,17 +30,34 @@
 /*********************  STRUCT  *********************/
 /****/
 struct sctk_runtime_config_module_test
-{	/****/
-	int tt;
+{	int tt;
 };
 
 /*********************  STRUCT  *********************/
 /****/
 struct sctk_runtime_config_module_rail
-{	/****/
-	int tt;
-	/****/
+{	int tt;
 	int tt2;
+};
+
+/**********************  ENUM  **********************/
+/****/
+enum sctk_runtime_config_module_driver_type
+{
+	SCTK_RTCFG_driver_NONE,
+	SCTK_RTCFG_driver_test,
+	SCTK_RTCFG_driver_rail,
+};
+
+/*********************  STRUCT  *********************/
+/****/
+struct sctk_runtime_config_module_driver
+{
+	enum sctk_runtime_config_module_driver_type type;
+	union {
+		struct sctk_runtime_config_module_test test;
+		struct sctk_runtime_config_module_rail rail;
+	} value;
 };
 
 /*********************  STRUCT  *********************/
@@ -60,6 +77,8 @@ struct sctk_runtime_config_module_allocator
 	bool warnings;
 	/****/
 	struct sctk_runtime_config_module_test test;
+	/**azertyuy**/
+	struct sctk_runtime_config_module_driver driver;
 	/**Permit to list all available size classes.**/
 	int * classes;
 	/** Number of elements in classes array. **/
@@ -72,6 +91,10 @@ struct sctk_runtime_config_module_allocator
 	struct sctk_runtime_config_module_rail * rails;
 	/** Number of elements in rails array. **/
 	int rails_size;
+	/**azertyuy**/
+	struct sctk_runtime_config_module_driver * driverlist;
+	/** Number of elements in driverlist array. **/
+	int driverlist_size;
 };
 
 /*********************  STRUCT  *********************/
