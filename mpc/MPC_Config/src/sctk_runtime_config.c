@@ -70,10 +70,10 @@ void sctk_runtime_config_map_profile_to_c_struct( struct sctk_runtime_config * c
 		return;
 
 	//another way to map
-	entry = sctk_runtime_config_get_meta_type_entry(sctk_runtime_config_db, "sctk_runtime_config_modules");
+	entry = sctk_runtime_config_get_meta_type(sctk_runtime_config_db, "sctk_runtime_config_modules");
 	if (entry == NULL)
 		fatal("Invalid type name : %s.","sctk_runtime_config_modules");
-	sctk_runtime_config_map_node_to_c_struct(sctk_runtime_config_db, config,&config->modules,entry,modules);
+	sctk_runtime_config_map_struct(sctk_runtime_config_db, &config->modules,entry,modules);
 }
 
 /*******************  FUNCTION  *********************/

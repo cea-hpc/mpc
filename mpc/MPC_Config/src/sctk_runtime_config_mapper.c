@@ -161,7 +161,7 @@ void sctk_runtime_config_apply_init_handler(const struct sctk_runtime_config_ent
 
 	//search definition
 	const struct sctk_runtime_config_entry_meta * entry;
-	entry = sctk_runtime_config_get_meta_type_entry(config_meta, type_name);
+	entry = sctk_runtime_config_get_meta_type(config_meta, type_name);
 	if (entry != NULL 
             && entry->type == SCTK_CONFIG_META_TYPE_STRUCT 
             && entry->extra != NULL)
@@ -169,18 +169,24 @@ void sctk_runtime_config_apply_init_handler(const struct sctk_runtime_config_ent
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_apply_node_array(const struct sctk_runtime_config_entry_meta *config_meta, struct sctk_runtime_config * config,
-                                  sctk_runtime_config_struct_ptr struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node)
+/**
+ * Map an XML node and childs to a C array.
+ * @param config_meta Define the root element of the meta description table.
+ * @param array Define the pointer to the array pointer in C struct.
+ * @param current Define the meta description of the entry, must be a type SCTK_CONFIG_META_TYPE_ARRAY.
+ * @param node Define the XML node to map.
+**/
+void sctk_runtime_config_map_array(const struct sctk_runtime_config_entry_meta *config_meta,
+                                  void ** array,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node)
 {
 	//vars
 	const xmlChar * entry_name;
 	int cnt;
-	void ** array = struct_ptr;
 	int * array_size;
+	void * element;
 
 	//errors
-	assert(config != NULL);
-	assert(struct_ptr != NULL);
+	assert(array != NULL);
 	assert(current != NULL);
 	assert(current->type == SCTK_CONFIG_META_TYPE_ARRAY);
 	assert(node != NULL);
@@ -188,9 +194,9 @@ void sctk_runtime_config_apply_node_array(const struct sctk_runtime_config_entry
 	assert(current->inner_type != NULL);
 	assert(current->extra != NULL);
 
-	//get entry
 	//we know that the size counter is next element by definition
 	array_size = (int*)(array+1);
+
 	//get element size
 	assert(current->size > 0 && current->size < 4096);
 
@@ -213,17 +219,28 @@ void sctk_runtime_config_apply_node_array(const struct sctk_runtime_config_entry
 		*array = NULL;
 		*array_size = 0;
 	} else {
+		//allocate new one
 		*array = calloc(cnt,current->size);
 		*array_size = cnt;
+
 		//loop on all child nodes
 		int i = 0;
 		node = xmlFirstElementChild(node);
 		while (node != NULL)
 		{
+			//calc address of current element
+			element = (*array)+i*current->size;
+			
 			//must only find nodes with tage_name = entry_name
 			assume(xmlStrcmp(node->name,entry_name) == 0,"Invalid child node in array alement, expect %s -> %s but get %s.",current->name,(const char*)current->extra,node->name);
-			sctk_runtime_config_apply_init_handler(config_meta, (*array)+i*current->size,current->inner_type);
-			sctk_runtime_config_apply_node_value(config_meta, config,(*array)+i*current->size,current->inner_type,node);
+			
+			//init the element before mapping the xml node
+			sctk_runtime_config_apply_init_handler(config_meta, element,current->inner_type);
+
+			//map the xml node on current element
+			sctk_runtime_config_map_value(config_meta, element,current->inner_type,node);
+
+			//move to next one
 			node = xmlNextElementSibling(node);
 			i++;
 		}
@@ -231,15 +248,21 @@ void sctk_runtime_config_apply_node_array(const struct sctk_runtime_config_entry
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_map_node_to_c_union( const struct sctk_runtime_config_entry_meta *config_meta, struct sctk_runtime_config * config,
-                                       sctk_runtime_config_struct_ptr struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node)
+/**
+ * Map the given XML node to a union type element.
+ * @param config_meta Define the root element of the meta description table.
+ * @param value Define the pointer to the union value to fill in C struct.
+ * @param current Define the meta description of the entry, must be a type SCTK_CONFIG_META_TYPE_UNION.
+ * @param node Define the XML node to map.
+**/
+void sctk_runtime_config_map_union( const struct sctk_runtime_config_entry_meta *config_meta,
+                                       void * value,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node)
 {
 	//vars
 	const struct sctk_runtime_config_entry_meta * entry;
 	xmlNodePtr child;
 
 	//errors
-	assert(config != NULL);
 	assert(current != NULL);
 	assert(node != NULL);
 	assert(current->type == SCTK_CONFIG_META_TYPE_UNION);
@@ -249,8 +272,9 @@ void sctk_runtime_config_map_node_to_c_union( const struct sctk_runtime_config_e
 	//get first child
 	child = xmlFirstElementChild(node);
 
-	//search corresponding type
+	//skip the union entry itself
 	entry = current+1;
+	//search corresponding type in union acceped list
 	while (entry->type == SCTK_CONFIG_META_TYPE_UNION_ENTRY && xmlStrcmp(child->name,BAD_CAST(entry->name)) != 0)
 		entry++;
 
@@ -258,50 +282,52 @@ void sctk_runtime_config_map_node_to_c_union( const struct sctk_runtime_config_e
 	if (entry->type != SCTK_CONFIG_META_TYPE_UNION_ENTRY)
 		fatal("Invalid entry type in enum %s : %s.",current->name,child->name);
 
-	//setup type
-	*(int*)struct_ptr = entry->offset;
+	//setup type ID
+	*(int*)value = entry->offset;
 
 	//skip enum to go to bas adress of next element
-	struct_ptr += sizeof(int);
+	value += sizeof(int);
 
-	//call function to apply to good struct
-	sctk_runtime_config_apply_node_value(config_meta,config,struct_ptr,entry->inner_type,child);
+	//call function to apply to good type
+	sctk_runtime_config_map_value(config_meta,value,entry->inner_type,child);
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_apply_node_value( const struct sctk_runtime_config_entry_meta *config_meta, struct sctk_runtime_config * config,sctk_runtime_config_struct_ptr struct_ptr, const char * type_name,xmlNodePtr node)
+/**
+ * Map a value on C structure by using the good type.
+ * @param config_meta Define the root element of the meta description table.
+ * @param value Define the pointer to the value to fill in C struct.
+ * @param type_name Define the type name of the value.
+ * @param node Define the XML node to map.
+**/
+void sctk_runtime_config_map_value( const struct sctk_runtime_config_entry_meta *config_meta, void * value, const char * type_name,xmlNodePtr node)
 {
 	//vars
+	bool is_plain_type;
 	const struct sctk_runtime_config_entry_meta * entry;
 
 	//errors
-	assert(config != NULL);
-	assert(struct_ptr != NULL);
+	assert(value != NULL);
 	assert(node != NULL);
 	assert(type_name != NULL);
 
+	//try with plain types
+	is_plain_type = sctk_runtime_config_map_plain_type(value,type_name,node);
 
-	//check type name
-	if (strcmp(type_name,"int") == 0)
+	//if not it's a composed type
+	if ( ! is_plain_type )
 	{
-		*(int*)struct_ptr = sctk_runtime_config_map_entry_to_int(node);
-	} else if (strcmp(type_name,"bool") == 0) {
-		*(bool*)struct_ptr = sctk_runtime_config_map_entry_to_bool(node);
-	} else if (strcmp(type_name,"double") == 0) {
-		*(double*)struct_ptr = sctk_runtime_config_map_entry_to_double(node);
-	} else if (strcmp(type_name,"float") == 0) {
-		*(float*)struct_ptr = sctk_runtime_config_map_entry_to_float(node);
-	} else if (strcmp(type_name,"char *") == 0) {
-		*((char **)struct_ptr) = sctk_runtime_config_map_entry_to_string(node);
-	} else {
-		entry = sctk_runtime_config_get_meta_type_entry(config_meta, type_name);
+		//get the meta description of the type
+		entry = sctk_runtime_config_get_meta_type(config_meta, type_name);
+
+		//check for errors and types
 		if (entry == NULL)
 		{
 			fatal("Can't find type information for : %s.",type_name);
 		} else if (entry->type == SCTK_CONFIG_META_TYPE_STRUCT) {
-			sctk_runtime_config_map_node_to_c_struct(config_meta,config,struct_ptr,entry,node);
+			sctk_runtime_config_map_struct(config_meta,value,entry,node);
 		} else if (entry->type == SCTK_CONFIG_META_TYPE_UNION) {
-			sctk_runtime_config_map_node_to_c_union(config_meta,config,struct_ptr,entry,node);
+			sctk_runtime_config_map_union(config_meta,value,entry,node);
 		} else {
 			fatal("Unknown custom type : %s (%d)",type_name,entry->type);
 		}
@@ -309,45 +335,100 @@ void sctk_runtime_config_apply_node_value( const struct sctk_runtime_config_entr
 }
 
 /*******************  FUNCTION  *********************/
-/** @TODO cleanup this method. **/
-void sctk_runtime_config_map_node_to_c_struct( const struct sctk_runtime_config_entry_meta *config_meta, struct sctk_runtime_config * config,
-                                       sctk_runtime_config_struct_ptr struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node)
+/**
+ * Try to map as a plain type, if not return false.
+ * @param value Define the address of the value to map.
+ * @param type_name Define the type name of the value to know how to map.
+ * @param node Define the XML node in which to take the value.
+**/
+bool sctk_runtime_config_map_plain_type(void * value, const char * type_name,xmlNodePtr node)
+{
+	//errors
+	assert(value != NULL);
+	assert(type_name != NULL);
+	assert(node != NULL);
+
+	//test all plain types
+	//check type name
+	if (strcmp(type_name,"int") == 0)
+	{
+		*(int*)value = sctk_runtime_config_map_entry_to_int(node);
+		return true;
+	} else if (strcmp(type_name,"bool") == 0) {
+		*(bool*)value = sctk_runtime_config_map_entry_to_bool(node);
+		return true;
+	} else if (strcmp(type_name,"double") == 0) {
+		*(double*)value = sctk_runtime_config_map_entry_to_double(node);
+		return true;
+	} else if (strcmp(type_name,"float") == 0) {
+		*(float*)value = sctk_runtime_config_map_entry_to_float(node);
+		return true;
+	} else if (strcmp(type_name,"char *") == 0) {
+		*((char **)value) = sctk_runtime_config_map_entry_to_string(node);
+		return true;
+	} else {
+		return false;
+	}
+}
+
+/*******************  FUNCTION  *********************/
+/**
+ * Map a given XML node structure to the C config struct.
+ * @param config_meta Define the root element of the meta description table.
+ * @param struct_ptr Define the pointer of the C structure to fill.
+ * @param current Define the meta description related to current node.
+ * @param node Define the XML node to map.
+**/
+void sctk_runtime_config_map_struct( const struct sctk_runtime_config_entry_meta *config_meta,
+                                       void * struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node)
 {
 	//child
 	const struct sctk_runtime_config_entry_meta * child;
-	sctk_runtime_config_struct_ptr child_ptr;
+	void * child_ptr;
 
 	//errors
-	assert(config != NULL);
 	assert(current != NULL);
 	assert(node != NULL);
 	assert(current->type == SCTK_CONFIG_META_TYPE_STRUCT);
 
-	//setup value
+	//loop on all parameters of the struct
 	node = xmlFirstElementChild(node);
 	while (node != NULL)
 	{
+		//get meta data of child
 		child = sctk_runtime_config_get_child_meta(current,node->name);
 		assume(child != NULL,"Can't find meta data for node : %s",node->name);
+		
+		//get pointer of entry in c struct
 		child_ptr = sctk_runtime_config_get_entry(struct_ptr,child);
 		assume(child_ptr != NULL,"Can't find meta data for node entry : %s",node->name);
+
+		//apply the good function
 		switch(child->type)
 		{
 			case SCTK_CONFIG_META_TYPE_ARRAY:
-				sctk_runtime_config_apply_node_array(config_meta,config,child_ptr,child,node);
+				sctk_runtime_config_map_array(config_meta,child_ptr,child,node);
 				break;
 			case SCTK_CONFIG_META_TYPE_PARAM:
-				sctk_runtime_config_apply_node_value(config_meta,config,child_ptr,child->inner_type,node);
+				sctk_runtime_config_map_value(config_meta,child_ptr,child->inner_type,node);
 				break;
 			default:
 				fatal("Invalid current meta entry type : %d",current->type);				
 		}
+
+		//move to next lement
 		node = xmlNextElementSibling(node);
 	}
 }
 
 /*******************  FUNCTION  *********************/
-const struct sctk_runtime_config_entry_meta * sctk_runtime_config_get_meta_type_entry( const struct sctk_runtime_config_entry_meta *config_meta, const char * name)
+/**
+ * Search and return the entry in meta description table which correspond the the given type name.
+ * It work only for root type definition, so for structures and union.
+ * @param config_meta Root element of the meta description table.
+ * @param name Define the name of the type to search in the table.
+**/
+const struct sctk_runtime_config_entry_meta * sctk_runtime_config_get_meta_type( const struct sctk_runtime_config_entry_meta *config_meta, const char * name)
 {
 	//vars
 	const struct sctk_runtime_config_entry_meta * entry = config_meta;
@@ -373,6 +454,7 @@ const struct sctk_runtime_config_entry_meta * sctk_runtime_config_get_meta_type_
 }
 
 /*******************  FUNCTION  *********************/
+/** @TODO Generate this methode from XML files. **/
 void sctk_runtime_config_do_cleanup(struct sctk_runtime_config* config)
 {
 

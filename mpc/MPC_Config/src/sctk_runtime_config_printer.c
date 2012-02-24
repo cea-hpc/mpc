@@ -64,7 +64,7 @@ void sctk_runtime_config_display_union(const struct sctk_runtime_config_entry_me
 	assert(*union_type_id < 64);
 
 	//find meta entry for type
-	entry = sctk_runtime_config_get_meta_type_entry(config_meta, type_name);
+	entry = sctk_runtime_config_get_meta_type(config_meta, type_name);
 	assert(entry != NULL);
 	assert(entry->type == SCTK_CONFIG_META_TYPE_UNION);
 
@@ -111,7 +111,7 @@ void sctk_runtime_config_display_struct(const struct sctk_runtime_config_entry_m
 	assert(struct_ptr != NULL);
 
 	//find meta entry for type
-	entry = sctk_runtime_config_get_meta_type_entry(config_meta, type_name);
+	entry = sctk_runtime_config_get_meta_type(config_meta, type_name);
 	assert(entry != NULL);
 	assert(entry->type == SCTK_CONFIG_META_TYPE_STRUCT);
 
@@ -239,7 +239,7 @@ void sctk_runtime_config_display_value(const struct sctk_runtime_config_entry_me
 	if ( ! is_basic_type )
 	{
 		//get metta data of the entry
-		entry = sctk_runtime_config_get_meta_type_entry(config_meta, type_name);
+		entry = sctk_runtime_config_get_meta_type(config_meta, type_name);
 		assert(entry != NULL);
 		
 		//apply related display method.

@@ -86,19 +86,20 @@ struct sctk_runtime_config_entry_meta
 
 /*******************  FUNCTION  *********************/
 //mappgin functions
-const struct sctk_runtime_config_entry_meta * sctk_runtime_config_get_meta_type_entry( const struct sctk_runtime_config_entry_meta *config_meta, const char * name);
+const struct sctk_runtime_config_entry_meta * sctk_runtime_config_get_meta_type( const struct sctk_runtime_config_entry_meta *config_meta, const char * name);
 const struct sctk_runtime_config_entry_meta * sctk_runtime_config_meta_get_first_child(const struct sctk_runtime_config_entry_meta * current);
 const struct sctk_runtime_config_entry_meta * sctk_runtime_config_meta_get_next_child(const struct sctk_runtime_config_entry_meta * current);
 const struct sctk_runtime_config_entry_meta * sctk_runtime_config_get_child_meta(const struct sctk_runtime_config_entry_meta * current,const xmlChar * name);
 void * sctk_runtime_config_get_entry(sctk_runtime_config_struct_ptr struct_ptr,const struct sctk_runtime_config_entry_meta * current);
 void sctk_runtime_config_apply_init_handler(const struct sctk_runtime_config_entry_meta *config_meta, sctk_runtime_config_struct_ptr struct_ptr,const char * type_name);
-void sctk_runtime_config_apply_node_array(const struct sctk_runtime_config_entry_meta *config_meta, struct sctk_runtime_config * config,
-                                  sctk_runtime_config_struct_ptr struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
-void sctk_runtime_config_apply_node_value( const struct sctk_runtime_config_entry_meta *config_meta, struct sctk_runtime_config * config,sctk_runtime_config_struct_ptr struct_ptr, const char * type_name,xmlNodePtr node);
-void sctk_runtime_config_map_node_to_c_struct( const struct sctk_runtime_config_entry_meta *config_meta, struct sctk_runtime_config * config,
-                                       sctk_runtime_config_struct_ptr struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
-void sctk_runtime_config_map_node_to_c_union( const struct sctk_runtime_config_entry_meta *config_meta, struct sctk_runtime_config * config,
-                                       sctk_runtime_config_struct_ptr struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
+void sctk_runtime_config_map_array(const struct sctk_runtime_config_entry_meta *config_meta,
+                                  void ** array,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
+void sctk_runtime_config_map_value( const struct sctk_runtime_config_entry_meta *config_meta, void * value, const char * type_name,xmlNodePtr node);
+bool sctk_runtime_config_map_plain_type(void * value, const char * type_name,xmlNodePtr node);
+void sctk_runtime_config_map_struct( const struct sctk_runtime_config_entry_meta *config_meta, 
+                                       void * struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
+void sctk_runtime_config_map_union( const struct sctk_runtime_config_entry_meta *config_meta,
+                                       void * value,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
 
 /*******************  FUNCTION  *********************/
 //type supports
