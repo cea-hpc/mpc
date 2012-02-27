@@ -56,7 +56,7 @@ extern "C"
 /* Maximum number of shared for loops w/ dynamic schedule alive */
 #define MPCOMP_MAX_ALIVE_FOR_DYN 	7
 /* Maximum number of alive 'single' construct */
-#define MPCOMP_MAX_ALIVE_SINGLE 	3
+#define MPCOMP_MAX_ALIVE_SINGLE 	20
 
 #define MPCOMP_OK 1
 #define MPCOMP_STOP 2

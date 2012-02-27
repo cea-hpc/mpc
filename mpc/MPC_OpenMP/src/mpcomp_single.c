@@ -67,7 +67,7 @@ __mpcomp_do_single (void)
  sctk_nodebug("[__mpcomp_do_single] beginning, rank=%d, index=%d, lock taken, lock_enter_single=%d..\n", self->rank, index, team->lock_enter_single[index]); //AMAHEO
   
   
-  //nb_entered_threads = team->nb_threads_entered_single[index];
+  nb_entered_threads = team->nb_threads_entered_single[index];
   //sctk_spinlock_unlock (&(team->lock_enter_single[index]));
   
   sctk_nodebug("[mpcomp_do_single] t rank=%d begin.., index=%d, nb_entered_threads=%d, team->nb_threads_entered_single=%d, num_threads=%d\n", self->rank, index, nb_entered_threads, team->nb_threads_entered_single[index], num_threads); //AMAHEO - DEBUG
@@ -80,7 +80,7 @@ __mpcomp_do_single (void)
   sctk_nodebug("\n\n");
 
   /* Current thread encounters a STOP index */  
-  if(team->nb_threads_entered_single[index] == MPCOMP_NOWAIT_STOP_SYMBOL)
+  if(nb_entered_threads == MPCOMP_NOWAIT_STOP_SYMBOL)
   {
 
    //sctk_spinlock_lock (&(team->lock_enter_single[index]));
@@ -106,11 +106,13 @@ __mpcomp_do_single (void)
    sctk_nodebug("[__mpcomp_do_single] STOP_SYMBOL, rank=%d, index=%d, getting lock, lock_enter_single=%d..\n", self->rank, index, team->lock_enter_single[index]); //AMAHEO      
    sctk_spinlock_lock (&(team->lock_enter_single[index]));  
    sctk_nodebug("[__mpcomp_do_single] STOP_SYMBOL, rank=%d, index=%d, lock taken, lock_enter_single=%d..\n", self->rank, index, team->lock_enter_single[index]); //AMAHEO      
-    
+     
+   nb_entered_threads = team->nb_threads_entered_single[index];
+
   }
 
   //sctk_spinlock_lock (&(team->lock_enter_single[index]));
-  if(team->nb_threads_entered_single[index] == 0)
+  if(nb_entered_threads == 0)
   {
 sctk_nodebug("[__mpcomp_do_single] rank=%d, index=%d, team->nb_threads_entered_single=%d, first thread in Single construct, execute it 1..\n", rank, index, team->nb_threads_entered_single[index]);
     
@@ -129,18 +131,21 @@ sctk_nodebug("[__mpcomp_do_single] rank=%d, index=%d, team->nb_threads_entered_s
   }
 
   /* If I am the last thread to enter Single construct */
-  if(team->nb_threads_entered_single[index] + 1 >= num_threads) 
+  if(nb_entered_threads + 1 >= num_threads) 
   {
   
-   sctk_nodebug("[__mpcomp_do_single] last thread, rank=%d, index=%d, releasing lock, lock_enter_single=%d..\n", self->rank, index, team->lock_enter_single[index]); //AMAHEO          
-   sctk_spinlock_unlock (&(team->lock_enter_single[index]));  
-   sctk_nodebug("[__mpcomp_do_single] last thread, rank=%d, index=%d, lock released, lock_enter_single=%d..\n", self->rank, index, team->lock_enter_single[index]); //AMAHEO      
+   //sctk_nodebug("[__mpcomp_do_single] last thread, rank=%d, index=%d, releasing lock, lock_enter_single=%d..\n", self->rank, index, team->lock_enter_single[index]); //AMAHEO          
+   //sctk_spinlock_unlock (&(team->lock_enter_single[index]));  
+   //sctk_nodebug("[__mpcomp_do_single] last thread, rank=%d, index=%d, lock released, lock_enter_single=%d..\n", self->rank, index, team->lock_enter_single[index]); //AMAHEO      
 
    previous_index = (index-1+MPCOMP_MAX_ALIVE_SINGLE+1)%(MPCOMP_MAX_ALIVE_SINGLE+1);
 
    sctk_nodebug("***********[__mpcomp_do_single] rank=%d, index=%d, nb_threads_entered_single=%d, last thread in Single construct !, previous index=%d, previous value = %d\n", rank, index, nb_entered_threads, previous_index, team->nb_threads_entered_single[previous_index]); 
+ 
+  
 
    //   sctk_thread_wait_for_value( (int*) &team->nb_threads_entered_single[previous_index], MPCOMP_NOWAIT_STOP_SYMBOL);
+   /*
    if(team->nb_threads_entered_single[previous_index]  != MPCOMP_NOWAIT_STOP_SYMBOL) 
    { 
 	   while(team->nb_threads_entered_single[previous_index] != MPCOMP_NOWAIT_STOP_SYMBOL)
@@ -149,11 +154,13 @@ sctk_nodebug("[__mpcomp_do_single] rank=%d, index=%d, team->nb_threads_entered_s
 		   sctk_thread_yield();
 	   }
    }
+  */
+  
+   assert (team->nb_threads_entered_single[previous_index] = MPCOMP_NOWAIT_STOP_SYMBOL);
 
-
-  sctk_nodebug("[__mpcomp_do_single] last thread, rank=%d, index=%d, getting lock, lock_enter_single=%d..\n", self->rank, index, team->lock_enter_single[index]); //AMAHEO          
-   sctk_spinlock_lock (&(team->lock_enter_single[index]));
-   sctk_nodebug("[__mpcomp_do_single] last thread, rank=%d, index=%d, lock taken, lock_enter_single=%d..\n", self->rank, index, team->lock_enter_single[index]); //AMAHEO      
+   //sctk_nodebug("[__mpcomp_do_single] last thread, rank=%d, index=%d, getting lock, lock_enter_single=%d..\n", self->rank, index, team->lock_enter_single[index]); //AMAHEO          
+   //sctk_spinlock_lock (&(team->lock_enter_single[index]));
+   //sctk_nodebug("[__mpcomp_do_single] last thread, rank=%d, index=%d, lock taken, lock_enter_single=%d..\n", self->rank, index, team->lock_enter_single[index]); //AMAHEO      
 
    team->nb_threads_entered_single[index] = MPCOMP_NOWAIT_STOP_SYMBOL;
 
@@ -166,7 +173,8 @@ sctk_nodebug("[__mpcomp_do_single] rank=%d, index=%d, team->nb_threads_entered_s
    sctk_spinlock_lock (&(team->lock_enter_single[previous_index]));    
    sctk_nodebug("[__mpcomp_do_single] last thread, rank=%d, index=%d, lock taken, lock_enter_single=%d..\n", self->rank, index, team->lock_enter_single[index]); //AMAHEO      
 
-   team->nb_threads_entered_single[previous_index] = 0;
+   if(team->nb_threads_entered_single[previous_index] == MPCOMP_NOWAIT_STOP_SYMBOL)
+    team->nb_threads_entered_single[previous_index] = 0;
 
    sctk_nodebug("[__mpcomp_do_single] last thread, rank=%d, index=%d, releasing lock, lock_enter_single=%d..\n", self->rank, index, team->lock_enter_single[previous_index]); //AMAHEO          
    sctk_spinlock_unlock (&(team->lock_enter_single[previous_index]));   
