@@ -20,55 +20,76 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_ALLOC_DEBUG_H
-#define SCTK_ALLOC_DEBUG_H
-
 /************************** HEADERS ************************/
-#include <stdio.h>
-#include <assert.h>
-#include "sctk_allocator.h"
-
-/************************** MACROS *************************/
-#ifdef NDEBUG
-	#define SCTK_PDEBUG //sctk_alloc_pdebug
-	#define SCTK_CRASH_DUMP //sctk_alloc_crash_dump
-#else //NDEBUG
-	#define SCTK_PDEBUG sctk_alloc_pdebug
-	#define SCTK_CRASH_DUMP sctk_alloc_crash_dump
-	#ifndef ENABLE_TRACE
-		#define ENABLE_TRACE
-	#endif
-#endif //NDEBUG
-
-#ifndef ENABLE_TRACE
-	#define SCTK_PTRACE //sctk_alloc_ptrace
-#else
-	#define SCTK_PTRACE sctk_alloc_ptrace
-#endif
-
-/************************** MACROS *************************/
-#define warning(m) sctk_alloc_pwarning("Warning at %s!%d\n%s\n",__FILE__,__LINE__,m);
-#define assume(x,m) if (!(x)) { sctk_alloc_perror("Error at %s!%d\n%s\n%s\n",__FILE__,__LINE__,#x,m); abort(); }
-#define fatal(m) { sctk_alloc_perror("Fatal error at %s!%d\n%s\n",__FILE__,__LINE__,m); abort(); }
+#include <stdlib.h>
+#include <errno.h>
+#include "sctk_alloc_posix.h"
+#include "sctk_alloc_debug.h"
 
 /************************* FUNCTION ************************/
-void sctk_alloc_ptrace_init(void);
+static inline bool sctk_alloc_is_power_of_two(sctk_size_t size)
+{
+	return ((size != 0) && !(size & (size-1)));
+}
 
 /************************* FUNCTION ************************/
-void sctk_alloc_pdebug(const char * format,...);
-void sctk_alloc_ptrace(const char * format,...);
-void sctk_alloc_perror(const char * format,...);
-void sctk_alloc_pwarning(const char * format,...);
-void sctk_alloc_fprintf(int fd,const char * format,...);
+void * calloc (size_t nmemb, size_t size)
+{
+	return sctk_calloc(nmemb,size);
+}
 
 /************************* FUNCTION ************************/
-void sctk_alloc_debug_dump_segment(int fd,void * base_addr,void * end_addr);
-void sctk_alloc_debug_dump_free_lists(int fd,struct sctk_alloc_free_chunk * free_lists);
-void sctk_alloc_debug_dump_thread_pool(int fd,struct sctk_thread_pool * pool);
-void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain * chain);
+void * malloc (size_t size)
+{
+	return sctk_malloc(size);
+}
 
 /************************* FUNCTION ************************/
-void sctk_alloc_debug_init(void);
-void sctk_alloc_crash_dump(void);
+void free (void * ptr)
+{
+	sctk_free(ptr);
+}
 
-#endif
+/************************* FUNCTION ************************/
+void * realloc (void * ptr, size_t size)
+{
+	return sctk_realloc(ptr,size);
+}
+
+/************************* FUNCTION ************************/
+int posix_memalign(void **memptr, size_t boundary, size_t size)
+{
+	//limit imposed by posix_memalign linux manpage
+	if (boundary % sizeof(void*) != 0 && sctk_alloc_is_power_of_two(boundary))
+	{
+		sctk_alloc_pwarning("memalign boundary not power of 2 or boundary not multiple of sizeof(void*).");
+		return EINVAL;
+	} else {
+		*memptr = sctk_memalign(boundary,size);
+
+		//check res
+		if (memptr == NULL)
+			return ENOMEM;
+		else
+			return 0;
+	}
+}
+
+/************************* FUNCTION ************************/
+void * memalign(size_t boundary,size_t size)
+{
+	//limit imposed by posix_memalign linux manpage
+	if (sctk_alloc_is_power_of_two(boundary))
+	{
+		return sctk_memalign(boundary,size);
+	} else {
+		sctk_alloc_pwarning("memalign boundary not power of 2.");
+		return NULL;
+	}
+};
+
+/************************* FUNCTION ************************/
+void *valloc(size_t size)
+{
+	return memalign(SCTK_ALLOC_PAGE_SIZE,size);
+}

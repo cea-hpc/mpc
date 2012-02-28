@@ -792,7 +792,7 @@ extern "C"
 					   &(vp->zombie_queue_tail));
     while (tmp_pid != NULL)
       {
-	sctk_alloc_thread_data_t *tls;
+	sctk_alloc_chain_t *tls;
 	if (tmp_pid->attr.stack == NULL)
 	  sctk_free (tmp_pid->stack);
 	tls = tmp_pid->tls_mem;

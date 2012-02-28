@@ -157,7 +157,7 @@ sctk_ethread_sched_migrate ()
 static int
 sctk_ethread_sched_restore (sctk_thread_t thread, char *type, int vp)
 {
-  sctk_alloc_thread_data_t *tls;
+  sctk_alloc_chain_t *tls;
   char name[SCTK_MAX_FILENAME_SIZE];
 
   assume (vp == 0);

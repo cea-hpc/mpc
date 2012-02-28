@@ -19,66 +19,53 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK__ALLOC__OPTIONS__
-#define __SCTK__ALLOC__OPTIONS__
 
-#ifdef __cplusplus
-extern "C"
+#ifndef SCTK_ALLOC_SPINLOCK_H
+#define SCTK_ALLOC_SPINLOCK_H
+
+/************************** HEADERS ************************/
+#include "sctk_alloc_spinlock_asm.h"
+
+/************************** TYPES **************************/
+typedef volatile unsigned int sctk_alloc_spinlock_t;
+
+/************************** MACROS *************************/
+#define SCTK_ALLOC_SPINLOCK_INITIALIZER 0
+// #define sctk_alloc_spinlock_init(a,b) do{*((sctk_alloc_spinlock_t*)(a))=b;}while(0)
+#define expect_true(expr) __builtin_expect(!!(expr),1)
+#define sctk_alloc_spinlock_destroy(x) //spinlock_destroy(x)
+
+/************************* FUNCTION ************************/
+static inline int sctk_alloc_spinlock_init(sctk_alloc_spinlock_t * lock,int flag)
 {
-#endif
-#ifndef __SCTK__ALLOC__C__
-#error "For internal use only"
-#endif
+	*lock = 0;
+}
 
-#include <stdlib.h>
-#include "sctk_config.h"
+/************************* FUNCTION ************************/
+static inline int sctk_alloc_spinlock_lock (sctk_alloc_spinlock_t * lock){
+	unsigned int *p = (unsigned int *) lock;
+	while (expect_true (sctk_test_and_set (p)))
+	{
+		do
+		{
+			sctk_cpu_relax ();
+		}
+		while (*p);
+	}
+	return 0 ;
+}
 
-/* #define SCTK_MEM_DEBUG */
-/* #define SCTK_MEM_LOG */
-/* #define SCTK_MEMINFO */
-/* #undef SCTK_ALL_OPTS */
-/* #define SCTK_USE_VALGRIND */
+/************************* FUNCTION ************************/
+static inline int sctk_alloc_spinlock_unlock (sctk_alloc_spinlock_t * lock)
+{
+	*lock = 0;
+	return 0;
+}
 
-/******************************** OPTION START ********************************/
+/************************* FUNCTION ************************/
+static inline int sctk_alloc_spinlock_trylock (sctk_alloc_spinlock_t * lock)
+{
+	return sctk_test_and_set (lock);
+}
 
-/*Compression buffer size for checkpoint*/
-#define SCTK_COMPRESSION_BUFFER_SIZE 4*SCTK_PAGE_SIZE
-
-/* Taille du plus petit bloc MUST BE >= chunks[0]*/
-#define SCTK_SPLIT_THRESHOLD 32
-
-/* Taille du buffer utilise pour la migration de pages */
-#define SCTK_RELOCALISE_BUFFER_SIZE (1024*1024)
-
-/* Doit être une puissance de 2*/
-#define SCTK_PAGES_ALLOC_SIZE ((size_t)(2*1024*1024))
-
-#define SCTK_SMALL_PAGES_ALLOC_SIZE (1*SCTK_PAGES_ALLOC_SIZE - (1024))
-
-/* Doit être une puissance de 2*/
-#ifdef SCTK_32_BIT_ARCH
-#define SCTK_xMO_TAB_SIZE 16
-#else
-#define SCTK_xMO_TAB_SIZE 32
-#endif
-
-#define SCTK_FULL_PAGE_NUMBER_DEFAULT 4
-
-/* #define SCTK_ALLOC_INFOS */
-/* #define SCTK_TRACE_ALLOC_BEHAVIOR */
-#define SCTK_SWITCH_MODE_INFO
-/* #define SCTK_USE_BRK_INSTED_MMAP */
-
-/* #define SCTK_DO_NOT_FREE */
-
-/******************************** OPTION  END  ********************************/
-
-#define sctk_align SCTK_ALIGNEMENT
-#define SCTK_ALIGNEMENT_MASK (SCTK_ALIGNEMENT - 1)
-#define SCTK_IS_ALIGNED_OK(m)  (((sctk_size_t)(m) & SCTK_ALIGNEMENT_MASK) == 0)
-#define sctk_aligned_size(a) (((a) | SCTK_ALIGNEMENT_MASK) + 1)
-
-#ifdef __cplusplus
-}				/* end of extern "C" */
-#endif
-#endif
+#endif //SCTK_ALLOC_SPINLOCK_H

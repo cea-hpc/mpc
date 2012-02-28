@@ -1,0 +1,194 @@
+/* ############################# MPC License ############################## */
+/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
+/* # This file is part of the MPC Runtime.                                # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
+/* #                                                                      # */
+/* ######################################################################## */
+
+#ifndef SCTK_ALLOC_INLINED_H
+#define SCTK_ALLOC_INLINED_H
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+/************************** HEADERS ************************/
+#include <stdlib.h>
+#include "sctk_allocator.h"
+#include "sctk_alloc_debug.h"
+
+/************************** MACROS *************************/
+#define SCTK_ALLOC_PADDED_VCHUNK_SIZE 1ul
+
+/************************** CONSTS *************************/
+extern const sctk_alloc_vchunk SCTK_ALLOC_DEFAULT_CHUNK;
+
+/************************* FUNCTION ************************/
+/**
+ * Get the vchunk description from a raw pointer. This is mostly to be used in free/realloc
+ * to get the chunk header from the void pointer given by the user.
+ * This method automatically detect the type of chunk depending on their size class.
+ * @param ptr Define the pointer used by the final user (next byte after the chunk header).
+**/
+static inline sctk_alloc_vchunk sctk_alloc_get_chunk(sctk_addr_t ptr)
+{
+	sctk_alloc_vchunk vchunk = SCTK_ALLOC_DEFAULT_CHUNK;
+
+
+	//if null, return default
+	if (ptr == 0)
+		return SCTK_ALLOC_DEFAULT_CHUNK;
+
+	//calc header info position
+	vchunk = ((struct sctk_alloc_chunk_info *)ptr) - 1;
+
+	//check type and magik number
+	if (vchunk->unused_magik != SCTK_ALLOC_MAGIK_STATUS)
+	{
+		warning("Header content error while trying to find chunk header.");
+		return SCTK_ALLOC_DEFAULT_CHUNK;
+	}
+
+	//check
+	/** @todo maybe can be replaced by assert **/
+	assume(vchunk->type == SCTK_ALLOC_CHUNK_TYPE_LARGE || vchunk->type == SCTK_ALLOC_CHUNK_TYPE_PADDED,"Invalid chunk type.");
+
+	return vchunk;
+}
+
+/************************* FUNCTION ************************/
+static inline struct sctk_alloc_chunk_header_large * sctk_alloc_get_large(sctk_alloc_vchunk vchunk)
+{
+	assert(vchunk!=NULL);
+	assert(vchunk->type == SCTK_ALLOC_CHUNK_TYPE_LARGE);
+	return (struct sctk_alloc_chunk_header_large *)(vchunk+1) - 1;
+}
+
+/************************* FUNCTION ************************/
+static inline struct sctk_alloc_chunk_header_padded * sctk_alloc_get_padded(sctk_alloc_vchunk vchunk)
+{
+	assert(vchunk!=NULL);
+	assert(vchunk->type == SCTK_ALLOC_CHUNK_TYPE_PADDED);
+	return (struct sctk_alloc_chunk_header_padded *)(vchunk+1) - 1;
+}
+
+/************************* FUNCTION ************************/
+static inline void * sctk_alloc_get_ptr(sctk_alloc_vchunk vchunk)
+{
+	assert(vchunk!=NULL);
+	switch(vchunk->type)
+	{
+		case SCTK_ALLOC_CHUNK_TYPE_LARGE:
+			return sctk_alloc_get_large(vchunk);
+		case SCTK_ALLOC_CHUNK_TYPE_PADDED:
+			return sctk_alloc_get_padded(vchunk);
+		default:
+			assume(false,"Invalid type of vchunk.");
+	}
+}
+
+/************************* FUNCTION ************************/
+static inline sctk_addr_t sctk_alloc_get_addr(sctk_alloc_vchunk vchunk)
+{
+	return (sctk_addr_t)sctk_alloc_get_ptr(vchunk);
+}
+
+/************************* FUNCTION ************************/
+static inline sctk_size_t sctk_alloc_get_size(sctk_alloc_vchunk vchunk)
+{
+	return sctk_alloc_get_large(vchunk)->size;
+}
+
+/************************* FUNCTION ************************/
+static inline sctk_size_t sctk_alloc_get_prev_size(sctk_alloc_vchunk vchunk)
+{
+	return sctk_alloc_get_large(vchunk)->prevSize;
+}
+
+/************************* FUNCTION ************************/
+static inline sctk_alloc_vchunk sctk_alloc_large_to_vchunk(struct sctk_alloc_chunk_header_large * chunk_large)
+{
+	assert(chunk_large != NULL);
+	return &chunk_large->info;
+}
+
+/************************* FUNCTION ************************/
+static inline sctk_alloc_vchunk sctk_alloc_padded_to_vchunk(struct sctk_alloc_chunk_header_padded * chunk_padded)
+{
+	assert(chunk_padded != NULL);
+	return &chunk_padded->info;
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Remove the padding described in header of the given vchunk and return the parent vchunk.
+ * @param vchunk Define the vchunk from which to remove padding.
+**/
+static inline sctk_alloc_vchunk sctk_alloc_unpadd_vchunk(struct sctk_alloc_chunk_header_padded * chunk_padded)
+{
+	//error
+	assert(chunk_padded != NULL);
+	assert(chunk_padded->info.type == SCTK_ALLOC_CHUNK_TYPE_PADDED);
+
+	//return previous header by removing padding space.
+	return sctk_alloc_get_chunk((sctk_addr_t)chunk_padded - chunk_padded->padding);
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Same than sctk_alloc_get_chunk, but automatically remove padding if get a padded header.
+ * Caution, the current implementation didn't support encapsulation of multiple level of padding,
+ * it will not be called recursivly.
+ * @param ptr Define the pointer used by the final user (next byte after the chunk header).
+**/
+static inline sctk_alloc_vchunk sctk_alloc_get_chunk_unpadded(sctk_addr_t ptr)
+{
+	sctk_alloc_vchunk vchunk = sctk_alloc_get_chunk(ptr);
+	if (vchunk == NULL)
+		return vchunk;
+	else if (vchunk->type == SCTK_ALLOC_CHUNK_TYPE_PADDED)
+		return sctk_alloc_unpadd_vchunk(sctk_alloc_get_padded(vchunk));
+	else
+		return vchunk;
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Return the bloc next to the current one by using the size to calculate the next address.
+ * Caution for now, this method only support large headers, we may need to generate another one
+ * for the small one. Merging the two one may be less safer due to current header structure.
+ * @param chunk Define the current chunk from which to jump to the next one.
+ * @return Return the next chunk.
+**/
+static inline sctk_alloc_vchunk sctk_alloc_get_next_chunk(sctk_alloc_vchunk chunk)
+{
+	sctk_alloc_vchunk res;
+
+	res = (sctk_alloc_vchunk)((sctk_addr_t)chunk + sctk_alloc_get_large(chunk)->size);
+
+	assume(res->unused_magik == SCTK_ALLOC_MAGIK_STATUS,"Small block not supported for now.");
+
+	return res;
+}
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif //SCTK_ALLOC_INLINED_H

@@ -148,7 +148,7 @@ extern "C"
     struct sctk_ethread_virtual_processor_s *migrate_to;
     void (*migration_func) (struct sctk_ethread_per_thread_s *);
 
-    sctk_alloc_thread_data_t *tls_mem;
+    sctk_alloc_chain_t *tls_mem;
     int dump_for_migration;
     char *file_to_dump;
     volatile char cancel_state;

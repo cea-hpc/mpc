@@ -149,7 +149,7 @@ sctk_mono_end ()
 static volatile long sctk_nb_user_threads = 0;
 extern volatile int sctk_online_program;
 
-sctk_alloc_thread_data_t *sctk_thread_tls = NULL;
+sctk_alloc_chain_t *sctk_thread_tls = NULL;
 
 void
 sctk_thread_init (void)
@@ -711,7 +711,7 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
 {
   int res;
   sctk_thread_data_t *tmp;
-  sctk_alloc_thread_data_t *tls;
+  sctk_alloc_chain_t *tls;
 
 
   tls = __sctk_create_thread_memory_area ();
@@ -812,7 +812,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
   int res;
   sctk_thread_data_t *tmp;
   sctk_thread_data_t *tmp_father;
-  sctk_alloc_thread_data_t *tls;
+  sctk_alloc_chain_t *tls;
   static sctk_spinlock_t lock = 0;
   int user_thread;
 #ifndef NO_INTERNAL_ASSERT

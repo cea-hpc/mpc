@@ -19,56 +19,38 @@
 /* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
 /* #                                                                      # */
 /* ######################################################################## */
-
-#ifndef SCTK_ALLOC_DEBUG_H
-#define SCTK_ALLOC_DEBUG_H
-
-/************************** HEADERS ************************/
-#include <stdio.h>
-#include <assert.h>
-#include "sctk_allocator.h"
+#ifndef SCTK_ALLOC_RDTSC_H_
+#define SCTK_ALLOC_RDTSC_H_
 
 /************************** MACROS *************************/
-#ifdef NDEBUG
-	#define SCTK_PDEBUG //sctk_alloc_pdebug
-	#define SCTK_CRASH_DUMP //sctk_alloc_crash_dump
-#else //NDEBUG
-	#define SCTK_PDEBUG sctk_alloc_pdebug
-	#define SCTK_CRASH_DUMP sctk_alloc_crash_dump
-	#ifndef ENABLE_TRACE
-		#define ENABLE_TRACE
-	#endif
-#endif //NDEBUG
-
-#ifndef ENABLE_TRACE
-	#define SCTK_PTRACE //sctk_alloc_ptrace
-#else
-	#define SCTK_PTRACE sctk_alloc_ptrace
+// Define rdtscll for x86_64 arch
+#ifdef __x86_64__
+	#define __sctk_rdtscll(val) do { \
+			unsigned int __a,__d; \
+			asm volatile("rdtsc" : "=a" (__a), "=d" (__d)); \
+			(val) = ((unsigned long)__a) | (((unsigned long)__d)<<32); \
+	} while(0)
 #endif
 
 /************************** MACROS *************************/
-#define warning(m) sctk_alloc_pwarning("Warning at %s!%d\n%s\n",__FILE__,__LINE__,m);
-#define assume(x,m) if (!(x)) { sctk_alloc_perror("Error at %s!%d\n%s\n%s\n",__FILE__,__LINE__,#x,m); abort(); }
-#define fatal(m) { sctk_alloc_perror("Fatal error at %s!%d\n%s\n",__FILE__,__LINE__,m); abort(); }
-
-/************************* FUNCTION ************************/
-void sctk_alloc_ptrace_init(void);
-
-/************************* FUNCTION ************************/
-void sctk_alloc_pdebug(const char * format,...);
-void sctk_alloc_ptrace(const char * format,...);
-void sctk_alloc_perror(const char * format,...);
-void sctk_alloc_pwarning(const char * format,...);
-void sctk_alloc_fprintf(int fd,const char * format,...);
-
-/************************* FUNCTION ************************/
-void sctk_alloc_debug_dump_segment(int fd,void * base_addr,void * end_addr);
-void sctk_alloc_debug_dump_free_lists(int fd,struct sctk_alloc_free_chunk * free_lists);
-void sctk_alloc_debug_dump_thread_pool(int fd,struct sctk_thread_pool * pool);
-void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain * chain);
-
-/************************* FUNCTION ************************/
-void sctk_alloc_debug_init(void);
-void sctk_alloc_crash_dump(void);
-
+// Define rdtscll for i386 arch
+#ifdef __i386__
+	#define __sctk_rdtscll(val) { \
+		asm volatile ("rdtsc" : "=A"(val)); \
+		}
 #endif
+
+/************************* FUNCTION ************************/
+static inline unsigned long sctk_alloc_rdtsc() {
+    unsigned long t;
+    __sctk_rdtscll(t);
+    return t;
+}
+
+/************************* FUNCTION ************************/
+static inline void sctk_alloc_fill_rdtsc(unsigned long * value)
+{
+	__sctk_rdtscll(*value);
+}
+
+#endif //SCTK_ALLOC_RDTSC_H_

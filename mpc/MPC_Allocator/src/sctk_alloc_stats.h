@@ -20,55 +20,49 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_ALLOC_DEBUG_H
-#define SCTK_ALLOC_DEBUG_H
+#ifndef SCTK_ALLOC_STATS_H
+#define SCTK_ALLOC_STATS_H
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
 
 /************************** HEADERS ************************/
-#include <stdio.h>
-#include <assert.h>
-#include "sctk_allocator.h"
+
+/************************** CONSTS *************************/
 
 /************************** MACROS *************************/
-#ifdef NDEBUG
-	#define SCTK_PDEBUG //sctk_alloc_pdebug
-	#define SCTK_CRASH_DUMP //sctk_alloc_crash_dump
-#else //NDEBUG
-	#define SCTK_PDEBUG sctk_alloc_pdebug
-	#define SCTK_CRASH_DUMP sctk_alloc_crash_dump
-	#ifndef ENABLE_TRACE
-		#define ENABLE_TRACE
-	#endif
-#endif //NDEBUG
+#ifndef SCTK_ALLOC_STATS
+#define SCTK_ALLOC_STATS_HOOK(x) x
+#define SCTK_ALLOC_STATS_HOOK_INC(x) (x++)
+#define SCTK_ALLOC_STATS_HOOK_DEC(x) (x--)
+#else //SCTK_ALLOC_STAT
+#define SCTK_ALLOC_STATS_HOOK(x) /*x*/
+#define SCTK_ALLOC_STATS_HOOK_INC(x) /*(x++)*/
+#define SCTK_ALLOC_STATS_HOOK_DEC(x) /*(x--)*/
+#endif //SCTK_ALLOC_STAT
 
-#ifndef ENABLE_TRACE
-	#define SCTK_PTRACE //sctk_alloc_ptrace
-#else
-	#define SCTK_PTRACE sctk_alloc_ptrace
+/************************** STRUCT *************************/
+/**
+ * Struct to store stats from each allocation chain.
+**/
+struct sctk_alloc_stats_chain
+{
+	/** Number of macro blocs allocated to the current allocation chain. **/
+	unsigned long nb_macro_blocs;
+	/** Memory size currently allocated an managed by the current allocation chain. **/
+	unsigned long allocated_memory;
+};
+
+/************************* FUNCTION ************************/
+void sctk_alloc_stats_chain_init(struct sctk_alloc_stats_chain * chain_stats);
+void sctk_alloc_stats_chain_destroy(struct sctk_alloc_stats_chain * chain_stats);
+
+
+#ifdef __cplusplus
+}
 #endif
 
-/************************** MACROS *************************/
-#define warning(m) sctk_alloc_pwarning("Warning at %s!%d\n%s\n",__FILE__,__LINE__,m);
-#define assume(x,m) if (!(x)) { sctk_alloc_perror("Error at %s!%d\n%s\n%s\n",__FILE__,__LINE__,#x,m); abort(); }
-#define fatal(m) { sctk_alloc_perror("Fatal error at %s!%d\n%s\n",__FILE__,__LINE__,m); abort(); }
+#endif //SCTK_ALLOC_STATS_H
 
-/************************* FUNCTION ************************/
-void sctk_alloc_ptrace_init(void);
-
-/************************* FUNCTION ************************/
-void sctk_alloc_pdebug(const char * format,...);
-void sctk_alloc_ptrace(const char * format,...);
-void sctk_alloc_perror(const char * format,...);
-void sctk_alloc_pwarning(const char * format,...);
-void sctk_alloc_fprintf(int fd,const char * format,...);
-
-/************************* FUNCTION ************************/
-void sctk_alloc_debug_dump_segment(int fd,void * base_addr,void * end_addr);
-void sctk_alloc_debug_dump_free_lists(int fd,struct sctk_alloc_free_chunk * free_lists);
-void sctk_alloc_debug_dump_thread_pool(int fd,struct sctk_thread_pool * pool);
-void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain * chain);
-
-/************************* FUNCTION ************************/
-void sctk_alloc_debug_init(void);
-void sctk_alloc_crash_dump(void);
-
-#endif

@@ -20,55 +20,40 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_ALLOC_DEBUG_H
-#define SCTK_ALLOC_DEBUG_H
+#ifndef SCTK_ALLOC_POSIX_H
+#define SCTK_ALLOC_POSIX_H
 
 /************************** HEADERS ************************/
-#include <stdio.h>
-#include <assert.h>
+#include <stdlib.h>
 #include "sctk_allocator.h"
 
-/************************** MACROS *************************/
-#ifdef NDEBUG
-	#define SCTK_PDEBUG //sctk_alloc_pdebug
-	#define SCTK_CRASH_DUMP //sctk_alloc_crash_dump
-#else //NDEBUG
-	#define SCTK_PDEBUG sctk_alloc_pdebug
-	#define SCTK_CRASH_DUMP sctk_alloc_crash_dump
-	#ifndef ENABLE_TRACE
-		#define ENABLE_TRACE
-	#endif
-#endif //NDEBUG
-
-#ifndef ENABLE_TRACE
-	#define SCTK_PTRACE //sctk_alloc_ptrace
-#else
-	#define SCTK_PTRACE sctk_alloc_ptrace
+#ifdef __cplusplus
+extern "C"
+{
 #endif
 
-/************************** MACROS *************************/
-#define warning(m) sctk_alloc_pwarning("Warning at %s!%d\n%s\n",__FILE__,__LINE__,m);
-#define assume(x,m) if (!(x)) { sctk_alloc_perror("Error at %s!%d\n%s\n%s\n",__FILE__,__LINE__,#x,m); abort(); }
-#define fatal(m) { sctk_alloc_perror("Fatal error at %s!%d\n%s\n",__FILE__,__LINE__,m); abort(); }
+/************************* FUNCTION ************************/
+SCTK_STATIC void sctk_alloc_posix_base_init(void);
+SCTK_STATIC struct sctk_alloc_chain * sctk_alloc_setup_tls_chain(void);
+sctk_size_t sctk_alloc_posix_get_size(void *ptr);
 
 /************************* FUNCTION ************************/
-void sctk_alloc_ptrace_init(void);
+SCTK_STATIC void sctk_alloc_posix_mmsrc_uma_init(void);
+SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init(void);
+SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(void);
 
 /************************* FUNCTION ************************/
-void sctk_alloc_pdebug(const char * format,...);
-void sctk_alloc_ptrace(const char * format,...);
-void sctk_alloc_perror(const char * format,...);
-void sctk_alloc_pwarning(const char * format,...);
-void sctk_alloc_fprintf(int fd,const char * format,...);
+void * sctk_calloc (size_t nmemb, size_t size);
+void * sctk_malloc (size_t size);
+void sctk_free (void * ptr);
+void * sctk_realloc (void * ptr, size_t size);
+void * sctk_memalign(size_t boundary,size_t size);
 
-/************************* FUNCTION ************************/
-void sctk_alloc_debug_dump_segment(int fd,void * base_addr,void * end_addr);
-void sctk_alloc_debug_dump_free_lists(int fd,struct sctk_alloc_free_chunk * free_lists);
-void sctk_alloc_debug_dump_thread_pool(int fd,struct sctk_thread_pool * pool);
-void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain * chain);
+#warning TODO remove this
+#include "sctk_alloc_to_recode.h"
 
-/************************* FUNCTION ************************/
-void sctk_alloc_debug_init(void);
-void sctk_alloc_crash_dump(void);
-
+#ifdef __cplusplus
+}
 #endif
+
+#endif //SCTK_ALLOC_POSIX_H
