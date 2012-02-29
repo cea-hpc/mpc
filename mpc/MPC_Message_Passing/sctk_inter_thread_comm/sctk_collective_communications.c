@@ -46,21 +46,21 @@ sctk_terminaison_barrier (const int id)
 
   sctk_thread_mutex_lock(&lock);
   done ++;
-  sctk_debug("sctk_terminaison_barrier %d %d",done, local);
+  sctk_nodebug("sctk_terminaison_barrier %d %d",done, local);
   if(done == local){
     done = 0;
     if(sctk_process_number > 1){
       sctk_nodebug("sctk_pmi_barrier");
       sctk_pmi_barrier();
     }
-    sctk_debug("WAKE ALL in sctk_terminaison_barrier");
+    sctk_nodebug("WAKE ALL in sctk_terminaison_barrier");
     sctk_thread_cond_broadcast(&cond);
   } else {
-    sctk_debug("WAIT in sctk_terminaison_barrier");
+    sctk_nodebug("WAIT in sctk_terminaison_barrier");
     sctk_thread_cond_wait(&cond,&lock);
   }
   sctk_thread_mutex_unlock(&lock);
-  sctk_debug("sctk_terminaison_barrier %d %d DONE",done, local);
+  sctk_nodebug("sctk_terminaison_barrier %d %d DONE",done, local);
 }
 
 /************************************************************************/
