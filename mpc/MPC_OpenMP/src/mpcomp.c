@@ -1687,5 +1687,93 @@ void check_parallel_region_correctness(void)
 
 }
 
+/*
+  Push tree node in stack
+*/
+void push(mpcomp_node_t *node, mpcomp_stack_t *head)
+{
+  
+  mpcomp_stack_t *s = malloc(sizeof(mpcomp_stack_t));
+
+  if(s == NULL) {
+    printf("Error: no space available for stack!\n");
+    return;
+  } else {
+    s->node = node;
+    s->next = head;
+    head = s;
+    head->size++;
+  } 
+}
+
+
+/*
+ Pop last element of stack
+*/
+mpcomp_node_t *pop(mpcomp_stack_t *head)
+{
+ 
+ if(head == NULL)
+ {
+   printf("Error: stack underflow!!\n");
+   return NULL;
+ }
+ else {
+   mpcomp_stack_t *top = head;
+   mpcomp_node_t *node;
+   node = top->node;
+   head = top->next;
+   head->size--; 
+   free(top);
+   return node;
+ }
+
+}
+
+/*
+ Initialize stack
+*/
+void mk_empty_stack(mpcomp_stack_t *head)
+{
+ head->size = 0; 
+}
+
+/*
+  Check if stack is empty
+*/
+int is_empty_stack(mpcomp_stack_t *head)
+{
+  if(head->size == 0)
+    return 1;
+  
+  return 0;
+}
+
+
+/*
+ Prefix in depth tree search
+*/
+void in_depth_tree_search(mpcomp_node_t *node, int *index)
+{
+
+  int i;
+  mpcomp_stack_t *stack;
+
+  mk_empty_stack(stack);
+  push(node, stack);
+
+  while(!is_empty_stack(stack)) 
+  {
+    node = pop(stack);
+    
+    if(node->nb_children != 0)
+    {
+       for(i=0;i<node->nb_children;i++) {
+         if(node->child_type == CHILDREN_NODE)
+          push(node->children.node[i], stack); 
+       }     
+    }  
+  }
+}
 
 

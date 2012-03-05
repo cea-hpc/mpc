@@ -111,6 +111,17 @@ struct mpcomp_chunk_s {
 
 typedef struct mpcomp_chunk_s mpcomp_chunk_t ;
 
+
+/******* STACK ******/
+struct mpcomp_stack_s {
+ struct mpcomp_node_t *node;
+ struct mpcomp_stack_s *next;
+ size_t size; 
+};
+
+typedef struct mpcomp_stack_s mpcomp_stack_t;
+
+
 /****** Linked list of locks (per lock structure, who is blocked with this lock) ******/
 
 struct mpcomp_slot_s {
@@ -311,6 +322,21 @@ void in_order_scheduler(mpcomp_mvp_t *mvp);
 *******************************************/
 void __mpcomp_barrier_for_dyn(void);
 void __mpcomp_internal_barrier_for_dyn(mpcomp_thread_t *t);
+void __mpcomp_steal_chunk(mpcomp_mvp_t *mvp, int start_index, int *dest_index);
+
+/************************************
+      STACK OPERATIONS
+************************************/
+void push(mpcomp_node_t *node, mpcomp_stack_t *head);
+mpcomp_node_t* pop(mpcomp_stack_t *head);
+void mk_empty_stack(mpcomp_stack_t *head);
+int is_empty_stack(mpcomp_stack_t *head);
+
+/************************************
+    IN DEPTH TREE SEARCH
+************************************/
+void in_depth_tree_search(mpcomp_node_t *node, int *index);
+
 
 /*************************************************
 *************************************************

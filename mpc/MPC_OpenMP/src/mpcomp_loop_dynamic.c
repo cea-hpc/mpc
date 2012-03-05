@@ -586,6 +586,42 @@ void __mpcomp_dynamic_loop_end_nowait()
 
 }
 
+void __mpcomp_steal_chunk(mpcomp_mvp_t *mvp, int start_index, int *dest_index)
+{
+  int node_index;
+  int i;
+  mpcomp_thread_t *t;
+  mpcomp_thread_team_t *team;
+  int rank;
+  int remain;
+  int mvp_rank;
+
+  /* Grab the info of the current thread */    
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  /* Grab the team info */
+  team = t->team;
+  sctk_assert(team != NULL);
+
+  /* Number of threads of the current team */  
+  num_threads = t->team->num_threads;
+
+  /* Grab the index of the current loop */
+  index = (t->private_current_for_dyn) % MPCOMP_MAX_ALIVE_FOR_DYN;
+  remain = team->chunk_info_for_dyn[rank][index].remain;
+
+  mpcomp_node_t *node = mvp->father;
+  int mvp_rank = mvp->tree_rank;  
+
+  for(i=mvp_rank+1;i<(mvp_rank+node->nb_children)%(node->nb_children);i++) {
+   mvp_rank = node->children.leaf[i].rank
+  }
+
+
+}
+
+
 
 
 #if 0
