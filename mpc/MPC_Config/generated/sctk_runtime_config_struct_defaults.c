@@ -57,7 +57,7 @@ void sctk_runtime_config_module_init_allocator(void * struct_ptr)
 	//Simple params :
 	obj->numa = false;
 	obj->profile = false;
-	obj->alstring= "TestTestTest";
+	obj->alstring = "TestTestTest";
 	obj->aldouble = 42.42;
 	obj->alfloat = 42.42;
 	obj->warnings = false;
@@ -91,9 +91,60 @@ void sctk_runtime_config_module_init_launcher(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_module_init_net_driver_fake(void * struct_ptr)
+{
+	struct sctk_runtime_config_module_net_driver_fake * obj = struct_ptr;
+	//Simple params :
+	obj->buffer = 1024;
+	obj->stealing = true;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_module_init_net_driver(void * struct_ptr)
+{
+	struct sctk_runtime_config_module_net_driver * obj = struct_ptr;
+	obj->type = SCTK_RTCFG_net_driver_NONE;
+	memset(&obj->value,0,sizeof(obj->value));
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_module_init_net_driver_config(void * struct_ptr)
+{
+	struct sctk_runtime_config_module_net_driver_config * obj = struct_ptr;
+	//Simple params :
+	obj->name = NULL;
+	sctk_runtime_config_module_init_net_driver(&obj->driver);
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_module_init_net_rail(void * struct_ptr)
+{
+	struct sctk_runtime_config_module_net_rail * obj = struct_ptr;
+	//Simple params :
+	obj->name = NULL;
+	obj->device = NULL;
+	obj->topology = NULL;
+	obj->config = NULL;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_module_init_networks(void * struct_ptr)
+{
+	struct sctk_runtime_config_module_networks * obj = struct_ptr;
+	//Simple params :
+	//array
+	obj->configs = NULL;
+	obj->configs_size = 0;
+	//array
+	obj->rails = NULL;
+	obj->rails_size = 0;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 {
 	sctk_runtime_config_module_init_allocator(&config->modules.allocator);
 	sctk_runtime_config_module_init_launcher(&config->modules.launcher);
+	sctk_runtime_config_module_init_networks(&config->networks);
 };
 

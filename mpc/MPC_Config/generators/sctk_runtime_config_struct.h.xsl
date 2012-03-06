@@ -47,6 +47,7 @@
 		<xsl:text>struct sctk_runtime_config&#10;</xsl:text>
 		<xsl:text>{&#10;</xsl:text>
 		<xsl:text>&#09;struct sctk_runtime_config_modules modules;&#10;</xsl:text>
+		<xsl:text>&#09;struct sctk_runtime_config_module_networks networks;&#10;</xsl:text>
 		<xsl:text>};&#10;</xsl:text>
 	</xsl:template>
 

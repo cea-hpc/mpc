@@ -54,20 +54,21 @@
 				<!-- Configure network drivers -->
 				<drivers>
 					<!-- Config for IB driver -->
-					<infiniband>
-						<!-- Define a first config named 'conf1' -->
-						<config>
-							<name>conf1</name>
+					<config>
+						<name>conf1</name>
+						<infiniband>
 							<buffer>1M</buffer>
 							<steal>true</steal>
-						</config>
-						<!-- Define a second config named 'conf2' -->
-						<config>
-							<name>conf2</name>
-							<buffer>2M</buffer>
-							<steal>false</steal>
-						</config>
-					</infiniband>
+						</infiniband>
+					</config>
+					<!-- Config for IB driver -->
+					<config>
+						<name>conf2</name>
+						<tcp>
+							<buffer>1M</buffer>
+							<steal>true</steal>
+						</tcp>
+					</config>
 				</drivers>
 				<!-- Setup all available rails -->
 				<rails>

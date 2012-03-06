@@ -46,34 +46,49 @@ bool __sctk_global_runtime_config_init__ = false;
 extern const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[];
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_map_profile_entry(void * value, xmlNodePtr node,const char * entry_name,const char * entry_c_type)
+{
+	//vars
+	xmlNodePtr entry;
+	const struct sctk_runtime_config_entry_meta * entry_meta;
+
+	//errors
+	assert(value != NULL);
+	assert(node != NULL);
+	assert(xmlStrcmp(node->name,SCTK_RUNTIME_CONFIG_XML_NODE_PROFILE) == 0);
+
+	//get the entry while taking in XML childs
+	entry = sctk_libxml_find_child_node(node,entry_name);
+
+	//if have entry, map
+	if (entry != NULL)
+	{
+		//get meta description of entry
+		entry_meta = sctk_runtime_config_get_meta_type(sctk_runtime_config_db, entry_c_type);
+
+		//check error
+		assume(entry_meta != NULL,"Invalid type name : %s.",entry_c_type);
+
+		//map the struct
+		sctk_runtime_config_map_struct(sctk_runtime_config_db,value,entry_meta,entry);
+	}
+}
+
+/*******************  FUNCTION  *********************/
 /**
  * Map the content of a profile XML node on MPC configuration structure.
  * @param config Define the configration structure to use.
  * @param node Define the XML node of the profile. Must be a &lt;profile&gt; balisis.
 **/
-void sctk_runtime_config_map_profile_to_c_struct( struct sctk_runtime_config * config, xmlNodePtr node)
+void sctk_runtime_config_map_profile( struct sctk_runtime_config * config, xmlNodePtr node)
 {
-	//vars
-	xmlNodePtr modules;
-	const struct sctk_runtime_config_entry_meta * entry;
-
 	//errors
 	assert(config != NULL);
 	assert(node != NULL);
 	assert(xmlStrcmp(node->name,SCTK_RUNTIME_CONFIG_XML_NODE_PROFILE) == 0);
 
-	//get modules entry
-	modules = sctk_libxml_find_child_node(node,SCTK_RUNTIME_CONFIG_XML_NODE_MODULES);
-
-	//nothing to do
-	if (modules == NULL)
-		return;
-
-	//another way to map
-	entry = sctk_runtime_config_get_meta_type(sctk_runtime_config_db, "sctk_runtime_config_modules");
-	if (entry == NULL)
-		fatal("Invalid type name : %s.","sctk_runtime_config_modules");
-	sctk_runtime_config_map_struct(sctk_runtime_config_db, &config->modules,entry,modules);
+	sctk_runtime_config_map_profile_entry(&config->modules,node,SCTK_RUNTIME_CONFIG_XML_NODE_MODULES,"sctk_runtime_config_modules");
+	sctk_runtime_config_map_profile_entry(&config->networks,node,SCTK_RUNTIME_CONFIG_XML_NODE_NETWORKS,"sctk_runtime_config_module_networks");
 }
 
 /*******************  FUNCTION  *********************/
@@ -82,7 +97,7 @@ void sctk_runtime_config_map_profile_to_c_struct( struct sctk_runtime_config * c
  * @param config Define the configuration structure to use.
  * @param config_sources Define the configuration source the use.
 **/
-void sctk_runtime_config_runtime_map_sources_to_c_struct( struct sctk_runtime_config * config,struct sctk_runtime_config_sources * config_sources)
+void sctk_runtime_config_runtime_map_sources( struct sctk_runtime_config * config,struct sctk_runtime_config_sources * config_sources)
 {
 	//vars
 	int i;
@@ -97,7 +112,7 @@ void sctk_runtime_config_runtime_map_sources_to_c_struct( struct sctk_runtime_co
 
 	//run over profiles
 	for (i = 0 ; i < config_sources->cnt_profile_nodes ; ++i)
-		sctk_runtime_config_map_profile_to_c_struct(config,config_sources->profile_nodes[i]);
+		sctk_runtime_config_map_profile(config,config_sources->profile_nodes[i]);
 }
 
 
@@ -112,7 +127,7 @@ void sctk_runtime_config_runtime_display(void)
 
 	//separator
 	printf("====================== MPC CONFIG ======================\n");
-	sctk_runtime_config_display_struct(sctk_runtime_config_db,&__sctk_global_runtime_config__.modules,"sctk_runtime_config_modules",0);
+	sctk_runtime_config_display_struct(sctk_runtime_config_db,&__sctk_global_runtime_config__,"sctk_runtime_config",0);
 	printf("\n");
 	printf("========================================================\n");
 }
@@ -158,7 +173,7 @@ void sctk_runtime_config_init(void)
 			sctk_runtime_config_sources_open(&config_sources);
 
 			//map to c struct
-			sctk_runtime_config_runtime_map_sources_to_c_struct( &__sctk_global_runtime_config__,&config_sources);
+			sctk_runtime_config_runtime_map_sources( &__sctk_global_runtime_config__,&config_sources);
 
 			//close
 			sctk_runtime_config_sources_close(&config_sources);

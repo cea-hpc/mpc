@@ -32,5 +32,10 @@ void sctk_runtime_config_module_init_rail(void * struct_ptr);
 void sctk_runtime_config_module_init_driver(void * struct_ptr);
 void sctk_runtime_config_module_init_allocator(void * struct_ptr);
 void sctk_runtime_config_module_init_launcher(void * struct_ptr);
+void sctk_runtime_config_module_init_net_driver_fake(void * struct_ptr);
+void sctk_runtime_config_module_init_net_driver(void * struct_ptr);
+void sctk_runtime_config_module_init_net_driver_config(void * struct_ptr);
+void sctk_runtime_config_module_init_net_rail(void * struct_ptr);
+void sctk_runtime_config_module_init_networks(void * struct_ptr);
 
 #endif //SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H

@@ -77,62 +77,39 @@
 			</modules>
 			<!-- network modules -->
 			<networks>
-				<!-- Configure network drivers -->
-				<drivers>
-					<!-- Config for IB driver -->
-					<infiniband>
-						<!-- Define a first config named 'conf1' -->
-						<config>
-							<name>conf1</name>
-							<buffer>1M</buffer>
-							<steal>true</steal>
-						</config>
-						<!-- Define a second config named 'conf2' -->
-						<config>
-							<name>conf2</name>
-							<buffer>2M</buffer>
-							<steal>false</steal>
-						</config>
-					</infiniband>
-				</drivers>
-				<!-- Setup all available rails -->
+				<configs>
+					<config>
+						<name>conf1</name>
+						<driver>
+							<infiniband>
+								<buffer>2048</buffer>
+							</infiniband>
+						</driver>
+					</config>
+					<config>
+						<name>conf2</name>
+						<driver>
+							<tcp>
+								<stealing>false</stealing>
+							</tcp>
+						</driver>
+					</config>
+				</configs>
+				
 				<rails>
-					<!-- First IB rail -->
 					<rail>
-						<!-- name of config to be referenced -->
-						<name>ib1</name>
-						<!-- Use IB card one -->
-						<device>1</device>
-						<!-- Driver is IB -->
-						<driver>infiniband</driver>
-						<!-- Internal topology is tore -->
-						<topology>tore</topology>
-						<!-- It use conf1 from ib driver -->
+						<name>rail1</name>
+						<device>ib1</device>
+						<topology>ring</topology>
 						<config>conf1</config>
 					</rail>
-					<!-- Same to use the second card, with different config -->
 					<rail>
-						<name>ib2</name>
-						<device>2</device>
-						<driver>infiniband</driver>
+						<name>rail2</name>
+						<device>eth0</device>
 						<topology>tore</topology>
 						<config>conf2</config>
 					</rail>
-					<!-- Define TCP network -->
-					<rail>
-						<name>tcp</name>
-						<driver>tcp</driver>
-						<device>eth0</device>
-						<topology>ring</topology>	
-					</rail>
 				</rails>
-				<!-- Define routing rules, rail will be realy setup only if used here -->
-				<routing>
-					<!-- Need to discuss what is needed to make bridge or routing rules between rails -->
-					<network>ib1</network>
-					<network>ib2</network>
-					<network>tcp</network>
-				</routing>
 			</networks>
 		</profile>
 		<profile>

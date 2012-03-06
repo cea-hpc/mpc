@@ -365,7 +365,7 @@ void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml *
 **/
 bool sctk_runtime_config_source_xml_is_open( struct sctk_runtime_config_source_xml * source )
 {
-	return (source->document == NULL);
+	return (source->document != NULL);
 }
 
 /*******************  FUNCTION  *********************/

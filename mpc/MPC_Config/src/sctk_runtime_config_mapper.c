@@ -78,7 +78,6 @@ char * sctk_runtime_config_map_entry_to_string(xmlNodePtr node)
 {
 	char *ret = NULL;
 	xmlChar * value = xmlNodeGetContent(node);
-	printf("Mapping %s \n", BAD_CAST( value ) );
 	ret = strdup( BAD_CAST( value ) );
 	xmlFree(value);
 	return ret;

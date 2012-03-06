@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<config>
+	<usertypes>
+
+		<!-- Structure for infiniband driver -->
+		<struct>
+			<name>net_driver_fake</name>
+			<param>
+				<name>buffer</name>
+				<type>int</type>
+				<doc>Size of the buffer used for internal copies.</doc>
+				<default>1024</default>
+			</param>
+			<param>
+				<name>stealing</name>
+				<type>bool</type>
+				<doc>Enable stealing between threads.</doc>
+				<default>true</default>
+			</param>
+		</struct>
+
+		<!-- Union to merge drivers -->
+		<union>
+			<name>net_driver</name>
+			<doc>Define a specific configuration for a network driver to apply in rails.</doc>
+			<choice>
+				<name>infiniband</name>
+				<type>net_driver_fake</type>
+			</choice>
+			<choice>
+				<name>tcp</name>
+				<type>net_driver_fake</type>
+			</choice>
+		</union>
+
+		<!-- define a network driver config -->
+		<struct>
+			<name>net_driver_config</name>
+			<doc>Contain a list of driver configuration reused by rail definitions.</doc>
+			<param>
+				<name>name</name>
+				<type>string</type>
+				<doc>Name of the driver configuration to be referenced in rail definitions.</doc>
+			</param>
+			<param>
+				<name>driver</name>
+				<type>net_driver</type>
+				<doc>Define the related driver to use and its configuration.</doc>
+			</param>
+		</struct>
+
+		<!-- Structure for rail definition -->
+		<struct>
+			<name>net_rail</name>
+			<param>
+				<name>name</name>
+				<type>string</type>
+				<doc>Define the name of current rail.</doc>
+			</param>
+			<param>
+				<name>device</name>
+				<type>string</type>
+				<doc>Define the name of the device to use in this rail.</doc>
+			</param>
+			<param>
+				<name>topology</name>
+				<type>string</type>
+				<doc>Define the network topology to apply on this rail.</doc>
+			</param>
+			<param>
+				<name>config</name>
+				<type>string</type>
+				<doc>Define the driver config to use for this rail.</doc>
+			</param>
+		</struct>
+
+		<!-- root structure of network config -->
+		<struct>
+			<name>networks</name>
+			<doc>Base structure to contain the network configuration</doc>
+			<array>
+				<name>configs</name>
+				<entry-name>config</entry-name>
+				<type>net_driver_config</type>
+				<doc>Define the configuration driver list to reuse in rail definitions.</doc>
+			</array>
+			<array>
+				<name>rails</name>
+				<entry-name>rail</entry-name>
+				<type>net_rail</type>
+				<doc>List of rails to declare in MPC.</doc>
+			</array>
+		</struct>
+
+	</usertypes>
+</config>
