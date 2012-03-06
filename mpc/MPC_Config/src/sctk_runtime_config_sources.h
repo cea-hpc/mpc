@@ -24,6 +24,7 @@
 #define SCTK_RUNTIME_CONFIG_SOURCES_H
 
 /********************  HEADERS  *********************/
+#include <stdbool.h>
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 
@@ -117,13 +118,13 @@ struct sctk_runtime_config_sources
 
 /*******************  FUNCTION  *********************/
 //functions to manage the sctk_runtime_config_sources structure
-void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * config_sources, const char * application_config_file);
+void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * config_sources);
 void sctk_runtime_config_sources_close(struct sctk_runtime_config_sources * config_sources);
 
 /*******************  FUNCTION  *********************/
 //function to manage open operations of a specific xml file.
 void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml * source,const char * filename,enum sctk_runtime_config_open_error_level level);
-int sctk_runtime_config_source_xml_is_open( struct sctk_runtime_config_source_xml * source );
+bool sctk_runtime_config_source_xml_is_open( struct sctk_runtime_config_source_xml * source );
 
 /*******************  FUNCTION  *********************/
 //functions to manage selection of profiles in XML DOM tree
@@ -134,5 +135,9 @@ void sctk_runtime_config_sources_insert_profile_node(struct sctk_runtime_config_
 xmlNodePtr sctk_runtime_config_sources_find_profile_node(struct sctk_runtime_config_source_xml * source,const xmlChar * name);
 void sctk_runtime_config_sources_select_profiles_in_file(struct sctk_runtime_config_sources * config_sources,struct sctk_runtime_config_source_xml * source);
 void sctk_runtime_config_sources_select_profiles_in_mapping(struct sctk_runtime_config_sources * config_sources, xmlNodePtr mapping);
+
+/*******************  FUNCTION  *********************/
+//some helper functions
+const char * sctk_runtime_config_get_env_or_value(const char * env_name,const char * fallback_value);
 
 #endif //SCTK_RUNTIME_CONFIG_FILES_H

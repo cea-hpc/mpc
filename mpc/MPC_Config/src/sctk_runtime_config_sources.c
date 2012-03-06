@@ -30,6 +30,13 @@
 #include "sctk_libxml_helper.h"
 #include "sctk_runtime_config_sources.h"
 
+/*********************  GLOBAL  *********************/
+/**
+ * This is a constant on exported symbol, so the user can redefine it in application source
+ * code if wanted.
+**/
+const char * sctk_runtime_config_default_app_file_path = NULL;
+
 /*******************  FUNCTION  *********************/
 /**
  * Checks if a given profile name is not already in the profile name array
@@ -38,21 +45,21 @@
 **/
 static int sctk_runtime_config_sources_profile_name_is_unique( struct sctk_runtime_config_sources * config_sources, const xmlChar *candidate )
 {
+	int i = 0;
+
+	//errors
 	assert( candidate != NULL );
 	assert( config_sources != NULL );
 
-	int i = 0;
-	
+	//loop on profiles
 	for( i = 0 ; i < config_sources->cnt_profile_names; i++ )
 	{
 		if( !xmlStrcmp( (const xmlChar *)&config_sources->profile_names[i], candidate ) )
 			return 0;
 	}
-	
+
 	return 1;
 }
-
-
 
 /** @TODO check that some assert need to be turned into assume (when checking node names...) **/
 
@@ -94,7 +101,6 @@ void sctk_runtime_config_sources_select_profiles_in_mapping(struct sctk_runtime_
 				//if profile, ok add it
 				if (xmlStrcmp(profile->name,SCTK_RUNTIME_CONFIG_XML_NODE_PROFILE) == 0)
 				{
-
 					xmlChar *profile_name = xmlNodeGetContent(profile);
 
 					//Check if the profile name is unique and store its name if so
@@ -108,7 +114,6 @@ void sctk_runtime_config_sources_select_profiles_in_mapping(struct sctk_runtime_
 					} else {
 						xmlFree( profile_name );
 					}
-
 				}
 				//move to next one
 				profile = xmlNextElementSibling(profile);
@@ -237,12 +242,11 @@ void sctk_runtime_config_sources_select_profile_nodes(struct sctk_runtime_config
 	//vars
 	xmlNodePtr node;
 	bool find_once = false;
+	int i = 0;
 
 	//errors
 	assert(config_sources != NULL);
 	assert(name != NULL);
-
-	int i = 0;
 	
 	for( i = 0 ; i < SCTK_RUNTIME_CONFIG_LEVEL_COUNT ; i++ )
 	{
@@ -254,9 +258,8 @@ void sctk_runtime_config_sources_select_profile_nodes(struct sctk_runtime_config
 				find_once = true;
 				sctk_runtime_config_sources_insert_profile_node(config_sources,node);
 			}
-		}	
+		}
 	}
-
 
 	//warning
 	/** @TODO To discuss, this may be an error. **/
@@ -300,21 +303,15 @@ void sctk_runtime_config_sources_select_profiles_nodes(struct sctk_runtime_confi
 **/
 void sctk_runtime_config_sources_select_profiles(struct sctk_runtime_config_sources * config_sources)
 {
+	int i = 0;
+
 	//errors
 	assert(config_sources != NULL);
-
-	int i = 0;
 	
 	//select in all sources
 	for( i = 0 ; i < SCTK_RUNTIME_CONFIG_LEVEL_COUNT ; i++ )
-	{
 		if(  sctk_runtime_config_source_xml_is_open(&config_sources->sources[i])  )
-		{
 			sctk_runtime_config_sources_select_profiles_in_file(config_sources,&config_sources->sources[i]);
-		}	
-	}
-
-
 	//select all profile nodes
 	sctk_runtime_config_sources_select_profiles_nodes(config_sources);
 }
@@ -361,10 +358,39 @@ void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml *
 	assume (xmlStrcmp(source->root_node->name,SCTK_RUNTIME_CONFIG_XML_NODE_MPC) == 0,"Bad root node name %s in config file : %s\n",source->root_node->name,filename);
 }
 
-
-int sctk_runtime_config_source_xml_is_open( struct sctk_runtime_config_source_xml * source )
+/*******************  FUNCTION  *********************/
+/**
+ * Check if the configuration source if open.
+ * @param source Define the configuration source to check.
+**/
+bool sctk_runtime_config_source_xml_is_open( struct sctk_runtime_config_source_xml * source )
 {
-	return (source->document == NULL)?0:1;
+	return (source->document == NULL);
+}
+
+/*******************  FUNCTION  *********************/
+/**
+ * Use the value of an environnement variable or a given default value if not defined or if empty.
+ * @param env_name The name of the environnement variable to use with getenv()
+ * @param fallback_value Define the value to return if the environnement variable is empty.
+**/
+const char * sctk_runtime_config_get_env_or_value(const char * env_name,const char * fallback_value)
+{
+	//vars
+	const char * res;
+
+	//errors
+	assert(env_name != NULL);
+
+	//select the good value
+	res = getenv(env_name);
+	if (res == NULL)
+		res = fallback_value;
+	else if (*res == '\0')
+		res= fallback_value;
+
+	//return
+	return res;
 }
 
 /*******************  FUNCTION  *********************/
@@ -375,11 +401,14 @@ int sctk_runtime_config_source_xml_is_open( struct sctk_runtime_config_source_xm
  * @param config_sources Define the structure to init.
  * @param application_config_file Define the application config filename if any. Use NULL for none.
 **/
-void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * config_sources, const char * application_config_file)
+void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * config_sources)
 {
 	//vars
-	#warning Allocate dynamically
-	char user_file[1024];
+	#warning Maybe allocate dynamically
+	char user_home_file[1024];
+	const char * config_system;
+	const char * config_user;
+	const char * config_app;
 
 	//errors
 	assert(config_sources != NULL);
@@ -387,17 +416,23 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 	//set to default
 	memset(config_sources,0,sizeof(*config_sources));
 
-	//calc user file path
-	sprintf(user_file,"%s/.mpc/config.xml",getenv("HOME"));
+	//calc user path
+	sprintf(user_home_file,"%s/.mpc/config.xml",getenv("HOME"));
 
-	//open system config
-	sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_RUNTIME_CONFIG_SYSTEM_LEVEL],SCTK_INSTALL_PREFIX "/share/mpc/system.xml",SCTK_RUNTIME_CONFIG_OPEN_WARNING);
-	sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_RUNTIME_CONFIG_USER_LEVEL],user_file,SCTK_RUNTIME_CONFIG_OPEN_SILENT);
+	//try to load from env
+	config_system = sctk_runtime_config_get_env_or_value("MPC_SYSTEM_CONFIG",SCTK_INSTALL_PREFIX "/share/mpc/system.xml");
+	config_user   = sctk_runtime_config_get_env_or_value("MPC_USER_CONFIG",user_home_file);
+	config_app    = sctk_runtime_config_get_env_or_value("MPC_APP_CONFIG",sctk_runtime_config_default_app_file_path);
 
-	if (application_config_file != NULL )
+	//open system and user config
+	sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_RUNTIME_CONFIG_SYSTEM_LEVEL],config_system,SCTK_RUNTIME_CONFIG_OPEN_WARNING);
+	sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_RUNTIME_CONFIG_USER_LEVEL],config_user,SCTK_RUNTIME_CONFIG_OPEN_SILENT);
+
+	//if get application config as parameter.
+	if (config_app != NULL )
 	{
-		if( application_config_file[0] != '\0')
-			sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_RUNTIME_CONFIG_APPLICATION_LEVEL],application_config_file,SCTK_RUNTIME_CONFIG_OPEN_ERROR);
+		if( config_app[0] != '\0')
+			sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_RUNTIME_CONFIG_APPLICATION_LEVEL],config_app,SCTK_RUNTIME_CONFIG_OPEN_ERROR);
 	}
 
 	//find profiles to use and sort them depeding on priority
@@ -419,12 +454,8 @@ void sctk_runtime_config_sources_close(struct sctk_runtime_config_sources * conf
 
 	//close XML documents
 	for( i = 0 ; i < SCTK_RUNTIME_CONFIG_LEVEL_COUNT ; i++ )
-	{
 		if( sctk_runtime_config_source_xml_is_open(&config_sources->sources[i]) )
-		{
 			xmlFreeDoc(config_sources->sources[i].document);
-		}	
-	}
 
 	//free selected names (as xmlNodeGetContent done copies)
 	for (i = 0 ; i < config_sources->cnt_profile_names ; i++)

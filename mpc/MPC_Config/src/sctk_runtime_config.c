@@ -137,27 +137,37 @@ void sctk_runtime_config_init(void)
 {
 	//declare temp storage
 	struct sctk_runtime_config_sources config_sources;
+	const char * disable_config;
 
 	//if already done do nothing
 	if (__sctk_global_runtime_config_init__ == false)
 	{
-		//init libxml (safer to manually call it in multi-thread environnement as not threadsafe)
-		xmlInitParser();
+		disable_config = sctk_runtime_config_get_env_or_value("MPC_DISABLE_CONFIG","0");
+		if (strcmp(disable_config,"1") == 0)
+		{
+			//reset the structure
+			sctk_runtime_config_reset(&__sctk_global_runtime_config__);
 
-		//open
-		sctk_runtime_config_sources_open(&config_sources,NULL);
+			//mark as init
+			__sctk_global_runtime_config_init__ = true;
+		} else {
+			//init libxml (safer to manually call it in multi-thread environnement as not threadsafe)
+			xmlInitParser();
 
-		//map to c struct
-		//sctk_runtime_config_reset(&config);
-		sctk_runtime_config_runtime_map_sources_to_c_struct( &__sctk_global_runtime_config__,&config_sources);
+			//open
+			sctk_runtime_config_sources_open(&config_sources);
 
-		//close
-		sctk_runtime_config_sources_close(&config_sources);
+			//map to c struct
+			sctk_runtime_config_runtime_map_sources_to_c_struct( &__sctk_global_runtime_config__,&config_sources);
 
-		//mark as init
-		__sctk_global_runtime_config_init__ = true;
+			//close
+			sctk_runtime_config_sources_close(&config_sources);
 
-		//display
-		sctk_runtime_config_runtime_display();
+			//mark as init
+			__sctk_global_runtime_config_init__ = true;
+
+			//display
+			sctk_runtime_config_runtime_display();
+		}
 	}
 }
