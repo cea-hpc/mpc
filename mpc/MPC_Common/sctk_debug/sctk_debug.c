@@ -203,9 +203,6 @@ sctk_debug_print_backtrace (const char *format, ...)
   sctk_vprint_backtrace (format, ap);
   va_end (ap);
 #endif
-#ifdef MPC_Profiler
-  sctk_profiling_result ();
-#endif
 }
 
 /**********************************************************************/

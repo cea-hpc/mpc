@@ -16,48 +16,22 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@cea.fr               # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK_TRACE_H__
-#define __SCTK_TRACE_H__
-#ifdef __cplusplus
-extern "C"
-{
-#endif
-  void sctk_trace_init (void);
-  void sctk_trace_commit (void);
-  void sctk_trace_end (void);
 
-  /*DANGER do not change the following variable dues to LIBZ compressBound issues */
-#ifdef SCTK_32_BIT_ARCH
-#define NB_ENTRIES (10*1000)
-#else
-#define NB_ENTRIES (1*1000*1000)
-#endif
-
-  typedef struct
-  {
-    double date;
-    char **function;
-    void *arg1;
-    void *arg2;
-    void *arg3;
-    void *arg4;
-    void *th;
-    int vp;
-  } sctk_trace_block_t;
-
-  typedef struct
-  {
-    int step;
-    sctk_trace_block_t buf[NB_ENTRIES];
-    char *tmp_buffer_compress;
-  } sctk_trace_t;
+#ifndef SCTK_PROFILER
+#define SCTK_PROFILER
 
 
 
-#ifdef __cplusplus
-}				/* end of extern "C" */
-#endif
-#endif
+
+
+
+
+
+
+
+
+
+#endif /* SCTK_PROFILER */

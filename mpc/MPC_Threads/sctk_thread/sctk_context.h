@@ -173,9 +173,11 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 	void *sctk_tls_module;
 #endif
     void *sctk_message_passing;
-    //profiling TLS
+    /* profiling TLS */
     void *tls_trace_module;
     void *tls_args;
+    /* MPC Profiler TLS */
+    void *tls_mpc_profiler;
   } sctk_mctx_t;
 
   int sctk_getcontext (sctk_mctx_t * ucp);

@@ -16,42 +16,74 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@cea.fr               # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifdef MPC_Threads
-#include "sctk_topology.h"
-#include "sctk_thread.h"
-#include "sctk_accessor.h"
-#endif
-#include "sctk_alloc.h"
-#include "sctk_debug.h"
-#include "sctk_launch.h"
+#ifndef SCTK_INTERNAL_PROFILER
+#define SCTK_INTERNAL_PROFILER
 
-extern int sctk_process_number;
-extern int sctk_process_rank;
-extern int sctk_node_number;
-extern int sctk_node_rank;
-extern volatile int sctk_multithreading_initialised;
-extern int sctk_migration_mode;
+#include <stdint.h>
 
-#ifdef MPC_Message_Passing
-#include "sctk_inter_thread_comm.h"
-/* #include "sctk_low_level_comm.h" */
-#endif
+#include "sctk_profiler_array.h"
+#include "sctk_asm.h"
+#include "sctk_tls.h"
 
-#ifdef MPC_Profiler
-#include "sctk_internal_profiler.h"
-#else
-#define SCTK_PROFIL_START(key)	(void)(0)
-#define SCTK_PROFIL_END(key) (void)(0)
-#define sctk_internal_profiler_init() (void)(0)
-#define sctk_internal_profiler_render() (void)(0)
-#define sctk_internal_profiler_release() (void)(0)
-#endif
-int sctk_user_main (int, char **);
-#if 0
+/* Profiler internal interface */
 
-#undef main
-#define main sctk_user_main
-#endif
+void sctk_internal_profiler_init();
+void sctk_internal_profiler_reduce();
+void sctk_internal_profiler_render();
+void sctk_internal_profiler_release();
+
+/* ****************** */
+
+/* Profiler switch */
+
+extern int sctk_profiler_internal_switch;
+
+static inline int sctk_profiler_internal_enabled()
+{
+	return sctk_profiler_internal_switch;
+}
+
+static inline void sctk_profiler_internal_enable()
+{
+	sctk_profiler_internal_switch = 1;
+}
+
+static inline void sctk_profiler_internal_disable()
+{
+	sctk_profiler_internal_switch = 0;
+}
+
+/* ****************** */
+
+
+/* Profiler hit */
+
+static inline struct sctk_profiler_array * sctk_internal_profiler_get_tls_array()
+{
+	return (struct sctk_profiler_array *)tls_mpc_profiler;
+}
+
+
+static inline void sctk_profiler_internal_hit( int key, uint64_t duration )
+{
+	struct sctk_profiler_array *array = sctk_internal_profiler_get_tls_array();
+
+	if( sctk_profiler_internal_enabled() && array )
+	{
+		sctk_profiler_array_hit( array, key, duration );
+	}
+}
+
+/* ****************** */
+
+/* Macros */
+
+#define SCTK_PROFIL_START(key) uint64_t ___sctk_profile_begin = sctk_get_time_stamp();
+#define SCTK_PROFIL_END(key) sctk_profiler_internal_hit(  SCTK_PROFILE_ ## key , sctk_get_time_stamp() - ___sctk_profile_begin );
+
+/* ****** */
+
+#endif /* SCTK_INTERNAL_PROFILER */

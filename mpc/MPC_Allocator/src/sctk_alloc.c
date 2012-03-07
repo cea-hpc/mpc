@@ -134,7 +134,7 @@ static mpc_inline void *
 sctk_mmap (void *ptr, sctk_size_t size)
 {
   void *tmp;
-  SCTK_TRACE_START (sctk_mmap, ptr, size, NULL, NULL);
+
   SCTK_DEBUG (sctk_mem_error
 	      ("PREPARE MMAP %p-%p %lu\n", ptr, (char *) ptr + size, size));
   tmp = sctk_real_mmap ((void *) (ptr), (size),
@@ -148,7 +148,7 @@ sctk_mmap (void *ptr, sctk_size_t size)
   SCTK_DEBUG (memset (ptr, 1, size));
   SCTK_DEBUG (sctk_mem_error
 	      ("MMAP %p-%p %lu\n", ptr, (char *) ptr + size, size));
-  SCTK_TRACE_END (sctk_mmap, tmp, size, NULL, NULL);
+
   return tmp;
 }
 static mpc_inline int
@@ -178,7 +178,7 @@ sctk_delete_not_migrable_page (sctk_page_t * cursor)
 static mpc_inline void
 sctk_empty_free_page (sctk_page_t * cursor)
 {
-  SCTK_TRACE_START (sctk_empty_free_page, cursor, NULL, NULL, NULL);
+
 
 #ifndef SCTK_DO_NOT_FREE
   sctk_munmap ((void *) ((char *) cursor + page_size),
@@ -187,7 +187,7 @@ sctk_empty_free_page (sctk_page_t * cursor)
   SCTK_DEBUG (sctk_mem_error
 	      ("Unmap %p-%p\n", ((char *) cursor + page_size),
 	       (char *) cursor + cursor->real_size));
-  SCTK_TRACE_END (sctk_empty_free_page, cursor, NULL, NULL, NULL);
+
 }
 
 static mpc_inline void
@@ -195,7 +195,7 @@ sctk_realloc_free_page (sctk_page_t * cursor)
 {
   void *tmp;
   sctk_size_t return_size;
-  SCTK_TRACE_START (sctk_realloc_free_page, cursor, NULL, NULL, NULL);
+
 
   return_size = cursor->real_size;
 
@@ -211,7 +211,7 @@ sctk_realloc_free_page (sctk_page_t * cursor)
 	      ("Remap %p-%p\n", ((char *) cursor),
 	       (char *) cursor + cursor->real_size));
   cursor->dirty = 0;
-  SCTK_TRACE_END (sctk_realloc_free_page, cursor, NULL, NULL, NULL);
+
 }
 
 #if 1
@@ -1150,7 +1150,6 @@ sctk_sbrk_compaction (sctk_size_t size)
   char *ptr;
   sctk_page_t *results = NULL;
 
-  SCTK_TRACE_START (sctk_sbrk_compaction, NULL, NULL, NULL, NULL);
 
   local_brk_pointer = (char *) brk_pointer;
 
@@ -1292,7 +1291,7 @@ fin_compaction:
       first_free = (char *) local_brk_pointer;
     }
 
-  SCTK_TRACE_END (sctk_sbrk_compaction, NULL, NULL, NULL, NULL);
+
   return results;
 }
 
@@ -1309,7 +1308,7 @@ sctk_sbrk (sctk_size_t init_size, void **ptr)
   sctk_page_t *result = NULL;
   sctk_size_t real_size;
 
-  SCTK_TRACE_START (sctk_sbrk, init_size, ptr, NULL, NULL);
+
 
   size = sctk_compute_real_size (init_size);
 
@@ -1420,8 +1419,6 @@ fin_sbrk:
 
   *ptr = return_ptr;
 
-  SCTK_TRACE_END (sctk_sbrk, init_size, ptr, local_brk_pointer,
-		  max_brk_pointer);
   return return_size;
 }
 
@@ -1546,7 +1543,7 @@ sctk_alloc_page_big_flush (sctk_tls_t * tls)
 static void
 sctk_free_page_big_compaction (sctk_page_t * page, sctk_tls_t * tls)
 {
-  SCTK_TRACE_START (sctk_free_page_big_compaction, page, tls, NULL, NULL);
+
   if (page->real_size < SCTK_xMO_TAB_SIZE * SCTK_PAGES_ALLOC_SIZE)
     {
       sctk_page_t *page_init;
@@ -1589,7 +1586,7 @@ sctk_free_page_big_compaction (sctk_page_t * page, sctk_tls_t * tls)
 	    }
 	}
     }
-  SCTK_TRACE_END (sctk_free_page_big_compaction, page, tls, NULL, NULL);
+
 }
 
 
@@ -1788,7 +1785,7 @@ fin:
 static void
 sctk_free_page_big (sctk_page_t * page, sctk_tls_t * tls)
 {
-  SCTK_TRACE_START (sctk_free_page_big, page, tls, NULL, NULL);
+
   page->type = sctk_chunk_big_type;
   if (page->cur_dirty > page->dirty)
     {
@@ -1819,7 +1816,7 @@ sctk_free_page_big (sctk_page_t * page, sctk_tls_t * tls)
     {
       sctk_delete_not_migrable_page (page);
     }
-  SCTK_TRACE_END (sctk_free_page_big, page, tls, NULL, NULL);
+
 }
 
 static void
@@ -2873,36 +2870,29 @@ __intern_sctk_free__ (void *ptr, sctk_tls_t * my_tls)
 
   if (chunk->type == sctk_chunk_small_type)
     {
-      SCTK_TRACE_START (__intern_sctk_free_small, ptr, my_tls, NULL, NULL);
       SCTK_DEBUG (sctk_mem_error ("--- Small type %p\n", ptr));
       sctk_free_small (chunk, size, my_tls);
 
       SCTK_DEBUG (sctk_mem_error
 		  ("<-- Free chunk %p size %lu DONE\n", chunk,
 		   chunk->cur_size));
-      SCTK_TRACE_END (__intern_sctk_free_small, ptr, my_tls, NULL, NULL);
     }
   else if (chunk->type == sctk_chunk_big_type)
     {
-      SCTK_TRACE_START (__intern_sctk_free_big, ptr, my_tls, NULL, NULL);
       SCTK_DEBUG (sctk_mem_error ("--- Big type %p\n", ptr));
       sctk_mem_assert (chunk->type == sctk_chunk_big_type);
       sctk_free_big (chunk, size, my_tls);
-      SCTK_TRACE_END (__intern_sctk_free_big, ptr, my_tls, NULL, NULL);
     }
   else if (chunk->type == sctk_chunk_new_type)
     {
-      SCTK_TRACE_START (__intern_sctk_free_new, ptr, my_tls, NULL, NULL);
       SCTK_DEBUG (sctk_mem_error ("--- New type\n"));
       sctk_mem_assert (chunk->type == sctk_chunk_new_type);
       sctk_free_new (chunk, size, my_tls);
-      SCTK_TRACE_END (__intern_sctk_free_new, ptr, my_tls, NULL, NULL);
     }
   else if (chunk->type == sctk_chunk_memalign_type)
     {
       void *new_ptr;
       unsigned long *val;
-      SCTK_TRACE_START (__intern_sctk_free_memalign, ptr, my_tls, NULL, NULL);
 
       val = (unsigned long *) ((char *) chunk - sizeof (unsigned long));
 
@@ -2914,7 +2904,6 @@ __intern_sctk_free__ (void *ptr, sctk_tls_t * my_tls)
       sctk_spinlock_unlock(&(my_tls->spinlock));
       __intern_sctk_free__ (new_ptr, my_tls);
       sctk_spinlock_lock(&(my_tls->spinlock));
-      SCTK_TRACE_END (__intern_sctk_free_memalign, ptr, my_tls, NULL, NULL);
     }
   else
     {

@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile Thu Nov 10 18:23:19 CET 2011
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile mar mar  6 14:55:01 CET 2012
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -49,7 +49,7 @@ FOBJ_include=$(FFILES_include:include/%.f=$(M_PWD)/BUILD_MPC_Profiler/lib/%_f.o)
 FFILES_profiling=$(wildcard sctk_profiling/*.f)
 FOBJ_profiling=$(FFILES_profiling:sctk_profiling/%.f=$(M_PWD)/BUILD_MPC_Profiler/lib/%_f.o)
 
-all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_profiling) $(FOBJ_profiling) $(SOBJ_profiling) build_sctk_trace_expand
+all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_profiling) $(FOBJ_profiling) $(SOBJ_profiling)
 
 $(M_PWD)/include_modules/MPC_Profiler:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Profiler/include $(M_PWD)/include_modules
@@ -127,6 +127,3 @@ ifeq ($(MAKECMDGOALS),all)
 -include $(DEPENDS)
 endif
 endif
-build_sctk_trace_expand:
-	@mkdir -p $(M_PWD)/BUILD_MPC_Profiler/sctk_trace_expand
-	@$(MAKE) BUILD_DIR=$(M_PWD)/BUILD_MPC_Profiler/sctk_trace_expand -C sctk_trace_expand all

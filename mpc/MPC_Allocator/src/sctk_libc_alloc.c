@@ -48,11 +48,11 @@ void *
 malloc (size_t size)
 {
   void *tmp;
-  SCTK_PROFIL_TRACE_START (malloc, (void *) size, NULL, NULL, NULL);
+  SCTK_PROFIL_START (malloc);
 
   tmp = sctk_malloc (size);
 
-  SCTK_PROFIL_TRACE_END (malloc, tmp, NULL, NULL, NULL);
+  SCTK_PROFIL_END (malloc);
   return tmp;
 }
 
@@ -66,9 +66,9 @@ void *
 calloc (size_t nmemb, size_t size)
 {
   void *tmp;
-  SCTK_PROFIL_TRACE_START (calloc, (void *) nmemb, (void *) size, NULL, NULL);
+  SCTK_PROFIL_START (calloc);
   tmp = sctk_calloc (nmemb, size);
-  SCTK_PROFIL_TRACE_END (calloc, tmp, NULL, NULL, NULL);
+  SCTK_PROFIL_END (calloc);
   return tmp;
 }
 
@@ -76,16 +76,16 @@ void *
 realloc (void *ptr, size_t size)
 {
   void *tmp;
-  SCTK_PROFIL_TRACE_START (realloc, ptr, size, NULL, NULL);
+  SCTK_PROFIL_START (realloc);
   tmp = sctk_realloc (ptr, size);
-  SCTK_PROFIL_TRACE_END (realloc, tmp, NULL, NULL, NULL);
+  SCTK_PROFIL_END (realloc);
   return tmp;
 }
 
 void
 free (void *ptr)
 {
-  SCTK_PROFIL_TRACE_START (free, ptr, NULL, NULL, NULL);
+  SCTK_PROFIL_START (free);
   sctk_free (ptr);
   SCTK_PROFIL_END (free);
 }

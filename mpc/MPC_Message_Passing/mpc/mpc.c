@@ -1022,7 +1022,7 @@ PMPC_Derived_datatype (MPC_Datatype * datatype,
   int i;
   sctk_derived_type_t **user_types;
   sctk_task_specific_t *task_specific;
-  SCTK_PROFIL_START (MPC_Struct_datatype);
+  SCTK_PROFIL_START (MPC_Derived_datatype);
   *datatype = MPC_DATATYPE_NULL;
   task_specific = __MPC_get_task_specific ();
   sctk_spinlock_lock (&(task_specific->user_types_struct.lock));
@@ -1063,7 +1063,7 @@ PMPC_Derived_datatype (MPC_Datatype * datatype,
 	  t->is_ub = is_ub;
 	  t->is_lb = is_lb;
 	  sctk_spinlock_unlock (&(task_specific->user_types_struct.lock));
-	  SCTK_PROFIL_END (MPC_Struct_datatype);
+	  SCTK_PROFIL_END (MPC_Derived_datatype);
 	  MPC_ERROR_SUCESS ();
 	}
     }

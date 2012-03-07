@@ -571,12 +571,12 @@ extern "C"
 
     if (expect_true (cur != new_task))
       {
-	SCTK_TRACE_POINT (sctk_swapcontext_out, new_task, NULL, NULL, NULL);
+
 	vp->current = new_task;
 	sctk_nodebug ("Jump %p to %p(%p) on vp %d", cur, new_task,
 		      &(new_task->ctx), vp->rank);
 	sctk_swapcontext (&(cur->ctx), &(new_task->ctx));
-	SCTK_TRACE_POINT (sctk_swapcontext_in, NULL, NULL, NULL, NULL);
+
       }
 
     __sctk_ethread_sched_yield_vp_tail (vp, cur);
@@ -613,15 +613,14 @@ extern "C"
 	  {
 	    sctk_ethread_set_status (cur, sctk_thread_sleep_status);
 	    SCTK_ACTIVITY_UP (vp);
-	    SCTK_TRACE_POINT (sctk_swapcontext_out, new_task, NULL,
-			      NULL, NULL);
+
 	    vp->current = new_task;
 	    sctk_nodebug ("idle Jump %p to %p(%p) on vp %d", cur,
 			  new_task, &(new_task->ctx), vp->rank);
 	    sctk_swapcontext (&(cur->ctx), &(new_task->ctx));
 	    sctk_nodebug ("idle thread %p(%p) restart vp->current %p",
 			  cur, &(cur->ctx), vp->current);
-	    SCTK_TRACE_POINT (sctk_swapcontext_in, NULL, NULL, NULL, NULL);
+
 	  }
 	else
 	  {
@@ -669,12 +668,12 @@ extern "C"
 		 (new_task->status == ethread_idle) ||
 		 (new_task->status == ethread_inside_polling));
 
-    SCTK_TRACE_POINT (sctk_swapcontext_out, new_task, NULL, NULL, NULL);
+
     vp->current = new_task;
     sctk_nodebug ("Jump %p to %p(%p) on vp %d", cur, new_task,
 		  &(new_task->ctx), vp->rank);
     sctk_swapcontext (&(cur->ctx), &(new_task->ctx));
-    SCTK_TRACE_POINT (sctk_swapcontext_in, NULL, NULL, NULL, NULL);
+
 
     __sctk_ethread_sched_yield_vp_tail (vp, cur);
 
@@ -711,12 +710,12 @@ extern "C"
 		 (new_task->status == ethread_idle) ||
 		 (new_task->status == ethread_inside_polling));
 
-    SCTK_TRACE_POINT (sctk_swapcontext_out, new_task, NULL, NULL, NULL);
+
     vp->current = new_task;
     sctk_nodebug ("Jump %p to %p(%p) on vp %d", cur, new_task,
 		  &(new_task->ctx), vp->rank);
     sctk_swapcontext (&(cur->ctx), &(new_task->ctx));
-    SCTK_TRACE_POINT (sctk_swapcontext_in, NULL, NULL, NULL, NULL);
+
 
     __sctk_ethread_sched_yield_vp_tail (vp, cur);
 
@@ -1289,12 +1288,10 @@ extern "C"
 		 (new_task->status == ethread_idle) ||
 		 (new_task->status == ethread_inside_polling));
 
-    SCTK_TRACE_POINT (sctk_swapcontext_out, new_task, NULL, NULL, NULL);
     vp->current = new_task;
     sctk_nodebug ("Jump %p to %p(%p) on vp %d", cur, new_task,
 		  &(new_task->ctx), vp->rank);
     sctk_swapcontext (&(cur->ctx), &(new_task->ctx));
-    SCTK_TRACE_POINT (sctk_swapcontext_in, NULL, NULL, NULL, NULL);
 
     __sctk_ethread_sched_yield_vp_tail (vp, cur);
 

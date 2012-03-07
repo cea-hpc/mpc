@@ -650,8 +650,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   sctk_tls_module_alloc_and_fill() ;
 #endif
 
-  sctk_profiling_init ();
-  SCTK_TRACE_START (task, tmp.task_id, NULL, NULL, NULL);
+  sctk_internal_profiler_init ();
 
   /** ** **/
   sctk_report_creation (sctk_thread_self());
@@ -668,9 +667,8 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   /** ** **/
   sctk_report_death (sctk_thread_self());
   /** **/
-
-  SCTK_TRACE_END (task, tmp.task_id, NULL, NULL, NULL);
-  sctk_profiling_commit ();
+  
+  sctk_internal_profiler_render();
 
 #ifdef MPC_Message_Passing
   if (tmp.task_id >= 0)
@@ -781,8 +779,8 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   sctk_tls_module_alloc_and_fill() ;
 #endif
 
-  sctk_profiling_init ();
-  SCTK_TRACE_START (user_thread, tmp.task_id, NULL, NULL, NULL);
+  sctk_internal_profiler_init();
+
 
   /** ** **/
   sctk_report_creation (sctk_thread_self());
@@ -802,8 +800,6 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   sctk_report_death (sctk_thread_self());
   /** **/
 
-  SCTK_TRACE_END (user_thread, tmp.task_id, NULL, NULL, NULL);
-  sctk_profiling_commit ();
 
   sctk_thread_remove (&tmp);
   sctk_thread_data_set (NULL);
@@ -2070,7 +2066,12 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	sctk_mpc_init_keys ();
 #endif
 
+<<<<<<< HEAD
 	sctk_profiling_init_keys ();
+=======
+  /* Fill the profiling parent key array */
+  sctk_profiler_array_init_parent_keys();
+>>>>>>> MPC_Profiler : Bootstrap
 
 #ifdef MPC_Message_Passing
 	THREAD_NUMBER = sctk_get_nb_task_total (SCTK_COMM_WORLD);
@@ -2361,11 +2362,10 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	}
 
 	sctk_thread_wait_for_value_and_poll ((int *) &sctk_total_number_of_tasks, 0, NULL, NULL);
+  	
+	sctk_internal_profiler_render();
 
-	sctk_profiling_commit ();
-	sctk_profiling_result ();
 	sctk_multithreading_initialised = 0;
-
 
 	sctk_thread_running = 0;
 
