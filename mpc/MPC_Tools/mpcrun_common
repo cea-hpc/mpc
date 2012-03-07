@@ -120,6 +120,7 @@ Launcher:
     --launcher=n,-l=n Define launcher
     --opt=<options> launcher specific options
     --launch_list print available launch methods
+    --config=<file> Configuration file to load.
 
 Debugger:
     --dbg=<debugger_name> to use a debugger
@@ -313,6 +314,10 @@ for arg in "$@" ; do
     ;;
     --launcher=*)
     LAUNCH="`echo A$arg | sed -e 's/A--launcher=//g'`"
+    ;;
+    --config=*)
+    MPC_APP_CONFIG="`echo A$arg | sed -e 's/A--config=//g'`"
+    export MPC_APP_CONFIG
     ;;
     -mpi-only|-mpi_only)
     mpi_only=yes
