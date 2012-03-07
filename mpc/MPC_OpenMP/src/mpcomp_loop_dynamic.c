@@ -586,15 +586,26 @@ void __mpcomp_dynamic_loop_end_nowait()
 
 }
 
-void __mpcomp_steal_chunk(mpcomp_mvp_t *mvp, int start_index, int *dest_index)
+/*
+  Search in tree for other chunks to steal
+*/
+void __mpcomp_steal_chunk(mpcomp_mvp_t *dest_mvp, int start_index, int *dest_index)
 {
   int node_index;
   int i;
   mpcomp_thread_t *t;
   mpcomp_thread_team_t *team;
+  mpcomp_mvp_t *mvp;
+  mpcomp_node_t *node;
+  mpcomp_node_t *n;
+  int num_threads;
+  int index;
+  int target_rank;
   int rank;
   int remain;
   int mvp_rank;
+  int mvp_subtree_rank;
+  int node_rank;
 
   /* Grab the info of the current thread */    
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
@@ -607,17 +618,90 @@ void __mpcomp_steal_chunk(mpcomp_mvp_t *mvp, int start_index, int *dest_index)
   /* Number of threads of the current team */  
   num_threads = t->team->num_threads;
 
+  /* Grab the rank of current thread */
+  rank = t->rank;
+  
+  /* Grab the current mvp */
+  mvp = t->mvp;
+
   /* Grab the index of the current loop */
   index = (t->private_current_for_dyn) % MPCOMP_MAX_ALIVE_FOR_DYN;
-  remain = team->chunk_info_for_dyn[rank][index].remain;
+  //remain = team->chunk_info_for_dyn[rank][index].remain;
 
-  mpcomp_node_t *node = mvp->father;
-  int mvp_rank = mvp->tree_rank;  
-
-  for(i=mvp_rank+1;i<(mvp_rank+node->nb_children)%(node->nb_children);i++) {
-   mvp_rank = node->children.leaf[i].rank
+  node = mvp->father;
+ 
+  /* current thread is out of chunks */
+  node->nb_children_chunks_idle += 1;
+  
+  if(node->nb_children_chunks_idle == node->nb_children) {
+    node->chunks_avail = CHUNK_NOT_AVAIL;
   }
 
+  mvp_subtree_rank = mvp->tree_rank[node->depth];  
+
+  for(i=mvp_subtree_rank+1;i<(mvp_subtree_rank+node->nb_children)%(node->nb_children);i++) {
+   mvp_rank = node->children.leaf[i]->rank;
+
+   remain = team->chunk_info_for_dyn[mvp_rank][index].remain;
+ 
+   if(remain != 0) {
+    dest_mvp = node->children.leaf[i];
+    break; 
+   }
+    
+  }
+  
+  if(remain != 0) {
+   
+    /* Do steal a chunk */
+    team->chunk_info_for_dyn[mvp_rank][index].remain--;
+    team->chunk_info_for_dyn[rank][index].remain++; 
+  }
+  else 
+  {
+    while(node->father != NULL) {
+      
+      node_rank = node->rank;
+ 
+      if(node->chunks_avail == CHUNK_NOT_AVAIL) {
+        node->father->nb_children_chunks_idle += 1;
+      }
+
+      node = node->father;
+
+      if(node->father->nb_children_chunks_idle == node->father->nb_children) {
+        node->father->chunks_avail = CHUNK_NOT_AVAIL;
+      }
+      else {
+     
+       for(i=node_rank+1;i<(node_rank+node->nb_children)%(node->nb_children);i++) {
+        
+         n = node->children.node[i];
+
+         /* Do a classic in depth tree search */
+         mpcomp_in_depth_tree_search(n, &target_rank); 
+
+         if(target_rank != -1) {
+           break;
+         }
+         else {
+           n->chunks_avail = CHUNK_NOT_AVAIL;
+         } 
+          
+        }
+      }
+      
+      if (target_rank != -1) {
+       break;
+      }
+    }
+  
+    if (target_rank != -1) {
+      //Do steal a chunk
+      team->chunk_info_for_dyn[target_rank][index].remain--;
+      team->chunk_info_for_dyn[rank][index].remain++; 
+    }
+  }
 
 }
 

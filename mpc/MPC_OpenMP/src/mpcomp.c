@@ -1,3 +1,4 @@
+
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
@@ -588,6 +589,8 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  root->depth = 0;
 	  root->nb_children = 8;
 	  root->child_type = CHILDREN_LEAF;
+          root->chunks_avail = CHUNK_AVAIL; 
+          root->nb_children_chunks_idle = 0;
 	  root->lock = SCTK_SPINLOCK_INITIALIZER;
 	  root->slave_running = 0;
 #ifdef ATOMICS
@@ -835,6 +838,8 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  root->min_index = 0;
 	  root->max_index = 31;
 	  root->child_type = CHILDREN_NODE;
+          root->chunks_avail = CHUNK_AVAIL;
+          root->nb_children_chunks_idle = 0;
 	  root->lock = SCTK_SPINLOCK_INITIALIZER;
 	  root->slave_running = 0;
 #ifdef ATOMICS
@@ -865,6 +870,8 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	    n->min_index = i*8;
 	    n->max_index = (i+1)*8-1;
 	    n->child_type = CHILDREN_NODE;
+            n->chunks_avail = CHUNK_AVAIL;
+            n->nb_children_chunks_idle = 0;
 	    n->lock = SCTK_SPINLOCK_INITIALIZER;
 	    n->slave_running = 0;
 #ifdef ATOMICS
@@ -894,6 +901,8 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
                n2->min_index = i*8 + j*4;
                n2->max_index = i*8 + (j+1)*4 - 1;
                n2->child_type = CHILDREN_LEAF;
+               n2->chunks_avail = CHUNK_AVAIL;
+               n2->nb_children_chunks_idle = 0;
                n2->lock = SCTK_SPINLOCK_INITIALIZER;
                n2->slave_running = 0;
 #ifdef ATOMICS
@@ -1733,7 +1742,7 @@ mpcomp_node_t *pop(mpcomp_stack_t *head)
 /*
  Initialize stack
 */
-void mk_empty_stack(mpcomp_stack_t *head)
+void mpcomp_mk_empty_stack(mpcomp_stack_t *head)
 {
  head->size = 0; 
 }
@@ -1741,7 +1750,7 @@ void mk_empty_stack(mpcomp_stack_t *head)
 /*
   Check if stack is empty
 */
-int is_empty_stack(mpcomp_stack_t *head)
+int mpcomp_is_empty_stack(mpcomp_stack_t *head)
 {
   if(head->size == 0)
     return 1;
@@ -1753,27 +1762,88 @@ int is_empty_stack(mpcomp_stack_t *head)
 /*
  Prefix in depth tree search
 */
-void in_depth_tree_search(mpcomp_node_t *node, int *index)
+void mpcomp_in_depth_tree_search(mpcomp_node_t *node, int *rank)
 {
-
+  mpcomp_thread_t *t;
+  mpcomp_thread_t *target_t;
+  mpcomp_thread_team_t *team;
+  mpcomp_mvp_t *mvp;
   int i;
+  int index;
+  int target_loop_index; 
+  int target_rank;
+  int remain = 0;
+  int mvp_rank;
+  int num_threads;
   mpcomp_stack_t *stack;
 
-  mk_empty_stack(stack);
+  /* Grab the info of the current thread */    
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+
+  /* Grab the team info */
+  team = t->team;
+  sctk_assert(team != NULL);
+
+  /* Number of threads of the current team */  
+  num_threads = t->team->num_threads;
+
+  /* Grab the current mvp */
+  mvp = t->mvp;
+
+  /* Grab the index of the current loop */
+  index = (t->private_current_for_dyn) % MPCOMP_MAX_ALIVE_FOR_DYN;
+
+  /* Empty the stack before any operation */
+  mpcomp_mk_empty_stack(stack);
+
   push(node, stack);
 
-  while(!is_empty_stack(stack)) 
+  while(!mpcomp_is_empty_stack(stack)) 
   {
     node = pop(stack);
+
+    if(node->chunks_avail == CHUNK_AVAIL)
+    {
     
     if(node->nb_children != 0)
     {
        for(i=0;i<node->nb_children;i++) {
-         if(node->child_type == CHILDREN_NODE)
-          push(node->children.node[i], stack); 
-       }     
+
+           if(node->child_type == CHILDREN_NODE) {
+             push(node->children.node[i], stack);
+           } else {
+              target_t = &(node->children.leaf[i]->threads[0]);
+              target_rank = target_t->rank;            
+
+              /* Grab the index of the current loop */
+              target_loop_index = (target_t->private_current_for_dyn) % MPCOMP_MAX_ALIVE_FOR_DYN;         
+               
+              remain = team->chunk_info_for_dyn[target_rank][target_loop_index].remain;
+              //mvp_rank = node->children.leaf[i]->rank;
+              //remain = team->chunk_info_for_dyn[mvp_rank][index].remain;       
+
+              if (remain != 0) {
+                break;
+              } 
+           }
+          
+         }
+
+         if (remain != 0) {
+           break;
+         }     
+      }
     }  
   }
+
+ if (remain != 0)
+  rank = target_rank;
+ else 
+  index = -1;
+ 
+ return 0;
+ 
 }
 
 

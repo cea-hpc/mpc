@@ -66,6 +66,9 @@ extern "C"
 #define MPCOMP_NOWAIT_STOP_CONSUMED	(-2)
 #define MPCOMP_NOWAIT_OK_SYMBOL		(-3)
 
+#define CHUNK_NOT_AVAIL 0
+#define CHUNK_AVAIL 1
+
 
 #define MPCOMP_LOCK_INIT {0,0,NULL,NULL,NULL,SCTK_SPINLOCK_INITIALIZER}
 
@@ -270,6 +273,8 @@ struct mpcomp_node_s {
     struct mpcomp_node_s **node;
     struct mpcomp_mvp_s **leaf;
   } children;
+  int chunks_avail;                             /* Flag to inform if there are chunks in the subtree */
+  int nb_children_chunks_idle;                  /* number of current node children who are out of chunks */
   sctk_spinlock_t lock;				/* Lock for structure update */
   char pad0[64];
   volatile int slave_running;
@@ -329,13 +334,13 @@ void __mpcomp_steal_chunk(mpcomp_mvp_t *mvp, int start_index, int *dest_index);
 ************************************/
 void push(mpcomp_node_t *node, mpcomp_stack_t *head);
 mpcomp_node_t* pop(mpcomp_stack_t *head);
-void mk_empty_stack(mpcomp_stack_t *head);
-int is_empty_stack(mpcomp_stack_t *head);
+void mpcomp_mk_empty_stack(mpcomp_stack_t *head);
+int mpcomp_is_empty_stack(mpcomp_stack_t *head);
 
 /************************************
     IN DEPTH TREE SEARCH
 ************************************/
-void in_depth_tree_search(mpcomp_node_t *node, int *index);
+void mpcomp_in_depth_tree_search(mpcomp_node_t *node, int *rank);
 
 
 /*************************************************
