@@ -212,6 +212,83 @@ static  void __sctk_start_routine (void * arg){
   not_reachable();
 }
 
+static int
+sctk_thread_generic_attr_setbinding (sctk_thread_generic_attr_t * attr, int binding)
+{
+  
+  if(attr->ptr == NULL){
+    sctk_thread_generic_attr_init(attr);
+  }
+  attr->ptr->bind_to = binding;
+  return 0;
+}
+
+static int
+sctk_thread_generic_attr_getbinding (sctk_thread_generic_attr_t * attr, int *binding)
+{
+  sctk_thread_generic_intern_attr_t init = sctk_thread_generic_intern_attr_init;
+  sctk_thread_generic_intern_attr_t * ptr;
+
+  ptr = attr->ptr;
+
+  if(ptr == NULL){
+    ptr = &init;
+  }
+  *binding = ptr->bind_to;
+  return 0;
+}
+
+static int
+sctk_thread_generic_attr_getstacksize (sctk_thread_generic_attr_t * attr,
+				    size_t * stacksize)
+{
+  sctk_thread_generic_intern_attr_t init = sctk_thread_generic_intern_attr_init;
+  sctk_thread_generic_intern_attr_t * ptr;
+
+  ptr = attr->ptr;
+
+  if(ptr == NULL){
+    ptr = &init;
+  }
+  *stacksize = ptr->stack_size;
+  return 0;
+}
+static int
+sctk_thread_generic_attr_setstacksize (sctk_thread_generic_attr_t * attr,
+				    size_t stacksize)
+{
+  if(attr->ptr == NULL){
+    sctk_thread_generic_attr_init(attr);
+  }
+  attr->ptr->stack_size = stacksize;
+  return 0;
+}
+
+static int
+sctk_thread_generic_attr_getstackaddr (sctk_thread_generic_attr_t * attr,
+				    void **addr)
+{
+  sctk_thread_generic_intern_attr_t init = sctk_thread_generic_intern_attr_init;
+  sctk_thread_generic_intern_attr_t * ptr;
+
+  ptr = attr->ptr;
+
+  if(ptr == NULL){
+    ptr = &init;
+  }
+  *addr = ptr->stack;
+  return 0;
+}
+static int
+sctk_thread_generic_attr_setstackaddr (sctk_thread_generic_attr_t * attr, void *addr)
+{
+  if(attr->ptr == NULL){
+    sctk_thread_generic_attr_init(attr);
+  }
+  attr->ptr->stack = addr;
+  return 0;
+}
+
 int
 sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
 				 sctk_thread_generic_attr_t * attr,
@@ -328,8 +405,10 @@ sctk_thread_generic_create (sctk_thread_generic_t * threadp,
     sctk_thread_generic_attr_init(attr);
   }
 
-  attr->ptr->bind_to = sctk_get_init_vp (pos);
-  pos++;
+  if(attr->ptr->bind_to == -1){
+    attr->ptr->bind_to = sctk_get_init_vp (pos);
+    pos++;
+  }
 
   res = sctk_thread_generic_user_create(threadp,attr,start_routine,arg);
 
@@ -479,10 +558,27 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
 		      int (*)(sctk_thread_attr_t *));
   sctk_add_func_type (sctk_thread_generic, attr_destroy,
 		      int (*)(sctk_thread_attr_t *));
+
   sctk_add_func_type (sctk_thread_generic, attr_getscope,
 		      int (*)(const sctk_thread_attr_t *, int *));
   sctk_add_func_type (sctk_thread_generic, attr_setscope,
 		      int (*)(sctk_thread_attr_t *, int));
+
+  sctk_add_func_type (sctk_thread_generic, attr_getbinding,
+		      int (*)(const sctk_thread_attr_t *, int *));
+  sctk_add_func_type (sctk_thread_generic, attr_setbinding,
+		      int (*)(sctk_thread_attr_t *, int));
+
+  sctk_add_func_type (sctk_thread_generic, attr_getstacksize,
+		      int (*)(const sctk_thread_attr_t *,size_t  *));
+  sctk_add_func_type (sctk_thread_generic, attr_setstacksize,
+		      int (*)(sctk_thread_attr_t *, size_t));
+
+  sctk_add_func_type (sctk_thread_generic, attr_getstackaddr,
+		      int (*)(const sctk_thread_attr_t *,  void **));
+  sctk_add_func_type (sctk_thread_generic, attr_setstackaddr,
+		      int (*)(sctk_thread_attr_t *,void * ));
+
   sctk_add_func_type (sctk_thread_generic, user_create,
 		      int (*)(sctk_thread_t *, const sctk_thread_attr_t *,
 			      void *(*)(void *), void *));
