@@ -19,70 +19,18 @@
 /* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@cea.fr               # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef SCTK_INTERNAL_PROFILER
-#define SCTK_INTERNAL_PROFILER
 
-#include <stdint.h>
+#ifndef SCTK_PROFILE_RENDER_TEXT_H
+#define SCTK_PROFILE_RENDER_TEXT_H
 
-#include "sctk_profiler_array.h"
-#include "sctk_asm.h"
-#include "sctk_tls.h"
-
-/* Profiler internal interface */
-
-void sctk_internal_profiler_init();
-void sctk_internal_profiler_render();
-void sctk_internal_profiler_release();
-
-/* ****************** */
-
-/* Profiler switch */
-
-extern int sctk_profiler_internal_switch;
-
-static inline int sctk_profiler_internal_enabled()
-{
-	return sctk_profiler_internal_switch;
-}
-
-static inline void sctk_profiler_internal_enable()
-{
-	sctk_profiler_internal_switch = 1;
-}
-
-static inline void sctk_profiler_internal_disable()
-{
-	sctk_profiler_internal_switch = 0;
-}
-
-/* ****************** */
+#include "sctk_profile_render.h"
 
 
-/* Profiler hit */
-
-static inline struct sctk_profiler_array * sctk_internal_profiler_get_tls_array()
-{
-	return (struct sctk_profiler_array *)tls_mpc_profiler;
-}
+	void sctk_profile_render_text_register( struct sctk_profile_renderer *rd, int is_stdout);
+	void sctk_profile_render_text_setup( struct sctk_profile_renderer *rd );
+	void sctk_profile_render_text_teardown( struct sctk_profile_renderer *rd );
+	void sctk_profile_render_text_render_entry( struct sctk_profiler_array *array, int id, int parent_id, int depth, struct sctk_profile_renderer *rd );
 
 
-static inline void sctk_profiler_internal_hit( int key, uint64_t duration )
-{
-	struct sctk_profiler_array *array = sctk_internal_profiler_get_tls_array();
 
-	if( sctk_profiler_internal_enabled() && array )
-	{
-		sctk_profiler_array_hit( array, key, duration );
-	}
-}
-
-/* ****************** */
-
-/* Macros */
-
-#define SCTK_PROFIL_START(key) uint64_t ___sctk_profile_begin = sctk_get_time_stamp();
-#define SCTK_PROFIL_END(key) sctk_profiler_internal_hit(  SCTK_PROFILE_ ## key , sctk_get_time_stamp() - ___sctk_profile_begin );
-
-/* ****** */
-
-#endif /* SCTK_INTERNAL_PROFILER */
+#endif /* SCTK_PROFILE_RENDER_TEXT_H */

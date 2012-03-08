@@ -47,9 +47,12 @@ struct sctk_profiler_array
 	uint64_t sctk_profile_max[ SCTK_PROFILE_KEY_COUNT ];
 	uint64_t sctk_profile_min[ SCTK_PROFILE_KEY_COUNT ];
 	sctk_spinlock_t lock;
+	
+	uint64_t been_unified;
 };
 
 
+extern uint64_t sctk_profile_has_child[ SCTK_PROFILE_KEY_COUNT ];
 extern uint64_t sctk_profile_parent_key[ SCTK_PROFILE_KEY_COUNT ];
 void sctk_profiler_array_init_parent_keys();
 
@@ -57,26 +60,28 @@ struct sctk_profiler_array * sctk_profiler_array_new();
 
 void sctk_profiler_array_init(struct sctk_profiler_array *array);
 void sctk_profiler_array_release(struct sctk_profiler_array *array);
-
-void sctk_profiler_array_walk( struct sctk_profiler_array *array, void (*handler)( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg ), void *arg );
+void sctk_profiler_array_unify( struct sctk_profiler_array *array );
+void sctk_profiler_array_walk( struct sctk_profiler_array *array, void (*handler)( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg ), void *arg , int DFS );
 
 static inline void sctk_profiler_array_hit( struct sctk_profiler_array *array, int id, uint64_t duration )
 {
 	sctk_spinlock_lock( &array->lock );
-	
-	array->sctk_profile_hits[ id ]++;
-	array->sctk_profile_time[ id ] += duration;
-	
-	if( (array->sctk_profile_min[ id ] == 0) || (duration < array->sctk_profile_min[ id ]) )
 	{
-		array->sctk_profile_min[ id ] = duration;
+
+		array->sctk_profile_hits[ id ]++;
+		array->sctk_profile_time[ id ] += duration;
+		
+		if( (array->sctk_profile_min[ id ] == 0) || (duration < array->sctk_profile_min[ id ]) )
+		{
+			array->sctk_profile_min[ id ] = duration;
+		}
+		
+		if( (array->sctk_profile_max[ id ] == 0) || (array->sctk_profile_max[ id ] < duration) )
+		{
+			array->sctk_profile_max[ id ] = duration;
+		}
+
 	}
-	
-	if( (array->sctk_profile_max[ id ] == 0) || (array->sctk_profile_max[ id ] < duration) )
-	{
-		array->sctk_profile_max[ id ] = duration;
-	}
-	
 	sctk_spinlock_unlock( &array->lock );
 }
 
@@ -85,9 +90,15 @@ static inline void sctk_profiler_array_hit( struct sctk_profiler_array *array, i
 
 static inline uint64_t sctk_profiler_array_get_from_tab( struct sctk_profiler_array *array, uint64_t *tab , int id )
 {
+	uint64_t ret;
+
 	sctk_spinlock_lock( &array->lock );
-	return tab[id];
+	{
+		ret = tab[id];
+	}
 	sctk_spinlock_unlock( &array->lock );
+
+	return ret;
 }
 
 static inline uint64_t sctk_profiler_array_get_hits( struct sctk_profiler_array *array, int id )
@@ -115,7 +126,14 @@ static inline uint64_t sctk_profiler_array_get_parent( int id )
 	return sctk_profile_parent_key[ id ];
 }
 
-const char * const sctk_profiler_array_get_desc( int id );
+static inline uint64_t sctk_profiler_array_has_child( int id )
+{
+	return sctk_profile_has_child[ id ];
+}
+
+char * sctk_profiler_array_get_desc( int id );
+
+char * sctk_profiler_array_get_name( int id );
 
 /* ******** */
 

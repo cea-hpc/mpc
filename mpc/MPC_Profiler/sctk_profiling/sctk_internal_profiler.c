@@ -23,6 +23,9 @@
 
 #include "sctk_debug.h"
 #include "mpc_mpi.h"
+#include "sctk_performance_tree.h"
+
+#include "sctk_profile_render.h"
 
 /* Profiling switch */
 int sctk_profiler_internal_switch = 0;
@@ -33,7 +36,6 @@ static struct sctk_profiler_array *reduce_array = NULL;
 
 void sctk_internal_profiler_init()
 {
-	printf("TLS prof init \n");
 	/* Setup the TLS */
 	tls_mpc_profiler = (void *) sctk_profiler_array_new();
 
@@ -42,14 +44,14 @@ void sctk_internal_profiler_init()
 
 
 
-void sctk_internal_profiler_reduce()
+void sctk_internal_profiler_reduce(int rank)
 {
-	if( !reduce_array )
+	if( !reduce_array && rank == 0 )
 	{
 		reduce_array = sctk_profiler_array_new();
 	}
 
-	if( !sctk_internal_profiler_get_tls_array())
+	if( !sctk_internal_profiler_get_tls_array() )
 	{
 		sctk_error("Profiler TLS is not initialized");
 		return;
@@ -57,7 +59,7 @@ void sctk_internal_profiler_reduce()
 
 	if( sctk_profiler_internal_enabled() )
 	{
-		sctk_error( "This section must be entered with a disbled profiler");
+		sctk_error( "This section must be entered with a disabled profiler");
 		abort();
 	}
 
@@ -94,20 +96,42 @@ void sctk_internal_profiler_reduce()
 		         0,
 		         MPC_COMM_WORLD);
 
-
-	free( reduce_array );
 }
-
 
 
 
 void sctk_internal_profiler_render()
 {
+	int rank = 0;
+	MPC_Comm_rank( MPC_COMM_WORLD, &rank );
+
 	sctk_profiler_internal_disable();
 
-	sctk_internal_profiler_reduce();
+
+	/* Allocate and reduce to rank 0 */
+	sctk_internal_profiler_reduce( rank );
+
+	if( rank == 0 )
+	{
+		sctk_profiler_array_unify( reduce_array );
+
+		struct sctk_profile_renderer renderer;
+
+		sctk_profile_renderer_init( &renderer, reduce_array, "text_stdout,latex,html" );
+		
+		sctk_profile_renderer_render( &renderer );
+		
+		sctk_profile_renderer_release( &renderer );
+		
+
+	}
 
 
+	/* Free reduce array in rank 0 */
+	if( reduce_array && rank == 0 )
+	{
+		free( reduce_array );
+	}
 
 }
 

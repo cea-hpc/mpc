@@ -19,70 +19,79 @@
 /* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@cea.fr               # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef SCTK_INTERNAL_PROFILER
-#define SCTK_INTERNAL_PROFILER
 
-#include <stdint.h>
+#include "sctk_profile_render_text.h"
 
-#include "sctk_profiler_array.h"
-#include "sctk_asm.h"
-#include "sctk_tls.h"
+#include <stdlib.h>
 
-/* Profiler internal interface */
+#include "sctk_debug.h"
 
-void sctk_internal_profiler_init();
-void sctk_internal_profiler_render();
-void sctk_internal_profiler_release();
+static int sctk_profile_render_text_is_stdout = 0;
 
-/* ****************** */
-
-/* Profiler switch */
-
-extern int sctk_profiler_internal_switch;
-
-static inline int sctk_profiler_internal_enabled()
+void sctk_profile_render_text_register( struct sctk_profile_renderer *rd , int is_stdout)
 {
-	return sctk_profiler_internal_switch;
-}
-
-static inline void sctk_profiler_internal_enable()
-{
-	sctk_profiler_internal_switch = 1;
-}
-
-static inline void sctk_profiler_internal_disable()
-{
-	sctk_profiler_internal_switch = 0;
-}
-
-/* ****************** */
-
-
-/* Profiler hit */
-
-static inline struct sctk_profiler_array * sctk_internal_profiler_get_tls_array()
-{
-	return (struct sctk_profiler_array *)tls_mpc_profiler;
+	rd->setup = sctk_profile_render_text_setup;
+	rd->teardown = sctk_profile_render_text_teardown;
+	rd->render_entry = sctk_profile_render_text_render_entry;
+	
+	sctk_profile_render_text_is_stdout = is_stdout;
 }
 
 
-static inline void sctk_profiler_internal_hit( int key, uint64_t duration )
+void sctk_profile_render_text_setup( struct sctk_profile_renderer *rd )
 {
-	struct sctk_profiler_array *array = sctk_internal_profiler_get_tls_array();
-
-	if( sctk_profiler_internal_enabled() && array )
+	char buff[300];
+	char output_file[500];
+	
+	sprintf( output_file, "mpc_profile_%s.txt", sctk_profile_renderer_date( buff ) );
+	
+	if( !sctk_profile_render_text_is_stdout )
 	{
-		sctk_profiler_array_hit( array, key, duration );
+	
+		rd->output_file = fopen( output_file, "w" );
+		
+		if( !rd->output_file )
+		{
+			sctk_error( "Failed to open profile file : %s ", output_file );
+			perror( " fopen " );
+			abort();
+		}
+		
 	}
+	else
+	{
+		rd->output_file = stdout;
+	}
+	
+
 }
 
-/* ****************** */
 
-/* Macros */
+void sctk_profile_render_text_teardown( struct sctk_profile_renderer *rd )
+{
+	if( !sctk_profile_render_text_is_stdout )
+	{
+		fclose( rd->output_file );
+	}
+	
+	rd->output_file = NULL;
+	
+}
 
-#define SCTK_PROFIL_START(key) uint64_t ___sctk_profile_begin = sctk_get_time_stamp();
-#define SCTK_PROFIL_END(key) sctk_profiler_internal_hit(  SCTK_PROFILE_ ## key , sctk_get_time_stamp() - ___sctk_profile_begin );
 
-/* ****** */
+void sctk_profile_render_text_render_entry( struct sctk_profiler_array *array, int id, int parent_id, int depth, struct sctk_profile_renderer *rd )
+{
+	char buff[500];
+	char *to_unit = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_time(array, id) , buff );
 
-#endif /* SCTK_INTERNAL_PROFILER */
+	if( sctk_profiler_array_get_hits( array, id ) )
+	{
+		sctk_profile_renderer_write_ntabs( rd->output_file, depth );
+		fprintf( rd->output_file, "%s %lld Hits %s ( %g\% )\n",  sctk_profiler_array_get_desc( id ), sctk_profiler_array_get_hits( array, id ), to_unit, rd->ptree.entry_total_percentage_time[id] * 100);
+	}
+
+}
+
+
+
+

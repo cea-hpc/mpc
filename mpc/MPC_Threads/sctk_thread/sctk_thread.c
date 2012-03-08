@@ -650,8 +650,6 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   sctk_tls_module_alloc_and_fill() ;
 #endif
 
-  sctk_internal_profiler_init ();
-
   /** ** **/
   sctk_report_creation (sctk_thread_self());
   /** **/
@@ -667,8 +665,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   /** ** **/
   sctk_report_death (sctk_thread_self());
   /** **/
-  
-  sctk_internal_profiler_render();
+
 
 #ifdef MPC_Message_Passing
   if (tmp.task_id >= 0)
@@ -779,8 +776,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   sctk_tls_module_alloc_and_fill() ;
 #endif
 
-  sctk_internal_profiler_init();
-
+  /* Note that the profiler is not initialized in user threads */
 
   /** ** **/
   sctk_report_creation (sctk_thread_self());
@@ -2066,12 +2062,8 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	sctk_mpc_init_keys ();
 #endif
 
-<<<<<<< HEAD
-	sctk_profiling_init_keys ();
-=======
   /* Fill the profiling parent key array */
   sctk_profiler_array_init_parent_keys();
->>>>>>> MPC_Profiler : Bootstrap
 
 #ifdef MPC_Message_Passing
 	THREAD_NUMBER = sctk_get_nb_task_total (SCTK_COMM_WORLD);
@@ -2350,6 +2342,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 		}
 	}
 
+<<<<<<< HEAD
 	sctk_nodebug("sctk_total_number_of_tasks %d",sctk_total_number_of_tasks);
 
 	__sctk_profiling__end__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
@@ -2360,6 +2353,9 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	sctk_profiling_get_init_time(), sctk_profiling_get_dataused());
 	}
 	}
+=======
+  sctk_multithreading_initialised = 0;
+>>>>>>> MPC_Profiler : Integration and rendering
 
 	sctk_thread_wait_for_value_and_poll ((int *) &sctk_total_number_of_tasks, 0, NULL, NULL);
   	
