@@ -32,6 +32,7 @@ main (int argc, char **argv)
   MPC_Comm_size (MPC_COMM_WORLD, &size);
   MPC_Comm_rank (MPC_COMM_WORLD, &rank);
   gethostname (name, 1023);
+  MPC_Barrier(MPC_COMM_WORLD);
   printf ("Hello world from process %d of %d %s\n", rank, size, name);
   MPC_Finalize ();
   return 0;

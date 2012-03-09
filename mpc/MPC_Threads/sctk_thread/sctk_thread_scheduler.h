@@ -43,6 +43,7 @@ typedef enum{
 }sctk_thread_generic_thread_status_t;
 
 struct sctk_thread_generic_scheduler_s;
+struct sctk_per_vp_data_s;
 
 typedef struct sctk_thread_generic_scheduler_generic_s{
   int vp_type;
@@ -51,6 +52,7 @@ typedef struct sctk_thread_generic_scheduler_generic_s{
   struct sctk_thread_generic_scheduler_s* sched;
   struct sctk_thread_generic_scheduler_generic_s *prev, *next;
   sem_t sem;
+  struct sctk_per_vp_data_s* vp;
 } sctk_thread_generic_scheduler_generic_t;
 
 typedef struct sctk_thread_generic_scheduler_s{
