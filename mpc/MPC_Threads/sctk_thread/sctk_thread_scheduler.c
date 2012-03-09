@@ -84,7 +84,7 @@ static void* sctk_thread_generic_scheduler_idle_task(sctk_thread_generic_schedul
   /* Start Idle*/
   sctk_thread_generic_sched_idle_start();
 
-  sctk_debug("End vp");
+  sctk_nodebug("End vp");
   
 #warning "Handle zombies"
   not_implemented();
@@ -105,7 +105,7 @@ static void* sctk_thread_generic_scheduler_bootstrap_task(sctk_thread_generic_sc
   sctk_thread_generic_set_self(thread);
   sctk_swapcontext(&(thread->sched.ctx_bootstrap),&(thread->sched.ctx));
 
-  sctk_debug("End vp");
+  sctk_nodebug("End vp");
 
 #warning "Handle zombies"
 
@@ -138,14 +138,14 @@ inline
 void sctk_thread_generic_scheduler_swapcontext(sctk_thread_generic_scheduler_t* old_th,
 					       sctk_thread_generic_scheduler_t* new_th){
   sctk_thread_generic_set_self(new_th->th);
-  sctk_debug("SWAP %p %p -> %p",pthread_self(),&(old_th->ctx),&(new_th->ctx));
+  sctk_nodebug("SWAP %p %p -> %p",pthread_self(),&(old_th->ctx),&(new_th->ctx));
   sctk_spinlock_unlock(&(old_th->debug_lock));
   assume(sctk_spinlock_trylock(&(new_th->debug_lock)) == 0);
   sctk_swapcontext(&(old_th->ctx),&(new_th->ctx));
 }
 void sctk_thread_generic_scheduler_setcontext(sctk_thread_generic_scheduler_t* new_th){
   sctk_thread_generic_set_self(new_th->th);
-  sctk_debug("SET %p",&(new_th->ctx));
+  sctk_nodebug("SET %p",&(new_th->ctx));
   sctk_setcontext(&(new_th->ctx));
   assume(sctk_spinlock_trylock(&(new_th->debug_lock)) == 0);	
 }
@@ -224,7 +224,7 @@ static sctk_thread_generic_scheduler_t* sctk_centralized_get_from_list_pthread_i
     }
     sctk_spinlock_unlock(&sctk_centralized_sched_list_lock);
     if(res != NULL){
-      sctk_debug("REMOVE Thread %p",res->sched);
+      sctk_nodebug("REMOVE Thread %p",res->sched);
       return res->sched;
     } else {
       return NULL;
@@ -265,7 +265,7 @@ void sctk_centralized_poll_tasks(sctk_thread_generic_scheduler_t* sched){
   DL_FOREACH_SAFE(sctk_centralized_task_list,task,task_tmp){
     if(sctk_thread_generic_scheduler_check_task(task) == 1){
       DL_DELETE(sctk_centralized_task_list,task);
-      sctk_debug("WAKE task %p",task);
+      sctk_nodebug("WAKE task %p",task);
       sctk_spinlock_lock(&(sched->generic.lock));
       sctk_thread_generic_wake(task->sched);
       sctk_spinlock_unlock(&(sched->generic.lock));
@@ -305,7 +305,7 @@ static inline int sctk_sem_wait(sem_t *sem){
   do{
     res = sem_wait(sem);
   }while(res != 0);
-  sctk_debug("SEM WAIT %d",res);
+  sctk_nodebug("SEM WAIT %d",res);
   if(res != 0){
     perror("SEM WAIT");
   }
@@ -319,8 +319,8 @@ void sctk_thread_generic_scheduler_swapcontext_pthread(sctk_thread_generic_sched
   int val;
   assume(new_th->status == sctk_thread_generic_running);
   assume(sem_getvalue(&(old_th->generic.sem),&val) == 0);
-  sctk_debug("SLEEP %p (%d) WAKE %p %d (%d)",old_th,old_th->status,new_th,val,new_th->status);
-  sctk_debug("Register spinunlock %p execute SWAP",vp->sctk_generic_delegated_spinlock);
+  sctk_nodebug("SLEEP %p (%d) WAKE %p %d (%d)",old_th,old_th->status,new_th,val,new_th->status);
+  sctk_nodebug("Register spinunlock %p execute SWAP",vp->sctk_generic_delegated_spinlock);
 
   new_th->generic.vp = vp;
   old_th->generic.vp = NULL;
@@ -338,9 +338,9 @@ void sctk_thread_generic_scheduler_swapcontext_pthread(sctk_thread_generic_sched
   assume(old_th->status == sctk_thread_generic_running);
   assume(old_th->generic.vp != NULL);
   memcpy(&vp_data,old_th->generic.vp,sizeof(sctk_per_vp_data_t));
-  sctk_debug("Register spinunlock %p execute SWAP NEW",old_th->generic.vp->sctk_generic_delegated_spinlock);
+  sctk_nodebug("Register spinunlock %p execute SWAP NEW",old_th->generic.vp->sctk_generic_delegated_spinlock);
 
-  sctk_debug("RESTART %p",old_th);
+  sctk_nodebug("RESTART %p",old_th);
 }
 
 inline
@@ -394,7 +394,7 @@ static void sctk_generic_sched_idle_start(){
     sched_yield();
     next = sctk_generic_get_from_list();
   }while(next == NULL);
-  sctk_debug("Launch %p",next);
+  sctk_nodebug("Launch %p",next);
   sctk_swapcontext(&(next->ctx_bootstrap),&(next->ctx));
   not_reachable();
 }
@@ -409,7 +409,7 @@ static void sctk_generic_sched_idle_start_pthread(){
     sched_yield();
     next = sctk_generic_get_from_list_pthread_init();
   }while(next == NULL);
-  sctk_debug("Launch PTHREAD %p",next);
+  sctk_nodebug("Launch PTHREAD %p",next);
   sctk_swapcontext(&(next->ctx_bootstrap),&(next->ctx));
   not_reachable();
 }
@@ -441,11 +441,11 @@ static inline void sctk_generic_sched_yield_intern(sctk_thread_generic_scheduler
     }
 
   } else {
-    sctk_debug("TASK %p status %d type %d",sched,sched->status,sched->generic.vp_type);
+    sctk_nodebug("TASK %p status %d type %d",sched,sched->status,sched->generic.vp_type);
     if(sched->status == sctk_thread_generic_zombie){
       assume(vp_data.sctk_generic_delegated_zombie_list == NULL);
       vp_data.sctk_generic_delegated_zombie_list = sched;
-      sctk_debug("Zombie %p",sched);
+      sctk_nodebug("Zombie %p",sched);
     }
   }
 
@@ -476,11 +476,11 @@ static inline void sctk_generic_sched_yield_intern(sctk_thread_generic_scheduler
 	have_spinlock_registered = 1;
 	assume(vp_data.registered_spin_unlock == NULL);
 
-	sctk_debug("REGISTER delegated IDLE %p",sched);
+	sctk_nodebug("REGISTER delegated IDLE %p",sched);
 	vp_data.sched_idle = sched;
 	vp_data.registered_spin_unlock = vp_data.sctk_generic_delegated_spinlock;
 
-	sctk_debug("Register spinunlock %p execute IDLE",vp_data.sctk_generic_delegated_spinlock);
+	sctk_nodebug("Register spinunlock %p execute IDLE",vp_data.sctk_generic_delegated_spinlock);
 	sctk_spinlock_unlock(vp_data.sctk_generic_delegated_spinlock);
 	vp_data.sctk_generic_delegated_spinlock = NULL;
       }
@@ -497,7 +497,7 @@ static inline void sctk_generic_sched_yield_intern(sctk_thread_generic_scheduler
 	sctk_spinlock_lock(vp_data.registered_spin_unlock);
 	vp_data.sched_idle->generic.is_idle_mode = 0;
 	if(vp_data.sched_idle->status == sctk_thread_generic_running){
-	  sctk_debug("ADD FROM delegated spinlock %p",vp_data.sched_idle);
+	  sctk_nodebug("ADD FROM delegated spinlock %p",vp_data.sched_idle);
 	  sctk_generic_add_to_list(vp_data.sched_idle,vp_data.sched_idle->generic.is_idle_mode);
 	}
 	sctk_spinlock_unlock(vp_data.registered_spin_unlock);	
@@ -508,7 +508,7 @@ static inline void sctk_generic_sched_yield_intern(sctk_thread_generic_scheduler
   }
   
   if(vp_data.sctk_generic_delegated_spinlock != NULL){
-    sctk_debug("Register spinunlock %p execute",vp_data.sctk_generic_delegated_spinlock);
+    sctk_nodebug("Register spinunlock %p execute",vp_data.sctk_generic_delegated_spinlock);
     sctk_spinlock_unlock(vp_data.sctk_generic_delegated_spinlock);
     vp_data.sctk_generic_delegated_spinlock = NULL;
   }
@@ -546,7 +546,7 @@ static void sctk_generic_sched_yield(sctk_thread_generic_scheduler_t*sched){
 	sctk_spinlock_unlock(&(sched->debug_lock));
 	assume(sctk_sem_wait(&(sched->generic.sem)) == 0);
 	memcpy(&vp_data,sched->generic.vp,sizeof(sctk_per_vp_data_t));
-	sctk_debug("Register spinunlock %p execute SWAP NEW FIRST",sched->generic.vp->sctk_generic_delegated_spinlock);
+	sctk_nodebug("Register spinunlock %p execute SWAP NEW FIRST",sched->generic.vp->sctk_generic_delegated_spinlock);
 	return;
       }
       sctk_generic_sched_yield_intern(sched,sctk_thread_generic_scheduler_swapcontext_pthread,
@@ -563,7 +563,7 @@ void sctk_generic_thread_status(sctk_thread_generic_scheduler_t* sched,
 
 static void sctk_generic_register_spinlock_unlock(sctk_thread_generic_scheduler_t* sched,
 						  sctk_spinlock_t* lock){
-  sctk_debug("Register spinunlock %p",lock);
+  sctk_nodebug("Register spinunlock %p",lock);
   vp_data.sctk_generic_delegated_spinlock = lock;
 }
 
@@ -572,7 +572,7 @@ static void sctk_generic_wake(sctk_thread_generic_scheduler_t* sched){
 
   is_idle_mode = sched->generic.is_idle_mode;
 
-  sctk_debug("WAKE %p",sched);
+  sctk_nodebug("WAKE %p",sched);
 
   if(sched->generic.vp_type == 0){
     sched->status = sctk_thread_generic_running;
@@ -622,11 +622,11 @@ void sctk_generic_create_common(sctk_thread_generic_p_t*thread){
   if(thread->attr.scope == SCTK_THREAD_SCOPE_SYSTEM){
     thread->sched.generic.vp_type = 1;
    
-    sctk_debug("Create thread scope %d (%d SYSTEM) vp _type %d",
+    sctk_nodebug("Create thread scope %d (%d SYSTEM) vp _type %d",
 	       thread->attr.scope,SCTK_THREAD_SCOPE_SYSTEM,thread->sched.generic.vp_type);
     sctk_thread_generic_scheduler_create_vp(thread,thread->attr.bind_to);
   } else {
-    sctk_debug("Create thread scope %d (%d SYSTEM) vp _type %d",
+    sctk_nodebug("Create thread scope %d (%d SYSTEM) vp _type %d",
 	       thread->attr.scope,SCTK_THREAD_SCOPE_SYSTEM,thread->sched.generic.vp_type);
     sctk_generic_add_to_list(&(thread->sched),(&(thread->sched))->generic.is_idle_mode);
   }
@@ -657,7 +657,7 @@ static void* sctk_generic_polling_func(void*arg){
 
   sched = &(sctk_thread_generic_self()->sched);
 
-  sctk_debug("Start polling func %p",sched);
+  sctk_nodebug("Start polling func %p",sched);
 
   do{
     sctk_generic_poll_tasks(sched);

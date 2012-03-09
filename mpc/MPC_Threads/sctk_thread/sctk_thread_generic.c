@@ -194,13 +194,14 @@ static  void __sctk_start_routine (void * arg){
 
   thread = arg;
 
-  sctk_debug("Before yield %p",&(thread->sched));
+  sctk_nodebug("Before yield %p",&(thread->sched));
+  /*It is mandatory to have to yield for pthread mode*/
   sctk_thread_generic_sched_yield(&(thread->sched));
   sctk_thread_generic_sched_yield(&(thread->sched));
 
-  sctk_debug("Start %p %p",&(thread->sched),thread->attr.arg);
+  sctk_nodebug("Start %p %p",&(thread->sched),thread->attr.arg);
   thread->attr.return_value = thread->attr.start_routine(thread->attr.arg);
-  sctk_debug("End %p %p",&(thread->sched),thread->attr.arg);
+  sctk_nodebug("End %p %p",&(thread->sched),thread->attr.arg);
 
   /* Handel Exit */
   if(thread->attr.scope == SCTK_THREAD_SCOPE_SYSTEM){
@@ -311,7 +312,7 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
     }
   }
 
-  sctk_debug("Create %p",arg);
+  sctk_nodebug("Create %p",arg);
 
   if (arg != NULL)
     {
@@ -375,7 +376,7 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
   {
     thread_id->attr.start_routine = start_routine;
     thread_id->attr.arg = arg;
-    sctk_debug("STACK %p STACK SIZE %lu",stack,stack_size);
+    sctk_nodebug("STACK %p STACK SIZE %lu",stack,stack_size);
     sctk_makecontext (&(thread_id->sched.ctx),
 		      (void *) thread_id,
 		      __sctk_start_routine, stack, stack_size);

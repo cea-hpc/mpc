@@ -51,7 +51,7 @@ int sctk_thread_generic_conds_cond_wait (sctk_thread_generic_cond_t * cond,
   cell.sched = sched;
   DL_APPEND(cond->blocked,&cell);
     
-  sctk_debug("WAIT on %p",sched);
+  sctk_nodebug("WAIT on %p",sched);
 
   sctk_thread_generic_thread_status(sched,sctk_thread_generic_blocked);
   sctk_thread_generic_register_spinlock_unlock(sched,&(cond->lock));
@@ -85,7 +85,7 @@ int sctk_thread_generic_conds_cond_broadcast (sctk_thread_generic_cond_t * cond,
   sctk_spinlock_lock(&(cond->lock));
   DL_FOREACH_SAFE(cond->blocked,task,task_tmp){
     DL_DELETE(cond->blocked,task);
-    sctk_debug("ADD BCAST cond wake %p from %p",task->sched,sched);
+    sctk_nodebug("ADD BCAST cond wake %p from %p",task->sched,sched);
     sctk_thread_generic_wake(task->sched);    
   }
   sctk_spinlock_unlock(&(cond->lock));
