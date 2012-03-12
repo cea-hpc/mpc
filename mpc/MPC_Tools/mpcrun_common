@@ -447,6 +447,12 @@ if test "$show" = "eval" ; then
     fi
 fi
 
+#make config loading silent in case of error
+#only for more than 64 process
+if test "A$PROCESS_NB" != "A" && test $PROCESS_NB -gt 64; then
+	export MPC_CONFIG_SILENT=1
+fi
+
 TMP_SCTK_ARG="$SCTK_ARGS"
 SCTK_ARGS=""
 for arg in $TMP_SCTK_ARG; do

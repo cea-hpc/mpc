@@ -145,6 +145,39 @@ void sctk_runtime_config_runtime_cleanup(void)
 
 /*******************  FUNCTION  *********************/
 /**
+ * Replacement for libxml handler but done nothing.
+ * \TODO Improve by printing at least on MPI task 0, but not sure that we can get this informations
+ * when MPC_Config is init.
+ */
+void sctk_runtime_config_libxml_silent_error_handler(void * ctx,const char * msg,...)
+{
+
+}
+
+/*******************  FUNCTION  *********************/
+/**
+ * Provide our own error handling to avoid printing too much messages while running on
+ * large clusters. This avoid to flood the terminal in case of error.
+ * We count on mpcrun to pass the MPC_CONFIG_SILENT variable when using a large number po
+ * nodes to disable libxml output in such case.
+ */
+void sctk_runtime_config_made_libxml_silent(void)
+{
+	//check env var MPC_CONFIG_SILENT.
+	const char * silent = getenv("MPC_CONFIG_SILENT");
+
+	if (silent == NULL)
+	{
+		//if not defined, nothing to do
+		return;
+	} else if (strcmp(silent,"1") == 0) {
+		//ok, replace the error handler
+		xmlSetGenericErrorFunc (NULL, sctk_runtime_config_libxml_silent_error_handler);
+	}
+}
+
+/*******************  FUNCTION  *********************/
+/**
  * Function used to initilized the MPC configuration structure. It load the XML files, parse them and
  * map the content on the global C structure.
 **/
@@ -168,6 +201,9 @@ void sctk_runtime_config_init(void)
 		} else {
 			//init libxml (safer to manually call it in multi-thread environnement as not threadsafe)
 			xmlInitParser();
+
+			//made silent errors
+			sctk_runtime_config_made_libxml_silent();
 
 			//open
 			sctk_runtime_config_sources_open(&config_sources);
