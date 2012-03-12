@@ -59,7 +59,7 @@
 		<xsl:for-each select="config">
 			<xsl:for-each select="modules">
 				<xsl:for-each select="module">
-					<xsl:value-of select="concat('&#10;&#9;struct sctk_runtime_config_module_',type,' ',name,';')"/>
+					<xsl:value-of select="concat('&#10;&#9;struct sctk_runtime_config_module_',@type,' ',@name,';')"/>
 				</xsl:for-each>
 			</xsl:for-each>
 		</xsl:for-each>
@@ -79,20 +79,20 @@
 	<!-- ********************************************************* -->
 	<xsl:template match="union">
 		<xsl:text>&#10;/**********************  ENUM  **********************/&#10;</xsl:text>
-		<xsl:value-of select="concat('/**',doc,'**/&#10;')"/>
-		<xsl:value-of select="concat('enum sctk_runtime_config_module_',name,'_type&#10;')"/>
+		<xsl:value-of select="concat('/**',@doc,'**/&#10;')"/>
+		<xsl:value-of select="concat('enum sctk_runtime_config_module_',@name,'_type&#10;')"/>
 		<xsl:text>{&#10;</xsl:text>
-		<xsl:value-of select="concat('&#09;SCTK_RTCFG_',name,'_NONE,&#10;')"/>
+		<xsl:value-of select="concat('&#09;SCTK_RTCFG_',@name,'_NONE,&#10;')"/>
 		<xsl:for-each select="choice">
-			<xsl:value-of select="concat('&#09;SCTK_RTCFG_',../name,'_',name,',&#10;')"/>
+			<xsl:value-of select="concat('&#09;SCTK_RTCFG_',../@name,'_',@name,',&#10;')"/>
 		</xsl:for-each>
 		<xsl:text>};&#10;</xsl:text>
 
 		<xsl:text>&#10;/*********************  STRUCT  *********************/&#10;</xsl:text>
-		<xsl:value-of select="concat('/**',doc,'**/&#10;')"/>
-		<xsl:value-of select="concat('struct sctk_runtime_config_module_',name,'&#10;')"/>
+		<xsl:value-of select="concat('/**',@doc,'**/&#10;')"/>
+		<xsl:value-of select="concat('struct sctk_runtime_config_module_',@name,'&#10;')"/>
 		<xsl:text>{&#10;</xsl:text>
-			<xsl:value-of select="concat('&#9;enum sctk_runtime_config_module_',name,'_type type;&#10;')"/>
+			<xsl:value-of select="concat('&#9;enum sctk_runtime_config_module_',@name,'_type type;&#10;')"/>
 			<xsl:text>&#09;union {&#10;</xsl:text>
 			<xsl:apply-templates select="choice"/>
 			<xsl:text>&#09;} value;&#10;</xsl:text>
@@ -108,8 +108,8 @@
 	<!-- ********************************************************* -->
 	<xsl:template match="struct">
 		<xsl:text>&#10;/*********************  STRUCT  *********************/&#10;</xsl:text>
-		<xsl:value-of select="concat('/**',doc,'**/&#10;')"/>
-		<xsl:value-of select="concat('struct sctk_runtime_config_module_',name,'&#10;')"/>
+		<xsl:value-of select="concat('/**',@doc,'**/&#10;')"/>
+		<xsl:value-of select="concat('struct sctk_runtime_config_module_',@name,'&#10;')"/>
 		<xsl:text>{</xsl:text>
 		<xsl:apply-templates select="param"/>
 		<xsl:apply-templates select="array"/>
@@ -118,37 +118,37 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template match="param" name="param">
-		<xsl:if test="doc">
-			<xsl:value-of select="concat('&#9;/**',doc,'**/&#10;')"/>
+		<xsl:if test="@doc">
+			<xsl:value-of select="concat('&#9;/**',@doc,'**/&#10;')"/>
 		</xsl:if>
 		<xsl:text>&#9;</xsl:text>
 		<xsl:call-template name="gen-type-name"/>
-		<xsl:value-of select="concat(' ',name)"/>
+		<xsl:value-of select="concat(' ',@name)"/>
 		<xsl:text>;&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template match="array">
-		<xsl:value-of select="concat('&#9;/**',doc,'**/&#10;')"/>
+		<xsl:value-of select="concat('&#9;/**',@doc,'**/&#10;')"/>
 		<xsl:text>&#9;</xsl:text>
 		<xsl:call-template name="gen-type-name"/>
-		<xsl:value-of select="concat(' * ',name)"/>
+		<xsl:value-of select="concat(' * ',@name)"/>
 		<xsl:text>;&#10;</xsl:text>
-		<xsl:value-of select="concat('&#9;/** Number of elements in ',name,' array. **/&#10;')"/>
-		<xsl:value-of select="concat('&#9;int ',name,'_size;&#10;')"/>
+		<xsl:value-of select="concat('&#9;/** Number of elements in ',@name,' array. **/&#10;')"/>
+		<xsl:value-of select="concat('&#9;int ',@name,'_size;&#10;')"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-type-name">
 		<xsl:choose>
-			<xsl:when test="type = 'int'">int</xsl:when>
-			<xsl:when test="type = 'bool'">bool</xsl:when>
-			<xsl:when test="type = 'float'">float</xsl:when>
-			<xsl:when test="type = 'double'">double</xsl:when>
-			<xsl:when test="type = 'string'">char *</xsl:when>
+			<xsl:when test="@type = 'int'">int</xsl:when>
+			<xsl:when test="@type = 'bool'">bool</xsl:when>
+			<xsl:when test="@type = 'float'">float</xsl:when>
+			<xsl:when test="@type = 'double'">double</xsl:when>
+			<xsl:when test="@type = 'string'">char *</xsl:when>
 			<xsl:otherwise>
 				<xsl:call-template name="gen-user-type-name">
-					<xsl:with-param name="type"><xsl:value-of select='type'/></xsl:with-param>
+					<xsl:with-param name="type"><xsl:value-of select='@type'/></xsl:with-param>
 				</xsl:call-template>
 			</xsl:otherwise>
 		</xsl:choose>
@@ -157,10 +157,10 @@
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-user-type-name">
 		<xsl:param name="type"/>
-		<xsl:for-each select="//struct[name = $type]">
+		<xsl:for-each select="//struct[@name = $type]">
 			<xsl:value-of select="concat('struct sctk_runtime_config_module_',$type)"/>
 		</xsl:for-each>
-		<xsl:for-each select="//union[name = $type]">
+		<xsl:for-each select="//union[@name = $type]">
 			<xsl:value-of select="concat('struct sctk_runtime_config_module_',$type)"/>
 		</xsl:for-each>
 	</xsl:template>

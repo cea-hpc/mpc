@@ -74,6 +74,7 @@ gen_global_config_file()
 	for tmp in ${CONFIG_FILES}
 	do
 		echo "   - Use $tmp"
+		xmllint "$tmp" > /dev/null || exit 1 
 	done
 	echo "<?xml version=\"1.0\"?>" > ${GLOBAL_CONFIG_FILE}
 	echo "<all>" >> ${GLOBAL_CONFIG_FILE}

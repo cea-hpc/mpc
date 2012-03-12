@@ -1,111 +1,39 @@
 <?xml version="1.0"?>
 <config>
 	<usertypes>
-		<struct>
-			<name>test</name>
-			<param><name>tt</name><type>int</type><default>10</default></param>
+		<struct name="test">
+			<param name="tt" type="int" default="10" doc="This is a test"/>
 		</struct>
-		<struct>
-			<name>rail</name>
-			<param><name>tt</name><type>int</type><default>10</default></param>
-			<param><name>tt2</name><type>int</type><default>20</default></param>
+		<struct name="rail">
+			<param name="tt" type="int" default="10" doc="This is a test"/>
+			<param name="tt2" type="int" default="20" doc="This is a test"/>
 		</struct>
-		<union>
-				<name>driver</name>
-				<doc></doc>
-				<choice>
-					<name>test</name>
-					<type>test</type>
-				</choice>
-				<choice>
-					<name>rail</name>
-					<type>rail</type>
-				</choice>
+		<union name="driver" doc="Define the list of drivers supported for MPC network.">
+				<choice name="test" type="test"/>
+				<choice name="rail" type="rail"/>
 		</union>
-		<struct>
-			<name>allocator</name>
-			<doc>Options for MPC allocator.</doc>
-			<param>
-				<name>numa</name>
-				<default>false</default>
-				<type>bool</type>
-				<doc>Permit to enable of disable NUMA support in MPC Allocator.</doc>
-			</param>
-			<param>
-				<name>profile</name>
-				<type>bool</type>
-				<default>false</default>
-				<doc>Enable of disable usage of allocator profiler.</doc>
-			</param>
-			<param>
-				<name>alstring</name>
-				<type>string</type>
-				<default>TestTestTest</default>
-				<doc>Sample string</doc>
-			</param>
-			<param>
-				<name>aldouble</name>
-				<type>double</type>
-				<default>42.42</default>
-				<doc>Sample double</doc>
-			</param>
-			<param>
-				<name>alfloat</name>
-				<type>float</type>
-				<default>42.42</default>
-				<doc>Sample float</doc>
-			</param>
-			<param>
-				<name>warnings</name>
-				<type>bool</type>
-				<default>false</default>
-				<doc>Permit to enable of disable allocator warnings.</doc>
-			</param>
-			<param>
-				<name>test</name>
-				<type>test</type>
-				<doc></doc>
-			</param>
-			<array>
-				<name>classes</name>
-				<entry-name>class</entry-name>
-				<type>int</type>
-				<doc>Permit to list all available size classes.</doc>
-			</array>
-			<array>
-				<name>classes2</name>
-				<entry-name>class2</entry-name>
-				<type>int</type>
-				<doc>Permit to list all available size classes.</doc>
+		<struct name="allocator"     doc="Options for MPC allocator.">
+			<param name="numa"       type="bool"   default="false"        doc="Permit to enable of disable NUMA support in MPC Allocator."/>
+			<param name="profile"    type="bool"   default="false"        doc="Enable of disable usage of allocator profiler."/>
+			<param name="alstring"   type="string" default="TestTestTest" doc="Sample string"/>
+			<param name="aldouble"   type="double" default="42.42"        doc="Sample double"/>
+			<param name="alfloat"    type="float"  default="42.42"        doc="Sample float"/>
+			<param name="warnings"   type="bool"   default="false"        doc="Permit to enable of disable allocator warnings."/>
+			<param name="test"       type="test"   doc="Try to use test structure." />
+			<array name="classes" entry-name="class" type="int" doc="Permit to list all available size classes."/>
+			<array name="classes2" entry-name="class2" type="int" doc="Permit to list all available size classes.">
 				<default>
 					<value>0</value>
 					<value>1</value>
 					<value>10</value>
 				</default>
 			</array>
-			<array>
-				<name>rails</name>
-				<entry-name>rail</entry-name>
-				<doc>blablabla</doc>
-				<type>rail</type>
-			</array>
-			<param>
-				<name>driver</name>
-				<type>driver</type>
-				<doc>azertyuy</doc>
-			</param>
-			<array>
-				<name>driverlist</name>
-				<type>driver</type>
-				<entry-name>driver</entry-name>
-				<doc>azertyuy</doc>
-			</array>
+			<array name="rails" entry-name="rail" doc="blablabla" type="rail"/>
+			<param name="driver" type="driver" doc="This is a super doc"/>
+			<array name="driverlist" entry-name="driver" type="driver" doc="blabla"/>
 		</struct>
 	</usertypes>
 	<modules>
-		<module>
-			<name>allocator</name>
-			<type>allocator</type>
-		</module>
+		<module name="allocator" type="allocator"/>
 	</modules>
 </config>

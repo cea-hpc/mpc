@@ -44,7 +44,7 @@
 		<xsl:for-each select="config">
 			<xsl:for-each select="modules">
 				<xsl:for-each select="module">
-					<xsl:value-of select="concat('&#9;sctk_runtime_config_module_init_',type,'(&amp;config->modules.',name,');&#10;')"/>
+					<xsl:value-of select="concat('&#9;sctk_runtime_config_module_init_',@type,'(&amp;config->modules.',@name,');&#10;')"/>
 				</xsl:for-each>
 			</xsl:for-each>
 		</xsl:for-each>
@@ -64,13 +64,13 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-struct-name">
-		<xsl:value-of select="concat('struct sctk_runtime_config_module_',name)"/>
+		<xsl:value-of select="concat('struct sctk_runtime_config_module_',@name)"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template match="struct">
 		<xsl:text>&#10;/*******************  FUNCTION  *********************/&#10;</xsl:text>
-		<xsl:value-of select="concat('void sctk_runtime_config_module_init_',name,'(void * struct_ptr)&#10;')"/>
+		<xsl:value-of select="concat('void sctk_runtime_config_module_init_',@name,'(void * struct_ptr)&#10;')"/>
 		<xsl:text>{&#10;&#09;</xsl:text>
 		<xsl:call-template name="gen-struct-name"/>
 		<xsl:text> * obj = struct_ptr;&#10;</xsl:text>
@@ -83,7 +83,7 @@
 	<!-- ********************************************************* -->
 	<xsl:template match="union">
 			<xsl:text>&#10;/*******************  FUNCTION  *********************/&#10;</xsl:text>
-		<xsl:value-of select="concat('void sctk_runtime_config_module_init_',name,'(void * struct_ptr)&#10;')"/>
+		<xsl:value-of select="concat('void sctk_runtime_config_module_init_',@name,'(void * struct_ptr)&#10;')"/>
 		<xsl:text>{&#10;&#09;</xsl:text>
 		<xsl:call-template name="gen-struct-name"/>
 		<xsl:text> * obj = struct_ptr;&#10;</xsl:text>
@@ -93,18 +93,18 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template name="union-no-default">
-		<xsl:value-of select="concat('&#09;obj->type = SCTK_RTCFG_',name,'_NONE;&#10;')"/>
+		<xsl:value-of select="concat('&#09;obj->type = SCTK_RTCFG_',@name,'_NONE;&#10;')"/>
 		<xsl:text>&#09;memset(&amp;obj->value,0,sizeof(obj->value));&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template match="param">
 		<xsl:choose>
-			<xsl:when test="type = 'int'"><xsl:call-template name='gent-default-param-int'/></xsl:when>
-			<xsl:when test="type = 'bool'"><xsl:call-template name='gent-default-param-bool'/></xsl:when>
-			<xsl:when test="type = 'string'"><xsl:call-template name='gent-default-param-string'/></xsl:when>
-			<xsl:when test="type = 'float'"><xsl:call-template name='gent-default-param-decimal'/></xsl:when>
-			<xsl:when test="type = 'double'"><xsl:call-template name='gent-default-param-decimal'/></xsl:when>
+			<xsl:when test="@type = 'int'"><xsl:call-template name='gent-default-param-int'/></xsl:when>
+			<xsl:when test="@type = 'bool'"><xsl:call-template name='gent-default-param-bool'/></xsl:when>
+			<xsl:when test="@type = 'string'"><xsl:call-template name='gent-default-param-string'/></xsl:when>
+			<xsl:when test="@type = 'float'"><xsl:call-template name='gent-default-param-decimal'/></xsl:when>
+			<xsl:when test="@type = 'double'"><xsl:call-template name='gent-default-param-decimal'/></xsl:when>
 			<xsl:otherwise><xsl:call-template name="gent-default-param-usertype"/></xsl:otherwise>
 		</xsl:choose>
 	</xsl:template>
@@ -112,10 +112,10 @@
 	<!-- ********************************************************* -->
 	<xsl:template name="gent-default-param-int">
 		<xsl:text>&#09;obj-></xsl:text>
-		<xsl:value-of select='name'/>
+		<xsl:value-of select='@name'/>
 		<xsl:text> = </xsl:text>
 		<xsl:choose>
-			<xsl:when test='default'><xsl:value-of select="default"/></xsl:when>
+			<xsl:when test='@default'><xsl:value-of select="@default"/></xsl:when>
 			<xsl:otherwise>0</xsl:otherwise>
 		</xsl:choose>
 		<xsl:text>;&#10;</xsl:text>
@@ -124,10 +124,10 @@
 	<!-- ********************************************************* -->
 	<xsl:template name="gent-default-param-bool">
 		<xsl:text>&#09;obj-></xsl:text>
-		<xsl:value-of select='name'/>
+		<xsl:value-of select='@name'/>
 		<xsl:text> = </xsl:text>
 		<xsl:choose>
-			<xsl:when test='default'><xsl:value-of select="default"/></xsl:when>
+			<xsl:when test='@default'><xsl:value-of select="@default"/></xsl:when>
 			<xsl:otherwise>false</xsl:otherwise>
 		</xsl:choose>
 		<xsl:text>;&#10;</xsl:text>
@@ -136,10 +136,10 @@
 	<!-- ********************************************************* -->
 	<xsl:template name="gent-default-param-decimal">
 		<xsl:text>&#09;obj-></xsl:text>
-		<xsl:value-of select='name'/>
+		<xsl:value-of select='@name'/>
 		<xsl:text> = </xsl:text>
 		<xsl:choose>
-			<xsl:when test='default'><xsl:value-of select="default"/></xsl:when>
+			<xsl:when test='@default'><xsl:value-of select="@default"/></xsl:when>
 			<xsl:otherwise>0.0</xsl:otherwise>
 		</xsl:choose>
 		<xsl:text>;&#10;</xsl:text>
@@ -148,10 +148,10 @@
 	<!-- ********************************************************* -->
 	<xsl:template name="gent-default-param-string">
 		<xsl:text>&#09;obj-></xsl:text>
-		<xsl:value-of select='name'/>
+		<xsl:value-of select='@name'/>
 		<xsl:text> = </xsl:text>
 		<xsl:choose>
-			<xsl:when test='default'><xsl:text>"</xsl:text><xsl:value-of select="default"/><xsl:text>"</xsl:text></xsl:when>
+			<xsl:when test='@default'><xsl:text>"</xsl:text><xsl:value-of select="@default"/><xsl:text>"</xsl:text></xsl:when>
 			<xsl:otherwise>NULL</xsl:otherwise>
 		</xsl:choose>
 		<xsl:text>;&#10;</xsl:text>
@@ -159,7 +159,7 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template name="gent-default-param-usertype">
-		<xsl:value-of select="concat('&#09;sctk_runtime_config_module_init_',type,'(&amp;obj->',name,');&#10;')"/>
+		<xsl:value-of select="concat('&#09;sctk_runtime_config_module_init_',@type,'(&amp;obj->',@name,');&#10;')"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -175,11 +175,11 @@
 	<xsl:template name="array-empty">
 		<!-- pointer -->
 		<xsl:text>&#09;obj-&gt;</xsl:text>
-		<xsl:value-of select='name'/>
+		<xsl:value-of select='@name'/>
 		<xsl:text> = NULL;&#10;</xsl:text>
 		<!-- size -->
 		<xsl:text>&#09;obj-&gt;</xsl:text>
-		<xsl:value-of select='name'/>
+		<xsl:value-of select='@name'/>
 		<xsl:text>_size = 0;&#10;</xsl:text>
 	</xsl:template>
 
@@ -187,12 +187,12 @@
 	<xsl:template name="array-default">
 		<!-- pointer -->
 		<xsl:text>&#09;obj-&gt;</xsl:text>
-		<xsl:value-of select='name'/>
-		<xsl:value-of select="concat(' = calloc(',count(default/value),',sizeof(',type,'));&#10;')"/>
+		<xsl:value-of select='@name'/>
+		<xsl:value-of select="concat(' = calloc(',count(default/value),',sizeof(',@type,'));&#10;')"/>
 		<xsl:call-template name="array-default-values"/>
 		<!-- size -->
 		<xsl:text>&#09;obj-&gt;</xsl:text>
-		<xsl:value-of select='name'/>
+		<xsl:value-of select='@name'/>
 		<xsl:text>_size = </xsl:text>
 		<xsl:value-of select="count(default/value)"/>
 		<xsl:text>;&#10;</xsl:text>
@@ -202,7 +202,7 @@
 	<xsl:template name="array-default-values">
 		<xsl:for-each select="default/value">
 			<xsl:text>&#09;obj-&gt;</xsl:text>
-			<xsl:value-of select="../../name" />
+			<xsl:value-of select="../../@name" />
 			<xsl:value-of select="concat('[',position()-1,'] = ',.,';&#10;')"/>
 		</xsl:for-each>
 	</xsl:template>

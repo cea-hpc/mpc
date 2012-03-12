@@ -2,237 +2,87 @@
 <all>
 <config>
 	<usertypes>
-		<struct>
-			<name>test</name>
-			<param><name>tt</name><type>int</type><default>10</default></param>
+		<struct name="test">
+			<param name="tt" type="int" default="10" doc="This is a test"/>
 		</struct>
-		<struct>
-			<name>rail</name>
-			<param><name>tt</name><type>int</type><default>10</default></param>
-			<param><name>tt2</name><type>int</type><default>20</default></param>
+		<struct name="rail">
+			<param name="tt" type="int" default="10" doc="This is a test"/>
+			<param name="tt2" type="int" default="20" doc="This is a test"/>
 		</struct>
-		<union>
-				<name>driver</name>
-				<doc></doc>
-				<choice>
-					<name>test</name>
-					<type>test</type>
-				</choice>
-				<choice>
-					<name>rail</name>
-					<type>rail</type>
-				</choice>
+		<union name="driver" doc="Define the list of drivers supported for MPC network.">
+				<choice name="test" type="test"/>
+				<choice name="rail" type="rail"/>
 		</union>
-		<struct>
-			<name>allocator</name>
-			<doc>Options for MPC allocator.</doc>
-			<param>
-				<name>numa</name>
-				<default>false</default>
-				<type>bool</type>
-				<doc>Permit to enable of disable NUMA support in MPC Allocator.</doc>
-			</param>
-			<param>
-				<name>profile</name>
-				<type>bool</type>
-				<default>false</default>
-				<doc>Enable of disable usage of allocator profiler.</doc>
-			</param>
-			<param>
-				<name>alstring</name>
-				<type>string</type>
-				<default>TestTestTest</default>
-				<doc>Sample string</doc>
-			</param>
-			<param>
-				<name>aldouble</name>
-				<type>double</type>
-				<default>42.42</default>
-				<doc>Sample double</doc>
-			</param>
-			<param>
-				<name>alfloat</name>
-				<type>float</type>
-				<default>42.42</default>
-				<doc>Sample float</doc>
-			</param>
-			<param>
-				<name>warnings</name>
-				<type>bool</type>
-				<default>false</default>
-				<doc>Permit to enable of disable allocator warnings.</doc>
-			</param>
-			<param>
-				<name>test</name>
-				<type>test</type>
-				<doc></doc>
-			</param>
-			<array>
-				<name>classes</name>
-				<entry-name>class</entry-name>
-				<type>int</type>
-				<doc>Permit to list all available size classes.</doc>
-			</array>
-			<array>
-				<name>classes2</name>
-				<entry-name>class2</entry-name>
-				<type>int</type>
-				<doc>Permit to list all available size classes.</doc>
+		<struct name="allocator"     doc="Options for MPC allocator.">
+			<param name="numa"       type="bool"   default="false"        doc="Permit to enable of disable NUMA support in MPC Allocator."/>
+			<param name="profile"    type="bool"   default="false"        doc="Enable of disable usage of allocator profiler."/>
+			<param name="alstring"   type="string" default="TestTestTest" doc="Sample string"/>
+			<param name="aldouble"   type="double" default="42.42"        doc="Sample double"/>
+			<param name="alfloat"    type="float"  default="42.42"        doc="Sample float"/>
+			<param name="warnings"   type="bool"   default="false"        doc="Permit to enable of disable allocator warnings."/>
+			<param name="test"       type="test"   doc="Try to use test structure." />
+			<array name="classes" entry-name="class" type="int" doc="Permit to list all available size classes."/>
+			<array name="classes2" entry-name="class2" type="int" doc="Permit to list all available size classes.">
 				<default>
 					<value>0</value>
 					<value>1</value>
 					<value>10</value>
 				</default>
 			</array>
-			<array>
-				<name>rails</name>
-				<entry-name>rail</entry-name>
-				<doc>blablabla</doc>
-				<type>rail</type>
-			</array>
-			<param>
-				<name>driver</name>
-				<type>driver</type>
-				<doc>azertyuy</doc>
-			</param>
-			<array>
-				<name>driverlist</name>
-				<type>driver</type>
-				<entry-name>driver</entry-name>
-				<doc>azertyuy</doc>
-			</array>
+			<array name="rails" entry-name="rail" doc="blablabla" type="rail"/>
+			<param name="driver" type="driver" doc="This is a super doc"/>
+			<array name="driverlist" entry-name="driver" type="driver" doc="blabla"/>
 		</struct>
 	</usertypes>
 	<modules>
-		<module>
-			<name>allocator</name>
-			<type>allocator</type>
-		</module>
+		<module name="allocator" type="allocator"/>
 	</modules>
 </config>
 <config>
 	<usertypes>
-		<struct>
-			<name>launcher</name>
-			<doc>Options for MPC launcher.</doc>
-			<param>
-				<name>smt</name>
-				<type>bool</type>
-				<default>false</default>
-				<doc>blabla</doc>
-			</param>
-			<param>
-				<name>cores</name>
-				<type>int</type>
-				<default>16</default>
-				<doc>blabla</doc>
-			</param>
-			<param>
-				<name>verbosity</name>
-				<type>int</type>
-				<default>0</default>
-				<doc>blabla</doc>
-			</param>
+		<struct name="launcher" doc="Options for MPC launcher.">
+			<param name="smt" type="bool" default="false" doc="blablabla"/>
+			<param name="cores" type="int" default="16" doc="blabla"/>
+			<param name="verbosity" type="int" default="0" doc="blabla"/>
 		</struct>
 	</usertypes>
 	<modules>
-		<module>
-			<name>launcher</name>
-			<type>launcher</type>
-		</module>
+		<module name="launcher" type="launcher"/>
 	</modules>
 </config>
 <config>
 	<usertypes>
 
 		<!-- Structure for infiniband driver -->
-		<struct>
-			<name>net_driver_fake</name>
-			<param>
-				<name>buffer</name>
-				<type>int</type>
-				<doc>Size of the buffer used for internal copies.</doc>
-				<default>1024</default>
-			</param>
-			<param>
-				<name>stealing</name>
-				<type>bool</type>
-				<doc>Enable stealing between threads.</doc>
-				<default>true</default>
-			</param>
+		<struct name="net_driver_fake">
+			<param name="buffer" type="int" doc="Size of the buffer used for internal copies." default ="1024"/>
+			<param name="stealing" type="bool" doc="Enable stealing between threads." default="true"/>
 		</struct>
 
 		<!-- Union to merge drivers -->
-		<union>
-			<name>net_driver</name>
-			<doc>Define a specific configuration for a network driver to apply in rails.</doc>
-			<choice>
-				<name>infiniband</name>
-				<type>net_driver_fake</type>
-			</choice>
-			<choice>
-				<name>tcp</name>
-				<type>net_driver_fake</type>
-			</choice>
+		<union name="net_driver" doc="Define a specific configuration for a network driver to apply in rails.">
+			<choice name="infiniband" type="net_driver_fake"/>
+			<choice name="tcp" type="net_driver_fake"/>
 		</union>
 
 		<!-- define a network driver config -->
-		<struct>
-			<name>net_driver_config</name>
-			<doc>Contain a list of driver configuration reused by rail definitions.</doc>
-			<param>
-				<name>name</name>
-				<type>string</type>
-				<doc>Name of the driver configuration to be referenced in rail definitions.</doc>
-			</param>
-			<param>
-				<name>driver</name>
-				<type>net_driver</type>
-				<doc>Define the related driver to use and its configuration.</doc>
-			</param>
+		<struct name="net_driver_config" doc="Contain a list of driver configuration reused by rail definitions.">
+			<param name="name" type="string" doc="Name of the driver configuration to be referenced in rail definitions."/>
+			<param name="driver" type="net_driver" doc="Define the related driver to use and its configuration."/>
 		</struct>
 
 		<!-- Structure for rail definition -->
-		<struct>
-			<name>net_rail</name>
-			<param>
-				<name>name</name>
-				<type>string</type>
-				<doc>Define the name of current rail.</doc>
-			</param>
-			<param>
-				<name>device</name>
-				<type>string</type>
-				<doc>Define the name of the device to use in this rail.</doc>
-			</param>
-			<param>
-				<name>topology</name>
-				<type>string</type>
-				<doc>Define the network topology to apply on this rail.</doc>
-			</param>
-			<param>
-				<name>config</name>
-				<type>string</type>
-				<doc>Define the driver config to use for this rail.</doc>
-			</param>
+		<struct name="net_rail">
+			<param name="name" type="string" doc="Define the name of current rail."/>
+			<param name="device" type="string" doc="Define the name of the device to use in this rail."/>
+			<param name="topology" type="string" doc="Define the network topology to apply on this rail."/>
+			<param name="config" type="string" doc="Define the driver config to use for this rail."/>
 		</struct>
 
 		<!-- root structure of network config -->
-		<struct>
-			<name>networks</name>
-			<doc>Base structure to contain the network configuration</doc>
-			<array>
-				<name>configs</name>
-				<entry-name>config</entry-name>
-				<type>net_driver_config</type>
-				<doc>Define the configuration driver list to reuse in rail definitions.</doc>
-			</array>
-			<array>
-				<name>rails</name>
-				<entry-name>rail</entry-name>
-				<type>net_rail</type>
-				<doc>List of rails to declare in MPC.</doc>
-			</array>
+		<struct name="networks" doc="Base structure to contain the network configuration">
+			<array name="configs" entry-name="config" type="net_driver_config" doc="Define the configuration driver list to reuse in rail definitions."/>
+			<array name="rails" entry-name="rail" type="net_rail" doc="List of rails to declare in MPC."/>
 		</struct>
 
 	</usertypes>

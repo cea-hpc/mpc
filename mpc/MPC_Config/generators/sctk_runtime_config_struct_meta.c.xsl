@@ -59,11 +59,11 @@
 	<xsl:template match="struct">
 		<xsl:text>&#09;//struct&#10;</xsl:text>
 		<xsl:text>&#09;{"sctk_runtime_config_module_</xsl:text>
-		<xsl:value-of select="name"/>
+		<xsl:value-of select="@name"/>
 		<xsl:text>" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_module_</xsl:text>
-		<xsl:value-of select="name"/>
+		<xsl:value-of select="@name"/>
 		<xsl:text>) , NULL , sctk_runtime_config_module_init_</xsl:text>
-		<xsl:value-of select="name"/>
+		<xsl:value-of select="@name"/>
 		<xsl:text>},&#10;</xsl:text>
 		<xsl:apply-templates select="param"/>
 		<xsl:apply-templates select="array"/>
@@ -72,9 +72,9 @@
 	<!-- ********************************************************* -->
 	<xsl:template match="param">
 		<xsl:text>&#09;{"</xsl:text>
-		<xsl:value-of select="name"/>
+		<xsl:value-of select="@name"/>
 		<xsl:text>"     , SCTK_CONFIG_META_TYPE_PARAM  , </xsl:text>
-		<xsl:value-of select="concat('sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_',../name,',',name,')')"/>
+		<xsl:value-of select="concat('sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_',../@name,',',@name,')')"/>
 		<xsl:text>  , sizeof(</xsl:text>
 		<xsl:call-template name="gen-type-name"/>
 		<xsl:text>) , "</xsl:text>
@@ -87,15 +87,15 @@
 	<!-- ********************************************************* -->
 	<xsl:template match="array">
 		<xsl:text>&#09;{"</xsl:text>
-		<xsl:value-of select="name"/>
+		<xsl:value-of select="@name"/>
 		<xsl:text>"     , SCTK_CONFIG_META_TYPE_ARRAY  , </xsl:text>
-		<xsl:value-of select="concat('sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_',../name,',',name,')')"/>
+		<xsl:value-of select="concat('sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_',../@name,',',@name,')')"/>
 		<xsl:text> , sizeof(</xsl:text>
 		<xsl:call-template name="gen-type-name"/>
 		<xsl:text>) , "</xsl:text>
 		<xsl:call-template name="gen-type-name2"/>
 		<xsl:text>" , "</xsl:text>
-		<xsl:value-of select="entry-name"/>
+		<xsl:value-of select="@entry-name"/>
 		<xsl:text>"},&#10;</xsl:text>
 	</xsl:template>
 
@@ -103,11 +103,11 @@
 	<xsl:template match="union">
 		<xsl:text>&#09;//union&#10;</xsl:text>
 		<xsl:text>&#09;{"sctk_runtime_config_module_</xsl:text>
-		<xsl:value-of select="name"/>
+		<xsl:value-of select="@name"/>
 		<xsl:text>" , SCTK_CONFIG_META_TYPE_UNION , 0  , sizeof(struct sctk_runtime_config_module_</xsl:text>
-		<xsl:value-of select="name"/>
+		<xsl:value-of select="@name"/>
 		<xsl:text>) , NULL , sctk_runtime_config_module_init_</xsl:text>
-		<xsl:value-of select="name"/>
+		<xsl:value-of select="@name"/>
 		<xsl:text>},&#10;</xsl:text>
 		<xsl:apply-templates select="choice"/>
 	</xsl:template>
@@ -116,9 +116,9 @@
 	<xsl:template match="choice">
 		<!-- TODO : reuse gen-* function, but need to extend parameters -->
 		<xsl:text>&#09;{"</xsl:text>
-		<xsl:value-of select="name"/>
+		<xsl:value-of select="@name"/>
 		<xsl:text>"     , SCTK_CONFIG_META_TYPE_UNION_ENTRY  , </xsl:text>
-		<xsl:value-of select="concat('SCTK_RTCFG_',../name,'_',name)"/>
+		<xsl:value-of select="concat('SCTK_RTCFG_',../@name,'_',@name)"/>
 		<xsl:text>  , sizeof(</xsl:text>
 		<xsl:call-template name="gen-type-name"/>
 		<xsl:text>) , "</xsl:text>
@@ -131,13 +131,13 @@
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-init-name">
 		<xsl:choose>
-			<xsl:when test="type = 'int'">NULL</xsl:when>
-			<xsl:when test="type = 'bool'">NULL</xsl:when>
-			<xsl:when test="type = 'float'">NULL</xsl:when>
-			<xsl:when test="type = 'double'">NULL</xsl:when>
-			<xsl:when test="type = 'string'">NULL</xsl:when>
+			<xsl:when test="@type = 'int'">NULL</xsl:when>
+			<xsl:when test="@type = 'bool'">NULL</xsl:when>
+			<xsl:when test="@type = 'float'">NULL</xsl:when>
+			<xsl:when test="@type = 'double'">NULL</xsl:when>
+			<xsl:when test="@type = 'string'">NULL</xsl:when>
 			<xsl:otherwise>
-				<xsl:value-of select="concat('sctk_runtime_config_module_init_',type)"/>
+				<xsl:value-of select="concat('sctk_runtime_config_module_init_',@type)"/>
 			</xsl:otherwise>
 		</xsl:choose>
 	</xsl:template>
@@ -145,14 +145,14 @@
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-type-name">
 		<xsl:choose>
-			<xsl:when test="type = 'int'">int</xsl:when>
-			<xsl:when test="type = 'bool'">bool</xsl:when>
-			<xsl:when test="type = 'float'">float</xsl:when>
-			<xsl:when test="type = 'double'">double</xsl:when>
-			<xsl:when test="type = 'string'">char *</xsl:when>
+			<xsl:when test="@type = 'int'">int</xsl:when>
+			<xsl:when test="@type = 'bool'">bool</xsl:when>
+			<xsl:when test="@type = 'float'">float</xsl:when>
+			<xsl:when test="@type = 'double'">double</xsl:when>
+			<xsl:when test="@type = 'string'">char *</xsl:when>
 			<xsl:otherwise>
 				<xsl:call-template name="gen-user-type-name">
-					<xsl:with-param name="type"><xsl:value-of select='type'/></xsl:with-param>
+					<xsl:with-param name="type"><xsl:value-of select='@type'/></xsl:with-param>
 				</xsl:call-template>
 			</xsl:otherwise>
 		</xsl:choose>
@@ -161,14 +161,14 @@
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-type-name2">
 		<xsl:choose>
-			<xsl:when test="type = 'int'">int</xsl:when>
-			<xsl:when test="type = 'bool'">bool</xsl:when>
-			<xsl:when test="type = 'float'">float</xsl:when>
-			<xsl:when test="type = 'double'">double</xsl:when>
-			<xsl:when test="type = 'string'">char *</xsl:when>
+			<xsl:when test="@type = 'int'">int</xsl:when>
+			<xsl:when test="@type = 'bool'">bool</xsl:when>
+			<xsl:when test="@type = 'float'">float</xsl:when>
+			<xsl:when test="@type = 'double'">double</xsl:when>
+			<xsl:when test="@type = 'string'">char *</xsl:when>
 			<xsl:otherwise>
 				<xsl:call-template name="gen-user-type-name2">
-					<xsl:with-param name="type"><xsl:value-of select='type'/></xsl:with-param>
+					<xsl:with-param name="type"><xsl:value-of select='@type'/></xsl:with-param>
 				</xsl:call-template>
 			</xsl:otherwise>
 		</xsl:choose>
@@ -177,10 +177,10 @@
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-user-type-name">
 		<xsl:param name="type"/>
-		<xsl:for-each select="//struct[name = $type]">
+		<xsl:for-each select="//struct[@name = $type]">
 			<xsl:value-of select="concat('struct sctk_runtime_config_module_',$type)"/>
 		</xsl:for-each>
-		<xsl:for-each select="//union[name = $type]">
+		<xsl:for-each select="//union[@name = $type]">
 			<xsl:value-of select="concat('struct sctk_runtime_config_module_',$type)"/>
 		</xsl:for-each>
 	</xsl:template>
@@ -188,10 +188,10 @@
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-user-type-name2">
 		<xsl:param name="type"/>
-		<xsl:for-each select="//struct[name = $type]">
+		<xsl:for-each select="//struct[@name = $type]">
 			<xsl:value-of select="concat('sctk_runtime_config_module_',$type)"/>
 		</xsl:for-each>
-		<xsl:for-each select="//union[name = $type]">
+		<xsl:for-each select="//union[@name = $type]">
 			<xsl:value-of select="concat('sctk_runtime_config_module_',$type)"/>
 		</xsl:for-each>
 	</xsl:template>
@@ -227,15 +227,15 @@
 	<!-- ********************************************************* -->
 	<xsl:template match="module">
 		<xsl:text>&#09;{"</xsl:text>
-		<xsl:value-of select="name"/>
+		<xsl:value-of select="@name"/>
 		<xsl:text>"     , SCTK_CONFIG_META_TYPE_PARAM , </xsl:text>
-		<xsl:value-of select="concat('sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules',../name,',',name,')')"/>
+		<xsl:value-of select="concat('sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules',../@name,',',@name,')')"/>
 		<xsl:text>  , sizeof(struct sctk_runtime_config_module_</xsl:text>
-		<xsl:value-of select="type"/>
+		<xsl:value-of select="@type"/>
 		<xsl:text>) , "sctk_runtime_config_module_</xsl:text>
-		<xsl:value-of select="type"/>
+		<xsl:value-of select="@type"/>
 		<xsl:text>" , sctk_runtime_config_module_init_</xsl:text>
-		<xsl:value-of select="type"/>
+		<xsl:value-of select="@type"/>
 		<xsl:text>},&#10;</xsl:text>
 	</xsl:template>
 

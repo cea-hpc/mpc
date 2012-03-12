@@ -30,18 +30,21 @@
 /*********************  STRUCT  *********************/
 /****/
 struct sctk_runtime_config_module_test
-{	int tt;
+{	/**This is a test**/
+	int tt;
 };
 
 /*********************  STRUCT  *********************/
 /****/
 struct sctk_runtime_config_module_rail
-{	int tt;
+{	/**This is a test**/
+	int tt;
+	/**This is a test**/
 	int tt2;
 };
 
 /**********************  ENUM  **********************/
-/****/
+/**Define the list of drivers supported for MPC network.**/
 enum sctk_runtime_config_module_driver_type
 {
 	SCTK_RTCFG_driver_NONE,
@@ -50,7 +53,7 @@ enum sctk_runtime_config_module_driver_type
 };
 
 /*********************  STRUCT  *********************/
-/****/
+/**Define the list of drivers supported for MPC network.**/
 struct sctk_runtime_config_module_driver
 {
 	enum sctk_runtime_config_module_driver_type type;
@@ -75,9 +78,9 @@ struct sctk_runtime_config_module_allocator
 	float alfloat;
 	/**Permit to enable of disable allocator warnings.**/
 	bool warnings;
-	/****/
+	/**Try to use test structure.**/
 	struct sctk_runtime_config_module_test test;
-	/**azertyuy**/
+	/**This is a super doc**/
 	struct sctk_runtime_config_module_driver driver;
 	/**Permit to list all available size classes.**/
 	int * classes;
@@ -91,7 +94,7 @@ struct sctk_runtime_config_module_allocator
 	struct sctk_runtime_config_module_rail * rails;
 	/** Number of elements in rails array. **/
 	int rails_size;
-	/**azertyuy**/
+	/**blabla**/
 	struct sctk_runtime_config_module_driver * driverlist;
 	/** Number of elements in driverlist array. **/
 	int driverlist_size;
@@ -100,7 +103,7 @@ struct sctk_runtime_config_module_allocator
 /*********************  STRUCT  *********************/
 /**Options for MPC launcher.**/
 struct sctk_runtime_config_module_launcher
-{	/**blabla**/
+{	/**blablabla**/
 	bool smt;
 	/**blabla**/
 	int cores;

@@ -1,33 +1,13 @@
 <?xml version="1.0"?>
 <config>
 	<usertypes>
-		<struct>
-			<name>launcher</name>
-			<doc>Options for MPC launcher.</doc>
-			<param>
-				<name>smt</name>
-				<type>bool</type>
-				<default>false</default>
-				<doc>blabla</doc>
-			</param>
-			<param>
-				<name>cores</name>
-				<type>int</type>
-				<default>16</default>
-				<doc>blabla</doc>
-			</param>
-			<param>
-				<name>verbosity</name>
-				<type>int</type>
-				<default>0</default>
-				<doc>blabla</doc>
-			</param>
+		<struct name="launcher" doc="Options for MPC launcher.">
+			<param name="smt" type="bool" default="false" doc="blablabla"/>
+			<param name="cores" type="int" default="16" doc="blabla"/>
+			<param name="verbosity" type="int" default="0" doc="blabla"/>
 		</struct>
 	</usertypes>
 	<modules>
-		<module>
-			<name>launcher</name>
-			<type>launcher</type>
-		</module>
+		<module name="launcher" type="launcher"/>
 	</modules>
 </config>
