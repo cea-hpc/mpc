@@ -63,7 +63,8 @@ apply_generators()
 	for gen in ${GENERATORS}
 	do
 		target=$(echo "${gen}" | sed -e 's/\.xsl//g' -e 's/generators/generated/g')
-		safe_exec xsltproc $gen ${GLOBAL_CONFIG_FILE} > $target
+		echo "   - xsltproc -o $target $gen ${GLOBAL_CONFIG_FILE}"
+		xsltproc -o $target $gen ${GLOBAL_CONFIG_FILE} || exit 1
 	done
 }
 
@@ -74,14 +75,19 @@ gen_global_config_file()
 	for tmp in ${CONFIG_FILES}
 	do
 		echo "   - Use $tmp"
-		xmllint "$tmp" > /dev/null || exit 1 
+		xmllint --noout --dtdvalid ./MPC_Config/extra/config-meta.dtd "$tmp" || exit 1
 	done
 	echo "<?xml version=\"1.0\"?>" > ${GLOBAL_CONFIG_FILE}
 	echo "<all>" >> ${GLOBAL_CONFIG_FILE}
 	cat ${CONFIG_FILES} | grep -v "<?xml version=\"1.0\"?>" >> ${GLOBAL_CONFIG_FILE}
 	echo "</all>" >> ${GLOBAL_CONFIG_FILE}
+
+	#remove inner invalid dtd declarations
+	sed -i "/<!DOCTYPE config SYSTEM .*>/d" ${GLOBAL_CONFIG_FILE}
 }
 
 #main
 gen_global_config_file
 apply_generators
+
+echo "Finish"

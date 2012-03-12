@@ -1,4 +1,5 @@
 <?xml version="1.0"?>
+<!DOCTYPE config SYSTEM "../MPC_Config/extra/config-meta.dtd">
 <config>
 	<usertypes>
 		<struct name="launcher" doc="Options for MPC launcher.">

@@ -28,14 +28,14 @@
 #define SCTK_RUNTIME_CONFIG_STRUCT_H
 
 /*********************  STRUCT  *********************/
-/****/
+/**This is a test structure.**/
 struct sctk_runtime_config_module_test
 {	/**This is a test**/
 	int tt;
 };
 
 /*********************  STRUCT  *********************/
-/****/
+/**This is a fake for rails**/
 struct sctk_runtime_config_module_rail
 {	/**This is a test**/
 	int tt;
@@ -112,7 +112,7 @@ struct sctk_runtime_config_module_launcher
 };
 
 /*********************  STRUCT  *********************/
-/****/
+/**Declare a fake driver to test the configuration system.**/
 struct sctk_runtime_config_module_net_driver_fake
 {	/**Size of the buffer used for internal copies.**/
 	int buffer;
@@ -150,7 +150,7 @@ struct sctk_runtime_config_module_net_driver_config
 };
 
 /*********************  STRUCT  *********************/
-/****/
+/**Define a rail which is a name, a device associate to a driver and a routing topology.**/
 struct sctk_runtime_config_module_net_rail
 {	/**Define the name of current rail.**/
 	char * name;

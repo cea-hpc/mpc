@@ -2,10 +2,10 @@
 <all>
 <config>
 	<usertypes>
-		<struct name="test">
+		<struct name="test" doc="This is a test structure.">
 			<param name="tt" type="int" default="10" doc="This is a test"/>
 		</struct>
-		<struct name="rail">
+		<struct name="rail" doc="This is a fake for rails">
 			<param name="tt" type="int" default="10" doc="This is a test"/>
 			<param name="tt2" type="int" default="20" doc="This is a test"/>
 		</struct>
@@ -54,7 +54,7 @@
 	<usertypes>
 
 		<!-- Structure for infiniband driver -->
-		<struct name="net_driver_fake">
+		<struct name="net_driver_fake" doc="Declare a fake driver to test the configuration system.">
 			<param name="buffer" type="int" doc="Size of the buffer used for internal copies." default ="1024"/>
 			<param name="stealing" type="bool" doc="Enable stealing between threads." default="true"/>
 		</struct>
@@ -72,7 +72,7 @@
 		</struct>
 
 		<!-- Structure for rail definition -->
-		<struct name="net_rail">
+		<struct name="net_rail" doc="Define a rail which is a name, a device associate to a driver and a routing topology.">
 			<param name="name" type="string" doc="Define the name of current rail."/>
 			<param name="device" type="string" doc="Define the name of the device to use in this rail."/>
 			<param name="topology" type="string" doc="Define the network topology to apply on this rail."/>

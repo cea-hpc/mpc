@@ -1,10 +1,11 @@
 <?xml version="1.0"?>
+<!DOCTYPE config SYSTEM "../MPC_Config/extra/config-meta.dtd">
 <config>
 	<usertypes>
-		<struct name="test">
+		<struct name="test" doc="This is a test structure.">
 			<param name="tt" type="int" default="10" doc="This is a test"/>
 		</struct>
-		<struct name="rail">
+		<struct name="rail" doc="This is a fake for rails">
 			<param name="tt" type="int" default="10" doc="This is a test"/>
 			<param name="tt2" type="int" default="20" doc="This is a test"/>
 		</struct>
