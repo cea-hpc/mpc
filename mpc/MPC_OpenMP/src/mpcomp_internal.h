@@ -69,6 +69,8 @@ extern "C"
 #define CHUNK_NOT_AVAIL 0
 #define CHUNK_AVAIL 1
 
+#define NOT_STOLEN_CHUNK 0
+#define STOLEN_CHUNK 1
 
 #define MPCOMP_LOCK_INIT {0,0,NULL,NULL,NULL,SCTK_SPINLOCK_INITIALIZER}
 
@@ -160,7 +162,7 @@ struct mpcomp_thread_s {
   int static_current_chunk ;
 
   /* SINGLE CONSTRUCT */
-  int current_single;							/* Which 'single' construct did we already go through? */
+  int current_single;				/* Which 'single' construct did we already go through? */
   int stop_index;
 
   /* ORDERED CONSTRUCT */
@@ -170,6 +172,9 @@ struct mpcomp_thread_s {
 
   /* DYNAMIC CONSTRUCT */
   volatile int private_current_for_dyn;
+  //int chunk_to_steal_index;
+  struct mpcomp_mvp_s *chunk_mvp;
+  
 };
 
 typedef struct mpcomp_thread_s mpcomp_thread_t;
@@ -243,6 +248,8 @@ struct mpcomp_mvp_s {
   char pad3[64];
   void *(*func) (void*);			/* Function to call by every thread */
   void *shared;					/* Shared variables for every thread */
+
+  int stolen_chunk;                             /* Flag specifying if chunk being executed was stolen or not */  
 };
 
 typedef struct mpcomp_mvp_s mpcomp_mvp_t;
@@ -327,7 +334,7 @@ void in_order_scheduler(mpcomp_mvp_t *mvp);
 *******************************************/
 void __mpcomp_barrier_for_dyn(void);
 void __mpcomp_internal_barrier_for_dyn(mpcomp_thread_t *t);
-void __mpcomp_steal_chunk(mpcomp_mvp_t *mvp, int start_index, int *dest_index);
+void __mpcomp_steal_chunk();
 
 /************************************
       STACK OPERATIONS
@@ -340,7 +347,7 @@ int mpcomp_is_empty_stack(mpcomp_stack_t *head);
 /************************************
     IN DEPTH TREE SEARCH
 ************************************/
-void mpcomp_in_depth_tree_search(mpcomp_node_t *node, int *rank);
+void mpcomp_in_depth_tree_search(mpcomp_node_t *node, mpcomp_mvp_t *target_mvp, int *rank);
 
 
 /*************************************************

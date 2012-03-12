@@ -266,6 +266,7 @@ void *mpcomp_slave_mvp_node (void *arg)
        mvp->threads[i].hierarchical_tls = NULL;
        mvp->threads[i].current_single = -1;
        mvp->threads[i].private_current_for_dyn = 0;
+       mvp->threads[i].chunk_mvp = NULL;
 
        mvp->threads[i].is_running = 1;
      }
@@ -332,6 +333,7 @@ void *mpcomp_slave_mvp_leaf (void *arg)
        mvp->threads[i].hierarchical_tls = NULL;
        mvp->threads[i].current_single = -1;
        mvp->threads[i].private_current_for_dyn = 0;
+       mvp->threads[i].chunk_mvp = NULL;
 
        mvp->threads[i].is_running = 1;
      }
@@ -365,6 +367,7 @@ void __mpcomp_thread_init (mpcomp_thread_t *t)
    t->hierarchical_tls = NULL;
    t->current_single = -1;
    t->private_current_for_dyn = 0;
+   t->chunk_mvp = NULL;
 
 }
 
@@ -633,6 +636,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
             instance->mvps[current_mvp]->tree_rank[0] = i;
             instance->mvps[current_mvp]->root = root;
             instance->mvps[current_mvp]->father = n;
+            instance->mvps[current_mvp]->stolen_chunk = NOT_STOLEN_CHUNK;
 
             n->children.leaf[i] = instance->mvps[current_mvp];
 
@@ -941,6 +945,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
                   instance->mvps[current_mvp]->tree_rank[2] = k;
                   instance->mvps[current_mvp]->root = root;
                   instance->mvps[current_mvp]->father = n2;
+                  instance->mvps[current_mvp]->stolen_chunk = NOT_STOLEN_CHUNK;
 
                   n2->children.leaf[k] = instance->mvps[current_mvp];
 
@@ -1336,6 +1341,7 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
       instance->mvps[0]->threads[i].hierarchical_tls = NULL;
       instance->mvps[0]->threads[i].current_single = -1;
       instance->mvps[0]->threads[i].private_current_for_dyn = 0;
+      instance->mvps[0]->threads[i].chunk_mvp = NULL;
 
       instance->mvps[0]->threads[i].is_running = 1;
     }
@@ -1701,7 +1707,9 @@ void check_parallel_region_correctness(void)
 */
 void push(mpcomp_node_t *node, mpcomp_stack_t *head)
 {
-  
+ 
+  //printf("push in stack\n"); 
+ 
   mpcomp_stack_t *s = malloc(sizeof(mpcomp_stack_t));
 
   if(s == NULL) {
@@ -1721,6 +1729,8 @@ void push(mpcomp_node_t *node, mpcomp_stack_t *head)
 */
 mpcomp_node_t *pop(mpcomp_stack_t *head)
 {
+
+ //printf("pop from stack\n");
  
  if(head == NULL)
  {
@@ -1744,6 +1754,8 @@ mpcomp_node_t *pop(mpcomp_stack_t *head)
 */
 void mpcomp_mk_empty_stack(mpcomp_stack_t *head)
 {
+ //printf("[mpcomp_mk_empty_stack] begin..\n");
+
  head->size = 0; 
 }
 
@@ -1762,7 +1774,7 @@ int mpcomp_is_empty_stack(mpcomp_stack_t *head)
 /*
  Prefix in depth tree search
 */
-void mpcomp_in_depth_tree_search(mpcomp_node_t *node, int *rank)
+void mpcomp_in_depth_tree_search(mpcomp_node_t *node, mpcomp_mvp_t *target_mvp, int *rank)
 {
   mpcomp_thread_t *t;
   mpcomp_thread_t *target_t;
@@ -1777,6 +1789,7 @@ void mpcomp_in_depth_tree_search(mpcomp_node_t *node, int *rank)
   int num_threads;
   mpcomp_stack_t *stack;
 
+
   /* Grab the info of the current thread */    
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
@@ -1788,31 +1801,46 @@ void mpcomp_in_depth_tree_search(mpcomp_node_t *node, int *rank)
   /* Number of threads of the current team */  
   num_threads = t->team->num_threads;
 
+  //printf("[mpcomp_in_depth_tree_search rank=%d] begin..\n", t->rank);  //AMAHEO
+
   /* Grab the current mvp */
   mvp = t->mvp;
 
   /* Grab the index of the current loop */
   index = (t->private_current_for_dyn) % MPCOMP_MAX_ALIVE_FOR_DYN;
 
+  stack = malloc(sizeof(mpcomp_stack_t));
+
   /* Empty the stack before any operation */
   mpcomp_mk_empty_stack(stack);
 
+  //printf("[mpcomp_in_depth_tree_search rank=%d] size stack=%d..\n", t->rank, stack->size); //AMAHEO
+
+  /* Push given node in the stack */
   push(node, stack);
+
+  //printf("[mpcomp_in_depth_tree_search rank=%d] after push operation, stack size=%d..\n", t->rank, stack->size); //AMAHEO 
 
   while(!mpcomp_is_empty_stack(stack)) 
   {
     node = pop(stack);
+  
+    //printf("[mpcomp_in_depth_tree_search rank=%d] stack size=%d\n", t->rank, stack->size);
 
     if(node->chunks_avail == CHUNK_AVAIL)
     {
     
-    if(node->nb_children != 0)
-    {
+     if(node->nb_children != 0)
+     {
        for(i=0;i<node->nb_children;i++) {
 
            if(node->child_type == CHILDREN_NODE) {
              push(node->children.node[i], stack);
+             printf("[mpcomp_in_depth_tree_search rank=%d]  children of type node: stack size=%d\n", t->rank, stack->size);
            } else {
+  
+              printf("[mpcomp_in_depth_tree_search rank=%d] leaf level\n", t->rank); 
+
               target_t = &(node->children.leaf[i]->threads[0]);
               target_rank = target_t->rank;            
 
@@ -1824,7 +1852,20 @@ void mpcomp_in_depth_tree_search(mpcomp_node_t *node, int *rank)
               //remain = team->chunk_info_for_dyn[mvp_rank][index].remain;       
 
               if (remain != 0) {
+               
+                printf("[mpcomp_in_depth_tree_search rank=%d] remain=%d..\n", t->rank, remain);
+                
+                t->chunk_mvp = node->children.leaf[i];
                 break;
+              
+                #if 0    
+                if(node->children.leaf[i]->stolen_chunk == NOT_STOLEN_CHUNK) {
+                  /* Store mvp containing chunk */
+                  t->chunk_mvp = node->children.leaf[i];
+                  break;
+                }
+                #endif
+              
               } 
            }
           
@@ -1832,8 +1873,14 @@ void mpcomp_in_depth_tree_search(mpcomp_node_t *node, int *rank)
 
          if (remain != 0) {
            break;
+         }
+         else {
+           node->chunks_avail = CHUNK_NOT_AVAIL;
          }     
       }
+    }
+    else {
+      printf("[mpcomp_in_depth_tree_search=%d] node not AVAIL\n");
     }  
   }
 
