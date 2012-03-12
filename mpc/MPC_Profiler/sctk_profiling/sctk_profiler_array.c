@@ -192,8 +192,8 @@ void sctk_profiler_array_sum_to_parent( struct sctk_profiler_array *array, int i
 	array->sctk_profile_hits[ parent_id ] += array->sctk_profile_hits[ id ];
 	array->sctk_profile_time[ parent_id ] += array->sctk_profile_time[ id ];
 
-	if(  array->sctk_profile_min[ id ] < array->sctk_profile_min[ parent_id ]
-	  || array->sctk_profile_min[ parent_id ] == 0 )
+	if(  (array->sctk_profile_min[ id ] < array->sctk_profile_min[ parent_id ]
+	  || array->sctk_profile_min[ parent_id ] == 0) && (array->sctk_profile_min[ id ] != 0) )
 	{
 		array->sctk_profile_min[ parent_id ] = array->sctk_profile_min[ id ];
 	}

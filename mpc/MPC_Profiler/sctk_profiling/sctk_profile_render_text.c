@@ -27,14 +27,19 @@
 #include "sctk_debug.h"
 
 static int sctk_profile_render_text_is_stdout = 0;
+static int sctk_profile_render_text_is_raw = 0;
+static int sctk_profile_render_text_no_indent = 0;
 
-void sctk_profile_render_text_register( struct sctk_profile_renderer *rd , int is_stdout)
+
+void sctk_profile_render_text_register( struct sctk_profile_renderer *rd , int is_stdout, int is_raw, int no_indent)
 {
 	rd->setup = sctk_profile_render_text_setup;
 	rd->teardown = sctk_profile_render_text_teardown;
 	rd->render_entry = sctk_profile_render_text_render_entry;
 	
 	sctk_profile_render_text_is_stdout = is_stdout;
+	sctk_profile_render_text_is_raw = is_raw;
+	sctk_profile_render_text_no_indent = no_indent;
 }
 
 
@@ -63,6 +68,8 @@ void sctk_profile_render_text_setup( struct sctk_profile_renderer *rd )
 		rd->output_file = stdout;
 	}
 	
+	fprintf(rd->output_file, "#NAME HITS TOTAL TOTAL_PCT AVG MIN MAX\n\n");
+
 
 }
 
@@ -81,13 +88,43 @@ void sctk_profile_render_text_teardown( struct sctk_profile_renderer *rd )
 
 void sctk_profile_render_text_render_entry( struct sctk_profiler_array *array, int id, int parent_id, int depth, struct sctk_profile_renderer *rd )
 {
-	char buff[500];
-	char *to_unit = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_time(array, id) , buff );
+	char buffA[500], buffB[500], buffC[500], buffD[500];
+
+	char *to_unit_total = NULL;
+	char *to_unit_avg = NULL;
+	char *to_unit_min = NULL;
+	char *to_unit_max = NULL;
+
+	if( !sctk_profile_render_text_is_raw )
+	{
+		to_unit_total = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_time(array, id) , buffA );
+		to_unit_avg = sctk_profile_renderer_convert_to_time( rd->ptree.entry_average_time[id] , buffB );
+		to_unit_min = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_min(array, id) , buffC );
+		to_unit_max = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_max(array, id) , buffD );
+	}
+	else
+	{
+		sprintf(buffA, "%lld", sctk_profiler_array_get_time(array, id));
+		to_unit_total = buffA;
+
+		sprintf(buffB, "%lld", rd->ptree.entry_average_time[id]);
+		to_unit_avg = buffB;
+
+		sprintf(buffC, "%lld", sctk_profiler_array_get_min(array, id));
+		to_unit_min = buffC;
+
+		sprintf(buffD, "%lld", sctk_profiler_array_get_max(array, id));
+		to_unit_max = buffD;
+	}
 
 	if( sctk_profiler_array_get_hits( array, id ) )
 	{
-		sctk_profile_renderer_write_ntabs( rd->output_file, depth );
-		fprintf( rd->output_file, "%s %lld Hits %s ( %g\% )\n",  sctk_profiler_array_get_desc( id ), sctk_profiler_array_get_hits( array, id ), to_unit, rd->ptree.entry_total_percentage_time[id] * 100);
+		if( !sctk_profile_render_text_no_indent )
+			sctk_profile_renderer_write_ntabs( rd->output_file, depth );
+
+		fprintf( rd->output_file, "%s %lld %s ( %g\% ) %s %s %s\n",  sctk_profiler_array_get_desc( id ), sctk_profiler_array_get_hits( array, id ),
+																     to_unit_total, rd->ptree.entry_total_percentage_time[id] * 100,
+																     to_unit_avg, to_unit_min, to_unit_max);
 	}
 
 }

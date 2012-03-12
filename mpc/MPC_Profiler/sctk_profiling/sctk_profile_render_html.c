@@ -58,7 +58,7 @@ void sctk_profile_render_html_setup( struct sctk_profile_renderer *rd )
 		"<body>\n"
 		"<h1>MPC Profile %s</h1>"
 		"<table>\n"
-		"<tr><td>Name</td><td>Hits</td><td>Total Time</td><td>Section</td><td>Global</tr>\n"
+		"<tr><td>Name</td><td>Hits</td><td>Total Time</td><td>Average Time</td><td>Minimum Time</td><td>Max Time</td><td>Section</td><td>Global</tr>\n"
 		, sctk_profile_renderer_date_clean( buff ));
 
 }
@@ -77,7 +77,7 @@ void sctk_profile_render_html_teardown( struct sctk_profile_renderer *rd )
 
 void sctk_profile_render_html_render_entry( struct sctk_profiler_array *array, int id, int parent_id, int depth, struct sctk_profile_renderer *rd )
 {
-	char buff[500];
+	char buffA[500], buffB[500], buffC[500], buffD[500];
 	
 	const char *prefix[3] = { "<B>", " ", "<I>" };
 	const char *suffix[3] = { "</B>", " ", "</I>" };
@@ -87,14 +87,22 @@ void sctk_profile_render_html_render_entry( struct sctk_profiler_array *array, i
 
 	int prefix_id = (depth<3)?depth:3;
 
-	char *to_unit = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_time(array, id) , buff );
+	char *to_unit_total = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_time(array, id) , buffA );
+	char *to_unit_avg = sctk_profile_renderer_convert_to_time( rd->ptree.entry_average_time[id] , buffB );
+	char *to_unit_min = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_min(array, id) , buffC );
+	char *to_unit_max = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_max(array, id) , buffD );
+
 	char *desc = sctk_profiler_array_get_desc( id );
 
 	if( sctk_profiler_array_get_hits( array, id ) )
 	{
-		fprintf( rd->output_file,"<tr bgcolor=\"%s\"><td>%s%s%s</td><td>%s%lld%s</td><td>%s%s%s</td><td>%s%g%s</td><td>%s%g%s</td></tr>\n", colors[ prefix_id], prefix[ prefix_id ], desc, suffix[ prefix_id ],
+		fprintf( rd->output_file,"<tr bgcolor=\"%s\"><td>%s%s%s</td><td>%s%lld%s</td><td>%s%s%s</td><td>%s%s%s</td><td>%s%s%s</td><td>%s%s%s</td><td>%s%g%s</td><td>%s%g%s</td></tr>\n",
+																																			colors[ prefix_id], prefix[ prefix_id ], desc, suffix[ prefix_id ],
 																																			prefix[ prefix_id ], sctk_profiler_array_get_hits( array, id ), suffix[ prefix_id ],
-																																			prefix[ prefix_id ], to_unit,  suffix[ prefix_id ],
+																																			prefix[ prefix_id ], to_unit_total,  suffix[ prefix_id ],
+																																			prefix[ prefix_id ], to_unit_avg,  suffix[ prefix_id ],
+																																			prefix[ prefix_id ], to_unit_min,  suffix[ prefix_id ],
+																																			prefix[ prefix_id ], to_unit_max,  suffix[ prefix_id ],
 																																			prefix[ prefix_id ], rd->ptree.entry_relative_percentage_time[id] * 100,  suffix[ prefix_id ],
 																																			prefix[ prefix_id ], rd->ptree.entry_total_percentage_time[id] * 100,   suffix[ prefix_id ]); 
 	}

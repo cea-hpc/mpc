@@ -32,7 +32,11 @@
 typedef enum
 {
 	SCTK_PROFILE_RENDER_TEXT,
+	SCTK_PROFILE_RENDER_TEXT_RAW,
+	SCTK_PROFILE_RENDER_TEXT_NOINDENT,
 	SCTK_PROFILE_RENDER_TEXT_STDOUT,
+	SCTK_PROFILE_RENDER_TEXT_STDOUT_RAW,
+	SCTK_PROFILE_RENDER_TEXT_STDOUT_NOINDENT,
 	SCTK_PROFILE_RENDER_TEX,
 	SCTK_PROFILE_RENDER_HTML,
 	SCTK_PROFILE_RENDER_COUNT
@@ -42,7 +46,11 @@ static const char * const sctk_profile_render_keys[] =
 
 {
 	"text",
+	"text_raw",
+	"text_noindent",
 	"text_stdout",
+	"text_stdout_raw",
+	"text_stdout_noindent",
 	"latex",
 	"html"
 };

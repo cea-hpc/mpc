@@ -40,10 +40,22 @@ void sctk_profile_renderer_register_output_iface( struct sctk_profile_renderer *
 	{
 		
 		case SCTK_PROFILE_RENDER_TEXT :
-			sctk_profile_render_text_register( rd, 0 );
+			sctk_profile_render_text_register( rd, 0, 0, 0 );
+		break;
+		case SCTK_PROFILE_RENDER_TEXT_RAW :
+			sctk_profile_render_text_register( rd, 0, 1, 1 );
+		break;
+		case SCTK_PROFILE_RENDER_TEXT_NOINDENT :
+			sctk_profile_render_text_register( rd, 0, 0, 1 );
 		break;
 		case SCTK_PROFILE_RENDER_TEXT_STDOUT :
-			sctk_profile_render_text_register( rd, 1 );
+			sctk_profile_render_text_register( rd, 1, 0, 0 );
+		break;
+		case SCTK_PROFILE_RENDER_TEXT_STDOUT_RAW :
+			sctk_profile_render_text_register( rd, 1, 1, 1 );
+		break;
+		case SCTK_PROFILE_RENDER_TEXT_STDOUT_NOINDENT :
+			sctk_profile_render_text_register( rd, 1, 0, 1 );
 		break;
 		case SCTK_PROFILE_RENDER_TEX :
 			sctk_profile_render_tex_register( rd );
