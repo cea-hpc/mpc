@@ -99,6 +99,9 @@ void sctk_internal_profiler_reduce(int rank)
 }
 
 
+/* Defined in sctk_launch.c */
+extern char * sctk_profiling_outputs;
+
 
 void sctk_internal_profiler_render()
 {
@@ -117,12 +120,11 @@ void sctk_internal_profiler_render()
 
 		struct sctk_profile_renderer renderer;
 
-		sctk_profile_renderer_init( &renderer, reduce_array, "text_stdout,latex,html" );
+		sctk_profile_renderer_init( &renderer, reduce_array, sctk_profiling_outputs );
 		
 		sctk_profile_renderer_render( &renderer );
 		
 		sctk_profile_renderer_release( &renderer );
-		
 
 	}
 

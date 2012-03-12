@@ -74,6 +74,9 @@ void sctk_profile_renderer_release( struct sctk_profile_renderer *rd );
 
 char *sctk_profile_renderer_convert_to_time( uint64_t duration , char *to_unit );
 
+int sctk_profile_renderer_check_render_list( char *render_list );
+
+
 
 static char * sctk_profile_renderer_date( char *buffer )
 {

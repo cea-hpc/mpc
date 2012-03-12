@@ -32,6 +32,8 @@ export SCTK_JOB_MANAGER
 MPC_VERBOSE="0"
 MPC_DISABLE="0"
 
+MPC_PROFILING="none"
+
 show=
 
 #. ${MPC_BIN_DIR}/mpc_modes
@@ -235,6 +237,9 @@ for arg in "$@" ; do
     --verbose=*)
     MPC_VERBOSE="`echo A$arg | sed -e 's/A--verbose=//g'`"
     ;;
+    --profiling=*)
+    MPC_PROFILING="`echo A$arg | sed -e 's/A--profiling=//g'`"
+    ;;
     --show)
     show=echo
     ;;
@@ -429,8 +434,9 @@ add_arg "$NET_TYPE"
 fi
 
 MPC_VERBOSE="--mpc-verbose=${MPC_VERBOSE}"
+MPC_PROFILING="--profiling=${MPC_PROFILING}"
 
-SCTK_ARGS="$SCTK_ARGS $VERSION_DETAILS $REPORT $CHECKPOINT $RESTART $MIGRATION $TMP_DIR $MPC_VERBOSE "
+SCTK_ARGS="$SCTK_ARGS $VERSION_DETAILS $REPORT $CHECKPOINT $RESTART $MIGRATION $TMP_DIR $MPC_VERBOSE $MPC_PROFILING"
 if test "$MPC_MONO" = "1" ; then
 SCTK_ARGS="$SCTK_ARGS --mono=$BINARY"
 BINARY="mpc_mono"

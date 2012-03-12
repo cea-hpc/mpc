@@ -52,6 +52,9 @@
 /* #include "sctk_daemons.h" */
 /* #include "sctk_io.h" */
 
+#ifdef MPC_Profiler
+#include "sctk_profile_render.h"
+#endif
 
 #define SCTK_START_KEYWORD "--sctk-args--"
 
@@ -79,6 +82,8 @@ int sctk_share_node_capabilities = 0;
 
 double __sctk_profiling__start__sctk_init_MPC;
 double __sctk_profiling__end__sctk_init_MPC;
+char * sctk_profiling_outputs = "none";
+
 
 void
 format_output (char *name, char *def)
@@ -493,6 +498,20 @@ sctk_use_network (char *arg)
 #endif
 }
 
+
+static void sctk_set_profiling( char * arg )
+{
+#ifdef MPC_Profiler
+	if( sctk_profile_renderer_check_render_list( arg ) )
+	{
+		sctk_error( "Provided profiling output syntax is not correct: %s", arg );
+		abort();
+	}
+
+	sctk_profiling_outputs = arg;
+#endif
+}
+
   static void
 sctk_def_port_number (char *arg)
 {
@@ -529,6 +548,8 @@ sctk_threat_arg (char *word)
   sctk_add_arg_eq ("--node-number", sctk_def_node_nb);
   sctk_add_arg_eq ("--enable-smt", sctk_def_enable_smt);
   sctk_add_arg_eq ("--share-node", sctk_def_share_node);
+
+  sctk_add_arg_eq ("--profiling", sctk_set_profiling);
 
   sctk_add_arg_eq ("--launcher", sctk_def_launcher_mode);
 

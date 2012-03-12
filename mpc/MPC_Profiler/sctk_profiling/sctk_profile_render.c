@@ -273,7 +273,13 @@ void sctk_profile_renderer_render_entry( struct sctk_profiler_array *array, int 
 void sctk_profile_renderer_render( struct sctk_profile_renderer *rd )
 {
 	char local_list[500];
-	
+
+	if( !strcmp( rd->render_list, "none" ) )
+	{
+		/* Nothing to render */
+		return;
+	}
+
 	strncpy( local_list, rd->render_list, 500 );
 
 	char *render_string = NULL;
