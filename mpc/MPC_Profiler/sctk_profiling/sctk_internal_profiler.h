@@ -25,6 +25,7 @@
 #include <stdint.h>
 
 #include "sctk_profiler_array.h"
+#include "sctk_profile_meta.h"
 #include "sctk_asm.h"
 #include "sctk_tls.h"
 
@@ -33,6 +34,8 @@
 void sctk_internal_profiler_init();
 void sctk_internal_profiler_render();
 void sctk_internal_profiler_release();
+
+struct sctk_profile_meta *sctk_internal_profiler_get_meta();
 
 /* ****************** */
 

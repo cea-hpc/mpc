@@ -30,6 +30,7 @@
 #include "sctk_asm.h"
 
 /* Profile renderer list */
+#include "sctk_internal_profiler.h"
 #include "sctk_profile_render_text.h"
 #include "sctk_profile_render_tex.h"
 
@@ -166,36 +167,6 @@ int sctk_profile_renderer_render_sting_to_id( char *render_string )
 
 
 
-static double sctk_profile_renderer_avg_ticks_per_sec;
-
-
-double sctk_profile_renderer_init_timer()
-{
-        double ret = 0;
-        
-        uint64_t begin = 0, end = 0;
-        double t_begin = 0, t_end = 0;
-
-        struct timeval b_tv;
-        struct timeval e_tv;
-
-        //printf( "Calibrating timer...");
-        gettimeofday( &b_tv , NULL );
-        begin = sctk_get_time_stamp();
-        sleep( 1 );
-        end = sctk_get_time_stamp();
-        gettimeofday( &e_tv , NULL );
-
-        t_begin = b_tv.tv_sec + b_tv.tv_usec/1000000;
-        t_end = e_tv.tv_sec + e_tv.tv_usec/1000000;
-
-        ret = (end-begin)/(t_end-t_begin);
-
-        return ret;
-}
-
-
-
 void sctk_profile_renderer_init( struct sctk_profile_renderer *rd, struct sctk_profiler_array *array, char *render_list )
 {
 	
@@ -214,10 +185,8 @@ void sctk_profile_renderer_init( struct sctk_profile_renderer *rd, struct sctk_p
 	rd->teardown = NULL;
 	rd->render_entry = NULL;
 	rd->output_file = NULL;
-	
-	sctk_info( "Calibrating timer...");
-	
-	sctk_profile_renderer_avg_ticks_per_sec = sctk_profile_renderer_init_timer();
+	rd->render_meta = NULL;
+
 
 }
 
@@ -231,6 +200,7 @@ void sctk_profile_renderer_release( struct sctk_profile_renderer *rd )
 	rd->teardown = NULL;
 	rd->render_entry = NULL;
 	rd->output_file = NULL;
+	rd->render_meta = NULL;
 }
 
 
@@ -315,6 +285,10 @@ void sctk_profile_renderer_render( struct sctk_profile_renderer *rd )
 			if( rd->setup )
 				(rd->setup )( rd );
 				
+
+			if( rd->render_meta )
+				(rd->render_meta)(rd, sctk_internal_profiler_get_meta());
+
 			if( rd->render_entry )
 				sctk_profiler_array_walk( rd->array, sctk_profile_renderer_render_entry, (void *)rd, 0 );
 
@@ -339,7 +313,7 @@ char *sctk_profile_renderer_convert_to_time( uint64_t duration , char *to_unit )
 	  }
 
 
-	  double time_sec = duration / (sctk_profile_renderer_avg_ticks_per_sec);
+	  double time_sec = duration / (sctk_internal_profiler_get_meta()->ticks_per_second);
 	 
 	  uint64_t hour = floor(time_sec/3600);
 	  uint64_t min = floor((double)(time_sec - hour*3600)/60);

@@ -24,11 +24,19 @@
 #include "sctk_debug.h"
 #include "mpc_mpi.h"
 #include "sctk_performance_tree.h"
-
 #include "sctk_profile_render.h"
 
 /* Profiling switch */
 int sctk_profiler_internal_switch = 0;
+
+/* Profiler Meta */
+struct sctk_profile_meta sctk_internal_profiler_meta;
+
+struct sctk_profile_meta *sctk_internal_profiler_get_meta()
+{
+	return &sctk_internal_profiler_meta;
+}
+
 
 /* Target structure for reduction */
 static struct sctk_profiler_array *reduce_array = NULL;
@@ -38,6 +46,14 @@ void sctk_internal_profiler_init()
 {
 	/* Setup the TLS */
 	tls_mpc_profiler = (void *) sctk_profiler_array_new();
+
+	/* Fill in the meta informations */
+	sctk_profile_meta_init(&sctk_internal_profiler_meta);
+
+	MPC_Barrier(MPC_COMM_WORLD);
+
+	/* Start Program */
+	sctk_profile_meta_begin_compute(&sctk_internal_profiler_meta);
 
 	sctk_profiler_internal_enable();
 }
@@ -110,6 +126,8 @@ void sctk_internal_profiler_render()
 
 	sctk_profiler_internal_disable();
 
+	/* End Program */
+	sctk_profile_meta_end_compute(&sctk_internal_profiler_meta);
 
 	/* Allocate and reduce to rank 0 */
 	sctk_internal_profiler_reduce( rank );

@@ -21,6 +21,8 @@
 /* ######################################################################## */
 
 #include "sctk_profile_render_html.h"
+#include "sctk_profile_meta.h"
+
 
 #include <stdlib.h>
 
@@ -32,6 +34,7 @@ void sctk_profile_render_html_register( struct sctk_profile_renderer *rd )
 	rd->setup = sctk_profile_render_html_setup;
 	rd->teardown = sctk_profile_render_html_teardown;
 	rd->render_entry = sctk_profile_render_html_render_entry;
+	rd->render_meta = sctk_profile_render_html_render_meta;
 }
 
 
@@ -72,6 +75,13 @@ void sctk_profile_render_html_teardown( struct sctk_profile_renderer *rd )
 	fclose( rd->output_file );
 	rd->output_file = NULL;
 
+}
+
+
+void sctk_profile_render_html_render_meta( struct sctk_profile_renderer *rd, struct sctk_profile_meta *meta )
+{
+
+	fprintf(rd->output_file, "");
 }
 
 

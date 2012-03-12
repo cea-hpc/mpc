@@ -521,6 +521,7 @@ echo "Using $DEBUG as debugger"
 . ${BINS_HOME}_${LAUNCH}_`basename ${DEBUG}`
 fi
 
+export MPC_LAUNCH_COMMAND="${LAUNCH_COMMAND}"
 
 trap "kill -s 2 0" INT
 #echo "LAUNCH_COMMAND $LAUNCH_COMMAND"

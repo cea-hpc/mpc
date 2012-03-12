@@ -27,6 +27,7 @@
 #include <time.h>
 
 #include "sctk_performance_tree.h"
+#include "sctk_profile_meta.h"
 
 
 typedef enum
@@ -67,6 +68,7 @@ struct sctk_profile_renderer
 
 	void (*setup)( struct sctk_profile_renderer *rd );
 	void (*teardown)( struct sctk_profile_renderer *rd );
+	void (*render_meta)( struct sctk_profile_renderer *rd, struct sctk_profile_meta *meta );
 	void (*render_entry)( struct sctk_profiler_array *array, int id, int parent_id, int depth, struct sctk_profile_renderer *rd );
 	
 	FILE *output_file;

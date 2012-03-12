@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile Thu Nov 10 18:23:18 CET 2011
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile Mon Mar 12 14:20:51 CET 2012
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -49,7 +49,7 @@ FOBJ_include=$(FFILES_include:include/%.f=$(M_PWD)/BUILD_MPC_MPI/lib/%_f.o)
 FFILES_src=$(wildcard src/*.f)
 FOBJ_src=$(FFILES_src:src/%.f=$(M_PWD)/BUILD_MPC_MPI/lib/%_f.o)
 
-all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_src) $(FOBJ_src) $(SOBJ_src) 
+all: $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_src) $(FOBJ_src) $(SOBJ_src)
 
 $(M_PWD)/include_modules/MPC_MPI:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_MPI/include $(M_PWD)/include_modules
