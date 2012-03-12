@@ -25,18 +25,33 @@
 
 /********************  HEADERS  *********************/
 #include "sctk_runtime_config_mapper.h"
+#include "sctk_runtime_config_walk.h"
+
+/*********************  STRUCT  *********************/
+struct sctk_runtime_config_display_state
+{
+	bool is_simple_array;
+};
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_display_union(const struct sctk_runtime_config_entry_meta * config_meta, void * value,const char * type_name,int level);
-void sctk_runtime_config_display_array(const struct sctk_runtime_config_entry_meta * config_meta,
-                               void ** value,const struct sctk_runtime_config_entry_meta * current,int level);
-void sctk_runtime_config_display_value(const struct sctk_runtime_config_entry_meta * config_meta,
-                                       void * value,
-                                       const char * type_name, int level);
-void sctk_runtime_config_display_struct(const struct sctk_runtime_config_entry_meta * config_meta, void * struct_ptr,const char * type_name,int level);
+//helpers
 void sctk_runtime_config_display_indent(int level);
-bool sctk_runtime_config_display_plain_type( const char * type_name,void *value, int level);
-bool sctk_runtime_config_is_basic_type(const char * type_name);
+bool sctk_runtime_config_display_plain_type( const char * type_name,void *value);
+void sctk_runtime_config_display_handler(enum sctk_runtime_config_walk_type type,
+                                         const char * name,
+                                         const char * type_name,
+                                         void * value,
+                                         enum sctk_runtime_config_walk_status status,
+                                         const struct sctk_runtime_config_entry_meta * type_meta,
+                                         int level,
+                                         void * opt);
+
+/*******************  FUNCTION  *********************/
+//entry point
+void sctk_runtime_config_display_tree(const struct sctk_runtime_config_entry_meta * config_meta,
+                                      const char * root_name,
+                                      const char * root_struct_name,
+                                      void * root_struct);
 
 
 #endif //SCTK_CONFIG_PRINTER

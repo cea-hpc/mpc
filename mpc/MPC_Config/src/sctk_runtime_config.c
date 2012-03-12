@@ -127,7 +127,7 @@ void sctk_runtime_config_runtime_display(void)
 
 	//separator
 	printf("====================== MPC CONFIG ======================\n");
-	sctk_runtime_config_display_struct(sctk_runtime_config_db,&__sctk_global_runtime_config__,"sctk_runtime_config",0);
+	sctk_runtime_config_display_tree(sctk_runtime_config_db,"config","sctk_runtime_config",&__sctk_global_runtime_config__);
 	printf("\n");
 	printf("========================================================\n");
 }
