@@ -58,7 +58,7 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-reset-func-name">
-		<xsl:value-of select="concat('void sctk_runtime_config_module_init_',@name,'(void * struct_ptr);&#10;')"/>
+		<xsl:value-of select="concat('void sctk_runtime_config_struct_init_',@name,'(void * struct_ptr);&#10;')"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->

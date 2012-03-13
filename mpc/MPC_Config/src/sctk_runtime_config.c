@@ -88,7 +88,7 @@ void sctk_runtime_config_map_profile( struct sctk_runtime_config * config, xmlNo
 	assert(xmlStrcmp(node->name,SCTK_RUNTIME_CONFIG_XML_NODE_PROFILE) == 0);
 
 	sctk_runtime_config_map_profile_entry(&config->modules,node,SCTK_RUNTIME_CONFIG_XML_NODE_MODULES,"sctk_runtime_config_modules");
-	sctk_runtime_config_map_profile_entry(&config->networks,node,SCTK_RUNTIME_CONFIG_XML_NODE_NETWORKS,"sctk_runtime_config_module_networks");
+	sctk_runtime_config_map_profile_entry(&config->networks,node,SCTK_RUNTIME_CONFIG_XML_NODE_NETWORKS,"sctk_runtime_config_struct_networks");
 }
 
 /*******************  FUNCTION  *********************/

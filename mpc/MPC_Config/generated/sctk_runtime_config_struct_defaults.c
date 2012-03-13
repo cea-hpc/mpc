@@ -27,34 +27,34 @@
 #include "sctk_runtime_config_mapper.h"
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_module_init_test(void * struct_ptr)
+void sctk_runtime_config_struct_init_test(void * struct_ptr)
 {
-	struct sctk_runtime_config_module_test * obj = struct_ptr;
+	struct sctk_runtime_config_struct_test * obj = struct_ptr;
 	//Simple params :
 	obj->tt = 10;
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_module_init_rail(void * struct_ptr)
+void sctk_runtime_config_struct_init_rail(void * struct_ptr)
 {
-	struct sctk_runtime_config_module_rail * obj = struct_ptr;
+	struct sctk_runtime_config_struct_rail * obj = struct_ptr;
 	//Simple params :
 	obj->tt = 10;
 	obj->tt2 = 20;
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_module_init_driver(void * struct_ptr)
+void sctk_runtime_config_struct_init_driver(void * struct_ptr)
 {
-	struct sctk_runtime_config_module_driver * obj = struct_ptr;
+	struct sctk_runtime_config_struct_driver * obj = struct_ptr;
 	obj->type = SCTK_RTCFG_driver_NONE;
 	memset(&obj->value,0,sizeof(obj->value));
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_module_init_allocator(void * struct_ptr)
+void sctk_runtime_config_struct_init_allocator(void * struct_ptr)
 {
-	struct sctk_runtime_config_module_allocator * obj = struct_ptr;
+	struct sctk_runtime_config_struct_allocator * obj = struct_ptr;
 	//Simple params :
 	obj->numa = false;
 	obj->profile = false;
@@ -63,8 +63,8 @@ void sctk_runtime_config_module_init_allocator(void * struct_ptr)
 	obj->alfloat = 42.42;
 	obj->alsize = sctk_runtime_config_map_entry_parse_size("2PB");
 	obj->warnings = false;
-	sctk_runtime_config_module_init_test(&obj->test);
-	sctk_runtime_config_module_init_driver(&obj->driver);
+	sctk_runtime_config_struct_init_test(&obj->test);
+	sctk_runtime_config_struct_init_driver(&obj->driver);
 	//array
 	obj->classes = NULL;
 	obj->classes_size = 0;
@@ -83,9 +83,9 @@ void sctk_runtime_config_module_init_allocator(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_module_init_launcher(void * struct_ptr)
+void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 {
-	struct sctk_runtime_config_module_launcher * obj = struct_ptr;
+	struct sctk_runtime_config_struct_launcher * obj = struct_ptr;
 	//Simple params :
 	obj->smt = false;
 	obj->cores = 16;
@@ -93,35 +93,35 @@ void sctk_runtime_config_module_init_launcher(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_module_init_net_driver_fake(void * struct_ptr)
+void sctk_runtime_config_struct_init_net_driver_fake(void * struct_ptr)
 {
-	struct sctk_runtime_config_module_net_driver_fake * obj = struct_ptr;
+	struct sctk_runtime_config_struct_net_driver_fake * obj = struct_ptr;
 	//Simple params :
 	obj->buffer = 1024;
 	obj->stealing = true;
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_module_init_net_driver(void * struct_ptr)
+void sctk_runtime_config_struct_init_net_driver(void * struct_ptr)
 {
-	struct sctk_runtime_config_module_net_driver * obj = struct_ptr;
+	struct sctk_runtime_config_struct_net_driver * obj = struct_ptr;
 	obj->type = SCTK_RTCFG_net_driver_NONE;
 	memset(&obj->value,0,sizeof(obj->value));
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_module_init_net_driver_config(void * struct_ptr)
+void sctk_runtime_config_struct_init_net_driver_config(void * struct_ptr)
 {
-	struct sctk_runtime_config_module_net_driver_config * obj = struct_ptr;
+	struct sctk_runtime_config_struct_net_driver_config * obj = struct_ptr;
 	//Simple params :
 	obj->name = NULL;
-	sctk_runtime_config_module_init_net_driver(&obj->driver);
+	sctk_runtime_config_struct_init_net_driver(&obj->driver);
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_module_init_net_rail(void * struct_ptr)
+void sctk_runtime_config_struct_init_net_rail(void * struct_ptr)
 {
-	struct sctk_runtime_config_module_net_rail * obj = struct_ptr;
+	struct sctk_runtime_config_struct_net_rail * obj = struct_ptr;
 	//Simple params :
 	obj->name = NULL;
 	obj->device = NULL;
@@ -130,9 +130,9 @@ void sctk_runtime_config_module_init_net_rail(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_module_init_networks(void * struct_ptr)
+void sctk_runtime_config_struct_init_networks(void * struct_ptr)
 {
-	struct sctk_runtime_config_module_networks * obj = struct_ptr;
+	struct sctk_runtime_config_struct_networks * obj = struct_ptr;
 	//Simple params :
 	//array
 	obj->configs = NULL;
@@ -145,8 +145,8 @@ void sctk_runtime_config_module_init_networks(void * struct_ptr)
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 {
-	sctk_runtime_config_module_init_allocator(&config->modules.allocator);
-	sctk_runtime_config_module_init_launcher(&config->modules.launcher);
-	sctk_runtime_config_module_init_networks(&config->networks);
+	sctk_runtime_config_struct_init_allocator(&config->modules.allocator);
+	sctk_runtime_config_struct_init_launcher(&config->modules.launcher);
+	sctk_runtime_config_struct_init_networks(&config->networks);
 };
 

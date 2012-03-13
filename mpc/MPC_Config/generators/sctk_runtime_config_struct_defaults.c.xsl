@@ -45,11 +45,11 @@
 		<xsl:for-each select="config">
 			<xsl:for-each select="modules">
 				<xsl:for-each select="module">
-					<xsl:value-of select="concat('&#9;sctk_runtime_config_module_init_',@type,'(&amp;config->modules.',@name,');&#10;')"/>
+					<xsl:value-of select="concat('&#9;sctk_runtime_config_struct_init_',@type,'(&amp;config->modules.',@name,');&#10;')"/>
 				</xsl:for-each>
 			</xsl:for-each>
 		</xsl:for-each>
-		<xsl:text>&#09;sctk_runtime_config_module_init_networks(&amp;config->networks);&#10;</xsl:text>
+		<xsl:text>&#09;sctk_runtime_config_struct_init_networks(&amp;config->networks);&#10;</xsl:text>
 		<xsl:text>};&#10;&#10;</xsl:text>
 	</xsl:template>
 
@@ -65,13 +65,13 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-struct-name">
-		<xsl:value-of select="concat('struct sctk_runtime_config_module_',@name)"/>
+		<xsl:value-of select="concat('struct sctk_runtime_config_struct_',@name)"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template match="struct">
 		<xsl:text>&#10;/*******************  FUNCTION  *********************/&#10;</xsl:text>
-		<xsl:value-of select="concat('void sctk_runtime_config_module_init_',@name,'(void * struct_ptr)&#10;')"/>
+		<xsl:value-of select="concat('void sctk_runtime_config_struct_init_',@name,'(void * struct_ptr)&#10;')"/>
 		<xsl:text>{&#10;&#09;</xsl:text>
 		<xsl:call-template name="gen-struct-name"/>
 		<xsl:text> * obj = struct_ptr;&#10;</xsl:text>
@@ -84,7 +84,7 @@
 	<!-- ********************************************************* -->
 	<xsl:template match="union">
 			<xsl:text>&#10;/*******************  FUNCTION  *********************/&#10;</xsl:text>
-		<xsl:value-of select="concat('void sctk_runtime_config_module_init_',@name,'(void * struct_ptr)&#10;')"/>
+		<xsl:value-of select="concat('void sctk_runtime_config_struct_init_',@name,'(void * struct_ptr)&#10;')"/>
 		<xsl:text>{&#10;&#09;</xsl:text>
 		<xsl:call-template name="gen-struct-name"/>
 		<xsl:text> * obj = struct_ptr;&#10;</xsl:text>
@@ -173,7 +173,7 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template name="gent-default-param-usertype">
-		<xsl:value-of select="concat('&#09;sctk_runtime_config_module_init_',@type,'(&amp;obj->',@name,');&#10;')"/>
+		<xsl:value-of select="concat('&#09;sctk_runtime_config_struct_init_',@type,'(&amp;obj->',@name,');&#10;')"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->

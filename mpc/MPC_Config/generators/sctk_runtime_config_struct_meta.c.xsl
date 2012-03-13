@@ -58,11 +58,11 @@
 	<!-- ********************************************************* -->
 	<xsl:template match="struct">
 		<xsl:text>&#09;//struct&#10;</xsl:text>
-		<xsl:text>&#09;{"sctk_runtime_config_module_</xsl:text>
+		<xsl:text>&#09;{"sctk_runtime_config_struct_</xsl:text>
 		<xsl:value-of select="@name"/>
-		<xsl:text>" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_module_</xsl:text>
+		<xsl:text>" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_</xsl:text>
 		<xsl:value-of select="@name"/>
-		<xsl:text>) , NULL , sctk_runtime_config_module_init_</xsl:text>
+		<xsl:text>) , NULL , sctk_runtime_config_struct_init_</xsl:text>
 		<xsl:value-of select="@name"/>
 		<xsl:text>},&#10;</xsl:text>
 		<xsl:apply-templates select="param"/>
@@ -74,7 +74,7 @@
 		<xsl:text>&#09;{"</xsl:text>
 		<xsl:value-of select="@name"/>
 		<xsl:text>"     , SCTK_CONFIG_META_TYPE_PARAM  , </xsl:text>
-		<xsl:value-of select="concat('sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_',../@name,',',@name,')')"/>
+		<xsl:value-of select="concat('sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_',../@name,',',@name,')')"/>
 		<xsl:text>  , sizeof(</xsl:text>
 		<xsl:call-template name="gen-type-name"/>
 		<xsl:text>) , "</xsl:text>
@@ -89,7 +89,7 @@
 		<xsl:text>&#09;{"</xsl:text>
 		<xsl:value-of select="@name"/>
 		<xsl:text>"     , SCTK_CONFIG_META_TYPE_ARRAY  , </xsl:text>
-		<xsl:value-of select="concat('sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_',../@name,',',@name,')')"/>
+		<xsl:value-of select="concat('sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_',../@name,',',@name,')')"/>
 		<xsl:text> , sizeof(</xsl:text>
 		<xsl:call-template name="gen-type-name"/>
 		<xsl:text>) , "</xsl:text>
@@ -102,11 +102,11 @@
 	<!-- ********************************************************* -->
 	<xsl:template match="union">
 		<xsl:text>&#09;//union&#10;</xsl:text>
-		<xsl:text>&#09;{"sctk_runtime_config_module_</xsl:text>
+		<xsl:text>&#09;{"sctk_runtime_config_struct_</xsl:text>
 		<xsl:value-of select="@name"/>
-		<xsl:text>" , SCTK_CONFIG_META_TYPE_UNION , 0  , sizeof(struct sctk_runtime_config_module_</xsl:text>
+		<xsl:text>" , SCTK_CONFIG_META_TYPE_UNION , 0  , sizeof(struct sctk_runtime_config_struct_</xsl:text>
 		<xsl:value-of select="@name"/>
-		<xsl:text>) , NULL , sctk_runtime_config_module_init_</xsl:text>
+		<xsl:text>) , NULL , sctk_runtime_config_struct_init_</xsl:text>
 		<xsl:value-of select="@name"/>
 		<xsl:text>},&#10;</xsl:text>
 		<xsl:apply-templates select="choice"/>
@@ -138,7 +138,7 @@
 			<xsl:when test="@type = 'string'">NULL</xsl:when>
 			<xsl:when test="@type = 'size'">NULL</xsl:when>
 			<xsl:otherwise>
-				<xsl:value-of select="concat('sctk_runtime_config_module_init_',@type)"/>
+				<xsl:value-of select="concat('sctk_runtime_config_struct_init_',@type)"/>
 			</xsl:otherwise>
 		</xsl:choose>
 	</xsl:template>
@@ -181,10 +181,10 @@
 	<xsl:template name="gen-user-type-name">
 		<xsl:param name="type"/>
 		<xsl:for-each select="//struct[@name = $type]">
-			<xsl:value-of select="concat('struct sctk_runtime_config_module_',$type)"/>
+			<xsl:value-of select="concat('struct sctk_runtime_config_struct_',$type)"/>
 		</xsl:for-each>
 		<xsl:for-each select="//union[@name = $type]">
-			<xsl:value-of select="concat('struct sctk_runtime_config_module_',$type)"/>
+			<xsl:value-of select="concat('struct sctk_runtime_config_struct_',$type)"/>
 		</xsl:for-each>
 	</xsl:template>
 
@@ -192,10 +192,10 @@
 	<xsl:template name="gen-user-type-name2">
 		<xsl:param name="type"/>
 		<xsl:for-each select="//struct[@name = $type]">
-			<xsl:value-of select="concat('sctk_runtime_config_module_',$type)"/>
+			<xsl:value-of select="concat('sctk_runtime_config_struct_',$type)"/>
 		</xsl:for-each>
 		<xsl:for-each select="//union[@name = $type]">
-			<xsl:value-of select="concat('sctk_runtime_config_module_',$type)"/>
+			<xsl:value-of select="concat('sctk_runtime_config_struct_',$type)"/>
 		</xsl:for-each>
 	</xsl:template>
 
@@ -210,7 +210,7 @@
 		<xsl:text>&#09;//sctk_runtime_config&#10;</xsl:text>
 		<xsl:text>&#09;{"sctk_runtime_config" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config) , NULL , sctk_runtime_config_reset},&#10;</xsl:text>
 		<xsl:text>&#09;{"modules"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config,modules)  , sizeof(struct sctk_runtime_config_modules) , "sctk_runtime_config_modules" , NULL},&#10;</xsl:text>
-		<xsl:text>&#09;{"networks"    , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config,networks)  , sizeof(struct sctk_runtime_config_module_networks), "sctk_runtime_config_module_networks" , NULL},&#10;</xsl:text>
+		<xsl:text>&#09;{"networks"    , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config,networks)  , sizeof(struct sctk_runtime_config_struct_networks), "sctk_runtime_config_struct_networks" , NULL},&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -233,11 +233,11 @@
 		<xsl:value-of select="@name"/>
 		<xsl:text>"     , SCTK_CONFIG_META_TYPE_PARAM , </xsl:text>
 		<xsl:value-of select="concat('sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_modules',../@name,',',@name,')')"/>
-		<xsl:text>  , sizeof(struct sctk_runtime_config_module_</xsl:text>
+		<xsl:text>  , sizeof(struct sctk_runtime_config_struct_</xsl:text>
 		<xsl:value-of select="@type"/>
-		<xsl:text>) , "sctk_runtime_config_module_</xsl:text>
+		<xsl:text>) , "sctk_runtime_config_struct_</xsl:text>
 		<xsl:value-of select="@type"/>
-		<xsl:text>" , sctk_runtime_config_module_init_</xsl:text>
+		<xsl:text>" , sctk_runtime_config_struct_init_</xsl:text>
 		<xsl:value-of select="@type"/>
 		<xsl:text>},&#10;</xsl:text>
 	</xsl:template>
