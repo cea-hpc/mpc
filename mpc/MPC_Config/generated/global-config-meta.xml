@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <all>
-<config>
+<config name="MPC_Allocator">
 	<usertypes>
 		<struct name="test" doc="This is a test structure.">
 			<param name="tt" type="int" default="10" doc="This is a test"/>
@@ -42,7 +42,7 @@
 		<handler>sctk_runtime_config_empty_validator_for_test</handler>
 	</validators>
 </config>
-<config>
+<config name="MPC_Common">
 	<usertypes>
 		<struct name="launcher" doc="Options for MPC launcher.">
 			<param name="smt" type="bool" default="false" doc="blablabla"/>
@@ -54,7 +54,7 @@
 		<module name="launcher" type="launcher"/>
 	</modules>
 </config>
-<config>
+<config name="MPC_Message_Passing">
 	<usertypes>
 
 		<!-- Structure for infiniband driver -->

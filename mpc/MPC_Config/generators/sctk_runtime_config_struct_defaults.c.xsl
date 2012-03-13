@@ -44,8 +44,14 @@
 		<xsl:text>&#10;/*******************  FUNCTION  *********************/&#10;</xsl:text>
 		<xsl:text>void sctk_runtime_config_validate(struct sctk_runtime_config * config)&#10;</xsl:text>
 		<xsl:text>{&#10;</xsl:text>
-		<xsl:for-each select="config/validators/handler">
-			<xsl:value-of select="concat('&#9;',.,'(config);&#10;')"/>
+		<xsl:for-each select="config">
+			<xsl:if test="validators/handler">
+				<xsl:value-of select="concat('&#9;#ifdef ',@name,'&#10;')"/>
+				<xsl:for-each select="validators/handler">
+					<xsl:value-of select="concat('&#9;',.,'(config);&#10;')"/>
+				</xsl:for-each>
+				<xsl:text>&#9;#endif&#10;</xsl:text>
+			</xsl:if>
 		</xsl:for-each>
 		<xsl:text>};&#10;</xsl:text>
 	</xsl:template>

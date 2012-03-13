@@ -79,7 +79,11 @@ gen_global_config_file()
 	done
 	echo "<?xml version=\"1.0\"?>" > ${GLOBAL_CONFIG_FILE}
 	echo "<all>" >> ${GLOBAL_CONFIG_FILE}
-	cat ${CONFIG_FILES} | grep -v "<?xml version=\"1.0\"?>" >> ${GLOBAL_CONFIG_FILE}
+	for tmp in ${CONFIG_FILES}
+	do
+		module_name=$(basename $(dirname ${tmp}))
+		cat ${tmp} | grep -v "<?xml version=\"1.0\"?>" | sed -e "s/<config>/<config name=\"${module_name}\">/g" >> ${GLOBAL_CONFIG_FILE}
+	done
 	echo "</all>" >> ${GLOBAL_CONFIG_FILE}
 
 	#remove inner invalid dtd declarations
