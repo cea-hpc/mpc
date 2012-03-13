@@ -1684,7 +1684,7 @@ sctk_thread_usleep (unsigned int useconds)
   return 0;
 }
 
-/*on ne prend pas en compte la précision en dessous de la micro-seconde
+/*on ne prend pas en compte la precision en dessous de la micro-seconde
 on ne gere pas les interruptions non plus*/
 int
 sctk_thread_nanosleep (const struct timespec *req, struct timespec *rem)
@@ -2002,7 +2002,7 @@ double sctk_profiling_get_dataused() {
 }
 
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
-#pragma weak MPC_Task_hook
+#pragma weak MPC_Process_hook
 void  MPC_Process_hook()
 {
     /*This function is used to intercept MPC process's creation when profiling*/
