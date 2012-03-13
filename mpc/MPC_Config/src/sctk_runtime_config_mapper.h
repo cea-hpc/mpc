@@ -27,7 +27,7 @@
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 #include "sctk_runtime_config_sources.h"
-#include "../generated/sctk_runtime_config_struct.h"
+#include "sctk_runtime_config_struct.h"
 
 /*********************  STRUCT  *********************/
 /**
@@ -107,6 +107,8 @@ int sctk_runtime_config_map_entry_to_int(xmlNodePtr node);
 bool sctk_runtime_config_map_entry_to_bool(xmlNodePtr node);
 double sctk_runtime_config_map_entry_to_double(xmlNodePtr node);
 float sctk_runtime_config_map_entry_to_float(xmlNodePtr node);
+size_t sctk_runtime_config_map_entry_parse_size( const char *value );
+size_t sctk_runtime_config_map_entry_to_size(xmlNodePtr node);
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_reset(sctk_runtime_config_struct_ptr config);

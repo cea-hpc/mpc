@@ -52,6 +52,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"alstring"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_allocator,alstring)  , sizeof(char *) , "char *" , NULL},
 	{"aldouble"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_allocator,aldouble)  , sizeof(double) , "double" , NULL},
 	{"alfloat"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_allocator,alfloat)  , sizeof(float) , "float" , NULL},
+	{"alsize"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_allocator,alsize)  , sizeof(size_t) , "size_t" , NULL},
 	{"warnings"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_allocator,warnings)  , sizeof(bool) , "bool" , NULL},
 	{"test"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_allocator,test)  , sizeof(struct sctk_runtime_config_module_test) , "sctk_runtime_config_module_test" , sctk_runtime_config_module_init_test},
 	{"driver"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_module_allocator,driver)  , sizeof(struct sctk_runtime_config_module_driver) , "sctk_runtime_config_module_driver" , sctk_runtime_config_module_init_driver},

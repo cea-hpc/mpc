@@ -23,6 +23,7 @@
 /********************  HEADERS  *********************/
 #include <assert.h>
 #include <string.h>
+#include <stdlib.h>
 #include "sctk_runtime_config_debug.h"
 #include "sctk_libxml_helper.h"
 #include "sctk_runtime_config_mapper.h"
@@ -79,6 +80,117 @@ char * sctk_runtime_config_map_entry_to_string(xmlNodePtr node)
 	char *ret = NULL;
 	xmlChar * value = xmlNodeGetContent(node);
 	ret = strdup( BAD_CAST( value ) );
+	xmlFree(value);
+	return ret;
+}
+
+/*******************  FUNCTION  *********************/
+
+int sctk_runtime_config_map_case_cmp( const char aa, const char bb)
+{
+	char str[4];
+	str[0]=aa;
+	str[1]='\0';
+	str[2]=bb;
+	str[3]='\0';
+
+	if( !strcasecmp(str, str+2 ) )
+		return 1;
+
+	return 0;
+
+}
+
+
+size_t sctk_runtime_config_map_entry_parse_size( const char *pval )
+{
+	size_t ret = 0;
+
+	int len = strlen( pval );
+
+	if( len < 2 )
+	{
+		return ret;
+	}
+
+	char *value = strdup( pval );
+
+	if( len == 2 && sctk_runtime_config_map_case_cmp(value[ len - 1 ],'B') )
+	{
+		value[len - 1 ]= '\0';
+		ret = atoll(value);
+
+	}
+	else
+	{
+		if( sctk_runtime_config_map_case_cmp(value[ len - 2 ],'K')
+		 && sctk_runtime_config_map_case_cmp(value[ len - 1 ],'B') )
+		{
+
+			value[len - 2 ]= '\0';
+			ret = atoll(value) * 1024;
+					;
+		}else if( sctk_runtime_config_map_case_cmp(value[ len - 2 ],'M')
+			   && sctk_runtime_config_map_case_cmp(value[ len - 1 ],'B') )
+		{
+
+			value[len - 2 ]= '\0';
+			ret = atoll(value) * 1024 * 1024;
+
+		}else if( sctk_runtime_config_map_case_cmp(value[ len - 2 ],'G')
+			   && sctk_runtime_config_map_case_cmp(value[ len - 1 ],'B') )
+		{
+
+			value[len - 2 ]= '\0';
+			ret = atoll(value) * 1073741824llu;
+
+		}else if( sctk_runtime_config_map_case_cmp(value[ len - 2 ],'T')
+			   && sctk_runtime_config_map_case_cmp(value[ len - 1 ],'B') )
+		{
+
+			value[len - 2 ]= '\0';
+			ret = atoll(value) * 1099511627776llu;
+
+		}else if( sctk_runtime_config_map_case_cmp(value[ len - 2 ],'P')
+			   && sctk_runtime_config_map_case_cmp(value[ len - 1 ],'B') )
+		{
+
+			value[len - 2 ]= '\0';
+			ret = atoll(value);
+			if( 16384 <= ret )
+			{
+				fprintf(stderr, "%llu PB is close to overflow 64bits values please choose a lower value", (unsigned long long int)ret);
+				abort();
+			}
+
+			ret = ret * 1125899906842624llu;
+
+		}else if( sctk_runtime_config_map_case_cmp(value[ len - 1 ],'B') )
+		{
+			value[len - 1 ]= '\0';
+			ret = atoll(value);
+		}
+		else
+		{
+			fprintf(stderr, "Could not parse size : %s\n", pval);
+			abort();
+		}
+	}
+
+
+	free( value );
+
+	return ret;
+}
+
+/*******************  FUNCTION  *********************/
+size_t sctk_runtime_config_map_entry_to_size(xmlNodePtr node)
+{
+	size_t ret = 0;
+	xmlChar * value = xmlNodeGetContent(node);
+
+	ret = sctk_runtime_config_map_entry_parse_size( BAD_CAST(value) );
+
 	xmlFree(value);
 	return ret;
 }
@@ -364,6 +476,9 @@ bool sctk_runtime_config_map_plain_type(void * value, const char * type_name,xml
 		return true;
 	} else if (strcmp(type_name,"char *") == 0) {
 		*((char **)value) = sctk_runtime_config_map_entry_to_string(node);
+		return true;
+	}else if (strcmp(type_name,"size_t") == 0) {
+		*((size_t *)value) = sctk_runtime_config_map_entry_to_size(node);
 		return true;
 	} else {
 		return false;

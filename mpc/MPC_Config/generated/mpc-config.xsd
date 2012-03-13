@@ -52,6 +52,7 @@
       <xs:element minOccurs="0" name="alstring" type="xs:string"/>
       <xs:element minOccurs="0" name="aldouble" type="xs:decimal"/>
       <xs:element minOccurs="0" name="alfloat" type="xs:decimal"/>
+      <xs:element minOccurs="0" name="alsize" type="xs:string"/>
       <xs:element minOccurs="0" name="warnings" type="xs:boolean"/>
       <xs:element minOccurs="0" name="test" type="user_type_test"/>
       <xs:element minOccurs="0" name="classes">

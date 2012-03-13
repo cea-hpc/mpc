@@ -32,6 +32,7 @@
 		<xsl:text>#include &lt;stdlib.h&gt;&#10;</xsl:text>
 		<xsl:text>#include &lt;string.h&gt;&#10;</xsl:text>
 		<xsl:text>#include "sctk_runtime_config_struct.h"&#10;</xsl:text>
+		<xsl:text>#include "sctk_runtime_config_mapper.h"&#10;</xsl:text>
 		<xsl:apply-templates select='config'/>
 		<xsl:call-template name="gen-main-reset-function"/>
 	</xsl:template>
@@ -105,8 +106,21 @@
 			<xsl:when test="@type = 'string'"><xsl:call-template name='gent-default-param-string'/></xsl:when>
 			<xsl:when test="@type = 'float'"><xsl:call-template name='gent-default-param-decimal'/></xsl:when>
 			<xsl:when test="@type = 'double'"><xsl:call-template name='gent-default-param-decimal'/></xsl:when>
+			<xsl:when test="@type = 'size'"><xsl:call-template name='gent-default-param-size'/></xsl:when>
 			<xsl:otherwise><xsl:call-template name="gent-default-param-usertype"/></xsl:otherwise>
 		</xsl:choose>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="gent-default-param-size">
+		<xsl:text>&#09;obj-></xsl:text>
+		<xsl:value-of select='@name'/>
+		<xsl:text> = </xsl:text>
+		<xsl:choose>
+			<xsl:when test='@default'><xsl:value-of select="concat('sctk_runtime_config_map_entry_parse_size(&quot;',@default, '&quot;)' )"/></xsl:when>
+			<xsl:otherwise>0</xsl:otherwise>
+		</xsl:choose>
+		<xsl:text>;&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->

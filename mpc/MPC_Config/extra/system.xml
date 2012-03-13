@@ -142,6 +142,7 @@
 					<verbosity>2</verbosity>
 				</launcher>
 				<allocator>
+					<alsize>16383PB</alsize>
 					<warnings>true</warnings>
 					<classes></classes>
 					<rails>

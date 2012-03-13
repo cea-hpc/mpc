@@ -24,6 +24,7 @@
 #include <assert.h>
 #include "sctk_runtime_config_debug.h"
 #include "sctk_runtime_config_walk.h"
+#include <string.h>
 
 /*******************  FUNCTION  *********************/
 /**
@@ -259,5 +260,5 @@ bool sctk_runtime_config_is_basic_type(const char * type_name)
 {
 	return (strcmp(type_name,"int")    == 0   || strcmp(type_name,"bool")   == 0
 	    ||  strcmp(type_name,"double") == 0   || strcmp(type_name,"char *") == 0
-	    ||  strcmp(type_name,"float" ) == 0 );
+	    ||  strcmp(type_name,"float" ) == 0   || strcmp(type_name,"size_t" ) == 0);
 }

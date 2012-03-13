@@ -44,6 +44,67 @@ void sctk_runtime_config_display_indent(int level)
 }
 
 /*******************  FUNCTION  *********************/
+
+#define SCTK_MB_SIZE 1048576llu
+#define SCTK_GB_SIZE 1073741824llu
+#define SCTK_TB_SIZE 1099511627776llu
+#define SCTK_PB_SIZE 1125899906842624llu
+
+
+char * sctk_runtime_config_display_size(size_t value)
+{
+	static char size[500];
+	unsigned long long int t_size = 0;
+
+	size[0]='\0';
+
+	if( value < 1024 )
+	{
+		/* Bits */
+		sprintf(size,"%llu B", (unsigned long long int)value);
+
+	} else if( value < SCTK_MB_SIZE )
+	{
+
+		/* KB */
+		t_size = value/(1024);
+		sprintf(size,"%llu KB", t_size);
+
+	} else if( value < SCTK_GB_SIZE )
+	{
+
+		/* MB */
+		t_size = value/(SCTK_MB_SIZE);
+		sprintf(size,"%llu MB", t_size);
+
+	}else if( value < SCTK_TB_SIZE )
+	{
+
+		/* GB */
+		t_size = value/(SCTK_GB_SIZE);
+		sprintf(size,"%llu GB", t_size);
+
+	}else if( value < SCTK_PB_SIZE )
+	{
+
+		/* TB */
+		t_size = value/(SCTK_TB_SIZE);
+		sprintf(size,"%llu TB", t_size);
+
+	}else
+	{
+		/* PB */
+		t_size = value/(SCTK_PB_SIZE);
+		sprintf(size,"%llu PB", t_size);
+
+	}
+
+	return size;
+}
+
+
+
+/*******************  FUNCTION  *********************/
 /**
  * Display simple values.
  * @param current Define the current meta entry to display.
@@ -70,6 +131,10 @@ bool sctk_runtime_config_display_plain_type( const char * type_name,void *value)
 	} else if (strcmp(type_name,"char *") == 0)
 	{
 		printf("%s",*((char **)value));
+		return true;
+	} else if (strcmp(type_name,"size_t") == 0)
+	{
+		printf("%s", sctk_runtime_config_display_size( *( (size_t *)value ) ) );
 		return true;
 	} else {
 		return false;

@@ -146,6 +146,7 @@
 			<xsl:when test="@type = 'float'">float</xsl:when>
 			<xsl:when test="@type = 'double'">double</xsl:when>
 			<xsl:when test="@type = 'string'">char *</xsl:when>
+			<xsl:when test="@type = 'size'">size_t</xsl:when>
 			<xsl:otherwise>
 				<xsl:call-template name="gen-user-type-name">
 					<xsl:with-param name="type"><xsl:value-of select='@type'/></xsl:with-param>

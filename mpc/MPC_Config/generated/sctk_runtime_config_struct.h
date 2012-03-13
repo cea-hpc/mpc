@@ -76,6 +76,8 @@ struct sctk_runtime_config_module_allocator
 	double aldouble;
 	/**Sample float**/
 	float alfloat;
+	/**Sample size entry**/
+	size_t alsize;
 	/**Permit to enable of disable allocator warnings.**/
 	bool warnings;
 	/**Try to use test structure.**/

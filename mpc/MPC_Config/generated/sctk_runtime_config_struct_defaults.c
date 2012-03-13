@@ -24,6 +24,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "sctk_runtime_config_struct.h"
+#include "sctk_runtime_config_mapper.h"
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_module_init_test(void * struct_ptr)
@@ -60,6 +61,7 @@ void sctk_runtime_config_module_init_allocator(void * struct_ptr)
 	obj->alstring = "TestTestTest";
 	obj->aldouble = 42.42;
 	obj->alfloat = 42.42;
+	obj->alsize = sctk_runtime_config_map_entry_parse_size("2PB");
 	obj->warnings = false;
 	sctk_runtime_config_module_init_test(&obj->test);
 	sctk_runtime_config_module_init_driver(&obj->driver);
