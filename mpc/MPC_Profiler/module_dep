@@ -22,4 +22,4 @@
 ########################################################################
 avail_module MPC_Threads
 need_module MPC_Common
-SCTK_INCLUDE_FILES="sctk_profiler.h"
+SCTK_INCLUDE_FILES="mpc_profiler.h"
