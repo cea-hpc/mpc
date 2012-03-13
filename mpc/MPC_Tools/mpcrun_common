@@ -126,6 +126,21 @@ Launcher:
 
 Debugger:
     --dbg=<debugger_name> to use a debugger
+    
+Profiling:
+	--profiling=AA,BB,...
+	
+	example : --profiling=text_stdout,html,latex
+	
+	With the following output modules :
+		text : Outputs to file indented profile with time in standard units
+		text_raw : Outputs to file unindented profile in ticks (gnuplot compliant)
+		text_noindent : Same as "text" with no indentation
+		text_stdout : "text" to stdout
+		text_stdout_raw : "text_raw" to stdout
+		text_stdout_noindent : "text_noindent" to stdout
+		latex : Outputs profile to a latex source file
+		html : Outputs profile to an html file
 EOF
 }
 
