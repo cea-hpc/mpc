@@ -25,7 +25,7 @@
 <!-- Or usage of YAML : http://docs.behat.org/guides/7.config.html  / http://www.yaml.org/ -->
 
 <!-- Global MPC config -->
-<mpc>
+<mpc xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="mpc-config.xsd">
 	<!-- List of profiles -->
 	<profiles>
 		<!-- Declare a first profile -->
