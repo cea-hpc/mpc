@@ -32,9 +32,22 @@
 		<xsl:text>#include &lt;stdlib.h&gt;&#10;</xsl:text>
 		<xsl:text>#include &lt;string.h&gt;&#10;</xsl:text>
 		<xsl:text>#include "sctk_runtime_config_struct.h"&#10;</xsl:text>
+		<xsl:text>#include "sctk_runtime_config_struct_defaults.h"&#10;</xsl:text>
 		<xsl:text>#include "sctk_runtime_config_mapper.h"&#10;</xsl:text>
 		<xsl:apply-templates select='config'/>
 		<xsl:call-template name="gen-main-reset-function"/>
+		<xsl:call-template name="gen-main-validate-function"/>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="gen-main-validate-function">
+		<xsl:text>&#10;/*******************  FUNCTION  *********************/&#10;</xsl:text>
+		<xsl:text>void sctk_runtime_config_validate(struct sctk_runtime_config * config)&#10;</xsl:text>
+		<xsl:text>{&#10;</xsl:text>
+		<xsl:for-each select="config/validators/handler">
+			<xsl:value-of select="concat('&#9;',.,'(config);&#10;')"/>
+		</xsl:for-each>
+		<xsl:text>};&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->

@@ -111,7 +111,6 @@ size_t sctk_runtime_config_map_entry_parse_size( const char *value );
 size_t sctk_runtime_config_map_entry_to_size(xmlNodePtr node);
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_reset(sctk_runtime_config_struct_ptr config);
 void sctk_runtime_config_do_cleanup(struct sctk_runtime_config * config);
 
 #endif //SCTK_CONFIG_MAPPER_H

@@ -28,6 +28,7 @@
 #include "sctk_runtime_config_sources.h"
 #include "sctk_runtime_config_mapper.h"
 #include "sctk_runtime_config_printer.h"
+#include "sctk_runtime_config_struct_defaults.h"
 #include "sctk_libxml_helper.h"
 
 /*********************  GLOBAL  *********************/
@@ -214,6 +215,9 @@ void sctk_runtime_config_init(void)
 			//close
 			sctk_runtime_config_sources_close(&config_sources);
 
+			//validate
+			sctk_runtime_config_validate(&__sctk_global_runtime_config__);
+
 			//mark as init
 			__sctk_global_runtime_config_init__ = true;
 
@@ -221,4 +225,10 @@ void sctk_runtime_config_init(void)
 			sctk_runtime_config_runtime_display();
 		}
 	}
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_empty_validator_for_test(struct sctk_runtime_config * config)
+{
+	printf("DEBUG : Test validator called on config...\n");
 }

@@ -28,6 +28,7 @@
 #include "sctk_libxml_helper.h"
 #include "sctk_runtime_config_mapper.h"
 #include "sctk_runtime_config_printer.h"
+#include "sctk_runtime_config_struct_defaults.h"
 
 /*******************  FUNCTION  *********************/
 bool sctk_runtime_config_map_entry_to_bool(xmlNodePtr node)

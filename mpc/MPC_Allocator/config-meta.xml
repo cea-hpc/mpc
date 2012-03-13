@@ -38,4 +38,7 @@
 	<modules>
 		<module name="allocator" type="allocator"/>
 	</modules>
+	<validators>
+		<handler>sctk_runtime_config_empty_validator_for_test</handler>
+	</validators>
 </config>

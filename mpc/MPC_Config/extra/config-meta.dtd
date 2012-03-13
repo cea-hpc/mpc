@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" ?>
 
-<!ELEMENT config (usertypes?,modules?)>
+<!ELEMENT config (usertypes?,modules?,validators?)>
 
 <!ELEMENT usertypes ((struct|union)+)>
 
@@ -37,3 +37,7 @@
 <!ELEMENT module EMPTY>
 	<!ATTLIST module name CDATA #REQUIRED>
 	<!ATTLIST module type CDATA #REQUIRED>
+
+<!ELEMENT validators (handler+)>
+
+<!ELEMENT handler (#PCDATA)>
