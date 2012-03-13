@@ -25,7 +25,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <sctk_config.h>
-#include "sctk_runtime_config_debug.h"
+#include "sctk_debug.h"
 #include "sctk_runtime_config_selectors.h"
 #include "sctk_libxml_helper.h"
 #include "sctk_runtime_config_sources.h"
@@ -109,7 +109,7 @@ void sctk_runtime_config_sources_select_profiles_in_mapping(struct sctk_runtime_
 						config_sources->profile_names[config_sources->cnt_profile_names] = profile_name;
 						printf("DEBUG : add profile %s\n",config_sources->profile_names[config_sources->cnt_profile_names]);
 						config_sources->cnt_profile_names++;
-						assume(config_sources->cnt_profile_names < SCTK_RUNTIME_CONFIG_MAX_PROFILES,
+						assume_m(config_sources->cnt_profile_names < SCTK_RUNTIME_CONFIG_MAX_PROFILES,
 						       "Reach maximum number of profiles : SCTK_RUNTIME_CONFIG_MAX_PROFILES = %d.",SCTK_RUNTIME_CONFIG_MAX_PROFILES);
 					} else {
 						xmlFree( profile_name );
@@ -264,10 +264,10 @@ void sctk_runtime_config_sources_select_profile_nodes(struct sctk_runtime_config
 	//warning
 	/** @TODO To discuss, this may be an error. **/
 	if (!find_once)
-		warning("Can't find requested profile %s in configuration files.\n",name);
+		sctk_warning("Can't find requested profile %s in configuration files.",name);
 
 	//error
-	assume(config_sources->cnt_profile_nodes < SCTK_RUNTIME_CONFIG_MAX_PROFILES,"Reach maximum number of profile : SCTK_RUNTIME_CONFIG_MAX_PROFILES = %d.",SCTK_RUNTIME_CONFIG_MAX_PROFILES);
+	assume_m(config_sources->cnt_profile_nodes < SCTK_RUNTIME_CONFIG_MAX_PROFILES,"Reach maximum number of profile : SCTK_RUNTIME_CONFIG_MAX_PROFILES = %d.",SCTK_RUNTIME_CONFIG_MAX_PROFILES);
 }
 
 /*******************  FUNCTION  *********************/
@@ -340,10 +340,10 @@ void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml *
 		switch(level)
 		{
 			case SCTK_RUNTIME_CONFIG_OPEN_WARNING:
-				warning("Cannot open XML file : %s\n",filename);
+				sctk_warning("Cannot open XML file : %s",filename);
 				return;
 			case SCTK_RUNTIME_CONFIG_OPEN_ERROR:
-				fatal("Cannot open XML file : %s\n",filename);
+				sctk_fatal("Cannot open XML file : %s",filename);
 				return;
 			case SCTK_RUNTIME_CONFIG_OPEN_SILENT:
 				return;
@@ -352,10 +352,10 @@ void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml *
 
 	//get root node
 	source->root_node = xmlDocGetRootElement(source->document);
-	assume (source->root_node != NULL,"Config file is empty : %s\n",filename);
+	assume_m (source->root_node != NULL,"Config file is empty : %s\n",filename);
 
 	//check root node name
-	assume (xmlStrcmp(source->root_node->name,SCTK_RUNTIME_CONFIG_XML_NODE_MPC) == 0,"Bad root node name %s in config file : %s\n",source->root_node->name,filename);
+	assume_m (xmlStrcmp(source->root_node->name,SCTK_RUNTIME_CONFIG_XML_NODE_MPC) == 0,"Bad root node name %s in config file : %s\n",source->root_node->name,filename);
 }
 
 /*******************  FUNCTION  *********************/

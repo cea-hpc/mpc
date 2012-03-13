@@ -22,7 +22,7 @@
 
 /********************  HEADERS  *********************/
 #include <assert.h>
-#include "sctk_runtime_config_debug.h"
+#include "sctk_debug.h"
 #include "sctk_runtime_config_walk.h"
 #include <string.h>
 
@@ -67,7 +67,7 @@ void sctk_runtime_config_walk_union(const struct sctk_runtime_config_entry_meta 
 	if (*union_type_id != 0)
 	{
 		//check
-		assume(entry->type == SCTK_CONFIG_META_TYPE_UNION_ENTRY,"Invalid union entry type : %d.",entry->type,opt);
+		assume_m(entry->type == SCTK_CONFIG_META_TYPE_UNION_ENTRY,"Invalid union entry type : %d.",entry->type,opt);
 
 		//walk on the value by using good type
 		sctk_runtime_config_walk_value(config_meta,handler,entry->name,entry->inner_type,union_data,level,opt);
@@ -231,7 +231,7 @@ void sctk_runtime_config_walk_value(const struct sctk_runtime_config_entry_meta 
 		else if (entry->type == SCTK_CONFIG_META_TYPE_UNION)
 			sctk_runtime_config_walk_union(config_meta, handler, name , type_name, value,level,opt);
 		else
-			fatal("Invalid type.");
+			sctk_fatal("Invalid type.");
 	}
 }
 

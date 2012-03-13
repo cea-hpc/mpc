@@ -19,5 +19,5 @@
 #   - VALAT Sebastien sebastien.valat@cea.fr                           #
 #                                                                      #
 ########################################################################
-# MPC Common Dependency Check
-
+# MPC Config Dependency Check
+need_module MPC_Common

@@ -23,7 +23,7 @@
 /********************  HEADERS  *********************/
 #include <assert.h>
 #include "sctk_runtime_config_selectors.h"
-#include "sctk_runtime_config_debug.h"
+#include "sctk_debug.h"
 
 /*********************  CONSTS  *********************/
 /** @TODO place all of them at same place. **/
@@ -82,7 +82,7 @@ bool sctk_runtime_config_xml_selector_check(xmlNodePtr selector)
 	if (xmlStrcmp(selector->name,BAD_CAST("env")) == 0)
 		return sctk_runtime_config_xml_selector_env_check(selector);
 	else
-		fatal("Invalid selector in mappings : %s.",selector->name);
+		sctk_fatal("Invalid selector in mappings : %s.",selector->name);
 }
 
 /*******************  FUNCTION  *********************/

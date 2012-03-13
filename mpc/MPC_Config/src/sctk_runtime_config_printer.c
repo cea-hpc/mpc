@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - VALAT Sebastien sebastien.valat@cea.fr                           # */
+/* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@cea.fr               # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -24,7 +25,7 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include "sctk_runtime_config_debug.h"
+#include "sctk_debug.h"
 #include "sctk_runtime_config_printer.h"
 #include "sctk_runtime_config_mapper.h"
 #include "sctk_runtime_config_walk.h"
@@ -186,7 +187,7 @@ void sctk_runtime_config_display_handler(enum sctk_runtime_config_walk_type type
 				}
 
 				//print the value
-				assume(sctk_runtime_config_display_plain_type(type_name,value),"Invalid plain type : %s.",type_name);
+				assume_m(sctk_runtime_config_display_plain_type(type_name,value),"Invalid plain type : %s.",type_name);
 
 				//separator if simple array, line break otherwise
 				if (state->is_simple_array)

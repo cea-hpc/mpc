@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - VALAT Sebastien sebastien.valat@cea.fr                           # */
+/* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@cea.fr               # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -24,7 +25,7 @@
 #include <assert.h>
 #include <string.h>
 #include <stdlib.h>
-#include "sctk_runtime_config_debug.h"
+#include "sctk_debug.h"
 #include "sctk_libxml_helper.h"
 #include "sctk_runtime_config_mapper.h"
 #include "sctk_runtime_config_printer.h"
@@ -41,8 +42,7 @@ bool sctk_runtime_config_map_entry_to_bool(xmlNodePtr node)
 	} else if (xmlStrcmp(value,BAD_CAST("false")) == 0) {
 		res = false;
 	} else {
-		fprintf(stderr,"Invalid boolean value (true|false) : %s\n",value);
-		abort();
+		sctk_fatal("Invalid boolean value (true|false) : %s",value);
 	}
 	xmlFree(value);
 	return res;
@@ -160,8 +160,7 @@ size_t sctk_runtime_config_map_entry_parse_size( const char *pval )
 			ret = atoll(value);
 			if( 16384 <= ret )
 			{
-				fprintf(stderr, "%llu PB is close to overflow 64bits values please choose a lower value", (unsigned long long int)ret);
-				abort();
+				sctk_fatal("%llu PB is close to overflow 64bits values please choose a lower value", (unsigned long long int)ret);
 			}
 
 			ret = ret * 1125899906842624llu;
@@ -173,8 +172,7 @@ size_t sctk_runtime_config_map_entry_parse_size( const char *pval )
 		}
 		else
 		{
-			fprintf(stderr, "Could not parse size : %s\n", pval);
-			abort();
+			sctk_fatal("Could not parse size : %s\n", pval);
 		}
 	}
 
@@ -344,7 +342,7 @@ void sctk_runtime_config_map_array(const struct sctk_runtime_config_entry_meta *
 			element = (*array)+i*current->size;
 			
 			//must only find nodes with tage_name = entry_name
-			assume(xmlStrcmp(node->name,entry_name) == 0,"Invalid child node in array alement, expect %s -> %s but get %s.",current->name,(const char*)current->extra,node->name);
+			assume_m(xmlStrcmp(node->name,entry_name) == 0,"Invalid child node in array alement, expect %s -> %s but get %s.",current->name,(const char*)current->extra,node->name);
 			
 			//init the element before mapping the xml node
 			sctk_runtime_config_apply_init_handler(config_meta, element,current->inner_type);
@@ -392,7 +390,7 @@ void sctk_runtime_config_map_union( const struct sctk_runtime_config_entry_meta 
 
 	//not found
 	if (entry->type != SCTK_CONFIG_META_TYPE_UNION_ENTRY)
-		fatal("Invalid entry type in enum %s : %s.",current->name,child->name);
+		sctk_fatal("Invalid entry type in enum %s : %s.",current->name,child->name);
 
 	//setup type ID
 	*(int*)value = entry->offset;
@@ -435,13 +433,13 @@ void sctk_runtime_config_map_value( const struct sctk_runtime_config_entry_meta 
 		//check for errors and types
 		if (entry == NULL)
 		{
-			fatal("Can't find type information for : %s.",type_name);
+			sctk_fatal("Can't find type information for : %s.",type_name);
 		} else if (entry->type == SCTK_CONFIG_META_TYPE_STRUCT) {
 			sctk_runtime_config_map_struct(config_meta,value,entry,node);
 		} else if (entry->type == SCTK_CONFIG_META_TYPE_UNION) {
 			sctk_runtime_config_map_union(config_meta,value,entry,node);
 		} else {
-			fatal("Unknown custom type : %s (%d)",type_name,entry->type);
+			sctk_fatal("Unknown custom type : %s (%d)",type_name,entry->type);
 		}
 	}
 }
@@ -512,11 +510,11 @@ void sctk_runtime_config_map_struct( const struct sctk_runtime_config_entry_meta
 	{
 		//get meta data of child
 		child = sctk_runtime_config_get_child_meta(current,node->name);
-		assume(child != NULL,"Can't find meta data for node : %s",node->name);
+		assume_m(child != NULL,"Can't find meta data for node : %s",node->name);
 		
 		//get pointer of entry in c struct
 		child_ptr = sctk_runtime_config_get_entry(struct_ptr,child);
-		assume(child_ptr != NULL,"Can't find meta data for node entry : %s",node->name);
+		assume_m(child_ptr != NULL,"Can't find meta data for node entry : %s",node->name);
 
 		//apply the good function
 		switch(child->type)
@@ -528,7 +526,7 @@ void sctk_runtime_config_map_struct( const struct sctk_runtime_config_entry_meta
 				sctk_runtime_config_map_value(config_meta,child_ptr,child->inner_type,node);
 				break;
 			default:
-				fatal("Invalid current meta entry type : %d",current->type);				
+				sctk_fatal("Invalid current meta entry type : %d",current->type);
 		}
 
 		//move to next lement

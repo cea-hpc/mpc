@@ -23,7 +23,7 @@
 /********************  HEADERS  *********************/
 #include <assert.h>
 #include <string.h>
-#include "sctk_runtime_config_debug.h"
+#include "sctk_debug.h"
 #include "sctk_runtime_config.h"
 #include "sctk_runtime_config_sources.h"
 #include "sctk_runtime_config_mapper.h"
@@ -68,7 +68,7 @@ void sctk_runtime_config_map_profile_entry(void * value, xmlNodePtr node,const c
 		entry_meta = sctk_runtime_config_get_meta_type(sctk_runtime_config_db, entry_c_type);
 
 		//check error
-		assume(entry_meta != NULL,"Invalid type name : %s.",entry_c_type);
+		assume_m(entry_meta != NULL,"Invalid type name : %s.",entry_c_type);
 
 		//map the struct
 		sctk_runtime_config_map_struct(sctk_runtime_config_db,value,entry_meta,entry);
