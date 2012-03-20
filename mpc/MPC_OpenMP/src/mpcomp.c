@@ -354,6 +354,8 @@ __mpcomp_wrapper_op (void *arg)
   if (info->context == 0)
     {
       sctk_extls = info->extls;
+	  sctk_tls_module = info->tls_module;
+	  sctk_context_restore_tls_module_vp() ;
     }
 
   sctk_nodebug
@@ -654,6 +656,8 @@ __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *),
 
   /* Restore the TLS for the main thread */
   sctk_extls = current_info->children[0]->extls;
+  sctk_tls_module = current_info->children[0]->tls_module;
+  sctk_context_restore_tls_module_vp() ;
 
   SCTK_PROFIL_END (__mpcomp_start_parallel_region);
 }
@@ -956,7 +960,7 @@ mpcomp_fork_when_blocked (sctk_microthread_vp_t * self, long step)
 				        (void (*)(void *)) self->
 				        op_list[i].func,
 				        info->stack, STACK_SIZE,
-				        info->extls);
+				        info->extls, info->tls_module); // add info->tls_module
 	  sctk_assert (res == TRUE);
 
 	  /* Context created */

@@ -182,7 +182,7 @@ extern "C"
 		            void *arg,
 		            void (*func) (void *), char *stack,
 		            size_t stack_size,
-		            void *extls);
+		            void *extls, void* tls_module);
   void sctk_tls_init (void);
 
 

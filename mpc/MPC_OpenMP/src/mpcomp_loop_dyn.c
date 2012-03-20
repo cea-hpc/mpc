@@ -935,6 +935,8 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
 
   /* Restore the TLS for the main thread */
   sctk_extls = current_info->children[0]->extls;
+  sctk_tls_module = current_info->children[0]->tls_module;
+  sctk_context_restore_tls_module_vp ();
 
   SCTK_PROFIL_END (__mpcomp_start_parallel_region);
 } /* __mpcomp_start_parallel_dynamic_loop */

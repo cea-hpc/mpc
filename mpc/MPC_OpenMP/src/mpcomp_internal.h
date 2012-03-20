@@ -127,6 +127,7 @@ extern "C"
     struct sctk_microthread_s *task;	/* Corresponding microthread "task" */
 
     void *extls;
+	void *tls_module;
 
     /* Private info on the current loop (whatever its schedule is)  */
     int loop_lb;		/* Lower bound */
@@ -285,6 +286,7 @@ extern "C"
       {
 	sctk_nodebug ("__mpcomp_init_thread_info: keep everything \n");
 	info->extls = sctk_extls;
+	info->tls_module = sctk_tls_module;
       }
     else
       {
@@ -296,7 +298,9 @@ extern "C"
 	  }
 	sctk_nodebug ("__mpcomp_init_thread_info: keep[1] = %d\n", keep[1]);
 	keep[sctk_extls_openmp_scope] = 0;
-	sctk_extls_keep_non_current_thread (info->extls, keep);
+	sctk_extls_keep_with_specified_extls (info->extls, keep);
+	sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( &info->tls_module, info->extls ) ;
+//	sctk_tls_module_alloc_and_fill_with_specified_extls ( &info->tls_module, info->extls ) ;
       }
 
 #if 0

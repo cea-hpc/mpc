@@ -91,6 +91,14 @@ extern "C"
   extern __thread struct sctk_thread_specific_s *sctk_message_passing;
 #endif
 
+  static inline void sctk_context_restore_tls_module_vp () {
+	  int i;
+	  if ( sctk_tls_module != NULL ) {
+		  for ( i=0; i<sctk_extls_max_scope+sctk_hls_max_scope; ++i )
+			  sctk_tls_module_vp[i] = sctk_tls_module[i] ;
+	  }
+  }
+
 #define tls_save(a) ucp->a = a;
 #define tls_restore(a) a = ucp->a;
 #define tls_init(a) ucp->a = NULL;
@@ -131,10 +139,7 @@ extern "C"
     tls_restore (sctk_extls);
     tls_restore (sctk_hls_generation);
     tls_restore (sctk_tls_module);
-	if ( sctk_tls_module != NULL ) {
-		for ( i=0; i<sctk_extls_max_scope+sctk_hls_max_scope; ++i )
-			sctk_tls_module_vp[i] = sctk_tls_module[i] ;
-	}
+    sctk_context_restore_tls_module_vp () ;
 #ifdef MPC_Message_Passing
     tls_restore (sctk_message_passing);
 #endif
@@ -175,10 +180,12 @@ extern "C"
 #endif
   }
 
-  static inline void sctk_context_init_tls_with_specified_extls (sctk_mctx_t * ucp, void * extls)
+  static inline void sctk_context_init_tls_with_specified_extls (sctk_mctx_t* ucp, void* extls, void* tls_module) // and tls_module
   {
 #if defined(SCTK_USE_TLS)
 	ucp->sctk_extls = extls ;
+	ucp->sctk_tls_module = tls_module ;
+	// ucp->sctk_tls_module = tls_module ;
     sctk_context_init_tls_without_extls (ucp);
 #endif
   }

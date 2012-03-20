@@ -376,8 +376,32 @@ sctk_extls_duplicate (void **new)
 }
 
 /*
-   only keep some tls and create new ones
+  take TLS_Module from father
 */
+
+void
+sctk_tls_module_duplicate (void **new)
+{
+  sctk_tls_module_t *tls_module = (sctk_tls_module_t*) sctk_tls_module;
+  sctk_tls_module_t *new_tls_module = sctk_calloc(sctk_extls_max_scope+sctk_hls_max_scope,sizeof(sctk_tls_module_t));
+  int i;
+
+  if( tls_module == NULL ){
+  	tls_module = sctk_calloc(sctk_extls_max_scope+sctk_hls_max_scope,sizeof(sctk_tls_module_t));
+	for( i=0; i<sctk_extls_max_scope+sctk_hls_max_scope; i++ ){
+		tls_module[i] = NULL;
+	}
+  }
+  *(sctk_tls_module_t**) new = new_tls_module;
+  sctk_tls_module = tls_module;
+
+  for( i=0; i<sctk_extls_max_scope+sctk_hls_max_scope; i++ ){
+  	new_tls_module[i] = tls_module[i];
+  }
+}
+
+/*
+   only keep some tls and create new ones
 void
 sctk_extls_keep (int *scopes)
 {
@@ -397,12 +421,14 @@ sctk_extls_keep (int *scopes)
 	}
     }
 }
+*/
 
 /*
   used by openmp in MPC_OpenMP/src/mpcomp_internal.h
 */
 void
-sctk_extls_keep_non_current_thread (void **extls, int *scopes)
+//sctk_extls_keep_non_current_thread (void **extls, int *scopes)
+sctk_extls_keep_with_specified_extls (void **extls, int *scopes)
 {
   int i;
 
@@ -417,6 +443,12 @@ sctk_extls_keep_non_current_thread (void **extls, int *scopes)
 	  sctk_tls_init_level (extls[i]);
 	}
     }
+}
+
+void
+sctk_extls_keep ( int *scopes )
+{
+	sctk_extls_keep_with_specified_extls ( sctk_extls, scopes ) ;
 }
 
 void
@@ -615,14 +647,13 @@ sctk_tls_module_set_gs_register ()
 }
 
 /*
- * Allocate and fill the tls_module for a thread
- * to be called before the user code starts
+ * Allocate and fill the specified tls_module using the specified extls
  */
 void
-sctk_tls_module_alloc_and_fill ()
+sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( void **_tls_module, void *_extls )
 {
 	int i ;
-	tls_level **extls = (tls_level**) sctk_extls ;
+	tls_level **extls = (tls_level**) _extls ;
 	sctk_tls_module_t *tls_module = sctk_calloc(sctk_extls_max_scope+sctk_hls_max_scope,sizeof(sctk_tls_module_t));
 
 	for ( i=0 ; i<sctk_extls_max_scope ; ++i ) {
@@ -655,12 +686,27 @@ sctk_tls_module_alloc_and_fill ()
 		tls_module[sctk_extls_max_scope+i] = sctk_hls[i]->level.modules[0] ;
 	}
 
+	*_tls_module = (void**) tls_module ;
+}
+
+/*
+ * Allocate and fill the tls_module for a thread
+ * to be called before the user code starts
+ */
+void
+sctk_tls_module_alloc_and_fill ()
+{
+	tls_level **extls = (tls_level**) sctk_extls ;
+	sctk_tls_module_t *tls_module ;
+	int i;
+
+	sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( &tls_module, extls ) ;
+	
 	for ( i=0; i<sctk_extls_max_scope+sctk_hls_max_scope; ++i )
 		sctk_tls_module_vp[i] = tls_module[i] ;
 
 	sctk_tls_module = (void**)tls_module ;
 }
-
 
 #if defined(SCTK_i686_ARCH_SCTK) || defined (SCTK_x86_64_ARCH_SCTK)
 
