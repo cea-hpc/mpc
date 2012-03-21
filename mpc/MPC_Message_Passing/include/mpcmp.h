@@ -728,6 +728,7 @@ extern "C"
     int not_matched;
 
     int poll_own;
+    int poll_own_failed;
     /* Number of msg stolen by another task */
     int poll_stolen;
 

@@ -122,8 +122,8 @@ void sctk_network_init_multirail_ib_all(char* name, char* topology){
 
   /* FIXME: for the moment, IB requires an ondemand connexion.
    * Exiting else... */
-  if (strcmp(topology, "ondemand")) {
-      sctk_error("IB requires the 'ondemand' topology! Exiting...");
+  if (strcmp(topology, "ondemand") && strcmp(topology, "fully")) {
+      sctk_error("IB requires the 'ondemand' of the 'fully' topology! Exiting...");
       sctk_abort();
   }
 

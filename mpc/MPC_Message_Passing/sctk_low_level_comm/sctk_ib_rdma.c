@@ -133,7 +133,7 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
  * SEND REQUEST
  */
 sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
-    sctk_route_table_t* route_table, sctk_thread_ptp_message_t * msg, size_t size) {
+    sctk_route_table_t* route_table, sctk_thread_ptp_message_t * msg, size_t size, int low_memory_mode) {
   sctk_ibuf_t *ibuf;
   sctk_ib_rdma_t *rdma_header;
   sctk_ib_rdma_req_t *rdma_req;
@@ -141,6 +141,7 @@ sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
   ibuf = sctk_ibuf_pick(&rail->network.ib, 1, task_node_number);
   IBUF_SET_DEST_TASK(ibuf, msg->sctk_msg_get_glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->sctk_msg_get_glob_source);
+  IBUF_SET_LOW_MEMORY_MODE(ibuf, low_memory_mode);
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_req_type);
 
@@ -172,16 +173,33 @@ sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
 /*
  * SEND RDMA ACK
  */
-inline sctk_ibuf_t* sctk_ib_rdma_prepare_ack(sctk_ib_rail_info_t* rail_ib,
+static inline sctk_ibuf_t* sctk_ib_rdma_prepare_ack(sctk_rail_info_t* rail,
   sctk_thread_ptp_message_t* msg) {
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  LOAD_CONFIG(rail_ib);
   sctk_ibuf_t *ibuf;
   sctk_ib_rdma_t *rdma_header;
   sctk_ib_rdma_ack_t *rdma_ack;
+  sctk_route_table_t* route;
+  int low_memory_mode_local;
+
+#if 0
+  if( IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag)) {
+    route = sctk_get_route_to_process(msg->sctk_msg_get_source,rail);
+  } else {
+    route = sctk_get_route(msg->sctk_msg_get_glob_source,rail);
+  }
+  low_memory_mode_local = (config->ibv_low_memory && !sctk_route_is_low_memory_mode_local(route));
+  if (low_memory_mode_local == 1) {
+    sctk_route_set_low_memory_mode_local(route, 1);
+  }
+#endif
 
   ibuf = sctk_ibuf_pick(rail_ib, 1, task_node_number);
   /* XXX: Source and dest inverted */
-  IBUF_SET_DEST_TASK(ibuf, msg->tail.ib.rdma.glob_source);
-  IBUF_SET_SRC_TASK(ibuf, msg->tail.ib.rdma.glob_destination);
+  IBUF_SET_DEST_TASK(ibuf, msg->tail.ib.rdma.glob_destination);
+  IBUF_SET_SRC_TASK(ibuf, msg->tail.ib.rdma.glob_source);
+  IBUF_SET_LOW_MEMORY_MODE(ibuf, low_memory_mode_local);
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_ack_type);
 
@@ -256,6 +274,7 @@ sctk_ib_rdma_prepare_done_write(sctk_rail_info_t* rail,
   rdma_done->dest_msg_header = dest_msg_header;
   IBUF_SET_DEST_TASK(ibuf, src_msg_header->tail.ib.rdma.glob_destination);
   IBUF_SET_SRC_TASK(ibuf, src_msg_header->tail.ib.rdma.glob_source);
+  IBUF_SET_LOW_MEMORY_MODE(ibuf, 0);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_done_type);
   sctk_ibuf_send_init(ibuf, IBUF_GET_RDMA_DONE_SIZE);
   sctk_ibuf_set_protocol(ibuf, rdma_protocol);
@@ -308,7 +327,7 @@ static void sctk_ib_rdma_send_ack(sctk_rail_info_t* rail, sctk_thread_ptp_messag
       send_header->rdma.local.aligned_size);
   sctk_nodebug("MMU registered for msg %p", send_header);
 
-  ibuf = sctk_ib_rdma_prepare_ack(rail_ib, msg);
+  ibuf = sctk_ib_rdma_prepare_ack(rail, msg);
 
   /* Send message */
   remote = send_header->rdma.route_table->data.ib.remote;
@@ -347,9 +366,6 @@ void sctk_ib_rdma_net_copy(sctk_message_to_copy_t* tmp){
       sctk_ib_rdma_send_ack(send_header->rdma.rail, send);
       send_header->rdma.local.ready = 1;
     }
-#if 0
-    else not_reachable();
-#endif
 
     sctk_nodebug("Copy_ptr: %p (free:%p, ptr:%p)", tmp, send->tail.free_memory,
         send_header->rdma.local.addr);
@@ -374,11 +390,23 @@ sctk_ib_rdma_recv_ack(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   sctk_ib_rdma_ack_t *rdma_ack;
   sctk_thread_ptp_message_t *dest_msg_header;
   sctk_thread_ptp_message_t *src_msg_header;
+  sctk_route_table_t* route;
 
   /* Save the values of the ack because the buffer will be reused */
   rdma_ack = IBUF_GET_RDMA_ACK(ibuf->buffer);
   src_msg_header  = rdma_ack->dest_msg_header;
   dest_msg_header = rdma_ack->src_msg_header;
+
+#if 0
+  if (IBUF_GET_LOW_MEMORY_MODE(ibuf) == 1) {
+    if( IS_PROCESS_SPECIFIC_MESSAGE_TAG(src_msg_header->body.header.specific_message_tag)) {
+      route = sctk_get_route_to_process(src_msg_header->sctk_msg_get_destination,rail);
+    } else {
+      route = sctk_get_route(src_msg_header->sctk_msg_get_glob_destination,rail);
+    }
+    sctk_route_set_low_memory_mode_remote(route, 1);
+  }
+#endif
 
   /* Wait while the message becomes ready */
   sctk_thread_wait_for_value((int*) &src_msg_header->tail.ib.rdma.local.ready, 1);
@@ -413,9 +441,14 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   if( IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag)) {
     route = sctk_get_route_to_process(msg->sctk_msg_get_source,rail);
   } else {
-    sctk_nodebug("Connexion to %d", msg->sctk_msg_get_glob_destination);
     route = sctk_get_route(msg->sctk_msg_get_glob_source,rail);
   }
+
+#if 0
+  if (IBUF_GET_LOW_MEMORY_MODE(ibuf) == 1) {
+    sctk_route_set_low_memory_mode_remote(route, 1);
+  }
+#endif
 
   msg->body.completion_flag = NULL;
   msg->tail.message_type = sctk_message_network;

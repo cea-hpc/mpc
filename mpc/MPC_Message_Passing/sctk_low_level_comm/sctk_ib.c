@@ -200,6 +200,7 @@ void sctk_network_stats_ib (struct MPC_Network_stats_s* stats) {
   stats->matched = CP_PROF_PRINT(task, matched);
   stats->not_matched = CP_PROF_PRINT(task, not_matched);
   stats->poll_own = CP_PROF_PRINT(task, poll_own);
+  stats->poll_own_failed = CP_PROF_PRINT(task, poll_own_failed);
   stats->poll_steals = CP_PROF_PRINT(task, poll_steals);
 
   stats->poll_steal_same_node = CP_PROF_PRINT(task, poll_steal_same_node);

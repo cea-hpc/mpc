@@ -36,7 +36,7 @@
  *  FUNCTIONS
  *----------------------------------------------------------*/
 sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
-    sctk_ib_qp_t* route_data, sctk_thread_ptp_message_t * msg, size_t size) {
+    sctk_ib_qp_t* route_data, sctk_thread_ptp_message_t * msg, size_t size, int low_memory_mode) {
   sctk_ibuf_t *ibuf;
   sctk_ib_eager_t *eager_header;
   void* body;
@@ -45,7 +45,7 @@ sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
   ibuf = sctk_ibuf_pick(rail_ib, 1, task_node_number);
   IBUF_SET_DEST_TASK(ibuf, msg->sctk_msg_get_glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->sctk_msg_get_glob_source);
-  sctk_nodebug("Picked buffer %p", ibuf);
+  IBUF_SET_LOW_MEMORY_MODE(ibuf, low_memory_mode);
 
   /* Copy header */
   memcpy(IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer), msg, sizeof(sctk_thread_ptp_message_body_t));
@@ -141,6 +141,20 @@ sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int *recopy) {
   msg->tail.ib.eager.ibuf = ibuf;
 
   sctk_rebuild_header(msg);
+#if 0
+  if (IBUF_GET_LOW_MEMORY_MODE(ibuf) == 1) {
+    sctk_route_table_t* route;
+    if( IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag)) {
+      route = sctk_get_route_to_process_no_ondemand(msg->sctk_msg_get_source,rail);
+    } else {
+      int process;
+      process = sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_glob_source);
+      route = sctk_get_route_to_process_no_ondemand(process,rail);
+    }
+//    sctk_route_set_low_memory_mode_remote(route, 1);
+  }
+#endif
+
   return msg;
 }
 

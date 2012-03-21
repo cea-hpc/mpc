@@ -72,6 +72,8 @@ typedef struct sctk_ib_rdma_req_s {
   sctk_thread_ptp_message_t* dest_msg_header;
   size_t requested_size;
   sctk_message_type_t message_type;
+  int source;
+  int glob_source;
 } __attribute__ ((packed))
 sctk_ib_rdma_req_t;
 
@@ -105,7 +107,8 @@ sctk_ib_rdma_done_t;
  *----------------------------------------------------------*/
 
 sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
-    sctk_route_table_t* route_table, sctk_thread_ptp_message_t * msg, size_t size);
+    sctk_route_table_t* route_table, sctk_thread_ptp_message_t * msg, size_t size,
+    int low_memory_mode);
 
 int
 sctk_ib_rdma_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf);

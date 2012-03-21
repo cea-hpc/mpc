@@ -47,6 +47,9 @@ enum cp_counters_e{
   poll_steal_other_node,
   /* Number of steals tried */
   poll_steal_try,
+  /* Poll own failed */
+  poll_own_lock_failed,
+  poll_own_failed
 };
 
 extern __thread int task_node_number;
@@ -60,10 +63,14 @@ typedef struct sctk_ib_cp_task_s{
   int node;
   /* rank is the key of HT */
   int rank;
-  /* pending ibufs for the current task  */
-  sctk_ibuf_t *recv_ibufs;
-  sctk_ibuf_t *send_ibufs;
-  sctk_spinlock_t lock;
+  /* local pending ibufs for the current task  */
+  sctk_ibuf_t *local_ibufs_list;
+  sctk_spinlock_t local_ibufs_list_lock;
+  char dummy[64];
+  /* global pending ibufs for the current task  */
+  sctk_ibuf_t * volatile * global_ibufs_list;
+  sctk_spinlock_t *global_ibufs_list_lock;
+
   /* Counters */
   OPA_int_t c[64];
   /* Timers */
@@ -74,6 +81,7 @@ typedef struct sctk_ib_cp_task_s{
   /* Tasks linked together on NUMA */
   struct sctk_ib_cp_task_s* prev;
   struct sctk_ib_cp_task_s* next;
+  char dummy1[64];
 } sctk_ib_cp_task_t;
 #define CP_PROF_INC(t,x) do {   \
   OPA_incr_int(&t->c[x]);        \
@@ -100,7 +108,7 @@ void sctk_ib_cp_init_task(int rank, int vp);
 
 void sctk_ib_cp_finalize_task(int rank);
 
-int sctk_ib_cp_handle_message(struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf, int dest_task, enum sctk_ib_cp_poll_cq_e cq);
+int sctk_ib_cp_handle_message(struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf, int dest_task, int target_task, enum sctk_ib_cp_poll_cq_e cq);
 
 int sctk_ib_cp_poll(struct sctk_rail_info_s* rail, struct sctk_ib_polling_s *poll);
 

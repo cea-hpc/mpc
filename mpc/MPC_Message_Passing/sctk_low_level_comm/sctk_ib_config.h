@@ -67,6 +67,7 @@ typedef struct sctk_ib_config_s
   unsigned int  ibv_adaptive_polling;
   unsigned int  ibv_secure_polling;
   unsigned int  ibv_steal;
+  unsigned int  ibv_low_memory;
   unsigned int  ibv_quiet_crash;
   unsigned int  ibv_match;
 

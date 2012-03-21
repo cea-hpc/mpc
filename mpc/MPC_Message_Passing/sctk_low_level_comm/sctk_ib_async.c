@@ -138,11 +138,23 @@ void* async_thread(void* arg)
         int ret, polled;
         limit = config->ibv_max_srq_ibufs_posted;
 
-        /* We first try to poll and steal from SRQ */
-//        polled = sctk_network_poll_all_entries(rail_ib);
-        /* We try to post new buffers */
-//        ret = sctk_ibuf_srq_check_and_post(rail_ib, limit);
+        /* We use now the low memory mode */
+        /* TODO: this mode is used until the end of the run */
 #if 0
+        if (config->ibv_low_memory == 0) {
+          sctk_warning("Falling back to the low memory mode !");
+          config->ibv_low_memory = 1;
+        } else {
+          sctk_warning("Low memory mode not sufficient. Increase the number of buffers !");
+        }
+#endif
+
+#if 0
+        /* We first try to poll and steal from SRQ */
+        polled = sctk_network_poll_all_entries(rail_ib);
+        /* We try to post new buffers */
+        ret = sctk_ibuf_srq_check_and_post(rail_ib, limit);
+
         /* If no buffers posted */
         if (ret == 0) {
           if (limit + 128 < sctk_ib_srq_get_max_srq_wr(rail_ib)) {

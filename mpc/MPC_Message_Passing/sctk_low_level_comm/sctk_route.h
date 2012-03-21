@@ -82,6 +82,11 @@ typedef struct sctk_route_table_s{
 
   /* If route connected & ready to use*/
   OPA_int_t connected;
+  /* If a message "out of memory" has already been sent to the
+   * process to notice him that we are out of memory */
+  OPA_int_t low_memory_mode_local;
+  /* If the remote process is running out of memory */
+  OPA_int_t low_memory_mode_remote;
 
 } sctk_route_table_t;
 
@@ -92,8 +97,15 @@ void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* 
 void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail);
 struct sctk_route_table_s *sctk_route_dynamic_search(int dest, sctk_rail_info_t* rail);
 
+/* For ondemand connexions */
 int sctk_route_is_connected(sctk_route_table_t* tmp);
 void sctk_route_set_connected(sctk_route_table_t* tmp, int connected);
+
+/* For low_memory_mode */
+int sctk_route_is_low_memory_mode_remote(sctk_route_table_t* tmp);
+void sctk_route_set_low_memory_mode_remote(sctk_route_table_t* tmp, int low);
+int sctk_route_is_low_memory_mode_local(sctk_route_table_t* tmp);
+void sctk_route_set_low_memory_mode_local(sctk_route_table_t* tmp, int low);
 
   sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail);
 sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail);

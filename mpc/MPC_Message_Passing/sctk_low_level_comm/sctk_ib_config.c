@@ -47,8 +47,8 @@
  * if x > IBV_FRAG_EAGER_LIMIT -> rendezvous msg */
 //#define IBV_EAGER_LIMIT ( 12 * 1024 )
 #define IBV_EAGER_LIMIT       ( 12 * 1024)
-#define IBV_FRAG_EAGER_LIMIT  (1024 * 256)
-//#define IBV_FRAG_EAGER_LIMIT  (1024 * 1024)
+#define IBV_FRAG_EAGER_LIMIT  (1024 * 1024)
+//#define IBV_FRAG_EAGER_LIMIT  (10 * 1024 * 1024)
 /* Number of allowed pending Work Queue Elements
  * for each QP */
 #define IBV_QP_TX_DEPTH     15000
@@ -64,19 +64,22 @@
 
 /* Maximum number of buffers to allocate during the
  * initialization step */
-#define IBV_INIT_IBUFS         2000
+#define IBV_INIT_IBUFS         20000
+//#define IBV_INIT_IBUFS         100
 
 /* Maximum number of buffers which can be posted to the SRQ.
  * This number cannot be higher than than the number fixed by the HW.
  * The verification is done during the config_check function */
 #define IBV_MAX_SRQ_IBUFS_POSTED     6000
+//#define IBV_MAX_SRQ_IBUFS_POSTED     50
 /* When the async thread wakes, it means that the SRQ is full. We
  * allows the async thread to extract IBV_MAX_SRQ_WR_HANDLE_BY_THREAD messages
  * before posting new buffers .*/
 #define IBV_MAX_SRQ_WR_HANDLE_BY_THREAD 50
 /* Maximum number of buffers which can be used by SRQ. This number
  * is not fixed by the HW */
-#define IBV_MAX_SRQ_IBUFS            6000
+#define IBV_MAX_SRQ_IBUFS            12000
+//#define IBV_MAX_SRQ_IBUFS            50
 /* Minimum number of free recv buffer before
  * posting of new buffers. This thread is  activated
  * once a recv buffer is freed. If IBV_SRQ_CREDIT_LIMIT ==
@@ -98,7 +101,7 @@
 
 /* Number of new buffers allocated when
  * no more buffers are available */
-#define IBV_SIZE_IBUFS_CHUNKS 1000
+#define IBV_SIZE_IBUFS_CHUNKS 2000
 
 #define IBV_WC_IN_NUMBER    1
 #define IBV_WC_OUT_NUMBER   1
@@ -110,14 +113,14 @@
  * no more MMU entries are available */
 #define IBV_SIZE_MR_CHUNKS  200
 #define IBV_MMU_CACHE_ENABLED 0
-#define IBV_MMU_CACHE_ENTRIES 10
+#define IBV_MMU_CACHE_ENTRIES 0
 
 #define IBV_ADM_PORT        1
 
 #define IBV_RDMA_DEPTH       4
 #define IBV_RDMA_DEST_DEPTH  4
 
-#define IBV_NO_MEMORY_LIMITATION  1
+#define IBV_LOW_MEMORY 0
 /* Verbosity level (some infos can appears on
  * the terminal during runtime: new ibufs allocated,
  * new MMu entries allocated, etc...) */
@@ -201,6 +204,7 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         "ibv_match            = %d\n"
         EXPERIMENTAL(ibv_steal)"            = %d\n"
         "Stealing desc        = %s\n"
+        EXPERIMENTAL(ibv_low_memory)"            = %d\n"
         "#############\n",
         config->network_name,
         config->ibv_eager_limit,
@@ -228,7 +232,8 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         config->ibv_adaptive_polling,
         config->ibv_quiet_crash,
         config->ibv_match,
-        config->ibv_steal, steal_names[config->ibv_steal]);
+        config->ibv_steal, steal_names[config->ibv_steal],
+        config->ibv_low_memory);
   }
 }
 
@@ -266,6 +271,7 @@ void load_ib_default_config(sctk_ib_rail_info_t *rail_ib)
   config->ibv_rdma_dest_depth = IBV_RDMA_DEST_DEPTH;
   config->ibv_adaptive_polling = IBV_ADAPTIVE_POLLING;
   config->ibv_steal = IBV_STEAL;
+  config->ibv_low_memory = IBV_LOW_MEMORY;
   config->ibv_quiet_crash = IBV_QUIET_CRASH;
   config->ibv_match = IBV_MATCH;
 }
@@ -352,6 +358,9 @@ void set_ib_env(sctk_ib_rail_info_t *rail_ib)
 
   if ( (value = getenv("MPC_IBV_STEAL")) != NULL )
     c->ibv_steal = atoi(value);
+
+  if ( (value = getenv("MPC_IBV_LOW_MEMORY")) != NULL )
+    c->ibv_low_memory = atoi(value);
 
   if ( (value = getenv("MPC_IBV_QUIET_CRASH")) != NULL )
     c->ibv_quiet_crash = atoi(value);
