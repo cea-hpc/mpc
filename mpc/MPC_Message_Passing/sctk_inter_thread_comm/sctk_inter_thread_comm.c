@@ -601,7 +601,7 @@ inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp){
   send = tmp->msg_send;
   recv = tmp->msg_recv;
 
-  assume(send->tail.message_type == sctk_message_pack_absolute); 
+  assume(send->tail.message_type == sctk_message_pack_absolute);
 
   switch(recv->tail.message_type){
   case sctk_message_pack_absolute: {
@@ -629,7 +629,7 @@ inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp){
     size_t size;
     char* body;
 
-    body = recv->tail.message.contiguous.addr; 
+    body = recv->tail.message.contiguous.addr;
 
     sctk_nodebug("COUNT %lu",send->tail.message.pack.count);
 
@@ -1205,7 +1205,6 @@ void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_ch
 
     /*   key.comm = msg->header.communicator; */
     key.destination = msg->sctk_msg_get_glob_destination;
-    sctk_nodebug("glob dest: %d", key.destination);
 
     assume(msg->sctk_msg_get_communicator >= 0);
 
