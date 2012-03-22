@@ -164,7 +164,6 @@ void __mpcomp_internal_barrier_for_dyn(mpcomp_thread_t *t)
    }
 }
 
-
 /* 
   Start a new for dynamic construct
 */
@@ -177,8 +176,6 @@ int __mpcomp_dynamic_loop_begin(int lb, int b, int incr, int chunk_size, int *fr
   int num_threads;
   int remain;
   int chunk_id;
-
-  //printf("[__mpcomp_dynamic_loop_begin] begin..\n"); //DEBUG
 
   /* Grab the info of the current thread */    
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
@@ -216,6 +213,8 @@ int __mpcomp_dynamic_loop_begin(int lb, int b, int incr, int chunk_size, int *fr
       team->stop[index] = MPCOMP_CONSUMED;
       sctk_spinlock_unlock(&(team->lock_stop_for_dyn));
 
+      //printf("[__mpcomp_dynamic_loop_begin rank=%d] last loop: MPCOMP_STOP\n"); 
+
       /* Call barrier */
       __mpcomp_barrier_for_dyn();
 
@@ -227,6 +226,8 @@ int __mpcomp_dynamic_loop_begin(int lb, int b, int incr, int chunk_size, int *fr
     if (team->stop[index] == MPCOMP_CONSUMED) {
 
       sctk_spinlock_unlock(&(team->lock_stop_for_dyn));
+
+      //printf("[__mpcomp_dynamic_loop_begin rank=%d] last loop: MPCOMP_CONSUMED\n");       
 
       /* Call barrier */
       __mpcomp_barrier_for_dyn();
@@ -255,7 +256,9 @@ int __mpcomp_dynamic_loop_begin(int lb, int b, int incr, int chunk_size, int *fr
     /* Compute the number of chunks for the thread "rank"  */
     total_nb_chunks = __mpcomp_get_static_nb_chunks_per_rank(rank, num_threads, lb, b, incr, chunk_size); 
     team->chunk_info_for_dyn[rank][index].total = total_nb_chunks;
-    
+   
+    //printf("[__mpcomp_dynamic_loop_begin rank=%d] remain=-1, total_nb_chunks=%d\n", rank, total_nb_chunks);       
+     
     /* First chunk is been scheduled */
     team->chunk_info_for_dyn[rank][index].remain = total_nb_chunks - 1;
 
@@ -289,8 +292,6 @@ int __mpcomp_dynamic_loop_begin(int lb, int b, int incr, int chunk_size, int *fr
   /* remain == 0 -> somebody stole everything */
   if (remain == 0) {
 
-    //printf("[__mpcomp_dynamic_loop_begin] remain=0..\n"); //DEBUG
-   
     sctk_spinlock_unlock(&(team->lock_for_dyn[rank][index]));
 
     /* TODO: this thread has no more chunks for this loop. Should we fill the private info about the loop anyway ? Maybe not. */
@@ -301,34 +302,7 @@ int __mpcomp_dynamic_loop_begin(int lb, int b, int incr, int chunk_size, int *fr
     t->loop_chunk_size = chunk_size;
 
     /* TODO: Try to steal someone ? */
-    __mpcomp_steal_chunk(); 
-
-    remain = team->chunk_info_for_dyn[rank][index].remain;
-
-    if (remain > 0) {
-
-     /* remain > 0 -> somebody stole at least one chunk and there is still at least one chunk to schedule */ 
-     chunk_id =  team->chunk_info_for_dyn[rank][index].total - remain;
-  
-     sctk_spinlock_lock(&(team->lock_for_dyn[rank][index]));
-
-     /* TODO use atomics to decrement */
-     team->chunk_info_for_dyn[rank][index].remain--;
-
-     sctk_spinlock_unlock(&(team->lock_for_dyn[rank][index]));
-
-     /* Fill the private information about the current loop */  
-     t->loop_lb = lb;
-     t->loop_b = b;
-     t->loop_incr = incr;
-     t->loop_chunk_size = chunk_size;
-
-     __mpcomp_get_specific_chunk_per_rank(rank, num_threads, lb, b, incr, chunk_size, chunk_id, from, to);
-
-     sctk_openmp_thread_tls = t;
-
-     return 1+chunk_id; 
-    } 
+    
 
     sctk_openmp_thread_tls = t; 
 
@@ -337,6 +311,8 @@ int __mpcomp_dynamic_loop_begin(int lb, int b, int incr, int chunk_size, int *fr
 
   /* remain > 0 -> somebody stole at least one chunk and there is still at least one chunk to schedule */ 
   chunk_id =  team->chunk_info_for_dyn[rank][index].total - remain;
+
+  //printf("[__mpcomp_dynamic_loop_begin rank=%d] remain=%d, total=%d (chunks stolen !)", rank, remain, team->chunk_info_for_dyn[rank][index]);  
 
   /* TODO use atomics to decrement */
   team->chunk_info_for_dyn[rank][index].remain--;
@@ -372,8 +348,6 @@ int __mpcomp_dynamic_loop_next(int *from, int *to)
   int chunk_id;
   int total_nb_chunks;
 
-  //printf("[__mpcomp_dynamic_loop_next] begin..\n"); //DEBUG
-
   /* Grab the info of the current thread */    
   t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
@@ -394,6 +368,7 @@ int __mpcomp_dynamic_loop_next(int *from, int *to)
 
   /* Index of the current loop */
   index = t->private_current_for_dyn-1;
+  //index = (t->private_current_for_dyn) % MPCOMP_MAX_ALIVE_FOR_DYN;
 
   sctk_spinlock_lock(&(team->lock_for_dyn[rank][index]));
 
@@ -404,38 +379,11 @@ int __mpcomp_dynamic_loop_next(int *from, int *to)
   if (remain == 0) {
     sctk_spinlock_unlock(&(team->lock_for_dyn[rank][index]));
 
-    //printf("[__mpcomp_dyamic_loop_next] remain = 0..\n"); //DEBUG
-
     /* TODO steal a chunk for other threads */
     /* There is still a bug in the current stealing.  
        When thread i steals a chunk from thread j it seems like 
        thread j does not see the stealing and executes the "stolen" chunk.
        That mean that a stolen chunk is executed twice */
-
-    __mpcomp_steal_chunk();
-
-    remain = team->chunk_info_for_dyn[rank][index].remain;   
-
-    if (remain > 0) {
-
-      /* remain > 0 -> somebody stole at least one chunk and there is still at least one chunk to schedule */ 
-      chunk_id =  team->chunk_info_for_dyn[rank][index].total - remain;
-  
-      sctk_spinlock_lock(&(team->lock_for_dyn[rank][index]));
-
-      /* TODO use atomics to decrement */
-      team->chunk_info_for_dyn[rank][index].remain--;
-
-      sctk_spinlock_unlock(&(team->lock_for_dyn[rank][index]));
-
-      __mpcomp_get_specific_chunk_per_rank(rank, num_threads, t->loop_lb, t->loop_b, t->loop_incr, t->loop_chunk_size, chunk_id, from, to);
-
-      sctk_openmp_thread_tls = t;
-
-      return 1+chunk_id; 
-    } 
-
- 
 #if 0
     int i;
     int chunk_id;
@@ -514,6 +462,8 @@ int __mpcomp_dynamic_loop_next(int *from, int *to)
     }
 #endif
 
+    printf("[__mpcomp_dynamic_loop_next rank=%d] remain = %d, return 0\n", rank, remain); 
+
     /* Nothing to steal */
     return 0;    
   }
@@ -523,15 +473,21 @@ int __mpcomp_dynamic_loop_next(int *from, int *to)
   
   /* Current chunk id */
   chunk_id = total_nb_chunks - remain;
+  
+  printf("[__mpcomp_dynamic_loop_next before rank=%d] remain=%d, total_nb_chunks=%d, chunk_id=%d\n", rank, remain, total_nb_chunks, chunk_id); //DEBUG
 
   /* TODO use atomics to decrement */
   team->chunk_info_for_dyn[rank][index].remain--;
+
+  //printf("[__mpcomp_dynamic_loop_next after rank=%d] remain=%d, total_nb_chunks=%d, chunk_id=%d\n", rank, team->chunk_info_for_dyn[rank][index].remain, total_nb_chunks, chunk_id); //DEBUG
 
   sctk_spinlock_unlock(&(team->lock_for_dyn[rank][index]));
 
   __mpcomp_get_specific_chunk_per_rank(rank, num_threads, t->loop_lb, t->loop_b, t->loop_incr, t->loop_chunk_size, chunk_id, from, to);
  
   sctk_openmp_thread_tls = t; 
+
+  //printf("[__mpcomp_dynamic_loop_next rank=%d] chunk_id=%d\n", rank, chunk_id); //AMAHEO
 
   return 1+chunk_id;
 }
@@ -645,203 +601,6 @@ void __mpcomp_dynamic_loop_end_nowait()
   sctk_openmp_thread_tls = t;
 
 }
-
-/*
-  Search in tree for other chunks to steal
-*/
-void __mpcomp_steal_chunk()
-{
-  int node_index;
-  int i;
-  mpcomp_thread_t *t;
-  mpcomp_thread_t *start_t;
-  mpcomp_thread_team_t *team;
-  mpcomp_mvp_t *mvp;
-  mpcomp_mvp_t *target_mvp;
-  mpcomp_mvp_t *dest_mvp;
-  mpcomp_node_t *node;
-  mpcomp_node_t *n;
-  int num_threads;
-  int index;
-  int target_rank;
-  int rank;
-  int remain;
-  int mvp_rank;
-  int mvp_subtree_rank;
-  int node_rank;
-
-  
-
-  /* Grab the info of the current thread */    
-  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-  sctk_assert(t != NULL);
-
-  /* Grab the team info */
-  team = t->team;
-  sctk_assert(team != NULL);
-
-  /* Number of threads of the current team */  
-  num_threads = t->team->num_threads;
-
-  /* Grab the rank of current thread */
-  rank = t->rank;
-  
-  /* Grab the current mvp */
-  mvp = t->mvp;
-
-  /* Grab the index of the current loop */
-  index = (t->private_current_for_dyn) % MPCOMP_MAX_ALIVE_FOR_DYN;
-  //remain = team->chunk_info_for_dyn[rank][index].remain;
-  remain = 0;
-
-  //printf("[__mpcomp_steal_chunk rank=%d] begin..\n", t->rank); //DEBUG
-
-  /* Restart chunk search at last found index */
-  if(t->chunk_mvp != NULL) {
-    node = t->chunk_mvp->father;
-    mvp_subtree_rank = t->chunk_mvp->tree_rank[node->depth];
-  }
-  else {
-    node = mvp->father;
-    mvp_subtree_rank = mvp->tree_rank[node->depth]; 
-
-    /* current thread is out of chunks */   
-    node->nb_children_chunks_idle += 1; 
-  } 
-
-  if(node->nb_children_chunks_idle == node->nb_children) {
-    node->chunks_avail = CHUNK_NOT_AVAIL;
-  }
- 
-  sctk_nodebug("[__mpcomp_steal_chunk rank=%d] mvp_subtree_rank = %d, nb_children = %d", rank, mvp_subtree_rank, node->nb_children); //DEBUG
- 
-
-  for(i=mvp_subtree_rank+1;i<(mvp_subtree_rank+node->nb_children)%(node->nb_children);i++) {
-   //mvp_rank = node->children.leaf[i]->rank;
-   mvp_rank = node->children.leaf[i]->threads[0].rank;
-
-   sctk_nodebug("[__mpcomp_steal_chunk rank=%d] i=%d, loop on subtree..", rank); //DEBUG 
-
-   remain = team->chunk_info_for_dyn[mvp_rank][index].remain;
- 
-   if(remain != 0) {
-   
-    sctk_nodebug("[__mpcomp_steal_chunk rank=%d] remain = %d", rank, remain); //DEBUG
-
-    dest_mvp = node->children.leaf[i];
-
-    if(dest_mvp->stolen_chunk == NOT_STOLEN_CHUNK) {
-      t->chunk_mvp = node->children.leaf[i];
-      //dest_rank = dest_mvp->rank; 
-      //t->chunk_to_steal_index = mvp_rank;
-
-      sctk_nodebug("[__mpcomp_steal_chunk rank=%d] chunk not stolen..", rank); //DEBUG 
-         
-      sctk_spinlock_lock(&(team->lock_for_dyn[rank][index]));
- 
-      /* Do steal a chunk */
-      team->chunk_info_for_dyn[mvp_rank][index].remain--;
-      team->chunk_info_for_dyn[rank][index].remain++; 
-
-      sctk_spinlock_unlock(&(team->lock_for_dyn[rank][index]));
-
-      break; 
-    }
-   }
-    
-  }
-  
-  if(remain != 0) {
-   
-   sctk_nodebug("[__mpcomp_steal_chunk rank=%d] remain != 0..", rank); //DEBUG 
-    
-  }
-  else 
-  {
-    
-    sctk_nodebug("[__mpcomp_steal_chunk rank=%d] no chunks found, climb the tree", rank); //DEBUG
-
-    while(node->father != NULL) {
-   
-      node_rank = node->rank;
-
-      //printf("[__mpcomp_steal_chunk rank=%d] nb_children, nb_children_chunks_idle=%d\n", rank, node->father->nb_children, node->father->nb_children_chunks_idle); 
-   
-      /* 
-      if(node->chunks_avail == CHUNK_NOT_AVAIL) {
-        printf("[__mpcomp_steal_chunk rank=%d] increment nb_children_chunks_idle=%d\n", rank, node->father->nb_children_chunks_idle);
-
-        sctk_spinlock_lock (&(node->father->lock)); 
-        node->father->nb_children_chunks_idle += 1;
-        sctk_spinlock_unlock (&(node->father->lock));
-      }
-      */
-
-      sctk_assert(node->father->nb_children_chunks_idle <= node->father->nb_children); //nb children without children can't be upper than nb children of node 
-
-      node = node->father;
-
-      //printf("[__mpcomp_steal_chunk rank=%d] nb_children_chunks_idle=%d, nb_children=%d, check father node..\n", rank, node->nb_children_chunks_idle, node->nb_children); //DEBUG
-
-      /*
-      if(node->nb_children_chunks_idle == node->nb_children) {
-
-        sctk_nodebug("[__mpcomp_steal_chunk rank=%d] node father have no available chunks..", rank); //DEBUG
-
-        sctk_spinlock_lock (&(node->lock));
-        node->chunks_avail = CHUNK_NOT_AVAIL;
-        sctk_spinlock_unlock (&(node->lock));
-      }
-      
-      else {
-      */
-
-       //printf("[__mpcomp_steal_chunk rank=%d] node_rank=%d, nb_children=%d, node_rank+nb_children% = %d\n", t->rank, node_rank, node->nb_children, (node_rank+node->nb_children)%(node->nb_children)); //DEBUG
-
-       //for(i=node_rank+1;i<(node_rank+node->nb_children)%(node->nb_children);i++) {
-       for(i=1;i<node->nb_children;i++) {
-        
-         n = node->children.node[i];
-         n = node->children.node[(node_rank+i)%(node->nb_children)];
-
-         //printf("[__mpcomp_steal_chunk rank=%d] i=%d, Call to in depth tree search..\n", rank, i); //DEBUG
-
-         /* Do a classic in depth tree search */
-         mpcomp_in_depth_tree_search(n, target_mvp, &target_rank); 
-
-         if(target_rank != -1) {
-           break;
-         }
-         else {
-           
-           sctk_spinlock_lock (&(n->lock));
-           n->chunks_avail = CHUNK_NOT_AVAIL;
-           sctk_spinlock_unlock (&(n->lock));
-         } 
-          
-        }
-      //}
-      
-      if (target_rank != -1) {
-       break;
-      }
-    }
-  
-    if (target_rank != -1) {
-      //t->chunk_to_steal_index = target_rank;
-
-      sctk_spinlock_lock(&(team->lock_for_dyn[rank][index]));
-
-      /* Do steal a chunk */
-      team->chunk_info_for_dyn[target_rank][index].remain--;
-      team->chunk_info_for_dyn[rank][index].remain++; 
-
-      sctk_spinlock_unlock(&(team->lock_for_dyn[rank][index]));
-    }
-  }
-
-}
-
 
 
 
@@ -1471,7 +1230,6 @@ __old_mpcomp_barrier_for_dyn (void)
 
   sctk_nodebug ("__mpcomp_barrier: Leaving");
 }
-//#endif
 
 void
 __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,

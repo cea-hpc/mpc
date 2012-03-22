@@ -54,7 +54,7 @@ extern "C"
 /* Maximum number of threads for each team of a parallel region */
 #define MPCOMP_MAX_THREADS 		64
 /* Maximum number of shared for loops w/ dynamic schedule alive */
-#define MPCOMP_MAX_ALIVE_FOR_DYN 	7
+#define MPCOMP_MAX_ALIVE_FOR_DYN 	15
 /* Maximum number of alive 'single' construct */
 #define MPCOMP_MAX_ALIVE_SINGLE 	20
 
@@ -66,13 +66,15 @@ extern "C"
 #define MPCOMP_NOWAIT_STOP_CONSUMED	(-2)
 #define MPCOMP_NOWAIT_OK_SYMBOL		(-3)
 
-#define CHUNK_NOT_AVAIL 0
-#define CHUNK_AVAIL 1
+#define NO_CHUNKS_AVAIL 0
+#define CHUNKS_AVAIL 1
 
 #define NOT_STOLEN_CHUNK 0
 #define STOLEN_CHUNK 1
 
 #define MPCOMP_LOCK_INIT {0,0,NULL,NULL,NULL,SCTK_SPINLOCK_INITIALIZER}
+
+#define STACKSIZE 1024
 
 extern __thread void *sctk_openmp_thread_tls;
 
@@ -118,13 +120,13 @@ typedef struct mpcomp_chunk_s mpcomp_chunk_t ;
 
 
 /******* STACK ******/
-struct mpcomp_stack_s {
- struct mpcomp_node_t *node;
- struct mpcomp_stack_s *next;
+struct mpcomp_stack_s_old {
+ struct mpcomp_node_s *node[STACKSIZE];
+ //struct mpcomp_stack_s *next;
  size_t size; 
 };
 
-typedef struct mpcomp_stack_s mpcomp_stack_t;
+
 
 
 /****** Linked list of locks (per lock structure, who is blocked with this lock) ******/
@@ -174,6 +176,7 @@ struct mpcomp_thread_s {
   volatile int private_current_for_dyn;
   //int chunk_to_steal_index;
   struct mpcomp_mvp_s *chunk_mvp;
+  int stolen_chunk_id;                               /* index of stolen chunk */
   
 };
 
@@ -248,6 +251,8 @@ struct mpcomp_mvp_s {
   char pad3[64];
   void *(*func) (void*);			/* Function to call by every thread */
   void *shared;					/* Shared variables for every thread */
+ 
+  int *tree_path;                               /* AMAHEO - path inside tree from root to current leaf */
 
   int stolen_chunk;                             /* Flag specifying if chunk being executed was stolen or not */  
 };
@@ -305,6 +310,26 @@ struct mpcomp_node_s {
 };
 
 typedef struct mpcomp_node_s mpcomp_node_t;
+
+union element_u
+{
+ mpcomp_node_t **node;
+ mpcomp_mvp_t **mvp;
+};
+
+typedef union element_u element;
+
+/****** STACK *****/
+struct mpcomp_stack_s {
+ 
+ //element **elements;
+ mpcomp_node_t **elements; 
+ 
+ int max_elements;
+ int n_elements;
+};
+
+typedef struct mpcomp_stack_s mpcomp_stack_t;
 
   /* Linked list of locks 
      (per lock structure, who is blocked with this lock)

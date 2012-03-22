@@ -37,6 +37,8 @@ __mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads, int lb,
   /* Compute the trip count (total number of iterations of the original loop) */
   trip_count = (b - lb) / incr;
 
+  //printf("[__mpcomp_get_static_nb_chunks_per_rank  rank=%d] nb iterations=%d\n", rank, trip_count); //DEBUG
+
   if ( (b - lb) % incr != 0 ) {
     trip_count++ ;
   }
@@ -47,6 +49,8 @@ __mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads, int lb,
 
   /* Compute the number of chunks per thread (floor value) */
   nb_chunks_per_thread = trip_count / (chunk_size * nb_threads);
+  
+  printf("[__mpcomp_get_static_nb_chunks_per_rank  rank=%d] trip_count=%d, chunk_size=%d, nb_threads=%d, nb_chunks_per_thread=%d\n", rank, trip_count, chunk_size, nb_threads, nb_chunks_per_thread); //DEBUG
 
   /* The first threads will have one more chunk (according to the previous
      approximation) */
@@ -63,7 +67,7 @@ __mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads, int lb,
       nb_chunks_per_thread++;
     }
 
-  sctk_nodebug
+  sctk_debug
     ("__mpcomp_get_static_nb_chunks: final nb_chunks_per_thread = %d",
      nb_chunks_per_thread);
 
@@ -85,6 +89,9 @@ __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
   if ( (b - lb) % incr != 0 ) {
     trip_count++ ;
   }
+
+  //printf("[__mpcomp_get_specific_chunk_per_rank rank=%d] nb_iterations=%d, nb_chunks_per_thread=%d\n", rank, trip_count, chunk_num); //DEBUG
+ 
 
   /* The final additionnal chunk is smaller, so its computation is a little bit
      different */

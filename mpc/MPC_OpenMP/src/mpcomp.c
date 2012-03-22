@@ -267,6 +267,7 @@ void *mpcomp_slave_mvp_node (void *arg)
        mvp->threads[i].current_single = -1;
        mvp->threads[i].private_current_for_dyn = 0;
        mvp->threads[i].chunk_mvp = NULL;
+       mvp->threads[i].stolen_chunk_id = -1;
 
        mvp->threads[i].is_running = 1;
      }
@@ -334,6 +335,7 @@ void *mpcomp_slave_mvp_leaf (void *arg)
        mvp->threads[i].current_single = -1;
        mvp->threads[i].private_current_for_dyn = 0;
        mvp->threads[i].chunk_mvp = NULL;
+       mvp->threads[i].stolen_chunk_id = -1;
 
        mvp->threads[i].is_running = 1;
      }
@@ -368,6 +370,7 @@ void __mpcomp_thread_init (mpcomp_thread_t *t)
    t->current_single = -1;
    t->private_current_for_dyn = 0;
    t->chunk_mvp = NULL;
+   t->stolen_chunk_id = -1;
 
 }
 
@@ -427,6 +430,9 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
   int flag_level;
   mpcomp_node_t *root;
   int current_mpc_vp;
+
+  int *tree_path = (int *)malloc(sizeof(int)); /* Tree path to current leaf */
+  int tree_depth = 0;
 
   /* Alloc memory for 'nb_mvps' microVPs */
   instance->mvps = (mpcomp_mvp_t **)sctk_malloc(nb_mvps*sizeof(mpcomp_mvp_t *));
@@ -592,7 +598,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  root->depth = 0;
 	  root->nb_children = 8;
 	  root->child_type = CHILDREN_LEAF;
-          root->chunks_avail = CHUNK_AVAIL; 
+          root->chunks_avail = CHUNKS_AVAIL; 
           root->nb_children_chunks_idle = 0;
 	  root->lock = SCTK_SPINLOCK_INITIALIZER;
 	  root->slave_running = 0;
@@ -609,6 +615,9 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  for (i=0 ; i<root->nb_children ; i++) {
 	    mpcomp_node_t *n;
 	    int j;
+
+            tree_depth += 1; //AMAHEO - increment tree depth
+            //tree_path = re
 
             n = root;
 
@@ -842,7 +851,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	  root->min_index = 0;
 	  root->max_index = 31;
 	  root->child_type = CHILDREN_NODE;
-          root->chunks_avail = CHUNK_AVAIL;
+          root->chunks_avail = CHUNKS_AVAIL;
           root->nb_children_chunks_idle = 0;
 	  root->lock = SCTK_SPINLOCK_INITIALIZER;
 	  root->slave_running = 0;
@@ -874,7 +883,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
 	    n->min_index = i*8;
 	    n->max_index = (i+1)*8-1;
 	    n->child_type = CHILDREN_NODE;
-            n->chunks_avail = CHUNK_AVAIL;
+            n->chunks_avail = CHUNKS_AVAIL;
             n->nb_children_chunks_idle = 0;
 	    n->lock = SCTK_SPINLOCK_INITIALIZER;
 	    n->slave_running = 0;
@@ -905,7 +914,7 @@ void __mpcomp_instance_init (mpcomp_instance_t *instance, int nb_mvps)
                n2->min_index = i*8 + j*4;
                n2->max_index = i*8 + (j+1)*4 - 1;
                n2->child_type = CHILDREN_LEAF;
-               n2->chunks_avail = CHUNK_AVAIL;
+               n2->chunks_avail = CHUNKS_AVAIL;
                n2->nb_children_chunks_idle = 0;
                n2->lock = SCTK_SPINLOCK_INITIALIZER;
                n2->slave_running = 0;
@@ -1342,6 +1351,7 @@ void __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *)
       instance->mvps[0]->threads[i].current_single = -1;
       instance->mvps[0]->threads[i].private_current_for_dyn = 0;
       instance->mvps[0]->threads[i].chunk_mvp = NULL;
+      instance->mvps[0]->threads[i].stolen_chunk_id = -1;
 
       instance->mvps[0]->threads[i].is_running = 1;
     }
@@ -1703,74 +1713,188 @@ void check_parallel_region_correctness(void)
 }
 
 /*
-  Push tree node in stack
+ Initialize stack
 */
-void push(mpcomp_node_t *node, mpcomp_stack_t *head)
+mpcomp_stack_t * __mpcomp_create_stack(int max_elements)
 {
- 
-  //printf("push in stack\n"); 
- 
-  mpcomp_stack_t *s = malloc(sizeof(mpcomp_stack_t));
+ //printf("[mpcomp_mk_empty_stack] begin..\n");
 
-  if(s == NULL) {
-    printf("Error: no space available for stack!\n");
-    return;
-  } else {
-    s->node = node;
-    s->next = head;
-    head = s;
-    head->size++;
-  } 
+ mpcomp_stack_t *s;
+ s = (mpcomp_stack_t *)malloc(sizeof(mpcomp_stack_t));
+
+ s->elements = (mpcomp_node_t **)malloc(max_elements*sizeof(mpcomp_node_t));
+ //s->elements = malloc(max_elements*sizeof(*(s->elements)));
+ s->max_elements = max_elements;
+ s->n_elements = 0;
+ 
+ return s;
 }
 
+/*
+ Test if stack is empty
+*/
+int __mpcomp_is_stack_empty(mpcomp_stack_t *s)
+{
+  return (s->n_elements == 0);
+}
+
+
+/*
+  Free the stack
+*/
+void __mpcomp_free_stack(mpcomp_stack_t* s)
+{
+ free(s->elements);
+} 
+
+/*
+  Push tree node in stack
+*/
+void __mpcomp_push(mpcomp_node_t *n, mpcomp_stack_t *s)
+{
+
+ if ( s->n_elements == s->max_elements) {
+  
+  printf("STACK OVERFLOW: elements=%d, max_elements=%d..\n", s->n_elements, s->max_elements);
+  exit(1);
+ }
+ else {
+   s->elements[s->n_elements] = n;
+   s->n_elements++;
+ }
+
+}
 
 /*
  Pop last element of stack
 */
-mpcomp_node_t *pop(mpcomp_stack_t *head)
+mpcomp_node_t * __mpcomp_pop(mpcomp_stack_t *s)
 {
-
- //printf("pop from stack\n");
  
- if(head == NULL)
- {
-   printf("Error: stack underflow!!\n");
-   return NULL;
+ mpcomp_node_t* n;
+ 
+
+ if(s->n_elements == 0) {
+  printf("STACK UNDERFLOW..\n"); 
+  return NULL;
  }
  else {
-   mpcomp_stack_t *top = head;
-   mpcomp_node_t *node;
-   node = top->node;
-   head = top->next;
-   head->size--; 
-   free(top);
-   return node;
+  n = s->elements[s->n_elements-1];
+  s->n_elements--;
  }
 
+ return n; 
+
 }
 
-/*
- Initialize stack
-*/
-void mpcomp_mk_empty_stack(mpcomp_stack_t *head)
-{
- //printf("[mpcomp_mk_empty_stack] begin..\n");
 
- head->size = 0; 
+#if 0
+void __mpcomp_dynamic_init_stealing()
+{
 }
+#endif
 
 /*
-  Check if stack is empty
+ Do steal chunks in dynamic loop using a DFS
 */
-int mpcomp_is_empty_stack(mpcomp_stack_t *head)
+int __mpcomp_dynamic_steal()
 {
-  if(head->size == 0)
-    return 1;
+
+  mpcomp_thread_t *t;
+  mpcomp_thread_t *target_t;
+  mpcomp_mvp_t *mvp;
+  mpcomp_thread_team_t *team;
+  mpcomp_stack_t* stack;
+  mpcomp_node_t* n;
+  mpcomp_node_t* root;
   
-  return 0;
+  int i;
+  int depth;
+  int tree_rank;
+  int target_rank;
+  int target_loop_index;
+  int remain; 
+
+  /* Grab the info of the current thread */    
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  sctk_assert(t != NULL);
+  
+  /* Grab mvp info */
+  mvp = t->mvp;
+
+  /* Grab the team info */
+  team = t->team;
+
+  /* Grab the tree root */
+  root = mvp->root;
+   
+  stack = __mpcomp_create_stack(STACKSIZE);
+
+  __mpcomp_push(root, stack);
+
+  while( !__mpcomp_is_stack_empty(stack)) {
+
+    n = __mpcomp_pop(stack);
+
+    depth = n->depth;
+    tree_rank = mvp->tree_rank[depth];     
+
+    //if (n->nb_children != 0) {
+
+    for(i=(tree_rank-1)%(n->nb_children) ; i >= tree_rank % (n->nb_children) ; i--) {
+ 
+      if (n->child_type == CHILDREN_NODE) { 
+        __mpcomp_push(n->children.node[i], stack);
+      }
+      else {
+
+       if(n->children.leaf[tree_rank]->rank == mvp->rank) 
+        continue;
+
+       /* We are at leaf level */
+       target_t = &(n->children.leaf[tree_rank]->threads[0]); 
+       //target_t = &(n->children.leaf[i]->threads[0]);  
+       target_rank = target_t->rank;    
+
+       /* Grab the index of the current loop */
+       target_loop_index = (target_t->private_current_for_dyn) % MPCOMP_MAX_ALIVE_FOR_DYN;    
+
+       /* Grab remain */
+       remain = team->chunk_info_for_dyn[target_rank][target_loop_index].remain;
+  
+       if(remain > 0) {
+      
+         t->stolen_chunk_id = team->chunk_info_for_dyn[target_rank][target_loop_index].total - remain; 
+    
+         sctk_spinlock_lock(&(team->lock_stop_for_dyn));  
+         team->chunk_info_for_dyn[target_rank][target_loop_index].remain--;
+         sctk_spinlock_unlock(&(team->lock_stop_for_dyn));
+
+         break; 
+       }
+     }
+    }
+    
+    if(remain > 0) {
+      break;
+    }
+    else {
+      sctk_spinlock_lock (&(n->lock)); 
+      n->chunks_avail = NO_CHUNKS_AVAIL;
+      sctk_spinlock_unlock (&(n->lock));    
+    }
+    
+   }
+
+  if(t->stolen_chunk_id != -1)
+   return t->stolen_chunk_id;
+  else
+   return 0;
 }
 
 
+
+#if 0
 /*
  Prefix in depth tree search
 */
@@ -1811,6 +1935,7 @@ void mpcomp_in_depth_tree_search(mpcomp_node_t *node, mpcomp_mvp_t *target_mvp, 
 
   stack = malloc(sizeof(mpcomp_stack_t));
 
+  sctk_spinlock_lock (&(node->lock));
   /* Empty the stack before any operation */
   mpcomp_mk_empty_stack(stack);
 
@@ -1819,43 +1944,56 @@ void mpcomp_in_depth_tree_search(mpcomp_node_t *node, mpcomp_mvp_t *target_mvp, 
   /* Push given node in the stack */
   push(node, stack);
 
+  sctk_spinlock_unlock (&(node->lock));
   //printf("[mpcomp_in_depth_tree_search rank=%d] after push operation, stack size=%d..\n", t->rank, stack->size); //AMAHEO 
+
+  //DEBUG
+  if(mpcomp_is_empty_stack(stack)) {
+   printf("[mpcomp_in_depth_tree_search rank=%d] (ERROR) stack is empty !!\n", t->rank); //DEBUG
+  }
 
   while(!mpcomp_is_empty_stack(stack)) 
   {
+    
     node = pop(stack);
   
     //printf("[mpcomp_in_depth_tree_search rank=%d] stack size=%d\n", t->rank, stack->size);
 
     if(node->chunks_avail == CHUNK_AVAIL)
     {
-    
+     printf("[mpcomp_in_depth_tree_search rank=%d] node CHUNKS AVAIL\n", t->rank); //DEBUG 
      if(node->nb_children != 0)
      {
        for(i=0;i<node->nb_children;i++) {
 
            if(node->child_type == CHILDREN_NODE) {
              push(node->children.node[i], stack);
-             printf("[mpcomp_in_depth_tree_search rank=%d]  children of type node: stack size=%d\n", t->rank, stack->size);
+             //printf("[mpcomp_in_depth_tree_search rank=%d]  children of type node: stack size=%d\n", t->rank, stack->size);
            } else {
   
-              printf("[mpcomp_in_depth_tree_search rank=%d] leaf level\n", t->rank); 
-
               target_t = &(node->children.leaf[i]->threads[0]);
               target_rank = target_t->rank;            
 
+              printf("[mpcomp_in_depth_tree_search rank=%d] target_rank=%d, leaf level\n", t->rank, target_rank); 
+
               /* Grab the index of the current loop */
               target_loop_index = (target_t->private_current_for_dyn) % MPCOMP_MAX_ALIVE_FOR_DYN;         
+              //target_loop_index = target_t->private_current_for_dyn+1;
                
               remain = team->chunk_info_for_dyn[target_rank][target_loop_index].remain;
+              //printf("[mpcomp_in_depth_tree_search rank=%d] target_rank remain=%d\n", t->rank, team->chunk_info_for_dyn[target_rank][target_loop_index].remain); 
               //mvp_rank = node->children.leaf[i]->rank;
-              //remain = team->chunk_info_for_dyn[mvp_rank][index].remain;       
+              //remain = team->chunk_info_for_dyn[mvp_rank][index].remain;     
 
-              if (remain != 0) {
+              printf("[mpcomp_in_depth_tree_search rank=%d] target_rank=%d, remain=%d..\n", t->rank, target_rank, remain);                
+
+              if (remain > 0) {
                
                 printf("[mpcomp_in_depth_tree_search rank=%d] remain=%d..\n", t->rank, remain);
-                
+               
+                t->stolen_chunk_id = team->chunk_info_for_dyn[target_rank][target_loop_index].total - remain; 
                 t->chunk_mvp = node->children.leaf[i];
+                team->chunk_info_for_dyn[target_rank][target_loop_index].remain--;
                 break;
               
                 #if 0    
@@ -1871,7 +2009,7 @@ void mpcomp_in_depth_tree_search(mpcomp_node_t *node, mpcomp_mvp_t *target_mvp, 
           
          }
 
-         if (remain != 0) {
+         if (remain > 0) {
            break;
          }
          else {
@@ -1880,17 +2018,17 @@ void mpcomp_in_depth_tree_search(mpcomp_node_t *node, mpcomp_mvp_t *target_mvp, 
       }
     }
     else {
-      printf("[mpcomp_in_depth_tree_search=%d] node not AVAIL\n");
+      printf("[mpcomp_in_depth_tree_search rank=%d] node not CHUNK AVAIL\n", t->rank);
     }  
   }
 
- if (remain != 0)
+ if (remain > 0)
   rank = target_rank;
  else 
-  index = -1;
+  rank = -1;
  
- return 0;
+ return;
  
 }
-
+#endif
 
