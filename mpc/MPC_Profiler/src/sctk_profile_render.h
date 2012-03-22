@@ -68,8 +68,14 @@ struct sctk_profile_renderer
 
 	void (*setup)( struct sctk_profile_renderer *rd );
 	void (*teardown)( struct sctk_profile_renderer *rd );
+
+	void (*setup_meta)( struct sctk_profile_renderer *rd );
+	void (*teardown_meta)( struct sctk_profile_renderer *rd );
 	void (*render_meta)( struct sctk_profile_renderer *rd, struct sctk_profile_meta *meta );
-	void (*render_entry)( struct sctk_profiler_array *array, int id, int parent_id, int depth, struct sctk_profile_renderer *rd );
+
+	void (*setup_profile)( struct sctk_profile_renderer *rd );
+	void (*teardown_profile)( struct sctk_profile_renderer *rd );
+	void (*render_profile)( struct sctk_profiler_array *array, int id, int parent_id, int depth, struct sctk_profile_renderer *rd );
 	
 	FILE *output_file;
 
@@ -86,59 +92,14 @@ char *sctk_profile_renderer_convert_to_time( uint64_t duration , char *to_unit )
 
 int sctk_profile_renderer_check_render_list( char *render_list );
 
+/* Utility functions */
 
+char * sctk_profile_renderer_date( char *buffer );
 
-static char * sctk_profile_renderer_date( char *buffer )
-{
-	time_t t = time( NULL );
-	struct tm *time_entry = localtime( &t );
-	
-	if( strftime( buffer, 300, "%F_%H-%M-%S", time_entry ) <= 0 )
-	{
-		buffer[0] = '\0';
-	}
+char * sctk_profile_renderer_date_clean( char *buffer );
 
-	
-	return buffer;
-}
+void sctk_profile_renderer_write_ntabs( FILE *fd, int n );
 
-static char * sctk_profile_renderer_date_clean( char *buffer )
-{
-	time_t t = time( NULL );
-	struct tm *time_entry = localtime( &t );
-	
-	if( strftime( buffer, 300, "%F %H:%M:%S", time_entry ) <= 0 )
-	{
-		buffer[0] = '\0';
-	}
-
-	
-	return buffer;
-}
-
-
-
-static void sctk_profile_renderer_write_ntabs( FILE *fd, int n )
-{
-	int i = 0;
-	
-	for( i = 0 ; i < n ; i++ )
-	{
-		fprintf( fd, "    ");
-	}
-
-}
-
-static void sctk_profile_renderer_print_ntabs( int n )
-{
-	int i = 0;
-	
-	for( i = 0 ; i < n ; i++ )
-	{
-		printf( "    ");
-	}
-
-}
-
+void sctk_profile_renderer_print_ntabs( int n );
 
 #endif /* SCTK_PROFILE_RENDER */

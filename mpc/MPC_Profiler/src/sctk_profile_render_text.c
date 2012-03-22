@@ -35,11 +35,35 @@ void sctk_profile_render_text_register( struct sctk_profile_renderer *rd , int i
 {
 	rd->setup = sctk_profile_render_text_setup;
 	rd->teardown = sctk_profile_render_text_teardown;
-	rd->render_entry = sctk_profile_render_text_render_entry;
+	rd->render_profile = sctk_profile_render_text_render_entry;
+	
+	rd->setup_meta = sctk_profile_render_text_setup_meta;
+	rd->render_meta = sctk_profile_render_text_render_meta;
+	rd->teardown_meta = sctk_profile_render_text_teardown_meta;
 	
 	sctk_profile_render_text_is_stdout = is_stdout;
 	sctk_profile_render_text_is_raw = is_raw;
 	sctk_profile_render_text_no_indent = no_indent;
+}
+
+
+void sctk_profile_render_text_setup_meta( struct sctk_profile_renderer *rd )
+{
+	
+	
+}
+
+void sctk_profile_render_text_teardown_meta( struct sctk_profile_renderer *rd )
+{
+	
+	
+}
+
+void sctk_profile_render_text_render_meta( struct sctk_profile_renderer *rd, struct sctk_profile_meta *meta )
+{
+	
+	
+	
 }
 
 
@@ -104,16 +128,16 @@ void sctk_profile_render_text_render_entry( struct sctk_profiler_array *array, i
 	}
 	else
 	{
-		sprintf(buffA, "%lld", sctk_profiler_array_get_time(array, id));
+		sprintf(buffA, "%llu", (unsigned long long int )sctk_profiler_array_get_time(array, id));
 		to_unit_total = buffA;
 
-		sprintf(buffB, "%lld", rd->ptree.entry_average_time[id]);
+		sprintf(buffB, "%llu", (unsigned long long int )rd->ptree.entry_average_time[id]);
 		to_unit_avg = buffB;
 
-		sprintf(buffC, "%lld", sctk_profiler_array_get_min(array, id));
+		sprintf(buffC, "%llu", (unsigned long long int )sctk_profiler_array_get_min(array, id));
 		to_unit_min = buffC;
 
-		sprintf(buffD, "%lld", sctk_profiler_array_get_max(array, id));
+		sprintf(buffD, "%llu", (unsigned long long int )sctk_profiler_array_get_max(array, id));
 		to_unit_max = buffD;
 	}
 
@@ -122,7 +146,7 @@ void sctk_profile_render_text_render_entry( struct sctk_profiler_array *array, i
 		if( !sctk_profile_render_text_no_indent )
 			sctk_profile_renderer_write_ntabs( rd->output_file, depth );
 
-		fprintf( rd->output_file, "%s %lld %s ( %g\% ) %s %s %s\n",  sctk_profiler_array_get_desc( id ), sctk_profiler_array_get_hits( array, id ),
+		fprintf( rd->output_file, "%s %llu %s ( %g %% ) %s %s %s\n",  sctk_profiler_array_get_desc( id ), (unsigned long long int )sctk_profiler_array_get_hits( array, id ),
 																     to_unit_total, rd->ptree.entry_total_percentage_time[id] * 100,
 																     to_unit_avg, to_unit_min, to_unit_max);
 	}

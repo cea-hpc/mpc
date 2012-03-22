@@ -466,15 +466,6 @@ PROCESS_NB="$TASK_NB"
 NET_TYPE="--use-mpi"
 fi
 
-# TEST Task and Process number correctness
-if test $TASK_NB -lt $PROCESS_NB;  then
-	mpcrun_error "You cannot have less tasks than processes ($TASK_NB task(s) for $PROCESS_NB processe(s))"
-fi
-
-# TEST Node and Process number correctness
-if test $PROCESS_NB -lt $NODE_NB;  then
-	mpcrun_error "You cannot have less processes than nodes ($NODE_NB nodes(s) for $PROCESS_NB processe(s))"
-fi
 
 export PROCESS_NB
 

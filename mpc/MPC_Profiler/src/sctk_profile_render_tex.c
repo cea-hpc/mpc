@@ -23,7 +23,7 @@
 #include "sctk_profile_render_tex.h"
 
 #include <stdlib.h>
-
+#include <string.h>
 #include "sctk_debug.h"
 
 
@@ -81,7 +81,16 @@ void sctk_profile_render_tex_register( struct sctk_profile_renderer *rd )
 {
 	rd->setup = sctk_profile_render_tex_setup;
 	rd->teardown = sctk_profile_render_tex_teardown;
-	rd->render_entry = sctk_profile_render_tex_render_entry;
+
+	rd->setup_profile = sctk_profile_render_tex_setup_profile;
+	rd->render_profile = sctk_profile_render_tex_render_profile;
+	rd->teardown_profile = sctk_profile_render_tex_teardown_profile;
+
+	rd->setup_meta = sctk_profile_render_tex_setup_meta;
+	rd->render_meta = sctk_profile_render_tex_render_meta;
+	rd->teardown_meta = sctk_profile_render_tex_setup_meta;
+
+
 }
 
 
@@ -120,25 +129,54 @@ void sctk_profile_render_tex_setup( struct sctk_profile_renderer *rd )
 		"\\geometry{lmargin=2cm,rmargin=2cm}\n"
 		"\\title{MPC Profile %s}\n"
 		"\\begin{document}\n"
-		"\\maketitle\n"
-		"\\begin{center}\n"
-		"\\begin{tabular}{lccccccc}\n"
-		"Name & Hits & Total Time & Average Time & Minimum Time & Maximum Time & Section & Global \\\\\n", sctk_profile_renderer_date_clean( buff ));
+		"\\maketitle\n", sctk_profile_renderer_date_clean( buff ));
 }
 
 
 void sctk_profile_render_tex_teardown( struct sctk_profile_renderer *rd )
 {
-	fprintf(rd->output_file, "\\end{tabular}\n"
-							 "\\end{center}\n"
-							 "\\end{document}\n");
+	fprintf(rd->output_file, "\\end{document}\n");
 	fclose( rd->output_file );
 	rd->output_file = NULL;
 
 }
 
 
-void sctk_profile_render_tex_render_entry( struct sctk_profiler_array *array, int id, int parent_id, int depth, struct sctk_profile_renderer *rd )
+void sctk_profile_render_tex_setup_meta( struct sctk_profile_renderer *rd )
+{
+
+
+
+}
+
+
+void sctk_profile_render_tex_render_meta( struct sctk_profile_renderer *rd, struct sctk_profile_meta *meta )
+{
+
+
+}
+
+
+void sctk_profile_render_tex_teardown_meta( struct sctk_profile_renderer *rd )
+{
+
+
+
+}
+
+
+
+
+void sctk_profile_render_tex_setup_profile( struct sctk_profile_renderer *rd )
+{
+	fprintf(rd->output_file,
+			"\\begin{center}\n"
+			"\\begin{tabular}{lccccccc}\n"
+			"Name & Hits & Total Time & Average Time & Minimum Time & Maximum Time & Section & Global \\\\\n");
+}
+
+
+void sctk_profile_render_tex_render_profile( struct sctk_profiler_array *array, int id, int parent_id, int depth, struct sctk_profile_renderer *rd )
 {
 	char buffA[500], buffB[500], buffC[500], buffD[500];
 	
@@ -157,8 +195,8 @@ void sctk_profile_render_tex_render_entry( struct sctk_profiler_array *array, in
 
 	if( sctk_profiler_array_get_hits( array, id ) )
 	{
-		fprintf( rd->output_file,"\\rowcolor{%s} %s{%s} & %s{%lld} & %s{%s} & %s{%s} & %s{%s} & %s{%s} & %s{ %g } & %s{ %g } \\\\\n",colors[ prefix_id], prefix[ prefix_id ], desc,
-																						   prefix[ prefix_id ], sctk_profiler_array_get_hits( array, id ),
+		fprintf( rd->output_file,"\\rowcolor{%s} %s{%s} & %s{%llu} & %s{%s} & %s{%s} & %s{%s} & %s{%s} & %s{ %g } & %s{ %g } \\\\\n",colors[ prefix_id], prefix[ prefix_id ], desc,
+																						   prefix[ prefix_id ], (unsigned long long int )sctk_profiler_array_get_hits( array, id ),
 																						   prefix[ prefix_id ], to_unit_total,
 																						   prefix[ prefix_id ], to_unit_avg,
 																						   prefix[ prefix_id ], to_unit_min,
@@ -171,5 +209,11 @@ void sctk_profile_render_tex_render_entry( struct sctk_profiler_array *array, in
 }
 
 
+
+void sctk_profile_render_tex_teardown_profile( struct sctk_profile_renderer *rd )
+{
+	fprintf(rd->output_file, "\\end{tabular}\n"
+							 "\\end{center}\n");
+}
 
 

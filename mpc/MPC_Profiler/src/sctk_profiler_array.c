@@ -24,6 +24,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "sctk_debug.h"
+
 uint64_t sctk_profile_has_child[ SCTK_PROFILE_KEY_COUNT ];
 uint64_t sctk_profile_parent_key[ SCTK_PROFILE_KEY_COUNT ];
 

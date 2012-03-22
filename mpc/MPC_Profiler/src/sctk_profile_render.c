@@ -33,10 +33,35 @@
 #include "sctk_internal_profiler.h"
 #include "sctk_profile_render_text.h"
 #include "sctk_profile_render_tex.h"
+#include "sctk_profile_render_html.h"
+
+
+
+void sctk_profiler_renderer_clear_handlers( struct sctk_profile_renderer *rd )
+{
+	rd->setup = NULL;
+	rd->teardown = NULL;
+
+	rd->setup_meta = NULL;
+	rd->setup_profile = NULL;
+
+	rd->teardown_meta = NULL;
+	rd->teardown_profile = NULL;
+
+
+	rd->render_profile = NULL;
+	rd->output_file = NULL;
+	rd->render_meta = NULL;
+}
+
+
+
 
 /* Profile renderer Interface */
 void sctk_profile_renderer_register_output_iface( struct sctk_profile_renderer *rd, sctk_profile_render_type render_type )
 {
+	sctk_profiler_renderer_clear_handlers( rd );
+	
 	switch( render_type )
 	{
 		
@@ -75,7 +100,7 @@ void sctk_profile_renderer_remove_output_iface( struct sctk_profile_renderer *rd
 {
 	rd->setup = NULL;
 	rd->teardown = NULL;
-	rd->render_entry = NULL;
+	rd->render_profile = NULL;
 
 	if( rd->output_file )
 	{
@@ -165,8 +190,6 @@ int sctk_profile_renderer_render_sting_to_id( char *render_string )
 }
 
 
-
-
 void sctk_profile_renderer_init( struct sctk_profile_renderer *rd, struct sctk_profiler_array *array, char *render_list )
 {
 	
@@ -181,12 +204,7 @@ void sctk_profile_renderer_init( struct sctk_profile_renderer *rd, struct sctk_p
 
 	strncpy( rd->render_list, render_list, 500 );
 
-	rd->setup = NULL;
-	rd->teardown = NULL;
-	rd->render_entry = NULL;
-	rd->output_file = NULL;
-	rd->render_meta = NULL;
-
+	sctk_profiler_renderer_clear_handlers( rd );
 
 }
 
@@ -194,13 +212,8 @@ void sctk_profile_renderer_init( struct sctk_profile_renderer *rd, struct sctk_p
 void sctk_profile_renderer_release( struct sctk_profile_renderer *rd )
 {
 	sctk_performance_tree_release( &rd->ptree );
-	rd->array = NULL;
 
-	rd->setup = NULL;
-	rd->teardown = NULL;
-	rd->render_entry = NULL;
-	rd->output_file = NULL;
-	rd->render_meta = NULL;
+	sctk_profiler_renderer_clear_handlers( rd );
 }
 
 
@@ -246,8 +259,8 @@ void sctk_profile_renderer_render_entry( struct sctk_profiler_array *array, int 
 {
 	struct sctk_profile_renderer *rd = (struct sctk_profile_renderer *)arg;
 	
-	if( rd->render_entry )
-		(rd->render_entry)( array, id, parent_id, depth, rd );
+	if( rd->render_profile )
+		(rd->render_profile)( array, id, parent_id, depth, rd );
 }
 
 
@@ -282,16 +295,31 @@ void sctk_profile_renderer_render( struct sctk_profile_renderer *rd )
 
 		sctk_profile_renderer_register_output_iface( rd, rd_type);
 		
+			/* SETUP */
 			if( rd->setup )
 				(rd->setup )( rd );
-				
 
-			if( rd->render_meta )
-				(rd->render_meta)(rd, sctk_internal_profiler_get_meta());
+			/* META */
+			if( rd->setup_meta )
+				(rd->setup_meta )( rd );
 
-			if( rd->render_entry )
+           if( rd->render_meta )
+        	   (rd->render_meta)(rd, sctk_internal_profiler_get_meta());
+
+			if( rd->teardown_meta )
+				(rd->teardown_meta )( rd );
+
+			/* PROFILE */
+			if( rd->setup_profile )
+				(rd->setup_profile )( rd );
+
+			if( rd->render_profile )
 				sctk_profiler_array_walk( rd->array, sctk_profile_renderer_render_entry, (void *)rd, 0 );
 
+			if( rd->teardown_profile )
+				(rd->teardown_profile )( rd );
+
+			/* TEARDOWN */
 			if( rd->teardown )
 				(rd->teardown )( rd );
 
@@ -345,6 +373,61 @@ char *sctk_profile_renderer_convert_to_time( uint64_t duration , char *to_unit )
 	 }
 
 	 return to_unit;
+}
+
+
+/* Utility functions */
+
+char * sctk_profile_renderer_date( char *buffer )
+{
+	time_t t = time( NULL );
+	struct tm *time_entry = localtime( &t );
+	
+	if( strftime( buffer, 300, "%F_%H-%M-%S", time_entry ) <= 0 )
+	{
+		buffer[0] = '\0';
+	}
+
+	
+	return buffer;
+}
+
+char * sctk_profile_renderer_date_clean( char *buffer )
+{
+	time_t t = time( NULL );
+	struct tm *time_entry = localtime( &t );
+	
+	if( strftime( buffer, 300, "%F %H:%M:%S", time_entry ) <= 0 )
+	{
+		buffer[0] = '\0';
+	}
+
+	
+	return buffer;
+}
+
+
+
+void sctk_profile_renderer_write_ntabs( FILE *fd, int n )
+{
+	int i = 0;
+	
+	for( i = 0 ; i < n ; i++ )
+	{
+		fprintf( fd, "    ");
+	}
+
+}
+
+void sctk_profile_renderer_print_ntabs( int n )
+{
+	int i = 0;
+	
+	for( i = 0 ; i < n ; i++ )
+	{
+		printf( "    ");
+	}
+
 }
 
 

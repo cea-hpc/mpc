@@ -27,6 +27,13 @@
 
 
 	void sctk_profile_render_text_register( struct sctk_profile_renderer *rd , int is_stdout, int is_raw, int no_indent);
+
+
+	void sctk_profile_render_text_setup_meta( struct sctk_profile_renderer *rd );
+	void sctk_profile_render_text_render_meta( struct sctk_profile_renderer *rd, struct sctk_profile_meta *meta );
+	void sctk_profile_render_text_teardown_meta( struct sctk_profile_renderer *rd );
+
+
 	void sctk_profile_render_text_setup( struct sctk_profile_renderer *rd );
 	void sctk_profile_render_text_teardown( struct sctk_profile_renderer *rd );
 	void sctk_profile_render_text_render_entry( struct sctk_profiler_array *array, int id, int parent_id, int depth, struct sctk_profile_renderer *rd );
