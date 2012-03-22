@@ -177,15 +177,20 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
         /* If on demand, handle message before sending it to high-layers */
         if(ondemand) {
           sctk_nodebug("Received OD message");
-          recopy = 1;
           msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
           sctk_ib_cm_on_demand_recv(rail, msg, ibuf, recopy);
           goto release;
         }
+      } else {
+        /* Do not recopy message if it is not a process specific message.
+         *
+         * When there is an intermediate message, we *MUST* recopy the message
+         * because MPC does not match the user buffer with the network buffer (the copy function is
+         * not performed) */
+        recopy = 0;
       }
 
       /* Normal message: we handle it */
-      recopy = 0;
       msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
       sctk_ib_sr_recv_free(rail, msg, ibuf, recopy);
       rail->send_message_from_network(msg);

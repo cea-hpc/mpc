@@ -59,7 +59,7 @@ void sctk_ib_cm_connect_to(int from, int to,sctk_rail_info_t* rail){
   sctk_nodebug("Connection TO from %d to %d", from, to);
 
   /* create remote for dest */
-  route_table = sctk_ib_create_remote(to, rail);
+  route_table = sctk_ib_create_remote(from, rail);
   route=&route_table->data.ib;
   sctk_ib_debug("[%d] QP connection request to process %d", rail->rail_number, route->remote->rank);
 
@@ -142,7 +142,7 @@ int sctk_ib_cm_on_demand_recv_ack(sctk_rail_info_t *rail, void* ack, int src) {
   sctk_ib_qp_keys_t keys;
   char done=1;
 
-  sctk_ib_nodebug("OD QP connexion ACK received from process %d %s", src, ack);
+  sctk_ib_debug("OD QP connexion ACK received from process %d %s", src, ack);
   route_table = sctk_route_dynamic_search(src, rail);
   assume(route_table);
   route=&route_table->data.ib;
