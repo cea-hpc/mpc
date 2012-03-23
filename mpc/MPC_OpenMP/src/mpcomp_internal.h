@@ -23,194 +23,139 @@
 #ifndef __mpcomp_internal__H
 #define __mpcomp_internal__H
 
+#include "mpcomp.h"
+#include "sctk.h"
+#include "sctk_atomics.h"
+#include "sctk_context.h"
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#include <sctk_asm.h>
-#include <sctk_context.h>
-#include <sctk_posix_thread.h>
-#include <sctk_thread_api.h>
-#include <sctk_spinlock.h>
-#include <sctk_tls.h>
-#include <sctk_debug.h>
-#include <mpcmicrothread.h>
-#include <mpcomp_abi.h>
-
-/*************************************************
-*************************************************
-	BEGIN: NEW MPCOMP STRUCTURES
-*************************************************
-**************************************************/
-
-/*******************
-       MACROS 
-********************/
-
-#define SCTK_OMP_VERSION_MAJOR 3
-#define SCTK_OMP_VERSION_MINOR 0
+/*****************
+  ****** MACROS 
+  *****************/
 
 /* Maximum number of threads for each team of a parallel region */
-#define MPCOMP_MAX_THREADS 		64
-/* Maximum number of shared for loops w/ dynamic schedule alive */
-#define MPCOMP_MAX_ALIVE_FOR_DYN 	15
+#define MPCOMP_MAX_THREADS		256
+/* Number of threads per microVP */
+#define MPCOMP_MAX_THREADS_PER_MICROVP	8
+
+
 /* Maximum number of alive 'single' construct */
-#define MPCOMP_MAX_ALIVE_SINGLE 	20
+#define MPCOMP_MAX_ALIVE_SINGLE		1023	
+/* Maximum number of alive 'for dynamic' construct */
+#define MPCOMP_MAX_ALIVE_FOR_DYN 	1023
 
-#define MPCOMP_OK 1
-#define MPCOMP_STOP 2
-#define MPCOMP_CONSUMED 3
-
-#define MPCOMP_NOWAIT_STOP_SYMBOL	(-1)
-#define MPCOMP_NOWAIT_STOP_CONSUMED	(-2)
-#define MPCOMP_NOWAIT_OK_SYMBOL		(-3)
-
-#define NO_CHUNKS_AVAIL 0
-#define CHUNKS_AVAIL 1
-
-#define NOT_STOLEN_CHUNK 0
-#define STOLEN_CHUNK 1
-
-#define MPCOMP_LOCK_INIT {0,0,NULL,NULL,NULL,SCTK_SPINLOCK_INITIALIZER}
-
-#define STACKSIZE 1024
-
-extern __thread void *sctk_openmp_thread_tls;
-
-/* Schedule type */
-static omp_sched_t OMP_SCHEDULE = 1;
-/* Schedule modifier */
-static int OMP_MODIFIER_SCHEDULE = -1;
-/* Defaults number of threads */
-static int OMP_NUM_THREADS = 0;
-/* Is dynamic adaptation on? */
-static int OMP_DYNAMIC = 0;
-/* Is nested parallelism handled or flaterned? */
-static int OMP_NESTED = 0;
-/* Number of VPs for each OpenMP team */
-static int OMP_MICROVP_NUMBER = 0;
+#define MPCOMP_NOWAIT_STOP_SYMBOL	(-2)
+#define MPCOMP_NOWAIT_STOP_CONSUMED	(-3)
 
 
-/*********************
-       STRUCTURES
-**********************/
+  /* MACRO FOR PERFORMANCE */
+#define MPCOMP_USE_ATOMICS	1
+#define MPCOMP_MALLOC_ON_NODE	1
 
-/******** ICV ********/
-struct icv_s {
-  int nthreads_var;		/* Number of threads for the next team creation */
-  int dyn_var;			/* Is dynamic thread adjustement on? */
-  int nest_var;			/* Is nested OpenMP handled? */
-  omp_sched_t run_sched_var;	/* Schedule to use when 'schedule' clause is set to 'runtime' */
+/*****************
+  ****** STRUCTURES 
+  *****************/
+
+/******* ICV ********/
+struct icv_s
+{
+  int nthreads_var;		/* Number of threads for the next team 
+				   creation */
+  int dyn_var;		/* Is dynamic thread adjustement on? */
+  int nest_var;		/* Is nested OpenMP handled/allowed? */
+  omp_sched_t run_sched_var;	/* Schedule to use when a 'schedule' clause is
+				   set to 'runtime' */
   int modifier_sched_var;	/* Size of chunks for loop schedule */
-  omp_sched_t def_sched_var;	/* Default schedule when no 'schedule' clause is present */
+  omp_sched_t def_sched_var;	/* Default schedule when no 'schedule' clause
+			   is present */
   int nmicrovps_var;		/* Number of VPs */
 };
- 
+
 typedef struct icv_s icv_t;
 
-/******* CHUNK ********/ 
+struct atomic_int_pad_s {
+  sctk_atomics_int i ;
+  char pad[8] ;
+} ;
+typedef struct atomic_int_pad_s atomic_int_pad ;
+
+
+struct mpcomp_team_info_s {
+  /* -- TEAM INFO -- */
+  int depth;			/* Depth of the current thread (0 = sequential region) */
+
+  /* -- SINGLE CONSTRUCT -- */
+  int single_last_current ;
+#if MPCOMP_USE_ATOMICS
+  // sctk_atomics_int single_nb_threads_entered[ MPCOMP_MAX_ALIVE_SINGLE + 1 ] ;
+  atomic_int_pad single_nb_threads_entered[ MPCOMP_MAX_ALIVE_SINGLE + 1 ] ;
+#else
+  sctk_spinlock_t single_lock_enter[MPCOMP_MAX_ALIVE_SINGLE + 1];
+  volatile int single_nb_threads_entered[ MPCOMP_MAX_ALIVE_SINGLE + 1 ] ;
+#endif
+  volatile int single_first_copyprivate ;
+  void * single_copyprivate_data ;
+  volatile int single_nb_threads_stopped ;
+
+  /* -- SECTION CONSTRUCT -- */
+
+  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
+  int for_dyn_last_current ;
+  atomic_int_pad for_dyn_nb_threads_exited[ MPCOMP_MAX_ALIVE_FOR_DYN + 1 ] ;
+
+  /* -- GUIDED FOR LOOP CONSTRUCT -- */
+} ;
+
+typedef struct mpcomp_team_info_s mpcomp_team_info ;
+
 struct mpcomp_chunk_s {
-   int remain ;
-   int total ;
-   char pad[7] ;
-};
+  sctk_atomics_int total ;
+  sctk_atomics_int remain ;
+  // char pad[8] ;
+} ;
 
-typedef struct mpcomp_chunk_s mpcomp_chunk_t ;
+typedef struct mpcomp_chunk_s mpcomp_chunk ;
 
-
-/******* STACK ******/
-struct mpcomp_stack_s_old {
- struct mpcomp_node_s *node[STACKSIZE];
- //struct mpcomp_stack_s *next;
- size_t size; 
-};
-
-
-
-
-/****** Linked list of locks (per lock structure, who is blocked with this lock) ******/
-
-struct mpcomp_slot_s {
-   struct mpcomp_thread_s *t;
-   struct mpcomp_slot_s *next;
-};
-typedef struct mpcomp_slot_s mpcomp_slot_t;
-
-/******** OPENMP THREAD *********/
+/******* OPENMP THREAD ********/
 struct mpcomp_thread_s {
-  sctk_mctx_t uc;				/* Context: register initialization, etc. Initialized when another thread is blocked */
-  char *stack;					/* Stack: initialized when another thread is blocked */
-  icv_t icvs;					/* Set of the ICVs for the child team */
-  int rank;					/* OpenMP rank. 0 for master thread per team */
-  struct mpcomp_mvp_s *mvp;			/* Openmp microvp */
-  int is_running;				
-  int index_in_mvp;	
-  volatile int done;
-  struct mpcomp_instance_s *children_instance; 	/* Instance for nested parallelism */
-  struct mpcomp_thread_team_s *team; 		/* Info on the current team */
-  void *hierarchical_tls;			/* Local variables */
+  sctk_mctx_t uc;		/* Context (initializes registers, ...)
+				   Initialized when another thread is blocked */
+  icv_t icvs;			/* Set of ICVs for the child team */
+  char *stack;		/* The stack (initialized when another thread is blocked) */
+  long rank;			/* OpenMP rank (0 for master thread per team) */
+  long num_threads;		/* Current number of threads in the team */
+  struct mpcomp_mvp_s * mvp ;
+  int index_in_mvp ;
+  volatile int done ;
+  struct mpcomp_instance_s * children_instance ; /* Instance for nested parallelism */
 
-  /* Private info on the current loop (whatever its schedule is)  */
-  int loop_lb;					/* Lower bound */
-  int loop_b;					/* Upper bound */
-  int loop_incr;				/* Step */
-  int loop_chunk_size;				/* Size of each chunk */
+  struct mpcomp_team_info_s * team ; /* Information on the team */
 
-  /* FOR LOOPS - STATIC SCHEDULE */
-  int static_nb_chunks;
+  void *hierarchical_tls; /* Local variables */
 
-  /* What is the currently scheduled chunk for static loops and/or ordered loops */
-  int static_current_chunk ;
+  /* -- SINGLE CONSTRUCT -- */
+  int single_current ;		/* Which 'single' construct did we already go through? */
 
-  /* SINGLE CONSTRUCT */
-  int current_single;				/* Which 'single' construct did we already go through? */
-  int stop_index;
+  /* LOOP CONSTRUCT */
+  int loop_lb;		/* Lower bound */
+  int loop_b;			/* Upper bound */
+  int loop_incr;		/* Step */
+  int loop_chunk_size;	/* Size of each chunk */
 
-  /* ORDERED CONSTRUCT */
-  volatile int current_ordered_iteration ; 
+  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
+  int for_dyn_current ;	
+  mpcomp_chunk for_dyn_chunk_info[ MPCOMP_MAX_ALIVE_FOR_DYN + 1 ] ;
+#if 0
+  mpcomp_stack_node_leaves for_dyn_stack ;
+#endif
 
-  
+} ;
 
-  /* DYNAMIC CONSTRUCT */
-  volatile int private_current_for_dyn;
-  //int chunk_to_steal_index;
-  struct mpcomp_mvp_s *chunk_mvp;
-  int stolen_chunk_id;                               /* index of stolen chunk */
-  
-};
-
-typedef struct mpcomp_thread_s mpcomp_thread_t;
-
-/******** OPENMP THREAD TEAM *********/
-struct mpcomp_thread_team_s {
-  int depth;                                    /* Depth of the current thread (0 =sequential region) */
-  icv_t icvs;                                   /* Set of the ICVs for the child team */
-  int rank;                                     /* OpenMP rank. 0 for master thread per team */
-  int num_threads;                              /* Current number of threads in the team */
-  struct mpcomp_instance_s *children_instance;  /* Instance for nested parallelism */
-  void *hierarchical_tls;                       /* Local variables */
-
-  /* DYNAMIC SCHEDULING */
-  sctk_spinlock_t lock_stop_for_dyn;
-  sctk_spinlock_t lock_exited_for_dyn[MPCOMP_MAX_ALIVE_FOR_DYN];                /* Lock for dynamic scheduling. A lock for each loop */
-  sctk_spinlock_t lock_for_dyn[MPCOMP_MAX_THREADS][MPCOMP_MAX_ALIVE_FOR_DYN];   /* Lock for dynamic scheduling. A lock for each loop */
-
-  volatile mpcomp_chunk_t chunk_info_for_dyn[MPCOMP_MAX_THREADS][MPCOMP_MAX_ALIVE_FOR_DYN];
-  volatile int stop[MPCOMP_MAX_ALIVE_FOR_DYN];
-  volatile int nthread_exited_for_dyn[MPCOMP_MAX_ALIVE_FOR_DYN];
-
-  /* SINGLE CONSTRUCT */
-  sctk_spinlock_t lock_enter_single[MPCOMP_MAX_ALIVE_SINGLE+1];
-  volatile int nb_threads_entered_single[MPCOMP_MAX_ALIVE_SINGLE+1];
-  volatile int nb_threads_stop;                                        /* To know how many threads are spinning on STOP_SYMBOL case  */
-
-  /* ORDERED CONSTRUCT */
-  volatile int next_ordered_offset ; 
-
-};
-
-typedef struct mpcomp_thread_team_s mpcomp_thread_team_t;
+typedef struct mpcomp_thread_s mpcomp_thread ;
 
 #if defined (SCTK_USE_OPTIMIZED_TLS)
 	info->tls_module = sctk_tls_module;
@@ -220,166 +165,223 @@ typedef struct mpcomp_thread_team_s mpcomp_thread_team_t;
 	sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( &info->tls_module, info->extls ) ;
 #endif
 
-
 /******* INSTANCE OF OPENMP ********/
 struct mpcomp_instance_s {
-  int nb_mvps;
-  struct mpcomp_mvp_s **mvps;
-  struct mpcomp_node_s *root;
-};
+  int nb_mvps;			/* Number of microVPs for this instance */
+  struct mpcomp_mvp_s ** mvps ;	/* All microVPs of this instance */
+  struct mpcomp_node_s * root ;	/* Root to the tree linking the microVPs */
+} ;
 
-typedef struct mpcomp_instance_s mpcomp_instance_t;
+typedef struct mpcomp_instance_s mpcomp_instance ;
 
-/********* OPENMP MICRO VP **********/
+/******* OPENMP MICRO VP ********/
 struct mpcomp_mvp_s {
-  sctk_mctx_t vp_context;			/* Context including registers, stack pointer, etc. */
-  sctk_thread_t pid;				/* Thread ID */
-  int nb_threads;
-  int next_nb_threads;				/* TODO: maybe we don't need it. Probably used for parallel nesting */
-  struct mpcomp_thread_s threads[128];
-  int *tree_rank;				/* Array of rank in every node of the tree */
-  int rank;					/* Rank within the microVPs */
-  char pad0[64];
-  volatile int enable;
-  char pad1[64];
-  struct mpcomp_node_s *root;
-  struct mpcomp_node_s *father;
-  int region_id;				/* TODO: 0 or 1. To be checked */
-  struct mpcomp_node_s *to_run;			/* Specify where is the spin waiting for a new parallel region */
-  char pad2[64];
-  volatile int slave_running;
-  char pad3[64];
-  void *(*func) (void*);			/* Function to call by every thread */
-  void *shared;					/* Shared variables for every thread */
- 
-  int *tree_path;                               /* AMAHEO - path inside tree from root to current leaf */
+    /* Context including registers, stack pointer, ... */
+    sctk_mctx_t vp_context;
+    /* Thread ID */
+    sctk_thread_t pid;
 
-  int stolen_chunk;                             /* Flag specifying if chunk being executed was stolen or not */  
-};
+    int nb_threads ;
+    int next_nb_threads ;
+    struct mpcomp_thread_s threads[MPCOMP_MAX_THREADS_PER_MICROVP] ;
+    /* array of rank in evey node of the tree */
+    int * tree_rank ; 	
+    /* Rank within the microVPs */
+    int rank ;
 
-typedef struct mpcomp_mvp_s mpcomp_mvp_t;
+    char pad0[64] ;
 
-typedef enum children_s {
-  CHILDREN_NODE = 1,
-  CHILDREN_LEAF = 2,
-}children_t;
+    volatile int enable ;
+
+    char pad1[64] ;
+
+    struct mpcomp_node_s * root ;
+
+    char pad1_1[64] ;
+
+    struct mpcomp_node_s * father ;
+
+    char pad1_2[64] ;
+
+    struct mpcomp_node_s * to_run ; /* Specify where the spin waiting for a new parallel region */
+    char pad2[64] ;
+
+    volatile int slave_running ;
+
+    char pad3[64] ;
+
+    void *(*func) (void *);	/* Function to call by every thread */
+    void *shared;		/* Shared variables (for every thread) */
+
+} ;
+
+typedef struct mpcomp_mvp_s mpcomp_mvp ;
+
+  typedef enum children_t {
+    CHILDREN_NODE = 1,
+    CHILDREN_LEAF = 2,
+  } children_t ;
 
 typedef enum context_t {
   MPCOMP_CONTEXT_IN_ORDER = 1,
   MPCOMP_CONTEXT_OUT_OF_ORDER_MAIN = 2,
   MPCOMP_CONTEXT_OUT_OF_ORDER_SUB = 3,
-} context_t;
+} context_t ;
 
-
-/******** OPENMP INFO NODE ********/
-struct mpcomp_node_s {
-  struct mpcomp_node_s *father;
-  struct mpcomp_thread_team_s *team;
-  int rank;					/* Rank among children of my father */
-  int depth;					/* Depth in the tree */
-  int nb_children;				/* Number of children */
-  int min_index;				/* Flat min index of leaves in this subtree */
-  int max_index;				/* Flat max index of leaves in this subtree */
-  children_t child_type;			/* Am I a node or a leaf? */ 
-  union node_or_leaf {
-    struct mpcomp_node_s **node;
-    struct mpcomp_mvp_s **leaf;
-  } children;
-  int chunks_avail;                             /* Flag to inform if there are chunks in the subtree */
-  int nb_children_chunks_idle;                  /* number of current node children who are out of chunks */
-  sctk_spinlock_t lock;				/* Lock for structure update */
-  char pad0[64];
-  volatile int slave_running;
-  char pad1[64];
-#ifdef ATOMICS
-#warning "OpenMp compiling w/atomics"	    
-  sctk_atomics_int barrier;				/* Barrier for the child team */
+/******* OPENMP INFO NODE ********/
+  struct mpcomp_node_s {
+    struct mpcomp_node_s * father ;
+    long rank ; /* Rank among children of my father */
+    int depth ; /* Depth in the tree */
+    int nb_children ; /* Number of children */
+    /* The following indices correspond to the 'rank' value in microVPs */
+    int min_index ;  /* Flat min index of leaves in this subtree */
+    int max_index ; /* Flat max index of leaves in this subtree */
+    mpcomp_team_info * team_info ; /* Information on the whole team */
+    children_t child_type ; /* Kind of children (node or leaf) */
+    union node_or_leaf {
+      struct mpcomp_node_s ** node ;
+      struct mpcomp_mvp_s ** leaf ;
+    } children ;
+    sctk_spinlock_t lock;	/* Lock for structure updates */
+    char pad0[64];
+    volatile int slave_running ;
+    char pad1[64];
+#if MPCOMP_USE_ATOMICS
+    sctk_atomics_int barrier;	/* Barrier for the child team */
 #else
-#warning "OpenMp compiling without atomics"	    
-  volatile int barrier;				/* Barrier for the child team */
+    volatile long barrier;	/* Barrier for the child team */
 #endif
-  char pad2[64];
-  volatile int barrier_done;			/* Is the barrier for the child team is over? */
-  char pad3[64];
-  /* TODO: check if it should be volatile or not */
-  int barrier_num_threads;			/* Number of threads involved in the barrier */
-  char pad4[64];
-  int num_threads;				/* Number of threads in the current team */ 
-  void *(*func) (void*);
-  void *shared;
-};
+    char pad2[64];
+    volatile long barrier_done;	/* Is the barrier (for the child team) over? */
+    char pad3[64];
+    volatile long barrier_num_threads;	/* Number of threads involved in the barrier */
+    char pad4[64];
 
-typedef struct mpcomp_node_s mpcomp_node_t;
+    int num_threads ; /* Number of threads in the current team */
+    void *(*func) (void *);
+    void *shared;
+  } ;
 
-union element_u
-{
- mpcomp_node_t **node;
- mpcomp_mvp_t **mvp;
-};
+  typedef struct mpcomp_node_s mpcomp_node ;
 
-typedef union element_u element;
+/************** BEGIN HEADER ****************/
 
-/****** STACK *****/
-struct mpcomp_stack_s {
- 
- //element **elements;
- mpcomp_node_t **elements; 
- 
- int max_elements;
- int n_elements;
-};
+struct mpcomp_stack {
+  mpcomp_node ** elements ;
+  int max_elements ;
+  int n_elements ; /* corresponds to the head of the stack */
+} ;
 
-typedef struct mpcomp_stack_s mpcomp_stack_t;
-
-  /* Linked list of locks 
-     (per lock structure, who is blocked with this lock)
-   */
-
-/************************************
-       CORRECTNESS CHECK FUNCTIONS 
-*************************************/
-void check_parallel_region_correctness(void);
- 
-/************************************
-       OMP PARALLEL FUNCTIONS 
-*************************************/
-void __mpcomp_instance_init(mpcomp_instance_t *instance, int nb_mvps);
-void __mpcomp_thread_init(mpcomp_thread_t *t);
-void __mpcomp_thread_team_init(mpcomp_thread_team_t *team);
-void __mpcomp_internal_barrier(mpcomp_mvp_t *mvp);
-void __mpcomp_internal_half_barrier(mpcomp_mvp_t *mvp);
-void __mpcomp_half_barrier(void);
-void __mpcomp_barrier(void);
-void *mpcomp_slave_mvp_node(void *arg);
-void *mpcomp_slave_mvp_leaf(void *arg);
-void in_order_scheduler(mpcomp_mvp_t *mvp);
-
-/******************************************
-       DYNAMIC SCHEDULING FUNCTIONS 
-*******************************************/
-void __mpcomp_barrier_for_dyn(void);
-void __mpcomp_internal_barrier_for_dyn(mpcomp_thread_t *t);
-void __mpcomp_steal_chunk();
-
-/************************************
-      STACK OPERATIONS
-************************************/
-void push(mpcomp_node_t *node, mpcomp_stack_t *head);
-mpcomp_node_t* pop(mpcomp_stack_t *head);
-void mpcomp_mk_empty_stack(mpcomp_stack_t *head);
-int mpcomp_is_empty_stack(mpcomp_stack_t *head);
-
-/************************************
-    IN DEPTH TREE SEARCH
-************************************/
-void mpcomp_in_depth_tree_search(mpcomp_node_t *node, mpcomp_mvp_t *target_mvp, int *rank);
+typedef struct mpcomp_stack mpcomp_stack ;
 
 
-/*************************************************
-*************************************************
-	END: NEW MPCOMP STRUCTURES
-*************************************************
-**************************************************/
+
+/************** END HEADER ****************/
+
+/*****************
+  ****** VARIABLES 
+  *****************/
+
+
+extern __thread void *sctk_openmp_thread_tls ;
+
+/*****************
+  ****** FUNCTIONS  
+  *****************/
+
+/* inline */
+
+static inline void __mpcomp_team_info_init( mpcomp_team_info * team_info ) {
+  int i ;
+
+  /* -- TEAM INFO -- */
+  team_info->depth = 0 ;
+
+  /* -- SINGLE CONSTRUCT -- */
+  team_info->single_last_current = MPCOMP_MAX_ALIVE_SINGLE ;
+#if MPCOMP_USE_ATOMICS
+  for ( i = 0 ; i < MPCOMP_MAX_ALIVE_SINGLE ; i++ ) {
+    sctk_atomics_store_int( 
+	&(team_info->single_nb_threads_entered[i].i), 0 ) ;
+  }
+  sctk_atomics_store_int( 
+      &(team_info->single_nb_threads_entered[MPCOMP_MAX_ALIVE_SINGLE].i), MPCOMP_MAX_THREADS ) ;
+
+  sctk_nodebug( "__mpcomp_team_info_init: Filling cell %d with %d", 
+      MPCOMP_MAX_ALIVE_SINGLE, MPCOMP_MAX_THREADS ) ;
+#else
+  for ( i = 0 ; i < MPCOMP_MAX_ALIVE_SINGLE ; i++ ) {
+    team_info->single_nb_threads_entered[i] = 0 ;
+    team_info->single_lock_enter[ i ] = SCTK_SPINLOCK_INITIALIZER ;
+  }
+  team_info->single_nb_threads_entered[MPCOMP_MAX_ALIVE_SINGLE] = MPCOMP_NOWAIT_STOP_SYMBOL ;
+  team_info->single_lock_enter[ MPCOMP_MAX_ALIVE_SINGLE ] = SCTK_SPINLOCK_INITIALIZER ;
+#endif
+
+  team_info->single_first_copyprivate = 0 ;
+  team_info->single_copyprivate_data = NULL ;
+  team_info->single_nb_threads_stopped = 0 ;
+
+  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
+  team_info->for_dyn_last_current = MPCOMP_MAX_ALIVE_FOR_DYN ;
+  for ( i = 0 ; i < MPCOMP_MAX_ALIVE_FOR_DYN ; i++ ) {
+    sctk_atomics_store_int( 
+	&(team_info->for_dyn_nb_threads_exited[i].i), 0 ) ;
+  }
+  sctk_atomics_store_int( 
+      &(team_info->for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN].i), 
+      MPCOMP_NOWAIT_STOP_SYMBOL ) ;
+}
+
+static inline void __mpcomp_thread_init( mpcomp_thread * t, icv_t icvs, mpcomp_instance * instance,
+    mpcomp_team_info * team_info ) {
+  int i ;
+
+  t->icvs = icvs ;
+  t->rank = 0 ;
+  t->num_threads = 1 ;
+  t->mvp = NULL ;
+  t->index_in_mvp = 0 ;
+  t->done = 0 ;
+  t->children_instance = instance ;
+  t->team = team_info ;
+  t->hierarchical_tls = NULL ;
+  t->single_current = -1 ;
+
+  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
+}
+
+/* mpcomp.c */
+void __mpcomp_init (void);
+void __mpcomp_instance_init( mpcomp_instance * instance, int nb_mvps ) ;
+void in_order_scheduler( mpcomp_mvp * mvp ) ;
+void * mpcomp_slave_mvp_node( void * arg ) ;
+void * mpcomp_slave_mvp_leaf( void * arg ) ;
+void __mpcomp_internal_half_barrier() ;
+void __mpcomp_internal_full_barrier() ;
+void __mpcomp_barrier() ;
+
+/* mpcomp_tree.c */
+int __mpcomp_check_tree_parameters( int n_leaves, int depth, int * degree ) ;
+int __mpcomp_build_default_tree( mpcomp_instance * instance ) ;
+int __mpcomp_build_tree( mpcomp_instance * instance, int n_leaves, int depth, int * degree ) ;
+int __mpcomp_check_tree_coherency( mpcomp_instance * instance ) ;
+void __mpcomp_print_tree( mpcomp_instance * instance ) ;
+
+/* mpcomp_loop_dyn.c */
+int __mpcomp_dynamic_loop_begin (int lb, int b, int incr,
+			     int chunk_size, int *from, int *to);
+int __mpcomp_dynamic_loop_next (int *from, int *to) ;
+void __mpcomp_dynamic_loop_end () ;
+void __mpcomp_dynamic_loop_end_nowait () ;
+
+/* Stack primitives */
+mpcomp_stack * __mpcomp_create_stack( int max_elements ) ;
+int __mpcomp_is_stack_empty( mpcomp_stack * s ) ;
+void __mpcomp_push( mpcomp_stack * s, mpcomp_node * n ) ;
+mpcomp_node * __mpcomp_pop( mpcomp_stack * s ) ;
+void __mpcomp_free_stack( mpcomp_stack * s ) ;
 
 #ifdef __cplusplus
 }

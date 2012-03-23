@@ -24,7 +24,7 @@
 #include "mpcomp_internal.h"
 #include <sctk_debug.h>
 
-/* Return the number of chunks that a static schedule will create */
+/* Return the number of chunks that a static schedule will create for the thread 'rank' */
 int
 __mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads, int lb,
 					int b, int incr, int chunk_size)
@@ -37,8 +37,6 @@ __mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads, int lb,
   /* Compute the trip count (total number of iterations of the original loop) */
   trip_count = (b - lb) / incr;
 
-  //printf("[__mpcomp_get_static_nb_chunks_per_rank  rank=%d] nb iterations=%d\n", rank, trip_count); //DEBUG
-
   if ( (b - lb) % incr != 0 ) {
     trip_count++ ;
   }
@@ -49,8 +47,6 @@ __mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads, int lb,
 
   /* Compute the number of chunks per thread (floor value) */
   nb_chunks_per_thread = trip_count / (chunk_size * nb_threads);
-  
-  printf("[__mpcomp_get_static_nb_chunks_per_rank  rank=%d] trip_count=%d, chunk_size=%d, nb_threads=%d, nb_chunks_per_thread=%d\n", rank, trip_count, chunk_size, nb_threads, nb_chunks_per_thread); //DEBUG
 
   /* The first threads will have one more chunk (according to the previous
      approximation) */
@@ -67,7 +63,7 @@ __mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads, int lb,
       nb_chunks_per_thread++;
     }
 
-  sctk_debug
+  sctk_nodebug
     ("__mpcomp_get_static_nb_chunks: final nb_chunks_per_thread = %d",
      nb_chunks_per_thread);
 
@@ -82,6 +78,8 @@ __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
 				      int *from, int *to)
 {
   int trip_count;
+  int local_from ;
+  int local_to ;
 
   /* Compute the trip count (total number of iterations of the original loop) */
   trip_count = (b - lb) / incr;
@@ -89,9 +87,6 @@ __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
   if ( (b - lb) % incr != 0 ) {
     trip_count++ ;
   }
-
-  //printf("[__mpcomp_get_specific_chunk_per_rank rank=%d] nb_iterations=%d, nb_chunks_per_thread=%d\n", rank, trip_count, chunk_num); //DEBUG
- 
 
   /* The final additionnal chunk is smaller, so its computation is a little bit
      different */
@@ -103,29 +98,32 @@ __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
 							      chunk_size) - 1)
     {
 
-      *from = lb + (trip_count / chunk_size) * chunk_size * incr;
-      *to = lb + trip_count * incr;
+      local_from = lb + (trip_count / chunk_size) * chunk_size * incr;
+      local_to = lb + trip_count * incr;
 
       sctk_nodebug ("__mpcomp_static_schedule_get_specific_chunk: "
 		    "Thread %d: %d -> %d (excl) step %d => "
 		    "%d -> %d (excl) step %d (chunk of %d)\n",
-		    rank, lb, b, incr, from, to, incr,
+		    rank, lb, b, incr, local_from, local_to, incr,
 		    trip_count % chunk_size);
 
     }
   else
     {
-      *from =
+      local_from =
 	lb + chunk_num * nb_threads * chunk_size * incr +
 	chunk_size * incr * rank;
-      *to =
+      local_to =
 	lb + chunk_num * nb_threads * chunk_size * incr +
 	chunk_size * incr * rank + chunk_size * incr;
 
       sctk_nodebug ("__mpcomp_static_schedule_get_specific_chunk: "
 		    "Thread %d / Chunk %d: %d -> %d (excl) step %d => "
 		    "%d -> %d (excl) step %d (chunk of %d)\n",
-		    rank, chunk_num, lb, b, incr, *from, *to, incr,
+		    rank, chunk_num, lb, b, incr, local_from, local_to, incr,
 		    chunk_size);
     }
+
+  *from = local_from ;
+  *to = local_to ;
 }

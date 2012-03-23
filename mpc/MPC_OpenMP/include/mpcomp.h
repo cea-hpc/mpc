@@ -33,16 +33,16 @@ extern "C"
 #include <mpc.h>
 
 /* Macros for OpenMP compliance */
-//#define omp_set_num_threads mpcomp_set_num_threads
+#define omp_set_num_threads mpcomp_set_num_threads
 #define omp_get_num_threads mpcomp_get_num_threads
 #define omp_get_max_threads mpcomp_get_max_threads
 #define omp_get_thread_num mpcomp_get_thread_num
-//#define omp_get_num_procs mpcomp_get_num_procs
-//#define omp_in_parallel mpcomp_in_parallel
-//#define omp_set_dynamic mpcomp_set_dynamic
-//#define omp_get_dynamic mpcomp_get_dynamic
-//#define omp_set_nested mpcomp_set_nested
-//#define omp_get_nested mpcomp_get_nested
+#define omp_get_num_procs mpcomp_get_num_procs
+#define omp_in_parallel mpcomp_in_parallel
+#define omp_set_dynamic mpcomp_set_dynamic
+#define omp_get_dynamic mpcomp_get_dynamic
+#define omp_set_nested mpcomp_set_nested
+#define omp_get_nested mpcomp_get_nested
 
 #define omp_lock_t mpcomp_lock_t
 #define omp_nest_lock_t mpcomp_nest_lock_t
@@ -64,16 +64,16 @@ extern "C"
 
 
 /* OpenMP 2.5 API */
-  //void mpcomp_set_num_threads (int num_threads);
+  void mpcomp_set_num_threads (int num_threads);
   int mpcomp_get_num_threads (void);
   int mpcomp_get_max_threads (void);
   int mpcomp_get_thread_num (void);
-  //int mpcomp_get_num_procs (void);
-  //int mpcomp_in_parallel (void);
-  //void mpcomp_set_dynamic (int dynamic_threads);
-  //int mpcomp_get_dynamic (void);
-  //void mpcomp_set_nested (int nested);
-  //int mpcomp_get_nested (void);
+  int mpcomp_get_num_procs (void);
+  int mpcomp_in_parallel (void);
+  void mpcomp_set_dynamic (int dynamic_threads);
+  int mpcomp_get_dynamic (void);
+  void mpcomp_set_nested (int nested);
+  int mpcomp_get_nested (void);
 
   struct mpcomp_lock_s
   {

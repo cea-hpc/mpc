@@ -68,7 +68,7 @@ extern "C"
    ->
    __mpcomp_barrier() ;
  */
-  void __rename_mpcomp_barrier (void);
+  void __mpcomp_barrier (void);
 
 /*
    CRITICAL construct
@@ -80,6 +80,12 @@ extern "C"
 
   void __mpcomp_named_critical_begin (void **l);
   void __mpcomp_named_critical_end (void **l);
+
+/* SECTIONS/SECTION construct */
+  int __mpcomp_sections_begin (int nb_sections);
+  int __mpcomp_sections_next ();
+  void __mpcomp_sections_end ();
+  void __mpcomp_sections_end_nowait ();
 
 /*
    SINGLE construct
@@ -213,6 +219,46 @@ extern "C"
   void __mpcomp_dynamic_loop_end ();
   void __mpcomp_dynamic_loop_end_nowait ();
 
+/* GUIDED schedule */
+/*
+   pragma omp for schedule(guided,chunk_size)
+   for ( ... ) { A ; }
+   ->
+   if ( __mpcomp_guided_loop_begin( ... ) ) {
+     do {
+       for ( ... ) {
+	 A ;
+       } 
+     } while ( __mpcomp_guided_loop_next( ... ) ) ;
+   }
+   __mpcomp_guided_loop_end() ;
+ */
+  int __mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size,
+				  int *from, int *to);
+  int __mpcomp_guided_loop_next (int *from, int *to);
+  void __mpcomp_guided_loop_end ();
+  void __mpcomp_guided_loop_end_nowait ();
+
+/* RUNTIME schedule */
+/*
+   pragma omp for schedule(runtime)
+   for ( i=lb ; i COND b ; i+=incr ) { A ; }
+   ->
+   if ( __mpcomp_runtime_loop_begin( ... ) ) {
+     do {
+       for ( ... ) {
+	 A ;
+       } 
+     } while ( __mpcomp_runtime_loop_next( ... ) ) ;
+   }
+   __mpcomp_runtime_loop_end() ;
+ */
+  int __mpcomp_runtime_loop_begin (int lb, int b, int incr, int chunk_size,
+				   int *from, int *to);
+  int __mpcomp_runtime_loop_next (int *from, int *to);
+  void __mpcomp_runtime_loop_end ();
+  void __mpcomp_runtime_loop_end_nowait ();
+
 /*
    ORDERED clause/construct
  */
@@ -254,14 +300,52 @@ int __mpcomp_ordered_static_loop_next(int *from, int *to) ;
 void __mpcomp_ordered_static_loop_end() ;
 void __mpcomp_ordered_static_loop_end_nowait() ;
 
+int __mpcomp_ordered_dynamic_loop_begin (int lb, int b, int incr, int chunk_size, int *from, int *to) ;
+int __mpcomp_ordered_dynamic_loop_next(int *from, int *to) ;
+void __mpcomp_ordered_dynamic_loop_end() ;
+void __mpcomp_ordered_dynamic_loop_end_nowait() ;
+
+int __mpcomp_ordered_guided_loop_begin (int lb, int b, int incr, int chunk_size, int *from, int *to) ;
+int __mpcomp_ordered_guided_loop_next (int *from, int *to) ;
+void __mpcomp_ordered_guided_loop_end () ;
+void __mpcomp_ordered_guided_loop_end_nowait () ;
+
+/* CHECKPOINT/RESTART */
+/*
+   If the application uses the OpenMP ABI (or API), the checkpoint/restart
+   mechanism has to be called through the function 'mpcomp_checkpoint()'.
+   
+   This function will take care of saving everything related to OpenMP and the
+   MPC tasks (message-passing interface).
+ */
+  int __mpcomp_checkpoint ();
 
 /* COMBINED PARALLEL REGION + IGNORE-NOWAIT VERSIONS */
 
- void __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
+  void __mpcomp_start_parallel_static_loop (int arg_num_threads, void *(*func)
+					    (void *), void *shared, int lb,
+					    int b, int incr, int chunk_size);
+  int __mpcomp_static_loop_next_ignore_nowait (int *from, int *to);
+
+  void __mpcomp_start_parallel_guided_loop (int arg_num_threads, void *(*func)
+					    (void *), void *shared, int lb,
+					    int b, int incr, int chunk_size);
+  int __mpcomp_guided_loop_begin_ignore_nowait (int lb, int b, int incr,
+						int chunk_size, int *from,
+						int *to);
+  int __mpcomp_guided_loop_next_ignore_nowait (int *from, int *to);
+
+  void __mpcomp_start_parallel_runtime_loop (int arg_num_threads,
 					     void *(*func) (void *),
 					     void *shared, int lb, int b,
-					     int incr, int chunk_size); 
-/*  int __mpcomp_dynamic_loop_next_ignore_nowait (int *from, int *to);*/
+					     int incr, int chunk_size);
+  int __mpcomp_runtime_loop_next_ignore_nowait (int *from, int *to);
+
+  void __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
+					     void *(*func) (void *),
+					     void *shared, int lb, int b,
+					     int incr, int chunk_size);
+  int __mpcomp_dynamic_loop_next_ignore_nowait (int *from, int *to);
 
 #ifdef __cplusplus
 }
