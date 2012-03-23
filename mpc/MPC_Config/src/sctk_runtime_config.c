@@ -220,9 +220,6 @@ void sctk_runtime_config_init(void)
 
 			//mark as init
 			__sctk_global_runtime_config_init__ = true;
-
-			//display
-			sctk_runtime_config_runtime_display();
 		}
 	}
 }
@@ -230,5 +227,5 @@ void sctk_runtime_config_init(void)
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_empty_validator_for_test(struct sctk_runtime_config * config)
 {
-	printf("DEBUG : Test validator called on config...\n");
+	sctk_debug("DEBUG : Test validator called on config...\n");
 }

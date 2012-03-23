@@ -187,6 +187,33 @@ TMP_DIR="--directory=${TMP_DIR_D}"
 LAUNCH_OPTIONS=""
 MPC_CLEAN_TMP_DIR="0"
 
+# Pre-parsing to extrac --config, it must be done before parsing all options
+# as config file must feed default value and can be erased by mpcrun arguments.
+for arg in "$@" ; do
+	case $arg in
+		--config=*)
+			MPC_APP_CONFIG="`echo A$arg | sed -e 's/A--config=//g'`"
+			export MPC_APP_CONFIG
+			;;
+	esac
+done
+
+# Load config files options
+CONFIG_FILES_VALID=false
+eval $(${MPC_BIN_DIR}/mpc_print_config --launcher)
+if [ "${CONFIG_FILES_VALID}" = "true" ]; then
+	# Default value related to --enable-smt
+	ENABLE_SMT="${CONFIG_LAUNCHER_SMT}"
+	# Default value related to -v/-vv/-vvv
+	MPC_VERBOSE="${CONFIG_LAUNCHER_VERBOSITY}"
+else
+	error "Error while loading MPC configuration files."
+fi
+
+# Make config loading silent in case of error in all MPC processes
+export MPC_CONFIG_SILENT=1
+
+# Parse command options
 DEFAULT_CPU_NB=""
 for arg in "$@" ; do
     if test "$READ_MPC_ARG" = "true" ; then
@@ -315,10 +342,6 @@ for arg in "$@" ; do
     --launcher=*)
     LAUNCH="`echo A$arg | sed -e 's/A--launcher=//g'`"
     ;;
-    --config=*)
-    MPC_APP_CONFIG="`echo A$arg | sed -e 's/A--config=//g'`"
-    export MPC_APP_CONFIG
-    ;;
     -mpi-only|-mpi_only)
     mpi_only=yes
     ;;
@@ -445,12 +468,6 @@ if test "$show" = "eval" ; then
 	    mpcrun_error "Binary $BINARY not found"
 	fi
     fi
-fi
-
-#make config loading silent in case of error
-#only for more than 64 process
-if test "A$PROCESS_NB" != "A" && test $PROCESS_NB -gt 64; then
-	export MPC_CONFIG_SILENT=1
 fi
 
 TMP_SCTK_ARG="$SCTK_ARGS"

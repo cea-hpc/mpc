@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile mar mar 13 13:37:45 CET 2012
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile Wed Mar 21 10:23:14 CET 2012
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -85,7 +85,7 @@ FOBJ_generators=$(FFILES_generators:generators/%.f=$(M_PWD)/BUILD_MPC_Config/lib
 FFILES_src=$(wildcard src/*.f)
 FOBJ_src=$(FFILES_src:src/%.f=$(M_PWD)/BUILD_MPC_Config/lib/%_f.o)
 
-all: $(OBJ_doc) $(FOBJ_doc) $(SOBJ_doc) $(OBJ_extra) $(FOBJ_extra) $(SOBJ_extra) $(OBJ_generated) $(FOBJ_generated) $(SOBJ_generated) $(OBJ_generators) $(FOBJ_generators) $(SOBJ_generators) $(OBJ_src) $(FOBJ_src) $(SOBJ_src)
+all: $(OBJ_doc) $(FOBJ_doc) $(SOBJ_doc) $(OBJ_extra) $(FOBJ_extra) $(SOBJ_extra) $(OBJ_generated) $(FOBJ_generated) $(SOBJ_generated) $(OBJ_generators) $(FOBJ_generators) $(SOBJ_generators) $(OBJ_src) $(FOBJ_src) $(SOBJ_src) build_bin
 
 $(M_PWD)/include_modules/MPC_Config:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Config/doc $(M_PWD)/include_modules
@@ -244,3 +244,6 @@ ifeq ($(MAKECMDGOALS),all)
 -include $(DEPENDS)
 endif
 endif
+build_bin:
+	@mkdir -p $(M_PWD)/BUILD_MPC_Config/bin
+	@$(MAKE) BUILD_DIR=$(M_PWD)/BUILD_MPC_Config/bin -C bin all
