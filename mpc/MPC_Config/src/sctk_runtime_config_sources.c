@@ -24,6 +24,8 @@
 #include <assert.h>
 #include <string.h>
 #include <stdbool.h>
+#include <sys/stat.h>
+#include <errno.h>
 #include <sctk_config.h>
 #include "sctk_debug.h"
 #include "sctk_runtime_config_selectors.h"
@@ -318,6 +320,29 @@ void sctk_runtime_config_sources_select_profiles(struct sctk_runtime_config_sour
 
 /*******************  FUNCTION  *********************/
 /**
+ * Check if the file exist before trying to use it with libxml.
+**/
+bool sckt_runtime_config_file_exist(const char * filename)
+{
+	bool exist = false;
+	struct stat value;
+	//maybe stat is a portabilité issue
+	if (stat(filename, &value) == -1)
+	{
+		if (errno != ENOENT)
+		{
+			perror(filename);
+			sctk_error("Can't stat file %s.",filename);
+		}
+	} else {
+		exist = true;
+	}
+
+	return exist;
+}
+
+/*******************  FUNCTION  *********************/
+/**
  * Function used to open a particular XML file and select the DOM root node for future usage.
  * It will abort on errors.
  * @param source Define the struct to setup while openning the file.
@@ -333,9 +358,8 @@ void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml *
 	source->document = NULL;
 	source->root_node = NULL;
 
-	//open file
-	source->document = xmlParseFile(filename);
-	if (source->document == NULL)
+	//check if file exist
+	if ( ! sckt_runtime_config_file_exist(filename) )
 	{
 		switch(level)
 		{
@@ -350,9 +374,13 @@ void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml *
 		}
 	}
 
+	//load it
+	source->document = xmlParseFile(filename);
+	abort();
+
 	//get root node
 	source->root_node = xmlDocGetRootElement(source->document);
-	assume_m (source->root_node != NULL,"Config file is empty : %s\n",filename);
+	assume_m (source->root_node != NULL,"Config file is empty : %s",filename);
 
 	//check root node name
 	assume_m (xmlStrcmp(source->root_node->name,SCTK_RUNTIME_CONFIG_XML_NODE_MPC) == 0,"Bad root node name %s in config file : %s\n",source->root_node->name,filename);

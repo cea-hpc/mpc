@@ -200,14 +200,15 @@ done
 
 # Load config files options
 CONFIG_FILES_VALID=false
-eval $(${MPC_BIN_DIR}/mpc_print_config --launcher)
+config_files_vars="$(${MPC_BIN_DIR}/mpc_print_config --launcher)"
+if [ ! -z "" ]; then eval "${config_files_vars}"; fi
 if [ "${CONFIG_FILES_VALID}" = "true" ]; then
 	# Default value related to --enable-smt
 	ENABLE_SMT="${CONFIG_LAUNCHER_SMT}"
 	# Default value related to -v/-vv/-vvv
 	MPC_VERBOSE="${CONFIG_LAUNCHER_VERBOSITY}"
 else
-	error "Error while loading MPC configuration files."
+	mpcrun_error "Error while loading MPC configuration files."
 fi
 
 # Make config loading silent in case of error in all MPC processes
