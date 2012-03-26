@@ -149,6 +149,13 @@ struct mpcomp_thread_s {
   /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
   int for_dyn_current ;	
   mpcomp_chunk for_dyn_chunk_info[ MPCOMP_MAX_ALIVE_FOR_DYN + 1 ] ;
+
+  /* Infos for DFS */
+  struct mpcomp_stack   *tree_stack;
+  struct mpcomp_mvp_s   *stolen_mvp;
+  int stolen_chunk_id;
+  //struct mpcomp_node_s  *parent_node  
+
 #if 0
   mpcomp_stack_node_leaves for_dyn_stack ;
 #endif
@@ -350,6 +357,9 @@ static inline void __mpcomp_thread_init( mpcomp_thread * t, icv_t icvs, mpcomp_i
   t->single_current = -1 ;
 
   /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
+  t->tree_stack = NULL;
+  t->stolen_mvp = NULL;
+  t->stolen_chunk_id = -1;
 }
 
 /* mpcomp.c */
