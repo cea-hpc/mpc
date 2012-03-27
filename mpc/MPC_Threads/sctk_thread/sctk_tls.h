@@ -183,10 +183,9 @@ extern "C"
   static inline void sctk_context_init_tls_with_specified_extls (sctk_mctx_t* ucp, void* extls, void* tls_module) // and tls_module
   {
 #if defined(SCTK_USE_TLS)
+    sctk_context_init_tls_without_extls (ucp);
 	ucp->sctk_extls = extls ;
 	ucp->sctk_tls_module = tls_module ;
-	// ucp->sctk_tls_module = tls_module ;
-    sctk_context_init_tls_without_extls (ucp);
 #endif
   }
 
@@ -196,6 +195,7 @@ extern "C"
 
   void sctk_tls_module_set_gs_register ();
   void sctk_tls_module_alloc_and_fill ();
+  void sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( void **_tls_module, void *_extls );
 
 
 #ifdef __cplusplus
