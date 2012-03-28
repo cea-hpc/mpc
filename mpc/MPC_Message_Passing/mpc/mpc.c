@@ -4872,12 +4872,20 @@ PMPC_User_Main (int argc, char **argv)
 }
 
 /********************************************************************/
-/*Netowk statistics                                                 */
+/*Netowk functions                                                  */
 /********************************************************************/
 void MPC_Network_stats(struct MPC_Network_stats_s *stats) {
 #ifdef MPC_Message_Passing
 #ifdef MPC_USE_INFINIBAND
   sctk_network_stats_ib(stats);
+#endif
+#endif
+}
+
+void MPC_Network_deco_neighbors() {
+#ifdef MPC_Message_Passing
+#ifdef MPC_USE_INFINIBAND
+  sctk_network_deco_neighbors_ib();
 #endif
 #endif
 }

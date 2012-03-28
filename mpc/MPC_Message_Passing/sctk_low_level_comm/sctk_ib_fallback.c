@@ -54,14 +54,15 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   sctk_ib_qp_t *remote;
   sctk_ibuf_t *ibuf;
   size_t size;
-  int low_memory_mode_remote;
-  int low_memory_mode_local;
+  int low_memory_mode;
+  specific_message_tag_t tag = msg->body.header.specific_message_tag;
 
   sctk_nodebug("send message through rail %d",rail->rail_number);
 
   sctk_nodebug("Send message with tag %d", msg->sctk_msg_get_specific_message_tag);
-  if( IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag)) {
-    if (sctk_ib_cm_on_demand_recv_check(&msg->body))
+  if( IS_PROCESS_SPECIFIC_MESSAGE_TAG(tag)) {
+
+    if (IS_PROCESS_SPECIFIC_LOW_MEM(tag) || IS_PROCESS_SPECIFIC_ONDEMAND(tag))
     {
       tmp = sctk_get_route_to_process_no_ondemand(msg->sctk_msg_get_destination,rail);
       sctk_nodebug("Send to process %d", msg->sctk_msg_get_destination);
@@ -76,24 +77,19 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
   route_data=&tmp->data.ib;
   remote=route_data->remote;
-#if 0
-  low_memory_mode_remote = sctk_route_is_low_memory_mode_remote(tmp);
-  low_memory_mode_local = (config->ibv_low_memory && !sctk_route_is_low_memory_mode_local(tmp));
-  sctk_nodebug("Local: %d, remote: %d", low_memory_mode_local, low_memory_mode_remote);
-  if (low_memory_mode_local == 1) {
-    sctk_route_set_low_memory_mode_local(tmp, 1);
-  }
-#endif
+
+  /* Check if the remote task is in low mem mode */
+  low_memory_mode = sctk_route_is_low_memory_mode_remote(tmp);
 
   size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
 
   if (size+IBUF_GET_EAGER_SIZE < config->ibv_eager_limit)  {
-    ibuf = sctk_ib_sr_prepare_msg(rail_ib, remote, msg, size, low_memory_mode_local);
+    ibuf = sctk_ib_sr_prepare_msg(rail_ib, remote, msg, size, -1);
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
     sctk_complete_and_free_message(msg);
     PROF_INC_RAIL_IB(rail_ib, eager_nb);
-  } else if (size+IBUF_GET_BUFFERED_SIZE < config->ibv_frag_eager_limit)  {
+  } else if (!low_memory_mode && size+IBUF_GET_BUFFERED_SIZE < config->ibv_frag_eager_limit)  {
     sctk_nodebug("Sending message to %d (process_destk:%d,process_src;%d,number:%d) (%p)", remote->rank, msg->sctk_msg_get_destination, msg->sctk_msg_get_source,msg->sctk_msg_get_message_number, tmp);
     /* Fallback to RDMA if buffered not available or low memory mode */
     if (sctk_ib_buffered_prepare_msg(rail, tmp, msg, size) == 1 ) goto rdma;
@@ -102,7 +98,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   } else {
 rdma:
     sctk_nodebug("Send RDMA message");
-    ibuf = sctk_ib_rdma_prepare_req(rail, tmp, msg, size, low_memory_mode_local);
+    ibuf = sctk_ib_rdma_prepare_req(rail, tmp, msg, size, -1);
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
     sctk_ib_rdma_prepare_send_msg(rail_ib, msg, size);
@@ -162,23 +158,29 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
   int release_ibuf = 1;
   int recopy = 1;
   int ondemand = 0;
+  specific_message_tag_t tag;
 
   sctk_nodebug("[%d] Recv ibuf:%p", rail->rail_number,ibuf);
   /* Switch on the protocol of the received message */
   switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
     case eager_protocol:
       msg_ibuf = IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer);
+      tag = msg_ibuf->header.specific_message_tag;
 
-      if (IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg_ibuf->header.specific_message_tag)) {
-        ondemand = sctk_ib_cm_on_demand_recv_check(msg_ibuf);
-        sctk_nodebug("Received specific message");
-        sctk_nodebug("received src:%d, dest:%d, od:%d", msg_ibuf->sctk_msg_get_source, msg_ibuf->sctk_msg_get_destination, ondemand);
+      if (IS_PROCESS_SPECIFIC_MESSAGE_TAG(tag)) {
 
-        /* If on demand, handle message before sending it to high-layers */
-        if(ondemand) {
+        /* If on demand, handle message and do not send it
+         * to high-layers */
+        if (IS_PROCESS_SPECIFIC_ONDEMAND(tag)) {
           sctk_nodebug("Received OD message");
-          msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
+          msg = sctk_ib_sr_recv(rail, ibuf, recopy);
           sctk_ib_cm_on_demand_recv(rail, msg, ibuf, recopy);
+          goto release;
+        } else if (IS_PROCESS_SPECIFIC_LOW_MEM(tag)) {
+          sctk_nodebug("Received low mem message");
+          msg = sctk_ib_sr_recv(rail, ibuf, recopy);
+          sctk_ib_low_mem_recv(rail, msg, ibuf, recopy);
+
           goto release;
         }
       } else {
@@ -191,7 +193,7 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
       }
 
       /* Normal message: we handle it */
-      msg = sctk_ib_sr_recv(rail, ibuf, &recopy);
+      msg = sctk_ib_sr_recv(rail, ibuf, recopy);
       sctk_ib_sr_recv_free(rail, msg, ibuf, recopy);
       rail->send_message_from_network(msg);
 
@@ -260,6 +262,9 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,
   src_task = IBUF_GET_SRC_TASK(ibuf);
   dest_task = IBUF_GET_DEST_TASK(ibuf);
   ibuf->cq = send_cq;
+  /* Decrease the number of pending requests */
+  sctk_ib_qp_decr_requests_nb(ibuf->remote);
+
   /* We still check the dest_task. If it is -1, this is a process_specific
    * message, so we need to handle the message asap */
   if (sctk_ib_cp_handle_message(rail, ibuf, dest_task, src_task, recv_cq) == 0) {
@@ -413,6 +418,8 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   sctk_ib_config_init(rail_ib, "fallback");
   /* Open device */
   device = sctk_ib_device_init(rail_ib);
+  /* FIXME: pass rail as an arg of sctk_ib_device_init  */
+  rail_ib->rail = rail;
   sctk_ib_device_open(rail_ib, 0);
   /* Init Proctection Domain */
   sctk_ib_pd_init(device);

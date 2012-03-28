@@ -28,9 +28,20 @@
 #include "sctk_ib_config.h"
 #include "sctk_spinlock.h"
 #include "sctk_ibufs.h"
+#include "sctk_route.h"
 
 #include <infiniband/verbs.h>
 #include <inttypes.h>
+
+struct sctk_ib_qp_s;
+/* Structure related to ondemand
+ * connexions */
+typedef struct sctk_ib_qp_ondemand_s {
+  struct sctk_ib_qp_s *qp_list;
+  /* 'Hand' of the clock */
+  struct sctk_ib_qp_s *qp_list_ptr;
+  sctk_spinlock_t lock;
+} sctk_ib_qp_ondemand_t;
 
 /* Structure associated to a device */
 /* XXX: Put it in a file called sctk_ib_device.c */
@@ -57,6 +68,8 @@ typedef struct sctk_ib_device_s
   struct ibv_srq          *srq;      /* shared received quue */
   struct ibv_cq           *send_cq;  /* outgoing completion queues */
   struct ibv_cq           *recv_cq;  /* incoming completion queues */
+
+  struct sctk_ib_qp_ondemand_s ondemand;
 } sctk_ib_device_t;
 
 /* Structure associated to a remote QP */
@@ -67,22 +80,34 @@ typedef struct sctk_ib_qp_s
                                         (should match remote QP's sq_psn) */
   uint32_t                psn;       /* packet sequence number */
   uint32_t                dest_qp_num;/* destination qp number */
-  int                     rank;
+  int                     rank; /* Process rank associated to the QP */
+  /* QP state */
+  OPA_int_t               state;
   /* If QP in Ready-to-Receive mode*/
   OPA_int_t               is_rtr;
   sctk_spinlock_t         lock_rtr;
   /* If QP in Ready-to-Send mode */
   OPA_int_t               is_rts;
   sctk_spinlock_t         lock_rts;
-  /* QP connected */
-  uint8_t                 is_connected;
+
   /* Number of pending entries free in QP */
   unsigned int            free_nb;
   /* Lock when posting an element */
   sctk_spinlock_t         post_lock;
+  /* Number of pending requests */
+  OPA_int_t               pending_requests_nb;
 
+  /* For linked-list */
   struct sctk_ib_qp_s *prev;
   struct sctk_ib_qp_s *next;
+
+  /* Lock for sending messages */
+  sctk_spin_rwlock_t lock_send;
+
+  /* Is remote dynamically created ? */
+  int ondemand;
+  /* Bit for clock algorithm */
+  int R;
 } sctk_ib_qp_t;
 
 /*-----------------------------------------------------------
@@ -141,7 +166,7 @@ void
 sctk_ib_qp_modify( sctk_ib_qp_t* remote, struct ibv_qp_attr* attr, int flags);
 
 void sctk_ib_qp_allocate_init(struct sctk_ib_rail_info_s* rail_ib,
-    int rank, sctk_ib_qp_t* remote);
+    int rank, sctk_ib_qp_t* remote, int ondemand);
 
 void sctk_ib_qp_allocate_rtr(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t *remote,sctk_ib_qp_keys_t* keys);
@@ -163,13 +188,52 @@ sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
 void sctk_ib_qp_release_entry(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t *remote);
 
-int
-sctk_ib_qp_allocate_get_rtr(sctk_ib_qp_t *remote);
-
-int
-sctk_ib_qp_allocate_get_rts(sctk_ib_qp_t *remote);
-
 int sctk_ib_qp_get_cap_flags(struct sctk_ib_rail_info_s* rail_ib);
+
+static void
+sctk_ib_qp_inc_requests_nb(sctk_ib_qp_t *remote) {
+  OPA_incr_int(&remote->pending_requests_nb);
+}
+static void
+sctk_ib_qp_decr_requests_nb(sctk_ib_qp_t *remote) {
+  OPA_decr_int(&remote->pending_requests_nb);
+}
+static int
+sctk_ib_qp_get_requests_nb(sctk_ib_qp_t *remote) {
+  OPA_load_int(&remote->pending_requests_nb);
+}
+static int
+sctk_ib_qp_set_requests_nb(sctk_ib_qp_t *remote) {
+  OPA_load_int(&remote->pending_requests_nb);
+}
+
+void
+sctk_ib_qp_flush(struct sctk_ib_rail_info_s* rail_ib,
+    sctk_ib_qp_t *remote);
+
+
+/*-----------------------------------------------------------
+ *  Change the state of a QP
+ *----------------------------------------------------------*/
+static inline void
+sctk_ib_qp_allocate_set_rtr(sctk_ib_qp_t *remote, int enabled) {
+  OPA_store_int(&remote->is_rtr, enabled);
+}
+static inline void
+sctk_ib_qp_allocate_set_rts(sctk_ib_qp_t *remote, int enabled) {
+  OPA_store_int(&remote->is_rts, enabled);
+}
+static inline int
+sctk_ib_qp_allocate_get_rtr(sctk_ib_qp_t *remote) {
+  return (int) OPA_load_int(&remote->is_rtr);
+}
+static inline int
+sctk_ib_qp_allocate_get_rts(sctk_ib_qp_t *remote) {
+  return (int) OPA_load_int(&remote->is_rts);
+}
+
+
+
 
 #endif
 #endif

@@ -28,6 +28,7 @@
 #include "sctk_ib_config.h"
 #include "sctk_ib_qp.h"
 #include "utlist.h"
+#include "uthash.h"
 
 /* IB debug macros */
 #if defined SCTK_IB_MODULE_NAME
@@ -54,7 +55,8 @@
 void sctk_ib_mmu_cache_init(sctk_ib_rail_info_t *rail_ib){
   LOAD_MMU(rail_ib);
 
-  mmu->cache.entries = NULL;
+  mmu->cache.ht_entries = NULL;
+  mmu->cache.lru_entries = NULL;
   mmu->cache.lock = SCTK_SPINLOCK_INITIALIZER;
   mmu->cache.entries_nb = 0;
 }
@@ -67,16 +69,19 @@ sctk_ib_mmu_entry_t*
 
   /* Lock already taken. */
 #ifdef DEBUG_IB_MMU
-  assume(mmu->cache.entries);
-  assume(mmu->cache.entries->prev);
+  assume(mmu->cache.ht_entries);
+  assume(mmu->cache.ht_entries->prev);
 #endif
   /* select the LRU entry */
-  mmu_entry = mmu->cache.entries->prev;
+  mmu_entry = mmu->cache.lru_entries->prev;
   /* If last entry still used, we cannot add another entry */
   sctk_nodebug(">>>>>> remove nb reg: %d (%p)",mmu_entry->registrations_nb, mmu_entry);
   if (mmu_entry->registrations_nb > 0) return NULL;
+
+  /* Remove the entry from HashTable and LRU */
+  DL_DELETE(mmu->cache.lru_entries, mmu_entry);
+  HASH_DEL(mmu->cache.ht_entries, mmu_entry);
   sctk_nodebug("Entry %p removed from cache", mmu_entry);
-  DL_DELETE(mmu->cache.entries, mmu_entry);
 #ifdef DEBUG_IB_MMU
   assume(mmu_entry);
 #endif
@@ -92,10 +97,10 @@ int
   LOAD_MMU(rail_ib);
   LOAD_CONFIG(rail_ib);
 
-  sctk_nodebug("Try to register (%p) %p %lu to cache %d", mmu_entry, mmu_entry->ptr, mmu_entry->size, mmu->cache.entries_nb );
+  sctk_nodebug("Try to register (%p) %p %lu to cache %d", mmu_entry, mmu_entry->key.ptr, mmu_entry->key.size, mmu->cache.entries_nb );
   sctk_spinlock_lock(&mmu->cache.lock);
   /* Maximum number of cached entries reached */
-  if (mmu->cache.entries_nb == config->ibv_mmu_cache_entries) {
+  if (mmu->cache.entries_nb >= config->ibv_mmu_cache_entries) {
     sctk_ib_mmu_entry_t* mmu_entry_to_remove;
     mmu_entry_to_remove = sctk_ib_mmu_cache_remove(rail_ib);
     if (!mmu_entry_to_remove) {
@@ -106,14 +111,17 @@ int
   }
 #ifdef DEBUG_IB_MMU
   assume(mmu->cache.entries_nb < config->ibv_mmu_cache_entries);
+  assume(mmu_entry->registrations_nb == 0);
 #endif
-  sctk_nodebug("Add entry %p to cache %p %lu", mmu_entry, mmu_entry->ptr, mmu_entry->size);
+  sctk_nodebug("Add entry %p to cache %p %lu", mmu_entry, mmu_entry->key.ptr, mmu_entry->key.size);
   mmu->cache.entries_nb++;
   mmu_entry->cache_status = cached;
-  assume(mmu_entry->registrations_nb == 0);
+
+  /* Add the entry */
+  HASH_ADD(hh, mmu->cache.ht_entries, key, sizeof(sctk_ib_mmu_ht_key_t), mmu_entry);
+  DL_PREPEND(mmu->cache.lru_entries, mmu_entry);
+
   mmu_entry->registrations_nb++;
-  sctk_nodebug("<<<<<<<< add nb reg: %d (%p)",mmu_entry->registrations_nb, mmu_entry);
-  DL_PREPEND(mmu->cache.entries, mmu_entry);
   sctk_spinlock_unlock(&mmu->cache.lock);
   return 1;
 }
@@ -122,31 +130,36 @@ sctk_ib_mmu_entry_t*
  sctk_ib_mmu_cache_search(sctk_ib_rail_info_t *rail_ib,
     void *ptr, size_t size) {
   LOAD_MMU(rail_ib);
-  sctk_ib_mmu_entry_t *mmu_entry, *tmp;
+  LOAD_DEVICE(rail_ib);
+  sctk_ib_mmu_entry_t *mmu_entry = NULL, *tmp = NULL;
+  sctk_ib_mmu_ht_key_t key;
+
+  /* Construct the key */
+  key.ptr = ptr;
+  key.size = size;
 
   sctk_spinlock_lock(&mmu->cache.lock);
-  DL_FOREACH_SAFE(mmu->cache.entries, mmu_entry, tmp) {
-    if ( ptr >= mmu_entry->ptr ) {
-      size_t offset;
-      offset = ((unsigned long) ptr - (unsigned long) mmu_entry->ptr);
-      /* entry found */
-      if (offset + size <= mmu_entry->size) {
-        sctk_nodebug("Entry %p reused (%p - %lu)", mmu_entry, ptr, size);
-        /* Put the entry at the beginning of the array.
-         * We check if the element is actually not the first element */
-        if (mmu->cache.entries != mmu_entry) {
-          DL_DELETE(mmu->cache.entries, mmu_entry);
-          DL_PREPEND(mmu->cache.entries, mmu_entry);
-        }
-        mmu_entry->registrations_nb++;
-        sctk_nodebug("<<<<<<<< search nb reg: %d (%p)",mmu_entry->registrations_nb, mmu_entry);
-        sctk_spinlock_unlock(&mmu->cache.lock);
-        return mmu_entry;
-      }
+  HASH_FIND(hh,mmu->cache.ht_entries, &key,sizeof(sctk_ib_mmu_ht_key_t),mmu_entry);
+  if (mmu_entry) {
+#ifdef DEBUG_IB_MMU
+    assume(mmu_entry->cache_status == cached);
+    assume(mmu_entry->key.ptr == key.ptr);
+    assume(mmu_entry->key.size == key.size);
+#endif
+    if (mmu->cache.lru_entries != mmu_entry) {
+      DL_DELETE(mmu->cache.lru_entries, mmu_entry);
+      DL_PREPEND(mmu->cache.lru_entries, mmu_entry);
     }
+    mmu_entry->registrations_nb++;
+#warning "Memory registration not needed there !!"
+    mmu_entry->mr = ibv_reg_mr (device->pd,
+      ptr, size,
+      IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE |
+      IBV_ACCESS_REMOTE_READ);
+
   }
   sctk_spinlock_unlock(&mmu->cache.lock);
-  return NULL;
+  return mmu_entry;
 }
 
 
@@ -232,10 +245,10 @@ __mmu_register ( sctk_ib_rail_info_t *rail_ib,
   sctk_ib_mmu_entry_t* mmu_entry;
 
 #ifdef DEBUG_IB_MMU
-  if ((uintptr_t) ptr % mmu->page_size) {
-    sctk_error("MMU ptr is not aligned on page_size");
-    sctk_abort();
-  }
+//  if ((uintptr_t) ptr % mmu->page_size) {
+//    sctk_error("MMU ptr is not aligned on page_size");
+//    sctk_abort();
+//  }
 #endif
   sctk_nodebug("Try to pick entry %p %lu", ptr, size);
 
@@ -256,8 +269,8 @@ __mmu_register ( sctk_ib_rail_info_t *rail_ib,
   /* pop the first element */
   DL_DELETE(mmu->free_entry, mmu->free_entry);
   mmu->free_nb--;
-  sctk_ib_nodebug("Entry reserved (free_nb:%d size:%lu)", mmu->free_nb, size);
   sctk_spinlock_unlock (&mmu->lock);
+  sctk_ib_nodebug("Entry reserved (free_nb:%d size:%lu)", mmu->free_nb, size);
   mmu_entry->status = ibv_entry_used;
 
   mmu_entry->mr = ibv_reg_mr (device->pd,
@@ -271,8 +284,8 @@ __mmu_register ( sctk_ib_rail_info_t *rail_ib,
     sctk_abort();
   }
 #endif
-  mmu_entry->ptr    = ptr;
-  mmu_entry->size   = size;
+  mmu_entry->key.ptr    = ptr;
+  mmu_entry->key.size   = size;
 
   if (in_cache && config->ibv_mmu_cache_enabled)
     sctk_ib_mmu_cache_add(rail_ib, mmu_entry);
@@ -305,7 +318,6 @@ sctk_ib_mmu_unregister (sctk_ib_rail_info_t *rail_ib,
     if (mmu_entry->cache_status == cached) {
       sctk_spinlock_lock (&mmu->cache.lock);
       mmu_entry->registrations_nb--;
-      sctk_nodebug("Release entry %p (nb:%d)", mmu_entry, mmu_entry->registrations_nb);
       sctk_spinlock_unlock (&mmu->cache.lock);
       return;
     }
@@ -313,8 +325,8 @@ sctk_ib_mmu_unregister (sctk_ib_rail_info_t *rail_ib,
   assume (mmu_entry->registrations_nb == 0);
   sctk_nodebug("Entry %p unregistered", mmu_entry);
 
-  mmu_entry->ptr = NULL;
-  mmu_entry->size = 0;
+  mmu_entry->key.ptr = NULL;
+  mmu_entry->key.size = 0;
   mmu_entry->status = ibv_entry_free;
   assume (ibv_dereg_mr (mmu_entry->mr) == 0);
 

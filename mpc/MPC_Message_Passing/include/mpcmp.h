@@ -752,6 +752,7 @@ extern "C"
   };
 
   void MPC_Network_stats(struct MPC_Network_stats_s *stats);
+  void MPC_Network_deco_neighbors();
 
 #ifdef __cplusplus
 }

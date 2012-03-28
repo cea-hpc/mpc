@@ -25,10 +25,13 @@
 #ifndef __SCTK__IB_MMU_H_
 #define __SCTK__IB_MMU_H_
 
+#include <uthash.h>
 #include <sctk_spinlock.h>
 #include <sctk_debug.h>
 #include <sctk_config.h>
 #include <stdint.h>
+
+#define DEBUG_IB_MMU
 
 struct sctk_ib_rail_info_s;
 
@@ -45,6 +48,11 @@ typedef enum sctk_ib_mmu_cached_status_e
   cached = 222,
 } sctk_ib_mmu_cached_status_t;
 
+typedef struct sctk_ib_mmu_ht_key_s {
+  void *ptr;
+  size_t size;
+} sctk_ib_mmu_ht_key_t;
+
 /* Entry to the soft MMU */
 typedef struct sctk_ib_mmu_entry_s
 {
@@ -54,14 +62,18 @@ typedef struct sctk_ib_mmu_entry_s
   /* status of the slot */
   sctk_ib_mmu_entry_status_t status;     /* status of entry */
   struct sctk_ib_mmu_region_s* region;  /* first region */
-  void *ptr;                /* ptr to the MR */
-  size_t size;              /* size of the MR */
+//  void *ptr;                /* ptr to the MR */
+//  size_t size;              /* size of the MR */
   struct ibv_mr *mr;        /* MR */
 
   /* Status of the entry in cache */
   sctk_ib_mmu_cached_status_t cache_status;
   /* Number of registration. If 0, the entry can be erased from cache  */
   unsigned int registrations_nb;
+  /* UTHash key */
+  sctk_ib_mmu_ht_key_t key;
+  /* UTHash header */
+  UT_hash_handle hh;
 } sctk_ib_mmu_entry_t;
 
 
@@ -79,7 +91,10 @@ typedef struct sctk_ib_mmu_region_s
 typedef struct sctk_ib_cache_s
 {
   /* MMU entries in cache */
-  sctk_ib_mmu_entry_t* entries;
+  sctk_ib_mmu_entry_t* ht_entries;
+  /* LRU list of entries in cache */
+  sctk_ib_mmu_entry_t* lru_entries;
+
   sctk_spinlock_t lock;
   unsigned int entries_nb;
 } sctk_ib_cache_t;

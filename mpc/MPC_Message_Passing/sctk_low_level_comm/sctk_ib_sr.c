@@ -59,12 +59,14 @@ sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
   eager_header = IBUF_GET_EAGER_HEADER(ibuf->buffer);
   eager_header->payload_size = size - sizeof(sctk_thread_ptp_message_body_t);
 
-  sctk_nodebug("TO SEND: %s %lu to %d", IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer), size - sizeof(sctk_thread_ptp_message_body_t), route_data->rank);
-
   return ibuf;
 }
 
-void sctk_ib_sr_free_msg_no_recopy(void* arg) {
+
+/*-----------------------------------------------------------
+ *  Internal free functions
+ *----------------------------------------------------------*/
+static void __free_no_recopy(void* arg) {
   sctk_thread_ptp_message_t *msg = (sctk_thread_ptp_message_t*) arg;
   sctk_ibuf_t *ibuf = NULL;
 
@@ -76,7 +78,7 @@ void sctk_ib_sr_free_msg_no_recopy(void* arg) {
   sctk_free(msg);
 }
 
-static void __free(void *arg) {
+static void __free_with_recopy(void *arg) {
   sctk_thread_ptp_message_t *msg = (sctk_thread_ptp_message_t*) arg;
   sctk_ibuf_t *ibuf = NULL;
 
@@ -85,21 +87,24 @@ static void __free(void *arg) {
   sctk_free(msg);
 }
 
+/*-----------------------------------------------------------
+ *  Ibuf free function
+ *----------------------------------------------------------*/
 void
 sctk_ib_sr_recv_free(sctk_rail_info_t* rail, sctk_thread_ptp_message_t *msg,
     sctk_ibuf_t *ibuf, int recopy) {
-  /* Read from network buffer  */
-  if (!recopy){
-    sctk_reinit_header(msg, sctk_ib_sr_free_msg_no_recopy, sctk_ib_sr_recv_msg_no_recopy);
-    /* Read from recopied buffer */
-  } else {
-    sctk_reinit_header(msg,__free,sctk_net_message_copy);
+  /* Read from recopied buffer */
+  if (recopy){
+    sctk_reinit_header(msg,__free_with_recopy,sctk_net_message_copy);
     sctk_ibuf_release(&rail->network.ib, ibuf);
+    /* Read from network buffer  */
+  } else {
+    sctk_reinit_header(msg,__free_no_recopy, sctk_ib_sr_recv_msg_no_recopy);
   }
 }
 
 sctk_thread_ptp_message_t*
-sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int *recopy) {
+sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int recopy) {
   size_t size;
   sctk_thread_ptp_message_t * msg;
   void* body;
@@ -107,7 +112,7 @@ sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int *recopy) {
   /* XXX: recopy is not compatible with CM */
 
    /* If recopy required */
-  if (*recopy)
+  if (recopy)
   {
     sctk_ib_eager_t *eager_header;
 
@@ -124,10 +129,9 @@ sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int *recopy) {
     /* Copy the body of the message */
     memcpy(body, IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer), size);
   } else {
-    sctk_nodebug("not recopy");
     msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
-    PROF_INC(rail, alloc_mem);
     assume(msg);
+    PROF_INC(rail, alloc_mem);
 
     /* Copy the header of the message */
     memcpy(msg, IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer), sizeof(sctk_thread_ptp_message_body_t));
@@ -137,24 +141,10 @@ sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int *recopy) {
 
   msg->body.completion_flag = NULL;
   msg->tail.message_type = sctk_message_network;
-  msg->tail.ib.eager.recopied = *recopy;
+  msg->tail.ib.eager.recopied = recopy;
   msg->tail.ib.eager.ibuf = ibuf;
 
   sctk_rebuild_header(msg);
-#if 0
-  if (IBUF_GET_LOW_MEMORY_MODE(ibuf) == 1) {
-    sctk_route_table_t* route;
-    if( IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag)) {
-      route = sctk_get_route_to_process_no_ondemand(msg->sctk_msg_get_source,rail);
-    } else {
-      int process;
-      process = sctk_get_process_rank_from_task_rank(msg->sctk_msg_get_glob_source);
-      route = sctk_get_route_to_process_no_ondemand(process,rail);
-    }
-//    sctk_route_set_low_memory_mode_remote(route, 1);
-  }
-#endif
-
   return msg;
 }
 

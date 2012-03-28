@@ -49,7 +49,6 @@ void sctk_ib_cm_connect_from(int from, int to,sctk_rail_info_t* rail);
 int sctk_ib_cm_on_demand_recv_check(sctk_thread_ptp_message_body_t *msg);
 int sctk_ib_cm_on_demand_recv(struct sctk_rail_info_s *rail,
     sctk_thread_ptp_message_t *msg, struct sctk_ibuf_s* ibuf, int recopy);
-sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail, sctk_route_table_t* (*func)(int dest, sctk_rail_info_t* rail), int *added);
 sctk_route_table_t *sctk_ib_cm_on_demand_request(int dest,sctk_rail_info_t* rail);
 #endif
 #endif

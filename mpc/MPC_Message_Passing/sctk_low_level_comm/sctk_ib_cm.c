@@ -59,7 +59,7 @@ void sctk_ib_cm_connect_to(int from, int to,sctk_rail_info_t* rail){
   sctk_nodebug("Connection TO from %d to %d", from, to);
 
   /* create remote for dest */
-  route_table = sctk_ib_create_remote(from, rail);
+  route_table = sctk_ib_create_remote(from, rail, 0);
   route=&route_table->data.ib;
   sctk_ib_debug("[%d] QP connection request to process %d", rail->rail_number, route->remote->rank);
 
@@ -77,7 +77,7 @@ void sctk_ib_cm_connect_to(int from, int to,sctk_rail_info_t* rail){
   sctk_nodebug("TO: Received done from %d",from);
   sctk_ib_qp_allocate_rts(rail_ib, route->remote);
   /* Add route */
-  sctk_ib_add_static_route(from, route_table, rail);
+  sctk_add_static_route(from, route_table, rail);
   sctk_ib_debug("[%d] QP connected to process %d", rail->rail_number,route->remote->rank);
 }
 
@@ -93,7 +93,7 @@ void sctk_ib_cm_connect_from(int from, int to,sctk_rail_info_t* rail){
   sctk_nodebug("Connection FROM from %d to %d", from, to);
 
   /* create remote for dest */
-  route_table = sctk_ib_create_remote(to, rail);
+  route_table = sctk_ib_create_remote(to, rail, 0);
   route=&route_table->data.ib;
   sctk_ib_debug("[%d] QP connection  request to process %d", rail->rail_number, route->remote->rank);
 
@@ -111,7 +111,7 @@ void sctk_ib_cm_connect_from(int from, int to,sctk_rail_info_t* rail){
   sctk_nodebug("FROM: Ready to send to %d", to);
   sctk_route_messages_send(from,to,ondemand_specific_message_tag, 0,&done,sizeof(char));
   /* Add route */
-  sctk_ib_add_static_route(to, route_table, rail);
+  sctk_add_static_route(to, route_table, rail);
   sctk_ib_debug("[%d] QP connected to process %d", rail->rail_number,route->remote->rank);
 }
 
@@ -130,8 +130,9 @@ int sctk_ib_cm_on_demand_recv_done(sctk_rail_info_t *rail, void* done, int src) 
     sctk_ib_qp_allocate_rts(rail_ib, route->remote);
   }
   sctk_spinlock_unlock(&route->remote->lock_rts);
-  sctk_ib_route_dynamic_set_connected(route_table, 1);
+  sctk_route_set_state(route_table, state_connected);
   sctk_ib_debug("[%d] OD QP connected to process %d", rail->rail_number,src);
+
   return 0;
 }
 
@@ -162,8 +163,9 @@ int sctk_ib_cm_on_demand_recv_ack(sctk_rail_info_t *rail, void* ack, int src) {
 
   sctk_route_messages_send(sctk_process_rank,src,ondemand_specific_message_tag, ONDEMAND_DONE_TAG+ONDEMAND_MASK_TAG,
       &done,sizeof(char));
-  sctk_ib_route_dynamic_set_connected(route_table, 1);
+  sctk_route_set_state(route_table, state_connected);
   sctk_ib_debug("[%d] OD QP connected to process %d", rail->rail_number,src);
+
   return 0;
 }
 
@@ -280,6 +282,14 @@ sctk_route_table_t *sctk_ib_cm_on_demand_request(int dest,sctk_rail_info_t* rail
       ONDEMAND_REQ_TAG+ONDEMAND_MASK_TAG,
       msg,MSG_STRING_SIZE);
   return route_table;
+}
+
+
+/*-----------------------------------------------------------
+ *  On demand QP deconnexion
+ *----------------------------------------------------------*/
+void sctk_ib_cm_deco_all_dynamic_routes() {
+
 }
 
 #endif

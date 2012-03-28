@@ -80,14 +80,13 @@ typedef struct sctk_route_table_s{
 
   UT_hash_handle hh;
 
-  /* If route connected & ready to use*/
-  OPA_int_t connected;
+  /* State of the route */
+  OPA_int_t state;
   /* If a message "out of memory" has already been sent to the
    * process to notice him that we are out of memory */
   OPA_int_t low_memory_mode_local;
   /* If the remote process is running out of memory */
   OPA_int_t low_memory_mode_remote;
-
 } sctk_route_table_t;
 
 /*NOT THREAD SAFE use to add a route at initialisation time*/
@@ -97,11 +96,10 @@ void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* 
 void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail);
 struct sctk_route_table_s *sctk_route_dynamic_search(int dest, sctk_rail_info_t* rail);
 
-/* For ondemand connexions */
-int sctk_route_is_connected(sctk_route_table_t* tmp);
-void sctk_route_set_connected(sctk_route_table_t* tmp, int connected);
+sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail, sctk_route_table_t* (*func)(int dest, sctk_rail_info_t* rail, int ondemand), int *added);
 
 /* For low_memory_mode */
+int sctk_route_cas_low_memory_mode_local(sctk_route_table_t* tmp, int oldv, int newv);
 int sctk_route_is_low_memory_mode_remote(sctk_route_table_t* tmp);
 void sctk_route_set_low_memory_mode_remote(sctk_route_table_t* tmp, int low);
 int sctk_route_is_low_memory_mode_local(sctk_route_table_t* tmp);
@@ -117,8 +115,31 @@ sctk_rail_info_t* sctk_route_get_rail(int i);
 /* Routes */
 void sctk_route_messages_send(int myself,int dest, specific_message_tag_t specific_message_tag, int tag, void* buffer,size_t size);
 void sctk_route_messages_recv(int src, int myself,specific_message_tag_t specific_message_tag, int tag, void* buffer,size_t size);
+void sctk_walk_all_routes( const sctk_rail_info_t* rail, void (*func) (const sctk_rail_info_t* rail,sctk_route_table_t* table) );
 
 void sctk_route_init_in_rail(sctk_rail_info_t* rail, char* topology);
 void sctk_route_finalize();
 int sctk_route_is_finalized();
+
+
+
+/*-----------------------------------------------------------
+ *  For ondemand
+ *----------------------------------------------------------*/
+/* State of the QP */
+typedef enum sctk_route_state_e {
+  state_connected = 111,
+  state_flushing = 222,
+  state_deconnected = 333,
+  state_connecting = 444
+} sctk_route_state_t;
+
+static void sctk_route_set_state(sctk_route_table_t* tmp, sctk_route_state_t state){
+  OPA_store_int(&tmp->state, state);
+}
+
+static int sctk_route_get_state(sctk_route_table_t* tmp){
+  return (int) OPA_load_int(&tmp->state);
+}
+
 #endif

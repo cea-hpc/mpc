@@ -138,6 +138,8 @@ void* async_thread(void* arg)
         int ret, polled;
         limit = config->ibv_max_srq_ibufs_posted;
 
+        sctk_ib_low_mem_broadcast(rail);
+
         /* We use now the low memory mode */
         /* TODO: this mode is used until the end of the run */
 #if 0

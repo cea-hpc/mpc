@@ -50,8 +50,12 @@
 static inline void sctk_ib_rdma_align_msg(void *addr, size_t  size,
     void **aligned_addr, size_t *aligned_size)
 {
- /*XXX Get page_size from device */
+  /* We do not need to align pointers by hand */
+  *aligned_addr = addr;
+  *aligned_size = size;
+#if 0
   size_t page_size;
+ /*XXX Get page_size from device */
   page_size = getpagesize();
 
   /* align on a page size */
@@ -62,6 +66,7 @@ static inline void sctk_ib_rdma_align_msg(void *addr, size_t  size,
 
   sctk_nodebug("ptr:%p size:%lu -> ptr:%p size:%lu", addr, size,
       *aligned_addr, *aligned_size);
+#endif
 }
 
 /*-----------------------------------------------------------
@@ -89,7 +94,7 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
   void* aligned_addr = NULL;
   size_t aligned_size = 0;
 
-  /* Allocate memory if not contiguous*/
+  /* Do not allocate memory if contiguous message */
   if (msg->tail.message_type == sctk_message_contiguous)
   {
     sctk_nodebug("Sending contiguous message; %p (%lu-%lu)", msg->tail.message.contiguous.addr,
@@ -397,17 +402,6 @@ sctk_ib_rdma_recv_ack(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   src_msg_header  = rdma_ack->dest_msg_header;
   dest_msg_header = rdma_ack->src_msg_header;
 
-#if 0
-  if (IBUF_GET_LOW_MEMORY_MODE(ibuf) == 1) {
-    if( IS_PROCESS_SPECIFIC_MESSAGE_TAG(src_msg_header->body.header.specific_message_tag)) {
-      route = sctk_get_route_to_process(src_msg_header->sctk_msg_get_destination,rail);
-    } else {
-      route = sctk_get_route(src_msg_header->sctk_msg_get_glob_destination,rail);
-    }
-    sctk_route_set_low_memory_mode_remote(route, 1);
-  }
-#endif
-
   /* Wait while the message becomes ready */
   sctk_thread_wait_for_value((int*) &src_msg_header->tail.ib.rdma.local.ready, 1);
 
@@ -431,7 +425,6 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
   PROF_INC(rail, alloc_mem);
   memcpy(&msg->body, &rdma_req->msg_header, sizeof(sctk_thread_ptp_message_body_t));
-  sctk_nodebug("Checksum:%lu", msg->body.checksum);
 
   /* We reinit header before calculating the source */
   sctk_rebuild_header(msg);
@@ -443,12 +436,6 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   } else {
     route = sctk_get_route(msg->sctk_msg_get_glob_source,rail);
   }
-
-#if 0
-  if (IBUF_GET_LOW_MEMORY_MODE(ibuf) == 1) {
-    sctk_route_set_low_memory_mode_remote(route, 1);
-  }
-#endif
 
   msg->body.completion_flag = NULL;
   msg->tail.message_type = sctk_message_network;
@@ -465,33 +452,9 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   msg->tail.ib.rdma.glob_source = IBUF_GET_SRC_TASK(ibuf);
   msg->tail.ib.rdma.glob_destination = IBUF_GET_DEST_TASK(ibuf);
 
-  /* XXX: If the message is not contiguous, we allocate a tmp buffer.
-   * XXX: message_type not in body */
-#if 0
-  sctk_debug("Message type: %d", rdma_req->message_type);
-  if (rdma_req->message_type != sctk_message_contiguous) {
-    msg->tail.ib.rdma.local.status       = recopy;
-    sctk_ib_rdma_prepare_recv_recopy(rail, msg);
-    sctk_ib_rdma_send_ack(rail, msg);
-  }
-#endif
-
   /* Send message to MPC. The message can be matched at the end
    * of function. */
   rail->send_message_from_network(msg);
-  /* XXX: Deal with the fact that buffer not been posted */
-#if 0
-  sctk_spinlock_lock(&msg->tail.ib.rdma.lock);
-  status = msg->tail.ib.rdma.local.status;
-  if (status == not_set)
-  {
-    sctk_nodebug("NOT zero-copy msg");
-    sctk_ib_rdma_prepare_recv_recopy(rail, msg);
-    sctk_ib_rdma_send_ack(rail, msg);
-    msg->tail.ib.rdma.local.status = recopy;
-  }
-  sctk_spinlock_unlock(&msg->tail.ib.rdma.lock);
-#endif
 
   sctk_nodebug("End send_message (matching:%p, stats:%d, "
       "requested_size:%lu, required_size:%lu)",

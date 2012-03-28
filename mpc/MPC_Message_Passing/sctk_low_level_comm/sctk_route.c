@@ -28,6 +28,7 @@
 #include <sctk_spinlock.h>
 #include <sctk_ib_cm.h>
 #include <sctk_pmi.h>
+#include <utarray.h>
 
 static sctk_route_table_t* sctk_dynamic_route_table = NULL;
 static sctk_route_table_t* sctk_static_route_table = NULL;
@@ -41,15 +42,10 @@ static int is_route_finalized = 0;
 #define TABLE_LOCK() if(sctk_route_table_init_lock_needed) sctk_spinlock_write_lock(&sctk_route_table_init_lock);
 #define TABLE_UNLOCK() if(sctk_route_table_init_lock_needed) sctk_spinlock_write_unlock(&sctk_route_table_init_lock);
 
-/* For ondemand connexions */
-void sctk_route_set_connected(sctk_route_table_t* tmp, int connected){
-  OPA_store_int(&tmp->connected, connected);
-}
-int sctk_route_is_connected(sctk_route_table_t* tmp){
-  return (int) OPA_load_int(&tmp->connected);
+int sctk_route_cas_low_memory_mode_local(sctk_route_table_t* tmp, int oldv, int newv) {
+  return (int) OPA_cas_int(&tmp->low_memory_mode_local, oldv, newv);
 }
 
-/* For low memory mode */
 int sctk_route_is_low_memory_mode_local(sctk_route_table_t* tmp) {
   return (int) OPA_load_int(&tmp->low_memory_mode_local);
 }
@@ -66,7 +62,7 @@ void sctk_route_set_low_memory_mode_remote(sctk_route_table_t* tmp, int low) {
 }
 
 
-sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail, sctk_route_table_t* (*func)(int dest, sctk_rail_info_t* rail), int *added) {
+sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail, sctk_route_table_t* (*func)(int dest, sctk_rail_info_t* rail, int ondemand), int *added) {
   sctk_route_key_t key;
   sctk_route_table_t* tmp;
   *added = 0;
@@ -77,11 +73,12 @@ sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail
   sctk_spinlock_write_lock(&sctk_route_table_lock);
   HASH_FIND(hh,sctk_dynamic_route_table,&key,sizeof(sctk_route_key_t),tmp);
   if (tmp == NULL) {
-    tmp = func(dest, rail);
+    /* QP added on demand */
+    tmp = func(dest, rail, 1);
     tmp->key.destination = dest;
     tmp->key.rail = rail->rail_number;
     tmp->rail = rail;
-    sctk_route_set_connected(tmp, 0);
+    sctk_route_set_state(tmp, state_deconnected);
     sctk_route_set_low_memory_mode_local(tmp, 0);
     sctk_route_set_low_memory_mode_remote(tmp, 0);
     HASH_ADD(hh,sctk_dynamic_route_table,key,sizeof(sctk_route_key_t),tmp);
@@ -109,7 +106,7 @@ void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t*
   tmp->rail = rail;
 
   /* XXX: For debug only. Assume that entry not already added */
-  assume (sctk_route_dynamic_search(dest, rail) == NULL);
+  /* assume (sctk_route_dynamic_search(dest, rail) == NULL); */
 
   sctk_add_dynamic_reorder_buffer(dest);
 
@@ -122,7 +119,7 @@ void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* 
   tmp->key.destination = dest;
   tmp->key.rail = rail->rail_number;
   tmp->rail = rail;
-  sctk_route_set_connected(tmp, 1);
+  sctk_route_set_state(tmp, state_connected);
   sctk_route_set_low_memory_mode_local(tmp, 0);
   sctk_route_set_low_memory_mode_remote(tmp, 0);
 
@@ -132,6 +129,66 @@ void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* 
   TABLE_UNLOCK();
 }
 
+UT_icd ptr_icd = {sizeof(sctk_route_table_t**), NULL, NULL, NULL};
+
+/* Walk through all registered routes and call the function 'func'.
+ * Static and dynamic routes are involved */
+void sctk_walk_all_routes(const sctk_rail_info_t* rail, void (*func) (const sctk_rail_info_t* rail,sctk_route_table_t* table) ) {
+  sctk_route_table_t *current_route, *tmp, **tmp2;
+  UT_array *routes;
+  utarray_new(routes, &ptr_icd);
+
+  /* We do not need to take a lock */
+  HASH_ITER(hh, sctk_static_route_table,current_route, tmp) {
+    if ( sctk_route_get_state(current_route) == state_connected) {
+      if (sctk_route_cas_low_memory_mode_local(current_route, 0, 1) == 0) {
+        utarray_push_back(routes, &current_route);
+      }
+    }
+  }
+
+  sctk_spinlock_read_lock(&sctk_route_table_lock);
+  HASH_ITER(hh, sctk_dynamic_route_table,current_route, tmp) {
+    if ( sctk_route_get_state(current_route) == state_connected) {
+      if (sctk_route_cas_low_memory_mode_local(current_route, 0, 1) == 0) {
+        utarray_push_back(routes, &current_route);
+      }
+    }
+  }
+  sctk_spinlock_read_unlock(&sctk_route_table_lock);
+
+  current_route = NULL;
+  while( (tmp2=(sctk_route_table_t**) utarray_next(routes,tmp2))) {
+      func(rail, *tmp2);
+  }
+}
+
+/* Walk through all registered routes and call the function 'func'.
+ * Only dynamic routes are involved */
+void sctk_walk_all_dynamic_routes(const sctk_rail_info_t* rail, void (*func) (const sctk_rail_info_t* rail,sctk_route_table_t* table) ) {
+  sctk_route_table_t *current_route, *tmp, **tmp2;
+  UT_array *routes;
+  utarray_new(routes, &ptr_icd);
+
+  /* Do not walk on static routes */
+
+  sctk_spinlock_read_lock(&sctk_route_table_lock);
+  HASH_ITER(hh, sctk_dynamic_route_table,current_route, tmp) {
+    if ( sctk_route_get_state(current_route) == state_connected) {
+      if (sctk_route_cas_low_memory_mode_local(current_route, 0, 1) == 0) {
+        utarray_push_back(routes, &current_route);
+      }
+    }
+  }
+  sctk_spinlock_read_unlock(&sctk_route_table_lock);
+
+  current_route = NULL;
+  while( (tmp2=(sctk_route_table_t**) utarray_next(routes,tmp2))) {
+      func(rail, *tmp2);
+  }
+}
+
+
 static inline
 sctk_route_table_t* sctk_get_route_to_process_no_route(int dest, sctk_rail_info_t* rail){
   sctk_route_key_t key;
@@ -140,15 +197,16 @@ sctk_route_table_t* sctk_get_route_to_process_no_route(int dest, sctk_rail_info_
   key.destination = dest;
   key.rail = rail->rail_number;
 
-  TABLE_LOCK();
+  /* FIXME: We do not need to take a lock for the static table. */
+  /* TABLE_LOCK(); */
   HASH_FIND(hh,sctk_static_route_table,&key,sizeof(sctk_route_key_t),tmp);
-  TABLE_UNLOCK();
+  /* TABLE_UNLOCK(); */
   if(tmp == NULL){
     sctk_spinlock_read_lock(&sctk_route_table_lock);
     HASH_FIND(hh,sctk_dynamic_route_table,&key,sizeof(sctk_route_key_t),tmp);
     sctk_spinlock_read_unlock(&sctk_route_table_lock);
     /* If the route is deconnected, we do not use it*/
-    if (tmp && !sctk_route_is_connected(tmp)) {
+    if (tmp && sctk_route_get_state(tmp) != state_connected) {
       tmp = NULL;
     }
   }
@@ -164,7 +222,7 @@ struct wait_connexion_args_s {
 void* __wait_connexion(void* a) {
   struct wait_connexion_args_s *args = (struct wait_connexion_args_s*) a;
 
-  if (sctk_route_is_connected(args->route_table)) {
+  if (sctk_route_get_state(args->route_table) == state_connected) {
     args->done = 1;
   } else {
     sctk_network_poll_all(args->rail);
@@ -196,14 +254,14 @@ sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail){
       tmp = sctk_ib_cm_on_demand_request(dest,rail);
       assume(tmp);
       /* If route not connected, so we wait for until it is connected */
-      if (sctk_route_is_connected(tmp) == 0) {
+      if (sctk_route_get_state(tmp) != state_connected) {
         struct wait_connexion_args_s args;
         args.route_table = tmp;
         args.done = 0;
         args.rail = rail;
         sctk_thread_wait_for_value_and_poll((int*) &args.done, 1,
             (void (*)(void*)) __wait_connexion, &args);
-        assume(sctk_route_is_connected(tmp));
+        assume(sctk_route_get_state(tmp) == state_connected);
       }
 
       sctk_nodebug("Connected to process %d", dest);

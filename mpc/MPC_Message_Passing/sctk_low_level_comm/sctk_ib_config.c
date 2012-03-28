@@ -47,7 +47,7 @@
  * if x > IBV_FRAG_EAGER_LIMIT -> rendezvous msg */
 //#define IBV_EAGER_LIMIT ( 12 * 1024 )
 #define IBV_EAGER_LIMIT       ( 12 * 1024)
-#define IBV_FRAG_EAGER_LIMIT  (256 * 1024)
+#define IBV_FRAG_EAGER_LIMIT  (10 * 1024 * 1024) //(256 * 1024)
 //#define IBV_FRAG_EAGER_LIMIT  (10 * 1024 * 1024)
 /* Number of allowed pending Work Queue Elements
  * for each QP */
@@ -64,27 +64,27 @@
 
 /* Maximum number of buffers to allocate during the
  * initialization step */
-#define IBV_INIT_IBUFS         10000
+#define IBV_INIT_IBUFS          5000
 //#define IBV_INIT_IBUFS         100
 
 /* Maximum number of buffers which can be posted to the SRQ.
  * This number cannot be higher than than the number fixed by the HW.
  * The verification is done during the config_check function */
-#define IBV_MAX_SRQ_IBUFS_POSTED     8000
+#define IBV_MAX_SRQ_IBUFS_POSTED     3000
 /* When the async thread wakes, it means that the SRQ is full. We
  * allows the async thread to extract IBV_MAX_SRQ_WR_HANDLE_BY_THREAD messages
  * before posting new buffers .*/
 #define IBV_MAX_SRQ_WR_HANDLE_BY_THREAD 50
 /* Maximum number of buffers which can be used by SRQ. This number
  * is not fixed by the HW */
-#define IBV_MAX_SRQ_IBUFS            8000
+#define IBV_MAX_SRQ_IBUFS            3000
 //#define IBV_MAX_SRQ_IBUFS            50
 /* Minimum number of free recv buffer before
  * posting of new buffers. This thread is  activated
  * once a recv buffer is freed. If IBV_SRQ_CREDIT_LIMIT ==
  * IBV_MAX_SRQ_IBUFS_POSTED, receive buffers are re-post every-time
  * they are consumned */
-#define IBV_SRQ_CREDIT_LIMIT  1000
+#define IBV_SRQ_CREDIT_LIMIT  100
 //#define IBV_SRQ_CREDIT_LIMIT  10
 /* Minimum number of free recv buffer before
  * the activation of the asynchronous
@@ -112,7 +112,7 @@
  * no more MMU entries are available */
 #define IBV_SIZE_MR_CHUNKS  200
 #define IBV_MMU_CACHE_ENABLED 0
-#define IBV_MMU_CACHE_ENTRIES 0
+#define IBV_MMU_CACHE_ENTRIES 1000
 
 #define IBV_ADM_PORT        1
 
@@ -146,10 +146,10 @@ char* steal_names[3] = {
 
 void sctk_ib_config_check(sctk_ib_rail_info_t *rail_ib)
 {
-//  sctk_ib_config_t *c = rail_ib->config;
+#if 0
+  sctk_ib_config_t *c = rail_ib->config;
 
   /* FIXME: fix here */
-#if 0
   c->device_attr = sctk_net_ibv_qp_get_dev_attr();
 
   /* If more wr for srq available than the hw maximum number */

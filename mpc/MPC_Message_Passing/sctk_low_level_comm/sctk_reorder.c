@@ -152,8 +152,7 @@ extern __thread int nb_recv_tst;
 int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
   int process;
   int number;
-  sctk_reorder_table_t* tmp;
-  double s=0, e=0;
+  sctk_reorder_table_t* tmp = NULL;
 
   if(msg->sctk_msg_get_use_message_numbering == 0){
     /* Renumbering unused */
@@ -169,10 +168,17 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
     /* With message reordering */
     process = msg->sctk_msg_get_destination;
     sctk_nodebug("Receives process specific with message reordering from %d to %d %d", msg->sctk_msg_get_source, process, msg->sctk_msg_get_message_number);
+
     /* The message must not be indirect */
-    assume (process == sctk_process_rank);
+    /* assume (process == sctk_process_rank); */
 
     tmp = sctk_get_reorder_to_process(msg->sctk_msg_get_source);
+    if (tmp == NULL) {
+      /* Without message reordering */
+      msg->sctk_msg_get_use_message_numbering = 0;
+      return 1;
+    }
+
     assume(tmp);
     number = OPA_load_int(&(tmp->message_number_src));
 
@@ -224,9 +230,7 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
 
     if(number == msg->sctk_msg_get_message_number){
       sctk_nodebug("Direct Send %d from %p",msg->sctk_msg_get_message_number, tmp);
-    s = sctk_atomics_get_timestamp();
       sctk_send_message_try_check(msg,1);
-  e = sctk_atomics_get_timestamp();
       OPA_fetch_and_incr_int(&(tmp->message_number_src));
 
       /*Search for pending messages*/
@@ -265,8 +269,6 @@ int sctk_prepare_send_message_to_network_reorder (sctk_thread_ptp_message_t * ms
   sctk_reorder_table_t* tmp;
   int src_process;
   int dest_process;
-  double s=0, e=0;
-  s = sctk_atomics_get_timestamp();
 
   sctk_nodebug("Send message with tag: %d %d %d", msg->body.header.specific_message_tag, (MASK_PROCESS_SPECIFIC | MASK_PROCESS_SPECIFIC_W_ORDERING) & msg->body.header.specific_message_tag, MASK_PROCESS_SPECIFIC | MASK_PROCESS_SPECIFIC_W_ORDERING);
 
@@ -277,14 +279,17 @@ int sctk_prepare_send_message_to_network_reorder (sctk_thread_ptp_message_t * ms
       msg->sctk_msg_get_use_message_numbering = 0;
       return 1;
     }
-    /* The source process must be the current process */
-    assume(msg->sctk_msg_get_source == sctk_process_rank);
 
     /* With message reordering */
     dest_process = msg->sctk_msg_get_destination;
     /* Must require numbering */
     tmp = sctk_get_reorder_to_process(dest_process);
-    assume (tmp);
+    if(tmp == NULL){
+      msg->sctk_msg_get_use_message_numbering = 0;
+      return 1;
+    }
+    /* The source process must be the current process */
+    /* assume(msg->sctk_msg_get_source == sctk_process_rank); */
 
     /* Local numbering */
     msg->sctk_msg_get_use_message_numbering = 1;

@@ -149,6 +149,11 @@ sctk_ibuf_pick(struct sctk_ib_rail_info_s *rail_ib,
   LOAD_CONFIG(rail_ib);
   sctk_ibuf_t* ibuf;
   sctk_ibuf_numa_t *node = &pool->nodes[n];
+
+  if (node->free_nb < 100) {
+    sctk_ib_low_mem_broadcast(rail_ib->rail);
+  }
+
   sctk_spinlock_t *lock = &node->lock;
 
   if (need_lock) sctk_spinlock_lock(lock);

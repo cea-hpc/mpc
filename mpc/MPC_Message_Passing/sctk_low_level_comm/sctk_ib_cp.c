@@ -309,6 +309,7 @@ int sctk_ib_cp_poll_global_list(struct sctk_rail_info_s* rail,struct sctk_ib_pol
   CHECK_ONLINE_PROGRAM;
 
   task = vps[vp].tasks;
+  if (!task) return 0;
 #ifdef DEBUG_CP
   assume(task);
 #endif

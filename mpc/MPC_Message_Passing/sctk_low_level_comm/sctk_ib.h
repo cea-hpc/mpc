@@ -30,6 +30,8 @@ extern "C"
 #include <stdint.h>
 #include <mpcmp.h>
 
+
+  struct sctk_rail_info_s;
   struct sctk_ibuf_pool_s;
   struct sctk_ibuf_s;
   struct sctk_ib_mmu_s;
@@ -52,6 +54,7 @@ extern "C"
     struct sctk_ib_cp_s *cp;
     /* HashTable where all QPs are stored */
     struct sctk_ib_qp_s *qps;
+    struct sctk_rail_info_s        *rail;
   } sctk_ib_rail_info_t;
 
   typedef struct sctk_ib_data_s {
@@ -140,7 +143,7 @@ extern "C"
 
   /* XXX: Should not be declared here but in CM */
   struct sctk_route_table_s *
-    sctk_ib_create_remote(int dest, struct sctk_rail_info_s* rail);
+    sctk_ib_create_remote(int dest, struct sctk_rail_info_s* rail, int ondemand);
   void sctk_ib_add_static_route(int dest, struct sctk_route_table_s *tmp, struct sctk_rail_info_s* rail);
   void sctk_ib_add_dynamic_route(int dest, struct sctk_route_table_s *tmp, struct sctk_rail_info_s* rail);
   int sctk_ib_route_dynamic_is_connected(struct sctk_route_table_s *tmp);
@@ -194,6 +197,7 @@ extern "C"
   void sctk_network_free_msg(struct sctk_thread_ptp_message_s *msg);
   /* For getting stats from network usage */
   void sctk_network_stats_ib (struct MPC_Network_stats_s* stats);
+  void sctk_network_deco_neighbors_ib ();
 
 /* For not used fuctions (disable compiler warning */
 #ifdef __GNUC__
