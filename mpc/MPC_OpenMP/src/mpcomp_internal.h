@@ -380,6 +380,7 @@ int __mpcomp_check_tree_coherency( mpcomp_instance * instance ) ;
 void __mpcomp_print_tree( mpcomp_instance * instance ) ;
 
 /* mpcomp_loop_dyn.c */
+int __mpcomp_dynamic_steal (int *from, int *to);
 int __mpcomp_dynamic_loop_begin (int lb, int b, int incr,
 			     int chunk_size, int *from, int *to);
 int __mpcomp_dynamic_loop_next (int *from, int *to) ;

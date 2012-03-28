@@ -832,6 +832,8 @@ void in_order_scheduler( mpcomp_mvp * mvp ) {
     sctk_openmp_thread_tls = &mvp->threads[i];
 
     sctk_assert( ((mpcomp_thread*)sctk_openmp_thread_tls)->team != NULL ) ;
+    sctk_assert( mvp != NULL);  
+
     mvp->func( mvp->shared ) ;
     mvp->threads[i].done = 1 ;
   }
