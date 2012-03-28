@@ -24,3 +24,8 @@ avail_module MPC_Allocator
 need_module MPC_Common
 SCTK_CHECK_OPTION "-DMPC_Threads"
 SCTK_INCLUDE_FILES="mpcthread.h"
+
+# Check if binutils are installed and pass the macro SCTK_USE_OPTIMIZED_TLS
+if test ! -z "${BINUTILS_PREFIX_INSTALL}"; then
+	SCTK_CHECK_OPTION "-DSCTK_USE_OPTIMIZED_TLS"
+fi

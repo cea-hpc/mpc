@@ -39,16 +39,28 @@
 
 #if defined(SCTK_USE_TLS)
 __thread void *sctk_extls = NULL;
+
+#if defined (SCTK_USE_OPTIMIZED_TLS)
+/* to set GS register */
+#include <asm/prctl.h> /* ARCH_SET_GS */
+#include <sys/prctl.h> /* arch_prctl */
+
+/* need to be saved and restored at context switch */
+__thread void *sctk_tls_module_vp[sctk_extls_max_scope+sctk_hls_max_scope] ;
+/* store a direct pointer to each tls module */
+/* used by tls optimized in the linker */
+/* gs register contains the address of this array */
+/* per thread: need to be updated at context switch */
+/* real type: sctk_tls_module_t** */
+__thread void **sctk_tls_module ;
+#endif
+
 #endif
 
 #if defined(SCTK_USE_TLS) && defined(Linux_SYS)
 #include <link.h>
 #include <stdlib.h>
 #include <stdio.h>
-
-/* to set GS register */
-#include <asm/prctl.h> /* ARCH_SET_GS */
-#include <sys/prctl.h> /* arch_prctl */
 
 static __thread unsigned long p_memsz;
 static __thread unsigned long p_filesz;
@@ -123,15 +135,6 @@ typedef struct
 static hls_level **sctk_hls_repository ; /* global per process */
 static __thread hls_level* sctk_hls[sctk_hls_max_scope] ; /* per VP */
 __thread void* sctk_hls_generation ; /* per thread */
-/* need to be saved and restored at context switch */
-
-__thread void *sctk_tls_module_vp[sctk_extls_max_scope+sctk_hls_max_scope] ;
-/* store a direct pointer to each tls module */
-/* used by tls optimized in the linker */
-/* gs register contains the address of this array */
-/* per thread: need to be updated at context switch */
-/* real type: sctk_tls_module_t** */
-__thread void **sctk_tls_module ;
 
 static inline void
 sctk_tls_init_level (tls_level * level)
@@ -376,58 +379,9 @@ sctk_extls_duplicate (void **new)
 }
 
 /*
-  take TLS_Module from father
-*/
-
-void
-sctk_tls_module_duplicate (void **new)
-{
-  sctk_tls_module_t *tls_module = (sctk_tls_module_t*) sctk_tls_module;
-  sctk_tls_module_t *new_tls_module = sctk_calloc(sctk_extls_max_scope+sctk_hls_max_scope,sizeof(sctk_tls_module_t));
-  int i;
-
-  if( tls_module == NULL ){
-  	tls_module = sctk_calloc(sctk_extls_max_scope+sctk_hls_max_scope,sizeof(sctk_tls_module_t));
-	for( i=0; i<sctk_extls_max_scope+sctk_hls_max_scope; i++ ){
-		tls_module[i] = NULL;
-	}
-  }
-  *(sctk_tls_module_t**) new = new_tls_module;
-  sctk_tls_module = tls_module;
-
-  for( i=0; i<sctk_extls_max_scope+sctk_hls_max_scope; i++ ){
-  	new_tls_module[i] = tls_module[i];
-  }
-}
-
-/*
-   only keep some tls and create new ones
-void
-sctk_extls_keep (int *scopes)
-{
-  tls_level **extls;
-  int i;
-  extls = sctk_extls;
-
-  assert (extls != NULL);
-
-  for (i = 0; i < sctk_extls_max_scope; i++)
-    {
-      if (scopes[i] == 0)
-	{
-	  sctk_nodebug ("Remove %d in %p", i, extls);
-	  extls[i] = sctk_malloc (sizeof (tls_level));
-	  sctk_tls_init_level (extls[i]);
-	}
-    }
-}
-*/
-
-/*
   used by openmp in MPC_OpenMP/src/mpcomp_internal.h
 */
 void
-//sctk_extls_keep_non_current_thread (void **extls, int *scopes)
 sctk_extls_keep_with_specified_extls (void **extls, int *scopes)
 {
   int i;
@@ -619,6 +573,7 @@ void sctk_hls_free ()
   free ( sctk_hls_repository ) ;
 }
 
+#if defined (SCTK_USE_OPTIMIZED_TLS)
 /*
  * Set the GS register to contain the address
  * of the tls_module array
@@ -707,6 +662,7 @@ sctk_tls_module_alloc_and_fill ()
 
 	sctk_tls_module = (void**)tls_module ;
 }
+#endif
 
 #if defined(SCTK_i686_ARCH_SCTK) || defined (SCTK_x86_64_ARCH_SCTK)
 

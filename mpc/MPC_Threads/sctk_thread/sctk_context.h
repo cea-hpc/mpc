@@ -163,7 +163,9 @@ extern "C"
     void *mpc_user_tls_1;
     void *sctk_extls;
 	void *sctk_hls_generation;
+#if defined (SCTK_USE_OPTIMIZED_TLS)
 	void *sctk_tls_module;
+#endif
     void *sctk_message_passing;
     //profiling TLS
     void *tls_trace_module;
@@ -177,12 +179,21 @@ extern "C"
 			void *arg,
 			void (*func) (void *),
 			char *stack, size_t stack_size);
+#if defined (SCTK_USE_OPTIMIZED_TLS)
   int
     sctk_makecontext_extls (sctk_mctx_t * ucp,
 		            void *arg,
 		            void (*func) (void *), char *stack,
 		            size_t stack_size,
 		            void *extls, void* tls_module);
+#else
+  int
+    sctk_makecontext_extls (sctk_mctx_t * ucp,
+		            void *arg,
+		            void (*func) (void *), char *stack,
+		            size_t stack_size,
+		            void *extls);
+#endif
   void sctk_tls_init (void);
 
 

@@ -354,8 +354,10 @@ __mpcomp_wrapper_op (void *arg)
   if (info->context == 0)
     {
       sctk_extls = info->extls;
+#if defined (SCTK_USE_OPTIMIZED_TLS)
 	  sctk_tls_module = info->tls_module;
 	  sctk_context_restore_tls_module_vp() ;
+#endif
     }
 
   sctk_nodebug
@@ -656,8 +658,10 @@ __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *),
 
   /* Restore the TLS for the main thread */
   sctk_extls = current_info->children[0]->extls;
+#if defined (SCTK_USE_OPTIMIZED_TLS)
   sctk_tls_module = current_info->children[0]->tls_module;
   sctk_context_restore_tls_module_vp() ;
+#endif
 
   SCTK_PROFIL_END (__mpcomp_start_parallel_region);
 }
@@ -954,13 +958,23 @@ mpcomp_fork_when_blocked (sctk_microthread_vp_t * self, long step)
 	      sctk_nodebug( "mpcomp_fork_when_blocked[%d]: Null stack -> mallocing"
 		  , info->rank ) ;
 	    }
+#if defined (SCTK_USE_OPTIMIZED_TLS)
 	  res = sctk_makecontext_extls (&(info->uc),
 				        (void *) self->op_list[i].
 				        arg,
 				        (void (*)(void *)) self->
 				        op_list[i].func,
 				        info->stack, STACK_SIZE,
-				        info->extls, info->tls_module); // add info->tls_module
+				        info->extls, info->tls_module);
+#else
+	  res = sctk_makecontext_extls (&(info->uc),
+				        (void *) self->op_list[i].
+				        arg,
+				        (void (*)(void *)) self->
+				        op_list[i].func,
+				        info->stack, STACK_SIZE,
+				        info->extls);
+#endif
 	  sctk_assert (res == TRUE);
 
 	  /* Context created */

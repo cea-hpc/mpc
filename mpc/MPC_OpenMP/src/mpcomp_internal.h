@@ -127,7 +127,9 @@ extern "C"
     struct sctk_microthread_s *task;	/* Corresponding microthread "task" */
 
     void *extls;
+#if defined (SCTK_USE_OPTIMIZED_TLS)
 	void *tls_module;
+#endif
 
     /* Private info on the current loop (whatever its schedule is)  */
     int loop_lb;		/* Lower bound */
@@ -286,7 +288,10 @@ extern "C"
       {
 	sctk_nodebug ("__mpcomp_init_thread_info: keep everything \n");
 	info->extls = sctk_extls;
+
+#if defined (SCTK_USE_OPTIMIZED_TLS)
 	info->tls_module = sctk_tls_module;
+#endif
       }
     else
       {
@@ -299,8 +304,10 @@ extern "C"
 	sctk_nodebug ("__mpcomp_init_thread_info: keep[1] = %d\n", keep[1]);
 	keep[sctk_extls_openmp_scope] = 0;
 	sctk_extls_keep_with_specified_extls (info->extls, keep);
+
+#if defined (SCTK_USE_OPTIMIZED_TLS)
 	sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( &info->tls_module, info->extls ) ;
-//	sctk_tls_module_alloc_and_fill_with_specified_extls ( &info->tls_module, info->extls ) ;
+#endif
       }
 
 #if 0

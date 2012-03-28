@@ -636,8 +636,10 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
     sctk_extls_keep (keep);
   }
 
+#if defined (SCTK_USE_OPTIMIZED_TLS)
   sctk_tls_module_set_gs_register() ;
   sctk_tls_module_alloc_and_fill() ;
+#endif
 
   sctk_profiling_init ();
   SCTK_TRACE_START (task, tmp.task_id, NULL, NULL, NULL);
@@ -764,8 +766,10 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
     sctk_extls_keep (keep);
   }
 
+#if defined (SCTK_USE_OPTIMIZED_TLS)
   sctk_tls_module_set_gs_register() ;
   sctk_tls_module_alloc_and_fill() ;
+#endif
 
   sctk_profiling_init ();
   SCTK_TRACE_START (user_thread, tmp.task_id, NULL, NULL, NULL);

@@ -82,8 +82,10 @@ extern "C"
 
   extern __thread void *sctk_hls_generation;
 
+#if defined (SCTK_USE_OPTIMIZED_TLS)
   extern __thread void *sctk_tls_module_vp[sctk_extls_max_scope+sctk_hls_max_scope] ;
   extern __thread void **sctk_tls_module ;
+#endif
 
 #endif
 
@@ -91,6 +93,7 @@ extern "C"
   extern __thread struct sctk_thread_specific_s *sctk_message_passing;
 #endif
 
+#if defined (SCTK_USE_OPTIMIZED_TLS)
   static inline void sctk_context_restore_tls_module_vp () {
 	  int i;
 	  if ( sctk_tls_module != NULL ) {
@@ -98,6 +101,7 @@ extern "C"
 			  sctk_tls_module_vp[i] = sctk_tls_module[i] ;
 	  }
   }
+#endif
 
 #define tls_save(a) ucp->a = a;
 #define tls_restore(a) a = ucp->a;
@@ -115,7 +119,11 @@ extern "C"
     tls_save (mpc_user_tls_1);
     tls_save (sctk_extls);
 	tls_save (sctk_hls_generation);
+	
+#if defined (SCTK_USE_OPTIMIZED_TLS)
 	tls_save (sctk_tls_module);
+#endif
+
 #ifdef MPC_Message_Passing
     tls_save (sctk_message_passing);
 #endif
@@ -138,8 +146,12 @@ extern "C"
     tls_restore (mpc_user_tls_1);
     tls_restore (sctk_extls);
     tls_restore (sctk_hls_generation);
-    tls_restore (sctk_tls_module);
+
+#if defined (SCTK_USE_OPTIMIZED_TLS)
+	tls_restore (sctk_tls_module);
     sctk_context_restore_tls_module_vp () ;
+#endif
+
 #ifdef MPC_Message_Passing
     tls_restore (sctk_message_passing);
 #endif
@@ -167,7 +179,11 @@ extern "C"
     tls_init (tls_args);
     tls_init (tls_trace_module);
     tls_init (sctk_hls_generation);
+
+#if defined (SCTK_USE_OPTIMIZED_TLS)
     tls_init (sctk_tls_module);
+#endif
+
 #endif
   }
 
@@ -180,7 +196,8 @@ extern "C"
 #endif
   }
 
-  static inline void sctk_context_init_tls_with_specified_extls (sctk_mctx_t* ucp, void* extls, void* tls_module) // and tls_module
+#if defined (SCTK_USE_OPTIMIZED_TLS)
+  static inline void sctk_context_init_tls_with_specified_extls (sctk_mctx_t* ucp, void* extls, void* tls_module)
   {
 #if defined(SCTK_USE_TLS)
     sctk_context_init_tls_without_extls (ucp);
@@ -188,15 +205,25 @@ extern "C"
 	ucp->sctk_tls_module = tls_module ;
 #endif
   }
+#else
+  static inline void sctk_context_init_tls_with_specified_extls (sctk_mctx_t* ucp, void* extls )
+  {
+#if defined(SCTK_USE_TLS)
+    sctk_context_init_tls_without_extls (ucp);
+	ucp->sctk_extls = extls ;
+#endif
+  }
+#endif
 
   void sctk_hls_build_repository () ;
   void sctk_hls_checkout_on_vp () ;
   void sctk_hls_register_thread () ;
 
+#if defined (SCTK_USE_OPTIMIZED_TLS)
   void sctk_tls_module_set_gs_register ();
   void sctk_tls_module_alloc_and_fill ();
   void sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( void **_tls_module, void *_extls );
-
+#endif
 
 #ifdef __cplusplus
 }

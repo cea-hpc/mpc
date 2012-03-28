@@ -554,8 +554,10 @@ __mpcomp_start_parallel_static_loop (int arg_num_threads, void *(*func)
 
   /* Restore the TLS for the main thread */
   sctk_extls = current_info->children[0]->extls;
+#if defined (SCTK_USE_OPTIMIZED_TLS)
   sctk_tls_module = current_info->children[0]->tls_module;
   sctk_context_restore_tls_module_vp ();
+#endif
 
   SCTK_PROFIL_END (__mpcomp_start_parallel_region);
 }
