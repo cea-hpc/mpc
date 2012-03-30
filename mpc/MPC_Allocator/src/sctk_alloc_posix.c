@@ -45,8 +45,6 @@
 #endif
 
 /************************* GLOBALS *************************/
-static const sctk_size_t SCTK_MEM_SIZE = 2*1024*1024UL;
-static sctk_alloc_spinlock_t sctk_alloc_global_mutex;
 /** Permit to know if the base initialization was done or not. **/
 static bool sctk_global_base_init = false;
 /** Global memory source for the current process (shared between all threads). **/
@@ -164,8 +162,9 @@ SCTK_STATIC void sctk_alloc_posix_base_init(void)
 **/
 SCTK_STATIC struct sctk_alloc_chain * sctk_alloc_setup_tls_chain(void)
 {
-	//check errors
-	assert(sctk_current_alloc_chain == NULL);
+	//nothing to do
+	if (sctk_current_alloc_chain != NULL)
+		return sctk_current_alloc_chain;
 	
 	//start allocator base initialisation if not already done.
 	sctk_alloc_posix_base_init();
