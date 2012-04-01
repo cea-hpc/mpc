@@ -146,7 +146,6 @@ sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
   ibuf = sctk_ibuf_pick(&rail->network.ib, 1, task_node_number);
   IBUF_SET_DEST_TASK(ibuf, msg->sctk_msg_get_glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->sctk_msg_get_glob_source);
-  IBUF_SET_LOW_MEMORY_MODE(ibuf, low_memory_mode);
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_req_type);
 
@@ -204,7 +203,6 @@ static inline sctk_ibuf_t* sctk_ib_rdma_prepare_ack(sctk_rail_info_t* rail,
   /* XXX: Source and dest inverted */
   IBUF_SET_DEST_TASK(ibuf, msg->tail.ib.rdma.glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->tail.ib.rdma.glob_source);
-  IBUF_SET_LOW_MEMORY_MODE(ibuf, low_memory_mode_local);
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_ack_type);
 
@@ -279,7 +277,6 @@ sctk_ib_rdma_prepare_done_write(sctk_rail_info_t* rail,
   rdma_done->dest_msg_header = dest_msg_header;
   IBUF_SET_DEST_TASK(ibuf, src_msg_header->tail.ib.rdma.glob_destination);
   IBUF_SET_SRC_TASK(ibuf, src_msg_header->tail.ib.rdma.glob_source);
-  IBUF_SET_LOW_MEMORY_MODE(ibuf, 0);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_done_type);
   sctk_ibuf_send_init(ibuf, IBUF_GET_RDMA_DONE_SIZE);
   sctk_ibuf_set_protocol(ibuf, rdma_protocol);
@@ -336,7 +333,7 @@ static void sctk_ib_rdma_send_ack(sctk_rail_info_t* rail, sctk_thread_ptp_messag
 
   /* Send message */
   remote = send_header->rdma.route_table->data.ib.remote;
-  sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
+  sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, 0);
 }
 
 void sctk_ib_rdma_net_copy(sctk_message_to_copy_t* tmp){
@@ -547,7 +544,7 @@ sctk_ib_rdma_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
       header = sctk_ib_rdma_recv_ack(rail, ibuf);
       sctk_ib_rdma_prepare_data_write(rail, header, ibuf);
       sctk_ib_qp_send_ibuf(&rail->network.ib,
-      header->tail.ib.rdma.route_table->data.ib.remote,  ibuf);
+      header->tail.ib.rdma.route_table->data.ib.remote, ibuf, 0);
       return 0;
       break;
 
@@ -585,7 +582,7 @@ sctk_ib_rdma_poll_send(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
       sctk_nodebug("Poll send: message RDMA data write received");
       msg = sctk_ib_rdma_prepare_done_write(rail, ibuf);
       sctk_ib_qp_send_ibuf(&rail->network.ib,
-        msg->tail.ib.rdma.route_table->data.ib.remote, ibuf);
+        msg->tail.ib.rdma.route_table->data.ib.remote, ibuf, 0);
       sctk_nodebug("Checksum after write:%lu", sctk_checksum_message(msg));
       sctk_ib_rdma_recv_done_local(rail, msg);
       /* Buffer reused: don't need to free it */

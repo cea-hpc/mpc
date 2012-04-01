@@ -190,7 +190,6 @@ static int srq_post(
   sctk_ibuf_t* ibuf;
   int rc;
   sctk_spinlock_t *lock = &node->lock;
-  double e, s;
 
   if(need_lock) sctk_spinlock_lock(lock);
   for (i=0; i < nb_ibufs; ++i)

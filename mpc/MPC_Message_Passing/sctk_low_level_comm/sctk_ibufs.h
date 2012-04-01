@@ -59,8 +59,6 @@ sctk_ibuf_header_t;
 #define IBUF_GET_DEST_TASK(ibuf) (IBUF_GET_HEADER(ibuf->buffer)->dest_task)
 #define IBUF_SET_SRC_TASK(ibuf,x) (ibuf->src_task = x)
 #define IBUF_GET_SRC_TASK(ibuf) (ibuf->src_task)
-#define IBUF_SET_LOW_MEMORY_MODE(ibuf,x) (IBUF_GET_HEADER(ibuf->buffer)->low_memory_mode = x)
-#define IBUF_GET_LOW_MEMORY_MODE(ibuf) (IBUF_GET_HEADER(ibuf->buffer)->low_memory_mode)
 
 /* Description of an ibuf */
 typedef struct sctk_ibuf_desc_s

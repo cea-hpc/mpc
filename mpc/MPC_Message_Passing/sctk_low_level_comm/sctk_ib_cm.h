@@ -34,6 +34,10 @@
 #define ONDEMAND_REQ_TAG (2)
 #define ONDEMAND_ACK_TAG (3)
 #define ONDEMAND_DONE_TAG (4)
+#define ONDEMAND_DECO_REQ_TAG (5)
+#define ONDEMAND_DECO_ACK_TAG (6)
+#define ONDEMAND_DECO_DONE_REQ_TAG (7)
+#define ONDEMAND_DECO_DONE_ACK_TAG (8)
 
 struct sctk_thread_ptp_message_body_s;
 
@@ -50,5 +54,25 @@ int sctk_ib_cm_on_demand_recv_check(sctk_thread_ptp_message_body_t *msg);
 int sctk_ib_cm_on_demand_recv(struct sctk_rail_info_s *rail,
     sctk_thread_ptp_message_t *msg, struct sctk_ibuf_s* ibuf, int recopy);
 sctk_route_table_t *sctk_ib_cm_on_demand_request(int dest,sctk_rail_info_t* rail);
+
+void sctk_ib_cm_deco_ack(sctk_rail_info_t* rail,
+    sctk_route_table_t* route_table, int ack);
+
+
+/*-----------------------------------------------------------
+ *  On demand QP deconnexion
+ *----------------------------------------------------------*/
+/* Recv */
+void sctk_ib_cm_deco_request_recv(sctk_rail_info_t *rail, void* payload, int src);
+void sctk_ib_cm_deco_ack_recv(sctk_rail_info_t *rail, void* ack, int src);
+void sctk_ib_cm_deco_done_ack_recv(sctk_rail_info_t *rail, void* ack, int src);
+void sctk_ib_cm_deco_done_request_recv(sctk_rail_info_t *rail, void* ack, int src);
+
+/* Send */
+void sctk_ib_cm_deco_request_send(sctk_rail_info_t* rail, sctk_route_table_t* route_table);
+void sctk_ib_cm_deco_done_request_send(sctk_rail_info_t* rail, sctk_route_table_t* route_table);
+void sctk_ib_cm_deco_ack_send(sctk_rail_info_t* rail, sctk_route_table_t* route_table, int ack);
+void sctk_ib_cm_deco_done_ack_send(sctk_rail_info_t* rail, sctk_route_table_t* route_table, int ack);
+
 #endif
 #endif

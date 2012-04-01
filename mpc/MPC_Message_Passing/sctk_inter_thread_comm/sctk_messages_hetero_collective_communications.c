@@ -172,7 +172,7 @@ void sctk_barrier_hetero_messages_inter(const sctk_communicator_t communicator,
       src = myself;
       for(j = 1; j < BARRIER_ARRITY; j++){
         if((src + (j*(i/BARRIER_ARRITY))) < total){
-          sctk_nodebug("Recv %d to %d", src + (j*(i/BARRIER_ARRITY)), myself);
+          sctk_debug("Recv %d to %d", src + (j*(i/BARRIER_ARRITY)), myself);
           sctk_hetero_messages_recv(communicator,
               process_array[src + (j*(i/BARRIER_ARRITY))],
               process_array[myself],
@@ -185,12 +185,12 @@ void sctk_barrier_hetero_messages_inter(const sctk_communicator_t communicator,
 
       dest = (myself / i) * i;
       if(dest >= 0){
-        sctk_nodebug("send %d to %d", myself, dest);
+        sctk_debug("send %d to %d", myself, dest);
         sctk_hetero_messages_send(communicator,
             process_array[myself],
             process_array[dest],
             0,&c,1,barrier_hetero_specific_message_tage,sctk_hetero_messages_get_item(&table),0,1);
-        sctk_nodebug("recv %d to %d", dest, myself);
+        sctk_debug("recv %d to %d", dest, myself);
         sctk_hetero_messages_recv(communicator,
             process_array[dest],
             process_array[myself],
@@ -210,6 +210,7 @@ void sctk_barrier_hetero_messages_inter(const sctk_communicator_t communicator,
       dest = myself;
       for(j = 1; j < BARRIER_ARRITY; j++){
         if((dest + (j*(i/BARRIER_ARRITY))) < total){
+          sctk_debug("send %d to %d", myself, dest+(j*(i/BARRIER_ARRITY)));
           sctk_hetero_messages_send(communicator,
               process_array[myself],
               process_array[dest+(j*(i/BARRIER_ARRITY))],
@@ -219,7 +220,7 @@ void sctk_barrier_hetero_messages_inter(const sctk_communicator_t communicator,
     }
   }
   sctk_hetero_messages_wait(&table);
-  sctk_nodebug("End inter");
+  sctk_debug("End inter");
 }
 
 static

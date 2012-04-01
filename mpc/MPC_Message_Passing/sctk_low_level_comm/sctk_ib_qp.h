@@ -72,6 +72,9 @@ typedef struct sctk_ib_device_s
   struct sctk_ib_qp_ondemand_s ondemand;
 } sctk_ib_device_t;
 
+#define ACK_UNSET   111
+#define ACK_OK      222
+#define ACK_CANCEL  333
 /* Structure associated to a remote QP */
 typedef struct sctk_ib_qp_s
 {
@@ -97,12 +100,21 @@ typedef struct sctk_ib_qp_s
   /* Number of pending requests */
   OPA_int_t               pending_requests_nb;
 
+  /* Route */
+  sctk_route_table_t      *route_table;
+
   /* For linked-list */
   struct sctk_ib_qp_s *prev;
   struct sctk_ib_qp_s *next;
 
   /* Lock for sending messages */
   sctk_spin_rwlock_t lock_send;
+  /* If a QP deconnexion should be canceled */
+  OPA_int_t deco_canceled;
+  /* ACK for the local and the remote peers */
+  int local_ack;
+  int remote_ack;
+  int deco_lock;
 
   /* Is remote dynamically created ? */
   int ondemand;
@@ -166,12 +178,16 @@ void
 sctk_ib_qp_modify( sctk_ib_qp_t* remote, struct ibv_qp_attr* attr, int flags);
 
 void sctk_ib_qp_allocate_init(struct sctk_ib_rail_info_s* rail_ib,
-    int rank, sctk_ib_qp_t* remote, int ondemand);
+    int rank, sctk_ib_qp_t* remote, int ondemand, sctk_route_table_t* route);
 
 void sctk_ib_qp_allocate_rtr(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t *remote,sctk_ib_qp_keys_t* keys);
 
 void sctk_ib_qp_allocate_rts(struct sctk_ib_rail_info_s* rail_ib,
+    sctk_ib_qp_t *remote);
+
+  void
+sctk_ib_qp_allocate_reset(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t *remote);
 
   struct ibv_srq*
@@ -183,56 +199,87 @@ sctk_ib_srq_init_attr(struct sctk_ib_rail_info_s* rail_ib);
 
 void
 sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
-    sctk_ib_qp_t *remote, sctk_ibuf_t* ibuf);
+    sctk_ib_qp_t *remote, sctk_ibuf_t* ibuf, int is_control_message);
 
 void sctk_ib_qp_release_entry(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t *remote);
 
 int sctk_ib_qp_get_cap_flags(struct sctk_ib_rail_info_s* rail_ib);
 
-static void
+/* Number of pending requests */
+__UNUSED__ static void
 sctk_ib_qp_inc_requests_nb(sctk_ib_qp_t *remote) {
   OPA_incr_int(&remote->pending_requests_nb);
 }
-static void
+__UNUSED__ static void
 sctk_ib_qp_decr_requests_nb(sctk_ib_qp_t *remote) {
   OPA_decr_int(&remote->pending_requests_nb);
 }
-static int
+__UNUSED__ static int
 sctk_ib_qp_get_requests_nb(sctk_ib_qp_t *remote) {
-  OPA_load_int(&remote->pending_requests_nb);
+  return OPA_load_int(&remote->pending_requests_nb);
 }
-static int
-sctk_ib_qp_set_requests_nb(sctk_ib_qp_t *remote) {
-  OPA_load_int(&remote->pending_requests_nb);
+__UNUSED__ static void
+sctk_ib_qp_set_requests_nb(sctk_ib_qp_t *remote, int i) {
+  OPA_store_int(&remote->pending_requests_nb, i);
 }
 
-void
-sctk_ib_qp_flush(struct sctk_ib_rail_info_s* rail_ib,
-    sctk_ib_qp_t *remote);
+/* Flush ACK */
+__UNUSED__ static int
+sctk_ib_qp_get_local_flush_ack(sctk_ib_qp_t *remote) {
+  return remote->local_ack;
+}
+__UNUSED__ static void
+sctk_ib_qp_set_local_flush_ack(sctk_ib_qp_t *remote, int i) {
+  remote->local_ack = i;
+}
+__UNUSED__ static int
+sctk_ib_qp_get_remote_flush_ack(sctk_ib_qp_t *remote) {
+  return remote->remote_ack;
+}
+__UNUSED__ static void
+sctk_ib_qp_set_remote_flush_ack(sctk_ib_qp_t *remote, int i) {
+  remote->remote_ack = i;
+}
 
+
+/* Flush cancel */
+__UNUSED__ static int
+sctk_ib_qp_get_deco_canceled(sctk_ib_qp_t *remote) {
+  return OPA_load_int(&remote->deco_canceled);
+}
+__UNUSED__ static void
+sctk_ib_qp_set_deco_canceled(sctk_ib_qp_t *remote, int i) {
+  OPA_store_int(&remote->deco_canceled, i);
+}
+
+int
+sctk_ib_srq_get_max_srq_wr (struct sctk_ib_rail_info_s* rail_ib);
 
 /*-----------------------------------------------------------
  *  Change the state of a QP
  *----------------------------------------------------------*/
-static inline void
+__UNUSED__ static inline void
 sctk_ib_qp_allocate_set_rtr(sctk_ib_qp_t *remote, int enabled) {
   OPA_store_int(&remote->is_rtr, enabled);
 }
-static inline void
+__UNUSED__ static inline void
 sctk_ib_qp_allocate_set_rts(sctk_ib_qp_t *remote, int enabled) {
   OPA_store_int(&remote->is_rts, enabled);
 }
-static inline int
+__UNUSED__ static inline int
 sctk_ib_qp_allocate_get_rtr(sctk_ib_qp_t *remote) {
   return (int) OPA_load_int(&remote->is_rtr);
 }
-static inline int
+__UNUSED__ static inline int
 sctk_ib_qp_allocate_get_rts(sctk_ib_qp_t *remote) {
   return (int) OPA_load_int(&remote->is_rts);
 }
 
 
+void sctk_ib_qp_select_victim(struct sctk_ib_rail_info_s* rail_ib);
+void sctk_ib_qp_deco_victim(struct sctk_ib_rail_info_s* rail_ib,
+    sctk_route_table_t* route_table);
 
 
 #endif

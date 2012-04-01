@@ -45,7 +45,6 @@ sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
   ibuf = sctk_ibuf_pick(rail_ib, 1, task_node_number);
   IBUF_SET_DEST_TASK(ibuf, msg->sctk_msg_get_glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->sctk_msg_get_glob_source);
-  IBUF_SET_LOW_MEMORY_MODE(ibuf, low_memory_mode);
 
   /* Copy header */
   memcpy(IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer), msg, sizeof(sctk_thread_ptp_message_body_t));

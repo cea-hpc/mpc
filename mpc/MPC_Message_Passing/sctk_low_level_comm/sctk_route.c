@@ -28,6 +28,7 @@
 #include <sctk_spinlock.h>
 #include <sctk_ib_cm.h>
 #include <sctk_pmi.h>
+#include "sctk_ib_qp.h"
 #include <utarray.h>
 
 static sctk_route_table_t* sctk_dynamic_route_table = NULL;
@@ -62,7 +63,7 @@ void sctk_route_set_low_memory_mode_remote(sctk_route_table_t* tmp, int low) {
 }
 
 
-sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail, sctk_route_table_t* (*func)(int dest, sctk_rail_info_t* rail, int ondemand), int *added) {
+sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail, sctk_route_table_t* (*create_func)(), void (*init_func)(int dest, sctk_rail_info_t* rail, sctk_route_table_t *route_table, int ondemand), int *added) {
   sctk_route_key_t key;
   sctk_route_table_t* tmp;
   *added = 0;
@@ -72,9 +73,11 @@ sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail
 
   sctk_spinlock_write_lock(&sctk_route_table_lock);
   HASH_FIND(hh,sctk_dynamic_route_table,&key,sizeof(sctk_route_key_t),tmp);
+  /* Entry not found, we create it */
   if (tmp == NULL) {
     /* QP added on demand */
-    tmp = func(dest, rail, 1);
+    tmp = create_func();
+    init_func(dest, rail, tmp, 1);
     tmp->key.destination = dest;
     tmp->key.rail = rail->rail_number;
     tmp->rail = rail;
@@ -82,6 +85,13 @@ sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail
     sctk_route_set_low_memory_mode_local(tmp, 0);
     sctk_route_set_low_memory_mode_remote(tmp, 0);
     HASH_ADD(hh,sctk_dynamic_route_table,key,sizeof(sctk_route_key_t),tmp);
+    *added = 1;
+  } else if (sctk_route_get_state(tmp) == state_reset) { /* QP in a reset state */
+    sctk_route_set_state(tmp, state_reconnecting);
+   /* We just need to init the entry. No need to create it */
+    init_func(dest, rail, tmp, 1);
+    sctk_route_set_low_memory_mode_local(tmp, 0);
+    sctk_route_set_low_memory_mode_remote(tmp, 0);
     *added = 1;
   }
   sctk_spinlock_write_unlock(&sctk_route_table_lock);
@@ -157,7 +167,7 @@ void sctk_walk_all_routes(const sctk_rail_info_t* rail, void (*func) (const sctk
   }
   sctk_spinlock_read_unlock(&sctk_route_table_lock);
 
-  current_route = NULL;
+  tmp2 = NULL;
   while( (tmp2=(sctk_route_table_t**) utarray_next(routes,tmp2))) {
       func(rail, *tmp2);
   }
@@ -182,12 +192,27 @@ void sctk_walk_all_dynamic_routes(const sctk_rail_info_t* rail, void (*func) (co
   }
   sctk_spinlock_read_unlock(&sctk_route_table_lock);
 
-  current_route = NULL;
+  tmp2 = NULL;
   while( (tmp2=(sctk_route_table_t**) utarray_next(routes,tmp2))) {
       func(rail, *tmp2);
   }
 }
 
+static inline
+sctk_route_table_t* sctk_get_route_to_process_no_route_static(int dest, sctk_rail_info_t* rail){
+  sctk_route_key_t key;
+  sctk_route_table_t* tmp;
+
+  key.destination = dest;
+  key.rail = rail->rail_number;
+
+  /* FIXME: We do not need to take a lock for the static table. No route can be created
+   * or destructed during execution time */
+  /* TABLE_LOCK(); */
+  HASH_FIND(hh,sctk_static_route_table,&key,sizeof(sctk_route_key_t),tmp);
+  /* TABLE_UNLOCK(); */
+  return tmp;
+}
 
 static inline
 sctk_route_table_t* sctk_get_route_to_process_no_route(int dest, sctk_rail_info_t* rail){
@@ -197,7 +222,8 @@ sctk_route_table_t* sctk_get_route_to_process_no_route(int dest, sctk_rail_info_
   key.destination = dest;
   key.rail = rail->rail_number;
 
-  /* FIXME: We do not need to take a lock for the static table. */
+  /* FIXME: We do not need to take a lock for the static table. No route can be created
+   * or destructed during execution time */
   /* TABLE_LOCK(); */
   HASH_FIND(hh,sctk_static_route_table,&key,sizeof(sctk_route_key_t),tmp);
   /* TABLE_UNLOCK(); */
@@ -205,6 +231,13 @@ sctk_route_table_t* sctk_get_route_to_process_no_route(int dest, sctk_rail_info_
     sctk_spinlock_read_lock(&sctk_route_table_lock);
     HASH_FIND(hh,sctk_dynamic_route_table,&key,sizeof(sctk_route_key_t),tmp);
     sctk_spinlock_read_unlock(&sctk_route_table_lock);
+
+    /* Wait if route beeing deconnected */
+    /* FIXME: not compatible with other module than IB */
+    if (tmp) {
+      sctk_ib_qp_t *remote = tmp->data.ib.remote;
+      sctk_thread_wait_for_value (&remote->deco_lock, 0);
+    }
     /* If the route is deconnected, we do not use it*/
     if (tmp && sctk_route_get_state(tmp) != state_connected) {
       tmp = NULL;
@@ -230,7 +263,20 @@ void* __wait_connexion(void* a) {
   return NULL;
 }
 
+/* Get a route to a process only on static routes */
+inline sctk_route_table_t* sctk_get_route_to_process_static(int dest, sctk_rail_info_t* rail){
+  sctk_route_table_t* tmp;
+  tmp = sctk_get_route_to_process_no_route_static(dest,rail);
 
+  if(tmp == NULL){
+    dest = rail->route(dest,rail);
+    return sctk_get_route_to_process_static(dest,rail);
+  }
+
+  return tmp;
+}
+
+/* Get a route to a process with no ondemand connexions */
 inline sctk_route_table_t* sctk_get_route_to_process_no_ondemand(int dest, sctk_rail_info_t* rail){
   sctk_route_table_t* tmp;
   tmp = sctk_get_route_to_process_no_route(dest,rail);

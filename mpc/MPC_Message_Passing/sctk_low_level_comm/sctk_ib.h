@@ -142,8 +142,9 @@ extern "C"
 			       void(*route_init)(struct sctk_rail_info_s*));
 
   /* XXX: Should not be declared here but in CM */
-  struct sctk_route_table_s *
-    sctk_ib_create_remote(int dest, struct sctk_rail_info_s* rail, int ondemand);
+  struct sctk_route_table_s *sctk_ib_create_remote();
+  void sctk_ib_init_remote(int dest, struct sctk_rail_info_s* rail, struct sctk_route_table_s* route_table, int ondemand);
+
   void sctk_ib_add_static_route(int dest, struct sctk_route_table_s *tmp, struct sctk_rail_info_s* rail);
   void sctk_ib_add_dynamic_route(int dest, struct sctk_route_table_s *tmp, struct sctk_rail_info_s* rail);
   int sctk_ib_route_dynamic_is_connected(struct sctk_route_table_s *tmp);

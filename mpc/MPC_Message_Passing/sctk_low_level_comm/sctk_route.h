@@ -96,7 +96,7 @@ void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* 
 void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail);
 struct sctk_route_table_s *sctk_route_dynamic_search(int dest, sctk_rail_info_t* rail);
 
-sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail, sctk_route_table_t* (*func)(int dest, sctk_rail_info_t* rail, int ondemand), int *added);
+sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail, sctk_route_table_t* (*create_func)(), void (*init_func)(int dest, sctk_rail_info_t* rail, sctk_route_table_t *route_table, int ondemand), int *added);
 
 /* For low_memory_mode */
 int sctk_route_cas_low_memory_mode_local(sctk_route_table_t* tmp, int oldv, int newv);
@@ -105,9 +105,11 @@ void sctk_route_set_low_memory_mode_remote(sctk_route_table_t* tmp, int low);
 int sctk_route_is_low_memory_mode_local(sctk_route_table_t* tmp);
 void sctk_route_set_low_memory_mode_local(sctk_route_table_t* tmp, int low);
 
+/* Function for getting a route */
   sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail);
 sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail);
 inline sctk_route_table_t* sctk_get_route_to_process_no_ondemand(int dest, sctk_rail_info_t* rail);
+inline sctk_route_table_t* sctk_get_route_to_process_static(int dest, sctk_rail_info_t* rail);
 
 void sctk_route_set_rail_nb(int i);
 sctk_rail_info_t* sctk_route_get_rail(int i);
@@ -128,17 +130,18 @@ int sctk_route_is_finalized();
  *----------------------------------------------------------*/
 /* State of the QP */
 typedef enum sctk_route_state_e {
-  state_connected = 111,
-  state_flushing = 222,
+  state_connected   = 111,
+  state_flushing    = 222,
   state_deconnected = 333,
-  state_connecting = 444
+  state_reconnecting  = 444,
+  state_reset       = 555,
 } sctk_route_state_t;
 
-static void sctk_route_set_state(sctk_route_table_t* tmp, sctk_route_state_t state){
+__UNUSED__ static void sctk_route_set_state(sctk_route_table_t* tmp, sctk_route_state_t state){
   OPA_store_int(&tmp->state, state);
 }
 
-static int sctk_route_get_state(sctk_route_table_t* tmp){
+__UNUSED__ static int sctk_route_get_state(sctk_route_table_t* tmp){
   return (int) OPA_load_int(&tmp->state);
 }
 

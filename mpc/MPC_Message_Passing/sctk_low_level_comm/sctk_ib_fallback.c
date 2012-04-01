@@ -55,22 +55,29 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   sctk_ibuf_t *ibuf;
   size_t size;
   int low_memory_mode;
+  char is_control_message = 0;
   specific_message_tag_t tag = msg->body.header.specific_message_tag;
 
-  sctk_nodebug("send message through rail %d",rail->rail_number);
+  sctk_nodebug("send message through rail %d to %d",rail->rail_number, msg->sctk_msg_get_destination);
 
   sctk_nodebug("Send message with tag %d", msg->sctk_msg_get_specific_message_tag);
   if( IS_PROCESS_SPECIFIC_MESSAGE_TAG(tag)) {
 
-    if (IS_PROCESS_SPECIFIC_LOW_MEM(tag) || IS_PROCESS_SPECIFIC_ONDEMAND(tag))
+    if (IS_PROCESS_SPECIFIC_CONTROL_MESSAGE(tag))
     {
-      tmp = sctk_get_route_to_process_no_ondemand(msg->sctk_msg_get_destination,rail);
-      sctk_nodebug("Send to process %d", msg->sctk_msg_get_destination);
+      is_control_message = 1;
+      /* send a message with no_ondemand connexion */
+      tmp = sctk_get_route_to_process_static(msg->sctk_msg_get_destination,rail);
+      sctk_nodebug("Send control message to process %d", msg->sctk_msg_get_destination);
     } else {
+      /* send a message to a PROCESS with a possible ondemand connexion if the peer doest not
+       * exist.  */
       tmp = sctk_get_route_to_process(msg->sctk_msg_get_destination,rail);
       sctk_nodebug("Send to process %d", msg->sctk_msg_get_destination);
     }
   } else {
+    /* send a message to a TASK with a possible ondemand connexion if the peer doest not
+     * exist.  */
     sctk_nodebug("Connexion to %d", msg->sctk_msg_get_glob_destination);
     tmp = sctk_get_route(msg->sctk_msg_get_glob_destination,rail);
   }
@@ -80,13 +87,17 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
   /* Check if the remote task is in low mem mode */
   low_memory_mode = sctk_route_is_low_memory_mode_remote(tmp);
-
   size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
+  if (is_control_message && size + IBUF_GET_EAGER_SIZE > config->ibv_eager_limit) {
+    sctk_error("MPC tries to send a control message without using the Eager protocol."
+        "This is not supported and MPC is going to exit ...");
+    sctk_abort();
+  }
 
   if (size+IBUF_GET_EAGER_SIZE < config->ibv_eager_limit)  {
     ibuf = sctk_ib_sr_prepare_msg(rail_ib, remote, msg, size, -1);
     /* Send message */
-    sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
+    sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, is_control_message);
     sctk_complete_and_free_message(msg);
     PROF_INC_RAIL_IB(rail_ib, eager_nb);
   } else if (!low_memory_mode && size+IBUF_GET_BUFFERED_SIZE < config->ibv_frag_eager_limit)  {
@@ -100,7 +111,7 @@ rdma:
     sctk_nodebug("Send RDMA message");
     ibuf = sctk_ib_rdma_prepare_req(rail, tmp, msg, size, -1);
     /* Send message */
-    sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf);
+    sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, 0);
     sctk_ib_rdma_prepare_send_msg(rail_ib, msg, size);
     PROF_INC_RAIL_IB(rail_ib, rdma_nb);
   }

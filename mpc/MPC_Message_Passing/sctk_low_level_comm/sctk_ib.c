@@ -55,20 +55,31 @@ void sctk_ib_add_dynamic_route(int dest, sctk_route_table_t *tmp, sctk_rail_info
   sctk_add_dynamic_route(dest,tmp,rail);
 }
 
-/* dynamic means that the QP is created by the ondemand protocol */
-sctk_route_table_t *
-sctk_ib_create_remote(int dest, sctk_rail_info_t* rail, int ondemand){
-  sctk_route_table_t* tmp;
+/* Initialize a new route table */
+void
+sctk_ib_init_remote(int dest, sctk_rail_info_t* rail, struct sctk_route_table_s* route_table, int ondemand){
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  sctk_ib_data_t *route_ib;
+
+  route_ib=&route_table->data.ib;
+
+  sctk_nodebug("Initializing QP for dest %d", dest);
+  sctk_ib_qp_allocate_init(rail_ib, dest, route_ib->remote, ondemand, route_table);
+  return;
+}
+
+
+/* Create a new route table */
+sctk_route_table_t *
+sctk_ib_create_remote(){
+  sctk_route_table_t* tmp;
   sctk_ib_data_t *route_ib;
 
   tmp = sctk_malloc(sizeof(sctk_route_table_t));
   memset(tmp,0,sizeof(sctk_route_table_t));
 
-  sctk_nodebug("Creating QP for dest %d", dest);
   route_ib=&tmp->data.ib;
   route_ib->remote = sctk_ib_qp_new();
-  sctk_ib_qp_allocate_init(rail_ib, dest, route_ib->remote, ondemand);
 
   return tmp;
 }
@@ -124,10 +135,12 @@ void sctk_network_init_ib_all(sctk_rail_info_t* rail,
    * the remote QP has sent an ack */
 
     /* create remote for dest */
-    route_table_dest = sctk_ib_create_remote(dest_rank, rail, 0);
+    route_table_dest = sctk_ib_create_remote();
+    sctk_ib_init_remote(dest_rank, rail, route_table_dest, 0);
     route_dest=&route_table_dest->data.ib;
     /* create remote for src */
-    route_table_src = sctk_ib_create_remote(src_rank, rail, 0);
+    route_table_src = sctk_ib_create_remote();
+    sctk_ib_init_remote(src_rank, rail, route_table_src, 0);
     route_src=&route_table_src->data.ib;
 
     sctk_ib_qp_keys_send(rail_ib, route_dest->remote);
@@ -149,7 +162,8 @@ void sctk_network_init_ib_all(sctk_rail_info_t* rail,
     sctk_ib_add_static_route(src_rank, route_table_src, rail);
   } else {
     /* create remote for dest */
-    route_table_dest = sctk_ib_create_remote(dest_rank, rail, 0);
+    route_table_dest = sctk_ib_create_remote();
+    sctk_ib_init_remote(dest_rank, rail, route_table_dest, 0);
     route_dest=&route_table_dest->data.ib;
 
     sctk_ib_qp_keys_send(rail_ib, route_dest->remote);
@@ -211,7 +225,7 @@ void sctk_network_deco_neighbors_ib () {
   /* Select the first rail */
   rails = sctk_network_get_rails();
   r = &rails[0]->network.ib;
-  sctk_warning("Proceeding to a QP deconnexion");
+  sctk_ib_qp_select_victim(r);
 
 }
 #endif
