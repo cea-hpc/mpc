@@ -106,7 +106,7 @@ SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(vo
 		node = sctk_get_node_from_cpu (sctk_get_cpu());
 	else
 		node = 0;
-	assert(node < numa_available());
+	sctk_alloc_assert(node < numa_available());
 	#else
 	int node = 0;
 	#endif
@@ -162,16 +162,15 @@ SCTK_STATIC void sctk_alloc_posix_base_init(void)
 **/
 SCTK_STATIC struct sctk_alloc_chain * sctk_alloc_setup_tls_chain(void)
 {
-	//nothing to do
-	if (sctk_current_alloc_chain != NULL)
-		return sctk_current_alloc_chain;
+	//check errors
+	sctk_alloc_assert(sctk_current_alloc_chain == NULL);
 	
 	//start allocator base initialisation if not already done.
 	sctk_alloc_posix_base_init();
 	
 	//allocate a new chain from egg allocator
 	struct sctk_alloc_chain * chain = sctk_alloc_chain_alloc(&sctk_global_egg_chain,sizeof(struct sctk_alloc_chain));
-	assert(chain != NULL);
+	sctk_alloc_assert(chain != NULL);
 
 	//init allocation chain.
 	sctk_alloc_chain_user_init(chain,NULL,0);
@@ -182,6 +181,9 @@ SCTK_STATIC struct sctk_alloc_chain * sctk_alloc_setup_tls_chain(void)
 
 	//setup allocation chain for current thread
 	sctk_current_alloc_chain = chain;
+
+	//debug
+	SCTK_PDEBUG("Init an allocation chain : %p",chain);
 
 	/** @todo TODO register the allocation chain for debugging. **/
 	//setup pointer for alocator memory dump in case of crash
@@ -351,4 +353,10 @@ void * sctk_realloc (void * ptr, size_t size)
 	if (ptr != NULL)
 		free(ptr);
 	return res;
+}
+
+/************************* FUNCTION ************************/
+struct sctk_alloc_chain_t * sctk_get_current_alloc_chain(void)
+{
+	return sctk_current_alloc_chain;
 }
