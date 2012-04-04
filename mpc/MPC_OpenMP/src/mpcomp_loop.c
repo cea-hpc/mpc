@@ -88,6 +88,8 @@ __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
     trip_count++ ;
   }
 
+  sctk_nodebug("__mpcomp_get_specific_chunk_per_rank: trip_count=%d", trip_count);
+
   /* The final additionnal chunk is smaller, so its computation is a little bit
      different */
   if (rank == (trip_count / chunk_size) % nb_threads
