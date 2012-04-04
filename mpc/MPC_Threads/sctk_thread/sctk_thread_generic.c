@@ -419,6 +419,44 @@ sctk_thread_generic_create (sctk_thread_generic_t * threadp,
 }
 
 /***************************************/
+/* THREAD JOIN                         */
+/***************************************/
+
+int
+sctk_thread_generic_join ( sctk_thread_generic_t* threadp, int** val ){
+  /*
+   	ERRORS:
+   	ESRCH  No  thread could be found corresponding to that specified by th.
+   	EINVAL The th thread has been detached.
+   	EINVAL Another thread is already waiting on termination of th.
+   	EDEADLK The th argument refers to the calling thread.
+   */
+
+  sctk_thread_generic_t* current;
+  // sched ??
+  sctk_thread_generic_thread_status_t* status;
+  sctk_nodebug ("Join Thread %p", /*Thread*/ );
+  
+  /* TODO: handle signals
+	 sctk_thread_generic_testcancel( Thread  )
+   */
+ 
+  if( /* THREAD_ATTENDU != THREAD_COURANT */ ){
+	if( /* THREAD_ATTENDU->JOINED */ ) return SCTK_ESRCH;
+	if( /* THREAD_ATTENDU->DETACHED */ ) return SCTK_EINVAL;
+	sctk_nodebug ("TO Join Thread %p", th);
+	sctk_thread_generic_wait_for_value_and_poll();
+	sctk_nodebug ("Joined Thread %p", th);
+
+	if( val != NULL ) *val = ret_val;
+  }else{
+    return SCTK_EDEADLK;
+  }
+
+  return 0;
+}
+
+/***************************************/
 /* THREAD POLLING                      */
 /***************************************/
 

@@ -39,7 +39,8 @@
 typedef enum{
   sctk_thread_generic_blocked,
   sctk_thread_generic_running,
-  sctk_thread_generic_zombie
+  sctk_thread_generic_zombie,
+  sctk_thread_generic_joined
 }sctk_thread_generic_thread_status_t;
 
 struct sctk_thread_generic_scheduler_s;
