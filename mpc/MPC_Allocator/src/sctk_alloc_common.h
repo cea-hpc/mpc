@@ -1,0 +1,97 @@
+/* ############################# MPC License ############################## */
+/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
+/* # This file is part of the MPC Runtime.                                # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
+/* #                                                                      # */
+/* ######################################################################## */
+
+#ifndef SCTK_ALLOC_COMMON_H
+#define SCTK_ALLOC_COMMON_H
+
+/************************** HEADERS ************************/
+#include <stdlib.h>
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
+/************************** CONSTS *************************/
+/** Magick value to be used as check in common header. **/
+#define SCTK_ALLOC_MAGIK_STATUS 0x10
+/**
+ * Define the cut size for small chunk, for now it can be up to 256o. It was currently 32 because
+ * small bloc support is not fully available.
+**/
+#define SCTK_ALLOC_SMALL_CHUNK_SIZE 32
+/** Define the size of a macro bloc (2Mo by default) **/
+#define SCTK_MACRO_BLOC_SIZE (2*1024*1024UL)
+/** Number of size class for the free list. **/
+#define SCTK_ALLOC_NB_FREE_LIST 48
+/** Minimal size of blocks. **/
+#define SCTK_ALLOC_MIN_SIZE 32
+/** Basic alignement for large blocs. **/
+#define SCTK_ALLOC_BASIC_ALIGN 16
+/** Define the considered page size. **/
+#define SCTK_ALLOC_PAGE_SIZE 4096
+/** Size allocated for region headers. **/
+#define SCTK_REGION_HEADER_SIZE (4*1024*1024ul)
+/** Size of a region header (1TB for 2MB macro-blocs and 1 pointer per entry) **/
+#define SCTK_REGION_SIZE (1024UL*1024UL*1024UL*1024UL)
+/** Number of entries of a region header. **/
+#define SCTK_REGION_HEADER_ENTRIES ((SCTK_REGION_SIZE) / SCTK_MACRO_BLOC_SIZE)
+/** Base addresse for the current process heap based on mmap. **/
+#define SCTK_ALLOC_HEAP_BASE 0xc0000000UL
+/** Maximum size of current process heap based on mmap (128Go by default for now). **/
+#define SCTK_ALLOC_HEAP_SIZE (128UL*1024UL*1024UL*1024UL)
+/** Maximum number of regions, need to cover the 256TB available with 48bit addressing. **/
+#define SCTK_ALLOC_MAX_REGIONS 256
+/** Enable or disable huge chunk segragation. **/
+#define SCTK_ALLOC_HUGE_CHUNK_SEGREGATION true
+
+/************************** MACROS *************************/
+/**
+ * Macro to align x on required alignement. It internally use a bit per bit AND operation.
+ * @param x Define the value to align.
+ * @param align Define the target alignement (must be power of 2)
+**/
+#define SCTK_ALLOC_ALIGN(x,align) ((x) & (~((align) -1 )))
+// #define SCTK_ALLOC_ALIGN(x,align) ((x) - ((x)%(align)))
+#ifdef MPC_ALLOCATOR_DISABLE_STATIC
+#define SCTK_STATIC /*static*/
+#else
+#define SCTK_STATIC static
+#endif // MPC_ALLOCATOR_DISABLE_STATIC
+
+/************************** TYPES **************************/
+/** Type for size member, must be 64bit type to maintain alignment coherency. **/
+typedef unsigned long sctk_size_t;
+/** Type for address member, must be 64bit type to maintain alignement coherency. **/
+typedef unsigned long sctk_addr_t;
+/** Type for short size member, must be 8bits type to maintain alignement coherency. **/
+typedef unsigned char sctk_short_size_t;
+
+/************************** STRUCT *************************/
+struct sctk_alloc_chain;
+typedef struct sctk_alloc_chain sctk_alloc_chain_t;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif //SCTK_ALLOC_COMMON_H

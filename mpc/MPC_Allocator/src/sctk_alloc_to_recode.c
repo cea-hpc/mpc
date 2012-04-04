@@ -23,6 +23,7 @@
 #include "sctk_alloc_posix.h"
 #include "sctk_config.h"
 #include "sctk_spinlock.h"
+#include "sctk_allocator.h"
 
 #ifdef MPC_Threads
 #include "sctk_context.h"
@@ -41,4 +42,34 @@ sctk_alloc_chain_t * __sctk_create_thread_memory_area(void)
 void sctk_set_tls(sctk_alloc_chain_t * tls)
 {
 	sctk_alloc_posix_set_default_chain(tls);
+};
+
+void * sctk_get_heap_start(void)
+{
+	return (void*)SCTK_ALLOC_HEAP_BASE;
+};
+
+size_t sctk_get_heap_size(void)
+{
+	return SCTK_ALLOC_HEAP_SIZE;
+};
+
+void * __sctk_malloc_new(size_t size,sctk_alloc_chain_t * chain)
+{
+	return sctk_alloc_chain_alloc(chain,size);
+};
+
+void * __sctk_malloc (size_t size,sctk_alloc_chain_t * chain)
+{
+	return sctk_alloc_chain_alloc(chain,size);
+};
+
+char * sctk_alloc_mode (void)
+{
+	return "MPC allocator";
+};
+
+void __sctk_free(void * ptr,sctk_alloc_chain_t * chain)
+{
+	sctk_alloc_chain_free(chain,ptr);
 };

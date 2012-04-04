@@ -25,7 +25,7 @@
 
 /************************** HEADERS ************************/
 #include <stdlib.h>
-#include "sctk_allocator.h"
+#include "sctk_alloc_common.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -33,16 +33,18 @@ extern "C"
 #endif
 
 /************************* FUNCTION ************************/
-SCTK_STATIC void sctk_alloc_posix_base_init(void);
+void sctk_alloc_posix_base_init(void);
 struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void);
 void sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain);
 struct sctk_alloc_chain * sctk_alloc_posix_setup_tls_chain(void);
 sctk_size_t sctk_alloc_posix_get_size(void *ptr);
 
 /************************* FUNCTION ************************/
+#ifdef MPC_ALLOCATOR_DISABLE_STATIC
 SCTK_STATIC void sctk_alloc_posix_mmsrc_uma_init(void);
 SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init(void);
 SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(void);
+#endif
 
 /************************* FUNCTION ************************/
 void * sctk_calloc (size_t nmemb, size_t size);
@@ -52,7 +54,6 @@ void * sctk_realloc (void * ptr, size_t size);
 void * sctk_memalign(size_t boundary,size_t size);
 struct sctk_alloc_chain * sctk_get_current_alloc_chain(void);
 
-#warning TODO remove this
 #include "sctk_alloc_to_recode.h"
 
 #ifdef __cplusplus

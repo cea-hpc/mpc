@@ -106,7 +106,7 @@ SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(vo
 		node = sctk_get_node_from_cpu (sctk_get_cpu());
 	else
 		node = 0;
-	sctk_alloc_assert(node < numa_available());
+	assert(node < numa_available());
 	#else
 	int node = 0;
 	#endif
@@ -119,7 +119,7 @@ SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(vo
  * initialisation step if available. This method is protected for exclusive access by an internal
  * mutex.
 **/
-SCTK_STATIC void sctk_alloc_posix_base_init(void)
+void sctk_alloc_posix_base_init(void)
 {
 	/** @todo check for optimization **/
 	static SCTK_ALLOC_INIT_LOCK_TYPE global_mm_mutex = SCTK_ALLOC_INIT_LOCK_INITIALIZER;
@@ -166,7 +166,7 @@ struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void)
 
 	//allocate a new chain from egg allocator
 	struct sctk_alloc_chain * chain = sctk_alloc_chain_alloc(&sctk_global_egg_chain,sizeof(struct sctk_alloc_chain));
-	sctk_alloc_assert(chain != NULL);
+	assert(chain != NULL);
 
 	//init allocation chain.
 	sctk_alloc_chain_user_init(chain,NULL,0);
@@ -209,7 +209,7 @@ void sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain)
 struct sctk_alloc_chain * sctk_alloc_posix_setup_tls_chain(void)
 {
 	//check errors
-	sctk_alloc_assert(sctk_current_alloc_chain == NULL);
+	assert(sctk_current_alloc_chain == NULL);
 
 	//create a new TLS chain
 	struct sctk_alloc_chain * chain = sctk_alloc_posix_create_new_tls_chain();

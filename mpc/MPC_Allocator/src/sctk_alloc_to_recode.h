@@ -35,12 +35,12 @@ static inline void sctk_buffered_alloc_delete (sctk_alloc_buffer_t * buf) {};
 static inline void sctk_buffered_free (void *ptr) {free(ptr);};
 static inline void * sctk_buffered_malloc (sctk_alloc_buffer_t * buf, size_t size) {return malloc(size);};
 static inline void * sctk_malloc_on_node(size_t size,int node_id) {return malloc(size);};
-static inline void * sctk_get_heap_start(void) {return (void*)SCTK_ALLOC_HEAP_BASE;};
-static inline size_t sctk_get_heap_size(void) {return SCTK_ALLOC_HEAP_SIZE;};
-static inline void * __sctk_malloc_new(size_t size,sctk_alloc_chain_t * chain) {return sctk_alloc_chain_alloc(chain,size);};
-static inline void * __sctk_malloc (size_t size,sctk_alloc_chain_t * chain) {return sctk_alloc_chain_alloc(chain,size);};
-static inline char * sctk_alloc_mode (void){return "MPC allocator";};
-static inline void __sctk_free(void * ptr,sctk_alloc_chain_t * chain) {sctk_alloc_chain_free(chain,ptr);};
+void * sctk_get_heap_start(void);
+size_t sctk_get_heap_size(void);
+void * __sctk_malloc_new(size_t size,sctk_alloc_chain_t * chain);
+void * __sctk_malloc (size_t size,sctk_alloc_chain_t * chain);
+char * sctk_alloc_mode (void);
+void __sctk_free(void * ptr,sctk_alloc_chain_t * chain);
 static inline void sctk_delete_thread_memory_area(sctk_alloc_chain_t * chain) {};
 static inline void __sctk_set_tls (sctk_alloc_chain_t * tls) {
   /*sctk_get_set_tls_init ();
