@@ -38,7 +38,7 @@ typedef volatile unsigned int sctk_alloc_spinlock_t;
 /************************* FUNCTION ************************/
 static inline int sctk_alloc_spinlock_init(sctk_alloc_spinlock_t * lock,int flag)
 {
-	*lock = 0;
+	return *lock = 0;
 }
 
 /************************* FUNCTION ************************/

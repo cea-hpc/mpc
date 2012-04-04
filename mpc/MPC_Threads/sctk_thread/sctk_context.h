@@ -164,7 +164,7 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
     sigset_t sigs;
     int error;
     void *thread_lib;
-    void *sctk_tls_key_local;
+    void *sctk_current_alloc_chain_local;
     void *sctk_tls_trace_local;
     void *mpc_user_tls_1;
     void *sctk_extls;

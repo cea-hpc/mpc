@@ -67,7 +67,7 @@ extern "C"
   void sctk_extls_delete ();
 
 #if defined (MPC_Allocator)
-  extern __thread void *sctk_tls_key;
+  extern __thread struct sctk_alloc_chain * sctk_current_alloc_chain;
 #endif
 #if defined (MPC_Profiler)
   /* MPC Profiler TLS */
@@ -114,7 +114,7 @@ extern "C"
   {
 #if defined(SCTK_USE_TLS)
 #if defined (MPC_Allocator)
-    ucp->sctk_tls_key_local = sctk_tls_key;
+    ucp->sctk_current_alloc_chain_local = sctk_current_alloc_chain;
 #endif
 #if defined (MPC_Profiler)
     /* MPC Profiler TLS */
@@ -141,7 +141,7 @@ extern "C"
   {
 #if defined(SCTK_USE_TLS)
 #if defined (MPC_Allocator)
-    sctk_tls_key = ucp->sctk_tls_key_local;
+    sctk_current_alloc_chain = ucp->sctk_current_alloc_chain_local;
 #endif
 #if defined (MPC_Profiler)
     /* MPC Profiler TLS */
@@ -169,7 +169,7 @@ extern "C"
   {
 #if defined(SCTK_USE_TLS)
 #if defined (MPC_Allocator)
-    ucp->sctk_tls_key_local = NULL;
+    ucp->sctk_current_alloc_chain_local = NULL;
 #endif
 #if defined (MPC_Profiler)
     /* MPC Profiler TLS */

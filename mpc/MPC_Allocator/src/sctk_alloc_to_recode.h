@@ -27,12 +27,14 @@
 
 typedef size_t sctk_alloc_buffer_t;
 
+sctk_alloc_chain_t * __sctk_create_thread_memory_area(void);
+void sctk_set_tls(sctk_alloc_chain_t * tls);
+
 static inline void sctk_buffered_alloc_create (sctk_alloc_buffer_t * buf, size_t elemsize){*buf = elemsize;};
 static inline void sctk_buffered_alloc_delete (sctk_alloc_buffer_t * buf) {};
 static inline void sctk_buffered_free (void *ptr) {free(ptr);};
 static inline void * sctk_buffered_malloc (sctk_alloc_buffer_t * buf, size_t size) {return malloc(size);};
 static inline void * sctk_malloc_on_node(size_t size,int node_id) {return malloc(size);};
-static inline sctk_alloc_chain_t * __sctk_create_thread_memory_area(void) {return sctk_alloc_setup_tls_chain();};
 static inline void * sctk_get_heap_start(void) {return (void*)SCTK_ALLOC_HEAP_BASE;};
 static inline size_t sctk_get_heap_size(void) {return SCTK_ALLOC_HEAP_SIZE;};
 static inline void * __sctk_malloc_new(size_t size,sctk_alloc_chain_t * chain) {return sctk_alloc_chain_alloc(chain,size);};
@@ -45,7 +47,6 @@ static inline void __sctk_set_tls (sctk_alloc_chain_t * tls) {
   SCTK_DEBUG (sctk_mem_error ("Set tls %p\n", tls));
   sctk_set_tls_from_thread (tls);*/
 }
-static inline sctk_set_tls(sctk_alloc_chain_t * tls) {__sctk_set_tls(tls);};
 static inline void sctk_enter_no_alloc_land(void) {};
 static inline void sctk_leave_no_alloc_land(void) {};
 static inline void __sctk_delete_thread_memory_area(sctk_alloc_chain_t * tls) {};
@@ -56,7 +57,7 @@ static inline void sctk_init_alloc(void) {sctk_alloc_posix_base_init();};
 /*******************************************/
 /*************** dump_*alloc ***************/
 /*******************************************/
-static inline int sctk_check_file (char *name) {};
+static inline int sctk_check_file (char *name) {return 0;};
 static inline void __sctk_dump_tls (sctk_alloc_chain_t * tls, char *file_name) {};
 static inline void sctk_dump_tls (char *file_name) {};
 static inline void __sctk_restore_tls (sctk_alloc_chain_t ** tls, char *file_name) {};
@@ -73,7 +74,7 @@ static inline void sctk_relocalise_memory (void *ptr, sctk_size_t size) {};
 static inline void sctk_update_used_pages (int fd, void **user_data,sctk_size_t * user_data_size, sctk_alloc_chain_t ** tls) {};
 static inline void sctk_add_global_var (void *adr, sctk_size_t size) {};
 static inline void sctk_restore_used_pages (int fd, void **user_data,sctk_size_t * user_data_size, sctk_alloc_chain_t ** tls) {};
-static inline int sctk_check_used_pages (int fd) {};
+static inline int sctk_check_used_pages (int fd) {return 0;};
 static inline void sctk_dump_used_pages (int fd, void *user_data,sctk_size_t user_data_size) {};
 static inline void sctk_dump_memory_heap () {};
 

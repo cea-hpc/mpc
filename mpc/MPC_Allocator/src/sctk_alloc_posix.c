@@ -157,17 +157,13 @@ SCTK_STATIC void sctk_alloc_posix_base_init(void)
 
 /************************* FUNCTION ************************/
 /**
- * Setup the allocation chain for the current thread. It init an allocation chain and point it with
- * the TLS sctk_current_alloc_chain.
+ * Create a new thread local allocation chain.
 **/
-SCTK_STATIC struct sctk_alloc_chain * sctk_alloc_setup_tls_chain(void)
+struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void)
 {
-	//check errors
-	sctk_alloc_assert(sctk_current_alloc_chain == NULL);
-	
 	//start allocator base initialisation if not already done.
 	sctk_alloc_posix_base_init();
-	
+
 	//allocate a new chain from egg allocator
 	struct sctk_alloc_chain * chain = sctk_alloc_chain_alloc(&sctk_global_egg_chain,sizeof(struct sctk_alloc_chain));
 	sctk_alloc_assert(chain != NULL);
@@ -179,9 +175,6 @@ SCTK_STATIC struct sctk_alloc_chain * sctk_alloc_setup_tls_chain(void)
 	//mark as non shared
 	chain->shared = false;
 
-	//setup allocation chain for current thread
-	sctk_current_alloc_chain = chain;
-
 	//debug
 	SCTK_PDEBUG("Init an allocation chain : %p",chain);
 
@@ -191,6 +184,40 @@ SCTK_STATIC struct sctk_alloc_chain * sctk_alloc_setup_tls_chain(void)
 	//TODO
 	//sctk_alloc_chain_list[0] = &chain;
 	//#endif
+	return chain;
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Update the current thread local allocation chain.
+ * @param chain Define the allocation chain to setup.
+**/
+void sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain)
+{
+	//errors
+	//assume(chain != NULL,"Can't set a default NULL allocation chain for local thread.");
+
+	//setup allocation chain for current thread
+	sctk_current_alloc_chain = chain;
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Setup the allocation chain for the current thread. It init an allocation chain and point it with
+ * the TLS sctk_current_alloc_chain.
+**/
+struct sctk_alloc_chain * sctk_alloc_posix_setup_tls_chain(void)
+{
+	//check errors
+	sctk_alloc_assert(sctk_current_alloc_chain == NULL);
+
+	//create a new TLS chain
+	struct sctk_alloc_chain * chain = sctk_alloc_posix_create_new_tls_chain();
+
+	//make it default for current thread
+	sctk_alloc_posix_set_default_chain(chain);
+
+	//return it
 	return chain;
 }
 
@@ -212,7 +239,7 @@ void * sctk_malloc (size_t size)
 
 	//setup the local chain if not already done
 	if (local_chain == NULL)
-		local_chain = sctk_alloc_setup_tls_chain();
+		local_chain = sctk_alloc_posix_setup_tls_chain();
 
 	//purge the remote free queue
 	sctk_alloc_chain_purge_rfq(local_chain);
@@ -241,7 +268,7 @@ void * sctk_memalign(size_t boundary,size_t size)
 
 	//setup the local chain if not already done
 	if (local_chain == NULL)
-		local_chain = sctk_alloc_setup_tls_chain();
+		local_chain = sctk_alloc_posix_setup_tls_chain();
 
 	//purge the remote free queue
 	sctk_alloc_chain_purge_rfq(local_chain);
@@ -271,7 +298,7 @@ void sctk_free (void * ptr)
 	//call to malloc()
 	#ifdef SCTK_ALLOC_SPY
 	if (local_chain == NULL)
-		local_chain = sctk_alloc_setup_tls_chain();
+		local_chain = sctk_alloc_posix_setup_tls_chain();
 	#endif
 
 	//SCTK_PDEBUG("Free(%p);//%p",ptr,sctk_current_alloc_chain);
@@ -335,7 +362,7 @@ void * sctk_realloc (void * ptr, size_t size)
 	#ifdef SCTK_ALLOC_SPY
 	struct sctk_alloc_chain * local_chain = sctk_current_alloc_chain;
 	if (local_chain == NULL)
-		local_chain = sctk_alloc_setup_tls_chain();
+		local_chain = sctk_alloc_posix_setup_tls_chain();
 	#endif
 	
 	if (size != 0)
@@ -356,7 +383,7 @@ void * sctk_realloc (void * ptr, size_t size)
 }
 
 /************************* FUNCTION ************************/
-struct sctk_alloc_chain_t * sctk_get_current_alloc_chain(void)
+struct sctk_alloc_chain * sctk_get_current_alloc_chain(void)
 {
 	return sctk_current_alloc_chain;
 }

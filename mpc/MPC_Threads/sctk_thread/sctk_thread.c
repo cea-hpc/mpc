@@ -149,12 +149,13 @@ sctk_mono_end ()
 static volatile long sctk_nb_user_threads = 0;
 extern volatile int sctk_online_program;
 
-sctk_alloc_chain_t *sctk_thread_tls = NULL;
+struct sctk_alloc_chain *sctk_thread_tls = NULL;
 
 void
 sctk_thread_init (void)
 {
-  sctk_thread_tls = __sctk_create_thread_memory_area ();
+  sctk_thread_tls = sctk_get_current_alloc_chain();
+  assert(sctk_thread_tls != NULL);
 #ifdef SCTK_CHECK_CODE_RETURN
   fprintf (stderr, "Thread librarie return code check enable!!\n");
 #endif
