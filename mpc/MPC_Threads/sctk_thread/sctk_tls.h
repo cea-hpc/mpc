@@ -62,6 +62,7 @@ extern "C"
 
   void sctk_extls_duplicate (void **new);
   void sctk_extls_keep (int *scopes);
+  void sctk_extls_keep_with_specified_extls (void **extls, int *scopes);
   void sctk_extls_keep_non_current_thread (void **tls, int *scopes);
   void sctk_extls_delete ();
 
@@ -136,7 +137,6 @@ extern "C"
   static inline void sctk_context_restore_tls (sctk_mctx_t * ucp)
   {
 #if defined(SCTK_USE_TLS)
-	int i ;
 #if defined (MPC_Allocator)
     sctk_tls_key = ucp->sctk_tls_key_local;
 #endif
