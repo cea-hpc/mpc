@@ -109,7 +109,7 @@ struct mpcomp_team_info_s {
 
   /* -- GUIDED FOR LOOP CONSTRUCT -- */
 
-  sctk_atomics_int stats_stolen_chunks; /* Temporary stats for stolen chunks */
+  sctk_atomics_int stats_stolen_chunks;
 } ;
 
 typedef struct mpcomp_team_info_s mpcomp_team_info ;
@@ -342,9 +342,7 @@ static inline void __mpcomp_team_info_init( mpcomp_team_info * team_info ) {
       &(team_info->for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN].i), 
       MPCOMP_NOWAIT_STOP_SYMBOL ) ;
 
-  //Temporary data
-  sctk_atomics_store_int(&(team_info->stats_stolen_chunks), 0);
-
+ sctk_atomics_store_int( &(team_info->stats_stolen_chunks), 0);
 }
 
 static inline void __mpcomp_thread_init( mpcomp_thread * t, icv_t icvs, mpcomp_instance * instance,
