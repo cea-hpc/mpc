@@ -727,20 +727,38 @@ extern "C"
     int matched;
     int not_matched;
 
+#if 0
     int poll_own;
     int poll_own_failed;
-    /* Number of msg stolen by another task */
-    int poll_stolen;
+    int poll_steals_failed;
 
     /* Number of msg stolen by the current task */
     int poll_steals;
 
     int poll_steal_same_node;
     int poll_steal_other_node;
+#endif
+    long poll_own;
+    long poll_own_failed;
+    long poll_own_success;
+    long poll_steals_failed;
+    long poll_steals_success;
+
+    /* Number of msg stolen by the current task */
+    long poll_steals;
+
+    long poll_steal_same_node;
+    long poll_steal_other_node;
+    long call_to_polling;
+    long poll_cq;
+
 
     double time_stolen;
     double time_steals;
     double time_own;
+    double time_poll_cq;
+    double time_ptp;
+    double time_coll;
 
     int alloc_mem;
     int free_mem;

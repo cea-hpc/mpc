@@ -35,9 +35,6 @@
 typedef struct sctk_ib_polling_s{
   int recv_found_own;
   int recv_found_other;
-
-  int send_found_own;
-  int send_found_other;
 } sctk_ib_polling_t;
 
 #define HOSTNAME 2048

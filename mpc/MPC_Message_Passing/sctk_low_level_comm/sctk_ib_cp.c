@@ -101,8 +101,23 @@ static sctk_ib_cp_task_t* all_tasks = NULL;
 __thread unsigned int seed;
 __thread int task_node_number = -1;
 static const int ibv_cp_profiler = 1;
+
+/* Counters */
+__thread double time_poll_cq = 0;
 __thread double time_steals = 0;
 __thread double time_own = 0;
+__thread double time_ptp = 0;
+__thread double time_coll = 0;
+__thread long poll_steals = 0;
+__thread long poll_steals_failed = 0;
+__thread long poll_steals_success = 0;
+__thread long poll_steal_same_node = 0;
+__thread long poll_steal_other_node = 0;
+__thread long poll_own = 0;
+__thread long poll_own_failed = 0;
+__thread long poll_own_success = 0;
+__thread long call_to_polling = 0;
+__thread long poll_cq = 0;
 
 #define CHECK_AND_QUIT(rail_ib) do {  \
   LOAD_CONFIG(rail_ib);                             \
@@ -232,7 +247,7 @@ void sctk_ib_cp_finalize_task(int rank) {
 
 }
 
-static inline int __cp_poll(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll, sctk_ibuf_t * volatile * const list, sctk_spinlock_t *lock, sctk_ib_cp_task_t *task){
+static inline int __cp_poll(const struct sctk_rail_info_s const* rail, struct sctk_ib_polling_s *poll, sctk_ibuf_t * volatile * const list, sctk_spinlock_t *lock, sctk_ib_cp_task_t *task){
   sctk_ibuf_t *ibuf = NULL;
   int nb_found = 0;
   char update_timers=0;
@@ -274,15 +289,23 @@ retry:
   }
 
   if (update_timers) {
+    poll_own_success ++;
     time_own += _time_own;
+    poll_own += _poll_own;
+#if 0
     CP_PROF_ADD(task, poll_own, _poll_own);
+#endif
+    poll->recv_found_own = _poll_own;
   } else {
-    CP_PROF_ADD(task, poll_own_failed, 1);
+    poll_own_failed ++;
+#if 0
+    CP_PROF_INC(task, poll_own_failed);
+#endif
   }
   return nb_found;
 }
 
-int sctk_ib_cp_poll_all(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll){
+int sctk_ib_cp_poll_all(const struct sctk_rail_info_s const* rail, struct sctk_ib_polling_s *poll){
   int vp = sctk_thread_get_vp();
   sctk_ib_cp_task_t *task = NULL;
   sctk_ib_cp_task_t *tmp_task = NULL;
@@ -301,7 +324,7 @@ int sctk_ib_cp_poll_all(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *
   return nb_found;
 }
 
-int sctk_ib_cp_poll_global_list(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll){
+int sctk_ib_cp_poll_global_list(const struct sctk_rail_info_s const * rail, struct sctk_ib_polling_s *poll){
   sctk_ib_cp_task_t *task = NULL;
   int nb_found = 0;
   int vp = sctk_thread_get_vp();
@@ -320,7 +343,7 @@ int sctk_ib_cp_poll_global_list(struct sctk_rail_info_s* rail,struct sctk_ib_pol
 }
 
 
-int sctk_ib_cp_poll(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll){
+int sctk_ib_cp_poll(const struct sctk_rail_info_s const* rail, struct sctk_ib_polling_s *poll){
   int vp = sctk_thread_get_vp();
   sctk_ib_cp_task_t *task = NULL;
   int nb_found = 0;
@@ -394,10 +417,22 @@ retry:
 
 exit:
   if(update_timers) {
+    poll_steals_success ++;
     time_steals += _time_steals;
+    poll->recv_found_other = _poll_steals;
+    poll_steals += _poll_steals;
+    poll_steal_same_node += _poll_steal_same_node;
+    poll_steal_other_node += _poll_steal_other_node;
+#if 0
     CP_PROF_ADD(stealing_task,poll_steals, _poll_steals);
     CP_PROF_ADD(stealing_task,poll_steal_same_node,_poll_steal_same_node);
     CP_PROF_ADD(stealing_task,poll_steal_other_node,_poll_steal_other_node);
+#endif
+  } else {
+    poll_steals_failed ++;
+#if 0
+    CP_PROF_INC(stealing_task, poll_steals_failed);
+#endif
   }
 
   return nb_found;
@@ -453,7 +488,6 @@ int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll) {
 
   /* XXX: Not working with oversubscribing */
   stealing_task = vps[vp].tasks;
-  if (stealing_task) CP_PROF_INC(stealing_task,poll_steal_try);
 
   /* First, try to steal from the same NUMA node*/
   STEAL_CURRENT_NODE(&task->local_ibufs_list);

@@ -319,25 +319,43 @@ int sctk_network_poll_all (sctk_rail_info_t* rail) {
   int steal = config->ibv_steal;
   sctk_ib_polling_t poll;
   POLL_INIT(&poll);
+  double t1, t2, t3;
 
   /* Only one task is allowed to poll new messages from QP */
   int ret = OPA_fetch_and_incr_int(&polling_lock);
   if ( recursive_polling || ret < MAX_TASKS_ALLOWED)
   {
+    double e, s;
+
+    if (recursive_polling == 0)
+      s = sctk_get_time_stamp();
+
     recursive_polling++;
+    poll_cq++;
     /* Poll received messages */
     sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, &poll, sctk_network_poll_recv);
     /* Poll sent messages */
     sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, &poll, sctk_network_poll_send);
     recursive_polling--;
+
+    if (recursive_polling == 0) {
+      e = sctk_get_time_stamp();
+      time_poll_cq += (e - s);
+    }
   }
   OPA_decr_int(&polling_lock);
 
+  t1 = sctk_get_time_stamp();
   POLL_INIT(&poll);
   sctk_ib_cp_poll_global_list(rail, &poll);
+  t2 = sctk_get_time_stamp();
   /* Try to poll incomming messages */
   POLL_INIT(&poll);
   sctk_ib_cp_poll(rail, &poll);
+  t3 = sctk_get_time_stamp();
+
+  time_coll += (t2 - t1);
+  time_ptp += (t3 - t2);
 
   return poll.recv_found_own;
 }
@@ -349,9 +367,13 @@ int sctk_network_poll_all_and_steal(sctk_rail_info_t *rail) {
   sctk_ib_polling_t poll;
   POLL_INIT(&poll);
   int nb_found = 0;
+  int ret;
+
+  call_to_polling++;
 
   /* POLLING */
-  if (sctk_network_poll_all(rail)==0 && steal > 1){
+  ret = sctk_network_poll_all(rail);
+  if (ret == 0 && steal > 1){
     /* If no message has been found -> steal*/
     nb_found += sctk_ib_cp_steal(rail, &poll);
   }

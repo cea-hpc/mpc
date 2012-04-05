@@ -35,21 +35,19 @@ enum cp_counters_e{
   matched = 0,
   not_matched,
 
-  poll_own,
-  /* Number of msg stolen by another task */
-  poll_stolen,
-
+//  poll_own,
   /* Number of msg stolen by the current task */
-  poll_steals,
+//  poll_steals,
   /* Numer of msg stolen on the same node */
-  poll_steal_same_node,
+//  poll_steal_same_node,
   /* Number of msg stolen on other nodes */
-  poll_steal_other_node,
+//  poll_steal_other_node,
   /* Number of steals tried */
-  poll_steal_try,
+//  poll_steal_try,
   /* Poll own failed */
-  poll_own_lock_failed,
-  poll_own_failed
+//  poll_own_lock_failed,
+//  poll_own_failed,
+//  poll_steals_failed,
 };
 
 extern __thread int task_node_number;
@@ -97,6 +95,21 @@ typedef struct sctk_ib_cp_task_s{
 
 extern __thread double time_steals;
 extern __thread double time_own;
+extern __thread double time_poll_cq;
+extern __thread double time_ptp;
+extern __thread double time_coll;
+extern __thread long poll_steals;
+extern __thread long poll_steals_failed;
+extern __thread long poll_steals_success;
+extern __thread long poll_steal_same_node;
+extern __thread long poll_steal_other_node;
+extern __thread long poll_own;
+extern __thread long poll_own_failed;
+extern __thread long poll_own_success;
+extern __thread long call_to_polling;
+extern __thread long poll_cq;
+
+
 /*-----------------------------------------------------------
  *  Structures
  *----------------------------------------------------------*/
@@ -110,9 +123,9 @@ void sctk_ib_cp_finalize_task(int rank);
 
 int sctk_ib_cp_handle_message(struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf, int dest_task, int target_task, enum sctk_ib_cp_poll_cq_e cq);
 
-int sctk_ib_cp_poll(struct sctk_rail_info_s* rail, struct sctk_ib_polling_s *poll);
+int sctk_ib_cp_poll(const struct sctk_rail_info_s const* rail, struct sctk_ib_polling_s *poll);
 
-int sctk_ib_cp_poll_all(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll);
+int sctk_ib_cp_poll_all(const struct sctk_rail_info_s const* rail, struct sctk_ib_polling_s *poll);
 
 int sctk_ib_cp_steal(struct sctk_rail_info_s* rail, struct sctk_ib_polling_s *poll);
 
