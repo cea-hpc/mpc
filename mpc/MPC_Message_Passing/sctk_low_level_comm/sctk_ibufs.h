@@ -60,6 +60,12 @@ sctk_ibuf_header_t;
 #define IBUF_SET_SRC_TASK(ibuf,x) (ibuf->src_task = x)
 #define IBUF_GET_SRC_TASK(ibuf) (ibuf->src_task)
 
+#define IMM_DATA_NULL ~0
+#define IMM_DATA_RENDEZVOUS_WRITE (0x1 << 31)
+#define IMM_DATA_RENDEZVOUS_READ  (0x1 << 30)
+/* Maximum number of values for each types */
+#define IMM_DATA_SIZE             (0x1 << 29)
+
 /* Description of an ibuf */
 typedef struct sctk_ibuf_desc_s
 {
@@ -93,8 +99,8 @@ typedef struct sctk_ibuf_numa_s
   /* Number of buffers created and free in total,
    * and free for srq */
   unsigned int nb;
-  unsigned int free_nb;
-  unsigned int free_srq_nb;
+  OPA_int_t free_nb;
+  OPA_int_t free_srq_nb;
 } sctk_ibuf_numa_t
 /* FIXME: only with GCC and ICC. Padd to the size of a cache
  * for avoind false sharing */
@@ -137,8 +143,9 @@ enum sctk_ibuf_status
   RDMA_WRITE_IBUF_FLAG  = 444,
   NORMAL_IBUF_FLAG      = 555,
   SEND_IBUF_FLAG        = 666,
-  RECV_IBUF_FLAG        = 777,
-  BARRIER_IBUF_FLAG     = 888
+  SEND_INLINE_IBUF_FLAG = 777,
+  RECV_IBUF_FLAG        = 888,
+  BARRIER_IBUF_FLAG     = 999
 };
 
 __UNUSED__ static char* sctk_ibuf_print_flag (enum sctk_ibuf_status flag)
@@ -149,6 +156,7 @@ __UNUSED__ static char* sctk_ibuf_print_flag (enum sctk_ibuf_status flag)
     case NORMAL_IBUF_FLAG:      return "NORMAL_IBUF_FLAG";break;
     case RECV_IBUF_FLAG:        return "RECV_IBUF_FLAG";break;
     case SEND_IBUF_FLAG:        return "SEND_IBUF_FLAG";break;
+    case SEND_INLINE_IBUF_FLAG: return "SEND_INLINE_IBUF_FLAG";break;
     case BARRIER_IBUF_FLAG:     return "BARRIER_IBUF_FLAG";break;
     case BUSY_FLAG:             return "BUSY_FLAG";break;
     case FREE_FLAG:             return "FREE_FLAG";break;
@@ -214,6 +222,10 @@ void sctk_ibuf_barrier_send_init(sctk_ibuf_t* ibuf, void* local_address,
     int len);
 
 void sctk_ibuf_send_init(
+    sctk_ibuf_t* ibuf, size_t size);
+
+int sctk_ibuf_send_inline_init(
+    sctk_ib_rail_info_t *rail_ib,
     sctk_ibuf_t* ibuf, size_t size);
 
 void sctk_ibuf_rdma_write_init(
