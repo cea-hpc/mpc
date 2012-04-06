@@ -53,10 +53,7 @@ void sctk_add_static_reorder_buffer(int dest){
     OPA_store_int(&(tmp->message_number_dest),0);
     tmp->lock = SCTK_SPINLOCK_INITIALIZER;
     tmp->buffer = NULL;
-#ifdef MPC_USE_INFINIBAND
-    tmp->ib_buffered.entries = NULL;
-    tmp->ib_buffered.lock = SCTK_SPINLOCK_INITIALIZER;
-#endif
+
     HASH_ADD(hh,sctk_static_reorder_table,key,sizeof(sctk_reorder_key_t),tmp);
   }
 }
@@ -78,10 +75,6 @@ void sctk_add_dynamic_reorder_buffer(int dest){
     OPA_store_int(&(tmp->message_number_dest),0);
     tmp->lock = SCTK_SPINLOCK_INITIALIZER;
     tmp->buffer = NULL;
-#ifdef MPC_USE_INFINIBAND
-    tmp->ib_buffered.entries = NULL;
-    tmp->ib_buffered.lock = SCTK_SPINLOCK_INITIALIZER;
-#endif
 
     HASH_ADD(hh,sctk_dynamic_reorder_table,key,sizeof(sctk_reorder_key_t),tmp);
   }

@@ -26,6 +26,7 @@
 #define __SCTK__IB_QP_H_
 
 #include "sctk_ib_config.h"
+#include "sctk_ib_buffered.h"
 #include "sctk_spinlock.h"
 #include "sctk_ibufs.h"
 #include "sctk_route.h"
@@ -115,6 +116,9 @@ typedef struct sctk_ib_qp_s
   int local_ack;
   int remote_ack;
   int deco_lock;
+
+  /* List of pending buffered messages */
+  struct sctk_ib_buffered_table_s ib_buffered;
 
   /* Is remote dynamically created ? */
   int ondemand;

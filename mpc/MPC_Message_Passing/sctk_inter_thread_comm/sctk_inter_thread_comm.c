@@ -740,6 +740,23 @@ void* sctk_alloc_header(){
   return tmp;
 }
 
+int sctk_determine_src_process_from_header (sctk_thread_ptp_message_t * msg){
+  int src_process;
+  int task_number;
+
+  if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->sctk_msg_get_specific_message_tag)){
+    src_process = msg->sctk_msg_get_source;
+  } else {
+    if(msg->sctk_msg_get_source != MPC_ANY_SOURCE) {
+      task_number = sctk_get_comm_world_rank (msg->sctk_msg_get_communicator,msg->sctk_msg_get_source);
+    src_process = sctk_get_process_rank_from_task_rank(task_number);
+  } else {
+      src_process = -1;
+    }
+  }
+  return src_process;
+}
+
 void sctk_rebuild_header (sctk_thread_ptp_message_t * msg){
   if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->sctk_msg_get_specific_message_tag)){
     if(msg->sctk_msg_get_source != MPC_ANY_SOURCE)

@@ -40,6 +40,7 @@ sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
   sctk_ibuf_t *ibuf;
   sctk_ib_eager_t *eager_header;
   void* body;
+  int is_inlined;
 
   body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
   ibuf = sctk_ibuf_pick(rail_ib, 1, task_node_number);
@@ -52,7 +53,7 @@ sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
   sctk_net_copy_in_buffer(msg, IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer));
 
   /* Initialization of the buffer */
-  sctk_ibuf_send_init(ibuf, IBUF_GET_EAGER_SIZE + size);
+  is_inlined = sctk_ibuf_send_inline_init(rail_ib, ibuf, IBUF_GET_EAGER_SIZE + size);
   sctk_ibuf_set_protocol(ibuf, eager_protocol);
 
   eager_header = IBUF_GET_EAGER_HEADER(ibuf->buffer);

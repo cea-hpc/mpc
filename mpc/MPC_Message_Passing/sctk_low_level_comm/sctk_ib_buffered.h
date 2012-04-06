@@ -32,6 +32,10 @@
 /*-----------------------------------------------------------
  *  Structures
  *----------------------------------------------------------*/
+typedef struct sctk_ib_buffered_table_s {
+  struct sctk_ib_buffered_entry_s* entries;
+  sctk_spinlock_t lock;
+} sctk_ib_buffered_table_t;
 
 typedef struct sctk_ib_buffered_s {
   struct sctk_thread_ptp_message_s msg;

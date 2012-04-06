@@ -117,10 +117,8 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
 void sctk_ib_buffered_free_msg(void* arg) {
   sctk_thread_ptp_message_t *msg = (sctk_thread_ptp_message_t*) arg;
   sctk_ib_buffered_entry_t *entry = NULL;
-  sctk_reorder_table_t* reorder_table;
   sctk_rail_info_t* rail;
 
-  reorder_table = msg->tail.ib.buffered.reorder_table;
   entry = msg->tail.ib.buffered.entry;
   rail = entry->msg.tail.ib.buffered.rail;
   assume(entry);
@@ -190,24 +188,25 @@ void sctk_ib_buffered_copy(sctk_message_to_copy_t* tmp){
 sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   sctk_thread_ptp_message_t *msg;
   sctk_ib_buffered_t *buffered;
-  sctk_reorder_table_t* reorder_table;
+  sctk_route_table_t* route_table;
   sctk_ib_buffered_entry_t *entry = NULL;
-	int key;
+  sctk_ib_qp_t *remote;
+  int key;
   int current;
+  int src_process;
 
   buffered = IBUF_GET_BUFFERED_HEADER(ibuf->buffer);
   msg = &buffered->msg;
-  if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag)) {
-    reorder_table = sctk_get_reorder_to_process(msg->sctk_msg_get_source);
-  } else {
-    reorder_table = sctk_get_reorder_to_process(msg->sctk_msg_get_source);
-//    reorder_table = sctk_get_reorder(msg->sctk_msg_get_glob_source);
-  }
-  assume(reorder_table);
+
+  src_process = sctk_determine_src_process_from_header(msg);
+  assume(src_process != -1);
+  route_table = sctk_get_route_to_process(src_process, rail);
+  assume(route_table);
+  remote = route_table->data.ib.remote;
   key = msg->sctk_msg_get_message_number;
 
-  sctk_spinlock_lock(&reorder_table->ib_buffered.lock);
-  HASH_FIND(hh,reorder_table->ib_buffered.entries,&key,sizeof(int),entry);
+  sctk_spinlock_lock(&remote->ib_buffered.lock);
+  HASH_FIND(hh,remote->ib_buffered.entries,&key,sizeof(int),entry);
   if (!entry) {
     /* Allocate memory for message header */
     entry = sctk_malloc(sizeof(sctk_ib_buffered_entry_t));
@@ -218,7 +217,6 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     entry->msg.tail.ib.protocol = buffered_protocol;
     entry->msg.tail.ib.buffered.entry = entry;
     entry->msg.tail.ib.buffered.rail = rail;
-    entry->msg.tail.ib.buffered.reorder_table = reorder_table;
     /* Prepare matching */
     entry->msg.body.completion_flag = NULL;
     entry->msg.tail.message_type = sctk_message_network;
@@ -234,7 +232,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     entry->lock = SCTK_SPINLOCK_INITIALIZER;
     entry->payload = NULL;
     entry->copy_ptr = NULL;
-    HASH_ADD(hh,reorder_table->ib_buffered.entries,key,sizeof(int),entry);
+    HASH_ADD(hh,remote->ib_buffered.entries,key,sizeof(int),entry);
     /* Send message to high level MPC */
 
     sctk_nodebug("Read msg with number %d", msg->sctk_msg_get_message_number);
@@ -250,7 +248,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     } else if ( (entry->status & MASK_BASE) != zerocopy) not_reachable();
     sctk_spinlock_unlock(&entry->lock);
   }
-  sctk_spinlock_unlock(&reorder_table->ib_buffered.lock);
+  sctk_spinlock_unlock(&remote->ib_buffered.lock);
 
   sctk_nodebug("Copy frag %d on %d (size:%lu copied:%lu)", buffered->index, buffered->nb, buffered->payload_size, buffered->copied);
   /* Copy the message payload */
@@ -264,9 +262,9 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   if (current == entry->total-1) {
     /* remove entry from HT.
      * XXX: We have to do this before marking message as done */
-    sctk_spinlock_lock(&reorder_table->ib_buffered.lock);
-    HASH_DEL(reorder_table->ib_buffered.entries, entry);
-    sctk_spinlock_unlock(&reorder_table->ib_buffered.lock);
+    sctk_spinlock_lock(&remote->ib_buffered.lock);
+    HASH_DEL(remote->ib_buffered.entries, entry);
+    sctk_spinlock_unlock(&remote->ib_buffered.lock);
 
     sctk_spinlock_lock(&entry->lock);
     switch(entry->status & MASK_BASE) {

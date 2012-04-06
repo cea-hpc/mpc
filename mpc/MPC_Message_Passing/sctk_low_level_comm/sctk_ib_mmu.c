@@ -41,7 +41,10 @@
 
 /**
  *  Description:
- *
+ *  TODO:
+ *  * use the clock algorithm to select the LRU entry
+ *  * add hooks in the allocator to notice the MMU that
+ *    a memory has been freed
  *
  */
 
@@ -61,21 +64,25 @@ void sctk_ib_mmu_cache_init(sctk_ib_rail_info_t *rail_ib){
   mmu->cache.entries_nb = 0;
 }
 
-/* Remove the Last Recently Used entry */
-sctk_ib_mmu_entry_t*
+/* Remove the Last Recently Used entry from the
+ * pinned cached entries.
+ * When call this function, the lock has already been
+ * taken */
+static inline sctk_ib_mmu_entry_t*
  sctk_ib_mmu_cache_remove(sctk_ib_rail_info_t *rail_ib) {
    LOAD_MMU(rail_ib);
   sctk_ib_mmu_entry_t* mmu_entry;
 
-  /* Lock already taken. */
 #ifdef DEBUG_IB_MMU
   assume(mmu->cache.ht_entries);
   assume(mmu->cache.ht_entries->prev);
 #endif
+
   /* select the LRU entry */
   mmu_entry = mmu->cache.lru_entries->prev;
-  /* If last entry still used, we cannot add another entry */
   sctk_nodebug(">>>>>> remove nb reg: %d (%p)",mmu_entry->registrations_nb, mmu_entry);
+
+  /* If last entry still used, we cannot add another entry */
   if (mmu_entry->registrations_nb > 0) return NULL;
 
   /* Remove the entry from HashTable and LRU */
@@ -90,8 +97,8 @@ sctk_ib_mmu_entry_t*
   return mmu_entry;
 }
 
-
-int
+/* Add a cache entry */
+static inline int
  sctk_ib_mmu_cache_add(sctk_ib_rail_info_t *rail_ib,
     sctk_ib_mmu_entry_t* mmu_entry) {
   LOAD_MMU(rail_ib);
@@ -126,6 +133,8 @@ int
   return 1;
 }
 
+/* Search for a cached entry according to the ptr and
+ * the size of the buffer */
 sctk_ib_mmu_entry_t*
  sctk_ib_mmu_cache_search(sctk_ib_rail_info_t *rail_ib,
     void *ptr, size_t size) {
@@ -146,17 +155,12 @@ sctk_ib_mmu_entry_t*
     assume(mmu_entry->key.ptr == key.ptr);
     assume(mmu_entry->key.size == key.size);
 #endif
+    /* If the entry is not the head of the list */
     if (mmu->cache.lru_entries != mmu_entry) {
       DL_DELETE(mmu->cache.lru_entries, mmu_entry);
       DL_PREPEND(mmu->cache.lru_entries, mmu_entry);
     }
     mmu_entry->registrations_nb++;
-#warning "Memory registration not needed there !!"
-    mmu_entry->mr = ibv_reg_mr (device->pd,
-      ptr, size,
-      IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE |
-      IBV_ACCESS_REMOTE_READ);
-
   }
   sctk_spinlock_unlock(&mmu->cache.lock);
   return mmu_entry;
@@ -245,6 +249,7 @@ __mmu_register ( sctk_ib_rail_info_t *rail_ib,
   sctk_ib_mmu_entry_t* mmu_entry;
 
 #ifdef DEBUG_IB_MMU
+  /* It is no more needed that we register a buffer aligned on 1 system page */
 //  if ((uintptr_t) ptr % mmu->page_size) {
 //    sctk_error("MMU ptr is not aligned on page_size");
 //    sctk_abort();

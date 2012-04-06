@@ -330,7 +330,7 @@ sctk_ib_qp_init_attr(struct sctk_ib_rail_info_s* rail_ib)
   /* if this value is set to 1, all work requests (WR) will
    * generate completion queue events (CQE). If this value is set to 0,
    * only WRs that are flagged will generate CQE's*/
-  attr.sq_sig_all = 1;
+  attr.sq_sig_all = 0;
   return attr;
 }
 
@@ -530,6 +530,9 @@ sctk_ib_qp_allocate_init(struct sctk_ib_rail_info_s* rail_ib,
   remote->rank = rank;
   remote->free_nb = config->ibv_qp_tx_depth;
   remote->post_lock = SCTK_SPINLOCK_INITIALIZER;
+  /* For buffered eager */
+  remote->ib_buffered.entries = NULL;
+  remote->ib_buffered.lock = SCTK_SPINLOCK_INITIALIZER;
 
   /* Add it to the Cicrular Linked List if the QP is created from
    * an ondemand request */
@@ -729,6 +732,11 @@ sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
     __send_ibuf_nolock(rail_ib, remote, ibuf);
   } else {
     __send_ibuf(rail_ib, remote, ibuf);
+  }
+
+  /* We release the buffer if it has been inlined */
+  if (ibuf->flag == SEND_INLINE_IBUF_FLAG) {
+    sctk_ibuf_release(rail_ib, ibuf);
   }
 }
 /*-----------------------------------------------------------

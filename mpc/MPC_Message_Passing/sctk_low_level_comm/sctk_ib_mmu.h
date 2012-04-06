@@ -31,7 +31,7 @@
 #include <sctk_config.h>
 #include <stdint.h>
 
-#define DEBUG_IB_MMU
+//#define DEBUG_IB_MMU
 
 struct sctk_ib_rail_info_s;
 

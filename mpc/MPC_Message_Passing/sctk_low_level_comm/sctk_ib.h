@@ -27,6 +27,7 @@ extern "C"
 {
 #endif
 #include "sctk_spinlock.h"
+#include "uthash.h"
 #include <stdint.h>
 #include <mpcmp.h>
 
@@ -84,6 +85,45 @@ extern "C"
 #define MASK_MATCH  0x04
 #define MASK_DONE   0x08
 
+  /* Headers */
+  typedef struct sctk_ib_header_rdma_s {
+    /* HT */
+    UT_hash_handle hh;
+    int ht_msg_number;
+
+    size_t requested_size;
+    sctk_spinlock_t lock;
+    struct sctk_rail_info_s *rail;
+    struct sctk_route_table_s* route_table;
+    struct sctk_message_to_copy_s *copy_ptr;
+    /* For collaborative polling: src and dest of msg */
+    int glob_source;
+    int glob_destination;
+    /* Local structure */
+    struct {
+      struct sctk_thread_ptp_message_s *msg_header;
+      sctk_ib_rdma_status_t status;
+      struct sctk_ib_mmu_entry_s *mmu_entry;
+      void  *addr;
+      size_t size;
+      void  *aligned_addr;
+      size_t aligned_size;
+      /* Local structure ready to be read */
+      volatile int ready;
+    } local;
+    /* Remote structure */
+    struct {
+      /* msg_header of the remote peer */
+      struct sctk_thread_ptp_message_s *msg_header;
+      void  *addr;
+      size_t size;
+      uint32_t rkey;
+      void  *aligned_addr;
+      size_t aligned_size;
+    } remote;
+  } sctk_ib_header_rdma_t;
+
+
   /* Structure included in msg header */
   typedef struct sctk_ib_msg_header_s{
     sctk_ib_protocol_t protocol;
@@ -98,42 +138,11 @@ extern "C"
         struct sctk_ibuf_s *ibuf;
       } eager;
       struct {
-        struct sctk_reorder_table_s* reorder_table;
         struct sctk_ib_buffered_entry_s* entry;
         struct sctk_rail_info_s* rail;
         int ready;
       } buffered;
-      struct {
-        size_t requested_size;
-        sctk_spinlock_t lock;
-        struct sctk_rail_info_s *rail;
-        struct sctk_route_table_s* route_table;
-        struct sctk_message_to_copy_s *copy_ptr;
-        /* For collaborative polling: src and dest of msg */
-        int glob_source;
-        int glob_destination;
-        /* Local structure */
-        struct {
-          sctk_ib_rdma_status_t status;
-          struct sctk_ib_mmu_entry_s *mmu_entry;
-          void  *addr;
-          size_t size;
-          void  *aligned_addr;
-          size_t aligned_size;
-          /* Local structure ready to be read */
-          volatile int ready;
-        } local;
-        /* Remote structure */
-        struct {
-          /* msg_header of the remote peer */
-          struct sctk_thread_ptp_message_s *msg_header;
-          void  *addr;
-          size_t size;
-          uint32_t rkey;
-          void  *aligned_addr;
-          size_t aligned_size;
-        } remote;
-      } rdma;
+      struct sctk_ib_header_rdma_s rdma;
     };
   } sctk_ib_msg_header_t;
 

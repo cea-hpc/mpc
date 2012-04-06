@@ -47,7 +47,7 @@
  * if x > IBV_FRAG_EAGER_LIMIT -> rendezvous msg */
 //#define IBV_EAGER_LIMIT ( 12 * 1024 )
 #define IBV_EAGER_LIMIT       ( 12 * 1024)
-#define IBV_FRAG_EAGER_LIMIT  (10 * 1024 * 1024) //(256 * 1024)
+#define IBV_FRAG_EAGER_LIMIT  (256 * 1024)
 //#define IBV_FRAG_EAGER_LIMIT  (10 * 1024 * 1024)
 /* Number of allowed pending Work Queue Elements
  * for each QP */
@@ -111,8 +111,8 @@
 /* Number of new MMU allocated when
  * no more MMU entries are available */
 #define IBV_SIZE_MR_CHUNKS  200
-#define IBV_MMU_CACHE_ENABLED 0
-#define IBV_MMU_CACHE_ENTRIES 1000
+#define IBV_MMU_CACHE_ENABLED 1
+#define IBV_MMU_CACHE_ENTRIES 100
 
 #define IBV_ADM_PORT        1
 

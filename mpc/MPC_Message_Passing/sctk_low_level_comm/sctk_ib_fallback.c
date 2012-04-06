@@ -54,7 +54,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   sctk_ib_qp_t *remote;
   sctk_ibuf_t *ibuf;
   size_t size;
-  int low_memory_mode;
+  int low_memory_mode = 0;
   char is_control_message = 0;
   specific_message_tag_t tag = msg->body.header.specific_message_tag;
 
@@ -173,6 +173,7 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
 
   sctk_nodebug("[%d] Recv ibuf:%p", rail->rail_number,ibuf);
   /* Switch on the protocol of the received message */
+
   switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
     case eager_protocol:
       msg_ibuf = IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer);
@@ -190,7 +191,8 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
         } else if (IS_PROCESS_SPECIFIC_LOW_MEM(tag)) {
           sctk_nodebug("Received low mem message");
           msg = sctk_ib_sr_recv(rail, ibuf, recopy);
-          sctk_ib_low_mem_recv(rail, msg, ibuf, recopy);
+#warning "Uncomment after commit"
+//          sctk_ib_low_mem_recv(rail, msg, ibuf, recopy);
 
           goto release;
         }
@@ -234,8 +236,7 @@ release:
       msg->sctk_msg_get_glob_source,
       msg->sctk_msg_get_glob_destination);
 
-  if (release_ibuf)
-  {
+  if (release_ibuf) {
     /* sctk_ib_qp_release_entry(&rail->network.ib, ibuf->remote); */
     sctk_ibuf_release(&rail->network.ib, ibuf);
   } else {
@@ -251,6 +252,10 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc,
   assume(ibuf);
   int dest_task = -1;
   int ret;
+
+  if (wc->imm_data == IMM_DATA_RENDEZVOUS_WRITE) {
+    sctk_debug("Imm data: %u %u", wc->imm_data, IMM_DATA_NULL);
+  }
 
   dest_task = IBUF_GET_DEST_TASK(ibuf);
   ibuf->cq = recv_cq;

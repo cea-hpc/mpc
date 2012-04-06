@@ -77,7 +77,7 @@ __UNUSED__ static void sctk_ib_debug(const char *fmt, ...)
   {
   }
 #endif
-
+#define LOAD_RAIL(x) sctk_ib_rail_info_t *rail_ib = &(x)->network.ib;
 #define LOAD_CONFIG(x) sctk_ib_config_t *config = (x)->config;
 #define LOAD_MMU(x)    sctk_ib_mmu_t* mmu = (x)->mmu;
 #define LOAD_DEVICE(x)    sctk_ib_device_t* device = (x)->device;

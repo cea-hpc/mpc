@@ -74,6 +74,7 @@ typedef struct sctk_ib_rdma_req_s {
   sctk_message_type_t message_type;
   int source;
   int glob_source;
+  int msg_number;
 } __attribute__ ((packed))
 sctk_ib_rdma_req_t;
 
