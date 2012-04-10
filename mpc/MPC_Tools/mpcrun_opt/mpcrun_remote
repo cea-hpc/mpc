@@ -1,0 +1,74 @@
+#!/bin/sh
+############################# MPC License ############################## 
+# Wed Nov 19 15:19:19 CET 2008                                         # 
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # 
+#                                                                      # 
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            # 
+# This file is part of the MPC Runtime.                                # 
+#                                                                      # 
+# This software is governed by the CeCILL-C license under French law   # 
+# and abiding by the rules of distribution of free software.  You can  # 
+# use, modify and/ or redistribute the software under the terms of     # 
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # 
+# following URL http://www.cecill.info.                                # 
+#                                                                      # 
+# The fact that you are presently reading this means that you have     # 
+# had knowledge of the CeCILL-C license and that you accept its        # 
+# terms.                                                               # 
+#                                                                      # 
+# Authors:                                                             # 
+#   - PERACHE Marc marc.perache@cea.fr                                 # 
+#                                                                      # 
+######################################################################## 
+if test "$MPCRUN_REMOTE_HOST" = "" ; then 
+	echo remote host ?
+	read MPCRUN_REMOTE_HOST
+fi 
+if test "$MPCRUN_REMOTE_DIR" = "" ; then 
+	echo Dir on remote host ?
+	read MPCRUN_REMOTE_DIR
+fi 
+echo "echo Launch on host '$MPCRUN_REMOTE_HOST' in $MPCRUN_REMOTE_DIR"
+
+REMOTE_LAUNCHER_FILE=
+
+ssh $MPCRUN_REMOTE_HOST rm -rf ${MPCRUN_REMOTE_DIR}/MPC_USER_PACKAGE
+ssh $MPCRUN_REMOTE_HOST mkdir -p ${MPCRUN_REMOTE_DIR}
+
+rm -rf MPC_USER_PACKAGE
+mkdir MPC_USER_PACKAGE
+
+mkdir -p MPC_USER_PACKAGE/bin
+mkdir -p MPC_USER_PACKAGE/lib
+
+cp -r ${MPC_BIN_DIR}/mpcrun_opt MPC_USER_PACKAGE/bin
+cp -r ${MPC_BIN_DIR}/mpcrun MPC_USER_PACKAGE/bin
+cp $BINARY MPC_USER_PACKAGE
+
+copy_remote_iter(){
+	echo "Copy $3"
+	cp $3 MPC_USER_PACKAGE/lib
+
+}
+copy_remote(){
+	read line 
+	while test "$line" != "" ; do 
+		copy_remote_iter $line 
+		read line 
+	done
+}
+
+ldd $BINARY
+
+ldd $BINARY | grep "$prefix" | copy_remote
+#ldd $BINARY  | copy_remote
+
+echo "Broadcast binary and libs"
+scp -r MPC_USER_PACKAGE ${MPCRUN_REMOTE_HOST}:${MPCRUN_REMOTE_DIR}
+
+LAUNCH_COMMAND="ssh $MPCRUN_REMOTE_HOST ${MPCRUN_REMOTE_DIR}/MPC_USER_PACKAGE/bin/mpcrun_opt/mpcrun_remote_launcher ${MPCRUN_REMOTE_HOST} ${MPCRUN_REMOTE_DIR} $prefix $LAUNCH_OPTIONS -n=$TASK_NB -p=$PROCESS_NB -N=$NODE_NB -c=$CPU_NB ${MPCRUN_REMOTE_DIR}/MPC_USER_PACKAGE/`basename $BINARY` $USER_ARGS $SCTK_ARGS"
+
+
+echo "Launch command $LAUNCH_COMMAND"
+
+#rm -rf MPC_USER_PACKAGE
