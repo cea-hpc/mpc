@@ -223,42 +223,7 @@ sctk_mctx_set (sctk_mctx_t * mctx,
 }
 
 #elif SCTK_MCTX_MTH(sjlj)
-#ifdef SCTK_USE_CONTEXT_FOR_CREATION
-#include <ucontext.h>
 
-static inline void sctk_bootstrap_func(void (*func) (void*), void *arg, ucontext_t* root_uc,sctk_mctx_t *mctx) {
-  if (sctk_setjmp((mctx->jb)) == 0) {
-    setcontext(root_uc);
-  } else {
-    func(arg);
-  }
-}
-
-static inline int
-sctk_mctx_set(sctk_mctx_t* mctx,
-    void (*func) (void*), char *sk_addr_lo, char *sk_addr_hi, void *arg)
-{
-  ucontext_t uc;
-  ucontext_t root_uc;
-
-  if (getcontext(&(uc)) != 0)
-    return FALSE;
-
-  uc.uc_link = NULL;
-
-  uc.uc_stack.ss_sp =
-    sctk_skaddr(makecontext, sk_addr_lo, sk_addr_hi - sk_addr_lo);
-  uc.uc_stack.ss_size =
-    sctk_sksize(makecontext, sk_addr_lo, sk_addr_hi - sk_addr_lo);
-  uc.uc_stack.ss_flags = 0;
-
-  (mctx)->restored = 0;
-  makecontext (&(uc), (void (*)(void)) sctk_bootstrap_func, 1 + 4, (void*)func, arg, &root_uc, mctx);
-
-  swapcontext(&(root_uc), &(uc));
-  return TRUE;
-}
-#else
 static sctk_spinlock_t sjlj_spinlock = SCTK_SPINLOCK_INITIALIZER;
 static jmp_buf mctx_trampoline;
 
@@ -392,7 +357,6 @@ sctk_mctx_set_bootstrap (void)
   mctx_starting_func ((void *) args);
   abort ();
 }
-#endif
 #elif SCTK_MCTX_MTH(windows)
 #error "not implemented yet"
 #else
