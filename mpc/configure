@@ -259,7 +259,9 @@ for arg in "$@" ; do
     SCTK_CC=icc
     SCTK_F77=ifort
     SCTK_CFLAGS="$SCTK_CFLAGS -mmic"
-    SCTK_LDLAGS="$SCTK_LDFLAGS -mmic"
+    SCTK_LDFLAGS="$SCTK_LDFLAGS -mmic"
+    SCTK_AR=/usr/linux-l1om-4.7/bin/x86_64-l1om-linux-ar
+    SCTK_LD=/usr/linux-l1om-4.7/bin/x86_64-l1om-linux-ld
     ;;
     --no-recursion)
     ;;

@@ -27,25 +27,34 @@ CC=""
 CFLAGS=""
 LDFLAGS=""
 F77=""
+AR=""
 
 prepare_arguments() {
   OUTPUT=""
 
-  if [ ${CC} != "" ]; then
+  if [ ! -z "${CC}" ]; then
     OUTPUT="${OUTPUT} CC=${CC}"
   fi
 
-  if [ ${F77} != "" ]; then
+  if [ ! -z "${F77}" ]; then
     OUTPUT="${OUTPUT} F77=${F77}"
   fi
 
-  if [ ${CFLAGS} != "" ]; then
-    OUTPUT="${OUTPUT} CFLAGS=${CFLAGS}"
-  fi
+#  if [ ! -z "${CFLAGS}" ]; then
+#    OUTPUT="${OUTPUT} CFLAGS=\"${CFLAGS}\""
+#  fi
 
-  if [ ${LDFLAGS} != "" ]; then
-    OUTPUT="${OUTPUT} LDFLAGS=${LDFLAGS}"
-  fi
+#  if [ ! -z "${LDFLAGS}" ]; then
+#    OUTPUT="${OUTPUT} LDFLAGS=${LDFLAGS}"
+#  fi
+
+#  if [ ${AR} != "" ]; then
+#    OUTPUT="${OUTPUT} AR=${AR}"
+#  fi
+
+#  if [ ${LD} != "" ]; then
+#    OUTPUT="${OUTPUT} LD=${LD}"
+#  fi
 
   echo $OUTPUT
 }

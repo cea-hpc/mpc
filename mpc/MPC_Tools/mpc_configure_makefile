@@ -301,12 +301,13 @@ echo "Preparing includes for Fortran"
 for i in $MODULE_LIST; do
 NAME="fortran_header"
 if test "$SCTK_FORTRAN" = "1" && test "$i" = "MPC_Message_Passing"; then
-printf "\t@\$(CC) -g -DMPC_NO_AUTO_MAIN_REDEF -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME ">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) -g -DMPC_NO_AUTO_MAIN_REDEF -DMPC_MODULE_MPC_Message_Passing -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME ">> Makefile; echo "">> Makefile
 printf "\t@./$NAME mpc.h > INSTALL/include/mpcf.h">> Makefile; echo "">> Makefile
 
 DIR_TEST="MPC_MPI"
 check_module
 if test "$FOUND" != "" ; then
+printf "\t@\$(CC) -g -DMPC_NO_AUTO_MAIN_REDEF -DMPC_MPI_C_INCLUDE -DMPC_MPI -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME ">> Makefile; echo "">> Makefile
 printf "\t@./$NAME mpi.h > INSTALL/include/mpif.h">> Makefile; echo "">> Makefile
 fi
 

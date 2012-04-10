@@ -44,9 +44,8 @@ do
      ARGUMENTS_OPENPA="${ARGUMENTS_OPENPA} --host=i686-pc-linux --target=i686-pc-linux"
      F77=ifort
      CC=icc
-     CFLAGS="`echo $CFLAGS | sed -e 's/-fPIC//g'`"
-     CFLAGS="-mmic ${CFLAGS}"
-     LDFLAGS="-mmic ${LDFLAGS}"
+     AR=/usr/linux-l1om-4.7/bin/x86_64-l1om-linux-ar
+     LD=/usr/linux-l1om-4.7/bin/x86_64-l1om-linux-ld
      ;;
 		*)
 			ARGUMENTS_OPENPA="${ARGUMENTS_OPENPA} $arg"
@@ -55,6 +54,9 @@ do
 done
 
 ARGUMENTS_OPENPA="$ARGUMENTS_OPENPA $(prepare_arguments)"
+
+export CFLAGS="-mmic ${CFLAGS}"
+export LDFLAGS="-mmic ${LDFLAGS}"
 
 echo "Running: cd openpa-$VERSION"
 cd openpa-$VERSION || exit 1
