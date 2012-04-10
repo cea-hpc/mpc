@@ -191,6 +191,18 @@ extern "C"
   extern const int MPI_APPNUM;
   extern const MPI_Comm MPI_COMM_SELF;
 
+#ifdef MPC_MPI_C_INCLUDE
+const MPI_Comm MPI_COMM_SELF = MPC_COMM_SELF;
+const int MPI_TAG_UB = 0;
+const int MPI_HOST = 1;
+const int MPI_IO = 2;
+const int MPI_WTIME_IS_GLOBAL = 3;
+const int MPI_UNIVERSE_SIZE = MPI_KEYVAL_INVALID;
+const int MPI_LASTUSEDCODE = MPI_KEYVAL_INVALID;
+const int MPI_APPNUM = MPI_KEYVAL_INVALID;
+
+#endif
+
   int MPI_Send (void *, int, MPI_Datatype, int, int, MPI_Comm);
   int MPI_Recv (void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Status *);
   int MPI_Get_count (MPI_Status *, MPI_Datatype, int *);

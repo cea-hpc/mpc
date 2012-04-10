@@ -19,6 +19,7 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
+#define MPC_MPI_C_INCLUDE
 #include <mpc.h>
 #include <mpc_mpi.h>
 #include <sctk_debug.h>
@@ -561,7 +562,6 @@ __sctk_init_mpi_errors ()
 static int SCTK__MPI_Attr_clean_communicator (MPI_Comm comm);
 static int SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new);
 
-const MPI_Comm MPI_COMM_SELF = MPC_COMM_SELF;
 
 /*
   Requests
@@ -4879,13 +4879,6 @@ __INTERNAL__PMPI_Intercomm_merge (MPI_Comm intercomm, int high,
   Attributes
 */
 #define MPI_MAX_KEY_DEFINED 7
-const int MPI_TAG_UB = 0;
-const int MPI_HOST = 1;
-const int MPI_IO = 2;
-const int MPI_WTIME_IS_GLOBAL = 3;
-const int MPI_UNIVERSE_SIZE = MPI_KEYVAL_INVALID;
-const int MPI_LASTUSEDCODE = MPI_KEYVAL_INVALID;
-const int MPI_APPNUM = MPI_KEYVAL_INVALID;
 
 static int MPI_TAG_UB_VALUE = 512*1024*1024;
 static char *MPI_HOST_VALUE[4096];
