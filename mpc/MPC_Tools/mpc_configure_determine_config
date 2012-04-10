@@ -252,7 +252,11 @@ sctk_title (Compiler:);
   fprintf (std_output, "#define %s %s\n", SCTK_STRING (SCTK_COMPILER),
 	   SCTK_COMPILER);
   fprintf (std_output, "#endif\n");
-  if ((strcmp (SCTK_COMPILER, "__GNU_COMPILER") == 0) || (strcmp (SCTK_COMPILER, "__INTEL_COMPILER")))
+  if ((strcmp (SCTK_COMPILER, "__GNU_COMPILER") == 0) || (strcmp (SCTK_COMPILER, "__INTEL_COMPILER"))
+#ifdef __x86_64__
+    || (strcmp (SCTK_COMPILER, "__INTEL_COMPILER") == 0)
+#endif
+    )
     {
       fprintf (std_output, "#define %s\n",
 	       SCTK_STRING (SCTK_COMPILER_ACCEPT_ASM));

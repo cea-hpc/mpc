@@ -255,6 +255,11 @@ for arg in "$@" ; do
     --mic=*)
     SCTK_CROSS_EXEC="${MPC_SOURCE_DIR}MPC_Tools/cross_compilation_scripts/mic.sh"
     export SCTK_MIC_HOSTNAME="`echo A$arg | sed -e 's/A--mic=//g'`"
+    SCTK_GCC=icc
+    SCTK_CC=icc
+    SCTK_F77=ifort
+    SCTK_CFLAGS="$SCTK_CFLAGS -mmic"
+    SCTK_LDLAGS="$SCTK_LDFLAGS -mmic"
     ;;
     --no-recursion)
     ;;

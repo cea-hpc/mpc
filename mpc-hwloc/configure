@@ -1,3 +1,4 @@
+#!/bin/sh
 MPC_SOURCE_DIR="`dirname $0`/"
 VERSION="$1"
 PREFIX="$2"
@@ -34,7 +35,26 @@ if test "${PATCH_NEEDED}" = "1" ; then
   cd ${CURRENT_WD} || exit 1
 fi
 
-  echo "cd hwloc-$VERSION && Running: ./configure $PREFIX $ARGUMENTS"
-  cd hwloc-$VERSION && ./configure $PREFIX $ARGUMENTS || exit 1
+for arg in $ARGUMENTS
+do
+	case $arg in
+   --mic)
+     ARGUMENTS_HWLOC="${ARGUMENTS_HWLOC} --host=i686-pc-linux --target=i686-pc-linux"
+     F77=ifort
+     CC=icc
+     CFLAGS="`echo $CFLAGS | sed -e 's/-fPIC//g'`"
+     CFLAGS="-mmic ${CFLAGS}"
+     LDFLAGS="-mmic ${LDFLAGS}"
+     ;;
+		*)
+			ARGUMENTS_HWLOC="${ARGUMENTS_HWLOC} $arg"
+			;;
+	esac
+done
+
+ARGUMENTS_HWLOC="$ARGUMENTS_HWLOC $(prepare_arguments)"
+
+echo "cd hwloc-$VERSION && Running: ./configure $PREFIX $ARGUMENTS_HWLOC"
+cd hwloc-$VERSION && ./configure $PREFIX $ARGUMENTS_HWLOC || exit 1
 
 exit 0

@@ -151,9 +151,9 @@ prepare_includes:$(M_PWD)/include_modules/MPC_Common
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-DEPENDS=$(DEP_alloc) $(DEP_asm) $(DEP_datastructures) $(DEP_debug) $(DEP_helpers) $(DEP_launch) $(DEP_optim) $(DEP_options) $(DEP_spinlock) 
+DEPENDS=$(DEP_alloc) $(DEP_asm) $(DEP_datastructures) $(DEP_debug) $(DEP_helpers) $(DEP_launch) $(DEP_optim) $(DEP_options) $(DEP_spinlock)
 
-$(DEPENDS):Makefile 
+$(DEPENDS):Makefile
 endif
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)

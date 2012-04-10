@@ -24,7 +24,7 @@
 
 #include <sys/time.h>
 
-#if defined(SCTK_ia64_ARCH_SCTK)
+#if defined(SCTK_ia64_ARCH_SCTK) && defined(SCTK_COMPILER_ACCEPT_ASM)
 double
 sctk_atomics_get_timestamp ()
 {
@@ -32,7 +32,7 @@ sctk_atomics_get_timestamp ()
   __asm__ volatile ("mov %0=ar%1":"=r" (t):"i" (44));
   return (double) t;
 }
-#elif defined(SCTK_i686_ARCH_SCTK)
+#elif defined(SCTK_i686_ARCH_SCTK) && defined(SCTK_COMPILER_ACCEPT_ASM)
 double
 sctk_atomics_get_timestamp ()
 {
@@ -40,7 +40,7 @@ sctk_atomics_get_timestamp ()
   __asm__ volatile ("rdtsc":"=A" (t));
   return (double) t;
 }
-#elif defined(SCTK_x86_64_ARCH_SCTK)
+#elif defined(SCTK_x86_64_ARCH_SCTK) && defined(SCTK_COMPILER_ACCEPT_ASM)
 double
 sctk_atomics_get_timestamp ()
 {

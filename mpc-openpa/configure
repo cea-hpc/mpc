@@ -1,3 +1,4 @@
+#!/bin/sh
 MPC_SOURCE_DIR="`dirname $0`/"
 VERSION="$1"
 PREFIX="$2"
@@ -9,6 +10,8 @@ PATCH_NAME="$7"
 ARGUMENTS="$8"
 
 . ${MPC_SOURCE_DIR}/../common_configure
+
+CFLAGS="-fPIC"
 
 #
 # ARGUMENTS
@@ -34,10 +37,29 @@ if test "${PATCH_NEEDED}" = "1" ; then
   cd ${CURRENT_WD} || exit 1
 fi
 
-  echo "Running: cd openpa-$VERSION"
-  cd openpa-$VERSION || exit 1
+for arg in $ARGUMENTS
+do
+	case $arg in
+   --mic)
+     ARGUMENTS_OPENPA="${ARGUMENTS_OPENPA} --host=i686-pc-linux --target=i686-pc-linux"
+     F77=ifort
+     CC=icc
+     CFLAGS="`echo $CFLAGS | sed -e 's/-fPIC//g'`"
+     CFLAGS="-mmic ${CFLAGS}"
+     LDFLAGS="-mmic ${LDFLAGS}"
+     ;;
+		*)
+			ARGUMENTS_OPENPA="${ARGUMENTS_OPENPA} $arg"
+			;;
+	esac
+done
 
-  echo "Running: ./configure $PREFIX $ARGUMENTS"
-  ./configure $PREFIX $ARGUMENTS || exit 1
+ARGUMENTS_OPENPA="$ARGUMENTS_OPENPA $(prepare_arguments)"
+
+echo "Running: cd openpa-$VERSION"
+cd openpa-$VERSION || exit 1
+
+echo "Running: ./configure $PREFIX $ARGUMENTS_OPENPA"
+./configure $PREFIX $ARGUMENTS_OPENPA || exit 1
 
 exit 0

@@ -11,6 +11,8 @@ ARGUMENTS="$8"
 
 . ${MPC_SOURCE_DIR}/../common_configure
 
+CFLAGS="-fPIC"
+
 #
 # ARGUMENTS
 #
@@ -45,12 +47,24 @@ do
 		--hydra-*)
 			ARGUMENTS_HYDRA="${ARGUMENTS_HYDRA} -`echo A$arg | sed -e 's/A--hydra//g'`"
 			;;
+   --mic)
+     ARGUMENTS_HYDRA="${ARGUMENTS_HYDRA} --host=i686-pc-linux --target=i686-pc-linux"
+     ARGUMENTS_SIMPLE="${ARGUMENTS_SIMPLE} --host=i686-pc-linux --target=i686-pc-linux"
+     F77=ifort
+     CC=icc
+     CFLAGS="`echo $CFLAGS | sed -e 's/-fPIC//g'`"
+     CFLAGS="-mmic ${CFLAGS}"
+     LDFLAGS="-mmic ${LDFLAGS}"
+     ;;
 		*)
 			ARGUMENTS_HYDRA="${ARGUMENTS_HYDRA} $arg"
 			ARGUMENTS_SIMPLE="${ARGUMENTS_SIMPLE} $arg"
 			;;
 	esac
 done
+
+ARGUMENTS_HYDRA="$ARGUMENTS_HYDRA $(prepare_arguments)"
+ARGUMENTS_SIMPLE="$ARGUMENTS_SIMPLE $(prepare_arguments)"
 
 echo "Running cd hydra && ./configure $PREFIX $ARGUMENTS_HYDRA"
 cd hydra && ./configure $PREFIX $ARGUMENTS_HYDRA  || exit 1
