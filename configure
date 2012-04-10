@@ -98,6 +98,9 @@ Installation directories:
   --prefix=PREFIX                     Install architecture-independent files in PREFIX [/usr/local]
   --disable-prefix-check              Force given prefix (in case of file conflicts)
 
+Cross-compilation:
+  --mic=ADDRESS                       Cross-compile MPC for Intel MIC
+
 Optional Features:
   --with-cpath=DIR1:DIR2:...          Add directories to the CPATH environment variable
                                       for the whole MPC distribution

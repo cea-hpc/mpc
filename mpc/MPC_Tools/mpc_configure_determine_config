@@ -1,25 +1,25 @@
 #!/bin/sh
-############################# MPC License ############################## 
-# Wed Nov 19 15:19:19 CET 2008                                         # 
-# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # 
-#                                                                      # 
-# IDDN.FR.001.230040.000.S.P.2007.000.10000                            # 
-# This file is part of the MPC Runtime.                                # 
-#                                                                      # 
-# This software is governed by the CeCILL-C license under French law   # 
-# and abiding by the rules of distribution of free software.  You can  # 
-# use, modify and/ or redistribute the software under the terms of     # 
-# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # 
-# following URL http://www.cecill.info.                                # 
-#                                                                      # 
-# The fact that you are presently reading this means that you have     # 
-# had knowledge of the CeCILL-C license and that you accept its        # 
-# terms.                                                               # 
-#                                                                      # 
-# Authors:                                                             # 
-#   - PERACHE Marc marc.perache@cea.fr                                 # 
-#                                                                      # 
-######################################################################## 
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - PERACHE Marc marc.perache@cea.fr                                 #
+#                                                                      #
+########################################################################
 gen_config(){
 cat << EOF > ${SCTK_CONF_C}
 #define ${SCTK_OS}_SYS
@@ -37,7 +37,7 @@ cat << EOF > ${SCTK_CONF_C}
 #include <signal.h>
 EOF
 
-if test "$MPC_Threads" != "" ; then 
+if test "$MPC_Threads" != "" ; then
 cat ${MPC_SOURCE_DIR}MPC_Threads/sctk_thread/sctk_pthread_compatible_structures.h >> ${SCTK_CONF_C}
 fi
 
@@ -282,7 +282,7 @@ sctk_title (Sizes:);
 #ifdef SCTK_HAVE_LONG_LONG
   fprintf (std_output, "#define sctk_sizeof_%s %ld\n", "long_long",
 	   (long) (sizeof (long long)));
-  
+
   fprintf (std_output, "#define sctk_long_long long long\n");
 #else
   fprintf (std_output, "#define sctk_long_long long\n");
@@ -322,12 +322,12 @@ sctk_title (Alignement:);
     a = malloc(4096);
     b = malloc(4096);
     aligne = (long)b - (long)a - 4096;
-    if(!((aligne == 2)   || 
-           (aligne == 4)   ||   
-           (aligne == 8)   ||   
-           (aligne == 16)  ||   
-           (aligne == 32)  ||   
-           (aligne == 64)  ||   
+    if(!((aligne == 2)   ||
+           (aligne == 4)   ||
+           (aligne == 8)   ||
+           (aligne == 16)  ||
+           (aligne == 32)  ||
+           (aligne == 64)  ||
            (aligne == 128))){
            aligne = 16;
   }
@@ -571,7 +571,8 @@ sctk_title (Error values:);
 
 int main(int argc, char **argv)
 {
-    std_output = fopen("include/sctk_config.h","a");
+  std_output = stdout;
+  /*  std_output = fopen("include/sctk_config.h","a"); */
 
   sctk_title(Tools:);
   fprintf(std_output,"#define %s(a) %s\n",SCTK_STRING(SCTK_STRING),SCTK_STRING_VAL);
@@ -624,7 +625,7 @@ EOF
 }
 
 SCTK_POSIX_CHECK_FUNCS_PTR(){
-    for i in $1 ; do 
+    for i in $1 ; do
 
 cat  << EOF  > ${SCTK_CONF_C}
 #include <signal.h>
@@ -646,7 +647,7 @@ EOF
 	eval "$SCTK_CC $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN} $SCTK_LDFLAGS">> ${SCTK_CONF_LOG} 2>&1
 	SCTK_SCTK_CHECK_HEADER_RES="$?"
 	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
-	if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then 
+	if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
 	    result yes
 	    echo "#define $2 1" >> ${SCTK_POSIX_CHECK_FUNCS_RES_FILE}
 	else
@@ -657,7 +658,7 @@ EOF
 }
 
 SCTK_POSIX_CHECK_FUNCS(){
-    for i in $1 ; do 
+    for i in $1 ; do
 	SCTK_MSG_CHECKING $i
 
 cat  << EOF  > ${SCTK_CONF_C}
@@ -676,7 +677,7 @@ EOF
 	eval "$SCTK_CC $SCTK_CFLAGS ${SCTK_CONF_C} -o ${SCTK_CONF_BIN} $SCTK_LDFLAGS">> ${SCTK_CONF_LOG} 2>&1
 	SCTK_SCTK_CHECK_HEADER_RES="$?"
 	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
-	if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then 
+	if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
 	    SCTK_POSIX_CHECK_FUNCS_PTR $i $2
 	else
 	    result no

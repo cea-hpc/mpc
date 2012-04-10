@@ -167,6 +167,9 @@ Optional features:
   --enable-debug-messages          Enable MPC debug message printing in verbose level 3
   --enable-shell-colors            Enable support of colors in shell
 
+Cross-compilation:
+  --mic=ADDRESS                    Cross-compile MPC for Intel MIC
+
 Module selection:
 EOF
 
@@ -247,6 +250,11 @@ for arg in "$@" ; do
     ;;
     --cross_prefix=*)
     SCTK_CROSS_PREFIX="`echo A$arg | sed -e 's/A--cross_prefix=//g'`"
+    ;;
+    # Rule for MIC
+    --mic=*)
+    SCTK_CROSS_EXEC="${MPC_SOURCE_DIR}MPC_Tools/cross_compilation_scripts/mic.sh"
+    export SCTK_MIC_HOSTNAME="`echo A$arg | sed -e 's/A--mic=//g'`"
     ;;
     --no-recursion)
     ;;
