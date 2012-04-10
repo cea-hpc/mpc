@@ -28,7 +28,7 @@ if test "$MPCRUN_REMOTE_DIR" = "" ; then
 	echo Dir on remote host ?
 	read MPCRUN_REMOTE_DIR
 fi 
-echo "echo Launch on host '$MPCRUN_REMOTE_HOST' in $MPCRUN_REMOTE_DIR"
+echo "Launch on host '$MPCRUN_REMOTE_HOST' in $MPCRUN_REMOTE_DIR"
 
 REMOTE_LAUNCHER_FILE=
 
@@ -45,6 +45,14 @@ cp -r ${MPC_BIN_DIR}/mpcrun_opt MPC_USER_PACKAGE/bin
 cp -r ${MPC_BIN_DIR}/mpcrun MPC_USER_PACKAGE/bin
 cp $BINARY MPC_USER_PACKAGE
 
+HYDRA_DIR_REMOTE="`echo  $SCTK_HYDRA_BINDIR | sed s,bin,,g`"
+HYDRA_DIR_REMOTE_VERSION=`basename $HYDRA_DIR_REMOTE`
+
+echo "Use hydra $HYDRA_DIR_REMOTE_VERSION"
+mkdir -p MPC_USER_PACKAGE/$HYDRA_DIR_REMOTE_VERSION/
+cp -r $HYDRA_DIR_REMOTE/bin MPC_USER_PACKAGE/$HYDRA_DIR_REMOTE_VERSION/
+cp -r $HYDRA_DIR_REMOTE/lib MPC_USER_PACKAGE/$HYDRA_DIR_REMOTE_VERSION/
+
 copy_remote_iter(){
 	echo "Copy $3"
 	cp $3 MPC_USER_PACKAGE/lib
@@ -58,7 +66,7 @@ copy_remote(){
 	done
 }
 
-ldd $BINARY
+#ldd $BINARY
 
 ldd $BINARY | grep "$prefix" | copy_remote
 #ldd $BINARY  | copy_remote

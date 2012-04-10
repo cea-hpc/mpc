@@ -42,6 +42,6 @@ fi
 
 export LD_LIBRARY_PATH
 
-ldd ./MPC_USER_PACKAGE/a.out
+#ldd ./MPC_USER_PACKAGE/a.out
 
 ./MPC_USER_PACKAGE/bin/mpcrun_rebased $@
