@@ -56,6 +56,9 @@ extern "C"
 #define MPCOMP_USE_ATOMICS	1
 #define MPCOMP_MALLOC_ON_NODE	1
 
+#define MPCOMP_CHUNKS_NOT_AVAIL 1
+#define MPCOMP_CHUNKS_AVAIL     2
+
 /*****************
   ****** STRUCTURES 
   *****************/
@@ -258,8 +261,12 @@ typedef enum context_t {
     char pad1[64];
 #if MPCOMP_USE_ATOMICS
     sctk_atomics_int barrier;	/* Barrier for the child team */
+    sctk_atomics_int chunks_avail; /* Flag for presence of chunks under current node */
+    sctk_atomics_int nb_chunks_empty_children; /* Counter for presence of chunks */
 #else
     volatile long barrier;	/* Barrier for the child team */
+    volatile long chunks_avail; /* Flag for presence of chunks under current node */
+    volatile long nb_chunks_empty_children; /* Counter for presence of chunks */
 #endif
     char pad2[64];
     volatile long barrier_done;	/* Is the barrier (for the child team) over? */
@@ -270,6 +277,10 @@ typedef enum context_t {
     int num_threads ; /* Number of threads in the current team */
     void *(*func) (void *);
     void *shared;
+
+    /* Infos of chunks presence in node */
+    //sctk_atomics_int chunks_avail; 
+    //sctk_atomics_int nb_chunks_empty_children;
   } ;
 
   typedef struct mpcomp_node_s mpcomp_node ;
