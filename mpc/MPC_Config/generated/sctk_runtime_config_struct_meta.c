@@ -58,6 +58,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"driver"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_allocator,driver)  , sizeof(struct sctk_runtime_config_struct_driver) , "sctk_runtime_config_struct_driver" , sctk_runtime_config_struct_init_driver},
 	{"classes"     , SCTK_CONFIG_META_TYPE_ARRAY  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_allocator,classes) , sizeof(int) , "int" , "class"},
 	{"classes2"     , SCTK_CONFIG_META_TYPE_ARRAY  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_allocator,classes2) , sizeof(int) , "int" , "class2"},
+	{"array_string"     , SCTK_CONFIG_META_TYPE_ARRAY  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_allocator,array_string) , sizeof(char *) , "char *" , "st"},
 	{"rails"     , SCTK_CONFIG_META_TYPE_ARRAY  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_allocator,rails) , sizeof(struct sctk_runtime_config_struct_rail) , "sctk_runtime_config_struct_rail" , "rail"},
 	{"driverlist"     , SCTK_CONFIG_META_TYPE_ARRAY  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_allocator,driverlist) , sizeof(struct sctk_runtime_config_struct_driver) , "sctk_runtime_config_struct_driver" , "driver"},
 	//struct

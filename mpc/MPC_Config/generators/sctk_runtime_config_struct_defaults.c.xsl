@@ -221,7 +221,11 @@
 		<!-- pointer -->
 		<xsl:text>&#09;obj-&gt;</xsl:text>
 		<xsl:value-of select='@name'/>
-		<xsl:value-of select="concat(' = calloc(',count(default/value),',sizeof(',@type,'));&#10;')"/>
+		<xsl:choose>
+			<xsl:when test="(@type='string')"> <xsl:value-of select="concat(' = calloc(',count(default/value),',sizeof(char *));&#10;')"/> </xsl:when>
+			<xsl:otherwise> <xsl:value-of select="concat(' = calloc(',count(default/value),',sizeof(',@type,'));&#10;')"/> </xsl:otherwise>
+		</xsl:choose>
+		
 		<xsl:call-template name="array-default-values"/>
 		<!-- size -->
 		<xsl:text>&#09;obj-&gt;</xsl:text>

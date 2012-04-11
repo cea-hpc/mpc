@@ -76,6 +76,12 @@ void sctk_runtime_config_struct_init_allocator(void * struct_ptr)
 	obj->classes2[2] = 10;
 	obj->classes2_size = 3;
 	//array
+	obj->array_string = calloc(3,sizeof(char *));
+	obj->array_string[0] = "0";
+	obj->array_string[1] = "1";
+	obj->array_string[2] = "10";
+	obj->array_string_size = 3;
+	//array
 	obj->rails = NULL;
 	obj->rails_size = 0;
 	//array

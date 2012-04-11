@@ -30,6 +30,13 @@
 					<value>10</value>
 				</default>
 			</array>
+			<array name="array_string" entry-name="st" type="string" doc="Array of strings">
+				<default>
+					<value>"0"</value>
+					<value>"1"</value>
+					<value>"10"</value>
+				</default>
+			</array>
 			<array name="rails" entry-name="rail" doc="blablabla" type="rail"/>
 			<param name="driver" type="driver" doc="This is a super doc"/>
 			<array name="driverlist" entry-name="driver" type="driver" doc="blabla"/>

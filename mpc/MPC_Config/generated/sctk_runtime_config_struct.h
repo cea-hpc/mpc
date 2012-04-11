@@ -92,6 +92,10 @@ struct sctk_runtime_config_struct_allocator
 	int * classes2;
 	/** Number of elements in classes2 array. **/
 	int classes2_size;
+	/**Array of strings**/
+	char * * array_string;
+	/** Number of elements in array_string array. **/
+	int array_string_size;
 	/**blablabla**/
 	struct sctk_runtime_config_struct_rail * rails;
 	/** Number of elements in rails array. **/
