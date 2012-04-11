@@ -60,7 +60,7 @@ void sctk_profile_meta_init(struct sctk_profile_meta *meta)
 
 	char *cmd = getenv( "MPC_LAUNCH_COMMAND" );
 
-	if( !cmd )
+	if( cmd )
 	{
 		sprintf(meta->command, "%s", cmd);
 	}

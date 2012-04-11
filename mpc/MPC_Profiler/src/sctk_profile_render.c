@@ -448,7 +448,7 @@ struct MPC_prof_color sctk_profile_renderer_to_rgb( char *hex_col )
 	return ret;
 }
 
-struct sctk_runtime_config_struct_profiler * sctk_profile_get_config()
+const struct sctk_runtime_config_struct_profiler * sctk_profile_get_config()
 {
 	return (struct sctk_runtime_config_struct_profiler *)&sctk_config_runtime_get()->modules.profiler;
 }
