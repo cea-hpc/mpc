@@ -69,13 +69,11 @@ void sctk_profile_render_text_render_meta( struct sctk_profile_renderer *rd, str
 
 void sctk_profile_render_text_setup( struct sctk_profile_renderer *rd )
 {
-	char buff[300];
 	char output_file[500];
-	
-	sprintf( output_file, "mpc_profile_%s.txt", sctk_profile_renderer_date( buff ) );
 	
 	if( !sctk_profile_render_text_is_stdout )
 	{
+		sctk_profile_render_filename( output_file, "txt" );
 	
 		rd->output_file = fopen( output_file, "w" );
 		

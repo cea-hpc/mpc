@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<!DOCTYPE config SYSTEM "../MPC_Config/extra/config-meta.dtd">
+<config>
+	<usertypes>
+		<struct name="profiler"     doc="Options for the internal MPC Profiler">
+			<param name="file_prefix"   type="string" default="mpc_profile" doc="Prefix of MPC Profiler outputs"/>
+			<param name="append_date"   type="bool" default="true" doc="Add a timestamp to profiles file names"/>
+
+			<array name="level_colors" entry-name="level" type="string" doc="Color for levels of profiler output">
+				<default>
+					<value>"#3A4D85"</value>
+					<value>"#82A2FF"</value>
+					<value>"#B8BDCB"</value>
+					<value>"#5D6782"</value>
+					<value>"#838383"</value>
+					<value>"#5A5757"</value>
+				</default>
+			</array>
+		</struct>
+	</usertypes>
+	<modules>
+		<module name="profiler" type="profiler"/>
+	</modules>
+	<validators>
+		<handler>sctk_runtime_config_empty_validator_for_test</handler>
+	</validators>
+</config>

@@ -431,6 +431,39 @@ void sctk_profile_renderer_print_ntabs( int n )
 }
 
 
+struct MPC_prof_color sctk_profile_renderer_to_rgb( char *hex_col )
+{
+	
+	struct MPC_prof_color ret = { 255, 255, 255 };
+	
+	int r, g, b;
+	
+	if( sscanf(hex_col,"#%2x%2x%2x",&r,&g,&b) == 3 )
+	{
+		ret.r = r;
+		ret.g = g;
+		ret.b = b;
+	}
+
+	return ret;
+}
+
+struct sctk_runtime_config_struct_profiler * sctk_profile_get_config()
+{
+	return (struct sctk_runtime_config_struct_profiler *)&sctk_config_runtime_get()->modules.profiler;
+}
 
 
+void sctk_profile_render_filename( char *output_file, char *ext )
+{
+	char buff[500];
+	if( sctk_profile_get_config()->append_date )
+	{
+		sprintf( output_file, "%s_%s.%s", sctk_profile_get_config()->file_prefix, sctk_profile_renderer_date( buff ), ext );
+	}
+	else
+	{
+		sprintf( output_file, "%s.%s", sctk_profile_get_config()->file_prefix, ext);
+	}
+}
 

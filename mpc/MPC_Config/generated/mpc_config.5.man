@@ -205,3 +205,18 @@ It support parameters :
 .Pp
 .Bl -tag -width Ds
 .El
+.Sh OPTIONS OF NODE profiler
+Options for the internal MPC Profiler
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm file_prefix
+Type is string. Default value if mpc_profile. 
+.Pp file_prefix
+Prefix of MPC Profiler outputs
+.It Cm append_date
+Type is bool. Default value if true. 
+.Pp append_date
+Add a timestamp to profiles file names
+.El

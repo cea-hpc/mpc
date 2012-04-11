@@ -99,7 +99,7 @@ void sctk_profile_render_tex_setup( struct sctk_profile_renderer *rd )
 	char buff[300];
 	char output_file[500];
 	
-	sprintf( output_file, "mpc_profile_%s.tex", sctk_profile_renderer_date( buff ) );
+	sctk_profile_render_filename( output_file, "tex" );
 	
 
 	rd->output_file = fopen( output_file, "w" );
@@ -119,10 +119,18 @@ void sctk_profile_render_tex_setup( struct sctk_profile_renderer *rd )
 		"\\usepackage{lscape}\n"
 		"\\usepackage{babel}\n"
 		"\\usepackage{subfigure}\n"
-		"\\usepackage[table]{xcolor}\n"
-		"\\definecolor{A}{RGB}{58,77,133}\n"
-		"\\definecolor{B}{RGB}{130,162,255}\n"
-		"\\definecolor{C}{RGB}{184,189,203}\n"
+		"\\usepackage[table]{xcolor}\n");
+		
+
+		int i = 0;
+		
+		for( i = 0 ; i < 6 ; i++ )
+		{
+			struct MPC_prof_color col = sctk_profile_renderer_to_rgb( sctk_profile_get_config()->level_colors[i] );
+			fprintf(rd->output_file, "\\definecolor{%c}{RGB}{%d,%d,%d}\n", 'A'+i, col.r, col.g, col.b );
+		}
+
+		fprintf(rd->output_file,
 		"\\usepackage{hyperref}\n"
 		"\\usepackage[latin9]{inputenc}\n"
 		"\\usepackage{geometry}\n"
@@ -181,10 +189,8 @@ void sctk_profile_render_tex_render_profile( struct sctk_profiler_array *array, 
 	char buffA[500], buffB[500], buffC[500], buffD[500];
 	
 	const char *prefix[3] = { "\\textbf", " ", "\\textit" };
-	const char *colors[3] = { "A", "B", "C" };
-	
-	
-	int prefix_id = (depth<3)?depth:3;
+
+	int prefix_id = (depth<6)?depth:5;
 
 	char *to_unit_total = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_time(array, id) , buffA );
 	char *to_unit_avg = sctk_profile_renderer_convert_to_time( rd->ptree.entry_average_time[id] , buffB );
@@ -195,7 +201,7 @@ void sctk_profile_render_tex_render_profile( struct sctk_profiler_array *array, 
 
 	if( sctk_profiler_array_get_hits( array, id ) )
 	{
-		fprintf( rd->output_file,"\\rowcolor{%s} %s{%s} & %s{%llu} & %s{%s} & %s{%s} & %s{%s} & %s{%s} & %s{ %g } & %s{ %g } \\\\\n",colors[ prefix_id], prefix[ prefix_id ], desc,
+		fprintf( rd->output_file,"\\rowcolor{%c} %s{%s} & %s{%llu} & %s{%s} & %s{%s} & %s{%s} & %s{%s} & %s{ %g } & %s{ %g } \\\\\n",'A'+prefix_id, prefix[ prefix_id ], desc,
 																						   prefix[ prefix_id ], (unsigned long long int )sctk_profiler_array_get_hits( array, id ),
 																						   prefix[ prefix_id ], to_unit_total,
 																						   prefix[ prefix_id ], to_unit_avg,

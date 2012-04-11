@@ -150,10 +150,29 @@ void sctk_runtime_config_struct_init_networks(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_profiler(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_profiler * obj = struct_ptr;
+	//Simple params :
+	obj->file_prefix = "mpc_profile";
+	obj->append_date = true;
+	//array
+	obj->level_colors = calloc(6,sizeof(char *));
+	obj->level_colors[0] = "#3A4D85";
+	obj->level_colors[1] = "#82A2FF";
+	obj->level_colors[2] = "#B8BDCB";
+	obj->level_colors[3] = "#5D6782";
+	obj->level_colors[4] = "#838383";
+	obj->level_colors[5] = "#5A5757";
+	obj->level_colors_size = 6;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 {
 	sctk_runtime_config_struct_init_allocator(&config->modules.allocator);
 	sctk_runtime_config_struct_init_launcher(&config->modules.launcher);
+	sctk_runtime_config_struct_init_profiler(&config->modules.profiler);
 	sctk_runtime_config_struct_init_networks(&config->networks);
 };
 

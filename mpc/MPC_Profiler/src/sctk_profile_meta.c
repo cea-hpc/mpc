@@ -27,8 +27,6 @@
 #include "sctk_asm.h"
 
 
-static double sctk_profile_renderer_avg_ticks_per_sec;
-
 void sctk_profile_meta_calibrate_begin(struct sctk_profile_meta *meta)
 {
 			meta->begin_ts = sctk_get_time_stamp();
@@ -60,7 +58,7 @@ void sctk_profile_meta_init(struct sctk_profile_meta *meta)
 	MPC_Node_number( &meta->node_count );
 	MPC_Process_number( &meta->process_count );
 
-	char cmd = getenv( "MPC_LAUNCH_COMMAND" );
+	char *cmd = getenv( "MPC_LAUNCH_COMMAND" );
 
 	if( !cmd )
 	{
@@ -68,7 +66,7 @@ void sctk_profile_meta_init(struct sctk_profile_meta *meta)
 	}
 	else
 	{
-		sprintf(meta->command, "Not found", cmd);
+		sprintf(meta->command, "Not found");
 	}
 
 	meta->lock = 0;

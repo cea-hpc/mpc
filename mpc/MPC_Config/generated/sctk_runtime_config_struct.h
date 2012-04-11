@@ -182,10 +182,24 @@ struct sctk_runtime_config_struct_networks
 };
 
 /*********************  STRUCT  *********************/
+/**Options for the internal MPC Profiler**/
+struct sctk_runtime_config_struct_profiler
+{	/**Prefix of MPC Profiler outputs**/
+	char * file_prefix;
+	/**Add a timestamp to profiles file names**/
+	bool append_date;
+	/**Color for levels of profiler output**/
+	char * * level_colors;
+	/** Number of elements in level_colors array. **/
+	int level_colors_size;
+};
+
+/*********************  STRUCT  *********************/
 struct sctk_runtime_config_modules
 {
 	struct sctk_runtime_config_struct_allocator allocator;
 	struct sctk_runtime_config_struct_launcher launcher;
+	struct sctk_runtime_config_struct_profiler profiler;
 };
 
 /*********************  STRUCT  *********************/

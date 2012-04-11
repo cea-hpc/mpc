@@ -23,7 +23,6 @@
 #include "sctk_profile_render_html.h"
 #include "sctk_profile_meta.h"
 
-
 #include <stdlib.h>
 
 #include "sctk_debug.h"
@@ -46,12 +45,9 @@ void sctk_profile_render_html_register( struct sctk_profile_renderer *rd )
 
 void sctk_profile_render_html_setup( struct sctk_profile_renderer *rd )
 {
-	char buff[300];
 	char output_file[500];
-	
-	sprintf( output_file, "mpc_profile_%s.html", sctk_profile_renderer_date( buff ) );
-	
 
+	sctk_profile_render_filename( output_file, "html" );
 	rd->output_file = fopen( output_file, "w" );
 	
 	if( !rd->output_file )
@@ -117,10 +113,7 @@ void sctk_profile_render_html_render_profile( struct sctk_profiler_array *array,
 	const char *prefix[3] = { "<B>", " ", "<I>" };
 	const char *suffix[3] = { "</B>", " ", "</I>" };
 
-	const char *colors[3] = { "#3A4D85", "#82A2FF", "#B8BDCB" };
-
-
-	int prefix_id = (depth<3)?depth:3;
+	int prefix_id = (depth<6)?depth:5;
 
 	char *to_unit_total = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_time(array, id) , buffA );
 	char *to_unit_avg = sctk_profile_renderer_convert_to_time( rd->ptree.entry_average_time[id] , buffB );
@@ -132,7 +125,7 @@ void sctk_profile_render_html_render_profile( struct sctk_profiler_array *array,
 	if( sctk_profiler_array_get_hits( array, id ) )
 	{
 		fprintf( rd->output_file,"<tr bgcolor=\"%s\"><td>%s%s%s</td><td>%s%llu%s</td><td>%s%s%s</td><td>%s%s%s</td><td>%s%s%s</td><td>%s%s%s</td><td>%s%g%s</td><td>%s%g%s</td></tr>\n",
-																		colors[ prefix_id], prefix[ prefix_id ], desc, suffix[ prefix_id ],
+																		sctk_profile_get_config()->level_colors[prefix_id], prefix[ prefix_id ], desc, suffix[ prefix_id ],
 																		prefix[ prefix_id ], (unsigned long long int )sctk_profiler_array_get_hits( array, id ), suffix[ prefix_id ],
 																		prefix[ prefix_id ], to_unit_total,  suffix[ prefix_id ],
 																		prefix[ prefix_id ], to_unit_avg,  suffix[ prefix_id ],

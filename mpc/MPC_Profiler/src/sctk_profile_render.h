@@ -28,6 +28,7 @@
 
 #include "sctk_performance_tree.h"
 #include "sctk_profile_meta.h"
+#include "sctk_runtime_config.h"
 
 
 typedef enum
@@ -101,5 +102,17 @@ char * sctk_profile_renderer_date_clean( char *buffer );
 void sctk_profile_renderer_write_ntabs( FILE *fd, int n );
 
 void sctk_profile_renderer_print_ntabs( int n );
+
+struct MPC_prof_color
+{
+	int r;
+	int g;
+	int b;
+};
+
+struct MPC_prof_color sctk_profile_renderer_to_rgb( char *hex_col );
+
+struct sctk_runtime_config_struct_profiler * sctk_profile_get_config();
+void sctk_profile_render_filename( char *output_file, char *ext );
 
 #endif /* SCTK_PROFILE_RENDER */
