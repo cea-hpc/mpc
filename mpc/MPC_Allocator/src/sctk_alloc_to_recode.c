@@ -25,7 +25,7 @@
 #include "sctk_spinlock.h"
 #include "sctk_allocator.h"
 
-#ifdef MPC_Threads
+#ifdef MPC_Threadss
 #include "sctk_context.h"
 #endif
 

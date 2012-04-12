@@ -477,6 +477,9 @@ sctk_ethread_mxn_func_kernel_thread (void *arg)
   sctk_thread_data_set (&tmp);
   sctk_set_tls (NULL);
 
+  //avoid to create an allocation chain
+  sctk_alloc_posix_plug_on_egg_allocator();
+
   sctk_spinlock_lock (&sctk_ethread_key_spinlock);
   sctk_nb_vp_initialized++;
   sctk_spinlock_unlock (&sctk_ethread_key_spinlock);

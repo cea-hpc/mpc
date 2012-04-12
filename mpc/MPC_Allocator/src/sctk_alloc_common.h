@@ -63,6 +63,21 @@ extern "C"
 #define SCTK_ALLOC_MAX_REGIONS 256
 /** Enable or disable huge chunk segragation. **/
 #define SCTK_ALLOC_HUGE_CHUNK_SEGREGATION true
+/** Unknown NUMA node **/
+#define SCTK_ALLOC_UNKNWON_NUMA_NODE -1
+
+/************************** MACROS *************************/
+//if have NUMA support
+#ifdef HAVE_LIBNUMA
+/** Define the maximum number of numa node supported. **/
+#define SCTK_MAX_NUMA_NODE 4
+#else
+/** Define the maximum number of numa node supported, one if no numa support. **/
+#define SCTK_MAX_NUMA_NODE 1
+#endif
+
+/** Select the NUMA memory source init function. **/
+#define SCTK_DEFAULT_NUMA_MM_SOURCE_ID SCTK_MAX_NUMA_NODE
 
 /************************** MACROS *************************/
 /**

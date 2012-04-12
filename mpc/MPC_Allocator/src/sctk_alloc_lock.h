@@ -27,7 +27,7 @@
 #include <pthread.h>
 
 /************************** MACROS *************************/
-#ifdef MPC_check_compatibility
+#ifdef MPC_Threads
 #define SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK 1
 #endif
 

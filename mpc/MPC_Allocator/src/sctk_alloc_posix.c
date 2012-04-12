@@ -30,25 +30,36 @@
 #include "sctk_alloc_debug.h"
 #include "sctk_alloc_spy.h"
 #include "sctk_alloc_inlined.h"
+//optional headers
+#ifdef HAVE_LIBNUMA
+#include "sctk_alloc_topology.h"
+#endif
+
 //if have NUMA support
 #ifdef HAVE_LIBNUMA
-#include <numa.h>
-/** Define the maximum number of numa node supported. **/
-#define SCTK_MAX_NUMA_NODE 4
+#include <hwloc.h>
+// #include "../../../install/include/mpcmp.h"
 /** Select the NUMA memory source init function. **/
 #define sctk_alloc_posix_mmsrc_init sctk_alloc_posix_mmsrc_numa_init
 #else
-/** Define the maximum number of numa node supported, one if no numa support. **/
-#define SCTK_MAX_NUMA_NODE 1
 /** Select the UMA memory source init function. **/
 #define sctk_alloc_posix_mmsrc_init sctk_alloc_posix_mmsrc_uma_init
 #endif
 
+/*************************** ENUM **************************/
+enum sctk_alloc_posix_init_state
+{
+	SCTK_ALLOC_POSIX_INIT_NONE,
+	SCTK_ALLOC_POSIX_INIT_EGG,
+	SCTK_ALLOC_POSIX_INIT_DEFAULT,
+	SCTK_ALLOC_POSIX_INIT_NUMA,
+};
+
 /************************* GLOBALS *************************/
 /** Permit to know if the base initialization was done or not. **/
-static bool sctk_global_base_init = false;
+static enum sctk_alloc_posix_init_state sctk_global_base_init = SCTK_ALLOC_POSIX_INIT_NONE;
 /** Global memory source for the current process (shared between all threads). **/
-static struct sctk_alloc_mm_source_default sctk_global_memory_source[SCTK_MAX_NUMA_NODE];
+static struct sctk_alloc_mm_source_default * sctk_global_memory_source[SCTK_MAX_NUMA_NODE + 1];
 /**
  * Basic allocation for allocator internal management (allocation of chain structures....).
  * It's required to boostrap the allocator.
@@ -69,7 +80,72 @@ int sctk_get_node_from_cpu (int cpu);
 /** Init the global memory source for UMA architecture. **/
 SCTK_STATIC void sctk_alloc_posix_mmsrc_uma_init(void)
 {
-	sctk_alloc_mm_source_default_init(sctk_global_memory_source,SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE);
+	//error
+	assume (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_EGG,"Invalid init state while calling allocator default init phase.");
+
+	sctk_global_memory_source[0] = sctk_alloc_chain_alloc(&sctk_global_egg_chain,sizeof(struct sctk_alloc_mm_source_default));
+	sctk_alloc_mm_source_default_init(sctk_global_memory_source[0],SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE);
+}
+
+/************************* FUNCTION ************************/
+SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init_node(int id)
+{
+	//errors and debug
+	assume(id <= SCTK_MAX_NUMA_NODE,"Caution, you get more node than supported by allocator. Limit is setup by SCTK_MAX_NUMA_NODE macro in sctk_alloc_posix.c.");
+	SCTK_PDEBUG("Init memory source id = %d , MAX_NUMA_NODE = %d",id,SCTK_MAX_NUMA_NODE);
+
+	SCTK_PDEBUG("Allocator init phase : Default");
+	sctk_global_memory_source[id] = sctk_alloc_chain_alloc(&sctk_global_egg_chain,sizeof(struct sctk_alloc_mm_source_default));
+	sctk_alloc_mm_source_default_init(sctk_global_memory_source[id],SCTK_ALLOC_HEAP_BASE + SCTK_ALLOC_HEAP_SIZE * id,SCTK_ALLOC_HEAP_SIZE);
+}
+
+/************************* FUNCTION ************************/
+SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init_phase_default(void)
+{
+	//error
+	assume (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_EGG,"Invalid init state while calling allocator default init phase.");
+
+	SCTK_PDEBUG("Allocator init phase : NUMA");
+	//init the default source ID of thead which are on unknown NUMA node or for initial thread in MPC.
+	sctk_alloc_posix_mmsrc_numa_init_node(SCTK_DEFAULT_NUMA_MM_SOURCE_ID);
+}
+
+/************************* FUNCTION ************************/
+void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void)
+{
+	//vars
+	int nodes;
+	int i;
+
+	//error
+	assume (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_DEFAULT,"Invalid init state while calling allocator NUMA init phase.");
+
+	//get number of nodes
+	SCTK_PDEBUG("Init numa nodes");
+	nodes = sctk_get_numa_node_number();
+	assume(nodes <= SCTK_MAX_NUMA_NODE,"Caution, you get more node than supported by allocator. Limit is setup by SCTK_MAX_NUMA_NODE macro in sctk_alloc_posix.c.");
+
+	//debug
+	SCTK_PDEBUG("Init with NUMA_NODES = %d , MAX_NUMA_NODE = %d",nodes,SCTK_MAX_NUMA_NODE);
+
+	if (nodes == 0)
+	{
+		sctk_global_memory_source[0] = sctk_global_memory_source[SCTK_DEFAULT_NUMA_MM_SOURCE_ID];
+	} else {
+		//init heaps for each NUMA node
+		SCTK_PDEBUG("Memory source size is %lu GB.",((SCTK_ALLOC_HEAP_SIZE)/1024ul/1024ul/1024ul));
+		for ( i = 0 ; i < nodes ; ++i)
+			sctk_alloc_posix_mmsrc_numa_init_node(i);
+	}
+
+	//mark NUMA init phase as done.
+	sctk_global_base_init = SCTK_ALLOC_POSIX_INIT_NUMA;
+}
+
+/************************* FUNCTION ************************/
+void sctk_alloc_posix_plug_on_egg_allocator(void)
+{
+	sctk_alloc_posix_set_default_chain(&sctk_global_egg_chain);
 }
 
 /************************* FUNCTION ************************/
@@ -79,17 +155,13 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_uma_init(void)
 **/
 SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init(void)
 {
-	int nodes;
-	int i;
-	SCTK_PDEBUG("Init numa nodes");
-// 	if (numa_available() == 0)
-		nodes = SCTK_MAX_NUMA_NODE;
-// 	else
-// 		nodes = 1;
-	assume(nodes <= SCTK_MAX_NUMA_NODE,"Caution, you get more node than supported by allocator. Limit is setup by SCTK_MAX_NUMA_NODE macro in sctk_alloc_posix.c.");
-	SCTK_PDEBUG("Init with NUMA_NODES = %d , MAX_NUMA_NODE = %d",nodes,SCTK_MAX_NUMA_NODE);
-	for ( i = 0 ; i < nodes ; ++i)
-		sctk_alloc_mm_source_default_init(sctk_global_memory_source+i,SCTK_ALLOC_HEAP_BASE+SCTK_ALLOC_HEAP_SIZE*i,SCTK_ALLOC_HEAP_SIZE);
+	//setup default memory source
+	sctk_alloc_posix_mmsrc_numa_init_phase_default();
+
+	//in MPC NUMA is 
+	#ifndef MPC_Common
+	sctk_alloc_posix_mmsrc_numa_init_phase_numa();
+	#endif
 }
 
 /************************* FUNCTION ************************/
@@ -99,18 +171,35 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init(void)
 **/
 SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(void)
 {
+	//vars
+	struct sctk_alloc_mm_source * res;
+	
 	//get numa node
-	#ifdef HAVE_NUMA
+	#ifdef HAVE_LIBNUMA
 	int node;
-	if (numa_available())
-		node = sctk_get_node_from_cpu (sctk_get_cpu());
+	//during init phase, allocator use the default memory source, so the default thread will not
+	//be really numa aware.
+	if (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_EGG || sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_DEFAULT)
+		node = SCTK_DEFAULT_NUMA_MM_SOURCE_ID;
+	else if (sctk_is_numa_node())
+		node = sctk_alloc_init_on_numa_node();
 	else
-		node = 0;
-	assert(node < numa_available());
+		node = SCTK_DEFAULT_NUMA_MM_SOURCE_ID;
 	#else
-	int node = 0;
+	int node = SCTK_DEFAULT_NUMA_MM_SOURCE_ID;
 	#endif
-	return (struct sctk_alloc_mm_source*)(sctk_global_memory_source+node);
+
+	//check and get
+	SCTK_PDEBUG("Init allocation chain of thread on memory source %d (NUMA node %d)",node,node - 1);
+	assert(sctk_global_base_init > SCTK_ALLOC_POSIX_INIT_NONE);
+	assume(node <= SCTK_MAX_NUMA_NODE,"Node ID (%d) is larger than current SCTK_MAX_NUMA_NODE.");
+	assert(node >= 0);
+	res = (struct sctk_alloc_mm_source*)(sctk_global_memory_source[node]);
+	assert(res != NULL);
+	assume(res->request_memory != NULL,"The memory source to map to current new thread is no initialized.");
+
+	//return
+	return res;
 }
 
 /************************* FUNCTION ************************/
@@ -123,32 +212,56 @@ void sctk_alloc_posix_base_init(void)
 {
 	/** @todo check for optimization **/
 	static SCTK_ALLOC_INIT_LOCK_TYPE global_mm_mutex = SCTK_ALLOC_INIT_LOCK_INITIALIZER;
+	#warning Maybe allocate this with mmap or sbrk
+	static char buffer[SCTK_MACRO_BLOC_SIZE];
 
 	//check to avoid taking the mutex if not necessary
-	if (sctk_global_base_init == true)
+	if (sctk_global_base_init >= SCTK_ALLOC_POSIX_INIT_DEFAULT)
 		return;
 
 	//critical initialization section
 	SCTK_ALLOC_INIT_LOCK_LOCK(&global_mm_mutex);
 
 	//check if not already init by previous thread
-	if (sctk_global_base_init == false)
+	if (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_NONE)
 	{
-		//init global memory source
-		sctk_alloc_posix_mmsrc_init();
+		//debug
+		SCTK_PDEBUG("Allocator init phase : Egg");
 
 		//setup egg allocator to bootstrap thread allocation chains.
 		/** @todo Maybe optimize by avoiding loading 2MB of virtual memory on egg allocator. **/
-		sctk_alloc_chain_user_init(&sctk_global_egg_chain,NULL,0);
-		sctk_global_egg_chain.source = sctk_alloc_posix_get_local_mm_source();
+		sctk_alloc_chain_user_init(&sctk_global_egg_chain,buffer,SCTK_MACRO_BLOC_SIZE);
 
 		#ifndef NDEBUG
 		//init debug section
 		sctk_alloc_debug_init();
 		#endif
 
+		//mark it as default chain to call for inti phase
+		sctk_current_alloc_chain = &sctk_global_egg_chain;
+
+		//marked egg as init
+		sctk_global_base_init = SCTK_ALLOC_POSIX_INIT_EGG;
+
+		//init topology system if have NUMA
+		//on MPC it will be done latter after entering in MPC main()
+		#ifndef MPC_Common
+		#ifdef HAVE_LIBNUMA
+		sctk_alloc_init_topology();
+		#endif
+		#endif
+
+		//init global memory source
+		sctk_alloc_posix_mmsrc_init();
+
+		//can bind the memory source in egg allocator
+		sctk_global_egg_chain.source = sctk_alloc_posix_get_local_mm_source();
+
+		//unmark it
+		sctk_current_alloc_chain = NULL;
+
 		//marked as init
-		sctk_global_base_init = true;
+		sctk_global_base_init = SCTK_ALLOC_POSIX_INIT_DEFAULT;
 	}
 
 	//end of critical section
@@ -161,6 +274,10 @@ void sctk_alloc_posix_base_init(void)
 **/
 struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void)
 {
+	static int cnt = 0;
+	cnt++;
+	SCTK_PDEBUG("Create new alloc chain, total is %d",cnt);
+	
 	//start allocator base initialisation if not already done.
 	sctk_alloc_posix_base_init();
 
@@ -170,7 +287,9 @@ struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void)
 
 	//init allocation chain.
 	sctk_alloc_chain_user_init(chain,NULL,0);
-	chain->source = (struct sctk_alloc_mm_source*)sctk_global_memory_source;
+
+	//bin to the adapted memory source depending on numa node availability
+	chain->source = sctk_alloc_posix_get_local_mm_source();
 
 	//mark as non shared
 	chain->shared = false;

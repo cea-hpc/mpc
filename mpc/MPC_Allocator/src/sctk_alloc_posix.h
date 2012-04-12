@@ -38,6 +38,7 @@ struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void);
 void sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain);
 struct sctk_alloc_chain * sctk_alloc_posix_setup_tls_chain(void);
 sctk_size_t sctk_alloc_posix_get_size(void *ptr);
+void sctk_alloc_posix_plug_on_egg_allocator(void);
 
 /************************* FUNCTION ************************/
 #ifdef MPC_ALLOCATOR_DISABLE_STATIC
