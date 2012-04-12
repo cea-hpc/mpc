@@ -39,7 +39,7 @@
 	#endif
 #endif //NDEBUG
 
-#ifndef ENABLE_TRACE
+#ifdef ENABLE_TRACE
 	#define SCTK_PTRACE sctk_alloc_ptrace
 #else
 	#define SCTK_PTRACE //sctk_alloc_ptrace

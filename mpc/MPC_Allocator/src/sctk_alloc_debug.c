@@ -48,6 +48,7 @@ static int SCTK_ALLOC_TRACE_FD = -1;
 /**
  * If SCTK_ALLOC_TRACE_FD is set to -1, setup the output file descriptor for patrace mode.
 **/
+#ifdef ENABLE_TRACE
 void sctk_alloc_ptrace_init(void )
 {
 	char fname[2*sizeof(SCTK_ALLOC_TRACE_FILE)];
@@ -68,6 +69,7 @@ void sctk_alloc_ptrace_init(void )
 		}
 	}
 }
+#endif
 
 /************************* FUNCTION ************************/
 /**
@@ -87,6 +89,7 @@ void sctk_alloc_pdebug (const char * format,...)
 }
 
 /************************* FUNCTION ************************/
+#ifdef ENABLE_TRACE
 /**
  * Provide a non buffered printf for debugging as we must avoid to call the allocator in debugging
  * methods.
@@ -107,6 +110,7 @@ void sctk_alloc_ptrace (const char * format,...)
 	write(SCTK_ALLOC_TRACE_FD,tmp2,strlen(tmp2));
 	fflush(stderr);
 }
+#endif
 
 /************************* FUNCTION ************************/
 void sctk_alloc_fprintf(int fd,const char * format,...)
@@ -205,21 +209,26 @@ void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain* chain)
 }
 
 /************************* FUNCTION ************************/
+#ifndef NDEBUG
 void sctk_alloc_crash_dump(void)
 {
 	if (sctk_alloc_chain_list[0] != NULL)
 		sctk_alloc_debug_dump_alloc_chain(sctk_alloc_chain_list[0]);
 	abort();
 }
+#endif
 
 /************************* FUNCTION ************************/
+#ifndef NDEBUG
 void sctk_alloc_debug_setgault_handler(int signal, siginfo_t *si, void *arg)
 {
 	sctk_alloc_perror("SEGMENTATION FAULT");
 	sctk_alloc_crash_dump();
 }
+#endif
 
 /************************* FUNCTION ************************/
+#ifndef NDEBUG
 void sctk_alloc_debug_setup_sighandler()
 {
 	int res;
@@ -236,10 +245,13 @@ void sctk_alloc_debug_setup_sighandler()
 		exit(1);
 	}
 }
+#endif
 
 /************************* FUNCTION ************************/
+#ifndef NDEBUG
 void sctk_alloc_debug_init(void )
 {
 	sctk_alloc_debug_setup_sighandler();
 }
+#endif
 

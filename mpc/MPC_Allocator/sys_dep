@@ -65,6 +65,10 @@ SCTK_CHECK_FUNC strlen
 SCTK_CHECK_FUNC sysconf
 SCTK_CHECK_FUNC write
 
+SCTK_CHECK_OPTION -DHAVE_LIBNUMA
+SCTK_CHECK_OPTION -DENABLE_STATIC
+SCTK_CHECK_OPTION -DNDEBUG
+
 sctk_echo
 begin_section "Page migration"
 check_binding
