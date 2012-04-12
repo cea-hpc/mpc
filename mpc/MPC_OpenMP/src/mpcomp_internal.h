@@ -331,6 +331,7 @@ static inline void __mpcomp_team_info_init( mpcomp_team_info * team_info ) {
   sctk_nodebug( "__mpcomp_team_info_init: Filling cell %d with %d", 
       MPCOMP_MAX_ALIVE_SINGLE, MPCOMP_MAX_THREADS ) ;
 #else
+  sctk_debug("__mpcomp_team_info_init: no atomics!");
   for ( i = 0 ; i < MPCOMP_MAX_ALIVE_SINGLE ; i++ ) {
     team_info->single_nb_threads_entered[i] = 0 ;
     team_info->single_lock_enter[ i ] = SCTK_SPINLOCK_INITIALIZER ;
