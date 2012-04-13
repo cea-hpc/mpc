@@ -48,14 +48,7 @@ do
 			ARGUMENTS_HYDRA="${ARGUMENTS_HYDRA} -`echo A$arg | sed -e 's/A--hydra//g'`"
 			;;
    --mic)
-     ARGUMENTS_HYDRA="${ARGUMENTS_HYDRA} --host=i686-pc-linux --target=i686-pc-linux"
-     ARGUMENTS_SIMPLE="${ARGUMENTS_SIMPLE} --host=i686-pc-linux --target=i686-pc-linux"
-     F77=ifort
-     CC=icc
-     export CFLAGS="-mmic ${CFLAGS}"
-     export LDFLAGS="-mmic ${LDFLAGS}"
-     AR=/usr/linux-l1om-4.7/bin/x86_64-l1om-linux-ar
-     LD=/usr/linux-l1om-4.7/bin/x86_64-l1om-linux-ld
+     mic_configure_hydra
      ;;
 		*)
 			ARGUMENTS_HYDRA="${ARGUMENTS_HYDRA} $arg"
@@ -66,6 +59,8 @@ done
 
 ARGUMENTS_HYDRA="$ARGUMENTS_HYDRA $(prepare_arguments)"
 ARGUMENTS_SIMPLE="$ARGUMENTS_SIMPLE $(prepare_arguments)"
+export CFLAGS
+export LDFLAGS
 
 echo "Running cd hydra && ./configure $PREFIX $ARGUMENTS_HYDRA"
 cd hydra && ./configure $PREFIX $ARGUMENTS_HYDRA  || exit 1

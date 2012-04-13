@@ -254,12 +254,17 @@ for arg in "$@" ; do
     # Rule for MIC
     --mic=*)
     SCTK_CROSS_EXEC="${MPC_SOURCE_DIR}MPC_Tools/cross_compilation_scripts/mic.sh"
-    export SCTK_MIC_HOSTNAME="`echo A$arg | sed -e 's/A--mic=//g'`"
+    tmp_arg="`echo A$arg | sed -e 's/A--mic=//g'`"
+    # FIXME: we should check if USER and HOSTNAME are well formated
+    SCTK_MIC_HOSTNAME="`echo $tmp_arg | sed -e 's/^.*@//g'`"
+    SCTK_MIC_USER="`echo $tmp_arg | sed -e 's/@.*$//g'`"
+    export SCTK_MIC_USER
+    export SCTK_MIC_HOSTNAME
     SCTK_GCC=icc
     SCTK_CC=icc
     SCTK_F77=ifort
     SCTK_CFLAGS="$SCTK_CFLAGS -mmic"
-    SCTK_LDFLAGS="$SCTK_LDFLAGS -mmic"
+    SCTK_LDFLAGS="$SCTK_LDFLAGS -mmic -lirc -lsvml"
     SCTK_AR=/usr/linux-l1om-4.7/bin/x86_64-l1om-linux-ar
     SCTK_LD=/usr/linux-l1om-4.7/bin/x86_64-l1om-linux-ld
     ;;

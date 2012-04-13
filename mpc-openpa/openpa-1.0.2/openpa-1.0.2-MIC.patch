@@ -1,0 +1,19 @@
+diff -rc openpa-1.0.2/src/primitives/opa_gcc_intel_32_64_p3barrier.h openpa-1.0.2.bugfix/src/primitives/opa_gcc_intel_32_64_p3barrier.h
+*** openpa-1.0.2/src/primitives/opa_gcc_intel_32_64_p3barrier.h	Fri Jul 10 22:20:28 2009
+--- openpa-1.0.2.bugfix/src/primitives/opa_gcc_intel_32_64_p3barrier.h	Fri Apr 13 13:44:59 2012
+***************
+*** 11,17 ****
+--- 11,23 ----
+     but no full barrier or load barriers.  However, the lock prefix
+     orders loads and stores (essentially doing a full barrier).  */
+  
++ #if (__ICC && (__MIC__ || __MIC2__))
++ /*  On MIC, fence seems to be completely unnecessary.
++  *  Just for simplicity of 1st implementation, it defaults to x86 */
++ #define OPA_write_barrier() __asm__ __volatile__  ("lock addl $0,(%rsp)")
++ #else
+  #define OPA_write_barrier() __asm__ __volatile__ ( "sfence" ::: "memory" )
++ #endif
+  
+  static inline void OPA_read_barrier(void) {
+      int a = 0;

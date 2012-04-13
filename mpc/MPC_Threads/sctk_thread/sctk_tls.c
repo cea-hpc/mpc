@@ -510,7 +510,7 @@ void sctk_hls_checkout_on_vp ()
 	  level_id = atol ( hwloc_obj_get_info_by_name (obj, "hls_level") ) ;
 	  sctk_hls[sctk_hls_numa_level_1_scope] = sctk_hls_repository[numa_id] + level_id ;
   }
-  
+
   for ( i = 1 ; i <= 3 ; ++i ) {
 	  obj = hwloc_get_ancestor_obj_by_depth (topology, core_depth-i, pu) ;
 	  if ( obj != NULL && obj->type == HWLOC_OBJ_CACHE ) {
@@ -656,7 +656,7 @@ sctk_tls_module_alloc_and_fill ()
 	int i;
 
 	sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( &tls_module, extls ) ;
-	
+
 	for ( i=0; i<sctk_extls_max_scope+sctk_hls_max_scope; ++i )
 		sctk_tls_module_vp[i] = tls_module[i] ;
 

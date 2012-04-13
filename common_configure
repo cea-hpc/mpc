@@ -25,9 +25,45 @@
 # Env variables which can be set
 CC=""
 CFLAGS=""
+CPPFLAGS=""
 LDFLAGS=""
 F77=""
 AR=""
+
+######################################################
+#             CROSS-COMPILATION MIC
+######################################################
+mic_configure_hwloc() {
+  HWLOC_ARGUMENTS="${HWLOC_ARGUMENTS} --host=i686-pc-linux-gnu --target=i686-pc-linux-gnu"
+  F77=ifort
+  CC=icc
+  AR=/usr/linux-l1om-4.7/bin/x86_64-l1om-linux-ar
+  LD=/usr/linux-l1om-4.7/bin/x86_64-l1om-linux-ld
+  CFLAGS="${CFLAGS} -mmic"
+  LDFLAGS="${LDFLAGS} -mmic"
+  CPPFLAGS="${CFLAGS}"
+}
+
+mic_configure_hydra() {
+  ARGUMENTS_HYDRA="${ARGUMENTS_HYDRA} --host=i686-pc-linux-gnu --target=i686-pc-linux-gnu"
+  ARGUMENTS_SIMPLE="${ARGUMENTS_SIMPLE} --host=i686-pc-linux-gnu --target=i686-pc-linux-gnu"
+  F77=ifort
+  CC=icc
+  AR=/usr/linux-l1om-4.7/bin/x86_64-l1om-linux-ar
+  LD=/usr/linux-l1om-4.7/bin/x86_64-l1om-linux-ld
+  CFLAGS="-mmic ${CFLAGS}"
+  LDFLAGS="-mmic ${LDFLAGS}"
+}
+
+mic_configure_openpa() {
+  ARGUMENTS_OPENPA="${ARGUMENTS_OPENPA} --host=i686-pc-linux --target=i686-pc-linux-gnu"
+  F77=ifort
+  CC=icc
+  AR=/usr/linux-l1om-4.7/bin/x86_64-l1om-linux-ar
+  LD=/usr/linux-l1om-4.7/bin/x86_64-l1om-linux-ld
+  CFLAGS="-mmic ${CFLAGS}"
+  LDFLAGS="-mmic ${LDFLAGS}"
+}
 
 prepare_arguments() {
   OUTPUT=""
@@ -40,24 +76,20 @@ prepare_arguments() {
     OUTPUT="${OUTPUT} F77=${F77}"
   fi
 
-#  if [ ! -z "${CFLAGS}" ]; then
-#    OUTPUT="${OUTPUT} CFLAGS=\"${CFLAGS}\""
-#  fi
+  if [ ! -z "${AR}" ]; then
+    OUTPUT="${OUTPUT} AR=${AR}"
+  fi
 
-#  if [ ! -z "${LDFLAGS}" ]; then
-#    OUTPUT="${OUTPUT} LDFLAGS=${LDFLAGS}"
-#  fi
-
-#  if [ ${AR} != "" ]; then
-#    OUTPUT="${OUTPUT} AR=${AR}"
-#  fi
-
-#  if [ ${LD} != "" ]; then
-#    OUTPUT="${OUTPUT} LD=${LD}"
-#  fi
+  if [ ! -z "${LD}" ]; then
+    OUTPUT="${OUTPUT} LD=${LD}"
+  fi
 
   echo $OUTPUT
 }
+
+######################################################
+#             ARCHIVES PREPARATION
+######################################################
 
 prepare_archive_directory() {
 

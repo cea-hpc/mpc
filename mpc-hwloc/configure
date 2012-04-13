@@ -35,28 +35,25 @@ if test "${PATCH_NEEDED}" = "1" ; then
   cd ${CURRENT_WD} || exit 1
 fi
 
+HWLOC_ARGUMENTS=""
 for arg in $ARGUMENTS
 do
 	case $arg in
    --mic)
-     ARGUMENTS_HWLOC="${ARGUMENTS_HWLOC} --host=i686-pc-linux --target=i686-pc-linux"
-     F77=ifort
-     CC=icc
-     AR=/usr/linux-l1om-4.7/bin/x86_64-l1om-linux-ar
-     LD=/usr/linux-l1om-4.7/bin/x86_64-l1om-linux-ld
+     mic_configure_hwloc
      ;;
 		*)
-			ARGUMENTS_HWLOC="${ARGUMENTS_HWLOC} $arg"
-			;;
+	   HWLOC_ARGUMENTS="${HWLOC_ARGUMENTS} $arg"
+		 ;;
 	esac
 done
 
-ARGUMENTS_HWLOC="$ARGUMENTS_HWLOC $(prepare_arguments)"
+HWLOC_ARGUMENTS="${HWLOC_ARGUMENTS} $(prepare_arguments)"
+export CFLAGS
+export CPPFLAGS
+export LDFLAGS
 
-export CFLAGS="-mmic ${CFLAGS}"
-export LDFLAGS="-mmic ${LDFLAGS}"
-
-echo "cd hwloc-$VERSION && Running: ./configure $PREFIX $ARGUMENTS_HWLOC"
-cd hwloc-$VERSION && ./configure $PREFIX $ARGUMENTS_HWLOC || exit 1
+echo "cd hwloc-$VERSION && Running: ./configure $PREFIX $HWLOC_ARGUMENTS"
+cd hwloc-$VERSION && ./configure $PREFIX $HWLOC_ARGUMENTS || exit 1
 
 exit 0
