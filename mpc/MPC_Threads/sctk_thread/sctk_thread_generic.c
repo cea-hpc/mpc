@@ -143,6 +143,88 @@ sctk_thread_generic_cond_broadcast (sctk_thread_cond_t * lock)
 }
 
 /***************************************/
+/* READ/WRITE SYNCHS                   */
+/***************************************/
+
+static int
+sctk_thread_generic_rwlockattr_destroy( sctk_thread_rwlockattr_t* attr ){
+  return sctk_thread_generic_rwlocks_rwlockattr_destroy( (sctk_thread_generic_rwlockattr_t*) attr,
+		  				&(sctk_thread_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_rwlockattr_getpshared( const sctk_thread_rwlockattr_t* attr, int* val ){
+  return sctk_thread_generic_rwlocks_rwlockattr_getpshared( (sctk_thread_generic_rwlockattr_t*) attr,
+		  				val, &(sctk_thread_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_rwlockattr_init( sctk_thread_rwlockattr_t* attr ){
+  return sctk_thread_generic_rwlocks_rwlockattr_init( (sctk_thread_generic_rwlockattr_t*) attr,
+		  				&(sctk_thread_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_rwlockattr_setpshared( sctk_thread_rwlockattr_t* attr, int val ){
+  return sctk_thread_generic_rwlocks_rwlockattr_setpshared( (sctk_thread_generic_rwlockattr_t*) attr,
+		  				val, &(sctk_thread_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_rwlock_destroy( sctk_thread_rwlock_t* lock ){
+  return sctk_thread_generic_rwlocks_rwlock_destroy( (sctk_thread_generic_rwlock_t*) lock,
+		  				&(sctk_thread_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_rwlock_init( sctk_thread_rwlock_t* lock, sctk_thread_rwlockattr_t* attr ){
+  return sctk_thread_generic_rwlocks_rwlock_init( (sctk_thread_generic_rwlock_t*) lock,
+		  				(sctk_thread_generic_rwlockattr_t*) attr, &(sctk_thread_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_rwlock_rdlock( sctk_thread_rwlock_t* lock ){
+  return sctk_thread_generic_rwlocks_rwlock_rdlock( (sctk_thread_generic_rwlock_t*) lock,
+		  				&(sctk_thread_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_rwlock_wrlock( sctk_thread_rwlock_t* lock ){
+  return sctk_thread_generic_rwlocks_rwlock_wrlock( (sctk_thread_generic_rwlock_t*) lock,
+		  				&(sctk_thread_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_rwlock_tryrdlock( sctk_thread_rwlock_t* lock ){
+  return sctk_thread_generic_rwlocks_rwlock_tryrdlock( (sctk_thread_generic_rwlock_t*) lock,
+		  				&(sctk_thread_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_rwlock_trywrlock( sctk_thread_rwlock_t* lock ){
+  return sctk_thread_generic_rwlocks_rwlock_trywrlock( (sctk_thread_generic_rwlock_t*) lock,
+		  				&(sctk_thread_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_rwlock_unlock( sctk_thread_rwlock_t* lock ){
+  return sctk_thread_generic_rwlocks_rwlock_unlock( (sctk_thread_generic_rwlock_t*) lock,
+		  				&(sctk_thread_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_rwlock_timedrdlock( sctk_thread_rwlock_t* lock, const struct timespec* time ){
+  return sctk_thread_generic_rwlocks_rwlock_timedrdlock( (sctk_thread_generic_rwlock_t*) lock,
+		  				time, &(sctk_thread_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_rwlock_timedwrlock( sctk_thread_rwlock_t* lock, const struct timespec* time ){
+  return sctk_thread_generic_rwlocks_rwlock_timedwrlock( (sctk_thread_generic_rwlock_t*) lock,
+		  				time, &(sctk_thread_generic_self()->sched) );
+}
+
+/***************************************/
 /* THREAD CREATION                     */
 /***************************************/
 
@@ -382,6 +464,7 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
 		      __sctk_start_routine, stack, stack_size);
   }
 
+  thread_id->attr.nb_wait_for_join = 0;
 
   *threadp = thread_id;
   
@@ -419,44 +502,6 @@ sctk_thread_generic_create (sctk_thread_generic_t * threadp,
 }
 
 /***************************************/
-/* THREAD JOIN                         */
-/***************************************/
-
-int
-sctk_thread_generic_join ( sctk_thread_generic_t* threadp, int** val ){
-  /*
-   	ERRORS:
-   	ESRCH  No  thread could be found corresponding to that specified by th.
-   	EINVAL The th thread has been detached.
-   	EINVAL Another thread is already waiting on termination of th.
-   	EDEADLK The th argument refers to the calling thread.
-   */
-
-  sctk_thread_generic_t* current;
-  // sched ??
-  sctk_thread_generic_thread_status_t* status;
-  sctk_nodebug ("Join Thread %p", /*Thread*/ );
-  
-  /* TODO: handle signals
-	 sctk_thread_generic_testcancel( Thread  )
-   */
- 
-  if( /* THREAD_ATTENDU != THREAD_COURANT */ ){
-	if( /* THREAD_ATTENDU->JOINED */ ) return SCTK_ESRCH;
-	if( /* THREAD_ATTENDU->DETACHED */ ) return SCTK_EINVAL;
-	sctk_nodebug ("TO Join Thread %p", th);
-	sctk_thread_generic_wait_for_value_and_poll();
-	sctk_nodebug ("Joined Thread %p", th);
-
-	if( val != NULL ) *val = ret_val;
-  }else{
-    return SCTK_EDEADLK;
-  }
-
-  return 0;
-}
-
-/***************************************/
 /* THREAD POLLING                      */
 /***************************************/
 
@@ -481,7 +526,59 @@ sctk_thread_generic_wait_for_value_and_poll (volatile int *data, int value,
 
   sctk_thread_generic_add_task(&task); 
 
-} 
+}
+
+/***************************************/
+/* THREAD JOIN                         */
+/***************************************/
+
+int
+sctk_thread_generic_join ( sctk_thread_generic_t threadp, void** val ){
+  /*
+   	ERRORS:
+   	ESRCH  No  thread could be found corresponding to that specified by th.
+   	EINVAL The th thread has been detached.
+   	EINVAL Another thread is already waiting on termination of th.
+   	EDEADLK The th argument refers to the calling thread.
+   */
+
+  sctk_thread_generic_p_t* th = threadp;
+  sctk_thread_generic_scheduler_t* sched;
+  sctk_thread_generic_p_t* current;
+  sctk_thread_generic_thread_status_t* status;
+
+  /* Get the current thread */
+  sched = &(sctk_thread_generic_self()->sched);
+  current = sched->th;
+  sctk_assert( current->sched == sched );
+  
+  sctk_nodebug ("Join Thread %p", th );
+
+  /* TODO: handle signals
+	 sctk_thread_generic_testcancel( Thread  )
+   */
+
+  if( th != current ){
+	if( th->sched.status == sctk_thread_generic_joined ) return SCTK_ESRCH;
+	if( th->attr.detachstate != 0 ) return SCTK_EINVAL;
+
+	th->attr.nb_wait_for_join++;
+	if (th->attr.nb_wait_for_join != 1) return SCTK_EINVAL;
+
+	status = (sctk_thread_generic_thread_status_t*) &(th->sched.status);
+	sctk_nodebug ("TO Join Thread %p", th);
+	sctk_thread_generic_wait_for_value_and_poll( (volatile int *) status, sctk_thread_generic_zombie, NULL, NULL );
+	sctk_nodebug ("Joined Thread %p", th);
+
+	if( val != NULL ) *val = th->attr.return_value;
+	th->sched.status = sctk_thread_generic_joined;
+  }else{
+    return SCTK_EDEADLK;
+  }
+
+  return 0;
+}
+
 /***************************************/
 /* THREAD ONCE                         */
 /***************************************/
@@ -556,6 +653,10 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
   sctk_thread_generic_scheduler_init_thread(&(sctk_thread_generic_self()->sched),
 					    sctk_thread_generic_self());
 
+  /****** JOIN ******/
+  sctk_add_func_type (sctk_thread_generic, join,
+			  int (*)(sctk_thread_generic_t* threadp, void** val));
+
   /****** KEYS ******/
   sctk_thread_generic_keys_init();
   sctk_add_func_type (sctk_thread_generic, key_create,
@@ -590,6 +691,34 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
    sctk_add_func_type (sctk_thread_generic, cond_broadcast,
 		      int (*)(sctk_thread_cond_t *));
 #warning "ADD destroy and timedwait"
+
+  /****** RWLOCK ******/
+/*  sctk_thread_generic_rwlocks_init();
+  __sctk_ptr_thread_rwlock_init = sctk_thread_generic_rwlock_init;
+  sctk_add_func_type (sctk_thread_generic, rwlockattr_destroy,
+		  	  int (*)( sctk_thread_rwlockattr_t* attr );
+  sctk_add_func_type (sctk_thread_generic, rwlockattr_getpshared,
+		  	  int (*)( sctk_thread_rwlockattr_t* attr, int* val );
+  sctk_add_func_type (sctk_thread_generic, rwlockattr_init,
+		  	  int (*)( sctk_thread_rwlockattr_t* attr );
+  sctk_add_func_type (sctk_thread_generic, rwlockattr_setpshared,
+		  	  int (*)( sctk_thread_rwlockattr_t* attr, int val );
+  sctk_add_func_type (sctk_thread_generic, rwlock_destroy,
+		  	  int (*)( sctk_thread_rwlock_t* lock );
+  sctk_add_func_type (sctk_thread_generic, rwlock_rdlock,
+		  	  int (*)( sctk_thread_rwlock_t* lock );
+  sctk_add_func_type (sctk_thread_generic, rwlock_wrlock,
+		  	  int (*)( sctk_thread_rwlock_t* lock );
+  sctk_add_func_type (sctk_thread_generic, rwlock_tryrdlock,
+		  	  int (*)( sctk_thread_rwlock_t* lock );
+  sctk_add_func_type (sctk_thread_generic, rwlock_trywrlock,
+		  	  int (*)( sctk_thread_rwlock_t* lock );
+  sctk_add_func_type (sctk_thread_generic, rwlock_unlock,
+		  	  int (*)( sctk_thread_rwlock_t* lock );
+  sctk_add_func_type (sctk_thread_generic, rwlock_timedrdlock,
+		  	  int (*)( sctk_thread_rwlock_t* lock, const struct timespec* time );
+  sctk_add_func_type (sctk_thread_generic, rwlock_timedwrlock,
+		  	  int (*)( sctk_thread_rwlock_t* lock, const struct timespec* time );*/
 
   /****** THREAD CREATION ******/  
   sctk_thread_generic_check_size (sctk_thread_generic_attr_t, sctk_thread_attr_t);

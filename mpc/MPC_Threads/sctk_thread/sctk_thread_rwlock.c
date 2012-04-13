@@ -19,50 +19,15 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK_THREAD_GENERIC_H_
-#define __SCTK_THREAD_GENERIC_H_
 
-#include "sctk_config.h"
-#include "sctk_debug.h"
-#include "sctk_thread.h"
-#include <sctk_thread_keys.h>
-#include <sctk_thread_mutex.h>
-#include <sctk_thread_scheduler.h>
-#include <sctk_thread_cond.h>
+#include "sctk_thread_rwlock.h"
 
-typedef struct{
-  int scope;
-  int detachstate; 
-  int schedpolicy; 
-  int inheritsched;
-  int nb_wait_for_join;
-  char* stack;
-  size_t stack_size;
-  void *(*start_routine) (void *);
-  void *arg;
-  void* return_value;
-  int bind_to;
-  int polling;
-}sctk_thread_generic_intern_attr_t;
-#define sctk_thread_generic_intern_attr_init {SCTK_THREAD_SCOPE_PROCESS,SCTK_THREAD_CREATE_JOINABLE,0,SCTK_THREAD_EXPLICIT_SCHED,NULL,0,NULL,NULL,-1,0}
-
-typedef struct{
-  sctk_thread_generic_intern_attr_t* ptr;
-} sctk_thread_generic_attr_t;
-
-typedef struct sctk_thread_generic_p_s{
-  sctk_thread_generic_scheduler_t sched;
-  sctk_thread_generic_keys_t keys;
-  sctk_thread_generic_intern_attr_t attr;
-} sctk_thread_generic_p_t;
-
-typedef sctk_thread_generic_p_t* sctk_thread_generic_t;
-void sctk_thread_generic_set_self(sctk_thread_generic_t th);
-sctk_thread_generic_t sctk_thread_generic_self();
-int
-sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
-				 sctk_thread_generic_attr_t * attr,
-				 void *(*start_routine) (void *), void *arg);
-int
-sctk_thread_generic_attr_init (sctk_thread_generic_attr_t * attr);
-#endif
+void sctk_thread_generic_rwlocks_init(){ 
+  sctk_thread_generic_check_size (sctk_thread_generic_rwlock_t, sctk_thread_rwlock_t);
+  sctk_thread_generic_check_size (sctk_thread_generic_rwlockattr_t, sctk_thread_rwlockattr_t);
+  {
+	static sctk_thread_generic_rwlock_t loc = SCTK_THREAD_GENERIC_RWLOCK_INIT;
+	static sctk_thread_rwlock_t glob = SCTK_THREAD_RWLOCK_INITIALIZER;
+	assume (memcmp (&loc, &glob, sizeof (sctk_thread_generic_rwlock_t)) == 0);
+  }
+}
