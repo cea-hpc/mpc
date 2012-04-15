@@ -728,6 +728,12 @@ static void* wait_send(void *arg){
   void
 sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t *remote, sctk_ibuf_t* ibuf, int is_control_message) {
+
+  if(IBUF_GET_PROTOCOL(ibuf->buffer)  ==  null_protocol) {
+    sctk_ib_toolkit_print_backtrace();
+    assume(0);
+  }
+
   if (is_control_message) {
     __send_ibuf_nolock(rail_ib, remote, ibuf);
   } else {

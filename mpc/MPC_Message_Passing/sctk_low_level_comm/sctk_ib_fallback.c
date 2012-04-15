@@ -146,7 +146,10 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
       release_ibuf = 1;
       break;
 
-    default: assume(0);
+    default:
+      sctk_error ("Got wrong protocol: %d", IBUF_GET_PROTOCOL(ibuf->buffer));
+      assume(0);
+      break;
   }
 
   if(release_ibuf) {
@@ -226,8 +229,22 @@ release:
       break;
 
     default:
+      {
+      char host[HOSTNAME];
+      char ibuf_desc[4096];
+    gethostname(host, HOSTNAME);
       sctk_error("Got protocol: %d", IBUF_GET_PROTOCOL(ibuf->buffer));
+            sctk_ibuf_print(ibuf, ibuf_desc);
+      sctk_error ("\033[1;31m\nIB - FATAL ERROR FROM PROCESS %d (%s)\n"
+          "################################\033[0m\n"
+          "Dest process : %d\n"
+          "\033[1;31m######### IBUF DESC ############\033[0m\n"
+          "%s\n"
+          "\033[1;31m################################\033[0m",
+          sctk_process_rank, host,
+          ibuf->dest_process, ibuf_desc);
       assume(0);
+      }
   }
 
   sctk_nodebug("Message received for %d from %d (task:%d), glob_dest:%d",
@@ -253,9 +270,9 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc,
   int dest_task = -1;
   int ret;
 
-  if (wc->imm_data == IMM_DATA_RENDEZVOUS_WRITE) {
-    sctk_debug("Imm data: %u %u", wc->imm_data, IMM_DATA_NULL);
-  }
+//  if (wc->imm_data == IMM_DATA_RENDEZVOUS_WRITE) {
+//    sctk_debug("Imm data: %u %u", wc->imm_data, IMM_DATA_NULL);
+//  }
 
   dest_task = IBUF_GET_DEST_TASK(ibuf);
   ibuf->cq = recv_cq;

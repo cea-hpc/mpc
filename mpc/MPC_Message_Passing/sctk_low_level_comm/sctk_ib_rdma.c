@@ -70,51 +70,6 @@ static inline void sctk_ib_rdma_align_msg(void *addr, size_t  size,
 }
 
 /*-----------------------------------------------------------
- *  HT for storing recved rdma messages. It is usefull when a
- *  done message is sent to the remote peer to locate the rdma
- *  entry.
- *----------------------------------------------------------*/
-static sctk_ib_header_rdma_t *rdma_recv_msg_ht = NULL;
-static OPA_int_t rdma_recv_msg_nb;
-static sctk_spin_rwlock_t rdma_recv_msg_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
-
-static inline int rdma_recv_fetch_and_incr() {
-  int ret;
-
-  ret = OPA_fetch_and_incr_int(&rdma_recv_msg_nb);
-  return ret % IMM_DATA_SIZE;
-}
-
-static inline rdma_recv_msg_add_ht(sctk_thread_ptp_message_t* msg) {
-  sctk_ib_header_rdma_t * rdma = &msg->tail.ib.rdma;
-
-  sctk_spinlock_write_lock(&rdma_recv_msg_lock);
-  HASH_ADD_INT(rdma_recv_msg_ht, ht_msg_number, rdma);
-  sctk_spinlock_write_unlock(&rdma_recv_msg_lock);
-}
-
-static inline sctk_thread_ptp_message_t* rdma_recv_msg_get_ht(int index) {
-  sctk_ib_header_rdma_t * rdma;
-  sctk_thread_ptp_message_t* msg;
-
-  sctk_spinlock_read_lock(&rdma_recv_msg_lock);
-  HASH_FIND_INT(rdma_recv_msg_ht, &index, rdma);
-  sctk_spinlock_read_unlock(&rdma_recv_msg_lock);
-  assume(rdma);
-
-  return rdma->local.msg_header;
-}
-
-static inline void rdma_recv_msg_remove_ht(sctk_thread_ptp_message_t* msg) {
-  sctk_ib_header_rdma_t * rdma = &msg->tail.ib.rdma;
-
-  sctk_spinlock_write_lock(&rdma_recv_msg_lock);
-  HASH_DEL(rdma_recv_msg_ht, rdma);
-  sctk_spinlock_write_unlock(&rdma_recv_msg_lock);
-}
-
-
-/*-----------------------------------------------------------
  *  FREE RECV MESSAGE
  *----------------------------------------------------------*/
 void sctk_ib_rdma_net_free_recv(void* arg) {
@@ -208,9 +163,6 @@ sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
   rdma->local.ready = 0;
   rdma->rail = rail;
   rdma->route_table = route_table;
-  /* RDMA message number for HT */
-  rdma->ht_msg_number = rdma_recv_fetch_and_incr();
-  sctk_nodebug("msg: %p - Rail: %p %p", msg, rail, &msg->tail.ib.rdma);
 
   /* Initialization of the request */
   rdma_req->requested_size = size - sizeof(sctk_thread_ptp_message_body_t);
@@ -246,7 +198,6 @@ static inline sctk_ibuf_t* sctk_ib_rdma_prepare_ack(sctk_rail_info_t* rail,
   int low_memory_mode_local;
 
   ibuf = sctk_ibuf_pick(rail_ib, 1, task_node_number);
-  /* XXX: Source and dest inverted */
   IBUF_SET_DEST_TASK(ibuf, msg->tail.ib.rdma.glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->tail.ib.rdma.glob_source);
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
@@ -504,9 +455,6 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   rdma->glob_source = IBUF_GET_SRC_TASK(ibuf);
   rdma->glob_destination = IBUF_GET_DEST_TASK(ibuf);
 
-  /* Add the recv entry to the HT */
-  rdma_recv_msg_add_ht(msg);
-
   /* Send message to MPC. The message can be matched at the end
    * of function. */
   rail->send_message_from_network(msg);
@@ -534,9 +482,6 @@ sctk_ib_rdma_recv_done_remote(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   rdma_done = IBUF_GET_RDMA_DONE(ibuf->buffer);
   dest_msg_header = rdma_done->dest_msg_header;
   rdma = &dest_msg_header->tail.ib.rdma;
-
-  assume (rdma_recv_msg_get_ht(rdma->ht_msg_number) == dest_msg_header);
-  rdma_recv_msg_remove_ht(dest_msg_header);
 
   sctk_thread_wait_for_value((int*) &dest_msg_header->tail.ib.rdma.local.ready, 1);
 

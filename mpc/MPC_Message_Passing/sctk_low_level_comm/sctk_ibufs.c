@@ -176,6 +176,8 @@ sctk_ibuf_pick(struct sctk_ib_rail_info_s *rail_ib,
 
  if (need_lock) sctk_spinlock_unlock(lock);
 
+ sctk_ibuf_set_protocol(ibuf, null_protocol);
+
 #ifdef DEBUG_IB_BUFS
   assume(ibuf);
   if (ibuf->flag != FREE_FLAG)
@@ -367,7 +369,7 @@ void sctk_ibuf_barrier_send_init(sctk_ibuf_t* ibuf, void* local_address,
 
   ibuf->in_srq = 0;
   ibuf->desc.wr.send.next = NULL;
-  ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE_WITH_IMM;
+  ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE;
   ibuf->desc.wr.send.send_flags = IBV_SEND_SIGNALED;
   ibuf->desc.wr.send.wr_id = (uintptr_t) ibuf;
 
@@ -404,7 +406,7 @@ int sctk_ibuf_send_inline_init(
 
   ibuf->in_srq = 0;
   ibuf->desc.wr.send.next = NULL;
-  ibuf->desc.wr.send.opcode = IBV_WR_SEND_WITH_IMM;
+  ibuf->desc.wr.send.opcode = IBV_WR_SEND;
   ibuf->desc.wr.send.wr_id = (uintptr_t) ibuf;
 
   ibuf->desc.wr.send.num_sge = 1;
@@ -425,7 +427,7 @@ void sctk_ibuf_send_init(
 
   ibuf->in_srq = 0;
   ibuf->desc.wr.send.next = NULL;
-  ibuf->desc.wr.send.opcode = IBV_WR_SEND_WITH_IMM;
+  ibuf->desc.wr.send.opcode = IBV_WR_SEND;
   ibuf->desc.wr.send.send_flags = IBV_SEND_SIGNALED;
   ibuf->desc.wr.send.wr_id = (uintptr_t) ibuf;
 
@@ -449,7 +451,7 @@ void sctk_ibuf_rdma_write_init(
 
   ibuf->in_srq = 0;
   ibuf->desc.wr.send.next = NULL;
-  ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE_WITH_IMM;
+  ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE;
   ibuf->desc.wr.send.send_flags = IBV_SEND_SIGNALED;
   ibuf->desc.wr.send.wr_id = (uintptr_t) ibuf;
 

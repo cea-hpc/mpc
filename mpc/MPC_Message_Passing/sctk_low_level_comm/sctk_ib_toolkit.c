@@ -26,9 +26,30 @@
 #include "sctk_shell_colors.h"
 
 #include "sctk_ib_toolkit.h"
+#include <execinfo.h>
 
 #define SMALL_BUFFER_SIZE (4*1024)
 #define HAVE_SHELL_COLORS
 
 
+#define BT_SIZE 100
+  void
+sctk_ib_toolkit_print_backtrace(void)
+{
+  int j, nptrs;
+  void *buffer[BT_SIZE];
+  char **strings;
 
+  nptrs = backtrace(buffer, BT_SIZE);
+
+  strings = backtrace_symbols(buffer, nptrs);
+  if (strings == NULL) {
+    perror("backtrace_symbols");
+    exit(EXIT_FAILURE);
+  }
+
+  for (j = 0; j < nptrs; j++)
+    fprintf(stderr, "%s\n", strings[j]);
+
+  free(strings);
+}
