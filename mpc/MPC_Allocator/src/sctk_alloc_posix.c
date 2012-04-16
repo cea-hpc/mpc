@@ -202,7 +202,7 @@ SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(vo
 	else
 		node = SCTK_DEFAULT_NUMA_MM_SOURCE_ID;
 	#else
-	int node = SCTK_DEFAULT_NUMA_MM_SOURCE_ID;
+	int node = 0;
 	#endif
 
 	//check and get
