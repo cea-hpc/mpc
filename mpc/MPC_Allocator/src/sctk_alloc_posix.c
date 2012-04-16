@@ -77,6 +77,20 @@ int sctk_get_node_from_cpu (int cpu);
 #endif
 
 /************************* FUNCTION ************************/
+/**
+ * Update the current thread local allocation chain.
+ * @param chain Define the allocation chain to setup.
+**/
+void sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain)
+{
+	//errors
+	//assume(chain != NULL,"Can't set a default NULL allocation chain for local thread.");
+
+	//setup allocation chain for current thread
+	sctk_current_alloc_chain = chain;
+}
+
+/************************* FUNCTION ************************/
 /** Init the global memory source for UMA architecture. **/
 SCTK_STATIC void sctk_alloc_posix_mmsrc_uma_init(void)
 {
@@ -113,6 +127,7 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init_phase_default(void)
 /************************* FUNCTION ************************/
 void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void)
 {
+	#ifdef HAVE_LIBNUMA
 	//vars
 	int nodes;
 	int i;
@@ -137,6 +152,7 @@ void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void)
 		for ( i = 0 ; i < nodes ; ++i)
 			sctk_alloc_posix_mmsrc_numa_init_node(i);
 	}
+	#endif
 
 	//mark NUMA init phase as done.
 	sctk_global_base_init = SCTK_ALLOC_POSIX_INIT_NUMA;
@@ -304,20 +320,6 @@ struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void)
 	//sctk_alloc_chain_list[0] = &chain;
 	//#endif
 	return chain;
-}
-
-/************************* FUNCTION ************************/
-/**
- * Update the current thread local allocation chain.
- * @param chain Define the allocation chain to setup.
-**/
-void sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain)
-{
-	//errors
-	//assume(chain != NULL,"Can't set a default NULL allocation chain for local thread.");
-
-	//setup allocation chain for current thread
-	sctk_current_alloc_chain = chain;
 }
 
 /************************* FUNCTION ************************/
