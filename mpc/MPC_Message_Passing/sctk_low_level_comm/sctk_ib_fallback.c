@@ -29,6 +29,7 @@
 #include <sctk_ib_fallback.h>
 #include "sctk_ib.h"
 #include <sctk_ibufs.h>
+#include <sctk_ibufs_rdma.h>
 #include <sctk_ib_mmu.h>
 #include <sctk_ib_config.h>
 #include "sctk_ib_qp.h"
@@ -52,14 +53,12 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   sctk_route_table_t* tmp;
   sctk_ib_data_t *route_data;
   sctk_ib_qp_t *remote;
-  sctk_ibuf_t *ibuf;
   size_t size;
   int low_memory_mode = 0;
   char is_control_message = 0;
   specific_message_tag_t tag = msg->body.header.specific_message_tag;
 
   sctk_nodebug("send message through rail %d to %d",rail->rail_number, msg->sctk_msg_get_destination);
-
   sctk_nodebug("Send message with tag %d", msg->sctk_msg_get_specific_message_tag);
   if( IS_PROCESS_SPECIFIC_MESSAGE_TAG(tag)) {
 
@@ -94,7 +93,12 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
     sctk_abort();
   }
 
-  if (size+IBUF_GET_EAGER_SIZE < config->ibv_eager_limit)  {
+  if (remote->ibuf_rdma) { /* Send with an eager RDMA if possible. FIXME: change test */
+    sctk_ibuf_t *ibuf;
+    ibuf = sctk_ib_rdma_eager_prepare_msg(rail_ib, remote, msg, size);
+  } else if (size+IBUF_GET_EAGER_SIZE < config->ibv_eager_limit)  {
+    sctk_ibuf_t *ibuf;
+
     ibuf = sctk_ib_sr_prepare_msg(rail_ib, remote, msg, size, -1);
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, is_control_message);
@@ -107,6 +111,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
     sctk_complete_and_free_message(msg);
     PROF_INC_RAIL_IB(rail_ib, buffered_nb);
   } else {
+    sctk_ibuf_t *ibuf;
 rdma:
     sctk_nodebug("Send RDMA message");
     ibuf = sctk_ib_rdma_prepare_req(rail, tmp, msg, size, -1);
@@ -229,22 +234,7 @@ release:
       break;
 
     default:
-      {
-      char host[HOSTNAME];
-      char ibuf_desc[4096];
-    gethostname(host, HOSTNAME);
-      sctk_error("Got protocol: %d", IBUF_GET_PROTOCOL(ibuf->buffer));
-            sctk_ibuf_print(ibuf, ibuf_desc);
-      sctk_error ("\033[1;31m\nIB - FATAL ERROR FROM PROCESS %d (%s)\n"
-          "################################\033[0m\n"
-          "Dest process : %d\n"
-          "\033[1;31m######### IBUF DESC ############\033[0m\n"
-          "%s\n"
-          "\033[1;31m################################\033[0m",
-          sctk_process_rank, host,
-          ibuf->dest_process, ibuf_desc);
       assume(0);
-      }
   }
 
   sctk_nodebug("Message received for %d from %d (task:%d), glob_dest:%d",

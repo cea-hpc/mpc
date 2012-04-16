@@ -46,8 +46,10 @@
  * if x < IBV_FRAG_EAGER_LIMIT -> frag msg (into several eager buffers)
  * if x > IBV_FRAG_EAGER_LIMIT -> rendezvous msg */
 //#define IBV_EAGER_LIMIT ( 12 * 1024 )
-#define IBV_EAGER_LIMIT       ( 12 * 1024)
+#define IBV_EAGER_LIMIT       ( 4 * 1024)
 #define IBV_FRAG_EAGER_LIMIT  (256 * 1024)
+
+#define IBV_EAGER_RDMA_LIMIT       ( 4 * 1024)
 //#define IBV_FRAG_EAGER_LIMIT  (10 * 1024 * 1024)
 /* Number of allowed pending Work Queue Elements
  * for each QP */
@@ -111,7 +113,7 @@
 /* Number of new MMU allocated when
  * no more MMU entries are available */
 #define IBV_SIZE_MR_CHUNKS  200
-#define IBV_MMU_CACHE_ENABLED 1
+#define IBV_MMU_CACHE_ENABLED 0
 #define IBV_MMU_CACHE_ENTRIES 100
 
 #define IBV_ADM_PORT        1
@@ -177,6 +179,7 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
     fprintf(stderr,
         "############# IB configuration for %s\n"
         "ibv_eager_limit      = %d\n"
+        "ibv_eager_rdma_limit = %d\n"
         "ibv_frag_eager_limit = %d\n"
         "ibv_qp_tx_depth      = %d\n"
         "ibv_qp_rx_depth      = %d\n"
@@ -207,6 +210,7 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         "#############\n",
         config->network_name,
         config->ibv_eager_limit,
+        config->ibv_eager_rdma_limit,
         config->ibv_frag_eager_limit,
         config->ibv_qp_tx_depth,
         config->ibv_qp_rx_depth,
@@ -244,6 +248,7 @@ void load_ib_default_config(sctk_ib_rail_info_t *rail_ib)
   config->ibv_init_ibufs = IBV_INIT_IBUFS;
 
   config->ibv_eager_limit = IBV_EAGER_LIMIT + IBUF_GET_EAGER_SIZE;
+  config->ibv_eager_rdma_limit = IBV_EAGER_RDMA_LIMIT + IBUF_GET_EAGER_SIZE;
   config->ibv_frag_eager_limit = IBV_FRAG_EAGER_LIMIT + IBUF_GET_BUFFERED_SIZE ;
   config->ibv_qp_tx_depth = IBV_QP_TX_DEPTH;
   config->ibv_qp_rx_depth = IBV_QP_RX_DEPTH;
@@ -283,6 +288,9 @@ void set_ib_env(sctk_ib_rail_info_t *rail_ib)
 
   if ( (value = getenv("MPC_IBV_EAGER_LIMIT")) != NULL )
     c->ibv_eager_limit = atoi(value) + IBUF_GET_EAGER_SIZE;
+
+  if ( (value = getenv("MPC_IBV_EAGER_RDMA_LIMIT")) != NULL )
+    c->ibv_eager_rdma_limit = atoi(value) + IBUF_GET_EAGER_SIZE;
 
   if ( (value = getenv("MPC_IBV_FRAG_EAGER_LIMIT")) != NULL )
     c->ibv_frag_eager_limit = atoi(value) + IBUF_GET_BUFFERED_SIZE;

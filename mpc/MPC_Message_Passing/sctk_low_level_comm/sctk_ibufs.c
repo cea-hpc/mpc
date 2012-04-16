@@ -35,7 +35,10 @@
    Description: NUMA aware buffers poll interface.
  *  Buffers are stored together in regions. Buffers are
  *  deallocated region per region.
+ *  TODO: Use HWLOC for detecting which core is the closest to the
+ *  IB card.
  */
+#define CLOSEST_NODE_FROM_NIC 0
 
 /* Init a poll of buffers on the numa node pointed by 'node'
  * FIXME: use malloc_on_node instead of memalign
@@ -61,13 +64,11 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
   /* XXX: replaced by memalign_on_node */
   sctk_posix_memalign( (void**) &ptr, mmu->page_size, nb_ibufs * config->ibv_eager_limit);
   assume(ptr);
-  /* FIXME: should be done by the a task on same VP */
   // memset(ptr, 0, nb_ibufs * config->ibv_eager_limit);
 
   /* XXX: replaced by memalign_on_node */
    sctk_posix_memalign(&ibuf, mmu->page_size, nb_ibufs * sizeof(sctk_ibuf_t));
   assume(ibuf);
-  /* FIXME: should be done by the a task on same VP */
   // memset (ibuf, 0, nb_ibufs * sizeof(sctk_ibuf_t));
 
   region->ibuf = ibuf;
@@ -114,9 +115,7 @@ sctk_ibuf_pool_init(struct sctk_ib_rail_info_s *rail_ib)
   nodes_nb = sctk_get_numa_node_number();
  /* FIXME: get_numa_node_number may returns 1 when SMP */
   nodes_nb = (nodes_nb == 0) ? 1 : nodes_nb;
-  /* We alloc an additional pool of buffer where all buffers for SRQ will
-   * be allocated */
-  alloc_nb = nodes_nb+1;
+  alloc_nb = nodes_nb;
 
   /* We malloc the entries */
   pool = sctk_malloc(sizeof(sctk_ibuf_pool_t) +
@@ -149,10 +148,16 @@ sctk_ibuf_t*
 sctk_ibuf_pick(struct sctk_ib_rail_info_s *rail_ib,
     int need_lock, int n)
 {
-  if (n == -1) n = 0;
   LOAD_POOL(rail_ib);
   LOAD_CONFIG(rail_ib);
   sctk_ibuf_t* ibuf;
+#ifdef DEBUG_IB_BUFS
+  if (n != -1)  {
+    assume(n <= pool->nodes_nb);
+  }
+#endif
+
+  if (n == -1) n = CLOSEST_NODE_FROM_NIC;
   sctk_ibuf_numa_t *node = &pool->nodes[n];
   sctk_spinlock_t *lock = &node->lock;
 
@@ -245,7 +250,7 @@ int sctk_ibuf_srq_check_and_post(
     int limit)
 {
   LOAD_POOL(rail_ib);
-  int node = pool->nodes_nb;
+  int node = CLOSEST_NODE_FROM_NIC;
 
   return srq_post(rail_ib, limit, &pool->nodes[node], 1);
 }
@@ -256,7 +261,7 @@ static inline void __release_in_srq(
   assume(ibuf);
   LOAD_CONFIG(rail_ib);
   sctk_ibuf_numa_t *node = ibuf->region->node;
-  sctk_spinlock_t *lock = &node->lock;
+//  sctk_spinlock_t *lock = &node->lock;
   int limit;
   int free_srq_nb;
 

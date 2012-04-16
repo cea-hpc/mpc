@@ -76,6 +76,11 @@ typedef struct sctk_ib_device_s
 #define ACK_UNSET   111
 #define ACK_OK      222
 #define ACK_CANCEL  333
+
+typedef struct sctk_ib_endpoint_s {
+
+} sctk_ib_endpoint_t;
+
 /* Structure associated to a remote QP */
 typedef struct sctk_ib_qp_s
 {
@@ -120,6 +125,9 @@ typedef struct sctk_ib_qp_s
   /* List of pending buffered messages */
   struct sctk_ib_buffered_table_s ib_buffered;
 
+  /* Eager RDMA channel */
+  struct sctk_ibuf_rdma_pool_s *ibuf_rdma;
+
   /* Is remote dynamically created ? */
   int ondemand;
   /* Bit for clock algorithm */
@@ -134,7 +142,15 @@ typedef struct
   uint16_t lid;
   uint32_t qp_num;
   uint32_t psn;
+  struct {
+    void* ptr;
+    uint32_t rkey;
+  } rdma;
 } sctk_ib_qp_keys_t;
+
+void sctk_ib_qp_key_create_value(char *msg, size_t size, uint16_t lid, uint32_t qp_num, uint32_t psn, void* rdma_eager, uint32_t rdma_eager_rkey);
+void sctk_ib_qp_key_create_key(char *msg, size_t size, int rail, int src, int dest);
+sctk_ib_qp_keys_t sctk_ib_qp_keys_convert( char* msg);
 
 /*-----------------------------------------------------------
  *  FUNCTIONS

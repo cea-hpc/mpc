@@ -25,6 +25,7 @@
 #include "sctk_ib.h"
 #include "sctk_ib_config.h"
 #include "sctk_ibufs.h"
+#include "sctk_ibufs_rdma.h"
 #include "sctk_ib_qp.h"
 #include "sctk_ib_prof.h"
 #include "sctk_pmi.h"
@@ -115,7 +116,6 @@ sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int r
   struct ibv_pd*
 sctk_ib_pd_init(sctk_ib_device_t *device)
 {
-
   device->pd = ibv_alloc_pd(device->context);
   if (!device->pd) {
     sctk_error ("Cannot get IB protection domain.");
@@ -220,11 +220,25 @@ sctk_ib_cq_print_status (enum ibv_wc_status status)
 /*-----------------------------------------------------------
  *  Exchange keys
  *----------------------------------------------------------*/
+#define VALUE_STRING "%05"SCNu16":%010"SCNu32":%010"SCNu32":%p:%010"SCNu32
+void sctk_ib_qp_key_create_value(char *msg, size_t size, uint16_t lid, uint32_t qp_num,
+    uint32_t psn, void* rdma_eager_ptr, uint32_t rdma_eager_rkey) {
+  snprintf(msg, size,
+      VALUE_STRING,
+      lid, qp_num, psn, rdma_eager_ptr, rdma_eager_rkey);
+}
+
+void sctk_ib_qp_key_create_key(char *msg, size_t size, int rail, int src, int dest) {
+  /* FIXME: Change 0 if several rails at the same time */
+  snprintf(msg, size,"IB%02d:%06d:%06d", 0, src, dest);
+}
+
 sctk_ib_qp_keys_t sctk_ib_qp_keys_convert( char* msg)
 {
   sctk_ib_qp_keys_t keys;
-  sscanf(msg, "%05"SCNu16":%010"SCNu32":%010"SCNu32, &keys.lid, &keys.qp_num, &keys.psn);
-  sctk_nodebug("LID : %lu|psn : %lu|qp_num : %lu", keys.lid, keys.psn, keys.qp_num);
+  sscanf(msg, VALUE_STRING,
+      &keys.lid, &keys.qp_num, &keys.psn, &keys.rdma.ptr, &keys.rdma.rkey);
+  sctk_debug("LID : %lu|psn : %lu|qp_num : %lu|rdma ptr : %p|rdma rkey : %u", keys.lid, keys.psn, keys.qp_num, keys.rdma.ptr,keys.rdma.rkey);
 
   return keys;
 }
@@ -241,11 +255,18 @@ void sctk_ib_qp_keys_send(
   int val_max = sctk_pmi_get_max_val_len();
   char key[key_max];
   char val[key_max];
+  void *rdma_eager_ptr = NULL;
+  uint32_t rdma_eager_rkey = 0;
 
-  /* FIXME: Change 0 if several rails at the same time */
-  snprintf(key, key_max,"IB%02d:%06d:%06d", 0, sctk_process_rank, remote->rank);
-  snprintf(val, val_max, "%05"SCNu16":%010"SCNu32":%010"SCNu32, device->port_attr.lid, remote->qp->qp_num, remote->psn);
-  sctk_nodebug("Send KEY %s\t%s", key, val);
+  /* FIXME: change the test */
+  if (remote->ibuf_rdma) {
+    rdma_eager_ptr = remote->ibuf_rdma->local_addr;
+    rdma_eager_rkey = remote->ibuf_rdma->region->mmu_entry->mr->rkey;
+  }
+
+  sctk_ib_qp_key_create_key(key, key_max, 0, sctk_process_rank, remote->rank);
+  sctk_ib_qp_key_create_value(val, val_max,
+    device->port_attr.lid, remote->qp->qp_num, remote->psn, rdma_eager_ptr, rdma_eager_rkey);
   sctk_pmi_put_connection_info_str(val, val_max, key);
 }
 
@@ -258,9 +279,9 @@ sctk_ib_qp_keys_recv(sctk_ib_qp_t *remote, int dest_process)
   char key[key_max];
   char val[key_max];
 
+  sctk_ib_qp_key_create_key(key, key_max, 0, dest_process, sctk_process_rank);
   snprintf(key, key_max,"IB%02d:%06d:%06d", 0, dest_process, sctk_process_rank);
   sctk_pmi_get_connection_info_str(val, val_max, key);
-  sctk_nodebug("Got KEY %s\t%s", key, val);
   qp_keys = sctk_ib_qp_keys_convert(val);
 
   return qp_keys;
@@ -634,7 +655,7 @@ static void* wait_send(void *arg){
   return NULL;
 }
 
-/* Send a message without locks. This is usefull for QP deconnexion */
+/* Send a message without locks. Messages which are sent are not blocked by locks. This is usefull for QP deconnexion */
   static inline void __send_ibuf_nolock(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t *remote, sctk_ibuf_t* ibuf)
 {
@@ -653,7 +674,6 @@ static void* wait_send(void *arg){
     wait_send_arg.remote = remote;
     wait_send_arg.ibuf = ibuf;
 
-    assume(0);
     sctk_ib_nodebug("QP full, waiting for posting message...");
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
         (void (*)(void *)) wait_send, &wait_send_arg);

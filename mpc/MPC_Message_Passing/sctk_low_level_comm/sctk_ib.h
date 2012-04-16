@@ -67,7 +67,8 @@ extern "C"
     eager_protocol        = 111,
     buffered_protocol     = 222,
     rdma_protocol   = 333,
-    null_protocol = 444
+    null_protocol = 444,
+    eager_rdma_protocol = 555,
   } sctk_ib_protocol_t;
 
   /* 2 first bits: not_set, zerocopy, recopy */

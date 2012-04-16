@@ -52,9 +52,6 @@ sctk_network_send_message_multirail_ib (sctk_thread_ptp_message_t * msg){
     /*
       Reordering available : we can use multirail
       */
-    if (msg->sctk_msg_get_message_number % 2)
-      i = 0;
-    else
       i = 0;
   } else {
     i = 0;

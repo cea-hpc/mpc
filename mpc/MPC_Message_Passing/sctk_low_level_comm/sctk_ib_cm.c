@@ -64,17 +64,13 @@ void sctk_ib_cm_connect_to(int from, int to,sctk_rail_info_t* rail){
   sctk_ib_debug("[%d] QP connection request to process %d", rail->rail_number, route->remote->rank);
 
   sctk_route_messages_recv(from,to,ondemand_specific_message_tag, 0,msg,MSG_STRING_SIZE);
-  sctk_nodebug("TO: Recv %s", msg);
   keys = sctk_ib_qp_keys_convert(msg);
   sctk_ib_qp_allocate_rtr(rail_ib, route->remote, &keys);
 
-  snprintf(msg, MSG_STRING_SIZE,
-      "%05"SCNu16":%010"SCNu32":%010"SCNu32,
-      device->port_attr.lid, route->remote->qp->qp_num, route->remote->psn);
+  sctk_ib_qp_key_create_value(msg, MSG_STRING_SIZE,
+      device->port_attr.lid, route->remote->qp->qp_num, route->remote->psn, NULL, 0);
   sctk_route_messages_send(to,from,ondemand_specific_message_tag, 0,msg,MSG_STRING_SIZE);
-  sctk_nodebug("TO: Send %s", msg);
   sctk_route_messages_recv(from,to,ondemand_specific_message_tag, 0,&done,sizeof(char));
-  sctk_nodebug("TO: Received done from %d",from);
   sctk_ib_qp_allocate_rts(rail_ib, route->remote);
   /* Add route */
   sctk_add_static_route(from, route_table, rail);
@@ -97,14 +93,11 @@ void sctk_ib_cm_connect_from(int from, int to,sctk_rail_info_t* rail){
   route=&route_table->data.ib;
   sctk_ib_debug("[%d] QP connection  request to process %d", rail->rail_number, route->remote->rank);
 
-  snprintf(msg, MSG_STRING_SIZE,
-      "%05"SCNu16":%010"SCNu32":%010"SCNu32,
-      device->port_attr.lid, route->remote->qp->qp_num, route->remote->psn);
+  sctk_ib_qp_key_create_value(msg, MSG_STRING_SIZE,
+      device->port_attr.lid, route->remote->qp->qp_num, route->remote->psn, NULL, 0);
 
-  sctk_nodebug("FROM: Send %s", msg);
   sctk_route_messages_send(from,to,ondemand_specific_message_tag, 0,msg,MSG_STRING_SIZE);
   sctk_route_messages_recv(to,from,ondemand_specific_message_tag, 0,msg,MSG_STRING_SIZE);
-  sctk_nodebug("FROM: Recv %s", msg);
   keys = sctk_ib_qp_keys_convert(msg);
   sctk_ib_qp_allocate_rtr(rail_ib, route->remote, &keys);
   sctk_ib_qp_allocate_rts(rail_ib, route->remote);
@@ -160,9 +153,10 @@ int sctk_ib_cm_on_demand_recv_ack(sctk_rail_info_t *rail, void* ack, int src) {
 
   sctk_spinlock_lock(&route->remote->lock_rtr);
   if (sctk_ib_qp_allocate_get_rtr(route->remote) == 0){
-  sctk_ib_qp_allocate_rtr(rail_ib, route->remote, &keys);
+    sctk_ib_qp_allocate_rtr(rail_ib, route->remote, &keys);
   }
   sctk_spinlock_unlock(&route->remote->lock_rtr);
+
   sctk_spinlock_lock(&route->remote->lock_rts);
   if (sctk_ib_qp_allocate_get_rts(route->remote) == 0){
     sctk_ib_qp_allocate_rts(rail_ib, route->remote);
@@ -209,9 +203,8 @@ int sctk_ib_cm_on_demand_recv_request(sctk_rail_info_t *rail, void* request, int
   }
   sctk_spinlock_unlock(&route->remote->lock_rtr);
 
-    snprintf(msg, MSG_STRING_SIZE,
-        "%05"SCNu16":%010"SCNu32":%010"SCNu32,
-        device->port_attr.lid, route->remote->qp->qp_num, route->remote->psn);
+  sctk_ib_qp_key_create_value(msg, MSG_STRING_SIZE,
+        device->port_attr.lid, route->remote->qp->qp_num, route->remote->psn, NULL, 0);
 
   /* Send ACK */
   sctk_ib_nodebug("OD QP ack to process %d: %s (tag:%d)",
@@ -527,9 +520,8 @@ sctk_route_table_t *sctk_ib_cm_on_demand_request(int dest,sctk_rail_info_t* rail
   if (added == 0) return route_table;
   route=&route_table->data.ib;
 
-  snprintf(msg, MSG_STRING_SIZE,
-      "%05"SCNu16":%010"SCNu32":%010"SCNu32,
-      device->port_attr.lid, route->remote->qp->qp_num, route->remote->psn);
+  sctk_ib_qp_key_create_value(msg, MSG_STRING_SIZE,
+      device->port_attr.lid, route->remote->qp->qp_num, route->remote->psn, NULL, 0);
   sctk_ib_debug("[%d] OD QP connexion requested to %d", rail->rail_number, route->remote->rank);
   sctk_route_messages_send(sctk_process_rank,dest,ondemand_specific_message_tag,
       ONDEMAND_REQ_TAG+ONDEMAND_MASK_TAG,

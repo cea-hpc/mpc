@@ -43,7 +43,7 @@
 #include "sctk_ib_toolkit.h"
 #include "math.h"
 
-#define DEBUG_CP
+//#define DEBUG_CP
 #ifdef DEBUG_CP
 #warning "DEBUG MODE ACTIVATED"
 #endif
@@ -99,6 +99,7 @@ static int vp_number = -1;
 static sctk_spinlock_t vps_lock = SCTK_SPINLOCK_INITIALIZER;
 static sctk_ib_cp_task_t* all_tasks = NULL;
 __thread unsigned int seed;
+/* NUMA node where the task is located */
 __thread int task_node_number = -1;
 static const int ibv_cp_profiler = 1;
 
