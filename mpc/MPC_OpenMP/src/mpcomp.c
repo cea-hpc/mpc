@@ -705,7 +705,7 @@ void * mpcomp_slave_mvp_node( void * arg ) {
       mvp->threads[i].team =  mvp->father->team_info ;
       mvp->threads[i].single_current = mvp->father->team_info->single_last_current ;
       mvp->threads[i].for_dyn_current = mvp->father->team_info->for_dyn_last_current ;
-
+      mvp->threads[i].start_steal_chunk = -1; //CHUNK STEALING
       sctk_nodebug( "mpcomp_slave_mvp: Got num threads %d",
 	  mvp->threads[i].num_threads ) ;
       /* TODO finish */
@@ -790,7 +790,7 @@ INFO("__mpcomp_flush: need to call mpcomp_macro_scheduler")
 
       mvp->threads[i].single_current = mvp->father->team_info->single_last_current ;
       mvp->threads[i].for_dyn_current = mvp->father->team_info->for_dyn_last_current ;
-
+      mvp->threads[i].start_steal_chunk = -1; //CHUNK STEALING
       sctk_nodebug( "mpcomp_slave_mvp_leaf: Got num threads %d",
 	  mvp->threads[i].num_threads ) ;
       /* TODO finish */
@@ -894,6 +894,22 @@ mpcomp_get_num_threads (void)
   sctk_assert( t != NULL ) ;
 
   return t->num_threads;
+}
+
+void
+mpcomp_set_num_threads(int num_threads) 
+{
+ mpcomp_thread * t;
+
+ __mpcomp_init ();
+
+ sctk_nodebug("mpcomp_set_num_threads: entering");
+
+ t = sctk_openmp_thread_tls;
+ sctk_assert( t != NULL);
+
+ t->num_threads = num_threads;
+
 }
 
 /*

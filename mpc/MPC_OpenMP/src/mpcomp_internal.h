@@ -112,7 +112,9 @@ struct mpcomp_team_info_s {
 
   /* -- GUIDED FOR LOOP CONSTRUCT -- */
 
-  sctk_atomics_int stats_stolen_chunks;
+  /* Temp stats for chunk stealing */
+  sctk_atomics_int stats_stolen_chunks; 
+  sctk_atomics_int stats_last_mvp_chunk;
 } ;
 
 typedef struct mpcomp_team_info_s mpcomp_team_info ;
@@ -160,7 +162,9 @@ struct mpcomp_thread_s {
   struct mpcomp_mvp_s   *stolen_mvp;
   int stolen_chunk_id;
   //struct mpcomp_node_s  *parent_node  
-
+  int start_steal_chunk;
+  
+  //mpcomp_mvp_s **mvps; /* all mvps stores for chunk stealing (array of integers) */
 #if 0
   mpcomp_stack_node_leaves for_dyn_stack ;
 #endif
@@ -278,9 +282,6 @@ typedef enum context_t {
     void *(*func) (void *);
     void *shared;
 
-    /* Infos of chunks presence in node */
-    //sctk_atomics_int chunks_avail; 
-    //sctk_atomics_int nb_chunks_empty_children;
   } ;
 
   typedef struct mpcomp_node_s mpcomp_node ;
@@ -355,6 +356,7 @@ static inline void __mpcomp_team_info_init( mpcomp_team_info * team_info ) {
       MPCOMP_NOWAIT_STOP_SYMBOL ) ;
 
  sctk_atomics_store_int( &(team_info->stats_stolen_chunks), 0);
+ sctk_atomics_store_int( &(team_info->stats_last_mvp_chunk), 0);
 }
 
 static inline void __mpcomp_thread_init( mpcomp_thread * t, icv_t icvs, mpcomp_instance * instance,
@@ -375,7 +377,8 @@ static inline void __mpcomp_thread_init( mpcomp_thread * t, icv_t icvs, mpcomp_i
   /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
   t->tree_stack = NULL;
   t->stolen_mvp = NULL;
-  t->stolen_chunk_id = -1;
+  t->stolen_chunk_id = -1; //AMAHEO
+  t->start_steal_chunk = -1; //AMAHEO
 }
 
 /* mpcomp.c */
