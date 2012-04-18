@@ -189,7 +189,7 @@ for arg in "$@" ; do
     exit 0;
     ;;
     -v|--verbose)
-    MPC_VERBOSE="1"
+    MPC_VERBOSE="1"A
     ;;
     -vv)
     MPC_VERBOSE="2"

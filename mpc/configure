@@ -262,6 +262,7 @@ for arg in "$@" ; do
     export SCTK_MIC_HOSTNAME
     SCTK_GCC=icc
     SCTK_CC=icc
+    SCTK_CXX=icpc
     SCTK_F77=ifort
     SCTK_CFLAGS="$SCTK_CFLAGS -mmic"
     SCTK_LDFLAGS="$SCTK_LDFLAGS -mmic -lirc -lsvml"
