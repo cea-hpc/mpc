@@ -162,6 +162,7 @@ int sctk_get_preferred_numa_node_no_mpc()
 #endif //MPC_Threads
 
 /************************* FUNCTION ************************/
+#ifdef HAVE_LIBNUMA
 int sctk_get_preferred_numa_node()
 {
 	#ifdef MPC_Threads
@@ -170,10 +171,12 @@ int sctk_get_preferred_numa_node()
 	return sctk_get_preferred_numa_node_no_mpc();
 	#endif
 }
+#endif
 
 /************************* FUNCTION ************************/
 #ifndef MPC_Threads
 #ifdef HAVE_GETCPU
+#ifdef HAVE_LIBNUMA
 int sctk_alloc_get_current_numa_node_getcpu(void)
 {
 	//get the current cpu ID
@@ -188,10 +191,12 @@ int sctk_alloc_get_current_numa_node_getcpu(void)
 
 	return logical_node_id;
 }
+#endif //HABE_LIBNUMA
 #endif //HAVE_GETCPU
 #endif //MPC_Threads
 
 /************************* FUNCTION ************************/
+#ifdef HAVE_LIBNUMA
 int sctk_alloc_get_current_numa_node_default(void)
 {
 	//if not, we can use the common memory source which is not specific to one numa node
@@ -199,8 +204,10 @@ int sctk_alloc_get_current_numa_node_default(void)
 	SCTK_PDEBUG("Random NUMA selection");
 	return -1;
 }
+#endif
 
 /************************* FUNCTION ************************/
+#ifdef HAVE_LIBNUMA
 int sctk_alloc_init_on_numa_node(void)
 {
 	int node = sctk_get_preferred_numa_node();
@@ -209,3 +216,4 @@ int sctk_alloc_init_on_numa_node(void)
 	else
 		return sctk_alloc_get_current_numa_node();
 }
+#endif

@@ -34,9 +34,6 @@
 #else //NDEBUG
 	#define SCTK_PDEBUG sctk_alloc_pdebug
 	#define SCTK_CRASH_DUMP sctk_alloc_crash_dump
-	#ifndef ENABLE_TRACE
-		#define ENABLE_TRACE
-	#endif
 #endif //NDEBUG
 
 #ifdef ENABLE_TRACE

@@ -90,7 +90,7 @@ extern "C"
 #ifdef MPC_ALLOCATOR_DISABLE_STATIC
 #define SCTK_STATIC /*static*/
 #else
-#define SCTK_STATIC static
+#define SCTK_STATIC inline
 #endif // MPC_ALLOCATOR_DISABLE_STATIC
 
 /************************** TYPES **************************/
