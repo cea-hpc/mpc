@@ -104,7 +104,7 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
     buffered->copied = msg_copied;
     buffered->nb = buffer_nb;
     sctk_ibuf_send_init(ibuf, IBUF_GET_BUFFERED_SIZE + buffer_size);
-    sctk_ibuf_set_protocol(ibuf, buffered_protocol);
+    IBUF_SET_PROTOCOL(ibuf->buffer, buffered_protocol);
     msg_copied += payload_size;
 
     IBUF_SET_DEST_TASK(ibuf, msg->sctk_msg_get_glob_destination);

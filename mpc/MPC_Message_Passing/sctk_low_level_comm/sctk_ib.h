@@ -31,6 +31,10 @@ extern "C"
 #include <stdint.h>
 #include <mpcmp.h>
 
+#define IB_DEBUG
+#ifdef IB_DEBUG
+#warning "Debug activated"
+#endif
 
   struct sctk_rail_info_s;
   struct sctk_ibuf_pool_s;
@@ -44,6 +48,7 @@ extern "C"
   struct sctk_rail_info_s;
   struct sctk_message_to_copy_s;
   struct sctk_ib_buffered_entry_s;
+  struct sctk_ib_qp_ht_s;
 
   typedef struct sctk_ib_rail_info_s {
     struct sctk_ibuf_pool_s *pool_buffers;
@@ -53,8 +58,11 @@ extern "C"
     struct sctk_ib_prof_s   *profiler;
     /* Collaborative polling */
     struct sctk_ib_cp_s *cp;
-    /* HashTable where all QPs are stored */
-    struct sctk_ib_qp_s *qps;
+
+    /* HashTable where all remote are stored.
+     * qp_num is the key of the HT */
+    struct sctk_ib_qp_ht_s         *remotes;
+    /* Pointer to the generic rail */
     struct sctk_rail_info_s        *rail;
   } sctk_ib_rail_info_t;
 
@@ -66,10 +74,22 @@ extern "C"
   typedef enum sctk_ib_protocol_e{
     eager_protocol        = 111,
     buffered_protocol     = 222,
-    rdma_protocol   = 333,
-    null_protocol = 444,
-    eager_rdma_protocol = 555,
+    rdma_protocol         = 333,
+    null_protocol         = 444,
+    eager_rdma_protocol   = 555,
   } sctk_ib_protocol_t;
+
+  static char* sctk_ib_protocol_print(sctk_ib_protocol_t prot) {
+    switch(prot) {
+      case eager_protocol: return "eager_protocol"; break;
+      case buffered_protocol: return "buffered_protocol"; break;
+      case rdma_protocol: return "rdma_protocol"; break;
+      case null_protocol: return "null_protocol"; break;
+      case eager_rdma_protocol: return "eager_rdma_protocol"; break;
+      default: return "null"; break;
+    }
+  }
+
 
   /* 2 first bits: not_set, zerocopy, recopy */
   /* third bit: if matched */

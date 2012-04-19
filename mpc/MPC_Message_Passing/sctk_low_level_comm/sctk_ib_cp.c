@@ -524,24 +524,18 @@ resume:
 #endif
   /* Process specific message */
   if (dest_task < 0) {
-    goto enqueue_global;
+    sctk_nodebug("Received global msg");
+    sctk_spinlock_lock(task->global_ibufs_list_lock);
+    DL_APPEND( *(task->global_ibufs_list), ibuf);
+    sctk_spinlock_unlock(task->global_ibufs_list_lock);
+    return 1;
   } else {
-    goto enqueue_local;
+    sctk_nodebug("Received local msg from task %d", target_task);
+    sctk_spinlock_lock(&task->local_ibufs_list_lock);
+    DL_APPEND(task->local_ibufs_list, ibuf);
+    sctk_spinlock_unlock(&task->local_ibufs_list_lock);
+    return 1;
   }
-
-  /* Add the ibuf to the pending list */
-enqueue_local:
-  sctk_nodebug("Received local msg from task %d", target_task);
-  sctk_spinlock_lock(&task->local_ibufs_list_lock);
-  DL_APPEND(task->local_ibufs_list, ibuf);
-  sctk_spinlock_unlock(&task->local_ibufs_list_lock);
-  return 1;
-enqueue_global:
-  sctk_nodebug("Received global msg");
-  sctk_spinlock_lock(task->global_ibufs_list_lock);
-  DL_APPEND( *(task->global_ibufs_list), ibuf);
-  sctk_spinlock_unlock(task->global_ibufs_list_lock);
-  return 1;
 }
 
 #endif

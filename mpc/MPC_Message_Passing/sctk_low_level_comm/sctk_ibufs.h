@@ -38,6 +38,7 @@ enum sctk_ib_cp_poll_cq_e {
 #include "sctk_ib.h"
 
 struct sctk_ib_rail_info_s;
+struct sctk_ibuf_rdma_region_s;
 
 /*-----------------------------------------------------------
  *  STRUCTURES
@@ -53,18 +54,17 @@ sctk_ibuf_header_t;
 #define IBUF_GET_HEADER(buffer) ((sctk_ibuf_header_t*) buffer)
 #define IBUF_GET_HEADER_SIZE (sizeof(sctk_ibuf_header_t))
 #define IBUF_GET_PROTOCOL(buffer) (IBUF_GET_HEADER(buffer)->protocol)
+#define IBUF_SET_PROTOCOL(buffer,x) (IBUF_GET_HEADER(buffer)->protocol=x)
 
 /* XXX: take an ibuf and not a buffer */
 #define IBUF_SET_DEST_TASK(ibuf,x) (IBUF_GET_HEADER(ibuf->buffer)->dest_task = x)
 #define IBUF_GET_DEST_TASK(ibuf) (IBUF_GET_HEADER(ibuf->buffer)->dest_task)
 #define IBUF_SET_SRC_TASK(ibuf,x) (ibuf->src_task = x)
 #define IBUF_GET_SRC_TASK(ibuf) (ibuf->src_task)
+#define IBUF_GET_CHANNEL(ibuf) (ibuf->region->channel)
 
 #define IMM_DATA_NULL ~0
-#define IMM_DATA_RENDEZVOUS_WRITE (0x1 << 31)
-#define IMM_DATA_RENDEZVOUS_READ  (0x1 << 30)
-/* Maximum number of values for each types */
-#define IMM_DATA_SIZE             (0x1 << 29)
+#define IMM_DATA_EAGER_RDMA (0x1 << 31)
 
 /* Description of an ibuf */
 typedef struct sctk_ibuf_desc_s
@@ -106,10 +106,22 @@ typedef struct sctk_ibuf_numa_s
  * for avoind false sharing */
 __attribute__((__aligned__(64)));
 
+/* Channel where the region has been allocated */
+enum sctk_ibuf_channel
+{
+  RC_SR_CHANNEL = 1<<0,
+  RDMA_CHANNEL  = 1<<1,
+  SEND_CHANNEL  = 1<<2,
+  RECV_CHANNEL  = 1<<3,
+};
+
 /* Region of buffers where several buffers
  * are allocated */
 typedef struct sctk_ibuf_region_s
 {
+  /* Address of the buffer */
+  void *buffer_addr;
+
   struct sctk_ibuf_region_s* next;
   struct sctk_ibuf_region_s* prev;
   /* Number of buffer for the region */
@@ -119,9 +131,25 @@ typedef struct sctk_ibuf_region_s
   /* MMU entry */
   struct sctk_ib_mmu_entry_s* mmu_entry;
 
+  /* List of buffers */
+  struct sctk_ibuf_s* list;
+  /* Pointer to the addr where ibufs are
+   * allocated */
+  struct sctk_ibuf_s* ibuf;
+
+  /* Channel where the region has been allocated */
+  enum sctk_ibuf_channel channel;
+
+  /*** Specific to SR ***/
   struct sctk_ibuf_numa_s *node;
 
-  struct sctk_ibuf_s* ibuf;
+  /*** Specific to RDMA ***/
+  /* Pointers to 'head' and 'tail' pointers */
+  struct sctk_ibuf_s *head;
+  struct sctk_ibuf_s *tail;
+  struct sctk_ib_qp_s *remote;
+  /* Locks */
+  sctk_spinlock_t lock;
 } sctk_ibuf_region_t;
 
 /* Poll of ibufs */
@@ -137,15 +165,17 @@ typedef struct sctk_ibuf_pool_s
 /* type of an ibuf */
 enum sctk_ibuf_status
 {
-  BUSY_FLAG             = 111,
-  FREE_FLAG             = 222,
-  RDMA_READ_IBUF_FLAG   = 333,
-  RDMA_WRITE_IBUF_FLAG  = 444,
-  NORMAL_IBUF_FLAG      = 555,
-  SEND_IBUF_FLAG        = 666,
-  SEND_INLINE_IBUF_FLAG = 777,
-  RECV_IBUF_FLAG        = 888,
-  BARRIER_IBUF_FLAG     = 999
+  BUSY_FLAG             = 11,
+  FREE_FLAG             = 22,
+  RDMA_READ_IBUF_FLAG   = 33,
+  RDMA_WRITE_IBUF_FLAG  = 44,
+  NORMAL_IBUF_FLAG      = 55,
+  SEND_IBUF_FLAG        = 66,
+  SEND_INLINE_IBUF_FLAG = 77,
+  RECV_IBUF_FLAG        = 88,
+  BARRIER_IBUF_FLAG     = 99,
+
+  EAGER_RDMA_POLLED     = 1010
 };
 
 __UNUSED__ static char* sctk_ibuf_print_flag (enum sctk_ibuf_status flag)
@@ -170,7 +200,8 @@ typedef struct sctk_ibuf_s
   /* XXX: desc must be first in the structure
    * for data alignment troubles */
   struct sctk_ibuf_desc_s desc;
-  sctk_ibuf_region_t* region;
+  struct sctk_ibuf_region_s* region;
+  int index;
 
   /* pointer to the buffer and its size */
   unsigned char* buffer;
@@ -184,6 +215,9 @@ typedef struct sctk_ibuf_s
   int dest_process;
   /* If the buffer is in a shaed receive queue */
   char in_srq;
+
+  /* We store the wc of the ibuf */
+  struct ibv_wc wc;
 
   struct sctk_ibuf_s* next;
   struct sctk_ibuf_s* prev;
@@ -228,6 +262,11 @@ int sctk_ibuf_send_inline_init(
     sctk_ib_rail_info_t *rail_ib,
     sctk_ibuf_t* ibuf, size_t size);
 
+void sctk_ibuf_rdma_write_with_imm_init(
+    sctk_ibuf_t* ibuf, void* local_address,
+    uint32_t lkey, void* remote_address, uint32_t rkey,
+    int len, uint32_t imm_data);
+
 void sctk_ibuf_rdma_write_init(
     sctk_ibuf_t* ibuf, void* local_address,
     uint32_t lkey, void* remote_address, uint32_t rkey,
@@ -242,6 +281,5 @@ void sctk_ibuf_release(
     struct sctk_ib_rail_info_s *rail_ib,
     sctk_ibuf_t* ibuf);
 
-void sctk_ibuf_set_protocol(sctk_ibuf_t* ibuf, sctk_ib_protocol_t protocol);
 #endif
 #endif

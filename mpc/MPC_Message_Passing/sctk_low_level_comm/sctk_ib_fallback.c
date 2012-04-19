@@ -53,12 +53,13 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   sctk_route_table_t* tmp;
   sctk_ib_data_t *route_data;
   sctk_ib_qp_t *remote;
+  sctk_ibuf_t *ibuf;
   size_t size;
   int low_memory_mode = 0;
   char is_control_message = 0;
   specific_message_tag_t tag = msg->body.header.specific_message_tag;
 
-  sctk_nodebug("send message through rail %d to %d",rail->rail_number, msg->sctk_msg_get_destination);
+  sctk_debug("send message through rail %d to %d",rail->rail_number, msg->sctk_msg_get_destination);
   sctk_nodebug("Send message with tag %d", msg->sctk_msg_get_specific_message_tag);
   if( IS_PROCESS_SPECIFIC_MESSAGE_TAG(tag)) {
 
@@ -94,11 +95,11 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   }
 
   if (remote->ibuf_rdma) { /* Send with an eager RDMA if possible. FIXME: change test */
-    sctk_ibuf_t *ibuf;
+    sctk_debug("Send IBUF rdma");
     ibuf = sctk_ib_rdma_eager_prepare_msg(rail_ib, remote, msg, size);
+    sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, is_control_message);
+    sctk_complete_and_free_message(msg);
   } else if (size+IBUF_GET_EAGER_SIZE < config->ibv_eager_limit)  {
-    sctk_ibuf_t *ibuf;
-
     ibuf = sctk_ib_sr_prepare_msg(rail_ib, remote, msg, size, -1);
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, is_control_message);
@@ -111,7 +112,6 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
     sctk_complete_and_free_message(msg);
     PROF_INC_RAIL_IB(rail_ib, buffered_nb);
   } else {
-    sctk_ibuf_t *ibuf;
 rdma:
     sctk_nodebug("Send RDMA message");
     ibuf = sctk_ib_rdma_prepare_req(rail, tmp, msg, size, -1);
@@ -138,6 +138,10 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
 
   /* Switch on the protocol of the received message */
   switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
+    case eager_rdma_protocol:
+      release_ibuf = 1;
+      break;
+
     case eager_protocol:
       release_ibuf = 1;
       break;
@@ -178,63 +182,78 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
   int recopy = 1;
   int ondemand = 0;
   specific_message_tag_t tag;
+  const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL(ibuf->buffer);
+  const struct ibv_wc wc = ibuf->wc;
 
   sctk_nodebug("[%d] Recv ibuf:%p", rail->rail_number,ibuf);
+#ifdef IB_DEBUG
+  sctk_debug("Protocol received: %s", sctk_ib_protocol_print(protocol));
+#endif
+
+  /* First we check if the message has an immediate data */
+  if (wc.wc_flags == IBV_WC_WITH_IMM) {
+    assume( (wc.imm_data & IMM_DATA_EAGER_RDMA));
+    const int index = wc.imm_data - IMM_DATA_EAGER_RDMA;
+   /* Find the remote which has received the msg */
+    const sctk_ib_qp_t const *remote = sctk_ib_qp_ht_find(rail_ib, wc.qp_num);
+    assume(remote);
+
+   sctk_debug("received an RDMA message from rank %d, ibuf index: %u", remote->rank, index);
+    sctk_ib_rdma_eager_poll_recv(rail_ib, remote, index);
+  } else {
+
   /* Switch on the protocol of the received message */
+    switch (protocol) {
+      case eager_protocol:
+        msg_ibuf = IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer);
+        tag = msg_ibuf->header.specific_message_tag;
 
-  switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
-    case eager_protocol:
-      msg_ibuf = IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer);
-      tag = msg_ibuf->header.specific_message_tag;
-
-      if (IS_PROCESS_SPECIFIC_MESSAGE_TAG(tag)) {
-
-        /* If on demand, handle message and do not send it
-         * to high-layers */
-        if (IS_PROCESS_SPECIFIC_ONDEMAND(tag)) {
-          sctk_nodebug("Received OD message");
-          msg = sctk_ib_sr_recv(rail, ibuf, recopy);
-          sctk_ib_cm_on_demand_recv(rail, msg, ibuf, recopy);
-          goto release;
-        } else if (IS_PROCESS_SPECIFIC_LOW_MEM(tag)) {
-          sctk_nodebug("Received low mem message");
-          msg = sctk_ib_sr_recv(rail, ibuf, recopy);
+        if (IS_PROCESS_SPECIFIC_MESSAGE_TAG(tag)) {
+          /* If on demand, handle message and do not send it
+           * to high-layers */
+          if (IS_PROCESS_SPECIFIC_ONDEMAND(tag)) {
+            sctk_nodebug("Received OD message");
+            msg = sctk_ib_sr_recv(rail, ibuf, recopy, protocol);
+            sctk_ib_cm_on_demand_recv(rail, msg, ibuf, recopy);
+            goto release;
+          } else if (IS_PROCESS_SPECIFIC_LOW_MEM(tag)) {
+            sctk_nodebug("Received low mem message");
+            msg = sctk_ib_sr_recv(rail, ibuf, recopy, protocol);
 #warning "Uncomment after commit"
-//          sctk_ib_low_mem_recv(rail, msg, ibuf, recopy);
+            //          sctk_ib_low_mem_recv(rail, msg, ibuf, recopy);
 
-          goto release;
+            goto release;
+          }
+        } else {
+          /* Do not recopy message if it is not a process specific message.
+           *
+           * When there is an intermediate message, we *MUST* recopy the message
+           * because MPC does not match the user buffer with the network buffer (the copy function is
+           * not performed) */
+          recopy = 0;
         }
-      } else {
-        /* Do not recopy message if it is not a process specific message.
-         *
-         * When there is an intermediate message, we *MUST* recopy the message
-         * because MPC does not match the user buffer with the network buffer (the copy function is
-         * not performed) */
-        recopy = 0;
-      }
 
-      /* Normal message: we handle it */
-      msg = sctk_ib_sr_recv(rail, ibuf, recopy);
-      sctk_ib_sr_recv_free(rail, msg, ibuf, recopy);
-      rail->send_message_from_network(msg);
+        /* Normal message: we handle it */
+        msg = sctk_ib_sr_recv(rail, ibuf, recopy, protocol);
+        sctk_ib_sr_recv_free(rail, msg, ibuf, recopy);
+        rail->send_message_from_network(msg);
 
 release:
-      release_ibuf = 0;
-      break;
+        release_ibuf = 0;
+        break;
 
-    case rdma_protocol:
-      sctk_nodebug("RDMA message received");
-      release_ibuf = sctk_ib_rdma_poll_recv(rail, ibuf);
-      break;
+      case rdma_protocol:
+        release_ibuf = sctk_ib_rdma_poll_recv(rail, ibuf);
+        break;
 
-    case buffered_protocol:
-      sctk_nodebug("Buffered protocol");
-      sctk_ib_buffered_poll_recv(rail, ibuf);
-      release_ibuf = 1;
-      break;
+      case buffered_protocol:
+        sctk_ib_buffered_poll_recv(rail, ibuf);
+        release_ibuf = 1;
+        break;
 
-    default:
-      assume(0);
+      default:
+        assume(0);
+    }
   }
 
   sctk_nodebug("Message received for %d from %d (task:%d), glob_dest:%d",
@@ -260,12 +279,11 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc,
   int dest_task = -1;
   int ret;
 
-//  if (wc->imm_data == IMM_DATA_RENDEZVOUS_WRITE) {
-//    sctk_debug("Imm data: %u %u", wc->imm_data, IMM_DATA_NULL);
-//  }
+  sctk_debug("wc : %u", wc->imm_data);
 
   dest_task = IBUF_GET_DEST_TASK(ibuf);
   ibuf->cq = recv_cq;
+  ibuf->wc = *wc;
   if (sctk_ib_cp_handle_message(rail, ibuf, dest_task, dest_task, recv_cq) == 0) {
     return sctk_network_poll_recv_ibuf(rail, ibuf, 0, poll);
   } else {
@@ -285,6 +303,7 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,
   src_task = IBUF_GET_SRC_TASK(ibuf);
   dest_task = IBUF_GET_DEST_TASK(ibuf);
   ibuf->cq = send_cq;
+  ibuf->wc = *wc;
   /* Decrease the number of pending requests */
   sctk_ib_qp_decr_requests_nb(ibuf->remote);
 

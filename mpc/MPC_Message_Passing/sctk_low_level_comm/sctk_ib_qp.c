@@ -41,6 +41,50 @@
 #define SCTK_IB_MODULE_NAME "QP"
 #include "sctk_ib_toolkit.h"
 
+
+/*-----------------------------------------------------------
+ *  HT of remote peers.
+ *  Used to determine the remote which has generated an event
+ *  to the CQ of the SRQ.
+ *----------------------------------------------------------*/
+struct sctk_ib_qp_ht_s {
+  int key;
+  UT_hash_handle hh;
+  struct sctk_ib_qp_s *remote;
+};
+static sctk_spin_rwlock_t __qp_ht_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
+
+sctk_ib_qp_t*  sctk_ib_qp_ht_find(struct sctk_ib_rail_info_s* rail_ib, int key) {
+  struct sctk_ib_qp_ht_s *entry = NULL;
+
+  sctk_spinlock_read_lock(&__qp_ht_lock);
+  HASH_FIND_INT(rail_ib->remotes, &key, entry);
+  sctk_spinlock_read_unlock(&__qp_ht_lock);
+
+  if (entry != NULL) return entry->remote;
+
+  return NULL;
+}
+
+static inline void sctk_ib_qp_ht_add(struct sctk_ib_rail_info_s* rail_ib, struct sctk_ib_qp_s *remote, int key) {
+  struct sctk_ib_qp_ht_s *entry = NULL;
+
+#ifdef IB_DEBUG
+  entry = sctk_ib_qp_ht_find(rail_ib, key);
+  assume(entry == NULL);
+#endif
+
+  entry = sctk_malloc(sizeof(struct sctk_ib_qp_ht_s));
+  assume(entry);
+  entry->key = key;
+  entry->remote = remote;
+
+  sctk_spinlock_write_lock(&__qp_ht_lock);
+  HASH_ADD_INT(rail_ib->remotes, key, entry);
+  sctk_spinlock_write_unlock(&__qp_ht_lock);
+}
+
+
 /*-----------------------------------------------------------
  *  DEVICE
  *----------------------------------------------------------*/
@@ -310,7 +354,7 @@ sctk_ib_qp_free(sctk_ib_qp_t* remote) {
   }
   /* destroy the QP */
   ibv_destroy_qp(remote->qp);
-  /* We cannot really remove the entry... We leave it as it*/
+  /* We do not remove the entry. */
   /* free(remote); */
 }
 
@@ -327,6 +371,9 @@ sctk_ib_qp_init(struct sctk_ib_rail_info_s* rail_ib,
     sctk_abort();
   }
   sctk_nodebug("QP Initialized for rank %d %p", remote->rank, remote->qp);
+
+  /* Add QP to HT */
+  sctk_ib_qp_ht_add(rail_ib, remote, remote->qp->qp_num);
   return remote->qp;
 }
 

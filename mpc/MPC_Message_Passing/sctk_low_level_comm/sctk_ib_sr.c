@@ -54,7 +54,7 @@ sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
 
   /* Initialization of the buffer */
   is_inlined = sctk_ibuf_send_inline_init(rail_ib, ibuf, IBUF_GET_EAGER_SIZE + size);
-  sctk_ibuf_set_protocol(ibuf, eager_protocol);
+  IBUF_SET_PROTOCOL(ibuf->buffer, eager_protocol);
 
   eager_header = IBUF_GET_EAGER_HEADER(ibuf->buffer);
   eager_header->payload_size = size - sizeof(sctk_thread_ptp_message_body_t);
@@ -104,7 +104,8 @@ sctk_ib_sr_recv_free(sctk_rail_info_t* rail, sctk_thread_ptp_message_t *msg,
 }
 
 sctk_thread_ptp_message_t*
-sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int recopy) {
+sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int recopy,
+    sctk_ib_protocol_t protocol) {
   size_t size;
   sctk_thread_ptp_message_t * msg;
   void* body;
@@ -135,14 +136,13 @@ sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int recopy) {
 
     /* Copy the header of the message */
     memcpy(msg, IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer), sizeof(sctk_thread_ptp_message_body_t));
-
-    msg->tail.ib.protocol = eager_protocol;
   }
 
   msg->body.completion_flag = NULL;
   msg->tail.message_type = sctk_message_network;
   msg->tail.ib.eager.recopied = recopy;
   msg->tail.ib.eager.ibuf = ibuf;
+  msg->tail.ib.protocol = protocol;
 
   sctk_rebuild_header(msg);
   return msg;

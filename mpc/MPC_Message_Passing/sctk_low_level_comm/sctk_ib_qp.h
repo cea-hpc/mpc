@@ -302,5 +302,10 @@ void sctk_ib_qp_deco_victim(struct sctk_ib_rail_info_s* rail_ib,
     sctk_route_table_t* route_table);
 
 
+/*-----------------------------------------------------------
+ *  QP HT
+ *----------------------------------------------------------*/
+sctk_ib_qp_t*  sctk_ib_qp_ht_find(struct sctk_ib_rail_info_s* rail_ib, int key);
+
 #endif
 #endif

@@ -174,7 +174,7 @@ sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
 
   /* Initialization of the buffer */
   sctk_ibuf_send_inline_init(rail_ib, ibuf, IBUF_GET_RDMA_REQ_SIZE);
-  sctk_ibuf_set_protocol(ibuf, rdma_protocol);
+  IBUF_SET_PROTOCOL(ibuf->buffer, rdma_protocol);
 
   sctk_nodebug("Request size: %d", IBUF_GET_RDMA_REQ_SIZE);
   sctk_nodebug("Req sent (size:%lu, requested:%d, ibuf:%p)", IBUF_GET_RDMA_REQ_SIZE,
@@ -213,7 +213,7 @@ static inline sctk_ibuf_t* sctk_ib_rdma_prepare_ack(sctk_rail_info_t* rail,
 
   /* Initialization of the buffer */
   sctk_ibuf_send_inline_init(rail_ib, ibuf, IBUF_GET_RDMA_ACK_SIZE);
-  sctk_ibuf_set_protocol(ibuf, rdma_protocol);
+  IBUF_SET_PROTOCOL(ibuf->buffer, rdma_protocol);
 
   sctk_nodebug("Send RDMA ACK message: %lu %u", rdma_ack->addr, rdma_ack->rkey);
   return ibuf;
@@ -237,7 +237,7 @@ sctk_ib_rdma_prepare_data_write(sctk_rail_info_t* rail,
   IBUF_SET_DEST_TASK(ibuf, rdma->glob_destination);
   IBUF_SET_SRC_TASK(ibuf, rdma->glob_source);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_data_write_type);
-  sctk_ibuf_set_protocol(ibuf, rdma_protocol);
+  IBUF_SET_PROTOCOL(ibuf->buffer, rdma_protocol);
 
   sctk_nodebug("Write from %p (%lu) to %p (%lu)",
       rdma->local.addr,
@@ -280,7 +280,7 @@ sctk_ib_rdma_prepare_done_write(sctk_rail_info_t* rail,
   IBUF_SET_SRC_TASK(ibuf, rdma->glob_source);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_done_type);
   sctk_ibuf_send_inline_init(rail_ib, ibuf, IBUF_GET_RDMA_DONE_SIZE);
-  sctk_ibuf_set_protocol(ibuf, rdma_protocol);
+  IBUF_SET_PROTOCOL(ibuf->buffer, rdma_protocol);
 
   return src_msg_header;
 }

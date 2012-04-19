@@ -22,41 +22,77 @@
 /* ######################################################################## */
 
 #ifdef MPC_USE_INFINIBAND
-#ifndef __SCTK__IB_SR_H_
-#define __SCTK__IB_SR_H_
+#ifndef __SCTK__INFINIBAND_IBUFS_RDMA_H_
+#define __SCTK__INFINIBAND_IBUFS_RDMA_H_
 
-#include <infiniband/verbs.h>
+#include "stdint.h"
+#include "infiniband/verbs.h"
+
+#include "sctk_spinlock.h"
+#include "sctk_ib_mmu.h"
 #include "sctk_ib.h"
-#include "sctk_ib_config.h"
-#include "sctk_ibufs.h"
 #include "sctk_ib_qp.h"
-#include "sctk_pmi.h"
-#include "utlist.h"
 
-struct sctk_rail_info_s;
+struct sctk_ib_rail_info_s;
 
-typedef struct sctk_ib_eager_s {
-  size_t payload_size;
-} __attribute__ ((packed))
- sctk_ib_eager_t;
+#define IBUF_RDMA_GET_HEAD(remote,ptr) (remote->ibuf_rdma->region[ptr].head)
+#define IBUF_RDMA_GET_TAIL(remote,ptr) (remote->ibuf_rdma->region[ptr].tail)
+#define IBUF_RDMA_GET_NEXT(remote, ptr, index) \
+  (index + 1 >= remote->ibuf_rdma->region[ptr].nb) ? 0 : index + 1;
+
+#define IBUF_RDMA_GET_ADDR_FROM_INDEX(remote,ptr,index) \
+  ((sctk_ibuf_t*) remote->ibuf_rdma->region[ptr].ibuf + index)
+
+#define IBUF_RDMA_GET_REGION(remote,ptr) (&remote->ibuf_rdma->region[ptr])
+
+#define IBUF_RDMA_LOCK_REGION(remote,ptr) (sctk_spinlock_lock(&remote->ibuf_rdma->region[ptr].lock))
+#define IBUF_RDMA_UNLOCK_REGION(remote,ptr) (sctk_spinlock_unlock(&remote->ibuf_rdma->region[ptr].lock))
+
+#define IBUF_RDMA_GET_REMOTE_ADDR(remote,ibuf) \
+  ((char*) remote->ibuf_rdma->remote_addr + (ibuf->index * config->ibv_eager_rdma_limit))
+
+/* Pool of ibufs */
+#define REGION_SEND 0
+#define REGION_RECV 1
+typedef struct sctk_ibuf_rdma_pool_s
+{
+  /* Pointer to the RDMA regions: send and recv */
+  struct sctk_ibuf_region_s region[2];
+
+  /* Local addr of the buffers pool */
+  void *local_addr;
+  void *remote_addr;
+
+  /* Rkey of the remote buffer pool */
+  uint32_t rkey;
+
+} sctk_ibuf_rdma_pool_t;
+
+/* Description of an ibuf */
+typedef struct sctk_ibuf_rdma_desc_s
+{
+  union
+  {
+    struct ibv_recv_wr recv;
+    struct ibv_send_wr send;
+  } wr;
+  union
+  {
+    struct ibv_recv_wr* recv;
+    struct ibv_send_wr* send;
+  } bad_wr;
+
+  struct ibv_sge sg_entry;
+} sctk_ibuf_rdma_desc_t;
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
-sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
-    sctk_ib_qp_t* route_data, sctk_thread_ptp_message_t * msg, size_t size, int low_memory_mode);
-
-void sctk_ib_sr_free_msg_no_recopy(void* arg);
-
-void sctk_ib_sr_recv_msg_no_recopy(sctk_message_to_copy_t* tmp);
-
-sctk_thread_ptp_message_t* sctk_ib_sr_recv(struct sctk_rail_info_s* rail, sctk_ibuf_t *ibuf, int recopy, sctk_ib_protocol_t protocol);
+sctk_ibuf_rdma_pool_t*
+sctk_ibuf_rdma_pool_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remote, int nb_ibufs);
 
 void
-sctk_ib_sr_recv_free(struct sctk_rail_info_s* rail, sctk_thread_ptp_message_t *msg,
-    sctk_ibuf_t *ibuf, int recopy);
-
-void sctk_ib_buffered_poll_recv(struct sctk_rail_info_s* rail, sctk_ibuf_t *ibuf);
+sctk_ibuf_rdma_update_remote_addr(sctk_ib_qp_t* remote, sctk_ib_qp_keys_t *key);
 
 #endif
 #endif

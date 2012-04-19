@@ -71,10 +71,12 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
   assume(ibuf);
   // memset (ibuf, 0, nb_ibufs * sizeof(sctk_ibuf_t));
 
-  region->ibuf = ibuf;
+  region->list = ibuf;
   region->nb = nb_ibufs;
   region->node = node;
   region->rail = rail_ib;
+  region->channel = RC_SR_CHANNEL;
+  region->ibuf = ibuf;
   DL_APPEND(node->regions, region);
 
   /* register buffers at once
@@ -89,6 +91,7 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
     ibuf_ptr->region = region;
     ibuf_ptr->size = 0;
     ibuf_ptr->flag = FREE_FLAG;
+    ibuf_ptr->index = i;
 
     ibuf_ptr->buffer = (unsigned char*) ((char*) ptr + (i*config->ibv_eager_limit));
     assume(ibuf_ptr->buffer);
@@ -181,7 +184,7 @@ sctk_ibuf_pick(struct sctk_ib_rail_info_s *rail_ib,
 
  if (need_lock) sctk_spinlock_unlock(lock);
 
- sctk_ibuf_set_protocol(ibuf, null_protocol);
+ IBUF_SET_PROTOCOL(ibuf->buffer, null_protocol);
 
 #ifdef DEBUG_IB_BUFS
   assume(ibuf);
@@ -210,7 +213,6 @@ static int srq_post(
   int rc;
   sctk_spinlock_t *lock = &node->lock;
 
-//  if(need_lock) sctk_spinlock_lock(lock);
   for (i=0; i < nb_ibufs; ++i)
   {
     ibuf = sctk_ibuf_pick(rail_ib, need_lock, node->id);
@@ -239,7 +241,6 @@ static int srq_post(
   }
 
   OPA_add_int(&node->free_srq_nb, nb_posted);
-//  if (need_lock) sctk_spinlock_unlock(lock);
 
   return nb_posted;
 }
@@ -254,6 +255,7 @@ int sctk_ibuf_srq_check_and_post(
 
   return srq_post(rail_ib, limit, &pool->nodes[node], 1);
 }
+
 static inline void __release_in_srq(
     struct sctk_ib_rail_info_s *rail_ib,
     sctk_ibuf_t* ibuf, int need_lock)
@@ -261,12 +263,10 @@ static inline void __release_in_srq(
   assume(ibuf);
   LOAD_CONFIG(rail_ib);
   sctk_ibuf_numa_t *node = ibuf->region->node;
-//  sctk_spinlock_t *lock = &node->lock;
   int limit;
   int free_srq_nb;
 
   ibuf->in_srq = 0;
-//  if (need_lock) sctk_spinlock_lock(lock);
   /* limit of buffer posted */
   free_srq_nb = OPA_fetch_and_decr_int(&node->free_srq_nb) - 1;
   limit = config->ibv_max_srq_ibufs_posted - free_srq_nb;
@@ -275,8 +275,6 @@ static inline void __release_in_srq(
     srq_post(rail_ib, limit, node, 1);
   }
   sctk_nodebug("Buffer %p free (%d)", ibuf, is_srq);
-
-//  if (need_lock) sctk_spinlock_unlock(lock);
 }
 
 void sctk_ibuf_release_from_srq(
@@ -293,30 +291,27 @@ void sctk_ibuf_release(
     sctk_ibuf_t* ibuf)
 {
   assume(ibuf);
-  sctk_ibuf_numa_t *node = ibuf->region->node;
-  sctk_spinlock_t *lock = &node->lock;
 
-  ibuf->flag = FREE_FLAG;
+  if (IBUF_GET_CHANNEL(ibuf) & RDMA_CHANNEL) {
+    sctk_ibuf_rdma_release(rail_ib, ibuf);
+  } else {
+    assume(IBUF_GET_CHANNEL(ibuf) == RC_SR_CHANNEL);
+    sctk_ibuf_numa_t *node = ibuf->region->node;
+    sctk_spinlock_t *lock = &node->lock;
 
-  OPA_incr_int(&node->free_nb);
-  sctk_spinlock_lock(lock);
-  DL_APPEND(node->free_entry, ibuf);
-  sctk_spinlock_unlock(lock);
+    ibuf->flag = FREE_FLAG;
 
-  /* If SRQ, we check and try to post more messages to SRQ */
-  if (ibuf->in_srq) {
-    __release_in_srq(rail_ib, ibuf, 0);
+    OPA_incr_int(&node->free_nb);
+    sctk_spinlock_lock(lock);
+    DL_APPEND(node->free_entry, ibuf);
+    sctk_spinlock_unlock(lock);
+
+    /* If SRQ, we check and try to post more messages to SRQ */
+    if (ibuf->in_srq) {
+      __release_in_srq(rail_ib, ibuf, 0);
+    }
+    sctk_nodebug("Buffer %p free (%d)", ibuf, ibuf->in_srq);
   }
-  sctk_nodebug("Buffer %p free (%d)", ibuf, ibuf->in_srq);
-//  sctk_spinlock_unlock(lock);
-}
-
-void sctk_ibuf_set_protocol(sctk_ibuf_t* ibuf, sctk_ib_protocol_t protocol)
-{
-  sctk_ibuf_header_t *ibuf_header;
-
-  ibuf_header = IBUF_GET_HEADER(ibuf->buffer);
-  ibuf_header->protocol = protocol;
 }
 
 /*-----------------------------------------------------------
@@ -465,13 +460,41 @@ void sctk_ibuf_rdma_write_init(
   ibuf->desc.wr.send.wr.rdma.rkey = rkey;
 
   ibuf->desc.wr.send.sg_list = &(ibuf->desc.sg_entry);
-  ibuf->desc.wr.send.imm_data = IMM_DATA_RENDEZVOUS_WRITE;
+  ibuf->desc.wr.send.imm_data = IMM_DATA_NULL;
   ibuf->desc.sg_entry.length = len;
   ibuf->desc.sg_entry.lkey = lkey;
   ibuf->desc.sg_entry.addr = (uintptr_t) local_address;
 
   ibuf->flag = RDMA_WRITE_IBUF_FLAG;
 }
+
+void sctk_ibuf_rdma_write_with_imm_init(
+    sctk_ibuf_t* ibuf, void* local_address,
+    uint32_t lkey, void* remote_address, uint32_t rkey,
+    int len, uint32_t imm_data)
+{
+  sctk_assert(ibuf);
+
+  ibuf->in_srq = 0;
+  ibuf->desc.wr.send.next = NULL;
+  ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE_WITH_IMM;
+  ibuf->desc.wr.send.send_flags = IBV_SEND_SIGNALED;
+  ibuf->desc.wr.send.wr_id = (uintptr_t) ibuf;
+
+  ibuf->desc.wr.send.num_sge = 1;
+  ibuf->desc.wr.send.wr.rdma.remote_addr = (uintptr_t) remote_address;
+  ibuf->desc.wr.send.wr.rdma.rkey = rkey;
+
+  ibuf->desc.wr.send.sg_list = &(ibuf->desc.sg_entry);
+  ibuf->desc.wr.send.imm_data = imm_data;
+  ibuf->desc.sg_entry.length = len;
+  ibuf->desc.sg_entry.lkey = lkey;
+  ibuf->desc.sg_entry.addr = (uintptr_t) local_address;
+
+  ibuf->flag = RDMA_WRITE_IBUF_FLAG;
+}
+
+
 
 void sctk_ibuf_rdma_read_init(
     sctk_ibuf_t* ibuf, void* local_address,
