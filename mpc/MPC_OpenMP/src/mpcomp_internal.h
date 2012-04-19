@@ -114,6 +114,7 @@ struct mpcomp_team_info_s {
 
   /* Temp stats for chunk stealing */
   sctk_atomics_int stats_stolen_chunks; 
+  //int stats_stolen_chunks;
   sctk_atomics_int stats_last_mvp_chunk;
 } ;
 
@@ -356,6 +357,7 @@ static inline void __mpcomp_team_info_init( mpcomp_team_info * team_info ) {
       MPCOMP_NOWAIT_STOP_SYMBOL ) ;
 
  sctk_atomics_store_int( &(team_info->stats_stolen_chunks), 0);
+ //team_info->stats_stolen_chunks = 0;
  sctk_atomics_store_int( &(team_info->stats_last_mvp_chunk), 0);
 }
 
