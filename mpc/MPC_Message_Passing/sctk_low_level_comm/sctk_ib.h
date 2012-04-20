@@ -189,7 +189,7 @@ extern "C"
 #define IBUF_GET_RDMA_HEADER(buffer) \
   (sctk_ib_rdma_t*) ((char*) buffer + sizeof(sctk_ibuf_header_t))
 
-/* IB payload: generic */
+  /* IB payload: generic */
 #define IBUF_GET_EAGER_PAYLOAD(buffer) \
   (void*) ((char*) IBUF_GET_EAGER_HEADER(buffer) + sizeof(sctk_ib_eager_t))
 #define IBUF_GET_BUFFERED_PAYLOAD(buffer) \

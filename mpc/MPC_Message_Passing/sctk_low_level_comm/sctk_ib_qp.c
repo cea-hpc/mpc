@@ -57,6 +57,8 @@ static sctk_spin_rwlock_t __qp_ht_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 sctk_ib_qp_t*  sctk_ib_qp_ht_find(struct sctk_ib_rail_info_s* rail_ib, int key) {
   struct sctk_ib_qp_ht_s *entry = NULL;
 
+  if  (rail_ib->remotes == NULL) return NULL;
+
   sctk_spinlock_read_lock(&__qp_ht_lock);
   HASH_FIND_INT(rail_ib->remotes, &key, entry);
   sctk_spinlock_read_unlock(&__qp_ht_lock);
@@ -70,8 +72,9 @@ static inline void sctk_ib_qp_ht_add(struct sctk_ib_rail_info_s* rail_ib, struct
   struct sctk_ib_qp_ht_s *entry = NULL;
 
 #ifdef IB_DEBUG
-  entry = sctk_ib_qp_ht_find(rail_ib, key);
-  assume(entry == NULL);
+  struct sctk_ib_qp_s *rem;
+  rem = sctk_ib_qp_ht_find(rail_ib, key);
+  assume(rem == NULL);
 #endif
 
   entry = sctk_malloc(sizeof(struct sctk_ib_qp_ht_s));
@@ -264,12 +267,29 @@ sctk_ib_cq_print_status (enum ibv_wc_status status)
 /*-----------------------------------------------------------
  *  Exchange keys
  *----------------------------------------------------------*/
-#define VALUE_STRING "%05"SCNu16":%010"SCNu32":%010"SCNu32":%p:%010"SCNu32
-void sctk_ib_qp_key_create_value(char *msg, size_t size, uint16_t lid, uint32_t qp_num,
-    uint32_t psn, void* rdma_eager_ptr, uint32_t rdma_eager_rkey) {
+void sctk_ib_qp_key_print(sctk_ib_qp_keys_t *keys) {
+ sctk_nodebug(
+     "LID=%lu psn=%lu qp_num=%lu rdma_send ptr=%p rdma send_rkey=%u rdma_send ptr=%p rdma send_rkey=%u",
+     keys->lid,
+     keys->psn,
+     keys->qp_num,
+     keys->rdma.send.ptr,
+     keys->rdma.send.rkey,
+     keys->rdma.recv.ptr,
+     keys->rdma.recv.rkey);
+}
+
+void sctk_ib_qp_key_create_value(char *msg, size_t size, sctk_ib_qp_keys_t* keys) {
   snprintf(msg, size,
-      VALUE_STRING,
-      lid, qp_num, psn, rdma_eager_ptr, rdma_eager_rkey);
+      "%08x:%08x:%08x:(%p:%08x-%p:%08x)",
+      keys->lid,
+      keys->qp_num,
+      keys->psn,
+      keys->rdma.send.ptr,
+      keys->rdma.send.rkey,
+      keys->rdma.recv.ptr,
+      keys->rdma.recv.rkey);
+  sctk_ib_qp_key_print(keys);
 }
 
 void sctk_ib_qp_key_create_key(char *msg, size_t size, int rail, int src, int dest) {
@@ -280,9 +300,16 @@ void sctk_ib_qp_key_create_key(char *msg, size_t size, int rail, int src, int de
 sctk_ib_qp_keys_t sctk_ib_qp_keys_convert( char* msg)
 {
   sctk_ib_qp_keys_t keys;
-  sscanf(msg, VALUE_STRING,
-      &keys.lid, &keys.qp_num, &keys.psn, &keys.rdma.ptr, &keys.rdma.rkey);
-  sctk_debug("LID : %lu|psn : %lu|qp_num : %lu|rdma ptr : %p|rdma rkey : %u", keys.lid, keys.psn, keys.qp_num, keys.rdma.ptr,keys.rdma.rkey);
+  sscanf(msg, "%08x:%08x:%08x:(%p:%08x-%p:%08x)",
+      &keys.lid,
+      &keys.qp_num,
+      &keys.psn,
+      &keys.rdma.send.ptr,
+      &keys.rdma.send.rkey,
+      &keys.rdma.recv.ptr,
+      &keys.rdma.recv.rkey);
+
+  sctk_ib_qp_key_print(&keys);
 
   return keys;
 }
@@ -299,18 +326,33 @@ void sctk_ib_qp_keys_send(
   int val_max = sctk_pmi_get_max_val_len();
   char key[key_max];
   char val[key_max];
-  void *rdma_eager_ptr = NULL;
-  uint32_t rdma_eager_rkey = 0;
+
+  void *rdma_send_ptr = NULL;
+  uint32_t rdma_send_rkey = 0;
+  void *rdma_recv_ptr = NULL;
+  uint32_t rdma_recv_rkey = 0;
 
   /* FIXME: change the test */
   if (remote->ibuf_rdma) {
-    rdma_eager_ptr = remote->ibuf_rdma->local_addr;
-    rdma_eager_rkey = remote->ibuf_rdma->region->mmu_entry->mr->rkey;
+    rdma_send_ptr = remote->ibuf_rdma->region[REGION_SEND].buffer_addr;
+    rdma_send_rkey = remote->ibuf_rdma->region[REGION_SEND].mmu_entry->mr->rkey;
+
+    rdma_recv_ptr = remote->ibuf_rdma->region[REGION_RECV].buffer_addr;
+    rdma_recv_rkey = remote->ibuf_rdma->region[REGION_RECV].mmu_entry->mr->rkey;
   }
 
+  sctk_ib_qp_keys_t qp_keys = {
+    .lid = device->port_attr.lid,
+    .qp_num = remote->qp->qp_num,
+    .psn = remote->psn,
+    .rdma.send.ptr = rdma_send_ptr,
+    .rdma.send.rkey = rdma_send_rkey,
+    .rdma.recv.ptr = rdma_recv_ptr,
+    .rdma.recv.rkey = rdma_recv_rkey,
+  };
+
   sctk_ib_qp_key_create_key(key, key_max, 0, sctk_process_rank, remote->rank);
-  sctk_ib_qp_key_create_value(val, val_max,
-    device->port_attr.lid, remote->qp->qp_num, remote->psn, rdma_eager_ptr, rdma_eager_rkey);
+  sctk_ib_qp_key_create_value(val, val_max, &qp_keys);
   sctk_pmi_put_connection_info_str(val, val_max, key);
 }
 
@@ -436,7 +478,7 @@ sctk_ib_qp_state_rtr_attr(struct sctk_ib_rail_info_s* rail_ib,
 
   attr.qp_state = IBV_QPS_RTR;
   /* 512 is the recommended value */
-  attr.path_mtu = IBV_MTU_1024;
+  attr.path_mtu = IBV_MTU_2048;
   /* QP number of remote QP */
   /* maximul number if resiyrces for incoming RDMA request */
   attr.max_dest_rd_atomic = config->ibv_rdma_dest_depth;
@@ -721,7 +763,7 @@ static void* wait_send(void *arg){
     wait_send_arg.remote = remote;
     wait_send_arg.ibuf = ibuf;
 
-    sctk_ib_nodebug("QP full, waiting for posting message...");
+    sctk_ib_debug("QP full, waiting for posting message...");
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
         (void (*)(void *)) wait_send, &wait_send_arg);
   }
@@ -771,7 +813,7 @@ static void* wait_send(void *arg){
     wait_send_arg.remote = remote;
     wait_send_arg.ibuf = ibuf;
 
-    sctk_ib_nodebug("QP full, waiting for posting message...");
+    sctk_ib_debug("QP full, waiting for posting message...");
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
         (void (*)(void *)) wait_send, &wait_send_arg);
   }

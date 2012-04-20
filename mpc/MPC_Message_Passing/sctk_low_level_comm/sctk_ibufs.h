@@ -46,6 +46,7 @@ struct sctk_ibuf_rdma_region_s;
 typedef struct sctk_ibuf_header_s
 {
   /* Protocol used */
+  int piggyback;
   sctk_ib_protocol_t protocol;
   int dest_task;
   int low_memory_mode;
@@ -55,6 +56,9 @@ sctk_ibuf_header_t;
 #define IBUF_GET_HEADER_SIZE (sizeof(sctk_ibuf_header_t))
 #define IBUF_GET_PROTOCOL(buffer) (IBUF_GET_HEADER(buffer)->protocol)
 #define IBUF_SET_PROTOCOL(buffer,x) (IBUF_GET_HEADER(buffer)->protocol=x)
+/* Get the piggyback of the eager message */
+#define IBUF_GET_EAGER_PIGGYBACK(buffer) (IBUF_GET_HEADER(buffer)->piggyback)
+
 
 /* XXX: take an ibuf and not a buffer */
 #define IBUF_SET_DEST_TASK(ibuf,x) (IBUF_GET_HEADER(ibuf->buffer)->dest_task = x)
@@ -219,6 +223,7 @@ typedef struct sctk_ibuf_s
   /* We store the wc of the ibuf */
   struct ibv_wc wc;
 
+  /* Linked list used for CP */
   struct sctk_ibuf_s* next;
   struct sctk_ibuf_s* prev;
 
@@ -270,7 +275,7 @@ void sctk_ibuf_rdma_write_with_imm_init(
 void sctk_ibuf_rdma_write_init(
     sctk_ibuf_t* ibuf, void* local_address,
     uint32_t lkey, void* remote_address, uint32_t rkey,
-    int len);
+    int len, int send_flags);
 
 void sctk_ibuf_rdma_read_init(
     sctk_ibuf_t* ibuf, void* local_address,

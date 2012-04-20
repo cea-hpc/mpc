@@ -250,7 +250,8 @@ sctk_ib_rdma_prepare_data_write(sctk_rail_info_t* rail,
       rdma->local.mmu_entry->mr->lkey,
       rdma->remote.addr,
       rdma->remote.rkey,
-      rdma->local.size);
+      rdma->local.size,
+      IBV_SEND_SIGNALED);
 }
 
 /*

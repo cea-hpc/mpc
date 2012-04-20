@@ -37,8 +37,10 @@ struct sctk_ib_rail_info_s;
 
 #define IBUF_RDMA_GET_HEAD(remote,ptr) (remote->ibuf_rdma->region[ptr].head)
 #define IBUF_RDMA_GET_TAIL(remote,ptr) (remote->ibuf_rdma->region[ptr].tail)
-#define IBUF_RDMA_GET_NEXT(remote, ptr, index) \
-  (index + 1 >= remote->ibuf_rdma->region[ptr].nb) ? 0 : index + 1;
+#define IBUF_RDMA_GET_NEXT(i) \
+  ( ( (i->index + 1) >= i->region->nb) ? \
+    (sctk_ibuf_t*) i->region->ibuf : \
+    (sctk_ibuf_t*) i->region->ibuf + (i->index + 1))
 
 #define IBUF_RDMA_GET_ADDR_FROM_INDEX(remote,ptr,index) \
   ((sctk_ibuf_t*) remote->ibuf_rdma->region[ptr].ibuf + index)
@@ -48,8 +50,11 @@ struct sctk_ib_rail_info_s;
 #define IBUF_RDMA_LOCK_REGION(remote,ptr) (sctk_spinlock_lock(&remote->ibuf_rdma->region[ptr].lock))
 #define IBUF_RDMA_UNLOCK_REGION(remote,ptr) (sctk_spinlock_unlock(&remote->ibuf_rdma->region[ptr].lock))
 
-#define IBUF_RDMA_GET_REMOTE_ADDR(remote,ibuf) \
-  ((char*) remote->ibuf_rdma->remote_addr + (ibuf->index * config->ibv_eager_rdma_limit))
+#define IBUF_RDMA_GET_REMOTE_ADDR(remote,ptr,ibuf) \
+  ((char*) remote->ibuf_rdma->remote_region[ptr] + (ibuf->index * config->ibv_eager_rdma_limit))
+
+#define IBUF_RDMA_GET_REMOTE_PIGGYBACK(remote,ptr,ibuf) \
+  ((char*) remote->ibuf_rdma->remote_region[ptr] + (ibuf->index * config->ibv_eager_rdma_limit))
 
 /* Pool of ibufs */
 #define REGION_SEND 0
@@ -59,12 +64,11 @@ typedef struct sctk_ibuf_rdma_pool_s
   /* Pointer to the RDMA regions: send and recv */
   struct sctk_ibuf_region_s region[2];
 
-  /* Local addr of the buffers pool */
-  void *local_addr;
-  void *remote_addr;
+  /* Remote addr of the buffers pool */
+  struct sctk_ibuf_region_s* remote_region[2];
 
   /* Rkey of the remote buffer pool */
-  uint32_t rkey;
+  uint32_t rkey[2];
 
 } sctk_ibuf_rdma_pool_t;
 
@@ -93,6 +97,8 @@ sctk_ibuf_rdma_pool_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remo
 
 void
 sctk_ibuf_rdma_update_remote_addr(sctk_ib_qp_t* remote, sctk_ib_qp_keys_t *key);
+
+void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf);
 
 #endif
 #endif

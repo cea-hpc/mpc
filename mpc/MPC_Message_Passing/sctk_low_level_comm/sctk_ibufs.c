@@ -445,14 +445,14 @@ void sctk_ibuf_send_init(
 void sctk_ibuf_rdma_write_init(
     sctk_ibuf_t* ibuf, void* local_address,
     uint32_t lkey, void* remote_address, uint32_t rkey,
-    int len)
+    int len, int send_flags)
 {
   sctk_assert(ibuf);
 
   ibuf->in_srq = 0;
   ibuf->desc.wr.send.next = NULL;
   ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE;
-  ibuf->desc.wr.send.send_flags = IBV_SEND_SIGNALED;
+  ibuf->desc.wr.send.send_flags = send_flags;
   ibuf->desc.wr.send.wr_id = (uintptr_t) ibuf;
 
   ibuf->desc.wr.send.num_sge = 1;
@@ -524,6 +524,35 @@ void sctk_ibuf_rdma_read_init(
   ibuf->dest_process = dest_process;
 }
 
+void sctk_ibuf_print_rdma(sctk_ibuf_t *ibuf, char* desc) {
+  sprintf(desc,
+      "region       :%p\n"
+      "buffer       :%p\n"
+      "size         :%lu\n"
+      "flag         :%s\n"
+      "remote       :%p\n"
+      "dest_process :%d\n"
+      "in_srq       :%d\n"
+      "next         :%p\n"
+      "prev         :%p\n"
+      "sg_entry.length :%u\n"
+      "local addr   :%p\n"
+      "remote addr  :%p\n",
+      ibuf->region,
+      ibuf->buffer,
+      ibuf->size,
+      sctk_ibuf_print_flag(ibuf->flag),
+      ibuf->remote,
+      ibuf->dest_process,
+      ibuf->in_srq,
+      ibuf->next,
+      ibuf->prev,
+      ibuf->desc.sg_entry.length,
+      ibuf->desc.sg_entry.addr,
+      ibuf->desc.wr.send.wr.rdma.remote_addr);
+}
+
+
 void sctk_ibuf_print(sctk_ibuf_t *ibuf, char* desc) {
   sprintf(desc,
       "region       :%p\n"
@@ -535,7 +564,7 @@ void sctk_ibuf_print(sctk_ibuf_t *ibuf, char* desc) {
       "in_srq       :%d\n"
       "next         :%p\n"
       "prev         :%p\n"
-      "sg_entry.length :%u",
+      "sg_entry.length :%u\n",
       ibuf->region,
       ibuf->buffer,
       ibuf->size,

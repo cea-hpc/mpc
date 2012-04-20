@@ -143,12 +143,18 @@ typedef struct
   uint32_t qp_num;
   uint32_t psn;
   struct {
-    void* ptr;
-    uint32_t rkey;
+    struct {
+      void* ptr;
+      uint32_t rkey;
+    } send;
+    struct {
+      void* ptr;
+      uint32_t rkey;
+    } recv;
   } rdma;
 } sctk_ib_qp_keys_t;
 
-void sctk_ib_qp_key_create_value(char *msg, size_t size, uint16_t lid, uint32_t qp_num, uint32_t psn, void* rdma_eager, uint32_t rdma_eager_rkey);
+void sctk_ib_qp_key_create_value(char *msg, size_t size, sctk_ib_qp_keys_t* keys);
 void sctk_ib_qp_key_create_key(char *msg, size_t size, int rail, int src, int dest);
 sctk_ib_qp_keys_t sctk_ib_qp_keys_convert( char* msg);
 
