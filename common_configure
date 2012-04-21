@@ -32,9 +32,7 @@ if test "$ARCHIVE_TYPE" = "" ; then
   echo "Using default configuration..."
   # Look for the right configuration of this version in 'VERSIONS' file
   while read ver atype aname adir pneeded pname args ; do
-  if test "$ver" = "#" ; then
-    echo "Comment"
-  else
+  if test "$ver" != "#" ; then
     if test "$ver" = "$VERSION" ; then
       echo "Found version $ver..."
       ARCHIVE_TYPE=$atype
