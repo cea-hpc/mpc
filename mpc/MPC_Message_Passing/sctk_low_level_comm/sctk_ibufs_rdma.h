@@ -42,6 +42,9 @@ struct sctk_ib_rail_info_s;
     (sctk_ibuf_t*) i->region->ibuf : \
     (sctk_ibuf_t*) i->region->ibuf + (i->index + 1))
 
+#define IBUF_RDMA_ADD(i, x) \
+  ( (sctk_ibuf_t*) ( (i->region->ibuf + ( ( i->index + x  ) % (i->region->nb) ) ) ) )
+
 #define IBUF_RDMA_GET_ADDR_FROM_INDEX(remote,ptr,index) \
   ((sctk_ibuf_t*) remote->ibuf_rdma->region[ptr].ibuf + index)
 
@@ -69,6 +72,8 @@ typedef struct sctk_ibuf_rdma_pool_s
 
   /* Rkey of the remote buffer pool */
   uint32_t rkey[2];
+
+  int send_credit;
 
 } sctk_ibuf_rdma_pool_t;
 

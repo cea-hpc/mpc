@@ -48,6 +48,29 @@ int sctk_ib_counters[128];
  *
  */
 
+/* Counters */
+__thread double time_poll_cq = 0;
+__thread double time_steals = 0;
+__thread double time_own = 0;
+__thread double time_ptp = 0;
+__thread double time_coll = 0;
+__thread long poll_steals = 0;
+__thread long poll_steals_failed = 0;
+__thread long poll_steals_success = 0;
+__thread long poll_steal_same_node = 0;
+__thread long poll_steal_other_node = 0;
+__thread long poll_own = 0;
+__thread long poll_own_failed = 0;
+__thread long poll_own_success = 0;
+__thread long call_to_polling = 0;
+__thread long poll_cq = 0;
+
+__thread double time_send = 0;
+__thread double poll_send = 0;
+__thread double poll_recv = 0;
+__thread double tst = 0;
+
+
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/

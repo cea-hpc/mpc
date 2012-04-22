@@ -34,20 +34,6 @@
 enum cp_counters_e{
   matched = 0,
   not_matched,
-
-//  poll_own,
-  /* Number of msg stolen by the current task */
-//  poll_steals,
-  /* Numer of msg stolen on the same node */
-//  poll_steal_same_node,
-  /* Number of msg stolen on other nodes */
-//  poll_steal_other_node,
-  /* Number of steals tried */
-//  poll_steal_try,
-  /* Poll own failed */
-//  poll_own_lock_failed,
-//  poll_own_failed,
-//  poll_steals_failed,
 };
 
 extern __thread int task_node_number;
@@ -92,23 +78,6 @@ typedef struct sctk_ib_cp_task_s{
 #define CP_PROF_PRINT(t,x) ((int) OPA_load_int(&t->c[x]))
 /* XXX:should be determined dynamically */
 #define CYCLES_PER_SEC (2270.000*1e6)
-
-extern __thread double time_steals;
-extern __thread double time_own;
-extern __thread double time_poll_cq;
-extern __thread double time_ptp;
-extern __thread double time_coll;
-extern __thread long poll_steals;
-extern __thread long poll_steals_failed;
-extern __thread long poll_steals_success;
-extern __thread long poll_steal_same_node;
-extern __thread long poll_steal_other_node;
-extern __thread long poll_own;
-extern __thread long poll_own_failed;
-extern __thread long poll_own_success;
-extern __thread long call_to_polling;
-extern __thread long poll_cq;
-
 
 /*-----------------------------------------------------------
  *  Structures

@@ -167,7 +167,7 @@ void sctk_network_init_ib_all(sctk_rail_info_t* rail,
     sctk_ib_init_remote(dest_rank, rail, route_table_dest, 0);
     route_dest=&route_table_dest->data.ib;
     /* TODO: User may choose the number of ibufs */
-    sctk_ibuf_rdma_pool_init(rail_ib, route_dest->remote, 4000);
+    sctk_ibuf_rdma_pool_init(rail_ib, route_dest->remote, 128);
 
     sctk_ib_qp_keys_send(rail_ib, route_dest->remote);
     sctk_pmi_barrier();

@@ -292,25 +292,28 @@ void sctk_ibuf_release(
 {
   assume(ibuf);
 
-  if (IBUF_GET_CHANNEL(ibuf) & RDMA_CHANNEL) {
-    sctk_ibuf_rdma_release(rail_ib, ibuf);
-  } else {
-    assume(IBUF_GET_CHANNEL(ibuf) == RC_SR_CHANNEL);
-    sctk_ibuf_numa_t *node = ibuf->region->node;
-    sctk_spinlock_t *lock = &node->lock;
+  if (ibuf->to_release & IBUF_RELEASE) {
 
-    ibuf->flag = FREE_FLAG;
+    if (IBUF_GET_CHANNEL(ibuf) & RDMA_CHANNEL) {
+      sctk_ibuf_rdma_release(rail_ib, ibuf);
+    } else {
+      assume(IBUF_GET_CHANNEL(ibuf) == RC_SR_CHANNEL);
+      sctk_ibuf_numa_t *node = ibuf->region->node;
+      sctk_spinlock_t *lock = &node->lock;
 
-    OPA_incr_int(&node->free_nb);
-    sctk_spinlock_lock(lock);
-    DL_APPEND(node->free_entry, ibuf);
-    sctk_spinlock_unlock(lock);
+      ibuf->flag = FREE_FLAG;
 
-    /* If SRQ, we check and try to post more messages to SRQ */
-    if (ibuf->in_srq) {
-      __release_in_srq(rail_ib, ibuf, 0);
+      OPA_incr_int(&node->free_nb);
+      sctk_spinlock_lock(lock);
+      DL_APPEND(node->free_entry, ibuf);
+      sctk_spinlock_unlock(lock);
+
+      /* If SRQ, we check and try to post more messages to SRQ */
+      if (ibuf->in_srq) {
+        __release_in_srq(rail_ib, ibuf, 0);
+      }
+      sctk_nodebug("Buffer %p free (%d)", ibuf, ibuf->in_srq);
     }
-    sctk_nodebug("Buffer %p free (%d)", ibuf, ibuf->in_srq);
   }
 }
 
@@ -319,9 +322,9 @@ void sctk_ibuf_release(
  *----------------------------------------------------------*/
 void sctk_ibuf_recv_init(sctk_ibuf_t* ibuf)
 {
-  sctk_assert(ibuf);
   LOAD_CONFIG(ibuf->region->rail);
 
+  ibuf->to_release = IBUF_RELEASE;
   ibuf->in_srq = 1;
 
   ibuf->desc.wr.send.next = NULL;
@@ -338,36 +341,14 @@ void sctk_ibuf_recv_init(sctk_ibuf_t* ibuf)
   ibuf->flag = RECV_IBUF_FLAG;
 }
 
-void sctk_ibuf_rdma_recv_init(sctk_ibuf_t* ibuf, void* local_address,
-    uint32_t lkey)
-{
-  sctk_assert(ibuf);
-  LOAD_CONFIG(ibuf->region->rail);
-
-  /* XXX: not verified*/
-  assume(0);
-  ibuf->in_srq = 1;
-
-  ibuf->desc.wr.send.next = NULL;
-  ibuf->desc.wr.send.wr_id = (uintptr_t) ibuf;
-
-  ibuf->desc.wr.send.num_sge = 1;
-  ibuf->desc.wr.send.sg_list = &(ibuf->desc.sg_entry);
-  ibuf->desc.wr.send.imm_data = IMM_DATA_NULL;
-  ibuf->desc.sg_entry.length = config->ibv_eager_limit;
-  ibuf->desc.sg_entry.lkey = lkey;
-  ibuf->desc.sg_entry.addr = (uintptr_t) local_address;
-
-  ibuf->flag = NORMAL_IBUF_FLAG;
-}
-
 void sctk_ibuf_barrier_send_init(sctk_ibuf_t* ibuf, void* local_address,
     uint32_t lkey, void* remote_address, uint32_t rkey,
     int len)
 {
-  sctk_assert(ibuf);
 
+  ibuf->to_release = IBUF_RELEASE;
   ibuf->in_srq = 0;
+
   ibuf->desc.wr.send.next = NULL;
   ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE;
   ibuf->desc.wr.send.send_flags = IBV_SEND_SIGNALED;
@@ -387,13 +368,11 @@ void sctk_ibuf_barrier_send_init(sctk_ibuf_t* ibuf, void* local_address,
 }
 
 int sctk_ibuf_send_inline_init(
-    sctk_ib_rail_info_t *rail_ib,
     sctk_ibuf_t* ibuf, size_t size)
 {
-  LOAD_CONFIG(rail_ib);
+  LOAD_CONFIG(ibuf->region->rail);
   int is_inlined = 0;
 
-  sctk_assert(ibuf);
   /* If data may be inlined */
   if(size <= config->ibv_max_inline) {
     ibuf->desc.wr.send.send_flags = IBV_SEND_INLINE;
@@ -405,6 +384,7 @@ int sctk_ibuf_send_inline_init(
   }
 
   ibuf->in_srq = 0;
+  ibuf->to_release = IBUF_RELEASE;
   ibuf->desc.wr.send.next = NULL;
   ibuf->desc.wr.send.opcode = IBV_WR_SEND;
   ibuf->desc.wr.send.wr_id = (uintptr_t) ibuf;
@@ -423,9 +403,8 @@ int sctk_ibuf_send_inline_init(
 void sctk_ibuf_send_init(
     sctk_ibuf_t* ibuf, size_t size)
 {
-  sctk_assert(ibuf);
-
   ibuf->in_srq = 0;
+  ibuf->to_release = IBUF_RELEASE;
   ibuf->desc.wr.send.next = NULL;
   ibuf->desc.wr.send.opcode = IBV_WR_SEND;
   ibuf->desc.wr.send.send_flags = IBV_SEND_SIGNALED;
@@ -442,17 +421,28 @@ void sctk_ibuf_send_init(
   ibuf->flag = SEND_IBUF_FLAG;
 }
 
-void sctk_ibuf_rdma_write_init(
+int sctk_ibuf_rdma_write_init(
     sctk_ibuf_t* ibuf, void* local_address,
     uint32_t lkey, void* remote_address, uint32_t rkey,
-    int len, int send_flags)
+    int len, int send_flags, char to_release)
 {
-  sctk_assert(ibuf);
+  LOAD_CONFIG(ibuf->region->rail);
+  int is_inlined = 0;
+
+  /* If data may be inlined */
+  if(len <= config->ibv_max_inline) {
+    ibuf->desc.wr.send.send_flags = IBV_SEND_INLINE | send_flags;
+    ibuf->flag = RDMA_WRITE_INLINE_IBUF_FLAG;
+    is_inlined = 1;
+  } else {
+    ibuf->desc.wr.send.send_flags = send_flags;
+    ibuf->flag = RDMA_WRITE_IBUF_FLAG;
+  }
 
   ibuf->in_srq = 0;
+  ibuf->to_release = to_release;
   ibuf->desc.wr.send.next = NULL;
   ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE;
-  ibuf->desc.wr.send.send_flags = send_flags;
   ibuf->desc.wr.send.wr_id = (uintptr_t) ibuf;
 
   ibuf->desc.wr.send.num_sge = 1;
@@ -465,7 +455,7 @@ void sctk_ibuf_rdma_write_init(
   ibuf->desc.sg_entry.lkey = lkey;
   ibuf->desc.sg_entry.addr = (uintptr_t) local_address;
 
-  ibuf->flag = RDMA_WRITE_IBUF_FLAG;
+  return is_inlined;
 }
 
 void sctk_ibuf_rdma_write_with_imm_init(
@@ -473,12 +463,24 @@ void sctk_ibuf_rdma_write_with_imm_init(
     uint32_t lkey, void* remote_address, uint32_t rkey,
     int len, uint32_t imm_data)
 {
-  sctk_assert(ibuf);
+  LOAD_CONFIG(ibuf->region->rail);
+  int is_inlined = 0;
+
+  /* If data may be inlined */
+  if(len <= config->ibv_max_inline) {
+    ibuf->desc.wr.send.send_flags = IBV_SEND_INLINE;
+    ibuf->flag = RDMA_WRITE_INLINE_IBUF_FLAG;
+    is_inlined = 1;
+  } else {
+    ibuf->desc.wr.send.send_flags = IBV_SEND_SIGNALED;
+    ibuf->flag = RDMA_WRITE_IBUF_FLAG;
+  }
 
   ibuf->in_srq = 0;
+
+  ibuf->to_release = IBUF_RELEASE;
   ibuf->desc.wr.send.next = NULL;
   ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE_WITH_IMM;
-  ibuf->desc.wr.send.send_flags = IBV_SEND_SIGNALED;
   ibuf->desc.wr.send.wr_id = (uintptr_t) ibuf;
 
   ibuf->desc.wr.send.num_sge = 1;
@@ -491,7 +493,7 @@ void sctk_ibuf_rdma_write_with_imm_init(
   ibuf->desc.sg_entry.lkey = lkey;
   ibuf->desc.sg_entry.addr = (uintptr_t) local_address;
 
-  ibuf->flag = RDMA_WRITE_IBUF_FLAG;
+  return is_inlined;
 }
 
 
@@ -501,9 +503,8 @@ void sctk_ibuf_rdma_read_init(
     uint32_t lkey, void* remote_address, uint32_t rkey,
     int len, void* supp_ptr, int dest_process)
 {
-  sctk_assert(ibuf);
-
   ibuf->in_srq = 0;
+  ibuf->to_release = IBUF_RELEASE;
   ibuf->desc.wr.send.next = NULL;
   ibuf->desc.wr.send.opcode = IBV_WR_RDMA_READ;
   ibuf->desc.wr.send.send_flags = IBV_SEND_SIGNALED;

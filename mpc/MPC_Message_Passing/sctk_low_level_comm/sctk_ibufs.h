@@ -70,6 +70,11 @@ sctk_ibuf_header_t;
 #define IMM_DATA_NULL ~0
 #define IMM_DATA_EAGER_RDMA (0x1 << 31)
 
+/* Release the buffer after freeing */
+#define IBUF_RELEASE (1<<0)
+/* Do not release the buffer after freeing */
+#define IBUF_DO_NOT_RELEASE (1<<1)
+
 /* Description of an ibuf */
 typedef struct sctk_ibuf_desc_s
 {
@@ -179,7 +184,8 @@ enum sctk_ibuf_status
   RECV_IBUF_FLAG        = 88,
   BARRIER_IBUF_FLAG     = 99,
 
-  EAGER_RDMA_POLLED     = 1010
+  EAGER_RDMA_POLLED     = 1010,
+  RDMA_WRITE_INLINE_IBUF_FLAG  = 1111,
 };
 
 __UNUSED__ static char* sctk_ibuf_print_flag (enum sctk_ibuf_status flag)
@@ -187,6 +193,7 @@ __UNUSED__ static char* sctk_ibuf_print_flag (enum sctk_ibuf_status flag)
   switch(flag) {
     case RDMA_READ_IBUF_FLAG:   return "RDMA_READ_IBUF_FLAG";break;
     case RDMA_WRITE_IBUF_FLAG:  return "RDMA_WRITE_IBUF_FLAG";break;
+    case RDMA_WRITE_INLINE_IBUF_FLAG:  return "RDMA_WRITE_INLINE_IBUF_FLAG";break;
     case NORMAL_IBUF_FLAG:      return "NORMAL_IBUF_FLAG";break;
     case RECV_IBUF_FLAG:        return "RECV_IBUF_FLAG";break;
     case SEND_IBUF_FLAG:        return "SEND_IBUF_FLAG";break;
@@ -219,6 +226,7 @@ typedef struct sctk_ibuf_s
   int dest_process;
   /* If the buffer is in a shaed receive queue */
   char in_srq;
+  char to_release;
 
   /* We store the wc of the ibuf */
   struct ibv_wc wc;
@@ -264,7 +272,6 @@ void sctk_ibuf_send_init(
     sctk_ibuf_t* ibuf, size_t size);
 
 int sctk_ibuf_send_inline_init(
-    sctk_ib_rail_info_t *rail_ib,
     sctk_ibuf_t* ibuf, size_t size);
 
 void sctk_ibuf_rdma_write_with_imm_init(
@@ -272,10 +279,10 @@ void sctk_ibuf_rdma_write_with_imm_init(
     uint32_t lkey, void* remote_address, uint32_t rkey,
     int len, uint32_t imm_data);
 
-void sctk_ibuf_rdma_write_init(
+int sctk_ibuf_rdma_write_init(
     sctk_ibuf_t* ibuf, void* local_address,
     uint32_t lkey, void* remote_address, uint32_t rkey,
-    int len, int send_flags);
+    int len, int send_flags, char to_release);
 
 void sctk_ibuf_rdma_read_init(
     sctk_ibuf_t* ibuf, void* local_address,

@@ -53,7 +53,7 @@ sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
   sctk_net_copy_in_buffer(msg, IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer));
 
   /* Initialization of the buffer */
-  is_inlined = sctk_ibuf_send_inline_init(rail_ib, ibuf, IBUF_GET_EAGER_SIZE + size);
+  is_inlined = sctk_ibuf_send_inline_init(ibuf, IBUF_GET_EAGER_SIZE + size);
   IBUF_SET_PROTOCOL(ibuf->buffer, eager_protocol);
 
   eager_header = IBUF_GET_EAGER_HEADER(ibuf->buffer);

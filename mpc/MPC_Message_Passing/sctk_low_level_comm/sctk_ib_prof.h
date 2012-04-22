@@ -45,6 +45,26 @@ enum sctk_ib_prof_counters_e {
   rdma_nb = 9,
 };
 
+extern __thread double time_steals;
+extern __thread double time_own;
+extern __thread double time_poll_cq;
+extern __thread double time_ptp;
+extern __thread double time_coll;
+extern __thread long poll_steals;
+extern __thread long poll_steals_failed;
+extern __thread long poll_steals_success;
+extern __thread long poll_steal_same_node;
+extern __thread long poll_steal_other_node;
+extern __thread long poll_own;
+extern __thread long poll_own_failed;
+extern __thread long poll_own_success;
+extern __thread long call_to_polling;
+extern __thread long poll_cq;
+
+extern __thread double time_send;
+extern __thread double poll_send;
+extern __thread double poll_recv;
+extern __thread double tst;
 
 #ifdef SCTK_IB_PROF
 typedef struct sctk_ib_prof_s {

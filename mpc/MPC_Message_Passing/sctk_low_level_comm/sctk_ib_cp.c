@@ -32,6 +32,7 @@
 #include "sctk_ib_sr.h"
 #include "sctk_ib_prof.h"
 #include "sctk_asm.h"
+#include "sctk_ib_fallback.h"
 #include "utlist.h"
 #include "sctk_ib_fallback.h"
 
@@ -42,11 +43,6 @@
 #define SCTK_IB_MODULE_NAME "CP"
 #include "sctk_ib_toolkit.h"
 #include "math.h"
-
-//#define DEBUG_CP
-#ifdef DEBUG_CP
-#warning "DEBUG MODE ACTIVATED"
-#endif
 
 typedef struct sctk_ib_cp_s{
   /* Void for now */
@@ -103,23 +99,6 @@ __thread unsigned int seed;
 __thread int task_node_number = -1;
 static const int ibv_cp_profiler = 1;
 
-/* Counters */
-__thread double time_poll_cq = 0;
-__thread double time_steals = 0;
-__thread double time_own = 0;
-__thread double time_ptp = 0;
-__thread double time_coll = 0;
-__thread long poll_steals = 0;
-__thread long poll_steals_failed = 0;
-__thread long poll_steals_success = 0;
-__thread long poll_steal_same_node = 0;
-__thread long poll_steal_other_node = 0;
-__thread long poll_own = 0;
-__thread long poll_own_failed = 0;
-__thread long poll_own_success = 0;
-__thread long call_to_polling = 0;
-__thread long poll_cq = 0;
-
 #define CHECK_AND_QUIT(rail_ib) do {  \
   LOAD_CONFIG(rail_ib);                             \
   int steal = config->ibv_steal;                    \
@@ -138,7 +117,7 @@ sctk_ib_cp_task_t *sctk_ib_cp_get_task(int rank) {
 
   /* XXX: Do not support thread migration */
   HASH_FIND(hh_all,all_tasks,&rank, sizeof(int),task);
-#ifdef DEBUG_CP
+#ifdef SCTK_IB_DEBUG
   assume(task);
 #endif
 
@@ -251,10 +230,12 @@ void sctk_ib_cp_finalize_task(int rank) {
 static inline int __cp_poll(const struct sctk_rail_info_s const* rail, struct sctk_ib_polling_s *poll, sctk_ibuf_t * volatile * const list, sctk_spinlock_t *lock, sctk_ib_cp_task_t *task){
   sctk_ibuf_t *ibuf = NULL;
   int nb_found = 0;
+#ifdef SCTK_IB_PROFILER
   char update_timers=0;
   double s, e;
   double _time_own = 0;
   int _poll_own = 0;
+#endif
 
 retry:
   if ( *list != NULL) {
@@ -264,9 +245,11 @@ retry:
         DL_DELETE(*list, ibuf);
         sctk_spinlock_unlock(lock);
 
+#ifdef SCTK_IB_PROFILER
         if (ibv_cp_profiler) {
           s = sctk_atomics_get_timestamp();
         }
+#endif
 
         /* Run the polling function according to the type of message */
         if (ibuf->cq == recv_cq) {
@@ -275,12 +258,14 @@ retry:
           sctk_network_poll_send_ibuf(rail, ibuf, 1, poll);
         }
 
+#ifdef SCTK_IB_PROFILER
         if (ibv_cp_profiler) {
           update_timers=1;
           e = sctk_atomics_get_timestamp();
           _time_own += e - s;
           _poll_own++;
         }
+#endif
         nb_found++;
         goto retry;
       } else {
@@ -289,6 +274,7 @@ retry:
     }
   }
 
+#ifdef SCTK_IB_PROFILER
   if (update_timers) {
     poll_own_success ++;
     time_own += _time_own;
@@ -303,16 +289,15 @@ retry:
     CP_PROF_INC(task, poll_own_failed);
 #endif
   }
+#endif
   return nb_found;
 }
 
 int sctk_ib_cp_poll_all(const struct sctk_rail_info_s const* rail, struct sctk_ib_polling_s *poll){
-  int vp = sctk_thread_get_vp();
   sctk_ib_cp_task_t *task = NULL;
   sctk_ib_cp_task_t *tmp_task = NULL;
   sctk_ib_cp_task_t *current_task = NULL;
   int nb_found = 0;
-  vp_t* tmp_vp;
 
   CHECK_ONLINE_PROGRAM;
 
@@ -334,7 +319,7 @@ int sctk_ib_cp_poll_global_list(const struct sctk_rail_info_s const * rail, stru
 
   task = vps[vp].tasks;
   if (!task) return 0;
-#ifdef DEBUG_CP
+#ifdef SCTK_IB_DEBUG
   assume(task);
 #endif
 
@@ -352,7 +337,7 @@ int sctk_ib_cp_poll(const struct sctk_rail_info_s const* rail, struct sctk_ib_po
   CHECK_ONLINE_PROGRAM;
 
   for (task=vps[vp].tasks; task; task=task->hh_vp.next) {
-#ifdef DEBUG_CP
+#ifdef SCTK_IB_DEBUG
     assume(vp == task->vp);
     assume(vps[vp].node->number == task->node);
 #endif
@@ -364,14 +349,16 @@ int sctk_ib_cp_poll(const struct sctk_rail_info_s const* rail, struct sctk_ib_po
 
 static inline int __cp_steal(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll, sctk_ibuf_t** volatile list, sctk_spinlock_t *lock, sctk_ib_cp_task_t *task, sctk_ib_cp_task_t* stealing_task) {
   sctk_ibuf_t *ibuf = NULL;
-  int nb_found = 0;
   /* For CP profiling */
+#ifdef SCTK_IB_PROFILER
   double s, e;
   double _time_steals = 0;
   int _poll_steals=0;
   int _poll_steal_same_node=0;
   int _poll_steal_other_node=0;
   char update_timers=0;
+#endif
+  int nb_found = 0;
   int max_retry = 1;
 
 retry:
@@ -382,9 +369,11 @@ retry:
         DL_DELETE(*list, ibuf);
         sctk_spinlock_unlock(lock);
 
+#ifdef SCTK_IB_PROFILER
         if (ibv_cp_profiler) {
           s = sctk_atomics_get_timestamp();
         }
+#endif
 
         /* Run the polling function */
         if (ibuf->cq == recv_cq) {
@@ -393,6 +382,7 @@ retry:
           sctk_network_poll_send_ibuf(rail, ibuf, 2, poll);
         }
 
+#ifdef SCTK_IB_PROFILER
         if (ibv_cp_profiler) {
           e = sctk_atomics_get_timestamp();
           update_timers=1;
@@ -406,6 +396,7 @@ retry:
           else
             _poll_steal_other_node++;
         }
+#endif
         nb_found++;
         /* We can retry once again */
         if (nb_found < max_retry)
@@ -417,6 +408,7 @@ retry:
   }
 
 exit:
+#ifdef SCTK_IB_PROFILER
   if(update_timers) {
     poll_steals_success ++;
     time_steals += _time_steals;
@@ -435,7 +427,7 @@ exit:
     CP_PROF_INC(stealing_task, poll_steals_failed);
 #endif
   }
-
+#endif
   return nb_found;
 }
 
@@ -460,30 +452,13 @@ exit:
   if (nb_found) return nb_found;  \
 } while (0)
 
-#define STEAL_OTHER_NODE_OLD(x) do { \
-    CDL_FOREACH(numa_list, tmp_numa) {  \
-    if(i >= max_numa_to_steal) return nb_found;  \
-      CDL_FOREACH(tmp_numa->vps, tmp_vp) {  \
-        for (task=tmp_vp->tasks; task; task=task->hh_vp.next) { \
-          nb_found += __cp_steal(rail, poll, x, &(task->local_ibufs_list_lock), task, stealing_task);  \
-        } \
-      } \
-      /* steal a restricted number of NUMA nodes */ \
-      ++i; \
-      /* Return if message stolen */  \
-      if (nb_found) return nb_found;  \
-    } \
-} while (0)
-
 int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll) {
   int nb_found = 0;
   int vp = sctk_thread_get_vp();
   sctk_ib_cp_task_t *stealing_task = NULL;
   sctk_ib_cp_task_t *task = NULL;
-//  const int max_numa_to_steal = 1;
   vp_t* tmp_vp;
   numa_t* tmp_numa;
-  int i = 0;
 
   CHECK_ONLINE_PROGRAM;
 
@@ -505,7 +480,6 @@ int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll) {
 int sctk_ib_cp_handle_message(sctk_rail_info_t* rail,
     sctk_ibuf_t *ibuf, int dest_task, int target_task, enum sctk_ib_cp_poll_cq_e cq) {
   sctk_ib_cp_task_t *task = NULL;
-  int vp = sctk_thread_get_vp();
 
   CHECK_ONLINE_PROGRAM;
 
@@ -517,8 +491,7 @@ int sctk_ib_cp_handle_message(sctk_rail_info_t* rail,
     return 0;
   }
 
-resume:
-#ifdef DEBUG_CP
+#ifdef SCTK_IB_DEBUG
   assume(task);
   assume(task->rank == target_task);
 #endif

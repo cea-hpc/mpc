@@ -851,7 +851,8 @@ sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
   }
 
   /* We release the buffer if it has been inlined */
-  if (ibuf->flag == SEND_INLINE_IBUF_FLAG) {
+  if (ibuf->flag == SEND_INLINE_IBUF_FLAG
+      || ibuf->flag == RDMA_WRITE_INLINE_IBUF_FLAG) {
     sctk_ibuf_release(rail_ib, ibuf);
   }
 }

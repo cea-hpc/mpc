@@ -39,6 +39,7 @@
 #include "sctk_ib_async.h"
 #include "sctk_ib_rdma.h"
 #include "sctk_ib_buffered.h"
+#include "sctk_ib_prof.h"
 #include "sctk_ib_cp.h"
 #include "sctk_ib_prof.h"
 #include "sctk_atomics.h"
@@ -58,6 +59,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   int low_memory_mode = 0;
   char is_control_message = 0;
   specific_message_tag_t tag = msg->body.header.specific_message_tag;
+  double e, s;
 
   sctk_nodebug("send message through rail %d to %d",rail->rail_number, msg->sctk_msg_get_destination);
   sctk_nodebug("Send message with tag %d", msg->sctk_msg_get_specific_message_tag);
@@ -97,12 +99,16 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   if (remote->ibuf_rdma
       && size+IBUF_GET_EAGER_SIZE < config->ibv_eager_rdma_limit) { /* Send with an eager RDMA if possible. FIXME: change test */
     ibuf = sctk_ib_rdma_eager_prepare_msg(rail_ib, remote, msg, size);
+    s = sctk_get_time_stamp();
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, is_control_message);
+    e = sctk_get_time_stamp();
     sctk_complete_and_free_message(msg);
   } else if (size+IBUF_GET_EAGER_SIZE < config->ibv_eager_limit)  {
     ibuf = sctk_ib_sr_prepare_msg(rail_ib, remote, msg, size, -1);
     /* Send message */
+    s = sctk_get_time_stamp();
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, is_control_message);
+    e = sctk_get_time_stamp();
     sctk_complete_and_free_message(msg);
     PROF_INC_RAIL_IB(rail_ib, eager_nb);
   } else if (!low_memory_mode && size+IBUF_GET_BUFFERED_SIZE < config->ibv_frag_eager_limit)  {
@@ -120,6 +126,8 @@ rdma:
     sctk_ib_rdma_prepare_send_msg(rail_ib, msg, size);
     PROF_INC_RAIL_IB(rail_ib, rdma_nb);
   }
+
+  time_send += e - s;
 }
 
 static int __is_specific_mesage_tag(sctk_thread_ptp_message_body_t *msg)
@@ -133,6 +141,9 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
     const char from_cp, struct sctk_ib_polling_s* poll) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   int release_ibuf = 1;
+  double e, s;
+
+  s = sctk_get_time_stamp();
 
   /* Switch on the protocol of the received message */
   switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
@@ -169,6 +180,10 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
   } else {
     sctk_ibuf_release_from_srq(rail_ib, ibuf);
   }
+
+  e = sctk_get_time_stamp();
+  poll_send += e - s;
+
   return 0;
 }
 
@@ -186,6 +201,9 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
   specific_message_tag_t tag;
   const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL(ibuf->buffer);
   const struct ibv_wc wc = ibuf->wc;
+  double e, s;
+
+  s = sctk_get_time_stamp();
 
   sctk_nodebug("[%d] Recv ibuf:%p", rail->rail_number,ibuf);
 #ifdef IB_DEBUG
@@ -202,6 +220,7 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
 
    sctk_nodebug("received an RDMA message from rank %d, ibuf index: %u", remote->rank, index);
     sctk_ib_rdma_eager_poll_recv(rail_ib, remote, index);
+   release_ibuf = 1;
   } else {
 
   /* Switch on the protocol of the received message */
@@ -270,6 +289,10 @@ release:
   } else {
     sctk_ibuf_release_from_srq(&rail->network.ib, ibuf);
   }
+
+  e = sctk_get_time_stamp();
+  poll_recv += e - s;
+
   return 0;
 }
 
@@ -328,43 +351,39 @@ int sctk_network_poll_all (sctk_rail_info_t* rail) {
   int steal = config->ibv_steal;
   sctk_ib_polling_t poll;
   POLL_INIT(&poll);
-//  double t1, t2, t3;
 
   /* Only one task is allowed to poll new messages from QP */
-//  int ret = OPA_fetch_and_incr_int(&polling_lock);
-//  if ( recursive_polling || ret < MAX_TASKS_ALLOWED)
-//  {
-//    double e, s;
+  int ret = OPA_fetch_and_incr_int(&polling_lock);
+  if ( recursive_polling || ret < MAX_TASKS_ALLOWED)
+  {
+#ifdef SCTK_IB_PROFILER
+    double e, s;
 
-//    if (recursive_polling == 0)
-//      s = sctk_get_time_stamp();
+    if (recursive_polling == 0)
+      s = sctk_get_time_stamp();
 
-//    recursive_polling++;
-//    poll_cq++;
+    recursive_polling++;
+    poll_cq++;
+#endif
     /* Poll received messages */
     sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, &poll, sctk_network_poll_recv);
     /* Poll sent messages */
     sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, &poll, sctk_network_poll_send);
-//    recursive_polling--;
+#ifdef SCTK_IB_PROFILER
+    recursive_polling--;
+    if (recursive_polling == 0) {
+      e = sctk_get_time_stamp();
+      time_poll_cq += (e - s);
+    }
+#endif
+  }
+  OPA_decr_int(&polling_lock);
 
-//    if (recursive_polling == 0) {
-//      e = sctk_get_time_stamp();
-//      time_poll_cq += (e - s);
-//    }
-//  }
-//  OPA_decr_int(&polling_lock);
-
-//  t1 = sctk_get_time_stamp();
-//  POLL_INIT(&poll);
-//  sctk_ib_cp_poll_global_list(rail, &poll);
-//  t2 = sctk_get_time_stamp();
-  /* Try to poll incomming messages */
-//  POLL_INIT(&poll);
+  POLL_INIT(&poll);
+  sctk_ib_cp_poll_global_list(rail, &poll);
+/* Try to poll incomming messages */
+  POLL_INIT(&poll);
   sctk_ib_cp_poll(rail, &poll);
-//  t3 = sctk_get_time_stamp();
-
-//  time_coll += (t2 - t1);
-//  time_ptp += (t3 - t2);
 
   return poll.recv_found_own;
 }

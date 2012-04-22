@@ -182,6 +182,8 @@ void sctk_network_finalize_multirail_ib (){
     }
   }
 #endif
+  sctk_debug("time_send=%f poll_send=%f poll_recv=%f tst=%f",
+      time_send, poll_send, poll_recv, tst);
 }
 
 /************ FINALIZE ****************/
