@@ -32,11 +32,9 @@
 #define NB_RAILS 2
 static sctk_rail_info_t** rails = NULL;
 
-void sctk_network_init_tcp_rdma(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib);
-
-static void 
+static void
 sctk_network_send_message_multirail_tcp (sctk_thread_ptp_message_t * msg){
-  int i ; 
+  int i ;
   if(sctk_prepare_send_message_to_network_reorder(msg) == 0){
     /*
       Reordering available : we can use multirail
@@ -54,7 +52,7 @@ sctk_network_send_message_multirail_tcp (sctk_thread_ptp_message_t * msg){
   rails[i]->send_message(msg,rails[i]);
 }
 
-static void 
+static void
 sctk_network_notify_recv_message_multirail_tcp (sctk_thread_ptp_message_t * msg){
   int i;
   for(i = 0; i < NB_RAILS; i++){
@@ -62,7 +60,7 @@ sctk_network_notify_recv_message_multirail_tcp (sctk_thread_ptp_message_t * msg)
   }
 }
 
-static void 
+static void
 sctk_network_notify_matching_message_multirail_tcp (sctk_thread_ptp_message_t * msg){
   int i;
   for(i = 0; i < NB_RAILS; i++){
@@ -70,7 +68,7 @@ sctk_network_notify_matching_message_multirail_tcp (sctk_thread_ptp_message_t * 
   }
 }
 
-static void 
+static void
 sctk_network_notify_perform_message_multirail_tcp (int remote){
   int i;
   for(i = 0; i < NB_RAILS; i++){
@@ -78,7 +76,7 @@ sctk_network_notify_perform_message_multirail_tcp (int remote){
   }
 }
 
-static void 
+static void
 sctk_network_notify_idle_message_multirail_tcp (){
   int i;
   for(i = 0; i < NB_RAILS; i++){
@@ -86,7 +84,7 @@ sctk_network_notify_idle_message_multirail_tcp (){
   }
 }
 
-static void 
+static void
 sctk_network_notify_any_source_message_multirail_tcp (){
   int i;
   for(i = 0; i < NB_RAILS; i++){
@@ -96,11 +94,11 @@ sctk_network_notify_any_source_message_multirail_tcp (){
 
 static
 void sctk_send_message_from_network_multirail_tcp (sctk_thread_ptp_message_t * msg){
-  if(sctk_send_message_from_network_reorder(msg) != 0){
+  if(sctk_send_message_from_network_reorder(msg) == REORDER_NO_NUMBERING){
     /*
       No reordering
     */
-    sctk_send_message_try_check(msg,1);    
+    sctk_send_message_try_check(msg,1);
   }
 }
 

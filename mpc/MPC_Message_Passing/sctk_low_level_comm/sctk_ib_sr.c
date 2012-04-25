@@ -36,11 +36,10 @@
  *  FUNCTIONS
  *----------------------------------------------------------*/
 sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
-    sctk_ib_qp_t* route_data, sctk_thread_ptp_message_t * msg, size_t size, int low_memory_mode) {
+    sctk_ib_qp_t* remote, sctk_thread_ptp_message_t * msg, size_t size, int low_memory_mode) {
   sctk_ibuf_t *ibuf;
   sctk_ib_eager_t *eager_header;
   void* body;
-  int is_inlined;
 
   body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
   ibuf = sctk_ibuf_pick(rail_ib, 1, task_node_number);
@@ -54,8 +53,8 @@ sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
   sctk_net_copy_in_buffer(msg, IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer));
 
   /* Initialization of the buffer */
-  is_inlined = sctk_ibuf_send_inline_init(ibuf, IBUF_GET_EAGER_SIZE + size);
-  IBUF_SET_PROTOCOL(ibuf->buffer, eager_protocol);
+  sctk_ibuf_prepare(rail_ib, remote, ibuf,
+      size + IBUF_GET_EAGER_SIZE);
 
   eager_header = IBUF_GET_EAGER_HEADER(ibuf->buffer);
   eager_header->payload_size = size - sizeof(sctk_thread_ptp_message_body_t);
@@ -104,7 +103,7 @@ sctk_ib_sr_recv_free(sctk_rail_info_t* rail, sctk_thread_ptp_message_t *msg,
   }
 }
 
-sctk_thread_ptp_message_t*
+static sctk_thread_ptp_message_t*
 sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int recopy,
     sctk_ib_protocol_t protocol) {
   size_t size;
@@ -166,6 +165,51 @@ void sctk_ib_sr_recv_msg_no_recopy(sctk_message_to_copy_t* tmp){
   body = IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer);
 
   sctk_net_message_copy_from_buffer(body, tmp, 1);
+}
+
+
+/* *******
+ * Specific to eager
+ * ********/
+
+void
+sctk_ib_eager_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
+  sctk_thread_ptp_message_body_t * msg_ibuf = IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer);
+;
+  const specific_message_tag_t tag = msg_ibuf->header.specific_message_tag;
+  const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL(ibuf->buffer);
+  int recopy = 1;
+  sctk_thread_ptp_message_t * msg = NULL;
+
+  if (IS_PROCESS_SPECIFIC_MESSAGE_TAG(tag)) {
+    /* If on demand, handle message and do not send it
+     * to high-layers */
+    if (IS_PROCESS_SPECIFIC_ONDEMAND(tag)) {
+      sctk_nodebug("Received OD message");
+      msg = sctk_ib_sr_recv(rail, ibuf, recopy, protocol);
+      sctk_ib_cm_on_demand_recv(rail, msg, ibuf, recopy);
+      return;
+    } else if (IS_PROCESS_SPECIFIC_LOW_MEM(tag)) {
+      sctk_nodebug("Received low mem message");
+      msg = sctk_ib_sr_recv(rail, ibuf, recopy, protocol);
+#warning "Uncomment after commit"
+      //          sctk_ib_low_mem_recv(rail, msg, ibuf, recopy);
+
+      return;
+    }
+  } else {
+    /* Do not recopy message if it is not a process specific message.
+     *
+     * When there is an intermediate message, we *MUST* recopy the message
+     * because MPC does not match the user buffer with the network buffer (the copy function is
+     * not performed) */
+    recopy = 0;
+  }
+
+  /* Normal message: we handle it */
+  msg = sctk_ib_sr_recv(rail, ibuf, recopy, protocol);
+  sctk_ib_sr_recv_free(rail, msg, ibuf, recopy);
+  rail->send_message_from_network(msg);
 }
 
 #endif

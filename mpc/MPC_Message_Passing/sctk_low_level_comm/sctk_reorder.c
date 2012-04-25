@@ -114,8 +114,10 @@ sctk_reorder_table_t* sctk_get_reorder(int dest){
   return tmp;
 }
 
-/* Try to handle ll message with expected sequence numbers */
-inline void __send_pending_messages(sctk_reorder_table_t* tmp) {
+/* Try to handle all messages with an expected sequence number */
+static inline int __send_pending_messages(sctk_reorder_table_t* tmp) {
+  int ret = REORDER_FOUND_NOT_EXPECTED;
+
   if(tmp->buffer != NULL){
     sctk_reorder_buffer_t* reorder;
     int key;
@@ -131,9 +133,11 @@ inline void __send_pending_messages(sctk_reorder_table_t* tmp) {
          * code will deadlock */
         sctk_send_message_try_check(reorder->msg,1);
         OPA_fetch_and_incr_int(&(tmp->message_number_src));
+        ret = REORDER_FOUND_EXPECTED;
       } else sctk_spinlock_unlock(&(tmp->lock));
     } while(reorder != NULL);
   }
+  return ret;
 }
 
 
@@ -147,27 +151,24 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
 
   if(msg->sctk_msg_get_use_message_numbering == 0){
     /* Renumbering unused */
-    return 1;
+    return REORDER_NO_NUMBERING;
   } else if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag)){
       /* Process specific message tag */
     if (IS_PROCESS_SPECIFIC_MESSAGE_TAG_WITH_ORDERING(msg->body.header.specific_message_tag) == 0) {
       /* Without message reordering */
       msg->sctk_msg_get_use_message_numbering = 0;
-      return 1;
+      return REORDER_NO_NUMBERING;
     }
 
     /* With message reordering */
     process = msg->sctk_msg_get_destination;
     sctk_nodebug("Receives process specific with message reordering from %d to %d %d", msg->sctk_msg_get_source, process, msg->sctk_msg_get_message_number);
 
-    /* The message must not be indirect */
-    /* assume (process == sctk_process_rank); */
-
     tmp = sctk_get_reorder_to_process(msg->sctk_msg_get_source);
     if (tmp == NULL) {
       /* Without message reordering */
       msg->sctk_msg_get_use_message_numbering = 0;
-      return 1;
+      return REORDER_NO_NUMBERING;
     }
 
     number = OPA_load_int(&(tmp->message_number_src));
@@ -179,6 +180,7 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
 
       /*Search for pending messages*/
       __send_pending_messages(tmp);
+      return REORDER_FOUND_EXPECTED;
     } else {
       sctk_reorder_buffer_t* reorder;
 
@@ -195,10 +197,10 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
       /* XXX: we *MUST* check once again if there is no pending messages. During
        * adding a msg to the pending list, a new message with a good PSN could be
        * received. If we omit this line, the code can deadlock */
-      __send_pending_messages(tmp);
+      return __send_pending_messages(tmp);
     }
-    return 0;
 
+    not_reachable();
 
   } else {
     tmp = sctk_get_reorder(msg->sctk_msg_get_glob_source);
@@ -210,7 +212,7 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
 
     /* Indirect messages, we do not check PSN */
     if(sctk_process_rank != process){
-      return 1;
+      return REORDER_NO_NUMBERING;
     }
 
     assume(tmp != NULL);
@@ -225,6 +227,8 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
 
       /*Search for pending messages*/
       __send_pending_messages(tmp);
+      return REORDER_FOUND_EXPECTED;
+
     } else {
       sctk_reorder_buffer_t* reorder;
 
@@ -242,7 +246,7 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
       /* XXX: we *MUST* check once again if there is no pending messages. During
        * adding a msg to the pending list, a new message with a good PSN could be
         * received. If we omit this line, the code can deadlock */
-      __send_pending_messages(tmp);
+      return __send_pending_messages(tmp);
     }
     return 0;
   }

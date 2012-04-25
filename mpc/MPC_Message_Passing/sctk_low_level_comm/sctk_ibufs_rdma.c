@@ -251,8 +251,6 @@ void sctk_ib_rdma_set_tail_flag(sctk_ibuf_t* ibuf, size_t size) {
  */
 sctk_ibuf_t* sctk_ib_rdma_eager_prepare_msg(sctk_ib_rail_info_t* rail_ib,
     sctk_ib_qp_t* remote, sctk_thread_ptp_message_t * msg, size_t size) {
-  const sctk_ibuf_region_t* region = IBUF_RDMA_GET_REGION(remote, REGION_SEND);
-  LOAD_CONFIG(rail_ib);
   void* body;
   sctk_ibuf_t *ibuf;
   sctk_ib_eager_t *eager_header;
@@ -272,27 +270,8 @@ sctk_ibuf_t* sctk_ib_rdma_eager_prepare_msg(sctk_ib_rail_info_t* rail_ib,
   /* Copy payload */
   sctk_net_copy_in_buffer(msg, IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer));
 
-  /* We do not emit an immediate data */
-#if 0
-  /* Initialization of the buffer */
-  sctk_ibuf_rdma_write_with_imm_init(ibuf,
-      IBUF_RDMA_GET_BASE_FLAG(ibuf), /* Local addr */
-      region->mmu_entry->mr->lkey,  /* lkey */
-      IBUF_RDMA_GET_REMOTE_ADDR(remote, REGION_RECV, ibuf),  /* Remote addr */
-      remote->ibuf_rdma->rkey[REGION_RECV],  /* rkey */
-      IBUF_RDMA_GET_SIZE + size + IBUF_GET_EAGER_SIZE, /* size */
-      ibuf->index | IMM_DATA_EAGER_RDMA);  /* imm_data: index of the ibuf in the region */
-#endif
-  /* Initialization of the buffer */
-  sctk_ibuf_rdma_write_init(ibuf,
-      IBUF_RDMA_GET_BASE_FLAG(ibuf), /* Local addr */
-      region->mmu_entry->mr->lkey,  /* lkey */
-      IBUF_RDMA_GET_REMOTE_ADDR(remote, REGION_RECV, ibuf),  /* Remote addr */
-      remote->ibuf_rdma->rkey[REGION_RECV],  /* rkey */
-      IBUF_RDMA_GET_SIZE + size + IBUF_GET_EAGER_SIZE, /* size */
-      0, IBUF_DO_NOT_RELEASE);  /* imm_data: index of the ibuf in the region */
-
-  IBUF_SET_PROTOCOL(ibuf->buffer, eager_rdma_protocol);
+  sctk_ibuf_prepare(rail_ib, remote, ibuf,
+      IBUF_RDMA_GET_SIZE + size + IBUF_GET_EAGER_SIZE);
 
   eager_header = IBUF_GET_EAGER_HEADER(ibuf->buffer);
   eager_header->payload_size = size - sizeof(sctk_thread_ptp_message_body_t);
@@ -306,50 +285,17 @@ static void __poll_ibuf(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote,
     sctk_ibuf_t* ibuf) {
   sctk_rail_info_t* rail = rail_ib->rail;
   assume(ibuf);
-  const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL(ibuf->buffer);
-  sctk_thread_ptp_message_t * msg = NULL;
-  sctk_thread_ptp_message_body_t * msg_ibuf = NULL;
-  specific_message_tag_t tag;
-  int recopy = 1;
 
-  /* Set the buffer as releasable */
+  /* Set the buffer as releasable. Actually, we need to do this reset
+   * here.. */
   ibuf->to_release = IBUF_RELEASE;
+
   const size_t size_flag = *ibuf->size_flag;
   int *tail_flag = IBUF_RDMA_GET_TAIL_FLAG(ibuf->buffer, size_flag);
   assume (*ibuf->head_flag == *tail_flag);
   sctk_nodebug("Buffer size:%d, head flag:%d, tail flag:%d", *ibuf->size_flag, *ibuf->head_flag, *tail_flag);
 
-  sctk_nodebug("Received ibuf %p (%d) with buffer %p", ibuf, ibuf->index, ibuf->buffer);
-  msg_ibuf = IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer);
-  tag = msg_ibuf->header.specific_message_tag;
-
-  if (IS_PROCESS_SPECIFIC_MESSAGE_TAG(tag)) {
-    /* If on demand, handle message and do not send it
-     * to high-layers */
-    if (IS_PROCESS_SPECIFIC_ONDEMAND(tag)) {
-      sctk_nodebug("Received OD message");
-      msg = sctk_ib_sr_recv(rail, ibuf, recopy, protocol);
-      sctk_ib_cm_on_demand_recv(rail, msg, ibuf, recopy);
-      return;
-    } else if (IS_PROCESS_SPECIFIC_LOW_MEM(tag)) {
-      sctk_nodebug("Received low mem message");
-      msg = sctk_ib_sr_recv(rail, ibuf, recopy, protocol);
-      return;
-    }
-  } else {
-    /* Do not recopy message if it is not a process specific message.
-     *
-     * When there is an intermediate message, we *MUST* recopy the message
-     * because MPC does not match the user buffer with the network buffer (the copy function is
-     * not performed) */
-    recopy = 0;
-  }
-
-
-  /* Normal message: we handle it */
-  msg = sctk_ib_sr_recv(rail, ibuf, recopy, protocol);
-  sctk_ib_sr_recv_free(rail, msg, ibuf, recopy);
-  rail->send_message_from_network(msg);
+  sctk_ib_eager_poll_recv(rail, ibuf);
 }
 
 

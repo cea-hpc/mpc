@@ -102,7 +102,7 @@ sctk_network_notify_any_source_message_multirail_ib (){
 
 static
 void sctk_send_message_from_network_multirail_ib (sctk_thread_ptp_message_t * msg){
-  if(sctk_send_message_from_network_reorder(msg) != 0){
+  if(sctk_send_message_from_network_reorder(msg) == REORDER_NO_NUMBERING){
     /*
       No reordering
     */
@@ -118,7 +118,7 @@ void sctk_network_init_multirail_ib_all(char* name, char* topology){
   /* FIXME: for the moment, IB requires an ondemand connexion.
    * Exiting else... */
   if (strcmp(topology, "ondemand") && strcmp(topology, "fully")) {
-      sctk_error("IB requires the 'ondemand' of the 'fully' topology! Exiting...");
+      sctk_error("IB requires the 'ondemand' or the 'fully' topology! Exiting...");
       sctk_abort();
   }
 

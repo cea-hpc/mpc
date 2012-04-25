@@ -50,8 +50,6 @@ void sctk_ib_sr_free_msg_no_recopy(void* arg);
 
 void sctk_ib_sr_recv_msg_no_recopy(sctk_message_to_copy_t* tmp);
 
-sctk_thread_ptp_message_t* sctk_ib_sr_recv(struct sctk_rail_info_s* rail, sctk_ibuf_t *ibuf, int recopy, sctk_ib_protocol_t protocol);
-
 void
 sctk_ib_sr_recv_free(struct sctk_rail_info_s* rail, sctk_thread_ptp_message_t *msg,
     sctk_ibuf_t *ibuf, int recopy);

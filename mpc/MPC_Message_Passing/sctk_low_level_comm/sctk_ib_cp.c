@@ -279,15 +279,9 @@ retry:
     poll_own_success ++;
     time_own += _time_own;
     poll_own += _poll_own;
-#if 0
-    CP_PROF_ADD(task, poll_own, _poll_own);
-#endif
     poll->recv_found_own = _poll_own;
   } else {
     poll_own_failed ++;
-#if 0
-    CP_PROF_INC(task, poll_own_failed);
-#endif
   }
 #endif
   return nb_found;

@@ -318,6 +318,41 @@ void sctk_ibuf_release(
   }
 }
 
+void sctk_ibuf_prepare(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote,
+    sctk_ibuf_t* ibuf, size_t size) {
+  LOAD_CONFIG(rail_ib);
+
+  if (IBUF_GET_CHANNEL(ibuf) & RDMA_CHANNEL) {
+    const sctk_ibuf_region_t* region = IBUF_RDMA_GET_REGION(remote, REGION_SEND);
+    /* We do not emit an immediate data */
+#if 0
+    /* Initialization of the buffer */
+    sctk_ibuf_rdma_write_with_imm_init(ibuf,
+        IBUF_RDMA_GET_BASE_FLAG(ibuf), /* Local addr */
+        region->mmu_entry->mr->lkey,  /* lkey */
+        IBUF_RDMA_GET_REMOTE_ADDR(remote, REGION_RECV, ibuf),  /* Remote addr */
+        remote->ibuf_rdma->rkey[REGION_RECV],  /* rkey */
+        IBUF_RDMA_GET_SIZE + size + IBUF_GET_EAGER_SIZE, /* size */
+        ibuf->index | IMM_DATA_EAGER_RDMA);  /* imm_data: index of the ibuf in the region */
+#endif
+    /* Initialization of the buffer */
+    sctk_ibuf_rdma_write_init(ibuf,
+        IBUF_RDMA_GET_BASE_FLAG(ibuf), /* Local addr */
+        region->mmu_entry->mr->lkey,  /* lkey */
+        IBUF_RDMA_GET_REMOTE_ADDR(remote, REGION_RECV, ibuf),  /* Remote addr */
+        remote->ibuf_rdma->rkey[REGION_RECV],  /* rkey */
+        size, /* size */
+        0, IBUF_DO_NOT_RELEASE);  /* imm_data: index of the ibuf in the region */
+
+    IBUF_SET_PROTOCOL(ibuf->buffer, eager_rdma_protocol);
+
+  } else {
+    assume (IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL);
+    sctk_ibuf_send_inline_init(ibuf, size);
+    IBUF_SET_PROTOCOL(ibuf->buffer, eager_protocol);
+  }
+}
+
 /*-----------------------------------------------------------
  *  WR INITIALIZATION
  *----------------------------------------------------------*/

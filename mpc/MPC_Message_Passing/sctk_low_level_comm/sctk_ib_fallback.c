@@ -200,15 +200,12 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
   int steal = config->ibv_steal;
   sctk_thread_ptp_message_t * msg = NULL;
   sctk_thread_ptp_message_body_t * msg_ibuf = NULL;
+  const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL(ibuf->buffer);
   int release_ibuf = 1;
   int recopy = 1;
   int ondemand = 0;
   specific_message_tag_t tag;
-  const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL(ibuf->buffer);
   const struct ibv_wc wc = ibuf->wc;
-  double e, s;
-
-  s = sctk_get_time_stamp();
 
   sctk_nodebug("[%d] Recv ibuf:%p", rail->rail_number,ibuf);
 #ifdef IB_DEBUG
@@ -231,40 +228,7 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
   /* Switch on the protocol of the received message */
     switch (protocol) {
       case eager_protocol:
-        msg_ibuf = IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer);
-        tag = msg_ibuf->header.specific_message_tag;
-
-        if (IS_PROCESS_SPECIFIC_MESSAGE_TAG(tag)) {
-          /* If on demand, handle message and do not send it
-           * to high-layers */
-          if (IS_PROCESS_SPECIFIC_ONDEMAND(tag)) {
-            sctk_nodebug("Received OD message");
-            msg = sctk_ib_sr_recv(rail, ibuf, recopy, protocol);
-            sctk_ib_cm_on_demand_recv(rail, msg, ibuf, recopy);
-            goto release;
-          } else if (IS_PROCESS_SPECIFIC_LOW_MEM(tag)) {
-            sctk_nodebug("Received low mem message");
-            msg = sctk_ib_sr_recv(rail, ibuf, recopy, protocol);
-#warning "Uncomment after commit"
-            //          sctk_ib_low_mem_recv(rail, msg, ibuf, recopy);
-
-            goto release;
-          }
-        } else {
-          /* Do not recopy message if it is not a process specific message.
-           *
-           * When there is an intermediate message, we *MUST* recopy the message
-           * because MPC does not match the user buffer with the network buffer (the copy function is
-           * not performed) */
-          recopy = 0;
-        }
-
-        /* Normal message: we handle it */
-        msg = sctk_ib_sr_recv(rail, ibuf, recopy, protocol);
-        sctk_ib_sr_recv_free(rail, msg, ibuf, recopy);
-        rail->send_message_from_network(msg);
-
-release:
+        sctk_ib_eager_poll_recv(rail, ibuf);
         release_ibuf = 0;
         break;
 
@@ -294,9 +258,6 @@ release:
   } else {
     sctk_ibuf_release_from_srq(&rail->network.ib, ibuf);
   }
-
-  e = sctk_get_time_stamp();
-  poll_recv += e - s;
 
   return 0;
 }
