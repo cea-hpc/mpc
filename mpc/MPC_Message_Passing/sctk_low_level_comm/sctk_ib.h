@@ -31,10 +31,18 @@ extern "C"
 #include <stdint.h>
 #include <mpcmp.h>
 
-#define IB_DEBUG
+//#define IB_DEBUG
 #ifdef IB_DEBUG
-#warning "Debug activated"
+#warning "WARNING !!!! Debug activated !!!! WARNING"
 #endif
+
+  /* For not used fuctions (disable compiler warning */
+#ifdef __GNUC__
+#define __UNUSED__ __attribute__ ((__unused__))
+#else
+#define __UNUSED__
+#endif
+
 
   struct sctk_rail_info_s;
   struct sctk_ibuf_pool_s;
@@ -79,7 +87,7 @@ extern "C"
     eager_rdma_protocol   = 555,
   } sctk_ib_protocol_t;
 
-  static char* sctk_ib_protocol_print(sctk_ib_protocol_t prot) {
+  __UNUSED__ static char* sctk_ib_protocol_print(sctk_ib_protocol_t prot) {
     switch(prot) {
       case eager_protocol: return "eager_protocol"; break;
       case buffered_protocol: return "buffered_protocol"; break;
@@ -230,13 +238,6 @@ extern "C"
   /* For getting stats from network usage */
   void sctk_network_stats_ib (struct MPC_Network_stats_s* stats);
   void sctk_network_deco_neighbors_ib ();
-
-/* For not used fuctions (disable compiler warning */
-#ifdef __GNUC__
-#define __UNUSED__ __attribute__ ((__unused__))
-#else
-#define __UNUSED__
-#endif
 
 #ifdef __cplusplus
 }

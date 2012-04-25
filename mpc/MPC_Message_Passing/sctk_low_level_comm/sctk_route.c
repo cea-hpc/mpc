@@ -355,7 +355,7 @@ void sctk_route_finalize(){
   name_ptr = net_name;
   for(i = 0; i < rail_number; i++){
     rails[i].route_init(&(rails[i]));
-    sprintf(name_ptr,"[%d:%s (%s)]",i,rails[i].network_name,rails[i].topology_name);
+    sprintf(name_ptr,"\nRail %d/%d [%s (%s)]",i+1, rail_number, rails[i].network_name,rails[i].topology_name);
     name_ptr = net_name + strlen(net_name);
     sctk_pmi_barrier();
   }
@@ -488,7 +488,7 @@ void sctk_route_init_in_rail(sctk_rail_info_t* rail, char* topology){
   } else if(strcmp("ondemand",topology) == 0){
     rail->route = sctk_route_ondemand;
     rail->route_init = sctk_route_ondemand_init;
-    rail->topology_name = "OD connexion";
+    rail->topology_name = "On Demand connexions";
   } else {
     not_reachable();
   }

@@ -45,6 +45,8 @@ struct sctk_ibuf_rdma_region_s;
  *----------------------------------------------------------*/
 typedef struct sctk_ibuf_header_s
 {
+  /* Poison */
+  int poison;
   /* Protocol used */
   int piggyback;
   sctk_ib_protocol_t protocol;
@@ -60,9 +62,9 @@ sctk_ibuf_header_t;
 #define IBUF_GET_EAGER_PIGGYBACK(buffer) (IBUF_GET_HEADER(buffer)->piggyback)
 
 
+#define IBUF_SET_DEST_TASK(buffer,x) (IBUF_GET_HEADER(buffer)->dest_task = x)
+#define IBUF_GET_DEST_TASK(buffer) (IBUF_GET_HEADER(buffer)->dest_task)
 /* XXX: take an ibuf and not a buffer */
-#define IBUF_SET_DEST_TASK(ibuf,x) (IBUF_GET_HEADER(ibuf->buffer)->dest_task = x)
-#define IBUF_GET_DEST_TASK(ibuf) (IBUF_GET_HEADER(ibuf->buffer)->dest_task)
 #define IBUF_SET_SRC_TASK(ibuf,x) (ibuf->src_task = x)
 #define IBUF_GET_SRC_TASK(ibuf) (ibuf->src_task)
 #define IBUF_GET_CHANNEL(ibuf) (ibuf->region->channel)
@@ -74,6 +76,15 @@ sctk_ibuf_header_t;
 #define IBUF_RELEASE (1<<0)
 /* Do not release the buffer after freeing */
 #define IBUF_DO_NOT_RELEASE (1<<1)
+
+/* Only for debugging */
+#define IBUF_POISON 213819238
+#define IBUF_SET_POISON(buffer) (IBUF_GET_HEADER(buffer)->poison = IBUF_POISON)
+#define IBUF_CHECK_POISON(buffer) do {\
+  if (IBUF_GET_HEADER(buffer)->poison != IBUF_POISON) { \
+    sctk_error("Wrong header received from buffer %p (got=%d expected=%d %p)", buffer, IBUF_GET_HEADER(buffer)->poison, IBUF_POISON, &IBUF_GET_HEADER(buffer)->poison); \
+    assume(0); \
+  }} while(0)
 
 /* Description of an ibuf */
 typedef struct sctk_ibuf_desc_s
@@ -201,6 +212,7 @@ __UNUSED__ static char* sctk_ibuf_print_flag (enum sctk_ibuf_status flag)
     case BARRIER_IBUF_FLAG:     return "BARRIER_IBUF_FLAG";break;
     case BUSY_FLAG:             return "BUSY_FLAG";break;
     case FREE_FLAG:             return "FREE_FLAG";break;
+    case EAGER_RDMA_POLLED:     return "EAGER_RDMA_POLLED";break;
   }
   return NULL;
 }
@@ -235,6 +247,13 @@ typedef struct sctk_ibuf_s
   struct sctk_ibuf_s* next;
   struct sctk_ibuf_s* prev;
 
+  /* Head flag */
+  volatile int volatile * head_flag;
+  /* Size flag */
+  size_t *size_flag;
+  /* Previous flag for RDMA */
+  int previous_flag;
+
   enum sctk_ib_cp_poll_cq_e cq;
 } sctk_ibuf_t;
 
@@ -256,6 +275,8 @@ void sctk_ibuf_release_from_srq( struct sctk_ib_rail_info_s *rail_ib,
 
 void sctk_ibuf_print(sctk_ibuf_t *ibuf, char* desc);
 
+void *sctk_ibuf_get_buffer(sctk_ibuf_t *ibuf);
+
 /*-----------------------------------------------------------
  *  WR INITIALIZATION
  *----------------------------------------------------------*/
@@ -274,7 +295,7 @@ void sctk_ibuf_send_init(
 int sctk_ibuf_send_inline_init(
     sctk_ibuf_t* ibuf, size_t size);
 
-void sctk_ibuf_rdma_write_with_imm_init(
+int sctk_ibuf_rdma_write_with_imm_init(
     sctk_ibuf_t* ibuf, void* local_address,
     uint32_t lkey, void* remote_address, uint32_t rkey,
     int len, uint32_t imm_data);

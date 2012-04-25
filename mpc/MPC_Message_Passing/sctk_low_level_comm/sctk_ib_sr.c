@@ -44,8 +44,9 @@ sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
 
   body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
   ibuf = sctk_ibuf_pick(rail_ib, 1, task_node_number);
-  IBUF_SET_DEST_TASK(ibuf, msg->sctk_msg_get_glob_destination);
+  IBUF_SET_DEST_TASK(ibuf->buffer, msg->sctk_msg_get_glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->sctk_msg_get_glob_source);
+  IBUF_SET_POISON(ibuf->buffer);
 
   /* Copy header */
   memcpy(IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer), msg, sizeof(sctk_thread_ptp_message_body_t));
@@ -109,6 +110,7 @@ sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int recopy,
   size_t size;
   sctk_thread_ptp_message_t * msg;
   void* body;
+  IBUF_CHECK_POISON(ibuf->buffer);
   /* XXX: select if a recopy is needed for the message */
   /* XXX: recopy is not compatible with CM */
 
@@ -116,8 +118,8 @@ sctk_ib_sr_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int recopy,
   if (recopy)
   {
     sctk_ib_eager_t *eager_header;
-
     eager_header = IBUF_GET_EAGER_HEADER(ibuf->buffer);
+
     size = eager_header->payload_size;
     msg = sctk_malloc(size + sizeof(sctk_thread_ptp_message_t));
     PROF_INC(rail, alloc_mem);

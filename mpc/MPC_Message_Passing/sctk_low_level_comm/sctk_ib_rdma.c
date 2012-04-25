@@ -51,6 +51,7 @@ static inline void sctk_ib_rdma_align_msg(void *addr, size_t  size,
     void **aligned_addr, size_t *aligned_size)
 {
   /* We do not need to align pointers by hand */
+
   *aligned_addr = addr;
   *aligned_size = size;
 #if 0
@@ -142,14 +143,13 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
  */
 sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
     sctk_route_table_t* route_table, sctk_thread_ptp_message_t * msg, size_t size, int low_memory_mode) {
-  LOAD_RAIL(rail);
   sctk_ib_header_rdma_t * rdma = &msg->tail.ib.rdma;
   sctk_ibuf_t *ibuf;
   sctk_ib_rdma_t *rdma_header;
   sctk_ib_rdma_req_t *rdma_req;
 
   ibuf = sctk_ibuf_pick(&rail->network.ib, 1, task_node_number);
-  IBUF_SET_DEST_TASK(ibuf, msg->sctk_msg_get_glob_destination);
+  IBUF_SET_DEST_TASK(ibuf->buffer, msg->sctk_msg_get_glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->sctk_msg_get_glob_source);
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_req_type);
@@ -190,15 +190,13 @@ static inline sctk_ibuf_t* sctk_ib_rdma_prepare_ack(sctk_rail_info_t* rail,
   sctk_thread_ptp_message_t* msg) {
   sctk_ib_header_rdma_t * rdma = &msg->tail.ib.rdma;
   LOAD_RAIL(rail);
-  LOAD_CONFIG(rail_ib);
   sctk_ibuf_t *ibuf;
   sctk_ib_rdma_t *rdma_header;
   sctk_ib_rdma_ack_t *rdma_ack;
-  sctk_route_table_t* route;
   int low_memory_mode_local;
 
   ibuf = sctk_ibuf_pick(rail_ib, 1, task_node_number);
-  IBUF_SET_DEST_TASK(ibuf, msg->tail.ib.rdma.glob_destination);
+  IBUF_SET_DEST_TASK(ibuf->buffer, msg->tail.ib.rdma.glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->tail.ib.rdma.glob_source);
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_ack_type);
@@ -234,7 +232,7 @@ sctk_ib_rdma_prepare_data_write(sctk_rail_info_t* rail,
   rdma_data_write = IBUF_GET_RDMA_DATA_WRITE(ibuf->buffer);
   rdma_data_write->src_msg_header = src_msg_header;
 
-  IBUF_SET_DEST_TASK(ibuf, rdma->glob_destination);
+  IBUF_SET_DEST_TASK(ibuf->buffer, rdma->glob_destination);
   IBUF_SET_SRC_TASK(ibuf, rdma->glob_source);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_data_write_type);
   IBUF_SET_PROTOCOL(ibuf->buffer, rdma_protocol);
@@ -260,7 +258,6 @@ sctk_ib_rdma_prepare_data_write(sctk_rail_info_t* rail,
 inline sctk_thread_ptp_message_t*
 sctk_ib_rdma_prepare_done_write(sctk_rail_info_t* rail,
     sctk_ibuf_t *ibuf) {
-  LOAD_RAIL(rail);
   sctk_ib_header_rdma_t * rdma;
   sctk_thread_ptp_message_t *src_msg_header;
   sctk_thread_ptp_message_t *dest_msg_header;
@@ -277,7 +274,7 @@ sctk_ib_rdma_prepare_done_write(sctk_rail_info_t* rail,
   /* At this time, we can rewrite informations on the ibuf */
   rdma_done = IBUF_GET_RDMA_DONE(ibuf->buffer);
   rdma_done->dest_msg_header = dest_msg_header;
-  IBUF_SET_DEST_TASK(ibuf, rdma->glob_destination);
+  IBUF_SET_DEST_TASK(ibuf->buffer, rdma->glob_destination);
   IBUF_SET_SRC_TASK(ibuf, rdma->glob_source);
   IBUF_SET_RDMA_TYPE(rdma_header, rdma_done_type);
   sctk_ibuf_send_inline_init(ibuf, IBUF_GET_RDMA_DONE_SIZE);
@@ -394,7 +391,6 @@ sctk_ib_rdma_recv_ack(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   sctk_thread_ptp_message_t *dest_msg_header;
   sctk_thread_ptp_message_t *src_msg_header;
   sctk_ib_header_rdma_t *rdma;
-  sctk_route_table_t* route;
 
   /* Save the values of the ack because the buffer will be reused */
   rdma_ack = IBUF_GET_RDMA_ACK(ibuf->buffer);
@@ -454,7 +450,7 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   rdma->ht_msg_number = rdma_req->msg_number;
   /* XXX: Only for collaborative polling */
   rdma->glob_source = IBUF_GET_SRC_TASK(ibuf);
-  rdma->glob_destination = IBUF_GET_DEST_TASK(ibuf);
+  rdma->glob_destination = IBUF_GET_DEST_TASK(ibuf->buffer);
 
   /* Send message to MPC. The message can be matched at the end
    * of function. */

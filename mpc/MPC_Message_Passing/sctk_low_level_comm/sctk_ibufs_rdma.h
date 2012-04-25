@@ -57,7 +57,55 @@ struct sctk_ib_rail_info_s;
   ((char*) remote->ibuf_rdma->remote_region[ptr] + (ibuf->index * config->ibv_eager_rdma_limit))
 
 #define IBUF_RDMA_GET_REMOTE_PIGGYBACK(remote,ptr,ibuf) \
-  ((char*) remote->ibuf_rdma->remote_region[ptr] + (ibuf->index * config->ibv_eager_rdma_limit))
+  &(IBUF_GET_EAGER_PIGGYBACK( \
+    (IBUF_RDMA_GET_PAYLOAD_FLAG( \
+      (char*) remote->ibuf_rdma->remote_region[ptr] + (ibuf->index * config->ibv_eager_rdma_limit) \
+    )) \
+  ))
+
+/*
+ * This figure discribe how the buffer is
+ * decomposed with the size of each filed.
+ *  _____________
+ * |             |    <--- BASE_FLAG
+ * |SIZE (size_t)|
+ * |_____________|
+ * |             |
+ * | HEAD (int)  |
+ * |_____________|    <--- ibuf->buffer
+ * |             |
+ * |    DATA     |
+ * |             |
+ * |_____________|
+ * |             |
+ * | TAIL (int)  |
+ * |_____________|
+ *
+ */
+#define IBUF_RDMA_RESET_FLAG   120983
+#define IBUF_RDMA_FLAG_1 989898
+#define IBUF_RDMA_FLAG_2 434343
+
+#define IBUF_RDMA_GET_BASE_FLAG(ibuf) \
+  ((void*) ibuf->size_flag)
+
+#define IBUF_RDMA_GET_SIZE_FLAG(buffer) \
+  ((void*) buffer)
+
+#define IBUF_RDMA_GET_HEAD_FLAG(buffer) \
+  ((void*) ((char*) buffer + sizeof(size_t)))
+
+#define IBUF_RDMA_GET_PAYLOAD_FLAG(buffer) \
+  ((void*) ((char*) buffer + sizeof(size_t) + sizeof(int)))
+
+/* 's' is the size of the data.
+ * XXX: We only start to count from the buffer. */
+#define IBUF_RDMA_GET_TAIL_FLAG(buffer, s) \
+  ((void*) ((char*) buffer + s))
+
+/* The payload size must be set before using this macro */
+#define IBUF_RDMA_GET_SIZE \
+  (sizeof(size_t) + (2 * sizeof(int)) )
 
 /* Pool of ibufs */
 #define REGION_SEND 0
@@ -74,6 +122,12 @@ typedef struct sctk_ibuf_rdma_pool_s
   uint32_t rkey[2];
 
   int send_credit;
+
+  /* Pointer to the remote */
+  sctk_ib_qp_t *remote;
+  /* Pointer to next and tail for list */
+  struct sctk_ibuf_rdma_pool_s *next;
+  struct sctk_ibuf_rdma_pool_s *prev;
 
 } sctk_ibuf_rdma_pool_t;
 
@@ -105,5 +159,15 @@ sctk_ibuf_rdma_update_remote_addr(sctk_ib_qp_t* remote, sctk_ib_qp_keys_t *key);
 
 void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf);
 
+int
+sctk_ib_rdma_eager_poll_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote);
+
+void sctk_ib_rdma_eager_walk_remotes(sctk_ib_rail_info_t *rail, int (func)(sctk_ib_rail_info_t *rail, sctk_ib_qp_t* remote), int *ret);
+
+int
+sctk_ibuf_rdma_is_remote_connected(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* remote);
+
+void
+sctk_ib_rdma_eager_poll_recv(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, int index);
 #endif
 #endif

@@ -30,6 +30,7 @@
 #include "sctk_ib.h"
 #include "sctk_ib_config.h"
 #include "sctk_ib_qp.h"
+#include "sctk_ibufs_rdma.h"
 #include "utlist.h"
 /**
    Description: NUMA aware buffers poll interface.
@@ -375,7 +376,7 @@ int sctk_ibuf_send_inline_init(
 
   /* If data may be inlined */
   if(size <= config->ibv_max_inline) {
-    ibuf->desc.wr.send.send_flags = IBV_SEND_INLINE;
+    ibuf->desc.wr.send.send_flags = IBV_SEND_INLINE | IBV_SEND_SIGNALED;
     ibuf->flag = SEND_INLINE_IBUF_FLAG;
     is_inlined = 1;
   } else {
@@ -458,7 +459,7 @@ int sctk_ibuf_rdma_write_init(
   return is_inlined;
 }
 
-void sctk_ibuf_rdma_write_with_imm_init(
+int sctk_ibuf_rdma_write_with_imm_init(
     sctk_ibuf_t* ibuf, void* local_address,
     uint32_t lkey, void* remote_address, uint32_t rkey,
     int len, uint32_t imm_data)

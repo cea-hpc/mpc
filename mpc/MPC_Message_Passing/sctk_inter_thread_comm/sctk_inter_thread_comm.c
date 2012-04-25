@@ -720,7 +720,7 @@ void sctk_free_header(void* tmp){
 
 static
 void* sctk_alloc_header(){
-  sctk_thread_ptp_message_t *tmp;
+  sctk_thread_ptp_message_t *tmp = NULL;
 
   /* We first look at the buffered list if a header is available */
   if (buffered_ptp_message != NULL) {
@@ -1038,10 +1038,13 @@ int sctk_perform_messages_probe_matching(sctk_internal_ptp_t* pair,
   if(header->source == MPC_ANY_SOURCE){
     sctk_network_notify_any_source_message ();
   } else {
-    int remote;
-    remote = sctk_get_comm_world_rank (header->communicator,header->source);
-    if(remote != sctk_process_rank){
-      sctk_network_notify_perform_message (remote);
+    int remote_task;
+    int remote_process;
+    remote_task = sctk_get_comm_world_rank (header->communicator,header->source);
+    remote_process = sctk_get_process_rank_from_task_rank(remote_task);
+
+    if(remote_process != sctk_process_rank){
+      sctk_network_notify_perform_message (remote_process);
     }
   }
   return 0;
@@ -1117,7 +1120,7 @@ void sctk_wait_message (sctk_request_t * request){
 
 void sctk_perform_messages(sctk_request_t* request){
   if(request->completion_flag != SCTK_MESSAGE_DONE){
-     sctk_internal_ptp_t* tmp;
+     sctk_internal_ptp_t* tmp = NULL;
      sctk_internal_ptp_t* send_tmp;
 
      {
@@ -1133,10 +1136,49 @@ void sctk_perform_messages(sctk_request_t* request){
        sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
      }
 
+     /* FIXME: totally useless.... */
+#if 0
     if(send_tmp == NULL){
       sctk_network_notify_perform_message (request->header.glob_source);
     }
+#endif
 
+    /* Check the source of the request. We try to poll the
+     * source in order to retreive messages from the network */
+    if(request->header.source == MPC_ANY_SOURCE){
+      sctk_network_notify_any_source_message ();
+    } else {
+      int remote_task;
+      int remote_process;
+      /* Convert task rank to process rank */
+      remote_task = sctk_get_comm_world_rank (request->header.communicator,
+          request->header.source);
+      remote_process = sctk_get_process_rank_from_task_rank(remote_task);
+
+      sctk_nodebug("remote process=%d source=%d comm=%d",
+          remote_process, request->header.source, request->header.communicator);
+      /* This call can return remote_process == sctk_process.
+       * If we use an MPI_Isend followed by a MPI_Text, remote_process
+       * is equal to the source of the message, so the current task */
+      sctk_network_notify_perform_message (remote_process);
+    }
+
+    /* Try to match messages */
+    if(tmp != NULL){
+      if(request->need_check_in_wait == 1){
+      	sctk_try_perform_messages_for_pair(tmp);
+      }
+    }
+
+#warning "To remove in a next commit"
+#if 0
+    if(tmp != NULL){
+      if(request->need_check_in_wait == 1){
+      	sctk_try_perform_messages_for_pair(tmp);
+      } else {
+        sctk_network_notify_perform_message (request->header.glob_source);
+      }
+    }
     if(tmp != NULL){
       if(request->need_check_in_wait == 1){
 	sctk_try_perform_messages_for_pair(tmp);
@@ -1144,6 +1186,7 @@ void sctk_perform_messages(sctk_request_t* request){
     } else {
       sctk_network_notify_perform_message (request->header.glob_destination);
     }
+#endif
   }
 }
 
@@ -1175,7 +1218,6 @@ void sctk_wait_all (const int task, const sctk_communicator_t com){
     }
     sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
 
-#warning "To optimize"
     if (i != 0) sctk_thread_yield();
   } while(i != 0);
 }
@@ -1309,7 +1351,7 @@ void sctk_recv_message_try_check (sctk_thread_ptp_message_t * msg,sctk_internal_
   }
 }
 void sctk_recv_message (sctk_thread_ptp_message_t * msg,sctk_internal_ptp_t* tmp){
-  msg->tail.need_check_in_wait = 1;
+  msg->tail.need_check_in_wait = 0;
   sctk_recv_message_try_check(msg,tmp,1);
 }
 

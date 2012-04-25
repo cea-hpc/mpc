@@ -61,16 +61,22 @@ typedef struct sctk_ib_device_s
   struct ibv_device_attr  dev_attr;
   /* Port attributs */
   struct ibv_port_attr    port_attr;
+  /* XXX: do not add other fields here or the code segfaults.
+   * Maybe a restriction of IB in the memory alignement */
   /* ID of the device */
   unsigned int id;
-//  uint16_t                lid;
-
   struct ibv_pd           *pd;       /* protection domain */
   struct ibv_srq          *srq;      /* shared received quue */
   struct ibv_cq           *send_cq;  /* outgoing completion queues */
   struct ibv_cq           *recv_cq;  /* incoming completion queues */
 
   struct sctk_ib_qp_ondemand_s ondemand;
+
+  /* Link rate & data rate*/
+  char link_rate[64];
+  int link_width;
+  int data_rate;
+
 } sctk_ib_device_t;
 
 #define ACK_UNSET   111

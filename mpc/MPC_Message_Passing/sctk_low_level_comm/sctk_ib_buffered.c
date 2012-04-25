@@ -107,7 +107,7 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
     IBUF_SET_PROTOCOL(ibuf->buffer, buffered_protocol);
     msg_copied += payload_size;
 
-    IBUF_SET_DEST_TASK(ibuf, msg->sctk_msg_get_glob_destination);
+    IBUF_SET_DEST_TASK(ibuf->buffer, msg->sctk_msg_get_glob_destination);
     IBUF_SET_SRC_TASK(ibuf, msg->sctk_msg_get_glob_source);
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, 0);
   }

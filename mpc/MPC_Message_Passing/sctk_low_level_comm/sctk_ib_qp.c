@@ -28,6 +28,7 @@
 #include "sctk_ibufs_rdma.h"
 #include "sctk_ib_qp.h"
 #include "sctk_ib_prof.h"
+#include "sctk_ib_polling.h"
 #include "sctk_pmi.h"
 #include "utlist.h"
 #include <sctk_spinlock.h>
@@ -121,6 +122,10 @@ sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int r
   LOAD_DEVICE(rail_ib);
   struct ibv_device** dev_list = device->dev_list;
   int devices_nb = device->dev_nb;
+  int link_width = -1;
+  char *link_rate_string = "unknown";
+  int link_rate = -1;
+  int data_rate = -1;
 
   if (rail_nb >= devices_nb)
   {
@@ -149,7 +154,28 @@ sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int r
     sctk_abort();
   }
 
-//  rail->lid = device->port_attr.lid;
+  /* Get the link width */
+  switch(device->port_attr.active_width) {
+    case 1: link_width = 1; break;
+    case 2: link_width = 4; break;
+    case 4: link_width = 8; break;
+    case 8: link_width = 12; break;
+  }
+
+  /* Get the link rate */
+  switch(device->port_attr.active_speed) {
+    case 0x01: link_rate = 2;  link_rate_string = "SDR"; break;
+    case 0x02: link_rate = 4;  link_rate_string = "DDR"; break;
+    case 0x04: link_rate = 8;  link_rate_string = "QDR"; break;
+    case 0x08: link_rate = 14; link_rate_string = "FDR"; break;
+    case 0x10: link_rate = 25; link_rate_string = "EDR"; break;
+  }
+  data_rate = link_width * link_rate;
+
+  rail_ib->device->data_rate = data_rate;
+  rail_ib->device->link_width = link_width;
+  strcpy(rail_ib->device->link_rate, link_rate_string);
+
   sctk_nodebug("device %d", device->dev_attr.max_qp_wr);
   srand48 (getpid () * time (NULL));
   rail_ib->device->dev_index = rail_nb;
@@ -813,7 +839,7 @@ static void* wait_send(void *arg){
     wait_send_arg.remote = remote;
     wait_send_arg.ibuf = ibuf;
 
-    sctk_ib_debug("QP full, waiting for posting message...");
+    sctk_ib_debug("QP full, waiting for posting message... rc=%d, request_nb=%d", rc, sctk_ib_qp_get_requests_nb(remote));
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
         (void (*)(void *)) wait_send, &wait_send_arg);
   }
@@ -853,7 +879,12 @@ sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
   /* We release the buffer if it has been inlined */
   if (ibuf->flag == SEND_INLINE_IBUF_FLAG
       || ibuf->flag == RDMA_WRITE_INLINE_IBUF_FLAG) {
-    sctk_ibuf_release(rail_ib, ibuf);
+      sctk_ib_polling_t poll;
+      POLL_INIT(&poll);
+
+      /* Decrease the number of pending requests */
+//      sctk_ib_qp_decr_requests_nb(ibuf->remote);
+//      sctk_network_poll_send_ibuf(rail_ib->rail, ibuf, 0, poll);
   }
 }
 /*-----------------------------------------------------------

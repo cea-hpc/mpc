@@ -49,7 +49,7 @@
 #define IBV_EAGER_LIMIT       ( 4 * 1024)
 #define IBV_FRAG_EAGER_LIMIT  (256 * 1024)
 
-#define IBV_EAGER_RDMA_LIMIT       ( 4 * 1024)
+#define IBV_EAGER_RDMA_LIMIT       ( 32 * 1024)
 //#define IBV_FRAG_EAGER_LIMIT  (10 * 1024 * 1024)
 /* Number of allowed pending Work Queue Elements
  * for each QP */
@@ -72,7 +72,7 @@
 /* Maximum number of buffers which can be posted to the SRQ.
  * This number cannot be higher than than the number fixed by the HW.
  * The verification is done during the config_check function */
-#define IBV_MAX_SRQ_IBUFS_POSTED     3000
+#define IBV_MAX_SRQ_IBUFS_POSTED     5000
 /* When the async thread wakes, it means that the SRQ is full. We
  * allows the async thread to extract IBV_MAX_SRQ_WR_HANDLE_BY_THREAD messages
  * before posting new buffers .*/

@@ -37,6 +37,8 @@
 #define SCTK_IB_MODULE_NAME "NONE"
 #endif
 
+void sctk_ib_toolkit_print_backtrace(void);
+
 #ifdef SCTK_IB_MODULE_DEBUG
 __UNUSED__ static void sctk_ib_debug(const char *fmt, ...)
 {

@@ -56,8 +56,6 @@ sctk_network_send_message_multirail_ib (sctk_thread_ptp_message_t * msg){
   } else {
     i = 0;
   }
-  sctk_nodebug("msg number: %d, rail %d", msg->sctk_msg_get_message_number, i);
-
 
   rails[i]->send_message(msg,rails[i]);
 }
@@ -182,7 +180,7 @@ void sctk_network_finalize_multirail_ib (){
     }
   }
 #endif
-  sctk_debug("time_send=%f poll_send=%f poll_recv=%f tst=%f",
+  sctk_nodebug("time_send=%f poll_send=%f poll_recv=%f tst=%f",
       time_send, poll_send, poll_recv, tst);
 }
 

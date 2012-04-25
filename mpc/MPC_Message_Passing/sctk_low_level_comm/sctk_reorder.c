@@ -114,11 +114,11 @@ sctk_reorder_table_t* sctk_get_reorder(int dest){
   return tmp;
 }
 
+/* Try to handle ll message with expected sequence numbers */
 inline void __send_pending_messages(sctk_reorder_table_t* tmp) {
   if(tmp->buffer != NULL){
     sctk_reorder_buffer_t* reorder;
     int key;
-    sctk_nodebug("Proceed pending messages");
     do{
       sctk_spinlock_lock(&(tmp->lock));
       key = OPA_load_int(&(tmp->message_number_src));
@@ -137,8 +137,6 @@ inline void __send_pending_messages(sctk_reorder_table_t* tmp) {
 }
 
 
-extern __thread double t_recv;
-extern __thread int nb_recv_tst;
 /*
  * Receive message from network
  * */
@@ -172,7 +170,6 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
       return 1;
     }
 
-    assume(tmp);
     number = OPA_load_int(&(tmp->message_number_src));
 
     if(number == msg->sctk_msg_get_message_number){
@@ -256,8 +253,6 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
  * Send message to network
  * */
 
-extern __thread double t_recv;
-extern __thread int nb_recv_tst;
 int sctk_prepare_send_message_to_network_reorder (sctk_thread_ptp_message_t * msg){
   sctk_reorder_table_t* tmp;
   int src_process;

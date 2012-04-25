@@ -46,9 +46,22 @@
  *  posted in receive.
  */
 
+/* Linked list of rdma_poll where each remote using the RDMA eager protocol
+ * is listed*/
+sctk_ibuf_rdma_pool_t *rdma_pool_list = NULL;
+
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
+
+/*
+ * Check if a remote is connected to the process with a RDMA channel
+ */
+int
+sctk_ibuf_rdma_is_remote_connected(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* remote) {
+
+  return (remote->ibuf_rdma != NULL);
+}
 
 static inline void
 sctk_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* remote,
@@ -89,6 +102,8 @@ sctk_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* rem
 
   /* init all buffers */
   for(i=0; i < nb_ibufs; ++i) {
+    const char *buffer = (char*) ((char*) ptr + (i*config->ibv_eager_rdma_limit));
+;
     ibuf_ptr = (sctk_ibuf_t*) ibuf + i;
     ibuf_ptr->region = region;
     ibuf_ptr->size = 0;
@@ -96,9 +111,16 @@ sctk_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* rem
     ibuf_ptr->index = i;
     ibuf_ptr->to_release = IBUF_RELEASE;
 
-    ibuf_ptr->buffer = (unsigned char*) ((char*) ptr + (i*config->ibv_eager_rdma_limit));
+    /* Set flags  */
+    ibuf_ptr->buffer = IBUF_RDMA_GET_PAYLOAD_FLAG(buffer);
+    ibuf_ptr->head_flag = IBUF_RDMA_GET_HEAD_FLAG(buffer);
+    ibuf_ptr->size_flag = IBUF_RDMA_GET_SIZE_FLAG(buffer);
+    /* Set headers value */
+    *(ibuf_ptr->head_flag) = IBUF_RDMA_RESET_FLAG;
+
     DL_APPEND(region->list, ((sctk_ibuf_t*) ibuf + i));
-    sctk_nodebug("ibuf=%p, index=%d, buffer=%p", ibuf_ptr, i, ibuf_ptr->buffer);
+    sctk_nodebug("ibuf=%p, index=%d, buffer=%p, head_flag=%p, size_flag=%p",
+        ibuf_ptr, i, ibuf_ptr->buffer, ibuf_ptr->head_flag, ibuf_ptr->size_flag);
   }
 
   /* Setup tail and head pointers */
@@ -109,7 +131,9 @@ sctk_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* rem
       region->tail, region->tail->index);
 }
 
-/* Create a region of ibufs for RDMA */
+/*
+ * Create a region of ibufs for RDMA
+ */
 sctk_ibuf_rdma_pool_t*
 sctk_ibuf_rdma_pool_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remote, int nb_ibufs) {
   sctk_ibuf_rdma_pool_t* pool;
@@ -130,6 +154,8 @@ sctk_ibuf_rdma_pool_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remo
   pool->remote_region[REGION_SEND] = NULL;
   pool->remote_region[REGION_RECV] = NULL;
   pool->send_credit = nb_ibufs;
+  pool->remote = remote;
+  DL_APPEND(rdma_pool_list, pool);
 
   sctk_ib_debug("[rank:%d] Allocation of %d RDMA buffers", remote->rank, nb_ibufs);
 
@@ -138,7 +164,9 @@ sctk_ibuf_rdma_pool_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remo
   return pool;
 }
 
-/* Pick a RDMA buffer */
+/*
+ * Pick a RDMA buffer from the RDMA channel
+ */
 static inline sctk_ibuf_t *sctk_ibuf_rdma_pick(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t* remote) {
   sctk_ibuf_t *head;
   sctk_ibuf_t *tail;
@@ -152,6 +180,8 @@ static inline sctk_ibuf_t *sctk_ibuf_rdma_pick(sctk_ib_rail_info_t* rail_ib, sct
   piggyback =  &IBUF_GET_EAGER_PIGGYBACK(
       IBUF_RDMA_GET_NEXT(tail)->buffer);
 
+  sctk_nodebug("Piggy back field %d %p", *piggyback, piggyback);
+
   if (*piggyback != 0) {
     /* Increment the credit for RDMA send */
     remote->ibuf_rdma->send_credit += *piggyback;
@@ -163,6 +193,7 @@ static inline sctk_ibuf_t *sctk_ibuf_rdma_pick(sctk_ib_rail_info_t* rail_ib, sct
   }
 
   head = IBUF_RDMA_GET_HEAD(remote, REGION_SEND);
+
   /* If a buffer is available */
   if (remote->ibuf_rdma->send_credit >= 0) {
     /* Update the credit */
@@ -181,71 +212,112 @@ static inline sctk_ibuf_t *sctk_ibuf_rdma_pick(sctk_ib_rail_info_t* rail_ib, sct
     IBUF_GET_EAGER_PIGGYBACK(head->buffer) = 0;
 
     return (sctk_ibuf_t*) head;
+  } else {
+    IBUF_RDMA_UNLOCK_REGION(remote, REGION_SEND);
   }
 
   return NULL;
 }
 
+/*
+ * Reset the head flag after a message has been successfully received
+ */
+void sctk_ib_rdma_reset_head_flag(sctk_ibuf_t* ibuf) {
+  *(ibuf->head_flag) = IBUF_RDMA_RESET_FLAG;
+}
+
+/*
+ * Set the tail flag to the ibuf
+ */
+void sctk_ib_rdma_set_tail_flag(sctk_ibuf_t* ibuf, size_t size) {
+  /* Head, payload and Tail */
+  int* ibuf_tail;
+
+  ibuf_tail = IBUF_RDMA_GET_TAIL_FLAG(ibuf->buffer, size);
+
+  *(ibuf->size_flag) = size;
+
+  if (*ibuf_tail == IBUF_RDMA_FLAG_1) {
+    *ibuf_tail = IBUF_RDMA_FLAG_2;
+    *(ibuf->head_flag) = IBUF_RDMA_FLAG_2;
+  } else {
+    *ibuf_tail =IBUF_RDMA_FLAG_1;
+    *(ibuf->head_flag) = IBUF_RDMA_FLAG_1;
+  }
+}
+
+/*
+ * Send a message
+ */
 sctk_ibuf_t* sctk_ib_rdma_eager_prepare_msg(sctk_ib_rail_info_t* rail_ib,
     sctk_ib_qp_t* remote, sctk_thread_ptp_message_t * msg, size_t size) {
+  const sctk_ibuf_region_t* region = IBUF_RDMA_GET_REGION(remote, REGION_SEND);
   LOAD_CONFIG(rail_ib);
   void* body;
   sctk_ibuf_t *ibuf;
   sctk_ib_eager_t *eager_header;
-  const sctk_ibuf_region_t* region = IBUF_RDMA_GET_REGION(remote, REGION_SEND);
 
   body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
   ibuf = sctk_ibuf_rdma_pick(rail_ib, remote);
   assume(ibuf);
-  IBUF_SET_DEST_TASK(ibuf, msg->sctk_msg_get_glob_destination);
+
+  /* Update RDMA buffer description */
+  sctk_ib_rdma_set_tail_flag(ibuf, size + IBUF_GET_EAGER_SIZE);
+  IBUF_SET_DEST_TASK(ibuf->buffer, msg->sctk_msg_get_glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->sctk_msg_get_glob_source);
+  IBUF_SET_POISON(ibuf->buffer);
 
   /* Copy header */
   memcpy(IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer), msg, sizeof(sctk_thread_ptp_message_body_t));
   /* Copy payload */
   sctk_net_copy_in_buffer(msg, IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer));
 
+  /* We do not emit an immediate data */
+#if 0
   /* Initialization of the buffer */
   sctk_ibuf_rdma_write_with_imm_init(ibuf,
-      ibuf->buffer, /* Local addr */
+      IBUF_RDMA_GET_BASE_FLAG(ibuf), /* Local addr */
       region->mmu_entry->mr->lkey,  /* lkey */
       IBUF_RDMA_GET_REMOTE_ADDR(remote, REGION_RECV, ibuf),  /* Remote addr */
       remote->ibuf_rdma->rkey[REGION_RECV],  /* rkey */
-      IBUF_GET_EAGER_SIZE + size, /* size */
+      IBUF_RDMA_GET_SIZE + size + IBUF_GET_EAGER_SIZE, /* size */
       ibuf->index | IMM_DATA_EAGER_RDMA);  /* imm_data: index of the ibuf in the region */
+#endif
+  /* Initialization of the buffer */
+  sctk_ibuf_rdma_write_init(ibuf,
+      IBUF_RDMA_GET_BASE_FLAG(ibuf), /* Local addr */
+      region->mmu_entry->mr->lkey,  /* lkey */
+      IBUF_RDMA_GET_REMOTE_ADDR(remote, REGION_RECV, ibuf),  /* Remote addr */
+      remote->ibuf_rdma->rkey[REGION_RECV],  /* rkey */
+      IBUF_RDMA_GET_SIZE + size + IBUF_GET_EAGER_SIZE, /* size */
+      0, IBUF_DO_NOT_RELEASE);  /* imm_data: index of the ibuf in the region */
 
   IBUF_SET_PROTOCOL(ibuf->buffer, eager_rdma_protocol);
 
   eager_header = IBUF_GET_EAGER_HEADER(ibuf->buffer);
   eager_header->payload_size = size - sizeof(sctk_thread_ptp_message_body_t);
-
   return ibuf;
 }
 
-void
-sctk_ib_rdma_eager_poll_send(sctk_ib_rail_info_t *rail_ib, sctk_ibuf_t* ibuf) {
-
-  sctk_ibuf_rdma_release(rail_ib, ibuf);
-}
-
-
-/* FIXME: Ideally, the following function should be merged with the
- * function in the polling */
-void
-sctk_ib_rdma_eager_poll_recv(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, int index) {
-//  LOAD_CONFIG(rail_ib);
+/*
+ * Handle a message received
+ */
+static void __poll_ibuf(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote,
+    sctk_ibuf_t* ibuf) {
   sctk_rail_info_t* rail = rail_ib->rail;
-  sctk_ibuf_t *ibuf = IBUF_RDMA_GET_ADDR_FROM_INDEX(remote, REGION_RECV, index);
   assume(ibuf);
   const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL(ibuf->buffer);
   sctk_thread_ptp_message_t * msg = NULL;
   sctk_thread_ptp_message_body_t * msg_ibuf = NULL;
   specific_message_tag_t tag;
-  int release_ibuf = 1;
   int recopy = 1;
 
   /* Set the buffer as releasable */
   ibuf->to_release = IBUF_RELEASE;
+  const size_t size_flag = *ibuf->size_flag;
+  int *tail_flag = IBUF_RDMA_GET_TAIL_FLAG(ibuf->buffer, size_flag);
+  assume (*ibuf->head_flag == *tail_flag);
+  sctk_nodebug("Buffer size:%d, head flag:%d, tail flag:%d", *ibuf->size_flag, *ibuf->head_flag, *tail_flag);
 
   sctk_nodebug("Received ibuf %p (%d) with buffer %p", ibuf, ibuf->index, ibuf->buffer);
   msg_ibuf = IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer);
@@ -280,8 +352,94 @@ sctk_ib_rdma_eager_poll_recv(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote,
   rail->send_message_from_network(msg);
 }
 
+
+/*
+ * Walk on each remotes
+ */
+void sctk_ib_rdma_eager_walk_remotes(sctk_ib_rail_info_t *rail, int (func)(sctk_ib_rail_info_t *rail, sctk_ib_qp_t* remote), int *ret) {
+  sctk_ibuf_rdma_pool_t *pool;
+  *ret = 0;
+
+  CDL_FOREACH(rdma_pool_list, pool) {
+    *ret |= func(rail, pool->remote);
+  }
+}
+
+
+/*
+ * Poll a specific remote in order to handle new received messages.
+ * Returns 1 if a message has been found, 0 else
+ */
+int
+sctk_ib_rdma_eager_poll_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote) {
+  /* We return if the remote is not connected to the RDMA channel */
+  if (sctk_ibuf_rdma_is_remote_connected(rail_ib, remote) == 0) return 0;
+
+  static sctk_spinlock_t poll_lock = SCTK_SPINLOCK_INITIALIZER;
+  sctk_ibuf_t *head = IBUF_RDMA_GET_HEAD(remote, REGION_RECV);
+
+  sctk_nodebug("Head set: %d-%d", *(head->head_flag), IBUF_RDMA_RESET_FLAG);
+
+  if (*(head->head_flag) != IBUF_RDMA_RESET_FLAG) {
+
+    /* Spinlock for preventing two concurrent calls to this function */
+    if (sctk_spinlock_trylock(&poll_lock) == 0) {
+      /* Recaculate the head because it could be moved */
+      head = IBUF_RDMA_GET_HEAD(remote, REGION_RECV);
+      /* Double checking */
+      if (*(head->head_flag) != IBUF_RDMA_RESET_FLAG) {
+
+        const size_t size_flag = *head->size_flag;
+        volatile int volatile * tail_flag = IBUF_RDMA_GET_TAIL_FLAG(head->buffer, size_flag);
+
+        sctk_nodebug("Head set: %d-%d", *(head->head_flag), IBUF_RDMA_RESET_FLAG);
+
+        /* The head has been set. We spin while waiting the tail to be set.
+         * We do not release the lock because it is not necessary that a task
+         * concurrently polls the same remote.  */
+        while (*(head->head_flag) != *(tail_flag)) { /* poll */ };
+        /* Move head flag */
+        IBUF_RDMA_GET_HEAD(remote, REGION_RECV) =  IBUF_RDMA_GET_NEXT(head);
+        sctk_spinlock_unlock(&poll_lock);
+
+        sctk_nodebug("Buffer size:%d, head flag:%d, tail flag:%d", *head->size_flag, *head->head_flag, *tail_flag);
+
+        /* Handle the ibuf */
+        __poll_ibuf(rail_ib, remote, head);
+        return 1;
+      } else {
+        sctk_spinlock_unlock(&poll_lock);
+      }
+    }
+  }
+  return 0;
+}
+
+void
+sctk_ib_rdma_eager_poll_send(sctk_ib_rail_info_t *rail_ib, sctk_ibuf_t* ibuf) {
+  sctk_ibuf_rdma_release(rail_ib, ibuf);
+}
+
+
+/* FIXME: Ideally, the following function should be merged with the
+ * function in the polling */
+void
+sctk_ib_rdma_eager_poll_recv(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, int index) {
+#if 0
+  sctk_rail_info_t* rail = rail_ib->rail;
+  sctk_ibuf_t *ibuf = IBUF_RDMA_GET_ADDR_FROM_INDEX(remote, REGION_RECV, index);
+  assume(ibuf);
+  __poll_ibuf(rail_ib, remote, ibuf);
+#endif
+
+  sctk_ib_rdma_eager_poll_remote(rail_ib, remote);
+}
+
+/*
+ * Release a buffer from the RDMA channel
+ */
 void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
-  const sctk_ib_qp_t const * remote = ibuf->region->remote;
+  sctk_ib_qp_t * remote = ibuf->region->remote;
   LOAD_CONFIG(rail_ib);
 
   if (IBUF_GET_CHANNEL(ibuf) & RECV_CHANNEL) {
@@ -293,12 +451,13 @@ void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
     /* Firstly lock the region */
     IBUF_RDMA_LOCK_REGION(remote, REGION_RECV);
 
+    /* Get the tail */
     sctk_ibuf_t *tail = IBUF_RDMA_GET_TAIL(remote, REGION_RECV);
     /* Buffer which will be piggybacked */
     sctk_ibuf_t *base = ibuf;
     sctk_ibuf_t *next_tail = IBUF_RDMA_GET_NEXT(tail);
 
-    /* First mark the buffer as polled */
+    /* Mark the buffer as polled */
     ibuf->flag = EAGER_RDMA_POLLED;
 
     /* Check if the buffer is located at the tail adress */
@@ -308,17 +467,21 @@ void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
         IBUF_RDMA_GET_NEXT(tail)->buffer,
         IBUF_RDMA_GET_NEXT(tail)->index);
 
+    /* While a buffer free is found, we increase the piggy back and
+     * we reset each buffer */
     while (ibuf->flag == EAGER_RDMA_POLLED && ibuf == next_tail) {
       piggyback ++;
       /* Put the buffer as free */
       ibuf->flag = FREE_FLAG;
+      /* Reset the head flag */
+      sctk_ib_rdma_reset_head_flag(ibuf);
 
       /* Move to next buffers */
       next_tail = IBUF_RDMA_GET_NEXT(next_tail);
       ibuf = IBUF_RDMA_GET_NEXT(ibuf);
     }
 
-    /* Piggyback the ibuf */
+    /* Piggyback the ibuf to the tail addr */
     if (piggyback > 0) {
       IBUF_GET_EAGER_PIGGYBACK(base->buffer) = piggyback;
 
@@ -327,7 +490,8 @@ void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
       /* Prepare the piggyback msg.
        * FIXME: there is an issue when IBV_SEND_SIGNALED missing.
        * If not present, at a certain time we cannot post ibufs
-       * no more to the QP */
+       * no more to the QP. This is bad because IBV_SEND_SIGNALED generates
+       * an useless event into the CQ and could be omitted. */
       sctk_ibuf_rdma_write_init(base,
           &IBUF_GET_EAGER_PIGGYBACK(base->buffer), /* Local addr */
           base->region->mmu_entry->mr->lkey,  /* lkey */
@@ -336,6 +500,7 @@ void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
           sizeof(int), IBV_SEND_SIGNALED,
           IBUF_DO_NOT_RELEASE);
 
+      /* Send the piggyback  */
       sctk_ib_qp_send_ibuf(rail_ib, remote, base, 0);
 
       /* Move tail */
@@ -345,15 +510,21 @@ void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
     IBUF_RDMA_UNLOCK_REGION(remote, REGION_RECV);
 
   } else if (IBUF_GET_CHANNEL(ibuf) & SEND_CHANNEL) {
-    /* Void */
+    /* Void: nothing to do */
   } else not_reachable();
 }
 
+/*
+ * Update a remote from the keys received by a peer. This function must be
+ * called before sending any message to the RDMA channel
+ */
 void
 sctk_ibuf_rdma_update_remote_addr(sctk_ib_qp_t* remote, sctk_ib_qp_keys_t *key) {
   sctk_nodebug("Set remote addr: send_ptr=%p send_rkey=%u recv_ptr=%p recv_rkey=%u",
       key->rdma.send.ptr, key->rdma.send.rkey, key->rdma.recv.ptr, key->rdma.recv.rkey);
 
+  /* Update keys for send and recv regions. We need to register the send region
+   * because of the piggyback */
   remote->ibuf_rdma->remote_region[REGION_SEND] = key->rdma.send.ptr;
   remote->ibuf_rdma->rkey[REGION_SEND] = key->rdma.send.rkey;
 
