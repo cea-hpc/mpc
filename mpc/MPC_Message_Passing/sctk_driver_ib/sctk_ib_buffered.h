@@ -38,7 +38,7 @@ typedef struct sctk_ib_buffered_table_s {
 } sctk_ib_buffered_table_t;
 
 typedef struct sctk_ib_buffered_s {
-  struct sctk_thread_ptp_message_s msg;
+  sctk_thread_ptp_message_body_t msg;
   int index;
   int nb;
   size_t payload_size;
@@ -49,11 +49,15 @@ typedef struct sctk_ib_buffered_entry_s {
   struct sctk_thread_ptp_message_s msg;
   int key;
   UT_hash_handle hh;
-  OPA_int_t current;
   int total;
   void* payload;
   sctk_ib_rdma_status_t status;
   sctk_spinlock_t lock;
+  char dummy[64];
+  /* Current copied */
+  sctk_spinlock_t current_copied_lock;
+  size_t current_copied;
+
   struct sctk_message_to_copy_s *copy_ptr;
 } sctk_ib_buffered_entry_t;
 

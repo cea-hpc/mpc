@@ -749,15 +749,16 @@ void* sctk_alloc_header(){
   return tmp;
 }
 
-int sctk_determine_src_process_from_header (sctk_thread_ptp_message_t * msg){
+int sctk_determine_src_process_from_header (sctk_thread_ptp_message_body_t * body){
   int src_process;
   int task_number;
 
-  if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->sctk_msg_get_specific_message_tag)){
-    src_process = msg->sctk_msg_get_source;
+  if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(body->header.specific_message_tag)){
+    src_process = body->header.source;
   } else {
-    if(msg->sctk_msg_get_source != MPC_ANY_SOURCE) {
-      task_number = sctk_get_comm_world_rank (msg->sctk_msg_get_communicator,msg->sctk_msg_get_source);
+    if(body->header.source != MPC_ANY_SOURCE) {
+      task_number = sctk_get_comm_world_rank (body->header.communicator,
+          body->header.source);
     src_process = sctk_get_process_rank_from_task_rank(task_number);
   } else {
       src_process = -1;

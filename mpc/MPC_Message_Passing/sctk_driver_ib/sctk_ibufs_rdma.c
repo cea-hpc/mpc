@@ -59,7 +59,7 @@ sctk_ibuf_rdma_pool_t *rdma_pool_list = NULL;
  */
 int
 sctk_ibuf_rdma_is_remote_connected(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* remote) {
-
+#warning "Change here"
   return (remote->ibuf_rdma != NULL);
 }
 
@@ -167,7 +167,7 @@ sctk_ibuf_rdma_pool_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remo
 /*
  * Pick a RDMA buffer from the RDMA channel
  */
-static inline sctk_ibuf_t *sctk_ibuf_rdma_pick(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t* remote) {
+inline sctk_ibuf_t *sctk_ibuf_rdma_pick(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t* remote) {
   sctk_ibuf_t *head;
   sctk_ibuf_t *tail;
   int *piggyback;
@@ -256,7 +256,7 @@ sctk_ibuf_t* sctk_ib_rdma_eager_prepare_msg(sctk_ib_rail_info_t* rail_ib,
   sctk_ib_eager_t *eager_header;
 
   body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
-  ibuf = sctk_ibuf_rdma_pick(rail_ib, remote);
+  ibuf = sctk_ibuf_pick_send(rail_ib, remote, size + IBUF_GET_EAGER_SIZE, 0);
   assume(ibuf);
 
   /* Update RDMA buffer description */
@@ -270,11 +270,12 @@ sctk_ibuf_t* sctk_ib_rdma_eager_prepare_msg(sctk_ib_rail_info_t* rail_ib,
   /* Copy payload */
   sctk_net_copy_in_buffer(msg, IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer));
 
-  sctk_ibuf_prepare(rail_ib, remote, ibuf,
-      IBUF_RDMA_GET_SIZE + size + IBUF_GET_EAGER_SIZE);
+//  sctk_ibuf_prepare(rail_ib, remote, ibuf,
+//      IBUF_RDMA_GET_SIZE + size + IBUF_GET_EAGER_SIZE);
 
   eager_header = IBUF_GET_EAGER_HEADER(ibuf->buffer);
   eager_header->payload_size = size - sizeof(sctk_thread_ptp_message_body_t);
+  IBUF_SET_PROTOCOL(ibuf->buffer, eager_protocol);
   return ibuf;
 }
 
@@ -285,6 +286,7 @@ static void __poll_ibuf(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote,
     sctk_ibuf_t* ibuf) {
   sctk_rail_info_t* rail = rail_ib->rail;
   assume(ibuf);
+  int release_ibuf;
 
   /* Set the buffer as releasable. Actually, we need to do this reset
    * here.. */
@@ -295,7 +297,29 @@ static void __poll_ibuf(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote,
   assume (*ibuf->head_flag == *tail_flag);
   sctk_nodebug("Buffer size:%d, head flag:%d, tail flag:%d", *ibuf->size_flag, *ibuf->head_flag, *tail_flag);
 
-  sctk_ib_eager_poll_recv(rail, ibuf);
+  const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL(ibuf->buffer);
+  switch (protocol) {
+    case eager_protocol:
+      sctk_ib_eager_poll_recv(rail, ibuf);
+      break;
+
+    case rdma_protocol:
+      sctk_nodebug("RDMA received from RDMA channel");
+      release_ibuf = sctk_ib_rdma_poll_recv(rail, ibuf);
+      break;
+
+    case buffered_protocol:
+      sctk_ib_buffered_poll_recv(rail, ibuf);
+      release_ibuf = 1;
+      break;
+
+    default:
+      assume(0);
+  }
+
+  if (release_ibuf) {
+    sctk_ibuf_release(rail_ib, ibuf);
+  }
 }
 
 

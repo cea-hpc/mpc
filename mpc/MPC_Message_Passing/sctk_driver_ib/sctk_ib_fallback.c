@@ -101,8 +101,8 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
    *  We switch between available protocols
    *
    * */
-
   /***** RDMA EAGER CHANNEL *****/
+#if 0
   if (  sctk_ibuf_rdma_is_remote_connected(rail_ib, remote)
       && (IBUF_RDMA_GET_SIZE + size + IBUF_GET_EAGER_SIZE) < config->ibv_eager_rdma_limit) {
     ibuf = sctk_ib_rdma_eager_prepare_msg(rail_ib, remote, msg, size);
@@ -110,7 +110,9 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
     sctk_complete_and_free_message(msg);
 
   /***** SEND-RECEIVE EAGER CHANNEL *****/
-  } else if (size+IBUF_GET_EAGER_SIZE < config->ibv_eager_limit)  {
+  } else
+#endif
+    if (size+IBUF_GET_EAGER_SIZE < config->ibv_eager_limit)  {
     ibuf = sctk_ib_eager_prepare_msg(rail_ib, remote, msg, size, -1);
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, is_control_message);
@@ -147,26 +149,16 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
     const char from_cp, struct sctk_ib_polling_s* poll) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   int release_ibuf = 1;
-  double e, s;
-
-  s = sctk_get_time_stamp();
 
   /* Switch on the protocol of the received message */
   switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
-    case eager_rdma_protocol:
-      /* The message owns the RDMA channel. We do not release it
-       * for now */
-      //sctk_ib_rdma_eager_poll_send(rail_ib, ibuf); return 0;
-      return 0;
-      break;
-
     case eager_protocol:
       release_ibuf = 1;
       break;
 
     case rdma_protocol:
-      sctk_nodebug("RDMA message received");
       release_ibuf = sctk_ib_rdma_poll_send(rail, ibuf);
+      sctk_nodebug("Received RMDA write send");
       break;
 
     case buffered_protocol:
@@ -179,15 +171,16 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
       break;
   }
 
+  /* We do not need to release the buffer with the RDMA channel */
+  if (IBUF_GET_CHANNEL(ibuf) & RDMA_CHANNEL) return 0;
+
+  assume(IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL);
   if(release_ibuf) {
     /* sctk_ib_qp_release_entry(&rail->network.ib, ibuf->remote); */
     sctk_ibuf_release(rail_ib, ibuf);
   } else {
     sctk_ibuf_release_from_srq(rail_ib, ibuf);
   }
-
-  e = sctk_get_time_stamp();
-  poll_send += e - s;
 
   return 0;
 }

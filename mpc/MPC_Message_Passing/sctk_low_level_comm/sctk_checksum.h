@@ -23,6 +23,7 @@
 
 #ifndef __SCTK__CHECKSUM_H_
 #define __SCTK__CHECKSUM_H_
+
 #include "sctk_inter_thread_comm.h"
 
 unsigned long sctk_checksum_message(struct sctk_thread_ptp_message_s *msg);

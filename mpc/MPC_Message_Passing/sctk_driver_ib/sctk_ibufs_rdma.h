@@ -169,5 +169,9 @@ sctk_ibuf_rdma_is_remote_connected(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_q
 
 void
 sctk_ib_rdma_eager_poll_recv(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, int index);
+
+sctk_ibuf_t *sctk_ibuf_rdma_pick(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t* remote);
+
+void sctk_ib_rdma_set_tail_flag(sctk_ibuf_t* ibuf, size_t size);
 #endif
 #endif

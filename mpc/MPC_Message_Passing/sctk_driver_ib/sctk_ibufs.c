@@ -28,6 +28,7 @@
 #define SCTK_IB_MODULE_NAME "IBUF"
 #include "sctk_ib_toolkit.h"
 #include "sctk_ib.h"
+#include "sctk_ib_sr.h"
 #include "sctk_ib_config.h"
 #include "sctk_ib_qp.h"
 #include "sctk_ibufs_rdma.h"
@@ -146,12 +147,156 @@ sctk_ibuf_pool_init(struct sctk_ib_rail_info_s *rail_ib)
   rail_ib->pool_buffers = pool;
 }
 
+sctk_ibuf_t*
+sctk_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib, int n)
+{
+  LOAD_POOL(rail_ib);
+  LOAD_CONFIG(rail_ib);
+  sctk_ibuf_t* ibuf;
+
+#ifdef DEBUG_IB_BUFS
+    if (n != -1)  {
+      assume(n <= pool->nodes_nb);
+    }
+#endif
+
+    if (n == -1) n = CLOSEST_NODE_FROM_NIC;
+    sctk_ibuf_numa_t *node = &pool->nodes[n];
+    sctk_spinlock_t *lock = &node->lock;
+
+#warning "Uncomment after commit"
+#if 0
+    if (OPA_load_int(&node->free_nb) < 100) {
+      sctk_ib_low_mem_broadcast(rail_ib->rail);
+    }
+#endif
+    sctk_spinlock_lock(lock);
+
+    /* Allocate additionnal buffers if no more are available */
+    if ( !node->free_entry) {
+      init_node(rail_ib, node, config->ibv_size_ibufs_chunk);
+    }
+
+    /* update pointers from buffer pool */
+    ibuf = node->free_entry;
+    DL_DELETE(node->free_entry, node->free_entry);
+    OPA_decr_int(&node->free_nb);
+
+    sctk_spinlock_unlock(lock);
+
+    IBUF_SET_PROTOCOL(ibuf->buffer, null_protocol);
+
+#ifdef DEBUG_IB_BUFS
+    assume(ibuf);
+    if (ibuf->flag != FREE_FLAG)
+    {sctk_error("Wrong flag (%d) got from ibuf", ibuf->flag);}
+#endif
+
+    sctk_nodebug("ibuf: %p, lock:%p, need_lock:%d next free_entryr: %p, nb_free %d, nb_got %d, nb_free_srq %d, node %d)", ibuf, lock, need_lock, node->free_entry, node->nb_free, node->nb_got, node->nb_free_srq, n);
+
+    /* Prepare the buffer for sending */
+  IBUF_SET_POISON(ibuf->buffer);
+
+  return ibuf;
+}
+
+sctk_ibuf_t*
+sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
+    size_t *size, int n)
+{
+  LOAD_POOL(rail_ib);
+  LOAD_CONFIG(rail_ib);
+  sctk_ibuf_t* ibuf = NULL;
+
+  /* We return the max size for the buffer */
+  if (*size == ULONG_MAX) {
+    if (sctk_ibuf_rdma_is_remote_connected(rail_ib, remote)) {
+      /* Connected with RDMA */
+      *size = config->ibv_eager_rdma_limit - IBUF_RDMA_GET_SIZE;
+      sctk_nodebug("Max RDMA: %lu", *size);
+    }
+    else {
+      /* Connected with SR */
+      *size = config->ibv_eager_limit;
+      sctk_nodebug("Max SR: %lu", *size);
+    }
+  }
+
+/***** RDMA CHANNEL *****/
+  if (sctk_ibuf_rdma_is_remote_connected(rail_ib, remote)
+      && (IBUF_RDMA_GET_SIZE + *size) <= config->ibv_eager_rdma_limit) {
+
+    sctk_nodebug("requested:%lu max:%lu header:%lu", *size, config->ibv_eager_rdma_limit, IBUF_RDMA_GET_SIZE);
+    ibuf = sctk_ibuf_rdma_pick(rail_ib, remote);
+    assume(ibuf);
+
+    sctk_ibuf_prepare(rail_ib, remote, ibuf, *size);
+
+    /***** SR CHANNEL *****/
+  } else if (*size <= config->ibv_eager_limit) {
+
+#ifdef DEBUG_IB_BUFS
+    if (n != -1)  {
+      assume(n <= pool->nodes_nb);
+    }
+#endif
+
+    if (n == -1) n = CLOSEST_NODE_FROM_NIC;
+    sctk_ibuf_numa_t *node = &pool->nodes[n];
+    sctk_spinlock_t *lock = &node->lock;
+
+#warning "Uncomment after commit"
+#if 0
+    if (OPA_load_int(&node->free_nb) < 100) {
+      sctk_ib_low_mem_broadcast(rail_ib->rail);
+    }
+#endif
+    sctk_spinlock_lock(lock);
+
+    /* Allocate additionnal buffers if no more are available */
+    if ( !node->free_entry) {
+      init_node(rail_ib, node, config->ibv_size_ibufs_chunk);
+    }
+
+    /* update pointers from buffer pool */
+    ibuf = node->free_entry;
+    DL_DELETE(node->free_entry, node->free_entry);
+    OPA_decr_int(&node->free_nb);
+
+    sctk_spinlock_unlock(lock);
+
+    IBUF_SET_PROTOCOL(ibuf->buffer, null_protocol);
+
+#ifdef DEBUG_IB_BUFS
+    assume(ibuf);
+    if (ibuf->flag != FREE_FLAG)
+    {sctk_error("Wrong flag (%d) got from ibuf", ibuf->flag);}
+#endif
+
+    sctk_ibuf_prepare(rail_ib, remote, ibuf, *size);
+
+    sctk_nodebug("ibuf: %p, lock:%p, need_lock:%d next free_entryr: %p, nb_free %d, nb_got %d, nb_free_srq %d, node %d)", ibuf, lock, need_lock, node->free_entry, node->nb_free, node->nb_got, node->nb_free_srq, n);
+
+  } else {
+#warning "Fill with the correct value"
+    sctk_error("The size associated to one eager buffer is too small to allocate a"
+        "eager buffer. Please increase the value of XXXXX. (Requested=%lu)", *size);
+    sctk_abort();
+  }
+
+  /* Prepare the buffer for sending */
+  IBUF_SET_POISON(ibuf->buffer);
+
+  return ibuf;
+}
+
+
 /* pick a new buffer from the ibuf list. Function *MUST* be locked to avoid
  * oncurrent calls.
  * - remote: process where picking buffer. It may be NULL. In this case,
  *   we pick a buffer from the SR channel */
-sctk_ibuf_t*
-sctk_ibuf_pick(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
+static inline sctk_ibuf_t*
+sctk_ibuf_pick_recv(struct sctk_ib_rail_info_s *rail_ib,
     int need_lock, int n)
 {
   LOAD_POOL(rail_ib);
@@ -218,7 +363,7 @@ static int srq_post(
 
   for (i=0; i < nb_ibufs; ++i)
   {
-    ibuf = sctk_ibuf_pick(rail_ib, NULL, need_lock, node->id);
+    ibuf = sctk_ibuf_pick_recv(rail_ib, need_lock, node->id);
 #ifdef DEBUG_IB_BUFS
     assume(ibuf);
 #endif
@@ -296,7 +441,6 @@ void sctk_ibuf_release(
   assume(ibuf);
 
   if (ibuf->to_release & IBUF_RELEASE) {
-
     if (IBUF_GET_CHANNEL(ibuf) & RDMA_CHANNEL) {
       sctk_ibuf_rdma_release(rail_ib, ibuf);
     } else {
@@ -343,15 +487,15 @@ void sctk_ibuf_prepare(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote,
         region->mmu_entry->mr->lkey,  /* lkey */
         IBUF_RDMA_GET_REMOTE_ADDR(remote, REGION_RECV, ibuf),  /* Remote addr */
         remote->ibuf_rdma->rkey[REGION_RECV],  /* rkey */
-        size, /* size */
+        size + IBUF_RDMA_GET_SIZE, /* size */
         0, IBUF_DO_NOT_RELEASE);  /* imm_data: index of the ibuf in the region */
 
-    IBUF_SET_PROTOCOL(ibuf->buffer, eager_rdma_protocol);
+    /* Move tail flag */
+    sctk_ib_rdma_set_tail_flag(ibuf, size);
 
   } else {
     assume (IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL);
     sctk_ibuf_send_inline_init(ibuf, size);
-    IBUF_SET_PROTOCOL(ibuf->buffer, eager_protocol);
   }
 }
 

@@ -104,9 +104,11 @@ sctk_ibuf_t* sctk_ib_eager_prepare_msg(sctk_ib_rail_info_t* rail_ib,
   sctk_ibuf_t *ibuf;
   sctk_ib_eager_t *eager_header;
   void* body;
+  size_t ibuf_size = size + IBUF_GET_EAGER_SIZE;
 
   body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
-  ibuf = sctk_ibuf_pick(rail_ib, remote, 1, task_node_number);
+  ibuf = sctk_ibuf_pick_send(rail_ib, remote, &ibuf_size,
+      task_node_number);
   IBUF_SET_DEST_TASK(ibuf->buffer, msg->sctk_msg_get_glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->sctk_msg_get_glob_source);
   IBUF_SET_POISON(ibuf->buffer);
@@ -116,12 +118,9 @@ sctk_ibuf_t* sctk_ib_eager_prepare_msg(sctk_ib_rail_info_t* rail_ib,
   /* Copy payload */
   sctk_net_copy_in_buffer(msg, IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer));
 
-  /* Initialization of the buffer */
-  sctk_ibuf_prepare(rail_ib, remote, ibuf,
-      size + IBUF_GET_EAGER_SIZE);
-
   eager_header = IBUF_GET_EAGER_HEADER(ibuf->buffer);
   eager_header->payload_size = size - sizeof(sctk_thread_ptp_message_body_t);
+  IBUF_SET_PROTOCOL(ibuf->buffer, eager_protocol);
 
   return ibuf;
 }

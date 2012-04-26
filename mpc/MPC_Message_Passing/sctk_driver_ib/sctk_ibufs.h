@@ -81,6 +81,7 @@ sctk_ibuf_header_t;
 /* Only for debugging */
 #define IBUF_POISON 213819238
 #define IBUF_SET_POISON(buffer) (IBUF_GET_HEADER(buffer)->poison = IBUF_POISON)
+#define IBUF_GET_POISON(buffer) (IBUF_GET_HEADER(buffer)->poison)
 #define IBUF_CHECK_POISON(buffer) do {\
   if (IBUF_GET_HEADER(buffer)->poison != IBUF_POISON) { \
     sctk_error("Wrong header received from buffer %p (got=%d expected=%d %p)", buffer, IBUF_GET_HEADER(buffer)->poison, IBUF_POISON, &IBUF_GET_HEADER(buffer)->poison); \
@@ -265,8 +266,11 @@ typedef struct sctk_ibuf_s
 void sctk_ibuf_pool_init(struct sctk_ib_rail_info_s *rail);
 
 sctk_ibuf_t*
-sctk_ibuf_pick(struct sctk_ib_rail_info_s *rail_ib,
-    struct sctk_ib_qp_s *remote, int need_lock, int n);
+sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, struct sctk_ib_qp_s *remote,
+   size_t *size, int n);
+
+sctk_ibuf_t*
+sctk_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib, int n);
 
 int sctk_ibuf_srq_check_and_post(
     struct sctk_ib_rail_info_s *rail_ib, int limit);
@@ -277,6 +281,10 @@ void sctk_ibuf_release_from_srq( struct sctk_ib_rail_info_s *rail_ib,
 void sctk_ibuf_print(sctk_ibuf_t *ibuf, char* desc);
 
 void *sctk_ibuf_get_buffer(sctk_ibuf_t *ibuf);
+
+__UNUSED__ static size_t sctk_ibuf_get_payload_size(sctk_ibuf_t *ibuf) {
+  return ibuf->desc.sg_entry.length;
+}
 
 /*-----------------------------------------------------------
  *  WR INITIALIZATION

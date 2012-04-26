@@ -31,6 +31,7 @@
 #include "sctk_net_tools.h"
 #include "sctk_ib_sr.h"
 #include "sctk_ib_cp.h"
+#include "sctk_ibufs_rdma.h"
 #include "sctk_ib_prof.h"
 
 #if defined SCTK_IB_MODULE_NAME
@@ -57,10 +58,7 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
   LOAD_CONFIG(rail_ib);
   /* Maximum size for an eager buffer */
   size = size - sizeof(sctk_thread_ptp_message_body_t);
-  const size_t buffer_size = config->ibv_eager_limit - IBUF_GET_BUFFERED_SIZE;
-  /* Maximum number of buffers */
-  int    buffer_nb = ceilf( (float) size / buffer_size);
-  int    buffer_index;
+  int    buffer_index = 0;
   size_t msg_copied=0;
   size_t payload_size;
   sctk_ibuf_t* ibuf;
@@ -73,10 +71,19 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
   }
   payload = msg->tail.message.contiguous.addr;
 
-  sctk_nodebug("Sending buffered message (buffer:nb:%lu, size:%lu)", buffer_nb, size);
+  sctk_nodebug("Sending buffered message (size:%lu)", size);
+
   /* While it reamins slots to copy */
-  for (buffer_index = 0; buffer_index < buffer_nb; ++buffer_index) {
-    ibuf = sctk_ibuf_pick(rail_ib, remote, 1, task_node_number);
+  do {
+    size_t ibuf_size = ULONG_MAX;
+    ibuf = sctk_ibuf_pick_send(rail_ib, remote, &ibuf_size, task_node_number);
+
+    size_t buffer_size = ibuf_size;
+    /* We remote the buffered header's size from the size */
+    sctk_nodebug("Payload with size %lu %lu", buffer_size, sizeof(sctk_thread_ptp_message_body_t));
+    buffer_size -= IBUF_GET_BUFFERED_SIZE;
+    sctk_nodebug("Sending a message with size %lu", buffer_size );
+
     buffered = IBUF_GET_BUFFERED_HEADER(ibuf->buffer);
 
     assume(buffer_size >= sizeof( sctk_thread_ptp_message_body_t));
@@ -92,21 +99,26 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
     memcpy(IBUF_GET_BUFFERED_PAYLOAD(ibuf->buffer), (char*) payload+msg_copied,
       payload_size);
 
-    sctk_nodebug("Send message %d on %d (msg_copied:%lu pyload_size:%lu header:%lu, buffer_size:%lu",
-        buffer_index, buffer_nb, msg_copied, payload_size, IBUF_GET_BUFFERED_SIZE, buffer_size);
+    sctk_nodebug("Send message %d (msg_copied:%lu pyload_size:%lu header:%lu, buffer_size:%lu number:%lu)",
+        buffer_index, msg_copied, payload_size, IBUF_GET_BUFFERED_SIZE, buffer_size, msg->sctk_msg_get_message_number);
     /* Initialization of the buffer */
     buffered->index = buffer_index;
     buffered->payload_size = payload_size;
     buffered->copied = msg_copied;
-    buffered->nb = buffer_nb;
-    sctk_ibuf_send_init(ibuf, IBUF_GET_BUFFERED_SIZE + buffer_size);
     IBUF_SET_PROTOCOL(ibuf->buffer, buffered_protocol);
     msg_copied += payload_size;
 
     IBUF_SET_DEST_TASK(ibuf->buffer, msg->sctk_msg_get_glob_destination);
     IBUF_SET_SRC_TASK(ibuf, msg->sctk_msg_get_glob_source);
+
+    /* Recalculate size and send */
+    sctk_ibuf_prepare(rail_ib, remote, ibuf, payload_size + IBUF_GET_BUFFERED_SIZE);
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, 0);
-  }
+
+    buffer_index++;
+  } while ( msg_copied < size);
+
+  sctk_nodebug("End of message sending");
   return 0;
 }
 
@@ -180,26 +192,17 @@ void sctk_ib_buffered_copy(sctk_message_to_copy_t* tmp){
   }
 }
 
-  void
-sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
-  sctk_thread_ptp_message_t *msg;
-  sctk_ib_buffered_t *buffered;
-  sctk_route_table_t* route_table;
+static inline sctk_ib_buffered_entry_t *
+sctk_ib_buffered_get_entry(sctk_rail_info_t* rail, sctk_ib_qp_t *remote, sctk_ibuf_t *ibuf) {
   sctk_ib_buffered_entry_t *entry = NULL;
-  sctk_ib_qp_t *remote;
+  sctk_thread_ptp_message_body_t *body;
+  sctk_ib_buffered_t *buffered;
   int key;
-  int current;
-  int src_process;
 
   buffered = IBUF_GET_BUFFERED_HEADER(ibuf->buffer);
-  msg = &buffered->msg;
-
-  src_process = sctk_determine_src_process_from_header(msg);
-  assume(src_process != -1);
-  route_table = sctk_get_route_to_process(src_process, rail);
-  assume(route_table);
-  remote = route_table->data.ib.remote;
-  key = msg->sctk_msg_get_message_number;
+  body = &buffered->msg;
+  key = body->header.message_number;
+  sctk_nodebug("Got message number %d", key);
 
   sctk_spinlock_lock(&remote->ib_buffered.lock);
   HASH_FIND(hh,remote->ib_buffered.entries,&key,sizeof(int),entry);
@@ -209,7 +212,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     assume(entry);
     PROF_INC(rail, alloc_mem);
     /* Copy message header */
-    memcpy(&entry->msg, msg, sizeof(sctk_thread_ptp_message_body_t));
+    memcpy(&entry->msg.body, body, sizeof(sctk_thread_ptp_message_body_t));
     entry->msg.tail.ib.protocol = buffered_protocol;
     entry->msg.tail.ib.buffered.entry = entry;
     entry->msg.tail.ib.buffered.rail = rail;
@@ -219,25 +222,26 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     sctk_rebuild_header(&entry->msg);
     sctk_reinit_header(&entry->msg, sctk_ib_buffered_free_msg,
         sctk_ib_buffered_copy);
-    OPA_store_int(&entry->current, 0);
     /* Add msg to hashtable */
     entry->key = key;
     entry->total = buffered->nb;
     entry->status = not_set;
     sctk_nodebug("Not set: %d (%p)", entry->status, entry);
     entry->lock = SCTK_SPINLOCK_INITIALIZER;
+    entry->current_copied_lock = SCTK_SPINLOCK_INITIALIZER;
+    entry->current_copied = 0;
     entry->payload = NULL;
     entry->copy_ptr = NULL;
     HASH_ADD(hh,remote->ib_buffered.entries,key,sizeof(int),entry);
     /* Send message to high level MPC */
 
-    sctk_nodebug("Read msg with number %d", msg->sctk_msg_get_message_number);
+    sctk_nodebug("Read msg with number %d", body->header.message_number);
     rail->send_message_from_network(&entry->msg);
 
     sctk_spinlock_lock(&entry->lock);
     /* Should be 'not_set' or 'zerocopy' */
     if ( (entry->status & MASK_BASE) == not_set) {
-      entry->payload = sctk_malloc(msg->sctk_msg_get_msg_size);
+      entry->payload = sctk_malloc(body->header.msg_size);
       assume(entry->payload);
       PROF_INC(rail, alloc_mem);
       entry->status = recopy;
@@ -246,16 +250,47 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   }
   sctk_spinlock_unlock(&remote->ib_buffered.lock);
 
+  return entry;
+}
+
+  void
+sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
+  sctk_thread_ptp_message_body_t *body;
+  sctk_ib_buffered_t *buffered;
+  sctk_route_table_t* route_table;
+  sctk_ib_buffered_entry_t *entry = NULL;
+  sctk_ib_qp_t *remote;
+  size_t current_copied;
+  int src_process;
+
+  IBUF_CHECK_POISON(ibuf->buffer);
+  buffered = IBUF_GET_BUFFERED_HEADER(ibuf->buffer);
+  body = &buffered->msg;
+
+  src_process = sctk_determine_src_process_from_header(body);
+  assume(src_process != -1);
+  route_table = sctk_get_route_to_process(src_process, rail);
+  assume(route_table);
+  remote = route_table->data.ib.remote;
+
+  /* Get the entry */
+  entry = sctk_ib_buffered_get_entry(rail, remote, ibuf);
+
   sctk_nodebug("Copy frag %d on %d (size:%lu copied:%lu)", buffered->index, buffered->nb, buffered->payload_size, buffered->copied);
   /* Copy the message payload */
   memcpy((char*) entry->payload + buffered->copied,IBUF_GET_BUFFERED_PAYLOAD(ibuf->buffer),
    buffered->payload_size);
 
-  /* If last entry, we send it to MPC */
+  /* We check if we have receive the whole message.
+   * If yes, we send it to MPC */
+  sctk_spinlock_lock(&entry->current_copied_lock);
+  current_copied = (entry->current_copied += buffered->payload_size);
+  sctk_spinlock_unlock(&entry->current_copied_lock);
+  sctk_nodebug("Received current copied : %lu on %lu number %d", current_copied, body->header.msg_size, body->header.message_number);
+
   /* XXX: horrible use of locks. but we do not have the choice */
-  current = OPA_fetch_and_incr_int(&(entry->current));
-  sctk_nodebug("%p - %d on %d", entry, current, entry->total);
-  if (current == entry->total-1) {
+  if (current_copied >= body->header.msg_size) {
+    assume(current_copied == body->header.msg_size);
     /* remove entry from HT.
      * XXX: We have to do this before marking message as done */
     sctk_spinlock_lock(&remote->ib_buffered.lock);

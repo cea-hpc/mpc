@@ -314,7 +314,7 @@ typedef struct sctk_message_to_copy_s{
 					sctk_thread_ptp_message_t* recv);
   void sctk_complete_and_free_message (sctk_thread_ptp_message_t * msg);
   void sctk_rebuild_header (sctk_thread_ptp_message_t * msg);
-  int sctk_determine_src_process_from_header (sctk_thread_ptp_message_t * msg);
+  int sctk_determine_src_process_from_header (sctk_thread_ptp_message_body_t * body);
 
 #ifdef __cplusplus
 }

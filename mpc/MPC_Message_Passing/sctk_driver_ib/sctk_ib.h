@@ -84,7 +84,6 @@ extern "C"
     buffered_protocol     = 222,
     rdma_protocol         = 333,
     null_protocol         = 444,
-    eager_rdma_protocol   = 555,
   } sctk_ib_protocol_t;
 
   __UNUSED__ static char* sctk_ib_protocol_print(sctk_ib_protocol_t prot) {
@@ -93,7 +92,6 @@ extern "C"
       case buffered_protocol: return "buffered_protocol"; break;
       case rdma_protocol: return "rdma_protocol"; break;
       case null_protocol: return "null_protocol"; break;
-      case eager_rdma_protocol: return "eager_rdma_protocol"; break;
       default: return "null"; break;
     }
   }
