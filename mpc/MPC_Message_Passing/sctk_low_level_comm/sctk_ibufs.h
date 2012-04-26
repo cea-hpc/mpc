@@ -38,6 +38,7 @@ enum sctk_ib_cp_poll_cq_e {
 #include "sctk_ib.h"
 
 struct sctk_ib_rail_info_s;
+struct sctk_ib_qp_s;
 struct sctk_ibuf_rdma_region_s;
 
 /*-----------------------------------------------------------
@@ -265,7 +266,7 @@ void sctk_ibuf_pool_init(struct sctk_ib_rail_info_s *rail);
 
 sctk_ibuf_t*
 sctk_ibuf_pick(struct sctk_ib_rail_info_s *rail_ib,
-    int need_lock, int n);
+    struct sctk_ib_qp_s *remote, int need_lock, int n);
 
 int sctk_ibuf_srq_check_and_post(
     struct sctk_ib_rail_info_s *rail_ib, int limit);
@@ -313,6 +314,9 @@ void sctk_ibuf_rdma_read_init(
 void sctk_ibuf_release(
     struct sctk_ib_rail_info_s *rail_ib,
     sctk_ibuf_t* ibuf);
+
+void sctk_ibuf_prepare(struct sctk_ib_rail_info_s* rail_ib, struct sctk_ib_qp_s *remote,
+    sctk_ibuf_t* ibuf, size_t size);
 
 #endif
 #endif

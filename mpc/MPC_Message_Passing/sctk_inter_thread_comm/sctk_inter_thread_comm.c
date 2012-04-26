@@ -658,9 +658,9 @@ inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp){
 /*INIT                                                              */
 /********************************************************************/
 /* For message creation: a set of buffered ptp_message entries is allocated during init */
+#define BUFFERED_PTP_MESSAGE_NUMBER 100
 __thread sctk_thread_ptp_message_t* buffered_ptp_message = NULL;
 __thread sctk_spinlock_t lock_buffered_ptp_message = SCTK_SPINLOCK_INITIALIZER;
-#define BUFFERED_PTP_MESSAGE_NUMBER 50
 
 /*Init data structures used for task i*/
 void sctk_ptp_per_task_init (int i){
@@ -680,16 +680,22 @@ void sctk_ptp_per_task_init (int i){
 
   if (buffered_ptp_message == NULL) {
     sctk_spinlock_lock(&lock_buffered_ptp_message);
-    /* List not already allocated */
+
+    /* List not already allocated. We create it */
     if (buffered_ptp_message == NULL) {
+      sctk_thread_ptp_message_t* tmp;
+      tmp = sctk_malloc(sizeof(sctk_thread_ptp_message_t) * BUFFERED_PTP_MESSAGE_NUMBER);
+      assume(tmp);
+
+      /* Loop on all buffers and create a list */
       for (j = 0; j < BUFFERED_PTP_MESSAGE_NUMBER; ++j) {
-        sctk_thread_ptp_message_t* entry = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
-        assume(entry);
+        sctk_thread_ptp_message_t* entry = &tmp[j];
         entry->from_buffered = 1;
         /* Add it to the list */
         LL_PREPEND(buffered_ptp_message, entry);
       }
     }
+
     sctk_spinlock_unlock(&lock_buffered_ptp_message);
   }
 }
@@ -708,6 +714,7 @@ void sctk_free_pack(void*);
 static
 void sctk_free_header(void* tmp){
   sctk_thread_ptp_message_t *header = (sctk_thread_ptp_message_t*) tmp;
+  sctk_nodebug("Free buffer %p buffered?%d", header, header->from_buffered);
   /* Header is from the buffered list */
   if (header->from_buffered) {
     sctk_spinlock_lock(&lock_buffered_ptp_message);
@@ -726,7 +733,9 @@ void* sctk_alloc_header(){
   if (buffered_ptp_message != NULL) {
     sctk_spinlock_lock(&lock_buffered_ptp_message);
     if (buffered_ptp_message != NULL) {
-      LL_DELETE(buffered_ptp_message, tmp);
+      tmp = buffered_ptp_message;
+      assume(tmp->from_buffered);
+      LL_DELETE(buffered_ptp_message, buffered_ptp_message);
     }
     sctk_spinlock_unlock(&lock_buffered_ptp_message);
   }
@@ -808,8 +817,11 @@ sctk_thread_ptp_message_t *sctk_create_header (const int myself,sctk_message_typ
   sctk_thread_ptp_message_t * tmp;
 
   tmp = sctk_alloc_header();
-
+  /* Store if the buffer has been buffered */
+  const char from_buffered = tmp->from_buffered;
   sctk_init_header(tmp,myself,msg_type,sctk_free_header,sctk_message_copy);
+  /* Restore it */
+  tmp->from_buffered = from_buffered;
 
   return tmp;
 }

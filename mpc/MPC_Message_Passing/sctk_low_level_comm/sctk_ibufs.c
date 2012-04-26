@@ -147,9 +147,11 @@ sctk_ibuf_pool_init(struct sctk_ib_rail_info_s *rail_ib)
 }
 
 /* pick a new buffer from the ibuf list. Function *MUST* be locked to avoid
- * multiple calls*/
+ * oncurrent calls.
+ * - remote: process where picking buffer. It may be NULL. In this case,
+ *   we pick a buffer from the SR channel */
 sctk_ibuf_t*
-sctk_ibuf_pick(struct sctk_ib_rail_info_s *rail_ib,
+sctk_ibuf_pick(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
     int need_lock, int n)
 {
   LOAD_POOL(rail_ib);
@@ -216,7 +218,7 @@ static int srq_post(
 
   for (i=0; i < nb_ibufs; ++i)
   {
-    ibuf = sctk_ibuf_pick(rail_ib, need_lock, node->id);
+    ibuf = sctk_ibuf_pick(rail_ib, NULL, need_lock, node->id);
 #ifdef DEBUG_IB_BUFS
     assume(ibuf);
 #endif

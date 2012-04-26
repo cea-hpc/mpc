@@ -64,7 +64,7 @@ struct sctk_ibuf_s;
  *----------------------------------------------------------*/
 
 int sctk_ib_buffered_prepare_msg(struct sctk_rail_info_s *rail,
-    struct sctk_route_table_s* route_table, struct sctk_thread_ptp_message_s * msg, size_t size);
+    struct sctk_ib_qp_s* remote, struct sctk_thread_ptp_message_s * msg, size_t size);
 
 #endif
 #endif

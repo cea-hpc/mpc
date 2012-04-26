@@ -111,7 +111,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
   /***** SEND-RECEIVE EAGER CHANNEL *****/
   } else if (size+IBUF_GET_EAGER_SIZE < config->ibv_eager_limit)  {
-    ibuf = sctk_ib_sr_prepare_msg(rail_ib, remote, msg, size, -1);
+    ibuf = sctk_ib_eager_prepare_msg(rail_ib, remote, msg, size, -1);
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, is_control_message);
     sctk_complete_and_free_message(msg);
@@ -120,14 +120,14 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   /***** BUFFERED EAGER CHANNEL *****/
   } else if (!low_memory_mode && size+IBUF_GET_BUFFERED_SIZE < config->ibv_frag_eager_limit)  {
     /* Fallback to RDMA if buffered not available or low memory mode */
-    if (sctk_ib_buffered_prepare_msg(rail, tmp, msg, size) == 1 ) goto rdma;
+    if (sctk_ib_buffered_prepare_msg(rail, remote, msg, size) == 1 ) goto rdma;
     sctk_complete_and_free_message(msg);
     PROF_INC_RAIL_IB(rail_ib, buffered_nb);
   } else {
 
   /***** RDMA RENDEZVOUS CHANNEL *****/
 rdma:
-    ibuf = sctk_ib_rdma_prepare_req(rail, tmp, msg, size, -1);
+    ibuf = sctk_ib_rdma_prepare_req(rail, remote, msg, size, -1);
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, 0);
     sctk_ib_rdma_prepare_send_msg(rail_ib, msg, size);
@@ -512,6 +512,8 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   /* Init SRQ */
   srq_attr = sctk_ib_srq_init_attr(rail_ib);
   sctk_ib_srq_init(rail_ib, &srq_attr);
+  /* Configure all channels */
+  sctk_ib_eager_init(rail_ib);
   /* Print config */
   if (sctk_get_verbosity() >= 2) {
     sctk_ib_config_print(rail_ib);

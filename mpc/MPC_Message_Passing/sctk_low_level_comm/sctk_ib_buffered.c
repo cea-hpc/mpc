@@ -52,7 +52,7 @@
  *----------------------------------------------------------*/
 
 int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
-    sctk_route_table_t* route_table, sctk_thread_ptp_message_t * msg, size_t size) {
+    sctk_ib_qp_t* remote, sctk_thread_ptp_message_t * msg, size_t size) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
   /* Maximum size for an eager buffer */
@@ -66,21 +66,17 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
   sctk_ibuf_t* ibuf;
   sctk_ib_buffered_t *buffered;
   void *payload;
-  sctk_ib_data_t *route_data;
-  sctk_ib_qp_t *remote;
 
   /* Sometimes it should be interresting to fallback to RDMA :-) */
   if (msg->tail.message_type != sctk_message_contiguous) {
     return 1;
   }
   payload = msg->tail.message.contiguous.addr;
-  route_data=&route_table->data.ib;
-  remote=route_data->remote;
 
   sctk_nodebug("Sending buffered message (buffer:nb:%lu, size:%lu)", buffer_nb, size);
   /* While it reamins slots to copy */
   for (buffer_index = 0; buffer_index < buffer_nb; ++buffer_index) {
-    ibuf = sctk_ibuf_pick(rail_ib, 1, task_node_number);
+    ibuf = sctk_ibuf_pick(rail_ib, remote, 1, task_node_number);
     buffered = IBUF_GET_BUFFERED_HEADER(ibuf->buffer);
 
     assume(buffer_size >= sizeof( sctk_thread_ptp_message_body_t));

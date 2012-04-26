@@ -517,7 +517,7 @@ int sctk_ib_cm_on_demand_recv(sctk_rail_info_t *rail,
     return 1;
   } else {
     sctk_nodebug("Forward request to process %d for process %d", process_dest, process_src);
-    sctk_ib_sr_recv_free(rail, msg, ibuf, recopy);
+    sctk_ib_eager_recv_free(rail, msg, ibuf, recopy);
     rail->send_message_from_network(msg);
     return 0;
   }

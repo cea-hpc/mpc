@@ -43,18 +43,20 @@ typedef struct sctk_ib_eager_s {
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
-sctk_ibuf_t* sctk_ib_sr_prepare_msg(sctk_ib_rail_info_t* rail_ib,
+sctk_ibuf_t* sctk_ib_eager_prepare_msg(sctk_ib_rail_info_t* rail_ib,
     sctk_ib_qp_t* route_data, sctk_thread_ptp_message_t * msg, size_t size, int low_memory_mode);
 
-void sctk_ib_sr_free_msg_no_recopy(void* arg);
+void sctk_ib_eager_free_msg_no_recopy(void* arg);
 
-void sctk_ib_sr_recv_msg_no_recopy(sctk_message_to_copy_t* tmp);
+void sctk_ib_eager_recv_msg_no_recopy(sctk_message_to_copy_t* tmp);
 
 void
-sctk_ib_sr_recv_free(struct sctk_rail_info_s* rail, sctk_thread_ptp_message_t *msg,
+sctk_ib_eager_recv_free(struct sctk_rail_info_s* rail, sctk_thread_ptp_message_t *msg,
     sctk_ibuf_t *ibuf, int recopy);
 
 void sctk_ib_buffered_poll_recv(struct sctk_rail_info_s* rail, sctk_ibuf_t *ibuf);
+
+void sctk_ib_eager_init(struct sctk_ib_rail_info_s* rail_ib);
 
 #endif
 #endif

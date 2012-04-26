@@ -108,7 +108,7 @@ sctk_ib_rdma_done_t;
  *----------------------------------------------------------*/
 
 sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
-    sctk_route_table_t* route_table, sctk_thread_ptp_message_t * msg, size_t size,
+    sctk_ib_qp_t* remote, sctk_thread_ptp_message_t * msg, size_t size,
     int low_memory_mode);
 
 int

@@ -142,13 +142,14 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
  * SEND REQUEST
  */
 sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
-    sctk_route_table_t* route_table, sctk_thread_ptp_message_t * msg, size_t size, int low_memory_mode) {
+    sctk_ib_qp_t *remote, sctk_thread_ptp_message_t * msg, size_t size, int low_memory_mode) {
+  LOAD_RAIL(rail);
   sctk_ib_header_rdma_t * rdma = &msg->tail.ib.rdma;
   sctk_ibuf_t *ibuf;
   sctk_ib_rdma_t *rdma_header;
   sctk_ib_rdma_req_t *rdma_req;
 
-  ibuf = sctk_ibuf_pick(&rail->network.ib, 1, task_node_number);
+  ibuf = sctk_ibuf_pick(rail_ib, remote, 1, task_node_number);
   IBUF_SET_DEST_TASK(ibuf->buffer, msg->sctk_msg_get_glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->sctk_msg_get_glob_source);
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
@@ -162,7 +163,7 @@ sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
   /* Message not ready: memory not pinned */
   rdma->local.ready = 0;
   rdma->rail = rail;
-  rdma->route_table = route_table;
+  rdma->remote_peer = remote;
 
   /* Initialization of the request */
   rdma_req->requested_size = size - sizeof(sctk_thread_ptp_message_body_t);
@@ -195,7 +196,7 @@ static inline sctk_ibuf_t* sctk_ib_rdma_prepare_ack(sctk_rail_info_t* rail,
   sctk_ib_rdma_ack_t *rdma_ack;
   int low_memory_mode_local;
 
-  ibuf = sctk_ibuf_pick(rail_ib, 1, task_node_number);
+  ibuf = sctk_ibuf_pick(rail_ib, rdma->remote_peer, 1, task_node_number);
   IBUF_SET_DEST_TASK(ibuf->buffer, msg->tail.ib.rdma.glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->tail.ib.rdma.glob_source);
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
@@ -330,7 +331,7 @@ static void sctk_ib_rdma_send_ack(sctk_rail_info_t* rail, sctk_thread_ptp_messag
   ibuf = sctk_ib_rdma_prepare_ack(rail, msg);
 
   /* Send message */
-  remote = send_header->rdma.route_table->data.ib.remote;
+  remote = send_header->rdma.remote_peer;
   sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, 0);
 }
 
@@ -442,7 +443,7 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   rdma->local.status      = not_set;
   rdma->requested_size  = rdma_req->requested_size;
   rdma->rail        = rail;
-  rdma->route_table = route;
+  rdma->remote_peer = route->data.ib.remote;
   rdma->local.addr  = NULL;
   rdma->remote.msg_header = rdma_req->dest_msg_header;
   rdma->local.msg_header = msg;
@@ -550,7 +551,7 @@ sctk_ib_rdma_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
       header = sctk_ib_rdma_recv_ack(rail, ibuf);
       sctk_ib_rdma_prepare_data_write(rail, header, ibuf);
       sctk_ib_qp_send_ibuf(rail_ib,
-      header->tail.ib.rdma.route_table->data.ib.remote, ibuf, 0);
+      header->tail.ib.rdma.remote_peer, ibuf, 0);
       return 0;
       break;
 
@@ -588,7 +589,7 @@ sctk_ib_rdma_poll_send(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
       sctk_nodebug("Poll send: message RDMA data write received");
       msg = sctk_ib_rdma_prepare_done_write(rail, ibuf);
       sctk_ib_qp_send_ibuf(&rail->network.ib,
-        msg->tail.ib.rdma.route_table->data.ib.remote, ibuf, 0);
+        msg->tail.ib.rdma.remote_peer, ibuf, 0);
       sctk_nodebug("Checksum after write:%lu", sctk_checksum_message(msg));
       sctk_ib_rdma_recv_done_local(rail, msg);
       /* Buffer reused: don't need to free it */
@@ -617,7 +618,7 @@ void sctk_ib_rdma_print(sctk_thread_ptp_message_t* msg) {
   sctk_error("MSG INFOS\n"
       "requested_size: %d\n"
       "rail: %p\n"
-      "route_table: %p\n"
+      "remote_peer: %p\n"
       "copy_ptr: %p\n"
       "--- LOCAL ---\n"
       "status: %d\n"
@@ -636,7 +637,7 @@ void sctk_ib_rdma_print(sctk_thread_ptp_message_t* msg) {
       "aligned_size: %lu\n",
     h->rdma.requested_size,
     h->rdma.rail,
-    h->rdma.route_table,
+    h->rdma.remote_peer,
     h->rdma.copy_ptr,
     h->rdma.local.status,
     h->rdma.local.mmu_entry,
