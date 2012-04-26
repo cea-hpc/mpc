@@ -86,6 +86,36 @@ struct atomic_int_pad_s {
 } ;
 typedef struct atomic_int_pad_s atomic_int_pad ;
 
+union mpcomp_node_leaf_s {
+    struct mpcomp_node_s * n ;
+    struct mpcomp_mvp_s * mvp ;
+} ;
+
+typedef union mpcomp_node_leaf_s mpcomp_node_leaf;
+
+struct mpcomp_elem_stack_s
+{
+  union mpcomp_node_leaf_s * node_leaf;
+ #if 0
+ union {
+   struct mpcomp_node_s * n;
+   struct mpcomp_mvp_s * mvp;
+ } node_leaf;
+ #endif
+ int node_or_leaf;
+} ;
+
+typedef struct mpcomp_elem_stack_s mpcomp_elem_stack;
+
+struct mpcomp_stack_node_leaf {
+  //mpcomp_node_leaf ** elements ;
+  mpcomp_elem_stack ** elements;
+  enum children_t * child_type ;
+  int max_elements ;
+  int n_elements ; /* corresponds to the head of the stack */
+} ;
+
+typedef struct mpcomp_stack_node_leaf mpcomp_stack_node_leaf ;
 
 struct mpcomp_team_info_s {
   /* -- TEAM INFO -- */
@@ -113,9 +143,8 @@ struct mpcomp_team_info_s {
   /* -- GUIDED FOR LOOP CONSTRUCT -- */
 
   /* Temp stats for chunk stealing */
-  sctk_atomics_int stats_stolen_chunks; 
-  //int stats_stolen_chunks;
-  sctk_atomics_int stats_last_mvp_chunk;
+  //sctk_atomics_int stats_stolen_chunks; 
+  //sctk_atomics_int stats_last_mvp_chunk;
 } ;
 
 typedef struct mpcomp_team_info_s mpcomp_team_info ;
@@ -159,11 +188,12 @@ struct mpcomp_thread_s {
   mpcomp_chunk for_dyn_chunk_info[ MPCOMP_MAX_ALIVE_FOR_DYN + 1 ] ;
 
   /* Infos for DFS */
-  struct mpcomp_stack   *tree_stack;
+  //struct mpcomp_stack   *tree_stack;
+  struct mpcomp_stack_node_leaf *tree_stack;
   struct mpcomp_mvp_s   *stolen_mvp;
   int stolen_chunk_id;
   //struct mpcomp_node_s  *parent_node  
-  int start_steal_chunk;
+  //int start_steal_chunk;
   
   //mpcomp_mvp_s **mvps; /* all mvps stores for chunk stealing (array of integers) */
 #if 0
@@ -356,9 +386,8 @@ static inline void __mpcomp_team_info_init( mpcomp_team_info * team_info ) {
       &(team_info->for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN].i), 
       MPCOMP_NOWAIT_STOP_SYMBOL ) ;
 
- sctk_atomics_store_int( &(team_info->stats_stolen_chunks), 0);
- //team_info->stats_stolen_chunks = 0;
- sctk_atomics_store_int( &(team_info->stats_last_mvp_chunk), 0);
+ //sctk_atomics_store_int( &(team_info->stats_stolen_chunks), 0);
+ //sctk_atomics_store_int( &(team_info->stats_last_mvp_chunk), 0);
 }
 
 static inline void __mpcomp_thread_init( mpcomp_thread * t, icv_t icvs, mpcomp_instance * instance,
@@ -379,8 +408,8 @@ static inline void __mpcomp_thread_init( mpcomp_thread * t, icv_t icvs, mpcomp_i
   /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
   t->tree_stack = NULL;
   t->stolen_mvp = NULL;
-  t->stolen_chunk_id = -1; //AMAHEO
-  t->start_steal_chunk = -1; //AMAHEO
+  //t->stolen_chunk_id = -1; //AMAHEO
+  //t->start_steal_chunk = -1; //AMAHEO
 }
 
 /* mpcomp.c */
@@ -414,6 +443,15 @@ int __mpcomp_is_stack_empty( mpcomp_stack * s ) ;
 void __mpcomp_push( mpcomp_stack * s, mpcomp_node * n ) ;
 mpcomp_node * __mpcomp_pop( mpcomp_stack * s ) ;
 void __mpcomp_free_stack( mpcomp_stack * s ) ;
+
+//#if 0
+mpcomp_stack_node_leaf * __mpcomp_create_stack_node_leaf( int max_elements ) ;
+int __mpcomp_is_stack_node_leaf_empty( mpcomp_stack_node_leaf * s ) ;
+void __mpcomp_push_node( mpcomp_stack_node_leaf * s, mpcomp_node * n ) ;
+void __mpcomp_push_leaf( mpcomp_stack_node_leaf * s, mpcomp_mvp * n ) ;
+mpcomp_elem_stack * __mpcomp_pop_elem_stack( mpcomp_stack_node_leaf * s ) ;
+void __mpcomp_free_stack_node_leaf( mpcomp_stack_node_leaf * s ) ;
+//#endif
 
 #ifdef __cplusplus
 }
