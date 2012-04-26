@@ -155,6 +155,8 @@
       size_t size;
 
       size = msg->body.header.msg_size;
+    sctk_nodebug("SEND size %lu %lu", size,
+        adler32(0, (unsigned char*) msg->tail.message.contiguous.addr, size));
 
       sctk_nodebug("MSG SEND |%s|", (char*)msg->tail.message.contiguous.addr);
       memcpy(buffer,msg->tail.message.contiguous.addr,size);
@@ -651,6 +653,8 @@ void sctk_net_message_copy_from_buffer(char* body,
 
     memcpy(recv->tail.message.contiguous.addr,body,
 	   size);
+    sctk_nodebug("RECV size %lu-%lu %lu %p", size, recv->tail.message.contiguous.size,
+        adler32(0, (unsigned char*) recv->tail.message.contiguous.addr, size), recv);
 
     if(free_headers) sctk_message_completion_and_free(send,recv);
     break;

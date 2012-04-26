@@ -289,8 +289,6 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,
   /* Decrease the number of pending requests */
   sctk_ib_qp_decr_requests_nb(ibuf->remote);
 
-  sctk_nodebug("recv send message");
-
   /* We still check the dest_task. If it is -1, this is a process_specific
    * message, so we need to handle the message asap */
   if (sctk_ib_cp_handle_message(rail, ibuf, dest_task, src_task, recv_cq) == 0) {
@@ -402,9 +400,9 @@ sctk_network_notify_perform_message_ib (int dest, sctk_rail_info_t* rail){
     /* Poll messages fistly on RDMA. If no message has been found,
      * we continue to poll SR channel */
     ret = sctk_ib_rdma_eager_poll_remote(rail_ib, remote);
-    if (ret == 0) {
+//    if (ret == 0) {
       sctk_network_poll_all_and_steal(rail);
-    }
+//    }
   } else {
     /* Else we simply pool all other channels */
     sctk_network_poll_all_and_steal(rail);
@@ -417,9 +415,9 @@ sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){
   int ret;
   /* POLLING */
   sctk_ib_rdma_eager_walk_remotes(rail_ib, sctk_ib_rdma_eager_poll_remote, &ret);
-  if (ret == 0) {
+//  if (ret == 0) {
     sctk_network_poll_all_and_steal(rail);
-  }
+//  }
 }
 
 static void
@@ -428,9 +426,9 @@ sctk_network_notify_any_source_message_ib (sctk_rail_info_t* rail){
   int ret;
   /* POLLING */
   sctk_ib_rdma_eager_walk_remotes(rail_ib, sctk_ib_rdma_eager_poll_remote, &ret);
-  if (ret == 0) {
+//  if (ret == 0) {
     sctk_network_poll_all_and_steal(rail);
-  }
+//  }
 }
 
 static void

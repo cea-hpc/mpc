@@ -99,8 +99,6 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
   /* Do not allocate memory if contiguous message */
   if (msg->tail.message_type == sctk_message_contiguous)
   {
-    sctk_nodebug("Sending contiguous message; %p (%lu-%lu)", msg->tail.message.contiguous.addr,
-        sctk_checksum_message(msg), msg->body.checksum);
     sctk_ib_rdma_align_msg(msg->tail.message.contiguous.addr,
         msg->tail.message.contiguous.size,
         &aligned_addr, &aligned_size);

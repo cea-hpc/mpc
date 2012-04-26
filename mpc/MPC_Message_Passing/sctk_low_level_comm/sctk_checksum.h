@@ -26,7 +26,8 @@
 
 #include "sctk_inter_thread_comm.h"
 
-unsigned long sctk_checksum_message(struct sctk_thread_ptp_message_s *msg);
+unsigned long sctk_checksum_message(sctk_thread_ptp_message_t *send,
+    sctk_thread_ptp_message_t *recv);
 unsigned long sctk_checksum_buffer(char* body, struct sctk_thread_ptp_message_s *msg);
 unsigned long sctk_checksum_verify(sctk_thread_ptp_message_t *send, sctk_thread_ptp_message_t *recv);
 

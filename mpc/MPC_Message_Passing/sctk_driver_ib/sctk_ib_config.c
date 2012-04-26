@@ -49,7 +49,7 @@
 #define IBV_EAGER_LIMIT       ( 4 * 1024)
 #define IBV_FRAG_EAGER_LIMIT  (256 * 1024)
 
-#define IBV_EAGER_RDMA_LIMIT       ( 32 * 1024)
+#define IBV_EAGER_RDMA_LIMIT       ( 8 * 1024)
 //#define IBV_FRAG_EAGER_LIMIT  (10 * 1024 * 1024)
 /* Number of allowed pending Work Queue Elements
  * for each QP */

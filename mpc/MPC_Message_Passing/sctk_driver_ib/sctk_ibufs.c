@@ -200,6 +200,12 @@ sctk_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib, int n)
   return ibuf;
 }
 
+/*
+ * Prepare a message to send. According to the size and the remote, the function
+ * choose between the SR and the RDMA channel.
+ * If '*size' == ULONG_MAX, the fonction returns in '*size' the maximum size
+ * of the payload for the buffer. The user next needs to manually call sctk_ib_prepare.
+ */
 sctk_ibuf_t*
 sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
     size_t *size, int n)
@@ -207,6 +213,7 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
   LOAD_POOL(rail_ib);
   LOAD_CONFIG(rail_ib);
   sctk_ibuf_t* ibuf = NULL;
+  char prepare = 1;
 
   /* We return the max size for the buffer */
   if (*size == ULONG_MAX) {
@@ -214,12 +221,13 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
       /* Connected with RDMA */
       *size = config->ibv_eager_rdma_limit - IBUF_RDMA_GET_SIZE;
       sctk_nodebug("Max RDMA: %lu", *size);
-    }
-    else {
+    } else {
       /* Connected with SR */
       *size = config->ibv_eager_limit;
       sctk_nodebug("Max SR: %lu", *size);
     }
+    /* We do not prepare the buffer. It will be done after */
+    prepare = 0;
   }
 
 /***** RDMA CHANNEL *****/
@@ -229,8 +237,6 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
     sctk_nodebug("requested:%lu max:%lu header:%lu", *size, config->ibv_eager_rdma_limit, IBUF_RDMA_GET_SIZE);
     ibuf = sctk_ibuf_rdma_pick(rail_ib, remote);
     assume(ibuf);
-
-    sctk_ibuf_prepare(rail_ib, remote, ibuf, *size);
 
     /***** SR CHANNEL *****/
   } else if (*size <= config->ibv_eager_limit) {
@@ -273,8 +279,6 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
     {sctk_error("Wrong flag (%d) got from ibuf", ibuf->flag);}
 #endif
 
-    sctk_ibuf_prepare(rail_ib, remote, ibuf, *size);
-
     sctk_nodebug("ibuf: %p, lock:%p, need_lock:%d next free_entryr: %p, nb_free %d, nb_got %d, nb_free_srq %d, node %d)", ibuf, lock, need_lock, node->free_entry, node->nb_free, node->nb_got, node->nb_free_srq, n);
 
   } else {
@@ -286,6 +290,10 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
 
   /* Prepare the buffer for sending */
   IBUF_SET_POISON(ibuf->buffer);
+
+  if (prepare) {
+    sctk_ibuf_prepare(rail_ib, remote, ibuf, *size);
+  }
 
   return ibuf;
 }
