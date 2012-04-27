@@ -45,7 +45,7 @@ extern "C"
 
 /* Maximum number of alive 'single' construct */
 #define MPCOMP_MAX_ALIVE_SINGLE		1023	
-/* Maximum number of alive 'for dynamic' construct */
+/* Maximum number of alive 'for dynamic' constr_suct */
 #define MPCOMP_MAX_ALIVE_FOR_DYN 	1023
 
 #define MPCOMP_NOWAIT_STOP_SYMBOL	(-2)
@@ -86,16 +86,22 @@ struct atomic_int_pad_s {
 } ;
 typedef struct atomic_int_pad_s atomic_int_pad ;
 
+#if 0
 union mpcomp_node_leaf_s {
     struct mpcomp_node_s * n ;
     struct mpcomp_mvp_s * mvp ;
 } ;
 
 typedef union mpcomp_node_leaf_s mpcomp_node_leaf;
+#endif
 
 struct mpcomp_elem_stack_s
 {
-  union mpcomp_node_leaf_s * node_leaf;
+ union node_leaf {
+      struct mpcomp_node_s *node ;
+      struct mpcomp_mvp_s *leaf ;
+    } elem ;
+  //union mpcomp_node_leaf_s * node_leaf;
  #if 0
  union {
    struct mpcomp_node_s * n;
@@ -107,15 +113,15 @@ struct mpcomp_elem_stack_s
 
 typedef struct mpcomp_elem_stack_s mpcomp_elem_stack;
 
-struct mpcomp_stack_node_leaf {
+struct mpcomp_stack_node_leaf_s {
   //mpcomp_node_leaf ** elements ;
-  mpcomp_elem_stack ** elements;
+  struct mpcomp_elem_stack_s ** elements;
   enum children_t * child_type ;
   int max_elements ;
   int n_elements ; /* corresponds to the head of the stack */
 } ;
 
-typedef struct mpcomp_stack_node_leaf mpcomp_stack_node_leaf ;
+typedef struct mpcomp_stack_node_leaf_s mpcomp_stack_node_leaf ;
 
 struct mpcomp_team_info_s {
   /* -- TEAM INFO -- */
@@ -188,8 +194,8 @@ struct mpcomp_thread_s {
   mpcomp_chunk for_dyn_chunk_info[ MPCOMP_MAX_ALIVE_FOR_DYN + 1 ] ;
 
   /* Infos for DFS */
-  //struct mpcomp_stack   *tree_stack;
-  struct mpcomp_stack_node_leaf *tree_stack;
+  struct mpcomp_stack   *tree_stack;
+  //struct mpcomp_stack_node_leaf_s *tree_stack;
   struct mpcomp_mvp_s   *stolen_mvp;
   int stolen_chunk_id;
   //struct mpcomp_node_s  *parent_node  
