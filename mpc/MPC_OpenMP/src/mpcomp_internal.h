@@ -194,12 +194,13 @@ struct mpcomp_thread_s {
   mpcomp_chunk for_dyn_chunk_info[ MPCOMP_MAX_ALIVE_FOR_DYN + 1 ] ;
 
   /* Infos for DFS */
-  struct mpcomp_stack   *tree_stack;
-  //struct mpcomp_stack_node_leaf_s *tree_stack;
+  //struct mpcomp_stack   *tree_stack;
+  struct mpcomp_stack_node_leaf_s *tree_stack;
   struct mpcomp_mvp_s   *stolen_mvp;
   int stolen_chunk_id;
   //struct mpcomp_node_s  *parent_node  
   //int start_steal_chunk;
+  int start_mvp_index;  /* mark to know on what mvp rank we start for chunk stealing - avoid useless search */
   
   //mpcomp_mvp_s **mvps; /* all mvps stores for chunk stealing (array of integers) */
 #if 0
@@ -416,6 +417,7 @@ static inline void __mpcomp_thread_init( mpcomp_thread * t, icv_t icvs, mpcomp_i
   t->stolen_mvp = NULL;
   //t->stolen_chunk_id = -1; //AMAHEO
   //t->start_steal_chunk = -1; //AMAHEO
+  t->start_mvp_index = -1; //AMAHEO
 }
 
 /* mpcomp.c */
