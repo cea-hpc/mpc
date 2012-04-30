@@ -112,29 +112,38 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   /***** SEND-RECEIVE EAGER CHANNEL *****/
   } else
 #endif
-    if (size+IBUF_GET_EAGER_SIZE < config->ibv_eager_limit)  {
+  if (size+IBUF_GET_EAGER_SIZE <= config->ibv_eager_limit)  {
+    sctk_nodebug("Eager");
     ibuf = sctk_ib_eager_prepare_msg(rail_ib, remote, msg, size, -1);
+    /* Actually, it is possible to get a NULL pointer for ibuf. We falback to buffered */
+    if (ibuf == NULL) goto buffered;
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, is_control_message);
     sctk_complete_and_free_message(msg);
     PROF_INC_RAIL_IB(rail_ib, eager_nb);
+    goto exit;
+  }
 
+buffered:
   /***** BUFFERED EAGER CHANNEL *****/
-  } else if (!low_memory_mode && size+IBUF_GET_BUFFERED_SIZE < config->ibv_frag_eager_limit)  {
+  if (!low_memory_mode && size <= config->ibv_frag_eager_limit)  {
+    sctk_nodebug("Buffered");
     /* Fallback to RDMA if buffered not available or low memory mode */
     if (sctk_ib_buffered_prepare_msg(rail, remote, msg, size) == 1 ) goto rdma;
     sctk_complete_and_free_message(msg);
     PROF_INC_RAIL_IB(rail_ib, buffered_nb);
-  } else {
+    goto exit;
+  }
 
   /***** RDMA RENDEZVOUS CHANNEL *****/
 rdma:
-    ibuf = sctk_ib_rdma_prepare_req(rail, remote, msg, size, -1);
-    /* Send message */
-    sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, 0);
-    sctk_ib_rdma_prepare_send_msg(rail_ib, msg, size);
-    PROF_INC_RAIL_IB(rail_ib, rdma_nb);
-  }
+  ibuf = sctk_ib_rdma_prepare_req(rail, remote, msg, size, -1);
+  /* Send message */
+  sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, 0);
+  sctk_ib_rdma_prepare_send_msg(rail_ib, msg, size);
+  PROF_INC_RAIL_IB(rail_ib, rdma_nb);
+
+exit: {}
 
 }
 
@@ -207,6 +216,7 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
 
   /* First we check if the message has an immediate data */
   if (wc.wc_flags == IBV_WC_WITH_IMM) {
+    assume(0);
     assume( (wc.imm_data & IMM_DATA_EAGER_RDMA));
     const int index = wc.imm_data - IMM_DATA_EAGER_RDMA;
    /* Find the remote which has received the msg */
@@ -263,13 +273,17 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc,
   int dest_task = -1;
   int ret;
 
-  dest_task = IBUF_GET_DEST_TASK(ibuf->buffer);
-  ibuf->cq = recv_cq;
-  ibuf->wc = *wc;
-  if (sctk_ib_cp_handle_message(rail, ibuf, dest_task, dest_task, recv_cq) == 0) {
-    return sctk_network_poll_recv_ibuf(rail, ibuf, 0, poll);
+  if (IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL) {
+    dest_task = IBUF_GET_DEST_TASK(ibuf->buffer);
+    ibuf->cq = recv_cq;
+    ibuf->wc = *wc;
+    if (sctk_ib_cp_handle_message(rail, ibuf, dest_task, dest_task, recv_cq) == 0) {
+      return sctk_network_poll_recv_ibuf(rail, ibuf, 0, poll);
+    } else {
+      return 0;
+    }
   } else {
-    return 0;
+    return sctk_network_poll_recv_ibuf(rail, ibuf, 0, poll);
   }
 }
 
@@ -282,19 +296,23 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,
   int dest_task = -1;
   int ret;
 
-  src_task = IBUF_GET_SRC_TASK(ibuf);
-  dest_task = IBUF_GET_DEST_TASK(ibuf->buffer);
-  ibuf->cq = send_cq;
-  ibuf->wc = *wc;
-  /* Decrease the number of pending requests */
-  sctk_ib_qp_decr_requests_nb(ibuf->remote);
+  if (IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL) {
+    src_task = IBUF_GET_SRC_TASK(ibuf);
+    dest_task = IBUF_GET_DEST_TASK(ibuf->buffer);
+    ibuf->cq = send_cq;
+    ibuf->wc = *wc;
+    /* Decrease the number of pending requests */
+    sctk_ib_qp_decr_requests_nb(ibuf->remote);
 
-  /* We still check the dest_task. If it is -1, this is a process_specific
-   * message, so we need to handle the message asap */
-  if (sctk_ib_cp_handle_message(rail, ibuf, dest_task, src_task, recv_cq) == 0) {
+    /* We still check the dest_task. If it is -1, this is a process_specific
+     * message, so we need to handle the message asap */
+    if (sctk_ib_cp_handle_message(rail, ibuf, dest_task, src_task, recv_cq) == 0) {
       return sctk_network_poll_send_ibuf(rail, ibuf, 0, poll);
+    } else {
+      return 0;
+    }
   } else {
-    return 0;
+    return sctk_network_poll_send_ibuf(rail, ibuf, 0, poll);
   }
 }
 

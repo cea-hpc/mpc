@@ -213,34 +213,32 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
   LOAD_POOL(rail_ib);
   LOAD_CONFIG(rail_ib);
   sctk_ibuf_t* ibuf = NULL;
-  char prepare = 1;
+  size_t s;
 
-  /* We return the max size for the buffer */
-  if (*size == ULONG_MAX) {
-    if (sctk_ibuf_rdma_is_remote_connected(rail_ib, remote)) {
-      /* Connected with RDMA */
-      *size = config->ibv_eager_rdma_limit - IBUF_RDMA_GET_SIZE;
-      sctk_nodebug("Max RDMA: %lu", *size);
-    } else {
-      /* Connected with SR */
-      *size = config->ibv_eager_limit;
-      sctk_nodebug("Max SR: %lu", *size);
+  s = *size;
+  /***** RDMA CHANNEL *****/
+  if (sctk_ibuf_rdma_is_remote_connected(rail_ib, remote)) {
+
+    if (s == ULONG_MAX) s = config->ibv_eager_rdma_limit - IBUF_RDMA_GET_SIZE;
+
+    if ( (IBUF_RDMA_GET_SIZE + s) <= config->ibv_eager_rdma_limit) {
+      sctk_nodebug("requested:%lu max:%lu header:%lu", s, config->ibv_eager_rdma_limit, IBUF_RDMA_GET_SIZE);
+      ibuf = sctk_ibuf_rdma_pick(rail_ib, remote);
+
+      /* If we cannot pick a buffer from the RDMA channel, we switch to SR */
+      if (ibuf) {
+        sctk_nodebug("Picking from RDMA %d", ibuf->index);
+        goto exit;
+      }
     }
-    /* We do not prepare the buffer. It will be done after */
-    prepare = 0;
   }
 
-/***** RDMA CHANNEL *****/
-  if (sctk_ibuf_rdma_is_remote_connected(rail_ib, remote)
-      && (IBUF_RDMA_GET_SIZE + *size) <= config->ibv_eager_rdma_limit) {
+  s = *size;
+  /***** SR CHANNEL *****/
+  if (s == ULONG_MAX) s = config->ibv_eager_limit;
 
-    sctk_nodebug("requested:%lu max:%lu header:%lu", *size, config->ibv_eager_rdma_limit, IBUF_RDMA_GET_SIZE);
-    ibuf = sctk_ibuf_rdma_pick(rail_ib, remote);
-    assume(ibuf);
-
-    /***** SR CHANNEL *****/
-  } else if (*size <= config->ibv_eager_limit) {
-
+  if (s <= config->ibv_eager_limit) {
+    sctk_nodebug("Picking from SR");
 #ifdef DEBUG_IB_BUFS
     if (n != -1)  {
       assume(n <= pool->nodes_nb);
@@ -282,18 +280,23 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
     sctk_nodebug("ibuf: %p, lock:%p, need_lock:%d next free_entryr: %p, nb_free %d, nb_got %d, nb_free_srq %d, node %d)", ibuf, lock, need_lock, node->free_entry, node->nb_free, node->nb_got, node->nb_free_srq, n);
 
   } else {
-#warning "Fill with the correct value"
     sctk_error("The size associated to one eager buffer is too small to allocate a"
-        "eager buffer. Please increase the value of XXXXX. (Requested=%lu)", *size);
+        "eager buffer. Please increase the value of XXXXX. (Requested=%lu max_rdma=%lu max_sr=%lu)", s,
+        config->ibv_eager_rdma_limit - IBUF_RDMA_GET_SIZE, config->ibv_eager_limit);
     sctk_abort();
+    return NULL;
   }
+exit:
 
-  /* Prepare the buffer for sending */
-  IBUF_SET_POISON(ibuf->buffer);
-
-  if (prepare) {
+  /* We update the size if it is equal to ULONG_MAX*/
+  if (*size == ULONG_MAX)  {
+    *size = s;
+  } else {
+    /* Prepare the buffer for sending */
     sctk_ibuf_prepare(rail_ib, remote, ibuf, *size);
   }
+
+  IBUF_SET_POISON(ibuf->buffer);
 
   return ibuf;
 }
@@ -339,8 +342,6 @@ sctk_ibuf_pick_recv(struct sctk_ib_rail_info_s *rail_ib,
   OPA_decr_int(&node->free_nb);
 
  if (need_lock) sctk_spinlock_unlock(lock);
-
- IBUF_SET_PROTOCOL(ibuf->buffer, null_protocol);
 
 #ifdef DEBUG_IB_BUFS
   assume(ibuf);
@@ -457,6 +458,7 @@ void sctk_ibuf_release(
       sctk_spinlock_t *lock = &node->lock;
 
       ibuf->flag = FREE_FLAG;
+      IBUF_SET_PROTOCOL(ibuf->buffer, null_protocol);
 
       OPA_incr_int(&node->free_nb);
       sctk_spinlock_lock(lock);

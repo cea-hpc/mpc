@@ -150,6 +150,7 @@ sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
 
   ibuf = sctk_ibuf_pick_send(rail_ib, remote, &ibuf_size,
       task_node_number);
+  assume(ibuf);
   IBUF_SET_DEST_TASK(ibuf->buffer, msg->sctk_msg_get_glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->sctk_msg_get_glob_source);
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
@@ -197,6 +198,7 @@ static inline sctk_ibuf_t* sctk_ib_rdma_prepare_ack(sctk_rail_info_t* rail,
 
   ibuf = sctk_ibuf_pick_send(rail_ib, rdma->remote_peer, &ibuf_size,
       task_node_number);
+  assume(ibuf);
   IBUF_SET_DEST_TASK(ibuf->buffer, msg->tail.ib.rdma.glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->tail.ib.rdma.glob_source);
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
@@ -230,6 +232,7 @@ sctk_ib_rdma_prepare_data_write(sctk_rail_info_t* rail,
   sctk_ibuf_t* ibuf;
 
   ibuf = sctk_ibuf_pick_send_sr(rail_ib, task_node_number);
+  assume(ibuf);
 
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
   rdma_data_write = IBUF_GET_RDMA_DATA_WRITE(ibuf->buffer);

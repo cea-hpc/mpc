@@ -33,6 +33,7 @@
 #include "sctk_ib_toolkit.h"
 #include "sctk_ib.h"
 #include "sctk_ib_sr.h"
+#include "sctk_ibufs_rdma.h"
 #include "sctk_ib_buffered.h"
 
 /*-----------------------------------------------------------
@@ -45,12 +46,10 @@
  * if x < IBV_EAGER_LIMIT -> eager msg
  * if x < IBV_FRAG_EAGER_LIMIT -> frag msg (into several eager buffers)
  * if x > IBV_FRAG_EAGER_LIMIT -> rendezvous msg */
-//#define IBV_EAGER_LIMIT ( 12 * 1024 )
 #define IBV_EAGER_LIMIT       ( 4 * 1024)
+#define IBV_EAGER_RDMA_LIMIT  ( 16 * 1024)
 #define IBV_FRAG_EAGER_LIMIT  (256 * 1024)
 
-#define IBV_EAGER_RDMA_LIMIT       ( 8 * 1024)
-//#define IBV_FRAG_EAGER_LIMIT  (10 * 1024 * 1024)
 /* Number of allowed pending Work Queue Elements
  * for each QP */
 #define IBV_QP_TX_DEPTH     15000
@@ -63,6 +62,11 @@
 #define IBV_MAX_SG_SQ       8
 #define IBV_MAX_SG_RQ       8
 #define IBV_MAX_INLINE      128
+
+/* Number of RDMA buffers allocated for each neighbor.
+ * i.e: if IBV_MAX_RDMA_IBUFS = 256:
+ * The total memory used is: 2 (1 for send and 1 for receive) * 256 buffers * IBV_EAGER_RDMA_LIMIT */
+#define IBV_MAX_RDMA_IBUFS  256
 
 /* Maximum number of buffers to allocate during the
  * initialization step */
@@ -113,7 +117,7 @@
 /* Number of new MMU allocated when
  * no more MMU entries are available */
 #define IBV_SIZE_MR_CHUNKS  200
-#define IBV_MMU_CACHE_ENABLED 0
+#define IBV_MMU_CACHE_ENABLED 1
 #define IBV_MMU_CACHE_ENTRIES 100
 
 #define IBV_ADM_PORT        1
@@ -181,6 +185,7 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         "ibv_eager_limit      = %d\n"
         "ibv_eager_rdma_limit = %d\n"
         "ibv_frag_eager_limit = %d\n"
+        "ibv_max_rdma_ibufs   = %d\n"
         "ibv_qp_tx_depth      = %d\n"
         "ibv_qp_rx_depth      = %d\n"
         "ibv_max_sg_sq        = %d\n"
@@ -212,6 +217,7 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         config->ibv_eager_limit,
         config->ibv_eager_rdma_limit,
         config->ibv_frag_eager_limit,
+        config->ibv_max_rdma_ibufs,
         config->ibv_qp_tx_depth,
         config->ibv_qp_rx_depth,
         config->ibv_max_sg_sq,
@@ -240,6 +246,7 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
   }
 }
 
+#define ALIGN(x) ( (x + 63) & (~63) )
 void load_ib_default_config(sctk_ib_rail_info_t *rail_ib)
 {
   LOAD_CONFIG(rail_ib);
@@ -247,9 +254,11 @@ void load_ib_default_config(sctk_ib_rail_info_t *rail_ib)
   config->ibv_size_mr_chunk = IBV_SIZE_MR_CHUNKS;
   config->ibv_init_ibufs = IBV_INIT_IBUFS;
 
-  config->ibv_eager_limit = IBV_EAGER_LIMIT + IBUF_GET_EAGER_SIZE;
-  config->ibv_eager_rdma_limit = IBV_EAGER_RDMA_LIMIT + IBUF_GET_EAGER_SIZE;
-  config->ibv_frag_eager_limit = IBV_FRAG_EAGER_LIMIT + IBUF_GET_BUFFERED_SIZE ;
+  config->ibv_eager_limit       = ALIGN (IBV_EAGER_LIMIT + IBUF_GET_EAGER_SIZE);
+  config->ibv_eager_rdma_limit  = ALIGN (IBV_EAGER_RDMA_LIMIT + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE);
+  config->ibv_frag_eager_limit  = (IBV_FRAG_EAGER_LIMIT + sizeof(sctk_thread_ptp_message_body_t));
+
+  config->ibv_max_rdma_ibufs  = IBV_MAX_RDMA_IBUFS;
   config->ibv_qp_tx_depth = IBV_QP_TX_DEPTH;
   config->ibv_qp_rx_depth = IBV_QP_RX_DEPTH;
   config->ibv_cq_depth = IBV_CQ_DEPTH;
@@ -286,6 +295,7 @@ void set_ib_env(sctk_ib_rail_info_t *rail_ib)
   char* value;
   sctk_ib_config_t* c = rail_ib->config;
 
+#warning "Change limits"
   if ( (value = getenv("MPC_IBV_EAGER_LIMIT")) != NULL )
     c->ibv_eager_limit = atoi(value) + IBUF_GET_EAGER_SIZE;
 
@@ -294,6 +304,9 @@ void set_ib_env(sctk_ib_rail_info_t *rail_ib)
 
   if ( (value = getenv("MPC_IBV_FRAG_EAGER_LIMIT")) != NULL )
     c->ibv_frag_eager_limit = atoi(value) + IBUF_GET_BUFFERED_SIZE;
+
+  if ( (value = getenv("MPC_IBV_MAX_RDMA_IBUFS")) != NULL )
+    c->ibv_max_rdma_ibufs = atoi(value);
 
   if ( (value = getenv("MPC_IBV_QP_TX_DEPTH")) != NULL )
     c->ibv_qp_tx_depth = atoi(value);

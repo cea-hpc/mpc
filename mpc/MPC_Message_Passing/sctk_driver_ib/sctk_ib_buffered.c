@@ -67,6 +67,7 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
 
   /* Sometimes it should be interresting to fallback to RDMA :-) */
   if (msg->tail.message_type != sctk_message_contiguous) {
+    sctk_nodebug("Switch to RDMA");
     return 1;
   }
   payload = msg->tail.message.contiguous.addr;
@@ -77,9 +78,10 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
   do {
     size_t ibuf_size = ULONG_MAX;
     ibuf = sctk_ibuf_pick_send(rail_ib, remote, &ibuf_size, task_node_number);
+    assume(ibuf);
 
     size_t buffer_size = ibuf_size;
-    /* We remote the buffered header's size from the size */
+    /* We remove the buffered header's size from the size */
     sctk_nodebug("Payload with size %lu %lu", buffer_size, sizeof(sctk_thread_ptp_message_body_t));
     buffer_size -= IBUF_GET_BUFFERED_SIZE;
     sctk_nodebug("Sending a message with size %lu", buffer_size );

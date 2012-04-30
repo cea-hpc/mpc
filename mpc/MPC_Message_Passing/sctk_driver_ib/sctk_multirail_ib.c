@@ -172,16 +172,12 @@ void sctk_network_init_ib(char* name, char* topology){
 /************ FINALIZE ****************/
 void sctk_network_finalize_multirail_ib (){
 /* Do not report timers */
-#if 0
   int i;
   if (rails) {
     for(i = 0; i < NB_RAILS; i++){
       sctk_ib_prof_print(rails[i]);
     }
   }
-#endif
-  sctk_nodebug("time_send=%f poll_send=%f poll_recv=%f tst=%f",
-      time_send, poll_send, poll_recv, tst);
 }
 
 /************ FINALIZE ****************/

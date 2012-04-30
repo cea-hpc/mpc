@@ -109,6 +109,9 @@ sctk_ibuf_t* sctk_ib_eager_prepare_msg(sctk_ib_rail_info_t* rail_ib,
   body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
   ibuf = sctk_ibuf_pick_send(rail_ib, remote, &ibuf_size,
       task_node_number);
+  /* We cannot pick an ibuf. We should try the buffered eager protocol */
+  if (ibuf == NULL) return NULL;
+
   IBUF_SET_DEST_TASK(ibuf->buffer, msg->sctk_msg_get_glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->sctk_msg_get_glob_source);
   IBUF_SET_POISON(ibuf->buffer);
@@ -268,6 +271,8 @@ sctk_ib_eager_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
      * not performed) */
     recopy = 0;
   }
+
+  sctk_nodebug("Received IBUF %p %d", ibuf, IBUF_GET_CHANNEL(ibuf));
 
   /* Normal message: we handle it */
   msg = sctk_ib_eager_recv(rail, ibuf, recopy, protocol);

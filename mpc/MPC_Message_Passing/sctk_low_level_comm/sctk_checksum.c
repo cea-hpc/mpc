@@ -26,7 +26,7 @@
 #include "sctk_shell_colors.h"
 #include <zlib.h>
 
-static char checksum_enabled = 0;
+static char checksum_enabled = 1;
 
 unsigned long sctk_checksum_message(sctk_thread_ptp_message_t *send,
     sctk_thread_ptp_message_t *recv) {
