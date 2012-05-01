@@ -168,7 +168,6 @@ sctk_ibuf_rdma_pool_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remo
  * Pick a RDMA buffer from the RDMA channel
  */
 inline sctk_ibuf_t *sctk_ibuf_rdma_pick(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t* remote) {
-  sctk_ibuf_t *head;
   sctk_ibuf_t *tail;
   int *piggyback;
 
@@ -192,10 +191,11 @@ inline sctk_ibuf_t *sctk_ibuf_rdma_pick(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp
     sctk_nodebug("Piggy backed %d %p", *piggyback, piggyback);
   }
 
-  head = IBUF_RDMA_GET_HEAD(remote, REGION_SEND);
-
   /* If a buffer is available */
   if (remote->ibuf_rdma->send_credit > 0) {
+    sctk_ibuf_t *head;
+
+    head = IBUF_RDMA_GET_HEAD(remote, REGION_SEND);
     /* Update the credit */
     remote->ibuf_rdma->send_credit--;
     /* Move the head flag */

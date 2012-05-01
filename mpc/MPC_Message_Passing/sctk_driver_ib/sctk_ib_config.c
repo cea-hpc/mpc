@@ -295,15 +295,14 @@ void set_ib_env(sctk_ib_rail_info_t *rail_ib)
   char* value;
   sctk_ib_config_t* c = rail_ib->config;
 
-#warning "Change limits"
   if ( (value = getenv("MPC_IBV_EAGER_LIMIT")) != NULL )
-    c->ibv_eager_limit = atoi(value) + IBUF_GET_EAGER_SIZE;
+    c->ibv_eager_limit = ALIGN (atoi(value) + IBUF_GET_EAGER_SIZE);
 
   if ( (value = getenv("MPC_IBV_EAGER_RDMA_LIMIT")) != NULL )
-    c->ibv_eager_rdma_limit = atoi(value) + IBUF_GET_EAGER_SIZE;
+    c->ibv_eager_rdma_limit = ALIGN (atoi(value) + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE);
 
   if ( (value = getenv("MPC_IBV_FRAG_EAGER_LIMIT")) != NULL )
-    c->ibv_frag_eager_limit = atoi(value) + IBUF_GET_BUFFERED_SIZE;
+    c->ibv_frag_eager_limit = ALIGN (atoi(value) + sizeof(sctk_thread_ptp_message_body_t));
 
   if ( (value = getenv("MPC_IBV_MAX_RDMA_IBUFS")) != NULL )
     c->ibv_max_rdma_ibufs = atoi(value);
