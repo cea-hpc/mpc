@@ -77,6 +77,9 @@ typedef struct sctk_ib_device_s
   int link_width;
   int data_rate;
 
+  /* For eager RDMA channel */
+  int eager_rdma_connections;
+
 } sctk_ib_device_t;
 
 #define ACK_UNSET   111
@@ -86,6 +89,27 @@ typedef struct sctk_ib_device_s
 typedef struct sctk_ib_endpoint_s {
 
 } sctk_ib_endpoint_t;
+
+/*-----------------------------------------------------------
+ *  Exchanged keys: used to connect QPs
+ *----------------------------------------------------------*/
+typedef struct
+{
+  uint16_t lid;
+  uint32_t qp_num;
+  uint32_t psn;
+  struct {
+    struct {
+      void* ptr;
+      uint32_t rkey;
+    } send;
+    struct {
+      void* ptr;
+      uint32_t rkey;
+    } recv;
+  } rdma;
+} sctk_ib_qp_keys_t;
+
 
 /* Structure associated to a remote QP */
 typedef struct sctk_ib_qp_s
@@ -128,6 +152,10 @@ typedef struct sctk_ib_qp_s
   int remote_ack;
   int deco_lock;
 
+  /* keys */
+  sctk_ib_qp_keys_t recv_keys;
+  sctk_ib_qp_keys_t send_keys;
+
   /* List of pending buffered messages */
   struct sctk_ib_buffered_table_s ib_buffered;
 
@@ -140,27 +168,9 @@ typedef struct sctk_ib_qp_s
   int R;
 } sctk_ib_qp_t;
 
-/*-----------------------------------------------------------
- *  Exchanged keys: used to connect QPs
- *----------------------------------------------------------*/
-typedef struct
-{
-  uint16_t lid;
-  uint32_t qp_num;
-  uint32_t psn;
-  struct {
-    struct {
-      void* ptr;
-      uint32_t rkey;
-    } send;
-    struct {
-      void* ptr;
-      uint32_t rkey;
-    } recv;
-  } rdma;
-} sctk_ib_qp_keys_t;
-
 void sctk_ib_qp_key_create_value(char *msg, size_t size, sctk_ib_qp_keys_t* keys);
+void sctk_ib_qp_key_fill(sctk_ib_qp_keys_t* keys, sctk_ib_qp_t *remote,
+    uint16_t lid, uint32_t qp_num, uint32_t psn);
 void sctk_ib_qp_key_create_key(char *msg, size_t size, int rail, int src, int dest);
 sctk_ib_qp_keys_t sctk_ib_qp_keys_convert( char* msg);
 

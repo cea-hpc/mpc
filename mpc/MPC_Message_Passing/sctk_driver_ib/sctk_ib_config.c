@@ -67,23 +67,24 @@
  * i.e: if IBV_MAX_RDMA_IBUFS = 256:
  * The total memory used is: 2 (1 for send and 1 for receive) * 256 buffers * IBV_EAGER_RDMA_LIMIT */
 #define IBV_MAX_RDMA_IBUFS  256
+#define IBV_MAX_RDMA_CONNECTIONS 16
 
 /* Maximum number of buffers to allocate during the
  * initialization step */
-#define IBV_INIT_IBUFS          5000
+#define IBV_INIT_IBUFS          10000
 //#define IBV_INIT_IBUFS         100
 
 /* Maximum number of buffers which can be posted to the SRQ.
  * This number cannot be higher than than the number fixed by the HW.
  * The verification is done during the config_check function */
-#define IBV_MAX_SRQ_IBUFS_POSTED     5000
+#define IBV_MAX_SRQ_IBUFS_POSTED     10000
 /* When the async thread wakes, it means that the SRQ is full. We
  * allows the async thread to extract IBV_MAX_SRQ_WR_HANDLE_BY_THREAD messages
  * before posting new buffers .*/
 #define IBV_MAX_SRQ_WR_HANDLE_BY_THREAD 50
 /* Maximum number of buffers which can be used by SRQ. This number
  * is not fixed by the HW */
-#define IBV_MAX_SRQ_IBUFS            3000
+#define IBV_MAX_SRQ_IBUFS            10000
 //#define IBV_MAX_SRQ_IBUFS            50
 /* Minimum number of free recv buffer before
  * posting of new buffers. This thread is  activated
@@ -108,8 +109,8 @@
  * no more buffers are available */
 #define IBV_SIZE_IBUFS_CHUNKS 2000
 
-#define IBV_WC_IN_NUMBER    1
-#define IBV_WC_OUT_NUMBER   1
+#define IBV_WC_IN_NUMBER    4
+#define IBV_WC_OUT_NUMBER   4
 
 /* Numer of MMU entries allocated during
  * the MPC initialization */
@@ -186,6 +187,7 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         "ibv_eager_rdma_limit = %d\n"
         "ibv_frag_eager_limit = %d\n"
         "ibv_max_rdma_ibufs   = %d\n"
+        "ibv_max_rdma_connections = %d\n"
         "ibv_qp_tx_depth      = %d\n"
         "ibv_qp_rx_depth      = %d\n"
         "ibv_max_sg_sq        = %d\n"
@@ -218,6 +220,7 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         config->ibv_eager_rdma_limit,
         config->ibv_frag_eager_limit,
         config->ibv_max_rdma_ibufs,
+        config->ibv_max_rdma_connections,
         config->ibv_qp_tx_depth,
         config->ibv_qp_rx_depth,
         config->ibv_max_sg_sq,
@@ -259,6 +262,7 @@ void load_ib_default_config(sctk_ib_rail_info_t *rail_ib)
   config->ibv_frag_eager_limit  = (IBV_FRAG_EAGER_LIMIT + sizeof(sctk_thread_ptp_message_body_t));
 
   config->ibv_max_rdma_ibufs  = IBV_MAX_RDMA_IBUFS;
+  config->ibv_max_rdma_connections  = IBV_MAX_RDMA_CONNECTIONS;
   config->ibv_qp_tx_depth = IBV_QP_TX_DEPTH;
   config->ibv_qp_rx_depth = IBV_QP_RX_DEPTH;
   config->ibv_cq_depth = IBV_CQ_DEPTH;
@@ -306,6 +310,9 @@ void set_ib_env(sctk_ib_rail_info_t *rail_ib)
 
   if ( (value = getenv("MPC_IBV_MAX_RDMA_IBUFS")) != NULL )
     c->ibv_max_rdma_ibufs = atoi(value);
+
+  if ( (value = getenv("MPC_IBV_MAX_RDMA_CONNECTIONS")) != NULL )
+    c->ibv_max_rdma_connections = atoi(value);
 
   if ( (value = getenv("MPC_IBV_QP_TX_DEPTH")) != NULL )
     c->ibv_qp_tx_depth = atoi(value);

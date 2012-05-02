@@ -136,30 +136,44 @@ sctk_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* rem
  */
 sctk_ibuf_rdma_pool_t*
 sctk_ibuf_rdma_pool_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remote, int nb_ibufs) {
-  sctk_ibuf_rdma_pool_t* pool;
+  LOAD_DEVICE(rail_ib);
+  LOAD_CONFIG(rail_ib);
+  sctk_ibuf_rdma_pool_t* pool = NULL;
+  static sctk_spinlock_t rdma_lock = SCTK_SPINLOCK_INITIALIZER;
 
-  sctk_ib_debug("Allocating %d RDMA buffers", nb_ibufs);
+  /* Check if we can allocate an RDMA channel */
+  sctk_spinlock_lock(&rdma_lock);
+  if (config->ibv_max_rdma_connections >= (device->eager_rdma_connections + 1)) {
+    ++device->eager_rdma_connections;
+    sctk_spinlock_unlock(&rdma_lock);
 
-  pool = sctk_malloc(sizeof(sctk_ibuf_rdma_pool_t));
-  assume(pool);
-  memset(pool, 0, sizeof(sctk_ibuf_rdma_pool_t));
+    sctk_ib_debug("Allocating %d RDMA buffers (connections: %d)", nb_ibufs, device->eager_rdma_connections);
 
-  /* Initialize regions for send and recv */
-  sctk_ibuf_rdma_region_init(rail_ib, remote, &pool->region[REGION_SEND],
-      RDMA_CHANNEL | SEND_CHANNEL, nb_ibufs);
-  sctk_ibuf_rdma_region_init(rail_ib, remote, &pool->region[REGION_RECV],
-      RDMA_CHANNEL | RECV_CHANNEL, nb_ibufs);
+    pool = sctk_malloc(sizeof(sctk_ibuf_rdma_pool_t));
+    assume(pool);
+    memset(pool, 0, sizeof(sctk_ibuf_rdma_pool_t));
 
-  /* Setup local addr */
-  pool->remote_region[REGION_SEND] = NULL;
-  pool->remote_region[REGION_RECV] = NULL;
-  pool->send_credit = nb_ibufs;
-  pool->remote = remote;
-  DL_APPEND(rdma_pool_list, pool);
+    /* Initialize regions for send and recv */
+    sctk_ibuf_rdma_region_init(rail_ib, remote, &pool->region[REGION_SEND],
+        RDMA_CHANNEL | SEND_CHANNEL, nb_ibufs);
+    sctk_ibuf_rdma_region_init(rail_ib, remote, &pool->region[REGION_RECV],
+        RDMA_CHANNEL | RECV_CHANNEL, nb_ibufs);
 
-  sctk_ib_debug("[rank:%d] Allocation of %d RDMA buffers", remote->rank, nb_ibufs);
+    /* Setup local addr */
+    pool->remote_region[REGION_SEND] = NULL;
+    pool->remote_region[REGION_RECV] = NULL;
+    pool->send_credit = nb_ibufs;
+    pool->remote = remote;
+    DL_APPEND(rdma_pool_list, pool);
 
-  remote->ibuf_rdma = pool;
+    sctk_ib_debug("[rank:%d] Allocation of %d RDMA buffers", remote->rank, nb_ibufs);
+
+    remote->ibuf_rdma = pool;
+  } else {
+    sctk_spinlock_unlock(&rdma_lock);
+    sctk_debug("Cannot no more allocate RDMA channels (connections: %d)", device->eager_rdma_connections);
+    remote->ibuf_rdma = NULL;
+  }
 
   return pool;
 }
@@ -266,6 +280,7 @@ static void __poll_ibuf(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote,
   switch (protocol) {
     case eager_protocol:
       sctk_ib_eager_poll_recv(rail, ibuf);
+      release_ibuf = 0;
       break;
 
     case rdma_protocol:
@@ -450,7 +465,8 @@ void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
       base->flag = FREE_FLAG;
 
       /* Send the piggyback  */
-      sctk_ib_qp_send_ibuf(rail_ib, remote, base, 0);
+#warning "Is a control message"
+      sctk_ib_qp_send_ibuf(rail_ib, remote, base, 1);
 
     }
     else {
@@ -469,16 +485,19 @@ void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
  */
 void
 sctk_ibuf_rdma_update_remote_addr(sctk_ib_qp_t* remote, sctk_ib_qp_keys_t *key) {
-  sctk_nodebug("Set remote addr: send_ptr=%p send_rkey=%u recv_ptr=%p recv_rkey=%u",
-      key->rdma.send.ptr, key->rdma.send.rkey, key->rdma.recv.ptr, key->rdma.recv.rkey);
 
-  /* Update keys for send and recv regions. We need to register the send region
-   * because of the piggyback */
-  remote->ibuf_rdma->remote_region[REGION_SEND] = key->rdma.send.ptr;
-  remote->ibuf_rdma->rkey[REGION_SEND] = key->rdma.send.rkey;
+  if (remote->ibuf_rdma) {
+    sctk_debug("Set remote addr: send_ptr=%p send_rkey=%u recv_ptr=%p recv_rkey=%u",
+        key->rdma.send.ptr, key->rdma.send.rkey, key->rdma.recv.ptr, key->rdma.recv.rkey);
 
-  remote->ibuf_rdma->remote_region[REGION_RECV] = key->rdma.recv.ptr;
-  remote->ibuf_rdma->rkey[REGION_RECV] = key->rdma.recv.rkey;
+    /* Update keys for send and recv regions. We need to register the send region
+     * because of the piggyback */
+    remote->ibuf_rdma->remote_region[REGION_SEND] = key->rdma.send.ptr;
+    remote->ibuf_rdma->rkey[REGION_SEND] = key->rdma.send.rkey;
+
+    remote->ibuf_rdma->remote_region[REGION_RECV] = key->rdma.recv.ptr;
+    remote->ibuf_rdma->rkey[REGION_RECV] = key->rdma.recv.rkey;
+  }
 }
 
 

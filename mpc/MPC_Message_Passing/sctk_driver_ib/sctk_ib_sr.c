@@ -100,15 +100,20 @@ void sctk_ib_eager_release_buffered_ptp_message(sctk_thread_ptp_message_t* msg) 
 
 
 sctk_ibuf_t* sctk_ib_eager_prepare_msg(sctk_ib_rail_info_t* rail_ib,
-    sctk_ib_qp_t* remote, sctk_thread_ptp_message_t * msg, size_t size, int low_memory_mode) {
+    sctk_ib_qp_t* remote, sctk_thread_ptp_message_t * msg, size_t size, int low_memory_mode, char is_control_message) {
   sctk_ibuf_t *ibuf;
   sctk_ib_eager_t *eager_header;
   void* body;
   size_t ibuf_size = size + IBUF_GET_EAGER_SIZE;
 
   body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
-  ibuf = sctk_ibuf_pick_send(rail_ib, remote, &ibuf_size,
-      task_node_number);
+  if (is_control_message) {
+    ibuf = sctk_ibuf_pick_send_sr(rail_ib, task_node_number);
+    sctk_ibuf_prepare(rail_ib, remote, ibuf, ibuf_size);
+  } else {
+    ibuf = sctk_ibuf_pick_send(rail_ib, remote, &ibuf_size,
+        task_node_number);
+  }
   /* We cannot pick an ibuf. We should try the buffered eager protocol */
   if (ibuf == NULL) return NULL;
 

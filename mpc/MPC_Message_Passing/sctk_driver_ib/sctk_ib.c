@@ -60,12 +60,14 @@ void sctk_ib_add_dynamic_route(int dest, sctk_route_table_t *tmp, sctk_rail_info
 void
 sctk_ib_init_remote(int dest, sctk_rail_info_t* rail, struct sctk_route_table_s* route_table, int ondemand){
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  LOAD_CONFIG(rail_ib);
   sctk_ib_data_t *route_ib;
 
   route_ib=&route_table->data.ib;
 
   sctk_nodebug("Initializing QP for dest %d", dest);
   sctk_ib_qp_allocate_init(rail_ib, dest, route_ib->remote, ondemand, route_table);
+  sctk_ibuf_rdma_pool_init(rail_ib, route_ib->remote, config->ibv_max_rdma_ibufs);
   return;
 }
 
@@ -139,6 +141,7 @@ void sctk_network_init_ib_all(sctk_rail_info_t* rail,
     route_table_dest = sctk_ib_create_remote();
     sctk_ib_init_remote(dest_rank, rail, route_table_dest, 0);
     route_dest=&route_table_dest->data.ib;
+
     /* create remote for src */
     route_table_src = sctk_ib_create_remote();
     sctk_ib_init_remote(src_rank, rail, route_table_src, 0);
@@ -149,12 +152,14 @@ void sctk_network_init_ib_all(sctk_rail_info_t* rail,
 
     /* change state to RTR */
     keys = sctk_ib_qp_keys_recv(route_dest->remote, src_rank);
+    sctk_ibuf_rdma_update_remote_addr(route_src->remote, &keys);
     sctk_ib_qp_allocate_rtr(rail_ib, route_src->remote, &keys);
     sctk_ib_qp_allocate_rts(rail_ib, route_src->remote);
     sctk_ib_qp_keys_send(rail_ib, route_src->remote);
     sctk_pmi_barrier();
 
     keys = sctk_ib_qp_keys_recv(route_src->remote, dest_rank);
+    sctk_ibuf_rdma_update_remote_addr(route_dest->remote, &keys);
     sctk_ib_qp_allocate_rtr(rail_ib, route_dest->remote, &keys);
     sctk_ib_qp_allocate_rts(rail_ib, route_dest->remote);
     sctk_pmi_barrier();
@@ -166,15 +171,12 @@ void sctk_network_init_ib_all(sctk_rail_info_t* rail,
     route_table_dest = sctk_ib_create_remote();
     sctk_ib_init_remote(dest_rank, rail, route_table_dest, 0);
     route_dest=&route_table_dest->data.ib;
-    /* TODO: User may choose the number of ibufs */
-    sctk_ibuf_rdma_pool_init(rail_ib, route_dest->remote, config->ibv_max_rdma_ibufs);
 
     sctk_ib_qp_keys_send(rail_ib, route_dest->remote);
     sctk_pmi_barrier();
 
     /* change state to RTR */
     keys = sctk_ib_qp_keys_recv(route_dest->remote, src_rank);
-    /* TODO: for RDMA */
     sctk_ibuf_rdma_update_remote_addr(route_dest->remote, &keys);
     sctk_ib_qp_allocate_rtr(rail_ib, route_dest->remote, &keys);
     sctk_ib_qp_allocate_rts(rail_ib, route_dest->remote);

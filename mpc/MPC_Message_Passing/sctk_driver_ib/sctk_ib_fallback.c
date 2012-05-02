@@ -86,6 +86,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
   route_data=&tmp->data.ib;
   remote=route_data->remote;
+  sctk_nodebug("Go to process %d", remote->rank);
 
   /* Check if the remote task is in low mem mode */
   low_memory_mode = sctk_route_is_low_memory_mode_remote(tmp);
@@ -101,20 +102,9 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
    *  We switch between available protocols
    *
    * */
-  /***** RDMA EAGER CHANNEL *****/
-#if 0
-  if (  sctk_ibuf_rdma_is_remote_connected(rail_ib, remote)
-      && (IBUF_RDMA_GET_SIZE + size + IBUF_GET_EAGER_SIZE) < config->ibv_eager_rdma_limit) {
-    ibuf = sctk_ib_rdma_eager_prepare_msg(rail_ib, remote, msg, size);
-    sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, is_control_message);
-    sctk_complete_and_free_message(msg);
-
-  /***** SEND-RECEIVE EAGER CHANNEL *****/
-  } else
-#endif
   if (size+IBUF_GET_EAGER_SIZE <= config->ibv_eager_limit)  {
     sctk_nodebug("Eager");
-    ibuf = sctk_ib_eager_prepare_msg(rail_ib, remote, msg, size, -1);
+    ibuf = sctk_ib_eager_prepare_msg(rail_ib, remote, msg, size, -1, is_control_message);
     /* Actually, it is possible to get a NULL pointer for ibuf. We falback to buffered */
     if (ibuf == NULL) goto buffered;
     /* Send message */
@@ -204,7 +194,6 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
   sctk_thread_ptp_message_body_t * msg_ibuf = NULL;
   const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL(ibuf->buffer);
   int release_ibuf = 1;
-  int recopy = 1;
   int ondemand = 0;
   specific_message_tag_t tag;
   const struct ibv_wc wc = ibuf->wc;
@@ -296,13 +285,14 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,
   int dest_task = -1;
   int ret;
 
+  /* Decrease the number of pending requests */
+  sctk_ib_qp_decr_requests_nb(ibuf->remote);
+
   if (IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL) {
     src_task = IBUF_GET_SRC_TASK(ibuf);
     dest_task = IBUF_GET_DEST_TASK(ibuf->buffer);
     ibuf->cq = send_cq;
     ibuf->wc = *wc;
-    /* Decrease the number of pending requests */
-    sctk_ib_qp_decr_requests_nb(ibuf->remote);
 
     /* We still check the dest_task. If it is -1, this is a process_specific
      * message, so we need to handle the message asap */
@@ -402,10 +392,11 @@ sctk_network_notify_matching_message_ib (sctk_thread_ptp_message_t * msg,sctk_ra
 /* WARNING: This function can be called with dest == sctk_process_rank */
 static void
 sctk_network_notify_perform_message_ib (int dest, sctk_rail_info_t* rail){
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  int ret;
+
   /* If the dest is another process than the current process */
   if (dest != sctk_process_rank) {
-    sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-    int ret;
     sctk_ib_qp_t *remote;
     sctk_ib_data_t *route_data;
     const sctk_route_table_t const *route =
@@ -418,9 +409,7 @@ sctk_network_notify_perform_message_ib (int dest, sctk_rail_info_t* rail){
     /* Poll messages fistly on RDMA. If no message has been found,
      * we continue to poll SR channel */
     ret = sctk_ib_rdma_eager_poll_remote(rail_ib, remote);
-//    if (ret == 0) {
-      sctk_network_poll_all_and_steal(rail);
-//    }
+    sctk_network_poll_all_and_steal(rail);
   } else {
     /* Else we simply pool all other channels */
     sctk_network_poll_all_and_steal(rail);
@@ -431,22 +420,20 @@ static void
 sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   int ret;
+
   /* POLLING */
   sctk_ib_rdma_eager_walk_remotes(rail_ib, sctk_ib_rdma_eager_poll_remote, &ret);
-//  if (ret == 0) {
-    sctk_network_poll_all_and_steal(rail);
-//  }
+  sctk_network_poll_all_and_steal(rail);
 }
 
 static void
 sctk_network_notify_any_source_message_ib (sctk_rail_info_t* rail){
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   int ret;
+
   /* POLLING */
   sctk_ib_rdma_eager_walk_remotes(rail_ib, sctk_ib_rdma_eager_poll_remote, &ret);
-//  if (ret == 0) {
-    sctk_network_poll_all_and_steal(rail);
-//  }
+  sctk_network_poll_all_and_steal(rail);
 }
 
 static void

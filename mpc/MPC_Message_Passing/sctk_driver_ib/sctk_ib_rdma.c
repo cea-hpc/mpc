@@ -97,8 +97,8 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
   size_t aligned_size = 0;
 
   /* Do not allocate memory if contiguous message */
-  if (msg->tail.message_type == sctk_message_contiguous)
-  {
+  if (msg->tail.message_type == sctk_message_contiguous) {
+
     sctk_ib_rdma_align_msg(msg->tail.message.contiguous.addr,
         msg->tail.message.contiguous.size,
         &aligned_addr, &aligned_size);
@@ -368,6 +368,10 @@ void sctk_ib_rdma_net_copy(sctk_message_to_copy_t* tmp){
   if (send_header->rdma.local.status == not_set) {
 
     if (recv->tail.message_type == sctk_message_contiguous) {
+
+      /* XXX: Check if the size requested is the size of the message posted */
+      assume(send_header->rdma.requested_size == recv->tail.message.contiguous.size);
+
       send_header->rdma.local.addr  = recv->tail.message.contiguous.addr;
       send_header->rdma.local.size  = recv->tail.message.contiguous.size;
       send_header->rdma.local.status       = zerocopy;
@@ -387,8 +391,7 @@ void sctk_ib_rdma_net_copy(sctk_message_to_copy_t* tmp){
 
     sctk_nodebug("Copy_ptr: %p (free:%p, ptr:%p)", tmp, send->tail.free_memory,
         send_header->rdma.local.addr);
-    /* XXX: Check if the size requested is the size of the message posted */
-    // assume(send_header->rdma.requested_size == msg->tail.ib.rdma.size_remote);
+
   } else if (send_header->rdma.local.status == recopy) {
       send_header->rdma.copy_ptr = tmp;
       send_header->rdma.local.ready = 1;

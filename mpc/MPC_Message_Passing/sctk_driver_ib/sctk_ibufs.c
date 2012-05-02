@@ -498,7 +498,7 @@ void sctk_ibuf_prepare(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote,
         IBUF_RDMA_GET_REMOTE_ADDR(remote, REGION_RECV, ibuf),  /* Remote addr */
         remote->ibuf_rdma->rkey[REGION_RECV],  /* rkey */
         size + IBUF_RDMA_GET_SIZE, /* size */
-        0, IBUF_DO_NOT_RELEASE);  /* imm_data: index of the ibuf in the region */
+        IBV_SEND_SIGNALED, IBUF_DO_NOT_RELEASE);  /* imm_data: index of the ibuf in the region */
 
     /* Move tail flag */
     sctk_ib_rdma_set_tail_flag(ibuf, size);

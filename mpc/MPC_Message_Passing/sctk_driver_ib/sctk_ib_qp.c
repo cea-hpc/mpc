@@ -110,6 +110,7 @@ sctk_ib_device_t *sctk_ib_device_init(struct sctk_ib_rail_info_s* rail_ib) {
   rail_ib->device = device;
   rail_ib->device->dev_list = dev_list;
   rail_ib->device->dev_nb = devices_nb;
+  rail_ib->device->eager_rdma_connections = 0;
   /* Specific to ondemand (de)connexions */
   rail_ib->device->ondemand.qp_list = NULL;
   rail_ib->device->ondemand.qp_list_ptr = NULL;
@@ -304,6 +305,34 @@ void sctk_ib_qp_key_print(sctk_ib_qp_keys_t *keys) {
      keys->rdma.recv.ptr,
      keys->rdma.recv.rkey);
 }
+
+void sctk_ib_qp_key_fill(sctk_ib_qp_keys_t* keys, sctk_ib_qp_t *remote,
+    uint16_t lid, uint32_t qp_num, uint32_t psn) {
+
+  void *rdma_send_ptr = NULL;
+  uint32_t rdma_send_rkey = 0;
+  void *rdma_recv_ptr = NULL;
+  uint32_t rdma_recv_rkey = 0;
+
+  /* FIXME: change the test */
+  if (remote->ibuf_rdma) {
+    rdma_send_ptr = remote->ibuf_rdma->region[REGION_SEND].buffer_addr;
+    rdma_send_rkey = remote->ibuf_rdma->region[REGION_SEND].mmu_entry->mr->rkey;
+
+    rdma_recv_ptr = remote->ibuf_rdma->region[REGION_RECV].buffer_addr;
+    rdma_recv_rkey = remote->ibuf_rdma->region[REGION_RECV].mmu_entry->mr->rkey;
+  }
+
+  keys->lid = lid;
+  keys->qp_num = qp_num;
+  keys->psn = psn;
+  keys->rdma.send.ptr = rdma_send_ptr;
+  keys->rdma.send.rkey = rdma_send_rkey;
+  keys->rdma.recv.ptr = rdma_recv_ptr;
+  keys->rdma.recv.rkey = rdma_recv_rkey;
+
+}
+
 
 void sctk_ib_qp_key_create_value(char *msg, size_t size, sctk_ib_qp_keys_t* keys) {
   snprintf(msg, size,
@@ -747,6 +776,7 @@ sctk_ib_qp_allocate_reset(struct sctk_ib_rail_info_s* rail_ib,
  *  Send a message to a remote QP
  *----------------------------------------------------------*/
 struct wait_send_s {
+  struct sctk_ib_rail_info_s* rail_ib;
   int flag;
   sctk_ib_qp_t *remote;
   sctk_ibuf_t *ibuf;
@@ -788,8 +818,9 @@ static void* wait_send(void *arg){
     wait_send_arg.flag = 0;
     wait_send_arg.remote = remote;
     wait_send_arg.ibuf = ibuf;
+    wait_send_arg.rail_ib = rail_ib;
 
-    sctk_ib_debug("QP full, waiting for posting message...");
+    sctk_ib_debug("QP full for remote %d, waiting for posting message...", remote->rank);
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
         (void (*)(void *)) wait_send, &wait_send_arg);
   }
@@ -820,14 +851,16 @@ static void* wait_send(void *arg){
   /* We avoid the send of new messages while deconnecting */
   sctk_spinlock_read_lock(&remote->lock_send);
 
+#warning "Disabled because of errors"
   /* Check the state of a QP */
   if (sctk_route_get_state(remote->route_table) != state_connected ) {
     sctk_route_table_t* new_route;
 
-    sctk_warning("QP deconnected. Recomputing route");
+    sctk_warning("QP to rank %d deconnected (state:%d). Recomputing route", remote->rank, sctk_route_get_state(remote->route_table));
     new_route = sctk_get_route_to_process(remote->route_table->key.destination, rail_ib->rail);
     assume(new_route);
     remote->route_table = new_route;
+    sctk_ib_toolkit_print_backtrace();
 
     not_implemented();
   }
@@ -839,7 +872,7 @@ static void* wait_send(void *arg){
     wait_send_arg.remote = remote;
     wait_send_arg.ibuf = ibuf;
 
-    sctk_ib_debug("QP full, waiting for posting message... rc=%d, request_nb=%d", rc, sctk_ib_qp_get_requests_nb(remote));
+    sctk_ib_debug("QP full for rank %d, waiting for posting message... rc=%d, request_nb=%d", remote->rank, rc, sctk_ib_qp_get_requests_nb(remote));
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
         (void (*)(void *)) wait_send, &wait_send_arg);
   }
@@ -883,7 +916,7 @@ sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
       POLL_INIT(&poll);
 
       /* Decrease the number of pending requests */
-//      sctk_ib_qp_decr_requests_nb(ibuf->remote);
+      sctk_ib_qp_decr_requests_nb(ibuf->remote);
 //      sctk_network_poll_send_ibuf(rail_ib->rail, ibuf, 0, poll);
   }
 }
