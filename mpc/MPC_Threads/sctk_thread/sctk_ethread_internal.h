@@ -1437,7 +1437,6 @@ extern "C"
  * function is not called. */
 #ifdef MPC_Message_Passing
 	    sctk_notify_idle_message ();
-      sched_yield();
 #endif
 # if 0
 	if ((vp->ready_queue_used == NULL) &&

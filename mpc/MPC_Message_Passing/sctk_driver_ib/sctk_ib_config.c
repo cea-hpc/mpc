@@ -67,7 +67,7 @@
  * i.e: if IBV_MAX_RDMA_IBUFS = 256:
  * The total memory used is: 2 (1 for send and 1 for receive) * 256 buffers * IBV_EAGER_RDMA_LIMIT */
 #define IBV_MAX_RDMA_IBUFS  256
-#define IBV_MAX_RDMA_CONNECTIONS 16
+#define IBV_MAX_RDMA_CONNECTIONS 0
 
 /* Maximum number of buffers to allocate during the
  * initialization step */
