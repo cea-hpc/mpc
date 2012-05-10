@@ -184,6 +184,7 @@ void sctk_network_finalize_multirail_ib (){
 void sctk_network_finalize_task_multirail_ib (int rank){
   if(sctk_process_number > 1){
     sctk_ib_cp_finalize_task(rank);
+    sctk_ib_prof_qp_finalize_task(rank);
   }
 }
 #endif

@@ -161,14 +161,14 @@ __UNUSED__ static inline int sctk_ib_cq_poll(sctk_rail_info_t* rail,
   int found_nb = 0;
   int i, res = 0;
 
-  for(i=0; i < poll_nb; ++i) {
+  do {//for(i=0; i < poll_nb; ++i) {
       res = ibv_poll_cq (cq, 1, &wc);
       if (res) {
         sctk_ib_polling_check_wc(rail_ib, wc);
         ptr_func(rail, &wc, poll);
         found_nb++;
       }
-    }
+    } while(res);
   return found_nb;
 }
 

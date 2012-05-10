@@ -46,7 +46,9 @@
  * if x < IBV_EAGER_LIMIT -> eager msg
  * if x < IBV_FRAG_EAGER_LIMIT -> frag msg (into several eager buffers)
  * if x > IBV_FRAG_EAGER_LIMIT -> rendezvous msg */
-#define IBV_EAGER_LIMIT       ( 4 * 1024)
+/* !!! WARNING !!! : diminishing IBV_EAGER_LIMIT me cause bad performance
+ * on buffered eager messages */
+#define IBV_EAGER_LIMIT       ( 16 * 1024)
 #define IBV_EAGER_RDMA_LIMIT  ( 16 * 1024)
 #define IBV_FRAG_EAGER_LIMIT  (256 * 1024)
 
@@ -66,7 +68,7 @@
 /* Number of RDMA buffers allocated for each neighbor.
  * i.e: if IBV_MAX_RDMA_IBUFS = 256:
  * The total memory used is: 2 (1 for send and 1 for receive) * 256 buffers * IBV_EAGER_RDMA_LIMIT */
-#define IBV_MAX_RDMA_IBUFS  256
+#define IBV_MAX_RDMA_IBUFS  512
 #define IBV_MAX_RDMA_CONNECTIONS 0
 
 /* Maximum number of buffers to allocate during the

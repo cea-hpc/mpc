@@ -30,6 +30,7 @@
 #include "sctk_ib_prof.h"
 #include "sctk_ib_polling.h"
 #include "sctk_pmi.h"
+#include "sctk_asm.h"
 #include "utlist.h"
 #include <sctk_spinlock.h>
 #include <errno.h>
@@ -824,6 +825,8 @@ static void* wait_send(void *arg){
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
         (void (*)(void *)) wait_send, &wait_send_arg);
   }
+  sctk_ib_prof_qp_write(remote->rank, ibuf->desc.sg_entry.length,
+      sctk_get_time_stamp());
   /* We inc the number of pending requests */
   sctk_ib_qp_inc_requests_nb(remote);
 }
@@ -876,6 +879,8 @@ static void* wait_send(void *arg){
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
         (void (*)(void *)) wait_send, &wait_send_arg);
   }
+  sctk_ib_prof_qp_write(remote->rank, ibuf->desc.sg_entry.length,
+      sctk_get_time_stamp());
   /* We inc the number of pending requests */
   sctk_ib_qp_inc_requests_nb(remote);
 

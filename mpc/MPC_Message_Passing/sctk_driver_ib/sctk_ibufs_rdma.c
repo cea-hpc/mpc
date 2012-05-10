@@ -324,9 +324,11 @@ int
 sctk_ib_rdma_eager_poll_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote) {
   /* We return if the remote is not connected to the RDMA channel */
   if (sctk_ibuf_rdma_is_remote_connected(rail_ib, remote) == 0) return 0;
-
   static sctk_spinlock_t poll_lock = SCTK_SPINLOCK_INITIALIZER;
-  sctk_ibuf_t *head = IBUF_RDMA_GET_HEAD(remote, REGION_RECV);
+  sctk_ibuf_t *head;
+
+//retry:
+  head = IBUF_RDMA_GET_HEAD(remote, REGION_RECV);
 
   if (*(head->head_flag) != IBUF_RDMA_RESET_FLAG) {
 
@@ -362,6 +364,10 @@ sctk_ib_rdma_eager_poll_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remot
         }
         /* Handle the ibuf */
         __poll_ibuf(rail_ib, remote, head);
+        /* We retry to poll a message.
+         * FIXME: only retry if the sequence number of the message is not
+         * expected */
+//        goto retry;
         return 1;
       } else {
         sctk_spinlock_unlock(&poll_lock);

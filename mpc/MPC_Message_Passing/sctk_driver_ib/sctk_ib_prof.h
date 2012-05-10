@@ -85,6 +85,9 @@ typedef struct sctk_ib_prof_s {
 
 void sctk_ib_prof_init(sctk_ib_rail_info_t *rail_ib);
 void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib);
+
+void sctk_ib_prof_qp_init_task(int task_id);
+void sctk_ib_prof_qp_finalize_task(int task_id);
 #else
 
 #define PROF_INC

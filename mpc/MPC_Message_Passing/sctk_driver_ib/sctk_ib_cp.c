@@ -212,7 +212,6 @@ void sctk_ib_cp_finalize_task(int rank) {
       CP_PROF_PRINT(task, poll_own),
       CP_PROF_PRINT(task, poll_own_failed),
       CP_PROF_PRINT(task, poll_own_lock_failed));
-#endif
 
   if (ibv_cp_profiler) {
     if (rank == 0) {
@@ -227,6 +226,7 @@ void sctk_ib_cp_finalize_task(int rank) {
         time_steals/CYCLES_PER_SEC,
         time_own/CYCLES_PER_SEC);
   }
+#endif
 }
 
 static inline int __cp_poll(const struct sctk_rail_info_s const* rail, struct sctk_ib_polling_s *poll, sctk_ibuf_t * volatile * const list, sctk_spinlock_t *lock, sctk_ib_cp_task_t *task, char from_global){

@@ -1271,9 +1271,9 @@ PMPC_Finalize (void)
   /*   __MPC_delete_task_specific (); */
 #ifdef MPC_Message_Passing
 #if MPC_USE_INFINIBAND
-int rank;
-__MPC_Comm_rank (MPC_COMM_WORLD, &rank, task_specific);
-sctk_network_finalize_task_multirail_ib (rank);
+//int rank;
+//__MPC_Comm_rank (MPC_COMM_WORLD, &rank, task_specific);
+//sctk_network_finalize_task_multirail_ib (rank);
 #endif
 #endif
 
