@@ -52,6 +52,7 @@ void * sctk_calloc (size_t nmemb, size_t size);
 void * sctk_malloc (size_t size);
 void sctk_free (void * ptr);
 void * sctk_realloc (void * ptr, size_t size);
+int sctk_posix_memalign(void **memptr, size_t boundary, size_t size);
 void * sctk_memalign(size_t boundary,size_t size);
 struct sctk_alloc_chain * sctk_get_current_alloc_chain(void);
 

@@ -418,6 +418,17 @@ void * sctk_memalign(size_t boundary,size_t size)
 }
 
 /************************* FUNCTION ************************/
+int sctk_posix_memalign(void **memptr, size_t boundary, size_t size)
+{
+	assert(memptr != NULL);
+	*memptr = sctk_memalign(boundary,size);
+	if (memptr == NULL)
+		return ENOMEM;
+	else
+		return 0;
+}
+
+/************************* FUNCTION ************************/
 void sctk_free (void * ptr)
 {
 	//to avoid many access to TLS variable
