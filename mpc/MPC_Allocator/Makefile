@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile Mon May 14 09:56:19 CEST 2012
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile Mon May 14 10:11:28 CEST 2012
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -73,7 +73,7 @@ FOBJ_src=$(FFILES_src:src/%.f=$(M_PWD)/BUILD_MPC_Allocator/lib/%_f.o)
 FFILES_tests=$(wildcard tests/*.f)
 FOBJ_tests=$(FFILES_tests:tests/%.f=$(M_PWD)/BUILD_MPC_Allocator/lib/%_f.o)
 
-all: $(OBJ_cmake) $(FOBJ_cmake) $(SOBJ_cmake) $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_src) $(FOBJ_src) $(SOBJ_src) $(OBJ_tests) $(FOBJ_tests) $(SOBJ_tests) build_build
+all: $(OBJ_cmake) $(FOBJ_cmake) $(SOBJ_cmake) $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_src) $(FOBJ_src) $(SOBJ_src) $(OBJ_tests) $(FOBJ_tests) $(SOBJ_tests)
 
 $(M_PWD)/include_modules/MPC_Allocator:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Allocator/cmake $(M_PWD)/include_modules
@@ -205,6 +205,3 @@ ifeq ($(MAKECMDGOALS),all)
 -include $(DEPENDS)
 endif
 endif
-build_build:
-	@mkdir -p $(M_PWD)/BUILD_MPC_Allocator/build
-	@$(MAKE) BUILD_DIR=$(M_PWD)/BUILD_MPC_Allocator/build -C build all
