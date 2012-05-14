@@ -49,7 +49,7 @@ int sctk_get_preferred_numa_node(void);
 int sctk_alloc_init_on_numa_node(void);
 
 #ifdef HAVE_LIBNUMA
-hwloc_topology_t sctk_get_topology(void);
+hwloc_topology_t sctk_get_topology_object(void);
 #endif //HAVE_LIBNUMA
 
 #ifdef __cplusplus

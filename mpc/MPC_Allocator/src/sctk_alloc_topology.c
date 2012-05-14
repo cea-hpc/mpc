@@ -221,7 +221,7 @@ int sctk_alloc_init_on_numa_node(void)
 /************************* FUNCTION ************************/
 #ifdef HAVE_LIBNUMA
 #ifndef MPC_Threads
-hwloc_topology_t sctk_get_topology(void)
+hwloc_topology_t sctk_get_topology_object(void)
 {
 	return topology;
 }

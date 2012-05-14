@@ -167,7 +167,7 @@ SCTK_STATIC void sctk_alloc_force_segment_binding(struct sctk_alloc_mm_source_li
 
 	//use hwloc to bind the segment
 	if (light_source->nodeset != NULL)
-		res = hwloc_set_area_membind_nodeset(sctk_get_topology(),base,size,light_source->nodeset,HWLOC_MEMBIND_BIND ,HWLOC_MEMBIND_THREAD);
+		res = hwloc_set_area_membind_nodeset(sctk_get_topology_object(),base,size,light_source->nodeset,HWLOC_MEMBIND_BIND ,HWLOC_MEMBIND_THREAD);
 }
 #endif //HAVE_LIBNUMA
 
