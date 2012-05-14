@@ -197,20 +197,24 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
   int ondemand = 0;
   specific_message_tag_t tag;
   const struct ibv_wc wc = ibuf->wc;
+  /* Get the remote associated to the ibuf */
+//  const sctk_ib_qp_t const *remote = sctk_ib_qp_ht_find(rail_ib, wc.qp_num);
+//  assume(remote);
 
   sctk_nodebug("[%d] Recv ibuf:%p", rail->rail_number,ibuf);
 #ifdef IB_DEBUG
   sctk_nodebug("Protocol received: %s", sctk_ib_protocol_print(protocol));
 #endif
 
+
   /* First we check if the message has an immediate data */
   if (wc.wc_flags == IBV_WC_WITH_IMM) {
     assume(0);
     assume( (wc.imm_data & IMM_DATA_EAGER_RDMA));
+    const sctk_ib_qp_t const *remote = sctk_ib_qp_ht_find(rail_ib, wc.qp_num);
+  assume(remote);
     const int index = wc.imm_data - IMM_DATA_EAGER_RDMA;
    /* Find the remote which has received the msg */
-    const sctk_ib_qp_t const *remote = sctk_ib_qp_ht_find(rail_ib, wc.qp_num);
-    assume(remote);
 
    sctk_nodebug("received an RDMA message from rank %d, ibuf index: %u", remote->rank, index);
    sctk_ib_rdma_eager_poll_recv(rail_ib, remote, index);
@@ -261,6 +265,10 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc,
   assume(ibuf);
   int dest_task = -1;
   int ret;
+  /* Get the remote associated to the ibuf */
+  const sctk_ib_qp_t const *remote = sctk_ib_qp_ht_find(rail_ib, wc->qp_num);
+  assume(remote);
+  sctk_ib_prof_qp_write(remote->rank, wc->byte_len, sctk_get_time_stamp(), PROF_QP_RECV);
 
   if (IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL) {
     dest_task = IBUF_GET_DEST_TASK(ibuf->buffer);

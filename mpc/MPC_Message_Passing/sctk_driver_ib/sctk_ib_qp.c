@@ -826,7 +826,7 @@ static void* wait_send(void *arg){
         (void (*)(void *)) wait_send, &wait_send_arg);
   }
   sctk_ib_prof_qp_write(remote->rank, ibuf->desc.sg_entry.length,
-      sctk_get_time_stamp());
+      sctk_get_time_stamp(), PROF_QP_SEND);
   /* We inc the number of pending requests */
   sctk_ib_qp_inc_requests_nb(remote);
 }

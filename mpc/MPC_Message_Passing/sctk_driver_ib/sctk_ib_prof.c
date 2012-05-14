@@ -31,7 +31,9 @@
 #include "utlist.h"
 #include "sctk_route.h"
 #include "sctk_ib_prof.h"
+
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 
 /* IB debug macros */
@@ -87,7 +89,6 @@ void sctk_ib_prof_init(sctk_ib_rail_info_t *rail_ib) {
 }
 
 void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib) {
-  sctk_ib_prof_qp_finalize();
   fprintf(stderr, "[%d] %d %d %d %d %d %d\n", sctk_process_rank,
       PROF_LOAD(rail_ib, alloc_mem),
       PROF_LOAD(rail_ib, free_mem),
@@ -101,7 +102,7 @@ void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib) {
 /*-----------------------------------------------------------
  *  QP profiling
  *----------------------------------------------------------*/
-
+#if 0
 #define QP_PROF_BUFF_SIZE 400000
 #define QP_PROF_OUTPUT_FILE "output/qp_prof_%d_%d"
 
@@ -175,24 +176,18 @@ void sctk_ib_prof_qp_finalize() {
   close(qp_prof->fd);
 }
 
-
-
-
-
-
-
-
-
-#if 0
+#endif
 
 
 #define QP_PROF_BUFF_SIZE 40000
-#define QP_PROF_OUTPUT_FILE "output/qp_prof_%d_%d"
+#define QP_PROF_DIR "prof/node_%d"
+#define QP_PROF_OUTPUT_FILE "qp_prof_%d"
 
 struct sctk_ib_prof_qp_buff_s {
   int proc;
   size_t size;
   double ts;
+  char from;
 };
 
 struct sctk_ib_prof_qp_s {
@@ -204,14 +199,24 @@ struct sctk_ib_prof_qp_s {
 
 __thread struct sctk_ib_prof_qp_s * qp_prof;
 
+/* Process */
+void sctk_ib_prof_qp_init() {
+  char dirname[256];
+
+  sprintf(dirname, QP_PROF_DIR, sctk_get_process_rank());
+  mkdir(dirname, S_IRWXU);
+}
+
+
+/* Task */
 void sctk_ib_prof_qp_init_task(int task_id) {
-  char filename[256];
+  char pathname[256];
 
   qp_prof = sctk_malloc ( sizeof(struct sctk_ib_prof_qp_s) );
   qp_prof->buff = sctk_malloc (QP_PROF_BUFF_SIZE * sizeof(struct sctk_ib_prof_qp_buff_s));
 
-  sprintf(filename, QP_PROF_OUTPUT_FILE, sctk_get_node_rank(), task_id);
-  qp_prof->fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
+  sprintf(pathname, QP_PROF_DIR"/"QP_PROF_OUTPUT_FILE, sctk_get_process_rank(), task_id);
+  qp_prof->fd = open(pathname, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
   assume (qp_prof->fd != -1);
 
   qp_prof->task_id = task_id;
@@ -222,7 +227,7 @@ void sctk_ib_prof_qp_init_task(int task_id) {
   sctk_terminaison_barrier (task_id);
   sctk_terminaison_barrier (task_id);
   sctk_terminaison_barrier (task_id);
-  sctk_ib_prof_qp_write(-1, 0, sctk_get_time_stamp());
+  sctk_ib_prof_qp_write(-1, 0, sctk_get_time_stamp(), PROF_QP_SYNC);
 }
 
 void sctk_ib_prof_qp_flush() {
@@ -233,7 +238,8 @@ void sctk_ib_prof_qp_flush() {
   qp_prof->head = 0;
 }
 
-void sctk_ib_prof_qp_write(int proc, size_t size, double ts) {
+
+void sctk_ib_prof_qp_write(int proc, size_t size, double ts, char from) {
 
   /* We flush */
   if (qp_prof->head > (QP_PROF_BUFF_SIZE - 1)) {
@@ -243,18 +249,17 @@ void sctk_ib_prof_qp_write(int proc, size_t size, double ts) {
   qp_prof->buff[qp_prof->head].proc = proc;
   qp_prof->buff[qp_prof->head].size = size;
   qp_prof->buff[qp_prof->head].ts = ts;
+  qp_prof->buff[qp_prof->head].from = from;
   qp_prof->head ++;
 }
 
 void sctk_ib_prof_qp_finalize_task(int task_id) {
   sctk_debug("End of task %d", task_id);
   /* End marker */
-  sctk_ib_prof_qp_write(-1, 0, sctk_get_time_stamp());
+  sctk_ib_prof_qp_write(-1, 0, sctk_get_time_stamp(), PROF_QP_SYNC);
   sctk_ib_prof_qp_flush();
   close(qp_prof->fd);
 }
-
-#endif
 
 #endif
 #endif
