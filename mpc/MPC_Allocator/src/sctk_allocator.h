@@ -206,6 +206,10 @@ struct sctk_alloc_macro_bloc
 {
 	/** Inherit from large header. **/
 	struct sctk_alloc_chunk_header_large header;
+	/** Pointer to the alloc chain which manage this bloc **/
+	struct sctk_alloc_chain * chain;
+	/** Some padding to maintain multiples**/
+	char padding[8];
 };
 
 /************************** STRUCT *************************/
@@ -299,13 +303,19 @@ struct sctk_alloc_chain
 };
 
 /************************** STRUCT *************************/
+struct sctk_alloc_region_entry
+{
+	struct sctk_alloc_macro_bloc * macro_bloc;
+};
+
+/************************** STRUCT *************************/
 /**
  * Define an entry from region header. For now it simply contain a pointer to the related allocation
  * chain. NULL if not used.
 **/
 struct sctk_alloc_region
 {
-	struct sctk_alloc_chain * chain[SCTK_REGION_HEADER_ENTRIES];
+	struct sctk_alloc_region_entry entries[SCTK_REGION_HEADER_ENTRIES];
 };
 
 /************************* GLOBALS *************************/
@@ -324,7 +334,8 @@ typedef struct sctk_alloc_free_chunk sctk_alloc_free_list_t;
 /************************* FUNCTION ************************/
 //chunk management.
 //static inline sctk_alloc_vchunk sctk_alloc_get_chunk(sctk_addr_t ptr);
-SCTK_STATIC sctk_alloc_vchunk sctk_alloc_setup_chunk(void * ptr, sctk_size_t size, void * prev);
+//static inline sctk_alloc_vchunk sctk_alloc_setup_chunk(void * ptr, sctk_size_t size, void * prev);
+//static inline void sctk_alloc_setup_macro_bloc(struct sctk_alloc_macro_bloc * macro_bloc);
 SCTK_STATIC sctk_alloc_vchunk sctk_alloc_setup_chunk_padded(sctk_alloc_vchunk chunk,sctk_size_t boundary);
 SCTK_STATIC sctk_size_t sctk_alloc_calc_chunk_size(sctk_size_t user_size);
 SCTK_STATIC sctk_size_t sctk_alloc_calc_body_size(sctk_size_t chunk_size);
@@ -371,11 +382,6 @@ void sctk_alloc_chain_purge_rfq(struct sctk_alloc_chain * chain);
 SCTK_STATIC void sctk_alloc_chain_free_macro_bloc(struct sctk_alloc_chain * chain,sctk_alloc_vchunk vchunk);
 
 /************************* FUNCTION ************************/
-//mmap/munmap wrappers
-SCTK_STATIC void* sctk_mmap(void* addr, size_t length);
-SCTK_STATIC void sctk_munmap(void * addr, size_t size);
-
-/************************* FUNCTION ************************/
 //default memory source functions
 void sctk_alloc_mm_source_default_init(struct sctk_alloc_mm_source_default * source,sctk_addr_t heap_base,sctk_size_t heap_size);
 SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_default_request_memory(struct sctk_alloc_mm_source * source,sctk_size_t size);
@@ -389,14 +395,17 @@ SCTK_STATIC void sctk_alloc_mm_source_insert_segment(struct sctk_alloc_mm_source
 SCTK_STATIC struct sctk_alloc_region * sctk_alloc_region_setup(void * addr);
 SCTK_STATIC struct sctk_alloc_region * sctk_alloc_region_get(void * addr);
 SCTK_STATIC void sctk_alloc_region_del(struct sctk_alloc_region * region);
-struct sctk_alloc_chain * sctk_alloc_region_get_entry(void* addr);
+struct sctk_alloc_region_entry * sctk_alloc_region_get_entry(void* addr);
 SCTK_STATIC bool sctk_alloc_region_exist(void * addr);
 SCTK_STATIC void sctk_alloc_region_init(void);
 SCTK_STATIC void sctk_alloc_region_del_all(void);
-SCTK_STATIC void sctk_alloc_region_set_entry(struct sctk_alloc_chain * chain,void * base_addr,sctk_size_t size);
+SCTK_STATIC void sctk_alloc_region_set_entry(struct sctk_alloc_chain * chain,struct sctk_alloc_macro_bloc * macro_bloc);
 SCTK_STATIC int sctk_alloc_region_get_id(void * addr);
 SCTK_STATIC bool sctk_alloc_region_has_ref(struct sctk_alloc_region * region);
 SCTK_STATIC void sctk_alloc_region_del_chain(struct sctk_alloc_region * region,struct sctk_alloc_chain * chain);
+SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_prepare_and_reg_macro_bloc(struct sctk_alloc_chain * chaine,struct sctk_alloc_macro_bloc * macro_bloc);
+SCTK_STATIC void sctk_alloc_region_unset_entry(struct sctk_alloc_macro_bloc * macro_bloc);
+SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_region_get_macro_bloc(void * ptr);
 
 /************************* FUNCTION ************************/
 //remote free queue management for allocation chains

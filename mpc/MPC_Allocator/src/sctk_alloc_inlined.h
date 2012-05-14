@@ -187,6 +187,63 @@ static inline sctk_alloc_vchunk sctk_alloc_get_next_chunk(sctk_alloc_vchunk chun
 	return res;
 }
 
+/************************* FUNCTION ************************/
+/**
+ * Methode used to setup the chunk header. It select automatically the good one depending
+ * on the given size.
+ * @param ptr Define the base address of the chunk to setup.
+ * @param size Define the size of the chunk (with the header size which will be removed
+ * internaly).
+ * @param prev Define address of previous chunk. It was used only in large bloc headers. Use NULL
+ * or same address than ptr if none.
+**/
+static inline struct sctk_alloc_chunk_header_large * sctk_alloc_setup_large_header(void * ptr, sctk_size_t size, void * prev)
+{
+	struct sctk_alloc_chunk_header_large * chunk_large;
+	assert(ptr >= prev);
+
+	//large blocs
+	chunk_large = (struct sctk_alloc_chunk_header_large *)ptr;
+	chunk_large->size = size;
+	/** @todo  Need to cleanup this **/
+	//for now we used a short for addr, by we got 5 more bytes which could be used to
+	//store more checking bits
+	chunk_large->addr = (sctk_size_t)ptr;
+	chunk_large->info.state = SCTK_ALLOC_CHUNK_STATE_ALLOCATED;
+	chunk_large->info.type = SCTK_ALLOC_CHUNK_TYPE_LARGE;
+	chunk_large->info.unused_magik = SCTK_ALLOC_MAGIK_STATUS;
+	if (prev == NULL || prev == ptr)
+		chunk_large->prevSize = 0;
+	else
+		chunk_large->prevSize = ((sctk_addr_t)ptr - (sctk_addr_t)prev);
+
+	return chunk_large;
+}
+
+/************************* FUNCTION ************************/
+static inline struct sctk_alloc_macro_bloc * sctk_alloc_setup_macro_bloc(void * ptr,size_t size)
+{
+	struct sctk_alloc_macro_bloc * macro_bloc = (struct sctk_alloc_macro_bloc *)ptr;
+	sctk_alloc_setup_large_header(&macro_bloc->header,size,NULL);
+	macro_bloc->chain = NULL;
+	return macro_bloc;
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Methode used to setup the chunk header. It select automatically the good one depending
+ * on the given size.
+ * @param ptr Define the base address of the chunk to setup.
+ * @param size Define the size of the chunk (with the header size which will be removed
+ * internaly).
+ * @param prev Define address of previous chunk. It was used only in large bloc headers. Use NULL
+ * or same address than ptr if none.
+**/
+static inline sctk_alloc_vchunk sctk_alloc_setup_chunk(void * ptr, sctk_size_t size, void * prev)
+{
+	return sctk_alloc_large_to_vchunk(sctk_alloc_setup_large_header(ptr,size,prev));
+}
+
 #ifdef __cplusplus
 }
 #endif

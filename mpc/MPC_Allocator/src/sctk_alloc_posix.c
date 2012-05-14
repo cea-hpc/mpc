@@ -30,6 +30,7 @@
 #include "sctk_alloc_debug.h"
 #include "sctk_alloc_spy.h"
 #include "sctk_alloc_inlined.h"
+#include "sctk_alloc_light_mm_source.h"
 //optional headers
 #ifdef HAVE_LIBNUMA
 #include "sctk_alloc_topology.h"
@@ -59,7 +60,7 @@ enum sctk_alloc_posix_init_state
 /** Permit to know if the base initialization was done or not. **/
 static enum sctk_alloc_posix_init_state sctk_global_base_init = SCTK_ALLOC_POSIX_INIT_NONE;
 /** Global memory source for the current process (shared between all threads). **/
-static struct sctk_alloc_mm_source_default * sctk_global_memory_source[SCTK_MAX_NUMA_NODE + 1];
+static struct sctk_alloc_mm_source_light * sctk_global_memory_source[SCTK_MAX_NUMA_NODE + 1];
 /**
  * Basic allocation for allocator internal management (allocation of chain structures....).
  * It's required to boostrap the allocator.
@@ -98,7 +99,8 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_uma_init(void)
 	assume (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_EGG,"Invalid init state while calling allocator default init phase.");
 
 	sctk_global_memory_source[0] = sctk_alloc_chain_alloc(&sctk_global_egg_chain,sizeof(struct sctk_alloc_mm_source_default));
-	sctk_alloc_mm_source_default_init(sctk_global_memory_source[0],SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE);
+	//sctk_alloc_mm_source_default_init(sctk_global_memory_source[0],SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE);
+	sctk_alloc_mm_source_light_init(sctk_global_memory_source[0],0,SCTK_ALLOC_MM_SOURCE_LIGHT_DEFAULT);
 }
 
 /************************* FUNCTION ************************/
@@ -110,7 +112,11 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init_node(int id)
 
 	SCTK_PDEBUG("Allocator init phase : Default");
 	sctk_global_memory_source[id] = sctk_alloc_chain_alloc(&sctk_global_egg_chain,sizeof(struct sctk_alloc_mm_source_default));
-	sctk_alloc_mm_source_default_init(sctk_global_memory_source[id],SCTK_ALLOC_HEAP_BASE + SCTK_ALLOC_HEAP_SIZE * id,SCTK_ALLOC_HEAP_SIZE);
+	//sctk_alloc_mm_source_default_init(sctk_global_memory_source[id],SCTK_ALLOC_HEAP_BASE + SCTK_ALLOC_HEAP_SIZE * id,SCTK_ALLOC_HEAP_SIZE);
+	if (id == SCTK_DEFAULT_NUMA_MM_SOURCE_ID)
+		sctk_alloc_mm_source_light_init(sctk_global_memory_source[id],SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_NODE_IGNORE,SCTK_ALLOC_MM_SOURCE_LIGHT_DEFAULT);
+	else
+		sctk_alloc_mm_source_light_init(sctk_global_memory_source[id],id,SCTK_ALLOC_MM_SOURCE_LIGHT_DEFAULT);
 }
 
 /************************* FUNCTION ************************/
@@ -133,7 +139,11 @@ void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void)
 	int i;
 
 	//error
+	#ifndef MPC_Common
+	assume (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_EGG,"Invalid init state while calling allocator NUMA init phase.");
+	#else
 	assume (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_DEFAULT,"Invalid init state while calling allocator NUMA init phase.");
+	#endif
 
 	//get number of nodes
 	SCTK_PDEBUG("Init numa nodes");
@@ -432,14 +442,17 @@ void sctk_free (void * ptr)
 		return;
 	
 	//Find the chain corresponding to the given memory bloc
-	struct sctk_alloc_chain * chain = sctk_alloc_region_get_entry(ptr);
-	if (chain == NULL)
+	struct sctk_alloc_macro_bloc * macro_bloc = sctk_alloc_region_get_macro_bloc(ptr);
+	if (macro_bloc == NULL)
 	{
+		#ifndef NDEBUG
 		cnt++;
 		sctk_alloc_pwarning("Don't free the block %p (cnt = %d).",ptr,cnt);
 		abort();
+		#endif
 		return;
 	}
+	struct sctk_alloc_chain * chain = macro_bloc->chain;
 	assume(chain != NULL,"Can't free a pointer not manage by an allocation chain from our allocator.");
 
 	SCTK_PTRACE("free(ptr%p); //%p",ptr,chain);

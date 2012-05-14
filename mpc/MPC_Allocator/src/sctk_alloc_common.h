@@ -105,6 +105,11 @@ typedef unsigned char sctk_short_size_t;
 struct sctk_alloc_chain;
 typedef struct sctk_alloc_chain sctk_alloc_chain_t;
 
+/************************* FUNCTION ************************/
+//mmap/munmap wrappers
+void* sctk_mmap(void* addr, size_t length);
+void sctk_munmap(void * addr, size_t size);
+
 #ifdef __cplusplus
 }
 #endif

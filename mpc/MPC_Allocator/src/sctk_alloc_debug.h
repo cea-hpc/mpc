@@ -46,10 +46,12 @@
 #define warning(m) sctk_alloc_pwarning("Warning at %s!%d\n%s\n",__FILE__,__LINE__,m);
 #define assume(x,m) if (!(x)) { sctk_alloc_perror("Error at %s!%d\n%s\n%s\n",__FILE__,__LINE__,#x,m); abort(); }
 #define fatal(m) { sctk_alloc_perror("Fatal error at %s!%d\n%s\n",__FILE__,__LINE__,m); abort(); }
+#ifndef assert
 #ifdef NDEBUG
 #define assert(x) if (!(x)) { sctk_alloc_perror("Assertion failure at %s!%d\n%s\n",__FILE__,__LINE__,#x); abort(); }
 #else
 #define assert(x) /* assert(x) */
+#endif
 #endif
 
 /************************* FUNCTION ************************/

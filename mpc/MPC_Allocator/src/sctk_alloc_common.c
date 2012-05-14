@@ -20,40 +20,38 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_ALLOC_TOPOLOGY_H
-#define SCTK_ALLOC_TOPOLOGY_H
-
 /************************** HEADERS ************************/
-#include <stdbool.h>
-
-//optional header
-#ifdef MPC_Threads
-#include <sctk_topology.h>
-#elif defined(HAVE_LIBNUMA)
-#include <hwloc.h>
-#endif
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+#include <sys/mman.h>
+#include <stdlib.h>
 
 /************************* FUNCTION ************************/
-#ifndef MPC_Threads
-bool sctk_is_numa_node(void);
-int sctk_get_numa_node_number (void);
-#endif
+/**
+ * Provide a quick wrapper to mmap. It may help for debugging and instrumentation of malloc.
+ * @param addr Define the mapping address to request. NULL to not forced. Must be multiple of
+ * OS page size as for mmap.
+ * @param size Define the requested segement size. Must be multiple of OS page size as for mmap.
+**/
+void* sctk_mmap(void* addr, size_t size)
+{
+	void * res = NULL;
+	if (addr == NULL)
+		res = mmap(NULL,size,PROT_READ|PROT_WRITE,MAP_ANON|MAP_PRIVATE,-1,0);
+	else
+		res = mmap(addr,size,PROT_READ|PROT_WRITE,MAP_ANON|MAP_PRIVATE|MAP_FIXED,-1,0);
+	if (res == MAP_FAILED)
+		perror("Out of memory, failed to request memory to the OS via mmap.");
+	return res;
+}
 
-void sctk_alloc_init_topology(void);
-int sctk_get_preferred_numa_node(void);
-int sctk_alloc_init_on_numa_node(void);
-
-#ifdef HAVE_LIBNUMA
-hwloc_topology_t sctk_get_topology(void);
-#endif //HAVE_LIBNUMA
-
-#ifdef __cplusplus
-};
-#endif
-
-#endif //SCTK_ALLOC_TOPOLOGY_H
+/************************* FUNCTION ************************/
+/**
+ * Provide a quick wrapper to munmap, it may help for debugging and instrumentation of malloc.
+ * @param addr Define the starting address to unmap. As for munmap, it must be multiple of OS
+ * page size.
+ * @param size Define the size of the segment to unmap. As for munmap, it must be multiple of
+ * OS page size.
+**/
+void sctk_munmap(void * addr,size_t size)
+{
+	munmap(addr,size);
+}

@@ -217,3 +217,13 @@ int sctk_alloc_init_on_numa_node(void)
 		return sctk_alloc_get_current_numa_node();
 }
 #endif
+
+/************************* FUNCTION ************************/
+#ifdef HAVE_LIBNUMA
+#ifndef MPC_Threads
+hwloc_topology_t sctk_get_topology(void)
+{
+	return topology;
+}
+#endif
+#endif
