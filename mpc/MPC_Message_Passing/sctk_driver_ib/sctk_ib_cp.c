@@ -39,7 +39,7 @@
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"
 #endif
-#define SCTK_IB_MODULE_DEBUG
+//#define SCTK_IB_MODULE_DEBUG
 #define SCTK_IB_MODULE_NAME "CP"
 #include "sctk_ib_toolkit.h"
 #include "math.h"

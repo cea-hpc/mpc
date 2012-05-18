@@ -96,10 +96,12 @@ static inline void sctk_internal_ptp_message_list_init(sctk_internal_ptp_message
 
 typedef struct sctk_internal_ptp_s{
   sctk_comm_dest_key_t key;
+  sctk_comm_dest_key_t key_on_vp;
 
   sctk_internal_ptp_message_lists_t lists;
 
   UT_hash_handle hh;
+  UT_hash_handle hh_on_vp;
 } sctk_internal_ptp_t;
 
 static inline void sctk_ptp_tasks_insert(sctk_message_to_copy_t* tmp,
@@ -177,13 +179,20 @@ static inline void sctk_internal_ptp_add_send_incomming(sctk_internal_ptp_t* tmp
 /************************************************************************/
 /*Data structure accessors                                              */
 /************************************************************************/
+
+/* Table where all msg lists for the process are stored */
 static sctk_internal_ptp_t* sctk_ptp_table = NULL;
+/* Table where all msg lists for the current VP are stored */
+__thread sctk_internal_ptp_t* sctk_ptp_table_on_vp = NULL;
 static sctk_internal_ptp_t** sctk_ptp_array = NULL;
 /* List for process specific messages */
 static sctk_internal_ptp_t* sctk_ptp_admin = NULL;
 static int sctk_ptp_array_start = 0;
 static int sctk_ptp_array_end = 0;
 static sctk_spin_rwlock_t sctk_ptp_table_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
+
+/* Migration disabled */
+#define SCTK_MIGRATION_DISABLED
 
 static inline void
 sctk_ptp_table_write_lock(){
@@ -239,6 +248,7 @@ static inline void sctk_ptp_table_insert(sctk_internal_ptp_t * tmp){
 
   sctk_ptp_table_write_lock(&sctk_ptp_table_lock);
   HASH_ADD(hh,sctk_ptp_table,key,sizeof(sctk_comm_dest_key_t),tmp);
+  HASH_ADD(hh_on_vp,sctk_ptp_table_on_vp,key,sizeof(sctk_comm_dest_key_t),tmp);
   if(sctk_migration_mode){
     if(sctk_ptp_array != NULL){
       sctk_free(sctk_ptp_array);
@@ -1182,24 +1192,6 @@ void sctk_perform_messages(sctk_request_t* request){
       	sctk_try_perform_messages_for_pair(tmp);
       }
     }
-
-#warning "To remove in a next commit"
-#if 0
-    if(tmp != NULL){
-      if(request->need_check_in_wait == 1){
-      	sctk_try_perform_messages_for_pair(tmp);
-      } else {
-        sctk_network_notify_perform_message (request->header.glob_source);
-      }
-    }
-    if(tmp != NULL){
-      if(request->need_check_in_wait == 1){
-	sctk_try_perform_messages_for_pair(tmp);
-      }
-    } else {
-      sctk_network_notify_perform_message (request->header.glob_destination);
-    }
-#endif
   }
 }
 
@@ -1239,12 +1231,21 @@ void sctk_wait_all (const int task, const sctk_communicator_t com){
 void sctk_perform_all (){
   sctk_internal_ptp_t* pair;
   sctk_internal_ptp_t* tmp;
-#warning "Collaborative polling"
-#warning "Add topological iterations"
   sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
-  HASH_ITER(hh,sctk_ptp_table,pair,tmp){
+
+  HASH_ITER(hh_on_vp,sctk_ptp_table_on_vp,pair,tmp){
     sctk_try_perform_messages_for_pair(pair);
   }
+  /* FIXME: We only try to match messages for the tasks
+   * which are on the same NUMA node than the current thread.
+   * We observed *HUGE* performance issues while looping on
+   * all tasks on the node. Ideally, we should try to handle messages
+   * on the same VP and try to steal messages from another
+   * VP.
+  HASH_ITER(hh_on_vp,sctk_ptp_table_on_vp,pair,tmp){
+    sctk_try_perform_messages_for_pair(pair);
+  }
+  */
   sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
 }
 

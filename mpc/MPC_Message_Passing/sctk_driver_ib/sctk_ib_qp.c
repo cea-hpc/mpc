@@ -317,11 +317,14 @@ void sctk_ib_qp_key_fill(sctk_ib_qp_keys_t* keys, sctk_ib_qp_t *remote,
 
   /* FIXME: change the test */
   if (remote->ibuf_rdma) {
+    keys->connected = 1;
     rdma_send_ptr = remote->ibuf_rdma->region[REGION_SEND].buffer_addr;
     rdma_send_rkey = remote->ibuf_rdma->region[REGION_SEND].mmu_entry->mr->rkey;
 
     rdma_recv_ptr = remote->ibuf_rdma->region[REGION_RECV].buffer_addr;
     rdma_recv_rkey = remote->ibuf_rdma->region[REGION_RECV].mmu_entry->mr->rkey;
+  } else {
+    keys->connected = 0;
   }
 
   keys->lid = lid;
@@ -337,10 +340,11 @@ void sctk_ib_qp_key_fill(sctk_ib_qp_keys_t* keys, sctk_ib_qp_t *remote,
 
 void sctk_ib_qp_key_create_value(char *msg, size_t size, sctk_ib_qp_keys_t* keys) {
   snprintf(msg, size,
-      "%08x:%08x:%08x:(%p:%08x-%p:%08x)",
+      "%08x:%08x:%08x:(%d-%p:%08x-%p:%08x)",
       keys->lid,
       keys->qp_num,
       keys->psn,
+      keys->connected,
       keys->rdma.send.ptr,
       keys->rdma.send.rkey,
       keys->rdma.recv.ptr,
@@ -356,10 +360,11 @@ void sctk_ib_qp_key_create_key(char *msg, size_t size, int rail, int src, int de
 sctk_ib_qp_keys_t sctk_ib_qp_keys_convert( char* msg)
 {
   sctk_ib_qp_keys_t keys;
-  sscanf(msg, "%08x:%08x:%08x:(%p:%08x-%p:%08x)",
+  sscanf(msg, "%08x:%08x:%08x:(%d-%p:%08x-%p:%08x)",
       &keys.lid,
       &keys.qp_num,
       &keys.psn,
+      &keys.connected,
       &keys.rdma.send.ptr,
       &keys.rdma.send.rkey,
       &keys.rdma.recv.ptr,
@@ -706,7 +711,7 @@ sctk_ib_qp_allocate_init(struct sctk_ib_rail_info_s* rail_ib,
     remote->R = 1;
     remote->ondemand = 1;
     sctk_spinlock_lock(&od->lock);
-    sctk_debug("Add QP to rank %d %p", remote->rank, remote);
+    sctk_nodebug("Add QP to rank %d %p", remote->rank, remote);
     CDL_PREPEND(od->qp_list, remote);
     if (od->qp_list_ptr == NULL) {
       od->qp_list_ptr = remote;
@@ -880,7 +885,7 @@ static void* wait_send(void *arg){
         (void (*)(void *)) wait_send, &wait_send_arg);
   }
   sctk_ib_prof_qp_write(remote->rank, ibuf->desc.sg_entry.length,
-      sctk_get_time_stamp());
+      sctk_get_time_stamp(), PROF_QP_SEND);
   /* We inc the number of pending requests */
   sctk_ib_qp_inc_requests_nb(remote);
 

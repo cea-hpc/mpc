@@ -260,6 +260,7 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
 
 static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc,
     struct sctk_ib_polling_s *poll){
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   sctk_ibuf_t *ibuf = NULL;
   ibuf = (sctk_ibuf_t*) wc->wr_id;
   assume(ibuf);
@@ -538,7 +539,6 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   rc = ibv_modify_srq(device->srq, &mod_attr, IBV_SRQ_LIMIT);
   assume(rc == 0);
 
-
   /* Initialize network */
   sprintf(network_name, "IB-MT (v2.0) fallback %d/%d:%s - %dx %s (%d Gb/s)]",
     device->dev_index+1, device->dev_nb, ibv_get_device_name(device->dev),
@@ -554,6 +554,6 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   rail->notify_any_source_message = sctk_network_notify_any_source_message_ib;
   rail->network_name = network_name;
 
-  sctk_network_init_ib_all(rail, rail->route, rail->route_init);
+  sctk_ib_cm_connect_ring(rail, rail->route, rail->route_init);
 }
 #endif

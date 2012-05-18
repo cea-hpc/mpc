@@ -155,7 +155,7 @@ sctk_ibuf_rdma_pool_t*
 sctk_ibuf_rdma_pool_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remote, int nb_ibufs);
 
 void
-sctk_ibuf_rdma_update_remote_addr(sctk_ib_qp_t* remote, sctk_ib_qp_keys_t *key);
+sctk_ibuf_rdma_update_remote_addr(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remote, sctk_ib_qp_keys_t *key);
 
 void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf);
 
@@ -165,7 +165,7 @@ sctk_ib_rdma_eager_poll_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remot
 void sctk_ib_rdma_eager_walk_remotes(sctk_ib_rail_info_t *rail, int (func)(sctk_ib_rail_info_t *rail, sctk_ib_qp_t* remote), int *ret);
 
 int
-sctk_ibuf_rdma_is_remote_connected(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* remote);
+sctk_ibuf_rdma_is_remote_connected(sctk_ib_qp_t* remote);
 
 void
 sctk_ib_rdma_eager_poll_recv(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, int index);
@@ -173,5 +173,8 @@ sctk_ib_rdma_eager_poll_recv(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote,
 sctk_ibuf_t *sctk_ibuf_rdma_pick(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t* remote);
 
 void sctk_ib_rdma_set_tail_flag(sctk_ibuf_t* ibuf, size_t size);
+
+void sctk_ibuf_rdma_set_state_remote(sctk_ib_qp_t* remote, sctk_route_state_t state);
+sctk_route_state_t sctk_ibuf_rdma_get_state_remote(sctk_ib_qp_t* remote);
 #endif
 #endif

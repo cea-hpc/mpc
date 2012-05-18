@@ -71,6 +71,11 @@ struct sctk_rail_info_s{
   int rail_number;
 };
 
+typedef enum {
+  route_origin_dynamic  = 111,
+  route_origin_static   = 222
+} sctk_route_origin_t;
+
 typedef struct sctk_route_table_s{
   sctk_route_key_t key;
 
@@ -79,6 +84,9 @@ typedef struct sctk_route_table_s{
   sctk_rail_info_t* rail;
 
   UT_hash_handle hh;
+
+  /* Origin of the route entry: static or dynamic route */
+  sctk_route_origin_t origin;
 
   /* State of the route */
   OPA_int_t state;
@@ -143,6 +151,11 @@ __UNUSED__ static void sctk_route_set_state(sctk_route_table_t* tmp, sctk_route_
 
 __UNUSED__ static int sctk_route_get_state(sctk_route_table_t* tmp){
   return (int) OPA_load_int(&tmp->state);
+}
+
+/* Return the origin of a route entry: from dynamic or static allocation */
+__UNUSED__ static sctk_route_origin_t sctk_route_get_origin(sctk_route_table_t *tmp) {
+  return tmp->origin;
 }
 
 #endif

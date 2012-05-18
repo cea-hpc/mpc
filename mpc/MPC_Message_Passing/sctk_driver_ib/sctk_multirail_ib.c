@@ -175,7 +175,7 @@ void sctk_network_finalize_multirail_ib (){
   int i;
   if (rails) {
     for(i = 0; i < NB_RAILS; i++){
-      sctk_ib_prof_print(rails[i]);
+      sctk_ib_prof_finalize(rails[i]);
     }
   }
 }

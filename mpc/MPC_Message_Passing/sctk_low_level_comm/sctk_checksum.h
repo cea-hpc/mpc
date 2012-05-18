@@ -24,6 +24,8 @@
 #ifndef __SCTK__CHECKSUM_H_
 #define __SCTK__CHECKSUM_H_
 
+//#define SCTK_USE_CHECKSUM
+
 #include "sctk_inter_thread_comm.h"
 
 unsigned long sctk_checksum_message(sctk_thread_ptp_message_t *send,

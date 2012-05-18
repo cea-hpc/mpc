@@ -422,6 +422,7 @@ sctk_ib_rdma_recv_ack(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   /* Wait while the message becomes ready */
   sctk_thread_wait_for_value((int*) &rdma->local.ready, 1);
 
+  sctk_nodebug("Remote addr: %p", rdma_ack->addr);
   rdma->remote.addr = rdma_ack->addr;
   rdma->remote.size = rdma_ack->size;
   rdma->remote.rkey = rdma_ack->rkey;

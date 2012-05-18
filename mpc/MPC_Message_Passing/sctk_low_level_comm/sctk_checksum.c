@@ -21,8 +21,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef SCTK_USE_CHECKSUM
 #include "sctk_checksum.h"
+#ifdef SCTK_USE_CHECKSUM
 #include "sctk_shell_colors.h"
 #include <zlib.h>
 

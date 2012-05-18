@@ -98,6 +98,7 @@ typedef struct
   uint16_t lid;
   uint32_t qp_num;
   uint32_t psn;
+  int connected;
   struct {
     struct {
       void* ptr;
@@ -161,6 +162,8 @@ typedef struct sctk_ib_qp_s
 
   /* Eager RDMA channel */
   struct sctk_ibuf_rdma_pool_s *ibuf_rdma;
+  /* State of the RDMA channel */
+  sctk_route_state_t ibuf_rdma_state;
 
   /* Is remote dynamically created ? */
   int ondemand;

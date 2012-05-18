@@ -44,7 +44,6 @@
 #define SCTK_IB_MODULE_NAME "PROF"
 #include "sctk_ib_toolkit.h"
 
-#ifdef SCTK_IB_PROF
 int sctk_ib_counters[128];
 
 /**
@@ -75,6 +74,7 @@ __thread double poll_send = 0;
 __thread double poll_recv = 0;
 __thread double tst = 0;
 
+#ifdef SCTK_IB_PROF
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
@@ -85,7 +85,16 @@ void sctk_ib_prof_init(sctk_ib_rail_info_t *rail_ib) {
   assume(rail_ib->profiler);
   memset(rail_ib->profiler, 0, sizeof(sctk_ib_prof_t));
 
+  /* Initialize QP usage profiling */
   sctk_ib_prof_qp_init();
+
+  /* Memory profiling */
+  sctk_ib_prof_mem_init(rail_ib);
+}
+
+void sctk_ib_prof_finalize(sctk_ib_rail_info_t *rail_ib) {
+  sctk_ib_prof_print(rail_ib);
+  sctk_ib_prof_mem_finalize(rail_ib);
 }
 
 void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib) {
@@ -102,85 +111,13 @@ void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib) {
 /*-----------------------------------------------------------
  *  QP profiling
  *----------------------------------------------------------*/
-#if 0
-#define QP_PROF_BUFF_SIZE 400000
-#define QP_PROF_OUTPUT_FILE "output/qp_prof_%d_%d"
+// TODO: should add a filter to record only a part of events
 
-void sctk_ib_prof_qp_init_task(int task_id) {}
-void sctk_ib_prof_qp_finalize_task(int task_id) {}
-
-  struct sctk_ib_prof_qp_buff_s {
-  int proc;
-  size_t size;
-  double ts;
-};
-
-struct sctk_ib_prof_qp_s {
-  struct sctk_ib_prof_qp_buff_s *buff;
-  int head;
-  int fd;
-  int proc;
-  sctk_spinlock_t lock;
-};
-
-struct sctk_ib_prof_qp_s * qp_prof;
-
-void sctk_ib_prof_qp_init() {
-  char filename[256];
-
-  qp_prof = sctk_malloc ( sizeof(struct sctk_ib_prof_qp_s) );
-  qp_prof->buff = sctk_malloc (QP_PROF_BUFF_SIZE * sizeof(struct sctk_ib_prof_qp_buff_s));
-
-  sprintf(filename, QP_PROF_OUTPUT_FILE, sctk_get_node_rank(), sctk_get_process_rank());
-  qp_prof->fd = open(filename, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
-  assume (qp_prof->fd != -1);
-
-  qp_prof->proc = sctk_get_process_rank();
-  qp_prof->head = 0;
-  qp_prof->lock = SCTK_SPINLOCK_INITIALIZER;
-
-  sctk_ib_prof_qp_write(-1, 0, sctk_get_time_stamp());
-}
-
-void sctk_ib_prof_qp_flush() {
-  sctk_debug("Dumping file with %lu elements", qp_prof->head);
-  write(qp_prof->fd, qp_prof->buff,
-      qp_prof->head * sizeof(struct sctk_ib_prof_qp_buff_s));
-  sctk_debug("File dumped");
-  qp_prof->head = 0;
-}
-
-extern volatile int sctk_online_program;
-void sctk_ib_prof_qp_write(int proc, size_t size, double ts) {
-  int head;
-
-  assume(qp_prof);
-  /* We flush */
-  sctk_spinlock_lock(&qp_prof->lock);
-  if (qp_prof->head > (QP_PROF_BUFF_SIZE - 1)) {
-    sctk_ib_prof_qp_flush();
-  }
-  head = qp_prof->head;
-  qp_prof->head++;
-  sctk_spinlock_unlock(&qp_prof->lock);
-
-  qp_prof->buff[head].proc = proc;
-  qp_prof->buff[head].size = size;
-  qp_prof->buff[head].ts = ts;
-}
-
-void sctk_ib_prof_qp_finalize() {
-  /* End marker */
-  sctk_ib_prof_qp_write(-1, 0, sctk_get_time_stamp());
-  sctk_ib_prof_qp_flush();
-  close(qp_prof->fd);
-}
-
-#endif
-
-
-#define QP_PROF_BUFF_SIZE 40000
+/* Size of the buffer */
+#define QP_PROF_BUFF_SIZE 40000000
+/* Path where profile files are stored */
 #define QP_PROF_DIR "prof/node_%d"
+/* Name of files */
 #define QP_PROF_OUTPUT_FILE "qp_prof_%d"
 
 struct sctk_ib_prof_qp_buff_s {
@@ -199,7 +136,7 @@ struct sctk_ib_prof_qp_s {
 
 __thread struct sctk_ib_prof_qp_s * qp_prof;
 
-/* Process */
+/* Process initialization */
 void sctk_ib_prof_qp_init() {
   char dirname[256];
 
@@ -208,7 +145,7 @@ void sctk_ib_prof_qp_init() {
 }
 
 
-/* Task */
+/* Task initialization */
 void sctk_ib_prof_qp_init_task(int task_id) {
   char pathname[256];
 
@@ -230,15 +167,17 @@ void sctk_ib_prof_qp_init_task(int task_id) {
   sctk_ib_prof_qp_write(-1, 0, sctk_get_time_stamp(), PROF_QP_SYNC);
 }
 
+/*
+ * Flush the buffer to the file
+ */
 void sctk_ib_prof_qp_flush() {
-  sctk_debug("Dumping file with %lu elements", qp_prof->head);
+  sctk_nodebug("Dumping file with %lu elements", qp_prof->head);
   write(qp_prof->fd, qp_prof->buff,
       qp_prof->head * sizeof(struct sctk_ib_prof_qp_buff_s));
-  sctk_debug("File dumped");
   qp_prof->head = 0;
 }
 
-
+/* Write a new prof line */
 void sctk_ib_prof_qp_write(int proc, size_t size, double ts, char from) {
 
   /* We flush */
@@ -253,12 +192,96 @@ void sctk_ib_prof_qp_write(int proc, size_t size, double ts, char from) {
   qp_prof->head ++;
 }
 
+/* Finalize a task */
 void sctk_ib_prof_qp_finalize_task(int task_id) {
-  sctk_debug("End of task %d", task_id);
   /* End marker */
   sctk_ib_prof_qp_write(-1, 0, sctk_get_time_stamp(), PROF_QP_SYNC);
+  sctk_nodebug("End of task %d (head:%d)", task_id, qp_prof->head);
   sctk_ib_prof_qp_flush();
+  sctk_nodebug("FLUSHED End of task %d (head:%d)", task_id, qp_prof->head);
   close(qp_prof->fd);
+}
+
+/*-----------------------------------------------------------
+ *  Memory profiling
+ *----------------------------------------------------------*/
+/* Size of the buffer */
+#define MEM_PROF_BUFF_SIZE 40000000
+/* Path where profile files are stored */
+#define MEM_PROF_DIR "prof/node_%d"
+/* Name of files */
+#define MEM_PROF_OUTPUT_FILE "mem_prof"
+
+struct sctk_ib_prof_mem_buff_s {
+  double ts;
+  double mem;
+};
+
+struct sctk_ib_prof_mem_s {
+  struct sctk_ib_prof_mem_buff_s *buff;
+  int head;
+  int fd;
+};
+
+struct sctk_ib_prof_mem_s * mem_prof;
+
+/*
+ * Flush the buffer to the file
+ */
+void sctk_ib_prof_mem_flush() {
+  sctk_nodebug("Dumping file with %lu elements", mem_prof->head);
+  write(mem_prof->fd, mem_prof->buff,
+      mem_prof->head * sizeof(struct sctk_ib_prof_mem_buff_s));
+  mem_prof->head = 0;
+}
+
+/* Write a new prof line */
+void sctk_ib_prof_mem_write(double ts, double mem) {
+
+  /* We flush */
+  if (mem_prof->head > (MEM_PROF_BUFF_SIZE - 1)) {
+    sctk_ib_prof_mem_flush();
+  }
+
+  mem_prof->buff[mem_prof->head].ts = ts;
+  mem_prof->buff[mem_prof->head].mem = mem;
+  mem_prof->head ++;
+}
+
+void * __mem_thread(void* arg) {
+  sctk_ib_rail_info_t *rail_ib = (sctk_ib_rail_info_t*) arg;
+
+  while(1) {
+    sctk_ib_prof_mem_write(sctk_get_time_stamp(), sctk_profiling_get_dataused());
+    sleep(1);
+  }
+}
+/* Process initialization */
+void sctk_ib_prof_mem_init(sctk_ib_rail_info_t *rail_ib) {
+  char pathname[256];
+  sctk_thread_t pidt;
+  sctk_thread_attr_t attr;
+
+  mem_prof = sctk_malloc ( sizeof(struct sctk_ib_prof_mem_s) );
+  mem_prof->buff = sctk_malloc (MEM_PROF_BUFF_SIZE * sizeof(struct sctk_ib_prof_mem_buff_s));
+
+  sprintf(pathname, MEM_PROF_DIR"/"MEM_PROF_OUTPUT_FILE, sctk_get_process_rank());
+  mem_prof->fd = open(pathname, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
+  assume (mem_prof->fd != -1);
+
+  mem_prof->head = 0;
+
+  sctk_thread_attr_init (&attr);
+  sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
+  sctk_user_thread_create (&pidt, &attr, __mem_thread, (void*) rail_ib);
+}
+
+/* Process finalization */
+void sctk_ib_prof_mem_finalize(sctk_ib_rail_info_t *rail_ib) {
+  /* End marker */
+  sctk_ib_prof_mem_write(sctk_get_time_stamp(), PROF_QP_SYNC);
+  sctk_ib_prof_mem_flush();
+  close(mem_prof->fd);
 }
 
 #endif

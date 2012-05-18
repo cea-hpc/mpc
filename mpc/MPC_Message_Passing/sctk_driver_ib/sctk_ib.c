@@ -102,7 +102,7 @@ char *sctk_ib_print_procotol(sctk_ib_protocol_t p)
 }
 
 void sctk_ib_print_msg(sctk_thread_ptp_message_t *msg) {
-  sctk_debug("IB protocol: %s", sctk_ib_print_procotol(msg->tail.ib.protocol));
+  sctk_error("IB protocol: %s", sctk_ib_print_procotol(msg->tail.ib.protocol));
   switch (msg->tail.ib.protocol) {
     case eager_protocol:
       break;
@@ -114,78 +114,6 @@ void sctk_ib_print_msg(sctk_thread_ptp_message_t *msg) {
     default: not_reachable();
   }
 
-}
-
-void sctk_network_init_ib_all(sctk_rail_info_t* rail,
-			       int (*route)(int , sctk_rail_info_t* ),
-			       void(*route_init)(sctk_rail_info_t*)){
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  LOAD_CONFIG(rail_ib);
-  int dest_rank;
-  int src_rank;
-  sctk_route_table_t *route_table_src, *route_table_dest;
-  sctk_ib_data_t *route_dest, *route_src;
-  sctk_ib_qp_keys_t keys;
-
-  assume(rail->send_message_from_network != NULL);
-
-  dest_rank = (sctk_process_rank + 1) % sctk_process_number;
-  src_rank = (sctk_process_rank + sctk_process_number - 1) % sctk_process_number;
-
-  if (sctk_process_number > 2)
-  {
-  /* XXX: Set QP in a Ready-To-Send mode. Ideally, we should check that
-   * the remote QP has sent an ack */
-
-    /* create remote for dest */
-    route_table_dest = sctk_ib_create_remote();
-    sctk_ib_init_remote(dest_rank, rail, route_table_dest, 0);
-    route_dest=&route_table_dest->data.ib;
-
-    /* create remote for src */
-    route_table_src = sctk_ib_create_remote();
-    sctk_ib_init_remote(src_rank, rail, route_table_src, 0);
-    route_src=&route_table_src->data.ib;
-
-    sctk_ib_qp_keys_send(rail_ib, route_dest->remote);
-    sctk_pmi_barrier();
-
-    /* change state to RTR */
-    keys = sctk_ib_qp_keys_recv(route_dest->remote, src_rank);
-    sctk_ibuf_rdma_update_remote_addr(route_src->remote, &keys);
-    sctk_ib_qp_allocate_rtr(rail_ib, route_src->remote, &keys);
-    sctk_ib_qp_allocate_rts(rail_ib, route_src->remote);
-    sctk_ib_qp_keys_send(rail_ib, route_src->remote);
-    sctk_pmi_barrier();
-
-    keys = sctk_ib_qp_keys_recv(route_src->remote, dest_rank);
-    sctk_ibuf_rdma_update_remote_addr(route_dest->remote, &keys);
-    sctk_ib_qp_allocate_rtr(rail_ib, route_dest->remote, &keys);
-    sctk_ib_qp_allocate_rts(rail_ib, route_dest->remote);
-    sctk_pmi_barrier();
-
-    sctk_ib_add_static_route(dest_rank, route_table_dest, rail);
-    sctk_ib_add_static_route(src_rank, route_table_src, rail);
-  } else {
-    /* create remote for dest */
-    route_table_dest = sctk_ib_create_remote();
-    sctk_ib_init_remote(dest_rank, rail, route_table_dest, 0);
-    route_dest=&route_table_dest->data.ib;
-
-    sctk_ib_qp_keys_send(rail_ib, route_dest->remote);
-    sctk_pmi_barrier();
-
-    /* change state to RTR */
-    keys = sctk_ib_qp_keys_recv(route_dest->remote, src_rank);
-    sctk_ibuf_rdma_update_remote_addr(route_dest->remote, &keys);
-    sctk_ib_qp_allocate_rtr(rail_ib, route_dest->remote, &keys);
-    sctk_ib_qp_allocate_rts(rail_ib, route_dest->remote);
-    sctk_pmi_barrier();
-
-    sctk_ib_add_static_route(dest_rank, route_table_dest, rail);
-  }
-
-  sctk_nodebug("Recv from %d, send to %d", src_rank, dest_rank);
 }
 
 void sctk_network_stats_ib (struct MPC_Network_stats_s* stats) {

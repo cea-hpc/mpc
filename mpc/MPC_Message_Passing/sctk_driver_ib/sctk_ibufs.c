@@ -217,7 +217,7 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
 
   s = *size;
   /***** RDMA CHANNEL *****/
-  if (sctk_ibuf_rdma_is_remote_connected(rail_ib, remote)) {
+  if (sctk_ibuf_rdma_is_remote_connected(remote)) {
 
     if (s == ULONG_MAX) s = config->ibv_eager_rdma_limit - IBUF_RDMA_GET_SIZE;
 

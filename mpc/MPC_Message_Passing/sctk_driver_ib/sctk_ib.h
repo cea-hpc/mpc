@@ -174,10 +174,6 @@ extern "C"
     };
   } sctk_ib_msg_header_t;
 
-  void sctk_network_init_ib_all(struct sctk_rail_info_s* rail,
-			       int (*route)(int , struct sctk_rail_info_s* ),
-			       void(*route_init)(struct sctk_rail_info_s*));
-
   /* XXX: Should not be declared here but in CM */
   struct sctk_route_table_s *sctk_ib_create_remote();
   void sctk_ib_init_remote(int dest, struct sctk_rail_info_s* rail, struct sctk_route_table_s* route_table, int ondemand);

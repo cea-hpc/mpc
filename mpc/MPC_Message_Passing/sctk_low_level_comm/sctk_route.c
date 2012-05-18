@@ -84,6 +84,7 @@ sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail
     sctk_route_set_state(tmp, state_deconnected);
     sctk_route_set_low_memory_mode_local(tmp, 0);
     sctk_route_set_low_memory_mode_remote(tmp, 0);
+    tmp->origin = route_origin_dynamic;
     HASH_ADD(hh,sctk_dynamic_route_table,key,sizeof(sctk_route_key_t),tmp);
     *added = 1;
   } else if (sctk_route_get_state(tmp) == state_reset) { /* QP in a reset state */
@@ -118,6 +119,7 @@ void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t*
   /* XXX: For debug only. Assume that entry not already added */
   /* assume (sctk_route_dynamic_search(dest, rail) == NULL); */
 
+  tmp->origin = route_origin_dynamic;
   sctk_add_dynamic_reorder_buffer(dest);
 
   sctk_spinlock_write_lock(&sctk_route_table_lock);
@@ -129,10 +131,12 @@ void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* 
   tmp->key.destination = dest;
   tmp->key.rail = rail->rail_number;
   tmp->rail = rail;
-  sctk_route_set_state(tmp, state_connected);
+  /* FIXME: the following commented line may potentially break other modules (like TCP). */
+  /* sctk_route_set_state(tmp, state_connected); */
   sctk_route_set_low_memory_mode_local(tmp, 0);
   sctk_route_set_low_memory_mode_remote(tmp, 0);
 
+  tmp->origin = route_origin_static;
   sctk_add_static_reorder_buffer(dest);
   TABLE_LOCK();
   HASH_ADD(hh,sctk_static_route_table,key,sizeof(sctk_route_key_t),tmp);

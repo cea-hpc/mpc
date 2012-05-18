@@ -68,8 +68,8 @@
 /* Number of RDMA buffers allocated for each neighbor.
  * i.e: if IBV_MAX_RDMA_IBUFS = 256:
  * The total memory used is: 2 (1 for send and 1 for receive) * 256 buffers * IBV_EAGER_RDMA_LIMIT */
-#define IBV_MAX_RDMA_IBUFS  512
-#define IBV_MAX_RDMA_CONNECTIONS 0
+#define IBV_MAX_RDMA_IBUFS  256
+#define IBV_MAX_RDMA_CONNECTIONS 12
 
 /* Maximum number of buffers to allocate during the
  * initialization step */
@@ -104,7 +104,8 @@
 /* threshold before using dynamic allocation. For example, when
  * 80% of the SRQ buffers are busy, we make a copy of the message
  * before sending it to MPC. In the other case, MPC reads the message
- * directly from the network buffer */
+ * directly from the network buffer.
+ * FIXME: not used now */
 #define IBV_DYNAMIC_ALLOCATION_THRESHOLD 0.80L
 
 /* Number of new buffers allocated when
@@ -114,13 +115,14 @@
 #define IBV_WC_IN_NUMBER    4
 #define IBV_WC_OUT_NUMBER   4
 
-/* Numer of MMU entries allocated during
+/* Number of MMU entries allocated during
  * the MPC initialization */
 #define IBV_INIT_MR          400
 /* Number of new MMU allocated when
- * no more MMU entries are available */
+ * no more MMU entries are available.
+ * You must use this option at your own risks! */
 #define IBV_SIZE_MR_CHUNKS  200
-#define IBV_MMU_CACHE_ENABLED 1
+#define IBV_MMU_CACHE_ENABLED 0
 #define IBV_MMU_CACHE_ENTRIES 100
 
 #define IBV_ADM_PORT        1
@@ -131,12 +133,12 @@
 #define IBV_LOW_MEMORY 0
 /* Verbosity level (some infos can appears on
  * the terminal during runtime: new ibufs allocated,
- * new MMu entries allocated, etc...) */
+ * new MMU entries allocated, etc...) */
 #define IBV_VERBOSE_LEVEL         2
 
 #define IBV_ADAPTIVE_POLLING      0
 
-#define IBV_STEAL                 1
+#define IBV_STEAL                 2
 /*  0 -> MPC in normal mode, without work-stealing */
 /*  1 -> MPC in collaborative-polling mode, without work-stealing */
 /*  2 -> MPC in collaborative-polling mode, with work-stealing */
@@ -147,7 +149,6 @@ char* steal_names[3] = {
   "Collaborative-polling w/ WS"};
 
 #define IBV_QUIET_CRASH           0
-#define IBV_MATCH                 1
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
@@ -155,6 +156,14 @@ char* steal_names[3] = {
 
 void sctk_ib_config_check(sctk_ib_rail_info_t *rail_ib)
 {
+  LOAD_CONFIG(rail_ib);
+
+  /* TODO: MMU cache is buggy and do not intercept free calls */
+  if ( (sctk_process_rank == 0)
+      && (config->ibv_mmu_cache_enabled == 1) ) {
+    sctk_error("MMU cache enabled: use it at your own risk!");
+  }
+
 #if 0
   sctk_ib_config_t *c = rail_ib->config;
 
@@ -172,7 +181,7 @@ void sctk_ib_config_check(sctk_ib_rail_info_t *rail_ib)
   /* Good conf, we return */
   return;
 
-//error:
+error:
   sctk_error("Wrong IB configuration");
   sctk_abort();
   return;
@@ -212,7 +221,6 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         "ibv_rdma_dest_depth  = %d\n"
         "ibv_adaptive_polling = %d\n"
         "ibv_quiet_crash      = %d\n"
-        "ibv_match            = %d\n"
         EXPERIMENTAL(ibv_steal)"            = %d\n"
         "Stealing desc        = %s\n"
         EXPERIMENTAL(ibv_low_memory)"            = %d\n"
@@ -245,7 +253,6 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         config->ibv_rdma_dest_depth,
         config->ibv_adaptive_polling,
         config->ibv_quiet_crash,
-        config->ibv_match,
         config->ibv_steal, steal_names[config->ibv_steal],
         config->ibv_low_memory);
   }
@@ -292,7 +299,6 @@ void load_ib_default_config(sctk_ib_rail_info_t *rail_ib)
   config->ibv_steal = IBV_STEAL;
   config->ibv_low_memory = IBV_LOW_MEMORY;
   config->ibv_quiet_crash = IBV_QUIET_CRASH;
-  config->ibv_match = IBV_MATCH;
 }
 
 /* Set IB configure with env variables */
@@ -392,9 +398,6 @@ void set_ib_env(sctk_ib_rail_info_t *rail_ib)
 
   if ( (value = getenv("MPC_IBV_QUIET_CRASH")) != NULL )
     c->ibv_quiet_crash = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_MATCH")) != NULL )
-    c->ibv_match = atoi(value);
 }
 
 void sctk_ib_config_init(sctk_ib_rail_info_t *rail_ib, char* network_name)

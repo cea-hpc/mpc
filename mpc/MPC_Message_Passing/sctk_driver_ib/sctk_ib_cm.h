@@ -44,6 +44,10 @@ struct sctk_thread_ptp_message_body_s;
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
+/* Ring connexion */
+void sctk_ib_cm_connect_ring (sctk_rail_info_t* rail,
+			       int (*route)(int , sctk_rail_info_t* ),
+			       void(*route_init)(sctk_rail_info_t*));
 
 /* Fully-connected */
 void sctk_ib_cm_connect_to(int from, int to, struct sctk_rail_info_s* rail);

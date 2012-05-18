@@ -46,9 +46,14 @@
  *  posted in receive.
  */
 
+/* FIXME: the following variables *SHOULD* be in the rail */
 /* Linked list of rdma_poll where each remote using the RDMA eager protocol
  * is listed*/
 sctk_ibuf_rdma_pool_t *rdma_pool_list = NULL;
+/* Elements to merge to the rdma_pool_list */
+sctk_ibuf_rdma_pool_t *rdma_pool_list_to_merge = NULL;
+/* Lock when adding and accessing the concat list */
+static sctk_spinlock_t rdma_pool_list_lock = SCTK_SPINLOCK_INITIALIZER;
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
@@ -58,7 +63,7 @@ sctk_ibuf_rdma_pool_t *rdma_pool_list = NULL;
  * Check if a remote is connected to the process with a RDMA channel
  */
 int
-sctk_ibuf_rdma_is_remote_connected(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* remote) {
+sctk_ibuf_rdma_is_remote_connected(sctk_ib_qp_t* remote) {
   /* FIXME: Change the test */
   return (remote->ibuf_rdma != NULL);
 }
@@ -164,7 +169,12 @@ sctk_ibuf_rdma_pool_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remo
     pool->remote_region[REGION_RECV] = NULL;
     pool->send_credit = nb_ibufs;
     pool->remote = remote;
-    DL_APPEND(rdma_pool_list, pool);
+    sctk_ibuf_rdma_set_state_remote(pool->remote, state_deconnected);
+
+    /* Add the entry to the list */
+    sctk_spinlock_lock(&rdma_pool_list_lock);
+    DL_APPEND(rdma_pool_list_to_merge, pool);
+    sctk_spinlock_unlock(&rdma_pool_list_lock);
 
     sctk_ib_debug("[rank:%d] Allocation of %d RDMA buffers", remote->rank, nb_ibufs);
 
@@ -172,11 +182,69 @@ sctk_ibuf_rdma_pool_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remo
   } else {
     sctk_spinlock_unlock(&rdma_lock);
     sctk_debug("Cannot no more allocate RDMA channels (connections: %d)", device->eager_rdma_connections);
-    remote->ibuf_rdma = NULL;
   }
 
   return pool;
 }
+
+/*
+ * Delete all buffers
+ */
+static inline void
+sctk_ibuf_rdma_region_free(struct sctk_ib_rail_info_s *rail_ib,
+    sctk_ibuf_region_t *region) {
+  void* ptr = NULL;
+  void* ibuf;
+  sctk_ibuf_t* ibuf_ptr;
+  int i;
+
+  assume(region->buffer_addr);
+  assume(region->ibuf);
+
+  free(region->buffer_addr);
+  free(region->ibuf);
+
+  region->buffer_addr = NULL;
+  region->ibuf = NULL;
+}
+
+
+/*
+ * Delete a RDMA poll from a remote
+ */
+void
+sctk_ibuf_rdma_pool_free(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remote) {
+  LOAD_DEVICE(rail_ib);
+  LOAD_CONFIG(rail_ib);
+  static sctk_spinlock_t rdma_lock = SCTK_SPINLOCK_INITIALIZER;
+
+  /* Check if we can allocate an RDMA channel */
+  sctk_spinlock_lock(&rdma_lock);
+  if (sctk_ibuf_rdma_is_remote_connected(remote)) {
+    sctk_ibuf_rdma_pool_t* pool = remote->ibuf_rdma;
+    --device->eager_rdma_connections;
+    sctk_spinlock_unlock(&rdma_lock);
+
+    sctk_ib_debug("Freeing RDMA buffers (connections: %d)", device->eager_rdma_connections);
+
+    /* Free regions for send and recv */
+    sctk_ibuf_rdma_region_free(rail_ib, &pool->region[REGION_SEND]);
+    sctk_ibuf_rdma_region_free(rail_ib, &pool->region[REGION_RECV]);
+
+    sctk_spinlock_lock(&rdma_pool_list_lock);
+    DL_DELETE(rdma_pool_list_to_merge, pool);
+    sctk_spinlock_unlock(&rdma_pool_list_lock);
+
+    /* Free pool */
+    free(remote->ibuf_rdma);
+    remote->ibuf_rdma = NULL;
+
+    sctk_ib_debug("[rank:%d] Free RDMA buffers", remote->rank);
+  } else {
+    sctk_spinlock_unlock(&rdma_lock);
+  }
+}
+
 
 /*
  * Pick a RDMA buffer from the RDMA channel
@@ -309,9 +377,34 @@ static void __poll_ibuf(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote,
 void sctk_ib_rdma_eager_walk_remotes(sctk_ib_rail_info_t *rail, int (func)(sctk_ib_rail_info_t *rail, sctk_ib_qp_t* remote), int *ret) {
   sctk_ibuf_rdma_pool_t *pool;
   *ret = 0;
+  static sctk_spin_rwlock_t rw_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 
-  CDL_FOREACH(rdma_pool_list, pool) {
-    *ret |= func(rail, pool->remote);
+  sctk_spinlock_read_lock(&rw_lock);
+  DL_FOREACH(rdma_pool_list, pool) {
+    /* We check if the remote is connected. If not, do not pool */
+    if (sctk_ibuf_rdma_get_state_remote(pool->remote) == state_connected) {
+      *ret |= func(rail, pool->remote);
+    }
+  }
+  sctk_spinlock_read_unlock(&rw_lock);
+
+  /* Check if they are remotes to merge. We need to merge here because
+   * we cannot do this in the DL_FOREACH just before. It aims
+   * to deadlocks. */
+  if (rdma_pool_list_to_merge != NULL) {
+    sctk_spinlock_write_lock(&rw_lock);
+    /* We only add entries of connected processes */
+    sctk_spinlock_lock(&rdma_pool_list_lock);
+    DL_FOREACH(rdma_pool_list_to_merge, pool) {
+      if (sctk_ibuf_rdma_get_state_remote(pool->remote) == state_connected) {
+        /* Remove the entry from the merge list... */
+        DL_DELETE(rdma_pool_list_to_merge, pool);
+        /* ... add it to the global list */
+        DL_APPEND(rdma_pool_list, pool);
+      }
+    }
+    sctk_spinlock_unlock(&rdma_pool_list_lock);
+    sctk_spinlock_write_unlock(&rw_lock);
   }
 }
 
@@ -323,7 +416,7 @@ void sctk_ib_rdma_eager_walk_remotes(sctk_ib_rail_info_t *rail, int (func)(sctk_
 int
 sctk_ib_rdma_eager_poll_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote) {
   /* We return if the remote is not connected to the RDMA channel */
-  if (sctk_ibuf_rdma_is_remote_connected(rail_ib, remote) == 0) return 0;
+  if (sctk_ibuf_rdma_is_remote_connected(remote) == 0) return 0;
   static sctk_spinlock_t poll_lock = SCTK_SPINLOCK_INITIALIZER;
   sctk_ibuf_t *head;
 
@@ -473,7 +566,6 @@ void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
       /* Send the piggyback  */
 #warning "Is a control message"
       sctk_ib_qp_send_ibuf(rail_ib, remote, base, 1);
-
     }
     else {
       /* Unlock the RDMA region */
@@ -485,16 +577,40 @@ void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
   } else not_reachable();
 }
 
+void
+sctk_ibuf_rdma_set_state_remote(sctk_ib_qp_t* remote, sctk_route_state_t state) {
+
+  if (sctk_ibuf_rdma_is_remote_connected(remote)) {
+    remote->ibuf_rdma_state = state;
+  }
+}
+
+sctk_route_state_t
+sctk_ibuf_rdma_get_state_remote(sctk_ib_qp_t* remote) {
+
+  if (sctk_ibuf_rdma_is_remote_connected(remote)) {
+    return remote->ibuf_rdma_state;
+  } else state_deconnected;
+}
+
+
 /*
  * Update a remote from the keys received by a peer. This function must be
  * called before sending any message to the RDMA channel
  */
 void
-sctk_ibuf_rdma_update_remote_addr(sctk_ib_qp_t* remote, sctk_ib_qp_keys_t *key) {
+sctk_ibuf_rdma_update_remote_addr(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t* remote, sctk_ib_qp_keys_t *key) {
 
-  if (remote->ibuf_rdma) {
-    sctk_debug("Set remote addr: send_ptr=%p send_rkey=%u recv_ptr=%p recv_rkey=%u",
-        key->rdma.send.ptr, key->rdma.send.rkey, key->rdma.recv.ptr, key->rdma.recv.rkey);
+  if (sctk_ibuf_rdma_is_remote_connected(remote)) {
+
+
+    sctk_debug("Set remote addr: send_ptr=%p send_rkey=%u recv_ptr=%p recv_rkey=%u (connected: %d)",
+        key->rdma.send.ptr, key->rdma.send.rkey, key->rdma.recv.ptr, key->rdma.recv.rkey, key->connected);
+
+    if (key->connected == 0)  {
+      sctk_ibuf_rdma_pool_free(rail_ib, remote);
+      return;
+    }
 
     /* Update keys for send and recv regions. We need to register the send region
      * because of the piggyback */
