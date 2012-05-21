@@ -27,6 +27,7 @@
 #include <sctk_communicator.h>
 #include <sctk_spinlock.h>
 #include <sctk_ib_cm.h>
+#include <sctk_low_level_comm.h>
 #include <sctk_pmi.h>
 #include "sctk_ib_qp.h"
 #include <utarray.h>
@@ -116,8 +117,7 @@ void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t*
   tmp->key.rail = rail->rail_number;
   tmp->rail = rail;
 
-  /* XXX: For debug only. Assume that entry not already added */
-  /* assume (sctk_route_dynamic_search(dest, rail) == NULL); */
+  sctk_assert (sctk_route_dynamic_search(dest, rail) == NULL);
 
   tmp->origin = route_origin_dynamic;
   sctk_add_dynamic_reorder_buffer(dest);
@@ -262,7 +262,9 @@ void* __wait_connexion(void* a) {
   if (sctk_route_get_state(args->route_table) == state_connected) {
     args->done = 1;
   } else {
-    sctk_network_poll_all(args->rail);
+    /* The notify idle message *MUST* be filled for supporting on-demand
+     * connexion */
+    sctk_network_notify_idle_message();
   }
   return NULL;
 }

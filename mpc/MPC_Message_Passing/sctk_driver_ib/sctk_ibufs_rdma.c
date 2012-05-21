@@ -31,6 +31,8 @@
 #include "sctk_ib.h"
 #include "sctk_asm.h"
 #include "sctk_ib_prof.h"
+#include "sctk_ib_eager.h"
+#include "sctk_ib_rdma.h"
 #include "sctk_ib_config.h"
 #include "sctk_ib_qp.h"
 #include "sctk_ib_eager.h"
@@ -193,10 +195,6 @@ sctk_ibuf_rdma_pool_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remo
 static inline void
 sctk_ibuf_rdma_region_free(struct sctk_ib_rail_info_s *rail_ib,
     sctk_ibuf_region_t *region) {
-  void* ptr = NULL;
-  void* ibuf;
-  sctk_ibuf_t* ibuf_ptr;
-  int i;
 
   assume(region->buffer_addr);
   assume(region->ibuf);
@@ -215,7 +213,6 @@ sctk_ibuf_rdma_region_free(struct sctk_ib_rail_info_s *rail_ib,
 void
 sctk_ibuf_rdma_pool_free(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remote) {
   LOAD_DEVICE(rail_ib);
-  LOAD_CONFIG(rail_ib);
   static sctk_spinlock_t rdma_lock = SCTK_SPINLOCK_INITIALIZER;
 
   /* Check if we can allocate an RDMA channel */
@@ -340,8 +337,8 @@ static void __poll_ibuf(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote,
    * here.. */
   ibuf->to_release = IBUF_RELEASE;
 
-  const size_t size_flag = *ibuf->size_flag;
-  int *tail_flag = IBUF_RDMA_GET_TAIL_FLAG(ibuf->buffer, size_flag);
+  /* const size_t size_flag = *ibuf->size_flag; */
+  /* int *tail_flag = IBUF_RDMA_GET_TAIL_FLAG(ibuf->buffer, size_flag); */
   sctk_nodebug("Buffer size:%d, head flag:%d, tail flag:%d", *ibuf->size_flag, *ibuf->head_flag, *tail_flag);
 
   const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL(ibuf->buffer);
@@ -590,7 +587,7 @@ sctk_ibuf_rdma_get_state_remote(sctk_ib_qp_t* remote) {
 
   if (sctk_ibuf_rdma_is_remote_connected(remote)) {
     return remote->ibuf_rdma_state;
-  } else state_deconnected;
+  } else return state_deconnected;
 }
 
 

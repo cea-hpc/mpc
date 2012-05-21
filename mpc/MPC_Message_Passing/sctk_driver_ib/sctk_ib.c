@@ -178,6 +178,5 @@ void sctk_network_deco_neighbors_ib () {
   rails = sctk_network_get_rails();
   r = &rails[0]->network.ib;
   sctk_ib_qp_select_victim(r);
-
 }
 #endif

@@ -108,9 +108,9 @@ void sctk_ib_prof_mem_finalize(sctk_ib_rail_info_t *rail_ib);
 
 #else
 
-#define PROF_INC
-#define PROF_INC_RAIL_IB
-#define PROF_LOAD
+#define PROF_INC(x,y) (void)(0)
+#define PROF_INC_RAIL_IB(x,y) (void)(0)
+#define PROF_LOAD(x,y) 0
 #define sctk_ib_prof_init(x) (void)(0)
 #define sctk_ib_prof_print(x) (void)(0)
 #define sctk_ib_prof_finalize(x) (void)(0)

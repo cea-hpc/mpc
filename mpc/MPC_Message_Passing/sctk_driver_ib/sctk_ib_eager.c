@@ -238,11 +238,6 @@ void sctk_ib_eager_recv_msg_no_recopy(sctk_message_to_copy_t* tmp){
   sctk_net_message_copy_from_buffer(body, tmp, 1);
 }
 
-
-/* *******
- * Specific to eager
- * ********/
-
 void
 sctk_ib_eager_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   sctk_thread_ptp_message_body_t * msg_ibuf = IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer);

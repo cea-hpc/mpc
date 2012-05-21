@@ -57,6 +57,8 @@ sctk_ib_eager_recv_free(struct sctk_rail_info_s* rail, sctk_thread_ptp_message_t
 void sctk_ib_buffered_poll_recv(struct sctk_rail_info_s* rail, sctk_ibuf_t *ibuf);
 
 void sctk_ib_eager_init(struct sctk_ib_rail_info_s* rail_ib);
+void
+sctk_ib_eager_poll_recv(struct sctk_rail_info_s* rail, sctk_ibuf_t *ibuf);
 
 #endif
 #endif
