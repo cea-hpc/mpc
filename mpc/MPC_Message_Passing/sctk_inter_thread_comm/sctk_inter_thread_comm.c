@@ -290,22 +290,27 @@ static inline void sctk_ptp_table_insert(sctk_internal_ptp_t * tmp){
 /********************************************************************/
 #define SCTK_DISABLE_TASK_ENGINE
 
-static inline void sctk_ptp_tasks_perform(sctk_internal_ptp_t* pair){
+static inline int sctk_ptp_tasks_perform(sctk_internal_ptp_t* pair){
   sctk_message_to_copy_t* tmp;
+  int processed_nb = 0; /* Number of messages processed */
 
+  /* Each element of this list has already been matched */
   while(pair->lists.sctk_ptp_task_list != NULL){
     tmp = NULL;
     if(sctk_spinlock_trylock(&(pair->lists.sctk_ptp_tasks_lock)) == 0){
       tmp = pair->lists.sctk_ptp_task_list;
       if(tmp != NULL){
-	DL_DELETE(pair->lists.sctk_ptp_task_list,tmp);
+        DL_DELETE(pair->lists.sctk_ptp_task_list,tmp);
       }
       sctk_spinlock_unlock(&(pair->lists.sctk_ptp_tasks_lock));
     }
     if(tmp != NULL){
+      /* Call the copy function to copy the message from the network buffer to the matching user buffer */
       tmp->msg_send->tail.message_copy(tmp);
+      processed_nb++;
     }
   }
+  return processed_nb;
 }
 
 static inline void sctk_ptp_copy_tasks_insert(sctk_msg_list_t* ptr_recv,
@@ -1087,20 +1092,21 @@ static inline void sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t* pa
     if(ptr_send != NULL){
       DL_DELETE(pair->lists.pending_recv.list,ptr_recv);
 
-      /*Copy message*/
+      /*Insert the matching message to the pendint list. At this time,
+       * the message is not copied */
       sctk_ptp_copy_tasks_insert(ptr_recv,ptr_send,pair);
     } else {
       if(ptr_recv->msg->tail.remote_source){
-	sctk_network_notify_matching_message (ptr_recv->msg);
+        sctk_network_notify_matching_message (ptr_recv->msg);
       }
       if(ptr_recv->msg->body.header.source == MPC_ANY_SOURCE){
-	sctk_network_notify_any_source_message ();
+        sctk_network_notify_any_source_message ();
       }
     }
   }
 }
 
-static inline void sctk_perform_messages_for_pair(sctk_internal_ptp_t* pair){
+static inline int sctk_perform_messages_for_pair(sctk_internal_ptp_t* pair){
   if(((pair->lists.pending_send.list != NULL)
 #ifndef SCTK_DISABLE_REENTRANCE
       ||(pair->lists.incomming_send.list != NULL)
@@ -1123,14 +1129,18 @@ static inline void sctk_perform_messages_for_pair(sctk_internal_ptp_t* pair){
       sctk_internal_ptp_unlock_pending(&(pair->lists));
     }
   }
-  sctk_ptp_tasks_perform(pair);
+  return sctk_ptp_tasks_perform(pair);
 }
 
-static inline void sctk_try_perform_messages_for_pair(sctk_internal_ptp_t* pair){
+/*
+ * This function returns the number of messages processed.
+ */
+static inline int sctk_try_perform_messages_for_pair(sctk_internal_ptp_t* pair){
   /* If the lock has not been taken, we continue */
   if(pair->lists.pending_lock == 0){
-    sctk_perform_messages_for_pair(pair);
+    return sctk_perform_messages_for_pair(pair);
   }
+  return 0;
 }
 
 void sctk_wait_message (sctk_request_t * request){
@@ -1168,8 +1178,9 @@ void sctk_perform_messages(sctk_request_t* request){
        sctk_ptp_table_find(send_key, send_ptp);
        sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
      }
-     /* We assume that the corresponding pending list has been found */
-     assume(recv_ptp);
+     /* We assume that the corresponding pending list has been found.
+      * FIXME: not working, why ?*/
+     /* assume(recv_ptp); */
 
     /* Check the source of the request. We try to poll the
      * source in order to retreive messages from the network */
@@ -1197,7 +1208,7 @@ void sctk_perform_messages(sctk_request_t* request){
     }
 
     /* Try to match messages if the user asked for it */
-    if(request->need_check_in_wait == 1) {
+    if(recv_ptp && request->need_check_in_wait == 1) {
     	sctk_try_perform_messages_for_pair(recv_ptp);
     }
   }
@@ -1278,13 +1289,28 @@ void sctk_perform_all (){
   sctk_internal_ptp_t* pair;
   sctk_internal_ptp_t* tmp;
   sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
+  int processed_nb = 0; /* Number of messages processed */
 
   HASH_ITER(hh_on_vp,sctk_ptp_table_on_vp,pair,tmp){
-    sctk_try_perform_messages_for_pair(pair);
+    processed_nb += sctk_try_perform_messages_for_pair(pair);
   }
-  /* Also try to poll the ptp_admin queue */
-  if(sctk_ptp_admin) sctk_try_perform_messages_for_pair(sctk_ptp_admin);
 
+  /* Also try to poll the ptp_admin queue if no message
+   * has been processed previously */
+  if(sctk_ptp_admin && !processed_nb) {
+    processed_nb += sctk_try_perform_messages_for_pair(sctk_ptp_admin);
+  }
+
+  /* At the end, we try to process messages from other
+   * pending lists. We leave when we found a message to
+   * handle */
+
+  if( !processed_nb ) {
+    HASH_ITER(hh,sctk_ptp_table,pair,tmp){
+      processed_nb += sctk_try_perform_messages_for_pair(pair);
+      if (processed_nb) break;
+    }
+  }
 
   /* FIXME: We only try to match messages for the tasks
    * which are on the same NUMA node than the current thread.
