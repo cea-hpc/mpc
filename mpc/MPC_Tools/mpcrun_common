@@ -21,7 +21,7 @@
 #                                                                      #
 ########################################################################
 
-LAUNCH="none"
+LAUNCH="mpiexec"
 BINS_HOME="${MPC_BIN_DIR}/mpcrun_opt/mpcrun"
 
 GDB_LIBTHREAD_DB="${MPC_LIB_DIR}/libmpc_thread_db.so"
@@ -333,9 +333,6 @@ done
 if test "$PROCESS_NB" != "1"; then
   if test "$NET_TYPE" = "--sctk_use_network=none"; then
     NET_TYPE="--sctk_use_network=tcp"
-  fi
-  if test "$LAUNCH" = "none"  ; then
-  	LAUNCH="mpiexec"
   fi
 else
 	NET_TYPE="--sctk_use_network=none"
