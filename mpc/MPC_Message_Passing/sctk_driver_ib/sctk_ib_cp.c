@@ -29,7 +29,7 @@
 #include "sctk_route.h"
 #include "sctk_ib_mmu.h"
 #include "sctk_net_tools.h"
-#include "sctk_ib_sr.h"
+#include "sctk_ib_eager.h"
 #include "sctk_ib_prof.h"
 #include "sctk_asm.h"
 #include "sctk_ib_fallback.h"

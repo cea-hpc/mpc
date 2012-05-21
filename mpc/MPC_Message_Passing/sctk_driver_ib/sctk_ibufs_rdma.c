@@ -33,7 +33,7 @@
 #include "sctk_ib_prof.h"
 #include "sctk_ib_config.h"
 #include "sctk_ib_qp.h"
-#include "sctk_ib_sr.h"
+#include "sctk_ib_eager.h"
 #include "sctk_net_tools.h"
 #include "utlist.h"
 

@@ -28,7 +28,7 @@
 #define SCTK_IB_MODULE_NAME "IBUF"
 #include "sctk_ib_toolkit.h"
 #include "sctk_ib.h"
-#include "sctk_ib_sr.h"
+#include "sctk_ib_eager.h"
 #include "sctk_ib_config.h"
 #include "sctk_ib_qp.h"
 #include "sctk_ibufs_rdma.h"
@@ -164,12 +164,10 @@ sctk_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib, int n)
     sctk_ibuf_numa_t *node = &pool->nodes[n];
     sctk_spinlock_t *lock = &node->lock;
 
-#warning "Uncomment after commit"
-#if 0
     if (OPA_load_int(&node->free_nb) < 100) {
       sctk_ib_low_mem_broadcast(rail_ib->rail);
     }
-#endif
+
     sctk_spinlock_lock(lock);
 
     /* Allocate additionnal buffers if no more are available */
@@ -249,12 +247,10 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
     sctk_ibuf_numa_t *node = &pool->nodes[n];
     sctk_spinlock_t *lock = &node->lock;
 
-#warning "Uncomment after commit"
-#if 0
     if (OPA_load_int(&node->free_nb) < 100) {
       sctk_ib_low_mem_broadcast(rail_ib->rail);
     }
-#endif
+
     sctk_spinlock_lock(lock);
 
     /* Allocate additionnal buffers if no more are available */
@@ -323,12 +319,10 @@ sctk_ibuf_pick_recv(struct sctk_ib_rail_info_s *rail_ib,
   sctk_ibuf_numa_t *node = &pool->nodes[n];
   sctk_spinlock_t *lock = &node->lock;
 
-#warning "Uncomment after commit"
-#if 0
   if (OPA_load_int(&node->free_nb) < 100) {
     sctk_ib_low_mem_broadcast(rail_ib->rail);
   }
-#endif
+
   if (need_lock) sctk_spinlock_lock(lock);
 
   /* Allocate additionnal buffers if no more are available */

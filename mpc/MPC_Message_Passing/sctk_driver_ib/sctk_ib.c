@@ -39,7 +39,7 @@
 #include <sctk_ib_cp.h>
 #include <sctk_ib_toolkit.h>
 #include <sctk_ib_rdma.h>
-#include <sctk_ib_sr.h>
+#include <sctk_ib_eager.h>
 #include <sctk_ib_prof.h>
 #include <sctk_route.h>
 #include <sctk_ibufs_rdma.h>

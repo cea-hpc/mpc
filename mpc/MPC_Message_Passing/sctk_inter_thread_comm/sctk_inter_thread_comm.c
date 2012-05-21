@@ -1083,6 +1083,7 @@ static inline void sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t* pa
   DL_FOREACH_SAFE(pair->lists.pending_recv.list,ptr_recv,tmp){
     sctk_assert(ptr_recv->msg != NULL);
     ptr_send = sctk_perform_messages_search_matching(pair,&(ptr_recv->msg->body.header));
+    /* The task has posted the send buffer (i.e: MPI_Send)*/
     if(ptr_send != NULL){
       DL_DELETE(pair->lists.pending_recv.list,ptr_recv);
 
@@ -1126,6 +1127,7 @@ static inline void sctk_perform_messages_for_pair(sctk_internal_ptp_t* pair){
 }
 
 static inline void sctk_try_perform_messages_for_pair(sctk_internal_ptp_t* pair){
+  /* If the lock has not been taken, we continue */
   if(pair->lists.pending_lock == 0){
     sctk_perform_messages_for_pair(pair);
   }
@@ -1141,65 +1143,108 @@ void sctk_wait_message (sctk_request_t * request){
   }
 }
 
+/*
+ * Function called for performing message from a specific request.
+ * FIXME: Few lines have been commented because they seem useless.
+ * We should remove them in a next commit once validated all is
+ * working fine
+ */
 void sctk_perform_messages(sctk_request_t* request){
   if(request->completion_flag != SCTK_MESSAGE_DONE){
-     sctk_internal_ptp_t* tmp = NULL;
-     sctk_internal_ptp_t* send_tmp;
+     sctk_internal_ptp_t* recv_ptp = NULL;
+     sctk_internal_ptp_t* send_ptp;
 
      {
-       sctk_comm_dest_key_t key;
-       sctk_comm_dest_key_t send_key;
-       /*     key.comm = request->header.communicator; */
-       key.destination = request->header.glob_destination;
+       sctk_comm_dest_key_t recv_key;
+      sctk_comm_dest_key_t send_key;
+       /* key.comm = request->header.communicator; */
+       recv_key.destination = request->header.glob_destination;
        send_key.destination = request->header.glob_source;
 
        sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
-       sctk_ptp_table_find(key,tmp);
-       sctk_ptp_table_find(send_key,send_tmp);
+       /* Searching for the pending list corresponding to the
+        * dest task */
+       sctk_ptp_table_find(recv_key, recv_ptp);
+       sctk_ptp_table_find(send_key, send_ptp);
        sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
      }
-
-     /* FIXME: totally useless.... */
-#if 0
-    if(send_tmp == NULL){
-      sctk_network_notify_perform_message (request->header.glob_source);
-    }
-#endif
+     /* We assume that the corresponding pending list has been found */
+     assume(recv_ptp);
 
     /* Check the source of the request. We try to poll the
      * source in order to retreive messages from the network */
     if(request->header.source == MPC_ANY_SOURCE){
-      sctk_network_notify_any_source_message ();
+      /* If the source task is not on the current node, we
+       * call the low level module */
+      if (!send_ptp) sctk_network_notify_any_source_message ();
     } else {
       int remote_task;
       int remote_process;
       /* Convert task rank to process rank */
-      remote_task = sctk_get_comm_world_rank (request->header.communicator,
-          request->header.source);
+      remote_task = sctk_get_comm_world_rank (
+          request->header.communicator,request->header.source);
       remote_process = sctk_get_process_rank_from_task_rank(remote_task);
 
       sctk_nodebug("remote process=%d source=%d comm=%d",
           remote_process, request->header.source, request->header.communicator);
       /* This call can return remote_process == sctk_process.
-       * If we use an MPI_Isend followed by a MPI_Text, remote_process
+       * If we use an MPI_Isend followed by a MPI_Test, remote_process
        * is equal to the source of the message, so the current task */
-      sctk_network_notify_perform_message (remote_process);
+
+      /* If the source task is not on the current node, we
+       * call the low level module */
+      if (!send_ptp) sctk_network_notify_perform_message (remote_process);
     }
 
-    /* Try to match messages */
-    if(tmp != NULL){
-      if(request->need_check_in_wait == 1){
-      	sctk_try_perform_messages_for_pair(tmp);
-      }
+    /* Try to match messages if the user asked for it */
+    if(request->need_check_in_wait == 1) {
+    	sctk_try_perform_messages_for_pair(recv_ptp);
     }
   }
 }
 
+/*
+ * Wait for all message according to a communicator and a task id
+ * FIXME: We do not need to loop on all pending lists from
+ * sctk_ptp_table.
+ */
 void sctk_wait_all (const int task, const sctk_communicator_t com){
   sctk_internal_ptp_t* pair;
-  sctk_internal_ptp_t* tmp;
   int i;
 
+  /* Get the pending list associated to the task */
+  pair = sctk_get_internal_ptp(task);
+  sctk_assert(pair);
+
+  do{
+    i = 0;
+    sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
+    sctk_msg_list_t* ptr;
+    sctk_internal_ptp_lock_pending(&(pair->lists));
+    sctk_perform_messages_for_pair_locked(pair);
+    /* We loop on the recv list */
+    DL_FOREACH(pair->lists.pending_recv.list,ptr){
+      if((ptr->msg->body.header.destination == task) &&
+          (ptr->msg->body.header.communicator == com)){
+        i++;
+      }
+    }
+    /* We loop on the send list */
+    DL_FOREACH(pair->lists.pending_send.list,ptr){
+      if((ptr->msg->body.header.source == task) &&
+          (ptr->msg->body.header.communicator == com)){
+        i++;
+      }
+    }
+    sctk_internal_ptp_unlock_pending(&(pair->lists));
+    sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
+
+    if (i != 0) sctk_thread_yield();
+  } while(i != 0);
+
+  /* FIXME: The following code is the previous implementation of the function. We should remove it in a next commit */
+#if 0
+  sctk_internal_ptp_t* tmp;
   do{
     i = 0;
     sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
@@ -1208,16 +1253,16 @@ void sctk_wait_all (const int task, const sctk_communicator_t com){
       sctk_internal_ptp_lock_pending(&(pair->lists));
       sctk_perform_messages_for_pair_locked(pair);
       DL_FOREACH(pair->lists.pending_recv.list,ptr){
-	if((ptr->msg->body.header.destination == task) &&
-	   (ptr->msg->body.header.communicator == com)){
-	  i++;
-	}
+        if((ptr->msg->body.header.destination == task) &&
+            (ptr->msg->body.header.communicator == com)){
+          i++;
+        }
       }
       DL_FOREACH(pair->lists.pending_send.list,ptr){
-	if((ptr->msg->body.header.source == task) &&
-	   (ptr->msg->body.header.communicator == com)){
-	  i++;
-	}
+        if((ptr->msg->body.header.source == task) &&
+            (ptr->msg->body.header.communicator == com)){
+          i++;
+        }
       }
       sctk_internal_ptp_unlock_pending(&(pair->lists));
     }
@@ -1225,6 +1270,7 @@ void sctk_wait_all (const int task, const sctk_communicator_t com){
 
     if (i != 0) sctk_thread_yield();
   } while(i != 0);
+#endif
 }
 
 
@@ -1236,13 +1282,17 @@ void sctk_perform_all (){
   HASH_ITER(hh_on_vp,sctk_ptp_table_on_vp,pair,tmp){
     sctk_try_perform_messages_for_pair(pair);
   }
+  /* Also try to poll the ptp_admin queue */
+  if(sctk_ptp_admin) sctk_try_perform_messages_for_pair(sctk_ptp_admin);
+
+
   /* FIXME: We only try to match messages for the tasks
    * which are on the same NUMA node than the current thread.
    * We observed *HUGE* performance issues while looping on
    * all tasks on the node. Ideally, we should try to handle messages
    * on the same VP and try to steal messages from another
    * VP.
-  HASH_ITER(hh_on_vp,sctk_ptp_table_on_vp,pair,tmp){
+  HASH_ITER(hh,sctk_ptp_table,pair,tmp){
     sctk_try_perform_messages_for_pair(pair);
   }
   */
@@ -1263,14 +1313,23 @@ void sctk_notify_idle_message (){
     sctk_network_notify_idle_message ();
   }
 }
+
 /********************************************************************/
-/*Send/Recv messages                                                */
+/* Send messages                                                    */
 /********************************************************************/
 
+/*
+ * Function called when sending a message. The message can be forwarded to another process
+ * using the 'sctk_network_send_message' function. If the message
+ * matches, we add it to the corresponding pending list
+ * */
 void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_check){
+  /* The message is a process specific message and the process rank does not match
+   * the current process rank */
   if((IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag)) &&
      (msg->sctk_msg_get_destination != sctk_process_rank)){
     msg->tail.remote_destination = 1;
+    /* We forward the message */
     sctk_network_send_message (msg);
   } else {
     sctk_comm_dest_key_t key;
@@ -1292,23 +1351,28 @@ void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_ch
     msg->tail.remote_source = 0;
     msg->tail.remote_destination = 0;
 
+    /* We are searching for the corresponding pending list.
+     * If we do not find any entry, we forward the message */
     sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
     sctk_ptp_table_find(key,tmp);
     sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
 
     if(tmp != NULL){
       sctk_internal_ptp_add_send_incomming(tmp,msg);
-      if(perform_check){
-	sctk_try_perform_messages_for_pair(tmp);
-      }
+      /* If we ask for a checking, we check it */
+      if(perform_check) sctk_try_perform_messages_for_pair(tmp);
     } else {
-      /*Entering low level comm*/
+      /*Entering low level comm and forwarding the message*/
       msg->tail.remote_destination = 1;
       sctk_network_send_message (msg);
     }
   }
 }
 
+/*
+ * Function called for sending a message (i.e: MPI_Send).
+ * Mostly used by the file mpc.c
+ * */
 void sctk_send_message (sctk_thread_ptp_message_t * msg){
 #warning "To optimize"
   /*
@@ -1318,6 +1382,13 @@ void sctk_send_message (sctk_thread_ptp_message_t * msg){
   sctk_send_message_try_check(msg,0);
 }
 
+/********************************************************************/
+/* Recv messages                                                    */
+/********************************************************************/
+
+/*
+ * Function called when receiving a message.
+ * */
 void sctk_recv_message_try_check (sctk_thread_ptp_message_t * msg,sctk_internal_ptp_t* tmp,int perform_check){
   sctk_comm_dest_key_t send_key;
   sctk_internal_ptp_t* send_tmp = NULL;
@@ -1335,18 +1406,24 @@ void sctk_recv_message_try_check (sctk_thread_ptp_message_t * msg,sctk_internal_
   msg->tail.remote_source = 0;
   msg->tail.remote_destination = 0;
 
+  /* We are searching for the list corresponding to the
+   * task which receives the message */
   sctk_ptp_table_read_lock(&sctk_ptp_table_lock);
   if(tmp == NULL){
     sctk_comm_dest_key_t key;
     key.destination = msg->sctk_msg_get_glob_destination;
     sctk_ptp_table_find(key,tmp);
   }
+
   if(!IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag)){
     if(send_key.destination != -1){
       sctk_ptp_table_find(send_key,send_tmp);
     }
   }
   sctk_ptp_table_read_unlock(&sctk_ptp_table_lock);
+  /* We assume that the entry is found. If not, the message received is
+   * for a task which is not registered on the node. Possible issue. */
+  assume(tmp);
 
   if(send_tmp == NULL){
     msg->tail.need_check_in_wait = 1;
@@ -1355,20 +1432,26 @@ void sctk_recv_message_try_check (sctk_thread_ptp_message_t * msg,sctk_internal_
     sctk_network_notify_recv_message (msg);
   }
 
-  if(tmp != NULL){
-    sctk_internal_ptp_add_recv_incomming(tmp,msg);
-    if(perform_check){
-      sctk_try_perform_messages_for_pair(tmp);
-    }
-  } else {
-    not_reachable();
+  /* We add the message to the pending list */
+  sctk_internal_ptp_add_recv_incomming(tmp,msg);
+  /* Iw we ask for a matching, we run it */
+  if(perform_check){
+    sctk_try_perform_messages_for_pair(tmp);
   }
 }
+
+/*
+ * Function called for receiving a message (i.e: MPI_Recv).
+ * Mostly used by the file mpc.c
+ * */
 void sctk_recv_message (sctk_thread_ptp_message_t * msg,sctk_internal_ptp_t* tmp){
   msg->tail.need_check_in_wait = 0;
   sctk_recv_message_try_check(msg,tmp,1);
 }
 
+/*
+ * Get the internal pending list for a specific task
+ */
 struct sctk_internal_ptp_s* sctk_get_internal_ptp(int glob_id){
   sctk_internal_ptp_t* tmp = NULL;
   if(!sctk_migration_mode){
@@ -1380,6 +1463,10 @@ struct sctk_internal_ptp_s* sctk_get_internal_ptp(int glob_id){
   }
   return tmp;
 }
+
+/*
+ * Return if the task is on the node or not
+ */
 int sctk_is_net_message (int dest){
   sctk_comm_dest_key_t key;
   sctk_internal_ptp_t* tmp;

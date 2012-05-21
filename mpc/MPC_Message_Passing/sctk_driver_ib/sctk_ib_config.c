@@ -32,7 +32,7 @@
 #define SCTK_IB_MODULE_NAME "CONFIG"
 #include "sctk_ib_toolkit.h"
 #include "sctk_ib.h"
-#include "sctk_ib_sr.h"
+#include "sctk_ib_eager.h"
 #include "sctk_ibufs_rdma.h"
 #include "sctk_ib_buffered.h"
 
@@ -163,6 +163,12 @@ void sctk_ib_config_check(sctk_ib_rail_info_t *rail_ib)
       && (config->ibv_mmu_cache_enabled == 1) ) {
     sctk_error("MMU cache enabled: use it at your own risk!");
   }
+
+  if ( (sctk_process_rank == 0)
+      && (config->ibv_low_memory == 1) ) {
+    sctk_error("LOW mem module enabled: use it at your own risk!");
+  }
+
 
 #if 0
   sctk_ib_config_t *c = rail_ib->config;

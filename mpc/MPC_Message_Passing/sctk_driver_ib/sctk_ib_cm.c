@@ -25,7 +25,7 @@
 #include "sctk_ib.h"
 #include "sctk_ib_cm.h"
 #include "sctk_ib_polling.h"
-#include "sctk_ib_sr.h"
+#include "sctk_ib_eager.h"
 #include "sctk_ib_prof.h"
 #include "sctk_ibufs_rdma.h"
 #include "sctk_route.h"

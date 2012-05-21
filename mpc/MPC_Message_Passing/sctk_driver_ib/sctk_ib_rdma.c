@@ -24,7 +24,7 @@
 #ifdef MPC_USE_INFINIBAND
 #include "sctk_ib.h"
 #include "sctk_ib_rdma.h"
-#include "sctk_ib_sr.h"
+#include "sctk_ib_eager.h"
 #include "sctk_ib_polling.h"
 #include "sctk_ibufs.h"
 #include "sctk_ib_mmu.h"

@@ -34,7 +34,7 @@
 #include <sctk_ib_config.h>
 #include "sctk_ib_qp.h"
 #include "sctk_ib_cm.h"
-#include "sctk_ib_sr.h"
+#include "sctk_ib_eager.h"
 #include "sctk_ib_polling.h"
 #include "sctk_ib_async.h"
 #include "sctk_ib_rdma.h"
