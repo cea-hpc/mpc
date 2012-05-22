@@ -248,7 +248,7 @@ extern "C"
   int MPC_Processor_number (int *number);
   int MPC_Process_rank (int *rank);
   int MPC_Local_process_rank (int *rank);
-  int MPC_Local_process_number (int *rank);
+  int MPC_Local_process_number (int *number);
   int MPC_Process_number (int *number);
   int MPC_Get_version (int *version, int *subversion);
   int MPC_Get_multithreading (char *name, int size);

@@ -162,7 +162,7 @@ int sctk_pmi_get_node_rank(int* rank);
 /*! \brief Get the number of processes on the current node
  * @param size Pointer to store the number of processes
 */
-int sctk_pmi_get_processes_on_node_number(int* size);
+int sctk_pmi_get_process_on_node_number(int* size);
 
 /*! \brief Get the rank of this process on the current node
  * @param rank Pointer to store the rank of the process

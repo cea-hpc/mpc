@@ -139,7 +139,7 @@ sctk_restrict_topology ()
 
 #ifdef MPC_Message_Passing
     /* Determine number of processes on this node */
-    sctk_pmi_get_processes_on_node_number(&detected_on_this_host);
+    sctk_pmi_get_process_on_node_number(&detected_on_this_host);
     sctk_pmi_get_process_on_node_rank(&rank);
     detected = sctk_process_number;
     sctk_nodebug("Nb process on node %d",detected_on_this_host);
