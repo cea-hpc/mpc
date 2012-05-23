@@ -107,6 +107,7 @@ extern "C"
     void *__arg;
     void *(*__start_routine) (void *);
     int task_id;
+    int local_task_id;
     int virtual_processor;
     int user_thread;
 
@@ -117,7 +118,7 @@ extern "C"
     volatile sctk_thread_status_t status;
     struct sctk_task_specific_s *father_data;
   } sctk_thread_data_t;
-#define SCTK_THREAD_DATA_INIT { NULL, NULL, NULL, -1, -1, -1 ,\
+#define SCTK_THREAD_DATA_INIT { NULL, NULL, NULL, -1, -1, -1 , -1,\
       NULL,NULL,-1,(void*)NULL,sctk_thread_undef_status,NULL}
 
   void sctk_thread_data_init (void);

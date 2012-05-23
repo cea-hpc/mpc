@@ -77,8 +77,8 @@ struct sctk_task_specific_s
 {
   int task_id;
 
-    MPC_USE_TYPE (user_types);
-    MPC_USE_TYPE (user_types_struct);
+  MPC_USE_TYPE (user_types);
+  MPC_USE_TYPE (user_types_struct);
 
   mpc_per_communicator_t*per_communicator;
   sctk_spinlock_t per_communicator_lock;

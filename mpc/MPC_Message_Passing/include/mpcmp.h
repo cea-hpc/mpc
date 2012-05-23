@@ -238,18 +238,35 @@ extern "C"
   int MPC_Finalize (void);
   int MPC_Abort (MPC_Comm, int);
 
-  /*Topology informations */
+  /* MPI Topology informations */
   int MPC_Comm_rank (MPC_Comm comm, int *rank);
   int MPC_Comm_size (MPC_Comm comm, int *size);
   int MPC_Comm_remote_size (MPC_Comm comm, int *size);
+  
+  /* Node topology */
   int MPC_Node_rank (int *rank);
   int MPC_Node_number (int *number);
+  
+  /* Processors topology */
   int MPC_Processor_rank (int *rank);
   int MPC_Processor_number (int *number);
+ 
+  /* Process global numbering */
   int MPC_Process_rank (int *rank);
+  int MPC_Process_number (int *number);
+
+  /* Process local numbering */
   int MPC_Local_process_rank (int *rank);
   int MPC_Local_process_number (int *number);
-  int MPC_Process_number (int *number);
+  
+  /* Task global topology */
+  int MPC_Task_rank( int *rank );
+  int MPC_Task_number( int *number );
+
+  /* Task local topology */
+  int MPC_Local_task_rank( int *rank );
+  int MPC_Local_task_number( int *number );
+
   int MPC_Get_version (int *version, int *subversion);
   int MPC_Get_multithreading (char *name, int size);
   int MPC_Get_networking (char *name, int size);

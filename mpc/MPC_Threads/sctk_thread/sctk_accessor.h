@@ -37,12 +37,17 @@ extern "C"
   {
     return (int) (sctk_thread_data_get ()->task_id);
   }
-  
-  static inline int sctk_get_task_number (void)
+
+  static inline int sctk_get_local_task_rank (void)
+  {
+    return (int) (sctk_thread_data_get ()->local_task_id);
+  }
+
+  static inline int sctk_get_local_task_number (void)
   {
     return sctk_total_number_of_tasks;
   }
-  
+
   static inline int sctk_get_processor_rank (void)
   {
     return (int) (sctk_thread_data_get ()->virtual_processor);

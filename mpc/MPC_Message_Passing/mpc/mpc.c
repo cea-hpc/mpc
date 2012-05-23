@@ -1883,6 +1883,37 @@ PMPC_Local_process_number (int *number)
   MPC_ERROR_SUCESS();
 }
 
+int
+PMPC_Task_rank (int *rank)
+{
+  sctk_task_specific_t *task_specific;
+  mpc_check_comm (MPC_COMM_WORLD, MPC_COMM_WORLD);
+  task_specific = __MPC_get_task_specific ();
+  __MPC_Comm_rank (MPC_COMM_WORLD, rank, task_specific);
+  MPC_ERROR_SUCESS ();
+}
+
+int
+PMPC_Task_number (int *number)
+{
+  mpc_check_comm (MPC_COMM_WORLD, MPC_COMM_WORLD);
+  __MPC_Comm_size (MPC_COMM_WORLD, number);
+  MPC_ERROR_SUCESS ();
+}
+
+int
+PMPC_Local_task_rank (int *rank)
+{
+  *rank = sctk_get_local_task_rank();
+  MPC_ERROR_SUCESS();
+}
+
+int
+PMPC_Local_task_number (int *number)
+{
+  *number = sctk_get_local_task_number();
+  MPC_ERROR_SUCESS();
+}
 
 /*Collective operations*/
 

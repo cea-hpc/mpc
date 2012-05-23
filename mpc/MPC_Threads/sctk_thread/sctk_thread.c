@@ -702,7 +702,7 @@ int
 sctk_thread_create (sctk_thread_t * restrict __threadp,
 		    const sctk_thread_attr_t * restrict __attr,
 		    void *(*__start_routine) (void *), void *restrict __arg,
-		    long task_id)
+		    long task_id, long local_task_id)
 {
   int res;
   sctk_thread_data_t *tmp;
@@ -722,7 +722,7 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
   tmp->user_thread = 0;
 
   tmp->task_id = sctk_safe_cast_long_int (task_id);
-
+  tmp->local_task_id = sctk_safe_cast_long_int (local_task_id);
 
   res = __sctk_ptr_thread_create (__threadp, __attr, (void *(*)(void *))
 				  sctk_thread_create_tmp_start_routine,
@@ -2030,11 +2030,12 @@ static int sctk_ignore_sigpipe()
 void
 sctk_start_func (void *(*run) (void *), void *arg)
 {
-	int i;
+	int i, cnt;
 	int THREAD_NUMBER;
 	int local_threads;
 	int start_thread;
 	kthread_t timer_thread;
+
 #ifdef MPC_Message_Passing
 	sctk_thread_t migration_thread;
 	sctk_thread_attr_t migration_thread_attr;
@@ -2131,6 +2132,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	{
 		sctk_leave_no_alloc_land ();
 		local_threads = THREAD_NUMBER / sctk_process_number;
+
 		if (THREAD_NUMBER % sctk_process_number > sctk_process_rank)
 			local_threads++;
 
@@ -2156,10 +2158,12 @@ sctk_start_func (void *(*run) (void *), void *arg)
 		(sctk_thread_t *) sctk_malloc (local_threads * sizeof (sctk_thread_t));
 		sctk_total_number_of_tasks = local_threads;
 
+		cnt = 0;
+
 		for (i = start_thread; i < start_thread + local_threads; i++)
 		{
 			sctk_nodebug ("Thread %d try create", i);
-			sctk_thread_create (&(threads[thread_to_join]), NULL, run, arg, (long) i);
+			sctk_thread_create (&(threads[thread_to_join]), NULL, run, arg, (long) i, cnt++);
 			sctk_nodebug ("Thread %d created", i);
 			thread_to_join++;
 		}
