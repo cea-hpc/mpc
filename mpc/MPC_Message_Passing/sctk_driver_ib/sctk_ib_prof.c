@@ -119,6 +119,7 @@ void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib) {
 #define QP_PROF_DIR "prof/node_%d"
 /* Name of files */
 #define QP_PROF_OUTPUT_FILE "qp_prof_%d"
+static char QP_PROF_DONE = 0;
 
 struct sctk_ib_prof_qp_buff_s {
   int proc;
@@ -128,13 +129,17 @@ struct sctk_ib_prof_qp_buff_s {
 };
 
 struct sctk_ib_prof_qp_s {
-  struct sctk_ib_prof_qp_buff_s *buff;
+  struct sctk_ib_prof_qp_buff_s buff[QP_PROF_BUFF_SIZE];
   int head;
   int fd;
   int task_id;
 };
 
-__thread struct sctk_ib_prof_qp_s * qp_prof;
+struct sctk_ib_prof_qp_s * qp_prof = NULL;
+
+struct sctk_ib_prof_qp_s * sctk_ib_prof_qp_get(int vp)  {
+  return &qp_prof[vp];
+}
 
 /* Process initialization */
 void sctk_ib_prof_qp_init() {
@@ -146,18 +151,30 @@ void sctk_ib_prof_qp_init() {
 
 
 /* Task initialization */
-void sctk_ib_prof_qp_init_task(int task_id) {
+void sctk_ib_prof_qp_init_task(int task_id, int vp) {
   char pathname[256];
+  static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+  struct sctk_ib_prof_qp_s *tmp;
 
-  qp_prof = sctk_malloc ( sizeof(struct sctk_ib_prof_qp_s) );
-  qp_prof->buff = sctk_malloc (QP_PROF_BUFF_SIZE * sizeof(struct sctk_ib_prof_qp_buff_s));
+  sctk_spinlock_lock(&lock);
+  if (qp_prof == NULL) {
+    int vp_number;
+    vp_number = sctk_get_cpu_number();
+    assume(vp_number >= 1);
+    qp_prof = sctk_malloc (vp_number * sizeof(struct sctk_ib_prof_qp_s));
+    assume (qp_prof);
+    memset(qp_prof, 0, vp_number * sizeof(struct sctk_ib_prof_qp_s));
+  }
+  sctk_spinlock_unlock(&lock);
+
+  tmp = sctk_ib_prof_qp_get(vp);
 
   sprintf(pathname, QP_PROF_DIR"/"QP_PROF_OUTPUT_FILE, sctk_get_process_rank(), task_id);
-  qp_prof->fd = open(pathname, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
-  assume (qp_prof->fd != -1);
+  tmp->fd = open(pathname, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
+  assume (tmp->fd != -1);
 
-  qp_prof->task_id = task_id;
-  qp_prof->head = 0;
+  tmp->task_id = task_id;
+  tmp->head = 0;
 
   /* Tasks synchronization */
   sctk_terminaison_barrier (task_id);
@@ -171,35 +188,49 @@ void sctk_ib_prof_qp_init_task(int task_id) {
  * Flush the buffer to the file
  */
 void sctk_ib_prof_qp_flush() {
-  sctk_nodebug("Dumping file with %lu elements", qp_prof->head);
-  write(qp_prof->fd, qp_prof->buff,
-      qp_prof->head * sizeof(struct sctk_ib_prof_qp_buff_s));
-  qp_prof->head = 0;
+  struct sctk_ib_prof_qp_s *tmp;
+  tmp = sctk_ib_prof_qp_get(sctk_thread_get_vp());
+
+  sctk_nodebug("Dumping file with %lu elements", tmp->head);
+  write(tmp->fd, tmp->buff,
+      tmp->head * sizeof(struct sctk_ib_prof_qp_buff_s));
+  tmp->head = 0;
 }
 
 /* Write a new prof line */
 void sctk_ib_prof_qp_write(int proc, size_t size, double ts, char from) {
 
+  struct sctk_ib_prof_qp_s *tmp;
+  tmp = sctk_ib_prof_qp_get(sctk_thread_get_vp());
+  assume(tmp);
+
   /* We flush */
-  if (qp_prof->head > (QP_PROF_BUFF_SIZE - 1)) {
+  if (tmp->head > (QP_PROF_BUFF_SIZE - 1)) {
     sctk_ib_prof_qp_flush();
   }
 
-  qp_prof->buff[qp_prof->head].proc = proc;
-  qp_prof->buff[qp_prof->head].size = size;
-  qp_prof->buff[qp_prof->head].ts = ts;
-  qp_prof->buff[qp_prof->head].from = from;
-  qp_prof->head ++;
+
+  if (from == PROF_QP_CREAT) {
+    sctk_debug("CREATION FOUND for rank %d on vp %d!!!", proc, sctk_thread_get_vp());
+  }
+
+  tmp->buff[tmp->head].proc = proc;
+  tmp->buff[tmp->head].size = size;
+  tmp->buff[tmp->head].ts = ts;
+  tmp->buff[tmp->head].from = from;
+  tmp->head ++;
 }
 
 /* Finalize a task */
 void sctk_ib_prof_qp_finalize_task(int task_id) {
+  struct sctk_ib_prof_qp_s *tmp;
+  tmp = sctk_ib_prof_qp_get(sctk_thread_get_vp());
   /* End marker */
   sctk_ib_prof_qp_write(-1, 0, sctk_get_time_stamp(), PROF_QP_SYNC);
-  sctk_nodebug("End of task %d (head:%d)", task_id, qp_prof->head);
+  sctk_nodebug("End of task %d (head:%d)", task_id, tmp->head);
   sctk_ib_prof_qp_flush();
-  sctk_nodebug("FLUSHED End of task %d (head:%d)", task_id, qp_prof->head);
-  close(qp_prof->fd);
+  sctk_nodebug("FLUSHED End of task %d (head:%d)", task_id, tmp->head);
+  close(tmp->fd);
 }
 
 /*-----------------------------------------------------------

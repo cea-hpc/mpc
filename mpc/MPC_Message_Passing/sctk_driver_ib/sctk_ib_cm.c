@@ -29,6 +29,7 @@
 #include "sctk_ib_prof.h"
 #include "sctk_ibufs_rdma.h"
 #include "sctk_route.h"
+#include "sctk_asm.h"
 
 /* IB debug macros */
 #if defined SCTK_IB_MODULE_NAME
@@ -52,6 +53,7 @@ static void sctk_ib_cm_change_state(sctk_rail_info_t* rail,
 
   sctk_route_state_t state_before_connexion;
   struct sctk_ib_qp_s *remote = route_table->data.ib.remote;
+  state_before_connexion = sctk_route_get_state(route_table);
 
   switch ( sctk_route_get_origin(route_table) ) {
 
@@ -70,10 +72,16 @@ static void sctk_ib_cm_change_state(sctk_rail_info_t* rail,
         sctk_ib_debug("[%d] OD QP reconnected to process %d", rail->rail_number,remote->rank);
       else
         sctk_ib_debug("[%d] OD QP connected to process %d", rail->rail_number,remote->rank);
+
+      /* Only reccord dynamically created QPs */
+      sctk_ib_prof_qp_write(remote->rank, 0,
+        sctk_get_time_stamp(), PROF_QP_CREAT);
+
       break;
 
     default: not_reachable(); sctk_abort(); /* Not reachable */
   }
+
 }
 
 /*-----------------------------------------------------------
@@ -438,6 +446,35 @@ void sctk_ib_cm_deco_done_request_recv(sctk_rail_info_t *rail, void* ack, int sr
   return;
 }
 
+sctk_route_table_t *sctk_ib_cm_on_demand_request(int dest,sctk_rail_info_t* rail){
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  LOAD_DEVICE(rail_ib);
+  sctk_route_table_t *route_table;
+  sctk_ib_data_t *route;
+  /* Message to exchange to the peer */
+  char msg[MSG_STRING_SIZE];
+  int added;
+  struct sctk_ib_qp_s *remote;
+
+  /* create remote for dest */
+  route_table = sctk_route_dynamic_safe_add(dest, rail, sctk_ib_create_remote, sctk_ib_init_remote, &added);
+  remote = route_table->data.ib.remote;
+
+  assume(route_table);
+  if (added == 0) return route_table;
+  route=&route_table->data.ib;
+
+  sctk_ib_qp_key_fill(&remote->send_keys, route->remote, device->port_attr.lid,
+      route->remote->qp->qp_num, route->remote->psn);
+
+  sctk_ib_qp_key_create_value(msg, MSG_STRING_SIZE, &remote->send_keys);
+  sctk_ib_nodebug("[%d] OD QP connexion requested to %d", rail->rail_number, route->remote->rank);
+  sctk_route_messages_send(sctk_process_rank,dest,ondemand_specific_message_tag,
+      ONDEMAND_REQ_TAG+ONDEMAND_MASK_TAG,
+      msg,MSG_STRING_SIZE);
+  return route_table;
+}
+
 
 
 /*-----------------------------------------------------------
@@ -599,44 +636,6 @@ int sctk_ib_cm_on_demand_recv(sctk_rail_info_t *rail,
     rail->send_message_from_network(msg);
     return 0;
   }
-}
-
-int sctk_ib_cm_on_demand_recv_check(sctk_thread_ptp_message_body_t *msg) {
-  /* If on demand, handle message before sending it to high-layers */
-  if (msg->header.message_tag & ONDEMAND_MASK_TAG)
-  {
-   return 1;
-  }
-  return 0;
-}
-
-sctk_route_table_t *sctk_ib_cm_on_demand_request(int dest,sctk_rail_info_t* rail){
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  LOAD_DEVICE(rail_ib);
-  sctk_route_table_t *route_table;
-  sctk_ib_data_t *route;
-  /* Message to exchange to the peer */
-  char msg[MSG_STRING_SIZE];
-  int added;
-  struct sctk_ib_qp_s *remote;
-
-  /* create remote for dest */
-  route_table = sctk_route_dynamic_safe_add(dest, rail, sctk_ib_create_remote, sctk_ib_init_remote, &added);
-  remote = route_table->data.ib.remote;
-
-  assume(route_table);
-  if (added == 0) return route_table;
-  route=&route_table->data.ib;
-
-  sctk_ib_qp_key_fill(&remote->send_keys, route->remote, device->port_attr.lid,
-      route->remote->qp->qp_num, route->remote->psn);
-
-  sctk_ib_qp_key_create_value(msg, MSG_STRING_SIZE, &remote->send_keys);
-  sctk_ib_nodebug("[%d] OD QP connexion requested to %d", rail->rail_number, route->remote->rank);
-  sctk_route_messages_send(sctk_process_rank,dest,ondemand_specific_message_tag,
-      ONDEMAND_REQ_TAG+ONDEMAND_MASK_TAG,
-      msg,MSG_STRING_SIZE);
-  return route_table;
 }
 
 #endif

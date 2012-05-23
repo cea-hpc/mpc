@@ -618,7 +618,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
         sctk_ib_cp_init_task(tmp.task_id, tmp.virtual_processor);
 
         /* Register task for QP prof */
-        sctk_ib_prof_qp_init_task(tmp.task_id);
+        sctk_ib_prof_qp_init_task(tmp.task_id, tmp.virtual_processor);
     }
 #endif
       sctk_register_thread_initial (tmp.task_id);
