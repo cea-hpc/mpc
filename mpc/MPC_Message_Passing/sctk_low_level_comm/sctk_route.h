@@ -95,16 +95,28 @@ typedef struct sctk_route_table_s{
   OPA_int_t low_memory_mode_local;
   /* If the remote process is running out of memory */
   OPA_int_t low_memory_mode_remote;
+  /* Return if the process is the initiator of the remote creation.
+   * if 'is_initiator == CHAR_MAX, value not set */
+  char is_initiator;
+  sctk_spinlock_t lock;
 } sctk_route_table_t;
 
+#define ROUTE_LOCK(r) sctk_spinlock_lock(&(r)->lock)
+#define ROUTE_UNLOCK(r) sctk_spinlock_unlock(&(r)->lock)
+#define ROUTE_TRYLOCK(r) sctk_spinlock_trylock(&(r)->lock)
+
 /*NOT THREAD SAFE use to add a route at initialisation time*/
+void sctk_init_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail);
 void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail);
 
 /*THREAD SAFE use to add a route at compute time*/
+void sctk_init_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail);
 void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail);
 struct sctk_route_table_s *sctk_route_dynamic_search(int dest, sctk_rail_info_t* rail);
 
-sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail, sctk_route_table_t* (*create_func)(), void (*init_func)(int dest, sctk_rail_info_t* rail, sctk_route_table_t *route_table, int ondemand), int *added);
+sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail, sctk_route_table_t* (*create_func)(), void (*init_func)(int dest, sctk_rail_info_t* rail, sctk_route_table_t *route_table, int ondemand), int *added, char is_initiator);
+
+char sctk_route_get_is_initiator(sctk_route_table_t * route_table);
 
 /* For low_memory_mode */
 int sctk_route_cas_low_memory_mode_local(sctk_route_table_t* tmp, int oldv, int newv);
@@ -141,6 +153,7 @@ typedef enum sctk_route_state_e {
   state_connected   = 111,
   state_flushing    = 222,
   state_deconnected = 333,
+  state_connecting = 666,
   state_reconnecting  = 444,
   state_reset       = 555,
 } sctk_route_state_t;

@@ -31,7 +31,7 @@
 #include <stdint.h>
 #include "opa_primitives.h"
 
-#define SCTK_IB_PROF
+//#define SCTK_IB_PROF
 
 enum sctk_ib_prof_counters_e {
   cp_matched = 0,
@@ -118,7 +118,7 @@ void sctk_ib_prof_mem_finalize(sctk_ib_rail_info_t *rail_ib);
 
 /* QP profiling */
 #define sctk_ib_prof_qp_init(x) (void)(0)
-#define sctk_ib_prof_qp_init_task(x) (void)(0)
+#define sctk_ib_prof_qp_init_task(x,y) (void)(0)
 #define sctk_ib_prof_qp_flush() (void)(0)
 #define sctk_ib_prof_qp_finalize_task(x) (void)(0)
 #define sctk_ib_prof_qp_write(a,b,c,d) (void)(0)

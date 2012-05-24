@@ -47,15 +47,6 @@
 
 #define MAX_STRING_SIZE  2048
 
-
-void sctk_ib_add_static_route(int dest, sctk_route_table_t *tmp, sctk_rail_info_t* rail){
-  sctk_add_static_route(dest,tmp,rail);
-}
-
-void sctk_ib_add_dynamic_route(int dest, sctk_route_table_t *tmp, sctk_rail_info_t* rail){
-  sctk_add_dynamic_route(dest,tmp,rail);
-}
-
 /* Initialize a new route table */
 void
 sctk_ib_init_remote(int dest, sctk_rail_info_t* rail, struct sctk_route_table_s* route_table, int ondemand){
@@ -70,7 +61,6 @@ sctk_ib_init_remote(int dest, sctk_rail_info_t* rail, struct sctk_route_table_s*
   sctk_ibuf_rdma_pool_init(rail_ib, route_ib->remote, config->ibv_max_rdma_ibufs);
   return;
 }
-
 
 /* Create a new route table */
 sctk_route_table_t *

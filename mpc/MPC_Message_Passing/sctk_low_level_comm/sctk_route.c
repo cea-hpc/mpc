@@ -63,8 +63,16 @@ void sctk_route_set_low_memory_mode_remote(sctk_route_table_t* tmp, int low) {
   OPA_store_int(&tmp->low_memory_mode_remote, low);
 }
 
-
-sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail, sctk_route_table_t* (*create_func)(), void (*init_func)(int dest, sctk_rail_info_t* rail, sctk_route_table_t *route_table, int ondemand), int *added) {
+/*
+ * Return the route entry of the process 'dest'.
+ * If the entry is not found, it is created using the 'create_func' function and
+ * initialized using the 'init_funct' function.
+ *
+ * Return:
+ *  - added: if the entry has been created
+ *  - is_initiator: if the current process is the initiator of the entry creation.
+ */
+sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail, sctk_route_table_t* (*create_func)(), void (*init_func)(int dest, sctk_rail_info_t* rail, sctk_route_table_t *route_table, int ondemand), int *added, char is_initiator) {
   sctk_route_key_t key;
   sctk_route_table_t* tmp;
   *added = 0;
@@ -79,25 +87,38 @@ sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail
     /* QP added on demand */
     tmp = create_func();
     init_func(dest, rail, tmp, 1);
-    tmp->key.destination = dest;
-    tmp->key.rail = rail->rail_number;
-    tmp->rail = rail;
     sctk_route_set_state(tmp, state_deconnected);
-    sctk_route_set_low_memory_mode_local(tmp, 0);
-    sctk_route_set_low_memory_mode_remote(tmp, 0);
-    tmp->origin = route_origin_dynamic;
+    /* We init the entry and add it to the table */
+    sctk_init_dynamic_route(dest, tmp, rail);
+    tmp->is_initiator = is_initiator;
     HASH_ADD(hh,sctk_dynamic_route_table,key,sizeof(sctk_route_key_t),tmp);
     *added = 1;
   } else if (sctk_route_get_state(tmp) == state_reset) { /* QP in a reset state */
+    /* If the remote is in a reset state, we can reinit all the fields
+     * and we set added to 1 */
+    /* TODO: Reinit the structures */
+    ROUTE_LOCK(tmp);
     sctk_route_set_state(tmp, state_reconnecting);
-   /* We just need to init the entry. No need to create it */
     init_func(dest, rail, tmp, 1);
     sctk_route_set_low_memory_mode_local(tmp, 0);
     sctk_route_set_low_memory_mode_remote(tmp, 0);
+    ROUTE_UNLOCK(tmp);
     *added = 1;
   }
   sctk_spinlock_write_unlock(&sctk_route_table_lock);
   return tmp;
+}
+
+/* Return if the process is the initiator of the connexion or not */
+char sctk_route_get_is_initiator(sctk_route_table_t * route_table) {
+  assume(route_table);
+  int is_initiator;
+
+  ROUTE_LOCK(route_table);
+  is_initiator = route_table->is_initiator;
+  ROUTE_UNLOCK(route_table);
+
+  return is_initiator;
 }
 
 sctk_route_table_t *sctk_route_dynamic_search(int dest, sctk_rail_info_t* rail){
@@ -112,22 +133,32 @@ sctk_route_table_t *sctk_route_dynamic_search(int dest, sctk_rail_info_t* rail){
   return tmp;
 }
 
-void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
+/*-----------------------------------------------------------
+ *  Initialize and add dynamic routes
+ *----------------------------------------------------------*/
+void sctk_init_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
   tmp->key.destination = dest;
   tmp->key.rail = rail->rail_number;
   tmp->rail = rail;
 
-  sctk_assert (sctk_route_dynamic_search(dest, rail) == NULL);
+  /* sctk_assert (sctk_route_dynamic_search(dest, rail) == NULL); */
+  sctk_route_set_low_memory_mode_local(tmp, 0);
+  sctk_route_set_low_memory_mode_remote(tmp, 0);
+
+  tmp->is_initiator = CHAR_MAX;
+  tmp->lock = SCTK_SPINLOCK_INITIALIZER;
 
   tmp->origin = route_origin_dynamic;
   sctk_add_dynamic_reorder_buffer(dest);
+}
 
+void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
   sctk_spinlock_write_lock(&sctk_route_table_lock);
   HASH_ADD(hh,sctk_dynamic_route_table,key,sizeof(sctk_route_key_t),tmp);
   sctk_spinlock_write_unlock(&sctk_route_table_lock);
 }
 
-void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
+void sctk_init_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
   tmp->key.destination = dest;
   tmp->key.rail = rail->rail_number;
   tmp->rail = rail;
@@ -136,17 +167,32 @@ void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* 
   sctk_route_set_low_memory_mode_local(tmp, 0);
   sctk_route_set_low_memory_mode_remote(tmp, 0);
 
+  tmp->is_initiator = CHAR_MAX;
+  tmp->lock = SCTK_SPINLOCK_INITIALIZER;
+
   tmp->origin = route_origin_static;
   sctk_add_static_reorder_buffer(dest);
+}
+
+void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
+  /* FIXME: Ideally the initialization should not be in the 'add' function */
+  sctk_init_static_route(dest, tmp, rail);
   TABLE_LOCK();
   HASH_ADD(hh,sctk_static_route_table,key,sizeof(sctk_route_key_t),tmp);
   TABLE_UNLOCK();
 }
 
+
+/*-----------------------------------------------------------
+ *  Routes walking
+ *----------------------------------------------------------*/
+
 UT_icd ptr_icd = {sizeof(sctk_route_table_t**), NULL, NULL, NULL};
 
-/* Walk through all registered routes and call the function 'func'.
- * Static and dynamic routes are involved */
+/*
+ * Walk through all registered routes and call the function 'func'.
+ * Static and dynamic routes are involved
+ */
 void sctk_walk_all_routes(const sctk_rail_info_t* rail, void (*func) (const sctk_rail_info_t* rail,sctk_route_table_t* table) ) {
   sctk_route_table_t *current_route, *tmp, **tmp2;
   UT_array *routes;
@@ -201,6 +247,11 @@ void sctk_walk_all_dynamic_routes(const sctk_rail_info_t* rail, void (*func) (co
       func(rail, *tmp2);
   }
 }
+
+
+/*-----------------------------------------------------------
+ *  Route calculation
+ *----------------------------------------------------------*/
 
 static inline
 sctk_route_table_t* sctk_get_route_to_process_no_route_static(int dest, sctk_rail_info_t* rail){

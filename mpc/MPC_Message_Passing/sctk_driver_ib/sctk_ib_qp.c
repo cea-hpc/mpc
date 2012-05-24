@@ -317,14 +317,14 @@ void sctk_ib_qp_key_fill(sctk_ib_qp_keys_t* keys, sctk_ib_qp_t *remote,
 
   /* FIXME: change the test */
   if (remote->ibuf_rdma) {
-    keys->connected = 1;
+    keys->rdma.connected = 1;
     rdma_send_ptr = remote->ibuf_rdma->region[REGION_SEND].buffer_addr;
     rdma_send_rkey = remote->ibuf_rdma->region[REGION_SEND].mmu_entry->mr->rkey;
 
     rdma_recv_ptr = remote->ibuf_rdma->region[REGION_RECV].buffer_addr;
     rdma_recv_rkey = remote->ibuf_rdma->region[REGION_RECV].mmu_entry->mr->rkey;
   } else {
-    keys->connected = 0;
+    keys->rdma.connected = 0;
   }
 
   keys->lid = lid;
@@ -334,41 +334,81 @@ void sctk_ib_qp_key_fill(sctk_ib_qp_keys_t* keys, sctk_ib_qp_t *remote,
   keys->rdma.send.rkey = rdma_send_rkey;
   keys->rdma.recv.ptr = rdma_recv_ptr;
   keys->rdma.recv.rkey = rdma_recv_rkey;
+}
 
+void sctk_ib_qp_key_fill_rdma(sctk_ib_qp_keys_t* keys, sctk_ib_qp_t *remote,
+    uint16_t lid, uint32_t qp_num, uint32_t psn) {
+
+  void *rdma_send_ptr = NULL;
+  uint32_t rdma_send_rkey = 0;
+  void *rdma_recv_ptr = NULL;
+  uint32_t rdma_recv_rkey = 0;
+
+  /* FIXME: change the test */
+  if (remote->ibuf_rdma) {
+    keys->rdma.connected = 1;
+    rdma_send_ptr = remote->ibuf_rdma->region[REGION_SEND].buffer_addr;
+    rdma_send_rkey = remote->ibuf_rdma->region[REGION_SEND].mmu_entry->mr->rkey;
+
+    rdma_recv_ptr = remote->ibuf_rdma->region[REGION_RECV].buffer_addr;
+    rdma_recv_rkey = remote->ibuf_rdma->region[REGION_RECV].mmu_entry->mr->rkey;
+  } else {
+    keys->rdma.connected = 0;
+  }
+
+  keys->lid = lid;
+  keys->qp_num = qp_num;
+  keys->psn = psn;
+  keys->rdma.send.ptr = rdma_send_ptr;
+  keys->rdma.send.rkey = rdma_send_rkey;
+  keys->rdma.recv.ptr = rdma_recv_ptr;
+  keys->rdma.recv.rkey = rdma_recv_rkey;
 }
 
 
 void sctk_ib_qp_key_create_value(char *msg, size_t size, sctk_ib_qp_keys_t* keys) {
-  snprintf(msg, size,
-      "%08x:%08x:%08x:(%d-%p:%08x-%p:%08x)",
+  int ret;
+
+  ret = snprintf(msg, size,
+      "%08x:%08x:%08x:(%1d-%p:%08x:%04x|%p:%08x:%04x)",
       keys->lid,
       keys->qp_num,
       keys->psn,
-      keys->connected,
+      keys->rdma.connected,
       keys->rdma.send.ptr,
       keys->rdma.send.rkey,
+      keys->rdma.send.size,
       keys->rdma.recv.ptr,
-      keys->rdma.recv.rkey);
+      keys->rdma.recv.rkey,
+      keys->rdma.recv.size);
+  /* We assume the value doest not overflow with the buffer */
+  assume(ret < size);
+
   sctk_ib_qp_key_print(keys);
 }
 
 void sctk_ib_qp_key_create_key(char *msg, size_t size, int rail, int src, int dest) {
+  int ret;
   /* FIXME: Change 0 if several rails at the same time */
-  snprintf(msg, size,"IB%02d:%06d:%06d", 0, src, dest);
+  ret = snprintf(msg, size,"IB%02d:%06d:%06d", 0, src, dest);
+  /* We assume the value doest not overflow with the buffer */
+  assume(ret < size);
 }
 
 sctk_ib_qp_keys_t sctk_ib_qp_keys_convert( char* msg)
 {
   sctk_ib_qp_keys_t keys;
-  sscanf(msg, "%08x:%08x:%08x:(%d-%p:%08x-%p:%08x)",
+  sscanf(msg, "%08x:%08x:%08x:(%1d-%p:%08x:%04x|%p:%08x:%04x)",
       &keys.lid,
       &keys.qp_num,
       &keys.psn,
-      &keys.connected,
+      &keys.rdma.connected,
       &keys.rdma.send.ptr,
       &keys.rdma.send.rkey,
+      &keys.rdma.send.size,
       &keys.rdma.recv.ptr,
-      &keys.rdma.recv.rkey);
+      &keys.rdma.recv.rkey,
+      &keys.rdma.recv.size);
 
   sctk_ib_qp_key_print(&keys);
 
@@ -376,7 +416,7 @@ sctk_ib_qp_keys_t sctk_ib_qp_keys_convert( char* msg)
 }
 
 /*-----------------------------------------------------------
- *  Queue Pair Keys
+ *  Queue Pair Keys: Used for the ring connection
  *----------------------------------------------------------*/
 void sctk_ib_qp_keys_send(
     struct sctk_ib_rail_info_s* rail_ib,

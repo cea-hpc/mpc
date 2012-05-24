@@ -98,15 +98,17 @@ typedef struct
   uint16_t lid;
   uint32_t qp_num;
   uint32_t psn;
-  int connected;
   struct {
+    int connected;
     struct {
       void* ptr;
       uint32_t rkey;
+      int size;
     } send;
     struct {
       void* ptr;
       uint32_t rkey;
+      int size;
     } recv;
   } rdma;
 } sctk_ib_qp_keys_t;
