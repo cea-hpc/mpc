@@ -242,7 +242,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_find_in_cac
 	//loop in the list the find the first on which is good.
 	free_bloc = light_source->cache;
 	prev_bloc = NULL;
-	while (free_bloc != NULL && free_bloc->size < size)
+	while (free_bloc != NULL && free_bloc->size == size)
 	{
 		prev_bloc = free_bloc;
 		free_bloc = free_bloc->next;
@@ -337,10 +337,10 @@ SCTK_STATIC void sctk_alloc_mm_source_light_free_memory(struct sctk_alloc_mm_sou
 	free_bloc = sctk_alloc_mm_source_light_to_free_macro_bloc(bloc);
 
 	//if larger than basic macro bloc size, return to system immediately
-	if (bloc->header.size > SCTK_MACRO_BLOC_SIZE)
-		sctk_munmap(bloc,bloc->header.size);
-	else
-		sctk_alloc_mm_source_light_reg_in_cache(light_source,free_bloc);
+	//if (free_bloc->size > 2*SCTK_MACRO_BLOC_SIZE)
+		sctk_munmap(free_bloc,free_bloc->size);
+	//else
+	//	sctk_alloc_mm_source_light_reg_in_cache(light_source,free_bloc);
 
 	//increment counters
 	sctk_alloc_spinlock_lock(&light_source->spinlock);

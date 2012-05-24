@@ -509,6 +509,9 @@ void * sctk_realloc (void * ptr, size_t size)
 	if (local_chain == NULL)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
 	#endif
+
+	//if (size != 0 && ptr != NULL && size < sctk_alloc_posix_get_size(ptr) - 16)
+	//	return ptr;
 	
 	if (size != 0)
 	{
