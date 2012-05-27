@@ -73,6 +73,7 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
   assume(ibuf);
   // memset (ibuf, 0, nb_ibufs * sizeof(sctk_ibuf_t));
 
+  region->size_ibufs = config->ibv_eager_limit;
   region->list = ibuf;
   region->nb = nb_ibufs;
   region->node = node;
@@ -212,15 +213,18 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
   LOAD_CONFIG(rail_ib);
   sctk_ibuf_t* ibuf = NULL;
   size_t s;
+  size_t limit;
 
   s = *size;
   /***** RDMA CHANNEL *****/
   if (sctk_ibuf_rdma_is_remote_connected(remote)) {
+    limit = sctk_ibuf_rdma_get_eager_limit(remote);
+    sctk_nodebug("Eager limit: %lu", limit);
 
-    if (s == ULONG_MAX) s = config->ibv_eager_rdma_limit - IBUF_RDMA_GET_SIZE;
+    if (s == ULONG_MAX) s = limit - IBUF_RDMA_GET_SIZE;
 
-    if ( (IBUF_RDMA_GET_SIZE + s) <= config->ibv_eager_rdma_limit) {
-      sctk_nodebug("requested:%lu max:%lu header:%lu", s, config->ibv_eager_rdma_limit, IBUF_RDMA_GET_SIZE);
+    if ( (IBUF_RDMA_GET_SIZE + s) <= limit) {
+      sctk_nodebug("requested:%lu max:%lu header:%lu", s, limit, IBUF_RDMA_GET_SIZE);
       ibuf = sctk_ibuf_rdma_pick(rail_ib, remote);
 
       /* If we cannot pick a buffer from the RDMA channel, we switch to SR */
@@ -278,7 +282,7 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
   } else {
     sctk_error("The size associated to one eager buffer is too small to allocate a"
         "eager buffer. Please increase the value of XXXXX. (Requested=%lu max_rdma=%lu max_sr=%lu)", s,
-        config->ibv_eager_rdma_limit - IBUF_RDMA_GET_SIZE, config->ibv_eager_limit);
+        sctk_ibuf_rdma_get_eager_limit(remote) - IBUF_RDMA_GET_SIZE, config->ibv_eager_limit);
     sctk_abort();
     return NULL;
   }
@@ -470,7 +474,6 @@ void sctk_ibuf_release(
 
 void sctk_ibuf_prepare(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote,
     sctk_ibuf_t* ibuf, size_t size) {
-  LOAD_CONFIG(rail_ib);
 
   if (IBUF_GET_CHANNEL(ibuf) & RDMA_CHANNEL) {
     const sctk_ibuf_region_t* region = IBUF_RDMA_GET_REGION(remote, REGION_SEND);
@@ -480,7 +483,7 @@ void sctk_ibuf_prepare(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote,
     sctk_ibuf_rdma_write_with_imm_init(ibuf,
         IBUF_RDMA_GET_BASE_FLAG(ibuf), /* Local addr */
         region->mmu_entry->mr->lkey,  /* lkey */
-        IBUF_RDMA_GET_REMOTE_ADDR(remote, REGION_RECV, ibuf),  /* Remote addr */
+        IBUF_RDMA_GET_REMOTE_ADDR(remote, ibuf),  /* Remote addr */
         remote->ibuf_rdma->rkey[REGION_RECV],  /* rkey */
         IBUF_RDMA_GET_SIZE + size + IBUF_GET_EAGER_SIZE, /* size */
         ibuf->index | IMM_DATA_EAGER_RDMA);  /* imm_data: index of the ibuf in the region */
@@ -489,8 +492,8 @@ void sctk_ibuf_prepare(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote,
     sctk_ibuf_rdma_write_init(ibuf,
         IBUF_RDMA_GET_BASE_FLAG(ibuf), /* Local addr */
         region->mmu_entry->mr->lkey,  /* lkey */
-        IBUF_RDMA_GET_REMOTE_ADDR(remote, REGION_RECV, ibuf),  /* Remote addr */
-        remote->ibuf_rdma->rkey[REGION_RECV],  /* rkey */
+        IBUF_RDMA_GET_REMOTE_ADDR(remote, ibuf),  /* Remote addr */
+        remote->rdma.pool->rkey[REGION_RECV],  /* rkey */
         size + IBUF_RDMA_GET_SIZE, /* size */
         IBV_SEND_SIGNALED, IBUF_DO_NOT_RELEASE);  /* imm_data: index of the ibuf in the region */
 
@@ -512,6 +515,9 @@ void sctk_ibuf_recv_init(sctk_ibuf_t* ibuf)
 
   ibuf->to_release = IBUF_RELEASE;
   ibuf->in_srq = 1;
+  /* For the SRQ, remote is set to 'NULL' as it is shared
+   * between all processes */
+  ibuf->remote = NULL;
 
   ibuf->desc.wr.send.next = NULL;
   ibuf->desc.wr.send.wr_id = (uintptr_t) ibuf;
@@ -687,7 +693,7 @@ int sctk_ibuf_rdma_write_with_imm_init(
 void sctk_ibuf_rdma_read_init(
     sctk_ibuf_t* ibuf, void* local_address,
     uint32_t lkey, void* remote_address, uint32_t rkey,
-    int len, void* supp_ptr, int dest_process)
+    int len, void* supp_ptr)
 {
   ibuf->in_srq = 0;
   ibuf->to_release = IBUF_RELEASE;
@@ -708,7 +714,6 @@ void sctk_ibuf_rdma_read_init(
 
   ibuf->flag = RDMA_READ_IBUF_FLAG;
   ibuf->supp_ptr = supp_ptr;
-  ibuf->dest_process = dest_process;
 }
 
 void sctk_ibuf_print_rdma(sctk_ibuf_t *ibuf, char* desc) {
@@ -718,7 +723,6 @@ void sctk_ibuf_print_rdma(sctk_ibuf_t *ibuf, char* desc) {
       "size         :%lu\n"
       "flag         :%s\n"
       "remote       :%p\n"
-      "dest_process :%d\n"
       "in_srq       :%d\n"
       "next         :%p\n"
       "prev         :%p\n"
@@ -730,13 +734,12 @@ void sctk_ibuf_print_rdma(sctk_ibuf_t *ibuf, char* desc) {
       ibuf->size,
       sctk_ibuf_print_flag(ibuf->flag),
       ibuf->remote,
-      ibuf->dest_process,
       ibuf->in_srq,
       ibuf->next,
       ibuf->prev,
       ibuf->desc.sg_entry.length,
-      ibuf->desc.sg_entry.addr,
-      ibuf->desc.wr.send.wr.rdma.remote_addr);
+      (void*) ibuf->desc.sg_entry.addr,
+      (void*) ibuf->desc.wr.send.wr.rdma.remote_addr);
 }
 
 
@@ -747,7 +750,6 @@ void sctk_ibuf_print(sctk_ibuf_t *ibuf, char* desc) {
       "size         :%lu\n"
       "flag         :%s\n"
       "remote       :%p\n"
-      "dest_process :%d\n"
       "in_srq       :%d\n"
       "next         :%p\n"
       "prev         :%p\n"
@@ -757,7 +759,6 @@ void sctk_ibuf_print(sctk_ibuf_t *ibuf, char* desc) {
       ibuf->size,
       sctk_ibuf_print_flag(ibuf->flag),
       ibuf->remote,
-      ibuf->dest_process,
       ibuf->in_srq,
       ibuf->next,
       ibuf->prev,

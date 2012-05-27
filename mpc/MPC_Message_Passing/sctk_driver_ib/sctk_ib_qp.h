@@ -30,6 +30,7 @@
 #include "sctk_spinlock.h"
 #include "sctk_ibufs.h"
 #include "sctk_route.h"
+#include "sctk_ib_cm.h"
 
 #include <infiniband/verbs.h>
 #include <inttypes.h>
@@ -85,36 +86,26 @@ typedef struct sctk_ib_device_s
 #define ACK_UNSET   111
 #define ACK_OK      222
 #define ACK_CANCEL  333
-
-typedef struct sctk_ib_endpoint_s {
-
-} sctk_ib_endpoint_t;
-
-/*-----------------------------------------------------------
- *  Exchanged keys: used to connect QPs
- *----------------------------------------------------------*/
-typedef struct
+typedef struct sctk_ibuf_rdma_s
 {
-  uint16_t lid;
-  uint32_t qp_num;
-  uint32_t psn;
-  struct {
-    int connected;
-    struct {
-      void* ptr;
-      uint32_t rkey;
-      int size;
-    } send;
-    struct {
-      void* ptr;
-      uint32_t rkey;
-      int size;
-    } recv;
-  } rdma;
-} sctk_ib_qp_keys_t;
+  sctk_spinlock_t lock;
 
+  struct sctk_ibuf_rdma_pool_s *pool;
+  /* State of the RDMA channel */
+  sctk_route_state_t state;
+  /* Mean size for rdma entries */
+  float           mean_size;
+  int             mean_iter;
+  sctk_spinlock_t mean_size_lock;
+  /* Max number of pending requests.
+   * We this, we can get an approximation of the number
+   * of slots to create for the RDMA */
+  int max_pending_requests;
+  /* If the process is the initiator of the request */
+  char is_initiator;
+} sctk_ibuf_rdma_t;
 
-/* Structure associated to a remote QP */
+/*Structure associated to a remote QP */
 typedef struct sctk_ib_qp_s
 {
   struct ibv_qp           *qp;       /* queue pair */
@@ -155,17 +146,20 @@ typedef struct sctk_ib_qp_s
   int remote_ack;
   int deco_lock;
 
-  /* keys */
-  sctk_ib_qp_keys_t recv_keys;
-  sctk_ib_qp_keys_t send_keys;
+  /* keys for QP */
+  sctk_ib_cm_qp_connection_t recv_keys;
+  sctk_ib_cm_qp_connection_t send_keys;
 
   /* List of pending buffered messages */
   struct sctk_ib_buffered_table_s ib_buffered;
 
-  /* Eager RDMA channel */
-  struct sctk_ibuf_rdma_pool_s *ibuf_rdma;
-  /* State of the RDMA channel */
-  sctk_route_state_t ibuf_rdma_state;
+  /* Structure for ibuf rdma */
+  struct sctk_ibuf_rdma_s rdma;
+  /* Structs for requests */
+  struct {
+    int nb;
+    int size_ibufs;
+  } request;
 
   /* Is remote dynamically created ? */
   int ondemand;
@@ -173,11 +167,11 @@ typedef struct sctk_ib_qp_s
   int R;
 } sctk_ib_qp_t;
 
-void sctk_ib_qp_key_create_value(char *msg, size_t size, sctk_ib_qp_keys_t* keys);
-void sctk_ib_qp_key_fill(sctk_ib_qp_keys_t* keys, sctk_ib_qp_t *remote,
+void sctk_ib_qp_key_create_value(char *msg, size_t size, sctk_ib_cm_qp_connection_t* keys);
+void sctk_ib_qp_key_fill(sctk_ib_cm_qp_connection_t* keys, sctk_ib_qp_t *remote,
     uint16_t lid, uint32_t qp_num, uint32_t psn);
 void sctk_ib_qp_key_create_key(char *msg, size_t size, int rail, int src, int dest);
-sctk_ib_qp_keys_t sctk_ib_qp_keys_convert( char* msg);
+sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_convert( char* msg);
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
@@ -192,12 +186,12 @@ struct ibv_cq* sctk_ib_cq_init(sctk_ib_device_t* device,
 
 char* sctk_ib_cq_print_status (enum ibv_wc_status status);
 
-sctk_ib_qp_keys_t sctk_ib_qp_keys_convert( char* msg);
+sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_convert( char* msg);
 
 void sctk_ib_qp_keys_send(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t* remote);
 
-sctk_ib_qp_keys_t
+sctk_ib_cm_qp_connection_t
 sctk_ib_qp_keys_recv(sctk_ib_qp_t *remote, int dest_process);
 
 sctk_ib_qp_t* sctk_ib_qp_new();
@@ -215,7 +209,7 @@ sctk_ib_qp_state_init_attr(struct sctk_ib_rail_info_s* rail_ib,
 
 struct ibv_qp_attr
 sctk_ib_qp_state_rtr_attr(struct sctk_ib_rail_info_s* rail_ib,
-    sctk_ib_qp_keys_t* keys, int *flags);
+    sctk_ib_cm_qp_connection_t* keys, int *flags);
 
 struct ibv_qp_attr
 sctk_ib_qp_state_rts_attr(struct sctk_ib_rail_info_s* rail_ib,
@@ -228,7 +222,7 @@ void sctk_ib_qp_allocate_init(struct sctk_ib_rail_info_s* rail_ib,
     int rank, sctk_ib_qp_t* remote, int ondemand, sctk_route_table_t* route);
 
 void sctk_ib_qp_allocate_rtr(struct sctk_ib_rail_info_s* rail_ib,
-    sctk_ib_qp_t *remote,sctk_ib_qp_keys_t* keys);
+    sctk_ib_qp_t *remote,sctk_ib_cm_qp_connection_t* keys);
 
 void sctk_ib_qp_allocate_rts(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t *remote);

@@ -596,6 +596,7 @@ sctk_ib_rdma_poll_send(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   int release_ibuf = 1;
   sctk_thread_ptp_message_t* msg;
 
+  IBUF_CHECK_POISON(ibuf->buffer);
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
   /* Switch on the RDMA type of message */
   switch(IBUF_GET_RDMA_TYPE(rdma_header)) {

@@ -146,7 +146,9 @@ sctk_ib_polling_check_wc(struct sctk_ib_rail_info_s* rail_ib,
           sctk_process_rank, host,
           wc.wr_id, sctk_ib_polling_print_status(wc.status),
           wc.vendor_err, wc.byte_len,
-          ibuf->dest_process, ibuf_desc);
+          /* Remote can be NULL if the buffer comes from SRQ */
+          (ibuf->remote) ? ibuf->remote->rank : 0,
+          ibuf_desc);
     }
     sctk_abort();
   }
@@ -159,9 +161,10 @@ __UNUSED__ static inline int sctk_ib_cq_poll(sctk_rail_info_t* rail,
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   struct ibv_wc wc;
   int found_nb = 0;
-  int i, res = 0;
+  int res = 0;
+  /* int i; */
 
-  do {//for(i=0; i < poll_nb; ++i) {
+  do { /* for(i=0; i < poll_nb; ++i) {  */
       res = ibv_poll_cq (cq, 1, &wc);
       if (res) {
         sctk_ib_polling_check_wc(rail_ib, wc);

@@ -101,6 +101,8 @@ int sctk_ib_cp_steal(struct sctk_rail_info_s* rail, struct sctk_ib_polling_s *po
 sctk_ib_cp_task_t *sctk_ib_cp_get_task(int rank);
 
 sctk_ib_cp_task_t *sctk_ib_cp_get_polling_task();
+
+int sctk_ib_cp_poll_global_list(const struct sctk_rail_info_s const * rail, struct sctk_ib_polling_s *poll);
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/

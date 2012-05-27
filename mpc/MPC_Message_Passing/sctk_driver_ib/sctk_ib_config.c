@@ -49,7 +49,7 @@
 /* !!! WARNING !!! : diminishing IBV_EAGER_LIMIT me cause bad performance
  * on buffered eager messages */
 #define IBV_EAGER_LIMIT       ( 16 * 1024)
-#define IBV_EAGER_RDMA_LIMIT  ( 16 * 1024)
+#define IBV_EAGER_RDMA_LIMIT  ( 2 * 1024)
 #define IBV_FRAG_EAGER_LIMIT  (256 * 1024)
 
 /* Number of allowed pending Work Queue Elements
@@ -73,20 +73,20 @@
 
 /* Maximum number of buffers to allocate during the
  * initialization step */
-#define IBV_INIT_IBUFS          10000
+#define IBV_INIT_IBUFS          3000
 //#define IBV_INIT_IBUFS         100
 
 /* Maximum number of buffers which can be posted to the SRQ.
  * This number cannot be higher than than the number fixed by the HW.
  * The verification is done during the config_check function */
-#define IBV_MAX_SRQ_IBUFS_POSTED     10000
+#define IBV_MAX_SRQ_IBUFS_POSTED     3000
 /* When the async thread wakes, it means that the SRQ is full. We
  * allows the async thread to extract IBV_MAX_SRQ_WR_HANDLE_BY_THREAD messages
  * before posting new buffers .*/
 #define IBV_MAX_SRQ_WR_HANDLE_BY_THREAD 50
 /* Maximum number of buffers which can be used by SRQ. This number
  * is not fixed by the HW */
-#define IBV_MAX_SRQ_IBUFS            10000
+#define IBV_MAX_SRQ_IBUFS            3000
 //#define IBV_MAX_SRQ_IBUFS            50
 /* Minimum number of free recv buffer before
  * posting of new buffers. This thread is  activated
@@ -264,7 +264,6 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
   }
 }
 
-#define ALIGN(x) ( (x + 63) & (~63) )
 void load_ib_default_config(sctk_ib_rail_info_t *rail_ib)
 {
   LOAD_CONFIG(rail_ib);
@@ -272,8 +271,8 @@ void load_ib_default_config(sctk_ib_rail_info_t *rail_ib)
   config->ibv_size_mr_chunk = IBV_SIZE_MR_CHUNKS;
   config->ibv_init_ibufs = IBV_INIT_IBUFS;
 
-  config->ibv_eager_limit       = ALIGN (IBV_EAGER_LIMIT + IBUF_GET_EAGER_SIZE);
-  config->ibv_eager_rdma_limit  = ALIGN (IBV_EAGER_RDMA_LIMIT + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE);
+  config->ibv_eager_limit       = ALIGN_ON_64 (IBV_EAGER_LIMIT + IBUF_GET_EAGER_SIZE);
+  config->ibv_eager_rdma_limit  = ALIGN_ON_64 (IBV_EAGER_RDMA_LIMIT + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE);
   config->ibv_frag_eager_limit  = (IBV_FRAG_EAGER_LIMIT + sizeof(sctk_thread_ptp_message_body_t));
 
   config->ibv_max_rdma_ibufs  = IBV_MAX_RDMA_IBUFS;
@@ -314,13 +313,13 @@ void set_ib_env(sctk_ib_rail_info_t *rail_ib)
   sctk_ib_config_t* c = rail_ib->config;
 
   if ( (value = getenv("MPC_IBV_EAGER_LIMIT")) != NULL )
-    c->ibv_eager_limit = ALIGN (atoi(value) + IBUF_GET_EAGER_SIZE);
+    c->ibv_eager_limit = ALIGN_ON_64 (atoi(value) + IBUF_GET_EAGER_SIZE);
 
   if ( (value = getenv("MPC_IBV_EAGER_RDMA_LIMIT")) != NULL )
-    c->ibv_eager_rdma_limit = ALIGN (atoi(value) + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE);
+    c->ibv_eager_rdma_limit = ALIGN_ON_64 (atoi(value) + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE);
 
   if ( (value = getenv("MPC_IBV_FRAG_EAGER_LIMIT")) != NULL )
-    c->ibv_frag_eager_limit = ALIGN (atoi(value) + sizeof(sctk_thread_ptp_message_body_t));
+    c->ibv_frag_eager_limit = ALIGN_ON_64 (atoi(value) + sizeof(sctk_thread_ptp_message_body_t));
 
   if ( (value = getenv("MPC_IBV_MAX_RDMA_IBUFS")) != NULL )
     c->ibv_max_rdma_ibufs = atoi(value);

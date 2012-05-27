@@ -39,6 +39,8 @@ typedef struct sctk_ib_low_mem_s {
 
 struct sctk_rail_info_s *rail;
 
+void sctk_ib_low_mem_broadcast(sctk_rail_info_t* rail);
+
 int sctk_ib_low_mem_recv(struct sctk_rail_info_s *rail, sctk_thread_ptp_message_t *msg, sctk_ibuf_t* ibuf, int recopy);
 
 void sctk_ib_low_mem_broadcast_func(const struct sctk_rail_info_s* rail, sctk_route_table_t* table);

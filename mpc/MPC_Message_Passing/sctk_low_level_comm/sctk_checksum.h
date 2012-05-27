@@ -24,7 +24,7 @@
 #ifndef __SCTK__CHECKSUM_H_
 #define __SCTK__CHECKSUM_H_
 
-//#define SCTK_USE_CHECKSUM
+#define SCTK_USE_CHECKSUM
 
 #include "sctk_inter_thread_comm.h"
 

@@ -30,7 +30,7 @@
 /*-----------------------------------------------------------
  *  MACROS
  *----------------------------------------------------------*/
-#define CM_MASK_TAG (1<<8)
+#define CM_MASK_TAG (1<<8) /* Up to 128 */
 #define CM_OD_REQ_TAG (2)
 #define CM_OD_ACK_TAG (3)
 #define CM_OD_DONE_TAG (4)
@@ -40,33 +40,69 @@
 #define ONDEMAND_DECO_DONE_REQ_TAG (7)
 #define ONDEMAND_DECO_DONE_ACK_TAG (8)
 
+#define CM_OD_RDMA_REQ_TAG (9)
+#define CM_OD_RDMA_ACK_TAG (10)
+#define CM_OD_RDMA_DONE_REQ_TAG (11)
+#define CM_OD_RDMA_DONE_ACK_TAG (12)
+
 struct sctk_thread_ptp_message_body_s;
 
 /*-----------------------------------------------------------
  *  STRUCTURES
  *----------------------------------------------------------*/
+
+#define CM_SET_REQUEST(r,x) (r->request_id = x)
+#define CM_GET_REQUEST(r) (r->request_id)
+
+/* All the following structures are requests
+ * for the Connection Manager. */
+typedef enum {
+  cm_request_qp_connection,       /* Connection to a remote QP */
+  cm_request_qp_deconnection,     /* Deconnection from a remote QP */
+  cm_request_rdma_connection,     /* Establishment of a RDMA connection*/
+  cm_request_rdma_deconnection,   /* Remove a RDMA connection */
+  cm_request_rdma_resizing,       /* Resize a RDMA connection */
+} sctk_ib_cm_request_t;
+
 /* QP */
 typedef struct {
-
-} sctk_ib_cm_qp_connection;
+  sctk_ib_cm_request_t request_id;  /* Request id. *MUST* be the first field */
+  uint16_t lid;
+  uint32_t qp_num;
+  uint32_t psn;
+} sctk_ib_cm_qp_connection_t;
 
 typedef struct {
-
-} sctk_ib_cm_qp_deconnection;
-
+  sctk_ib_cm_request_t request_id;  /* Request id. *MUST* be the first field */
+} sctk_ib_cm_qp_deconnection_t;
 
 /* RDMA */
 typedef struct {
-
-} sctk_ib_cm_rdma_connection;
+  sctk_ib_cm_request_t request_id;  /* Request id. *MUST* be the first field */
+  int connected;
+  int size;   /* Size of a slot */
+  int nb;     /* Number of slots */
+  struct {     /* Address remote send region */
+    uint32_t rkey;
+    void *addr;
+  } send;
+  struct {     /* Address remote recv region */
+    uint32_t rkey;
+    void *addr;
+  } recv;
+} sctk_ib_cm_rdma_connection_t;
 
 typedef struct {
-
-} sctk_ib_cm_rdma_resizing;
+  sctk_ib_cm_request_t request_id;  /* Request id. *MUST* be the first field */
+  int size;   /* Size of a slot */
+  int nb;     /* Number of slots */
+  uintptr_t addr; /* Base addr of the buffer */
+} sctk_ib_cm_rdma_resizing_t;
 
 typedef struct {
+  sctk_ib_cm_request_t request_id;  /* Request id. *MUST* be the first field */
 
-} sctk_ib_cm_rdma_deconnection;
+} sctk_ib_cm_rdma_deconnection_t;
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
@@ -105,5 +141,10 @@ void sctk_ib_cm_deco_done_request_send(sctk_rail_info_t* rail, sctk_route_table_
 void sctk_ib_cm_deco_ack_send(sctk_rail_info_t* rail, sctk_route_table_t* route_table, int ack);
 void sctk_ib_cm_deco_done_ack_send(sctk_rail_info_t* rail, sctk_route_table_t* route_table, int ack);
 
+int sctk_ib_cm_on_demand_rdma_request(int dest,
+    sctk_rail_info_t* rail, int rdma_connected, int entry_size, int entry_nb);
+
+void sctk_ibuf_rdma_fill_remote_addr(sctk_ib_rail_info_t *rail_ib, struct sctk_ib_qp_s* remote,
+    sctk_ib_cm_rdma_connection_t *keys);
 #endif
 #endif

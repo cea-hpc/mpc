@@ -51,14 +51,12 @@
 void
 sctk_ib_init_remote(int dest, sctk_rail_info_t* rail, struct sctk_route_table_s* route_table, int ondemand){
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  LOAD_CONFIG(rail_ib);
   sctk_ib_data_t *route_ib;
 
   route_ib=&route_table->data.ib;
 
   sctk_nodebug("Initializing QP for dest %d", dest);
   sctk_ib_qp_allocate_init(rail_ib, dest, route_ib->remote, ondemand, route_table);
-  sctk_ibuf_rdma_pool_init(rail_ib, route_ib->remote, config->ibv_max_rdma_ibufs);
   return;
 }
 

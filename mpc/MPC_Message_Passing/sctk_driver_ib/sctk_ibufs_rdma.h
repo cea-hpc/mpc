@@ -32,11 +32,12 @@
 #include "sctk_ib_mmu.h"
 #include "sctk_ib.h"
 #include "sctk_ib_qp.h"
+#include "sctk_ib_cm.h"
 
 struct sctk_ib_rail_info_s;
 
-#define IBUF_RDMA_GET_HEAD(remote,ptr) (remote->ibuf_rdma->region[ptr].head)
-#define IBUF_RDMA_GET_TAIL(remote,ptr) (remote->ibuf_rdma->region[ptr].tail)
+#define IBUF_RDMA_GET_HEAD(remote,ptr) (remote->rdma.pool->region[ptr].head)
+#define IBUF_RDMA_GET_TAIL(remote,ptr) (remote->rdma.pool->region[ptr].tail)
 #define IBUF_RDMA_GET_NEXT(i) \
   ( ( (i->index + 1) >= i->region->nb) ? \
     (sctk_ibuf_t*) i->region->ibuf : \
@@ -46,20 +47,22 @@ struct sctk_ib_rail_info_s;
   ( (sctk_ibuf_t*) ( (i->region->ibuf + ( ( i->index + x  ) % (i->region->nb) ) ) ) )
 
 #define IBUF_RDMA_GET_ADDR_FROM_INDEX(remote,ptr,index) \
-  ((sctk_ibuf_t*) remote->ibuf_rdma->region[ptr].ibuf + index)
+  ((sctk_ibuf_t*) remote->rdma.pool->region[ptr].ibuf + index)
 
-#define IBUF_RDMA_GET_REGION(remote,ptr) (&remote->ibuf_rdma->region[ptr])
+#define IBUF_RDMA_GET_REGION(remote,ptr) (&remote->rdma.pool->region[ptr])
 
-#define IBUF_RDMA_LOCK_REGION(remote,ptr) (sctk_spinlock_lock(&remote->ibuf_rdma->region[ptr].lock))
-#define IBUF_RDMA_UNLOCK_REGION(remote,ptr) (sctk_spinlock_unlock(&remote->ibuf_rdma->region[ptr].lock))
+#define IBUF_RDMA_LOCK_REGION(remote,ptr) (sctk_spinlock_lock(&remote->rdma.pool->region[ptr].lock))
+#define IBUF_RDMA_UNLOCK_REGION(remote,ptr) (sctk_spinlock_unlock(&remote->rdma.pool->region[ptr].lock))
 
-#define IBUF_RDMA_GET_REMOTE_ADDR(remote,ptr,ibuf) \
-  ((char*) remote->ibuf_rdma->remote_region[ptr] + (ibuf->index * config->ibv_eager_rdma_limit))
+#define IBUF_RDMA_GET_REMOTE_ADDR(remote,ibuf) \
+  ((char*) remote->rdma.pool->remote_region[REGION_RECV] + (ibuf->index * \
+    remote->rdma.pool->region[REGION_SEND].size_ibufs))
 
-#define IBUF_RDMA_GET_REMOTE_PIGGYBACK(remote,ptr,ibuf) \
+#define IBUF_RDMA_GET_REMOTE_PIGGYBACK(remote,ibuf) \
   &(IBUF_GET_EAGER_PIGGYBACK( \
     (IBUF_RDMA_GET_PAYLOAD_FLAG( \
-      (char*) remote->ibuf_rdma->remote_region[ptr] + (ibuf->index * config->ibv_eager_rdma_limit) \
+      (char*) remote->rdma.pool->remote_region[REGION_SEND] + (ibuf->index * \
+        remote->rdma.pool->region[REGION_RECV].size_ibufs) \
     )) \
   ))
 
@@ -110,6 +113,7 @@ struct sctk_ib_rail_info_s;
 /* Pool of ibufs */
 #define REGION_SEND 0
 #define REGION_RECV 1
+
 typedef struct sctk_ibuf_rdma_pool_s
 {
   /* Pointer to the RDMA regions: send and recv */
@@ -151,11 +155,18 @@ typedef struct sctk_ibuf_rdma_desc_s
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
+void sctk_ibuf_rdma_remote_init(sctk_ib_qp_t* remote);
+
+int sctk_ibuf_rdma_is_connectable(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote);
+
+void sctk_ibuf_rdma_check_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, size_t size);
+
 sctk_ibuf_rdma_pool_t*
-sctk_ibuf_rdma_pool_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remote, int nb_ibufs);
+sctk_ibuf_rdma_pool_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remote,
+    int send_nb_ibufs, int send_size_ibufs, int recv_nb_ibufs, int recv_size_ibufs);
 
 void
-sctk_ibuf_rdma_update_remote_addr(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remote, sctk_ib_qp_keys_t *key);
+sctk_ibuf_rdma_update_remote_addr(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t* remote, sctk_ib_cm_rdma_connection_t *key);
 
 void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf);
 
@@ -167,8 +178,9 @@ void sctk_ib_rdma_eager_walk_remotes(sctk_ib_rail_info_t *rail, int (func)(sctk_
 int
 sctk_ibuf_rdma_is_remote_connected(sctk_ib_qp_t* remote);
 
-void
-sctk_ib_rdma_eager_poll_recv(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, int index);
+void sctk_ibuf_rdma_update_max_pending_requests(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote);
+
+void sctk_ib_rdma_eager_poll_recv(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, int index);
 
 sctk_ibuf_t *sctk_ibuf_rdma_pick(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t* remote);
 
@@ -176,5 +188,16 @@ void sctk_ib_rdma_set_tail_flag(sctk_ibuf_t* ibuf, size_t size);
 
 void sctk_ibuf_rdma_set_state_remote(sctk_ib_qp_t* remote, sctk_route_state_t state);
 sctk_route_state_t sctk_ibuf_rdma_get_state_remote(sctk_ib_qp_t* remote);
+
+void
+sctk_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* remote,
+    sctk_ibuf_region_t *region, enum sctk_ibuf_channel channel, int nb_ibufs, int size_ibufs);
+
+size_t sctk_ibuf_rdma_get_eager_limit(sctk_ib_qp_t *remote);
+
+void sctk_ibuf_rdma_determine_config_from_sample(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, int *nb,
+   int *size_ibufs);
+
+void sctk_ibuf_rdma_connection_cancel(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote);
 #endif
 #endif

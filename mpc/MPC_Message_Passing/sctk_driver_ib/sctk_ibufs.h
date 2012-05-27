@@ -148,6 +148,8 @@ typedef struct sctk_ibuf_region_s
   struct sctk_ibuf_region_s* prev;
   /* Number of buffer for the region */
   uint16_t nb;
+  /* Size of the buffers */
+  int size_ibufs;
   /* A region is associated to a rail */
   struct sctk_ib_rail_info_s* rail;
   /* MMU entry */
@@ -237,7 +239,6 @@ typedef struct sctk_ibuf_s
   struct sctk_ib_qp_s*    remote;
   void* supp_ptr;
   int src_task;
-  int dest_process;
   /* If the buffer is in a shaed receive queue */
   char in_srq;
   char to_release;
@@ -317,7 +318,7 @@ int sctk_ibuf_rdma_write_init(
 void sctk_ibuf_rdma_read_init(
     sctk_ibuf_t* ibuf, void* local_address,
     uint32_t lkey, void* remote_address, uint32_t rkey,
-    int len, void* supp_ptr, int dest_process);
+    int len, void* supp_ptr);
 
 void sctk_ibuf_release(
     struct sctk_ib_rail_info_s *rail_ib,

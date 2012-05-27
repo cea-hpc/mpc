@@ -87,11 +87,11 @@ sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail
     /* QP added on demand */
     tmp = create_func();
     init_func(dest, rail, tmp, 1);
-    sctk_route_set_state(tmp, state_deconnected);
     /* We init the entry and add it to the table */
     sctk_init_dynamic_route(dest, tmp, rail);
     tmp->is_initiator = is_initiator;
     HASH_ADD(hh,sctk_dynamic_route_table,key,sizeof(sctk_route_key_t),tmp);
+    sctk_nodebug("Entry created for %d", dest);
     *added = 1;
   } else if (sctk_route_get_state(tmp) == state_reset) { /* QP in a reset state */
     /* If the remote is in a reset state, we can reinit all the fields
@@ -144,6 +144,7 @@ void sctk_init_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t
   /* sctk_assert (sctk_route_dynamic_search(dest, rail) == NULL); */
   sctk_route_set_low_memory_mode_local(tmp, 0);
   sctk_route_set_low_memory_mode_remote(tmp, 0);
+  sctk_route_set_state(tmp, state_deconnected);
 
   tmp->is_initiator = CHAR_MAX;
   tmp->lock = SCTK_SPINLOCK_INITIALIZER;
@@ -163,9 +164,9 @@ void sctk_init_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t*
   tmp->key.rail = rail->rail_number;
   tmp->rail = rail;
   /* FIXME: the following commented line may potentially break other modules (like TCP). */
-  /* sctk_route_set_state(tmp, state_connected); */
   sctk_route_set_low_memory_mode_local(tmp, 0);
   sctk_route_set_low_memory_mode_remote(tmp, 0);
+  sctk_route_set_state(tmp, state_deconnected);
 
   tmp->is_initiator = CHAR_MAX;
   tmp->lock = SCTK_SPINLOCK_INITIALIZER;

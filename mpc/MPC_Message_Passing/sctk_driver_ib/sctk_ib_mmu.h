@@ -33,6 +33,8 @@
 
 //#define DEBUG_IB_MMU
 
+#define ALIGN_ON_64(x) ( (x + 63) & (~63) )
+
 struct sctk_ib_rail_info_s;
 
 /* Enumeration for entry status  */
