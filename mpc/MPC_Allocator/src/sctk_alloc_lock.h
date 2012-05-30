@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
+/* #   - Adam Julien julien.adam.ocre@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -24,7 +25,11 @@
 #define SCTK_ALLOC_LOCK_H
 
 /************************** HEADERS ************************/
-#include <pthread.h>
+#ifndef WIN32
+	#include <pthread.h>
+//#else
+//	#include "winPortage/pthread.h"
+#endif
 
 /************************** MACROS *************************/
 #ifdef MPC_Threads
@@ -32,8 +37,12 @@
 #endif
 
 /************************** HEADERS ************************/
+#ifdef WIN32
+	#define SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK	
+#endif
+
 #ifdef SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK
-#include "sctk_alloc_spinlock.h"
+	#include "sctk_alloc_spinlock.h"
 #endif //SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK
 
 /************************** MACROS *************************/

@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
+/* #   - Adam Julien julien.adam.ocre@cea.fr                              # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -29,13 +30,16 @@ extern "C"
 #endif
 
 /************************** HEADERS ************************/
-#include <sys/mman.h>
+#if defined(WIN32)
+	#include <windows.h>
+#else	
+	#include <sys/mman.h>
+#endif
 #include "sctk_alloc_common.h"
 #include "sctk_alloc_lock.h"
 #include "sctk_alloc_stats.h"
 #include "sctk_alloc_spy.h"
-
-/************************** CONSTS *************************/
+#include <stdint.h>
 /** Size class for the free lists. **/
 extern const sctk_size_t SCTK_ALLOC_FREE_SIZES[SCTK_ALLOC_NB_FREE_LIST];
 

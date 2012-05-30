@@ -40,6 +40,13 @@ static const char * SCTK_ALLOC_TYPE_NAME[] = {"small","large"};
 // static const char SCTK_ALLOC_TRACE_FILE[] = "-";
 static const char SCTK_ALLOC_TRACE_FILE[] = "alloc-trace-%d.txt";
 
+/*********************** PORTABILITY ***********************/
+#ifndef WIN32
+	#define OPEN_FILE_PERMISSIONS O_TRUNC|O_WRONLY|O_CREAT,S_IRUSR|S_IRGRP|S_IROTH|S_IWUSR
+#else
+	#define OPEN_FILE_PERMISSIONS O_TRUNC|O_WRONLY|O_CREAT
+#endif
+
 /************************* GLOBALS *************************/
 /** File descriptor for PTRACE output file. **/
 static int SCTK_ALLOC_TRACE_FD = -1;
@@ -61,7 +68,7 @@ void sctk_alloc_ptrace_init(void )
 		SCTK_ALLOC_TRACE_FD = STDERR_FILENO;
 	} else {
 		sprintf(fname,SCTK_ALLOC_TRACE_FILE,getpid());
-		SCTK_ALLOC_TRACE_FD = open(fname,O_TRUNC|O_WRONLY|O_CREAT,S_IRUSR|S_IRGRP|S_IROTH|S_IWUSR);
+		SCTK_ALLOC_TRACE_FD = open(fname,OPEN_FILE_PERMISSIONS);
 		if (SCTK_ALLOC_TRACE_FD == -1)
 		{
 			perror(fname);
@@ -190,8 +197,8 @@ void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain* chain)
 	sprintf(fname,"alloc-dump-%04d.txt",id);
 // 	id++;
 
-	//open output file
-	fd = open(fname,O_TRUNC|O_WRONLY|O_CREAT,S_IRUSR|S_IRGRP|S_IROTH|S_IWUSR);
+	//open output filei
+	fd = open(fname,OPEN_FILE_PERMISSIONS);
 	if (fd == -1)
 	{
 		perror(fname);
@@ -204,7 +211,9 @@ void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain* chain)
 	sctk_alloc_debug_dump_thread_pool(fd,&chain->pool);
 
 	//close
-	sync();
+	#ifndef WIN32
+		sync();
+	#endif
 	close(fd);
 }
 
@@ -219,7 +228,7 @@ void sctk_alloc_crash_dump(void)
 #endif
 
 /************************* FUNCTION ************************/
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(WIN32)
 void sctk_alloc_debug_setgault_handler(int signal, siginfo_t *si, void *arg)
 {
 	sctk_alloc_perror("SEGMENTATION FAULT");
@@ -228,7 +237,7 @@ void sctk_alloc_debug_setgault_handler(int signal, siginfo_t *si, void *arg)
 #endif
 
 /************************* FUNCTION ************************/
-#ifndef NDEBUG
+#if !defined(NDEBUG) && !defined(WIN32)
 void sctk_alloc_debug_setup_sighandler()
 {
 	int res;
@@ -251,7 +260,9 @@ void sctk_alloc_debug_setup_sighandler()
 #ifndef NDEBUG
 void sctk_alloc_debug_init(void )
 {
-	sctk_alloc_debug_setup_sighandler();
+	#ifndef WIN32
+		sctk_alloc_debug_setup_sighandler();
+	#endif
 }
 #endif
 

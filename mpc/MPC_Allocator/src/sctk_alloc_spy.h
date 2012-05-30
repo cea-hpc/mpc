@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
+/* #   - Adam Julien julien.adam.ocre@cea.fr                              # */
 /* #                                                                      # */
 /* ######################################################################## */
 

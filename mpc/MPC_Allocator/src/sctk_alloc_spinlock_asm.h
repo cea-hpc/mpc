@@ -25,7 +25,9 @@
 
 /************************** HEADERS ************************/
 #include <stdio.h>
+#ifndef WIN32
 #include <sched.h>
+#endif
 
 /************************** MACROS *************************/
 #ifdef __cplusplus

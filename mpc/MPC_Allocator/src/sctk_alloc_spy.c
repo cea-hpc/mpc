@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
+/* #   - Adam Julien julien.adam.ocre@cea.fr                              # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -44,6 +45,15 @@ static struct sctk_alloc_spy_chain * sctk_alloc_global_spy_list = NULL;
 static SCTK_ALLOC_INIT_LOCK_TYPE sctk_alloc_global_spy_mutex = SCTK_ALLOC_INIT_LOCK_INITIALIZER;
 /** Check if atexit as been setup or not. **/
 static bool sctk_alloc_glob_spy_as_atexit = false;
+
+
+/********************** PORTABILITY ************************/
+#ifndef WIN32
+	#define OPEN_FILE_PERMISSIONS O_TRUNC|O_WRONLY|O_CREAT,S_IRUSR|S_IRGRP|S_IROTH|S_IWUSR
+#else
+	#define OPEN_FILE_PERMISSIONS O_TRUNC|O_WRONLY|O_CREAT
+	#define PTHREAD_PROCESS_PRIVATE 0
+#endif
 
 
 /************************* FUNCTION ************************/
@@ -94,7 +104,12 @@ void sctk_alloc_spy_chain_get_fname(struct sctk_alloc_chain * chain,char * fname
 	sctk_alloc_spy_get_exename(exename,sizeof(exename));
 	sprintf(dirname,"mpc-alloc-spy-%s-%06d",exename,getpid());
 	sprintf(fname,"%s/alloc-chain-%p.raw",dirname,chain);
-	mkdir(dirname,S_IRUSR|S_IRGRP|S_IROTH|S_IWUSR|S_IXUSR|S_IXGRP|S_IXOTH);
+	
+	#ifndef WIN32
+		mkdir(dirname,S_IRUSR|S_IRGRP|S_IROTH|S_IWUSR|S_IXUSR|S_IXGRP|S_IXOTH);
+	#else
+		_mkdir(dirname);
+	#endif
 }
 
 /************************* FUNCTION ************************/
@@ -143,7 +158,7 @@ void sctk_alloc_spy_chain_init(struct sctk_alloc_chain* chain)
 		SCTK_PDEBUG("Init spy file : %s for chain %p",fname,chain);
 
 		//open file
-		chain->spy.fd = open(fname,O_TRUNC|O_WRONLY|O_CREAT,S_IRUSR|S_IRGRP|S_IROTH|S_IWUSR);
+		chain->spy.fd = open(fname,OPEN_FILE_PERMISSIONS);
 		if (chain->spy.fd == -1)
 		{
 			perror(fname);

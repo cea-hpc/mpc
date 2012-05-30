@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
+/* #   - Adam Julien julien.adam.ocre@cea.fr                              # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -33,6 +34,12 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "sctk_alloc_inlined.h"
+
+/************************* PORTABILITY *************************/
+#ifdef WIN32
+	#define MAP_FAILED NULL
+	#define PTHREAD_PROCESS_PRIVATE 0
+#endif
 
 /************************* GLOBALS *************************/
 /** @todo to move to a clean global structure, avoid spreading global elements everywheres **/
@@ -209,6 +216,7 @@ SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_get_free_list(struct sctk_thread
 	//int j = 0;
 
 	//errors
+	assert(pool->alloc_free_sizes != NULL);
 	assert(pool != NULL);
 	assert(size > 0);
 
@@ -715,6 +723,12 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_merge_chunk(struct sctk_thread_pool * p
 **/
 SCTK_STATIC void sctk_alloc_chain_base_init(struct sctk_alloc_chain * chain)
 {
+	//memory reservation for portability with virtualAlloc
+	#ifdef WIN32
+		
+		void *ptr = VirtualAlloc((void*)SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE,MEM_RESERVE,PAGE_EXECUTE_READWRITE);
+		assert(ptr == chain);
+	#endif
 	//init lists
 	/** @todo TODO add a call to spin destroy while removing the chain **/
 	sctk_alloc_thread_pool_init(&chain->pool,SCTK_ALLOC_FREE_SIZES);

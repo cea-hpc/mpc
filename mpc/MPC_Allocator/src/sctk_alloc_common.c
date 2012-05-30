@@ -31,6 +31,20 @@
  * OS page size as for mmap.
  * @param size Define the requested segement size. Must be multiple of OS page size as for mmap.
 **/
+#ifdef WIN32
+SCTK_STATIC void* sctk_mmap(void* addr, size_t size)
+{
+	void * res = NULL;
+	if (addr == NULL)
+		res = VirtualAlloc(NULL,size,MEM_COMMIT,PAGE_EXECUTE_READWRITE);
+	else
+		res = VirtualAlloc(addr,size,MEM_COMMIT,PAGE_EXECUTE_READWRITE);
+	if (res == MAP_FAILED){
+		perror("Out of memory, failed to request memory to the OS via VirtualAlloc.");
+	}
+	return res;
+}
+#else
 void* sctk_mmap(void* addr, size_t size)
 {
 	void * res = NULL;
@@ -42,6 +56,7 @@ void* sctk_mmap(void* addr, size_t size)
 		perror("Out of memory, failed to request memory to the OS via mmap.");
 	return res;
 }
+#endif
 
 /************************* FUNCTION ************************/
 /**
@@ -51,7 +66,10 @@ void* sctk_mmap(void* addr, size_t size)
  * @param size Define the size of the segment to unmap. As for munmap, it must be multiple of
  * OS page size.
 **/
+#ifdef WIN32
+#else
 void sctk_munmap(void * addr,size_t size)
 {
 	munmap(addr,size);
 }
+#endif

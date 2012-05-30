@@ -16,14 +16,19 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
+/* #   - Valat Sébastien sebastien.valat@cea.fr                          # */
+/* #   - Adam Julien julien.adam.ocre@cea.fr                              # */
 /* #                                                                      # */
 /* ######################################################################## */
 
 /************************** HEADERS ************************/
+#if defined(WIN32)
+	#include <windows.h>
+#else
+	#include <sys/mman.h>
+#endif
 #include <stdlib.h>
 #include <string.h>
-#include <sys/mman.h>
 #include <stdio.h>
 #include "sctk_alloc_lock.h"
 #include "sctk_allocator.h"
