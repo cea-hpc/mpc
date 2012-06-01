@@ -394,10 +394,11 @@ int sctk_ib_cm_on_demand_rdma_request(int dest,
 
   remote = route_table->data.ib.remote;
 
+  /* If several threads call this function, only 1 will send a request to
+   * the remote process */
   ROUTE_LOCK(route_table);
-  if (sctk_ibuf_rdma_get_state_remote(remote) == state_deconnected) {
-    sctk_ibuf_rdma_set_state_remote(remote, state_connecting);
-    remote->rdma.is_initiator = 1;
+  if (sctk_ibuf_rdma_get_remote_state_rts(remote) == state_deconnected) {
+    sctk_ibuf_rdma_set_remote_state_rts(remote, state_connecting);
     send_request = 1;
   }
   ROUTE_UNLOCK(route_table);
@@ -411,6 +412,8 @@ int sctk_ib_cm_on_demand_rdma_request(int dest,
       sctk_nodebug("Can connect to remote %d", remote->rank);
 
       send_keys.connected = 1;
+      /* We fill the request and we save how many slots are requested as well
+       * as the size of each slot */
       remote->request.nb = send_keys.nb = entry_nb;
       remote->request.size_ibufs = send_keys.size = entry_size;
 
@@ -424,14 +427,15 @@ int sctk_ib_cm_on_demand_rdma_request(int dest,
     } else { /* Cannot connect to RDMA */
       sctk_nodebug("Cannot connect to remote %d", remote->rank);
       /* We reset the state to deconnected */
-      sctk_ibuf_rdma_set_state_remote(remote, state_deconnected);
+      /* FIXME: state to reset */
+      sctk_ibuf_rdma_set_remote_state_rts(remote, state_reset);
     }
   }
 
   return 1;
 }
 
-int sctk_ib_cm_on_demand_rdma_done_request_recv(sctk_rail_info_t *rail, void* done, int src) {
+int sctk_ib_cm_on_demand_rdma_done_recv(sctk_rail_info_t *rail, void* done, int src) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   sctk_route_table_t *route_table;
   struct sctk_ib_qp_s *remote;
@@ -442,19 +446,20 @@ int sctk_ib_cm_on_demand_rdma_done_request_recv(sctk_rail_info_t *rail, void* do
   route_table = sctk_get_route_to_process_no_ondemand(src, rail);
   remote = route_table->data.ib.remote;
 
-  sctk_ib_nodebug("OD QP connexion DONE REQ received from process %d (%p:%u|%p:%u)", src,
-      recv_keys->send.addr, recv_keys->send.rkey, recv_keys->recv.addr, recv_keys->recv.rkey);
+  sctk_ib_debug("OD QP connexion DONE REQ received from process %d (%p:%u)", src,
+      recv_keys->addr, recv_keys->rkey);
 
   assume(recv_keys->connected == 1);
   /* Update the RDMA regions */
-  sctk_ibuf_rdma_update_remote_addr(rail_ib, remote, recv_keys);
+  sctk_ibuf_rdma_update_remote_addr(rail_ib, remote, recv_keys, REGION_SEND);
+  sctk_ibuf_rdma_set_remote_state_rtr(remote, state_connected);
 
-  sctk_route_messages_send(sctk_process_rank,src,ondemand_specific_message_tag,
-      CM_OD_RDMA_DONE_ACK_TAG+CM_MASK_TAG,
-      &done_to_send,sizeof(char));
+//  sctk_route_messages_send(sctk_process_rank,src,ondemand_specific_message_tag,
+//      CM_OD_RDMA_DONE_ACK_TAG+CM_MASK_TAG,
+//      &done_to_send,sizeof(char));
 
   /* Change to connected. It is important to do it after sending the message */
-  sctk_ibuf_rdma_set_state_remote(remote, state_connected);
+//  sctk_ibuf_rdma_set_state_remote(remote, state_connected);
 
   return 0;
 }
@@ -472,7 +477,7 @@ void sctk_ib_cm_on_demand_rdma_done_ack_recv(sctk_rail_info_t *rail, void* done,
   sctk_ib_nodebug("OD QP connexion DONE ACK received from process %d", src);
 
   /* Change to connected */
-  sctk_ibuf_rdma_set_state_remote(remote, state_connected);
+//  sctk_ibuf_rdma_set_state_remote(remote, state_connected);
 }
 
 int sctk_ib_cm_on_demand_rdma_recv_ack(sctk_rail_info_t *rail, void* ack, int src) {
@@ -489,26 +494,30 @@ int sctk_ib_cm_on_demand_rdma_recv_ack(sctk_rail_info_t *rail, void* ack, int sr
   assume(route_table);
   remote = route_table->data.ib.remote;
 
-  sctk_ib_nodebug("OD QP connexion ACK received from process %d (%p:%u|%p:%u)", src,
-      recv_keys->send.addr, recv_keys->send.rkey, recv_keys->recv.addr, recv_keys->recv.rkey);
-
+  sctk_ib_debug("OD QP connexion ACK received from process %d (%p:%u)", src,
+      recv_keys->addr, recv_keys->rkey);
 
   /* If the remote peer is connectable */
   if (recv_keys->connected == 1) {
     /* Allocate the buffer */
-    sctk_ibuf_rdma_pool_init(rail_ib, remote,
-        remote->request.nb,
-        remote->request.size_ibufs,
-        recv_keys->nb,
-        recv_keys->size);
+    sctk_ibuf_rdma_pool_init(rail_ib, remote);
+    /* We create the SEND region */
+    sctk_ibuf_rdma_region_init(rail_ib, remote,
+        &remote->rdma.pool->region[REGION_SEND],
+        RDMA_CHANNEL | SEND_CHANNEL, remote->request.nb, remote->request.size_ibufs);
+
     /* Update the RDMA regions */
-    sctk_ibuf_rdma_update_remote_addr(rail_ib, remote, recv_keys);
+    sctk_ibuf_rdma_update_remote_addr(rail_ib, remote, recv_keys, REGION_RECV);
     /* Fill the keys */
-    sctk_ibuf_rdma_fill_remote_addr(rail_ib, remote, &send_keys);
+    sctk_ibuf_rdma_fill_remote_addr(rail_ib, remote, &send_keys, REGION_SEND);
+
+    /* Send the message */
     send_keys.connected = 1;
   sctk_route_messages_send(sctk_process_rank,src,ondemand_specific_message_tag,
-      CM_OD_RDMA_DONE_REQ_TAG+CM_MASK_TAG,
+      CM_OD_RDMA_DONE_TAG+CM_MASK_TAG,
       &send_keys,sizeof(sctk_ib_cm_rdma_connection_t));
+
+  sctk_ibuf_rdma_set_remote_state_rts(remote, state_connected);
 
   } else { /* cannot connect */
     /* We cancel the RDMA connection */
@@ -544,50 +553,51 @@ int sctk_ib_cm_on_demand_rdma_recv_request(sctk_rail_info_t *rail, void* request
   remote = route_table->data.ib.remote;
 
   ROUTE_LOCK(route_table);
-  if (sctk_ibuf_rdma_get_state_remote(remote) == state_deconnected) {
-    sctk_ibuf_rdma_set_state_remote(remote, state_connecting);
-    remote->rdma.is_initiator = 0;
+  if (sctk_ibuf_rdma_get_remote_state_rtr(remote) == state_deconnected) {
+    sctk_ibuf_rdma_set_remote_state_rtr(remote, state_connecting);
   }
   ROUTE_UNLOCK(route_table);
 
-  /* RACE CONDITION AVOIDING -> positive ACK */
-  if ( remote->rdma.is_initiator == 0 || sctk_process_rank > src ) {
-    sctk_ib_cm_rdma_connection_t *recv_keys = (sctk_ib_cm_rdma_connection_t*) request;
-    sctk_ib_nodebug("[%d] OD RDMA connexion REQUEST to process %d (connected:%d size:%d nb:%d)",
-        rail->rail_number, remote->rank, recv_keys->connected, recv_keys->size, recv_keys->nb);
+  sctk_ib_cm_rdma_connection_t *recv_keys = (sctk_ib_cm_rdma_connection_t*) request;
+  sctk_ib_debug("[%d] OD RDMA connexion REQUEST to process %d (connected:%d size:%d nb:%d)",
+      rail->rail_number, remote->rank, recv_keys->connected, recv_keys->size, recv_keys->nb);
 
-    /* If we have received a request, we *MUST* have the filed 'connected' set to 1*/
-    assume(recv_keys->connected == 1);
-    /* We check if we can also be connected using RDMA */
-    if (sctk_ibuf_rdma_is_connectable(rail_ib, remote)) {  /* Can connect to RDMA */
+  /* We do not send a request if we do not want to be connected
+   * using RDMA. This is stupid :-) */
+  assume(recv_keys->connected == 1);
 
-      sctk_nodebug("Can connect to remote %d", remote->rank);
+  /* We check if we can also be connected using RDMA */
+  if (sctk_ibuf_rdma_is_connectable(rail_ib, remote)) {  /* Can connect to RDMA */
 
-      /* FIXME: we determine how many entries we need to allocate and
-       * how much memory per slot */
-      send_keys.connected = 1;
-      sctk_ibuf_rdma_determine_config_from_sample(rail_ib, remote, &send_keys.nb, &send_keys.size);
+    sctk_nodebug("Can connect to remote %d", remote->rank);
 
-      /* Allocate the buffer */
-      sctk_ibuf_rdma_pool_init(rail_ib, remote,
-          send_keys.nb, send_keys.size, recv_keys->nb, recv_keys->size);
-      /* Fill the keys */
-      sctk_ibuf_rdma_fill_remote_addr(rail_ib, remote, &send_keys);
-    } else { /* Cannot connect to RDMA */
-      sctk_nodebug("Cannot connect to remote %d", remote->rank);
+    /* We can change to RTR because we are RDMA connectable */
+    send_keys.connected = 1;
 
-      send_keys.connected = 0;
-      send_keys.size = 0;
-      send_keys.nb = 0;
-    }
+    /* We firstly allocate the main structure. 'ibuf_rdma_pool_init'
+     * implicitely does not allocate memory if already created */
+    sctk_ibuf_rdma_pool_init(rail_ib, remote);
+    /* We create the RECV region */
+    sctk_ibuf_rdma_region_init(rail_ib, remote,
+        &remote->rdma.pool->region[REGION_RECV],
+        RDMA_CHANNEL | RECV_CHANNEL, recv_keys->nb, recv_keys->size);
 
-    /* Send ACK */
-    sctk_ib_nodebug("[%d] OD QP ack to process %d (%p:%u|%p:%u)", rail->rail_number, src,
-      send_keys.send.addr, send_keys.send.rkey, send_keys.recv.addr, send_keys.recv.rkey);
+    /* Fill the keys */
+    sctk_ibuf_rdma_fill_remote_addr(rail_ib, remote, &send_keys, REGION_RECV);
+  } else { /* Cannot connect to RDMA */
+    sctk_debug("Cannot connect to remote %d", remote->rank);
 
-    sctk_route_messages_send(sctk_process_rank,src,ondemand_specific_message_tag, CM_OD_RDMA_ACK_TAG+CM_MASK_TAG,
-        &send_keys, sizeof(sctk_ib_cm_rdma_connection_t));
+    send_keys.connected = 0;
+    send_keys.size = 0;
+    send_keys.nb = 0;
   }
+
+  /* Send ACK */
+  sctk_ib_debug("[%d] OD QP ack to process %d (%p:%u)", rail->rail_number, src,
+      send_keys.addr, send_keys.rkey);
+
+  sctk_route_messages_send(sctk_process_rank,src,ondemand_specific_message_tag, CM_OD_RDMA_ACK_TAG+CM_MASK_TAG,
+      &send_keys, sizeof(sctk_ib_cm_rdma_connection_t));
   return 0;
 
 }
@@ -847,12 +857,8 @@ int sctk_ib_cm_on_demand_recv(sctk_rail_info_t *rail,
       sctk_ib_cm_on_demand_rdma_recv_ack(rail, payload, process_src);
       break;
 
-      case CM_OD_RDMA_DONE_REQ_TAG:
-      sctk_ib_cm_on_demand_rdma_done_request_recv(rail, payload, process_src);
-      break;
-
-      case CM_OD_RDMA_DONE_ACK_TAG:
-      sctk_ib_cm_on_demand_rdma_done_ack_recv(rail, payload, process_src);
+      case CM_OD_RDMA_DONE_TAG:
+      sctk_ib_cm_on_demand_rdma_done_recv(rail, payload, process_src);
       break;
 
 

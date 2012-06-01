@@ -162,11 +162,10 @@ int sctk_ibuf_rdma_is_connectable(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *re
 void sctk_ibuf_rdma_check_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, size_t size);
 
 sctk_ibuf_rdma_pool_t*
-sctk_ibuf_rdma_pool_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remote,
-    int send_nb_ibufs, int send_size_ibufs, int recv_nb_ibufs, int recv_size_ibufs);
+sctk_ibuf_rdma_pool_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remote);
 
 void
-sctk_ibuf_rdma_update_remote_addr(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t* remote, sctk_ib_cm_rdma_connection_t *key);
+sctk_ibuf_rdma_update_remote_addr(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t* remote, sctk_ib_cm_rdma_connection_t *key, int region);
 
 void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf);
 
@@ -175,9 +174,6 @@ sctk_ib_rdma_eager_poll_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remot
 
 void sctk_ib_rdma_eager_walk_remotes(sctk_ib_rail_info_t *rail, int (func)(sctk_ib_rail_info_t *rail, sctk_ib_qp_t* remote), int *ret);
 
-int
-sctk_ibuf_rdma_is_remote_connected(sctk_ib_qp_t* remote);
-
 void sctk_ibuf_rdma_update_max_pending_requests(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote);
 
 void sctk_ib_rdma_eager_poll_recv(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, int index);
@@ -185,9 +181,6 @@ void sctk_ib_rdma_eager_poll_recv(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *re
 sctk_ibuf_t *sctk_ibuf_rdma_pick(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t* remote);
 
 void sctk_ib_rdma_set_tail_flag(sctk_ibuf_t* ibuf, size_t size);
-
-void sctk_ibuf_rdma_set_state_remote(sctk_ib_qp_t* remote, sctk_route_state_t state);
-sctk_route_state_t sctk_ibuf_rdma_get_state_remote(sctk_ib_qp_t* remote);
 
 void
 sctk_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* remote,
@@ -199,5 +192,33 @@ void sctk_ibuf_rdma_determine_config_from_sample(sctk_ib_rail_info_t *rail_ib, s
    int *size_ibufs);
 
 void sctk_ibuf_rdma_connection_cancel(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote);
+
+void sctk_ibuf_rdma_fill_remote_addr(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t* remote,
+    sctk_ib_cm_rdma_connection_t *keys, int region);
+
+/*-----------------------------------------------------------
+ *  ACESSORS
+ *----------------------------------------------------------*/
+
+static __UNUSED__ void
+sctk_ibuf_rdma_set_remote_state_rtr(sctk_ib_qp_t* remote, sctk_route_state_t state) {
+  remote->rdma.state_rtr = state;
+}
+
+static __UNUSED__ int
+sctk_ibuf_rdma_get_remote_state_rtr(sctk_ib_qp_t* remote) {
+  return remote->rdma.state_rtr;
+}
+
+static __UNUSED__ void
+sctk_ibuf_rdma_set_remote_state_rts(sctk_ib_qp_t* remote, sctk_route_state_t state) {
+  remote->rdma.state_rts = state;
+}
+
+static __UNUSED__ int
+sctk_ibuf_rdma_get_remote_state_rts(sctk_ib_qp_t* remote) {
+  return remote->rdma.state_rts;
+}
+
 #endif
 #endif

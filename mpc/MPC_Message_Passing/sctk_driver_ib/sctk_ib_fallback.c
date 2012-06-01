@@ -102,7 +102,10 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
    *  We switch between available protocols
    *
    * */
-  if (size+IBUF_GET_EAGER_SIZE <= config->ibv_eager_limit)  {
+  if ( ( (sctk_ibuf_rdma_get_remote_state_rts(remote) == state_connected) &&
+        (size+IBUF_GET_EAGER_SIZE+IBUF_RDMA_GET_SIZE <= sctk_ibuf_rdma_get_eager_limit(remote) ) )
+      || (size+IBUF_GET_EAGER_SIZE <= config->ibv_eager_limit) )
+  {
     sctk_nodebug("Eager");
     ibuf = sctk_ib_eager_prepare_msg(rail_ib, remote, msg, size, -1, is_control_message);
     /* Actually, it is possible to get a NULL pointer for ibuf. We falback to buffered */
@@ -116,6 +119,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
     sctk_ibuf_rdma_check_remote(rail_ib, remote, size);
 
     goto exit;
+
   }
 
 buffered:

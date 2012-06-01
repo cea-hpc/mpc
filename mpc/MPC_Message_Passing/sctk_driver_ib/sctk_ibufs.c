@@ -30,7 +30,7 @@
 #include "sctk_ib.h"
 #include "sctk_ib_eager.h"
 #include "sctk_ib_config.h"
-#include "sctk_ib_qp.h"
+#include "sctk_ib_prof.h"
 #include "sctk_ibufs_rdma.h"
 #include "utlist.h"
 /**
@@ -195,6 +195,7 @@ sctk_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib, int n)
 
     /* Prepare the buffer for sending */
   IBUF_SET_POISON(ibuf->buffer);
+  PROF_INC_RAIL_IB(rail_ib, ibuf_sr_nb);
 
   return ibuf;
 }
@@ -217,7 +218,7 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
 
   s = *size;
   /***** RDMA CHANNEL *****/
-  if (sctk_ibuf_rdma_is_remote_connected(remote)) {
+  if (sctk_ibuf_rdma_get_remote_state_rts(remote) == state_connected) {
     limit = sctk_ibuf_rdma_get_eager_limit(remote);
     sctk_nodebug("Eager limit: %lu", limit);
 
@@ -229,6 +230,7 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
 
       /* If we cannot pick a buffer from the RDMA channel, we switch to SR */
       if (ibuf) {
+        PROF_INC_RAIL_IB(rail_ib, ibuf_rdma_nb);
         sctk_nodebug("Picking from RDMA %d", ibuf->index);
         goto exit;
       }
@@ -270,6 +272,7 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
     sctk_spinlock_unlock(lock);
 
     IBUF_SET_PROTOCOL(ibuf->buffer, null_protocol);
+    PROF_INC_RAIL_IB(rail_ib, ibuf_sr_nb);
 
 #ifdef DEBUG_IB_BUFS
     assume(ibuf);

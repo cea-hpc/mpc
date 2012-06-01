@@ -88,11 +88,16 @@ typedef struct sctk_ib_device_s
 #define ACK_CANCEL  333
 typedef struct sctk_ibuf_rdma_s
 {
+  /* Lock for allocating pool */
   sctk_spinlock_t lock;
 
   struct sctk_ibuf_rdma_pool_s *pool;
-  /* State of the RDMA channel */
-  sctk_route_state_t state;
+
+  /* If remote is RTR */
+  sctk_route_state_t state_rtr;
+  /* If remote is RTS */
+  sctk_route_state_t state_rts;
+
   /* Mean size for rdma entries */
   float           mean_size;
   int             mean_iter;

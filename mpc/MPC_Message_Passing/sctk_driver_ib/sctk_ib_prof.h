@@ -31,7 +31,7 @@
 #include <stdint.h>
 #include "opa_primitives.h"
 
-//#define SCTK_IB_PROF
+#define SCTK_IB_PROF
 
 enum sctk_ib_prof_counters_e {
   cp_matched = 0,
@@ -44,6 +44,8 @@ enum sctk_ib_prof_counters_e {
   eager_nb = 7,
   buffered_nb = 8,
   rdma_nb = 9,
+  ibuf_sr_nb = 10,
+  ibuf_rdma_nb = 11,
 };
 
 extern __thread double time_steals;
@@ -84,6 +86,18 @@ typedef struct sctk_ib_prof_s {
 
 #define PROF_LOAD(r,x) OPA_load_int(&r->profiler->counters[x])
 
+#else
+
+#define PROF_INC(x,y) (void)(0)
+#define PROF_INC_RAIL_IB(x,y) (void)(0)
+#define PROF_LOAD(x,y) 0
+#define sctk_ib_prof_init(x) (void)(0)
+#define sctk_ib_prof_print(x) (void)(0)
+#define sctk_ib_prof_finalize(x) (void)(0)
+
+#endif
+
+#if 0
 void sctk_ib_prof_init(sctk_ib_rail_info_t *rail_ib);
 void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib);
 void sctk_ib_prof_finalize(sctk_ib_rail_info_t *rail_ib);
@@ -108,14 +122,6 @@ void sctk_ib_prof_mem_finalize(sctk_ib_rail_info_t *rail_ib);
 #define PROF_QP_CREAT 3
 
 #else
-
-#define PROF_INC(x,y) (void)(0)
-#define PROF_INC_RAIL_IB(x,y) (void)(0)
-#define PROF_LOAD(x,y) 0
-#define sctk_ib_prof_init(x) (void)(0)
-#define sctk_ib_prof_print(x) (void)(0)
-#define sctk_ib_prof_finalize(x) (void)(0)
-
 /* QP profiling */
 #define sctk_ib_prof_qp_init(x) (void)(0)
 #define sctk_ib_prof_qp_init_task(x,y) (void)(0)
@@ -129,6 +135,8 @@ void sctk_ib_prof_mem_finalize(sctk_ib_rail_info_t *rail_ib);
 #define sctk_ib_prof_mem_init(x) (void)(0)
 #define sctk_ib_prof_mem_finalize(x) (void)(0)
 
+
 #endif
+
 #endif
 #endif

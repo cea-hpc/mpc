@@ -42,8 +42,7 @@
 
 #define CM_OD_RDMA_REQ_TAG (9)
 #define CM_OD_RDMA_ACK_TAG (10)
-#define CM_OD_RDMA_DONE_REQ_TAG (11)
-#define CM_OD_RDMA_DONE_ACK_TAG (12)
+#define CM_OD_RDMA_DONE_TAG (11)
 
 struct sctk_thread_ptp_message_body_s;
 
@@ -82,14 +81,8 @@ typedef struct {
   int connected;
   int size;   /* Size of a slot */
   int nb;     /* Number of slots */
-  struct {     /* Address remote send region */
-    uint32_t rkey;
-    void *addr;
-  } send;
-  struct {     /* Address remote recv region */
-    uint32_t rkey;
-    void *addr;
-  } recv;
+  uint32_t rkey;
+  void *addr;
 } sctk_ib_cm_rdma_connection_t;
 
 typedef struct {
@@ -143,8 +136,5 @@ void sctk_ib_cm_deco_done_ack_send(sctk_rail_info_t* rail, sctk_route_table_t* r
 
 int sctk_ib_cm_on_demand_rdma_request(int dest,
     sctk_rail_info_t* rail, int rdma_connected, int entry_size, int entry_nb);
-
-void sctk_ibuf_rdma_fill_remote_addr(sctk_ib_rail_info_t *rail_ib, struct sctk_ib_qp_s* remote,
-    sctk_ib_cm_rdma_connection_t *keys);
 #endif
 #endif

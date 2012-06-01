@@ -67,20 +67,13 @@ static sctk_spinlock_t rdma_lock = SCTK_SPINLOCK_INITIALIZER;
  * Init the remote
  */
 void sctk_ibuf_rdma_remote_init(sctk_ib_qp_t* remote) {
-  remote->rdma.state = state_deconnected;
+  sctk_ibuf_rdma_set_remote_state_rtr(remote, state_deconnected);
+  sctk_ibuf_rdma_set_remote_state_rts(remote, state_deconnected);
   remote->rdma.mean_size_lock = SCTK_SPINLOCK_INITIALIZER;
   remote->rdma.mean_size = 0;
   remote->rdma.mean_iter = 0;
   remote->rdma.max_pending_requests = 0;
   remote->rdma.lock = SCTK_SPINLOCK_INITIALIZER;
-}
-
-/*
- * Check if a remote is connected to the process with a RDMA channel
- */
-int
-sctk_ibuf_rdma_is_remote_connected(sctk_ib_qp_t* remote) {
-  return (sctk_ibuf_rdma_get_state_remote(remote) == state_connected);
 }
 
 void
@@ -91,6 +84,8 @@ sctk_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* rem
   void* ibuf;
   sctk_ibuf_t* ibuf_ptr = NULL;
   int i;
+
+  assume(remote->rdma.pool);
 
   /* XXX: replaced by memalign_on_node */
   sctk_posix_memalign( (void**) &ptr, mmu->page_size, nb_ibufs * size_ibufs);
@@ -147,6 +142,24 @@ sctk_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* rem
   region->head = ibuf;
   region->tail = ibuf_ptr;
 
+  /* If this is the send channel */
+  if (channel == (RDMA_CHANNEL | SEND_CHANNEL) ) {
+    /* Send the number of credits */
+    remote->rdma.pool->send_credit = nb_ibufs;
+
+    sctk_ib_debug("SEND channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d (send_credit:%d)",
+        remote->rank, nb_ibufs, size_ibufs, remote->rdma.pool->send_credit);
+  } else if (channel == (RDMA_CHANNEL | RECV_CHANNEL) ) {
+    sctk_ib_debug("RECV channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d",
+        remote->rank, nb_ibufs, size_ibufs);
+
+    /* Add the entry to the pooling list */
+  sctk_spinlock_lock(&rdma_pool_list_lock);
+  DL_APPEND(rdma_pool_list_to_merge, remote->rdma.pool);
+  sctk_spinlock_unlock(&rdma_pool_list_lock);
+
+  } else not_reachable();
+
   sctk_nodebug("Head=%p(%d) Tail=%p(%d)", region->head, region->head->index,
       region->tail, region->tail->index);
 }
@@ -155,40 +168,41 @@ sctk_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* rem
  * Create a region of ibufs for RDMA
  */
 sctk_ibuf_rdma_pool_t*
-sctk_ibuf_rdma_pool_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remote,
-    int send_nb_ibufs, int send_size_ibufs, int recv_nb_ibufs, int recv_size_ibufs) {
+sctk_ibuf_rdma_pool_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remote) {
   LOAD_DEVICE(rail_ib);
   sctk_ibuf_rdma_pool_t* pool = NULL;
 
-  pool = sctk_malloc(sizeof(sctk_ibuf_rdma_pool_t));
-  assume(pool);
-  memset(pool, 0, sizeof(sctk_ibuf_rdma_pool_t));
+  /* We lock during the memmory allocating */
+  sctk_spinlock_lock(&remote->rdma.lock);
+  /* If no allocation has been done */
+  if (remote->rdma.pool == NULL) {
+    pool = sctk_malloc(sizeof(sctk_ibuf_rdma_pool_t));
+    assume(pool);
+    memset(pool, 0, sizeof(sctk_ibuf_rdma_pool_t));
 
-  /* Initia¢lize regions for send and recv */
-  sctk_ibuf_rdma_region_init(rail_ib, remote, &pool->region[REGION_SEND],
+    /* Setup local addr */
+    pool->remote_region[REGION_SEND] = NULL;
+    pool->remote_region[REGION_RECV] = NULL;
+    pool->remote = remote;
+
+    /* Finaly update the pool pointer */
+    remote->rdma.pool = pool;
+  }
+  sctk_spinlock_unlock(&remote->rdma.lock);
+
+  /* Initialize regions for send and recv */
+  /* sctk_ibuf_rdma_region_init(rail_ib, remote, &pool->region[REGION_SEND],
       RDMA_CHANNEL | SEND_CHANNEL, send_nb_ibufs, send_size_ibufs);
   sctk_ibuf_rdma_region_init(rail_ib, remote, &pool->region[REGION_RECV],
-      RDMA_CHANNEL | RECV_CHANNEL, recv_nb_ibufs, recv_size_ibufs);
+      RDMA_CHANNEL | RECV_CHANNEL, recv_nb_ibufs, recv_size_ibufs); */
 
-  sctk_ib_debug("Allocating (|%p|%d:%d-|%p|%d:%d) RDMA buffers (connections: %d)",
+  /* sctk_ib_debug("Allocating (|%p|%d:%d-|%p|%d:%d) RDMA buffers (connections: %d)",
       pool->region[REGION_SEND].buffer_addr,
       send_nb_ibufs, send_size_ibufs,
       pool->region[REGION_RECV].buffer_addr,
       recv_nb_ibufs, recv_size_ibufs,
-      device->eager_rdma_connections);
+      device->eager_rdma_connections); */
 
-  /* Setup local addr */
-  pool->remote_region[REGION_SEND] = NULL;
-  pool->remote_region[REGION_RECV] = NULL;
-  pool->send_credit = send_nb_ibufs;
-  pool->remote = remote;
-
-  /* Add the entry to the list */
-  sctk_spinlock_lock(&rdma_pool_list_lock);
-  DL_APPEND(rdma_pool_list_to_merge, pool);
-  sctk_spinlock_unlock(&rdma_pool_list_lock);
-
-  remote->rdma.pool = pool;
 
   return pool;
 }
@@ -216,8 +230,9 @@ sctk_ibuf_rdma_region_free(struct sctk_ib_rail_info_s *rail_ib,
  */
 void
 sctk_ibuf_rdma_pool_free(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remote) {
+/* Needs to be re-written */
+#if 0
   LOAD_DEVICE(rail_ib);
-
   /* Check if we can allocate an RDMA channel */
   sctk_spinlock_lock(&rdma_lock);
   if (sctk_ibuf_rdma_is_remote_connected(remote)) {
@@ -243,6 +258,7 @@ sctk_ibuf_rdma_pool_free(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remo
   } else {
     sctk_spinlock_unlock(&rdma_lock);
   }
+#endif
 }
 
 
@@ -297,6 +313,7 @@ inline sctk_ibuf_t *sctk_ibuf_rdma_pick(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp
     return (sctk_ibuf_t*) head;
   }
   else {
+    sctk_nodebug("Cannot pick RDMA buffer");
     IBUF_RDMA_UNLOCK_REGION(remote, REGION_SEND);
   }
 
@@ -384,10 +401,8 @@ void sctk_ib_rdma_eager_walk_remotes(sctk_ib_rail_info_t *rail, int (func)(sctk_
 
   sctk_spinlock_read_lock(&rw_lock);
   DL_FOREACH(rdma_pool_list, pool) {
-    /* We check if the remote is connected. If not, do not pool */
-    if (sctk_ibuf_rdma_get_state_remote(pool->remote) == state_connected) {
-      *ret |= func(rail, pool->remote);
-    }
+    /* 'func' needs to check if the remote is in a RTR mode */
+    *ret |= func(rail, pool->remote);
   }
   sctk_spinlock_read_unlock(&rw_lock);
 
@@ -399,7 +414,7 @@ void sctk_ib_rdma_eager_walk_remotes(sctk_ib_rail_info_t *rail, int (func)(sctk_
     /* We only add entries of connected processes */
     sctk_spinlock_lock(&rdma_pool_list_lock);
     DL_FOREACH(rdma_pool_list_to_merge, pool) {
-      if (sctk_ibuf_rdma_get_state_remote(pool->remote) == state_connected) {
+      if (sctk_ibuf_rdma_get_remote_state_rtr(pool->remote) == state_connected) {
         sctk_nodebug("List merged for pooling !!");
         /* Remove the entry from the merge list... */
         DL_DELETE(rdma_pool_list_to_merge, pool);
@@ -420,7 +435,7 @@ void sctk_ib_rdma_eager_walk_remotes(sctk_ib_rail_info_t *rail, int (func)(sctk_
 int
 sctk_ib_rdma_eager_poll_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote) {
   /* We return if the remote is not connected to the RDMA channel */
-  if (sctk_ibuf_rdma_is_remote_connected(remote) == 0) return 0;
+  if (sctk_ibuf_rdma_get_remote_state_rtr(remote) != state_connected) return 0;
   static sctk_spinlock_t poll_lock = SCTK_SPINLOCK_INITIALIZER;
   sctk_ibuf_t *head;
 
@@ -562,7 +577,7 @@ void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
           base->region->mmu_entry->mr->lkey,  /* lkey */
           IBUF_RDMA_GET_REMOTE_PIGGYBACK(remote, base),  /* Remote addr */
           remote->rdma.pool->rkey[REGION_SEND],  /* rkey */
-          sizeof(int), IBV_SEND_SIGNALED,
+          sizeof(int),  IBV_SEND_SIGNALED ,
           IBUF_DO_NOT_RELEASE);
 
       /* Put the buffer as free */
@@ -582,22 +597,12 @@ void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
   } else not_reachable();
 }
 
-void
-sctk_ibuf_rdma_set_state_remote(sctk_ib_qp_t* remote, sctk_route_state_t state) {
-  remote->rdma.state = state;
-}
-
-sctk_route_state_t
-sctk_ibuf_rdma_get_state_remote(sctk_ib_qp_t* remote) {
-    return remote->rdma.state;
-}
-
 
 /*
  * Check if the need to connect the remote using RDMA.
  */
-#define IBUF_RDMA_SAMPLES 10000
-#define IBUF_RDMA_MIN_SIZE (1  * 1024)
+#define IBUF_RDMA_SAMPLES 1
+#define IBUF_RDMA_MIN_SIZE (16 * 1024)
 #define IBUF_RDMA_MAX_SIZE (16 * 1024)
 #define IBUF_RDMA_MIN_NB (64)
 #define IBUF_RDMA_MAX_NB (256)
@@ -628,7 +633,7 @@ void sctk_ibuf_rdma_connection_cancel(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t
   sctk_spinlock_unlock(&rdma_lock);
 
   /* We reset the state to deconnected */
-  sctk_ibuf_rdma_set_state_remote(remote, state_deconnected);
+  sctk_ibuf_rdma_set_remote_state_rts(remote, state_deconnected);
 }
 
 
@@ -642,55 +647,15 @@ void sctk_ibuf_rdma_update_max_pending_requests(sctk_ib_rail_info_t *rail_ib, sc
 
   sctk_spinlock_lock(&remote->rdma.mean_size_lock);
   current_pending = sctk_ib_qp_get_requests_nb(remote);
-  assume(current_pending >= 0);
   if (current_pending > remote->rdma.max_pending_requests) {
     remote->rdma.max_pending_requests = current_pending;
   }
   sctk_spinlock_unlock(&remote->rdma.mean_size_lock);
 }
 
-/*
- * Determine the RDMA configuration from the sample
- */
-void sctk_ibuf_rdma_determine_config_from_sample(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, int *nb,
-   int *size_ibufs) {
-  float total;
-  int iter;
-  int determined_size;
-  int determined_nb;
-
-  /* We firslty determine what is the mean size
-   * FIXME: This locks are really costly. Is there any tip for
-   * using atomics with float ? */
-  sctk_spinlock_lock(&remote->rdma.mean_size_lock);
-  determined_nb = remote->rdma.max_pending_requests;
-  total = remote->rdma.mean_size;
-  iter  = remote->rdma.mean_iter;
-  sctk_spinlock_unlock(&remote->rdma.mean_size_lock);
-
-  /* If we have not recorded the total number of messages, we re-ajust */
-  if (iter == 0) {
-    total = 0;
-  } else if (iter < IBUF_RDMA_SAMPLES) {
-    total = (float) (total * (IBUF_RDMA_SAMPLES / iter) );
-  }
-
-  determined_size = (int) total;
-  if (determined_size > IBUF_RDMA_MAX_SIZE) determined_size = IBUF_RDMA_MAX_SIZE;
-  if (determined_size < IBUF_RDMA_MIN_SIZE) determined_size = IBUF_RDMA_MIN_SIZE;
-  if (determined_nb > IBUF_RDMA_MAX_NB) determined_nb = IBUF_RDMA_MAX_NB;
-  if (determined_nb < IBUF_RDMA_MIN_NB) determined_nb = IBUF_RDMA_MIN_NB;
-  determined_size = ALIGN_ON_64 (determined_size + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE);
-
-    /* Update arguments */
-  *nb = determined_nb;
-  *size_ibufs = determined_size;
-  sctk_debug("Configuration determined after %d iters: nb ibufs:%d size_ibufs:%d", iter, *nb, *size_ibufs);
-}
-
 void sctk_ibuf_rdma_check_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, size_t size) {
   /* We profile only when the RDMA route is deconnected */
-  if (remote->rdma.state == state_deconnected) {
+  if (sctk_ibuf_rdma_get_remote_state_rts(remote) == state_deconnected) {
     float mean = (float) (size / IBUF_RDMA_SAMPLES);
     float total;
     int iter;
@@ -716,7 +681,7 @@ void sctk_ibuf_rdma_check_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *rem
       if (determined_nb < IBUF_RDMA_MIN_NB) determined_nb = IBUF_RDMA_MIN_NB;
       determined_size = ALIGN_ON_64 (determined_size + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE);
 
-      sctk_debug("Trying to connect remote %d using RDMA (mean size: %f, determined: %d, pending: %d, iter: %d)", remote->rank, total, determined_size,
+      sctk_nodebug("Trying to connect remote %d using RDMA (mean size: %f, determined: %d, pending: %d, iter: %d)", remote->rank, total, determined_size,
           determined_nb, iter);
 
       /* Sending the request. If the request has been sent, we reinit */
@@ -737,17 +702,14 @@ void sctk_ibuf_rdma_check_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *rem
  */
 void
 sctk_ibuf_rdma_fill_remote_addr(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t* remote,
-    sctk_ib_cm_rdma_connection_t *keys) {
+    sctk_ib_cm_rdma_connection_t *keys, int region) {
 
   assume(remote->rdma.pool);
-  keys->send.addr = remote->rdma.pool->region[REGION_SEND].buffer_addr;
-  keys->send.rkey = remote->rdma.pool->region[REGION_SEND].mmu_entry->mr->rkey;
+  keys->addr = remote->rdma.pool->region[region].buffer_addr;
+  keys->rkey = remote->rdma.pool->region[region].mmu_entry->mr->rkey;
 
-  keys->recv.addr = remote->rdma.pool->region[REGION_RECV].buffer_addr;
-  keys->recv.rkey = remote->rdma.pool->region[REGION_RECV].mmu_entry->mr->rkey;
-
-  sctk_nodebug("LOCAL addr: send_ptr=%p send_rkey=%u recv_ptr=%p recv_rkey=%u (connected: %d)",
-      keys->send.addr, keys->send.rkey, keys->recv.addr, keys->recv.rkey, keys->connected);
+  sctk_debug("Filled keys addr=%p rkey=%u",
+      keys->addr, keys->rkey, keys->connected);
 }
 
 /*
@@ -755,18 +717,15 @@ sctk_ibuf_rdma_fill_remote_addr(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t* remo
  * called before sending any message to the RDMA channel
  */
 void
-sctk_ibuf_rdma_update_remote_addr(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t* remote, sctk_ib_cm_rdma_connection_t *key) {
-  sctk_nodebug("REMOTE addr: send_ptr=%p send_rkey=%u recv_ptr=%p recv_rkey=%u (connected: %d)",
-      key->send.addr, key->send.rkey, key->recv.addr, key->recv.rkey, key->connected);
+sctk_ibuf_rdma_update_remote_addr(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t* remote, sctk_ib_cm_rdma_connection_t *key, int region) {
+  sctk_debug("REMOTE addr updated:: addr=%p rkey=%u (connected: %d)",
+      key->addr, key->rkey, key->connected);
 
   assume(remote->rdma.pool);
   /* Update keys for send and recv regions. We need to register the send region
    * because of the piggyback */
-  remote->rdma.pool->remote_region[REGION_SEND] = key->send.addr;
-  remote->rdma.pool->rkey[REGION_SEND] = key->send.rkey;
-
-  remote->rdma.pool->remote_region[REGION_RECV] = key->recv.addr;
-  remote->rdma.pool->rkey[REGION_RECV] = key->recv.rkey;
+  remote->rdma.pool->remote_region[region] = key->addr;
+  remote->rdma.pool->rkey[region] = key->rkey;
 }
 
 /*
