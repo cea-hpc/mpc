@@ -240,6 +240,7 @@ struct sctk_alloc_mm_source
 	struct sctk_alloc_macro_bloc * (*request_memory)(struct sctk_alloc_mm_source * source,sctk_size_t size);
 	void (*free_memory)(struct sctk_alloc_mm_source * source,struct sctk_alloc_macro_bloc * bloc);
 	void (*cleanup)(struct sctk_alloc_mm_source * source);
+	struct sctk_alloc_macro_bloc * (*remap)(struct sctk_alloc_macro_bloc * old_macro_bloc,sctk_size_t new_size);
 };
 
 /************************** STRUCT *************************/
@@ -384,6 +385,12 @@ SCTK_STATIC bool sctk_alloc_chain_refill_mem(struct sctk_alloc_chain* chain,sctk
 void sctk_alloc_chain_destroy(struct sctk_alloc_chain * chain,bool force);
 void sctk_alloc_chain_purge_rfq(struct sctk_alloc_chain * chain);
 SCTK_STATIC void sctk_alloc_chain_free_macro_bloc(struct sctk_alloc_chain * chain,sctk_alloc_vchunk vchunk);
+SCTK_STATIC bool sctk_alloc_chain_can_remap(struct sctk_alloc_chain * chain);
+void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sctk_size_t size);
+
+/************************* FUNCTION ************************/
+//Base of memory source
+void sctk_alloc_mm_source_base_init(struct sctk_alloc_mm_source * source);
 
 /************************* FUNCTION ************************/
 //default memory source functions

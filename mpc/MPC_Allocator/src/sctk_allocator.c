@@ -914,6 +914,54 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_request_mem(struct sctk_alloc_cha
 
 /************************* FUNCTION ************************/
 /**
+ * This function is a merge of sctk_alloc_chain_request_mem() and sctk_alloc_chain_free_macro_bloc()
+ * which exploit mremap capabilities to avoid a copy of large segment for realloc() implementation.
+ * @param chain Define the chain in which to realloc. Caution you must ensure that the original
+ * segment was managed by the same chain otherwise it can procuce unpredictable behaviors.
+ * @param size Define the size of the new chunk to allocate.
+ * @param vchunk Define the old vchunk to remap. Caution it must be a macro bloc.
+**/
+SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_realloc_macro_bloc(struct sctk_alloc_chain * chain,sctk_size_t size,sctk_alloc_vchunk vchunk)
+{
+	//errors
+	assert(chain != NULL)
+	assert(chain->source != NULL);
+	assert(chain->source->remap != NULL);
+	assert(size > 0);
+	assert(sctk_alloc_chain_can_remap(chain));
+	/** @todo Maybe request the bloc size to memory source insteed of directly use the constant **/
+	assert (sctk_alloc_get_size(vchunk) % SCTK_MACRO_BLOC_SIZE == SCTK_MACRO_BLOC_SIZE - sizeof(struct sctk_alloc_macro_bloc) - sizeof(struct sctk_alloc_chunk_header_large));
+
+	//round size
+	size += sizeof(struct sctk_alloc_macro_bloc) + sizeof(struct sctk_alloc_chunk_header_large);
+	if (size % SCTK_MACRO_BLOC_SIZE != 0)
+		size += SCTK_MACRO_BLOC_SIZE - size % SCTK_MACRO_BLOC_SIZE;
+	assert(size % SCTK_MACRO_BLOC_SIZE == 0);
+
+	//get original macro bloc
+	/** @todo wrap the address calculation due to inheritance **/
+	struct sctk_alloc_macro_bloc * macro_bloc = sctk_alloc_get_ptr(vchunk) - sizeof(struct sctk_alloc_macro_bloc);
+
+	//unregister from regions
+	sctk_alloc_region_unset_entry(macro_bloc);
+
+	//request a realloc
+	//SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_free_macro_bloc(chain,macro_bloc));
+	macro_bloc = chain->source->remap(macro_bloc,size);
+	assert(macro_bloc->chain != NULL);
+	//SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_add_macro_bloc(chain,bloc));
+
+	//setup and return
+	vchunk = sctk_alloc_chain_prepare_and_reg_macro_bloc(chain,macro_bloc);
+	if (vchunk == NULL)
+		vchunk = SCTK_ALLOC_DEFAULT_CHUNK;
+
+	//ok we can return
+	return vchunk;
+}
+
+/************************* FUNCTION ************************/
+/**
  * Refill memory of the given chain when it fall to low level. It will request the new memory
  * to the related memory source if available.
  * @param chain Define the allocation chain to refill.
@@ -974,7 +1022,7 @@ void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t 
 	//check if huge allocation of normal
 	/** @todo Split in two sub-functions **/
 	/** @todo Define a function to detect huge blocs intead of use two time the calculation.**/
-	if (SCTK_ALLOC_HUGE_CHUNK_SEGREGATION && chain->source != NULL && sctk_alloc_calc_chunk_size(size) > SCTK_MACRO_BLOC_SIZE / 2)
+	if (SCTK_ALLOC_HUGE_CHUNK_SEGREGATION && chain->source != NULL && sctk_alloc_calc_chunk_size(size) > SCTK_HUGE_BLOC_LIMIT)
 	{
 		//for huge block, we bypass the thread pool and call directly the memory source.
 		//huge bloc are > SCTK_MACRO_BLOC_SIZE / 2
@@ -1095,7 +1143,7 @@ void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 	//check if huge bloc or not
 	/** @todo Split in two sub-functions **/
 	/** @todo Define a function to detect huge blocs intead of use two time the calculation. **/
-	if (SCTK_ALLOC_HUGE_CHUNK_SEGREGATION && chain->source != NULL && sctk_alloc_get_size(vchunk) > SCTK_MACRO_BLOC_SIZE / 2)
+	if (SCTK_ALLOC_HUGE_CHUNK_SEGREGATION && chain->source != NULL && sctk_alloc_get_size(vchunk) > SCTK_HUGE_BLOC_LIMIT)
 	{
 		//spy
 		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_chain_huge_free(chain,ptr,sctk_alloc_get_size(vchunk)));
@@ -1134,6 +1182,89 @@ void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 		if (chain->shared)
 			sctk_alloc_spinlock_unlock(&chain->lock);
 	}
+}
+
+/************************* FUNCTION ************************/
+SCTK_STATIC bool sctk_alloc_chain_can_remap(struct sctk_alloc_chain * chain)
+{
+	#ifdef HAVE_MREMAP
+	bool res = false;
+	if (chain->source != NULL)
+		if (chain->source->remap != NULL)
+			res = true;
+	return res;
+	#else
+	return false;
+	#endif
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Implementation of posix realloc on the given chain.
+ * CAUTION, this function is limited to reallocated a segment in the same chain, using it to reallocate
+ * a segment in another chain may lead to bugs.
+ * @param chain Define the allocation chain to use for reallocation.
+ * @param ptr Define the base pointer of the segment to reallocate.
+ * @param size Define the new size of the segment.
+**/
+void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sctk_size_t size)
+{
+	//vars
+	void * res = NULL;
+	sctk_size_t old_size;
+	sctk_size_t copy_size;
+	sctk_alloc_vchunk vchunk;
+	struct sctk_alloc_macro_bloc * old_macro_bloc = NULL;
+	struct sctk_alloc_macro_bloc * new_macro_bloc = NULL;
+	
+	//errors
+	assert(chain != NULL);
+
+	SCTK_PDEBUG("Do realloc %p -> %llu",ptr,size);
+
+	//cases
+	if (ptr == NULL && size == 0)
+	{
+		//nothing to do
+		res = NULL;
+	} else if (ptr == NULL) {
+		//only alloc, no previous segment
+		res = sctk_alloc_chain_alloc(chain,size);
+	} else if (size == 0) {
+		//only free, no new segment
+		sctk_alloc_chain_free(chain,ptr);
+		res = NULL;
+	} else if ( ( vchunk = sctk_alloc_get_chunk((sctk_addr_t)ptr) ) != NULL) {
+		//errors
+		assert(sctk_alloc_region_get_macro_bloc(ptr) != NULL);
+		assert(chain == sctk_alloc_region_get_macro_bloc(ptr)->chain);
+
+		//get chunk header
+		/** @todo Use a function which compute the inner size instead of hacking with sizeof() . **/
+		old_size = sctk_alloc_get_size(vchunk) - sizeof(struct sctk_alloc_chunk_header_large);
+
+		if (old_size >= size && old_size - size < old_size / SCTK_REALLOC_THRESHOLD) {
+			//simply keep the old segment, nothing to change
+			res = ptr;
+		} else if (SCTK_ALLOC_HUGE_CHUNK_SEGREGATION && old_size > SCTK_HUGE_BLOC_LIMIT && size > 0 && size > SCTK_HUGE_BLOC_LIMIT && sctk_alloc_chain_can_remap(chain)) {
+			//use remap to realloc
+			SCTK_PDEBUG("Use mremap %llu -> %llu",old_size,size);
+			res = sctk_alloc_chunk_body(sctk_alloc_chain_realloc_macro_bloc(chain,size,vchunk));
+		} else {
+			//need to reallocate a new segment and copy the old data
+			res = sctk_alloc_chain_alloc(chain,size);
+			//copy the data
+			if (res != NULL)
+			{
+				copy_size = (old_size < size) ? old_size : size;
+				memcpy(res,ptr,copy_size);
+			}
+			//free the old one
+			sctk_alloc_chain_free(chain,ptr);
+		}
+	}
+
+	return res;
 }
 
 /************************* FUNCTION ************************/
@@ -1255,6 +1386,15 @@ SCTK_STATIC void sctk_alloc_mm_source_insert_segment(struct sctk_alloc_mm_source
 }
 
 /************************* FUNCTION ************************/
+void sctk_alloc_mm_source_base_init(struct sctk_alloc_mm_source * source)
+{
+	source->cleanup        = NULL;
+	source->free_memory    = NULL;
+	source->remap          = NULL;
+	source->request_memory = NULL;
+}
+
+/************************* FUNCTION ************************/
 /**
  * Function used to initialized the default memory source for the common allocation chain.
  * @param source Define the memory source to initialized.
@@ -1268,6 +1408,9 @@ SCTK_STATIC void sctk_alloc_mm_source_insert_segment(struct sctk_alloc_mm_source
 void sctk_alloc_mm_source_default_init(struct sctk_alloc_mm_source_default* source,sctk_addr_t heap_base,sctk_size_t heap_size)
 {
 	void * current = (void*)heap_base;
+
+	//basic setup
+	sctk_alloc_mm_source_base_init(&source->source);
 	
 	//setup functions
 	source->source.cleanup = sctk_alloc_mm_source_default_cleanup;

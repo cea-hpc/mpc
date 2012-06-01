@@ -36,6 +36,7 @@
 #include "sctk_alloc_spy.h"
 #include "sctk_alloc_inlined.h"
 #include "sctk_alloc_light_mm_source.h"
+#include "sctk_alloc_posix.h"
 //optional headers
 #ifdef HAVE_LIBNUMA
 #include "sctk_alloc_topology.h"
@@ -459,6 +460,7 @@ void sctk_free (void * ptr)
 	
 	//Find the chain corresponding to the given memory bloc
 	struct sctk_alloc_macro_bloc * macro_bloc = sctk_alloc_region_get_macro_bloc(ptr);
+	assert(ptr > (void*)macro_bloc && ptr < (void*)macro_bloc + macro_bloc->header.size);
 	if (macro_bloc == NULL)
 	{
 		#ifndef NDEBUG
@@ -506,6 +508,37 @@ sctk_size_t sctk_alloc_posix_get_size(void *ptr)
 /************************* FUNCTION ************************/
 void * sctk_realloc (void * ptr, size_t size)
 {
+	struct sctk_alloc_chain * local_chain = NULL;
+	struct sctk_alloc_chain * chain = NULL;
+	struct sctk_alloc_macro_bloc * macro_bloc = NULL;
+	sctk_size_t copy_size = size;
+	void * res = NULL;
+
+	//get the current chain
+	local_chain = sctk_current_alloc_chain;
+	if (local_chain == NULL)
+		local_chain = sctk_alloc_posix_setup_tls_chain();
+
+	//get the chain of the chunk
+	if (ptr != NULL)
+		macro_bloc = sctk_alloc_region_get_macro_bloc(ptr);
+	if (macro_bloc != NULL)
+		chain = macro_bloc->chain;
+
+	if (size != 0 && ptr != NULL && chain == local_chain && chain != NULL)
+	{
+		res = sctk_alloc_chain_realloc(chain,ptr,size);
+	} else {
+		res = sctk_realloc_inter_chain(ptr,size);
+	}
+
+	SCTK_PTRACE("//ptr%p = realloc(ptr%p,%llu); //%p",res,ptr,size);
+	return res;
+}
+
+/************************* FUNCTION ************************/
+void * sctk_realloc_inter_chain (void * ptr, size_t size)
+{
 	sctk_size_t copy_size = size;
 	void * res = NULL;
 
@@ -515,13 +548,10 @@ void * sctk_realloc (void * ptr, size_t size)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
 	#endif
 
-	//if (size != 0 && ptr != NULL && size < sctk_alloc_posix_get_size(ptr) - 16)
-	//	return ptr;
-	
 	if (size != 0)
 	{
 		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_next_is_realloc(local_chain,ptr,size));
-		res = malloc(size);
+		res = sctk_malloc(size);
 	}
 	if (res != NULL && ptr != NULL)
 	{
@@ -531,7 +561,8 @@ void * sctk_realloc (void * ptr, size_t size)
 		memcpy(res,ptr,copy_size);
 	}
 	if (ptr != NULL)
-		free(ptr);
+		sctk_free(ptr);
+
 	return res;
 }
 

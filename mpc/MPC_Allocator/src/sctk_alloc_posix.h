@@ -55,6 +55,7 @@ void * sctk_realloc (void * ptr, size_t size);
 int sctk_posix_memalign(void **memptr, size_t boundary, size_t size);
 void * sctk_memalign(size_t boundary,size_t size);
 struct sctk_alloc_chain * sctk_get_current_alloc_chain(void);
+void * sctk_realloc_inter_chain (void * ptr, size_t size);
 
 #include "sctk_alloc_to_recode.h"
 

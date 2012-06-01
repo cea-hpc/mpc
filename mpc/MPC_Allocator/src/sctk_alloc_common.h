@@ -62,10 +62,17 @@ extern "C"
 #define SCTK_ALLOC_HEAP_SIZE (128UL*1024UL*1024UL*1024UL)
 /** Maximum number of regions, need to cover the 256TB available with 48bit addressing. **/
 #define SCTK_ALLOC_MAX_REGIONS 256
-/** Enable or disable huge chunk segragation. **/
-#define SCTK_ALLOC_HUGE_CHUNK_SEGREGATION true
 /** Unknown NUMA node **/
 #define SCTK_ALLOC_UNKNWON_NUMA_NODE -1
+/** Enable or disable huge chunk segragation. **/
+#define SCTK_ALLOC_HUGE_CHUNK_SEGREGATION true
+/**
+ * Define the smaller size to directly use macro blocs instead of splitting in inner chunks.
+ * Usefull only in confunction with SCTK_ALLOC_HUGE_CHUNK_SEGREGATION
+**/
+#define SCTK_HUGE_BLOC_LIMIT (SCTK_MACRO_BLOC_SIZE / 2)
+/** Realloc factor between old an new size to force a new reallocation. **/
+#define SCTK_REALLOC_THRESHOLD 2
 
 /************************** MACROS *************************/
 //if have NUMA support

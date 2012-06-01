@@ -21,13 +21,19 @@
 /* ######################################################################## */
 
 /************************** HEADERS ************************/
-#include <sys/mman.h>
+#define _GNU_SOURCE
+
 #include "sctk_alloc_inlined.h"
 #include "sctk_alloc_lock.h"
 #include "sctk_alloc_debug.h"
 #include "sctk_alloc_light_mm_source.h"
 #include "sctk_alloc_topology.h"
 
+//options Linux specific (mremap)
+#include <unistd.h>
+#include <sys/mman.h>
+
+//optional for NUMA
 #ifdef HAVE_LIBNUMA
 #include <hwloc.h>
 #endif
@@ -53,11 +59,17 @@ void sctk_alloc_mm_source_light_init(struct sctk_alloc_mm_source_light * source,
 	//errors
 	assert(source != NULL);
 	assert(numa_node >= 0 || numa_node == SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_NODE_IGNORE);
+
+	//basic setup
+	sctk_alloc_mm_source_base_init(&source->source);
 	
 	//setup functions
 	source->source.cleanup = sctk_alloc_mm_source_light_cleanup;
 	source->source.free_memory = sctk_alloc_mm_source_light_free_memory;
 	source->source.request_memory = sctk_alloc_mm_source_light_request_memory;
+	#ifdef HAVE_MREMAP
+	source->source.remap = sctk_alloc_mm_source_light_remap;
+	#endif
 	#ifdef HAVE_LIBNUMA
 	source->nodeset = NULL;
 	#endif
@@ -347,3 +359,29 @@ SCTK_STATIC void sctk_alloc_mm_source_light_free_memory(struct sctk_alloc_mm_sou
 	light_source->counter--;
 	sctk_alloc_spinlock_unlock(&light_source->spinlock);
 }
+
+/************************* FUNCTION ************************/
+#ifdef HAVE_MREMAP
+SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_remap(struct sctk_alloc_macro_bloc * macro_bloc,sctk_size_t size)
+{
+	//errors
+	assert(macro_bloc != NULL);
+	assert(size % SCTK_ALLOC_PAGE_SIZE == 0);
+	assert((sctk_addr_t)macro_bloc % SCTK_ALLOC_PAGE_SIZE == 0);
+
+	//use mremap
+	macro_bloc = mremap(macro_bloc,macro_bloc->header.size,size,MREMAP_MAYMOVE);
+
+	if (macro_bloc == MAP_FAILED)
+	{
+		perror("Error while using mremap in sctk_realloc()");
+		abort();
+	}
+
+	//setup header
+	macro_bloc = sctk_alloc_setup_macro_bloc(macro_bloc,size);
+
+	//return it
+	return macro_bloc;
+}
+#endif
