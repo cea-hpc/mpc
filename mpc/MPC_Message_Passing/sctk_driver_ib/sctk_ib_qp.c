@@ -672,7 +672,7 @@ sctk_ib_qp_allocate_init(struct sctk_ib_rail_info_s* rail_ib,
     remote->R = 1;
     remote->ondemand = 1;
     sctk_spinlock_lock(&od->lock);
-    sctk_nodebug("Add QP to rank %d %p", remote->rank, remote);
+    sctk_debug("[%d] Add QP to rank %d %p", rail_ib->rail->rail_number, remote->rank, remote);
     CDL_PREPEND(od->qp_list, remote);
     if (od->qp_list_ptr == NULL) {
       od->qp_list_ptr = remote;

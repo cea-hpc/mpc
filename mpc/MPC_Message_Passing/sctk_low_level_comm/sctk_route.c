@@ -355,6 +355,7 @@ sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail){
 #if MPC_USE_INFINIBAND
     if (rail->on_demand) {
       sctk_nodebug("%d Trying to connect to process %d (remote:%p)", sctk_process_rank, dest, tmp);
+      /* We send the request using the signalization rail */
       tmp = sctk_ib_cm_on_demand_request(dest,rail);
       assume(tmp);
       /* If route not connected, so we wait for until it is connected */
@@ -395,6 +396,11 @@ void sctk_route_set_rail_nb(int i){
   rails = sctk_malloc(i*sizeof(sctk_rail_info_t));
   rail_number = i;
 }
+
+int sctk_route_get_rail_nb(){
+  return rail_number;
+}
+
 
 sctk_rail_info_t* sctk_route_get_rail(int i){
   return &(rails[i]);
@@ -560,9 +566,7 @@ static sctk_rail_info_t* rail_signalization = NULL;
 void sctk_route_set_signalization_rail(sctk_rail_info_t* rail) {
   rail_signalization = rail;
 }
-
 sctk_rail_info_t* sctk_route_get_signalization_rail() {
-  /* The signalization rail must be set */
   assume(rail_signalization);
   return rail_signalization;
 }

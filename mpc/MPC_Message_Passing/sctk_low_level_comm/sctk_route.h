@@ -132,6 +132,7 @@ inline sctk_route_table_t* sctk_get_route_to_process_no_ondemand(int dest, sctk_
 inline sctk_route_table_t* sctk_get_route_to_process_static(int dest, sctk_rail_info_t* rail);
 
 void sctk_route_set_rail_nb(int i);
+int sctk_route_get_rail_nb();
 sctk_rail_info_t* sctk_route_get_rail(int i);
 
 /* Routes */

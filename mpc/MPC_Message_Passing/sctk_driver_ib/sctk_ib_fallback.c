@@ -32,6 +32,7 @@
 #include <sctk_ibufs_rdma.h>
 #include <sctk_ib_mmu.h>
 #include <sctk_ib_config.h>
+#include <sctk_ib_fallback_config.h>
 #include "sctk_ib_qp.h"
 #include "sctk_ib_cm.h"
 #include "sctk_ib_eager.h"
@@ -303,6 +304,7 @@ static int sctk_network_poll_all (sctk_rail_info_t* rail) {
     recursive_polling--;
 #endif
   }
+  OPA_decr_int(&polling_lock);
 
   return poll.recv_found_own;
 }
@@ -316,14 +318,8 @@ static int sctk_network_poll_all_and_steal(sctk_rail_info_t *rail) {
   int nb_found = 0;
   int ret;
 
-  call_to_polling++;
-
   /* POLLING */
   ret = sctk_network_poll_all(rail);
-  if (ret == 0 && steal > 1){
-    /* If no message has been found -> steal*/
-    nb_found += sctk_ib_cp_steal(rail, &poll);
-  }
   return nb_found;
 }
 
@@ -402,7 +398,7 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   sctk_ib_device_t *device;
   struct ibv_srq_init_attr srq_attr;
   /* Open config */
-  sctk_ib_config_init(rail_ib, "fallback");
+  sctk_ib_fallback_config_init(rail_ib, "fallback");
   /* Open device */
   device = sctk_ib_device_init(rail_ib);
   /* FIXME: pass rail as an arg of sctk_ib_device_init  */

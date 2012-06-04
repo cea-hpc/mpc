@@ -262,7 +262,7 @@ int sctk_ib_cm_on_demand_recv_ack(sctk_rail_info_t *rail, void* ack, int src) {
   char done=1;
   struct sctk_ib_qp_s *remote;
 
-  sctk_ib_nodebug("OD QP connexion ACK received from process %d %s", src, ack);
+  sctk_ib_debug("OD QP connexion ACK received from process %d %s", src, ack);
   route_table = sctk_route_dynamic_search(src, rail);
   assume(route_table);
   remote = route_table->data.ib.remote;
@@ -303,7 +303,7 @@ int sctk_ib_cm_on_demand_recv_request(sctk_rail_info_t *rail, void* request, int
   /* RACE CONDITION AVOIDING -> positive ACK */
   if ( sctk_route_get_is_initiator(route_table) == 0 || sctk_process_rank > src ) {
     remote = route_table->data.ib.remote;
-    sctk_ib_nodebug("[%d] OD QP connexion request to process %d",
+    sctk_ib_debug("[%d] OD QP connexion request to process %d",
         rail->rail_number, remote->rank);
     memcpy(&remote->recv_keys, request, sizeof(sctk_ib_cm_qp_connection_t));
 
@@ -355,7 +355,7 @@ sctk_route_table_t *sctk_ib_cm_on_demand_request(int dest,sctk_rail_info_t* rail
     sctk_ib_qp_key_fill(&remote->send_keys, remote, device->port_attr.lid,
         remote->qp->qp_num, remote->psn);
 
-    sctk_ib_nodebug("[%d] OD QP connexion requested to %d", rail->rail_number, remote->rank);
+    sctk_ib_debug("[%d] OD QP connexion requested to %d", rail->rail_number, remote->rank);
     sctk_route_messages_send(sctk_process_rank,dest,ondemand_specific_message_tag,
         CM_OD_REQ_TAG+CM_MASK_TAG,
         &remote->send_keys, sizeof(sctk_ib_cm_qp_connection_t));
@@ -827,56 +827,59 @@ int sctk_ib_cm_on_demand_recv(sctk_rail_info_t *rail,
   int process_dest;
   int process_src;
   void* payload;
+  sctk_rail_info_t *rail_target;
 
   payload = IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer);
+#warning "OD connections only work with rail number 1!"
+  rail_target = sctk_route_get_rail(0);
   process_dest = msg->sctk_msg_get_destination;
   process_src = msg->sctk_msg_get_source;
   /* If destination of the message */
   if (process_dest == sctk_process_rank) {
-    sctk_nodebug("[%d] Receiving OD connexion from %d to %d (%d)", rail->rail_number, process_src, process_dest, msg->body.header.message_tag ^ CM_MASK_TAG);
+    sctk_nodebug("[%d] Receiving OD connexion from %d to %d (%d)", rail_target->rail_number, process_src, process_dest, msg->body.header.message_tag ^ CM_MASK_TAG);
     switch (msg->body.header.message_tag ^ CM_MASK_TAG) {
 
       /* QP connection */
       case CM_OD_REQ_TAG:
-      sctk_ib_cm_on_demand_recv_request(rail, payload, process_src);
+      sctk_ib_cm_on_demand_recv_request(rail_target, payload, process_src);
       break;
 
       case CM_OD_ACK_TAG:
-      sctk_ib_cm_on_demand_recv_ack(rail, payload, process_src);
+      sctk_ib_cm_on_demand_recv_ack(rail_target, payload, process_src);
       break;
 
       case CM_OD_DONE_TAG:
-      sctk_ib_cm_on_demand_recv_done(rail, payload, process_src);
+      sctk_ib_cm_on_demand_recv_done(rail_target, payload, process_src);
       break;
 
       /* RDMA connection */
       case CM_OD_RDMA_REQ_TAG:
-      sctk_ib_cm_on_demand_rdma_recv_request(rail, payload, process_src);
+      sctk_ib_cm_on_demand_rdma_recv_request(rail_target, payload, process_src);
       break;
 
       case CM_OD_RDMA_ACK_TAG:
-      sctk_ib_cm_on_demand_rdma_recv_ack(rail, payload, process_src);
+      sctk_ib_cm_on_demand_rdma_recv_ack(rail_target, payload, process_src);
       break;
 
       case CM_OD_RDMA_DONE_TAG:
-      sctk_ib_cm_on_demand_rdma_done_recv(rail, payload, process_src);
+      sctk_ib_cm_on_demand_rdma_done_recv(rail_target, payload, process_src);
       break;
 
 
       case ONDEMAND_DECO_REQ_TAG:
-      sctk_ib_cm_deco_request_recv(rail, payload, process_src);
+      sctk_ib_cm_deco_request_recv(rail_target, payload, process_src);
       break;
 
       case ONDEMAND_DECO_ACK_TAG:
-      sctk_ib_cm_deco_ack_recv(rail, payload, process_src);
+      sctk_ib_cm_deco_ack_recv(rail_target, payload, process_src);
       break;
 
       case ONDEMAND_DECO_DONE_REQ_TAG:
-      sctk_ib_cm_deco_done_request_recv(rail, payload, process_src);
+      sctk_ib_cm_deco_done_request_recv(rail_target, payload, process_src);
       break;
 
       case ONDEMAND_DECO_DONE_ACK_TAG:
-      sctk_ib_cm_deco_done_ack_recv(rail, payload, process_src);
+      sctk_ib_cm_deco_done_ack_recv(rail_target, payload, process_src);
       break;
 
       default:

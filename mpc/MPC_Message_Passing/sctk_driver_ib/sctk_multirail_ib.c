@@ -50,13 +50,13 @@ sctk_network_send_message_multirail_ib (sctk_thread_ptp_message_t * msg){
 #ifdef SCTK_USE_CHECKSUM
   sctk_checksum_register(msg);
 #endif
-  if(sctk_prepare_send_message_to_network_reorder(msg) == 0){
-    /*
-      Reordering available : we can use multirail
-      */
-      i = 1;
-  } else {
+  sctk_prepare_send_message_to_network_reorder(msg);
+
+  const specific_message_tag_t tag = msg->body.header.specific_message_tag;
+  if (IS_PROCESS_SPECIFIC_CONTROL_MESSAGE(tag)) {
     i = 1;
+  } else {
+    i = 0;
   }
   /* Always send using the MPI network */
   sctk_nodebug("Send message using rail %d", i);
@@ -169,24 +169,25 @@ void sctk_network_init_multirail_ib_all(char* name, char* topology){
   rails = sctk_malloc(NB_RAILS*sizeof(sctk_rail_info_t*));
   memset(rails, 0, NB_RAILS*sizeof(sctk_rail_info_t*));
 
-  /* Fallback IB network */
+  /* MPI IB network */
   i = 0;
   rails[i] = sctk_route_get_rail(i);
   rails[i]->rail_number = i;
   rails[i]->send_message_from_network = sctk_send_message_from_network_multirail_ib;
   sctk_route_init_in_rail(rails[i],topology);
-  sctk_network_init_fallback_ib(rails[i]);
-  sctk_network_init_polling_thread (rails[i], topology);
-  /* Set the rail as a signalization rail */
-  sctk_route_set_signalization_rail(&rails[i]);
+  sctk_network_init_mpi_ib(rails[i]);
 
-  /* MPI IB network */
+  /* Fallback IB network */
   i = 1;
   rails[i] = sctk_route_get_rail(i);
   rails[i]->rail_number = i;
   rails[i]->send_message_from_network = sctk_send_message_from_network_multirail_ib;
-  sctk_route_init_in_rail(rails[i],topology);
-  sctk_network_init_mpi_ib(rails[i]);
+  sctk_route_init_in_rail(rails[i],"ring");
+  sctk_network_init_fallback_ib(rails[i]);
+  sctk_network_init_polling_thread (rails[i], "ring");
+  /* Set the rail as a signalization rail */
+  sctk_route_set_signalization_rail(rails[i]);
+
 
   sctk_network_send_message_set(sctk_network_send_message_multirail_ib);
   sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_multirail_ib);
