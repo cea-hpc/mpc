@@ -137,15 +137,17 @@ buffered:
 
   /***** RDMA RENDEZVOUS CHANNEL *****/
 rdma:
-  /* We cannot exchange a signalization message using RDMA */
-  not_implemented();
-  sctk_abort();
+  ibuf = sctk_ib_rdma_prepare_req(rail, remote, msg, size, -1);
+  /* Send message */
+  sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, 0);
+  sctk_ib_rdma_prepare_send_msg(rail_ib, msg, size);
+  PROF_INC_RAIL_IB(rail_ib, rdma_nb);
 
 exit: {}
 
 }
 
-static int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
+int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
     const char from_cp, struct sctk_ib_polling_s* poll) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   int release_ibuf = 1;
@@ -171,6 +173,9 @@ static int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
       break;
   }
 
+  /* We do not need to release the buffer with the RDMA channel */
+  if (IBUF_GET_CHANNEL(ibuf) & RDMA_CHANNEL) return 0;
+
   assume(IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL);
   if(release_ibuf) {
     /* sctk_ib_qp_release_entry(&rail->network.ib, ibuf->remote); */
@@ -182,7 +187,7 @@ static int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
   return 0;
 }
 
-static int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
+int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
     const char from_cp, struct sctk_ib_polling_s* poll)
 {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
@@ -201,7 +206,16 @@ static int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
 
   /* First we check if the message has an immediate data */
   if (wc.wc_flags == IBV_WC_WITH_IMM) {
-    not_implemented();
+    assume(0);
+    assume( (wc.imm_data & IMM_DATA_EAGER_RDMA));
+    sctk_ib_qp_t *remote = sctk_ib_qp_ht_find(rail_ib, wc.qp_num);
+  assume(remote);
+    const int index = wc.imm_data - IMM_DATA_EAGER_RDMA;
+   /* Find the remote which has received the msg */
+
+   sctk_nodebug("received an RDMA message from rank %d, ibuf index: %u", remote->rank, index);
+   sctk_ib_rdma_eager_poll_recv(rail_ib, remote, index);
+   release_ibuf = 1;
   } else {
 
   /* Switch on the protocol of the received message */
@@ -212,7 +226,7 @@ static int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
         break;
 
       case rdma_protocol:
-        not_implemented();
+        release_ibuf = sctk_ib_rdma_poll_recv(rail, ibuf);
         break;
 
       case buffered_protocol:
@@ -253,7 +267,18 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc,
   assume(remote);
   sctk_ib_prof_qp_write(remote->rank, wc->byte_len, sctk_get_time_stamp(), PROF_QP_RECV);
 
- return sctk_network_poll_recv_ibuf(rail, ibuf, 0, poll);
+  if (IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL) {
+    dest_task = IBUF_GET_DEST_TASK(ibuf->buffer);
+    ibuf->cq = recv_cq;
+    ibuf->wc = *wc;
+    if (sctk_ib_cp_handle_message(rail, ibuf, dest_task, dest_task, recv_cq) == 0) {
+      return sctk_network_poll_recv_ibuf(rail, ibuf, 0, poll);
+    } else {
+      return 0;
+    }
+  } else {
+    return sctk_network_poll_recv_ibuf(rail, ibuf, 0, poll);
+  }
 }
 
 static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,
@@ -268,19 +293,34 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,
   /* Decrease the number of pending requests */
   sctk_ibuf_rdma_update_max_pending_requests(rail_ib, ibuf->remote);
   sctk_ib_qp_decr_requests_nb(ibuf->remote);
-
   /* The following assume is false as we can call 'sctk_ib_qp_inc_requests_nb' before
    * 'sctk_ib_qp_get_requests_nb' */
   /* assume(sctk_ib_qp_get_requests_nb(ibuf->remote) >= 0); */
-  return sctk_network_poll_send_ibuf(rail, ibuf, 0, poll);
+
+  if (IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL) {
+    src_task = IBUF_GET_SRC_TASK(ibuf);
+    dest_task = IBUF_GET_DEST_TASK(ibuf->buffer);
+    ibuf->cq = send_cq;
+    ibuf->wc = *wc;
+
+    /* We still check the dest_task. If it is -1, this is a process_specific
+     * message, so we need to handle the message asap */
+    if (sctk_ib_cp_handle_message(rail, ibuf, dest_task, src_task, recv_cq) == 0) {
+      return sctk_network_poll_send_ibuf(rail, ibuf, 0, poll);
+    } else {
+      return 0;
+    }
+  } else {
+    return sctk_network_poll_send_ibuf(rail, ibuf, 0, poll);
+  }
 }
 
 #define MAX_TASKS_ALLOWED 1
 static OPA_int_t polling_lock;
 /* Count how many times the vp is entered to the polling function. We
  * allow recursive calls to the polling function */
-static __thread int recursive_polling = 0;
-static int sctk_network_poll_all (sctk_rail_info_t* rail) {
+__thread int recursive_polling = 0;
+int sctk_network_poll_all (sctk_rail_info_t* rail) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
   LOAD_DEVICE(rail_ib);
@@ -293,7 +333,12 @@ static int sctk_network_poll_all (sctk_rail_info_t* rail) {
   {
 #ifdef SCTK_IB_PROFILER
     double e, s;
+
+    if (recursive_polling == 0)
+      s = sctk_get_time_stamp();
+
     recursive_polling++;
+    poll_cq++;
 #endif
     /* Poll received messages */
     sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, &poll, sctk_network_poll_recv);
@@ -301,8 +346,19 @@ static int sctk_network_poll_all (sctk_rail_info_t* rail) {
     sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, &poll, sctk_network_poll_send);
 #ifdef SCTK_IB_PROFILER
     recursive_polling--;
+    if (recursive_polling == 0) {
+      e = sctk_get_time_stamp();
+      time_poll_cq += (e - s);
+    }
 #endif
   }
+  OPA_decr_int(&polling_lock);
+
+  POLL_INIT(&poll);
+  sctk_ib_cp_poll_global_list(rail, &poll);
+/* Try to poll incomming messages */
+  POLL_INIT(&poll);
+  sctk_ib_cp_poll(rail, &poll);
 
   return poll.recv_found_own;
 }
@@ -328,10 +384,18 @@ static int sctk_network_poll_all_and_steal(sctk_rail_info_t *rail) {
 }
 
 static void
-sctk_network_notify_recv_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){ }
+sctk_network_notify_recv_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
+  /* POLLING */
+  /* XXX: do not add polling here */
+//  sctk_network_poll_all_and_steal(rail);
+}
 
 static void
-sctk_network_notify_matching_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){ }
+sctk_network_notify_matching_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
+  /* POLLING */
+  /* XXX: do not add polling here */
+//  sctk_network_poll_all_and_steal(rail);
+}
 
 /* WARNING: This function can be called with dest == sctk_process_rank */
 static void
@@ -389,7 +453,7 @@ sctk_network_connection_from_ib(int from, int to,sctk_rail_info_t* rail){
   sctk_ib_cm_connect_from(from,to,rail);
 }
 
-void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
+void sctk_network_init_mpi_ib(sctk_rail_info_t* rail){
   /* XXX: memory never freed */
   char *network_name = sctk_malloc(256);
 
@@ -402,7 +466,7 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   sctk_ib_device_t *device;
   struct ibv_srq_init_attr srq_attr;
   /* Open config */
-  sctk_ib_config_init(rail_ib, "fallback");
+  sctk_ib_config_init(rail_ib, "MPI");
   /* Open device */
   device = sctk_ib_device_init(rail_ib);
   /* FIXME: pass rail as an arg of sctk_ib_device_init  */
@@ -439,7 +503,7 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   assume(rc == 0);
 
   /* Initialize network */
-  sprintf(network_name, "IB-MT (v2.0) Fallback %d/%d:%s - %dx %s (%d Gb/s)]",
+  sprintf(network_name, "IB-MT (v2.0) MPI      %d/%d:%s - %dx %s (%d Gb/s)]",
     device->dev_index+1, device->dev_nb, ibv_get_device_name(device->dev),
     device->link_width, device->link_rate, device->data_rate);
 

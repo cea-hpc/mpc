@@ -38,7 +38,7 @@ extern "C"
   struct sctk_ib_polling_s;
 
 #define MAX_STRING_SIZE 2048
-  void sctk_network_init_fallback_ib(sctk_rail_info_t* rail);
+  void sctk_network_init_mpi_ib(sctk_rail_info_t* rail);
 #ifdef __cplusplus
 }
 #endif

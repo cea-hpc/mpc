@@ -171,4 +171,8 @@ __UNUSED__ static sctk_route_origin_t sctk_route_get_origin(sctk_route_table_t *
   return tmp->origin;
 }
 
+/* Signalization rails: getters and setters */
+void sctk_route_set_signalization_rail(sctk_rail_info_t* rail);
+sctk_rail_info_t* sctk_route_get_signalization_rail();
+
 #endif

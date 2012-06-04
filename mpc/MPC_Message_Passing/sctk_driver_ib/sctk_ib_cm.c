@@ -128,13 +128,13 @@ void sctk_ib_cm_connect_ring (sctk_rail_info_t* rail,
     sctk_pmi_barrier();
 
     /* change state to RTR */
-    keys = sctk_ib_qp_keys_recv(route_dest->remote, src_rank);
+    keys = sctk_ib_qp_keys_recv(rail_ib, route_dest->remote, src_rank);
     sctk_ib_qp_allocate_rtr(rail_ib, route_src->remote, &keys);
     sctk_ib_qp_allocate_rts(rail_ib, route_src->remote);
     sctk_ib_qp_keys_send(rail_ib, route_src->remote);
     sctk_pmi_barrier();
 
-    keys = sctk_ib_qp_keys_recv(route_src->remote, dest_rank);
+    keys = sctk_ib_qp_keys_recv(rail_ib, route_src->remote, dest_rank);
     sctk_ib_qp_allocate_rtr(rail_ib, route_dest->remote, &keys);
     sctk_ib_qp_allocate_rts(rail_ib, route_dest->remote);
     sctk_pmi_barrier();
@@ -146,6 +146,7 @@ void sctk_ib_cm_connect_ring (sctk_rail_info_t* rail,
     sctk_ib_cm_change_state(rail, route_table_dest, state_connected);
     sctk_ib_cm_change_state(rail, route_table_src, state_connected);
   } else {
+    sctk_nodebug("Send msg to rail %d", rail->rail_number);
     /* create remote for dest */
     route_table_dest = sctk_ib_create_remote();
     sctk_ib_init_remote(dest_rank, rail, route_table_dest, 0);
@@ -155,7 +156,7 @@ void sctk_ib_cm_connect_ring (sctk_rail_info_t* rail,
     sctk_pmi_barrier();
 
     /* change state to RTR */
-    keys = sctk_ib_qp_keys_recv(route_dest->remote, src_rank);
+    keys = sctk_ib_qp_keys_recv(rail_ib, route_dest->remote, src_rank);
     sctk_ib_qp_allocate_rtr(rail_ib, route_dest->remote, &keys);
     sctk_ib_qp_allocate_rts(rail_ib, route_dest->remote);
     sctk_pmi_barrier();
@@ -585,7 +586,7 @@ int sctk_ib_cm_on_demand_rdma_recv_request(sctk_rail_info_t *rail, void* request
     /* Fill the keys */
     sctk_ibuf_rdma_fill_remote_addr(rail_ib, remote, &send_keys, REGION_RECV);
   } else { /* Cannot connect to RDMA */
-    sctk_debug("Cannot connect to remote %d", remote->rank);
+    sctk_nodebug("Cannot connect to remote %d", remote->rank);
 
     send_keys.connected = 0;
     send_keys.size = 0;

@@ -197,7 +197,9 @@ void sctk_ib_qp_keys_send(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t* remote);
 
 sctk_ib_cm_qp_connection_t
-sctk_ib_qp_keys_recv(sctk_ib_qp_t *remote, int dest_process);
+sctk_ib_qp_keys_recv(
+    struct sctk_ib_rail_info_s* rail_ib,
+    sctk_ib_qp_t *remote, int dest_process);
 
 sctk_ib_qp_t* sctk_ib_qp_new();
 

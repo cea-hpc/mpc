@@ -546,9 +546,23 @@ void sctk_route_init_in_rail(sctk_rail_info_t* rail, char* topology){
   } else if(strcmp("ondemand",topology) == 0){
     rail->route = sctk_route_ondemand;
     rail->route_init = sctk_route_ondemand_init;
-    rail->topology_name = "On Demand connexions";
+    rail->topology_name = "On-Demand connections";
   } else {
     not_reachable();
   }
 }
 
+/*
+ * Signalization rails: getters and setters
+ */
+static sctk_rail_info_t* rail_signalization = NULL;
+
+void sctk_route_set_signalization_rail(sctk_rail_info_t* rail) {
+  rail_signalization = rail;
+}
+
+sctk_rail_info_t* sctk_route_get_signalization_rail() {
+  /* The signalization rail must be set */
+  assume(rail_signalization);
+  return rail_signalization;
+}
