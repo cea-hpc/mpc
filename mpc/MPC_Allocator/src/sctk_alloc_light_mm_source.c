@@ -38,8 +38,23 @@
 #include <hwloc.h>
 #endif
 
+/**
+ * Maximum bloc to keep in memory source for future resuse at free time.
+ * The main goal is to resduce the number of calls to mmap and avoid to pass
+ * too much time in kernek zero page function.
+ * The larger it is, the more it keep the memory in the process.
+ * It must be multiples of SCTK_MACRO_BLOC_SIZE.
+ * With huge pvalues it tend to consume as much memory than TCMalloc.
+**/
+#define SCTK_ALLOC_MACRO_BLOC_REUSE_THREASHOLD (1*SCTK_MACRO_BLOC_SIZE)
+
 /************************* FUNCTION ************************/
 #ifdef HAVE_LIBNUMA
+/**
+ * Setup the nodset structure of hwloc to request NUMA binding of the pages of the
+ * managed by the current memory source.
+ * @param numa_node Define the specific NUMA node on which to bind.
+**/
 SCTK_STATIC  hwloc_nodeset_t sctk_alloc_mm_source_light_init_nodeset(int numa_node)
 {
 	//allocate node set
@@ -54,6 +69,13 @@ SCTK_STATIC  hwloc_nodeset_t sctk_alloc_mm_source_light_init_nodeset(int numa_no
 #endif
 
 /************************* FUNCTION ************************/
+/**
+ * Function used to setup the light memory source.
+ * @param source Define the memory source to init.
+ * @param numa_node Define the NUMA node on which to bind the memory source pages. Use -1 for none.
+ * @param mode Enable some flags defined in sctk_alloc_mm_source_light to configure the memory source.
+ * @todo Define a constante instead of -1 for non defined NUMA node.
+**/
 void sctk_alloc_mm_source_light_init(struct sctk_alloc_mm_source_light * source,int numa_node,enum sctk_alloc_mm_source_light_flags mode)
 {
 	//errors
@@ -103,6 +125,13 @@ void sctk_alloc_mm_source_light_init(struct sctk_alloc_mm_source_light * source,
 
 
 /************************* FUNCTION ************************/
+/**
+ * Register a macro bloc into the memory source for future reuse. The bloc is
+ * inserted at the beginning of the fist.
+ * @param light_source Define the memory source in which to register.
+ * @param free_bloc Define the free_bloc to register in the list.
+ * @todo Try to use an atomic list.
+**/
 SCTK_STATIC void sctk_alloc_mm_source_light_reg_in_cache(struct sctk_alloc_mm_source_light * light_source,struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc)
 {
 	//taks the lock
@@ -117,6 +146,11 @@ SCTK_STATIC void sctk_alloc_mm_source_light_reg_in_cache(struct sctk_alloc_mm_so
 }
 
 /************************* FUNCTION ************************/
+/**
+ * Setup the header of a macro bloc from a raw memory bloc.
+ * @param ptr Define the base pointer of the macro bloc to setup.
+ * @param size Define the size of the macro_bloc to setup.
+**/
 SCTK_STATIC struct sctk_alloc_mm_source_light_free_macro_bloc * sctk_alloc_mm_source_light_setup_free_macro_bloc(void * ptr,sctk_size_t size)
 {
 	struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc = ptr;
@@ -126,6 +160,10 @@ SCTK_STATIC struct sctk_alloc_mm_source_light_free_macro_bloc * sctk_alloc_mm_so
 }
 
 /************************* FUNCTION ************************/
+/**
+ * Convert a macro bloc into a free macro bloc. It mostly update the header structure.
+ * @param macro_bloc Define the macro bloc to mark as free macro_bloc.
+**/
 SCTK_STATIC struct sctk_alloc_mm_source_light_free_macro_bloc * sctk_alloc_mm_source_light_to_free_macro_bloc(struct sctk_alloc_macro_bloc * macro_bloc)
 {
 	return sctk_alloc_mm_source_light_setup_free_macro_bloc(macro_bloc,macro_bloc->header.size);
@@ -234,19 +272,45 @@ SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_to_macro_b
 }
 
 /************************* FUNCTION ************************/
+#ifdef HAVE_MREMAP
+SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_to_macro_bloc_resized(struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc,sctk_size_t size)
+{
+	//vars
+	struct sctk_alloc_macro_bloc * macro_bloc;
+
+	//cases
+	if (free_bloc == NULL)
+	{
+		return NULL;
+	} else if (free_bloc->size == size) {
+		return sctk_alloc_mm_source_light_to_macro_bloc(free_bloc);
+	} else {
+		macro_bloc = sctk_alloc_mm_source_light_to_macro_bloc(free_bloc);
+		SCTK_PDEBUG("Reuse but internal remap %p -> %llu -> %llu",macro_bloc,macro_bloc->header.size,size);
+		macro_bloc = sctk_alloc_mm_source_light_remap(macro_bloc,size);
+		return macro_bloc;
+	}
+}
+#endif
+
+/************************* FUNCTION ************************/
 SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_find_in_cache(struct sctk_alloc_mm_source_light * light_source,sctk_size_t size)
 {
 	//vars
 	struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc = NULL;
 	struct sctk_alloc_mm_source_light_free_macro_bloc * prev_bloc = NULL;
+	#ifdef HAVE_MREMAP_FOR_FIND_IN_CACHE
+	struct sctk_alloc_mm_source_light_free_macro_bloc * non_exact = NULL;
+	struct sctk_alloc_mm_source_light_free_macro_bloc * non_exact_prev = NULL;
+	#endif //HAVE_MREMAP
 
 	//errors
 	assert(light_source != NULL);
 	assert(size > 0);
 
 	//trivial case, we know that we didn't start multi-macro bloc chunks in the cache so return directory
-	if (size > SCTK_MACRO_BLOC_SIZE)
-		return NULL;
+	//if (size > SCTK_MACRO_BLOC_SIZE)
+	//	return NULL;
 
 	//take the lock
 	sctk_alloc_spinlock_lock(&light_source->spinlock);
@@ -254,11 +318,30 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_find_in_cac
 	//loop in the list the find the first on which is good.
 	free_bloc = light_source->cache;
 	prev_bloc = NULL;
-	while (free_bloc != NULL && free_bloc->size == size)
+	while (free_bloc != NULL && free_bloc->size != size)
 	{
+		#ifdef HAVE_MREMAP_FOR_FIND_IN_CACHE
+		if (non_exact == NULL)
+		{
+			non_exact = free_bloc;
+			non_exact_prev = prev_bloc;
+		} else if (abs(size - free_bloc->size) < abs(size - non_exact->size)) {
+			non_exact = free_bloc;
+			non_exact_prev = prev_bloc;
+		}
+		#endif
 		prev_bloc = free_bloc;
 		free_bloc = free_bloc->next;
 	}
+
+	//if can't find exact, try non exact and resize it to reuse pages
+	#ifdef HAVE_MREMAP_FOR_FIND_IN_CACHE
+	if (free_bloc == NULL)
+	{
+		free_bloc = non_exact;
+		prev_bloc = non_exact_prev;
+	}
+	#endif
 
 	//update counter and remove from list
 	if (free_bloc != NULL)
@@ -274,7 +357,11 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_find_in_cac
 	sctk_alloc_spinlock_unlock(&light_source->spinlock);
 
 	//return
+	#ifdef HAVE_MREMAP_FOR_FIND_IN_CACHE
+	return sctk_alloc_mm_source_light_to_macro_bloc_resized(free_bloc,size);
+	#else
 	return sctk_alloc_mm_source_light_to_macro_bloc(free_bloc);
+	#endif
 }
 
 /************************* FUNCTION ************************/
@@ -287,14 +374,18 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_request_mem
 	//errors
 	assert(source != NULL);
 	assert(size > 0);
+	assert(size % SCTK_MACRO_BLOC_SIZE == 0 );
 
 	//runtime errors
 	if (size == 0)
 		return NULL;
 
 	//try to find memory in source local cache if smaller that one macro bloc (we now that we didn't store such blocs here)
-	if (size <= SCTK_MACRO_BLOC_SIZE)
+	if (size <= SCTK_ALLOC_MACRO_BLOC_REUSE_THREASHOLD)
+	{
 		macro_bloc = sctk_alloc_mm_source_light_find_in_cache(light_source,size);
+		SCTK_PDEBUG("LMMSRC %p : Try to reuse macro bloc %p -> %llu",source,macro_bloc,size);
+	}
 
 	//allocate a new one
 	if (macro_bloc == NULL)
@@ -321,6 +412,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_mmap_new_s
 
 	//call mmap to get a macro blocs
 	macro_bloc = sctk_mmap(NULL,size);
+	SCTK_PDEBUG("LMMSRC : Map new macro_bloc %p -> %llu",macro_bloc,size);
 
 	//setup header
 	macro_bloc = sctk_alloc_setup_macro_bloc(macro_bloc,size);
@@ -349,10 +441,14 @@ SCTK_STATIC void sctk_alloc_mm_source_light_free_memory(struct sctk_alloc_mm_sou
 	free_bloc = sctk_alloc_mm_source_light_to_free_macro_bloc(bloc);
 
 	//if larger than basic macro bloc size, return to system immediately
-	//if (free_bloc->size > 2*SCTK_MACRO_BLOC_SIZE)
+	if (free_bloc->size > SCTK_ALLOC_MACRO_BLOC_REUSE_THREASHOLD)
+	{
+		SCTK_PDEBUG("LMMSRC %p : Do munmap %p -> %llu",source,free_bloc,free_bloc->size);
 		sctk_munmap(free_bloc,free_bloc->size);
-	//else
-	//	sctk_alloc_mm_source_light_reg_in_cache(light_source,free_bloc);
+	} else {
+		SCTK_PDEBUG("LMMSRC %p : Keep bloc for future %p -> %llu",source,free_bloc,free_bloc->size);
+		sctk_alloc_mm_source_light_reg_in_cache(light_source,free_bloc);
+	}
 
 	//increment counters
 	sctk_alloc_spinlock_lock(&light_source->spinlock);
@@ -370,6 +466,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_remap(stru
 	assert((sctk_addr_t)macro_bloc % SCTK_ALLOC_PAGE_SIZE == 0);
 
 	//use mremap
+	SCTK_PDEBUG("LMMSRC : Use mremap : %p -> %llu",macro_bloc,size);
 	macro_bloc = mremap(macro_bloc,macro_bloc->header.size,size,MREMAP_MAYMOVE);
 
 	if (macro_bloc == MAP_FAILED)

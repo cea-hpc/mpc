@@ -948,7 +948,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_realloc_macro_bloc(struct sctk_al
 	//request a realloc
 	//SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_free_macro_bloc(chain,macro_bloc));
 	macro_bloc = chain->source->remap(macro_bloc,size);
-	assert(macro_bloc->chain != NULL);
+	assert(macro_bloc->chain == NULL);
 	//SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_add_macro_bloc(chain,bloc));
 
 	//setup and return
@@ -1229,6 +1229,7 @@ void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sct
 		res = NULL;
 	} else if (ptr == NULL) {
 		//only alloc, no previous segment
+		SCTK_PDEBUG("Simple chain alloc instead of realloc %p -> %llu",ptr,size);
 		res = sctk_alloc_chain_alloc(chain,size);
 	} else if (size == 0) {
 		//only free, no new segment
@@ -1245,12 +1246,14 @@ void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sct
 
 		if (old_size >= size && old_size - size < old_size / SCTK_REALLOC_THRESHOLD) {
 			//simply keep the old segment, nothing to change
+			SCTK_PDEBUG("realloc with same address");
 			res = ptr;
 		} else if (SCTK_ALLOC_HUGE_CHUNK_SEGREGATION && old_size > SCTK_HUGE_BLOC_LIMIT && size > 0 && size > SCTK_HUGE_BLOC_LIMIT && sctk_alloc_chain_can_remap(chain)) {
 			//use remap to realloc
 			SCTK_PDEBUG("Use mremap %llu -> %llu",old_size,size);
 			res = sctk_alloc_chunk_body(sctk_alloc_chain_realloc_macro_bloc(chain,size,vchunk));
 		} else {
+			SCTK_PDEBUG("Use chain_alloc / chain_free %p -> %llu -> %llu",ptr,old_size,size);
 			//need to reallocate a new segment and copy the old data
 			res = sctk_alloc_chain_alloc(chain,size);
 			//copy the data
