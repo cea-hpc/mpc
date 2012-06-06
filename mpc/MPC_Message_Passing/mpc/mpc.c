@@ -1833,20 +1833,24 @@ sctk_user_main (int argc, char **argv)
 int
 PMPC_Comm_rank (MPC_Comm comm, int *rank)
 {
+  SCTK_PROFIL_START (MPC_Comm_rank);
   sctk_task_specific_t *task_specific;
   mpc_check_comm (comm, comm);
   task_specific = __MPC_get_task_specific ();
   sctk_nodebug ("Get rank of %d", comm);
   __MPC_Comm_rank (comm, rank, task_specific);
   sctk_nodebug ("Get rank of %d done", comm);
+  SCTK_PROFIL_END (MPC_Comm_rank);
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Comm_size (MPC_Comm comm, int *size)
 {
+  SCTK_PROFIL_START (MPC_Comm_size);
   mpc_check_comm (comm, comm);
   __MPC_Comm_size (comm, size);
+  SCTK_PROFIL_END (MPC_Comm_size);
   MPC_ERROR_SUCESS ();
 }
 
@@ -1861,74 +1865,94 @@ PMPC_Comm_remote_size (MPC_Comm comm, int *size)
 int
 PMPC_Node_rank (int *rank)
 {
+  SCTK_PROFIL_START (MPC_Node_rank);
   *rank = sctk_get_node_rank ();
+  SCTK_PROFIL_END (MPC_Node_rank);
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Node_number (int *number)
 {
+  SCTK_PROFIL_START (MPC_Node_number);
   *number = sctk_get_node_number ();
+  SCTK_PROFIL_END (MPC_Node_number);
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Processor_rank (int *rank)
 {
+  SCTK_PROFIL_START (MPC_Processor_rank);
   *rank = sctk_get_processor_rank ();
+  SCTK_PROFIL_END (MPC_Processor_rank);
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Processor_number (int *number)
 {
+  SCTK_PROFIL_START (MPC_Processor_number);
   *number = sctk_get_processor_number ();
+  SCTK_PROFIL_END (MPC_Processor_number);
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Process_rank (int *rank)
 {
+  SCTK_PROFIL_START (MPC_Process_rank);
   *rank = sctk_get_process_rank ();
+  SCTK_PROFIL_END (MPC_Process_rank);
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Process_number (int *number)
 {
+  SCTK_PROFIL_START (MPC_Process_number);
   *number = sctk_get_process_number ();
+  SCTK_PROFIL_END (MPC_Process_number);
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Local_process_rank (int *rank)
 {
+  SCTK_PROFIL_START (MPC_Local_process_rank);
   *rank = sctk_get_local_process_rank();
+  SCTK_PROFIL_END (MPC_Local_process_rank);
   MPC_ERROR_SUCESS();
 }
 
 int
 PMPC_Local_process_number (int *number)
 {
+  SCTK_PROFIL_START (MPC_Local_process_number);
   *number = sctk_get_local_process_number();
+  SCTK_PROFIL_END (MPC_Local_process_number);
   MPC_ERROR_SUCESS();
 }
 
 int
 PMPC_Task_rank (int *rank)
 {
+  SCTK_PROFIL_START (MPC_Task_rank);
   sctk_task_specific_t *task_specific;
   mpc_check_comm (MPC_COMM_WORLD, MPC_COMM_WORLD);
   task_specific = __MPC_get_task_specific ();
   __MPC_Comm_rank (MPC_COMM_WORLD, rank, task_specific);
+  SCTK_PROFIL_END (MPC_Task_rank);
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Task_number (int *number)
 {
+  SCTK_PROFIL_START (MPC_Task_number);
   mpc_check_comm (MPC_COMM_WORLD, MPC_COMM_WORLD);
   __MPC_Comm_size (MPC_COMM_WORLD, number);
+  SCTK_PROFIL_END (MPC_Task_number);
   MPC_ERROR_SUCESS ();
 }
 
@@ -3884,6 +3908,7 @@ int
 PMPC_Get_count (MPC_Status * status, MPC_Datatype datatype,
 		mpc_msg_count * count)
 {
+  SCTK_PROFIL_START (MPC_Get_count);
   size_t size;
   mpc_msg_count res;
   sctk_task_specific_t *task_specific;
@@ -3898,6 +3923,7 @@ PMPC_Get_count (MPC_Status * status, MPC_Datatype datatype,
       res = MPC_UNDEFINED;
     }
   *count = res;
+  SCTK_PROFIL_END (MPC_Get_count);
   MPC_ERROR_SUCESS ();
 }
 
@@ -3905,8 +3931,10 @@ PMPC_Get_count (MPC_Status * status, MPC_Datatype datatype,
 int
 PMPC_Get_processor_name (char *name, int *resultlen)
 {
+  SCTK_PROFIL_START (MPC_Get_processor_name);
   gethostname (name, HOSTNAME_SIZE);
   *resultlen = strlen (name);
+  SCTK_PROFIL_END (MPC_Get_processor_name);
   MPC_ERROR_SUCESS ();
 }
 
@@ -4460,6 +4488,7 @@ PMPC_Error_class (int errorcode, int *errorclass)
 double
 PMPC_Wtime ()
 {
+  SCTK_PROFIL_START (MPC_Wtime);
   double res;
   struct timeval tp;
 
@@ -4468,6 +4497,7 @@ PMPC_Wtime ()
   res = res / (double) 1000000;
 
   sctk_nodebug ("Wtime = %f", res);
+  SCTK_PROFIL_END (MPC_Wtime);
   return res;
 }
 
