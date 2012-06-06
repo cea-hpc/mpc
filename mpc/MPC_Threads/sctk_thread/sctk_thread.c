@@ -2342,24 +2342,18 @@ sctk_start_func (void *(*run) (void *), void *arg)
 		}
 	}
 
-<<<<<<< HEAD
 	sctk_nodebug("sctk_total_number_of_tasks %d",sctk_total_number_of_tasks);
 
 	__sctk_profiling__end__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
 	if (sctk_process_rank == 0)
 	{
-	if (getenv ("MPC_DISABLE_BANNER") == NULL) {
-	fprintf(stderr, "Initialization time: %.1fs - Memory used: %0.fMB\n",
-	sctk_profiling_get_init_time(), sctk_profiling_get_dataused());
+		if (getenv ("MPC_DISABLE_BANNER") == NULL) {
+			fprintf(stderr, "Initialization time: %.1fs - Memory used: %0.fMB\n",
+			sctk_profiling_get_init_time(), sctk_profiling_get_dataused());
+		}
 	}
-	}
-=======
-  sctk_multithreading_initialised = 0;
->>>>>>> MPC_Profiler : Integration and rendering
 
 	sctk_thread_wait_for_value_and_poll ((int *) &sctk_total_number_of_tasks, 0, NULL, NULL);
-  	
-	sctk_internal_profiler_render();
 
 	sctk_multithreading_initialised = 0;
 
