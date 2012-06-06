@@ -24,6 +24,7 @@
 #include "sctk_config.h"
 #include "sctk_spinlock.h"
 #include "sctk_allocator.h"
+#include "sctk_alloc_debug.h"
 
 #ifdef MPC_Threadss
 #include "sctk_context.h"
@@ -73,3 +74,23 @@ void __sctk_free(void * ptr,sctk_alloc_chain_t * chain)
 {
 	sctk_alloc_chain_free(chain,ptr);
 };
+
+void sctk_clean_memory (void) 
+{
+	SCTK_PDEBUG("Unimpl call clean_memory with CPU : %d",sctk_get_cpu());
+}
+
+void sctk_relocalise_tls (void)
+{
+	SCTK_PDEBUG("Unimpl call of relocalise_tls : %d",sctk_get_cpu());
+}
+
+void __sctk_relocalise_tls (sctk_alloc_chain_t * tls)
+{
+	SCTK_PDEBUG("Unimpl call of relocalise_tls : %d (%p)",sctk_get_cpu(),tls);
+}
+
+void sctk_relocalise_memory (void *ptr, sctk_size_t size)
+{
+	SCTK_PDEBUG("Unimpl call to relocalise_memory %p, %llu (%d)",ptr,size,sctk_get_cpu());
+}

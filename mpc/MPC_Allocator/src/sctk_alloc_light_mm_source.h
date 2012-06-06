@@ -36,30 +36,52 @@ extern "C"
 #define SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_NODE_IGNORE -1
 
 /*************************** ENUM **************************/
+/**
+ * Flags to enable some function of light memory sources.
+**/
 enum sctk_alloc_mm_source_light_flags
 {
+	/** Default state. **/
 	SCTK_ALLOC_MM_SOURCE_LIGHT_DEFAULT      = 0x0,
+	/** Enable NUMA strict which force memory bindings. **/
 	SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_STRICT  = 0x1,
 };
 
 /************************** STRUCT *************************/
+/**
+ * Structure a a free macro bloc managed by the light memory source
+ * for future resuse.
+**/
 struct sctk_alloc_mm_source_light_free_macro_bloc
 {
+	/** Next free bloc to build the chained list. **/
 	struct sctk_alloc_mm_source_light_free_macro_bloc * next;
+	/** Size of the current macro bloc (accounting the header). **/
 	sctk_size_t size;
 };
 
 /************************** STRUCT *************************/
+/**
+ * Structure of the memory source.
+**/
 struct sctk_alloc_mm_source_light
 {
+	/** Inheritance of the basic memory source commonb structure. **/
 	struct sctk_alloc_mm_source source;
+	/** List of free bloc to reuse. **/
 	struct sctk_alloc_mm_source_light_free_macro_bloc * cache;
+	/** Flags to setup some optional behaviors. **/
 	enum sctk_alloc_mm_source_light_flags mode;
+	/** Spinlock to protect the access to cache and counter. **/
 	sctk_alloc_spinlock_t spinlock;
+	/** The NUMA node of the memory source, -1 if none. **/
 	int numa_node;
+	/** Enable strict NUMA binding. **/
 	bool strict_numa_bind;
+	/** More for debug, to know how-many blocks are in use. **/
 	int counter;
 	#ifdef HAVE_LIBNUMA
+	/** Define the nodset related to the NUMA binding for hwloc.**/
 	hwloc_nodeset_t nodeset;
 	#endif
 };
