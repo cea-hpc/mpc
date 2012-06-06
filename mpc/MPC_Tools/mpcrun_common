@@ -218,7 +218,7 @@ done
 # Load config files options
 CONFIG_FILES_VALID=false
 config_files_vars="$(${MPC_BIN_DIR}/mpc_print_config --launcher)"
-if [ ! -z "" ]; then eval "${config_files_vars}"; fi
+if [ $? -eq 0 ]; then eval "${config_files_vars}"; fi
 if [ "${CONFIG_FILES_VALID}" = "true" ]; then
 	# Default value related to --enable-smt
 	ENABLE_SMT="${CONFIG_LAUNCHER_SMT}"
