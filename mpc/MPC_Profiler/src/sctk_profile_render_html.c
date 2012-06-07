@@ -113,7 +113,7 @@ void sctk_profile_render_html_render_profile( struct sctk_profiler_array *array,
 	const char *prefix[3] = { "<B>", " ", "<I>" };
 	const char *suffix[3] = { "</B>", " ", "</I>" };
 
-	int prefix_id = (depth<6)?depth:5;
+	int prefix_id = (depth < sctk_profile_get_config()->level_colors_size)?depth:sctk_profile_get_config()->level_colors_size - 1;
 
 	char *to_unit_total = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_time(array, id) , buffA );
 	char *to_unit_avg = sctk_profile_renderer_convert_to_time( rd->ptree.entry_average_time[id] , buffB );

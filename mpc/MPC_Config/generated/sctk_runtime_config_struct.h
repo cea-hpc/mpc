@@ -188,6 +188,8 @@ struct sctk_runtime_config_struct_profiler
 	char * file_prefix;
 	/**Add a timestamp to profiles file names**/
 	bool append_date;
+	/**Profile in color when outputed to stdout**/
+	bool color_stdout;
 	/**Color for levels of profiler output**/
 	char * * level_colors;
 	/** Number of elements in level_colors array. **/

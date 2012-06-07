@@ -155,6 +155,7 @@
     <xs:all>
       <xs:element minOccurs="0" name="file_prefix" type="xs:string"/>
       <xs:element minOccurs="0" name="append_date" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="color_stdout" type="xs:boolean"/>
       <xs:element minOccurs="0" name="level_colors">
         <xs:complexType>
           <xs:sequence>

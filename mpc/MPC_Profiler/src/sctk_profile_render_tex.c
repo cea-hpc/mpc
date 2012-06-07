@@ -124,7 +124,7 @@ void sctk_profile_render_tex_setup( struct sctk_profile_renderer *rd )
 
 		int i = 0;
 		
-		for( i = 0 ; i < 6 ; i++ )
+		for( i = 0 ; i < sctk_profile_get_config()->level_colors_size ; i++ )
 		{
 			struct MPC_prof_color col = sctk_profile_renderer_to_rgb( sctk_profile_get_config()->level_colors[i] );
 			fprintf(rd->output_file, "\\definecolor{%c}{RGB}{%d,%d,%d}\n", 'A'+i, col.r, col.g, col.b );
@@ -190,7 +190,7 @@ void sctk_profile_render_tex_render_profile( struct sctk_profiler_array *array, 
 	
 	const char *prefix[3] = { "\\textbf", " ", "\\textit" };
 
-	int prefix_id = (depth<6)?depth:5;
+	int prefix_id = (depth<sctk_profile_get_config()->level_colors_size)?depth:sctk_profile_get_config()->level_colors_size - 1;
 
 	char *to_unit_total = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_time(array, id) , buffA );
 	char *to_unit_avg = sctk_profile_renderer_convert_to_time( rd->ptree.entry_average_time[id] , buffB );

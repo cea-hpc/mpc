@@ -156,6 +156,7 @@ void sctk_runtime_config_struct_init_profiler(void * struct_ptr)
 	//Simple params :
 	obj->file_prefix = "mpc_profile";
 	obj->append_date = true;
+	obj->color_stdout = true;
 	//array
 	obj->level_colors = calloc(6,sizeof(char *));
 	obj->level_colors[0] = "#3A4D85";

@@ -74,6 +74,15 @@
 					<!-- Use 16 cores per nodes by default -->
 					<cores>16</cores>
 				</launcher>
+				<profiler>
+					<file_prefix>profile</file_prefix>
+					<append_date>false</append_date>
+					<color_stdout>true</color_stdout>
+					<level_colors>
+						<level>#3A4D85</level>
+						<level>#82A2FF</level>
+						</level_colors>
+				</profiler>
 			</modules>
 			<!-- network modules -->
 			<networks>

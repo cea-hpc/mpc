@@ -41,9 +41,23 @@ struct sctk_profile_meta *sctk_internal_profiler_get_meta()
 /* Target structure for reduction */
 static struct sctk_profiler_array *reduce_array = NULL;
 
+static void sctk_internal_profiler_check_config()
+{
+	/* Check for at least one color */
+	if( sctk_profile_get_config()->level_colors_size < 1 )
+	{
+		sctk_error("You should provide at least one level color to MPC Profiler");
+		abort();
+	}
+}
+
+
 
 void sctk_internal_profiler_init()
 {
+	/* Check config options validity */
+	sctk_internal_profiler_check_config();
+
 	/* Setup the TLS */
 	tls_mpc_profiler = (void *) sctk_profiler_array_new();
 

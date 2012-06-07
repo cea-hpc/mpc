@@ -100,7 +100,8 @@
 		<struct name="profiler"     doc="Options for the internal MPC Profiler">
 			<param name="file_prefix"   type="string" default="mpc_profile" doc="Prefix of MPC Profiler outputs"/>
 			<param name="append_date"   type="bool" default="true" doc="Add a timestamp to profiles file names"/>
-
+			<param name="color_stdout"   type="bool" default="true" doc="Profile in color when outputed to stdout"/>
+			
 			<array name="level_colors" entry-name="level" type="string" doc="Color for levels of profiler output">
 				<default>
 					<value>"#3A4D85"</value>
