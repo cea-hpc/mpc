@@ -46,7 +46,7 @@ MPC_VERSION="`${MPC_SOURCE_DIR}/MPC_Tools/mpc_print_version`"
 SCTK_PREFIX_CHECK="1"
 
 # List of all modules to add to MPC distribution
-MODULES="mpc-gdb mpc-gcc mpc-hydra mpc-hwloc mpc-openpa mpc-binutils"
+MODULES="mpc-gdb mpc-gcc mpc-hydra mpc-hwloc mpc-openpa mpc-binutils mpc-libxml2"
 # List of modules for the 'clean' rule
 MODULES_CLEAN=
 
@@ -67,6 +67,7 @@ GDB_CONFIGURE_ARGUMENTS=""
 HWLOC_CONFIGURE_ARGUMENTS=""
 OPENPA_CONFIGURE_ARGUMENTS=""
 HYDRA_CONFIGURE_ARGUMENTS=""
+LIBXML2_CONFIGURE_ARGUMENTS=""
 
 # Options for SCTK_PMI
 SCTK_PMI_OPTIONS="--with-hydra"
@@ -77,6 +78,9 @@ SCTK_HWLOC_OPTIONS="--with-hwloc=embeded"
 
 # Options for SCTK_OPENPA
 SCTK_OPENPA_OPTIONS="--with-openpa=embeded"
+
+# Options fo SCTK_LIBXML
+SCTK_LIBXML2_OPTIONS="--with-libxml2=embeded"
 
 # Options for OpenIB
 SCTK_OPENIB_OPTIONS=""
@@ -126,6 +130,7 @@ MPC gdb options:
 
 MPC dependencies:
   --with-hwloc[=prefix]               Use the hwloc provided in prefix if not set MPC will buid its own hwloc
+  --with-libxml2[=prefix]             Use the libxml2 provided in prefix if not set MPC will buid its own one
   --hwloc-{enable-debug|...}          Pass option to hwloc configure script.
   --with-openpa[=prefix]              Use the OpenPA in this prefix if not set MPC will build its own OpenPA
   --openpa-{disable-assert|...}       Pass option to OpenPA configure script.
@@ -211,6 +216,16 @@ for arg in "$@" ; do
   	  SCTK_PMI_OPTIONS="$arg"
       MODULES="`echo $MODULES | sed -e 's/mpc-hydra//g'`"
     ;;
+    --with-libxml2)
+      MODULES="`echo $MODULES | sed -e 's/mpc-libxml2//g'`"
+      SCTK_LIBXML2_OPTIONS=""
+      echo "Using libxml2 located in system"
+    ;;
+    --with-libxml2=*)
+      MODULES="`echo $MODULES | sed -e 's/mpc-libxml2//g'`"
+      SCTK_LIBXML2_OPTIONS="$arg"
+      echo "Using libxml2 given by $arg"
+    ;;
     --with-hwloc)
       MODULES="`echo $MODULES | sed -e 's/mpc-hwloc//g'`"
       SCTK_HWLOC_OPTIONS=""
@@ -244,6 +259,9 @@ for arg in "$@" ; do
     --hwloc-*)
       HWLOC_CONFIGURE_ARGUMENTS="${HWLOC_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--hwloc//g'`"
     ;;
+    --libxml2-*)
+      LIBXML2_CONFIGURE_ARGUMENTS="${LIBXML2_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--libxml2//g'`"
+    ;;
     --openpa-*)
       OPENPA_CONFIGURE_ARGUMENTS="${OPENPA_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--openpa//g'`"
     ;;
@@ -270,6 +288,9 @@ MPC_ARGS="$SCTK_OPENPA_OPTIONS $MPC_ARGS"
 
 # Add arguments linked to OpenIB
 MPC_ARGS="$SCTK_OPENIB_OPTIONS $MPC_ARGS"
+
+# Add arguments linked to SCTK_LIBXML2
+MPC_ARGS="$SCTK_LIBXML2_OPTIONS $MPC_ARGS"
 
 if [ $SCTK_PREFIX_CHECK -eq 1 ]; then
   check_overwritten_files
@@ -414,6 +435,9 @@ if test "$mod" != "#" ; then
        mpc-openpa)
          MOD_CONFIGURE_ARGUMENTS="${OPENPA_CONFIGURE_ARGUMENTS} CFLAGS=-fPIC"
        ;;
+       mpc-libxml2)
+         MOD_CONFIGURE_ARGUMENTS="${LIBXML2_CONFIGURE_ARGUMENTS}"
+       ;;
        *)
          MOD_CONFIGURE_ARGUMENTS=''
        ;;
@@ -428,10 +452,10 @@ if test "$mod" != "#" ; then
     MODULES_CLEAN="${MODULES_CLEAN} ${FULL_NAME}_build"
 
     printf "#\n# Module ${mod} / Version ${ver}\n#\n" >> Makefile
-    if [ "${mod##*-}" = "openpa" ] || [ "${mod##*-}" = "hwloc" ] || [ "${mod##*-}" = "binutils" ]
+    if [ "${mod##*-}" = "openpa" ] || [ "${mod##*-}" = "hwloc" ] || [ "${mod##*-}" = "binutils" ] || [ "${mod##*-}" = "libxml2" ]
     then
-		  printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_INSTALL=`echo A${SCTK_PREFIX} | sed -e 's/A--prefix=//g'`/${FULL_NAME}\n" >> Makefile
-    	printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_BUILD=`pwd`/${FULL_NAME}_build/${mod##*-}-${ver}\n" >> Makefile
+        printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_INSTALL=`echo A${SCTK_PREFIX} | sed -e 's/A--prefix=//g'`/${FULL_NAME}\n" >> Makefile
+        printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_BUILD=`pwd`/${FULL_NAME}_build/${mod##*-}-${ver}\n" >> Makefile
     fi
     printf "${FULL_NAME}_build/config.status: Makefile ${TOP_SOURCE_DIR}/${mod}/configure\n" >> Makefile
     printf "\tmkdir -p ${FULL_NAME}_build\n" >> Makefile
@@ -441,7 +465,7 @@ if test "$mod" != "#" ; then
     printf "\n" >> Makefile
 
     # We set all depedences for compiling MPC
-    if [ "${mod##*-}" = "openpa" ] || [ "${mod##*-}" = "hwloc" ] || [ "${mod##*-}" = "hydra"  ]; then
+    if [ "${mod##*-}" = "openpa" ] || [ "${mod##*-}" = "hwloc" ] || [ "${mod##*-}" = "hydra"  ] || [ "${mod##*-}" = "libxml2" ]; then
       CONFIG_MPC_DEPS="$CONFIG_MPC_DEPS ${FULL_NAME}_build/config.status"
       MAKE_MPC_DEPS="$MAKE_MPC_DEPS ${FULL_NAME}_make"
       INSTALL_MPC_DEPS="$INSTALL_MPC_DEPS ${FULL_NAME}_install"
@@ -462,7 +486,7 @@ if test "$mod" != "#" ; then
 			printf "\t\$(MAKE) -C ${FULL_NAME}_build/hydra \n" >> Makefile
 			printf "\t\$(MAKE) -C ${FULL_NAME}_build/simple \n" >> Makefile
 			;;
-		openpa|hwloc|binutils)
+		openpa|hwloc|binutils|libxml2)
 			printf "\t\$(MAKE) -C ${FULL_NAME}_build/${mod##*-}-${ver} \n" >> Makefile
 			;;
 		*)
@@ -478,7 +502,7 @@ if test "$mod" != "#" ; then
 		"hydra")
 			printf "\t\$(MAKE) -C ${FULL_NAME}_build/hydra install \n" >> Makefile
 			;;
-		"openpa"|"hwloc"|"binutils")
+		"openpa"|"hwloc"|"binutils"|"libxml2")
 			printf "\t\$(MAKE) -C ${FULL_NAME}_build/${mod##*-}-${ver} install \n" >> Makefile
 			;;
 		*)

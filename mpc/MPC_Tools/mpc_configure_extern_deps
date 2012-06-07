@@ -408,9 +408,14 @@ SCTK_CHECK_LIBXML2()
 
 	#Find paths
 	if [ "$LIBXML_IS_SETUP" != "yes" ]; then
-		# For the moment, we dont use rpath
-		
-		if [ -d "${SCTK_LIBXML2_PREFIX}" ]; then
+		# For the moment, we dont use rpath except for embeded version
+		if [ "${SCTK_LIBXML2_PREFIX}" = "embeded" ]; then
+			#We are relying on our own libxml2
+			#LIBXML2_PREFIX_INSTALL is defined in the root configure
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBXML2_PREFIX_BUILD}/.libs/libxml2.so"
+			SCTK_CFLAGS="${SCTK_CFLAGS} -I${LIBXML2_PREFIX_BUILD}/include/"
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${LIBXML2_PREFIX_INSTALL}/lib -L${LIBXML2_PREFIX_BUILD}/.libs"
+		elif [ -d "${SCTK_LIBXML2_PREFIX}" ]; then
 			SCTK_MSG_CHECKING "Search in ${SCTK_LIBXML2_PREFIX}"; result yes
 			sctk_internal_setup_libxml
 			SCTK_CHECK_LDOPTION "-lxml2"
@@ -427,7 +432,7 @@ SCTK_CHECK_LIBXML2()
 			if [ "x${SCTK_LIBXML2_PREFIX}" != "x" ]; then
 				error "the prefix ${SCTK_LIBXML2_PREFIX} does not seem to contain libxlm2"
 			fi
-			
+
 			error "please check if libxml2 is installed or provide its prefix with --with-libxml2={PREFIX}."
 			exit 1
 		fi
