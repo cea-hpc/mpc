@@ -826,8 +826,7 @@ mpc_log_debug (MPC_Comm comm, const char *fmt, ...)
 
 #endif
 
-static inline int
-__MPC_Barrier (MPC_Comm comm)
+int __MPC_Barrier (MPC_Comm comm)
 {
   mpc_check_comm (comm, comm);
 
@@ -1275,7 +1274,7 @@ PMPC_Finalize (void)
 
   sctk_nodebug("PMPC_Finalize");
 
-  PMPC_Barrier (MPC_COMM_WORLD);
+  __MPC_Barrier (MPC_COMM_WORLD);
 
   task_specific = __MPC_get_task_specific ();
   task_specific->init_done = 0;
@@ -1794,6 +1793,7 @@ sctk_user_main (int argc, char **argv)
   __mpcomp_init() ;
 #endif
 
+
 #ifdef MPC_Profiler
 	sctk_internal_profiler_init();
 #endif
@@ -1807,7 +1807,6 @@ sctk_user_main (int argc, char **argv)
 #ifdef MPC_Profiler
 	sctk_internal_profiler_render();
 #endif
-
 
   MPC_Checkpoint_restart_end ();
 

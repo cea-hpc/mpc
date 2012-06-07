@@ -50,7 +50,7 @@ void sctk_internal_profiler_init()
 	/* Fill in the meta informations */
 	sctk_profile_meta_init(&sctk_internal_profiler_meta);
 
-	MPC_Barrier(MPC_COMM_WORLD);
+	__MPC_Barrier(MPC_COMM_WORLD);
 
 	/* Start Program */
 	sctk_profile_meta_begin_compute(&sctk_internal_profiler_meta);
@@ -121,10 +121,10 @@ extern char * sctk_profiling_outputs;
 
 void sctk_internal_profiler_render()
 {
+	sctk_profiler_internal_disable();
+
 	int rank = 0;
 	MPC_Comm_rank( MPC_COMM_WORLD, &rank );
-
-	sctk_profiler_internal_disable();
 
 	/* End Program */
 	sctk_profile_meta_end_compute(&sctk_internal_profiler_meta);

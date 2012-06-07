@@ -647,6 +647,7 @@ extern "C"
   /*Types */
   int PMPC_Type_size (MPC_Datatype, size_t *);
   int PMPC_Sizeof_datatype (MPC_Datatype *, size_t);
+  int __MPC_Barrier (MPC_Comm comm);
   int PMPC_Type_free (MPC_Datatype * datatype);
 
   /*MPC specific function */
