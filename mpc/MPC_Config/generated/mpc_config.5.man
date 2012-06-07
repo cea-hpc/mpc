@@ -1,0 +1,207 @@
+
+.\" ############################# MPC License ##############################
+.\" # Wed Nov 19 15:19:19 CET 2008                                         #
+.\" # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+.\" #                                                                      #
+.\" # IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+.\" # This file is part of the MPC Runtime.                                #
+.\" #                                                                      #
+.\" # This software is governed by the CeCILL-C license under French law   #
+.\" # and abiding by the rules of distribution of free software.  You can  #
+.\" # use, modify and/ or redistribute the software under the terms of     #
+.\" # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+.\" # following URL http://www.cecill.info.                                #
+.\" #                                                                      #
+.\" # The fact that you are presently reading this means that you have     #
+.\" # had knowledge of the CeCILL-C license and that you accept its        #
+.\" # terms.                                                               #
+.\" #                                                                      #
+.\" # Authors:                                                             #
+.\" #   - VALAT Sebastien sebastien.valat@cea.fr                           #
+.\" #   - AUTOMATIC GENERATION                                             #
+.\" #                                                                      #
+.\" ########################################################################
+
+.Dd $Mdocdate: June 6 2012 $
+.Dt MPC_CONFIG 5
+.Os
+.Sh NAME
+.Nm mpc_config
+.Nd MPC runtime configuration files
+.Sh SYNOPSIS
+.Nm ~/.mpc/config or ${MPC_USER_CONFIG}
+.Nm ${PREFIX}/share/mpc/config.xml or ${MPC_SYSTEM_CONFIG}
+.Nm File given to option --config of
+.Xr mpcrun 1
+.Sh DESCRIPTION
+Their is three important concepts in MPC configuration system :
+.Bl -tag -width Ds
+
+.It Cm Profile
+Each configuration file provide some profiles. A profile has a name and provide a set of values.
+.It Cm Profile mapping
+At loading time, we can define which profiles to apply to generate the final configuration.
+.It Cm Overriding
+Each profile can override values of a previous loaded one of the onces from a file previously loaded. So in your profile you can redefine only the specific values you want to change, the others keep their values.
+.El
+.Pp
+Files are loaded in priority order :
+.Bl -enum -offset indent -compact
+.It
+System configuration (${PREFIX}/share/mpc/config.xml or $MPC_SYSTEM_CONFIG)
+.It
+User configuration (~/.mpc/config or ${MPC_USER_CONFIG})
+.It
+Application configuration given to mpcrun with option --config
+.El
+.Pp
+.Sh OPTIONS
+MPC configuration system support the given options :
+	.Sh OPTIONS OF NODE test
+This is a test structure.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm tt
+Type is int. Default value if 10. 
+.Pp tt
+This is a test
+.El
+.Sh OPTIONS OF NODE rail
+This is a fake for rails
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm tt
+Type is int. Default value if 10. 
+.Pp tt
+This is a test
+.It Cm tt2
+Type is int. Default value if 20. 
+.Pp tt2
+This is a test
+.El
+.Sh OPTIONS OF NODE allocator
+Options for MPC allocator.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm numa
+Type is bool. Default value if false. 
+.Pp numa
+Permit to enable of disable NUMA support in MPC Allocator.
+.It Cm profile
+Type is bool. Default value if false. 
+.Pp profile
+Enable of disable usage of allocator profiler.
+.It Cm alstring
+Type is string. Default value if TestTestTest. 
+.Pp alstring
+Sample string
+.It Cm aldouble
+Type is double. Default value if 42.42. 
+.Pp aldouble
+Sample double
+.It Cm alfloat
+Type is float. Default value if 42.42. 
+.Pp alfloat
+Sample float
+.It Cm alsize
+Type is size. Default value if 2PB. 
+.Pp alsize
+Sample size entry
+.It Cm warnings
+Type is bool. Default value if false. 
+.Pp warnings
+Permit to enable of disable allocator warnings.
+.It Cm test
+Type is test. 
+.Pp test
+Try to use test structure.
+.It Cm driver
+Type is driver. 
+.Pp driver
+This is a super doc
+.El
+.Sh OPTIONS OF NODE launcher
+Options for MPC launcher.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm smt
+Type is bool. Default value if false. 
+.Pp smt
+blablabla
+.It Cm cores
+Type is int. Default value if 16. 
+.Pp cores
+blabla
+.It Cm verbosity
+Type is int. Default value if 0. 
+.Pp verbosity
+blabla
+.El
+.Sh OPTIONS OF NODE net_driver_fake
+Declare a fake driver to test the configuration system.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm buffer
+Type is int. Default value if 1024. 
+.Pp buffer
+Size of the buffer used for internal copies.
+.It Cm stealing
+Type is bool. Default value if true. 
+.Pp stealing
+Enable stealing between threads.
+.El
+.Sh OPTIONS OF NODE net_driver_config
+Contain a list of driver configuration reused by rail definitions.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm name
+Type is string. 
+.Pp name
+Name of the driver configuration to be referenced in rail definitions.
+.It Cm driver
+Type is net_driver. 
+.Pp driver
+Define the related driver to use and its configuration.
+.El
+.Sh OPTIONS OF NODE net_rail
+Define a rail which is a name, a device associate to a driver and a routing topology.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm name
+Type is string. 
+.Pp name
+Define the name of current rail.
+.It Cm device
+Type is string. 
+.Pp device
+Define the name of the device to use in this rail.
+.It Cm topology
+Type is string. 
+.Pp topology
+Define the network topology to apply on this rail.
+.It Cm config
+Type is string. 
+.Pp config
+Define the driver config to use for this rail.
+.El
+.Sh OPTIONS OF NODE networks
+Base structure to contain the network configuration
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.El
