@@ -376,7 +376,7 @@ void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml *
 
 	//load it
 	source->document = xmlParseFile(filename);
-	abort();
+	assume( source->document != NULL );
 
 	//get root node
 	source->root_node = xmlDocGetRootElement(source->document);
