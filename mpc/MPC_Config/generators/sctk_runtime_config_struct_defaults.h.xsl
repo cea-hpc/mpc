@@ -33,7 +33,6 @@
 		<xsl:text>#define SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H&#10;</xsl:text>
 		<xsl:call-template name="gen-forward-struct-decl"/>
 		<xsl:call-template name="gen-reset-function"/>
-		<xsl:call-template name="gen-validate-function"/>
 		<xsl:text>&#10;#endif //SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H&#10;</xsl:text>
 	</xsl:template>
 
@@ -53,14 +52,6 @@
 	</xsl:template>
 
 	<!-- ********************************************************* -->
-	<xsl:template name="gen-validate-function">
-		<xsl:text>&#10;/*******************  FUNCTION  *********************/&#10;</xsl:text>
-		<xsl:text>//validation functions&#10;</xsl:text>
-		<xsl:apply-templates select="config/validators"/>
-		<xsl:text>void sctk_runtime_config_validate(struct sctk_runtime_config * config);&#10;</xsl:text>
-	</xsl:template>
-
-	<!-- ********************************************************* -->
 	<xsl:template match="usertypes">
 		<xsl:apply-templates select="struct|union"/>
 	</xsl:template>
@@ -73,11 +64,6 @@
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-reset-func-name">
 		<xsl:value-of select="concat('void sctk_runtime_config_struct_init_',@name,'(void * struct_ptr);&#10;')"/>
-	</xsl:template>
-
-	<!-- ********************************************************* -->
-	<xsl:template match="validators">
-		<xsl:apply-templates select="handler"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->

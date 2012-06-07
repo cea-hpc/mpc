@@ -18,48 +18,12 @@
 /* # Authors:                                                             # */
 /* #   - VALAT Sebastien sebastien.valat@cea.fr                           # */
 /* #                                                                      # */
-/* ######################################################################## */ 
+/* ######################################################################## */
 
-#ifndef SCTK_RUNTIME_CONFIG
-#define SCTK_RUNTIME_CONFIG
+#ifndef SCTK_RUNTIME_CONFIG_VALIDATION
+#define SCTK_RUNTIME_CONFIG_VALIDATION
 
-/********************  HEADERS  *********************/
-#include "sctk_runtime_config_struct.h"
+/*********************  STRUCT  *********************/
+void sctk_runtime_config_validate(struct sctk_runtime_config * config);
 
-/*********************  GLOBAL  *********************/
-/**
- * Global variable to store mpc runtime configuration loaded from XML.
- * Caution for quick static access, prefer usage of macro sctk_runtime_config_get().
-**/
-extern struct sctk_runtime_config __sctk_global_runtime_config__;
-/** To know if aldready init. **/
-extern bool __sctk_global_runtime_config_init__;
-
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_init(void);
-void sctk_runtime_config_runtime_display(void);
-
-/*******************  FUNCTION  *********************/
-/**
- * Return true if MPC configuration structure was initialised, false otherwise.
-**/
-static inline bool sctk_runtime_config_init_done(void)
-{
-	return __sctk_global_runtime_config_init__;
-}
-
-/*******************  FUNCTION  *********************/
-/**
- * Function to use to get access to the configuration structure of MPC. It ensure that it was initialized
- * when the function return.
-**/
-static inline const struct sctk_runtime_config * sctk_config_runtime_get(void)
-{
-	if ( ! __sctk_global_runtime_config_init__ )
-		sctk_runtime_config_init();
-
-	return &__sctk_global_runtime_config__;
-}
-
-#endif
+#endif //SCTK_RUNTIME_CONFIG_VALIDATION

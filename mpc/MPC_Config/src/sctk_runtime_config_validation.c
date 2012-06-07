@@ -18,48 +18,32 @@
 /* # Authors:                                                             # */
 /* #   - VALAT Sebastien sebastien.valat@cea.fr                           # */
 /* #                                                                      # */
-/* ######################################################################## */ 
-
-#ifndef SCTK_RUNTIME_CONFIG
-#define SCTK_RUNTIME_CONFIG
+/* ######################################################################## */
 
 /********************  HEADERS  *********************/
+#include "sctk_debug.h"
 #include "sctk_runtime_config_struct.h"
-
-/*********************  GLOBAL  *********************/
-/**
- * Global variable to store mpc runtime configuration loaded from XML.
- * Caution for quick static access, prefer usage of macro sctk_runtime_config_get().
-**/
-extern struct sctk_runtime_config __sctk_global_runtime_config__;
-/** To know if aldready init. **/
-extern bool __sctk_global_runtime_config_init__;
-
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_init(void);
-void sctk_runtime_config_runtime_display(void);
+#include "sctk_runtime_config_validation.h"
+#include "sctk_runtime_config_struct_defaults.h"
 
 /*******************  FUNCTION  *********************/
 /**
- * Return true if MPC configuration structure was initialised, false otherwise.
+ * This function is called after loading the config to do more complexe validation on some values.
+ * Create functions for each of you modules and call them here.
+ * CAUTION, you must not depend on you module here as it was called at first initialisation step
+ * before main and before the complete allocator initialisation.
 **/
-static inline bool sctk_runtime_config_init_done(void)
+void sctk_runtime_config_validate(struct sctk_runtime_config * config)
 {
-	return __sctk_global_runtime_config_init__;
+	sctk_debug("Validator called on config...\n");
+	//sctk_runtime_config_validate_example(config);
 }
 
 /*******************  FUNCTION  *********************/
 /**
- * Function to use to get access to the configuration structure of MPC. It ensure that it was initialized
- * when the function return.
+ * This is a validator example.
 **/
-static inline const struct sctk_runtime_config * sctk_config_runtime_get(void)
+void sctk_runtime_config_validate_example(struct sctk_runtime_config * config)
 {
-	if ( ! __sctk_global_runtime_config_init__ )
-		sctk_runtime_config_init();
-
-	return &__sctk_global_runtime_config__;
+	assume_m(config != NULL,"Config cannot be NULL.");
 }
-
-#endif

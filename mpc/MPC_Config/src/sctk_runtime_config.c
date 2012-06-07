@@ -28,6 +28,7 @@
 #include "sctk_runtime_config_sources.h"
 #include "sctk_runtime_config_mapper.h"
 #include "sctk_runtime_config_printer.h"
+#include "sctk_runtime_config_validation.h"
 #include "sctk_runtime_config_struct_defaults.h"
 #include "sctk_libxml_helper.h"
 
@@ -224,8 +225,4 @@ void sctk_runtime_config_init(void)
 	}
 }
 
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_empty_validator_for_test(struct sctk_runtime_config * config)
-{
-	sctk_debug("DEBUG : Test validator called on config...\n");
-}
+

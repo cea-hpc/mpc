@@ -44,9 +44,4 @@ void sctk_runtime_config_struct_init_net_rail(void * struct_ptr);
 void sctk_runtime_config_struct_init_networks(void * struct_ptr);
 void sctk_runtime_config_reset(struct sctk_runtime_config * config);
 
-/*******************  FUNCTION  *********************/
-//validation functions
-void sctk_runtime_config_empty_validator_for_test(struct sctk_runtime_config * config);
-void sctk_runtime_config_validate(struct sctk_runtime_config * config);
-
 #endif //SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H
