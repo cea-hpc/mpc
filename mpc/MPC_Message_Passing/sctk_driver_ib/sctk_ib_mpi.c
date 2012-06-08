@@ -151,6 +151,7 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
     const char from_cp, struct sctk_ib_polling_s* poll) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   int release_ibuf = 1;
+  const struct ibv_wc wc = ibuf->wc;
 
   /* Switch on the protocol of the received message */
   switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
@@ -169,14 +170,17 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
 
     default:
       sctk_error ("Got wrong protocol: %d %p", IBUF_GET_PROTOCOL(ibuf->buffer), &IBUF_GET_PROTOCOL(ibuf->buffer));
-      assume(0);
+      not_reachable();
       break;
   }
 
   /* We do not need to release the buffer with the RDMA channel */
-  if (IBUF_GET_CHANNEL(ibuf) & RDMA_CHANNEL) return 0;
+  if (IBUF_GET_CHANNEL(ibuf) & RDMA_CHANNEL) {
+    sctk_ibuf_release(rail_ib, ibuf);
+    return 0;
+  }
 
-  assume(IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL);
+  ib_assume(IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL);
   if(release_ibuf) {
     /* sctk_ib_qp_release_entry(&rail->network.ib, ibuf->remote); */
     sctk_ibuf_release(rail_ib, ibuf);
@@ -194,9 +198,6 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
   const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL(ibuf->buffer);
   int release_ibuf = 1;
   const struct ibv_wc wc = ibuf->wc;
-  /* Get the remote associated to the ibuf */
-//  const sctk_ib_qp_t const *remote = sctk_ib_qp_ht_find(rail_ib, wc.qp_num);
-//  assume(remote);
 
   sctk_nodebug("[%d] Recv ibuf:%p", rail->rail_number,ibuf);
 #ifdef IB_DEBUG
@@ -206,19 +207,24 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
 
   /* First we check if the message has an immediate data */
   if (wc.wc_flags == IBV_WC_WITH_IMM) {
-    assume(0);
-    assume( (wc.imm_data & IMM_DATA_EAGER_RDMA));
-    sctk_ib_qp_t *remote = sctk_ib_qp_ht_find(rail_ib, wc.qp_num);
-  assume(remote);
-    const int index = wc.imm_data - IMM_DATA_EAGER_RDMA;
-   /* Find the remote which has received the msg */
+    if (wc.imm_data & IMM_DATA_RDMA_PIGGYBACK) {
+      /* We actually do nothing here */
+    } else {
+      not_reachable();
+#if 0
+      sctk_ib_qp_t *remote = sctk_ib_qp_ht_find(rail_ib, wc.qp_num);
+      assume(remote);
+      /* Find the remote which has received the msg */
+      sctk_nodebug("received an RDMA message from rank %d, ibuf index: %u", remote->rank, index);
+      sctk_ib_rdma_eager_poll_remote(rail_ib, remote);
+#endif
+    }
 
-   sctk_nodebug("received an RDMA message from rank %d, ibuf index: %u", remote->rank, index);
-   sctk_ib_rdma_eager_poll_recv(rail_ib, remote, index);
-   release_ibuf = 1;
+    /* We release the buffer */
+    release_ibuf = 1;
   } else {
 
-  /* Switch on the protocol of the received message */
+    /* Switch on the protocol of the received message */
     switch (protocol) {
       case eager_protocol:
         sctk_ib_eager_poll_recv(rail, ibuf);
@@ -235,7 +241,7 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
         break;
 
       default:
-        assume(0);
+        not_reachable();
     }
   }
 
@@ -260,17 +266,20 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc,
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   sctk_ibuf_t *ibuf = NULL;
   ibuf = (sctk_ibuf_t*) wc->wr_id;
-  assume(ibuf);
+  ib_assume(ibuf);
   int dest_task = -1;
   /* Get the remote associated to the ibuf */
   const sctk_ib_qp_t const *remote = sctk_ib_qp_ht_find(rail_ib, wc->qp_num);
-  assume(remote);
+  ib_assume(remote);
   sctk_ib_prof_qp_write(remote->rank, wc->byte_len, sctk_get_time_stamp(), PROF_QP_RECV);
+
+  /* We *MUST* recopy some informations to the ibuf */
+  ibuf->wc = *wc;
+  ibuf->cq = recv_cq;
 
   if (IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL) {
     dest_task = IBUF_GET_DEST_TASK(ibuf->buffer);
     ibuf->cq = recv_cq;
-    ibuf->wc = *wc;
     if (sctk_ib_cp_handle_message(rail, ibuf, dest_task, dest_task, recv_cq) == 0) {
       return sctk_network_poll_recv_ibuf(rail, ibuf, 0, poll);
     } else {
@@ -286,9 +295,18 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   sctk_ibuf_t *ibuf = NULL;
   ibuf = (sctk_ibuf_t*) wc->wr_id;
-  assume(ibuf);
+  ib_assume(ibuf);
   int src_task = -1;
   int dest_task = -1;
+
+  /* First we check if the message has an immediate data */
+  if (wc->wc_flags & IBV_WC_WITH_IMM) {
+    return 0;
+  }
+
+  /* We *MUST* recopy some informations to the ibuf */
+  ibuf->wc = *wc;
+  ibuf->cq = send_cq;
 
   /* Decrease the number of pending requests */
   sctk_ibuf_rdma_update_max_pending_requests(rail_ib, ibuf->remote);
@@ -300,8 +318,6 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,
   if (IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL) {
     src_task = IBUF_GET_SRC_TASK(ibuf);
     dest_task = IBUF_GET_DEST_TASK(ibuf->buffer);
-    ibuf->cq = send_cq;
-    ibuf->wc = *wc;
 
     /* We still check the dest_task. If it is -1, this is a process_specific
      * message, so we need to handle the message asap */
@@ -408,7 +424,7 @@ sctk_network_notify_perform_message_ib (int dest, sctk_rail_info_t* rail){
     sctk_ib_qp_t *remote;
     sctk_ib_data_t *route_data;
     sctk_route_table_t *route =  sctk_get_route_to_process_no_ondemand(dest, rail);
-    assume(route);
+    ib_assume(route);
 
     route_data=&route->data.ib;
     remote=route_data->remote;
@@ -500,12 +516,18 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t* rail){
   int rc;
   mod_attr.srq_limit  = config->ibv_srq_credit_thread_limit;
   rc = ibv_modify_srq(device->srq, &mod_attr, IBV_SRQ_LIMIT);
-  assume(rc == 0);
+  ib_assume(rc == 0);
 
   /* Initialize network */
   sprintf(network_name, "IB-MT (v2.0) MPI      %d/%d:%s - %dx %s (%d Gb/s)]",
     device->dev_index+1, device->dev_nb, ibv_get_device_name(device->dev),
     device->link_width, device->link_rate, device->data_rate);
+
+#ifdef IB_DEBUG
+  if ( sctk_process_rank == 0)  {
+    fprintf(stderr, SCTK_COLOR_RED_BOLD(WARNING: MPC debug mode activated. Your job *MAY* be *VERY* slow!)"\n");
+  }
+#endif
 
   rail->connect_to = sctk_network_connection_to_ib;
   rail->connect_from = sctk_network_connection_from_ib;

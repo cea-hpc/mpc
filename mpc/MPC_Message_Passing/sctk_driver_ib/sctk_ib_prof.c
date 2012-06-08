@@ -40,7 +40,7 @@
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"
 #endif
-#define SCTK_IB_MODULE_DEBUG
+//#define SCTK_IB_MODULE_DEBUG
 #define SCTK_IB_MODULE_NAME "PROF"
 #include "sctk_ib_toolkit.h"
 
@@ -98,7 +98,7 @@ void sctk_ib_prof_finalize(sctk_ib_rail_info_t *rail_ib) {
 }
 
 void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib) {
-  fprintf(stderr, "[%d] %d %d %d %d %d %d %d %d\n", sctk_process_rank,
+  fprintf(stderr, "[%d] %d %d %d %d %d %d %d RDMA(%d %d)\n", sctk_process_rank,
       PROF_LOAD(rail_ib, alloc_mem),
       PROF_LOAD(rail_ib, free_mem),
       PROF_LOAD(rail_ib, qp_created),
@@ -106,7 +106,8 @@ void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib) {
       PROF_LOAD(rail_ib, buffered_nb),
       PROF_LOAD(rail_ib, rdma_nb),
       PROF_LOAD(rail_ib, ibuf_sr_nb),
-      PROF_LOAD(rail_ib, ibuf_rdma_nb)
+      PROF_LOAD(rail_ib, ibuf_rdma_nb),
+      PROF_LOAD(rail_ib, ibuf_rdma_miss_nb)
       );
 }
 

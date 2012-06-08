@@ -37,7 +37,7 @@
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"
 #endif
-#define SCTK_IB_MODULE_DEBUG
+//#define SCTK_IB_MODULE_DEBUG
 #define SCTK_IB_MODULE_NAME "BUFF"
 #include "sctk_ib_toolkit.h"
 #include "math.h"
@@ -78,7 +78,7 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
   do {
     size_t ibuf_size = ULONG_MAX;
     ibuf = sctk_ibuf_pick_send(rail_ib, remote, &ibuf_size, task_node_number);
-    assume(ibuf);
+    ib_assume(ibuf);
 
     size_t buffer_size = ibuf_size;
     /* We remove the buffered header's size from the size */
@@ -88,7 +88,7 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
 
     buffered = IBUF_GET_BUFFERED_HEADER(ibuf->buffer);
 
-    assume(buffer_size >= sizeof( sctk_thread_ptp_message_body_t));
+    ib_assume(buffer_size >= sizeof( sctk_thread_ptp_message_body_t));
     memcpy(&buffered->msg, msg, sizeof(sctk_thread_ptp_message_body_t));
     sctk_nodebug("Send number %d, src:%d, dest:%d", msg->sctk_msg_get_message_number, msg->sctk_msg_get_glob_source, msg->sctk_msg_get_glob_destination);
 
@@ -131,7 +131,7 @@ void sctk_ib_buffered_free_msg(void* arg) {
 
   entry = msg->tail.ib.buffered.entry;
   rail = entry->msg.tail.ib.buffered.rail;
-  assume(entry);
+  ib_assume(entry);
 
   switch(entry->status & MASK_BASE) {
     case recopy:
@@ -158,8 +158,8 @@ void sctk_ib_buffered_copy(sctk_message_to_copy_t* tmp){
   send = tmp->msg_send;
   rail = send->tail.ib.buffered.rail;
   entry = send->tail.ib.buffered.entry;
-  assume(entry);
-  assume(recv->tail.message_type == sctk_message_contiguous);
+  ib_assume(entry);
+  ib_assume(recv->tail.message_type == sctk_message_contiguous);
 
   sctk_spinlock_lock(&entry->lock);
   entry->copy_ptr = tmp;
@@ -211,7 +211,7 @@ sctk_ib_buffered_get_entry(sctk_rail_info_t* rail, sctk_ib_qp_t *remote, sctk_ib
   if (!entry) {
     /* Allocate memory for message header */
     entry = sctk_malloc(sizeof(sctk_ib_buffered_entry_t));
-    assume(entry);
+    ib_assume(entry);
     PROF_INC(rail, alloc_mem);
     /* Copy message header */
     memcpy(&entry->msg.body, body, sizeof(sctk_thread_ptp_message_body_t));
@@ -244,7 +244,7 @@ sctk_ib_buffered_get_entry(sctk_rail_info_t* rail, sctk_ib_qp_t *remote, sctk_ib
     /* Should be 'not_set' or 'zerocopy' */
     if ( (entry->status & MASK_BASE) == not_set) {
       entry->payload = sctk_malloc(body->header.msg_size);
-      assume(entry->payload);
+      ib_assume(entry->payload);
       PROF_INC(rail, alloc_mem);
       entry->status = recopy;
     } else if ( (entry->status & MASK_BASE) != zerocopy) not_reachable();
@@ -270,9 +270,9 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   body = &buffered->msg;
 
   src_process = sctk_determine_src_process_from_header(body);
-  assume(src_process != -1);
+  ib_assume(src_process != -1);
   route_table = sctk_get_route_to_process(src_process, rail);
-  assume(route_table);
+  ib_assume(route_table);
   remote = route_table->data.ib.remote;
 
   /* Get the entry */
@@ -292,7 +292,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
 
   /* XXX: horrible use of locks. but we do not have the choice */
   if (current_copied >= body->header.msg_size) {
-    assume(current_copied == body->header.msg_size);
+    ib_assume(current_copied == body->header.msg_size);
     /* remove entry from HT.
      * XXX: We have to do this before marking message as done */
     sctk_spinlock_lock(&remote->ib_buffered.lock);
@@ -305,7 +305,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
         /* Message matched */
         if ( (entry->status & MASK_MATCH) == match) {
           sctk_spinlock_unlock(&entry->lock);
-          assume(entry->copy_ptr);
+          ib_assume(entry->copy_ptr);
           /* The message is done. All buffers have been received */
           sctk_net_message_copy_from_buffer(entry->payload, entry->copy_ptr, 1);
           sctk_nodebug("Message recopied free from done");
@@ -321,7 +321,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
         /* Message matched */
         if ( (entry->status & MASK_MATCH) == match) {
           sctk_spinlock_unlock(&entry->lock);
-          assume(entry->copy_ptr);
+          ib_assume(entry->copy_ptr);
           sctk_message_completion_and_free(entry->copy_ptr->msg_send,
               entry->copy_ptr->msg_recv);
           sctk_free(entry);

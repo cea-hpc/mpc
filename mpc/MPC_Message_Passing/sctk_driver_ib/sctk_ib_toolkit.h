@@ -87,9 +87,6 @@ __UNUSED__ static void sctk_ib_debug(const char *fmt, ...)
 #define LOAD_CP(x)    sctk_ib_cp_t* cp = (x)->cp;
 #define LOAD_PROFILER(x)    sctk_ib_prof_t* profiler = (x)->profiler;
 
-/* const for debugging IB */
-#define DEBUG_IB_MMU
-#define DEBUG_IB_BUFS
 
 #endif
 #endif

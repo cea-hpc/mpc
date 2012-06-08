@@ -188,7 +188,6 @@ void sctk_network_init_multirail_ib_all(char* name, char* topology){
   /* Set the rail as a signalization rail */
   sctk_route_set_signalization_rail(rails[i]);
 
-
   sctk_network_send_message_set(sctk_network_send_message_multirail_ib);
   sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_multirail_ib);
   sctk_network_notify_matching_message_set(sctk_network_notify_matching_message_multirail_ib);

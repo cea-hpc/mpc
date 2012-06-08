@@ -104,7 +104,7 @@ void sctk_ib_cm_connect_ring (sctk_rail_info_t* rail,
   sctk_ib_data_t *route_dest, *route_src;
   sctk_ib_cm_qp_connection_t keys;
 
-  assume(rail->send_message_from_network != NULL);
+  ib_assume(rail->send_message_from_network != NULL);
 
   dest_rank = (sctk_process_rank + 1) % sctk_process_number;
   src_rank = (sctk_process_rank + sctk_process_number - 1) % sctk_process_number;
@@ -182,7 +182,9 @@ void sctk_ib_cm_connect_to(int from, int to,sctk_rail_info_t* rail){
   LOAD_DEVICE(rail_ib);
   sctk_route_table_t *route_table;
   struct sctk_ib_qp_s *remote;
-  char *done;
+  sctk_ib_cm_qp_connection_t send_keys;
+  sctk_ib_cm_qp_connection_t recv_keys;
+  sctk_ib_cm_done_t done;
   sctk_nodebug("Connection TO from %d to %d", from, to);
 
   /* create remote for dest */
@@ -190,14 +192,15 @@ void sctk_ib_cm_connect_to(int from, int to,sctk_rail_info_t* rail){
   remote = route_table->data.ib.remote;
   sctk_ib_nodebug("[%d] QP connection request to process %d", rail->rail_number, remote->rank);
 
-  sctk_route_messages_recv(from,to,ondemand_specific_message_tag, 0,&remote->recv_keys, sizeof(sctk_ib_cm_qp_connection_t));
-  sctk_ib_qp_allocate_rtr(rail_ib, remote, &remote->recv_keys);
+  sctk_route_messages_recv(from,to,ondemand_specific_message_tag, 0,&recv_keys, sizeof(sctk_ib_cm_qp_connection_t));
+  sctk_ib_qp_allocate_rtr(rail_ib, remote, &recv_keys);
 
-  sctk_ib_qp_key_fill(&remote->send_keys, remote, device->port_attr.lid,
+  sctk_ib_qp_key_fill(&send_keys, remote, device->port_attr.lid,
       remote->qp->qp_num, remote->psn);
 
-  sctk_route_messages_send(to,from,ondemand_specific_message_tag, 0, &remote->send_keys,sizeof(sctk_ib_cm_qp_connection_t));
-  sctk_route_messages_recv(from,to,ondemand_specific_message_tag, 0,&done,sizeof(char));
+  sctk_route_messages_send(to,from,ondemand_specific_message_tag, 0, &send_keys,sizeof(sctk_ib_cm_qp_connection_t));
+  sctk_route_messages_recv(from,to,ondemand_specific_message_tag, 0,&done,
+      sizeof(sctk_ib_cm_done_t));
   sctk_ib_qp_allocate_rts(rail_ib, remote);
   /* Add route */
   sctk_add_static_route(from, route_table, rail);
@@ -210,8 +213,12 @@ void sctk_ib_cm_connect_from(int from, int to,sctk_rail_info_t* rail){
   LOAD_DEVICE(rail_ib);
   sctk_route_table_t *route_table;
   struct sctk_ib_qp_s *remote;
+  sctk_ib_cm_qp_connection_t send_keys;
+  sctk_ib_cm_qp_connection_t recv_keys;
   /* Message to exchange to the peer */
-  char done = 1;
+  sctk_ib_cm_done_t done = {
+    .done = 1,
+  };
   sctk_nodebug("Connection FROM from %d to %d", from, to);
 
   /* create remote for dest */
@@ -219,16 +226,17 @@ void sctk_ib_cm_connect_from(int from, int to,sctk_rail_info_t* rail){
   remote = route_table->data.ib.remote;
   sctk_ib_nodebug("[%d] QP connection  request to process %d", rail->rail_number, remote->rank);
 
-  sctk_ib_qp_key_fill(&remote->send_keys, remote, device->port_attr.lid,
+  sctk_ib_qp_key_fill(&send_keys, remote, device->port_attr.lid,
       remote->qp->qp_num, remote->psn);
 
-  sctk_route_messages_send(from,to,ondemand_specific_message_tag, 0,&remote->send_keys, sizeof(sctk_ib_cm_qp_connection_t));
-  sctk_route_messages_recv(to,from,ondemand_specific_message_tag, 0,&remote->recv_keys, sizeof(sctk_ib_cm_qp_connection_t));
-  sctk_ib_qp_allocate_rtr(rail_ib, remote, &remote->recv_keys);
-
+  sctk_route_messages_send(from,to,ondemand_specific_message_tag, 0,&send_keys, sizeof(sctk_ib_cm_qp_connection_t));
+  sctk_route_messages_recv(to,from,ondemand_specific_message_tag, 0,&recv_keys, sizeof(sctk_ib_cm_qp_connection_t));
+  sctk_ib_qp_allocate_rtr(rail_ib, remote, &recv_keys);
   sctk_ib_qp_allocate_rts(rail_ib, remote);
   sctk_nodebug("FROM: Ready to send to %d", to);
-  sctk_route_messages_send(from,to,ondemand_specific_message_tag, 0,&done,sizeof(char));
+
+  sctk_route_messages_send(from,to,ondemand_specific_message_tag, 0, &done,
+      sizeof(sctk_ib_cm_done_t));
   /* Add route */
   sctk_add_static_route(to, route_table, rail);
   /* Change to connected */
@@ -248,7 +256,7 @@ int sctk_ib_cm_on_demand_recv_done(sctk_rail_info_t *rail, void* done, int src) 
   route_table = sctk_route_dynamic_search(src, rail);
   remote = route_table->data.ib.remote;
 
-  assume(sctk_ib_qp_allocate_get_rts(remote) == 0);
+  ib_assume(sctk_ib_qp_allocate_get_rts(remote) == 0);
   sctk_ib_qp_allocate_rts(rail_ib, remote);
 
   /* Change to connected */
@@ -259,23 +267,26 @@ int sctk_ib_cm_on_demand_recv_done(sctk_rail_info_t *rail, void* done, int src) 
 int sctk_ib_cm_on_demand_recv_ack(sctk_rail_info_t *rail, void* ack, int src) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   sctk_route_table_t *route_table;
-  char done=1;
+  sctk_ib_cm_qp_connection_t recv_keys;
+  sctk_ib_cm_done_t done = {
+    .done = 1,
+  };
   struct sctk_ib_qp_s *remote;
 
-  sctk_ib_debug("OD QP connexion ACK received from process %d %s", src, ack);
+  sctk_ib_nodebug("OD QP connexion ACK received from process %d %s", src, ack);
   route_table = sctk_route_dynamic_search(src, rail);
-  assume(route_table);
+  ib_assume(route_table);
   remote = route_table->data.ib.remote;
-  memcpy(&remote->recv_keys, ack, sizeof(sctk_ib_cm_qp_connection_t));
+  memcpy(&recv_keys, ack, sizeof(sctk_ib_cm_qp_connection_t));
 
-  assume (sctk_ib_qp_allocate_get_rtr(remote) == 0);
-  sctk_ib_qp_allocate_rtr(rail_ib, remote, &remote->recv_keys);
+  ib_assume (sctk_ib_qp_allocate_get_rtr(remote) == 0);
+  sctk_ib_qp_allocate_rtr(rail_ib, remote, &recv_keys);
 
-  assume (sctk_ib_qp_allocate_get_rts(remote) == 0);
+  ib_assume (sctk_ib_qp_allocate_get_rts(remote) == 0);
   sctk_ib_qp_allocate_rts(rail_ib, remote);
 
   sctk_route_messages_send(sctk_process_rank,src,ondemand_specific_message_tag, CM_OD_DONE_TAG+CM_MASK_TAG,
-      &done,sizeof(char));
+      &done,sizeof(sctk_ib_cm_done_t));
 
   /* Change to connected */
   sctk_ib_cm_change_state(rail, route_table, state_connected);
@@ -286,13 +297,15 @@ int sctk_ib_cm_on_demand_recv_request(sctk_rail_info_t *rail, void* request, int
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_DEVICE(rail_ib);
   sctk_route_table_t *route_table;
+  sctk_ib_cm_qp_connection_t send_keys;
+  sctk_ib_cm_qp_connection_t recv_keys;
   int added;
   struct sctk_ib_qp_s *remote;
   sctk_route_state_t state;
 
   /* create remote for source */
   route_table = sctk_route_dynamic_safe_add(src, rail, sctk_ib_create_remote, sctk_ib_init_remote, &added, 0);
-  assume(route_table);
+  ib_assume(route_table);
 
   ROUTE_LOCK(route_table);
   if (sctk_route_get_state(route_table) == state_deconnected) {
@@ -305,19 +318,19 @@ int sctk_ib_cm_on_demand_recv_request(sctk_rail_info_t *rail, void* request, int
     remote = route_table->data.ib.remote;
     sctk_ib_debug("[%d] OD QP connexion request to process %d",
         rail->rail_number, remote->rank);
-    memcpy(&remote->recv_keys, request, sizeof(sctk_ib_cm_qp_connection_t));
+    memcpy(&recv_keys, request, sizeof(sctk_ib_cm_qp_connection_t));
 
-    assume(sctk_ib_qp_allocate_get_rtr(remote) == 0);
-    sctk_ib_qp_allocate_rtr(rail_ib, remote, &remote->recv_keys);
+    ib_assume(sctk_ib_qp_allocate_get_rtr(remote) == 0);
+    sctk_ib_qp_allocate_rtr(rail_ib, remote, &recv_keys);
 
-    sctk_ib_qp_key_fill(&remote->send_keys, remote, device->port_attr.lid,
+    sctk_ib_qp_key_fill(&send_keys, remote, device->port_attr.lid,
         remote->qp->qp_num, remote->psn);
 
     /* Send ACK */
     sctk_ib_nodebug("OD QP ack to process %d: (tag:%d)", src, CM_OD_ACK_TAG+CM_MASK_TAG);
 
     sctk_route_messages_send(sctk_process_rank,src,ondemand_specific_message_tag, CM_OD_ACK_TAG+CM_MASK_TAG,
-        &remote->send_keys, sizeof(sctk_ib_cm_qp_connection_t));
+        &send_keys, sizeof(sctk_ib_cm_qp_connection_t));
   }
   return 0;
 }
@@ -330,6 +343,7 @@ sctk_route_table_t *sctk_ib_cm_on_demand_request(int dest,sctk_rail_info_t* rail
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_DEVICE(rail_ib);
   sctk_route_table_t *route_table;
+  sctk_ib_cm_qp_connection_t send_keys;
   /* Message to exchange to the peer */
   int added;
   struct sctk_ib_qp_s *remote;
@@ -338,7 +352,7 @@ sctk_route_table_t *sctk_ib_cm_on_demand_request(int dest,sctk_rail_info_t* rail
 
   /* create remote for dest if it does not exist */
   route_table = sctk_route_dynamic_safe_add(dest, rail, sctk_ib_create_remote, sctk_ib_init_remote, &added, 1);
-  assume(route_table);
+  ib_assume(route_table);
 
   ROUTE_LOCK(route_table);
   if (sctk_route_get_state(route_table) == state_deconnected) {
@@ -352,13 +366,13 @@ sctk_route_table_t *sctk_ib_cm_on_demand_request(int dest,sctk_rail_info_t* rail
   if (send_request) {
     remote = route_table->data.ib.remote;
 
-    sctk_ib_qp_key_fill(&remote->send_keys, remote, device->port_attr.lid,
+    sctk_ib_qp_key_fill(&send_keys, remote, device->port_attr.lid,
         remote->qp->qp_num, remote->psn);
 
     sctk_ib_debug("[%d] OD QP connexion requested to %d", rail->rail_number, remote->rank);
     sctk_route_messages_send(sctk_process_rank,dest,ondemand_specific_message_tag,
         CM_OD_REQ_TAG+CM_MASK_TAG,
-        &remote->send_keys, sizeof(sctk_ib_cm_qp_connection_t));
+        &send_keys, sizeof(sctk_ib_cm_qp_connection_t));
   }
 
   return route_table;
@@ -389,9 +403,9 @@ int sctk_ib_cm_on_demand_rdma_request(int dest,
 
   /* get the route to process */
   route_table = sctk_get_route_to_process_no_ondemand(dest, rail);
-  assume(route_table);
+  ib_assume(route_table);
   /* We assume the route is connected */
-  assume(sctk_route_get_state(route_table) == state_connected);
+  ib_assume(sctk_route_get_state(route_table) == state_connected);
 
   remote = route_table->data.ib.remote;
 
@@ -426,7 +440,7 @@ int sctk_ib_cm_on_demand_rdma_request(int dest,
         &send_keys, sizeof(sctk_ib_cm_rdma_connection_t));
 
     } else { /* Cannot connect to RDMA */
-      sctk_nodebug("Cannot connect to remote %d", remote->rank);
+      sctk_nodebug("[%d] Cannot connect to remote %d", rail->rail_number, remote->rank);
       /* We reset the state to deconnected */
       /* FIXME: state to reset */
       sctk_ibuf_rdma_set_remote_state_rts(remote, state_reset);
@@ -447,38 +461,15 @@ int sctk_ib_cm_on_demand_rdma_done_recv(sctk_rail_info_t *rail, void* done, int 
   route_table = sctk_get_route_to_process_no_ondemand(src, rail);
   remote = route_table->data.ib.remote;
 
-  sctk_ib_debug("OD QP connexion DONE REQ received from process %d (%p:%u)", src,
+  sctk_ib_debug("[%d] OD QP connexion DONE REQ received from process %d (%p:%u)", rail->rail_number, src,
       recv_keys->addr, recv_keys->rkey);
 
-  assume(recv_keys->connected == 1);
+  ib_assume(recv_keys->connected == 1);
   /* Update the RDMA regions */
   sctk_ibuf_rdma_update_remote_addr(rail_ib, remote, recv_keys, REGION_SEND);
   sctk_ibuf_rdma_set_remote_state_rtr(remote, state_connected);
 
-//  sctk_route_messages_send(sctk_process_rank,src,ondemand_specific_message_tag,
-//      CM_OD_RDMA_DONE_ACK_TAG+CM_MASK_TAG,
-//      &done_to_send,sizeof(char));
-
-  /* Change to connected. It is important to do it after sending the message */
-//  sctk_ibuf_rdma_set_state_remote(remote, state_connected);
-
   return 0;
-}
-
-void sctk_ib_cm_on_demand_rdma_done_ack_recv(sctk_rail_info_t *rail, void* done, int src) {
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  sctk_route_table_t *route_table;
-  struct sctk_ib_qp_s *remote;
-  sctk_ib_cm_rdma_connection_t *recv_keys = (sctk_ib_cm_rdma_connection_t*) done;
-
-  /* get the route to process */
-  route_table = sctk_get_route_to_process_no_ondemand(src, rail);
-  remote = route_table->data.ib.remote;
-
-  sctk_ib_nodebug("OD QP connexion DONE ACK received from process %d", src);
-
-  /* Change to connected */
-//  sctk_ibuf_rdma_set_state_remote(remote, state_connected);
 }
 
 int sctk_ib_cm_on_demand_rdma_recv_ack(sctk_rail_info_t *rail, void* ack, int src) {
@@ -492,10 +483,10 @@ int sctk_ib_cm_on_demand_rdma_recv_ack(sctk_rail_info_t *rail, void* ack, int sr
 
   /* get the route to process */
   route_table = sctk_get_route_to_process_no_ondemand(src, rail);
-  assume(route_table);
+  ib_assume(route_table);
   remote = route_table->data.ib.remote;
 
-  sctk_ib_debug("OD QP connexion ACK received from process %d (%p:%u)", src,
+  sctk_ib_debug("[%d] OD QP connexion ACK received from process %d (%p:%u)", rail->rail_number, src,
       recv_keys->addr, recv_keys->rkey);
 
   /* If the remote peer is connectable */
@@ -547,9 +538,9 @@ int sctk_ib_cm_on_demand_rdma_recv_request(sctk_rail_info_t *rail, void* request
 
   /* get the route to process */
   route_table = sctk_get_route_to_process_no_ondemand(src, rail);
-  assume(route_table);
+  ib_assume(route_table);
   /* We assume the route is connected */
-  assume(sctk_route_get_state(route_table) == state_connected);
+  ib_assume(sctk_route_get_state(route_table) == state_connected);
 
   remote = route_table->data.ib.remote;
 
@@ -565,12 +556,12 @@ int sctk_ib_cm_on_demand_rdma_recv_request(sctk_rail_info_t *rail, void* request
 
   /* We do not send a request if we do not want to be connected
    * using RDMA. This is stupid :-) */
-  assume(recv_keys->connected == 1);
+  ib_assume(recv_keys->connected == 1);
 
   /* We check if we can also be connected using RDMA */
   if (sctk_ibuf_rdma_is_connectable(rail_ib, remote)) {  /* Can connect to RDMA */
 
-    sctk_nodebug("Can connect to remote %d", remote->rank);
+    sctk_nodebug("[%d] Can connect to remote %d", rail->rail_number, remote->rank);
 
     /* We can change to RTR because we are RDMA connectable */
     send_keys.connected = 1;
@@ -830,7 +821,7 @@ int sctk_ib_cm_on_demand_recv(sctk_rail_info_t *rail,
   sctk_rail_info_t *rail_target;
 
   payload = IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer);
-#warning "OD connections only work with rail number 1!"
+#warning "OD connections only work with rail number 0!"
   rail_target = sctk_route_get_rail(0);
   process_dest = msg->sctk_msg_get_destination;
   process_src = msg->sctk_msg_get_source;
@@ -884,7 +875,7 @@ int sctk_ib_cm_on_demand_recv(sctk_rail_info_t *rail,
 
       default:
       sctk_error("Invalid CM request: %d (%d - %d)", msg->body.header.message_tag ^ CM_MASK_TAG, msg->body.header.message_tag & CM_MASK_TAG, msg->body.header.message_tag );
-      assume(0);
+      not_reachable();
       break;
 
     }

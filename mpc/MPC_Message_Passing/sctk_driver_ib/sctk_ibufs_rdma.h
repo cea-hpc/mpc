@@ -52,7 +52,12 @@ struct sctk_ib_rail_info_s;
 #define IBUF_RDMA_GET_REGION(remote,ptr) (&remote->rdma.pool->region[ptr])
 
 #define IBUF_RDMA_LOCK_REGION(remote,ptr) (sctk_spinlock_lock(&remote->rdma.pool->region[ptr].lock))
+#define IBUF_RDMA_TRYLOCK_REGION(remote,ptr) (sctk_spinlock_trylock(&remote->rdma.pool->region[ptr].lock))
 #define IBUF_RDMA_UNLOCK_REGION(remote,ptr) (sctk_spinlock_unlock(&remote->rdma.pool->region[ptr].lock))
+
+#define IBUF_RDMA_LOCK_POLLING(remote) (sctk_spinlock_lock(&remote->rdma.polling_lock))
+#define IBUF_RDMA_TRYLOCK_POLLING(remote) (sctk_spinlock_trylock(&remote->rdma.polling_lock))
+#define IBUF_RDMA_UNLOCK_POLLING(remote) (sctk_spinlock_unlock(&remote->rdma.polling_lock))
 
 #define IBUF_RDMA_GET_REMOTE_ADDR(remote,ibuf) \
   ((char*) remote->rdma.pool->remote_region[REGION_RECV] + (ibuf->index * \
@@ -67,10 +72,13 @@ struct sctk_ib_rail_info_s;
   ))
 
 /*
- * This figure discribe how the buffer is
+ * This figure discribes how the buffer is
  * decomposed with the size of each filed.
  *  _____________
  * |             |    <--- BASE_FLAG
+ * |POISON  (int)|
+ * |_____________|
+ * |             |
  * |SIZE (size_t)|
  * |_____________|
  * |             |
@@ -83,23 +91,39 @@ struct sctk_ib_rail_info_s;
  * |             |
  * | TAIL (int)  |
  * |_____________|
+ * |             |
+ * | POISON (int)|
+ * |_____________|
  *
  */
 #define IBUF_RDMA_RESET_FLAG   120983
 #define IBUF_RDMA_FLAG_1 989898
 #define IBUF_RDMA_FLAG_2 434343
 
+/* ATTENTION: this macro *MUST* point to the
+ * base of the ibuf */
 #define IBUF_RDMA_GET_BASE_FLAG(ibuf) \
-  ((void*) ibuf->size_flag)
+  ((void*) ibuf->poison_flag_head)
+
+#define IBUF_RDMA_POISON_HEAD (~ (0<<16))
+#define IBUF_RDMA_GET_POISON_FLAG_HEAD(buffer) \
+  ((void*) ((char*) buffer))
+
+#define IBUF_RDMA_CHECK_POISON_FLAG(ibuf) do {\
+   if ( *(ibuf->poison_flag_head) != IBUF_RDMA_POISON_HEAD) {  \
+      sctk_error("Got a wrong Poison flag. Aborting");  \
+      sctk_abort(); \
+    } \
+}while(0)\
 
 #define IBUF_RDMA_GET_SIZE_FLAG(buffer) \
-  ((void*) buffer)
+  ((void*) ((char*) buffer + sizeof(int)))
 
 #define IBUF_RDMA_GET_HEAD_FLAG(buffer) \
-  ((void*) ((char*) buffer + sizeof(size_t)))
+  ((void*) ((char*) buffer + sizeof(size_t) + sizeof(int)))
 
 #define IBUF_RDMA_GET_PAYLOAD_FLAG(buffer) \
-  ((void*) ((char*) buffer + sizeof(size_t) + sizeof(int)))
+  ((void*) ((char*) buffer + sizeof(size_t) + 2*sizeof(int)))
 
 /* 's' is the size of the data.
  * XXX: We only start to count from the buffer. */
@@ -108,7 +132,7 @@ struct sctk_ib_rail_info_s;
 
 /* The payload size must be set before using this macro */
 #define IBUF_RDMA_GET_SIZE \
-  (sizeof(size_t) + (2 * sizeof(int)) )
+  (sizeof(size_t) + (3 * sizeof(int)) )
 
 /* Pool of ibufs */
 #define REGION_SEND 0

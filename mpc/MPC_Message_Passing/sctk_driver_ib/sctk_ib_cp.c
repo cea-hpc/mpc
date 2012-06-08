@@ -121,9 +121,7 @@ sctk_ib_cp_task_t *sctk_ib_cp_get_task(int rank) {
 
   /* XXX: Do not support thread migration */
   HASH_FIND(hh_all,all_tasks,&rank, sizeof(int),task);
-#ifdef SCTK_IB_DEBUG
-  assume(task);
-#endif
+  ib_assume(task);
 
   return task;
 }
@@ -134,7 +132,7 @@ void sctk_ib_cp_init(struct sctk_ib_rail_info_s* rail_ib) {
   sctk_ib_cp_t* cp;
 
   cp = sctk_malloc(sizeof(sctk_ib_cp_t));
-  assume(cp);
+  ib_assume(cp);
   rail_ib->cp = cp;
 }
 
@@ -147,7 +145,7 @@ void sctk_ib_cp_init_task(int rank, int vp) {
   static sctk_spinlock_t __global_ibufs_list_lock = SCTK_SPINLOCK_INITIALIZER;
 
   task = sctk_malloc(sizeof(sctk_ib_cp_task_t));
-  assume(task);
+  ib_assume(task);
   memset(task, 0, sizeof(sctk_ib_cp_task_t));
   task->node =  node;
   task->vp = vp;
@@ -165,11 +163,11 @@ void sctk_ib_cp_init_task(int rank, int vp) {
     if (numa_number == 0) numa_number = 1;
     numas = sctk_malloc(sizeof(numa_t) * numa_number);
     memset(numas, 0, sizeof(numa_t) * numa_number);
-    assume(numas);
+    ib_assume(numas);
 
     vp_number = sctk_get_cpu_number();
     vps = sctk_malloc(sizeof(vp_t) * vp_number);
-    assume(vps);
+    ib_assume(vps);
     memset(vps, 0, sizeof(vp_t) * vp_number);
     sctk_nodebug("vp: %d - numa: %d", sctk_get_cpu_number(), numa_number);
   }
@@ -205,7 +203,7 @@ void sctk_ib_cp_finalize_task(int rank) {
   sctk_ib_cp_task_t *task = NULL;
 
   HASH_FIND(hh_all,all_tasks,&rank, sizeof(int),task);
-  assume(task);
+  ib_assume(task);
 
 #if 0
   fprintf(stderr, "%2d %d %d %d\n", rank,
@@ -316,9 +314,7 @@ int sctk_ib_cp_poll_global_list(const struct sctk_rail_info_s const * rail, stru
 
   task = vps[vp].tasks;
   if (!task) return 0;
-#ifdef SCTK_IB_DEBUG
-  assume(task);
-#endif
+  ib_assume(task);
 
   nb_found += __cp_poll(rail, poll, task->global_ibufs_list, task->global_ibufs_list_lock, task, 1);
 
@@ -336,10 +332,8 @@ int sctk_ib_cp_poll(const struct sctk_rail_info_s const* rail, struct sctk_ib_po
 //  if (OPA_load_int(&vps[vp].node->pending_nb) == 0) return 0;
 
   for (task=vps[vp].tasks; task; task=task->hh_vp.next) {
-#ifdef SCTK_IB_DEBUG
-    assume(vp == task->vp);
-    assume(vps[vp].node->number == task->node);
-#endif
+    ib_assume(vp == task->vp);
+    ib_assume(vps[vp].node->number == task->node);
     nb_found += __cp_poll(rail, poll, &(task->local_ibufs_list), &(task->local_ibufs_list_lock), task, 0);
   }
 
@@ -496,10 +490,8 @@ int sctk_ib_cp_handle_message(sctk_rail_info_t* rail,
     return 0;
   }
 
-#ifdef SCTK_IB_DEBUG
-  assume(task);
-  assume(task->rank == target_task);
-#endif
+  ib_assume(task);
+  ib_assume(task->rank == target_task);
   /* Process specific message */
   if (dest_task < 0) {
     sctk_nodebug("Received global msg");

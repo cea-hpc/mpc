@@ -39,7 +39,7 @@
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"
 #endif
-#define SCTK_IB_MODULE_DEBUG
+//#define SCTK_IB_MODULE_DEBUG
 #define SCTK_IB_MODULE_NAME "QP"
 #include "sctk_ib_toolkit.h"
 
@@ -76,11 +76,11 @@ static inline void sctk_ib_qp_ht_add(struct sctk_ib_rail_info_s* rail_ib, struct
 #ifdef IB_DEBUG
   struct sctk_ib_qp_s *rem;
   rem = sctk_ib_qp_ht_find(rail_ib, key);
-  assume(rem == NULL);
+  ib_assume(rem == NULL);
 #endif
 
   entry = sctk_malloc(sizeof(struct sctk_ib_qp_ht_s));
-  assume(entry);
+  ib_assume(entry);
   entry->key = key;
   entry->remote = remote;
 
@@ -106,7 +106,7 @@ sctk_ib_device_t *sctk_ib_device_init(struct sctk_ib_rail_info_s* rail_ib) {
     sctk_abort();
   }
  device = sctk_malloc(sizeof(sctk_ib_device_t));
-  assume(device);
+  ib_assume(device);
 
   rail_ib->device = device;
   rail_ib->device->dev_list = dev_list;
@@ -321,7 +321,7 @@ void sctk_ib_qp_key_create_value(char *msg, size_t size, sctk_ib_cm_qp_connectio
       keys->qp_num,
       keys->psn);
   /* We assume the value doest not overflow with the buffer */
-  assume(ret < size);
+  ib_assume(ret < size);
 
   sctk_ib_qp_key_print(keys);
 }
@@ -332,7 +332,7 @@ void sctk_ib_qp_key_create_key(char *msg, size_t size, int rail_id, int src, int
   ret = snprintf(msg, size,"IB-%02d|%06d:%06d", rail_id, src, dest);
   sctk_nodebug("key: %s", msg);
   /* We assume the value doest not overflow with the buffer */
-  assume(ret < size);
+  ib_assume(ret < size);
 }
 
 sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_convert( char* msg)
@@ -371,7 +371,7 @@ void sctk_ib_qp_keys_send(
   sctk_ib_qp_key_create_key(key, key_max, rail_ib->rail->rail_number, sctk_process_rank, remote->rank);
   sctk_ib_qp_key_create_value(val, val_max, &qp_keys);
   ret = sctk_pmi_put_connection_info_str(val, val_max, key);
-  assume(ret == SCTK_PMI_SUCCESS);
+  ib_assume(ret == SCTK_PMI_SUCCESS);
 }
 
   sctk_ib_cm_qp_connection_t
@@ -389,7 +389,7 @@ sctk_ib_qp_keys_recv(
   sctk_ib_qp_key_create_key(key, key_max, rail_ib->rail->rail_number, dest_process, sctk_process_rank);
   snprintf(key, key_max,"IB-%02d|%06d:%06d", rail_ib->rail->rail_number, dest_process, sctk_process_rank);
   ret = sctk_pmi_get_connection_info_str(val, val_max, key);
-  assume(ret == SCTK_PMI_SUCCESS);
+  ib_assume(ret == SCTK_PMI_SUCCESS);
   qp_keys = sctk_ib_qp_keys_convert(val);
 
   return qp_keys;
@@ -403,7 +403,7 @@ sctk_ib_qp_t* sctk_ib_qp_new()
   sctk_ib_qp_t *remote;
 
   remote = sctk_malloc(sizeof(sctk_ib_qp_t));
-  assume(remote);
+  ib_assume(remote);
   memset(remote, 0, sizeof(sctk_ib_qp_t));
 
   return remote;
@@ -672,7 +672,7 @@ sctk_ib_qp_allocate_init(struct sctk_ib_rail_info_s* rail_ib,
     remote->R = 1;
     remote->ondemand = 1;
     sctk_spinlock_lock(&od->lock);
-    sctk_debug("[%d] Add QP to rank %d %p", rail_ib->rail->rail_number, remote->rank, remote);
+    sctk_nodebug("[%d] Add QP to rank %d %p", rail_ib->rail->rail_number, remote->rank, remote);
     CDL_PREPEND(od->qp_list, remote);
     if (od->qp_list_ptr == NULL) {
       od->qp_list_ptr = remote;
@@ -789,13 +789,16 @@ static void* wait_send(void *arg){
     wait_send_arg.ibuf = ibuf;
     wait_send_arg.rail_ib = rail_ib;
 
-    sctk_ib_debug("QP full for remote %d, waiting for posting message...", remote->rank);
+    sctk_error("[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d unsignaled: %d)", rail_ib->rail->rail_number,
+        remote->rank, sctk_ib_qp_get_requests_nb(remote));
+    sctk_ib_toolkit_print_backtrace();
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
         (void (*)(void *)) wait_send, &wait_send_arg);
   }
   sctk_ib_prof_qp_write(remote->rank, ibuf->desc.sg_entry.length,
       sctk_get_time_stamp(), PROF_QP_SEND);
   /* We inc the number of pending requests */
+  /* FIXME: do not inc the nb of pending requests */
   sctk_ib_qp_inc_requests_nb(remote);
 }
 
@@ -829,7 +832,7 @@ static void* wait_send(void *arg){
 
     sctk_warning("QP to rank %d deconnected (state:%d). Recomputing route", remote->rank, sctk_route_get_state(remote->route_table));
     new_route = sctk_get_route_to_process(remote->route_table->key.destination, rail_ib->rail);
-    assume(new_route);
+    ib_assume(new_route);
     remote->route_table = new_route;
     sctk_ib_toolkit_print_backtrace();
 
@@ -843,7 +846,8 @@ static void* wait_send(void *arg){
     wait_send_arg.remote = remote;
     wait_send_arg.ibuf = ibuf;
 
-    sctk_ib_debug("QP full for rank %d, waiting for posting message... rc=%d, request_nb=%d", remote->rank, rc, sctk_ib_qp_get_requests_nb(remote));
+    sctk_error("[%d] LOCK QP full for rank %d, waiting for posting message... rc=%d, request_nb=%d", rail_ib->rail->rail_number, remote->rank, rc, sctk_ib_qp_get_requests_nb(remote));
+    sctk_ib_toolkit_print_backtrace();
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
         (void (*)(void *)) wait_send, &wait_send_arg);
   }
@@ -853,7 +857,7 @@ static void* wait_send(void *arg){
   sctk_ib_qp_inc_requests_nb(remote);
 
   if (remote->ondemand) {
-    assume(od->qp_list_ptr);
+    ib_assume(od->qp_list_ptr);
     sctk_spinlock_lock(&od->lock);
     /* Update the Clock for QP deconnexion. If the bit is set to 1, we change it
      * to 0 and we go to the next QP */
@@ -871,10 +875,12 @@ static void* wait_send(void *arg){
 sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t *remote, sctk_ibuf_t* ibuf, int is_control_message) {
 
+#ifdef IB_DEBUG
   if(IBUF_GET_PROTOCOL(ibuf->buffer)  ==  null_protocol) {
     sctk_ib_toolkit_print_backtrace();
-    assume(0);
+    not_reachable();
   }
+#endif
 
   if (is_control_message) {
     __send_ibuf_nolock(rail_ib, remote, ibuf);
@@ -989,7 +995,7 @@ void sctk_ib_qp_select_victim(struct sctk_ib_rail_info_s* rail_ib) {
   }
 
 exit:
-  assume(current_qp);
+  ib_assume(current_qp);
   /* Remove the QP from the list -> cannot be no more deconnected */
   CDL_DELETE(od->qp_list, current_qp);
   sctk_spinlock_unlock(&od->lock);

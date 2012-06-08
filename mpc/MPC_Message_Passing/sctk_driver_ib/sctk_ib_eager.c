@@ -142,7 +142,7 @@ static void __free_no_recopy(void* arg) {
   sctk_ibuf_t *ibuf = NULL;
 
   /* Assume msg not recopies */
-  assume(!msg->tail.ib.eager.recopied);
+  ib_assume(!msg->tail.ib.eager.recopied);
   ibuf = msg->tail.ib.eager.ibuf;
   sctk_ibuf_release(ibuf->region->rail, ibuf);
   PROF_INC_RAIL_IB(ibuf->region->rail, free_mem);
@@ -193,7 +193,7 @@ sctk_ib_eager_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int recopy,
     size = eager_header->payload_size;
     msg = sctk_malloc(size + sizeof(sctk_thread_ptp_message_t));
     PROF_INC(rail, alloc_mem);
-    assume(msg);
+    ib_assume(msg);
 
     body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
     /* Copy the header of the message */
@@ -203,7 +203,7 @@ sctk_ib_eager_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int recopy,
     memcpy(body, IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer), size);
   } else {
     msg = sctk_ib_eager_pick_buffered_ptp_message();
-    assume(msg);
+    ib_assume(msg);
     PROF_INC(rail, alloc_mem);
 
     /* Copy the header of the message */
@@ -230,9 +230,9 @@ void sctk_ib_eager_recv_msg_no_recopy(sctk_message_to_copy_t* tmp){
   recv = tmp->msg_recv;
   send = tmp->msg_send;
   /* Assume msg not recopied */
-  assume(!send->tail.ib.eager.recopied);
+  ib_assume(!send->tail.ib.eager.recopied);
   ibuf = send->tail.ib.eager.ibuf;
-  assume(ibuf);
+  ib_assume(ibuf);
   body = IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer);
 
   sctk_net_message_copy_from_buffer(body, tmp, 1);

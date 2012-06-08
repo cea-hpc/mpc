@@ -71,7 +71,7 @@ sctk_ibuf_header_t;
 #define IBUF_GET_CHANNEL(ibuf) (ibuf->region->channel)
 
 #define IMM_DATA_NULL ~0
-#define IMM_DATA_EAGER_RDMA (0x1 << 31)
+#define IMM_DATA_RDMA_PIGGYBACK (0x1 << 31)
 
 /* Release the buffer after freeing */
 #define IBUF_RELEASE (1<<0)
@@ -136,6 +136,15 @@ enum sctk_ibuf_channel
   SEND_CHANNEL  = 1<<2,
   RECV_CHANNEL  = 1<<3,
 };
+
+__UNUSED__ static void sctk_ibuf_channel_print(char * str, enum sctk_ibuf_channel channel) {
+
+  str[0] = (channel & RC_SR_CHANNEL) == RC_SR_CHANNEL ? '1' : '0';
+  str[1] = (channel & RDMA_CHANNEL)  == RDMA_CHANNEL ? '1' : '0';
+  str[2] = (channel & SEND_CHANNEL)  == SEND_CHANNEL ? '1' : '0';
+  str[3] = (channel & RECV_CHANNEL)  == RECV_CHANNEL ? '1' : '0';
+  str[4] = '\0';
+}
 
 /* Region of buffers where several buffers
  * are allocated */
@@ -250,6 +259,8 @@ typedef struct sctk_ibuf_s
   struct sctk_ibuf_s* next;
   struct sctk_ibuf_s* prev;
 
+  /* Poison flag */
+  int * poison_flag_head;
   /* Head flag */
   volatile int volatile * head_flag;
   /* Size flag */

@@ -63,6 +63,16 @@ typedef enum {
   cm_request_rdma_resizing,       /* Resize a RDMA connection */
 } sctk_ib_cm_request_t;
 
+/* ACK */
+typedef struct {
+  int ack;
+} sctk_ib_cm_ack_t;
+
+/* DONE */
+typedef struct {
+  int done;
+} sctk_ib_cm_done_t;
+
 /* QP */
 typedef struct {
   sctk_ib_cm_request_t request_id;  /* Request id. *MUST* be the first field */

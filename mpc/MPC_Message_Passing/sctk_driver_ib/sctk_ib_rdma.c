@@ -36,7 +36,7 @@
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"
 #endif
-#define SCTK_IB_MODULE_DEBUG
+//#define SCTK_IB_MODULE_DEBUG
 #define SCTK_IB_MODULE_NAME "RDMA"
 #include "sctk_ib_toolkit.h"
 #include "sctk_checksum.h"
@@ -202,7 +202,6 @@ static inline sctk_ibuf_t* sctk_ib_rdma_prepare_ack(sctk_rail_info_t* rail,
   IBUF_SET_DEST_TASK(ibuf->buffer, msg->tail.ib.rdma.glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->tail.ib.rdma.glob_source);
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
-  IBUF_SET_RDMA_TYPE(rdma_header, rdma_ack_type);
 
   rdma_ack    = IBUF_GET_RDMA_ACK(ibuf->buffer);
 
@@ -214,6 +213,7 @@ static inline sctk_ibuf_t* sctk_ib_rdma_prepare_ack(sctk_rail_info_t* rail,
 
   /* Initialization of the buffer */
   IBUF_SET_PROTOCOL(ibuf->buffer, rdma_protocol);
+  IBUF_SET_RDMA_TYPE(rdma_header, rdma_ack_type);
 
   sctk_nodebug("Send RDMA ACK message: %lu %u", rdma_ack->addr, rdma_ack->rkey);
   return ibuf;
@@ -240,8 +240,8 @@ sctk_ib_rdma_prepare_data_write(sctk_rail_info_t* rail,
 
   IBUF_SET_DEST_TASK(ibuf->buffer, rdma->glob_destination);
   IBUF_SET_SRC_TASK(ibuf, rdma->glob_source);
-  IBUF_SET_RDMA_TYPE(rdma_header, rdma_data_write_type);
   IBUF_SET_PROTOCOL(ibuf->buffer, rdma_protocol);
+  IBUF_SET_RDMA_TYPE(rdma_header, rdma_data_write_type);
 
   sctk_nodebug("Write from %p (%lu) to %p (%lu)",
       rdma->local.addr,
@@ -292,9 +292,9 @@ sctk_ib_rdma_prepare_done_write(sctk_rail_info_t* rail, sctk_ibuf_t *incoming_ib
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
   IBUF_SET_DEST_TASK(ibuf->buffer, rdma->glob_destination);
   IBUF_SET_SRC_TASK(ibuf, rdma->glob_source);
-  IBUF_SET_RDMA_TYPE(rdma_header, rdma_done_type);
+
   IBUF_SET_PROTOCOL(ibuf->buffer, rdma_protocol);
-  IBUF_SET_POISON(ibuf->buffer);
+  IBUF_SET_RDMA_TYPE(rdma_header, rdma_done_type);
 
   sctk_ib_qp_send_ibuf(rail_ib, rdma->remote_peer, ibuf, 0);
 
@@ -621,7 +621,18 @@ sctk_ib_rdma_poll_send(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     case rdma_done_type:
       sctk_nodebug("Poll send: message RDMA done received");
       break;
-    default:assume(0);
+    default:
+      sctk_error("Got RDMA type:%d, payload_size;%lu", IBUF_GET_RDMA_TYPE(rdma_header), rdma_header->payload_size);
+      char ibuf_desc[4096];
+      sctk_error("BEGIN ERROR");
+      sctk_ibuf_print(ibuf, ibuf_desc);
+      sctk_error ("\033[1;31m\nIB - FATAL ERROR FROM PROCESS %d\n"
+          "\033[1;31m######### IBUF DESC ############\033[0m\n"
+          "%s\n"
+          "\033[1;31m################################\033[0m",
+          sctk_process_rank, ibuf_desc);
+      sctk_error("END ERROR");
+//      not_reachable();
   }
 
   return release_ibuf;

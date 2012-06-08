@@ -31,10 +31,27 @@ extern "C"
 #include <stdint.h>
 #include <mpcmp.h>
 
+/*-----------------------------------------------------------
+ *  IB module debugging
+ *----------------------------------------------------------*/
 //#define IB_DEBUG
+
 #ifdef IB_DEBUG
 #warning "WARNING !!!! Debug activated !!!! WARNING"
 #endif
+
+#ifdef IB_DEBUG
+#define ib_assume(x) assume(x)
+/* const for debugging IB */
+#define DEBUG_IB_MMU
+#define DEBUG_IB_BUFS
+#else
+#define ib_assume(x) (void)(0)
+#endif
+
+/*-----------------------------------------------------------
+ *----------------------------------------------------------*/
+
 
   /* For not used fuctions (disable compiler warning */
 #ifdef __GNUC__

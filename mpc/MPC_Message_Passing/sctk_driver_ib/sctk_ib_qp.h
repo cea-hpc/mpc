@@ -90,6 +90,8 @@ typedef struct sctk_ibuf_rdma_s
 {
   /* Lock for allocating pool */
   sctk_spinlock_t lock;
+  char dummy[64];
+  sctk_spinlock_t polling_lock;
 
   struct sctk_ibuf_rdma_pool_s *pool;
 
@@ -108,6 +110,9 @@ typedef struct sctk_ibuf_rdma_s
   int max_pending_requests;
   /* If the process is the initiator of the request */
   char is_initiator;
+  /* Counters */
+  OPA_int_t miss_nb;     /* Number of RDMA miss */
+  OPA_int_t hits_nb;     /* Number of RDMA hits */
 } sctk_ibuf_rdma_t;
 
 /*Structure associated to a remote QP */
@@ -150,10 +155,6 @@ typedef struct sctk_ib_qp_s
   int local_ack;
   int remote_ack;
   int deco_lock;
-
-  /* keys for QP */
-  sctk_ib_cm_qp_connection_t recv_keys;
-  sctk_ib_cm_qp_connection_t send_keys;
 
   /* List of pending buffered messages */
   struct sctk_ib_buffered_table_s ib_buffered;

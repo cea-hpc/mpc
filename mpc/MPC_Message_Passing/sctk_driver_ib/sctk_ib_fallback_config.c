@@ -48,19 +48,19 @@
  * if x > IBV_FRAG_EAGER_LIMIT -> rendezvous msg */
 /* !!! WARNING !!! : diminishing IBV_EAGER_LIMIT me cause bad performance
  * on buffered eager messages */
-#define IBV_EAGER_LIMIT       ( 4 * 1024)
+#define IBV_EAGER_LIMIT       ( 1 * 1024)
 #define IBV_EAGER_RDMA_LIMIT  ( 0 )
 #define IBV_FRAG_EAGER_LIMIT  ( 256 * 1024)
 
 /* Number of allowed pending Work Queue Elements
  * for each QP */
-#define IBV_QP_TX_DEPTH     100
+#define IBV_QP_TX_DEPTH     15000
 /* We don't need recv WQE when using SRQ.
  * This variable must be set to 0 */
 #define IBV_QP_RX_DEPTH     0
 /* Many CQE. In memory, it represents about
  * 1.22Mb for 40000 entries */
-#define IBV_CQ_DEPTH        200
+#define IBV_CQ_DEPTH        10000
 #define IBV_MAX_SG_SQ       8
 #define IBV_MAX_SG_RQ       8
 #define IBV_MAX_INLINE      128
@@ -73,31 +73,31 @@
 
 /* Maximum number of buffers to allocate during the
  * initialization step */
-#define IBV_INIT_IBUFS          100
+#define IBV_INIT_IBUFS          2000
 
 /* Maximum number of buffers which can be posted to the SRQ.
  * This number cannot be higher than than the number fixed by the HW.
  * The verification is done during the config_check function */
-#define IBV_MAX_SRQ_IBUFS_POSTED     100
+#define IBV_MAX_SRQ_IBUFS_POSTED     2000
 /* When the async thread wakes, it means that the SRQ is full. We
  * allows the async thread to extract IBV_MAX_SRQ_WR_HANDLE_BY_THREAD messages
  * before posting new buffers .*/
 #define IBV_MAX_SRQ_WR_HANDLE_BY_THREAD 0
 /* Maximum number of buffers which can be used by SRQ. This number
  * is not fixed by the HW */
-#define IBV_MAX_SRQ_IBUFS            100
+#define IBV_MAX_SRQ_IBUFS            2000
 //#define IBV_MAX_SRQ_IBUFS            50
 /* Minimum number of free recv buffer before
  * posting of new buffers. This thread is  activated
  * once a recv buffer is freed. If IBV_SRQ_CREDIT_LIMIT ==
  * IBV_MAX_SRQ_IBUFS_POSTED, receive buffers are re-post every-time
  * they are consumned */
-#define IBV_SRQ_CREDIT_LIMIT  100
+#define IBV_SRQ_CREDIT_LIMIT  2000
 /* Minimum number of free recv buffer before
  * the activation of the asynchronous
  * thread (if this thread is activated too much times,
  * the performance can be decreased) */
-#define IBV_SRQ_CREDIT_THREAD_LIMIT  1
+#define IBV_SRQ_CREDIT_THREAD_LIMIT  10
 
 /* threshold before using dynamic allocation. For example, when
  * 80% of the SRQ buffers are busy, we make a copy of the message
@@ -108,7 +108,7 @@
 
 /* Number of new buffers allocated when
  * no more buffers are available */
-#define IBV_SIZE_IBUFS_CHUNKS 10
+#define IBV_SIZE_IBUFS_CHUNKS 100
 
 #define IBV_WC_IN_NUMBER    4
 #define IBV_WC_OUT_NUMBER   4

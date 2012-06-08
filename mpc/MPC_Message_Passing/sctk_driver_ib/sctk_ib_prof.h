@@ -46,6 +46,8 @@ enum sctk_ib_prof_counters_e {
   rdma_nb = 9,
   ibuf_sr_nb = 10,
   ibuf_rdma_nb = 11,
+  ibuf_rdma_hits_nb = 12,
+  ibuf_rdma_miss_nb = 13,
 };
 
 extern __thread double time_steals;

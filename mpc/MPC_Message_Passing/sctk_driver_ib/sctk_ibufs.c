@@ -24,7 +24,7 @@
 
 #include "sctk_ibufs.h"
 
-#define SCTK_IB_MODULE_DEBUG
+//#define SCTK_IB_MODULE_DEBUG
 #define SCTK_IB_MODULE_NAME "IBUF"
 #include "sctk_ib_toolkit.h"
 #include "sctk_ib.h"
@@ -61,16 +61,16 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
   sctk_ib_debug("Allocating %d buffers", nb_ibufs);
 
   region = sctk_malloc_on_node(sizeof(sctk_ibuf_region_t), 0);
-  assume(region);
+  ib_assume(region);
 
   /* XXX: replaced by memalign_on_node */
   sctk_posix_memalign( (void**) &ptr, mmu->page_size, nb_ibufs * config->ibv_eager_limit);
-  assume(ptr);
+  ib_assume(ptr);
   // memset(ptr, 0, nb_ibufs * config->ibv_eager_limit);
 
   /* XXX: replaced by memalign_on_node */
    sctk_posix_memalign(&ibuf, mmu->page_size, nb_ibufs * sizeof(sctk_ibuf_t));
-  assume(ibuf);
+  ib_assume(ibuf);
   // memset (ibuf, 0, nb_ibufs * sizeof(sctk_ibuf_t));
 
   region->size_ibufs = config->ibv_eager_limit;
@@ -97,7 +97,7 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
     ibuf_ptr->index = i;
 
     ibuf_ptr->buffer = (unsigned char*) ((char*) ptr + (i*config->ibv_eager_limit));
-    assume(ibuf_ptr->buffer);
+    ib_assume(ibuf_ptr->buffer);
     DL_APPEND(node->free_entry, ((sctk_ibuf_t*) ibuf + i));
   }
 
@@ -128,7 +128,7 @@ sctk_ibuf_pool_init(struct sctk_ib_rail_info_s *rail_ib)
       alloc_nb * sizeof(sctk_ibuf_numa_t));
   memset(pool, 0, sizeof(sctk_ibuf_pool_t) +
       alloc_nb * sizeof(sctk_ibuf_numa_t));
-  assume (pool);
+  ib_assume (pool);
   /* Number of NUMA nodes */
   pool->nodes_nb = nodes_nb;
   pool->nodes = (sctk_ibuf_numa_t*)
@@ -222,7 +222,9 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
     limit = sctk_ibuf_rdma_get_eager_limit(remote);
     sctk_nodebug("Eager limit: %lu", limit);
 
-    if (s == ULONG_MAX) s = limit - IBUF_RDMA_GET_SIZE;
+    if (s == ULONG_MAX) {
+      s = limit - IBUF_RDMA_GET_SIZE;
+    }
 
     if ( (IBUF_RDMA_GET_SIZE + s) <= limit) {
       sctk_nodebug("requested:%lu max:%lu header:%lu", s, limit, IBUF_RDMA_GET_SIZE);
@@ -233,6 +235,8 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
         PROF_INC_RAIL_IB(rail_ib, ibuf_rdma_nb);
         sctk_nodebug("Picking from RDMA %d", ibuf->index);
         goto exit;
+      } else {
+        PROF_INC_RAIL_IB(rail_ib, ibuf_rdma_miss_nb);
       }
     }
   }
@@ -418,7 +422,7 @@ static inline void __release_in_srq(
     struct sctk_ib_rail_info_s *rail_ib,
     sctk_ibuf_t* ibuf, int need_lock)
 {
-  assume(ibuf);
+  ib_assume(ibuf);
   LOAD_CONFIG(rail_ib);
   sctk_ibuf_numa_t *node = ibuf->region->node;
   int limit;
@@ -448,13 +452,13 @@ void sctk_ibuf_release(
     struct sctk_ib_rail_info_s *rail_ib,
     sctk_ibuf_t* ibuf)
 {
-  assume(ibuf);
+  ib_assume(ibuf);
 
   if (ibuf->to_release & IBUF_RELEASE) {
     if (IBUF_GET_CHANNEL(ibuf) & RDMA_CHANNEL) {
       sctk_ibuf_rdma_release(rail_ib, ibuf);
     } else {
-      assume(IBUF_GET_CHANNEL(ibuf) == RC_SR_CHANNEL);
+      ib_assume(IBUF_GET_CHANNEL(ibuf) == RC_SR_CHANNEL);
       sctk_ibuf_numa_t *node = ibuf->region->node;
       sctk_spinlock_t *lock = &node->lock;
 
@@ -474,6 +478,7 @@ void sctk_ibuf_release(
     }
   }
 }
+
 
 void sctk_ibuf_prepare(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote,
     sctk_ibuf_t* ibuf, size_t size) {
@@ -498,13 +503,13 @@ void sctk_ibuf_prepare(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote,
         IBUF_RDMA_GET_REMOTE_ADDR(remote, ibuf),  /* Remote addr */
         remote->rdma.pool->rkey[REGION_RECV],  /* rkey */
         size + IBUF_RDMA_GET_SIZE, /* size */
-        IBV_SEND_SIGNALED, IBUF_DO_NOT_RELEASE);  /* imm_data: index of the ibuf in the region */
+        IBV_SEND_SIGNALED, IBUF_RELEASE);  /* imm_data: index of the ibuf in the region */
 
     /* Move tail flag */
     sctk_ib_rdma_set_tail_flag(ibuf, size);
 
   } else {
-    assume (IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL);
+    ib_assume (IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL);
     sctk_ibuf_send_inline_init(ibuf, size);
   }
 }
@@ -663,7 +668,7 @@ int sctk_ibuf_rdma_write_with_imm_init(
 
   /* If data may be inlined */
   if(len <= config->ibv_max_inline) {
-    ibuf->desc.wr.send.send_flags = IBV_SEND_INLINE;
+    ibuf->desc.wr.send.send_flags = IBV_SEND_INLINE | IBV_SEND_SIGNALED;
     ibuf->flag = RDMA_WRITE_INLINE_IBUF_FLAG;
     is_inlined = 1;
   } else {
@@ -673,7 +678,7 @@ int sctk_ibuf_rdma_write_with_imm_init(
 
   ibuf->in_srq = 0;
 
-  ibuf->to_release = IBUF_RELEASE;
+  ibuf->to_release = IBUF_DO_NOT_RELEASE;
   ibuf->desc.wr.send.next = NULL;
   ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE_WITH_IMM;
   ibuf->desc.wr.send.wr_id = (uintptr_t) ibuf;
@@ -747,8 +752,14 @@ void sctk_ibuf_print_rdma(sctk_ibuf_t *ibuf, char* desc) {
 
 
 void sctk_ibuf_print(sctk_ibuf_t *ibuf, char* desc) {
+  char * poison = (IBUF_GET_HEADER(ibuf->buffer)->poison != IBUF_POISON) ? "NAK" : "OK";
+  char channel[5];
+  sctk_ibuf_channel_print(channel, ibuf->region->channel);
+
   sprintf(desc,
+      "rail         :%d\n"
       "region       :%p\n"
+      "channel type : %s\n"
       "buffer       :%p\n"
       "size         :%lu\n"
       "flag         :%s\n"
@@ -756,8 +767,11 @@ void sctk_ibuf_print(sctk_ibuf_t *ibuf, char* desc) {
       "in_srq       :%d\n"
       "next         :%p\n"
       "prev         :%p\n"
-      "sg_entry.length :%u\n",
+      "sg_entry.length :%u\n"
+      "poison       :%s",
+      ibuf->region->rail->rail->rail_number,
       ibuf->region,
+      channel,
       ibuf->buffer,
       ibuf->size,
       sctk_ibuf_print_flag(ibuf->flag),
@@ -765,6 +779,7 @@ void sctk_ibuf_print(sctk_ibuf_t *ibuf, char* desc) {
       ibuf->in_srq,
       ibuf->next,
       ibuf->prev,
-      ibuf->desc.sg_entry.length);
+      ibuf->desc.sg_entry.length,
+      poison);
 }
 #endif
