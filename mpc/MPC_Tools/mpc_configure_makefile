@@ -147,7 +147,7 @@ fi
 # Rule for bin/mpc_launch_config
 #
 echo "" >> Makefile
-echo "bin/mpc_launch_config:" >> Makefile
+echo "bin/mpc_launch_config: lib/libmpc.a" >> Makefile
 printf "\t@echo Build bin/mpc_launch_config" >> Makefile; echo "" >> Makefile
 printf "\t@DIR_DEST_EXE=${PWD}/bin BUILD_DIR=\$(M_PWD)/BUILD_MPC_Config/bin \$(MAKE) -C ${MPC_SOURCE_DIR}MPC_Config/bin build_exe" >> Makefile; echo "" >> Makefile
 
