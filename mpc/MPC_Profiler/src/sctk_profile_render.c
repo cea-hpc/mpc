@@ -414,7 +414,7 @@ void sctk_profile_renderer_write_ntabs( FILE *fd, int n )
 	
 	for( i = 0 ; i < n ; i++ )
 	{
-		fprintf( fd, "    ");
+		fprintf( fd, "    |");
 	}
 
 }

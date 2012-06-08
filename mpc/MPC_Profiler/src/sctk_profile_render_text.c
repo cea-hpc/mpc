@@ -141,19 +141,23 @@ void sctk_profile_render_text_render_entry( struct sctk_profiler_array *array, i
 
 	if( sctk_profiler_array_get_hits( array, id ) )
 	{
+
 		if( !sctk_profile_render_text_no_indent )
+		{
+			printf("|");
 			sctk_profile_renderer_write_ntabs( rd->output_file, depth );
+		}
 
 		if( sctk_profile_get_config()->color_stdout )
 		{
-			fprintf( rd->output_file, SCTK_COLOR_RED_BOLD(%s)"  "SCTK_COLOR_BLUE_BOLD(%llu)"  "SCTK_COLOR_GREEN_BOLD(%s)"  "
-									  SCTK_COLOR_VIOLET_BOLD(( %g %% ))"  %s  %s  %s\n", sctk_profiler_array_get_desc( id ), (unsigned long long int )sctk_profiler_array_get_hits( array, id ),
+			fprintf( rd->output_file, SCTK_COLOR_RED_BOLD(%-15s)"  "SCTK_COLOR_BLUE_BOLD(%10llu)"  "SCTK_COLOR_GREEN_BOLD(%-10s)"  "
+									  SCTK_COLOR_VIOLET_BOLD(( %1g %% ))"  %-10s  %-10s  %-10s\n", sctk_profiler_array_get_desc( id ), (unsigned long long int )sctk_profiler_array_get_hits( array, id ),
 																		 to_unit_total, rd->ptree.entry_total_percentage_time[id] * 100,
 																		 to_unit_avg, to_unit_min, to_unit_max);
 		}
 		else
 		{
-			fprintf( rd->output_file, "%s  %llu  %s  ( %g %% )  %s  %s  %s\n", sctk_profiler_array_get_desc( id ), (unsigned long long int )sctk_profiler_array_get_hits( array, id ),
+			fprintf( rd->output_file, "%-15s  %10llu  %-10s  ( %g1 %% )  %-10s  %-10s  %-10s\n", sctk_profiler_array_get_desc( id ), (unsigned long long int )sctk_profiler_array_get_hits( array, id ),
 																		 to_unit_total, rd->ptree.entry_total_percentage_time[id] * 100,
 																		 to_unit_avg, to_unit_min, to_unit_max);
 		}

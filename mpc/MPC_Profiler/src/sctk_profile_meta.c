@@ -58,6 +58,7 @@ void sctk_profile_meta_init(struct sctk_profile_meta *meta)
 	MPC_Node_number( &meta->node_count );
 	MPC_Process_number( &meta->process_count );
 
+
 	char *cmd = getenv( "MPC_LAUNCH_COMMAND" );
 
 	if( cmd )
