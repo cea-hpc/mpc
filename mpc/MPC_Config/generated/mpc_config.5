@@ -55,16 +55,14 @@ User configuration (~/.mpc/config or ${MPC_USER_CONFIG})
 Application configuration given to mpcrun with option --config
 .El
 .Pp
-.Sh OPTIONS
-MPC configuration system support the given options :
-	.Sh OPTIONS OF NODE test
+.Sh OPTIONS OF NODE test
 This is a test structure.
 .Pp
 It support parameters :
 .Pp
 .Bl -tag -width Ds
 .It Cm tt
-Type is int. Default value if 10. 
+Type is int. Default value is 10. 
 .Pp tt
 This is a test
 .El
@@ -75,13 +73,24 @@ It support parameters :
 .Pp
 .Bl -tag -width Ds
 .It Cm tt
-Type is int. Default value if 10. 
+Type is int. Default value is 10. 
 .Pp tt
 This is a test
 .It Cm tt2
-Type is int. Default value if 20. 
+Type is int. Default value is 20. 
 .Pp tt2
 This is a test
+.El
+.Sh OPTIONS OF NODE driver
+Define the list of drivers supported for MPC network.
+.Pp
+It can contain a node of type :
+.Pp
+.Bl -tag -width Ds
+.It Cm test
+ of type test. 
+.It Cm rail
+ of type rail. 
 .El
 .Sh OPTIONS OF NODE allocator
 Options for MPC allocator.
@@ -90,41 +99,61 @@ It support parameters :
 .Pp
 .Bl -tag -width Ds
 .It Cm numa
-Type is bool. Default value if false. 
+Type is bool. Default value is false. 
 .Pp numa
 Permit to enable of disable NUMA support in MPC Allocator.
 .It Cm profile
-Type is bool. Default value if false. 
+Type is bool. Default value is false. 
 .Pp profile
 Enable of disable usage of allocator profiler.
 .It Cm alstring
-Type is string. Default value if TestTestTest. 
+Type is string. Default value is TestTestTest. 
 .Pp alstring
 Sample string
 .It Cm aldouble
-Type is double. Default value if 42.42. 
+Type is double. Default value is 42.42. 
 .Pp aldouble
 Sample double
 .It Cm alfloat
-Type is float. Default value if 42.42. 
+Type is float. Default value is 42.42. 
 .Pp alfloat
 Sample float
 .It Cm alsize
-Type is size. Default value if 2PB. 
+Type is size. Default value is 2PB. 
 .Pp alsize
 Sample size entry
 .It Cm warnings
-Type is bool. Default value if false. 
+Type is bool. Default value is false. 
 .Pp warnings
 Permit to enable of disable allocator warnings.
 .It Cm test
 Type is test. 
 .Pp test
 Try to use test structure.
+.It Cm classes
+Type is array of int. 
+.Pp classes
+Permit to list all available size classes.
+.It Cm classes2
+Type is array of int. Default value is {0, 1, 10}.
+.Pp classes2
+Permit to list all available size classes.
+.It Cm array_string
+Type is array of string. Default value is {"0", "1", "10"}.
+.Pp array_string
+Array of strings
+.It Cm rails
+Type is array of rail. 
+.Pp rails
+blablabla
 .It Cm driver
 Type is driver. 
 .Pp driver
 This is a super doc
+.It Cm driverlist
+Type is array of driver. 
+.Pp driverlist
+blabla
 .El
 .Sh OPTIONS OF NODE launcher
 Options for MPC launcher.
@@ -133,23 +162,23 @@ It support parameters :
 .Pp
 .Bl -tag -width Ds
 .It Cm smt
-Type is bool. Default value if false. 
+Type is bool. Default value is false. 
 .Pp smt
 Enable usage of hyperthreaded cores if available on current architecture.
 .It Cm cores
-Type is int. Default value if 1. 
+Type is int. Default value is 1. 
 .Pp cores
 Default number of cores if -c=X is not given to mpcrun.
 .It Cm verbosity
-Type is int. Default value if 0. 
+Type is int. Default value is 0. 
 .Pp verbosity
 Default verbosity level from 0 to 3. Can be override by -vv on mpcrun.
 .It Cm banner
-Type is bool. Default value if true. 
+Type is bool. Default value is true. 
 .Pp banner
 Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER.
 .It Cm autokill
-Type is int. Default value if 0. 
+Type is int. Default value is 0. 
 .Pp autokill
 Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT
 .El
@@ -160,13 +189,24 @@ It support parameters :
 .Pp
 .Bl -tag -width Ds
 .It Cm buffer
-Type is int. Default value if 1024. 
+Type is int. Default value is 1024. 
 .Pp buffer
 Size of the buffer used for internal copies.
 .It Cm stealing
-Type is bool. Default value if true. 
+Type is bool. Default value is true. 
 .Pp stealing
 Enable stealing between threads.
+.El
+.Sh OPTIONS OF NODE net_driver
+Define a specific configuration for a network driver to apply in rails.
+.Pp
+It can contain a node of type :
+.Pp
+.Bl -tag -width Ds
+.It Cm infiniband
+ of type net_driver_fake. 
+.It Cm tcp
+ of type net_driver_fake. 
 .El
 .Sh OPTIONS OF NODE net_driver_config
 Contain a list of driver configuration reused by rail definitions.
@@ -212,6 +252,14 @@ Base structure to contain the network configuration
 It support parameters :
 .Pp
 .Bl -tag -width Ds
+.It Cm configs
+Type is array of net_driver_config. 
+.Pp configs
+Define the configuration driver list to reuse in rail definitions.
+.It Cm rails
+Type is array of net_rail. 
+.Pp rails
+List of rails to declare in MPC.
 .El
 .Sh OPTIONS OF NODE profiler
 Options for the internal MPC Profiler

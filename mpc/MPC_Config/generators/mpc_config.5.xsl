@@ -71,72 +71,46 @@
 		<xsl:text>.Bl -tag -width Ds&#10;</xsl:text>
 		<xsl:apply-templates select="param|array"/>
 		<xsl:text>.El&#10;</xsl:text>
-<!--		<xsl:comment> ********************************************************* </xsl:comment>
-		<xs:complexType>
-			<xsl:attribute name="name"><xsl:value-of select="concat('user_type_',@name)"/></xsl:attribute>
-			<xs:all>
-				<xsl:apply-templates select="param|array"/>
-			</xs:all>
-		</xs:complexType>-->
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template match="param">
 		<xsl:value-of select="concat('.It Cm ',@name,'&#10;','Type is ',@type,'. ')"/>
-		<xsl:if test='@default'><xsl:value-of select="concat('Default value if ',@default,'. ')"/></xsl:if>
+		<xsl:if test='@default'><xsl:value-of select="concat('Default value is ',@default,'. ')"/></xsl:if>
 		<xsl:text>&#10;</xsl:text>
 		<xsl:value-of select="concat('.Pp ',@name,'&#10;',@doc,'&#10;')"/>
-<!--		<xs:element minOccurs="0">
-			<xsl:attribute name="name"><xsl:value-of select="@name"/></xsl:attribute>
-			<xsl:attribute name="type"><xsl:call-template name="gen-xs-type-name"/></xsl:attribute>
-		</xs:element>-->
-	</xsl:template>
-
-	<!-- ********************************************************* -->
-	<xsl:template name="gen-xs-type-name">
-<!--		<xsl:choose>
-			<xsl:when test="@type = 'string'">xs:string</xsl:when>
-			<xsl:when test="@type = 'int'">xs:integer</xsl:when>
-			<xsl:when test="@type = 'bool'">xs:boolean</xsl:when>
-			<xsl:when test="@type = 'float'">xs:decimal</xsl:when>
-			<xsl:when test="@type = 'double'">xs:decimal</xsl:when>
-			<xsl:when test="@type = 'size'">xs:string</xsl:when>
-			<xsl:otherwise><xsl:value-of select="concat('user_type_',@type)"/></xsl:otherwise>
-		</xsl:choose>-->
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template match="array">
-<!--		<xs:element minOccurs="0">
-			<xsl:attribute name="name"><xsl:value-of select="@name"/></xsl:attribute>
-			<xs:complexType>
-				<xs:sequence>
-					<xs:element minOccurs="0" maxOccurs="unbounded">
-						<xsl:attribute name="name"><xsl:value-of select="@entry-name"/></xsl:attribute>
-						<xsl:attribute name="type"><xsl:call-template name="gen-xs-type-name"/></xsl:attribute>
-					</xs:element>
-				</xs:sequence>
-			</xs:complexType>
-		</xs:element>-->
+		<xsl:value-of select="concat('.It Cm ',@name,'&#10;','Type is array of ',@type,'. ')"/>
+		<xsl:if test='default and default/value'>
+			<xsl:text>Default value is {</xsl:text>
+			<xsl:for-each select='default/value'>
+				<xsl:value-of select="."/>
+				<xsl:if test="position() != count(../value)">
+				<xsl:text>, </xsl:text>
+				</xsl:if>
+			</xsl:for-each>
+			<xsl:text>}.</xsl:text>
+		</xsl:if>
+		<xsl:text>&#10;</xsl:text>
+		<xsl:value-of select="concat('.Pp ',@name,'&#10;',@doc,'&#10;')"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template match="union">
-<!--		<xsl:comment> ********************************************************* </xsl:comment>
-		<xs:complexType>
-			<xsl:attribute name="name"><xsl:value-of select="concat('user_type_',@name)"/></xsl:attribute>
-			<xs:choice>
-				<xsl:apply-templates select="choice"/>
-			</xs:choice>
-		</xs:complexType>-->
+		<xsl:value-of select="concat('.Sh OPTIONS OF NODE ',@name,'&#10;')"/>
+		<xsl:value-of select="concat(@doc,'&#10;','.Pp&#10;')"/>
+		<xsl:text>It can contain a node of type :&#10;.Pp&#10;</xsl:text>
+		<xsl:text>.Bl -tag -width Ds&#10;</xsl:text>
+		<xsl:apply-templates select="choice"/>
+		<xsl:text>.El&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template match="choice">
-<!--		<xs:element>
-			<xsl:attribute name="name"><xsl:value-of select="@name"/></xsl:attribute>
-			<xsl:attribute name="type"><xsl:call-template name="gen-xs-type-name"/></xsl:attribute>
-		</xs:element>-->
+		<xsl:value-of select="concat('.It Cm ',@name,'&#10; of type ',@type,'. &#10;')"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -203,8 +177,6 @@ User configuration (~/.mpc/config or ${MPC_USER_CONFIG})
 Application configuration given to mpcrun with option --config
 .El
 .Pp
-.Sh OPTIONS
-MPC configuration system support the given options :
-	</xsl:text>
+</xsl:text>
 	</xsl:template>
 </xsl:stylesheet>

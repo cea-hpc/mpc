@@ -303,9 +303,11 @@ printf "\t@mkdir -p \${DESTDIR}${SCTK_SHARE_DIR}">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL/man">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL/man/man1">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL/man/man3">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p INSTALL/man/man5">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL/share/mpc">> Makefile; echo "">> Makefile
 printf "\t@cp ${MPC_SOURCE_DIR}MPC_Doc/man1/*.1 INSTALL/man/man1">> Makefile; echo "">> Makefile
 printf "\t@cp ${MPC_SOURCE_DIR}MPC_Doc/man3/*.3 INSTALL/man/man3">> Makefile; echo "">> Makefile
+printf "\t@cp ${MPC_SOURCE_DIR}MPC_Config/generated/*.5 INSTALL/man/man5">> Makefile; echo "">> Makefile
 printf "\t@cp share/mpc/* INSTALL/share/mpc">> Makefile; echo "">> Makefile
 printf "\t@cp ${MPC_SOURCE_DIR}MPC_Config/extra/config-multi-profile.xml.example INSTALL/share/mpc">> Makefile; echo "">> Makefile
 
@@ -342,6 +344,7 @@ printf "\t@chmod -R 755 INSTALL/bin/*">> Makefile; echo "">> Makefile
 printf "\t@chmod -R 644 INSTALL/include/*">> Makefile; echo "">> Makefile
 printf "\t@chmod 644 INSTALL/man/man1/*.1">> Makefile; echo "">> Makefile
 printf "\t@chmod 644 INSTALL/man/man3/*.3">> Makefile; echo "">> Makefile
+printf "\t@chmod 644 INSTALL/man/man5/*.5">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/lib/* \${DESTDIR}${SCTK_LIB_DIR}">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/include/* \${DESTDIR}${SCTK_INCLUDE_DIR}">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/man/* \${DESTDIR}${SCTK_MAN_DIR}">> Makefile; echo "">> Makefile
@@ -363,6 +366,7 @@ printf "\t@for i in  INSTALL/bin/* ; do rm -rf \${DESTDIR}${SCTK_BIN_DIR}/\`base
 printf "\t@for i in  INSTALL/include/* ; do rm -rf \${DESTDIR}${SCTK_INCLUDE_DIR}/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
 printf "\t@for i in  INSTALL/man/man1/* ; do rm -rf \${DESTDIR}${SCTK_MAN_DIR}/man1/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
 printf "\t@for i in  INSTALL/man/man3/* ; do rm -rf \${DESTDIR}${SCTK_MAN_DIR}/man3/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
+printf "\t@for i in  INSTALL/man/man5/* ; do rm -rf \${DESTDIR}${SCTK_MAN_DIR}/man5/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
 printf "\t@for i in  INSTALL/share/mpc/* ; do rm -rf \${DESTDIR}${SCTK_SHARE_DIR}/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
 
 
