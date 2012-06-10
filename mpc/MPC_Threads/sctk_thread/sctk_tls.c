@@ -37,6 +37,9 @@
 #include <fcntl.h>
 #include "hwloc.h"
 
+/* Not present in hwloc.h */
+void hwloc_obj_add_info(hwloc_obj_t obj, const char *name, const char *value);
+
 #if defined(SCTK_USE_TLS)
 __thread void *sctk_extls = NULL;
 

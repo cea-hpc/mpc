@@ -25,6 +25,7 @@
 #include <uthash.h>
 #include "utarray.h"
 #include <opa_primitives.h>
+#include "sctk_pmi.h"
 
 /************************************************************************/
 /*Data structure accessors                                              */

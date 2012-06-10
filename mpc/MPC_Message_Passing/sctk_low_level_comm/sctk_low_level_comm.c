@@ -24,10 +24,13 @@
 #include <sctk.h>
 #include <sctk_pmi.h>
 #include <string.h>
+#include "sctk_checksum.h"
 
  /*Networks*/
 #include <sctk_simple_tcp.h>
 #include <sctk_multirail_tcp.h>
+#include <sctk_multirail_ib.h>
+#include <sctk_route.h>
 
 int sctk_is_net_migration_available(){
   if(sctk_migration_mode == 1){

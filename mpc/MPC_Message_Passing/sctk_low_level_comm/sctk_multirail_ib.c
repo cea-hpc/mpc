@@ -31,6 +31,7 @@
 #include <sctk_checksum.h>
 #include "sctk_ib_fallback.h"
 #include "sctk_ib_prof.h"
+#include "sctk_ib_cp.h"
 
 #define NB_RAILS 1
 static sctk_rail_info_t** rails = NULL;

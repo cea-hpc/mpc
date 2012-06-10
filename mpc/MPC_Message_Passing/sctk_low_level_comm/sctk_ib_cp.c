@@ -33,6 +33,7 @@
 #include "sctk_ib_prof.h"
 #include "sctk_asm.h"
 #include "utlist.h"
+#include "sctk_ib_fallback.h"
 
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"

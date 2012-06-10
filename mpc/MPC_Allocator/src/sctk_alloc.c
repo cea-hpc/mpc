@@ -41,6 +41,9 @@
 #include <sched.h>
 #include "sctk_dummy.h"
 
+#ifdef MPC_Message_Passing
+#include "sctk_low_level_comm.h"
+#endif
 
 #ifdef MPC_Threads
 #include "sctk_thread.h"

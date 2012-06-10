@@ -64,6 +64,10 @@ MonoDomain *domain;
 #include <sctk_communicator.h>
 #include "sctk_pmi.h"
 #include "sctk_multirail_ib.h"
+
+#if MPC_USE_INFINIBAND
+#include "sctk_ib_cp.h"
+#endif
 /* #include "sctk_hybrid_comm.h" */
 /* #include "sctk_ib_scheduling.h" */
 #endif

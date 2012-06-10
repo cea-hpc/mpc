@@ -32,6 +32,8 @@
 #define NB_RAILS 2
 static sctk_rail_info_t** rails = NULL;
 
+void sctk_network_init_tcp_rdma(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib);
+
 static void 
 sctk_network_send_message_multirail_tcp (sctk_thread_ptp_message_t * msg){
   int i ; 

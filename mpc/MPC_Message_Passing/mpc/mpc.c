@@ -52,6 +52,17 @@
 #include "mpc_weak.h"
 #endif
 
+#ifdef MPC_Message_Passing
+
+#include "sctk_low_level_comm.h"
+
+#if MPC_USE_INFINIBAND
+#include "sctk_multirail_ib.h"
+#endif
+
+#endif
+
+
  /************************************************************************/
  /*GLOBAL VARIABLES                                                      */
  /************************************************************************/
