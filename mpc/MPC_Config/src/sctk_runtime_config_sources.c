@@ -441,6 +441,8 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 	const char * config_system;
 	const char * config_user;
 	const char * config_app;
+	static const char * def_sys_path = SCTK_INSTALL_PREFIX "/share/mpc/system.xml";
+	static const char * def_sys_path_fallback = SCTK_INSTALL_PREFIX "/share/mpc/system.xml.example";
 
 	//errors
 	assert(config_sources != NULL);
@@ -452,9 +454,17 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 	sprintf(user_home_file,"%s/.mpc/config.xml",getenv("HOME"));
 
 	//try to load from env
-	config_system = sctk_runtime_config_get_env_or_value("MPC_SYSTEM_CONFIG",SCTK_INSTALL_PREFIX "/share/mpc/system.xml");
+	config_system = sctk_runtime_config_get_env_or_value("MPC_SYSTEM_CONFIG",def_sys_path);
 	config_user   = sctk_runtime_config_get_env_or_value("MPC_USER_CONFIG",user_home_file);
 	config_app    = sctk_runtime_config_get_env_or_value("MPC_APP_CONFIG",sctk_runtime_config_default_app_file_path);
+
+	//If system file is default and if it didn't exist, fall back onto the .example one.
+	//This is a trick, but it permit to not create system.xml at install, so avoid
+	//trouble in case of futur update of the lib and if config file format evolve.
+	//The problem stay present only if the admin create system.xml and modify it.
+	//But in that case it's acceptable.
+	if (strcmp(config_system,def_sys_path) == 0 && !sckt_runtime_config_file_exist(config_system))
+		config_system = def_sys_path_fallback;
 
 	//open system and user config
 	sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_RUNTIME_CONFIG_SYSTEM_LEVEL],config_system,SCTK_RUNTIME_CONFIG_OPEN_WARNING);

@@ -351,7 +351,6 @@ printf "\t@\$(F77) \$(FOBJ_LIST) ${EXTERN_NON_TESTED_LIB} -fPIC -shared -o \${DE
 fi
 printf "\t@cp -r INSTALL/bin/* \${DESTDIR}${SCTK_BIN_DIR}">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/share/mpc/* \${DESTDIR}${SCTK_SHARE_DIR}">> Makefile; echo "">> Makefile
-printf "\t@if [ ! -f \${DESTDIR}${SCTK_SHARE_DIR}/system.xml ]; then cp INSTALL/share/mpc/system.xml.example \${DESTDIR}${SCTK_SHARE_DIR}/system.xml; fi" >> Makefile
 
 #
 # Rule 'uninstall'

@@ -82,6 +82,10 @@ void mpc_print_config_xml_handler(enum sctk_runtime_config_walk_type type,
 				sctk_runtime_config_display_indent(level+2);
 				printf("</%s>\n",name);
 				break;
+			case SCTK_RUNTIME_CONFIG_WALK_UNION:
+				sctk_runtime_config_display_indent(level+2);
+				printf("</%s>\n",name);
+				break;
 		}
 	} else {
 		switch(type)
@@ -104,10 +108,12 @@ void mpc_print_config_xml_handler(enum sctk_runtime_config_walk_type type,
 				if (level == 0)
 				{
 					sctk_runtime_config_display_indent(level+2+1);
-					printf("<default/>\n");
+					printf("<name>default</name>\n");
 				}
 				break;
 			case SCTK_RUNTIME_CONFIG_WALK_UNION:
+				sctk_runtime_config_display_indent(level+2);
+				printf("<%s>\n",name);
 				break;
 		}
 	}
