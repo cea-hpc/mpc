@@ -32,7 +32,7 @@
 /*********************  CONSTS  *********************/
 /** Header of XML output format. **/
 const char * mpc_print_config_xml_header = "<?xml version='1.0'?>\n\
-<mpc>\n\
+<mpc xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"mpc-config.xsd\">\n\
 \t<profiles>\n";
 /** Footer of XML output format. **/
 const char * mpc_print_config_xml_footer = "\

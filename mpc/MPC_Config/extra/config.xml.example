@@ -23,41 +23,56 @@
 ########################################################################
 -->
 
-<mpc>
+<!--
+This file contain the default values to override when generating the final file to place into
+{INSTALL_PREFIX}/share/mpc/config.xml.example
+
+PLEASE, setup only complexe structure here, for simple values de default will be taken from
+config-meta.xml automatically.
+-->
+
+<mpc xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="mpc-config.xsd">
 	<profiles>
-		<!-- Declare a first profile -->
 		<profile>
-			<!-- It is the default one -->
 			<name>default</name>
-			<!-- Configur some modules -->
 			<modules>
-				<!-- Config for MPC Allocator -->
-				<allocator>
-					<test>
-						<tt>23</tt>
-					</test>
-				</allocator>
 			</modules>
-		</profile>
-		<profile>
-			<name>debug</name>
-			<modules>
-				<!-- Config for MPC Allocator -->
-				<allocator>
-					<classes>
-					</classes>
-					<classes2>
-						<class2>33</class2>
-						<class2>34</class2>
-					</classes2>
-					<rails>
-						<rail>
-							<tt>0</tt>
-							<tt2>0</tt2>
-						</rail>
-					</rails>
-				</allocator>
-			</modules>
+			<networks>
+				<!-- net config contain complexe structures so default value cannot be setup into config-meta.xml -->
+				<configs>
+					<config>
+						<name>conf1</name>
+						<driver>
+							<infiniband>
+								<buffer>2048</buffer>
+							</infiniband>
+						</driver>
+					</config>
+					<config>
+						<name>conf2</name>
+						<driver>
+							<tcp>
+								<stealing>false</stealing>
+							</tcp>
+						</driver>
+					</config>
+				</configs>
+				<!-- rails contain complexe structures so default value cannot be setup into config-meta.xml -->
+				<rails>
+					<rail>
+						<name>rail1</name>
+						<device>ib1</device>
+						<topology>ring</topology>
+						<config>conf1</config>
+					</rail>
+					<rail>
+						<name>rail2</name>
+						<device>eth0</device>
+						<topology>tore</topology>
+						<config>conf2</config>
+					</rail>
+				</rails>
+			</networks>
 		</profile>
 	</profiles>
 </mpc>

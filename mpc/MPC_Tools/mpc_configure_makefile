@@ -122,7 +122,7 @@ echo "" >> Makefile
 echo "MAKEFLAGS += --no-print-directory"  >> Makefile
 echo "" >> Makefile
 
-echo "all:lib/libmpc.a lib/libmpcf.a lib/libmpc_thread_db.so lib/libmpc_tdb_remote_static.a bin/mpc_launch_config share/mpc/system.xml.example"  >> Makefile
+echo "all:lib/libmpc.a lib/libmpcf.a lib/libmpc_thread_db.so lib/libmpc_tdb_remote_static.a bin/mpc_launch_config share/mpc/config.xml.example"  >> Makefile
 echo "" >> Makefile
 
 echo "#"  >> Makefile
@@ -265,9 +265,9 @@ fi
 # Rule to generate the example config file
 #
 echo "" >> Makefile
-echo "share/mpc/system.xml.example: ${MPC_SOURCE_DIR}MPC_Config/extra/system.xml.example bin/mpc_print_config" >> Makefile
+echo "share/mpc/config.xml.example: ${MPC_SOURCE_DIR}MPC_Config/extra/config.xml.example bin/mpc_print_config" >> Makefile
 printf "\t@mkdir -p share/mpc">> Makefile; echo "">> Makefile
-printf "\t@./bin/mpc_print_config --xml --system=${MPC_SOURCE_DIR}MPC_Config/extra/system.xml.example --user=none --app= > share/mpc/system.xml.example">> Makefile; echo "">> Makefile
+printf "\t@./bin/mpc_print_config --xml --system=${MPC_SOURCE_DIR}MPC_Config/extra/config.xml.example --user=none --app= > share/mpc/config.xml.example">> Makefile; echo "">> Makefile
 
 #
 # Rule 'install'
@@ -307,6 +307,7 @@ printf "\t@mkdir -p INSTALL/share/mpc">> Makefile; echo "">> Makefile
 printf "\t@cp ${MPC_SOURCE_DIR}MPC_Doc/man1/*.1 INSTALL/man/man1">> Makefile; echo "">> Makefile
 printf "\t@cp ${MPC_SOURCE_DIR}MPC_Doc/man3/*.3 INSTALL/man/man3">> Makefile; echo "">> Makefile
 printf "\t@cp share/mpc/* INSTALL/share/mpc">> Makefile; echo "">> Makefile
+printf "\t@cp ${MPC_SOURCE_DIR}MPC_Config/extra/config-multi-profile.xml.example INSTALL/share/mpc">> Makefile; echo "">> Makefile
 
 DIR_TEST="MPC_Threads"
 check_module

@@ -441,8 +441,8 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 	const char * config_system;
 	const char * config_user;
 	const char * config_app;
-	static const char * def_sys_path = SCTK_INSTALL_PREFIX "/share/mpc/system.xml";
-	static const char * def_sys_path_fallback = SCTK_INSTALL_PREFIX "/share/mpc/system.xml.example";
+	static const char * def_sys_path = SCTK_INSTALL_PREFIX "/share/mpc/config.xml";
+	static const char * def_sys_path_fallback = SCTK_INSTALL_PREFIX "/share/mpc/config.xml.example";
 
 	//errors
 	assert(config_sources != NULL);
@@ -459,9 +459,9 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 	config_app    = sctk_runtime_config_get_env_or_value("MPC_APP_CONFIG",sctk_runtime_config_default_app_file_path);
 
 	//If system file is default and if it didn't exist, fall back onto the .example one.
-	//This is a trick, but it permit to not create system.xml at install, so avoid
+	//This is a trick, but it permit to not create system config.xml at install, so avoid
 	//trouble in case of futur update of the lib and if config file format evolve.
-	//The problem stay present only if the admin create system.xml and modify it.
+	//The problem stay present only if the admin create system config.xml and modify it.
 	//But in that case it's acceptable.
 	if (strcmp(config_system,def_sys_path) == 0 && !sckt_runtime_config_file_exist(config_system))
 		config_system = def_sys_path_fallback;

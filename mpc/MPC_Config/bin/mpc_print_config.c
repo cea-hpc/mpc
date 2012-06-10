@@ -82,7 +82,7 @@ Options :\n\
   --nofile        : Only use the internal default values.\n\
 \n\
 You can olaso influence the loaded files with environnement variables :\n\
-  - MPC_SYSTEM_CONFIG   : System configuration file (" SCTK_INSTALL_PREFIX "/share/mpc/system.xml)\n\
+  - MPC_SYSTEM_CONFIG   : System configuration file (" SCTK_INSTALL_PREFIX "/share/mpc/config.xml)\n\
   - MPC_USER_CONFIG     : User configuration file (~/.mpc/config.xml)\n\
   - MPC_APP_CONFIG      : Application configuration file (disabled)\n\
   - MPC_DISABLE_CONFIG  : Disable loading of configuration files if setup to 1.\n";
