@@ -29,6 +29,7 @@
 #include "sctk_spinlock.h"
 #include "sctk_alloc.h"
 #include "sctk_thread_api.h"
+#include "sctk_dummy.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -65,8 +66,8 @@ extern "C"
   void sctk_ethread_thread_init (void);
   void sctk_ethread_mxn_thread_init (void);
 
-  void sctk_thread_wait_for_value ( int *data, int value);
-  void sctk_thread_wait_for_value_and_poll ( int *data, int value,
+  void sctk_thread_wait_for_value ( volatile int *data, int value);
+  void sctk_thread_wait_for_value_and_poll ( volatile int *data, int value,
 					    void (*func) (void *), void *arg);
   void
     sctk_kthread_wait_for_value_and_poll ( int *data, int value,

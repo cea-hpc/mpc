@@ -39,6 +39,8 @@
 #include "mpcalloc.h"
 #include "sctk.h"
 #include <sched.h>
+#include "sctk_dummy.h"
+
 
 #ifdef MPC_Threads
 #include "sctk_thread.h"
