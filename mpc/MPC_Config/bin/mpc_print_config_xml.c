@@ -126,7 +126,7 @@ void mpc_print_config_xml(const struct sctk_runtime_config_entry_meta * config_m
                                       const char * root_struct_name,
                                       void * root_struct)
 {
-	printf(mpc_print_config_xml_header);
+	puts(mpc_print_config_xml_header);
 	sctk_runtime_config_walk_tree(config_meta,mpc_print_config_xml_handler,root_name,root_struct_name,root_struct,NULL);
-	printf(mpc_print_config_xml_footer);
+	puts(mpc_print_config_xml_footer);
 }

@@ -298,7 +298,7 @@ printf "\t@mkdir -p INSTALL/man/man3">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL/share/mpc">> Makefile; echo "">> Makefile
 printf "\t@cp ${MPC_SOURCE_DIR}MPC_Doc/man1/*.1 INSTALL/man/man1">> Makefile; echo "">> Makefile
 printf "\t@cp ${MPC_SOURCE_DIR}MPC_Doc/man3/*.3 INSTALL/man/man3">> Makefile; echo "">> Makefile
-printf "\t@cp ${MPC_SOURCE_DIR}MPC_Config/extra/system.xml.example INSTALL/share/mpc/">> Makefile; echo "">> Makefile
+printf "\t@cp ${MPC_SOURCE_DIR}MPC_Config/extra/system.xml.example INSTALL/share/mpc/system.xml.example">> Makefile; echo "">> Makefile
 
 DIR_TEST="MPC_Threads"
 check_module
