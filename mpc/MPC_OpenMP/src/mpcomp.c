@@ -27,6 +27,7 @@
 #include "sctk_asm.h"
 #include "sctk_debug.h"
 #include "sctk_topology.h"
+#include "sctk_runtime_config.h"
 #include "mpcmicrothread_internal.h"
 #include "mpcomp_internal.h"
 #include <sys/time.h>
@@ -234,7 +235,7 @@ __mpcomp_init (void)
 
 
 	  /***** PRINT SUMMARY ******/
-	  if ( (getenv ("MPC_DISABLE_BANNER") == NULL) && (sctk_get_process_rank() == 0) ) {
+	  if ( (sctk_config_runtime_get()->modules.launcher.banner) && (sctk_get_process_rank() == 0) ) {
 	    fprintf (stderr,
 		"MPC OpenMP version %d.%d (DEV)\n",
 		SCTK_OMP_VERSION_MAJOR, SCTK_OMP_VERSION_MINOR);

@@ -51,6 +51,7 @@
 #include "sctk_tls.h"
 /* #include "sctk_daemons.h" */
 /* #include "sctk_io.h" */
+#include "sctk_runtime_config.h"
 
 #ifdef MPC_Profiler
 #include "sctk_profile_render.h"
@@ -273,7 +274,7 @@ sctk_perform_initialisation (void)
       mpc_lang = "Fortran";
     }
 
-    if (getenv ("MPC_DISABLE_BANNER") == NULL)
+    if (sctk_config_runtime_get()->modules.launcher.banner)
     {
       if (SCTK_VERSION_MINOR >= 0)
       {
@@ -780,7 +781,7 @@ sctk_disable_addr_randomize (int argc, char **argv)
     if (disable_addr_randomize)
     {
       unsetenv ("SCTK_LINUX_DISABLE_ADDR_RADOMIZE");
-      if (getenv ("MPC_DISABLE_BANNER") == NULL)
+      if (sctk_config_runtime_get()->modules.launcher.banner)
       {
 INFO("Addr randomize disabled for large scale runs")
 //        sctk_warning ("Restart execution to disable addr randomize");
@@ -802,11 +803,10 @@ sctk_disable_addr_randomize (int argc, char **argv)
   static void *
 auto_kill_func (void *arg)
 {
-  int timeout;
-  timeout = atoi ((char *) arg);
+  int timeout = *(int*)arg;
   if (timeout > 0)
   {
-    if (getenv ("MPC_DISABLE_BANNER") == NULL)
+    if (sctk_config_runtime_get()->modules.launcher.banner)
     {
       sctk_noalloc_fprintf (stderr, "Autokill in %ds\n", timeout);
     }
@@ -829,22 +829,22 @@ sctk_launch_main (int argc, char **argv)
   char *sctk_disable_mpc;
   void **tofree = NULL;
   int tofree_nb = 0;
-  char *auto_kill;
+  int auto_kill;
+
+  //load mpc configuration from XML files if not already done.
+  sctk_runtime_config_init();
 
   sctk_disable_addr_randomize (argc, argv);
 
   __sctk_profiling__start__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
-
-  //load mpc configuration from XML files if not already done.
-  sctk_runtime_config_init();
   
 
-  auto_kill = getenv ("MPC_AUTO_KILL_TIMEOUT");
-  if (auto_kill != NULL)
+  auto_kill = sctk_config_runtime_get()->modules.launcher.autokill;
+  if (auto_kill > 0)
   {
     pthread_t pid;
     /*       sctk_warning ("Auto kill in %s s",auto_kill); */
-    pthread_create (&pid, NULL, auto_kill_func, auto_kill);
+    pthread_create (&pid, NULL, auto_kill_func, &auto_kill);
   }
 
   sctk_use_ethread_mxn ();

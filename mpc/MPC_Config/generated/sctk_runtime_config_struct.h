@@ -109,12 +109,16 @@ struct sctk_runtime_config_struct_allocator
 /*********************  STRUCT  *********************/
 /**Options for MPC launcher.**/
 struct sctk_runtime_config_struct_launcher
-{	/**blablabla**/
+{	/**Enable usage of hyperthreaded cores if available on current architecture.**/
 	bool smt;
-	/**blabla**/
+	/**Default number of cores if -c=X is not given to mpcrun.**/
 	int cores;
-	/**blabla**/
+	/**Default verbosity level from 0 to 3. Can be override by -vv on mpcrun.**/
 	int verbosity;
+	/**Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER.**/
+	bool banner;
+	/**Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT**/
+	int autokill;
 };
 
 /*********************  STRUCT  *********************/

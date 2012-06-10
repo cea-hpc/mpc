@@ -99,6 +99,8 @@
       <xs:element minOccurs="0" name="smt" type="xs:boolean"/>
       <xs:element minOccurs="0" name="cores" type="xs:integer"/>
       <xs:element minOccurs="0" name="verbosity" type="xs:integer"/>
+      <xs:element minOccurs="0" name="banner" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="autokill" type="xs:integer"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

@@ -21,6 +21,8 @@
 /* ######################################################################## */
 
 /********************  HEADERS  *********************/
+#include <stdlib.h>
+#include <stdio.h>
 #include "sctk_debug.h"
 #include "sctk_runtime_config_struct.h"
 #include "sctk_runtime_config_validation.h"
@@ -35,15 +37,32 @@
 **/
 void sctk_runtime_config_validate(struct sctk_runtime_config * config)
 {
+	//errors
+	assert(config != NULL);
+
+	//debug message
 	sctk_debug("Validator called on config...\n");
-	//sctk_runtime_config_validate_example(config);
+
+	//call all post actions
+	sctk_runtime_config_old_getenv_compatibility(config);
 }
 
 /*******************  FUNCTION  *********************/
 /**
- * This is a validator example.
+ * Compatility with old getenv() system. Some may be removed soon but
+ * need some discutions about that.
+ * @todo Cleanup non needed old support.
 **/
-void sctk_runtime_config_validate_example(struct sctk_runtime_config * config)
+void sctk_runtime_config_old_getenv_compatibility(struct sctk_runtime_config * config)
 {
-	assume_m(config != NULL,"Config cannot be NULL.");
+	//vars
+	char * tmp;
+
+	//came from sctk_launch.c for banner disabling, also used into mpcomp.c
+	//and sctk_thread.c
+	if (getenv ("MPC_DISABLE_BANNER") != NULL)
+		config->modules.launcher.banner = false;
+	//came from sctk_launch.c
+	if ((tmp = getenv ("MPC_AUTO_KILL_TIMEOUT")) != NULL)
+		config->modules.launcher.autokill = atoi(tmp);
 }

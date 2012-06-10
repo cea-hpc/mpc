@@ -63,6 +63,7 @@ MonoDomain *domain;
 #include "sctk.h"
 #include "sctk_context.h"
 #include "sctk_tls.h"
+#include "sctk_runtime_config.h"
 
 #ifdef MPC_Message_Passing
 #include <mpc_internal_thread.h>
@@ -2350,7 +2351,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	__sctk_profiling__end__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
 	if (sctk_process_rank == 0)
 	{
-		if (getenv ("MPC_DISABLE_BANNER") == NULL) {
+		if (sctk_config_runtime_get()->modules.launcher.banner) {
 			fprintf(stderr, "Initialization time: %.1fs - Memory used: %0.fMB\n",
 			sctk_profiling_get_init_time(), sctk_profiling_get_dataused());
 		}

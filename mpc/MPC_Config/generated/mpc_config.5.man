@@ -135,15 +135,23 @@ It support parameters :
 .It Cm smt
 Type is bool. Default value if false. 
 .Pp smt
-blablabla
+Enable usage of hyperthreaded cores if available on current architecture.
 .It Cm cores
-Type is int. Default value if 16. 
+Type is int. Default value if 1. 
 .Pp cores
-blabla
+Default number of cores if -c=X is not given to mpcrun.
 .It Cm verbosity
 Type is int. Default value if 0. 
 .Pp verbosity
-blabla
+Default verbosity level from 0 to 3. Can be override by -vv on mpcrun.
+.It Cm banner
+Type is bool. Default value if true. 
+.Pp banner
+Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER.
+.It Cm autokill
+Type is int. Default value if 0. 
+.Pp autokill
+Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT
 .El
 .Sh OPTIONS OF NODE net_driver_fake
 Declare a fake driver to test the configuration system.

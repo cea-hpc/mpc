@@ -95,8 +95,10 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 	struct sctk_runtime_config_struct_launcher * obj = struct_ptr;
 	//Simple params :
 	obj->smt = false;
-	obj->cores = 16;
+	obj->cores = 1;
 	obj->verbosity = 0;
+	obj->banner = true;
+	obj->autokill = 0;
 }
 
 /*******************  FUNCTION  *********************/

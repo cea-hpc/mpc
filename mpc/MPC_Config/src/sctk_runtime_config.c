@@ -198,6 +198,9 @@ void sctk_runtime_config_init(void)
 			//reset the structure
 			sctk_runtime_config_reset(&__sctk_global_runtime_config__);
 
+			//validate
+			sctk_runtime_config_validate(&__sctk_global_runtime_config__);
+
 			//mark as init
 			__sctk_global_runtime_config_init__ = true;
 		} else {
