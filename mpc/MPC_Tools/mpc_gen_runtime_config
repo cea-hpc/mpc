@@ -28,6 +28,7 @@
 #
 # Used :
 #    - command xsltproc
+#    - command xmllint
 #    - files in MPC_Config/generators
 #    - files MPC_*/config-meta.xml
 #
@@ -36,6 +37,7 @@
 
 #setup commands
 XSLTPROC=xsltproc
+XMLLINT=xmllint
 
 #get files
 CONFIG_FILES=MPC_*/config-meta.xml
@@ -59,12 +61,25 @@ safe_exec()
 #generate files from global xml file by using XSLTs
 apply_generators()
 {
+	echo "Generate all targets"
+
 	#loop on generator to generate all files
 	for gen in ${GENERATORS}
 	do
 		target=$(echo "${gen}" | sed -e 's/\.xsl//g' -e 's/generators/generated/g')
 		echo "   - xsltproc -o $target $gen ${GLOBAL_CONFIG_FILE}"
-		xsltproc -o $target $gen ${GLOBAL_CONFIG_FILE} || exit 1
+		${XSLTPROC} -o $target $gen ${GLOBAL_CONFIG_FILE} || exit 1
+	done
+}
+
+#validate meta files of all modules before generating final files
+check_meta_files()
+{
+	echo "Check all files config-meta.xml"
+	for tmp in ${CONFIG_FILES}
+	do
+		echo "   - Check $tmp"
+		${XMLLINT} --noout --dtdvalid ./MPC_Config/extra/config-meta.dtd "$tmp" || exit 1
 	done
 }
 
@@ -72,18 +87,20 @@ apply_generators()
 gen_global_config_file()
 {
 	echo "Generate ${GLOBAL_CONFIG_FILE}"
+
+	#file header
+	echo "<?xml version=\"1.0\"?>" > ${GLOBAL_CONFIG_FILE}
+	echo "<all>" >> ${GLOBAL_CONFIG_FILE}
+
+	#generate body
 	for tmp in ${CONFIG_FILES}
 	do
 		echo "   - Use $tmp"
-		xmllint --noout --dtdvalid ./MPC_Config/extra/config-meta.dtd "$tmp" || exit 1
-	done
-	echo "<?xml version=\"1.0\"?>" > ${GLOBAL_CONFIG_FILE}
-	echo "<all>" >> ${GLOBAL_CONFIG_FILE}
-	for tmp in ${CONFIG_FILES}
-	do
 		module_name=$(basename $(dirname ${tmp}))
 		cat ${tmp} | grep -v "<?xml version=\"1.0\"?>" | sed -e "s/<config>/<config name=\"${module_name}\">/g" >> ${GLOBAL_CONFIG_FILE}
 	done
+
+	#footer
 	echo "</all>" >> ${GLOBAL_CONFIG_FILE}
 
 	#remove inner invalid dtd declarations
@@ -91,6 +108,7 @@ gen_global_config_file()
 }
 
 #main
+check_meta_files
 gen_global_config_file
 apply_generators
 
