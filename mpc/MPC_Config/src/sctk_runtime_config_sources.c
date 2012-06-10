@@ -346,7 +346,7 @@ bool sckt_runtime_config_file_exist(const char * filename)
  * Function used to open a particular XML file and select the DOM root node for future usage.
  * It will abort on errors.
  * @param source Define the struct to setup while openning the file.
- * @param filename Define the XML file to open.
+ * @param filename Define the XML file to open. File loading can be disable by using "none" as filename.
 **/
 void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml * source,const char * filename,enum sctk_runtime_config_open_error_level level)
 {
@@ -357,6 +357,10 @@ void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml *
 	//setup default
 	source->document = NULL;
 	source->root_node = NULL;
+
+	//skip if filename is "none"
+	if (strcmp(filename,"none") == 0)
+		return;
 
 	//check if file exist
 	if ( ! sckt_runtime_config_file_exist(filename) )
