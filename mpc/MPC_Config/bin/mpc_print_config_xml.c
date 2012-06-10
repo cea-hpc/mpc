@@ -29,6 +29,18 @@
 #include "mpc_print_config_xml.h"
 #include "sctk_runtime_config_walk.h"
 
+/*********************  CONSTS  *********************/
+/** Header of XML output format. **/
+const char * mpc_print_config_xml_header = "<?xml version='1.0'?>\n\
+<mpc>\n\
+\t<profiles>\n";
+/** Footer of XML output format. **/
+const char * mpc_print_config_xml_footer = "\
+\t</profiles>\n\
+\t<mappings>\n\
+\t</mappings>\n\
+</mpc>\n";
+
 /*******************  FUNCTION  *********************/
 /**
  * Type for user handler function to call on each node of the configuration structure.
@@ -50,20 +62,24 @@ void mpc_print_config_xml_handler(enum sctk_runtime_config_walk_type type,
                                          int level,
                                          void * opt)
 {
+	//erase name of root node
+	if (level == 0 && strcmp(name,"config") == 0)
+		name = "profile";
+	
 	//check open/close
 	if (status == SCTK_RUNTIME_CONFIG_WALK_CLOSE)
 	{
 		switch(type)
 		{
 			case SCTK_RUNTIME_CONFIG_WALK_ARRAY:
-				sctk_runtime_config_display_indent(level);
+				sctk_runtime_config_display_indent(level+2);
 				printf("</%s>\n",name);
 				break;
 			case SCTK_RUNTIME_CONFIG_WALK_VALUE:
 				printf("</%s>\n",name);
 				break;
 			case SCTK_RUNTIME_CONFIG_WALK_STRUCT:
-				sctk_runtime_config_display_indent(level);
+				sctk_runtime_config_display_indent(level+2);
 				printf("</%s>\n",name);
 				break;
 		}
@@ -72,18 +88,24 @@ void mpc_print_config_xml_handler(enum sctk_runtime_config_walk_type type,
 		{
 			case SCTK_RUNTIME_CONFIG_WALK_VALUE:
 				//print the name if not simple array
-				sctk_runtime_config_display_indent(level);
+				sctk_runtime_config_display_indent(level+2);
 				printf("<%s>",name);
 				//print the value
 				assume_m(sctk_runtime_config_display_plain_type(type_name,value),"Invalid plain type : %s.",type_name);
 				break;
 			case SCTK_RUNTIME_CONFIG_WALK_ARRAY:
-				sctk_runtime_config_display_indent(level);
+				sctk_runtime_config_display_indent(level+2);
 				printf("<%s>\n",name);
 				break;
 			case SCTK_RUNTIME_CONFIG_WALK_STRUCT:
-				sctk_runtime_config_display_indent(level);
+				sctk_runtime_config_display_indent(level+2);
 				printf("<%s>\n",name);
+				//if root node, add the <default> tag
+				if (level == 0)
+				{
+					sctk_runtime_config_display_indent(level+2+1);
+					printf("<default/>\n");
+				}
 				break;
 			case SCTK_RUNTIME_CONFIG_WALK_UNION:
 				break;
@@ -104,6 +126,7 @@ void mpc_print_config_xml(const struct sctk_runtime_config_entry_meta * config_m
                                       const char * root_struct_name,
                                       void * root_struct)
 {
-	printf("<?xml version='1.0'?>\n");
+	printf(mpc_print_config_xml_header);
 	sctk_runtime_config_walk_tree(config_meta,mpc_print_config_xml_handler,root_name,root_struct_name,root_struct,NULL);
+	printf(mpc_print_config_xml_footer);
 }
