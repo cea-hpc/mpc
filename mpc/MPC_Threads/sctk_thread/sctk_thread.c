@@ -2064,7 +2064,9 @@ sctk_start_func (void *(*run) (void *), void *arg)
 #endif
 
   /* Fill the profiling parent key array */
+#ifdef MPC_Profiler
   sctk_profiler_array_init_parent_keys();
+#endif
 
 #ifdef MPC_Message_Passing
 	THREAD_NUMBER = sctk_get_nb_task_total (SCTK_COMM_WORLD);
