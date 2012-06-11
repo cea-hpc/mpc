@@ -9,12 +9,12 @@
 			
 			<array name="level_colors" entry-name="level" type="string" doc="Color for levels of profiler output">
 				<default>
-					<value>"#3A4D85"</value>
-					<value>"#82A2FF"</value>
-					<value>"#B8BDCB"</value>
-					<value>"#5D6782"</value>
-					<value>"#838383"</value>
-					<value>"#5A5757"</value>
+					<value>#3A4D85</value>
+					<value>#82A2FF</value>
+					<value>#B8BDCB</value>
+					<value>#5D6782</value>
+					<value>#838383</value>
+					<value>#5A5757</value>
 				</default>
 			</array>
 		</struct>

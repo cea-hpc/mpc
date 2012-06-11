@@ -139,7 +139,7 @@ Type is array of int. Default value is {0, 1, 10}.
 .Pp classes2
 Permit to list all available size classes.
 .It Cm array_string
-Type is array of string. Default value is {"0", "1", "10"}.
+Type is array of string. Default value is {0, 1, 10}.
 .Pp array_string
 Array of strings
 .It Cm rails
@@ -268,11 +268,19 @@ It support parameters :
 .Pp
 .Bl -tag -width Ds
 .It Cm file_prefix
-Type is string. Default value if mpc_profile. 
+Type is string. Default value is mpc_profile. 
 .Pp file_prefix
 Prefix of MPC Profiler outputs
 .It Cm append_date
-Type is bool. Default value if true. 
+Type is bool. Default value is true. 
 .Pp append_date
 Add a timestamp to profiles file names
+.It Cm color_stdout
+Type is bool. Default value is true. 
+.Pp color_stdout
+Profile in color when outputed to stdout
+.It Cm level_colors
+Type is array of string. Default value is {#3A4D85, #82A2FF, #B8BDCB, #5D6782, #838383, #5A5757}.
+.Pp level_colors
+Color for levels of profiler output
 .El

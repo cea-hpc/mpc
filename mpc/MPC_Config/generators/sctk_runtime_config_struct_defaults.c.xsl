@@ -222,7 +222,14 @@
 		<xsl:for-each select="default/value">
 			<xsl:text>&#09;obj-&gt;</xsl:text>
 			<xsl:value-of select="../../@name" />
-			<xsl:value-of select="concat('[',position()-1,'] = ',.,';&#10;')"/>
+			<xsl:choose>
+				<xsl:when test="../../@type = 'string'">
+					<xsl:value-of select="concat('[',position()-1,'] = &quot;',.,'&quot;;&#10;')"/>
+				</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="concat('[',position()-1,'] = ',.,';&#10;')"/>
+				</xsl:otherwise>
+			</xsl:choose>
 		</xsl:for-each>
 	</xsl:template>
 
