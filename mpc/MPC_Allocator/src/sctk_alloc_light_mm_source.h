@@ -31,7 +31,7 @@ extern "C"
 /************************** HEADERS ************************/
 #ifdef HAVE_LIBNUMA
 #include <hwloc.h>
-#endif
+#endif //HAVE_LIBNUMA
 #include "sctk_allocator.h"
 
 /************************** CONSTS *************************/

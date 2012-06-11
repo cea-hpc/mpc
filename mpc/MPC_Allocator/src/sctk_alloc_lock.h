@@ -25,7 +25,7 @@
 #define SCTK_ALLOC_LOCK_H
 
 /************************** HEADERS ************************/
-#ifndef WIN32
+#ifndef _WIN32
 	#include <pthread.h>
 //#else
 //	#include "winPortage/pthread.h"
@@ -37,7 +37,7 @@
 #endif
 
 /************************** HEADERS ************************/
-#ifdef WIN32
+#ifdef _WIN32
 	#define SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK	
 #endif
 

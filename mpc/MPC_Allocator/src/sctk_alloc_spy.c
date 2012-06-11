@@ -48,7 +48,7 @@ static bool sctk_alloc_glob_spy_as_atexit = false;
 
 
 /********************** PORTABILITY ************************/
-#ifndef WIN32
+#ifndef _WIN32
 	#define OPEN_FILE_PERMISSIONS O_TRUNC|O_WRONLY|O_CREAT,S_IRUSR|S_IRGRP|S_IROTH|S_IWUSR
 #else
 	#define OPEN_FILE_PERMISSIONS O_TRUNC|O_WRONLY|O_CREAT
@@ -105,7 +105,7 @@ void sctk_alloc_spy_chain_get_fname(struct sctk_alloc_chain * chain,char * fname
 	sprintf(dirname,"mpc-alloc-spy-%s-%06d",exename,getpid());
 	sprintf(fname,"%s/alloc-chain-%p.raw",dirname,chain);
 	
-	#ifndef WIN32
+	#ifndef _WIN32
 		mkdir(dirname,S_IRUSR|S_IRGRP|S_IROTH|S_IWUSR|S_IXUSR|S_IXGRP|S_IXOTH);
 	#else
 		_mkdir(dirname);

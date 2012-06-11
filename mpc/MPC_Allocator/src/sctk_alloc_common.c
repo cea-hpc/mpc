@@ -32,7 +32,7 @@
  * OS page size as for mmap.
  * @param size Define the requested segement size. Must be multiple of OS page size as for mmap.
 **/
-#ifdef WIN32
+#ifdef _WIN32
 SCTK_STATIC void* sctk_mmap(void* addr, size_t size)
 {
 	void * res = NULL;
@@ -67,7 +67,7 @@ void* sctk_mmap(void* addr, size_t size)
  * @param size Define the size of the segment to unmap. As for munmap, it must be multiple of
  * OS page size.
 **/
-#ifdef WIN32
+#ifdef _WIN32
 #else
 void sctk_munmap(void * addr,size_t size)
 {

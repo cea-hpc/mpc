@@ -30,7 +30,7 @@ extern "C"
 #endif
 
 /************************** HEADERS ************************/
-#if defined(WIN32)
+#if defined(_WIN32)
 	#include <windows.h>
 #else	
 	#include <sys/mman.h>

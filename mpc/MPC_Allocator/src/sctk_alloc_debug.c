@@ -41,7 +41,7 @@ static const char * SCTK_ALLOC_TYPE_NAME[] = {"small","large"};
 static const char SCTK_ALLOC_TRACE_FILE[] = "alloc-trace-%d.txt";
 
 /*********************** PORTABILITY ***********************/
-#ifndef WIN32
+#ifndef _WIN32
 	#define OPEN_FILE_PERMISSIONS O_TRUNC|O_WRONLY|O_CREAT,S_IRUSR|S_IRGRP|S_IROTH|S_IWUSR
 #else
 	#define OPEN_FILE_PERMISSIONS O_TRUNC|O_WRONLY|O_CREAT
@@ -212,7 +212,7 @@ void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain* chain)
 	sctk_alloc_debug_dump_thread_pool(fd,&chain->pool);
 
 	//close
-	#ifndef WIN32
+	#ifndef _WIN32
 		sync();
 	#endif
 	close(fd);
@@ -229,7 +229,7 @@ void sctk_alloc_crash_dump(void)
 #endif
 
 /************************* FUNCTION ************************/
-#if !defined(NDEBUG) && !defined(WIN32)
+#if !defined(NDEBUG) && !defined(_WIN32)
 void sctk_alloc_debug_setgault_handler(int signal, siginfo_t *si, void *arg)
 {
 	sctk_alloc_perror("SEGMENTATION FAULT");
@@ -238,7 +238,7 @@ void sctk_alloc_debug_setgault_handler(int signal, siginfo_t *si, void *arg)
 #endif
 
 /************************* FUNCTION ************************/
-#if !defined(NDEBUG) && !defined(WIN32)
+#if !defined(NDEBUG) && !defined(_WIN32)
 void sctk_alloc_debug_setup_sighandler()
 {
 	int res;
@@ -261,7 +261,7 @@ void sctk_alloc_debug_setup_sighandler()
 #ifndef NDEBUG
 void sctk_alloc_debug_init(void )
 {
-	#ifndef WIN32
+	#ifndef _WIN32
 		sctk_alloc_debug_setup_sighandler();
 	#endif
 }

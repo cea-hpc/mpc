@@ -25,7 +25,7 @@
 
 /************************** HEADERS ************************/
 #include <stdio.h>
-#ifndef WIN32
+#ifndef _WIN32
 #include <sched.h>
 #endif
 
