@@ -182,9 +182,6 @@ static int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
   int release_ibuf = 1;
   const struct ibv_wc wc = ibuf->wc;
 
-  sctk_nodebug("[%d] Recv ibuf:%p", rail->rail_number,ibuf);
-
-
   /* First we check if the message has an immediate data */
   if (wc.wc_flags & IBV_WC_WITH_IMM) {
     not_reachable();
@@ -235,6 +232,14 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc,
   ibuf = (sctk_ibuf_t*) wc->wr_id;
   assume(ibuf);
 
+#if 0
+  /* Get the remote associated to the ibuf */
+  const sctk_ib_qp_t const *remote = sctk_ib_qp_ht_find(rail_ib, wc->qp_num);
+  ib_assume(remote);
+
+  sctk_debug("Recv message released (rank: %d)", remote->rank);
+#endif
+
   ibuf->wc = *wc;
  return sctk_network_poll_recv_ibuf(rail, ibuf, 0, poll);
 }
@@ -245,6 +250,10 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,
   sctk_ibuf_t *ibuf = NULL;
   ibuf = (sctk_ibuf_t*) wc->wr_id;
   assume(ibuf);
+
+  /* Decrease the number of pending requests */
+  sctk_ib_qp_decr_requests_nb(ibuf->remote);
+  sctk_nodebug("Send message released (rank: %d - pending_nb: %d)", ibuf->remote->rank, sctk_ib_qp_get_requests_nb(ibuf->remote));
 
   ibuf->wc = *wc;
   return sctk_network_poll_send_ibuf(rail, ibuf, 0, poll);
@@ -266,17 +275,12 @@ static int sctk_network_poll_all (sctk_rail_info_t* rail) {
   int ret = OPA_fetch_and_incr_int(&polling_lock);
   if ( recursive_polling || ret < MAX_TASKS_ALLOWED)
   {
-#ifdef SCTK_IB_PROFILER
-    double e, s;
     recursive_polling++;
-#endif
     /* Poll received messages */
     sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, &poll, sctk_network_poll_recv);
     /* Poll sent messages */
     sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, &poll, sctk_network_poll_send);
-#ifdef SCTK_IB_PROFILER
     recursive_polling--;
-#endif
   }
   OPA_decr_int(&polling_lock);
 
@@ -286,8 +290,6 @@ static int sctk_network_poll_all (sctk_rail_info_t* rail) {
 static int sctk_network_poll_all_and_steal(sctk_rail_info_t *rail) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
-  sctk_ib_polling_t poll;
-  POLL_INIT(&poll);
 
   /* POLLING */
   return sctk_network_poll_all(rail);

@@ -765,6 +765,8 @@ static void* wait_send(void *arg){
   if (rc == 0)
   {
     a->flag = 1;
+  } else {
+    sctk_notify_idle_message ();
   }
   return NULL;
 }
@@ -789,11 +791,12 @@ static void* wait_send(void *arg){
     wait_send_arg.ibuf = ibuf;
     wait_send_arg.rail_ib = rail_ib;
 
-    sctk_error("[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d unsignaled: %d)", rail_ib->rail->rail_number,
+    sctk_error("[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d)", rail_ib->rail->rail_number,
         remote->rank, sctk_ib_qp_get_requests_nb(remote));
-    sctk_ib_toolkit_print_backtrace();
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
         (void (*)(void *)) wait_send, &wait_send_arg);
+
+    sctk_error("[%d] NO LOCK QP message sent to remote %d", rail_ib->rail->rail_number, remote->rank);
   }
   sctk_ib_prof_qp_write(remote->rank, ibuf->desc.sg_entry.length,
       sctk_get_time_stamp(), PROF_QP_SEND);

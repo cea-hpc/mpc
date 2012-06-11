@@ -349,19 +349,17 @@ int sctk_network_poll_all (sctk_rail_info_t* rail) {
   {
 #ifdef SCTK_IB_PROFILER
     double e, s;
-
     if (recursive_polling == 0)
       s = sctk_get_time_stamp();
-
-    recursive_polling++;
     poll_cq++;
 #endif
+    recursive_polling++;
     /* Poll received messages */
     sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, &poll, sctk_network_poll_recv);
     /* Poll sent messages */
     sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, &poll, sctk_network_poll_send);
-#ifdef SCTK_IB_PROFILER
     recursive_polling--;
+#ifdef SCTK_IB_PROFILER
     if (recursive_polling == 0) {
       e = sctk_get_time_stamp();
       time_poll_cq += (e - s);
