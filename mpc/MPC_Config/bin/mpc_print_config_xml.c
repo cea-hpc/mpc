@@ -28,6 +28,7 @@
 #include "sctk_debug.h"
 #include "mpc_print_config_xml.h"
 #include "sctk_runtime_config_walk.h"
+#include "sctk_runtime_config_printer.h"
 
 /*********************  CONSTS  *********************/
 /** Header of XML output format. **/
@@ -83,8 +84,12 @@ void mpc_print_config_xml_handler(enum sctk_runtime_config_walk_type type,
 				printf("</%s>\n",name);
 				break;
 			case SCTK_RUNTIME_CONFIG_WALK_UNION:
-				sctk_runtime_config_display_indent(level+2);
-				printf("</%s>\n",name);
+				//print only if the content is not SCTK_RTCFG_..._NONE
+				if (*(int*)value != 0)
+				{
+					sctk_runtime_config_display_indent(level+2);
+					printf("</%s>\n",name);
+				}
 				break;
 		}
 	} else {
@@ -112,8 +117,12 @@ void mpc_print_config_xml_handler(enum sctk_runtime_config_walk_type type,
 				}
 				break;
 			case SCTK_RUNTIME_CONFIG_WALK_UNION:
-				sctk_runtime_config_display_indent(level+2);
-				printf("<%s>\n",name);
+				//print only if the content is not SCTK_RTCFG_..._NONE
+				if (*(int*)value != 0)
+				{
+					sctk_runtime_config_display_indent(level+2);
+					printf("<%s>\n",name);
+				}
 				break;
 		}
 	}

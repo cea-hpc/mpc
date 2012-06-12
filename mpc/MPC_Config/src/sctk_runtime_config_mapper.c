@@ -382,6 +382,13 @@ void sctk_runtime_config_map_union( const struct sctk_runtime_config_entry_meta 
 	//get first child
 	child = xmlFirstElementChild(node);
 
+	//not found
+	if (child == NULL)
+	{
+		sctk_warning("Invalid child in union node %s.",current->name);
+		return;
+	}
+
 	//skip the union entry itself
 	entry = current+1;
 	//search corresponding type in union acceped list

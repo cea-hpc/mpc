@@ -122,7 +122,7 @@ echo "" >> Makefile
 echo "MAKEFLAGS += --no-print-directory"  >> Makefile
 echo "" >> Makefile
 
-echo "all:lib/libmpc.a lib/libmpcf.a lib/libmpc_thread_db.so lib/libmpc_tdb_remote_static.a bin/mpc_launch_config share/mpc/config.xml.example"  >> Makefile
+echo "all:lib/libmpc.a lib/libmpcf.a lib/libmpc_thread_db.so lib/libmpc_tdb_remote_static.a bin/mpc_print_config share/mpc/config.xml.example"  >> Makefile
 echo "" >> Makefile
 
 echo "#"  >> Makefile
@@ -144,11 +144,11 @@ if test "$SCTK_FORTRAN" = "1"; then
 fi
 
 #
-# Rule for bin/mpc_launch_config
+# Rule for bin/mpc_print_config
 #
 echo "" >> Makefile
-echo "bin/mpc_launch_config: lib/libmpc.a" >> Makefile
-printf "\t@echo Build bin/mpc_launch_config" >> Makefile; echo "" >> Makefile
+echo "bin/mpc_print_config: lib/libmpc.a" >> Makefile
+printf "\t@echo Build bin/mpc_print_config" >> Makefile; echo "" >> Makefile
 printf "\t@DIR_DEST_EXE=${PWD}/bin BUILD_DIR=\$(M_PWD)/BUILD_MPC_Config/bin \$(MAKE) -C ${MPC_SOURCE_DIR}MPC_Config/bin build_exe" >> Makefile; echo "" >> Makefile
 
 #
