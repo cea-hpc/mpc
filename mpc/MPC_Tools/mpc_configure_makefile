@@ -263,11 +263,15 @@ fi
 
 #
 # Rule to generate the example config file
+# GGRRRRRRRR !!!!!!!
+# LD_LIBRARY_PATH is only needed because it sucks to build the MPC_Config module an independant
+# library. We didn't need the other part of MPC here and the sources are independant......
+# It will cause some trouble one day.... (sorry for the one who need to debug)
 #
 echo "" >> Makefile
 echo "share/mpc/config.xml.example: ${MPC_SOURCE_DIR}MPC_Config/extra/config.xml.example bin/mpc_print_config" >> Makefile
 printf "\t@mkdir -p share/mpc">> Makefile; echo "">> Makefile
-printf "\t@./bin/mpc_print_config --xml --system=${MPC_SOURCE_DIR}MPC_Config/extra/config.xml.example --user=none --app= > share/mpc/config.xml.example">> Makefile; echo "">> Makefile
+printf "\t@LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) ./bin/mpc_print_config --xml --system=${MPC_SOURCE_DIR}MPC_Config/extra/config.xml.example --user=none --app= > share/mpc/config.xml.example">> Makefile; echo "">> Makefile
 
 #
 # Rule 'install'
