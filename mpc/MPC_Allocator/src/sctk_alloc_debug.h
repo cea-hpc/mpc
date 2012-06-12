@@ -29,17 +29,17 @@
 
 /************************** MACROS *************************/
 #ifdef NDEBUG
-	#define SCTK_PDEBUG //sctk_alloc_pdebug
-	#define SCTK_CRASH_DUMP //sctk_alloc_crash_dump
+	#define SCTK_PDEBUG(...)
+	#define SCTK_CRASH_DUMP
 #else //NDEBUG
-	#define SCTK_PDEBUG sctk_alloc_pdebug
+	#define SCTK_PDEBUG(...) sctk_alloc_pdebug(__VA_ARGS__)
 	#define SCTK_CRASH_DUMP sctk_alloc_crash_dump
 #endif //NDEBUG
 
 #ifdef ENABLE_TRACE
-	#define SCTK_PTRACE sctk_alloc_ptrace
+	#define SCTK_PTRACE(m,...) sctk_alloc_ptrace((m),__VA_ARGS__)
 #else
-	#define SCTK_PTRACE //sctk_alloc_ptrace
+	#define SCTK_PTRACE(m,...)
 #endif
 
 /************************** MACROS *************************/

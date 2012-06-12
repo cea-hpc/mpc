@@ -658,7 +658,6 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_merge_chunk(struct sctk_thread_pool * p
 {
 	sctk_alloc_vchunk cur = first_page_chunk;
 	sctk_alloc_vchunk last;
-	struct sctk_alloc_free_chunk * fchunk;
 	sctk_size_t size;
 	
 	//error
@@ -1214,9 +1213,7 @@ void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sct
 	sctk_size_t old_size;
 	sctk_size_t copy_size;
 	sctk_alloc_vchunk vchunk;
-	struct sctk_alloc_macro_bloc * old_macro_bloc = NULL;
-	struct sctk_alloc_macro_bloc * new_macro_bloc = NULL;
-	
+
 	//errors
 	assert(chain != NULL);
 
@@ -1537,7 +1534,6 @@ SCTK_STATIC void sctk_alloc_mm_source_default_free_memory(struct sctk_alloc_mm_s
 	sctk_alloc_vchunk vfirst;
 	struct sctk_alloc_free_macro_bloc* fbloc = (struct sctk_alloc_free_macro_bloc* )bloc;
 	struct sctk_alloc_mm_source_default * source_default = (struct sctk_alloc_mm_source_default*)source;
-	sctk_size_t original_size = bloc->header.size;
 
 	//error
 	assume(source != NULL, "Can't free the memory without an allocation chain.");
@@ -1835,18 +1831,21 @@ SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_region_get_macro_bloc(void
 	entry = sctk_alloc_region_get_entry(ptr);
 	if (entry == NULL)
 	{
-		return NULL;
+		macro_bloc = NULL;
 	} else if (entry->macro_bloc == NULL || (void*)entry->macro_bloc > ptr) {
 		entry = sctk_alloc_region_get_entry(ptr - SCTK_MACRO_BLOC_SIZE);
 		if (entry == NULL)
-			return NULL;
+			macro_bloc = NULL;
 		else if (ptr > (void*)entry->macro_bloc && ptr < (void*)entry->macro_bloc + entry->macro_bloc->header.size)
-			return entry->macro_bloc;
+			macro_bloc = entry->macro_bloc;
 		else
-			return NULL;
+			macro_bloc = NULL;
 	} else {
-		return entry->macro_bloc;
+		macro_bloc = entry->macro_bloc;
 	}
+
+	//final status
+	return macro_bloc;
 }
 
 /************************* FUNCTION ************************/
@@ -1912,7 +1911,6 @@ SCTK_STATIC bool sctk_alloc_region_exist(void* addr)
 **/
 SCTK_STATIC void sctk_alloc_region_init(void )
 {
-	int i;
 	if (!sctk_alloc_glob_regions_init)
 	{
 		sctk_alloc_spinlock_init(&sctk_alloc_glob_regions_lock,0);

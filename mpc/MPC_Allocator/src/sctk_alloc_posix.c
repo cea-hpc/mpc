@@ -244,7 +244,7 @@ void sctk_alloc_posix_base_init(void)
 {
 	/** @todo check for optimization **/
 	static SCTK_ALLOC_INIT_LOCK_TYPE global_mm_mutex = SCTK_ALLOC_INIT_LOCK_INITIALIZER;
-	#warning Maybe allocate this with mmap or sbrk
+	/** @todo Maybe allocate this with mmap or sbrk **/
 	static char buffer[SCTK_MACRO_BLOC_SIZE];
 
 	//check to avoid taking the mutex if not necessary
@@ -371,7 +371,6 @@ void * sctk_malloc (size_t size)
 {
 	//to avoid many access to TLS variable
 	struct sctk_alloc_chain * local_chain = sctk_current_alloc_chain;
-	static int cnt =  0;
 	void * res;
 
 	//setup the local chain if not already done
@@ -400,7 +399,6 @@ void * sctk_memalign(size_t boundary,size_t size)
 {
 	//to avoid many access to TLS variable
 	struct sctk_alloc_chain * local_chain = sctk_current_alloc_chain;
-	static int cnt =  0;
 	void * res;
 
 	//setup the local chain if not already done
@@ -439,7 +437,9 @@ void sctk_free (void * ptr)
 {
 	//to avoid many access to TLS variable
 	struct sctk_alloc_chain * local_chain = sctk_current_alloc_chain;
+	#ifndef NDEBUG
 	static int cnt = 0;
+	#endif
 
 	//setup the local chain if not already done
 	//we need a non null chain when spy is enabled to avoid crash on remote free before a first
@@ -511,7 +511,6 @@ void * sctk_realloc (void * ptr, size_t size)
 	struct sctk_alloc_chain * local_chain = NULL;
 	struct sctk_alloc_chain * chain = NULL;
 	struct sctk_alloc_macro_bloc * macro_bloc = NULL;
-	sctk_size_t copy_size = size;
 	void * res = NULL;
 
 	//get the current chain

@@ -41,6 +41,7 @@ sctk_size_t sctk_alloc_posix_get_size(void *ptr);
 void sctk_alloc_posix_plug_on_egg_allocator(void);
 
 /************************* FUNCTION ************************/
+void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void);
 #ifdef MPC_ALLOCATOR_DISABLE_STATIC
 SCTK_STATIC void sctk_alloc_posix_mmsrc_uma_init(void);
 SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init(void);

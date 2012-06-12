@@ -49,7 +49,9 @@ static const char SCTK_ALLOC_TRACE_FILE[] = "alloc-trace-%d.txt";
 
 /************************* GLOBALS *************************/
 /** File descriptor for PTRACE output file. **/
+#ifdef ENABLE_TRACE
 static int SCTK_ALLOC_TRACE_FD = -1;
+#endif
 
 /************************* FUNCTION ************************/
 /**
@@ -133,7 +135,6 @@ void sctk_alloc_fprintf(int fd,const char * format,...)
 /************************* FUNCTION ************************/
 void sctk_alloc_debug_dump_segment(int fd,void* base_addr, void* end_addr)
 {
-	sctk_size_t sum = 0;
 	sctk_size_t prev_size = 0;
 	sctk_alloc_vchunk vchunk;
 	
