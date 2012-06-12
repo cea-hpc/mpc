@@ -35,8 +35,6 @@
 #include "sctk_profile_render_tex.h"
 #include "sctk_profile_render_html.h"
 
-
-
 void sctk_profiler_renderer_clear_handlers( struct sctk_profile_renderer *rd )
 {
 	rd->setup = NULL;
@@ -464,7 +462,7 @@ struct MPC_prof_color sctk_profile_renderer_to_rgb( char *hex_col )
 
 const struct sctk_runtime_config_struct_profiler * sctk_profile_get_config()
 {
-	return (struct sctk_runtime_config_struct_profiler *)&sctk_config_runtime_get()->modules.profiler;
+	return (struct sctk_runtime_config_struct_profiler *)&sctk_runtime_config_get()->modules.profiler;
 }
 
 
