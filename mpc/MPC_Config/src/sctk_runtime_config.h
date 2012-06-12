@@ -54,7 +54,7 @@ static inline bool sctk_runtime_config_init_done(void)
  * Function to use to get access to the configuration structure of MPC. It ensure that it was initialized
  * when the function return.
 **/
-static inline const struct sctk_runtime_config * sctk_config_runtime_get(void)
+static inline const struct sctk_runtime_config * sctk_runtime_config_get(void)
 {
 	if ( ! __sctk_global_runtime_config_init__ )
 		sctk_runtime_config_init();

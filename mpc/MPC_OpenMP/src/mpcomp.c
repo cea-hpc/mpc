@@ -235,7 +235,7 @@ __mpcomp_init (void)
 
 
 	  /***** PRINT SUMMARY ******/
-	  if ( (sctk_config_runtime_get()->modules.launcher.banner) && (sctk_get_process_rank() == 0) ) {
+	  if ( (sctk_runtime_config_get()->modules.launcher.banner) && (sctk_get_process_rank() == 0) ) {
 	    fprintf (stderr,
 		"MPC OpenMP version %d.%d (DEV)\n",
 		SCTK_OMP_VERSION_MAJOR, SCTK_OMP_VERSION_MINOR);

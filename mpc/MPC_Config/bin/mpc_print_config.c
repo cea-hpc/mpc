@@ -224,7 +224,7 @@ int load_and_print_mpc_config(const struct command_options * options)
 		setenv("MPC_DISABLE_CONFIG","1",1);
 
 	//load the config
-	const struct sctk_runtime_config * config = sctk_config_runtime_get();
+	const struct sctk_runtime_config * config = sctk_runtime_config_get();
 
 	//print
 	switch(options->mode)
@@ -281,5 +281,5 @@ int main(int argc, char ** argv)
 **/
 int mpc_user_main__(void)
 {
-	
+	return EXIT_FAILURE;	
 }
