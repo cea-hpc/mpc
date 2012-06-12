@@ -26,9 +26,14 @@
 
 #include "sctk_spinlock.h"
 
+#undef SIZE_COUNTER
+#undef COUNTER
 #undef PROBE
-#define PROBE( key, parent, desc ) SCTK_PROFILE_ ## key,
 
+#define SIZE_COUNTER PROBE
+#define COUNTER PROBE
+
+#define PROBE( key, parent, desc ) SCTK_PROFILE_ ## key,
 
 typedef enum
 {
@@ -37,17 +42,27 @@ typedef enum
 	SCTK_PROFILE_KEY_COUNT
 }sctk_profile_key;
 
+#undef SIZE_COUNTER
+#undef COUNTER
+#undef PROBE
 
 
+typedef enum
+{
+	SCTK_PROFILE_TIME_PROBE,
+	SCTK_PROFILE_COUNTER_SIZE_PROBE,
+	SCTK_PROFILE_COUNTER_PROBE
+}sctk_profile_key_type;
 
 struct sctk_profiler_array
 {
 	uint64_t sctk_profile_hits[ SCTK_PROFILE_KEY_COUNT ];
-	uint64_t sctk_profile_time[ SCTK_PROFILE_KEY_COUNT ];
+	uint64_t sctk_profile_value[ SCTK_PROFILE_KEY_COUNT ];
 	uint64_t sctk_profile_max[ SCTK_PROFILE_KEY_COUNT ];
 	uint64_t sctk_profile_min[ SCTK_PROFILE_KEY_COUNT ];
+
 	sctk_spinlock_t lock;
-	
+
 	uint64_t been_unified;
 };
 
@@ -63,28 +78,35 @@ void sctk_profiler_array_release(struct sctk_profiler_array *array);
 void sctk_profiler_array_unify( struct sctk_profiler_array *array );
 void sctk_profiler_array_walk( struct sctk_profiler_array *array, void (*handler)( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg ), void *arg , int DFS );
 
-static inline void sctk_profiler_array_hit( struct sctk_profiler_array *array, int id, uint64_t duration )
+static inline void sctk_profiler_array_hit( struct sctk_profiler_array *array, int id, int64_t value )
 {
 	sctk_spinlock_lock( &array->lock );
 	{
 
 		array->sctk_profile_hits[ id ]++;
-		array->sctk_profile_time[ id ] += duration;
 		
-		if( (array->sctk_profile_min[ id ] == 0) || (duration < array->sctk_profile_min[ id ]) )
+		if( (value + array->sctk_profile_value[ id ]) < 0 )
 		{
-			array->sctk_profile_min[ id ] = duration;
+			array->sctk_profile_value[ id ] = 0;
+		}
+		else
+		{
+			array->sctk_profile_value[ id ] += value;
 		}
 		
-		if( (array->sctk_profile_max[ id ] == 0) || (array->sctk_profile_max[ id ] < duration) )
+		if( (array->sctk_profile_min[ id ] == 0) || (value < array->sctk_profile_min[ id ]) )
 		{
-			array->sctk_profile_max[ id ] = duration;
+			array->sctk_profile_min[ id ] = value;
+		}
+		
+		if( (array->sctk_profile_max[ id ] == 0) || (array->sctk_profile_max[ id ] < value) )
+		{
+			array->sctk_profile_max[ id ] = value;
 		}
 
 	}
 	sctk_spinlock_unlock( &array->lock );
 }
-
 
 /* GETTERS */
 
@@ -101,14 +123,21 @@ static inline uint64_t sctk_profiler_array_get_from_tab( struct sctk_profiler_ar
 	return ret;
 }
 
+extern sctk_profile_key_type sctk_profile_type[ SCTK_PROFILE_KEY_COUNT ];
+
+static inline sctk_profile_key_type sctk_profiler_array_get_type( int id )
+{
+	return sctk_profile_type[id];
+}
+
 static inline uint64_t sctk_profiler_array_get_hits( struct sctk_profiler_array *array, int id )
 {
 	return sctk_profiler_array_get_from_tab( array, array->sctk_profile_hits , id );
 }
 
-static inline uint64_t sctk_profiler_array_get_time( struct sctk_profiler_array *array, int id )
+static inline uint64_t sctk_profiler_array_get_value( struct sctk_profiler_array *array, int id )
 {
-	return sctk_profiler_array_get_from_tab( array, array->sctk_profile_time , id );
+	return sctk_profiler_array_get_from_tab( array, array->sctk_profile_value , id );
 }
 
 static inline uint64_t sctk_profiler_array_get_max( struct sctk_profiler_array *array, int id )

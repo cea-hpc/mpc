@@ -110,23 +110,33 @@ void sctk_profile_render_text_teardown( struct sctk_profile_renderer *rd )
 
 void sctk_profile_render_text_render_entry( struct sctk_profiler_array *array, int id, int parent_id, int depth, struct sctk_profile_renderer *rd )
 {
-	char buffA[500], buffB[500], buffC[500], buffD[500];
+	char buffA[100], buffB[100], buffC[100], buffD[100];
 
 	char *to_unit_total = NULL;
 	char *to_unit_avg = NULL;
 	char *to_unit_min = NULL;
 	char *to_unit_max = NULL;
 
-	if( !sctk_profile_render_text_is_raw )
+	if( !sctk_profile_render_text_is_raw  && sctk_profiler_array_get_type( id ) != SCTK_PROFILE_COUNTER_PROBE  )
 	{
-		to_unit_total = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_time(array, id) , buffA );
-		to_unit_avg = sctk_profile_renderer_convert_to_time( rd->ptree.entry_average_time[id] , buffB );
-		to_unit_min = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_min(array, id) , buffC );
-		to_unit_max = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_max(array, id) , buffD );
+		if( sctk_profiler_array_get_type( id ) == SCTK_PROFILE_COUNTER_SIZE_PROBE)
+		{
+			to_unit_total = sctk_profile_renderer_convert_to_size( sctk_profiler_array_get_value(array, id) , buffA );
+			to_unit_avg = sctk_profile_renderer_convert_to_size( rd->ptree.entry_average_time[id] , buffB );
+			to_unit_min = sctk_profile_renderer_convert_to_size( sctk_profiler_array_get_min(array, id) , buffC );
+			to_unit_max = sctk_profile_renderer_convert_to_size( sctk_profiler_array_get_max(array, id) , buffD );
+		}
+		else if( sctk_profiler_array_get_type( id ) == SCTK_PROFILE_TIME_PROBE )
+		{
+			to_unit_total = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_value(array, id) , buffA );
+			to_unit_avg = sctk_profile_renderer_convert_to_time( rd->ptree.entry_average_time[id] , buffB );
+			to_unit_min = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_min(array, id) , buffC );
+			to_unit_max = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_max(array, id) , buffD );
+		}
 	}
 	else
 	{
-		sprintf(buffA, "%llu", (unsigned long long int )sctk_profiler_array_get_time(array, id));
+		sprintf(buffA, "%llu", (unsigned long long int )sctk_profiler_array_get_value(array, id));
 		to_unit_total = buffA;
 
 		sprintf(buffB, "%llu", (unsigned long long int )rd->ptree.entry_average_time[id]);
@@ -150,10 +160,10 @@ void sctk_profile_render_text_render_entry( struct sctk_profiler_array *array, i
 
 		if( sctk_profile_get_config()->color_stdout )
 		{
-			fprintf( rd->output_file, SCTK_COLOR_RED_BOLD(%-15s)"  "SCTK_COLOR_BLUE_BOLD(%10llu)"  "SCTK_COLOR_GREEN_BOLD(%-10s)"  "
-									  SCTK_COLOR_VIOLET_BOLD(( %1g %% ))"  %-10s  %-10s  %-10s\n", sctk_profiler_array_get_desc( id ), (unsigned long long int )sctk_profiler_array_get_hits( array, id ),
-																		 to_unit_total, rd->ptree.entry_total_percentage_time[id] * 100,
-																		 to_unit_avg, to_unit_min, to_unit_max);
+				fprintf( rd->output_file, SCTK_COLOR_RED_BOLD(%-15s)"  "SCTK_COLOR_BLUE_BOLD(%10llu)"  "SCTK_COLOR_GREEN_BOLD(%-10s)"  "
+										  SCTK_COLOR_VIOLET_BOLD(( %1g %% ))"  %-10s  %-10s  %-10s\n", sctk_profiler_array_get_desc( id ), (unsigned long long int )sctk_profiler_array_get_hits( array, id ),
+																			 to_unit_total, rd->ptree.entry_total_percentage_time[id] * 100,
+																			 to_unit_avg, to_unit_min, to_unit_max);
 		}
 		else
 		{

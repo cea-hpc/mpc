@@ -329,7 +329,21 @@ void sctk_profile_renderer_render( struct sctk_profile_renderer *rd )
 	}
 }
 
+char *sctk_profile_renderer_convert_to_size( uint64_t size , char *to_size )
+{
 
+	if( size < 1024 ) {
+		sprintf(to_size, "%ld B", size);
+	} else if( size < 1024*1024 ) {
+		sprintf(to_size, "%.2f KB", (float)size/1024);
+	} else if( size < 1024*1024*1024 ) {
+		sprintf(to_size, "%.2f MB", (float)size/(1024*1024));
+	} else {
+		sprintf(to_size, "%.2f GB", (float)size/(1073741824llu));
+	}
+
+	return to_size;
+}
 
 char *sctk_profile_renderer_convert_to_time( uint64_t duration , char *to_unit )
 {

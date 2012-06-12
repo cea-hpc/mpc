@@ -118,14 +118,19 @@ PROBE( MPI, NO_PARENT, MPI Interface)
 		PROBE( MPC_Init, MPI_SETUP , MPC_Init)
 		PROBE( MPC_Initialized, MPI_SETUP , MPC_Initialized)
 
+
+
+
 PROBE( ALLOCATOR, NO_PARENT, MPC Allocator)
 	PROBE( POSIX_ALLOC, ALLOCATOR, Posix allocator Interface)
+		SIZE_COUNTER( malloc_size, POSIX_ALLOC, size allocated by  malloc)
 		PROBE( malloc, POSIX_ALLOC,  malloc)
 		PROBE( calloc, POSIX_ALLOC,  calloc)
 		PROBE( realloc, POSIX_ALLOC,  realloc)
 		PROBE( free, POSIX_ALLOC,  free)
 	PROBE( MPC_ALLOC, ALLOCATOR, MPC internal allocator Interface)
 		PROBE( sctk_malloc, MPC_ALLOC,  sctk_malloc)
+		SIZE_COUNTER( sctk_malloc_size, MPC_ALLOC, size allocated by sctk_malloc)
 		PROBE( sctk_calloc, MPC_ALLOC,  sctk_calloc)
 		PROBE( sctk_realloc, MPC_ALLOC,  sctk_realloc)
 		PROBE( sctk_free, MPC_ALLOC,  sctk_free)

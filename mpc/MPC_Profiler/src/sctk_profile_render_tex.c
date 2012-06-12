@@ -180,22 +180,54 @@ void sctk_profile_render_tex_setup_profile( struct sctk_profile_renderer *rd )
 	fprintf(rd->output_file,
 			"\\begin{center}\n"
 			"\\begin{tabular}{lccccccc}\n"
-			"Name & Hits & Total Time & Average Time & Minimum Time & Maximum Time & Section & Global \\\\\n");
+			"Name & Hits & Total & Average & Minimum & Maximum & Section & Global \\\\\n");
 }
 
 
 void sctk_profile_render_tex_render_profile( struct sctk_profiler_array *array, int id, int parent_id, int depth, struct sctk_profile_renderer *rd )
 {
-	char buffA[500], buffB[500], buffC[500], buffD[500];
+	char buffA[100], buffB[100], buffC[100], buffD[100];
 	
 	const char *prefix[3] = { "\\textbf", " ", "\\textit" };
 
 	int prefix_id = (depth<sctk_profile_get_config()->level_colors_size)?depth:sctk_profile_get_config()->level_colors_size - 1;
 
-	char *to_unit_total = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_time(array, id) , buffA );
-	char *to_unit_avg = sctk_profile_renderer_convert_to_time( rd->ptree.entry_average_time[id] , buffB );
-	char *to_unit_min = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_min(array, id) , buffC );
-	char *to_unit_max = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_max(array, id) , buffD );
+	char *to_unit_total = NULL;
+	char *to_unit_avg = NULL;
+	char *to_unit_min = NULL;
+	char *to_unit_max = NULL;
+
+	if( sctk_profiler_array_get_type( id ) != SCTK_PROFILE_COUNTER_PROBE  )
+	{
+		if( sctk_profiler_array_get_type( id ) == SCTK_PROFILE_COUNTER_SIZE_PROBE)
+		{
+			to_unit_total = sctk_profile_renderer_convert_to_size( sctk_profiler_array_get_value(array, id) , buffA );
+			to_unit_avg = sctk_profile_renderer_convert_to_size( rd->ptree.entry_average_time[id] , buffB );
+			to_unit_min = sctk_profile_renderer_convert_to_size( sctk_profiler_array_get_min(array, id) , buffC );
+			to_unit_max = sctk_profile_renderer_convert_to_size( sctk_profiler_array_get_max(array, id) , buffD );
+		}
+		else if( sctk_profiler_array_get_type( id ) == SCTK_PROFILE_TIME_PROBE )
+		{
+			to_unit_total = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_value(array, id) , buffA );
+			to_unit_avg = sctk_profile_renderer_convert_to_time( rd->ptree.entry_average_time[id] , buffB );
+			to_unit_min = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_min(array, id) , buffC );
+			to_unit_max = sctk_profile_renderer_convert_to_time( sctk_profiler_array_get_max(array, id) , buffD );
+		}
+	}
+	else
+	{
+		sprintf(buffA, "%llu", (unsigned long long int )sctk_profiler_array_get_value(array, id));
+		to_unit_total = buffA;
+
+		sprintf(buffB, "%llu", (unsigned long long int )rd->ptree.entry_average_time[id]);
+		to_unit_avg = buffB;
+
+		sprintf(buffC, "%llu", (unsigned long long int )sctk_profiler_array_get_min(array, id));
+		to_unit_min = buffC;
+
+		sprintf(buffD, "%llu", (unsigned long long int )sctk_profiler_array_get_max(array, id));
+		to_unit_max = buffD;
+	}
 
 	char *desc = sctk_profile_render_tex_sanitize_string( sctk_profiler_array_get_desc( id ) );
 

@@ -102,8 +102,8 @@ void sctk_internal_profiler_reduce(int rank)
 		         0,
 		         MPC_COMM_WORLD);
 
-	PMPC_Reduce( sctk_internal_profiler_get_tls_array()->sctk_profile_time,
-	             reduce_array->sctk_profile_time,
+	PMPC_Reduce( sctk_internal_profiler_get_tls_array()->sctk_profile_value,
+	             reduce_array->sctk_profile_value,
 		         SCTK_PROFILE_KEY_COUNT,
 		         MPC_LONG_LONG_INT,
 		         MPC_SUM,

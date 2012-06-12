@@ -23,7 +23,7 @@
 #define SCTK_INTERNAL_PROFILER
 
 #include <stdint.h>
-
+#include "sctk_debug.h"
 #include "sctk_profiler_array.h"
 #include "sctk_profile_meta.h"
 #include "sctk_asm.h"
@@ -83,9 +83,28 @@ static inline void sctk_profiler_internal_hit( int key, uint64_t duration )
 
 /* Macros */
 
-#define SCTK_PROFIL_START(key) uint64_t ___sctk_profile_begin = sctk_get_time_stamp();
-#define SCTK_PROFIL_END(key) sctk_profiler_internal_hit(  SCTK_PROFILE_ ## key , sctk_get_time_stamp() - ___sctk_profile_begin );
+#define SCTK_PROFIL_START(key) uint64_t ___sctk_profile_begin_ ## key = sctk_get_time_stamp();
+#define SCTK_PROFIL_END(key) sctk_profiler_internal_hit( SCTK_PROFILE_ ## key , sctk_get_time_stamp() - ___sctk_profile_begin_ ## key );
 
+#define SCTK_COUNTER_INC(key, value) if( sctk_profiler_array_get_type( SCTK_PROFILE_ ## key ) != SCTK_PROFILE_TIME_PROBE )\
+									{\
+									   sctk_profiler_internal_hit( SCTK_PROFILE_ ## key , value );\
+									}\
+									else\
+									{\
+									   sctk_error("Cannot increment a time probe at %s:%d", __FILE__, __LINE__);\
+									   abort();\
+									}
+
+#define SCTK_COUNTER_DEC(key, value) if( sctk_profiler_array_get_type( SCTK_PROFILE_ ## key ) != SCTK_PROFILE_TIME_PROBE )\
+									{\
+									   sctk_profiler_internal_hit( SCTK_PROFILE_ ## key , -value );\
+									}\
+									else\
+									{\
+									   sctk_error("Cannot decrement a time probe at %s:%d", __FILE__, __LINE__);\
+									   abort();\
+									}
 /* ****** */
 
 #endif /* SCTK_INTERNAL_PROFILER */
