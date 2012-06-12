@@ -151,10 +151,8 @@ void sctk_runtime_config_walk_array(const struct sctk_runtime_config_entry_meta 
                                     const char * name,const struct sctk_runtime_config_entry_meta * current_meta,void ** value,int level,void * opt)
 {
 	//vars
-	const struct sctk_runtime_config_entry_meta * entry;
 	int size;
 	int i;
-	bool is_basic_type;
 
 	//error
 	assert(config_meta != NULL);
@@ -208,7 +206,6 @@ void sctk_runtime_config_walk_value(const struct sctk_runtime_config_entry_meta 
 {
 	//vars
 	const struct sctk_runtime_config_entry_meta * entry;
-	bool is_basic_type;
 
 	//error
 	assert(config_meta != NULL);

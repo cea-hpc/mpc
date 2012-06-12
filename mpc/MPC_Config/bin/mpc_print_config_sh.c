@@ -28,6 +28,7 @@
 #include "sctk_debug.h"
 #include "mpc_print_config_sh.h"
 #include "sctk_runtime_config_walk.h"
+#include "sctk_runtime_config_printer.h"
 
 /*******************  FUNCTION  *********************/
 /**

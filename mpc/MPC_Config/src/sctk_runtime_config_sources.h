@@ -49,9 +49,9 @@
 /** Tag name of selectors node in XML document. **/
 #define SCTK_RUNTIME_CONFIG_XML_NODE_SELECTORS BAD_CAST("selectors")
 /** Tag name of modules node in XML document. **/
-#define SCTK_RUNTIME_CONFIG_XML_NODE_MODULES BAD_CAST("modules")
+#define SCTK_RUNTIME_CONFIG_XML_NODE_MODULES "modules"
 /** Tag name of networks node in XML document. **/
-#define SCTK_RUNTIME_CONFIG_XML_NODE_NETWORKS BAD_CAST("networks")
+#define SCTK_RUNTIME_CONFIG_XML_NODE_NETWORKS "networks"
 
 /*********************  STRUCT  *********************/
 /**

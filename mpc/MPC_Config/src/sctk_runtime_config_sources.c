@@ -436,11 +436,11 @@ const char * sctk_runtime_config_get_env_or_value(const char * env_name,const ch
 void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * config_sources)
 {
 	//vars
-	#warning Maybe allocate dynamically
-	char user_home_file[1024];
+	char * user_home_file = NULL;
 	const char * config_system;
 	const char * config_user;
 	const char * config_app;
+	const char * tmp;
 	static const char * def_sys_path = SCTK_INSTALL_PREFIX "/share/mpc/config.xml";
 	static const char * def_sys_path_fallback = SCTK_INSTALL_PREFIX "/share/mpc/config.xml.example";
 
@@ -451,6 +451,9 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 	memset(config_sources,0,sizeof(*config_sources));
 
 	//calc user path
+	tmp = getenv("HOME");
+	assume_m(tmp != NULL,"Can't read HOME environnement variable, get NULL.");
+	user_home_file = malloc(strlen(tmp) + 17);
 	sprintf(user_home_file,"%s/.mpc/config.xml",getenv("HOME"));
 
 	//try to load from env
@@ -479,6 +482,9 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 
 	//find profiles to use and sort them depeding on priority
 	sctk_runtime_config_sources_select_profiles(config_sources);
+
+	//free temp memory
+	free(user_home_file);
 }
 
 /*******************  FUNCTION  *********************/

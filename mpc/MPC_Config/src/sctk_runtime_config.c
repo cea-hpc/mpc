@@ -60,7 +60,7 @@ void sctk_runtime_config_map_profile_entry(void * value, xmlNodePtr node,const c
 	assert(xmlStrcmp(node->name,SCTK_RUNTIME_CONFIG_XML_NODE_PROFILE) == 0);
 
 	//get the entry while taking in XML childs
-	entry = sctk_libxml_find_child_node(node,entry_name);
+	entry = sctk_libxml_find_child_node(node,BAD_CAST(entry_name));
 
 	//if have entry, map
 	if (entry != NULL)

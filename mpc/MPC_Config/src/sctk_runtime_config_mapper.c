@@ -80,7 +80,7 @@ char * sctk_runtime_config_map_entry_to_string(xmlNodePtr node)
 {
 	char *ret = NULL;
 	xmlChar * value = xmlNodeGetContent(node);
-	ret = strdup( BAD_CAST( value ) );
+	ret = strdup( (char*)value );
 	xmlFree(value);
 	return ret;
 }
@@ -188,7 +188,7 @@ size_t sctk_runtime_config_map_entry_to_size(xmlNodePtr node)
 	size_t ret = 0;
 	xmlChar * value = xmlNodeGetContent(node);
 
-	ret = sctk_runtime_config_map_entry_parse_size( BAD_CAST(value) );
+	ret = sctk_runtime_config_map_entry_parse_size( (char *)value );
 
 	xmlFree(value);
 	return ret;
