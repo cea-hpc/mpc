@@ -122,7 +122,7 @@ echo "" >> Makefile
 echo "MAKEFLAGS += --no-print-directory"  >> Makefile
 echo "" >> Makefile
 
-echo "all:lib/libmpc.a lib/libmpcf.a lib/libmpc_thread_db.so lib/libmpc_tdb_remote_static.a bin/mpc_print_config share/mpc/config.xml.example"  >> Makefile
+echo "all:lib/libmpc.a lib/libmpcf.a lib/libmpc_thread_db.so lib/libmpc_tdb_remote_static.a bin/mpc_print_config"  >> Makefile
 echo "" >> Makefile
 
 echo "#"  >> Makefile
@@ -275,7 +275,7 @@ printf "\t@LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)
 # Rule 'install'
 #
 echo "" >> Makefile
-echo "install: all" >> Makefile
+echo "install: all share/mpc/config.xml.example" >> Makefile
 printf "\t@rm -rf INSTALL">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL">> Makefile; echo "">> Makefile
 printf "\t@cp -r bin INSTALL">> Makefile; echo "">> Makefile
