@@ -721,12 +721,6 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_merge_chunk(struct sctk_thread_pool * p
 **/
 SCTK_STATIC void sctk_alloc_chain_base_init(struct sctk_alloc_chain * chain)
 {
-	//memory reservation for portability with virtualAlloc
-	#ifdef _WIN32
-		
-		void *ptr = VirtualAlloc((void*)SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE,MEM_RESERVE,PAGE_EXECUTE_READWRITE);
-		assert(ptr == chain);
-	#endif
 	//init lists
 	/** @todo TODO add a call to spin destroy while removing the chain **/
 	sctk_alloc_thread_pool_init(&chain->pool,SCTK_ALLOC_FREE_SIZES);

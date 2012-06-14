@@ -17,7 +17,6 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
-/* #   - Adam Julien julien.adam.ocre@cea.fr                              # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -630,7 +629,7 @@ void sctk_alloc_spy_emit_event_chain_merge(struct sctk_alloc_chain * chain, void
  * @param orig_ptr The original pointer to free.
  * @param new_requested_size Define the new size requested by user.
 **/
-void sctk_alloc_spy_emit_event_next_is_realloc(struct sctk_alloc_chain * chain, void * orig_ptr,sctk_size_t new_requested_size)
+void sctk_alloc_spy_emit_event_next_is_realloc(struct sctk_alloc_chain * chain, void * orig_ptr, unsigned long new_requested_size)
 {
 	//get entry
 	struct sctk_alloc_spy_event event;

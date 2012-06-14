@@ -58,8 +58,9 @@ void * sctk_memalign(size_t boundary,size_t size);
 struct sctk_alloc_chain * sctk_get_current_alloc_chain(void);
 void * sctk_realloc_inter_chain (void * ptr, size_t size);
 
-#include "sctk_alloc_to_recode.h"
-
+#ifdef MPC_Allocator
+	#include "sctk_alloc_to_recode.h"
+#endif
 #ifdef __cplusplus
 }
 #endif

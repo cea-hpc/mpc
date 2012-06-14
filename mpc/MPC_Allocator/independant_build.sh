@@ -17,7 +17,7 @@
 # terms.                                                               #
 #                                                                      #
 # Authors:                                                             #
-#   - Julien Adam : julien.adam.ocre@cea.fr                            #
+#   - Adam Julien julien.adam.ocre@cea.fr                              #
 #                                                                      #
 ########################################################################
 MODE="Debug"
@@ -88,7 +88,7 @@ run(){
 }
 
 run_linux(){
-	cmake -DCMAKE_BUILD_TYPE=$MODE .. && make && make test
+	cmake -DCMAKE_BUILD_TYPE=$MODE .. && make -j 4 && make test
 }
 
 run_win(){

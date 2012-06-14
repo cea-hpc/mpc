@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
+/* #   - Adam Julien julien.adam.ocre@cea.fr                              # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -47,9 +48,9 @@ SCTK_STATIC void* sctk_mmap(void* addr, size_t size)
 {
 	void * res = NULL;
 	if (addr == NULL)
-		res = VirtualAlloc(NULL,size,MEM_COMMIT,PAGE_EXECUTE_READWRITE);
+		res = VirtualAlloc(NULL,size,MEM_RESERVE|MEM_COMMIT,PAGE_EXECUTE_READWRITE);
 	else
-		res = VirtualAlloc(addr,size,MEM_COMMIT,PAGE_EXECUTE_READWRITE);
+		res = VirtualAlloc(addr,size,MEM_RESERVE|MEM_COMMIT,PAGE_EXECUTE_READWRITE);
 	if (res == MAP_FAILED){
 		perror("Out of memory, failed to request memory to the OS via VirtualAlloc.");
 	}
@@ -78,6 +79,11 @@ void* sctk_mmap(void* addr, size_t size)
  * OS page size.
 **/
 #ifdef _WIN32
+SCTK_STATIC void sctk_munmap(void * addr,size_t size)
+{
+	VirtualFree(addr,size,MEM_RELEASE);
+}
+
 #else
 void sctk_munmap(void * addr,size_t size)
 {
