@@ -29,9 +29,11 @@
 #include "sctk_alloc_light_mm_source.h"
 #include "sctk_alloc_topology.h"
 
-//options Linux specific (mremap)
-#include <unistd.h>
-#include <sys/mman.h>
+#ifndef _WIN32
+	//options Linux specific (mremap)
+	#include <unistd.h>
+	#include <sys/mman.h>
+#endif
 
 //optional for NUMA
 #ifdef HAVE_LIBNUMA

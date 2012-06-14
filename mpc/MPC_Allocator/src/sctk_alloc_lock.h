@@ -27,8 +27,6 @@
 /************************** HEADERS ************************/
 #ifndef _WIN32
 	#include <pthread.h>
-//#else
-//	#include "winPortage/pthread.h"
 #endif
 
 /************************** MACROS *************************/
@@ -55,6 +53,9 @@
 #define SCTK_ALLOC_INIT_LOCK_INITIALIZER SCTK_ALLOC_SPINLOCK_INITIALIZER
 #define SCTK_ALLOC_INIT_LOCK_LOCK(x) sctk_alloc_spinlock_lock(x)
 #define SCTK_ALLOC_INIT_LOCK_UNLOCK(x) sctk_alloc_spinlock_unlock(x)
+#ifndef PTHREAD_PROCESS_PRIVATE
+	#define PTHREAD_PROCESS_PRIVATE 0
+#endif
 #else //SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK
 #define SCTK_ALLOC_INIT_LOCK_TYPE pthread_mutex_t
 #define SCTK_ALLOC_INIT_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER

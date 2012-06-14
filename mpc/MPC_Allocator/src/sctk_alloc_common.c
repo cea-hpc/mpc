@@ -21,9 +21,19 @@
 /* ######################################################################## */
 
 /************************** HEADERS ************************/
-#include <sys/mman.h>
-#include <stdlib.h>
+#ifdef _WIN32
+	#include <windows.h>
+#else
+	#include <sys/mman.h>
+#endif
+
+#include "sctk_alloc_common.h"
 #include <stdio.h>
+
+/************************* PORTABILITY *************************/
+#ifdef _WIN32
+	#define MAP_FAILED NULL
+#endif
 
 /************************* FUNCTION ************************/
 /**

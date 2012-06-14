@@ -38,7 +38,6 @@
 /************************* PORTABILITY *************************/
 #ifdef _WIN32
 	#define MAP_FAILED NULL
-	#define PTHREAD_PROCESS_PRIVATE 0
 #endif
 
 /************************* GLOBALS *************************/

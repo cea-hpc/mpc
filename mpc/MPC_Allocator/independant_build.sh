@@ -76,10 +76,24 @@ run(){
 	
 	#execution
 	cd ${ROOT_FOLDER}/build
-	cmake -DCMAKE_BUILD_TYPE=$MODE .. && make -j 1 && make test
+	case $OS in
+		"linux")
+			run_linux;;
+		"windows")
+			run_win;;
+	esac
 	cd ..
 
 	delinker
+}
+
+run_linux(){
+	cmake -DCMAKE_BUILD_TYPE=$MODE .. && make && make test
+}
+
+run_win(){
+	cmake -DWIN32=yes -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DCMAKE_BUILD_TYPE=$MODE .. && make -j 1 && make test
+
 }
 
 ######################### MAIN ######################
@@ -98,7 +112,13 @@ ROOT_FOLDER=${PWD}
 
 for arg in $*
 do 
-	case $arg in 
+	case $arg in
+		--linux)
+			OS="linux"
+			;;
+		--win)
+			OS="windows"
+			;;
 		--mode=*)
 			MODE=$(read_param_value $arg --mode)
 			;;
