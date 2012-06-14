@@ -135,7 +135,6 @@ static void* sctk_tcp_rdma_thread(sctk_route_table_t* tmp){
 static void
 sctk_network_send_message_tcp_rdma (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
   sctk_route_table_t* tmp;
-  size_t size;
   int fd;
   if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(msg->body.header.specific_message_tag)){
     not_reachable();

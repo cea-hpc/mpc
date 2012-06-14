@@ -46,7 +46,7 @@ extern "C"
     int rail;
     char connection_infos[MAX_STRING_SIZE];
     size_t connection_infos_size;
-    void* (*tcp_thread)(void*);
+    void* (*tcp_thread)(struct sctk_route_table_s*);
   }sctk_tcp_rail_info_t;
 
   void sctk_network_init_tcp(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib);

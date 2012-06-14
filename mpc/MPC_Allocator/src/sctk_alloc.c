@@ -1886,7 +1886,7 @@ sctk_free_big (sctk_free_chunk_t * chunk, sctk_size_t size,
     }
   else
     {
-      /*Gestion des libération distantes */
+      /*Gestion des libï¿½ration distantes */
       sctk_mutex_lock (&tls->lock);
 /*       tls->big_chunks_distant_number++; */
       chunk->next_chunk = (sctk_free_chunk_t *) tls->big_chunks_distant;
@@ -1904,7 +1904,7 @@ sctk_free_big_distant (sctk_tls_t * tls)
     {
       sctk_free_chunk_t *big_chunks_distant;
       sctk_free_chunk_t *tmp;
-      /*Gestion des libération distantes */
+      /*Gestion des libï¿½ration distantes */
       sctk_mutex_lock (&tls->lock);
       if (tls->big_chunks_distant != NULL)
 	{
@@ -2517,7 +2517,7 @@ sctk_free_small (sctk_free_chunk_t * chunk, sctk_size_t size,
     }
   else
     {
-      /*Gestion des libération distantes */
+      /*Gestion des libï¿½ration distantes */
       sctk_mutex_lock (&tls->lock);
       chunk->next_chunk = (sctk_free_chunk_t *) tls->chunks_distant;
       tls->chunks_distant = chunk;
@@ -2534,7 +2534,7 @@ sctk_free_small_distant (sctk_tls_t * tls)
     {
       sctk_free_chunk_t *chunks_distant;
       sctk_free_chunk_t *tmp;
-      /*Gestion des libération distantes */
+      /*Gestion des libï¿½ration distantes */
       sctk_mutex_lock (&tls->lock);
       if (tls->chunks_distant != NULL)
 	{
@@ -3390,7 +3390,7 @@ sctk_alloc_block (void *ptr, sctk_size_t size)
 	  else
 	    {
 	      cursor = ptr;
-	      /*Si elle est occupée alors la taille doit etre bonne */
+	      /*Si elle est occupï¿½e alors la taille doit etre bonne */
 	      if (owner_page->real_size != size)
 		{
 		  not_reachable ();
@@ -3403,7 +3403,7 @@ sctk_alloc_block (void *ptr, sctk_size_t size)
 	{
 	  /*cas ou block a cheval sur local_brk_pointer */
 
-	  /*La dernière page doit être libre!!!! */
+	  /*La derniï¿½re page doit ï¿½tre libre!!!! */
 	  owner_page = sctk_alloc_block_get_owner_page (ptr);
 
 	  if (owner_page->page_state == sctk_free_state)
@@ -3421,7 +3421,7 @@ sctk_alloc_block (void *ptr, sctk_size_t size)
 
 	  /*
 	     Creation de deux pages:
-	     - une de local_brk_pointer à ptr
+	     - une de local_brk_pointer ï¿½ ptr
 	     - une pour le block
 	   */
 	  sctk_page_t *new_page;

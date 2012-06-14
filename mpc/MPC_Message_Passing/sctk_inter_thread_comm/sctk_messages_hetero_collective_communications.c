@@ -39,7 +39,6 @@ static int BROADCAST_MAX_SIZE = 1024;
 static int BROADCAST_CHECK_THREASHOLD = 512;
 static int ALLREDUCE_ARITY_MAX = 8;
 static int ALLREDUCE_MAX_SIZE = 1024;
-static int ALLREDUCE_MAX_NB_ELEM_SIZE = 1024;
 static int ALLREDUCE_CHECK_THREASHOLD = 8192;
 #define SCTK_MAX_ASYNC 32
 
@@ -139,7 +138,6 @@ void sctk_barrier_hetero_messages_inter(const sctk_communicator_t communicator,
   sctk_hetero_messages_table_t table;
   char c = 'c';
   struct sctk_internal_ptp_s* ptp_internal;
-  int specific_tag = barrier_hetero_specific_message_tage;
 
   /* If only one process involved, we return */
   if (total == 1) return;
@@ -370,15 +368,12 @@ void sctk_broadcast_hetero_messages (void *buffer, const size_t size,
 				  struct sctk_internal_collectives_struct_s *tmp){
   int nb_tasks_in_node;
   int task_id_in_node;
-  int nb_task_exited;
   unsigned int generation;
   sctk_broadcast_hetero_messages_t *bcast;
   sctk_thread_data_t *thread_data;
   int myself;
   int is_root_on_node = 0;
   int root_process;
-  int i;
-  int *task_to_process;
 
   if(size == 0)  {
     sctk_barrier_hetero_messages(communicator,tmp);

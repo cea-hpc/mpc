@@ -502,7 +502,6 @@ __sctk_init_mpi_errors_per_comm (mpc_mpi_per_communicator_t* tmp)
 static void
 __sctk_init_mpi_errors ()
 {
-  int i;
   mpc_mpi_data_t* data;
 
   data = mpc_mpc_get_per_task_data();
@@ -1698,7 +1697,6 @@ __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests,
   while (!flag)
     {
       int i;
-      int old_done = 0;
       int done = 0;
       int loc_flag;
       for (i = 0; i < count; i++)
@@ -4904,8 +4902,6 @@ static void *defines_attr_tab[MPI_MAX_KEY_DEFINED] = {
   &MPI_WTIME_IS_GLOBAL_VALUE
 };
 
-static sctk_thread_mutex_t sctk_attr_lock = SCTK_THREAD_MUTEX_INITIALIZER;
-
 static int
 __INTERNAL__PMPI_Keyval_create (MPI_Copy_function * copy_fn,
 				MPI_Delete_function * delete_fn,
@@ -4919,7 +4915,6 @@ __INTERNAL__PMPI_Keyval_create (MPI_Copy_function * copy_fn,
   sctk_spinlock_lock(&(tmp->lock));
   if (tmp->number >= tmp->max_number)
     {
-      int j;
       tmp->max_number += 100;
 
       tmp->attrs_fn =

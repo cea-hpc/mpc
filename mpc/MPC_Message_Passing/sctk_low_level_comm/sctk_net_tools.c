@@ -259,6 +259,7 @@
 /*       } */
 /*     } */
 /*     return ptr; */
+    return NULL;
   }
 
 
@@ -324,30 +325,30 @@ copy_frag ( char *msg,
 
 /* 	sctk_nodebug ( "size of the msg: %d (cur_cop %d) (tot_size %d)", size, curr_copy, tot_size ); */
 
-/* 	/* if this msg's part has to be copyied */ */
+/* 	// if this msg's part has to be copyied */
 /* 	if ( ( tot_size + size > curr_copy ) | ( curr_copy == 0 ) ) { */
 
-/* 		/* it remains data to copy from this msg */ */
+/* 		// it remains data to copy from this msg */
 /* 		if ( curr_copy > tot_size ) { */
 
-/* 			/* segment size which remains to copy */ */
+/* 			// segment size which remains to copy */
 /* 			size_frag_msg = ( size - ( curr_copy - tot_size ) ); */
 /* 			sctk_nodebug */
 /* 			( "Copy the remain (%d) of the msg, (size : %d) (curr_copy : %d) (tot_size : %d) (max_copy %d)", */
 /* 			  size_frag_msg, size, curr_copy, tot_size, max_copy ); */
 
-/* 			/*  if the frag size is greater than the max size */ */
+/* 			//  if the frag size is greater than the max size */
 /* 			if ( size_frag_msg > max_copy ) { */
 /* 				sctk_nodebug ( "Msg is greater than the max msg size again" ); */
 
-/* 				/* copy the max size */ */
+/* 				// copy the max size */
 /* 				amd64_cpy_nt ( buffer, ( char* ) msg + curr_copy, max_copy ); */
 
-/* 				/* return the size of all copied data */ */
+/* 				// return the size of all copied data */
 /* 				*go_on = 0; */
 /* 				return curr_copy + max_copy; */
 /* 			} else { */
-/* 				/* copy the whole remaining message */ */
+/* 				// copy the whole remaining message */
 /* 				sctk_nodebug ( "Copy the whole remaining msg (size_frag_msg %d) (deb %hhx) (first %hhx)", size_frag_msg, msg, ( ( char* ) msg ) + ( size - size_frag_msg ) ) ; */
 /* 				amd64_cpy_nt ( buffer, ( char * ) msg + ( size - size_frag_msg ), size_frag_msg ); */
 
@@ -356,30 +357,30 @@ copy_frag ( char *msg,
 /* 			} */
 
 /* 		} */
-/* 		/* there is no more space for the new message. Slot filled at max */ */
+/* 		// there is no more space for the new message. Slot filled at max */
 /* 		else if ( ( tot_size - curr_copy ) == max_copy ) { */
 /* 			sctk_nodebug ( "No more space for the msg" ); */
 /* 			*go_on = 0; */
 /* 			return tot_size; */
 /* 		} */
-/* 		/* if the new msg to copy is greater thant the max size */ */
+/* 		// if the new msg to copy is greater thant the max size */
 /* 		else if ( size + ( tot_size - curr_copy ) > max_copy ) { */
-/* 			/* msg needs to be splitted in several parts */ */
+/* 			// msg needs to be splitted in several parts */
 /* 			size_frag_msg = max_copy - ( tot_size - curr_copy ); */
 
 /* 			sctk_nodebug ( "Msg is greater than the max size (size %d) (max %d) (tot_size %d) (curr_copy %d) (size_frag %d) (deb %hhx) (next %hhx)", size, max_copy, tot_size, curr_copy, size_frag_msg, msg, ( ( ( char* ) msg ) + size_frag_msg ) ); */
 
-/* 			/* copy the max size that we can copy */ */
+/* 			// copy the max size that we can copy */
 /* 			amd64_cpy_nt ( buffer + ( tot_size - curr_copy ), msg, size_frag_msg ); */
 
-/* 			/* return the new size */ */
+/* 			//return the new size */
 /* 			*go_on = 0; */
 /* 			return tot_size + size_frag_msg; */
 /* 		} else { */
 /* 			if ( curr_copy != 0 ) */
 /* 				sctk_nodebug ( "Copy the whole msg (size %d) (curr %d) (tot %d) (max %d)", size, curr_copy, tot_size, max_copy ); */
 
-/* 			/* copy the whole msg */ */
+/* 			//copy the whole msg */
 /* 			amd64_cpy_nt ( buffer + ( tot_size - curr_copy ), msg, size ); */
 /* 			*go_on = 1; */
 /* 			return tot_size + size; */
@@ -391,6 +392,7 @@ copy_frag ( char *msg,
 /* 	} */
 #endif
   not_implemented();
+  return 0;
 }
 
 

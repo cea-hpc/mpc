@@ -572,7 +572,6 @@ inline void sctk_message_copy_pack(sctk_message_to_copy_t* tmp){
 
   switch(send->tail.message_type){
   case sctk_message_pack: {
-    size_t size;
     size_t i;
     for (i = 0; i < send->tail.message.pack.count; i++)
       {
@@ -606,7 +605,6 @@ inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp){
 
   switch(recv->tail.message_type){
   case sctk_message_pack_absolute: {
-    size_t size;
     size_t i;
     for (i = 0; i < send->tail.message.pack.count; i++)
       {
@@ -961,7 +959,6 @@ int sctk_perform_messages_probe_matching(sctk_internal_ptp_t* pair,
   sctk_msg_list_t* res = NULL;
   sctk_msg_list_t* ptr_send;
   sctk_msg_list_t* tmp;
-  int remote;
   res = NULL;
   sctk_internal_ptp_merge_pending(&(pair->lists));
 

@@ -152,41 +152,6 @@ static void sctk_tcp_add_static_route(int dest, int fd,sctk_rail_info_t* rail,
 }
 
 /************ INTER_THEAD_COMM HOOOKS ****************/
-static void* sctk_tcp_thread(sctk_route_table_t* tmp){
-  not_reachable();
-  return NULL;
-}
-
-static void
-sctk_network_send_message_tcp (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
-  not_reachable();
-}
-
-static void
-sctk_network_notify_recv_message_tcp (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
-  not_reachable();
-}
-
-static void
-sctk_network_notify_matching_message_tcp (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
-  not_reachable();
-}
-
-static void
-sctk_network_notify_perform_message_tcp (int remote,sctk_rail_info_t* rail){
-  not_reachable();
-}
-
-static void
-sctk_network_notify_idle_message_tcp (sctk_rail_info_t* rail){
-  not_reachable();
-}
-
-static void
-sctk_network_notify_any_source_message_tcp (sctk_rail_info_t* rail){
-  not_reachable();
-}
-
 static void
 sctk_network_connection_to_tcp(int from, int to,sctk_rail_info_t* rail){
   int dest_socket;

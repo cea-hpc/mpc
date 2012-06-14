@@ -162,7 +162,6 @@ sctk_tls_unlock_level (tls_level * level)
 static inline void
 sctk_hls_init_level(hls_level * level)
 {
-	int i ;
 	sctk_tls_init_level(&level->level);
 	sctk_atomics_store_int ( &level->toenter, 0 ) ;
 	sctk_atomics_store_int ( &level->entered, 0 ) ;
@@ -743,7 +742,6 @@ void *
 __sctk__tls_get_addr__numa_level_2_scope (tls_index * tmp)
 {
   void *res;
-  tls_level **hls;
   sctk_nodebug ("__sctk__tls_get_addr__numa_level_2_scope on numa node %d",
     sctk_get_node_from_cpu(sctk_get_cpu()));
   res =
@@ -756,7 +754,6 @@ void *
 __sctk__tls_get_addr__numa_level_1_scope (tls_index * tmp)
 {
   void *res;
-  tls_level **hls;
   sctk_nodebug ("__sctk__tls_get_addr__numa_level_1_scope on numa node %d",
     sctk_get_node_from_cpu(sctk_get_cpu()));
   res =

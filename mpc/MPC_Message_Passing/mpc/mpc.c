@@ -202,7 +202,7 @@ static inline void sctk_thread_createspecific_mpc_per_comm_from_existing(sctk_ta
 /*ACCESSORS                                                             */
 /************************************************************************/
 
-static inline sctk_mpc_verify_request_compatibility()
+static inline void sctk_mpc_verify_request_compatibility()
 {
   /*     MPC_Request mpc_req; */
   /*     sctk_request_t sctk_req; */
@@ -2649,7 +2649,9 @@ __MPC_Waitall (mpc_msg_count count,
 	       MPC_Status array_of_statuses[])
 {
   int i;
+#if 0
   int flag = 1;
+#endif
 
   for (i = 0; i < count; i++) {
     MPC_Status *status;
@@ -4340,7 +4342,6 @@ PMPC_Errhandler_create (MPC_Handler_function * function,
 int
 PMPC_Errhandler_set (MPC_Comm comm, MPC_Errhandler errhandler)
 {
-  MPC_Handler_function **user_error_handlers;
   sctk_task_specific_t *task_specific;
   mpc_per_communicator_t* tmp;
   task_specific = __MPC_get_task_specific ();
@@ -4355,7 +4356,6 @@ PMPC_Errhandler_set (MPC_Comm comm, MPC_Errhandler errhandler)
 int
 PMPC_Errhandler_get (MPC_Comm comm, MPC_Errhandler * errhandler)
 {
-  MPC_Handler_function **user_error_handlers;
   sctk_task_specific_t *task_specific;
   mpc_per_communicator_t* tmp;
   task_specific = __MPC_get_task_specific ();
