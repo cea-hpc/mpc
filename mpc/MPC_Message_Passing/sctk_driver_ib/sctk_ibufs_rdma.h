@@ -273,6 +273,7 @@ sctk_ibuf_rdma_cas_remote_state_rts(sctk_ib_qp_t* remote,
 int sctk_ibuf_rdma_check_send_flush(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote);
 
 void sctk_ibuf_rdma_flush_recv(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote);
-
+int sctk_ibuf_rdma_check_flush_send(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote);
+int sctk_ibuf_rdma_check_flush_recv(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote);
 #endif
 #endif

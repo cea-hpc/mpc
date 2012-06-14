@@ -34,7 +34,7 @@ extern "C"
 /*-----------------------------------------------------------
  *  IB module debugging
  *----------------------------------------------------------*/
-//#define IB_DEBUG
+#define IB_DEBUG
 
 #ifdef IB_DEBUG
 #warning "WARNING !!!! Debug activated !!!! WARNING"

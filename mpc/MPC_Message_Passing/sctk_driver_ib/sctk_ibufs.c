@@ -247,14 +247,18 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
           PROF_INC_RAIL_IB(rail_ib, ibuf_rdma_nb);
           sctk_nodebug("Picking from RDMA %d", ibuf->index);
 #ifdef DEBUG_IB_BUFS
-          assume (sctk_ibuf_rdma_get_remote_state_rts(remote) == state_connected)
+          sctk_route_state_t state = sctk_ibuf_rdma_get_remote_state_rts(remote);
+          if ( (state != state_connected) && (state != state_flushing))  {
+            sctk_error("Got a wrong state : %d", state);
+            not_reachable();
+          }
 #endif
             goto exit;
         } else {
           /* If we cannot pick a buffer from the RDMA channel, we switch to SR */
           PROF_INC_RAIL_IB(rail_ib, ibuf_rdma_miss_nb);
           OPA_decr_int(&remote->rdma.pool->busy_nb[REGION_SEND]);
-          sctk_ibuf_rdma_check_flush_send(remote, rail_ib);
+          sctk_ibuf_rdma_check_flush_send(rail_ib, remote);
           OPA_incr_int(&remote->rdma.miss_nb);
         }
       }

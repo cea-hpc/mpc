@@ -126,11 +126,10 @@ void sctk_ib_cm_deco_ack(sctk_rail_info_t* rail,
     sctk_route_table_t* route_table, int ack);
 
 /* RDMA resizing */
-int sctk_ib_cm_resizing_rdma_request(int dest, sctk_rail_info_t* rail, int entry_size, int entry_nb);
-int sctk_ib_cm_resizing_rdma_ack(struct sctk_ib_qp_s *remote, sctk_rail_info_t* rail, sctk_ib_cm_rdma_connection_t* send_keys);
-int sctk_ib_cm_resizing_rdma_done_recv(sctk_rail_info_t *rail, void* done, int src);
-int sctk_ib_cm_resizing_rdma_recv_ack(sctk_rail_info_t *rail, void* ack, int src);
-int sctk_ib_cm_resizing_rdma_recv_request(sctk_rail_info_t *rail, void* request, int src);
+int sctk_ib_cm_resizing_rdma_request(sctk_rail_info_t* rail_targ, struct sctk_ib_qp_s *remote,
+    int entry_size, int entry_nb);
+void sctk_ib_cm_resizing_rdma_ack(sctk_rail_info_t* rail_targ,  struct sctk_ib_qp_s *remote,
+    sctk_ib_cm_rdma_connection_t* send_keys);
 
 /*-----------------------------------------------------------
  *  On demand QP deconnexion
@@ -147,7 +146,8 @@ void sctk_ib_cm_deco_done_request_send(sctk_rail_info_t* rail, sctk_route_table_
 void sctk_ib_cm_deco_ack_send(sctk_rail_info_t* rail, sctk_route_table_t* route_table, int ack);
 void sctk_ib_cm_deco_done_ack_send(sctk_rail_info_t* rail, sctk_route_table_t* route_table, int ack);
 
-int sctk_ib_cm_on_demand_rdma_request(int dest,
-    sctk_rail_info_t* rail, int rdma_connected, int entry_size, int entry_nb);
+int sctk_ib_cm_on_demand_rdma_request(
+    sctk_rail_info_t* rail_targ, struct sctk_ib_qp_s *remote,
+    int entry_size, int entry_nb);
 #endif
 #endif

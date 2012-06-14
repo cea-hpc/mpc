@@ -270,7 +270,6 @@ sctk_route_table_t* sctk_get_route_to_process_no_route_static(int dest, sctk_rai
   return tmp;
 }
 
-static inline
 sctk_route_table_t* sctk_get_route_to_process_no_route(int dest, sctk_rail_info_t* rail){
   sctk_route_key_t key;
   sctk_route_table_t* tmp;
@@ -278,11 +277,7 @@ sctk_route_table_t* sctk_get_route_to_process_no_route(int dest, sctk_rail_info_
   key.destination = dest;
   key.rail = rail->rail_number;
 
-  /* FIXME: We do not need to take a lock for the static table. No route can be created
-   * or destructed during execution time */
-  /* TABLE_LOCK(); */
   HASH_FIND(hh,sctk_static_route_table,&key,sizeof(sctk_route_key_t),tmp);
-  /* TABLE_UNLOCK(); */
   if(tmp == NULL){
     sctk_spinlock_read_lock(&sctk_route_table_lock);
     HASH_FIND(hh,sctk_dynamic_route_table,&key,sizeof(sctk_route_key_t),tmp);
