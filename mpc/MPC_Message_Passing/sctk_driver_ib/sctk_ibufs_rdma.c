@@ -64,7 +64,7 @@ static sctk_spinlock_t rdma_lock = SCTK_SPINLOCK_INITIALIZER;
  *----------------------------------------------------------*/
 
 /*
- * Init the remote
+ * Init the remote for the RDMA connection
  */
 void sctk_ibuf_rdma_remote_init(sctk_ib_qp_t* remote) {
   sctk_ibuf_rdma_set_remote_state_rtr(remote, state_deconnected);
@@ -78,51 +78,17 @@ void sctk_ibuf_rdma_remote_init(sctk_ib_qp_t* remote) {
   /* Counters */
   OPA_store_int(&remote->rdma.miss_nb, 0);
   OPA_store_int(&remote->rdma.hits_nb, 0);
+  /* Lock for resizing */
+  remote->rdma.flushing_lock = SCTK_SPINLOCK_INITIALIZER;
 }
 
-void
-sctk_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* remote,
-    sctk_ibuf_region_t *region, enum sctk_ibuf_channel channel, int nb_ibufs, int size_ibufs) {
-  LOAD_MMU(rail_ib);
-  void* ptr = NULL;
-  void* ibuf;
-  sctk_ibuf_t* ibuf_ptr = NULL;
+static inline void __init_rdma_slots(sctk_ibuf_region_t *region,
+    void* ptr, void* ibuf, int nb_ibufs, int size_ibufs) {
   int i;
+  sctk_ibuf_t* ibuf_ptr = NULL;
 
-  ib_assume(remote->rdma.pool);
-
-  /* XXX: replaced by memalign_on_node */
-  sctk_posix_memalign( (void**) &ptr, mmu->page_size, nb_ibufs * size_ibufs);
-  ib_assume(ptr);
-  memset(ptr, 0, nb_ibufs * size_ibufs);
-
-  /* XXX: replaced by memalign_on_node */
-   sctk_posix_memalign(&ibuf, mmu->page_size, nb_ibufs * sizeof(sctk_ibuf_t));
-  ib_assume(ibuf);
-  memset (ibuf, 0, nb_ibufs * sizeof(sctk_ibuf_t));
-
-  region->size_ibufs = size_ibufs;
-  region->buffer_addr = ptr;
-  region->nb = nb_ibufs;
-  region->rail = rail_ib;
-  region->list = NULL;
-  region->channel = channel;
-  region->ibuf = ibuf;
-  region->remote = remote;
-  region->lock = SCTK_SPINLOCK_INITIALIZER;
-
-  sctk_nodebug("Channel: %d", region->channel);
-
-  /* register buffers at once
-   * FIXME: Always task on NUMA node 0 which firs-touch all pages... really bad */
-  region->mmu_entry = sctk_ib_mmu_register_no_cache(rail_ib, ptr,
-      nb_ibufs * size_ibufs);
-  sctk_nodebug("Reg %p registered. lkey : %lu", ptr, region->mmu_entry->mr->lkey);
-
-  /* init all buffers */
   for(i=0; i < nb_ibufs; ++i) {
     const char *buffer = (char*) ((char*) ptr + (i*size_ibufs));
-;
     ibuf_ptr = (sctk_ibuf_t*) ibuf + i;
     ibuf_ptr->region = region;
     ibuf_ptr->size = 0;
@@ -146,26 +112,161 @@ sctk_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* rem
     sctk_nodebug("ibuf=%p, index=%d, buffer=%p, head_flag=%p, size_flag=%p",
         ibuf_ptr, i, ibuf_ptr->buffer, ibuf_ptr->head_flag, ibuf_ptr->size_flag);
   }
+}
+
+/*
+ * Reinitialize a RDMA region with a different number of ibufs and a different size of ibufs
+ */
+void
+sctk_ibuf_rdma_region_reinit(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* remote,
+    sctk_ibuf_region_t *region, enum sctk_ibuf_channel channel, int nb_ibufs, int size_ibufs) {
+  LOAD_MMU(rail_ib);
+  void* ptr = NULL;
+  void* ibuf;
+  sctk_ibuf_t* ibuf_ptr = NULL;
+  int i;
+
+  ib_assume(remote->rdma.pool);
+  /* Because we are reinitializing a RDMA region, be sure that a previous allocation
+   * has been made */
+  assume(region->buffer_addr);
+
+  /* Unregister the memory.
+   * FIXME: ideally, we should use ibv_reregister() but this call is currently not
+   * supported by the libverb. */
+  sctk_ib_mmu_unregister(rail_ib, region->mmu_entry);
+
+  /* Realloc a new memory region.
+   * FIXME: Using realloc is a little bit useless here because we get an additional
+   * memory copy not used in this case */
+  assume(region->buffer_addr);
+  ptr = realloc(region->buffer_addr, nb_ibufs * size_ibufs);
+  ib_assume(ptr);
+  /* FIXME: is the memset here really usefull? */
+  memset(ptr, 0, nb_ibufs * size_ibufs);
+
+  assume(region->ibuf);
+  ibuf = realloc(region->ibuf, nb_ibufs * sizeof(sctk_ibuf_t));
+  ib_assume(ibuf);
+  /* FIXME: is the memset here really usefull? */
+  memset (ibuf, 0, nb_ibufs * sizeof(sctk_ibuf_t));
+
+  region->size_ibufs = size_ibufs;
+  region->buffer_addr = ptr;
+  region->nb = nb_ibufs;
+  region->rail = rail_ib;
+  region->list = NULL;
+  region->channel = channel;
+  region->ibuf = ibuf;
+  region->remote = remote;
+  region->lock = SCTK_SPINLOCK_INITIALIZER;
+
+  sctk_nodebug("Channel: %d", region->channel);
+
+  /* register buffers at once
+   * FIXME: ideally, we should use ibv_reregister() but this call is currently not
+   * supported by the libverb. */
+  region->mmu_entry = sctk_ib_mmu_register_no_cache(rail_ib, ptr,
+      nb_ibufs * size_ibufs);
+  sctk_debug("[%d] Reg %p registered. lkey : %lu", rail_ib->rail->rail_number, ptr, region->mmu_entry->mr->lkey);
+
+  /* Init all RDMA slots */
+  __init_rdma_slots(region, ptr, ibuf, nb_ibufs, size_ibufs);
 
   /* Setup tail and head pointers */
   region->head = ibuf;
   region->tail = ibuf;
 
-  /* If this is the send channel */
-  if (channel == (RDMA_CHANNEL | SEND_CHANNEL) ) {
+  if (channel == (RDMA_CHANNEL | SEND_CHANNEL) ) { /* SEND CHANNEL */
     /* Send the number of credits */
     remote->rdma.pool->send_credit = nb_ibufs;
+    OPA_store_int(&remote->rdma.pool->busy_nb[REGION_SEND], 0);
+
+    sctk_ib_debug("RESIZING SEND channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d (send_credit:%d)",
+        remote->rank, nb_ibufs, size_ibufs, remote->rdma.pool->send_credit);
+
+  } else if (channel == (RDMA_CHANNEL | RECV_CHANNEL) ) { /* RECV CHANNEL */
+    sctk_ib_debug("RESIZING RECV channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d)",
+        remote->rank, nb_ibufs, size_ibufs);
+
+    /* Add the entry to the pooling list */
+    sctk_spinlock_lock(&rdma_pool_list_lock);
+    DL_APPEND(rdma_pool_list_to_merge, remote->rdma.pool);
+    sctk_spinlock_unlock(&rdma_pool_list_lock);
+    OPA_store_int(&remote->rdma.pool->busy_nb[REGION_RECV], 0);
+
+  } else not_reachable();
+
+  sctk_nodebug("Head=%p(%d) Tail=%p(%d)", region->head, region->head->index,
+      region->tail, region->tail->index);
+}
+
+
+/*
+ * Initialize a new RDMA buffer region
+ */
+void
+sctk_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* remote,
+    sctk_ibuf_region_t *region, enum sctk_ibuf_channel channel, int nb_ibufs, int size_ibufs) {
+  LOAD_MMU(rail_ib);
+  void* ptr = NULL;
+  void* ibuf;
+  sctk_ibuf_t* ibuf_ptr = NULL;
+  int i;
+
+  ib_assume(remote->rdma.pool);
+
+  /* XXX: replace by memalign_on_node */
+  sctk_posix_memalign( (void**) &ptr, mmu->page_size, nb_ibufs * size_ibufs);
+  ib_assume(ptr);
+  memset(ptr, 0, nb_ibufs * size_ibufs);
+
+  /* XXX: replace by memalign_on_node */
+   sctk_posix_memalign(&ibuf, mmu->page_size, nb_ibufs * sizeof(sctk_ibuf_t));
+  ib_assume(ibuf);
+  memset (ibuf, 0, nb_ibufs * sizeof(sctk_ibuf_t));
+
+  region->size_ibufs = size_ibufs;
+  region->buffer_addr = ptr;
+  region->nb = nb_ibufs;
+  region->rail = rail_ib;
+  region->list = NULL;
+  region->channel = channel;
+  region->ibuf = ibuf;
+  region->remote = remote;
+  region->lock = SCTK_SPINLOCK_INITIALIZER;
+
+  sctk_nodebug("Channel: %d", region->channel);
+
+  /* register buffers at once */
+  region->mmu_entry = sctk_ib_mmu_register_no_cache(rail_ib, ptr,
+      nb_ibufs * size_ibufs);
+  sctk_nodebug("Reg %p registered. lkey : %lu", ptr, region->mmu_entry->mr->lkey);
+
+  /* Init all RDMA slots */
+  __init_rdma_slots(region, ptr, ibuf, nb_ibufs, size_ibufs);
+
+  /* Setup tail and head pointers */
+  region->head = ibuf;
+  region->tail = ibuf;
+
+  if (channel == (RDMA_CHANNEL | SEND_CHANNEL) ) { /* SEND CHANNEL */
+    /* Send the number of credits */
+    remote->rdma.pool->send_credit = nb_ibufs;
+    OPA_store_int(&remote->rdma.pool->busy_nb[REGION_SEND], 0);
 
     sctk_ib_debug("SEND channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d (send_credit:%d)",
         remote->rank, nb_ibufs, size_ibufs, remote->rdma.pool->send_credit);
-  } else if (channel == (RDMA_CHANNEL | RECV_CHANNEL) ) {
+
+  } else if (channel == (RDMA_CHANNEL | RECV_CHANNEL) ) { /* RECV CHANNEL */
     sctk_ib_debug("RECV channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d",
         remote->rank, nb_ibufs, size_ibufs);
 
     /* Add the entry to the pooling list */
-  sctk_spinlock_lock(&rdma_pool_list_lock);
-  DL_APPEND(rdma_pool_list_to_merge, remote->rdma.pool);
-  sctk_spinlock_unlock(&rdma_pool_list_lock);
+    sctk_spinlock_lock(&rdma_pool_list_lock);
+    DL_APPEND(rdma_pool_list_to_merge, remote->rdma.pool);
+    sctk_spinlock_unlock(&rdma_pool_list_lock);
+    OPA_store_int(&remote->rdma.pool->busy_nb[REGION_RECV], 0);
 
   } else not_reachable();
 
@@ -448,21 +549,34 @@ void sctk_ib_rdma_eager_walk_remotes(sctk_ib_rail_info_t *rail, int (func)(sctk_
 
 /*
  * Poll a specific remote in order to handle new received messages.
- * Returns 1 if a message has been found, 0 else
+ * Returns :
+ *  1 if a message has been found
+ *  -1 if the lock had not been taken
+ *  0 if no message has been found
  */
 int
 sctk_ib_rdma_eager_poll_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote) {
   /* We return if the remote is not connected to the RDMA channel */
-  if (sctk_ibuf_rdma_get_remote_state_rtr(remote) != state_connected) return 0;
+  sctk_route_state_t state = sctk_ibuf_rdma_get_remote_state_rtr(remote);
+  if ( (state != state_connected) && (state != state_flushing) ) return -1;
   sctk_ibuf_t *head;
 
-retry:
   head = IBUF_RDMA_GET_HEAD(remote, REGION_RECV);
 
   if (*(head->head_flag) != IBUF_RDMA_RESET_FLAG) {
 
     /* Spinlock for preventing two concurrent calls to this function */
     if (IBUF_RDMA_TRYLOCK_REGION(remote, REGION_RECV) == 0) {
+
+      /* Read the state of the connection and return if necessary.
+       * If we do not this, the RDMA buffer may be read while the RDMA buffer
+       * is in a 'flushed' state */
+      state = sctk_ibuf_rdma_get_remote_state_rtr(remote);
+      if ( (state != state_connected) && (state != state_flushing) ) {
+        IBUF_RDMA_UNLOCK_REGION(remote, REGION_RECV);
+        return -1;
+      }
+
       /* Recaculate the head because it could be moved */
       head = IBUF_RDMA_GET_HEAD(remote, REGION_RECV);
       /* Double checking */
@@ -494,6 +608,8 @@ retry:
         }
         /* Set the slot as busy */
         head->flag = BUSY_FLAG;
+        /* Increase the number of buffers busy */
+        OPA_incr_int(&remote->rdma.pool->busy_nb[REGION_RECV]);
 
         /* Handle the ibuf */
         __poll_ibuf(rail_ib, remote, head);
@@ -501,11 +617,12 @@ retry:
         /* We retry to poll a message.
          * FIXME: only retry if the sequence number of the message is not
          * expected */
-//        goto retry;
         return 1;
       } else {
         IBUF_RDMA_UNLOCK_REGION(remote, REGION_RECV);
       }
+    } else {
+      return -1;
     }
   }
   return 0;
@@ -571,12 +688,7 @@ void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
 
       sctk_nodebug("Piggy back to %p pb:%d size:%d", IBUF_RDMA_GET_REMOTE_PIGGYBACK(remote, base), piggyback, remote->rdma.pool->region[REGION_RECV].size_ibufs);
 
-      /* Prepare the piggyback msg.
-       * FIXME: there is an issue when IBV_SEND_SIGNALED missing.
-       * If not present, at a certain time we cannot post ibufs
-       * no more to the QP. This is bad because IBV_SEND_SIGNALED generates
-       * an useless event into the CQ and could be omitted. */
-
+      /* Prepare the piggyback msg. The sent message is SIGNALED */
 #if 0
        sctk_ibuf_rdma_write_init(base,
           &IBUF_GET_EAGER_PIGGYBACK(base->buffer), /* Local addr */
@@ -601,14 +713,24 @@ void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
 #warning "Is a control message"
       sctk_ib_qp_send_ibuf(rail_ib, remote, base, 1);
       sctk_ib_qp_decr_requests_nb(remote);
+
+      /* Check if we are in a flush state */
+      sctk_ibuf_rdma_check_flush_recv(rail_ib, remote);
     } else {
       /* Unlock the RDMA region */
       IBUF_RDMA_UNLOCK_REGION(remote, REGION_RECV);
     }
 
+    /* Increase the number of buffers busy */
+    OPA_decr_int(&remote->rdma.pool->busy_nb[REGION_RECV]);
+
   } else if (IBUF_GET_CHANNEL(ibuf) & SEND_CHANNEL) {
     /* We set the buffer as free */
     ibuf->flag = FREE_FLAG;
+    OPA_decr_int(&remote->rdma.pool->busy_nb[REGION_SEND]);
+
+    /* Check if we are in a flush state */
+    sctk_ibuf_rdma_check_flush_send(rail_ib, remote);
   } else not_reachable();
 }
 
@@ -619,8 +741,11 @@ void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
 #define IBUF_RDMA_SAMPLES 1000
 #define IBUF_RDMA_MIN_SIZE (16 * 1024)
 #define IBUF_RDMA_MAX_SIZE (16 * 1024)
-#define IBUF_RDMA_MIN_NB (128)
-#define IBUF_RDMA_MAX_NB (128)
+#define IBUF_RDMA_MIN_NB (2)
+#define IBUF_RDMA_MAX_NB (2)
+/* Maximum number of miss before resizing RDMA */
+#define IBUF_RDMA_MAX_MISS 1000
+
 
 /*
  * Check if a remote can be connected using RDMA.
@@ -687,6 +812,7 @@ void sctk_ibuf_rdma_check_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *rem
       sctk_spinlock_unlock(&remote->rdma.mean_size_lock);
     }
 
+    /* Check if we need to connect using RDMA */
     if ( iter >= IBUF_RDMA_SAMPLES ) {
       /* Reajust the size according to the statistics */
       determined_size = (int) total;
@@ -709,6 +835,24 @@ void sctk_ibuf_rdma_check_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *rem
         sctk_spinlock_unlock(&remote->rdma.mean_size_lock);
       }
     }
+  } else if (sctk_ibuf_rdma_get_remote_state_rts(remote) == state_connected) {
+
+    /* Check if we need the resize the RDMA */
+    if( OPA_load_int(&remote->rdma.miss_nb) > IBUF_RDMA_MAX_MISS) {
+      /* Try to change the state to flushing.
+       * By changing the state of the remote to 'flushing', we automaticaly switch to SR */
+      sctk_spinlock_lock(&remote->rdma.flushing_lock);
+      sctk_route_state_t ret =
+        sctk_ibuf_rdma_cas_remote_state_rts(remote, state_connected, state_flushing);
+      sctk_spinlock_unlock(&remote->rdma.flushing_lock);
+      /* If we are allowed to resize */
+      if (ret == state_connected) {
+        /* Reset the counter */
+        OPA_store_int(&remote->rdma.miss_nb, 0);
+        sctk_ib_debug("Trying to flush RDMA for for remote %d", remote->rank);
+        sctk_ibuf_rdma_check_flush_send(rail_ib, remote);
+      }
+    }
   }
 }
 
@@ -723,7 +867,7 @@ sctk_ibuf_rdma_fill_remote_addr(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t* remo
   keys->addr = remote->rdma.pool->region[region].buffer_addr;
   keys->rkey = remote->rdma.pool->region[region].mmu_entry->mr->rkey;
 
-  sctk_nodebug("Filled keys addr=%p rkey=%u",
+  sctk_debug("Filled keys addr=%p rkey=%u",
       keys->addr, keys->rkey, keys->connected);
 }
 
@@ -733,7 +877,7 @@ sctk_ibuf_rdma_fill_remote_addr(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t* remo
  */
 void
 sctk_ibuf_rdma_update_remote_addr(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t* remote, sctk_ib_cm_rdma_connection_t *key, int region) {
-  sctk_nodebug("REMOTE addr updated:: addr=%p rkey=%u (connected: %d)",
+  sctk_debug("REMOTE addr updated:: addr=%p rkey=%u (connected: %d)",
       key->addr, key->rkey, key->connected);
 
   ib_assume(remote->rdma.pool);
@@ -749,6 +893,110 @@ sctk_ibuf_rdma_update_remote_addr(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t* re
  */
 size_t sctk_ibuf_rdma_get_eager_limit(sctk_ib_qp_t *remote) {
   return (remote->rdma.pool->region[REGION_SEND].size_ibufs);
+}
+
+
+/*-----------------------------------------------------------
+ *                          FLUSH
+ *----------------------------------------------------------*/
+
+/*
+ * Check if a remote is in a flushing state. If it is, it
+ * sends a flush REQ to the process
+ */
+int sctk_ibuf_rdma_check_flush_send(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote) {
+  /* Check if the RDMA is in flushing mode and if all messages
+   * have be flushed to the network */
+  sctk_route_state_t ret = sctk_ibuf_rdma_get_remote_state_rts(remote);
+
+  /* If we are in a flushing mode */
+  if (ret == state_flushing) {
+    int busy_nb = OPA_load_int(&remote->rdma.pool->busy_nb[REGION_SEND]);
+    if ( busy_nb == 0) {
+      ret = sctk_ibuf_rdma_cas_remote_state_rts(remote, state_flushing, state_flushed);
+      if (ret == state_flushing) {
+        /* All the requests have been flushed. We can now send the resizing request.
+         * NOTE: we are sure that only one thread call the resizing request */
+        sctk_ib_nodebug("Sending a FLUSH message to remote %d", remote->rank);
+
+        /* FIXME: for now, we multiply the number of buffers by 2 */
+        sctk_ib_cm_resizing_rdma_request(remote->rank, rail_ib->rail,
+            remote->rdma.pool->region[REGION_SEND].size_ibufs,
+            remote->rdma.pool->region[REGION_SEND].nb * 2);
+        return 1;
+      }
+    } else {
+      sctk_debug("Nb pending: %d", busy_nb);
+    }
+  }
+  return 0;
+}
+
+
+/*
+ * Check if a remote is in a flushing state. If it is, it
+ * sends a flush REQ to the process
+ */
+int sctk_ibuf_rdma_check_flush_recv(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote) {
+  /* Check if the RDMA is in flushing mode and if all messages
+   * have be flushed to the network */
+  sctk_route_state_t ret = sctk_ibuf_rdma_get_remote_state_rtr(remote);
+
+  /* If we are in a flushing mode */
+  if (ret == state_flushing) {
+    int busy_nb = OPA_load_int(&remote->rdma.pool->busy_nb[REGION_RECV]);
+    if ( busy_nb == 0) {
+      /* We lock the region during the state modification to 'flushed'.
+       * If we do not this, the RDMA buffer may be read while the RDMA buffer
+       * is in a 'flushed' state */
+      IBUF_RDMA_LOCK_REGION(remote, REGION_RECV);
+      ret = sctk_ibuf_rdma_cas_remote_state_rtr(remote, state_flushing, state_flushed);
+      IBUF_RDMA_UNLOCK_REGION(remote, REGION_RECV);
+      if (ret == state_flushing) {
+        /* All the requests have been flushed. We can now send the resizing request.
+         * NOTE: we are sure that only one thread call the resizing request */
+
+        /* Resizing the RDMA buffer */
+        sctk_ibuf_rdma_region_reinit(rail_ib, remote,
+          &remote->rdma.pool->region[REGION_RECV],
+          RDMA_CHANNEL | RECV_CHANNEL,
+          remote->rdma.pool->resizing_request.recv_keys.nb,
+          remote->rdma.pool->resizing_request.recv_keys.size);
+
+        /* Fill the keys */
+        sctk_ib_cm_rdma_connection_t *send_keys = &remote->rdma.pool->resizing_request.send_keys;
+        sctk_ibuf_rdma_fill_remote_addr(rail_ib, remote, send_keys, REGION_RECV);
+        send_keys->connected = 1;
+
+        sctk_ib_nodebug("Sending a FLUSH ACK message to remote %d", remote->rank);
+        sctk_ib_cm_resizing_rdma_ack(remote, rail_ib->rail, send_keys);
+        return 1;
+      }
+    } else {
+      sctk_debug("Nb pending: %d", busy_nb);
+    }
+  }
+  return 0;
+}
+
+
+
+void sctk_ibuf_rdma_flush_recv(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote) {
+  int ret = -1;
+  int nb = 0;
+  sctk_route_state_t state;
+  state = sctk_ibuf_rdma_cas_remote_state_rtr(remote, state_connected, state_flushing);
+  assume(state == state_connected);
+
+  sctk_ib_nodebug("Start flushing for remote %d", remote->rank);
+  do {
+    ret = sctk_ib_rdma_eager_poll_remote(rail_ib, remote);
+    if (ret == 1) {
+      nb ++;
+    }
+  } while (ret != 0);
+  sctk_ib_nodebug("RECV Flushed %d messages for remote %d", nb, remote->rank);
+  sctk_ibuf_rdma_check_flush_recv(rail_ib, remote);
 }
 
 #endif

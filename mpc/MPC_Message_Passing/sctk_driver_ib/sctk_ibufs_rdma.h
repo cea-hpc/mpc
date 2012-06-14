@@ -149,6 +149,16 @@ typedef struct sctk_ibuf_rdma_pool_s
   /* Rkey of the remote buffer pool */
   uint32_t rkey[2];
 
+  /* Number of pending entries busy in the RDMA buffer.
+   * Only for send region */
+  OPA_int_t            busy_nb[2];
+
+  /* Request for resizing */
+  struct {
+    sctk_ib_cm_rdma_connection_t send_keys;
+    sctk_ib_cm_rdma_connection_t recv_keys;
+  } resizing_request;
+
   int send_credit;
 
   /* Pointer to the remote */
@@ -206,8 +216,9 @@ sctk_ibuf_t *sctk_ibuf_rdma_pick(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t* rem
 
 void sctk_ib_rdma_set_tail_flag(sctk_ibuf_t* ibuf, size_t size);
 
-void
-sctk_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* remote,
+void sctk_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* remote,
+    sctk_ibuf_region_t *region, enum sctk_ibuf_channel channel, int nb_ibufs, int size_ibufs);
+void sctk_ibuf_rdma_region_reinit(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* remote,
     sctk_ibuf_region_t *region, enum sctk_ibuf_channel channel, int nb_ibufs, int size_ibufs);
 
 size_t sctk_ibuf_rdma_get_eager_limit(sctk_ib_qp_t *remote);
@@ -226,23 +237,42 @@ void sctk_ibuf_rdma_fill_remote_addr(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t*
 
 static __UNUSED__ void
 sctk_ibuf_rdma_set_remote_state_rtr(sctk_ib_qp_t* remote, sctk_route_state_t state) {
-  remote->rdma.state_rtr = state;
+  OPA_store_int(&remote->rdma.state_rtr, (int) state);
 }
 
-static __UNUSED__ int
+static __UNUSED__ sctk_route_state_t
 sctk_ibuf_rdma_get_remote_state_rtr(sctk_ib_qp_t* remote) {
-  return remote->rdma.state_rtr;
+  return (sctk_route_state_t) OPA_load_int(&remote->rdma.state_rtr);
 }
+
+/* Return the old value */
+static __UNUSED__ sctk_route_state_t
+sctk_ibuf_rdma_cas_remote_state_rtr(sctk_ib_qp_t* remote,
+    sctk_route_state_t oldv, sctk_route_state_t newv) {
+  return (sctk_route_state_t) OPA_cas_int(&remote->rdma.state_rtr, oldv, newv);
+}
+
 
 static __UNUSED__ void
 sctk_ibuf_rdma_set_remote_state_rts(sctk_ib_qp_t* remote, sctk_route_state_t state) {
-  remote->rdma.state_rts = state;
+  OPA_store_int(&remote->rdma.state_rts, (int) state);
 }
 
-static __UNUSED__ int
+static __UNUSED__ sctk_route_state_t
 sctk_ibuf_rdma_get_remote_state_rts(sctk_ib_qp_t* remote) {
-  return remote->rdma.state_rts;
+  return (sctk_route_state_t) OPA_load_int(&remote->rdma.state_rts);
 }
+
+/* Return the old value */
+static __UNUSED__ sctk_route_state_t
+sctk_ibuf_rdma_cas_remote_state_rts(sctk_ib_qp_t* remote,
+    sctk_route_state_t oldv, sctk_route_state_t newv) {
+  return (sctk_route_state_t) OPA_cas_int(&remote->rdma.state_rts, oldv, newv);
+}
+
+int sctk_ibuf_rdma_check_send_flush(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote);
+
+void sctk_ibuf_rdma_flush_recv(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote);
 
 #endif
 #endif

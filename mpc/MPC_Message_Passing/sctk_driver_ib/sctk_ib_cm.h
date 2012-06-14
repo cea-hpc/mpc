@@ -44,6 +44,10 @@
 #define CM_OD_RDMA_ACK_TAG (10)
 #define CM_OD_RDMA_DONE_TAG (11)
 
+#define CM_RESIZING_RDMA_REQ_TAG (12)
+#define CM_RESIZING_RDMA_ACK_TAG (13)
+#define CM_RESIZING_RDMA_DONE_TAG (14)
+
 struct sctk_thread_ptp_message_body_s;
 
 /*-----------------------------------------------------------
@@ -85,7 +89,7 @@ typedef struct {
   sctk_ib_cm_request_t request_id;  /* Request id. *MUST* be the first field */
 } sctk_ib_cm_qp_deconnection_t;
 
-/* RDMA */
+/* RDMA connection and resizing */
 typedef struct {
   sctk_ib_cm_request_t request_id;  /* Request id. *MUST* be the first field */
   int connected;
@@ -94,13 +98,6 @@ typedef struct {
   uint32_t rkey;
   void *addr;
 } sctk_ib_cm_rdma_connection_t;
-
-typedef struct {
-  sctk_ib_cm_request_t request_id;  /* Request id. *MUST* be the first field */
-  int size;   /* Size of a slot */
-  int nb;     /* Number of slots */
-  uintptr_t addr; /* Base addr of the buffer */
-} sctk_ib_cm_rdma_resizing_t;
 
 typedef struct {
   sctk_ib_cm_request_t request_id;  /* Request id. *MUST* be the first field */
@@ -128,6 +125,12 @@ sctk_route_table_t *sctk_ib_cm_on_demand_request(int dest,sctk_rail_info_t* rail
 void sctk_ib_cm_deco_ack(sctk_rail_info_t* rail,
     sctk_route_table_t* route_table, int ack);
 
+/* RDMA resizing */
+int sctk_ib_cm_resizing_rdma_request(int dest, sctk_rail_info_t* rail, int entry_size, int entry_nb);
+int sctk_ib_cm_resizing_rdma_ack(struct sctk_ib_qp_s *remote, sctk_rail_info_t* rail, sctk_ib_cm_rdma_connection_t* send_keys);
+int sctk_ib_cm_resizing_rdma_done_recv(sctk_rail_info_t *rail, void* done, int src);
+int sctk_ib_cm_resizing_rdma_recv_ack(sctk_rail_info_t *rail, void* ack, int src);
+int sctk_ib_cm_resizing_rdma_recv_request(sctk_rail_info_t *rail, void* request, int src);
 
 /*-----------------------------------------------------------
  *  On demand QP deconnexion

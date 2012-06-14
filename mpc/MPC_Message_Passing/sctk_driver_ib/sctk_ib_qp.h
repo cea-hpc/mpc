@@ -95,10 +95,10 @@ typedef struct sctk_ibuf_rdma_s
 
   struct sctk_ibuf_rdma_pool_s *pool;
 
-  /* If remote is RTR */
-  sctk_route_state_t state_rtr;
-  /* If remote is RTS */
-  sctk_route_state_t state_rts;
+  /* If remote is RTR. Type: sctk_route_state_t */
+  OPA_int_t state_rtr;
+  /* If remote is RTS. Type: sctk_route_state_t */
+  OPA_int_t state_rts;
 
   /* Mean size for rdma entries */
   float           mean_size;
@@ -113,6 +113,7 @@ typedef struct sctk_ibuf_rdma_s
   /* Counters */
   OPA_int_t miss_nb;     /* Number of RDMA miss */
   OPA_int_t hits_nb;     /* Number of RDMA hits */
+  sctk_spinlock_t flushing_lock; /* Lock while flushing */
 } sctk_ibuf_rdma_t;
 
 /*Structure associated to a remote QP */
@@ -165,7 +166,7 @@ typedef struct sctk_ib_qp_s
   struct {
     int nb;
     int size_ibufs;
-  } request;
+  } od_request;
 
   /* Is remote dynamically created ? */
   int ondemand;

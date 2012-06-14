@@ -800,9 +800,6 @@ static void* wait_send(void *arg){
   }
   sctk_ib_prof_qp_write(remote->rank, ibuf->desc.sg_entry.length,
       sctk_get_time_stamp(), PROF_QP_SEND);
-  /* We inc the number of pending requests */
-  /* FIXME: do not inc the nb of pending requests */
-  sctk_ib_qp_inc_requests_nb(remote);
 }
 
 
@@ -819,15 +816,18 @@ static void* wait_send(void *arg){
   ibuf->remote = remote;
 
   /* If the route is beeing flushed, we can cancel the QP deconnexion */
+#if 0
   if (sctk_route_get_state(remote->route_table) == state_flushing) {
     sctk_warning("Try to interrupt the QP deconnexion");
     /* FIXME: we do not cancel a deconnexion for the moment */
     //    sctk_ib_qp_set_deco_canceled(remote, ACK_CANCEL);
   }
+#endif
 
   /* We avoid the send of new messages while deconnecting */
   sctk_spinlock_read_lock(&remote->lock_send);
 
+#if 0
 #warning "Disabled because of errors"
   /* Check the state of a QP */
   if (sctk_route_get_state(remote->route_table) != state_connected ) {
@@ -841,6 +841,7 @@ static void* wait_send(void *arg){
 
     not_implemented();
   }
+#endif
 
   rc = ibv_post_send(remote->qp, &(ibuf->desc.wr.send), &(ibuf->desc.bad_wr.send));
   if( rc != 0) {
@@ -856,8 +857,6 @@ static void* wait_send(void *arg){
   }
   sctk_ib_prof_qp_write(remote->rank, ibuf->desc.sg_entry.length,
       sctk_get_time_stamp(), PROF_QP_SEND);
-  /* We inc the number of pending requests */
-  sctk_ib_qp_inc_requests_nb(remote);
 
   if (remote->ondemand) {
     ib_assume(od->qp_list_ptr);
@@ -891,6 +890,9 @@ sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
     __send_ibuf(rail_ib, remote, ibuf);
   }
 
+  /* We inc the number of pending requests */
+  sctk_ib_qp_inc_requests_nb(remote);
+
   /* We release the buffer if it has been inlined & if it
    * do not generate an event once the transmission done */
   if ( ( ibuf->flag == SEND_INLINE_IBUF_FLAG
@@ -904,8 +906,8 @@ sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
       sctk_ib_qp_decr_requests_nb(ibuf->remote);
       sctk_network_poll_send_ibuf(rail_ib->rail, ibuf, 0, poll);
   }
-
 }
+
 /*-----------------------------------------------------------
  *  Flush messages from a QP. We block the QP to send new messages.
  *  The function waits until no more message has to be sent

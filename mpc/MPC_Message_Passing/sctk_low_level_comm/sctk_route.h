@@ -151,12 +151,15 @@ int sctk_route_is_finalized();
  *----------------------------------------------------------*/
 /* State of the QP */
 typedef enum sctk_route_state_e {
-  state_connected   = 111,
-  state_flushing    = 222,
-  state_deconnected = 333,
-  state_connecting = 666,
+  state_connected     = 111,
+  state_flushing      = 222,
+  state_flushing_check= 233,
+  state_flushed       = 234,
+  state_deconnected   = 333,
+  state_connecting    = 666,
   state_reconnecting  = 444,
-  state_reset       = 555,
+  state_reset         = 555,
+  state_resizing      = 777,
 } sctk_route_state_t;
 
 __UNUSED__ static void sctk_route_set_state(sctk_route_table_t* tmp, sctk_route_state_t state){

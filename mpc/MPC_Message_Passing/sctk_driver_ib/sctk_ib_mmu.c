@@ -248,13 +248,6 @@ __mmu_register ( sctk_ib_rail_info_t *rail_ib,
   LOAD_CONFIG(rail_ib);
   sctk_ib_mmu_entry_t* mmu_entry;
 
-#ifdef DEBUG_IB_MMU
-  /* It is no more needed that we register a buffer aligned on 1 system page */
-//  if ((uintptr_t) ptr % mmu->page_size) {
-//    sctk_error("MMU ptr is not aligned on page_size");
-//    sctk_abort();
-//  }
-#endif
   sctk_nodebug("Try to pick entry %p %lu", ptr, size);
 
   if (in_cache && config->ibv_mmu_cache_enabled) {

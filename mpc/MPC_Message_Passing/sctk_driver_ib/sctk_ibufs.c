@@ -215,29 +215,51 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
   sctk_ibuf_t* ibuf = NULL;
   size_t s;
   size_t limit;
+  sctk_route_state_t state;
 
   s = *size;
   /***** RDMA CHANNEL *****/
-  if (sctk_ibuf_rdma_get_remote_state_rts(remote) == state_connected) {
-    limit = sctk_ibuf_rdma_get_eager_limit(remote);
-    sctk_nodebug("Eager limit: %lu", limit);
+  state = sctk_ibuf_rdma_get_remote_state_rts(remote);
+  if (state == state_connected) {
+    /* Double lock checking */
+    sctk_spinlock_lock(&remote->rdma.flushing_lock);
+    state = sctk_ibuf_rdma_get_remote_state_rts(remote);
 
-    if (s == ULONG_MAX) {
-      s = limit - IBUF_RDMA_GET_SIZE;
-    }
+    if (state == state_connected) {
+      /* WARNING: 'free_nb' must be decremented just after
+       * checking the state of the RDMA buffer. */
+      OPA_incr_int(&remote->rdma.pool->busy_nb[REGION_SEND]);
+      sctk_spinlock_unlock(&remote->rdma.flushing_lock);
 
-    if ( (IBUF_RDMA_GET_SIZE + s) <= limit) {
-      sctk_nodebug("requested:%lu max:%lu header:%lu", s, limit, IBUF_RDMA_GET_SIZE);
-      ibuf = sctk_ibuf_rdma_pick(rail_ib, remote);
+      limit = sctk_ibuf_rdma_get_eager_limit(remote);
+      sctk_nodebug("Eager limit: %lu", limit);
 
-      /* If we cannot pick a buffer from the RDMA channel, we switch to SR */
-      if (ibuf) {
-        PROF_INC_RAIL_IB(rail_ib, ibuf_rdma_nb);
-        sctk_nodebug("Picking from RDMA %d", ibuf->index);
-        goto exit;
-      } else {
-        PROF_INC_RAIL_IB(rail_ib, ibuf_rdma_miss_nb);
+      if (s == ULONG_MAX) {
+        s = limit - IBUF_RDMA_GET_SIZE;
       }
+
+      if ( (IBUF_RDMA_GET_SIZE + s) <= limit) {
+        sctk_nodebug("requested:%lu max:%lu header:%lu", s, limit, IBUF_RDMA_GET_SIZE);
+        ibuf = sctk_ibuf_rdma_pick(rail_ib, remote);
+
+        /* A buffer has been picked-up */
+        if (ibuf) {
+          PROF_INC_RAIL_IB(rail_ib, ibuf_rdma_nb);
+          sctk_nodebug("Picking from RDMA %d", ibuf->index);
+#ifdef DEBUG_IB_BUFS
+          assume (sctk_ibuf_rdma_get_remote_state_rts(remote) == state_connected)
+#endif
+            goto exit;
+        } else {
+          /* If we cannot pick a buffer from the RDMA channel, we switch to SR */
+          PROF_INC_RAIL_IB(rail_ib, ibuf_rdma_miss_nb);
+          OPA_decr_int(&remote->rdma.pool->busy_nb[REGION_SEND]);
+          sctk_ibuf_rdma_check_flush_send(remote, rail_ib);
+          OPA_incr_int(&remote->rdma.miss_nb);
+        }
+      }
+    } else {
+      sctk_spinlock_unlock(&remote->rdma.flushing_lock);
     }
   }
 
@@ -476,6 +498,8 @@ void sctk_ibuf_release(
       }
       sctk_nodebug("Buffer %p free (%d)", ibuf, ibuf->in_srq);
     }
+  } else {
+    not_reachable();
   }
 }
 
