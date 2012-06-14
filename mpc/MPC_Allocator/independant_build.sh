@@ -24,6 +24,7 @@ MODE="Debug"
 EXIT_STATUS="0"
 REBUILD="no"
 OS="linux"
+ROOT_FOLDER=""
 
 print_help(){
 	echo "###########################################################################"
@@ -37,8 +38,6 @@ print_help(){
 	echo "#  --rebuild               Execute CMake command after clean up build     #"
 	echo "#                          folder.                                        #"
 	echo "#  --all                   Clean up and run Debug Mode.                   #"
-	echo "#  --lin                   Select Linux platform (by default).            #"
-	echo "#  --win                   Select minGW platform.                         #"
 	echo "#                                                                         #"
 	echo "###########################################################################"
 }
@@ -51,21 +50,21 @@ read_param_value(){
 clean(){
 
 	#clean up
-	rm -rfv build/* 2> /dev/null
+	rm -rfv ${ROOT_FOLDER}/build/* 2> /dev/null
 	delinker
 }
 
 linker(){
 	#link
 	echo "SymLink Creation"
-	ln -s ../../MPC_Test_Suite/UnitTests/Allocator tests 2> /dev/null
+	ln -s ${ROOT_FOLDER}/../../MPC_Test_Suite/UnitTests/Allocator tests 2> /dev/null
 }
 
 delinker(){
 
 	#delink
 	echo "SymLink Destruction..."
-	rm tests 2> /dev/null
+	rm ${ROOT_FOLDER}/tests 2> /dev/null
 }
 
 run(){
@@ -76,27 +75,11 @@ run(){
 	linker
 	
 	#execution
-	cd build
-
-	case $OS in
-		"linux")
-			run_linux
-			;;
-	
-		"windows")
-			run_win
-			;;
-	esac
+	cd ${ROOT_FOLDER}/build
+	cmake -DCMAKE_BUILD_TYPE=$MODE .. && make -j 1 && make test
 	cd ..
-}
 
-
-run_linux(){
-	cmake -DCMAKE_BUILD_TYPE=$MODE .. && make && make test
-}
-
-run_win(){
-	echo "nothing to do here..."
+	delinker
 }
 
 ######################### MAIN ######################
@@ -111,16 +94,11 @@ if [ ! -d "${PWD}/build" ] ; then
 	mkdir -p ${PWD}/build
 fi
 
+ROOT_FOLDER=${PWD}
+
 for arg in $*
 do 
 	case $arg in 
-		--lin)
-			OS="linux"
-			;;
-
-		--win)
-			OS="windows"
-			;;
 		--mode=*)
 			MODE=$(read_param_value $arg --mode)
 			;;
