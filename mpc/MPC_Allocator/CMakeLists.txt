@@ -8,6 +8,10 @@ enable_testing()
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/)
 
+if(WIN32)
+	SET(EXECUTOR_PATH ${WINE_PATH})
+endif(WIN32)
+
 ####################### DEPS ############################
 if (NOT DISABLE_LIBNUMA)
 	find_package(Hwloc)

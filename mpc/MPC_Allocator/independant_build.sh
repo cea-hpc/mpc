@@ -20,32 +20,41 @@
 #   - Adam Julien julien.adam.ocre@cea.fr                              #
 #                                                                      #
 ########################################################################
+##################### VARIABLES #####################
+# Variables need to be setted with Windows
+#	- WINE_PATH 	--> path to wine64 executable (for tests)
+#	- EXTERNAL_LIBS --> external libraries path
+
 MODE="Debug"
 EXIT_STATUS="0"
 REBUILD="no"
 OS="linux"
 ROOT_FOLDER=""
-
+CMAKE_ARGS=""
+MAKE_J=1
+EXTERNAL_LIBS="/home/julia/usr/lib"
 print_help(){
-	echo "###########################################################################"
-	echo "#                      ./independant_build.sh USAGE                       #"
-	echo "###########################################################################"
-	echo "#                                                                         #"
-	echo "#  --help, -h              Displays this help.                            #"
-	echo "#  --mode=[Debug|Release]  Allows to run cmake with Debug or Release Mode.#"
-	echo "#  --setup                 Make some actions to prepare CMake execution   #"
-	echo "#  --clean                 Clean build folder.                            #"
-	echo "#  --rebuild               Execute CMake command after clean up build     #"
-	echo "#                          folder.                                        #"
-	echo "#  --all                   Clean up and run Debug Mode.                   #"
-	echo "#                                                                         #"
-	echo "###########################################################################"
+	echo "#############################################################################"
+	echo "#                      ./independant_build.sh USAGE                         #"
+	echo "#############################################################################"
+	echo "#                                                                           #"
+	echo "#  --help, -h              Displays this help.                              #"
+	echo "#  --mode=[Debug|Release]  Allows to run cmake with Debug or Release Mode.  #"
+	echo "#  --setup                 Make some actions to prepare CMake execution     #"
+	echo "#  --clean                 Clean build folder.                              #"
+	echo "#  --rebuild               Execute CMake command after clean up build folder#"
+	echo "#  --all                   Clean up and run Debug Mode.                     #"
+	echo "#  --args=<args>           Arguments for CMake instructions (separated      #"
+	echo "#                          by comma).                                       #"
+	echo "#  -j <num>, -j=<num>      Specifies Make -j options.                       #"
+	echo "#  --ext-libs=<path>        Specifies path to bind minGW with hers libraries #"
+	echo "#                                                                           #"
+	echo "#############################################################################"
 }
 
 read_param_value(){
 	echo "$1" | sed -e "s/^$2=//g"
 }
-
 
 clean(){
 
@@ -88,12 +97,27 @@ run(){
 }
 
 run_linux(){
-	cmake -DCMAKE_BUILD_TYPE=$MODE .. && make -j 4 && make test
+	cmake -DCMAKE_BUILD_TYPE=$MODE .. ${CMAKE_ARGS} && make -j ${MAKE_J} && make test
 }
 
 run_win(){
-	cmake -DWIN32=yes -DCMAKE_TOOLCHAIN_FILE=toolchain.cmake -DCMAKE_BUILD_TYPE=$MODE .. && make -j 1 && make test
-
+	#some checks
+	CHAIN="$(echo ${CMAKE_ARGS} | grep "\-DWINE_PATH=")"
+	if [ "${CHAIN}" == "" ] ; then 
+		echo "Error in argument to find Wine. You must add -DWINE_PATH=<path>"
+		delinker
+		exit 1
+	fi
+	
+	cmake -DWIN32=yes -DCMAKE_TOOLCHAIN_FILE=${ROOT_FOLDER}/toolchain.cmake -DCMAKE_BUILD_TYPE=$MODE ${CMAKE_ARGS} .. && make -j 1
+	if [ ! $? -eq 0 ] ; then
+		echo "Error during Make command. Stop."
+		exit 2
+	fi
+		cp ${EXTERNAL_LIBS}/* ${ROOT_FOLDER}/build/tests/
+		cd tests
+		make test
+		cd ..
 }
 
 ######################### MAIN ######################
@@ -120,7 +144,7 @@ do
 			OS="windows"
 			;;
 		--mode=*)
-			MODE=$(read_param_value $arg --mode)
+			MODE="$(read_param_value $arg --mode)"
 			;;
 		--setup)
 			MODE="setup"
@@ -138,6 +162,18 @@ do
 		--all)
 			MODE="Debug"
 			REBUILD="yes"
+			;;
+		--args=*)
+			CMAKE_ARGS="$(read_param_value $arg --args | sed -e 's/\"//g' -e 's/,/ /g')"
+			;;
+		-j=*)
+			MAKE_J=$(read_param_value $arg -j)
+			;;
+		-j*)
+			MAKE_J=$(echo $arg | sed -e "s/-j//g")
+			;;
+		--ext-libs=*)
+			EXTERNAL_LIBS="$(read_param_value $arg --ext-libs)"
 			;;
 		*)
 			echo "Error argument: \"$arg\""
@@ -163,9 +199,3 @@ case $MODE in
 esac
 
 exit "${EXIT_STATUS}"
-
-		
-		
-
-
-
