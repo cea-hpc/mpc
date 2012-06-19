@@ -26,6 +26,7 @@
 #include "sctk_alloc_debug.h"
 #include "sctk_alloc_rdtsc.h"
 #include "sctk_alloc_lock.h"
+#include "sctk_alloc_inlined.h"
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -375,7 +376,7 @@ void sctk_alloc_spy_emit_event_add_macro_bloc(struct sctk_alloc_chain * chain,st
 	//fill it
 	event.infos.evt_add_macro_bloc.bloc = bloc;
 	if (bloc != NULL)
-		event.infos.evt_add_macro_bloc.size = bloc->header.size;
+		event.infos.evt_add_macro_bloc.size = sctk_alloc_get_chunk_header_large_size(&bloc->header);
 	else
 		event.infos.evt_add_macro_bloc.size = 0;
 
@@ -398,7 +399,7 @@ void sctk_alloc_spy_emit_event_free_macro_bloc(struct sctk_alloc_chain * chain,s
 
 	//fill it
 	event.infos.evt_add_macro_bloc.bloc = bloc;
-	event.infos.evt_add_macro_bloc.size = bloc->header.size;
+	event.infos.evt_add_macro_bloc.size = sctk_alloc_get_chunk_header_large_size(&bloc->header);
 
 	//push it
 	sctk_alloc_spy_chain_push_event(&chain->spy,&event);

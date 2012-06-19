@@ -168,7 +168,7 @@ SCTK_STATIC struct sctk_alloc_mm_source_light_free_macro_bloc * sctk_alloc_mm_so
 **/
 SCTK_STATIC struct sctk_alloc_mm_source_light_free_macro_bloc * sctk_alloc_mm_source_light_to_free_macro_bloc(struct sctk_alloc_macro_bloc * macro_bloc)
 {
-	return sctk_alloc_mm_source_light_setup_free_macro_bloc(macro_bloc,macro_bloc->header.size);
+	return sctk_alloc_mm_source_light_setup_free_macro_bloc(macro_bloc,sctk_alloc_get_chunk_header_large_size(&macro_bloc->header));
 }
 
 /************************* FUNCTION ************************/

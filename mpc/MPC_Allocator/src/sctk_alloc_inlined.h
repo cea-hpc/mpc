@@ -39,6 +39,71 @@ extern "C"
 /************************** CONSTS *************************/
 extern const sctk_alloc_vchunk SCTK_ALLOC_DEFAULT_CHUNK;
 
+/**
+ * Some functions to access attributes structure 
+ */
+/************************* FUNCTION ************************/
+static inline sctk_size_t sctk_alloc_get_chunk_header_large_size(struct sctk_alloc_chunk_header_large * chunk)
+{
+	return chunk->size;
+}
+
+/************************* FUNCTION ************************/
+static inline unsigned char sctk_alloc_get_chunk_header_large_addr(struct sctk_alloc_chunk_header_large * chunk)
+{
+	return chunk->addr;
+}
+
+/************************* FUNCTION ************************/
+static inline sctk_size_t sctk_alloc_get_chunk_header_large_previous_size(struct sctk_alloc_chunk_header_large * chunk)
+{
+	return chunk->prevSize;
+}
+
+/************************* FUNCTION ************************/
+static inline struct sctk_alloc_chunk_info * sctk_alloc_get_chunk_header_large_info(struct sctk_alloc_chunk_header_large * chunk)
+{
+	return &chunk->info;
+}
+
+/************************* FUNCTION ************************/
+static inline sctk_size_t sctk_alloc_get_chunk_header_padded_padding(struct sctk_alloc_chunk_header_padded * chunk)
+{
+		return chunk->padding;
+}
+
+/************************* FUNCTION ************************/
+static inline struct sctk_alloc_chunk_info * sctk_alloc_get_chunk_header_padded_info(struct sctk_alloc_chunk_header_padded * chunk)
+{
+		return &chunk->info;
+}
+
+/**
+ * Some functions to set attributes structures
+ */
+/************************* FUNCTION ************************/
+static inline void sctk_alloc_set_chunk_header_large_size(struct sctk_alloc_chunk_header_large * chunk, sctk_size_t size)
+{
+	chunk->size = size;
+}
+/************************* FUNCTION ************************/
+static inline void sctk_alloc_set_chunk_header_large_addr(struct sctk_alloc_chunk_header_large * chunk, unsigned char addr)
+{
+	chunk->addr = addr;
+}
+
+/************************* FUNCTION ************************/
+static inline void sctk_alloc_set_chunk_header_large_previous_size(struct sctk_alloc_chunk_header_large * chunk, sctk_size_t prevSize)
+{
+	chunk->prevSize = prevSize;
+}
+
+/************************* FUNCTION ************************/
+static inline void sctk_alloc_set_chunk_header_padded_padding(struct sctk_alloc_chunk_header_padded * chunk, sctk_size_t padding)
+{
+	chunk->padding = padding;
+}
+
 /************************* FUNCTION ************************/
 /**
  * Get the vchunk description from a raw pointer. This is mostly to be used in free/realloc
@@ -113,27 +178,27 @@ static inline sctk_addr_t sctk_alloc_get_addr(sctk_alloc_vchunk vchunk)
 /************************* FUNCTION ************************/
 static inline sctk_size_t sctk_alloc_get_size(sctk_alloc_vchunk vchunk)
 {
-	return sctk_alloc_get_large(vchunk)->size;
+	return sctk_alloc_get_chunk_header_large_size(sctk_alloc_get_large(vchunk));
 }
 
 /************************* FUNCTION ************************/
 static inline sctk_size_t sctk_alloc_get_prev_size(sctk_alloc_vchunk vchunk)
 {
-	return sctk_alloc_get_large(vchunk)->prevSize;
+	return sctk_alloc_get_chunk_header_large_previous_size(sctk_alloc_get_large(vchunk));
 }
 
 /************************* FUNCTION ************************/
 static inline sctk_alloc_vchunk sctk_alloc_large_to_vchunk(struct sctk_alloc_chunk_header_large * chunk_large)
 {
 	assert(chunk_large != NULL);
-	return &chunk_large->info;
+	return sctk_alloc_get_chunk_header_large_info(chunk_large);
 }
 
 /************************* FUNCTION ************************/
 static inline sctk_alloc_vchunk sctk_alloc_padded_to_vchunk(struct sctk_alloc_chunk_header_padded * chunk_padded)
 {
 	assert(chunk_padded != NULL);
-	return &chunk_padded->info;
+	return sctk_alloc_get_chunk_header_padded_info(chunk_padded);
 }
 
 /************************* FUNCTION ************************/
@@ -148,7 +213,7 @@ static inline sctk_alloc_vchunk sctk_alloc_unpadd_vchunk(struct sctk_alloc_chunk
 	assert(chunk_padded->info.type == SCTK_ALLOC_CHUNK_TYPE_PADDED);
 
 	//return previous header by removing padding space.
-	return sctk_alloc_get_chunk((sctk_addr_t)chunk_padded - chunk_padded->padding);
+	return sctk_alloc_get_chunk((sctk_addr_t)chunk_padded - sctk_alloc_get_chunk_header_padded_padding(chunk_padded));
 }
 
 /************************* FUNCTION ************************/
@@ -181,7 +246,7 @@ static inline sctk_alloc_vchunk sctk_alloc_get_next_chunk(sctk_alloc_vchunk chun
 {
 	sctk_alloc_vchunk res;
 
-	res = (sctk_alloc_vchunk)((sctk_addr_t)chunk + sctk_alloc_get_large(chunk)->size);
+	res = (sctk_alloc_vchunk)((sctk_addr_t)chunk + sctk_alloc_get_chunk_header_large_size(sctk_alloc_get_large(chunk)));
 
 	assume(res->unused_magik == SCTK_ALLOC_MAGIK_STATUS,"Small block not supported for now.");
 
@@ -205,18 +270,18 @@ static inline struct sctk_alloc_chunk_header_large * sctk_alloc_setup_large_head
 
 	//large blocs
 	chunk_large = (struct sctk_alloc_chunk_header_large *)ptr;
-	chunk_large->size = size;
+	sctk_alloc_set_chunk_header_large_size(chunk_large, size);
 	/** @todo  Need to cleanup this **/
 	//for now we used a short for addr, by we got 5 more bytes which could be used to
 	//store more checking bits
-	chunk_large->addr = (sctk_size_t)ptr;
-	chunk_large->info.state = SCTK_ALLOC_CHUNK_STATE_ALLOCATED;
-	chunk_large->info.type = SCTK_ALLOC_CHUNK_TYPE_LARGE;
-	chunk_large->info.unused_magik = SCTK_ALLOC_MAGIK_STATUS;
+	sctk_alloc_set_chunk_header_large_addr(chunk_large, (sctk_size_t)ptr);
+	sctk_alloc_get_chunk_header_large_info(chunk_large)->state = SCTK_ALLOC_CHUNK_STATE_ALLOCATED;
+	sctk_alloc_get_chunk_header_large_info(chunk_large)->type = SCTK_ALLOC_CHUNK_TYPE_LARGE;
+	sctk_alloc_get_chunk_header_large_info(chunk_large)->unused_magik = SCTK_ALLOC_MAGIK_STATUS;
 	if (prev == NULL || prev == ptr)
-		chunk_large->prevSize = 0;
+		sctk_alloc_set_chunk_header_large_previous_size(chunk_large, 0);
 	else
-		chunk_large->prevSize = ((sctk_addr_t)ptr - (sctk_addr_t)prev);
+		sctk_alloc_set_chunk_header_large_previous_size(chunk_large, ((sctk_addr_t)ptr - (sctk_addr_t)prev));
 
 	return chunk_large;
 }

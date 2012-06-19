@@ -172,8 +172,8 @@ void sctk_alloc_debug_dump_free_lists(int fd, struct sctk_alloc_free_chunk* free
 		fchunk = free_lists[i].next;
 		while (fchunk != free_lists+i)
 		{
-			sctk_alloc_fprintf(fd,"Bloc %p (align = %2d) %12ld [%s] in state %s\n",fchunk,((sctk_addr_t)fchunk)%32,fchunk->header.size,
-			                   SCTK_ALLOC_TYPE_NAME[fchunk->header.info.type],SCTK_ALLOC_STATE_NAME[fchunk->header.info.state]);
+			sctk_alloc_fprintf(fd,"Bloc %p (align = %2d) %12ld [%s] in state %s\n",fchunk,((sctk_addr_t)fchunk)%32,sctk_alloc_get_chunk_header_large_size(&fchunk->header),
+			                   SCTK_ALLOC_TYPE_NAME[sctk_alloc_get_chunk_header_large_info(&fchunk->header)->type],SCTK_ALLOC_STATE_NAME[sctk_alloc_get_chunk_header_large_info(&fchunk->header)->state]);
 			fchunk = fchunk->next;
 		}
 	}
