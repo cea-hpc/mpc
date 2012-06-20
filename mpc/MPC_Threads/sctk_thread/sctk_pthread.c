@@ -42,6 +42,8 @@
 #define SCTK_LOCAL_VERSION_MAJOR 0
 #define SCTK_LOCAL_VERSION_MINOR 1
 
+extern volatile int sctk_online_program;
+
 static void
 pthread_wait_for_value_and_poll (volatile int *data, int value,
 				 void (*func) (void *), void *arg)
@@ -62,11 +64,16 @@ pthread_wait_for_value_and_poll (volatile int *data, int value,
 	    {
 #ifdef MPC_Message_Passing
 	      sctk_notify_idle_message ();
-	      if(sctk_get_processor_number () == sctk_get_nb_task_local(SCTK_COMM_WORLD)){
-		sched_yield();
-	      } else {
-		kthread_usleep (10);
-	      }
+        /* We need to check if we have finished the MPC init step.
+         * If we do not that, get_nb_task_local *may* fail because the
+         * communicator SCTK_COMM_WORLD is not initialized */
+        if (sctk_online_program == 1) {
+          if(sctk_get_processor_number () == sctk_get_nb_task_local(SCTK_COMM_WORLD)){
+            sched_yield();
+          } else {
+            kthread_usleep (10);
+          }
+        }
 #else
 	      kthread_usleep (10);
 #endif
