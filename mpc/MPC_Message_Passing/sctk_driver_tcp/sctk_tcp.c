@@ -41,18 +41,21 @@ static void* sctk_tcp_thread(sctk_route_table_t* tmp){
     ssize_t res;
 
     res = sctk_safe_read(fd,(char*)&size,sizeof(size_t));
+    sctk_nodebug("Got msg of size %d (online:%d)", res, sctk_online_program);
     if(res < sizeof(size_t)){
       return NULL;
     }
     if(size < sizeof(sctk_thread_ptp_message_body_t)){
       return NULL;
     }
-    if(sctk_online_program == 0){
+    /* Stupid tests which block the 'fully connected' mode...
+     * Is there any reason here to do that ? */
+    /* if(sctk_online_program == 0){
       return NULL;
     }
     while(sctk_online_program == -1){
       sched_yield();
-    }
+    } */
 
     size = size - sizeof(sctk_thread_ptp_message_body_t) +
       sizeof(sctk_thread_ptp_message_t);
@@ -100,6 +103,8 @@ sctk_network_send_message_tcp (sctk_thread_ptp_message_t * msg,sctk_rail_info_t*
   } else {
     tmp = sctk_get_route(msg->sctk_msg_get_glob_destination,rail);
   }
+
+  sctk_nodebug("Send message to %d", tmp->key.destination);
 
   sctk_spinlock_lock(&(tmp->data.tcp.lock));
 
