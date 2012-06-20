@@ -106,6 +106,15 @@ struct sctk_alloc_chunk_info
 /** Chunk header for large blocs (>256o). **/
 struct sctk_alloc_chunk_header_large
 {
+	#ifdef _WIN32
+	uint32_t size;
+	unsigned char padding0[3];
+	unsigned char addr;
+	uint32_t prevSize;
+	unsigned char padding1[3];
+	struct sctk_alloc_chunk_info info;
+	
+	#else
 	/** Size of the bloc content (counting the header size). **/
 	sctk_size_t size:56;
 	/** Addr of the bloc, this is a sort of canary to dected bugs. **/
@@ -117,6 +126,7 @@ struct sctk_alloc_chunk_header_large
 	 * It must be at the end of the header for each header type.
 	**/
 	struct sctk_alloc_chunk_info info;
+	#endif
 };
 
 /************************** STRUCT *************************/
@@ -130,6 +140,11 @@ struct sctk_alloc_chunk_header_large
 **/
 struct sctk_alloc_chunk_header_padded
 {
+	#ifdef _WIN32
+	uint32_t padding;
+	unsigned char padding0[3];
+	struct sctk_alloc_chunk_info info;
+	#else
 	/**
 	 * Padding, it give the space between body addr of real chunk and base addr of
 	 * sctk_alloc_chunk_header_padded struct. So to get the previous header, we just need
@@ -141,6 +156,7 @@ struct sctk_alloc_chunk_header_padded
 	 * It must be at the end of the header for each header type.
 	**/
 	struct sctk_alloc_chunk_info info;
+	#endif
 };
 
 /************************** STRUCT *************************/

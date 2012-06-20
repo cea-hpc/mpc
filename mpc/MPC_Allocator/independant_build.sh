@@ -25,31 +25,49 @@
 #	- WINE_PATH 	--> path to wine64 executable (for tests)
 #	- EXTERNAL_LIBS --> external libraries path
 
-MODE="Debug"
+MODE="all"
+LAUNCH="Debug"
 EXIT_STATUS="0"
 REBUILD="no"
 OS="linux"
 ROOT_FOLDER=""
 CMAKE_ARGS=""
 MAKE_J=1
-EXTERNAL_LIBS="/home/julia/usr/lib"
+EXTERNAL_LIBS="libgcc_s_sjlj-1.dll libgfortran-3.dll libobjc-4.dll libquadmath-0.dll libssp-0.dll libstdc++-6.dll"
+MINGW_PATH="/home/julia/usr/minGW"
+WINE_PATH="/home/julia/usr/wine/bin/wine64"
+TARGET_ENV_PATH=""
+INTERNALS_ARGS=""
+
 print_help(){
-	echo "#############################################################################"
-	echo "#                      ./independant_build.sh USAGE                         #"
-	echo "#############################################################################"
-	echo "#                                                                           #"
-	echo "#  --help, -h              Displays this help.                              #"
-	echo "#  --mode=[Debug|Release]  Allows to run cmake with Debug or Release Mode.  #"
-	echo "#  --setup                 Make some actions to prepare CMake execution     #"
-	echo "#  --clean                 Clean build folder.                              #"
-	echo "#  --rebuild               Execute CMake command after clean up build folder#"
-	echo "#  --all                   Clean up and run Debug Mode.                     #"
-	echo "#  --args=<args>           Arguments for CMake instructions (separated      #"
-	echo "#                          by comma).                                       #"
-	echo "#  -j <num>, -j=<num>      Specifies Make -j options.                       #"
-	echo "#  --ext-libs=<path>        Specifies path to bind minGW with hers libraries #"
-	echo "#                                                                           #"
-	echo "#############################################################################"
+	echo "##############################################################################"
+	echo "#                       ./independant_build.sh USAGE                         #"
+	echo "##############################################################################"
+	echo "#                                                                            #"
+	echo "# COMMON OPTIONS:                                                            #"
+	echo "#                                                                            #"
+	echo "#  --help, -h              Displays this help.                               #"
+	echo "#  --mode=[Debug|Release]  Allows to run cmake with Debug or Release Mode.   #"
+	echo "#  --clean                 Clean build folder.                               #"
+	echo "#  --rebuild               Allows to clean build folder before execution.    #"
+	echo "#  --all                   Execute CMake, make and test conmmand.            #"
+	echo "#  --cmake                 Execute only CMake command.                       #"
+	echo "#  --make                  Execute only make command.                        #"
+	echo "#  --test                  Execute only test command.                        #"
+	echo "#  --args=<args>           Arguments for CMake (separated by comma).         #"
+	echo "#  --linux                 Run on Unix systems (default).                    #"
+	echo "#  --win                   Run on Microsoft systems.                         #"
+	echo "#  --target-path           Specifies where CMake have to search .CMake files.#"  
+	echo "#                                                                            #"
+	echo "# ONLY LINUX OPTIONS:                                                        #" 
+	echo "#                                                                            #"
+	echo "#  -j <num>, -j=<num>      Specifies Make -j options.                        #"
+	echo "#                                                                            #"
+	echo "# ONLY WINDOWS OPTIONS:                                                      #"
+	echo "#                                                                            #"
+	echo "#  --mingw-path=<path>     Specifies minGW prefix (bind libraries or exe).   #"
+	echo "#                                                                            #"
+	echo "##############################################################################"
 }
 
 read_param_value(){
@@ -76,7 +94,7 @@ delinker(){
 	rm ${ROOT_FOLDER}/tests 2> /dev/null
 }
 
-run(){
+config(){
 	if [ "$REBUILD" == "yes" ] ; then
 		clean
 	fi
@@ -85,39 +103,50 @@ run(){
 	
 	#execution
 	cd ${ROOT_FOLDER}/build
-	case $OS in
-		"linux")
-			run_linux;;
-		"windows")
-			run_win;;
-	esac
-	cd ..
-
-	delinker
-}
-
-run_linux(){
-	cmake -DCMAKE_BUILD_TYPE=$MODE .. ${CMAKE_ARGS} && make -j ${MAKE_J} && make test
-}
-
-run_win(){
-	#some checks
-	CHAIN="$(echo ${CMAKE_ARGS} | grep "\-DWINE_PATH=")"
-	if [ "${CHAIN}" == "" ] ; then 
-		echo "Error in argument to find Wine. You must add -DWINE_PATH=<path>"
-		delinker
-		exit 1
-	fi
 	
-	cmake -DWIN32=yes -DCMAKE_TOOLCHAIN_FILE=${ROOT_FOLDER}/toolchain.cmake -DCMAKE_BUILD_TYPE=$MODE ${CMAKE_ARGS} .. && make -j 1
+	if [ "$OS" == "windows" ] ; then
+		CHAIN="$(echo ${CMAKE_ARGS} | grep "\-DWINE_PATH=")"
+		if [ "${CHAIN}" == "" ] ; then 
+			echo "Error in argument to find Wine. You must add -DWINE_PATH=<path>"
+			delinker
+			exit 1
+		fi
+
+		INTERNALS_ARGS="-DTARGET_ENV_PREFIX="${TARGET_ENV_PATH}" -DMINGW_PREFIX="${MINGW_PATH}" -DWIN32=yes -DCMAKE_TOOLCHAIN_FILE=${ROOT_FOLDER}/toolchain.cmake"
+	fi
+
+	cmake ${INTERNALS_ARGS} -DCMAKE_BUILD_TYPE=$LAUNCH ${CMAKE_ARGS} ..
+	
+	#if make fails
 	if [ ! $? -eq 0 ] ; then
 		echo "Error during Make command. Stop."
 		exit 2
 	fi
-		cp ${EXTERNAL_LIBS}/* ${ROOT_FOLDER}/build/tests/
-		cd tests
-		make test
-		cd ..
+}
+
+compil(){
+	
+	if [ "$OS" == "windows" ] ; then
+		MAKE_J=1
+	fi
+
+	cd ${ROOT_FOLDER}/build
+	make -j ${MAKE_J}
+}
+
+testing(){
+	
+	if [ "$OS" == "windows" ] ; then
+		for dll in ${EXTERNAL_LIBS}
+		do
+			cp ${MINGW_PATH}/mingw/lib/$dll ${ROOT_FOLDER}/build/tests/
+		done
+	fi
+
+	cd ${ROOT_FOLDER}/build
+	make test
+	cd ..
+	delinker
 }
 
 ######################### MAIN ######################
@@ -144,10 +173,7 @@ do
 			OS="windows"
 			;;
 		--mode=*)
-			MODE="$(read_param_value $arg --mode)"
-			;;
-		--setup)
-			MODE="setup"
+			LAUNCH="$(read_param_value $arg --mode)"
 			;;
 		--clean)
 			MODE="clean"
@@ -160,7 +186,7 @@ do
 			REBUILD="yes"
 			;;
 		--all)
-			MODE="Debug"
+			MODE="all"
 			REBUILD="yes"
 			;;
 		--args=*)
@@ -172,8 +198,20 @@ do
 		-j*)
 			MAKE_J=$(echo $arg | sed -e "s/-j//g")
 			;;
-		--ext-libs=*)
-			EXTERNAL_LIBS="$(read_param_value $arg --ext-libs)"
+		--mingw-path=*)
+			MINGW_PATH="$(read_param_value $arg --win-path)"
+			;;
+		--cmake)
+			MODE="config"
+			;;
+		--make)
+			MODE="compil"
+			;;
+		--test)
+			MODE="test"
+			;;
+		--target-path=*)
+			TARGET_ENV_PATH="$(read_param_value $arg --target-path)"
 			;;
 		*)
 			echo "Error argument: \"$arg\""
@@ -183,15 +221,22 @@ do
 done
 
 case $MODE in
-	"setup")
-		clean
-		linker
-		;;
 	"clean")
 		clean
 		;;
-	"Debug"|"Release")
-		run	
+	"config")
+		config
+		;;
+	"compil")
+		compil
+		;;
+	"test")
+		testing
+		;;
+	"all")
+		config
+		compil
+		testing
 		;;
 	*)
 		echo "Error Mode: \"$MODE\""

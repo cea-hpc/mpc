@@ -223,7 +223,6 @@ SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_get_free_list(struct sctk_thread
 	//find the correct size class, none if too large by dicotomic search.
 	/*while (pool->alloc_free_sizes[j] != -1 && pool->alloc_free_sizes[j] < size)
 		++j;*/
-
 	if (ptr[0] >= size)
 	{
 		i = 0;

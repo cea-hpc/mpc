@@ -76,7 +76,7 @@ static struct sctk_alloc_chain sctk_global_egg_chain;
 /** Define the TLS pointer to the current allocation chain. **/
  
 #ifdef _WIN32
-	static int sctk_current_alloc_chain;
+	static int sctk_current_alloc_chain = -1;
 #else 
 	__thread struct sctk_alloc_chain * sctk_current_alloc_chain = NULL;
 #endif
@@ -404,7 +404,6 @@ void * sctk_malloc (size_t size)
 	//to avoid many access to TLS variable
 	struct sctk_alloc_chain * local_chain = sctk_get_tls_chain();
 	void * res;
-
 	//setup the local chain if not already done
 	if (local_chain == NULL)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
@@ -472,7 +471,6 @@ void sctk_free (void * ptr)
 	#ifndef NDEBUG
 	static int cnt = 0;
 	#endif
-
 	//setup the local chain if not already done
 	//we need a non null chain when spy is enabled to avoid crash on remote free before a first
 	//call to malloc()

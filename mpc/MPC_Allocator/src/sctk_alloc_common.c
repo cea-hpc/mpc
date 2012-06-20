@@ -47,11 +47,11 @@
 SCTK_STATIC void* sctk_mmap(void* addr, size_t size)
 {
 	void * res = NULL;
-	if (addr == NULL)
-		res = VirtualAlloc(NULL,size,MEM_RESERVE|MEM_COMMIT,PAGE_EXECUTE_READWRITE);
-	else
-		res = VirtualAlloc(addr,size,MEM_RESERVE|MEM_COMMIT,PAGE_EXECUTE_READWRITE);
+	
+	res = VirtualAlloc(addr,size,MEM_COMMIT|MEM_RESERVE,PAGE_EXECUTE_READWRITE);
+	
 	if (res == MAP_FAILED){
+		fprintf(stderr, "Error Code to VirtualAlloc: %d\n",GetLastError());
 		perror("Out of memory, failed to request memory to the OS via VirtualAlloc.");
 	}
 	return res;
@@ -81,7 +81,10 @@ void* sctk_mmap(void* addr, size_t size)
 #ifdef _WIN32
 SCTK_STATIC void sctk_munmap(void * addr,size_t size)
 {
-	VirtualFree(addr,size,MEM_RELEASE);
+	int exit_status;
+	exit_status = VirtualFree(addr,size,MEM_RELEASE);
+	if(exit_status != 0)
+		fprintf(stderr, "Error Code to VirtualFree: %d\n", GetLastError());
 }
 
 #else
