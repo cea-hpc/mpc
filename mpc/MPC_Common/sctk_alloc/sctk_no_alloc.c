@@ -443,6 +443,11 @@ void * sctk_user_mremap (void *old_address, size_t old_size, size_t new_size,
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_alloc_posix_numa_migrate(void)
+{
+}
+
+/*******************  FUNCTION  *********************/
 #ifdef SCTK_MPC_MMAP
 void *__real_mmap (void *start, size_t length, int prot, int flags,
                    int fd, off_t offset);
@@ -468,6 +473,7 @@ void * __wrap_mremap (void *old_address, size_t old_size, size_t new_size, int f
 {
 	return __real_mremap (old_address, old_size, new_size, flags);
 }
+
 #endif //SCTK_MPC_MMAP
 
 #endif //MPC_Allocator
