@@ -32,6 +32,10 @@
 #include "sctk_ib_qp.h"
 #include <utarray.h>
 
+static int size=MIN_SIZE_DIM;
+static sctk_Torus_t Torus;
+//static sctk_Torus_route route;
+static sctk_Node_t node;
 static sctk_route_table_t* sctk_dynamic_route_table = NULL;
 static sctk_route_table_t* sctk_static_route_table = NULL;
 static sctk_spin_rwlock_t sctk_route_table_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
@@ -345,6 +349,11 @@ inline sctk_route_table_t* sctk_get_route_to_process_no_ondemand(int dest, sctk_
 sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail){
   sctk_route_table_t* tmp;
   tmp = sctk_get_route_to_process_no_route(dest,rail);
+  if (tmp) {
+  	sctk_nodebug("Directly connected to %d", dest);
+  } else {
+  	sctk_nodebug("NOT Directly connected to %d", dest);
+  }
 
   if(tmp == NULL){
 #if MPC_USE_INFINIBAND
@@ -534,6 +543,599 @@ void sctk_route_ondemand_init(sctk_rail_info_t* rail){
   rail->on_demand=1;
 }
 
+/* TORUS */
+inline void sctk_Node_zero (sctk_Node_t *Node )
+    {
+        unsigned i = 0,j = 0;
+        for ( i = 0; i < Node->d; i++ )
+        {
+		    for ( j = 0; j < 4; j++ )
+		    {
+		        Node->neigh[i][j] = -1;
+		    }
+            Node->c[i] = 0;
+        }
+    }
+
+inline void sctk_Node_print (sctk_Node_t *Node )
+    {
+        int i = 0;
+        sctk_debug( "Node %ld",Node->id);
+        for ( i = 0; i < Node->d; i++ )
+        {
+            sctk_debug( "[%d]=%d", i, Node->c[i] );
+        }
+    }
+
+void sctk_Node_init (sctk_Node_t *Node, int id)
+    {
+    	unsigned d = Torus.dimension;
+    	int regular = Torus.node_regular;
+        if ( MAX_SCTK_FAST_NODE_DIM < d)
+        {
+            fprintf ( stderr, "MAX_SCTK_FAST_NODE_DIM cannot be enabled on more than %d dimensions\n",
+                      MAX_SCTK_FAST_NODE_DIM );
+            abort ();
+        }
+		unsigned i;
+		Node->id = id;
+        Node->d = d;
+        sctk_Node_zero ( Node );
+        //printf("dim %d\nregular %ld\nsize %d\n",d,regular,size);
+        if(d > 1){
+		    if(id < regular){
+				Node->c[0] = id / (regular/size);
+				regular = regular/size;
+				for(i=1;i<d;i++){
+					id = id - regular * Node->c[i-1];
+					if(i!=d-1){
+						regular = regular/size;
+						Node->c[i] = id / regular;
+					}
+					else{
+						regular = regular/Torus.size_last_dimension;
+						Node->c[i] = id / regular;
+					}
+				}
+			}
+			else{
+				id = id - regular;
+				regular = regular / size / Torus.size_last_dimension;
+				Node->c[0] = id / regular;
+
+				for(i=1;i<d;i++){
+
+					if(i!=d-1){
+						id = id - regular * Node->c[i-1];
+						regular = regular/size;
+						//printf("%d %d\n",id,regular);
+						Node->c[i] = id / regular;
+					}
+					else{
+						Node->c[d-1] = Torus.size_last_dimension;
+					}
+
+				}
+				//sctk_Node_print ( Node );
+			}
+		}
+		else
+			Node->c[0] = id;
+
+		//sctk_Node_print ( Node );
+    }
+
+
+inline void sctk_Node_release ( sctk_Node_t *Node )
+    {
+        Node->d = 0;
+    }
+
+inline void sctk_Node_set_from ( sctk_Node_t *Node, sctk_Node_t *NodeToCopy )
+    {
+		unsigned i,j;
+
+		Node->d = NodeToCopy->d;
+		sctk_Node_zero ( Node );
+		Node->id = NodeToCopy->id;
+		for(i=0;i<NodeToCopy->d;i++){
+			Node->c[i] = NodeToCopy->c[i];
+			for ( j = 0; j < 4; j++ )
+		    {
+		        Node->neigh[i][j] = NodeToCopy->neigh[i][j];
+		    }
+		}
+    }
+
+inline int sctk_Node_quadratic_distance (int a, int b ,unsigned sdim)
+    {
+
+        int tmp = 0;
+        int tmp2 = 0;
+
+        long int dist = 0;
+
+
+        tmp = a - b;
+        if(a > b)
+        	tmp2 = sdim - (a - b);
+        else
+        	tmp2 = sdim - (b - a);
+
+        dist = (tmp*tmp < tmp2*tmp2) ? tmp*tmp : tmp2*tmp2;
+
+        return dist;
+    }
+
+
+
+
+
+unsigned sctk_Torus_dim_set(int node_count){
+	unsigned dim = 1;
+	while(pow(MIN_SIZE_DIM,dim+1) <= node_count){
+		dim++;
+		if(dim > MAX_SCTK_FAST_NODE_DIM){
+			sctk_nodebug("\nWARNING : the dimension was set at the maximum (%d) because of the number of nodes which is too big.\nThe size of each dimension may be high\n",MAX_SCTK_FAST_NODE_DIM);
+			return MAX_SCTK_FAST_NODE_DIM;
+		}
+	}
+
+	return dim;
+}
+
+void sctk_Torus_init ( int node_count, uint8_t dimension)
+{
+    if ( dimension == 0 )
+    {
+        fprintf ( stderr,  "0 dimension is not supported %s:%d\n", __FILE__, __LINE__ );
+        abort ();
+    }
+	int tmp;
+	unsigned i;
+	int diff=0;
+	unsigned min;
+	unsigned last;
+    /*Setup the node count */
+    Torus.node_count = node_count;
+    Torus.dimension = dimension;
+    Torus.node_regular = 1;
+    Torus.node_left = 0;
+
+
+    diff = node_count / pow ( size, dimension-1 ) - size;
+    if(diff<0)
+    	diff = -diff;
+    min = diff;
+    size++;
+	while(diff <= min){
+		last = node_count / pow ( size, dimension-1 );
+    	diff = last - size;
+    	if(diff<0)
+    		diff = -diff;
+    	if(last < MIN_SIZE_DIM)
+    		break;
+    	if(diff <= min){
+    		min = diff;
+    		size++;
+    	}
+	}
+	size--;
+
+    tmp = node_count;
+    for ( i = 0; i < dimension - 1; i++ )
+    {
+    	tmp = tmp / size;
+    	Torus.node_regular *= size;
+    }
+    /* Put the rest in the last dimension */
+    Torus.node_regular *= tmp;
+	Torus.size_last_dimension = tmp;
+    Torus.node_left = Torus.node_count - Torus.node_regular;
+
+    /*imperfect Torus*/
+    sctk_Node_init ( &Torus.last_node,node_count-1);
+    //sctk_Node_print ( &Torus.last_node);
+    ///**********************************************
+    sctk_nodebug("dimension %d",dimension);
+   	sctk_nodebug("size %d\nsize_last_dimension %d\nnode_regular %ld\nnode_left %ld",size,Torus.size_last_dimension ,Torus.node_regular,Torus.node_left);
+
+}
+
+
+
+void sctk_Torus_release ()
+{
+    Torus.node_count = 0;
+    Torus.dimension = 0;
+    sctk_Node_release ( &Torus.last_node );
+}
+
+int sctk_Node_id ( sctk_Node_t *coord ){
+
+	int id = 0;
+	int size_in_this_dim = Torus.node_regular / size;
+	unsigned i;
+	if(coord->c[Torus.dimension-1] < Torus.size_last_dimension){//normal case
+		for(i=0;i<Torus.dimension-1;i++){
+			id += coord->c[i] * size_in_this_dim;
+			size_in_this_dim /= size;
+		}
+		id += coord->c[Torus.dimension-1];
+	}
+	else
+	{
+
+		size_in_this_dim /= Torus.size_last_dimension;
+		id =  Torus.node_regular;
+		for(i=0;i<Torus.dimension-1;i++){
+			id += coord->c[i] * size_in_this_dim;
+			//printf("+%ld\n",coord->c[i] * size_in_this_dim);
+			size_in_this_dim /= size;
+		}
+
+
+	}
+	coord->id = id;
+
+	return id;
+}
+int sctk_Torus_neighbour_dimension( unsigned i,unsigned j){
+	unsigned k;
+	unsigned IsSpecialCase=1;
+	unsigned l;
+
+	switch(j){
+		case 0://gauche
+
+			if(node.c[i] - 1 >= 0)
+				return node.c[i]-1;
+			else
+				if(node.id < Torus.node_regular){//normal node
+					if(i!=node.d-1)
+						return size-1;
+					else{
+						k=0;
+						while(k<node.d){
+
+							if((Torus.node_regular != Torus.node_count) && (node.c[k] < Torus.last_node.c[k]))
+								break;
+
+							if((Torus.node_regular == Torus.node_count)||(node.c[k] > Torus.last_node.c[k])){
+								IsSpecialCase = 0;
+								break;
+							}
+							k++;
+						}
+						if(IsSpecialCase)
+							return Torus.size_last_dimension;
+						else
+							return Torus.size_last_dimension - 1;
+					}
+				}
+				else{
+					k=0;
+					l=size-1;
+
+					while(k<node.d-1){
+						if(i==k){
+							if(Torus.last_node.c[k] < l){
+								l = Torus.last_node.c[k];
+							}
+							if(Torus.last_node.c[k] > l){
+								return l;
+							}
+						}
+						else{
+							if(Torus.last_node.c[k] > node.c[k]){
+									return l;
+							}
+							if(Torus.last_node.c[k] < node.c[k]){
+								l--;
+								if(l<=Torus.last_node.c[i]+1)
+									return -1;
+								else
+									return l;
+							}
+						}
+						k++;
+					}
+
+					return l;
+				}
+			break;
+		case 1:
+
+			if(node.id < Torus.node_regular){//normal node
+				if(i!=node.d-1)
+					return ((node.c[i]+1) % size);
+				else if(i==node.d-1 && node.c[i]+1 < Torus.size_last_dimension)
+					return (node.c[i]+1);
+
+				k=0;
+
+				while(k<node.d){
+
+					if((Torus.node_regular != Torus.node_count) && (node.c[k] < Torus.last_node.c[k]))
+						break;
+
+					if((Torus.node_regular == Torus.node_count)||(node.c[k] > Torus.last_node.c[k])){
+						IsSpecialCase = 0;
+						break;
+					}
+					k++;
+				}
+				if(IsSpecialCase)
+					return Torus.size_last_dimension;
+				else
+					return 0;
+
+			}
+			else{
+				if(i==node.d-1)
+					return 0;
+				k=0;
+				l=(node.c[i]+1) % size;
+				if(l==node.c[i] || l==node.c[i]-1)
+					return -1;
+
+				while(k<node.d-1){
+
+					if(i==k){
+						if(Torus.last_node.c[k] < l){
+							return -1;
+						}
+						if(Torus.last_node.c[k] > l){
+							return l;
+						}
+					}
+					else{
+						if(Torus.last_node.c[k] > node.c[k]){
+							return l;
+						}
+						if(Torus.last_node.c[k] < node.c[k]){
+							return -1;
+						}
+					}
+					k++;
+				}
+
+				return l;
+			}
+
+			break;
+		default:
+			fprintf(stderr,"Wrong argument j aborting in %s it must be 0 or 1, here is %d\n",__FUNCTION__,j);
+			abort();
+			break;
+
+	}
+
+	return -1;
+}
+
+int sctk_Torus_route_next(sctk_Node_t *dest){
+	unsigned i,j,k,IsSpecialCase = 1;
+	unsigned imin,jmin;
+	long long int dist;
+	long long int min_way=0;
+	int nearest_id;
+	//for(i=0;i<Torus.dimension-1;i++){
+	min_way += size;
+	//}
+	min_way += Torus.size_last_dimension;
+	min_way *= min_way;
+	sctk_Node_t node_tmp;
+	sctk_Node_set_from(&node_tmp,&node);
+
+	i=0;
+	if((node_tmp.id >= Torus.node_regular) && ((dest->id < Torus.node_regular)||(node_tmp.id < dest->id))){
+		i = Torus.dimension-1;
+		if(dest->id >= Torus.node_regular){
+			while(node_tmp.c[i]==dest->c[i]){
+	   			i--;
+	   		}
+	   	}
+	}
+	else{
+   		while(node_tmp.c[i]==dest->c[i])
+   			i++;
+   	}
+   	if(i==Torus.dimension){
+   		sctk_Node_print ( &node_tmp );
+   		sctk_Node_print ( dest );
+   		abort();
+   	}
+   /*	printf("route--->\n");
+   	sctk_Node_print ( &node_tmp );
+   	sctk_Node_print ( dest );
+   	fflush(stdout);
+	*/
+
+	for(j=0;j<2;j++){
+			IsSpecialCase = 1;
+			if(node.neigh[i][j*2] != node.id){
+
+				if(node.neigh[i][j*2] == -1){
+
+					node_tmp.c[i] = sctk_Torus_neighbour_dimension(i,j);
+					if(node_tmp.c[i]==-1){
+						node.neigh[i][j*2] = node.id;
+					}
+					else{
+						node.neigh[i][j*2+1] = node_tmp.c[i];
+						node.neigh[i][j*2] = sctk_Node_id ( &node_tmp );
+					}
+				}
+				else
+					node_tmp.c[i] = node.neigh[i][j*2+1];
+				if(node.neigh[i][j*2] < -1 || node.neigh[i][j*2] > Torus.node_count){
+					fprintf(stderr,"Error route_next\n");
+					abort();
+				}
+
+				if(node_tmp.c[i]!=-1){
+					//printf("i %d j %d id %ld c %d\n",i,j,node_tmp.id,node_tmp.c[i]);
+					//fflush(stdout);
+					//sleep(1);
+					if(i==Torus.dimension-1){
+							k=0;
+							while(k<node.d){
+
+								if((Torus.node_regular != Torus.node_count) && (node.c[k] < Torus.last_node.c[k]))
+									break;
+
+								if((Torus.node_regular == Torus.node_count)||(node.c[k] > Torus.last_node.c[k])){
+									IsSpecialCase = 0;
+									break;
+								}
+								k++;
+							}
+							if(IsSpecialCase)
+								dist = sctk_Node_quadratic_distance (node_tmp.c[i], dest->c[i], Torus.size_last_dimension+1);
+							else
+								dist = sctk_Node_quadratic_distance (node_tmp.c[i], dest->c[i], Torus.size_last_dimension);
+					}
+					else
+						dist = sctk_Node_quadratic_distance (node_tmp.c[i], dest->c[i], size);
+
+					if(dist < min_way){
+						//printf("min trouve !!!\n");
+						min_way = dist;
+						nearest_id = node.neigh[i][j*2];
+						imin = i;
+						jmin = j;
+
+					}
+				}
+			}
+		}
+
+   	/*
+	//this part would be changed in MPC context
+	node.c[imin] = node.neigh[imin][jmin*2+1];
+	node.id = nearest_id;
+
+	for(i=0;i<Torus.dimension;i++)
+		for(j=0;j<4;j++)
+			node.neigh[i][j] = -1;
+	*/
+	sctk_debug("routing passed by %d",nearest_id);
+	return nearest_id;
+}
+
+
+
+
+
+void sctk_route_torus_init(sctk_rail_info_t* rail){
+	sctk_nodebug("process %d started",sctk_process_rank);
+	int (*sav_sctk_route)(int , sctk_rail_info_t* );
+	unsigned dim;
+	sctk_pmi_barrier();
+	sctk_route_table_init_lock_needed = 1;
+	sctk_pmi_barrier();
+	dim = sctk_Torus_dim_set(sctk_process_number);
+    sctk_Torus_init (sctk_process_number, dim);
+
+	sctk_Node_init (&node ,sctk_process_rank);
+	sav_sctk_route = rail->route;
+	rail->route = sctk_route_ring;
+
+
+	if(sctk_process_number > 3){
+		int me=sctk_process_rank;
+		//sleep(me*2);
+		int neigh;
+		int i,j;
+		sctk_Node_t node_tmp;
+		sctk_Node_set_from(&node_tmp,&node);
+		//for(from = 0; from < sctk_process_number; from++){
+		//for(to = 0; to < sctk_process_number; to ++){
+		for(i=0;i<dim;i++){
+
+			if(node_tmp.c[i] % 2){
+				for(j=1;j>=0;j--){
+					sctk_nodebug("process %d search neigbour %d",me,j);
+					node_tmp.c[i] = sctk_Torus_neighbour_dimension(i,j);
+					if(node_tmp.c[i]==-1){
+							node.neigh[i][j] = node.id;
+					}
+					else{
+						node.neigh[i][j*2+1] = node_tmp.c[i];
+						neigh = sctk_Node_id ( &node_tmp );
+						node.neigh[i][j*2] = neigh;
+						sctk_route_table_t* tmp;
+
+						tmp = sctk_get_route_to_process_no_route(neigh,rail);
+						if(tmp == NULL){
+							sctk_nodebug("process %d want connection to %d",me,neigh);
+							if(me < neigh)
+								rail->connect_from(me,neigh,rail);
+							else
+								rail->connect_to(neigh,me,rail);
+						}
+
+
+					}
+
+				}
+			}
+			else{
+				for(j=0;j<2;j++){
+					node_tmp.c[i] = sctk_Torus_neighbour_dimension(i,j);
+					if(node_tmp.c[i]==-1){
+							node.neigh[i][j] = node.id;
+					}
+					else{
+						node.neigh[i][j*2+1] = node_tmp.c[i];
+						neigh = sctk_Node_id ( &node_tmp );
+						node.neigh[i][j*2] = neigh;
+						sctk_route_table_t* tmp;
+
+						tmp = sctk_get_route_to_process_no_route(neigh,rail);
+						if(tmp == NULL){
+							sctk_nodebug("process %d want connection to %d",me,neigh);
+							if(me < neigh)
+								rail->connect_from(me,neigh,rail);
+							else
+								rail->connect_to(neigh,me,rail);
+						}
+
+
+					}
+				}
+			}
+			sctk_nodebug("process %d passed %d step",me,i);
+			node_tmp.c[i] = node.c[i];
+		}
+		sctk_debug("process %d passed",me);
+		//}
+		//}
+		sctk_pmi_barrier();
+	  }
+	  rail->route = sav_sctk_route;
+	  sctk_pmi_barrier();
+	  sctk_route_table_init_lock_needed = 0;
+	  sctk_pmi_barrier();
+}
+
+int sctk_route_torus(int dest, sctk_rail_info_t* rail){
+  int old_dest;
+
+  old_dest = dest;
+  sctk_Node_t dest_node;
+  sctk_Node_init (&dest_node, dest);
+
+  dest = sctk_Torus_route_next(&dest_node);
+  sctk_debug("Route via dest - 1 %d to %d",dest,old_dest);
+
+  return dest;
+}
+
+/*****************************************************/
+
+
 void sctk_route_init_in_rail(sctk_rail_info_t* rail, char* topology){
   rail->on_demand = 0;
   if(strcmp("ring",topology) == 0){
@@ -548,6 +1150,10 @@ void sctk_route_init_in_rail(sctk_rail_info_t* rail, char* topology){
     rail->route = sctk_route_ondemand;
     rail->route_init = sctk_route_ondemand_init;
     rail->topology_name = "On-Demand connections";
+  } else if(strcmp("torus",topology) == 0){
+    rail->route = sctk_route_torus;
+    rail->route_init = sctk_route_torus_init;
+    rail->topology_name = "torus";
   } else {
     not_reachable();
   }
