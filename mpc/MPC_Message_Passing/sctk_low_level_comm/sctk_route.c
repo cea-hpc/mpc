@@ -1109,13 +1109,14 @@ void sctk_route_torus_init(sctk_rail_info_t* rail){
 			sctk_nodebug("process %d passed %d step",me,i);
 			node_tmp.c[i] = node.c[i];
 		}
-		sctk_debug("process %d passed",me);
+		sctk_nodebug("process %d passed",me);
 		//}
 		//}
-		sctk_pmi_barrier();
+		//sctk_pmi_barrier();
 	  }
-	  rail->route = sav_sctk_route;
+	  
 	  sctk_pmi_barrier();
+	  rail->route = sav_sctk_route;
 	  sctk_route_table_init_lock_needed = 0;
 	  sctk_pmi_barrier();
 }
