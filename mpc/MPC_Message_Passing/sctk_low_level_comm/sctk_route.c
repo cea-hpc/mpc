@@ -776,7 +776,7 @@ int sctk_Node_id ( sctk_Node_t *coord ){
 
 
 	}
-	coord->id = id;
+	//coord->id = id;
 
 	return id;
 }
@@ -919,63 +919,63 @@ int sctk_Torus_route_next(sctk_Node_t *dest){
 	unsigned imin,jmin;
 	long long int dist;
 	long long int min_way=0;
-	int nearest_id;
+	int nearest_id,id,current_coord;
 	//for(i=0;i<Torus.dimension-1;i++){
 	min_way += size;
 	//}
 	min_way += Torus.size_last_dimension;
 	min_way *= min_way;
-	sctk_Node_t node_tmp;
-	sctk_Node_set_from(&node_tmp,&node);
 
 	i=0;
-	if((node_tmp.id >= Torus.node_regular) && ((dest->id < Torus.node_regular)||(node_tmp.id < dest->id))){
+	if((node.id >= Torus.node_regular) && ((dest->id < Torus.node_regular)||(node.id < dest->id))){
 		i = Torus.dimension-1;
 		if(dest->id >= Torus.node_regular){
-			while(node_tmp.c[i]==dest->c[i]){
+			while(node.c[i]==dest->c[i]){
 	   			i--;
 	   		}
 	   	}
 	}
 	else{
-   		while(node_tmp.c[i]==dest->c[i])
+   		while(node.c[i]==dest->c[i])
    			i++;
    	}
    	if(i==Torus.dimension){
-   		sctk_Node_print ( &node_tmp );
+   		sctk_Node_print ( &node );
    		sctk_Node_print ( dest );
    		abort();
    	}
    /*	printf("route--->\n");
-   	sctk_Node_print ( &node_tmp );
+   	sctk_Node_print ( &node );
    	sctk_Node_print ( dest );
    	fflush(stdout);
+<<<<<<< HEAD
 	*/
 
 	for(j=0;j<2;j++){
+
 			IsSpecialCase = 1;
 			if(node.neigh[i][j*2] != node.id){
 
 				if(node.neigh[i][j*2] == -1){
 
-					node_tmp.c[i] = sctk_Torus_neighbour_dimension(i,j);
-					if(node_tmp.c[i]==-1){
+					node.c[i] = sctk_Torus_neighbour_dimension(i,j);
+					if(node.c[i]==-1){
 						node.neigh[i][j*2] = node.id;
 					}
 					else{
-						node.neigh[i][j*2+1] = node_tmp.c[i];
-						node.neigh[i][j*2] = sctk_Node_id ( &node_tmp );
+						node.neigh[i][j*2+1] = node.c[i];
+						node.neigh[i][j*2] = sctk_Node_id ( &node );
 					}
-				}
-				else
-					node_tmp.c[i] = node.neigh[i][j*2+1];
-				if(node.neigh[i][j*2] < -1 || node.neigh[i][j*2] > Torus.node_count){
-					fprintf(stderr,"Error route_next\n");
-					abort();
+					node.c[i] = current_coord;
 				}
 
-				if(node_tmp.c[i]!=-1){
-					//printf("i %d j %d id %ld c %d\n",i,j,node_tmp.id,node_tmp.c[i]);
+				if(node.neigh[i][j*2] < -1 || node.neigh[i][j*2] > Torus.node_count){
+					sctk_error("Error route_next");
+					not_reachable();
+				}
+
+				if(node.neigh[i][j*2+1]!=-1){
+					//printf("i %d j %d id %ld c %d\n",i,j,node.id,node.c[i]);
 					//fflush(stdout);
 					//sleep(1);
 					if(i==Torus.dimension-1){
@@ -992,12 +992,12 @@ int sctk_Torus_route_next(sctk_Node_t *dest){
 								k++;
 							}
 							if(IsSpecialCase)
-								dist = sctk_Node_quadratic_distance (node_tmp.c[i], dest->c[i], Torus.size_last_dimension+1);
+								dist = sctk_Node_quadratic_distance (node.neigh[i][j*2+1], dest->c[i], Torus.size_last_dimension+1);
 							else
-								dist = sctk_Node_quadratic_distance (node_tmp.c[i], dest->c[i], Torus.size_last_dimension);
+								dist = sctk_Node_quadratic_distance (node.neigh[i][j*2+1], dest->c[i], Torus.size_last_dimension);
 					}
 					else
-						dist = sctk_Node_quadratic_distance (node_tmp.c[i], dest->c[i], size);
+						dist = sctk_Node_quadratic_distance (node.neigh[i][j*2+1], dest->c[i], size);
 
 					if(dist < min_way){
 						//printf("min trouve !!!\n");
@@ -1032,6 +1032,7 @@ void sctk_route_torus_init(sctk_rail_info_t* rail){
 	sctk_nodebug("process %d started",sctk_process_rank);
 	int (*sav_sctk_route)(int , sctk_rail_info_t* );
 	unsigned dim;
+	unsigned current_coord;
 	sctk_pmi_barrier();
 	sctk_route_table_init_lock_needed = 1;
 	sctk_pmi_barrier();
@@ -1048,22 +1049,22 @@ void sctk_route_torus_init(sctk_rail_info_t* rail){
 		//sleep(me*2);
 		int neigh;
 		int i,j;
-		sctk_Node_t node_tmp;
-		sctk_Node_set_from(&node_tmp,&node);
+		//sctk_Node_t node;
+		//sctk_Node_set_from(&node,&node);
 		//for(from = 0; from < sctk_process_number; from++){
 		//for(to = 0; to < sctk_process_number; to ++){
 		for(i=0;i<dim;i++){
-
-			if(node_tmp.c[i] % 2){
+			current_coord = node.c[i];
+			if(node.c[i] % 2){
 				for(j=1;j>=0;j--){
 					sctk_nodebug("process %d search neigbour %d",me,j);
-					node_tmp.c[i] = sctk_Torus_neighbour_dimension(i,j);
-					if(node_tmp.c[i]==-1){
+					node.c[i] = sctk_Torus_neighbour_dimension(i,j);
+					if(node.c[i]==-1){
 							node.neigh[i][j] = node.id;
 					}
 					else{
-						node.neigh[i][j*2+1] = node_tmp.c[i];
-						neigh = sctk_Node_id ( &node_tmp );
+						node.neigh[i][j*2+1] = node.c[i];
+						neigh = sctk_Node_id ( &node );
 						node.neigh[i][j*2] = neigh;
 						sctk_route_table_t* tmp;
 
@@ -1078,18 +1079,19 @@ void sctk_route_torus_init(sctk_rail_info_t* rail){
 
 
 					}
+					node.c[i] = current_coord;
 
 				}
 			}
 			else{
 				for(j=0;j<2;j++){
-					node_tmp.c[i] = sctk_Torus_neighbour_dimension(i,j);
-					if(node_tmp.c[i]==-1){
+					node.c[i] = sctk_Torus_neighbour_dimension(i,j);
+					if(node.c[i]==-1){
 							node.neigh[i][j] = node.id;
 					}
 					else{
-						node.neigh[i][j*2+1] = node_tmp.c[i];
-						neigh = sctk_Node_id ( &node_tmp );
+						node.neigh[i][j*2+1] = node.c[i];
+						neigh = sctk_Node_id ( &node );
 						node.neigh[i][j*2] = neigh;
 						sctk_route_table_t* tmp;
 
@@ -1101,20 +1103,20 @@ void sctk_route_torus_init(sctk_rail_info_t* rail){
 							else
 								rail->connect_to(neigh,me,rail);
 						}
-
-
 					}
+					node.c[i] = current_coord;
+
 				}
 			}
 			sctk_nodebug("process %d passed %d step",me,i);
-			node_tmp.c[i] = node.c[i];
+			node.c[i] = node.c[i];
 		}
 		sctk_nodebug("process %d passed",me);
 		//}
 		//}
 		//sctk_pmi_barrier();
 	  }
-	  
+
 	  sctk_pmi_barrier();
 	  rail->route = sav_sctk_route;
 	  sctk_route_table_init_lock_needed = 0;
