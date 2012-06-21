@@ -2113,7 +2113,8 @@ SCTK_STATIC void sctk_alloc_chain_numa_migrate_content(struct sctk_alloc_chain *
 		if (region != NULL)
 			for ( j = 0 ; j < SCTK_REGION_HEADER_ENTRIES ; j++)
 				if (region->entries[j].macro_bloc != NULL)
-					sctk_alloc_migrate_numa_mem(region->entries[j].macro_bloc,region->entries[j].macro_bloc->header.size,target_numa_node);
+					if (region->entries[j].macro_bloc->chain == chain)
+						sctk_alloc_migrate_numa_mem(region->entries[j].macro_bloc,region->entries[j].macro_bloc->header.size,target_numa_node);
 	}
 
 	//lock the region map

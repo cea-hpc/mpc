@@ -241,6 +241,7 @@ void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_no
 	assert(addr != NULL);
 	assert(size > 0);
 	assert(target_numa_node >= -1);
+	assert(target_numa_node <= SCTK_MAX_NUMA_NODE);
 
 	//trivial case
 	if (addr == NULL || size == 0)
@@ -257,7 +258,7 @@ void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_no
 	SCTK_PDEBUG("Request change of memory binding on area %p [%llu] to node %d.",addr,size,target_numa_node);
 
 	//if -1, then reset to default
-	if (target_numa_node == -1)
+	if (target_numa_node != -1)
 	{
 		//get topo
 		topo = sctk_get_topology_object();
