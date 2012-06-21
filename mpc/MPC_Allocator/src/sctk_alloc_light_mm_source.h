@@ -102,6 +102,7 @@ SCTK_STATIC void sctk_alloc_mm_source_light_free_memory(struct sctk_alloc_mm_sou
 SCTK_STATIC void sctk_alloc_mm_source_light_insert_segment(struct sctk_alloc_mm_source_light* light_source, void* base, sctk_size_t size);
 SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_mmap_new_segment(struct sctk_alloc_mm_source_light* light_source,sctk_size_t size);
 SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_remap(struct sctk_alloc_macro_bloc * macro_bloc,sctk_size_t size);
+struct sctk_alloc_mm_source_light * sctk_alloc_get_mm_source_light(struct sctk_alloc_mm_source * source);
 
 /************************* FUNCTION ************************/
 //helpers

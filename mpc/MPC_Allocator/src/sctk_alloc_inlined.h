@@ -133,7 +133,7 @@ static inline sctk_alloc_vchunk sctk_alloc_get_chunk(sctk_addr_t ptr)
 
 	//check
 	/** @todo maybe can be replaced by assert **/
-	assume(vchunk->type == SCTK_ALLOC_CHUNK_TYPE_LARGE || vchunk->type == SCTK_ALLOC_CHUNK_TYPE_PADDED,"Invalid chunk type.");
+	assume_m(vchunk->type == SCTK_ALLOC_CHUNK_TYPE_LARGE || vchunk->type == SCTK_ALLOC_CHUNK_TYPE_PADDED,"Invalid chunk type.");
 
 	return vchunk;
 }
@@ -165,7 +165,7 @@ static inline void * sctk_alloc_get_ptr(sctk_alloc_vchunk vchunk)
 		case SCTK_ALLOC_CHUNK_TYPE_PADDED:
 			return sctk_alloc_get_padded(vchunk);
 		default:
-			assume(false,"Invalid type of vchunk.");
+			assume_m(false,"Invalid type of vchunk.");
 	}
 }
 
@@ -248,7 +248,7 @@ static inline sctk_alloc_vchunk sctk_alloc_get_next_chunk(sctk_alloc_vchunk chun
 
 	res = (sctk_alloc_vchunk)((sctk_addr_t)chunk + sctk_alloc_get_chunk_header_large_size(sctk_alloc_get_large(chunk)));
 
-	assume(res->unused_magik == SCTK_ALLOC_MAGIK_STATUS,"Small block not supported for now.");
+	assume_m(res->unused_magik == SCTK_ALLOC_MAGIK_STATUS,"Small block not supported for now.");
 
 	return res;
 }

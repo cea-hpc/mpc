@@ -24,11 +24,17 @@
 #define SCTK_ALLOC_DEBUG_H
 
 /************************** HEADERS ************************/
+#ifdef MPC_Common
+#include "sctk_debug.h"
+#endif
 #include <stdio.h>
 #include "sctk_allocator.h"
 
 /************************** MACROS *************************/
-#ifdef NDEBUG
+#if defined(MPC_Common)
+	#define SCTK_PDEBUG(...) sctk_debug(__VA_ARGS__)
+	#define SCTK_CRASH_DUMP sctk_alloc_crash_dump
+#elif defined(NDEBUG)
 	#define SCTK_PDEBUG(...)
 	#define SCTK_CRASH_DUMP
 #else //NDEBUG
@@ -43,14 +49,26 @@
 #endif
 
 /************************** MACROS *************************/
-#define warning(m) sctk_alloc_pwarning("Warning at %s!%d\n%s\n",__FILE__,__LINE__,m);
-#define assume(x,m) if (!(x)) { sctk_alloc_perror("Error at %s!%d\n%s\n%s\n",__FILE__,__LINE__,#x,m); abort(); }
+#ifdef sctk_warning
+#define warning(m) sctk_warning(m)
+#else //sctk_warning
+#define warning(m) sctk_alloc_pwarning("Warning at %s!%d\n%s\n",__FILE__,__LINE__,m)
+#endif //sctk_warning
+
+/************************** MACROS *************************/
 #define fatal(m) { sctk_alloc_perror("Fatal error at %s!%d\n%s\n",__FILE__,__LINE__,m); abort(); }
+
+/************************** MACROS *************************/
+#ifndef assume_m
+#define assume_m(x,m) if (!(x)) { sctk_alloc_perror("Error at %s!%d\n%s\n%s\n",__FILE__,__LINE__,#x,m); abort(); }
+#endif
+
+/************************** MACROS *************************/
 #ifndef assert
 #ifdef NDEBUG
-#define assert(x) if (!(x)) { sctk_alloc_perror("Assertion failure at %s!%d\n%s\n",__FILE__,__LINE__,#x); abort(); }
-#else
 #define assert(x) /* assert(x) */
+#else
+#define assert(x) if (!(x)) { sctk_alloc_perror("Assertion failure at %s!%d\n%s\n",__FILE__,__LINE__,#x); abort(); }
 #endif
 #endif
 

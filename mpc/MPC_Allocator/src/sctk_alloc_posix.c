@@ -27,6 +27,7 @@
 #else
 	#include <sys/mman.h>
 #endif
+#include <errno.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -121,7 +122,7 @@ SCTK_STATIC int sctk_alloc_tls_chain(){
 void sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain)
 {
 	//errors
-	//assume(chain != NULL,"Can't set a default NULL allocation chain for local thread.");
+	//assume_m(chain != NULL,"Can't set a default NULL allocation chain for local thread.");
 
 	//setup allocation chain for current thread
 	sctk_set_tls_chain(chain);
@@ -132,7 +133,7 @@ void sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain)
 SCTK_STATIC void sctk_alloc_posix_mmsrc_uma_init(void)
 {
 	//error
-	assume (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_EGG,"Invalid init state while calling allocator default init phase.");
+	assume_m (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_EGG,"Invalid init state while calling allocator default init phase.");
 
 	sctk_global_memory_source[0] = sctk_alloc_chain_alloc(&sctk_global_egg_chain,sizeof(struct sctk_alloc_mm_source_default));
 	//sctk_alloc_mm_source_default_init(sctk_global_memory_source[0],SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE);
@@ -143,7 +144,7 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_uma_init(void)
 SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init_node(int id)
 {
 	//errors and debug
-	assume(id <= SCTK_MAX_NUMA_NODE,"Caution, you get more node than supported by allocator. Limit is setup by SCTK_MAX_NUMA_NODE macro in sctk_alloc_posix.c.");
+	assume_m(id <= SCTK_MAX_NUMA_NODE,"Caution, you get more node than supported by allocator. Limit is setup by SCTK_MAX_NUMA_NODE macro in sctk_alloc_posix.c.");
 	SCTK_PDEBUG("Init memory source id = %d , MAX_NUMA_NODE = %d",id,SCTK_MAX_NUMA_NODE);
 
 	SCTK_PDEBUG("Allocator init phase : Default");
@@ -159,7 +160,7 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init_node(int id)
 SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init_phase_default(void)
 {
 	//error
-	assume (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_EGG,"Invalid init state while calling allocator default init phase.");
+	assume_m (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_EGG,"Invalid init state while calling allocator default init phase.");
 
 	SCTK_PDEBUG("Allocator init phase : NUMA");
 	//init the default source ID of thead which are on unknown NUMA node or for initial thread in MPC.
@@ -176,15 +177,15 @@ void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void)
 
 	//error
 	#ifndef MPC_Common
-	assume (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_EGG,"Invalid init state while calling allocator NUMA init phase.");
+	assume_m (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_EGG,"Invalid init state while calling allocator NUMA init phase.");
 	#else
-	assume (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_DEFAULT,"Invalid init state while calling allocator NUMA init phase.");
+	assume_m (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_DEFAULT,"Invalid init state while calling allocator NUMA init phase.");
 	#endif
 
 	//get number of nodes
 	SCTK_PDEBUG("Init numa nodes");
 	nodes = sctk_get_numa_node_number();
-	assume(nodes <= SCTK_MAX_NUMA_NODE,"Caution, you get more node than supported by allocator. Limit is setup by SCTK_MAX_NUMA_NODE macro in sctk_alloc_posix.c.");
+	assume_m(nodes <= SCTK_MAX_NUMA_NODE,"Caution, you get more node than supported by allocator. Limit is setup by SCTK_MAX_NUMA_NODE macro in sctk_alloc_posix.c.");
 
 	//debug
 	SCTK_PDEBUG("Init with NUMA_NODES = %d , MAX_NUMA_NODE = %d",nodes,SCTK_MAX_NUMA_NODE);
@@ -254,11 +255,11 @@ SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(vo
 	//check and get
 	SCTK_PDEBUG("Init allocation chain of thread on memory source %d (NUMA node %d)",node,node - 1);
 	assert(sctk_global_base_init > SCTK_ALLOC_POSIX_INIT_NONE);
-	assume(node <= SCTK_MAX_NUMA_NODE,"Node ID (%d) is larger than current SCTK_MAX_NUMA_NODE.");
+	assume_m(node <= SCTK_MAX_NUMA_NODE,"Node ID (%d) is larger than current SCTK_MAX_NUMA_NODE.");
 	assert(node >= 0);
 	res = (struct sctk_alloc_mm_source*)(sctk_global_memory_source[node]);
 	assert(res != NULL);
-	assume(res->request_memory != NULL,"The memory source to map to current new thread is no initialized.");
+	assume_m(res->request_memory != NULL,"The memory source to map to current new thread is no initialized.");
 
 	//return
 	return res;
@@ -501,7 +502,7 @@ void sctk_free (void * ptr)
 		return;
 	}
 	struct sctk_alloc_chain * chain = macro_bloc->chain;
-	assume(chain != NULL,"Can't free a pointer not manage by an allocation chain from our allocator.");
+	assume_m(chain != NULL,"Can't free a pointer not manage by an allocation chain from our allocator.");
 
 	SCTK_PTRACE("free(ptr%p); //%p",ptr,chain);
 	if (chain->shared || chain == local_chain)
@@ -599,4 +600,49 @@ void * sctk_realloc_inter_chain (void * ptr, size_t size)
 struct sctk_alloc_chain * sctk_get_current_alloc_chain(void)
 {
 	return sctk_get_tls_chain();
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Reconfigure the allocator binding on memory source, mainly to adapt after a NUMA migration.
+**/
+void sctk_alloc_posix_numa_migrate(void)
+{
+	//vars
+	struct sctk_alloc_chain * local_chain;
+	struct sctk_alloc_mm_source * old_source;
+	struct sctk_alloc_mm_source_light * light_source;
+	int old_numa_node = -1;
+	int new_numa_node = -1;
+	
+	//get the current allocation chain
+	local_chain = sctk_current_alloc_chain;
+
+	SCTK_PDEBUG("--- Migration on %d",sctk_get_cpu());
+	sctk_alloc_posix_get_local_mm_source();
+
+	//if NULL nothing to do otherwise remind the current mm source
+	if (local_chain == NULL)
+		return;
+	else
+		old_source = local_chain->source;
+
+	//re-setup the memory source.
+	local_chain->source = sctk_alloc_posix_get_local_mm_source();
+
+	/** @TODO move part of this code into sctk_alloc_chain_numa_migrate **/
+
+	//get numa node of sources
+	light_source = sctk_alloc_get_mm_source_light(old_source);
+	if (light_source != NULL)
+		old_numa_node = light_source->numa_node;
+	light_source = sctk_alloc_get_mm_source_light(local_chain->source);
+	if (light_source != NULL)
+		new_numa_node = light_source->numa_node;
+
+	SCTK_PDEBUG("--- Request NUMA migration %d -> %d",old_numa_node,new_numa_node);
+
+	//check if need to migrate NUMA explicitely
+	if (old_numa_node != new_numa_node && new_numa_node != SCTK_DEFAULT_NUMA_MM_SOURCE_ID)
+		sctk_alloc_chain_numa_migrate(local_chain,new_numa_node,true,true,local_chain->source);
 }

@@ -194,8 +194,8 @@ SCTK_STATIC void sctk_alloc_mm_source_light_insert_segment(struct sctk_alloc_mm_
 		return;
 
 	//Check requirements on params, need page aligned address, size smaller or equals to SCTK_ALLOC_MACRO_BLOC_SIZE
-	assume((sctk_addr_t)base % SCTK_ALLOC_PAGE_SIZE == 0,"Buffer base adderss must be aligned to page size.");
-	assume(size % SCTK_MACRO_BLOC_SIZE == 0,"Buffer size must be aligned to page size.");
+	assume_m((sctk_addr_t)base % SCTK_ALLOC_PAGE_SIZE == 0,"Buffer base adderss must be aligned to page size.");
+	assume_m(size % SCTK_MACRO_BLOC_SIZE == 0,"Buffer size must be aligned to page size.");
 
 	//if need to force binding, as we didn't now the origin, call meme binding method
 	#ifdef HAVE_LIBNUMA
@@ -257,7 +257,7 @@ SCTK_STATIC void sctk_alloc_mm_source_light_cleanup(struct sctk_alloc_mm_source*
 	sctk_alloc_spinlock_lock(&light_source->spinlock);
 
 	//check counters to know if all blocs are returned to the mm source.
-	assume(light_source->counter == 0, "Invalid counter status, must be 0 to call cleanup.");
+	assume_m(light_source->counter == 0, "Invalid counter status, must be 0 to call cleanup.");
 
 	//loop on the blocs in cache to free them
 	free_bloc = light_source->cache;
@@ -534,3 +534,16 @@ SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_remap(stru
 }
 #endif
 
+/************************* FUNCTION ************************/
+/**
+ * Check if the given memory source is a light one and return it with cast. Otherwise return NULL.
+**/
+struct sctk_alloc_mm_source_light * sctk_alloc_get_mm_source_light(struct sctk_alloc_mm_source * source)
+{
+	if (source == NULL)
+		return NULL;
+	else if (source->request_memory == sctk_alloc_mm_source_light_request_memory)
+		return (struct sctk_alloc_mm_source_light *)source;
+	else
+		return NULL;
+}

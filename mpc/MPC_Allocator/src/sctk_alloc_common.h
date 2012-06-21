@@ -72,6 +72,8 @@ extern "C"
 #define SCTK_HUGE_BLOC_LIMIT (SCTK_MACRO_BLOC_SIZE / 2)
 /** Realloc factor between old an new size to force a new reallocation. **/
 #define SCTK_REALLOC_THRESHOLD 2
+/** Permit to keep the old memory source in chain numa migration. **/
+#define SCTK_ALLOC_KEEP_OLD_MM_SOURCE ((void*)-1)
 
 /************************** MACROS *************************/
 //if have NUMA support

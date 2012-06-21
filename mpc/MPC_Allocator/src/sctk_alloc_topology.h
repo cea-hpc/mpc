@@ -50,6 +50,7 @@ int sctk_alloc_init_on_numa_node(void);
 
 #ifdef HAVE_LIBNUMA
 hwloc_topology_t sctk_get_topology_object(void);
+void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_node);
 #endif //HAVE_LIBNUMA
 
 #ifdef __cplusplus

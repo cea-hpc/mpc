@@ -602,6 +602,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   tmp = *__arg;
 
   sctk_nodebug ("THREAD START");
+  sctk_alloc_posix_numa_migrate();
 
   sctk_set_tls (tmp.tls);
   ptr_cleanup = NULL;
@@ -766,6 +767,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   sctk_thread_data_set (&tmp);
   sctk_thread_add (&tmp,sctk_thread_self());
 
+  sctk_alloc_posix_numa_migrate();
 
   {
     int keep[sctk_extls_max_scope];

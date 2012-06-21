@@ -227,3 +227,54 @@ hwloc_topology_t sctk_get_topology_object(void)
 }
 #endif
 #endif
+
+/************************* FUNCTION ************************/
+#ifdef HAVE_LIBNUMA
+void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_node)
+{
+	//vars
+	hwloc_obj_t obj;
+	hwloc_topology_t topo;
+	int res;
+
+	//errors
+	assert(addr != NULL);
+	assert(size > 0);
+	assert(target_numa_node >= -1);
+
+	//trivial case
+	if (addr == NULL || size == 0)
+		return;
+
+	//round the size and addr
+	/** @todo replace by a cleaner round function. **/
+	size += (sctk_addr_t)addr % SCTK_ALLOC_PAGE_SIZE;
+	addr -= (sctk_addr_t)addr % SCTK_ALLOC_PAGE_SIZE;
+	if (size % SCTK_ALLOC_PAGE_SIZE != 0)
+		size += SCTK_ALLOC_PAGE_SIZE - (size % SCTK_ALLOC_PAGE_SIZE);
+
+	//debug
+	SCTK_PDEBUG("Request change of memory binding on area %p [%llu] to node %d.",addr,size,target_numa_node);
+
+	//if -1, then reset to default
+	if (target_numa_node == -1)
+	{
+		//get topo
+		topo = sctk_get_topology_object();
+
+		//get hwloc object for binding
+		obj = hwloc_get_obj_by_type(topo, HWLOC_OBJ_NODE, target_numa_node);
+		res = hwloc_set_area_membind_nodeset(topo, addr, size, obj->nodeset, HWLOC_MEMBIND_BIND, HWLOC_MEMBIND_THREAD | HWLOC_MEMBIND_MIGRATE);
+	} else {
+		res = hwloc_set_area_membind_nodeset(topo, addr, size, obj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_THREAD);
+	}
+
+	//check errors
+	if (res != 0)
+	{
+		SCTK_PDEBUG("Tried to move pages to node %d",target_numa_node);
+		warning("Failed to move pages on NUMA node.");
+		warning(strerror(res));
+	}
+}
+#endif //HAVE_LIBNUMA

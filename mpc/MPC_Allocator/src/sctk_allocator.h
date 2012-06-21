@@ -47,9 +47,10 @@ extern const sctk_size_t SCTK_ALLOC_FREE_SIZES[SCTK_ALLOC_NB_FREE_LIST];
  * C unavailability of boolean type sucks.
 **/
 #ifndef __cplusplus
-#define bool unsigned char
-#define true 1
-#define false 0
+#include <stdbool.h>
+// #define bool unsigned char
+// #define true 1
+// #define false 0
 #endif //__cplusplus
 
 /*************************** ENUM **************************/
@@ -402,6 +403,7 @@ void sctk_alloc_chain_purge_rfq(struct sctk_alloc_chain * chain);
 SCTK_STATIC void sctk_alloc_chain_free_macro_bloc(struct sctk_alloc_chain * chain,sctk_alloc_vchunk vchunk);
 SCTK_STATIC bool sctk_alloc_chain_can_remap(struct sctk_alloc_chain * chain);
 void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sctk_size_t size);
+void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_numa_node,bool migrate_chain_struct,bool migrate_content,struct sctk_alloc_mm_source * new_mm_source);
 
 /************************* FUNCTION ************************/
 //Base of memory source

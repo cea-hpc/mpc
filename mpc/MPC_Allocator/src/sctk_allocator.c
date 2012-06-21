@@ -34,6 +34,7 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include "sctk_alloc_inlined.h"
+#include "sctk_alloc_topology.h"
 
 /************************* PORTABILITY *************************/
 #ifdef _WIN32
@@ -186,7 +187,7 @@ SCTK_STATIC void sctk_alloc_thread_pool_init(struct sctk_thread_pool* pool,const
 			pool->nb_free_lists+=2;
 		else
 			pool->nb_free_lists++;
-		assume(pool->nb_free_lists < SCTK_ALLOC_NB_FREE_LIST,"Error while calculating number of free lists.");
+		assume_m(pool->nb_free_lists < SCTK_ALLOC_NB_FREE_LIST,"Error while calculating number of free lists.");
 	} else {
 		warning("Caution, the last free list size must be -1, you didn't follow this requirement, this may leed to errors.");
 	}
@@ -256,7 +257,7 @@ SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_get_free_list(struct sctk_thread
 SCTK_STATIC sctk_size_t sctk_alloc_get_list_class(struct sctk_thread_pool* pool,sctk_alloc_free_list_t * list)
 {
 	int id = list - pool->free_lists;
-	assume(id >= 0 && id < SCTK_ALLOC_NB_FREE_LIST,"The given list didn't be a member of the given thread pool.");
+	assume_m(id >= 0 && id < SCTK_ALLOC_NB_FREE_LIST,"The given list didn't be a member of the given thread pool.");
 	return pool->alloc_free_sizes[id];
 }
 
@@ -344,7 +345,7 @@ SCTK_STATIC void sctk_alloc_free_list_insert(struct sctk_thread_pool * pool,stru
 			flist->next = fchunk;
 			break;
 		default:
-			assume(false,"Unknown insert mode in free list.");
+			assume_m(false,"Unknown insert mode in free list.");
 	}
 
 	//mark non empty
@@ -518,7 +519,7 @@ SCTK_STATIC sctk_alloc_free_list_t* sctk_alloc_get_next_list(const struct sctk_t
 {
 	//error
 	assert(pool != NULL);
-	assume(list - pool->free_lists < SCTK_ALLOC_NB_FREE_LIST,"The given list didn't be a member of the given pool");
+	assume_m(list - pool->free_lists < SCTK_ALLOC_NB_FREE_LIST,"The given list didn't be a member of the given pool");
 	
 	if (list == NULL)
 		return NULL;
@@ -569,7 +570,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_split_free_bloc(sctk_alloc_vchunk * chu
 	
 	//error
 	assert(chunk != NULL);
-	assume(sctk_alloc_get_size(*chunk) >= size,"Chunk size if too small to fit with requested size.");
+	assume_m(sctk_alloc_get_size(*chunk) >= size,"Chunk size if too small to fit with requested size.");
 
 	residut_size = sctk_alloc_get_size(*chunk) - size;
 	if (residut_size >= SCTK_ALLOC_MIN_SIZE)
@@ -598,7 +599,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_get_prev_chunk(sctk_alloc_vchunk chunk)
 {
 	sctk_alloc_vchunk res;
 
-	assume(chunk->unused_magik == SCTK_ALLOC_MAGIK_STATUS,"Small block not supported for now.");
+	assume_m(chunk->unused_magik == SCTK_ALLOC_MAGIK_STATUS,"Small block not supported for now.");
 
 	if (sctk_alloc_get_prev_size(chunk) == 0)
 	{
@@ -660,8 +661,8 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_merge_chunk(struct sctk_thread_pool * p
 	
 	//error
 // 	assert(max_address != 0);
-	assume(chunk->state == SCTK_ALLOC_CHUNK_STATE_ALLOCATED,"The central chunk must be allocated to be merged.");
-// 	assume(chunk.bloc.abstract >= cur.bloc.abstract,"The given page start didn't preceed the central chunk to merge.")
+	assume_m(chunk->state == SCTK_ALLOC_CHUNK_STATE_ALLOCATED,"The central chunk must be allocated to be merged.");
+// 	assume_m(chunk.bloc.abstract >= cur.bloc.abstract,"The given page start didn't preceed the central chunk to merge.")
 
 	//search the first free chunk before the central one.
 	/** @todo To remove this old core or move into function as it may serve for small blocs **/
@@ -748,8 +749,8 @@ void sctk_alloc_chain_user_init(struct sctk_alloc_chain * chain,void * buffer,sc
 	sctk_alloc_vchunk vchunk;
 	
 	//error
-	assume(buffer != 0 || size == 0, "Can't manage NULL buffer with non NULL size.");
-	assume(size == 0 || size > 64+16, "Buffer size must null or greater than 80o.");
+	assume_m(buffer != 0 || size == 0, "Can't manage NULL buffer with non NULL size.");
+	assume_m(size == 0 || size > 64+16, "Buffer size must null or greater than 80o.");
 
 	//base init
 	sctk_alloc_chain_base_init(chain);
@@ -787,7 +788,7 @@ void sctk_alloc_chain_destroy(struct sctk_alloc_chain* chain,bool force)
 
 	//test if can detroy
 	if ( ! force )
-		assume(sctk_alloc_chain_can_destroy(chain),"Can't destroy the given allocation chain.");
+		assume_m(sctk_alloc_chain_can_destroy(chain),"Can't destroy the given allocation chain.");
 
 	//destroy stat and spy module
 	SCTK_ALLOC_STATS_HOOK(sctk_alloc_stats_chain_destroy(&chain->stats));
@@ -915,7 +916,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_request_mem(struct sctk_alloc_cha
 SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_realloc_macro_bloc(struct sctk_alloc_chain * chain,sctk_size_t size,sctk_alloc_vchunk vchunk)
 {
 	//errors
-	assert(chain != NULL)
+	assert(chain != NULL);
 	assert(chain->source != NULL);
 	assert(chain->source->remap != NULL);
 	assert(size > 0);
@@ -999,7 +1000,7 @@ void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t 
 	sctk_alloc_vchunk residut;
 	
 	//error
-	assume(chain != NULL,"Can't work with NULL allocation chain.");
+	assume_m(chain != NULL,"Can't work with NULL allocation chain.");
 
 	//trivial
 	if (size == 0)
@@ -1036,7 +1037,7 @@ void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t 
 
 		//temporaty check non support of small blocs
 		if (chunk != NULL)
-			assume(sctk_alloc_get_chunk_header_large_size(&chunk->header) >= 32lu,"Small blocs are not supported for now, so it's imposible to get such a small size here.");
+			assume_m(sctk_alloc_get_chunk_header_large_size(&chunk->header) >= 32lu,"Small blocs are not supported for now, so it's imposible to get such a small size here.");
 
 		//error
 		if (chunk == NULL)
@@ -1053,7 +1054,7 @@ void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t 
 		//try to split
 		vchunk = sctk_alloc_free_chunk_to_vchunk(chunk);
 		residut = sctk_alloc_split_free_bloc(&vchunk,size);
-		assume(sctk_alloc_get_size(vchunk) >= sctk_alloc_calc_chunk_size(size), "Size error in chunk spliting function.");
+		assume_m(sctk_alloc_get_size(vchunk) >= sctk_alloc_calc_chunk_size(size), "Size error in chunk spliting function.");
 
 		if (residut != NULL)
 		{
@@ -1118,7 +1119,7 @@ void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 	bool insert_bloc = true;
 
 	//error
-	assume(chain != NULL, "Can't free the memory without an allocation chain.");
+	assume_m(chain != NULL, "Can't free the memory without an allocation chain.");
 
 	//trivial
 	if (ptr == NULL)
@@ -1129,7 +1130,7 @@ void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 	//manage the cas of bad pointer and return withour doing anything
 	if (vchunk == NULL)
 		return;
-	assume(vchunk->state == SCTK_ALLOC_CHUNK_STATE_ALLOCATED,"Double free corruption.");
+	assume_m(vchunk->state == SCTK_ALLOC_CHUNK_STATE_ALLOCATED,"Double free corruption.");
 
 	//check if huge bloc or not
 	/** @todo Split in two sub-functions **/
@@ -1343,10 +1344,10 @@ SCTK_STATIC void sctk_alloc_mm_source_insert_segment(struct sctk_alloc_mm_source
 {
 	//check errors
 	assert(source != NULL);
-	assume((sctk_addr_t)base % SCTK_MACRO_BLOC_SIZE == 0, "Base address must be multiple of SCTK_MACRO_BLOC_SIZE to insert the segment in memory source.");
-	assume(size % SCTK_MACRO_BLOC_SIZE == 0, "Base address must be multiple of SCTK_MACRO_BLOC_SIZE to insert the segment in memory source.");
-	assume(sctk_alloc_region_get(base) == sctk_alloc_region_get(base+size-1),"Segments can't cover more than one region.");
-	//assume(base >= (void*)sctk_alloc_region_get(base) + SCTK_REGION_HEADER_SIZE,"Segment mustn't overlap the region header.");
+	assume_m((sctk_addr_t)base % SCTK_MACRO_BLOC_SIZE == 0, "Base address must be multiple of SCTK_MACRO_BLOC_SIZE to insert the segment in memory source.");
+	assume_m(size % SCTK_MACRO_BLOC_SIZE == 0, "Base address must be multiple of SCTK_MACRO_BLOC_SIZE to insert the segment in memory source.");
+	assume_m(sctk_alloc_region_get(base) == sctk_alloc_region_get(base+size-1),"Segments can't cover more than one region.");
+	//assume_m(base >= (void*)sctk_alloc_region_get(base) + SCTK_REGION_HEADER_SIZE,"Segment mustn't overlap the region header.");
 
 	//remove the size for end bloc
 	size -= SCTK_ALLOC_PAGE_SIZE;
@@ -1413,13 +1414,13 @@ void sctk_alloc_mm_source_default_init(struct sctk_alloc_mm_source_default* sour
 	sctk_alloc_spinlock_init(&source->spinlock,PTHREAD_PROCESS_PRIVATE);
 
 	//some checks
-	assume(heap_base % SCTK_MACRO_BLOC_SIZE == 0,"Memory source heap_base address must be multiple of SCTK_MACRO_BLOC_SIZE.");
-	assume(heap_size % SCTK_MACRO_BLOC_SIZE == 0,"Memory source heap_size must be multiple of SCTK_MACRO_BLOC_SIZE.");
+	assume_m(heap_base % SCTK_MACRO_BLOC_SIZE == 0,"Memory source heap_base address must be multiple of SCTK_MACRO_BLOC_SIZE.");
+	assume_m(heap_size % SCTK_MACRO_BLOC_SIZE == 0,"Memory source heap_size must be multiple of SCTK_MACRO_BLOC_SIZE.");
 
 	//get the first region and loop to register all related regions
 	while (current < (void*)heap_base + heap_size)
 	{
-		assume( sctk_alloc_region_setup(current) != NULL , "Can't create region header." );
+		assume_m( sctk_alloc_region_setup(current) != NULL , "Can't create region header." );
 		current += SCTK_REGION_SIZE;
 	}
 
@@ -1450,7 +1451,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_default_request_m
 
 	//errors
 	/** @todo Can down this restriction to multiple of 4k and round here **/
-	assume(size % SCTK_MACRO_BLOC_SIZE == 0,"The request size on a memory source must be multiple of SCTK_MACRO_BLOC_SIZE.");
+	assume_m(size % SCTK_MACRO_BLOC_SIZE == 0,"The request size on a memory source must be multiple of SCTK_MACRO_BLOC_SIZE.");
 
 	//lock access to the memory source
 	sctk_alloc_spinlock_lock(&source_default->spinlock);
@@ -1489,7 +1490,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_default_request_m
 	//try to split if required
 	sctk_alloc_vchunk vchunk = sctk_alloc_free_chunk_to_vchunk(&bloc->header);
 	sctk_alloc_vchunk residut = sctk_alloc_split_free_bloc(&vchunk,size);
-	assume(sctk_alloc_get_size(vchunk) >= sctk_alloc_calc_chunk_size(size), "Size error in chunk spliting function.");
+	assume_m(sctk_alloc_get_size(vchunk) >= sctk_alloc_calc_chunk_size(size), "Size error in chunk spliting function.");
 
 	//insert residut in free list
 	if (residut != NULL)
@@ -1528,7 +1529,7 @@ SCTK_STATIC void sctk_alloc_mm_source_default_free_memory(struct sctk_alloc_mm_s
 	struct sctk_alloc_mm_source_default * source_default = (struct sctk_alloc_mm_source_default*)source;
 
 	//error
-	assume(source != NULL, "Can't free the memory without an allocation chain.");
+	assume_m(source != NULL, "Can't free the memory without an allocation chain.");
 
 	//trivial
 	if (bloc == NULL)
@@ -1539,7 +1540,7 @@ SCTK_STATIC void sctk_alloc_mm_source_default_free_memory(struct sctk_alloc_mm_s
 	//manage the case of bad pointer and return withour doing anything
 	if (vchunk == NULL)
 		return;
-	assume(vchunk->state == SCTK_ALLOC_CHUNK_STATE_ALLOCATED,"Double free corruption.");
+	assume_m(vchunk->state == SCTK_ALLOC_CHUNK_STATE_ALLOCATED,"Double free corruption.");
 
 	//lock access to the memory source
 	sctk_alloc_spinlock_lock(&source_default->spinlock);
@@ -1573,7 +1574,7 @@ SCTK_STATIC void sctk_alloc_mm_source_default_cleanup(struct sctk_alloc_mm_sourc
 	struct sctk_alloc_mm_source_default * source_default = (struct sctk_alloc_mm_source_default *)source;
 
 	//lock access to the memory source
-	assume(sctk_alloc_spinlock_trylock(&source_default->spinlock)==0,"Multiple thread access to memory source while calling cleanup is an error.");
+	assume_m(sctk_alloc_spinlock_trylock(&source_default->spinlock)==0,"Multiple thread access to memory source while calling cleanup is an error.");
 
 	void * current = source_default->heap_addr;
 	struct sctk_alloc_region * region;
@@ -1759,7 +1760,7 @@ SCTK_STATIC void sctk_alloc_region_set_entry(struct sctk_alloc_chain * chain, st
 	{
 		dest = sctk_alloc_region_get_entry(ptr);
 		if (macro_bloc != NULL)
-			assume(dest->macro_bloc == NULL, "For now, don't support multiple usage of region entries");
+			assume_m(dest->macro_bloc == NULL, "For now, don't support multiple usage of region entries");
 		dest->macro_bloc = macro_bloc;
 		ptr += SCTK_MACRO_BLOC_SIZE;
 	}
@@ -1994,7 +1995,7 @@ void sctk_alloc_rfq_register(struct sctk_alloc_rfq * rfq,void * ptr)
 			entry = ptr;
 			break;
 		default:
-			assume(false,"Invalid chunk type.");
+			assume_m(false,"Invalid chunk type.");
 	}
 
 	//setup entry
@@ -2072,11 +2073,83 @@ SCTK_STATIC void sctk_alloc_rfq_destroy(struct sctk_alloc_rfq * rfq)
 		return;
 
 	//try to take the lock
-	assume( ! sctk_alloc_spinlock_trylock(&rfq->lock) ,"Can't take the lock of Remote Free Queue to made the cleanup.");
+	assume_m( ! sctk_alloc_spinlock_trylock(&rfq->lock) ,"Can't take the lock of Remote Free Queue to made the cleanup.");
 
 	//check empty list
-	assume(rfq->first == NULL && rfq->last == NULL,"Can't cleanup a non empty Remote Free Queue.");
+	assume_m(rfq->first == NULL && rfq->last == NULL,"Can't cleanup a non empty Remote Free Queue.");
 
 	//cleanup the spinlock
 	sctk_alloc_spinlock_destroy(&rfq->lock);
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Migrate an allocation to another NUMA node if numa is supported otherwise it does nothing.
+ * @param chain Define the allocation chain to migrate.
+ * @param target_numa_node Define the targeted NUMA node, you can use -1 to reset memory binding.
+**/
+#ifdef HAVE_LIBNUMA
+SCTK_STATIC void sctk_alloc_chain_numa_migrate_content(struct sctk_alloc_chain * chain, int target_numa_node)
+{
+	//vars
+	int i;
+	int j;
+	struct sctk_alloc_region * region;
+
+	//errors
+	assert(chain != NULL);
+	assert(target_numa_node >= -1);
+
+	static struct sctk_alloc_region * sctk_alloc_glob_regions[SCTK_ALLOC_MAX_REGIONS];
+
+	//lock the region map
+	sctk_alloc_spinlock_lock(&sctk_alloc_glob_regions_lock);
+
+	//loop on all region entries
+	#warning Caution by reading like this we touch empty pages, maybe add a bitmap to avoid that for j.
+	for ( i = 0 ; i < SCTK_ALLOC_MAX_REGIONS ; i++)
+	{
+		region = sctk_alloc_glob_regions[i];
+		if (region != NULL)
+			for ( j = 0 ; j < SCTK_REGION_HEADER_ENTRIES ; j++)
+				if (region->entries[j].macro_bloc != NULL)
+					sctk_alloc_migrate_numa_mem(region->entries[j].macro_bloc,region->entries[j].macro_bloc->header.size,target_numa_node);
+	}
+
+	//lock the region map
+	sctk_alloc_spinlock_unlock(&sctk_alloc_glob_regions_lock);
+}
+#endif //HAVE_LIBNUMA
+
+/************************* FUNCTION ************************/
+/**
+ * Migrate an allocation to another NUMA node if numa is supported otherwise it does nothing.
+ * @param chain Define the allocation chain to migrate.
+ * @param target_numa_node Define the targeted NUMA node, you can use -1 to reset memory binding.
+ * @param migrate_chain_struct Enable of disable migration of the pages of the allocation chain itself.
+ * @param migrate_content Enable of disable migration of the current pages returned by the allocation chain.
+ * @param new_mm_source Define the new memory source to link to this allocation chain you can use
+ * SCTK_ALLOC_KEEP_OLD_MM_SOURCE.
+**/
+void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_numa_node,bool migrate_chain_struct,bool migrate_content,struct sctk_alloc_mm_source * new_mm_source)
+{
+	//errors
+	assert(chain != NULL);
+	assert(target_numa_node >= -1);
+
+	SCTK_PDEBUG("Call migration to numa node %d",target_numa_node);
+
+	#ifdef HAVE_LIBNUMA
+	//remap the struct itself
+	if (migrate_chain_struct)
+		sctk_alloc_migrate_numa_mem(chain,sizeof(struct sctk_alloc_chain),target_numa_node);
+
+	//remap the content
+	if (migrate_chain_struct)
+		sctk_alloc_chain_numa_migrate_content(chain,target_numa_node);
+	#endif //HAVE_LIBNUMA
+	
+	//update the mm source
+	if (new_mm_source != SCTK_ALLOC_KEEP_OLD_MM_SOURCE)
+		chain->source = new_mm_source;
 }
