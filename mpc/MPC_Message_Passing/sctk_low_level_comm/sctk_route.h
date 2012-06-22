@@ -54,6 +54,7 @@ struct sctk_ib_data_s;
     {
         int c[MAX_SCTK_FAST_NODE_DIM]; /*!< Node storage */
         int neigh[MAX_SCTK_FAST_NODE_DIM][4]; /*!< Node neigbours storage */
+        uint8_t breakdown[MAX_SCTK_FAST_NODE_DIM*2];
         uint8_t d;                           /*!< Node dimension */
         int id;						 /*!< Node ident */
     }sctk_Node_t;
