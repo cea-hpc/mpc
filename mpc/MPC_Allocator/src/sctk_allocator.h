@@ -88,6 +88,18 @@ enum sctk_alloc_insert_mode
 	SCTK_ALLOC_INSERT_AT_START
 };
 
+/*************************** ENUM **************************/
+/** List of flags to enable options of an allocation chain. **/
+enum sctk_alloc_chain_flags
+{
+	/** Default options. By default it is thread safe. **/
+	SCTK_ALLOC_CHAIN_FLAGS_DEFAULT = 0,
+	/** Enable the locks in the chain to use it from multiple threads. **/
+	SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE = 1,
+	/** Disable chunk merge at free time. **/
+	SCTK_ALLOC_CHAIN_DISABLE_MERGE = 2
+};
+
 /************************** STRUCT *************************/
 /**
  * Bloc common header between small and large bloc. It define the type and status of current bloc.
@@ -308,15 +320,22 @@ struct sctk_alloc_chain
 	struct sctk_alloc_mm_source * source;
 	void * base_addr;
 	void * end_addr;
-	/**
-	 * Define if the thread pool is shared or not (to know if spin lock are requierd or not).
-	 * If true, the spinlock will be used to protect access the the thread pool.
-	**/
-	bool shared;
+	/** Flags to enable some options of the allocation chain. **/
+	enum sctk_alloc_chain_flags flags;
 	/** Spinlock used to protect the thread pool if it was shared, ignored otherwire. **/
 	sctk_alloc_spinlock_t lock;
 	/** Remote free queue **/
 	struct sctk_alloc_rfq rfq;
+	/**
+	 * If not NULL, function to call when empty for final destruction.
+	 * This is more to be used internally for thread destruction.
+	**/
+	void (*destroy_handler)(struct sctk_alloc_chain * chain);
+	/**
+	 * Count the total number of macro bloc currently managed by the chain.
+	 * It serve to known when to call the destroy_handler method.
+	**/
+	int cnt_macro_blocs;
 	/** Stats of the given allocation chain. **/
 	SCTK_ALLOC_STATS_HOOK(struct sctk_alloc_stats_chain stats);
 	/** Struct specific for allocation chain spying. **/
@@ -389,9 +408,9 @@ SCTK_STATIC bool sctk_alloc_free_list_is_not_empty_quick(struct sctk_thread_pool
 
 /************************* FUNCTION ************************/
 //allocation chain management
-SCTK_STATIC void sctk_alloc_chain_base_init(struct sctk_alloc_chain * chain);
-void sctk_alloc_chain_user_init(struct sctk_alloc_chain * chain,void * buffer,sctk_size_t size);
-void sctk_alloc_chain_default_init(struct sctk_alloc_chain * chain,struct sctk_alloc_mm_source * source);
+SCTK_STATIC void sctk_alloc_chain_base_init(struct sctk_alloc_chain * chain,enum sctk_alloc_chain_flags flags);
+void sctk_alloc_chain_user_init(struct sctk_alloc_chain * chain,void * buffer,sctk_size_t size,enum sctk_alloc_chain_flags flags);
+void sctk_alloc_chain_default_init(struct sctk_alloc_chain * chain,struct sctk_alloc_mm_source * source,enum sctk_alloc_chain_flags flags);
 void * sctk_alloc_chain_alloc(struct sctk_alloc_chain * chain,sctk_size_t size);
 void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t boundary,sctk_size_t size);
 void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr);
@@ -404,6 +423,10 @@ SCTK_STATIC void sctk_alloc_chain_free_macro_bloc(struct sctk_alloc_chain * chai
 SCTK_STATIC bool sctk_alloc_chain_can_remap(struct sctk_alloc_chain * chain);
 void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sctk_size_t size);
 void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_numa_node,bool migrate_chain_struct,bool migrate_content,struct sctk_alloc_mm_source * new_mm_source);
+bool sctk_alloc_chain_is_thread_safe(struct sctk_alloc_chain * chain);
+void sctk_alloc_chain_make_thread_safe(struct sctk_alloc_chain * chain,bool value);
+void sctk_alloc_chain_mark_for_destroy(struct sctk_alloc_chain * chain,void (*destroy_handler)(struct sctk_alloc_chain * chain));
+
 
 /************************* FUNCTION ************************/
 //Base of memory source

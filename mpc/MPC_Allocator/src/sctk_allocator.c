@@ -719,18 +719,23 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_merge_chunk(struct sctk_thread_pool * p
  * Base initialization of allocation.
  * @param chain Define the allocation to init.
 **/
-SCTK_STATIC void sctk_alloc_chain_base_init(struct sctk_alloc_chain * chain)
+SCTK_STATIC void sctk_alloc_chain_base_init(struct sctk_alloc_chain * chain,enum sctk_alloc_chain_flags flags)
 {
 	//init lists
 	/** @todo TODO add a call to spin destroy while removing the chain **/
 	sctk_alloc_thread_pool_init(&chain->pool,SCTK_ALLOC_FREE_SIZES);
 
 	//init lock
-	chain->shared = true,
+	chain->flags = flags,
 	sctk_alloc_spinlock_init(&chain->lock,PTHREAD_PROCESS_PRIVATE);
 
 	//init Remote Free Queue
 	sctk_alloc_rfq_init(&chain->rfq);
+
+	//destroy system
+	chain->destroy_handler = NULL;
+	chain->cnt_macro_blocs = 0;
+
 
 	//init spy and stat module
 	SCTK_ALLOC_STATS_HOOK(sctk_alloc_stats_chain_init(&chain->stats));
@@ -743,7 +748,7 @@ SCTK_STATIC void sctk_alloc_chain_base_init(struct sctk_alloc_chain * chain)
  * @param buffer Define the segment to be managed by the user allocation chain.
  * @param size Define de size og the segment.
 **/
-void sctk_alloc_chain_user_init(struct sctk_alloc_chain * chain,void * buffer,sctk_size_t size)
+void sctk_alloc_chain_user_init(struct sctk_alloc_chain * chain,void * buffer,sctk_size_t size,enum sctk_alloc_chain_flags flags)
 {
 	struct sctk_alloc_macro_bloc * macro_bloc;
 	sctk_alloc_vchunk vchunk;
@@ -753,7 +758,7 @@ void sctk_alloc_chain_user_init(struct sctk_alloc_chain * chain,void * buffer,sc
 	assume_m(size == 0 || size > 64+16, "Buffer size must null or greater than 80o.");
 
 	//base init
-	sctk_alloc_chain_base_init(chain);
+	sctk_alloc_chain_base_init(chain,flags);
 
 	//insert the buffer in the thread pool
 	if (buffer == NULL)
@@ -766,11 +771,51 @@ void sctk_alloc_chain_user_init(struct sctk_alloc_chain * chain,void * buffer,sc
 		sctk_alloc_free_list_insert(&chain->pool,sctk_alloc_get_large(vchunk),SCTK_ALLOC_INSERT_AT_START);
 		chain->base_addr = buffer;
 		chain->end_addr = (char*)buffer + size;
+		chain->cnt_macro_blocs++;
 	}
 	chain->source = NULL;
 }
 
 /************************* FUNCTION ************************/
+bool sctk_alloc_chain_is_thread_safe(struct sctk_alloc_chain * chain)
+{
+	//errors
+	assert(chain != NULL);
+  
+	return chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE;
+}
+
+/************************* FUNCTION ************************/
+void sctk_alloc_chain_make_thread_safe(struct sctk_alloc_chain * chain,bool value)
+{
+	//errors
+	assert(chain != NULL);
+
+	if (value)
+		chain->flags |= SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE;
+	else
+		chain->flags &= ~SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE;
+}
+
+/************************* FUNCTION ************************/
+void sctk_alloc_chain_mark_for_destroy(struct sctk_alloc_chain * chain,void (*destroy_handler)(struct sctk_alloc_chain * chain))
+{
+	//errors
+	assert(chain != NULL);
+	assume_m(destroy_handler != NULL,"Your must provide a destroy handler to destroy an allocation.");
+
+	//mark the chain as thread safe so we didn't use RFQ anymore.
+	sctk_alloc_chain_make_thread_safe(chain,true);
+
+	//mark for destroy
+	chain->destroy_handler = destroy_handler;
+
+	//flush the RFQ
+	sctk_alloc_chain_purge_rfq(chain);
+}
+
+/************************* FUNCTION ************************/
+
 /**
  * Permit to destroy a user allocation chain or a default allocation chain.
  * @param chain Define the allocation chain to destroy.
@@ -806,10 +851,10 @@ void sctk_alloc_chain_destroy(struct sctk_alloc_chain* chain,bool force)
 /**
  * Create a standard allocation chain.
 **/
-void sctk_alloc_chain_default_init(struct sctk_alloc_chain * chain, struct sctk_alloc_mm_source * source)
+void sctk_alloc_chain_default_init(struct sctk_alloc_chain * chain, struct sctk_alloc_mm_source * source,enum sctk_alloc_chain_flags flags)
 {
 	//base init
-	sctk_alloc_chain_base_init(chain);
+	sctk_alloc_chain_base_init(chain,flags);
 
 	chain->base_addr = NULL;
 	chain->end_addr = NULL;
@@ -893,12 +938,17 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_request_mem(struct sctk_alloc_cha
 	//request memory and refill the free list with it
 	bloc = chain->source->request_memory(chain->source,size);
 	SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_add_macro_bloc(chain,bloc));
-	assert(bloc->chain == NULL);
+	if (bloc != NULL)
+		assert(bloc->chain == NULL);
 
 	//insert in free list
 	vchunk = sctk_alloc_chain_prepare_and_reg_macro_bloc(chain,bloc);
+
+	//update counter or replace default value
 	if (vchunk == NULL)
 		vchunk = SCTK_ALLOC_DEFAULT_CHUNK;
+	else
+		chain->cnt_macro_blocs++;
 
 	//ok we can return
 	return vchunk;
@@ -1024,7 +1074,7 @@ void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t 
 		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_chain_huge_alloc(chain,size-boundary,sctk_alloc_chunk_body((boundary > 1)?sctk_alloc_setup_chunk_padded(vchunk,boundary):vchunk),sctk_alloc_get_size(vchunk),boundary));
 	} else {
 		//lock if required
-		if (chain->shared)
+		 if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
 			sctk_alloc_spinlock_lock(&chain->lock);
 
 		//try to find a chunk
@@ -1046,7 +1096,7 @@ void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t 
 			//SCTK_PDEBUG("Out of memory in user segment.");
 			//SCTK_CRASH_DUMP();
 			//unlock if required
-			if (chain->shared)
+			if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
 				sctk_alloc_spinlock_unlock(&chain->lock);
 			return NULL;
 		}
@@ -1066,7 +1116,7 @@ void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t 
 		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_chain_alloc(chain,size,sctk_alloc_chunk_body((boundary > 1)?sctk_alloc_setup_chunk_padded(vchunk,boundary):vchunk),sctk_alloc_get_size(vchunk),boundary));
 
 		//unlock if required
-		if (chain->shared)
+		if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
 			sctk_alloc_spinlock_unlock(&chain->lock);
 	}
 
@@ -1104,6 +1154,14 @@ SCTK_STATIC void sctk_alloc_chain_free_macro_bloc(struct sctk_alloc_chain * chai
 	//free it
 	SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_free_macro_bloc(chain,macro_bloc));
 	chain->source->free_memory(chain->source,macro_bloc);
+
+	//update counter
+	chain->cnt_macro_blocs--;
+	assert(chain->cnt_macro_blocs >= 0);
+
+	//check if we must destroy the allocation chain
+	if (chain->cnt_macro_blocs == 0 && chain->destroy_handler != NULL && chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
+		chain->destroy_handler(chain);
 }
 
 /************************* FUNCTION ************************/
@@ -1144,7 +1202,7 @@ void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 		sctk_alloc_chain_free_macro_bloc(chain,vchunk);
 	} else {
 		//lock if required
-		if (chain->shared)
+		if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
 			sctk_alloc_spinlock_lock(&chain->lock);
 
 		//spy
@@ -1171,7 +1229,7 @@ void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 			sctk_alloc_free_list_insert(&chain->pool,sctk_alloc_get_large(vchunk),SCTK_ALLOC_INSERT_AT_END);
 
 		//lock if required
-		if (chain->shared)
+		if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
 			sctk_alloc_spinlock_unlock(&chain->lock);
 	}
 }

@@ -295,7 +295,7 @@ void sctk_alloc_posix_base_init(void)
 		sctk_alloc_tls_chain();
 		//setup egg allocator to bootstrap thread allocation chains.
 		/** @todo Maybe optimize by avoiding loading 2MB of virtual memory on egg allocator. **/
-		sctk_alloc_chain_user_init(&sctk_global_egg_chain,buffer,SCTK_MACRO_BLOC_SIZE);
+		sctk_alloc_chain_user_init(&sctk_global_egg_chain,buffer,SCTK_MACRO_BLOC_SIZE,SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE);
 
 		#ifndef NDEBUG
 		//init debug section
@@ -350,14 +350,11 @@ struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void)
 	struct sctk_alloc_chain * chain = sctk_alloc_chain_alloc(&sctk_global_egg_chain,sizeof(struct sctk_alloc_chain));
 	assert(chain != NULL);
 
-	//init allocation chain.
-	sctk_alloc_chain_user_init(chain,NULL,0);
+	//init allocation chain, use default to mark as non shared
+	sctk_alloc_chain_user_init(chain,NULL,0,SCTK_ALLOC_CHAIN_FLAGS_DEFAULT);
 
 	//bin to the adapted memory source depending on numa node availability
 	chain->source = sctk_alloc_posix_get_local_mm_source();
-
-	//mark as non shared
-	chain->shared = false;
 
 	//debug
 	SCTK_PDEBUG("Init an allocation chain : %p",chain);
@@ -505,7 +502,7 @@ void sctk_free (void * ptr)
 	assume_m(chain != NULL,"Can't free a pointer not manage by an allocation chain from our allocator.");
 
 	SCTK_PTRACE("free(ptr%p); //%p",ptr,chain);
-	if (chain->shared || chain == local_chain)
+	if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE || chain == local_chain)
 	{
 		//local free or protected free in shared allocation chain
 		sctk_alloc_chain_free(chain,ptr);
@@ -618,7 +615,9 @@ void sctk_alloc_posix_numa_migrate(void)
 	//get the current allocation chain
 	local_chain = sctk_current_alloc_chain;
 
+	#ifdef MPC_Common
 	SCTK_PDEBUG("--- Migration on %d",sctk_get_cpu());
+	#endif
 	sctk_alloc_posix_get_local_mm_source();
 
 	//if NULL nothing to do otherwise remind the current mm source

@@ -69,7 +69,7 @@ void sctk_alloc_spy_get_exename(char * buffer,unsigned int max_size)
 
 	//open /proc/self/stat
 	int fd = open("/proc/self/stat",O_RDONLY);
-	assume(fd != -1,"Can't open file /proc/self/stat");
+	assume_m(fd != -1,"Can't open file /proc/self/stat");
 
 	//read in local buffer to avoid malloc call by fscanf
 	res = read(fd,tmp,sizeof(tmp));
@@ -78,7 +78,7 @@ void sctk_alloc_spy_get_exename(char * buffer,unsigned int max_size)
 
 	//scan to extract chain
 	res = sscanf(tmp,"%d (%s) ",&tmp2,buffer);
-	assume(res == 2,"Error while reading /proc/self/stat, bad format");
+	assume_m(res == 2,"Error while reading /proc/self/stat, bad format");
 
 	//???? why it let a ')' at then end ???????
 	while( buffer[i] != '\0' )
@@ -691,7 +691,7 @@ void sctk_alloc_spy_chain_unregister(struct sctk_alloc_spy_chain * spy)
 	}
 
 	//error
-	assume(cur == spy,"Can't find the given spy in global list.");
+	assume_m(cur == spy,"Can't find the given spy in global list.");
 
 	//remove
 	if (prev == NULL)
