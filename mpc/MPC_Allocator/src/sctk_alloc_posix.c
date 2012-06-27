@@ -297,7 +297,7 @@ void sctk_alloc_posix_base_init(void)
 		/** @todo Maybe optimize by avoiding loading 2MB of virtual memory on egg allocator. **/
 		sctk_alloc_chain_user_init(&sctk_global_egg_chain,buffer,SCTK_MACRO_BLOC_SIZE,SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE);
 
-		#ifndef NDEBUG
+		#ifdef SCTK_ALLOC_DEBUG
 		//init debug section
 		sctk_alloc_debug_init();
 		#endif
@@ -361,7 +361,7 @@ struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void)
 
 	/** @todo TODO register the allocation chain for debugging. **/
 	//setup pointer for alocator memory dump in case of crash
-	//#ifndef NDEBUG
+	//#ifdef SCTK_ALLOC_DEBUG
 	//TODO
 	//sctk_alloc_chain_list[0] = &chain;
 	//#endif
@@ -466,7 +466,7 @@ void sctk_free (void * ptr)
 {
 	//to avoid many access to TLS variable
 	struct sctk_alloc_chain * local_chain = sctk_get_tls_chain();
-	#ifndef NDEBUG
+	#ifdef SCTK_ALLOC_DEBUG
 	static int cnt = 0;
 	#endif
 	//setup the local chain if not already done
@@ -491,7 +491,7 @@ void sctk_free (void * ptr)
 	assert(ptr > (void*)macro_bloc && ptr < (void*)macro_bloc + macro_bloc->header.size);
 	if (macro_bloc == NULL)
 	{
-		#ifndef NDEBUG
+		#ifdef SCTK_ALLOC_DEBUG
 		cnt++;
 		sctk_alloc_pwarning("Don't free the block %p (cnt = %d).",ptr,cnt);
 		abort();

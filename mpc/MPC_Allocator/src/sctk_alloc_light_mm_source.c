@@ -429,10 +429,10 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_request_mem
 		macro_bloc = sctk_alloc_mm_source_light_mmap_new_segment(light_source,size);
 
 	//warn if out of memory
-	#ifndef NDEBUG
+	#ifndef SCTK_ALLOC_DEBUG
 	if (macro_bloc == NULL)
 		SCTK_PDEBUG("Memory source get out of memory and can't request more to system.");
-	#endif
+	#endif //SCTK_ALLOC_DEBUG
 
 	//return if
 	return macro_bloc;

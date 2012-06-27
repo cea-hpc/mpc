@@ -359,10 +359,10 @@ struct sctk_alloc_region
 };
 
 /************************* GLOBALS *************************/
-#ifndef NDEBUG
+#ifndef SCTK_ALLOC_DEBUG
 /** @todo TO REMOVE **/
 extern struct sctk_alloc_chain * sctk_alloc_chain_list[2];
-#endif
+#endif //SCTK_ALLOC_DEBUG
 
 /************************** TYPES **************************/
 /**

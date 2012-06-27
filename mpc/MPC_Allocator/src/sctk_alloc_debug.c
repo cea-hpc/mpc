@@ -219,7 +219,7 @@ void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain* chain)
 }
 
 /************************* FUNCTION ************************/
-#ifndef NDEBUG
+#ifdef SCTK_ALLOC_DEBUG
 void sctk_alloc_crash_dump(void)
 {
 	if (sctk_alloc_chain_list[0] != NULL)
@@ -229,7 +229,7 @@ void sctk_alloc_crash_dump(void)
 #endif
 
 /************************* FUNCTION ************************/
-#if !defined(NDEBUG) && !defined(_WIN32)
+#if defined(SCTK_ALLOC_DEBUG) && !defined(_WIN32)
 void sctk_alloc_debug_setgault_handler(int signal, siginfo_t *si, void *arg)
 {
 	sctk_alloc_perror("SEGMENTATION FAULT");
@@ -238,7 +238,7 @@ void sctk_alloc_debug_setgault_handler(int signal, siginfo_t *si, void *arg)
 #endif
 
 /************************* FUNCTION ************************/
-#if !defined(NDEBUG) && !defined(_WIN32)
+#if defined(SCTK_ALLOC_DEBUG) && !defined(_WIN32)
 void sctk_alloc_debug_setup_sighandler()
 {
 	int res;
@@ -258,7 +258,7 @@ void sctk_alloc_debug_setup_sighandler()
 #endif
 
 /************************* FUNCTION ************************/
-#ifndef NDEBUG
+#ifdef SCTK_ALLOC_DEBUG
 void sctk_alloc_debug_init(void )
 {
 	#ifndef _WIN32

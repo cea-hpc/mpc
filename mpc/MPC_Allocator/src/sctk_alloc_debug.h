@@ -30,17 +30,24 @@
 #include <stdio.h>
 #include "sctk_allocator.h"
 
+//compat with NDEBUG system because using this has consequences in MPC sources.
+#ifdef NDEBUG
+#undef SCTK_ALLOC_DEBUG
+#elif ! defined(MPC_Common)
+#define SCTK_ALLOC_DEBUG
+#endif //NDEBUG
+
 /************************** MACROS *************************/
 #if defined(MPC_Common)
 	#define SCTK_PDEBUG(...) sctk_debug(__VA_ARGS__)
 	#define SCTK_CRASH_DUMP sctk_alloc_crash_dump
-#elif defined(NDEBUG)
-	#define SCTK_PDEBUG(...)
-	#define SCTK_CRASH_DUMP
-#else //NDEBUG
+#elif defined(SCTK_ALLOC_DEBUG)
 	#define SCTK_PDEBUG(...) sctk_alloc_pdebug(__VA_ARGS__)
 	#define SCTK_CRASH_DUMP sctk_alloc_crash_dump
-#endif //NDEBUG
+#else //SCTK_ALLOC_DEBUG
+	#define SCTK_PDEBUG(...)
+	#define SCTK_CRASH_DUMP
+#endif //SCTK_ALLOC_DEBUG
 
 #ifdef ENABLE_TRACE
 	#define SCTK_PTRACE(m,...) sctk_alloc_ptrace((m),__VA_ARGS__)
@@ -65,10 +72,10 @@
 
 /************************** MACROS *************************/
 #ifndef assert
-#ifdef NDEBUG
-#define assert(x) /* assert(x) */
-#else
+#ifdef SCTK_ALLOC_DEBUG
 #define assert(x) if (!(x)) { sctk_alloc_perror("Assertion failure at %s!%d\n%s\n",__FILE__,__LINE__,#x); abort(); }
+#else
+#define assert(x) /* assert(x) */
 #endif
 #endif
 
