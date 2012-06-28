@@ -326,13 +326,13 @@ sctk_rail_info_t* sctk_route_get_signalization_rail();
 
 
     /**
-    * \brief Compute the quadratic distance between two Nodes
+    * \brief Compute the distance between two Nodes
     * \param a integer, the value of the coordinate of the first node
     * \param b integer, the value of the coordinate of the second node
     * \param sdim integer, the size of the current dimension
-    * \return quadratic distance beetween a and b
+    * \return distance beetween a and b
     *
     */
-    inline int sctk_Node_quadratic_distance (int a, int b ,unsigned sdim);
+    inline int sctk_Node_distance (int a, int b ,unsigned sdim);
 
 #endif
