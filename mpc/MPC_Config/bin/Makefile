@@ -86,7 +86,7 @@ $(OBJ):%.o:%.d
 
 $(DIR_DEST_EXE)/$(PREFIX_EXE)$(EXE)$(SUFFIX_EXE):$(OBJ) $(LD_DEPS)
 	@echo "    Build $@"
-	@$(CC) $(OBJ) $(CFLAGS) -o $@ $(LDFLAGS)
+	$(CC) $(OBJ) $(CFLAGS) -o $@ $(LDFLAGS)
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)

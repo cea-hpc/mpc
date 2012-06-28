@@ -26,6 +26,11 @@
 #include "sctk_alloc_posix.h"
 #include "sctk_alloc_debug.h"
 
+//optional header
+#ifdef MPC_Common
+#include "sctk.h"
+#endif
+
 /************************* FUNCTION ************************/
 static __inline__ bool sctk_alloc_is_power_of_two(sctk_size_t size)
 {
@@ -35,57 +40,87 @@ static __inline__ bool sctk_alloc_is_power_of_two(sctk_size_t size)
 /************************* FUNCTION ************************/
 void * calloc (size_t nmemb, size_t size)
 {
-	return sctk_calloc(nmemb,size);
+	void * res;
+	SCTK_PROFIL_START(calloc);
+	res = sctk_calloc(nmemb,size);
+	SCTK_PROFIL_END(calloc);
+	return res;
 }
 
 /************************* FUNCTION ************************/
 void * malloc (size_t size)
 {
-	return sctk_malloc(size);
+	void * res;
+	SCTK_PROFIL_START(malloc);
+	res = sctk_malloc(size);
+	SCTK_PROFIL_END(malloc);
+	return res;
 }
 
 /************************* FUNCTION ************************/
 void free (void * ptr)
 {
+	SCTK_PROFIL_START(free);
 	sctk_free(ptr);
+	SCTK_PROFIL_END(free);
 }
 
 /************************* FUNCTION ************************/
 void * realloc (void * ptr, size_t size)
 {
-	return sctk_realloc(ptr,size);
+	void * res;
+	SCTK_PROFIL_START(realloc);
+	res = sctk_realloc(ptr,size);
+	SCTK_PROFIL_END(realloc);
+	return res;
 }
 
 /************************* FUNCTION ************************/
 int posix_memalign(void **memptr, size_t boundary, size_t size)
 {
+	int res;
+
+	SCTK_PROFIL_START(posix_memalign);
+	
 	//limit imposed by posix_memalign linux manpage
 	if (boundary % sizeof(void*) != 0 && sctk_alloc_is_power_of_two(boundary))
 	{
 		sctk_alloc_pwarning("memalign boundary not power of 2 or boundary not multiple of sizeof(void*).");
-		return EINVAL;
+		res = EINVAL;
 	} else {
 		*memptr = sctk_memalign(boundary,size);
 
 		//check res
 		if (memptr == NULL)
-			return ENOMEM;
+			res = ENOMEM;
 		else
-			return 0;
+			res = 0;
 	}
+	
+	SCTK_PROFIL_END(posix_memalign);
+	
+	return res;
 }
 
 /************************* FUNCTION ************************/
 void * memalign(size_t boundary,size_t size)
 {
+	void * res;
+
+	SCTK_PROFIL_START(memalign);
+
 	//limit imposed by posix_memalign linux manpage
 	if (sctk_alloc_is_power_of_two(boundary))
 	{
-		return sctk_memalign(boundary,size);
+		res = sctk_memalign(boundary,size);
 	} else {
 		sctk_alloc_pwarning("memalign boundary not power of 2.");
-		return NULL;
+		res = NULL;
 	}
+
+	SCTK_PROFIL_END(memalign);
+
+	return res;
 };
 
 /************************* FUNCTION ************************/

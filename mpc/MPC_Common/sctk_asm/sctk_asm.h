@@ -40,8 +40,6 @@ extern "C"
 #define sctk_max(a, b)  ((a) > (b) ? (a) : (b))
 #define sctk_min(a, b)  ((a) < (b) ? (a) : (b))
 
-  double sctk_get_time_stamp (void);
-
   double sctk_get_time_stamp_gettimeofday();
 
   /*

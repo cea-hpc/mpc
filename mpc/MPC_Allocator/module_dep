@@ -22,5 +22,6 @@
 ########################################################################
 # MPC Module Dependency Check
 avail_module MPC_Threads
+avail_module MPC_Profiler
 need_module MPC_Common
 SCTK_INCLUDE_FILES="mpcalloc.h"

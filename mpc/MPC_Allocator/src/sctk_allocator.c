@@ -36,9 +36,15 @@
 #include "sctk_alloc_lock.h"
 #include "sctk_alloc_debug.h"
 #include "sctk_allocator.h"
-//for getpid
 #include "sctk_alloc_inlined.h"
 #include "sctk_alloc_topology.h"
+
+//for getpid
+
+//optional header
+#ifdef MPC_Common
+#include "sctk.h"
+#endif
 
 /************************* PORTABILITY *************************/
 #ifdef _WIN32

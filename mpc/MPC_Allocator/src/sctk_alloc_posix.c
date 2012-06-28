@@ -39,9 +39,15 @@
 #include "sctk_alloc_inlined.h"
 #include "sctk_alloc_light_mm_source.h"
 #include "sctk_alloc_posix.h"
+
 //optional headers
 #ifdef HAVE_LIBNUMA
 #include "sctk_alloc_topology.h"
+#endif
+
+//optional header
+#ifdef MPC_Common
+#include "sctk.h"
 #endif
 
 //if have NUMA support
@@ -381,6 +387,9 @@ struct sctk_alloc_chain * sctk_alloc_posix_setup_tls_chain(void)
 	//vars
 	struct sctk_alloc_chain * chain; 
 
+	//profiling
+	SCTK_PROFIL_START(sctk_alloc_posix_setup_tls_chain);
+
 	//check errors
 	assert(sctk_get_tls_chain() == NULL);
 
@@ -390,6 +399,8 @@ struct sctk_alloc_chain * sctk_alloc_posix_setup_tls_chain(void)
 	//make it default for current thread
 	sctk_alloc_posix_set_default_chain(chain);
 
+	SCTK_PROFIL_END(sctk_alloc_posix_setup_tls_chain);
+
 	//return it
 	return chain;
 }
@@ -397,8 +408,11 @@ struct sctk_alloc_chain * sctk_alloc_posix_setup_tls_chain(void)
 /************************* FUNCTION ************************/
 SCTK_PUBLIC void * sctk_calloc (size_t nmemb, size_t size)
 {
-	void * ptr = sctk_malloc(nmemb * size);
+	void * ptr;
+	SCTK_PROFIL_START(sctk_calloc);
+	ptr = malloc(nmemb * size);
 	memset(ptr,0,nmemb * size);
+	SCTK_PROFIL_END(sctk_calloc);
 	return ptr;
 }
 
@@ -409,10 +423,13 @@ SCTK_PUBLIC void * sctk_malloc (size_t size)
 	//vars
 	struct sctk_alloc_chain * local_chain;
 	void * res;
-	
-	//puts("Yeah, we are in our malloc ! :)");
-	//to avoid many access to TLS variable
+
+	//profile
+	SCTK_PROFIL_START(sctk_malloc);
+
+	//get TLS
 	local_chain = sctk_get_tls_chain();
+	
 	//setup the local chain if not already done
 	if (local_chain == NULL)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
@@ -431,6 +448,7 @@ SCTK_PUBLIC void * sctk_malloc (size_t size)
 	//done allocation
 	res = sctk_alloc_chain_alloc(local_chain,size);
 	SCTK_PTRACE("void * ptr%p = malloc(%ld);//chain = %p",res,size,local_chain);
+	SCTK_PROFIL_END(sctk_malloc);
 	return res;
 }
 
@@ -441,9 +459,12 @@ SCTK_PUBLIC void * sctk_memalign(size_t boundary,size_t size)
 	struct sctk_alloc_chain * local_chain;
 	void * res;
 
-	//to avoid many access to TLS variable
+	//profile
+	SCTK_PROFIL_START(sctk_memalign);
+
+	//get TLS
 	local_chain = sctk_get_tls_chain();
-	
+
 	//setup the local chain if not already done
 	if (local_chain == NULL)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
@@ -461,14 +482,17 @@ SCTK_PUBLIC void * sctk_memalign(size_t boundary,size_t size)
 	//done allocation
 	res = sctk_alloc_chain_alloc_align(local_chain,boundary,size);
 	SCTK_PTRACE("void * ptr%p = memalign(%ld,%ld);//chain = %p",res,boundary,size,local_chain);
+	SCTK_PROFIL_END(sctk_memalign);
 	return res;
 }
 
 /************************* FUNCTION ************************/
 SCTK_PUBLIC int sctk_posix_memalign(void **memptr, size_t boundary, size_t size)
 {
+	SCTK_PROFIL_START(sctk_posix_memalign);
 	assert(memptr != NULL);
 	*memptr = sctk_memalign(boundary,size);
+	SCTK_PROFIL_END(sctk_posix_memalign);
 	if (memptr == NULL)
 		return ENOMEM;
 	else
@@ -486,8 +510,8 @@ SCTK_PUBLIC void sctk_free (void * ptr)
 	#ifdef SCTK_ALLOC_DEBUG
 	static int cnt = 0;
 	#endif
-	
-	//to avoid many access to TLS variable
+
+	SCTK_PROFIL_START(sctk_free);
 	local_chain = sctk_get_tls_chain();
 	
 	//setup the local chain if not already done
@@ -534,6 +558,7 @@ SCTK_PUBLIC void sctk_free (void * ptr)
 		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_remote_free(chain,local_chain,ptr));
 		sctk_alloc_rfq_register(&chain->rfq,ptr);
 	}
+	SCTK_PROFIL_END(sctk_free);
 }
 
 /************************* FUNCTION ************************/
@@ -563,6 +588,8 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 	struct sctk_alloc_macro_bloc * macro_bloc = NULL;
 	void * res = NULL;
 
+	SCTK_PROFIL_START(sctk_realloc);
+
 	//get the current chain
 	local_chain = sctk_get_tls_chain();
 	if (local_chain == NULL)
@@ -582,6 +609,7 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 	}
 
 	SCTK_PTRACE("//ptr%p = realloc(ptr%p,%llu); //%p",res,ptr,size);
+	SCTK_PROFIL_END(sctk_realloc);
 	return res;
 }
 
@@ -590,6 +618,8 @@ void * sctk_realloc_inter_chain (void * ptr, size_t size)
 {
 	sctk_size_t copy_size = size;
 	void * res = NULL;
+
+	SCTK_PROFIL_START(sctk_realloc_inter_chain);
 
 	#ifdef SCTK_ALLOC_SPY
 	struct sctk_alloc_chain * local_chain = sctk_get_tls_chain();
@@ -612,6 +642,8 @@ void * sctk_realloc_inter_chain (void * ptr, size_t size)
 	if (ptr != NULL)
 		sctk_free(ptr);
 
+	SCTK_PROFIL_END(sctk_realloc_inter_chain);
+
 	return res;
 }
 
@@ -633,6 +665,8 @@ void sctk_alloc_posix_numa_migrate(void)
 	struct sctk_alloc_mm_source_light * light_source;
 	int old_numa_node = -1;
 	int new_numa_node = -1;
+
+	SCTK_PROFIL_START(sctk_alloc_posix_numa_migrate);
 	
 	//get the current allocation chain
 	local_chain = sctk_current_alloc_chain;
@@ -671,4 +705,6 @@ void sctk_alloc_posix_numa_migrate(void)
 	//check if need to migrate NUMA explicitely
 	if (old_numa_node != new_numa_node && new_numa_node != SCTK_DEFAULT_NUMA_MM_SOURCE_ID)
 		sctk_alloc_chain_numa_migrate(local_chain,new_numa_node,true,true,local_chain->source);
+
+	SCTK_PROFIL_END(sctk_alloc_posix_numa_migrate);
 }
