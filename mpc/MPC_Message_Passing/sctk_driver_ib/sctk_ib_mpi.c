@@ -299,8 +299,16 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,
   int src_task = -1;
   int dest_task = -1;
 
-  /* First we check if the message has an immediate data */
+  /* First we check if the message has an immediate data.
+   * If it is, we decrease the number of pending requests and we check
+   * if the remote is in a 'flushing' state*/
   if (wc->wc_flags & IBV_WC_WITH_IMM) {
+    sctk_ib_qp_decr_requests_nb(ibuf->remote);
+
+    /* Check if we are in a flush state */
+    OPA_decr_int(&ibuf->remote->rdma.pool->busy_nb[REGION_RECV]);
+    sctk_ibuf_rdma_check_flush_recv(rail_ib, ibuf->remote);
+
     return 0;
   }
 

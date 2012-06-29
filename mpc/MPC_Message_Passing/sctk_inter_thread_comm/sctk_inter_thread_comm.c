@@ -1189,22 +1189,26 @@ void sctk_perform_messages(sctk_request_t* request){
        * call the low level module */
       if (!send_ptp) sctk_network_notify_any_source_message ();
     } else {
-      int remote_task;
-      int remote_process;
-      /* Convert task rank to process rank */
-      remote_task = sctk_get_comm_world_rank (
-          request->header.communicator,request->header.source);
-      remote_process = sctk_get_process_rank_from_task_rank(remote_task);
-
-      sctk_nodebug("remote process=%d source=%d comm=%d",
-          remote_process, request->header.source, request->header.communicator);
       /* This call can return remote_process == sctk_process.
        * If we use an MPI_Isend followed by a MPI_Test, remote_process
        * is equal to the source of the message, so the current task */
 
       /* If the source task is not on the current node, we
        * call the low level module */
-      if (!send_ptp) sctk_network_notify_perform_message (remote_process);
+      if (!send_ptp) {
+        int remote_task;
+        int remote_process;
+
+        sctk_nodebug("remote process=%d source=%d comm=%d",
+            remote_process, request->header.source, request->header.communicator);
+
+        /* Convert task rank to process rank */
+        remote_task = sctk_get_comm_world_rank (
+            request->header.communicator,request->header.source);
+        remote_process = sctk_get_process_rank_from_task_rank(remote_task);
+
+        sctk_network_notify_perform_message (remote_process);
+      }
     }
 
     /* Try to match messages if the user asked for it */

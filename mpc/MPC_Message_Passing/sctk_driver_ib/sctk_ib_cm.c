@@ -600,7 +600,7 @@ int sctk_ib_cm_resizing_rdma_request(sctk_rail_info_t* rail_targ,
   remote->rdma.pool->resizing_request.send_keys.nb   = send_keys.nb = entry_nb;
   remote->rdma.pool->resizing_request.send_keys.size = send_keys.size = entry_size;
 
-  sctk_ib_debug("[%d] Sending RDMA RESIZING request to %d (size:%d nb:%d)",
+  sctk_ib_nodebug("[%d] Sending RDMA RESIZING request to %d (size:%d nb:%d)",
       rail_targ->rail_number, remote->rank, send_keys.size, send_keys.nb);
 
   sctk_route_messages_send(sctk_process_rank,remote->rank,ondemand_specific_message_tag,
@@ -619,7 +619,7 @@ void sctk_ib_cm_resizing_rdma_ack(sctk_rail_info_t* rail_targ,  struct sctk_ib_q
   /* Assume there is no more pending messages */
   ib_assume(OPA_load_int(&remote->rdma.pool->busy_nb[REGION_RECV]) == 0);
 
-  sctk_ib_debug("[%d] Sending RDMA RESIZING ack to %d (addr:%p - rkey:%u)",
+  sctk_ib_nodebug("[%d] Sending RDMA RESIZING ACK to %d (addr:%p - rkey:%u)",
       rail_targ->rail_number, remote->rank, send_keys->addr, send_keys->rkey);
 
   sctk_route_messages_send(sctk_process_rank,remote->rank,ondemand_specific_message_tag,
@@ -637,7 +637,7 @@ static inline void sctk_ib_cm_resizing_rdma_done_recv(RAIL_ARGS, void* done, int
   struct sctk_ib_qp_s *remote = route_table->data.ib.remote;
   ib_assume(remote);
 
-  sctk_ib_debug("[%d] RDMA RESIZING done req received from process %d (%p:%u)", rail_targ->rail_number, src,
+  sctk_ib_nodebug("[%d] RDMA RESIZING done req received from process %d (%p:%u)", rail_targ->rail_number, src,
       recv_keys->addr, recv_keys->rkey);
 
   ib_assume(recv_keys->connected == 1);
@@ -649,6 +649,9 @@ static inline void sctk_ib_cm_resizing_rdma_done_recv(RAIL_ARGS, void* done, int
   sctk_route_state_t state;
   state = sctk_ibuf_rdma_cas_remote_state_rtr(remote, state_flushed, state_connected);
   assume(state == state_flushed);
+  sctk_ib_debug("RTR with process %d (nb:%d, size:%lu)", remote->rank,
+      remote->rdma.pool->resizing_request.recv_keys.nb,
+      remote->rdma.pool->resizing_request.recv_keys.size );
 }
 
 
@@ -662,7 +665,7 @@ static inline void sctk_ib_cm_resizing_rdma_ack_recv(RAIL_ARGS, void* ack, int s
   struct sctk_ib_qp_s *remote = route_table->data.ib.remote;
   ib_assume(remote);
 
-  sctk_ib_debug("[%d] RDMA RESIZING ACK received from process %d (addr:%p rkey:%u)", rail_targ->rail_number, src, recv_keys->addr, recv_keys->rkey);
+  sctk_ib_nodebug("[%d] RDMA RESIZING ACK received from process %d (addr:%p rkey:%u)", rail_targ->rail_number, src, recv_keys->addr, recv_keys->rkey);
 
   /* Update the RDMA regions */
   /* FIXME: the rail number should be determinated */
@@ -689,6 +692,9 @@ static inline void sctk_ib_cm_resizing_rdma_ack_recv(RAIL_ARGS, void* ack, int s
   sctk_route_state_t state;
   state = sctk_ibuf_rdma_cas_remote_state_rts(remote, state_flushed, state_connected);
   assume(state == state_flushed);
+  sctk_ib_debug("RTS with process %d (nb:%d, size:%lu)", remote->rank,
+      remote->rdma.pool->resizing_request.send_keys.nb,
+      remote->rdma.pool->resizing_request.send_keys.size );
 }
 
 /*
@@ -717,7 +723,7 @@ static inline sctk_ib_cm_resizing_rdma_recv_request(RAIL_ARGS, void* request, in
   remote->rdma.pool->resizing_request.recv_keys.nb   = recv_keys->nb;
   remote->rdma.pool->resizing_request.recv_keys.size = recv_keys->size;
 
-  sctk_ib_debug("[%d] Receiving RDMA RESIZING request to process %d (connected:%d size:%d nb:%d)",
+  sctk_ib_nodebug("[%d] Receiving RDMA RESIZING request to process %d (connected:%d size:%d nb:%d)",
       rail_targ->rail_number, remote->rank, recv_keys->connected, recv_keys->size, recv_keys->nb);
 
   /* Start flushing */

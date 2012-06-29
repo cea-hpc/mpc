@@ -254,14 +254,14 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
           }
 #endif
             goto exit;
-        } else {
-          /* If we cannot pick a buffer from the RDMA channel, we switch to SR */
-          PROF_INC_RAIL_IB(rail_ib, ibuf_rdma_miss_nb);
-          OPA_decr_int(&remote->rdma.pool->busy_nb[REGION_SEND]);
-          sctk_ibuf_rdma_check_flush_send(rail_ib, remote);
-          OPA_incr_int(&remote->rdma.miss_nb);
         }
       }
+
+      /* If we cannot pick a buffer from the RDMA channel, we switch to SR */
+      PROF_INC_RAIL_IB(rail_ib, ibuf_rdma_miss_nb);
+      OPA_decr_int(&remote->rdma.pool->busy_nb[REGION_SEND]);
+      sctk_ibuf_rdma_check_flush_send(rail_ib, remote);
+      OPA_incr_int(&remote->rdma.miss_nb);
     } else {
       sctk_spinlock_unlock(&remote->rdma.flushing_lock);
     }
@@ -307,16 +307,16 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
 #ifdef DEBUG_IB_BUFS
     assume(ibuf);
     if (ibuf->flag != FREE_FLAG)
-    {sctk_error("Wrong flag (%d) got from ibuf", ibuf->flag);}
+    {sctk_error("Wrong flag (%d) got from ibuf", ibuf->flag);sctk_abort();}
 #endif
+    ibuf->flag = BUSY_FLAG;
 
     sctk_nodebug("ibuf: %p, lock:%p, need_lock:%d next free_entryr: %p, nb_free %d, nb_got %d, nb_free_srq %d, node %d)", ibuf, lock, need_lock, node->free_entry, node->nb_free, node->nb_got, node->nb_free_srq, n);
 
   } else {
-    sctk_error("The size associated to one eager buffer is too small to allocate a"
-        "eager buffer. Please increase the value of XXXXX. (Requested=%lu max_rdma=%lu max_sr=%lu)", s,
-        sctk_ibuf_rdma_get_eager_limit(remote) - IBUF_RDMA_GET_SIZE, config->ibv_eager_limit);
-    sctk_abort();
+    /* We can reach this block if there is no more slots for the RDMA channel and the
+     * requested size is larger than the size of a SR slot. At this time, we switch can switch to the
+     * buffered protocol */
     return NULL;
   }
 exit:
@@ -513,17 +513,7 @@ void sctk_ibuf_prepare(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote,
 
   if (IBUF_GET_CHANNEL(ibuf) & RDMA_CHANNEL) {
     const sctk_ibuf_region_t* region = IBUF_RDMA_GET_REGION(remote, REGION_SEND);
-    /* We do not emit an immediate data */
-#if 0
-    /* Initialization of the buffer */
-    sctk_ibuf_rdma_write_with_imm_init(ibuf,
-        IBUF_RDMA_GET_BASE_FLAG(ibuf), /* Local addr */
-        region->mmu_entry->mr->lkey,  /* lkey */
-        IBUF_RDMA_GET_REMOTE_ADDR(remote, ibuf),  /* Remote addr */
-        remote->ibuf_rdma->rkey[REGION_RECV],  /* rkey */
-        IBUF_RDMA_GET_SIZE + size + IBUF_GET_EAGER_SIZE, /* size */
-        ibuf->index | IMM_DATA_EAGER_RDMA);  /* imm_data: index of the ibuf in the region */
-#endif
+
     /* Initialization of the buffer */
     sctk_ibuf_rdma_write_init(ibuf,
         IBUF_RDMA_GET_BASE_FLAG(ibuf), /* Local addr */

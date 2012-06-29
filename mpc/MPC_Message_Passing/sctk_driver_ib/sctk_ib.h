@@ -34,7 +34,8 @@ extern "C"
 /*-----------------------------------------------------------
  *  IB module debugging
  *----------------------------------------------------------*/
-#define IB_DEBUG
+/* Uncomment this macro to activate the IB debug */
+/* #define IB_DEBUG */
 
 #ifdef IB_DEBUG
 #warning "WARNING !!!! Debug activated !!!! WARNING"

@@ -60,7 +60,7 @@
 #define IBV_QP_RX_DEPTH     0
 /* Many CQE. In memory, it represents about
  * 1.22Mb for 40000 entries */
-#define IBV_CQ_DEPTH        100
+#define IBV_CQ_DEPTH        1000
 #define IBV_MAX_SG_SQ       8
 #define IBV_MAX_SG_RQ       8
 #define IBV_MAX_INLINE      128

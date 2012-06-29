@@ -825,7 +825,7 @@ static void* wait_send(void *arg){
 #endif
 
   /* We avoid the send of new messages while deconnecting */
-  sctk_spinlock_read_lock(&remote->lock_send);
+//  sctk_spinlock_read_lock(&remote->lock_send);
 
 #if 0
 #warning "Disabled because of errors"
@@ -851,13 +851,14 @@ static void* wait_send(void *arg){
     wait_send_arg.ibuf = ibuf;
 
     sctk_error("[%d] LOCK QP full for rank %d, waiting for posting message... rc=%d, request_nb=%d", rail_ib->rail->rail_number, remote->rank, rc, sctk_ib_qp_get_requests_nb(remote));
-    sctk_ib_toolkit_print_backtrace();
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
         (void (*)(void *)) wait_send, &wait_send_arg);
   }
   sctk_ib_prof_qp_write(remote->rank, ibuf->desc.sg_entry.length,
       sctk_get_time_stamp(), PROF_QP_SEND);
 
+  /* Decomment to support on-demand deconnection */
+#if 0
   if (remote->ondemand) {
     ib_assume(od->qp_list_ptr);
     sctk_spinlock_lock(&od->lock);
@@ -869,11 +870,12 @@ static void* wait_send(void *arg){
     }
     sctk_spinlock_unlock(&od->lock);
   }
+#endif
 
-  sctk_spinlock_read_unlock(&remote->lock_send);
+//  sctk_spinlock_read_unlock(&remote->lock_send);
 }
 
-  void
+  int
 sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t *remote, sctk_ibuf_t* ibuf, int is_control_message) {
 
@@ -905,7 +907,9 @@ sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
       sctk_ibuf_rdma_update_max_pending_requests(rail_ib, remote);
       sctk_ib_qp_decr_requests_nb(ibuf->remote);
       sctk_network_poll_send_ibuf(rail_ib->rail, ibuf, 0, poll);
+      return 0;
   }
+  return 1;
 }
 
 /*-----------------------------------------------------------
