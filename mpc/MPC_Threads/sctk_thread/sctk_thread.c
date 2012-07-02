@@ -613,7 +613,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
       sctk_ptp_per_task_init (tmp.task_id);
 #ifdef MPC_USE_INFINIBAND
     /* XXX Also check if IB enabled */
-    if(sctk_process_number > 1){
+    if(sctk_process_number > 1 && sctk_network_is_ib_used() ){
         /* Register task for collaborative polling */
         sctk_ib_cp_init_task(tmp.task_id, tmp.virtual_processor);
 
@@ -676,12 +676,12 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
       sctk_terminaison_barrier (tmp.task_id);
       sctk_nodebug ("sctk_terminaison_barrier done");
 #ifdef MPC_USE_INFINIBAND
-      sctk_network_finalize_task_multirail_ib (tmp.task_id);
-      /* Register task for collaborative polling */
-      /* XXX Also check if IB enabled */
-//      if(sctk_process_number > 1){
-//        sctk_ib_cp_finalize_task(tmp.task_id);
-//      }
+      if(sctk_network_is_ib_used() ){
+        sctk_network_finalize_task_multirail_ib (tmp.task_id);
+        /* if(sctk_process_number > 1){
+          sctk_ib_cp_finalize_task(tmp.task_id);
+        } */
+      }
 #endif
       sctk_unregister_thread (tmp.task_id);
       sctk_net_send_task_end (tmp.task_id, sctk_process_rank);
@@ -2366,7 +2366,9 @@ sctk_start_func (void *(*run) (void *), void *arg)
 
 	#ifdef MPC_Message_Passing
 	#ifdef MPC_USE_INFINIBAND
-	sctk_network_finalize_multirail_ib();
+  if(sctk_network_is_ib_used() ){
+	  sctk_network_finalize_multirail_ib();
+  }
 	#endif
 	sctk_ignore_sigpipe();
 	sctk_communicator_delete ();

@@ -38,6 +38,7 @@
 
 #define NB_RAILS 2
 static sctk_rail_info_t** rails = NULL;
+static char is_ib_used = 0;
 
 struct sctk_rail_info_s** sctk_network_get_rails() {
   return rails;
@@ -169,6 +170,7 @@ void sctk_network_init_multirail_ib_all(char* name, char* topology){
   rails = sctk_malloc(NB_RAILS*sizeof(sctk_rail_info_t*));
   memset(rails, 0, NB_RAILS*sizeof(sctk_rail_info_t*));
 
+  is_ib_used = 1;
   /* MPI IB network */
   i = 0;
   rails[i] = sctk_route_get_rail(i);
@@ -202,6 +204,10 @@ void sctk_network_init_multirail_ib(char* name, char* topology){
 
 void sctk_network_init_ib(char* name, char* topology){
   sctk_network_init_multirail_ib_all("mutirail_ib",topology);
+}
+
+char sctk_network_is_ib_used() {
+  return is_ib_used;
 }
 
 /************ FINALIZE ****************/
