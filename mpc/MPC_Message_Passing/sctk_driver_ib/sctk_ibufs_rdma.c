@@ -132,7 +132,7 @@ sctk_ibuf_rdma_region_reinit(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* r
   assume(region->buffer_addr);
 
   /* Check if all ibufs are really free */
-#warning "Only for debug"
+#ifdef IB_DEBUG
   int busy;
   if (channel == (RDMA_CHANNEL | SEND_CHANNEL) ) { /* SEND CHANNEL */
     if ( (busy = OPA_load_int(&remote->rdma.pool->busy_nb[REGION_SEND])) != 0) {
@@ -164,6 +164,7 @@ sctk_ibuf_rdma_region_reinit(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* r
       }
     }
   } else not_reachable();
+#endif
 
 
   /* Unregister the memory.
@@ -441,8 +442,7 @@ inline sctk_ibuf_t *sctk_ibuf_rdma_pick(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp
     sctk_nodebug("Picked RDMA buffer %p, buffer=%p pb=%p index=%d credit=%d size:%d", head,
         head->buffer, &IBUF_GET_EAGER_PIGGYBACK(head->buffer), head->index, remote->rdma.pool->send_credit,
         remote->rdma.pool->region[REGION_SEND].size_ibufs);
-#warning "FOR DEBUG!!!"
-#if 1
+#ifdef IB_DEBUG
     if (head->flag != FREE_FLAG)
     {sctk_error("Wrong flag (%d) got from ibuf", head->flag);not_implemented();}
 #endif
@@ -804,8 +804,10 @@ void sctk_ibuf_rdma_connection_cancel(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t
   --device->eager_rdma_connections;
   sctk_spinlock_unlock(&rdma_lock);
 
-  /* We reset the state to deconnected */
-  sctk_ibuf_rdma_set_remote_state_rts(remote, state_deconnected);
+  /* We reset the state to 'reset' because we do not support the RDMA deconnection for now.
+   * In a next release, we need to change to deconnected */
+#warning "We set the state of the route to reset for avoiding a future RDMA OD connection. This warning will be removed in the next MPC release"
+  sctk_ibuf_rdma_set_remote_state_rts(remote, state_reset);
 }
 
 

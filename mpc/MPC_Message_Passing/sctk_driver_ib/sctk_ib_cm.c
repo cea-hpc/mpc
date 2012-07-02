@@ -395,6 +395,7 @@ int sctk_ib_cm_on_demand_rdma_request(
     sctk_rail_info_t* rail_targ, struct sctk_ib_qp_s *remote,
     int entry_size, int entry_nb){
   LOAD_TARG();
+  LOAD_DEVICE(rail_ib_targ);
   /* If we need to send the request */
   int send_request = 0;
 
@@ -423,8 +424,8 @@ int sctk_ib_cm_on_demand_rdma_request(
       remote->od_request.nb = send_keys.nb = entry_nb;
       remote->od_request.size_ibufs = send_keys.size = entry_size;
 
-      sctk_ib_debug("[%d] OD QP RDMA connexion requested to %d (size:%d nb:%d)",
-        rail_targ->rail_number, remote->rank, send_keys.size, send_keys.nb);
+      sctk_ib_debug("[%d] OD QP RDMA connexion requested to %d (size:%d nb:%d rdma_connections:%d)",
+        rail_targ->rail_number, remote->rank, send_keys.size, send_keys.nb, device->eager_rdma_connections);
 
       sctk_route_messages_send(sctk_process_rank,remote->rank,ondemand_specific_message_tag,
         CM_OD_RDMA_REQ_TAG+CM_MASK_TAG,
@@ -512,6 +513,7 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_ack(RAIL_ARGS, void* ack, int 
  */
 static inline void sctk_ib_cm_on_demand_rdma_recv_request(RAIL_ARGS, void* request, int src) {
   LOAD_TARG();
+  LOAD_DEVICE(rail_ib_targ);
   sctk_ib_cm_rdma_connection_t send_keys;
   memset(&send_keys, 0, sizeof(sctk_ib_cm_rdma_connection_t));
 
@@ -530,8 +532,9 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_request(RAIL_ARGS, void* reque
   ROUTE_UNLOCK(route_table);
 
   sctk_ib_cm_rdma_connection_t *recv_keys = (sctk_ib_cm_rdma_connection_t*) request;
-  sctk_ib_debug("[%d] OD RDMA connexion REQUEST to process %d (connected:%d size:%d nb:%d)",
-      rail_targ->rail_number, remote->rank, recv_keys->connected, recv_keys->size, recv_keys->nb);
+  sctk_ib_debug("[%d] OD RDMA connexion REQUEST to process %d (connected:%d size:%d nb:%d rdma_connections:%d)",
+      rail_targ->rail_number, remote->rank, recv_keys->connected, recv_keys->size, recv_keys->nb,
+      device->eager_rdma_connections);
 
   /* We do not send a request if we do not want to be connected
    * using RDMA. This is stupid :-) */
@@ -961,7 +964,7 @@ int sctk_ib_cm_on_demand_recv(sctk_rail_info_t *rail,
   sctk_rail_info_t *rail_sign;
 
   payload = IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer);
-#warning "OD connections only work with rail number 0!. Will not work for multirail"
+#warning "OD connections only work with rail number 0! There is no support for multirail now"
   rail_targ = sctk_route_get_rail(0);
   rail_sign = sctk_route_get_rail(1);
 
