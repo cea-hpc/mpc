@@ -520,6 +520,7 @@ cat  << EOF  > ${SCTK_CONF_C}
 #ifdef Linux_SYS
 #define _XOPEN_SOURCE 600
 #endif
+#include <limits.h>
 #include <pthread.h>
 
 void *

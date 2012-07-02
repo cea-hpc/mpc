@@ -139,7 +139,7 @@ extern "C"
 
 
 /* pthread_attr_setinheritsched */
-#define pthread_attr_setinheritsched mpc_thread_attr_setinheritsched (attr, sched)
+#define pthread_attr_setinheritsched mpc_thread_attr_setinheritsched
 
 
 /* pthread_attr_setschedparam */
