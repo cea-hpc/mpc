@@ -145,6 +145,8 @@ static void sctk_tcp_add_static_route(int dest, int fd,sctk_rail_info_t* rail,
   tmp->data.tcp.fd = fd;
   sctk_nodebug("register route to %d on rail %d",dest,rail->rail_number);
   sctk_add_static_route(dest,tmp,rail);
+  /* set the route as connected */
+  sctk_route_set_state(tmp, state_connected);
 
   sctk_thread_attr_init (&attr);
   sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
