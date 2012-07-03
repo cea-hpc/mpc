@@ -586,7 +586,7 @@ void sctk_Node_init (sctk_Node_t *Node, int id)
         sctk_Node_zero ( Node );
         //printf("dim %d\nregular %ld\nsize %d\n",d,regular,size);
         if(d > 1){
-		    if(id < regular){
+		    if(id < regular){//normal case
 				Node->c[0] = id / (regular/size);
 				regular = regular/size;
 				for(i=1;i<d;i++){
@@ -1004,11 +1004,13 @@ int sctk_Torus_route_next(sctk_Node_t *dest){
 			if(!IsSpecialCase)
 				DerPoss--;
    		}
-   		indPoss = rand() % DerPoss;
+   		//indPoss = rand() % DerPoss;
 
    	}
-   	i = poss[indPoss];
+
    	nearest_id = -1;
+   	indPoss = 0;
+   	i = poss[indPoss];
     /*
     printf("route--->\n");
    	sctk_Node_print ( &node );
@@ -1024,20 +1026,7 @@ int sctk_Torus_route_next(sctk_Node_t *dest){
 				IsSpecialCase = 1;
 				if(node.neigh[i][j*2] != node.id){
 
-					if(node.neigh[i][j*2] == -1){
-
-						node.c[i] = sctk_Torus_neighbour_dimension(i,j);
-						if(node.c[i]==-1){
-							node.neigh[i][j*2] = node.id;
-						}
-						else{
-							node.neigh[i][j*2+1] = node.c[i];
-							node.neigh[i][j*2] = sctk_Node_id ( &node );
-						}
-						node.c[i] = current_coord;
-					}
-
-					if(node.neigh[i][j*2] < -1 || node.neigh[i][j*2] > Torus.node_count){
+          if(node.neigh[i][j*2] < -1 || node.neigh[i][j*2] > Torus.node_count){
 						sctk_error("Error route_next");
 						not_reachable();
 					}
@@ -1101,7 +1090,7 @@ int sctk_Torus_route_next(sctk_Node_t *dest){
 
 								/*if this neighbour is available*/
 								if(node.breakdown[i*2 + j] == 0){
-									if(dist < min_way || nearest_id == -1 || rand()%2){
+									if(dist < min_way || nearest_id == -1/* || rand()%2*/){
 										nearest_id = node.neigh[i][j*2];
 									}
 								}
@@ -1324,7 +1313,7 @@ int sctk_route_torus(int dest, sctk_rail_info_t* rail){
   /*
   if(sctk_process_rank==14){
   	  sctk_torus_breakroute(0);
-	  //sctk_torus_breakroute(1);
+	  sctk_torus_breakroute(1);
 	  sctk_torus_breakroute(2);
 	  //sctk_torus_breakroute(3);
 	  //sctk_torus_breakroute(4);
