@@ -21,7 +21,11 @@
 /* ######################################################################## */
 
 /************************** HEADERS ************************/
+#ifndef _MSC_VER
 #include <unistd.h>
+#else
+#include <process.h>
+#endif
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -58,6 +62,7 @@ static int SCTK_ALLOC_TRACE_FD = -1;
  * If SCTK_ALLOC_TRACE_FD is set to -1, setup the output file descriptor for patrace mode.
 **/
 #ifdef ENABLE_TRACE
+#ifndef _WIN32
 void sctk_alloc_ptrace_init(void )
 {
 	char fname[2*sizeof(SCTK_ALLOC_TRACE_FILE)];
@@ -69,7 +74,7 @@ void sctk_alloc_ptrace_init(void )
 	{
 		SCTK_ALLOC_TRACE_FD = STDERR_FILENO;
 	} else {
-		sprintf(fname,SCTK_ALLOC_TRACE_FILE,getpid());
+		sprintf(fname,SCTK_ALLOC_TRACE_FILE,_getpid());
 		SCTK_ALLOC_TRACE_FD = open(fname,OPEN_FILE_PERMISSIONS);
 		if (SCTK_ALLOC_TRACE_FD == -1)
 		{
@@ -78,6 +83,12 @@ void sctk_alloc_ptrace_init(void )
 		}
 	}
 }
+#else
+void sctk_alloc_ptrace_init(void )
+{
+	return;
+}
+#endif
 #endif
 
 /************************* FUNCTION ************************/
@@ -94,7 +105,9 @@ void sctk_alloc_pdebug (const char * format,...)
 	va_start (param, format);
 	vsprintf (tmp2, tmp, param);
 	va_end (param);
+#ifndef _WIN32
 	write(STDERR_FILENO,tmp2,strlen(tmp2));
+#endif
 }
 
 /************************* FUNCTION ************************/
@@ -107,16 +120,18 @@ void sctk_alloc_ptrace (const char * format,...)
 {
 	char tmp[4096];
 	char tmp2[4096];
+	va_list param;
 
 	if (SCTK_ALLOC_TRACE_FD == -1)
 		sctk_alloc_ptrace_init();
 	
-	va_list param;
 	sprintf (tmp, "SCTK_ALLOC_TRACE : %s\n", format);
 	va_start (param, format);
 	vsprintf (tmp2, tmp, param);
 	va_end (param);
+#ifndef _WIN32
 	write(SCTK_ALLOC_TRACE_FD,tmp2,strlen(tmp2));
+#endif
 	fflush(stderr);
 }
 #endif
@@ -129,7 +144,9 @@ void sctk_alloc_fprintf(int fd,const char * format,...)
 	va_start (param, format);
 	vsprintf (tmp, format, param);
 	va_end (param);
+#ifndef _WIN32
 	write(fd,tmp,strlen(tmp));
+#endif
 }
 
 /************************* FUNCTION ************************/
@@ -187,6 +204,7 @@ void sctk_alloc_debug_dump_thread_pool(int fd, struct sctk_thread_pool* pool)
 }
 
 /************************* FUNCTION ************************/
+#ifndef _WIN32
 void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain* chain)
 {
 	/** @todo  Not thread safe **/
@@ -218,6 +236,12 @@ void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain* chain)
 	close(fd);
 }
 
+#else
+void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain* chain)
+{
+	return;
+}
+#endif
 /************************* FUNCTION ************************/
 #ifdef SCTK_ALLOC_DEBUG
 void sctk_alloc_crash_dump(void)
@@ -266,4 +290,3 @@ void sctk_alloc_debug_init(void )
 	#endif
 }
 #endif
-

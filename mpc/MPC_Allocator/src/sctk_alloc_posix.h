@@ -50,15 +50,15 @@ SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(vo
 #endif
 
 /************************* FUNCTION ************************/
-void * sctk_calloc (size_t nmemb, size_t size);
-void * sctk_malloc (size_t size);
-void sctk_free (void * ptr);
-void * sctk_realloc (void * ptr, size_t size);
-int sctk_posix_memalign(void **memptr, size_t boundary, size_t size);
-void * sctk_memalign(size_t boundary,size_t size);
+SCTK_PUBLIC void * sctk_calloc (size_t nmemb, size_t size);
+SCTK_PUBLIC void * sctk_malloc (size_t size);
+SCTK_PUBLIC void sctk_free (void * ptr);
+SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size);
+SCTK_PUBLIC int sctk_posix_memalign(void **memptr, size_t boundary, size_t size);
+SCTK_PUBLIC void * sctk_memalign(size_t boundary,size_t size);
 struct sctk_alloc_chain * sctk_get_current_alloc_chain(void);
 void * sctk_realloc_inter_chain (void * ptr, size_t size);
-
+SCTK_STATIC void sctk_alloc_tls_chain();
 #ifdef MPC_Allocator
 	#include "sctk_alloc_to_recode.h"
 #endif

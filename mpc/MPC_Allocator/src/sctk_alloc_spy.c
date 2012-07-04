@@ -27,10 +27,17 @@
 #include "sctk_alloc_rdtsc.h"
 #include "sctk_alloc_lock.h"
 #include "sctk_alloc_inlined.h"
+#ifndef _WIN32
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#else
+//mkdir windows command
+#include <direct.h>
+//getpid command
+#include <process.h>
+#endif
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -38,7 +45,7 @@
 #ifdef SCTK_ALLOC_SPY
 
 /************************* GLOBALS *************************/
-#warning Move to a global struct to avoid getting many global variables
+//#warning Move to a global struct to avoid getting many global variables
 /** Global list for automatic deletion and flush at exit. **/
 static struct sctk_alloc_spy_chain * sctk_alloc_global_spy_list = NULL;
 /** Mutex to protect the global list for automatic deletion. **/
@@ -63,12 +70,14 @@ void sctk_alloc_spy_get_exename(char * buffer,unsigned int max_size)
 	int tmp2;
 	int res;
 	int i = 0;
+	int fd;
+
 	//error
 	assert(buffer != NULL);
 	assert(max_size <= 256);
 
 	//open /proc/self/stat
-	int fd = open("/proc/self/stat",O_RDONLY);
+	fd = open("/proc/self/stat",O_RDONLY);
 	assume_m(fd != -1,"Can't open file /proc/self/stat");
 
 	//read in local buffer to avoid malloc call by fscanf
@@ -102,7 +111,7 @@ void sctk_alloc_spy_chain_get_fname(struct sctk_alloc_chain * chain,char * fname
 	char dirname[256];
 	char exename[128];
 	sctk_alloc_spy_get_exename(exename,sizeof(exename));
-	sprintf(dirname,"mpc-alloc-spy-%s-%06d",exename,getpid());
+	sprintf(dirname,"mpc-alloc-spy-%s-%06d",exename,_getpid());
 	sprintf(fname,"%s/alloc-chain-%p.raw",dirname,chain);
 	
 	#ifndef _WIN32
@@ -119,7 +128,7 @@ int sctk_alloc_spy_exename_filter_accept(void)
 	char * filter = getenv("SCTK_ALLOC_SPY_EXENAME");
 
 	//get exename
-	#warning Avoid to call this another time
+	#warning "Avoid to call this another time"
 	sctk_alloc_spy_get_exename(exename,sizeof(exename));
 
 	//trivial

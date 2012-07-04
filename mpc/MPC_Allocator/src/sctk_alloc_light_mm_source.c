@@ -533,7 +533,6 @@ SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_remap(stru
 	return macro_bloc;
 }
 #endif
-
 /************************* FUNCTION ************************/
 /**
  * Check if the given memory source is a light one and return it with cast. Otherwise return NULL.

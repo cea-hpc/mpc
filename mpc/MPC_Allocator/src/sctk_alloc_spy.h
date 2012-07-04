@@ -29,7 +29,11 @@ extern "C"
 #endif
 
 /************************** HEADERS ************************/
-#include <sys/time.h>
+#ifndef _WIN32
+	#include <sys/time.h>
+#elif defined(_MSC_VER)
+//#include <WinSock.h>
+#endif
 #include "sctk_alloc_lock.h"
 
 /************************** CONSTS *************************/

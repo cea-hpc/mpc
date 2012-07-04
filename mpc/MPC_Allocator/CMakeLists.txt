@@ -24,7 +24,7 @@ else()
 endif (HWLOC_FOUND)
 
 add_subdirectory(src)
-#IF(EXISTS tests)
+IF(EXISTS tests)
 	add_subdirectory(tests)
-#ENDIF(EXISTS tests)
+ENDIF(EXISTS tests)
 

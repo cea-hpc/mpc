@@ -26,7 +26,7 @@
 /************************** HEADERS ************************/
 #include <stdio.h>
 #ifndef _WIN32
-#include <sched.h>
+	#include <sched.h>
 #endif
 
 /************************** MACROS *************************/
@@ -98,6 +98,22 @@ typedef volatile unsigned int sctk_atomic_test_t;
   {
     sched_yield ();
   }
+#elif defined(_MSC_VER)
+	#define __inline__ __inline
+	static __inline__ int __sctk_test_and_set(sctk_atomic_test_t * spinlock)
+	{
+		char ret = 0;
+
+		//__asm{"ldstub [%0], %1":"=r" (spinlock), "=r" (ret):"0" (spinlock), "1" (ret):"memory"};
+
+      return (unsigned) ret;
+	}
+
+	static __inline__ void __sctk_cpu_relax()
+	{
+		/** @todo TODO **/
+	}
+
 #else
 #if defined(__GNU_COMPILER) || defined(__INTEL_COMPILER)
 #warning "Unsupported architecture using default asm"
@@ -133,7 +149,7 @@ typedef volatile unsigned int sctk_atomic_test_t;
   void sctk_cpu_relax (void);
 #endif
 
-/*   static inline void sctk_atomic_set (sctk_atomic_t * atomic, int val) */
+/*   static __inline__ void sctk_atomic_set (sctk_atomic_t * atomic, int val) */
 /*   { */
 /*     atomic->counter = val; */
 /*   } static inline int sctk_atomic_read (sctk_atomic_t * atomic) */
@@ -146,10 +162,6 @@ typedef volatile unsigned int sctk_atomic_test_t;
   int __asm_default_sctk_test_and_set (sctk_atomic_test_t * atomic);
 
   double sctk_get_time_stamp (void);
-
-
-
-
 
 
 #ifdef __cplusplus

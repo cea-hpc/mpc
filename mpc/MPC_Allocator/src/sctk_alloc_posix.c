@@ -16,7 +16,7 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - Valat Sébastien sebastien.valat@cea.fr                          # */
+/* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
 /* #   - Adam Julien julien.adam.ocre@cea.fr                              # */
 /* #                                                                      # */
 /* ######################################################################## */
@@ -108,7 +108,7 @@ SCTK_STATIC struct sctk_alloc_chain * sctk_get_tls_chain(){
 }
 
 /*************************** FUNCTION **********************/
-SCTK_STATIC int sctk_alloc_tls_chain(){
+SCTK_STATIC void sctk_alloc_tls_chain(){
 	#ifdef _WIN32
 		sctk_current_alloc_chain = TlsAlloc();
 	#endif
@@ -339,7 +339,10 @@ void sctk_alloc_posix_base_init(void)
 **/
 struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void)
 {
+	//vars
+	struct sctk_alloc_chain * chain;
 	static int cnt = 0;
+
 	cnt++;
 	SCTK_PDEBUG("Create new alloc chain, total is %d",cnt);
 	
@@ -347,7 +350,7 @@ struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void)
 	sctk_alloc_posix_base_init();
 
 	//allocate a new chain from egg allocator
-	struct sctk_alloc_chain * chain = sctk_alloc_chain_alloc(&sctk_global_egg_chain,sizeof(struct sctk_alloc_chain));
+	chain = sctk_alloc_chain_alloc(&sctk_global_egg_chain,sizeof(struct sctk_alloc_chain));
 	assert(chain != NULL);
 
 	//init allocation chain, use default to mark as non shared
@@ -375,11 +378,14 @@ struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void)
 **/
 struct sctk_alloc_chain * sctk_alloc_posix_setup_tls_chain(void)
 {
+	//vars
+	struct sctk_alloc_chain * chain; 
+
 	//check errors
 	assert(sctk_get_tls_chain() == NULL);
 
 	//create a new TLS chain
-	struct sctk_alloc_chain * chain = sctk_alloc_posix_create_new_tls_chain();
+	chain = sctk_alloc_posix_create_new_tls_chain();
 
 	//make it default for current thread
 	sctk_alloc_posix_set_default_chain(chain);
@@ -389,19 +395,24 @@ struct sctk_alloc_chain * sctk_alloc_posix_setup_tls_chain(void)
 }
 
 /************************* FUNCTION ************************/
-void * sctk_calloc (size_t nmemb, size_t size)
+SCTK_PUBLIC void * sctk_calloc (size_t nmemb, size_t size)
 {
-	void * ptr = malloc(nmemb * size);
+	void * ptr = sctk_malloc(nmemb * size);
 	memset(ptr,0,nmemb * size);
 	return ptr;
 }
 
 /************************* FUNCTION ************************/
-void * sctk_malloc (size_t size)
+SCTK_PUBLIC void * sctk_malloc (size_t size)
 {
-	//to avoid many access to TLS variable
-	struct sctk_alloc_chain * local_chain = sctk_get_tls_chain();
+	
+	//vars
+	struct sctk_alloc_chain * local_chain;
 	void * res;
+	
+	//puts("Yeah, we are in our malloc ! :)");
+	//to avoid many access to TLS variable
+	local_chain = sctk_get_tls_chain();
 	//setup the local chain if not already done
 	if (local_chain == NULL)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
@@ -424,12 +435,15 @@ void * sctk_malloc (size_t size)
 }
 
 /************************* FUNCTION ************************/
-void * sctk_memalign(size_t boundary,size_t size)
+SCTK_PUBLIC void * sctk_memalign(size_t boundary,size_t size)
 {
-	//to avoid many access to TLS variable
-	struct sctk_alloc_chain * local_chain = sctk_get_tls_chain();
+	//vars
+	struct sctk_alloc_chain * local_chain;
 	void * res;
 
+	//to avoid many access to TLS variable
+	local_chain = sctk_get_tls_chain();
+	
 	//setup the local chain if not already done
 	if (local_chain == NULL)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
@@ -451,7 +465,7 @@ void * sctk_memalign(size_t boundary,size_t size)
 }
 
 /************************* FUNCTION ************************/
-int sctk_posix_memalign(void **memptr, size_t boundary, size_t size)
+SCTK_PUBLIC int sctk_posix_memalign(void **memptr, size_t boundary, size_t size)
 {
 	assert(memptr != NULL);
 	*memptr = sctk_memalign(boundary,size);
@@ -462,13 +476,20 @@ int sctk_posix_memalign(void **memptr, size_t boundary, size_t size)
 }
 
 /************************* FUNCTION ************************/
-void sctk_free (void * ptr)
+SCTK_PUBLIC void sctk_free (void * ptr)
 {
-	//to avoid many access to TLS variable
-	struct sctk_alloc_chain * local_chain = sctk_get_tls_chain();
-	#ifdef SCTK_ALLOC_DEBUG
+	//vars
+	struct sctk_alloc_chain * local_chain;
+	struct sctk_alloc_macro_bloc * macro_bloc;
+	struct sctk_alloc_chain * chain;
+
+	#ifndef SCTK_ALLOC_DEBUG
 	static int cnt = 0;
 	#endif
+	
+	//to avoid many access to TLS variable
+	local_chain = sctk_get_tls_chain();
+	
 	//setup the local chain if not already done
 	//we need a non null chain when spy is enabled to avoid crash on remote free before a first
 	//call to malloc()
@@ -487,7 +508,7 @@ void sctk_free (void * ptr)
 		return;
 	
 	//Find the chain corresponding to the given memory bloc
-	struct sctk_alloc_macro_bloc * macro_bloc = sctk_alloc_region_get_macro_bloc(ptr);
+	macro_bloc = sctk_alloc_region_get_macro_bloc(ptr);
 	assert(ptr > (void*)macro_bloc && ptr < (void*)macro_bloc + macro_bloc->header.size);
 	if (macro_bloc == NULL)
 	{
@@ -498,7 +519,7 @@ void sctk_free (void * ptr)
 		#endif
 		return;
 	}
-	struct sctk_alloc_chain * chain = macro_bloc->chain;
+	
 	assume_m(chain != NULL,"Can't free a pointer not manage by an allocation chain from our allocator.");
 
 	SCTK_PTRACE("free(ptr%p); //%p",ptr,chain);
@@ -534,7 +555,7 @@ sctk_size_t sctk_alloc_posix_get_size(void *ptr)
 }
 
 /************************* FUNCTION ************************/
-void * sctk_realloc (void * ptr, size_t size)
+SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 {
 	struct sctk_alloc_chain * local_chain = NULL;
 	struct sctk_alloc_chain * chain = NULL;

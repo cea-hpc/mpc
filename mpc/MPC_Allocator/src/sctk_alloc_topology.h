@@ -24,7 +24,9 @@
 #define SCTK_ALLOC_TOPOLOGY_H
 
 /************************** HEADERS ************************/
-#include <stdbool.h>
+#if !defined(bool) && !defined(__cplusplus)
+	#include <stdbool.h>
+#endif
 
 //optional header
 #ifdef MPC_Threads

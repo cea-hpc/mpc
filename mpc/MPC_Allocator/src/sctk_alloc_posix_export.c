@@ -27,7 +27,7 @@
 #include "sctk_alloc_debug.h"
 
 /************************* FUNCTION ************************/
-static inline bool sctk_alloc_is_power_of_two(sctk_size_t size)
+static __inline__ bool sctk_alloc_is_power_of_two(sctk_size_t size)
 {
 	return ((size != 0) && !(size & (size-1)));
 }

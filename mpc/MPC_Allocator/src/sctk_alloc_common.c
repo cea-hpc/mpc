@@ -44,7 +44,7 @@
  * @param size Define the requested segement size. Must be multiple of OS page size as for mmap.
 **/
 #ifdef _WIN32
-SCTK_STATIC void* sctk_mmap(void* addr, size_t size)
+void * sctk_mmap(void* addr, size_t size)
 {
 	void * res = NULL;
 	
@@ -57,7 +57,7 @@ SCTK_STATIC void* sctk_mmap(void* addr, size_t size)
 	return res;
 }
 #else
-void* sctk_mmap(void* addr, size_t size)
+void * sctk_mmap(void* addr, size_t size)
 {
 	void * res = NULL;
 	if (addr == NULL)
@@ -79,7 +79,7 @@ void* sctk_mmap(void* addr, size_t size)
  * OS page size.
 **/
 #ifdef _WIN32
-SCTK_STATIC void sctk_munmap(void * addr,size_t size)
+void sctk_munmap(void * addr,size_t size)
 {
 	int exit_status;
 	exit_status = VirtualFree(addr,size,MEM_RELEASE);

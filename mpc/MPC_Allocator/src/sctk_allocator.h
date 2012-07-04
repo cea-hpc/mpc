@@ -38,7 +38,14 @@ extern "C"
 #include "sctk_alloc_lock.h"
 #include "sctk_alloc_stats.h"
 #include "sctk_alloc_spy.h"
+#ifdef _MSC_VER
+	#define int32_t __int32
+	#define uint32_t unsigned __int32
+	#define int64_t __int64
+	#define uint64_t unsigned __int64
+#else
 #include <stdint.h>
+#endif
 /** Size class for the free lists. **/
 extern const sctk_size_t SCTK_ALLOC_FREE_SIZES[SCTK_ALLOC_NB_FREE_LIST];
 
@@ -337,9 +344,14 @@ struct sctk_alloc_chain
 	**/
 	int cnt_macro_blocs;
 	/** Stats of the given allocation chain. **/
-	SCTK_ALLOC_STATS_HOOK(struct sctk_alloc_stats_chain stats);
+	#ifndef SCTK_ALLOC_STATS
+		SCTK_ALLOC_STATS_HOOK(struct sctk_alloc_stats_chain stats);
+	#endif
+
 	/** Struct specific for allocation chain spying. **/
-	SCTK_ALLOC_SPY_HOOK(struct sctk_alloc_spy_chain spy);
+	#ifdef SCTK_ALLOC_SPY
+		SCTK_ALLOC_SPY_HOOK(struct sctk_alloc_spy_chain spy);
+	#endif
 };
 
 /************************** STRUCT *************************/
@@ -373,9 +385,9 @@ typedef struct sctk_alloc_free_chunk sctk_alloc_free_list_t;
 
 /************************* FUNCTION ************************/
 //chunk management.
-//static inline sctk_alloc_vchunk sctk_alloc_get_chunk(sctk_addr_t ptr);
+//static __inline__ sctk_alloc_vchunk sctk_alloc_get_chunk(sctk_addr_t ptr);
 //static inline sctk_alloc_vchunk sctk_alloc_setup_chunk(void * ptr, sctk_size_t size, void * prev);
-//static inline void sctk_alloc_setup_macro_bloc(struct sctk_alloc_macro_bloc * macro_bloc);
+//static __inline__ void sctk_alloc_setup_macro_bloc(struct sctk_alloc_macro_bloc * macro_bloc);
 SCTK_STATIC sctk_alloc_vchunk sctk_alloc_setup_chunk_padded(sctk_alloc_vchunk chunk,sctk_size_t boundary);
 SCTK_STATIC sctk_size_t sctk_alloc_calc_chunk_size(sctk_size_t user_size);
 SCTK_STATIC sctk_size_t sctk_alloc_calc_body_size(sctk_size_t chunk_size);
@@ -383,7 +395,7 @@ SCTK_STATIC void * sctk_alloc_chunk_body(sctk_alloc_vchunk vchunk);
 SCTK_STATIC void sctk_alloc_create_stopper(void * ptr,void * prev);
 SCTK_STATIC sctk_size_t sctk_alloc_align_size(sctk_size_t size,sctk_size_t align);
 SCTK_STATIC sctk_alloc_vchunk sctk_alloc_get_prev_chunk(sctk_alloc_vchunk chunk);
-//static inline sctk_alloc_vchunk sctk_alloc_get_next_chunk(sctk_alloc_vchunk chunk);
+//static __inline__ sctk_alloc_vchunk sctk_alloc_get_next_chunk(sctk_alloc_vchunk chunk);
 
 /************************* FUNCTION ************************/
 //thread pool management
@@ -456,7 +468,7 @@ SCTK_STATIC bool sctk_alloc_region_has_ref(struct sctk_alloc_region * region);
 SCTK_STATIC void sctk_alloc_region_del_chain(struct sctk_alloc_region * region,struct sctk_alloc_chain * chain);
 SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_prepare_and_reg_macro_bloc(struct sctk_alloc_chain * chaine,struct sctk_alloc_macro_bloc * macro_bloc);
 SCTK_STATIC void sctk_alloc_region_unset_entry(struct sctk_alloc_macro_bloc * macro_bloc);
-SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_region_get_macro_bloc(void * ptr);
+struct sctk_alloc_macro_bloc * sctk_alloc_region_get_macro_bloc(void * ptr);
 
 /************************* FUNCTION ************************/
 //remote free queue management for allocation chains

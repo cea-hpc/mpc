@@ -22,6 +22,13 @@
 #ifndef SCTK_ALLOC_RDTSC_H_
 #define SCTK_ALLOC_RDTSC_H_
 
+#ifdef _MSC_VER
+	#define __inline__ __inline
+	#define __sctk_rdtscll(val) 0
+#else
+	#define __inline__ inline
+#endif
+
 /************************** MACROS *************************/
 // Define rdtscll for x86_64 arch
 #ifdef __x86_64__
@@ -41,14 +48,14 @@
 #endif
 
 /************************* FUNCTION ************************/
-static inline unsigned long sctk_alloc_rdtsc() {
+static __inline__ unsigned long sctk_alloc_rdtsc() {
     unsigned long t;
     __sctk_rdtscll(t);
     return t;
 }
 
 /************************* FUNCTION ************************/
-static inline void sctk_alloc_fill_rdtsc(unsigned long * value)
+static __inline__ void sctk_alloc_fill_rdtsc(unsigned long * value)
 {
 	__sctk_rdtscll(*value);
 }

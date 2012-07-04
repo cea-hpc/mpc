@@ -30,6 +30,18 @@
 extern "C"
 {
 #endif
+/************************* PORTABILITY *********************/
+#ifdef _MSC_VER
+	#include <errno.h>
+	#ifndef STDIN_FILENO
+		#define STDIN_FILENO 0
+		#define STDOUT_FILENO 1
+		#define STDERR_FILENO 2
+	#endif
+	#define SCTK_PUBLIC __declspec(dllexport)
+#else
+	#define SCTK_PUBLIC
+#endif
 
 /************************** CONSTS *************************/
 /** Magick value to be used as check in common header. **/
@@ -58,7 +70,7 @@ extern "C"
 /** Base addresse for the current process heap based on mmap. **/
 #define SCTK_ALLOC_HEAP_BASE 0xc0000000UL
 /** Maximum size of current process heap based on mmap (128Go by default for now). **/
-#define SCTK_ALLOC_HEAP_SIZE (128UL*1024UL*1024UL*1024UL)
+#define SCTK_ALLOC_HEAP_SIZE (128ULL*1024ULL*1024ULL*1024ULL)
 /** Maximum number of regions, need to cover the 256TB available with 48bit addressing. **/
 #define SCTK_ALLOC_MAX_REGIONS 256
 /** Unknown NUMA node **/
@@ -99,7 +111,11 @@ extern "C"
 #ifdef MPC_ALLOCATOR_DISABLE_STATIC
 #define SCTK_STATIC /*static*/
 #else
-#define SCTK_STATIC inline
+	#ifdef _MSC_VER
+		#define SCTK_STATIC __inline
+	#else
+		#define SCTK_STATIC inline
+	#endif
 #endif // MPC_ALLOCATOR_DISABLE_STATIC
 
 /************************** TYPES **************************/

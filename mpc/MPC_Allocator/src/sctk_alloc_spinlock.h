@@ -32,17 +32,21 @@ typedef volatile unsigned int sctk_alloc_spinlock_t;
 /************************** MACROS *************************/
 #define SCTK_ALLOC_SPINLOCK_INITIALIZER 0
 // #define sctk_alloc_spinlock_init(a,b) do{*((sctk_alloc_spinlock_t*)(a))=b;}while(0)
+#ifdef _MSC_VER
+	#define expect_true(expr) (expr)
+#else
 #define expect_true(expr) __builtin_expect(!!(expr),1)
+#endif
 #define sctk_alloc_spinlock_destroy(x) //spinlock_destroy(x)
 
 /************************* FUNCTION ************************/
-static inline int sctk_alloc_spinlock_init(sctk_alloc_spinlock_t * lock,int flag)
+static __inline__ int sctk_alloc_spinlock_init(sctk_alloc_spinlock_t * lock,int flag)
 {
 	return *lock = 0;
 }
 
 /************************* FUNCTION ************************/
-static inline int sctk_alloc_spinlock_lock (sctk_alloc_spinlock_t * lock){
+static __inline__ int sctk_alloc_spinlock_lock (sctk_alloc_spinlock_t * lock){
 	unsigned int *p = (unsigned int *) lock;
 	while (expect_true (sctk_test_and_set (p)))
 	{
@@ -56,14 +60,14 @@ static inline int sctk_alloc_spinlock_lock (sctk_alloc_spinlock_t * lock){
 }
 
 /************************* FUNCTION ************************/
-static inline int sctk_alloc_spinlock_unlock (sctk_alloc_spinlock_t * lock)
+static __inline__ int sctk_alloc_spinlock_unlock (sctk_alloc_spinlock_t * lock)
 {
 	*lock = 0;
 	return 0;
 }
 
 /************************* FUNCTION ************************/
-static inline int sctk_alloc_spinlock_trylock (sctk_alloc_spinlock_t * lock)
+static __inline__ int sctk_alloc_spinlock_trylock (sctk_alloc_spinlock_t * lock)
 {
 	return sctk_test_and_set (lock);
 }
