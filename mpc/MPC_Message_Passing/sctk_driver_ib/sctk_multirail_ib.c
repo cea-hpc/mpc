@@ -138,17 +138,14 @@ static void* __polling_thread(void *arg) {
 }
 
 static void sctk_network_init_polling_thread (sctk_rail_info_t* rail, char* topology) {
-  int i;
-  for(i = 0; i < NB_RAILS; i++){
-    if (strcmp("fully", topology) == 0)
-    {
-      sctk_thread_t pidt;
-      sctk_thread_attr_t attr;
+  if ( (strcmp("fully", topology) == 0) || (strcmp("torus", topology) == 0) )
+  {
+    sctk_thread_t pidt;
+    sctk_thread_attr_t attr;
 
-      sctk_thread_attr_init (&attr);
-      sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
-      sctk_user_thread_create (&pidt, &attr, __polling_thread, (void*) &rail[i]);
-    }
+    sctk_thread_attr_init (&attr);
+    sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
+    sctk_user_thread_create (&pidt, &attr, __polling_thread, (void*) rail);
   }
 }
 

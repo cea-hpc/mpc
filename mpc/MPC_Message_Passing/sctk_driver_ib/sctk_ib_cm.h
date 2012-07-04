@@ -34,19 +34,20 @@
 #define CM_OD_REQ_TAG (2)
 #define CM_OD_ACK_TAG (3)
 #define CM_OD_DONE_TAG (4)
+#define CM_OD_STATIC_TAG (5)
 
-#define ONDEMAND_DECO_REQ_TAG (5)
-#define ONDEMAND_DECO_ACK_TAG (6)
-#define ONDEMAND_DECO_DONE_REQ_TAG (7)
-#define ONDEMAND_DECO_DONE_ACK_TAG (8)
+#define ONDEMAND_DECO_REQ_TAG (6)
+#define ONDEMAND_DECO_ACK_TAG (7)
+#define ONDEMAND_DECO_DONE_REQ_TAG (8)
+#define ONDEMAND_DECO_DONE_ACK_TAG (9)
 
-#define CM_OD_RDMA_REQ_TAG (9)
-#define CM_OD_RDMA_ACK_TAG (10)
-#define CM_OD_RDMA_DONE_TAG (11)
+#define CM_OD_RDMA_REQ_TAG (10)
+#define CM_OD_RDMA_ACK_TAG (11)
+#define CM_OD_RDMA_DONE_TAG (12)
 
-#define CM_RESIZING_RDMA_REQ_TAG (12)
-#define CM_RESIZING_RDMA_ACK_TAG (13)
-#define CM_RESIZING_RDMA_DONE_TAG (14)
+#define CM_RESIZING_RDMA_REQ_TAG (13)
+#define CM_RESIZING_RDMA_ACK_TAG (14)
+#define CM_RESIZING_RDMA_DONE_TAG (15)
 
 struct sctk_thread_ptp_message_body_s;
 

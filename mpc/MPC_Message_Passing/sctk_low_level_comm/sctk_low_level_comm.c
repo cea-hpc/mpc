@@ -127,17 +127,22 @@ static void sctk_network_not_implemented(char* name){
 }
 
 void
-sctk_net_init_driver (char *name)
-{
+sctk_net_init_pmi() {
   if(sctk_process_number > 1){
-    char *topo = "ring";
-    int i;
-
     /* Initialize topology informations from PMI */
     sctk_pmi_get_process_rank(&sctk_process_rank);
     sctk_pmi_get_process_number(&sctk_process_number);
     sctk_pmi_get_process_on_node_rank(&sctk_local_process_rank);
     sctk_pmi_get_process_on_node_number(&sctk_local_process_number);
+  }
+}
+
+void
+sctk_net_init_driver (char *name)
+{
+  if(sctk_process_number > 1){
+    char *topo = "ring";
+    int i;
 
     for(i= 0; i < strlen(name); i++){
       if(name[i] == ':'){

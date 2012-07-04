@@ -240,6 +240,7 @@ static inline void sctk_ptp_table_insert(sctk_internal_ptp_t * tmp){
     if(!sctk_migration_mode){
       sctk_ptp_array_start = sctk_get_first_task_local (SCTK_COMM_WORLD);
       sctk_ptp_array_end = sctk_get_last_task_local (SCTK_COMM_WORLD);
+      sctk_debug("Update %d", sctk_ptp_array_end);
       sctk_ptp_array = sctk_malloc((sctk_ptp_array_end - sctk_ptp_array_start + 1)*sizeof(sctk_internal_ptp_t*));
       memset(sctk_ptp_array,0,(sctk_ptp_array_end - sctk_ptp_array_start + 1)*sizeof(sctk_internal_ptp_t*));
     }
@@ -687,6 +688,7 @@ void sctk_ptp_per_task_init (int i){
   memset(tmp,0,sizeof(sctk_internal_ptp_t));
 /*   tmp->key.comm = SCTK_COMM_WORLD; */
   tmp->key.destination = i;
+  sctk_debug("Destination: %d", i);
 
   sctk_spinlock_lock(&lock);
   sctk_internal_ptp_message_list_init(&(tmp->lists));

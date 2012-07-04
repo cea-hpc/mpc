@@ -251,10 +251,13 @@ sctk_ib_eager_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     /* If on demand, handle message and do not send it
      * to high-layers */
     if (IS_PROCESS_SPECIFIC_ONDEMAND(tag)) {
-      sctk_nodebug("Received OD message");
-      msg = sctk_ib_eager_recv(rail, ibuf, recopy, protocol);
-      sctk_ib_cm_on_demand_recv(rail, msg, ibuf, recopy);
-      return;
+      sctk_nodebug("Message tag: %d", (msg_ibuf->header.message_tag ^ CM_MASK_TAG) );
+      if ( (msg_ibuf->header.message_tag ^ CM_MASK_TAG) != CM_OD_STATIC_TAG) {
+        sctk_nodebug("Received OD message");
+        msg = sctk_ib_eager_recv(rail, ibuf, recopy, protocol);
+        sctk_ib_cm_on_demand_recv(rail, msg, ibuf, recopy);
+        return;
+      }
     } else if (IS_PROCESS_SPECIFIC_LOW_MEM(tag)) {
       sctk_nodebug("Received low mem message");
       msg = sctk_ib_eager_recv(rail, ibuf, recopy, protocol);

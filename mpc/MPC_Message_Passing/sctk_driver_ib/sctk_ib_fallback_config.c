@@ -54,13 +54,13 @@
 
 /* Number of allowed pending Work Queue Elements
  * for each QP */
-#define IBV_QP_TX_DEPTH     1000
+#define IBV_QP_TX_DEPTH     5000
 /* We don't need recv WQE when using SRQ.
  * This variable must be set to 0 */
 #define IBV_QP_RX_DEPTH     0
 /* Many CQE. In memory, it represents about
  * 1.22Mb for 40000 entries */
-#define IBV_CQ_DEPTH        1000
+#define IBV_CQ_DEPTH        5000
 #define IBV_MAX_SG_SQ       8
 #define IBV_MAX_SG_RQ       8
 #define IBV_MAX_INLINE      128

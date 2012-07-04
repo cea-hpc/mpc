@@ -23,8 +23,8 @@
 #define __SCTK_LOW_LEVEL_COMM_H_
 
 #include <sctk_inter_thread_comm.h>
-void
-sctk_net_init_driver (char *name);
+void sctk_net_init_driver (char *name);
+void sctk_net_init_pmi();
 int sctk_is_net_migration_available();
 
 void sctk_network_send_message (sctk_thread_ptp_message_t * msg);

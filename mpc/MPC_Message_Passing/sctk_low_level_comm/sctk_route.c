@@ -1241,7 +1241,7 @@ void sctk_route_torus_init(sctk_rail_info_t* rail){
 					sctk_nodebug("process %d search neigbour %d",me,j);
 					node.c[i] = sctk_Torus_neighbour_dimension(i,j);
 					if(node.c[i]==-1){
-							node.neigh[i][j] = node.id;
+							node.neigh[i][j*2] = node.id;
 							sctk_nodebug("process %d don't have neighbour %d in dim %d",me,j,i);
 					}
 					else{
@@ -1268,7 +1268,7 @@ void sctk_route_torus_init(sctk_rail_info_t* rail){
 				for(j=0;j<2;j++){
 					node.c[i] = sctk_Torus_neighbour_dimension(i,j);
 					if(node.c[i]==-1){
-							node.neigh[i][j] = node.id;
+							node.neigh[i][j*2] = node.id;
 							sctk_debug("process %d don't have neighbour %d in dim %d",me,j,i);
 					}
 					else{

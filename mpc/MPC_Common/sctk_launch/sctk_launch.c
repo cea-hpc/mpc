@@ -230,7 +230,7 @@ sctk_perform_initialisation (void)
 #ifdef MPC_Message_Passing
   if (sctk_net_val != NULL){
     sctk_ptp_per_task_init(-1);
-    sctk_net_val (sctk_net_val_arg);
+    sctk_net_init_pmi();
   }
 #endif
 
@@ -247,6 +247,13 @@ sctk_perform_initialisation (void)
     fprintf (stderr, "No task number specified!\n");
     sctk_abort ();
   }
+
+#ifdef MPC_Message_Passing
+  if (sctk_net_val != NULL){
+    sctk_net_val (sctk_net_val_arg);
+  }
+#endif
+
 
   if (sctk_process_rank == 0)
   {
