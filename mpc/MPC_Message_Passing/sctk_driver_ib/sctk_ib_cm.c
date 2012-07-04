@@ -178,6 +178,8 @@ void sctk_ib_cm_connect_ring (sctk_rail_info_t* rail,
  *  string).
  *----------------------------------------------------------*/
 void sctk_ib_cm_connect_to(int from, int to,sctk_rail_info_t* rail){
+  /* We assume that the node we want to connect to is not the current  */
+  assume(from != to);
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_DEVICE(rail_ib);
   sctk_route_table_t *route_table;
@@ -210,6 +212,8 @@ void sctk_ib_cm_connect_to(int from, int to,sctk_rail_info_t* rail){
 }
 
 void sctk_ib_cm_connect_from(int from, int to,sctk_rail_info_t* rail){
+  /* We assume that the node we want to connect to is not the current  */
+  assume(from != to);
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_DEVICE(rail_ib);
   sctk_route_table_t *route_table;

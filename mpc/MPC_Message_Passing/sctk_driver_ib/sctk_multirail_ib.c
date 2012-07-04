@@ -181,9 +181,9 @@ void sctk_network_init_multirail_ib_all(char* name, char* topology){
   rails[i] = sctk_route_get_rail(i);
   rails[i]->rail_number = i;
   rails[i]->send_message_from_network = sctk_send_message_from_network_multirail_ib;
-  sctk_route_init_in_rail(rails[i],"ring");
+  sctk_route_init_in_rail(rails[i],"torus");
   sctk_network_init_fallback_ib(rails[i]);
-  sctk_network_init_polling_thread (rails[i], "ring");
+  sctk_network_init_polling_thread (rails[i], "torus");
   /* Set the rail as a signalization rail */
   sctk_route_set_signalization_rail(rails[i]);
 

@@ -688,7 +688,7 @@ void sctk_ptp_per_task_init (int i){
   memset(tmp,0,sizeof(sctk_internal_ptp_t));
 /*   tmp->key.comm = SCTK_COMM_WORLD; */
   tmp->key.destination = i;
-  sctk_debug("Destination: %d", i);
+  sctk_nodebug("Destination: %d", i);
 
   sctk_spinlock_lock(&lock);
   sctk_internal_ptp_message_list_init(&(tmp->lists));

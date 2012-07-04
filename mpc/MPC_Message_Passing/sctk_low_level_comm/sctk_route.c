@@ -576,9 +576,9 @@ void sctk_Node_init (sctk_Node_t *Node, int id)
     	int regular = Torus.node_regular;
         if ( MAX_SCTK_FAST_NODE_DIM < d)
         {
-            fprintf ( stderr, "MAX_SCTK_FAST_NODE_DIM cannot be enabled on more than %d dimensions\n",
+            sctk_error("MAX_SCTK_FAST_NODE_DIM cannot be enabled on more than %d dimensions",
                       MAX_SCTK_FAST_NODE_DIM );
-            abort ();
+            not_reachable();
         }
 		unsigned i;
 		Node->id = id;
@@ -694,8 +694,8 @@ void sctk_Torus_init ( int node_count, uint8_t dimension)
 {
     if ( dimension == 0 )
     {
-        fprintf ( stderr,  "0 dimension is not supported %s:%d\n", __FILE__, __LINE__ );
-        abort ();
+        sctk_error("0 dimension is not supported %s:%d", __FILE__, __LINE__ );
+        not_reachable();
     }
 	int tmp;
 	unsigned i;
@@ -813,10 +813,17 @@ int sctk_Torus_neighbour_dimension( unsigned i,unsigned j){
 							}
 							k++;
 						}
-						if(IsSpecialCase)
-							return Torus.size_last_dimension;
-						else
-							return Torus.size_last_dimension - 1;
+
+						if(IsSpecialCase) {
+              if (Torus.size_last_dimension > node.c[i] + 1) {
+							  return Torus.size_last_dimension;
+              } else return -1;
+            } else {
+              if ( (Torus.size_last_dimension - 1) > node.c[i] + 1) {
+							  return Torus.size_last_dimension -1 ;
+              } else return -1;
+
+            }
 					}
 				}
 				else{
@@ -838,16 +845,16 @@ int sctk_Torus_neighbour_dimension( unsigned i,unsigned j){
 							}
 							if(Torus.last_node.c[k] < node.c[k]){
 								l--;
-								if(l<=Torus.last_node.c[i]+1)
-									return -1;
-								else
-									return l;
-							}
+                break;
+              }
 						}
 						k++;
 					}
 
-					return l;
+          if(l<=node.c[i]+1)
+            return -1;
+          else
+            return l;
 				}
 			break;
 		case 1://"right" (incr)
@@ -871,11 +878,13 @@ int sctk_Torus_neighbour_dimension( unsigned i,unsigned j){
 					}
 					k++;
 				}
-				if(IsSpecialCase)
+				if(IsSpecialCase) {
 					return Torus.size_last_dimension;
-				else
-					return 0;
-
+        } else {
+          if ( 0 < node.c[i] - 1) {
+  					return 0;
+          } else return -1;
+        }
 			}
 			else{
 				if(i==node.d-1)
@@ -889,17 +898,20 @@ int sctk_Torus_neighbour_dimension( unsigned i,unsigned j){
 					if(i==k){
 						if(Torus.last_node.c[k] < l){
 							l = 0;
+							break;
 						}
 						if(Torus.last_node.c[k] > l){
-							return l;
+							break;
 						}
 					}
 					else{
 						if(Torus.last_node.c[k] > node.c[k]){
-							return l;
+							l = l % size;
+							break;
 						}
 						if(Torus.last_node.c[k] < node.c[k]){
 							l = 0;
+							break;
 						}
 					}
 					k++;
@@ -912,9 +924,9 @@ int sctk_Torus_neighbour_dimension( unsigned i,unsigned j){
 
 			break;
 		default:
-			fprintf(stderr,"Wrong argument j aborting in %s it must be 0 or 1, here is %d\n",__FUNCTION__,j);
-			abort();
-			break;
+			sctk_error("Wrong argument j aborting in %s it must be 0 or 1, here is %d",__FUNCTION__,j);
+      not_implemented();
+      break;
 
 	}
 
@@ -1190,7 +1202,7 @@ int sctk_Torus_route_next(sctk_Node_t *dest){
 		//sctk_debug("routing to %d",dest->id);
 		//sctk_debug("routing passed by %d (%d %d %d) %d",nearest_id,DerPoss,DerOtherPoss,DerOtherPoss2,indPoss);
 	}
-	sctk_debug("routing passed by %d (%d %d %d)",nearest_id,DerPoss,DerOtherPoss,DerOtherPoss2);
+	sctk_nodebug("routing passed by %d (%d %d %d)",nearest_id,DerPoss,DerOtherPoss,DerOtherPoss2);
 	return nearest_id;
 }
 
@@ -1216,7 +1228,7 @@ void sctk_route_torus_init(sctk_rail_info_t* rail){
 	unsigned dim;
 	unsigned current_coord;
 
-	dim = sctk_Torus_dim_set(sctk_process_number);
+  	dim = sctk_Torus_dim_set(sctk_process_number);
     sctk_Torus_init (sctk_process_number, dim);
     sctk_Node_init (&node ,sctk_process_rank);
 
@@ -1240,6 +1252,7 @@ void sctk_route_torus_init(sctk_rail_info_t* rail){
 				for(j=1;j>=0;j--){
 					sctk_nodebug("process %d search neigbour %d",me,j);
 					node.c[i] = sctk_Torus_neighbour_dimension(i,j);
+					sctk_nodebug("process %d have neighbour %d in dim %d -> %d",me,j,i, node.c[i]);
 					if(node.c[i]==-1){
 							node.neigh[i][j*2] = node.id;
 							sctk_nodebug("process %d don't have neighbour %d in dim %d",me,j,i);
@@ -1252,6 +1265,7 @@ void sctk_route_torus_init(sctk_rail_info_t* rail){
 
 						tmp = sctk_get_route_to_process_no_route(neigh,rail);
 						if(tmp == NULL){
+              assume(neigh != me);
 							if(me < neigh)
 								rail->connect_from(me,neigh,rail);
 							else
@@ -1267,9 +1281,10 @@ void sctk_route_torus_init(sctk_rail_info_t* rail){
 			else{
 				for(j=0;j<2;j++){
 					node.c[i] = sctk_Torus_neighbour_dimension(i,j);
+					sctk_nodebug("process %d have neighbour %d in dim %d -> %d",me,j,i, node.c[i]);
 					if(node.c[i]==-1){
 							node.neigh[i][j*2] = node.id;
-							sctk_debug("process %d don't have neighbour %d in dim %d",me,j,i);
+							sctk_nodebug("process %d don't have neighbour %d in dim %d",me,j,i);
 					}
 					else{
 						node.neigh[i][j*2+1] = node.c[i];
@@ -1279,6 +1294,7 @@ void sctk_route_torus_init(sctk_rail_info_t* rail){
 
 						tmp = sctk_get_route_to_process_no_route(neigh,rail);
 						if(tmp == NULL){
+              assume(neigh != me);
 							if(me < neigh)
 								rail->connect_from(me,neigh,rail);
 							else
@@ -1292,9 +1308,6 @@ void sctk_route_torus_init(sctk_rail_info_t* rail){
 			sctk_nodebug("process %d passed %d step",me,i);
 		}
 		sctk_nodebug("process %d passed",me);
-		//}
-		//}
-		//sctk_pmi_barrier();
 	  }
 
 	  sctk_pmi_barrier();
@@ -1310,35 +1323,8 @@ int sctk_route_torus(int dest, sctk_rail_info_t* rail){
   sctk_Node_t dest_node;
   sctk_Node_init (&dest_node, dest);
 
-  /*
-  if(sctk_process_rank==14){
-  	  sctk_torus_breakroute(0);
-	  sctk_torus_breakroute(1);
-	  sctk_torus_breakroute(2);
-	  //sctk_torus_breakroute(3);
-	  //sctk_torus_breakroute(4);
-	  //sctk_torus_breakroute(5);
-  }
-  if(sctk_process_rank==25){
-  	  //sctk_torus_breakroute(0);
-	  //sctk_torus_breakroute(1);
-	  sctk_torus_breakroute(2);
-	  //sctk_torus_breakroute(3);
-	  //sctk_torus_breakroute(4);
-	  //sctk_torus_breakroute(5);
-  }
-  if(sctk_process_rank==26){
-  	  //sctk_torus_breakroute(0);
-	  //sctk_torus_breakroute(1);
-	  sctk_torus_breakroute(2);
-	  //sctk_torus_breakroute(3);
-	  //sctk_torus_breakroute(4);
-	  //sctk_torus_breakroute(5);
-  }
-  */
   dest = sctk_Torus_route_next(&dest_node);
-  sctk_debug("Route via dest - 1 %d to %d",dest,old_dest);
-  //sctk_torus_restoreroute(2);
+  sctk_nodebug("Route via dest - 1 %d to %d",dest,old_dest);
   return dest;
 }
 
