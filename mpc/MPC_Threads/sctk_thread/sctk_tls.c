@@ -323,9 +323,11 @@ __sctk__tls_get_addr__generic_scope ( size_t module_id,
 	  if ( tls_level->modules[module_id-1] == NULL )
 		  tls_module = sctk_alloc_module (module_id, tls_level);
 	  sctk_tls_unlock_level (tls_level);
+    assert(tls_level->modules[module_id-1] != NULL);
   }
 
   tls_module = (char *) tls_level->modules[module_id - 1];
+  assert(tls_module != NULL);
   res = tls_module + offset;
   return res;
 }
@@ -624,7 +626,7 @@ sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( vo
 		if ( extls[i]->modules == NULL || extls[i]->modules[0] == NULL ) {
 			void *dummy = __sctk__tls_get_addr__generic_scope (1,0,extls[i]) ;
 		}
-		assert ( extls[i]->modules[0] != NULL ) ;
+    /* assert ( extls[i]->modules[0] != NULL ) ; */
 		tls_module[i] = extls[i]->modules[0] ;
 	}
 
@@ -638,13 +640,15 @@ sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( vo
 		/* generate a dummy access to an hls variable to initialize memory if needed */
 		if ( sctk_hls[i]->level.modules == NULL || sctk_hls[i]->level.modules[0] == NULL ) {
 			void *dummy = __sctk__tls_get_addr__generic_scope (1,0,&sctk_hls[i]->level) ;
-      assert ( dummy != NULL ) ;
+      /* assert ( sctk_hls[i]->level.modules[0] != NULL ) ; */
+      /* assert ( dummy != NULL ) ; */
 		}
-		assert ( sctk_hls[i]->level.modules[0] != NULL ) ;
+		assert ( sctk_hls[i]->level.modules != NULL ) ;
+		/* assert ( sctk_hls[i]->level.modules[0] != NULL ) ; */
 		tls_module[sctk_extls_max_scope+i] = sctk_hls[i]->level.modules[0] ;
 	}
 
-	*_tls_module = (void**) tls_module ;
+	*((sctk_tls_module_t**) _tls_module) = tls_module ;
 }
 
 /*
@@ -658,12 +662,12 @@ sctk_tls_module_alloc_and_fill ()
 	sctk_tls_module_t *tls_module ;
 	int i;
 
-	sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( &tls_module, extls ) ;
-	
+	sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( (void**) &tls_module, extls ) ;
+
 	for ( i=0; i<sctk_extls_max_scope+sctk_hls_max_scope; ++i )
 		sctk_tls_module_vp[i] = tls_module[i] ;
 
-	sctk_tls_module = (void**)tls_module ;
+	sctk_tls_module = (void**) tls_module ;
 }
 #endif
 
