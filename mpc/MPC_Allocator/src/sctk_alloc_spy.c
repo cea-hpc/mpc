@@ -111,7 +111,7 @@ void sctk_alloc_spy_chain_get_fname(struct sctk_alloc_chain * chain,char * fname
 	char dirname[256];
 	char exename[128];
 	sctk_alloc_spy_get_exename(exename,sizeof(exename));
-	sprintf(dirname,"mpc-alloc-spy-%s-%06d",exename,_getpid());
+	sprintf(dirname,"mpc-alloc-spy-%s-%06d",exename,getpid());
 	sprintf(fname,"%s/alloc-chain-%p.raw",dirname,chain);
 	
 	#ifndef _WIN32

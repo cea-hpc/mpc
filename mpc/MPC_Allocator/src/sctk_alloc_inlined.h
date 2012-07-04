@@ -287,7 +287,7 @@ static __inline__ struct sctk_alloc_chunk_header_large * sctk_alloc_setup_large_
 	/** @todo  Need to cleanup this **/
 	//for now we used a short for addr, by we got 5 more bytes which could be used to
 	//store more checking bits
-	sctk_alloc_set_chunk_header_large_addr(chunk_large, (unsigned char)ptr);
+	sctk_alloc_set_chunk_header_large_addr(chunk_large, (unsigned char)((sctk_addr_t)ptr));
 	sctk_alloc_get_chunk_header_large_info(chunk_large)->state = SCTK_ALLOC_CHUNK_STATE_ALLOCATED;
 	sctk_alloc_get_chunk_header_large_info(chunk_large)->type = SCTK_ALLOC_CHUNK_TYPE_LARGE;
 	sctk_alloc_get_chunk_header_large_info(chunk_large)->unused_magik = SCTK_ALLOC_MAGIK_STATUS;

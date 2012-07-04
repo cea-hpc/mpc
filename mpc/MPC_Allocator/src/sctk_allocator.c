@@ -1520,7 +1520,7 @@ void sctk_alloc_mm_source_default_init(struct sctk_alloc_mm_source_default* sour
 	while (current < (void*)((sctk_addr_t)heap_base + heap_size))
 	{
 		assume_m( sctk_alloc_region_setup(current) != NULL , "Can't create region header." );
-		(sctk_addr_t)current += SCTK_REGION_SIZE;
+		current = (void*)((sctk_addr_t)current + SCTK_REGION_SIZE);
 	}
 
 	//insert the segment in memory source
@@ -1575,7 +1575,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_default_request_m
 		//if we will split, we must allocated one more page to store the header of next bloc
 		//We also skip the first page as it was already allocated to store the header, hence
 		//we avoid to loss it's content.
-		SCTK_PDEBUG("Have non mapped macro bloc, call mmap on addr = %p (%lu) PID=%d.",bloc,aligned_size/1024,_getpid());
+		SCTK_PDEBUG("Have non mapped macro bloc, call mmap on addr = %p (%lu) PID=%d.",bloc,aligned_size/1024,getpid());
 		if (sctk_alloc_get_chunk_header_large_size(&bloc->header.header) == aligned_size)
 			tmp = sctk_mmap((void*)((sctk_addr_t)bloc+SCTK_ALLOC_PAGE_SIZE),aligned_size-SCTK_ALLOC_PAGE_SIZE);
 		else
@@ -1688,7 +1688,7 @@ SCTK_STATIC void sctk_alloc_mm_source_default_cleanup(struct sctk_alloc_mm_sourc
  		/** @todo  Add a counter to avoid deleting a shared region. **/
  		sctk_alloc_region_del_chain(region,NULL);
  		sctk_alloc_region_del(region);
- 		(sctk_addr_t)current += SCTK_REGION_SIZE;
+ 		current = (void*)((sctk_addr_t)current + SCTK_REGION_SIZE);
  	}
 	sctk_munmap(source_default->heap_addr,source_default->heap_size + SCTK_ALLOC_PAGE_SIZE);
 

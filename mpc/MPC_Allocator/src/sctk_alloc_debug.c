@@ -74,7 +74,7 @@ void sctk_alloc_ptrace_init(void )
 	{
 		SCTK_ALLOC_TRACE_FD = STDERR_FILENO;
 	} else {
-		sprintf(fname,SCTK_ALLOC_TRACE_FILE,_getpid());
+		sprintf(fname,SCTK_ALLOC_TRACE_FILE,getpid());
 		SCTK_ALLOC_TRACE_FD = open(fname,OPEN_FILE_PERMISSIONS);
 		if (SCTK_ALLOC_TRACE_FD == -1)
 		{

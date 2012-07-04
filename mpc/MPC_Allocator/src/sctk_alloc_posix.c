@@ -479,11 +479,11 @@ SCTK_PUBLIC int sctk_posix_memalign(void **memptr, size_t boundary, size_t size)
 SCTK_PUBLIC void sctk_free (void * ptr)
 {
 	//vars
-	struct sctk_alloc_chain * local_chain;
-	struct sctk_alloc_macro_bloc * macro_bloc;
-	struct sctk_alloc_chain * chain;
+	struct sctk_alloc_chain * local_chain = NULL;
+	struct sctk_alloc_macro_bloc * macro_bloc = NULL;
+	struct sctk_alloc_chain * chain = NULL;
 
-	#ifndef SCTK_ALLOC_DEBUG
+	#ifdef SCTK_ALLOC_DEBUG
 	static int cnt = 0;
 	#endif
 	
@@ -520,6 +520,7 @@ SCTK_PUBLIC void sctk_free (void * ptr)
 		return;
 	}
 	
+	chain = macro_bloc->chain;
 	assume_m(chain != NULL,"Can't free a pointer not manage by an allocation chain from our allocator.");
 
 	SCTK_PTRACE("free(ptr%p); //%p",ptr,chain);

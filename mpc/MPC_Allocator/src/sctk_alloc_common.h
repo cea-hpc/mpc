@@ -38,6 +38,7 @@ extern "C"
 		#define STDOUT_FILENO 1
 		#define STDERR_FILENO 2
 	#endif
+	#define getpid() _getpid()
 	#define SCTK_PUBLIC __declspec(dllexport)
 #else
 	#define SCTK_PUBLIC
