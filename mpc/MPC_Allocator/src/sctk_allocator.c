@@ -223,7 +223,7 @@ SCTK_STATIC void sctk_alloc_thread_pool_init(struct sctk_thread_pool* pool,const
 SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_get_free_list(struct sctk_thread_pool* pool, sctk_size_t size)
 {
 	int seg_size = pool->nb_free_lists;
-	int i = seg_size / 2;
+	int i = seg_size << 2;
 	const sctk_size_t * ptr = pool->alloc_free_sizes;
 	//int j = 0;
 
@@ -231,6 +231,7 @@ SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_get_free_list(struct sctk_thread
 	assert(pool->alloc_free_sizes != NULL);
 	assert(pool != NULL);
 	assert(size > 0);
+	assert(4 >> 1 == 2);//required property to quicly divide by 2
 
 	/** @todo  Remove this old code **/
 	//find the correct size class, none if too large by dicotomic search.
@@ -250,7 +251,7 @@ SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_get_free_list(struct sctk_thread
 			} else {
 				seg_size = i;
 			}
-			i = seg_size / 2;
+			i = seg_size >> 1;//diveide by 2
 		}
 	}
 	assert(ptr+i >= pool->alloc_free_sizes);
@@ -471,13 +472,14 @@ SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_find_first_free_non_empty_list(s
 	//error
 	assert(pool != NULL);
 	assert(list != NULL);
-	assert(list >= pool->free_lists && list < pool->free_lists+SCTK_ALLOC_NB_FREE_LIST);
+	assert(pool->nb_free_lists <= SCTK_ALLOC_NB_FREE_LIST);
+	assert(list >= pool->free_lists && list < pool->free_lists+pool->nb_free_lists);
 	//get free list id
 	id = (short int) (list - pool->free_lists);
 	
-	assert(id < SCTK_ALLOC_NB_FREE_LIST);
+	assert(id < pool->nb_free_lists);
 
-	for ( i = id ; i < SCTK_ALLOC_NB_FREE_LIST ; ++i)
+	for ( i = id ; i < pool->nb_free_lists ; ++i)
 		if (pool->free_list_status[i])
 			return pool->free_lists+i;
 
@@ -546,11 +548,12 @@ SCTK_STATIC sctk_alloc_free_list_t* sctk_alloc_get_next_list(const struct sctk_t
 {
 	//error
 	assert(pool != NULL);
-	assume_m(list - pool->free_lists < SCTK_ALLOC_NB_FREE_LIST,"The given list didn't be a member of the given pool");
+	assert(pool->nb_free_lists <= SCTK_ALLOC_NB_FREE_LIST);
+	assume_m(list - pool->free_lists <= pool->nb_free_lists,"The given list didn't be a member of the given pool");
 	
 	if (list == NULL)
 		return NULL;
-	else if (list - pool->free_lists >= SCTK_ALLOC_NB_FREE_LIST - 1)
+	else if (list - pool->free_lists >= pool->nb_free_lists - 1)
 		return NULL;
 	else
 		return list+1;
