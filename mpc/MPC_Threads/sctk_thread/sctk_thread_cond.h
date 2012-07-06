@@ -33,33 +33,73 @@
 #include "sctk_spinlock.h"
 #include <utlist.h>
 
-typedef int sctk_thread_generic_condattr_t;
-
 typedef struct sctk_thread_generic_cond_cell_s{
-sctk_thread_generic_scheduler_t* sched;
-struct sctk_thread_generic_cond_cell_s *prev, *next;
-} sctk_thread_generic_cond_cell_t;
+  sctk_thread_generic_scheduler_t* sched;
+  sctk_thread_generic_mutex_t* binded;
+  struct sctk_thread_generic_cond_cell_s *prev, *next;
+}sctk_thread_generic_cond_cell_t;
 
 typedef struct {
   sctk_spinlock_t lock;
   sctk_thread_generic_cond_cell_t *blocked;
+  clockid_t clock_id;
 }sctk_thread_generic_cond_t;
-#define SCTK_THREAD_GENERIC_COND_INIT {SCTK_SPINLOCK_INITIALIZER,NULL}
+#define SCTK_THREAD_GENERIC_COND_INIT {SCTK_SPINLOCK_INITIALIZER,NULL,0}
+
+typedef struct sctk_thread_generic_condattr_s{
+  int attrs;
+}sctk_thread_generic_condattr_t;
+#define SCTK_THREAd_GENERIC_CONDATTR_INIT {0}
 
 void sctk_thread_generic_conds_init();
-int sctk_thread_generic_conds_cond_init (sctk_thread_generic_cond_t * cond,
+
+int
+sctk_thread_generic_conds_condattr_destroy( sctk_thread_generic_condattr_t* attr );
+
+int
+sctk_thread_generic_conds_condattr_getpshared( sctk_thread_generic_condattr_t* attr,
+                     int* pshared );
+
+int
+sctk_thread_generic_conds_condattr_init( sctk_thread_generic_condattr_t* attr );
+
+int
+sctk_thread_generic_conds_condattr_setpshared( sctk_thread_generic_condattr_t* attr,
+                     int pshared );
+
+int
+sctk_thread_generic_conds_condattr_setclock( sctk_thread_generic_condattr_t* attr,
+					 clockid_t clock_id );
+
+int
+sctk_thread_generic_conds_condattr_getclock( sctk_thread_generic_condattr_t* restrict attr,
+                     clockid_t* restrict clockid_t );
+
+int
+sctk_thread_generic_conds_cond_destroy( sctk_thread_generic_cond_t* lock );
+
+int
+sctk_thread_generic_conds_cond_init (sctk_thread_generic_cond_t * cond,
 					 const  sctk_thread_generic_condattr_t* attr,
 					 sctk_thread_generic_scheduler_t* sched);
 
-int sctk_thread_generic_conds_cond_wait (sctk_thread_generic_cond_t * cond,
+int
+sctk_thread_generic_conds_cond_wait (sctk_thread_generic_cond_t * cond,
 					 sctk_thread_generic_mutex_t* mutex,
 					 sctk_thread_generic_scheduler_t* sched);
 
-int sctk_thread_generic_conds_cond_signal (sctk_thread_generic_cond_t * cond,
+int
+sctk_thread_generic_conds_cond_signal (sctk_thread_generic_cond_t * cond,
 					 sctk_thread_generic_scheduler_t* sched);
 
-int sctk_thread_generic_conds_cond_broadcast (sctk_thread_generic_cond_t * cond,
-					 sctk_thread_generic_scheduler_t* sched);
+int
+sctk_thread_generic_conds_cond_timedwait( sctk_thread_generic_cond_t* cond,
+                     sctk_thread_generic_mutex_t* mutex,
+					 const struct timespec* restrict time,
+                     sctk_thread_generic_scheduler_t* sched );
 
+int
+sctk_thread_generic_conds_cond_broadcast (sctk_thread_generic_cond_t * cond,
+					 sctk_thread_generic_scheduler_t* sched);
 
 #endif

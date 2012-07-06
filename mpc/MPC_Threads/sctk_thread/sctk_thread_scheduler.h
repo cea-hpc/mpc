@@ -82,6 +82,7 @@ void sctk_thread_generic_scheduler_init_thread(sctk_thread_generic_scheduler_t* 
 					       struct sctk_thread_generic_p_s* th); 
 char* sctk_thread_generic_scheduler_get_name();
 
+inline void sctk_thread_generic_handle_zombies( struct sctk_per_vp_data_s* vp );
 /***************************************/
 /* TASK SCHEDULING                     */
 /***************************************/
@@ -93,6 +94,7 @@ typedef struct sctk_thread_generic_task_s{
   struct sctk_thread_generic_task_s *prev, *next;
   int value;
   int is_blocking;
+  void (*free_func) (void*);
 }sctk_thread_generic_task_t;
 
 extern void (*sctk_thread_generic_add_task)(sctk_thread_generic_task_t*);

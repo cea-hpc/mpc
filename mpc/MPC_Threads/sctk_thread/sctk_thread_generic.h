@@ -29,13 +29,20 @@
 #include <sctk_thread_mutex.h>
 #include <sctk_thread_scheduler.h>
 #include <sctk_thread_cond.h>
+#include <sctk_thread_rwlock.h>
+#include <sctk_thread_sem.h>
+#include <sctk_thread_barrier.h>
 
-typedef struct{
+typedef struct sctk_thread_generic_intern_attr_s{
   int scope;
   int detachstate; 
   int schedpolicy; 
   int inheritsched;
   int nb_wait_for_join;
+  volatile int cancel_state;
+  volatile int cancel_type;
+  volatile int cancel_status;
+  char* user_stack;
   char* stack;
   size_t stack_size;
   void *(*start_routine) (void *);
@@ -43,8 +50,14 @@ typedef struct{
   void* return_value;
   int bind_to;
   int polling;
+  sctk_thread_rwlock_in_use_t* rwlocks_owned;
+  sctk_spinlock_t spinlock;
+  volatile int nb_sig_pending;
+  volatile int nb_sig_treated;
+  volatile sigset_t thread_sigset;
+  volatile int thread_sigpending[SCTK_NSIG];
 }sctk_thread_generic_intern_attr_t;
-#define sctk_thread_generic_intern_attr_init {SCTK_THREAD_SCOPE_PROCESS,SCTK_THREAD_CREATE_JOINABLE,0,SCTK_THREAD_EXPLICIT_SCHED,NULL,0,NULL,NULL,-1,0}
+#define sctk_thread_generic_intern_attr_init {SCTK_THREAD_SCOPE_PROCESS,SCTK_THREAD_CREATE_JOINABLE,0,SCTK_THREAD_EXPLICIT_SCHED,0,PTHREAD_CANCEL_ENABLE,PTHREAD_CANCEL_DEFERRED,0,NULL,NULL,0,NULL,NULL,NULL,-1,0,NULL,SCTK_SPINLOCK_INITIALIZER,0,0}
 
 typedef struct{
   sctk_thread_generic_intern_attr_t* ptr;
@@ -65,4 +78,8 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
 				 void *(*start_routine) (void *), void *arg);
 int
 sctk_thread_generic_attr_init (sctk_thread_generic_attr_t * attr);
+
+inline void
+sctk_thread_generic_check_signals( int select );
+
 #endif

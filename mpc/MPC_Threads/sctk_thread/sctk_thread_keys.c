@@ -83,7 +83,13 @@ sctk_thread_generic_keys_key_create (sctk_thread_key_t * __key,
 int
 sctk_thread_generic_keys_key_delete (sctk_thread_key_t __key,sctk_thread_generic_keys_t* keys)
 {
-  not_implemented ();
+  if( sctk_key_used[__key] == 1){
+	if( __destr_function_key[__key] != NULL ){
+	  __destr_function_key[__key] (keys->keys[__key]);
+	  keys->keys[__key] = NULL;
+	}
+  }
+  //not_implemented ();
   return 0;
 }
 
@@ -105,3 +111,18 @@ void sctk_thread_generic_keys_init_thread(sctk_thread_generic_keys_t* keys){
       keys->keys[i] = NULL;
     } 
 }
+
+inline void
+sctk_thread_generic_keys_key_delete_all ( sctk_thread_generic_keys_t* keys ){
+  int i;
+
+  for( i=0; i<SCTK_THREAD_KEYS_MAX; i++ ){
+	if( sctk_key_used[i] == 1 ){
+	  if( __destr_function_key[i] != NULL ){
+		__destr_function_key[i] (keys->keys[i]);
+		keys->keys[i] = NULL;
+	  }
+	}
+  }
+}
+

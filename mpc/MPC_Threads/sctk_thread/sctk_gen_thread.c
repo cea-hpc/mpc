@@ -837,6 +837,15 @@ sctk_gen_thread_sem_trywait (sctk_thread_sem_t * sem)
   return 0;
 }
 static int
+sctk_gen_thread_sem_timedwait (sctk_thread_sem_t * sem,
+		const struct timespec* __abstime )
+{
+  not_initialized ();
+  sctk_touch_ptr (sem);
+  sctk_touch_ptr (__abstime );
+  return 0;
+}
+static int
 sctk_gen_thread_sem_post (sctk_thread_sem_t * sem)
 {
   not_initialized ();
@@ -1501,6 +1510,9 @@ int (*__sctk_ptr_thread_sem_wait) (sctk_thread_sem_t * sem) =
   sctk_gen_thread_sem_wait;
 int (*__sctk_ptr_thread_sem_trywait) (sctk_thread_sem_t * sem) =
   sctk_gen_thread_sem_trywait;
+int (*__sctk_ptr_thread_sem_timedwait) (sctk_thread_sem_t * sem,
+		const struct timespec* __abstime) =
+  sctk_gen_thread_sem_timedwait;
 int (*__sctk_ptr_thread_sem_post) (sctk_thread_sem_t * sem) =
   sctk_gen_thread_sem_post;
 int (*__sctk_ptr_thread_sem_getvalue) (sctk_thread_sem_t * sem,

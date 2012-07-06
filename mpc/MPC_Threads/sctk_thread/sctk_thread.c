@@ -1335,9 +1335,10 @@ sctk_thread_sem_open (const char *__name, int __oflag, ...)
     {
 
       va_list ap;
-      int mode, value;
+      int value;
+	  mode_t mode;
       va_start (ap, __oflag);
-      mode = (int) va_arg (ap, mode_t);
+      mode = va_arg (ap, mode_t);
       value = va_arg (ap, int);
       va_end (ap);
       tmp = __sctk_ptr_thread_sem_open (__name, __oflag, mode, value);
@@ -1370,9 +1371,7 @@ sctk_thread_sem_timedwait (sctk_thread_sem_t * __sem,
 			   const struct timespec *__abstime)
 {
   int res = 0;
-  not_implemented ();
-  assume (__sem == NULL);
-  assume (__abstime == NULL);
+  res = __sctk_ptr_thread_sem_timedwait( __sem, __abstime);
   return res;
 }
 
@@ -1651,6 +1650,7 @@ sctk_thread_sleep_pool (sctk_thread_sleep_pool_t * wake_time)
 unsigned int
 sctk_thread_sleep (unsigned int seconds)
 {
+  //__sctk_ptr_thread_testcancel ();
   sctk_thread_sleep_pool_t wake_time;
 
   wake_time.done = 1;
@@ -1659,16 +1659,20 @@ sctk_thread_sleep (unsigned int seconds)
      (sctk_timer_t) sctk_time_interval) + sctk_timer + 1;
   sctk_thread_yield ();
 
+  printf("In sleep: Before wait\n");
   sctk_thread_wait_for_value_and_poll (&(wake_time.done), 0,
 				       (void (*)(void *))
 				       sctk_thread_sleep_pool,
 				       (void *) &wake_time);
+  printf("In sleep: after wait\n");
+  //__sctk_ptr_thread_testcancel ();
   return 0;
 }
 
 int
 sctk_thread_usleep (unsigned int useconds)
 {
+  //__sctk_ptr_thread_testcancel ();
   sctk_thread_sleep_pool_t wake_time;
 
   wake_time.done = 1;
@@ -1677,10 +1681,13 @@ sctk_thread_usleep (unsigned int useconds)
      (sctk_timer_t) sctk_time_interval) + sctk_timer + 1;
   sctk_thread_yield ();
 
+  printf("In usleep: Before wait\n");
   sctk_thread_wait_for_value_and_poll (&(wake_time.done), 0,
 				       (void (*)(void *))
 				       sctk_thread_sleep_pool,
 				       (void *) &wake_time);
+  printf("In usleep: after wait\n");
+  //__sctk_ptr_thread_testcancel ();
   return 0;
 }
 
@@ -2350,9 +2357,11 @@ sctk_start_func (void *(*run) (void *), void *arg)
 /* 					   NULL, NULL); */
 /*     } */
 /* #else */
+  printf("In start_func: before wait\n");
   sctk_thread_wait_for_value_and_poll ((int *)
 				       &sctk_total_number_of_tasks, 0,
 				       NULL, NULL);
+  printf("In start_func: after wait\n");
 /* #ifdef MPC_Message_Passing */
 /*   if(sctk_process_number > 1){ */
 /*     sctk_pmi_barrier(); */

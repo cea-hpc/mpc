@@ -31,46 +31,72 @@
 #include "sctk_thread_scheduler.h"
 #include "sctk_spinlock.h"
 #include <utlist.h>
+#include <time.h>
+#include <uthash.h>
 
-struct sctk_thread_generic_rwlock_cell_s{
+#define SCTK_RWLOCK_READ 1
+#define SCTK_RWLOCK_WRITE 2
+#define SCTK_RWLOCK_TRYREAD 3
+#define SCTK_RWLOCK_TRYWRITE 4
+#define SCTK_RWLOCK_ALONE 0
+#define SCTK_RWLOCK_NO_WR_WAITING 0
+#define SCTK_RWLOCK_WR_WAITING 1
+
+typedef enum{
+  SCTK_UNINITIALIZED, SCTK_INITIALIZED, SCTK_DESTROYED
+}sctk_rwlock_status_t;
+
+typedef struct sctk_thread_generic_rwlock_cell_s{
   sctk_thread_generic_scheduler_t* sched;
+  volatile unsigned int type;
   struct sctk_thread_generic_rwlock_cell_s *prev, *next;
-} sctk_thread_generic_rwlock_cell_t;
+}sctk_thread_generic_rwlock_cell_t;
 
-typedef int sctk_thread_generic_rwlockattr_t;
+typedef struct sctk_thread_generic_rwlockattr_s{
+  volatile int pshared;
+}sctk_thread_generic_rwlockattr_t;
+
+#define SCTK_THREAD_GENERIC_RWLOCKATTR_INIT {SCTK_THREAD_PROCESS_PRIVATE}
 
 typedef struct sctk_thread_generic_rwlock_s{
-
+  sctk_spinlock_t lock;
+  volatile sctk_rwlock_status_t status;
+  volatile unsigned int count;
+  volatile unsigned int reads_count;
+  volatile unsigned int current;
+  volatile unsigned int wait;
+  volatile sctk_thread_generic_scheduler_t* writer;
+  volatile sctk_thread_generic_rwlock_cell_t* readers;
+  volatile sctk_thread_generic_rwlock_cell_t* waiting;
 }sctk_thread_generic_rwlock_t;
 
-#define SCTK_THREAD_GENERIC_RWLOCK_INIT {}
+#define SCTK_THREAD_GENERIC_RWLOCK_INIT {SCTK_SPINLOCK_INITIALIZER,SCTK_UNINITIALIZED,0,0,SCTK_RWLOCK_ALONE,SCTK_RWLOCK_NO_WR_WAITING,NULL,NULL,NULL}
+
+typedef struct{
+  sctk_thread_generic_rwlock_t* rwlock;
+  UT_hash_handle hh; 
+}sctk_thread_rwlock_in_use_t;
 
 int
-sctk_thread_generic_rwlocks_rwlockattr_destroy( sctk_thread_generic_rwlockattr_t* attr, 
-					const sctk_thread_generic_rwlockattr_t* attr,
-					sctk_thread_generic_scheduler_t* sched );
+sctk_thread_generic_rwlocks_rwlockattr_destroy( sctk_thread_generic_rwlockattr_t* attr );
 
 int
 sctk_thread_generic_rwlocks_rwlockattr_getpshared( const sctk_thread_generic_rwlockattr_t* attr,
-					int* val,
-					sctk_thread_generic_scheduler_t* sched );
+					int* val );
 
 int
-sctk_thread_generic_rwlocks_rwlockattr_init( sctk_thread_generic_rwlockattr_t* attr,
-					sctk_thread_generic_scheduler_t* sched );
+sctk_thread_generic_rwlocks_rwlockattr_init( sctk_thread_generic_rwlockattr_t* attr );
 
 int
 sctk_thread_generic_rwlocks_rwlockattr_setpshared( sctk_thread_generic_rwlockattr_t* attr,
-					int val,
-					sctk_thread_generic_scheduler_t* sched );
+					int val );
 
 int
-sctk_thread_generic_rwlocks_rwlock_destroy( sctk_thread_generic_rwlock_t* lock,
-					sctk_thread_generic_scheduler_t* sched );
+sctk_thread_generic_rwlocks_rwlock_destroy( sctk_thread_generic_rwlock_t* lock );
 
 int
 sctk_thread_generic_rwlocks_rwlock_init( sctk_thread_generic_rwlock_t* lock,
-					sctk_thread_generic_rwlockattr_t* attr,
+					const sctk_thread_generic_rwlockattr_t* attr,
 					sctk_thread_generic_scheduler_t* sched );
 
 int
@@ -83,12 +109,12 @@ sctk_thread_generic_rwlocks_rwlock_wrlock( sctk_thread_generic_rwlock_t* lock,
 
 int
 sctk_thread_generic_rwlocks_rwlock_timedrdlock( sctk_thread_generic_rwlock_t* lock,
-					const struct timespec* time,
+					const struct timespec* restrict time,
 					sctk_thread_generic_scheduler_t* sched );
 
 int
 sctk_thread_generic_rwlocks_rwlock_timedwrlock( sctk_thread_generic_rwlock_t* lock,
-					const struct timespec* time,
+					const struct timespec* restrict time,
 					sctk_thread_generic_scheduler_t* sched );
 
 int
@@ -102,6 +128,14 @@ sctk_thread_generic_rwlocks_rwlock_trywrlock( sctk_thread_generic_rwlock_t* lock
 int
 sctk_thread_generic_rwlocks_rwlock_unlock( sctk_thread_generic_rwlock_t* lock,
 					sctk_thread_generic_scheduler_t* sched );
+
+int
+sctk_thread_generic_rwlocks_rwlockattr_getkind_np( sctk_thread_generic_rwlockattr_t * attr,
+					int* pref);
+
+int
+sctk_thread_generic_rwlocks_rwlockattr_setkind_np( sctk_thread_generic_rwlockattr_t * attr,
+					int pref);
 
 void
 sctk_thread_generic_rwlocks_init();

@@ -31,41 +31,234 @@
 #include "sctk_spinlock.h"
 
 int
-sctk_thread_generic_mutexes_mutex_init (sctk_thread_generic_mutex_t * lock,
-					const  sctk_thread_generic_mutexattr_t* attr,
-					sctk_thread_generic_scheduler_t* sched)
-{
-  sctk_thread_generic_mutex_t local_lock = SCTK_THREAD_GENERIC_MUTEX_INIT;
-  if(attr != NULL){
-    not_implemented();
-  }
-  *lock = local_lock;
+sctk_thread_generic_mutexes_mutexattr_destroy( sctk_thread_generic_mutexattr_t* attr ){
+
+  /*  
+	ERRORS:
+	EINVAL The value specified for the argument is not correct
+	*/
+
+  if( attr == NULL ) return SCTK_EINVAL;
+  /*if( ((attr->attrs >> 3) & 1 ) == 0 ) return SCTK_EINVAL;
+
+  attr->attrs &= ~( 1 << 3 );*/
+
   return 0;
 }
 
 int
+sctk_thread_generic_mutexes_mutexattr_getpshared( sctk_thread_generic_mutexattr_t* attr,
+                    int* pshared ){
+ /*  
+	ERRORS:
+    EINVAL The value specified for the argument is not correct
+	*/
+
+  if( attr == NULL || pshared == NULL ) return SCTK_EINVAL;
+  //if( ((attr->attrs >> 3) & 1 ) == 0 ) return SCTK_EINVAL;
+
+  (*pshared) = ( (attr->attrs >> 2) & 1);
+
+  return 0;
+}
+/*
+int
+sctk_thread_generic_mutexes_mutexattr_getprioceiling(sctk_thread_generic_mutexattr_t* attr,
+                    int* prioceiling ){
+
+  return 0;
+}
+
+int
+sctk_thread_generic_mutexes_mutexattr_setprioceiling(sctk_thread_generic_mutexattr_t* attr,
+                    int prioceiling ){
+
+  return 0;
+}
+
+int
+sctk_thread_generic_mutexes_mutexattr_getprotocol(sctk_thread_generic_mutexattr_t* attr,
+                    int* protocol ){
+
+  return 0;
+}
+
+int
+sctk_thread_generic_mutexes_mutexattr_setprotocol(sctk_thread_generic_mutexattr_t* attr,
+                    int protocol ){
+
+  return 0;
+}
+*/
+int
+sctk_thread_generic_mutexes_mutexattr_gettype( sctk_thread_generic_mutexattr_t* attr,
+                    int* kind ){
+
+ /*  
+	ERRORS:
+    EINVAL The value specified for the argument is not correct
+	*/
+
+  if( attr == NULL || kind == NULL ) return SCTK_EINVAL;
+  //if( ((attr->attrs >> 3) & 1 ) == 0 ) return SCTK_EINVAL;
+
+  (*kind) = (attr->attrs & 3 );
+
+  return 0;
+}
+
+int
+sctk_thread_generic_mutexes_mutexattr_init( sctk_thread_generic_mutexattr_t* attr ){
+
+  /*
+	ERRORS:
+    EINVAL The value specified for the argument is not correct
+    ENOMEM |> NOT IMPLEMENTED <| Insufficient memory exists to initialize 
+           the read-write lock attributes object
+	*/
+
+  if( attr == NULL ) return SCTK_EINVAL;
+  //if( ((attr->attrs >> 3) & 1 ) == 1 ) return SCTK_EINVAL;
+
+  attr->attrs = ((attr->attrs & ~3) | (0 & 3));
+  attr->attrs &= ~( 1 << 2 );
+  //attr->attrs = (attr->attrs & ~8) | (1 << 3);
+
+  return 0;
+}
+
+int
+sctk_thread_generic_mutexes_mutexattr_setpshared( sctk_thread_generic_mutexattr_t* attr,
+                    int pshared ){
+
+  /*
+	ERRORS:
+	EINVAL The value specified for the argument is not correct
+	*/
+
+  if( attr == NULL ) return SCTK_EINVAL;
+  if( pshared != SCTK_THREAD_PROCESS_PRIVATE && pshared != SCTK_THREAD_PROCESS_SHARED ) return SCTK_EINVAL;
+
+  int ret = 0;
+  if( pshared == SCTK_THREAD_PROCESS_SHARED ){
+	attr->attrs |= (1<<2);
+	fprintf (stderr, "Invalid pshared value in attr, MPC doesn't handle process shared mutexes\n");
+	ret = SCTK_ENOTSUP;
+  } else {
+	attr->attrs &= ~(1<<2);
+  }
+
+  return ret;
+}
+
+int
+sctk_thread_generic_mutexes_mutexattr_settype( sctk_thread_generic_mutexattr_t* attr,
+                    int kind ){
+
+  /*
+	ERRORS:
+	EINVAL The value specified for the argument is not correct
+	*/
+
+  if( attr == NULL ) return SCTK_EINVAL;
+  if( kind != PTHREAD_MUTEX_NORMAL && kind != PTHREAD_MUTEX_ERRORCHECK 
+		  && kind != PTHREAD_MUTEX_RECURSIVE && kind != PTHREAD_MUTEX_DEFAULT ) return SCTK_EINVAL;
+
+  attr->attrs = (attr->attrs & ~3) | (kind & 3);
+
+  return 0;
+}
+
+int
+sctk_thread_generic_mutexes_mutex_destroy( sctk_thread_generic_mutex_t* lock ){
+
+  /*
+	ERRORS:
+	EINVAL The value specified for the argument is not correct
+	EBUSY  The specified lock is currently owned by a thread or 
+		   another thread is currently using the mutex in a cond
+	*/
+
+  if( lock == NULL ) return SCTK_EINVAL;
+  if( lock->owner != NULL /*|| ((lock->m_attrs >> 1) & 1) == 1*/ ) return SCTK_EBUSY;
+
+  //lock->m_attrs &= 0;
+
+  return 0;
+}
+
+int
+sctk_thread_generic_mutexes_mutex_init (sctk_thread_generic_mutex_t * lock,
+					const  sctk_thread_generic_mutexattr_t* attr,
+					sctk_thread_generic_scheduler_t* sched){
+
+  /*
+	ERRORS:
+	EINVAL The value specified for the argument is not correct
+    EBUSY  The specified lock has already been initialized
+	EAGAIN |>NOT IMPLEMENTED<| The system lacked the necessary 
+		   resources (other than memory) to initialize another mutex
+	ENOMEM |>NOT IMPLEMENTED<| Insufficient memory exists to 
+		   initialize the mutex
+	EPERM  |>NOT IMPLEMENTED<| The caller does not have the 
+		   privilege to perform the operation
+	*/
+
+  if( lock == NULL ) return SCTK_EINVAL;
+  //if( (lock->m_attrs & 1) == 1 ) return SCTK_EBUSY;
+
+  int ret = 0;
+  sctk_thread_generic_mutex_t local_lock = SCTK_THREAD_GENERIC_MUTEX_INIT;
+  sctk_thread_generic_mutex_t* local_ptr = &local_lock;
+
+  if(attr != NULL){
+	if( ( (attr->attrs >> 2) & 1) == SCTK_THREAD_PROCESS_SHARED ){
+	  fprintf (stderr, "Invalid pshared value in attr, MPC doesn't handle process shared mutexes\n");
+	  ret = SCTK_ENOTSUP;
+	}
+	local_ptr->type = ( attr->attrs & 3 );
+  }
+
+  //local_ptr->m_attrs = (( lock->m_attrs & ~1 ) | ( 1 & 1 ));
+  *lock = local_lock;
+
+  return ret;
+}
+
+int
 sctk_thread_generic_mutexes_mutex_lock (sctk_thread_generic_mutex_t * lock,
-					sctk_thread_generic_scheduler_t* sched)
-{
+					sctk_thread_generic_scheduler_t* sched){
+
+  /*
+	ERRORS:
+	EINVAL  The value specified for the argument is not correct
+	EAGAIN  |>NOT IMPLEMENTED<| The mutex could not be acquired because the maximum 
+		    number of recursive locks for mutex has been exceeded
+	EDEADLK The current thread already owns the mutex
+	*/
+
+  if( lock == NULL /*|| (lock->m_attrs & 1) != 1*/ ) return SCTK_EINVAL;
+
   int ret = 0;
   sctk_thread_generic_mutex_cell_t cell;
   sctk_spinlock_lock(&(lock->lock));
   if(lock->owner == NULL){
     lock->owner = sched;
+    if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE ) lock->nb_call ++;
     sctk_spinlock_unlock(&(lock->lock));
     return ret;
   } else {
-    if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE){
+    if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE 
+			&& lock->owner == sched){
       lock->nb_call ++;
       sctk_spinlock_unlock(&(lock->lock));
       return ret;
     } 
-    if (lock->type == SCTK_THREAD_MUTEX_ERRORCHECK){
-      if(lock->owner == sched){
-	ret = SCTK_EDEADLK;
-	sctk_spinlock_unlock(&(lock->lock));
-	return ret;
-      }
+    if (lock->type == SCTK_THREAD_MUTEX_ERRORCHECK 
+			&& lock->owner == sched ){
+	  ret = SCTK_EDEADLK;
+	  sctk_spinlock_unlock(&(lock->lock));
+	  return ret;
     }
 
     cell.sched = sched;
@@ -81,37 +274,104 @@ sctk_thread_generic_mutexes_mutex_lock (sctk_thread_generic_mutex_t * lock,
 
 int
 sctk_thread_generic_mutexes_mutex_trylock (sctk_thread_generic_mutex_t * lock,
-					   sctk_thread_generic_scheduler_t* sched)
-{
+					   sctk_thread_generic_scheduler_t* sched){
+
+  /*
+	ERRORS:
+	EINVAL  The value specified for the argument is not correct
+	EAGAIN  |>NOT IMPLEMENTED<| The mutex could not be acquired because the maximum 
+		    number of recursive locks for mutex has been exceeded
+	EBUSY   the mutex is already owned by another thread or the calling thread
+	*/
+
+  if( lock == NULL /*|| (lock->m_attrs & 1) != 1*/ ) return SCTK_EINVAL;
+
   int ret = 0;
-  sctk_spinlock_lock(&(lock->lock));
-  if(lock->owner == NULL){
-    lock->owner = sched;
-    sctk_spinlock_unlock(&(lock->lock));
-    return ret;
+  if( sctk_spinlock_trylock(&(lock->lock)) == 0 ){
+	if(lock->owner == NULL){
+	  lock->owner = sched;
+	  if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE ) lock->nb_call ++;
+	  sctk_spinlock_unlock(&(lock->lock));
+	  return ret;
+	} else {
+	  if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE
+			&& lock->owner == sched ){
+		lock->nb_call ++;
+		sctk_spinlock_unlock(&(lock->lock));
+		return ret;
+	  } 
+	  ret = SCTK_EBUSY;
+	  sctk_spinlock_unlock(&(lock->lock));
+	}
   } else {
-    if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE){
-      lock->nb_call ++;
-      sctk_spinlock_unlock(&(lock->lock));
-      return ret;
-    } 
-    if (lock->type == SCTK_THREAD_MUTEX_ERRORCHECK){
-      if(lock->owner == sched){
-	ret = SCTK_EDEADLK;
-	sctk_spinlock_unlock(&(lock->lock));
-	return ret;
-      }
-    }
-    ret = SCTK_EBUSY;
-    sctk_spinlock_unlock(&(lock->lock));
+	ret = SCTK_EBUSY;
   }
+
+  return ret;
+}
+
+int
+sctk_thread_generic_mutexes_mutex_timedlock (sctk_thread_generic_mutex_t* lock,
+						const struct timespec* restrict time,
+                        sctk_thread_generic_scheduler_t* sched){
+
+  /*
+	ERRORS:
+	EINVAL    The value specified by argument lock does not refer to an initialized 
+			  mutex object, or the abs_timeout nanosecond value is less than zero or 
+			  greater than or equal to 1000 million
+	ETIMEDOUT The lock could not be acquired in specified time
+	EAGAIN    |> NOT IMPLEMENTED <| The read lock could not be acquired because the 
+			  maximum number of recursive locks for mutex has been exceeded
+	*/
+
+  if( lock == NULL || time == NULL /*|| (lock->m_attrs & 1) != 1*/ ) return SCTK_EINVAL;
+  if( time->tv_nsec < 0 || time->tv_nsec >= 1000000000 ) return SCTK_EINVAL;
+
+  int ret = 0;
+  struct timespec t_current;
+
+  do{
+	if( sctk_spinlock_trylock( &(lock->lock)) == 0 ){
+	  if(lock->owner == NULL){
+		lock->owner = sched;
+    	if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE ) lock->nb_call ++;
+	  } else {
+		if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE
+				&& lock->owner == sched ){
+			lock->nb_call ++;
+		} 
+		ret = SCTK_EBUSY;
+	  }
+	} else {
+	  ret = SCTK_EBUSY;
+	}
+	sctk_spinlock_unlock(&(lock->lock));
+	clock_gettime( CLOCK_REALTIME, &t_current );
+  } while( ret != 0 && ( t_current.tv_sec < time->tv_sec ||
+			  ( t_current.tv_sec == time->tv_sec && t_current.tv_nsec < time->tv_nsec ) ) );
+
+  if( ret != 0 ){
+	return SCTK_ETIMEDOUT;
+  }
+
   return ret;
 }
 
 int
 sctk_thread_generic_mutexes_mutex_spinlock (sctk_thread_generic_mutex_t * lock,
-					    sctk_thread_generic_scheduler_t* sched)
-{
+					    sctk_thread_generic_scheduler_t* sched){
+
+  /*
+	ERRORS:
+	EINVAL  The value specified for the argument is not correct
+	EAGAIN  |>NOT IMPLEMENTED<| The mutex could not be acquired because the maximum 
+		    number of recursive locks for mutex has been exceeded
+	EDEADLK The current thread already owns the mutex
+	*/
+
+  if( lock == NULL /*|| (lock->m_attrs & 1) != 1*/ ) return SCTK_EINVAL;
+
   int ret = 0;
   sctk_thread_generic_mutex_cell_t cell;
 
@@ -148,19 +408,26 @@ sctk_thread_generic_mutexes_mutex_spinlock (sctk_thread_generic_mutex_t * lock,
 
 int
 sctk_thread_generic_mutexes_mutex_unlock (sctk_thread_generic_mutex_t * lock,
-					  sctk_thread_generic_scheduler_t* sched)
-{
-  if (lock->owner != sched)
-    {
+					  sctk_thread_generic_scheduler_t* sched){
+
+  /*
+	ERRORS:
+	EINVAL The value specified by argument lock does not refer to an initialized mutex
+	EAGAIN |> NOT IMPLEMENTED <| The read lock could not be acquired because the 
+		    maximum number of recursive locks for mutex has been exceeded
+	EPERM  The current thread does not own the mutex  
+	*/
+
+  if( lock == NULL ) return SCTK_EINVAL;
+
+  if (lock->owner != sched){
       return SCTK_EPERM;
     }
-  if (lock->type == SCTK_THREAD_MUTEX_RECURSIVE)
-    {
-      if (lock->nb_call > 1)
-	{
+  if (lock->type == SCTK_THREAD_MUTEX_RECURSIVE){
+      if (lock->nb_call > 1){
 	  lock->nb_call --;
 	  return 0;
-	}
+	  }
     }
 
   sctk_spinlock_lock(&(lock->lock));

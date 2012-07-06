@@ -566,6 +566,12 @@ sctk_title (Error values:);
   sctk_define_arg (SCTK_ENOENT, ENOENT);
   sctk_define_arg (SCTK_EINTR, EINTR);
   sctk_define_arg (SCTK_ETIMEDOUT, ETIMEDOUT);
+  sctk_define_arg (SCTK_ENOSYS, ENOSYS);
+  sctk_define_arg (SCTK_EOVERFLOW, EOVERFLOW);
+  sctk_define_arg (SCTK_ENAMETOOLONG, ENAMETOOLONG);
+  sctk_define_arg (SCTK_EEXIST, EEXIST);
+  sctk_define_arg (SCTK_EACCES, EACCES);
+  sctk_define_arg (SCTK_ENOMEM, ENOMEM);
 }
 
 

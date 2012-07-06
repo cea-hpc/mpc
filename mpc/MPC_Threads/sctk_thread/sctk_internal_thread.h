@@ -274,6 +274,8 @@ extern "C"
 					    int pshared, unsigned int value);
   extern int (*__sctk_ptr_thread_sem_wait) (sctk_thread_sem_t * sem);
   extern int (*__sctk_ptr_thread_sem_trywait) (sctk_thread_sem_t * sem);
+  extern int (*__sctk_ptr_thread_sem_timedwait) (sctk_thread_sem_t * sem,
+		  				  const struct timespec* __abstime );
   extern int (*__sctk_ptr_thread_sem_post) (sctk_thread_sem_t * sem);
   extern int (*__sctk_ptr_thread_sem_getvalue) (sctk_thread_sem_t * sem,
 						int *sval);
