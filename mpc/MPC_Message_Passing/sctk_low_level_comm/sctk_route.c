@@ -181,6 +181,7 @@ void sctk_init_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t*
 }
 
 void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
+sctk_nodebug("Add process %d to static routes", dest);
   /* FIXME: Ideally the initialization should not be in the 'add' function */
   sctk_init_static_route(dest, tmp, rail);
   TABLE_LOCK();
@@ -271,6 +272,7 @@ sctk_route_table_t* sctk_get_route_to_process_no_route_static(int dest, sctk_rai
    * or destructed during execution time */
   /* TABLE_LOCK(); */
   HASH_FIND(hh,sctk_static_route_table,&key,sizeof(sctk_route_key_t),tmp);
+  sctk_nodebug("Get static route for %d -> %p", dest, tmp);
   /* TABLE_UNLOCK(); */
   return tmp;
 }
@@ -299,6 +301,7 @@ sctk_route_table_t* sctk_get_route_to_process_no_route(int dest, sctk_rail_info_
       tmp = NULL;
     }
   }
+  sctk_nodebug("Get static route for %d -> %p", dest, tmp);
   return tmp;
 }
 
@@ -481,10 +484,27 @@ void sctk_route_ring_init(sctk_rail_info_t* rail){
 
 int sctk_route_ring(int dest, sctk_rail_info_t* rail){
   int old_dest;
+  int delta_1;
 
   old_dest = dest;
-  dest = (dest + sctk_process_number -1) % sctk_process_number;
-  sctk_nodebug("Route via dest - 1 %d to %d",dest,old_dest);
+
+  if ( sctk_process_rank > dest) {
+    delta_1 = sctk_process_rank - dest;
+
+    dest = (delta_1 > sctk_process_number - delta_1 ) ?
+      (sctk_process_rank + sctk_process_number + 1) % sctk_process_number :
+      (sctk_process_rank + sctk_process_number - 1) % sctk_process_number;
+  }
+  else
+  {
+    delta_1 = dest - sctk_process_rank;
+
+    dest = (delta_1 > sctk_process_number - delta_1 ) ?
+      (sctk_process_rank + sctk_process_number - 1) % sctk_process_number :
+      (sctk_process_rank + sctk_process_number + 1) % sctk_process_number;
+  }
+
+  sctk_nodebug("Route via dest - %d to %d (delta1:%d - process_rank:%d - process_number:%d)",dest,old_dest, delta_1, sctk_process_rank, sctk_process_number);
 
   return dest;
 }
