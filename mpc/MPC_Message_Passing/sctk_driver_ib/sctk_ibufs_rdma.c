@@ -287,11 +287,11 @@ sctk_ibuf_rdma_region_init(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* rem
     remote->rdma.pool->send_credit = nb_ibufs;
     OPA_store_int(&remote->rdma.pool->busy_nb[REGION_SEND], 0);
 
-    sctk_ib_debug("SEND channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d (send_credit:%d)",
+    sctk_ib_nodebug("SEND channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d (send_credit:%d)",
         remote->rank, nb_ibufs, size_ibufs, remote->rdma.pool->send_credit);
 
   } else if (channel == (RDMA_CHANNEL | RECV_CHANNEL) ) { /* RECV CHANNEL */
-    sctk_ib_debug("RECV channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d",
+    sctk_ib_nodebug("RECV channel initialized for remote %d (nb_ibufs=%d, size_ibufs=%d",
         remote->rank, nb_ibufs, size_ibufs);
 
     /* Add the entry to the pooling list */
@@ -776,7 +776,7 @@ void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
 #define IBV_RDMA_MIN_NB (64)
 #define IBV_RDMA_MAX_NB (128)
 /* Maximum number of miss before resizing RDMA */
-#define IBV_RDMA_MAX_MISS 1000
+#define IBV_RDMA_MAX_MISS 100
 
 
 /*
@@ -870,6 +870,7 @@ void sctk_ibuf_rdma_check_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *rem
       }
     }
 #if IBV_RDMA_RESIZING == 1
+#warning "Resizing enabled"
   } else if (sctk_ibuf_rdma_get_remote_state_rts(remote) == state_connected) {
 
     /* Check if we need the resize the RDMA */

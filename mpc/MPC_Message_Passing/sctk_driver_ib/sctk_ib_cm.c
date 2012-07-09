@@ -67,16 +67,16 @@ static void sctk_ib_cm_change_state(sctk_rail_info_t* rail,
     case route_origin_static: /* Static route */
       sctk_route_set_state(route_table, state_connected);
 
-      sctk_ib_debug("[%d] Static QP connected to process %d", rail->rail_number,remote->rank);
+      sctk_ib_nodebug("[%d] Static QP connected to process %d", rail->rail_number,remote->rank);
       break;
 
     case route_origin_dynamic: /* Dynamic route */
       sctk_route_set_state(route_table, state_connected);
 
       if (state_before_connexion == state_reconnecting)
-        sctk_ib_debug("[%d] OD QP reconnected to process %d", rail->rail_number,remote->rank);
+        sctk_ib_nodebug("[%d] OD QP reconnected to process %d", rail->rail_number,remote->rank);
       else
-        sctk_ib_debug("[%d] OD QP connected to process %d", rail->rail_number,remote->rank);
+        sctk_ib_nodebug("[%d] OD QP connected to process %d", rail->rail_number,remote->rank);
 
       /* Only reccord dynamically created QPs */
       sctk_ib_prof_qp_write(remote->rank, 0,
@@ -193,7 +193,7 @@ void sctk_ib_cm_connect_to(int from, int to,sctk_rail_info_t* rail){
   route_table = sctk_ib_create_remote();
   sctk_ib_init_remote(from, rail, route_table, 0);
   remote = route_table->data.ib.remote;
-  sctk_ib_debug("[%d] QP connection request to process %d", rail->rail_number, remote->rank);
+  sctk_ib_nodebug("[%d] QP connection request to process %d", rail->rail_number, remote->rank);
 
   sctk_route_messages_recv(from,to,ondemand_specific_message_tag, CM_OD_STATIC_TAG+CM_MASK_TAG,&recv_keys, sizeof(sctk_ib_cm_qp_connection_t));
   sctk_ib_qp_allocate_rtr(rail_ib, remote, &recv_keys);
@@ -230,7 +230,7 @@ void sctk_ib_cm_connect_from(int from, int to,sctk_rail_info_t* rail){
   route_table = sctk_ib_create_remote();
   sctk_ib_init_remote(to, rail, route_table, 0);
   remote = route_table->data.ib.remote;
-  sctk_ib_debug("[%d] QP connection  request to process %d", rail->rail_number, remote->rank);
+  sctk_ib_nodebug("[%d] QP connection  request to process %d", rail->rail_number, remote->rank);
 
   assume(remote->qp);
   sctk_ib_qp_key_fill(&send_keys, remote, device->port_attr.lid,
@@ -324,7 +324,7 @@ int sctk_ib_cm_on_demand_recv_request(RAIL_ARGS, void* request, int src) {
   /* RACE CONDITION AVOIDING -> positive ACK */
   if ( sctk_route_get_is_initiator(route_table) == 0 || sctk_process_rank > src ) {
     struct sctk_ib_qp_s *remote = route_table->data.ib.remote;
-    sctk_ib_debug("[%d] OD QP connexion request to process %d",
+    sctk_ib_nodebug("[%d] OD QP connexion request to process %d",
         rail_sign->rail_number, remote->rank);
     memcpy(&recv_keys, request, sizeof(sctk_ib_cm_qp_connection_t));
 
@@ -376,7 +376,7 @@ sctk_route_table_t *sctk_ib_cm_on_demand_request(int dest,sctk_rail_info_t* rail
     sctk_ib_qp_key_fill(&send_keys, remote, device->port_attr.lid,
         remote->qp->qp_num, remote->psn);
 
-    sctk_ib_debug("[%d] OD QP connexion requested to %d", rail_targ->rail_number, remote->rank);
+    sctk_ib_nodebug("[%d] OD QP connexion requested to %d", rail_targ->rail_number, remote->rank);
     sctk_route_messages_send(sctk_process_rank,dest,ondemand_specific_message_tag,
         CM_OD_REQ_TAG+CM_MASK_TAG,
         &send_keys, sizeof(sctk_ib_cm_qp_connection_t));
@@ -431,7 +431,7 @@ int sctk_ib_cm_on_demand_rdma_request(
       remote->od_request.nb = send_keys.nb = entry_nb;
       remote->od_request.size_ibufs = send_keys.size = entry_size;
 
-      sctk_ib_debug("[%d] OD QP RDMA connexion requested to %d (size:%d nb:%d rdma_connections:%d)",
+      sctk_ib_nodebug("[%d] OD QP RDMA connexion requested to %d (size:%d nb:%d rdma_connections:%d)",
         rail_targ->rail_number, remote->rank, send_keys.size, send_keys.nb, device->eager_rdma_connections);
 
       sctk_route_messages_send(sctk_process_rank,remote->rank,ondemand_specific_message_tag,
@@ -459,7 +459,7 @@ static inline void sctk_ib_cm_on_demand_rdma_done_recv(RAIL_ARGS, void* done, in
   struct sctk_ib_qp_s *remote = route_table->data.ib.remote;
   ib_assume(remote);
 
-  sctk_ib_debug("[%d] OD QP connexion DONE REQ received from process %d (%p:%u)", rail_targ->rail_number, src,
+  sctk_ib_nodebug("[%d] OD QP connexion DONE REQ received from process %d (%p:%u)", rail_targ->rail_number, src,
       recv_keys->addr, recv_keys->rkey);
 
   ib_assume(recv_keys->connected == 1);
@@ -479,7 +479,7 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_ack(RAIL_ARGS, void* ack, int 
   struct sctk_ib_qp_s *remote = route_table->data.ib.remote;
   ib_assume(remote);
 
-  sctk_ib_debug("[%d] OD QP connexion ACK received from process %d (%p:%u)", rail_targ->rail_number, src,
+  sctk_ib_nodebug("[%d] OD QP connexion ACK received from process %d (%p:%u)", rail_targ->rail_number, src,
       recv_keys->addr, recv_keys->rkey);
 
   /* If the remote peer is connectable */
@@ -539,7 +539,7 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_request(RAIL_ARGS, void* reque
   ROUTE_UNLOCK(route_table);
 
   sctk_ib_cm_rdma_connection_t *recv_keys = (sctk_ib_cm_rdma_connection_t*) request;
-  sctk_ib_debug("[%d] OD RDMA connexion REQUEST to process %d (connected:%d size:%d nb:%d rdma_connections:%d)",
+  sctk_ib_nodebug("[%d] OD RDMA connexion REQUEST to process %d (connected:%d size:%d nb:%d rdma_connections:%d)",
       rail_targ->rail_number, remote->rank, recv_keys->connected, recv_keys->size, recv_keys->nb,
       device->eager_rdma_connections);
 
@@ -574,7 +574,7 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_request(RAIL_ARGS, void* reque
   }
 
   /* Send ACK */
-  sctk_ib_debug("[%d] OD QP ack to process %d (%p:%u)", rail_targ->rail_number, src,
+  sctk_ib_nodebug("[%d] OD QP ack to process %d (%p:%u)", rail_targ->rail_number, src,
       send_keys.addr, send_keys.rkey);
 
   sctk_route_messages_send(sctk_process_rank,src,ondemand_specific_message_tag, CM_OD_RDMA_ACK_TAG+CM_MASK_TAG,
@@ -610,7 +610,7 @@ int sctk_ib_cm_resizing_rdma_request(sctk_rail_info_t* rail_targ,
   remote->rdma.pool->resizing_request.send_keys.nb   = send_keys.nb = entry_nb;
   remote->rdma.pool->resizing_request.send_keys.size = send_keys.size = entry_size;
 
-  sctk_ib_nodebug("[%d] Sending RDMA RESIZING request to %d (size:%d nb:%d)",
+  sctk_ib_debug("[%d] Sending RDMA RESIZING request to %d (size:%d nb:%d)",
       rail_targ->rail_number, remote->rank, send_keys.size, send_keys.nb);
 
   sctk_route_messages_send(sctk_process_rank,remote->rank,ondemand_specific_message_tag,

@@ -211,13 +211,6 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
       /* We actually do nothing here */
     } else {
       not_reachable();
-#if 0
-      sctk_ib_qp_t *remote = sctk_ib_qp_ht_find(rail_ib, wc.qp_num);
-      assume(remote);
-      /* Find the remote which has received the msg */
-      sctk_nodebug("received an RDMA message from rank %d, ibuf index: %u", remote->rank, index);
-      sctk_ib_rdma_eager_poll_remote(rail_ib, remote);
-#endif
     }
 
     /* We release the buffer */

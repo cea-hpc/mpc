@@ -137,18 +137,24 @@ static void* __polling_thread(void *arg) {
   return NULL;
 }
 
-static void sctk_network_init_polling_thread (sctk_rail_info_t* rail, char* topology) {
-  if ( (strcmp("fully", topology) == 0) || (strcmp("torus", topology) == 0) )
-  {
-    sctk_thread_t pidt;
-    sctk_thread_attr_t attr;
+static void sctk_network_init_polling_thread (sctk_rail_info_t* rail) {
+  sctk_thread_t pidt;
+  sctk_thread_attr_t attr;
 
-    sctk_thread_attr_init (&attr);
-    sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
-    sctk_user_thread_create (&pidt, &attr, __polling_thread, (void*) rail);
-  }
+  sctk_thread_attr_init (&attr);
+  sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
+  sctk_user_thread_create (&pidt, &attr, __polling_thread, (void*) rail);
 }
 
+/* Choose the topology of the signalization network (ring, torus) */
+static char *__get_signalization_topology(char* topo, size_t size) {
+  char *value;
+
+  if ( (value = getenv("MPC_IBV_SIGN_TOPO")) != NULL )
+    snprintf(topo, size, "%s", value);
+  else  /* Torus is the default */
+    snprintf(topo, size, "%s", "torus");
+}
 
 /************ INIT ****************/
 static
@@ -175,15 +181,23 @@ void sctk_network_init_multirail_ib_all(char* name, char* topology){
   rails[i]->send_message_from_network = sctk_send_message_from_network_multirail_ib;
   sctk_route_init_in_rail(rails[i],topology);
   sctk_network_init_mpi_ib(rails[i]);
+  /* If fully mode, we activate the polling thread */
+  if ( strcmp(topology, "fully") == 0) {
+    sctk_network_init_polling_thread (rails[i]);
+  }
 
   /* Fallback IB network */
+  char signalization_topology[256];
+  __get_signalization_topology(signalization_topology, 256);
   i = 1;
   rails[i] = sctk_route_get_rail(i);
   rails[i]->rail_number = i;
   rails[i]->send_message_from_network = sctk_send_message_from_network_multirail_ib;
-  sctk_route_init_in_rail(rails[i],"torus");
+  sctk_route_init_in_rail(rails[i],signalization_topology);
   sctk_network_init_fallback_ib(rails[i]);
-  sctk_network_init_polling_thread (rails[i], "torus");
+  if ( strcmp(signalization_topology, "torus") == 0) {
+    sctk_network_init_polling_thread (rails[i]);
+  }
   /* Set the rail as a signalization rail */
   sctk_route_set_signalization_rail(rails[i]);
 

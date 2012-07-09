@@ -836,12 +836,12 @@ int sctk_Torus_neighbour_dimension( unsigned i,unsigned j){
 								l = Torus.last_node.c[k];
 							}
 							if(Torus.last_node.c[k] > l){
-								return l;
+								break;
 							}
 						}
 						else{
 							if(Torus.last_node.c[k] > node.c[k]){
-									return l;
+									break;
 							}
 							if(Torus.last_node.c[k] < node.c[k]){
 								l--;

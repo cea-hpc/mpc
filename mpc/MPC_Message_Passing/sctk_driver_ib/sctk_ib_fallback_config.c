@@ -48,7 +48,7 @@
  * if x > IBV_FRAG_EAGER_LIMIT -> rendezvous msg */
 /* !!! WARNING !!! : diminishing IBV_EAGER_LIMIT me cause bad performance
  * on buffered eager messages */
-#define IBV_EAGER_LIMIT       ( 1 * 1024)
+#define IBV_EAGER_LIMIT       ( 2 * 1024)
 #define IBV_EAGER_RDMA_LIMIT  ( 0 )
 #define IBV_FRAG_EAGER_LIMIT  ( 256 * 1024)
 

@@ -62,6 +62,11 @@ extern "C"
 #define MASK_PROCESS_SPECIFIC_LOW_MEM (1<<28 | MASK_PROCESS_SPECIFIC | MASK_CONTROL_MESSAGE)
 #define IS_PROCESS_SPECIFIC_LOW_MEM(x) ( (MASK_PROCESS_SPECIFIC_LOW_MEM & x) == (MASK_PROCESS_SPECIFIC_LOW_MEM) )
 
+/* For user connexions */
+#define MASK_PROCESS_SPECIFIC_USER (1<<27 | MASK_PROCESS_SPECIFIC | MASK_CONTROL_MESSAGE)
+#define IS_PROCESS_SPECIFIC_USER(x) ( (MASK_PROCESS_SPECIFIC_USER & x) == (MASK_PROCESS_SPECIFIC_USER) )
+
+
 /* Is the message a control message ? */
 #define IS_PROCESS_SPECIFIC_CONTROL_MESSAGE(x) ( (MASK_CONTROL_MESSAGE & x) == (MASK_CONTROL_MESSAGE) )
 
@@ -80,6 +85,8 @@ extern "C"
     ondemand_specific_message_tag =  MASK_PROCESS_SPECIFIC_ONDEMAND,
     /* Low memory */
     low_mem_specific_message_tag =  MASK_PROCESS_SPECIFIC_LOW_MEM,
+    /* User */
+    user_specific_message_tag =  MASK_PROCESS_SPECIFIC_USER,
 
     /* Collective */
     allreduce_hetero_specific_message_tage = MASK_PROCESS_SPECIFIC_W_ORDERING | allreduce_specific_message_tag,

@@ -55,7 +55,6 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   sctk_ib_qp_t *remote;
   sctk_ibuf_t *ibuf;
   size_t size;
-  int low_memory_mode = 0;
   char is_control_message = 0;
   specific_message_tag_t tag = msg->body.header.specific_message_tag;
 
@@ -88,7 +87,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   sctk_nodebug("Go to process %d", remote->rank);
 
   size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
-  if (is_control_message && size + IBUF_GET_EAGER_SIZE > config->ibv_eager_limit) {
+  if (is_control_message && ((size + IBUF_GET_EAGER_SIZE) > config->ibv_eager_limit) ) {
     sctk_error("MPC tries to send a control message without using the Eager protocol."
         "This is not supported and MPC is going to exit ...");
     sctk_abort();
@@ -109,27 +108,23 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, is_control_message);
     sctk_complete_and_free_message(msg);
     PROF_INC_RAIL_IB(rail_ib, eager_nb);
-
     goto exit;
-
   }
 
 buffered:
   /***** BUFFERED EAGER CHANNEL *****/
-  if (!low_memory_mode && size <= config->ibv_frag_eager_limit)  {
-    sctk_nodebug("Buffered");
+  if (size <= config->ibv_frag_eager_limit)  {
     /* Fallback to RDMA if buffered not available or low memory mode */
-    if (sctk_ib_buffered_prepare_msg(rail, remote, msg, size) == 1 ) goto rdma;
+    if (sctk_ib_buffered_prepare_msg(rail, remote, msg, size) == 1 ) goto error;
     sctk_complete_and_free_message(msg);
     PROF_INC_RAIL_IB(rail_ib, buffered_nb);
-
     goto exit;
   }
 
-  /***** RDMA RENDEZVOUS CHANNEL *****/
-rdma:
-  /* We cannot exchange a signalization message using RDMA */
-  not_implemented();
+error:
+  sctk_error("MPC did not find any channel to use for sending the message."
+      "Your job is going to die ...");
+  sctk_abort();
 
 exit: {}
 
@@ -230,16 +225,8 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc,
   ibuf = (sctk_ibuf_t*) wc->wr_id;
   assume(ibuf);
 
-#if 0
-  /* Get the remote associated to the ibuf */
-  const sctk_ib_qp_t const *remote = sctk_ib_qp_ht_find(rail_ib, wc->qp_num);
-  ib_assume(remote);
-
-  sctk_debug("Recv message released (rank: %d)", remote->rank);
-#endif
-
   ibuf->wc = *wc;
- return sctk_network_poll_recv_ibuf(rail, ibuf, 0, poll);
+  return sctk_network_poll_recv_ibuf(rail, ibuf, 0, poll);
 }
 
 static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,

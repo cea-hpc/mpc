@@ -4872,8 +4872,11 @@ PMPC_User_Main (int argc, char **argv)
 }
 
 /********************************************************************/
-/*Netowk functions                                                  */
+/*    Network functions. These functions are not a part of the      */
+/*    MPI standard.                                                 */
 /********************************************************************/
+
+/* For getting stats about the network */
 void MPC_Network_stats(struct MPC_Network_stats_s *stats) {
 #ifdef MPC_Message_Passing
 #ifdef MPC_USE_INFINIBAND
@@ -4882,6 +4885,7 @@ void MPC_Network_stats(struct MPC_Network_stats_s *stats) {
 #endif
 }
 
+/* Try to deconnect neighbors */
 void MPC_Network_deco_neighbors() {
 #ifdef MPC_Message_Passing
 #ifdef MPC_USE_INFINIBAND
@@ -4889,3 +4893,22 @@ void MPC_Network_deco_neighbors() {
 #endif
 #endif
 }
+
+/* Send a message to a process using the signalization network */
+void MPC_Send_signalization_network(int dest_process, int tag, void *buff, size_t size) {
+#ifdef MPC_Message_Passing
+    sctk_route_messages_send(sctk_process_rank,dest_process,user_specific_message_tag,
+        tag, buff, size);
+#endif
+}
+
+/* Recv a message from a process using the signalization network */
+void MPC_Recv_signalization_network(int src_process, int tag, void *buff, size_t size) {
+#ifdef MPC_Message_Passing
+#ifdef MPC_USE_INFINIBAND
+  sctk_route_messages_recv(src_process,sctk_process_rank,user_specific_message_tag,
+        tag, buff, size);
+#endif
+#endif
+}
+

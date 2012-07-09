@@ -242,15 +242,15 @@ extern "C"
   int MPC_Comm_rank (MPC_Comm comm, int *rank);
   int MPC_Comm_size (MPC_Comm comm, int *size);
   int MPC_Comm_remote_size (MPC_Comm comm, int *size);
-  
+
   /* Node topology */
   int MPC_Node_rank (int *rank);
   int MPC_Node_number (int *number);
-  
+
   /* Processors topology */
   int MPC_Processor_rank (int *rank);
   int MPC_Processor_number (int *number);
- 
+
   /* Process global numbering */
   int MPC_Process_rank (int *rank);
   int MPC_Process_number (int *number);
@@ -258,7 +258,7 @@ extern "C"
   /* Process local numbering */
   int MPC_Local_process_rank (int *rank);
   int MPC_Local_process_number (int *number);
-  
+
   /* Task global topology */
   int MPC_Task_rank( int *rank );
   int MPC_Task_number( int *number );
@@ -771,6 +771,9 @@ extern "C"
 
   void MPC_Network_stats(struct MPC_Network_stats_s *stats);
   void MPC_Network_deco_neighbors();
+  /* Send/Recv message using the signalization network */
+  void MPC_Send_signalization_network(int dest_process, int tag, void *buff, size_t size);
+  void MPC_Recv_signalization_network(int src_process, int tag, void *buff, size_t size);
 
 #ifdef __cplusplus
 }
