@@ -87,6 +87,10 @@ extern "C"
 #define SCTK_REALLOC_THRESHOLD 2
 /** Permit to keep the old memory source in chain numa migration. **/
 #define SCTK_ALLOC_KEEP_OLD_MM_SOURCE ((void*)-1)
+/** It disable some assume which may be OK for stable version of allocator and valid applications. **/
+#ifndef SCTK_ALLOC_DEBUG
+#define SCTK_ALLOC_FAST_BUT_LESS_SAFE
+#endif
 
 /************************** MACROS *************************/
 //if have NUMA support

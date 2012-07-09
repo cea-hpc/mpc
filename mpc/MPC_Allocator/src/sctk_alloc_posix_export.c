@@ -23,6 +23,7 @@
 /************************** HEADERS ************************/
 #include <stdlib.h>
 #include <errno.h>
+#include "sctk_alloc_inlined.h"
 #include "sctk_alloc_posix.h"
 #include "sctk_alloc_debug.h"
 
@@ -30,12 +31,6 @@
 #ifdef MPC_Common
 #include "sctk.h"
 #endif
-
-/************************* FUNCTION ************************/
-static __inline__ bool sctk_alloc_is_power_of_two(sctk_size_t size)
-{
-	return ((size != 0) && !(size & (size-1)));
-}
 
 /************************* FUNCTION ************************/
 void * calloc (size_t nmemb, size_t size)

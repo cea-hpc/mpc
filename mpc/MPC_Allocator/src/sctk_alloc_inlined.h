@@ -39,6 +39,12 @@ extern "C"
 /************************** CONSTS *************************/
 extern const sctk_alloc_vchunk SCTK_ALLOC_DEFAULT_CHUNK;
 
+/************************* FUNCTION ************************/
+static __inline__ bool sctk_alloc_is_power_of_two(sctk_size_t size)
+{
+	return ((size != 0) && !(size & (size-1)));
+}
+
 /**
  * Some functions to access attributes structure 
  */
@@ -259,9 +265,11 @@ static __inline__ sctk_alloc_vchunk sctk_alloc_get_next_chunk(sctk_alloc_vchunk 
 {
 	sctk_alloc_vchunk res;
 
-	res = (sctk_alloc_vchunk)((sctk_addr_t)chunk + sctk_alloc_get_chunk_header_large_size(sctk_alloc_get_large(chunk)));
+	#ifndef SCTK_ALLOC_FAST_BUT_LESS_SAFE
+	assume_m(chunk->unused_magik == SCTK_ALLOC_MAGIK_STATUS,"Small block not supported for now.");
+	#endif
 
-	assume_m(res->unused_magik == SCTK_ALLOC_MAGIK_STATUS,"Small block not supported for now.");
+	res = (sctk_alloc_vchunk)((sctk_addr_t)chunk + sctk_alloc_get_chunk_header_large_size(sctk_alloc_get_large(chunk)));
 
 	return res;
 }

@@ -104,6 +104,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_setup_chunk_padded(sctk_alloc_vchunk vc
 {
 	//vars
 	struct sctk_alloc_chunk_header_padded * chunk_padded;
+	struct sctk_alloc_chunk_info * chunk_padded_info;
 	sctk_addr_t ptr;
 	sctk_addr_t ptr_orig;
 	//errors
@@ -127,9 +128,10 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_setup_chunk_padded(sctk_alloc_vchunk vc
 		//setup padded header
 		chunk_padded = (struct sctk_alloc_chunk_header_padded *)((char*)ptr - sizeof(struct sctk_alloc_chunk_header_padded));
 		sctk_alloc_set_chunk_header_padded_padding(chunk_padded, (sctk_addr_t)chunk_padded - ptr_orig);
-		sctk_alloc_get_chunk_header_padded_info(chunk_padded)->state = vchunk->state;
-		sctk_alloc_get_chunk_header_padded_info(chunk_padded)->type = SCTK_ALLOC_CHUNK_TYPE_PADDED;
-		sctk_alloc_get_chunk_header_padded_info(chunk_padded)->unused_magik = SCTK_ALLOC_MAGIK_STATUS;
+		chunk_padded_info = sctk_alloc_get_chunk_header_padded_info(chunk_padded);
+		chunk_padded_info->state = vchunk->state;
+		chunk_padded_info->type = SCTK_ALLOC_CHUNK_TYPE_PADDED;
+		chunk_padded_info->unused_magik = SCTK_ALLOC_MAGIK_STATUS;
 		//setup final vchunk
 		vchunk = sctk_alloc_padded_to_vchunk(chunk_padded);
 	}
@@ -222,8 +224,9 @@ SCTK_STATIC void sctk_alloc_thread_pool_init(struct sctk_thread_pool* pool,const
 **/
 SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_get_free_list(struct sctk_thread_pool* pool, sctk_size_t size)
 {
-	int seg_size = pool->nb_free_lists;
-	int i = seg_size << 2;
+	/** @TODO maybe this can be optimized by using uin32_t, only ok if refuse usage of old memory source as it manage segment of large size. **/
+	sctk_size_t seg_size = pool->nb_free_lists;
+	sctk_size_t i = seg_size >> 1;
 	const sctk_size_t * ptr = pool->alloc_free_sizes;
 	//int j = 0;
 
@@ -251,7 +254,7 @@ SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_get_free_list(struct sctk_thread
 			} else {
 				seg_size = i;
 			}
-			i = seg_size >> 1;//diveide by 2
+			i = seg_size >> 1;//divide by 2
 		}
 	}
 	assert(ptr+i >= pool->alloc_free_sizes);
@@ -269,8 +272,10 @@ SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_get_free_list(struct sctk_thread
 **/
 SCTK_STATIC sctk_size_t sctk_alloc_get_list_class(struct sctk_thread_pool* pool,sctk_alloc_free_list_t * list)
 {
-	int id = (short int)(list - pool->free_lists);
+	int id = (int)(list - pool->free_lists);
+	#ifndef SCTK_ALLOC_FAST_BUT_LESS_SAFE
 	assume_m(id >= 0 && id < SCTK_ALLOC_NB_FREE_LIST,"The given list didn't be a member of the given thread pool.");
+	#endif
 	return pool->alloc_free_sizes[id];
 }
 
@@ -318,6 +323,7 @@ SCTK_STATIC void sctk_alloc_free_list_insert(struct sctk_thread_pool * pool,stru
 {
 	struct sctk_alloc_free_chunk* flist;
 	struct sctk_alloc_free_chunk * fchunk;
+	sctk_size_t list_class;
 	
 	//errors
 	assert(pool != NULL);
@@ -327,7 +333,8 @@ SCTK_STATIC void sctk_alloc_free_list_insert(struct sctk_thread_pool * pool,stru
 	//get the free list
 	flist = sctk_alloc_get_free_list(pool,sctk_alloc_get_chunk_header_large_size(chunk_large));
 	assert(flist != NULL);
-	if (flist != pool->free_lists && sctk_alloc_get_list_class(pool,flist) != -1 && sctk_alloc_get_list_class(pool,flist) != sctk_alloc_get_chunk_header_large_size(chunk_large))
+	list_class = sctk_alloc_get_list_class(pool,flist);
+	if (flist != pool->free_lists && list_class != -1 && list_class != sctk_alloc_get_chunk_header_large_size(chunk_large))
 		flist--;
 
 	//small bloc not supported, need specific list or external declaration of list elements
@@ -372,16 +379,24 @@ SCTK_STATIC void sctk_alloc_free_list_insert(struct sctk_thread_pool * pool,stru
 **/
 SCTK_STATIC void sctk_alloc_free_list_remove(struct sctk_thread_pool * pool,struct sctk_alloc_free_chunk * fchunk)
 {
+	//vars
+	struct sctk_alloc_free_chunk * prev;
+	struct sctk_alloc_free_chunk * next;
+
 	//error
 	assert(fchunk != NULL);
 
-	fchunk->next->prev = fchunk->prev;
-	fchunk->prev->next = fchunk->next;
+	//keep localy to avoid dereferencing the pointer every time
+	prev = fchunk->prev;
+	next = fchunk->next;
+
+	next->prev = prev;
+	prev->next = next;
 
 	//check if this is the last of the list
 	//if true, mark the list as empty
-	if (fchunk->next == fchunk->prev)
-		sctk_alloc_free_list_mark_empty(pool,fchunk->prev);
+	if (next == prev)
+		sctk_alloc_free_list_mark_empty(pool,prev);
 
 	fchunk->next = NULL;
 	fchunk->prev = NULL;
@@ -468,18 +483,19 @@ SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_find_first_free_non_empty_list(s
 	//vars
 	short int id;
 	short int i;
+	short int nb_free_lists = pool->nb_free_lists;
 	
 	//error
 	assert(pool != NULL);
 	assert(list != NULL);
-	assert(pool->nb_free_lists <= SCTK_ALLOC_NB_FREE_LIST);
-	assert(list >= pool->free_lists && list < pool->free_lists+pool->nb_free_lists);
+	assert(nb_free_lists <= SCTK_ALLOC_NB_FREE_LIST);
+	assert(list >= pool->free_lists && list < pool->free_lists+nb_free_lists);
 	//get free list id
 	id = (short int) (list - pool->free_lists);
 	
-	assert(id < pool->nb_free_lists);
+	assert(id < nb_free_lists);
 
-	for ( i = id ; i < pool->nb_free_lists ; ++i)
+	for ( i = id ; i < nb_free_lists ; ++i)
 		if (pool->free_list_status[i])
 			return pool->free_lists+i;
 
@@ -579,6 +595,13 @@ SCTK_STATIC sctk_size_t sctk_alloc_align_size(sctk_size_t size,sctk_size_t align
 }
 
 /************************* FUNCTION ************************/
+SCTK_STATIC sctk_size_t sctk_alloc_align_size_pow_of_2(sctk_size_t size,sctk_size_t align)
+{
+	assert(sctk_alloc_is_power_of_two(align));
+	return ((size + align - 1) & (~(align-1)));
+}
+
+/************************* FUNCTION ************************/
 /**
  * Split an original chunk into two small ones. The first one will be of requested size, the second
  * one if available will cover the rest of the original size.
@@ -596,11 +619,13 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_split_free_bloc(sctk_alloc_vchunk * chu
 	
 	//convert size to take in accound the header size
 	size = sctk_alloc_calc_chunk_size(size);
-	size = sctk_alloc_align_size(size,SCTK_ALLOC_BASIC_ALIGN);
+	size = sctk_alloc_align_size_pow_of_2(size,SCTK_ALLOC_BASIC_ALIGN);
 	
 	//error
 	assert(chunk != NULL);
+	#ifndef SCTK_ALLOC_FAST_BUT_LESS_SAFE
 	assume_m(sctk_alloc_get_size(*chunk) >= size,"Chunk size if too small to fit with requested size.");
+	#endif
 
 	residut_size = sctk_alloc_get_size(*chunk) - size;
 	if (residut_size >= SCTK_ALLOC_MIN_SIZE)
@@ -629,7 +654,9 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_get_prev_chunk(sctk_alloc_vchunk chunk)
 {
 	sctk_alloc_vchunk res;
 
+	#ifndef SCTK_ALLOC_FAST_BUT_LESS_SAFE
 	assume_m(chunk->unused_magik == SCTK_ALLOC_MAGIK_STATUS,"Small block not supported for now.");
+	#endif
 
 	if (sctk_alloc_get_prev_size(chunk) == 0)
 	{
@@ -685,50 +712,43 @@ SCTK_STATIC void sctk_alloc_free_chunk_range(struct sctk_thread_pool * pool,sctk
 **/
 SCTK_STATIC sctk_alloc_vchunk sctk_alloc_merge_chunk(struct sctk_thread_pool * pool,sctk_alloc_vchunk chunk,sctk_alloc_vchunk first_page_chunk,sctk_addr_t max_address)
 {
-	sctk_alloc_vchunk cur = first_page_chunk;
+	sctk_alloc_vchunk cur = chunk;
 	sctk_alloc_vchunk last;
 	sctk_size_t size;
+	struct sctk_alloc_free_chunk * fchunk;
 	
 	//error
-// 	assert(max_address != 0);
 	assume_m(chunk->state == SCTK_ALLOC_CHUNK_STATE_ALLOCATED,"The central chunk must be allocated to be merged.");
-// 	assume_m(chunk.bloc.abstract >= cur.bloc.abstract,"The given page start didn't preceed the central chunk to merge.")
 
 	//search the first free chunk before the central one.
-	/** @todo To remove this old core or move into function as it may serve for small blocs **/
-// 	while (((sctk_addr_t)cur.bloc.large) + cur.size < max_address && cur.bloc.abstract < chunk.bloc.abstract)
-// 	{
-// 		if (cur.info->state == SCTK_ALLOC_CHUNK_STATE_ALLOCATED || first_page_chunk.info->state == SCTK_ALLOC_CHUNK_STATE_ALLOCATED)
-// 			first_page_chunk = cur;
-// 		//jump to next one
-// 		cur = sctk_alloc_get_next_chunk(cur);
-// 	}
-	cur = chunk;
+	first_page_chunk = chunk;
+	cur = sctk_alloc_get_prev_chunk(chunk);
 	/** @todo caution it did not support small blocs **/
-	while (cur != NULL && (cur->state == SCTK_ALLOC_CHUNK_STATE_FREE || cur == chunk))
+	while (cur != NULL && (cur->state == SCTK_ALLOC_CHUNK_STATE_FREE))
 	{
 		first_page_chunk = cur;
+		//can remove current one from free list to be merged at the end of the function
+		fchunk = (struct sctk_alloc_free_chunk *)sctk_alloc_get_ptr(cur);
+		sctk_alloc_free_list_remove(pool,fchunk);
+		//movre to prev one
 		cur = sctk_alloc_get_prev_chunk(cur);
 	}
-	
-	//no free chunk before the requested one
-	if (first_page_chunk->state == SCTK_ALLOC_CHUNK_STATE_ALLOCATED)
-		first_page_chunk = chunk;
 
 	//search the last mergeable after the central one
 	//so start from central one and move until find an allocated one
 	//last is comprised into the merge
-	last = cur = chunk;
+	last = chunk;
+	cur = sctk_alloc_get_next_chunk(chunk);
 // 	while (cur.bloc.abstract + cur.size < max_address
-	while(cur != NULL && (cur == chunk || cur->state == SCTK_ALLOC_CHUNK_STATE_FREE))
+	while(cur != NULL && (cur->state == SCTK_ALLOC_CHUNK_STATE_FREE))
 	{
+		last = cur;
+		//can remove current one from free list to be merged at the end of the function
+		fchunk = (struct sctk_alloc_free_chunk *)sctk_alloc_get_ptr(cur);
+		sctk_alloc_free_list_remove(pool,fchunk);
+		//move to next one
 		cur = sctk_alloc_get_next_chunk(cur);
-		if (cur->state == SCTK_ALLOC_CHUNK_STATE_FREE)
-			last = cur;
 	} 
-
-	//free all elements in the merge interval
-	sctk_alloc_free_chunk_range(pool,first_page_chunk,last);
 
 	//calc final bloc size
 	size = sctk_alloc_get_addr(last) - sctk_alloc_get_addr(first_page_chunk) + sctk_alloc_get_size(last);
