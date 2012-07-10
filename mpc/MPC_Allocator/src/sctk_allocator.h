@@ -224,6 +224,8 @@ struct sctk_thread_pool
 	 * memory refilling.
 	**/
 	bool free_list_status[SCTK_ALLOC_NB_FREE_LIST];
+	/** If you free list size follow an analytic low, you can provide a method to reverse it is more optimized way. **/
+	int (*reverse_analytic_free_size)(sctk_size_t size,const sctk_size_t * size_list);
 	/**
 	 * Define the size of each class of free blocs, must be terminated by -1.
 	 * and must must contain at least SCTK_ALLOC_NB_FREE_LIST elements.
@@ -417,6 +419,7 @@ SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_find_first_free_non_empty_list(s
 SCTK_STATIC void sctk_alloc_free_list_mark_empty(struct sctk_thread_pool * pool,sctk_alloc_free_list_t * list);
 SCTK_STATIC void sctk_alloc_free_list_mark_non_empty(struct sctk_thread_pool * pool,sctk_alloc_free_list_t * list);
 SCTK_STATIC bool sctk_alloc_free_list_is_not_empty_quick(struct sctk_thread_pool * pool,sctk_alloc_free_list_t * list);
+SCTK_STATIC int sctk_alloc_reverse_analytic_free_size(sctk_size_t size,const sctk_size_t * size_list);
 
 /************************* FUNCTION ************************/
 //allocation chain management

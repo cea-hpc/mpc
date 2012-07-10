@@ -69,6 +69,9 @@ struct sctk_alloc_chain * sctk_alloc_chain_list[2] = {NULL,NULL};
 /************************** CONSTS *************************/
 /**
  * Define the size classes used for the free list for thread pools.
+ * As is follow a linear + exp analytic model, we can reverse it
+ * with analytic function sctk_alloc_reverse_analytic_free_size()
+ * CAUTION, if change values here, you need to update this function.
 **/
 const sctk_size_t SCTK_ALLOC_FREE_SIZES[SCTK_ALLOC_NB_FREE_LIST] = {
 	32,    64,   96,  128,  160,   192,   224,   256,    288,    320,
@@ -206,11 +209,63 @@ SCTK_STATIC void sctk_alloc_thread_pool_init(struct sctk_thread_pool* pool,const
 		warning("Caution, the last free list size must be -1, you didn't follow this requirement, this may leed to errors.");
 	}
 
+	//set analitic reverse
+	if (alloc_free_sizes == SCTK_ALLOC_FREE_SIZES)
+		pool->reverse_analytic_free_size = sctk_alloc_reverse_analytic_free_size;
+	else
+		pool->reverse_analytic_free_size = NULL;
+
 	//setup free list bitmap
 	memset(pool->free_list_status,0,SCTK_ALLOC_NB_FREE_LIST);
 
 	//setup class size
 	pool->alloc_free_sizes = alloc_free_sizes;
+}
+
+/************************* FUNCTION ************************/
+int sctk_alloc_optimized_log2_size_t(sctk_size_t value)
+{
+	//vars
+	int res = 0;
+
+	#ifdef HAVE_ASM_BSR
+		while (value > 1) {value = value >> 1 ; res++;};
+	#else
+		if (value != 0)
+			asm volatile ("bsr %1, %0":"=r" (res):"r"(value));
+	#endif
+
+	return res;
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Use analytic way to reverse the position of a free list for the case of values
+ * provided by internal SCTK_ALLOC_FREE_SIZES.
+ * It use a linear + exp model so we can compute easily the position
+ * by inverting the mathematical formula.
+ * @param size Define the size for which to find the list.
+ * @param size_list Define the list this is only to check in debug mode.
+**/
+SCTK_STATIC int sctk_alloc_reverse_analytic_free_size(sctk_size_t size,const sctk_size_t * size_list)
+{
+	//vars
+	int res;
+
+	//errors
+	assert(size_list == SCTK_ALLOC_FREE_SIZES);
+	assert(64 >> 5 == 2);
+	assert(size_list[43] == -1);
+
+	if (size <= 1024)
+		//divide by 32 and fix first element ID as we start to indexes by 0
+		return (size >> 5) - 1;
+	else if (size > SCTK_MACRO_BLOC_SIZE)
+		return 43;
+	else
+		//1024/32 :  starting offset of the exp zone
+		// >> 10: ( - log2(1024)) remote the start of the exp
+		return 1024/32 + sctk_alloc_optimized_log2_size_t(size >> 10) - 1;
 }
 
 /************************* FUNCTION ************************/
@@ -222,7 +277,7 @@ SCTK_STATIC void sctk_alloc_thread_pool_init(struct sctk_thread_pool* pool,const
  * @param size Define the size in which we are interested. We consider the full buffer size.
  * header comprised. For blocs larger than a macro bloc, it will return NULL.
 **/
-SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_get_free_list(struct sctk_thread_pool* pool, sctk_size_t size)
+SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_get_free_list_slow(struct sctk_thread_pool* pool, sctk_size_t size)
 {
 	/** @TODO maybe this can be optimized by using uin32_t, only ok if refuse usage of old memory source as it manage segment of large size. **/
 	sctk_size_t seg_size = pool->nb_free_lists;
@@ -262,6 +317,65 @@ SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_get_free_list(struct sctk_thread
 	//assert(pool->free_lists+j == pool->free_lists+(ptr-pool->alloc_free_sizes+i));
 	return pool->free_lists+(ptr-pool->alloc_free_sizes+i);
 	//return pool->free_lists+j;
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Return the free list of the given pool which correspond to the size class related the the given
+ * size. The size classes are determined by pool->alloc_free_sizes which define the minimal size of
+ * bloc contained in the list (greater or equal).
+ * @param pool Define the thread pool in which to search the free list.
+ * @param size Define the size in which we are interested. We consider the full buffer size.
+ * header comprised. For blocs larger than a macro bloc, it will return NULL.
+**/
+SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_get_free_list_fast(struct sctk_thread_pool* pool, sctk_size_t size)
+{
+	//vars
+	const sctk_size_t * size_list = pool->alloc_free_sizes;
+	int pos;
+
+	//errors
+	assert(pool->alloc_free_sizes != NULL);
+	assert(pool->reverse_analytic_free_size != NULL);
+	assert(pool != NULL);
+	assert(size > 0);
+
+	//get position by reverse analytic computation.
+	pos = pool->reverse_analytic_free_size(size, size_list);
+
+	//check size of current cell, if too small, take the next one
+	if (size_list[pos] < size)
+		pos++;
+
+	//check
+	assert(pos >= 0 && pos <=pool->nb_free_lists);
+
+	assert(pool->free_lists + pos == sctk_alloc_get_free_list_slow(pool,size));
+
+	//return position
+	return pool->free_lists + pos;
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Return the free list of the given pool which correspond to the size class related the the given
+ * size. The size classes are determined by pool->alloc_free_sizes which define the minimal size of
+ * bloc contained in the list (greater or equal).
+ * @param pool Define the thread pool in which to search the free list.
+ * @param size Define the size in which we are interested. We consider the full buffer size.
+ * header comprised. For blocs larger than a macro bloc, it will return NULL.
+**/
+SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_get_free_list(struct sctk_thread_pool* pool, sctk_size_t size)
+{
+	//errors
+	assert(pool->alloc_free_sizes != NULL);
+	assert(pool != NULL);
+	assert(size > 0);
+
+	if (pool->reverse_analytic_free_size != NULL)
+		return sctk_alloc_get_free_list_fast(pool,size);
+	else
+		return sctk_alloc_get_free_list_slow(pool,size);
 }
 
 /************************* FUNCTION ************************/
