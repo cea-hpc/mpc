@@ -49,26 +49,22 @@
 /* !!! WARNING !!! : diminishing IBV_EAGER_LIMIT me cause bad performance
  * on buffered eager messages */
 #define IBV_EAGER_LIMIT       ( 2 * 1024)
-#define IBV_EAGER_RDMA_LIMIT  ( 0 )
 #define IBV_FRAG_EAGER_LIMIT  ( 256 * 1024)
 
 /* Number of allowed pending Work Queue Elements
  * for each QP */
-#define IBV_QP_TX_DEPTH     5000
+#define IBV_QP_TX_DEPTH     1000
 /* We don't need recv WQE when using SRQ.
  * This variable must be set to 0 */
 #define IBV_QP_RX_DEPTH     0
 /* Many CQE. In memory, it represents about
  * 1.22Mb for 40000 entries */
-#define IBV_CQ_DEPTH        5000
+#define IBV_CQ_DEPTH        2000
 #define IBV_MAX_SG_SQ       8
 #define IBV_MAX_SG_RQ       8
 #define IBV_MAX_INLINE      128
 
-/* Number of RDMA buffers allocated for each neighbor.
- * i.e: if IBV_MAX_RDMA_IBUFS = 256:
- * The total memory used is: 2 (1 for send and 1 for receive) * 256 buffers * IBV_EAGER_RDMA_LIMIT */
-#define IBV_MAX_RDMA_IBUFS  0
+/* Number of RDMA buffers allocated for each neighbor. */
 #define IBV_MAX_RDMA_CONNECTIONS 0
 
 /* Maximum number of buffers to allocate during the
@@ -154,10 +150,8 @@ static void load_ib_fallback_default_config(sctk_ib_rail_info_t *rail_ib)
   config->ibv_init_ibufs = IBV_INIT_IBUFS;
 
   config->ibv_eager_limit       = ALIGN_ON_64 (IBV_EAGER_LIMIT + IBUF_GET_EAGER_SIZE);
-  config->ibv_eager_rdma_limit  = ALIGN_ON_64 (IBV_EAGER_RDMA_LIMIT + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE);
   config->ibv_frag_eager_limit  = (IBV_FRAG_EAGER_LIMIT + sizeof(sctk_thread_ptp_message_body_t));
 
-  config->ibv_max_rdma_ibufs  = IBV_MAX_RDMA_IBUFS;
   config->ibv_max_rdma_connections  = IBV_MAX_RDMA_CONNECTIONS;
   config->ibv_qp_tx_depth = IBV_QP_TX_DEPTH;
   config->ibv_qp_rx_depth = IBV_QP_RX_DEPTH;

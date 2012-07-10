@@ -773,7 +773,7 @@ void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
 
 /* Number of messages needed to be exchanged before connecting peers
  * using RMDA */
-#define IBV_RDMA_MIN_SIZE (2 * 1024)
+#define IBV_RDMA_MIN_SIZE (8 * 1024)
 #define IBV_RDMA_MAX_SIZE (16 * 1024)
 #define IBV_RDMA_MIN_NB (12)
 #define IBV_RDMA_MAX_NB (64)
@@ -784,7 +784,7 @@ void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
 #define IBV_RDMA_RESIZING_MAX_NB (64)
 
 /* Maximum number of miss before resizing RDMA */
-#define IBV_RDMA_MAX_MISS 100
+#define IBV_RDMA_MAX_MISS 1000
 
 
 /*

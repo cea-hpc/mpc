@@ -41,9 +41,7 @@ typedef struct sctk_ib_config_s
   unsigned int  ibv_init_ibufs;
 
   unsigned int  ibv_eager_limit;
-  unsigned int  ibv_eager_rdma_limit;
   unsigned int  ibv_frag_eager_limit;
-  unsigned int  ibv_max_rdma_ibufs;
   unsigned int  ibv_max_rdma_connections;
   unsigned int  ibv_qp_tx_depth;
   unsigned int  ibv_qp_rx_depth;
@@ -82,7 +80,7 @@ struct sctk_ib_rail_info_s;
 void sctk_ib_config_init(struct sctk_ib_rail_info_s *rail_ib, char *network_name);
 void sctk_ib_config_print(struct sctk_ib_rail_info_s *rail_ib);
 
-#define IBV_RDMA_RESIZING  1
+#define IBV_RDMA_RESIZING  0
 
 #endif
 #endif

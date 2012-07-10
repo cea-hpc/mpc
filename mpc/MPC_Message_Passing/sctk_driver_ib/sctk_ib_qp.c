@@ -1011,7 +1011,7 @@ exit:
   sctk_warning("Proceeding to a QP deconnexion: QP to process %d elected %p", current_qp->rank, current_qp);
 
   /* Send a deconnexion request */
-  sctk_ib_cm_deco_request_send(rail_ib, current_qp->route_table);
+  sctk_ib_cm_deco_request_send(rail_ib->rail, current_qp->route_table);
 
   /* ---> We block the message sending and wait until all
    * task is out from the send function */
