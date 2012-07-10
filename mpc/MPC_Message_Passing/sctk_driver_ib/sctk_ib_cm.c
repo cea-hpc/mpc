@@ -392,6 +392,24 @@ sctk_route_table_t *sctk_ib_cm_on_demand_request(int dest,sctk_rail_info_t* rail
  *  string).
  *----------------------------------------------------------*/
 
+/* Function which returns if a remote can be connected using RDMA */
+int sctk_ib_cm_on_demand_rdma_check_request(
+    sctk_rail_info_t* rail_targ, struct sctk_ib_qp_s *remote) {
+  int send_request = 0;
+  ib_assume(sctk_route_get_state(remote->route_table) == state_connected);
+
+  /* If several threads call this function, only 1 will send a request to
+   * the remote process */
+  ROUTE_LOCK(remote->route_table);
+  if (sctk_ibuf_rdma_get_remote_state_rts(remote) == state_deconnected) {
+    sctk_ibuf_rdma_set_remote_state_rts(remote, state_connecting);
+    send_request = 1;
+  }
+  ROUTE_UNLOCK(remote->route_table);
+
+  return send_request;
+}
+
 /*
  * Send a connexion request to the process 'dest'.
  * Data exchanged:
@@ -404,46 +422,34 @@ int sctk_ib_cm_on_demand_rdma_request(
   LOAD_TARG();
   LOAD_DEVICE(rail_ib_targ);
   /* If we need to send the request */
-  int send_request = 0;
 
   ib_assume(sctk_route_get_state(remote->route_table) == state_connected);
 
-  /* If several threads call this function, only 1 will send a request to
-   * the remote process */
-  ROUTE_LOCK(remote->route_table);
-  if (sctk_ibuf_rdma_get_remote_state_rts(remote) == state_deconnected) {
-    sctk_ibuf_rdma_set_remote_state_rts(remote, state_connecting);
-    send_request = 1;
-  }
-  ROUTE_UNLOCK(remote->route_table);
-
   /* If we are the first to access the route and if the state
    * is deconnected, so we can proceed to a connection*/
-  if (send_request) {
 
-    if (sctk_ibuf_rdma_is_connectable(rail_ib_targ, remote)) {  /* Can connect to RDMA */
-      sctk_ib_cm_rdma_connection_t send_keys;
-      sctk_nodebug("Can connect to remote %d", remote->rank);
+  if (sctk_ibuf_rdma_is_connectable(rail_ib_targ, remote)) {  /* Can connect to RDMA */
+    sctk_ib_cm_rdma_connection_t send_keys;
+    sctk_nodebug("Can connect to remote %d", remote->rank);
 
-      send_keys.connected = 1;
-      /* We fill the request and we save how many slots are requested as well
-       * as the size of each slot */
-      remote->od_request.nb = send_keys.nb = entry_nb;
-      remote->od_request.size_ibufs = send_keys.size = entry_size;
+    send_keys.connected = 1;
+    /* We fill the request and we save how many slots are requested as well
+     * as the size of each slot */
+    remote->od_request.nb = send_keys.nb = entry_nb;
+    remote->od_request.size_ibufs = send_keys.size = entry_size;
 
-      sctk_ib_nodebug("[%d] OD QP RDMA connexion requested to %d (size:%d nb:%d rdma_connections:%d)",
+    sctk_ib_debug("[%d] OD QP RDMA connexion requested to %d (size:%d nb:%d rdma_connections:%d)",
         rail_targ->rail_number, remote->rank, send_keys.size, send_keys.nb, device->eager_rdma_connections);
 
-      sctk_route_messages_send(sctk_process_rank,remote->rank,ondemand_specific_message_tag,
+    sctk_route_messages_send(sctk_process_rank,remote->rank,ondemand_specific_message_tag,
         CM_OD_RDMA_REQ_TAG+CM_MASK_TAG,
         &send_keys, sizeof(sctk_ib_cm_rdma_connection_t));
 
-    } else { /* Cannot connect to RDMA */
-      sctk_nodebug("[%d] Cannot connect to remote %d", rail->rail_number, remote->rank);
-      /* We reset the state to deconnected */
-      /* FIXME: state to reset */
-      sctk_ibuf_rdma_set_remote_state_rts(remote, state_reset);
-    }
+  } else { /* Cannot connect to RDMA */
+    sctk_nodebug("[%d] Cannot connect to remote %d", rail->rail_number, remote->rank);
+    /* We reset the state to deconnected */
+    /* FIXME: state to reset */
+    sctk_ibuf_rdma_set_remote_state_rts(remote, state_reset);
   }
 
   return 1;
@@ -610,8 +616,9 @@ int sctk_ib_cm_resizing_rdma_request(sctk_rail_info_t* rail_targ,
   remote->rdma.pool->resizing_request.send_keys.nb   = send_keys.nb = entry_nb;
   remote->rdma.pool->resizing_request.send_keys.size = send_keys.size = entry_size;
 
-  sctk_ib_debug("[%d] Sending RDMA RESIZING request to %d (size:%d nb:%d)",
-      rail_targ->rail_number, remote->rank, send_keys.size, send_keys.nb);
+  sctk_ib_debug("[%d] Sending RDMA RESIZING request to %d (size:%d nb:%d resizing_nb:%d)",
+      rail_targ->rail_number, remote->rank, send_keys.size, send_keys.nb,
+      remote->rdma.resizing_nb);
 
   sctk_route_messages_send(sctk_process_rank,remote->rank,ondemand_specific_message_tag,
       CM_RESIZING_RDMA_REQ_TAG+CM_MASK_TAG,
@@ -691,6 +698,7 @@ static inline void sctk_ib_cm_resizing_rdma_ack_recv(RAIL_ARGS, void* ack, int s
       RDMA_CHANNEL | SEND_CHANNEL,
       send_keys->nb, send_keys->size);
 
+  OPA_incr_int(&remote->rdma.resizing_nb);
   send_keys->connected = 1;
   sctk_ibuf_rdma_fill_remote_addr(rail_ib_targ, remote, send_keys, REGION_SEND);
 

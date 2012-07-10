@@ -254,6 +254,8 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
           }
 #endif
             goto exit;
+        } else {
+          OPA_incr_int(&remote->rdma.miss_nb);
         }
       }
 
@@ -261,7 +263,6 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
       PROF_INC_RAIL_IB(rail_ib, ibuf_rdma_miss_nb);
       OPA_decr_int(&remote->rdma.pool->busy_nb[REGION_SEND]);
       sctk_ibuf_rdma_check_flush_send(rail_ib, remote);
-      OPA_incr_int(&remote->rdma.miss_nb);
     } else {
       sctk_spinlock_unlock(&remote->rdma.flushing_lock);
     }

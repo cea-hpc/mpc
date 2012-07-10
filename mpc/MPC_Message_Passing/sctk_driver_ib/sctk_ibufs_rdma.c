@@ -70,14 +70,14 @@ void sctk_ibuf_rdma_remote_init(sctk_ib_qp_t* remote) {
   sctk_ibuf_rdma_set_remote_state_rtr(remote, state_deconnected);
   sctk_ibuf_rdma_set_remote_state_rts(remote, state_deconnected);
   remote->rdma.mean_size_lock = SCTK_SPINLOCK_INITIALIZER;
-  remote->rdma.mean_size = 0;
-  remote->rdma.mean_iter = 0;
+  remote->rdma.messages_nb = 0;
   remote->rdma.max_pending_requests = 0;
   remote->rdma.lock = SCTK_SPINLOCK_INITIALIZER;
   remote->rdma.polling_lock = SCTK_SPINLOCK_INITIALIZER;
   /* Counters */
   OPA_store_int(&remote->rdma.miss_nb, 0);
   OPA_store_int(&remote->rdma.hits_nb, 0);
+  OPA_store_int(&remote->rdma.resizing_nb, 0);
   /* Lock for resizing */
   remote->rdma.flushing_lock = SCTK_SPINLOCK_INITIALIZER;
 }
@@ -187,6 +187,7 @@ sctk_ibuf_rdma_region_reinit(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* r
   /* FIXME: is the memset here really usefull? */
   memset (ibuf, 0, nb_ibufs * sizeof(sctk_ibuf_t));
 
+  ib_assume(nb_ibufs > 0);
   region->size_ibufs = size_ibufs;
   region->buffer_addr = ptr;
   region->nb = nb_ibufs;
@@ -722,7 +723,9 @@ void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
       ib_assume(tail->region);
       ib_assume(tail->region->ibuf);
       if (tail->region->nb <= 0) {
-        sctk_error("rank: %d, size: %d", tail->region->remote->rank, tail->region->size_ibufs);
+        sctk_error("rank: %d, size: %d, prev: %p", tail->region->remote->rank, tail->region->size_ibufs,
+            tail->region->prev);
+        not_reachable();
       }
       /* Move tail */
       IBUF_RDMA_GET_TAIL(remote, REGION_RECV) = IBUF_RDMA_ADD(tail, piggyback);
@@ -770,11 +773,16 @@ void sctk_ibuf_rdma_release(sctk_ib_rail_info_t* rail_ib, sctk_ibuf_t* ibuf) {
 
 /* Number of messages needed to be exchanged before connecting peers
  * using RMDA */
-#define IBV_RDMA_SAMPLES 1000
-#define IBV_RDMA_MIN_SIZE (16 * 1024)
-#define IBV_RDMA_MAX_SIZE (32 * 1024)
-#define IBV_RDMA_MIN_NB (64)
-#define IBV_RDMA_MAX_NB (128)
+#define IBV_RDMA_MIN_SIZE (2 * 1024)
+#define IBV_RDMA_MAX_SIZE (16 * 1024)
+#define IBV_RDMA_MIN_NB (12)
+#define IBV_RDMA_MAX_NB (64)
+
+#define IBV_RDMA_RESIZING_MIN_SIZE (16 * 1024)
+#define IBV_RDMA_RESIZING_MAX_SIZE (16 * 1024)
+#define IBV_RDMA_RESISING_MIN_NB (12)
+#define IBV_RDMA_RESIZING_MAX_NB (64)
+
 /* Maximum number of miss before resizing RDMA */
 #define IBV_RDMA_MAX_MISS 100
 
@@ -827,53 +835,74 @@ void sctk_ibuf_rdma_update_max_pending_requests(sctk_ib_rail_info_t *rail_ib, sc
   sctk_spinlock_unlock(&remote->rdma.mean_size_lock);
 }
 
+static void sctk_ibuf_rdma_determine_config(sctk_ib_qp_t *remote, int *determined_size, int *determined_nb, char resizing) {
+  /* Compute the mean size of messages */
+  int i, max;
+  float mean = 0;
+  sctk_spinlock_lock(&remote->rdma.mean_size_lock);
+  /* We check if the 'samples' array is fully written. If not, we
+   * just compute the average from 0 to message_nb - 1*/
+  if (remote->rdma.messages_nb > IBV_RDMA_SAMPLES) max = IBV_RDMA_SAMPLES;
+  else max = remote->rdma.messages_nb;
+  for (i=0; i < max; ++i) {
+    mean+=( (float) remote->rdma.samples[i] / (float) max);
+  }
+  *determined_nb = remote->rdma.max_pending_requests;
+  sctk_spinlock_unlock(&remote->rdma.mean_size_lock);
+  /* Reajust the size according to the statistics */
+  *determined_size = (int) mean;
+
+  if (resizing == 0) {
+    if (*determined_size > IBV_RDMA_MAX_SIZE) *determined_size = IBV_RDMA_MAX_SIZE;
+    if (*determined_size < IBV_RDMA_MIN_SIZE) *determined_size = IBV_RDMA_MIN_SIZE;
+    if (*determined_nb > IBV_RDMA_MAX_NB) *determined_nb = IBV_RDMA_MAX_NB;
+    if (*determined_nb < IBV_RDMA_MIN_NB) *determined_nb = IBV_RDMA_MIN_NB;
+  }
+  *determined_size = ALIGN_ON_64 (*determined_size + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE);
+}
+
 void sctk_ibuf_rdma_check_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, size_t size) {
+  int iter;
+  int determined_size;
+  int determined_nb;
+  int sample_nb;
+  int messages_nb;
+
+  /* We add the size of the message to the array 'samples' */
+  sctk_spinlock_lock(&remote->rdma.mean_size_lock);
+  messages_nb = remote->rdma.messages_nb;
+  sample_nb = messages_nb % IBV_RDMA_SAMPLES;
+  /* Save the size of the message */
+  remote->rdma.samples[sample_nb] = size;
+  /* Incr the number of messages */
+  ++remote->rdma.messages_nb;
+  sctk_spinlock_unlock(&remote->rdma.mean_size_lock);
+
   /* We profile only when the RDMA route is deconnected */
   if (sctk_ibuf_rdma_get_remote_state_rts(remote) == state_deconnected) {
-    float mean = (float) (size / IBV_RDMA_SAMPLES);
-    float total;
-    int iter;
-    int determined_size;
-    int determined_nb;
-
-    /* FIXME: This locks are really costly. Is there any tip for
-     * using atomics with float ? */
-    {
-      sctk_spinlock_lock(&remote->rdma.mean_size_lock);
-      determined_nb = remote->rdma.max_pending_requests;
-      total = (remote->rdma.mean_size += mean);
-      iter  = (++remote->rdma.mean_iter);
-      sctk_spinlock_unlock(&remote->rdma.mean_size_lock);
-    }
 
     /* Check if we need to connect using RDMA */
-    if ( iter >= IBV_RDMA_SAMPLES ) {
-      /* Reajust the size according to the statistics */
-      determined_size = (int) total;
-      if (determined_size > IBV_RDMA_MAX_SIZE) determined_size = IBV_RDMA_MAX_SIZE;
-      if (determined_size < IBV_RDMA_MIN_SIZE) determined_size = IBV_RDMA_MIN_SIZE;
-      if (determined_nb > IBV_RDMA_MAX_NB) determined_nb = IBV_RDMA_MAX_NB;
-      if (determined_nb < IBV_RDMA_MIN_NB) determined_nb = IBV_RDMA_MIN_NB;
-      determined_size = ALIGN_ON_64 (determined_size + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE);
+    if ( messages_nb >= IBV_RDMA_SAMPLES ) {
 
-      sctk_nodebug("Trying to connect remote %d using RDMA (mean size: %f, determined: %d, pending: %d, iter: %d)", remote->rank, total, determined_size,
-          determined_nb, iter);
+      /* Check if we can connect using RDMA. If == 1, only one thread can have an access to
+       * this code's part */
+      if (sctk_ib_cm_on_demand_rdma_check_request(rail_ib->rail, remote) == 1) {
 
-      /* Sending the request. If the request has been sent, we reinit */
-      if (sctk_ib_cm_on_demand_rdma_request(rail_ib->rail, remote,
-            determined_size, determined_nb) == 1) {
-        /* Reset counters */
-        sctk_spinlock_lock(&remote->rdma.mean_size_lock);
-        remote->rdma.mean_size = 0;
-        remote->rdma.mean_iter = 0;
-        sctk_spinlock_unlock(&remote->rdma.mean_size_lock);
+        sctk_ibuf_rdma_determine_config(remote, &determined_size, &determined_nb, 0);
+
+        sctk_nodebug("Trying to connect remote %d using RDMA (mean size: %f, determined: %d, pending: %d, iter: %d)", remote->rank, mean, determined_size,
+            determined_nb, iter);
+
+        /* Sending the request. If the request has been sent, we reinit */
+        sctk_ib_cm_on_demand_rdma_request(rail_ib->rail, remote,
+            determined_size, determined_nb);
       }
     }
 #if IBV_RDMA_RESIZING == 1
 #warning "Resizing enabled"
   } else if (sctk_ibuf_rdma_get_remote_state_rts(remote) == state_connected) {
 
-    /* Check if we need the resize the RDMA */
+    /* Check if we need to resize the RDMA */
     if( OPA_load_int(&remote->rdma.miss_nb) > IBV_RDMA_MAX_MISS) {
       sctk_nodebug("MAX MISS REACHED busy:%d",OPA_load_int(&remote->rdma.pool->busy_nb[REGION_SEND]) );
       /* Try to change the state to flushing.
@@ -963,10 +992,16 @@ int sctk_ibuf_rdma_check_flush_send(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *
          * NOTE: we are sure that only one thread call the resizing request */
         sctk_ib_nodebug("Sending a FLUSH message to remote %d", remote->rank);
 
-        /* FIXME: for now, we multiply the number of buffers by 2 */
+        int next_size, next_nb, previous_size, previous_nb;
+        sctk_ibuf_rdma_determine_config(remote, &next_size, &next_nb, 1);
+        previous_size = remote->rdma.pool->region[REGION_SEND].size_ibufs;
+        previous_nb   = remote->rdma.pool->region[REGION_SEND].nb;
+
+        next_size = (next_size > previous_size) ? next_size : previous_size;
+        next_nb = (next_nb > previous_nb) ? next_nb : previous_nb;
+
         sctk_ib_cm_resizing_rdma_request(rail_ib->rail, remote,
-            remote->rdma.pool->region[REGION_SEND].size_ibufs,
-            remote->rdma.pool->region[REGION_SEND].nb * 2);
+            next_size, next_nb);
         return 1;
       }
     } else {

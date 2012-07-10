@@ -156,7 +156,7 @@ typedef struct sctk_ibuf_region_s
   struct sctk_ibuf_region_s* next;
   struct sctk_ibuf_region_s* prev;
   /* Number of buffer for the region */
-  uint16_t nb;
+  uint32_t nb;
   /* Size of the buffers */
   int size_ibufs;
   /* A region is associated to a rail */

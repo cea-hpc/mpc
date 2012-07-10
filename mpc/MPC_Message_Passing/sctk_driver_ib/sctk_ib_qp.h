@@ -86,6 +86,7 @@ typedef struct sctk_ib_device_s
 #define ACK_UNSET   111
 #define ACK_OK      222
 #define ACK_CANCEL  333
+#define IBV_RDMA_SAMPLES 1000
 typedef struct sctk_ibuf_rdma_s
 {
   /* Lock for allocating pool */
@@ -100,10 +101,10 @@ typedef struct sctk_ibuf_rdma_s
   /* If remote is RTS. Type: sctk_route_state_t */
   OPA_int_t state_rts;
 
-  /* Mean size for rdma entries */
-  float           mean_size;
-  int             mean_iter;
   sctk_spinlock_t mean_size_lock;
+  /* Number of resizing */
+  OPA_int_t       resizing_nb;
+
   /* Max number of pending requests.
    * We this, we can get an approximation of the number
    * of slots to create for the RDMA */
@@ -114,6 +115,11 @@ typedef struct sctk_ibuf_rdma_s
   OPA_int_t miss_nb;     /* Number of RDMA miss */
   OPA_int_t hits_nb;     /* Number of RDMA hits */
   sctk_spinlock_t flushing_lock; /* Lock while flushing */
+  /* Array for sampling messages: this array might be a scalability problem
+   * if the value is IBV_RDMA_SAMPLES is high */
+  size_t samples[IBV_RDMA_SAMPLES];
+  /* Number of messages exchanged */
+  unsigned int messages_nb;
 } sctk_ibuf_rdma_t;
 
 /*Structure associated to a remote QP */

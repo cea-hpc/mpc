@@ -147,6 +147,9 @@ void sctk_ib_cm_deco_done_request_send(sctk_rail_info_t* rail, sctk_route_table_
 void sctk_ib_cm_deco_ack_send(sctk_rail_info_t* rail, sctk_route_table_t* route_table, int ack);
 void sctk_ib_cm_deco_done_ack_send(sctk_rail_info_t* rail, sctk_route_table_t* route_table, int ack);
 
+int sctk_ib_cm_on_demand_rdma_check_request(
+    sctk_rail_info_t* rail_targ, struct sctk_ib_qp_s *remote);
+
 int sctk_ib_cm_on_demand_rdma_request(
     sctk_rail_info_t* rail_targ, struct sctk_ib_qp_s *remote,
     int entry_size, int entry_nb);
