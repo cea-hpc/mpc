@@ -290,12 +290,6 @@ sctk_route_table_t* sctk_get_route_to_process_no_route(int dest, sctk_rail_info_
     HASH_FIND(hh,sctk_dynamic_route_table,&key,sizeof(sctk_route_key_t),tmp);
     sctk_spinlock_read_unlock(&sctk_route_table_lock);
 
-    /* Wait if route beeing deconnected */
-    /* FIXME: not compatible with other module than IB */
-    if (tmp) {
-      sctk_ib_qp_t *remote = tmp->data.ib.remote;
-      sctk_thread_wait_for_value (&remote->deco_lock, 0);
-    }
     /* If the route is deconnected, we do not use it*/
     if (tmp && sctk_route_get_state(tmp) != state_connected) {
       tmp = NULL;
