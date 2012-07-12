@@ -143,17 +143,25 @@ static inline void sctk_internal_ptp_unlock_pending(sctk_internal_ptp_message_li
 #ifndef SCTK_DISABLE_REENTRANCE
 static inline void sctk_internal_ptp_add_recv_incomming(sctk_internal_ptp_t* tmp,
 							sctk_thread_ptp_message_t * msg){
+
+    sctk_msg_list_t *list;
+    list = (sctk_msg_list_t *)tmp->lists.incomming_recv.list;
+
     msg->tail.distant_list.msg = msg;
     sctk_spinlock_lock(&(tmp->lists.incomming_recv.lock));
-    DL_APPEND(tmp->lists.incomming_recv.list, &(msg->tail.distant_list));
+    
+    DL_APPEND(list , &(msg->tail.distant_list));
     sctk_spinlock_unlock(&(tmp->lists.incomming_recv.lock));
 }
 
 static inline void sctk_internal_ptp_add_send_incomming(sctk_internal_ptp_t* tmp,
 							sctk_thread_ptp_message_t * msg){
+    sctk_msg_list_t *list;
+    list = (sctk_msg_list_t *)tmp->lists.incomming_send.list;
+
     msg->tail.distant_list.msg = msg;
     sctk_spinlock_lock(&(tmp->lists.incomming_send.lock));
-    DL_APPEND(tmp->lists.incomming_send.list, &(msg->tail.distant_list));
+    DL_APPEND(list, &(msg->tail.distant_list));
     sctk_spinlock_unlock(&(tmp->lists.incomming_send.lock));
 }
 #else

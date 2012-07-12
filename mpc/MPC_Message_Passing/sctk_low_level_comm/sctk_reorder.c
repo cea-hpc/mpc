@@ -148,6 +148,7 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
   int process;
   int number;
   sctk_reorder_table_t* tmp = NULL;
+  sctk_reorder_buffer_t *buff;
 
   if(msg->sctk_msg_get_use_message_numbering == 0){
     /* Renumbering unused */
@@ -189,7 +190,8 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
       reorder->msg = msg;
 
       sctk_spinlock_lock(&(tmp->lock));
-      HASH_ADD(hh,tmp->buffer,key,sizeof(int),reorder);
+      buff=(sctk_reorder_buffer_t *)tmp->buffer;
+      HASH_ADD(hh,buff,key,sizeof(int),reorder);
       sctk_spinlock_unlock(&(tmp->lock));
       sctk_nodebug("PS recv %d to %d - delay expecting %d recv %d (glob_source:%d))", msg->sctk_msg_get_source, msg->sctk_msg_get_destination,
           number,msg->sctk_msg_get_message_number, msg->sctk_msg_get_glob_source);
@@ -238,7 +240,8 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
       reorder->msg = msg;
 
       sctk_spinlock_lock(&(tmp->lock));
-      HASH_ADD(hh,tmp->buffer,key,sizeof(int),reorder);
+      buff=(sctk_reorder_buffer_t *)tmp->buffer;
+      HASH_ADD(hh,buff,key,sizeof(int),reorder);
       sctk_spinlock_unlock(&(tmp->lock));
       sctk_nodebug("recv %d to %d - delay wait for %d recv %d (expecting:%d, tmp:%p)", msg->sctk_msg_get_source, msg->sctk_msg_get_destination,
           number,msg->sctk_msg_get_message_number, number, tmp);

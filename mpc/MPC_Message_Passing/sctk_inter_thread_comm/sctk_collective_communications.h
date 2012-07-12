@@ -27,6 +27,7 @@
 #include <sctk.h>
 #include <sctk_spinlock.h>
 #include <sctk_thread.h>
+#include <mpcmp.h>
 
 typedef unsigned int sctk_datatype_t;
 #define sctk_null_data_type ((sctk_datatype_t)(-1))
@@ -77,8 +78,7 @@ typedef union {
 void sctk_all_reduce (const void *buffer_in, void *buffer_out,
 		      const size_t elem_size,
 		      const size_t elem_number,
-		      void (*func) (const sctk_communicator_t *, sctk_communicator_t *, size_t,
-				    sctk_datatype_t),
+		      MPC_Op_f,
 		      const sctk_communicator_t com_id,
 		      const sctk_datatype_t data_type);
 
@@ -100,9 +100,7 @@ typedef struct sctk_internal_collectives_struct_s{
   void (*allreduce_func) (const void *, void *,
 			  const size_t ,
 			  const size_t ,
-			  void (*) (const void *, 
-              void *, size_t,
-				    sctk_datatype_t),
+              MPC_Op_f,
 			  const sctk_communicator_t ,
 			  const sctk_datatype_t ,
 			  struct sctk_internal_collectives_struct_s *);
