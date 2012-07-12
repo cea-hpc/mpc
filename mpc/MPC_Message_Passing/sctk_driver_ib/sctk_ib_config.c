@@ -183,11 +183,6 @@ void sctk_ib_config_check(sctk_ib_rail_info_t *rail_ib)
 
   /* Good conf, we return */
   return;
-
-error:
-  sctk_error("Wrong IB configuration");
-  sctk_abort();
-  return;
 }
 
 #define EXPERIMENTAL(str) #str" (experimental)"

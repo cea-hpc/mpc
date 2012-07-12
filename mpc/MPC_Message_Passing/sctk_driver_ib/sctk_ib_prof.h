@@ -99,7 +99,6 @@ typedef struct sctk_ib_prof_s {
 
 #endif
 
-#if 0
 void sctk_ib_prof_init(sctk_ib_rail_info_t *rail_ib);
 void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib);
 void sctk_ib_prof_finalize(sctk_ib_rail_info_t *rail_ib);
@@ -140,5 +139,4 @@ void sctk_ib_prof_mem_finalize(sctk_ib_rail_info_t *rail_ib);
 
 #endif
 
-#endif
 #endif

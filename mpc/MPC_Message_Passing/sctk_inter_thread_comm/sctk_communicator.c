@@ -325,8 +325,8 @@ static int int_cmp(const void *a, const void *b)
 }
 
 static inline void
-sctk_communicator_init_intern_init_only(const int nb_task, const sctk_communicator_t comm,
-						  int last_local,
+sctk_communicator_init_intern_init_only(const int nb_task, 
+						 int last_local,
 						 int first_local, int local_tasks,
 						 int* local_to_global, int* global_to_local,
 						 int* task_to_process,
@@ -374,7 +374,6 @@ sctk_communicator_init_intern_no_alloc(const int nb_task, const sctk_communicato
 				       sctk_internal_communicator_t * tmp){
 
   sctk_communicator_init_intern_init_only(nb_task,
-					  comm,
 					  last_local,
 					  first_local,
 					  local_tasks,
@@ -638,7 +637,6 @@ sctk_duplicate_communicator (const sctk_communicator_t origin_communicator,
       memset(new_tmp,0,sizeof(sctk_internal_communicator_t));
       tmp->new_comm = new_tmp;
       sctk_communicator_init_intern_init_only(tmp->nb_task,
-					      comm,
 					      tmp->last_local,
 					      tmp->first_local,
 					      tmp->local_tasks,
@@ -682,7 +680,9 @@ sctk_duplicate_communicator (const sctk_communicator_t origin_communicator,
   } else {
     not_implemented();
   }
+  return MPC_COMM_NULL;
 }
+
 sctk_communicator_t sctk_create_communicator (const sctk_communicator_t
 					      origin_communicator,
 					      const int
@@ -752,7 +752,6 @@ sctk_communicator_t sctk_create_communicator (const sctk_communicator_t
 
       tmp->new_comm = new_tmp;
      sctk_communicator_init_intern_init_only(nb_task_involved,
-					      comm,
 					      -1,
 					      -1,
 					      local_tasks,
@@ -806,6 +805,8 @@ sctk_communicator_t sctk_create_communicator (const sctk_communicator_t
   } else {
     not_implemented();
   }
+
+  return MPC_COMM_NULL;
 }
 int sctk_is_inter_comm (const sctk_communicator_t communicator){
   sctk_internal_communicator_t * tmp;

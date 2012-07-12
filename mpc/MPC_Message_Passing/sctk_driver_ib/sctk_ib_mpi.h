@@ -21,26 +21,36 @@
 /* ######################################################################## */
 
 #ifdef MPC_USE_INFINIBAND
-#ifndef __SCTK_IB_FALLBACK_H_
-#define __SCTK_IB_FALLBACK_H_
+
+#ifndef __SCTK_IB_MPI_H_
+#define __SCTK_IB_MPI_H_
+
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-#ifndef __SCTK_ROUTE_H_
-#error "sctk_route must be included before sctk_ib_fallback.h"
-#endif
-
+#include <sctk_route.h>
+#include <sctk_ibufs.h>
 #include <sctk_spinlock.h>
 
-  struct sctk_ibuf_s;
-  struct sctk_ib_polling_s;
+    struct sctk_ibuf_s;
+    struct sctk_ib_polling_s;
 
 #define MAX_STRING_SIZE 2048
-  void sctk_network_init_mpi_ib(sctk_rail_info_t* rail);
+void sctk_network_init_mpi_ib(sctk_rail_info_t* rail);
+
+int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
+       const char from_cp, struct sctk_ib_polling_s* poll);
+int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
+       const char from_cp, struct sctk_ib_polling_s* poll); 
+int sctk_network_poll_all (sctk_rail_info_t* rail);
+
 #ifdef __cplusplus
 }
 #endif
+
 #endif
+
 #endif
+

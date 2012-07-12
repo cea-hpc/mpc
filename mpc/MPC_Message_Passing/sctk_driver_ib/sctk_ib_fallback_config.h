@@ -22,8 +22,8 @@
 /* ######################################################################## */
 #ifdef MPC_USE_INFINIBAND
 
-#ifndef __SCTK__IB_CONFIG_H_
-#define __SCTK__IB_CONFIG_H_
+#ifndef __SCTK_FALLBACK_IB_CONFIG_H_
+#define __SCTK_FALLBACK_IB_CONFIG_H_
 
 #include "infiniband/verbs.h"
 

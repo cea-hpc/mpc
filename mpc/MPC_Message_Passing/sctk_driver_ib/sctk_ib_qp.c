@@ -32,6 +32,7 @@
 #include "sctk_pmi.h"
 #include "sctk_asm.h"
 #include "utlist.h"
+#include "sctk_ib_mpi.h"
 #include <sctk_spinlock.h>
 #include <errno.h>
 
@@ -339,9 +340,9 @@ sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_convert( char* msg)
 {
   sctk_ib_cm_qp_connection_t keys;
   sscanf(msg, "%08x:%08x:%08x",
-      &keys.lid,
-      &keys.qp_num,
-      &keys.psn);
+      (unsigned int *)&keys.lid,
+      (unsigned int *)&keys.qp_num,
+      (unsigned int *)&keys.psn);
 
   sctk_ib_qp_key_print(&keys);
 
@@ -900,7 +901,7 @@ sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
   if ( ( ibuf->flag == SEND_INLINE_IBUF_FLAG
       || ibuf->flag == RDMA_WRITE_INLINE_IBUF_FLAG)
       && ( ( (ibuf->desc.wr.send.send_flags & IBV_SEND_SIGNALED) == 0) ) ) {
-      sctk_ib_polling_t poll;
+      struct sctk_ib_polling_s *poll;
       POLL_INIT(&poll);
 
       /* Decrease the number of pending requests */

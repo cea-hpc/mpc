@@ -29,7 +29,7 @@
 #include "sctk_debug.h"
 #include "sctk_topology.h"
 #include "sctk_tls.h"
-
+#include "sctk_route.h"
 #include "mpcthread.h"
 #include <mpcmp.h>
 #include <sys/time.h>

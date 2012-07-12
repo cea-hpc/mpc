@@ -25,7 +25,7 @@
 #include <sctk_ib_toolkit.h>
 #include <sctk_route.h>
 #include <sctk_net_tools.h>
-
+#include <sctk_ib_prof.h> 
 #include <sctk_ib_fallback.h>
 #include "sctk_ib.h"
 #include <sctk_ibufs.h>

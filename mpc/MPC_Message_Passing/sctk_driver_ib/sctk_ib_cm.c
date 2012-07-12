@@ -723,7 +723,7 @@ static inline void sctk_ib_cm_resizing_rdma_ack_recv(RAIL_ARGS, void* ack, int s
  * - Address of the send region
  * - Address of the recv region
  */
-static inline sctk_ib_cm_resizing_rdma_recv_request(RAIL_ARGS, void* request, int src) {
+static inline int sctk_ib_cm_resizing_rdma_recv_request(RAIL_ARGS, void* request, int src) {
   LOAD_TARG();
   sctk_ib_cm_rdma_connection_t send_keys;
   memset(&send_keys, 0, sizeof(sctk_ib_cm_rdma_connection_t));

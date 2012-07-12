@@ -34,6 +34,8 @@
 #define SCTK_IB_MODULE_NAME "ASYNC"
 #include "sctk_ib_toolkit.h"
 
+
+#include "sctk_ib_low_mem.h"
 #include "sctk_ib.h"
 #include "sctk_ib_async.h"
 #include "sctk_ib_qp.h"

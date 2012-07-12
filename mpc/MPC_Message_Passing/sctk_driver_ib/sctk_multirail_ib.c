@@ -148,12 +148,14 @@ static void sctk_network_init_polling_thread (sctk_rail_info_t* rail) {
 
 /* Choose the topology of the signalization network (ring, torus) */
 static char *__get_signalization_topology(char* topo, size_t size) {
-  char *value;
+    char *value;
 
-  if ( (value = getenv("MPC_IBV_SIGN_TOPO")) != NULL )
-    snprintf(topo, size, "%s", value);
-  else  /* Torus is the default */
-    snprintf(topo, size, "%s", "torus");
+    if ( (value = getenv("MPC_IBV_SIGN_TOPO")) != NULL )
+        snprintf(topo, size, "%s", value);
+    else  /* Torus is the default */
+        snprintf(topo, size, "%s", "torus");
+
+    return topo;
 }
 
 /************ INIT ****************/
@@ -227,7 +229,8 @@ void sctk_network_finalize_multirail_ib (){
   int i;
   if (rails) {
     for(i = 0; i < NB_RAILS; i++){
-      sctk_ib_prof_finalize(rails[i]);
+      TODO("Check those *_info_t typedef coherency");
+      sctk_ib_prof_finalize((sctk_ib_rail_info_t *)rails[i]);
     }
   }
 }

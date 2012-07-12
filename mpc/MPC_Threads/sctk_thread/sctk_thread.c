@@ -31,6 +31,11 @@ MonoAssembly *assembly;
 MonoDomain *domain;
 #endif
 
+
+#ifdef MPC_USE_INFINIBAND
+#include <sctk_ib_cp.h>
+#endif
+
 #ifdef SCTK_USE_GC
 #include <gc.h>
 #endif

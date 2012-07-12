@@ -623,6 +623,16 @@ end_section
 sctk_echo
 fi
 
+if test "$SCTK_DEBUG" = "1" ; then
+    begin_section "Enabling -Werror and -Wall as we are running in debug mode"
+    SCTK_CHECK_OPTION "-Wall -Werror -Wno-unused-variable"
+    end_section
+
+    sctk_echo
+fi
+
+
+
 COMPILER_SPECIFC_FLAGS="$COMPILER_SPECIFC_FLAGS $SCTK_CFLAGS_NON_GNU"
 
 if test "$SCTK_NOCREATE" != "1" ; then

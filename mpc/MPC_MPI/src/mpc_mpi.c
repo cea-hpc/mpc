@@ -4955,6 +4955,8 @@ __INTERNAL__PMPI_Attr_set_fortran (int keyval)
   MPI_Comm comm = MPI_COMM_WORLD;
   mpc_mpi_data_t* tmp;
 
+  tmp = mpc_mpc_get_per_task_data();
+
   if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
     {
       MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");

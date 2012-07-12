@@ -35,6 +35,7 @@
 #include "sctk_ib_fallback.h"
 #include "utlist.h"
 #include "sctk_ib_fallback.h"
+#include "sctk_ib_mpi.h"
 
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"
@@ -112,6 +113,8 @@ extern volatile int sctk_online_program;
 #define CHECK_ONLINE_PROGRAM do {         \
   if (sctk_online_program != 1) return 0; \
 }while(0);
+
+
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
@@ -227,7 +230,8 @@ void sctk_ib_cp_finalize_task(int rank) {
 #endif
 }
 
-static inline int __cp_poll(const struct sctk_rail_info_s const* rail, struct sctk_ib_polling_s *poll, sctk_ibuf_t * volatile * const list, sctk_spinlock_t *lock, sctk_ib_cp_task_t *task, char from_global){
+static inline int __cp_poll(const sctk_rail_info_t const* rail, struct sctk_ib_polling_s *poll, sctk_ibuf_t * volatile * const list, sctk_spinlock_t *lock, sctk_ib_cp_task_t *task, char from_global){
+
   sctk_ibuf_t *ibuf = NULL;
   int nb_found = 0;
 #ifdef SCTK_IB_PROFILER
@@ -250,12 +254,11 @@ retry:
         s = sctk_atomics_get_timestamp();
       }
 #endif
-
       /* Run the polling function according to the type of message */
       if (ibuf->cq == recv_cq) {
-        sctk_network_poll_recv_ibuf(rail, ibuf, 1, poll);
+        sctk_network_poll_recv_ibuf((sctk_rail_info_t *)rail, ibuf, 1, poll);
       } else {
-        sctk_network_poll_send_ibuf(rail, ibuf, 1, poll);
+        sctk_network_poll_send_ibuf((sctk_rail_info_t *)rail, ibuf, 1, poll);
       }
 
 //      if (from_global == 0) OPA_decr_int(&numas[task->node].pending_nb);

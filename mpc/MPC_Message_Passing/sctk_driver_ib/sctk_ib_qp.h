@@ -246,6 +246,9 @@ void sctk_ib_qp_allocate_rts(struct sctk_ib_rail_info_s* rail_ib,
 sctk_ib_qp_allocate_reset(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t *remote);
 
+void
+sctk_ib_qp_free(sctk_ib_qp_t* remote);
+
   struct ibv_srq*
 sctk_ib_srq_init(struct sctk_ib_rail_info_s* rail_ib,
     struct ibv_srq_init_attr* attr);
