@@ -435,7 +435,7 @@ __mpcomp_start_sections_parallel_region (int arg_num_threads, void *(*func) (voi
       current_info->next_section[0] = 1 ;
 
 
-#warning "TODO Only one way to distribute thread in case of parallel sections"
+TODO("Only one way to distribute thread in case of parallel sections")
       /* Fill the microthread structure with these new threads */
       for (i = num_threads - 1; i >= 0; i--)
 	{
@@ -580,7 +580,7 @@ __mpcomp_start_sections_parallel_region (int arg_num_threads, void *(*func) (voi
       sctk_free (new_info);
     }
 
-#warning "TODO can we only reset sections-team info?"
+TODO("can we only reset sections-team info?")
   /* Re-initializes team info for this thread */
   __mpcomp_reset_team_info (current_info, num_threads);
 

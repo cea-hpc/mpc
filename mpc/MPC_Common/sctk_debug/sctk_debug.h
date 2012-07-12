@@ -81,6 +81,20 @@ extern "C"
   #endif
 #endif
 
+#ifdef SCTK_DEBUG_MESSAGES
+    /* Add todo support (as stated in GCC doc
+    * Supported since GCC 4.4.7 ignored in previous versions*/ 
+    #define DO_PRAGMA(x) _Pragma (#x)
+    
+    #define TODO(x) DO_PRAGMA(message ("TODO - " #x))
+    #define INFO(x) DO_PRAGMA(message ("INFO - " #x))
+
+#else
+     #define TODO(x)
+     #define INFO(x)
+#endif
+
+
   void sctk_silent_debug (const char *fmt, ...);
   void sctk_log (FILE * file, const char *fmt, ...);
   void sctk_warning (const char *fmt, ...);

@@ -412,7 +412,7 @@ sctk_extls_keep ( int *scopes )
 void
 sctk_extls_delete ()
 {
-#warning "Pas de liberation des extls"
+TODO("Liberation des extls")
 }
 
 /*

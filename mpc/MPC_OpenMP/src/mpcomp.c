@@ -390,7 +390,7 @@ __mpcomp_wrapper_op (void *arg)
   if (info->context == 3)
     {
       sctk_microthread_vp_t *my_vp;
-#warning "TODO to translate"
+TODO("to translate")
       /* Pour repasser la main à la pile principale de dummy_func */
       my_vp = &(info->task->__list[info->vp]);
       sctk_nodebug ("__mpcomp_wrapper_op: Restore main (context=3)");
@@ -1284,7 +1284,7 @@ void __mpcomp_flush() {
 
   __mpcomp_init ();
 
-#warning "__mpcomp_flush: need to call mpcomp_macro_scheduler"
+INFO("__mpcomp_flush: need to call mpcomp_macro_scheduler")
 
   sctk_nodebug( "__mpcomp_flush: entering..." ) ;
 

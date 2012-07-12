@@ -525,7 +525,7 @@ MPC_CREATE_INTERN_FUNC (MAXLOC);
   if (datatype >= sctk_user_data_types_max)	\
     MPC_ERROR_REPORT (comm, MPC_ERR_TYPE, "");
 
-#warning "To optimize"
+TODO("To optimize")
 /* #define mpc_check_comm(com,comm)		\ */
 /*   if(sctk_thread_getspecific_mpc_per_comm(__MPC_get_task_specific (),com) == NULL)	\ */
 /*     MPC_ERROR_REPORT(comm,MPC_ERR_COMM,"") */
@@ -1481,7 +1481,7 @@ PMPC_Checkpoint_timed (unsigned int sec, MPC_Comm comm)
 	      __MPC_Barrier (MPC_COMM_WORLD);
 
 #if defined(__GNU_COMPILER) || defined(__INTEL_COMPILER)
-#warning "Si on redemarre , recr�ation des commnicateurs"
+INFO("Si on redemarre , recreation des commnicateurs")
 #endif
 	    }
 	}
@@ -2300,7 +2300,7 @@ __MPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
       tmp_buf = &(thread_specific->buffer_async.buffer_async[buffer_rank]);
       thread_specific->buffer_async.buffer_async_rank =
 	(buffer_rank + 1) % MAX_MPC_BUFFERED_MSG;
-#warning "To optimize"
+TODO("To optimize")
 
       if (sctk_mpc_completion_flag(&(tmp_buf->request)) == SCTK_MESSAGE_DONE)
 	{
@@ -2759,7 +2759,7 @@ PMPC_Waitsome (mpc_msg_count incount,
 	}
       if (done == 0)
 	{
-#warning "wait_for_value_and_poll should be used here"
+TODO("wait_for_value_and_poll should be used here")
 	  sctk_thread_yield ();
 	}
     }
@@ -2796,7 +2796,7 @@ PMPC_Waitany (mpc_msg_count count,
 		}
 	    }
 	}
-#warning "wait_for_value_and_poll should be used here"
+TODO("wait_for_value_and_poll should be used here")
       sctk_thread_yield ();
     }
 }
@@ -3017,8 +3017,7 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
       tmp_buf = &(thread_specific->buffer.buffer[buffer_rank]);
       thread_specific->buffer.buffer_rank =
 	(buffer_rank + 1) % MAX_MPC_BUFFERED_MSG;
-#warning "To optimize"
-
+TODO("To optimize")
       if (sctk_mpc_completion_flag(&(tmp_buf->request)) != SCTK_MESSAGE_DONE)
 	{
 	  msg = &header;
@@ -4133,7 +4132,7 @@ __MPC_Comm_free (MPC_Comm * comm)
     }
   MPC_Comm old_comm = *comm;
 
-#warning "Comm free disabled"
+  INFO("Comm free disabled")
   MPC_ERROR_SUCESS();
   sctk_nodebug ("Comm free %d", old_comm);
   mpc_check_comm (old_comm, MPC_COMM_WORLD);

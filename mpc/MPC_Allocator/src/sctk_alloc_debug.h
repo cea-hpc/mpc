@@ -46,7 +46,7 @@
 #define sctk_check_chunk_coherency(a) (void)(0)
 #define sctk_check_alignement(a) (void)(0)
 #else
-#warning "Enable memory checks"
+INFO("Enable memory checks")
 #define sctk_alloc_assert(a) assume(a)
 #define sctk_check_chunk_coherency(a) sctk_check_chunk_coherency_intern(((sctk_malloc_chunk_t *)(a)),__FILE__,__LINE__)
 #define sctk_check_alignement(a) sctk_alloc_assert(SCTK_IS_ALIGNED_OK(a))

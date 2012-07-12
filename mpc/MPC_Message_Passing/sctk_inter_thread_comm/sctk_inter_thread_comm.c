@@ -157,7 +157,7 @@ static inline void sctk_internal_ptp_add_send_incomming(sctk_internal_ptp_t* tmp
     sctk_spinlock_unlock(&(tmp->lists.incomming_send.lock));
 }
 #else
-#warning "Use blocking version of send/recv message"
+#warning "Using blocking version of send/recv message"
 static inline void sctk_internal_ptp_add_recv_incomming(sctk_internal_ptp_t* tmp,
 							sctk_thread_ptp_message_t * msg){
     msg->tail.distant_list.msg = msg;
@@ -322,7 +322,7 @@ static inline void sctk_ptp_copy_tasks_insert(sctk_msg_list_t* ptr_recv,
   tmp->msg_send = ptr_send->msg;
   tmp->msg_recv = ptr_recv->msg;
 
-#warning "Add parapmeter to deal with task engine"
+TODO("Add parapmeter to deal with task engine")
 #ifdef SCTK_DISABLE_TASK_ENGINE
   tmp->msg_send->tail.message_copy(tmp);
 #else
@@ -1405,7 +1405,7 @@ void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_ch
  * Mostly used by the file mpc.c
  * */
 void sctk_send_message (sctk_thread_ptp_message_t * msg){
-#warning "To optimize"
+TODO("To optimize")
   /*
       msg->tail.need_check_in_wait should be optimize by adding self polling in wait and test on myself
    */

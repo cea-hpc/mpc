@@ -469,7 +469,7 @@ __mpcomp_start_parallel_guided_loop (int arg_num_threads, void *(*func)
 				     (void *), void *shared, int lb, int b,
 				     int incr, int chunk_size)
 {
-#warning "TODO implement #pragma omp parallel for schedule(guided)"
+TODO("implement #pragma omp parallel for schedule(guided)")
   not_implemented ();
 }
 

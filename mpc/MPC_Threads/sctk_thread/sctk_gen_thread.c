@@ -229,7 +229,7 @@ static int
 sctk_gen_thread_attr_setguardsize (sctk_thread_attr_t * __attr,
 				   size_t __guardsize)
 {
-  #warning "Calls to pthread_attr_setguardsize () allowed but without effect"
+  TODO("Calls to pthread_attr_setguardsize () allowed but without effect")
   //not_initialized ();
   //sctk_touch_ptr (__attr);
   //sctk_touch_long (__guardsize);
@@ -1044,7 +1044,7 @@ sctk_gen_thread_setcanceltype (int __type, int *__oldtype)
 static int
 sctk_gen_thread_setconcurrency (int __level)
 {
-  #warning "Calls to pthread_setconcurrency () allowed but without effect"
+  TODO("Calls to pthread_setconcurrency () allowed but without effect")
   //not_initialized ();
   //sctk_touch_int (__level);
   return 0;

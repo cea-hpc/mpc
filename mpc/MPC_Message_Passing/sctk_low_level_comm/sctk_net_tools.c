@@ -31,7 +31,7 @@
   void sctk_net_read_in_fd (sctk_thread_ptp_message_t * msg,
 			     int fd)
   {
-#warning "Deal with partial reception"
+TODO("Deal with partial reception")
     switch(msg->tail.message_type){
     case sctk_message_contiguous: {
       size_t size;

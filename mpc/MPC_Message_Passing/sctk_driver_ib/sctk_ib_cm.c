@@ -979,7 +979,7 @@ int sctk_ib_cm_on_demand_recv(sctk_rail_info_t *rail,
   sctk_rail_info_t *rail_sign;
 
   payload = IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer);
-#warning "OD connections only work with rail number 0! There is no support for multirail now"
+  TODO("OD connections only work with rail number 0! There is no support for multirail now")
   rail_targ = sctk_route_get_rail(0);
   rail_sign = sctk_route_get_rail(1);
 

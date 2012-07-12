@@ -756,7 +756,7 @@ sctk_disable_addr_randomize (int argc, char **argv)
       unsetenv ("SCTK_LINUX_DISABLE_ADDR_RADOMIZE");
       if (getenv ("MPC_DISABLE_BANNER") == NULL)
       {
-#warning "Addr randomize disabled for large scale runs"
+INFO("Addr randomize disabled for large scale runs")
 //        sctk_warning ("Restart execution to disable addr randomize");
       }
       THIS__set_personality (ADDR_NO_RANDOMIZE);

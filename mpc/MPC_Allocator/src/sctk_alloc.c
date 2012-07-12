@@ -969,7 +969,7 @@ void sctk_check_address(void* addr, size_t n){
       i++;
     }
 
-#warning "We miss somme cases"
+   INFO("We miss somme cases")
   /*
     We miss:
         - Out of scope memory
@@ -2657,7 +2657,7 @@ sctk_free_new (sctk_free_chunk_t * chunk, sctk_size_t size,
 /*******************************************/
 
 #ifdef SCTK_COHERENCY_CHECK
-#warning "Enable hard coherency checking"
+INFO("Enable hard coherency checking")
 
 
 #define SCTK_COHERENCY_CHECK_SIZE 24
@@ -4085,7 +4085,7 @@ __sctk_update_memory (char *file_name)
 static mpc_inline void
 __sctk_relocalise_memory (void *ptr, sctk_size_t size)
 {
-#warning "wrong behavior => disabled"
+INFO("wrong behavior => disabled")
 #if 0
   unsigned long pos;
   unsigned long i;
@@ -4257,7 +4257,7 @@ sctk_malloc (sctk_size_t size)
 void *
 sctk_tmp_malloc (sctk_size_t size)
 {
-#warning "Should be optimize"
+TODO("Should be optimized")
   return sctk_malloc (size);
 }
 
@@ -5224,7 +5224,7 @@ sctk_user_mmap (void *start, size_t length, int prot, int flags,
   void *res = MAP_FAILED;
   if (flags & MAP_FIXED)
     {
-#warning "MAP_FIXED not implemented"
+        INFO("MAP_FIXED not implemented")
     }
   else
     {
@@ -5243,7 +5243,7 @@ end:
 int
 sctk_user_munmap (void *start, size_t length)
 {
-#warning "munmap not implemented"
+    INFO("munmap not implemented")
   return 1;
 }
 

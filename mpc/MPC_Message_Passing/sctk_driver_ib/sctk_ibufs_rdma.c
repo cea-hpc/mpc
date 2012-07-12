@@ -814,7 +814,7 @@ void sctk_ibuf_rdma_connection_cancel(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t
 
   /* We reset the state to 'reset' because we do not support the RDMA deconnection for now.
    * In a next release, we need to change to deconnected */
-#warning "We set the state of the route to reset for avoiding a future RDMA OD connection. This warning will be removed in the next MPC release"
+INFO("We set the state of the route to reset for avoiding a future RDMA OD connection. This will be removed in the next MPC release")
   sctk_ibuf_rdma_set_remote_state_rts(remote, state_reset);
 }
 
@@ -899,7 +899,7 @@ void sctk_ibuf_rdma_check_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *rem
       }
     }
 #if IBV_RDMA_RESIZING == 1
-#warning "Resizing enabled"
+INFO("Resizing enabled")
   } else if (sctk_ibuf_rdma_get_remote_state_rts(remote) == state_connected) {
 
     /* Check if we need to resize the RDMA */

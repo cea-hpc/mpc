@@ -28,9 +28,9 @@
 #include "sctk_debug.h"
 #include "sctk_spinlock.h"
 #include "sctk.h"
+
+
 #include "sctk_shell_colors.h"
-
-
 
 #ifdef MPC_Debugger
 #include <sctk_debugger.h>

@@ -29,6 +29,7 @@
 #include <mpcmp.h>
 #include <sctk_reorder.h>
 #include <sctk_ib.h>
+#include <opa_primitives.h>
 
 #ifdef __cplusplus
 extern "C"

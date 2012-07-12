@@ -42,7 +42,7 @@
 #include "mpc_mpi_weak.h"
 #endif
 
-#warning "Optimize algorithme for derived types"
+TODO("Optimize algorithme for derived types")
 
 
 static int __INTERNAL__PMPI_Attr_set_fortran (int keyval);
@@ -53,7 +53,7 @@ sctk_char_fortran_to_c (char *buf, long int size)
   char *tmp;
   long int i;
   tmp = sctk_malloc (size + 1);
-#warning "check memory liberation"
+TODO("check memory liberation")
 
   for (i = 0; i < size; i++)
     {
@@ -528,7 +528,7 @@ __sctk_init_mpi_errors ()
   if ((datatype >= sctk_user_data_types_max) && (sctk_is_derived_type(datatype) != 1)) \
     MPI_ERROR_REPORT (comm, MPI_ERR_TYPE, "");
 
-#warning "to optimize"
+TODO("to optimize")
 #define mpi_check_comm(com,comm)		\
   if(mpc_mpc_get_per_comm_data(com) == NULL)	\
     MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"")
@@ -3071,7 +3071,7 @@ __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype datatype,
       *elements = 0;
     }
 
-#warning "behave as get_count"
+INFO("behave as get_count")
 
   return res;
 }
@@ -3618,7 +3618,7 @@ __INTERNAL__PMPI_Alltoall (void *sendbuf, int sendcount,
 {
   if (sctk_is_derived_type (sendtype) || sctk_is_derived_type (recvtype))
     {
-#warning "Should be optimized like PMPC_Alltoall"
+TODO("Should be optimized like PMPC_Alltoall")
       int i;
       int size;
       int rank;
@@ -3665,7 +3665,7 @@ __INTERNAL__PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 {
   if (sctk_is_derived_type (sendtype) || sctk_is_derived_type (recvtype))
     {
-#warning "Should be optimized like PMPC_Alltoallv"
+TODO("Should be optimized like PMPC_Alltoallv")
       int i;
       int size;
       int rank;
@@ -4943,7 +4943,7 @@ __INTERNAL__PMPI_Keyval_create (MPI_Copy_function * copy_fn,
 static int
 __INTERNAL__PMPI_Keyval_free (int *keyval)
 {
-  #warning "Optimize to free memory"
+  TODO("Optimize to free memory")
   *keyval = MPI_KEYVAL_INVALID;
   return MPI_SUCCESS;
 }
@@ -5488,7 +5488,7 @@ __INTERNAL__PMPI_Cart_create (MPI_Comm comm_old, int ndims, int *dims,
       MPI_ERROR_REPORT (comm_old, MPI_ERR_COMM, "too small group size");
     }
 
-#warning "Very simple approach never reorder nor take care of hardware topology"
+INFO("Very simple approach never reorder nor take care of hardware topology")
 
   if (nb_tasks == size)
     {
@@ -5607,7 +5607,7 @@ __INTERNAL__PMPI_Dims_create (int nnodes, int ndims, int *dims)
   nnodes = nnodes / prod;
 
   /*Compute decomposition */
-#warning "Approximate dims decomposition"
+INFO("Approximate dims decomposition")
   j = 0;
   for (i = 2; i <= nnodes;)
     {
@@ -5660,7 +5660,7 @@ __INTERNAL__PMPI_Graph_create (MPI_Comm comm_old, int nnodes, int *index,
   int size;
   __INTERNAL__PMPI_Comm_size (comm_old, &size);
 
-#warning "Very simple approach never reorder nor take care of hardware topology"
+INFO("Very simple approach never reorder nor take care of hardware topology")
   if (nnodes == size)
     {
       res = __INTERNAL__PMPI_Comm_dup (comm_old, comm_graph);
@@ -6268,7 +6268,7 @@ __INTERNAL__PMPI_Cart_map (MPI_Comm comm, int ndims, int *dims,
       nnodes *= dims[i];
     }
 
-#warning "Should be optimized"
+TODO("Should be optimized")
   res = __INTERNAL__PMPI_Comm_rank (comm, newrank);
 
   if (*newrank > nnodes)
@@ -6285,7 +6285,7 @@ __INTERNAL__PMPI_Graph_map (MPI_Comm comm, int nnodes, int *index,
 {
   int res;
 
-#warning "Should be optimized"
+TODO("Should be optimized")
   res = __INTERNAL__PMPI_Comm_rank (comm, newrank);
 
   if (*newrank > nnodes)
@@ -8232,7 +8232,7 @@ PMPI_Comm_set_name (MPI_Comm comm, char *comm_name)
 }
 
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
-#warning "Default mpc_user_main__ has been removed because of TLS compilation..."
+INFO("Default mpc_user_main__ has been removed because of TLS compilation...")
 #if 0
 int mpc_user_main__ (int argc, char **argv);
 int
