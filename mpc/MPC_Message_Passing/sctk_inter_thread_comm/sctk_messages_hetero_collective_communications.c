@@ -624,8 +624,8 @@ static void sctk_allreduce_hetero_messages_hetero_intern (const void *buffer_in,
     buff_out = (void**) allreduce->buff_out;
 
     /* Fill the buffer entry for all tasks */
-    buff_in[task_id_in_node] = (void *)buffer_in;
-    buff_out[task_id_in_node] = (void *)buffer_out;
+    buff_in[task_id_in_node] = buffer_in;
+    buff_out[task_id_in_node] = buffer_out;
     sctk_atomics_write_barrier();
 
     /* Last entry */
@@ -704,8 +704,8 @@ void sctk_allreduce_hetero_messages_init(struct sctk_internal_collectives_struct
   allreduce->generation = 0;
   allreduce->buff_in = sctk_malloc(nb_tasks_in_node * sizeof(void*));
   allreduce->buff_out = sctk_malloc(nb_tasks_in_node * sizeof(void*));
-  memset((void *)allreduce->buff_in, 0, nb_tasks_in_node * sizeof(void*));
-  memset((void *)allreduce->buff_out, 0, nb_tasks_in_node * sizeof(void*));
+  memset(allreduce->buff_in, 0, nb_tasks_in_node * sizeof(void*));
+  memset(allreduce->buff_out, 0, nb_tasks_in_node * sizeof(void*));
 }
 
 /************************************************************************/

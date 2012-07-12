@@ -266,7 +266,7 @@ sctk_communicator_get_new_id(int local_root, int rank,
     sctk_nodebug("Every one try %d allreduce %d",comm,origin_communicator);
     /* Check if available every where*/
     ti = comm;
-    sctk_all_reduce(&ti,&comm,sizeof(sctk_communicator_t),1,(MPC_Op_f)sctk_comm_reduce,
+    sctk_all_reduce(&ti,&comm,sizeof(sctk_communicator_t),1,sctk_comm_reduce,
 		    origin_communicator,0);
 
     sctk_nodebug("DONE Every one try %d allreduce %d",comm,origin_communicator);
