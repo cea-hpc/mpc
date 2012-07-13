@@ -275,6 +275,7 @@ void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_no
 	{
 		SCTK_PDEBUG("Tried to move pages to node %d",target_numa_node);
 		warning("Failed to move pages on NUMA node.");
+		sctk_alloc_pwarning("numa node id : %d, size : %lu, ptr=%p",target_numa_node,size,addr);
 		warning(strerror(res));
 	}
 }

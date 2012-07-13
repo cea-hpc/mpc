@@ -35,6 +35,7 @@ extern "C"
 //#include <WinSock.h>
 #endif
 #include "sctk_alloc_lock.h"
+#include "sctk_alloc_common.h"
 
 /************************** CONSTS *************************/
 
@@ -103,7 +104,7 @@ struct sctk_alloc_spy_event_init
 struct sctk_alloc_spy_event_add_macro_bloc
 {
 	struct sctk_alloc_macro_bloc * bloc;
-	unsigned long size;
+	sctk_size_t size;
 };
 
 /************************** STRUCT *************************/
@@ -129,46 +130,46 @@ struct sctk_alloc_spy_event_flush_rfq_entry
 struct sctk_alloc_spy_event_realloc
 {
 	void * orig_ptr;
-	unsigned long new_requested_size;
+	sctk_size_t new_requested_size;
 };
 
 /************************** STRUCT *************************/
 struct sctk_alloc_spy_event_chain_alloc
 {
-	unsigned long request;
+	sctk_size_t request;
 	void * ptr;
-	unsigned long size;
+	sctk_size_t size;
 	void * realloc_orig;
-	unsigned long boundary;
+	sctk_size_t boundary;
 };
 
 /************************** STRUCT *************************/
 struct sctk_alloc_spy_event_chain_free
 {
 	void * ptr;
-	unsigned long size;
+	sctk_size_t size;
 };
 
 /************************** STRUCT *************************/
 struct sctk_alloc_spy_event_chain_split
 {
 	void * base_addr;
-	unsigned long chunk_size;
-	unsigned long residut_size;
+	sctk_size_t chunk_size;
+	sctk_size_t residut_size;
 };
 
 /************************** STRUCT *************************/
 struct sctk_alloc_spy_event_chain_merge
 {
 	void * base_addr;
-	unsigned long size;
+	sctk_size_t size;
 };
 
 /************************** STRUCT *************************/
 struct sctk_alloc_spy_event
 {
 	enum sctk_alloc_spy_event_type type;
-	unsigned long rdtsc;
+	sctk_size_t rdtsc;
 	union {
 		struct sctk_alloc_spy_event_init evt_init;
 		struct sctk_alloc_spy_event_init evt_destroy;
@@ -193,7 +194,7 @@ struct sctk_alloc_spy_chain
 	struct sctk_alloc_spy_chain * next;
 	struct sctk_alloc_chain * chain;
 	sctk_alloc_spinlock_t lock;
-	unsigned char next_is_realloc;
+	void * next_is_realloc;
 };
 
 /************************* FUNCTION ************************/
@@ -219,13 +220,13 @@ void sctk_alloc_spy_emit_event_free_macro_bloc(struct sctk_alloc_chain * chain,s
 void sctk_alloc_spy_emit_event_remote_free(struct sctk_alloc_chain * local_chain,struct sctk_alloc_chain * distant_chain,void * ptr);
 void sctk_alloc_spy_emit_event_flush_rfq(struct sctk_alloc_chain * chain,int nb_entries);
 void sctk_alloc_spy_emit_event_flush_rfq_entry(struct sctk_alloc_chain * chain,void * ptr);
-void sctk_alloc_spy_emit_event_chain_alloc(struct sctk_alloc_chain * chain,unsigned long request,void * ptr,unsigned long size,unsigned long boundary);
-void sctk_alloc_spy_emit_event_chain_free(struct sctk_alloc_chain * chain,void * ptr,unsigned long size);
-void sctk_alloc_spy_emit_event_chain_huge_alloc(struct sctk_alloc_chain * chain,unsigned long request,void * ptr,unsigned long size,unsigned long boundary);
-void sctk_alloc_spy_emit_event_chain_huge_free(struct sctk_alloc_chain * chain,void * ptr,unsigned long size);
-void sctk_alloc_spy_emit_event_chain_split(struct sctk_alloc_chain * chain,void * base_addr,unsigned long chunk_size,unsigned long residut_size);
-void sctk_alloc_spy_emit_event_chain_merge(struct sctk_alloc_chain * chain, void * base_addr,unsigned long size);
-void sctk_alloc_spy_emit_event_next_is_realloc(struct sctk_alloc_chain * chain, void * orig_ptr,unsigned long new_requested_size);
+void sctk_alloc_spy_emit_event_chain_alloc(struct sctk_alloc_chain * chain,sctk_size_t request,void * ptr,sctk_size_t size,sctk_size_t boundary);
+void sctk_alloc_spy_emit_event_chain_free(struct sctk_alloc_chain * chain,void * ptr,sctk_size_t size);
+void sctk_alloc_spy_emit_event_chain_huge_alloc(struct sctk_alloc_chain * chain,sctk_size_t request,void * ptr,sctk_size_t size,sctk_size_t boundary);
+void sctk_alloc_spy_emit_event_chain_huge_free(struct sctk_alloc_chain * chain,void * ptr,sctk_size_t size);
+void sctk_alloc_spy_emit_event_chain_split(struct sctk_alloc_chain * chain,void * base_addr,sctk_size_t chunk_size,sctk_size_t residut_size);
+void sctk_alloc_spy_emit_event_chain_merge(struct sctk_alloc_chain * chain, void * base_addr,sctk_size_t size);
+void sctk_alloc_spy_emit_event_next_is_realloc(struct sctk_alloc_chain * chain, void * orig_ptr,sctk_size_t new_requested_size);
 
 /************************* FUNCTION ************************/
 int sctk_alloc_spy_exename_filter_accept(void);

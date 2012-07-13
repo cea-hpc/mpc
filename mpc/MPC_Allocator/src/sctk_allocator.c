@@ -386,12 +386,13 @@ SCTK_STATIC void sctk_alloc_free_list_remove(struct sctk_thread_pool * pool,stru
 SCTK_STATIC struct sctk_alloc_free_chunk * sctk_alloc_find_adapted_free_chunk(sctk_alloc_free_list_t * list,sctk_size_t size)
 {
 	struct sctk_alloc_free_chunk * fchunk;
+
 	//error
 	assert(list!=NULL);
 
 	//first in the list fo oldest one -> FIFO
 	fchunk = list->next;
-	while (fchunk != list && sctk_alloc_get_chunk_header_large_size(&fchunk->header) < size)
+	while (fchunk != NULL && fchunk != list && sctk_alloc_get_chunk_header_large_size(&fchunk->header) < size)
 		fchunk = fchunk->next;
 
 	if (fchunk == list)
@@ -2254,8 +2255,9 @@ void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_n
 
 	#ifdef HAVE_LIBNUMA
 	//remap the struct itself
-	if (migrate_chain_struct)
-		sctk_alloc_migrate_numa_mem(chain,sizeof(struct sctk_alloc_chain),target_numa_node);
+	/** @todo Get error on cassard ??? **/
+	//if (migrate_chain_struct)
+	//	sctk_alloc_migrate_numa_mem(chain,sizeof(struct sctk_alloc_chain),target_numa_node);
 
 	//remap the content
 	if (migrate_chain_struct)

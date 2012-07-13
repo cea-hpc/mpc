@@ -488,8 +488,7 @@ void sctk_alloc_spy_emit_event_flush_rfq_entry(struct sctk_alloc_chain * chain,v
  * @param size Define the real allocated size (with bloc header)
  * @param boundary Define the requested boundary to fulfill (this is for memalign profiling).
 **/
-#warning Declare sctk_size_t instead of unsigned long
-void sctk_alloc_spy_emit_event_chain_alloc(struct sctk_alloc_chain * chain,unsigned long request,void * ptr,unsigned long size,unsigned long boundary)
+void sctk_alloc_spy_emit_event_chain_alloc(struct sctk_alloc_chain * chain,sctk_size_t request,void * ptr,sctk_size_t size,sctk_size_t boundary)
 {
 	//get entry
 	struct sctk_alloc_spy_event event;
@@ -517,8 +516,7 @@ void sctk_alloc_spy_emit_event_chain_alloc(struct sctk_alloc_chain * chain,unsig
  * @param ptr Define the body address of the bloc to free.
  * @param size Define the real allocated size (with bloc header)
 **/
-#warning Declare sctk_size_t instead of unsigned long
-void sctk_alloc_spy_emit_event_chain_free(struct sctk_alloc_chain * chain,void * ptr,unsigned long size)
+void sctk_alloc_spy_emit_event_chain_free(struct sctk_alloc_chain * chain,void * ptr,sctk_size_t size)
 {
 	//get entry
 	struct sctk_alloc_spy_event event;
@@ -542,8 +540,7 @@ void sctk_alloc_spy_emit_event_chain_free(struct sctk_alloc_chain * chain,void *
  * @param size Define the real allocated size (with bloc header)
  * @param boundary Define the requested boundary to fulfill (this is for memalign profiling).
 **/
-#warning Declare sctk_size_t instead of unsigned long
-void sctk_alloc_spy_emit_event_chain_huge_alloc(struct sctk_alloc_chain * chain,unsigned long request,void * ptr,unsigned long size,unsigned long boundary)
+void sctk_alloc_spy_emit_event_chain_huge_alloc(struct sctk_alloc_chain * chain,sctk_size_t request,void * ptr,sctk_size_t size,sctk_size_t boundary)
 {
 	//get entry
 	struct sctk_alloc_spy_event event;
@@ -571,8 +568,7 @@ void sctk_alloc_spy_emit_event_chain_huge_alloc(struct sctk_alloc_chain * chain,
  * @param ptr Define the body address of the bloc to free.
  * @param size Define the real allocated size (with bloc header)
 **/
-#warning Declare sctk_size_t instead of unsigned long
-void sctk_alloc_spy_emit_event_chain_huge_free(struct sctk_alloc_chain * chain,void * ptr,unsigned long size)
+void sctk_alloc_spy_emit_event_chain_huge_free(struct sctk_alloc_chain * chain,void * ptr,sctk_size_t size)
 {
 	//get entry
 	struct sctk_alloc_spy_event event;
@@ -595,7 +591,7 @@ void sctk_alloc_spy_emit_event_chain_huge_free(struct sctk_alloc_chain * chain,v
  * @param chunk_size Define the size of first chunk (to fit the allocation request). Full size with headers.
  * @param residut_size Define the size of second chunk (the residut). Full size with headers.
 **/
-void sctk_alloc_spy_emit_event_chain_split(struct sctk_alloc_chain * chain,void * base_addr,unsigned long chunk_size,unsigned long residut_size)
+void sctk_alloc_spy_emit_event_chain_split(struct sctk_alloc_chain * chain,void * base_addr,sctk_size_t chunk_size,sctk_size_t residut_size)
 {
 	//get entry
 	struct sctk_alloc_spy_event event;
@@ -618,7 +614,7 @@ void sctk_alloc_spy_emit_event_chain_split(struct sctk_alloc_chain * chain,void 
  * @param base_addr Define the base address of the merged segement.
  * @param size Define the full size of merged segment (with header).
 **/
-void sctk_alloc_spy_emit_event_chain_merge(struct sctk_alloc_chain * chain, void * base_addr,unsigned long size)
+void sctk_alloc_spy_emit_event_chain_merge(struct sctk_alloc_chain * chain, void * base_addr,sctk_size_t size)
 {
 	//get entry
 	struct sctk_alloc_spy_event event;
@@ -639,7 +635,7 @@ void sctk_alloc_spy_emit_event_chain_merge(struct sctk_alloc_chain * chain, void
  * @param orig_ptr The original pointer to free.
  * @param new_requested_size Define the new size requested by user.
 **/
-void sctk_alloc_spy_emit_event_next_is_realloc(struct sctk_alloc_chain * chain, void * orig_ptr, unsigned long new_requested_size)
+void sctk_alloc_spy_emit_event_next_is_realloc(struct sctk_alloc_chain * chain, void * orig_ptr, sctk_size_t new_requested_size)
 {
 	//get entry
 	struct sctk_alloc_spy_event event;

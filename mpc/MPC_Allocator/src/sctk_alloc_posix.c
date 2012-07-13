@@ -637,6 +637,11 @@ void sctk_alloc_posix_numa_migrate(void)
 	//get the current allocation chain
 	local_chain = sctk_current_alloc_chain;
 
+	//if we didn't have an allocation, we can skip this, it will be
+	//create at first use on the current numa node, so automatically OK
+	if (local_chain == NULL)
+		return;
+
 	#ifdef MPC_Common
 	SCTK_PDEBUG("--- Migration on %d",sctk_get_cpu());
 	#endif
