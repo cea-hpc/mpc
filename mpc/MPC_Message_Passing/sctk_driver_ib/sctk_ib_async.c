@@ -137,7 +137,6 @@ void* async_thread(void* arg)
         DESC_EVENT(config, "IBV_EVENT_SRQ_LIMIT_REACHED","SRQ limit was reached", 4, 0);
 
         int limit;
-        int ret, polled;
         limit = config->ibv_max_srq_ibufs_posted;
 
         sctk_ib_low_mem_broadcast(rail);
@@ -154,6 +153,7 @@ void* async_thread(void* arg)
 #endif
 
 #if 0
+        int ret, polled;
         /* We first try to poll and steal from SRQ */
         polled = sctk_network_poll_all_entries(rail_ib);
         /* We try to post new buffers */

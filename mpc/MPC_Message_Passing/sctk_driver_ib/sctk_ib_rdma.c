@@ -193,7 +193,6 @@ static inline sctk_ibuf_t* sctk_ib_rdma_prepare_ack(sctk_rail_info_t* rail,
   sctk_ibuf_t *ibuf;
   sctk_ib_rdma_t *rdma_header;
   sctk_ib_rdma_ack_t *rdma_ack;
-  int low_memory_mode_local;
   size_t ibuf_size = IBUF_GET_RDMA_ACK_SIZE;
 
   ibuf = sctk_ibuf_pick_send(rail_ib, rdma->remote_peer, &ibuf_size,
@@ -554,7 +553,6 @@ sctk_ib_rdma_recv_done_local(sctk_rail_info_t* rail, sctk_thread_ptp_message_t* 
 int
 sctk_ib_rdma_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   sctk_ib_rdma_t *rdma_header;
-  LOAD_RAIL(rail);
   sctk_thread_ptp_message_t *header;
 
   IBUF_CHECK_POISON(ibuf->buffer);

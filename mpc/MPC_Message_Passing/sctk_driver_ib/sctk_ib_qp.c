@@ -35,6 +35,7 @@
 #include "sctk_ib_mpi.h"
 #include <sctk_spinlock.h>
 #include <errno.h>
+#include <string.h>
 
 /* IB debug macros */
 #if defined SCTK_IB_MODULE_NAME
@@ -211,7 +212,7 @@ sctk_ib_cq_init(sctk_ib_device_t* device,
   cq = ibv_create_cq (device->context, config->ibv_cq_depth, NULL, NULL, 0);
 
   if (!cq) {
-    sctk_error("Cannot create Completion Queue");
+    sctk_error("Cannot create Completion Queue %s", strerror(errno));
     sctk_abort();
   }
   return cq;
@@ -566,7 +567,6 @@ sctk_ib_qp_state_rts_attr(struct sctk_ib_rail_info_s* rail_ib,
 sctk_ib_qp_state_reset_attr(struct sctk_ib_rail_info_s* rail_ib,
     uint32_t psn, int *flags)
 {
-  LOAD_CONFIG(rail_ib);
   struct ibv_qp_attr attr;
   memset (&attr, 0, sizeof (struct ibv_qp_attr));
 
@@ -777,8 +777,6 @@ static void* wait_send(void *arg){
     sctk_ib_qp_t *remote, sctk_ibuf_t* ibuf)
 {
   int rc;
-  LOAD_DEVICE(rail_ib);
-  sctk_ib_qp_ondemand_t *od = &device->ondemand;
 
   sctk_nodebug("Send no-lock message to process %d %p", remote->rank, remote->qp);
 
@@ -809,40 +807,10 @@ static void* wait_send(void *arg){
     sctk_ib_qp_t *remote, sctk_ibuf_t* ibuf)
 {
   int rc;
-  LOAD_DEVICE(rail_ib);
-  sctk_ib_qp_ondemand_t *od = &device->ondemand;
 
   sctk_nodebug("Send locked message to process %d %p", remote->rank, remote->qp);
 
   ibuf->remote = remote;
-
-  /* If the route is beeing flushed, we can cancel the QP deconnexion */
-#if 0
-  if (sctk_route_get_state(remote->route_table) == state_flushing) {
-    sctk_warning("Try to interrupt the QP deconnexion");
-    /* FIXME: we do not cancel a deconnexion for the moment */
-    //    sctk_ib_qp_set_deco_canceled(remote, ACK_CANCEL);
-  }
-#endif
-
-  /* We avoid the send of new messages while deconnecting */
-//  sctk_spinlock_read_lock(&remote->lock_send);
-
-#if 0
-#warning "Disabled because of errors"
-  /* Check the state of a QP */
-  if (sctk_route_get_state(remote->route_table) != state_connected ) {
-    sctk_route_table_t* new_route;
-
-    sctk_warning("QP to rank %d deconnected (state:%d). Recomputing route", remote->rank, sctk_route_get_state(remote->route_table));
-    new_route = sctk_get_route_to_process(remote->route_table->key.destination, rail_ib->rail);
-    ib_assume(new_route);
-    remote->route_table = new_route;
-    sctk_ib_toolkit_print_backtrace();
-
-    not_implemented();
-  }
-#endif
 
   rc = ibv_post_send(remote->qp, &(ibuf->desc.wr.send), &(ibuf->desc.bad_wr.send));
   if( rc != 0) {
@@ -857,23 +825,6 @@ static void* wait_send(void *arg){
   }
   sctk_ib_prof_qp_write(remote->rank, ibuf->desc.sg_entry.length,
       sctk_get_time_stamp(), PROF_QP_SEND);
-
-  /* Decomment to support on-demand deconnection */
-#if 0
-  if (remote->ondemand) {
-    ib_assume(od->qp_list_ptr);
-    sctk_spinlock_lock(&od->lock);
-    /* Update the Clock for QP deconnexion. If the bit is set to 1, we change it
-     * to 0 and we go to the next QP */
-    if (remote->R == 1) {
-      remote->R = 0;
-      od->qp_list_ptr = od->qp_list_ptr->next;
-    }
-    sctk_spinlock_unlock(&od->lock);
-  }
-#endif
-
-//  sctk_spinlock_read_unlock(&remote->lock_send);
 }
 
   int

@@ -151,7 +151,6 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
     const char from_cp, struct sctk_ib_polling_s* poll) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   int release_ibuf = 1;
-  const struct ibv_wc wc = ibuf->wc;
 
   /* Switch on the protocol of the received message */
   switch (IBUF_GET_PROTOCOL(ibuf->buffer)) {
@@ -194,7 +193,6 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
 int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
     const char from_cp, struct sctk_ib_polling_s* poll)
 {
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL(ibuf->buffer);
   int release_ibuf = 1;
   const struct ibv_wc wc = ibuf->wc;
@@ -256,13 +254,10 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
 
 static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc,
     struct sctk_ib_polling_s *poll){
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   sctk_ibuf_t *ibuf = NULL;
   ibuf = (sctk_ibuf_t*) wc->wr_id;
   ib_assume(ibuf);
   int dest_task = -1;
-  /* Get the remote associated to the ibuf */
-  const sctk_ib_qp_t const *remote = sctk_ib_qp_ht_find(rail_ib, wc->qp_num);
   ib_assume(remote);
   sctk_ib_prof_qp_write(remote->rank, wc->byte_len, sctk_get_time_stamp(), PROF_QP_RECV);
 

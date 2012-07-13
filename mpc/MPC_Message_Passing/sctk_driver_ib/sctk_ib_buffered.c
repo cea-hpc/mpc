@@ -55,7 +55,6 @@
 int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
     sctk_ib_qp_t* remote, sctk_thread_ptp_message_t * msg, size_t size) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  LOAD_CONFIG(rail_ib);
   /* Maximum size for an eager buffer */
   size = size - sizeof(sctk_thread_ptp_message_body_t);
   int    buffer_index = 0;

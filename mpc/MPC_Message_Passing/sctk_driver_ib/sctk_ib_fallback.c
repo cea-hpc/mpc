@@ -25,7 +25,7 @@
 #include <sctk_ib_toolkit.h>
 #include <sctk_route.h>
 #include <sctk_net_tools.h>
-#include <sctk_ib_prof.h> 
+#include <sctk_ib_prof.h>
 #include <sctk_ib_fallback.h>
 #include "sctk_ib.h"
 #include <sctk_ibufs.h>
@@ -170,7 +170,6 @@ static int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
 static int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
     const char from_cp, struct sctk_ib_polling_s* poll)
 {
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL(ibuf->buffer);
   int release_ibuf = 1;
   const struct ibv_wc wc = ibuf->wc;
@@ -220,7 +219,6 @@ static int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
 
 static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc,
     struct sctk_ib_polling_s *poll){
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   sctk_ibuf_t *ibuf = NULL;
   ibuf = (sctk_ibuf_t*) wc->wr_id;
   assume(ibuf);
@@ -231,7 +229,6 @@ static int sctk_network_poll_recv(sctk_rail_info_t* rail, struct ibv_wc* wc,
 
 static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,
     struct sctk_ib_polling_s *poll) {
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   sctk_ibuf_t *ibuf = NULL;
   ibuf = (sctk_ibuf_t*) wc->wr_id;
   assume(ibuf);
@@ -273,9 +270,6 @@ static int sctk_network_poll_all (sctk_rail_info_t* rail) {
 }
 
 static int sctk_network_poll_all_and_steal(sctk_rail_info_t *rail) {
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  LOAD_CONFIG(rail_ib);
-
   /* POLLING */
   return sctk_network_poll_all(rail);
 }
@@ -289,24 +283,17 @@ sctk_network_notify_matching_message_ib (sctk_thread_ptp_message_t * msg,sctk_ra
 /* WARNING: This function can be called with dest == sctk_process_rank */
 static void
 sctk_network_notify_perform_message_ib (int dest, sctk_rail_info_t* rail){
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-
   sctk_network_poll_all_and_steal(rail);
 }
 
 static void
 sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-
   /* POLLING */
   sctk_network_poll_all_and_steal(rail);
 }
 
 static void
 sctk_network_notify_any_source_message_ib (sctk_rail_info_t* rail){
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  int ret;
-
   /* POLLING */
   sctk_network_poll_all_and_steal(rail);
 }

@@ -139,8 +139,7 @@ sctk_ib_mmu_entry_t*
  sctk_ib_mmu_cache_search(sctk_ib_rail_info_t *rail_ib,
     void *ptr, size_t size) {
   LOAD_MMU(rail_ib);
-  LOAD_DEVICE(rail_ib);
-  sctk_ib_mmu_entry_t *mmu_entry = NULL, *tmp = NULL;
+  sctk_ib_mmu_entry_t *mmu_entry = NULL;
   sctk_ib_mmu_ht_key_t key;
 
   /* Construct the key */

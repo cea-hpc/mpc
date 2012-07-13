@@ -48,7 +48,7 @@ sctk_tcp_connect_to (char *name_init,sctk_rail_info_t* rail)
   struct hostent *server;
   char* ip;
   char name[MAX_STRING_SIZE];
-  int portno;
+  int portno = -1;
   int i;
   sprintf(name,"%s",name_init);
 
@@ -190,9 +190,9 @@ void sctk_network_init_tcp_all(sctk_rail_info_t* rail,int sctk_use_tcp_o_ib,
 			       void(*route_init)(sctk_rail_info_t*)){
   char dest_connection_infos[MAX_STRING_SIZE];
   int dest_rank;
-  int dest_socket;
+  int dest_socket = -1;
   int src_rank;
-  int src_socket;
+  int src_socket = -1;
 
   assume(rail->send_message_from_network != NULL);
 

@@ -59,7 +59,6 @@ static void sctk_ib_cm_change_state(sctk_rail_info_t* rail,
     sctk_route_table_t *route_table, sctk_route_state_t state) {
 
   sctk_route_state_t state_before_connexion;
-  struct sctk_ib_qp_s *remote = route_table->data.ib.remote;
   state_before_connexion = sctk_route_get_state(route_table);
 
   switch ( sctk_route_get_origin(route_table) ) {
@@ -526,7 +525,6 @@ static inline void sctk_ib_cm_on_demand_rdma_recv_ack(RAIL_ARGS, void* ack, int 
  */
 static inline void sctk_ib_cm_on_demand_rdma_recv_request(RAIL_ARGS, void* request, int src) {
   LOAD_TARG();
-  LOAD_DEVICE(rail_ib_targ);
   sctk_ib_cm_rdma_connection_t send_keys;
   memset(&send_keys, 0, sizeof(sctk_ib_cm_rdma_connection_t));
 
@@ -820,8 +818,6 @@ void sctk_ib_cm_deco_ack_recv(sctk_rail_info_t *rail, void* ack, int src) {
 }
 
 void sctk_ib_cm_deco_done_ack_recv(sctk_rail_info_t *rail, void* ack, int src) {
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  struct __deco_ack_msg_s * deco_ack = ack;
   /* We can proceed to a QP deconnexion */
   sctk_route_table_t *route_table;
 
@@ -924,9 +920,6 @@ void sctk_ib_cm_deco_done_request_send(sctk_rail_info_t* rail,
  */
 void sctk_ib_cm_deco_ack_send(sctk_rail_info_t* rail,
     sctk_route_table_t* route_table, int ack){
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  sctk_ib_data_t *route;
-  LOAD_DEVICE(rail_ib);
   /* Message to exchange to the peer */
   struct __deco_ack_msg_s msg;
   int dest;
@@ -946,9 +939,6 @@ void sctk_ib_cm_deco_ack_send(sctk_rail_info_t* rail,
 
 void sctk_ib_cm_deco_done_ack_send(sctk_rail_info_t* rail,
     sctk_route_table_t* route_table, int ack){
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  sctk_ib_data_t *route;
-  LOAD_DEVICE(rail_ib);
   /* Message to exchange to the peer */
   struct __deco_ack_msg_s msg;
   int dest;

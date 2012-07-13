@@ -122,8 +122,6 @@ sctk_ibuf_rdma_region_reinit(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* r
     sctk_ibuf_region_t *region, enum sctk_ibuf_channel channel, int nb_ibufs, int size_ibufs) {
   void* ptr = NULL;
   void* ibuf;
-  sctk_ibuf_t* ibuf_ptr = NULL;
-  int i;
 
   ib_assume(nb_ibufs > 0);
   ib_assume(remote->rdma.pool);
@@ -862,7 +860,6 @@ static void sctk_ibuf_rdma_determine_config(sctk_ib_qp_t *remote, int *determine
 }
 
 void sctk_ibuf_rdma_check_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, size_t size) {
-  int iter;
   int determined_size;
   int determined_nb;
   int sample_nb;

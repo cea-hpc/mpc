@@ -46,8 +46,6 @@
 
 
 static inline void sctk_ib_low_mem_request_send(const sctk_rail_info_t* rail, sctk_route_table_t* table){
-  const sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  LOAD_DEVICE(rail_ib);
   sctk_ib_data_t *route;
   /* Message to exchange to the peer */
   sctk_ib_low_mem_t msg;
@@ -64,8 +62,6 @@ static inline void sctk_ib_low_mem_request_send(const sctk_rail_info_t* rail, sc
 }
 
 void sctk_ib_low_mem_request_recv(sctk_rail_info_t* rail, sctk_ib_low_mem_t *msg, int src){
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  LOAD_DEVICE(rail_ib);
   sctk_route_table_t *table;
   sctk_ib_data_t *route;
 
