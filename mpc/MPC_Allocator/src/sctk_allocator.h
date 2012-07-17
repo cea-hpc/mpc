@@ -104,7 +104,13 @@ enum sctk_alloc_chain_flags
 	/** Enable the locks in the chain to use it from multiple threads. **/
 	SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE = 1,
 	/** Disable chunk merge at free time. **/
-	SCTK_ALLOC_CHAIN_DISABLE_MERGE = 2
+	SCTK_ALLOC_CHAIN_DISABLE_MERGE = 2,
+	/**
+	 * Disable global region registry. Caution, in that case, you can't use free/delete on memory
+	 * blocs allocated by this allocation chain. But you do not have the minimam size of 2M for
+	 * macro blocs which is required by region representation.
+	**/
+	SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER = 4
 };
 
 /************************** STRUCT *************************/

@@ -1011,8 +1011,11 @@ void sctk_alloc_chain_destroy(struct sctk_alloc_chain* chain,bool force)
 	sctk_alloc_rfq_destroy(&chain->rfq);
 
 	//unregister segment in regions.
-	region = sctk_alloc_region_get(chain->base_addr);
-	sctk_alloc_region_del_chain(region,chain);
+	if (! (chain->flags & SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER) )
+	{
+		region = sctk_alloc_region_get(chain->base_addr);
+		sctk_alloc_region_del_chain(region,chain);
+	}
 }
 
 /************************* FUNCTION ************************/
@@ -1069,7 +1072,8 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_prepare_and_reg_macro_bloc(struct
 		sctk_alloc_create_stopper((void *)((sctk_addr_t)macro_bloc+size-sizeof(struct sctk_alloc_chunk_header_large)),macro_bloc+1);
 		/** @todo TOTO create a set_entry which accept blocs directly this may be cleaner to maintain **/
 		SCTK_PDEBUG("Reg macro bloc : %p -> %p",macro_bloc,(sctk_addr_t)macro_bloc + sctk_alloc_get_chunk_header_large_size(&macro_bloc->header));
-		sctk_alloc_region_set_entry(chain,macro_bloc);
+		if (! (chain->flags & SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER ))
+			sctk_alloc_region_set_entry(chain,macro_bloc);
 	}
 
 	return vchunk;
@@ -1156,7 +1160,8 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_realloc_macro_bloc(struct sctk_al
 	macro_bloc = (struct sctk_alloc_macro_bloc *)(sctk_alloc_get_addr(vchunk) - sizeof(struct sctk_alloc_macro_bloc));
 
 	//unregister from regions
-	sctk_alloc_region_unset_entry(macro_bloc);
+	if (! (chain->flags & SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER) )
+		sctk_alloc_region_unset_entry(macro_bloc);
 
 	//request a realloc
 	//SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_free_macro_bloc(chain,macro_bloc));
@@ -1323,7 +1328,8 @@ SCTK_STATIC void sctk_alloc_chain_free_macro_bloc(struct sctk_alloc_chain * chai
 
 	//unregister from regions
 	SCTK_PDEBUG("Send macro bloc to memory source 0x%p -> 0x%p.",macro_bloc,(sctk_addr_t)macro_bloc + sctk_alloc_get_chunk_header_large_size(&macro_bloc->header));
-	sctk_alloc_region_unset_entry(macro_bloc);
+	if (! (chain->flags & SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER ))
+		sctk_alloc_region_unset_entry(macro_bloc);
 
 	//free it
 	SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_free_macro_bloc(chain,macro_bloc));
@@ -1392,7 +1398,8 @@ void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 #ifdef SCTK_ALLOC_SPY
 		SCTK_ALLOC_SPY_HOOK(old_size);
 #endif
-		vchunk = sctk_alloc_merge_chunk(&chain->pool,vchunk,vfirst,(sctk_addr_t)chain->end_addr);
+		if (! (chain->flags & SCTK_ALLOC_CHAIN_DISABLE_MERGE) )
+			vchunk = sctk_alloc_merge_chunk(&chain->pool,vchunk,vfirst,(sctk_addr_t)chain->end_addr);
 #ifdef SCTK_ALLOC_SPY
 		SCTK_ALLOC_SPY_COND_HOOK(old_size != sctk_alloc_get_size(vchunk),sctk_alloc_spy_emit_event_chain_merge(chain, sctk_alloc_get_ptr(vchunk),sctk_alloc_get_size(vchunk)));
 #endif
@@ -1465,8 +1472,11 @@ void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sct
 		res = NULL;
 	} else if ( ( vchunk = sctk_alloc_get_chunk((sctk_addr_t)ptr) ) != NULL) {
 		//errors
-		assert(sctk_alloc_region_get_macro_bloc(ptr) != NULL);
-		assert(chain == sctk_alloc_region_get_macro_bloc(ptr)->chain);
+		if (! (chain->flags & SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER ))
+		{
+			assert(sctk_alloc_region_get_macro_bloc(ptr) != NULL);
+			assert(chain == sctk_alloc_region_get_macro_bloc(ptr)->chain);
+		}
 
 		//get chunk header
 		/** @todo Use a function which compute the inner size instead of hacking with sizeof() . **/
@@ -2007,11 +2017,17 @@ SCTK_STATIC void sctk_alloc_region_set_entry(struct sctk_alloc_chain * chain, st
 	//errors
 	assert(macro_bloc != NULL);
 	assert(macro_bloc->chain == NULL || macro_bloc->chain == chain);
+	assert(! (chain->flags & SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER));
 
 	//setup macro bloc chain
 	macro_bloc->chain = chain;
 
-	/** @todo TO OPTIMIZE by avoiding calling sctk_alloc_region_get_entry each time **/
+	//warn if too small
+	if (sctk_alloc_get_chunk_header_large_size(&macro_bloc->header) < SCTK_MACRO_BLOC_SIZE)
+		warning("Caution, using macro blocs smaller than SCTK_MACRO_BLOC_SIZE is dangerous, check usage of flag SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER.");
+
+	/** @TODO TO OPTIMIZE by avoiding calling sctk_alloc_region_get_entry each time. **/
+	/** @TODO Support sub link list for macro_bloc imbrication. **/
 	while (ptr < (sctk_addr_t)macro_bloc + sctk_alloc_get_chunk_header_large_size(&macro_bloc->header))
 	{
 		dest = sctk_alloc_region_get_entry((void *)ptr);
@@ -2355,6 +2371,7 @@ SCTK_STATIC void sctk_alloc_chain_numa_migrate_content(struct sctk_alloc_chain *
 	//errors
 	assert(chain != NULL);
 	assert(target_numa_node >= -1);
+	assume_m(!(chain->flags & SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER),"NUMA migration of allocation chain is not supported in conjunction with SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER.");
 
 	static struct sctk_alloc_region * sctk_alloc_glob_regions[SCTK_ALLOC_MAX_REGIONS];
 
