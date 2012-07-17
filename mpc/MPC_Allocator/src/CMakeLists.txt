@@ -11,11 +11,22 @@ endfunction (cm_export_file)
 #################### DEFINE SOURCES #####################
 Message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-	set(alloc_SRC sctk_alloc_debug.c sctk_allocator.c sctk_alloc_stats.c sctk_alloc_spy.c sctk_alloc_posix.c sctk_alloc_topology.c sctk_alloc_light_mm_source.c sctk_alloc_common.c)
+	set(alloc_SRC sctk_alloc_debug.c sctk_allocator.c sctk_alloc_stats.c sctk_alloc_spy.c sctk_alloc_posix.c sctk_alloc_topology.c sctk_alloc_light_mm_source.c sctk_alloc_common.c sctk_alloc_numa_stat.c)
 else()
-	set(alloc_SRC sctk_allocator.c sctk_alloc_posix.c sctk_alloc_stats.c sctk_alloc_spy.c sctk_alloc_topology.c sctk_alloc_light_mm_source.c sctk_alloc_common.c)
+	set(alloc_SRC sctk_allocator.c sctk_alloc_posix.c sctk_alloc_stats.c sctk_alloc_spy.c sctk_alloc_topology.c sctk_alloc_light_mm_source.c sctk_alloc_common.c sctk_alloc_numa_stat.c)
 endif()
 
+################# CHECK SOME INCLUDE FILES #############
+include(CheckIncludeFile)
+CHECK_INCLUDE_FILE (numaif.h HAVE_NUMAIF_H)
+if(HAVE_NUMAIF_H)
+	add_definitions(-DHAVE_NUMAIF_H)
+endif(HAVE_NUMAIF_H)
+
+#################### CHECK PAGEMAP ######################
+if (EXISTS /proc/self/pagemap)
+	add_definitions(-DHAVE_LINUX_PAGEMAP_H)
+endif(EXISTS /proc/self/pagemap)
 
 #################### ADD INCLUDE DIRS ###################
 include_directories(${HWLOC_INCLUDE_DIRS})
@@ -63,6 +74,8 @@ if(WIN32)
 endif(WIN32)
 
 
+IF(WIN32)
+IF(EXISTS ${CMAKE_SOURCE_DIR}/tests/simple_malloc.cpp)
 find_package(OpenMP REQUIRED)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
 set(UNITTEST_INCLUDE_DIR ${CMAKE_SOURCE_DIR}/tools/svUnitTest_fake/)
@@ -70,4 +83,5 @@ include_directories(${UNITTEST_INCLUDE_DIR} ${CMAKE_SOURCE_DIR}/src)
 
 add_executable(toto1 ../tests/simple_malloc.cpp win_export/mpc_alloc_win_load.c)
 target_link_libraries(toto1 mpc_win_allocator)
-
+ENDIF(EXISTS ${CMAKE_SOURCE_DIR}/tests/simple_malloc.cpp)
+ENDIF(WIN32)

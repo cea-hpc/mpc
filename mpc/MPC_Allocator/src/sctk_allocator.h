@@ -113,6 +113,9 @@ enum sctk_alloc_chain_flags
 };
 
 /************************** STRUCT *************************/
+struct sctk_alloc_numa_stat_s;
+
+/************************** STRUCT *************************/
 /**
  * Bloc common header between small and large bloc. It define the type and status of current bloc.
  * With this values, we can determin the position of the size value and read it.
@@ -368,6 +371,15 @@ struct sctk_alloc_region_entry
 };
 
 /************************** STRUCT *************************/
+struct sctk_alloc_chain_stat
+{
+	sctk_size_t min_free_size;
+	sctk_size_t max_free_size;
+	sctk_size_t nb_free_chunks;
+	sctk_size_t nb_macro_blocs;
+};
+
+/************************** STRUCT *************************/
 /**
  * Define an entry from region header. For now it simply contain a pointer to the related allocation
  * chain. NULL if not used.
@@ -486,6 +498,11 @@ void sctk_alloc_rfq_register(struct sctk_alloc_rfq * rfq,void * ptr);
 SCTK_STATIC struct sctk_alloc_rfq_entry * sctk_alloc_rfq_extract(struct sctk_alloc_rfq * rfq);
 SCTK_STATIC int sctk_alloc_rfq_count_entries(struct sctk_alloc_rfq_entry * entries);
 SCTK_STATIC void sctk_alloc_rfq_destroy(struct sctk_alloc_rfq * rfq);
+
+/************************* FUNCTION ************************/
+//some stat function for debug
+void sctk_alloc_chain_get_numa_stat(struct sctk_alloc_numa_stat_s * numa_stat,struct sctk_alloc_chain * chain);
+void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain);
 
 #ifdef __cplusplus
 }

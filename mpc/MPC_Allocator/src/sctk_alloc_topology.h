@@ -49,6 +49,7 @@ int sctk_get_numa_node_number (void);
 void sctk_alloc_init_topology(void);
 int sctk_get_preferred_numa_node(void);
 int sctk_alloc_init_on_numa_node(void);
+void sctk_alloc_topology_bind_thread_on_core(int id);
 
 #ifdef HAVE_LIBNUMA
 hwloc_topology_t sctk_get_topology_object(void);

@@ -38,6 +38,8 @@
 #include "sctk_allocator.h"
 #include "sctk_alloc_inlined.h"
 #include "sctk_alloc_topology.h"
+#include "sctk_alloc_numa_stat.h"
+#include "sctk_alloc_light_mm_source.h"
 
 //for getpid
 
@@ -227,13 +229,13 @@ SCTK_STATIC void sctk_alloc_thread_pool_init(struct sctk_thread_pool* pool,const
 int sctk_alloc_optimized_log2_size_t(sctk_size_t value)
 {
 	//vars
-	int res = 0;
+	sctk_size_t res = 0;
 
 	#ifdef HAVE_ASM_BSR
-		while (value > 1) {value = value >> 1 ; res++;};
-	#else
 		if (value != 0)
 			asm volatile ("bsr %1, %0":"=r" (res):"r"(value));
+	#else
+		while (value > 1) {value = value >> 1 ; res++;};
 	#endif
 
 	return res;
@@ -2355,14 +2357,12 @@ SCTK_STATIC void sctk_alloc_chain_numa_migrate_content(struct sctk_alloc_chain *
 	//vars
 	int i;
 	int j;
-	struct sctk_alloc_region * region;
+	struct sctk_alloc_region * region = NULL;
 
 	//errors
 	assert(chain != NULL);
 	assert(target_numa_node >= -1);
 	assume_m(!(chain->flags & SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER),"NUMA migration of allocation chain is not supported in conjunction with SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER.");
-
-	static struct sctk_alloc_region * sctk_alloc_glob_regions[SCTK_ALLOC_MAX_REGIONS];
 
 	//lock the region map
 	sctk_alloc_spinlock_lock(&sctk_alloc_glob_regions_lock);
@@ -2385,6 +2385,137 @@ SCTK_STATIC void sctk_alloc_chain_numa_migrate_content(struct sctk_alloc_chain *
 #endif //HAVE_LIBNUMA
 
 /************************* FUNCTION ************************/
+void sctk_alloc_chain_get_numa_stat(struct sctk_alloc_numa_stat_s * numa_stat,struct sctk_alloc_chain * chain)
+{
+	//vars
+	int i;
+	int j;
+	struct sctk_alloc_region * region = NULL;
+
+	//errors
+	assert(numa_stat != NULL);
+
+	//init stat
+	sctk_alloc_numa_stat_init(numa_stat);
+
+	//lock the region map
+	sctk_alloc_spinlock_lock(&sctk_alloc_glob_regions_lock);
+
+	//loop on all region entries
+	/** @TODO Caution by reading like this we touch empty pages, maybe add a bitmap to avoid that for j. **/
+	for ( i = 0 ; i < SCTK_ALLOC_MAX_REGIONS ; i++)
+	{
+		region = sctk_alloc_glob_regions[i];
+		if (region != NULL)
+			for ( j = 0 ; j < SCTK_REGION_HEADER_ENTRIES ; j++)
+				if (region->entries[j].macro_bloc != NULL)
+					if (region->entries[j].macro_bloc->chain == chain)
+					{
+						sctk_alloc_numa_stat_cumul(numa_stat,region->entries[j].macro_bloc,region->entries[j].macro_bloc->header.size);
+					}
+	}
+
+	//lock the region map
+	sctk_alloc_spinlock_unlock(&sctk_alloc_glob_regions_lock);
+}
+
+/************************* FUNCTION ************************/
+void sctk_alloc_chain_get_stat(struct sctk_alloc_chain_stat * chain_stat,struct sctk_alloc_chain * chain)
+{
+	//vars
+	int i;
+	int nb_free_lists;
+	struct sctk_alloc_free_chunk * free_chunk;
+	struct sctk_alloc_free_chunk * free_lists;
+
+	//errors
+	assert(chain != NULL);
+	assert(chain_stat != NULL);
+
+	//reset stat
+	chain_stat->max_free_size = 0;
+	chain_stat->min_free_size = -1;
+	chain_stat->nb_free_chunks = 0;
+	chain_stat->nb_macro_blocs = 0;
+
+	//lock the chain
+	if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
+		sctk_alloc_spinlock_lock(&chain->lock);
+
+	//loop on free chunks
+	free_lists = chain->pool.free_lists;
+	nb_free_lists = chain->pool.nb_free_lists;
+	for (i = 0 ; i  < nb_free_lists; ++i) {
+		free_chunk = free_lists[i].next;
+		while(free_chunk != free_lists+i)
+		{
+			chain_stat->nb_free_chunks++;
+			if (sctk_alloc_get_chunk_header_large_size(&free_chunk->header) < chain_stat->min_free_size)
+				chain_stat->min_free_size = sctk_alloc_get_chunk_header_large_size(&free_chunk->header);
+			if (sctk_alloc_get_chunk_header_large_size(&free_chunk->header) > chain_stat->max_free_size)
+				chain_stat->max_free_size = sctk_alloc_get_chunk_header_large_size(&free_chunk->header);
+			free_chunk = free_chunk->next;
+		}
+	}
+
+	//unlock
+	if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
+		sctk_alloc_spinlock_lock(&chain->lock);
+
+	if (chain_stat->min_free_size == -1)
+		chain_stat->min_free_size = 0;
+}
+
+/************************* FUNCTION ************************/
+void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain)
+{
+	//vars
+	struct sctk_alloc_numa_stat_s numa_stat;
+	struct sctk_alloc_chain_stat chain_stat;
+	
+	//errors
+	assert(chain != NULL);
+
+	//read stat
+	sctk_alloc_chain_get_numa_stat(&numa_stat,chain);
+	sctk_alloc_chain_get_stat(&chain_stat,chain);
+
+	//print it
+	printf("====================== ALLOCATION CHAIN STAT ======================\n");
+	printf("%-20s : %d\n","Thread ID",getpid());
+	printf("%-20s : %d\n","Current preferred node",sctk_get_preferred_numa_node());
+	printf("%-20s : %p\n","Chain",chain);
+	printf("%-20s : %p\n","Memory source",chain->source);
+	printf("%-20s : %d\n","NUMA node",sctk_alloc_chain_get_numa_node(chain));
+	printf("%-20s : %lu\n","Min free size",chain_stat.min_free_size);
+	printf("%-20s : %lu\n","Max free size",chain_stat.max_free_size);
+	printf("%-20s : %lu\n","Nb free chunks",chain_stat.nb_free_chunks);
+	//TODO
+	//printf("%-20s : %lu\n","Nb macro blocs",chain_stat.nb_macro_blocs);
+	sctk_alloc_numa_stat_print(&numa_stat,NULL,0);
+	printf("===================================================================\n");
+}
+
+/************************* FUNCTION ************************/
+int sctk_alloc_chain_get_numa_node(struct sctk_alloc_chain * chain)
+{
+	//vars
+	struct sctk_alloc_mm_source_light * light_source;
+
+	//errors
+	assert(chain != NULL);
+
+	//convert the source
+	light_source = sctk_alloc_get_mm_source_light(chain->source);
+
+	//extract numa node
+	if (light_source != NULL)
+		return light_source->numa_node;
+	else
+		return -1;
+}
+
+/************************* FUNCTION ************************/
 /**
  * Migrate an allocation to another NUMA node if numa is supported otherwise it does nothing.
  * @param chain Define the allocation chain to migrate.
@@ -2405,8 +2536,8 @@ void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_n
 	#ifdef HAVE_LIBNUMA
 	//remap the struct itself
 	/** @todo Get error on cassard ??? **/
-	//if (migrate_chain_struct)
-	//	sctk_alloc_migrate_numa_mem(chain,sizeof(struct sctk_alloc_chain),target_numa_node);
+	if (migrate_chain_struct)
+		sctk_alloc_migrate_numa_mem(chain,sizeof(struct sctk_alloc_chain),target_numa_node);
 
 	//remap the content
 	if (migrate_chain_struct)

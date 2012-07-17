@@ -131,22 +131,28 @@ int sctk_get_preferred_numa_node_no_mpc()
 	int status =  hwloc_get_membind_nodeset(topology,nodeset,&policy,0);
 	assert(status == 0);
 
+	#if defined(SCTK_ALLOC_DEBUG) && defined(hwloc_bitmap_list_snprintf)
 	status = hwloc_bitmap_list_snprintf(buffer,4096,nodeset);
 	SCTK_PDEBUG("Current nodes : %s\n",buffer);
+	#endif
 
 	//cores
 	// flags = 0 fallback on PROCESS if THREAD is not supported (as for windows).
 	status =  hwloc_get_membind(topology,cpuset,&policy,0);
 	assert(status == 0);
 
+	#if defined(SCTK_ALLOC_DEBUG) && defined(hwloc_bitmap_list_snprintf)
 	status = hwloc_bitmap_list_snprintf(buffer,4096,cpuset);
 	SCTK_PDEBUG("Current cores : %s\n",buffer);
+	#endif
 
 	//nodes from cores
 	hwloc_cpuset_to_nodeset(topology,cpuset,nodeset);
 
+	#if defined(SCTK_ALLOC_DEBUG) && defined(hwloc_bitmap_list_snprintf)
 	status = hwloc_bitmap_list_snprintf(buffer,4096,nodeset);
 	SCTK_PDEBUG("Current nodes from cores : %s\n",buffer);
+	#endif
 
 	//calc res
 	weight = hwloc_bitmap_weight(nodeset);
@@ -281,3 +287,59 @@ void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_no
 	}
 }
 #endif //HAVE_LIBNUMA
+
+/************************* FUNCTION ************************/
+#ifdef HAVE_LIBNUMA
+/**
+ * Bind the current thread on requested core by using hwloc. It's more a debug and test feature than
+ * fore real usage, please avoid to use it in release mode.
+ * 
+ * Source : the global layout of this code is taken from hwloc documentation and examples, thanks to them.
+**/
+void sctk_alloc_topology_bind_thread_on_core(int id)
+{
+	//vars
+	int depth;
+	hwloc_cpuset_t cpuset;
+	hwloc_obj_t obj;
+	hwloc_topology_t topology;
+
+	//errors
+	assert(id >= 0);
+
+	//get topology
+	topology = sctk_get_topology_object();
+
+	//debug
+	SCTK_PDEBUG("Bind thread with hwloc on core %d\n",id);
+	depth = hwloc_get_type_or_below_depth(topology, HWLOC_OBJ_CORE);
+	assert(depth != HWLOC_TYPE_DEPTH_UNKNOWN);
+	/* Get first. */
+	obj = hwloc_get_obj_by_depth(topology, depth,id);
+	if (obj) {
+			/* Get a copy of its cpuset that we may modify. */
+			cpuset = hwloc_bitmap_dup(obj->cpuset);
+
+			/* Get only one logical processor (in case the core is
+					SMT/hyperthreaded). */
+			hwloc_bitmap_singlify(cpuset);
+
+			/* And try to bind ourself there. */
+			if (hwloc_set_cpubind(topology, cpuset, 0)) {
+					char *str;
+					int error = errno;
+					hwloc_bitmap_asprintf(&str, obj->cpuset);
+					fprintf(stderr,"Couldn't bind to cpuset %s: %s\n", str, strerror(error));
+					free(str);
+			}
+
+			/* Free our cpuset copy */
+			hwloc_bitmap_free(cpuset);
+	}
+}
+#else
+void sctk_alloc_topology_bind_thread_on_core(int id)
+{
+	warning("Thread binding is not supported, please enable support of hwloc at compile time.");
+}
+#endif

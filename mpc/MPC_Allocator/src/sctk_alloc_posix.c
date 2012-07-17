@@ -268,6 +268,10 @@ SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(vo
 	int node = 0;
 	#endif
 
+	//check res
+	if (node == -1)
+		node = SCTK_DEFAULT_NUMA_MM_SOURCE_ID;
+
 	//check and get
 	SCTK_PDEBUG("Init allocation chain of thread on memory source %d (NUMA node %d)",node,node - 1);
 	assert(sctk_global_base_init > SCTK_ALLOC_POSIX_INIT_NONE);
@@ -717,4 +721,14 @@ void sctk_alloc_posix_numa_migrate(void)
 		sctk_alloc_chain_numa_migrate(local_chain,new_numa_node,true,true,local_chain->source);
 
 	SCTK_PROFIL_END(sctk_alloc_posix_numa_migrate);
+}
+
+/************************* FUNCTION ************************/
+void sctk_alloc_posix_chain_print_stat(void)
+{
+	struct sctk_alloc_chain * local_chain = sctk_get_tls_chain();
+	if (local_chain == NULL)
+		warning("The current thread hasn't setup his allocation up to now.");
+	else
+		sctk_alloc_chain_print_stat(local_chain);
 }
