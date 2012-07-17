@@ -77,20 +77,25 @@ void __sctk_free(void * ptr,sctk_alloc_chain_t * chain)
 
 void sctk_clean_memory (void) 
 {
-	SCTK_PDEBUG("Unimpl call clean_memory with CPU : %d",sctk_get_cpu());
+	//SCTK_PDEBUG("Unimpl call clean_memory with CPU : %d",sctk_get_cpu());
+	fatal("Unimpl call clean_memory with CPU");
 }
 
 void sctk_relocalise_tls (void)
 {
-	SCTK_PDEBUG("Unimpl call of relocalise_tls : %d",sctk_get_cpu());
+	//SCTK_PDEBUG("Unimpl call of relocalise_tls : %d",sctk_get_cpu());
+	fatal("Unimpl call of relocalise_tls");
 }
 
 void __sctk_relocalise_tls (sctk_alloc_chain_t * tls)
 {
-	SCTK_PDEBUG("Unimpl call of relocalise_tls : %d (%p)",sctk_get_cpu(),tls);
+	//SCTK_PDEBUG("Unimpl call of relocalise_tls : %d (%p)",sctk_get_cpu(),tls);
+	fatal("Unimpl call of relocalise_tls");
 }
 
 void sctk_relocalise_memory (void *ptr, sctk_size_t size)
 {
-	SCTK_PDEBUG("Unimpl call to relocalise_memory %p, %llu (%d)",ptr,size,sctk_get_cpu());
+	//SCTK_PDEBUG("Unimpl call to relocalise_memory %p, %llu (%d)",ptr,size,sctk_get_cpu());
+	fatal("Unimpl call to relocalise_memory");
 }
+
