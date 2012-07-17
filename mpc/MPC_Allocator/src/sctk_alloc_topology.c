@@ -257,14 +257,14 @@ void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_no
 	//debug
 	SCTK_PDEBUG("Request change of memory binding on area %p [%llu] to node %d.",addr,size,target_numa_node);
 
+	//get topo
+	topo = sctk_get_topology_object();
+	//get hwloc object for binding
+	obj = hwloc_get_obj_by_type(topo, HWLOC_OBJ_NODE, target_numa_node);
+
 	//if -1, then reset to default
 	if (target_numa_node != -1)
 	{
-		//get topo
-		topo = sctk_get_topology_object();
-
-		//get hwloc object for binding
-		obj = hwloc_get_obj_by_type(topo, HWLOC_OBJ_NODE, target_numa_node);
 		res = hwloc_set_area_membind_nodeset(topo, addr, size, obj->nodeset, HWLOC_MEMBIND_BIND, HWLOC_MEMBIND_THREAD | HWLOC_MEMBIND_MIGRATE);
 	} else {
 		res = hwloc_set_area_membind_nodeset(topo, addr, size, obj->nodeset, HWLOC_MEMBIND_DEFAULT, HWLOC_MEMBIND_THREAD);

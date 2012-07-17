@@ -249,9 +249,6 @@ int sctk_alloc_optimized_log2_size_t(sctk_size_t value)
 **/
 SCTK_STATIC int sctk_alloc_reverse_analytic_free_size(sctk_size_t size,const sctk_size_t * size_list)
 {
-	//vars
-	int res;
-
 	//errors
 	assert(size_list == SCTK_ALLOC_FREE_SIZES);
 	assert(64 >> 5 == 2);
@@ -2379,7 +2376,7 @@ SCTK_STATIC void sctk_alloc_chain_numa_migrate_content(struct sctk_alloc_chain *
 	sctk_alloc_spinlock_lock(&sctk_alloc_glob_regions_lock);
 
 	//loop on all region entries
-	#warning Caution by reading like this we touch empty pages, maybe add a bitmap to avoid that for j.
+	/** @TODO Caution by reading like this we touch empty pages, maybe add a bitmap to avoid that for j. **/
 	for ( i = 0 ; i < SCTK_ALLOC_MAX_REGIONS ; i++)
 	{
 		region = sctk_alloc_glob_regions[i];
