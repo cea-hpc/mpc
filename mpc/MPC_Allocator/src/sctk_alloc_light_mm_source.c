@@ -37,7 +37,7 @@
 
 //optional for NUMA
 #ifdef HAVE_LIBNUMA
-#include <hwloc.h>
+	#include <hwloc.h>
 #endif
 
 /**
@@ -429,7 +429,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_request_mem
 		macro_bloc = sctk_alloc_mm_source_light_mmap_new_segment(light_source,size);
 
 	//warn if out of memory
-	#ifndef SCTK_ALLOC_DEBUG
+	#ifdef SCTK_ALLOC_DEBUG
 	if (macro_bloc == NULL)
 		SCTK_PDEBUG("Memory source get out of memory and can't request more to system.");
 	#endif //SCTK_ALLOC_DEBUG
@@ -454,7 +454,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_mmap_new_s
 	//call mmap to get a macro blocs
 	macro_bloc = sctk_mmap(NULL,size);
 	SCTK_PDEBUG("LMMSRC : Map new macro_bloc %p -> %llu",macro_bloc,size);
-
+	assume_m(macro_bloc != NULL,"Error macro bloc allocation");
 	//setup header
 	macro_bloc = sctk_alloc_setup_macro_bloc(macro_bloc,size);
 

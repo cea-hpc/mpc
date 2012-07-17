@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
+/* #   - Adam Julien julien.adam@cea.fr                                   # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -51,7 +52,14 @@ static __inline__ bool sctk_alloc_is_power_of_two(sctk_size_t size)
 /************************* FUNCTION ************************/
 static __inline__ sctk_size_t sctk_alloc_get_chunk_header_large_size(struct sctk_alloc_chunk_header_large * chunk)
 {
-	return chunk->size;
+	#ifdef _WIN32
+		//Windows doesn't support bitfield value of more than 32bits, but we have 56, so re-implement by and with masks and shift.
+		//Here, take the first 56bits were the size if stored.
+		return ( (*(sctk_size_t * ) chunk->size) & ((1ULL << 56 ) - 1 ) );
+	#else
+		//On Unix, we can use the more safe way with bitfield.
+		return chunk->size;
+	#endif
 }
 
 /************************* FUNCTION ************************/
@@ -63,7 +71,14 @@ static __inline__ unsigned char sctk_alloc_get_chunk_header_large_addr(struct sc
 /************************* FUNCTION ************************/
 static __inline__ sctk_size_t sctk_alloc_get_chunk_header_large_previous_size(struct sctk_alloc_chunk_header_large * chunk)
 {
-	return chunk->prevSize;
+	#ifdef _WIN32
+		//Windows doesn't support bitfield value of more than 32bits, but we have 56, so re-implement by and with masks and shift.
+		//Here, take the first 56bits were the size if stored.
+		return ( (*(sctk_size_t * ) chunk->prevSize) & ((1ULL << 56 ) - 1 ) );
+	#else
+		//On Unix, we can use the more safe way with bitfield.
+		return chunk->prevSize;
+	#endif
 }
 
 /************************* FUNCTION ************************/
@@ -75,13 +90,20 @@ static __inline__ struct sctk_alloc_chunk_info * sctk_alloc_get_chunk_header_lar
 /************************* FUNCTION ************************/
 static __inline__ sctk_size_t sctk_alloc_get_chunk_header_padded_padding(struct sctk_alloc_chunk_header_padded * chunk)
 {
+	#ifdef _WIN32
+		//Windows doesn't support bitfield value of more than 32bits, but we have 56, so re-implement by and with masks and shift.
+		//Here, take the first 56bits were the size if stored.
+		return ( (*(sctk_size_t * ) chunk->padding) & ((1ULL << 56 ) - 1 ) );
+	#else
+		//On Unix, we can use the more safe way with bitfield.
 		return chunk->padding;
+	#endif
 }
 
 /************************* FUNCTION ************************/
 static __inline__ struct sctk_alloc_chunk_info * sctk_alloc_get_chunk_header_padded_info(struct sctk_alloc_chunk_header_padded * chunk)
 {
-		return &chunk->info;
+	return &chunk->info;
 }
 
 /**
@@ -91,9 +113,13 @@ static __inline__ struct sctk_alloc_chunk_info * sctk_alloc_get_chunk_header_pad
 static __inline__ void sctk_alloc_set_chunk_header_large_size(struct sctk_alloc_chunk_header_large * chunk, sctk_size_t size)
 {
 	#ifdef _WIN32
-	chunk->size = (unsigned int) size;
+		//Windows doesn't support bitfield value of more than 32bits, but we have 56, so re-implement by and with masks and shift.
+		//Here, remplace the first 56bit with the onces from "size" and complete with the old value of addr, then erase the whole 64bit word
+		//need to copy locally to be sure of typing.
+		sctk_size_t addr = (sctk_size_t)chunk->addr;
+		*(sctk_size_t *)chunk->size = ((size & ((1ULL<<56)-1)) | ((addr) << 56));
 	#else
-	chunk->size = size;
+		chunk->size = size;
 	#endif
 }
 /************************* FUNCTION ************************/
@@ -106,20 +132,28 @@ static __inline__ void sctk_alloc_set_chunk_header_large_addr(struct sctk_alloc_
 static __inline__ void sctk_alloc_set_chunk_header_large_previous_size(struct sctk_alloc_chunk_header_large * chunk, sctk_size_t prevSize)
 {
 	#ifdef _WIN32
-	chunk->prevSize = (unsigned int) prevSize;
+		//Windows doesn't support bitfield value of more than 32bits, but we have 56, so re-implement by and with masks and shift.
+		//Here, remplace the first 56bit with the onces from "size" and complete with the old value of addr, then erase the whole 64bit word
+		//need to copy locally to be sure of typing.
+		sctk_size_t info = (sctk_size_t)(*((unsigned char*)(&chunk->info)));
+		*(sctk_size_t *)chunk->prevSize = ((prevSize & ((1ULL<<56)-1)) | ((info) << 56));
 	#else
-	chunk->prevSize = prevSize;
+		chunk->prevSize = prevSize;
 	#endif
 }
 
 /************************* FUNCTION ************************/
 static __inline__ void sctk_alloc_set_chunk_header_padded_padding(struct sctk_alloc_chunk_header_padded * chunk, sctk_size_t padding)
 {
-#ifdef _WIN32
-	chunk->padding = (unsigned int) padding;
-#else
-	chunk->padding = padding;
-#endif
+	#ifdef _WIN32
+		//Windows doesn't support bitfield value of more than 32bits, but we have 56, so re-implement by and with masks and shift.
+		//Here, remplace the first 56bit with the onces from "size" and complete with the old value of addr, then erase the whole 64bit word
+		//need to copy locally to be sure of typing.
+		sctk_size_t info = (sctk_size_t)(*((unsigned char*)(&chunk->info)));
+		*(sctk_size_t *)chunk->padding = ((padding & ((1ULL<<56)-1)) | ((info) << 56));
+	#else
+		chunk->padding = padding;
+	#endif
 }
 
 /************************* FUNCTION ************************/

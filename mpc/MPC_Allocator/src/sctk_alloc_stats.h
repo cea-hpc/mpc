@@ -38,9 +38,9 @@ extern "C"
 #define SCTK_ALLOC_STATS_HOOK_INC(x) (x++)
 #define SCTK_ALLOC_STATS_HOOK_DEC(x) (x--)
 #else //SCTK_ALLOC_STAT
-#define SCTK_ALLOC_STATS_HOOK(x) /*x*/
-#define SCTK_ALLOC_STATS_HOOK_INC(x) /*(x++)*/
-#define SCTK_ALLOC_STATS_HOOK_DEC(x) /*(x--)*/
+#define SCTK_ALLOC_STATS_HOOK(x) while(0){}
+#define SCTK_ALLOC_STATS_HOOK_INC(x) while(0){}
+#define SCTK_ALLOC_STATS_HOOK_DEC(x) while(0){}
 #endif //SCTK_ALLOC_STAT
 
 /************************** STRUCT *************************/

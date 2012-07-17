@@ -23,15 +23,39 @@
 #ifdef _MSC_VER
 #include <windows.h>
 #include <cstdio>
-#include "../sctk_alloc_posix.h"
 #include "mhook-lib/mhook.h"
-	
-static void * ptr_origin_function_malloc 	= (void *) malloc;
-static void * ptr_origin_function_free 		= (void *) free;
-static void * ptr_origin_function_realloc 	= (void *) realloc;
-static void * ptr_origin_function_calloc 	= (void *) calloc;
-static void * ptr_origin_operator_delete = (void *) operator delete[];
-static void * ptr_origin_function_memalign 	= (void *) _aligned_malloc;
+
+/******************* STRUCT ********************/
+struct sctk_alloc_function {
+	//String with origin function name
+	char * sctk_alloc_origin_function;
+	//a pointer on function to hooking
+	void * sctk_alloc_function_ptr;
+};
+
+//import functions from allocator libraries to hooking windows symbols
+extern "C" __declspec(dllimport) void sctk_free(void *);
+extern "C" __declspec(dllimport) void * sctk_malloc(size_t);
+extern "C" __declspec(dllimport) void * sctk_calloc(size_t, size_t);
+extern "C" __declspec(dllimport) void * sctk_realloc(size_t);
+extern "C" __declspec(dllimport) void * sctk_memalign(size_t, size_t);
+extern "C" __declspec(dllexport) void * sctk_alloc_win_memalign(size_t size, size_t alignment); //function defined here to be used in const array.
+
+/****************** CONSTS ****************************/
+static const char* sctk_alloc_libraries_name[]= 
+{"MSVCR71.DLL", "MSVCR71d.DLL",	"MSVCM71.DLL",	"MSVCR80.DLL" ,	"MSVCR80d.DLL",	"MSVCM80.DLL",
+ "MSVCR90.DLL",	"MSVCR90d.DLL",	"MSVCM90.DLL",	"MSVCR100.DLL", "MSVCR100d.DLL","MSVCM100.DLL"};
+
+static const struct sctk_alloc_function sctk_alloc_hook_functions[]={{ "malloc" 			, sctk_malloc 				},
+																	 { "free"				, sctk_free					},
+																	 { "_aligned_malloc"	, sctk_alloc_win_memalign	},
+																	 { "realloc"			, sctk_realloc				},
+																	 { "calloc"				, sctk_calloc				},
+																	 { "??3@YAXPEAX@Z"		, sctk_free					}, //delete operator symbol
+																	 { "??_V@YAXPEAX@Z"		, sctk_free					}, //delete[] operator symbol*/
+																	 { "??2@YAPEAX_K@Z"		, sctk_malloc				}, //new operator symbol
+																	 { "??_U@YAPEAX_K@Z"	, sctk_malloc				}  //new[] operator symbol
+													};
 
 extern "C" __declspec(dllexport)
 void * sctk_alloc_win_memalign(size_t size, size_t alignment)
@@ -43,20 +67,47 @@ void * sctk_alloc_win_memalign(size_t size, size_t alignment)
 	return sctk_memalign(alignment, size);
 }
 
+static int sctk_alloc_erasing_symbols(HMODULE module)
+{
+	int ok = 1;
+	for(int i = 0; i < (sizeof(sctk_alloc_hook_functions)/sizeof(struct sctk_alloc_function)); i++)
+	{
+		//contains pointer on windows function
+		void * tmp_addr = GetProcAddress(module,sctk_alloc_hook_functions[i].sctk_alloc_origin_function);
+		printf("\tFUNCTION %s : ", sctk_alloc_hook_functions[i].sctk_alloc_origin_function);
+		//Hook each functions		
+		
+		if(tmp_addr){
+			printf("%p\n",  tmp_addr);
+			//printf("sctk_%s address: %p\n", sctk_alloc_hook_functions[i].sctk_alloc_origin_function,sctk_alloc_hook_functions[i].sctk_alloc_function_ptr);
+			ok = ok && (Mhook_SetHook( 	(PVOID *)&tmp_addr,(PVOID)sctk_alloc_hook_functions[i].sctk_alloc_function_ptr));
+			if (ok) puts("OK"); else puts("ERROR");
+		}
+		else {printf("NOT FOUND\n");}
+	}
+	return ok;
+}
+
 extern "C" __declspec(dllexport)
 BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, LPVOID reserved)
 {
-	int ok = 1;
-
+	int ok = 1, i = 0;
 	switch(reason)
 	{
 		case DLL_PROCESS_ATTACH:
-			ok = (	Mhook_SetHook( (PVOID *)&ptr_origin_function_malloc, 	(PVOID)sctk_malloc)					&&
-					Mhook_SetHook( (PVOID *)&ptr_origin_function_free,		(PVOID)sctk_free) 					&&
-					Mhook_SetHook( (PVOID *)&ptr_origin_operator_delete,	(PVOID)sctk_free)					&&
-					Mhook_SetHook( (PVOID *)&ptr_origin_function_memalign,	(PVOID)sctk_alloc_win_memalign)		&&
-					Mhook_SetHook( (PVOID *)&ptr_origin_function_realloc,	(PVOID)sctk_realloc)				&&
-					Mhook_SetHook( (PVOID *)&ptr_origin_function_calloc, 	(PVOID)sctk_calloc)					);
+			for(int i = 0; i < (sizeof(sctk_alloc_libraries_name)/sizeof(char*)); i++)
+			{
+				printf("LIB %s : \t",sctk_alloc_libraries_name[i]);
+									 
+				HMODULE sctk_module = GetModuleHandle(sctk_alloc_libraries_name[i]);
+				
+				//Hook functions for each library
+				if(sctk_module){
+					printf("\n");
+					ok = ok && sctk_alloc_erasing_symbols(sctk_module);
+				}
+				else {printf("NOT FOUND\n");}
+			}
 			break;
 		case DLL_PROCESS_DETACH:
 			/*

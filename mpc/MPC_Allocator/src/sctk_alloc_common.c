@@ -17,7 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
-/* #   - Adam Julien julien.adam.ocre@cea.fr                              # */
+/* #   - Adam Julien julien.adam@cea.fr                                   # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -82,6 +82,7 @@ void * sctk_mmap(void* addr, size_t size)
 void sctk_munmap(void * addr,size_t size)
 {
 	int exit_status;
+	//DO not need to DECOMMIT before release, MEM_RELEASE implies it
 	exit_status = VirtualFree(addr,size,MEM_RELEASE);
 	if(exit_status != 0)
 		fprintf(stderr, "Error Code to VirtualFree: %d\n", GetLastError());

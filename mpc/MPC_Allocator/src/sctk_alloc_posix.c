@@ -17,7 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
-/* #   - Adam Julien julien.adam.ocre@cea.fr                              # */
+/* #   - Adam Julien julien.adam@cea.fr                                   # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -42,7 +42,7 @@
 
 //optional headers
 #ifdef HAVE_LIBNUMA
-#include "sctk_alloc_topology.h"
+	#include "sctk_alloc_topology.h"
 #endif
 
 //optional header
@@ -52,14 +52,14 @@
 
 //if have NUMA support
 #ifdef HAVE_LIBNUMA
-#include <hwloc.h>
-// #include "../../../install/include/mpcmp.h"
-/** Select the NUMA memory source init function. **/
-#define sctk_alloc_posix_mmsrc_init sctk_alloc_posix_mmsrc_numa_init
-#else
-/** Select the UMA memory source init function. **/
-#define sctk_alloc_posix_mmsrc_init sctk_alloc_posix_mmsrc_uma_init
-#endif
+	#include <hwloc.h>
+	// #include "../../../install/include/mpcmp.h"
+	/** Select the NUMA memory source init function. **/
+	#define sctk_alloc_posix_mmsrc_init sctk_alloc_posix_mmsrc_numa_init
+#else //HAVE_LIBNUMA
+	/** Select the UMA memory source init function. **/
+	#define sctk_alloc_posix_mmsrc_init sctk_alloc_posix_mmsrc_uma_init
+#endif //HAVE_LIBNUMA
 
 /*************************** ENUM **************************/
 enum sctk_alloc_posix_init_state
@@ -96,6 +96,10 @@ int sctk_get_node_from_cpu (int cpu);
 #endif
 
 /*************************** FUNCTION **********************/
+/**
+ * Tls chain setter
+ * @param chain Define the allocation chain to setup.
+**/
 SCTK_STATIC void sctk_set_tls_chain(struct sctk_alloc_chain * chain){
 	#ifdef _WIN32
 		TlsSetValue(sctk_current_alloc_chain, (void*) chain);
@@ -105,6 +109,9 @@ SCTK_STATIC void sctk_set_tls_chain(struct sctk_alloc_chain * chain){
 }
 
 /*************************** FUNCTION **********************/
+/**
+ * Tls chain getter
+**/
 SCTK_STATIC struct sctk_alloc_chain * sctk_get_tls_chain(){
 	#ifdef _WIN32
 		return (TlsGetValue(sctk_current_alloc_chain));
@@ -114,6 +121,9 @@ SCTK_STATIC struct sctk_alloc_chain * sctk_get_tls_chain(){
 }
 
 /*************************** FUNCTION **********************/
+/**
+ * Windows specifics. Tls variables need to be initialised before using.
+**/
 SCTK_STATIC void sctk_alloc_tls_chain(){
 	#ifdef _WIN32
 		sctk_current_alloc_chain = TlsAlloc();
@@ -196,7 +206,7 @@ void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void)
 	//debug
 	SCTK_PDEBUG("Init with NUMA_NODES = %d , MAX_NUMA_NODE = %d",nodes,SCTK_MAX_NUMA_NODE);
 
-	if (nodes == 0)
+	if (nodes <= 1)
 	{
 		sctk_global_memory_source[0] = sctk_global_memory_source[SCTK_DEFAULT_NUMA_MM_SOURCE_ID];
 	} else {

@@ -27,6 +27,8 @@
 #include <stdio.h>
 #ifndef _WIN32
 	#include <sched.h>
+#else
+	#include <windows.h>
 #endif
 
 /************************** MACROS *************************/
@@ -103,8 +105,8 @@ typedef volatile unsigned int sctk_atomic_test_t;
 	static __inline__ int __sctk_test_and_set(sctk_atomic_test_t * spinlock)
 	{
 		char ret = 0;
-
-		//__asm{"ldstub [%0], %1":"=r" (spinlock), "=r" (ret):"0" (spinlock), "1" (ret):"memory"};
+		//ASM equivalent to Windows
+		InterlockedExchange(spinlock,1);
 
       return (unsigned) ret;
 	}

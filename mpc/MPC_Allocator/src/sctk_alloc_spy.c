@@ -28,15 +28,15 @@
 #include "sctk_alloc_lock.h"
 #include "sctk_alloc_inlined.h"
 #ifndef _WIN32
-#include <unistd.h>
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
+	#include <unistd.h>
+	#include <sys/types.h>
+	#include <sys/stat.h>
+	#include <fcntl.h>
 #else
-//mkdir windows command
-#include <direct.h>
-//getpid command
-#include <process.h>
+	//mkdir windows command
+	#include <direct.h>
+	//getpid command
+	#include <process.h>
 #endif
 #include <stdlib.h>
 #include <stdio.h>
@@ -55,6 +55,7 @@ static bool sctk_alloc_glob_spy_as_atexit = false;
 
 
 /********************** PORTABILITY ************************/
+//files permissions
 #ifndef _WIN32
 	#define OPEN_FILE_PERMISSIONS O_TRUNC|O_WRONLY|O_CREAT,S_IRUSR|S_IRGRP|S_IROTH|S_IWUSR
 #else

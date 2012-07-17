@@ -16,7 +16,7 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - Adam Julien julien.adam.ocre@cea.fr                              # */
+/* #   - Adam Julien julien.adam@cea.fr                                   # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -24,9 +24,19 @@
 #include <windows.h>
 #include <stdio.h>
 
-void sctk_free(void *);
+//linker options
+#if defined(_WIN64)
+#pragma comment(linker, "/include:mpc_allocator_win_load")
+#else
+#pragma comment(linker, "/include:_mpc_allocator_win_load")
+#endif
 
+//used to force library loading
+__declspec(dllimport) void sctk_free(void *);
+  
 void mpc_allocator_win_load(void){
+	LoadLibraryA ("mpc_win_allocator.dll");
 	sctk_free(NULL);
 }
 #endif
+

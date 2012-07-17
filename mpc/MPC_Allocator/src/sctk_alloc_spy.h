@@ -50,8 +50,9 @@ extern "C"
 #define SCTK_ALLOC_SPY_HOOK(x) x
 #define SCTK_ALLOC_SPY_COND_HOOK(x,y) if (x) y
 #else //SCTK_ALLOC_STAT
-#define SCTK_ALLOC_SPY_HOOK(x) /*x*/
-#define SCTK_ALLOC_SPY_COND_HOOK(x,y) /*if (x) y*/
+//we define with "while(0)..." because VCC doesn't support two semicolons.
+#define SCTK_ALLOC_SPY_HOOK(x) while(0){}
+#define SCTK_ALLOC_SPY_COND_HOOK(x,y) while(0){}
 #endif //SCTK_ALLOC_STAT
 
 /*************************** ENUM **************************/

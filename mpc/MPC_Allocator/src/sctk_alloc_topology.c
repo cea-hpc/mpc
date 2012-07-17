@@ -60,7 +60,7 @@ void sctk_alloc_init_topology(void)
 #ifndef MPC_Threads
 bool sctk_is_numa_node (void)
 {
-	#ifdef HABE_LIBNUMA
+	#ifdef HAVE_LIBNUMA
 	return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) != 0;
 	#else
 	return false;
@@ -72,10 +72,10 @@ bool sctk_is_numa_node (void)
 #ifndef MPC_Threads
 int sctk_get_numa_node_number ()
 {
-	#ifdef HABE_LIBNUMA
+	#ifdef HAVE_LIBNUMA
 	return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) ;
 	#else
-	return 0;
+	return 1;
 	#endif
 }
 #endif
@@ -84,7 +84,7 @@ int sctk_get_numa_node_number ()
 #ifndef MPC_Threads
 int sctk_get_node_from_cpu (const int vp)
 {
-	#ifdef HABE_LIBNUMA
+	#ifdef HAVE_LIBNUMA
 	if(sctk_is_numa_node ()){
 		const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
 		const hwloc_obj_t node = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, pu);
@@ -126,16 +126,17 @@ int sctk_get_preferred_numa_node_no_mpc()
 	int res = -1;
 	int weight;
 	char buffer[4096];
-
 	//nodes
-	int status =  hwloc_get_membind_nodeset(topology,nodeset,&policy,HWLOC_MEMBIND_THREAD);
+	// flags = 0 fallback on PROCESS if THREAD is not supported (as for windows).
+	int status =  hwloc_get_membind_nodeset(topology,nodeset,&policy,0);
 	assert(status == 0);
 
 	status = hwloc_bitmap_list_snprintf(buffer,4096,nodeset);
 	SCTK_PDEBUG("Current nodes : %s\n",buffer);
 
 	//cores
-	status =  hwloc_get_membind(topology,cpuset,&policy,HWLOC_MEMBIND_THREAD);
+	// flags = 0 fallback on PROCESS if THREAD is not supported (as for windows).
+	status =  hwloc_get_membind(topology,cpuset,&policy,0);
 	assert(status == 0);
 
 	status = hwloc_bitmap_list_snprintf(buffer,4096,cpuset);
@@ -191,7 +192,7 @@ int sctk_alloc_get_current_numa_node_getcpu(void)
 
 	return logical_node_id;
 }
-#endif //HABE_LIBNUMA
+#endif //HAVE_LIBNUMA
 #endif //HAVE_GETCPU
 #endif //MPC_Threads
 

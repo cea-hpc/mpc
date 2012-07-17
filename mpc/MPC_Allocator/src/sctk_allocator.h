@@ -31,6 +31,12 @@ extern "C"
 /************************** HEADERS ************************/
 #if defined(_WIN32)
 	#include <windows.h>
+	#ifndef _MSC_VER
+		#include <stdint.h>
+	#else
+		//used for _open and _write functions with VCC
+		#include <io.h>
+	#endif
 #else	
 	#include <sys/mman.h>
 #endif
@@ -38,14 +44,7 @@ extern "C"
 #include "sctk_alloc_lock.h"
 #include "sctk_alloc_stats.h"
 #include "sctk_alloc_spy.h"
-#ifdef _MSC_VER
-	#define int32_t __int32
-	#define uint32_t unsigned __int32
-	#define int64_t __int64
-	#define uint64_t unsigned __int64
-#else
-#include <stdint.h>
-#endif
+
 /** Size class for the free lists. **/
 extern const sctk_size_t SCTK_ALLOC_FREE_SIZES[SCTK_ALLOC_NB_FREE_LIST];
 

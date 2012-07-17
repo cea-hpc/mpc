@@ -427,7 +427,7 @@ static VOID ResumeOtherThreads() {
 		CloseHandle(g_hThreadHandles[i]);
 	}
 	// clean up
-	free(g_hThreadHandles);
+	//free(g_hThreadHandles);
 	g_hThreadHandles = NULL;
 	g_nThreadHandles = 0;
 	SetThreadPriority(GetCurrentThread(), nOriginalPriority);
@@ -657,12 +657,13 @@ BOOL Mhook_SetHook(PVOID *ppSystemFunction, PVOID pHookFunction) {
 	EnterCritSec();
 	ODPRINTF((L"mhooks: Mhook_SetHook: Started on the job: %p / %p", pSystemFunction, pHookFunction));
 	// find the real functions (jump over jump tables, if any)
-	pSystemFunction = SkipJumps((PBYTE)pSystemFunction);
+	//pSystemFunction = SkipJumps((PBYTE)pSystemFunction);
 	pHookFunction   = SkipJumps((PBYTE)pHookFunction);
 	ODPRINTF((L"mhooks: Mhook_SetHook: Started on the job: %p / %p", pSystemFunction, pHookFunction));
 	// figure out the length of the overwrite zone
 	MHOOKS_PATCHDATA patchdata = {0};
-	DWORD dwInstructionLength = DisassembleAndSkip(pSystemFunction, MHOOK_JMPSIZE, &patchdata);
+	//DWORD dwInstructionLength = DisassembleAndSkip(pSystemFunction, MHOOK_JMPSIZE, &patchdata);
+	DWORD dwInstructionLength = MHOOK_JMPSIZE;
 	if (dwInstructionLength >= MHOOK_JMPSIZE) {
 		ODPRINTF((L"mhooks: Mhook_SetHook: disassembly signals %d bytes", dwInstructionLength));
 		// suspend every other thread in this process, and make sure their IP 

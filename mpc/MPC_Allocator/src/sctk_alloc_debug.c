@@ -22,9 +22,9 @@
 
 /************************** HEADERS ************************/
 #ifndef _MSC_VER
-#include <unistd.h>
+	#include <unistd.h>
 #else
-#include <process.h>
+	#include <process.h>
 #endif
 #include <string.h>
 #include <stdarg.h>
@@ -49,12 +49,16 @@ static const char SCTK_ALLOC_TRACE_FILE[] = "alloc-trace-%d.txt";
 	#define OPEN_FILE_PERMISSIONS O_TRUNC|O_WRONLY|O_CREAT,S_IRUSR|S_IRGRP|S_IROTH|S_IWUSR
 #else
 	#define OPEN_FILE_PERMISSIONS O_TRUNC|O_WRONLY|O_CREAT
+	//primitives functions on Windows
+	#define write _write
+	#define open _open
+	#define close _close
 #endif
 
 /************************* GLOBALS *************************/
 /** File descriptor for PTRACE output file. **/
 #ifdef ENABLE_TRACE
-static int SCTK_ALLOC_TRACE_FD = -1;
+	static int SCTK_ALLOC_TRACE_FD = -1;
 #endif
 
 /************************* FUNCTION ************************/
@@ -62,10 +66,11 @@ static int SCTK_ALLOC_TRACE_FD = -1;
  * If SCTK_ALLOC_TRACE_FD is set to -1, setup the output file descriptor for patrace mode.
 **/
 #ifdef ENABLE_TRACE
-#ifndef _WIN32
+
 void sctk_alloc_ptrace_init(void )
 {
 	char fname[2*sizeof(SCTK_ALLOC_TRACE_FILE)];
+	const int max_size = 2*sizeof(SCTK_ALLOC_TRACE_FILE);
 	//nothing to do
 	if (SCTK_ALLOC_TRACE_FD != -1)
 		return;
@@ -74,7 +79,7 @@ void sctk_alloc_ptrace_init(void )
 	{
 		SCTK_ALLOC_TRACE_FD = STDERR_FILENO;
 	} else {
-		sprintf(fname,SCTK_ALLOC_TRACE_FILE,getpid());
+		sctk_alloc_sprintf(fname,max_size,SCTK_ALLOC_TRACE_FILE,_getpid());
 		SCTK_ALLOC_TRACE_FD = open(fname,OPEN_FILE_PERMISSIONS);
 		if (SCTK_ALLOC_TRACE_FD == -1)
 		{
@@ -83,12 +88,6 @@ void sctk_alloc_ptrace_init(void )
 		}
 	}
 }
-#else
-void sctk_alloc_ptrace_init(void )
-{
-	return;
-}
-#endif
 #endif
 
 /************************* FUNCTION ************************/
@@ -101,13 +100,11 @@ void sctk_alloc_pdebug (const char * format,...)
 	char tmp[4096];
 	char tmp2[4096];
 	va_list param;
-	sprintf (tmp, "SCTK_ALLOC_DEBUG : %s\n", format);
+	sctk_alloc_sprintf (tmp,4096, "SCTK_ALLOC_DEBUG : %s\n", format);
 	va_start (param, format);
-	vsprintf (tmp2, tmp, param);
+	sctk_alloc_vsprintf (tmp2,4096, tmp, param);
 	va_end (param);
-#ifndef _WIN32
-	write(STDERR_FILENO,tmp2,strlen(tmp2));
-#endif
+	write(STDERR_FILENO,tmp2,(unsigned int)strlen(tmp2));
 }
 
 /************************* FUNCTION ************************/
@@ -125,13 +122,11 @@ void sctk_alloc_ptrace (const char * format,...)
 	if (SCTK_ALLOC_TRACE_FD == -1)
 		sctk_alloc_ptrace_init();
 	
-	sprintf (tmp, "SCTK_ALLOC_TRACE : %s\n", format);
+	sctk_alloc_sprintf (tmp,4096, "SCTK_ALLOC_TRACE : %s\n", format);
 	va_start (param, format);
-	vsprintf (tmp2, tmp, param);
+	sctk_alloc_vsprintf (tmp2,4096, tmp, param);
 	va_end (param);
-#ifndef _WIN32
-	write(SCTK_ALLOC_TRACE_FD,tmp2,strlen(tmp2));
-#endif
+	write(SCTK_ALLOC_TRACE_FD,tmp2,(unsigned int)strlen(tmp2));
 	fflush(stderr);
 }
 #endif
@@ -142,11 +137,9 @@ void sctk_alloc_fprintf(int fd,const char * format,...)
 	char tmp[4096];
 	va_list param;
 	va_start (param, format);
-	vsprintf (tmp, format, param);
+	sctk_alloc_vsprintf (tmp,4096, format, param);
 	va_end (param);
-#ifndef _WIN32
-	write(fd,tmp,strlen(tmp));
-#endif
+	write(fd,tmp,(unsigned int)strlen(tmp));
 }
 
 /************************* FUNCTION ************************/
@@ -204,7 +197,6 @@ void sctk_alloc_debug_dump_thread_pool(int fd, struct sctk_thread_pool* pool)
 }
 
 /************************* FUNCTION ************************/
-#ifndef _WIN32
 void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain* chain)
 {
 	/** @todo  Not thread safe **/
@@ -213,7 +205,7 @@ void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain* chain)
 	char fname[1024];
 
 	//calc filename
-	sprintf(fname,"alloc-dump-%04d.txt",id);
+	sctk_alloc_sprintf(fname,1024,"alloc-dump-%04d.txt",id);
 // 	id++;
 
 	//open output filei
@@ -235,13 +227,6 @@ void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain* chain)
 	#endif
 	close(fd);
 }
-
-#else
-void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain* chain)
-{
-	return;
-}
-#endif
 /************************* FUNCTION ************************/
 #ifdef SCTK_ALLOC_DEBUG
 void sctk_alloc_crash_dump(void)
@@ -290,3 +275,4 @@ void sctk_alloc_debug_init(void )
 	#endif
 }
 #endif
+

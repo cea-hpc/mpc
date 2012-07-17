@@ -33,12 +33,14 @@ extern "C"
 /************************* PORTABILITY *********************/
 #ifdef _MSC_VER
 	#include <errno.h>
+	//fix file descriptor
 	#ifndef STDIN_FILENO
 		#define STDIN_FILENO 0
 		#define STDOUT_FILENO 1
 		#define STDERR_FILENO 2
 	#endif
 	#define getpid() _getpid()
+	//export dll
 	#define SCTK_PUBLIC __declspec(dllexport)
 #else
 	#define SCTK_PUBLIC

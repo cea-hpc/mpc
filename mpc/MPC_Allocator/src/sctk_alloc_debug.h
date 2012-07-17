@@ -49,7 +49,7 @@
 	#define SCTK_CRASH_DUMP
 #endif //SCTK_ALLOC_DEBUG
 
-#ifdef ENABLE_TRACE
+#if defined(ENABLE_TRACE) && defined(SCTK_ALLOC_DEBUG)
 	#define SCTK_PTRACE(m,...) sctk_alloc_ptrace((m),__VA_ARGS__)
 #else
 	#define SCTK_PTRACE(m,...)
@@ -77,6 +77,15 @@
 #else
 #define assert(x) /* assert(x) */
 #endif
+#endif
+
+//Some functions on Windows need to be used "safely" specifying size buffer
+#ifdef _WIN32
+#define sctk_alloc_sprintf(buffer,buffer_size,...) sprintf_s(buffer,buffer_size,__VA_ARGS__)
+#define sctk_alloc_vsprintf(buffer,buffer_size,...) vsprintf_s(buffer,buffer_size,__VA_ARGS__)
+#else
+#define sctk_alloc_sprintf(buffer,buffer_size,...) sprintf(buffer,__VA_ARGS__)
+#define sctk_alloc_vsprintf(buffer,buffer_size,...) vsprintf(buffer,__VA_ARGS__)
 #endif
 
 /************************* FUNCTION ************************/

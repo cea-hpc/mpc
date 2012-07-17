@@ -17,7 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
-/* #   - Adam Julien julien.adam.ocre@cea.fr                              # */
+/* #   - Adam Julien julien.adam@cea.fr                                   # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -28,7 +28,7 @@
 	#include <unistd.h>
 	#include <sys/types.h>
 #else
-#include <process.h>
+	#include <process.h>
 #endif
 
 #include <stdarg.h>
@@ -49,6 +49,7 @@
 /************************* PORTABILITY *************************/
 #ifdef _WIN32
 	#define MAP_FAILED NULL
+	#define write _write
 #endif
 
 /************************* GLOBALS *************************/
@@ -899,12 +900,8 @@ SCTK_STATIC void sctk_alloc_chain_base_init(struct sctk_alloc_chain * chain,enum
 
 
 	//init spy and stat module
-	#ifndef SCTK_ALLOC_STATS
 	SCTK_ALLOC_STATS_HOOK(sctk_alloc_stats_chain_init(&chain->stats));
-	#endif
-	#ifdef SCTK_ALLOC_SPY
 	SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_chain_init(chain));
-	#endif
 }
 
 /************************* FUNCTION ************************/
@@ -1384,22 +1381,19 @@ void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 			sctk_alloc_spinlock_lock(&chain->lock);
 
 		//spy
-#ifdef SCTK_ALLOC_SPY
 		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_chain_free(chain,ptr,sctk_alloc_get_size(vchunk)));
-#endif
+
 		//try some merge
 		/** @todo Here this is a trick, NEED TO BE FIXED => NOW NEED TO REMOVE THIS OR USE THE MACRO BLOC START POINT IF AVAILABLE. **/
 		if (chain->base_addr != NULL)
 			vfirst = sctk_alloc_get_chunk((sctk_addr_t)chain->base_addr+sizeof(struct sctk_alloc_chunk_header_large));
 		old_size = sctk_alloc_get_size(vchunk);
-#ifdef SCTK_ALLOC_SPY
 		SCTK_ALLOC_SPY_HOOK(old_size);
-#endif
+		
 		if (! (chain->flags & SCTK_ALLOC_CHAIN_DISABLE_MERGE) )
 			vchunk = sctk_alloc_merge_chunk(&chain->pool,vchunk,vfirst,(sctk_addr_t)chain->end_addr);
-#ifdef SCTK_ALLOC_SPY
 		SCTK_ALLOC_SPY_COND_HOOK(old_size != sctk_alloc_get_size(vchunk),sctk_alloc_spy_emit_event_chain_merge(chain, sctk_alloc_get_ptr(vchunk),sctk_alloc_get_size(vchunk)));
-#endif
+
 		//if whe have a source, we may try to check if we can clear the bloc
 		/** @todo Maybe request the bloc size to memory source insteed of directly use the constant **/
 		if (chain->source != NULL && sctk_alloc_get_size(vchunk) % SCTK_MACRO_BLOC_SIZE == SCTK_MACRO_BLOC_SIZE - sizeof(struct sctk_alloc_macro_bloc) - sizeof(struct sctk_alloc_chunk_header_large))
@@ -1422,13 +1416,13 @@ void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 SCTK_STATIC bool sctk_alloc_chain_can_remap(struct sctk_alloc_chain * chain)
 {
 	#ifdef HAVE_MREMAP
-	bool res = false;
-	if (chain->source != NULL)
-		if (chain->source->remap != NULL)
-			res = true;
-	return res;
+		bool res = false;
+		if (chain->source != NULL)
+			if (chain->source->remap != NULL)
+				res = true;
+		return res;
 	#else
-	return false;
+		return false;
 	#endif
 }
 
@@ -1863,9 +1857,9 @@ void sctk_alloc_perror (const char * format,...)
 	char tmp[4096];
 	char tmp2[4096];
 	va_list param;
-	sprintf (tmp, "SCTK_ALLOC_ERROR : %s\n", format);
+	sctk_alloc_sprintf (tmp,4096,"SCTK_ALLOC_ERROR : %s\n", format);
 	va_start (param, format);
-	vsprintf (tmp2, tmp, param);
+	sctk_alloc_vsprintf (tmp2,4096, tmp, param);
 	va_end (param);
 #ifndef _WIN32
 	write(STDERR_FILENO,tmp2,strlen(tmp2));
@@ -1881,13 +1875,11 @@ void sctk_alloc_pwarning (const char * format,...)
 	char tmp[4096];
 	char tmp2[4096];
 	va_list param;
-	sprintf (tmp, "SCTK_ALLOC_WARNING : %s\n", format);
+	sctk_alloc_sprintf (tmp,4096, "SCTK_ALLOC_WARNING : %s\n", format);
 	va_start (param, format);
-	vsprintf (tmp2, tmp, param);
+	sctk_alloc_vsprintf (tmp2,4096, tmp, param);
 	va_end (param);
-#ifndef _WIN32
-	write(STDERR_FILENO,tmp2,strlen(tmp2));
-#endif
+	write(STDERR_FILENO,tmp2,(unsigned int)strlen(tmp2));
 }
 
 /************************* FUNCTION ************************/
@@ -2096,7 +2088,7 @@ struct sctk_alloc_macro_bloc * sctk_alloc_region_get_macro_bloc(void * ptr)
 		macro_bloc = NULL;
 	} else if (entry->macro_bloc == NULL || (void*)entry->macro_bloc > ptr) {
 		entry = sctk_alloc_region_get_entry((void*)((sctk_addr_t)ptr - SCTK_MACRO_BLOC_SIZE));
-		if (entry == NULL)
+		if (entry == NULL || entry->macro_bloc == NULL)
 			macro_bloc = NULL;
 		else if (ptr > (void*)((sctk_addr_t)entry->macro_bloc) && ptr < (void*)((sctk_addr_t)entry->macro_bloc +sctk_alloc_get_chunk_header_large_size(&entry->macro_bloc->header)))
 			macro_bloc = entry->macro_bloc;
