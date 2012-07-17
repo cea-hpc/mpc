@@ -676,7 +676,7 @@ void sctk_alloc_posix_numa_migrate(void)
 	if (local_chain == NULL)
 		return;
 
-	#ifdef MPC_Common
+	#ifdef MPC_Theads
 	SCTK_PDEBUG("--- Migration on %d",sctk_get_cpu());
 	#endif
 	sctk_alloc_posix_get_local_mm_source();
