@@ -78,28 +78,12 @@ clean(){
 
 	#clean up
 	rm -rfv ${ROOT_FOLDER}/build/* 2> /dev/null
-	delinker
-}
-
-linker(){
-	#link
-	echo "SymLink Creation"
-	ln -s ${ROOT_FOLDER}/../../MPC_Test_Suite/UnitTests/Allocator tests 2> /dev/null
-}
-
-delinker(){
-
-	#delink
-	echo "SymLink Destruction..."
-	rm ${ROOT_FOLDER}/tests 2> /dev/null
 }
 
 config(){
 	if [ "$REBUILD" == "yes" ] ; then
 		clean
 	fi
-	
-	linker
 	
 	#execution
 	cd ${ROOT_FOLDER}/build
@@ -108,7 +92,6 @@ config(){
 		CHAIN="$(echo ${CMAKE_ARGS} | grep "\-DWINE_PATH=")"
 		if [ "${CHAIN}" == "" ] ; then 
 			echo "Error in argument to find Wine. You must add -DWINE_PATH=<path>"
-			delinker
 			exit 1
 		fi
 
@@ -146,7 +129,6 @@ testing(){
 	cd ${ROOT_FOLDER}/build
 	make test
 	cd ..
-	delinker
 }
 
 ######################### MAIN ######################
