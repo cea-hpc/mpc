@@ -50,17 +50,6 @@ extern const sctk_size_t SCTK_ALLOC_FREE_SIZES[SCTK_ALLOC_NB_FREE_LIST];
 
 /*************************** ENUM **************************/
 /**
- * C unavailability of boolean type sucks.
-**/
-#ifndef __cplusplus
-#include <stdbool.h>
-// #define bool unsigned char
-// #define true 1
-// #define false 0
-#endif //__cplusplus
-
-/*************************** ENUM **************************/
-/**
  * Constants to define the type of current block, currently, only small (<=256o) or large.
 **/
 enum sctk_alloc_chunk_type

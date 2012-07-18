@@ -322,3 +322,45 @@ void sctk_alloc_numa_stat_print_detail(void* ptr, size_t size)
 	//free the temporaray segment
 	free(table);
 }
+
+/************************* FUNCTION ************************/
+void sctk_alloc_numa_check(bool fatal_on_fail, const char* filename, int line, void* ptr, size_t size, int required_numa, int min_ratio, const char* message)
+{
+	//vars
+	struct sctk_alloc_numa_stat_s numa_stat;
+	float ratio;
+
+	//errors
+	assert(filename != NULL);
+	assert(line > 0);
+	assert(ptr != NULL);
+	assert(size != 0);
+	assert(required_numa > 0);
+	assert(min_ratio >= 0 && min_ratio <= 100);
+
+	//get numa stat
+	sctk_alloc_numa_stat_init(&numa_stat);
+	sctk_alloc_numa_stat_get(&numa_stat,ptr,size);
+
+	//error
+	assert(required_numa < numa_stat.numa_nodes);
+
+	//compute NUMA ratio for required node
+	ratio = 100.0 * (float)numa_stat.numa_pages[required_numa] / (float)numa_stat.total_mapped;
+
+	//print error if failed
+	if (ratio < min_ratio)
+	{
+		if (fatal_on_fail)
+		{
+			sctk_alloc_perror("NUMA Assertion failure at %s!%d\nRequierd %d %% of memory on node %d, but get %d %%\n",__FILE__,__LINE__,min_ratio,required_numa,ratio);
+			if (message)
+				sctk_alloc_perror("%s\n",message);
+		} else {
+			sctk_alloc_pwarning("NUMA Assertion failure at %s!%d\nRequierd %d %% of memory on node %d, but get %d %%\n",__FILE__,__LINE__,min_ratio,required_numa,ratio);
+			if (message)
+				sctk_alloc_pwarning("%s\n",message);
+		}
+	}
+}
+

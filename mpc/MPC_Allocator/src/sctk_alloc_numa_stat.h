@@ -77,4 +77,15 @@ void sctk_alloc_numa_stat_get(struct sctk_alloc_numa_stat_s * stat,void * ptr,si
 void sctk_alloc_numa_stat_cumul(struct sctk_alloc_numa_stat_s * stat,void * ptr,size_t size);
 void sctk_alloc_numa_stat_print_detail(void * ptr,size_t size);
 
+/************************* FUNCTION ************************/
+//helpers for NUMA debugging on Linux only
+#ifdef SCTK_ALLOC_DEBUG
+#define assert_numa(ptr,size,required_numa,min_ratio,message) sctk_alloc_numa_check(true,__FILE__,__LINE__,(ptr),(size),(required_numa),(min_ratio),(message))
+#define warn_numa(ptr,size,required_numa,min_ratio,message) sctk_alloc_numa_check(false,__FILE__,__LINE__,(ptr),(size),(required_numa),(min_ratio),(message))
+#else
+#define assert_numa(ptr,size,required_numa,min_ratio,message) while(0) {}
+#define warning_numa(ptr,size,required_numa,min_ratio,message) while(0) {}
+#endif
+void sctk_alloc_numa_check(bool fatal_on_fail,const char * filename,int line,void * ptr,size_t size,int required_numa,int min_ratio,const char * message);
+
 #endif //SCTK_ALLOC_NUMA_STAT_H

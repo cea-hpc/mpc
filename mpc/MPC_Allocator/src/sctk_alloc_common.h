@@ -46,6 +46,17 @@ extern "C"
 	#define SCTK_PUBLIC
 #endif
 
+/*************************** ENUM **************************/
+/**
+ * C unavailability of boolean type sucks.
+**/
+#ifndef __cplusplus
+#include <stdbool.h>
+// #define bool unsigned char
+// #define true 1
+// #define false 0
+#endif //__cplusplus
+
 /************************** CONSTS *************************/
 /** Magick value to be used as check in common header. **/
 #define SCTK_ALLOC_MAGIK_STATUS 0x10

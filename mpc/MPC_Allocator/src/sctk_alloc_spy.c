@@ -129,7 +129,7 @@ int sctk_alloc_spy_exename_filter_accept(void)
 	char * filter = getenv("SCTK_ALLOC_SPY_EXENAME");
 
 	//get exename
-	#warning "Avoid to call this another time"
+	/** @TODO Avoid to call this another time **/
 	sctk_alloc_spy_get_exename(exename,sizeof(exename));
 
 	//trivial
