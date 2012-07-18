@@ -2483,10 +2483,10 @@ void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain)
 	//print it
 	printf("====================== ALLOCATION CHAIN STAT ======================\n");
 	printf("%-20s : %d\n","Thread ID",getpid());
-	printf("%-20s : %d\n","Current preferred node",sctk_get_preferred_numa_node());
 	printf("%-20s : %p\n","Chain",chain);
 	printf("%-20s : %p\n","Memory source",chain->source);
-	printf("%-20s : %d\n","NUMA node",sctk_alloc_chain_get_numa_node(chain));
+	printf("%-20s : %d\n","Source NUMA node",sctk_alloc_chain_get_numa_node(chain));
+	printf("%-20s : %d\n","Preferred NUMA node",sctk_get_preferred_numa_node());
 	printf("%-20s : %lu\n","Min free size",chain_stat.min_free_size);
 	printf("%-20s : %lu\n","Max free size",chain_stat.max_free_size);
 	printf("%-20s : %lu\n","Nb free chunks",chain_stat.nb_free_chunks);

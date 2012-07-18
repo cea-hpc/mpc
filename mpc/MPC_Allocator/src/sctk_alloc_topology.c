@@ -118,7 +118,7 @@ int sctk_get_first_bit_in_bitmap(hwloc_bitmap_t bitmap)
 /************************* FUNCTION ************************/
 #ifndef MPC_Threads
 #ifdef HAVE_LIBNUMA
-int sctk_get_preferred_numa_node_no_mpc()
+int sctk_get_preferred_numa_node_no_mpc_numa_binding()
 {
 	hwloc_nodeset_t nodeset = hwloc_bitmap_alloc();
 	hwloc_cpuset_t cpuset = hwloc_bitmap_alloc();
@@ -162,6 +162,68 @@ int sctk_get_preferred_numa_node_no_mpc()
 
 	hwloc_bitmap_free(cpuset);
 	hwloc_bitmap_free(nodeset);
+
+	return res;
+}
+#endif
+#endif //MPC_Threads
+
+/************************* FUNCTION ************************/
+#ifndef MPC_Threads
+#ifdef HAVE_LIBNUMA
+int sctk_get_preferred_numa_node_no_mpc_thread_binding()
+{
+	hwloc_nodeset_t nodeset = hwloc_bitmap_alloc();
+	hwloc_cpuset_t cpuset = hwloc_bitmap_alloc();
+	hwloc_membind_policy_t policy;
+	int res = -1;
+	int weight;
+	char buffer[4096];
+	
+	//get current core binding
+	int status = hwloc_get_cpubind (topology, cpuset, HWLOC_CPUBIND_THREAD);
+	assert(status == 0);
+
+	#if defined(SCTK_ALLOC_DEBUG) && defined(hwloc_bitmap_list_snprintf)
+	status = hwloc_bitmap_list_snprintf(buffer,4096,cpuset);
+	SCTK_PDEBUG("Current cores : %s\n",buffer);
+	#endif
+
+	//nodes from cores
+	hwloc_cpuset_to_nodeset(topology,cpuset,nodeset);
+
+	#if defined(SCTK_ALLOC_DEBUG) && defined(hwloc_bitmap_list_snprintf)
+	status = hwloc_bitmap_list_snprintf(buffer,4096,nodeset);
+	SCTK_PDEBUG("Current nodes from cores : %s\n",buffer);
+	#endif
+
+	//calc res
+	weight = hwloc_bitmap_weight(nodeset);
+	assert(weight != 0);
+	if (weight == 1)
+		res = sctk_get_first_bit_in_bitmap(nodeset);
+
+	hwloc_bitmap_free(cpuset);
+	hwloc_bitmap_free(nodeset);
+
+	return res;
+}
+#endif
+#endif //MPC_Threads
+
+/************************* FUNCTION ************************/
+#ifndef MPC_Threads
+#ifdef HAVE_LIBNUMA
+int sctk_get_preferred_numa_node_no_mpc()
+{
+	//vars
+	int res = -1;
+
+	//try to find by using NUMA bindings
+	res = sctk_get_preferred_numa_node_no_mpc_numa_binding();
+
+	//if not found try to find with thread binding on cores
+	res = sctk_get_preferred_numa_node_no_mpc_thread_binding();
 
 	return res;
 }

@@ -192,11 +192,7 @@ void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void)
 	int i;
 
 	//error
-	#ifndef MPC_Common
-	assume_m (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_EGG,"Invalid init state while calling allocator NUMA init phase.");
-	#else
 	assume_m (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_DEFAULT,"Invalid init state while calling allocator NUMA init phase.");
-	#endif
 
 	//get number of nodes
 	SCTK_PDEBUG("Init numa nodes");
@@ -238,9 +234,9 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init(void)
 	sctk_alloc_posix_mmsrc_numa_init_phase_default();
 
 	//in MPC NUMA is 
-	#ifndef MPC_Common
-	sctk_alloc_posix_mmsrc_numa_init_phase_numa();
-	#endif
+	//#ifndef MPC_Common
+	//sctk_alloc_posix_mmsrc_numa_init_phase_numa();
+	//#endif
 }
 
 /************************* FUNCTION ************************/
@@ -340,13 +336,19 @@ void sctk_alloc_posix_base_init(void)
 		sctk_alloc_posix_mmsrc_init();
 
 		//can bind the memory source in egg allocator
-		sctk_global_egg_chain.source = sctk_alloc_posix_get_local_mm_source();
+		sctk_global_egg_chain.source = &sctk_global_memory_source[SCTK_DEFAULT_NUMA_MM_SOURCE_ID]->source;
 
 		//unmark it
 		sctk_set_tls_chain(NULL);
 
 		//marked as init
 		sctk_global_base_init = SCTK_ALLOC_POSIX_INIT_DEFAULT;
+
+		//if standelone, init NUMA now, in MPC it will be called later after init of hwloc and
+		//restriction of nodeset.
+		#ifndef MPC_Common
+		sctk_alloc_posix_mmsrc_numa_init_phase_numa();
+		#endif //MPC_Common
 	}
 
 	//end of critical section
@@ -693,7 +695,6 @@ void sctk_alloc_posix_numa_migrate(void)
 	#ifdef MPC_Theads
 	SCTK_PDEBUG("--- Migration on %d",sctk_get_cpu());
 	#endif
-	sctk_alloc_posix_get_local_mm_source();
 
 	//if NULL nothing to do otherwise remind the current mm source
 	if (local_chain == NULL)
