@@ -303,6 +303,7 @@ void TestRegions::test_exist_none(void )
 void TestRegions::test_setup_entry_1(void )
 {
 	sctk_alloc_chain chain;
+	chain.flags = SCTK_ALLOC_CHAIN_FLAGS_DEFAULT;
 	sctk_alloc_region * region = sctk_alloc_region_setup(TEST_ADDR_REGION_1);
 
 	SVUT_ASSERT_NULL(region->entries[0].macro_bloc);

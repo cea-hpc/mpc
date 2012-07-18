@@ -322,9 +322,9 @@ void TestThreadPool::test_sctk_alloc_get_next_list_1(void )
 /************************* FUNCTION ************************/
 void TestThreadPool::test_sctk_alloc_get_next_list_2(void )
 {
-	sctk_alloc_free_list_t * flist = pool.free_lists+SCTK_ALLOC_NB_FREE_LIST-2;
+	sctk_alloc_free_list_t * flist = pool.free_lists+pool.nb_free_lists-2;
 	flist = sctk_alloc_get_next_list(&pool,flist);
-	SVUT_ASSERT_SAME(pool.free_lists+SCTK_ALLOC_NB_FREE_LIST-1,flist);
+	SVUT_ASSERT_SAME(pool.free_lists+pool.nb_free_lists-1,flist);
 	flist = sctk_alloc_get_next_list(&pool,flist);
 	SVUT_ASSERT_NULL(flist);
 }
