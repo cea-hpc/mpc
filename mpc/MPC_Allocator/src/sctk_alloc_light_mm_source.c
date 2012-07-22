@@ -48,7 +48,7 @@
  * It must be multiples of SCTK_MACRO_BLOC_SIZE.
  * With huge pvalues it tend to consume as much memory than TCMalloc.
 **/
-#define SCTK_ALLOC_MACRO_BLOC_REUSE_THREASHOLD (1*SCTK_MACRO_BLOC_SIZE)
+#define SCTK_ALLOC_MACRO_BLOC_REUSE_THREASHOLD (0*SCTK_MACRO_BLOC_SIZE)
 
 /************************* FUNCTION ************************/
 #ifdef HAVE_LIBNUMA
@@ -459,6 +459,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_mmap_new_s
 	macro_bloc = sctk_alloc_setup_macro_bloc(macro_bloc,size);
 
 	//increment counters
+	//@TODO use atomic inc
 	sctk_alloc_spinlock_lock(&light_source->spinlock);
 	light_source->counter++;
 	sctk_alloc_spinlock_unlock(&light_source->spinlock);
@@ -496,6 +497,7 @@ SCTK_STATIC void sctk_alloc_mm_source_light_free_memory(struct sctk_alloc_mm_sou
 	}
 
 	//increment counters
+	//@TODO use atomic inc
 	sctk_alloc_spinlock_lock(&light_source->spinlock);
 	light_source->counter--;
 	sctk_alloc_spinlock_unlock(&light_source->spinlock);

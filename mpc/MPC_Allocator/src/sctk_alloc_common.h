@@ -139,7 +139,7 @@ extern "C"
 	#ifdef _MSC_VER
 		#define SCTK_STATIC __inline
 	#else
-		#define SCTK_STATIC inline
+		#define SCTK_STATIC static inline
 	#endif
 #endif // MPC_ALLOCATOR_DISABLE_STATIC
 

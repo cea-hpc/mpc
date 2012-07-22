@@ -1099,6 +1099,17 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_request_mem(struct sctk_alloc_cha
 
 	//round size
 	size += sizeof(struct sctk_alloc_macro_bloc) + sizeof(struct sctk_alloc_chunk_header_large);
+	//region didn't support smaller than macro bloc size, but for larger we only need to align on page size
+	/*if (size <= SCTK_MACRO_BLOC_SIZE)
+	{
+		size = SCTK_MACRO_BLOC_SIZE;
+	} else {
+		if (size % SCTK_PAGE_SIZE)
+			size += SCTK_PAGE_SIZE - size % SCTK_PAGE_SIZE;
+	}
+	assert(size % SCTK_PAGE_SIZE == 0);
+	assert(size >= SCTK_MACRO_BLOC_SIZE);*/
+	
 	if (size % SCTK_MACRO_BLOC_SIZE != 0)
 		size += SCTK_MACRO_BLOC_SIZE - size % SCTK_MACRO_BLOC_SIZE;
 	assert(size % SCTK_MACRO_BLOC_SIZE == 0);
@@ -1863,9 +1874,7 @@ void sctk_alloc_perror (const char * format,...)
 	va_start (param, format);
 	sctk_alloc_vsprintf (tmp2,4096, tmp, param);
 	va_end (param);
-#ifndef _WIN32
 	write(STDERR_FILENO,tmp2,strlen(tmp2));
-#endif
 }
 
 /************************* FUNCTION ************************/
@@ -2486,7 +2495,9 @@ void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain)
 	printf("%-20s : %p\n","Chain",chain);
 	printf("%-20s : %p\n","Memory source",chain->source);
 	printf("%-20s : %d\n","Source NUMA node",sctk_alloc_chain_get_numa_node(chain));
+	#ifdef HAVE_LIBNUMA
 	printf("%-20s : %d\n","Preferred NUMA node",sctk_get_preferred_numa_node());
+	#endif //HAVE_LIBNUMA
 	printf("%-20s : %lu\n","Min free size",chain_stat.min_free_size);
 	printf("%-20s : %lu\n","Max free size",chain_stat.max_free_size);
 	printf("%-20s : %lu\n","Nb free chunks",chain_stat.nb_free_chunks);

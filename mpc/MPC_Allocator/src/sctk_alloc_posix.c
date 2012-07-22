@@ -232,11 +232,6 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init(void)
 {
 	//setup default memory source
 	sctk_alloc_posix_mmsrc_numa_init_phase_default();
-
-	//in MPC NUMA is 
-	//#ifndef MPC_Common
-	//sctk_alloc_posix_mmsrc_numa_init_phase_numa();
-	//#endif
 }
 
 /************************* FUNCTION ************************/
