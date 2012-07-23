@@ -102,7 +102,8 @@ int sctk_get_node_from_cpu (int cpu);
 **/
 SCTK_STATIC void sctk_set_tls_chain(struct sctk_alloc_chain * chain){
 	#ifdef _WIN32
-		TlsSetValue(sctk_current_alloc_chain, (void*) chain);
+		assume_m(sctk_current_alloc_chain != -1,"The TLS wasn't initialized.");
+		TlsSetValue(sctk_current_alloc_chain, (LPVOID)chain);
 	#else
 		sctk_current_alloc_chain = chain;
 	#endif
@@ -114,7 +115,8 @@ SCTK_STATIC void sctk_set_tls_chain(struct sctk_alloc_chain * chain){
 **/
 SCTK_STATIC struct sctk_alloc_chain * sctk_get_tls_chain(){
 	#ifdef _WIN32
-		return (TlsGetValue(sctk_current_alloc_chain));
+		assume_m (sctk_current_alloc_chain != -1,"The TLS wasn't initialized.");
+		return (struct sctk_alloc_chain *)(TlsGetValue(sctk_current_alloc_chain));
 	#else
 		return sctk_current_alloc_chain;
 	#endif
@@ -126,7 +128,20 @@ SCTK_STATIC struct sctk_alloc_chain * sctk_get_tls_chain(){
 **/
 SCTK_STATIC void sctk_alloc_tls_chain(){
 	#ifdef _WIN32
+		assume_m (sctk_current_alloc_chain == -1,"Try to double alloc the allocator global TLS");
 		sctk_current_alloc_chain = TlsAlloc();
+		assume_m (sctk_current_alloc_chain != TLS_OUT_OF_INDEXES,"Not enougth indexes for TLS");
+		sctk_set_tls_chain(NULL);
+	#endif
+}
+
+/*************************** FUNCTION **********************/
+/**
+ * Windows specifics. Tls variables need to be initialised before using.
+**/
+void sctk_alloc_tls_chain_local_reset(){
+	#ifdef _WIN32
+		sctk_set_tls_chain(NULL);
 	#endif
 }
 
@@ -396,7 +411,10 @@ struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void)
 struct sctk_alloc_chain * sctk_alloc_posix_setup_tls_chain(void)
 {
 	//vars
-	struct sctk_alloc_chain * chain; 
+	struct sctk_alloc_chain * chain;
+
+	//debug
+	SCTK_PDEBUG("sctk_alloc_posix_setup_tls_chain()");
 
 	//profiling
 	SCTK_PROFIL_START(sctk_alloc_posix_setup_tls_chain);
@@ -528,10 +546,8 @@ SCTK_PUBLIC void sctk_free (void * ptr)
 	//setup the local chain if not already done
 	//we need a non null chain when spy is enabled to avoid crash on remote free before a first
 	//call to malloc()
-	#ifdef SCTK_ALLOC_SPY
 	if (local_chain == NULL)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
-	#endif
 
 	//SCTK_PDEBUG("Free(%p);//%p",ptr,sctk_get_tls_chain());
 
@@ -544,7 +560,6 @@ SCTK_PUBLIC void sctk_free (void * ptr)
 	
 	//Find the chain corresponding to the given memory bloc
 	macro_bloc = sctk_alloc_region_get_macro_bloc(ptr);
-	assert(ptr > (void*)macro_bloc && ptr < (void*)macro_bloc + macro_bloc->header.size);
 	if (macro_bloc == NULL)
 	{
 		#ifdef SCTK_ALLOC_DEBUG
@@ -553,6 +568,8 @@ SCTK_PUBLIC void sctk_free (void * ptr)
 		abort();
 		#endif
 		return;
+	} else {
+		assert(ptr > (void*)macro_bloc && (sctk_addr_t)ptr < (sctk_addr_t)macro_bloc + macro_bloc->header.size);
 	}
 	
 	chain = macro_bloc->chain;
@@ -668,7 +685,7 @@ struct sctk_alloc_chain * sctk_get_current_alloc_chain(void)
 /**
  * Reconfigure the allocator binding on memory source, mainly to adapt after a NUMA migration.
 **/
-void sctk_alloc_posix_numa_migrate(void)
+SCTK_PUBLIC void sctk_alloc_posix_numa_migrate(void)
 {
 	//vars
 	struct sctk_alloc_chain * local_chain;
@@ -680,7 +697,7 @@ void sctk_alloc_posix_numa_migrate(void)
 	SCTK_PROFIL_START(sctk_alloc_posix_numa_migrate);
 	
 	//get the current allocation chain
-	local_chain = sctk_current_alloc_chain;
+	local_chain = sctk_get_tls_chain();
 
 	//if we didn't have an allocation, we can skip this, it will be
 	//create at first use on the current numa node, so automatically OK

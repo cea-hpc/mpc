@@ -67,7 +67,7 @@ static __inline__ int sctk_alloc_spinlock_unlock (sctk_alloc_spinlock_t * lock)
 }
 
 /************************* FUNCTION ************************/
-static __inline__ int sctk_alloc_spinlock_trylock (sctk_alloc_spinlock_t * lock)
+static __inline__ int sctk_alloc_spinlock_trylock (volatile sctk_alloc_spinlock_t * lock)
 {
 	return sctk_test_and_set (lock);
 }

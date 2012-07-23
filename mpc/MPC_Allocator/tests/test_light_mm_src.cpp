@@ -97,6 +97,7 @@ TestLightMMSrc::TestLightMMSrc(const char * name,sctk_alloc_mm_source_light_flag
 /************************* FUNCTION ************************/
 void TestLightMMSrc::testMethodsRegistration (void)
 {
+	sctk_alloc_init_topology();
 	SVUT_REG_TEST_METHOD(test_init);
 	SVUT_REG_TEST_METHOD(test_setup_free_macro_bloc);
 	SVUT_REG_TEST_METHOD(test_reg_in_cache_1);

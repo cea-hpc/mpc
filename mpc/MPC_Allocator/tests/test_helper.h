@@ -28,6 +28,7 @@
 #include <sctk_allocator.h>
 #include <cstring>
 #include <sctk_alloc_inlined.h>
+#include <omp.h>
 #ifdef _WIN32
 	#include <windows.h>
 #endif
@@ -59,7 +60,8 @@ void sctk_alloc_spy_chain_get_fname(struct sctk_alloc_chain * chain,char * fname
 	strcpy(fname,"/dev/null");
 }
 }
-#if defined(_WIN32) && !defined(_VCC)
+
+#if defined(_WIN32) && !defined(_MSC_VER)
 	int omp_get_num_threads(void) { return 1;}
 	int omp_get_thread_num (void) { return 0;}
 #endif

@@ -29,6 +29,7 @@
 //#include "../src/sctk_allocator.h"
 #include <omp.h>
 #include <malloc.h>
+#include <Windows.h>
 
 /************************* FUNCTION ************************/
 int main(void)
@@ -362,54 +363,68 @@ int main(void)
 	malloc(32);
 	
 	malloc(256*1024*1024);
-	system("pause");
+	//system("pause");
 	
 	//test_massiv_thread_malloc
-#define TEST_REAL_HEAP_BASE (SCTK_ALLOC_HEAP_BASE)
-#define TEST_REAL_HEAP_SIZE (SCTK_ALLOC_HEAP_SIZE - SCTK_PAGE_SIZE)
-#define TEST_MAX_THREAD 1024
-#define TEST_NB_ALLOC 32*4096
+	#define TEST_REAL_HEAP_BASE (SCTK_ALLOC_HEAP_BASE)
+	#define TEST_REAL_HEAP_SIZE (SCTK_ALLOC_HEAP_SIZE - SCTK_PAGE_SIZE)
+	#define TEST_MAX_THREAD 1024
+	#define TEST_NB_ALLOC 32*4096
 	puts("test new\n");
-		void ** ptr = new void * [TEST_MAX_THREAD * TEST_NB_ALLOC];
-		int nb;
+	void ** ptr = new void * [TEST_MAX_THREAD * TEST_NB_ALLOC];
+	int nb;
 
-	#pragma omp parallel
-	#pragma omp single
-	nb = omp_get_num_threads();
-	assert(TEST_MAX_THREAD > nb);
-	#pragma omp parallel
+	DWORD t0 = GetTickCount();
+	for (int loop = 0 ; loop < 50 ; loop++)
 	{
-		int id = omp_get_thread_num();
-		for (int j = 0 ; j < TEST_NB_ALLOC ; ++j)
-			ptr[id*TEST_NB_ALLOC+j] = malloc(256);
-	}
-	puts("line 386\n");
-	for (int i = 0 ; i < nb ; ++i)
-		for (int j = 0 ; j < TEST_NB_ALLOC ; ++j)
-		{
-			assert(ptr[i*TEST_NB_ALLOC+j] != NULL);
-			free(ptr[i*TEST_NB_ALLOC+j]);
-		}
-	puts("line 393\n");
-	#pragma omp parallel
-	{
-		free(NULL);
-	}
-	puts("line 398\n");
-	for (int i = 0 ; i < nb ; ++i)
-		for (int j = 0 ; j < TEST_NB_ALLOC ; ++j)
-		{
-			//SVUT_SET_CONTEXT("Thread",i);
-			//SVUT_SET_CONTEXT("Bloc",j);
-			//SVUT_SET_CONTEXT("BlocAddr",ptr[i*TEST_NB_ALLOC+j]);
-			//assert((sctk_alloc_region_get_entry(ptr[i*TEST_NB_ALLOC+j])->macro_bloc) == NULL);
-		}
 
+		#pragma omp parallel
+		#pragma omp single
+		nb = omp_get_num_threads();
+		//nb=1;
+		assert(TEST_MAX_THREAD > nb);
+		#pragma omp parallel
+		{
+			int id = omp_get_thread_num();
+			for (int j = 0 ; j < TEST_NB_ALLOC ; ++j)
+			{
+				ptr[id*TEST_NB_ALLOC+j] = malloc(256);
+				*(char*)ptr[id*TEST_NB_ALLOC+j] = 'c';
+			}
+		}
+		puts("line 386\n");
+		#pragma omp parallel
+		{
+			int id = (omp_get_thread_num()) % nb;
+			for (int j = 0 ; j < TEST_NB_ALLOC ; ++j)
+			{
+				assert(ptr[id*TEST_NB_ALLOC+j] != NULL);
+				free(ptr[id*TEST_NB_ALLOC+j]);
+			}
+		}
+		//puts("line 393\n");
+		#pragma omp parallel
+		{
+			free(NULL);
+		}
+		//puts("line 398\n");
+		for (int i = 0 ; i < nb ; ++i)
+			for (int j = 0 ; j < TEST_NB_ALLOC ; ++j)
+			{
+				//SVUT_SET_CONTEXT("Thread",i);
+				//SVUT_SET_CONTEXT("Bloc",j);
+				//SVUT_SET_CONTEXT("BlocAddr",ptr[i*TEST_NB_ALLOC+j]);
+				//assert((sctk_alloc_region_get_entry(ptr[i*TEST_NB_ALLOC+j])->macro_bloc) == NULL);
+			}
+		int * seb = new int;
+		delete seb;
+
+	}
+	DWORD t1 = GetTickCount();
+	printf("time = %llu\n",t1-t0);
 	delete[] ptr;
 
-	int * seb = new int;
-	delete seb;
-	system("pause");
+	//system("pause");
 
 	_aligned_malloc(100,1024);
 

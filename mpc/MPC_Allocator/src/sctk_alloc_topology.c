@@ -185,7 +185,8 @@ int sctk_get_preferred_numa_node_no_mpc_thread_binding()
 	#endif
 	
 	//get current core binding
-	int status = hwloc_get_cpubind (topology, cpuset, HWLOC_CPUBIND_THREAD);
+	//for windows use 0 instead of HWLOC_CPUBIND_THREAD
+	int status = hwloc_get_cpubind (topology, cpuset, 0);
 	assert(status == 0);
 
 	#if defined(SCTK_ALLOC_DEBUG) && defined(hwloc_bitmap_list_snprintf)
@@ -323,7 +324,7 @@ void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_no
 	//round the size and addr
 	/** @todo replace by a cleaner round function. **/
 	size += (sctk_addr_t)addr % SCTK_ALLOC_PAGE_SIZE;
-	addr -= (sctk_addr_t)addr % SCTK_ALLOC_PAGE_SIZE;
+	addr = (void*)((sctk_addr_t)addr - (sctk_addr_t)addr % SCTK_ALLOC_PAGE_SIZE);
 	if (size % SCTK_ALLOC_PAGE_SIZE != 0)
 		size += SCTK_ALLOC_PAGE_SIZE - (size % SCTK_ALLOC_PAGE_SIZE);
 

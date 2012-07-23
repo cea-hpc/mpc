@@ -29,6 +29,7 @@
 #endif
 
 #include "sctk_alloc_common.h"
+#include "sctk_alloc_debug.h"
 #include <stdio.h>
 
 /************************* PORTABILITY *************************/
@@ -48,8 +49,9 @@ void * sctk_mmap(void* addr, size_t size)
 {
 	void * res = NULL;
 	
+	SCTK_PDEBUG("VirtualAlloc(%p,%llu)",addr,size);
 	res = VirtualAlloc(addr,size,MEM_COMMIT|MEM_RESERVE,PAGE_EXECUTE_READWRITE);
-	
+	SCTK_PDEBUG("Return => %p",res);
 	if (res == MAP_FAILED){
 		fprintf(stderr, "Error Code to VirtualAlloc: %d\n",GetLastError());
 		perror("Out of memory, failed to request memory to the OS via VirtualAlloc.");
@@ -83,9 +85,11 @@ void sctk_munmap(void * addr,size_t size)
 {
 	int exit_status;
 	//DO not need to DECOMMIT before release, MEM_RELEASE implies it
-	exit_status = VirtualFree(addr,size,MEM_RELEASE);
-	if(exit_status != 0)
-		fprintf(stderr, "Error Code to VirtualFree: %d\n", GetLastError());
+	SCTK_PDEBUG("VirtualFree(%p,%llu)",addr,size);
+	SetLastError(0);
+	exit_status = VirtualFree(addr,0,MEM_RELEASE);
+	if(exit_status == 0)
+		SCTK_PDEBUG("Error Code to VirtualFree: %d\n", GetLastError());
 }
 
 #else

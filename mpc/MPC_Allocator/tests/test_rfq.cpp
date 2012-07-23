@@ -82,10 +82,6 @@ void TestAllocRFQ::testMethodsRegistration (void)
 /************************* FUNCTION ************************/
 void TestAllocRFQ::setUp (void)
 {
-	#ifdef _WIN32
-		void *res = VirtualAlloc((void*)SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE,MEM_RESERVE,PAGE_EXECUTE_READWRITE);
-		assert(res == (void*)SCTK_ALLOC_HEAP_BASE);
-	#endif
 	sctk_alloc_rfq_init(&rfq);
 	sctk_alloc_chain_user_init(&chain,TEST_BUFFER,sizeof(TEST_BUFFER),SCTK_ALLOC_CHAIN_FLAGS_DEFAULT);
 }
@@ -97,9 +93,7 @@ void TestAllocRFQ::tearDown (void)
 	rfq.first = rfq.last = NULL;
 	sctk_alloc_rfq_destroy(&rfq);
 	sctk_alloc_chain_destroy(&chain,true);
-	#ifdef _WIN32
-		VirtualFree((void*)SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE,MEM_RELEASE);
-	#endif
+	sctk_alloc_region_del_all();
 }
 
 /************************* FUNCTION ************************/
@@ -212,7 +206,7 @@ void TestAllocRFQ::test_threaded_insert(void )
 {
 	//prepare blocs
 	int nb = sizeof(TEST_BUFFER) / TEST_BLOC_SIZE / 2;
-	void ** ptr = new void * [sizeof(TEST_BUFFER) / TEST_BLOC_SIZE / 2];
+	void ** ptr = new void * [nb];
 
 	//allocate blocs
 	for (int i = 0 ; i < nb ; ++i)
@@ -225,7 +219,7 @@ void TestAllocRFQ::test_threaded_insert(void )
 
 	//check
 	int cnt = 0;
-	sctk_alloc_rfq_entry * curr = rfq.first;
+	volatile sctk_alloc_rfq_entry * curr = rfq.first;
 	while (curr != NULL)
 	{
 		curr = curr->next;
@@ -276,7 +270,7 @@ void TestAllocRFQ::test_threaded_export(void )
 		} else {
 			while( cnt != nbprod * base )
 			{
-				sctk_alloc_rfq_entry * curr = sctk_alloc_rfq_extract(&rfq);
+				volatile sctk_alloc_rfq_entry * curr = sctk_alloc_rfq_extract(&rfq);
 				while (curr != NULL)
 				{
 					curr = curr->next;

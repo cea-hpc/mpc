@@ -253,7 +253,7 @@ void TestMMSourceDefault::test_bug_seq_2(void )
 //error on mapping status when splitting a non mapped macro bloc
 void TestMMSourceDefault::test_bug_seq_3(void )
 {
-	struct sctk_alloc_macro_bloc * blocs[7];
+	struct sctk_alloc_macro_bloc * blocs[8];
 	blocs[0] = sctk_alloc_mm_source_default_request_memory(&source.source,2*1024*1024);
 	blocs[1] = sctk_alloc_mm_source_default_request_memory(&source.source,2*1024*1024);
 	blocs[2] = sctk_alloc_mm_source_default_request_memory(&source.source,2*1024*1024);

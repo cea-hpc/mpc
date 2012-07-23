@@ -99,11 +99,9 @@ void TestFullAllocChain::tearDown (void)
 {
 	sctk_alloc_chain_destroy(&chain,true);
 	source.source.cleanup(&source.source);
-	/*
 	#ifdef _WIN32
 		VirtualFree((void*)SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE,MEM_RELEASE);
 	#endif
-	*/
 }
 
 /************************* FUNCTION ************************/

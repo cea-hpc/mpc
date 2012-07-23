@@ -39,4 +39,3 @@ void mpc_allocator_win_load(void){
 	sctk_free(NULL);
 }
 #endif
-

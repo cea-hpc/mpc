@@ -238,7 +238,7 @@ int sctk_alloc_optimized_log2_size_t(sctk_size_t value)
 		while (value > 1) {value = value >> 1 ; res++;};
 	#endif
 
-	return res;
+	return (int)res;
 }
 
 /************************* FUNCTION ************************/
@@ -259,7 +259,7 @@ SCTK_STATIC int sctk_alloc_reverse_analytic_free_size(sctk_size_t size,const sct
 
 	if (size <= 1024)
 		//divide by 32 and fix first element ID as we start to indexes by 0
-		return (size >> 5) - 1;
+		return (int)((size >> 5) - 1);
 	else if (size > SCTK_MACRO_BLOC_SIZE)
 		return 43;
 	else
@@ -2302,6 +2302,10 @@ SCTK_STATIC struct sctk_alloc_rfq_entry * sctk_alloc_rfq_extract(struct sctk_all
 	if (rfq == NULL)
 		return NULL;
 
+	//if empty, no need to take the lock, can exi now
+	if (rfq->first == NULL)
+		return NULL;
+
 	//take the lock
 	sctk_alloc_spinlock_lock(&rfq->lock);
 
@@ -2312,7 +2316,7 @@ SCTK_STATIC struct sctk_alloc_rfq_entry * sctk_alloc_rfq_extract(struct sctk_all
 	//let the lock
 	sctk_alloc_spinlock_unlock(&rfq->lock);
 
-	return res;
+	return ( struct sctk_alloc_rfq_entry *)res;
 }
 
 /************************* FUNCTION ************************/
@@ -2323,11 +2327,13 @@ SCTK_STATIC struct sctk_alloc_rfq_entry * sctk_alloc_rfq_extract(struct sctk_all
 **/
 SCTK_STATIC int sctk_alloc_rfq_count_entries(struct sctk_alloc_rfq_entry * entries)
 {
+	struct sctk_alloc_rfq_entry * cur = entries;
 	int cnt = 0;
+
 	while (entries != NULL)
 	{
 		cnt++;
-		entries = entries->next;
+		cur = cur->next;
 	}
 	return cnt;
 }

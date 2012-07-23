@@ -101,14 +101,15 @@ typedef volatile unsigned int sctk_atomic_test_t;
     sched_yield ();
   }
 #elif defined(_MSC_VER)
+	#ifndef __inline__
 	#define __inline__ __inline
-	static __inline__ int __sctk_test_and_set(sctk_atomic_test_t * spinlock)
+	#endif
+	static __inline__ int __sctk_test_and_set(volatile sctk_atomic_test_t * spinlock)
 	{
-		char ret = 0;
+		unsigned int ret = 0;
 		//ASM equivalent to Windows
-		InterlockedExchange(spinlock,1);
-
-      return (unsigned) ret;
+		ret = InterlockedExchange(spinlock,1);
+      return ret;
 	}
 
 	static __inline__ void __sctk_cpu_relax()

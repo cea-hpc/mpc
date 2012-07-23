@@ -189,6 +189,7 @@ void sctk_alloc_numa_stat_print(const struct sctk_alloc_numa_stat_s* stat,void *
 }
 
 /************************* FUNCTION ************************/
+#ifdef HAVE_LINUX_PAGEMAP
 struct sctk_alloc_numa_stat_linux_page_entry_s * sctk_alloc_numa_stat_read_pagemap(sctk_size_t first_page, sctk_size_t last_page)
 {
 	//vars
@@ -231,8 +232,10 @@ struct sctk_alloc_numa_stat_linux_page_entry_s * sctk_alloc_numa_stat_read_pagem
 
 	return table;
 }
+#endif //HAVE_LINUX_PAGEMAP
 
 /************************* FUNCTION ************************/
+#ifdef HAVE_LINUX_PAGEMAP
 void sctk_alloc_numa_stat_cumul(struct sctk_alloc_numa_stat_s* stat, void* ptr, size_t size)
 {
 	//vars
@@ -270,6 +273,12 @@ void sctk_alloc_numa_stat_cumul(struct sctk_alloc_numa_stat_s* stat, void* ptr, 
 		free(table);
 	}
 }
+#else //HAVE_LINUX_PAGEMAP
+void sctk_alloc_numa_stat_cumul(struct sctk_alloc_numa_stat_s* stat, void* ptr, size_t size)
+{
+	warning("Caution, HAVE_LINUX_PAGEMAP was disabled at compile time, do nothing.");
+}
+#endif //HAVE_LINUX_PAGEMAP
 
 /************************* FUNCTION ************************/
 void sctk_alloc_numa_stat_get(struct sctk_alloc_numa_stat_s* stat, void* ptr, size_t size)
@@ -279,6 +288,7 @@ void sctk_alloc_numa_stat_get(struct sctk_alloc_numa_stat_s* stat, void* ptr, si
 }
 
 /************************* FUNCTION ************************/
+#ifdef HAVE_LINUX_PAGEMAP
 void sctk_alloc_numa_stat_print_detail(void* ptr, size_t size)
 {
 	//vars
@@ -322,6 +332,12 @@ void sctk_alloc_numa_stat_print_detail(void* ptr, size_t size)
 	//free the temporaray segment
 	free(table);
 }
+#else //HAVE_LINUX_PAGEMAP
+void sctk_alloc_numa_stat_print_detail(void* ptr, size_t size)
+{
+	warning("Caution, HAVE_LINUX_PAGEMAP was disabled at compile time, do nothing.");
+}
+#endif //HAVE_LINUX_PAGEMAP
 
 /************************* FUNCTION ************************/
 void sctk_alloc_numa_check(bool fatal_on_fail, const char* filename, int line, void* ptr, size_t size, int required_numa, int min_ratio, const char* message)
@@ -346,7 +362,7 @@ void sctk_alloc_numa_check(bool fatal_on_fail, const char* filename, int line, v
 	assert(required_numa < numa_stat.numa_nodes);
 
 	//compute NUMA ratio for required node
-	ratio = 100.0 * (float)numa_stat.numa_pages[required_numa] / (float)numa_stat.total_mapped;
+	ratio = 100.0f * (float)numa_stat.numa_pages[required_numa] / (float)numa_stat.total_mapped;
 
 	//print error if failed
 	if (ratio < min_ratio)

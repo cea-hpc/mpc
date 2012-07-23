@@ -31,9 +31,8 @@ extern "C"
 /************************** HEADERS ************************/
 #if defined(_WIN32)
 	#include <windows.h>
-	#ifndef _MSC_VER
-		#include <stdint.h>
-	#else
+	#include <stdint.h>
+	#ifdef _MSC_VER
 		//used for _open and _write functions with VCC
 		#include <io.h>
 	#endif

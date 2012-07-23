@@ -658,7 +658,7 @@ BOOL Mhook_SetHook(PVOID *ppSystemFunction, PVOID pHookFunction) {
 	ODPRINTF((L"mhooks: Mhook_SetHook: Started on the job: %p / %p", pSystemFunction, pHookFunction));
 	// find the real functions (jump over jump tables, if any)
 	//pSystemFunction = SkipJumps((PBYTE)pSystemFunction);
-	pHookFunction   = SkipJumps((PBYTE)pHookFunction);
+	//pHookFunction   = SkipJumps((PBYTE)pHookFunction);
 	ODPRINTF((L"mhooks: Mhook_SetHook: Started on the job: %p / %p", pSystemFunction, pHookFunction));
 	// figure out the length of the overwrite zone
 	MHOOKS_PATCHDATA patchdata = {0};

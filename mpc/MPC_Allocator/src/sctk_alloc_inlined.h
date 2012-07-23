@@ -55,7 +55,7 @@ static __inline__ sctk_size_t sctk_alloc_get_chunk_header_large_size(struct sctk
 	#ifdef _WIN32
 		//Windows doesn't support bitfield value of more than 32bits, but we have 56, so re-implement by and with masks and shift.
 		//Here, take the first 56bits were the size if stored.
-		return ( (*(sctk_size_t * ) chunk->size) & ((1ULL << 56 ) - 1 ) );
+		return ( (*(sctk_size_t * ) &chunk->size) & ((1ULL << 56 ) - 1 ) );
 	#else
 		//On Unix, we can use the more safe way with bitfield.
 		return chunk->size;
@@ -74,7 +74,7 @@ static __inline__ sctk_size_t sctk_alloc_get_chunk_header_large_previous_size(st
 	#ifdef _WIN32
 		//Windows doesn't support bitfield value of more than 32bits, but we have 56, so re-implement by and with masks and shift.
 		//Here, take the first 56bits were the size if stored.
-		return ( (*(sctk_size_t * ) chunk->prevSize) & ((1ULL << 56 ) - 1 ) );
+		return ( (*(sctk_size_t * ) &chunk->prevSize) & ((1ULL << 56 ) - 1 ) );
 	#else
 		//On Unix, we can use the more safe way with bitfield.
 		return chunk->prevSize;
@@ -93,7 +93,7 @@ static __inline__ sctk_size_t sctk_alloc_get_chunk_header_padded_padding(struct 
 	#ifdef _WIN32
 		//Windows doesn't support bitfield value of more than 32bits, but we have 56, so re-implement by and with masks and shift.
 		//Here, take the first 56bits were the size if stored.
-		return ( (*(sctk_size_t * ) chunk->padding) & ((1ULL << 56 ) - 1 ) );
+		return ( (*(sctk_size_t * ) &chunk->padding) & ((1ULL << 56 ) - 1 ) );
 	#else
 		//On Unix, we can use the more safe way with bitfield.
 		return chunk->padding;
@@ -117,7 +117,7 @@ static __inline__ void sctk_alloc_set_chunk_header_large_size(struct sctk_alloc_
 		//Here, remplace the first 56bit with the onces from "size" and complete with the old value of addr, then erase the whole 64bit word
 		//need to copy locally to be sure of typing.
 		sctk_size_t addr = (sctk_size_t)chunk->addr;
-		*(sctk_size_t *)chunk->size = ((size & ((1ULL<<56)-1)) | ((addr) << 56));
+		*(sctk_size_t *)&chunk->size = ((size & ((1ULL<<56)-1)) | ((addr) << 56));
 	#else
 		chunk->size = size;
 	#endif
@@ -136,7 +136,7 @@ static __inline__ void sctk_alloc_set_chunk_header_large_previous_size(struct sc
 		//Here, remplace the first 56bit with the onces from "size" and complete with the old value of addr, then erase the whole 64bit word
 		//need to copy locally to be sure of typing.
 		sctk_size_t info = (sctk_size_t)(*((unsigned char*)(&chunk->info)));
-		*(sctk_size_t *)chunk->prevSize = ((prevSize & ((1ULL<<56)-1)) | ((info) << 56));
+		(*(sctk_size_t *)(&chunk->prevSize)) = ((prevSize & ((1ULL<<56)-1)) | ((info) << 56));
 	#else
 		chunk->prevSize = prevSize;
 	#endif
@@ -150,7 +150,7 @@ static __inline__ void sctk_alloc_set_chunk_header_padded_padding(struct sctk_al
 		//Here, remplace the first 56bit with the onces from "size" and complete with the old value of addr, then erase the whole 64bit word
 		//need to copy locally to be sure of typing.
 		sctk_size_t info = (sctk_size_t)(*((unsigned char*)(&chunk->info)));
-		*(sctk_size_t *)chunk->padding = ((padding & ((1ULL<<56)-1)) | ((info) << 56));
+		*(sctk_size_t *)&chunk->padding = ((padding & ((1ULL<<56)-1)) | ((info) << 56));
 	#else
 		chunk->padding = padding;
 	#endif

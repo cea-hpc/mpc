@@ -119,19 +119,12 @@ void TestThreadPool::testMethodsRegistration (void)
 /************************* FUNCTION ************************/
 void TestThreadPool::setUp (void)
 {
-	#ifdef _WIN32
-		void *res = VirtualAlloc((void*)SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE,MEM_RESERVE,PAGE_EXECUTE_READWRITE);
-		assert(res == (void*)SCTK_ALLOC_HEAP_BASE);
-	#endif
 	sctk_alloc_thread_pool_init(&pool,NULL);
 }
 
 /************************* FUNCTION ************************/
 void TestThreadPool::tearDown (void)
 {
-	#ifdef _WIN32
-		VirtualFree((void*)SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE,MEM_RELEASE);
-	#endif
 }
 
 /************************* FUNCTION ************************/

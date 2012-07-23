@@ -79,18 +79,11 @@ void TestAllocatedChunk::testMethodsRegistration (void)
 /************************* FUNCTION ************************/
 void TestAllocatedChunk::setUp (void)
 {
-	#ifdef _WIN32
-		void *address = VirtualAlloc((void*)SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE,MEM_RESERVE,PAGE_EXECUTE_READWRITE);
-		assert(address == SCTK_ALLOC_HEAP_BASE);
-	#endif
 }
 
 /************************* FUNCTION ************************/
 void TestAllocatedChunk::tearDown (void)
 {
-	#ifdef _WIN32
-		VirtualFree((void*)SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE,MEM_RELEASE);
-	#endif
 }
 
 /************************* FUNCTION ************************/

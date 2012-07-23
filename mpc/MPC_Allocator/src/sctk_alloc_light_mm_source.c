@@ -233,8 +233,9 @@ SCTK_STATIC void sctk_alloc_force_segment_binding(struct sctk_alloc_mm_source_li
 	assert(numa_node >= 0);
 
 	//use hwloc to bind the segment
+	//0 on HWLOC_MEMBIND_THREAD for windows
 	if (light_source->nodeset != NULL)
-		res = hwloc_set_area_membind_nodeset(sctk_get_topology_object(),base,size,light_source->nodeset,HWLOC_MEMBIND_BIND ,HWLOC_MEMBIND_THREAD);
+		res = hwloc_set_area_membind_nodeset(sctk_get_topology_object(),base,size,light_source->nodeset,HWLOC_MEMBIND_BIND ,0);
 }
 #endif //HAVE_LIBNUMA
 
@@ -497,7 +498,7 @@ SCTK_STATIC void sctk_alloc_mm_source_light_free_memory(struct sctk_alloc_mm_sou
 	}
 
 	//increment counters
-	//@TODO use atomic inc
+	//@TODO use atomic inc and disable in non debug
 	sctk_alloc_spinlock_lock(&light_source->spinlock);
 	light_source->counter--;
 	sctk_alloc_spinlock_unlock(&light_source->spinlock);

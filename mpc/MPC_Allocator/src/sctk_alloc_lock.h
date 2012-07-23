@@ -27,6 +27,8 @@
 /************************** HEADERS ************************/
 #ifndef _WIN32
 	#include <pthread.h>
+#else
+	#include <Windows.h>
 #endif
 
 /************************** MACROS *************************/
@@ -35,9 +37,9 @@
 #endif
 
 /************************** HEADERS ************************/
-#ifdef _WIN32
+/*#ifdef _WIN32
 	#define SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK	
-#endif
+#endif*/
 
 #ifdef SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK
 	#include "sctk_alloc_spinlock.h"
@@ -48,25 +50,40 @@
 //But in POSIX standard, spinlock didn't have static INITIALIZER, so prefer to use mutex in
 //this case
 //pthread_once wan't usable in MPC as it's based on mutex too.
-#ifdef SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK
-#define SCTK_ALLOC_INIT_LOCK_TYPE sctk_alloc_spinlock_t
-#define SCTK_ALLOC_INIT_LOCK_INITIALIZER SCTK_ALLOC_SPINLOCK_INITIALIZER
-#define SCTK_ALLOC_INIT_LOCK_LOCK(x) sctk_alloc_spinlock_lock(x)
-#define SCTK_ALLOC_INIT_LOCK_UNLOCK(x) sctk_alloc_spinlock_unlock(x)
-#ifndef PTHREAD_PROCESS_PRIVATE
-	#define PTHREAD_PROCESS_PRIVATE 0
-#endif
-#else //SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK
-#define SCTK_ALLOC_INIT_LOCK_TYPE pthread_mutex_t
-#define SCTK_ALLOC_INIT_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
-#define SCTK_ALLOC_INIT_LOCK_LOCK(x) pthread_mutex_lock(x)
-#define SCTK_ALLOC_INIT_LOCK_UNLOCK(x) pthread_mutex_unlock(x)
-#define sctk_alloc_spinlock_t pthread_spinlock_t
-#define sctk_alloc_spinlock_init(x,y) pthread_spin_init(x,y)
-#define sctk_alloc_spinlock_lock(x) pthread_spin_lock(x)
-#define sctk_alloc_spinlock_unlock(x) pthread_spin_unlock(x)
-#define sctk_alloc_spinlock_trylock(x) pthread_spin_trylock(x)
-#define sctk_alloc_spinlock_destroy(x) pthread_spin_destroy(x)
-#endif //SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK
-
+//on windows, seams to get a bug on our internal spinlock implementation with optim flags
+#ifdef _WIN32
+	//@TODO find a way to use static mutexes, here it didn't failed as long as we use the DLL init step
+	//which is called no nmultithread, but it may fail one day
+	#define SCTK_ALLOC_INIT_LOCK_TYPE int
+	#define SCTK_ALLOC_INIT_LOCK_INITIALIZER 0
+	#define SCTK_ALLOC_INIT_LOCK_LOCK(x) do {} while(0)
+	#define SCTK_ALLOC_INIT_LOCK_UNLOCK(x) do {} while(0)
+	#define sctk_alloc_spinlock_t CRITICAL_SECTION
+	#define sctk_alloc_spinlock_init(x,y) InitializeCriticalSection((x))
+	#define sctk_alloc_spinlock_lock(x) EnterCriticalSection(x)
+	#define sctk_alloc_spinlock_unlock(x) LeaveCriticalSection(x)
+	#define sctk_alloc_spinlock_trylock(x) (!TryEnterCriticalSection(x))
+	#define sctk_alloc_spinlock_destroy(x) DeleteCriticalSection(x)
+#else //_WIN32
+	#ifdef SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK
+		#define SCTK_ALLOC_INIT_LOCK_TYPE sctk_alloc_spinlock_t
+		#define SCTK_ALLOC_INIT_LOCK_INITIALIZER SCTK_ALLOC_SPINLOCK_INITIALIZER
+		#define SCTK_ALLOC_INIT_LOCK_LOCK(x) sctk_alloc_spinlock_lock(x)
+		#define SCTK_ALLOC_INIT_LOCK_UNLOCK(x) sctk_alloc_spinlock_unlock(x)
+		#ifndef PTHREAD_PROCESS_PRIVATE
+			#define PTHREAD_PROCESS_PRIVATE 0
+		#endif
+	#else //SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK
+		#define SCTK_ALLOC_INIT_LOCK_TYPE pthread_mutex_t
+		#define SCTK_ALLOC_INIT_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
+		#define SCTK_ALLOC_INIT_LOCK_LOCK(x) pthread_mutex_lock(x)
+		#define SCTK_ALLOC_INIT_LOCK_UNLOCK(x) pthread_mutex_unlock(x)
+		#define sctk_alloc_spinlock_t pthread_spinlock_t
+		#define sctk_alloc_spinlock_init(x,y) pthread_spin_init(x,y)
+		#define sctk_alloc_spinlock_lock(x) pthread_spin_lock(x)
+		#define sctk_alloc_spinlock_unlock(x) pthread_spin_unlock(x)
+		#define sctk_alloc_spinlock_trylock(x) pthread_spin_trylock(x)
+		#define sctk_alloc_spinlock_destroy(x) pthread_spin_destroy(x)
+	#endif //SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK
+#endif //_WIN32
 #endif //SCTK_ALLOC_LOCK_H

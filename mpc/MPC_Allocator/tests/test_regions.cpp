@@ -361,6 +361,7 @@ void TestRegions::test_setup_entry_2(void )
 void TestRegions::test_setup_entry_3(void )
 {
 	sctk_alloc_chain chain;
+	chain.flags = SCTK_ALLOC_CHAIN_FLAGS_DEFAULT;
 	sctk_alloc_region * region = sctk_alloc_region_setup(TEST_ADDR_REGION_1);
 
 	SVUT_ASSERT_NULL(region->entries[0].macro_bloc);
@@ -388,6 +389,7 @@ void TestRegions::test_setup_entry_3(void )
 void TestRegions::test_setup_entry_4(void )
 {;
 	sctk_alloc_chain chain;
+	chain.flags = SCTK_ALLOC_CHAIN_FLAGS_DEFAULT;
 	sctk_alloc_region * region1 = sctk_alloc_region_setup(TEST_ADDR_REGION_1);
 	sctk_alloc_region * region2 = sctk_alloc_region_setup(TEST_ADDR_REGION_2);
 

@@ -125,18 +125,11 @@ void TestChunkPadding::testMethodsRegistration (void)
 /************************* FUNCTION ************************/
 void TestChunkPadding::setUp (void)
 {
-	#ifdef _WIN32   
-		void *res = VirtualAlloc((void*)SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE,MEM_RESERVE,PAGE_EXECUTE_READWRITE);
-		assert(res == (void*)SCTK_ALLOC_HEAP_BASE);
-	#endif
 }
 
 /************************* FUNCTION ************************/
 void TestChunkPadding::tearDown (void)
 {
-	#ifdef _WIN32
-		VirtualFree((void*)SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE,MEM_RELEASE);
-	#endif
 }
 
 /************************* FUNCTION ************************/
@@ -416,7 +409,9 @@ void TestChunkPadding::test_sctk_alloc_setup_chunk_padded(sctk_size_t boundary,s
 	SVUT_ASSERT_SAME(buffer, sctk_alloc_get_ptr(vchunk));
 	SVUT_SET_CONTEXT("init_align",(sctk_addr_t)sctk_alloc_chunk_body(vchunk)%(base_align_and_size));
 	if (boundary != 0)
+	{
 		SVUT_SET_CONTEXT("init_relativ_align",(sctk_addr_t)sctk_alloc_chunk_body(vchunk)%boundary);
+	}
 	vchunk = sctk_alloc_setup_chunk_padded(vchunk,boundary);
 
 	//check alignement
@@ -445,7 +440,7 @@ void TestChunkPadding::test_sctk_alloc_setup_chunk_padded(sctk_size_t boundary,s
 		SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,sctk_alloc_get_chunk_header_padded_info(chunk)->unused_magik);
 		SVUT_ASSERT_SAME(chunk,sctk_alloc_get_ptr(vchunk));
 
-		free(rbuffer);
+		//sctk_free(rbuffer);
 	}
 }
 

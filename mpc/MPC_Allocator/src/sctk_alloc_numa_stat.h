@@ -47,6 +47,7 @@ struct sctk_alloc_numa_stat_s
  * for more detailes on it (Documentation / vm / pagemap.txt).
  * Available since Linux 2.6.25.
 **/
+#ifdef HAVE_LINUX_PAGEMAP
 struct sctk_alloc_numa_stat_linux_page_entry_s
 {
 	/** Page frame number if present and not swaped. **/
@@ -60,13 +61,16 @@ struct sctk_alloc_numa_stat_linux_page_entry_s
 	/** Set to 1 if the page if present. **/
 	unsigned char present      :  1;
 };
+#endif //HAVE_LINUX_PAGEMAP
 
 /************************* FUNCTION ************************/
 //internal functions
 SCTK_STATIC int sctk_alloc_numa_stat_get_node_of_page(void * ptr);
 SCTK_STATIC void sctk_alloc_numa_stat_at_exit(void);
 SCTK_STATIC void sctk_alloc_numa_stat_open_pagemap(void);
+#ifdef HAVE_LINUX_PAGEMAP
 SCTK_STATIC struct sctk_alloc_numa_stat_linux_page_entry_s * sctk_alloc_numa_stat_read_pagemap(sctk_size_t first_page, sctk_size_t last_page);
+#endif //HAVE_LINUX_PAGEMAP
 
 /************************* FUNCTION ************************/
 //user interface

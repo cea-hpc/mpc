@@ -11,7 +11,7 @@ if(SVUNITTEST_FOUND)
 	set(UNITTEST_LIBRARY ${SVUNITTEST_LIBRARY})
 else(SVUNITTEST_FOUND)
 	#add_subdirectory(svUnitTest_fake)
-	set(UNITTEST_INCLUDE_DIR ../tools/svUnitTest_fake/)
+	set(UNITTEST_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/svUnitTest_fake/)
 	set(UNITTEST_LIBRARY "")
 endif(SVUNITTEST_FOUND)
 
@@ -34,6 +34,6 @@ foreach(i ${ALLOC_TEST_LIST})
 	add_test(${i} ${EXECUTOR_PATH} ${i})
 endforeach(i)
 
-add_executable(simple_malloc simple_malloc.c)
+add_executable(simple_malloc simple_malloc-1.cpp)
 target_link_libraries(simple_malloc alloc)
 

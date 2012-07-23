@@ -136,6 +136,12 @@ void TestPosixMalloc::test_simple_threaded_malloc(void )
 		SVUT_ASSERT_NOT_NULL(ptr[i]);
 		sctk_free(ptr[i]);
 	}
+
+	//flush rfq
+	#pragma omp parallel
+	{
+		sctk_free(NULL);
+	}
 }
 
 /************************* FUNCTION ************************/
@@ -162,6 +168,12 @@ void TestPosixMalloc::test_simple_threaded_free(void )
 	{
 		int id = omp_get_thread_num();
 		sctk_free(ptr[id]);
+	}
+
+	//flush rfq
+	#pragma omp parallel
+	{
+		sctk_free(NULL);
 	}
 }
 

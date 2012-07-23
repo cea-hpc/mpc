@@ -99,10 +99,6 @@ void TestUserAllocChain::testMethodsRegistration (void)
 /************************* FUNCTION ************************/
 void TestUserAllocChain::setUp (void)
 {
-	#ifdef _WIN32
-		void *res = VirtualAlloc((void*)SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE,MEM_RESERVE,PAGE_EXECUTE_READWRITE);
-		assert(res == (void*)SCTK_ALLOC_HEAP_BASE);
-	#endif
 	SCTK_ALLOC_SPY_HOOK(__sctk_alloc_spy_chain_reset());
 	sctk_alloc_chain_user_init(&chain,buffer,BUFFER_TOTAL_SIZE,SCTK_ALLOC_CHAIN_FLAGS_DEFAULT);
 }
@@ -112,9 +108,6 @@ void TestUserAllocChain::tearDown (void)
 {
 	sctk_alloc_chain_destroy(&chain,true);
 	sctk_alloc_region_del_all();
-	#ifdef _WIN32
-		VirtualFree((void*)SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE,MEM_RELEASE);
-	#endif
 }
 
 /************************* FUNCTION ************************/

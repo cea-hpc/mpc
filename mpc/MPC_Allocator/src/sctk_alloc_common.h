@@ -46,15 +46,27 @@ extern "C"
 	#define SCTK_PUBLIC
 #endif
 
+//spcial inline symbol for VCC
+#ifndef __inline__
+	#ifdef _MSC_VER
+		#define __inline__ __inline
+	#else
+		#define __inline__ inline
+	#endif
+#endif
+
 /*************************** ENUM **************************/
 /**
  * C unavailability of boolean type sucks.
 **/
 #ifndef __cplusplus
+#ifdef HAVE_STDBOOL_H
 #include <stdbool.h>
-// #define bool unsigned char
-// #define true 1
-// #define false 0
+#else
+#define bool unsigned char
+#define true 1
+#define false 0
+#endif
 #endif //__cplusplus
 
 /************************** CONSTS *************************/
@@ -139,7 +151,7 @@ extern "C"
 	#ifdef _MSC_VER
 		#define SCTK_STATIC __inline
 	#else
-		#define SCTK_STATIC static inline
+		#define SCTK_STATIC inline
 	#endif
 #endif // MPC_ALLOCATOR_DISABLE_STATIC
 
