@@ -45,6 +45,16 @@
 #define SCTK_IB_MODULE_NAME "QP"
 #include "sctk_ib_toolkit.h"
 
+/* Error handler */
+#define SMALL_BUFFER_SIZE 1024
+#define SCTK_IB_ABORT_WITH_ERRNO(...)                           \
+    sctk_error(__VA_ARGS__"(errno: %s)", strerror(errno));      \
+    sctk_abort();
+
+#define SCTK_IB_ABORT(...)        \
+    sctk_error(__VA_ARGS__);      \
+    sctk_abort();
+
 
 /*-----------------------------------------------------------
  *  HT of remote peers.
@@ -104,8 +114,7 @@ sctk_ib_device_t *sctk_ib_device_init(struct sctk_ib_rail_info_s* rail_ib) {
   /* Check parameters */
   if (!dev_list)
   {
-    sctk_error ("No IB devices found");
-    sctk_abort();
+    SCTK_IB_ABORT("No IB devices found.");
   }
  device = sctk_malloc(sizeof(sctk_ib_device_t));
   ib_assume(device);
@@ -133,8 +142,7 @@ sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int r
 
   if (rail_nb >= devices_nb)
   {
-    sctk_error("Cannot open rail. You asked rail %d on %d", rail_nb, devices_nb);
-    sctk_abort();
+    SCTK_IB_ABORT("Cannot open rail. You asked rail %d on %d", rail_nb, devices_nb);
   }
 
   sctk_ib_nodebug("Opening rail %d on %d", rail_nb, devices_nb);
@@ -142,20 +150,17 @@ sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int r
   device->context = ibv_open_device (dev_list[rail_nb]);
   if (!device->context)
   {
-    sctk_error ("Cannot get devive context.");
-    sctk_abort();
+    SCTK_IB_ABORT_WITH_ERRNO("Cannot get device context.");
   }
 
   if ( ibv_query_device(device->context, &device->dev_attr) != 0)
   {
-    sctk_error ("Unable to get device attr.");
-    sctk_abort();
+    SCTK_IB_ABORT_WITH_ERRNO("Unable to get device attr.");
   }
 
   if (ibv_query_port(device->context, 1, &device->port_attr) != 0)
   {
-    sctk_error ("Unable to get port attr");
-    sctk_abort();
+    SCTK_IB_ABORT("Unable to get port attr");
   }
 
   /* Get the link width */
@@ -195,8 +200,7 @@ sctk_ib_pd_init(sctk_ib_device_t *device)
 {
   device->pd = ibv_alloc_pd(device->context);
   if (!device->pd) {
-    sctk_error ("Cannot get IB protection domain.");
-    sctk_abort();
+    SCTK_IB_ABORT("Cannot get IB protection domain.");
   }
   return device->pd;
 }
@@ -212,8 +216,7 @@ sctk_ib_cq_init(sctk_ib_device_t* device,
   cq = ibv_create_cq (device->context, config->ibv_cq_depth, NULL, NULL, 0);
 
   if (!cq) {
-    sctk_error("Cannot create Completion Queue %s", strerror(errno));
-    sctk_abort();
+    SCTK_IB_ABORT_WITH_ERRNO("Cannot create Completion Queue.");
   }
   return cq;
 }
@@ -415,8 +418,7 @@ void
 sctk_ib_qp_free(sctk_ib_qp_t* remote) {
 
   if (!remote) {
-    sctk_error("Trying to free a remote entry which is not initialized");
-    sctk_abort();
+    SCTK_IB_ABORT("Trying to free a remote entry which is not initialized");
   }
   /* destroy the QP */
   ibv_destroy_qp(remote->qp);
@@ -433,8 +435,7 @@ sctk_ib_qp_init(struct sctk_ib_rail_info_s* rail_ib,
   remote->qp = ibv_create_qp (device->pd, attr);
   PROF_INC_RAIL_IB(rail_ib, qp_created);
   if (!remote->qp) {
-    sctk_error("Cannot create QP for rank %d", rank);
-    sctk_abort();
+    SCTK_IB_ABORT("Cannot create QP for rank %d", rank);
   }
   sctk_nodebug("QP Initialized for rank %d %p", remote->rank, remote->qp);
 
@@ -585,8 +586,7 @@ sctk_ib_qp_modify( sctk_ib_qp_t* remote, struct ibv_qp_attr* attr, int flags)
 
   if (ibv_modify_qp(remote->qp, attr, flags) != 0)
   {
-    sctk_error("Cannot modify Queue Pair");
-    sctk_abort();
+    SCTK_IB_ABORT_WITH_ERRNO("Cannot modify Queue Pair");
   }
 }
 
@@ -600,17 +600,15 @@ sctk_ib_srq_init(struct sctk_ib_rail_info_s* rail_ib,
   LOAD_DEVICE(rail_ib);
   LOAD_CONFIG(rail_ib);
   device->srq = ibv_create_srq(device->pd, attr);
-  config->ibv_max_srq_ibufs_posted = attr->attr.max_wr;
-
-  sctk_ib_debug("Initializing SRQ with %d entries (max:%d)",
-      attr->attr.max_wr, sctk_ib_srq_get_max_srq_wr(rail_ib));
-
   if (!device->srq)
   {
-    perror("error");
-    sctk_error("Cannot create Shared Received Queue");
+    SCTK_IB_ABORT_WITH_ERRNO("Cannot create Shared Received Queue");
     sctk_abort();
   }
+
+  config->ibv_max_srq_ibufs_posted = attr->attr.max_wr;
+  sctk_ib_debug("Initializing SRQ with %d entries (max:%d)",
+      attr->attr.max_wr, sctk_ib_srq_get_max_srq_wr(rail_ib));
 
   return device->srq;
 }
@@ -790,12 +788,12 @@ static void* wait_send(void *arg){
     wait_send_arg.ibuf = ibuf;
     wait_send_arg.rail_ib = rail_ib;
 
-    sctk_error("[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d)", rail_ib->rail->rail_number,
+    sctk_nodebug("[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d)", rail_ib->rail->rail_number,
         remote->rank, sctk_ib_qp_get_requests_nb(remote));
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
         (void (*)(void *)) wait_send, &wait_send_arg);
 
-    sctk_error("[%d] NO LOCK QP message sent to remote %d", rail_ib->rail->rail_number, remote->rank);
+    sctk_nodebug("[%d] NO LOCK QP message sent to remote %d", rail_ib->rail->rail_number, remote->rank);
   }
   sctk_ib_prof_qp_write(remote->rank, ibuf->desc.sg_entry.length,
       sctk_get_time_stamp(), PROF_QP_SEND);
@@ -819,7 +817,7 @@ static void* wait_send(void *arg){
     wait_send_arg.remote = remote;
     wait_send_arg.ibuf = ibuf;
 
-    sctk_error("[%d] LOCK QP full for rank %d, waiting for posting message... rc=%d, request_nb=%d", rail_ib->rail->rail_number, remote->rank, rc, sctk_ib_qp_get_requests_nb(remote));
+    sctk_nodebug("[%d] LOCK QP full for rank %d, waiting for posting message... rc=%d, request_nb=%d", rail_ib->rail->rail_number, remote->rank, rc, sctk_ib_qp_get_requests_nb(remote));
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
         (void (*)(void *)) wait_send, &wait_send_arg);
   }
