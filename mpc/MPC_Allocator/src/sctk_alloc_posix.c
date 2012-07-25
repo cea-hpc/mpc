@@ -737,7 +737,7 @@ SCTK_PUBLIC void sctk_alloc_posix_numa_migrate(void)
 }
 
 /************************* FUNCTION ************************/
-void sctk_alloc_posix_chain_print_stat(void)
+SCTK_PUBLIC void sctk_alloc_posix_chain_print_stat(void)
 {
 	struct sctk_alloc_chain * local_chain = sctk_get_tls_chain();
 	if (local_chain == NULL)

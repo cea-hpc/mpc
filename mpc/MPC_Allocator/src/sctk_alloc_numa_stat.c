@@ -167,6 +167,7 @@ void sctk_alloc_numa_stat_reset(struct sctk_alloc_numa_stat_s* stat)
 }
 
 /************************* FUNCTION ************************/
+#ifdef HAVE_LINUX_PAGEMAP
 void sctk_alloc_numa_stat_print(const struct sctk_alloc_numa_stat_s* stat,void * ptr,sctk_size_t size)
 {
 	//vars
@@ -187,6 +188,12 @@ void sctk_alloc_numa_stat_print(const struct sctk_alloc_numa_stat_s* stat,void *
 	if (stat->numa_pages[SCTK_MAX_NUMA_NODE] != 0)
 		printf("%-20s : %lu\n","NUMA unknown",stat->numa_pages[SCTK_MAX_NUMA_NODE]);
 }
+#else //HAVE_LINUX_PAGEMAP
+void sctk_alloc_numa_stat_print(const struct sctk_alloc_numa_stat_s* stat,void * ptr,sctk_size_t size)
+{
+	printf("%-20s : %s\n","Linux pagemap","Not supported");
+}
+#endif //HAVE_LINUX_PAGEMAP
 
 /************************* FUNCTION ************************/
 #ifdef HAVE_LINUX_PAGEMAP
@@ -276,7 +283,12 @@ void sctk_alloc_numa_stat_cumul(struct sctk_alloc_numa_stat_s* stat, void* ptr, 
 #else //HAVE_LINUX_PAGEMAP
 void sctk_alloc_numa_stat_cumul(struct sctk_alloc_numa_stat_s* stat, void* ptr, size_t size)
 {
-	warning("Caution, HAVE_LINUX_PAGEMAP was disabled at compile time, do nothing.");
+	bool first_call = true;
+	if (first_call)
+	{
+		first_call=false;
+		warning("Caution, HAVE_LINUX_PAGEMAP was disabled at compile time, do nothing.");
+	}
 }
 #endif //HAVE_LINUX_PAGEMAP
 
@@ -335,7 +347,12 @@ void sctk_alloc_numa_stat_print_detail(void* ptr, size_t size)
 #else //HAVE_LINUX_PAGEMAP
 void sctk_alloc_numa_stat_print_detail(void* ptr, size_t size)
 {
-	warning("Caution, HAVE_LINUX_PAGEMAP was disabled at compile time, do nothing.");
+	static bool first_call = true;
+	if (first_call)
+	{
+		first_call = false;
+		warning("Caution, HAVE_LINUX_PAGEMAP was disabled at compile time, do nothing.");
+	}
 }
 #endif //HAVE_LINUX_PAGEMAP
 

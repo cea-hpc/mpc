@@ -109,6 +109,7 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, LPVOID reserved)
 		case DLL_PROCESS_ATTACH:
 			//init the alloca chaine
 			//puts("base init");
+			puts("Initialization of MPC_Allocator, erasing MSVCRT one...");
 			sctk_alloc_posix_base_init();
 			sctk_free(NULL);
 
@@ -154,3 +155,4 @@ BOOL WINAPI DllMain(HINSTANCE dll, DWORD reason, LPVOID reserved)
 }
 
 #endif
+

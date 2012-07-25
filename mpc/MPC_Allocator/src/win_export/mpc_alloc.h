@@ -32,6 +32,7 @@ extern "C"
 	__declspec(dllimport) void * sctk_realloc(size_t);
 	__declspec(dllimport) void * sctk_memalign(size_t, size_t);
 	__declspec(dllimport) void * sctk_alloc_posix_numa_migrate(void);
+	__declspec(dllimport) void sctk_alloc_posix_chain_print_stat(void);
 }
 
 #endif

@@ -61,7 +61,7 @@ void * sctk_realloc_inter_chain (void * ptr, size_t size);
 SCTK_STATIC void sctk_alloc_tls_chain();
 
 /************************* FUNCTION ************************/
-void sctk_alloc_posix_chain_print_stat(void);
+SCTK_PUBLIC void sctk_alloc_posix_chain_print_stat(void);
 
 #ifdef MPC_Allocator
 	#include "sctk_alloc_to_recode.h"
