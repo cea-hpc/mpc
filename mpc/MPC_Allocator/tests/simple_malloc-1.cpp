@@ -23,6 +23,7 @@
 /************************** HEADERS ************************/
 #include <stdlib.h>
 #include "sctk_allocator.h"
+#include "sctk_alloc_posix.h"
 
 /************************* FUNCTION ************************/
 int main(void)
@@ -199,5 +200,6 @@ ptr0x7f9f01ce51f4 = malloc(48);
  malloc(32);
 
 	malloc(256*1024*1024);
+	sctk_alloc_posix_chain_print_stat();
 	return EXIT_SUCCESS;
 }

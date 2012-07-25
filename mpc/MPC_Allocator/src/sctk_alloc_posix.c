@@ -323,6 +323,9 @@ void sctk_alloc_posix_base_init(void)
 		/** @todo Maybe optimize by avoiding loading 2MB of virtual memory on egg allocator. **/
 		sctk_alloc_chain_user_init(&sctk_global_egg_chain,buffer,SCTK_MACRO_BLOC_SIZE,SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE);
 
+		//set name
+		sctk_global_egg_chain.name = "mpc_egg_allocator";
+
 		#ifdef SCTK_ALLOC_DEBUG
 		//init debug section
 		sctk_alloc_debug_init();
@@ -387,6 +390,7 @@ struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void)
 
 	//init allocation chain, use default to mark as non shared
 	sctk_alloc_chain_user_init(chain,NULL,0,SCTK_ALLOC_CHAIN_FLAGS_DEFAULT);
+	chain->name = "mpc_thread_allocator";
 
 	//bin to the adapted memory source depending on numa node availability
 	chain->source = sctk_alloc_posix_get_local_mm_source();

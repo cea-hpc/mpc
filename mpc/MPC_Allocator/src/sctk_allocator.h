@@ -323,6 +323,8 @@ struct sctk_alloc_chain
 {
 	struct sctk_thread_pool pool;
 	struct sctk_alloc_mm_source * source;
+	/** Can give a name to the memory source to help debugging. By default "Unknown". **/
+	const char * name;
 	void * base_addr;
 	void * end_addr;
 	/** Flags to enable some options of the allocation chain. **/
@@ -365,6 +367,7 @@ struct sctk_alloc_chain_stat
 	sctk_size_t max_free_size;
 	sctk_size_t nb_free_chunks;
 	sctk_size_t nb_macro_blocs;
+	sctk_size_t cached_free_memory;
 };
 
 /************************** STRUCT *************************/

@@ -896,10 +896,12 @@ SCTK_STATIC void sctk_alloc_chain_base_init(struct sctk_alloc_chain * chain,enum
 	//init Remote Free Queue
 	sctk_alloc_rfq_init(&chain->rfq);
 
+	//defaults
+	chain->name = "Unknwon";
+
 	//destroy system
 	chain->destroy_handler = NULL;
 	chain->cnt_macro_blocs = 0;
-
 
 	//init spy and stat module
 	SCTK_ALLOC_STATS_HOOK(sctk_alloc_stats_chain_init(&chain->stats));
@@ -2453,6 +2455,7 @@ void sctk_alloc_chain_get_stat(struct sctk_alloc_chain_stat * chain_stat,struct 
 	chain_stat->min_free_size = -1;
 	chain_stat->nb_free_chunks = 0;
 	chain_stat->nb_macro_blocs = 0;
+	chain_stat->cached_free_memory = 0;
 
 	//lock the chain
 	if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
@@ -2466,6 +2469,7 @@ void sctk_alloc_chain_get_stat(struct sctk_alloc_chain_stat * chain_stat,struct 
 		while(free_chunk != free_lists+i)
 		{
 			chain_stat->nb_free_chunks++;
+			chain_stat->cached_free_memory += sctk_alloc_get_chunk_header_large_size(&free_chunk->header);
 			if (sctk_alloc_get_chunk_header_large_size(&free_chunk->header) < chain_stat->min_free_size)
 				chain_stat->min_free_size = sctk_alloc_get_chunk_header_large_size(&free_chunk->header);
 			if (sctk_alloc_get_chunk_header_large_size(&free_chunk->header) > chain_stat->max_free_size)
@@ -2499,12 +2503,14 @@ void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain)
 	//print it
 	printf("====================== ALLOCATION CHAIN STAT ======================\n");
 	printf("%-20s : %d\n","Thread ID",getpid());
+	printf("%-20s : %s\n","Name",chain->name);
 	printf("%-20s : %p\n","Chain",chain);
 	printf("%-20s : %p\n","Memory source",chain->source);
 	printf("%-20s : %d\n","Source NUMA node",sctk_alloc_chain_get_numa_node(chain));
 	#ifdef HAVE_LIBNUMA
 	printf("%-20s : %d\n","Preferred NUMA node",sctk_get_preferred_numa_node());
 	#endif //HAVE_LIBNUMA
+	printf("%-20s : %lu\n","Cached free memory",chain_stat.cached_free_memory);
 	printf("%-20s : %lu\n","Min free size",chain_stat.min_free_size);
 	printf("%-20s : %lu\n","Max free size",chain_stat.max_free_size);
 	printf("%-20s : %lu\n","Nb free chunks",chain_stat.nb_free_chunks);

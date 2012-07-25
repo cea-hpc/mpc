@@ -133,6 +133,8 @@ int sctk_get_preferred_numa_node_no_mpc_numa_binding()
 	// flags = 0 fallback on PROCESS if THREAD is not supported (as for windows).
 	int status =  hwloc_get_membind_nodeset(topology,nodeset,&policy,0);
 	assert(status == 0);
+	if (status == 0)
+		return -1;
 
 	#if defined(SCTK_ALLOC_DEBUG) && defined(hwloc_bitmap_list_snprintf)
 	status = hwloc_bitmap_list_snprintf(buffer,4096,nodeset);
@@ -143,6 +145,8 @@ int sctk_get_preferred_numa_node_no_mpc_numa_binding()
 	// flags = 0 fallback on PROCESS if THREAD is not supported (as for windows).
 	status =  hwloc_get_membind(topology,cpuset,&policy,0);
 	assert(status == 0);
+	if (status == 0)
+		return -1;
 
 	#if defined(SCTK_ALLOC_DEBUG) && defined(hwloc_bitmap_list_snprintf)
 	status = hwloc_bitmap_list_snprintf(buffer,4096,cpuset);
@@ -188,6 +192,8 @@ int sctk_get_preferred_numa_node_no_mpc_thread_binding()
 	//for windows use 0 instead of HWLOC_CPUBIND_THREAD
 	int status = hwloc_get_cpubind (topology, cpuset, 0);
 	assert(status == 0);
+	if (status == 0)
+		return -1;
 
 	#if defined(SCTK_ALLOC_DEBUG) && defined(hwloc_bitmap_list_snprintf)
 	status = hwloc_bitmap_list_snprintf(buffer,4096,cpuset);
