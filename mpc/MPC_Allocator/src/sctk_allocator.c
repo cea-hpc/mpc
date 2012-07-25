@@ -918,14 +918,15 @@ void sctk_alloc_chain_user_init(struct sctk_alloc_chain * chain,void * buffer,sc
 	sctk_alloc_vchunk vchunk;
 	
 	//error
-	assume_m(buffer != 0 || size == 0, "Can't manage NULL buffer with non NULL size.");
+	assume_m(buffer != NULL || size == 0, "Can't manage NULL buffer with non NULL size.");
+	/** @TODO compute min size cleaner with size of struct. **/
 	assume_m(size == 0 || size > 64+16, "Buffer size must null or greater than 80o.");
 
 	//base init
 	sctk_alloc_chain_base_init(chain,flags);
 
 	//insert the buffer in the thread pool
-	if (buffer == NULL)
+	if (buffer == NULL || size == 0)
 	{
 		chain->base_addr = NULL;
 		chain->end_addr = NULL;

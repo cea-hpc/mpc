@@ -1,4 +1,4 @@
-PROJECT(mpc_allocator_v1)
+PROJECT(mpc_allocator)
 cmake_minimum_required(VERSION 2.8)
 
 enable_testing()
