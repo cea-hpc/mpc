@@ -21,10 +21,11 @@
 /* ######################################################################## */
 
 #include "sctk_thread_sem.h"
+#include <sctk_thread_generic.h>
 #include <limits.h>
 #include <errno.h>
 
-extern errno;
+extern int errno;
 static sctk_spinlock_t sem_named_lock = SCTK_SPINLOCK_INITIALIZER;
 static sctk_thread_generic_sem_named_list_t* named_list_head = NULL;
 
@@ -58,7 +59,7 @@ sctk_thread_generic_sems_sem_init( sctk_thread_generic_sem_t* sem,
   sctk_thread_generic_sem_t* local_ptr = &local;
 
   if( pshared == SCTK_THREAD_PROCESS_SHARED ){
-	errno = SCTK_ENOSYS;
+	errno = SCTK_ENOTSUP;
 	return -1;
   }
 
@@ -84,6 +85,7 @@ sctk_thread_generic_sems_sem_wait( sctk_thread_generic_sem_t* sem,
   }
 
   int ret = 0;
+  void** tmp = (void**) sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
   sctk_thread_generic_mutex_cell_t cell;
 
   /* test cancel */
@@ -100,8 +102,10 @@ sctk_thread_generic_sems_sem_wait( sctk_thread_generic_sem_t* sem,
   DL_APPEND( sem->list, &cell );
   sctk_thread_generic_thread_status(sched,sctk_thread_generic_blocked);
   sctk_nodebug("WAIT SEM LOCK sleep %p",sched);
+  tmp[sctk_thread_generic_sem] = (void*) sem;
   sctk_thread_generic_register_spinlock_unlock(sched,&(sem->spinlock));
   sctk_thread_generic_sched_yield(sched);
+  tmp[sctk_thread_generic_sem] = NULL;
 
   return ret;
 }
@@ -185,6 +189,10 @@ sctk_thread_generic_sems_sem_timedwait( sctk_thread_generic_sem_t* sem,
   
   if( ret != 0 ){
 	errno = SCTK_ETIMEDOUT;
+  }
+
+  if( sched->th->attr.nb_sig_pending > 0 ){
+	errno = SCTK_EINTR;
   }
 
   return ret;
@@ -290,12 +298,12 @@ sctk_thread_generic_sems_sem_open( const char* name, int oflag, ...){
 	*/
 
   if( name == NULL ){
-	errno == SCTK_EINVAL;
+	errno = SCTK_EINVAL;
 	return (sctk_thread_generic_sem_t*) SCTK_SEM_FAILED;
   }
 
   if( name[0] != '/' || (name[0] == '/' && name[1] == '\0') ){
-	errno == SCTK_EINVAL;
+	errno = SCTK_EINVAL;
 	return (sctk_thread_generic_sem_t*) SCTK_SEM_FAILED;
   }
 

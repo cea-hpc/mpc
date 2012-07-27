@@ -21,6 +21,7 @@
 /* ######################################################################## */
 
 #include "sctk_thread_barrier.h"
+#include <sctk_thread_generic.h>
 
 int
 sctk_thread_generic_barriers_barrierattr_destroy( sctk_thread_generic_barrierattr_t* attr ){
@@ -153,6 +154,7 @@ sctk_thread_generic_barriers_barrier_wait( sctk_thread_generic_barrier_t* barrie
   int ret = 0;
   sctk_thread_generic_barrier_cell_t cell;
   sctk_thread_generic_barrier_cell_t* list;
+  void** tmp = sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
 
   sctk_spinlock_lock ( &(barrier->lock) );
   barrier->nb_current--;
@@ -160,9 +162,11 @@ sctk_thread_generic_barriers_barrier_wait( sctk_thread_generic_barrier_t* barrie
 	cell.sched = sched;
 	DL_APPEND( barrier->blocked, &cell );
 	sctk_thread_generic_thread_status( sched, sctk_thread_generic_blocked );
+	tmp[sctk_thread_generic_barrier] = (void*) barrier;
 	sctk_nodebug ("blocked on %p", barrier);
 	sctk_thread_generic_register_spinlock_unlock( sched, &(barrier->lock) );
 	sctk_thread_generic_sched_yield( sched );
+	tmp[sctk_thread_generic_barrier] = NULL;
   }
   else {
 	list = barrier->blocked;
@@ -176,9 +180,9 @@ sctk_thread_generic_barriers_barrier_wait( sctk_thread_generic_barrier_t* barrie
 	}
 	barrier->nb_current = barrier->nb_max;
 	ret = SCTK_THREAD_BARRIER_SERIAL_THREAD;
+	sctk_spinlock_unlock( &(barrier->lock) );
   }
 
-  sctk_spinlock_unlock( &(barrier->lock) );
   return ret;
 }
 

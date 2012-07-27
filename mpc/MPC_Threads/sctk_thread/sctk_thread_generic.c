@@ -28,6 +28,9 @@
 #include <errno.h>
 #include <sctk_kernel_thread.h>
 #include <sctk_topology.h>
+
+#define SCTK_BLOCKING_LOCK_TABLE_SIZE 6
+
 /***************************************/
 /* THREADS                             */
 /***************************************/
@@ -41,6 +44,12 @@ sctk_thread_generic_t sctk_thread_generic_self(){
 void sctk_thread_generic_set_self(sctk_thread_generic_t th){
   sctk_thread_generic_self_data = th;
 }
+
+inline
+sctk_thread_generic_t sctk_thread_generic_self_check(){
+  not_implemented();
+}
+
 /***************************************/
 /* KEYS                                */
 /***************************************/
@@ -482,6 +491,39 @@ sctk_thread_generic_barrier_wait( sctk_thread_barrier_t* barrier ){
 }
 
 /***************************************/
+/* THREAD SPINLOCK                     */
+/***************************************/
+
+static int
+sctk_thread_generic_spin_destroy( sctk_thread_spinlock_t* spinlock ){
+  return sctk_thread_generic_spinlocks_spin_destroy( (sctk_thread_generic_spinlock_t*) spinlock );
+}
+
+static int
+sctk_thread_generic_spin_init( sctk_thread_spinlock_t* spinlock, int pshared ){
+  return sctk_thread_generic_spinlocks_spin_init( (sctk_thread_generic_spinlock_t*) spinlock,
+		  				pshared );
+}
+
+static int
+sctk_thread_generic_spin_lock( sctk_thread_spinlock_t* spinlock ){
+  return sctk_thread_generic_spinlocks_spin_lock( (sctk_thread_generic_spinlock_t*) spinlock,
+  						&(sctk_thread_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_spin_trylock( sctk_thread_spinlock_t* spinlock ){
+  return sctk_thread_generic_spinlocks_spin_trylock( (sctk_thread_generic_spinlock_t*) spinlock,
+  						&(sctk_thread_generic_self()->sched) );
+}
+
+static int
+sctk_thread_generic_spin_unlock( sctk_thread_spinlock_t* spinlock ){
+  return sctk_thread_generic_spinlocks_spin_unlock( (sctk_thread_generic_spinlock_t*) spinlock,
+  						&(sctk_thread_generic_self()->sched) );
+}
+
+/***************************************/
 /* THREAD SIGNALS                      */
 /***************************************/
 
@@ -654,6 +696,160 @@ sctk_thread_generic_sigsuspend( const sigset_t* mask ){
 /* THREAD KILL                         */
 /***************************************/
 
+static inline void
+sctk_thread_generic_wake_on_barrier( sctk_thread_generic_scheduler_t* sched,
+		void* lock, int remove_from_lock_list ){
+  sctk_thread_generic_barrier_t* barrier = (sctk_thread_generic_barrier_t*) lock;
+  sctk_thread_generic_barrier_cell_t* list;
+
+  sctk_spinlock_lock( &(barrier->lock ));
+  DL_FOREACH( barrier->blocked, list ){
+	if( list->sched == sched ) break;
+  }
+  if( remove_from_lock_list && list ){
+	DL_DELETE( barrier->blocked, list );
+	barrier->nb_current -= 1;
+	sctk_thread_generic_register_spinlock_unlock( &(sctk_thread_generic_self()->sched ),
+			&(barrier->lock ));
+	sctk_generic_swap_to_sched( sched );
+  }
+  else{
+  if( list ) sctk_generic_swap_to_sched( sched );
+  sctk_spinlock_unlock( &(barrier->lock ));
+  }
+}
+
+static inline void
+sctk_thread_generic_wake_on_cond( sctk_thread_generic_scheduler_t* sched,
+		void* lock, int remove_from_lock_list ){
+  sctk_thread_generic_cond_t* cond = (sctk_thread_generic_cond_t*) lock;
+  sctk_thread_generic_cond_cell_t* list;
+
+  sctk_spinlock_lock( &(cond->lock ));
+  DL_FOREACH( cond->blocked, list ){
+	if( list->sched == sched ) break;
+  }
+  if( remove_from_lock_list && list ){
+	DL_DELETE( cond->blocked, list );
+	//sctk_thread_generic_register_spinlock_unlock( &(sctk_thread_generic_self()->sched ),
+	//		&(cond->lock ));
+	sctk_thread_generic_wake( sched );
+  sctk_spinlock_unlock( &(cond->lock ));
+	//sctk_generic_swap_to_sched( sched );
+  }
+  else{
+  if( list ) sctk_generic_swap_to_sched( sched );
+  sctk_spinlock_unlock( &(cond->lock ));
+  }
+}
+
+static inline void
+sctk_thread_generic_wake_on_mutex( sctk_thread_generic_scheduler_t* sched,
+		void* lock, int remove_from_lock_list ){
+  sctk_thread_generic_mutex_t* mu = (sctk_thread_generic_mutex_t*) lock;
+  sctk_thread_generic_mutex_cell_t* list;
+
+  sctk_spinlock_lock( &(mu->lock ));
+  DL_FOREACH( mu->blocked, list ){
+	if( list->sched == sched ) break;
+  }
+  if( remove_from_lock_list && list ){
+	  DL_DELETE( mu->blocked, list );
+	  //sctk_thread_generic_register_spinlock_unlock( &(sctk_thread_generic_self()->sched ),
+		//	  &(mu->lock));
+	  //sctk_generic_swap_to_sched( sched );
+	  sctk_thread_generic_wake( sched );
+	  sctk_spinlock_unlock( &(mu->lock ));
+  }
+  else{
+	if( list ) sctk_generic_swap_to_sched( sched );
+	sctk_spinlock_unlock( &(mu->lock ));
+  }
+}
+
+static inline void
+sctk_thread_generic_wake_on_rwlock( sctk_thread_generic_scheduler_t* sched,
+		void* lock, int remove_from_lock_list ){
+  sctk_thread_generic_rwlock_t* rw = (sctk_thread_generic_rwlock_t*) lock;
+  sctk_thread_generic_rwlock_cell_t* list;
+
+  sctk_spinlock_lock( &(rw->lock ));
+  DL_FOREACH( rw->waiting, list ){
+	if( list->sched == sched ) break;
+  }
+  if( remove_from_lock_list && list ){
+	DL_DELETE( rw->waiting, list );
+	rw->count--;
+	sctk_thread_generic_register_spinlock_unlock( &(sctk_thread_generic_self()->sched ),
+			&(rw->lock ));
+	sctk_generic_swap_to_sched( sched );
+	/* Maybe need to remove the lock from taken thread s rwlocks list*/
+  }
+  else{
+  if( list ) sctk_generic_swap_to_sched( sched );
+  sctk_spinlock_unlock( &(rw->lock ));
+  }
+}
+
+static inline void
+sctk_thread_generic_wake_on_sem( sctk_thread_generic_scheduler_t* sched,
+		void* lock, int remove_from_lock_list ){
+  sctk_thread_generic_sem_t* sem = (sctk_thread_generic_sem_t*) lock;
+  sctk_thread_generic_mutex_cell_t* list;
+
+  sctk_spinlock_lock( &(sem->spinlock ));
+  DL_FOREACH( sem->list, list ){
+	if( list->sched == sched ) break;
+  }
+  if( remove_from_lock_list && list ){
+	DL_DELETE( sem->list, list );
+	sctk_thread_generic_register_spinlock_unlock( &(sctk_thread_generic_self()->sched ),
+			&(sem->spinlock ));
+	sctk_generic_swap_to_sched( sched );
+  }
+  else{
+  if( list ) sctk_generic_swap_to_sched( sched );
+  sctk_spinlock_unlock( &(sem->spinlock ));
+  }
+}
+
+static inline void
+sctk_thread_generic_handle_blocked_thread( sctk_thread_generic_t threadp,
+					int remove_from_lock_list ){
+  sctk_thread_generic_p_t* th = threadp;
+  int i;
+  void** list = (void**) th->attr.sctk_thread_generic_pthread_blocking_lock_table;
+
+  for( i = 0; i <= SCTK_BLOCKING_LOCK_TABLE_SIZE; i++ ){
+	if( ( i < SCTK_BLOCKING_LOCK_TABLE_SIZE ) 
+			&& (list[i] != NULL) ) break;
+  }
+
+  switch( i ){
+	  case sctk_thread_generic_barrier:
+		  sctk_thread_generic_wake_on_barrier( &(th->sched), list[i], remove_from_lock_list );
+		  break;
+	  case sctk_thread_generic_cond:
+		  sctk_thread_generic_wake_on_cond( &(th->sched), list[i], remove_from_lock_list );
+		  break;
+	  case sctk_thread_generic_mutex:
+		  sctk_thread_generic_wake_on_mutex( &(th->sched), list[i], remove_from_lock_list );
+		  break;
+	  case sctk_thread_generic_rwlock:
+		  sctk_thread_generic_wake_on_rwlock( &(th->sched), list[i], remove_from_lock_list );
+		  break;
+	  case sctk_thread_generic_sem:
+		  sctk_thread_generic_wake_on_sem( &(th->sched), list[i], remove_from_lock_list );
+		  break;
+	  case sctk_thread_generic_task_lock:
+		  sctk_thread_generic_wake_on_task_lock( &(th->sched), remove_from_lock_list );
+		  break;
+	  default:
+		  sctk_nodebug("No saved lock, thread %p has been wakened",th);
+		  //not_reachable();
+  }
+}
+
 static int
 sctk_thread_generic_kill( sctk_thread_generic_t threadp, int val ){
 
@@ -663,7 +859,7 @@ sctk_thread_generic_kill( sctk_thread_generic_t threadp, int val ){
 	EINVAL An invalid signal was specified
 	*/
 
-  sctk_nodebug ("sctk_thread_generic_kill %p %d set", thread, val);
+  sctk_nodebug ("sctk_thread_generic_kill %p %d set", threadp, val);
 
   if( val == 0 ) return 0;
   val--;
@@ -675,13 +871,14 @@ sctk_thread_generic_kill( sctk_thread_generic_t threadp, int val ){
 	  return SCTK_ESRCH;
 
   sctk_spinlock_lock ( &(th->attr.spinlock ));
-
   if( th->attr.thread_sigpending[val] == 0 ){
 	th->attr.thread_sigpending[val] = 1;
 	th->attr.nb_sig_pending++;
   }
-
   sctk_spinlock_unlock ( &(th->attr.spinlock ));
+
+  if( th->sched.status == sctk_thread_generic_blocked )
+	  sctk_thread_generic_handle_blocked_thread( threadp, 0 );
 
   return 0;
 }
@@ -695,6 +892,17 @@ sctk_thread_generic_kill_other_threads_np(){
 /* THREAD CREATION                     */
 /***************************************/
 
+ inline void
+sctk_thread_generic_alloc_pthread_blocking_lock_table( const sctk_thread_generic_attr_t* attr){
+  int i;
+  void** lock_table = (void**) sctk_malloc( SCTK_BLOCKING_LOCK_TABLE_SIZE * sizeof( void* ));
+  if( lock_table == NULL ) abort();
+  for( i=0; i < SCTK_BLOCKING_LOCK_TABLE_SIZE; i++ ){
+	lock_table[i] = NULL;
+  }
+  attr->ptr->sctk_thread_generic_pthread_blocking_lock_table = (void*) lock_table;
+}
+
 int
 sctk_thread_generic_attr_init (sctk_thread_generic_attr_t * attr)
 {
@@ -704,6 +912,30 @@ sctk_thread_generic_attr_init (sctk_thread_generic_attr_t * attr)
 
   *(attr->ptr) = init;
   sctk_thread_generic_attr_init_sigs( attr );
+  sctk_thread_generic_alloc_pthread_blocking_lock_table( attr );
+  return 0;
+}
+
+static int
+sctk_thread_generic_getattr_np( sctk_thread_generic_t threadp,
+					sctk_thread_generic_attr_t* attr ){
+
+  /*
+	ERRORS:
+	EINVAL 
+	ESRCH
+	*/
+
+  if( threadp == NULL || attr == NULL ) return SCTK_EINVAL;
+  sctk_thread_generic_p_t* th = threadp;
+  if( th->sched.status == sctk_thread_generic_joined
+		  || th->sched.status == sctk_thread_generic_zombie )
+	  return SCTK_ESRCH;
+
+  if(attr->ptr == NULL){
+    sctk_thread_generic_attr_init(attr);
+  }
+  *(attr->ptr) = th->attr;
   return 0;
 }
 
@@ -725,6 +957,7 @@ sctk_thread_generic_attr_getscope (const sctk_thread_generic_attr_t * attr, int 
   if(ptr == NULL){
     ptr = &init;
 	sctk_thread_generic_attr_init_sigs( attr );
+	sctk_thread_generic_alloc_pthread_blocking_lock_table( attr );
   }
   *scope = ptr->scope;
   return 0;
@@ -786,6 +1019,7 @@ sctk_thread_generic_attr_getbinding (sctk_thread_generic_attr_t * attr, int *bin
   if(ptr == NULL){
     ptr = &init;
 	sctk_thread_generic_attr_init_sigs( attr );
+	sctk_thread_generic_alloc_pthread_blocking_lock_table( attr );
   }
   *binding = ptr->bind_to;
   return 0;
@@ -811,6 +1045,7 @@ sctk_thread_generic_attr_getstacksize (sctk_thread_generic_attr_t * attr,
   if(ptr == NULL){
     ptr = &init;
 	sctk_thread_generic_attr_init_sigs( attr );
+	sctk_thread_generic_alloc_pthread_blocking_lock_table( attr );
   }
   *stacksize = ptr->stack_size;
   return 0;
@@ -854,6 +1089,7 @@ sctk_thread_generic_attr_getstackaddr (sctk_thread_generic_attr_t * attr,
   if(ptr == NULL){
     ptr = &init;
 	sctk_thread_generic_attr_init_sigs( attr );
+	sctk_thread_generic_alloc_pthread_blocking_lock_table( attr );
   }
 
   *addr = ptr->stack;
@@ -921,6 +1157,132 @@ sctk_thread_generic_attr_setstack( sctk_thread_generic_attr_t* attr,
 }
 
 static int
+sctk_thread_generic_attr_getguardsize( sctk_thread_generic_attr_t* attr,
+					size_t* guardsize ){
+
+  /*
+	ERRORS:
+	EINVAL Invalid arguments for the function
+	*/
+
+  if( attr == NULL || guardsize == NULL ) return SCTK_EINVAL;
+  if(attr->ptr == NULL){
+	sctk_thread_generic_attr_init(attr);
+  }
+  (*guardsize) = attr->ptr->stack_guardsize;
+
+  return 0;
+}
+
+static int
+sctk_thread_generic_attr_setguardsize( sctk_thread_generic_attr_t* attr,
+					size_t guardsize ){
+
+  /*
+	ERRORS:
+	EINVAL Invalid arguments for the function
+	*/
+
+  if( attr == NULL ) return SCTK_EINVAL;
+  if( guardsize <= 0 ) return SCTK_EINVAL;
+
+  if(attr->ptr == NULL){
+	sctk_thread_generic_attr_init(attr);
+  }
+
+  attr->ptr->stack_guardsize = guardsize ;
+
+  return 0;
+}
+
+struct sched_param;
+
+static int
+sctk_thread_generic_attr_getschedparam( sctk_thread_generic_attr_t* attr,
+					struct sched_param* param){
+
+  /*
+	ERRORS:
+	EINVAL  Arguments of function are invalid
+	*/
+
+  if( attr == NULL || param == NULL ) return SCTK_EINVAL;
+  param->__sched_priority = 0;
+  return 0;
+}
+
+static int
+sctk_thread_generic_attr_setschedparam( sctk_thread_generic_attr_t* attr,
+					const struct sched_param* param){
+
+  /*
+	ERRORS:
+	EINVAL  Arguments of function are invalid
+	ENOTSUP Only priority 0 (default) is supported
+	*/
+
+  if( attr == NULL || param == NULL ) return SCTK_EINVAL;
+  if( param->__sched_priority != 0 ) return SCTK_ENOTSUP;
+  return 0;
+}
+
+static int
+sctk_thread_generic_attr_setschedpolicy( sctk_thread_generic_attr_t* attr,
+					int policy ){
+
+  if( policy == SCTK_SCHED_FIFO 
+		  || policy == SCTK_SCHED_RR ) return SCTK_ENOTSUP;
+  if( policy != SCTK_SCHED_OTHER ) return SCTK_EINVAL;
+
+  if(attr->ptr == NULL){
+	sctk_thread_generic_attr_init(attr);
+  }
+
+  attr->ptr->schedpolicy = policy;
+
+  return 0;
+}
+
+static int
+sctk_thread_generic_attr_getschedpolicy( sctk_thread_generic_attr_t* attr,
+					int* policy ){
+
+  if(attr->ptr == NULL){
+	sctk_thread_generic_attr_init(attr);
+  }
+
+  (*policy) = attr->ptr->schedpolicy;
+
+  return 0;
+}
+
+static int
+sctk_thread_generic_attr_getinheritsched( sctk_thread_generic_attr_t* attr,
+					int* inheritsched ){
+
+  if(attr->ptr == NULL){
+	sctk_thread_generic_attr_init(attr);
+  }
+
+  (*inheritsched) = attr->ptr->inheritsched;
+
+  return 0;
+}
+
+static int
+sctk_thread_generic_attr_setinheritsched( sctk_thread_generic_attr_t* attr,
+					int inheritsched ){
+
+  if(attr->ptr == NULL){
+	sctk_thread_generic_attr_init(attr);
+  }
+
+  attr->ptr->inheritsched = inheritsched;
+
+  return 0;
+}
+
+static int
 sctk_thread_generic_attr_getdetachstate( sctk_thread_generic_attr_t* attr,
 					int* detachstate ){
 
@@ -960,6 +1322,7 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
   sctk_thread_generic_t thread_id;
   char* stack;
   size_t stack_size;
+  size_t stack_guardsize;
 
   if(attr == NULL){
     ptr = &init;
@@ -973,6 +1336,7 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
   sctk_thread_generic_attr_t lattr;
   lattr.ptr = ptr;
   sctk_thread_generic_attr_init_sigs( &lattr );
+  sctk_thread_generic_alloc_pthread_blocking_lock_table( &lattr );
 
   sctk_nodebug("Create %p",arg);
 
@@ -1004,6 +1368,7 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
   {
     stack = thread_id->attr.stack;
     stack_size = thread_id->attr.stack_size;
+	stack_guardsize = thread_id->attr.stack_guardsize;
     
     if (stack == NULL)
       {
@@ -1011,6 +1376,38 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
 	  stack_size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
 	else if (stack_size <= 0)
 	  stack_size = SCTK_ETHREAD_STACK_SIZE;
+	if( stack_guardsize > 0 ){
+	  long _page_size_ = 0;
+	  size_t old_stack_size;
+	  size_t old_stack_guardsize;
+	  int ret;
+#ifndef _SC_PAGESIZE
+  #ifndef PAGE_SIZE
+	#error "Unknown system macro for pagesize"
+  #else
+	_page_size_ = sysconf(PAGESIZE);
+  #endif
+#else
+  _page_size_ = sysconf(_SC_PAGESIZE);
+#endif
+  	  old_stack_guardsize = stack_guardsize;
+	  stack_guardsize = ( stack_guardsize + _page_size_ - 1 ) & ~( _page_size_ - 1 );
+	  stack_size = ( stack_size+ 8 + _page_size_ - 1 ) & ~( _page_size_ - 1 );
+	  old_stack_size = stack_size;
+	  stack_size = stack_size + stack_guardsize;
+	  posix_memalign( (void*) &stack, _page_size_, stack_size );
+	    if (stack == NULL)
+	      {
+		sctk_free(thread_id);
+		return SCTK_EAGAIN;
+	      }
+	  if( ( ret = mprotect( stack + stack_size, old_stack_guardsize, PROT_NONE )) != 0 ){
+		sctk_free(stack);
+		sctk_free(thread_id);
+		return ret;
+	  }
+	  stack[old_stack_size] = 123;
+	}
 	if (stack == NULL)
 	  {
 	    stack = (char *) __sctk_malloc (stack_size + 8, tmp.tls);
@@ -1020,6 +1417,7 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
 		return SCTK_EAGAIN;
 	      }
 	  }
+	if( stack_guardsize == 0 )
 	stack[stack_size] = 123;
 
       }
@@ -1083,6 +1481,13 @@ sctk_thread_generic_create (sctk_thread_generic_t * threadp,
 }
 
 static int
+sctk_thread_generic_atfork( void (*prepare)(void), void (*parent)(void),
+				void (*child)(void) ){
+  not_implemented();
+  return 0;
+}
+
+static int
 sctk_thread_generic_sched_get_priority_min( int sched_policy ){
 
   /*
@@ -1108,6 +1513,49 @@ sctk_thread_generic_sched_get_priority_max( int sched_policy ){
   if( sched_policy != SCTK_SCHED_FIFO && sched_policy != SCTK_SCHED_RR
 		  && sched_policy != SCTK_SCHED_OTHER )
 			return SCTK_EINVAL;
+
+  return 0;
+}
+
+static int
+sctk_thread_generic_getschedparam( sctk_thread_generic_t threadp,
+				int* policy, struct sched_param* param ){
+
+  /*
+	ERRORS:
+	EINVAL Invalid arguments for the function call
+	ESRCH No thread with the ID threadp could be found
+	*/
+
+  if( threadp == NULL || policy == NULL || param == NULL ) return SCTK_EINVAL;
+  sctk_thread_generic_p_t* th = threadp;
+  if( th->sched.status == sctk_thread_generic_zombie
+		  || th->sched.status == sctk_thread_generic_joined )
+	  return SCTK_ESRCH;
+
+  param->__sched_priority = 0;
+
+  return 0;
+}
+
+static int
+sctk_thread_generic_setschedparam( sctk_thread_generic_t threadp,
+				int policy, const struct sched_param* param ){
+
+  /*
+	ERRORS:
+	EINVAL Invalid arguments for the function call
+	ESRCH No thread with the ID threadp could be found
+	EPERM |>NOT IMPLEMENTED<| The caller does not have appropriate
+	privileges to set the specified scheduling policy and parameters
+	*/
+
+  if( threadp == NULL || param == NULL ) return SCTK_EINVAL;
+  if( policy != SCTK_SCHED_OTHER ) return SCTK_EINVAL;
+  sctk_thread_generic_p_t* th = threadp;
+  if( th->sched.status == sctk_thread_generic_zombie
+		  || th->sched.status == sctk_thread_generic_joined )
+	  return SCTK_ESRCH;
 
   return 0;
 }
@@ -1176,6 +1624,9 @@ sctk_thread_generic_cancel( sctk_thread_generic_t threadp ){
 	sctk_nodebug ("thread %p canceled\n", th);
   }
 
+  if( th->sched.status == sctk_thread_generic_blocked )
+	  sctk_thread_generic_handle_blocked_thread( threadp, 1 );
+
   return 0;
 }
 
@@ -1209,7 +1660,7 @@ sctk_thread_generic_setcanceltype( int type, int* oldtype ){
 	EINVAL Invalid value for type
 	*/
 
-  sctk_nodebug ("%d %d\n", type, sctk_thread_generic_self()->cancel_type);
+  sctk_nodebug ("%d %d", type, sctk_thread_generic_self()->cancel_type);
   sctk_thread_generic_attr_t attr;
   attr.ptr = &(sctk_thread_generic_self()->attr);
 
@@ -1224,6 +1675,29 @@ sctk_thread_generic_setcanceltype( int type, int* oldtype ){
   return 0;
 }
 
+static int
+sctk_thread_generic_setschedprio( sctk_thread_generic_t threadp, int prio ){
+
+  /*
+	ERRORS
+	EINVAL prio is not valid for the scheduling policy of the specified thread
+	EPERM  |>NOT IMPLEMENTED<| The caller does not have appropriate privileges 
+		   to set the specified priority
+	ESRCH  No thread with the ID thread could be found
+	*/
+
+  if( threadp == NULL || prio != 0 ) return SCTK_EINVAL;
+
+  sctk_thread_generic_p_t* th = threadp;
+  if( th->sched.status == sctk_thread_generic_joined ||
+		  th->sched.status == sctk_thread_generic_zombie )
+	  return SCTK_ESRCH;
+
+  sctk_nodebug("Only Priority 0 handled in current version of MPC, priority remains the same as before the call");
+
+  return 0;
+}
+
 static void
 sctk_thread_generic_testcancel(){
   sctk_thread_generic_check_signals( 0 );
@@ -1233,7 +1707,7 @@ sctk_thread_generic_testcancel(){
 /* THREAD POLLING                      */
 /***************************************/
 
-static void
+void
 sctk_thread_generic_wait_for_value_and_poll (volatile int *data, int value,
 					     void (*func) (void *), void *arg)
 {
@@ -1285,7 +1759,6 @@ sctk_thread_generic_join ( sctk_thread_generic_t threadp, void** val ){
   sctk_assert( current->sched == sched );
   
   sctk_nodebug ("Join Thread %p", th );
-  //printf("in join: vp = %p\n",th->sched.generic.vp);
 
   /* test cancel */
   sctk_thread_generic_check_signals( 0 );
@@ -1306,9 +1779,7 @@ sctk_thread_generic_join ( sctk_thread_generic_t threadp, void** val ){
 	if( val != NULL ) *val = th->attr.return_value;
 	th->sched.status = sctk_thread_generic_joined;
 
-	/* TODO: handle zombies */
-	//printf("In join: th %p\n",th);
-	//sctk_thread_generic_handle_zombies( th->sched.generic.vp );
+	sctk_thread_generic_handle_zombies( &(th->sched.generic ));
 
   }else{
     return SCTK_EDEADLK;
@@ -1356,9 +1827,99 @@ sctk_thread_generic_exit( void* retval ){
 /* THREAD EQUAL                        */
 /***************************************/
 
+inline void
+sctk_thread_generic_handle_zombies( sctk_thread_generic_scheduler_generic_t* th ){
+  sctk_thread_generic_scheduler_generic_t* schedg = th;
+  sctk_thread_generic_p_t* p_th = schedg->sched->th;
+
+  sctk_nodebug("th %p to be freed",th->sched->th);
+  if( schedg->sched->th->attr.user_stack == NULL )
+	sctk_free( schedg->sched->th->attr.stack );
+  sctk_free( schedg->sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table );
+  sctk_free( schedg->sched->th );
+  p_th = NULL;
+}
+
+/***************************************/
+/* THREAD EQUAL                        */
+/***************************************/
+
 static int
 sctk_thread_generic_equal( sctk_thread_generic_t th1, sctk_thread_generic_t th2 ){
   return th1 == th2;
+}
+
+/***************************************/
+/* THREAD DETACH                       */
+/***************************************/
+
+static int
+sctk_thread_generic_detach( sctk_thread_generic_t threadp ){
+
+  /*
+	ERRORS:
+	EINVAL threadp is not a joinable thread
+	ESRCH  No thread with the ID threadp could be found
+	*/
+
+  if( threadp == NULL ) return SCTK_ESRCH;
+  sctk_thread_generic_p_t* th = threadp;
+
+  if( th->sched.status == sctk_thread_generic_joined ||
+		  th->sched.status == sctk_thread_generic_zombie )
+	  return SCTK_ESRCH;
+
+  th->attr.detachstate = SCTK_THREAD_CREATE_DETACHED;
+
+  return 0;
+}
+
+/***************************************/
+/* THREAD CONCURRENCY                  */
+/***************************************/
+
+static int
+sctk_thread_generic_setconcurrency( int new_level ){
+  if( new_level < 0 ) return SCTK_EINVAL;
+  if( new_level != 0 ) return SCTK_ENOTSUP;
+  return 0;
+}
+
+static int
+sctk_thread_generic_getconcurrency( void ){
+  return 0;
+}
+
+/***************************************/
+/* THREAD CPUCLOCKID                   */
+/***************************************/
+
+static int
+sctk_thread_generic_getcpuclockid( sctk_thread_generic_t threadp,
+			clockid_t* clock_id ){
+
+  /*
+	ERRORS:
+	ENOENT |>NOT IMPLEMENTED<| Per-thread CPU time clocks 
+		   are not supported by the system
+	ESRCH  No thread with the ID thread could be found
+	EINVAL Invalid arguments for function call
+	*/
+
+  if( threadp == NULL || clock_id == NULL ) return SCTK_EINVAL;
+  sctk_thread_generic_p_t* th = threadp;
+  if( th->sched.status == sctk_thread_generic_zombie
+		  || th->sched.status == sctk_thread_generic_joined )
+	  return SCTK_ESRCH;
+
+  int ret = 0;
+#ifdef _POSIX_THREAD_CPUTIME
+  (*clock_id) = CLOCK_THREAD_CPUTIME_ID;
+#else
+  ret = SCTK_ENOENT;
+#endif
+
+  return ret;
 }
 
 /***************************************/
@@ -1440,7 +2001,7 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
 
   /****** JOIN ******/
   sctk_add_func_type (sctk_thread_generic, join,
-			  int (*)(sctk_thread_generic_t, void **));
+			  int (*)(sctk_thread_generic_t, void** ));
 
   /****** EXIT ******/
   sctk_add_func_type (sctk_thread_generic, exit,
@@ -1449,6 +2010,21 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
   /****** EQUAL ******/
   sctk_add_func_type (sctk_thread_generic, equal,
 		  	  int (*)(sctk_thread_generic_t, sctk_thread_generic_t ));
+
+  /****** DETACH ******/
+  sctk_add_func_type (sctk_thread_generic, detach,
+		  	  int (*)(sctk_thread_generic_t ));
+
+  /****** CONCURRENCY ******/
+  sctk_add_func_type (sctk_thread_generic, getconcurrency,
+		  	  int (*)( void ));
+  sctk_add_func_type (sctk_thread_generic, setconcurrency,
+		  	  int (*)( int ));
+
+  /****** CPUCLOCKID ******/
+  sctk_add_func_type (sctk_thread_generic, getcpuclockid,
+		  	  int (*)( sctk_thread_generic_t, clockid_t* ));
+
   /****** KEYS ******/
   sctk_thread_generic_keys_init();
   sctk_add_func_type (sctk_thread_generic, key_create,
@@ -1590,12 +2166,26 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
   sctk_add_func_type (sctk_thread_generic, barrier_wait,
 		  	  int (*)( sctk_thread_barrier_t* ));
 
-  /****** THREAD CREATION ******/  
+  /****** THREAD SPINLOCK ******/
+//  sctk_thread_generic_spinlocks_init();
+  __sctk_ptr_thread_spin_init = sctk_thread_generic_spin_init;
+  sctk_add_func_type (sctk_thread_generic, spin_destroy,
+		  	  int (*)( sctk_thread_spinlock_t* ));
+  sctk_add_func_type (sctk_thread_generic, spin_lock,
+		  	  int (*)( sctk_thread_spinlock_t* ));
+  sctk_add_func_type (sctk_thread_generic, spin_trylock,
+		  	  int (*)( sctk_thread_spinlock_t* ));
+  sctk_add_func_type (sctk_thread_generic, spin_unlock,
+		  	  int (*)( sctk_thread_spinlock_t* ));
+
+  /****** THREAD CREATION ******/
   sctk_thread_generic_check_size (sctk_thread_generic_attr_t, sctk_thread_attr_t);
   sctk_add_func_type (sctk_thread_generic, attr_init,
 		      int (*)(sctk_thread_attr_t *));
   sctk_add_func_type (sctk_thread_generic, attr_destroy,
 		      int (*)(sctk_thread_attr_t *));
+  sctk_add_func_type (sctk_thread_generic, getattr_np,
+		  	  int (*)( sctk_thread_generic_t, sctk_thread_attr_t *));
 
   sctk_add_func_type (sctk_thread_generic, attr_getscope,
 		      int (*)(const sctk_thread_attr_t *, int *));
@@ -1622,6 +2212,26 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
   sctk_add_func_type (sctk_thread_generic, attr_getstack,
 		      int (*)(const sctk_thread_attr_t *, void**, size_t* ));
 
+  sctk_add_func_type (sctk_thread_generic, attr_setguardsize,
+		  	  int (*)(sctk_thread_attr_t*, size_t ));
+  sctk_add_func_type (sctk_thread_generic, attr_getguardsize,
+		  	  int (*)(sctk_thread_attr_t*, size_t* ));
+
+  sctk_add_func_type (sctk_thread_generic, attr_setschedparam,
+		  	  int (*)(sctk_thread_attr_t *, const struct sched_param* ));
+  sctk_add_func_type (sctk_thread_generic, attr_getschedparam,
+		  	  int (*)(sctk_thread_attr_t *, struct sched_param* ));
+
+  sctk_add_func_type (sctk_thread_generic, attr_getschedpolicy,
+		  	  int (*)(sctk_thread_attr_t *, int* ));
+  sctk_add_func_type (sctk_thread_generic, attr_setschedpolicy,
+		  	  int (*)(sctk_thread_attr_t *, int ));
+
+  sctk_add_func_type (sctk_thread_generic, attr_setinheritsched,
+		  	  int (*)(sctk_thread_attr_t *, int));
+  sctk_add_func_type (sctk_thread_generic, attr_getinheritsched,
+		  	  int (*)(sctk_thread_attr_t *, int*));
+
   sctk_add_func_type (sctk_thread_generic, attr_setdetachstate,
 		  	  int (*)(sctk_thread_attr_t *, int));
   sctk_add_func_type (sctk_thread_generic, attr_getdetachstate,
@@ -1634,10 +2244,19 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
 		      int (*)(sctk_thread_t *, const sctk_thread_attr_t *,
 			      void *(*)(void *), void *));
 
+  sctk_add_func_type (sctk_thread_generic, atfork,
+		  	  int (*)( void (*)(void),
+				  	   void (*)(void),
+					   void (*)(void) ));
   sctk_add_func_type (sctk_thread_generic, sched_get_priority_min,
 		 	  int (*)( int ));
   sctk_add_func_type (sctk_thread_generic, sched_get_priority_max,
 		  	  int (*)( int ));
+
+  sctk_add_func_type (sctk_thread_generic, getschedparam,
+		  	  int (*)( sctk_thread_generic_t, int*, struct sched_param* ));
+  sctk_add_func_type (sctk_thread_generic, setschedparam,
+		  	  int (*)( sctk_thread_generic_t, int, const struct sched_param* ));
 
   /****** THREAD SIGNALS ******/
   sctk_add_func_type (sctk_thread_generic, sigsuspend,
@@ -1653,6 +2272,8 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
 			  int (*)( int, int* ));
   sctk_add_func_type (sctk_thread_generic, setcanceltype,
 			  int (*)( int, int* ));
+  sctk_add_func_type (sctk_thread_generic, setschedprio,
+		  	  int (*)( sctk_thread_generic_t, int ));
   sctk_add_func_type (sctk_thread_generic, testcancel,
 		  	  void (*)());
 
@@ -1718,8 +2339,3 @@ sctk_pthread_ng_thread_init (void){
   sctk_register_thread_type("pthread_ng");
 }
 
-/*
-static int
-sctk_thread_generic_barrier_wait( sctk_thread_barrier_t* barrier ){
-  return sctk_thread_generic_barriers_barrier_wait( (sctk_thread_generic_barrier_t*) barrier );
-}*/

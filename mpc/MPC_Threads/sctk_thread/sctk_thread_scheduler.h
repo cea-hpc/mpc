@@ -82,7 +82,8 @@ void sctk_thread_generic_scheduler_init_thread(sctk_thread_generic_scheduler_t* 
 					       struct sctk_thread_generic_p_s* th); 
 char* sctk_thread_generic_scheduler_get_name();
 
-inline void sctk_thread_generic_handle_zombies( struct sctk_per_vp_data_s* vp );
+inline void sctk_generic_swap_to_sched( sctk_thread_generic_scheduler_t* sched );
+inline void sctk_thread_generic_wake_on_task_lock( sctk_thread_generic_scheduler_t* sched, int remove_from_task_list );
 /***************************************/
 /* TASK SCHEDULING                     */
 /***************************************/

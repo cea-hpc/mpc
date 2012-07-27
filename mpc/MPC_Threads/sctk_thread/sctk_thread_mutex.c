@@ -20,15 +20,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <stdlib.h>
-#include <string.h>
-#include "sctk_config.h"
-#include "sctk_debug.h"
-#include "sctk_thread.h"
-#include "sctk_internal_thread.h"
 #include "sctk_thread_mutex.h"
-#include "sctk_thread_scheduler.h"
-#include "sctk_spinlock.h"
+#include <sctk_thread_generic.h>
 
 int
 sctk_thread_generic_mutexes_mutexattr_destroy( sctk_thread_generic_mutexattr_t* attr ){
@@ -195,7 +188,8 @@ sctk_thread_generic_mutexes_mutex_init (sctk_thread_generic_mutex_t * lock,
   /*
 	ERRORS:
 	EINVAL The value specified for the argument is not correct
-    EBUSY  The specified lock has already been initialized
+    EBUSY  |>NOT IMPLEMENTED<| The specified lock has already been
+		   initialized
 	EAGAIN |>NOT IMPLEMENTED<| The system lacked the necessary 
 		   resources (other than memory) to initialize another mutex
 	ENOMEM |>NOT IMPLEMENTED<| Insufficient memory exists to 
@@ -241,6 +235,7 @@ sctk_thread_generic_mutexes_mutex_lock (sctk_thread_generic_mutex_t * lock,
 
   int ret = 0;
   sctk_thread_generic_mutex_cell_t cell;
+  void** tmp = (void**) sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
   sctk_spinlock_lock(&(lock->lock));
   if(lock->owner == NULL){
     lock->owner = sched;
@@ -263,11 +258,13 @@ sctk_thread_generic_mutexes_mutex_lock (sctk_thread_generic_mutex_t * lock,
 
     cell.sched = sched;
     DL_APPEND(lock->blocked,&cell);
+	tmp[sctk_thread_generic_mutex] = (void*) lock;
     
     sctk_thread_generic_thread_status(sched,sctk_thread_generic_blocked);
     sctk_nodebug("WAIT MUTEX LOCK sleep %p",sched);
     sctk_thread_generic_register_spinlock_unlock(sched,&(lock->lock));
     sctk_thread_generic_sched_yield(sched);
+	tmp[sctk_thread_generic_mutex] = NULL;
   }
   return ret;
 }
@@ -287,7 +284,8 @@ sctk_thread_generic_mutexes_mutex_trylock (sctk_thread_generic_mutex_t * lock,
   if( lock == NULL /*|| (lock->m_attrs & 1) != 1*/ ) return SCTK_EINVAL;
 
   int ret = 0;
-  if( sctk_spinlock_trylock(&(lock->lock)) == 0 ){
+  if( /*sctk_spinlock_trylock(&(lock->lock)) == 0 */1){
+	  sctk_spinlock_lock(&(lock->lock));
 	if(lock->owner == NULL){
 	  lock->owner = sched;
 	  if(lock->type == SCTK_THREAD_MUTEX_RECURSIVE ) lock->nb_call ++;
@@ -370,6 +368,9 @@ sctk_thread_generic_mutexes_mutex_spinlock (sctk_thread_generic_mutex_t * lock,
 	EDEADLK The current thread already owns the mutex
 	*/
 
+  /* TODO: FIX BUG when called by "sctk_thread_lock_lock" (same issue with mutex
+   unlock when called by "sctk_thread_lock_unlock") with sched null beacause calling
+   functions only have one argument instead of two*/
   if( lock == NULL /*|| (lock->m_attrs & 1) != 1*/ ) return SCTK_EINVAL;
 
   int ret = 0;
@@ -421,6 +422,7 @@ sctk_thread_generic_mutexes_mutex_unlock (sctk_thread_generic_mutex_t * lock,
   if( lock == NULL ) return SCTK_EINVAL;
 
   if (lock->owner != sched){
+	  //printf("Owner = %p et sched = %p\n",lock->owner,sched);
       return SCTK_EPERM;
     }
   if (lock->type == SCTK_THREAD_MUTEX_RECURSIVE){

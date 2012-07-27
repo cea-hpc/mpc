@@ -227,6 +227,7 @@ __sctk_thread_generic_rwlocks_rwlock_lock( sctk_thread_generic_rwlock_t* lock,
   sctk_thread_generic_rwlock_cell_t cell;
   sctk_thread_generic_rwlocks_init_cell( &cell );
   int ret;
+  void** tmp = (void**) sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
 
   /* test cancel */
   sctk_thread_generic_check_signals( 0 );
@@ -325,8 +326,10 @@ __sctk_thread_generic_rwlocks_rwlock_lock( sctk_thread_generic_rwlock_t* lock,
 
   sctk_thread_generic_thread_status( sched, sctk_thread_generic_blocked );
   sctk_nodebug( "WAIT RWLOCK LOCK sleep %p", sched );
+  tmp[sctk_thread_generic_rwlock] = (void*) lock;
   sctk_thread_generic_register_spinlock_unlock( sched, &(lock->lock) );
   sctk_thread_generic_sched_yield( sched );
+  tmp[sctk_thread_generic_rwlock] = NULL;
 
   return 0;
 }

@@ -32,6 +32,7 @@
 #include <sctk_thread_rwlock.h>
 #include <sctk_thread_sem.h>
 #include <sctk_thread_barrier.h>
+#include <sctk_thread_spinlock.h>
 
 typedef struct sctk_thread_generic_intern_attr_s{
   int scope;
@@ -45,19 +46,21 @@ typedef struct sctk_thread_generic_intern_attr_s{
   char* user_stack;
   char* stack;
   size_t stack_size;
+  size_t stack_guardsize;
   void *(*start_routine) (void *);
   void *arg;
   void* return_value;
   int bind_to;
-  int polling;
-  sctk_thread_rwlock_in_use_t* rwlocks_owned;
+  int polling;                                             /* ----------------------------------------- */
+  void* sctk_thread_generic_pthread_blocking_lock_table;   /* |BARRIER|COND|MUTEX|RWLOCK|SEM|TASK LOCK| */ 
+  sctk_thread_rwlock_in_use_t* rwlocks_owned;              /* ----------------------------------------- */
   sctk_spinlock_t spinlock;
   volatile int nb_sig_pending;
   volatile int nb_sig_treated;
   volatile sigset_t thread_sigset;
   volatile int thread_sigpending[SCTK_NSIG];
 }sctk_thread_generic_intern_attr_t;
-#define sctk_thread_generic_intern_attr_init {SCTK_THREAD_SCOPE_PROCESS,SCTK_THREAD_CREATE_JOINABLE,0,SCTK_THREAD_EXPLICIT_SCHED,0,PTHREAD_CANCEL_ENABLE,PTHREAD_CANCEL_DEFERRED,0,NULL,NULL,0,NULL,NULL,NULL,-1,0,NULL,SCTK_SPINLOCK_INITIALIZER,0,0}
+#define sctk_thread_generic_intern_attr_init {SCTK_THREAD_SCOPE_PROCESS,SCTK_THREAD_CREATE_JOINABLE,0,SCTK_THREAD_EXPLICIT_SCHED,0,PTHREAD_CANCEL_ENABLE,PTHREAD_CANCEL_DEFERRED,0,NULL,NULL,0,0,NULL,NULL,NULL,-1,0,NULL,NULL,SCTK_SPINLOCK_INITIALIZER,0,0}
 
 typedef struct{
   sctk_thread_generic_intern_attr_t* ptr;
@@ -81,5 +84,18 @@ sctk_thread_generic_attr_init (sctk_thread_generic_attr_t * attr);
 
 inline void
 sctk_thread_generic_check_signals( int select );
+inline void
+sctk_thread_generic_handle_zombies( sctk_thread_generic_scheduler_generic_t* th );
+inline void
+sctk_thread_generic_alloc_pthread_blocking_lock_table( const sctk_thread_generic_attr_t* attr);
+
+typedef enum{
+  sctk_thread_generic_barrier,
+  sctk_thread_generic_cond,
+  sctk_thread_generic_mutex,
+  sctk_thread_generic_rwlock,
+  sctk_thread_generic_sem,
+  sctk_thread_generic_task_lock
+}sctk_thread_generic_lock_list_t;
 
 #endif
