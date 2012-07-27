@@ -282,8 +282,10 @@ void sctk_centralized_poll_tasks(sctk_thread_generic_scheduler_t* sched){
 		task->free_func( task );
 	  }
       if( lsched ){
-		void** tmp = (void**) lsched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
-		tmp[sctk_thread_generic_task_lock] = NULL;
+		void** tmp = NULL;
+		if( task->sched && task->sched->th && &(task->sched->th->attr )) 
+			tmp = (void**) task->sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
+		if( tmp ) tmp[sctk_thread_generic_task_lock] = NULL;
 		sctk_thread_generic_wake(lsched);
 	  }
       //sctk_thread_generic_wake(task->sched);
