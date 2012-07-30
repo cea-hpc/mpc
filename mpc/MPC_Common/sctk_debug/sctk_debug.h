@@ -32,7 +32,6 @@ extern "C"
 #include <sctk_config.h>
 #include <assert.h>
 
-
 #define SCTK_MAX_FILENAME_SIZE 1024
 #define SCTK_DBG_INFO stderr,__LINE__,__FILE__,SCTK_FUNCTION
 
@@ -171,29 +170,31 @@ extern "C"
   {
   }
 #endif
-#undef assert
-#define assert(op) if(expect_false(!(op)))				\
-    sctk_formated_assert_print(SCTK_DBG_INFO,				\
-			       SCTK_STRING(op))
-#define assume(op) if(expect_false(!(op)))	\
-    sctk_formated_assert_print(SCTK_DBG_INFO,	\
-			       SCTK_STRING(op))
+
+//If inline is not supported, disable assertions
 #ifndef SCTK_NO_INLINE
 #undef NO_INTERNAL_ASSERT
 #define NO_INTERNAL_ASSERT
 #endif
 
+//for standard assert function, rewrite but maintain -DNDEBUG convention 
+#if !defined(NDEBUG) || !defined(NO_INTERNAL_ASSERT)
+	#undef assert
+	#define assert(op) if(expect_false(!(op))) sctk_formated_assert_print(SCTK_DBG_INFO, SCTK_STRING(op)); else (void)(0)
+#endif //NDEBUG, NO_INTERNAL_ASSERT
+
+/** Assume stay present independently of NDEBUG/NO_INTERNAL_ASSERT **/
+#define assume(op) if(expect_false(!(op))) sctk_formated_assert_print(SCTK_DBG_INFO, SCTK_STRING(op)); else (void)(0)
+
 #ifdef NO_INTERNAL_ASSERT
 #define sctk_assert(op) (void)(0)
 #define sctk_assert_func(op) (void)(0)
-#else
-#define sctk_assert_func(op) do{		\
-    op						\
-      }while(0)
+#else //NO_INTERNAL_ASSERT
+#define sctk_assert_func(op) do{ op }while(0)
 #define sctk_assert(op) if(expect_false(!(op)))				\
     sctk_formated_assert_print(SCTK_DBG_INFO,				\
 			       SCTK_STRING(op))
-#endif
+#endif //NO_INTERNAL_ASSERT
 
   extern int sctk_only_once_while_val;
 #define sctk_only_once() do{                                            \
