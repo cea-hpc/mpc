@@ -45,7 +45,7 @@ sctk_internal_setup_lib_hydra()
 		SCTK_CFLAGS="${SCTK_CFLAGS} -I${HYDRA_MODULE} -DMPC_USE_HYDRA"
 		SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HYDRA_MODULE}/safestr2.o ${HYDRA_MODULE}/simple_pmiutil.o ${HYDRA_MODULE}/simple_pmi.o"
 		SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${SCTK_HYDRA_PREFIX}/lib -L${HYDRA_MODULE}"
-		EXTERN_NON_TESTED_LIB="-lsimple"
+		EXTERN_NON_TESTED_LIB="${EXTERN_NON_TESTED_LIB} -lsimple"
 	fi
 
 	#mark as setup
