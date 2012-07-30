@@ -277,6 +277,12 @@ for arg in "$@" ; do
 done
 echo "" >> configure.log
 
+# Print some env info in script for easier debug
+echo "=============== ENV =================" >> configure.log
+echo "uname -rsvpo = `uname -rsvpo`"         >> configure.log
+echo "SHELL        = `echo $SHELL`"          >> configure.log
+echo "make -v      = `make -v | head -n 1`"              >> configure.log
+
 # Add arguments linked to SCTK_PMI
 MPC_ARGS="$SCTK_PMI_OPTIONS $MPC_ARGS"
 
