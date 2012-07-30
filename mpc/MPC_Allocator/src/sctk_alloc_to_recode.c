@@ -78,7 +78,11 @@ void __sctk_free(void * ptr,sctk_alloc_chain_t * chain)
 void sctk_clean_memory (void) 
 {
 	//SCTK_PDEBUG("Unimpl call clean_memory with CPU : %d",sctk_get_cpu());
-	fatal("Unimpl call clean_memory with CPU");
+	//fatal("Unimpl call clean_memory with CPU");
+	/**
+	 * TODO remove this, it seams safe, but need to ask to marc P.
+	 * The old version only get the current TLS.
+	**/
 }
 
 void sctk_relocalise_tls (void)
