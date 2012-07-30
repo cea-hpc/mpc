@@ -67,13 +67,26 @@ SCTK_CHECK_FUNC write
 
 SCTK_CHECK_LIB_HWLOC
 
+#TODO rename this into hwloc as now NUMA is supported via hwloc
 SCTK_CHECK_OPTION -DHAVE_LIBNUMA
+
+#TODO maybe reverse this in DISABLE_STATIC for unit test and default static for others
 SCTK_CHECK_OPTION -DENABLE_STATIC
-#SCTK_CHECK_OPTION -DSCTK_ALLOC_NDEBUG
-SCTK_CHECK_OPTION -DHAVE_MREMAP
-SCTK_CHECK_OPTION -DHAVE_NUMAIF_H
+#TODO move this or remove if already have in MPC build system
 SCTK_CHECK_OPTION -DNDEBUG
-SCTK_CHECK_OPTION -DHAVE_ASM_BSR
+#SCTK_CHECK_OPTION -DSCTK_ALLOC_DEBUG
+
+#optional enable of mremap support
+SCTK_CHECK_FUNC_NOFAIL mremap
+if test "${SCTK_SCTK_CHECK_FUNC_RES}" = 0 ; then
+	SCTK_CHECK_OPTION -DHAVE_MREMAP
+fi
+
+#check if have numaif.h to enable NUMA debug functions (only on Linux)
+SCTK_CHECK_HEADER_NOFAIL numaif.h
+if test "${SCTK_SCTK_CHECK_HEADER_RES}" = 0 ; then
+	SCTK_CHECK_OPTION -DHAVE_NUMAIF_H
+fi
 
 sctk_echo
 begin_section "Page migration"

@@ -31,7 +31,6 @@ extern "C"
 /************************** HEADERS ************************/
 #if defined(_WIN32)
 	#include <windows.h>
-	#include <stdint.h>
 	#ifdef _MSC_VER
 		//used for _open and _write functions with VCC
 		#include <io.h>
@@ -123,11 +122,9 @@ struct sctk_alloc_chunk_info
 struct sctk_alloc_chunk_header_large
 {
 	#ifdef _WIN32
-	uint32_t size;
-	unsigned char padding0[3];
+	unsigned char size[7];
 	unsigned char addr;
-	uint32_t prevSize;
-	unsigned char padding1[3];
+	unsigned char prevSize[7];
 	struct sctk_alloc_chunk_info info;
 	
 	#else
@@ -157,8 +154,7 @@ struct sctk_alloc_chunk_header_large
 struct sctk_alloc_chunk_header_padded
 {
 	#ifdef _WIN32
-	uint32_t padding;
-	unsigned char padding0[3];
+	unsigned char padding[7];
 	struct sctk_alloc_chunk_info info;
 	#else
 	/**

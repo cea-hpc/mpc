@@ -231,10 +231,14 @@ int sctk_alloc_optimized_log2_size_t(sctk_size_t value)
 	//vars
 	sctk_size_t res = 0;
 
-	#ifdef HAVE_ASM_BSR
+	#if defined(__GNUC__) && defined(__x86_64__)
 		if (value != 0)
 			asm volatile ("bsr %1, %0":"=r" (res):"r"(value));
 	#else
+		/** @TODO find equivalent for others compiler. Maybe arch x86 is also OK as for x86_64, but need to check. **/
+		#ifndef _MSC_VER
+		#warning "ASM bsr was tested only on gcc x64_64, fallback on default slower C implementation."
+		#endif
 		while (value > 1) {value = value >> 1 ; res++;};
 	#endif
 
