@@ -180,11 +180,11 @@ extern "C"
 //for standard assert function, rewrite but maintain -DNDEBUG convention 
 #if !defined(NDEBUG) || !defined(NO_INTERNAL_ASSERT)
 	#undef assert
-	#define assert(op) if(expect_false(!(op))) sctk_formated_assert_print(SCTK_DBG_INFO, SCTK_STRING(op)); else (void)(0)
+	#define assert(op) do { if(expect_false(!(op))) sctk_formated_assert_print(SCTK_DBG_INFO, SCTK_STRING(op)); } while(0)
 #endif //NDEBUG, NO_INTERNAL_ASSERT
 
 /** Assume stay present independently of NDEBUG/NO_INTERNAL_ASSERT **/
-#define assume(op) if(expect_false(!(op))) sctk_formated_assert_print(SCTK_DBG_INFO, SCTK_STRING(op)); else (void)(0)
+#define assume(op) do { if(expect_false(!(op))) sctk_formated_assert_print(SCTK_DBG_INFO, SCTK_STRING(op)); } while(0)
 
 #ifdef NO_INTERNAL_ASSERT
 #define sctk_assert(op) (void)(0)
