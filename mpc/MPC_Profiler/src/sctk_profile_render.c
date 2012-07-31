@@ -34,6 +34,7 @@
 #include "sctk_profile_render_text.h"
 #include "sctk_profile_render_tex.h"
 #include "sctk_profile_render_html.h"
+#include "sctk_profile_render_xml.h"
 
 void sctk_profiler_renderer_clear_handlers( struct sctk_profile_renderer *rd )
 {
@@ -84,6 +85,10 @@ void sctk_profile_renderer_register_output_iface( struct sctk_profile_renderer *
 		case SCTK_PROFILE_RENDER_TEX :
 			sctk_profile_render_tex_register( rd );
 		break;
+		case SCTK_PROFILE_RENDER_XML :
+			printf("Reg XML ! \n");
+			sctk_profile_render_xml_register( rd );
+			break;
 		case SCTK_PROFILE_RENDER_HTML :
 			sctk_profile_render_html_register( rd );
 		break;
@@ -193,6 +198,7 @@ void sctk_profile_renderer_init( struct sctk_profile_renderer *rd, struct sctk_p
 	
 	sctk_performance_tree_init( &rd->ptree, array);
 	rd->array = array;
+	rd->walk_mode = SCTK_PROFILE_RENDER_WALK_DFS;
 	
 	if( sctk_profile_renderer_check_render_list( render_list ) )
 	{
@@ -253,12 +259,12 @@ char * sctk_profile_renderer_get_next_render_string( char **render_list )
 
 
 
-void sctk_profile_renderer_render_entry( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg )
+void sctk_profile_renderer_render_entry( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg, int going_up )
 {
 	struct sctk_profile_renderer *rd = (struct sctk_profile_renderer *)arg;
 	
 	if( rd->render_profile )
-		(rd->render_profile)( array, id, parent_id, depth, rd );
+		(rd->render_profile)( array, id, parent_id, depth, going_up, rd);
 }
 
 
@@ -312,7 +318,7 @@ void sctk_profile_renderer_render( struct sctk_profile_renderer *rd )
 				(rd->setup_profile )( rd );
 
 			if( rd->render_profile )
-				sctk_profiler_array_walk( rd->array, sctk_profile_renderer_render_entry, (void *)rd, 0 );
+				sctk_profiler_array_walk( rd->array, sctk_profile_renderer_render_entry, (void *)rd, rd->walk_mode );
 
 			if( rd->teardown_profile )
 				(rd->teardown_profile )( rd );
@@ -477,5 +483,55 @@ void sctk_profile_render_filename( char *output_file, char *ext )
 	{
 		sprintf( output_file, "%s.%s", sctk_profile_get_config()->file_prefix, ext);
 	}
+
+	sctk_info("MPC_Profiler : Rendering in %s", output_file);
 }
 
+
+char *sctk_profile_render_sanitize_string( char *string )
+{
+  int len = strlen( string );
+  char *ret = malloc( 2* len );
+  
+  int i = 0;
+  int off = 0;
+  
+  for( i = 0 ; i <= len ; i++)
+  {
+    if( i == len )
+      ret[off] = '\0';
+    
+    if( off == len * 2 )
+    {
+	ret[off]= '\0';
+    }
+    
+    
+    if( string[i] == '_' )
+    {
+	ret[off] = '\\';
+	off++;
+	ret[off] = '_';
+    }
+    else if( string[i] == '&' )
+    {
+	ret[off] = '\\';
+	off++;
+	ret[off] = '&';
+    }
+    else if(string[i] == '$' )
+    {
+	ret[off] = '\\';
+	off++;
+	ret[off] = '$';
+    }
+    else
+    {
+	ret[off] = string[i];
+    }
+
+    off++;
+  }
+  
+  return ret;
+}

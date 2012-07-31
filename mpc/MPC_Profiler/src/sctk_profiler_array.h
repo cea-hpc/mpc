@@ -26,6 +26,7 @@
 
 #include "sctk_spinlock.h"
 
+
 #undef SIZE_COUNTER
 #undef COUNTER
 #undef PROBE
@@ -54,6 +55,15 @@ typedef enum
 	SCTK_PROFILE_COUNTER_PROBE
 }sctk_profile_key_type;
 
+typedef enum
+{
+	SCTK_PROFILE_RENDER_WALK_DFS = 0,
+	SCTK_PROFILE_RENDER_WALK_BFS = 1,
+	SCTK_PROFILE_RENDER_WALK_BOTH = 2,
+	SCTK_PROFILE_RENDER_WALK_COUNT
+}sctk_profile_render_walk_mode;
+
+
 struct sctk_profiler_array
 {
 	uint64_t sctk_profile_hits[ SCTK_PROFILE_KEY_COUNT ];
@@ -76,7 +86,7 @@ struct sctk_profiler_array * sctk_profiler_array_new();
 void sctk_profiler_array_init(struct sctk_profiler_array *array);
 void sctk_profiler_array_release(struct sctk_profiler_array *array);
 void sctk_profiler_array_unify( struct sctk_profiler_array *array );
-void sctk_profiler_array_walk( struct sctk_profiler_array *array, void (*handler)( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg ), void *arg , int DFS );
+void sctk_profiler_array_walk( struct sctk_profiler_array *array, void (*handler)( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg, int going_up ), void *arg , sctk_profile_render_walk_mode DFS );
 
 static inline void sctk_profiler_array_hit( struct sctk_profiler_array *array, int id, int64_t value )
 {

@@ -165,12 +165,12 @@ void sctk_profiler_array_release(struct sctk_profiler_array *array)
 
 
 static void __sctk_profiler_array_walk( struct sctk_profiler_array *array, short *been_walked, int current_id, int depth,
-                                        void (*handler)( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg ),
-                                        void *arg, int DFS )
+                                        void (*handler)( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg, int going_up ),
+                                        void *arg, sctk_profile_render_walk_mode DFS )
 {
-	if( !DFS )
+	if( DFS == SCTK_PROFILE_RENDER_WALK_DFS || DFS == SCTK_PROFILE_RENDER_WALK_BOTH )
 	{
-		(handler)( array, current_id, sctk_profile_parent_key[ current_id ], depth, arg );
+		(handler)( array, current_id, sctk_profile_parent_key[ current_id ], depth, arg, 0 );
 		been_walked[current_id] = 1;
 	}
 	
@@ -184,14 +184,14 @@ static void __sctk_profiler_array_walk( struct sctk_profiler_array *array, short
 		}
 	}
 	
-	if( DFS )
+	if( DFS == SCTK_PROFILE_RENDER_WALK_BFS || DFS == SCTK_PROFILE_RENDER_WALK_BOTH )
 	{
-		(handler)( array, current_id, sctk_profile_parent_key[ current_id ], depth, arg );
+		(handler)( array, current_id, sctk_profile_parent_key[ current_id ], depth, arg, 1 );
 		been_walked[current_id] = 1;
 	}
 }
 
-void sctk_profiler_array_walk( struct sctk_profiler_array *array, void (*handler)( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg ), void *arg, int DFS )
+void sctk_profiler_array_walk( struct sctk_profiler_array *array, void (*handler)( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg, int going_up ), void *arg, sctk_profile_render_walk_mode DFS )
 {
 	short been_walked[ SCTK_PROFILE_KEY_COUNT ];
 	
@@ -216,7 +216,7 @@ void sctk_profiler_array_walk( struct sctk_profiler_array *array, void (*handler
 }
 
 
-void sctk_profiler_array_sum_to_parent( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg )
+void sctk_profiler_array_sum_to_parent( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg, int going_up )
 {
 	if( sctk_profiler_array_get_type( id ) == sctk_profiler_array_get_type( parent_id ) )
 	{
@@ -244,7 +244,7 @@ void sctk_profiler_array_unify( struct sctk_profiler_array *array )
 	if( array->been_unified )
 	{
 		sctk_error( "You cant unify an array two times !");
-		MPC_Abort();
+		abort();
 	}
 	
 	sctk_profiler_array_walk( array, sctk_profiler_array_sum_to_parent, NULL, 1 );

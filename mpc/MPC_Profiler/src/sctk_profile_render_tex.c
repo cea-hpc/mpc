@@ -27,53 +27,7 @@
 #include "sctk_debug.h"
 
 
-char *sctk_profile_render_tex_sanitize_string( char *string )
-{
-  int len = strlen( string );
-  char *ret = malloc( 2* len );
-  
-  int i = 0;
-  int off = 0;
-  
-  for( i = 0 ; i <= len ; i++)
-  {
-    if( i == len )
-      ret[off] = '\0';
-    
-    if( off == len * 2 )
-    {
-	ret[off]= '\0';
-    }
-    
-    
-    if( string[i] == '_' )
-    {
-	ret[off] = '\\';
-	off++;
-	ret[off] = '_';
-    }
-    else if( string[i] == '&' )
-    {
-	ret[off] = '\\';
-	off++;
-	ret[off] = '&';
-    }
-    else if(string[i] == '$' )
-    {
-	ret[off] = '\\';
-	off++;
-	ret[off] = '$';
-    }
-    else
-    {
-	ret[off] = string[i];
-    }
 
-    off++;
-  }
-  
-  return ret;
-}
 
 
 
@@ -184,13 +138,15 @@ void sctk_profile_render_tex_setup_profile( struct sctk_profile_renderer *rd )
 }
 
 
-void sctk_profile_render_tex_render_profile( struct sctk_profiler_array *array, int id, int parent_id, int depth, struct sctk_profile_renderer *rd )
+void sctk_profile_render_tex_render_profile( struct sctk_profiler_array *array, int id, int parent_id, int depth, int going_up, struct sctk_profile_renderer *rd )
 {
 	char buffA[100], buffB[100], buffC[100], buffD[100];
 	
 	const char *prefix[3] = { "\\textbf", " ", "\\textit" };
 
 	int prefix_id = (depth<sctk_profile_get_config()->level_colors_size)?depth:sctk_profile_get_config()->level_colors_size - 1;
+
+	int format_id = (prefix_id < 3)?prefix_id:2;
 
 	char *to_unit_total = NULL;
 	char *to_unit_avg = NULL;
@@ -229,18 +185,18 @@ void sctk_profile_render_tex_render_profile( struct sctk_profiler_array *array, 
 		to_unit_max = buffD;
 	}
 
-	char *desc = sctk_profile_render_tex_sanitize_string( sctk_profiler_array_get_desc( id ) );
+	char *desc = sctk_profile_render_sanitize_string( sctk_profiler_array_get_desc( id ) );
 
 	if( sctk_profiler_array_get_hits( array, id ) )
 	{
-		fprintf( rd->output_file,"\\rowcolor{%c} %s{%s} & %s{%llu} & %s{%s} & %s{%s} & %s{%s} & %s{%s} & %s{ %g } & %s{ %g } \\\\\n",'A'+prefix_id, prefix[ prefix_id ], desc,
-																						   prefix[ prefix_id ], (unsigned long long int )sctk_profiler_array_get_hits( array, id ),
-																						   prefix[ prefix_id ], to_unit_total,
-																						   prefix[ prefix_id ], to_unit_avg,
-																						   prefix[ prefix_id ], to_unit_min,
-																						   prefix[ prefix_id ], to_unit_max,
-																						   prefix[ prefix_id ], rd->ptree.entry_relative_percentage_time[id] * 100,
-																						   prefix[ prefix_id ], rd->ptree.entry_total_percentage_time[id] * 100 );
+		fprintf( rd->output_file,"\\rowcolor{%c} %s{%s} & %s{%llu} & %s{%s} & %s{%s} & %s{%s} & %s{%s} & %s{ %g } & %s{ %g } \\\\\n",'A'+prefix_id, prefix[ format_id ], desc,
+																						   prefix[ format_id ], (unsigned long long int )sctk_profiler_array_get_hits( array, id ),
+																						   prefix[ format_id ], to_unit_total,
+																						   prefix[ format_id ], to_unit_avg,
+																						   prefix[ format_id ], to_unit_min,
+																						   prefix[ format_id ], to_unit_max,
+																						   prefix[ format_id ], rd->ptree.entry_relative_percentage_time[id] * 100,
+																						   prefix[ format_id ], rd->ptree.entry_total_percentage_time[id] * 100 );
 	}
 
 	free(desc);

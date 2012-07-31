@@ -36,7 +36,7 @@
 
 
 	void sctk_profile_render_tex_setup_profile( struct sctk_profile_renderer *rd );
-	void sctk_profile_render_tex_render_profile( struct sctk_profiler_array *array, int id, int parent_id, int depth, struct sctk_profile_renderer *rd );
+	void sctk_profile_render_tex_render_profile( struct sctk_profiler_array *array, int id, int parent_id, int depth,  int going_up, struct sctk_profile_renderer *rd );
 	void sctk_profile_render_tex_teardown_profile( struct sctk_profile_renderer *rd );
 
 

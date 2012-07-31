@@ -31,7 +31,7 @@
 	void sctk_profile_render_html_teardown( struct sctk_profile_renderer *rd );
 
 	void sctk_profile_render_html_setup_profile( struct sctk_profile_renderer *rd );
-	void sctk_profile_render_html_render_profile( struct sctk_profiler_array *array, int id, int parent_id, int depth, struct sctk_profile_renderer *rd );
+	void sctk_profile_render_html_render_profile( struct sctk_profiler_array *array, int id, int parent_id, int depth, int going_up, struct sctk_profile_renderer *rd );
 	void sctk_profile_render_html_teardown_profile( struct sctk_profile_renderer *rd );
 
 	void sctk_profile_render_html_setup_meta( struct sctk_profile_renderer *rd );

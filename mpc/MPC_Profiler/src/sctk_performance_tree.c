@@ -27,7 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void sctk_performance_tree_relative_percentage( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg )
+void sctk_performance_tree_relative_percentage( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg , int going_up )
 {
 	struct sctk_performance_tree *tr = (struct sctk_performance_tree *)arg;
 
@@ -94,7 +94,7 @@ void sctk_performance_tree_relative_percentage( struct sctk_profiler_array *arra
 }
 
 
-void sctk_performance_tree_total_time_and_hits( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg )
+void sctk_performance_tree_total_time_and_hits( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg, int going_up  )
 {
 	struct sctk_performance_tree *tr = (struct sctk_performance_tree *)arg;
 	
@@ -110,7 +110,7 @@ void sctk_performance_tree_total_time_and_hits( struct sctk_profiler_array *arra
 
 }
 
-void sctk_performance_tree_absolute_percentage( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg )
+void sctk_performance_tree_absolute_percentage( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg, int going_up  )
 {
 	struct sctk_performance_tree *tr = (struct sctk_performance_tree *)arg;
 
