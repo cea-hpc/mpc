@@ -91,8 +91,7 @@ void sctk_broadcast (void *buffer, const size_t size,
 void sctk_all_reduce (const void *buffer_in, void *buffer_out,
 		      const size_t elem_size,
 		      const size_t elem_number,
-		      void (*func) (const sctk_communicator_t *, sctk_communicator_t *, size_t,
-				    sctk_datatype_t),
+		      MPC_Op_f func,
 		      const sctk_communicator_t communicator,
 		      const sctk_datatype_t data_type)
 {
