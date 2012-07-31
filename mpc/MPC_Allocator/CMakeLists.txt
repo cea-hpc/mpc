@@ -50,7 +50,7 @@ if (NOT DISABLE_LIBNUMA)
 endif(NOT DISABLE_LIBNUMA)
 
 if (HWLOC_FOUND)
-	add_definitions(-DHAVE_LIBNUMA=yes)
+	add_definitions(-DHAVE_HWLOC=yes)
 else (HWLOC_FOUND)
 	set(hwloc_inner_path ${CMAKE_SOURCE_DIR}/hwloc)
 	#try some other dirs
@@ -60,7 +60,7 @@ else (HWLOC_FOUND)
 	#real check
 	if(EXISTS ${hwloc_inner_path})
 		Message("Hwloc not found by cmake, use the one in ${hwloc_inner_path}")
-		add_definitions(-DHAVE_LIBNUMA=yes)
+		add_definitions(-DHAVE_HWLOC=yes)
 		set(HWLOC_LIBRARY ${hwloc_inner_path}/lib/libhwloc.lib)
 		set(HWLOC_INCLUDE_DIRS ${hwloc_inner_path}/include)
 		set(HWLOC_INCLUDE_DIR ${hwloc_inner_path}/include)

@@ -29,9 +29,9 @@ extern "C"
 #endif
 
 /************************** HEADERS ************************/
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 #include <hwloc.h>
-#endif //HAVE_LIBNUMA
+#endif //HAVE_HWLOC
 #include "sctk_allocator.h"
 
 /************************** CONSTS *************************/
@@ -82,7 +82,7 @@ struct sctk_alloc_mm_source_light
 	bool strict_numa_bind;
 	/** More for debug, to know how-many blocks are in use. **/
 	int counter;
-	#ifdef HAVE_LIBNUMA
+	#ifdef HAVE_HWLOC
 	/** Define the nodset related to the NUMA binding for hwloc.**/
 	hwloc_nodeset_t nodeset;
 	#endif
@@ -107,7 +107,7 @@ struct sctk_alloc_mm_source_light * sctk_alloc_get_mm_source_light(struct sctk_a
 /************************* FUNCTION ************************/
 //helpers
 SCTK_STATIC void sctk_alloc_force_segment_binding(struct sctk_alloc_mm_source_light * light_source,void* base, sctk_size_t size,int numa_node);
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 SCTK_STATIC  hwloc_nodeset_t sctk_alloc_mm_source_light_init_nodeset(int numa_node);
 #endif
 

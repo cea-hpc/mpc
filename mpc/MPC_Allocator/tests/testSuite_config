@@ -23,7 +23,7 @@ helper_insert_test "compile_MPC_Allocator_uma" "0" "gcc -fPIC -Wall -g -shared $
 HWLOC_PREFIX=${MPC_INSTALL_PREFIX}/mpc-hwloc-1.3/
 HWLOC_CFLAGS="-I${MPC_INSTALL_PREFIX}/mpc-hwloc-1.3/include"
 HWLOC_LDFLAGS="-L${MPC_INSTALL_PREFIX}/mpc-hwloc-1.3/lib -lhwloc -Wl,-rpath,${MPC_INSTALL_PREFIX}/mpc-hwloc-1.3/lib"
-helper_insert_test "compile_MPC_Allocator_numa" "0" "gcc -fPIC -Wall -g -shared ${ALLOC_SOURCES} -DMPC_ALLOCATOR_DISABLE_STATIC -DHAVE_LIBNUMA ${HWLOC_CFLAGS} ${HWLOC_LDFLAGS} -o ${MPC_TEST_CURRENT_WORK_DIR}/executables/liballoc-numa.so -lpthread"
+helper_insert_test "compile_MPC_Allocator_numa" "0" "gcc -fPIC -Wall -g -shared ${ALLOC_SOURCES} -DMPC_ALLOCATOR_DISABLE_STATIC -DHAVE_HWLOC ${HWLOC_CFLAGS} ${HWLOC_LDFLAGS} -o ${MPC_TEST_CURRENT_WORK_DIR}/executables/liballoc-numa.so -lpthread"
 
 #setup svunittest
 helper_use_svunittest

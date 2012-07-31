@@ -119,7 +119,7 @@ extern "C"
 
 /************************** MACROS *************************/
 //if have NUMA support
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 /** Define the maximum number of numa node supported. **/
 #define SCTK_MAX_NUMA_NODE 4
 #else

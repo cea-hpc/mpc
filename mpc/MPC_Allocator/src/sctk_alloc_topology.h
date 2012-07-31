@@ -31,7 +31,7 @@
 //optional header
 #ifdef MPC_Threads
 #include <sctk_topology.h>
-#elif defined(HAVE_LIBNUMA)
+#elif defined(HAVE_HWLOC)
 #include <hwloc.h>
 #endif
 
@@ -51,10 +51,10 @@ int sctk_get_preferred_numa_node(void);
 int sctk_alloc_init_on_numa_node(void);
 void sctk_alloc_topology_bind_thread_on_core(int id);
 
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 hwloc_topology_t sctk_get_topology_object(void);
 void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_node);
-#endif //HAVE_LIBNUMA
+#endif //HAVE_HWLOC
 
 #ifdef __cplusplus
 };

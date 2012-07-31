@@ -36,7 +36,7 @@
 #endif
 
 //optional for NUMA
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 	#include <hwloc.h>
 #endif
 
@@ -51,7 +51,7 @@
 #define SCTK_ALLOC_MACRO_BLOC_REUSE_THREASHOLD (0*SCTK_MACRO_BLOC_SIZE)
 
 /************************* FUNCTION ************************/
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 /**
  * Setup the nodset structure of hwloc to request NUMA binding of the pages of the
  * managed by the current memory source.
@@ -94,7 +94,7 @@ void sctk_alloc_mm_source_light_init(struct sctk_alloc_mm_source_light * source,
 	#ifdef HAVE_MREMAP
 	source->source.remap = sctk_alloc_mm_source_light_remap;
 	#endif
-	#ifdef HAVE_LIBNUMA
+	#ifdef HAVE_HWLOC
 	source->nodeset = NULL;
 	#endif
 
@@ -102,7 +102,7 @@ void sctk_alloc_mm_source_light_init(struct sctk_alloc_mm_source_light * source,
 	sctk_alloc_spinlock_init(&source->spinlock,PTHREAD_PROCESS_PRIVATE);
 
 	//if numa is disable we don't know anything, so remove info
-	#ifndef HAVE_LIBNUMA
+	#ifndef HAVE_HWLOC
 	if (mode |= SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_STRICT)
 		sctk_alloc_pwarning("Caution, you request NUMA strict but allocator was compiled without NUMA support.");
 	mode &= ~SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_STRICT;
@@ -198,10 +198,10 @@ SCTK_STATIC void sctk_alloc_mm_source_light_insert_segment(struct sctk_alloc_mm_
 	assume_m(size % SCTK_MACRO_BLOC_SIZE == 0,"Buffer size must be aligned to page size.");
 
 	//if need to force binding, as we didn't now the origin, call meme binding method
-	#ifdef HAVE_LIBNUMA
+	#ifdef HAVE_HWLOC
 	if (light_source->mode | SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_STRICT && light_source->numa_node != SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_NODE_IGNORE)
 		sctk_alloc_force_segment_binding(light_source,base,size,light_source->numa_node);
-	#endif //HAVE_LIBNUMA
+	#endif //HAVE_HWLOC
 
 	//setup header
 	free_bloc->size = size;
@@ -220,7 +220,7 @@ SCTK_STATIC void sctk_alloc_mm_source_light_insert_segment(struct sctk_alloc_mm_
  * @param numa_node The NUMA node on which to bind (unused, to remote).
  * @todo Remove numa_node param.
 **/
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 SCTK_STATIC void sctk_alloc_force_segment_binding(struct sctk_alloc_mm_source_light * light_source,void* base, sctk_size_t size,int numa_node)
 {
 	//vars
@@ -237,7 +237,7 @@ SCTK_STATIC void sctk_alloc_force_segment_binding(struct sctk_alloc_mm_source_li
 	if (light_source->nodeset != NULL)
 		res = hwloc_set_area_membind_nodeset(sctk_get_topology_object(),base,size,light_source->nodeset,HWLOC_MEMBIND_BIND ,0);
 }
-#endif //HAVE_LIBNUMA
+#endif //HAVE_HWLOC
 
 /************************* FUNCTION ************************/
 /**
@@ -270,7 +270,7 @@ SCTK_STATIC void sctk_alloc_mm_source_light_cleanup(struct sctk_alloc_mm_source*
 	}
 
 	//free the nodeset
-	#ifdef HAVE_LIBNUMA
+	#ifdef HAVE_HWLOC
 	if (light_source->nodeset != NULL)
 		hwloc_bitmap_free(light_source->nodeset);
 	#endif

@@ -2373,7 +2373,7 @@ SCTK_STATIC void sctk_alloc_rfq_destroy(struct sctk_alloc_rfq * rfq)
  * @param chain Define the allocation chain to migrate.
  * @param target_numa_node Define the targeted NUMA node, you can use -1 to reset memory binding.
 **/
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 SCTK_STATIC void sctk_alloc_chain_numa_migrate_content(struct sctk_alloc_chain * chain, int target_numa_node)
 {
 	//vars
@@ -2404,7 +2404,7 @@ SCTK_STATIC void sctk_alloc_chain_numa_migrate_content(struct sctk_alloc_chain *
 	//lock the region map
 	sctk_alloc_spinlock_unlock(&sctk_alloc_glob_regions_lock);
 }
-#endif //HAVE_LIBNUMA
+#endif //HAVE_HWLOC
 
 /************************* FUNCTION ************************/
 void sctk_alloc_chain_get_numa_stat(struct sctk_alloc_numa_stat_s * numa_stat,struct sctk_alloc_chain * chain)
@@ -2511,9 +2511,9 @@ void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain)
 	printf("%-20s : %p\n","Chain",chain);
 	printf("%-20s : %p\n","Memory source",chain->source);
 	printf("%-20s : %d\n","Source NUMA node",sctk_alloc_chain_get_numa_node(chain));
-	#ifdef HAVE_LIBNUMA
+	#ifdef HAVE_HWLOC
 	printf("%-20s : %d\n","Preferred NUMA node",sctk_get_preferred_numa_node());
-	#endif //HAVE_LIBNUMA
+	#endif //HAVE_HWLOC
 	printf("%-20s : %lu\n","Cached free memory",chain_stat.cached_free_memory);
 	printf("%-20s : %lu\n","Min free size",chain_stat.min_free_size);
 	printf("%-20s : %lu\n","Max free size",chain_stat.max_free_size);
@@ -2561,7 +2561,7 @@ void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_n
 
 	SCTK_PDEBUG("Call migration to numa node %d",target_numa_node);
 
-	#ifdef HAVE_LIBNUMA
+	#ifdef HAVE_HWLOC
 	//remap the struct itself
 	/** @todo Get error on cassard ??? **/
 	if (migrate_chain_struct)
@@ -2570,7 +2570,7 @@ void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_n
 	//remap the content
 	if (migrate_chain_struct)
 		sctk_alloc_chain_numa_migrate_content(chain,target_numa_node);
-	#endif //HAVE_LIBNUMA
+	#endif //HAVE_HWLOC
 	
 	//update the mm source
 	if (new_mm_source != SCTK_ALLOC_KEEP_OLD_MM_SOURCE)

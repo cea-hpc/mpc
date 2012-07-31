@@ -25,7 +25,7 @@
 #include "sctk_alloc_debug.h"
 #include "sctk_alloc_topology.h"
 
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 #include <hwloc.h>
 #endif
 
@@ -40,7 +40,7 @@
 
 /************************* GLOBALS *************************/
 #ifndef MPC_Threads
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 static hwloc_topology_t topology;
 #endif
 #endif
@@ -50,7 +50,7 @@ void sctk_alloc_init_topology(void)
 {
 	#ifdef MPC_Threads
 	sctk_topology_init();
-	#elif defined(HAVE_LIBNUMA)
+	#elif defined(HAVE_HWLOC)
 	hwloc_topology_init(&topology);
 	hwloc_topology_load(topology);
 	#endif
@@ -60,7 +60,7 @@ void sctk_alloc_init_topology(void)
 #ifndef MPC_Threads
 bool sctk_is_numa_node (void)
 {
-	#ifdef HAVE_LIBNUMA
+	#ifdef HAVE_HWLOC
 	return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) != 0;
 	#else
 	return false;
@@ -72,7 +72,7 @@ bool sctk_is_numa_node (void)
 #ifndef MPC_Threads
 int sctk_get_numa_node_number ()
 {
-	#ifdef HAVE_LIBNUMA
+	#ifdef HAVE_HWLOC
 	return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) ;
 	#else
 	return 1;
@@ -84,7 +84,7 @@ int sctk_get_numa_node_number ()
 #ifndef MPC_Threads
 int sctk_get_node_from_cpu (const int vp)
 {
-	#ifdef HAVE_LIBNUMA
+	#ifdef HAVE_HWLOC
 	if(sctk_is_numa_node ()){
 		const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
 		const hwloc_obj_t node = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, pu);
@@ -99,7 +99,7 @@ int sctk_get_node_from_cpu (const int vp)
 #endif
 
 /************************* FUNCTION ************************/
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 int sctk_get_first_bit_in_bitmap(hwloc_bitmap_t bitmap)
 {
 	int last = hwloc_bitmap_last(bitmap);
@@ -117,7 +117,7 @@ int sctk_get_first_bit_in_bitmap(hwloc_bitmap_t bitmap)
 
 /************************* FUNCTION ************************/
 #ifndef MPC_Threads
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 int sctk_get_preferred_numa_node_no_mpc_numa_binding()
 {
 	hwloc_nodeset_t nodeset = hwloc_bitmap_alloc();
@@ -177,7 +177,7 @@ int sctk_get_preferred_numa_node_no_mpc_numa_binding()
 
 /************************* FUNCTION ************************/
 #ifndef MPC_Threads
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 int sctk_get_preferred_numa_node_no_mpc_thread_binding()
 {
 	hwloc_nodeset_t nodeset = hwloc_bitmap_alloc();
@@ -224,7 +224,7 @@ int sctk_get_preferred_numa_node_no_mpc_thread_binding()
 
 /************************* FUNCTION ************************/
 #ifndef MPC_Threads
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 int sctk_get_preferred_numa_node_no_mpc()
 {
 	//vars
@@ -242,7 +242,7 @@ int sctk_get_preferred_numa_node_no_mpc()
 #endif //MPC_Threads
 
 /************************* FUNCTION ************************/
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 int sctk_get_preferred_numa_node()
 {
 	#ifdef MPC_Threads
@@ -256,7 +256,7 @@ int sctk_get_preferred_numa_node()
 /************************* FUNCTION ************************/
 #ifndef MPC_Threads
 #ifdef HAVE_GETCPU
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 int sctk_alloc_get_current_numa_node_getcpu(void)
 {
 	//get the current cpu ID
@@ -271,12 +271,12 @@ int sctk_alloc_get_current_numa_node_getcpu(void)
 
 	return logical_node_id;
 }
-#endif //HAVE_LIBNUMA
+#endif //HAVE_HWLOC
 #endif //HAVE_GETCPU
 #endif //MPC_Threads
 
 /************************* FUNCTION ************************/
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 int sctk_alloc_get_current_numa_node_default(void)
 {
 	//if not, we can use the common memory source which is not specific to one numa node
@@ -287,7 +287,7 @@ int sctk_alloc_get_current_numa_node_default(void)
 #endif
 
 /************************* FUNCTION ************************/
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 int sctk_alloc_init_on_numa_node(void)
 {
 	int node = sctk_get_preferred_numa_node();
@@ -299,7 +299,7 @@ int sctk_alloc_init_on_numa_node(void)
 #endif
 
 /************************* FUNCTION ************************/
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 #ifndef MPC_Threads
 hwloc_topology_t sctk_get_topology_object(void)
 {
@@ -309,7 +309,7 @@ hwloc_topology_t sctk_get_topology_object(void)
 #endif
 
 /************************* FUNCTION ************************/
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_node)
 {
 	//vars
@@ -359,10 +359,10 @@ void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_no
 		warning(strerror(res));
 	}
 }
-#endif //HAVE_LIBNUMA
+#endif //HAVE_HWLOC
 
 /************************* FUNCTION ************************/
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 /**
  * Bind the current thread on requested core by using hwloc. It's more a debug and test feature than
  * fore real usage, please avoid to use it in release mode.

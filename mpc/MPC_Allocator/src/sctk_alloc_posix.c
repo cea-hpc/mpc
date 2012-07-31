@@ -41,7 +41,7 @@
 #include "sctk_alloc_posix.h"
 
 //optional headers
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 	#include "sctk_alloc_topology.h"
 #endif
 
@@ -51,15 +51,15 @@
 #endif
 
 //if have NUMA support
-#ifdef HAVE_LIBNUMA
+#ifdef HAVE_HWLOC
 	#include <hwloc.h>
 	// #include "../../../install/include/mpcmp.h"
 	/** Select the NUMA memory source init function. **/
 	#define sctk_alloc_posix_mmsrc_init sctk_alloc_posix_mmsrc_numa_init
-#else //HAVE_LIBNUMA
+#else //HAVE_HWLOC
 	/** Select the UMA memory source init function. **/
 	#define sctk_alloc_posix_mmsrc_init sctk_alloc_posix_mmsrc_uma_init
-#endif //HAVE_LIBNUMA
+#endif //HAVE_HWLOC
 
 /*************************** ENUM **************************/
 enum sctk_alloc_posix_init_state
@@ -201,7 +201,7 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init_phase_default(void)
 /************************* FUNCTION ************************/
 void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void)
 {
-	#ifdef HAVE_LIBNUMA
+	#ifdef HAVE_HWLOC
 	//vars
 	int nodes;
 	int i;
@@ -260,7 +260,7 @@ SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(vo
 	struct sctk_alloc_mm_source * res;
 	
 	//get numa node
-	#ifdef HAVE_LIBNUMA
+	#ifdef HAVE_HWLOC
 	int node;
 	//during init phase, allocator use the default memory source, so the default thread will not
 	//be really numa aware.
@@ -340,7 +340,7 @@ void sctk_alloc_posix_base_init(void)
 		//init topology system if have NUMA
 		//on MPC it will be done latter after entering in MPC main()
 		#ifndef MPC_Common
-		#ifdef HAVE_LIBNUMA
+		#ifdef HAVE_HWLOC
 		sctk_alloc_init_topology();
 		#endif
 		#endif
