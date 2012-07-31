@@ -25,6 +25,7 @@
 #include "sctk_spinlock.h"
 #include "sctk_allocator.h"
 #include "sctk_alloc_debug.h"
+#include "sctk_alloc_posix.h"
 
 #ifdef MPC_Threadss
 #include "sctk_context.h"
@@ -85,16 +86,16 @@ void sctk_clean_memory (void)
 	**/
 }
 
+/** @TODO replace in MPC to directly call the function. **/
 void sctk_relocalise_tls (void)
 {
-	//SCTK_PDEBUG("Unimpl call of relocalise_tls : %d",sctk_get_cpu());
-	fatal("Unimpl call of relocalise_tls");
+	sctk_alloc_posix_numa_migrate();
 }
 
+/** @TODO replace in MPC to directly call the function. **/
 void __sctk_relocalise_tls (sctk_alloc_chain_t * tls)
 {
-	//SCTK_PDEBUG("Unimpl call of relocalise_tls : %d (%p)",sctk_get_cpu(),tls);
-	fatal("Unimpl call of relocalise_tls");
+	sctk_alloc_posix_numa_migrate();
 }
 
 void sctk_relocalise_memory (void *ptr, sctk_size_t size)

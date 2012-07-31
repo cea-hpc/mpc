@@ -61,7 +61,11 @@ void sctk_alloc_init_topology(void)
 bool sctk_is_numa_node (void)
 {
 	#ifdef HAVE_HWLOC
-	return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) != 0;
+	//avoid to request multiple times as it will not change
+	static int res = -1;
+	if (res == -1)
+		res = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) != 0;
+	return res;
 	#else
 	return false;
 	#endif
@@ -73,7 +77,11 @@ bool sctk_is_numa_node (void)
 int sctk_get_numa_node_number ()
 {
 	#ifdef HAVE_HWLOC
-	return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) ;
+	//avoid to request multiple times as it will not change
+	static int res = -1;
+	if (res == -1)
+		res = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) ;
+	return res;
 	#else
 	return 1;
 	#endif
