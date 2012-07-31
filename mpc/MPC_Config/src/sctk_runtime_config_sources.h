@@ -24,7 +24,7 @@
 #define SCTK_RUNTIME_CONFIG_SOURCES_H
 
 /********************  HEADERS  *********************/
-#include <stdbool.h>
+#include "sctk_bool.h"
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 

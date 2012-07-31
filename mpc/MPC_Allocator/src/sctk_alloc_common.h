@@ -59,6 +59,9 @@ extern "C"
 /**
  * C unavailability of boolean type sucks.
 **/
+
+#ifndef MPC_Common
+
 #ifndef __cplusplus
 #ifdef HAVE_STDBOOL_H
 #include <stdbool.h>
@@ -68,6 +71,12 @@ extern "C"
 #define false 0
 #endif
 #endif //__cplusplus
+
+#else
+
+#include "sctk_bool.h"
+
+#endif
 
 /************************** CONSTS *************************/
 /** Magick value to be used as check in common header. **/

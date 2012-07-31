@@ -23,7 +23,7 @@
 /********************  HEADERS  *********************/
 #include <assert.h>
 #include <string.h>
-#include <stdbool.h>
+#include "sctk_bool.h"
 #include <sys/stat.h>
 #include <errno.h>
 #include <sctk_config.h>

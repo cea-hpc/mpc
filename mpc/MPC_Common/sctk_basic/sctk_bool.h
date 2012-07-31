@@ -16,25 +16,18 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - VALAT Sebastien sebastien.valat@cea.fr                           # */
+/* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
+#ifndef SCTK_BOOL_H
+#define SCTK_BOOL_H
 
-#ifndef SCTK_RUNTIME_CONFIG_SELECTORS_H
-#define SCTK_RUNTIME_CONFIG_SELECTORS_H
-
-/********************  HEADERS  *********************/
-#include <libxml/tree.h>
-#include <libxml/parser.h>
-#include "sctk_bool.h"
-
-/*******************  FUNCTION  *********************/
-//selector functions
-bool sctk_runtime_config_xml_selectors_check(xmlNodePtr selectors);
-bool sctk_runtime_config_xml_selector_check(xmlNodePtr selector);
-
-/*******************  FUNCTION  *********************/
-//specific selector rules implementation.
-bool sctk_runtime_config_xml_selector_env_check(xmlNodePtr selector);
-
+#ifdef HAVE_STDBOOL_H
+	#include <stdbool.h>
+#else
+	#define bool unsigned char
+	#define true 1
+	#define false 0
 #endif
+
+#endif /*SCTK_BOOL_H*/
