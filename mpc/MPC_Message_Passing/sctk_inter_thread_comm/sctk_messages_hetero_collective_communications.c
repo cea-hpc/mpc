@@ -607,8 +607,8 @@ static void sctk_allreduce_hetero_messages_hetero_intern (const void *buffer_in,
     int task_id_in_node;
     int nb_tasks_in_node;
     sctk_allreduce_hetero_messages_t *allreduce;
-    void **buff_in;
-    void **buff_out;
+    volatile void * volatile* buff_in;
+    volatile void * volatile* buff_out;
     unsigned int generation;
     size_t size;
 
@@ -620,11 +620,11 @@ static void sctk_allreduce_hetero_messages_hetero_intern (const void *buffer_in,
     task_id_in_node =
       OPA_fetch_and_incr_int(&allreduce->tasks_entered_in_node);
 
-    buff_in = (void **) allreduce->buff_in;
-    buff_out = (void**) allreduce->buff_out;
+    buff_in = allreduce->buff_in;
+    buff_out =  allreduce->buff_out;
 
     /* Fill the buffer entry for all tasks */
-    buff_in[task_id_in_node] = buffer_in;
+    buff_in[task_id_in_node] = (volatile void *)buffer_in;
     buff_out[task_id_in_node] = buffer_out;
     sctk_atomics_write_barrier();
 
@@ -640,7 +640,7 @@ static void sctk_allreduce_hetero_messages_hetero_intern (const void *buffer_in,
         while (buff_in[i] == NULL) sctk_thread_yield();
 
         sctk_nodebug("Add content %d to buffer", *((int*) buff_in[i]));
-        func(buff_in[i], buffer_out, elem_number, data_type);
+        func((const void *)buff_in[i], buffer_out, elem_number, data_type);
       }
 
       sctk_nodebug("Buffer content : %d", *((int*) buffer_out));
@@ -667,8 +667,8 @@ static void sctk_allreduce_hetero_messages_hetero_intern (const void *buffer_in,
       while (allreduce->generation < generation + 1)
         sctk_thread_yield();
 
-      memcpy(buffer_out,
-          buff_out[nb_tasks_in_node - 1],size);
+      memcpy((void *)buffer_out,
+          (void *)buff_out[nb_tasks_in_node - 1],size);
 
       buff_in[task_id_in_node] = NULL;
       buff_out[task_id_in_node] = NULL;
@@ -704,8 +704,8 @@ void sctk_allreduce_hetero_messages_init(struct sctk_internal_collectives_struct
   allreduce->generation = 0;
   allreduce->buff_in = sctk_malloc(nb_tasks_in_node * sizeof(void*));
   allreduce->buff_out = sctk_malloc(nb_tasks_in_node * sizeof(void*));
-  memset(allreduce->buff_in, 0, nb_tasks_in_node * sizeof(void*));
-  memset(allreduce->buff_out, 0, nb_tasks_in_node * sizeof(void*));
+  memset((void *)allreduce->buff_in, 0, nb_tasks_in_node * sizeof(void*));
+  memset((void *)allreduce->buff_out, 0, nb_tasks_in_node * sizeof(void*));
 }
 
 /************************************************************************/

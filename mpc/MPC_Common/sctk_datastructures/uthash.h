@@ -133,7 +133,7 @@ do {                                                                            
                   sizeof(UT_hash_table));                                        \
   if (!((head)->hh.tbl))  { uthash_fatal( "out of memory"); }                    \
   memset((head)->hh.tbl, 0, sizeof(UT_hash_table));                              \
-  (head)->hh.tbl->tail = &((head)->hh);                                          \
+  (head)->hh.tbl->tail = (void *)&((head)->hh);                                          \
   (head)->hh.tbl->num_buckets = HASH_INITIAL_NUM_BUCKETS;                        \
   (head)->hh.tbl->log2_num_buckets = HASH_INITIAL_NUM_BUCKETS_LOG2;              \
   (head)->hh.tbl->hho = (char*)(&(head)->hh) - (char*)(head);                    \
