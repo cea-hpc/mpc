@@ -30,7 +30,7 @@
 
 #include "sctk_shell_colors.h"
 
-#define SMALL_BUFFER_SIZE (4*1024)
+#define SMALL_BUFFER_SIZE 1024
 #define HAVE_SHELL_COLORS
 
 #ifndef SCTK_IB_MODULE_NAME

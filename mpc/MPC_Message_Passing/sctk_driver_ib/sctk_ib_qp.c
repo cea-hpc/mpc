@@ -46,7 +46,6 @@
 #include "sctk_ib_toolkit.h"
 
 /* Error handler */
-#define SMALL_BUFFER_SIZE 1024
 #define SCTK_IB_ABORT_WITH_ERRNO(...)                           \
     sctk_error(__VA_ARGS__"(errno: %s)", strerror(errno));      \
     sctk_abort();
