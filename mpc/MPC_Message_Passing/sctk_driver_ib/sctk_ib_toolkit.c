@@ -28,7 +28,6 @@
 #include "sctk_ib_toolkit.h"
 #include <execinfo.h>
 
-#define SMALL_BUFFER_SIZE (4*1024)
 #define HAVE_SHELL_COLORS
 
 
