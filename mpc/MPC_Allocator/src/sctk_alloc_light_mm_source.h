@@ -37,6 +37,17 @@ extern "C"
 /************************** CONSTS *************************/
 #define SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_NODE_IGNORE -1
 
+/************************** MACROS *************************/
+/**
+ * Maximum bloc to keep in memory source for future resuse at free time.
+ * The main goal is to resduce the number of calls to mmap and avoid to pass
+ * too much time in kernek zero page function.
+ * The larger it is, the more it keep the memory in the process.
+ * It must be multiples of SCTK_MACRO_BLOC_SIZE.
+ * With huge pvalues it tend to consume as much memory than TCMalloc.
+**/
+#define SCTK_ALLOC_MACRO_BLOC_REUSE_THREASHOLD (0*SCTK_MACRO_BLOC_SIZE)
+
 /*************************** ENUM **************************/
 /**
  * Flags to enable some function of light memory sources.

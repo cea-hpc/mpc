@@ -126,6 +126,7 @@ void TestLightMMSrc::setUp (void)
 /************************* FUNCTION ************************/
 void TestLightMMSrc::tearDown (void)
 {
+	light_source.counter = 0;
 	sctk_alloc_mm_source_light_cleanup((sctk_alloc_mm_source*)&light_source);
 }
 
@@ -264,7 +265,9 @@ void TestLightMMSrc::test_request_mem_2(void)
 
 	//request mem
 	sctk_alloc_macro_bloc * macro_bloc = sctk_alloc_mm_source_light_request_memory((sctk_alloc_mm_source*)&light_source,SCTK_MACRO_BLOC_SIZE);
+	#if SCTK_ALLOC_MACRO_BLOC_REUSE_THREASHOLD > 0
 	SVUT_ASSERT_SAME(ptr,macro_bloc);
+	#endif
 
 	//ok didn't need to test the re-registration here.
 	SVUT_ASSERT_EQUAL(1,light_source.counter);
@@ -302,7 +305,11 @@ void TestLightMMSrc::test_free_mem(void)
 	sctk_alloc_mm_source_light_free_memory((sctk_alloc_mm_source*)&light_source,macro_bloc);
 
 	//free it
+	#if SCTK_ALLOC_MACRO_BLOC_REUSE_THREASHOLD > 0
 	SVUT_ASSERT_NOT_NULL(light_source.cache);
+	#else
+	SVUT_ASSERT_NULL(light_source.cache);
+	#endif
 	SVUT_ASSERT_EQUAL(0,light_source.counter);
 }
 
