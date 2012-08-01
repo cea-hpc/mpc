@@ -20,6 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+/************************** HEADERS ************************/
 #include "sctk_alloc_posix.h"
 #include "sctk_config.h"
 #include "sctk_spinlock.h"
@@ -31,76 +32,58 @@
 #include "sctk_context.h"
 #endif
 
+/************************* FUNCTION ************************/
 void * sctk_user_mmap (void *start, size_t length, int prot, int flags,int fd, off_t offset)
 {
 	return mmap(start,length,prot,flags,fd,offset);
 }
 
+/************************* FUNCTION ************************/
 sctk_alloc_chain_t * __sctk_create_thread_memory_area(void)
 {
 	return sctk_alloc_posix_create_new_tls_chain();
 }
 
+/************************* FUNCTION ************************/
 void sctk_set_tls(sctk_alloc_chain_t * tls)
 {
 	sctk_alloc_posix_set_default_chain(tls);
 };
 
+/************************* FUNCTION ************************/
 void * sctk_get_heap_start(void)
 {
-	return (void*)SCTK_ALLOC_HEAP_BASE;
+	//now fully use mmap, so no strict heap definition
+	return NULL;
 };
 
+/************************* FUNCTION ************************/
 size_t sctk_get_heap_size(void)
 {
-	return SCTK_ALLOC_HEAP_SIZE;
+	//now fully use mmap, so no strict heap definition
+	return 0;
 };
 
+/************************* FUNCTION ************************/
 void * __sctk_malloc_new(size_t size,sctk_alloc_chain_t * chain)
 {
 	return sctk_alloc_chain_alloc(chain,size);
 };
 
+/************************* FUNCTION ************************/
 void * __sctk_malloc (size_t size,sctk_alloc_chain_t * chain)
 {
 	return sctk_alloc_chain_alloc(chain,size);
 };
 
+/************************* FUNCTION ************************/
 char * sctk_alloc_mode (void)
 {
 	return "MPC allocator";
 };
 
+/************************* FUNCTION ************************/
 void __sctk_free(void * ptr,sctk_alloc_chain_t * chain)
 {
 	sctk_alloc_chain_free(chain,ptr);
 };
-
-void sctk_clean_memory (void) 
-{
-	//SCTK_PDEBUG("Unimpl call clean_memory with CPU : %d",sctk_get_cpu());
-	//fatal("Unimpl call clean_memory with CPU");
-	/**
-	 * TODO remove this, it seams safe, but need to ask to marc P.
-	 * The old version only get the current TLS.
-	**/
-}
-
-/** @TODO replace in MPC to directly call the function. **/
-void sctk_relocalise_tls (void)
-{
-	sctk_alloc_posix_numa_migrate();
-}
-
-/** @TODO replace in MPC to directly call the function. **/
-void __sctk_relocalise_tls (sctk_alloc_chain_t * tls)
-{
-	sctk_alloc_posix_numa_migrate();
-}
-
-void sctk_relocalise_memory (void *ptr, sctk_size_t size)
-{
-	//SCTK_PDEBUG("Unimpl call to relocalise_memory %p, %llu (%d)",ptr,size,sctk_get_cpu());
-	fatal("Unimpl call to relocalise_memory");
-}
-

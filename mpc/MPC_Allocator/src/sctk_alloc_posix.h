@@ -33,21 +33,20 @@ extern "C"
 #endif
 
 /************************* FUNCTION ************************/
-void sctk_alloc_posix_base_init(void);
-struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void);
-void sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain);
-struct sctk_alloc_chain * sctk_alloc_posix_setup_tls_chain(void);
-sctk_size_t sctk_alloc_posix_get_size(void *ptr);
-void sctk_alloc_posix_plug_on_egg_allocator(void);
+SCTK_INTERN void sctk_alloc_posix_base_init(void);
+SCTK_INTERN struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void);
+SCTK_INTERN void sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain);
+SCTK_INTERN struct sctk_alloc_chain * sctk_alloc_posix_setup_tls_chain(void);
+SCTK_INTERN sctk_size_t sctk_alloc_posix_get_size(void *ptr);
+SCTK_INTERN void sctk_alloc_posix_plug_on_egg_allocator(void);
 
 /************************* FUNCTION ************************/
-void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void);
+SCTK_INTERN void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void);
+SCTK_INTERN void sctk_alloc_posix_numa_migrate_chain(struct sctk_alloc_chain * local_chain);
 SCTK_PUBLIC void sctk_alloc_posix_numa_migrate(void);
-#ifdef MPC_ALLOCATOR_DISABLE_STATIC
 SCTK_STATIC void sctk_alloc_posix_mmsrc_uma_init(void);
 SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init(void);
 SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(void);
-#endif
 
 /************************* FUNCTION ************************/
 SCTK_PUBLIC void * sctk_calloc (size_t nmemb, size_t size);
@@ -56,8 +55,8 @@ SCTK_PUBLIC void sctk_free (void * ptr);
 SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size);
 SCTK_PUBLIC int sctk_posix_memalign(void **memptr, size_t boundary, size_t size);
 SCTK_PUBLIC void * sctk_memalign(size_t boundary,size_t size);
-struct sctk_alloc_chain * sctk_get_current_alloc_chain(void);
-void * sctk_realloc_inter_chain (void * ptr, size_t size);
+SCTK_INTERN struct sctk_alloc_chain * sctk_get_current_alloc_chain(void);
+SCTK_STATIC void * sctk_realloc_inter_chain (void * ptr, size_t size);
 SCTK_STATIC void sctk_alloc_tls_chain();
 
 /************************* FUNCTION ************************/

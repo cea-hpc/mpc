@@ -113,7 +113,8 @@ SCTK_STATIC void sctk_set_tls_chain(struct sctk_alloc_chain * chain){
 /**
  * Tls chain getter
 **/
-SCTK_STATIC struct sctk_alloc_chain * sctk_get_tls_chain(){
+SCTK_STATIC struct sctk_alloc_chain * sctk_get_tls_chain()
+{
 	#ifdef _WIN32
 		assume_m (sctk_current_alloc_chain != -1,"The TLS wasn't initialized.");
 		return (struct sctk_alloc_chain *)(TlsGetValue(sctk_current_alloc_chain));
@@ -126,7 +127,8 @@ SCTK_STATIC struct sctk_alloc_chain * sctk_get_tls_chain(){
 /**
  * Windows specifics. Tls variables need to be initialised before using.
 **/
-SCTK_STATIC void sctk_alloc_tls_chain(){
+SCTK_STATIC void sctk_alloc_tls_chain()
+{
 	#ifdef _WIN32
 		assume_m (sctk_current_alloc_chain == -1,"Try to double alloc the allocator global TLS");
 		sctk_current_alloc_chain = TlsAlloc();
@@ -139,7 +141,8 @@ SCTK_STATIC void sctk_alloc_tls_chain(){
 /**
  * Windows specifics. Tls variables need to be initialised before using.
 **/
-void sctk_alloc_tls_chain_local_reset(){
+SCTK_INTERN void sctk_alloc_tls_chain_local_reset()
+{
 	#ifdef _WIN32
 		sctk_set_tls_chain(NULL);
 	#endif
@@ -150,7 +153,7 @@ void sctk_alloc_tls_chain_local_reset(){
  * Update the current thread local allocation chain.
  * @param chain Define the allocation chain to setup.
 **/
-void sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain)
+SCTK_INTERN void sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain)
 {
 	//errors
 	//assume_m(chain != NULL,"Can't set a default NULL allocation chain for local thread.");
@@ -199,7 +202,7 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init_phase_default(void)
 }
 
 /************************* FUNCTION ************************/
-void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void)
+SCTK_INTERN void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void)
 {
 	#ifdef HAVE_HWLOC
 	//vars
@@ -233,7 +236,7 @@ void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void)
 }
 
 /************************* FUNCTION ************************/
-void sctk_alloc_posix_plug_on_egg_allocator(void)
+SCTK_INTERN void sctk_alloc_posix_plug_on_egg_allocator(void)
 {
 	sctk_alloc_posix_set_default_chain(&sctk_global_egg_chain);
 }
@@ -297,7 +300,7 @@ SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(vo
  * initialisation step if available. This method is protected for exclusive access by an internal
  * mutex.
 **/
-void sctk_alloc_posix_base_init(void)
+SCTK_INTERN void sctk_alloc_posix_base_init(void)
 {
 	/** @todo check for optimization **/
 	static SCTK_ALLOC_INIT_LOCK_TYPE global_mm_mutex = SCTK_ALLOC_INIT_LOCK_INITIALIZER;
@@ -372,7 +375,7 @@ void sctk_alloc_posix_base_init(void)
 /**
  * Create a new thread local allocation chain.
 **/
-struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void)
+SCTK_INTERN struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void)
 {
 	//vars
 	struct sctk_alloc_chain * chain;
@@ -390,7 +393,7 @@ struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void)
 
 	//init allocation chain, use default to mark as non shared
 	sctk_alloc_chain_user_init(chain,NULL,0,SCTK_ALLOC_CHAIN_FLAGS_DEFAULT);
-	chain->name = "mpc_thread_allocator";
+	chain->name = "mpc_posix_thread_allocator";
 
 	//bin to the adapted memory source depending on numa node availability
 	chain->source = sctk_alloc_posix_get_local_mm_source();
@@ -412,7 +415,7 @@ struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void)
  * Setup the allocation chain for the current thread. It init an allocation chain and point it with
  * the TLS sctk_current_alloc_chain.
 **/
-struct sctk_alloc_chain * sctk_alloc_posix_setup_tls_chain(void)
+SCTK_INTERN struct sctk_alloc_chain * sctk_alloc_posix_setup_tls_chain(void)
 {
 	//vars
 	struct sctk_alloc_chain * chain;
@@ -600,7 +603,7 @@ SCTK_PUBLIC void sctk_free (void * ptr)
  * @return Return the bloc size (body size, don't count the header), 0 if ptr is NULL of in case
  * of bad address.
 **/
-sctk_size_t sctk_alloc_posix_get_size(void *ptr)
+SCTK_INTERN sctk_size_t sctk_alloc_posix_get_size(void *ptr)
 {
 	sctk_alloc_vchunk vchunk;
 	if (ptr == NULL)
@@ -646,7 +649,7 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 }
 
 /************************* FUNCTION ************************/
-void * sctk_realloc_inter_chain (void * ptr, size_t size)
+SCTK_STATIC void * sctk_realloc_inter_chain (void * ptr, size_t size)
 {
 	sctk_size_t copy_size = size;
 	void * res = NULL;
@@ -680,7 +683,7 @@ void * sctk_realloc_inter_chain (void * ptr, size_t size)
 }
 
 /************************* FUNCTION ************************/
-struct sctk_alloc_chain * sctk_get_current_alloc_chain(void)
+SCTK_INTERN struct sctk_alloc_chain * sctk_get_current_alloc_chain(void)
 {
 	return sctk_get_tls_chain();
 }
@@ -693,13 +696,7 @@ SCTK_PUBLIC void sctk_alloc_posix_numa_migrate(void)
 {
 	//vars
 	struct sctk_alloc_chain * local_chain;
-	struct sctk_alloc_mm_source * old_source;
-	struct sctk_alloc_mm_source_light * light_source;
-	int old_numa_node = -1;
-	int new_numa_node = -1;
 
-	SCTK_PROFIL_START(sctk_alloc_posix_numa_migrate);
-	
 	//get the current allocation chain
 	local_chain = sctk_get_tls_chain();
 
@@ -708,26 +705,45 @@ SCTK_PUBLIC void sctk_alloc_posix_numa_migrate(void)
 	if (local_chain == NULL)
 		return;
 
+	//move the chain
+	sctk_alloc_posix_numa_migrate_chain(local_chain);
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Migrate the memory of a given allocation chain to current NUMA node.
+ * CAUTION, it suppose that you provide a posix allocation chain, this function is not build
+ * to support generic once.
+ * @param chain Define the memory chain to migrate.
+**/
+SCTK_STATIC void sctk_alloc_posix_numa_migrate_chain(struct sctk_alloc_chain * chain)
+{
+	//vars
+	struct sctk_alloc_mm_source * old_source;
+	struct sctk_alloc_mm_source_light * light_source;
+	int old_numa_node = -1;
+	int new_numa_node = -1;
+
+	SCTK_PROFIL_START(sctk_alloc_posix_numa_migrate);
+
 	#ifdef MPC_Theads
-	SCTK_PDEBUG("--- Migration on %d",sctk_get_cpu());
+	SCTK_PDEBUG("Migration on %d",sctk_get_cpu());
 	#endif
 
 	//if NULL nothing to do otherwise remind the current mm source
-	if (local_chain == NULL)
+	if (chain == NULL)
 		return;
 	else
-		old_source = local_chain->source;
+		old_source = chain->source;
 
 	//re-setup the memory source.
-	local_chain->source = sctk_alloc_posix_get_local_mm_source();
-
-	/** @TODO move part of this code into sctk_alloc_chain_numa_migrate **/
+	chain->source = sctk_alloc_posix_get_local_mm_source();
 
 	//get numa node of sources
 	light_source = sctk_alloc_get_mm_source_light(old_source);
 	if (light_source != NULL)
 		old_numa_node = light_source->numa_node;
-	light_source = sctk_alloc_get_mm_source_light(local_chain->source);
+	light_source = sctk_alloc_get_mm_source_light(chain->source);
 	if (light_source != NULL)
 		new_numa_node = light_source->numa_node;
 
@@ -735,7 +751,7 @@ SCTK_PUBLIC void sctk_alloc_posix_numa_migrate(void)
 
 	//check if need to migrate NUMA explicitely
 	if (old_numa_node != new_numa_node && new_numa_node != SCTK_DEFAULT_NUMA_MM_SOURCE_ID)
-		sctk_alloc_chain_numa_migrate(local_chain,new_numa_node,true,true,local_chain->source);
+		sctk_alloc_chain_numa_migrate(chain,new_numa_node,true,true,chain->source);
 
 	SCTK_PROFIL_END(sctk_alloc_posix_numa_migrate);
 }

@@ -113,10 +113,6 @@ void sctk_restore_tls (char *file_name);
 int sctk_check_file (char *file_name);
 void sctk_view_local_memory (void);
 void __sctk_view_local_memory (sctk_alloc_chain_t * tls);
-void sctk_relocalise_tls (void);
-void __sctk_relocalise_tls (sctk_alloc_chain_t * tls);
-void sctk_clean_memory (void);
-void sctk_relocalise_memory (void *ptr, sctk_size_t size);
 
 /*******************  FUNCTION  *********************/
 //internal posix compliant allocator implementation

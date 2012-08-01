@@ -66,10 +66,6 @@ static inline void __sctk_view_local_memory (sctk_alloc_chain_t * tls) {};
 static inline void sctk_view_local_memory (void) {};
 static inline void sctk_mem_reset_heap (sctk_size_t start, sctk_size_t max_size) {};
 static inline void __sctk_update_memory (char *file_name) {};
-void sctk_relocalise_tls (void);
-void __sctk_relocalise_tls (sctk_alloc_chain_t * tls);
-void sctk_clean_memory (void);
-void sctk_relocalise_memory (void *ptr, sctk_size_t size);
 
 static inline void sctk_update_used_pages (int fd, void **user_data,sctk_size_t * user_data_size, sctk_alloc_chain_t ** tls) {};
 static inline void sctk_add_global_var (void *adr, sctk_size_t size) {};

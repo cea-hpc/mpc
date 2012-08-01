@@ -122,7 +122,7 @@ static void
 sctk_ethread_mxn_migration_task_relocalise (sctk_ethread_per_thread_t * task)
 {
   sctk_nodebug ("sctk_ethread_mxn_migration_task rel %p", task);
-  __sctk_relocalise_tls (task->tls_mem);
+  sctk_alloc_posix_numa_migrate_chain (task->tls_mem);
   sctk_ethread_mxn_place_task_on_vp (task->migrate_to, task);
   sctk_nodebug ("sctk_ethread_mxn_migration_task rel %p done", task);
 }
@@ -710,7 +710,6 @@ sctk_ethread_mxn_thread_proc_migration (const int cpu)
 
   if (cpu != last)
     {
-      sctk_clean_memory ();
       current->status = ethread_migrate;
       current->migration_func = sctk_ethread_mxn_migration_task;
       current->migrate_to = sctk_ethread_mxn_vp_list[cpu];
