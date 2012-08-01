@@ -169,9 +169,9 @@ extern "C"
 
   struct sctk_thread_ptp_message_s;
 
-  typedef struct sctk_msg_list_s{
+  typedef volatile struct sctk_msg_list_s{
     struct sctk_thread_ptp_message_s * msg;
-    struct sctk_msg_list_s *prev, *next;
+    volatile struct sctk_msg_list_s *prev, *next;
   }sctk_msg_list_t;
 
 typedef struct sctk_message_to_copy_s{

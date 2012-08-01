@@ -47,7 +47,7 @@ typedef struct{
 
 typedef struct {
   sctk_spinlock_t lock;
-  volatile sctk_msg_list_t* list;
+  sctk_msg_list_t* list;
 } sctk_internal_ptp_list_incomming_t;
 
 typedef struct {
