@@ -70,6 +70,7 @@
 #include "sctk_no_alloc.h"
 #else
 #include <sctk_alloc_posix.h>
+#include <sctk_alloc_on_node.h>
 #endif
 
 #endif

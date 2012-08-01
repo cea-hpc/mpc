@@ -20,44 +20,36 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_ALLOC_TOPOLOGY_H
-#define SCTK_ALLOC_TOPOLOGY_H
-
-/************************** HEADERS ************************/
-#if !defined(bool) && !defined(__cplusplus)
-	#include <stdbool.h>
-#endif
-
-//optional header
-#ifdef MPC_Threads
-#include <sctk_topology.h>
-#elif defined(HAVE_HWLOC)
-#include <hwloc.h>
-#endif
+#ifndef SCTK_ALLOC_ON_NODE_H
+#define SCTK_ALLOC_ON_NODE_H
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
+/************************** HEADERS ************************/
+#include "sctk_alloc_common.h"
+
 /************************* FUNCTION ************************/
-#ifndef MPC_Threads
-int sctk_is_numa_node(void);
-int sctk_get_numa_node_number (void);
-#endif
+//user entry point
+SCTK_PUBLIC void * sctk_malloc_on_node (size_t size, int node);
 
-void sctk_alloc_init_topology(void);
-int sctk_get_preferred_numa_node(void);
-int sctk_alloc_init_on_numa_node(void);
-void sctk_alloc_topology_bind_thread_on_core(int id);
+/************************* FUNCTION ************************/
+//internal functions
+SCTK_INTERN void sctk_malloc_on_node_init(int numa_nodes);
+SCTK_STATIC void * sctk_malloc_on_node_uma(size_t size,int node);
+SCTK_STATIC void sctk_malloc_on_node_reset(void);
 
+/************************* FUNCTION ************************/
+//optional intern function depend on NUMA status
 #ifdef HAVE_HWLOC
-hwloc_topology_t sctk_get_topology_object(void);
-void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_node);
+SCTK_STATIC void * sctk_malloc_on_node_numa(size_t size,int node);
+SCTK_STATIC struct sctk_alloc_chain * sctk_malloc_on_node_get_chain(int node);
 #endif //HAVE_HWLOC
 
 #ifdef __cplusplus
-};
+}
 #endif
 
-#endif //SCTK_ALLOC_TOPOLOGY_H
+#endif //SCTK_ALLOC_ON_NODE_H

@@ -58,7 +58,7 @@ void sctk_alloc_init_topology(void)
 
 /************************* FUNCTION ************************/
 #ifndef MPC_Threads
-bool sctk_is_numa_node (void)
+int sctk_is_numa_node (void)
 {
 	#ifdef HAVE_HWLOC
 	//avoid to request multiple times as it will not change
@@ -67,7 +67,7 @@ bool sctk_is_numa_node (void)
 		res = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) != 0;
 	return res;
 	#else
-	return false;
+	return 0;
 	#endif
 }
 #endif

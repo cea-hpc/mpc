@@ -39,6 +39,7 @@
 #include "sctk_alloc_inlined.h"
 #include "sctk_alloc_light_mm_source.h"
 #include "sctk_alloc_posix.h"
+#include "sctk_alloc_on_node.h"
 
 //optional headers
 #ifdef HAVE_HWLOC
@@ -230,6 +231,9 @@ SCTK_INTERN void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void)
 			sctk_alloc_posix_mmsrc_numa_init_node(i);
 	}
 	#endif
+
+	//setup malloc on node
+	sctk_malloc_on_node_init(sctk_get_numa_node_number());
 
 	//mark NUMA init phase as done.
 	sctk_global_base_init = SCTK_ALLOC_POSIX_INIT_NUMA;

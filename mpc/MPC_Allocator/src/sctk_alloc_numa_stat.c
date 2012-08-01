@@ -368,8 +368,12 @@ void sctk_alloc_numa_check(bool fatal_on_fail, const char* filename, int line, v
 	assert(line > 0);
 	assert(ptr != NULL);
 	assert(size != 0);
-	assert(required_numa > 0);
+	assert(required_numa >= 0);
 	assert(min_ratio >= 0 && min_ratio <= 100);
+
+	//if not numa node can return immediately
+	if (sctk_is_numa_node() == false)
+		return;
 
 	//get numa stat
 	sctk_alloc_numa_stat_init(&numa_stat);

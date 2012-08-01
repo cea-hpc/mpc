@@ -24,6 +24,11 @@
 #ifndef SCTK_ALLOC_NUMA_STAT_H
 #define SCTK_ALLOC_NUMA_STAT_H
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /************************** HEADERS ************************/
 #include "sctk_alloc_common.h"
 
@@ -91,5 +96,9 @@ void sctk_alloc_numa_stat_print_detail(void * ptr,size_t size);
 #define warning_numa(ptr,size,required_numa,min_ratio,message) while(0) {}
 #endif
 void sctk_alloc_numa_check(bool fatal_on_fail,const char * filename,int line,void * ptr,size_t size,int required_numa,int min_ratio,const char * message);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif //SCTK_ALLOC_NUMA_STAT_H

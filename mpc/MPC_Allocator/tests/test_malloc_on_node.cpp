@@ -17,47 +17,53 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
+/* #   - Adam Julien julien.adam.ocre@cea.fr                              # */
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_ALLOC_TOPOLOGY_H
-#define SCTK_ALLOC_TOPOLOGY_H
-
 /************************** HEADERS ************************/
-#if !defined(bool) && !defined(__cplusplus)
-	#include <stdbool.h>
-#endif
+#include <svUnitTest/svUnitTest.h>
+#include <sctk_allocator.h>
+#include <cstdlib>
+#include <cstring>
+#include "test_helper.h"
+#include "sctk_alloc_light_mm_source.h"
+#include "sctk_alloc_on_node.h"
+#include "sctk_alloc_numa_stat.h"
+#include "sctk_alloc_topology.h"
 
-//optional header
-#ifdef MPC_Threads
-#include <sctk_topology.h>
-#elif defined(HAVE_HWLOC)
-#include <hwloc.h>
-#endif
-
-#ifdef __cplusplus
-extern "C"
-{
-#endif
+/************************** USING **************************/
+using namespace svUnitTest;
 
 /************************* FUNCTION ************************/
-#ifndef MPC_Threads
-int sctk_is_numa_node(void);
-int sctk_get_numa_node_number (void);
-#endif
+SVUT_DECLARE_FLAT_SETUP(TestMallocOnNode)
+{
+	sctk_alloc_init_topology();
+}
 
-void sctk_alloc_init_topology(void);
-int sctk_get_preferred_numa_node(void);
-int sctk_alloc_init_on_numa_node(void);
-void sctk_alloc_topology_bind_thread_on_core(int id);
+/************************* FUNCTION ************************/
+SVUT_DECLARE_FLAT_TEAR_DOWN(TestMallocOnNode)
+{
+	sctk_malloc_on_node_reset();
+}
 
-#ifdef HAVE_HWLOC
-hwloc_topology_t sctk_get_topology_object(void);
-void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_node);
-#endif //HAVE_HWLOC
+/************************* FUNCTION ************************/
+SVUT_DECLARE_FLAT_TEST(TestMallocOnNode,test_init)
+{
+	sctk_malloc_on_node_init(2);
+}
 
-#ifdef __cplusplus
-};
-#endif
+/************************* FUNCTION ************************/
+SVUT_DECLARE_FLAT_TEST(TestMallocOnNode,test_alloc_on_0)
+{
+	const sctk_size_t size = 4*1024*1024;
+	sctk_malloc_on_node_init(2);
+	void * ptr = sctk_malloc_on_node(size,0);
+	SVUT_ASSERT_NOT_NULL(ptr);
+	memset(ptr,0,size);
+	assert_numa(ptr,size,0,100,"Faild to allocate completely the array on NUMA node 0.");
+}
 
-#endif //SCTK_ALLOC_TOPOLOGY_H
+/************************* FUNCTION ************************/
+//use default main implementation
+SVUT_USE_DEFAULT_MAIN

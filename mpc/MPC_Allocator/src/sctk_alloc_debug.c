@@ -53,7 +53,15 @@ static const char SCTK_ALLOC_TRACE_FILE[] = "alloc-trace-%d.txt";
 	#define write _write
 	#define open _open
 	#define close _close
+	#define getpid() _getpid()
 #endif
+
+//usage of safe write in MPC
+#ifdef MPC_Common
+	#include "sctk_io_helper.h"
+#else //MPC_Common
+	#define sctk_safe_write(fd,buf,count) write((fd),(buf),(count))
+#endif //MPC_Common
 
 /************************* GLOBALS *************************/
 /** File descriptor for PTRACE output file. **/
@@ -66,11 +74,9 @@ static const char SCTK_ALLOC_TRACE_FILE[] = "alloc-trace-%d.txt";
  * If SCTK_ALLOC_TRACE_FD is set to -1, setup the output file descriptor for patrace mode.
 **/
 #ifdef ENABLE_TRACE
-
 void sctk_alloc_ptrace_init(void )
 {
 	char fname[2*sizeof(SCTK_ALLOC_TRACE_FILE)];
-	const int max_size = 2*sizeof(SCTK_ALLOC_TRACE_FILE);
 	//nothing to do
 	if (SCTK_ALLOC_TRACE_FD != -1)
 		return;
@@ -79,7 +85,7 @@ void sctk_alloc_ptrace_init(void )
 	{
 		SCTK_ALLOC_TRACE_FD = STDERR_FILENO;
 	} else {
-		sctk_alloc_sprintf(fname,max_size,SCTK_ALLOC_TRACE_FILE,_getpid());
+		sctk_alloc_sprintf(fname,2*sizeof(SCTK_ALLOC_TRACE_FILE),SCTK_ALLOC_TRACE_FILE,getpid());
 		SCTK_ALLOC_TRACE_FD = open(fname,OPEN_FILE_PERMISSIONS);
 		if (SCTK_ALLOC_TRACE_FD == -1)
 		{
@@ -104,7 +110,7 @@ void sctk_alloc_pdebug (const char * format,...)
 	va_start (param, format);
 	sctk_alloc_vsprintf (tmp2,4096, tmp, param);
 	va_end (param);
-	write(STDERR_FILENO,tmp2,(unsigned int)strlen(tmp2));
+	sctk_safe_write(STDERR_FILENO,tmp2,(unsigned int)strlen(tmp2));
 }
 
 /************************* FUNCTION ************************/
@@ -126,7 +132,7 @@ void sctk_alloc_ptrace (const char * format,...)
 	va_start (param, format);
 	sctk_alloc_vsprintf (tmp2,4096, tmp, param);
 	va_end (param);
-	write(SCTK_ALLOC_TRACE_FD,tmp2,(unsigned int)strlen(tmp2));
+	sctk_safe_write(SCTK_ALLOC_TRACE_FD,tmp2,(unsigned int)strlen(tmp2));
 	fflush(stderr);
 }
 #endif
@@ -139,7 +145,7 @@ void sctk_alloc_fprintf(int fd,const char * format,...)
 	va_start (param, format);
 	sctk_alloc_vsprintf (tmp,4096, format, param);
 	va_end (param);
-	write(fd,tmp,(unsigned int)strlen(tmp));
+	sctk_safe_write(fd,tmp,(unsigned int)strlen(tmp));
 }
 
 /************************* FUNCTION ************************/

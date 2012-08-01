@@ -34,7 +34,6 @@ static inline void sctk_buffered_alloc_create (sctk_alloc_buffer_t * buf, size_t
 static inline void sctk_buffered_alloc_delete (sctk_alloc_buffer_t * buf) {};
 static inline void sctk_buffered_free (void *ptr) {free(ptr);};
 static inline void * sctk_buffered_malloc (sctk_alloc_buffer_t * buf, size_t size) {return malloc(size);};
-static inline void * sctk_malloc_on_node(size_t size,int node_id) {return malloc(size);};
 void * sctk_get_heap_start(void);
 size_t sctk_get_heap_size(void);
 void * __sctk_malloc_new(size_t size,sctk_alloc_chain_t * chain);

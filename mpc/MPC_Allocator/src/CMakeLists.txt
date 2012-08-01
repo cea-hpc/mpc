@@ -11,7 +11,7 @@ endfunction (cm_export_file)
 #################### DEFINE SOURCES #####################
 Message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 #if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-	set(alloc_SRC sctk_alloc_debug.c sctk_allocator.c sctk_alloc_stats.c sctk_alloc_spy.c sctk_alloc_posix.c sctk_alloc_topology.c sctk_alloc_light_mm_source.c sctk_alloc_common.c sctk_alloc_numa_stat.c)
+	set(alloc_SRC sctk_alloc_debug.c sctk_allocator.c sctk_alloc_stats.c sctk_alloc_spy.c sctk_alloc_posix.c sctk_alloc_topology.c sctk_alloc_light_mm_source.c sctk_alloc_common.c sctk_alloc_numa_stat.c sctk_alloc_on_node.c)
 #else()
 #	set(alloc_SRC sctk_allocator.c sctk_alloc_posix.c sctk_alloc_stats.c sctk_alloc_spy.c sctk_alloc_topology.c sctk_alloc_light_mm_source.c sctk_alloc_common.c sctk_alloc_numa_stat.c)
 #endif()

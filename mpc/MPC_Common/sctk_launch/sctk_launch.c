@@ -201,7 +201,7 @@ sctk_perform_initialisation (void)
     }
   }
   sctk_topology_init ();
-  #ifdef HAVE_LIBNUMA
+  #ifdef HAVE_HWLOC
   sctk_alloc_posix_mmsrc_numa_init_phase_numa();
   #endif
   sctk_hls_build_repository();

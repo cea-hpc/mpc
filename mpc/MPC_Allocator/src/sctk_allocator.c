@@ -42,7 +42,6 @@
 #include "sctk_alloc_light_mm_source.h"
 
 //for getpid
-
 //optional header
 #ifdef MPC_Common
 #include "sctk.h"
@@ -53,6 +52,13 @@
 	#define MAP_FAILED NULL
 	#define write _write
 #endif
+
+//usage of safe write in MPC
+#ifdef MPC_Common
+	#include "sctk_io_helper.h"
+#else //MPC_Common
+	#define sctk_safe_write(fd,buf,count) write((fd),(buf),(count))
+#endif //MPC_Common
 
 /************************* GLOBALS *************************/
 /** @todo to move to a clean global structure, avoid spreading global elements everywheres **/
@@ -1369,7 +1375,9 @@ void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 	sctk_alloc_vchunk vchunk;
 	sctk_alloc_vchunk vfirst = NULL;
 	bool insert_bloc = true;
+	#ifdef SCTK_ALLOC_SPY
 	sctk_size_t old_size;
+	#endif
 	
 	//error
 	assume_m(chain != NULL, "Can't free the memory without an allocation chain.");
@@ -1407,8 +1415,7 @@ void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 		/** @todo Here this is a trick, NEED TO BE FIXED => NOW NEED TO REMOVE THIS OR USE THE MACRO BLOC START POINT IF AVAILABLE. **/
 		if (chain->base_addr != NULL)
 			vfirst = sctk_alloc_get_chunk((sctk_addr_t)chain->base_addr+sizeof(struct sctk_alloc_chunk_header_large));
-		old_size = sctk_alloc_get_size(vchunk);
-		SCTK_ALLOC_SPY_HOOK(old_size);
+		SCTK_ALLOC_SPY_HOOK(old_size = sctk_alloc_get_size(vchunk));
 		
 		if (! (chain->flags & SCTK_ALLOC_CHAIN_DISABLE_MERGE) )
 			vchunk = sctk_alloc_merge_chunk(&chain->pool,vchunk,vfirst,(sctk_addr_t)chain->end_addr);
@@ -1881,7 +1888,7 @@ void sctk_alloc_perror (const char * format,...)
 	va_start (param, format);
 	sctk_alloc_vsprintf (tmp2,4096, tmp, param);
 	va_end (param);
-	write(STDERR_FILENO,tmp2,strlen(tmp2));
+	sctk_safe_write(STDERR_FILENO,tmp2,strlen(tmp2));
 }
 
 /************************* FUNCTION ************************/
@@ -1897,7 +1904,7 @@ void sctk_alloc_pwarning (const char * format,...)
 	va_start (param, format);
 	sctk_alloc_vsprintf (tmp2,4096, tmp, param);
 	va_end (param);
-	write(STDERR_FILENO,tmp2,(unsigned int)strlen(tmp2));
+	sctk_safe_write(STDERR_FILENO,tmp2,(unsigned int)strlen(tmp2));
 }
 
 /************************* FUNCTION ************************/

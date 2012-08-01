@@ -13,7 +13,8 @@ ALLOC_SOURCES="${ALLOC_SOURCE_PATH}/sctk_alloc_common.c \
 	${ALLOC_SOURCE_PATH}/sctk_alloc_stats.c \
 	${ALLOC_SOURCE_PATH}/sctk_alloc_topology.c \
 	${ALLOC_SOURCE_PATH}/sctk_allocator.c \
-	${ALLOC_SOURCE_PATH}/sctk_alloc_numa_stat.c"
+	${ALLOC_SOURCE_PATH}/sctk_alloc_numa_stat.c \
+	${ALLOC_SOURCE_PATH}/sctk_alloc_on_node.c"
 
 #recompile the allocator without NUMA support
 helper_insert_test "compile_MPC_Allocator_uma" "0" "gcc -fPIC -Wall -g -shared ${ALLOC_SOURCES} \
@@ -39,7 +40,8 @@ ALLOC_TESTS="test_allocated_chunk \
 	test_posix_malloc \
 	test_user_alloc_chain \
 	test_full_alloc_chain \
-	test_regions"
+	test_regions\
+	test_malloc_on_node"
 
 #loop on tests
 MPC_ALLOC_CFLAGS="-I${MPC_TEST_SOURCE_DIR}/../mpc/MPC_Allocator/src -DMPC_ALLOCATOR_DISABLE_STATIC"
@@ -48,7 +50,8 @@ for test in $ALLOC_TESTS
 do
 	for mode in uma numa
 	do
-		compile_command="g++ -g -Wall ${CFLAGS} ${MPC_ALLOC_CFLAGS} ${MPC_ALLOC_LDFLAGS} ${MPC_TEST_CURRENT_SOURCE_DIR}/${test}.cpp ${LDFLAGS} -o ${MPC_TEST_CURRENT_WORK_DIR}/executables/${test}_${mode} -lalloc-${mode} -fopenmp"
+		if [ "${mode}" = 'numa' ]; then EXTRA_CFLAGS="-DHAVE_HWLOC"; else EXTRA_CFLAGS=""; fi
+		compile_command="g++ -g -Wall ${CFLAGS} ${EXTRA_CFLAGS} ${MPC_ALLOC_CFLAGS} ${MPC_ALLOC_LDFLAGS} ${MPC_TEST_CURRENT_SOURCE_DIR}/${test}.cpp ${LDFLAGS} -o ${MPC_TEST_CURRENT_WORK_DIR}/executables/${test}_${mode} -lalloc-${mode} -fopenmp"
 		helper_insert_test "${test}_${mode}" "0" "${compile_command} && ${MPC_TEST_CURRENT_WORK_DIR}/executables/${test}_${mode} -m junit_xml -o output-${test}_${mode}.xml" "compile_MPC_Allocator_${mode}"
 	done
 done
