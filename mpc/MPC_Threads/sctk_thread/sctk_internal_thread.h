@@ -83,8 +83,7 @@ extern "C"
   extern int (*__sctk_ptr_thread_attr_setguardsize) (sctk_thread_attr_t *
 						     __attr,
 						     size_t __guardsize);
-  extern
-    int (*__sctk_ptr_thread_attr_setinheritsched) (sctk_thread_attr_t *
+  extern int (*__sctk_ptr_thread_attr_setinheritsched) (sctk_thread_attr_t *
 						   __attr, int __inherit);
   extern int (*__sctk_ptr_thread_attr_setschedparam) (sctk_thread_attr_t
 						      * __attr,

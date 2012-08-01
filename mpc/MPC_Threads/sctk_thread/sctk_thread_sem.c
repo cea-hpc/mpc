@@ -107,6 +107,9 @@ sctk_thread_generic_sems_sem_wait( sctk_thread_generic_sem_t* sem,
   sctk_thread_generic_sched_yield(sched);
   tmp[sctk_thread_generic_sem] = NULL;
 
+  /* test cancel */
+  sctk_thread_generic_check_signals( 0 );
+
   return ret;
 }
 
@@ -167,6 +170,9 @@ sctk_thread_generic_sems_sem_timedwait( sctk_thread_generic_sem_t* sem,
 	return -1;
   }
 
+  /* test cancel */
+  sctk_thread_generic_check_signals( 0 );
+
   int ret = 0;
   struct timespec t_current;
 
@@ -183,6 +189,8 @@ sctk_thread_generic_sems_sem_timedwait( sctk_thread_generic_sem_t* sem,
 	  errno = SCTK_EAGAIN;
 	  ret = -1;
 	}
+	/* test cancel */
+	sctk_thread_generic_check_signals( 0 );
 	clock_gettime( CLOCK_REALTIME, &t_current );
   } while ( ret != 0 && ( t_current.tv_sec < time->tv_sec ||
 		( t_current.tv_sec == time->tv_sec && t_current.tv_nsec < time->tv_nsec ) ) );
@@ -190,6 +198,9 @@ sctk_thread_generic_sems_sem_timedwait( sctk_thread_generic_sem_t* sem,
   if( ret != 0 ){
 	errno = SCTK_ETIMEDOUT;
   }
+
+  /* test cancel */
+  sctk_thread_generic_check_signals( 0 );
 
   if( sched->th->attr.nb_sig_pending > 0 ){
 	errno = SCTK_EINTR;

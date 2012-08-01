@@ -1659,6 +1659,7 @@ sctk_thread_sleep (unsigned int seconds)
      (sctk_timer_t) sctk_time_interval) + sctk_timer + 1;
   sctk_thread_yield ();
 
+  __sctk_ptr_thread_testcancel ();
   sctk_thread_wait_for_value_and_poll (&(wake_time.done), 0,
 				       (void (*)(void *))
 				       sctk_thread_sleep_pool,
@@ -1679,6 +1680,7 @@ sctk_thread_usleep (unsigned int useconds)
      (sctk_timer_t) sctk_time_interval) + sctk_timer + 1;
   sctk_thread_yield ();
 
+  __sctk_ptr_thread_testcancel ();
   sctk_thread_wait_for_value_and_poll (&(wake_time.done), 0,
 				       (void (*)(void *))
 				       sctk_thread_sleep_pool,

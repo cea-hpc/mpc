@@ -35,6 +35,7 @@ cat << EOF > ${SCTK_CONF_C}
 #include <stdio.h>
 #include <sys/types.h>
 #include <signal.h>
+#include <limits.h>
 EOF
 
 if test "$MPC_Threads" != "" ; then 

@@ -330,7 +330,9 @@ __sctk_thread_generic_rwlocks_rwlock_lock( sctk_thread_generic_rwlock_t* lock,
   sctk_thread_generic_register_spinlock_unlock( sched, &(lock->lock) );
   sctk_thread_generic_sched_yield( sched );
   tmp[sctk_thread_generic_rwlock] = NULL;
-
+ 
+  /* test cancel */
+  sctk_thread_generic_check_signals( 0 );
   return 0;
 }
 
