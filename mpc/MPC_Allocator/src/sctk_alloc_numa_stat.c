@@ -183,10 +183,11 @@ void sctk_alloc_numa_stat_print(const struct sctk_alloc_numa_stat_s* stat,void *
 	printf("%-20s : %-10lu (%.01f Mo)\n","Total pages",stat->total_pages,(float)(stat->total_pages * 4) / 1024.0);
 	printf("%-20s : %-10lu (%.01f Mo / %.01f %%)\n","Total mapped",stat->total_mapped,(float)(stat->total_mapped * 4) / 1024.0,100.0*(float)stat->total_mapped/(float)stat->total_pages);
 	printf("%-20s : %lu\n","Non mapped",stat->total_pages - stat->total_mapped);
-	for (i = 0 ; i < stat->numa_nodes ; i++)
-		printf("NUMA %-15d : %-10lu (%.01f Mo / %.01f %%)\n",i,stat->numa_pages[i],(float)(stat->numa_pages[i] * 4) / 1024.0,100.0*(float)stat->numa_pages[i] / (float)stat->total_mapped);
+	if (sctk_is_numa_node())
+		for (i = 0 ; i < stat->numa_nodes ; i++)
+			printf("NUMA %-15d : %-10lu (%.01f Mo / %.01f %%)\n",i,stat->numa_pages[i],(float)(stat->numa_pages[i] * 4) / 1024.0,100.0*(float)stat->numa_pages[i] / (float)stat->total_mapped);
 	if (stat->numa_pages[SCTK_MAX_NUMA_NODE] != 0)
-		printf("%-20s : %lu\n","NUMA unknown",stat->numa_pages[SCTK_MAX_NUMA_NODE]);
+		printf("%-20s : %-10lu (%.01f Mo / %.01f %%)\n","NUMA unknown",stat->numa_pages[SCTK_MAX_NUMA_NODE],(float)(stat->numa_pages[SCTK_MAX_NUMA_NODE] * 4) / 1024.0,100.0*(float)stat->numa_pages[SCTK_MAX_NUMA_NODE] / (float)stat->total_mapped);
 }
 #else //HAVE_LINUX_PAGEMAP
 void sctk_alloc_numa_stat_print(const struct sctk_alloc_numa_stat_s* stat,void * ptr,sctk_size_t size)

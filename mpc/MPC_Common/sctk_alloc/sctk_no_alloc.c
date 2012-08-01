@@ -474,6 +474,16 @@ void * __wrap_mremap (void *old_address, size_t old_size, size_t new_size, int f
 	return __real_mremap (old_address, old_size, new_size, flags);
 }
 
+/*******************  FUNCTION  *********************/
+void sctk_alloc_posix_numa_migrate_chain(struct sctk_alloc_chain * local_chain)
+{
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_alloc_posix_numa_migrate(void)
+{
+}
+
 #endif //SCTK_MPC_MMAP
 
 #endif //MPC_Allocator

@@ -137,6 +137,10 @@ int sctk_get_preferred_numa_node_no_mpc_numa_binding()
 	char buffer[4096];
 	#endif
 
+	//if no numa node, return immediately
+	if (sctk_is_numa_node() == false)
+		return -1;
+
 	//nodes
 	// flags = 0 fallback on PROCESS if THREAD is not supported (as for windows).
 	int status =  hwloc_get_membind_nodeset(topology,nodeset,&policy,0);
