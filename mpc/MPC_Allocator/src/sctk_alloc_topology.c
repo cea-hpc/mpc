@@ -274,7 +274,7 @@ int sctk_alloc_get_current_numa_node_getcpu(void)
 	int res = getcpu(&cpu_id,&node_id,NULL);
 
 	//check that we get the same logical ID in hwloc
-	logical_nod_id = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpu_id)->logical_index;
+	logical_node_id = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpu_id)->logical_index;
 	assert(logical_node_id == node_id);
 
 	return logical_node_id;

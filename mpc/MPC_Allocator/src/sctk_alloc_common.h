@@ -30,6 +30,7 @@
 extern "C"
 {
 #endif
+
 /************************* PORTABILITY *********************/
 #ifdef _MSC_VER
 	#include <errno.h>
@@ -59,23 +60,18 @@ extern "C"
 /**
  * C unavailability of boolean type sucks.
 **/
-
 #ifndef MPC_Common
-
-#ifndef __cplusplus
-#ifdef HAVE_STDBOOL_H
-#include <stdbool.h>
+	#ifndef __cplusplus
+		#ifdef HAVE_STDBOOL_H
+		#include <stdbool.h>
+	#else
+		#define bool unsigned char
+		#define true 1
+		#define false 0
+		#endif
+	#endif //__cplusplus
 #else
-#define bool unsigned char
-#define true 1
-#define false 0
-#endif
-#endif //__cplusplus
-
-#else
-
-#include "sctk_bool.h"
-
+	#include "sctk_bool.h"
 #endif
 
 /************************** CONSTS *************************/
