@@ -110,7 +110,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, is_control_message);
     sctk_complete_and_free_message(msg);
-    PROF_INC_RAIL_IB(rail_ib, eager_nb);
+    PROF_INC(rail_ib->rail, eager_nb);
     goto exit;
   }
 
@@ -120,7 +120,7 @@ buffered:
     /* Fallback to RDMA if buffered not available or low memory mode */
     if (sctk_ib_buffered_prepare_msg(rail, remote, msg, size) == 1 ) goto error;
     sctk_complete_and_free_message(msg);
-    PROF_INC_RAIL_IB(rail_ib, buffered_nb);
+    PROF_INC(rail_ib->rail, buffered_nb);
     goto exit;
   }
 
@@ -236,8 +236,6 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,
   ibuf = (sctk_ibuf_t*) wc->wr_id;
   assume(ibuf);
 
-  /* Decrease the number of pending requests */
-  sctk_ib_qp_decr_requests_nb(ibuf->remote);
   sctk_nodebug("Send message released (rank: %d - pending_nb: %d)", ibuf->remote->rank, sctk_ib_qp_get_requests_nb(ibuf->remote));
 
   ibuf->wc = *wc;
@@ -320,7 +318,6 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   memset(rail_ib, 0, sizeof(sctk_ib_rail_info_t));
   /* Profiler init */
-  sctk_ib_prof_init(rail_ib);
   sctk_ib_device_t *device;
   struct ibv_srq_init_attr srq_attr;
   /* Open config */

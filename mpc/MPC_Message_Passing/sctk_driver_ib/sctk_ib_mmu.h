@@ -35,7 +35,7 @@
 
 //#define DEBUG_IB_MMU
 
-#define ALIGN_ON_64(x) ( (x + 63) & (~63) )
+#define ALIGN_ON(x, align) ( (x + (align-1)) & (~(align-1)) )
 
 struct sctk_ib_rail_info_s;
 

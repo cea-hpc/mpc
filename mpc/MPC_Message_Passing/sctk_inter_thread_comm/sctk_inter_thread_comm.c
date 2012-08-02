@@ -770,6 +770,7 @@ void* sctk_alloc_header(){
   return tmp;
 }
 
+/* Determine what is the source process of the message */
 int sctk_determine_src_process_from_header (sctk_thread_ptp_message_body_t * body){
   int src_process;
   int task_number;
@@ -786,6 +787,27 @@ int sctk_determine_src_process_from_header (sctk_thread_ptp_message_body_t * bod
     }
   }
   return src_process;
+}
+
+/* Determine what is the global source and destination of one message */
+void sctk_determine_glob_source_and_destination_from_header (sctk_thread_ptp_message_body_t* body,
+    int *glob_source, int *glob_destination) {
+
+  if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(body->header.specific_message_tag)){
+    if(body->header.source != MPC_ANY_SOURCE)
+      *glob_source = body->header.source;
+    else
+      *glob_source = -1;
+
+    *glob_destination = -1;
+  } else {
+    if(body->header.source != MPC_ANY_SOURCE)
+      *glob_source = sctk_get_comm_world_rank (body->header.communicator, body->header.source);
+    else
+      *glob_source = -1;
+
+    *glob_destination = sctk_get_comm_world_rank (body->header.communicator, body->header.destination);
+  }
 }
 
 void sctk_rebuild_header (sctk_thread_ptp_message_t * msg){
@@ -1145,10 +1167,11 @@ static inline int sctk_perform_messages_for_pair(sctk_internal_ptp_t* pair){
 #endif
 ){
 
-      sctk_internal_ptp_lock_pending(&(pair->lists));
-      sctk_perform_messages_for_pair_locked(pair);
-      pair->lists.changed = 0;
-      sctk_internal_ptp_unlock_pending(&(pair->lists));
+      if (sctk_internal_ptp_trylock_pending(&pair->lists) == 0) {
+        sctk_perform_messages_for_pair_locked(pair);
+        pair->lists.changed = 0;
+        sctk_internal_ptp_unlock_pending(&pair->lists);
+      }
     }
   }
   return sctk_ptp_tasks_perform(pair);
@@ -1159,7 +1182,7 @@ static inline int sctk_perform_messages_for_pair(sctk_internal_ptp_t* pair){
  */
 static inline int sctk_try_perform_messages_for_pair(sctk_internal_ptp_t* pair){
   /* If the lock has not been taken, we continue */
-  if(pair->lists.pending_lock == 0){
+  if (pair->lists.pending_lock == 0) {
     return sctk_perform_messages_for_pair(pair);
   }
   return 0;
@@ -1323,7 +1346,7 @@ void sctk_perform_all (){
 
   /* Also try to poll the ptp_admin queue if no message
    * has been processed previously */
-  if(sctk_ptp_admin && !processed_nb) {
+  if(sctk_ptp_admin /* && !processed_nb */) {
     processed_nb += sctk_try_perform_messages_for_pair(sctk_ptp_admin);
   }
 

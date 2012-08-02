@@ -45,6 +45,7 @@ typedef struct sctk_ib_config_s
   unsigned int  ibv_eager_limit;
   unsigned int  ibv_frag_eager_limit;
   unsigned int  ibv_max_rdma_connections;
+  unsigned int  ibv_rdma_resizing;
   unsigned int  ibv_qp_tx_depth;
   unsigned int  ibv_qp_rx_depth;
   unsigned int  ibv_cq_depth;
@@ -74,6 +75,17 @@ typedef struct sctk_ib_config_s
   unsigned int  ibv_quiet_crash;
   unsigned int  ibv_match;
 
+  /* For RDMA */
+  unsigned int  ibv_rdma_min_size;
+  unsigned int  ibv_rdma_max_size;
+  unsigned int  ibv_rdma_min_nb;
+  unsigned int  ibv_rdma_max_nb;
+
+  unsigned int  ibv_rdma_resizing_min_size;
+  unsigned int  ibv_rdma_resizing_max_size;
+  unsigned int  ibv_rdma_resizing_min_nb;
+  unsigned int  ibv_rdma_resizing_max_nb;
+
   /* DEVICE */
   struct ibv_device_attr *device_attr;
 } sctk_ib_config_t;
@@ -81,8 +93,6 @@ typedef struct sctk_ib_config_s
 struct sctk_ib_rail_info_s;
 void sctk_ib_config_init(struct sctk_ib_rail_info_s *rail_ib, char *network_name);
 void sctk_ib_config_print(struct sctk_ib_rail_info_s *rail_ib);
-
-#define IBV_RDMA_RESIZING  0
 
 #endif
 #endif

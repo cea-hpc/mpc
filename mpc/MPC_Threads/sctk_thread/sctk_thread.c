@@ -627,11 +627,11 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 #ifdef MPC_USE_INFINIBAND
     /* XXX Also check if IB enabled */
     if(sctk_process_number > 1 && sctk_network_is_ib_used() ){
+        /* Register task for QP prof */
+        sctk_ib_prof_init_task(tmp.task_id, tmp.virtual_processor);
+
         /* Register task for collaborative polling */
         sctk_ib_cp_init_task(tmp.task_id, tmp.virtual_processor);
-
-        /* Register task for QP prof */
-        sctk_ib_prof_qp_init_task(tmp.task_id, tmp.virtual_processor);
     }
 #endif
       sctk_register_thread_initial (tmp.task_id);
@@ -2025,7 +2025,7 @@ poff_t dataused(void) {
 #endif
 
 double sctk_profiling_get_dataused() {
-  return (double)dataused()/(1024.0*1024.0);
+  return (double)dataused();
 }
 
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
@@ -2375,7 +2375,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	{
 		if (sctk_runtime_config_get()->modules.launcher.banner) {
 			fprintf(stderr, "Initialization time: %.1fs - Memory used: %0.fMB\n",
-			sctk_profiling_get_init_time(), sctk_profiling_get_dataused());
+	    sctk_profiling_get_init_time(), sctk_profiling_get_dataused()/(1024.0*1024.0));
 		}
 	}
 

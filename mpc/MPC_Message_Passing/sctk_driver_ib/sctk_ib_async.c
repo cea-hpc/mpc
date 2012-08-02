@@ -47,7 +47,7 @@
  *  CONSTS
  *----------------------------------------------------------*/
 #define DESC_EVENT(config, event, desc, level, fatal)  do { \
-  if ( (level <= (config)->ibv_verbose_level) || fatal) \
+  if ( (level != -1) && (level <= (config)->ibv_verbose_level) || fatal) \
     sctk_ib_debug(event":\t"desc); \
   if (fatal) sctk_abort(); \
   } while(0)
@@ -65,7 +65,7 @@ void* async_thread(void* arg)
   struct ibv_srq_attr mod_attr;
   int rc;
 
-  sctk_ib_debug("Async thread running on context %p", device->context);
+  sctk_ib_nodebug("Async thread running on context %p", device->context);
   while(1) {
     if(ibv_get_async_event((struct ibv_context*) device->context, &event))
     {
@@ -91,7 +91,7 @@ void* async_thread(void* arg)
         break;
 
       case IBV_EVENT_COMM_EST:
-        DESC_EVENT(config, "IBV_EVENT_COMM_EST", "Communication was established on a QP", 2, 0);
+        DESC_EVENT(config, "IBV_EVENT_COMM_EST", "Communication was established on a QP", -1, 0);
         break;
 
       case IBV_EVENT_SQ_DRAINED:

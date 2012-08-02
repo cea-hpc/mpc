@@ -113,7 +113,7 @@ struct sctk_rail_info_s{
   void (*notify_perform_message) (int ,struct sctk_rail_info_s*);
   void (*notify_idle_message) (struct sctk_rail_info_s*);
   void (*notify_any_source_message) (struct sctk_rail_info_s*);
-  void (*send_message_from_network) (sctk_thread_ptp_message_t * );
+  int (*send_message_from_network) (sctk_thread_ptp_message_t * );
   void(*connect_to)(int,int,sctk_rail_info_t*);
   void(*connect_from)(int,int,sctk_rail_info_t*);
   int (*route)(int , sctk_rail_info_t* );
@@ -214,10 +214,16 @@ typedef enum sctk_route_state_e {
   state_reconnecting  = 444,
   state_reset         = 555,
   state_resizing      = 777,
+  state_requesting      = 888,
 } sctk_route_state_t;
 
 __UNUSED__ static void sctk_route_set_state(sctk_route_table_t* tmp, sctk_route_state_t state){
   OPA_store_int(&tmp->state, state);
+}
+
+__UNUSED__ static int sctk_route_cas_state(sctk_route_table_t* tmp, sctk_route_state_t oldv,
+  sctk_route_state_t newv ){
+  return (int) OPA_cas_int(&tmp->state, oldv, newv);
 }
 
 __UNUSED__ static int sctk_route_get_state(sctk_route_table_t* tmp){

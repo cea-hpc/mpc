@@ -151,7 +151,7 @@ static void load_ib_fallback_default_config(sctk_ib_rail_info_t *rail_ib)
   config->ibv_size_mr_chunk = IBV_SIZE_MR_CHUNKS;
   config->ibv_init_ibufs = IBV_INIT_IBUFS;
 
-  config->ibv_eager_limit       = ALIGN_ON_64 (IBV_EAGER_LIMIT + IBUF_GET_EAGER_SIZE);
+  config->ibv_eager_limit       = ALIGN_ON (IBV_EAGER_LIMIT + IBUF_GET_EAGER_SIZE, 64);
   config->ibv_frag_eager_limit  = (IBV_FRAG_EAGER_LIMIT + sizeof(sctk_thread_ptp_message_body_t));
 
   config->ibv_max_rdma_connections  = IBV_MAX_RDMA_CONNECTIONS;

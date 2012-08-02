@@ -38,7 +38,7 @@ extern "C"
  *  IB module debugging
  *----------------------------------------------------------*/
 /* Uncomment this macro to activate the IB debug */
-/* #define IB_DEBUG */
+//#define IB_DEBUG
 
 #ifdef IB_DEBUG
 #warning "WARNING !!!! Debug activated !!!! WARNING"
@@ -84,7 +84,7 @@ extern "C"
     struct sctk_ib_mmu_s    *mmu;
     struct sctk_ib_config_s *config;
     struct sctk_ib_device_s *device;
-    struct sctk_ib_prof_s   *profiler;
+//    struct sctk_ib_prof_s   *profiler;
     /* Collaborative polling */
     struct sctk_ib_cp_s *cp;
 

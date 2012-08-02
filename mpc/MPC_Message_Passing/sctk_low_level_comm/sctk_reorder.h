@@ -37,12 +37,16 @@ void sctk_add_dynamic_reorder_buffer(int dest);
 /*
  * Return values for sctk_send_message_from_network_reorder
  */
+/* Undefined message */
+#define REORDER_UNDEFINED -1
 /* Message with the correct sequence number found */
 #define REORDER_FOUND_EXPECTED 0
 /* Message without numbering */
 #define REORDER_NO_NUMBERING 1
 /* Message with an incorrect sequence number found */
 #define REORDER_FOUND_NOT_EXPECTED 2
+/* Message not found */
+#define REORDER_NOT_FOUND 3
 
 int sctk_send_message_from_network_reorder (struct sctk_thread_ptp_message_s * msg);
 int sctk_prepare_send_message_to_network_reorder (struct sctk_thread_ptp_message_s * msg);

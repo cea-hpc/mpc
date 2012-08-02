@@ -733,53 +733,55 @@ extern "C"
 /*Netowk statistics                                                 */
 /********************************************************************/
   struct MPC_Network_stats_s {
-    int matched;
-    int not_matched;
+    struct {
+      int matched;
+      int not_matched;
+      int alloc_mem;
+      int free_mem;
+      int qp_created;
+      int eager_nb;
+      int buffered_nb;
+      int rdma_nb;
 
-#if 0
-    int poll_own;
-    int poll_own_failed;
-    int poll_steals_failed;
+      int ibuf_sr_nb;
+      int ibuf_rdma_nb;
+      int ibuf_rdma_miss_nb;
+      int rdma_connection;
+      int rdma_resizing;
+      int rdma_deconnection;
+    } int_t;
 
-    /* Number of msg stolen by the current task */
-    int poll_steals;
+    struct {
+      long poll_own;
+      long poll_own_failed;
+      long poll_own_success;
+      long poll_steals_failed;
+      long poll_steals_success;
 
-    int poll_steal_same_node;
-    int poll_steal_other_node;
-#endif
-    long poll_own;
-    long poll_own_failed;
-    long poll_own_success;
-    long poll_steals_failed;
-    long poll_steals_success;
+      /* Number of msg stolen by the current task */
+      long poll_steals;
 
-    /* Number of msg stolen by the current task */
-    long poll_steals;
+      long poll_steal_same_node;
+      long poll_steal_other_node;
+      long call_to_polling;
+      long poll_cq;
+    } long_t;
 
-    long poll_steal_same_node;
-    long poll_steal_other_node;
-    long call_to_polling;
-    long poll_cq;
-
-
-    double time_stolen;
-    double time_steals;
-    double time_own;
-    double time_poll_cq;
-    double time_ptp;
-    double time_coll;
-
-    int alloc_mem;
-    int free_mem;
-    int qp_created;
-
-    int eager_nb;
-    int buffered_nb;
-    int rdma_nb;
+    struct {
+      double time_stolen;
+      double time_steals;
+      double time_own;
+      double time_poll_cq;
+      double time_ptp;
+      double time_coll;
+      double post_send;
+      double resize_rdma;
+      double ibuf_release;
+    } double_t;
   };
 
   void MPC_Network_stats(struct MPC_Network_stats_s *stats);
-  void MPC_Network_deco_neighbors();
+  void MPC_Network_deco_neighbor(int process);
   /* Send/Recv message using the signalization network */
   void MPC_Send_signalization_network(int dest_process, int tag, void *buff, size_t size);
   void MPC_Recv_signalization_network(int src_process, int tag, void *buff, size_t size);

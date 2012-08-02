@@ -161,6 +161,8 @@ typedef struct sctk_ibuf_rdma_pool_s
     sctk_ib_cm_rdma_connection_t recv_keys;
   } resizing_request;
 
+  /* The maximum number of data pending */
+  size_t max_data_pending;
   int send_credit;
 
   /* Pointer to the remote */
@@ -193,7 +195,7 @@ typedef struct sctk_ibuf_rdma_desc_s
  *----------------------------------------------------------*/
 void sctk_ibuf_rdma_remote_init(sctk_ib_qp_t* remote);
 
-int sctk_ibuf_rdma_is_connectable(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote);
+int sctk_ibuf_rdma_is_connectable(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, int entry_nb, int entry_size);
 
 void sctk_ibuf_rdma_check_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, size_t size);
 
@@ -277,5 +279,8 @@ int sctk_ibuf_rdma_check_send_flush(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *
 void sctk_ibuf_rdma_flush_recv(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote);
 int sctk_ibuf_rdma_check_flush_send(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote);
 int sctk_ibuf_rdma_check_flush_recv(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote);
+size_t sctk_ibuf_rdma_get_regions_get_allocate_size(sctk_ib_qp_t* remote);
+void sctk_ibuf_rdma_save_memory(sctk_ib_rail_info_t* rail_ib, size_t memory_to_save);
+void sctk_ibuf_rdma_update_max_pending_data(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, int current_pending);
 #endif
 #endif
