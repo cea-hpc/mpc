@@ -1080,7 +1080,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_prepare_and_reg_macro_bloc(struct
 		vchunk = sctk_alloc_setup_chunk(macro_bloc+1,size - sizeof(struct sctk_alloc_macro_bloc) - sizeof(struct sctk_alloc_chunk_header_large),NULL);
 		sctk_alloc_create_stopper((void *)((sctk_addr_t)macro_bloc+size-sizeof(struct sctk_alloc_chunk_header_large)),macro_bloc+1);
 		/** @todo TOTO create a set_entry which accept blocs directly this may be cleaner to maintain **/
-		SCTK_PDEBUG("Reg macro bloc : %p -> %p",macro_bloc,(sctk_addr_t)macro_bloc + sctk_alloc_get_chunk_header_large_size(&macro_bloc->header));
+		SCTK_NO_PDEBUG("Reg macro bloc : %p -> %p",macro_bloc,(sctk_addr_t)macro_bloc + sctk_alloc_get_chunk_header_large_size(&macro_bloc->header));
 		if (! (chain->flags & SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER ))
 			sctk_alloc_region_set_entry(chain,macro_bloc);
 	}
@@ -1104,7 +1104,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_request_mem(struct sctk_alloc_cha
 
 	//error
 	assert(chain != NULL);
-	//SCTK_PDEBUG("Try to refill memory for size = %lu",size);
+	SCTK_NO_PDEBUG("Try to refill memory for size = %lu",size);
 
 	//trivial
 	if (chain->source == NULL)
@@ -1288,8 +1288,8 @@ void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t 
 		//error
 		if (chunk == NULL)
 		{
-			//SCTK_PDEBUG("Try to allocate %ld",size);
-			//SCTK_PDEBUG("Out of memory in user segment.");
+			//SCTK_NO_PDEBUG("Try to allocate %ld",size);
+			//SCTK_NO_PDEBUG("Out of memory in user segment.");
 			//SCTK_CRASH_DUMP();
 			//unlock if required
 			if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
@@ -1347,7 +1347,7 @@ SCTK_STATIC void sctk_alloc_chain_free_macro_bloc(struct sctk_alloc_chain * chai
 	macro_bloc = (struct sctk_alloc_macro_bloc *)(sctk_alloc_get_addr(vchunk) - sizeof(struct sctk_alloc_macro_bloc));
 
 	//unregister from regions
-	SCTK_PDEBUG("Send macro bloc to memory source 0x%p -> 0x%p.",macro_bloc,(sctk_addr_t)macro_bloc + sctk_alloc_get_chunk_header_large_size(&macro_bloc->header));
+	SCTK_NO_PDEBUG("Send macro bloc to memory source 0x%p -> 0x%p.",macro_bloc,(sctk_addr_t)macro_bloc + sctk_alloc_get_chunk_header_large_size(&macro_bloc->header));
 	if (! (chain->flags & SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER ))
 		sctk_alloc_region_unset_entry(macro_bloc);
 
@@ -1473,7 +1473,7 @@ void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sct
 	//errors
 	assert(chain != NULL);
 
-	SCTK_PDEBUG("Do realloc %p -> %llu",ptr,size);
+	SCTK_NO_PDEBUG("Do realloc %p -> %llu",ptr,size);
 
 	//cases
 	if (ptr == NULL && size == 0)
@@ -1482,7 +1482,7 @@ void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sct
 		res = NULL;
 	} else if (ptr == NULL) {
 		//only alloc, no previous segment
-		SCTK_PDEBUG("Simple chain alloc instead of realloc %p -> %llu",ptr,size);
+		SCTK_NO_PDEBUG("Simple chain alloc instead of realloc %p -> %llu",ptr,size);
 		res = sctk_alloc_chain_alloc(chain,size);
 	} else if (size == 0) {
 		//only free, no new segment
@@ -1502,14 +1502,14 @@ void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sct
 
 		if (old_size >= size && old_size - size < old_size / SCTK_REALLOC_THRESHOLD) {
 			//simply keep the old segment, nothing to change
-			SCTK_PDEBUG("realloc with same address");
+			SCTK_NO_PDEBUG("realloc with same address");
 			res = ptr;
 		} else if (SCTK_ALLOC_HUGE_CHUNK_SEGREGATION && old_size > SCTK_HUGE_BLOC_LIMIT && size > 0 && size > SCTK_HUGE_BLOC_LIMIT && sctk_alloc_chain_can_remap(chain)) {
 			//use remap to realloc
-			SCTK_PDEBUG("Use mremap %llu -> %llu",old_size,size);
+			SCTK_NO_PDEBUG("Use mremap %llu -> %llu",old_size,size);
 			res = sctk_alloc_chunk_body(sctk_alloc_chain_realloc_macro_bloc(chain,size,vchunk));
 		} else {
-			SCTK_PDEBUG("Use chain_alloc / chain_free %p -> %llu -> %llu",ptr,old_size,size);
+			SCTK_NO_PDEBUG("Use chain_alloc / chain_free %p -> %llu -> %llu",ptr,old_size,size);
 			//need to reallocate a new segment and copy the old data
 			res = sctk_alloc_chain_alloc(chain,size);
 			//copy the data
@@ -1747,7 +1747,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_default_request_m
 		//if we will split, we must allocated one more page to store the header of next bloc
 		//We also skip the first page as it was already allocated to store the header, hence
 		//we avoid to loss it's content.
-		SCTK_PDEBUG("Have non mapped macro bloc, call mmap on addr = %p (%lu) PID=%d.",bloc,aligned_size/1024,getpid());
+		SCTK_NO_PDEBUG("Have non mapped macro bloc, call mmap on addr = %p (%lu) PID=%d.",bloc,aligned_size/1024,getpid());
 		if (sctk_alloc_get_chunk_header_large_size(&bloc->header.header) == aligned_size)
 			tmp = sctk_mmap((void*)((sctk_addr_t)bloc+SCTK_ALLOC_PAGE_SIZE),aligned_size-SCTK_ALLOC_PAGE_SIZE);
 		else
@@ -1758,7 +1758,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_default_request_m
 			return NULL;
 		}
 	} else {
-		SCTK_PDEBUG("Have already mapped macro bloc on addr = %p (%lu).",bloc,aligned_size/1024);
+		SCTK_NO_PDEBUG("Have already mapped macro bloc on addr = %p (%lu).",bloc,aligned_size/1024);
 	}
 
 	//try to split if required
@@ -1771,7 +1771,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_default_request_m
 	{
 		bloc = sctk_alloc_get_ptr(residut);
 		bloc->maping = mapping;
-		SCTK_PDEBUG("Split bloc at addr=%p (%lu), mapping=%d",bloc,sctk_alloc_get_size(residut)/1024,mapping);
+		SCTK_NO_PDEBUG("Split bloc at addr=%p (%lu), mapping=%d",bloc,sctk_alloc_get_size(residut)/1024,mapping);
 		sctk_alloc_free_list_insert(&source_default->pool,sctk_alloc_get_large(residut),SCTK_ALLOC_INSERT_AT_START);
 	}
 
@@ -1829,7 +1829,7 @@ SCTK_STATIC void sctk_alloc_mm_source_default_free_memory(struct sctk_alloc_mm_s
 // 		fbloc->maping = SCTK_ALLOC_BLOC_MAPPED;
 // 		SCTK_PDEBUG("Insert as free mapped bloc : %p (%lu)",sctk_alloc_get_ptr(vchunk),sctk_alloc_get_size(vchunk)/1024/1024);
 // 	} else {
-		SCTK_PDEBUG("Return memory to system : %p (%lu)",sctk_alloc_get_ptr(vchunk),sctk_alloc_get_size(vchunk)/1024/1024);
+		SCTK_NO_PDEBUG("Return memory to system : %p (%lu)",sctk_alloc_get_ptr(vchunk),sctk_alloc_get_size(vchunk)/1024/1024);
 		fbloc->maping = SCTK_ALLOC_BLOC_UNMAPPED;
 		sctk_munmap((void*)(sctk_alloc_get_addr(vchunk)+SCTK_ALLOC_PAGE_SIZE),sctk_alloc_get_size(vchunk)-SCTK_ALLOC_PAGE_SIZE);
 // 	}
@@ -2566,7 +2566,7 @@ void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_n
 	assert(chain != NULL);
 	assert(target_numa_node >= -1);
 
-	SCTK_PDEBUG("Call migration to numa node %d",target_numa_node);
+	SCTK_PDEBUG("Call migration to numa node %d on chain",target_numa_node,chain);
 
 	#ifdef HAVE_HWLOC
 	//remap the struct itself

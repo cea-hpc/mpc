@@ -306,7 +306,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_to_macro_b
 		return sctk_alloc_mm_source_light_to_macro_bloc(free_bloc);
 	} else {
 		macro_bloc = sctk_alloc_mm_source_light_to_macro_bloc(free_bloc);
-		SCTK_PDEBUG("Reuse but internal remap %p -> %llu -> %llu",macro_bloc,macro_bloc->header.size,size);
+		SCTK_NO_PDEBUG("Reuse but internal remap %p -> %llu -> %llu",macro_bloc,macro_bloc->header.size,size);
 		macro_bloc = sctk_alloc_mm_source_light_remap(macro_bloc,size);
 		return macro_bloc;
 	}
@@ -412,7 +412,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_request_mem
 	if (size <= SCTK_ALLOC_MACRO_BLOC_REUSE_THREASHOLD)
 	{
 		macro_bloc = sctk_alloc_mm_source_light_find_in_cache(light_source,size);
-		SCTK_PDEBUG("LMMSRC %p : Try to reuse macro bloc %p -> %llu",source,macro_bloc,size);
+		SCTK_NO_PDEBUG("LMMSRC %p : Try to reuse macro bloc %p -> %llu",source,macro_bloc,size);
 	}
 
 	//allocate a new one
@@ -422,7 +422,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_request_mem
 	//warn if out of memory
 	#ifdef SCTK_ALLOC_DEBUG
 	if (macro_bloc == NULL)
-		SCTK_PDEBUG("Memory source get out of memory and can't request more to system.");
+		SCTK_NO_PDEBUG("Memory source get out of memory and can't request more to system.");
 	#endif //SCTK_ALLOC_DEBUG
 
 	//return if
@@ -444,7 +444,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_mmap_new_s
 
 	//call mmap to get a macro blocs
 	macro_bloc = sctk_mmap(NULL,size);
-	SCTK_PDEBUG("LMMSRC : Map new macro_bloc %p -> %llu",macro_bloc,size);
+	SCTK_NO_PDEBUG("LMMSRC : Map new macro_bloc %p -> %llu",macro_bloc,size);
 	assume_m(macro_bloc != NULL,"Error macro bloc allocation");
 	//setup header
 	macro_bloc = sctk_alloc_setup_macro_bloc(macro_bloc,size);
@@ -480,10 +480,10 @@ SCTK_STATIC void sctk_alloc_mm_source_light_free_memory(struct sctk_alloc_mm_sou
 	//if larger than basic macro bloc size, return to system immediately
 	if (free_bloc->size > SCTK_ALLOC_MACRO_BLOC_REUSE_THREASHOLD)
 	{
-		SCTK_PDEBUG("LMMSRC %p : Do munmap %p -> %llu",source,free_bloc,free_bloc->size);
+		SCTK_NO_PDEBUG("LMMSRC %p : Do munmap %p -> %llu",source,free_bloc,free_bloc->size);
 		sctk_munmap(free_bloc,free_bloc->size);
 	} else {
-		SCTK_PDEBUG("LMMSRC %p : Keep bloc for future %p -> %llu",source,free_bloc,free_bloc->size);
+		SCTK_NO_PDEBUG("LMMSRC %p : Keep bloc for future %p -> %llu",source,free_bloc,free_bloc->size);
 		sctk_alloc_mm_source_light_reg_in_cache(light_source,free_bloc);
 	}
 
@@ -510,7 +510,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_remap(stru
 	assert((sctk_addr_t)macro_bloc % SCTK_ALLOC_PAGE_SIZE == 0);
 
 	//use mremap
-	SCTK_PDEBUG("LMMSRC : Use mremap : %p -> %llu",macro_bloc,size);
+	SCTK_NO_PDEBUG("LMMSRC : Use mremap : %p -> %llu",macro_bloc,size);
 	macro_bloc = mremap(macro_bloc,macro_bloc->header.size,size,MREMAP_MAYMOVE);
 
 	if (macro_bloc == MAP_FAILED)

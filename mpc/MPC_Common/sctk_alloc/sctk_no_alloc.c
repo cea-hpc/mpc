@@ -144,21 +144,6 @@ char * sctk_alloc_mode (void)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_relocalise_tls (void)
-{
-}
-
-/*******************  FUNCTION  *********************/
-void sctk_clean_memory (void)
-{
-}
-
-/*******************  FUNCTION  *********************/
-void __sctk_relocalise_tls (sctk_alloc_chain_t * tls)
-{
-}
-
-/*******************  FUNCTION  *********************/
 void sctk_init_alloc (void)
 {
 	sctk_print_version ("Init Standard Alloc", SCTK_LOCAL_VERSION_MAJOR,
@@ -444,6 +429,11 @@ void * sctk_user_mremap (void *old_address, size_t old_size, size_t new_size,
 
 /*******************  FUNCTION  *********************/
 void sctk_alloc_posix_numa_migrate(void)
+{
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_alloc_posix_numa_migrate_chain(struct sctk_alloc_chain * chain)
 {
 }
 

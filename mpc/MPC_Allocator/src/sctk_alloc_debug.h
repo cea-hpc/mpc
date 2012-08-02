@@ -48,6 +48,7 @@
 	#define SCTK_PDEBUG(...)
 	#define SCTK_CRASH_DUMP
 #endif //SCTK_ALLOC_DEBUG
+#define SCTK_NO_PDEBUG(...)
 
 #if defined(ENABLE_TRACE) && defined(SCTK_ALLOC_DEBUG)
 	#define SCTK_PTRACE(m,...) sctk_alloc_ptrace((m),__VA_ARGS__)
