@@ -67,7 +67,7 @@ kthread_getspecific (kthread_key_t key)
 #endif
 
 
-#define kthread_stack_size (10*1024*1024)
+#define kthread_stack_size_default (10*1024*1024)
 
 typedef void *(*start_routine_t) (void *) ;
 
@@ -161,6 +161,7 @@ kthread_create (kthread_t * thread, void *(*start_routine) (void *),
   } else {
     pthread_attr_t attr;
     int res;
+    size_t kthread_stack_size;
     kthread_create_start_t tmp;
     sctk_nodebug("Create new kernel thread");
 
@@ -171,6 +172,14 @@ kthread_create (kthread_t * thread, void *(*start_routine) (void *),
     res = pthread_attr_setscope (&attr, PTHREAD_SCOPE_SYSTEM);
 
     sctk_nodebug( "kthread_create: value returned by attr_setscope %d", res ) ;
+
+#warning "Move it to the XML configuration file"
+    char *env;
+    if ( (env = getenv("MPC_KTHREAD_STACK_SIZE")) != NULL) {
+      kthread_stack_size = atoll(env);
+    } else {
+      kthread_stack_size = kthread_stack_size_default;
+    }
 
 #ifdef PTHREAD_STACK_MIN
     if (PTHREAD_STACK_MIN > kthread_stack_size)

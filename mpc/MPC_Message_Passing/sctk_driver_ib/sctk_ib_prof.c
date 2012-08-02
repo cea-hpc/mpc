@@ -33,6 +33,7 @@
 #include "utlist.h"
 #include "sctk_route.h"
 #include "sctk_ib_prof.h"
+#include "sctk_thread.h"
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -46,66 +47,47 @@
 #define SCTK_IB_MODULE_NAME "PROF"
 #include "sctk_ib_toolkit.h"
 
-int sctk_ib_counters[128];
+__thread struct sctk_ib_prof_s * sctk_ib_profiler;
+__thread struct sctk_ib_prof_s * sctk_ib_profiler_start;
+__thread int vp_number = -1;
 
-/**
- *  Description:
- *
- *
- */
-
-/* Counters */
-__thread double time_poll_cq = 0;
-__thread double time_steals = 0;
-__thread double time_own = 0;
-__thread double time_ptp = 0;
-__thread double time_coll = 0;
-__thread long poll_steals = 0;
-__thread long poll_steals_failed = 0;
-__thread long poll_steals_success = 0;
-__thread long poll_steal_same_node = 0;
-__thread long poll_steal_other_node = 0;
-__thread long poll_own = 0;
-__thread long poll_own_failed = 0;
-__thread long poll_own_success = 0;
-__thread long call_to_polling = 0;
-__thread long poll_cq = 0;
-
-__thread double time_send = 0;
-__thread double poll_send = 0;
-__thread double poll_recv = 0;
-__thread double tst = 0;
+/* Variable only modified by th __mem_thread */
+static size_t mem_used = 0;
 
 #ifdef SCTK_IB_PROF
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
-
-void sctk_ib_prof_init(sctk_ib_rail_info_t *rail_ib) {
-  rail_ib->profiler = sctk_malloc(sizeof(sctk_ib_prof_t));
-  assume(rail_ib->profiler);
-  memset(rail_ib->profiler, 0, sizeof(sctk_ib_prof_t));
+void sctk_ib_prof_init(int nb_rails) {
+  sctk_nodebug("VP number: %d", sctk_get_cpu_number());
 
   /* Initialize QP usage profiling */
+#ifdef SCTK_IB_QP_PROF
   sctk_ib_prof_qp_init();
+#endif
+}
 
-  /* Memory profiling */
-  sctk_ib_prof_mem_init(rail_ib);
+void sctk_ib_prof_init_task(int rank, int vp) {
+  sctk_nodebug("Initialization with %d rails for rank %d", sctk_route_get_rail_nb(), rank);
+
+  sctk_ib_prof_qp_init_task(rank, vp);
 }
 
 void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib) {
-/* fprintf(stderr, "[%d] %d %d %d %d %d %d %d RDMA(%d %d)\n", sctk_process_rank,
-      PROF_LOAD(rail_ib, alloc_mem),
-      PROF_LOAD(rail_ib, free_mem),
-      PROF_LOAD(rail_ib, qp_created),
-      PROF_LOAD(rail_ib, eager_nb),
-      PROF_LOAD(rail_ib, buffered_nb),
-      PROF_LOAD(rail_ib, rdma_nb),
-      PROF_LOAD(rail_ib, ibuf_sr_nb),
-      PROF_LOAD(rail_ib, ibuf_rdma_nb),
-      PROF_LOAD(rail_ib, ibuf_rdma_miss_nb)
-      ); */
+  if (rail_ib->rail->rail_number  == 0) {
+    fprintf(stderr, "[%d] %d %d %d %d %d %d %d RDMA(%d %d)\n", sctk_process_rank,
+        PROF_LOAD(rail_ib->rail, alloc_mem),
+        PROF_LOAD(rail_ib->rail, free_mem),
+        PROF_LOAD(rail_ib->rail, qp_created),
+        PROF_LOAD(rail_ib->rail, eager_nb),
+        PROF_LOAD(rail_ib->rail, buffered_nb),
+        PROF_LOAD(rail_ib->rail, rdma_nb),
+        PROF_LOAD(rail_ib->rail, ibuf_sr_nb),
+        PROF_LOAD(rail_ib->rail, ibuf_rdma_nb),
+        PROF_LOAD(rail_ib->rail, ibuf_rdma_miss_nb)
+        );
+  }
 }
 
 void sctk_ib_prof_finalize(sctk_ib_rail_info_t *rail_ib) {
@@ -113,10 +95,44 @@ void sctk_ib_prof_finalize(sctk_ib_rail_info_t *rail_ib) {
   sctk_ib_prof_mem_finalize(rail_ib);
 }
 
-#endif
+void * __mem_thread(void* arg) {
+  sctk_ib_rail_info_t *rail_ib = (sctk_ib_rail_info_t*) arg;
+
+  while(1) {
+    mem_used = sctk_profiling_get_dataused();
+
+    if (sctk_process_rank == 0) {
+      sctk_warning("Memory used for process %d: %.0fko-%.0fko", sctk_process_rank,
+          mem_used, IBV_MEM_USED_LIMIT);
+
+      if (mem_used > IBV_MEM_USED_LIMIT) {
+        sctk_warning("Process %d in low memory mode :%.0fko", mem_used);
+        sctk_ibuf_rdma_save_memory(rail_ib, mem_used - IBV_MEM_USED_LIMIT);
+      }
+    }
+    sleep(1);
+  }
+}
+
+double sctk_ib_prof_get_mem_used() {
+  return mem_used;
+}
 
 #if 0
+/* Process initialization */
+void sctk_ib_prof_mem_init(sctk_ib_rail_info_t *rail_ib) {
+  sctk_thread_t pidt;
+  sctk_thread_attr_t attr;
 
+  sctk_thread_attr_init (&attr);
+  sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
+  sctk_user_thread_create (&pidt, &attr, __mem_thread, (void*) rail_ib);
+}
+#endif
+#endif
+
+
+#ifdef SCTK_IB_QP_PROF
 /*-----------------------------------------------------------
  *  QP profiling
  *----------------------------------------------------------*/
@@ -164,6 +180,8 @@ void sctk_ib_prof_qp_init_task(int task_id, int vp) {
   char pathname[256];
   static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
   struct sctk_ib_prof_qp_s *tmp;
+
+  sctk_debug("Task initialization");
 
   sctk_spinlock_lock(&lock);
   if (qp_prof == NULL) {
@@ -241,7 +259,10 @@ void sctk_ib_prof_qp_finalize_task(int task_id) {
   sctk_nodebug("FLUSHED End of task %d (head:%d)", task_id, tmp->head);
   close(tmp->fd);
 }
+#endif
 
+
+#ifdef SCTK_IB_MEM_PROF
 /*-----------------------------------------------------------
  *  Memory profiling
  *----------------------------------------------------------*/

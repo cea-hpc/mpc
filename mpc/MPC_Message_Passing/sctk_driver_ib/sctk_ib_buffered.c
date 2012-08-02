@@ -44,11 +44,24 @@
 #include "sctk_ib_toolkit.h"
 #include "math.h"
 
+
 /* XXX: Modifications required:
  * - copy in user buffer if the message has already been posted - DONE
  * - Support of fragmented copy
  *
  * */
+
+/* Handle non contiguous messages. Returns 1 if the message was handled, 0 if not */
+static inline void* sctk_ib_buffered_send_non_contiguous_msg(sctk_rail_info_t* rail,
+    sctk_ib_qp_t* remote, sctk_thread_ptp_message_t * msg, size_t size) {
+
+  void * buffer = NULL;
+  buffer = sctk_malloc(size);
+  sctk_net_copy_in_buffer(msg, buffer);
+
+  return buffer;
+}
+
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
@@ -66,12 +79,12 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
   sctk_ib_buffered_t *buffered;
   void *payload;
 
-  /* Sometimes it should be interresting to fallback to RDMA :-) */
   if (msg->tail.message_type != sctk_message_contiguous) {
-    sctk_nodebug("Switch to RDMA");
-    return 1;
+    payload = sctk_ib_buffered_send_non_contiguous_msg(rail, remote, msg, size);
+    assume(payload);
+  } else {
+    payload = msg->tail.message.contiguous.addr;
   }
-  payload = msg->tail.message.contiguous.addr;
 
   sctk_nodebug("Sending buffered message (size:%lu)", size);
 
@@ -102,8 +115,8 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
     memcpy(IBUF_GET_BUFFERED_PAYLOAD(ibuf->buffer), (char*) payload+msg_copied,
       payload_size);
 
-    sctk_nodebug("Send message %d (msg_copied:%lu pyload_size:%lu header:%lu, buffer_size:%lu number:%lu)",
-        buffer_index, msg_copied, payload_size, IBUF_GET_BUFFERED_SIZE, buffer_size, msg->sctk_msg_get_message_number);
+    sctk_nodebug("Send message %d to %d (msg_copied:%lu pyload_size:%lu header:%lu, buffer_size:%lu number:%lu)",
+        buffer_index, remote->rank, msg_copied, payload_size, IBUF_GET_BUFFERED_SIZE, buffer_size, msg->sctk_msg_get_message_number);
     /* Initialization of the buffer */
     buffered->index = buffer_index;
     buffered->payload_size = payload_size;
@@ -120,6 +133,12 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
 
     buffer_index++;
   } while ( msg_copied < size);
+
+  /* We free the temp copy */
+  if (msg->tail.message_type != sctk_message_contiguous) {
+    assume(payload);
+    sctk_free(payload);
+  }
 
   sctk_nodebug("End of message sending");
   return 0;
@@ -160,7 +179,7 @@ void sctk_ib_buffered_copy(sctk_message_to_copy_t* tmp){
   rail = send->tail.ib.buffered.rail;
   entry = send->tail.ib.buffered.entry;
   ib_assume(entry);
-  ib_assume(recv->tail.message_type == sctk_message_contiguous);
+  //ib_assume(recv->tail.message_type == sctk_message_contiguous);
 
   sctk_spinlock_lock(&entry->lock);
   entry->copy_ptr = tmp;
@@ -168,13 +187,15 @@ void sctk_ib_buffered_copy(sctk_message_to_copy_t* tmp){
   switch (entry->status & MASK_BASE) {
     case not_set:
       sctk_nodebug("Message directly copied (entry:%p)", entry);
-      entry->payload = recv->tail.message.contiguous.addr;
-      /* Add matching OK */
-      entry->status = zerocopy | match;
-      sctk_spinlock_unlock(&entry->lock);
-      break;
+      if (recv->tail.message_type == sctk_message_contiguous) {
+        entry->payload = recv->tail.message.contiguous.addr;
+        /* Add matching OK */
+        entry->status = zerocopy | match;
+        sctk_spinlock_unlock(&entry->lock);
+        break;
+      }
     case recopy:
-      sctk_nodebug("Message directly recopied");
+      sctk_nodebug("Message recopied");
       /* transfer done */
       if ( (entry->status & MASK_DONE) == done) {
         sctk_spinlock_unlock(&entry->lock);
@@ -184,8 +205,10 @@ void sctk_ib_buffered_copy(sctk_message_to_copy_t* tmp){
         sctk_free(entry);
         PROF_INC(rail, free_mem);
       } else {
+        sctk_nodebug("Matched");
         /* Add matching OK */
         entry->status |= match;
+        sctk_nodebug("1 Matched ? %p %d", entry, entry->status & MASK_MATCH);
         sctk_spinlock_unlock(&entry->lock);
       }
       break;
@@ -244,10 +267,11 @@ sctk_ib_buffered_get_entry(sctk_rail_info_t* rail, sctk_ib_qp_t *remote, sctk_ib
     sctk_spinlock_lock(&entry->lock);
     /* Should be 'not_set' or 'zerocopy' */
     if ( (entry->status & MASK_BASE) == not_set) {
+      sctk_nodebug("We recopy the message");
       entry->payload = sctk_malloc(body->header.msg_size);
       ib_assume(entry->payload);
       PROF_INC(rail, alloc_mem);
-      entry->status = recopy;
+      entry->status |= recopy;
     } else if ( (entry->status & MASK_BASE) != zerocopy) not_reachable();
     sctk_spinlock_unlock(&entry->lock);
   }
@@ -256,7 +280,7 @@ sctk_ib_buffered_get_entry(sctk_rail_info_t* rail, sctk_ib_qp_t *remote, sctk_ib
   return entry;
 }
 
-  void
+  int
 sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   sctk_thread_ptp_message_body_t *body;
   sctk_ib_buffered_t *buffered;
@@ -265,13 +289,17 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   sctk_ib_qp_t *remote;
   size_t current_copied;
   int src_process;
+  int ret;
 
   IBUF_CHECK_POISON(ibuf->buffer);
   buffered = IBUF_GET_BUFFERED_HEADER(ibuf->buffer);
   body = &buffered->msg;
 
+  /* Determine the Source process */
   src_process = sctk_determine_src_process_from_header(body);
   ib_assume(src_process != -1);
+  /* Determine if the message is expected or not (good sequence number) */
+  ret = sctk_send_message_from_network_check_reorder(body);
   route_table = sctk_get_route_to_process(src_process, rail);
   ib_assume(route_table);
   remote = route_table->data.ib.remote;
@@ -301,6 +329,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     sctk_spinlock_unlock(&remote->ib_buffered.lock);
 
     sctk_spinlock_lock(&entry->lock);
+    sctk_nodebug("2 - Matched ? %p %d", entry, entry->status & MASK_MATCH);
     switch(entry->status & MASK_BASE) {
       case recopy:
         /* Message matched */

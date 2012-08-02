@@ -107,14 +107,17 @@ sctk_network_notify_any_source_message_multirail_ib (){
   }
 }
 
+/* Returns the status of the message polled */
 static
-void sctk_send_message_from_network_multirail_ib (sctk_thread_ptp_message_t * msg){
-  if(sctk_send_message_from_network_reorder(msg) == REORDER_NO_NUMBERING){
+int sctk_send_message_from_network_multirail_ib (sctk_thread_ptp_message_t * msg){
+  int ret = sctk_send_message_from_network_reorder(msg);
+  if(ret == REORDER_NO_NUMBERING){
     /*
       No reordering
     */
     sctk_send_message_try_check(msg,1);
   }
+  return ret;
 }
 
 /************ INIT ****************/
@@ -175,6 +178,7 @@ void sctk_network_init_multirail_ib_all(char* name, char* topology){
 
   sctk_set_dynamic_reordering_buffer_creation();
   sctk_route_set_rail_nb(NB_RAILS);
+  sctk_ib_prof_init(NB_RAILS);
   rails = sctk_malloc(NB_RAILS*sizeof(sctk_rail_info_t*));
   memset(rails, 0, NB_RAILS*sizeof(sctk_rail_info_t*));
 
@@ -232,8 +236,7 @@ void sctk_network_finalize_multirail_ib (){
   int i;
   if (rails) {
     for(i = 0; i < NB_RAILS; i++){
-      TODO("Check those *_info_t typedef coherency");
-      sctk_ib_prof_finalize((sctk_ib_rail_info_t *)rails[i]);
+      sctk_ib_prof_finalize(&rails[i]->network.ib);
     }
   }
 }

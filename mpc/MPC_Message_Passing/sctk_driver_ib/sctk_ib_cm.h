@@ -51,6 +51,8 @@
 #define CM_RESIZING_RDMA_ACK_TAG (14)
 #define CM_RESIZING_RDMA_DONE_TAG (15)
 
+#define CM_RESIZING_RDMA_DECO_REQ_TAG (16)
+
 struct sctk_thread_ptp_message_body_s;
 
 /*-----------------------------------------------------------
@@ -59,6 +61,10 @@ struct sctk_thread_ptp_message_body_s;
 
 #define CM_SET_REQUEST(r,x) (r->request_id = x)
 #define CM_GET_REQUEST(r) (r->request_id)
+enum sctk_ib_cm_change_state_type_e {
+  CONNECTION = 111,
+  RESIZING = 222,
+};
 
 /* All the following structures are requests
  * for the Connection Manager. */

@@ -50,8 +50,10 @@
  * if x > IBV_FRAG_EAGER_LIMIT -> rendezvous msg */
 /* !!! WARNING !!! : diminishing IBV_EAGER_LIMIT me cause bad performance
  * on buffered eager messages */
-#define IBV_EAGER_LIMIT       ( 8 * 1024)
-#define IBV_FRAG_EAGER_LIMIT  (256 * 1024)
+#define IBV_EAGER_LIMIT       ( 12 * 1024)
+//#define IBV_FRAG_EAGER_LIMIT  (256 * 1024)
+/* FOR PAPER */
+#define IBV_FRAG_EAGER_LIMIT  (512 * 1024)
 
 /* Number of allowed pending Work Queue Elements
  * for each QP */
@@ -62,13 +64,28 @@
 /* Many CQE. In memory, it represents about
  * 1.22Mb for 40000 entries */
 #define IBV_CQ_DEPTH        40000
-#define IBV_MAX_SG_SQ       8
-#define IBV_MAX_SG_RQ       8
+#define IBV_MAX_SG_SQ       4
+#define IBV_MAX_SG_RQ       4
 #define IBV_MAX_INLINE      128
 
 /* Number of RDMA buffers allocated for each neighbor.
  * The total memory used is: 2 (1 for send and 1 for receive) * 256 buffers * IBV_EAGER_RDMA_LIMIT */
 #define IBV_MAX_RDMA_CONNECTIONS 24 /* 2*12 */
+#define IBV_RDMA_RESIZING 1
+
+/* For RDMA connection */
+/* FOR PAPER */
+#define IBV_RDMA_MIN_SIZE (2 * 1024)
+#define IBV_RDMA_MAX_SIZE (12 * 1024)
+#define IBV_RDMA_MIN_NB (16)
+#define IBV_RDMA_MAX_NB (1024)
+
+/* For RDMA resizing */
+/* FOR PAPER */
+#define IBV_RDMA_RESIZING_MIN_SIZE (2 * 1024)
+#define IBV_RDMA_RESIZING_MAX_SIZE (12 * 1024)
+#define IBV_RDMA_RESIZING_MIN_NB (16)
+#define IBV_RDMA_RESIZING_MAX_NB (1024)
 
 /* Maximum number of buffers to allocate during the
  * initialization step */
@@ -78,7 +95,7 @@
 /* Maximum number of buffers which can be posted to the SRQ.
  * This number cannot be higher than than the number fixed by the HW.
  * The verification is done during the config_check function */
-#define IBV_MAX_SRQ_IBUFS_POSTED     3000
+#define IBV_MAX_SRQ_IBUFS_POSTED     1000
 /* When the async thread wakes, it means that the SRQ is full. We
  * allows the async thread to extract IBV_MAX_SRQ_WR_HANDLE_BY_THREAD messages
  * before posting new buffers .*/
@@ -197,6 +214,15 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         "ibv_eager_limit      = %d\n"
         "ibv_frag_eager_limit = %d\n"
         "ibv_max_rdma_connections = %d\n"
+        "ibv_rdma_min_size = %d\n"
+        "ibv_rdma_max_size = %d\n"
+        "ibv_rdma_min_nb = %d\n"
+        "ibv_rdma_max_nb = %d\n"
+        "ibv_rdma_resizing_min_size, = %d\n"
+        "ibv_rdma_resizing_max_size = %d\n"
+        "ibv_rdma_resizing_min_nb = %d\n"
+        "ibv_rdma_resizing_max_nb = %d\n"
+        "ibv_rdma_resizing    = %d\n"
         "ibv_qp_tx_depth      = %d\n"
         "ibv_qp_rx_depth      = %d\n"
         "ibv_max_sg_sq        = %d\n"
@@ -227,6 +253,16 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         config->ibv_eager_limit,
         config->ibv_frag_eager_limit,
         config->ibv_max_rdma_connections,
+        config->ibv_rdma_min_size,
+        config->ibv_rdma_max_size,
+        config->ibv_rdma_min_nb,
+        config->ibv_rdma_max_nb,
+        config->ibv_rdma_resizing_min_size,
+        config->ibv_rdma_resizing_max_size,
+        config->ibv_rdma_resizing_min_nb,
+        config->ibv_rdma_resizing_max_nb,
+
+        config->ibv_rdma_resizing,
         config->ibv_qp_tx_depth,
         config->ibv_qp_rx_depth,
         config->ibv_max_sg_sq,
@@ -261,10 +297,11 @@ void load_ib_default_config(sctk_ib_rail_info_t *rail_ib)
   config->ibv_size_mr_chunk = IBV_SIZE_MR_CHUNKS;
   config->ibv_init_ibufs = IBV_INIT_IBUFS;
 
-  config->ibv_eager_limit       = ALIGN_ON_64 (IBV_EAGER_LIMIT + IBUF_GET_EAGER_SIZE);
+  config->ibv_eager_limit       = ALIGN_ON (IBV_EAGER_LIMIT + IBUF_GET_EAGER_SIZE, 64);
   config->ibv_frag_eager_limit  = (IBV_FRAG_EAGER_LIMIT + sizeof(sctk_thread_ptp_message_body_t));
 
   config->ibv_max_rdma_connections  = IBV_MAX_RDMA_CONNECTIONS;
+  config->ibv_rdma_resizing = IBV_RDMA_RESIZING;
   config->ibv_qp_tx_depth = IBV_QP_TX_DEPTH;
   config->ibv_qp_rx_depth = IBV_QP_RX_DEPTH;
   config->ibv_cq_depth = IBV_CQ_DEPTH;
@@ -292,6 +329,17 @@ void load_ib_default_config(sctk_ib_rail_info_t *rail_ib)
   config->ibv_steal = IBV_STEAL;
   config->ibv_low_memory = IBV_LOW_MEMORY;
   config->ibv_quiet_crash = IBV_QUIET_CRASH;
+
+  /* For RDMA */
+  config->ibv_rdma_min_size = IBV_RDMA_MIN_SIZE;
+  config->ibv_rdma_max_size = IBV_RDMA_MAX_SIZE;
+  config->ibv_rdma_min_nb = IBV_RDMA_MIN_NB;
+  config->ibv_rdma_max_nb = IBV_RDMA_MAX_NB;
+
+  config->ibv_rdma_resizing_min_size = IBV_RDMA_RESIZING_MIN_SIZE;
+  config->ibv_rdma_resizing_max_size = IBV_RDMA_RESIZING_MAX_SIZE;
+  config->ibv_rdma_resizing_min_nb = IBV_RDMA_RESIZING_MIN_NB;
+  config->ibv_rdma_resizing_max_nb = IBV_RDMA_RESIZING_MAX_NB;
 }
 
 /* Set IB configure with env variables */
@@ -301,13 +349,16 @@ void set_ib_env(sctk_ib_rail_info_t *rail_ib)
   sctk_ib_config_t* c = rail_ib->config;
 
   if ( (value = getenv("MPC_IBV_EAGER_LIMIT")) != NULL )
-    c->ibv_eager_limit = ALIGN_ON_64 (atoi(value) + IBUF_GET_EAGER_SIZE);
+    c->ibv_eager_limit = ALIGN_ON(atoi(value) + IBUF_GET_EAGER_SIZE, 64);
 
   if ( (value = getenv("MPC_IBV_FRAG_EAGER_LIMIT")) != NULL )
-    c->ibv_frag_eager_limit = ALIGN_ON_64 (atoi(value) + sizeof(sctk_thread_ptp_message_body_t));
+    c->ibv_frag_eager_limit = ALIGN_ON (atoi(value) + sizeof(sctk_thread_ptp_message_body_t), 64);
 
   if ( (value = getenv("MPC_IBV_MAX_RDMA_CONNECTIONS")) != NULL )
     c->ibv_max_rdma_connections = atoi(value);
+
+  if ( (value = getenv("MPC_IBV_RDMA_RESIZING")) != NULL )
+    c->ibv_rdma_resizing = atoi(value);
 
   if ( (value = getenv("MPC_IBV_QP_TX_DEPTH")) != NULL )
     c->ibv_qp_tx_depth = atoi(value);
@@ -385,6 +436,26 @@ void set_ib_env(sctk_ib_rail_info_t *rail_ib)
 
   if ( (value = getenv("MPC_IBV_QUIET_CRASH")) != NULL )
     c->ibv_quiet_crash = atoi(value);
+
+  /* Format: "x:x:x:x-x:x:x:x". Buffer sizes are in KB */
+  if ( (value = getenv("MPC_IBV_RDMA_EAGER")) != NULL) {
+    sscanf(value,"%d-(%d:%d:%d:%d)-%d-(%d:%d:%d:%d)",
+        &c->ibv_max_rdma_connections,
+        &c->ibv_rdma_min_size,
+        &c->ibv_rdma_max_size,
+        &c->ibv_rdma_min_nb,
+        &c->ibv_rdma_max_nb,
+        &c->ibv_rdma_resizing,
+        &c->ibv_rdma_resizing_min_size,
+        &c->ibv_rdma_resizing_max_size,
+        &c->ibv_rdma_resizing_min_nb,
+        &c->ibv_rdma_resizing_max_nb);
+
+    c->ibv_rdma_min_size          *=1024;
+    c->ibv_rdma_max_size          *=1024;
+    c->ibv_rdma_resizing_min_size *=1024;
+    c->ibv_rdma_resizing_max_size *=1024;
+  }
 }
 
 void sctk_ib_config_init(sctk_ib_rail_info_t *rail_ib, char* network_name)

@@ -114,7 +114,7 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
     page_size = getpagesize();
 
     posix_memalign((void**) &aligned_addr, page_size, aligned_size);
-    PROF_INC_RAIL_IB(rail_ib, alloc_mem);
+    PROF_INC(rail_ib->rail, alloc_mem);
     sctk_net_copy_in_buffer(msg, aligned_addr);
 
     sctk_nodebug("Sending NOT contiguous message %p of size: %lu, add:%p, type:%d (src cs:%lu, dest cs:%lu)", msg, aligned_size, aligned_addr, msg->tail.message_type, msg->body.checksum, sctk_checksum_buffer(aligned_addr,msg));

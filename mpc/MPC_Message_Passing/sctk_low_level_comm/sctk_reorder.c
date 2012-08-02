@@ -142,6 +142,64 @@ static inline int __send_pending_messages(sctk_reorder_table_t* tmp) {
 
 
 /*
+ * Check a message received from network
+ * */
+int sctk_send_message_from_network_check_reorder(sctk_thread_ptp_message_body_t * body){
+   int process;
+  int number;
+  sctk_reorder_table_t* tmp = NULL;
+
+  if(body->header.use_message_numbering == 0){
+    /* Renumbering unused */
+    return REORDER_NO_NUMBERING;
+  } else if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(body->header.specific_message_tag)){
+      /* Process specific message tag */
+    if (IS_PROCESS_SPECIFIC_MESSAGE_TAG_WITH_ORDERING(body->header.specific_message_tag) == 0) {
+      return REORDER_NO_NUMBERING;
+    }
+
+    /* With message reordering */
+    process = body->header.destination;
+    tmp = sctk_get_reorder_to_process(body->header.source);
+    if (tmp == NULL) {
+      return REORDER_NO_NUMBERING;
+    }
+
+    number = OPA_load_int(&(tmp->message_number_src));
+
+    if(number == body->header.message_number){
+      return REORDER_FOUND_EXPECTED;
+    } else {
+      return REORDER_FOUND_NOT_EXPECTED;
+    }
+    not_reachable();
+  } else {
+    int glob_source, glob_destination;
+    sctk_determine_glob_source_and_destination_from_header(body,
+        &glob_source, &glob_destination);
+    tmp = sctk_get_reorder(glob_source);
+    process = sctk_get_process_rank_from_task_rank(glob_destination);
+
+    /* Indirect messages, we do not check PSN */
+    if(sctk_process_rank != process){
+      return REORDER_NO_NUMBERING;
+    }
+    assume(tmp != NULL);
+
+    number = OPA_load_int(&(tmp->message_number_src));
+
+    if(number == body->header.message_number){
+      return REORDER_FOUND_EXPECTED;
+    } else {
+      return REORDER_FOUND_NOT_EXPECTED;
+    }
+    not_reachable();
+  }
+  not_reachable();
+}
+
+
+/*
  * Receive message from network
  * */
 int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
@@ -252,11 +310,9 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
   }
 }
 
-
 /*
  * Send message to network
  * */
-
 int sctk_prepare_send_message_to_network_reorder (sctk_thread_ptp_message_t * msg){
   sctk_reorder_table_t* tmp;
   int src_process;

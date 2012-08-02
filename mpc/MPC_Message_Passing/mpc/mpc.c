@@ -1271,7 +1271,6 @@ PMPC_Finalize (void)
 {
   sctk_task_specific_t *task_specific;
   SCTK_PROFIL_START (MPC_Finalize);
-
   sctk_nodebug("PMPC_Finalize");
 
   __MPC_Barrier (MPC_COMM_WORLD);
@@ -4940,10 +4939,10 @@ void MPC_Network_stats(struct MPC_Network_stats_s *stats) {
 }
 
 /* Try to deconnect neighbors */
-void MPC_Network_deco_neighbors() {
+void MPC_Network_deco_neighbor(int process) {
 #ifdef MPC_Message_Passing
 #ifdef MPC_USE_INFINIBAND
-  sctk_network_deco_neighbors_ib();
+  sctk_network_deco_neighbor_ib(process);
 #endif
 #endif
 }
