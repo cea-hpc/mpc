@@ -157,4 +157,7 @@ begin_section Valgrind
 check_debug
 end_section
 
+check_pragma_message
+
+
 SCTK_CHECK_LIB_OPENPA

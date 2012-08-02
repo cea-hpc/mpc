@@ -82,7 +82,7 @@ extern "C"
   #endif
 #endif
 
-#if defined(SCTK_DEBUG_MESSAGES) && defined(SCTK_PRAGMA_MESSAGE)
+#if (defined SCTK_HAVE_PRAGMA_MESSAGE) && (defined SCTK_DEBUG_MESSAGES)
     /* Add todo support (as stated in GCC doc
     * Supported since GCC 4.4.7 ignored in previous versions*/
     #define DO_PRAGMA(x) _Pragma (#x)
