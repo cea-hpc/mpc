@@ -987,10 +987,10 @@ sctk_launch_main (int argc, char **argv)
       exit (1);
     }
   }
-
+#if defined (SCTK_USE_OPTIMIZED_TLS)
   /* Set GS register for optimized TLS */
   sctk_tls_module_set_gs_register();
-
+#endif
   sctk_nodebug ("new argc %d", argc);
 
   arg.argc = argc;
