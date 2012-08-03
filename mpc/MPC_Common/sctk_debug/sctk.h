@@ -41,21 +41,15 @@ extern int sctk_migration_mode;
 #endif
 
 #ifdef MPC_Profiler
-#include "sctk_profiling.h"
+#include "sctk_internal_profiler.h"
 #else
-#define SCTK_PROFIL_START(name)	(void)(0)
-#define SCTK_PROFIL_TRACE_START(name,a,b,c,d)	(void)(0)
-#define SCTK_PROFIL_INIT(name) int __sctk_dummy__##name
-#define SCTK_PROFIL_TIME(name) (void)(0)
-#define SCTK_PROFIL_END(name) (void)(0)
-#define SCTK_PROFIL_TRACE_END(name,a,b,c,d) (void)(0)
-#define SCTK_TRACE_START(func,a,b,c,d)  (void)(0)
-#define SCTK_TRACE_END(func,a,b,c,d) (void)(0)
-#define SCTK_TRACE_POINT(func,a,b,c,d) (void)(0)
-#define sctk_profiling_commit()  (void)(0)
-#define sctk_profiling_init() (void)(0)
-#define sctk_profiling_result() (void)(0)
-#define sctk_profiling_init_keys() (void)(0)
+#define SCTK_PROFIL_START(key)	(void)(0)
+#define SCTK_PROFIL_END(key) (void)(0)
+#define SCTK_COUNTER_INC(key) (void)(0);
+#define SCTK_COUNTER_DEC(key) (void)(0);
+#define sctk_internal_profiler_init() (void)(0)
+#define sctk_internal_profiler_render() (void)(0)
+#define sctk_internal_profiler_release() (void)(0)
 #endif
 int sctk_user_main (int, char **);
 #if 0

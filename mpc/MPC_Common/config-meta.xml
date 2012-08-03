@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<!DOCTYPE config SYSTEM "../MPC_Config/extra/config-meta.dtd">
+<config>
+	<usertypes>
+		<struct name="launcher" doc="Options for MPC launcher.">
+			<param name="smt" type="bool" default="false" doc="Enable usage of hyperthreaded cores if available on current architecture."/>
+			<param name="cores" type="int" default="1" doc="Default number of cores if -c=X is not given to mpcrun."/>
+			<param name="verbosity" type="int" default="0" doc="Default verbosity level from 0 to 3. Can be override by -vv on mpcrun."/>
+			<param name="banner" type="bool" default="true" doc="Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER."/>
+			<param name="autokill" type="int" default="0" doc="Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT."/>
+			<param name="user_launchers" type="string" default="" doc="Permit to extend the launchers available via 'mpcrun -l=...' by providing scripts (named mpcrun_XXXX) in a user directory. Can be override by MPC_USER_LAUNCHERS."/>
+		</struct>
+	</usertypes>
+	<modules>
+		<module name="launcher" type="launcher"/>
+	</modules>
+</config>

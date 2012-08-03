@@ -70,9 +70,10 @@ sctk_terminaison_barrier (const int id)
 void sctk_barrier(const sctk_communicator_t communicator){
   sctk_internal_collectives_struct_t * tmp;
 
-  tmp = sctk_get_internal_collectives(communicator);
-
-  tmp->barrier_func(communicator,tmp);
+  if (communicator != SCTK_COMM_SELF) {
+    tmp = sctk_get_internal_collectives(communicator);
+    tmp->barrier_func(communicator,tmp);
+  }
 }
 
 /************************************************************************/
@@ -83,9 +84,10 @@ void sctk_broadcast (void *buffer, const size_t size,
 {
   sctk_internal_collectives_struct_t * tmp;
 
-  tmp = sctk_get_internal_collectives(communicator);
-
-  tmp->broadcast_func(buffer,size,root,communicator,tmp);
+  if (communicator != SCTK_COMM_SELF) {
+    tmp = sctk_get_internal_collectives(communicator);
+    tmp->broadcast_func(buffer,size,root,communicator,tmp);
+  }
 }
 
 /************************************************************************/
@@ -94,24 +96,27 @@ void sctk_broadcast (void *buffer, const size_t size,
 void sctk_all_reduce (const void *buffer_in, void *buffer_out,
 		      const size_t elem_size,
 		      const size_t elem_number,
-		      void (*func) (const sctk_communicator_t *, sctk_communicator_t *, size_t,
-				    sctk_datatype_t),
+		      MPC_Op_f func,
 		      const sctk_communicator_t communicator,
 		      const sctk_datatype_t data_type)
 {
   sctk_internal_collectives_struct_t * tmp;
 
-  tmp = sctk_get_internal_collectives(communicator);
-
-  tmp->allreduce_func(buffer_in,buffer_out,elem_size,
+  if (communicator != SCTK_COMM_SELF) {
+    tmp = sctk_get_internal_collectives(communicator);
+    tmp->allreduce_func(buffer_in,buffer_out,elem_size,
 		      elem_number,func,communicator,data_type,tmp);
+  } else {
+    const size_t size = elem_size * elem_number;
+    memcpy(buffer_out,buffer_in,size);
+  }
 }
 
 /************************************************************************/
 /*INIT                                                                  */
 /************************************************************************/
 
-void (*sctk_collectives_init_hook)(sctk_communicator_t id) = sctk_collectives_init_hetero_messages;
+void (*sctk_collectives_init_hook)(sctk_communicator_t id) = sctk_collectives_init_opt_messages;
 
 /*Init data structures used for task i*/
 void sctk_collectives_init (sctk_communicator_t id,

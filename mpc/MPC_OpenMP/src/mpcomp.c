@@ -27,6 +27,7 @@
 #include "sctk_asm.h"
 #include "sctk_debug.h"
 #include "sctk_topology.h"
+#include "sctk_runtime_config.h"
 #include "mpcmicrothread_internal.h"
 #include "mpcomp_internal.h"
 #include <sys/time.h>
@@ -157,7 +158,7 @@ __mpcomp_init (void)
 	      if ( ok ) {
 		int chunk_size = 0 ;
 		/* Check for chunk size, if present */
-		sctk_debug( "Remaining string for schedule: <%s>", &env[offset] ) ;
+		sctk_nodebug( "Remaining string for schedule: <%s>", &env[offset] ) ;
 		switch( env[offset] ) {
 		  case ',':
 		    sctk_nodebug( "There is a chunk size -> <%s>", &env[offset+1] ) ;
@@ -234,7 +235,7 @@ __mpcomp_init (void)
 
 
 	  /***** PRINT SUMMARY ******/
-	  if ( (getenv ("MPC_DISABLE_BANNER") == NULL) && (sctk_get_process_rank() == 0) ) {
+	  if ( (sctk_runtime_config_get()->modules.launcher.banner) && (sctk_get_process_rank() == 0) ) {
 	    fprintf (stderr,
 		"MPC OpenMP version %d.%d (DEV)\n",
 		SCTK_OMP_VERSION_MAJOR, SCTK_OMP_VERSION_MINOR);
@@ -354,6 +355,10 @@ __mpcomp_wrapper_op (void *arg)
   if (info->context == 0)
     {
       sctk_extls = info->extls;
+#if defined (SCTK_USE_OPTIMIZED_TLS)
+	  sctk_tls_module = info->tls_module;
+	  sctk_context_restore_tls_module_vp() ;
+#endif
     }
 
   sctk_nodebug
@@ -386,7 +391,7 @@ __mpcomp_wrapper_op (void *arg)
   if (info->context == 3)
     {
       sctk_microthread_vp_t *my_vp;
-#warning "TODO to translate"
+TODO("to translate")
       /* Pour repasser la main à la pile principale de dummy_func */
       my_vp = &(info->task->__list[info->vp]);
       sctk_nodebug ("__mpcomp_wrapper_op: Restore main (context=3)");
@@ -430,7 +435,7 @@ __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *),
     }
 
   /* Bypass if the parallel region contains only 1 thread */
-  if (num_threads == 1)
+  if (current_info->depth == 0 && num_threads == 1)
     {
       sctk_nodebug
 	("__mpcomp_start_parallel_region: Only 1 thread -> call f");
@@ -445,6 +450,7 @@ __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *),
       SCTK_PROFIL_END (__mpcomp_start_parallel_region);
       return;
     }
+
 
   sctk_nodebug
     ("__mpcomp_start_parallel_region: -> Final num threads = %d",
@@ -557,6 +563,9 @@ __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *),
 	    }
 	  else
 	    {
+	      sctk_nodebug
+		("__mpcomp_start_parallel_region: Child %d is OK -> resetting thread_info",
+		 i);
 	      __mpcomp_reset_thread_info (new_info, func, shared, num_threads,
 					  current_info->icvs, 0, 0, vp);
 	    }
@@ -634,7 +643,7 @@ __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *),
 	{
 	  sctk_nodebug
 	    ("__mpcomp_start_parallel_region: Reusing older thread_info");
-	  __mpcomp_reset_thread_info (new_info, func, shared, 0,
+	  __mpcomp_reset_thread_info (new_info, func, shared, 1,
 				      current_info->icvs, 0, 0,
 				      current_info->vp);
 	}
@@ -654,6 +663,10 @@ __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *),
 
   /* Restore the TLS for the main thread */
   sctk_extls = current_info->children[0]->extls;
+#if defined (SCTK_USE_OPTIMIZED_TLS)
+  sctk_tls_module = current_info->children[0]->tls_module;
+  sctk_context_restore_tls_module_vp() ;
+#endif
 
   SCTK_PROFIL_END (__mpcomp_start_parallel_region);
 }
@@ -950,6 +963,15 @@ mpcomp_fork_when_blocked (sctk_microthread_vp_t * self, long step)
 	      sctk_nodebug( "mpcomp_fork_when_blocked[%d]: Null stack -> mallocing"
 		  , info->rank ) ;
 	    }
+#if defined (SCTK_USE_OPTIMIZED_TLS)
+	  res = sctk_makecontext_extls (&(info->uc),
+				        (void *) self->op_list[i].
+				        arg,
+				        (void (*)(void *)) self->
+				        op_list[i].func,
+				        info->stack, STACK_SIZE,
+				        info->extls, info->tls_module);
+#else
 	  res = sctk_makecontext_extls (&(info->uc),
 				        (void *) self->op_list[i].
 				        arg,
@@ -957,6 +979,7 @@ mpcomp_fork_when_blocked (sctk_microthread_vp_t * self, long step)
 				        op_list[i].func,
 				        info->stack, STACK_SIZE,
 				        info->extls);
+#endif
 	  sctk_assert (res == TRUE);
 
 	  /* Context created */
@@ -1266,7 +1289,7 @@ void __mpcomp_flush() {
 
   __mpcomp_init ();
 
-#warning "__mpcomp_flush: need to call mpcomp_macro_scheduler"
+INFO("__mpcomp_flush: need to call mpcomp_macro_scheduler")
 
   sctk_nodebug( "__mpcomp_flush: entering..." ) ;
 

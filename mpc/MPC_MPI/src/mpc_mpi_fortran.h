@@ -20,7 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#warning "traiter le cas des MPI_Aint qui sont des int en fortran"
+TODO("Handle the case of MPI_Aint which are not int fortran")
 
 void ffunc (mpi_send) (void *buf, int *count, MPI_Datatype * datatype,
 		       int *dest, int *tag, MPI_Comm * comm, int *res);

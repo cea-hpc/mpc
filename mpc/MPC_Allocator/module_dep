@@ -22,5 +22,11 @@
 ########################################################################
 # MPC Module Dependency Check
 avail_module MPC_Threads
+avail_module MPC_Profiler
 need_module MPC_Common
 SCTK_INCLUDE_FILES="mpcalloc.h"
+
+if [ "${SCTK_POSIX_ALLOC}" = '1' ];
+then
+	SCTK_CHECK_OPTION -DMPC_PosixAllocator
+fi

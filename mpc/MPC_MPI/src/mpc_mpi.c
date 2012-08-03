@@ -42,7 +42,7 @@
 #include "mpc_mpi_weak.h"
 #endif
 
-#warning "Optimize algorithme for derived types"
+TODO("Optimize algorithme for derived types")
 
 
 static int __INTERNAL__PMPI_Attr_set_fortran (int keyval);
@@ -53,7 +53,7 @@ sctk_char_fortran_to_c (char *buf, long int size)
   char *tmp;
   long int i;
   tmp = sctk_malloc (size + 1);
-#warning "check memory liberation"
+TODO("check memory liberation")
 
   for (i = 0; i < size; i++)
     {
@@ -276,6 +276,9 @@ static int __INTERNAL__PMPI_Init (int *, char ***);
 static int __INTERNAL__PMPI_Finalize (void);
 static int __INTERNAL__PMPI_Initialized (int *);
 static int __INTERNAL__PMPI_Abort (MPI_Comm, int);
+static int __INTERNAL__PMPI_Isend_test_req (void *buf, int count,
+    MPI_Datatype datatype, int dest, int tag, MPI_Comm comm,
+				 MPI_Request * request, int is_valid_request);
 
   /* MPI-2 functions */
 static int __INTERNAL__PMPI_Comm_get_name (MPI_Comm, char *, int *);
@@ -502,7 +505,6 @@ __sctk_init_mpi_errors_per_comm (mpc_mpi_per_communicator_t* tmp)
 static void
 __sctk_init_mpi_errors ()
 {
-  int i;
   mpc_mpi_data_t* data;
 
   data = mpc_mpc_get_per_task_data();
@@ -529,7 +531,7 @@ __sctk_init_mpi_errors ()
   if ((datatype >= sctk_user_data_types_max) && (sctk_is_derived_type(datatype) != 1)) \
     MPI_ERROR_REPORT (comm, MPI_ERR_TYPE, "");
 
-#warning "to optimize"
+TODO("to optimize")
 #define mpi_check_comm(com,comm)		\
   if(mpc_mpc_get_per_comm_data(com) == NULL)	\
     MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"")
@@ -659,7 +661,6 @@ __sctk_new_mpc_request_internal (MPI_Request * req)
 	{
 	  MPI_internal_request_t *tmp;
 	  sctk_nodebug ("%lu", i);
-/* 	  tmp = sctk_malloc(sizeof (MPI_internal_request_t)); */
 	  tmp =
 	    sctk_buffered_malloc (&(requests->buf),
 				  sizeof (MPI_internal_request_t));
@@ -993,11 +994,8 @@ static int
 __INTERNAL__PMPI_Bsend (void *buf, int count, MPI_Datatype datatype, int dest,
 			int tag, MPI_Comm comm)
 {
-  int res;
   MPI_Request request;
-  res =
-    __INTERNAL__PMPI_Ibsend (buf, count, datatype, dest, tag, comm, &request);
-  return res;
+  return __INTERNAL__PMPI_Ibsend (buf, count, datatype, dest, tag, comm, &request);
 }
 static int
 __INTERNAL__PMPI_Ssend (void *buf, int count, MPI_Datatype datatype, int dest,
@@ -1200,11 +1198,6 @@ __INTERNAL__PMPI_Buffer_detach (void *bufferptr, int *size)
 }
 
 static int
-__INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
-				 int dest, int tag, MPI_Comm comm,
-				 MPI_Request * request, int is_valid_request);
-
-static int
 __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
 				  int dest, int tag, MPI_Comm comm,
 				  MPI_Request * request, int is_valid_request)
@@ -1219,16 +1212,16 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
 
   res = __INTERNAL__PMPI_Pack_size (count, datatype, comm, &size);
   if (res != MPI_SUCCESS)
-    {
-      return res;
-    }
+  {
+    return res;
+  }
 
   if (size % sizeof (mpi_buffer_overhead_t))
-    {
-      size +=
-	sizeof (mpi_buffer_overhead_t) -
-	(size % sizeof (mpi_buffer_overhead_t));
-    }
+  {
+    size +=
+      sizeof (mpi_buffer_overhead_t) -
+      (size % sizeof (mpi_buffer_overhead_t));
+  }
   assume (size % sizeof (mpi_buffer_overhead_t) == 0);
 
   sctk_nodebug ("MSG size %d", size);
@@ -1237,68 +1230,68 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
   sctk_spinlock_lock (&(tmp->lock));
 
   if (tmp->buffer == NULL)
-    {
-      sctk_spinlock_unlock (&(tmp->lock));
-      MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "No buffer available");
-    }
+  {
+    sctk_spinlock_unlock (&(tmp->lock));
+    MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "No buffer available");
+  }
 
   found = SCTK__MPI_Compact_buffer (size, tmp);
 
   if (found)
+  {
+    int position = 0;
+    head = found;
+    head_buf = (char *) head + sizeof (mpi_buffer_overhead_t);
+
+    assume (head->request == MPI_REQUEST_NULL);
+
+    if (head->size >= size + (int)sizeof (mpi_buffer_overhead_t))
     {
-      int position = 0;
-      head = found;
-      head_buf = (char *) head + sizeof (mpi_buffer_overhead_t);
-
-      assume (head->request == MPI_REQUEST_NULL);
-
-      if (head->size >= size + (int)sizeof (mpi_buffer_overhead_t))
-	{
-	  int old_size;
-	  old_size = head->size;
-	  head->size = size;
-	  head_next = SCTK__buffer_next_header (head, tmp);
-	  head_next->size = old_size - size - sizeof (mpi_buffer_overhead_t);
-	  head_next->request = MPI_REQUEST_NULL;
-	  sctk_nodebug ("SPLIT Create new buffer of size %d old %d",
-			head_next->size, old_size);
-	}
-
-      sctk_nodebug ("CHUNK %p<%p-%p<%p", tmp->buffer, head,
-		    SCTK__buffer_next_header (head, tmp),
-		    (void *) ((unsigned long) tmp->buffer + tmp->size));
-
-      res =
-	__INTERNAL__PMPI_Pack (buf, count, datatype, head_buf, head->size,
-			       &position, comm);
-      if (res != MPI_SUCCESS)
-	{
-	  sctk_spinlock_unlock (&(tmp->lock));
-	  return res;
-	}
-      assume (position <= size);
-
-      res =
-	__INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest,
-					 tag, comm, &(head->request), 0);
-      if (res != MPI_SUCCESS)
-	{
-	  sctk_spinlock_unlock (&(tmp->lock));
-	  return res;
-	}
-
-
-      if (is_valid_request)
-	{
-	  __sctk_delete_mpc_request (request);
-	}
-
+      int old_size;
+      old_size = head->size;
+      head->size = size;
+      head_next = SCTK__buffer_next_header (head, tmp);
+      head_next->size = old_size - size - sizeof (mpi_buffer_overhead_t);
+      head_next->request = MPI_REQUEST_NULL;
+      sctk_nodebug ("SPLIT Create new buffer of size %d old %d",
+          head_next->size, old_size);
     }
-  else
+
+    sctk_nodebug ("CHUNK %p<%p-%p<%p", tmp->buffer, head,
+        SCTK__buffer_next_header (head, tmp),
+        (void *) ((unsigned long) tmp->buffer + tmp->size));
+
+    res =
+      __INTERNAL__PMPI_Pack (buf, count, datatype, head_buf, head->size,
+          &position, comm);
+    if (res != MPI_SUCCESS)
     {
       sctk_spinlock_unlock (&(tmp->lock));
-      MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "No space left in buffer");
+      return res;
     }
+    assume (position <= size);
+
+    res =
+      __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest,
+          tag, comm, &(head->request), 0);
+    if (res != MPI_SUCCESS)
+    {
+      sctk_spinlock_unlock (&(tmp->lock));
+      return res;
+    }
+
+    if (is_valid_request)
+    {
+      __sctk_delete_mpc_request (request);
+    }
+    *request = MPI_REQUEST_NULL;
+
+  }
+  else
+  {
+    sctk_spinlock_unlock (&(tmp->lock));
+    MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "No space left in buffer");
+  }
 
   sctk_spinlock_unlock (&(tmp->lock));
   return MPI_SUCCESS;
@@ -1319,106 +1312,106 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
 				 MPI_Request * request, int is_valid_request)
 {
   if (sctk_is_derived_type (datatype))
+  {
+    int res;
+
+    if (count > 1)
     {
-      int res;
-
-      if (count > 1)
-	{
-	  MPI_Datatype new_datatype;
-	  res =
-	    __INTERNAL__PMPI_Type_contiguous (count, datatype, &new_datatype);
-	  if (res != MPI_SUCCESS)
-	    {
-	      return res;
-	    }
-	  res = __INTERNAL__PMPI_Type_commit (&new_datatype);
-	  if (res != MPI_SUCCESS)
-	    {
-	      return res;
-	    }
-	  res =
-	    __INTERNAL__PMPI_Isend_test_req (buf, 1, new_datatype, dest, tag,
-					     comm, request, is_valid_request);
-	  if (res != MPI_SUCCESS)
-	    {
-	      return res;
-	    }
-	  res = __INTERNAL__PMPI_Type_free (&new_datatype);
-	  return res;
-	}
-      else
-	{
-	  mpc_pack_absolute_indexes_t *begins;
-	  mpc_pack_absolute_indexes_t *ends;
-	  unsigned long slots_count;
-	  mpc_pack_absolute_indexes_t lb;
-	  int is_lb;
-	  mpc_pack_absolute_indexes_t ub;
-	  int is_ub;
-
-	  res =
-	    PMPC_Is_derived_datatype (datatype, &res, &begins, &ends,
-				     &slots_count, &lb, &is_lb, &ub, &is_ub);
-	  if (res != MPI_SUCCESS)
-	    {
-	      return res;
-	    }
-
-
-	  if (is_valid_request)
-	    {
-	      res = PMPC_Open_pack (__sctk_convert_mpc_request (request));
-	    }
-	  else
-	    {
-	      res = PMPC_Open_pack (__sctk_new_mpc_request (request));
-	    }
-	  if (res != MPI_SUCCESS)
-	    {
-	      return res;
-	    }
-
-	  {
-	    mpc_pack_absolute_indexes_t *tmp;
-	    tmp =
-	      sctk_malloc (slots_count * 2 *
-			   sizeof (mpc_pack_absolute_indexes_t));
-	    __sctk_add_in_mpc_request (request, tmp);
-	    memcpy (tmp, begins,
-		    slots_count * sizeof (mpc_pack_absolute_indexes_t));
-	    memcpy (&(tmp[slots_count]), ends,
-		    slots_count * sizeof (mpc_pack_absolute_indexes_t));
-	    begins = tmp;
-	    ends = &(tmp[slots_count]);
-	  }
-
-	  res =
-	    PMPC_Add_pack_absolute (buf, slots_count, begins, ends, MPC_CHAR,
-				   __sctk_convert_mpc_request (request));
-	  if (res != MPI_SUCCESS)
-	    {
-	      return res;
-	    }
-
-	  res =
-	    PMPC_Isend_pack (dest, tag, comm,
-			    __sctk_convert_mpc_request (request));
-	  return res;
-	}
+      MPI_Datatype new_datatype;
+      res =
+        __INTERNAL__PMPI_Type_contiguous (count, datatype, &new_datatype);
+      if (res != MPI_SUCCESS)
+      {
+        return res;
+      }
+      res = __INTERNAL__PMPI_Type_commit (&new_datatype);
+      if (res != MPI_SUCCESS)
+      {
+        return res;
+      }
+      res =
+        __INTERNAL__PMPI_Isend_test_req (buf, 1, new_datatype, dest, tag,
+            comm, request, is_valid_request);
+      if (res != MPI_SUCCESS)
+      {
+        return res;
+      }
+      res = __INTERNAL__PMPI_Type_free (&new_datatype);
+      return res;
     }
-  else
+    else
     {
+      mpc_pack_absolute_indexes_t *begins;
+      mpc_pack_absolute_indexes_t *ends;
+      unsigned long slots_count;
+      mpc_pack_absolute_indexes_t lb;
+      int is_lb;
+      mpc_pack_absolute_indexes_t ub;
+      int is_ub;
+
+      res =
+        PMPC_Is_derived_datatype (datatype, &res, &begins, &ends,
+            &slots_count, &lb, &is_lb, &ub, &is_ub);
+      if (res != MPI_SUCCESS)
+      {
+        return res;
+      }
+
+
       if (is_valid_request)
-	{
-	  return PMPC_Isend (buf, count, datatype, dest, tag, comm,
-			    __sctk_convert_mpc_request (request));
-	}
+      {
+        res = PMPC_Open_pack (__sctk_convert_mpc_request (request));
+      }
       else
-	{
-	  return PMPC_Isend (buf, count, datatype, dest, tag, comm,
-			    __sctk_new_mpc_request (request));
-	}
+      {
+        res = PMPC_Open_pack (__sctk_new_mpc_request (request));
+      }
+      if (res != MPI_SUCCESS)
+      {
+        return res;
+      }
+
+      {
+        mpc_pack_absolute_indexes_t *tmp;
+        tmp =
+          sctk_malloc (slots_count * 2 *
+              sizeof (mpc_pack_absolute_indexes_t));
+        __sctk_add_in_mpc_request (request, tmp);
+        memcpy (tmp, begins,
+            slots_count * sizeof (mpc_pack_absolute_indexes_t));
+        memcpy (&(tmp[slots_count]), ends,
+            slots_count * sizeof (mpc_pack_absolute_indexes_t));
+        begins = tmp;
+        ends = &(tmp[slots_count]);
+      }
+
+      res =
+        PMPC_Add_pack_absolute (buf, slots_count, begins, ends, MPC_CHAR,
+            __sctk_convert_mpc_request (request));
+      if (res != MPI_SUCCESS)
+      {
+        return res;
+      }
+
+      res =
+        PMPC_Isend_pack (dest, tag, comm,
+            __sctk_convert_mpc_request (request));
+      return res;
     }
+  }
+  else
+  {
+    if (is_valid_request)
+    {
+      return PMPC_Isend (buf, count, datatype, dest, tag, comm,
+          __sctk_convert_mpc_request (request));
+    }
+    else
+    {
+      return PMPC_Isend (buf, count, datatype, dest, tag, comm,
+          __sctk_new_mpc_request (request));
+    }
+  }
 }
 static int
 __INTERNAL__PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest,
@@ -1698,7 +1691,6 @@ __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests,
   while (!flag)
     {
       int i;
-      int old_done = 0;
       int done = 0;
       int loc_flag;
       for (i = 0; i < count; i++)
@@ -2517,8 +2509,6 @@ __INTERNAL__PMPI_Type_indexed (int count,
 
       for (i = 0; i < count; i++)
 	{
-	  unsigned long stride_t;
-	  stride_t = (unsigned long) (indices[i]);
 	  for (j = 0; j < blocklens[i]; j++)
 	    {
 	      for (k = 0; k < count_in; k++)
@@ -2633,8 +2623,6 @@ __INTERNAL__PMPI_Type_hindexed (int count,
 
       for (i = 0; i < count; i++)
 	{
-	  unsigned long stride_t;
-	  stride_t = (unsigned long) indices[i];
 	  for (j = 0; j < blocklens[i]; j++)
 	    {
 	      for (k = 0; k < count_in; k++)
@@ -2702,202 +2690,142 @@ __INTERNAL__PMPI_Type_hindexed (int count,
     }
 }
 
-static int
-__INTERNAL__PMPI_Type_struct (int count,
-			      int blocklens[],
-			      MPI_Aint indices[],
-			      MPI_Datatype old_types[],
-			      MPI_Datatype * newtype)
+static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint indices[], MPI_Datatype old_types[], MPI_Datatype * newtype)
 {
-  int i;
-  mpc_pack_absolute_indexes_t *begins_out = NULL;
-  mpc_pack_absolute_indexes_t *ends_out = NULL;
-  unsigned long count_out = 0;
-  unsigned long glob_count_out = 0;
-  mpc_pack_absolute_indexes_t new_lb = (mpc_pack_absolute_indexes_t) (-1);
-  int new_is_lb = 0;
-  mpc_pack_absolute_indexes_t new_ub = 0;
-  int new_is_ub = 0;
+	int i;
+	mpc_pack_absolute_indexes_t *begins_out = NULL;
+	mpc_pack_absolute_indexes_t *ends_out = NULL;
+	unsigned long count_out = 0;
+	unsigned long glob_count_out = 0;
+	mpc_pack_absolute_indexes_t new_lb = (mpc_pack_absolute_indexes_t) (-1);
+	int new_is_lb = 0;
+	mpc_pack_absolute_indexes_t new_ub = 0;
+	int new_is_ub = 0;
 
-  for (i = 0; i < count; i++)
-    {
-      if ((old_types[i] != MPI_UB) && (old_types[i] != MPI_LB))
-	{
-	  if (sctk_is_derived_type (old_types[i]))
-	    {
-	      int res;
-	      mpc_pack_absolute_indexes_t *begins_in;
-	      mpc_pack_absolute_indexes_t *ends_in;
-	      unsigned long count_in;
-	      unsigned long extent;
-	      unsigned long local_count_out = 0;
-	      unsigned long prev_count_out = 0;
-	      int j;
-	      unsigned long k;
-	      unsigned long stride_t;
-	      mpc_pack_absolute_indexes_t lb;
-	      int is_lb;
-	      mpc_pack_absolute_indexes_t ub;
-	      int is_ub;
+	unsigned long my_count_out = 0;
+	// find malloc size
+	for (i = 0; i < count; i++) {
+		if ((old_types[i] != MPI_UB) && (old_types[i] != MPI_LB)) {
+			int res, is_lb, is_ub;
+			mpc_pack_absolute_indexes_t *begins_in, *ends_in;
+			mpc_pack_absolute_indexes_t lb, ub;
+			unsigned long count_in;
 
-	      PMPC_Is_derived_datatype (old_types[i], &res, &begins_in,
-				       &ends_in, &count_in, &lb, &is_lb, &ub,
-				       &is_ub);
-	      __INTERNAL__PMPI_Type_extent (old_types[i],
-					    (MPI_Aint *) & extent);
-	      sctk_nodebug ("Extend %lu", extent);
+			if (sctk_is_derived_type(old_types[i])) {
+				PMPC_Is_derived_datatype(old_types[i], &res, &begins_in, &ends_in, &count_in, &lb, &is_lb, &ub, &is_ub);
+			} else {
+				count_in = 1;
+			}
 
-	      prev_count_out = count_out;
-	      local_count_out = count_in * blocklens[i];
-	      count_out += local_count_out;
-
-	      begins_out =
-		sctk_realloc (begins_out,
-			      count_out *
-			      sizeof (mpc_pack_absolute_indexes_t));
-	      ends_out =
-		sctk_realloc (ends_out,
-			      count_out *
-			      sizeof (mpc_pack_absolute_indexes_t));
-
-
-	      stride_t = (unsigned long) indices[i];
-	      for (j = 0; j < blocklens[i]; j++)
-		{
-		  for (k = 0; k < count_in; k++)
-		    {
-		      begins_out[glob_count_out] =
-			begins_in[k] + stride_t + (extent * j);
-		      ends_out[glob_count_out] =
-			ends_in[k] + stride_t + (extent * j);
-		      sctk_nodebug (" begins_out[%lu] = %lu", glob_count_out,
-				    begins_out[glob_count_out]);
-		      sctk_nodebug (" ends_out[%lu] = %lu", glob_count_out,
-				    ends_out[glob_count_out]);
-
-		      glob_count_out++;
-		    }
+			my_count_out += count_in * blocklens[i];
 		}
-	      sctk_nodebug ("derived type %d new_lb %d new_ub %d before", i,
-			    new_lb, new_ub);
-	      if (is_ub)
-		{
-		  mpc_pack_absolute_indexes_t new_b;
-		  new_b = ub + indices[i] + extent * (blocklens[i] - 1);
-		  sctk_nodebug ("cur ub %d", new_b);
-		  if ((long int) new_b > (long int) new_ub || new_is_ub == 0)
-		    {
-		      new_ub = new_b;
-		    }
-		  new_is_ub = 1;
-		}
-	      if (is_lb)
-		{
-		  mpc_pack_absolute_indexes_t new_b;
-		  new_b = lb + indices[i];
-		  sctk_nodebug ("cur lb %d", new_b);
-		  if ((long int) new_b < (long int) new_lb || new_is_lb == 0)
-		    {
-		      new_lb = new_b;
-		    }
-		  new_is_lb = 1;
-		}
-	      sctk_nodebug ("derived type %d new_lb %d new_ub %d after ", i,
-			    new_lb, new_ub);
-	    }
-	  else
-	    {
-	      size_t tmp;
-	      unsigned long local_count_out = 0;
-	      unsigned long prev_count_out = 0;
-	      unsigned long stride_t;
-	      mpc_pack_absolute_indexes_t begins_in[1];
-	      mpc_pack_absolute_indexes_t ends_in[1];
-	      unsigned long count_in;
-	      unsigned long extent;
-	      int j;
-	      unsigned long k;
-
-	      begins_in[0] = 0;
-	      PMPC_Type_size (old_types[i], &(tmp));
-	      ends_in[0] = begins_in[0] + tmp - 1;
-	      count_in = 1;
-	      sctk_nodebug ("Type size %lu", tmp);
-
-	      __INTERNAL__PMPI_Type_extent (old_types[i],
-					    (MPI_Aint *) & extent);
-
-	      prev_count_out = count_out;
-	      local_count_out = count_in * blocklens[i];
-	      count_out += local_count_out;
-
-	      begins_out =
-		sctk_realloc (begins_out,
-			      count_out *
-			      sizeof (mpc_pack_absolute_indexes_t));
-	      ends_out =
-		sctk_realloc (ends_out,
-			      count_out *
-			      sizeof (mpc_pack_absolute_indexes_t));
-
-	      stride_t = (unsigned long) indices[i];
-	      for (j = 0; j < blocklens[i]; j++)
-		{
-		  for (k = 0; k < count_in; k++)
-		    {
-		      begins_out[glob_count_out] =
-			begins_in[k] + stride_t + (extent * j);
-
-
-		      ends_out[glob_count_out] =
-			ends_in[k] + stride_t + (extent * j);
-
-		      sctk_nodebug (" begins_out[%lu] = %lu", glob_count_out,
-				    begins_out[glob_count_out]);
-		      sctk_nodebug (" ends_out[%lu] = %lu", glob_count_out,
-				    ends_out[glob_count_out]);
-
-		      glob_count_out++;
-		    }
-		}
-	      sctk_nodebug ("simple type %d new_lb %d new_ub %d", i, new_lb,
-			    new_ub);
-	    }
 	}
-      else
-	{
-	  if (old_types[i] == MPI_UB)
-	    {
-	      new_is_ub = 1;
-	      new_ub = indices[i];
-	    }
-	  else
-	    {
-	      new_is_lb = 1;
-	      new_lb = indices[i];
-	    }
-	  sctk_nodebug ("hard bound %d new_lb %d new_ub %d", i, new_lb,
-			new_ub);
+
+	begins_out = sctk_malloc(my_count_out * sizeof(mpc_pack_absolute_indexes_t));
+	ends_out = sctk_malloc(my_count_out * sizeof(mpc_pack_absolute_indexes_t));
+
+	for (i = 0; i < count; i++) {
+		if ((old_types[i] != MPI_UB) && (old_types[i] != MPI_LB)) {
+			int res, j, is_lb, is_ub;
+			size_t tmp;
+			mpc_pack_absolute_indexes_t *begins_in, *ends_in;
+			mpc_pack_absolute_indexes_t begins_in_static, ends_in_static, lb, ub;
+			unsigned long count_in, extent, k, stride_t;
+			unsigned long local_count_out = 0;
+			unsigned long prev_count_out = 0;
+
+			if (sctk_is_derived_type(old_types[i])) {
+				PMPC_Is_derived_datatype(old_types[i], &res, &begins_in, &ends_in, &count_in, &lb, &is_lb, &ub, &is_ub);
+				__INTERNAL__PMPI_Type_extent(old_types[i], (MPI_Aint *) &extent);
+				sctk_nodebug("Extend %lu", extent);
+				stride_t = (unsigned long) indices[i];
+				for (j = 0; j < blocklens[i]; j++) {
+					for (k = 0; k < count_in; k++) {
+						begins_out[glob_count_out] = begins_in[k] + stride_t + (extent * j);
+						ends_out[glob_count_out] = ends_in[k] + stride_t + (extent * j);
+						sctk_nodebug(" begins_out[%lu] = %lu", glob_count_out, begins_out[glob_count_out]);
+						sctk_nodebug(" ends_out[%lu] = %lu", glob_count_out, ends_out[glob_count_out]);
+
+						glob_count_out++;
+					}
+				}
+				sctk_nodebug("derived type %d new_lb %d new_ub %d before", i, new_lb, new_ub);
+				if (is_ub) {
+					mpc_pack_absolute_indexes_t new_b;
+					new_b = ub + indices[i] + extent * (blocklens[i] - 1);
+					sctk_nodebug("cur ub %d", new_b);
+					if ((long int) new_b > (long int) new_ub || new_is_ub == 0) {
+						new_ub = new_b;
+					}
+					new_is_ub = 1;
+				}
+				if (is_lb) {
+					mpc_pack_absolute_indexes_t new_b;
+					new_b = lb + indices[i];
+					sctk_nodebug("cur lb %d", new_b);
+					if ((long int) new_b < (long int) new_lb || new_is_lb == 0) {
+						new_lb = new_b;
+					}
+					new_is_lb = 1;
+				}
+				sctk_nodebug("derived type %d new_lb %d new_ub %d after ", i, new_lb, new_ub);
+			} else {
+				begins_in = &begins_in_static;
+				ends_in = &ends_in_static;
+				begins_in[0] = 0;
+				PMPC_Type_size(old_types[i], &(tmp));
+				ends_in[0] = begins_in[0] + tmp - 1;
+				count_in = 1;
+				sctk_nodebug("Type size %lu", tmp);
+
+				__INTERNAL__PMPI_Type_extent(old_types[i], (MPI_Aint *) &extent);
+
+				stride_t = (unsigned long) indices[i];
+				for (j = 0; j < blocklens[i]; j++) {
+					for (k = 0; k < count_in; k++) {
+						begins_out[glob_count_out] = begins_in[k] + stride_t + (extent * j);
+
+						ends_out[glob_count_out] = ends_in[k] + stride_t + (extent * j);
+
+						sctk_nodebug(" begins_out[%lu] = %lu", glob_count_out, begins_out[glob_count_out]);
+						sctk_nodebug(" ends_out[%lu] = %lu", glob_count_out, ends_out[glob_count_out]);
+
+						glob_count_out++;
+					}
+				}
+				sctk_nodebug("simple type %d new_lb %d new_ub %d", i, new_lb, new_ub);
+			}
+
+			prev_count_out = count_out;
+			local_count_out = count_in * blocklens[i];
+			count_out += local_count_out;
+		} else {
+			if (old_types[i] == MPI_UB) {
+				new_is_ub = 1;
+				new_ub = indices[i];
+			} else {
+				new_is_lb = 1;
+				new_lb = indices[i];
+			}
+			sctk_nodebug("hard bound %d new_lb %d new_ub %d", i, new_lb, new_ub);
+		}
+		sctk_nodebug("%d new_lb %d new_ub %d", i, new_lb, new_ub);
 	}
-      sctk_nodebug ("%d new_lb %d new_ub %d", i, new_lb, new_ub);
-    }
 
+	PMPC_Derived_datatype(newtype, begins_out, ends_out, glob_count_out, new_lb, new_is_lb, new_ub, new_is_ub);
 
-  PMPC_Derived_datatype (newtype, begins_out, ends_out, glob_count_out, new_lb,
-			new_is_lb, new_ub, new_is_ub);
+	/*   sctk_debug("new_type %d",* newtype); */
+	/*   sctk_debug("final new_lb %d,%d new_ub %d %d",new_lb,new_is_lb,new_ub,new_is_ub); */
+	/*   { */
+	/*     int i ;  */
+	/*     for(i = 0; i < glob_count_out; i++){ */
+	/*       sctk_debug("%d begins %lu ends %lu",i,begins_out[i],ends_out[i]); */
+	/*     } */
+	/*   } */
 
-/*   sctk_debug("new_type %d",* newtype); */
-/*   sctk_debug("final new_lb %d,%d new_ub %d %d",new_lb,new_is_lb,new_ub,new_is_ub); */
-/*   { */
-/*     int i ;  */
-/*     for(i = 0; i < glob_count_out; i++){ */
-/*       sctk_debug("%d begins %lu ends %lu",i,begins_out[i],ends_out[i]); */
-/*     } */
-/*   } */
-
-  sctk_free (begins_out);
-  sctk_free (ends_out);
-  return MPI_SUCCESS;
+	sctk_free(begins_out);
+	sctk_free(ends_out);
+	return MPI_SUCCESS;
 }
 
 static int
@@ -3073,7 +3001,7 @@ __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype datatype,
       *elements = 0;
     }
 
-#warning "behave as get_count"
+INFO("behave as get_count")
 
   return res;
 }
@@ -3620,7 +3548,7 @@ __INTERNAL__PMPI_Alltoall (void *sendbuf, int sendcount,
 {
   if (sctk_is_derived_type (sendtype) || sctk_is_derived_type (recvtype))
     {
-#warning "Should be optimized like PMPC_Alltoall"
+TODO("Should be optimized like PMPC_Alltoall")
       int i;
       int size;
       int rank;
@@ -3667,7 +3595,7 @@ __INTERNAL__PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 {
   if (sctk_is_derived_type (sendtype) || sctk_is_derived_type (recvtype))
     {
-#warning "Should be optimized like PMPC_Alltoallv"
+TODO("Should be optimized like PMPC_Alltoallv")
       int i;
       int size;
       int rank;
@@ -3762,7 +3690,7 @@ __sctk_init_mpi_op ()
       done = 1;
     }
   sctk_thread_mutex_unlock (&lock);
-#ifdef MPC_Allocator
+#ifdef MPC_PosixAllocator
   sctk_add_global_var (defined_op, sizeof (defined_op));
 #endif
 
@@ -4240,7 +4168,7 @@ __sctk_convert_mpc_group (MPI_Group group)
   MPI_internal_group_t *tmp;
 
   tmp = __sctk_convert_mpc_group_internal (group);
-  if ((tmp == NULL))
+  if (tmp == NULL)
     {
       return MPC_GROUP_NULL;
     }
@@ -4904,8 +4832,6 @@ static void *defines_attr_tab[MPI_MAX_KEY_DEFINED] = {
   &MPI_WTIME_IS_GLOBAL_VALUE
 };
 
-static sctk_thread_mutex_t sctk_attr_lock = SCTK_THREAD_MUTEX_INITIALIZER;
-
 static int
 __INTERNAL__PMPI_Keyval_create (MPI_Copy_function * copy_fn,
 				MPI_Delete_function * delete_fn,
@@ -4919,7 +4845,6 @@ __INTERNAL__PMPI_Keyval_create (MPI_Copy_function * copy_fn,
   sctk_spinlock_lock(&(tmp->lock));
   if (tmp->number >= tmp->max_number)
     {
-      int j;
       tmp->max_number += 100;
 
       tmp->attrs_fn =
@@ -4948,7 +4873,7 @@ __INTERNAL__PMPI_Keyval_create (MPI_Copy_function * copy_fn,
 static int
 __INTERNAL__PMPI_Keyval_free (int *keyval)
 {
-  #warning "Optimize to free memory"
+  TODO("Optimize to free memory")
   *keyval = MPI_KEYVAL_INVALID;
   return MPI_SUCCESS;
 }
@@ -4959,6 +4884,8 @@ __INTERNAL__PMPI_Attr_set_fortran (int keyval)
   int res = MPI_SUCCESS;
   MPI_Comm comm = MPI_COMM_WORLD;
   mpc_mpi_data_t* tmp;
+
+  tmp = mpc_mpc_get_per_task_data();
 
   if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
     {
@@ -5206,17 +5133,6 @@ SCTK__MPI_Attr_clean_communicator (MPI_Comm comm)
   sctk_spinlock_unlock(&(tmp_per_comm->lock));
   sctk_spinlock_unlock(&(tmp->lock));
   return res;
-}
-
-int
-MPI_DUP_FN (MPI_Comm oldcom, int keyval, void *extra_state,
-	    void *attr_val_in, void *attr_val_out, int *flag)
-{
-  void **attr;
-  attr = (void **) attr_val_out;
-  *attr = attr_val_in;
-  *flag = 1;
-  return MPI_SUCCESS;
 }
 
 static int
@@ -5493,7 +5409,7 @@ __INTERNAL__PMPI_Cart_create (MPI_Comm comm_old, int ndims, int *dims,
       MPI_ERROR_REPORT (comm_old, MPI_ERR_COMM, "too small group size");
     }
 
-#warning "Very simple approach never reorder nor take care of hardware topology"
+INFO("Very simple approach never reorder nor take care of hardware topology")
 
   if (nb_tasks == size)
     {
@@ -5612,7 +5528,7 @@ __INTERNAL__PMPI_Dims_create (int nnodes, int ndims, int *dims)
   nnodes = nnodes / prod;
 
   /*Compute decomposition */
-#warning "Approximate dims decomposition"
+INFO("Approximate dims decomposition")
   j = 0;
   for (i = 2; i <= nnodes;)
     {
@@ -5665,7 +5581,7 @@ __INTERNAL__PMPI_Graph_create (MPI_Comm comm_old, int nnodes, int *index,
   int size;
   __INTERNAL__PMPI_Comm_size (comm_old, &size);
 
-#warning "Very simple approach never reorder nor take care of hardware topology"
+INFO("Very simple approach never reorder nor take care of hardware topology")
   if (nnodes == size)
     {
       res = __INTERNAL__PMPI_Comm_dup (comm_old, comm_graph);
@@ -5976,7 +5892,6 @@ __INTERNAL__PMPI_Graph_neighbors (MPI_Comm comm, int rank, int maxneighbors,
 				  int *neighbors)
 {
   int start;
-  int end;
   int i;
   mpc_mpi_per_communicator_t* tmp;
   mpi_topology_per_comm_t* topo;
@@ -5992,7 +5907,6 @@ __INTERNAL__PMPI_Graph_neighbors (MPI_Comm comm, int rank, int maxneighbors,
       MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
     }
 
-  end = topo->data.graph.index[rank];
   start = 0;
   if (rank)
     {
@@ -6165,7 +6079,6 @@ __INTERNAL__PMPI_Cart_sub (MPI_Comm comm, int *remain_dims,
   int ndims = 0;
   int j;
   mpc_mpi_per_communicator_t* tmp;
-  mpc_mpi_per_communicator_t* tmp_new;
   mpi_topology_per_comm_t* topo;
   mpi_topology_per_comm_t* topo_new;
 
@@ -6228,7 +6141,7 @@ __INTERNAL__PMPI_Cart_sub (MPI_Comm comm, int *remain_dims,
 
   sctk_free (coords_in_new);
 
-  tmp_new = mpc_mpc_get_per_comm_data(*comm_new);
+  mpc_mpc_get_per_comm_data(*comm_new);
   topo_new = &(tmp->topo);
 
   topo_new->type = MPI_CART;
@@ -6273,7 +6186,7 @@ __INTERNAL__PMPI_Cart_map (MPI_Comm comm, int ndims, int *dims,
       nnodes *= dims[i];
     }
 
-#warning "Should be optimized"
+TODO("Should be optimized")
   res = __INTERNAL__PMPI_Comm_rank (comm, newrank);
 
   if (*newrank > nnodes)
@@ -6288,10 +6201,8 @@ static int
 __INTERNAL__PMPI_Graph_map (MPI_Comm comm, int nnodes, int *index,
 			    int *edges, int *newrank)
 {
-  int res;
-
-#warning "Should be optimized"
-  res = __INTERNAL__PMPI_Comm_rank (comm, newrank);
+TODO("Should be optimized")
+  __INTERNAL__PMPI_Comm_rank (comm, newrank);
 
   if (*newrank > nnodes)
     {
@@ -6615,8 +6526,14 @@ __INTERNAL__PMPI_Abort (MPI_Comm comm, int val)
   PMPI FUNCTIONS
 */
 
-#define SCTK__MPI_Check_retrun_val(res,comm)do{if(res == MPI_SUCCESS){return res;} else {MPI_ERROR_REPORT(comm,res,"Generic error retrun");}}while(0)
-/* #define SCTK__MPI_Check_retrun_val(res) return res */
+/*
+ * TODO: RULE FROM THE MPI STANDARD
+ * In order to fully support the MPI standard, we cannot fail if the returned value of
+ * an MPI function is different than MPI_SUCCESS.
+ * We could add an additional MPC mode in order to fail in the case of a wrong returned value.
+ */
+/* #define SCTK__MPI_Check_retrun_val(res,comm)do{if(res == MPI_SUCCESS){return res;} else {MPI_ERROR_REPORT(comm,res,"Generic error retrun");}}while(0) */
+#define SCTK__MPI_Check_retrun_val(res, comm) return res
 
 static inline void
 SCTK__MPI_INIT_STATUS (MPI_Status * status)
@@ -8237,7 +8154,7 @@ PMPI_Comm_set_name (MPI_Comm comm, char *comm_name)
 }
 
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
-#warning "Default mpc_user_main__ has been removed because of TLS compilation..."
+INFO("Default mpc_user_main__ has been removed because of TLS compilation...")
 #if 0
 int mpc_user_main__ (int argc, char **argv);
 int

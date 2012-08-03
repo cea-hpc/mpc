@@ -1,0 +1,47 @@
+#!/bin/sh
+
+#import deps
+. ${MPC_TEST_SOURCE_DIR}/UnitTests/tools/helper_svunittest.sh
+
+#sources of the allocator without posix export
+ALLOC_SOURCE_PATH="${MPC_TEST_SOURCE_DIR}/../mpc/MPC_Allocator/"
+	
+#Deps
+OPENPA_PREFIX=${MPC_INSTALL_PREFIX}/mpc-openpa-1.0.2/
+HWLOC_PREFIX=${MPC_INSTALL_PREFIX}/mpc-hwloc-1.3/
+
+#create dirs
+mkdir numa || exit 1
+mkdir uma || exit 1
+
+#setup svunittest
+helper_use_svunittest
+if [ "${HAVE_SVUNITTEST}" = 'yes' ]; then
+	SVUNITTEST_OPT="-DSVUNITTEST_PREFIX=${SVUNITTEST_PREFIX}"
+else
+	SVUNITTEST_OPT=''
+fi
+
+#use cmake
+helper_insert_test "compile_MPC_Allocator_numa" '0' "cd numa && cmake -DCMAKE_BUILD_TYPE=Debug -DHWLOC_PREFIX=${HWLOC_PREFIX} -DOPENPA_PREFIX=${OPENPA_PREFIX} ${ALLOC_SOURCE_PATH} ${SVUNITTEST_OPT} && make"
+helper_insert_test "compile_MPC_Allocator_uma" '0' "cd uma && cmake -DCMAKE_BUILD_TYPE=Debug -DDISABLE_LIBNUMA=yes -DOPENPA_PREFIX=${OPENPA_PREFIX} ${ALLOC_SOURCE_PATH} ${SVUNITTEST_OPT} && make"
+
+#list of tests
+ALLOC_TESTS="test_allocated_chunk \
+	test_light_mm_src \
+	test_rfq test_chunk_padding \
+	test_mm_source_default \
+	test_thread_pool \
+	test_default_alloc_chain \
+	test_posix_malloc \
+	test_user_alloc_chain \
+	test_full_alloc_chain \
+	test_regions\
+	test_malloc_on_node"
+
+for mode in uma numa; do
+	for test in $ALLOC_TESTS; do
+		helper_insert_test "${test}_${mode}" '0' "${MPC_TEST_CURRENT_WORK_DIR}/${mode}/tests/${test} -m junit_xml -o output-${test}_${mode}.xml" "compile_MPC_Allocator_${mode}"
+	done
+	helper_insert_test "${test}_${mode}" '0' "${MPC_TEST_CURRENT_WORK_DIR}/${mode}/tests/test_mpscf_queue valid" "compile_MPC_Allocator_${mode}"
+done

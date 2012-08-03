@@ -85,6 +85,15 @@ SCTK_CHECK_FUNC opendir
 SCTK_CHECK_FUNC readdir
 SCTK_CHECK_FUNC closedir
 
+# Check if binutils are installed and pass the macro SCTK_USE_OPTIMIZED_TLS
+# It's not portable up to now (manpage say only Linux x86_64)
+if test ! -z "${BINUTILS_PREFIX_INSTALL}"; then
+	SCTK_CHECK_FUNC_NOFAIL arch_prctl
+	if test "${SCTK_SCTK_CHECK_FUNC_RES}" = "0"; then
+		SCTK_CHECK_OPTION "-DSCTK_USE_OPTIMIZED_TLS"
+	fi
+fi
+
 begin_section Binding
 check_binding
 end_section 
@@ -130,4 +139,5 @@ SCTK_CHECK_LIB_HWLOC
 begin_section Pthread
 check_pthread_flags 
 gen_pthread_config
+
 end_section

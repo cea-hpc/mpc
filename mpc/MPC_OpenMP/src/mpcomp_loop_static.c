@@ -211,7 +211,7 @@ __mpcomp_static_loop_begin (int lb, int b, int incr, int chunk_size,
     (mpcomp_thread_info_t *) mpc_thread_getspecific (mpcomp_thread_info_key);
 
   /* Automatic chunk size -> at most one chunk */
-  if (chunk_size == -1) {
+  if (chunk_size == -1 || chunk_size == 0 ) {
       info->static_nb_chunks = 1 ;
       __mpcomp_static_schedule_get_single_chunk (lb, b, incr, from, to);
     }
@@ -554,6 +554,10 @@ __mpcomp_start_parallel_static_loop (int arg_num_threads, void *(*func)
 
   /* Restore the TLS for the main thread */
   sctk_extls = current_info->children[0]->extls;
+#if defined (SCTK_USE_OPTIMIZED_TLS)
+  sctk_tls_module = current_info->children[0]->tls_module;
+  sctk_context_restore_tls_module_vp ();
+#endif
 
   SCTK_PROFIL_END (__mpcomp_start_parallel_region);
 }

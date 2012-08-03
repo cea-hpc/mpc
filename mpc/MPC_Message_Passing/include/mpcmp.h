@@ -231,6 +231,14 @@ extern "C"
 #define MPC_LOGICAL 22
 #define MPC_DOUBLE_COMPLEX 23
 
+#define MPC_INTEGER1 24
+#define MPC_INTEGER2 25
+#define MPC_INTEGER4 26
+#define MPC_INTEGER8 27
+#define MPC_REAL4 28
+#define MPC_REAL8 29
+#define MPC_REAL16 30
+
   /*Initialisation */
   int MPC_Init (int *argc, char ***argv);
   int MPC_Init_thread (int *argc, char ***argv, int required, int *provided);
@@ -238,18 +246,35 @@ extern "C"
   int MPC_Finalize (void);
   int MPC_Abort (MPC_Comm, int);
 
-  /*Topology informations */
+  /* MPI Topology informations */
   int MPC_Comm_rank (MPC_Comm comm, int *rank);
   int MPC_Comm_size (MPC_Comm comm, int *size);
   int MPC_Comm_remote_size (MPC_Comm comm, int *size);
+
+  /* Node topology */
   int MPC_Node_rank (int *rank);
   int MPC_Node_number (int *number);
+
+  /* Processors topology */
   int MPC_Processor_rank (int *rank);
   int MPC_Processor_number (int *number);
+
+  /* Process global numbering */
   int MPC_Process_rank (int *rank);
-  int MPC_Local_process_rank (int *rank);
-  int MPC_Local_process_number (int *rank);
   int MPC_Process_number (int *number);
+
+  /* Process local numbering */
+  int MPC_Local_process_rank (int *rank);
+  int MPC_Local_process_number (int *number);
+
+  /* Task global topology */
+  int MPC_Task_rank( int *rank );
+  int MPC_Task_number( int *number );
+
+  /* Task local topology */
+  int MPC_Local_task_rank( int *rank );
+  int MPC_Local_task_number( int *number );
+
   int MPC_Get_version (int *version, int *subversion);
   int MPC_Get_multithreading (char *name, int size);
   int MPC_Get_networking (char *name, int size);
@@ -622,6 +647,7 @@ extern "C"
   /*Types */
   int PMPC_Type_size (MPC_Datatype, size_t *);
   int PMPC_Sizeof_datatype (MPC_Datatype *, size_t);
+  int __MPC_Barrier (MPC_Comm comm);
   int PMPC_Type_free (MPC_Datatype * datatype);
 
   /*MPC specific function */
@@ -710,19 +736,53 @@ extern "C"
     int matched;
     int not_matched;
 
+#if 0
     int poll_own;
-    /* Number of msg stolen by another task */
-    int poll_stolen;
+    int poll_own_failed;
+    int poll_steals_failed;
 
     /* Number of msg stolen by the current task */
     int poll_steals;
 
+    int poll_steal_same_node;
+    int poll_steal_other_node;
+#endif
+    long poll_own;
+    long poll_own_failed;
+    long poll_own_success;
+    long poll_steals_failed;
+    long poll_steals_success;
+
+    /* Number of msg stolen by the current task */
+    long poll_steals;
+
+    long poll_steal_same_node;
+    long poll_steal_other_node;
+    long call_to_polling;
+    long poll_cq;
+
+
     double time_stolen;
     double time_steals;
     double time_own;
+    double time_poll_cq;
+    double time_ptp;
+    double time_coll;
+
+    int alloc_mem;
+    int free_mem;
+    int qp_created;
+
+    int eager_nb;
+    int buffered_nb;
+    int rdma_nb;
   };
 
   void MPC_Network_stats(struct MPC_Network_stats_s *stats);
+  void MPC_Network_deco_neighbors();
+  /* Send/Recv message using the signalization network */
+  void MPC_Send_signalization_network(int dest_process, int tag, void *buff, size_t size);
+  void MPC_Recv_signalization_network(int src_process, int tag, void *buff, size_t size);
 
 #ifdef __cplusplus
 }

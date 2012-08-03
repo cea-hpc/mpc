@@ -94,6 +94,9 @@ kthread_create_start_routine (void *t_arg)
   memcpy(&slot,t_arg,sizeof(kthread_create_start_t));
   ((kthread_create_start_t*)t_arg)->started = 1;
 
+  //avoir to create an allocation chain 
+  sctk_alloc_posix_plug_on_egg_allocator();
+
   sem_init(&(slot.sem), 0,0);
 
   sctk_spinlock_lock(&lock);
@@ -109,12 +112,11 @@ kthread_create_start_routine (void *t_arg)
   while(1){
     void *(*start_routine) (void *);
     void *arg;
-    void* res;
 
     start_routine = (void *(*) (void *))slot.start_routine;
     arg = (void*)slot.arg;
 
-    res = start_routine (arg);
+    start_routine (arg);
 
     slot.used = 0;
 
@@ -224,7 +226,7 @@ kthread_create (kthread_t * thread, void *(*start_routine) (void *),
     pthread_attr_destroy (&attr);
 
     if ( res != 0 ) {
-      sctk_debug( "Warning: Creating kernel threads with no attribute" ) ;
+      sctk_nodebug( "Warning: Creating kernel threads with no attribute" ) ;
       res = pthread_create ((pthread_t *) thread, NULL, kthread_create_start_routine, &tmp);
 
       assume( res == 0 ) ;

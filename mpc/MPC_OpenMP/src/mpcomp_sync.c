@@ -33,7 +33,7 @@
    - Key
    - TLS if available
  */
-#warning "OpenMP: Anonymous critical and global atomic are not per-task locks"
+TODO("OpenMP: Anonymous critical and global atomic are not per-task locks")
 static sctk_spinlock_t global_atomic_lock = SCTK_SPINLOCK_INITIALIZER;
 static sctk_thread_mutex_t global_critical_lock =
   SCTK_THREAD_MUTEX_INITIALIZER;
@@ -71,7 +71,7 @@ void
 __mpcomp_named_critical_begin (void **l)
 {
   /* TODO check if l==NULL, then allocate memory and lock */
-#warning "OpenMP: Named critical acts as anonymous critical"
+  TODO("OpenMP: Named critical acts as anonymous critical")
   sctk_thread_mutex_lock (&global_critical_lock);
 }
 

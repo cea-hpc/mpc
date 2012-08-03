@@ -60,11 +60,17 @@ extern "C"
 
 #if defined(SCTK_x86_64_ARCH_SCTK)
 
+/*
+Get a bug on new version of libs (centos6....), need to fix this. It produce segfault at
+make install with --enable-debug. Seams to be impacted by -OX option.
+Need to check this in more depth for futur version ( > 2.4.0-1).
+
 #ifndef DONOTHAVE_CONTEXTS
 #if (defined(Linux_SYS) && (defined(__GLIBC__) && ((__GLIBC__ >= 2) &&  (__GLIBC_MINOR__ >= 12)) ))
 #define SCTK_USE_CONTEXT_FOR_CREATION
 #endif
 #endif
+*/
 
 #undef DONOTHAVE_CONTEXTS
 #define DONOTHAVE_CONTEXTS
@@ -162,16 +168,20 @@ extern "C"
     sigset_t sigs;
     int error;
     void *thread_lib;
-    void *sctk_tls_key_local;
+    void *sctk_current_alloc_chain_local;
     void *sctk_tls_trace_local;
     void *mpc_user_tls_1;
     void *sctk_extls;
 	void *sctk_hls_generation;
+#if defined (SCTK_USE_OPTIMIZED_TLS)
 	void *sctk_tls_module;
+#endif
     void *sctk_message_passing;
-    //profiling TLS
+    /* profiling TLS */
     void *tls_trace_module;
     void *tls_args;
+    /* MPC Profiler TLS */
+    void *tls_mpc_profiler;
   } sctk_mctx_t;
 
   int sctk_getcontext (sctk_mctx_t * ucp);
@@ -181,12 +191,21 @@ extern "C"
 			void *arg,
 			void (*func) (void *),
 			char *stack, size_t stack_size);
+#if defined (SCTK_USE_OPTIMIZED_TLS)
+  int
+    sctk_makecontext_extls (sctk_mctx_t * ucp,
+		            void *arg,
+		            void (*func) (void *), char *stack,
+		            size_t stack_size,
+		            void *extls, void* tls_module);
+#else
   int
     sctk_makecontext_extls (sctk_mctx_t * ucp,
 		            void *arg,
 		            void (*func) (void *), char *stack,
 		            size_t stack_size,
 		            void *extls);
+#endif
   void sctk_tls_init (void);
 
 

@@ -1,6 +1,8 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
 /* # This file is part of the MPC Runtime.                                # */
@@ -17,7 +19,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - DIDELOT Sylvain  sdidelot@exascale-computing.eu                 # */
+/* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
 #ifndef __SCTK___DEBUG__
@@ -31,7 +33,6 @@ extern "C"
 #include <stdarg.h>
 #include <sctk_config.h>
 #include <assert.h>
-
 
 #define SCTK_MAX_FILENAME_SIZE 1024
 #define SCTK_DBG_INFO stderr,__LINE__,__FILE__,SCTK_FUNCTION
@@ -79,6 +80,18 @@ extern "C"
     {
     }
   #endif
+#endif
+
+#if (defined SCTK_HAVE_PRAGMA_MESSAGE) && (defined SCTK_DEBUG_MESSAGES)
+    /* Add todo support (as stated in GCC doc
+    * Supported since GCC 4.4.7 ignored in previous versions*/
+    #define DO_PRAGMA(x) _Pragma (#x)
+
+    #define TODO(x) DO_PRAGMA(message ("TODO - " #x))
+    #define INFO(x) DO_PRAGMA(message ("INFO - " #x))
+#else
+     #define TODO(x)
+     #define INFO(x)
 #endif
 
   void sctk_silent_debug (const char *fmt, ...);
@@ -157,29 +170,38 @@ extern "C"
   {
   }
 #endif
-#undef assert
-#define assert(op) if(expect_false(!(op)))				\
-    sctk_formated_assert_print(SCTK_DBG_INFO,				\
-			       SCTK_STRING(op))
-#define assume(op) if(expect_false(!(op)))	\
-    sctk_formated_assert_print(SCTK_DBG_INFO,	\
-			       SCTK_STRING(op))
+
+//If inline is not supported, disable assertions
+
+#define assume_m(x,...) if (!(x)) { sctk_error("Error at %s!%d\n%s\n",__FILE__,__LINE__,#x); sctk_error(__VA_ARGS__); abort(); }
+
+/** Print an error message and exit. It use the print formatting convention. **/
+#define sctk_fatal(...) { sctk_error("Fatal error at %s!%d\n",__FILE__,__LINE__); sctk_error(__VA_ARGS__); abort(); }
+
+
 #ifndef SCTK_NO_INLINE
 #undef NO_INTERNAL_ASSERT
 #define NO_INTERNAL_ASSERT
 #endif
 
+//for standard assert function, rewrite but maintain -DNDEBUG convention
+#if !defined(NDEBUG) || !defined(NO_INTERNAL_ASSERT)
+	#undef assert
+	#define assert(op) do { if(expect_false(!(op))) sctk_formated_assert_print(SCTK_DBG_INFO, SCTK_STRING(op)); } while(0)
+#endif //NDEBUG, NO_INTERNAL_ASSERT
+
+/** Assume stay present independently of NDEBUG/NO_INTERNAL_ASSERT **/
+#define assume(op) do { if(expect_false(!(op))) sctk_formated_assert_print(SCTK_DBG_INFO, SCTK_STRING(op)); } while(0)
+
 #ifdef NO_INTERNAL_ASSERT
 #define sctk_assert(op) (void)(0)
 #define sctk_assert_func(op) (void)(0)
-#else
-#define sctk_assert_func(op) do{		\
-    op						\
-      }while(0)
+#else //NO_INTERNAL_ASSERT
+#define sctk_assert_func(op) do{ op }while(0)
 #define sctk_assert(op) if(expect_false(!(op)))				\
     sctk_formated_assert_print(SCTK_DBG_INFO,				\
 			       SCTK_STRING(op))
-#endif
+#endif //NO_INTERNAL_ASSERT
 
   extern int sctk_only_once_while_val;
 #define sctk_only_once() do{                                            \

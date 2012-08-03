@@ -26,7 +26,7 @@
 #include "sctk_config.h"
 
 
-#ifndef MPC_Allocator
+#ifndef MPC_PosixAllocator
 #ifdef __cplusplus
 extern "C"
 {

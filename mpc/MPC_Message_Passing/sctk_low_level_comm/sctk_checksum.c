@@ -1,6 +1,8 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
 /* # This file is part of the MPC Runtime.                                # */
@@ -17,37 +19,38 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - DIDELOT Sylvain didelot.sylvain@gmail.com                        # */
+/* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef SCTK_USE_CHECKSUM
 #include "sctk_checksum.h"
+#ifdef SCTK_USE_CHECKSUM
 #include "sctk_shell_colors.h"
 #include <zlib.h>
 
 static char checksum_enabled = 1;
 
-unsigned long sctk_checksum_message(sctk_thread_ptp_message_t *msg) {
+unsigned long sctk_checksum_message(sctk_thread_ptp_message_t *send,
+    sctk_thread_ptp_message_t *recv) {
   unsigned long adler = 0;
   if (!checksum_enabled) return 0;
 
-  switch(msg->tail.message_type){
+  switch(recv->tail.message_type){
   case sctk_message_contiguous: {
     size_t size;
-    size = msg->body.header.msg_size;
-    if(size > msg->tail.message.contiguous.size){
-      size = msg->tail.message.contiguous.size;
+    size = send->body.header.msg_size;
+    if(size > recv->tail.message.contiguous.size){
+      size = recv->tail.message.contiguous.size;
     }
-    adler = adler32(adler, (unsigned char*) msg->tail.message.contiguous.addr, size);
+    adler = adler32(adler, (unsigned char*) recv->tail.message.contiguous.addr, size);
     break;
   }
   case sctk_message_network: {
     size_t size;
     void* body;
 
-    size = msg->body.header.msg_size;
-    body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
+    size = recv->body.header.msg_size;
+    body = (char*)recv + sizeof(sctk_thread_ptp_message_t);
 
     adler = adler32(adler, (unsigned char*) body, size);
     break;
@@ -57,15 +60,15 @@ unsigned long sctk_checksum_message(sctk_thread_ptp_message_t *msg) {
     size_t i;
     size_t j;
     size_t size;
-    for (i = 0; i < msg->tail.message.pack.count; i++)
-      for (j = 0; j < msg->tail.message.pack.list.std[i].count; j++)
+    for (i = 0; i < recv->tail.message.pack.count; i++)
+      for (j = 0; j < recv->tail.message.pack.list.std[i].count; j++)
 	{
-	  size = (msg->tail.message.pack.list.std[i].ends[j] -
-		  msg->tail.message.pack.list.std[i].begins[j] +
-		  1) * msg->tail.message.pack.list.std[i].elem_size;
-    adler = adler32(adler, ((unsigned char *) (msg->tail.message.pack.list.std[i].addr)) +
-		 msg->tail.message.pack.list.std[i].begins[j] *
-		 msg->tail.message.pack.list.std[i].elem_size,size);
+	  size = (recv->tail.message.pack.list.std[i].ends[j] -
+		  recv->tail.message.pack.list.std[i].begins[j] +
+		  1) * recv->tail.message.pack.list.std[i].elem_size;
+    adler = adler32(adler, ((unsigned char *) (recv->tail.message.pack.list.std[i].addr)) +
+		 recv->tail.message.pack.list.std[i].begins[j] *
+		 recv->tail.message.pack.list.std[i].elem_size,size);
 	}
     break;
   }
@@ -73,15 +76,15 @@ unsigned long sctk_checksum_message(sctk_thread_ptp_message_t *msg) {
     size_t i;
     size_t j;
     size_t size;
-    for (i = 0; i < msg->tail.message.pack.count; i++)
-      for (j = 0; j < msg->tail.message.pack.list.absolute[i].count; j++)
+    for (i = 0; i < recv->tail.message.pack.count; i++)
+      for (j = 0; j < recv->tail.message.pack.list.absolute[i].count; j++)
 	{
-	  size = (msg->tail.message.pack.list.absolute[i].ends[j] -
-		  msg->tail.message.pack.list.absolute[i].begins[j] +
-		  1) * msg->tail.message.pack.list.absolute[i].elem_size;
-	  adler = adler32(adler, ((unsigned char *) (msg->tail.message.pack.list.absolute[i].addr)) +
-		 msg->tail.message.pack.list.absolute[i].begins[j] *
-		 msg->tail.message.pack.list.absolute[i].elem_size,size);
+	  size = (recv->tail.message.pack.list.absolute[i].ends[j] -
+		  recv->tail.message.pack.list.absolute[i].begins[j] +
+		  1) * recv->tail.message.pack.list.absolute[i].elem_size;
+	  adler = adler32(adler, ((unsigned char *) (recv->tail.message.pack.list.absolute[i].addr)) +
+		 recv->tail.message.pack.list.absolute[i].begins[j] *
+		 recv->tail.message.pack.list.absolute[i].elem_size,size);
 	}
     break;
   }
@@ -145,7 +148,7 @@ unsigned long sctk_checksum_buffer(char* body,
 
 
 void sctk_checksum_register(sctk_thread_ptp_message_t *msg) {
-  msg->body.checksum = sctk_checksum_message(msg);
+  msg->body.checksum = sctk_checksum_message(msg, msg);
 }
 void sctk_checksum_unregister(sctk_thread_ptp_message_t *msg) {
   msg->body.checksum = 0;
@@ -157,7 +160,7 @@ unsigned long sctk_checksum_verify(sctk_thread_ptp_message_t *send, sctk_thread_
 
   /* If Checksum != 0, we verify it because the user asked for it */
   if (send->body.checksum) {
-    adler = sctk_checksum_message(recv);
+    adler = sctk_checksum_message(send, recv);
     if (adler != send->body.checksum) {
 #ifdef MPC_USE_INFINIBAND
       sctk_ib_print_msg(send);

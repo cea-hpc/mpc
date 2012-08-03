@@ -34,17 +34,20 @@ void sctk_add_static_reorder_buffer(int dest);
 /*THREAD SAFE use to add a route at compute time*/
 void sctk_add_dynamic_reorder_buffer(int dest);
 
+/*
+ * Return values for sctk_send_message_from_network_reorder
+ */
+/* Message with the correct sequence number found */
+#define REORDER_FOUND_EXPECTED 0
+/* Message without numbering */
+#define REORDER_NO_NUMBERING 1
+/* Message with an incorrect sequence number found */
+#define REORDER_FOUND_NOT_EXPECTED 2
+
 int sctk_send_message_from_network_reorder (struct sctk_thread_ptp_message_s * msg);
 int sctk_prepare_send_message_to_network_reorder (struct sctk_thread_ptp_message_s * msg);
 
 void sctk_set_dynamic_reordering_buffer_creation();
-
-#ifdef MPC_USE_INFINIBAND
-typedef struct sctk_ib_buffered_table_s {
-  struct sctk_ib_buffered_entry_s* entries;
-  sctk_spinlock_t lock;
-} sctk_ib_buffered_table_t;
-#endif
 
 typedef struct {
   int key;
@@ -64,11 +67,6 @@ typedef struct sctk_reorder_table_s{
 
   sctk_spinlock_t lock;
   volatile sctk_reorder_buffer_t* buffer;
-
-  /* Only for Infiniband */
-#ifdef MPC_USE_INFINIBAND
-  struct sctk_ib_buffered_table_s ib_buffered;
-#endif
 
   UT_hash_handle hh;
 } sctk_reorder_table_t;

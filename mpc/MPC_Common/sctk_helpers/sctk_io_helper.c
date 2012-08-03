@@ -21,17 +21,21 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+/********************************* INCLUDES *********************************/
 #include "sctk_io_helper.h"
 #include "sctk_debug.h"
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
+
+/********************************** GLOBALS *********************************/
 #ifdef MPC_Threads
 volatile int sctk_online_program = -1;
 #else
 volatile int sctk_online_program = 1;
 #endif
 
+/********************************* FUNCTION *********************************/
 /*!
  * Call read in loop to avoid problem with splitted messages.
  * Also support EINTR error if interrupted.
@@ -39,20 +43,21 @@ volatile int sctk_online_program = 1;
  * @param buf Buffer to read.
  * @param count Size of buffer to read.
 */
-ssize_t sctk_safe_read(int fd, void* buf, size_t count) {
-	//vars
+ssize_t sctk_safe_read(int fd, void* buf, size_t count)
+{
+	/* vars */
 	int tmp, nb_total_sent_bytes = 0;
 	int res = count;
 
-	//loop until read all
+	/* loop until read all */
 	while (nb_total_sent_bytes < count) {
 		tmp = read(fd, (char *)buf + nb_total_sent_bytes, count - nb_total_sent_bytes);
 
-		//check errors
+		/* check errors */
 		if (tmp == 0) {
 			break;
 		} else if (tmp < 0) {
-			//on interuption continue to re-read
+			/* on interuption continue to re-read */
 			if (errno == EINTR) {
 				continue;
 			} else {
@@ -63,16 +68,17 @@ ssize_t sctk_safe_read(int fd, void* buf, size_t count) {
 			}
 		}
 
-		//update size counter
+		/* update size counter */
 		nb_total_sent_bytes += tmp;
 	};
-	
-	if(sctk_online_program == 0){
-	  exit(0);
+
+	if(sctk_online_program == 0) {
+		exit(0);
 	}
 	return res;
 }
 
+/********************************* FUNCTION *********************************/
 /*!
  * Call write in loop to avoid problem with splitted messages.
  * Also support EINTR error if interrupted.
@@ -82,50 +88,52 @@ ssize_t sctk_safe_read(int fd, void* buf, size_t count) {
 */
 ssize_t sctk_safe_write(int fd, const void* buf, size_t count)
 {
-	//vars
+	/* vars */
 	int tmp, nb_total_sent_bytes = 0;
 	int res = count;
 
-	//loop until read all
+	/* loop until read all */
 	while (nb_total_sent_bytes < count) {
 		tmp = write(fd, (char *)buf + nb_total_sent_bytes, count - nb_total_sent_bytes);
 
-		//check errors
+		/* check errors */
 		if (tmp < 0) {
-			//on interuption continue to re-read
+			/* on interuption continue to re-read */
 			if (errno == EINTR) {
 				continue;
 			} else {
 				sctk_debug ("WRITE %p %lu/%lu FAIL\n", buf, count);
-				perror("sctk_safe_read");
+				perror("sctk_safe_write");
 				res = -1;
 				break;
 			}
 		}
 
-		//update size counter
+		/* update size counter */
 		nb_total_sent_bytes += tmp;
 	};
-	
+
 	return res;
 }
 
+/********************************* FUNCTION *********************************/
 /*!
- * Same than sctk_safe_read but abort on error or non complete read.
+ * Same than sctk_safe_read() but abort on error or non complete read.
 */
 ssize_t sctk_safe_checked_read(int fd, void* buf, size_t count)
 {
 	ssize_t res = sctk_safe_read(fd,buf,count);
-	assume(res == count);
+	assume_m(res == count,"Failed to read the requested size, get %lu but expect %lu.",res,count);
 	return res;
 }
 
+/********************************* FUNCTION *********************************/
 /*!
- * Same than sctk_safe_write but abort on error or non complete write.
+ * Same than sctk_safe_write() but abort on error or non complete write.
 */
-ssize_t sctk_safe_checked_write(int fd, void* buf, size_t count)
+ssize_t sctk_safe_checked_write(int fd, const void* buf, size_t count)
 {
 	ssize_t res = sctk_safe_write(fd,buf,count);
-	assume(res == count);
+	assume_m(res == count,"Failed to write the requested size, get %lu but expect %lu.",res,count);
 	return res;
 }

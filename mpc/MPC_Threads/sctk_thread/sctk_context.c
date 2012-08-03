@@ -37,9 +37,13 @@ typedef struct
 
 #if defined(SCTK_USE_TLS)
 __thread char *mpc_user_tls_1 = NULL;
-//profiling TLS
+
+/* MPC Tracelib TLS */
 __thread void *tls_trace_module = NULL;
 __thread void *tls_args = NULL;
+
+/* MPC Profiler TLS */
+__thread void *tls_mpc_profiler;
 
 unsigned long mpc_user_tls_1_offset = 0;
 unsigned long mpc_user_tls_1_entry_number = 0;
@@ -469,18 +473,19 @@ sctk_makecontext (sctk_mctx_t * ucp,
   return res;
 }
 
+#if defined (SCTK_USE_OPTIMIZED_TLS)
+
 int
 sctk_makecontext_extls (sctk_mctx_t * ucp,
 				   void *arg,
 				   void (*func) (void *), char *stack,
-				   size_t stack_size, void *extls)
+				   size_t stack_size, void *extls, void *tls_module)
 {
   int res;
   sctk_mctx_t lucp;
   sctk_context_save_tls (&lucp);
 
-  sctk_context_init_tls_with_specified_extls (ucp, extls);
-  // ucp->sctk_extls = extls;
+  sctk_context_init_tls_with_specified_extls (ucp, extls, tls_module);
   sctk_context_restore_tls (ucp);
 
 #ifdef SCTK_USE_VALGRIND
@@ -492,3 +497,30 @@ sctk_makecontext_extls (sctk_mctx_t * ucp,
   sctk_context_restore_tls (&lucp);
   return res;
 }
+
+#else
+
+int
+sctk_makecontext_extls (sctk_mctx_t * ucp,
+				   void *arg,
+				   void (*func) (void *), char *stack,
+				   size_t stack_size, void *extls )
+{
+  int res;
+  sctk_mctx_t lucp;
+  sctk_context_save_tls (&lucp);
+
+  sctk_context_init_tls_with_specified_extls (ucp, extls );
+  sctk_context_restore_tls (ucp);
+
+#ifdef SCTK_USE_VALGRIND
+  VALGRIND_STACK_REGISTER (stack, (((char *) stack) + stack_size));
+#endif
+  sctk_nodebug ("new stack %p-%p", stack, (((char *) stack) + stack_size));
+  res = sctk_mctx_set (ucp, func, stack, stack + stack_size, arg);
+
+  sctk_context_restore_tls (&lucp);
+  return res;
+}
+#endif
+

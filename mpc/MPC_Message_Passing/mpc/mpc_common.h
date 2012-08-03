@@ -24,9 +24,12 @@
 #define MAX_MPC_BUFFERED_SIZE (128 * sizeof(long))
 #include <uthash.h>
 
-typedef struct
+typedef struct mpc_buffered_msg_s
 {
   sctk_thread_ptp_message_t header;
+  /* Completion flag to use if the user do not provide a valid request */
+  int completion_flag;
+  /* MPC_Request if the message is buffered  */
   MPC_Request request;
   long buf[(MAX_MPC_BUFFERED_SIZE / sizeof (long)) + 1];
 } mpc_buffered_msg_t;
@@ -77,8 +80,8 @@ struct sctk_task_specific_s
 {
   int task_id;
 
-    MPC_USE_TYPE (user_types);
-    MPC_USE_TYPE (user_types_struct);
+  MPC_USE_TYPE (user_types);
+  MPC_USE_TYPE (user_types_struct);
 
   mpc_per_communicator_t*per_communicator;
   sctk_spinlock_t per_communicator_lock;
@@ -87,7 +90,8 @@ struct sctk_task_specific_s
 
   struct sctk_internal_ptp_s* my_ptp_internal;
 
-  int init_done;
+  int init_done;  /* =1 if the task has called MPI_Init() */
+  int finalize_done; /* =1 if the task has already called MPI_Finalize()  */
 };
 
 mpc_per_communicator_t* sctk_thread_getspecific_mpc_per_comm(struct sctk_task_specific_s* task_specific,sctk_communicator_t comm);

@@ -29,7 +29,7 @@
 #include "sctk_debug.h"
 #include "sctk_topology.h"
 #include "sctk_tls.h"
-
+#include "sctk_route.h"
 #include "mpcthread.h"
 #include <mpcmp.h>
 #include <sys/time.h>
@@ -51,6 +51,17 @@
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
 #include "mpc_weak.h"
 #endif
+
+#ifdef MPC_Message_Passing
+
+#include "sctk_low_level_comm.h"
+
+#if MPC_USE_INFINIBAND
+#include "sctk_multirail_ib.h"
+#endif
+
+#endif
+
 
  /************************************************************************/
  /*GLOBAL VARIABLES                                                      */
@@ -191,7 +202,7 @@ static inline void sctk_thread_createspecific_mpc_per_comm_from_existing(sctk_ta
 /*ACCESSORS                                                             */
 /************************************************************************/
 
-static inline sctk_mpc_verify_request_compatibility()
+static inline void sctk_mpc_verify_request_compatibility()
 {
   /*     MPC_Request mpc_req; */
   /*     sctk_request_t sctk_req; */
@@ -413,6 +424,7 @@ __MPC_init_task_specific_t (sctk_task_specific_t * tmp)
   __MPC_init_thread_specific();
 
   tmp->init_done = 0;
+  tmp->finalize_done = 0;
 
   tmp->my_ptp_internal = sctk_get_internal_ptp(tmp->task_id);
 
@@ -514,7 +526,7 @@ MPC_CREATE_INTERN_FUNC (MAXLOC);
   if (datatype >= sctk_user_data_types_max)	\
     MPC_ERROR_REPORT (comm, MPC_ERR_TYPE, "");
 
-#warning "To optimize"
+TODO("To optimize")
 /* #define mpc_check_comm(com,comm)		\ */
 /*   if(sctk_thread_getspecific_mpc_per_comm(__MPC_get_task_specific (),com) == NULL)	\ */
 /*     MPC_ERROR_REPORT(comm,MPC_ERR_COMM,"") */
@@ -814,10 +826,10 @@ mpc_log_debug (MPC_Comm comm, const char *fmt, ...)
 
 #endif
 
-static inline int
-__MPC_Barrier (MPC_Comm comm)
+int __MPC_Barrier (MPC_Comm comm)
 {
   mpc_check_comm (comm, comm);
+
   sctk_barrier ((sctk_communicator_t) comm);
   MPC_ERROR_SUCESS ();
 }
@@ -887,7 +899,7 @@ static inline size_t
 __MPC_Get_datatype_size (MPC_Datatype datatype,
 			 sctk_task_specific_t * task_specific)
 {
-  if ((datatype == MPC_DATATYPE_NULL))
+  if (datatype == MPC_DATATYPE_NULL)
     MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_TYPE, "");
 
   if (datatype == MPC_UB)
@@ -1009,7 +1021,7 @@ PMPC_Derived_datatype (MPC_Datatype * datatype,
   int i;
   sctk_derived_type_t **user_types;
   sctk_task_specific_t *task_specific;
-  SCTK_PROFIL_START (MPC_Struct_datatype);
+  SCTK_PROFIL_START (MPC_Derived_datatype);
   *datatype = MPC_DATATYPE_NULL;
   task_specific = __MPC_get_task_specific ();
   sctk_spinlock_lock (&(task_specific->user_types_struct.lock));
@@ -1050,7 +1062,7 @@ PMPC_Derived_datatype (MPC_Datatype * datatype,
 	  t->is_ub = is_ub;
 	  t->is_lb = is_lb;
 	  sctk_spinlock_unlock (&(task_specific->user_types_struct.lock));
-	  SCTK_PROFIL_END (MPC_Struct_datatype);
+	  SCTK_PROFIL_END (MPC_Derived_datatype);
 	  MPC_ERROR_SUCESS ();
 	}
     }
@@ -1220,8 +1232,13 @@ PMPC_Init (int *argc, char ***argv)
     }
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Init");
 #endif
-  PMPC_Barrier (MPC_COMM_WORLD);
   task_specific = __MPC_get_task_specific ();
+  /* If the task calls MPI_Init() a second time */
+  if (task_specific->finalize_done == 1) {
+    return MPC_ERR_OTHER;
+  }
+
+  PMPC_Barrier (MPC_COMM_WORLD);
   task_specific->init_done = 1;
   SCTK_PROFIL_END (MPC_Init);
   MPC_ERROR_SUCESS ();
@@ -1230,8 +1247,12 @@ PMPC_Init (int *argc, char ***argv)
 int
 PMPC_Init_thread (int *argc, char ***argv, int required, int *provided)
 {
-  *provided = required;
-  return PMPC_Init (argc, argv);
+  const int res = PMPC_Init (argc, argv);
+  if (res == MPC_SUCCESS) {
+    *provided = required;
+  }
+
+  return res;
 }
 
 int
@@ -1253,18 +1274,11 @@ PMPC_Finalize (void)
 
   sctk_nodebug("PMPC_Finalize");
 
-  PMPC_Barrier (MPC_COMM_WORLD);
+  __MPC_Barrier (MPC_COMM_WORLD);
 
   task_specific = __MPC_get_task_specific ();
   task_specific->init_done = 0;
-  /*   __MPC_delete_task_specific (); */
-#ifdef MPC_Message_Passing
-#if MPC_USE_INFINIBAND
-int rank;
-__MPC_Comm_rank (MPC_COMM_WORLD, &rank, task_specific);
-sctk_network_finalize_task_multirail_ib (rank);
-#endif
-#endif
+  task_specific->finalize_done = 1;
 
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Finalize");
@@ -1470,7 +1484,7 @@ PMPC_Checkpoint_timed (unsigned int sec, MPC_Comm comm)
 	      __MPC_Barrier (MPC_COMM_WORLD);
 
 #if defined(__GNU_COMPILER) || defined(__INTEL_COMPILER)
-#warning "Si on redemarre , recr�ation des commnicateurs"
+INFO("Si on redemarre , recreation des commnicateurs")
 #endif
 	    }
 	}
@@ -1693,8 +1707,7 @@ void  MPC_Task_hook(int rank)
 }
 #endif
 
-
-#define mpc_init(name,t) mpc_common_types[name] = sizeof(t)
+#define mpc_init(name,t) mpc_common_types[name] = sizeof(t) ; sctk_assert(name >=0 ); sctk_assert(name < sctk_user_data_types)
 
 void
 __MPC_init_types ()
@@ -1713,6 +1726,15 @@ __MPC_init_types ()
   mpc_init (MPC_UNSIGNED_LONG, unsigned long);
   mpc_init (MPC_LONG_DOUBLE, long double);
   mpc_init (MPC_LONG_LONG_INT, long long);
+#ifndef NOHAVE_ASSERT_H
+  mpc_init (MPC_INTEGER1, int8_t);
+  mpc_init (MPC_INTEGER2, int16_t);
+  mpc_init (MPC_INTEGER4, int32_t);
+  mpc_init (MPC_INTEGER8, int64_t);
+#endif
+  mpc_init (MPC_REAL4, float);
+  mpc_init (MPC_REAL8, double);
+  mpc_init (MPC_REAL16, long double);
   mpc_common_types[MPC_PACKED] = 0;
   mpc_init (MPC_FLOAT_INT, mpc_float_int);
   mpc_init (MPC_LONG_INT, mpc_long_int);
@@ -1733,7 +1755,6 @@ int
 sctk_user_main (int argc, char **argv)
 {
   int result;
-  sctk_task_specific_t *task_specific;
 
   sctk_mpc_init_request_null();
 
@@ -1772,17 +1793,26 @@ sctk_user_main (int argc, char **argv)
   __mpcomp_init() ;
 #endif
 
+
+#ifdef MPC_Profiler
+	sctk_internal_profiler_init();
+#endif
+
   __MPC_Barrier (MPC_COMM_WORLD);
 
   result = mpc_user_main (argc, argv);
 
   __MPC_Barrier (MPC_COMM_WORLD);
 
+#ifdef MPC_Profiler
+	sctk_internal_profiler_render();
+#endif
+
   MPC_Checkpoint_restart_end ();
 
   sctk_nodebug ("Wait for pending messages");
 
-  task_specific = __MPC_get_task_specific ();
+  __MPC_get_task_specific ();
 
   __MPC_delete_thread_specific();
 
@@ -1802,20 +1832,24 @@ sctk_user_main (int argc, char **argv)
 int
 PMPC_Comm_rank (MPC_Comm comm, int *rank)
 {
+  SCTK_PROFIL_START (MPC_Comm_rank);
   sctk_task_specific_t *task_specific;
   mpc_check_comm (comm, comm);
   task_specific = __MPC_get_task_specific ();
   sctk_nodebug ("Get rank of %d", comm);
   __MPC_Comm_rank (comm, rank, task_specific);
   sctk_nodebug ("Get rank of %d done", comm);
+  SCTK_PROFIL_END (MPC_Comm_rank);
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Comm_size (MPC_Comm comm, int *size)
 {
+  SCTK_PROFIL_START (MPC_Comm_size);
   mpc_check_comm (comm, comm);
   __MPC_Comm_size (comm, size);
+  SCTK_PROFIL_END (MPC_Comm_size);
   MPC_ERROR_SUCESS ();
 }
 
@@ -1830,59 +1864,110 @@ PMPC_Comm_remote_size (MPC_Comm comm, int *size)
 int
 PMPC_Node_rank (int *rank)
 {
+  SCTK_PROFIL_START (MPC_Node_rank);
   *rank = sctk_get_node_rank ();
+  SCTK_PROFIL_END (MPC_Node_rank);
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Node_number (int *number)
 {
+  SCTK_PROFIL_START (MPC_Node_number);
   *number = sctk_get_node_number ();
+  SCTK_PROFIL_END (MPC_Node_number);
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Processor_rank (int *rank)
 {
+  SCTK_PROFIL_START (MPC_Processor_rank);
   *rank = sctk_get_processor_rank ();
+  SCTK_PROFIL_END (MPC_Processor_rank);
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Processor_number (int *number)
 {
+  SCTK_PROFIL_START (MPC_Processor_number);
   *number = sctk_get_processor_number ();
+  SCTK_PROFIL_END (MPC_Processor_number);
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Process_rank (int *rank)
 {
+  SCTK_PROFIL_START (MPC_Process_rank);
   *rank = sctk_get_process_rank ();
+  SCTK_PROFIL_END (MPC_Process_rank);
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Process_number (int *number)
 {
+  SCTK_PROFIL_START (MPC_Process_number);
   *number = sctk_get_process_number ();
+  SCTK_PROFIL_END (MPC_Process_number);
   MPC_ERROR_SUCESS ();
 }
 
 int
 PMPC_Local_process_rank (int *rank)
 {
+  SCTK_PROFIL_START (MPC_Local_process_rank);
   *rank = sctk_get_local_process_rank();
+  SCTK_PROFIL_END (MPC_Local_process_rank);
   MPC_ERROR_SUCESS();
 }
 
 int
 PMPC_Local_process_number (int *number)
 {
+  SCTK_PROFIL_START (MPC_Local_process_number);
   *number = sctk_get_local_process_number();
+  SCTK_PROFIL_END (MPC_Local_process_number);
   MPC_ERROR_SUCESS();
 }
 
+int
+PMPC_Task_rank (int *rank)
+{
+  SCTK_PROFIL_START (MPC_Task_rank);
+  sctk_task_specific_t *task_specific;
+  mpc_check_comm (MPC_COMM_WORLD, MPC_COMM_WORLD);
+  task_specific = __MPC_get_task_specific ();
+  __MPC_Comm_rank (MPC_COMM_WORLD, rank, task_specific);
+  SCTK_PROFIL_END (MPC_Task_rank);
+  MPC_ERROR_SUCESS ();
+}
+
+int
+PMPC_Task_number (int *number)
+{
+  SCTK_PROFIL_START (MPC_Task_number);
+  mpc_check_comm (MPC_COMM_WORLD, MPC_COMM_WORLD);
+  __MPC_Comm_size (MPC_COMM_WORLD, number);
+  SCTK_PROFIL_END (MPC_Task_number);
+  MPC_ERROR_SUCESS ();
+}
+
+int
+PMPC_Local_task_rank (int *rank)
+{
+  *rank = sctk_get_local_task_rank();
+  MPC_ERROR_SUCESS();
+}
+
+int
+PMPC_Local_task_number (int *number)
+{
+  *number = sctk_get_local_task_number();
+  MPC_ERROR_SUCESS();
+}
 
 /*Collective operations*/
 
@@ -2244,45 +2329,42 @@ __MPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
   msg_size = count * d_size;
 
   if ((msg_size > MAX_MPC_BUFFERED_SIZE) || (sctk_is_net_message (dest)) || mpc_disable_buffering)
-    {
-      sctk_add_adress_in_message (msg, buf, msg_size);
-      sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
-				      request, msg_size,pt2pt_specific_message_tag);
-    }
+  {
+    sctk_add_adress_in_message (msg, buf, msg_size);
+    sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
+        request, msg_size,pt2pt_specific_message_tag);
+  }
   else
-    {
-      sctk_thread_specific_t* thread_specific;
-      thread_specific = sctk_message_passing;
-      sctk_spinlock_lock (&(thread_specific->buffer_async.lock));
-      buffer_rank = thread_specific->buffer_async.buffer_async_rank;
-      tmp_buf = &(thread_specific->buffer_async.buffer_async[buffer_rank]);
-      thread_specific->buffer_async.buffer_async_rank =
-	(buffer_rank + 1) % MAX_MPC_BUFFERED_MSG;
-#warning "To optimize"
+  {
+    sctk_thread_specific_t* thread_specific;
+    thread_specific = sctk_message_passing;
+    sctk_spinlock_lock (&(thread_specific->buffer_async.lock));
+    buffer_rank = thread_specific->buffer_async.buffer_async_rank;
+    tmp_buf = &(thread_specific->buffer_async.buffer_async[buffer_rank]);
+    thread_specific->buffer_async.buffer_async_rank =
+      (buffer_rank + 1) % MAX_MPC_BUFFERED_MSG;
 
-      if (sctk_mpc_completion_flag(&(tmp_buf->request)) == SCTK_MESSAGE_DONE)
-	{
-	  sctk_add_adress_in_message (msg, tmp_buf->buf, msg_size);
-	  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
-					  &(tmp_buf->request), msg_size,pt2pt_specific_message_tag);
+      if (tmp_buf->completion_flag == SCTK_MESSAGE_DONE)
+      {
+        /* We set the buffer as busy */
+        tmp_buf->completion_flag = SCTK_MESSAGE_PENDING;
+        sctk_add_adress_in_message (msg, tmp_buf->buf, msg_size);
+        sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
+            request, msg_size,pt2pt_specific_message_tag);
 
-	  sctk_spinlock_unlock (&(thread_specific->buffer_async.lock));
+        sctk_spinlock_unlock (&(thread_specific->buffer_async.lock));
 
-	  memcpy (tmp_buf->buf, buf, msg_size);
-	  if (request != NULL)
-	    {
-	      memcpy(request,&(tmp_buf->request),sizeof(sctk_request_t));
-	      request->completion_flag = SCTK_MESSAGE_DONE;
-	    }
-	}
+        msg->tail.buffer_async = tmp_buf;
+        memcpy (tmp_buf->buf, buf, msg_size);
+      }
       else
-	{
-	  sctk_spinlock_unlock (&(thread_specific->buffer_async.lock));
-	  sctk_add_adress_in_message (msg, buf, msg_size);
-	  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
-					  request, msg_size,pt2pt_specific_message_tag);
-	}
-    }
+      {
+        sctk_spinlock_unlock (&(thread_specific->buffer_async.lock));
+        sctk_add_adress_in_message (msg, buf, msg_size);
+        sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
+            request, msg_size,pt2pt_specific_message_tag);
+      }
+  }
 
   sctk_nodebug ("Message from %d to %d", src, dest);
   sctk_nodebug ("isend : snd2, my rank = %d", src);
@@ -2491,7 +2573,6 @@ __MPC_Wait (MPC_Request * request, MPC_Status * status)
 static inline int
 __MPC_Test (MPC_Request * request, int *flag, MPC_Status * status)
 {
-
   mpc_check_comm (sctk_mpc_get_communicator_from_request(request), MPC_COMM_WORLD);
   *flag = 0;
   if ((sctk_mpc_completion_flag(request) == SCTK_MESSAGE_PENDING) && (!sctk_mpc_message_is_null(request)))
@@ -2505,6 +2586,12 @@ __MPC_Test (MPC_Request * request, int *flag, MPC_Status * status)
       *flag = 1;
       sctk_mpc_commit_status_from_request(request,status);
     }
+
+  if(sctk_mpc_message_is_null(request)) {
+    *flag = 1;
+    sctk_mpc_commit_status_from_request(request,status);
+  }
+
   MPC_ERROR_SUCESS ();
 }
 
@@ -2607,7 +2694,9 @@ __MPC_Waitall (mpc_msg_count count,
 	       MPC_Status array_of_statuses[])
 {
   int i;
+#if 0
   int flag = 1;
+#endif
 
   for (i = 0; i < count; i++) {
     MPC_Status *status;
@@ -2715,7 +2804,7 @@ PMPC_Waitsome (mpc_msg_count incount,
 	}
       if (done == 0)
 	{
-#warning "wait_for_value_and_poll should be used here"
+TODO("wait_for_value_and_poll should be used here")
 	  sctk_thread_yield ();
 	}
     }
@@ -2752,7 +2841,7 @@ PMPC_Waitany (mpc_msg_count count,
 		}
 	    }
 	}
-#warning "wait_for_value_and_poll should be used here"
+TODO("wait_for_value_and_poll should be used here")
       sctk_thread_yield ();
     }
 }
@@ -2927,24 +3016,24 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
   mpc_check_comm (comm, comm);
   mpc_check_count (count, comm);
   if (count == 0)
-    {
-      buf = &tmp;
-    }
+  {
+    buf = &tmp;
+  }
   mpc_check_buf (buf, comm);
   mpc_check_msg_size (src, dest, tag, comm, size);
 
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (comm,
-		 "MPC_Send ptr=%p count=%lu type=%d dest=%d tag=%d ", buf,
-		 count, datatype, dest, tag);
+      "MPC_Send ptr=%p count=%lu type=%d dest=%d tag=%d ", buf,
+      count, datatype, dest, tag);
 #endif
   sctk_nodebug ("MPC_Send ptr=%p count=%lu type=%d dest=%d tag=%d ", buf,
-		count, datatype, dest, tag);
+      count, datatype, dest, tag);
 
   if (dest == MPC_PROC_NULL)
-    {
-      MPC_ERROR_SUCESS ();
-    }
+  {
+    MPC_ERROR_SUCESS ();
+  }
 
 
   msg_size = count * __MPC_Get_datatype_size (datatype, task_specific);
@@ -2952,59 +3041,61 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
 
 
   if ((msg_size > MAX_MPC_BUFFERED_SIZE) || (sctk_is_net_message (dest)) || mpc_disable_buffering)
-    {
-      msg = &header;
-      sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
-      sctk_mpc_init_request(&request,comm,src);
+  {
+    msg = &header;
+    sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
+    sctk_mpc_init_request(&request,comm,src);
 
-      sctk_add_adress_in_message(msg,buf,msg_size);
-      sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
-				      &request, msg_size,pt2pt_specific_message_tag);
-      sctk_send_message (msg);
-      sctk_nodebug("send request.is_null %d",request.is_null);
-      sctk_mpc_wait_message (&request);
-    }
+    sctk_add_adress_in_message(msg,buf,msg_size);
+    sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
+        &request, msg_size,pt2pt_specific_message_tag);
+    sctk_send_message (msg);
+    sctk_nodebug("send request.is_null %d",request.is_null);
+    sctk_mpc_wait_message (&request);
+  }
   else
-    {
-      sctk_thread_specific_t* thread_specific;
-      thread_specific = sctk_message_passing;
-      sctk_spinlock_lock (&(thread_specific->buffer.lock));
-      buffer_rank = thread_specific->buffer.buffer_rank;
-      tmp_buf = &(thread_specific->buffer.buffer[buffer_rank]);
-      thread_specific->buffer.buffer_rank =
-	(buffer_rank + 1) % MAX_MPC_BUFFERED_MSG;
-#warning "To optimize"
+  {
+    sctk_thread_specific_t* thread_specific;
+    thread_specific = sctk_message_passing;
+    sctk_spinlock_lock (&(thread_specific->buffer.lock));
+    buffer_rank = thread_specific->buffer.buffer_rank;
+    tmp_buf = &(thread_specific->buffer.buffer[buffer_rank]);
+    thread_specific->buffer.buffer_rank =
+      (buffer_rank + 1) % MAX_MPC_BUFFERED_MSG;
 
-      if (sctk_mpc_completion_flag(&(tmp_buf->request)) != SCTK_MESSAGE_DONE)
-	{
-	  msg = &header;
-	  sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
-	  sctk_spinlock_unlock (&(thread_specific->buffer.lock));
-	  sctk_mpc_init_request(&request,comm,src);
+    if ( tmp_buf->completion_flag != SCTK_MESSAGE_DONE)
+      {
+        msg = &header;
+        sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
+        sctk_spinlock_unlock (&(thread_specific->buffer.lock));
+        sctk_mpc_init_request(&request,comm,src);
 
-	  sctk_add_adress_in_message(msg,buf,msg_size);
-	  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
-					  &request, msg_size,pt2pt_specific_message_tag);
-	  sctk_send_message (msg);
-	  sctk_nodebug("send request.is_null %d",request.is_null);
-	  sctk_mpc_wait_message (&request);
-	}
+        sctk_add_adress_in_message(msg,buf,msg_size);
+        sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
+            &request, msg_size,pt2pt_specific_message_tag);
+        sctk_send_message (msg);
+        sctk_nodebug("send request.is_null %d",request.is_null);
+        sctk_mpc_wait_message (&request);
+      }
       else
-	{
-	  msg = &(tmp_buf->header);
-	  sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
-	  sctk_nodebug ("Copied message |%s| -> |%s| %d", buf, tmp_buf->buf,
-			msg_size);
+      {
+        msg = &(tmp_buf->header);
+        /* We set the buffer as busy */
+        tmp_buf->completion_flag = SCTK_MESSAGE_PENDING;
+        sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
+        sctk_nodebug ("Copied message |%s| -> |%s| %d", buf, tmp_buf->buf,
+            msg_size);
 
-	  sctk_add_adress_in_message(msg,tmp_buf->buf,msg_size);
-	  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
-					  &(tmp_buf->request), msg_size,pt2pt_specific_message_tag);
-	  sctk_spinlock_unlock (&(thread_specific->buffer.lock));
+        sctk_add_adress_in_message(msg,tmp_buf->buf,msg_size);
+        sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
+            &(tmp_buf->request), msg_size,pt2pt_specific_message_tag);
+        sctk_spinlock_unlock (&(thread_specific->buffer.lock));
 
-	  memcpy (tmp_buf->buf, buf, msg_size);
-	  sctk_send_message (msg);
-	}
-    }
+        msg->tail.buffer_async = tmp_buf;
+        memcpy (tmp_buf->buf, buf, msg_size);
+        sctk_send_message (msg);
+      }
+  }
 
 
 
@@ -3816,6 +3907,7 @@ int
 PMPC_Get_count (MPC_Status * status, MPC_Datatype datatype,
 		mpc_msg_count * count)
 {
+  SCTK_PROFIL_START (MPC_Get_count);
   size_t size;
   mpc_msg_count res;
   sctk_task_specific_t *task_specific;
@@ -3830,6 +3922,7 @@ PMPC_Get_count (MPC_Status * status, MPC_Datatype datatype,
       res = MPC_UNDEFINED;
     }
   *count = res;
+  SCTK_PROFIL_END (MPC_Get_count);
   MPC_ERROR_SUCESS ();
 }
 
@@ -3837,8 +3930,10 @@ PMPC_Get_count (MPC_Status * status, MPC_Datatype datatype,
 int
 PMPC_Get_processor_name (char *name, int *resultlen)
 {
+  SCTK_PROFIL_START (MPC_Get_processor_name);
   gethostname (name, HOSTNAME_SIZE);
   *resultlen = strlen (name);
+  SCTK_PROFIL_END (MPC_Get_processor_name);
   MPC_ERROR_SUCESS ();
 }
 
@@ -4089,7 +4184,7 @@ __MPC_Comm_free (MPC_Comm * comm)
     }
   MPC_Comm old_comm = *comm;
 
-#warning "Comm free disabled"
+  INFO("Comm free disabled")
   MPC_ERROR_SUCESS();
   sctk_nodebug ("Comm free %d", old_comm);
   mpc_check_comm (old_comm, MPC_COMM_WORLD);
@@ -4298,7 +4393,6 @@ PMPC_Errhandler_create (MPC_Handler_function * function,
 int
 PMPC_Errhandler_set (MPC_Comm comm, MPC_Errhandler errhandler)
 {
-  MPC_Handler_function **user_error_handlers;
   sctk_task_specific_t *task_specific;
   mpc_per_communicator_t* tmp;
   task_specific = __MPC_get_task_specific ();
@@ -4313,7 +4407,6 @@ PMPC_Errhandler_set (MPC_Comm comm, MPC_Errhandler errhandler)
 int
 PMPC_Errhandler_get (MPC_Comm comm, MPC_Errhandler * errhandler)
 {
-  MPC_Handler_function **user_error_handlers;
   sctk_task_specific_t *task_specific;
   mpc_per_communicator_t* tmp;
   task_specific = __MPC_get_task_specific ();
@@ -4394,6 +4487,7 @@ PMPC_Error_class (int errorcode, int *errorclass)
 double
 PMPC_Wtime ()
 {
+  SCTK_PROFIL_START (MPC_Wtime);
   double res;
   struct timeval tp;
 
@@ -4402,6 +4496,7 @@ PMPC_Wtime ()
   res = res / (double) 1000000;
 
   sctk_nodebug ("Wtime = %f", res);
+  SCTK_PROFIL_END (MPC_Wtime);
   return res;
 }
 
@@ -4419,6 +4514,9 @@ PMPC_Request_free (MPC_Request * request)
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Request_free req=%p", request);
 #endif
+
+  /* Firstly wait the message before freeing */
+  sctk_mpc_wait_message(request);
   *request = mpc_request_null;
   MPC_ERROR_SUCESS ();
 }
@@ -4830,8 +4928,11 @@ PMPC_User_Main (int argc, char **argv)
 }
 
 /********************************************************************/
-/*Netowk statistics                                                 */
+/*    Network functions. These functions are not a part of the      */
+/*    MPI standard.                                                 */
 /********************************************************************/
+
+/* For getting stats about the network */
 void MPC_Network_stats(struct MPC_Network_stats_s *stats) {
 #ifdef MPC_Message_Passing
 #ifdef MPC_USE_INFINIBAND
@@ -4839,3 +4940,29 @@ void MPC_Network_stats(struct MPC_Network_stats_s *stats) {
 #endif
 #endif
 }
+
+/* Try to deconnect neighbors */
+void MPC_Network_deco_neighbors() {
+#ifdef MPC_Message_Passing
+#ifdef MPC_USE_INFINIBAND
+  sctk_network_deco_neighbors_ib();
+#endif
+#endif
+}
+
+/* Send a message to a process using the signalization network */
+void MPC_Send_signalization_network(int dest_process, int tag, void *buff, size_t size) {
+#ifdef MPC_Message_Passing
+    sctk_route_messages_send(sctk_process_rank,dest_process,user_specific_message_tag,
+        tag, buff, size);
+#endif
+}
+
+/* Recv a message from a process using the signalization network */
+void MPC_Recv_signalization_network(int src_process, int tag, void *buff, size_t size) {
+#ifdef MPC_Message_Passing
+  sctk_route_messages_recv(src_process,sctk_process_rank,user_specific_message_tag,
+        tag, buff, size);
+#endif
+}
+

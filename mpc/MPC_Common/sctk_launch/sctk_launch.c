@@ -28,6 +28,7 @@
 #include <unistd.h>
 #include <pthread.h>
 #include <signal.h>
+#include <sctk_runtime_config.h>
 #include "sctk.h"
 
 #if !defined(NO_INTERNAL_ASSERT)
@@ -50,7 +51,11 @@
 #include "sctk_tls.h"
 /* #include "sctk_daemons.h" */
 /* #include "sctk_io.h" */
+#include "sctk_runtime_config.h"
 
+#ifdef MPC_Profiler
+#include "sctk_profile_render.h"
+#endif
 
 #define SCTK_START_KEYWORD "--sctk-args--"
 
@@ -78,6 +83,8 @@ int sctk_share_node_capabilities = 0;
 
 double __sctk_profiling__start__sctk_init_MPC;
 double __sctk_profiling__end__sctk_init_MPC;
+char * sctk_profiling_outputs = "none";
+
 
 void
 format_output (char *name, char *def)
@@ -194,6 +201,9 @@ sctk_perform_initialisation (void)
     }
   }
   sctk_topology_init ();
+  #ifdef HAVE_HWLOC
+  sctk_alloc_posix_mmsrc_numa_init_phase_numa();
+  #endif
   sctk_hls_build_repository();
   sctk_thread_init ();
 
@@ -230,14 +240,15 @@ sctk_perform_initialisation (void)
 #ifdef MPC_Message_Passing
   if (sctk_net_val != NULL){
     sctk_ptp_per_task_init(-1);
-    sctk_net_val (sctk_net_val_arg);
+    sctk_net_init_pmi();
   }
 #endif
 
   if (sctk_task_nb_val)
   {
 #ifdef MPC_Message_Passing
-    sctk_communicator_init (sctk_task_nb_val);
+    sctk_communicator_world_init (sctk_task_nb_val);
+    sctk_communicator_self_init (sctk_task_nb_val);
 #else
     (void) (0);
 #endif
@@ -248,6 +259,13 @@ sctk_perform_initialisation (void)
     sctk_abort ();
   }
 
+#ifdef MPC_Message_Passing
+  if (sctk_net_val != NULL){
+    sctk_net_val (sctk_net_val_arg);
+  }
+#endif
+
+
   if (sctk_process_rank == 0)
   {
     char *mpc_lang = "C/C++";
@@ -256,26 +274,25 @@ sctk_perform_initialisation (void)
       mpc_lang = "Fortran";
     }
 
-    if (getenv ("MPC_DISABLE_BANNER") == NULL)
+    if (sctk_runtime_config_get()->modules.launcher.banner)
     {
       if (SCTK_VERSION_MINOR >= 0)
       {
         fprintf (stderr,
-            "MPC version %d.%d.%d%s %s (%d tasks %d processes %d cpus %s/%s) %s%s\n",
+            "MPC version %d.%d.%d%s %s (%d tasks %d processes %d cpus %s) %s%s%s\n",
             SCTK_VERSION_MAJOR, SCTK_VERSION_MINOR, SCTK_VERSION_REVISION,
             SCTK_VERSION_PRE, mpc_lang, sctk_task_nb_val,
             sctk_process_nb_val, sctk_get_cpu_number (),
-            sctk_multithreading_mode, sctk_network_mode,
-            sctk_alloc_mode (), SCTK_DEBUG_MODE);
+            sctk_multithreading_mode,
+            sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_network_mode);
       }
       else
       {
         fprintf (stderr,
-            "MPC experimental version %s (%d tasks %d processes %d cpus %s/%s) %s%s\n",
+            "MPC experimental version %s (%d tasks %d processes %d cpus %s) %s%s%s\n",
             mpc_lang, sctk_task_nb_val, sctk_process_nb_val,
             sctk_get_cpu_number (), sctk_multithreading_mode,
-            sctk_network_mode, sctk_alloc_mode (),
-            SCTK_DEBUG_MODE);
+            sctk_alloc_mode (), SCTK_DEBUG_MODE, sctk_network_mode);
       }
     }
     if (sctk_restart_mode == 1)
@@ -474,7 +491,7 @@ sctk_use_network (char *arg)
   sctk_net_val_arg = arg;
   sctk_net_val = sctk_net_init_driver;
 #endif
-  
+
 #if 0
   /* if the network mode is different to none,
    * we initialize it. */
@@ -485,6 +502,20 @@ sctk_use_network (char *arg)
     sctk_net_init_driver (arg);
   }
 #endif
+#endif
+}
+
+
+static void sctk_set_profiling( char * arg )
+{
+#ifdef MPC_Profiler
+	if( sctk_profile_renderer_check_render_list( arg ) )
+	{
+		sctk_error( "Provided profiling output syntax is not correct: %s", arg );
+		abort();
+	}
+
+	sctk_profiling_outputs = arg;
 #endif
 }
 
@@ -527,6 +558,8 @@ sctk_threat_arg (char *word)
   sctk_add_arg_eq ("--node-number", sctk_def_node_nb);
   sctk_add_arg_eq ("--enable-smt", sctk_def_enable_smt);
   sctk_add_arg_eq ("--share-node", sctk_def_share_node);
+
+  sctk_add_arg_eq ("--profiling", sctk_set_profiling);
 
   sctk_add_arg_eq ("--launcher", sctk_def_launcher_mode);
 
@@ -741,7 +774,7 @@ run (sctk_startup_args_t * arg)
 #ifdef SCTK_LINUX_DISABLE_ADDR_RADOMIZE
 #include <asm/unistd.h>
 #include <linux/personality.h>
-#define THIS__set_personality(pers) ((long)syscall(__NR_personality,pers))
+#define THIS__set_personality(pers) syscall(__NR_personality,pers)
 
   static inline void
 sctk_disable_addr_randomize (int argc, char **argv)
@@ -755,9 +788,9 @@ return;
     if (disable_addr_randomize)
     {
       unsetenv ("SCTK_LINUX_DISABLE_ADDR_RADOMIZE");
-      if (getenv ("MPC_DISABLE_BANNER") == NULL)
+      if (sctk_runtime_config_get()->modules.launcher.banner)
       {
-#warning "Addr randomize disabled for large scale runs"
+INFO("Addr randomize disabled for large scale runs")
 //        sctk_warning ("Restart execution to disable addr randomize");
       }
       THIS__set_personality (ADDR_NO_RANDOMIZE);
@@ -777,11 +810,10 @@ sctk_disable_addr_randomize (int argc, char **argv)
   static void *
 auto_kill_func (void *arg)
 {
-  int timeout;
-  timeout = atoi ((char *) arg);
+  int timeout = *(int*)arg;
   if (timeout > 0)
   {
-    if (getenv ("MPC_DISABLE_BANNER") == NULL)
+    if (sctk_runtime_config_get()->modules.launcher.banner)
     {
       sctk_noalloc_fprintf (stderr, "Autokill in %ds\n", timeout);
     }
@@ -804,18 +836,22 @@ sctk_launch_main (int argc, char **argv)
   char *sctk_disable_mpc;
   void **tofree = NULL;
   int tofree_nb = 0;
-  char *auto_kill;
+  int auto_kill;
+
+  //load mpc configuration from XML files if not already done.
+  sctk_runtime_config_init();
 
   sctk_disable_addr_randomize (argc, argv);
 
   __sctk_profiling__start__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
+  
 
-  auto_kill = getenv ("MPC_AUTO_KILL_TIMEOUT");
-  if (auto_kill != NULL)
+  auto_kill = sctk_runtime_config_get()->modules.launcher.autokill;
+  if (auto_kill > 0)
   {
     pthread_t pid;
     /*       sctk_warning ("Auto kill in %s s",auto_kill); */
-    pthread_create (&pid, NULL, auto_kill_func, auto_kill);
+    pthread_create (&pid, NULL, auto_kill_func, &auto_kill);
   }
 
   sctk_use_ethread_mxn ();

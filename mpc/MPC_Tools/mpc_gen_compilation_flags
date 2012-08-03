@@ -173,6 +173,7 @@ check_cflags(){
 COMPILER_SPECIFC_FLAGS=""
 if test "$SCTK_DEBUG" = "0" ; then 
 SCTK_CHECK_OPTION "-DNO_INTERNAL_ASSERT"
+SCTK_CHECK_OPTION "-DNDEBUG"
 case $COMPILER_NAME in
     GNU_COMPILER) 
     sctk_echo "Using $COMPILER_NAME options"

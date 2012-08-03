@@ -39,7 +39,6 @@ static int BROADCAST_MAX_SIZE = 1024;
 static int BROADCAST_CHECK_THREASHOLD = 512;
 static int ALLREDUCE_ARITY_MAX = 8;
 static int ALLREDUCE_MAX_SIZE = 1024;
-static int ALLREDUCE_MAX_NB_ELEM_SIZE = 1024;
 static int ALLREDUCE_CHECK_THREASHOLD = 8192;
 #define SCTK_MAX_ASYNC 32
 
@@ -119,12 +118,6 @@ static void sctk_opt_messages_init_items(sctk_opt_messages_table_t* tab){
 /************************************************************************/
 /*BARRIER                                                               */
 /************************************************************************/
-static int int_cmp(const void *a, const void *b) {
-  const int *ia = (const int *)a;
-  const int *ib = (const int *)b;
-  return *ia  - *ib;
-}
-
 static
 void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
 			   sctk_internal_collectives_struct_t * tmp){
@@ -294,8 +287,6 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
     int myself;
     int total;
     size_t size;
-    int dest;
-    int src;
     int i;
     void* buffer_tmp;
     void** buffer_table;
@@ -411,7 +402,7 @@ static void sctk_allreduce_opt_messages (const void *buffer_in, void *buffer_out
 				   const sctk_communicator_t communicator,
 				   const sctk_datatype_t data_type,
 				   struct sctk_internal_collectives_struct_s *tmp){
-#warning "Add buffer splitting"
+TODO("Add buffer splitting")
   sctk_allreduce_opt_messages_intern(buffer_in,buffer_out,elem_size,elem_number,func,communicator,data_type,tmp);
 }
 

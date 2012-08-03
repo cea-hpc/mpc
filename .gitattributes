@@ -6,3 +6,4 @@ mpc/list_of_files                            export-ignore
 mpc/MPC_Accelerators                         export-ignore
 mpc/MPC_Virtual_Machines                     export-ignore
 mpc/MPC_Tools/mpcrun_opt/mpcrun_cea_mprun    export-ignore
+packaging                                    export-ignore

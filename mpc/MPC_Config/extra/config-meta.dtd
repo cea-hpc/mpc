@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+
+<!ELEMENT config (usertypes?,modules?,validators?)>
+
+<!ELEMENT usertypes ((struct|union)+)>
+
+<!ELEMENT struct ((param|array)+)>
+	<!ATTLIST struct name CDATA #REQUIRED>
+	<!ATTLIST struct doc CDATA #REQUIRED>
+
+<!ELEMENT param EMPTY>
+	<!ATTLIST param name CDATA #REQUIRED>
+	<!ATTLIST param type CDATA #REQUIRED>
+	<!ATTLIST param doc CDATA #REQUIRED>
+	<!ATTLIST param default CDATA #IMPLIED>
+
+<!ELEMENT union (choice+)>
+	<!ATTLIST union name CDATA #REQUIRED>
+	<!ATTLIST union doc CDATA #REQUIRED>
+
+<!ELEMENT choice EMPTY>
+	<!ATTLIST choice name CDATA #REQUIRED>
+	<!ATTLIST choice type CDATA #REQUIRED>
+
+<!ELEMENT array (default?)>
+	<!ATTLIST array name CDATA #REQUIRED>
+	<!ATTLIST array entry-name CDATA #REQUIRED>
+	<!ATTLIST array type CDATA #REQUIRED>
+	<!ATTLIST array doc CDATA #REQUIRED>
+
+<!ELEMENT default (value+)>
+
+<!ELEMENT value (#PCDATA)>
+
+<!ELEMENT modules (module+)>
+
+<!ELEMENT module EMPTY>
+	<!ATTLIST module name CDATA #REQUIRED>
+	<!ATTLIST module type CDATA #REQUIRED>
+
+<!ELEMENT validators (handler+)>
+
+<!ELEMENT handler (#PCDATA)>

@@ -102,6 +102,12 @@ extern "C"
 #define MPI_INT MPC_INT
 /* Support for MPI_INTEGER */
 #define MPI_INTEGER MPC_INT
+#ifndef NOHAVE_ASSERT_H
+	#define MPI_INTEGER1 MPC_INTEGER1
+	#define MPI_INTEGER2 MPC_INTEGER2
+	#define MPI_INTEGER4 MPC_INTEGER4
+	#define MPI_INTEGER8 MPC_INTEGER8
+#endif
 #define MPI_LONG MPC_LONG
 #define MPI_LONG_INT MPC_LONG_INT
 #define MPI_FLOAT MPC_FLOAT
@@ -123,6 +129,9 @@ extern "C"
 #define MPI_DOUBLE_COMPLEX MPC_DOUBLE_COMPLEX
 #define MPI_2DOUBLE_PRECISION MPC_2DOUBLE_PRECISION
 #define MPI_LOGICAL MPC_LOGICAL
+#define MPI_REAL4 MPC_REAL4
+#define MPI_REAL8 MPC_REAL8
+#define MPI_REAL16 MPC_REAL16
 
 
 #define MPI_SUM 0
@@ -352,8 +361,6 @@ extern "C"
   /* Note that we may need to define a @PCONTROL_LIST@ depending on whether
      stdargs are supported */
   int MPI_Pcontrol (const int, ...);
-
-  int MPI_DUP_FN (MPI_Comm, int, void *, void *, void *, int *);
 
   /* MPI-2 functions */
   int MPI_Comm_get_name (MPI_Comm, char *, int *);
