@@ -611,8 +611,7 @@ __sctk_thread_generic_sigmask( sctk_thread_generic_t threadp, int how,
 					const sigset_t* newmask, sigset_t* oldmask){
   int res = -1;
   if( how != SIG_BLOCK && how != SIG_UNBLOCK && how != SIG_SETMASK ){
-	errno = SCTK_EINVAL;
-	return res;
+	return SCTK_EINVAL;
   }
   sctk_thread_generic_p_t* th = threadp;
   sigset_t set;
@@ -622,11 +621,6 @@ __sctk_thread_generic_sigmask( sctk_thread_generic_t threadp, int how,
   kthread_sigmask( SIG_SETMASK, &set, (sigset_t*) &(th->attr.thread_sigset ));
 
   sctk_thread_generic_check_signals( 1 );
-
-  if( res > 0 ){
-	errno = res;
-	res = -1;
-  }
 
   return res;
 }
@@ -1162,7 +1156,6 @@ sctk_thread_generic_attr_setstack( sctk_thread_generic_attr_t* attr,
   if( stackaddr == NULL || stacksize < SCTK_THREAD_STACK_MIN )
 	  return SCTK_EINVAL;
 
-  printf("TOTO %ld %ld\n",SCTK_THREAD_STACK_MIN, stacksize);
   if(attr->ptr == NULL){
     sctk_thread_generic_attr_init(attr);
   }
@@ -1294,6 +1287,9 @@ sctk_thread_generic_attr_setinheritsched( sctk_thread_generic_attr_t* attr,
   if(attr->ptr == NULL){
 	sctk_thread_generic_attr_init(attr);
   }
+  if( inheritsched != PTHREAD_INHERIT_SCHED ||
+		  inheritsched != PTHREAD_EXPLICIT_SCHED )
+	  return SCTK_EINVAL;
 
   attr->ptr->inheritsched = inheritsched;
 
@@ -1392,9 +1388,12 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
       {
 	if (sctk_is_in_fortran == 1 && stack_size <= 0)
 	  stack_size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
-	else if (stack_size <= 0)
+	else if (stack_size <= 0){
 	  stack_size = SCTK_ETHREAD_STACK_SIZE;
+	  printf("ethread stack size=%d et stack min =%d\n",SCTK_ETHREAD_STACK_SIZE,SCTK_THREAD_STACK_MIN );
+	}
 	if( stack_guardsize > 0 ){
+		printf("guardsize=%ld\n",stack_guardsize);
 	  long _page_size_ = 0;
 	  size_t old_stack_size;
 	  size_t old_stack_guardsize;
@@ -1413,8 +1412,8 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
 	  stack_size = ( stack_size+ 8 + _page_size_ - 1 ) & ~( _page_size_ - 1 );
 	  old_stack_size = stack_size;
 	  stack_size = stack_size + stack_guardsize;
-	  posix_memalign( (void*) &stack, _page_size_, stack_size );
-	    if (stack == NULL)
+	  int ret_mem = posix_memalign( (void*) &stack, _page_size_, stack_size );
+	    if ( stack == NULL || ret_mem != 0 )
 	      {
 		sctk_free(thread_id);
 		return SCTK_EAGAIN;
@@ -1514,8 +1513,10 @@ sctk_thread_generic_sched_get_priority_min( int sched_policy ){
 	*/
 
   if( sched_policy != SCTK_SCHED_FIFO && sched_policy != SCTK_SCHED_RR
-		  && sched_policy != SCTK_SCHED_OTHER )
-			return SCTK_EINVAL;
+		  && sched_policy != SCTK_SCHED_OTHER ){
+	  errno = SCTK_EINVAL;
+	  return -1;
+  }
 
   return 0;
 }
@@ -1529,8 +1530,10 @@ sctk_thread_generic_sched_get_priority_max( int sched_policy ){
 	*/
 
   if( sched_policy != SCTK_SCHED_FIFO && sched_policy != SCTK_SCHED_RR
-		  && sched_policy != SCTK_SCHED_OTHER )
-			return SCTK_EINVAL;
+		  && sched_policy != SCTK_SCHED_OTHER ){
+	  errno = SCTK_EINVAL;
+	  return -1;
+  }
 
   return 0;
 }
@@ -1552,6 +1555,7 @@ sctk_thread_generic_getschedparam( sctk_thread_generic_t threadp,
 	  return SCTK_ESRCH;
 
   param->__sched_priority = 0;
+  (*policy) = SCHED_OTHER;
 
   return 0;
 }
@@ -1574,6 +1578,8 @@ sctk_thread_generic_setschedparam( sctk_thread_generic_t threadp,
   if( th->sched.status == sctk_thread_generic_zombie
 		  || th->sched.status == sctk_thread_generic_joined )
 	  return SCTK_ESRCH;
+  if( param->__sched_priority != 0 )
+	  return SCTK_EINVAL;
 
   return 0;
 }
@@ -1880,7 +1886,7 @@ sctk_thread_generic_detach( sctk_thread_generic_t threadp ){
 
   /*
 	ERRORS:
-	EINVAL threadp is not a joinable thread
+	EINVAL threadp is not a joinable thread or already detach
 	ESRCH  No thread with the ID threadp could be found
 	*/
 
@@ -1890,6 +1896,8 @@ sctk_thread_generic_detach( sctk_thread_generic_t threadp ){
   if( th->sched.status == sctk_thread_generic_joined ||
 		  th->sched.status == sctk_thread_generic_zombie )
 	  return SCTK_ESRCH;
+  if( th->attr.detachstate == SCTK_THREAD_CREATE_DETACHED )
+	  return SCTK_EINVAL;
 
   th->attr.detachstate = SCTK_THREAD_CREATE_DETACHED;
 

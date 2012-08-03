@@ -67,7 +67,8 @@ MonoDomain *domain;
 /* #include "sctk_hybrid_comm.h" */
 /* #include "sctk_ib_scheduling.h" */
 #endif
-
+#include <errno.h>
+extern int errno;
 typedef unsigned sctk_long_long sctk_timer_t;
 
 static sctk_thread_key_t _sctk_thread_handler_key;
@@ -1696,8 +1697,10 @@ sctk_thread_nanosleep (const struct timespec *req, struct timespec *rem)
 {
   if (req == NULL)
     return SCTK_EINVAL;
-  if ((req->tv_sec < 0) || (req->tv_nsec < 0))
-    return SCTK_EINVAL;
+  if ((req->tv_sec < 0) || (req->tv_nsec < 0) || (req->tv_nsec > 999999999)){
+	errno = SCTK_EINVAL;
+    return -1;
+  }
   sctk_thread_sleep (req->tv_sec);
   sctk_thread_usleep (req->tv_nsec / 1000);
   if (rem != NULL)

@@ -39,10 +39,12 @@ sctk_thread_generic_spinlocks_spin_destroy( sctk_thread_generic_spinlock_t* spin
 	  EINVAL The value of the spinlock argument is invalid
 	*/
 
-  if( spinlock == NULL ) return SCTK_EINVAL;
+	printf("%d %d\n",sctk_spin_destroyed,spinlock->state);
+  if( spinlock == NULL || spinlock->state != sctk_spin_initialized ) return SCTK_EINVAL;
   sctk_spinlock_t* p_lock = &(spinlock->lock);
   if( (*p_lock) != 0 ) return SCTK_EBUSY;
 
+  spinlock->state = sctk_spin_destroyed;
   return 0;
 }
 
@@ -62,14 +64,18 @@ sctk_thread_generic_spinlocks_spin_init( sctk_thread_generic_spinlock_t* spinloc
 
   if( spinlock == NULL ) return SCTK_EINVAL;
   sctk_spinlock_t* p_lock = &(spinlock->lock);
-  if( (*p_lock) != 0 ) return SCTK_EBUSY;
+  if( ( spinlock->state == sctk_spin_initialized || spinlock->state == sctk_spin_destroyed ) 
+		  && ( (*p_lock) != 0 )) return SCTK_EBUSY;
   if( pshared == SCTK_THREAD_PROCESS_SHARED ){
 	fprintf (stderr, "Invalid pshared value in attr, MPC doesn't handle process shared spinlocks\n");
 	return SCTK_ENOTSUP;
   }
 
   sctk_thread_generic_spinlock_t local = SCTK_THREAD_GENERIC_SPINLOCK_INIT;
+  sctk_thread_generic_spinlock_t* p_local = &local;
+  p_local->state = sctk_spin_initialized;
   (*spinlock) = local;
+  printf("init:%d\n",spinlock->state);
 
   return 0;
 }
@@ -99,6 +105,7 @@ sctk_thread_generic_spinlocks_spin_lock( sctk_thread_generic_spinlock_t* spinloc
 	}
   }
   spinlock->owner = sched;
+  printf("in lock:%d\n", spinlock->state);
   return 0;
 }
 
@@ -139,6 +146,7 @@ sctk_thread_generic_spinlocks_spin_unlock( sctk_thread_generic_spinlock_t* spinl
 
   spinlock->owner = NULL;
   sctk_spinlock_unlock( &(spinlock->lock) );
+  printf("in unlock:%d\n", spinlock->state);
   return 0;
 }
 
