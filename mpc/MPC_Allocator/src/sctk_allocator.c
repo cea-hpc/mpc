@@ -2570,20 +2570,16 @@ void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_n
 	assert(chain != NULL);
 	assert(target_numa_node >= -1);
 
-	//if migration is disabled
-	if ( ! SCTK_ALLOC_NUMA_MIGRATION )
-		return;
-
 	SCTK_PDEBUG("Call migration to numa node %d on chain",target_numa_node,chain);
 
 	#ifdef HAVE_HWLOC
 	//remap the struct itself
 	/** @todo Get error on cassard ??? **/
-	if (migrate_chain_struct)
+	if (migrate_chain_struct && SCTK_ALLOC_NUMA_MIGRATION )
 		sctk_alloc_migrate_numa_mem(chain,sizeof(struct sctk_alloc_chain),target_numa_node);
 
 	//remap the content
-	if (migrate_chain_struct)
+	if (migrate_chain_struct && SCTK_ALLOC_NUMA_MIGRATION )
 		sctk_alloc_chain_numa_migrate_content(chain,target_numa_node);
 	#endif //HAVE_HWLOC
 	
