@@ -121,6 +121,8 @@ extern "C"
 #ifndef SCTK_ALLOC_DEBUG
 #define SCTK_ALLOC_FAST_BUT_LESS_SAFE
 #endif
+/** Permit to enable (true) or disable (false) NUMA migration of allocation chains. **/
+#define SCTK_ALLOC_NUMA_MIGRATION true
 
 /************************** MACROS *************************/
 //if have NUMA support

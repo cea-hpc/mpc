@@ -2390,6 +2390,10 @@ SCTK_STATIC void sctk_alloc_chain_numa_migrate_content(struct sctk_alloc_chain *
 	int j;
 	struct sctk_alloc_region * region = NULL;
 
+	//if migration is disabled
+	if ( ! SCTK_ALLOC_NUMA_MIGRATION )
+		return;
+
 	//errors
 	assert(chain != NULL);
 	assert(target_numa_node >= -1);
@@ -2565,6 +2569,10 @@ void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_n
 	//errors
 	assert(chain != NULL);
 	assert(target_numa_node >= -1);
+
+	//if migration is disabled
+	if ( ! SCTK_ALLOC_NUMA_MIGRATION )
+		return;
 
 	SCTK_PDEBUG("Call migration to numa node %d on chain",target_numa_node,chain);
 

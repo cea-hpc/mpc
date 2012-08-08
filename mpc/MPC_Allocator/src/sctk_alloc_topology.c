@@ -336,7 +336,7 @@ void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_no
 	assert(target_numa_node <= SCTK_MAX_NUMA_NODE);
 
 	//trivial case
-	if (addr == NULL || size == 0)
+	if (addr == NULL || size == 0 || ! SCTK_ALLOC_NUMA_MIGRATION )
 		return;
 
 	//round the size and addr
