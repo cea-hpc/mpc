@@ -28,65 +28,15 @@
 #include "sctk_runtime_config_mapper.h"
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_test(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_test * obj = struct_ptr;
-	//Simple params :
-	obj->tt = 10;
-}
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_rail(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_rail * obj = struct_ptr;
-	//Simple params :
-	obj->tt = 10;
-	obj->tt2 = 20;
-}
-
-/*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_driver(void * struct_ptr)
-{
-	struct sctk_runtime_config_struct_driver * obj = struct_ptr;
-	obj->type = SCTK_RTCFG_driver_NONE;
-	memset(&obj->value,0,sizeof(obj->value));
-}
-
-/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_allocator(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_allocator * obj = struct_ptr;
 	//Simple params :
+	obj->numa_migration = true;
 	obj->numa = false;
-	obj->profile = false;
-	obj->alstring = "TestTestTest";
-	obj->aldouble = 42.42;
-	obj->alfloat = 42.42;
-	obj->alsize = sctk_runtime_config_map_entry_parse_size("2PB");
-	obj->warnings = false;
-	sctk_runtime_config_struct_init_test(&obj->test);
-	sctk_runtime_config_struct_init_driver(&obj->driver);
-	//array
-	obj->classes = NULL;
-	obj->classes_size = 0;
-	//array
-	obj->classes2 = calloc(3,sizeof(int));
-	obj->classes2[0] = 0;
-	obj->classes2[1] = 1;
-	obj->classes2[2] = 10;
-	obj->classes2_size = 3;
-	//array
-	obj->array_string = calloc(3,sizeof(char *));
-	obj->array_string[0] = "0";
-	obj->array_string[1] = "1";
-	obj->array_string[2] = "10";
-	obj->array_string_size = 3;
-	//array
-	obj->rails = NULL;
-	obj->rails_size = 0;
-	//array
-	obj->driverlist = NULL;
-	obj->driverlist_size = 0;
+	obj->scope = "thread";
+	obj->huge_bloc_limte = sctk_runtime_config_map_entry_parse_size("1MB");
+	obj->strict = false;
 }
 
 /*******************  FUNCTION  *********************/

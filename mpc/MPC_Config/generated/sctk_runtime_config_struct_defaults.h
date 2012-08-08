@@ -32,9 +32,6 @@ struct sctk_runtime_config;
 
 /*******************  FUNCTION  *********************/
 //reset functions
-void sctk_runtime_config_struct_init_test(void * struct_ptr);
-void sctk_runtime_config_struct_init_rail(void * struct_ptr);
-void sctk_runtime_config_struct_init_driver(void * struct_ptr);
 void sctk_runtime_config_struct_init_allocator(void * struct_ptr);
 void sctk_runtime_config_struct_init_launcher(void * struct_ptr);
 void sctk_runtime_config_struct_init_net_driver_fake(void * struct_ptr);

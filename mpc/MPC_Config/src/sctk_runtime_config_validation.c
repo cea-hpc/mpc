@@ -23,6 +23,7 @@
 /********************  HEADERS  *********************/
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 #include "sctk_debug.h"
 #include "sctk_runtime_config_struct.h"
 #include "sctk_runtime_config_validation.h"
@@ -45,6 +46,7 @@ void sctk_runtime_config_validate(struct sctk_runtime_config * config)
 
 	//call all post actions
 	sctk_runtime_config_old_getenv_compatibility(config);
+	sctk_runtime_config_validate_allocator(config);
 }
 
 /*******************  FUNCTION  *********************/
@@ -66,3 +68,19 @@ void sctk_runtime_config_old_getenv_compatibility(struct sctk_runtime_config * c
 	if ((tmp = getenv ("MPC_AUTO_KILL_TIMEOUT")) != NULL)
 		config->modules.launcher.autokill = atoi(tmp);
 }
+
+/*******************  FUNCTION  *********************/
+/**
+ * Function to validate MPC_Allocator configuration.
+**/
+void sctk_runtime_config_validate_allocator(struct sctk_runtime_config * config)
+{
+	//vars
+	const char * scope = config->modules.allocator.scope;
+
+	//check scope option
+	assume_m(scope != NULL,"Invalid NULL or empty value for allocator.scope.");
+	if (strcmp(scope,"process") != 0 && strcmp(scope,"thread") != 0 && strcmp(scope,"vp") != 0)
+		sctk_fatal("Invalid configuration value for allocator.scope : %s, require (process | thread | vp)",scope);
+}
+

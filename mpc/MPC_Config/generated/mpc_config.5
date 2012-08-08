@@ -55,105 +55,32 @@ User configuration (~/.mpc/config or ${MPC_USER_CONFIG})
 Application configuration given to mpcrun with option --config
 .El
 .Pp
-.Sh OPTIONS OF NODE test
-This is a test structure.
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm tt
-Type is int. Default value is 10. 
-.Pp tt
-This is a test
-.El
-.Sh OPTIONS OF NODE rail
-This is a fake for rails
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm tt
-Type is int. Default value is 10. 
-.Pp tt
-This is a test
-.It Cm tt2
-Type is int. Default value is 20. 
-.Pp tt2
-This is a test
-.El
-.Sh OPTIONS OF NODE driver
-Define the list of drivers supported for MPC network.
-.Pp
-It can contain a node of type :
-.Pp
-.Bl -tag -width Ds
-.It Cm test
- of type test. 
-.It Cm rail
- of type rail. 
-.El
 .Sh OPTIONS OF NODE allocator
-Options for MPC allocator.
+Options for MPC memory allocator (TODO not used up to now, need to be integrated).
 .Pp
 It support parameters :
 .Pp
 .Bl -tag -width Ds
+.It Cm numa_migration
+Type is bool. Default value is true. 
+.Pp numa_migration
+Enable of disable NUMA migration of allocator pages on thread migration.
 .It Cm numa
 Type is bool. Default value is false. 
 .Pp numa
 Permit to enable of disable NUMA support in MPC Allocator.
-.It Cm profile
+.It Cm scope
+Type is string. Default value is thread. 
+.Pp scope
+Define the scope the posix allocator, can be : process | thread | vp.
+.It Cm huge_bloc_limte
+Type is size. Default value is 1MB. 
+.Pp huge_bloc_limte
+Larger bloc will be allocated directely with mmap. Recommended to be less than 2MB to avoid performance issues.
+.It Cm strict
 Type is bool. Default value is false. 
-.Pp profile
-Enable of disable usage of allocator profiler.
-.It Cm alstring
-Type is string. Default value is TestTestTest. 
-.Pp alstring
-Sample string
-.It Cm aldouble
-Type is double. Default value is 42.42. 
-.Pp aldouble
-Sample double
-.It Cm alfloat
-Type is float. Default value is 42.42. 
-.Pp alfloat
-Sample float
-.It Cm alsize
-Type is size. Default value is 2PB. 
-.Pp alsize
-Sample size entry
-.It Cm warnings
-Type is bool. Default value is false. 
-.Pp warnings
-Permit to enable of disable allocator warnings.
-.It Cm test
-Type is test. 
-.Pp test
-Try to use test structure.
-.It Cm classes
-Type is array of int. 
-.Pp classes
-Permit to list all available size classes.
-.It Cm classes2
-Type is array of int. Default value is {0, 1, 10}.
-.Pp classes2
-Permit to list all available size classes.
-.It Cm array_string
-Type is array of string. Default value is {0, 1, 10}.
-.Pp array_string
-Array of strings
-.It Cm rails
-Type is array of rail. 
-.Pp rails
-blablabla
-.It Cm driver
-Type is driver. 
-.Pp driver
-This is a super doc
-.It Cm driverlist
-Type is array of driver. 
-.Pp driverlist
-blabla
+.Pp strict
+Enable failure on free error or try to continue by skipping.
 .El
 .Sh OPTIONS OF NODE launcher
 Options for MPC launcher.

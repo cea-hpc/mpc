@@ -25,72 +25,13 @@
 -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
   <!-- ********************************************************* -->
-  <xs:complexType name="user_type_test">
-    <xs:all>
-      <xs:element minOccurs="0" name="tt" type="xs:integer"/>
-    </xs:all>
-  </xs:complexType>
-  <!-- ********************************************************* -->
-  <xs:complexType name="user_type_rail">
-    <xs:all>
-      <xs:element minOccurs="0" name="tt" type="xs:integer"/>
-      <xs:element minOccurs="0" name="tt2" type="xs:integer"/>
-    </xs:all>
-  </xs:complexType>
-  <!-- ********************************************************* -->
-  <xs:complexType name="user_type_driver">
-    <xs:choice>
-      <xs:element name="test" type="user_type_test"/>
-      <xs:element name="rail" type="user_type_rail"/>
-    </xs:choice>
-  </xs:complexType>
-  <!-- ********************************************************* -->
   <xs:complexType name="user_type_allocator">
     <xs:all>
+      <xs:element minOccurs="0" name="numa_migration" type="xs:boolean"/>
       <xs:element minOccurs="0" name="numa" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="profile" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="alstring" type="xs:string"/>
-      <xs:element minOccurs="0" name="aldouble" type="xs:decimal"/>
-      <xs:element minOccurs="0" name="alfloat" type="xs:decimal"/>
-      <xs:element minOccurs="0" name="alsize" type="xs:string"/>
-      <xs:element minOccurs="0" name="warnings" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="test" type="user_type_test"/>
-      <xs:element minOccurs="0" name="classes">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element minOccurs="0" maxOccurs="unbounded" name="class" type="xs:integer"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
-      <xs:element minOccurs="0" name="classes2">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element minOccurs="0" maxOccurs="unbounded" name="class2" type="xs:integer"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
-      <xs:element minOccurs="0" name="array_string">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element minOccurs="0" maxOccurs="unbounded" name="st" type="xs:string"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
-      <xs:element minOccurs="0" name="rails">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element minOccurs="0" maxOccurs="unbounded" name="rail" type="user_type_rail"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
-      <xs:element minOccurs="0" name="driver" type="user_type_driver"/>
-      <xs:element minOccurs="0" name="driverlist">
-        <xs:complexType>
-          <xs:sequence>
-            <xs:element minOccurs="0" maxOccurs="unbounded" name="driver" type="user_type_driver"/>
-          </xs:sequence>
-        </xs:complexType>
-      </xs:element>
+      <xs:element minOccurs="0" name="scope" type="xs:string"/>
+      <xs:element minOccurs="0" name="huge_bloc_limte" type="xs:string"/>
+      <xs:element minOccurs="0" name="strict" type="xs:boolean"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

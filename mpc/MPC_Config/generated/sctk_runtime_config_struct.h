@@ -21,89 +21,25 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <stdbool.h>
+#include <sctk_bool.h>
 #include "sctk_runtime_config_struct_defaults.h"
 
 #ifndef SCTK_RUNTIME_CONFIG_STRUCT_H
 #define SCTK_RUNTIME_CONFIG_STRUCT_H
 
 /*********************  STRUCT  *********************/
-/**This is a test structure.**/
-struct sctk_runtime_config_struct_test
-{	/**This is a test**/
-	int tt;
-};
-
-/*********************  STRUCT  *********************/
-/**This is a fake for rails**/
-struct sctk_runtime_config_struct_rail
-{	/**This is a test**/
-	int tt;
-	/**This is a test**/
-	int tt2;
-};
-
-/**********************  ENUM  **********************/
-/**Define the list of drivers supported for MPC network.**/
-enum sctk_runtime_config_struct_driver_type
-{
-	SCTK_RTCFG_driver_NONE,
-	SCTK_RTCFG_driver_test,
-	SCTK_RTCFG_driver_rail,
-};
-
-/*********************  STRUCT  *********************/
-/**Define the list of drivers supported for MPC network.**/
-struct sctk_runtime_config_struct_driver
-{
-	enum sctk_runtime_config_struct_driver_type type;
-	union {
-		struct sctk_runtime_config_struct_test test;
-		struct sctk_runtime_config_struct_rail rail;
-	} value;
-};
-
-/*********************  STRUCT  *********************/
-/**Options for MPC allocator.**/
+/**Options for MPC memory allocator (TODO not used up to now, need to be integrated).**/
 struct sctk_runtime_config_struct_allocator
-{	/**Permit to enable of disable NUMA support in MPC Allocator.**/
+{	/**Enable of disable NUMA migration of allocator pages on thread migration.**/
+	bool numa_migration;
+	/**Permit to enable of disable NUMA support in MPC Allocator.**/
 	bool numa;
-	/**Enable of disable usage of allocator profiler.**/
-	bool profile;
-	/**Sample string**/
-	char * alstring;
-	/**Sample double**/
-	double aldouble;
-	/**Sample float**/
-	float alfloat;
-	/**Sample size entry**/
-	size_t alsize;
-	/**Permit to enable of disable allocator warnings.**/
-	bool warnings;
-	/**Try to use test structure.**/
-	struct sctk_runtime_config_struct_test test;
-	/**This is a super doc**/
-	struct sctk_runtime_config_struct_driver driver;
-	/**Permit to list all available size classes.**/
-	int * classes;
-	/** Number of elements in classes array. **/
-	int classes_size;
-	/**Permit to list all available size classes.**/
-	int * classes2;
-	/** Number of elements in classes2 array. **/
-	int classes2_size;
-	/**Array of strings**/
-	char * * array_string;
-	/** Number of elements in array_string array. **/
-	int array_string_size;
-	/**blablabla**/
-	struct sctk_runtime_config_struct_rail * rails;
-	/** Number of elements in rails array. **/
-	int rails_size;
-	/**blabla**/
-	struct sctk_runtime_config_struct_driver * driverlist;
-	/** Number of elements in driverlist array. **/
-	int driverlist_size;
+	/**Define the scope the posix allocator, can be : process | thread | vp.**/
+	char * scope;
+	/**Larger bloc will be allocated directely with mmap. Recommended to be less than 2MB to avoid performance issues.**/
+	size_t huge_bloc_limte;
+	/**Enable failure on free error or try to continue by skipping.**/
+	bool strict;
 };
 
 /*********************  STRUCT  *********************/

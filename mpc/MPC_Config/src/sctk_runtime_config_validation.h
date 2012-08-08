@@ -24,7 +24,13 @@
 #define SCTK_RUNTIME_CONFIG_VALIDATION
 
 /*********************  STRUCT  *********************/
+//main entry point
 void sctk_runtime_config_validate(struct sctk_runtime_config * config);
+
+/*********************  STRUCT  *********************/
+//sub functions
 void sctk_runtime_config_old_getenv_compatibility(struct sctk_runtime_config * config);
+void sctk_runtime_config_validate_allocator(struct sctk_runtime_config * config);
 
 #endif //SCTK_RUNTIME_CONFIG_VALIDATION
+
