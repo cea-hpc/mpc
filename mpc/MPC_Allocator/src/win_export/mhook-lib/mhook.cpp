@@ -42,7 +42,7 @@
 //=========================================================================
 #ifndef ODPRINTF
 
-#ifdef _DEBUG
+#ifdef MOOK_DEBUG
 #define ODPRINTF(a) odprintf a
 #else
 #define ODPRINTF(a)

@@ -1914,7 +1914,9 @@ void sctk_alloc_pwarning (const char * format,...)
 SCTK_STATIC int sctk_alloc_region_get_id(void * addr)
 {
 	/** @todo can be optimize if we consider power of 2 **/
-	return (int)((sctk_addr_t)addr / SCTK_REGION_SIZE);
+	int id = (int)((sctk_addr_t)addr / SCTK_REGION_SIZE);
+	assert(id >= 0 && id < SCTK_ALLOC_MAX_REGIONS);
+	return id;
 }
 
 /************************* FUNCTION ************************/
@@ -2045,7 +2047,7 @@ SCTK_STATIC void sctk_alloc_region_set_entry(struct sctk_alloc_chain * chain, st
 	while (ptr < (sctk_addr_t)macro_bloc + sctk_alloc_get_chunk_header_large_size(&macro_bloc->header))
 	{
 		dest = sctk_alloc_region_get_entry((void *)ptr);
-		if (macro_bloc != NULL)
+		if (dest != NULL)
 			assume_m(dest->macro_bloc == NULL, "For now, don't support multiple usage of region entries");
 		dest->macro_bloc = macro_bloc;
 		ptr += SCTK_MACRO_BLOC_SIZE;
@@ -2111,7 +2113,7 @@ struct sctk_alloc_macro_bloc * sctk_alloc_region_get_macro_bloc(void * ptr)
 	if (entry == NULL)
 	{
 		macro_bloc = NULL;
-	} else if (entry->macro_bloc == NULL || (void*)entry->macro_bloc > ptr) {
+	} else if ((entry->macro_bloc == NULL || (void*)entry->macro_bloc > ptr) && (sctk_addr_t)ptr > SCTK_MACRO_BLOC_SIZE) {
 		entry = sctk_alloc_region_get_entry((void*)((sctk_addr_t)ptr - SCTK_MACRO_BLOC_SIZE));
 		if (entry == NULL || entry->macro_bloc == NULL)
 			macro_bloc = NULL;
@@ -2405,7 +2407,7 @@ SCTK_STATIC void sctk_alloc_chain_numa_migrate_content(struct sctk_alloc_chain *
 			for ( j = 0 ; j < SCTK_REGION_HEADER_ENTRIES ; j++)
 				if (region->entries[j].macro_bloc != NULL)
 					if (region->entries[j].macro_bloc->chain == chain)
-						sctk_alloc_migrate_numa_mem(region->entries[j].macro_bloc,region->entries[j].macro_bloc->header.size,target_numa_node);
+						sctk_alloc_migrate_numa_mem(region->entries[j].macro_bloc,sctk_alloc_get_chunk_header_large_size(&region->entries[j].macro_bloc->header),target_numa_node);
 	}
 
 	//lock the region map
@@ -2439,9 +2441,7 @@ void sctk_alloc_chain_get_numa_stat(struct sctk_alloc_numa_stat_s * numa_stat,st
 			for ( j = 0 ; j < SCTK_REGION_HEADER_ENTRIES ; j++)
 				if (region->entries[j].macro_bloc != NULL)
 					if (region->entries[j].macro_bloc->chain == chain)
-					{
-						sctk_alloc_numa_stat_cumul(numa_stat,region->entries[j].macro_bloc,region->entries[j].macro_bloc->header.size);
-					}
+						sctk_alloc_numa_stat_cumul(numa_stat,region->entries[j].macro_bloc,sctk_alloc_get_chunk_header_large_size(&region->entries[j].macro_bloc->header));
 	}
 
 	//lock the region map

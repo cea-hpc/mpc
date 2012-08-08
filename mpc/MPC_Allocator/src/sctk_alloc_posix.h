@@ -39,6 +39,11 @@ SCTK_INTERN void sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * ch
 SCTK_INTERN struct sctk_alloc_chain * sctk_alloc_posix_setup_tls_chain(void);
 SCTK_INTERN sctk_size_t sctk_alloc_posix_get_size(void *ptr);
 SCTK_INTERN void sctk_alloc_posix_plug_on_egg_allocator(void);
+SCTK_INTERN void sctk_alloc_posix_mark_current_for_destroy(void);
+SCTK_INTERN void sctk_alloc_posix_destroy_handler(struct sctk_alloc_chain * chain);
+#ifdef _WIN32
+SCTK_PUBLIC size_t sctk_alloc_posix_get_size_win(void *ptr);
+#endif //_WIN32
 
 /************************* FUNCTION ************************/
 SCTK_INTERN void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void);

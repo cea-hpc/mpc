@@ -235,6 +235,12 @@ static __inline__ sctk_size_t sctk_alloc_get_size(sctk_alloc_vchunk vchunk)
 }
 
 /************************* FUNCTION ************************/
+static __inline__ sctk_size_t sctk_alloc_get_usable_size(sctk_alloc_vchunk vchunk)
+{
+	return sctk_alloc_get_chunk_header_large_size(sctk_alloc_get_large(vchunk)) - sizeof(struct sctk_alloc_chunk_header_large);
+}
+
+/************************* FUNCTION ************************/
 static __inline__ sctk_size_t sctk_alloc_get_prev_size(sctk_alloc_vchunk vchunk)
 {
 	return sctk_alloc_get_chunk_header_large_previous_size(sctk_alloc_get_large(vchunk));

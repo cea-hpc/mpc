@@ -32,6 +32,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <errno.h>
+#include <malloc.h>
 #include "sctk_alloc_lock.h"
 #include "sctk_allocator.h"
 #include "sctk_alloc_debug.h"
@@ -433,6 +434,9 @@ SCTK_INTERN struct sctk_alloc_chain * sctk_alloc_posix_setup_tls_chain(void)
 	//check errors
 	assert(sctk_get_tls_chain() == NULL);
 
+	//temporaty use egg_allocator as default chain
+	sctk_alloc_posix_set_default_chain(&sctk_global_egg_chain);
+
 	//create a new TLS chain
 	chain = sctk_alloc_posix_create_new_tls_chain();
 
@@ -571,14 +575,21 @@ SCTK_PUBLIC void sctk_free (void * ptr)
 	macro_bloc = sctk_alloc_region_get_macro_bloc(ptr);
 	if (macro_bloc == NULL)
 	{
-		#ifdef SCTK_ALLOC_DEBUG
-		cnt++;
-		sctk_alloc_pwarning("Don't free the block %p (cnt = %d).",ptr,cnt);
-		abort();
-		#endif
+		#ifdef _WIN32
+			//used to fallback on default HeapAlloc/HeapFree/HeapRealloc/HeapSize when getting some legacy
+			//segments not managed by our allocator It append typically with atexit method which init is segment
+			//before allocator overriding.
+			OutputDebugStringA("Try to free segment managed by default MSVCR, transmit to it\n");
+			HeapFree((HANDLE)_get_heap_handle(),0,ptr);
+		#else
+			#ifdef SCTK_ALLOC_DEBUG
+				cnt++;
+				sctk_alloc_pwarning("Don't free the block %p (cnt = %d).",ptr,cnt);
+			#endif//SCTK_ALLOC_DEBUG
+		#endif//_WIN32
 		return;
 	} else {
-		assert(ptr > (void*)macro_bloc && (sctk_addr_t)ptr < (sctk_addr_t)macro_bloc + macro_bloc->header.size);
+		assert(ptr > (void*)macro_bloc && (sctk_addr_t)ptr < (sctk_addr_t)macro_bloc + sctk_alloc_get_chunk_header_large_size(&macro_bloc->header));
 	}
 	
 	chain = macro_bloc->chain;
@@ -612,10 +623,41 @@ SCTK_INTERN sctk_size_t sctk_alloc_posix_get_size(void *ptr)
 	{
 		return 0;
 	} else {
-		vchunk = sctk_alloc_get_chunk((sctk_addr_t)ptr);
-		return sctk_alloc_get_size(vchunk);
+		vchunk = sctk_alloc_get_chunk_unpadded((sctk_addr_t)ptr);
+		//ptr - vchunk + 1 to take in accound padding if present.
+		return sctk_alloc_get_usable_size(vchunk) - ((sctk_addr_t)ptr - (sctk_addr_t)vchunk) + 1;
 	}
 }
+
+/************************* FUNCTION ************************/
+#ifdef _WIN32
+SCTK_PUBLIC size_t sctk_alloc_posix_get_size_win(void *ptr)
+{
+	//vars
+	size_t retval;
+	struct sctk_alloc_macro_bloc * macro_bloc;
+	HANDLE handle;
+
+	//trivial case
+	if (ptr == NULL)
+		return EINVAL;
+
+	//try to find the region to known if it's our or a legacy from standard HeapAlloc
+	macro_bloc = sctk_alloc_region_get_macro_bloc(ptr);
+	if (macro_bloc != NULL)
+	{
+		retval = sctk_alloc_posix_get_size(ptr);
+	} else {
+		//used to fallback on default HeapAlloc/HeapFree/HeapRealloc/HeapSize when getting some legacy
+		//segments not managed by our allocator It append typically with atexit method which init is segment
+		//before allocator overriding.
+		handle = (HANDLE)_get_heap_handle();
+		retval = (size_t)HeapSize(handle, 0, ptr);
+	}
+
+	return retval;
+}
+#endif //_WIN32
 
 /************************* FUNCTION ************************/
 SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
@@ -637,6 +679,18 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 		macro_bloc = sctk_alloc_region_get_macro_bloc(ptr);
 	if (macro_bloc != NULL)
 		chain = macro_bloc->chain;
+
+	//on windows we may got some segments allocated by HeapAlloc, detect them and fallback to HeapRealloc for them
+	#ifdef _WIN32
+	if (chain == NULL && ptr != NULL)
+	{
+		//used to fallback on default HeapAlloc/HeapFree/HeapRealloc/HeapSize when getting some legacy
+		//segments not managed by our allocator It append typically with atexit method which init is segment
+		//before allocator overriding.
+		OutputDebugStringA("Try to realloc segments from MSVCRT, transmit to it\n");
+		return HeapReAlloc((HANDLE)_get_heap_handle(),0,ptr,size);
+	}
+	#endif //_WIN32
 
 	if (size != 0 && ptr != NULL && chain == local_chain && chain != NULL)
 	{
@@ -766,4 +820,34 @@ SCTK_PUBLIC void sctk_alloc_posix_chain_print_stat(void)
 		warning("The current thread hasn't setup his allocation up to now.");
 	else
 		sctk_alloc_chain_print_stat(local_chain);
+}
+
+/************************* FUNCTION ************************/
+SCTK_INTERN void sctk_alloc_posix_destroy_handler(struct sctk_alloc_chain * chain)
+{
+	//errors
+	assert(chain != &sctk_global_egg_chain);
+
+	//free the memory used by the chain struct.
+	sctk_alloc_chain_free(&sctk_global_egg_chain,chain);
+}
+
+/************************* FUNCTION ************************/
+SCTK_INTERN void sctk_alloc_posix_mark_current_for_destroy(void)
+{
+	//vars
+	struct sctk_alloc_chain * local_chain;
+
+	//get current allocation chain
+	local_chain = sctk_get_tls_chain();
+
+	//nothing to do
+	if (local_chain == NULL)
+		return;
+
+	//replace default by egg_allocator to avoid recreating another one if some steps follow in thread destroy
+	sctk_alloc_posix_set_default_chain(&sctk_global_egg_chain);
+
+	//mark the current chain for destroy
+	sctk_alloc_chain_mark_for_destroy(local_chain,sctk_alloc_posix_destroy_handler);
 }
