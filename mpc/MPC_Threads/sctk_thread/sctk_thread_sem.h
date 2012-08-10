@@ -43,13 +43,6 @@ typedef struct sctk_thread_generic_sem_s{
 
 #define SCTK_THREAD_GENERIC_SEM_INIT {0,SCTK_SPINLOCK_INITIALIZER,NULL}
 
-/*typedef struct sctk_thread_generic_sem_named_s{
-  char* name;
-  volatile int nb;
-  volatile int unlink;
-  sctk_thread_generic_sem_t* sem;
-}sctk_thread_generic_sem_named_t;*/
-
 typedef struct sctk_thread_generic_sem_named_list_s{
   char* name;
   volatile int nb;

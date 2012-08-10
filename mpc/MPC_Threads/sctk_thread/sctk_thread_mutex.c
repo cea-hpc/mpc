@@ -32,9 +32,6 @@ sctk_thread_generic_mutexes_mutexattr_destroy( sctk_thread_generic_mutexattr_t* 
 	*/
 
   if( attr == NULL ) return SCTK_EINVAL;
-  /*if( ((attr->attrs >> 3) & 1 ) == 0 ) return SCTK_EINVAL;
-
-  attr->attrs &= ~( 1 << 3 );*/
 
   return 0;
 }
@@ -48,7 +45,6 @@ sctk_thread_generic_mutexes_mutexattr_getpshared( sctk_thread_generic_mutexattr_
 	*/
 
   if( attr == NULL || pshared == NULL ) return SCTK_EINVAL;
-  //if( ((attr->attrs >> 3) & 1 ) == 0 ) return SCTK_EINVAL;
 
   (*pshared) = ( (attr->attrs >> 2) & 1);
 
@@ -93,7 +89,6 @@ sctk_thread_generic_mutexes_mutexattr_gettype( sctk_thread_generic_mutexattr_t* 
 	*/
 
   if( attr == NULL || kind == NULL ) return SCTK_EINVAL;
-  //if( ((attr->attrs >> 3) & 1 ) == 0 ) return SCTK_EINVAL;
 
   (*kind) = (attr->attrs & 3 );
 
@@ -111,11 +106,9 @@ sctk_thread_generic_mutexes_mutexattr_init( sctk_thread_generic_mutexattr_t* att
 	*/
 
   if( attr == NULL ) return SCTK_EINVAL;
-  //if( ((attr->attrs >> 3) & 1 ) == 1 ) return SCTK_EINVAL;
 
   attr->attrs = ((attr->attrs & ~3) | (0 & 3));
   attr->attrs &= ~( 1 << 2 );
-  //attr->attrs = (attr->attrs & ~8) | (1 << 3);
 
   return 0;
 }
@@ -173,9 +166,7 @@ sctk_thread_generic_mutexes_mutex_destroy( sctk_thread_generic_mutex_t* lock ){
 	*/
 
   if( lock == NULL ) return SCTK_EINVAL;
-  if( lock->owner != NULL /*|| ((lock->m_attrs >> 1) & 1) == 1*/ ) return SCTK_EBUSY;
-
-  //lock->m_attrs &= 0;
+  if( lock->owner != NULL ) return SCTK_EBUSY;
 
   return 0;
 }
@@ -199,7 +190,6 @@ sctk_thread_generic_mutexes_mutex_init (sctk_thread_generic_mutex_t * lock,
 	*/
 
   if( lock == NULL ) return SCTK_EINVAL;
-  //if( (lock->m_attrs & 1) == 1 ) return SCTK_EBUSY;
 
   int ret = 0;
   sctk_thread_generic_mutex_t local_lock = SCTK_THREAD_GENERIC_MUTEX_INIT;
@@ -213,7 +203,6 @@ sctk_thread_generic_mutexes_mutex_init (sctk_thread_generic_mutex_t * lock,
 	local_ptr->type = ( attr->attrs & 3 );
   }
 
-  //local_ptr->m_attrs = (( lock->m_attrs & ~1 ) | ( 1 & 1 ));
   *lock = local_lock;
 
   return ret;
@@ -231,7 +220,7 @@ sctk_thread_generic_mutexes_mutex_lock (sctk_thread_generic_mutex_t * lock,
 	EDEADLK The current thread already owns the mutex
 	*/
 
-  if( lock == NULL /*|| (lock->m_attrs & 1) != 1*/ ) return SCTK_EINVAL;
+  if( lock == NULL ) return SCTK_EINVAL;
 
   int ret = 0;
   sctk_thread_generic_mutex_cell_t cell;
@@ -281,7 +270,7 @@ sctk_thread_generic_mutexes_mutex_trylock (sctk_thread_generic_mutex_t * lock,
 	EBUSY   the mutex is already owned by another thread or the calling thread
 	*/
 
-  if( lock == NULL /*|| (lock->m_attrs & 1) != 1*/ ) return SCTK_EINVAL;
+  if( lock == NULL ) return SCTK_EINVAL;
 
   int ret = 0;
   if( /*sctk_spinlock_trylock(&(lock->lock)) == 0 */1){
@@ -323,7 +312,7 @@ sctk_thread_generic_mutexes_mutex_timedlock (sctk_thread_generic_mutex_t* lock,
 			  maximum number of recursive locks for mutex has been exceeded
 	*/
 
-  if( lock == NULL || time == NULL /*|| (lock->m_attrs & 1) != 1*/ ) return SCTK_EINVAL;
+  if( lock == NULL || time == NULL ) return SCTK_EINVAL;
   if( time->tv_nsec < 0 || time->tv_nsec >= 1000000000 ) return SCTK_EINVAL;
 
   int ret = 0;
@@ -422,7 +411,6 @@ sctk_thread_generic_mutexes_mutex_unlock (sctk_thread_generic_mutex_t * lock,
   if( lock == NULL ) return SCTK_EINVAL;
 
   if (lock->owner != sched){
-	  //printf("Owner = %p et sched = %p\n",lock->owner,sched);
       return SCTK_EPERM;
     }
   if (lock->type == SCTK_THREAD_MUTEX_RECURSIVE){

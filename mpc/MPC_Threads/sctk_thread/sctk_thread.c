@@ -1086,6 +1086,14 @@ sctk_thread_sigsuspend (sigset_t * set)
   return res;
 }
 
+/*int
+sctk_thread_sigaction( int signum, const struct sigaction* act,
+		struct sigaction* oldact ){
+  int res;
+  res = __sctk_ptr_thread_sigaction( signum, act, oldact );
+  return res;
+}*/
+
 int
 sctk_thread_key_create (sctk_thread_key_t * __key,
 			void (*__destr_function) (void *))

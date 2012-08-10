@@ -1428,7 +1428,6 @@ int (*__sctk_ptr_thread_sched_get_priority_max) (int policy) =
 int (*__sctk_ptr_thread_sched_get_priority_min) (int policy) =
   sctk_gen_thread_sched_get_priority_min;
 
-
 void *(*__sctk_ptr_thread_getspecific) (sctk_thread_key_t __key) =
   sctk_gen_thread_getspecific;
 int (*__sctk_ptr_thread_join) (sctk_thread_t __th,

@@ -58,17 +58,12 @@ typedef struct sctk_thread_generic_mutex_s{
   sctk_spinlock_t lock;
   int type;
   int nb_call;
-  //int m_attrs;
   sctk_thread_generic_mutex_cell_t* blocked;
 }sctk_thread_generic_mutex_t;
 #define SCTK_THREAD_GENERIC_MUTEX_INIT {NULL,SCTK_SPINLOCK_INITIALIZER,0,0,NULL}
 
-//typedef int sctk_thread_generic_mutexattr_t;
 
 typedef struct sctk_thread_generic_mutexattr_s{
-  //volatile int pshared;
-  //volatile int prioceiling;
-  //volatile int protocol;
   volatile int attrs;
 }sctk_thread_generic_mutexattr_t;
 #define SCTK_THREAD_GENERIC_MUTEXATTR_INIT {0}

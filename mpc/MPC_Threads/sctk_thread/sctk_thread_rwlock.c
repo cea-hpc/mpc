@@ -193,7 +193,6 @@ __sctk_thread_generic_rwlocks_rwlock_init( sctk_thread_generic_rwlock_t* lock,
 
   int ret = 0;
   sctk_thread_generic_rwlock_t local = SCTK_THREAD_GENERIC_RWLOCK_INIT;
-  //sctk_thread_generic_rwlock_t* tmp = &local;
 
   if( attr != NULL ){
 	  if( attr->pshared == SCTK_THREAD_PROCESS_SHARED ){
@@ -245,8 +244,6 @@ __sctk_thread_generic_rwlocks_rwlock_lock( sctk_thread_generic_rwlock_t* lock,
 		  return SCTK_EINVAL;
 	  }
   } else {
-	  /* test cancel */
-	  //sctk_thread_generic_check_signals( 0 );
 	  sctk_spinlock_lock ( &(lock->lock) );
   }
   lock->count++;

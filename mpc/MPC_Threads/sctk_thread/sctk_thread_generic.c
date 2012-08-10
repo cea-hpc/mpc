@@ -26,7 +26,7 @@
 #include <stdlib.h>
 #include <fcntl.h>
 #include <errno.h>
-#include <sctk_kernel_thread.h>
+#include "sctk_kernel_thread.h"
 #include <sctk_topology.h>
 
 #define SCTK_BLOCKING_LOCK_TABLE_SIZE 6
@@ -48,6 +48,7 @@ void sctk_thread_generic_set_self(sctk_thread_generic_t th){
 inline
 sctk_thread_generic_t sctk_thread_generic_self_check(){
   not_implemented();
+  return;
 }
 
 /***************************************/
@@ -528,6 +529,7 @@ sctk_thread_generic_spin_unlock( sctk_thread_spinlock_t* spinlock ){
 /***************************************/
 
 static sigset_t sctk_thread_default_set;
+static int main_thread_sigs_initialized = 0;
 int errno;
 
 static inline void
@@ -535,8 +537,16 @@ sctk_thread_generic_init_default_sigset(){
 #ifndef WINDOWS_SYS
   sigset_t set;
   sigemptyset (&set);
-  kthread_sigmask (SIG_SETMASK, &set, &sctk_thread_default_set);
-  kthread_sigmask (SIG_SETMASK, &sctk_thread_default_set, NULL);
+
+  if( !main_thread_sigs_initialized ){
+	main_thread_sigs_initialized++;
+	kthread_sigmask (SIG_SETMASK, &set, &sctk_thread_default_set);
+	kthread_sigmask (SIG_SETMASK, &sctk_thread_default_set, NULL);
+  }
+  else {
+	kthread_sigmask (SIG_SETMASK, (sigset_t*) &(sctk_thread_generic_self()->attr.thread_sigset), &set);
+	kthread_sigmask (SIG_SETMASK, &set, &sctk_thread_default_set );
+  }
 #endif
 }
 
@@ -547,6 +557,7 @@ sctk_thread_generic_attr_init_sigs( const sctk_thread_generic_attr_t* attr){
   for( i=0; i<SCTK_NSIG; i++ ) attr->ptr->thread_sigpending[i] = 0;
 
   attr->ptr->thread_sigset = sctk_thread_default_set;
+  sigemptyset( (sigset_t*) &(attr->ptr->sa_sigset_mask ));
 }
 
 static inline void
@@ -554,7 +565,22 @@ sctk_thread_generic_treat_signals( sctk_thread_generic_t threadp ){
 #ifndef WINDOWS_SYS
   sctk_thread_generic_p_t* th = threadp;
   int i, done = 0;
+  static int nb_inner_calls = 0;
+  sigset_t set, current_set;
+  sigemptyset( &set );
+  if( nb_inner_calls == 0 ){
+	th->attr.old_thread_sigset = th->attr.thread_sigset;
+  }
+  kthread_sigmask( SIG_SETMASK, &set, &current_set );
+  kthread_sigmask( SIG_SETMASK, &current_set, NULL );
+  if( ( *((unsigned long*) &(th->attr.sa_sigset_mask)) > 0 ) || ( *((unsigned long*) &(current_set)) > 0 )){
+	kthread_sigmask( SIG_SETMASK, (sigset_t*) &(th->attr.thread_sigset ), NULL );
+	kthread_sigmask( SIG_BLOCK, &current_set, NULL );
+	kthread_sigmask( SIG_BLOCK, (sigset_t*) &(th->attr.sa_sigset_mask), NULL );
+	kthread_sigmask( SIG_SETMASK, &current_set, (sigset_t*) &(th->attr.thread_sigset ));
+  }
 
+  if( &(th->attr.spinlock ) != &(sctk_thread_generic_self()->attr.spinlock )){
   sctk_spinlock_lock ( &(th->attr.spinlock ));
 
   for( i = 0; i < SCTK_NSIG; i++ ){
@@ -563,13 +589,45 @@ sctk_thread_generic_treat_signals( sctk_thread_generic_t threadp ){
 		th->attr.thread_sigpending[i] = 0;
 		th->attr.nb_sig_pending--;
 		done++;
+		nb_inner_calls++;
+
 		kthread_kill ( kthread_self(), i + 1);
+		nb_inner_calls--;
+
+		if( nb_inner_calls == 0 ){
+		  th->attr.thread_sigset = th->attr.old_thread_sigset;
+		  sigemptyset( (sigset_t*) &(th->attr.sa_sigset_mask ));
+		}
+		th->attr.nb_sig_treated += done;
 	  }
 	}
   }
 
   th->attr.nb_sig_treated += done;
   sctk_spinlock_unlock ( &(th->attr.spinlock ));
+  }
+  else{
+  for( i = 0; i < SCTK_NSIG; i++ ){
+	if( expect_false( th->attr.thread_sigpending[i] != 0 )){
+	  if( sigismember( (sigset_t*) &(th->attr.thread_sigset ), i + 1 ) == 0 ){
+		th->attr.thread_sigpending[i] = 0;
+		th->attr.nb_sig_pending--;
+		done++;
+		nb_inner_calls++;
+
+		kthread_kill ( kthread_self(), i + 1);
+		nb_inner_calls--;
+
+		if( nb_inner_calls == 0 ){
+		  th->attr.thread_sigset = th->attr.old_thread_sigset;
+		  sigemptyset( (sigset_t*) &(th->attr.sa_sigset_mask ));
+		}
+		th->attr.nb_sig_treated += done;
+	  }
+	}
+  }
+
+  }
 #endif
 }
 
@@ -583,8 +641,9 @@ __sctk_thread_generic_sigpending( sctk_thread_generic_t threadp,
   sctk_spinlock_lock ( &(th->attr.spinlock ));
 
   for( i = 0; i < SCTK_NSIG; i++ ){
-	if( th->attr.thread_sigpending[i] != 0 ) 
+	if( th->attr.thread_sigpending[i] != 0 ){
 		sigaddset ( set, i + 1 );
+	}
   }
 
   sctk_spinlock_unlock ( &(th->attr.spinlock ));
@@ -714,7 +773,8 @@ sctk_thread_generic_wake_on_barrier( sctk_thread_generic_scheduler_t* sched,
 	}
   }
   else{
-  if( list ) sctk_generic_swap_to_sched( sched );
+  if( list ){ 
+	  sctk_generic_swap_to_sched( sched );}
   sctk_spinlock_unlock( &(barrier->lock ));
   }
 }
@@ -810,9 +870,6 @@ sctk_thread_generic_wake_on_sem( sctk_thread_generic_scheduler_t* sched,
   }
   if( remove_from_lock_list && list ){
 	DL_DELETE( sem->list, list );
-	//sctk_thread_generic_register_spinlock_unlock( &(sctk_thread_generic_self()->sched ),
-	//		&(sem->spinlock ));
-	//sctk_generic_swap_to_sched( sched );
 	sctk_spinlock_unlock( &(sem->spinlock ));
 	sctk_thread_generic_wake( sched );
   }
@@ -855,7 +912,6 @@ sctk_thread_generic_handle_blocked_thread( sctk_thread_generic_t threadp,
 		  break;
 	  default:
 		  sctk_nodebug("No saved lock, thread %p has been wakened",th);
-		  //not_reachable();
   }
 }
 
@@ -879,12 +935,25 @@ sctk_thread_generic_kill( sctk_thread_generic_t threadp, int val ){
   val--;
   if( val < 0 || val > SCTK_NSIG ) return SCTK_EINVAL;
 
-  sctk_spinlock_lock ( &(th->attr.spinlock ));
-  if( th->attr.thread_sigpending[val] == 0 ){
-	th->attr.thread_sigpending[val] = 1;
-	th->attr.nb_sig_pending++;
+  if( (&(th->attr.spinlock )) != (&(sctk_thread_generic_self()->attr.spinlock ))){
+	sctk_spinlock_lock ( &(th->attr.spinlock ));
+	if( th->attr.thread_sigpending[val] == 0 ){
+	  th->attr.thread_sigpending[val] = 1;
+	  th->attr.nb_sig_pending++;
+	}
+    sctk_spinlock_unlock ( &(th->attr.spinlock ));
   }
-  sctk_spinlock_unlock ( &(th->attr.spinlock ));
+  else{
+	if( th->attr.thread_sigpending[val] == 0 ){
+	  th->attr.thread_sigpending[val] = 1;
+	  th->attr.nb_sig_pending++;
+	}
+  }
+
+  sigset_t set;
+  kthread_sigmask( SIG_SETMASK, (sigset_t*) &(th->attr.sa_sigset_mask), &set);
+  kthread_sigmask( SIG_BLOCK, &set, NULL );
+  kthread_sigmask( SIG_SETMASK, &set, (sigset_t*) &(th->attr.sa_sigset_mask) );
 
   if( th->sched.status == sctk_thread_generic_blocked )
 	  sctk_thread_generic_handle_blocked_thread( threadp, 0 );
@@ -901,7 +970,7 @@ sctk_thread_generic_kill_other_threads_np(){
 /* THREAD CREATION                     */
 /***************************************/
 
- inline void
+inline void
 sctk_thread_generic_alloc_pthread_blocking_lock_table( const sctk_thread_generic_attr_t* attr){
   int i;
   void** lock_table = (void**) sctk_malloc( SCTK_BLOCKING_LOCK_TABLE_SIZE * sizeof( void* ));
@@ -952,6 +1021,7 @@ static int
 sctk_thread_generic_attr_destroy (sctk_thread_generic_attr_t * attr)
 {
   sctk_free (attr->ptr);
+  attr->ptr = NULL;
   return 0;
 }
 
@@ -1287,8 +1357,8 @@ sctk_thread_generic_attr_setinheritsched( sctk_thread_generic_attr_t* attr,
   if(attr->ptr == NULL){
 	sctk_thread_generic_attr_init(attr);
   }
-  if( inheritsched != PTHREAD_INHERIT_SCHED ||
-		  inheritsched != PTHREAD_EXPLICIT_SCHED )
+  if( inheritsched != SCTK_THREAD_INHERIT_SCHED &&
+		  inheritsched != SCTK_THREAD_EXPLICIT_SCHED )
 	  return SCTK_EINVAL;
 
   attr->ptr->inheritsched = inheritsched;
@@ -1349,7 +1419,11 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
   }
   sctk_thread_generic_attr_t lattr;
   lattr.ptr = ptr;
+
+  /****** SIGNALS ******/
+  sctk_thread_generic_init_default_sigset();
   sctk_thread_generic_attr_init_sigs( &lattr );
+
   sctk_thread_generic_alloc_pthread_blocking_lock_table( &lattr );
 
   sctk_nodebug("Create %p",arg);
@@ -1383,6 +1457,8 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
     stack = thread_id->attr.stack;
     stack_size = thread_id->attr.stack_size;
 	stack_guardsize = thread_id->attr.stack_guardsize;
+	size_t old_stack_size = 0;
+	size_t old_stack_guardsize = 0; 
     
     if (stack == NULL)
       {
@@ -1390,13 +1466,9 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
 	  stack_size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
 	else if (stack_size <= 0){
 	  stack_size = SCTK_ETHREAD_STACK_SIZE;
-	  printf("ethread stack size=%d et stack min =%d\n",SCTK_ETHREAD_STACK_SIZE,SCTK_THREAD_STACK_MIN );
 	}
 	if( stack_guardsize > 0 ){
-		printf("guardsize=%ld\n",stack_guardsize);
 	  long _page_size_ = 0;
-	  size_t old_stack_size;
-	  size_t old_stack_guardsize;
 	  int ret;
 #ifndef _SC_PAGESIZE
   #ifndef PAGE_SIZE
@@ -1409,7 +1481,7 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
 #endif
   	  old_stack_guardsize = stack_guardsize;
 	  stack_guardsize = ( stack_guardsize + _page_size_ - 1 ) & ~( _page_size_ - 1 );
-	  stack_size = ( stack_size+ 8 + _page_size_ - 1 ) & ~( _page_size_ - 1 );
+	  stack_size = ( stack_size + _page_size_ - 1 ) & ~( _page_size_ - 1 );
 	  old_stack_size = stack_size;
 	  stack_size = stack_size + stack_guardsize;
 	  int ret_mem = posix_memalign( (void*) &stack, _page_size_, stack_size );
@@ -1418,12 +1490,11 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
 		sctk_free(thread_id);
 		return SCTK_EAGAIN;
 	      }
-	  if( ( ret = mprotect( stack + stack_size, old_stack_guardsize, PROT_NONE )) != 0 ){
+	  if( ( ret = mprotect( stack, stack_guardsize, PROT_NONE )) != 0 ){
 		sctk_free(stack);
 		sctk_free(thread_id);
 		return ret;
 	  }
-	  stack[old_stack_size] = 123;
 	}
 	if (stack == NULL)
 	  {
@@ -1434,9 +1505,6 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
 		return SCTK_EAGAIN;
 	      }
 	  }
-	if( stack_guardsize == 0 )
-	stack[stack_size] = 123;
-
       }
     else if (stack_size <= 0)
       {
@@ -1444,8 +1512,15 @@ sctk_thread_generic_user_create (sctk_thread_generic_t * threadp,
 	return SCTK_EINVAL;
       }
 
-    thread_id->attr.stack = stack;
-    thread_id->attr.stack_size = stack_size;
+	if( stack_guardsize > 0 ){
+		thread_id->attr.user_stack = stack;
+		thread_id->attr.stack = stack + old_stack_guardsize;
+		thread_id->attr.stack_size = old_stack_size;
+	}
+	else{
+		thread_id->attr.stack = stack;
+		thread_id->attr.stack_size = stack_size;
+	}
   }
   
 
@@ -1603,7 +1678,6 @@ sctk_thread_generic_check_signals( int select ){
 			sctk_thread_generic_treat_signals( current );
 
 	if( expect_false( current->attr.cancel_status > 0 )){
-		//fprintf(stderr, "cancel_status:%d,cancelstate:%d,canceltype:%d,select :%d sched:%p, vp_type:%d\n", current->attr.cancel_status,current->attr.cancel_state,current->attr.cancel_type, select, sched, sched->generic.vp_type);
 		sctk_nodebug ("%p %d %d", current,
 				( current->attr.cancel_state != SCTK_THREAD_CANCEL_DISABLE),
 				(( current->attr.cancel_type != SCTK_THREAD_CANCEL_DEFERRED)
@@ -1807,7 +1881,8 @@ sctk_thread_generic_join ( sctk_thread_generic_t threadp, void** val ){
 	if( val != NULL ) *val = th->attr.return_value;
 	th->sched.status = sctk_thread_generic_joined;
 
-	sctk_thread_generic_handle_zombies( &(th->sched.generic ));
+	/* Free thread memory */
+	//sctk_thread_generic_handle_zombies( &(th->sched.generic ));
 
   }else{
     return SCTK_EDEADLK;
@@ -1852,7 +1927,7 @@ sctk_thread_generic_exit( void* retval ){
 }
 
 /***************************************/
-/* THREAD EQUAL                        */
+/* THREAD MEMORY                       */
 /***************************************/
 
 inline void
@@ -1893,8 +1968,8 @@ sctk_thread_generic_detach( sctk_thread_generic_t threadp ){
   if( threadp == NULL ) return SCTK_ESRCH;
   sctk_thread_generic_p_t* th = threadp;
 
-  if( th->sched.status == sctk_thread_generic_joined ||
-		  th->sched.status == sctk_thread_generic_zombie )
+  if( th->sched.status == sctk_thread_generic_joined /*||
+		  th->sched.status == sctk_thread_generic_zombie*/ )
 	  return SCTK_ESRCH;
   if( th->attr.detachstate == SCTK_THREAD_CREATE_DETACHED )
 	  return SCTK_EINVAL;
@@ -2022,7 +2097,7 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
   sctk_add_func_type (sctk_thread_generic, self, sctk_thread_t (*)(void));
 
   /****** SIGNALS ******/
-  sctk_thread_generic_init_default_sigset();
+  //sctk_thread_generic_init_default_sigset();
 
   /****** SCHEDULER ******/
   sctk_thread_generic_scheduler_init(thread_type,scheduler_type,vp_number);
@@ -2112,8 +2187,6 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
 			  int (*)(sctk_thread_condattr_t*, int*));
    sctk_add_func_type (sctk_thread_generic, cond_destroy,
 		      int (*)(sctk_thread_cond_t*));
-   /*sctk_add_func_type (sctk_thread_generic, cond_init,
-		      int (*)(sctk_thread_cond_t*, sctk_thread_mutex_t*));*/
    sctk_add_func_type (sctk_thread_generic, cond_wait,
 		      int (*)(sctk_thread_cond_t*,sctk_thread_mutex_t*));
    sctk_add_func_type (sctk_thread_generic, cond_signal,
@@ -2197,7 +2270,7 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
 		  	  int (*)( sctk_thread_barrier_t* ));
 
   /****** THREAD SPINLOCK ******/
-//  sctk_thread_generic_spinlocks_init();
+  sctk_thread_generic_spinlocks_init();
   __sctk_ptr_thread_spin_init = sctk_thread_generic_spin_init;
   sctk_add_func_type (sctk_thread_generic, spin_destroy,
 		  	  int (*)( sctk_thread_spinlock_t* ));

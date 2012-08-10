@@ -57,7 +57,9 @@ typedef struct sctk_thread_generic_intern_attr_s{
   sctk_spinlock_t spinlock;
   volatile int nb_sig_pending;
   volatile int nb_sig_treated;
+  volatile sigset_t old_thread_sigset;
   volatile sigset_t thread_sigset;
+  volatile sigset_t sa_sigset_mask;
   volatile int thread_sigpending[SCTK_NSIG];
 }sctk_thread_generic_intern_attr_t;
 #define sctk_thread_generic_intern_attr_init {SCTK_THREAD_SCOPE_PROCESS,SCTK_THREAD_CREATE_JOINABLE,0,SCTK_THREAD_EXPLICIT_SCHED,0,PTHREAD_CANCEL_ENABLE,PTHREAD_CANCEL_DEFERRED,0,NULL,NULL,0,0,NULL,NULL,NULL,-1,0,NULL,NULL,SCTK_SPINLOCK_INITIALIZER,0,0}

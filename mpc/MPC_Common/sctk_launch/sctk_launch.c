@@ -817,7 +817,7 @@ auto_kill_func (void *arg)
     {
       sctk_noalloc_fprintf (stderr, "Autokill in %ds\n", timeout);
     }
-    sleep (timeout);
+	sleep (timeout);
     sctk_noalloc_fprintf (stderr, "TIMEOUT reached\n");
     abort ();
     exit (-1);

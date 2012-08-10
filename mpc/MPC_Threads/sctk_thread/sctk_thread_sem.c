@@ -34,7 +34,7 @@ void sctk_thread_generic_sems_init(){
 
   {
 	static sctk_thread_generic_sem_t loc = SCTK_THREAD_GENERIC_SEM_INIT;
-	static sctk_thread_sem_t glob /*= SCTK_THREAD_SEM_INITIALIZER*/;
+	static sctk_thread_sem_t glob ;
 	assume (memcmp (&loc, &glob, sizeof (sctk_thread_generic_sem_t)) == 0);
   }
 }
@@ -180,6 +180,10 @@ sctk_thread_generic_sems_sem_timedwait( sctk_thread_generic_sem_t* sem,
 	if( sctk_spinlock_trylock(&(sem->spinlock)) == 0 ){
 	  if( sem->lock > 0 ){
 		sem->lock--;
+		errno = 0;
+		ret = 0;
+		sctk_spinlock_unlock(&(sem->spinlock));
+		return ret;
 	  } else {
 		errno = SCTK_EAGAIN;
 		ret = -1;

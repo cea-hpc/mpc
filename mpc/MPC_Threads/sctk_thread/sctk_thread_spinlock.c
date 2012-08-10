@@ -24,9 +24,10 @@
 
 void
 sctk_thread_generic_spinlocks_init(){
-  /*sctk_thread_generic_check_size( sctk_thread_spinlock_t, sctk_thread_generic_spinlock_t );
+  sctk_thread_generic_check_size( sctk_thread_spinlock_t, sctk_thread_generic_spinlock_t );
 
-  static sctk_thread_spinlock_t loc = */
+  //printf("TOTO %d - %d \n", sizeof(sctk_thread_spinlock_t), sizeof(sctk_thread_spinlock_t));
+  /*static sctk_thread_spinlock_t loc = */
 }
 
 int

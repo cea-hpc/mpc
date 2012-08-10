@@ -94,7 +94,6 @@ static void* sctk_thread_generic_scheduler_idle_task(sctk_thread_generic_schedul
   sctk_nodebug("End vp");
   
 #warning "Handle zombies"
-  //sctk_thread_generic_handle_zombies( th->sched.generic.vp );
   not_implemented();
   return NULL;
 }
@@ -119,7 +118,6 @@ static void* sctk_thread_generic_scheduler_bootstrap_task(sctk_thread_generic_sc
   sctk_nodebug("End vp");
 
 #warning "Handle zombies"
-  //sctk_thread_generic_handle_zombies( thread->sched.generic.vp );
 
   return NULL;
 }
@@ -292,7 +290,6 @@ void sctk_centralized_poll_tasks(sctk_thread_generic_scheduler_t* sched){
 		if( tmp ) tmp[sctk_thread_generic_task_lock] = NULL;
 		sctk_thread_generic_wake(lsched);
 	  }
-      //sctk_thread_generic_wake(task->sched);
       sctk_spinlock_unlock(&(sched->generic.lock));
     }
   }
@@ -333,7 +330,6 @@ static void (*sctk_generic_poll_tasks)(sctk_thread_generic_scheduler_t* ) = NULL
 
 typedef struct sctk_per_vp_data_s{
   volatile sctk_thread_generic_task_t* sctk_generic_delegated_task_list;
-  //volatile sctk_thread_generic_scheduler_t* sctk_generic_delegated_zombie_list;
   volatile sctk_thread_generic_scheduler_generic_t* sctk_generic_delegated_zombie_detach_thread;
   volatile sctk_thread_generic_scheduler_t* sctk_generic_delegated_add;
   volatile sctk_spinlock_t* sctk_generic_delegated_spinlock;
@@ -358,49 +354,12 @@ static inline int sctk_sem_wait(sem_t *sem){
   return res;
 }
 
-/*inline void 
-sctk_thread_generic_handle_zombies( struct sctk_per_vp_data_s* vp ){
-	printf("VP %p\n",vp);
-	sctk_thread_generic_scheduler_generic_t* zombie_list = vp->sctk_generic_delegated_zombie_list;
-	sctk_thread_generic_scheduler_generic_t* schedg = zombie_list;
-
-	printf("Zombie list %p\n",zombie_list);
-	while( schedg != NULL ){
-		DL_DELETE( zombie_list, schedg );
-		printf("sched %p\n",schedg->sched);
-		if( schedg->sched->th->attr.user_stack == NULL )
-			sctk_free( schedg->sched->th->attr.stack );
-		sctk_free( schedg->sched->th );
-		schedg = zombie_list;
-	}
-	vp->sctk_generic_delegated_zombie_list = NULL;
-}
-
-
-inline void
-sctk_thread_generic_handle_detach_zombies( struct sctk_per_vp_data_s* vp ){
-	printf("VP %p\n",vp);
-	sctk_thread_generic_scheduler_generic_t* zombie_detach_list = vp->sctk_generic_delegated_zombie_detach_list;
-	sctk_thread_generic_scheduler_generic_t* schedg_d = zombie_detach_list;
-
-	printf("Zombie list %p\n",zombie_detach_list);
-	while( schedg_d != NULL ){
-		DL_DELETE( zombie_detach_list, schedg_d );
-		printf("sched %p\n",schedg_d->sched);
-		if( schedg_d->sched->th->attr.user_stack == NULL )
-			sctk_free( schedg_d->sched->th->attr.stack );
-		sctk_free( schedg_d->sched->th );
-		schedg_d = zombie_detach_list;
-	}
-	vp->sctk_generic_delegated_zombie_detach_list = NULL;
-}*/
-
 inline
 void sctk_thread_generic_scheduler_swapcontext_pthread(sctk_thread_generic_scheduler_t* old_th,
 						       sctk_thread_generic_scheduler_t* new_th,
 						       sctk_per_vp_data_t* vp){
   int val;
-  //assume(new_th->status == sctk_thread_generic_running);
+  assume(new_th->status == sctk_thread_generic_running);
   assume(sem_getvalue(&(old_th->generic.sem),&val) == 0);
   sctk_nodebug("SLEEP %p (%d) WAKE %p %d (%d)",old_th,old_th->status,new_th,val,new_th->status);
   sctk_nodebug("Register spinunlock %p execute SWAP",vp->sctk_generic_delegated_spinlock);
@@ -418,7 +377,7 @@ void sctk_thread_generic_scheduler_swapcontext_pthread(sctk_thread_generic_sched
   assume(sem_getvalue(&(old_th->generic.sem),&val) == 0);
   assume(val == 0);  
 
-  //assume(old_th->status == sctk_thread_generic_running);
+  assume(old_th->status == sctk_thread_generic_running);
   assume(old_th->generic.vp != NULL);
   memcpy(&vp_data,old_th->generic.vp,sizeof(sctk_per_vp_data_t));
   sctk_nodebug("Register spinunlock %p execute SWAP NEW",old_th->generic.vp->sctk_generic_delegated_spinlock);
@@ -457,14 +416,10 @@ static void sctk_generic_add_to_list(sctk_thread_generic_scheduler_t* sched, int
 }
 
 static void sctk_generic_add_task(sctk_thread_generic_task_t* task){
-  //sctk_thread_generic_scheduler_t* sched = &(sctk_thread_generic_self()->sched );
-  //void** tmp = (void**) sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
-  //void** tmp = (void**) (sctk_thread_generic_self())->attr.sctk_thread_generic_pthread_blocking_lock_table;
 	void** tmp = NULL;
 	if( task->sched && task->sched->th && &(task->sched->th->attr )) 
 		tmp = (void**) task->sched->th->attr.sctk_thread_generic_pthread_blocking_lock_table;
 	if( tmp ) tmp[sctk_thread_generic_task_lock] = (void*) 1;
-  //tmp[sctk_thread_generic_task_lock] = (void*) 1;
   sctk_nodebug("ADD task %p FROM %p",task,task->sched);
   if(task->is_blocking){
     sctk_thread_generic_thread_status(task->sched,sctk_thread_generic_blocked);
@@ -494,7 +449,6 @@ static void sctk_generic_sched_idle_start_pthread(){
   sctk_thread_generic_scheduler_t* next;
 
   vp_data.sctk_generic_delegated_task_list = NULL;
-  //vp_data.sctk_generic_delegated_zombie_list = NULL;
   vp_data.sctk_generic_delegated_zombie_detach_thread = NULL;
   vp_data.sctk_generic_delegated_add = NULL;
   
@@ -628,7 +582,7 @@ static inline void sctk_generic_sched_yield_intern(sctk_thread_generic_scheduler
 
   /* Deal with zombie threads */
   if(vp_data.sctk_generic_delegated_zombie_detach_thread != NULL){
-	sctk_thread_generic_handle_zombies( vp_data.sctk_generic_delegated_zombie_detach_thread );
+	//sctk_thread_generic_handle_zombies( vp_data.sctk_generic_delegated_zombie_detach_thread );
 //#warning "Handel Zombies"
     vp_data.sctk_generic_delegated_zombie_detach_thread = NULL;
   }
