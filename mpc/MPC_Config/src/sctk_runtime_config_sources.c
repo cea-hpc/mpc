@@ -37,7 +37,7 @@
  * This is a constant on exported symbol, so the user can redefine it in application source
  * code if wanted.
 **/
-const char * sctk_runtime_config_default_app_file_path = NULL;
+const char * sctk_runtime_config_default_user_file_path = NULL;
 
 /*******************  FUNCTION  *********************/
 /**
@@ -431,15 +431,12 @@ const char * sctk_runtime_config_get_env_or_value(const char * env_name,const ch
  * this call, all sources are ready to be mapped to C struct.
  * The function will obort on failure.
  * @param config_sources Define the structure to init.
- * @param application_config_file Define the application config filename if any. Use NULL for none.
 **/
 void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * config_sources)
 {
 	//vars
-	char * user_home_file = NULL;
 	const char * config_system;
 	const char * config_user;
-	const char * config_app;
 	const char * tmp;
 	static const char * def_sys_path = SCTK_INSTALL_PREFIX "/share/mpc/config.xml";
 	static const char * def_sys_path_fallback = SCTK_INSTALL_PREFIX "/share/mpc/config.xml.example";
@@ -450,16 +447,9 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 	//set to default
 	memset(config_sources,0,sizeof(*config_sources));
 
-	//calc user path
-	tmp = getenv("HOME");
-	assume_m(tmp != NULL,"Can't read HOME environnement variable, get NULL.");
-	user_home_file = malloc(strlen(tmp) + 17);
-	sprintf(user_home_file,"%s/.mpc/config.xml",getenv("HOME"));
-
 	//try to load from env
 	config_system = sctk_runtime_config_get_env_or_value("MPC_SYSTEM_CONFIG",def_sys_path);
-	config_user   = sctk_runtime_config_get_env_or_value("MPC_USER_CONFIG",user_home_file);
-	config_app    = sctk_runtime_config_get_env_or_value("MPC_APP_CONFIG",sctk_runtime_config_default_app_file_path);
+	config_user   = sctk_runtime_config_get_env_or_value("MPC_USER_CONFIG",sctk_runtime_config_default_user_file_path);
 
 	//If system file is default and if it didn't exist, fall back onto the .example one.
 	//This is a trick, but it permit to not create system config.xml at install, so avoid
@@ -471,20 +461,14 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 
 	//open system and user config
 	sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_RUNTIME_CONFIG_SYSTEM_LEVEL],config_system,SCTK_RUNTIME_CONFIG_OPEN_WARNING);
-	sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_RUNTIME_CONFIG_USER_LEVEL],config_user,SCTK_RUNTIME_CONFIG_OPEN_SILENT);
 
-	//if get application config as parameter.
-	if (config_app != NULL )
-	{
-		if( config_app[0] != '\0')
-			sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_RUNTIME_CONFIG_APPLICATION_LEVEL],config_app,SCTK_RUNTIME_CONFIG_OPEN_ERROR);
-	}
+	//if get user config as parameter from --config.
+	if (config_user != NULL )
+		if( config_user[0] != '\0')
+			sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_RUNTIME_CONFIG_USER_LEVEL],config_user,SCTK_RUNTIME_CONFIG_OPEN_ERROR);
 
 	//find profiles to use and sort them depeding on priority
 	sctk_runtime_config_sources_select_profiles(config_sources);
-
-	//free temp memory
-	free(user_home_file);
 }
 
 /*******************  FUNCTION  *********************/

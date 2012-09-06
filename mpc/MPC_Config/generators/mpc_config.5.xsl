@@ -151,9 +151,8 @@
 .Nm mpc_config
 .Nd MPC runtime configuration files
 .Sh SYNOPSIS
-.Nm ~/.mpc/config or ${MPC_USER_CONFIG}
 .Nm ${PREFIX}/share/mpc/config.xml or ${MPC_SYSTEM_CONFIG}
-.Nm File given to option --config of
+.Nm File given to ${MPC_USER_CONFIG} or to option --config of
 .Xr mpcrun 1
 .Sh DESCRIPTION
 Their is three important concepts in MPC configuration system :
@@ -172,9 +171,7 @@ Files are loaded in priority order :
 .It
 System configuration (${PREFIX}/share/mpc/config.xml or $MPC_SYSTEM_CONFIG)
 .It
-User configuration (~/.mpc/config or ${MPC_USER_CONFIG})
-.It
-Application configuration given to mpcrun with option --config
+User configuration given to mpcrun with option --config
 .El
 .Pp
 </xsl:text>

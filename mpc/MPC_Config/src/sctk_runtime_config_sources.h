@@ -89,10 +89,8 @@ enum sctk_xml_config_type
 {
 	/** System level XML configuration file identifier. **/
 	SCTK_RUNTIME_CONFIG_SYSTEM_LEVEL,
-	/** User level XML configuration file identifier. **/
+	/** User level XML configuration file identifier (mpcrun --config=). **/
 	SCTK_RUNTIME_CONFIG_USER_LEVEL,
-	/** Application level XML configuration file identifier. **/
-	SCTK_RUNTIME_CONFIG_APPLICATION_LEVEL,
 	/** Number of configuration types. **/
 	SCTK_RUNTIME_CONFIG_LEVEL_COUNT
 };

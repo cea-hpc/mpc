@@ -209,8 +209,8 @@ MPC_CLEAN_TMP_DIR="0"
 for arg in "$@" ; do
 	case $arg in
 		--config=*)
-			MPC_APP_CONFIG="`echo A$arg | sed -e 's/A--config=//g'`"
-			export MPC_APP_CONFIG
+			MPC_USER_CONFIG="`echo A$arg | sed -e 's/A--config=//g'`"
+			export MPC_USER_CONFIG
 			;;
 	esac
 done
