@@ -54,6 +54,8 @@ struct command_options
 	char * system_file;
 	/** Setup the user file to load (--user). **/
 	char * user_file;
+	/** Setup manual selection of config profiles (--profiles). **/
+	char * user_profiles;
 	/** Request the help of the command (--help). **/
 	bool help;
 	/** Disable the loading of config files (--nofile). **/
@@ -71,17 +73,19 @@ static const char * cst_help_message = "\
 mpc_print_config [--text|--xml|--launcher|--help]\n\
 \n\
 Options :\n\
-  --text          : Display the current configuration in simple text format.\n\
-  --xml           : Display the current configuration in MPC config XML format.\n\
-  --launcher      : Display launcher options in bash variable format.\n\
-  --system={file} : Override the system configuration file. Use none to disable.\n\
-  --user={file}   : Override the user configuration file. Use none to disable.\n\
-  --nofile        : Only use the internal default values.\n\
+  --text            : Display the current configuration in simple text format.\n\
+  --xml             : Display the current configuration in MPC config XML format.\n\
+  --launcher        : Display launcher options in bash variable format.\n\
+  --system={file}   : Override the system configuration file. Use none to disable.\n\
+  --user={file}     : Override the user configuration file. Use none to disable.\n\
+  --nofile          : Only use the internal default values.\n\
+  --profiles={list} : Manualy enable some profiles (comma separated).\n\
 \n\
 You can olso influence the loaded files with environnement variables :\n\
   - MPC_SYSTEM_CONFIG   : System configuration file (" SCTK_INSTALL_PREFIX "/share/mpc/config.xml)\n\
   - MPC_USER_CONFIG     : Application configuration file (disabled)\n\
-  - MPC_DISABLE_CONFIG  : Disable loading of configuration files if setup to 1.\n";
+  - MPC_DISABLE_CONFIG  : Disable loading of configuration files if setup to 1.\n\
+  - MPC_USER_PROFILES   : Equivalent to --profiles.\n";
 
 /*******************  FUNCTION  *********************/
 /**
@@ -128,11 +132,12 @@ void init_default_options(struct command_options * options)
 	assert(options != NULL);
 
 	//default values
-	options->help        = false;
-	options->mode        = OUTPUT_MODE_TEXT;
-	options->system_file = NULL;
-	options->user_file   = NULL;
-	options->nofile      = false;
+	options->help          = false;
+	options->mode          = OUTPUT_MODE_TEXT;
+	options->system_file   = NULL;
+	options->user_file     = NULL;
+	options->user_profiles = NULL;
+	options->nofile        = false;
 }
 
 /*******************  FUNCTION  *********************/
@@ -175,6 +180,8 @@ bool parse_args(struct command_options * options,int argc, char ** argv)
 				options->system_file = strdup(argv[i]+9);
 			} else if (strncmp(argv[i],"--user=",7) == 0) {
 				options->user_file = strdup(argv[i]+7);
+			} else if (strncmp(argv[i],"--profiles=",11) == 0) {
+				options->user_profiles = strdup(argv[i]+11);
 			} else {
 				fprintf(stderr,"Error : invalid argument %s\n",argv[i]);
 				return false;
@@ -211,6 +218,8 @@ int load_and_print_mpc_config(const struct command_options * options)
 		setenv("MPC_USER_CONFIG",options->user_file,1);
 	if (options->nofile)
 		setenv("MPC_DISABLE_CONFIG","1",1);
+	if (options->user_profiles)
+		setenv("MPC_USER_PROFILES",options->user_profiles,1);
 
 	//load the config
 	const struct sctk_runtime_config * config = sctk_runtime_config_get();

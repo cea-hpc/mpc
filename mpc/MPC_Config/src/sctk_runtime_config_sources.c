@@ -66,6 +66,25 @@ static int sctk_runtime_config_sources_profile_name_is_unique( struct sctk_runti
 /** @TODO check that some assert need to be turned into assume (when checking node names...) **/
 
 /*******************  FUNCTION  *********************/
+void sctk_runtim_config_sources_select_profile_name(struct sctk_runtime_config_sources * config_sources,xmlChar * profile_name)
+{
+	//errors
+	assert(name != NULL);
+
+	//Check if the profile name is unique and store its name if true
+	if( sctk_runtime_config_sources_profile_name_is_unique( config_sources, profile_name ) )
+	{
+		config_sources->profile_names[config_sources->cnt_profile_names] = profile_name;
+		//sctk_debug("MPC_Config : Add profile %s\n",config_sources->profile_names[config_sources->cnt_profile_names]);
+		config_sources->cnt_profile_names++;
+		assume_m(config_sources->cnt_profile_names < SCTK_RUNTIME_CONFIG_MAX_PROFILES,
+				"Reach maximum number of profiles : SCTK_RUNTIME_CONFIG_MAX_PROFILES = %d.",SCTK_RUNTIME_CONFIG_MAX_PROFILES);
+	} else {
+		xmlFree( profile_name );
+	}
+}
+
+/*******************  FUNCTION  *********************/
 /**
  * Loops through all mapping to store their associated profile name
  * @param config_sources Define the XML source in which to store the profile names.
@@ -104,22 +123,65 @@ void sctk_runtime_config_sources_select_profiles_in_mapping(struct sctk_runtime_
 				if (xmlStrcmp(profile->name,SCTK_RUNTIME_CONFIG_XML_NODE_PROFILE) == 0)
 				{
 					xmlChar *profile_name = xmlNodeGetContent(profile);
-
-					//Check if the profile name is unique and store its name if so
-					if( sctk_runtime_config_sources_profile_name_is_unique( config_sources, profile_name ) )
-					{
-						config_sources->profile_names[config_sources->cnt_profile_names] = profile_name;
-						//sctk_debug("MPC_Config : Add profile %s\n",config_sources->profile_names[config_sources->cnt_profile_names]);
-						config_sources->cnt_profile_names++;
-						assume_m(config_sources->cnt_profile_names < SCTK_RUNTIME_CONFIG_MAX_PROFILES,
-						       "Reach maximum number of profiles : SCTK_RUNTIME_CONFIG_MAX_PROFILES = %d.",SCTK_RUNTIME_CONFIG_MAX_PROFILES);
-					} else {
-						xmlFree( profile_name );
-					}
+					sctk_runtim_config_sources_select_profile_name(config_sources,profile_name);
 				}
 				//move to next one
 				profile = xmlNextElementSibling(profile);
 			}
+		}
+	}
+}
+
+/*******************  FUNCTION  *********************/
+/**
+ * Select the profiles manually requested by user via --profile= option on mpcrun or via MPC_USER_PROFILES
+ * It's preferable to call this after sctk_runtime_config_sources_select_profiles_in_mapping() to ensure to override automatic
+ * profile selection with user one.
+ * @param config_sources Define the XML source in which to store the profile names.
+**/
+void sctk_runtime_config_sources_select_user_profiles(struct sctk_runtime_config_sources * config_sources)
+{
+	//vars
+	const char * env_var = NULL;
+	char * profiles = NULL;
+	char * current = NULL;
+	char * end = NULL;
+
+	//errors
+	assert(config_sources != NULL);
+
+	//read env var MPC_USER_CONFIG_PROFILES
+	env_var = sctk_runtime_config_get_env_or_value("MPC_USER_PROFILES",NULL);
+
+	//load if
+	if (env_var != NULL)
+	{
+		//clone to rewrite it
+		profiles = strdup(env_var);
+
+		current = profiles;
+		end = profiles;
+
+		//loop on the while chain and split on ','
+		while (*current != '\0')
+		{
+			//move unitil next ','
+			while (*end != '\0' && *end != ',')
+				end++;
+
+			//if get ',' => replace by '\0' and move next
+			if (*end == ',')
+			{
+				*end = '\0';
+				end++;
+			}
+
+			//mark the profile for use
+			if (*current != '\0')
+				sctk_runtim_config_sources_select_profile_name(config_sources,BAD_CAST(strdup(current)));
+
+			//move start to previous end
+			current = end;
 		}
 	}
 }
@@ -264,9 +326,8 @@ void sctk_runtime_config_sources_select_profile_nodes(struct sctk_runtime_config
 	}
 
 	//warning
-	/** @TODO To discuss, this may be an error. **/
-	if (!find_once)
-		sctk_warning("Can't find requested profile %s in configuration files.",name);
+	/** @TODO To discuss, this may be a warning. **/
+	assume_m(find_once,"Can't find requested profile %s in configuration files.",name);
 
 	//error
 	assume_m(config_sources->cnt_profile_nodes < SCTK_RUNTIME_CONFIG_MAX_PROFILES,"Reach maximum number of profile : SCTK_RUNTIME_CONFIG_MAX_PROFILES = %d.",SCTK_RUNTIME_CONFIG_MAX_PROFILES);
@@ -309,12 +370,16 @@ void sctk_runtime_config_sources_select_profiles(struct sctk_runtime_config_sour
 
 	//errors
 	assert(config_sources != NULL);
-	
-	//select in all sources
+
+	//select names from all sources <mappings> entries
 	for( i = 0 ; i < SCTK_RUNTIME_CONFIG_LEVEL_COUNT ; i++ )
 		if(  sctk_runtime_config_source_xml_is_open(&config_sources->sources[i])  )
 			sctk_runtime_config_sources_select_profiles_in_file(config_sources,&config_sources->sources[i]);
-	//select all profile nodes
+
+	//select names from command line
+	sctk_runtime_config_sources_select_user_profiles(config_sources);
+
+	//select all profile nodes from name list
 	sctk_runtime_config_sources_select_profiles_nodes(config_sources);
 }
 
@@ -326,7 +391,7 @@ bool sckt_runtime_config_file_exist(const char * filename)
 {
 	bool exist = false;
 	struct stat value;
-	//maybe stat is a portabilité issue
+	//maybe stat has portability issue (eg. windows)
 	if (stat(filename, &value) == -1)
 	{
 		if (errno != ENOENT)

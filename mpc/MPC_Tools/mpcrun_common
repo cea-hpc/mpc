@@ -123,6 +123,7 @@ Launcher:
     --opt=<options> launcher specific options
     --launch_list print available launch methods
     --config=<file> Configuration file to load.
+    --profiles=<p1,p2> List of profiles to enable in config.
 
 Debugger:
     --dbg=<debugger_name> to use a debugger
@@ -204,13 +205,17 @@ TMP_DIR="--directory=${TMP_DIR_D}"
 LAUNCH_OPTIONS=""
 MPC_CLEAN_TMP_DIR="0"
 
-# Pre-parsing to extrac --config, it must be done before parsing all options
+# Pre-parsing to extrac --config and --profiles, it must be done before parsing all options
 # as config file must feed default value and can be erased by mpcrun arguments.
 for arg in "$@" ; do
 	case $arg in
 		--config=*)
 			MPC_USER_CONFIG="`echo A$arg | sed -e 's/A--config=//g'`"
 			export MPC_USER_CONFIG
+			;;
+		--profiles=*)
+			MPC_USER_PROFILES="`echo A$arg | sed -e 's/A--profiles=//g'`"
+			export MPC_USER_PROFILES
 			;;
 	esac
 done
