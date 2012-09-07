@@ -56,11 +56,17 @@ extern "C"
 
 #if defined(SCTK_x86_64_ARCH_SCTK)
 
+/*
+Get a bug on new version of libs (centos6....), need to fix this. It produce segfault at
+make install with --enable-debug. Seams to be impacted by -OX option.
+Need to check this in more depth for futur version ( > 2.4.0-1).
+
 #ifndef DONOTHAVE_CONTEXTS
 #if (defined(Linux_SYS) && (defined(__GLIBC__) && ((__GLIBC__ >= 2) &&  (__GLIBC_MINOR__ >= 12)) ))
 #define SCTK_USE_CONTEXT_FOR_CREATION
 #endif
 #endif
+*/
 
 #undef DONOTHAVE_CONTEXTS
 #define DONOTHAVE_CONTEXTS
