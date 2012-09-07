@@ -1,6 +1,8 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
 /* # This file is part of the MPC Runtime.                                # */
@@ -17,6 +19,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
 
