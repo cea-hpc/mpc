@@ -35,11 +35,10 @@
 .Sh DESCRIPTION
 Their is three important concepts in MPC configuration system :
 .Bl -tag -width Ds
-
 .It Cm Profile
 Each configuration file provide some profiles. A profile has a name and provide a set of values.
 .It Cm Profile mapping
-At loading time, we can define which profiles to apply to generate the final configuration.
+At loading time, we can define which profiles to apply to generate the final configuration (mpcrun --profiles=a,b,c...).
 .It Cm Overriding
 Each profile can override values of a previous loaded one of the onces from a file previously loaded. So in your profile you can redefine only the specific values you want to change, the others keep their values.
 .El
@@ -47,12 +46,73 @@ Each profile can override values of a previous loaded one of the onces from a fi
 Files are loaded in priority order :
 .Bl -enum -offset indent -compact
 .It
-System configuration (${PREFIX}/share/mpc/config.xml or $MPC_SYSTEM_CONFIG)
+System configuration (${PREFIX}/share/mpc/config.xml or $MPC_SYSTEM_CONFIG).
 .It
-User configuration given to mpcrun with option --config
+User configuration given to mpcrun with option --config of $MPC_USER_CONFIG.
 .El
 .Pp
-.Sh OPTIONS OF NODE allocator
+You can find XML schema file for validation in ${PREFIX}/share/mpc/mpc-config.xsd. You can validate with one of the two solutions :
+.Bl -enum -offset indent -compact
+.It
+mpc_print_config --user={YOUR_XML_FILE}
+.It
+xmllint --noout --schema ${PREFIX}/share/mpc/mpc-config.xsd {YOUR_XML_FILE}
+.El
+.Pp
+.Sh GLOBAL LAYOUT
+The XML file may look like this :
+.PP
+.br
+	<mpc>
+.br
+		<profiles>
+.br
+			<profile>
+.br
+				<name>default</name>
+.br
+				<modules>
+.br
+					...
+.br
+				</modules>
+.br
+			</profile>
+.br
+			<profile>
+.br
+				<name>debug</name>
+.br
+				<modules>
+.br
+					...
+.br
+				</modules>
+.br
+			</profile>
+.br
+		</profiles>
+.br
+	</mpc>
+.Pp
+MPC always use the profile with name "default", others are only enabled with option --profiles= or with automatic mappings by using the <mappins> section.
+.Sh AVAILABLE MODULES
+.Pp The <modules> node can contain the following fields :
+.Bl -tag -width Ds
+.It Cm allocator
+Options for MPC memory allocator (TODO not used up to now, need to be integrated).
+.br
+See type allocator.
+.It Cm launcher
+Options for MPC launcher.
+.br
+See type launcher.
+.It Cm profiler
+Options for the internal MPC Profiler
+.br
+See type profiler.
+.El
+.Sh ENTRIES OF TYPE allocator
 Options for MPC memory allocator (TODO not used up to now, need to be integrated).
 .Pp
 It support parameters :
@@ -79,7 +139,7 @@ Type is bool. Default value is false.
 .Pp strict
 Enable failure on free error or try to continue by skipping.
 .El
-.Sh OPTIONS OF NODE launcher
+.Sh ENTRIES OF TYPE launcher
 Options for MPC launcher.
 .Pp
 It support parameters :
@@ -106,7 +166,7 @@ Type is int. Default value is 0.
 .Pp autokill
 Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT
 .El
-.Sh OPTIONS OF NODE net_driver_fake
+.Sh ENTRIES OF TYPE net_driver_fake
 Declare a fake driver to test the configuration system.
 .Pp
 It support parameters :
@@ -132,7 +192,7 @@ It can contain a node of type :
 .It Cm tcp
  of type net_driver_fake. 
 .El
-.Sh OPTIONS OF NODE net_driver_config
+.Sh ENTRIES OF TYPE net_driver_config
 Contain a list of driver configuration reused by rail definitions.
 .Pp
 It support parameters :
@@ -147,7 +207,7 @@ Type is net_driver.
 .Pp driver
 Define the related driver to use and its configuration.
 .El
-.Sh OPTIONS OF NODE net_rail
+.Sh ENTRIES OF TYPE net_rail
 Define a rail which is a name, a device associate to a driver and a routing topology.
 .Pp
 It support parameters :
@@ -170,7 +230,7 @@ Type is string.
 .Pp config
 Define the driver config to use for this rail.
 .El
-.Sh OPTIONS OF NODE networks
+.Sh ENTRIES OF TYPE networks
 Base structure to contain the network configuration
 .Pp
 It support parameters :
@@ -185,7 +245,7 @@ Type is array of net_rail.
 .Pp rails
 List of rails to declare in MPC.
 .El
-.Sh OPTIONS OF NODE profiler
+.Sh ENTRIES OF TYPE profiler
 Options for the internal MPC Profiler
 .Pp
 It support parameters :

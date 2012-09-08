@@ -32,6 +32,7 @@
 	<xsl:template match="all">
 		<xsl:call-template name="gen-mpc-header"/>
 		<xsl:call-template name="gen-mpc-man-base"/>
+		<xsl:call-template name="gen-mpc-man-module"/>
 		<xsl:apply-templates select="config"/>
 	</xsl:template>
 
@@ -41,21 +42,32 @@
 	</xsl:template>
 
 	<!-- ********************************************************* -->
-	<xsl:template name="modules">
-	
-		<!--<xs:complexType name="modules">
-			<xs:all>
-				<xsl:apply-templates select="config/modules/module"/>
-			</xs:all>
-		</xs:complexType>-->
+	<xsl:template name="gen-mpc-man-module">
+		<xsl:text>.Sh AVAILABLE MODULES&#10;</xsl:text>
+		<xsl:text>.Pp The &lt;modules&gt; node can contain the following fields :&#10;</xsl:text>
+		<xsl:text>.Bl -tag -width Ds&#10;</xsl:text>
+		<xsl:apply-templates select="config/modules/module"/>
+		<xsl:text>.El&#10;</xsl:text>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="print-doc-for-user-type">
+		<xsl:param name="type"/>
+		<xsl:for-each select="//struct[@name = $type]">
+			<xsl:value-of select="concat(@doc,'&#10;')"/>
+		</xsl:for-each>
+		<xsl:for-each select="//union[@name = $type]">
+			<xsl:value-of select="concat(@doc,'&#10;')"/>
+		</xsl:for-each>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template match="module">
-		<xs:element minOccurs="0">
-			<xsl:attribute name="name"><xsl:value-of select="@name"/></xsl:attribute>
-			<xsl:attribute name="type"><xsl:call-template name="gen-xs-type-name"/></xsl:attribute>
-		</xs:element>
+		<xsl:value-of select="concat('.It Cm ',@name,'&#10;')"/>
+		<xsl:call-template name="print-doc-for-user-type">
+			<xsl:with-param name="type"><xsl:value-of select='@type'/></xsl:with-param>
+		</xsl:call-template>
+		<xsl:value-of select="concat('.br&#10;See type ',@type,'.&#10;')"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -65,7 +77,7 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template match="struct">
-		<xsl:value-of select="concat('.Sh OPTIONS OF NODE ',@name,'&#10;')"/>
+		<xsl:value-of select="concat('.Sh ENTRIES OF TYPE ',@name,'&#10;')"/>
 		<xsl:value-of select="concat(@doc,'&#10;','.Pp&#10;')"/>
 		<xsl:text>It support parameters :&#10;.Pp&#10;</xsl:text>
 		<xsl:text>.Bl -tag -width Ds&#10;</xsl:text>
@@ -157,11 +169,10 @@
 .Sh DESCRIPTION
 Their is three important concepts in MPC configuration system :
 .Bl -tag -width Ds
-
 .It Cm Profile
 Each configuration file provide some profiles. A profile has a name and provide a set of values.
 .It Cm Profile mapping
-At loading time, we can define which profiles to apply to generate the final configuration.
+At loading time, we can define which profiles to apply to generate the final configuration (mpcrun --profiles=a,b,c...).
 .It Cm Overriding
 Each profile can override values of a previous loaded one of the onces from a file previously loaded. So in your profile you can redefine only the specific values you want to change, the others keep their values.
 .El
@@ -169,11 +180,57 @@ Each profile can override values of a previous loaded one of the onces from a fi
 Files are loaded in priority order :
 .Bl -enum -offset indent -compact
 .It
-System configuration (${PREFIX}/share/mpc/config.xml or $MPC_SYSTEM_CONFIG)
+System configuration (${PREFIX}/share/mpc/config.xml or $MPC_SYSTEM_CONFIG).
 .It
-User configuration given to mpcrun with option --config
+User configuration given to mpcrun with option --config of $MPC_USER_CONFIG.
 .El
 .Pp
+You can find XML schema file for validation in ${PREFIX}/share/mpc/mpc-config.xsd. You can validate with one of the two solutions :
+.Bl -enum -offset indent -compact
+.It
+mpc_print_config --user={YOUR_XML_FILE}
+.It
+xmllint --noout --schema ${PREFIX}/share/mpc/mpc-config.xsd {YOUR_XML_FILE}
+.El
+.Pp
+.Sh GLOBAL LAYOUT
+The XML file may look like this :
+.PP
+.br
+	&lt;mpc&gt;
+.br
+		&lt;profiles&gt;
+.br
+			&lt;profile&gt;
+.br
+				&lt;name&gt;default&lt;/name&gt;
+.br
+				&lt;modules&gt;
+.br
+					...
+.br
+				&lt;/modules&gt;
+.br
+			&lt;/profile&gt;
+.br
+			&lt;profile&gt;
+.br
+				&lt;name&gt;debug&lt;/name&gt;
+.br
+				&lt;modules&gt;
+.br
+					...
+.br
+				&lt;/modules&gt;
+.br
+			&lt;/profile&gt;
+.br
+		&lt;/profiles&gt;
+.br
+	&lt;/mpc&gt;
+.Pp
+MPC always use the profile with name "default", others are only enabled with option --profiles= or with automatic mappings by using the &lt;mappins&gt; section.
 </xsl:text>
 	</xsl:template>
+
 </xsl:stylesheet>
