@@ -494,7 +494,9 @@ const char * sctk_runtime_config_get_env_or_value(const char * env_name,const ch
 /*******************  FUNCTION  *********************/
 /**
  * Validate all XML sources with the given XML schema file.
- * Using help from : http://julp.lescigales.org/c/libxml2/validation.php
+ * This function can be skiped on cluster nodes if launch with mpcrun as we already checked the config
+ * files. It permit to not load the XSD file on every nodes and avoid to spam with error messages.
+ * Some help used for implementation : http://julp.lescigales.org/c/libxml2/validation.php
  * @param config_sources Define the structure containing the list of XML source to validate.
  * @param xml_shema_path Define the path to XML schema file to use for validation.
 **/
