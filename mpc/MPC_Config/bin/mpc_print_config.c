@@ -56,6 +56,8 @@ struct command_options
 	char * user_file;
 	/** Setup manual selection of config profiles (--profiles). **/
 	char * user_profiles;
+	/** Setup manual path to XSD file (--schema). **/
+	char * schema;
 	/** Request the help of the command (--help). **/
 	bool help;
 	/** Disable the loading of config files (--nofile). **/
@@ -80,6 +82,7 @@ Options :\n\
   --user={file}     : Override the user configuration file. Use none to disable.\n\
   --nofile          : Only use the internal default values.\n\
   --profiles={list} : Manualy enable some profiles (comma separated).\n\
+  --schema={file}   : Override the default path to XML schema for validation.\n\
 \n\
 You can olso influence the loaded files with environnement variables :\n\
   - MPC_SYSTEM_CONFIG   : System configuration file (" SCTK_INSTALL_PREFIX "/share/mpc/config.xml)\n\
@@ -137,6 +140,7 @@ void init_default_options(struct command_options * options)
 	options->system_file   = NULL;
 	options->user_file     = NULL;
 	options->user_profiles = NULL;
+	options->schema        = NULL;
 	options->nofile        = false;
 }
 
@@ -182,6 +186,8 @@ bool parse_args(struct command_options * options,int argc, char ** argv)
 				options->user_file = strdup(argv[i]+7);
 			} else if (strncmp(argv[i],"--profiles=",11) == 0) {
 				options->user_profiles = strdup(argv[i]+11);
+			} else if (strncmp(argv[i],"--schema=",9) == 0) {
+				options->schema = strdup(argv[i]+9);
 			} else {
 				fprintf(stderr,"Error : invalid argument %s\n",argv[i]);
 				return false;
@@ -203,6 +209,10 @@ void cleanup_options(struct command_options * options)
 		free(options->system_file);
 	if (options->user_file != NULL)
 		free(options->user_file);
+	if (options->schema != NULL)
+		free(options->schema);
+	if (options->user_profiles != NULL)
+		free(options->user_profiles);
 }
 
 /*******************  FUNCTION  *********************/
@@ -220,6 +230,8 @@ int load_and_print_mpc_config(const struct command_options * options)
 		setenv("MPC_DISABLE_CONFIG","1",1);
 	if (options->user_profiles)
 		setenv("MPC_USER_PROFILES",options->user_profiles,1);
+	if (options->schema)
+		setenv("MPC_CONFIG_SCHEMA",options->schema,1);
 
 	//load the config
 	const struct sctk_runtime_config * config = sctk_runtime_config_get();

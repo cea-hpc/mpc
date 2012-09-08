@@ -566,6 +566,7 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 	bool status;
 	const char * config_silent;
 	const char * config_system;
+	const char * config_schema;
 	const char * config_user;
 	const char * tmp;
 	static const char * def_sys_path = SCTK_INSTALL_PREFIX "/share/mpc/config.xml";
@@ -580,8 +581,10 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 
 	//try to load from env
 	config_silent = sctk_runtime_config_get_env_or_value("MPC_CONFIG_SILENT","0");
+	config_schema = sctk_runtime_config_get_env_or_value("MPC_CONFIG_SCHEMA",def_schema_path);
 	config_system = sctk_runtime_config_get_env_or_value("MPC_SYSTEM_CONFIG",def_sys_path);
 	config_user   = sctk_runtime_config_get_env_or_value("MPC_USER_CONFIG",sctk_runtime_config_default_user_file_path);
+	
 
 	//If system file is default and if it didn't exist, fall back onto the .example one.
 	//This is a trick, but it permit to not create system config.xml at install, so avoid
@@ -606,7 +609,7 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 	//If launch without mpcrun, it's sequential so need to run it which is ok by default.
 	if (strcmp(config_silent,"1") != 0)
 	{
-		status = sctk_runtime_config_sources_validate(config_sources,def_schema_path);
+		status = sctk_runtime_config_sources_validate(config_sources,config_schema);
 		assume_m(status,"Fail to validate the given configurations files, please check previous error lines for more details.");
 	}
 
