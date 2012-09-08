@@ -222,7 +222,7 @@ done
 
 # Load config files options
 CONFIG_FILES_VALID=false
-config_files_vars="$(${MPC_BIN_DIR}/mpc_print_config --launcher)"
+config_files_vars="`${MPC_BIN_DIR}/mpc_print_config --launcher`"
 if [ $? -eq 0 ]; then eval "${config_files_vars}"; fi
 if [ "${CONFIG_FILES_VALID}" = "true" ]; then
 	# Default value related to --enable-smt
@@ -233,7 +233,8 @@ else
 	mpcrun_error "Error while loading MPC configuration files."
 fi
 
-# Make config loading silent in case of error in all MPC processes
+# Make config loading silent in case of error in all MPC processes and avoid to revalidate XML files
+# with mpc-config.xsd as it's already done. By this way it avoid to open mpc-config.xsd on each nodes.
 export MPC_CONFIG_SILENT=1
 
 # Parse command options

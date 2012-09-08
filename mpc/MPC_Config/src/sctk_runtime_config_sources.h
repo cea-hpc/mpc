@@ -120,6 +120,7 @@ struct sctk_runtime_config_sources
 //functions to manage the sctk_runtime_config_sources structure
 void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * config_sources);
 void sctk_runtime_config_sources_close(struct sctk_runtime_config_sources * config_sources);
+bool sctk_runtime_config_sources_validate(struct sctk_runtime_config_sources * config_sources,const char * xml_shema_path);
 
 /*******************  FUNCTION  *********************/
 //function to manage open operations of a specific xml file.

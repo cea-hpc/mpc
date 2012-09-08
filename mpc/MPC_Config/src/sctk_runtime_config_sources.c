@@ -27,6 +27,7 @@
 #include <sys/stat.h>
 #include <errno.h>
 #include <sctk_config.h>
+#include <libxml/xmlschemas.h>
 #include "sctk_debug.h"
 #include "sctk_runtime_config_selectors.h"
 #include "sctk_libxml_helper.h"
@@ -69,7 +70,7 @@ static int sctk_runtime_config_sources_profile_name_is_unique( struct sctk_runti
 void sctk_runtim_config_sources_select_profile_name(struct sctk_runtime_config_sources * config_sources,xmlChar * profile_name)
 {
 	//errors
-	assert(name != NULL);
+	assert(profile_name != NULL);
 
 	//Check if the profile name is unique and store its name if true
 	if( sctk_runtime_config_sources_profile_name_is_unique( config_sources, profile_name ) )
@@ -492,6 +493,66 @@ const char * sctk_runtime_config_get_env_or_value(const char * env_name,const ch
 
 /*******************  FUNCTION  *********************/
 /**
+ * Validate all XML sources with the given XML schema file.
+ * Using help from : http://julp.lescigales.org/c/libxml2/validation.php
+ * @param config_sources Define the structure containing the list of XML source to validate.
+ * @param xml_shema_path Define the path to XML schema file to use for validation.
+**/
+bool sctk_runtime_config_sources_validate(struct sctk_runtime_config_sources * config_sources,const char * xml_shema_path)
+{
+	//vars
+	int i;
+	bool status = true;
+	bool has_one = false;
+	xmlSchemaPtr schema;
+    xmlSchemaValidCtxtPtr vctxt;
+    xmlSchemaParserCtxtPtr pctxt;
+
+	//errors
+	assert(config_sources != NULL);
+	assert(xml_shema_path != NULL);
+
+	//check if has one file at least
+	for ( i = 0 ; i < SCTK_RUNTIME_CONFIG_LEVEL_COUNT ; i++)
+		has_one |= sctk_runtime_config_source_xml_is_open(&config_sources->sources[i]);
+
+	//if not can skip
+	if ( ! has_one )
+		return true;
+
+	//Open XML schema file
+	pctxt = xmlSchemaNewParserCtxt(xml_shema_path);
+	assume_m(pctxt != NULL,"Fail to open XML schema file to validate config : %s.",xml_shema_path);
+
+    //Parse the schema
+    schema = xmlSchemaParse(pctxt);
+    xmlSchemaFreeParserCtxt(pctxt);
+	assume_m(schema != NULL,"Fail to parse the XML schema file to validate config : %s.",xml_shema_path);
+
+	//Create validation context
+	if ((vctxt = xmlSchemaNewValidCtxt(schema)) == NULL)
+	{
+		xmlSchemaFree(schema);
+		sctk_fatal("Fail to create validation context from XML schema file : %s.",xml_shema_path);
+	}
+
+    //Create validation output system
+	xmlSchemaSetValidErrors(vctxt, (xmlSchemaValidityErrorFunc) fprintf, (xmlSchemaValidityWarningFunc) fprintf, stderr);
+
+	// Validation
+	for ( i = 0 ; i < SCTK_RUNTIME_CONFIG_LEVEL_COUNT ; i++)
+		if (sctk_runtime_config_source_xml_is_open(&config_sources->sources[i]))
+			status &= (xmlSchemaValidateDoc(vctxt, config_sources->sources[i].document) == 0);
+
+	//Free the schema
+	xmlSchemaFree(schema);
+	xmlSchemaFreeValidCtxt(vctxt);
+
+	return status;
+}
+
+/*******************  FUNCTION  *********************/
+/**
  * Function used to open and prepare all config sources. It will also select all wanted profiles. After
  * this call, all sources are ready to be mapped to C struct.
  * The function will obort on failure.
@@ -500,11 +561,14 @@ const char * sctk_runtime_config_get_env_or_value(const char * env_name,const ch
 void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * config_sources)
 {
 	//vars
+	bool status;
+	const char * config_silent;
 	const char * config_system;
 	const char * config_user;
 	const char * tmp;
 	static const char * def_sys_path = SCTK_INSTALL_PREFIX "/share/mpc/config.xml";
 	static const char * def_sys_path_fallback = SCTK_INSTALL_PREFIX "/share/mpc/config.xml.example";
+	static const char * def_schema_path = SCTK_INSTALL_PREFIX "/share/mpc/mpc-config.xsd";
 
 	//errors
 	assert(config_sources != NULL);
@@ -513,6 +577,7 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 	memset(config_sources,0,sizeof(*config_sources));
 
 	//try to load from env
+	config_silent = sctk_runtime_config_get_env_or_value("MPC_CONFIG_SILENT","0");
 	config_system = sctk_runtime_config_get_env_or_value("MPC_SYSTEM_CONFIG",def_sys_path);
 	config_user   = sctk_runtime_config_get_env_or_value("MPC_USER_CONFIG",sctk_runtime_config_default_user_file_path);
 
@@ -531,6 +596,17 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 	if (config_user != NULL )
 		if( config_user[0] != '\0')
 			sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_RUNTIME_CONFIG_USER_LEVEL],config_user,SCTK_RUNTIME_CONFIG_OPEN_ERROR);
+
+	//validate XML format with schema
+	//but skip it if alread done by in mpcrun, it avoid to open the .xsd file on each node for nothing
+	//and avoid to spam the error stream with multiple instance of error messages.
+	//To disable mpcrun need to define CONFIG_SILENT="1" (as for xml loading errors)
+	//If launch without mpcrun, it's sequential so need to run it which is ok by default.
+	if (strcmp(config_silent,"1") != 0)
+	{
+		status = sctk_runtime_config_sources_validate(config_sources,def_schema_path);
+		assume_m(status,"Fail to validate the given configurations files, please check previous error lines for more details.");
+	}
 
 	//find profiles to use and sort them depeding on priority
 	sctk_runtime_config_sources_select_profiles(config_sources);
