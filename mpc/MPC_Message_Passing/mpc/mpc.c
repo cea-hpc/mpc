@@ -829,6 +829,7 @@ static inline int
 __MPC_Barrier (MPC_Comm comm)
 {
   mpc_check_comm (comm, comm);
+
   sctk_barrier ((sctk_communicator_t) comm);
   MPC_ERROR_SUCESS ();
 }
@@ -4904,10 +4905,8 @@ void MPC_Send_signalization_network(int dest_process, int tag, void *buff, size_
 /* Recv a message from a process using the signalization network */
 void MPC_Recv_signalization_network(int src_process, int tag, void *buff, size_t size) {
 #ifdef MPC_Message_Passing
-#ifdef MPC_USE_INFINIBAND
   sctk_route_messages_recv(src_process,sctk_process_rank,user_specific_message_tag,
         tag, buff, size);
-#endif
 #endif
 }
 
