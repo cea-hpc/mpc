@@ -50,6 +50,14 @@ __thread void *sctk_extls = NULL;
 #include <asm/prctl.h> /* ARCH_SET_GS */
 #include <sys/prctl.h> /* arch_prctl */
 
+/*
+Function is not defined in headers, manpage say to declare it manually.
+It may be fixed in future glibc.
+*/
+#ifndef arch_prctl
+int arch_prctl(int code, unsigned long addr);
+#endif
+
 /* need to be saved and restored at context switch */
 __thread void *sctk_tls_module_vp[sctk_extls_max_scope+sctk_hls_max_scope] ;
 /* store a direct pointer to each tls module */
