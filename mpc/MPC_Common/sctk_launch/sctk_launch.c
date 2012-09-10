@@ -237,7 +237,8 @@ sctk_perform_initialisation (void)
   if (sctk_task_nb_val)
   {
 #ifdef MPC_Message_Passing
-    sctk_communicator_init (sctk_task_nb_val);
+    sctk_communicator_world_init (sctk_task_nb_val);
+    sctk_communicator_self_init (sctk_task_nb_val);
 #else
     (void) (0);
 #endif
