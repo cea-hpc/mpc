@@ -48,9 +48,7 @@ static void
 pthread_wait_for_value_and_poll (volatile int *data, int value,
 				 void (*func) (void *), void *arg)
 {
-  volatile int *volatile d;
   int i = 0;
-  d = data;
   while ((*data) != value)
     {
       if (func != NULL)

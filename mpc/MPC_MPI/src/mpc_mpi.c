@@ -2515,8 +2515,6 @@ __INTERNAL__PMPI_Type_indexed (int count,
 
       for (i = 0; i < count; i++)
 	{
-	  unsigned long stride_t;
-	  stride_t = (unsigned long) (indices[i]);
 	  for (j = 0; j < blocklens[i]; j++)
 	    {
 	      for (k = 0; k < count_in; k++)
@@ -2631,8 +2629,6 @@ __INTERNAL__PMPI_Type_hindexed (int count,
 
       for (i = 0; i < count; i++)
 	{
-	  unsigned long stride_t;
-	  stride_t = (unsigned long) indices[i];
 	  for (j = 0; j < blocklens[i]; j++)
 	    {
 	      for (k = 0; k < count_in; k++)
@@ -2729,7 +2725,6 @@ __INTERNAL__PMPI_Type_struct (int count,
 	      unsigned long count_in;
 	      unsigned long extent;
 	      unsigned long local_count_out = 0;
-	      unsigned long prev_count_out = 0;
 	      int j;
 	      unsigned long k;
 	      unsigned long stride_t;
@@ -2745,7 +2740,6 @@ __INTERNAL__PMPI_Type_struct (int count,
 					    (MPI_Aint *) & extent);
 	      sctk_nodebug ("Extend %lu", extent);
 
-	      prev_count_out = count_out;
 	      local_count_out = count_in * blocklens[i];
 	      count_out += local_count_out;
 
@@ -2807,7 +2801,6 @@ __INTERNAL__PMPI_Type_struct (int count,
 	    {
 	      size_t tmp;
 	      unsigned long local_count_out = 0;
-	      unsigned long prev_count_out = 0;
 	      unsigned long stride_t;
 	      mpc_pack_absolute_indexes_t begins_in[1];
 	      mpc_pack_absolute_indexes_t ends_in[1];
@@ -2825,7 +2818,6 @@ __INTERNAL__PMPI_Type_struct (int count,
 	      __INTERNAL__PMPI_Type_extent (old_types[i],
 					    (MPI_Aint *) & extent);
 
-	      prev_count_out = count_out;
 	      local_count_out = count_in * blocklens[i];
 	      count_out += local_count_out;
 
@@ -5973,7 +5965,6 @@ __INTERNAL__PMPI_Graph_neighbors (MPI_Comm comm, int rank, int maxneighbors,
 				  int *neighbors)
 {
   int start;
-  int end;
   int i;
   mpc_mpi_per_communicator_t* tmp;
   mpi_topology_per_comm_t* topo;
@@ -5989,7 +5980,6 @@ __INTERNAL__PMPI_Graph_neighbors (MPI_Comm comm, int rank, int maxneighbors,
       MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
     }
 
-  end = topo->data.graph.index[rank];
   start = 0;
   if (rank)
     {
@@ -6162,7 +6152,6 @@ __INTERNAL__PMPI_Cart_sub (MPI_Comm comm, int *remain_dims,
   int ndims = 0;
   int j;
   mpc_mpi_per_communicator_t* tmp;
-  mpc_mpi_per_communicator_t* tmp_new;
   mpi_topology_per_comm_t* topo;
   mpi_topology_per_comm_t* topo_new;
 
@@ -6225,7 +6214,7 @@ __INTERNAL__PMPI_Cart_sub (MPI_Comm comm, int *remain_dims,
 
   sctk_free (coords_in_new);
 
-  tmp_new = mpc_mpc_get_per_comm_data(*comm_new);
+  mpc_mpc_get_per_comm_data(*comm_new);
   topo_new = &(tmp->topo);
 
   topo_new->type = MPI_CART;
@@ -6285,10 +6274,8 @@ static int
 __INTERNAL__PMPI_Graph_map (MPI_Comm comm, int nnodes, int *index,
 			    int *edges, int *newrank)
 {
-  int res;
-
 TODO("Should be optimized")
-  res = __INTERNAL__PMPI_Comm_rank (comm, newrank);
+  __INTERNAL__PMPI_Comm_rank (comm, newrank);
 
   if (*newrank > nnodes)
     {

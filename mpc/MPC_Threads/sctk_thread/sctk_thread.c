@@ -2389,8 +2389,6 @@ void
 sctk_kthread_wait_for_value_and_poll (int *data, int value,
 				      void (*func) (void *), void *arg)
 {
-  volatile int *volatile d;
-  d = data;
   while ((*data) != value)
     {
       if (func != NULL)

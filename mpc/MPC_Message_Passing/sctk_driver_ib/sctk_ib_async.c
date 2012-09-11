@@ -138,9 +138,6 @@ void* async_thread(void* arg)
       case IBV_EVENT_SRQ_LIMIT_REACHED:
         DESC_EVENT(config, "IBV_EVENT_SRQ_LIMIT_REACHED","SRQ limit was reached", 4, 0);
 
-        int limit;
-        limit = config->ibv_max_srq_ibufs_posted;
-
         sctk_ib_low_mem_broadcast(rail);
 
         /* We use now the low memory mode */

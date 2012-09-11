@@ -106,12 +106,11 @@ kthread_create_start_routine (void *t_arg)
   while(1){
     void *(*start_routine) (void *);
     void *arg;
-    void* res;
 
     start_routine = (void *(*) (void *))slot.start_routine;
     arg = (void*)slot.arg;
 
-    res = start_routine (arg);
+    start_routine (arg);
 
     slot.used = 0;
 

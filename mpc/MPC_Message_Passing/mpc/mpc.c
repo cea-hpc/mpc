@@ -1745,7 +1745,6 @@ int
 sctk_user_main (int argc, char **argv)
 {
   int result;
-  sctk_task_specific_t *task_specific;
 
   sctk_mpc_init_request_null();
 
@@ -1794,7 +1793,7 @@ sctk_user_main (int argc, char **argv)
 
   sctk_nodebug ("Wait for pending messages");
 
-  task_specific = __MPC_get_task_specific ();
+  __MPC_get_task_specific ();
 
   __MPC_delete_thread_specific();
 

@@ -582,7 +582,7 @@ int sctk_get_rank (const sctk_communicator_t communicator,
     return comm_world_rank;
   } else if (communicator == SCTK_COMM_SELF) { /* COMM_SELF communicator */
     return 0;
-  } else not_reachable();
+  } else not_reachable(); return 0;
 }
 
 int sctk_get_comm_world_rank (const sctk_communicator_t communicator,
