@@ -909,12 +909,27 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
 
     msg->sctk_msg_get_glob_destination = -1;
   } else {
-    if(source != MPC_ANY_SOURCE)
-      msg->sctk_msg_get_glob_source = sctk_get_comm_world_rank (communicator,source);
+    if(source != MPC_ANY_SOURCE) {
+      /* If the communicator used is the COMM_SELF */
+      if (communicator == SCTK_COMM_SELF) {
+        /* The world destination is actually ourself :) */
+        int world_src = sctk_get_task_rank ();
+        msg->sctk_msg_get_glob_source = sctk_get_comm_world_rank (communicator, world_src);
+      } else {
+        msg->sctk_msg_get_glob_source = sctk_get_comm_world_rank (communicator, source);
+      }
+    }
     else
       msg->sctk_msg_get_glob_source = -1;
 
-    msg->sctk_msg_get_glob_destination = sctk_get_comm_world_rank (communicator,destination);
+    /* If the communicator used is the COMM_SELF */
+    if (communicator == SCTK_COMM_SELF) {
+      /* The world destination is actually ourself :) */
+      int world_dest = sctk_get_task_rank ();
+      msg->sctk_msg_get_glob_destination = sctk_get_comm_world_rank (communicator, world_dest);
+    } else {
+      msg->sctk_msg_get_glob_destination = sctk_get_comm_world_rank (communicator, destination);
+    }
   }
 
   msg->body.header.communicator = communicator;

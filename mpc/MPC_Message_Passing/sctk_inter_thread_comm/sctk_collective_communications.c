@@ -67,9 +67,10 @@ sctk_terminaison_barrier (const int id)
 void sctk_barrier(const sctk_communicator_t communicator){
   sctk_internal_collectives_struct_t * tmp;
 
-  tmp = sctk_get_internal_collectives(communicator);
-
-  tmp->barrier_func(communicator,tmp);
+  if (communicator != SCTK_COMM_SELF) {
+    tmp = sctk_get_internal_collectives(communicator);
+    tmp->barrier_func(communicator,tmp);
+  }
 }
 
 /************************************************************************/
@@ -80,9 +81,10 @@ void sctk_broadcast (void *buffer, const size_t size,
 {
   sctk_internal_collectives_struct_t * tmp;
 
-  tmp = sctk_get_internal_collectives(communicator);
-
-  tmp->broadcast_func(buffer,size,root,communicator,tmp);
+  if (communicator != SCTK_COMM_SELF) {
+    tmp = sctk_get_internal_collectives(communicator);
+    tmp->broadcast_func(buffer,size,root,communicator,tmp);
+  }
 }
 
 /************************************************************************/
@@ -97,10 +99,14 @@ void sctk_all_reduce (const void *buffer_in, void *buffer_out,
 {
   sctk_internal_collectives_struct_t * tmp;
 
-  tmp = sctk_get_internal_collectives(communicator);
-
-  tmp->allreduce_func(buffer_in,buffer_out,elem_size,
+  if (communicator != SCTK_COMM_SELF) {
+    tmp = sctk_get_internal_collectives(communicator);
+    tmp->allreduce_func(buffer_in,buffer_out,elem_size,
 		      elem_number,func,communicator,data_type,tmp);
+  } else {
+    const size_t size = elem_size * elem_number;
+    memcpy(buffer_out,buffer_in,size);
+  }
 }
 
 /************************************************************************/

@@ -568,14 +568,16 @@ inline
 int sctk_get_rank (const sctk_communicator_t communicator,
 		   const int comm_world_rank){
   sctk_internal_communicator_t * tmp;
+  int ret;
 
   tmp = sctk_get_internal_communicator(communicator);
   if(tmp->global_to_local != NULL){
     sctk_communicator_intern_read_lock(tmp);
     sctk_nodebug("comm %d rank %d local %d",communicator,comm_world_rank,
 	       tmp->global_to_local[comm_world_rank]);
-    return tmp->global_to_local[comm_world_rank];
+    ret = tmp->global_to_local[comm_world_rank];
     sctk_communicator_intern_read_unlock(tmp);
+    return ret;
   } else if (communicator == SCTK_COMM_WORLD) { /* COMM_WORLD communicator */
     return comm_world_rank;
   } else if (communicator == SCTK_COMM_SELF) { /* COMM_SELF communicator */
@@ -586,15 +588,26 @@ int sctk_get_rank (const sctk_communicator_t communicator,
 int sctk_get_comm_world_rank (const sctk_communicator_t communicator,
 			      const int rank){
   sctk_internal_communicator_t * tmp;
+  int ret;
 
+  if (communicator == SCTK_COMM_WORLD) { /* COMM_WORLD communicator */
+    return rank;
+  } else if (communicator == SCTK_COMM_SELF) { /* COMM_WORLD communicator */
+    return rank;
+  }
+
+  /* Other communicators */
   tmp = sctk_get_internal_communicator(communicator);
   if(tmp->local_to_global != NULL){
     sctk_communicator_intern_read_lock(tmp);
-    return tmp->local_to_global[rank];
+    ret= tmp->local_to_global[rank];
     sctk_communicator_intern_read_unlock(tmp);
-  } else {
-    return rank;
+    return ret;
   }
+
+  /* The communicator has not been found */
+  not_reachable();
+  return -1;
 }
 
 void sctk_get_rank_size_total (const sctk_communicator_t communicator,
