@@ -1708,8 +1708,7 @@ void  MPC_Task_hook(int rank)
 }
 #endif
 
-
-#define mpc_init(name,t) mpc_common_types[name] = sizeof(t)
+#define mpc_init(name,t) mpc_common_types[name] = sizeof(t) ; sctk_assert(name >=0 ); sctk_assert(name < sctk_user_data_types)
 
 void
 __MPC_init_types ()
@@ -1728,6 +1727,15 @@ __MPC_init_types ()
   mpc_init (MPC_UNSIGNED_LONG, unsigned long);
   mpc_init (MPC_LONG_DOUBLE, long double);
   mpc_init (MPC_LONG_LONG_INT, long long);
+#ifndef NOHAVE_ASSERT_H
+  mpc_init (MPC_INTEGER1, int8_t);
+  mpc_init (MPC_INTEGER2, int16_t);
+  mpc_init (MPC_INTEGER4, int32_t);
+  mpc_init (MPC_INTEGER8, int64_t);
+#endif
+  mpc_init (MPC_REAL4, float);
+  mpc_init (MPC_REAL8, double);
+  mpc_init (MPC_REAL16, long double);
   mpc_common_types[MPC_PACKED] = 0;
   mpc_init (MPC_FLOAT_INT, mpc_float_int);
   mpc_init (MPC_LONG_INT, mpc_long_int);
