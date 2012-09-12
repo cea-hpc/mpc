@@ -424,6 +424,7 @@ __MPC_init_task_specific_t (sctk_task_specific_t * tmp)
   __MPC_init_thread_specific();
 
   tmp->init_done = 0;
+  tmp->finalize_done = 0;
 
   tmp->my_ptp_internal = sctk_get_internal_ptp(tmp->task_id);
 
@@ -1232,8 +1233,13 @@ PMPC_Init (int *argc, char ***argv)
     }
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Init");
 #endif
-  PMPC_Barrier (MPC_COMM_WORLD);
   task_specific = __MPC_get_task_specific ();
+  /* If the task calls MPI_Init() a second time */
+  if (task_specific->finalize_done == 1) {
+    return MPC_ERR_OTHER;
+  }
+
+  PMPC_Barrier (MPC_COMM_WORLD);
   task_specific->init_done = 1;
   SCTK_PROFIL_END (MPC_Init);
   MPC_ERROR_SUCESS ();
@@ -1242,8 +1248,12 @@ PMPC_Init (int *argc, char ***argv)
 int
 PMPC_Init_thread (int *argc, char ***argv, int required, int *provided)
 {
-  *provided = required;
-  return PMPC_Init (argc, argv);
+  const int res = PMPC_Init (argc, argv);
+  if (res == MPC_SUCCESS) {
+    *provided = required;
+  }
+
+  return res;
 }
 
 int
@@ -1269,14 +1279,7 @@ PMPC_Finalize (void)
 
   task_specific = __MPC_get_task_specific ();
   task_specific->init_done = 0;
-  /*   __MPC_delete_task_specific (); */
-#ifdef MPC_Message_Passing
-#if MPC_USE_INFINIBAND
-//int rank;
-//__MPC_Comm_rank (MPC_COMM_WORLD, &rank, task_specific);
-//sctk_network_finalize_task_multirail_ib (rank);
-#endif
-#endif
+  task_specific->finalize_done = 1;
 
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Finalize");

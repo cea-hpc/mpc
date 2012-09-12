@@ -6599,8 +6599,14 @@ __INTERNAL__PMPI_Abort (MPI_Comm comm, int val)
   PMPI FUNCTIONS
 */
 
-#define SCTK__MPI_Check_retrun_val(res,comm)do{if(res == MPI_SUCCESS){return res;} else {MPI_ERROR_REPORT(comm,res,"Generic error retrun");}}while(0)
-/* #define SCTK__MPI_Check_retrun_val(res) return res */
+/*
+ * TODO: RULE FROM THE MPI STANDARD
+ * In order to fully support the MPI standard, we cannot fail if the returned value of
+ * an MPI function is different than MPI_SUCCESS.
+ * We could add an additional MPC mode in order to fail in the case of a wrong returned value.
+ */
+/* #define SCTK__MPI_Check_retrun_val(res,comm)do{if(res == MPI_SUCCESS){return res;} else {MPI_ERROR_REPORT(comm,res,"Generic error retrun");}}while(0) */
+#define SCTK__MPI_Check_retrun_val(res, comm) return res
 
 static inline void
 SCTK__MPI_INIT_STATUS (MPI_Status * status)
