@@ -30,6 +30,7 @@
 #include <string.h>
 #include <sctk_asm.h>
 #include <sctk_checksum.h>
+#include <mpc_common.h>
 
 /* #define SCTK_DISABLE_REENTRANCE */
 
@@ -339,6 +340,10 @@ void sctk_complete_and_free_message (sctk_thread_ptp_message_t * msg){
   void (*free_memory)(void*);
 
   free_memory = msg->tail.free_memory;
+  if (msg->tail.buffer_async) {
+    mpc_buffered_msg_t* buffer_async = msg->tail.buffer_async;
+    buffer_async->completion_flag = SCTK_MESSAGE_DONE;
+  }
 
   if(msg->body.completion_flag)
     *(msg->body.completion_flag) = SCTK_MESSAGE_DONE;
@@ -820,6 +825,7 @@ void sctk_init_header (sctk_thread_ptp_message_t *tmp, const int myself,
   memset(tmp,0,sizeof(sctk_thread_ptp_message_t));
 
   tmp->tail.message_type = msg_type;
+  tmp->tail.buffer_async = NULL;
 
   sctk_reinit_header(tmp,free_memory,message_copy);
   if(tmp->tail.message_type == sctk_message_pack){

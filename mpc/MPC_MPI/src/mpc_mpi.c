@@ -276,6 +276,9 @@ static int __INTERNAL__PMPI_Init (int *, char ***);
 static int __INTERNAL__PMPI_Finalize (void);
 static int __INTERNAL__PMPI_Initialized (int *);
 static int __INTERNAL__PMPI_Abort (MPI_Comm, int);
+static int __INTERNAL__PMPI_Isend_test_req (void *buf, int count,
+    MPI_Datatype datatype, int dest, int tag, MPI_Comm comm,
+				 MPI_Request * request, int is_valid_request);
 
   /* MPI-2 functions */
 static int __INTERNAL__PMPI_Comm_get_name (MPI_Comm, char *, int *);
@@ -658,7 +661,6 @@ __sctk_new_mpc_request_internal (MPI_Request * req)
 	{
 	  MPI_internal_request_t *tmp;
 	  sctk_nodebug ("%lu", i);
-/* 	  tmp = sctk_malloc(sizeof (MPI_internal_request_t)); */
 	  tmp =
 	    sctk_buffered_malloc (&(requests->buf),
 				  sizeof (MPI_internal_request_t));
@@ -992,11 +994,8 @@ static int
 __INTERNAL__PMPI_Bsend (void *buf, int count, MPI_Datatype datatype, int dest,
 			int tag, MPI_Comm comm)
 {
-  int res;
   MPI_Request request;
-  res =
-    __INTERNAL__PMPI_Ibsend (buf, count, datatype, dest, tag, comm, &request);
-  return res;
+  return __INTERNAL__PMPI_Ibsend (buf, count, datatype, dest, tag, comm, &request);
 }
 static int
 __INTERNAL__PMPI_Ssend (void *buf, int count, MPI_Datatype datatype, int dest,
@@ -1199,11 +1198,6 @@ __INTERNAL__PMPI_Buffer_detach (void *bufferptr, int *size)
 }
 
 static int
-__INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
-				 int dest, int tag, MPI_Comm comm,
-				 MPI_Request * request, int is_valid_request);
-
-static int
 __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
 				  int dest, int tag, MPI_Comm comm,
 				  MPI_Request * request, int is_valid_request)
@@ -1218,16 +1212,16 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
 
   res = __INTERNAL__PMPI_Pack_size (count, datatype, comm, &size);
   if (res != MPI_SUCCESS)
-    {
-      return res;
-    }
+  {
+    return res;
+  }
 
   if (size % sizeof (mpi_buffer_overhead_t))
-    {
-      size +=
-	sizeof (mpi_buffer_overhead_t) -
-	(size % sizeof (mpi_buffer_overhead_t));
-    }
+  {
+    size +=
+      sizeof (mpi_buffer_overhead_t) -
+      (size % sizeof (mpi_buffer_overhead_t));
+  }
   assume (size % sizeof (mpi_buffer_overhead_t) == 0);
 
   sctk_nodebug ("MSG size %d", size);
@@ -1236,68 +1230,68 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
   sctk_spinlock_lock (&(tmp->lock));
 
   if (tmp->buffer == NULL)
-    {
-      sctk_spinlock_unlock (&(tmp->lock));
-      MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "No buffer available");
-    }
+  {
+    sctk_spinlock_unlock (&(tmp->lock));
+    MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "No buffer available");
+  }
 
   found = SCTK__MPI_Compact_buffer (size, tmp);
 
   if (found)
+  {
+    int position = 0;
+    head = found;
+    head_buf = (char *) head + sizeof (mpi_buffer_overhead_t);
+
+    assume (head->request == MPI_REQUEST_NULL);
+
+    if (head->size >= size + (int)sizeof (mpi_buffer_overhead_t))
     {
-      int position = 0;
-      head = found;
-      head_buf = (char *) head + sizeof (mpi_buffer_overhead_t);
-
-      assume (head->request == MPI_REQUEST_NULL);
-
-      if (head->size >= size + (int)sizeof (mpi_buffer_overhead_t))
-	{
-	  int old_size;
-	  old_size = head->size;
-	  head->size = size;
-	  head_next = SCTK__buffer_next_header (head, tmp);
-	  head_next->size = old_size - size - sizeof (mpi_buffer_overhead_t);
-	  head_next->request = MPI_REQUEST_NULL;
-	  sctk_nodebug ("SPLIT Create new buffer of size %d old %d",
-			head_next->size, old_size);
-	}
-
-      sctk_nodebug ("CHUNK %p<%p-%p<%p", tmp->buffer, head,
-		    SCTK__buffer_next_header (head, tmp),
-		    (void *) ((unsigned long) tmp->buffer + tmp->size));
-
-      res =
-	__INTERNAL__PMPI_Pack (buf, count, datatype, head_buf, head->size,
-			       &position, comm);
-      if (res != MPI_SUCCESS)
-	{
-	  sctk_spinlock_unlock (&(tmp->lock));
-	  return res;
-	}
-      assume (position <= size);
-
-      res =
-	__INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest,
-					 tag, comm, &(head->request), 0);
-      if (res != MPI_SUCCESS)
-	{
-	  sctk_spinlock_unlock (&(tmp->lock));
-	  return res;
-	}
-
-
-      if (is_valid_request)
-	{
-	  __sctk_delete_mpc_request (request);
-	}
-
+      int old_size;
+      old_size = head->size;
+      head->size = size;
+      head_next = SCTK__buffer_next_header (head, tmp);
+      head_next->size = old_size - size - sizeof (mpi_buffer_overhead_t);
+      head_next->request = MPI_REQUEST_NULL;
+      sctk_nodebug ("SPLIT Create new buffer of size %d old %d",
+          head_next->size, old_size);
     }
-  else
+
+    sctk_nodebug ("CHUNK %p<%p-%p<%p", tmp->buffer, head,
+        SCTK__buffer_next_header (head, tmp),
+        (void *) ((unsigned long) tmp->buffer + tmp->size));
+
+    res =
+      __INTERNAL__PMPI_Pack (buf, count, datatype, head_buf, head->size,
+          &position, comm);
+    if (res != MPI_SUCCESS)
     {
       sctk_spinlock_unlock (&(tmp->lock));
-      MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "No space left in buffer");
+      return res;
     }
+    assume (position <= size);
+
+    res =
+      __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest,
+          tag, comm, &(head->request), 0);
+    if (res != MPI_SUCCESS)
+    {
+      sctk_spinlock_unlock (&(tmp->lock));
+      return res;
+    }
+
+    if (is_valid_request)
+    {
+      __sctk_delete_mpc_request (request);
+    }
+    *request = MPI_REQUEST_NULL;
+
+  }
+  else
+  {
+    sctk_spinlock_unlock (&(tmp->lock));
+    MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "No space left in buffer");
+  }
 
   sctk_spinlock_unlock (&(tmp->lock));
   return MPI_SUCCESS;
@@ -1318,106 +1312,106 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
 				 MPI_Request * request, int is_valid_request)
 {
   if (sctk_is_derived_type (datatype))
+  {
+    int res;
+
+    if (count > 1)
     {
-      int res;
-
-      if (count > 1)
-	{
-	  MPI_Datatype new_datatype;
-	  res =
-	    __INTERNAL__PMPI_Type_contiguous (count, datatype, &new_datatype);
-	  if (res != MPI_SUCCESS)
-	    {
-	      return res;
-	    }
-	  res = __INTERNAL__PMPI_Type_commit (&new_datatype);
-	  if (res != MPI_SUCCESS)
-	    {
-	      return res;
-	    }
-	  res =
-	    __INTERNAL__PMPI_Isend_test_req (buf, 1, new_datatype, dest, tag,
-					     comm, request, is_valid_request);
-	  if (res != MPI_SUCCESS)
-	    {
-	      return res;
-	    }
-	  res = __INTERNAL__PMPI_Type_free (&new_datatype);
-	  return res;
-	}
-      else
-	{
-	  mpc_pack_absolute_indexes_t *begins;
-	  mpc_pack_absolute_indexes_t *ends;
-	  unsigned long slots_count;
-	  mpc_pack_absolute_indexes_t lb;
-	  int is_lb;
-	  mpc_pack_absolute_indexes_t ub;
-	  int is_ub;
-
-	  res =
-	    PMPC_Is_derived_datatype (datatype, &res, &begins, &ends,
-				     &slots_count, &lb, &is_lb, &ub, &is_ub);
-	  if (res != MPI_SUCCESS)
-	    {
-	      return res;
-	    }
-
-
-	  if (is_valid_request)
-	    {
-	      res = PMPC_Open_pack (__sctk_convert_mpc_request (request));
-	    }
-	  else
-	    {
-	      res = PMPC_Open_pack (__sctk_new_mpc_request (request));
-	    }
-	  if (res != MPI_SUCCESS)
-	    {
-	      return res;
-	    }
-
-	  {
-	    mpc_pack_absolute_indexes_t *tmp;
-	    tmp =
-	      sctk_malloc (slots_count * 2 *
-			   sizeof (mpc_pack_absolute_indexes_t));
-	    __sctk_add_in_mpc_request (request, tmp);
-	    memcpy (tmp, begins,
-		    slots_count * sizeof (mpc_pack_absolute_indexes_t));
-	    memcpy (&(tmp[slots_count]), ends,
-		    slots_count * sizeof (mpc_pack_absolute_indexes_t));
-	    begins = tmp;
-	    ends = &(tmp[slots_count]);
-	  }
-
-	  res =
-	    PMPC_Add_pack_absolute (buf, slots_count, begins, ends, MPC_CHAR,
-				   __sctk_convert_mpc_request (request));
-	  if (res != MPI_SUCCESS)
-	    {
-	      return res;
-	    }
-
-	  res =
-	    PMPC_Isend_pack (dest, tag, comm,
-			    __sctk_convert_mpc_request (request));
-	  return res;
-	}
+      MPI_Datatype new_datatype;
+      res =
+        __INTERNAL__PMPI_Type_contiguous (count, datatype, &new_datatype);
+      if (res != MPI_SUCCESS)
+      {
+        return res;
+      }
+      res = __INTERNAL__PMPI_Type_commit (&new_datatype);
+      if (res != MPI_SUCCESS)
+      {
+        return res;
+      }
+      res =
+        __INTERNAL__PMPI_Isend_test_req (buf, 1, new_datatype, dest, tag,
+            comm, request, is_valid_request);
+      if (res != MPI_SUCCESS)
+      {
+        return res;
+      }
+      res = __INTERNAL__PMPI_Type_free (&new_datatype);
+      return res;
     }
-  else
+    else
     {
+      mpc_pack_absolute_indexes_t *begins;
+      mpc_pack_absolute_indexes_t *ends;
+      unsigned long slots_count;
+      mpc_pack_absolute_indexes_t lb;
+      int is_lb;
+      mpc_pack_absolute_indexes_t ub;
+      int is_ub;
+
+      res =
+        PMPC_Is_derived_datatype (datatype, &res, &begins, &ends,
+            &slots_count, &lb, &is_lb, &ub, &is_ub);
+      if (res != MPI_SUCCESS)
+      {
+        return res;
+      }
+
+
       if (is_valid_request)
-	{
-	  return PMPC_Isend (buf, count, datatype, dest, tag, comm,
-			    __sctk_convert_mpc_request (request));
-	}
+      {
+        res = PMPC_Open_pack (__sctk_convert_mpc_request (request));
+      }
       else
-	{
-	  return PMPC_Isend (buf, count, datatype, dest, tag, comm,
-			    __sctk_new_mpc_request (request));
-	}
+      {
+        res = PMPC_Open_pack (__sctk_new_mpc_request (request));
+      }
+      if (res != MPI_SUCCESS)
+      {
+        return res;
+      }
+
+      {
+        mpc_pack_absolute_indexes_t *tmp;
+        tmp =
+          sctk_malloc (slots_count * 2 *
+              sizeof (mpc_pack_absolute_indexes_t));
+        __sctk_add_in_mpc_request (request, tmp);
+        memcpy (tmp, begins,
+            slots_count * sizeof (mpc_pack_absolute_indexes_t));
+        memcpy (&(tmp[slots_count]), ends,
+            slots_count * sizeof (mpc_pack_absolute_indexes_t));
+        begins = tmp;
+        ends = &(tmp[slots_count]);
+      }
+
+      res =
+        PMPC_Add_pack_absolute (buf, slots_count, begins, ends, MPC_CHAR,
+            __sctk_convert_mpc_request (request));
+      if (res != MPI_SUCCESS)
+      {
+        return res;
+      }
+
+      res =
+        PMPC_Isend_pack (dest, tag, comm,
+            __sctk_convert_mpc_request (request));
+      return res;
     }
+  }
+  else
+  {
+    if (is_valid_request)
+    {
+      return PMPC_Isend (buf, count, datatype, dest, tag, comm,
+          __sctk_convert_mpc_request (request));
+    }
+    else
+    {
+      return PMPC_Isend (buf, count, datatype, dest, tag, comm,
+          __sctk_new_mpc_request (request));
+    }
+  }
 }
 static int
 __INTERNAL__PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest,
@@ -5195,17 +5189,6 @@ SCTK__MPI_Attr_clean_communicator (MPI_Comm comm)
   sctk_spinlock_unlock(&(tmp_per_comm->lock));
   sctk_spinlock_unlock(&(tmp->lock));
   return res;
-}
-
-int
-MPI_DUP_FN (MPI_Comm oldcom, int keyval, void *extra_state,
-	    void *attr_val_in, void *attr_val_out, int *flag)
-{
-  void **attr;
-  attr = (void **) attr_val_out;
-  *attr = attr_val_in;
-  *flag = 1;
-  return MPI_SUCCESS;
 }
 
 static int

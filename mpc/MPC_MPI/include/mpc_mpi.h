@@ -362,8 +362,6 @@ extern "C"
      stdargs are supported */
   int MPI_Pcontrol (const int, ...);
 
-  int MPI_DUP_FN (MPI_Comm, int, void *, void *, void *, int *);
-
   /* MPI-2 functions */
   int MPI_Comm_get_name (MPI_Comm, char *, int *);
   int MPI_Comm_set_name (MPI_Comm, char *);

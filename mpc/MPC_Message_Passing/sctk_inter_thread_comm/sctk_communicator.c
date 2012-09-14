@@ -570,19 +570,23 @@ int sctk_get_rank (const sctk_communicator_t communicator,
   sctk_internal_communicator_t * tmp;
   int ret;
 
+  if (communicator == SCTK_COMM_WORLD) { /* COMM_WORLD communicator */
+    return comm_world_rank;
+  } else if (communicator == SCTK_COMM_SELF) { /* COMM_SELF communicator */
+    return 0;
+  }
+
   tmp = sctk_get_internal_communicator(communicator);
   if(tmp->global_to_local != NULL){
     sctk_communicator_intern_read_lock(tmp);
     sctk_nodebug("comm %d rank %d local %d",communicator,comm_world_rank,
-	       tmp->global_to_local[comm_world_rank]);
+        tmp->global_to_local[comm_world_rank]);
     ret = tmp->global_to_local[comm_world_rank];
     sctk_communicator_intern_read_unlock(tmp);
     return ret;
-  } else if (communicator == SCTK_COMM_WORLD) { /* COMM_WORLD communicator */
+  } else {
     return comm_world_rank;
-  } else if (communicator == SCTK_COMM_SELF) { /* COMM_SELF communicator */
-    return 0;
-  } else not_reachable(); return 0;
+  }
 }
 
 int sctk_get_comm_world_rank (const sctk_communicator_t communicator,
@@ -603,11 +607,9 @@ int sctk_get_comm_world_rank (const sctk_communicator_t communicator,
     ret= tmp->local_to_global[rank];
     sctk_communicator_intern_read_unlock(tmp);
     return ret;
+  } else {
+    return rank;
   }
-
-  /* The communicator has not been found */
-  not_reachable();
-  return -1;
 }
 
 void sctk_get_rank_size_total (const sctk_communicator_t communicator,
@@ -692,6 +694,7 @@ sctk_duplicate_communicator (const sctk_communicator_t origin_communicator,
     comm = sctk_communicator_get_new_id(local_root,rank,origin_communicator,new_tmp);
 
     if(local_root){
+      /* Check if the communicator has been well created */
       sctk_get_internal_communicator(comm);
       assume(comm >= 0);
       sctk_nodebug("Init collectives for comm %d",comm);
@@ -807,6 +810,7 @@ sctk_communicator_t sctk_create_communicator (const sctk_communicator_t
     comm = sctk_communicator_get_new_id(local_root,rank,origin_communicator,new_tmp);
 
     if(local_root){
+      /* Check if the communicator has been well created */
       sctk_get_internal_communicator(comm);
       assume(comm >= 0);
       sctk_nodebug("Init collectives for comm %d",comm);

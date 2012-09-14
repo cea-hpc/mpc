@@ -24,9 +24,12 @@
 #define MAX_MPC_BUFFERED_SIZE (128 * sizeof(long))
 #include <uthash.h>
 
-typedef struct
+typedef struct mpc_buffered_msg_s
 {
   sctk_thread_ptp_message_t header;
+  /* Completion flag to use if the user do not provide a valid request */
+  int completion_flag;
+  /* MPC_Request if the message is buffered  */
   MPC_Request request;
   long buf[(MAX_MPC_BUFFERED_SIZE / sizeof (long)) + 1];
 } mpc_buffered_msg_t;

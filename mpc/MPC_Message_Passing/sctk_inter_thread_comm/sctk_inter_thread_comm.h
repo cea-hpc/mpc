@@ -38,6 +38,7 @@ extern "C"
 
   struct sctk_request_s;
   struct sctk_ib_msg_header_s;
+  struct mpc_buffered_msg_s;
 
 #define SCTK_MESSAGE_PENDING 0
 #define SCTK_MESSAGE_DONE 1
@@ -216,6 +217,11 @@ typedef struct sctk_message_to_copy_s{
 
     /*Reoder buffer struct*/
     sctk_reorder_buffer_t reorder;
+
+    /* If the message has been buffered during the
+     * Send function. If it is, we need to free the async
+     * buffer when completing the message */
+    struct mpc_buffered_msg_s * buffer_async;
 
     /* RDMA infos */
     void* rdma_src;

@@ -2297,45 +2297,42 @@ __MPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
   msg_size = count * d_size;
 
   if ((msg_size > MAX_MPC_BUFFERED_SIZE) || (sctk_is_net_message (dest)) || mpc_disable_buffering)
-    {
-      sctk_add_adress_in_message (msg, buf, msg_size);
-      sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
-				      request, msg_size,pt2pt_specific_message_tag);
-    }
+  {
+    sctk_add_adress_in_message (msg, buf, msg_size);
+    sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
+        request, msg_size,pt2pt_specific_message_tag);
+  }
   else
-    {
-      sctk_thread_specific_t* thread_specific;
-      thread_specific = sctk_message_passing;
-      sctk_spinlock_lock (&(thread_specific->buffer_async.lock));
-      buffer_rank = thread_specific->buffer_async.buffer_async_rank;
-      tmp_buf = &(thread_specific->buffer_async.buffer_async[buffer_rank]);
-      thread_specific->buffer_async.buffer_async_rank =
-	(buffer_rank + 1) % MAX_MPC_BUFFERED_MSG;
-TODO("To optimize")
+  {
+    sctk_thread_specific_t* thread_specific;
+    thread_specific = sctk_message_passing;
+    sctk_spinlock_lock (&(thread_specific->buffer_async.lock));
+    buffer_rank = thread_specific->buffer_async.buffer_async_rank;
+    tmp_buf = &(thread_specific->buffer_async.buffer_async[buffer_rank]);
+    thread_specific->buffer_async.buffer_async_rank =
+      (buffer_rank + 1) % MAX_MPC_BUFFERED_MSG;
 
-      if (sctk_mpc_completion_flag(&(tmp_buf->request)) == SCTK_MESSAGE_DONE)
-	{
-	  sctk_add_adress_in_message (msg, tmp_buf->buf, msg_size);
-	  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
-					  &(tmp_buf->request), msg_size,pt2pt_specific_message_tag);
+      if (tmp_buf->completion_flag == SCTK_MESSAGE_DONE)
+      {
+        /* We set the buffer as busy */
+        tmp_buf->completion_flag = SCTK_MESSAGE_PENDING;
+        sctk_add_adress_in_message (msg, tmp_buf->buf, msg_size);
+        sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
+            request, msg_size,pt2pt_specific_message_tag);
 
-	  sctk_spinlock_unlock (&(thread_specific->buffer_async.lock));
+        sctk_spinlock_unlock (&(thread_specific->buffer_async.lock));
 
-	  memcpy (tmp_buf->buf, buf, msg_size);
-	  if (request != NULL)
-	    {
-	      memcpy(request,&(tmp_buf->request),sizeof(sctk_request_t));
-	      request->completion_flag = SCTK_MESSAGE_DONE;
-	    }
-	}
+        msg->tail.buffer_async = tmp_buf;
+        memcpy (tmp_buf->buf, buf, msg_size);
+      }
       else
-	{
-	  sctk_spinlock_unlock (&(thread_specific->buffer_async.lock));
-	  sctk_add_adress_in_message (msg, buf, msg_size);
-	  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
-					  request, msg_size,pt2pt_specific_message_tag);
-	}
-    }
+      {
+        sctk_spinlock_unlock (&(thread_specific->buffer_async.lock));
+        sctk_add_adress_in_message (msg, buf, msg_size);
+        sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
+            request, msg_size,pt2pt_specific_message_tag);
+      }
+  }
 
   sctk_nodebug ("Message from %d to %d", src, dest);
   sctk_nodebug ("isend : snd2, my rank = %d", src);
@@ -2544,7 +2541,6 @@ __MPC_Wait (MPC_Request * request, MPC_Status * status)
 static inline int
 __MPC_Test (MPC_Request * request, int *flag, MPC_Status * status)
 {
-
   mpc_check_comm (sctk_mpc_get_communicator_from_request(request), MPC_COMM_WORLD);
   *flag = 0;
   if ((sctk_mpc_completion_flag(request) == SCTK_MESSAGE_PENDING) && (!sctk_mpc_message_is_null(request)))
@@ -2558,6 +2554,12 @@ __MPC_Test (MPC_Request * request, int *flag, MPC_Status * status)
       *flag = 1;
       sctk_mpc_commit_status_from_request(request,status);
     }
+
+  if(sctk_mpc_message_is_null(request)) {
+    *flag = 1;
+    sctk_mpc_commit_status_from_request(request,status);
+  }
+
   MPC_ERROR_SUCESS ();
 }
 
@@ -2982,24 +2984,24 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
   mpc_check_comm (comm, comm);
   mpc_check_count (count, comm);
   if (count == 0)
-    {
-      buf = &tmp;
-    }
+  {
+    buf = &tmp;
+  }
   mpc_check_buf (buf, comm);
   mpc_check_msg_size (src, dest, tag, comm, size);
 
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (comm,
-		 "MPC_Send ptr=%p count=%lu type=%d dest=%d tag=%d ", buf,
-		 count, datatype, dest, tag);
+      "MPC_Send ptr=%p count=%lu type=%d dest=%d tag=%d ", buf,
+      count, datatype, dest, tag);
 #endif
   sctk_nodebug ("MPC_Send ptr=%p count=%lu type=%d dest=%d tag=%d ", buf,
-		count, datatype, dest, tag);
+      count, datatype, dest, tag);
 
   if (dest == MPC_PROC_NULL)
-    {
-      MPC_ERROR_SUCESS ();
-    }
+  {
+    MPC_ERROR_SUCESS ();
+  }
 
 
   msg_size = count * __MPC_Get_datatype_size (datatype, task_specific);
@@ -3007,58 +3009,61 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
 
 
   if ((msg_size > MAX_MPC_BUFFERED_SIZE) || (sctk_is_net_message (dest)) || mpc_disable_buffering)
-    {
-      msg = &header;
-      sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
-      sctk_mpc_init_request(&request,comm,src);
+  {
+    msg = &header;
+    sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
+    sctk_mpc_init_request(&request,comm,src);
 
-      sctk_add_adress_in_message(msg,buf,msg_size);
-      sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
-				      &request, msg_size,pt2pt_specific_message_tag);
-      sctk_send_message (msg);
-      sctk_nodebug("send request.is_null %d",request.is_null);
-      sctk_mpc_wait_message (&request);
-    }
+    sctk_add_adress_in_message(msg,buf,msg_size);
+    sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
+        &request, msg_size,pt2pt_specific_message_tag);
+    sctk_send_message (msg);
+    sctk_nodebug("send request.is_null %d",request.is_null);
+    sctk_mpc_wait_message (&request);
+  }
   else
-    {
-      sctk_thread_specific_t* thread_specific;
-      thread_specific = sctk_message_passing;
-      sctk_spinlock_lock (&(thread_specific->buffer.lock));
-      buffer_rank = thread_specific->buffer.buffer_rank;
-      tmp_buf = &(thread_specific->buffer.buffer[buffer_rank]);
-      thread_specific->buffer.buffer_rank =
-	(buffer_rank + 1) % MAX_MPC_BUFFERED_MSG;
-TODO("To optimize")
-      if (sctk_mpc_completion_flag(&(tmp_buf->request)) != SCTK_MESSAGE_DONE)
-	{
-	  msg = &header;
-	  sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
-	  sctk_spinlock_unlock (&(thread_specific->buffer.lock));
-	  sctk_mpc_init_request(&request,comm,src);
+  {
+    sctk_thread_specific_t* thread_specific;
+    thread_specific = sctk_message_passing;
+    sctk_spinlock_lock (&(thread_specific->buffer.lock));
+    buffer_rank = thread_specific->buffer.buffer_rank;
+    tmp_buf = &(thread_specific->buffer.buffer[buffer_rank]);
+    thread_specific->buffer.buffer_rank =
+      (buffer_rank + 1) % MAX_MPC_BUFFERED_MSG;
 
-	  sctk_add_adress_in_message(msg,buf,msg_size);
-	  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
-					  &request, msg_size,pt2pt_specific_message_tag);
-	  sctk_send_message (msg);
-	  sctk_nodebug("send request.is_null %d",request.is_null);
-	  sctk_mpc_wait_message (&request);
-	}
+    if ( tmp_buf->completion_flag != SCTK_MESSAGE_DONE)
+      {
+        msg = &header;
+        sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
+        sctk_spinlock_unlock (&(thread_specific->buffer.lock));
+        sctk_mpc_init_request(&request,comm,src);
+
+        sctk_add_adress_in_message(msg,buf,msg_size);
+        sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
+            &request, msg_size,pt2pt_specific_message_tag);
+        sctk_send_message (msg);
+        sctk_nodebug("send request.is_null %d",request.is_null);
+        sctk_mpc_wait_message (&request);
+      }
       else
-	{
-	  msg = &(tmp_buf->header);
-	  sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
-	  sctk_nodebug ("Copied message |%s| -> |%s| %d", buf, tmp_buf->buf,
-			msg_size);
+      {
+        msg = &(tmp_buf->header);
+        /* We set the buffer as busy */
+        tmp_buf->completion_flag = SCTK_MESSAGE_PENDING;
+        sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
+        sctk_nodebug ("Copied message |%s| -> |%s| %d", buf, tmp_buf->buf,
+            msg_size);
 
-	  sctk_add_adress_in_message(msg,tmp_buf->buf,msg_size);
-	  sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
-					  &(tmp_buf->request), msg_size,pt2pt_specific_message_tag);
-	  sctk_spinlock_unlock (&(thread_specific->buffer.lock));
+        sctk_add_adress_in_message(msg,tmp_buf->buf,msg_size);
+        sctk_mpc_set_header_in_message (msg, tag, comm, src, dest,
+            &(tmp_buf->request), msg_size,pt2pt_specific_message_tag);
+        sctk_spinlock_unlock (&(thread_specific->buffer.lock));
 
-	  memcpy (tmp_buf->buf, buf, msg_size);
-	  sctk_send_message (msg);
-	}
-    }
+        msg->tail.buffer_async = tmp_buf;
+        memcpy (tmp_buf->buf, buf, msg_size);
+        sctk_send_message (msg);
+      }
+  }
 
 
 
@@ -4471,6 +4476,9 @@ PMPC_Request_free (MPC_Request * request)
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Request_free req=%p", request);
 #endif
+
+  /* Firstly wait the message before freeing */
+  sctk_mpc_wait_message(request);
   *request = mpc_request_null;
   MPC_ERROR_SUCESS ();
 }
