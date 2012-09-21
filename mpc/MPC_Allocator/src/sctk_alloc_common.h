@@ -104,26 +104,23 @@ extern "C"
 #define SCTK_ALLOC_HEAP_SIZE (128ULL*1024ULL*1024ULL*1024ULL)
 /** Maximum number of regions, need to cover the 256TB available with 48bit addressing. **/
 #define SCTK_ALLOC_MAX_REGIONS 256
-/** Unknown NUMA node **/
-#define SCTK_ALLOC_UNKNWON_NUMA_NODE -1
-/** Enable or disable huge chunk segragation. **/
+/**
+ * Enable or disable huge chunk segragation. Turn off may cause huge memory consumption as
+ * memory may be locked due to presence of non free small block at the end of the macro blocs.
+**/
 #define SCTK_ALLOC_HUGE_CHUNK_SEGREGATION true
 /**
  * Define the smaller size to directly use macro blocs instead of splitting in inner chunks.
  * Usefull only in confunction with SCTK_ALLOC_HUGE_CHUNK_SEGREGATION
+ * May be better to be between SCTK_MACRO_BLOC_SIZE / 2 and SCTK_MACRO_BLOC_SIZE.
 **/
 #define SCTK_HUGE_BLOC_LIMIT (SCTK_MACRO_BLOC_SIZE / 2)
-/** Realloc factor between old an new size to force a new reallocation. **/
-#define SCTK_REALLOC_THRESHOLD 2
 /** Permit to keep the old memory source in chain numa migration. **/
 #define SCTK_ALLOC_KEEP_OLD_MM_SOURCE ((void*)-1)
 /** It disable some assume which may be OK for stable version of allocator and valid applications. **/
 #ifndef SCTK_ALLOC_DEBUG
 #define SCTK_ALLOC_FAST_BUT_LESS_SAFE
 #endif
-/** Permit to enable (true) or disable (false) NUMA migration of allocation chains. **/
-/** @TODO ------------------------------------- RE-SET TO TRUE ---------------------------------------------------------------*/
-#define SCTK_ALLOC_NUMA_MIGRATION false
 
 /************************** MACROS *************************/
 //if have NUMA support
@@ -142,7 +139,7 @@ extern "C"
 //If not in MPC we didn't support internal profiling
 #ifndef MPC_Common
 #define SCTK_PROFIL_START(x) /** No profiling support **/
-#define SCTK_PROFIL_END(x) /** No profiling support **/
+#define SCTK_PROFIL_END(x)   /** No profiling support **/
 #endif
 
 /************************** MACROS *************************/

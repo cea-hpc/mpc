@@ -36,6 +36,7 @@
 #include "sctk_alloc_lock.h"
 #include "sctk_alloc_debug.h"
 #include "sctk_allocator.h"
+#include "sctk_alloc_config.h"
 #include "sctk_alloc_inlined.h"
 #include "sctk_alloc_topology.h"
 #include "sctk_alloc_numa_stat.h"
@@ -1468,6 +1469,7 @@ void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sct
 	void * res = NULL;
 	sctk_size_t old_size;
 	sctk_size_t copy_size;
+	sctk_size_t delta;
 	sctk_alloc_vchunk vchunk;
 
 	//errors
@@ -1499,8 +1501,11 @@ void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sct
 		//get chunk header
 		/** @todo Use a function which compute the inner size instead of hacking with sizeof() . **/
 		old_size = sctk_alloc_get_size(vchunk) - sizeof(struct sctk_alloc_chunk_header_large);
+		delta = old_size - size;
 
-		if (old_size >= size && old_size - size < old_size / SCTK_REALLOC_THRESHOLD) {
+		if (old_size >= size && delta <= sctk_alloc_config()->realloc_threashold
+				&& delta >= SCTK_ALLOC_BASIC_ALIGN
+				&& delta <= old_size / sctk_alloc_config()->realloc_factor) {
 			//simply keep the old segment, nothing to change
 			SCTK_NO_PDEBUG("realloc with same address");
 			res = ptr;
@@ -2391,7 +2396,7 @@ SCTK_STATIC void sctk_alloc_chain_numa_migrate_content(struct sctk_alloc_chain *
 	struct sctk_alloc_region * region = NULL;
 
 	//if migration is disabled
-	if ( ! SCTK_ALLOC_NUMA_MIGRATION )
+	if ( ! sctk_alloc_config()->numa_migration )
 		return;
 
 	//errors
@@ -2575,11 +2580,11 @@ void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_n
 	#ifdef HAVE_HWLOC
 	//remap the struct itself
 	/** @todo Get error on cassard ??? **/
-	if (migrate_chain_struct && SCTK_ALLOC_NUMA_MIGRATION )
+	if (migrate_chain_struct && sctk_alloc_config()->numa_migration )
 		sctk_alloc_migrate_numa_mem(chain,sizeof(struct sctk_alloc_chain),target_numa_node);
 
 	//remap the content
-	if (migrate_chain_struct && SCTK_ALLOC_NUMA_MIGRATION )
+	if (migrate_chain_struct && sctk_alloc_config()->numa_migration )
 		sctk_alloc_chain_numa_migrate_content(chain,target_numa_node);
 	#endif //HAVE_HWLOC
 	

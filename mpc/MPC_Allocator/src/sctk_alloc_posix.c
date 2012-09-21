@@ -234,6 +234,7 @@ SCTK_INTERN void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void)
 	#endif
 
 	//setup malloc on node
+	/** @TODO plug malloc_on_node on std alloc if have no NUMA node. **/
 	sctk_malloc_on_node_init(sctk_get_numa_node_number());
 
 	//mark NUMA init phase as done.

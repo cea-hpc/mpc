@@ -28,10 +28,14 @@
 #define SCTK_RUNTIME_CONFIG_STRUCT_H
 
 /*********************  STRUCT  *********************/
-/**Options for MPC memory allocator (TODO not used up to now, need to be integrated).**/
+/**Options for MPC memory allocator.**/
 struct sctk_runtime_config_struct_allocator
-{	/**Enable of disable NUMA migration of allocator pages on thread migration.**/
+{	/**Enable or disable NUMA migration of allocator pages on thread migration.**/
 	bool numa_migration;
+	/**If the new segment is less than N time smaller than factor, realloc will allocate a new segment, otherwise it will keep the same one. Use 1 to force realloc every time (may be slower but consume less memory).**/
+	int realloc_factor;
+	/**If the new segment is smaller of N bytes than threashold, realloc will allocate a new segment, otherwise it will keep the same one. Use 0 to force realloc every time (may be slower but consume less memory).**/
+	size_t realloc_threashold;
 	/**Permit to enable of disable NUMA support in MPC Allocator.**/
 	bool numa;
 	/**Define the scope the posix allocator, can be : process | thread | vp.**/

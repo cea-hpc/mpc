@@ -32,7 +32,9 @@ void sctk_runtime_config_struct_init_allocator(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_allocator * obj = struct_ptr;
 	//Simple params :
-	obj->numa_migration = true;
+	obj->numa_migration = false;
+	obj->realloc_factor = 2;
+	obj->realloc_threashold = sctk_runtime_config_map_entry_parse_size("50MB");
 	obj->numa = false;
 	obj->scope = "thread";
 	obj->huge_bloc_limte = sctk_runtime_config_map_entry_parse_size("1MB");

@@ -100,7 +100,7 @@ MPC always use the profile with name "default", others are only enabled with opt
 .Pp The <modules> node can contain the following fields :
 .Bl -tag -width Ds
 .It Cm allocator
-Options for MPC memory allocator (TODO not used up to now, need to be integrated).
+Options for MPC memory allocator.
 .br
 See type allocator.
 .It Cm launcher
@@ -113,15 +113,23 @@ Options for the internal MPC Profiler
 See type profiler.
 .El
 .Sh ENTRIES OF TYPE allocator
-Options for MPC memory allocator (TODO not used up to now, need to be integrated).
+Options for MPC memory allocator.
 .Pp
 It support parameters :
 .Pp
 .Bl -tag -width Ds
 .It Cm numa_migration
-Type is bool. Default value is true. 
+Type is bool. Default value is false. 
 .Pp numa_migration
-Enable of disable NUMA migration of allocator pages on thread migration.
+Enable or disable NUMA migration of allocator pages on thread migration.
+.It Cm realloc_factor
+Type is int. Default value is 2. 
+.Pp realloc_factor
+If the new segment is less than N time smaller than factor, realloc will allocate a new segment, otherwise it will keep the same one. Use 1 to force realloc every time (may be slower but consume less memory).
+.It Cm realloc_threashold
+Type is size. Default value is 50MB. 
+.Pp realloc_threashold
+If the new segment is smaller of N bytes than threashold, realloc will allocate a new segment, otherwise it will keep the same one. Use 0 to force realloc every time (may be slower but consume less memory).
 .It Cm numa
 Type is bool. Default value is false. 
 .Pp numa

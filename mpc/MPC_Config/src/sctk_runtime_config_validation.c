@@ -78,6 +78,12 @@ void sctk_runtime_config_validate_allocator(struct sctk_runtime_config * config)
 	//vars
 	const char * scope = config->modules.allocator.scope;
 
+	//check some integer options
+	/** @TODO Maybe add constrain checker in config-meta.xml format (field constrain='...') **/
+	assume_m(config->modules.allocator.realloc_factor >= 1,
+			 "Option modules.allocator.realloc_factor must be greater or equal to 1, get %d.",
+			 config->modules.allocator.realloc_factor);
+
 	//check scope option
 	assume_m(scope != NULL,"Invalid NULL or empty value for allocator.scope.");
 	if (strcmp(scope,"process") != 0 && strcmp(scope,"thread") != 0 && strcmp(scope,"vp") != 0)

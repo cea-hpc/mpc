@@ -28,6 +28,8 @@
   <xs:complexType name="user_type_allocator">
     <xs:all>
       <xs:element minOccurs="0" name="numa_migration" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="realloc_factor" type="xs:integer"/>
+      <xs:element minOccurs="0" name="realloc_threashold" type="xs:string"/>
       <xs:element minOccurs="0" name="numa" type="xs:boolean"/>
       <xs:element minOccurs="0" name="scope" type="xs:string"/>
       <xs:element minOccurs="0" name="huge_bloc_limte" type="xs:string"/>
