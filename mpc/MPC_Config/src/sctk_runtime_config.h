@@ -24,6 +24,7 @@
 #define SCTK_RUNTIME_CONFIG
 
 /********************  HEADERS  *********************/
+#include "sctk_debug.h"
 #include "sctk_runtime_config_struct.h"
 
 /*********************  GLOBAL  *********************/
@@ -51,14 +52,41 @@ static inline bool sctk_runtime_config_init_done(void)
 
 /*******************  FUNCTION  *********************/
 /**
+ * Function to use to get access to the configuration structure of MPC.
+ * CAUTION, you must ensure that sctk_runtime_config_init() have been called before using
+ * this function.
+**/
+static inline const struct sctk_runtime_config * sctk_runtime_config_get(void)
+{
+	//ensure we have called sctk_runtime_config_init
+	assert( __sctk_global_runtime_config_init__ );
+
+	//ok can return directely, so normally compiler will inline it and directly
+	//use the static address
+	return &__sctk_global_runtime_config__;
+}
+
+/*******************  FUNCTION  *********************/
+/**
  * Function to use to get access to the configuration structure of MPC. It ensure that it was initialized
  * when the function return.
 **/
-static inline const struct sctk_runtime_config * sctk_runtime_config_get(void)
+static inline const struct sctk_runtime_config * sctk_runtime_config_get_checked(void)
 {
 	if ( ! __sctk_global_runtime_config_init__ )
 		sctk_runtime_config_init();
 
+	return &__sctk_global_runtime_config__;
+}
+
+/*******************  FUNCTION  *********************/
+/**
+ * Function to use to get access to the configuration structure of MPC. It never check init state.
+ * This function is DANGEROUS but required for allocator due to boostrap issues.
+ * Please AVOID to use it except in unsolvable situations.
+**/
+static inline const struct sctk_runtime_config * sctk_runtime_config_get_nocheck(void)
+{
 	return &__sctk_global_runtime_config__;
 }
 

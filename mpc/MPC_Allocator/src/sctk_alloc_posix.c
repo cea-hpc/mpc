@@ -37,6 +37,7 @@
 #include "sctk_allocator.h"
 #include "sctk_alloc_debug.h"
 #include "sctk_alloc_spy.h"
+#include "sctk_alloc_config.h"
 #include "sctk_alloc_inlined.h"
 #include "sctk_alloc_light_mm_source.h"
 #include "sctk_alloc_posix.h"
@@ -83,12 +84,12 @@ static struct sctk_alloc_mm_source_light * sctk_global_memory_source[SCTK_MAX_NU
 **/
 static struct sctk_alloc_chain sctk_global_egg_chain;
 /** Define the TLS pointer to the current allocation chain. **/
- 
 #ifdef _WIN32
 	static int sctk_current_alloc_chain = -1;
 #else 
 	__thread struct sctk_alloc_chain * sctk_current_alloc_chain = NULL;
 #endif
+
 /************************* FUNCTION ************************/
 #ifdef MPC_check_compatibility
 /** Defined in MPC **/
@@ -326,6 +327,9 @@ SCTK_INTERN void sctk_alloc_posix_base_init(void)
 		//debug
 		SCTK_NO_PDEBUG("Allocator init phase : Egg");
 
+		//setup default values of config
+		sctk_alloc_config_egg_init();
+
 		//tls chain initialization
 		sctk_alloc_tls_chain();
 		//setup egg allocator to bootstrap thread allocation chains.
@@ -357,11 +361,14 @@ SCTK_INTERN void sctk_alloc_posix_base_init(void)
 		//init global memory source
 		sctk_alloc_posix_mmsrc_init();
 
+		//Now can load the user config values as we get egg_allocator to parse the file
+		//like for phase_nunma we delay it in MPC to be done in main function, not before.
+		#ifndef MPC_Common
+		sctk_alloc_config_init();
+		#endif //MPC_Common
+
 		//can bind the memory source in egg allocator
 		sctk_global_egg_chain.source = &sctk_global_memory_source[SCTK_DEFAULT_NUMA_MM_SOURCE_ID]->source;
-
-		//unmark it
-		sctk_set_tls_chain(NULL);
 
 		//marked as init
 		sctk_global_base_init = SCTK_ALLOC_POSIX_INIT_DEFAULT;
@@ -371,6 +378,9 @@ SCTK_INTERN void sctk_alloc_posix_base_init(void)
 		#ifndef MPC_Common
 		sctk_alloc_posix_mmsrc_numa_init_phase_numa();
 		#endif //MPC_Common
+
+		//unmark egg_allocator from currant allocator
+		sctk_set_tls_chain(NULL);
 	}
 
 	//end of critical section
@@ -706,6 +716,7 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 }
 
 /************************* FUNCTION ************************/
+/** @TODO optimize this with mremap for huge segments. **/
 SCTK_STATIC void * sctk_realloc_inter_chain (void * ptr, size_t size)
 {
 	sctk_size_t copy_size = size;

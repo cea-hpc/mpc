@@ -234,7 +234,7 @@ int load_and_print_mpc_config(const struct command_options * options)
 		setenv("MPC_CONFIG_SCHEMA",options->schema,1);
 
 	//load the config
-	const struct sctk_runtime_config * config = sctk_runtime_config_get();
+	const struct sctk_runtime_config * config = sctk_runtime_config_get_checked();
 
 	//print
 	switch(options->mode)

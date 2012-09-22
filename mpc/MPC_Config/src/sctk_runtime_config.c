@@ -182,6 +182,7 @@ void sctk_runtime_config_made_libxml_silent(void)
 /**
  * Function used to initilized the MPC configuration structure. It load the XML files, parse them and
  * map the content on the global C structure.
+ * CAUTION : This method is not thread safe before end of first execution.
 **/
 void sctk_runtime_config_init(void)
 {
