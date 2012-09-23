@@ -32,7 +32,6 @@
       <xs:element minOccurs="0" name="realloc_threashold" type="xs:string"/>
       <xs:element minOccurs="0" name="numa" type="xs:boolean"/>
       <xs:element minOccurs="0" name="scope" type="xs:string"/>
-      <xs:element minOccurs="0" name="huge_bloc_limte" type="xs:string"/>
       <xs:element minOccurs="0" name="strict" type="xs:boolean"/>
     </xs:all>
   </xs:complexType>

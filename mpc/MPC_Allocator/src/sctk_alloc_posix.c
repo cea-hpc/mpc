@@ -586,19 +586,24 @@ SCTK_PUBLIC void sctk_free (void * ptr)
 	macro_bloc = sctk_alloc_region_get_macro_bloc(ptr);
 	if (macro_bloc == NULL)
 	{
-		#ifdef _WIN32
-			//used to fallback on default HeapAlloc/HeapFree/HeapRealloc/HeapSize when getting some legacy
-			//segments not managed by our allocator It append typically with atexit method which init is segment
-			//before allocator overriding.
-			OutputDebugStringA("Try to free segment managed by default MSVCR, transmit to it\n");
-			HeapFree((HANDLE)_get_heap_handle(),0,ptr);
-		#else
-			#ifdef SCTK_ALLOC_DEBUG
-				cnt++;
-				sctk_alloc_pwarning("Don't free the block %p (cnt = %d).",ptr,cnt);
-			#endif//SCTK_ALLOC_DEBUG
-		#endif//_WIN32
-		return;
+		if ( sctk_alloc_config()->strict )
+		{
+			sctk_fatal("Allocator error on free(%p), the address you provide is not managed by this memory allocator.",ptr);
+		} else {
+			#ifdef _WIN32
+				//used to fallback on default HeapAlloc/HeapFree/HeapRealloc/HeapSize when getting some legacy
+				//segments not managed by our allocator It append typically with atexit method which init is segment
+				//before allocator overriding.
+				OutputDebugStringA("Try to free segment managed by default MSVCR, transmit to it\n");
+				HeapFree((HANDLE)_get_heap_handle(),0,ptr);
+			#else
+				#ifdef SCTK_ALLOC_DEBUG
+					cnt++;
+					sctk_alloc_pwarning("Don't free the block %p (cnt = %d).",ptr,cnt);
+				#endif//SCTK_ALLOC_DEBUG
+			#endif//_WIN32
+			return;
+		}
 	} else {
 		assert(ptr > (void*)macro_bloc && (sctk_addr_t)ptr < (sctk_addr_t)macro_bloc + sctk_alloc_get_chunk_header_large_size(&macro_bloc->header));
 	}
@@ -690,6 +695,9 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 		macro_bloc = sctk_alloc_region_get_macro_bloc(ptr);
 	if (macro_bloc != NULL)
 		chain = macro_bloc->chain;
+
+	if ( chain == NULL && ptr != NULL && sctk_alloc_config()->strict )
+		sctk_fatal("Allocator error on realloc(%p,%llu), the address you provide is not managed by this memory allocator.",ptr,size);
 
 	//on windows we may got some segments allocated by HeapAlloc, detect them and fallback to HeapRealloc for them
 	#ifdef _WIN32

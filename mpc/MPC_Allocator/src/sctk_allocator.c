@@ -1391,7 +1391,12 @@ void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 	vchunk = sctk_alloc_get_chunk_unpadded((sctk_addr_t)ptr);
 	//manage the cas of bad pointer and return withour doing anything
 	if (vchunk == NULL)
+	{
+		assume_m( ! sctk_alloc_config()->strict ,
+			"Allocator error on sctk_alloc_chain_free(%p,%p), the address you provide is invalid, \
+			maybe you override the chunk header.",chain,ptr);
 		return;
+	}
 	assume_m(vchunk->state == SCTK_ALLOC_CHUNK_STATE_ALLOCATED,"Double free corruption.");
 
 	//check if huge bloc or not
@@ -1526,6 +1531,9 @@ void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sct
 			//free the old one
 			sctk_alloc_chain_free(chain,ptr);
 		}
+	} else if (sctk_alloc_config()->strict) {
+		sctk_fatal("Allocator error on sctk_alloc_chain_realloc(%p,%p,%llu), the address you provide is invalid, \
+			maybe you override the chunk header.",chain,ptr,size);
 	}
 
 	return res;

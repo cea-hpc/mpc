@@ -131,21 +131,17 @@ Type is size. Default value is 50MB.
 .Pp realloc_threashold
 If the new segment is smaller of N bytes than threashold, realloc will allocate a new segment, otherwise it will keep the same one. Use 0 to force realloc every time (may be slower but consume less memory).
 .It Cm numa
-Type is bool. Default value is false. 
+Type is bool. Default value is true. 
 .Pp numa
 Permit to enable of disable NUMA support in MPC Allocator.
 .It Cm scope
 Type is string. Default value is thread. 
 .Pp scope
-Define the scope the posix allocator, can be : process | thread | vp.
-.It Cm huge_bloc_limte
-Type is size. Default value is 1MB. 
-.Pp huge_bloc_limte
-Larger bloc will be allocated directely with mmap. Recommended to be less than 2MB to avoid performance issues.
+Define the scope the posix allocator, can be : process | vp | thread.
 .It Cm strict
 Type is bool. Default value is false. 
 .Pp strict
-Enable failure on free error or try to continue by skipping.
+If true, enable usage of abort() on free error, otherwise try to continue by skipping.
 .El
 .Sh ENTRIES OF TYPE launcher
 Options for MPC launcher.

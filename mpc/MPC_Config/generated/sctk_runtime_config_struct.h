@@ -38,11 +38,9 @@ struct sctk_runtime_config_struct_allocator
 	size_t realloc_threashold;
 	/**Permit to enable of disable NUMA support in MPC Allocator.**/
 	bool numa;
-	/**Define the scope the posix allocator, can be : process | thread | vp.**/
+	/**Define the scope the posix allocator, can be : process | vp | thread.**/
 	char * scope;
-	/**Larger bloc will be allocated directely with mmap. Recommended to be less than 2MB to avoid performance issues.**/
-	size_t huge_bloc_limte;
-	/**Enable failure on free error or try to continue by skipping.**/
+	/**If true, enable usage of abort() on free error, otherwise try to continue by skipping.**/
 	bool strict;
 };
 
