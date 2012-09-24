@@ -140,6 +140,12 @@ else
 . $MPC_USE_MPCRC_FILE
 fi
 
+# On 2.3.1 .mpcrc was setup with LAUNCH=none, but on 2.4.0 it
+# made all tasks running on interactiv node, so override 'none' values here
+if test "$LAUNCH" = 'none'; then
+	LAUNCH='mpiexec'
+fi
+
 mpi_only=no
 BINARY=""
 USER_ARGS=""
