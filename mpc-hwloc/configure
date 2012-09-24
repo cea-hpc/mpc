@@ -35,6 +35,6 @@ if test "${PATCH_NEEDED}" = "1" ; then
 fi
 
   echo "cd hwloc-$VERSION && Running: ./configure $PREFIX $ARGUMENTS"
-  cd hwloc-$VERSION && ./configure $PREFIX $ARGUMENTS || exit 1
+  cd hwloc-$VERSION && ./configure --disable-cairo $PREFIX $ARGUMENTS || exit 1
 
 exit 0
