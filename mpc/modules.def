@@ -1,5 +1,5 @@
 MPC_Common              ;   forced      ;   Bases of MPC framework, common to all modules
-MPC_Allocator           ;   enabled     ;   MPC memory allocator
+MPC_Allocator           ;   disabled    ;   MPC memory allocator
 MPC_Message_Passing     ;   enabled     ;   MPC message passing support
 MPC_Microthreads        ;   enabled     ;   MPC microthreads implementation
 MPC_OpenMP              ;   enabled     ;   MPC OpenMP implementation
