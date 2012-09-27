@@ -211,13 +211,6 @@ struct mpcomp_thread_s {
 
 typedef struct mpcomp_thread_s mpcomp_thread ;
 
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-	info->tls_module = sctk_tls_module;
-#endif
-
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-	sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( &info->tls_module, info->extls ) ;
-#endif
 
 /******* INSTANCE OF OPENMP ********/
 struct mpcomp_instance_s {

@@ -219,11 +219,6 @@ static inline void __mpcomp_read_env_variables() {
   if (env != NULL)
   {
     if (strcmp (env, "1") == 0 || strcmp (env, "TRUE") == 0 || strcmp (env, "true") == 0 )
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-	  sctk_tls_module = info->tls_module;
-	  sctk_context_restore_tls_module_vp() ;
-#endif
-TODO("to translate")
     {
       OMP_NESTED = 1;
     }
@@ -271,11 +266,6 @@ TODO("to translate")
     for ( i = 0 ; i < nb_tokens ; i++ ) {
       fprintf( stderr, "OMP_TREE\tLevel %d -> %d children\n", i, OMP_TREE[i] ) ;
     }
-#endif
-
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-  sctk_tls_module = current_info->children[0]->tls_module;
-  sctk_context_restore_tls_module_vp() ;
 #endif
   }
 
