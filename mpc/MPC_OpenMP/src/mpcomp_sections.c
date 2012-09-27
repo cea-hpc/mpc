@@ -28,13 +28,13 @@
 /*
    This file contains all functions related to SECTIONS constructs in OpenMP
  */
-
+#if 0
 int
 __mpcomp_sections_begin (int nb_sections)
 {
   not_implemented();
-  mpcomp_thread_info_t *self;	/* Info on the current thread */
-  mpcomp_thread_info_t *father;	/* Info on the team */
+  mpcomp_thread_info *self;	/* Info on the current thread */
+  mpcomp_thread_info *father;	/* Info on the team */
   int rank;
   int index;
   int num_threads;
@@ -50,7 +50,7 @@ __mpcomp_sections_begin (int nb_sections)
 
   /* Grab the thread info */
   /* TODO use TLS if available */
-  self = (mpcomp_thread_info_t *) sctk_thread_getspecific
+  self = (mpcomp_thread_info *) sctk_thread_getspecific
     (mpcomp_thread_info_key);
   sctk_assert (self != NULL);
 
@@ -599,3 +599,4 @@ TODO("can we only reset sections-team info?")
 
   SCTK_PROFIL_END (__mpcomp_start_parallel_region);
 }
+#endif

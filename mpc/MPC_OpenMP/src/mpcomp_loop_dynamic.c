@@ -28,19 +28,20 @@
 #include "mpcmicrothread_internal.h"
 
 
+#if 0
 /*
   Barrier for for dynamic construct
 */
 void __mpcomp_barrier_for_dyn(void)
 {
-  mpcomp_thread_t *t;
+  mpcomp_thread *t;
 
   /* Grab the info of the current thread */    
-  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  t = (mpcomp_thread *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
   /* Block only if I am not the only thread in the team */
-  if (t->team->num_threads > 1) {
+  if (t->num_threads > 1) {
     __mpcomp_internal_barrier_for_dyn(t);
   }
   
@@ -51,7 +52,7 @@ void __mpcomp_barrier_for_dyn(void)
 */
 void __mpcomp_internal_barrier_for_dyn(mpcomp_thread_t *t)
 {
-   mpcomp_thread_team_t *team;
+   mpcomp_team_info *team;
    mpcomp_mvp_t *mvp;
    mpcomp_node_t *c;
    int index;
@@ -169,8 +170,8 @@ void __mpcomp_internal_barrier_for_dyn(mpcomp_thread_t *t)
 */
 int __mpcomp_dynamic_loop_begin(int lb, int b, int incr, int chunk_size, int *from, int *to)
 {
-  mpcomp_thread_t *t;
-  mpcomp_thread_team_t *team;
+  mpcomp_thread *t;
+  mpcomp_team_info *team;
   int rank;
   int index;
   int num_threads;
@@ -178,11 +179,11 @@ int __mpcomp_dynamic_loop_begin(int lb, int b, int incr, int chunk_size, int *fr
   int chunk_id;
 
   /* Grab the info of the current thread */    
-  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  t = (mpcomp_thread *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
   /* Number of threads in the current team */
-  num_threads = t->team->num_threads;
+  num_threads = t->num_threads;
 
   /* If this function is called from a sequential part (orphaned directive) or
    * if this thread is the only one of its team -> it executes the whole loop */
@@ -384,7 +385,7 @@ int __mpcomp_dynamic_loop_next(int *from, int *to)
        When thread i steals a chunk from thread j it seems like 
        thread j does not see the stealing and executes the "stolen" chunk.
        That mean that a stolen chunk is executed twice */
-#if 0
+//#if 0
     int i;
     int chunk_id;
     int stolen_rank;
@@ -460,7 +461,7 @@ int __mpcomp_dynamic_loop_next(int *from, int *to)
 
       return 1+chunk_id;
     }
-#endif
+//#endif
 
     printf("[__mpcomp_dynamic_loop_next rank=%d] remain = %d, return 0\n", rank, remain); 
 
@@ -498,13 +499,13 @@ int __mpcomp_dynamic_loop_next(int *from, int *to)
 */
 void __mpcomp_dynamic_loop_end()
 {
-  mpcomp_thread_t *t;
-  mpcomp_thread_team_t *team; 
+  mpcomp_thread *t;
+  mpcomp_thread_team *team; 
   int rank;
   int index;
 
   /* Grab the info of the current thread */
-  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  t = (mpcomp_thread *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
   /* Grab the rank of the thread */
@@ -529,8 +530,8 @@ void __mpcomp_dynamic_loop_end()
 */
 void __mpcomp_dynamic_loop_end_nowait()
 {
-  mpcomp_thread_t *t;
-  mpcomp_thread_team_t *team;
+  mpcomp_thread *t;
+  mpcomp_thread_team *team;
   int i;
   int rank;
   int index;
@@ -539,7 +540,7 @@ void __mpcomp_dynamic_loop_end_nowait()
   int nb_exited_threads;
 
   /* Grab the info of the current thread */    
-  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+  t = (mpcomp_thread *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
   /* Grab the team info */
@@ -1761,4 +1762,5 @@ __mpcomp_ordered_dynamic_loop_end_nowait()
 {
   __mpcomp_dynamic_loop_end() ;
 }
+#endif
 #endif

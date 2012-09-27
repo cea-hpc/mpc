@@ -25,6 +25,7 @@
 #include "sctk_topology.h"
 #include "sctk_runtime_config.h"
 #include "mpcomp_internal.h"
+#include <sys/time.h>
 
 /*****************
   ****** MACROS
@@ -59,7 +60,7 @@ static int OMP_TREE_NB_LEAVES = 0 ;
   ****** FUNCTIONS  
   *****************/
 
-#warning "TODO function __mpcomp_tokenizer is inspired from sctk_launch.c. Need to merge"
+TODO(" function __mpcomp_tokenizer is inspired from sctk_launch.c. Need to merge")
 static char ** __mpcomp_tokenizer( char * string_to_tokenize, int * nb_tokens ) {
     /*    size_t len;*/
     char *cursor;
@@ -210,8 +211,6 @@ static inline void __mpcomp_read_env_variables() {
     }
   }
 
-	  if ( (sctk_runtime_config_get()->modules.launcher.banner) && (sctk_get_process_rank() == 0) ) {
-
 
   /******* OMP_NESTED *********/
   env = getenv ("OMP_NESTED");
@@ -267,6 +266,7 @@ static inline void __mpcomp_read_env_variables() {
       fprintf( stderr, "OMP_TREE\tLevel %d -> %d children\n", i, OMP_TREE[i] ) ;
     }
 #endif
+
   }
 
   /***** PRINT SUMMARY ******/
@@ -330,11 +330,6 @@ void __mpcomp_init() {
     icvs.modifier_sched_var = OMP_MODIFIER_SCHEDULE ;
     icvs.def_sched_var = omp_sched_static ;
     icvs.nmicrovps_var = OMP_MICROVP_NUMBER ;
-				        op_list[i].func,
-				        info->stack, STACK_SIZE,
-				        info->extls, info->tls_module);
-#else
-#endif
 
     /* Initialize team information */
     team_info = (mpcomp_team_info *)sctk_malloc( sizeof( mpcomp_team_info ) ) ;
@@ -652,7 +647,7 @@ void * mpcomp_slave_mvp_node( void * arg ) {
 	n->children.node[i]->num_threads = n->num_threads ;
 	n->children.node[i]->slave_running = 1 ;
       }
-#warning "TODO put the real barrier_num_threads"
+     TODO(put the real barrier_num_threads)
       n->barrier_num_threads = n->nb_children ;
       n = n->children.node[0] ;
     }
@@ -741,7 +736,7 @@ void * mpcomp_slave_mvp_leaf( void * arg ) {
 
     /* Spin for new parallel region */
     sctk_thread_wait_for_value_and_poll( (int*)&(mvp->slave_running), 1, NULL, NULL ) ;
-#warning "TODO maybe wrong if multiple mVPs are waitning on the same node"
+    TODO("maybe wrong if multiple mVPs are waitning on the same node")
     mvp->slave_running = 0 ;
 
     sctk_nodebug( "mpcomp_slave_mvp_leaf: wake up" ) ;
@@ -957,12 +952,17 @@ mpcomp_get_wtime (void)
   return res;
 }
 
-double
+double 
 mpcomp_get_wtick (void)
 {
   return 10e-6;
 }
 
-void __mpcomp_flush() {
+void __mpcomp_flush() 
+{
 /* TODO TEMP only return, but need to handle oversubscribing */
 }
+
+
+
+

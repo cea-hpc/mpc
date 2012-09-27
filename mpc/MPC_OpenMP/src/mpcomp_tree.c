@@ -161,7 +161,8 @@ int __mpcomp_build_default_tree( mpcomp_instance * instance ) {
   switch( sctk_get_cpu_number() ) {
     case 8:
 #if 1 /* NUMA Tree */
-#warning "OpenMP Compiling w/ NUMA tree (8 cores)"
+//#warning "OpenMP Compiling w/ NUMA tree (8 cores)"
+INFO("OpenMP Compiling w/ NUMA tree (8 cores)")
       sctk_debug("__mpcomp_build_default_tree: case 8"); 
 
       root->father = NULL ;
@@ -510,8 +511,8 @@ int __mpcomp_build_default_tree( mpcomp_instance * instance ) {
 #endif
 
 #if 1 /* NUMA Tree */
-#warning "OpenMP Compiling w/ NUMA tree (32 cores)"
-#warning "NO USE ATOMICS ET MALLOC ON NODE POUR LES OPTIONS"
+INFO("OpenMP Compiling w/ NUMA tree (32 cores)")
+INFO("NO USE ATOMICS ET MALLOC ON NODE POUR LES OPTIONS")
       sctk_debug( "Building OpenMP 4-8 tree for 32 cores" ) ;
       root->father = NULL ;
       root->rank = -1 ;
@@ -683,7 +684,7 @@ int __mpcomp_build_default_tree( mpcomp_instance * instance ) {
     case 128:
 
 #if 1 /* NUMA Tree */
-#warning "OpenMP Compiling w/ NUMA tree (128 cores)"
+INFO("OpenMP Compiling w/ NUMA tree (128 cores)")
       sctk_debug("__mpcomp_build_default_tree: build tree on 128 cores"); 
       root->father = NULL ;
       root->rank = -1 ;
@@ -1246,7 +1247,7 @@ void __mpcomp_print_tree( mpcomp_instance * instance ) {
       fprintf( stderr, "\t" ) ;
     }
 
-    fprintf( stderr, "Node %d (@ %p)\n", n->rank, n ) ;
+    fprintf( stderr, "Node %ld (@ %p)\n", n->rank, n ) ;
 
     switch( n->child_type ) {
       case CHILDREN_NODE:

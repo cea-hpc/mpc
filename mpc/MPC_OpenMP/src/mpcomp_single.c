@@ -37,7 +37,8 @@
 #if MPCOMP_USE_ATOMICS
 
 #if 1
-#warning "SINGLE: Old version with 2 increments"
+//#warning "SINGLE: Old version with 2 increments"
+INFO("SINGLE: Old version with 2 increments")
 /* Old version with initial increment */
 int
 __mpcomp_do_single (void)
@@ -372,6 +373,7 @@ __mpcomp_do_single_copyprivate_begin (void)
 {
   /* TODO */
   not_implemented() ;
+  return NULL;
 }
 
 void

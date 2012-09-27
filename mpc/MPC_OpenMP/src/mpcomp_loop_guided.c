@@ -30,13 +30,13 @@
    for loop.
  */
 
-
+#if 0
 int
 __mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size,
 			    int *from, int *to)
 {
-  mpcomp_thread_info_t *self;	/* Info on the current thread */
-  mpcomp_thread_info_t *father;	/* Info on the team */
+  mpcomp_thread *self;	/* Info on the current thread */
+  mpcomp_thread *father;	/* Info on the team */
   long rank;
   int index;
   int num_threads;
@@ -54,7 +54,7 @@ __mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size,
   }
 
   /* Grab the thread info */
-  self = (mpcomp_thread_info_t *) sctk_thread_getspecific
+  self = (mpcomp_thread *) sctk_thread_getspecific
     (mpcomp_thread_info_key);
   sctk_assert (self != NULL);
 
@@ -260,8 +260,8 @@ __mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size,
 int
 __mpcomp_guided_loop_next (int *from, int *to)
 {
-  mpcomp_thread_info_t *self;	/* Info on the current thread */
-  mpcomp_thread_info_t *father;	/* Info on the team */
+  mpcomp_thread_info *self;	/* Info on the current thread */
+  mpcomp_thread_info *father;	/* Info on the team */
   long rank;
   int index;
   int num_threads;
@@ -269,7 +269,7 @@ __mpcomp_guided_loop_next (int *from, int *to)
 
 
   /* Grab the thread info */
-  self = (mpcomp_thread_info_t *) sctk_thread_getspecific
+  self = (mpcomp_thread_info *) sctk_thread_getspecific
     (mpcomp_thread_info_key);
   sctk_assert (self != NULL);
 
@@ -369,15 +369,15 @@ __mpcomp_guided_loop_end ()
 void
 __mpcomp_guided_loop_end_nowait ()
 {
-  mpcomp_thread_info_t *self;	/* Info on the current thread */
-  mpcomp_thread_info_t *father;	/* Info on the team */
+  mpcomp_thread_info *self;	/* Info on the current thread */
+  mpcomp_thread_info *father;	/* Info on the team */
   long rank;
   int index;
   int num_threads;
   int nb_exited_threads;
 
   /* Grab the thread info */
-  self = (mpcomp_thread_info_t *) sctk_thread_getspecific
+  self = (mpcomp_thread_info *) sctk_thread_getspecific
     (mpcomp_thread_info_key);
   sctk_assert (self != NULL);
 
@@ -482,8 +482,8 @@ int
 __mpcomp_guided_loop_begin_ignore_nowait (int lb, int b, int incr, int
 					  chunk_size, int *from, int *to)
 {
-  mpcomp_thread_info_t *self;	/* Info on the current thread */
-  mpcomp_thread_info_t *father;	/* Info on the team */
+  mpcomp_thread_info *self;	/* Info on the current thread */
+  mpcomp_thread_info *father;	/* Info on the team */
   long rank;
   int num_threads;
   int nb_entered_threads;
@@ -491,7 +491,7 @@ __mpcomp_guided_loop_begin_ignore_nowait (int lb, int b, int incr, int
   int cs;			/* Current chunk size */
 
   /* Grab the thread info */
-  self = (mpcomp_thread_info_t *) sctk_thread_getspecific
+  self = (mpcomp_thread_info *) sctk_thread_getspecific
     (mpcomp_thread_info_key);
   sctk_assert (self != NULL);
 
@@ -651,14 +651,14 @@ __mpcomp_guided_loop_begin_ignore_nowait (int lb, int b, int incr, int
 int
 __mpcomp_guided_loop_next_ignore_nowait (int *from, int *to)
 {
-  mpcomp_thread_info_t *self;	/* Info on the current thread */
-  mpcomp_thread_info_t *father;	/* Info on the team */
+  mpcomp_thread_info *self;	/* Info on the current thread */
+  mpcomp_thread_info *father;	/* Info on the team */
   long rank;
   int num_threads;
   int n;
 
   /* Grab the thread info */
-  self = (mpcomp_thread_info_t *) sctk_thread_getspecific
+  self = (mpcomp_thread_info *) sctk_thread_getspecific
     (mpcomp_thread_info_key);
   sctk_assert (self != NULL);
 
@@ -748,14 +748,14 @@ __mpcomp_guided_loop_next_ignore_nowait (int *from, int *to)
 int
 __mpcomp_ordered_guided_loop_begin (int lb, int b, int incr, int chunk_size,
 			    int *from, int *to) {
-  mpcomp_thread_info_t *info;
+  mpcomp_thread_info *info;
   int res ;
 
   res = __mpcomp_guided_loop_begin(lb, b, incr, chunk_size, from, to ) ;
 
   /* TODO Use TLS if available */
   info =
-    (mpcomp_thread_info_t *) mpc_thread_getspecific (mpcomp_thread_info_key);
+    (mpcomp_thread_info *) mpc_thread_getspecific (mpcomp_thread_info_key);
 
   info->current_ordered_iteration = *from ;
 
@@ -764,14 +764,14 @@ __mpcomp_ordered_guided_loop_begin (int lb, int b, int incr, int chunk_size,
 
 int
 __mpcomp_ordered_guided_loop_next (int *from, int *to) {
-  mpcomp_thread_info_t *info;
+  mpcomp_thread_info *info;
   int res ;
 
   res = __mpcomp_guided_loop_next(from, to) ;
 
   /* TODO Use TLS if available */
   info =
-    (mpcomp_thread_info_t *) mpc_thread_getspecific (mpcomp_thread_info_key);
+    (mpcomp_thread_info *) mpc_thread_getspecific (mpcomp_thread_info_key);
 
   info->current_ordered_iteration = *from ;
 
@@ -789,3 +789,4 @@ __mpcomp_ordered_guided_loop_end_nowait ()
 {
   __mpcomp_guided_loop_end() ;
 }
+#endif

@@ -454,6 +454,14 @@ mpcomp_elem_stack * __mpcomp_pop_elem_stack( mpcomp_stack_node_leaf * s ) ;
 void __mpcomp_free_stack_node_leaf( mpcomp_stack_node_leaf * s ) ;
 //#endif
 
+void __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
+				      int lb, int b, int incr,
+				      int chunk_size, int chunk_num,
+				      int *from, int *to);
+
+int __mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads, int lb,
+					int b, int incr, int chunk_size);
+
 #ifdef __cplusplus
 }
 #endif

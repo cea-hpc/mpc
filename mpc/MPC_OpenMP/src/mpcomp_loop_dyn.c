@@ -441,7 +441,7 @@ int __mpcomp_dynamic_steal2(int *from, int *to)
 }
 
 
-//#if 0
+#if 0
 int __mpcomp_dynamic_steal(int *from, int *to)
 {
   mpcomp_thread *t;
@@ -555,7 +555,7 @@ int __mpcomp_dynamic_steal(int *from, int *to)
     //stack = t->tree_stack;
     //n = current_mvp->father;
     //__mpcomp_push(stack, n); 
-    __mpcomp_push(t->tree_stack, n);
+    __mpcomp_push(&(t->tree_stack), &n);
 //#endif
   }
   else {
@@ -721,7 +721,7 @@ int __mpcomp_dynamic_steal(int *from, int *to)
  return 0;
   
 }
-//#endif
+#endif
 
 
 int __mpcomp_dynamic_loop_begin (int lb, int b, int incr,
@@ -1057,6 +1057,7 @@ int
 __mpcomp_dynamic_loop_next_ignore_nowait (int *from, int *to)
 {
   not_implemented() ;
+  return 0;
 }
 
 /****
@@ -1071,12 +1072,14 @@ __mpcomp_ordered_dynamic_loop_begin (int lb, int b, int incr, int chunk_size,
 			    int *from, int *to)
 {
   not_implemented() ;
+  return -1;
 }
 
 int
 __mpcomp_ordered_dynamic_loop_next(int *from, int *to)
 {
   not_implemented() ;
+  return -1;
 }
 
 void
