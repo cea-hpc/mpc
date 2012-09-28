@@ -189,9 +189,16 @@ struct mpcomp_thread_s {
   int loop_incr;		/* Step */
   int loop_chunk_size;	/* Size of each chunk */
 
+  /* -- STATIC FOR LOOP CONSTRUCT -- */
+  int static_nb_chunks;
+  int static_current_chunk;
+
   /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
   int for_dyn_current ;	
   mpcomp_chunk for_dyn_chunk_info[ MPCOMP_MAX_ALIVE_FOR_DYN + 1 ] ;
+
+  /* ORDERED CONSTRUCT */
+  int current_ordered_iteration ; 
 
   /* Infos for DFS */
   //struct mpcomp_stack   *tree_stack;
