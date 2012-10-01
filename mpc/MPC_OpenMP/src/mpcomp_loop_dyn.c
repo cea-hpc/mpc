@@ -210,7 +210,8 @@ int __mpcomp_dynamic_steal_index()
 #endif
 
 
-int __mpcomp_dynamic_steal2(int *from, int *to)
+/* int __mpcomp_dynamic_steal2(int *from, int *to) */
+int __mpcomp_dynamic_steal(int *from, int *to)
 {
 
  mpcomp_thread *t;
