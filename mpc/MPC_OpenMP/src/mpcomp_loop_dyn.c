@@ -441,9 +441,10 @@ int __mpcomp_dynamic_steal2(int *from, int *to)
 }
 
 
-#if 0
+//#if 0
 int __mpcomp_dynamic_steal(int *from, int *to)
 {
+#if 0
   mpcomp_thread *t;
   mpcomp_thread *target_t;
   mpcomp_mvp *mvp, *current_mvp;
@@ -719,9 +720,9 @@ int __mpcomp_dynamic_steal(int *from, int *to)
  t->stolen_mvp = NULL;
 
  return 0;
-  
-}
 #endif
+}
+//#endif
 
 
 int __mpcomp_dynamic_loop_begin (int lb, int b, int incr,
