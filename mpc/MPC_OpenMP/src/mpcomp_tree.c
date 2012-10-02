@@ -26,54 +26,6 @@
 #include "mpcomp.h"
 #include "mpcomp_internal.h"
 
-/************** BEGIN STACK ****************/
-
-mpcomp_stack_t * __mpcomp_create_stack( int max_elements ) {
-  mpcomp_stack_t * s ;
-  s = (mpcomp_stack_t *)malloc( sizeof( mpcomp_stack_t ) ) ;
-
-  s->elements = (mpcomp_node_t **) malloc( max_elements * sizeof( mpcomp_node_t * ) ) ;
-  sctk_assert( s->elements != NULL ) ;
-  s->max_elements = max_elements ;
-  s->n_elements = 0 ;
-
-  return s ;
-}
-
-int __mpcomp_is_stack_empty( mpcomp_stack_t * s ) {
-  return ( s->n_elements == 0 ) ;
-}
-
-void __mpcomp_push( mpcomp_stack_t * s, mpcomp_node_t * n ) {
-
-  if ( s->n_elements == s->max_elements ) {
-    /* Error */
-    exit( 1 ) ;
-  }
-
-  s->elements[ s->n_elements ] = n ;
-  s->n_elements++ ;
-}
-
-mpcomp_node_t * __mpcomp_pop( mpcomp_stack_t * s ) {
-  mpcomp_node_t * n ;
-
-  if ( s->n_elements == 0 ) {
-    return NULL ;
-  }
-
-  n = s->elements[ s->n_elements - 1 ] ;
-  s->n_elements-- ;
-
-  return n ;
-}
-
-void __mpcomp_free_stack( mpcomp_stack_t * s ) {
-  free( s->elements ) ;
-}
-
-/************** END STACK ****************/
-
 
 /************** BEGIN TREE ****************/
 
