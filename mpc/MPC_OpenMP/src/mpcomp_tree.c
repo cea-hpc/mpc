@@ -123,7 +123,7 @@ int __mpcomp_check_tree_parameters( int n_leaves, int depth, int * degree ) {
    Build the default tree.
    TODO this function should create a tree according to architecture tolopogy
  */
-int __mpcomp_build_default_tree( mpcomp_instance * instance ) {
+int __mpcomp_build_default_tree( mpcomp_instance_t * instance ) {
   int * order ;
   int i ;
   int current_mvp ;
@@ -218,7 +218,7 @@ INFO("OpenMP Compiling w/ NUMA tree (8 cores)")
         n->nb_chunks_empty_children = 0;
 #endif
 	n->barrier_done = 0 ;
-	n->children.leaf = (mpcomp_mvp **)sctk_malloc_on_node( n->nb_children* sizeof(mpcomp_mvp *), i ) ;
+	n->children.leaf = (mpcomp_mvp_t **)sctk_malloc_on_node( n->nb_children* sizeof(mpcomp_mvp_t *), i ) ;
 
 
 	for ( j = 0 ; j < n->nb_children ; j++ ) {
@@ -230,8 +230,8 @@ INFO("OpenMP Compiling w/ NUMA tree (8 cores)")
 	  if ( flag_level == -1 ) { flag_level = 2 ; }
 
 	  /* Allocate memory (on the right NUMA Node) */
-	  instance->mvps[current_mvp] = (mpcomp_mvp *)sctk_malloc_on_node(
-	      sizeof(mpcomp_mvp), i ) ;
+	  instance->mvps[current_mvp] = (mpcomp_mvp_t *)sctk_malloc_on_node(
+	      sizeof(mpcomp_mvp_t), i ) ;
 
 	  /* Get the set of registers */
 	  sctk_getcontext (&(instance->mvps[current_mvp]->vp_context));
@@ -368,7 +368,7 @@ INFO("OpenMP Compiling w/ NUMA tree (8 cores)")
 	n->barrier = 0 ;
 #endif
 	n->barrier_done = 0 ;
-	n->children.leaf = (mpcomp_mvp **)sctk_malloc_on_node( n->nb_children* sizeof(mpcomp_mvp *), i ) ;
+	n->children.leaf = (mpcomp_mvp_t **)sctk_malloc_on_node( n->nb_children* sizeof(mpcomp_mvp_t *), i ) ;
 
 	sctk_nodebug( "__mpcomp_instance_init: Tree node (%d) rang [ %d, %d ]", i, n->min_index, n->max_index ) ;
 
@@ -399,7 +399,7 @@ INFO("OpenMP Compiling w/ NUMA tree (8 cores)")
 	  n2->barrier = 0 ;
 #endif
 	  n2->barrier_done = 0 ;
-	  n2->children.leaf = (mpcomp_mvp **)sctk_malloc_on_node( n2->nb_children* sizeof(mpcomp_mvp *), i ) ;
+	  n2->children.leaf = (mpcomp_mvp_t **)sctk_malloc_on_node( n2->nb_children* sizeof(mpcomp_mvp_t *), i ) ;
 
 	  sctk_nodebug( "__mpcomp_instance_init: Tree node (%d,%d) rang [ %d, %d ]", i, j, n2->min_index, n2->max_index ) ;
 
@@ -413,8 +413,8 @@ INFO("OpenMP Compiling w/ NUMA tree (8 cores)")
 	    if ( flag_level == -1 ) { flag_level = 3 ; }
 
 	    /* Allocate memory (on the right NUMA Node) */
-	    instance->mvps[current_mvp] = (mpcomp_mvp *)sctk_malloc_on_node(
-		sizeof(mpcomp_mvp), i ) ;
+	    instance->mvps[current_mvp] = (mpcomp_mvp_t *)sctk_malloc_on_node(
+		sizeof(mpcomp_mvp_t), i ) ;
 
 
 	    /* Get the set of registers */
@@ -572,7 +572,7 @@ INFO("NO USE ATOMICS ET MALLOC ON NODE POUR LES OPTIONS")
         n->nb_chunks_empty_children = 0;
 #endif
 	n->barrier_done = 0 ;
-	n->children.leaf = (mpcomp_mvp **)sctk_malloc_on_node( n->nb_children* sizeof(mpcomp_mvp *), i ) ;
+	n->children.leaf = (mpcomp_mvp_t **)sctk_malloc_on_node( n->nb_children* sizeof(mpcomp_mvp_t *), i ) ;
 
         sctk_nodebug("node %d has %d children", i, n->nb_children); 
 
@@ -585,8 +585,8 @@ INFO("NO USE ATOMICS ET MALLOC ON NODE POUR LES OPTIONS")
 	  if ( flag_level == -1 ) { flag_level = 2 ; }
 
 	  /* Allocate memory (on the right NUMA Node) */
-	  instance->mvps[current_mvp] = (mpcomp_mvp *)sctk_malloc_on_node(
-	      sizeof(mpcomp_mvp), i ) ;
+	  instance->mvps[current_mvp] = (mpcomp_mvp_t *)sctk_malloc_on_node(
+	      sizeof(mpcomp_mvp_t), i ) ;
 
 
 	  /* Get the set of registers */
@@ -794,9 +794,9 @@ INFO("OpenMP Compiling w/ NUMA tree (128 cores)")
 #endif
 	  n2->barrier_done = 0 ;
 #if MPCOMP_MALLOC_ON_NODE
-	  n2->children.leaf = (mpcomp_mvp **)sctk_malloc_on_node( n2->nb_children* sizeof(mpcomp_mvp *), 4*i+j ) ;
+	  n2->children.leaf = (mpcomp_mvp_t **)sctk_malloc_on_node( n2->nb_children* sizeof(mpcomp_mvp_t *), 4*i+j ) ;
 #else
-	  n2->children.leaf = (mpcomp_mvp **)sctk_malloc_on_node( n2->nb_children* sizeof(mpcomp_mvp *), 0 ) ;
+	  n2->children.leaf = (mpcomp_mvp_t **)sctk_malloc_on_node( n2->nb_children* sizeof(mpcomp_mvp_t *), 0 ) ;
 #endif
 
 	  sctk_nodebug( "__mpcomp_instance_init: Tree node (%d,%d) rang [ %d, %d ]", i, j, n2->min_index, n2->max_index ) ;
@@ -812,11 +812,11 @@ INFO("OpenMP Compiling w/ NUMA tree (128 cores)")
 
 	    /* Allocate memory (on the right NUMA Node) */
 #if MPCOMP_MALLOC_ON_NODE
-	    instance->mvps[current_mvp] = (mpcomp_mvp *)sctk_malloc_on_node(
-		sizeof(mpcomp_mvp), 4*i+j ) ;
+	    instance->mvps[current_mvp] = (mpcomp_mvp_t *)sctk_malloc_on_node(
+		sizeof(mpcomp_mvp_t), 4*i+j ) ;
 #else
-	    instance->mvps[current_mvp] = (mpcomp_mvp *)sctk_malloc_on_node(
-		sizeof(mpcomp_mvp), 0 ) ;
+	    instance->mvps[current_mvp] = (mpcomp_mvp_t *)sctk_malloc_on_node(
+		sizeof(mpcomp_mvp_t), 0 ) ;
 #endif
 
 
@@ -976,7 +976,7 @@ INFO("OpenMP Compiling w/ NUMA tree (128 cores)")
   return 1 ;
 }
 
-int __mpcomp_build_tree( mpcomp_instance * instance, int n_leaves, int depth, int * degree ) {
+int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int * degree ) {
   mpcomp_node * root ; /* Root of the tree */
   int current_mpc_vp; /* Current VP where the master is */
   int current_mvp ; /* Current microVP we are dealing with */
@@ -1074,13 +1074,13 @@ int __mpcomp_build_tree( mpcomp_instance * instance, int n_leaves, int depth, in
 
       /* Children are leaves */
       n->child_type = CHILDREN_LEAF ;
-      n->children.leaf = (mpcomp_mvp **) sctk_malloc_on_node( 
-	  n->nb_children * sizeof( mpcomp_mvp * ), target_numa ) ;
+      n->children.leaf = (mpcomp_mvp_t **) sctk_malloc_on_node( 
+	  n->nb_children * sizeof( mpcomp_mvp_t * ), target_numa ) ;
 
       for ( i = 0 ; i < n->nb_children ; i++ ) {
 	    /* Allocate memory (on the right NUMA Node) */
-	    instance->mvps[current_mvp] = (mpcomp_mvp *)sctk_malloc_on_node(
-		sizeof(mpcomp_mvp), target_numa ) ;
+	    instance->mvps[current_mvp] = (mpcomp_mvp_t *)sctk_malloc_on_node(
+		sizeof(mpcomp_mvp_t), target_numa ) ;
 
 	    /* Get the set of registers */
 	    sctk_getcontext (&(instance->mvps[current_mvp]->vp_context));
@@ -1218,7 +1218,7 @@ int __mpcomp_build_tree( mpcomp_instance * instance, int n_leaves, int depth, in
 
 }
 
-void __mpcomp_print_tree( mpcomp_instance * instance ) {
+void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
 
   mpcomp_stack * s ;
   int i, j ;
@@ -1257,7 +1257,7 @@ void __mpcomp_print_tree( mpcomp_instance * instance ) {
 	break ;
       case CHILDREN_LEAF:
 	for ( i = 0 ; i < n->nb_children ; i++ ) {
-	  mpcomp_mvp * mvp ;
+	  mpcomp_mvp_t * mvp ;
 
 	  mvp = n->children.leaf[i] ;
 	  sctk_assert( mvp != NULL ) ;

@@ -30,11 +30,12 @@
 
 union mpcomp_node_leaf {
     mpcomp_node * n ;
-    mpcomp_mvp * mvp ;
+    mpcomp_mvp_t * mvp ;
 } ;
 
 typedef union mpcomp_node_leaf mpcomp_node_leaf;
 
+/* TODO-JEJE: Delete it : two occurences with mpcomp_internal.h*/
 struct mpcomp_stack_node_leaf {
   mpcomp_node_leaf * elements ;
   children_t * child_type ;
@@ -47,7 +48,7 @@ typedef struct mpcomp_stack_node_leaf mpcomp_stack_node_leaf ;
 mpcomp_stack_node_leaf * __mpcomp_create_stack_node_leaf( int max_elements ) ;
 int __mpcomp_is_stack_node_leaf_empty( mpcomp_stack_node_leaf * s ) ;
 void __mpcomp_push_node( mpcomp_stack_node_leaf * s, mpcomp_node * n ) ;
-void __mpcomp_push_leaf( mpcomp_stack_node_leaf * s, mpcomp_mvp * n ) ;
+void __mpcomp_push_leaf( mpcomp_stack_node_leaf * s, mpcomp_mvp_t * n ) ;
 mpcomp_node_leaf * __mpcomp_pop_node_leaf( mpcomp_stack_node_leaf * s ) ;
 void __mpcomp_free_stack_node_leaf( mpcomp_stack_node_leaf * s ) ;
 #endif
@@ -66,8 +67,8 @@ mpcomp_stack_node_leaf * __mpcomp_create_stack_node_leaf( int max_elements )
   sctk_nodebug("__mpcomp_create_stack_node_leaf: max_elements=%d", max_elements);
 
   //s->elements = (mpcomp_node_leaf **) malloc( max_elements * sizeof( mpcomp_node_leaf * ) ) ;
-  s->elements = (mpcomp_elem_stack **)sctk_malloc(max_elements * sizeof(mpcomp_elem_stack *));
-  //memset(s->elements, 0, max_elements*sizeof(mpcomp_elem_stack *)); 
+  s->elements = (mpcomp_elem_stack_t **)sctk_malloc(max_elements * sizeof(mpcomp_elem_stack_t *));
+  //memset(s->elements, 0, max_elements*sizeof(mpcomp_elem_stack_t *)); 
  
   sctk_assert( s->elements != NULL ) ;
   //sctk_assert( s->elements[0] != NULL);
@@ -76,7 +77,7 @@ mpcomp_stack_node_leaf * __mpcomp_create_stack_node_leaf( int max_elements )
 
   for(i=0;i<max_elements;i++) {
     sctk_nodebug("__mpcomp_create_stack_node_leaf: i=%d", i);
-    s->elements[i] = (mpcomp_elem_stack *)sctk_malloc(sizeof(mpcomp_elem_stack));
+    s->elements[i] = (mpcomp_elem_stack_t *)sctk_malloc(sizeof(mpcomp_elem_stack_t));
     //sctk_assert(s->elements[i] != NULL);
     //s->elements[i]->node_leaf = (mpcomp_node_leaf *)sctk_malloc(sizeof(mpcomp_node_leaf));
   }
@@ -114,12 +115,12 @@ void __mpcomp_push_node( mpcomp_stack_node_leaf * s, mpcomp_node * n )
   s->elements[s->n_elements]->elem.node = n;
   //s->elements[0]->elem.node = n;
   //s->elements[s->n_elements]->node_leaf->n = n;
-  s->elements[s->n_elements]->node_or_leaf = 1;
-  //s->elements[0]->node_or_leaf = 1;
+  s->elements[s->n_elements]->type = MPCOMP_STACK_ELEM_NODE;
+  //s->elements[0]->type = MPCOMP_STACK_ELEM_NODE;
   s->n_elements++;
 }
 
-void __mpcomp_push_leaf( mpcomp_stack_node_leaf * s, mpcomp_mvp * l ) 
+void __mpcomp_push_leaf( mpcomp_stack_node_leaf * s, mpcomp_mvp_t * l ) 
 {
   if(s->n_elements == s->max_elements) {
     sctk_nodebug("__mpcomp_push_leaf: n_elements=%d max_elements=%d => exit", s->n_elements, s->max_elements);    
@@ -129,18 +130,18 @@ void __mpcomp_push_leaf( mpcomp_stack_node_leaf * s, mpcomp_mvp * l )
   
   sctk_assert( s->elements[s->n_elements] != NULL);
 
-  s->elements[s->n_elements]->elem.leaf = (mpcomp_mvp *)sctk_malloc(sizeof(mpcomp_mvp));
+  s->elements[s->n_elements]->elem.leaf = (mpcomp_mvp_t *)sctk_malloc(sizeof(mpcomp_mvp_t));
 
   s->elements[s->n_elements]->elem.leaf = l;
   //s->elements[s->n_elements]->node_leaf->mvp = l;
-  s->elements[s->n_elements]->node_or_leaf = 2;  
+  s->elements[s->n_elements]->type = MPCOMP_STACK_ELEM_LEAF;  
   s->n_elements++;
 }
 
-mpcomp_elem_stack * __mpcomp_pop_elem_stack( mpcomp_stack_node_leaf * s ) 
+mpcomp_elem_stack_t * __mpcomp_pop_elem_stack( mpcomp_stack_node_leaf * s ) 
 {
   //mpcomp_node_leaf * n ;
-  mpcomp_elem_stack * e;
+  mpcomp_elem_stack_t * e;
 
   if ( s->n_elements == 0 ) {
     return NULL ;
@@ -214,17 +215,17 @@ int __mpcomp_dynamic_steal_index()
 int __mpcomp_dynamic_steal(int *from, int *to)
 {
 
- mpcomp_thread *t;
- mpcomp_thread *target_t;
- mpcomp_mvp *mvp, *current_mvp;
- mpcomp_team_info *team;
+ mpcomp_thread_t *t;
+ mpcomp_thread_t *target_t;
+ mpcomp_mvp_t *mvp, *current_mvp;
+ mpcomp_team_t *team;
  mpcomp_stack_node_leaf* s;
  mpcomp_node *n;
  mpcomp_node *root;
  mpcomp_node *node_root;
  //mpcomp_node_leaf *e;
- mpcomp_elem_stack *e;
- mpcomp_mvp *l;
+ mpcomp_elem_stack_t *e;
+ mpcomp_mvp_t *l;
  
  int i;
  int index;
@@ -237,7 +238,7 @@ int __mpcomp_dynamic_steal(int *from, int *to)
  int real_r;
  int total;
 
- t = (mpcomp_thread *)sctk_openmp_thread_tls;
+ t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
  sctk_assert(t != NULL);
 
  sctk_debug("__mpcomp_dynamic_steal2 rank=%d: begin", t->rank);
@@ -323,7 +324,7 @@ int __mpcomp_dynamic_steal(int *from, int *to)
    }
    //#endif
 
-   if(e->node_or_leaf == 1) {
+   if(e->type == MPCOMP_STACK_ELEM_NODE) {
     
      //n = (mpcomp_node *) e;
      n = e->elem.node;
@@ -358,9 +359,9 @@ int __mpcomp_dynamic_steal(int *from, int *to)
  
      //}
    }
-   else if(e->node_or_leaf == 2) {
+   else if(e->type == MPCOMP_STACK_ELEM_LEAF) {
 
-     //l = (mpcomp_mvp *)e;
+     //l = (mpcomp_mvp_t *)e;
      l = e->elem.leaf;
 
      sctk_nodebug("__mpcomp_dynamic_steal2 rank=%d: reach a leaf rank=%d", t->rank, l->rank);
@@ -445,10 +446,10 @@ int __mpcomp_dynamic_steal(int *from, int *to)
 #if 0
 int __mpcomp_dynamic_steal(int *from, int *to)
 {
-  mpcomp_thread *t;
-  mpcomp_thread *target_t;
-  mpcomp_mvp *mvp, *current_mvp;
-  mpcomp_team_info *team;
+  mpcomp_thread_t *t;
+  mpcomp_thread_t *target_t;
+  mpcomp_mvp_t *mvp, *current_mvp;
+  mpcomp_team_t *team;
   mpcomp_stack *stack;
   mpcomp_node *n;
   mpcomp_node *root;
@@ -467,7 +468,7 @@ int __mpcomp_dynamic_steal(int *from, int *to)
   int nb_chunks_empty_children;
   int chunks_avail;
 
-  t = (mpcomp_thread *)sctk_openmp_thread_tls;
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
   sctk_debug("__mpcomp_dynamic_steal rank=%d: begin", t->rank);
@@ -728,8 +729,8 @@ int __mpcomp_dynamic_steal(int *from, int *to)
 int __mpcomp_dynamic_loop_begin (int lb, int b, int incr,
 			     int chunk_size, int *from, int *to)
 {
-  mpcomp_thread *t ;	/* Info on the current thread */
-  mpcomp_team_info *team_info ;	/* Info on the team */
+  mpcomp_thread_t *t ;	/* Info on the current thread */
+  mpcomp_team_t *team_info ;	/* Info on the team */
   int index;
   int num_threads;
   int nb_threads_exited ; 
@@ -739,7 +740,7 @@ int __mpcomp_dynamic_loop_begin (int lb, int b, int incr,
   __mpcomp_init() ;
 
   /* Grab the thread info */
-  t = (mpcomp_thread *) sctk_openmp_thread_tls ;
+  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
   /* Number of threads in the current team */
@@ -886,14 +887,14 @@ int __mpcomp_dynamic_loop_begin (int lb, int b, int incr,
 int
 __mpcomp_dynamic_loop_next (int *from, int *to)
 {
-  mpcomp_thread *t ;	/* Info on the current thread */
-  mpcomp_team_info *team_info ;	/* Info on the team */
+  mpcomp_thread_t *t ;	/* Info on the current thread */
+  mpcomp_team_t *team_info ;	/* Info on the team */
   int index;
   int num_threads;
   int r ;
 
   /* Grab the thread info */
-  t = (mpcomp_thread *) sctk_openmp_thread_tls ;
+  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
   /* Number of threads in the current team */
@@ -972,14 +973,14 @@ __mpcomp_dynamic_loop_next (int *from, int *to)
 void
 __mpcomp_dynamic_loop_end ()
 {
-  mpcomp_thread *t ;	/* Info on the current thread */
-  mpcomp_team_info *team_info ;	/* Info on the team */
+  mpcomp_thread_t *t ;	/* Info on the current thread */
+  mpcomp_team_t *team_info ;	/* Info on the team */
   int index;
   int num_threads;
   int nb_threads_exited ; 
 
   /* Grab the thread info */
-  t = (mpcomp_thread *) sctk_openmp_thread_tls ;
+  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
   /* Number of threads in the current team */

@@ -41,11 +41,11 @@ void __mpcomp_static_schedule_get_single_chunk (int lb, int b, int incr, int *fr
      int trip_count;
      int chunk_size;
      int num_threads;
-     mpcomp_thread *t;
+     mpcomp_thread_t *t;
      int rank;
 
      /* Grab info on the current thread */
-     t = (mpcomp_thread *)sctk_openmp_thread_tls;
+     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);      
 
      num_threads = t->num_threads;
@@ -85,10 +85,10 @@ int __mpcomp_static_schedule_get_nb_chunks (int lb, int b, int incr,
      int trip_count;
      int nb_chunks_per_thread;
      int nb_threads;
-     mpcomp_thread *t;
+     mpcomp_thread_t *t;
      int rank;
 
-     t = (mpcomp_thread *)sctk_openmp_thread_tls;
+     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);   
 
      /* Retrieve the number of threads and the rank of the current thread */
@@ -129,12 +129,12 @@ void __mpcomp_static_schedule_get_specific_chunk (int lb, int b, int incr,
 						  int chunk_size, int chunk_num,
 						  int *from, int *to)
 {
-     mpcomp_thread *t;
+     mpcomp_thread_t *t;
      int trip_count;
      int nb_threads;
      int rank;
 
-     t = (mpcomp_thread *)sctk_openmp_thread_tls;
+     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);  
 
      /* Retrieve the number of threads and the rank of this thread */
@@ -180,11 +180,11 @@ void __mpcomp_static_schedule_get_specific_chunk (int lb, int b, int incr,
 int __mpcomp_static_loop_begin (int lb, int b, int incr, int chunk_size,
 				int *from, int *to)
 {
-     mpcomp_thread *t;
+     mpcomp_thread_t *t;
      
      __mpcomp_init ();
 
-     t = (mpcomp_thread *)sctk_openmp_thread_tls;
+     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);  
 
      /* Automatic chunk size -> at most one chunk */
@@ -226,11 +226,11 @@ int __mpcomp_static_loop_begin (int lb, int b, int incr, int chunk_size,
 
 int __mpcomp_static_loop_next (int *from, int *to)
 {
-     mpcomp_thread *t;
+     mpcomp_thread_t *t;
      int nb_threads;
      int rank;
      
-     t = (mpcomp_thread *)sctk_openmp_thread_tls;
+     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);  
 
      /* Retrieve the number of threads and the rank of this thread */
@@ -272,12 +272,12 @@ void __mpcomp_static_loop_end_nowait ()
 int __mpcomp_ordered_static_loop_begin (int lb, int b, int incr, int chunk_size,
 					int *from, int *to)
 {
-     mpcomp_thread *t;
+     mpcomp_thread_t *t;
      int res;
 
      res = __mpcomp_static_loop_begin(lb, b, incr, chunk_size, from, to);
 
-     t = (mpcomp_thread *)sctk_openmp_thread_tls;
+     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);  
      
      t->current_ordered_iteration = *from;
@@ -287,12 +287,12 @@ int __mpcomp_ordered_static_loop_begin (int lb, int b, int incr, int chunk_size,
 
 int __mpcomp_ordered_static_loop_next(int *from, int *to)
 {
-     mpcomp_thread *t;
+     mpcomp_thread_t *t;
      int res ;
      
      res = __mpcomp_static_loop_next(from, to);
      
-     t = (mpcomp_thread *)sctk_openmp_thread_tls;
+     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);
      
      t->current_ordered_iteration = *from;

@@ -34,10 +34,10 @@
 */
 void __mpcomp_barrier_for_dyn(void)
 {
-  mpcomp_thread *t;
+  mpcomp_thread_t *t;
 
   /* Grab the info of the current thread */    
-  t = (mpcomp_thread *)sctk_openmp_thread_tls;
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
   /* Block only if I am not the only thread in the team */
@@ -52,7 +52,7 @@ void __mpcomp_barrier_for_dyn(void)
 */
 void __mpcomp_internal_barrier_for_dyn(mpcomp_thread_t *t)
 {
-   mpcomp_team_info *team;
+   mpcomp_team_t *team;
    mpcomp_mvp_t *mvp;
    mpcomp_node_t *c;
    int index;
@@ -170,8 +170,8 @@ void __mpcomp_internal_barrier_for_dyn(mpcomp_thread_t *t)
 */
 int __mpcomp_dynamic_loop_begin(int lb, int b, int incr, int chunk_size, int *from, int *to)
 {
-  mpcomp_thread *t;
-  mpcomp_team_info *team;
+  mpcomp_thread_t *t;
+  mpcomp_team_t *team;
   int rank;
   int index;
   int num_threads;
@@ -179,7 +179,7 @@ int __mpcomp_dynamic_loop_begin(int lb, int b, int incr, int chunk_size, int *fr
   int chunk_id;
 
   /* Grab the info of the current thread */    
-  t = (mpcomp_thread *)sctk_openmp_thread_tls;
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
   /* Number of threads in the current team */
@@ -499,13 +499,13 @@ int __mpcomp_dynamic_loop_next(int *from, int *to)
 */
 void __mpcomp_dynamic_loop_end()
 {
-  mpcomp_thread *t;
+  mpcomp_thread_t *t;
   mpcomp_thread_team *team; 
   int rank;
   int index;
 
   /* Grab the info of the current thread */
-  t = (mpcomp_thread *)sctk_openmp_thread_tls;
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
   /* Grab the rank of the thread */
@@ -530,7 +530,7 @@ void __mpcomp_dynamic_loop_end()
 */
 void __mpcomp_dynamic_loop_end_nowait()
 {
-  mpcomp_thread *t;
+  mpcomp_thread_t *t;
   mpcomp_thread_team *team;
   int i;
   int rank;
@@ -540,7 +540,7 @@ void __mpcomp_dynamic_loop_end_nowait()
   int nb_exited_threads;
 
   /* Grab the info of the current thread */    
-  t = (mpcomp_thread *)sctk_openmp_thread_tls;
+  t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
   sctk_assert(t != NULL);
 
   /* Grab the team info */
