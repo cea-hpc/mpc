@@ -28,11 +28,11 @@
 
 /************** BEGIN STACK ****************/
 
-mpcomp_stack * __mpcomp_create_stack( int max_elements ) {
-  mpcomp_stack * s ;
-  s = (mpcomp_stack *)malloc( sizeof( mpcomp_stack ) ) ;
+mpcomp_stack_t * __mpcomp_create_stack( int max_elements ) {
+  mpcomp_stack_t * s ;
+  s = (mpcomp_stack_t *)malloc( sizeof( mpcomp_stack_t ) ) ;
 
-  s->elements = (mpcomp_node **) malloc( max_elements * sizeof( mpcomp_node * ) ) ;
+  s->elements = (mpcomp_node_t **) malloc( max_elements * sizeof( mpcomp_node_t * ) ) ;
   sctk_assert( s->elements != NULL ) ;
   s->max_elements = max_elements ;
   s->n_elements = 0 ;
@@ -40,11 +40,11 @@ mpcomp_stack * __mpcomp_create_stack( int max_elements ) {
   return s ;
 }
 
-int __mpcomp_is_stack_empty( mpcomp_stack * s ) {
+int __mpcomp_is_stack_empty( mpcomp_stack_t * s ) {
   return ( s->n_elements == 0 ) ;
 }
 
-void __mpcomp_push( mpcomp_stack * s, mpcomp_node * n ) {
+void __mpcomp_push( mpcomp_stack_t * s, mpcomp_node_t * n ) {
 
   if ( s->n_elements == s->max_elements ) {
     /* Error */
@@ -55,8 +55,8 @@ void __mpcomp_push( mpcomp_stack * s, mpcomp_node * n ) {
   s->n_elements++ ;
 }
 
-mpcomp_node * __mpcomp_pop( mpcomp_stack * s ) {
-  mpcomp_node * n ;
+mpcomp_node_t * __mpcomp_pop( mpcomp_stack_t * s ) {
+  mpcomp_node_t * n ;
 
   if ( s->n_elements == 0 ) {
     return NULL ;
@@ -68,7 +68,7 @@ mpcomp_node * __mpcomp_pop( mpcomp_stack * s ) {
   return n ;
 }
 
-void __mpcomp_free_stack( mpcomp_stack * s ) {
+void __mpcomp_free_stack( mpcomp_stack_t * s ) {
   free( s->elements ) ;
 }
 
@@ -129,7 +129,7 @@ int __mpcomp_build_default_tree( mpcomp_instance_t * instance ) {
   int current_mvp ;
   int flag_level ;
   int current_mpc_vp;
-  mpcomp_node * root ;
+  mpcomp_node_t * root ;
 
   sctk_nodebug("__mpcomp_build_default_tree begin"); 
 
@@ -148,7 +148,7 @@ int __mpcomp_build_default_tree( mpcomp_instance_t * instance ) {
 
   /* Build the tree of this OpenMP instance */
 
-  root = (mpcomp_node *)sctk_malloc( sizeof( mpcomp_node ) ) ;
+  root = (mpcomp_node_t *)sctk_malloc( sizeof( mpcomp_node_t ) ) ;
   sctk_assert( root != NULL ) ;
 
   instance->root = root ;
@@ -169,7 +169,7 @@ INFO("OpenMP Compiling w/ NUMA tree (8 cores)")
       root->rank = -1 ;
       root->depth = 0 ;
       root->nb_children = 2 ;
-      root->child_type = CHILDREN_NODE ;
+      root->child_type = MPCOMP_CHILDREN_NODE ;
       root->lock = SCTK_SPINLOCK_INITIALIZER ;
       root->slave_running = 0 ;
 #if MPCOMP_USE_ATOMICS
@@ -184,17 +184,17 @@ INFO("OpenMP Compiling w/ NUMA tree (8 cores)")
       root->nb_chunks_empty_children = 0;
 #endif
       root->barrier_done = 0 ;
-      root->children.node = (mpcomp_node **)sctk_malloc( root->nb_children * sizeof( mpcomp_node *) ) ;
+      root->children.node = (mpcomp_node_t **)sctk_malloc( root->nb_children * sizeof( mpcomp_node_t *) ) ;
       sctk_assert( root->children.node != NULL ) ;
 
 
       for ( i = 0 ; i < root->nb_children ; i++ ) {
-	mpcomp_node * n ;
+	mpcomp_node_t * n ;
 	int j ;
 
 	if ( flag_level == -1 ) { flag_level = 1 ; }
 
-	n = (mpcomp_node *)sctk_malloc_on_node( sizeof( mpcomp_node ), i  ) ;
+	n = (mpcomp_node_t *)sctk_malloc_on_node( sizeof( mpcomp_node_t ), i  ) ;
 	sctk_assert( n != NULL ) ;
 
 	root->children.node[i] = n ;
@@ -203,7 +203,7 @@ INFO("OpenMP Compiling w/ NUMA tree (8 cores)")
 	n->rank = i ;
 	n->depth = 1 ;
 	n->nb_children = 4 ;
-	n->child_type = CHILDREN_LEAF ;
+	n->child_type = MPCOMP_CHILDREN_LEAF ;
 	n->lock = SCTK_SPINLOCK_INITIALIZER ;
 	n->slave_running = 0 ;
 #if MPCOMP_USE_ATOMICS
@@ -328,7 +328,7 @@ INFO("OpenMP Compiling w/ NUMA tree (8 cores)")
       root->nb_children = 4 ;
       root->min_index = 0 ;
       root->max_index = 31 ;
-      root->child_type = CHILDREN_NODE ;
+      root->child_type = MPCOMP_CHILDREN_NODE ;
       root->lock = SCTK_SPINLOCK_INITIALIZER ;
       root->slave_running = 0 ;
 #if MPCOMP_USE_ATOMICS
@@ -337,18 +337,18 @@ INFO("OpenMP Compiling w/ NUMA tree (8 cores)")
       root->barrier = 0 ;
 #endif
       root->barrier_done = 0 ;
-      root->children.node = (mpcomp_node **)sctk_malloc( root->nb_children * sizeof( mpcomp_node *) ) ;
+      root->children.node = (mpcomp_node_t **)sctk_malloc( root->nb_children * sizeof( mpcomp_node_t *) ) ;
       sctk_assert( root->children.node != NULL ) ;
 
       /* Depth 1 -> output degree 2*/
       for ( i = 0 ; i < root->nb_children ; i++ ) {
 
-	mpcomp_node * n ;
+	mpcomp_node_t * n ;
 	int j ;
 
 	if ( flag_level == -1 ) { flag_level = 1 ; }
 
-	n = (mpcomp_node *)sctk_malloc_on_node( sizeof( mpcomp_node ), i ) ;
+	n = (mpcomp_node_t *)sctk_malloc_on_node( sizeof( mpcomp_node_t ), i ) ;
 	sctk_assert( n != NULL ) ;
 
 	root->children.node[i] = n ;
@@ -359,7 +359,7 @@ INFO("OpenMP Compiling w/ NUMA tree (8 cores)")
 	n->nb_children = 2 ;
 	n->min_index = i*8 ;
 	n->max_index = (i+1)*8-1 ;
-	n->child_type = CHILDREN_NODE ;
+	n->child_type = MPCOMP_CHILDREN_NODE ;
 	n->lock = SCTK_SPINLOCK_INITIALIZER ;
 	n->slave_running = 0 ;
 #if MPCOMP_USE_ATOMICS
@@ -374,12 +374,12 @@ INFO("OpenMP Compiling w/ NUMA tree (8 cores)")
 
 	/* Depth 2 -> output degree 4*/
 	for ( j = 0 ; j < n->nb_children ; j++ ) {
-	  mpcomp_node * n2 ;
+	  mpcomp_node_t * n2 ;
 	  int k ;
 
 	  if ( flag_level == -1 ) { flag_level = 2 ; }
 
-	  n2 = (mpcomp_node *)sctk_malloc_on_node( sizeof( mpcomp_node ), i ) ;
+	  n2 = (mpcomp_node_t *)sctk_malloc_on_node( sizeof( mpcomp_node_t ), i ) ;
 	  sctk_assert( n2 != NULL ) ;
 
 	  n->children.node[j] = n2 ;
@@ -390,7 +390,7 @@ INFO("OpenMP Compiling w/ NUMA tree (8 cores)")
 	  n2->nb_children = 4 ;
 	  n2->min_index = i*8 + j*4;
 	  n2->max_index = i*8 + (j+1)*4 - 1 ;
-	  n2->child_type = CHILDREN_LEAF ;
+	  n2->child_type = MPCOMP_CHILDREN_LEAF ;
 	  n2->lock = SCTK_SPINLOCK_INITIALIZER ;
 	  n2->slave_running = 0 ;
 #if MPCOMP_USE_ATOMICS
@@ -520,7 +520,7 @@ INFO("NO USE ATOMICS ET MALLOC ON NODE POUR LES OPTIONS")
       root->nb_children = 4 ;
       root->min_index = 0 ;
       root->max_index = 31 ;
-      root->child_type = CHILDREN_NODE ;
+      root->child_type = MPCOMP_CHILDREN_NODE ;
       root->lock = SCTK_SPINLOCK_INITIALIZER ;
       root->slave_running = 0 ;
 #if MPCOMP_USE_ATOMICS
@@ -535,18 +535,18 @@ INFO("NO USE ATOMICS ET MALLOC ON NODE POUR LES OPTIONS")
       root->nb_chunks_empty_children = 0;
 #endif
       root->barrier_done = 0 ;
-      root->children.node = (mpcomp_node **)sctk_malloc( root->nb_children * sizeof( mpcomp_node *) ) ;
+      root->children.node = (mpcomp_node_t **)sctk_malloc( root->nb_children * sizeof( mpcomp_node_t *) ) ;
       sctk_assert( root->children.node != NULL );
 
       sctk_nodebug("Building tree for 32 cores: root has %d children", root->nb_children); 
 
       for ( i = 0 ; i < root->nb_children ; i++ ) {
-	mpcomp_node * n ;
+	mpcomp_node_t * n ;
 	int j ;
 
 	if ( flag_level == -1 ) { flag_level = 1 ; }
 
-	n = (mpcomp_node *)sctk_malloc_on_node( sizeof( mpcomp_node ), i ) ;
+	n = (mpcomp_node_t *)sctk_malloc_on_node( sizeof( mpcomp_node_t ), i ) ;
 	sctk_assert( n != NULL ) ;
 
 	root->children.node[i] = n ;
@@ -557,7 +557,7 @@ INFO("NO USE ATOMICS ET MALLOC ON NODE POUR LES OPTIONS")
 	n->nb_children = 8 ;
 	n->min_index = i*8 ;
 	n->max_index = (i+1)*8 ;
-	n->child_type = CHILDREN_LEAF ;
+	n->child_type = MPCOMP_CHILDREN_LEAF ;
 	n->lock = SCTK_SPINLOCK_INITIALIZER ;
 	n->slave_running = 0 ;
 #if MPCOMP_USE_ATOMICS
@@ -692,7 +692,7 @@ INFO("OpenMP Compiling w/ NUMA tree (128 cores)")
       root->nb_children = 4 ;
       root->min_index = 0 ;
       root->max_index = 127 ;
-      root->child_type = CHILDREN_NODE ;
+      root->child_type = MPCOMP_CHILDREN_NODE ;
       root->lock = SCTK_SPINLOCK_INITIALIZER ;
       root->slave_running = 0 ;
 #if MPCOMP_USE_ATOMICS
@@ -707,21 +707,21 @@ INFO("OpenMP Compiling w/ NUMA tree (128 cores)")
       root->nb_chunks_empty_children = 0;
 #endif
       root->barrier_done = 0 ;
-      root->children.node = (mpcomp_node **)sctk_malloc_on_node( root->nb_children * sizeof( mpcomp_node *), 0 ) ;
+      root->children.node = (mpcomp_node_t **)sctk_malloc_on_node( root->nb_children * sizeof( mpcomp_node_t *), 0 ) ;
       sctk_assert( root->children.node != NULL ) ;
 
       /* Depth 1 -> output degree 4*/
       for ( i = 0 ; i < root->nb_children ; i++ ) {
 
-	mpcomp_node * n ;
+	mpcomp_node_t * n ;
 	int j ;
 
 	if ( flag_level == -1 ) { flag_level = 1 ; }
 
 #if MPCOMP_MALLOC_ON_NODE
-	n = (mpcomp_node *)sctk_malloc_on_node( sizeof( mpcomp_node ), 4*i ) ;
+	n = (mpcomp_node_t *)sctk_malloc_on_node( sizeof( mpcomp_node_t ), 4*i ) ;
 #else
-	n = (mpcomp_node *)sctk_malloc_on_node( sizeof( mpcomp_node ), 0 ) ;
+	n = (mpcomp_node_t *)sctk_malloc_on_node( sizeof( mpcomp_node_t ), 0 ) ;
 #endif
 	sctk_assert( n != NULL ) ;
 
@@ -733,7 +733,7 @@ INFO("OpenMP Compiling w/ NUMA tree (128 cores)")
 	n->nb_children = 4 ;
 	n->min_index = i*32 ;
 	n->max_index = (i+1)*32-1 ;
-	n->child_type = CHILDREN_NODE ;
+	n->child_type = MPCOMP_CHILDREN_NODE ;
 	n->lock = SCTK_SPINLOCK_INITIALIZER ;
 	n->slave_running = 0 ;
 #if MPCOMP_USE_ATOMICS
@@ -749,24 +749,24 @@ INFO("OpenMP Compiling w/ NUMA tree (128 cores)")
 #endif
 	n->barrier_done = 0 ;
 #if MPCOMP_MALLOC_ON_NODE
-	n->children.node = (mpcomp_node **)sctk_malloc_on_node( n->nb_children* sizeof(mpcomp_node *), 4*i ) ;
+	n->children.node = (mpcomp_node_t **)sctk_malloc_on_node( n->nb_children* sizeof(mpcomp_node_t *), 4*i ) ;
 #else
-	n->children.node = (mpcomp_node **)sctk_malloc_on_node( n->nb_children* sizeof(mpcomp_node *), 0 ) ;
+	n->children.node = (mpcomp_node_t **)sctk_malloc_on_node( n->nb_children* sizeof(mpcomp_node_t *), 0 ) ;
 #endif
 
 	sctk_nodebug( "__mpcomp_instance_init: Tree node (%d) rang [ %d, %d ]", i, n->min_index, n->max_index ) ;
 
 	/* Depth 2 -> output degree 8*/
 	for ( j = 0 ; j < n->nb_children ; j++ ) {
-	  mpcomp_node * n2 ;
+	  mpcomp_node_t * n2 ;
 	  int k ;
 
 	  if ( flag_level == -1 ) { flag_level = 2 ; }
 
 #if MPCOMP_MALLOC_ON_NODE
-	  n2 = (mpcomp_node *)sctk_malloc_on_node( sizeof( mpcomp_node ), 4*i+j ) ;
+	  n2 = (mpcomp_node_t *)sctk_malloc_on_node( sizeof( mpcomp_node_t ), 4*i+j ) ;
 #else
-	  n2 = (mpcomp_node *)sctk_malloc_on_node( sizeof( mpcomp_node ), 0 ) ;
+	  n2 = (mpcomp_node_t *)sctk_malloc_on_node( sizeof( mpcomp_node_t ), 0 ) ;
 #endif
 	  sctk_assert( n2 != NULL ) ;
 
@@ -778,7 +778,7 @@ INFO("OpenMP Compiling w/ NUMA tree (128 cores)")
 	  n2->nb_children = 8 ;
 	  n2->min_index = i*32 + j*8;
 	  n2->max_index = i*32 + (j+1)*8 - 1 ;
-	  n2->child_type = CHILDREN_LEAF ;
+	  n2->child_type = MPCOMP_CHILDREN_LEAF ;
 	  n2->lock = SCTK_SPINLOCK_INITIALIZER ;
 	  n2->slave_running = 0 ;
 #if MPCOMP_USE_ATOMICS
@@ -977,14 +977,14 @@ INFO("OpenMP Compiling w/ NUMA tree (128 cores)")
 }
 
 int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int * degree ) {
-  mpcomp_node * root ; /* Root of the tree */
+  mpcomp_node_t * root ; /* Root of the tree */
   int current_mpc_vp; /* Current VP where the master is */
   int current_mvp ; /* Current microVP we are dealing with */
   int * order ; /* Topological sort of VPs where order[0] is the current VP */
-  mpcomp_stack * s ; /* Stack used to create the tree with a DFS */
+  mpcomp_stack_t * s ; /* Stack used to create the tree with a DFS */
   int max_stack_elements ; /* Max elements of the stack computed thanks to depth and degrees */
   int previous_depth ; /* What was the previously stacked depth (to check if depth is increasing or decreasing on the stack) */
-  mpcomp_node * target_node ; /* Target node to spin when creating the next mVP */
+  mpcomp_node_t * target_node ; /* Target node to spin when creating the next mVP */
   int i ;
 
 
@@ -1019,7 +1019,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 
   /* Build the tree of this OpenMP instance */
 
-  root = (mpcomp_node *)sctk_malloc( sizeof( mpcomp_node ) ) ;
+  root = (mpcomp_node_t *)sctk_malloc( sizeof( mpcomp_node_t ) ) ;
   sctk_assert( root != NULL ) ;
 
   instance->root = root ;
@@ -1047,7 +1047,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
   __mpcomp_push( s, root ) ;
 
   while ( !__mpcomp_is_stack_empty( s ) ) {
-    mpcomp_node * n ;
+    mpcomp_node_t * n ;
     int target_vp ;
     int target_numa ;
 
@@ -1073,7 +1073,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
     if ( n->depth == depth - 1 ) { 
 
       /* Children are leaves */
-      n->child_type = CHILDREN_LEAF ;
+      n->child_type = MPCOMP_CHILDREN_LEAF ;
       n->children.leaf = (mpcomp_mvp_t **) sctk_malloc_on_node( 
 	  n->nb_children * sizeof( mpcomp_mvp_t * ), target_numa ) ;
 
@@ -1096,7 +1096,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 
 	    instance->mvps[current_mvp]->tree_rank[ depth - 1 ] = i ;
 
-	    mpcomp_node * current_node = n ;
+	    mpcomp_node_t * current_node = n ;
 	    while ( current_node->father != NULL ) {
 
 	      instance->mvps[current_mvp]->
@@ -1173,15 +1173,15 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
       }
     } else {
       /* Children are nodes */
-      n->child_type = CHILDREN_NODE ;
-      n->children.node= (mpcomp_node **) sctk_malloc_on_node( 
-	  n->nb_children * sizeof( mpcomp_node * ), target_numa ) ;
+      n->child_type = MPCOMP_CHILDREN_NODE ;
+      n->children.node= (mpcomp_node_t **) sctk_malloc_on_node( 
+	  n->nb_children * sizeof( mpcomp_node_t * ), target_numa ) ;
 
       /* Traverse children in reverse order for correct ordering during the DFS */
       for ( i = n->nb_children - 1 ; i >= 0 ; i-- ) {
-	mpcomp_node * n2 ;
+	mpcomp_node_t * n2 ;
 
-	n2 = (mpcomp_node *)sctk_malloc_on_node( sizeof( mpcomp_node ), target_numa ) ;
+	n2 = (mpcomp_node_t *)sctk_malloc_on_node( sizeof( mpcomp_node_t ), target_numa ) ;
 
 	n->children.node[ i ] = n2 ;
 
@@ -1220,7 +1220,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 
 void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
 
-  mpcomp_stack * s ;
+  mpcomp_stack_t * s ;
   int i, j ;
 
 
@@ -1235,7 +1235,7 @@ void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
   fprintf( stderr, "==== Printing the current OpenMP tree ====\n" ) ;
 
   while ( !__mpcomp_is_stack_empty( s ) ) {
-    mpcomp_node * n ;
+    mpcomp_node_t * n ;
 
     n = __mpcomp_pop( s ) ;
     sctk_assert( n != NULL ) ;
@@ -1250,12 +1250,12 @@ void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
     fprintf( stderr, "Node %ld (@ %p)\n", n->rank, n ) ;
 
     switch( n->child_type ) {
-      case CHILDREN_NODE:
+      case MPCOMP_CHILDREN_NODE:
 	for ( i = n->nb_children - 1 ; i >= 0 ; i-- ) {
 	  __mpcomp_push( s, n->children.node[i] ) ;
 	}
 	break ;
-      case CHILDREN_LEAF:
+      case MPCOMP_CHILDREN_LEAF:
 	for ( i = 0 ; i < n->nb_children ; i++ ) {
 	  mpcomp_mvp_t * mvp ;
 

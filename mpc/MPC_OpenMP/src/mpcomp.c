@@ -375,7 +375,7 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps ) {
 void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     (void *), void *shared) {
   mpcomp_thread_t * t ;
-  mpcomp_node * root ;
+  mpcomp_node_t * root ;
   int num_threads ;
   int i ;
 
@@ -428,7 +428,7 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
   /* First level of parallel region (no nesting) */
   if ( t->team->depth == 0 ) {
     mpcomp_instance_t * instance ;
-    mpcomp_node * n ;			/* Temp node */
+    mpcomp_node_t * n ;			/* Temp node */
     int num_threads_per_child ;
     int max_index_with_more_threads ;
 
@@ -444,7 +444,7 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     num_threads_per_child = num_threads / instance->nb_mvps ;
     max_index_with_more_threads = (num_threads % instance->nb_mvps)-1 ;
 
-    mpcomp_node * new_root ; /* Where to spin for the end of the // region */
+    mpcomp_node_t * new_root ; /* Where to spin for the end of the // region */
 #if 1
     if ( instance->nb_mvps == 128 && num_threads <= 32 ) {
       if ( num_threads <= 8 ) {
@@ -469,7 +469,7 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
 
     new_root = n ;
 
-    while ( n->child_type != CHILDREN_LEAF ) {
+    while ( n->child_type != MPCOMP_CHILDREN_LEAF ) {
       int nb_children_involved = 1 ;
       /*
 	 n->children.node[0]->func = func ;
@@ -509,7 +509,7 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     n->shared = shared ;
     n->num_threads = num_threads ;
     /* Wake up children leaf */
-    sctk_assert( n->child_type == CHILDREN_LEAF ) ;
+    sctk_assert( n->child_type == MPCOMP_CHILDREN_LEAF ) ;
     int nb_leaves_involved = 1 ;
     for ( i = 1 ; i < n->nb_children ; i++ ) {
       int num_threads_leaf ;
@@ -603,8 +603,8 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
 void * mpcomp_slave_mvp_node( void * arg ) {
   int index ;
   mpcomp_mvp_t * mvp ; /* Current microVP */
-  mpcomp_node * n ; /* Spinning node + Traversing node */
-  mpcomp_node * root ; /* Tree root */
+  mpcomp_node_t * n ; /* Spinning node + Traversing node */
+  mpcomp_node_t * root ; /* Tree root */
 
   /* Get the current microVP */
   mvp = (mpcomp_mvp_t *)arg ;
@@ -632,7 +632,7 @@ void * mpcomp_slave_mvp_node( void * arg ) {
     sctk_nodebug( "mpcomp_slave_mvp_node: wake up -> go to children using function %p", n->func ) ;
 
     /* Wake up children node */
-    while ( n->child_type != CHILDREN_LEAF ) {
+    while ( n->child_type != MPCOMP_CHILDREN_LEAF ) {
       sctk_nodebug( "mpcomp_slave_mvp_node: children node passing function %p", n->func ) ;
 	n->children.node[0]->func = n->func ;
 	n->children.node[0]->shared = n->shared ;
@@ -652,7 +652,7 @@ void * mpcomp_slave_mvp_node( void * arg ) {
       n = n->children.node[0] ;
     }
     /* Wake up children leaf */
-    sctk_assert( n->child_type == CHILDREN_LEAF ) ;
+    sctk_assert( n->child_type == MPCOMP_CHILDREN_LEAF ) ;
     sctk_nodebug( "mpcomp_slave_mvp_node: children leaf will use %p", n->func ) ;
     for ( i = 1 ; i < n->nb_children ; i++ ) {
       /*

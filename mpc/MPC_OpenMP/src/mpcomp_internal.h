@@ -59,8 +59,31 @@ extern "C"
 #define MPCOMP_CHUNKS_NOT_AVAIL 1
 #define MPCOMP_CHUNKS_AVAIL     2
 
-#define MPCOMP_STACK_ELEM_NODE 1
-#define MPCOMP_STACK_ELEM_LEAF 2
+
+
+/*****************
+ ************ ENUM 
+ *****************/
+
+     /* Type of element in the stack for dynamic work stealing */
+     typedef enum mpcomp_elem_stack_type_t {
+	  MPCOMP_ELEM_STACK_NODE = 1,
+	  MPCOMP_ELEM_STACK_LEAF = 2,
+     } mpcomp_elem_stack_type_t;
+
+     /* Type of children in the topology tree */
+     typedef enum mpcomp_children_t {
+	  MPCOMP_CHILDREN_NODE = 1,
+	  MPCOMP_CHILDREN_LEAF = 2,
+     } mpcomp_children_t;
+
+
+     typedef enum mpcomp_context_t {
+	  MPCOMP_CONTEXT_IN_ORDER = 1,
+	  MPCOMP_CONTEXT_OUT_OF_ORDER_MAIN = 2,
+	  MPCOMP_CONTEXT_OUT_OF_ORDER_SUB = 3,
+     } mpcomp_context_t;
+
 
 
 /*****************
@@ -98,8 +121,8 @@ extern "C"
 	  union node_leaf {
 	       struct mpcomp_node_s *node;
 	       struct mpcomp_mvp_s *leaf;
-	  } elem;                            /* Stack element */
-	  int type;                          /* Type of the 'elem' field */
+	  } elem;                               /* Stack element */
+	  enum mpcomp_elem_stack_type_t type;   /* Type of the 'elem' field */
      } mpcomp_elem_stack_t;
 
      
@@ -107,7 +130,7 @@ extern "C"
      typedef struct mpcomp_stack_node_leaf_s
      {
 	  struct mpcomp_elem_stack_s **elements;   /* List of elements */
-	  enum children_t *child_type;             /* Type of childs : nodes or leafs */
+	  enum mpcomp_children_t *child_type;      /* Type of childs : nodes or leafs */
 	  int max_elements;                        /* Number of max elements */
 	  int n_elements;                          /* Corresponds to the head of the stack */
      } mpcomp_stack_node_leaf_t;
@@ -203,7 +226,8 @@ extern "C"
 
 
      /* OpenMP Micro VP */
-     typedef struct mpcomp_mvp_s {
+     typedef struct mpcomp_mvp_s
+     {
 	  sctk_mctx_t vp_context;   /* Context including registers, stack pointer, ... */
 	  sctk_thread_t pid; 	    /* Thread ID */
 	  int nb_threads;           /* Total number of threads running on the Micro VP */
@@ -229,197 +253,174 @@ extern "C"
      } mpcomp_mvp_t;
 
  
-     typedef enum children_t {
-	  CHILDREN_NODE = 1,
-	  CHILDREN_LEAF = 2,
-     } children_t;
 
+     /* OpenMP Node */
+     typedef struct mpcomp_node_s
+     {
+	  struct mpcomp_node_s *father;   /* Father in the topology tree */
+	  long rank;                      /* Rank among children of my father */
+	  int depth;                      /* Depth in the tree */
+	  int nb_children;                /* Number of children */
 
-     typedef enum context_t {
-	  MPCOMP_CONTEXT_IN_ORDER = 1,
-	  MPCOMP_CONTEXT_OUT_OF_ORDER_MAIN = 2,
-	  MPCOMP_CONTEXT_OUT_OF_ORDER_SUB = 3,
-     } context_t ;
-
-
-/******* OPENMP INFO NODE ********/
-     struct mpcomp_node_s {
-	  struct mpcomp_node_s * father ;
-	  long rank ; /* Rank among children of my father */
-	  int depth ; /* Depth in the tree */
-	  int nb_children ; /* Number of children */
 	  /* The following indices correspond to the 'rank' value in microVPs */
-	  int min_index ;  /* Flat min index of leaves in this subtree */
-	  int max_index ; /* Flat max index of leaves in this subtree */
-	  mpcomp_team_t * team_info ; /* Information on the whole team */
-	  children_t child_type ; /* Kind of children (node or leaf) */
-	  union node_or_leaf {
-	       struct mpcomp_node_s ** node ;
-	       struct mpcomp_mvp_s ** leaf ;
-	  } children ;
-	  sctk_spinlock_t lock;	/* Lock for structure updates */
-	  char pad0[64];
-	  volatile int slave_running ;
-	  char pad1[64];
-#if MPCOMP_USE_ATOMICS
-	  sctk_atomics_int barrier;	/* Barrier for the child team */
-	  sctk_atomics_int chunks_avail; /* Flag for presence of chunks under current node */
-	  sctk_atomics_int nb_chunks_empty_children; /* Counter for presence of chunks */
-#else
-	  volatile long barrier;	/* Barrier for the child team */
-	  volatile long chunks_avail; /* Flag for presence of chunks under current node */
-	  volatile long nb_chunks_empty_children; /* Counter for presence of chunks */
-#endif
-	  char pad2[64];
-	  volatile long barrier_done;	/* Is the barrier (for the child team) over? */
-	  char pad3[64];
-	  volatile long barrier_num_threads;	/* Number of threads involved in the barrier */
-	  char pad4[64];
+	  int min_index;   /* Flat min index of leaves in this subtree */
+	  int max_index;   /* Flat max index of leaves in this subtree */
 
-	  int num_threads ; /* Number of threads in the current team */
+	  mpcomp_team_t *team_info;   /* Information on the whole team */
+
+	  mpcomp_children_t child_type;       /* Kind of children (node or leaf) */
+	  union node_or_leaf {
+	       struct mpcomp_node_s **node;
+	       struct mpcomp_mvp_s **leaf;
+	  } children;                         /* Children list */
+
+	  sctk_spinlock_t lock;	        /* Lock for structure updates */
+	  char pad0[64];                /* Padding */
+	  volatile int slave_running;
+	  char pad1[64];                /* Padding */
+
+#if MPCOMP_USE_ATOMICS
+	  sctk_atomics_int barrier;	                /* Barrier for the child team */
+	  sctk_atomics_int chunks_avail;                /* Flag for presence of chunks 
+							   under current node */
+	  sctk_atomics_int nb_chunks_empty_children;    /* Counter for presence of chunks */
+#else
+	  volatile long barrier;	                /* Barrier for the child team */
+	  volatile long chunks_avail;                   /* Flag for presence of chunks 
+							   under current node */
+	  volatile long nb_chunks_empty_children;       /* Counter for presence of chunks */
+#endif
+
+	  char pad2[64];                       /* Padding */
+	  volatile long barrier_done;          /* Is the barrier (for the child team) over? */
+	  char pad3[64];                       /* Padding */
+	  volatile long barrier_num_threads;   /* Number of threads involved in the barrier */
+	  char pad4[64];                       /* Padding */
+
+	  int num_threads;          /* Number of threads in the current team */
 	  void *(*func) (void *);
 	  void *shared;
-
-     } ;
-
-     typedef struct mpcomp_node_s mpcomp_node ;
-
-/************** BEGIN HEADER ****************/
-
-     struct mpcomp_stack {
-	  mpcomp_node ** elements ;
-	  int max_elements ;
-	  int n_elements ; /* corresponds to the head of the stack */
-     } ;
-
-     typedef struct mpcomp_stack mpcomp_stack ;
+     } mpcomp_node_t;
 
 
+     /* Stack (maybe the same that mpcomp_stack_node_leaf_s structure) */
+     typedef struct mpcomp_stack {
+	  mpcomp_node_t **elements;
+	  int max_elements;
+	  int n_elements;             /* Corresponds to the head of the stack */
+     } mpcomp_stack_t;
 
-/************** END HEADER ****************/
 
 /*****************
  ****** VARIABLES 
  *****************/
 
+     extern __thread void *sctk_openmp_thread_tls;   /* Current thread pointer */
 
-     extern __thread void *sctk_openmp_thread_tls ;
+
 
 /*****************
  ****** FUNCTIONS  
  *****************/
-
-/* inline */
-
-     static inline void __mpcomp_team_init( mpcomp_team_t * team_info ) {
-	  int i ;
+     
+     static inline void __mpcomp_team_init(mpcomp_team_t *team_info)
+     {
+	  int i;
 
 	  /* -- TEAM INFO -- */
-	  team_info->depth = 0 ;
+	  team_info->depth = 0;
 
 	  /* -- SINGLE CONSTRUCT -- */
-	  team_info->single_last_current = MPCOMP_MAX_ALIVE_SINGLE ;
+	  team_info->single_last_current = MPCOMP_MAX_ALIVE_SINGLE;
 #if MPCOMP_USE_ATOMICS
-	  for ( i = 0 ; i < MPCOMP_MAX_ALIVE_SINGLE ; i++ ) {
-	       sctk_atomics_store_int( 
-		    &(team_info->single_nb_threads_entered[i].i), 0 ) ;
-	  }
-	  sctk_atomics_store_int( 
-	       &(team_info->single_nb_threads_entered[MPCOMP_MAX_ALIVE_SINGLE].i), MPCOMP_MAX_THREADS ) ;
-
-	  sctk_nodebug( "__mpcomp_team_init: Filling cell %d with %d", 
-			MPCOMP_MAX_ALIVE_SINGLE, MPCOMP_MAX_THREADS ) ;
+	  for (i=0; i<MPCOMP_MAX_ALIVE_SINGLE; i++)
+	       sctk_atomics_store_int(&(team_info->single_nb_threads_entered[i].i), 0);
+	  sctk_atomics_store_int(&(team_info->single_nb_threads_entered[MPCOMP_MAX_ALIVE_SINGLE].i), 
+				 MPCOMP_MAX_THREADS);
+	  sctk_nodebug("__mpcomp_team_init: Filling cell %d with %d", 
+		       MPCOMP_MAX_ALIVE_SINGLE, MPCOMP_MAX_THREADS);
 #else
 	  sctk_debug("__mpcomp_team_init: no atomics!");
-	  for ( i = 0 ; i < MPCOMP_MAX_ALIVE_SINGLE ; i++ ) {
-	       team_info->single_nb_threads_entered[i] = 0 ;
-	       team_info->single_lock_enter[ i ] = SCTK_SPINLOCK_INITIALIZER ;
+	  for (i=0 ; i<MPCOMP_MAX_ALIVE_SINGLE; i++) {
+	       team_info->single_nb_threads_entered[i] = 0;
+	       team_info->single_lock_enter[i] = SCTK_SPINLOCK_INITIALIZER;
 	  }
-	  team_info->single_nb_threads_entered[MPCOMP_MAX_ALIVE_SINGLE] = MPCOMP_NOWAIT_STOP_SYMBOL ;
-	  team_info->single_lock_enter[ MPCOMP_MAX_ALIVE_SINGLE ] = SCTK_SPINLOCK_INITIALIZER ;
+	  team_info->single_nb_threads_entered[MPCOMP_MAX_ALIVE_SINGLE] = MPCOMP_NOWAIT_STOP_SYMBOL;
+	  team_info->single_lock_enter[MPCOMP_MAX_ALIVE_SINGLE] = SCTK_SPINLOCK_INITIALIZER;
 #endif
-
-	  team_info->single_first_copyprivate = 0 ;
-	  team_info->single_copyprivate_data = NULL ;
-	  team_info->single_nb_threads_stopped = 0 ;
+	  team_info->single_first_copyprivate = 0;
+	  team_info->single_copyprivate_data = NULL;
+	  team_info->single_nb_threads_stopped = 0;
 
 	  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
-	  team_info->for_dyn_last_current = MPCOMP_MAX_ALIVE_FOR_DYN ;
-	  for ( i = 0 ; i < MPCOMP_MAX_ALIVE_FOR_DYN ; i++ ) {
-	       sctk_atomics_store_int( 
-		    &(team_info->for_dyn_nb_threads_exited[i].i), 0 ) ;
-	  }
-	  sctk_atomics_store_int( 
-	       &(team_info->for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN].i), 
-	       MPCOMP_NOWAIT_STOP_SYMBOL ) ;
-
-	  //sctk_atomics_store_int( &(team_info->stats_stolen_chunks), 0);
-	  //sctk_atomics_store_int( &(team_info->stats_last_mvp_chunk), 0);
+	  team_info->for_dyn_last_current = MPCOMP_MAX_ALIVE_FOR_DYN;
+	  for (i=0; i<MPCOMP_MAX_ALIVE_FOR_DYN; i++)
+	       sctk_atomics_store_int(&(team_info->for_dyn_nb_threads_exited[i].i), 0);
+	  sctk_atomics_store_int(&(team_info->for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN].i),
+				 MPCOMP_NOWAIT_STOP_SYMBOL);
      }
 
-     static inline void __mpcomp_thread_init( mpcomp_thread_t * t, mpcomp_icv_t icvs, mpcomp_instance_t * instance,
-					      mpcomp_team_t * team_info ) {
-	  int i ;
+     static inline void __mpcomp_thread_init(mpcomp_thread_t *t, mpcomp_icv_t icvs,
+					     mpcomp_instance_t *instance,
+					     mpcomp_team_t *team_info)
+     {
+	  int i;
 
-	  t->icvs = icvs ;
+	  t->icvs = icvs;
 	  t->stack = NULL;
-	  t->rank = 0 ;
-	  t->num_threads = 1 ;
-	  t->mvp = NULL ;
-	  t->done = 0 ;
-	  t->children_instance = instance ;
-	  t->team = team_info ;
-	  t->hierarchical_tls = NULL ;
-	  t->single_current = -1 ;
+	  t->rank = 0;
+	  t->num_threads = 1;
+	  t->mvp = NULL;
+	  t->done = 0;
+	  t->children_instance = instance;
+	  t->team = team_info;
+	  t->single_current = -1;
 
 	  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
 	  t->tree_stack = NULL;
 	  t->stolen_mvp = NULL;
-	  //t->stolen_chunk_id = -1; //AMAHEO
-	  //t->start_steal_chunk = -1; //AMAHEO
 	  t->start_mvp_index = -1; //AMAHEO
      }
 
-/* mpcomp.c */
-     void __mpcomp_init (void);
-     void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps ) ;
-     void in_order_scheduler( mpcomp_mvp_t * mvp ) ;
-     void * mpcomp_slave_mvp_node( void * arg ) ;
-     void * mpcomp_slave_mvp_leaf( void * arg ) ;
-     void __mpcomp_internal_half_barrier() ;
-     void __mpcomp_internal_full_barrier() ;
-     void __mpcomp_barrier() ;
+     /* mpcomp.c */
+     void __mpcomp_init(void);
+     void __mpcomp_instance_init(mpcomp_instance_t *instance, int nb_mvps);
+     void in_order_scheduler(mpcomp_mvp_t * mvp);
+     void * mpcomp_slave_mvp_node(void *arg);
+     void * mpcomp_slave_mvp_leaf(void *arg);
+     void __mpcomp_internal_half_barrier();
+     void __mpcomp_internal_full_barrier();
+     void __mpcomp_barrier();
 
-/* mpcomp_tree.c */
-     int __mpcomp_check_tree_parameters( int n_leaves, int depth, int * degree ) ;
-     int __mpcomp_build_default_tree( mpcomp_instance_t * instance ) ;
-     int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, int * degree ) ;
-     int __mpcomp_check_tree_coherency( mpcomp_instance_t * instance ) ;
-     void __mpcomp_print_tree( mpcomp_instance_t * instance ) ;
+     /* mpcomp_tree.c */
+     int __mpcomp_check_tree_parameters(int n_leaves, int depth, int *degree);
+     int __mpcomp_build_default_tree(mpcomp_instance_t *instance);
+     int __mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth, int *degree);
+     int __mpcomp_check_tree_coherency(mpcomp_instance_t *instance);
+     void __mpcomp_print_tree(mpcomp_instance_t *instance);
 
-/* mpcomp_loop_dyn.c */
-     int __mpcomp_dynamic_steal (int *from, int *to);
-     int __mpcomp_dynamic_loop_begin (int lb, int b, int incr,
+     /* mpcomp_loop_dyn.c */
+     int __mpcomp_dynamic_steal(int *from, int *to);
+     int __mpcomp_dynamic_loop_begin(int lb, int b, int incr,
 				      int chunk_size, int *from, int *to);
-     int __mpcomp_dynamic_loop_next (int *from, int *to) ;
-     void __mpcomp_dynamic_loop_end () ;
-     void __mpcomp_dynamic_loop_end_nowait () ;
+     int __mpcomp_dynamic_loop_next(int *from, int *to);
+     void __mpcomp_dynamic_loop_end();
+     void __mpcomp_dynamic_loop_end_nowait();
 
-/* Stack primitives */
-     mpcomp_stack * __mpcomp_create_stack( int max_elements ) ;
-     int __mpcomp_is_stack_empty( mpcomp_stack * s ) ;
-     void __mpcomp_push( mpcomp_stack * s, mpcomp_node * n ) ;
-     mpcomp_node * __mpcomp_pop( mpcomp_stack * s ) ;
-     void __mpcomp_free_stack( mpcomp_stack * s ) ;
+     /* Stack primitives */
+     mpcomp_stack_t * __mpcomp_create_stack(int max_elements);
+     int __mpcomp_is_stack_empty(mpcomp_stack_t *s);
+     void __mpcomp_push(mpcomp_stack_t *s, mpcomp_node_t *n);
+     mpcomp_node_t * __mpcomp_pop(mpcomp_stack_t *s);
+     void __mpcomp_free_stack(mpcomp_stack_t *s);
 
-//#if 0
-     mpcomp_stack_node_leaf_t * __mpcomp_create_stack_node_leaf( int max_elements ) ;
-     int __mpcomp_is_stack_node_leaf_empty( mpcomp_stack_node_leaf_t * s ) ;
-     void __mpcomp_push_node( mpcomp_stack_node_leaf_t * s, mpcomp_node * n ) ;
-     void __mpcomp_push_leaf( mpcomp_stack_node_leaf_t * s, mpcomp_mvp_t * n ) ;
-     mpcomp_elem_stack_t * __mpcomp_pop_elem_stack( mpcomp_stack_node_leaf_t * s ) ;
-     void __mpcomp_free_stack_node_leaf( mpcomp_stack_node_leaf_t * s ) ;
-//#endif
+     mpcomp_stack_node_leaf_t * __mpcomp_create_stack_node_leaf(int max_elements);
+     int __mpcomp_is_stack_node_leaf_empty(mpcomp_stack_node_leaf_t *s);
+     void __mpcomp_push_node(mpcomp_stack_node_leaf_t *s, mpcomp_node_t *n);
+     void __mpcomp_push_leaf(mpcomp_stack_node_leaf_t *s, mpcomp_mvp_t *n);
+     mpcomp_elem_stack_t * __mpcomp_pop_elem_stack(mpcomp_stack_node_leaf_t *s);
+     void __mpcomp_free_stack_node_leaf(mpcomp_stack_node_leaf_t *s);
+
 
      void __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
 						int lb, int b, int incr,

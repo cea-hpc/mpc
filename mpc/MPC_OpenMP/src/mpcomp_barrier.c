@@ -63,7 +63,7 @@ void
 __mpcomp_internal_half_barrier ( mpcomp_mvp_t * mvp )
 {
 
-  mpcomp_node * c ;
+  mpcomp_node_t * c ;
   long b ;
   long b_done ;
 
@@ -118,7 +118,7 @@ void
 __mpcomp_internal_full_barrier ( mpcomp_mvp_t * mvp )
 {
 
-  mpcomp_node * c ;
+  mpcomp_node_t * c ;
   long b ;
   long b_done ;
 
@@ -185,7 +185,7 @@ __mpcomp_internal_full_barrier ( mpcomp_mvp_t * mvp )
   }
 
   /* Step 3 - Go down */
-  while ( c->child_type != CHILDREN_LEAF )  {
+  while ( c->child_type != MPCOMP_CHILDREN_LEAF )  {
     c = c->children.node[ mvp->tree_rank[ c->depth ] ] ;
     c->barrier_done++ ; /* No need to lock I think... */
   }

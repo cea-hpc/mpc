@@ -159,7 +159,7 @@ void __mpcomp_internal_barrier_for_dyn(mpcomp_thread_t *t)
 
 
    /* Step 3: Go down in the tree to wake up the children */
-   while (c->child_type != CHILDREN_LEAF) {
+   while (c->child_type != MPCOMP_CHILDREN_LEAF) {
        c = c->children.node[mvp->tree_rank[c->depth]];
        c->barrier_done++;
    }
