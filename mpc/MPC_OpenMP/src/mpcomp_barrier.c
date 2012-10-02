@@ -33,11 +33,11 @@
 void
 __mpcomp_barrier (void)
 {
-  mpcomp_thread * t ;
-  mpcomp_mvp * mvp ;
+  mpcomp_thread_t * t ;
+  mpcomp_mvp_t * mvp ;
 
   /* Grab info on the current thread */
-  t = (mpcomp_thread *) sctk_openmp_thread_tls ;
+  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
   sctk_nodebug( "__mpcomp_barrier: thread %p", t ) ;
@@ -60,10 +60,10 @@ __mpcomp_barrier (void)
 
 /* Half barrier for the end of a parallel region */
 void
-__mpcomp_internal_half_barrier ( mpcomp_mvp * mvp )
+__mpcomp_internal_half_barrier ( mpcomp_mvp_t * mvp )
 {
 
-  mpcomp_node * c ;
+  mpcomp_node_t * c ;
   long b ;
   long b_done ;
 
@@ -115,10 +115,10 @@ __mpcomp_internal_half_barrier ( mpcomp_mvp * mvp )
 
 /* Barrier for all threads of the same team */
 void
-__mpcomp_internal_full_barrier ( mpcomp_mvp * mvp )
+__mpcomp_internal_full_barrier ( mpcomp_mvp_t * mvp )
 {
 
-  mpcomp_node * c ;
+  mpcomp_node_t * c ;
   long b ;
   long b_done ;
 
@@ -185,7 +185,7 @@ __mpcomp_internal_full_barrier ( mpcomp_mvp * mvp )
   }
 
   /* Step 3 - Go down */
-  while ( c->child_type != CHILDREN_LEAF )  {
+  while ( c->child_type != MPCOMP_CHILDREN_LEAF )  {
     c = c->children.node[ mvp->tree_rank[ c->depth ] ] ;
     c->barrier_done++ ; /* No need to lock I think... */
   }

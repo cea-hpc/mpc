@@ -295,13 +295,13 @@ static inline void __mpcomp_read_env_variables() {
 void __mpcomp_init() {
   static volatile int done = 0;
   static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
-  mpcomp_team_info * team_info ;
+  mpcomp_team_t * team_info ;
 
   /* Need to initialize the current team */
   if ( sctk_openmp_thread_tls == NULL ) {
-    mpcomp_instance * instance ;
-    mpcomp_thread * t ;
-    icv_t icvs;
+    mpcomp_instance_t * instance ;
+    mpcomp_thread_t * t ;
+    mpcomp_icv_t icvs;
 
     sctk_thread_mutex_lock (&lock);
     /* Need to initialize the whole runtime (environment variables) */
@@ -312,14 +312,14 @@ void __mpcomp_init() {
 
 
     /* Allocate an instance of OpenMP */
-    instance = (mpcomp_instance *)sctk_malloc( sizeof( mpcomp_instance ) ) ;
+    instance = (mpcomp_instance_t *)sctk_malloc( sizeof( mpcomp_instance_t ) ) ;
     sctk_assert( instance != NULL ) ;
 
     /* Initialization of the OpenMP instance */
     __mpcomp_instance_init( instance, OMP_MICROVP_NUMBER ) ;
 
     /* Allocate information for the sequential region */
-    t = (mpcomp_thread *)sctk_malloc( sizeof(mpcomp_thread) ) ;
+    t = (mpcomp_thread_t *)sctk_malloc( sizeof(mpcomp_thread_t) ) ;
     sctk_assert( t != NULL ) ;
 
     /* Initialize default ICVs */
@@ -332,11 +332,11 @@ void __mpcomp_init() {
     icvs.nmicrovps_var = OMP_MICROVP_NUMBER ;
 
     /* Initialize team information */
-    team_info = (mpcomp_team_info *)sctk_malloc( sizeof( mpcomp_team_info ) ) ;
+    team_info = (mpcomp_team_t *)sctk_malloc( sizeof( mpcomp_team_t ) ) ;
     sctk_assert( team_info != NULL ) ;
 
     /* Team initialization */
-    __mpcomp_team_info_init( team_info ) ;
+    __mpcomp_team_init( team_info ) ;
 
     // TODO: these lines should be in a function __mpcomp_thread_init(t)
     __mpcomp_thread_init( t, icvs, instance, team_info ) ;
@@ -353,12 +353,12 @@ void __mpcomp_init() {
 }
 
 
-void __mpcomp_instance_init( mpcomp_instance * instance, int nb_mvps ) {
+void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps ) {
 
   sctk_nodebug( "__mpcomp_instance_init: Entering..." ) ;
 
   /* Alloc memory for 'nb_mvps' microVPs */
-  instance->mvps = (mpcomp_mvp **)sctk_malloc( nb_mvps * sizeof( mpcomp_mvp * ) ) ;
+  instance->mvps = (mpcomp_mvp_t **)sctk_malloc( nb_mvps * sizeof( mpcomp_mvp_t * ) ) ;
   sctk_assert( instance->mvps != NULL ) ;
 
   instance->nb_mvps = nb_mvps ;
@@ -374,8 +374,8 @@ void __mpcomp_instance_init( mpcomp_instance * instance, int nb_mvps ) {
 
 void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     (void *), void *shared) {
-  mpcomp_thread * t ;
-  mpcomp_node * root ;
+  mpcomp_thread_t * t ;
+  mpcomp_node_t * root ;
   int num_threads ;
   int i ;
 
@@ -383,7 +383,7 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
 
   sctk_nodebug( "__mpcomp_start_parallel_region: ========== NEW PARALLEL REGION (f %p) =============", func ) ;
 
-  t = (mpcomp_thread *) sctk_openmp_thread_tls ;
+  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
   /* Compute the number of threads for this parallel region */
@@ -427,8 +427,8 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
 
   /* First level of parallel region (no nesting) */
   if ( t->team->depth == 0 ) {
-    mpcomp_instance * instance ;
-    mpcomp_node * n ;			/* Temp node */
+    mpcomp_instance_t * instance ;
+    mpcomp_node_t * n ;			/* Temp node */
     int num_threads_per_child ;
     int max_index_with_more_threads ;
 
@@ -444,7 +444,7 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     num_threads_per_child = num_threads / instance->nb_mvps ;
     max_index_with_more_threads = (num_threads % instance->nb_mvps)-1 ;
 
-    mpcomp_node * new_root ; /* Where to spin for the end of the // region */
+    mpcomp_node_t * new_root ; /* Where to spin for the end of the // region */
 #if 1
     if ( instance->nb_mvps == 128 && num_threads <= 32 ) {
       if ( num_threads <= 8 ) {
@@ -469,7 +469,7 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
 
     new_root = n ;
 
-    while ( n->child_type != CHILDREN_LEAF ) {
+    while ( n->child_type != MPCOMP_CHILDREN_LEAF ) {
       int nb_children_involved = 1 ;
       /*
 	 n->children.node[0]->func = func ;
@@ -509,7 +509,7 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     n->shared = shared ;
     n->num_threads = num_threads ;
     /* Wake up children leaf */
-    sctk_assert( n->child_type == CHILDREN_LEAF ) ;
+    sctk_assert( n->child_type == MPCOMP_CHILDREN_LEAF ) ;
     int nb_leaves_involved = 1 ;
     for ( i = 1 ; i < n->nb_children ; i++ ) {
       int num_threads_leaf ;
@@ -602,12 +602,12 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
  */
 void * mpcomp_slave_mvp_node( void * arg ) {
   int index ;
-  mpcomp_mvp * mvp ; /* Current microVP */
-  mpcomp_node * n ; /* Spinning node + Traversing node */
-  mpcomp_node * root ; /* Tree root */
+  mpcomp_mvp_t * mvp ; /* Current microVP */
+  mpcomp_node_t * n ; /* Spinning node + Traversing node */
+  mpcomp_node_t * root ; /* Tree root */
 
   /* Get the current microVP */
-  mvp = (mpcomp_mvp *)arg ;
+  mvp = (mpcomp_mvp_t *)arg ;
 
   /* Capture the node to spin on */
   n = mvp->to_run ;
@@ -632,7 +632,7 @@ void * mpcomp_slave_mvp_node( void * arg ) {
     sctk_nodebug( "mpcomp_slave_mvp_node: wake up -> go to children using function %p", n->func ) ;
 
     /* Wake up children node */
-    while ( n->child_type != CHILDREN_LEAF ) {
+    while ( n->child_type != MPCOMP_CHILDREN_LEAF ) {
       sctk_nodebug( "mpcomp_slave_mvp_node: children node passing function %p", n->func ) ;
 	n->children.node[0]->func = n->func ;
 	n->children.node[0]->shared = n->shared ;
@@ -652,7 +652,7 @@ void * mpcomp_slave_mvp_node( void * arg ) {
       n = n->children.node[0] ;
     }
     /* Wake up children leaf */
-    sctk_assert( n->child_type == CHILDREN_LEAF ) ;
+    sctk_assert( n->child_type == MPCOMP_CHILDREN_LEAF ) ;
     sctk_nodebug( "mpcomp_slave_mvp_node: children leaf will use %p", n->func ) ;
     for ( i = 1 ; i < n->nb_children ; i++ ) {
       /*
@@ -717,10 +717,10 @@ void * mpcomp_slave_mvp_node( void * arg ) {
   Spinning on a variables inside the microVP.
  */
 void * mpcomp_slave_mvp_leaf( void * arg ) {
-  mpcomp_mvp * mvp ;
+  mpcomp_mvp_t * mvp ;
 
   /* Grab the current microVP */
-  mvp = (mpcomp_mvp *)arg ;
+  mvp = (mpcomp_mvp_t *)arg ;
 
   sctk_nodebug( "mpcomp_slave_mvp_leaf: Polling address %p -> father is %p",
       &(mvp->slave_running), mvp->father ) ;
@@ -797,7 +797,7 @@ INFO("__mpcomp_flush: need to call mpcomp_macro_scheduler")
   return NULL ;
 }
 
-void in_order_scheduler( mpcomp_mvp * mvp ) {
+void in_order_scheduler( mpcomp_mvp_t * mvp ) {
 
   /*
      for i = 0 ; i < #threads in this mVP ; i++ )
@@ -816,7 +816,7 @@ void in_order_scheduler( mpcomp_mvp * mvp ) {
 
     sctk_openmp_thread_tls = &mvp->threads[i];
 
-    sctk_assert( ((mpcomp_thread*)sctk_openmp_thread_tls)->team != NULL ) ;
+    sctk_assert( ((mpcomp_thread_t *)sctk_openmp_thread_tls)->team != NULL ) ;
     sctk_assert( mvp != NULL);  
 
     mvp->func( mvp->shared ) ;
@@ -869,7 +869,7 @@ void out_of_order_scheduler() {
 int
 mpcomp_get_num_threads (void)
 {
-  mpcomp_thread * t ;
+  mpcomp_thread_t * t ;
 
   __mpcomp_init ();
 
@@ -884,7 +884,7 @@ mpcomp_get_num_threads (void)
 void
 mpcomp_set_num_threads(int num_threads) 
 {
- mpcomp_thread * t;
+ mpcomp_thread_t * t;
 
  __mpcomp_init ();
 
@@ -907,7 +907,7 @@ mpcomp_set_num_threads(int num_threads)
 int
 mpcomp_get_thread_num (void)
 {
-  mpcomp_thread * t ;
+  mpcomp_thread_t * t ;
 
   __mpcomp_init ();
 
@@ -928,7 +928,7 @@ mpcomp_get_thread_num (void)
 int
 mpcomp_get_max_threads (void)
 {
-  mpcomp_thread * t ;
+  mpcomp_thread_t * t ;
 
   __mpcomp_init ();
 

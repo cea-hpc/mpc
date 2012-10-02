@@ -43,8 +43,8 @@ INFO("SINGLE: Old version with 2 increments")
 int
 __mpcomp_do_single (void)
 {
-  mpcomp_thread *t ;	/* Info on the current thread */
-  mpcomp_team_info *team_info ;	/* Info on the team */
+  mpcomp_thread_t *t ;	/* Info on the current thread */
+  mpcomp_team_t *team_info ;	/* Info on the team */
   int index;
   int num_threads;
   int nb_entered_threads;
@@ -53,7 +53,7 @@ __mpcomp_do_single (void)
   __mpcomp_init() ;
 
   /* Grab the thread info */
-  t = (mpcomp_thread *) sctk_openmp_thread_tls ;
+  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
   /* Number of threads in the current team */
@@ -128,8 +128,8 @@ __mpcomp_do_single (void)
 int
 __mpcomp_do_single (void)
 {
-  mpcomp_thread *t ;	/* Info on the current thread */
-  mpcomp_team_info *team_info ;	/* Info on the team */
+  mpcomp_thread_t *t ;	/* Info on the current thread */
+  mpcomp_team_t *team_info ;	/* Info on the team */
   int index;
   int num_threads;
   int nb_entered_threads;
@@ -138,7 +138,7 @@ __mpcomp_do_single (void)
   __mpcomp_init() ;
 
   /* Grab the thread info */
-  t = (mpcomp_thread *) sctk_openmp_thread_tls ;
+  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
   /* Number of threads in the current team */
@@ -213,8 +213,8 @@ __mpcomp_do_single (void)
 int
 __mpcomp_do_single (void)
 {
-  mpcomp_thread *t ;	/* Info on the current thread */
-  mpcomp_team_info *team_info ;	/* Info on the team */
+  mpcomp_thread_t *t ;	/* Info on the current thread */
+  mpcomp_team_t *team_info ;	/* Info on the team */
   int index;
   int num_threads;
   int nb_entered_threads;
@@ -223,7 +223,7 @@ __mpcomp_do_single (void)
   __mpcomp_init() ;
 
   /* Grab the thread info */
-  t = (mpcomp_thread *) sctk_openmp_thread_tls ;
+  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
   /* Number of threads in the current team */

@@ -35,8 +35,8 @@ int
 __mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size,
 			    int *from, int *to)
 {
-  mpcomp_thread *self;	/* Info on the current thread */
-  mpcomp_thread *father;	/* Info on the team */
+  mpcomp_thread_t *self;	/* Info on the current thread */
+  mpcomp_thread_t *father;	/* Info on the team */
   long rank;
   int index;
   int num_threads;
@@ -54,7 +54,7 @@ __mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size,
   }
 
   /* Grab the thread info */
-  self = (mpcomp_thread *) sctk_thread_getspecific
+  self = (mpcomp_thread_t *) sctk_thread_getspecific
     (mpcomp_thread_info_key);
   sctk_assert (self != NULL);
 
