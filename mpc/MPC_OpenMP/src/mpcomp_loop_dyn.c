@@ -586,8 +586,8 @@ int __mpcomp_dynamic_steal(int *from, int *to)
 
  t->stolen_mvp = NULL;
 
- return 0;
 #endif
+ return 0;
 }
 //#endif
 
