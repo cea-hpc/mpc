@@ -1,0 +1,190 @@
+#!/bin/sh
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - Adam Julien julien.adam@cea.fr                                   #
+#                                                                      #
+########################################################################
+
+MPC_VERSION=""
+ROOT_TARBALL="$HOME/rpm-package-generator"
+ROOT_PACKAGE="$HOME/rpmbuild"
+ROOT_EXECUTION="$PWD"
+PATCHS_LIST=""
+
+##################################
+# READ_PARAM_VALUE: 
+# Formatting output to use values of arguments
+# - $1 : arguments (example: --source=mpc-framework.tar.gz)
+# - $2 : pattern to remove to the argument (example: --source)
+read_param_value(){
+	echo "$1" | sed -e "s/^$2=//g"
+}
+
+###################################
+# PRINT_HELP
+# No arguments
+print_help(){
+
+	echo "###################### RPM GENERATOR USAGE #########################"
+	echo "#               ./rpm_package_generator [OPTIONS]                  #"
+	echo "####################################################################"
+	echo "#   --version=<version>      Specifies version number to generate. #"
+	echo "#                            (can use -v=)                         #"
+	echo "#   --source=<source_file>   Specifies source tarball(can use -s=) #"
+	echo "#   -j=<number>              Fix make -j value.                    #"
+	echo "#   -h | --help              Print this help.                      #"
+	echo "####################################################################"
+}
+
+####################################
+# PRINT_ERROR
+# - $1 : Error message to display
+print_error(){
+	echo "------------- /!\ !!! ERROR !!! /!\ -------------"
+	echo "   $1"
+	echo "-------------------------------------------------"
+	exit 1
+}
+
+#################################
+# CHECKING_PATHS
+# check if source is given with absolute or relative path
+checking_paths(){
+	RELATIVE_PATH="$(echo "$SOURCES" | grep "^/")"
+	if test -z "$RELATIVE_PATH" ; then
+		SOURCES="$ROOT_EXECUTION/$SOURCES"
+	fi
+}
+
+##################################
+# CHECKING_SOFTWARES
+# Check if necessary programs are availables
+# - $* : program names
+checking_softwares(){
+	for soft in $*
+	do
+		hash $soft
+		RC=$?
+		if test "$RC" != "0" ; then
+			print_error "Program $soft is necessary to generate package !!"
+		fi
+		echo "Checking $soft ... OK"
+	done
+}
+#############################################
+#################### MAIN ###################
+#############################################
+for arg in $*
+do
+	case $arg in
+		--version=*)
+			MPC_VERSION="$(read_param_value $arg --version)"
+		;;
+		-v=*)
+			MPC_VERSION="$(read_param_value $arg -v)"
+		;;
+		-j=*)
+			MAKE_J="-j$(read_param_value $arg -j)"
+		;;
+		-j*)
+			MAKE_J="$arg"
+		;;
+		--source=*)
+			SOURCES="$(read_param_value $arg --source)"
+			checking_paths
+		;;
+		-s=*)
+			SOURCES="$(read_param_value $arg -s)"
+			checking_paths
+		;;
+		-h|--help)
+			print_help
+			exit 0
+		;;
+		*)
+			print_error "Unknown Argument --> $arg"
+		
+		;;
+			
+	esac
+done
+
+#Checking executables
+echo "Some Checking..."
+checking_softwares "gcc" "make" "rpmbuild"
+
+#checking version
+if test -z "$MPC_VERSION" ; then
+	print_error "You must provide a Version Number by argument !"
+fi
+TARGET="mpc-framework-$MPC_VERSION-x86_64-complete"
+TARGET_PATH="$ROOT_TARBALL/$TARGET"
+
+#checking sources
+if test -z "$SOURCES" ; then
+	SOURCES="$ROOT_TARBALL/mpc-framework-$MPC_VERSION.tar.gz"
+fi
+
+if test ! -f $SOURCES ; then
+	print_error "You need to select a tarball named mpc-framework-$MPC_VERSION.tar.gz and place this archive in $(echo $SOURCES | sed -e "s@/$(basename $SOURCES)@@g") !"
+fi
+
+if test -z "$MAKE_J" ; then
+	MAKE_J=""
+fi
+
+#some pre actions
+cd $HOME
+echo "Cleaning up \"rpmbuild\" Directory"
+rm -rf $HOME/rpmbuild/ > /dev/null
+echo "rpmbuild tree creation"
+mkdir -p $HOME/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS} || print_error "Unable to create rpmbuild tree !"
+cp $SOURCES $ROOT_PACKAGE/SOURCES/ || print_error "Tarball checked but impossible to copy her in SOURCES Folder !"
+cp $ROOT_TARBALL/patchs/* $ROOT_PACKAGE/SOURCES/ > /dev/null 2>&1
+#patchs list to apply
+PATCHS_LIST="$(ls $ROOT_TARBALL/patchs/)"
+
+#SPEC File generation
+export ROOT_TARBALL
+export MAKE_J
+
+echo "Spec File generation"
+$ROOT_TARBALL/spec_file_rpm_generator $MPC_VERSION $PATCHS_LIST || print_error "Error during spec file generation !"
+mv $ROOT_TARBALL/mpc-framework-$MPC_VERSION.spec $ROOT_PACKAGE/SPECS/ || print_error "Unable to move spec file in SPECS folder !"
+
+#package generation
+echo "RPM Package generation"
+rpmbuild -ba $ROOT_PACKAGE/SPECS/mpc-framework-$MPC_VERSION.spec || print_error "RPM PACKAGE GENERATION FAILED !!"
+
+
+#copy packages
+echo "Saving packages"
+mkdir -p $TARGET_PATH
+cp $ROOT_PACKAGE/RPMS/x86_64/* $TARGET_PATH/ || print_error "Unable to copy rpm package into $TARGET_PATH"
+
+#clean up generation build (if all is passed)
+rm -rf $ROOT_PACKAGE
+
+#create packages tarball
+cd $ROOT_TARBALL
+rm -rf $TARGET.tar.gz > /dev/null 2>&1
+tar -czf $TARGET.tar.gz $TARGET || print_error "Unable to compress rpm packages located in $TARGET_PATH"
+rm -rf $TARGET > /dev/null 2>&1
+
+echo "done"
