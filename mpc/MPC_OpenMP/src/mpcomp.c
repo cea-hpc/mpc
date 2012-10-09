@@ -346,7 +346,6 @@ void __mpcomp_init() {
 
     sctk_thread_mutex_unlock (&lock);
 
-
     sctk_nodebug( "__mpcomp_init: Init done..." ) ;
   }
 
@@ -469,6 +468,8 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
 
     new_root = n ;
 
+    TODO("Forward the team info only one time")
+    n->team_info = t->team;
     while ( n->child_type != MPCOMP_CHILDREN_LEAF ) {
       int nb_children_involved = 1 ;
       /*
