@@ -84,6 +84,11 @@ extern "C"
 	  MPCOMP_CONTEXT_OUT_OF_ORDER_SUB = 3,
      } mpcomp_context_t;
 
+     typedef enum mpcomp_myself_t {
+	  MPCOMP_MYSELF_ROOT = 0,
+	  MPCOMP_MYSELF_NODE = 1,
+	  MPCOMP_MYSELF_LEAF = 2,
+     } mpcomp_myself_t ;
 
 
 /*****************
@@ -248,6 +253,7 @@ extern "C"
 	  char pad2[64];                  /* Padding */
 	  volatile int slave_running;
 	  char pad3[64];                  /* Padding */
+	  enum mpcomp_myself_t type;
 	  void *(*func) (void *);	  /* Function to call by every thread */
 	  void *shared;		          /* Shared variables (for every thread) */
      } mpcomp_mvp_t;
@@ -297,6 +303,10 @@ extern "C"
 	  volatile long barrier_num_threads;   /* Number of threads involved in the barrier */
 	  char pad4[64];                       /* Padding */
 
+	  enum mpcomp_myself_t type;
+	  int current_mvp;
+	  int id_numa;
+        
 	  int num_threads;          /* Number of threads in the current team */
 	  void *(*func) (void *);
 	  void *shared;
