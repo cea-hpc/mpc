@@ -966,4 +966,66 @@ void __mpcomp_flush()
 
 
 
+void __mpcomp_ordered_begin()
+{
+     mpcomp_thread_t *t;
 
+     __mpcomp_init();
+     
+     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+     sctk_assert(t != NULL); 
+
+     /* First iteration of the loop -> initialize 'next_ordered_offset' */
+     if (t->current_ordered_iteration == t->loop_lb) {
+	  t->team->next_ordered_offset = 0;
+     } else {
+	  /* Do we have to wait for the right iteration? */
+	  if (t->current_ordered_iteration != 
+	      (t->loop_lb + t->loop_incr * t->team->next_ordered_offset)) {
+	       mpcomp_mvp_t *mvp;
+	       
+	       sctk_nodebug("__mpcomp_ordered_begin[%d]: Waiting to schedule iteration %d",
+			    t->rank, t->current_ordered_iteration);
+	       
+	       /* Grab the corresponding microVP */
+	       mvp = t->mvp;
+
+	       TODO("use correct primitives")
+#if 0	       
+	       mpcomp_fork_when_blocked (my_vp, info->step);
+	       
+	       /* Spin while the condition is not satisfied */
+	       mpcomp_macro_scheduler (my_vp, info->step);
+	       while ( info->current_ordered_iteration != 
+		       (info->loop_lb + info->loop_incr * team->next_ordered_offset) ) {
+		    mpcomp_macro_scheduler (my_vp, info->step);
+		    if ( info->current_ordered_iteration != 
+			 (info->loop_lb + info->loop_incr * team->next_ordered_offset) ) {
+			 sctk_thread_yield ();
+		    }
+	       }
+#endif
+	  }
+     }
+     
+     sctk_nodebug( "__mpcomp_ordered_begin[%d]: Allowed to schedule iteration %d",
+		   info->rank, info->current_ordered_iteration ) ;
+}
+
+
+
+void __mpcomp_ordered_end()
+{
+     mpcomp_thread_t *t;
+     
+     t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
+     sctk_assert(t != NULL); 
+     
+     t->current_ordered_iteration += t->loop_incr ;
+     if ( (t->loop_incr > 0 && t->current_ordered_iteration >= t->loop_b) ||
+	  (t->loop_incr < 0 && t->current_ordered_iteration <= t->loop_b) ) {
+	  t->team->next_ordered_offset = -1 ;
+     } else {
+	  t->team->next_ordered_offset++ ;
+     }
+}

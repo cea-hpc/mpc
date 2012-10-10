@@ -165,6 +165,9 @@ extern "C"
 	  mpcomp_atomic_int_pad_t for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
 
 	  /* -- GUIDED FOR LOOP CONSTRUCT -- */
+
+	  /* ORDERED CONSTRUCT */
+	  volatile int next_ordered_offset; 
      } mpcomp_team_t;
 
 
