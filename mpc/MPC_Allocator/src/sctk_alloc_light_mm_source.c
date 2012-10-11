@@ -98,7 +98,7 @@ void sctk_alloc_mm_source_light_init(struct sctk_alloc_mm_source_light * source,
 	mode &= ~SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_STRICT;
 	numa_node = SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_NODE_IGNORE;
 	#else
-	if (mode |= SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_STRICT && numa_node != -1)
+	if (( mode |= SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_STRICT ) && numa_node != -1)
 		source->nodeset = sctk_alloc_mm_source_light_init_nodeset(numa_node);
 	else
 		source->nodeset = NULL;

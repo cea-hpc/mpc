@@ -899,7 +899,7 @@ static inline size_t
 __MPC_Get_datatype_size (MPC_Datatype datatype,
 			 sctk_task_specific_t * task_specific)
 {
-  if ((datatype == MPC_DATATYPE_NULL))
+  if (datatype == MPC_DATATYPE_NULL)
     MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_TYPE, "");
 
   if (datatype == MPC_UB)

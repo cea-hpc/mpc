@@ -4224,7 +4224,7 @@ __sctk_convert_mpc_group (MPI_Group group)
   MPI_internal_group_t *tmp;
 
   tmp = __sctk_convert_mpc_group_internal (group);
-  if ((tmp == NULL))
+  if (tmp == NULL)
     {
       return MPC_GROUP_NULL;
     }

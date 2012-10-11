@@ -768,7 +768,7 @@ run (sctk_startup_args_t * arg)
 #ifdef SCTK_LINUX_DISABLE_ADDR_RADOMIZE
 #include <asm/unistd.h>
 #include <linux/personality.h>
-#define THIS__set_personality(pers) ((long)syscall(__NR_personality,pers))
+#define THIS__set_personality(pers) syscall(__NR_personality,pers)
 
   static inline void
 sctk_disable_addr_randomize (int argc, char **argv)
