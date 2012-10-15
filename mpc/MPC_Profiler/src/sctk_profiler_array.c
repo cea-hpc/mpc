@@ -106,7 +106,7 @@ void sctk_profiler_array_init_parent_keys()
 		sctk_profile_has_child[ i ] = 0;
 		sctk_profile_parent_key[ i ] = SCTK_PROFILE_NO_PARENT;
 	}
-	
+
 	/* Set parent probe
 	   sctk_profile_parent_key[ SCTK_PROFILE_ ## key ] = SCTK_PROFILE_ ## probe_parent;
 	*  if( SCTK_PROFILE_ ## probe_parent != SCTK_PROFILE_NO_PARENT)
@@ -129,20 +129,22 @@ void sctk_profiler_array_init(struct sctk_profiler_array *array)
 
 	array->lock = 0;
 	array->been_unified = 0;
+  array->initialize_time = 0;
+  array->run_time = 0;
 }
 
 struct sctk_profiler_array * sctk_profiler_array_new()
 {
 	struct sctk_profiler_array *ret = (struct sctk_profiler_array *)malloc( sizeof( struct sctk_profiler_array ));
-	
+
 	if( !ret )
 	{
 		perror( "malloc" );
 		abort();
 	}
-	
+
 	sctk_profiler_array_init( ret );
-	
+
 	return ret;
 }
 
@@ -173,9 +175,9 @@ static void __sctk_profiler_array_walk( struct sctk_profiler_array *array, short
 		(handler)( array, current_id, sctk_profile_parent_key[ current_id ], depth, arg, 0 );
 		been_walked[current_id] = 1;
 	}
-	
+
 	int i = 0;
-	
+
 	for( i = current_id ; i < SCTK_PROFILE_KEY_COUNT ; i++ )
 	{
 		if( !been_walked[i] && (sctk_profile_parent_key[ i ] == current_id) )
@@ -183,7 +185,7 @@ static void __sctk_profiler_array_walk( struct sctk_profiler_array *array, short
 			__sctk_profiler_array_walk( array, been_walked, i, depth + 1,  handler, arg, DFS );
 		}
 	}
-	
+
 	if( DFS == SCTK_PROFILE_RENDER_WALK_BFS || DFS == SCTK_PROFILE_RENDER_WALK_BOTH )
 	{
 		(handler)( array, current_id, sctk_profile_parent_key[ current_id ], depth, arg, 1 );
@@ -194,16 +196,16 @@ static void __sctk_profiler_array_walk( struct sctk_profiler_array *array, short
 void sctk_profiler_array_walk( struct sctk_profiler_array *array, void (*handler)( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg, int going_up ), void *arg, sctk_profile_render_walk_mode DFS )
 {
 	short been_walked[ SCTK_PROFILE_KEY_COUNT ];
-	
+
 	int i = 0;
 	for( i = 0 ; i < SCTK_PROFILE_KEY_COUNT ; i++ )
 	{
 		been_walked[i] = 0;
 	}
-	
+
 	/* 0 is a dummy key used for no parent */
 	been_walked[0] = 1;
-	
+
 	for( i = 0 ; i < SCTK_PROFILE_KEY_COUNT ; i++ )
 	{
 		if( !been_walked[i] && ( sctk_profile_parent_key[i] ==  SCTK_PROFILE_NO_PARENT ) )
@@ -212,7 +214,7 @@ void sctk_profiler_array_walk( struct sctk_profiler_array *array, void (*handler
 		}
 	}
 
-	
+
 }
 
 
@@ -229,7 +231,7 @@ void sctk_profiler_array_sum_to_parent( struct sctk_profiler_array *array, int i
 			array->sctk_profile_min[ parent_id ] = array->sctk_profile_min[ id ];
 		}
 
-		if( array->sctk_profile_max[ parent_id ] < array->sctk_profile_max[ id ] 
+		if( array->sctk_profile_max[ parent_id ] < array->sctk_profile_max[ id ]
 		 || array->sctk_profile_max[ parent_id ] == 0 )
 		{
 			array->sctk_profile_max[ parent_id ] = array->sctk_profile_max[ id ];
@@ -246,9 +248,9 @@ void sctk_profiler_array_unify( struct sctk_profiler_array *array )
 		sctk_error( "You cant unify an array two times !");
 		abort();
 	}
-	
+
 	sctk_profiler_array_walk( array, sctk_profiler_array_sum_to_parent, NULL, 1 );
-	
+
 	array->been_unified = 1;
 }
 

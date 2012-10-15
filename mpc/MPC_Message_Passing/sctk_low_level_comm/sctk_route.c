@@ -490,7 +490,7 @@ void sctk_route_messages_recv(int src, int myself,specific_message_tag_t specifi
   sctk_add_adress_in_message(&(msg_req->msg),buffer,size);
   sctk_set_header_in_message (&(msg_req->msg), tag, communicator,  src,myself,
 			      &(msg_req->request), size,specific_message_tag);
-  sctk_recv_message (&(msg_req->msg),NULL);
+  sctk_recv_message (&(msg_req->msg),NULL, 1);
   sctk_wait_message (&(msg_req->request));
 }
 

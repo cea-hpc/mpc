@@ -1797,11 +1797,6 @@ sctk_user_main (int argc, char **argv)
   __mpcomp_init() ;
 #endif
 
-
-#ifdef MPC_Profiler
-       sctk_internal_profiler_init();
-#endif
-
   __MPC_Barrier (MPC_COMM_WORLD);
 
   result = mpc_user_main (argc, argv);
