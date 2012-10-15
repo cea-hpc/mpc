@@ -39,6 +39,7 @@ extern "C"
   struct sctk_request_s;
   struct sctk_ib_msg_header_s;
   struct mpc_buffered_msg_s;
+  struct sctk_internal_ptp_s;
 
 #define SCTK_MESSAGE_PENDING 0
 #define SCTK_MESSAGE_DONE 1
@@ -259,7 +260,10 @@ typedef struct sctk_message_to_copy_s{
   /**
      Check if the message if completed according to the message passed as a request
   */
-  void sctk_perform_messages(sctk_request_t* request);
+  void sctk_perform_messages(sctk_request_t* request,
+    struct sctk_internal_ptp_s *recv_ptp,
+    struct sctk_internal_ptp_s *send_ptp,
+    int remote_process);
 
   void sctk_init_header (sctk_thread_ptp_message_t *tmp, const int myself,
 			 sctk_message_type_t msg_type, void (*free_memory)(void*),
@@ -310,8 +314,8 @@ typedef struct sctk_message_to_copy_s{
 				  sctk_thread_message_header_t * msg);
   void sctk_send_message (sctk_thread_ptp_message_t * msg);
   void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_check);
-  struct sctk_internal_ptp_s;
-  void sctk_recv_message (sctk_thread_ptp_message_t * msg, struct sctk_internal_ptp_s* tmp);
+  void sctk_recv_message (sctk_thread_ptp_message_t * msg, struct sctk_internal_ptp_s* tmp,
+      int need_check);
   void sctk_recv_message_try_check (sctk_thread_ptp_message_t * msg,struct sctk_internal_ptp_s* tmp,int perform_check);
   struct sctk_internal_ptp_s* sctk_get_internal_ptp(int glob_id);
   int sctk_is_net_message (int dest);
@@ -331,6 +335,12 @@ typedef struct sctk_message_to_copy_s{
   int sctk_determine_src_process_from_header (sctk_thread_ptp_message_body_t * body);
   void sctk_determine_glob_source_and_destination_from_header (
       sctk_thread_ptp_message_body_t* body, int *glob_source, int *glob_destination);
+
+  void sctk_perform_messages_find_ptp_from_request(
+      sctk_request_t* request,
+      struct sctk_internal_ptp_s **recv_ptp,
+      struct sctk_internal_ptp_s **send_ptp,
+      int *remote_process);
 
 #ifdef __cplusplus
 }
