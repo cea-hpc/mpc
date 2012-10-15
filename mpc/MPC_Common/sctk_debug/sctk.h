@@ -45,8 +45,8 @@ extern int sctk_migration_mode;
 #else
 #define SCTK_PROFIL_START(key)	(void)(0)
 #define SCTK_PROFIL_END(key) (void)(0)
-#define SCTK_COUNTER_INC(key) (void)(0);
-#define SCTK_COUNTER_DEC(key) (void)(0);
+#define SCTK_COUNTER_INC(key,val) (void)(0);
+#define SCTK_COUNTER_DEC(key,val) (void)(0);
 #define sctk_internal_profiler_init() (void)(0)
 #define sctk_internal_profiler_render() (void)(0)
 #define sctk_internal_profiler_release() (void)(0)
