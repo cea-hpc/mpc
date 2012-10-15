@@ -259,6 +259,10 @@ sctk_perform_initialisation (void)
     sctk_abort ();
   }
 
+#ifdef MPC_Profiler
+	sctk_internal_profiler_init();
+#endif
+
 #ifdef MPC_Message_Passing
   if (sctk_net_val != NULL){
     sctk_net_val (sctk_net_val_arg);
@@ -844,7 +848,7 @@ sctk_launch_main (int argc, char **argv)
   sctk_disable_addr_randomize (argc, argv);
 
   __sctk_profiling__start__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
-  
+
 
   auto_kill = sctk_runtime_config_get()->modules.launcher.autokill;
   if (auto_kill > 0)

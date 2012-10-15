@@ -73,6 +73,10 @@ struct sctk_profiler_array
 
 	sctk_spinlock_t lock;
 
+  /* Timer for start (MPI_Init) and end (MPI_Finalize) */
+  uint64_t initialize_time;
+  uint64_t run_time;
+
 	uint64_t been_unified;
 };
 
@@ -94,7 +98,7 @@ static inline void sctk_profiler_array_hit( struct sctk_profiler_array *array, i
 	{
 
 		array->sctk_profile_hits[ id ]++;
-		
+
 		if( (value + array->sctk_profile_value[ id ]) < 0 )
 		{
 			array->sctk_profile_value[ id ] = 0;
@@ -103,12 +107,12 @@ static inline void sctk_profiler_array_hit( struct sctk_profiler_array *array, i
 		{
 			array->sctk_profile_value[ id ] += value;
 		}
-		
+
 		if( (array->sctk_profile_min[ id ] == 0) || (value < array->sctk_profile_min[ id ]) )
 		{
 			array->sctk_profile_min[ id ] = value;
 		}
-		
+
 		if( (array->sctk_profile_max[ id ] == 0) || (array->sctk_profile_max[ id ] < value) )
 		{
 			array->sctk_profile_max[ id ] = value;

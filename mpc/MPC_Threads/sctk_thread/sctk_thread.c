@@ -620,6 +620,11 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 
   sctk_nodebug ("%d on %d", tmp.task_id, tmp.virtual_processor);
 
+  /* Initialization of the profiler */
+#ifdef MPC_Profiler
+	sctk_internal_profiler_init();
+#endif
+
 #ifdef MPC_Message_Passing
   if (tmp.task_id >= 0)
     {
