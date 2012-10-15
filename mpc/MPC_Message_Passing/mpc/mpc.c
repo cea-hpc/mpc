@@ -4936,15 +4936,6 @@ void MPC_Network_stats(struct MPC_Network_stats_s *stats) {
 #endif
 }
 
-/* Try to deconnect neighbors */
-void MPC_Network_deco_neighbor(int process) {
-#ifdef MPC_Message_Passing
-#ifdef MPC_USE_INFINIBAND
-  sctk_network_deco_neighbor_ib(process);
-#endif
-#endif
-}
-
 /* Send a message to a process using the signalization network */
 void MPC_Send_signalization_network(int dest_process, int tag, void *buff, size_t size) {
 #ifdef MPC_Message_Passing
