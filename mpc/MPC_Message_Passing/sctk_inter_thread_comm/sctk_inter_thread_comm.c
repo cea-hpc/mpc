@@ -815,6 +815,7 @@ void sctk_reinit_header (sctk_thread_ptp_message_t *tmp, void (*free_memory)(voi
 
   tmp->tail.free_memory = free_memory;
   tmp->tail.message_copy = message_copy;
+  tmp->tail.buffer_async = NULL;
 }
 
 void sctk_init_header (sctk_thread_ptp_message_t *tmp, const int myself,
@@ -825,7 +826,6 @@ void sctk_init_header (sctk_thread_ptp_message_t *tmp, const int myself,
   memset(tmp,0,sizeof(sctk_thread_ptp_message_t));
 
   tmp->tail.message_type = msg_type;
-  tmp->tail.buffer_async = NULL;
 
   sctk_reinit_header(tmp,free_memory,message_copy);
   if(tmp->tail.message_type == sctk_message_pack){
