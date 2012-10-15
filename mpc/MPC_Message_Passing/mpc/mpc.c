@@ -244,7 +244,14 @@ sctk_communicator_t sctk_mpc_get_communicator_from_request(MPC_Request * request
 
 static inline
 void sctk_mpc_perform_messages(MPC_Request * request){
-  sctk_perform_messages(request);
+  struct sctk_internal_ptp_s *recv_ptp;
+  struct sctk_internal_ptp_s *send_ptp;
+  int remote_process;
+
+  sctk_perform_messages_find_ptp_from_request(request,
+      &recv_ptp, &send_ptp, &remote_process);
+
+  sctk_perform_messages(request, recv_ptp, send_ptp, remote_process);
 }
 
 static inline int sctk_mpc_completion_flag(MPC_Request * request){
@@ -1792,7 +1799,7 @@ sctk_user_main (int argc, char **argv)
 
 
 #ifdef MPC_Profiler
-	sctk_internal_profiler_init();
+       sctk_internal_profiler_init();
 #endif
 
   __MPC_Barrier (MPC_COMM_WORLD);
@@ -2527,7 +2534,7 @@ __MPC_Irecv (void *buf, mpc_msg_count count, MPC_Datatype datatype,
   sctk_mpc_set_header_in_message (msg, tag, comm, source, src,
 				  request, count * d_size,pt2pt_specific_message_tag);
   sctk_nodebug ("ircv : rcv, my rank = %d", src);
-  sctk_recv_message (msg,task_specific->my_ptp_internal);
+  sctk_recv_message (msg,task_specific->my_ptp_internal, 0);
   MPC_ERROR_SUCESS ();
 }
 
@@ -3059,8 +3066,8 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
     tmp_buf = &(thread_specific->buffer.buffer[buffer_rank]);
     thread_specific->buffer.buffer_rank =
       (buffer_rank + 1) % MAX_MPC_BUFFERED_MSG;
-
-    if ( tmp_buf->completion_flag != SCTK_MESSAGE_DONE)
+    TODO("To optimize")
+      if (sctk_mpc_completion_flag(&(tmp_buf->request)) != SCTK_MESSAGE_DONE)
       {
         msg = &header;
         sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
@@ -3077,8 +3084,6 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
       else
       {
         msg = &(tmp_buf->header);
-        /* We set the buffer as busy */
-        tmp_buf->completion_flag = SCTK_MESSAGE_PENDING;
         sctk_init_header(msg,src,sctk_message_contiguous,sctk_no_free_header,sctk_message_copy);
         sctk_nodebug ("Copied message |%s| -> |%s| %d", buf, tmp_buf->buf,
             msg_size);
@@ -3093,8 +3098,6 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
         sctk_send_message (msg);
       }
   }
-
-
 
   MPC_ERROR_SUCESS ();
 }
@@ -3209,7 +3212,7 @@ PMPC_Recv (void *buf, mpc_msg_count count, MPC_Datatype datatype, int source,
   sctk_mpc_set_header_in_message (msg, tag, comm, source, src, &request,
 				  msg_size,pt2pt_specific_message_tag);
 
-  sctk_recv_message (msg,task_specific->my_ptp_internal);
+  sctk_recv_message (msg,task_specific->my_ptp_internal, 1);
   sctk_nodebug("recv request.is_null %d",request.is_null);
   sctk_mpc_wait_message (&request);
 
@@ -4906,7 +4909,7 @@ PMPC_Irecv_pack (int source, int tag, MPC_Comm comm, MPC_Request * request)
 				  request,
 				  sctk_mpc_get_message_size(request),pt2pt_specific_message_tag);
 
-  sctk_recv_message (msg,task_specific->my_ptp_internal);
+  sctk_recv_message (msg,task_specific->my_ptp_internal, 0);
   SCTK_PROFIL_END (MPC_Irecv_pack);
   MPC_ERROR_SUCESS ();
 }
