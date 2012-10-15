@@ -26,7 +26,7 @@
 
 #include "sctk_ibufs.h"
 
-//#define SCTK_IB_MODULE_DEBUG
+#define SCTK_IB_MODULE_DEBUG
 #define SCTK_IB_MODULE_NAME "IBUF"
 #include "sctk_ib_toolkit.h"
 #include "sctk_ib.h"
@@ -61,7 +61,7 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
   int i;
   int free_nb;
 
-  sctk_ib_debug("Allocating %d buffers", nb_ibufs);
+  sctk_ib_nodebug("Allocating %d buffers", nb_ibufs);
 
   region = sctk_malloc_on_node(sizeof(sctk_ibuf_region_t), 0);
   ib_assume(region);
@@ -70,11 +70,13 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
   sctk_posix_memalign( (void**) &ptr, mmu->page_size, nb_ibufs * config->ibv_eager_limit);
   ib_assume(ptr);
   // memset(ptr, 0, nb_ibufs * config->ibv_eager_limit);
+  PROF_ADD(rail_ib->rail, ib_ibuf_sr_size, nb_ibufs * config->ibv_eager_limit);
 
   /* XXX: replaced by memalign_on_node */
    sctk_posix_memalign(&ibuf, mmu->page_size, nb_ibufs * sizeof(sctk_ibuf_t));
   ib_assume(ibuf);
   // memset (ibuf, 0, nb_ibufs * sizeof(sctk_ibuf_t));
+  PROF_ADD(rail_ib->rail, ib_ibuf_sr_size, nb_ibufs * sizeof(sctk_ibuf_t));
 
   region->size_ibufs = config->ibv_eager_limit;
   region->list = ibuf;
@@ -202,7 +204,7 @@ sctk_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib, int n)
 
     /* Prepare the buffer for sending */
   IBUF_SET_POISON(ibuf->buffer);
-  PROF_INC(rail_ib->rail, ibuf_sr_nb);
+  PROF_INC(rail_ib->rail, ib_ibuf_sr_nb);
 
   return ibuf;
 }
@@ -223,6 +225,7 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
   size_t s;
   size_t limit;
   sctk_route_state_t state;
+  PROF_TIME_START(rail_ib->rail, ib_pick_send);
 
   s = *size;
   /***** RDMA CHANNEL *****/
@@ -251,7 +254,7 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
 
         /* A buffer has been picked-up */
         if (ibuf) {
-          PROF_INC(rail_ib->rail, ibuf_rdma_nb);
+          PROF_INC(rail_ib->rail, ib_ibuf_rdma_nb);
           sctk_nodebug("Picking from RDMA %d", ibuf->index);
 #ifdef DEBUG_IB_BUFS
           sctk_route_state_t state = sctk_ibuf_rdma_get_remote_state_rts(remote);
@@ -267,7 +270,7 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
       }
 
       /* If we cannot pick a buffer from the RDMA channel, we switch to SR */
-      PROF_INC(rail_ib->rail, ibuf_rdma_miss_nb);
+      PROF_INC(rail_ib->rail, ib_ibuf_rdma_miss_nb);
       OPA_decr_int(&remote->rdma.pool->busy_nb[REGION_SEND]);
       sctk_ibuf_rdma_check_flush_send(rail_ib, remote);
     } else {
@@ -312,7 +315,7 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
     sctk_spinlock_unlock(lock);
 
     IBUF_SET_PROTOCOL(ibuf->buffer, null_protocol);
-    PROF_INC(rail_ib->rail, ibuf_sr_nb);
+    PROF_INC(rail_ib->rail, ib_ibuf_sr_nb);
 
 #ifdef DEBUG_IB_BUFS
     assume(ibuf);
@@ -327,6 +330,7 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
     /* We can reach this block if there is no more slots for the RDMA channel and the
      * requested size is larger than the size of a SR slot. At this time, we switch can switch to the
      * buffered protocol */
+    PROF_TIME_END(rail_ib->rail, ib_pick_send);
     return NULL;
   }
 exit:
@@ -341,6 +345,7 @@ exit:
 
   IBUF_SET_POISON(ibuf->buffer);
 
+  PROF_TIME_END(rail_ib->rail, ib_pick_send);
   return ibuf;
 }
 
@@ -485,7 +490,7 @@ void sctk_ibuf_release(
 {
   ib_assume(ibuf);
 
-  PROF_TIME_START(rail_ib->rail, ibuf_release);
+  PROF_TIME_START(rail_ib->rail, ib_ibuf_release);
   if (ibuf->to_release & IBUF_RELEASE) {
     if (IBUF_GET_CHANNEL(ibuf) & RDMA_CHANNEL) {
       sctk_ibuf_rdma_release(rail_ib, ibuf);
@@ -511,7 +516,7 @@ void sctk_ibuf_release(
   } else {
     not_reachable();
   }
-  PROF_TIME_END(rail_ib->rail, ibuf_release);
+  PROF_TIME_END(rail_ib->rail, ib_ibuf_release);
 }
 
 
@@ -705,6 +710,7 @@ int sctk_ibuf_rdma_write_with_imm_init(
   ibuf->to_release = IBUF_DO_NOT_RELEASE;
   ibuf->desc.wr.send.next = NULL;
   ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE_WITH_IMM;
+//  ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE;
   ibuf->desc.wr.send.wr_id = (uintptr_t) ibuf;
 
   ibuf->desc.wr.send.num_sge = 1;

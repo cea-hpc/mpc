@@ -197,13 +197,19 @@ void* async_thread(void* arg)
 
 void sctk_ib_async_init(sctk_rail_info_t *rail)
 {
-  sctk_thread_attr_t attr;
-  sctk_thread_t pidt;
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  LOAD_CONFIG(rail_ib);
 
-  sctk_thread_attr_init (&attr);
-  /* The thread *MUST* be in a system scope */
-  sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
-  sctk_user_thread_create (&pidt, &attr, async_thread, rail);
+  /* Activate or not the async thread */
+  if (config->ibv_async_thread) {
+    sctk_thread_attr_t attr;
+    sctk_thread_t pidt;
+
+    sctk_thread_attr_init (&attr);
+    /* The thread *MUST* be in a system scope */
+    sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
+    sctk_user_thread_create (&pidt, &attr, async_thread, rail);
+  }
 }
 
 #endif

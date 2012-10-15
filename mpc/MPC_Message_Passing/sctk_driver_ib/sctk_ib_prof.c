@@ -47,8 +47,6 @@
 #define SCTK_IB_MODULE_NAME "PROF"
 #include "sctk_ib_toolkit.h"
 
-__thread struct sctk_ib_prof_s * sctk_ib_profiler;
-__thread struct sctk_ib_prof_s * sctk_ib_profiler_start;
 __thread int vp_number = -1;
 
 /* Variable only modified by th __mem_thread */
@@ -74,24 +72,8 @@ void sctk_ib_prof_init_task(int rank, int vp) {
   sctk_ib_prof_qp_init_task(rank, vp);
 }
 
-void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib) {
-  if (rail_ib->rail->rail_number  == 0) {
-    fprintf(stderr, "[%d] %d %d %d %d %d %d %d RDMA(%d %d)\n", sctk_process_rank,
-        PROF_LOAD(rail_ib->rail, alloc_mem),
-        PROF_LOAD(rail_ib->rail, free_mem),
-        PROF_LOAD(rail_ib->rail, qp_created),
-        PROF_LOAD(rail_ib->rail, eager_nb),
-        PROF_LOAD(rail_ib->rail, buffered_nb),
-        PROF_LOAD(rail_ib->rail, rdma_nb),
-        PROF_LOAD(rail_ib->rail, ibuf_sr_nb),
-        PROF_LOAD(rail_ib->rail, ibuf_rdma_nb),
-        PROF_LOAD(rail_ib->rail, ibuf_rdma_miss_nb)
-        );
-  }
-}
 
 void sctk_ib_prof_finalize(sctk_ib_rail_info_t *rail_ib) {
-  sctk_ib_prof_print(rail_ib);
   sctk_ib_prof_mem_finalize(rail_ib);
 }
 

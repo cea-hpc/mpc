@@ -245,38 +245,38 @@ static inline int __cp_poll(const sctk_rail_info_t const* rail, struct sctk_ib_p
 
 retry:
   if ( *list != NULL) {
-    sctk_spinlock_lock(lock);
-    if ( *list != NULL) {
-      ibuf = *list;
-      DL_DELETE(*list, ibuf);
-      sctk_spinlock_unlock(lock);
+    if (sctk_spinlock_trylock(lock) == 0) {
+      if ( *list != NULL) {
+        ibuf = *list;
+        DL_DELETE(*list, ibuf);
+        sctk_spinlock_unlock(lock);
 
 #ifdef SCTK_IB_PROFILER
-      if (ibv_cp_profiler) {
-        s = sctk_atomics_get_timestamp();
-      }
+        if (ibv_cp_profiler) {
+          s = sctk_atomics_get_timestamp();
+        }
 #endif
-      /* Run the polling function according to the type of message */
-      if (ibuf->cq == recv_cq) {
-        sctk_network_poll_recv_ibuf((sctk_rail_info_t *)rail, ibuf, 1, poll);
+        /* Run the polling function according to the type of message */
+        if (ibuf->cq == recv_cq) {
+          sctk_network_poll_recv_ibuf((sctk_rail_info_t *)rail, ibuf, 1, poll);
+        } else {
+          sctk_network_poll_send_ibuf((sctk_rail_info_t *)rail, ibuf, 1, poll);
+        }
+        poll->recv_found_own++;
+
+#ifdef SCTK_IB_PROFILER
+        if (ibv_cp_profiler) {
+          update_timers=1;
+          e = sctk_atomics_get_timestamp();
+          _time_own += e - s;
+          _poll_own++;
+        }
+#endif
+        nb_found++;
+//        goto retry;
       } else {
-        sctk_network_poll_send_ibuf((sctk_rail_info_t *)rail, ibuf, 1, poll);
+        sctk_spinlock_unlock(lock);
       }
-
-//      if (from_global == 0) OPA_decr_int(&numas[task->node].pending_nb);
-
-#ifdef SCTK_IB_PROFILER
-      if (ibv_cp_profiler) {
-        update_timers=1;
-        e = sctk_atomics_get_timestamp();
-        _time_own += e - s;
-        _poll_own++;
-      }
-#endif
-      nb_found++;
-      goto retry;
-    } else {
-      sctk_spinlock_unlock(lock);
     }
   }
 
@@ -285,7 +285,6 @@ retry:
     poll_own_success ++;
     time_own += _time_own;
     poll_own += _poll_own;
-    poll->recv_found_own = _poll_own;
   } else {
     poll_own_failed ++;
   }

@@ -114,13 +114,11 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, is_control_message);
     sctk_complete_and_free_message(msg);
-    PROF_INC(rail_ib->rail, eager_nb);
+    PROF_INC(rail_ib->rail, ib_eager_nb);
 
     /* Remote profiling */
     sctk_ibuf_rdma_check_remote(rail_ib, remote, size);
-
     goto exit;
-
   }
 
 buffered:
@@ -129,7 +127,7 @@ buffered:
     sctk_nodebug("Buffered");
     sctk_ib_buffered_prepare_msg(rail, remote, msg, size);
     sctk_complete_and_free_message(msg);
-    PROF_INC(rail_ib->rail, buffered_nb);
+    PROF_INC(rail_ib->rail, ib_buffered_nb);
 
     /* Remote profiling */
     sctk_ibuf_rdma_check_remote(rail_ib, remote, size);
@@ -138,16 +136,14 @@ buffered:
   }
 
   /***** RDMA RENDEZVOUS CHANNEL *****/
-rdma:
+rdma: {}
   sctk_nodebug("Size of message: %lu", size);
   ibuf = sctk_ib_rdma_prepare_req(rail, remote, msg, size, -1);
   /* Send message */
   sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, 0);
   sctk_ib_rdma_prepare_send_msg(rail_ib, msg, size);
-  PROF_INC(rail_ib->rail, rdma_nb);
-
+  PROF_INC(rail_ib->rail, ib_rdma_nb);
 exit: {}
-
 }
 
 int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
@@ -196,6 +192,7 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
 int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
     const char from_cp, struct sctk_ib_polling_s* poll)
 {
+  PROF_TIME_START(rail, ib_poll_recv_ibuf);
   const sctk_ib_protocol_t protocol = IBUF_GET_PROTOCOL(ibuf->buffer);
   int release_ibuf = 1;
   const struct ibv_wc wc = ibuf->wc;
@@ -206,7 +203,12 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
   /* First we check if the message has an immediate data */
   if (wc.wc_flags == IBV_WC_WITH_IMM) {
     if (wc.imm_data & IMM_DATA_RDMA_PIGGYBACK) {
-      /* We actually do nothing here */
+#if 0
+      /* TODO: we poll the RDMA buffers of the remote */
+      sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+      const sctk_ib_qp_t const *remote = sctk_ib_qp_ht_find(rail_ib, wc.qp_num);
+      sctk_ib_rdma_eager_poll_remote(rail_ib, remote);
+#endif
     } else {
       not_reachable();
     }
@@ -248,6 +250,7 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
   } else {
     sctk_ibuf_release_from_srq(&rail->network.ib, ibuf);
   }
+  PROF_TIME_END(rail, ib_poll_recv_ibuf);
 
   return 0;
 }
@@ -338,62 +341,81 @@ static OPA_int_t polling_lock;
 /* Count how many times the vp is entered to the polling function. We
  * allow recursive calls to the polling function */
 __thread int recursive_polling = 0;
-int sctk_network_poll_all (sctk_rail_info_t* rail) {
+void sctk_network_poll_all (sctk_rail_info_t* rail, sctk_ib_polling_t* poll) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
   LOAD_DEVICE(rail_ib);
-  sctk_ib_polling_t poll;
-  POLL_INIT(&poll);
 
   /* Only one task is allowed to poll new messages from QP */
   int ret = OPA_fetch_and_incr_int(&polling_lock);
   if ( recursive_polling || ret < MAX_TASKS_ALLOWED)
   {
-    double e, s;
-    if (recursive_polling == 0) PROF_TIME_START(rail, time_poll_cq);
     recursive_polling++;
     /* Poll received messages */
-    sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, &poll, sctk_network_poll_recv);
+    sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, poll, sctk_network_poll_recv);
     /* Poll sent messages */
-    sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, &poll, sctk_network_poll_send);
+    sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, poll, sctk_network_poll_send);
     recursive_polling--;
-    if (recursive_polling == 0) PROF_TIME_END(rail, time_poll_cq);
   }
   OPA_decr_int(&polling_lock);
 
-  POLL_INIT(&poll);
-  sctk_ib_cp_poll_global_list(rail, &poll);
+  POLL_INIT(poll);
+  sctk_ib_cp_poll_global_list(rail, poll);
 /* Try to poll incomming messages */
-  POLL_INIT(&poll);
-  sctk_ib_cp_poll(rail, &poll);
-
-  return poll.recv_found_own;
+  POLL_INIT(poll);
+  sctk_ib_cp_poll(rail, poll);
 }
 
-static int sctk_network_poll_all_and_steal(sctk_rail_info_t *rail) {
+static void sctk_network_poll_all_and_steal(sctk_rail_info_t *rail, struct sctk_ib_polling_s *poll) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
   int steal = config->ibv_steal;
-  sctk_ib_polling_t poll;
-  POLL_INIT(&poll);
-  int nb_found = 0;
-  int ret;
-
-  //call_to_polling++;
 
   /* POLLING */
-  ret = sctk_network_poll_all(rail);
-  if (ret == 0 && steal > 1){
+  sctk_network_poll_all(rail, poll);
+
+  if (poll->recv_found_own == 0 && steal > 1){
     /* If no message has been found -> steal*/
-    nb_found += sctk_ib_cp_steal(rail, &poll);
+    sctk_ib_cp_steal(rail, poll);
   }
-  return nb_found;
+}
+
+static void sctk_network_poll_remote_process(sctk_rail_info_t* rail, int remote_process) {
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  int ret;
+  struct sctk_ib_polling_s poll;
+  POLL_INIT(&poll);
+
+  /* If the dest is the same process than the current process */
+  if (remote_process == sctk_process_rank) {
+    sctk_ib_qp_t *remote;
+    sctk_ib_data_t *route_data;
+    sctk_route_table_t *route =  sctk_get_route_to_process_no_ondemand(remote_process, rail);
+    ib_assume(route);
+
+    route_data=&route->data.ib;
+    remote=route_data->remote;
+
+    /* Poll messages fistly on RDMA. If no message has been found,
+     * we continue to poll SR channel */
+    ret = sctk_ib_rdma_eager_poll_remote(rail_ib, remote);
+    if (ret != REORDER_FOUND_EXPECTED) {
+      sctk_network_poll_all_and_steal(rail, &poll);
+    }
+  } else {
+    /* Else we simply pool all other channels */
+    sctk_network_poll_all_and_steal(rail, &poll);
+  }
 }
 
 static void
 sctk_network_notify_recv_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
-  /* POLLING */
-  /* XXX: do not add polling here */
+  int remote_task = sctk_get_comm_world_rank (msg->tail.request->header.communicator,
+      msg->tail.request->header.source);
+  int remote_process = sctk_get_process_rank_from_task_rank(remote_task);
+
+  sctk_network_poll_remote_process(rail, remote_process);
+
 }
 
 static void
@@ -405,40 +427,21 @@ sctk_network_notify_matching_message_ib (sctk_thread_ptp_message_t * msg,sctk_ra
 /* WARNING: This function can be called with dest == sctk_process_rank */
 static void
 sctk_network_notify_perform_message_ib (int dest, sctk_rail_info_t* rail){
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  int ret;
 
-  /* If the dest is another process than the current process */
-  if (dest != sctk_process_rank) {
-    sctk_ib_qp_t *remote;
-    sctk_ib_data_t *route_data;
-    sctk_route_table_t *route =  sctk_get_route_to_process_no_ondemand(dest, rail);
-    ib_assume(route);
-
-    route_data=&route->data.ib;
-    remote=route_data->remote;
-
-    /* Poll messages fistly on RDMA. If no message has been found,
-     * we continue to poll SR channel */
-    ret = sctk_ib_rdma_eager_poll_remote(rail_ib, remote);
-    if (ret != REORDER_FOUND_EXPECTED) {
-      sctk_network_poll_all_and_steal(rail);
-    }
-  } else {
-    /* Else we simply pool all other channels */
-    sctk_network_poll_all_and_steal(rail);
-  }
+  sctk_network_poll_remote_process(rail, dest);
 }
 
 static void
 sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   int ret;
+  struct sctk_ib_polling_s poll;
+  POLL_INIT(&poll);
 
   /* POLLING */
   sctk_ib_rdma_eager_walk_remotes(rail_ib, sctk_ib_rdma_eager_poll_remote, &ret);
   if (ret != REORDER_FOUND_EXPECTED) {
-    sctk_network_poll_all_and_steal(rail);
+    sctk_network_poll_all_and_steal(rail, &poll);
   }
 }
 
@@ -446,11 +449,13 @@ static void
 sctk_network_notify_any_source_message_ib (sctk_rail_info_t* rail){
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   int ret;
+  struct sctk_ib_polling_s poll;
+  POLL_INIT(&poll);
 
   /* POLLING */
   sctk_ib_rdma_eager_walk_remotes(rail_ib, sctk_ib_rdma_eager_poll_remote, &ret);
   if (ret != REORDER_FOUND_EXPECTED) {
-    sctk_network_poll_all_and_steal(rail);
+    sctk_network_poll_all_and_steal(rail, &poll);
   }
 }
 

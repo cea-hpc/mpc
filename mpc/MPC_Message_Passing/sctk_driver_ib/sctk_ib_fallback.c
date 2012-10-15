@@ -110,7 +110,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, is_control_message);
     sctk_complete_and_free_message(msg);
-    PROF_INC(rail_ib->rail, eager_nb);
+    PROF_INC(rail_ib->rail, ib_eager_nb);
     goto exit;
   }
 
@@ -120,7 +120,7 @@ buffered:
     /* Fallback to RDMA if buffered not available or low memory mode */
     if (sctk_ib_buffered_prepare_msg(rail, remote, msg, size) == 1 ) goto error;
     sctk_complete_and_free_message(msg);
-    PROF_INC(rail_ib->rail, buffered_nb);
+    PROF_INC(rail_ib->rail, ib_buffered_nb);
     goto exit;
   }
 
@@ -284,7 +284,7 @@ sctk_network_notify_matching_message_ib (sctk_thread_ptp_message_t * msg,sctk_ra
 /* WARNING: This function can be called with dest == sctk_process_rank */
 static void
 sctk_network_notify_perform_message_ib (int dest, sctk_rail_info_t* rail){
-  sctk_network_poll_all_and_steal(rail);
+//  sctk_network_poll_all_and_steal(rail);
 }
 
 static void
@@ -296,7 +296,7 @@ sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){
 static void
 sctk_network_notify_any_source_message_ib (sctk_rail_info_t* rail){
   /* POLLING */
-  sctk_network_poll_all_and_steal(rail);
+//  sctk_network_poll_all_and_steal(rail);
 }
 
 static void
