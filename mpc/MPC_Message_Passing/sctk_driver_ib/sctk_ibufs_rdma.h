@@ -93,14 +93,13 @@ struct sctk_ib_rail_info_s;
  * |             |
  * | TAIL (int)  |
  * |_____________|
- * |             |
- * | POISON (int)|
- * |_____________|
  *
  */
 #define IBUF_RDMA_RESET_FLAG   120983
 #define IBUF_RDMA_FLAG_1 989898
 #define IBUF_RDMA_FLAG_2 434343
+#define ALIGNED_RDMA_BUFFER (sizeof(size_t) + 2*sizeof(int))
+//#define ALIGNED_RDMA_BUFFER ALIGN_ON((sizeof(size_t) + 2*sizeof(int)), 8)
 
 /* ATTENTION: this macro *MUST* point to the
  * base of the ibuf */
@@ -125,7 +124,7 @@ struct sctk_ib_rail_info_s;
   ((void*) ((char*) buffer + sizeof(size_t) + sizeof(int)))
 
 #define IBUF_RDMA_GET_PAYLOAD_FLAG(buffer) \
-  ((void*) ((char*) buffer + sizeof(size_t) + 2*sizeof(int)))
+  ((void*) ((char*) buffer + ALIGNED_RDMA_BUFFER ))
 
 /* 's' is the size of the data.
  * XXX: We only start to count from the buffer. */
@@ -134,7 +133,7 @@ struct sctk_ib_rail_info_s;
 
 /* The payload size must be set before using this macro */
 #define IBUF_RDMA_GET_SIZE \
-  (sizeof(size_t) + (3 * sizeof(int)) )
+ (ALIGNED_RDMA_BUFFER + sizeof(int) )
 
 /* Pool of ibufs */
 #define REGION_SEND 0

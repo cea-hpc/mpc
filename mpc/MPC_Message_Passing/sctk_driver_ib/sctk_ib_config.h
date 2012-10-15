@@ -74,6 +74,7 @@ typedef struct sctk_ib_config_s
   unsigned int  ibv_low_memory;
   unsigned int  ibv_quiet_crash;
   unsigned int  ibv_match;
+  unsigned int  ibv_async_thread;
 
   /* For RDMA */
   unsigned int  ibv_rdma_min_size;

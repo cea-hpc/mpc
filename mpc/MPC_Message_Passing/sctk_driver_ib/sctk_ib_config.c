@@ -50,10 +50,12 @@
  * if x > IBV_FRAG_EAGER_LIMIT -> rendezvous msg */
 /* !!! WARNING !!! : diminishing IBV_EAGER_LIMIT me cause bad performance
  * on buffered eager messages */
-#define IBV_EAGER_LIMIT       ( 12 * 1024)
+//#define IBV_EAGER_LIMIT       (256)
+#define IBV_EAGER_LIMIT       (1024 * 12)
 //#define IBV_FRAG_EAGER_LIMIT  (256 * 1024)
 /* FOR PAPER */
-#define IBV_FRAG_EAGER_LIMIT  (512 * 1024)
+//#define IBV_FRAG_EAGER_LIMIT  (0)
+#define IBV_FRAG_EAGER_LIMIT  (256 * 1024)
 
 /* Number of allowed pending Work Queue Elements
  * for each QP */
@@ -70,8 +72,8 @@
 
 /* Number of RDMA buffers allocated for each neighbor.
  * The total memory used is: 2 (1 for send and 1 for receive) * 256 buffers * IBV_EAGER_RDMA_LIMIT */
-#define IBV_MAX_RDMA_CONNECTIONS 24 /* 2*12 */
-#define IBV_RDMA_RESIZING 1
+#define IBV_MAX_RDMA_CONNECTIONS 0 /* 2*12 */
+#define IBV_RDMA_RESIZING 0
 
 /* For RDMA connection */
 /* FOR PAPER */
@@ -89,20 +91,20 @@
 
 /* Maximum number of buffers to allocate during the
  * initialization step */
-#define IBV_INIT_IBUFS          3000
+#define IBV_INIT_IBUFS          1000
 //#define IBV_INIT_IBUFS         100
 
 /* Maximum number of buffers which can be posted to the SRQ.
  * This number cannot be higher than than the number fixed by the HW.
  * The verification is done during the config_check function */
-#define IBV_MAX_SRQ_IBUFS_POSTED     1000
+#define IBV_MAX_SRQ_IBUFS_POSTED     500
 /* When the async thread wakes, it means that the SRQ is full. We
  * allows the async thread to extract IBV_MAX_SRQ_WR_HANDLE_BY_THREAD messages
  * before posting new buffers .*/
 #define IBV_MAX_SRQ_WR_HANDLE_BY_THREAD 50
 /* Maximum number of buffers which can be used by SRQ. This number
  * is not fixed by the HW */
-#define IBV_MAX_SRQ_IBUFS            3000
+#define IBV_MAX_SRQ_IBUFS            1000
 //#define IBV_MAX_SRQ_IBUFS            50
 /* Minimum number of free recv buffer before
  * posting of new buffers. This thread is  activated
@@ -165,6 +167,9 @@ char* steal_names[3] = {
   "Collaborative-polling w/ WS"};
 
 #define IBV_QUIET_CRASH           0
+
+/* Enable the async thread or not */
+#define IBV_ASYNC_THREAD 1
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
@@ -245,6 +250,7 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         "ibv_rdma_dest_depth  = %d\n"
         "ibv_adaptive_polling = %d\n"
         "ibv_quiet_crash      = %d\n"
+        "ibv_async_thread     = %d\n"
         EXPERIMENTAL(ibv_steal)"            = %d\n"
         "Stealing desc        = %s\n"
         EXPERIMENTAL(ibv_low_memory)"            = %d\n"
@@ -285,6 +291,7 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         config->ibv_rdma_dest_depth,
         config->ibv_adaptive_polling,
         config->ibv_quiet_crash,
+        config->ibv_async_thread,
         config->ibv_steal, steal_names[config->ibv_steal],
         config->ibv_low_memory);
   }
@@ -329,6 +336,7 @@ void load_ib_default_config(sctk_ib_rail_info_t *rail_ib)
   config->ibv_steal = IBV_STEAL;
   config->ibv_low_memory = IBV_LOW_MEMORY;
   config->ibv_quiet_crash = IBV_QUIET_CRASH;
+  config->ibv_async_thread = IBV_ASYNC_THREAD;
 
   /* For RDMA */
   config->ibv_rdma_min_size = IBV_RDMA_MIN_SIZE;
@@ -436,6 +444,9 @@ void set_ib_env(sctk_ib_rail_info_t *rail_ib)
 
   if ( (value = getenv("MPC_IBV_QUIET_CRASH")) != NULL )
     c->ibv_quiet_crash = atoi(value);
+
+  if ( (value = getenv("MPC_IBV_ASYNC_THREAD")) != NULL )
+    c->ibv_async_thread = atoi(value);
 
   /* Format: "x:x:x:x-x:x:x:x". Buffer sizes are in KB */
   if ( (value = getenv("MPC_IBV_RDMA_EAGER")) != NULL) {

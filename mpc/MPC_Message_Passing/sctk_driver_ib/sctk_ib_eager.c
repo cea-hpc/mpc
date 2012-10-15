@@ -78,7 +78,7 @@ sctk_ib_eager_pick_buffered_ptp_message(sctk_rail_info_t *rail) {
   }
   /* If no more entries are available in the buffered list, we allocate */
   if (tmp == NULL) {
-    PROF_INC(rail, alloc_mem);
+    PROF_INC(rail, ib_alloc_mem);
     tmp = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
     /* This header must be freed after use */
     tmp->from_buffered = 0;
@@ -98,7 +98,7 @@ void sctk_ib_eager_release_buffered_ptp_message(sctk_rail_info_t* rail,
     sctk_spinlock_unlock(&eager_lock_buffered_ptp_message);
   } else {
     /* We can simply free the buffer because it was malloc'ed :-) */
-    PROF_INC(rail, free_mem);
+    PROF_INC(rail, ib_free_mem);
     sctk_free(msg);
   }
 }
@@ -195,7 +195,7 @@ sctk_ib_eager_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int recopy,
 
     size = eager_header->payload_size;
     msg = sctk_malloc(size + sizeof(sctk_thread_ptp_message_t));
-    PROF_INC(rail, alloc_mem);
+    PROF_INC(rail, ib_alloc_mem);
     ib_assume(msg);
 
     body = (char*)msg + sizeof(sctk_thread_ptp_message_t);

@@ -30,12 +30,17 @@
 
 #include <sctk_spinlock.h>
 #include <sctk_debug.h>
+#include <mpc_profiler.h>
 #include <sctk_config.h>
 #include "opa_primitives.h"
 #include "sctk_stdint.h"
+#include <sctk_asm.h>
+
+/* Rail to profile */
+#define PROF_RAIL_NUMBER 0
 
 /* Uncomment to enable Counters */
- #define SCTK_IB_PROF
+#define SCTK_IB_PROF
 /* Uncomment to enable QP profiling */
 //#define SCTK_IB_QP_PROF
 /* Uncomment to enable MEM profiling */
@@ -92,42 +97,32 @@ typedef struct sctk_ib_prof_s {
 extern __thread struct sctk_ib_prof_s * sctk_ib_profiler;
 extern __thread struct sctk_ib_prof_s * sctk_ib_profiler_start;
 
-static void sctk_ib_prof_check_init_task() {
-  if (sctk_ib_profiler == NULL) {
-    sctk_ib_profiler = sctk_malloc(sizeof(sctk_ib_prof_t) * sctk_route_get_rail_nb());
-    assume(sctk_ib_profiler);
-    memset(sctk_ib_profiler, 0, sizeof(sctk_ib_prof_t) * sctk_route_get_rail_nb());
-
-    sctk_ib_profiler_start = sctk_malloc(sizeof(sctk_ib_prof_t) * sctk_route_get_rail_nb());
-    assume(sctk_ib_profiler_start);
-    memset(sctk_ib_profiler_start, 0, sizeof(sctk_ib_prof_t) * sctk_route_get_rail_nb());
+#define PROF_TIME_START(r, x)                                       \
+  SCTK_PROFIL_START_DECLARE(x);                                     \
+  if (r->rail_number == PROF_RAIL_NUMBER) {                         \
+     SCTK_PROFIL_START_INIT(x);                                     \
   }
-}
 
-#define PROF_TIME_START(r, x) do {                                  \
-  sctk_ib_prof_check_init_task();                                   \
-  sctk_ib_profiler_start[r->rail_number].x = sctk_get_time_stamp(); \
-} while (0)
+#define PROF_TIME_END(r, x)                                         \
+  if (r->rail_number == PROF_RAIL_NUMBER) {                         \
+    SCTK_PROFIL_END(x);                                        \
+  }                                                         \
 
-#define PROF_TIME_END(r, x) do {                                    \
-  const double ___end = sctk_get_time_stamp();                      \
-  const double ___start = sctk_ib_profiler_start[r->rail_number].x; \
-  sctk_ib_prof_check_init_task();                                   \
-  sctk_ib_profiler[r->rail_number].x += (___end - ___start);         \
-} while(0)
+#define PROF_INC(r,x)                                               \
+  if (r->rail_number == PROF_RAIL_NUMBER) {                         \
+    SCTK_COUNTER_INC(x, 1);                                    \
+  }
 
-#define PROF_INC(r,x) do {                              \
-  sctk_ib_prof_check_init_task();                       \
-  sctk_ib_profiler[r->rail_number].x ++;                \
-} while(0)
+#define PROF_ADD(r,x,y)                                             \
+  if (r->rail_number == PROF_RAIL_NUMBER) {                         \
+    SCTK_COUNTER_INC(x, y);                                    \
+  }
 
-#define PROF_ADD(r,x,y) do {                            \
-  sctk_ib_prof_check_init_task();                       \
-  sctk_ib_profiler[r->rail_number].x += y;              \
-} while(0)
+#define PROF_DECR(r,x,y)                                             \
+  if (r->rail_number == PROF_RAIL_NUMBER) {                         \
+    SCTK_COUNTER_DEC(x, y);                                    \
+  }
 
-
-#define PROF_LOAD(r,x) sctk_ib_profiler[r->rail_number].x
 
 void sctk_ib_prof_init(int nb_rails);
 void sctk_ib_prof_init_task(int rank, int vp);
@@ -142,7 +137,6 @@ double sctk_ib_prof_get_mem_used();
 #define PROF_INC_RAIL_IB(x,y) (void)(0)
 #define PROF_INC(x,y) (void)(0)
 #define PROF_INC_RAIL_IB(x,y) (void)(0)
-#define PROF_LOAD(x,y) 0
 #define sctk_ib_prof_init(x) (void)(0)
 #define sctk_ib_prof_init_task(x, y) (void)(0)
 #define sctk_ib_prof_print(x) (void)(0)

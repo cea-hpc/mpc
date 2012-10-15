@@ -99,7 +99,7 @@ int sctk_ib_low_mem_recv(sctk_rail_info_t *rail,
     sctk_ib_low_mem_request_recv(rail, payload, process_src);
 
     sctk_ibuf_release(&rail->network.ib, ibuf);
-    PROF_INC(rail, free_mem);
+    PROF_INC(rail, ib_free_mem);
     sctk_free(msg);
     return 1;
   } else {

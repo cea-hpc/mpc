@@ -109,6 +109,7 @@ void sctk_ib_print_msg(sctk_thread_ptp_message_t *msg) {
 }
 
 void sctk_network_stats_ib (struct MPC_Network_stats_s* stats) {
+#if 0
   sctk_ib_cp_task_t *task = NULL;
   int task_id;
   int thread_id;
@@ -162,6 +163,7 @@ void sctk_network_stats_ib (struct MPC_Network_stats_s* stats) {
       stats->int_t.ibuf_rdma_miss_nb      = PROF_LOAD(r, ibuf_rdma_miss_nb);
     }
   }
+#endif
 }
 
 

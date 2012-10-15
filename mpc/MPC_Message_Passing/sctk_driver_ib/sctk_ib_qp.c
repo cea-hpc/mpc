@@ -434,7 +434,7 @@ sctk_ib_qp_init(struct sctk_ib_rail_info_s* rail_ib,
   LOAD_DEVICE(rail_ib);
 
   remote->qp = ibv_create_qp (device->pd, attr);
-  PROF_INC(rail_ib->rail, qp_created);
+  PROF_INC(rail_ib->rail, ib_qp_created);
   if (!remote->qp) {
     SCTK_IB_ABORT("Cannot create QP for rank %d", rank);
   }
@@ -771,12 +771,12 @@ static void* wait_send(void *arg){
   struct wait_send_s *a = (struct wait_send_s*) arg;
   int rc;
 
-  PROF_TIME_START(a->rail_ib->rail, post_send);
+  PROF_TIME_START(a->rail_ib->rail, ib_post_send);
   sctk_spinlock_lock(&a->remote->lock_send);
   rc = ibv_post_send(a->remote->qp, &(a->ibuf->desc.wr.send),
       &(a->ibuf->desc.bad_wr.send));
   sctk_spinlock_unlock(&a->remote->lock_send);
-  PROF_TIME_END(a->rail_ib->rail, post_send);
+  PROF_TIME_END(a->rail_ib->rail, ib_post_send);
   if (rc == 0)
   {
     a->flag = 1;
@@ -798,11 +798,11 @@ static void* wait_send(void *arg){
 
   /* We lock here because ibv_post_send uses mutexes which provide really bad performances.
    * Instead we encapsulate the call between spinlocks */
-  PROF_TIME_START(rail_ib->rail, post_send);
+  PROF_TIME_START(rail_ib->rail, ib_post_send);
   sctk_spinlock_lock(&remote->lock_send);
   rc = ibv_post_send(remote->qp, &(ibuf->desc.wr.send), &(ibuf->desc.bad_wr.send));
   sctk_spinlock_unlock(&remote->lock_send);
-  PROF_TIME_END(rail_ib->rail, post_send);
+  PROF_TIME_END(rail_ib->rail, ib_post_send);
   if( rc != 0) {
     struct wait_send_s wait_send_arg;
     wait_send_arg.flag = 0;
@@ -818,8 +818,6 @@ static void* wait_send(void *arg){
 
     sctk_nodebug("[%d] NO LOCK QP message sent to remote %d", rail_ib->rail->rail_number, remote->rank);
   }
-//  sctk_ib_prof_qp_write(remote->rank, ibuf->desc.sg_entry.length,
-//      sctk_get_time_stamp(), PROF_QP_SEND);
 }
 
 /* Send an ibuf to a remote.
@@ -847,6 +845,7 @@ sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
   if ( ( ibuf->flag == SEND_INLINE_IBUF_FLAG
       || ibuf->flag == RDMA_WRITE_INLINE_IBUF_FLAG)
       && ( ( (ibuf->desc.wr.send.send_flags & IBV_SEND_SIGNALED) == 0) ) ) {
+
       struct sctk_ib_polling_s *poll;
       POLL_INIT(&poll);
 

@@ -85,7 +85,7 @@ void sctk_ib_rdma_net_free_recv(void* arg) {
       msg->tail.ib.rdma.local.mmu_entry);
     sctk_nodebug("FREE: %p", msg);
   sctk_free(msg);
-  PROF_INC(rail, free_mem);
+  PROF_INC(rail, ib_free_mem);
 }
 
 /*-----------------------------------------------------------
@@ -114,7 +114,7 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
     page_size = getpagesize();
 
     posix_memalign((void**) &aligned_addr, page_size, aligned_size);
-    PROF_INC(rail_ib->rail, alloc_mem);
+    PROF_INC(rail_ib->rail, ib_alloc_mem);
     sctk_net_copy_in_buffer(msg, aligned_addr);
 
     sctk_nodebug("Sending NOT contiguous message %p of size: %lu, add:%p, type:%d (src cs:%lu, dest cs:%lu)", msg, aligned_size, aligned_addr, msg->tail.message_type, msg->body.checksum, sctk_checksum_buffer(aligned_addr,msg));
@@ -125,8 +125,10 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
   }
 
   /* Register MMU */
+  PROF_TIME_START(rail_ib->rail, send_mmu_register);
   rdma->local.mmu_entry =  sctk_ib_mmu_register (
       rail_ib, aligned_addr, aligned_size);
+  PROF_TIME_END(rail_ib->rail, send_mmu_register);
 
   /* Save addr and size */
   rdma->local.aligned_addr = aligned_addr;
@@ -324,7 +326,7 @@ static void sctk_ib_rdma_prepare_recv_recopy(sctk_rail_info_t* rail, sctk_thread
   /* Allocating memory according to the requested size */
   posix_memalign((void**) &send_header->rdma.local.aligned_addr,
       page_size, send_header->rdma.requested_size );
-  PROF_INC(rail, alloc_mem);
+  PROF_INC(rail, ib_alloc_mem);
 
   send_header->rdma.local.aligned_size  = send_header->rdma.requested_size;
   send_header->rdma.local.size          = send_header->rdma.requested_size;
@@ -341,9 +343,11 @@ static void sctk_ib_rdma_send_ack(sctk_rail_info_t* rail, sctk_thread_ptp_messag
 
   send_header = &msg->tail.ib;
   /* Register MMU */
+  PROF_TIME_START(rail_ib->rail, recv_mmu_register);
   send_header->rdma.local.mmu_entry =  sctk_ib_mmu_register (
       rail_ib, send_header->rdma.local.aligned_addr,
       send_header->rdma.local.aligned_size);
+  PROF_TIME_END(rail_ib->rail, recv_mmu_register);
   sctk_nodebug("MMU registered for msg %p", send_header);
 
   ibuf = sctk_ib_rdma_prepare_ack(rail, msg);
@@ -444,7 +448,7 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   int src_process;
 
   msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
-  PROF_INC(rail, alloc_mem);
+  PROF_INC(rail, ib_alloc_mem);
   memcpy(&msg->body, &rdma_req->msg_header, sizeof(sctk_thread_ptp_message_body_t));
 
   /* We reinit header before calculating the source */
@@ -521,7 +525,7 @@ sctk_ib_rdma_recv_done_remote(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     sctk_nodebug("FREE: %p", dest_msg_header->tail.ib.rdma.local.addr);
     /* If we recopy, we can delete the temp buffer */
     sctk_free(dest_msg_header->tail.ib.rdma.local.addr);
-    PROF_INC(rail, free_mem);
+    PROF_INC(rail, ib_free_mem);
    }
   sctk_message_completion_and_free(send,recv);
 
@@ -542,7 +546,7 @@ sctk_ib_rdma_recv_done_local(sctk_rail_info_t* rail, sctk_thread_ptp_message_t* 
     /* Unregister MMU and free message */
     sctk_nodebug("FREE PTR: %p", msg->tail.ib.rdma.local.addr);
     sctk_free(msg->tail.ib.rdma.local.addr);
-    PROF_INC(rail, free_mem);
+    PROF_INC(rail, ib_free_mem);
   }
 
   sctk_nodebug("MSG LOCAL FREE %p", msg);

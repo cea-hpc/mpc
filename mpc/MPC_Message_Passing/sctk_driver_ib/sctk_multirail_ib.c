@@ -117,6 +117,7 @@ int sctk_send_message_from_network_multirail_ib (sctk_thread_ptp_message_t * msg
     */
     sctk_send_message_try_check(msg,1);
   }
+
   return ret;
 }
 
@@ -129,6 +130,8 @@ static void* __polling_thread(void *arg) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
   int steal = config->ibv_steal;
+  sctk_ib_polling_t poll;
+  POLL_INIT(&poll);
 
   /* XXX hack to disable CP when fully is used */
   config->ibv_steal = -1;
@@ -138,7 +141,7 @@ static void* __polling_thread(void *arg) {
       config->ibv_steal = steal;
       break;
     }
-    sctk_network_poll_all(rail);
+    sctk_network_poll_all(rail, &poll);
   }
   return NULL;
 }

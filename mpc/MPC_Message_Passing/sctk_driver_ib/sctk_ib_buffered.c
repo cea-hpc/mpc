@@ -112,8 +112,10 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
       payload_size = buffer_size;
     }
 
+    PROF_TIME_START(rail_ib->rail, ib_buffered_memcpy);
     memcpy(IBUF_GET_BUFFERED_PAYLOAD(ibuf->buffer), (char*) payload+msg_copied,
       payload_size);
+    PROF_TIME_END(rail_ib->rail, ib_buffered_memcpy);
 
     sctk_nodebug("Send message %d to %d (msg_copied:%lu pyload_size:%lu header:%lu, buffer_size:%lu number:%lu)",
         buffer_index, remote->rank, msg_copied, payload_size, IBUF_GET_BUFFERED_SIZE, buffer_size, msg->sctk_msg_get_message_number);
@@ -157,7 +159,7 @@ void sctk_ib_buffered_free_msg(void* arg) {
     case recopy:
       sctk_nodebug("Free payload %p from entry %p", entry->payload, entry);
       sctk_free(entry->payload);
-      PROF_INC(rail, free_mem);
+      PROF_INC(rail, ib_free_mem);
       break;
 
     case zerocopy:
@@ -203,7 +205,7 @@ void sctk_ib_buffered_copy(sctk_message_to_copy_t* tmp){
         sctk_nodebug("Message recopied free from copy %d (%p)", entry->status, entry);
         sctk_net_message_copy_from_buffer(entry->payload, tmp, 1);
         sctk_free(entry);
-        PROF_INC(rail, free_mem);
+        PROF_INC(rail, ib_free_mem);
       } else {
         sctk_nodebug("Matched");
         /* Add matching OK */
@@ -236,7 +238,7 @@ sctk_ib_buffered_get_entry(sctk_rail_info_t* rail, sctk_ib_qp_t *remote, sctk_ib
     /* Allocate memory for message header */
     entry = sctk_malloc(sizeof(sctk_ib_buffered_entry_t));
     ib_assume(entry);
-    PROF_INC(rail, alloc_mem);
+    PROF_INC(rail, ib_alloc_mem);
     /* Copy message header */
     memcpy(&entry->msg.body, body, sizeof(sctk_thread_ptp_message_body_t));
     entry->msg.tail.ib.protocol = buffered_protocol;
@@ -270,7 +272,7 @@ sctk_ib_buffered_get_entry(sctk_rail_info_t* rail, sctk_ib_qp_t *remote, sctk_ib
       sctk_nodebug("We recopy the message");
       entry->payload = sctk_malloc(body->header.msg_size);
       ib_assume(entry->payload);
-      PROF_INC(rail, alloc_mem);
+      PROF_INC(rail, ib_alloc_mem);
       entry->status |= recopy;
     } else if ( (entry->status & MASK_BASE) != zerocopy) not_reachable();
     sctk_spinlock_unlock(&entry->lock);
@@ -307,7 +309,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   /* Get the entry */
   entry = sctk_ib_buffered_get_entry(rail, remote, ibuf);
 
-  sctk_nodebug("Copy frag %d on %d (size:%lu copied:%lu)", buffered->index, buffered->nb, buffered->payload_size, buffered->copied);
+  //fprintf(stderr, "Copy frag %d on %d (size:%lu copied:%lu)\n", buffered->index, buffered->nb, buffered->payload_size, buffered->copied);
   /* Copy the message payload */
   memcpy((char*) entry->payload + buffered->copied,IBUF_GET_BUFFERED_PAYLOAD(ibuf->buffer),
    buffered->payload_size);
@@ -340,7 +342,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
           sctk_net_message_copy_from_buffer(entry->payload, entry->copy_ptr, 1);
           sctk_nodebug("Message recopied free from done");
           sctk_free(entry);
-          PROF_INC(rail, free_mem);
+          PROF_INC(rail, ib_free_mem);
         } else {
           sctk_nodebug("Free done:%p", entry);
           entry->status |= done;
@@ -355,7 +357,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
           sctk_message_completion_and_free(entry->copy_ptr->msg_send,
               entry->copy_ptr->msg_recv);
           sctk_free(entry);
-          PROF_INC(rail, free_mem);
+          PROF_INC(rail, ib_free_mem);
           sctk_nodebug("Message zerocpy free from done");
         } else {
           sctk_spinlock_unlock(&entry->lock);
