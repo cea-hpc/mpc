@@ -79,7 +79,14 @@ extern "C"
     MPC_DEFINED_FUNCS(MPC_2INT,mpc_int_int ,name);			\
     MPC_DEFINED_FUNCS(MPC_2FLOAT,mpc_float_float ,name)	;		\
     MPC_DEFINED_FUNCS(MPC_LOGICAL, int,name);				\
-    MPC_DEFINED_FUNCS(MPC_2DOUBLE_PRECISION,mpc_double_double ,name)
+    MPC_DEFINED_FUNCS(MPC_2DOUBLE_PRECISION,mpc_double_double ,name);	\
+    MPC_DEFINED_FUNCS(MPC_REAL4,float,name);				\
+    MPC_DEFINED_FUNCS(MPC_REAL8,double,name);				\
+    MPC_DEFINED_FUNCS(MPC_REAL16,long double,name);			\
+    MPC_DEFINED_FUNCS(MPC_INTEGER1,int8_t,name);			\
+    MPC_DEFINED_FUNCS(MPC_INTEGER2,int16_t,name);			\
+    MPC_DEFINED_FUNCS(MPC_INTEGER4,int32_t,name);			\
+    MPC_DEFINED_FUNCS(MPC_INTEGER8,int64_t,name)
 
     MPC_PROTOTYPES (MIN);
     MPC_PROTOTYPES (MAX);
