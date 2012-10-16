@@ -511,18 +511,6 @@ int main()
 }
 EOF
 fi
-#This is not the better place but it avoid to copy/past complex code !
-if test "$1" = '_Pragma_message'; then
-cat  << EOF  > ${SCTK_CONF_C}
-#define DO_PRAGMA(x) _Pragma (#x)
-#define TODO(x) DO_PRAGMA(message ("TODO - " #x))
-
-int main(){
-	TODO("test")
-	return 0;
-}
-EOF
-fi
 }
 
 SCTK_CHECK_FUNC(){

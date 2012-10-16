@@ -637,14 +637,8 @@ if test "$SCTK_DEBUG" = "1" ; then
 fi
 
 #Check for _Pragma message in macro
-#This is not the better place (SCTK_CHECK_FUNC) but it avoid to copy/past complex code !
 #It may be better to move this in MPC_Common/sys_dep file but we need to check with -Werror
-begin_section "Enabling _Pragma message for developpers"
-	SCTK_CHECK_FUNC_NOFAIL _Pragma_message
-	if test "${SCTK_SCTK_CHECK_FUNC_RES}" = "0"; then
-		SCTK_CHECK_OPTION "-DSCTK_PRAGMA_MESSAGE"
-	fi
-end_section
+check_pragma_message
 
 COMPILER_SPECIFC_FLAGS="$COMPILER_SPECIFC_FLAGS $SCTK_CFLAGS_NON_GNU"
 
