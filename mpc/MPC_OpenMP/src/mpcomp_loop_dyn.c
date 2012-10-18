@@ -295,6 +295,7 @@ int __mpcomp_dynamic_steal(int *from, int *to)
    
 //#endif
  }
+//}
 
  //t->stolen_mvp = NULL;
  //t->stolen_chunk_id = -1;
@@ -585,9 +586,9 @@ int __mpcomp_dynamic_steal(int *from, int *to)
   }
 
  t->stolen_mvp = NULL;
-
- return 0;
 #endif
+ return 0;
+//#endif
 }
 //#endif
 
