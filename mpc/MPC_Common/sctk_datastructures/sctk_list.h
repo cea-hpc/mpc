@@ -24,12 +24,12 @@
 /* ######################################################################## */
 
 #include <stdio.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sctk_config.h>
 #include <sctk_spinlock.h>
 #include <sctk_alloc.h>
+#include "sctk_stdint.h"
 
 #ifndef __SCTK__LIST__
 #define __SCTK__LIST__

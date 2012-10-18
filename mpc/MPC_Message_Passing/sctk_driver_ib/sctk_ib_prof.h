@@ -31,8 +31,8 @@
 #include <sctk_spinlock.h>
 #include <sctk_debug.h>
 #include <sctk_config.h>
-#include <stdint.h>
 #include "opa_primitives.h"
+#include "sctk_stdint.h"
 
 /* Define for activating profiling */
 /* #define SCTK_IB_PROF */

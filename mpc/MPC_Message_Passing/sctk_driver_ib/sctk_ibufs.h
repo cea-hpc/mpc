@@ -27,8 +27,8 @@
 #ifndef __SCTK__INFINIBAND_IBUFS_H_
 #define __SCTK__INFINIBAND_IBUFS_H_
 
-#include "stdint.h"
 #include "infiniband/verbs.h"
+#include "sctk_stdint.h"
 
 enum sctk_ib_cp_poll_cq_e {
   send_cq,

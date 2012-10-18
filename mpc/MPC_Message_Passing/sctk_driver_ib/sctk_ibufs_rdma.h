@@ -27,7 +27,6 @@
 #ifndef __SCTK__INFINIBAND_IBUFS_RDMA_H_
 #define __SCTK__INFINIBAND_IBUFS_RDMA_H_
 
-#include "stdint.h"
 #include "infiniband/verbs.h"
 
 #include "sctk_spinlock.h"
@@ -35,6 +34,7 @@
 #include "sctk_ib.h"
 #include "sctk_ib_qp.h"
 #include "sctk_ib_cm.h"
+#include "sctk_stdint.h"
 
 struct sctk_ib_rail_info_s;
 

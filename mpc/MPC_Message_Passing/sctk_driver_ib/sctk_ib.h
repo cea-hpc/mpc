@@ -31,8 +31,8 @@ extern "C"
 #endif
 #include "sctk_spinlock.h"
 #include "uthash.h"
-#include <stdint.h>
 #include <mpcmp.h>
+#include "sctk_stdint.h"
 
 /*-----------------------------------------------------------
  *  IB module debugging

@@ -25,9 +25,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdint.h>
 #include <string.h>
 #include <sctk_config.h>
+#include "sctk_stdint.h"
 
 #ifndef __SCTK__BUFFERED_FIFO__
 #define __SCTK__BUFFERED_FIFO__
