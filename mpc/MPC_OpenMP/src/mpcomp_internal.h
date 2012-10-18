@@ -45,7 +45,7 @@ extern "C"
 
 /* Maximum number of alive 'single' construct */
 #define MPCOMP_MAX_ALIVE_SINGLE		1023	
-/* Maximum number of alive 'for dynamic' constr_suct */
+/* Maximum number of alive 'for dynamic' construct */
 #define MPCOMP_MAX_ALIVE_FOR_DYN 	1023
 
 #define MPCOMP_NOWAIT_STOP_SYMBOL	(-2)
@@ -84,6 +84,11 @@ extern "C"
 	  MPCOMP_CONTEXT_OUT_OF_ORDER_SUB = 3,
      } mpcomp_context_t;
 
+     typedef enum mpcomp_myself_t {
+	  MPCOMP_MYSELF_ROOT = 0,
+	  MPCOMP_MYSELF_NODE = 1,
+	  MPCOMP_MYSELF_LEAF = 2,
+     } mpcomp_myself_t ;
 
 
 /*****************
@@ -160,14 +165,17 @@ extern "C"
 	  mpcomp_atomic_int_pad_t for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
 
 	  /* -- GUIDED FOR LOOP CONSTRUCT -- */
+
+	  /* ORDERED CONSTRUCT */
+	  volatile int next_ordered_offset; 
      } mpcomp_team_t;
 
 
      /* Chunk of iteration loops */
      typedef struct mpcomp_chunk_s
      {
-	  sctk_atomics_int total ;
-	  sctk_atomics_int remain ;
+	  sctk_atomics_int total;    /* Number of total chunks */
+	  sctk_atomics_int remain;   /* Number of chunks remaining (to be executed) */
      } mpcomp_chunk_t;
 
 
@@ -201,18 +209,21 @@ extern "C"
 	  int static_current_chunk;     /* Current chunk index */
 
 	  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
-	  int for_dyn_current;
-	  mpcomp_chunk_t for_dyn_chunk_info[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
+	  int for_dyn_current;    /* Current position in 'for_dyn_chunk_info' array  */
+	  mpcomp_chunk_t for_dyn_chunk_info[MPCOMP_MAX_ALIVE_FOR_DYN + 1]; /* Chunks array 
+									      for loop dynamic 
+									      schedule constructs */
 
 	  /* ORDERED CONSTRUCT */
 	  int current_ordered_iteration; 
 
 	  /* Informations for DFS */
-	  struct mpcomp_stack_node_leaf_s *tree_stack;
-	  struct mpcomp_mvp_s *stolen_mvp;
-	  int stolen_chunk_id;
-	  int start_mvp_index;  /* Mark to know on what mvp rank we start for chunk stealing
-				   - avoid useless search */
+	  struct mpcomp_stack_node_leaf_s *tree_stack; /* Stack containing the OpenMP thread tree */
+	  struct mpcomp_mvp_s *stolen_mvp;             /* Last microvp where chunks were stolen */
+	  int stolen_chunk_id;                         /* Chunk id in the mvp current thread's */
+	  int start_mvp_index;                         /* Mark to know on what mvp rank we start
+							  for chunk stealing
+							  - avoid useless search */
      } mpcomp_thread_t;
 
 
@@ -248,6 +259,7 @@ extern "C"
 	  char pad2[64];                  /* Padding */
 	  volatile int slave_running;
 	  char pad3[64];                  /* Padding */
+	  enum mpcomp_myself_t type;      /**/
 	  void *(*func) (void *);	  /* Function to call by every thread */
 	  void *shared;		          /* Shared variables (for every thread) */
      } mpcomp_mvp_t;
@@ -297,6 +309,10 @@ extern "C"
 	  volatile long barrier_num_threads;   /* Number of threads involved in the barrier */
 	  char pad4[64];                       /* Padding */
 
+	  enum mpcomp_myself_t type;
+	  int current_mvp;
+	  int id_numa;
+        
 	  int num_threads;          /* Number of threads in the current team */
 	  void *(*func) (void *);
 	  void *shared;
