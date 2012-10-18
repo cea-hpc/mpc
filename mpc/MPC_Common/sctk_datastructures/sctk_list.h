@@ -42,9 +42,9 @@ struct sctk_list_elem {
 };
 
 struct sctk_list {
-  uint64_t elem_count;
-  uint8_t is_collector;
-  uint8_t is_initialized;
+  sctk_uint64_t elem_count;
+  sctk_uint8_t is_collector;
+  sctk_uint8_t is_initialized;
   size_t size_payload;
   sctk_spinlock_t   lock;
   struct sctk_list_elem *head;
@@ -53,13 +53,13 @@ struct sctk_list {
 };
 
 void
-sctk_list_new(struct sctk_list* list, uint8_t is_collector, size_t size_payload);
+sctk_list_new(struct sctk_list* list, sctk_uint8_t is_collector, size_t size_payload);
 
 void *
 sctk_list_push(struct sctk_list* list, void *elem);
 
 void *
-sctk_list_get_from_head(struct sctk_list* list, uint32_t n);
+sctk_list_get_from_head(struct sctk_list* list, sctk_uint32_t n);
 
   void*
 sctk_list_remove(struct sctk_list* list, struct sctk_list_elem* elem);

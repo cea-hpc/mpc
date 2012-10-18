@@ -41,10 +41,10 @@ struct sctk_buffered_fifo_chunk {
     struct sctk_buffered_fifo_chunk *p_next;
 
     ///Number of elems in chunk
-    uint32_t current_offset;
+    sctk_uint32_t current_offset;
 
     ///Elems popped
-    uint32_t current_begin;
+    sctk_uint32_t current_begin;
 };
 
 /// Generic sctk_buffered_fifo
@@ -56,14 +56,14 @@ struct sctk_buffered_fifo {
     size_t elem_size;
 
     ///Number of elem in a chunk
-    uint32_t chunk_size;
-    uint64_t elem_count;
+    sctk_uint32_t chunk_size;
+    sctk_uint64_t elem_count;
 
     ////mode
-    uint8_t is_collector;
+    sctk_uint8_t is_collector;
 
     ///Is initialized
-    uint8_t is_initialized;
+    sctk_uint8_t is_initialized;
 };
 
 /**Ininitalizes a buffered fifo
@@ -74,7 +74,7 @@ struct sctk_buffered_fifo {
 * (it solves the ref problem)
 **/
 void sctk_buffered_fifo_new(struct sctk_buffered_fifo *fifo, size_t elem_size,
-			uint32_t chunk_size, uint8_t is_collector);
+			sctk_uint32_t chunk_size, sctk_uint8_t is_collector);
 
 /**Releases a buffered fifo
 * @param fifo Pointer to an initialized sctk_buffered_fifo
@@ -137,13 +137,13 @@ sctk_buffered_fifo_alloc_chunk(struct sctk_buffered_fifo
   int
 sctk_buffered_fifo_is_empty(struct sctk_buffered_fifo *fifo);
 
-void *sctk_buffered_fifo_getnth(struct sctk_buffered_fifo *fifo, uint64_t n);
+void *sctk_buffered_fifo_getnth(struct sctk_buffered_fifo *fifo, sctk_uint64_t n);
 
 /**Get ptr to tail elem
 * @param fifo Pointer to an initialized sctk_buffered_fifo
 * @return pointer to the tail
 **/
 void*
-sctk_buffered_fifo_get_elem_from_tail(struct sctk_buffered_fifo *fifo, uint64_t n);
+sctk_buffered_fifo_get_elem_from_tail(struct sctk_buffered_fifo *fifo, sctk_uint64_t n);
 
 #endif

@@ -20,40 +20,44 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_STDINT_H_
-#define SCTK_STDINT_H_
+#ifndef SCTK_STDINT_H
+#define SCTK_STDINT_H
 
 //stdint.h is C99, if we didn't get support of it, fall-back on manual
-//definitions of uint64_t... For compatibility, please use sctk_stdin.h in MPC.
+//definitions of sctk_uint64_t... For compatibility, please use sctk_stdin.h in MPC
+//in place of stdint.h
 #ifdef HAVE_STDINT_H
+	//use standard defs
 	#include <stdint.h>
-#elif !defined(uint64_t)
+	typedef int8_t       sctk_int8_t;
+	typedef int16_t      sctk_int16_t;
+	typedef int32_t      sctk_int32_t;
+	typedef int64_t      sctk_int64_t;
+
+	typedef uint8_t      sctk_uint8_t;
+	typedef uint16_t     sctk_uint16_t;
+	typedef uint32_t     sctk_uint32_t;
+	typedef uint64_t     sctk_uint64_t;
+#else //HAVE_STDINT_H
 	//select arch specific mode
-	#if defined(SCTK_x86_64_ARCH_SCTK)
+	#if defined(SCTK_x86_64_ARCH_SCTK) || defined(SCTK_i686_ARCH_SCTK)
 		//for x86 64bit
-		typedef signed char             int8_t;
-		typedef short int               int16_t;
-		typedef int                     int32_t;
-		typedef long int                int64_t;
+		typedef signed char             sctk_int8_t;
+		typedef short int               sctk_int16_t;
+		typedef int                     sctk_int32_t;
+		typedef long int                sctk_int64_t;
 
-		typedef unsigned char           uint8_t;
-		typedef unsigned short int      uint16_t;
-		typedef unsigned int            uint32_t;
-		typedef unsigned long int       uint64_t;
-	#elif defined(SCTK_i686_ARCH_SCTK)
-		//for x86 32bit
-		typedef signed char             int8_t;
-		typedef short int               int16_t;
-		typedef int                     int32_t;
-		typedef long long int           int64_t;
-
-		typedef unsigned char           uint8_t;
-		typedef unsigned short int      uint16_t;
-		typedef unsigned int            uint32_t;
-		typedef unsigned long long int  uint64_t;
-	#else
-		#error "Unsupported architecture without support of stdint.h"
-	#endif
-#endif
+		typedef unsigned char           sctk_uint8_t;
+		typedef unsigned short int      sctk_uint16_t;
+		typedef unsigned int            sctk_uint32_t;
+		//"long long int" is 64bit for 32bit and 64bit arch
+		//not as "long int" which change.
+		//Also OK for windows which use 32bit long int and
+		//64bit long long on x86_64
+		typedef unsigned long long int  sctk_uint64_t;
+	#else //arch
+		#error "Unsupported architecture without stdint.h"
+	#endif //arch
+#endif //HAVE_STDINT_H
 
 #endif /* STDINT_H_ */
