@@ -23,18 +23,18 @@
 #ifndef SCTK_RUNTIME_CONFIG_SELECTORS_H
 #define SCTK_RUNTIME_CONFIG_SELECTORS_H
 
-/********************  HEADERS  *********************/
+/********************************* INCLUDES *********************************/
+#include <sctk_bool.h>
 #include <libxml/tree.h>
 #include <libxml/parser.h>
-#include "sctk_bool.h"
 
-/*******************  FUNCTION  *********************/
-//selector functions
+/********************************* FUNCTION *********************************/
+/* selector functions */
 bool sctk_runtime_config_xml_selectors_check(xmlNodePtr selectors);
 bool sctk_runtime_config_xml_selector_check(xmlNodePtr selector);
 
-/*******************  FUNCTION  *********************/
-//specific selector rules implementation.
+/********************************* FUNCTION *********************************/
+/* specific selector rules implementation. */
 bool sctk_runtime_config_xml_selector_env_check(xmlNodePtr selector);
 
-#endif
+#endif /* SCTK_RUNTIME_CONFIG_SELECTORS_H */

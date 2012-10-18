@@ -20,38 +20,37 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_RUNTIME_CONFIG_PRINTER
-#define SCTK_RUNTIME_CONFIG_PRINTER
+#ifndef SCTK_RUNTIME_CONFIG_PRINTER_H
+#define SCTK_RUNTIME_CONFIG_PRINTER_H
 
-/********************  HEADERS  *********************/
+/********************************* INCLUDES *********************************/
 #include "sctk_runtime_config_mapper.h"
 #include "sctk_runtime_config_walk.h"
 
-/*********************  STRUCT  *********************/
-struct sctk_runtime_config_display_state
-{
+/******************************** STRUCTURE *********************************/
+struct sctk_runtime_config_display_state {
 	bool is_simple_array;
 };
 
-/*******************  FUNCTION  *********************/
-//helpers
+/********************************* FUNCTION *********************************/
+/* helpers */
 void sctk_runtime_config_display_indent(int level);
 bool sctk_runtime_config_display_plain_type( const char * type_name,void *value);
 void sctk_runtime_config_display_handler(enum sctk_runtime_config_walk_type type,
-                                         const char * name,
-                                         const char * type_name,
-                                         void * value,
-                                         enum sctk_runtime_config_walk_status status,
-                                         const struct sctk_runtime_config_entry_meta * type_meta,
-                                         int level,
-                                         void * opt);
+        const char * name,
+        const char * type_name,
+        void * value,
+        enum sctk_runtime_config_walk_status status,
+        const struct sctk_runtime_config_entry_meta * type_meta,
+        int level,
+        void * opt);
 
-/*******************  FUNCTION  *********************/
-//entry point
+/********************************* FUNCTION *********************************/
+/* entry point */
 void sctk_runtime_config_display_tree(const struct sctk_runtime_config_entry_meta * config_meta,
                                       const char * root_name,
                                       const char * root_struct_name,
                                       void * root_struct);
 
 
-#endif //SCTK_CONFIG_PRINTER
+#endif /*SCTK_RUNTIME_CONFIG_PRINTER_H*/

@@ -76,7 +76,7 @@
 		<xsl:text>{&#10;&#09;</xsl:text>
 		<xsl:call-template name="gen-struct-name"/>
 		<xsl:text> * obj = struct_ptr;&#10;</xsl:text>
-		<xsl:text>&#09;//Simple params :&#10;</xsl:text>
+		<xsl:text>&#09;/* Simple params : */&#10;</xsl:text>
 		<xsl:apply-templates select="param"/>
  		<xsl:apply-templates select="array"/>
 		<xsl:text>}&#10;</xsl:text>
@@ -179,7 +179,7 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template match="array">
-		<xsl:text>&#09;//array&#10;</xsl:text>
+		<xsl:text>&#09;/* array */&#10;</xsl:text>
 		<xsl:choose>
 			<xsl:when test="default"><xsl:call-template name="array-default"/></xsl:when>
 			<xsl:otherwise><xsl:call-template name="array-empty"/></xsl:otherwise>

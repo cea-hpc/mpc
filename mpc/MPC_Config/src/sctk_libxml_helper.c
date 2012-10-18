@@ -20,11 +20,11 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-/********************  HEADERS  *********************/
-#include <assert.h>
+/********************************* INCLUDES *********************************/
+#include <sctk_debug.h>
 #include "sctk_libxml_helper.h"
 
-/*******************  FUNCTION  *********************/
+/******************************** FUNCTIONS *********************************/
 /**
  * Helper function to find a node based on his tag name.
  * @param node Define the node in which to search.
@@ -33,31 +33,29 @@
 **/
 xmlNodePtr sctk_libxml_find_child_node(xmlNodePtr node,const xmlChar * tagname)
 {
-	//vars
+	/* vars */
 	xmlNodePtr res = NULL;
 
-	//errors
+	/* errors */
 	assert(tagname != NULL);
 	if (node == NULL)
 		return NULL;
 
-	//search first child
-	if ((node->type == XML_ELEMENT_NODE) && (node->children != NULL))
-	{
+	/* search first child */
+	if ((node->type == XML_ELEMENT_NODE) && (node->children != NULL)) {
 		res = xmlFirstElementChild(node);
-		while(res != NULL)
-		{
+		while(res != NULL) {
 			if (res->type == XML_ELEMENT_NODE && xmlStrcmp(res->name,tagname) == 0)
 				break;
 			res = xmlNextElementSibling(res);
 		}
 	}
 
-	//return
+	/* return */
 	return res;
 }
 
-/*******************  FUNCTION  *********************/
+/******************************** FUNCTIONS *********************************/
 /**
  * Helper function to find a node based on his tag name.
  * @param node Define the node in which to search.
@@ -68,17 +66,17 @@ xmlNodePtr sctk_libxml_find_child_node(xmlNodePtr node,const xmlChar * tagname)
 **/
 xmlChar * sctk_libxml_find_child_node_content(xmlNodePtr node,const xmlChar * tagname)
 {
-	//find node
+	/* find node */
 	node = sctk_libxml_find_child_node(node,tagname);
 
-	//return
+	/* return */
 	if (node == NULL)
 		return NULL;
 	else
 		return xmlNodeGetContent(node);
 }
 
-/*******************  FUNCTION  *********************/
+/******************************** FUNCTIONS *********************************/
 /**
  * Count the number of direct child with the given tag name.
  * @param node Define the XML node in which to search.
@@ -87,43 +85,40 @@ xmlChar * sctk_libxml_find_child_node_content(xmlNodePtr node,const xmlChar * ta
 **/
 int sctk_libxml_count_child_nodes(xmlNodePtr node,const xmlChar * tagname)
 {
-	//vars
+	/* vars */
 	xmlNodePtr cur = NULL;
 	int cnt = 0;
 
-	//errors
+	/* errors */
 	assert(tagname != NULL);
 	if (node == NULL)
 		return 0;
 
-	//search first child
-	if ((node->type == XML_ELEMENT_NODE) && (node->children != NULL))
-	{
+	/* search first child */
+	if ((node->type == XML_ELEMENT_NODE) && (node->children != NULL)) {
 		cur = xmlFirstElementChild(node);
-		while(cur != NULL)
-		{
+		while(cur != NULL) {
 			if (cur->type == XML_ELEMENT_NODE && xmlStrcmp(cur->name,tagname) == 0)
 				cnt++;
 			cur = xmlNextElementSibling(cur);
 		}
 	}
 
-	//return
+	/* return */
 	return cnt;
 }
 
-/*******************  FUNCTION  *********************/
+/******************************** FUNCTIONS *********************************/
 /**
- * IMPORTED FROM LIBXML 2.7.8 AS NOT PROVIDED BY < 2.7.3.
- * xmlFirstElementChild:
- * @parent: the parent node
- *
+ * IMPORTED FROM LIBXML 2.7.8 AS IT WAS NOT PROVIDED BY < 2.7.3.
+ * 
  * Finds the first child node of that element which is a Element node
  * Note the handling of entities references is different than in
  * the W3C DOM element traversal spec since we don't have back reference
  * from entities content to entities references.
  *
- * Returns the first element child or NULL if not available
+ * @param parent the parent node
+ * @return Returns the first element child or NULL if not available
  */
 #ifndef xmlFirstElementChild
 xmlNodePtr xmlFirstElementChild(xmlNodePtr parent)
@@ -132,8 +127,8 @@ xmlNodePtr xmlFirstElementChild(xmlNodePtr parent)
 
 	if (parent == NULL)
 		return(NULL);
-	switch (parent->type)
-	{
+
+	switch (parent->type) {
 		case XML_ELEMENT_NODE:
 		case XML_ENTITY_NODE:
 		case XML_DOCUMENT_NODE:
@@ -143,21 +138,20 @@ xmlNodePtr xmlFirstElementChild(xmlNodePtr parent)
 		default:
 			return(NULL);
 	}
-	while (cur != NULL)
-	{
+
+	while (cur != NULL) {
 		if (cur->type == XML_ELEMENT_NODE)
 			return(cur);
 		cur = cur->next;
 	}
+
 	return(NULL);
 }
-#endif //xmlFirstElementChild
+#endif /* xmlFirstElementChild */
 
-/*******************  FUNCTION  *********************/
+/******************************** FUNCTIONS *********************************/
 /**
  * IMPORTED FROM LIBXML 2.7.8 AS NOT PROVIDED BY < 2.7.3.
- * xmlNextElementSibling:
- * @node: the current node
  *
  * Finds the first closest next sibling of the node which is an
  * element node.
@@ -165,15 +159,16 @@ xmlNodePtr xmlFirstElementChild(xmlNodePtr parent)
  * the W3C DOM element traversal spec since we don't have back reference
  * from entities content to entities references.
  *
- * Returns the next element sibling or NULL if not available
+ * @param node the current node
+ * @return Returns the next element sibling or NULL if not available
  */
 #ifndef xmlNextElementSibling
 xmlNodePtr xmlNextElementSibling(xmlNodePtr node)
 {
 	if (node == NULL)
 		return(NULL);
-	switch (node->type)
-	{
+
+	switch (node->type) {
 		case XML_ELEMENT_NODE:
 		case XML_TEXT_NODE:
 		case XML_CDATA_SECTION_NODE:
@@ -189,12 +184,13 @@ xmlNodePtr xmlNextElementSibling(xmlNodePtr node)
 		default:
 			return(NULL);
 	}
-	while (node != NULL)
-	{
+
+	while (node != NULL) {
 		if (node->type == XML_ELEMENT_NODE)
 			return(node);
 		node = node->next;
 	}
+
 	return(NULL);
 }
-#endif //xmlNextElementSibling
+#endif /* xmlNextElementSibling */

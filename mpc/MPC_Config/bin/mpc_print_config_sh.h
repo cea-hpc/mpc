@@ -20,36 +20,35 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef MPC_PRINT_CONFIG_SH_HEADER
-#define MPC_PRINT_CONFIG_SH_HEADER
+#ifndef MPC_PRINT_CONFIG_SH_H
+#define MPC_PRINT_CONFIG_SH_H
 
-/********************  HEADERS  *********************/
-#include "sctk_runtime_config_walk.h"
+/********************************* INCLUDES *********************************/
+#include <sctk_runtime_config_walk.h>
 
-/*********************  STRUCT  *********************/
+/******************************** STRUCTURE *********************************/
 /**
  * Structure to store current display state.
 **/
-struct display_state_sh
-{
+struct display_state_sh {
 	bool is_simple_array;
 	const char * names[32];
 };
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 void to_upper_case(char * value);
 void print_var_name_sh(struct display_state_sh * state,const char * name,int level);
 void display_handler_sh(enum sctk_runtime_config_walk_type type,
-                                         const char * name,
-                                         const char * type_name,
-                                         void * value,
-                                         enum sctk_runtime_config_walk_status status,
-                                         const struct sctk_runtime_config_entry_meta * type_meta,
-                                         int level,
-                                         void * opt);
+                        const char * name,
+                        const char * type_name,
+                        void * value,
+                        enum sctk_runtime_config_walk_status status,
+                        const struct sctk_runtime_config_entry_meta * type_meta,
+                        int level,
+                        void * opt);
 void display_tree_sh(const struct sctk_runtime_config_entry_meta * config_meta,
-                                      const char * root_name,
-                                      const char * root_struct_name,
-                                      void * root_struct);
+                     const char * root_name,
+                     const char * root_struct_name,
+                     void * root_struct);
 
-#endif //MPC_PRINT_CONFIG_SH_HEADER
+#endif /* MPC_PRINT_CONFIG_SH_H */

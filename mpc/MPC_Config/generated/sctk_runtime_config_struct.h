@@ -27,7 +27,7 @@
 #ifndef SCTK_RUNTIME_CONFIG_STRUCT_H
 #define SCTK_RUNTIME_CONFIG_STRUCT_H
 
-/*********************  STRUCT  *********************/
+/******************************** STRUCTURE *********************************/
 /**Options for MPC memory allocator.**/
 struct sctk_runtime_config_struct_allocator
 {	/**Enable or disable NUMA migration of allocator pages on thread migration.**/
@@ -44,7 +44,7 @@ struct sctk_runtime_config_struct_allocator
 	bool strict;
 };
 
-/*********************  STRUCT  *********************/
+/******************************** STRUCTURE *********************************/
 /**Options for MPC launcher.**/
 struct sctk_runtime_config_struct_launcher
 {	/**Enable usage of hyperthreaded cores if available on current architecture.**/
@@ -59,7 +59,7 @@ struct sctk_runtime_config_struct_launcher
 	int autokill;
 };
 
-/*********************  STRUCT  *********************/
+/******************************** STRUCTURE *********************************/
 /**Declare a fake driver to test the configuration system.**/
 struct sctk_runtime_config_struct_net_driver_fake
 {	/**Size of the buffer used for internal copies.**/
@@ -68,7 +68,7 @@ struct sctk_runtime_config_struct_net_driver_fake
 	bool stealing;
 };
 
-/**********************  ENUM  **********************/
+/********************************** ENUM ************************************/
 /**Define a specific configuration for a network driver to apply in rails.**/
 enum sctk_runtime_config_struct_net_driver_type
 {
@@ -77,7 +77,7 @@ enum sctk_runtime_config_struct_net_driver_type
 	SCTK_RTCFG_net_driver_tcp,
 };
 
-/*********************  STRUCT  *********************/
+/******************************** STRUCTURE *********************************/
 /**Define a specific configuration for a network driver to apply in rails.**/
 struct sctk_runtime_config_struct_net_driver
 {
@@ -88,7 +88,7 @@ struct sctk_runtime_config_struct_net_driver
 	} value;
 };
 
-/*********************  STRUCT  *********************/
+/******************************** STRUCTURE *********************************/
 /**Contain a list of driver configuration reused by rail definitions.**/
 struct sctk_runtime_config_struct_net_driver_config
 {	/**Name of the driver configuration to be referenced in rail definitions.**/
@@ -97,7 +97,7 @@ struct sctk_runtime_config_struct_net_driver_config
 	struct sctk_runtime_config_struct_net_driver driver;
 };
 
-/*********************  STRUCT  *********************/
+/******************************** STRUCTURE *********************************/
 /**Define a rail which is a name, a device associate to a driver and a routing topology.**/
 struct sctk_runtime_config_struct_net_rail
 {	/**Define the name of current rail.**/
@@ -110,7 +110,7 @@ struct sctk_runtime_config_struct_net_rail
 	char * config;
 };
 
-/*********************  STRUCT  *********************/
+/******************************** STRUCTURE *********************************/
 /**Base structure to contain the network configuration**/
 struct sctk_runtime_config_struct_networks
 {	/**Define the configuration driver list to reuse in rail definitions.**/
@@ -123,7 +123,7 @@ struct sctk_runtime_config_struct_networks
 	int rails_size;
 };
 
-/*********************  STRUCT  *********************/
+/******************************** STRUCTURE *********************************/
 /**Options for the internal MPC Profiler**/
 struct sctk_runtime_config_struct_profiler
 {	/**Prefix of MPC Profiler outputs**/
@@ -138,7 +138,7 @@ struct sctk_runtime_config_struct_profiler
 	int level_colors_size;
 };
 
-/*********************  STRUCT  *********************/
+/******************************** STRUCTURE *********************************/
 struct sctk_runtime_config_modules
 {
 	struct sctk_runtime_config_struct_allocator allocator;
@@ -146,12 +146,12 @@ struct sctk_runtime_config_modules
 	struct sctk_runtime_config_struct_profiler profiler;
 };
 
-/*********************  STRUCT  *********************/
+/******************************** STRUCTURE *********************************/
 struct sctk_runtime_config
 {
 	struct sctk_runtime_config_modules modules;
 	struct sctk_runtime_config_struct_networks networks;
 };
 
-#endif // SCTK_RUNTIME_CONFIG_STRUCT_H
+#endif /* SCTK_RUNTIME_CONFIG_STRUCT_H */
 

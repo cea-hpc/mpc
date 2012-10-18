@@ -33,20 +33,20 @@
 		<xsl:text>#define SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H&#10;</xsl:text>
 		<xsl:call-template name="gen-forward-struct-decl"/>
 		<xsl:call-template name="gen-reset-function"/>
-		<xsl:text>&#10;#endif //SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H&#10;</xsl:text>
+		<xsl:text>&#10;#endif /* SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H */&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-forward-struct-decl">
-		<xsl:text>&#10;/*********************  STRUCT  *********************/&#10;</xsl:text>
-		<xsl:text>//forward declaration functions&#10;</xsl:text>
+		<xsl:text>&#10;/******************************** STRUCTURE *********************************/&#10;</xsl:text>
+		<xsl:text>/* forward declaration functions */&#10;</xsl:text>
 		<xsl:text>struct sctk_runtime_config;&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-reset-function">
-		<xsl:text>&#10;/*******************  FUNCTION  *********************/&#10;</xsl:text>
-		<xsl:text>//reset functions&#10;</xsl:text>
+		<xsl:text>&#10;/********************************* FUNCTION *********************************/&#10;</xsl:text>
+		<xsl:text>/* reset functions */&#10;</xsl:text>
 		<xsl:apply-templates select="config/usertypes"/>
 		<xsl:text>void sctk_runtime_config_reset(struct sctk_runtime_config * config);&#10;</xsl:text>
 	</xsl:template>

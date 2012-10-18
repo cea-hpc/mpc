@@ -20,26 +20,24 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef MPC_PRINT_CONFIG_XML_HEADER
-#define MPC_PRINT_CONFIG_XML_HEADER
+#ifndef MPC_PRINT_CONFIG_XML_H
+#define MPC_PRINT_CONFIG_XML_H
 
-/********************  HEADERS  *********************/
-#include "sctk_runtime_config_walk.h"
+/********************************* INCLUDES *********************************/
+#include <sctk_runtime_config_walk.h>
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 void mpc_print_config_xml_handler(enum sctk_runtime_config_walk_type type,
-                                         const char * name,
-                                         const char * type_name,
-                                         void * value,
-                                         enum sctk_runtime_config_walk_status status,
-                                         const struct sctk_runtime_config_entry_meta * type_meta,
-                                         int level,
-                                         void * opt);
+                                  const char * name,
+                                  const char * type_name,
+                                  void * value,
+                                  enum sctk_runtime_config_walk_status status,
+                                  const struct sctk_runtime_config_entry_meta * type_meta,
+                                  int level,
+                                  void * opt);
 void mpc_print_config_xml(const struct sctk_runtime_config_entry_meta * config_meta,
-                                      const char * root_name,
-                                      const char * root_struct_name,
-                                      void * root_struct);
+                          const char * root_name,
+                          const char * root_struct_name,
+                          void * root_struct);
 
-#endif //MPC_PRINT_CONFIG_XML_HEADER
-
-
+#endif /* MPC_PRINT_CONFIG_XML_H */

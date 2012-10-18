@@ -23,17 +23,17 @@
 #ifndef SCTK_LIBXML_HELPER_H
 #define SCTK_LIBXML_HELPER_H
 
-/********************  HEADERS  *********************/
+/********************************* INCLUDES *********************************/
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 xmlNodePtr sctk_libxml_find_child_node(xmlNodePtr node,const xmlChar * tagname);
 xmlChar * sctk_libxml_find_child_node_content(xmlNodePtr node,const xmlChar * tagname);
 int sctk_libxml_count_child_nodes(xmlNodePtr node,const xmlChar * tagname);
 
-/*******************  FUNCTION  *********************/
-//Those once came from libxml by redefined as no available for old versions (<2.7.3)
+/********************************* FUNCTION *********************************/
+/* Those once came from libxml by redefined as no available for old versions (<2.7.3) */
 #ifndef xmlFirstElementChild
 xmlNodePtr xmlFirstElementChild(xmlNodePtr parent);
 #endif
@@ -41,4 +41,4 @@ xmlNodePtr xmlFirstElementChild(xmlNodePtr parent);
 xmlNodePtr xmlNextElementSibling(xmlNodePtr node);
 #endif
 
-#endif //SCTK_LIBXML_HELPER_H
+#endif /*SCTK_LIBXML_HELPER_H*/

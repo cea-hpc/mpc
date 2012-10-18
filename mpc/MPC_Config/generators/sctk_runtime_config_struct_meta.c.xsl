@@ -36,7 +36,7 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-meta">
-		<xsl:text>&#10;/*********************  CONSTS  *********************/&#10;</xsl:text>
+		<xsl:text>&#10;/********************************  CONSTS  **********************************/&#10;</xsl:text>
 		<xsl:text>const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {&#10;</xsl:text>
 		<xsl:call-template name="profile-meta"/>
 		<xsl:call-template name="modules-meta"/>
@@ -57,7 +57,7 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template match="struct">
-		<xsl:text>&#09;//struct&#10;</xsl:text>
+		<xsl:text>&#09;/* struct */&#10;</xsl:text>
 		<xsl:text>&#09;{"sctk_runtime_config_struct_</xsl:text>
 		<xsl:value-of select="@name"/>
 		<xsl:text>" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_</xsl:text>
@@ -101,7 +101,7 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template match="union">
-		<xsl:text>&#09;//union&#10;</xsl:text>
+		<xsl:text>&#09;/* union */&#10;</xsl:text>
 		<xsl:text>&#09;{"sctk_runtime_config_struct_</xsl:text>
 		<xsl:value-of select="@name"/>
 		<xsl:text>" , SCTK_CONFIG_META_TYPE_UNION , 0  , sizeof(struct sctk_runtime_config_struct_</xsl:text>
@@ -201,13 +201,13 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template name="end-marker">
-		<xsl:text>&#09;//end marker&#10;</xsl:text>
+		<xsl:text>&#09;/* end marker */&#10;</xsl:text>
 		<xsl:text>&#09;{NULL , SCTK_CONFIG_META_TYPE_END , 0 , 0 , NULL,  NULL}&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template name="profile-meta">
-		<xsl:text>&#09;//sctk_runtime_config&#10;</xsl:text>
+		<xsl:text>&#09;/* sctk_runtime_config */&#10;</xsl:text>
 		<xsl:text>&#09;{"sctk_runtime_config" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config) , NULL , sctk_runtime_config_reset},&#10;</xsl:text>
 		<xsl:text>&#09;{"modules"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config,modules)  , sizeof(struct sctk_runtime_config_modules) , "sctk_runtime_config_modules" , NULL},&#10;</xsl:text>
 		<xsl:text>&#09;{"networks"    , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config,networks)  , sizeof(struct sctk_runtime_config_struct_networks), "sctk_runtime_config_struct_networks" , NULL},&#10;</xsl:text>
@@ -215,7 +215,7 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template name="modules-meta">
-		<xsl:text>&#09;//sctk_runtime_config_modules&#10;</xsl:text>
+		<xsl:text>&#09;/* sctk_runtime_config_modules */&#10;</xsl:text>
 		<xsl:text>&#09;{"sctk_runtime_config_modules" , SCTK_CONFIG_META_TYPE_STRUCT , 0 , sizeof(struct sctk_runtime_config) , NULL , NULL},&#10;</xsl:text>
 		<xsl:for-each select="config">
 			<xsl:apply-templates select="modules"/>

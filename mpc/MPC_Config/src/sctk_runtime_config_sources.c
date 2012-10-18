@@ -20,27 +20,26 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-/********************  HEADERS  *********************/
-#include <assert.h>
+/********************************* INCLUDES *********************************/
+#include <sctk_bool.h>
+#include <sctk_config.h>
+#include <sctk_debug.h>
 #include <string.h>
-#include "sctk_bool.h"
 #include <sys/stat.h>
 #include <errno.h>
-#include <sctk_config.h>
 #include <libxml/xmlschemas.h>
-#include "sctk_debug.h"
 #include "sctk_runtime_config_selectors.h"
-#include "sctk_libxml_helper.h"
 #include "sctk_runtime_config_sources.h"
+#include "sctk_libxml_helper.h"
 
-/*********************  GLOBAL  *********************/
+/********************************** GLOBALS *********************************/
 /**
  * This is a constant on exported symbol, so the user can redefine it in application source
  * code if wanted.
 **/
 const char * sctk_runtime_config_default_user_file_path = NULL;
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Checks if a given profile name is not already in the profile name array
  * @param config_sources Define the XML source in which to search for previous profile.
@@ -50,13 +49,12 @@ static int sctk_runtime_config_sources_profile_name_is_unique( struct sctk_runti
 {
 	int i = 0;
 
-	//errors
+	/* errors */
 	assert( candidate != NULL );
 	assert( config_sources != NULL );
 
-	//loop on profiles
-	for( i = 0 ; i < config_sources->cnt_profile_names; i++ )
-	{
+	/* loop on profiles */
+	for( i = 0 ; i < config_sources->cnt_profile_names; i++ ) {
 		if( !xmlStrcmp( (const xmlChar *)&config_sources->profile_names[i], candidate ) )
 			return 0;
 	}
@@ -66,26 +64,25 @@ static int sctk_runtime_config_sources_profile_name_is_unique( struct sctk_runti
 
 /** @TODO check that some assert need to be turned into assume (when checking node names...) **/
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 void sctk_runtim_config_sources_select_profile_name(struct sctk_runtime_config_sources * config_sources,xmlChar * profile_name)
 {
-	//errors
+	/* errors */
 	assert(profile_name != NULL);
 
-	//Check if the profile name is unique and store its name if true
-	if( sctk_runtime_config_sources_profile_name_is_unique( config_sources, profile_name ) )
-	{
+	/* Check if the profile name is unique and store its name if true */
+	if( sctk_runtime_config_sources_profile_name_is_unique( config_sources, profile_name ) ) {
 		config_sources->profile_names[config_sources->cnt_profile_names] = profile_name;
-		//sctk_debug("MPC_Config : Add profile %s\n",config_sources->profile_names[config_sources->cnt_profile_names]);
+		sctk_nodebug("MPC_Config : Add profile %s\n",config_sources->profile_names[config_sources->cnt_profile_names]);
 		config_sources->cnt_profile_names++;
 		assume_m(config_sources->cnt_profile_names < SCTK_RUNTIME_CONFIG_MAX_PROFILES,
-				"Reach maximum number of profiles : SCTK_RUNTIME_CONFIG_MAX_PROFILES = %d.",SCTK_RUNTIME_CONFIG_MAX_PROFILES);
+		         "Reach maximum number of profiles : SCTK_RUNTIME_CONFIG_MAX_PROFILES = %d.",SCTK_RUNTIME_CONFIG_MAX_PROFILES);
 	} else {
 		xmlFree( profile_name );
 	}
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Loops through all mapping to store their associated profile name
  * @param config_sources Define the XML source in which to store the profile names.
@@ -93,47 +90,43 @@ void sctk_runtim_config_sources_select_profile_name(struct sctk_runtime_config_s
 **/
 void sctk_runtime_config_sources_select_profiles_in_mapping(struct sctk_runtime_config_sources * config_sources, xmlNodePtr mapping)
 {
-	//vars
+	/* vars */
 	xmlNodePtr selectors;
 	xmlNodePtr profile;
 
-	//errors
+	/* errors */
 	assert(config_sources != NULL);
 	assert(mapping != NULL);
 	assert(mapping->type == XML_ELEMENT_NODE);
 	assert(xmlStrcmp(mapping->name,SCTK_RUNTIME_CONFIG_XML_NODE_MAPPING) == 0);
 
-	//check selectors
+	/* check selectors */
 	selectors = sctk_libxml_find_child_node(mapping,SCTK_RUNTIME_CONFIG_XML_NODE_SELECTORS);
-	if (selectors != NULL)
-	{
-		if (sctk_runtime_config_xml_selectors_check(selectors))
-		{
-			//get profiles
+	if (selectors != NULL) {
+		if (sctk_runtime_config_xml_selectors_check(selectors)) {
+			/* get profiles */
 			profile = sctk_libxml_find_child_node(mapping,SCTK_RUNTIME_CONFIG_XML_NODE_PROFILES);
-			//down to first profile child
+			/* down to first profile child */
 			profile = xmlFirstElementChild(profile);
 
 			assert(profile != NULL);
 			assert(xmlStrcmp(profile->name,SCTK_RUNTIME_CONFIG_XML_NODE_PROFILE) == 0);
 
-			//loop on childs
-			while (profile != NULL)
-			{
-				//if profile, ok add it
-				if (xmlStrcmp(profile->name,SCTK_RUNTIME_CONFIG_XML_NODE_PROFILE) == 0)
-				{
+			/* loop on childs */
+			while (profile != NULL) {
+				/* if profile, ok add it */
+				if (xmlStrcmp(profile->name,SCTK_RUNTIME_CONFIG_XML_NODE_PROFILE) == 0) {
 					xmlChar *profile_name = xmlNodeGetContent(profile);
 					sctk_runtim_config_sources_select_profile_name(config_sources,profile_name);
 				}
-				//move to next one
+				/* move to next one */
 				profile = xmlNextElementSibling(profile);
 			}
 		}
 	}
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Select the profiles manually requested by user via --profile= option on mpcrun or via MPC_USER_PROFILES
  * It's preferable to call this after sctk_runtime_config_sources_select_profiles_in_mapping() to ensure to override automatic
@@ -142,82 +135,77 @@ void sctk_runtime_config_sources_select_profiles_in_mapping(struct sctk_runtime_
 **/
 void sctk_runtime_config_sources_select_user_profiles(struct sctk_runtime_config_sources * config_sources)
 {
-	//vars
+	/* vars */
 	const char * env_var = NULL;
 	char * profiles = NULL;
 	char * current = NULL;
 	char * end = NULL;
 
-	//errors
+	/* errors */
 	assert(config_sources != NULL);
 
-	//read env var MPC_USER_CONFIG_PROFILES
+	/* read env var MPC_USER_CONFIG_PROFILES */
 	env_var = sctk_runtime_config_get_env_or_value("MPC_USER_PROFILES",NULL);
 
-	//load if
-	if (env_var != NULL)
-	{
-		//clone to rewrite it
+	/* load if */
+	if (env_var != NULL) {
+		/* clone to rewrite it */
 		profiles = strdup(env_var);
 
 		current = profiles;
 		end = profiles;
 
-		//loop on the while chain and split on ','
-		while (*current != '\0')
-		{
-			//move unitil next ','
+		/* loop on the while chain and split on ',' */
+		while (*current != '\0') {
+			/* move unitil next ',' */
 			while (*end != '\0' && *end != ',')
 				end++;
 
-			//if get ',' => replace by '\0' and move next
-			if (*end == ',')
-			{
+			/* if get ',' => replace by '\0' and move next */
+			if (*end == ',') {
 				*end = '\0';
 				end++;
 			}
 
-			//mark the profile for use
+			/* mark the profile for use */
 			if (*current != '\0')
 				sctk_runtim_config_sources_select_profile_name(config_sources,BAD_CAST(strdup(current)));
 
-			//move start to previous end
+			/* move start to previous end */
 			current = end;
 		}
 	}
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /** @TODO doc **/
 void sctk_runtime_config_sources_select_profiles_in_file(struct sctk_runtime_config_sources * config_sources,struct sctk_runtime_config_source_xml * source)
 {
-	//vars
+	/* vars */
 	xmlNodePtr mappings;
 	xmlNodePtr mapping;
 
-	//error
+	/* error */
 	assert(config_sources != NULL);
 	assert(source != NULL);
 
-	//search "mappings" balise
+	/* search "mappings" balise */
 	mappings = sctk_libxml_find_child_node(source->root_node,SCTK_RUNTIME_CONFIG_XML_NODE_MAPPINGS);
-	if (mappings != NULL)
-	{
-		//errors
+	if (mappings != NULL) {
+		/* errors */
 		assert(mappings->type == XML_ELEMENT_NODE);
 		assert(xmlStrcmp(mappings->name,SCTK_RUNTIME_CONFIG_XML_NODE_MAPPINGS) == 0);
 
-		//loop on mappings to extract names
+		/* loop on mappings to extract names */
 		mapping = xmlFirstElementChild(mappings);
-		while (mapping != NULL)
-		{
+		while (mapping != NULL) {
 			sctk_runtime_config_sources_select_profiles_in_mapping(config_sources,mapping);
 			mapping = xmlNextElementSibling(mapping);
 		}
 	}
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Find the profile node corresponding to the given name.
  * @param source Define the XML source in which to search the node.
@@ -226,33 +214,30 @@ void sctk_runtime_config_sources_select_profiles_in_file(struct sctk_runtime_con
 **/
 xmlNodePtr sctk_runtime_config_sources_find_profile_node(struct sctk_runtime_config_source_xml * source,const xmlChar * name)
 {
-	//vars
+	/* vars */
 	xmlNodePtr profiles;
 	xmlNodePtr profile = NULL;
 	xmlChar * profile_name;
 
-	//errors
+	/* errors */
 	assert(name != NULL);
 
-	//trivial, if no document, nothing to search
+	/* trivial, if no document, nothing to search */
 	if (source->document == NULL)
 		return NULL;
 
-	//find node "profiles"
+	/* find node "profiles" */
 	profiles = sctk_libxml_find_child_node(source->root_node,SCTK_RUNTIME_CONFIG_XML_NODE_PROFILES);
 	if (profiles == NULL)
 		return NULL;
 
-	//loop on childs ("profile" nodes)
+	/* loop on childs ("profile" nodes) */
 	profile = xmlFirstElementChild(profiles);
-	while (profile != NULL)
-	{
+	while (profile != NULL) {
 		profile_name = sctk_libxml_find_child_node_content(profile,BAD_CAST("name"));
-		if (profile_name != NULL )
-		{
-			if( xmlStrcmp(name,profile_name) == 0 )
-			{
-				//sctk_debug("MPC_Config : ok find node for %s in %p.\n",name,source);
+		if (profile_name != NULL ) {
+			if( xmlStrcmp(name,profile_name) == 0 ) {
+				sctk_nodebug("MPC_Config : ok find node for %s in %p.\n",name,source);
 				free(profile_name);
 				break;
 			}
@@ -265,7 +250,7 @@ xmlNodePtr sctk_runtime_config_sources_find_profile_node(struct sctk_runtime_con
 	return profile;
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Insert nodes by ensuring unicity. It already present, done nothing.
  * @param config_sources Define the configuration sources to use.
@@ -273,28 +258,28 @@ xmlNodePtr sctk_runtime_config_sources_find_profile_node(struct sctk_runtime_con
 **/
 void sctk_runtime_config_sources_insert_profile_node(struct sctk_runtime_config_sources * config_sources,xmlNodePtr node)
 {
-	//vars
+	/* vars */
 	int i;
 	bool present = false;
 
-	//trivial cas
+	/* trivial cas */
 	if (node == NULL)
 		return;
 
-	//errors
+	/* errors */
 	assert(xmlStrcmp(node->name,SCTK_RUNTIME_CONFIG_XML_NODE_PROFILE) == 0 );
 
-	//search to check if already in list
+	/* search to check if already in list */
 	for (i = 0 ; i < config_sources->cnt_profile_nodes ; ++i)
 		if (config_sources->profile_nodes[i] == node)
 			present = true;
 
-	//if not present, can insert
+	/* if not present, can insert */
 	if ( ! present )
 		config_sources->profile_nodes[config_sources->cnt_profile_nodes++] = node;
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Search the profile node correspondig to the given profile name in all XML files. All found profiles
  * are added to the node list in priority order.
@@ -304,37 +289,34 @@ void sctk_runtime_config_sources_insert_profile_node(struct sctk_runtime_config_
 **/
 void sctk_runtime_config_sources_select_profile_nodes(struct sctk_runtime_config_sources * config_sources,const xmlChar * name)
 {
-	//vars
+	/* vars */
 	xmlNodePtr node;
 	bool find_once = false;
 	int i = 0;
 
-	//errors
+	/* errors */
 	assert(config_sources != NULL);
 	assert(name != NULL);
-	
-	for( i = 0 ; i < SCTK_RUNTIME_CONFIG_LEVEL_COUNT ; i++ )
-	{
-		if( sctk_runtime_config_source_xml_is_open(&config_sources->sources[i]) )
-		{
+
+	for( i = 0 ; i < SCTK_RUNTIME_CONFIG_LEVEL_COUNT ; i++ ) {
+		if( sctk_runtime_config_source_xml_is_open(&config_sources->sources[i]) ) {
 			node = sctk_runtime_config_sources_find_profile_node(&config_sources->sources[i],name);
-			if (node != NULL)
-			{
+			if (node != NULL) {
 				find_once = true;
 				sctk_runtime_config_sources_insert_profile_node(config_sources,node);
 			}
 		}
 	}
 
-	//warning
+	/* warning */
 	/** @TODO To discuss, this may be a warning. **/
 	assume_m(find_once,"Can't find requested profile %s in configuration files.",name);
 
-	//error
+	/* error */
 	assume_m(config_sources->cnt_profile_nodes < SCTK_RUNTIME_CONFIG_MAX_PROFILES,"Reach maximum number of profile : SCTK_RUNTIME_CONFIG_MAX_PROFILES = %d.",SCTK_RUNTIME_CONFIG_MAX_PROFILES);
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Function used to find the DOM nodes of profiles to map. It fill the array profile_nodes
  * by using the list of names from profile_names. It ensure that a node is present only one time
@@ -345,21 +327,21 @@ void sctk_runtime_config_sources_select_profile_nodes(struct sctk_runtime_config
 **/
 void sctk_runtime_config_sources_select_profiles_nodes(struct sctk_runtime_config_sources * config_sources)
 {
-	//vars
+	/* vars */
 	unsigned int i;
 
-	//errors
+	/* errors */
 	assert(config_sources != NULL);
 
-	//search special one : default
+	/* search special one : default */
 	sctk_runtime_config_sources_select_profile_nodes(config_sources,BAD_CAST("default"));
 
-	//loop on names to get profile related xml nodes
+	/* loop on names to get profile related xml nodes */
 	for (i = 0 ; i < config_sources->cnt_profile_names ; i++)
 		sctk_runtime_config_sources_select_profile_nodes(config_sources,config_sources->profile_names[i]);
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * This function ensure the selection of all profiles to load from XML files.
  * It will sort them on priority orider in profile_nodes member.
@@ -369,22 +351,22 @@ void sctk_runtime_config_sources_select_profiles(struct sctk_runtime_config_sour
 {
 	int i = 0;
 
-	//errors
+	/* errors */
 	assert(config_sources != NULL);
 
-	//select names from all sources <mappings> entries
+	/* select names from all sources <mappings> entries */
 	for( i = 0 ; i < SCTK_RUNTIME_CONFIG_LEVEL_COUNT ; i++ )
 		if(  sctk_runtime_config_source_xml_is_open(&config_sources->sources[i])  )
 			sctk_runtime_config_sources_select_profiles_in_file(config_sources,&config_sources->sources[i]);
 
-	//select names from command line
+	/* select names from command line */
 	sctk_runtime_config_sources_select_user_profiles(config_sources);
 
-	//select all profile nodes from name list
+	/* select all profile nodes from name list */
 	sctk_runtime_config_sources_select_profiles_nodes(config_sources);
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Check if the file exist before trying to use it with libxml.
 **/
@@ -392,11 +374,10 @@ bool sckt_runtime_config_file_exist(const char * filename)
 {
 	bool exist = false;
 	struct stat value;
-	//maybe stat has portability issue (eg. windows)
-	if (stat(filename, &value) == -1)
-	{
-		if (errno != ENOENT)
-		{
+
+	/* maybe stat has portability issue (eg. windows) */
+	if (stat(filename, &value) == -1) {
+		if (errno != ENOENT) {
 			perror(filename);
 			sctk_error("Can't stat file %s.",filename);
 		}
@@ -407,7 +388,7 @@ bool sckt_runtime_config_file_exist(const char * filename)
 	return exist;
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Function used to open a particular XML file and select the DOM root node for future usage.
  * It will abort on errors.
@@ -416,23 +397,21 @@ bool sckt_runtime_config_file_exist(const char * filename)
 **/
 void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml * source,const char * filename,enum sctk_runtime_config_open_error_level level)
 {
-	//errors
+	/* errors */
 	assert(source != NULL);
 	assert(filename != NULL);
 
-	//setup default
+	/* setup default */
 	source->document = NULL;
 	source->root_node = NULL;
 
-	//skip if filename is "none"
+	/* skip if filename is "none" */
 	if (strcmp(filename,"none") == 0)
 		return;
 
-	//check if file exist
-	if ( ! sckt_runtime_config_file_exist(filename) )
-	{
-		switch(level)
-		{
+	/* check if file exist */
+	if ( ! sckt_runtime_config_file_exist(filename) ) {
+		switch(level) {
 			case SCTK_RUNTIME_CONFIG_OPEN_WARNING:
 				sctk_warning("Cannot open XML file : %s",filename);
 				return;
@@ -444,19 +423,19 @@ void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml *
 		}
 	}
 
-	//load it
+	/* load it */
 	source->document = xmlParseFile(filename);
 	assume( source->document != NULL );
 
-	//get root node
+	/* get root node */
 	source->root_node = xmlDocGetRootElement(source->document);
 	assume_m (source->root_node != NULL,"Config file is empty : %s",filename);
 
-	//check root node name
+	/* check root node name */
 	assume_m (xmlStrcmp(source->root_node->name,SCTK_RUNTIME_CONFIG_XML_NODE_MPC) == 0,"Bad root node name %s in config file : %s\n",source->root_node->name,filename);
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Check if the configuration source if open.
  * @param source Define the configuration source to check.
@@ -466,7 +445,7 @@ bool sctk_runtime_config_source_xml_is_open( struct sctk_runtime_config_source_x
 	return (source->document != NULL);
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Use the value of an environnement variable or a given default value if not defined or if empty.
  * @param env_name The name of the environnement variable to use with getenv()
@@ -474,24 +453,24 @@ bool sctk_runtime_config_source_xml_is_open( struct sctk_runtime_config_source_x
 **/
 const char * sctk_runtime_config_get_env_or_value(const char * env_name,const char * fallback_value)
 {
-	//vars
+	/* vars */
 	const char * res;
 
-	//errors
+	/* errors */
 	assert(env_name != NULL);
 
-	//select the good value
+	/* select the good value */
 	res = getenv(env_name);
 	if (res == NULL)
 		res = fallback_value;
 	else if (*res == '\0')
 		res= fallback_value;
 
-	//return
+	/* return */
 	return res;
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Validate all XML sources with the given XML schema file.
  * This function can be skiped on cluster nodes if launch with mpcrun as we already checked the config
@@ -502,58 +481,57 @@ const char * sctk_runtime_config_get_env_or_value(const char * env_name,const ch
 **/
 bool sctk_runtime_config_sources_validate(struct sctk_runtime_config_sources * config_sources,const char * xml_shema_path)
 {
-	//vars
+	/* vars */
 	int i;
 	bool status = true;
 	bool has_one = false;
 	xmlSchemaPtr schema;
-    xmlSchemaValidCtxtPtr vctxt;
-    xmlSchemaParserCtxtPtr pctxt;
+	xmlSchemaValidCtxtPtr vctxt;
+	xmlSchemaParserCtxtPtr pctxt;
 
-	//errors
+	/* errors */
 	assert(config_sources != NULL);
 	assert(xml_shema_path != NULL);
 
-	//check if has one file at least
+	/* check if has one file at least */
 	for ( i = 0 ; i < SCTK_RUNTIME_CONFIG_LEVEL_COUNT ; i++)
 		has_one |= sctk_runtime_config_source_xml_is_open(&config_sources->sources[i]);
 
-	//if not can skip
+	/* if not can skip */
 	if ( ! has_one )
 		return true;
 
-	//Open XML schema file
+	/* Open XML schema file */
 	pctxt = xmlSchemaNewParserCtxt(xml_shema_path);
 	assume_m(pctxt != NULL,"Fail to open XML schema file to validate config : %s.",xml_shema_path);
 
-    //Parse the schema
-    schema = xmlSchemaParse(pctxt);
-    xmlSchemaFreeParserCtxt(pctxt);
+	/* Parse the schema */
+	schema = xmlSchemaParse(pctxt);
+	xmlSchemaFreeParserCtxt(pctxt);
 	assume_m(schema != NULL,"Fail to parse the XML schema file to validate config : %s.",xml_shema_path);
 
-	//Create validation context
-	if ((vctxt = xmlSchemaNewValidCtxt(schema)) == NULL)
-	{
+	/* Create validation context */
+	if ((vctxt = xmlSchemaNewValidCtxt(schema)) == NULL) {
 		xmlSchemaFree(schema);
 		sctk_fatal("Fail to create validation context from XML schema file : %s.",xml_shema_path);
 	}
 
-    //Create validation output system
+	/* Create validation output system */
 	xmlSchemaSetValidErrors(vctxt, (xmlSchemaValidityErrorFunc) fprintf, (xmlSchemaValidityWarningFunc) fprintf, stderr);
 
-	// Validation
+	/* Validation */
 	for ( i = 0 ; i < SCTK_RUNTIME_CONFIG_LEVEL_COUNT ; i++)
 		if (sctk_runtime_config_source_xml_is_open(&config_sources->sources[i]))
 			status &= (xmlSchemaValidateDoc(vctxt, config_sources->sources[i].document) == 0);
 
-	//Free the schema
+	/* Free the schema */
 	xmlSchemaFree(schema);
 	xmlSchemaFreeValidCtxt(vctxt);
 
 	return status;
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Function used to open and prepare all config sources. It will also select all wanted profiles. After
  * this call, all sources are ready to be mapped to C struct.
@@ -562,7 +540,7 @@ bool sctk_runtime_config_sources_validate(struct sctk_runtime_config_sources * c
 **/
 void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * config_sources)
 {
-	//vars
+	/* vars */
 	bool status;
 	const char * config_silent;
 	const char * config_system;
@@ -573,72 +551,75 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 	static const char * def_sys_path_fallback = SCTK_INSTALL_PREFIX "/share/mpc/config.xml.example";
 	static const char * def_schema_path = SCTK_INSTALL_PREFIX "/share/mpc/mpc-config.xsd";
 
-	//errors
+	/* errors */
 	assert(config_sources != NULL);
 
-	//set to default
+	/* set to default */
 	memset(config_sources,0,sizeof(*config_sources));
 
-	//try to load from env
+	/* try to load from env */
 	config_silent = sctk_runtime_config_get_env_or_value("MPC_CONFIG_SILENT","0");
 	config_schema = sctk_runtime_config_get_env_or_value("MPC_CONFIG_SCHEMA",def_schema_path);
 	config_system = sctk_runtime_config_get_env_or_value("MPC_SYSTEM_CONFIG",def_sys_path);
 	config_user   = sctk_runtime_config_get_env_or_value("MPC_USER_CONFIG",sctk_runtime_config_default_user_file_path);
-	
 
-	//If system file is default and if it didn't exist, fall back onto the .example one.
-	//This is a trick, but it permit to not create system config.xml at install, so avoid
-	//trouble in case of futur update of the lib and if config file format evolve.
-	//The problem stay present only if the admin create system config.xml and modify it.
-	//But in that case it's acceptable.
+
+	/*
+	If system file is default and if it didn't exist, fall back onto the .example one.
+	This is a trick, but it permit to not create system config.xml at install, so avoid
+	trouble in case of futur update of the lib and if config file format evolve.
+	The problem stay present only if the admin create system config.xml and modify it.
+	But in that case it's acceptable.
+	*/
 	if (strcmp(config_system,def_sys_path) == 0 && !sckt_runtime_config_file_exist(config_system))
 		config_system = def_sys_path_fallback;
 
-	//open system and user config
+	/* open system and user config */
 	sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_RUNTIME_CONFIG_SYSTEM_LEVEL],config_system,SCTK_RUNTIME_CONFIG_OPEN_WARNING);
 
-	//if get user config as parameter from --config.
+	/* if get user config as parameter from --config. */
 	if (config_user != NULL )
 		if( config_user[0] != '\0')
 			sctk_runtime_config_source_xml_open(&config_sources->sources[SCTK_RUNTIME_CONFIG_USER_LEVEL],config_user,SCTK_RUNTIME_CONFIG_OPEN_ERROR);
 
-	//validate XML format with schema
-	//but skip it if alread done by in mpcrun, it avoid to open the .xsd file on each node for nothing
-	//and avoid to spam the error stream with multiple instance of error messages.
-	//To disable mpcrun need to define CONFIG_SILENT="1" (as for xml loading errors)
-	//If launch without mpcrun, it's sequential so need to run it which is ok by default.
-	if (strcmp(config_silent,"1") != 0)
-	{
+	/*
+	validate XML format with schema
+	but skip it if alread done by in mpcrun, it avoid to open the .xsd file on each node for nothing
+	and avoid to spam the error stream with multiple instance of error messages.
+	To disable mpcrun need to define CONFIG_SILENT="1" (as for xml loading errors)
+	If launch without mpcrun, it's sequential so need to run it which is ok by default.
+	*/
+	if (strcmp(config_silent,"1") != 0) {
 		status = sctk_runtime_config_sources_validate(config_sources,config_schema);
 		assume_m(status,"Fail to validate the given configurations files, please check previous error lines for more details.");
 	}
 
-	//find profiles to use and sort them depeding on priority
+	/* find profiles to use and sort them depeding on priority */
 	sctk_runtime_config_sources_select_profiles(config_sources);
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Close all XML files and free dynamic memories pointed by config_sources.
  * @param config_sources Define the structure to close and cleanup.
 **/
 void sctk_runtime_config_sources_close(struct sctk_runtime_config_sources * config_sources)
 {
-	//vars
+	/* vars */
 	int i;
 
-	//errors
+	/* errors */
 	assert(config_sources != NULL);
 
-	//close XML documents
+	/* close XML documents */
 	for( i = 0 ; i < SCTK_RUNTIME_CONFIG_LEVEL_COUNT ; i++ )
 		if( sctk_runtime_config_source_xml_is_open(&config_sources->sources[i]) )
 			xmlFreeDoc(config_sources->sources[i].document);
 
-	//free selected names (as xmlNodeGetContent done copies)
+	/* free selected names (as xmlNodeGetContent done copies) */
 	for (i = 0 ; i < config_sources->cnt_profile_names ; i++)
 		xmlFree(config_sources->profile_names[i]);
 
-	//reset to default
+	/* reset to default */
 	memset(config_sources,0,sizeof(*config_sources));
 }

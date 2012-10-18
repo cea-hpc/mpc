@@ -26,12 +26,12 @@
 #ifndef SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H
 #define SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H
 
-/*********************  STRUCT  *********************/
-//forward declaration functions
+/******************************** STRUCTURE *********************************/
+/* forward declaration functions */
 struct sctk_runtime_config;
 
-/*******************  FUNCTION  *********************/
-//reset functions
+/********************************* FUNCTION *********************************/
+/* reset functions */
 void sctk_runtime_config_struct_init_allocator(void * struct_ptr);
 void sctk_runtime_config_struct_init_launcher(void * struct_ptr);
 void sctk_runtime_config_struct_init_net_driver_fake(void * struct_ptr);
@@ -42,4 +42,4 @@ void sctk_runtime_config_struct_init_networks(void * struct_ptr);
 void sctk_runtime_config_struct_init_profiler(void * struct_ptr);
 void sctk_runtime_config_reset(struct sctk_runtime_config * config);
 
-#endif //SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H
+#endif /* SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H */

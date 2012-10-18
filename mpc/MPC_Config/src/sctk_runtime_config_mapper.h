@@ -23,45 +23,43 @@
 #ifndef SCTK_RUNTIME_CONFIG_MAPPER_H
 #define SCTK_RUNTIME_CONFIG_MAPPER_H
 
-/********************  HEADERS  *********************/
+/********************************* INCLUDES *********************************/
 #include <libxml/tree.h>
 #include <libxml/parser.h>
 #include "sctk_runtime_config_sources.h"
 #include "sctk_runtime_config_struct.h"
 
-/*********************  STRUCT  *********************/
+/******************************** STRUCTURE *********************************/
 /**
  * Enum to define internal types supported for meta-data structure.
  * @brief Types supported for meta-description entries.
 **/
-enum sctk_runtime_config_meta_entry_type
-{
-	/** The entry describe a parameter of struct. **/
-	SCTK_CONFIG_META_TYPE_PARAM,
-	/** Parameter defined as arrays of basic or user types. **/
-	SCTK_CONFIG_META_TYPE_ARRAY,
-	/** Composed C structure. **/
-	SCTK_CONFIG_META_TYPE_STRUCT,
-	/** Define a union type. **/
-	SCTK_CONFIG_META_TYPE_UNION,
-	/** Define an entry in union type. **/
-	SCTK_CONFIG_META_TYPE_UNION_ENTRY,
-	/** Last entry to close the meta description table. **/
-	SCTK_CONFIG_META_TYPE_END
+enum sctk_runtime_config_meta_entry_type {
+    /** The entry describe a parameter of struct. **/
+    SCTK_CONFIG_META_TYPE_PARAM,
+    /** Parameter defined as arrays of basic or user types. **/
+    SCTK_CONFIG_META_TYPE_ARRAY,
+    /** Composed C structure. **/
+    SCTK_CONFIG_META_TYPE_STRUCT,
+    /** Define a union type. **/
+    SCTK_CONFIG_META_TYPE_UNION,
+    /** Define an entry in union type. **/
+    SCTK_CONFIG_META_TYPE_UNION_ENTRY,
+    /** Last entry to close the meta description table. **/
+    SCTK_CONFIG_META_TYPE_END
 };
 
-/******************** TYPEDEF  **********************/
+/********************************** TYPES ***********************************/
 typedef void * sctk_runtime_config_struct_ptr;
 /** Declare handler init type function on struct. **/
 typedef void(*sctk_runtime_config_struct_init_handler)(sctk_runtime_config_struct_ptr struct_ptr);
 
-/*********************  STRUCT  *********************/
+/******************************** STRUCTURE *********************************/
 /**
  * Structure used to instanciate the meta-description table to map the XML file onto the C struct.
  * @brief Structure for the entries of meta-description table.
 **/
-struct sctk_runtime_config_entry_meta
-{
+struct sctk_runtime_config_entry_meta {
 	/** Name of the field. **/
 	const char * name;
 	/** Type of the field. **/
@@ -79,13 +77,12 @@ struct sctk_runtime_config_entry_meta
 	void * extra;
 };
 
-/********************  MACRO  ***********************/
+/********************************* MACROS ***********************************/
 /** @TODO remove this by the one from standard, offsetof or similar. **/
 #define sctk_runtime_config_get_offset_of_member(type,member) ((unsigned long)&(((type*)NULL)->member))
 
-
-/*******************  FUNCTION  *********************/
-//mappgin functions
+/********************************* FUNCTION *********************************/
+/* mappgin functions */
 const struct sctk_runtime_config_entry_meta * sctk_runtime_config_get_meta_type( const struct sctk_runtime_config_entry_meta *config_meta, const char * name);
 const struct sctk_runtime_config_entry_meta * sctk_runtime_config_meta_get_first_child(const struct sctk_runtime_config_entry_meta * current);
 const struct sctk_runtime_config_entry_meta * sctk_runtime_config_meta_get_next_child(const struct sctk_runtime_config_entry_meta * current);
@@ -93,16 +90,16 @@ const struct sctk_runtime_config_entry_meta * sctk_runtime_config_get_child_meta
 void * sctk_runtime_config_get_entry(sctk_runtime_config_struct_ptr struct_ptr,const struct sctk_runtime_config_entry_meta * current);
 void sctk_runtime_config_apply_init_handler(const struct sctk_runtime_config_entry_meta *config_meta, sctk_runtime_config_struct_ptr struct_ptr,const char * type_name);
 void sctk_runtime_config_map_array(const struct sctk_runtime_config_entry_meta *config_meta,
-                                  void ** array,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
+                                   void ** array,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
 void sctk_runtime_config_map_value( const struct sctk_runtime_config_entry_meta *config_meta, void * value, const char * type_name,xmlNodePtr node);
 bool sctk_runtime_config_map_plain_type(void * value, const char * type_name,xmlNodePtr node);
-void sctk_runtime_config_map_struct( const struct sctk_runtime_config_entry_meta *config_meta, 
-                                       void * struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
+void sctk_runtime_config_map_struct( const struct sctk_runtime_config_entry_meta *config_meta,
+                                     void * struct_ptr,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
 void sctk_runtime_config_map_union( const struct sctk_runtime_config_entry_meta *config_meta,
-                                       void * value,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
+                                    void * value,const struct sctk_runtime_config_entry_meta * current,xmlNodePtr node);
 
-/*******************  FUNCTION  *********************/
-//type supports
+/********************************* FUNCTION *********************************/
+/* type supports */
 int sctk_runtime_config_map_entry_to_int(xmlNodePtr node);
 bool sctk_runtime_config_map_entry_to_bool(xmlNodePtr node);
 double sctk_runtime_config_map_entry_to_double(xmlNodePtr node);
@@ -110,7 +107,7 @@ float sctk_runtime_config_map_entry_to_float(xmlNodePtr node);
 size_t sctk_runtime_config_map_entry_parse_size( const char *value );
 size_t sctk_runtime_config_map_entry_to_size(xmlNodePtr node);
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 void sctk_runtime_config_do_cleanup(struct sctk_runtime_config * config);
 
-#endif //SCTK_CONFIG_MAPPER_H
+#endif /*SCTK_RUNTIME_CONFIG_MAPPER_H*/

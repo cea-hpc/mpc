@@ -20,36 +20,34 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_RUNTIME_CONFIG_WALK
-#define SCTK_RUNTIME_CONFIG_WALK
+#ifndef SCTK_RUNTIME_CONFIG_WALK_H
+#define SCTK_RUNTIME_CONFIG_WALK_H
 
-/********************  HEADERS  *********************/
+/********************************* INCLUDES *********************************/
 #include "sctk_runtime_config_mapper.h"
 
-/*********************  STRUCT  *********************/
+/******************************** STRUCTURE *********************************/
 /**
  * Open/Close status on the current node of configuration structure.
  */
-enum sctk_runtime_config_walk_status
-{
+enum sctk_runtime_config_walk_status {
 	SCTK_RUNTIME_CONFIG_WALK_OPEN,
 	SCTK_RUNTIME_CONFIG_WALK_CLOSE
 };
 
-/*********************  STRUCT  *********************/
+/******************************** STRUCTURE *********************************/
 /**
  * Structure to define the type of node we are walking on while calling the
  * user handler.
  */
-enum sctk_runtime_config_walk_type
-{
-	SCTK_RUNTIME_CONFIG_WALK_UNION,
-	SCTK_RUNTIME_CONFIG_WALK_STRUCT,
-	SCTK_RUNTIME_CONFIG_WALK_ARRAY,
-	SCTK_RUNTIME_CONFIG_WALK_VALUE,
+enum sctk_runtime_config_walk_type {
+    SCTK_RUNTIME_CONFIG_WALK_UNION,
+    SCTK_RUNTIME_CONFIG_WALK_STRUCT,
+    SCTK_RUNTIME_CONFIG_WALK_ARRAY,
+    SCTK_RUNTIME_CONFIG_WALK_VALUE,
 };
 
-/******************** TYPEDEF  **********************/
+/********************************** TYPES ***********************************/
 /**
  * Type for user handler function to call on each node of the configuration structure.
  * @param type Define the type of the node (union, struct, array, simple value).
@@ -62,15 +60,15 @@ enum sctk_runtime_config_walk_type
  * @param opt An optional pointer to transmit to the handler while calling it.
  */
 typedef void (*sckt_runtime_walk_handler)(enum sctk_runtime_config_walk_type type,const char * name,
-		const char * type_name,
-		void * value,
-		enum sctk_runtime_config_walk_status status,
-		const struct sctk_runtime_config_entry_meta * type_meta,
-		int level,
-		void * opt);
+        const char * type_name,
+        void * value,
+        enum sctk_runtime_config_walk_status status,
+        const struct sctk_runtime_config_entry_meta * type_meta,
+        int level,
+        void * opt);
 
-/*******************  FUNCTION  *********************/
-//type specific walk functions
+/********************************* FUNCTION *********************************/
+/* type specific walk functions */
 void sctk_runtime_config_walk_union(const struct sctk_runtime_config_entry_meta * config_meta,sckt_runtime_walk_handler handler,
                                     const char * name,const char * type_name,void * union_ptr,int level,void * opt);
 void sctk_runtime_config_walk_struct(const struct sctk_runtime_config_entry_meta * config_meta,sckt_runtime_walk_handler handler,
@@ -78,10 +76,10 @@ void sctk_runtime_config_walk_struct(const struct sctk_runtime_config_entry_meta
 void sctk_runtime_config_walk_array(const struct sctk_runtime_config_entry_meta * config_meta,sckt_runtime_walk_handler handler,
                                     const char * name,const struct sctk_runtime_config_entry_meta * current_meta,void ** value,int level,void * opt);
 void sctk_runtime_config_walk_value(const struct sctk_runtime_config_entry_meta * config_meta,sckt_runtime_walk_handler handler,
-                                       const char * name, const char * type_name,void * value, int level,void * opt);
+                                    const char * name, const char * type_name,void * value, int level,void * opt);
 
-/*******************  FUNCTION  *********************/
-//the entry point
+/********************************* FUNCTION *********************************/
+/* the entry point */
 void sctk_runtime_config_walk_tree(const struct sctk_runtime_config_entry_meta * config_meta,
                                    sckt_runtime_walk_handler handler,
                                    const char * name,
@@ -89,8 +87,8 @@ void sctk_runtime_config_walk_tree(const struct sctk_runtime_config_entry_meta *
                                    void * root_struct,
                                    void * opt);
 
-/*******************  FUNCTION  *********************/
-//some helper functions
+/********************************* FUNCTION *********************************/
+/* some helper functions */
 bool sctk_runtime_config_is_basic_type(const char * type_name);
 
-#endif //SCTK_CONFIG_WALK
+#endif /* SCTK_RUNTIME_CONFIG_WALK_H */

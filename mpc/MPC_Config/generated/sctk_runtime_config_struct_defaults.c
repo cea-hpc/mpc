@@ -31,7 +31,7 @@
 void sctk_runtime_config_struct_init_allocator(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_allocator * obj = struct_ptr;
-	//Simple params :
+	/* Simple params : */
 	obj->numa_migration = false;
 	obj->realloc_factor = 2;
 	obj->realloc_threashold = sctk_runtime_config_map_entry_parse_size("50MB");
@@ -44,7 +44,7 @@ void sctk_runtime_config_struct_init_allocator(void * struct_ptr)
 void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_launcher * obj = struct_ptr;
-	//Simple params :
+	/* Simple params : */
 	obj->smt = false;
 	obj->cores = 1;
 	obj->verbosity = 0;
@@ -56,7 +56,7 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 void sctk_runtime_config_struct_init_net_driver_fake(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_net_driver_fake * obj = struct_ptr;
-	//Simple params :
+	/* Simple params : */
 	obj->buffer = 1024;
 	obj->stealing = true;
 }
@@ -73,7 +73,7 @@ void sctk_runtime_config_struct_init_net_driver(void * struct_ptr)
 void sctk_runtime_config_struct_init_net_driver_config(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_net_driver_config * obj = struct_ptr;
-	//Simple params :
+	/* Simple params : */
 	obj->name = NULL;
 	sctk_runtime_config_struct_init_net_driver(&obj->driver);
 }
@@ -82,7 +82,7 @@ void sctk_runtime_config_struct_init_net_driver_config(void * struct_ptr)
 void sctk_runtime_config_struct_init_net_rail(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_net_rail * obj = struct_ptr;
-	//Simple params :
+	/* Simple params : */
 	obj->name = NULL;
 	obj->device = NULL;
 	obj->topology = NULL;
@@ -93,11 +93,11 @@ void sctk_runtime_config_struct_init_net_rail(void * struct_ptr)
 void sctk_runtime_config_struct_init_networks(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_networks * obj = struct_ptr;
-	//Simple params :
-	//array
+	/* Simple params : */
+	/* array */
 	obj->configs = NULL;
 	obj->configs_size = 0;
-	//array
+	/* array */
 	obj->rails = NULL;
 	obj->rails_size = 0;
 }
@@ -106,11 +106,11 @@ void sctk_runtime_config_struct_init_networks(void * struct_ptr)
 void sctk_runtime_config_struct_init_profiler(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_profiler * obj = struct_ptr;
-	//Simple params :
+	/* Simple params : */
 	obj->file_prefix = "mpc_profile";
 	obj->append_date = true;
 	obj->color_stdout = true;
-	//array
+	/* array */
 	obj->level_colors = calloc(6,sizeof(char *));
 	obj->level_colors[0] = "#3A4D85";
 	obj->level_colors[1] = "#82A2FF";

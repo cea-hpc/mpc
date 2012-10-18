@@ -20,31 +20,30 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-/********************  HEADERS  *********************/
+/********************************* INCLUDES *********************************/
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sctk_bool.h>
-#include "sctk_debug.h"
+#include <sctk_debug.h>
+#include <sctk_runtime_config_walk.h>
+#include <sctk_runtime_config_printer.h>
 #include "mpc_print_config_sh.h"
-#include "sctk_runtime_config_walk.h"
-#include "sctk_runtime_config_printer.h"
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Replace ascii lower case letter by upper case onces.
 **/
 void to_upper_case(char * value)
 {
-	while (*value != '\0')
-	{
+	while (*value != '\0') {
 		if (*value >= 'a' && *value <= 'z')
 			*value += 'Z' - 'z';
 		value++;
 	}
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Print the name of the variable by reusin the current state to get the full path
  * to access to the current node. It will used path entries in upper case separated
@@ -55,8 +54,7 @@ void print_var_name_sh(struct display_state_sh * state,const char * name,int lev
 	char buffer[64];
 	int i = 0;
 	int size = 0;
-	for ( i = 0 ; i < level ; i++)
-	{
+	for ( i = 0 ; i < level ; i++) {
 		size += sprintf(buffer+size,"%s_",state->names[i]);
 	}
 	sprintf(buffer+size,"%s=\"",name);
@@ -64,7 +62,7 @@ void print_var_name_sh(struct display_state_sh * state,const char * name,int lev
 	printf("%s",buffer);
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Type for user handler function to call on each node of the configuration structure.
  * @param type Define the type of the node (union, struct, array, simple value).
@@ -77,45 +75,41 @@ void print_var_name_sh(struct display_state_sh * state,const char * name,int lev
  * @param opt An optional pointer to transmit to the handler while calling it.
  */
 void display_handler_sh(enum sctk_runtime_config_walk_type type,
-                                         const char * name,
-                                         const char * type_name,
-                                         void * value,
-                                         enum sctk_runtime_config_walk_status status,
-                                         const struct sctk_runtime_config_entry_meta * type_meta,
-                                         int level,
-                                         void * opt)
+                        const char * name,
+                        const char * type_name,
+                        void * value,
+                        enum sctk_runtime_config_walk_status status,
+                        const struct sctk_runtime_config_entry_meta * type_meta,
+                        int level,
+                        void * opt)
 {
-	//get the current state
+	/* get the current state */
 	struct display_state_sh * state = opt;
 
-	//check open/close
-	if (status == SCTK_RUNTIME_CONFIG_WALK_CLOSE)
-	{
-		//close only simple array as it was name: {v1,v2,v3}
-		if (state->is_simple_array && type == SCTK_RUNTIME_CONFIG_WALK_ARRAY)
-		{
+	/* check open/close */
+	if (status == SCTK_RUNTIME_CONFIG_WALK_CLOSE) {
+		/* close only simple array as it was name: {v1,v2,v3} */
+		if (state->is_simple_array && type == SCTK_RUNTIME_CONFIG_WALK_ARRAY) {
 			state->is_simple_array = false;
 		} else if (type == SCTK_RUNTIME_CONFIG_WALK_VALUE) {
 			printf("\"\n");
 		}
 	} else {
-		switch(type)
-		{
+		switch(type) {
 			case SCTK_RUNTIME_CONFIG_WALK_VALUE:
-				//push current name
+				/* push current name */
 				print_var_name_sh(state,name,level);
 
-				//print the value
+				/* print the value */
 				assume_m(sctk_runtime_config_display_plain_type(type_name,value),"Invalid plain type : %s.",type_name);
 
-				//separator if simple array, line break otherwise
+				/* separator if simple array, line break otherwise */
 				if (state->is_simple_array)
 					printf(" ");
 				break;
 			case SCTK_RUNTIME_CONFIG_WALK_ARRAY:
-				//detect siple array to change the display mode of values to be more compact.
-				if (sctk_runtime_config_is_basic_type(type_name))
-				{
+				/* detect siple array to change the display mode of values to be more compact. */
+				if (sctk_runtime_config_is_basic_type(type_name)) {
 					print_var_name_sh(state,name,level);
 					state->is_simple_array = true;
 				} else {
@@ -132,7 +126,7 @@ void display_handler_sh(enum sctk_runtime_config_walk_type type,
 	}
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Method to display the structure.
  * @param config_meta Pointer to the root element of the meta description of the structure.
@@ -141,9 +135,9 @@ void display_handler_sh(enum sctk_runtime_config_walk_type type,
  * @param root_struct Pointer to the C structure to display.
  */
 void display_tree_sh(const struct sctk_runtime_config_entry_meta * config_meta,
-                                      const char * root_name,
-                                      const char * root_struct_name,
-                                      void * root_struct)
+                     const char * root_name,
+                     const char * root_struct_name,
+                     void * root_struct)
 {
 	struct display_state_sh state;
 	state.is_simple_array = false;

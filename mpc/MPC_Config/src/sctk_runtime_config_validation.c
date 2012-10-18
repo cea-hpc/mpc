@@ -20,16 +20,16 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-/********************  HEADERS  *********************/
+/********************************* INCLUDES *********************************/
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "sctk_debug.h"
+#include <sctk_debug.h>
 #include "sctk_runtime_config_struct.h"
 #include "sctk_runtime_config_validation.h"
 #include "sctk_runtime_config_struct_defaults.h"
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * This function is called after loading the config to do more complexe validation on some values.
  * Create functions for each of you modules and call them here.
@@ -38,18 +38,18 @@
 **/
 void sctk_runtime_config_validate(struct sctk_runtime_config * config)
 {
-	//errors
+	/* errors */
 	assert(config != NULL);
 
-	//debug message
+	/* debug message */
 	sctk_nodebug("Validator called on config...");
 
-	//call all post actions
+	/* call all post actions */
 	sctk_runtime_config_old_getenv_compatibility(config);
 	sctk_runtime_config_validate_allocator(config);
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Compatility with old getenv() system. Some may be removed soon but
  * need some discutions about that.
@@ -57,11 +57,11 @@ void sctk_runtime_config_validate(struct sctk_runtime_config * config)
 **/
 void sctk_runtime_config_old_getenv_compatibility(struct sctk_runtime_config * config)
 {
-	//vars
+	/* vars */
 	char * tmp;
 
-	//came from sctk_launch.c for banner disabling, also used into mpcomp.c
-	//and sctk_thread.c
+	/* came from sctk_launch.c for banner disabling, also used into mpcomp.c
+	   and sctk_thread.c */
 	if (getenv ("MPC_DISABLE_BANNER") != NULL)
 		config->modules.launcher.banner = false;
 	//came from sctk_launch.c
@@ -69,22 +69,22 @@ void sctk_runtime_config_old_getenv_compatibility(struct sctk_runtime_config * c
 		config->modules.launcher.autokill = atoi(tmp);
 }
 
-/*******************  FUNCTION  *********************/
+/********************************* FUNCTION *********************************/
 /**
  * Function to validate MPC_Allocator configuration.
 **/
 void sctk_runtime_config_validate_allocator(struct sctk_runtime_config * config)
 {
-	//vars
+	/* vars */
 	const char * scope = config->modules.allocator.scope;
 
-	//check some integer options
+	/* check some integer options */
 	/** @TODO Maybe add constrain checker in config-meta.xml format (field constrain='...') **/
 	assume_m(config->modules.allocator.realloc_factor >= 1,
-			 "Option modules.allocator.realloc_factor must be greater or equal to 1, get %d.",
-			 config->modules.allocator.realloc_factor);
+	         "Option modules.allocator.realloc_factor must be greater or equal to 1, get %d.",
+	         config->modules.allocator.realloc_factor);
 
-	//check scope option
+	/* check scope option */
 	assume_m(scope != NULL,"Invalid NULL or empty value for allocator.scope.");
 	if (strcmp(scope,"process") != 0 && strcmp(scope,"thread") != 0 && strcmp(scope,"vp") != 0)
 		sctk_fatal("Invalid configuration value for allocator.scope : %s, require (process | thread | vp)",scope);

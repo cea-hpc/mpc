@@ -37,13 +37,13 @@
 		<xsl:apply-templates select="config"/>
 		<xsl:call-template name="gen-final-module-struct"/>
 		<xsl:call-template name="gen-config-struct"/>
-		<xsl:text>&#10;#endif // SCTK_RUNTIME_CONFIG_STRUCT_H&#10;</xsl:text>
+		<xsl:text>&#10;#endif /* SCTK_RUNTIME_CONFIG_STRUCT_H */&#10;</xsl:text>
 		<xsl:text>&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-config-struct">
-		<xsl:text>&#10;/*********************  STRUCT  *********************/&#10;</xsl:text>
+		<xsl:text>&#10;/******************************** STRUCTURE *********************************/&#10;</xsl:text>
 		<xsl:text>struct sctk_runtime_config&#10;</xsl:text>
 		<xsl:text>{&#10;</xsl:text>
 		<xsl:text>&#09;struct sctk_runtime_config_modules modules;&#10;</xsl:text>
@@ -53,7 +53,7 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-final-module-struct">
-		<xsl:text>&#10;/*********************  STRUCT  *********************/&#10;</xsl:text>
+		<xsl:text>&#10;/******************************** STRUCTURE *********************************/&#10;</xsl:text>
 		<xsl:text>struct sctk_runtime_config_modules&#10;</xsl:text>
 		<xsl:text>{</xsl:text>
 		<xsl:for-each select="config">
@@ -78,7 +78,7 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template match="union">
-		<xsl:text>&#10;/**********************  ENUM  **********************/&#10;</xsl:text>
+		<xsl:text>&#10;/********************************** ENUM ************************************/&#10;</xsl:text>
 		<xsl:value-of select="concat('/**',@doc,'**/&#10;')"/>
 		<xsl:value-of select="concat('enum sctk_runtime_config_struct_',@name,'_type&#10;')"/>
 		<xsl:text>{&#10;</xsl:text>
@@ -88,7 +88,7 @@
 		</xsl:for-each>
 		<xsl:text>};&#10;</xsl:text>
 
-		<xsl:text>&#10;/*********************  STRUCT  *********************/&#10;</xsl:text>
+		<xsl:text>&#10;/******************************** STRUCTURE *********************************/&#10;</xsl:text>
 		<xsl:value-of select="concat('/**',@doc,'**/&#10;')"/>
 		<xsl:value-of select="concat('struct sctk_runtime_config_struct_',@name,'&#10;')"/>
 		<xsl:text>{&#10;</xsl:text>
@@ -107,7 +107,7 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template match="struct">
-		<xsl:text>&#10;/*********************  STRUCT  *********************/&#10;</xsl:text>
+		<xsl:text>&#10;/******************************** STRUCTURE *********************************/&#10;</xsl:text>
 		<xsl:value-of select="concat('/**',@doc,'**/&#10;')"/>
 		<xsl:value-of select="concat('struct sctk_runtime_config_struct_',@name,'&#10;')"/>
 		<xsl:text>{</xsl:text>
