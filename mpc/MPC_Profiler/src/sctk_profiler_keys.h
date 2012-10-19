@@ -220,6 +220,18 @@ PROBE( MESSAGE_PASSING_INT, NO_PARENT, MPC Message passing internals )
     PROBE( send_mmu_register, INFINIBAND, send_mmu_register)
     PROBE( recv_mmu_register, INFINIBAND, recv_mmu_register)
     PROBE( ib_buffered_memcpy, INFINIBAND, buffered_memcpy)
+    PROBE( ib_send_message, INFINIBAND, ib_send_message)
+    PROBE( ib_ibuf_srq_post, INFINIBAND, ib_ibuf_srq_post)
+    COUNTER( mmu_cache_hit, INFINIBAND, mmu_cache_hit)
+    COUNTER( mmu_cache_miss, INFINIBAND, mmu_cache_miss)
+
+    PROBE( COLLABORATIVE_POLLING, INFINIBAND, Collaboraive Polling)
+      PROBE( cp_time_own, COLLABORATIVE_POLLING, Time own)
+      COUNTER( cp_counter_own, COLLABORATIVE_POLLING, Counter own)
+      PROBE( cp_time_steal, COLLABORATIVE_POLLING, Time steal)
+      COUNTER( cp_counter_steal_same_node, COLLABORATIVE_POLLING, Counter steal same node)
+      COUNTER( cp_counter_steal_other_node, COLLABORATIVE_POLLING, Counter steal other node)
+
 
 
 PROBE( OPEN_MP, NO_PARENT, MPC Message passing internals )
