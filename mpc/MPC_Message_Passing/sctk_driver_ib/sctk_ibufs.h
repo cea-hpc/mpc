@@ -116,6 +116,8 @@ typedef struct sctk_ibuf_numa_s
 {
   /* id of the region */
   int id;
+  /* if this is a SRQ pool */
+  char is_srq_pool;
   /* DL list of regions */
   struct sctk_ibuf_region_s  *regions;
   /* flag to the first free header */
