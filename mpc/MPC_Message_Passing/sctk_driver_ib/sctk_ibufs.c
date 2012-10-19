@@ -26,7 +26,7 @@
 
 #include "sctk_ibufs.h"
 
-#define SCTK_IB_MODULE_DEBUG
+//#define SCTK_IB_MODULE_DEBUG
 #define SCTK_IB_MODULE_NAME "IBUF"
 #include "sctk_ib_toolkit.h"
 #include "sctk_ib.h"
@@ -45,6 +45,9 @@
  */
 #define CLOSEST_NODE_FROM_NIC 0
 
+/* Node where SRQ buffers are allocated */
+static struct sctk_ibuf_numa_s* node_srq_buffers = NULL;
+
 /* Init a poll of buffers on the numa node pointed by 'node'
  * FIXME: use malloc_on_node instead of memalign
  * Carreful: this function is *NOT* thread-safe */
@@ -60,6 +63,13 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
   sctk_ibuf_t* ibuf_ptr;
   int i;
   int free_nb;
+
+#if 0
+  if (node->is_srq_pool) {
+    /* TODO: Allocate the SRQ pool of buffers
+     * on the right node */
+  }
+#endif
 
   sctk_ib_nodebug("Allocating %d buffers", nb_ibufs);
 
@@ -127,11 +137,14 @@ sctk_ibuf_pool_init(struct sctk_ib_rail_info_s *rail_ib)
   nodes_nb = sctk_get_numa_node_number();
  /* FIXME: get_numa_node_number may returns 1 when SMP */
   nodes_nb = (nodes_nb == 0) ? 1 : nodes_nb;
-  alloc_nb = nodes_nb;
+  /* We allocate a pool in addition in order to store the SRQ buffers */
+  alloc_nb = nodes_nb + 1;
 
   /* We malloc the entries */
   pool = sctk_malloc(sizeof(sctk_ibuf_pool_t) +
       alloc_nb * sizeof(sctk_ibuf_numa_t));
+  /* WARNING: Do not remove the following memset.
+   * Be sure that is_srq_poll is set to 0 !! */
   memset(pool, 0, sizeof(sctk_ibuf_pool_t) +
       alloc_nb * sizeof(sctk_ibuf_numa_t));
   ib_assume (pool);
@@ -140,6 +153,10 @@ sctk_ibuf_pool_init(struct sctk_ib_rail_info_s *rail_ib)
   pool->nodes = (sctk_ibuf_numa_t*)
     ((char*) pool + sizeof(sctk_ibuf_pool_t));
   pool->post_srq_lock = SCTK_SPINLOCK_INITIALIZER;
+
+  /* The last pool of buffers is dedicted to the SRQ */
+  node_srq_buffers = &pool->nodes[alloc_nb-1];
+  node_srq_buffers->is_srq_pool = 1;
 
   /* loop on nodes and create buffers */
   for (i=0; i < alloc_nb; ++i) {
@@ -151,6 +168,7 @@ sctk_ibuf_pool_init(struct sctk_ib_rail_info_s *rail_ib)
     OPA_store_int(&node->free_nb, 0);
     init_node(rail_ib, &pool->nodes[i], config->ibv_init_ibufs);
   }
+
   /* update pool buffer */
   rail_ib->pool_buffers = pool;
 }
@@ -164,19 +182,13 @@ sctk_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib, int n)
 
 #ifdef DEBUG_IB_BUFS
     if (n != -1)  {
-      assume(n <= pool->nodes_nb);
+      assume(n < pool->nodes_nb);
     }
 #endif
 
     if (n == -1) n = CLOSEST_NODE_FROM_NIC;
     sctk_ibuf_numa_t *node = &pool->nodes[n];
     sctk_spinlock_t *lock = &node->lock;
-
-#if 0
-    if (OPA_load_int(&node->free_nb) < 100) {
-      sctk_ib_low_mem_broadcast(rail_ib->rail);
-    }
-#endif
 
     sctk_spinlock_lock(lock);
 
@@ -286,7 +298,7 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
     sctk_nodebug("Picking from SR");
 #ifdef DEBUG_IB_BUFS
     if (n != -1)  {
-      assume(n <= pool->nodes_nb);
+      assume(n < pool->nodes_nb);
     }
 #endif
 
@@ -362,6 +374,7 @@ sctk_ibuf_pick_recv(struct sctk_ib_rail_info_s *rail_ib, int n)
   sctk_ibuf_t* ibuf;
 #ifdef DEBUG_IB_BUFS
   if (n != -1)  {
+    /* <= because we can ask a buffer for the SRQ */
     assume(n <= pool->nodes_nb);
   }
 #endif
@@ -399,6 +412,7 @@ static int srq_post(
     struct sctk_ib_rail_info_s *rail_ib,
     int nb_ibufs, sctk_ibuf_numa_t *node, int need_lock)
 {
+  assume(node);
   LOAD_DEVICE(rail_ib);
   int i;
   int nb_posted = 0;
@@ -407,6 +421,8 @@ static int srq_post(
   sctk_spinlock_t *lock = &node->lock;
 
   if (nb_ibufs <= 0) return 0;
+
+  PROF_TIME_START(rail_ib->rail, ib_ibuf_srq_post);
 
   /* Only 1 task can post to the SRQ at the same time. No need more concurrency */
   if (sctk_spinlock_trylock(&rail_ib->pool_buffers->post_srq_lock) == 0)
@@ -441,6 +457,7 @@ static int srq_post(
     OPA_add_int(&node->free_srq_nb, nb_posted);
     sctk_spinlock_unlock(&rail_ib->pool_buffers->post_srq_lock);
   }
+  PROF_TIME_END(rail_ib->rail, ib_ibuf_srq_post);
 
   return nb_posted;
 }
@@ -451,9 +468,8 @@ int sctk_ibuf_srq_check_and_post(
     int limit)
 {
   LOAD_POOL(rail_ib);
-  int node = CLOSEST_NODE_FROM_NIC;
 
-  return srq_post(rail_ib, limit, &pool->nodes[node], 1);
+  return srq_post(rail_ib, limit, node_srq_buffers, 1);
 }
 
 static inline void __release_in_srq(
