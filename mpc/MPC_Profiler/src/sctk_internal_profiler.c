@@ -57,7 +57,6 @@ static void sctk_internal_profiler_check_config()
 void sctk_internal_profiler_init()
 {
   if (mpc_profiler == NULL) {
-    sctk_debug("INIT");
     /* Check config options validity */
     sctk_internal_profiler_check_config();
 
