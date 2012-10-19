@@ -20,14 +20,16 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef __SCTK_IO_HELPER__
-#define __SCTK_IO_HELPER__
+#ifndef SCTK_IO_HELPER_H
+#define SCTK_IO_HELPER_H
 
+/********************************* INCLUDES *********************************/
 #include <unistd.h>
 
+/********************************* FUNCTION *********************************/
 ssize_t sctk_safe_read(int fd,void * buf,size_t count);
 ssize_t sctk_safe_write(int fd,const void * buf,size_t count);
 ssize_t sctk_safe_checked_read(int fd,void * buf,size_t count);
-ssize_t sctk_safe_checked_write(int fd,void * buf,size_t count);
+ssize_t sctk_safe_checked_write(int fd,const void * buf,size_t count);
 
-#endif //__SCTK_IO_HELPER__
+#endif /*SCTK_IO_HELPER_H*/
