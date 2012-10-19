@@ -29,6 +29,7 @@
 #include "sctk_ib.h"
 #include "sctk_ib_config.h"
 #include "sctk_ib_qp.h"
+#include "sctk_ib_prof.h"
 #include "utlist.h"
 #include "uthash.h"
 
@@ -36,7 +37,7 @@
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"
 #endif
-#define SCTK_IB_MODULE_DEBUG
+//#define SCTK_IB_MODULE_DEBUG
 #define SCTK_IB_MODULE_NAME "MMU"
 #include "sctk_ib_toolkit.h"
 
@@ -254,6 +255,7 @@ __mmu_register ( sctk_ib_rail_info_t *rail_ib,
   if (in_cache && config->ibv_mmu_cache_enabled) {
     mmu_entry = sctk_ib_mmu_cache_search(rail_ib, ptr, size);
     if (mmu_entry) {
+      PROF_INC(rail_ib->rail, mmu_cache_hit);
       return mmu_entry;
     }
   }
@@ -290,6 +292,7 @@ __mmu_register ( sctk_ib_rail_info_t *rail_ib,
     sctk_ib_mmu_cache_add(rail_ib, mmu_entry);
 
   sctk_nodebug("Entry %p registered", mmu_entry);
+  PROF_INC(rail_ib->rail, mmu_cache_miss);
   return mmu_entry;
 }
 
