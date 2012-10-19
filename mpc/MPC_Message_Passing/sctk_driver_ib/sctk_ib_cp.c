@@ -47,7 +47,7 @@
 #include "sctk_ib_toolkit.h"
 #include "math.h"
 
-//#define SCTK_IB_PROFILER
+#define SCTK_IB_PROFILER
 
 typedef struct sctk_ib_cp_s{
   /* Void for now */
@@ -104,7 +104,6 @@ static sctk_ib_cp_task_t* all_tasks = NULL;
 __thread unsigned int seed;
 /* NUMA node where the task is located */
 __thread int task_node_number = -1;
-static const int ibv_cp_profiler = 1;
 
 #define CHECK_AND_QUIT(rail_ib) do {  \
   LOAD_CONFIG(rail_ib);                             \
@@ -236,12 +235,6 @@ static inline int __cp_poll(const sctk_rail_info_t const* rail, struct sctk_ib_p
 
   sctk_ibuf_t *ibuf = NULL;
   int nb_found = 0;
-#ifdef SCTK_IB_PROFILER
-  char update_timers=0;
-  double s, e;
-  double _time_own = 0;
-  int _poll_own = 0;
-#endif
 
 retry:
   if ( *list != NULL) {
@@ -252,9 +245,7 @@ retry:
         sctk_spinlock_unlock(lock);
 
 #ifdef SCTK_IB_PROFILER
-        if (ibv_cp_profiler) {
-          s = sctk_atomics_get_timestamp();
-        }
+        PROF_TIME_START(rail, cp_time_own);
 #endif
         /* Run the polling function according to the type of message */
         if (ibuf->cq == recv_cq) {
@@ -265,30 +256,17 @@ retry:
         poll->recv_found_own++;
 
 #ifdef SCTK_IB_PROFILER
-        if (ibv_cp_profiler) {
-          update_timers=1;
-          e = sctk_atomics_get_timestamp();
-          _time_own += e - s;
-          _poll_own++;
-        }
+        PROF_TIME_END(rail, cp_time_own);
+        PROF_INC(rail, cp_counter_own);
 #endif
         nb_found++;
-//        goto retry;
+        goto retry;
       } else {
         sctk_spinlock_unlock(lock);
       }
     }
   }
 
-#ifdef SCTK_IB_PROFILER
-  if (update_timers) {
-    poll_own_success ++;
-    time_own += _time_own;
-    poll_own += _poll_own;
-  } else {
-    poll_own_failed ++;
-  }
-#endif
   return nb_found;
 }
 
@@ -346,15 +324,6 @@ int sctk_ib_cp_poll(const struct sctk_rail_info_s const* rail, struct sctk_ib_po
 
 static inline int __cp_steal(struct sctk_rail_info_s* rail,struct sctk_ib_polling_s *poll, sctk_ibuf_t** volatile list, sctk_spinlock_t *lock, sctk_ib_cp_task_t *task, sctk_ib_cp_task_t* stealing_task) {
   sctk_ibuf_t *ibuf = NULL;
-  /* For CP profiling */
-#ifdef SCTK_IB_PROFILER
-  double s, e;
-  double _time_steals = 0;
-  int _poll_steals=0;
-  int _poll_steal_same_node=0;
-  int _poll_steal_other_node=0;
-  char update_timers=0;
-#endif
   int nb_found = 0;
   int max_retry = 1;
 
@@ -367,9 +336,7 @@ retry:
         sctk_spinlock_unlock(lock);
 
 #ifdef SCTK_IB_PROFILER
-        if (ibv_cp_profiler) {
-          s = sctk_atomics_get_timestamp();
-        }
+        PROF_TIME_START(rail, cp_time_steal);
 #endif
 
         /* Run the polling function */
@@ -378,21 +345,14 @@ retry:
         } else {
           sctk_network_poll_send_ibuf(rail, ibuf, 2, poll);
         }
-//        OPA_decr_int(&numas[task->node].pending_nb);
 
 #ifdef SCTK_IB_PROFILER
-        if (ibv_cp_profiler) {
-          e = sctk_atomics_get_timestamp();
-          update_timers=1;
-          /* End of set timers */
-          _time_steals += e - s;
-
-          _poll_steals++;
-          /* Same node */
-          if (task->node == stealing_task->node)
-            _poll_steal_same_node++;
-          else
-            _poll_steal_other_node++;
+        PROF_TIME_END(rail, cp_time_steal);
+        /* Same node */
+        if (task->node == stealing_task->node) {
+          PROF_INC(rail, cp_counter_steal_same_node);
+        } else {
+          PROF_INC(rail, cp_counter_steal_other_node);
         }
 #endif
         nb_found++;
@@ -406,26 +366,6 @@ retry:
   }
 
 exit:
-#ifdef SCTK_IB_PROFILER
-  if(update_timers) {
-    poll_steals_success ++;
-    time_steals += _time_steals;
-    poll->recv_found_other = _poll_steals;
-    poll_steals += _poll_steals;
-    poll_steal_same_node += _poll_steal_same_node;
-    poll_steal_other_node += _poll_steal_other_node;
-#if 0
-    CP_PROF_ADD(stealing_task,poll_steals, _poll_steals);
-    CP_PROF_ADD(stealing_task,poll_steal_same_node,_poll_steal_same_node);
-    CP_PROF_ADD(stealing_task,poll_steal_other_node,_poll_steal_other_node);
-#endif
-  } else {
-    poll_steals_failed ++;
-#if 0
-    CP_PROF_INC(stealing_task, poll_steals_failed);
-#endif
-  }
-#endif
   return nb_found;
 }
 
