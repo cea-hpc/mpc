@@ -233,7 +233,17 @@ char sctk_network_is_ib_used() {
   return is_ib_used;
 }
 
-/************ FINALIZE ****************/
+/************ INITIALIZE TASK ****************/
+void sctk_network_initialize_task_multirail_ib (int rank, int vp){
+  if(sctk_process_number > 1 && sctk_network_is_ib_used() ){
+    /* Register task for QP prof */
+    sctk_ib_prof_init_task(rank, vp);
+    /* Register task for collaborative polling */
+    sctk_ib_cp_init_task(rank, vp);
+  }
+}
+
+/************ FINALIZE PROCESS ****************/
 void sctk_network_finalize_multirail_ib (){
 /* Do not report timers */
   int i;
@@ -244,11 +254,13 @@ void sctk_network_finalize_multirail_ib (){
   }
 }
 
-/************ FINALIZE ****************/
+/************ FINALIZE TASK ****************/
 void sctk_network_finalize_task_multirail_ib (int rank){
-  if(sctk_process_number > 1){
+  if(sctk_process_number > 1 && sctk_network_is_ib_used() ){
     sctk_ib_cp_finalize_task(rank);
     sctk_ib_prof_qp_finalize_task(rank);
   }
 }
+
+
 #endif

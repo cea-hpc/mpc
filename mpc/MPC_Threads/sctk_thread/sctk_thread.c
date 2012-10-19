@@ -630,14 +630,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
     {
       sctk_ptp_per_task_init (tmp.task_id);
 #ifdef MPC_USE_INFINIBAND
-    /* XXX Also check if IB enabled */
-    if(sctk_process_number > 1 && sctk_network_is_ib_used() ){
-        /* Register task for QP prof */
-        sctk_ib_prof_init_task(tmp.task_id, tmp.virtual_processor);
-
-        /* Register task for collaborative polling */
-        sctk_ib_cp_init_task(tmp.task_id, tmp.virtual_processor);
-    }
+      sctk_network_initialize_task_multirail_ib (tmp.task_id, tmp.virtual_processor);
 #endif
       sctk_register_thread_initial (tmp.task_id);
       sctk_terminaison_barrier (tmp.task_id);
@@ -689,12 +682,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
       sctk_terminaison_barrier (tmp.task_id);
       sctk_nodebug ("sctk_terminaison_barrier done");
 #ifdef MPC_USE_INFINIBAND
-      if(sctk_network_is_ib_used() ){
-        sctk_network_finalize_task_multirail_ib (tmp.task_id);
-        /* if(sctk_process_number > 1){
-          sctk_ib_cp_finalize_task(tmp.task_id);
-        } */
-      }
+      sctk_network_finalize_task_multirail_ib (tmp.task_id);
 #endif
       sctk_unregister_thread (tmp.task_id);
       sctk_net_send_task_end (tmp.task_id, sctk_process_rank);
