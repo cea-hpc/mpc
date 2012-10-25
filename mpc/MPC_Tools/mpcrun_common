@@ -220,6 +220,12 @@ for arg in "$@" ; do
 	esac
 done
 
+#check that we have the file
+if [ ! -z "${MPC_USER_CONFIG}" ] && [ ! -e "${MPC_USER_CONFIG}" ]; then
+	echo "ERROR : Configuration file '${MPC_USER_CONFIG}' provided by --config or MPC_USER_CONFIG doesn't exist." 1>&2
+	exit 1
+fi
+
 # Load config files options
 CONFIG_FILES_VALID=false
 config_files_vars="`${MPC_BIN_DIR}/mpc_print_config --launcher`"
@@ -371,6 +377,10 @@ for arg in "$@" ; do
     ;;
     -mpi-only|-mpi_only)
     mpi_only=yes
+    ;;
+    --config=* | --profiles=*)
+    #Already processed in a previous loop on arguments, but need to capture them otherwise
+    #it will be propagated as exe options.
     ;;
     --)
     READ_MPC_ARG="false"
