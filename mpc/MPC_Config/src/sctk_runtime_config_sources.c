@@ -25,12 +25,16 @@
 #include <sctk_config.h>
 #include <sctk_debug.h>
 #include <string.h>
-#include <sys/stat.h>
 #include <errno.h>
 #include <libxml/xmlschemas.h>
 #include "sctk_runtime_config_selectors.h"
 #include "sctk_runtime_config_sources.h"
 #include "sctk_libxml_helper.h"
+
+/* optional headers */
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif /*HAVE_SYS_STAT_H*/
 
 /********************************** GLOBALS *********************************/
 /**
@@ -373,17 +377,22 @@ void sctk_runtime_config_sources_select_profiles(struct sctk_runtime_config_sour
 bool sckt_runtime_config_file_exist(const char * filename)
 {
 	bool exist = false;
+	#ifdef HAVE_SYS_STAT_H
 	struct stat value;
+	#else
+	FILE * fp;
+	#endif
 
-	/* maybe stat has portability issue (eg. windows) */
-	if (stat(filename, &value) == -1) {
-		if (errno != ENOENT) {
-			perror(filename);
-			sctk_error("Can't stat file %s.",filename);
-		}
-	} else {
-		exist = true;
-	}
+	/*Check file presence, fstat may be smartter for filesystem,
+	  but for portatbility, fallback on fopen/fclose.*/
+	#ifdef HAVE_SYS_STAT_H
+	exist = (stat(filename, &value) != -1);
+	#else
+	fp = fopen(filename,"r");
+	exist = (fp != NULL);
+	if (fp != NULL)
+		fclose(fp);
+	#endif
 
 	return exist;
 }

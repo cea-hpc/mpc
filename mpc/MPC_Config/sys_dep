@@ -25,8 +25,12 @@ SCTK_CHECK_HEADER stdio.h
 SCTK_CHECK_HEADER stdlib.h
 SCTK_CHECK_HEADER string.h
 SCTK_CHECK_HEADER errno.h
-#Need to remove this for portability
-SCTK_CHECK_HEADER sys/stat.h
+
+#To check file presence without using fopen/fclose
+SCTK_CHECK_HEADER_NOFAIL sys/stat.h
+if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
+	SCTK_CHECK_OPTION '-DHAVE_SYS_STAT_H'
+fi
 
 sctk_echo
 
