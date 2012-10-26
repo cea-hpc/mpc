@@ -685,23 +685,23 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 
 	SCTK_PROFIL_START(sctk_realloc);
 
-	//get the current chain
-	local_chain = sctk_get_tls_chain();
-	if (local_chain == NULL)
-		local_chain = sctk_alloc_posix_setup_tls_chain();
+	//trivial cases
+	if (ptr == NULL)
+		return sctk_malloc(size);
+	if (size == 0)
+	{
+		sctk_free(ptr);
+		return NULL;
+	}
 
 	//get the chain of the chunk
-	if (ptr != NULL)
-		macro_bloc = sctk_alloc_region_get_macro_bloc(ptr);
+	macro_bloc = sctk_alloc_region_get_macro_bloc(ptr);
 	if (macro_bloc != NULL)
 		chain = macro_bloc->chain;
 
-	if ( chain == NULL && ptr != NULL && sctk_alloc_config()->strict )
-		sctk_fatal("Allocator error on realloc(%p,%llu), the address you provide is not managed by this memory allocator.",ptr,size);
-
 	//on windows we may got some segments allocated by HeapAlloc, detect them and fallback to HeapRealloc for them
 	#ifdef _WIN32
-	if (chain == NULL && ptr != NULL)
+	if (chain == NULL)
 	{
 		//used to fallback on default HeapAlloc/HeapFree/HeapRealloc/HeapSize when getting some legacy
 		//segments not managed by our allocator It append typically with atexit method which init is segment
@@ -711,10 +711,28 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 	}
 	#endif //_WIN32
 
-	if (size != 0 && ptr != NULL && chain == local_chain && chain != NULL)
+	//error handling
+	assume_m (chain != NULL,"Allocator error on realloc(%p,%llu), the address you provide is not managed by this memory allocator.",ptr,size);
+
+	//get the current chain
+	local_chain = sctk_get_tls_chain();
+	if (local_chain == NULL)
+		local_chain = sctk_alloc_posix_setup_tls_chain();
+
+	if (chain == local_chain || sctk_alloc_chain_is_thread_safe(chain))
 	{
+		//if distant chain is thread safe, we can try to use chain_realloc which
+		//use more optimized memory reuse if possible. If local its also good.
 		res = sctk_alloc_chain_realloc(chain,ptr,size);
+	#ifdef HAVE_MREMAP
+	} else if (SCTK_ALLOC_HUGE_CHUNK_SEGREGATION && size > SCTK_HUGE_BLOC_LIMIT && sctk_alloc_chain_can_remap(chain) && sctk_alloc_posix_get_size(ptr) > SCTK_HUGE_BLOC_LIMIT) {
+		//for huge segment, we can try to remap and update register field in region, it may not break
+		//thead-safety as in this case we didn't need to take locks on the chain
+		//remap will also not break current NUMA mapping (hope).
+		res = sctk_alloc_chain_realloc(chain,ptr,size);
+	#endif //HAVE_MREMAP
 	} else {
+		//for other cases we cannot do anything due to thread-safety, so need to alloc/copy/free
 		res = sctk_realloc_inter_chain(ptr,size);
 	}
 
@@ -743,6 +761,7 @@ SCTK_STATIC void * sctk_realloc_inter_chain (void * ptr, size_t size)
 		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_next_is_realloc(local_chain,ptr,size));
 		res = sctk_malloc(size);
 	}
+
 	if (res != NULL && ptr != NULL)
 	{
 		copy_size = sctk_alloc_posix_get_size(ptr);
@@ -750,6 +769,7 @@ SCTK_STATIC void * sctk_realloc_inter_chain (void * ptr, size_t size)
 			copy_size = size;
 		memcpy(res,ptr,copy_size);
 	}
+
 	if (ptr != NULL)
 		sctk_free(ptr);
 
