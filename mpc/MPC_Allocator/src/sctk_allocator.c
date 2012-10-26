@@ -2520,6 +2520,7 @@ void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain)
 	//vars
 	struct sctk_alloc_numa_stat_s numa_stat;
 	struct sctk_alloc_chain_stat chain_stat;
+	int numa_nodes;
 	
 	//errors
 	assert(chain != NULL);
@@ -2527,6 +2528,7 @@ void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain)
 	//read stat
 	sctk_alloc_chain_get_numa_stat(&numa_stat,chain);
 	sctk_alloc_chain_get_stat(&chain_stat,chain);
+	numa_nodes = sctk_get_numa_node_number();
 
 	//print it
 	printf("====================== ALLOCATION CHAIN STAT ======================\n");
@@ -2534,7 +2536,7 @@ void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain)
 	printf("%-20s : %s\n","Name",chain->name);
 	printf("%-20s : %p\n","Chain",chain);
 	printf("%-20s : %p\n","Memory source",chain->source);
-	printf("%-20s : %d\n","Source NUMA node",sctk_alloc_chain_get_numa_node(chain));
+	printf("%-20s : %d / %d\n","Source NUMA node",sctk_alloc_chain_get_numa_node(chain),numa_nodes);
 	#ifdef HAVE_HWLOC
 	printf("%-20s : %d\n","Preferred NUMA node",sctk_get_preferred_numa_node());
 	#endif //HAVE_HWLOC
