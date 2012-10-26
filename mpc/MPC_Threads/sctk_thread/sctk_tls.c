@@ -211,7 +211,7 @@ sctk_get_module_file_decr (size_t m, size_t module_size)
   sctk_spinlock_lock (&(lock));
   if (size <= m)
     {
-      fds = sctk_realloc (fds, m + 1);
+      fds = sctk_realloc (fds, (m + 1) * sizeof (int));
       for (i = size; i < m + 1; i++)
 	{
 	  fds[i] = -1;
