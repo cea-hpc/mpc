@@ -47,6 +47,25 @@ struct sctk_rail_info_s** sctk_network_get_rails() {
   return rails;
 }
 
+#define IB_RAIL_DATA 0          /* Data rail */
+#define IB_RAIL_SIGNALIZATION 1 /* Signalization rail */
+
+/* Return which rail is used for MPI communications */
+int sctk_network_ib_get_rail_data() {
+  assume(rails);
+  int rail_nb = IB_RAIL_DATA;
+  assume (rail_nb < NB_RAILS);
+  return rail_nb;
+}
+
+/* Return which rail is used for signalization */
+int sctk_network_ib_get_rail_signalization() {
+  assume(rails);
+  int rail_nb = IB_RAIL_SIGNALIZATION;
+  assume (rail_nb < NB_RAILS);
+  return rail_nb;
+}
+
 static void
 sctk_network_send_message_multirail_ib (sctk_thread_ptp_message_t * msg){
   int i ;
@@ -58,9 +77,9 @@ sctk_network_send_message_multirail_ib (sctk_thread_ptp_message_t * msg){
 
   const specific_message_tag_t tag = msg->body.header.specific_message_tag;
   if (IS_PROCESS_SPECIFIC_CONTROL_MESSAGE(tag)) {
-    i = 1;
+    i = sctk_network_ib_get_rail_signalization();
   } else {
-    i = 0;
+    i = sctk_network_ib_get_rail_data();
   }
   /* Always send using the MPI network */
   sctk_nodebug("Send message using rail %d", i);
@@ -238,6 +257,8 @@ void sctk_network_initialize_task_multirail_ib (int rank, int vp){
   if(sctk_process_number > 1 && sctk_network_is_ib_used() ){
     /* Register task for QP prof */
     sctk_ib_prof_init_task(rank, vp);
+    /* Register task for buffers */
+    sctk_ibuf_init_task(rank, vp);
     /* Register task for collaborative polling */
     sctk_ib_cp_init_task(rank, vp);
   }

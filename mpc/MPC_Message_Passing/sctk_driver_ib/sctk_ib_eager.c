@@ -113,11 +113,11 @@ sctk_ibuf_t* sctk_ib_eager_prepare_msg(sctk_ib_rail_info_t* rail_ib,
 
   body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
   if (is_control_message) {
-    ibuf = sctk_ibuf_pick_send_sr(rail_ib, task_node_number);
+    ibuf = sctk_ibuf_pick_send_sr(rail_ib, ibuf_node_task);
     sctk_ibuf_prepare(rail_ib, remote, ibuf, ibuf_size);
   } else {
     ibuf = sctk_ibuf_pick_send(rail_ib, remote, &ibuf_size,
-        task_node_number);
+        ibuf_node_task);
   }
   /* We cannot pick an ibuf. We should try the buffered eager protocol */
   if (ibuf == NULL) return NULL;

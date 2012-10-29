@@ -134,6 +134,8 @@ typedef struct sctk_ibuf_numa_s
  * for avoind false sharing */
 __attribute__((__aligned__(64)));
 
+extern __thread struct sctk_ibuf_numa_s* ibuf_node_task;
+
 /* Channel where the region has been allocated */
 enum sctk_ibuf_channel
 {
@@ -298,10 +300,10 @@ void sctk_ibuf_pool_init(struct sctk_ib_rail_info_s *rail);
 
 sctk_ibuf_t*
 sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, struct sctk_ib_qp_s *remote,
-   size_t *size, int n);
+   size_t *size, struct sctk_ibuf_numa_s *node);
 
 sctk_ibuf_t*
-sctk_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib, int n);
+sctk_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib, struct sctk_ibuf_numa_s *node);
 
 int sctk_ibuf_srq_check_and_post(
     struct sctk_ib_rail_info_s *rail_ib, int limit);
@@ -356,6 +358,8 @@ void sctk_ibuf_release(
 
 void sctk_ibuf_prepare(struct sctk_ib_rail_info_s* rail_ib, struct sctk_ib_qp_s *remote,
     sctk_ibuf_t* ibuf, size_t size);
+
+void sctk_ibuf_init_task(int rank, int vp);
 
 #endif
 #endif
