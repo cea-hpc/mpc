@@ -107,10 +107,7 @@ int sctk_alloc_numa_stat_get_node_of_page(void* ptr)
 	res = move_pages(0 , 1, &ptr,NULL, &status, 0);
 
 	//check status and return
-	if (res == -1)
-	{
-		return SCTK_MAX_NUMA_NODE;
-	} else if (status >= 0 && status < SCTK_MAX_NUMA_NODE) {
+	if (status >= -1 && status < SCTK_MAX_NUMA_NODE) {
 		return status;
 	} else {
 		return SCTK_MAX_NUMA_NODE;
@@ -135,7 +132,7 @@ void sctk_alloc_numa_stat_init(struct sctk_alloc_numa_stat_s* stat)
 		sctk_alloc_numa_stat_open_pagemap();
 
 	//check number of nodes
-	if (sctk_alloc_is_numa())
+	if (sctk_is_numa_node())
 	{
 		stat->numa_nodes = sctk_get_numa_node_number();
 	} else {
@@ -283,11 +280,29 @@ void sctk_alloc_numa_stat_cumul(struct sctk_alloc_numa_stat_s* stat, void* ptr, 
 #else //HAVE_LINUX_PAGEMAP
 void sctk_alloc_numa_stat_cumul(struct sctk_alloc_numa_stat_s* stat, void* ptr, size_t size)
 {
-	bool first_call = true;
+	//vars
+	int i;
+	size_t first_page = (size_t)ptr >> SCTK_ALLOC_NUMA_STAT_PAGE_SHIFT;
+	size_t last_page = first_page + (size >> SCTK_ALLOC_NUMA_STAT_PAGE_SHIFT);
+	struct sctk_alloc_numa_stat_linux_page_entry_s * table = NULL;
+	static bool first_call = true;
+
+	//errors
+	assert(stat != NULL);
+	assert(ptr != NULL);
+	assert(size > 0);
+
 	if (first_call)
 	{
 		first_call=false;
 		warning("Caution, HAVE_LINUX_PAGEMAP was disabled at compile time, do nothing.");
+	}
+
+	for (i = 0 ; i < last_page - first_page ; i++)
+	{
+		int node = sctk_alloc_numa_stat_get_node_of_page(ptr + (i << SCTK_ALLOC_NUMA_STAT_PAGE_SHIFT));
+		if (node > -1)
+			stat->numa_pages[node]++;
 	}
 }
 #endif //HAVE_LINUX_PAGEMAP
@@ -372,7 +387,7 @@ void sctk_alloc_numa_check(bool fatal_on_fail, const char* filename, int line, v
 	assert(min_ratio >= 0 && min_ratio <= 100);
 
 	//if not numa node can return immediately
-	if (sctk_alloc_is_numa() == false)
+	if (sctk_is_numa_node() == false)
 		return;
 
 	//get numa stat
