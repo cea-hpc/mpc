@@ -135,12 +135,12 @@ void sctk_alloc_numa_stat_init(struct sctk_alloc_numa_stat_s* stat)
 		sctk_alloc_numa_stat_open_pagemap();
 
 	//check number of nodes
-	if (sctk_is_numa_node())
+	if (sctk_alloc_is_numa())
 	{
 		stat->numa_nodes = sctk_get_numa_node_number();
 	} else {
 		stat->numa_nodes = 1;
-		warning("No NUMA node availables\n");
+		warning("No NUMA node available\n");
 	}
 
 	//reset
@@ -372,7 +372,7 @@ void sctk_alloc_numa_check(bool fatal_on_fail, const char* filename, int line, v
 	assert(min_ratio >= 0 && min_ratio <= 100);
 
 	//if not numa node can return immediately
-	if (sctk_is_numa_node() == false)
+	if (sctk_alloc_is_numa() == false)
 		return;
 
 	//get numa stat

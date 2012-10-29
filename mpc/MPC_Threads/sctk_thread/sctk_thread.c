@@ -601,10 +601,12 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   struct _sctk_thread_cleanup_buffer *ptr_cleanup;
   tmp = *__arg;
 
-  sctk_nodebug ("THREAD START");
+  //mark the given TLS as currant thread allocator
+  sctk_set_tls (tmp.tls);
+
+  //do NUMA migration if required
   sctk_alloc_posix_numa_migrate();
 
-  sctk_set_tls (tmp.tls);
   ptr_cleanup = NULL;
   sctk_thread_setspecific (_sctk_thread_handler_key, &ptr_cleanup);
 

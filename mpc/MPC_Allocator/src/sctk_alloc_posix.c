@@ -276,7 +276,7 @@ SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(vo
 	//be really numa aware.
 	if (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_EGG || sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_DEFAULT)
 		node = SCTK_DEFAULT_NUMA_MM_SOURCE_ID;
-	else if (sctk_is_numa_node())
+	else if (sctk_alloc_is_numa())
 		node = sctk_alloc_init_on_numa_node();
 	else
 		node = SCTK_DEFAULT_NUMA_MM_SOURCE_ID;
@@ -415,7 +415,7 @@ SCTK_INTERN struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void
 	chain->source = sctk_alloc_posix_get_local_mm_source();
 
 	//debug
-	SCTK_NO_PDEBUG("Init an allocation chain : %p",chain);
+	SCTK_NO_PDEBUG("Init an allocation chain : %p with mm_source = %p (node = %d)",chain,chain->source,sctk_alloc_chain_get_numa_node(chain));
 
 	/** @todo TODO register the allocation chain for debugging. **/
 	//setup pointer for alocator memory dump in case of crash
@@ -799,7 +799,10 @@ SCTK_PUBLIC void sctk_alloc_posix_numa_migrate(void)
 	//if we didn't have an allocation, we can skip this, it will be
 	//create at first use on the current numa node, so automatically OK
 	if (local_chain == NULL)
+	{
+		SCTK_NO_PDEBUG("Not allocation to migrate.");
 		return;
+	}
 
 	//move the chain
 	sctk_alloc_posix_numa_migrate_chain(local_chain);
@@ -816,6 +819,7 @@ SCTK_INTERN void sctk_alloc_posix_numa_migrate_chain(struct sctk_alloc_chain * c
 {
 	//vars
 	struct sctk_alloc_mm_source * old_source;
+	struct sctk_alloc_mm_source * new_source;
 	struct sctk_alloc_mm_source_light * light_source;
 	int old_numa_node = -1;
 	int new_numa_node = -1;
@@ -833,21 +837,21 @@ SCTK_INTERN void sctk_alloc_posix_numa_migrate_chain(struct sctk_alloc_chain * c
 		old_source = chain->source;
 
 	//re-setup the memory source.
-	chain->source = sctk_alloc_posix_get_local_mm_source();
+	new_source = sctk_alloc_posix_get_local_mm_source();
 
 	//get numa node of sources
 	light_source = sctk_alloc_get_mm_source_light(old_source);
 	if (light_source != NULL)
 		old_numa_node = light_source->numa_node;
-	light_source = sctk_alloc_get_mm_source_light(chain->source);
+	light_source = sctk_alloc_get_mm_source_light(new_source);
 	if (light_source != NULL)
 		new_numa_node = light_source->numa_node;
 
-	SCTK_PDEBUG("Request NUMA migration to thread allocator %d -> %d",old_numa_node,new_numa_node);
+	SCTK_NO_PDEBUG("Request NUMA migration to thread allocator (%p) %d -> %d",chain,old_numa_node,new_numa_node);
 
 	//check if need to migrate NUMA explicitely
 	if (old_numa_node != new_numa_node && new_numa_node != SCTK_DEFAULT_NUMA_MM_SOURCE_ID)
-		sctk_alloc_chain_numa_migrate(chain,new_numa_node,true,true,chain->source);
+		sctk_alloc_chain_numa_migrate(chain,new_numa_node,true,true,new_source);
 
 	SCTK_PROFIL_END(sctk_alloc_posix_numa_migrate);
 }

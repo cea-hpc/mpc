@@ -429,3 +429,14 @@ void sctk_alloc_topology_bind_thread_on_core(int id)
 	warning("Thread binding is not supported, please enable support of hwloc at compile time.");
 }
 #endif
+
+/********************************* FUNCTION *********************************/
+/**
+ * Permit to know if the memory allocator must use NUMA mode of not. It depend
+ * on presence of NUMA on current node and on field "numa" of MPC configuration.
+ * @return Return true if NUMA support must be used.
+**/
+bool sctk_alloc_is_numa(void)
+{
+	return sctk_is_numa_node() && sctk_alloc_config()->numa;
+}

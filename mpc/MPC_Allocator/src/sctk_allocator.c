@@ -2521,7 +2521,7 @@ void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain)
 	struct sctk_alloc_numa_stat_s numa_stat;
 	struct sctk_alloc_chain_stat chain_stat;
 	int numa_nodes;
-	
+
 	//errors
 	assert(chain != NULL);
 
@@ -2585,7 +2585,7 @@ void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_n
 	assert(chain != NULL);
 	assert(target_numa_node >= -1);
 
-	SCTK_PDEBUG("Call migration to numa node %d on chain",target_numa_node,chain);
+	SCTK_NO_PDEBUG("Call migration to numa node %d on chain",target_numa_node,chain);
 
 	#ifdef HAVE_HWLOC
 	//remap the struct itself

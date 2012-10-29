@@ -223,7 +223,7 @@ kthread_create (kthread_t * thread, void *(*start_routine) (void *),
     pthread_attr_destroy (&attr);
 
     if ( res != 0 ) {
-      sctk_debug( "Warning: Creating kernel threads with no attribute" ) ;
+      sctk_nodebug( "Warning: Creating kernel threads with no attribute" ) ;
       res = pthread_create ((pthread_t *) thread, NULL, kthread_create_start_routine, &tmp);
 
       assume( res == 0 ) ;
