@@ -37,7 +37,7 @@
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"
 #endif
-#define SCTK_IB_MODULE_DEBUG
+//#define SCTK_IB_MODULE_DEBUG
 #define SCTK_IB_MODULE_NAME "CM"
 #include "sctk_ib_toolkit.h"
 
@@ -899,8 +899,8 @@ int sctk_ib_cm_on_demand_recv(sctk_rail_info_t *rail,
 
   payload = IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer);
   TODO("OD connections only work with rail number 0! There is no support for multirail now")
-  rail_targ = sctk_route_get_rail(0);
-  rail_sign = sctk_route_get_rail(1);
+  rail_targ = sctk_route_get_rail(sctk_network_ib_get_rail_data());
+  rail_sign = sctk_route_get_rail(sctk_network_ib_get_rail_signalization());
 
   process_dest = msg->sctk_msg_get_destination;
   process_src = msg->sctk_msg_get_source;

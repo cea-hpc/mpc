@@ -168,16 +168,16 @@ void sctk_network_stats_ib (struct MPC_Network_stats_s* stats) {
 
 
 void sctk_network_deco_neighbor_ib (int process) {
-  sctk_rail_info_t ** rails;
+  sctk_rail_info_t * rail;
   sctk_ib_rail_info_t* rail_ib;
 ;
 
   /* Select the first rail */
-  rails = sctk_network_get_rails();
-  rail_ib = &rails[0]->network.ib;
+  rail = sctk_route_get_rail(sctk_network_ib_get_rail_data());
+  rail_ib = &rail->network.ib;
 
   /* get the route to process */
-  sctk_route_table_t *route_table = sctk_get_route_to_process_no_route(process, rails[0]);
+  sctk_route_table_t *route_table = sctk_get_route_to_process_no_route(process, rail);
   ib_assume(route_table);
   struct sctk_ib_qp_s *remote = route_table->data.ib.remote;
   ib_assume(remote);

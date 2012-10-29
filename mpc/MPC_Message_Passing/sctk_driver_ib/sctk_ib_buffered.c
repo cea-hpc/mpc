@@ -91,7 +91,7 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
   /* While it reamins slots to copy */
   do {
     size_t ibuf_size = ULONG_MAX;
-    ibuf = sctk_ibuf_pick_send(rail_ib, remote, &ibuf_size, task_node_number);
+    ibuf = sctk_ibuf_pick_send(rail_ib, remote, &ibuf_size, ibuf_node_task);
     ib_assume(ibuf);
 
     size_t buffer_size = ibuf_size;

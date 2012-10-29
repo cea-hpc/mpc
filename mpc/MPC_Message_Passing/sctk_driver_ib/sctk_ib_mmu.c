@@ -148,6 +148,9 @@ sctk_ib_mmu_entry_t*
   /* Construct the key */
   key.ptr = ptr;
   key.size = size;
+//  if (sctk_process_rank == 0) {
+//    sctk_debug("Look for address %p and size %lu", ptr, size);
+//  }
 
   sctk_spinlock_lock(&mmu->cache.lock);
   HASH_FIND(hh,mmu->cache.ht_entries, &key,sizeof(sctk_ib_mmu_ht_key_t),mmu_entry);
