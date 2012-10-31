@@ -47,6 +47,8 @@ extern "C"
 #define MPCOMP_MAX_ALIVE_SINGLE		1023	
 /* Maximum number of alive 'for dynamic' construct */
 #define MPCOMP_MAX_ALIVE_FOR_DYN 	1023
+/* Maximum number of alive 'for guided' construct */
+#define MPCOMP_MAX_ALIVE_FOR_GUIDED 	1023
 
 #define MPCOMP_NOWAIT_STOP_SYMBOL	(-2)
 #define MPCOMP_NOWAIT_STOP_CONSUMED	(-3)
@@ -165,6 +167,12 @@ extern "C"
 	  mpcomp_atomic_int_pad_t for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
 
 	  /* -- GUIDED FOR LOOP CONSTRUCT -- */
+	  sctk_spinlock_t lock_enter_for_guided[MPCOMP_MAX_ALIVE_FOR_GUIDED + 1]; 
+	  volatile int current_for_guided[MPCOMP_MAX_THREADS];
+	  volatile int nb_threads_entered_for_guided[MPCOMP_MAX_ALIVE_FOR_GUIDED + 1];
+	  volatile int nb_threads_exited_for_guided[MPCOMP_MAX_ALIVE_FOR_GUIDED + 1];
+	  volatile int nb_iterations_remaining[MPCOMP_MAX_ALIVE_FOR_GUIDED + 1];
+	  volatile int current_from_for_guided[MPCOMP_MAX_ALIVE_FOR_GUIDED + 1];
 
 	  /* ORDERED CONSTRUCT */
 	  volatile int next_ordered_offset; 
