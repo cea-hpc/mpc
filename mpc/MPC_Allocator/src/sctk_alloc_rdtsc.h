@@ -48,8 +48,8 @@
 #endif
 
 /************************* FUNCTION ************************/
-static __inline__ unsigned long sctk_alloc_rdtsc() {
-    unsigned long t;
+static __inline__ unsigned long long sctk_alloc_rdtsc() {
+    unsigned long long t;
     __sctk_rdtscll(t);
     return t;
 }

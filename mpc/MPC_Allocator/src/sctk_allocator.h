@@ -42,6 +42,7 @@ extern "C"
 #include "sctk_alloc_lock.h"
 #include "sctk_alloc_stats.h"
 #include "sctk_alloc_spy.h"
+#include "sctk_alloc_mpscf_queue.h"
 
 /** Size class for the free lists. **/
 extern const sctk_size_t SCTK_ALLOC_FREE_SIZES[SCTK_ALLOC_NB_FREE_LIST];
@@ -294,7 +295,7 @@ struct sctk_alloc_mm_source_default
 **/
 struct sctk_alloc_rfq_entry
 {
-	struct sctk_alloc_rfq_entry * next;
+	struct sctk_mpscf_queue_entry entry;
 	void * ptr;
 };
 
@@ -304,9 +305,7 @@ struct sctk_alloc_rfq_entry
 **/
 struct sctk_alloc_rfq
 {
-	sctk_alloc_spinlock_t lock;
-	struct sctk_alloc_rfq_entry * first;
-	struct sctk_alloc_rfq_entry * last;
+	struct sctk_mpscf_queue queue;
 };
 
 /************************** STRUCT *************************/

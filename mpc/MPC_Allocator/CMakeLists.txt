@@ -51,6 +51,7 @@ endif(NOT DISABLE_LIBNUMA)
 
 if (HWLOC_FOUND)
 	add_definitions(-DHAVE_HWLOC=yes)
+	include_directories(${HWLOC_INCLUDE_DIRS})
 else (HWLOC_FOUND)
 	set(hwloc_inner_path ${CMAKE_SOURCE_DIR}/hwloc)
 	#try some other dirs
@@ -71,6 +72,13 @@ else (HWLOC_FOUND)
 		set(HWLOC_LIBRARY "")
 	endif()
 endif (HWLOC_FOUND)
+
+find_package(OpenPA REQUIRED)
+if (OPENPA_FOUND)
+    include_directories(${OPENPA_INCLUDE_DIRS})
+else (OPENPA_FOUND)
+    message(FATAL_ERROR "Cannot find OpenPA, please provide the path with -DOPENPA_PREFIX=...")
+endif (OPENPA_FOUND)
 
 add_subdirectory(src)
 IF(EXISTS ${CMAKE_SOURCE_DIR}/tests)

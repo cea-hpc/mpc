@@ -34,6 +34,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
+#include "sctk_allocator.h"
 #include "sctk_alloc_debug.h"
 #include "sctk_alloc_inlined.h"
 
@@ -42,7 +43,9 @@ static const char * SCTK_ALLOC_STATE_NAME[] = {"free","allocated"};
 static const char * SCTK_ALLOC_TYPE_NAME[] = {"small","large"};
 /** PTRACE output file. Use '-' for stderr. You can use %d to get the PID in filename. **/
 // static const char SCTK_ALLOC_TRACE_FILE[] = "-";
+#ifdef ENABLE_TRACE
 static const char SCTK_ALLOC_TRACE_FILE[] = "alloc-trace-%d.txt";
+#endif //ENABLE_TRACE
 
 /*********************** PORTABILITY ***********************/
 #ifndef _WIN32
@@ -233,27 +236,18 @@ void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain* chain)
 	#endif
 	close(fd);
 }
-/************************* FUNCTION ************************/
-#ifdef SCTK_ALLOC_DEBUG
-void sctk_alloc_crash_dump(void)
-{
-	if (sctk_alloc_chain_list[0] != NULL)
-		sctk_alloc_debug_dump_alloc_chain(sctk_alloc_chain_list[0]);
-	abort();
-}
-#endif
 
 /************************* FUNCTION ************************/
-#if defined(SCTK_ALLOC_DEBUG) && !defined(_WIN32)
+/*#if defined(SCTK_ALLOC_DEBUG) && !defined(_WIN32)
 void sctk_alloc_debug_setgault_handler(int signal, siginfo_t *si, void *arg)
 {
 	sctk_alloc_perror("SEGMENTATION FAULT");
 	sctk_alloc_crash_dump();
 }
-#endif
+#endif*/
 
 /************************* FUNCTION ************************/
-#if defined(SCTK_ALLOC_DEBUG) && !defined(_WIN32)
+/*#if defined(SCTK_ALLOC_DEBUG) && !defined(_WIN32)
 void sctk_alloc_debug_setup_sighandler()
 {
 	int res;
@@ -270,15 +264,15 @@ void sctk_alloc_debug_setup_sighandler()
 		exit(1);
 	}
 }
-#endif
+#endif*/
 
 /************************* FUNCTION ************************/
 #ifdef SCTK_ALLOC_DEBUG
 void sctk_alloc_debug_init(void )
 {
-	#ifndef _WIN32
+	/*#ifndef _WIN32
 		sctk_alloc_debug_setup_sighandler();
-	#endif
+	#endif*/
 }
 #endif
 

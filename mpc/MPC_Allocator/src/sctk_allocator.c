@@ -491,6 +491,7 @@ SCTK_STATIC void sctk_alloc_free_list_insert(struct sctk_thread_pool * pool,stru
 			break;
 		default:
 			assume_m(false,"Unknown insert mode in free list.");
+			break;
 	}
 
 	//mark non empty
@@ -1361,7 +1362,7 @@ SCTK_STATIC void sctk_alloc_chain_free_macro_bloc(struct sctk_alloc_chain * chai
 	assert(chain->cnt_macro_blocs >= 0);
 
 	//check if we must destroy the allocation chain
-	if (chain->cnt_macro_blocs == 0 && chain->destroy_handler != NULL && chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
+	if (chain->cnt_macro_blocs == 0 && chain->destroy_handler != NULL && (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE))
 		chain->destroy_handler(chain);
 }
 
@@ -1509,7 +1510,7 @@ void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sct
 		delta = old_size - size;
 
 		if (old_size >= size && delta <= sctk_alloc_config()->realloc_threashold
-				&& delta >= SCTK_ALLOC_BASIC_ALIGN
+				//&& delta >= SCTK_ALLOC_BASIC_ALIGN (don't remember why I put this???)
 				&& delta <= old_size / sctk_alloc_config()->realloc_factor) {
 			//simply keep the old segment, nothing to change
 			SCTK_NO_PDEBUG("realloc with same address");
@@ -1602,7 +1603,7 @@ void sctk_alloc_chain_purge_rfq(struct sctk_alloc_chain * chain)
 		//CAUTION, we store the entry directly in the freed segment, so the content can be erase or
 		//unmap by sctk_alloc_chain_free, we must't use anymore the entry pointer after calling this
 		//method.
-		next = entries->next;
+		next = (struct sctk_alloc_rfq_entry*)entries->entry.next;
 		sctk_alloc_chain_free(chain,entries->ptr);
 		entries = next;
 	}
@@ -2246,12 +2247,8 @@ SCTK_STATIC void sctk_alloc_region_del_all(void)
 **/
 SCTK_STATIC void sctk_alloc_rfq_init(struct sctk_alloc_rfq * rfq)
 {
-	if (rfq != NULL)
-	{
-		rfq->first = NULL;
-		rfq->last = NULL;
-		sctk_alloc_spinlock_init(&rfq->lock,PTHREAD_PROCESS_PRIVATE);
-	}
+	assert(rfq != NULL);
+	sctk_mpscf_queue_init(&rfq->queue);
 }
 
 /************************* FUNCTION ************************/
@@ -2263,10 +2260,8 @@ SCTK_STATIC void sctk_alloc_rfq_init(struct sctk_alloc_rfq * rfq)
 **/
 SCTK_STATIC bool sctk_alloc_rfq_empty(struct sctk_alloc_rfq * rfq)
 {
-	if (rfq == NULL)
-		return true;
-	else
-		return rfq->first == NULL;
+	assert(rfq != NULL);
+	return sctk_mpscf_queue_is_empty(&rfq->queue);
 }
 
 /************************* FUNCTION ************************/
@@ -2297,24 +2292,15 @@ void sctk_alloc_rfq_register(struct sctk_alloc_rfq * rfq,void * ptr)
 			break;
 		default:
 			assume_m(false,"Invalid chunk type.");
+			break;
 	}
 
 	//setup entry
 	entry->ptr = ptr;
-	entry->next = NULL;
+	entry->entry.next = NULL;
 
-	//take the lock
-	sctk_alloc_spinlock_lock(&rfq->lock);
-
-	//insert
-	if (rfq->last != NULL)
-		rfq->last->next = entry;
-	rfq->last = entry;
-	if (rfq->first == NULL)
-		rfq->first = entry;
-
-	//let the lock
-	sctk_alloc_spinlock_unlock(&rfq->lock);
+	//reg in queue
+	sctk_mpscf_queue_insert(&rfq->queue,&entry->entry);
 }
 
 /************************* FUNCTION ************************/
@@ -2325,27 +2311,8 @@ void sctk_alloc_rfq_register(struct sctk_alloc_rfq * rfq,void * ptr)
 **/
 SCTK_STATIC struct sctk_alloc_rfq_entry * sctk_alloc_rfq_extract(struct sctk_alloc_rfq * rfq)
 {
-	struct sctk_alloc_rfq_entry * res;
-	
-	//error
-	if (rfq == NULL)
-		return NULL;
-
-	//if empty, no need to take the lock, can exi now
-	if (rfq->first == NULL)
-		return NULL;
-
-	//take the lock
-	sctk_alloc_spinlock_lock(&rfq->lock);
-
-	res = rfq->first;
-	rfq->first = NULL;
-	rfq->last = NULL;
-
-	//let the lock
-	sctk_alloc_spinlock_unlock(&rfq->lock);
-
-	return ( struct sctk_alloc_rfq_entry *)res;
+	assert(rfq != NULL);
+	return (struct sctk_alloc_rfq_entry *)sctk_mpscft_queue_dequeue_all(&rfq->queue);
 }
 
 /************************* FUNCTION ************************/
@@ -2362,7 +2329,7 @@ SCTK_STATIC int sctk_alloc_rfq_count_entries(struct sctk_alloc_rfq_entry * entri
 	while (entries != NULL)
 	{
 		cnt++;
-		cur = cur->next;
+		cur = (struct sctk_alloc_rfq_entry *)cur->entry.next;
 	}
 	return cnt;
 }
@@ -2376,17 +2343,8 @@ SCTK_STATIC int sctk_alloc_rfq_count_entries(struct sctk_alloc_rfq_entry * entri
 **/
 SCTK_STATIC void sctk_alloc_rfq_destroy(struct sctk_alloc_rfq * rfq)
 {
-	if (rfq == NULL)
-		return;
-
-	//try to take the lock
-	assume_m( ! sctk_alloc_spinlock_trylock(&rfq->lock) ,"Can't take the lock of Remote Free Queue to made the cleanup.");
-
-	//check empty list
-	assume_m(rfq->first == NULL && rfq->last == NULL,"Can't cleanup a non empty Remote Free Queue.");
-
-	//cleanup the spinlock
-	sctk_alloc_spinlock_destroy(&rfq->lock);
+	assert(rfq != NULL);
+	sctk_mpscf_queue_destroy(&rfq->queue);
 }
 
 /************************* FUNCTION ************************/

@@ -28,7 +28,7 @@
 #include "sctk_debug.h"
 #endif
 #include <stdio.h>
-#include "sctk_allocator.h"
+#include <stdlib.h>
 
 //compat with NDEBUG system because using this has consequences in MPC sources.
 #ifdef NDEBUG
@@ -64,11 +64,14 @@
 #endif //sctk_warning
 
 /************************** MACROS *************************/
-#define fatal(m) { sctk_alloc_perror("Fatal error at %s!%d\n%s\n",__FILE__,__LINE__,m); abort(); }
+#ifndef sctk_fatal
+	#define sctk_fatal(...) { sctk_alloc_perror("Fatal error at %s!%d\n%s\n",__FILE__,__LINE__,__VA_ARGS__); abort(); }
+	#define fatal(m) { sctk_alloc_perror("Fatal error at %s!%d\n%s\n",__FILE__,__LINE__,m); abort(); }
+#endif
 
 /************************** MACROS *************************/
 #ifndef assume_m
-#define assume_m(x,m) if (!(x)) { sctk_alloc_perror("Error at %s!%d\n%s\n%s\n",__FILE__,__LINE__,#x,m); abort(); }
+#define assume_m(x,...) if (!(x)) { sctk_alloc_perror("Error at %s!%d\n%s\n%s\n",__FILE__,__LINE__,#x,__VA_ARGS__); abort(); }
 #endif
 
 /************************** MACROS *************************/
@@ -89,6 +92,11 @@
 #define sctk_alloc_vsprintf(buffer,buffer_size,...) vsprintf(buffer,__VA_ARGS__)
 #endif
 
+/************************** STRUCT *************************/
+struct sctk_alloc_free_chunk;
+struct sctk_thread_pool;
+struct sctk_alloc_chain;
+
 /************************* FUNCTION ************************/
 void sctk_alloc_ptrace_init(void);
 
@@ -107,6 +115,5 @@ void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain * chain);
 
 /************************* FUNCTION ************************/
 void sctk_alloc_debug_init(void);
-void sctk_alloc_crash_dump(void);
 
 #endif
