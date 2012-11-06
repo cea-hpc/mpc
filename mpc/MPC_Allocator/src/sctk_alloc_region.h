@@ -20,40 +20,51 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_ALLOC_H
-#define SCTK_ALLOC_H
+#ifndef SCTK_ALLOC_REGION_H
+#define SCTK_ALLOC_REGION_H
 
 #ifdef __cplusplus
 extern "C"
 {
 #endif
 
-/************************** HEADERS ************************/
-#if defined(_WIN32)
-	#include <windows.h>
-	#ifdef _MSC_VER
-		//used for _open and _write functions with VCC
-		#include <io.h>
-	#endif
-#else	
-	#include <sys/mman.h>
-#endif
+/********************************* INCLUDES *********************************/
 #include "sctk_alloc_common.h"
-#include "sctk_alloc_lock.h"
-#include "sctk_alloc_stats.h"
-#include "sctk_alloc_spy.h"
-#include "sctk_alloc_mpscf_queue.h"
 
-#include "sctk_alloc_chunk.h"
-#include "sctk_alloc_thread_pool.h"
-#include "sctk_alloc_mmsrc.h"
-#include "sctk_alloc_mmsrc_default.h"
-#include "sctk_alloc_rfq.h"
-#include "sctk_alloc_chain.h"
-#include "sctk_alloc_region.h"
+/******************************** STRUCTURE *********************************/
+struct sctk_alloc_region_entry
+{
+	struct sctk_alloc_macro_bloc * macro_bloc;
+};
+
+/******************************** STRUCTURE *********************************/
+/**
+ * Define an entry from region header. For now it simply contain a pointer to the related allocation
+ * chain. NULL if not used.
+**/
+struct sctk_alloc_region
+{
+	struct sctk_alloc_region_entry entries[SCTK_REGION_HEADER_ENTRIES];
+};
+
+/************************* FUNCTION ************************/
+//Region management
+SCTK_STATIC struct sctk_alloc_region * sctk_alloc_region_setup(void * addr);
+SCTK_STATIC struct sctk_alloc_region * sctk_alloc_region_get(void * addr);
+SCTK_STATIC void sctk_alloc_region_del(struct sctk_alloc_region * region);
+struct sctk_alloc_region_entry * sctk_alloc_region_get_entry(void* addr);
+SCTK_STATIC bool sctk_alloc_region_exist(void * addr);
+SCTK_STATIC void sctk_alloc_region_init(void);
+SCTK_STATIC void sctk_alloc_region_del_all(void);
+SCTK_STATIC void sctk_alloc_region_set_entry(struct sctk_alloc_chain * chain,struct sctk_alloc_macro_bloc * macro_bloc);
+SCTK_STATIC int sctk_alloc_region_get_id(void * addr);
+SCTK_STATIC bool sctk_alloc_region_has_ref(struct sctk_alloc_region * region);
+SCTK_STATIC void sctk_alloc_region_del_chain(struct sctk_alloc_region * region,struct sctk_alloc_chain * chain);
+SCTK_STATIC void sctk_alloc_region_unset_entry(struct sctk_alloc_macro_bloc * macro_bloc);
+struct sctk_alloc_macro_bloc * sctk_alloc_region_get_macro_bloc(void * ptr);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif //SCTK_ALLOC_H
+#endif /* SCTK_ALLOC_REGION_H */

@@ -34,7 +34,6 @@
 #include <errno.h>
 #include <malloc.h>
 #include "sctk_alloc_lock.h"
-#include "sctk_allocator.h"
 #include "sctk_alloc_debug.h"
 #include "sctk_alloc_spy.h"
 #include "sctk_alloc_config.h"
@@ -42,6 +41,8 @@
 #include "sctk_alloc_light_mm_source.h"
 #include "sctk_alloc_posix.h"
 #include "sctk_alloc_on_node.h"
+#include "sctk_alloc_chain.h"
+#include "sctk_alloc_region.h"
 
 //optional headers
 #ifdef HAVE_HWLOC
@@ -172,7 +173,7 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_uma_init(void)
 	//error
 	assume_m (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_EGG,"Invalid init state while calling allocator default init phase.");
 
-	sctk_global_memory_source[0] = sctk_alloc_chain_alloc(&sctk_global_egg_chain,sizeof(struct sctk_alloc_mm_source_default));
+	sctk_global_memory_source[0] = sctk_alloc_chain_alloc(&sctk_global_egg_chain,sizeof(struct sctk_alloc_mm_source_light));
 	//sctk_alloc_mm_source_default_init(sctk_global_memory_source[0],SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE);
 	sctk_alloc_mm_source_light_init(sctk_global_memory_source[0],0,SCTK_ALLOC_MM_SOURCE_LIGHT_DEFAULT);
 }
@@ -185,7 +186,7 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init_node(int id)
 	SCTK_NO_PDEBUG("Init memory source id = %d , MAX_NUMA_NODE = %d",id,SCTK_MAX_NUMA_NODE);
 
 	SCTK_NO_PDEBUG("Allocator init phase : Default");
-	sctk_global_memory_source[id] = sctk_alloc_chain_alloc(&sctk_global_egg_chain,sizeof(struct sctk_alloc_mm_source_default));
+	sctk_global_memory_source[id] = sctk_alloc_chain_alloc(&sctk_global_egg_chain,sizeof(struct sctk_alloc_mm_source_light));
 	//sctk_alloc_mm_source_default_init(sctk_global_memory_source[id],SCTK_ALLOC_HEAP_BASE + SCTK_ALLOC_HEAP_SIZE * id,SCTK_ALLOC_HEAP_SIZE);
 	if (id == SCTK_DEFAULT_NUMA_MM_SOURCE_ID)
 		sctk_alloc_mm_source_light_init(sctk_global_memory_source[id],SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_NODE_IGNORE,SCTK_ALLOC_MM_SOURCE_LIGHT_DEFAULT);

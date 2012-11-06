@@ -31,8 +31,9 @@ extern "C"
 
 /************************** HEADERS ************************/
 #include <stdlib.h>
-#include "sctk_allocator.h"
 #include "sctk_alloc_debug.h"
+#include "sctk_alloc_chunk.h"
+#include "sctk_alloc_mmsrc.h"
 
 /************************** MACROS *************************/
 #define SCTK_ALLOC_PADDED_VCHUNK_SIZE 1ul

@@ -20,49 +20,44 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef TEST_HELPER_H
-#define TEST_HELPER_H
+#ifndef SCTK_ALLOC_MMSRC_DEFAULT_H
+#define SCTK_ALLOC_MMSRC_DEFAULT_H
 
-/************************** HEADERS ************************/
-#include <svUnitTest/svUnitTest.h>
-#include <cstring>
-#include <sctk_alloc_inlined.h>
-#include <omp.h>
-#ifdef _WIN32
-	#include <windows.h>
+#ifdef __cplusplus
+extern "C"
+{
 #endif
 
-/************************** CONSTS *************************/
-#define LARGE_HEADER (sizeof(sctk_alloc_chunk_header_large))
+/********************************* INCLUDES *********************************/
+#include "sctk_alloc_common.h"
+#include "sctk_alloc_lock.h"
 
-/************************* FUNCTION ************************/
-bool asserterOperatorEqual(const sctk_alloc_vchunk & v1,const sctk_alloc_vchunk & v2)
+/******************************** STRUCTURE *********************************/
+/**
+ * A simple memory source which use mmap to allocate memory. It will force mmap alignement to a
+ * constant size : SCTK_MACRO_BLOC_SIZE to maintain macro bloc header alignement which permit
+ * to find them quicly from a specific related chunk.
+**/
+struct sctk_alloc_mm_source_default
 {
-	return (v1 == v2);
-}
+	struct sctk_alloc_mm_source source;
+	void * heap_addr;
+	sctk_size_t heap_size;
+	struct sctk_thread_pool pool;
+	sctk_alloc_spinlock_t spinlock;
+};
 
-std::string asserterToString(const sctk_alloc_vchunk & v1)
-{
-	std::stringstream res;
-	res << "bloc = " << v1 << " ; ";
-	if (v1->type == SCTK_ALLOC_CHUNK_TYPE_LARGE)
-		res << "size = " << sctk_alloc_get_size(v1) << " ; ";
-	else
-		res << "size = 0 ; ";
-	return res.str();
-}
+/********************************* FUNCTION *********************************/
+//default memory source functions
+void sctk_alloc_mm_source_default_init(struct sctk_alloc_mm_source_default * source,sctk_addr_t heap_base,sctk_size_t heap_size);
+SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_default_request_memory(struct sctk_alloc_mm_source * source,sctk_size_t size);
+SCTK_STATIC void sctk_alloc_mm_source_default_free_memory(struct sctk_alloc_mm_source * source,struct sctk_alloc_macro_bloc * bloc);
+SCTK_STATIC void sctk_alloc_mm_source_default_cleanup(struct sctk_alloc_mm_source * source);
+SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_get_macro_bloc(void * ptr);
+SCTK_STATIC void sctk_alloc_mm_source_insert_segment(struct sctk_alloc_mm_source_default* source,void * base,sctk_size_t size);
 
-extern "C" {
-/** Replace the default file name for chain spying. **/
-void sctk_alloc_spy_chain_get_fname(struct sctk_alloc_chain * chain,char * fname)
-{
-	strcpy(fname,"/dev/null");
+#ifdef __cplusplus
 }
-}
-
-#if defined(_WIN32) && !defined(_MSC_VER)
-	int omp_get_num_threads(void) { return 1;}
-	int omp_get_thread_num (void) { return 0;}
 #endif
 
-#endif
+#endif /* SCTK_ALLOC_MMSRC_DEFAULT_H */

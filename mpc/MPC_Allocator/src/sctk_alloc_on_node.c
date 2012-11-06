@@ -25,6 +25,7 @@
 #include "sctk_alloc_debug.h"
 #include "sctk_alloc_posix.h"
 #include "sctk_alloc_topology.h"
+#include "sctk_alloc_chain.h"
 #include "sctk_alloc_light_mm_source.h"
 
 /************************* GLOBALS *************************/

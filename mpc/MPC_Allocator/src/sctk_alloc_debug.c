@@ -34,9 +34,9 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
-#include "sctk_allocator.h"
 #include "sctk_alloc_debug.h"
 #include "sctk_alloc_inlined.h"
+#include "sctk_alloc_chain.h"
 
 /************************** CONSTS *************************/
 static const char * SCTK_ALLOC_STATE_NAME[] = {"free","allocated"};
@@ -180,7 +180,7 @@ void sctk_alloc_debug_dump_segment(int fd,void* base_addr, void* end_addr)
 /************************* FUNCTION ************************/
 void sctk_alloc_debug_dump_free_lists(int fd, struct sctk_alloc_free_chunk* free_lists)
 {
-	int i;
+	/*int i;
 	struct sctk_alloc_free_chunk * fchunk = NULL;
 	
 	sctk_alloc_fprintf(fd,"=========================== FREE LISTS ===========================\n");
@@ -196,13 +196,13 @@ void sctk_alloc_debug_dump_free_lists(int fd, struct sctk_alloc_free_chunk* free
 			fchunk = fchunk->next;
 		}
 	}
-	sctk_alloc_fprintf(fd,"\n");
+	sctk_alloc_fprintf(fd,"\n");*/
 }
 
 /************************* FUNCTION ************************/
 void sctk_alloc_debug_dump_thread_pool(int fd, struct sctk_thread_pool* pool)
 {
-	sctk_alloc_debug_dump_free_lists(fd,pool->free_lists);
+	//sctk_alloc_debug_dump_free_lists(fd,pool->free_lists);
 }
 
 /************************* FUNCTION ************************/

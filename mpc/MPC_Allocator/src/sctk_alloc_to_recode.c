@@ -24,9 +24,10 @@
 #include "sctk_alloc_posix.h"
 #include "sctk_config.h"
 #include "sctk_spinlock.h"
-#include "sctk_allocator.h"
 #include "sctk_alloc_debug.h"
 #include "sctk_alloc_posix.h"
+#include "sctk_alloc_chain.h"
+#include <sys/mman.h>
 
 #ifdef MPC_Threadss
 #include "sctk_context.h"

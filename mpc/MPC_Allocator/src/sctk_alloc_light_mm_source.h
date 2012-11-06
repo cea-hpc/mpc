@@ -32,7 +32,8 @@ extern "C"
 #ifdef HAVE_HWLOC
 #include <hwloc.h>
 #endif //HAVE_HWLOC
-#include "sctk_allocator.h"
+#include "sctk_alloc_mmsrc.h"
+#include "sctk_alloc_lock.h"
 
 /************************** CONSTS *************************/
 #define SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_NODE_IGNORE -1

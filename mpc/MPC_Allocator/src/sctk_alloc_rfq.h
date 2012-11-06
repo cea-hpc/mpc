@@ -20,49 +20,48 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef TEST_HELPER_H
-#define TEST_HELPER_H
+#ifndef SCTK_ALLOC_RFQ_H
+#define SCTK_ALLOC_RFQ_H
 
-/************************** HEADERS ************************/
-#include <svUnitTest/svUnitTest.h>
-#include <cstring>
-#include <sctk_alloc_inlined.h>
-#include <omp.h>
-#ifdef _WIN32
-	#include <windows.h>
+#ifdef __cplusplus
+extern "C"
+{
 #endif
 
-/************************** CONSTS *************************/
-#define LARGE_HEADER (sizeof(sctk_alloc_chunk_header_large))
+/********************************* INCLUDES *********************************/
+#include "sctk_alloc_mpscf_queue.h"
+
+/******************************** STRUCTURE *********************************/
+/**
+ * Struct used to register free chunks into the free queue list on a remote allocation chaine.
+ * RFQ = Remote Free Queue
+**/
+struct sctk_alloc_rfq_entry
+{
+	struct sctk_mpscf_queue_entry entry;
+	void * ptr;
+};
+
+/******************************** STRUCTURE *********************************/
+/**
+ * Struct to define a remote free queue for parallel free. RFQ = Remote Free Queue
+**/
+struct sctk_alloc_rfq
+{
+	struct sctk_mpscf_queue queue;
+};
 
 /************************* FUNCTION ************************/
-bool asserterOperatorEqual(const sctk_alloc_vchunk & v1,const sctk_alloc_vchunk & v2)
-{
-	return (v1 == v2);
-}
+//remote free queue management for allocation chains
+SCTK_STATIC void sctk_alloc_rfq_init(struct sctk_alloc_rfq * rfq);
+SCTK_STATIC bool sctk_alloc_rfq_empty(struct sctk_alloc_rfq * rfq);
+void sctk_alloc_rfq_register(struct sctk_alloc_rfq * rfq,void * ptr);
+SCTK_STATIC struct sctk_alloc_rfq_entry * sctk_alloc_rfq_extract(struct sctk_alloc_rfq * rfq);
+SCTK_STATIC int sctk_alloc_rfq_count_entries(struct sctk_alloc_rfq_entry * entries);
+SCTK_STATIC void sctk_alloc_rfq_destroy(struct sctk_alloc_rfq * rfq);
 
-std::string asserterToString(const sctk_alloc_vchunk & v1)
-{
-	std::stringstream res;
-	res << "bloc = " << v1 << " ; ";
-	if (v1->type == SCTK_ALLOC_CHUNK_TYPE_LARGE)
-		res << "size = " << sctk_alloc_get_size(v1) << " ; ";
-	else
-		res << "size = 0 ; ";
-	return res.str();
+#ifdef __cplusplus
 }
-
-extern "C" {
-/** Replace the default file name for chain spying. **/
-void sctk_alloc_spy_chain_get_fname(struct sctk_alloc_chain * chain,char * fname)
-{
-	strcpy(fname,"/dev/null");
-}
-}
-
-#if defined(_WIN32) && !defined(_MSC_VER)
-	int omp_get_num_threads(void) { return 1;}
-	int omp_get_thread_num (void) { return 0;}
 #endif
 
-#endif
+#endif /* SCTK_ALLOC_RFQ_H */

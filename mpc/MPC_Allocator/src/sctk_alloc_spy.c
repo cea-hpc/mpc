@@ -21,12 +21,6 @@
 /* ######################################################################## */
 
 /************************** HEADERS ************************/
-#include "sctk_alloc_spy.h"
-#include "sctk_allocator.h"
-#include "sctk_alloc_debug.h"
-#include "sctk_alloc_rdtsc.h"
-#include "sctk_alloc_lock.h"
-#include "sctk_alloc_inlined.h"
 #ifndef _WIN32
 	#include <unistd.h>
 	#include <sys/types.h>
@@ -41,6 +35,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include "sctk_alloc_spy.h"
+#include "sctk_alloc_debug.h"
+#include "sctk_alloc_rdtsc.h"
+#include "sctk_alloc_lock.h"
+#include "sctk_alloc_inlined.h"
+#include "sctk_alloc_chain.h"
 
 #ifdef SCTK_ALLOC_SPY
 

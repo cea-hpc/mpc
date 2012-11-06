@@ -27,20 +27,28 @@
 #ifndef _WIN32
 	#include <unistd.h>
 	#include <sys/types.h>
+	#include <sys/mman.h>
 #else
 	#include <process.h>
+	//used for _open and _write functions with VCC
+	#include <io.h>
 #endif
 
 #include <stdarg.h>
 #include <string.h>
 #include "sctk_alloc_lock.h"
 #include "sctk_alloc_debug.h"
-#include "sctk_allocator.h"
 #include "sctk_alloc_config.h"
 #include "sctk_alloc_inlined.h"
 #include "sctk_alloc_topology.h"
 #include "sctk_alloc_numa_stat.h"
+#include "sctk_alloc_chunk.h"
+#include "sctk_alloc_chain.h"
+#include "sctk_alloc_thread_pool.h"
+#include "sctk_alloc_mmsrc.h"
+#include "sctk_alloc_region.h"
 #include "sctk_alloc_light_mm_source.h"
+#include "sctk_alloc_mmsrc_default.h"
 
 //for getpid
 //optional header
