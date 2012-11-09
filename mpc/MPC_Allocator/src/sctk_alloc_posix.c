@@ -398,6 +398,9 @@ SCTK_INTERN struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void
 	struct sctk_alloc_chain * chain;
 	static int cnt = 0;
 
+	//disable valgrind here as we never free most the the blocs from here
+	SCTK_ALLOC_MMCHECK_DISABLE_REPORT();
+
 	cnt++;
 	SCTK_NO_PDEBUG("Create new alloc chain, total is %d",cnt);
 	
@@ -417,6 +420,9 @@ SCTK_INTERN struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void
 
 	//debug
 	SCTK_NO_PDEBUG("Init an allocation chain : %p with mm_source = %p (node = %d)",chain,chain->source,sctk_alloc_chain_get_numa_node(chain));
+
+	//reenable valgrind
+	SCTK_ALLOC_MMCHECK_ENABLE_REPORT();
 
 	/** @todo TODO register the allocation chain for debugging. **/
 	//setup pointer for alocator memory dump in case of crash
@@ -466,7 +472,7 @@ SCTK_PUBLIC void * sctk_calloc (size_t nmemb, size_t size)
 {
 	void * ptr;
 	SCTK_PROFIL_START(sctk_calloc);
-	ptr = malloc(nmemb * size);
+	ptr = sctk_malloc(nmemb * size);
 	memset(ptr,0,nmemb * size);
 	SCTK_PROFIL_END(sctk_calloc);
 	return ptr;

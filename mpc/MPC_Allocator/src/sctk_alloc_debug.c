@@ -72,6 +72,16 @@ static const char SCTK_ALLOC_TRACE_FILE[] = "alloc-trace-%d.txt";
 	static int SCTK_ALLOC_TRACE_FD = -1;
 #endif
 
+/************************* GLOBALS *************************/
+#ifdef HAVE_MEMCHECK_H
+/**
+ * Permit to disable registration of chunk into memcheck for internal usage as we never free the
+ * one from init steps (hwloc....).
+ * Registration is enabled it 0 and disable if > 0.
+ */
+__thread unsigned int sctk_alloc_gbl_notify_memcheck = 0;
+#endif //HAVE_MEMCHECK_H
+
 /************************* FUNCTION ************************/
 /**
  * If SCTK_ALLOC_TRACE_FD is set to -1, setup the output file descriptor for patrace mode.

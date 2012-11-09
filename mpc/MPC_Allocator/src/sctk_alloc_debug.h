@@ -75,6 +75,28 @@
 #endif
 
 /************************** MACROS *************************/
+#ifdef HAVE_MEMCHECK_H
+	#include <valgrind/valgrind.h>
+	#define SCTK_ALLOC_MMCHECK_NOACCESS(ptr,size)     sVALGRIND_MAKE_MEM_NOACCESS((ptr),(size))
+	#define SCTK_ALLOC_MMCHECK_DEFINED(ptr,size)      VALGRIND_MAKE_MEM_DEFINED((ptr),(size))
+	#define SCTK_ALLOC_MMCHECK_UNDEFINED(ptr,size)    VALGRIND_MAKE_MEM_UNDEFINED((ptr),(size))
+	#define SCTK_ALLOC_MMCHECK_DISABLE_REPORT()       do {sctk_alloc_gbl_notify_memcheck++;assert(sctk_alloc_gbl_notify_memcheck >= 0);VALGRIND_DISABLE_ERROR_REPORTING;} while(0)
+	#define SCTK_ALLOC_MMCHECK_ENABLE_REPORT()        do {sctk_alloc_gbl_notify_memcheck--;assert(sctk_alloc_gbl_notify_memcheck >= 0);VALGRIND_ENABLE_ERROR_REPORTING;} while(0)
+	#define SCTK_ALLOC_MMCHECK_REG(ptr,size,zeroed)   do{if (sctk_alloc_gbl_notify_memcheck == 0) VALGRIND_MALLOCLIKE_BLOCK((ptr),(size),0,(zeroed));}while(0)
+	#define SCTK_ALLOC_MMCHECK_UNREG(ptr)             do{if (sctk_alloc_gbl_notify_memcheck == 0) VALGRIND_FREELIKE_BLOCK((ptr),0);}while(0)
+	extern __thread unsigned int sctk_alloc_gbl_notify_memcheck;
+#else //HAVE_MEMCHECK_H
+	extern __thread unsigned int sctk_alloc_gbl_notify_memcheck;
+	#define SCTK_ALLOC_MMCHECK_NOACCESS(ptr,size)     do {} while(0)
+	#define SCTK_ALLOC_MMCHECK_DEFINED(ptr,size)      do {} while(0)
+	#define SCTK_ALLOC_MMCHECK_UNDEFINED(ptr,size)    do {} while(0)
+	#define SCTK_ALLOC_MMCHECK_DISABLE_REPORT()       do {} while(0)
+	#define SCTK_ALLOC_MMCHECK_ENABLE_REPORT()        do {} while(0)
+	#define SCTK_ALLOC_MMCHECK_REG(ptr,size,zeroed)   do {} while(0)
+	#define SCTK_ALLOC_MMCHECK_UNREG(ptr)             do {} while(0)
+#endif //HAVE_MEMCHECK_H
+
+/************************** MACROS *************************/
 #ifndef assert
 #ifdef SCTK_ALLOC_DEBUG
 #define assert(x) if (!(x)) { sctk_alloc_perror("Assertion failure at %s!%d\n%s\n",__FILE__,__LINE__,#x); abort(); }

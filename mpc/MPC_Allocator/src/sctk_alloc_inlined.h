@@ -354,6 +354,7 @@ static __inline__ struct sctk_alloc_macro_bloc * sctk_alloc_setup_macro_bloc(voi
 	struct sctk_alloc_macro_bloc * macro_bloc = (struct sctk_alloc_macro_bloc *)ptr;
 	sctk_alloc_setup_large_header(&macro_bloc->header,size,NULL);
 	macro_bloc->chain = NULL;
+	SCTK_ALLOC_MMCHECK_NOACCESS(ptr,size);
 	return macro_bloc;
 }
 
