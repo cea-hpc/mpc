@@ -84,7 +84,7 @@ void TestDefaultAllocChain::testMethodsRegistration (void)
 /************************* FUNCTION ************************/
 void TestDefaultAllocChain::setUp (void)
 {
-	SCTK_ALLOC_SPY_HOOK(__sctk_alloc_spy_chain_reset());
+	//SCTK_ALLOC_SPY_HOOK(__sctk_alloc_spy_chain_reset());
 	/*
 	#ifdef _WIN32
 		void *res = VirtualAlloc((void*)SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE,MEM_RESERVE,PAGE_EXECUTE_READWRITE);

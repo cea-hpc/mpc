@@ -34,8 +34,7 @@ extern "C"
 #include "sctk_alloc_thread_pool.h"
 #include "sctk_alloc_rfq.h"
 //TODO find a way to remove this include from here
-#include "sctk_alloc_spy.h"
-#include "sctk_alloc_stats.h"
+#include "sctk_alloc_mmsrc.h"
 
 /********************************** ENUM ************************************/
 /** List of flags to enable options of an allocation chain. **/
@@ -98,15 +97,11 @@ struct sctk_alloc_chain
 	 * It serve to known when to call the destroy_handler method.
 	**/
 	int cnt_macro_blocs;
-	/** Stats of the given allocation chain. **/
-	#ifndef SCTK_ALLOC_STATS
-		SCTK_ALLOC_STATS_HOOK(struct sctk_alloc_stats_chain stats);
-	#endif
 
-	/** Struct specific for allocation chain spying. **/
-	#ifdef SCTK_ALLOC_SPY
-		SCTK_ALLOC_SPY_HOOK(struct sctk_alloc_spy_chain spy);
-	#endif
+	/** Permit to attache some info for easier tracing when using hook system. **/
+	#ifdef ENABLE_ALLOC_HOOKS
+	void * hook_user_data;
+	#endif //ENABLE_ALLOC_HOOKS
 };
 
 /********************************* FUNCTION *********************************/

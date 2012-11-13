@@ -267,6 +267,8 @@ void TestLightMMSrc::test_request_mem_2(void)
 	sctk_alloc_macro_bloc * macro_bloc = sctk_alloc_mm_source_light_request_memory((sctk_alloc_mm_source*)&light_source,SCTK_MACRO_BLOC_SIZE);
 	#if SCTK_ALLOC_MACRO_BLOC_REUSE_THREASHOLD > 0
 	SVUT_ASSERT_SAME(ptr,macro_bloc);
+	#else
+	SVUT_ASSERT_NOT_NULL(macro_bloc);
 	#endif
 
 	//ok didn't need to test the re-registration here.

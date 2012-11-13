@@ -37,6 +37,7 @@
 #include "sctk_alloc_debug.h"
 #include "sctk_alloc_inlined.h"
 #include "sctk_alloc_chain.h"
+#include "sctk_alloc_hooks.h"
 
 /************************** CONSTS *************************/
 static const char * SCTK_ALLOC_STATE_NAME[] = {"free","allocated"};
@@ -285,4 +286,3 @@ void sctk_alloc_debug_init(void )
 	#endif*/
 }
 #endif
-

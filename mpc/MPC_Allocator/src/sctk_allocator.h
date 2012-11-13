@@ -40,8 +40,6 @@ extern "C"
 #endif
 #include "sctk_alloc_common.h"
 #include "sctk_alloc_lock.h"
-#include "sctk_alloc_stats.h"
-#include "sctk_alloc_spy.h"
 #include "sctk_alloc_mpscf_queue.h"
 
 #include "sctk_alloc_chunk.h"

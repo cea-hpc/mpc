@@ -35,7 +35,6 @@
 #include <malloc.h>
 #include "sctk_alloc_lock.h"
 #include "sctk_alloc_debug.h"
-#include "sctk_alloc_spy.h"
 #include "sctk_alloc_config.h"
 #include "sctk_alloc_inlined.h"
 #include "sctk_alloc_light_mm_source.h"
@@ -43,6 +42,7 @@
 #include "sctk_alloc_on_node.h"
 #include "sctk_alloc_chain.h"
 #include "sctk_alloc_region.h"
+#include "sctk_alloc_hooks.h"
 
 //optional headers
 #ifdef HAVE_HWLOC
@@ -327,6 +327,11 @@ SCTK_INTERN void sctk_alloc_posix_base_init(void)
 	{
 		//debug
 		SCTK_NO_PDEBUG("Allocator init phase : Egg");
+
+		//setup hooks if required
+		#ifdef ENABLE_ALLOC_HOOKS
+		sctk_alloc_hooks_init(&sctk_alloc_gbl_hooks);
+		#endif //ENABLE_ALLOC_HOOKS
 
 		//setup default values of config
 		sctk_alloc_config_egg_init();
@@ -626,7 +631,7 @@ SCTK_PUBLIC void sctk_free (void * ptr)
 	} else {
 		SCTK_NO_PDEBUG("Register in RFQ of chain %p",chain);
 		//remote free => simply register in free queue.
-		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_remote_free(chain,local_chain,ptr));
+		SCTK_ALLOC_HOOK(chain_remote_free,chain,local_chain,ptr);
 		sctk_alloc_rfq_register(&chain->rfq,ptr);
 	}
 	SCTK_PROFIL_END(sctk_free);
@@ -754,20 +759,21 @@ SCTK_STATIC void * sctk_realloc_inter_chain (void * ptr, size_t size)
 {
 	sctk_size_t copy_size = size;
 	void * res = NULL;
+	struct sctk_alloc_chain * local_chain;
 
 	SCTK_PROFIL_START(sctk_realloc_inter_chain);
 
-	#ifdef SCTK_ALLOC_SPY
-	struct sctk_alloc_chain * local_chain = sctk_get_tls_chain();
-	if (local_chain == NULL)
-		local_chain = sctk_alloc_posix_setup_tls_chain();
-	#endif
+	//when using hooking, we need to know the chain
+	if (SCTK_ALLOC_HAS_HOOK(chain_next_is_realloc))
+	{
+		struct sctk_alloc_chain * local_chain = sctk_get_tls_chain();
+		if (local_chain == NULL)
+			local_chain = sctk_alloc_posix_setup_tls_chain();
+		SCTK_ALLOC_HOOK(chain_next_is_realloc,local_chain,ptr,size);
+	}
 
 	if (size != 0)
-	{
-		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_next_is_realloc(local_chain,ptr,size));
 		res = sctk_malloc(size);
-	}
 
 	if (res != NULL && ptr != NULL)
 	{

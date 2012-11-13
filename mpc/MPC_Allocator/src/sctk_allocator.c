@@ -49,6 +49,7 @@
 #include "sctk_alloc_region.h"
 #include "sctk_alloc_light_mm_source.h"
 #include "sctk_alloc_mmsrc_default.h"
+#include "sctk_alloc_hooks.h"
 
 //for getpid
 //optional header
@@ -924,8 +925,7 @@ SCTK_STATIC void sctk_alloc_chain_base_init(struct sctk_alloc_chain * chain,enum
 	chain->cnt_macro_blocs = 0;
 
 	//init spy and stat module
-	SCTK_ALLOC_STATS_HOOK(sctk_alloc_stats_chain_init(&chain->stats));
-	SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_chain_init(chain));
+	SCTK_ALLOC_HOOK(chain_init,chain);
 }
 
 /************************* FUNCTION ************************/
@@ -1023,8 +1023,7 @@ void sctk_alloc_chain_destroy(struct sctk_alloc_chain* chain,bool force)
 		assume_m(sctk_alloc_chain_can_destroy(chain),"Can't destroy the given allocation chain.");
 
 	//destroy stat and spy module
-	SCTK_ALLOC_STATS_HOOK(sctk_alloc_stats_chain_destroy(&chain->stats));
-	SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_chain_destroy(chain));
+	SCTK_ALLOC_HOOK(chain_destroy,chain);
 
 	//destroy the rfq
 	sctk_alloc_rfq_destroy(&chain->rfq);
@@ -1139,7 +1138,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_request_mem(struct sctk_alloc_cha
 
 	//request memory and refill the free list with it
 	bloc = chain->source->request_memory(chain->source,size);
-	SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_add_macro_bloc(chain,bloc));
+	SCTK_ALLOC_HOOK(chain_add_macro_bloc,chain,bloc);
 	if (bloc != NULL)
 		assert(bloc->chain == NULL);
 
@@ -1277,7 +1276,7 @@ void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t 
 		vchunk = sctk_alloc_chain_request_mem(chain,size);
 
 		//spy
-		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_chain_huge_alloc(chain,size-boundary,sctk_alloc_chunk_body((boundary > 1)?sctk_alloc_setup_chunk_padded(vchunk,boundary):vchunk),sctk_alloc_get_size(vchunk),boundary));
+		SCTK_ALLOC_HOOK(chain_huge_alloc,chain,size-boundary,sctk_alloc_chunk_body((boundary > 1)?sctk_alloc_setup_chunk_padded(vchunk,boundary):vchunk),sctk_alloc_get_size(vchunk),boundary);
 	} else {
 		//lock if required
 		 if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
@@ -1315,11 +1314,11 @@ void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t 
 		if (residut != NULL)
 		{
 			sctk_alloc_free_list_insert(&chain->pool,sctk_alloc_get_large(residut),SCTK_ALLOC_INSERT_AT_START);
-			SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_chain_split(chain,sctk_alloc_get_ptr(vchunk),sctk_alloc_get_size(vchunk),sctk_alloc_get_size(residut)));
+			SCTK_ALLOC_HOOK(chain_split,chain,sctk_alloc_get_ptr(vchunk),sctk_alloc_get_size(vchunk),sctk_alloc_get_size(residut));
 		}
 
 		//spy
-		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_chain_alloc(chain,size,sctk_alloc_chunk_body((boundary > 1)?sctk_alloc_setup_chunk_padded(vchunk,boundary):vchunk),sctk_alloc_get_size(vchunk),boundary));
+		SCTK_ALLOC_HOOK(chain_alloc,chain,size,sctk_alloc_chunk_body((boundary > 1)?sctk_alloc_setup_chunk_padded(vchunk,boundary):vchunk),sctk_alloc_get_size(vchunk),boundary);
 
 		//unlock if required
 		if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
@@ -1362,7 +1361,7 @@ SCTK_STATIC void sctk_alloc_chain_free_macro_bloc(struct sctk_alloc_chain * chai
 		sctk_alloc_region_unset_entry(macro_bloc);
 
 	//free it
-	SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_free_macro_bloc(chain,macro_bloc));
+	SCTK_ALLOC_HOOK(chain_free_macro_bloc,chain,macro_bloc);
 	chain->source->free_memory(chain->source,macro_bloc);
 
 	//update counter
@@ -1385,9 +1384,7 @@ void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 	sctk_alloc_vchunk vchunk;
 	sctk_alloc_vchunk vfirst = NULL;
 	bool insert_bloc = true;
-	#ifdef SCTK_ALLOC_SPY
 	sctk_size_t old_size;
-	#endif
 	
 	//error
 	assume_m(chain != NULL, "Can't free the memory without an allocation chain.");
@@ -1414,7 +1411,7 @@ void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 	if (SCTK_ALLOC_HUGE_CHUNK_SEGREGATION && chain->source != NULL && sctk_alloc_get_size(vchunk) > SCTK_HUGE_BLOC_LIMIT)
 	{
 		//spy
-		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_chain_huge_free(chain,ptr,sctk_alloc_get_size(vchunk)));
+		SCTK_ALLOC_HOOK(chain_huge_free,chain,ptr,sctk_alloc_get_size(vchunk));
 		
 		//for huge blocs, we send the memory directly to the memory source
 		sctk_alloc_chain_free_macro_bloc(chain,vchunk);
@@ -1424,17 +1421,18 @@ void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 			sctk_alloc_spinlock_lock(&chain->lock);
 
 		//spy
-		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_chain_free(chain,ptr,sctk_alloc_get_size(vchunk)));
+		SCTK_ALLOC_HOOK(chain_free,chain,ptr,sctk_alloc_get_size(vchunk));
 
 		//try some merge
 		/** @todo Here this is a trick, NEED TO BE FIXED => NOW NEED TO REMOVE THIS OR USE THE MACRO BLOC START POINT IF AVAILABLE. **/
 		if (chain->base_addr != NULL)
 			vfirst = sctk_alloc_get_chunk((sctk_addr_t)chain->base_addr+sizeof(struct sctk_alloc_chunk_header_large));
-		SCTK_ALLOC_SPY_HOOK(old_size = sctk_alloc_get_size(vchunk));
+		if (SCTK_ALLOC_HAS_HOOK(chain_merge))
+			old_size = sctk_alloc_get_size(vchunk);
 		
 		if (! (chain->flags & SCTK_ALLOC_CHAIN_DISABLE_MERGE) )
 			vchunk = sctk_alloc_merge_chunk(&chain->pool,vchunk,vfirst,(sctk_addr_t)chain->end_addr);
-		SCTK_ALLOC_SPY_COND_HOOK(old_size != sctk_alloc_get_size(vchunk),sctk_alloc_spy_emit_event_chain_merge(chain, sctk_alloc_get_ptr(vchunk),sctk_alloc_get_size(vchunk)));
+		SCTK_ALLOC_COND_HOOK(old_size != sctk_alloc_get_size(vchunk),chain_merge,chain, sctk_alloc_get_ptr(vchunk),sctk_alloc_get_size(vchunk));
 
 		//if whe have a source, we may try to check if we can clear the bloc
 		/** @todo Maybe request the bloc size to memory source insteed of directly use the constant **/
@@ -1598,15 +1596,15 @@ void sctk_alloc_chain_purge_rfq(struct sctk_alloc_chain * chain)
 	//get the list
 	entries = sctk_alloc_rfq_extract(&chain->rfq);
 
-	SCTK_ALLOC_SPY_COND_HOOK(entries != NULL,
-	                         sctk_alloc_spy_emit_event_flush_rfq(chain,sctk_alloc_rfq_count_entries(entries)));
+	SCTK_ALLOC_COND_HOOK(entries != NULL,
+	                         chain_flush_rfq,chain,sctk_alloc_rfq_count_entries(entries));
 	//SCTK_PDEBUG("Need to purge RFQ (%p)",chain);
 
 	//run over the list and call free on segments
 	/** @todo Check for lock **/
 	while (entries != NULL)
 	{
-		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_flush_rfq_entry(chain,entries->ptr));
+		SCTK_ALLOC_HOOK(chain_flush_rfq_entry,chain,entries->ptr);
 		//cnt++;
 		//CAUTION, we store the entry directly in the freed segment, so the content can be erase or
 		//unmap by sctk_alloc_chain_free, we must't use anymore the entry pointer after calling this

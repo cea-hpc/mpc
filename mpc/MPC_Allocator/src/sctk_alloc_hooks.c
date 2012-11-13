@@ -16,53 +16,29 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
+/* #   - Valat Sebastien sebastien.valat@cea.fr                           # */
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef SCTK_ALLOC_STATS_H
-#define SCTK_ALLOC_STATS_H
+/********************************* INCLUDES *********************************/
+#include <string.h>
+#include "sctk_alloc_hooks.h"
+#include "sctk_alloc_debug.h"
 
-#ifdef __cplusplus
-extern "C"
+/********************************** GLOBALS *********************************/
+#ifdef ENABLE_ALLOC_HOOKS
+struct sctk_alloc_hooks sctk_alloc_gbl_hooks = {0,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL,NULL};
+#endif /* SCTK_ALLOC_HOOKS */
+
+/********************************* FUNCTION *********************************/
+void sctk_alloc_hooks_init(struct sctk_alloc_hooks * hooks)
 {
-#endif
+	//errors
+	assert(hooks != NULL);
+	assert(hooks->was_init == 0);
 
-/************************** HEADERS ************************/
+	memset(hooks,0,sizeof(*hooks));
 
-/************************** CONSTS *************************/
-
-/************************** MACROS *************************/
-#ifndef SCTK_ALLOC_STATS
-#define SCTK_ALLOC_STATS_HOOK(x) x
-#define SCTK_ALLOC_STATS_HOOK_INC(x) (x++)
-#define SCTK_ALLOC_STATS_HOOK_DEC(x) (x--)
-#else //SCTK_ALLOC_STAT
-#define SCTK_ALLOC_STATS_HOOK(x) while(0){}
-#define SCTK_ALLOC_STATS_HOOK_INC(x) while(0){}
-#define SCTK_ALLOC_STATS_HOOK_DEC(x) while(0){}
-#endif //SCTK_ALLOC_STAT
-
-/************************** STRUCT *************************/
-/**
- * Struct to store stats from each allocation chain.
-**/
-struct sctk_alloc_stats_chain
-{
-	/** Number of macro blocs allocated to the current allocation chain. **/
-	unsigned long nb_macro_blocs;
-	/** Memory size currently allocated an managed by the current allocation chain. **/
-	unsigned long allocated_memory;
-};
-
-/************************* FUNCTION ************************/
-void sctk_alloc_stats_chain_init(struct sctk_alloc_stats_chain * chain_stats);
-void sctk_alloc_stats_chain_destroy(struct sctk_alloc_stats_chain * chain_stats);
-
-
-#ifdef __cplusplus
+	//define it as init
+	hooks->was_init = 1;
 }
-#endif
-
-#endif //SCTK_ALLOC_STATS_H
-
