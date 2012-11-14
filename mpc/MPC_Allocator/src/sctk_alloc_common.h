@@ -64,7 +64,7 @@ extern "C"
 	#ifndef __cplusplus
 		#ifdef HAVE_STDBOOL_H
 		#include <stdbool.h>
-	#else
+	#elif !defined(bool)
 		#define bool unsigned char
 		#define true 1
 		#define false 0

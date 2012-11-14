@@ -624,7 +624,7 @@ SCTK_PUBLIC void sctk_free (void * ptr)
 	assume_m(chain != NULL,"Can't free a pointer not manage by an allocation chain from our allocator.");
 
 	SCTK_PTRACE("free(ptr%p); //%p",ptr,chain);
-	if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE || chain == local_chain)
+	if ((chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE) || chain == local_chain)
 	{
 		//local free or protected free in shared allocation chain
 		sctk_alloc_chain_free(chain,ptr);

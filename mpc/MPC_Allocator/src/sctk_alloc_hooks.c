@@ -24,6 +24,7 @@
 #include <string.h>
 #include "sctk_alloc_hooks.h"
 #include "sctk_alloc_debug.h"
+#include "sctk_alloc_chain.h"
 
 /********************************** GLOBALS *********************************/
 #ifdef ENABLE_ALLOC_HOOKS
@@ -41,4 +42,20 @@ void sctk_alloc_hooks_init(struct sctk_alloc_hooks * hooks)
 
 	//define it as init
 	hooks->was_init = 1;
+}
+
+/********************************* FUNCTION *********************************/
+void * sctk_alloc_hooks_get_user_data(struct sctk_alloc_chain * chain)
+{
+	#ifdef ENABLE_ALLOC_HOOKS
+		return chain->hook_user_data;
+	#else
+		return NULL;
+	#endif
+}
+
+/********************************* FUNCTION *********************************/
+size_t sctk_alloc_hoks_get_macro_bloc_size(struct sctk_alloc_macro_bloc * bloc)
+{
+	return bloc->header.size;
 }
