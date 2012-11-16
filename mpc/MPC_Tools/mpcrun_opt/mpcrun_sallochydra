@@ -21,7 +21,7 @@
 #                                                                      #
 ########################################################################
 if [ "$SCTK_JOB_MANAGER" = "HYDRA" ]; then
-	LAUNCH_COMMAND="${SCTK_HYDRA_BINDIR}mpiexec.hydra $LAUNCH_OPTIONS -n $PROCESS_NB $BINARY $USER_ARGS $SCTK_ARGS"
+	LAUNCH_COMMAND="salloc $LAUNCH_OPTIONS -n $PROCESS_NB -N $NODE_NB -c $CPU_NB ${SCTK_HYDRA_BINDIR}mpiexec.hydra -n $PROCESS_NB $BINARY $USER_ARGS $SCTK_ARGS"
 else
 	echo  "ERROR mpc is compiled without Hydra support" 1>&2
 	exit 1
