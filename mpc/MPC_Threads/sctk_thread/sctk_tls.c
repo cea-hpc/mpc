@@ -464,10 +464,11 @@ void sctk_hls_build_repository ()
 		  char level_id[8] ;
 		  int numa_id = 0 ;
 		  if ( is_numa_node && cur_obj->type != HWLOC_OBJ_MACHINE ) {
-			  if ( cur_obj->type == HWLOC_OBJ_NODE )
-				  numa_id = cur_obj->logical_index ;
-			  else
-			      numa_id = hwloc_get_ancestor_obj_by_type(topology,HWLOC_OBJ_NODE,cur_obj)->logical_index ;
+			  hwloc_obj_t temp_obj = cur_obj;
+			  while (temp_obj->type != HWLOC_OBJ_NODE && temp_obj->type != HWLOC_OBJ_GROUP) {
+				  temp_obj = hwloc_get_ancestor_obj_by_type(topology,HWLOC_OBJ_NODE,temp_obj);
+			  }
+			  numa_id = temp_obj->logical_index ;
 		  }
 		  sprintf ( level_id, "%d", level_number[numa_id] ) ;
 		  hwloc_obj_add_info ( cur_obj, "hls_level", level_id ) ;
