@@ -158,7 +158,7 @@ __mpcomp_init (void)
 	      if ( ok ) {
 		int chunk_size = 0 ;
 		/* Check for chunk size, if present */
-		sctk_debug( "Remaining string for schedule: <%s>", &env[offset] ) ;
+		sctk_nodebug( "Remaining string for schedule: <%s>", &env[offset] ) ;
 		switch( env[offset] ) {
 		  case ',':
 		    sctk_nodebug( "There is a chunk size -> <%s>", &env[offset+1] ) ;
@@ -435,7 +435,7 @@ __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *),
     }
 
   /* Bypass if the parallel region contains only 1 thread */
-  if (num_threads == 1)
+  if (current_info->depth == 0 && num_threads == 1)
     {
       sctk_nodebug
 	("__mpcomp_start_parallel_region: Only 1 thread -> call f");
@@ -450,6 +450,7 @@ __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *),
       SCTK_PROFIL_END (__mpcomp_start_parallel_region);
       return;
     }
+
 
   sctk_nodebug
     ("__mpcomp_start_parallel_region: -> Final num threads = %d",
@@ -562,6 +563,9 @@ __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *),
 	    }
 	  else
 	    {
+	      sctk_nodebug
+		("__mpcomp_start_parallel_region: Child %d is OK -> resetting thread_info",
+		 i);
 	      __mpcomp_reset_thread_info (new_info, func, shared, num_threads,
 					  current_info->icvs, 0, 0, vp);
 	    }
@@ -639,7 +643,7 @@ __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *),
 	{
 	  sctk_nodebug
 	    ("__mpcomp_start_parallel_region: Reusing older thread_info");
-	  __mpcomp_reset_thread_info (new_info, func, shared, 0,
+	  __mpcomp_reset_thread_info (new_info, func, shared, 1,
 				      current_info->icvs, 0, 0,
 				      current_info->vp);
 	}
