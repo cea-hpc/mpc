@@ -30,6 +30,7 @@
    for loop.
  */
 
+#warning "BUG w/ long iterators, need to change signature of every loop function"
 
 int
 __mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size,
@@ -44,12 +45,15 @@ __mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size,
   int n;			/* Number of remaining iterations */
   int cs;			/* Current chunk size */
 
+  sctk_nodebug( "__mpcomp_guided_loop_begin: begin loop %d -> %d [%d], cs=%d",
+      lb, b, incr, chunk_size ) ;
 
   /* Compute the total number iterations */
   n = (b - lb) / incr;
 
   /* If this loop contains no iterations then exit */
   if ( n <= 0 ) {
+    sctk_nodebug( "__mpcomp_guided_loop_begin: no iteration, modulo=%d", (b - lb) % incr ) ;
     return 0 ;
   }
 
@@ -66,6 +70,9 @@ __mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size,
      loop */
   if (num_threads == 1)
     {
+
+      sctk_nodebug( "__mpcomp_guided_loop_begin: only one thread, chunk %d -> %d",
+	  lb, b ) ;
       *from = lb;
       *to = b;
       return 1;
@@ -276,12 +283,15 @@ __mpcomp_guided_loop_next (int *from, int *to)
   /* Number of threads in the current team */
   num_threads = self->num_threads;
 
+  sctk_nodebug( "__mpcomp_guided_loop_next: Entering" ) ;
+
   /* If this function is called from a sequential part (orphaned directive) or
    * this team has only 1 thread, the current thread has already executed the
    * whole loop 
    */
   if (num_threads == 1)
     {
+      sctk_nodebug( "__mpcomp_guided_loop_next: one thread, nothing to do" ) ;
       return 0;
     }
 
