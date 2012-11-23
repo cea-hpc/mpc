@@ -113,7 +113,7 @@ extern "C"
   static inline void sctk_context_save_tls (sctk_mctx_t * ucp)
   {
 #if defined(SCTK_USE_TLS)
-#if defined (MPC_Allocator)
+#if defined (MPC_PosixAllocator)
     ucp->sctk_current_alloc_chain_local = sctk_current_alloc_chain;
 #endif
 #if defined (MPC_Profiler)
@@ -140,7 +140,7 @@ extern "C"
   static inline void sctk_context_restore_tls (sctk_mctx_t * ucp)
   {
 #if defined(SCTK_USE_TLS)
-#if defined (MPC_Allocator)
+#if defined (MPC_PosixAllocator)
     sctk_current_alloc_chain = ucp->sctk_current_alloc_chain_local;
 #endif
 #if defined (MPC_Profiler)

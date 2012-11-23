@@ -104,7 +104,7 @@ extern "C"
 
   typedef struct sctk_thread_data_s
   {
-    sctk_alloc_chain_t *tls;
+    struct sctk_alloc_chain *tls;
     void *__arg;
     void *(*__start_routine) (void *);
     int task_id;
@@ -139,7 +139,7 @@ extern "C"
 
   extern volatile unsigned sctk_long_long sctk_timer;
 
-  extern sctk_alloc_chain_t *sctk_thread_tls;
+  extern struct sctk_alloc_chain *sctk_thread_tls;
   void __MPC_init_types (void);
 
 #define sctk_time_interval 10	/*millisecondes */

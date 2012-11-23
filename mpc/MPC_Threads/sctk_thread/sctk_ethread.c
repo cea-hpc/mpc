@@ -157,7 +157,7 @@ sctk_ethread_sched_migrate ()
 static int
 sctk_ethread_sched_restore (sctk_thread_t thread, char *type, int vp)
 {
-  sctk_alloc_chain_t *tls;
+  struct sctk_alloc_chain *tls;
   char name[SCTK_MAX_FILENAME_SIZE];
 
   assume (vp == 0);
@@ -589,7 +589,7 @@ sctk_ethread_thread_init (void)
 
   sctk_thread_data_init ();
   sctk_set_cpu_number (1);
-#ifdef MPC_Allocator
+#ifdef MPC_PosixAllocator
   sctk_add_global_var (&sctk_ethread_key_pos, sizeof (int));
 #endif
 }

@@ -172,7 +172,6 @@ typedef unsigned char sctk_short_size_t;
 
 /************************** STRUCT *************************/
 struct sctk_alloc_chain;
-typedef struct sctk_alloc_chain sctk_alloc_chain_t;
 
 /************************* FUNCTION ************************/
 //mmap/munmap wrappers

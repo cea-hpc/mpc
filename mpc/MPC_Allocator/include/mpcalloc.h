@@ -24,6 +24,8 @@
 #ifndef __mpcalloc__H
 #define __mpcalloc__H
 
+#ifdef MPC_PosixAllocator
+
 #ifdef __cplusplus
 extern "C"
 {
@@ -69,5 +71,6 @@ extern "C"
 
 #ifdef __cplusplus
 }
+#endif
 #endif
 #endif

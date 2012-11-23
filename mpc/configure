@@ -163,6 +163,7 @@ Optional features:
   --use-network=*                  Select inter-node network type [all]
   --enable-checksum                Enable checksum for inter-processes messages
   --disable-shm                    Disable intra-node communication module (SHM)
+  --disable-posix-alloc            Disable MPC posix memory allocator.
   --enable-debug                   Enable MPC internal debugging features
   --enable-debug-messages          Enable MPC debug message printing in verbose level 3
   --enable-shell-colors            Enable support of colors in shell
@@ -213,6 +214,7 @@ SCTK_HYDRA="1"
 SCTK_SLURM="0"
 SCTK_OPENPA="1"
 SCTK_SHM="1"
+SCTK_POSIX_ALLOC="1"
 SCTK_CHECKSUM="0"
 SCTK_SHELL_COLORS="0"
 SCTK_DEBUG_MESSAGES="0"
@@ -309,6 +311,12 @@ for arg in "$@" ; do
     ;;
     --disable-shm)
     SCTK_SHM="0"
+    ;;
+    --enable-posix-alloc)
+    SCTK_POSIX_ALLOC='1'
+    ;;
+    --disable-posix-alloc)
+    SCTK_POSIX_ALLOC='0'
     ;;
     --enable-checksum)
     SCTK_CHECKSUM="1"

@@ -17,7 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - VALAT Sébastien sebastien.valat@ocre.cea.fr                      # */
+/* #   - VALAT Sebastien sebastien.valat@ocre.cea.fr                      # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -30,7 +30,7 @@ extern "C"
 
 /********************  HEADERS  *********************/
 #include "sctk_config.h"
-#ifdef MPC_Allocator
+#ifdef MPC_PosixAllocator
 #error "don't have do be included"
 #endif
 
@@ -45,7 +45,6 @@ extern "C"
 #define sctk_aligned_sizeof(a) (sctk_aligned_size(sizeof(a)))
 
 /*********************  TYPES  **********************/
-typedef unsigned long sctk_size_t;
 struct sctk_alloc_block_s;
 
 /*********************  TYPES  **********************/
@@ -55,11 +54,7 @@ typedef struct sctk_alloc_buffer_s
 } sctk_alloc_buffer_t;
 
 /*********************  TYPES  **********************/
-struct sctk_alloc_chain
-{
-	char foo;
-};
-typedef struct sctk_alloc_chain sctk_alloc_chain_t;
+struct sctk_alloc_chain;
 
 /*********************  TYPES  **********************/
 struct sctk_alloc_block_s
@@ -76,13 +71,15 @@ struct sctk_alloc_page_s
 /*******************  FUNCTION  *********************/
 //Thread allocation chain management
 void sctk_flush_tls (void);
-sctk_alloc_chain_t *__sctk_create_thread_memory_area (void);
-void __sctk_delete_thread_memory_area (sctk_alloc_chain_t * tmp);
-void sctk_set_tls (sctk_alloc_chain_t * tls);
-sctk_alloc_chain_t *sctk_get_tls (void);
+struct sctk_alloc_chain *__sctk_create_thread_memory_area (void);
+void __sctk_delete_thread_memory_area (struct sctk_alloc_chain * tmp);
+void sctk_set_tls (struct sctk_alloc_chain * tls);
+struct sctk_alloc_chain *sctk_get_tls (void);
 void sctk_alloc_posix_plug_on_egg_allocator(void);
-sctk_alloc_chain_t * sctk_get_current_alloc_chain(void);
+struct sctk_alloc_chain * sctk_get_current_alloc_chain(void);
 void sctk_alloc_posix_numa_migrate(void);
+void sctk_alloc_posix_numa_migrate_chain(struct sctk_alloc_chain * chain);
+void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void);
 
 /*******************  FUNCTION  *********************/
 //buffered allocation functions
@@ -106,22 +103,21 @@ void sctk_view_local_memory (void);
 
 /*******************  FUNCTION  *********************/
 //dump/restore system
-void __sctk_dump_tls (sctk_alloc_chain_t * tls, char *file_name);
+void __sctk_dump_tls (struct sctk_alloc_chain * tls, char *file_name);
 void sctk_dump_tls (char *file_name);
-void __sctk_restore_tls (sctk_alloc_chain_t ** tls, char *file_name);
+void __sctk_restore_tls (struct sctk_alloc_chain ** tls, char *file_name);
 void sctk_restore_tls (char *file_name);
 int sctk_check_file (char *file_name);
 void sctk_view_local_memory (void);
-void __sctk_view_local_memory (sctk_alloc_chain_t * tls);
+void __sctk_view_local_memory (struct sctk_alloc_chain * tls);
 
 /*******************  FUNCTION  *********************/
 //internal posix compliant allocator implementation
-int __sctk_posix_memalign (void **memptr, size_t alignment, size_t size,
-                           sctk_alloc_chain_t * tls);
-void *__sctk_realloc (void *ptr, size_t size, sctk_alloc_chain_t * tls);
-void __sctk_free (void *ptr, sctk_alloc_chain_t * tls);
-void *__sctk_calloc (size_t nmemb, size_t size, sctk_alloc_chain_t * tls);
-void *__sctk_malloc (size_t size, sctk_alloc_chain_t * tls);
+int __sctk_posix_memalign (void **memptr, size_t alignment, size_t size, struct sctk_alloc_chain * tls);
+void *__sctk_realloc (void *ptr, size_t size, struct sctk_alloc_chain * tls);
+void __sctk_free (void *ptr, struct sctk_alloc_chain * tls);
+void *__sctk_calloc (size_t nmemb, size_t size, struct sctk_alloc_chain * tls);
+void *__sctk_malloc (size_t size, struct sctk_alloc_chain * tls);
 
 /*******************  FUNCTION  *********************/
 //internal posix compliant allocator implementation
@@ -152,8 +148,8 @@ int sctk_is_no_alloc_land (void);
 
 /*******************  FUNCTION  *********************/
 //numa specialized functions
-void *__sctk_malloc_on_node (size_t size, int node,sctk_alloc_chain_t * tls);
-void *__sctk_malloc_new (size_t size, sctk_alloc_chain_t * tls);
+void *__sctk_malloc_on_node (size_t size, int node,struct sctk_alloc_chain * tls);
+void *__sctk_malloc_new (size_t size, struct sctk_alloc_chain * tls);
 void *sctk_malloc_on_node (size_t size, int node);
 void sctk_init_alloc (void);
 char *sctk_alloc_mode (void);

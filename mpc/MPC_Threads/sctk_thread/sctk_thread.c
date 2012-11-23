@@ -156,7 +156,7 @@ void
 sctk_thread_init (void)
 {
   sctk_thread_tls = sctk_get_current_alloc_chain();
-#ifdef MPC_Allocator
+#ifdef MPC_PosixAllocator
   assert(sctk_thread_tls != NULL);
 #endif
 #ifdef SCTK_CHECK_CODE_RETURN
@@ -718,7 +718,7 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
 {
   int res;
   sctk_thread_data_t *tmp;
-  sctk_alloc_chain_t *tls;
+  struct sctk_alloc_chain *tls;
 
 
   tls = __sctk_create_thread_memory_area ();
@@ -820,7 +820,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
   int res;
   sctk_thread_data_t *tmp;
   sctk_thread_data_t *tmp_father;
-  sctk_alloc_chain_t *tls;
+  struct sctk_alloc_chain *tls;
   static sctk_spinlock_t lock = 0;
   int user_thread;
 #ifndef NO_INTERNAL_ASSERT
@@ -2106,9 +2106,9 @@ sctk_start_func (void *(*run) (void *), void *arg)
 		size_t s;
 		void *tmp;
 		size_t start = 0;
-		sctk_size_t size;
+		size_t size;
 		sctk_enter_no_alloc_land ();
-		size = (sctk_size_t) (SCTK_MAX_MEMORY_SIZE);
+		size = (size_t) (SCTK_MAX_MEMORY_SIZE);
 
 		tmp = sctk_get_heap_start ();
 		sctk_nodebug ("INIT ADRESS %p", tmp);
@@ -2128,7 +2128,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 		sctk_nodebug ("INIT ADRESS REALIGNED %p", tmp);
 
 		if (sctk_process_number > 1)
-		  sctk_mem_reset_heap ((sctk_size_t) tmp, size);
+		  sctk_mem_reset_heap ((size_t) tmp, size);
 
 		sctk_nodebug ("Heap start at %p (%p %p)", sctk_get_heap_start (),
 			  (void *) s, tmp);

@@ -792,7 +792,7 @@ extern "C"
 					   &(vp->zombie_queue_tail));
     while (tmp_pid != NULL)
       {
-	sctk_alloc_chain_t *tls;
+	struct sctk_alloc_chain *tls;
 	if (tmp_pid->attr.stack == NULL)
 	  sctk_free (tmp_pid->stack);
 	tls = tmp_pid->tls_mem;
@@ -1197,7 +1197,7 @@ extern "C"
 	sctk_ethread_destr_func_tab[sctk_ethread_key_pos] = destr_func;
 	*key = sctk_ethread_key_pos;
 	sctk_ethread_key_pos++;
-#ifdef MPC_Allocator
+#ifdef MPC_PosixAllocator
 #ifdef SCTK_USE_TLS
 	sctk_add_global_var (key, sizeof (int));
 #else

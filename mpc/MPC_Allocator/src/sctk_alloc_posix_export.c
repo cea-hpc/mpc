@@ -20,6 +20,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#if defined(MPC_PosixAllocator) || !defined(MPC_Common)
+
 /************************** HEADERS ************************/
 #include <stdlib.h>
 #include <errno.h>
@@ -141,3 +143,5 @@ void *valloc(size_t size)
 {
 	return memalign(SCTK_ALLOC_PAGE_SIZE,size);
 }
+
+#endif //defined(MPC_PosixAllocator) || !defined(MPC_Common)

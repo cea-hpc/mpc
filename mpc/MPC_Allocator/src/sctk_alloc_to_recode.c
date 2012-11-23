@@ -20,10 +20,12 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#if !defined(MPC_Common) || defined(MPC_PosixAllocator)
+
 /************************** HEADERS ************************/
+#include <sctk_config.h>
+#include <sctk_spinlock.h>
 #include "sctk_alloc_posix.h"
-#include "sctk_config.h"
-#include "sctk_spinlock.h"
 #include "sctk_alloc_debug.h"
 #include "sctk_alloc_posix.h"
 #include "sctk_alloc_chain.h"
@@ -40,13 +42,13 @@ void * sctk_user_mmap (void *start, size_t length, int prot, int flags,int fd, o
 }
 
 /************************* FUNCTION ************************/
-sctk_alloc_chain_t * __sctk_create_thread_memory_area(void)
+struct sctk_alloc_chain * __sctk_create_thread_memory_area(void)
 {
 	return sctk_alloc_posix_create_new_tls_chain();
 }
 
 /************************* FUNCTION ************************/
-void sctk_set_tls(sctk_alloc_chain_t * tls)
+void sctk_set_tls(struct sctk_alloc_chain * tls)
 {
 	sctk_alloc_posix_set_default_chain(tls);
 };
@@ -66,13 +68,13 @@ size_t sctk_get_heap_size(void)
 };
 
 /************************* FUNCTION ************************/
-void * __sctk_malloc_new(size_t size,sctk_alloc_chain_t * chain)
+void * __sctk_malloc_new(size_t size,struct sctk_alloc_chain * chain)
 {
 	return sctk_alloc_chain_alloc(chain,size);
 };
 
 /************************* FUNCTION ************************/
-void * __sctk_malloc (size_t size,sctk_alloc_chain_t * chain)
+void * __sctk_malloc (size_t size,struct sctk_alloc_chain * chain)
 {
 	return sctk_alloc_chain_alloc(chain,size);
 };
@@ -84,7 +86,9 @@ char * sctk_alloc_mode (void)
 };
 
 /************************* FUNCTION ************************/
-void __sctk_free(void * ptr,sctk_alloc_chain_t * chain)
+void __sctk_free(void * ptr,struct sctk_alloc_chain * chain)
 {
 	sctk_alloc_chain_free(chain,ptr);
 };
+
+#endif //!defined(MPC_Common) || defined(MPC_PosixAllocator)

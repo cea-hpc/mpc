@@ -183,7 +183,7 @@ sctk_ethread_mxn_sched_migrate ()
 static int
 sctk_ethread_mxn_sched_restore (sctk_thread_t thread, char *type, int vp)
 {
-  sctk_alloc_chain_t *tls;
+  struct sctk_alloc_chain *tls;
   sctk_ethread_virtual_processor_t *cpu;
   char name[SCTK_MAX_FILENAME_SIZE];
   sctk_nodebug ("Try to restore %p on vp %d", thread, vp);
@@ -899,7 +899,7 @@ sctk_ethread_mxn_thread_init (void)
   sctk_thread_data_init ();
 
   sctk_ethread_mxn_sched_yield ();
-#ifdef MPC_Allocator
+#ifdef MPC_PosixAllocator
   sctk_add_global_var (&sctk_ethread_key_pos, sizeof (int));
 #endif
 }

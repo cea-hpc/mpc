@@ -23,6 +23,8 @@
 #ifndef SCTK_ALLOC_POSIX_H
 #define SCTK_ALLOC_POSIX_H
 
+#if defined(MPC_PosixAllocator) || !defined(MPC_Common)
+
 /************************** HEADERS ************************/
 #include <stdlib.h>
 #include "sctk_alloc_common.h"
@@ -67,12 +69,14 @@ SCTK_STATIC void sctk_alloc_tls_chain();
 /************************* FUNCTION ************************/
 SCTK_PUBLIC void sctk_alloc_posix_chain_print_stat(void);
 
-#ifdef MPC_Allocator
+#ifdef MPC_PosixAllocator
 	#include "sctk_alloc_to_recode.h"
 #endif
 
 #ifdef __cplusplus
 }
 #endif
+
+#endif //defined(MPC_PosixAllocator) || !defined(MPC_Common)
 
 #endif //SCTK_ALLOC_POSIX_H

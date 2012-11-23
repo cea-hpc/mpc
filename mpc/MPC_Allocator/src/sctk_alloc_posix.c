@@ -21,6 +21,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#if defined(MPC_PosixAllocator) || !defined(MPC_Common)
+
 /************************** HEADERS ************************/
 #if defined(_WIN32)
 	#include <windows.h>
@@ -908,3 +910,5 @@ SCTK_INTERN void sctk_alloc_posix_mark_current_for_destroy(void)
 	//mark the current chain for destroy
 	sctk_alloc_chain_mark_for_destroy(local_chain,sctk_alloc_posix_destroy_handler);
 }
+
+#endif //define(MPC_PosixAllocator) || !defined(MPC_Common)
