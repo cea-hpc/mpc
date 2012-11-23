@@ -16,7 +16,7 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
+/* #   - Valat Sebastien sebastien.valat@cea.fr                           # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -48,7 +48,7 @@ enum sctk_alloc_chain_flags
 	SCTK_ALLOC_CHAIN_DISABLE_MERGE = 2,
 	/**
 	 * Disable global region registry. Caution, in that case, you can't use free/delete on memory
-	 * blocs allocated by this allocation chain. But you do not have the minimam size of 2M for
+	 * blocs allocated by this allocation chain. But you do not have the minimum size of 2M for
 	 * macro blocs which is required by region representation.
 	**/
 	SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER = 4
@@ -75,15 +75,19 @@ struct sctk_alloc_chain_stat
 **/
 struct sctk_alloc_chain
 {
+	/** Define the local thread pool to manage free chunks. **/
 	struct sctk_thread_pool pool;
+	/** Optional pointer to a memory source to refill memory when empty. **/
 	struct sctk_alloc_mm_source * source;
 	/** Can give a name to the memory source to help debugging. By default "Unknown". **/
 	const char * name;
+	/** TODO : To remove when removing the old memory source. **/
 	void * base_addr;
+	/** TODO : To remove when removing the old memory source. **/
 	void * end_addr;
 	/** Flags to enable some options of the allocation chain. **/
 	enum sctk_alloc_chain_flags flags;
-	/** Spinlock used to protect the thread pool if it was shared, ignored otherwire. **/
+	/** Spinlock used to protect the thread pool if it was shared, ignored otherwise. **/
 	sctk_alloc_spinlock_t lock;
 	/** Remote free queue **/
 	struct sctk_alloc_rfq rfq;

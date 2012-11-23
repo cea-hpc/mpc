@@ -153,7 +153,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_setup_chunk_padded(sctk_alloc_vchunk vc
 		chunk_padded_info = sctk_alloc_get_chunk_header_padded_info(chunk_padded);
 		chunk_padded_info->state = vchunk->state;
 		chunk_padded_info->type = SCTK_ALLOC_CHUNK_TYPE_PADDED;
-		chunk_padded_info->unused_magik = SCTK_ALLOC_MAGIK_STATUS;
+		chunk_padded_info->unused_magik = SCTK_ALLOC_MAGIC_STATUS;
 		//setup final vchunk
 		vchunk = sctk_alloc_padded_to_vchunk(chunk_padded);
 	}
@@ -790,7 +790,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_get_prev_chunk(sctk_alloc_vchunk chunk)
 	sctk_alloc_vchunk res;
 
 	#ifndef SCTK_ALLOC_FAST_BUT_LESS_SAFE
-	assume_m(chunk->unused_magik == SCTK_ALLOC_MAGIK_STATUS,"Small block not supported for now.");
+	assume_m(chunk->unused_magik == SCTK_ALLOC_MAGIC_STATUS,"Small block not supported for now.");
 	#endif
 
 	if (sctk_alloc_get_prev_size(chunk) == 0)

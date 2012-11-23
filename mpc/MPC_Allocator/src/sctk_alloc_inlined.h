@@ -177,7 +177,7 @@ static __inline__ sctk_alloc_vchunk sctk_alloc_get_chunk(sctk_addr_t ptr)
 	vchunk = ((struct sctk_alloc_chunk_info *)ptr) - 1;
 
 	//check type and magik number
-	if (vchunk->unused_magik != SCTK_ALLOC_MAGIK_STATUS)
+	if (vchunk->unused_magik != SCTK_ALLOC_MAGIC_STATUS)
 	{
 		SCTK_PDEBUG("Bad address is %p.",ptr);
 		warning("Header content error while trying to find chunk header.");
@@ -307,7 +307,7 @@ static __inline__ sctk_alloc_vchunk sctk_alloc_get_next_chunk(sctk_alloc_vchunk 
 	sctk_alloc_vchunk res;
 
 	#ifndef SCTK_ALLOC_FAST_BUT_LESS_SAFE
-	assume_m(chunk->unused_magik == SCTK_ALLOC_MAGIK_STATUS,"Small block not supported for now.");
+	assume_m(chunk->unused_magik == SCTK_ALLOC_MAGIC_STATUS,"Small block not supported for now.");
 	#endif
 
 	res = (sctk_alloc_vchunk)((sctk_addr_t)chunk + sctk_alloc_get_chunk_header_large_size(sctk_alloc_get_large(chunk)));
@@ -339,7 +339,7 @@ static __inline__ struct sctk_alloc_chunk_header_large * sctk_alloc_setup_large_
 	sctk_alloc_set_chunk_header_large_addr(chunk_large, (unsigned char)((sctk_addr_t)ptr));
 	sctk_alloc_get_chunk_header_large_info(chunk_large)->state = SCTK_ALLOC_CHUNK_STATE_ALLOCATED;
 	sctk_alloc_get_chunk_header_large_info(chunk_large)->type = SCTK_ALLOC_CHUNK_TYPE_LARGE;
-	sctk_alloc_get_chunk_header_large_info(chunk_large)->unused_magik = SCTK_ALLOC_MAGIK_STATUS;
+	sctk_alloc_get_chunk_header_large_info(chunk_large)->unused_magik = SCTK_ALLOC_MAGIC_STATUS;
 	if (prev == NULL || prev == ptr)
 		sctk_alloc_set_chunk_header_large_previous_size(chunk_large, 0);
 	else

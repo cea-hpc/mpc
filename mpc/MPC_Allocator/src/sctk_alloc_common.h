@@ -16,7 +16,7 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
+/* #   - Valat Sebastien sebastien.valat@cea.fr                           # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -75,8 +75,8 @@ extern "C"
 #endif
 
 /************************** CONSTS *************************/
-/** Magick value to be used as check in common header. **/
-#define SCTK_ALLOC_MAGIK_STATUS 0x10
+/** Magic value to be used as check in common header. **/
+#define SCTK_ALLOC_MAGIC_STATUS 0x10
 /**
  * Define the cut size for small chunk, for now it can be up to 256o. It was currently 32 because
  * small bloc support is not fully available.
@@ -88,7 +88,7 @@ extern "C"
 #define SCTK_ALLOC_NB_FREE_LIST 48
 /** Minimal size of blocks. **/
 #define SCTK_ALLOC_MIN_SIZE 32
-/** Basic alignement for large blocs. **/
+/** Basic alignment for large blocs. **/
 #define SCTK_ALLOC_BASIC_ALIGN 16
 /** Define the considered page size. **/
 #define SCTK_ALLOC_PAGE_SIZE 4096
@@ -98,20 +98,20 @@ extern "C"
 #define SCTK_REGION_SIZE (1024ULL*1024ULL*1024ULL*1024ULL)
 /** Number of entries of a region header. **/
 #define SCTK_REGION_HEADER_ENTRIES ((SCTK_REGION_SIZE) / SCTK_MACRO_BLOC_SIZE)
-/** Base addresse for the current process heap based on mmap. **/
+/** Base address for the current process heap based on mmap. **/
 #define SCTK_ALLOC_HEAP_BASE 0xc0000000UL
 /** Maximum size of current process heap based on mmap (128Go by default for now). **/
 #define SCTK_ALLOC_HEAP_SIZE (128ULL*1024ULL*1024ULL*1024ULL)
 /** Maximum number of regions, need to cover the 256TB available with 48bit addressing. **/
 #define SCTK_ALLOC_MAX_REGIONS 256
 /**
- * Enable or disable huge chunk segragation. Turn off may cause huge memory consumption as
+ * Enable or disable huge chunk segregation. Turn off may cause huge memory consumption as
  * memory may be locked due to presence of non free small block at the end of the macro blocs.
 **/
 #define SCTK_ALLOC_HUGE_CHUNK_SEGREGATION true
 /**
  * Define the smaller size to directly use macro blocs instead of splitting in inner chunks.
- * Usefull only in confunction with SCTK_ALLOC_HUGE_CHUNK_SEGREGATION
+ * Usefull only in function with SCTK_ALLOC_HUGE_CHUNK_SEGREGATION
  * May be better to be between SCTK_MACRO_BLOC_SIZE / 2 and SCTK_MACRO_BLOC_SIZE.
 **/
 #define SCTK_HUGE_BLOC_LIMIT (SCTK_MACRO_BLOC_SIZE / 2)
@@ -144,9 +144,9 @@ extern "C"
 
 /************************** MACROS *************************/
 /**
- * Macro to align x on required alignement. It internally use a bit per bit AND operation.
+ * Macro to align x on required alignment. It internally use a bit per bit AND operation.
  * @param x Define the value to align.
- * @param align Define the target alignement (must be power of 2)
+ * @param align Define the target alignment (must be power of 2)
 **/
 #define SCTK_ALLOC_ALIGN(x,align) ((x) & (~((align) -1 )))
 // #define SCTK_ALLOC_ALIGN(x,align) ((x) - ((x)%(align)))
@@ -165,9 +165,9 @@ extern "C"
 /************************** TYPES **************************/
 /** Type for size member, must be 64bit type to maintain alignment coherency. **/
 typedef size_t sctk_size_t;
-/** Type for address member, must be 64bit type to maintain alignement coherency. **/
+/** Type for address member, must be 64bit type to maintain alignment coherency. **/
 typedef size_t sctk_addr_t;
-/** Type for short size member, must be 8bits type to maintain alignement coherency. **/
+/** Type for short size member, must be 8bits type to maintain alignment coherency. **/
 typedef unsigned char sctk_short_size_t;
 
 /************************** STRUCT *************************/

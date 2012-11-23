@@ -144,12 +144,12 @@ void TestAllocatedChunk::test_struct_size (void)
 void TestAllocatedChunk::test_magick_number_storage ( void )
 {
 	sctk_alloc_chunk_info info;
-	info.unused_magik = SCTK_ALLOC_MAGIK_STATUS;
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,(int)info.unused_magik);
+	info.unused_magik = SCTK_ALLOC_MAGIC_STATUS;
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,(int)info.unused_magik);
 
 	sctk_alloc_chunk_header_padded chunk_small;
-	sctk_alloc_get_chunk_header_padded_info(&chunk_small)->unused_magik = SCTK_ALLOC_MAGIK_STATUS;
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,sctk_alloc_get_chunk_header_padded_info(&chunk_small)->unused_magik);
+	sctk_alloc_get_chunk_header_padded_info(&chunk_small)->unused_magik = SCTK_ALLOC_MAGIC_STATUS;
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,sctk_alloc_get_chunk_header_padded_info(&chunk_small)->unused_magik);
 }
 
 /************************* FUNCTION ************************/
@@ -172,9 +172,9 @@ void TestAllocatedChunk::test_sctk_alloc_get_chunk_large ( void )
 	sctk_alloc_set_chunk_header_large_size(&chunk, 20);
 	sctk_alloc_get_chunk_header_large_info(&chunk)->state = SCTK_ALLOC_CHUNK_STATE_ALLOCATED;
 	sctk_alloc_get_chunk_header_large_info(&chunk)->type = SCTK_ALLOC_CHUNK_TYPE_LARGE;
-	sctk_alloc_get_chunk_header_large_info(&chunk)->unused_magik = SCTK_ALLOC_MAGIK_STATUS;
+	sctk_alloc_get_chunk_header_large_info(&chunk)->unused_magik = SCTK_ALLOC_MAGIC_STATUS;
 
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,sctk_alloc_get_chunk_header_large_info(&chunk)->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,sctk_alloc_get_chunk_header_large_info(&chunk)->unused_magik);
 	void * ptr = ((&chunk)+1);
 	sctk_alloc_vchunk res = sctk_alloc_get_chunk((sctk_addr_t)ptr);
 
@@ -194,7 +194,7 @@ void TestAllocatedChunk::test_sctk_alloc_setup_chunk_large_1 ( void )
 	SVUT_ASSERT_EQUAL(32*1024ul,sctk_alloc_get_chunk_header_large_size(chunk));
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_STATE_ALLOCATED,sctk_alloc_get_chunk_header_large_info(chunk)->state);
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_TYPE_LARGE,sctk_alloc_get_chunk_header_large_info(chunk)->type);
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,sctk_alloc_get_chunk_header_large_info(chunk)->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,sctk_alloc_get_chunk_header_large_info(chunk)->unused_magik);
 	SVUT_ASSERT_EQUAL(0,buffer[sizeof(sctk_alloc_chunk_header_large)]);
 	SVUT_ASSERT_EQUAL(0u,sctk_alloc_get_chunk_header_large_previous_size(chunk));
 }
@@ -211,7 +211,7 @@ void TestAllocatedChunk::test_sctk_alloc_setup_chunk_large_2 ( void )
 	SVUT_ASSERT_EQUAL(32*1024ul,sctk_alloc_get_chunk_header_large_size(chunk));
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_STATE_ALLOCATED,sctk_alloc_get_chunk_header_large_info(chunk)->state);
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_TYPE_LARGE,sctk_alloc_get_chunk_header_large_info(chunk)->type);
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,sctk_alloc_get_chunk_header_large_info(chunk)->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,sctk_alloc_get_chunk_header_large_info(chunk)->unused_magik);
 	SVUT_ASSERT_EQUAL(0,buffer[sizeof(sctk_alloc_chunk_header_large)]);
 	SVUT_ASSERT_EQUAL(32u,sctk_alloc_get_chunk_header_large_previous_size(chunk));
 }

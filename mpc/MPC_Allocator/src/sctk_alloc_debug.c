@@ -16,7 +16,7 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
+/* #   - Valat Sebastien sebastien.valat@cea.fr                           # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -34,6 +34,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
+#include "sctk_alloc_chunk.h"
 #include "sctk_alloc_debug.h"
 #include "sctk_alloc_inlined.h"
 #include "sctk_alloc_chain.h"
@@ -85,7 +86,7 @@ __thread unsigned int sctk_alloc_gbl_notify_memcheck = 0;
 
 /************************* FUNCTION ************************/
 /**
- * If SCTK_ALLOC_TRACE_FD is set to -1, setup the output file descriptor for patrace mode.
+ * If SCTK_ALLOC_TRACE_FD is set to -1, setup the output file descriptor for ptrace mode.
 **/
 #ifdef ENABLE_TRACE
 void sctk_alloc_ptrace_init(void )
@@ -220,7 +221,7 @@ void sctk_alloc_debug_dump_thread_pool(int fd, struct sctk_thread_pool* pool)
 void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain* chain)
 {
 	/** @todo  Not thread safe **/
-	static int id = 0;
+	/*static int id = 0;
 	int fd;
 	char fname[1024];
 
@@ -245,7 +246,7 @@ void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain* chain)
 	#ifndef _WIN32
 		sync();
 	#endif
-	close(fd);
+	close(fd);*/
 }
 
 /************************* FUNCTION ************************/

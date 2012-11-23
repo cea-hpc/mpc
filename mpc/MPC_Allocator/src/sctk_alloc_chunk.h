@@ -16,7 +16,7 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
+/* #   - Valat Sebastien sebastien.valat@cea.fr                           # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -37,7 +37,9 @@ extern "C"
 **/
 enum sctk_alloc_chunk_type
 {
+	/** This is the default chunk type. **/
 	SCTK_ALLOC_CHUNK_TYPE_LARGE      = 1,
+	/** Used for padding (posix_memalign...). **/
 	SCTK_ALLOC_CHUNK_TYPE_PADDED     = 2
 };
 
@@ -45,7 +47,9 @@ enum sctk_alloc_chunk_type
 /** Define the state of current bloc, free or allocated. **/
 enum sctk_alloc_chunk_state
 {
+	/** Mark the chunk as free for reuse. **/
 	SCTK_ALLOC_CHUNK_STATE_FREE      = 0,
+	/** The chunk is allocated by application, not ready for reuse. **/
 	SCTK_ALLOC_CHUNK_STATE_ALLOCATED = 1
 };
 
@@ -53,15 +57,18 @@ enum sctk_alloc_chunk_state
 /** Mapping enum for macro blocs. **/
 enum sctk_alloc_mapping_state
 {
+	/** The macro bloc is unmapped and need to be remapped for reuse. **/
 	SCTK_ALLOC_BLOC_UNMAPPED         = 0,
+	/** The macro bloc is fully mapped and can be reused without any actions. **/
 	SCTK_ALLOC_BLOC_MAPPED           = 1,
+	/** The macro bloc is partially mapped so we need to use mmap to fully map it. **/
 	SCTK_ALLOC_BLOC_PARTIALY         = 2
 };
 
 /******************************** STRUCTURE *********************************/
 /**
  * Bloc common header between small and large bloc. It define the type and status of current bloc.
- * With this values, we can determin the position of the size value and read it.
+ * With this values, we can determine the position of the size value and read it.
 **/
 struct sctk_alloc_chunk_info
 {
@@ -69,7 +76,7 @@ struct sctk_alloc_chunk_info
 	unsigned char type:2;
 	/** Status of current bloc, free or allocated. **/
 	unsigned char state:1;
-	/** Unused bits, filled with a magik constant to be used as a canary for now and detect bugs. **/
+	/** Unused bits, filled with a magic constant to be used as a canary for now and detect bugs. **/
 	unsigned char unused_magik:5;
 };
 
@@ -78,20 +85,21 @@ struct sctk_alloc_chunk_info
 struct sctk_alloc_chunk_header_large
 {
 	#ifdef _WIN32
+	//For windows we cannot use bitfields with 64bit wide members, in work inly with members
+	//shorten or equal to 32bit.
 	unsigned char size[7];
 	unsigned char addr;
 	unsigned char prevSize[7];
 	struct sctk_alloc_chunk_info info;
-
 	#else
 	/** Size of the bloc content (counting the header size). **/
 	sctk_size_t size:56;
-	/** Addr of the bloc, this is a sort of canary to dected bugs. **/
+	/** Address of the bloc, this is a sort of canary to detect bugs. **/
 	unsigned char addr;
 	/** Size of previous bloc. **/
 	sctk_size_t prevSize:56;
 	/**
-	 * Common part of the hreader, if is mostly used to determine the status and type of blocs
+	 * Common part of the header, if is mostly used to determine the status and type of blocs
 	 * It must be at the end of the header for each header type.
 	**/
 	struct sctk_alloc_chunk_info info;
@@ -105,22 +113,24 @@ struct sctk_alloc_chunk_header_large
  * It imply padding up to 2^56 only (64To).
  * We can made another choice with 2^24 => 16Mo with a total header size of 4o, but we ignore
  * this approach for now, it may be interesting when really using the small chunk, for large
- * we never get such small alignement (<8).
+ * we never get such small alignment (<8).
 **/
 struct sctk_alloc_chunk_header_padded
 {
 	#ifdef _WIN32
+	//For windows we cannot use bitfields with 64bit wide members, in work inly with members
+	//shorten or equal to 32bit.
 	unsigned char padding[7];
 	struct sctk_alloc_chunk_info info;
 	#else
 	/**
-	 * Padding, it give the space between body addr of real chunk and base addr of
+	 * Padding, it give the space between body address of real chunk and base address of
 	 * sctk_alloc_chunk_header_padded struct. So to get the previous header, we just need
-	 * to remove the padding from current header addr, and call sctk_alloc_get_chunk().
+	 * to remove the padding from current header address, and call sctk_alloc_get_chunk().
 	**/
 	sctk_size_t padding:56;
 	/**
-	 * Common part of the hreader, if is mostly used to determine the status and type of blocs
+	 * Common part of the header, if is mostly used to determine the status and type of blocs
 	 * It must be at the end of the header for each header type.
 	**/
 	struct sctk_alloc_chunk_info info;
@@ -150,7 +160,7 @@ struct sctk_alloc_free_chunk
 **/
 typedef struct sctk_alloc_free_chunk sctk_alloc_free_list_t;
 /**
- * Abstract description of a chunk, is is used to manage tranparently the two type of blocs (small
+ * Abstract description of a chunk, is is used to manage transparently the two type of blocs (small
  * or large) in functions.
 **/
 typedef struct sctk_alloc_chunk_info * sctk_alloc_vchunk;

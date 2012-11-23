@@ -93,6 +93,7 @@ void sctk_alloc_hooks_init(struct sctk_alloc_hooks * hooks);
 /********************************* FUNCTION *********************************/
 //tmp functions to remove when we got cleaner headers
 void * sctk_alloc_hooks_get_user_data(struct sctk_alloc_chain * chain);
+void sctk_alloc_hooks_set_user_data(struct sctk_alloc_chain * chain,void * data);
 size_t sctk_alloc_hoks_get_macro_bloc_size(struct sctk_alloc_macro_bloc * bloc);
 
 #endif /* SCTK_ALLOC_HOOKS_H */
