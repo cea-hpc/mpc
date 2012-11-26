@@ -50,6 +50,7 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 	obj->verbosity = 0;
 	obj->banner = true;
 	obj->autokill = 0;
+	obj->user_launchers = "";
 }
 
 /*******************  FUNCTION  *********************/

@@ -168,7 +168,11 @@ Display the MPC banner at launch time to print some informations about the topol
 .It Cm autokill
 Type is int. Default value is 0. 
 .Pp autokill
-Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT
+Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT.
+.It Cm user_launchers
+Type is string. Default value is . 
+.Pp user_launchers
+Permit to extend the launchers available via 'mpcrun -l=...' by providing scripts (named mpcrun_XXXX) in a user directory. Can be override by MPC_USER_LAUNCHERS.
 .El
 .Sh ENTRIES OF TYPE net_driver_fake
 Declare a fake driver to test the configuration system.

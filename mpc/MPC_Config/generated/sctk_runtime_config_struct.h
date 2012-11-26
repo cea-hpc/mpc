@@ -55,8 +55,10 @@ struct sctk_runtime_config_struct_launcher
 	int verbosity;
 	/**Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER.**/
 	bool banner;
-	/**Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT**/
+	/**Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT.**/
 	int autokill;
+	/**Permit to extend the launchers available via 'mpcrun -l=...' by providing scripts (named mpcrun_XXXX) in a user directory. Can be override by MPC_USER_LAUNCHERS.**/
+	char * user_launchers;
 };
 
 /******************************** STRUCTURE *********************************/

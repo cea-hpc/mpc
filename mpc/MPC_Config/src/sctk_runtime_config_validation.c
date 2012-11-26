@@ -46,6 +46,7 @@ void sctk_runtime_config_validate(struct sctk_runtime_config * config)
 
 	/* call all post actions */
 	sctk_runtime_config_old_getenv_compatibility(config);
+	sctk_runtime_config_override_by_getenv(config);
 	sctk_runtime_config_validate_allocator(config);
 }
 
@@ -67,6 +68,21 @@ void sctk_runtime_config_old_getenv_compatibility(struct sctk_runtime_config * c
 	//came from sctk_launch.c
 	if ((tmp = getenv ("MPC_AUTO_KILL_TIMEOUT")) != NULL)
 		config->modules.launcher.autokill = atoi(tmp);
+}
+
+/********************************* FUNCTION *********************************/
+/**
+ * This function may be used to defined all value overriding by environment
+ * variables.
+**/
+void sctk_runtime_config_override_by_getenv(struct sctk_runtime_config * config)
+{
+	/* vars */
+	char * tmp;
+
+	/* User directory where to search extra launchers for mpcrun -l=... */
+	if ((tmp = getenv("MPC_USER_LAUNCHERS")) != NULL)
+		config->modules.launcher.user_launchers = tmp;
 }
 
 /********************************* FUNCTION *********************************/

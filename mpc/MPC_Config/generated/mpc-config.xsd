@@ -24,7 +24,7 @@
 ########################################################################
 -->
 <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
-  <!-- ********************************************************* -->
+<!-- ********************************************************* -->
   <xs:complexType name="user_type_allocator">
     <xs:all>
       <xs:element minOccurs="0" name="numa_migration" type="xs:boolean"/>
@@ -35,7 +35,7 @@
       <xs:element minOccurs="0" name="strict" type="xs:boolean"/>
     </xs:all>
   </xs:complexType>
-  <!-- ********************************************************* -->
+<!-- ********************************************************* -->
   <xs:complexType name="user_type_launcher">
     <xs:all>
       <xs:element minOccurs="0" name="smt" type="xs:boolean"/>
@@ -43,30 +43,31 @@
       <xs:element minOccurs="0" name="verbosity" type="xs:integer"/>
       <xs:element minOccurs="0" name="banner" type="xs:boolean"/>
       <xs:element minOccurs="0" name="autokill" type="xs:integer"/>
+      <xs:element minOccurs="0" name="user_launchers" type="xs:string"/>
     </xs:all>
   </xs:complexType>
-  <!-- ********************************************************* -->
+<!-- ********************************************************* -->
   <xs:complexType name="user_type_net_driver_fake">
     <xs:all>
       <xs:element minOccurs="0" name="buffer" type="xs:integer"/>
       <xs:element minOccurs="0" name="stealing" type="xs:boolean"/>
     </xs:all>
   </xs:complexType>
-  <!-- ********************************************************* -->
+<!-- ********************************************************* -->
   <xs:complexType name="user_type_net_driver">
     <xs:choice>
       <xs:element name="infiniband" type="user_type_net_driver_fake"/>
       <xs:element name="tcp" type="user_type_net_driver_fake"/>
     </xs:choice>
   </xs:complexType>
-  <!-- ********************************************************* -->
+<!-- ********************************************************* -->
   <xs:complexType name="user_type_net_driver_config">
     <xs:all>
       <xs:element minOccurs="0" name="name" type="xs:string"/>
       <xs:element minOccurs="0" name="driver" type="user_type_net_driver"/>
     </xs:all>
   </xs:complexType>
-  <!-- ********************************************************* -->
+<!-- ********************************************************* -->
   <xs:complexType name="user_type_net_rail">
     <xs:all>
       <xs:element minOccurs="0" name="name" type="xs:string"/>
@@ -75,7 +76,7 @@
       <xs:element minOccurs="0" name="config" type="xs:string"/>
     </xs:all>
   </xs:complexType>
-  <!-- ********************************************************* -->
+<!-- ********************************************************* -->
   <xs:complexType name="user_type_networks">
     <xs:all>
       <xs:element minOccurs="0" name="configs">
@@ -94,7 +95,7 @@
       </xs:element>
     </xs:all>
   </xs:complexType>
-  <!-- ********************************************************* -->
+<!-- ********************************************************* -->
   <xs:complexType name="user_type_profiler">
     <xs:all>
       <xs:element minOccurs="0" name="file_prefix" type="xs:string"/>
@@ -109,7 +110,7 @@
       </xs:element>
     </xs:all>
   </xs:complexType>
-  <!-- ********************************************************* -->
+<!-- ********************************************************* -->
   <xs:complexType name="modules">
     <xs:all>
       <xs:element minOccurs="0" name="allocator" type="user_type_allocator"/>
@@ -117,7 +118,7 @@
       <xs:element minOccurs="0" name="profiler" type="user_type_profiler"/>
     </xs:all>
   </xs:complexType>
-  <!-- ********************************************************* -->
+<!-- ********************************************************* -->
   <xs:complexType name="static_part_mapping_selector_env">
     <xs:simpleContent>
       <xs:extension base="xs:string">
@@ -125,32 +126,32 @@
       </xs:extension>
     </xs:simpleContent>
   </xs:complexType>
-  <!-- ********************************************************* -->
+<!-- ********************************************************* -->
   <xs:complexType name="static_part_mapping_selectors">
     <xs:sequence>
       <xs:element name="env" type="static_part_mapping_selector_env" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
   </xs:complexType>
-  <!-- ********************************************************* -->
+<!-- ********************************************************* -->
   <xs:complexType name="static_part_mapping_profiles">
     <xs:sequence>
       <xs:element name="profile" type="xs:string" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
   </xs:complexType>
-  <!-- ********************************************************* -->
+<!-- ********************************************************* -->
   <xs:complexType name="static_part_mapping">
     <xs:all>
       <xs:element name="selectors" type="static_part_mapping_selectors" minOccurs="0"/>
       <xs:element name="profiles" type="static_part_mapping_profiles" minOccurs="0"/>
     </xs:all>
   </xs:complexType>
-  <!-- ********************************************************* -->
+<!-- ********************************************************* -->
   <xs:complexType name="static_part_mappings">
     <xs:sequence>
       <xs:element name="mapping" type="static_part_mapping" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
   </xs:complexType>
-  <!-- ********************************************************* -->
+<!-- ********************************************************* -->
   <xs:complexType name="static_part_profile">
     <xs:sequence>
       <xs:element name="name" type="xs:string"/>
@@ -158,19 +159,19 @@
       <xs:element name="networks" type="user_type_networks" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
-  <!-- ********************************************************* -->
+<!-- ********************************************************* -->
   <xs:complexType name="static_part_profiles">
     <xs:sequence>
       <xs:element name="profile" type="static_part_profile" minOccurs="0" maxOccurs="unbounded"/>
     </xs:sequence>
   </xs:complexType>
-  <!-- ********************************************************* -->
+<!-- ********************************************************* -->
   <xs:complexType name="static_part_mpc">
     <xs:sequence>
       <xs:element name="profiles" type="static_part_profiles" minOccurs="0"/>
       <xs:element name="mappings" type="static_part_mappings" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
-  <!-- ********************************************************* -->
+<!-- ********************************************************* -->
   <xs:element name="mpc" type="static_part_mpc"/>
 </xs:schema>

@@ -235,6 +235,8 @@ if [ "${CONFIG_FILES_VALID}" = "true" ]; then
 	ENABLE_SMT="${CONFIG_LAUNCHER_SMT}"
 	# Default value related to -v/-vv/-vvv
 	MPC_VERBOSE="${CONFIG_LAUNCHER_VERBOSITY}"
+	# User launchers
+	MPC_USER_LAUNCHERS="${CONFIG_LAUNCHER_USER_LAUNCHERS}"
 else
 	mpcrun_error "Error while loading MPC configuration files."
 fi
@@ -289,6 +291,9 @@ for arg in "$@" ; do
     --launch_list|-l=help|--launcher=help)
     echo "Available launch method"
     for i in ${MPC_BIN_DIR}/mpcrun_opt/* ; do echo "    - `basename $i`" | sed s,mpcrun_,,g  | grep -v default_param | grep -v propagate_env | grep -v "~" ; done
+    if [ ! -z "${MPC_USER_LAUNCHERS}" ] && [ -e "${MPC_USER_LAUNCHERS}" ]; then
+    	for i in ${MPC_USER_LAUNCHERS}/mpcrun_* ; do echo "    - `basename $i`" | sed s,mpcrun_,,g  | grep -v default_param | grep -v propagate_env | grep -v "~" ; done
+    fi
     exit 0
     ;;
     --nocheckpoint)
@@ -536,11 +541,22 @@ fi
 
 debug_file="${TMP_DIR_D}debug_file"
 
+#compute suffix
 if test "$DEBUG" = "" ; then
-. ${BINS_HOME}_$LAUNCH
+	LAUNCH_SUFFIX="$LAUNCH"
 else
 echo "Using $DEBUG as debugger"
-. ${BINS_HOME}_${LAUNCH}_`basename ${DEBUG}`
+	LAUNCH_SUFFIX="${LAUNCH}_`basename ${DEBUG}`"
+fi
+
+#load launcher
+if [ ! -z "${MPC_USER_LAUNCHERS}" ] && [ -e "${MPC_USER_LAUNCHERS}/mpcrun_${LAUNCH_SUFFIX}" ]; then
+	. "${MPC_USER_LAUNCHERS}/mpcrun_${LAUNCH_SUFFIX}"
+if [ -e "${BINS_HOME}_${LAUNCH_SUFFIX}" ]; then
+	. "${BINS_HOME}_${LAUNCH_SUFFIX}"
+else
+	echo "Invalid launcher : ${LAUNCH_SUFFIX}" 1>&2
+	exit 1
 fi
 
 export MPC_LAUNCH_COMMAND="${LAUNCH_COMMAND}"
