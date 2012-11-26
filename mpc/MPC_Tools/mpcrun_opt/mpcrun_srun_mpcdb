@@ -19,6 +19,11 @@
 # Authors:                                                             # 
 #   - PERACHE Marc marc.perache@cea.fr                                 # 
 #                                                                      # 
-######################################################################## 
-LAUNCH_COMMAND="${MPC_BIN_DIR}/mpcdb_client srun $LAUNCH_OPTIONS -n $PROCESS_NB -N $NODE_NB -c $CPU_NB ${MPC_BIN_DIR}/mpcdb_server $BINARY $USER_ARGS $SCTK_ARGS"
+########################################################################
 
+if [ "$SCTK_JOB_MANAGER" = "SLURM" ]; then
+	LAUNCH_COMMAND="${MPC_BIN_DIR}/mpcdb_client srun $LAUNCH_OPTIONS -n $PROCESS_NB -N $NODE_NB -c $CPU_NB ${MPC_BIN_DIR}/mpcdb_server $BINARY $USER_ARGS $SCTK_ARGS"
+else
+	echo  "ERROR mpc is compiled without slurm support" 1>&2
+	exit 1
+fi

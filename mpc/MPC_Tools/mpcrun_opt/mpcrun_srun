@@ -24,6 +24,6 @@
 if [ "$SCTK_JOB_MANAGER" = "SLURM" ]; then
 	LAUNCH_COMMAND="srun $LAUNCH_OPTIONS -n $PROCESS_NB -N $NODE_NB -c $CPU_NB $BINARY $USER_ARGS $SCTK_ARGS"
 else
-	echo  "ERROR mpc is compiled without Hydra support" 1>&2
+	echo  "ERROR mpc is compiled without slurm support" 1>&2
 	exit 1
 fi

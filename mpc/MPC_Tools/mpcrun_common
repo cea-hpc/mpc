@@ -286,7 +286,7 @@ for arg in "$@" ; do
     --clean)
     MPC_CLEAN_TMP_DIR="1"
     ;;
-    --launch_list)
+    --launch_list|-l=help|--launcher=help)
     echo "Available launch method"
     for i in ${MPC_BIN_DIR}/mpcrun_opt/* ; do echo "    - `basename $i`" | sed s,mpcrun_,,g  | grep -v default_param | grep -v propagate_env | grep -v "~" ; done
     exit 0
