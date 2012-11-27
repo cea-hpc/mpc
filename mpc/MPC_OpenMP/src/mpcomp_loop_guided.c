@@ -30,7 +30,7 @@
    for loop.
  */
 
-#warning "BUG w/ long iterators, need to change signature of every loop function"
+/* TODO "BUG w/ long iterators, need to change signature of every loop function" */
 
 int
 __mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size,
