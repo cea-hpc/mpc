@@ -46,6 +46,14 @@ typedef enum{
 struct sctk_thread_generic_scheduler_s;
 struct sctk_per_vp_data_s;
 
+typedef struct{
+  int dummy;
+}sctk_centralized_scheduler_t;
+
+typedef struct{
+  int dummy;
+}sctk_multiple_queues_scheduler_t;
+
 typedef struct sctk_thread_generic_scheduler_generic_s{
   int vp_type;
   volatile int is_idle_mode;
@@ -54,6 +62,10 @@ typedef struct sctk_thread_generic_scheduler_generic_s{
   struct sctk_thread_generic_scheduler_generic_s *prev, *next;
   sem_t sem;
   struct sctk_per_vp_data_s* vp;
+  union{
+    sctk_centralized_scheduler_t centralized;
+    sctk_multiple_queues_scheduler_t multiple_queues;
+  };
 } sctk_thread_generic_scheduler_generic_t;
 
 typedef struct sctk_thread_generic_scheduler_s{
