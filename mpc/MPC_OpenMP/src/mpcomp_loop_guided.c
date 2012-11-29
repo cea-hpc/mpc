@@ -31,6 +31,7 @@
 */
 
 
+#if 0
 int
 __mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size,
 			    int *from, int *to)
@@ -719,3 +720,5 @@ __mpcomp_ordered_guided_loop_end_nowait ()
 {
      __mpcomp_guided_loop_end();
 }
+#endif
+
