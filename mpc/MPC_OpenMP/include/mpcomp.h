@@ -87,8 +87,11 @@ extern "C"
   };
 
 
-  typedef struct mpcomp_lock_s mpcomp_lock_t;
-  typedef struct mpcomp_lock_s mpcomp_nest_lock_t;
+  //typedef struct mpcomp_lock_s mpcomp_lock_t;
+  //typedef struct mpcomp_lock_s mpcomp_nest_lock_t;
+
+  typedef sctk_thread_mutex_t mpcomp_lock_t;
+  typedef sctk_thread_mutex_t mpcomp_nest_lock_t;
 
 /* Lock Functions */
   void mpcomp_init_lock (mpcomp_lock_t * lock);
