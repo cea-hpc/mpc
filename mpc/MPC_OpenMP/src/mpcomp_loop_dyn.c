@@ -299,7 +299,6 @@ int __mpcomp_dynamic_steal(int *from, int *to)
    
 //#endif
      }
-//}
 
      //t->stolen_mvp = NULL;
      //t->stolen_chunk_id = -1;
@@ -313,7 +312,7 @@ int __mpcomp_dynamic_steal(int *from, int *to)
 
 
 //#if 0
-int __mpcomp_dynamic_steal(int *from, int *to)
+int __mpcomp_dynamic_steal2(int *from, int *to)
 {
 #if 0
      mpcomp_thread_t *t;
@@ -589,9 +588,9 @@ int __mpcomp_dynamic_steal(int *from, int *to)
 }
 
 t->stolen_mvp = NULL;
+
 #endif
 return 0;
-//#endif
 }
 //#endif
 
