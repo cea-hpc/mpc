@@ -78,6 +78,7 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
   sctk_ibuf_t* ibuf;
   sctk_ib_buffered_t *buffered;
   void *payload;
+  int number;
 
   if (msg->tail.message_type != sctk_message_contiguous) {
     payload = sctk_ib_buffered_send_non_contiguous_msg(rail, remote, msg, size);
@@ -86,6 +87,7 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
     payload = msg->tail.message.contiguous.addr;
   }
 
+  number = OPA_fetch_and_incr_int(&remote->ib_buffered.number);
   sctk_nodebug("Sending buffered message (size:%lu)", size);
 
   /* While it reamins slots to copy */
@@ -101,6 +103,7 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
     sctk_nodebug("Sending a message with size %lu", buffer_size );
 
     buffered = IBUF_GET_BUFFERED_HEADER(ibuf->buffer);
+    buffered->number = number;
 
     ib_assume(buffer_size >= sizeof( sctk_thread_ptp_message_body_t));
     memcpy(&buffered->msg, msg, sizeof(sctk_thread_ptp_message_body_t));
@@ -229,7 +232,7 @@ sctk_ib_buffered_get_entry(sctk_rail_info_t* rail, sctk_ib_qp_t *remote, sctk_ib
 
   buffered = IBUF_GET_BUFFERED_HEADER(ibuf->buffer);
   body = &buffered->msg;
-  key = body->header.message_number;
+  key = buffered->number;
   sctk_nodebug("Got message number %d", key);
 
   sctk_spinlock_lock(&remote->ib_buffered.lock);
@@ -293,6 +296,8 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   int src_process;
   int ret;
 
+  sctk_nodebug("Polled buffered message");
+
   IBUF_CHECK_POISON(ibuf->buffer);
   buffered = IBUF_GET_BUFFERED_HEADER(ibuf->buffer);
   body = &buffered->msg;
@@ -301,7 +306,6 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   src_process = sctk_determine_src_process_from_header(body);
   ib_assume(src_process != -1);
   /* Determine if the message is expected or not (good sequence number) */
-  ret = sctk_send_message_from_network_check_reorder(body);
   route_table = sctk_get_route_to_process(src_process, rail);
   ib_assume(route_table);
   remote = route_table->data.ib.remote;
@@ -327,6 +331,7 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     /* remove entry from HT.
      * XXX: We have to do this before marking message as done */
     sctk_spinlock_lock(&remote->ib_buffered.lock);
+    assume(remote->ib_buffered.entries != NULL);
     HASH_DEL(remote->ib_buffered.entries, entry);
     sctk_spinlock_unlock(&remote->ib_buffered.lock);
 

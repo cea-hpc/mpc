@@ -671,6 +671,7 @@ sctk_ib_qp_allocate_init(struct sctk_ib_rail_info_s* rail_ib,
   /* For buffered eager */
   remote->ib_buffered.entries = NULL;
   remote->ib_buffered.lock = SCTK_SPINLOCK_INITIALIZER;
+  OPA_store_int(&remote->ib_buffered.number, 0);
 
   /* Add it to the Cicrular Linked List if the QP is created from
    * an ondemand request */

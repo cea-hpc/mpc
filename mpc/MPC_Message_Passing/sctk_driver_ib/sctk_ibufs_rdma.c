@@ -643,6 +643,7 @@ void sctk_ib_rdma_eager_walk_remotes(sctk_ib_rail_info_t *rail, int (func)(sctk_
 
   *ret = REORDER_UNDEFINED;
 
+  assume(0);
   sctk_spinlock_read_lock(&rdma_polling_lock);
   DL_FOREACH(rdma_pool_list, pool) {
     /* 'func' needs to check if the remote is in a RTR mode */

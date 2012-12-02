@@ -635,14 +635,17 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
       sctk_register_thread_initial (tmp.task_id);
       sctk_terminaison_barrier (tmp.task_id);
       sctk_online_program = 1;
+#ifdef MPC_USE_INFINIBAND
+      sctk_ib_prof_init_reference_clock();
+#endif
       sctk_terminaison_barrier (tmp.task_id);
     }
 #endif
 
   /* TLS INTIALIZATION */
   sctk_tls_init ();
-  sctk_hls_checkout_on_vp();
-  sctk_hls_register_thread();
+//  sctk_hls_checkout_on_vp();
+//  sctk_hls_register_thread();
 
   {
     int keep[sctk_extls_max_scope];

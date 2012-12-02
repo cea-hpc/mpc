@@ -2529,7 +2529,7 @@ __MPC_Irecv (void *buf, mpc_msg_count count, MPC_Datatype datatype,
   sctk_mpc_set_header_in_message (msg, tag, comm, source, src,
 				  request, count * d_size,pt2pt_specific_message_tag);
   sctk_nodebug ("ircv : rcv, my rank = %d", src);
-  sctk_recv_message (msg,task_specific->my_ptp_internal, 0);
+  sctk_recv_message (msg,task_specific->my_ptp_internal, 1);
   MPC_ERROR_SUCESS ();
 }
 

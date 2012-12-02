@@ -98,6 +98,12 @@ extern "C"
 
   }specific_message_tag_t;
 
+  typedef enum {
+    REQUEST_NULL = 0,
+    REQUEST_SEND = 1,
+    REQUEST_RECV = 2
+  } sctk_request_type_t;
+
   typedef struct sctk_thread_message_header_s
   {
 
@@ -341,6 +347,8 @@ typedef struct sctk_message_to_copy_s{
       struct sctk_internal_ptp_s **recv_ptp,
       struct sctk_internal_ptp_s **send_ptp,
       int *remote_process);
+
+  sctk_reorder_list_t * sctk_ptp_get_reorder_from_destination(int task);
 
 #ifdef __cplusplus
 }

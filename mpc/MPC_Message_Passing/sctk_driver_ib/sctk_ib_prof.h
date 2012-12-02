@@ -129,6 +129,8 @@ void sctk_ib_prof_init_task(int rank, int vp);
 void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib);
 void sctk_ib_prof_finalize(sctk_ib_rail_info_t *rail_ib);
 double sctk_ib_prof_get_mem_used();
+void sctk_ib_prof_init_reference_clock();
+double sctk_ib_prof_get_time_stamp();
 
 #else
 

@@ -1433,7 +1433,7 @@ extern "C"
  * Actually, when calling sctk_thread_yield(), the polling
  * function is not called. */
 #ifdef MPC_Message_Passing
-	    sctk_notify_idle_message ();
+//	    sctk_notify_idle_message ();
 #endif
 # if 0
 	if ((vp->ready_queue_used == NULL) &&

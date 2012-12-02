@@ -58,10 +58,43 @@
 /*-----------------------------------------------------------
  *  CACHE
  *----------------------------------------------------------*/
+
+/* Entry 'b' is the entry passed to the search function. It our
+ * case, it is the memory that we want to register */
+static inline int sctk_ib_mmu_compare_entries(sctk_ib_mmu_entry_t *a,
+    sctk_ib_mmu_entry_t *b){
+
+  /*
+  if ( (a->key.ptr == b->key.ptr) && (a->key.size == b->key.size) ) {
+    return 0;
+  }
+  */
+
+  /* Check if the both regions overlap well */
+  if ( (a->key.ptr >= b->key.ptr) && (
+      ( (uintptr_t) a->key.ptr + a->key.size ) <= ( (uintptr_t) b->key.ptr + b->key.size) ) ) {
+    return 0;
+  }
+
+  if (a->key.ptr < b->key.ptr) {
+    return -1;
+  }
+  return +1;
+}
+
+/* We do not free the entries in these functions */
+static inline void sctk_ib_mmu_delete_key(sctk_ib_mmu_entry_t *entry) {}
+static inline void sctk_ib_mmu_memlist_delete(sctk_ib_mmu_entry_t *entry) {}
+
 void sctk_ib_mmu_cache_init(sctk_ib_rail_info_t *rail_ib){
   LOAD_MMU(rail_ib);
 
-  mmu->cache.ht_entries = NULL;
+  mmu->cache.hb_entries = hb_tree_new(
+      (dict_cmp_func) sctk_ib_mmu_compare_entries,
+      (dict_del_func) sctk_ib_mmu_delete_key,
+      (dict_del_func) sctk_ib_mmu_memlist_delete);
+  assume (mmu->cache.hb_entries);
+
   mmu->cache.lru_entries = NULL;
   mmu->cache.lock = SCTK_SPINLOCK_INITIALIZER;
   mmu->cache.entries_nb = 0;
@@ -77,20 +110,18 @@ static inline sctk_ib_mmu_entry_t*
   sctk_ib_mmu_entry_t* mmu_entry;
 
 #ifdef DEBUG_IB_MMU
-  assume(mmu->cache.ht_entries);
-  assume(mmu->cache.ht_entries->prev);
+  assume(mmu->cache.hb_entries);
 #endif
 
   /* select the LRU entry */
   mmu_entry = mmu->cache.lru_entries->prev;
-  sctk_nodebug(">>>>>> remove nb reg: %d (%p)",mmu_entry->registrations_nb, mmu_entry);
 
   /* If last entry still used, we cannot add another entry */
   if (mmu_entry->registrations_nb > 0) return NULL;
 
   /* Remove the entry from HashTable and LRU */
   DL_DELETE(mmu->cache.lru_entries, mmu_entry);
-  HASH_DEL(mmu->cache.ht_entries, mmu_entry);
+  hb_tree_remove(mmu->cache.hb_entries, mmu_entry, 0);
   sctk_nodebug("Entry %p removed from cache", mmu_entry);
 #ifdef DEBUG_IB_MMU
   assume(mmu_entry);
@@ -128,7 +159,8 @@ static inline int
   mmu_entry->cache_status = cached;
 
   /* Add the entry */
-  HASH_ADD(hh, mmu->cache.ht_entries, key, sizeof(sctk_ib_mmu_ht_key_t), mmu_entry);
+  hb_tree_insert(mmu->cache.hb_entries, mmu_entry, mmu_entry, 0);
+  sctk_nodebug("Add %p <-> %lu",  mmu_entry->key.ptr, mmu_entry->key.size);
   DL_PREPEND(mmu->cache.lru_entries, mmu_entry);
 
   mmu_entry->registrations_nb++;
@@ -142,18 +174,14 @@ sctk_ib_mmu_entry_t*
  sctk_ib_mmu_cache_search(sctk_ib_rail_info_t *rail_ib,
     void *ptr, size_t size) {
   LOAD_MMU(rail_ib);
-  sctk_ib_mmu_entry_t *mmu_entry = NULL;
-  sctk_ib_mmu_ht_key_t key;
+  sctk_ib_mmu_entry_t *mmu_entry = NULL, to_find;
 
   /* Construct the key */
-  key.ptr = ptr;
-  key.size = size;
-//  if (sctk_process_rank == 0) {
-//    sctk_debug("Look for address %p and size %lu", ptr, size);
-//  }
+  to_find.key.ptr = ptr;
+  to_find.key.size = size;
 
   sctk_spinlock_lock(&mmu->cache.lock);
-  HASH_FIND(hh,mmu->cache.ht_entries, &key,sizeof(sctk_ib_mmu_ht_key_t),mmu_entry);
+  mmu_entry = (sctk_ib_mmu_entry_t*) hb_tree_search(mmu->cache.hb_entries, &to_find);
   if (mmu_entry) {
 #ifdef DEBUG_IB_MMU
     assume(mmu_entry->cache_status == cached);
@@ -239,6 +267,7 @@ sctk_ib_mmu_alloc(struct sctk_ib_rail_info_s *rail_ib, const unsigned int nb_ent
     mmu_entry_ptr->status = ibv_entry_free;
     mmu_entry_ptr->cache_status = not_cached;
     mmu_entry_ptr->registrations_nb = 0;
+    mmu_entry_ptr->rail_ib = rail_ib;
   }
 
   mmu->nb += nb_entries;
@@ -327,7 +356,7 @@ sctk_ib_mmu_unregister (sctk_ib_rail_info_t *rail_ib,
       return;
     }
   }
-  assume (mmu_entry->registrations_nb == 0);
+  //assume (mmu_entry->registrations_nb == 0);
   sctk_nodebug("Entry %p unregistered", mmu_entry);
 
   mmu_entry->key.ptr = NULL;

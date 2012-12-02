@@ -106,6 +106,7 @@ extern "C"
     struct sctk_thread_ptp_message_s* msg;
     int is_null;
     int need_check_in_wait;
+    int request_type;
   } MPC_Request;
 
   extern MPC_Request mpc_request_null;

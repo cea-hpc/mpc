@@ -107,6 +107,7 @@ static inline void sctk_profiler_internal_hit( int key, uint64_t duration )
 #define SCTK_PROFIL_START_INIT(key) ___sctk_profile_begin_ ## key = sctk_atomics_get_timestamp();
 #define SCTK_PROFIL_START(key) uint64_t ___sctk_profile_begin_ ## key = sctk_atomics_get_timestamp();
 #define SCTK_PROFIL_END(key) sctk_profiler_internal_hit( SCTK_PROFILE_ ## key , sctk_atomics_get_timestamp() - ___sctk_profile_begin_ ## key );
+#define SCTK_PROFIL_END_WITH_VALUE(key, value) sctk_profiler_internal_hit( SCTK_PROFILE_ ## key , value );
 
 #define SCTK_COUNTER_INC(key, value) if( sctk_profiler_array_get_type( SCTK_PROFILE_ ## key ) != SCTK_PROFILE_TIME_PROBE )\
 									{\

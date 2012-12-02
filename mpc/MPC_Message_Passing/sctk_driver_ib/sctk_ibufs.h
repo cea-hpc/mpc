@@ -288,6 +288,8 @@ typedef struct sctk_ibuf_s
   size_t *size_flag;
   /* Previous flag for RDMA */
   int previous_flag;
+  /* Timestamp when the ibuf has been polled from the CQ */
+  double polled_timestamp;
 
   enum sctk_ib_cp_poll_cq_e cq;
 } sctk_ibuf_t;

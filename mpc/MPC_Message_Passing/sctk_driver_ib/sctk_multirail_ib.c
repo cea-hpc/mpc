@@ -126,6 +126,17 @@ sctk_network_notify_any_source_message_multirail_ib (){
   }
 }
 
+void
+sctk_network_poll_cq (){
+  struct sctk_ib_polling_s poll;
+  POLL_INIT(&poll);
+
+  int i;
+  for(i = 0; i < NB_RAILS; i++){
+    sctk_network_poll_all_cq (rails[i], &poll);
+  }
+}
+
 /* Returns the status of the message polled */
 static
 int sctk_send_message_from_network_multirail_ib (sctk_thread_ptp_message_t * msg){
@@ -160,7 +171,7 @@ static void* __polling_thread(void *arg) {
       config->ibv_steal = steal;
       break;
     }
-    sctk_network_poll_all(rail, &poll);
+    sctk_network_poll_all_and_steal(rail, &poll);
   }
   return NULL;
 }
@@ -198,7 +209,6 @@ void sctk_network_init_multirail_ib_all(char* name, char* topology){
       sctk_abort();
   }
 
-  sctk_set_dynamic_reordering_buffer_creation();
   sctk_route_set_rail_nb(NB_RAILS);
   sctk_ib_prof_init(NB_RAILS);
   rails = sctk_malloc(NB_RAILS*sizeof(sctk_rail_info_t*));

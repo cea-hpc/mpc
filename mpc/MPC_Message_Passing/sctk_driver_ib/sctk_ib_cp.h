@@ -92,11 +92,11 @@ void sctk_ib_cp_init_task(int rank, int vp);
 
 void sctk_ib_cp_finalize_task(int rank);
 
-int sctk_ib_cp_handle_message(struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf, int dest_task, int target_task, enum sctk_ib_cp_poll_cq_e cq);
+int sctk_ib_cp_handle_message(struct sctk_rail_info_s *rail, sctk_ibuf_t *ibuf, int dest_task, int target_task);
 
 int sctk_ib_cp_poll(const struct sctk_rail_info_s const* rail, struct sctk_ib_polling_s *poll);
 
-int sctk_ib_cp_poll_all(const struct sctk_rail_info_s const* rail, struct sctk_ib_polling_s *poll);
+void sctk_ib_cp_poll_all(const struct sctk_rail_info_s const* rail, struct sctk_ib_polling_s *poll);
 
 int sctk_ib_cp_steal(struct sctk_rail_info_s* rail, struct sctk_ib_polling_s *poll);
 
@@ -104,7 +104,7 @@ sctk_ib_cp_task_t *sctk_ib_cp_get_task(int rank);
 
 sctk_ib_cp_task_t *sctk_ib_cp_get_polling_task();
 
-int sctk_ib_cp_poll_global_list(const struct sctk_rail_info_s const * rail, struct sctk_ib_polling_s *poll);
+void sctk_ib_cp_poll_global_list(const struct sctk_rail_info_s const * rail, struct sctk_ib_polling_s *poll);
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/

@@ -152,7 +152,6 @@ void sctk_init_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t
   tmp->lock = SCTK_SPINLOCK_INITIALIZER;
 
   tmp->origin = route_origin_dynamic;
-  sctk_add_dynamic_reorder_buffer(dest);
 }
 
 void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
@@ -174,7 +173,6 @@ void sctk_init_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t*
   tmp->lock = SCTK_SPINLOCK_INITIALIZER;
 
   tmp->origin = route_origin_static;
-  sctk_add_static_reorder_buffer(dest);
 }
 
 void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){

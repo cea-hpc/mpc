@@ -31,7 +31,8 @@
 #include <sctk_spinlock.h>
 #include <sctk_debug.h>
 #include <sctk_config.h>
-#include "sctk_stdint.h"
+#include <stdint.h>
+#include "hb_tree.h"
 
 //#define DEBUG_IB_MMU
 
@@ -78,6 +79,7 @@ typedef struct sctk_ib_mmu_entry_s
   sctk_ib_mmu_ht_key_t key;
   /* UTHash header */
   UT_hash_handle hh;
+  struct sctk_ib_rail_info_s *rail_ib;
 } sctk_ib_mmu_entry_t;
 
 
@@ -94,8 +96,8 @@ typedef struct sctk_ib_mmu_region_s
 
 typedef struct sctk_ib_cache_s
 {
-  /* MMU entries in cache */
-  sctk_ib_mmu_entry_t* ht_entries;
+  /* Libdict structure to store the MMU cache tree */
+  hb_tree* hb_entries;
   /* LRU list of entries in cache */
   sctk_ib_mmu_entry_t* lru_entries;
 
