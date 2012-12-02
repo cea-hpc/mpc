@@ -435,6 +435,7 @@ TODO("Liberation des extls")
 void sctk_hls_build_repository ()
 {
   page_size = getpagesize ();
+  return ;
 
   hwloc_topology_t topology = sctk_get_topology_object() ;
   const int topodepth = hwloc_topology_get_depth(topology);

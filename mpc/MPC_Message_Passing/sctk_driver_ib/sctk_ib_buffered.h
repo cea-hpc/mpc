@@ -37,10 +37,13 @@
 typedef struct sctk_ib_buffered_table_s {
   struct sctk_ib_buffered_entry_s* entries;
   sctk_spinlock_t lock;
+
+  OPA_int_t number;
 } sctk_ib_buffered_table_t;
 
 typedef struct sctk_ib_buffered_s {
   sctk_thread_ptp_message_body_t msg;
+  int number;
   int index;
   int nb;
   size_t payload_size;

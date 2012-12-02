@@ -51,8 +51,6 @@ void sctk_add_dynamic_reorder_buffer(int dest);
 int sctk_send_message_from_network_reorder (struct sctk_thread_ptp_message_s * msg);
 int sctk_prepare_send_message_to_network_reorder (struct sctk_thread_ptp_message_s * msg);
 
-void sctk_set_dynamic_reordering_buffer_creation();
-
 typedef struct {
   int key;
   struct sctk_thread_ptp_message_s* msg;
@@ -75,8 +73,15 @@ typedef struct sctk_reorder_table_s{
   UT_hash_handle hh;
 } sctk_reorder_table_t;
 
+typedef struct sctk_reorder_task_s {
+  sctk_reorder_table_t * table;
+  sctk_spinlock_t lock;
+} sctk_reorder_list_t;
+
 sctk_reorder_table_t* sctk_get_reorder(int dest);
 
 sctk_reorder_table_t* sctk_get_reorder_to_process(int dest);
+
+void sctk_reorder_list_init( sctk_reorder_list_t * reorder);
 
 #endif

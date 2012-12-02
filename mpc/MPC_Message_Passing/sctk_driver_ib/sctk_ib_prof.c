@@ -52,6 +52,9 @@ __thread int vp_number = -1;
 /* Variable only modified by th __mem_thread */
 static size_t mem_used = 0;
 
+/* Reference clock */
+__thread volatile double reference_clock = -1;
+
 #ifdef SCTK_IB_PROF
 
 /*-----------------------------------------------------------
@@ -66,9 +69,18 @@ void sctk_ib_prof_init(int nb_rails) {
 #endif
 }
 
+double sctk_ib_prof_get_time_stamp() {
+  return sctk_get_time_stamp() - reference_clock;
+}
+
+void sctk_ib_prof_init_reference_clock() {
+  if (reference_clock == -1) {
+    reference_clock = sctk_get_time_stamp();
+  }
+}
+
 void sctk_ib_prof_init_task(int rank, int vp) {
   sctk_nodebug("Initialization with %d rails for rank %d", sctk_route_get_rail_nb(), rank);
-
   sctk_ib_prof_qp_init_task(rank, vp);
 }
 

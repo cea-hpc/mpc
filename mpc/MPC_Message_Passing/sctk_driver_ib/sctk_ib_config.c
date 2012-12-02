@@ -52,10 +52,10 @@
  * on buffered eager messages */
 //#define IBV_EAGER_LIMIT       (256)
 #define IBV_EAGER_LIMIT       (1024 * 12)
-//#define IBV_FRAG_EAGER_LIMIT  (256 * 1024)
+#define IBV_FRAG_EAGER_LIMIT  (256 * 1024)
 /* FOR PAPER */
 //#define IBV_FRAG_EAGER_LIMIT  (0)
-#define IBV_FRAG_EAGER_LIMIT  (256 * 1024)
+//#define IBV_FRAG_EAGER_LIMIT  (0 * 1024)
 
 /* Number of allowed pending Work Queue Elements
  * for each QP */
@@ -97,7 +97,7 @@
 /* Maximum number of buffers which can be posted to the SRQ.
  * This number cannot be higher than than the number fixed by the HW.
  * The verification is done during the config_check function */
-#define IBV_MAX_SRQ_IBUFS_POSTED     500
+#define IBV_MAX_SRQ_IBUFS_POSTED     1500
 /* When the async thread wakes, it means that the SRQ is full. We
  * allows the async thread to extract IBV_MAX_SRQ_WR_HANDLE_BY_THREAD messages
  * before posting new buffers .*/
@@ -111,13 +111,13 @@
  * once a recv buffer is freed. If IBV_SRQ_CREDIT_LIMIT ==
  * IBV_MAX_SRQ_IBUFS_POSTED, receive buffers are re-post every-time
  * they are consumned */
-#define IBV_SRQ_CREDIT_LIMIT  100
+#define IBV_SRQ_CREDIT_LIMIT  500
 //#define IBV_SRQ_CREDIT_LIMIT  10
 /* Minimum number of free recv buffer before
  * the activation of the asynchronous
  * thread (if this thread is activated too much times,
  * the performance can be decreased) */
-#define IBV_SRQ_CREDIT_THREAD_LIMIT  1
+#define IBV_SRQ_CREDIT_THREAD_LIMIT  100
 
 /* threshold before using dynamic allocation. For example, when
  * 80% of the SRQ buffers are busy, we make a copy of the message
@@ -140,8 +140,8 @@
  * no more MMU entries are available.
  * You must use this option at your own risks! */
 #define IBV_SIZE_MR_CHUNKS  200
-#define IBV_MMU_CACHE_ENABLED 0
-#define IBV_MMU_CACHE_ENTRIES 100
+#define IBV_MMU_CACHE_ENABLED 1
+#define IBV_MMU_CACHE_ENTRIES 200
 
 #define IBV_ADM_PORT        1
 
