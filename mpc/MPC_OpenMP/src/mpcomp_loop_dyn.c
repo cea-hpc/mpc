@@ -77,6 +77,7 @@ int __mpcomp_dynamic_steal_index()
 
 #endif
 
+#if 0
 int __mpcomp_dynamic_steal_index(int *from, int *to)
 {
   mpcomp_thread_t *t;
@@ -169,6 +170,7 @@ int __mpcomp_dynamic_steal_index(int *from, int *to)
 
   return 0;
 }
+#endif
 
 
 /* int __mpcomp_dynamic_steal2(int *from, int *to) */
