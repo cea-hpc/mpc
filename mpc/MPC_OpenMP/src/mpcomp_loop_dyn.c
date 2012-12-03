@@ -94,6 +94,9 @@ int __mpcomp_dynamic_steal_index(int *from, int *to)
   int nb_leaves = 12; 
   int current_index;
   int depth_index;
+
+  mvp_rank = 0;
+  tmp_rank = 1;
  
   T[0] = 2;
   T[1] = 3;
@@ -118,8 +121,16 @@ int __mpcomp_dynamic_steal_index(int *from, int *to)
    /* Compute mVP rank */
     
    for(i=0;i<depth;i++) {
+
+     for(j=i+1;j<depth;j++) {
+       tmp_rank *= T[j];
+     }
      
+     tmp_rank *= M[i];
+     mvp_rank +=  tmp_rank;
    }
+
+   
    
 
    /* Print state of Leaf iterator */
