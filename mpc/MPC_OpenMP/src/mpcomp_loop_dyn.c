@@ -77,6 +77,88 @@ int __mpcomp_dynamic_steal_index()
 
 #endif
 
+int __mpcomp_dynamic_steal_index(int *from, int *to)
+{
+  mpcomp_thread_t *t;
+  mpcomp_mvp_t *mvp;
+  int mvp_rank;
+  int tmp_rank;
+  int depth;
+  int T[depth];
+  int R[depth];
+  int M[depth];
+
+  int i, j;
+
+  depth = 3;
+  int nb_leaves = 12; 
+  int current_index;
+  int depth_index;
+ 
+  T[0] = 2;
+  T[1] = 3;
+  T[2] = 2;
+
+  R[0] = 1;
+  R[1] = 0;
+  R[2] = 1;  
+
+  current_index = 0;
+
+  for(i=0;i<depth;i++)
+   L[i] = 0;
+  
+  while(current_index < nb_leaves) {
+
+   /* Compute M */
+   for(i=0;i<depth;i++) {
+    M[i] = (L[i]+R[i]) % T[i];
+   }
+
+   /* Compute mVP rank */
+    
+   for(i=0;i<depth;i++) {
+     
+   }
+   
+
+   /* Print state of Leaf iterator */
+   printf("L=\t");
+   for(j=0;j<depth;j++)
+    printf("%d\t", L[j]);
+   printf("\n"); 
+ 
+   /* Print Retenue */
+   printf("R=\t");
+   for(j=0;j<depth;j++)
+    printf("%d\t", R[j]);
+   printf("\n"); 
+ 
+   /* Print state of targeted location */
+   printf("M=\t");
+   for(j=0;j<depth;j++)
+    printf("%d\t", M[j]);
+   printf("\n"); 
+
+   printf("current_index=%d\n", current_index);
+   depth_index = 2;
+
+   /* Increment Leaf iterator */
+   while(L[depth_index]+1 == T[depth_index]) {
+     L[depth_index] = 0;
+     depth_index--;
+   }
+
+   L[depth_index]++;
+
+   
+
+   current_index++;
+  }
+
+  return 0;
+}
+
 
 /* int __mpcomp_dynamic_steal2(int *from, int *to) */
 int __mpcomp_dynamic_steal(int *from, int *to)
