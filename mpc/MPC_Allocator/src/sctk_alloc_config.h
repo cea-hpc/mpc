@@ -30,6 +30,12 @@
 #ifdef MPC_Common
 #include "sctk_runtime_config.h"
 #else //MPC_Common
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+
 /******************************** STRUCTURE *********************************/
 /**Options for MPC memory allocator.**/
 struct sctk_runtime_config_struct_allocator
@@ -49,6 +55,10 @@ struct sctk_runtime_config_struct_allocator
 	char * scope;
 	/**If true, enable usage of abort() on free error, otherwise try to continue by skipping.**/
 	bool strict;
+	/**Maximum amount of memory to keep in memory sources (one per NUMA node).**/
+	size_t keep_mem;
+	/**Maximum size of macro blocs to keep in memory source for reuse.**/
+	size_t keep_max;
 };
 #endif //MPC_Common
 
@@ -75,5 +85,9 @@ static __inline__ const struct sctk_runtime_config_struct_allocator * sctk_alloc
 void sctk_alloc_config_init(void);
 void sctk_alloc_config_egg_init(void);
 SCTK_STATIC void sctk_alloc_config_init_static_defaults(struct sctk_runtime_config_struct_allocator * config);
+
+#ifdef __cplusplus
+};
+#endif
 
 #endif //SCTK_ALLOC_CONFIG_H

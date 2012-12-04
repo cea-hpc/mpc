@@ -142,6 +142,14 @@ Define the scope the posix allocator, can be : process | vp | thread.
 Type is bool. Default value is false. 
 .Pp strict
 If true, enable usage of abort() on free error, otherwise try to continue by skipping.
+.It Cm keep_mem
+Type is size. Default value is 500MB. 
+.Pp keep_mem
+Maximum amount of memory to keep in memory sources (one per NUMA node). Use 0 to disable cache, huge value to keep all.
+.It Cm keep_max
+Type is size. Default value is 40MB. 
+.Pp keep_max
+Maximum size of macro blocs to keep in memory source for reuse. Use 0 to disable cache, huge value to keep all.
 .El
 .Sh ENTRIES OF TYPE launcher
 Options for MPC launcher.

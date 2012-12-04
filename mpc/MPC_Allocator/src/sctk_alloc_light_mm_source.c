@@ -23,6 +23,7 @@
 /************************** HEADERS ************************/
 #define _GNU_SOURCE
 
+#include "sctk_alloc_config.h"
 #include "sctk_alloc_inlined.h"
 #include "sctk_alloc_lock.h"
 #include "sctk_alloc_debug.h"
@@ -39,6 +40,22 @@
 #ifdef HAVE_HWLOC
 	#include <hwloc.h>
 #endif
+
+/************************* FUNCTION ************************/
+/**
+ * This function take the decision to keep the macro bloc into the memory source or to
+ * return it to the system. To get quick access, it also does the same to know if we need
+ * to search in cache or not.
+ * @param light_source Memory source to use (to known the current amount of memory available in it).
+ * @param size The size of the macro bloc to register or to find.
+ * @param for_register Must be setup to true if we want to register the bloc into the cache, false
+ * if we are searching a bloc.
+ */
+SCTK_STATIC bool sctk_alloc_mm_source_light_keep(struct sctk_alloc_mm_source_light * light_source,sctk_size_t size,bool for_register)
+{
+	assert(light_source != NULL);
+	return (size <= sctk_alloc_config()->keep_max && (!for_register || light_source->size <= sctk_alloc_config()->keep_mem));
+}
 
 /************************* FUNCTION ************************/
 #ifdef HAVE_HWLOC
@@ -110,6 +127,7 @@ void sctk_alloc_mm_source_light_init(struct sctk_alloc_mm_source_light * source,
 
 	//setup blocs counter to know if we can safetely delete. (more for debug)
 	source->counter = 0;
+	source->size = 0;
 
 	//start with empty local cache
 	source->cache = NULL;
@@ -132,6 +150,7 @@ SCTK_STATIC void sctk_alloc_mm_source_light_reg_in_cache(struct sctk_alloc_mm_so
 	//insert in list at beginin pos
 	free_bloc->next = light_source->cache;
 	light_source->cache = free_bloc;
+	light_source->size += free_bloc->size;
 
 	//taks the lock
 	sctk_alloc_spinlock_unlock(&light_source->spinlock);
@@ -376,6 +395,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_find_in_cac
 		else
 			prev_bloc->next = free_bloc->next;
 		light_source->counter++;
+		light_source->size -= free_bloc->size;
 	}
 
 	//unlock
@@ -409,7 +429,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_request_mem
 		return NULL;
 
 	//try to find memory in source local cache if smaller that one macro bloc (we now that we didn't store such blocs here)
-	if (size <= SCTK_ALLOC_MACRO_BLOC_REUSE_THREASHOLD)
+	if (sctk_alloc_mm_source_light_keep(light_source,size,false))
 	{
 		macro_bloc = sctk_alloc_mm_source_light_find_in_cache(light_source,size);
 		SCTK_NO_PDEBUG("LMMSRC %p : Try to reuse macro bloc %p -> %llu",source,macro_bloc,size);
@@ -478,13 +498,13 @@ SCTK_STATIC void sctk_alloc_mm_source_light_free_memory(struct sctk_alloc_mm_sou
 	free_bloc = sctk_alloc_mm_source_light_to_free_macro_bloc(bloc);
 
 	//if larger than basic macro bloc size, return to system immediately
-	if (free_bloc->size > SCTK_ALLOC_MACRO_BLOC_REUSE_THREASHOLD)
+	if (sctk_alloc_mm_source_light_keep(light_source,free_bloc->size,true))
 	{
-		SCTK_NO_PDEBUG("LMMSRC %p : Do munmap %p -> %llu",source,free_bloc,free_bloc->size);
-		sctk_munmap(free_bloc,free_bloc->size);
-	} else {
 		SCTK_NO_PDEBUG("LMMSRC %p : Keep bloc for future %p -> %llu",source,free_bloc,free_bloc->size);
 		sctk_alloc_mm_source_light_reg_in_cache(light_source,free_bloc);
+	} else {
+		SCTK_NO_PDEBUG("LMMSRC %p : Do munmap %p -> %llu",source,free_bloc,free_bloc->size);
+		sctk_munmap(free_bloc,free_bloc->size);
 	}
 
 	//increment counters

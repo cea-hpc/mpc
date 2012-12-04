@@ -42,6 +42,10 @@ struct sctk_runtime_config_struct_allocator
 	char * scope;
 	/**If true, enable usage of abort() on free error, otherwise try to continue by skipping.**/
 	bool strict;
+	/**Maximum amount of memory to keep in memory sources (one per NUMA node). Use 0 to disable cache, huge value to keep all.**/
+	size_t keep_mem;
+	/**Maximum size of macro blocs to keep in memory source for reuse. Use 0 to disable cache, huge value to keep all.**/
+	size_t keep_max;
 };
 
 /******************************** STRUCTURE *********************************/

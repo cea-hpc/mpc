@@ -33,6 +33,8 @@
       <xs:element minOccurs="0" name="numa" type="xs:boolean"/>
       <xs:element minOccurs="0" name="scope" type="xs:string"/>
       <xs:element minOccurs="0" name="strict" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="keep_mem" type="xs:string"/>
+      <xs:element minOccurs="0" name="keep_max" type="xs:string"/>
     </xs:all>
   </xs:complexType>
 <!-- ********************************************************* -->

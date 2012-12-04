@@ -38,6 +38,8 @@ void sctk_runtime_config_struct_init_allocator(void * struct_ptr)
 	obj->numa = true;
 	obj->scope = "thread";
 	obj->strict = false;
+	obj->keep_mem = sctk_runtime_config_map_entry_parse_size("500MB");
+	obj->keep_max = sctk_runtime_config_map_entry_parse_size("40MB");
 }
 
 /*******************  FUNCTION  *********************/

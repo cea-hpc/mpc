@@ -761,7 +761,6 @@ SCTK_STATIC void * sctk_realloc_inter_chain (void * ptr, size_t size)
 {
 	sctk_size_t copy_size = size;
 	void * res = NULL;
-	struct sctk_alloc_chain * local_chain;
 
 	SCTK_PROFIL_START(sctk_realloc_inter_chain);
 
