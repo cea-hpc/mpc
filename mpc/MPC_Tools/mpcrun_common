@@ -552,7 +552,7 @@ fi
 #load launcher
 if [ ! -z "${MPC_USER_LAUNCHERS}" ] && [ -e "${MPC_USER_LAUNCHERS}/mpcrun_${LAUNCH_SUFFIX}" ]; then
 	. "${MPC_USER_LAUNCHERS}/mpcrun_${LAUNCH_SUFFIX}"
-if [ -e "${BINS_HOME}_${LAUNCH_SUFFIX}" ]; then
+elif [ -e "${BINS_HOME}_${LAUNCH_SUFFIX}" ]; then
 	. "${BINS_HOME}_${LAUNCH_SUFFIX}"
 else
 	echo "Invalid launcher : ${LAUNCH_SUFFIX}" 1>&2
