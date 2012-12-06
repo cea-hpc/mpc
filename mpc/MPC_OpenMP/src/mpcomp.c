@@ -320,6 +320,7 @@ void __mpcomp_init() {
 
     /* Allocate information for the sequential region */
     t = (mpcomp_thread_t *)sctk_malloc( sizeof(mpcomp_thread_t) ) ;
+    //t = &(instance->mvps[0]->threads[0]);
     sctk_assert( t != NULL ) ;
 
     /* Initialize default ICVs */
@@ -340,6 +341,7 @@ void __mpcomp_init() {
 
     // TODO: these lines should be in a function __mpcomp_thread_init(t)
     __mpcomp_thread_init( t, icvs, instance, team_info ) ;
+    t->mvp = instance->mvps[0];
 
     /* Current thread information is 't' */
     sctk_openmp_thread_tls = t ;
@@ -640,12 +642,15 @@ void * mpcomp_slave_mvp_node( void * arg ) {
 	n->children.node[0]->team_info = n->team_info ;
 	sctk_assert( n->team_info != NULL ) ;
 	n->children.node[0]->num_threads = n->num_threads ;
+	n->children.node[0]->combined_pragma = n->combined_pragma;
+
       for ( i = 1 ; i < n->nb_children ; i++ ) {
 	n->children.node[i]->func = n->func ;
 	n->children.node[i]->shared = n->shared ;
 	n->children.node[i]->team_info = n->team_info ;
 	sctk_assert( n->team_info != NULL ) ;
 	n->children.node[i]->num_threads = n->num_threads ;
+	n->children.node[i]->combined_pragma = n->combined_pragma;
 	n->children.node[i]->slave_running = 1 ;
       }
      TODO(put the real barrier_num_threads)
@@ -656,12 +661,8 @@ void * mpcomp_slave_mvp_node( void * arg ) {
     sctk_assert( n->child_type == MPCOMP_CHILDREN_LEAF ) ;
     sctk_nodebug( "mpcomp_slave_mvp_node: children leaf will use %p", n->func ) ;
     for ( i = 1 ; i < n->nb_children ; i++ ) {
-      /*
-      n->children.leaf[i]->func = n->func ;
-      n->children.leaf[i]->shared = n->shared ;
-      n->children.leaf[i]->num_threads = n->num_threads ;
-      */
-      n->children.leaf[i]->slave_running = 1 ;
+	 n->children.leaf[i]->combined_pragma = n->combined_pragma;	 
+	 n->children.leaf[i]->slave_running = 1 ;
     }
     n->barrier_num_threads = n->nb_children ;
 
@@ -691,6 +692,21 @@ void * mpcomp_slave_mvp_node( void * arg ) {
       mvp->threads[i].team =  mvp->father->team_info ;
       mvp->threads[i].single_current = mvp->father->team_info->single_last_current ;
       mvp->threads[i].for_dyn_current = mvp->father->team_info->for_dyn_last_current ;
+
+      mpcomp_instance_t *instance;
+      instance =  mvp->threads[i].children_instance = mvp->children_instance ;
+      sctk_assert( instance != NULL ) ;
+
+      if (mvp->combined_pragma == 1) {
+	   /* Fill private info about the loop */	 
+	   mpcomp_thread_t *t = &(mvp->threads[i]);
+	   
+	   t->loop_lb = instance->mvps[0]->threads[0].loop_lb ;
+	   t->loop_b = instance->mvps[0]->threads[0].loop_b ;
+	   t->loop_incr = instance->mvps[0]->threads[0].loop_incr ;
+	   t->loop_chunk_size = instance->mvps[0]->threads[0].loop_chunk_size ;
+      }
+	   
       //mvp->threads[i].start_steal_chunk = -1; //CHUNK STEALING
       sctk_nodebug( "mpcomp_slave_mvp: Got num threads %d",
 	  mvp->threads[i].num_threads ) ;
@@ -737,7 +753,7 @@ void * mpcomp_slave_mvp_leaf( void * arg ) {
 
     /* Spin for new parallel region */
     sctk_thread_wait_for_value_and_poll( (int*)&(mvp->slave_running), 1, NULL, NULL ) ;
-    TODO("maybe wrong if multiple mVPs are waitning on the same node")
+    TODO("maybe wrong if multiple mVPs are waiting on the same node")
     mvp->slave_running = 0 ;
 
     sctk_nodebug( "mpcomp_slave_mvp_leaf: wake up" ) ;
@@ -760,25 +776,37 @@ INFO("__mpcomp_flush: need to call mpcomp_macro_scheduler")
 
     for ( i = 0 ; i < num_threads_mvp ; i++ ) {
       int rank ;
+      mpcomp_thread_t *t = &(mvp->threads[i]);
+
       /* Allocate this thread if needed */
 
-      mvp->threads[i].mvp = mvp ;
+      t->mvp = mvp ;
 
       /* Compute the rank of this thread */
       rank = mvp->rank ;
 
-      mvp->threads[i].rank = rank ;
+      t->rank = rank ;
 
       /* Copy information */
-      mvp->threads[i].num_threads = mvp->father->num_threads ;
+      t->num_threads = mvp->father->num_threads ;
 
-      mvp->threads[i].team = mvp->father->team_info ;
+      t->team = mvp->father->team_info ;
 
-      mvp->threads[i].single_current = mvp->father->team_info->single_last_current ;
-      mvp->threads[i].for_dyn_current = mvp->father->team_info->for_dyn_last_current ;
+      t->single_current = mvp->father->team_info->single_last_current ;
+      t->for_dyn_current = mvp->father->team_info->for_dyn_last_current ;
+      t->children_instance = mvp->children_instance;
+      if (mvp->combined_pragma == 1) {
+	   mpcomp_thread_t *t0;
+
+	   /* Fill private info about the loop */	 
+	   sctk_assert(t->children_instance != NULL) ;
+	   t0 = &(t->children_instance->mvps[0]->threads[0]);
+	   __mpcomp_dynamic_loop_init(t, t0->loop_lb, t0->loop_b, t0->loop_incr, 
+				      t0->loop_chunk_size);
+      }
+            
       //mvp->threads[i].start_steal_chunk = -1; //CHUNK STEALING
-      sctk_nodebug( "mpcomp_slave_mvp_leaf: Got num threads %d",
-	  mvp->threads[i].num_threads ) ;
+      sctk_nodebug( "mpcomp_slave_mvp_leaf: Got num threads %d", t->num_threads ) ;
       /* TODO finish */
     }
 
@@ -787,7 +815,7 @@ INFO("__mpcomp_flush: need to call mpcomp_macro_scheduler")
 
     /* Run */
     in_order_scheduler( mvp ) ;
-
+    
     sctk_nodebug( "mpcomp_slave_mvp_leaf: end of in-order scheduling" ) ;
 
     /* Half barrier */
@@ -819,7 +847,6 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
 
     sctk_assert( ((mpcomp_thread_t *)sctk_openmp_thread_tls)->team != NULL ) ;
     sctk_assert( mvp != NULL);  
-
     mvp->func( mvp->shared ) ;
     mvp->threads[i].done = 1 ;
   }

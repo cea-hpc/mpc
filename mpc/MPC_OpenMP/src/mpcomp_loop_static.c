@@ -202,6 +202,7 @@ int __mpcomp_static_loop_begin (int lb, int b, int incr, int chunk_size,
 	  
 	  /* Retrieve the number of threads and the rank of this thread */
 	  nb_threads = t->num_threads;
+
 	  rank = t->rank;
 	  
 	  t->static_nb_chunks = __mpcomp_get_static_nb_chunks_per_rank(rank, nb_threads, 

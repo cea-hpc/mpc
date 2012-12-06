@@ -169,11 +169,12 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 		*/
 	       leaf->nb_threads = 0;
 	       leaf->next_nb_threads = 0;
+	       leaf->children_instance = instance;
+		  
 	       
 	       sctk_nodebug( "////////// MVP INITIALIZATION //////////" );
 	       for (i_thread = 0; i_thread < MPCOMP_MAX_THREADS_PER_MICROVP; i_thread++) {
 		    int i_fordyn;
-		    
 		    for (i_fordyn = 0; i_fordyn < MPCOMP_MAX_ALIVE_FOR_DYN+1; i_fordyn++) {
 			 sctk_nodebug("[__mpcomp_build_auto_tree] set remain to -1");
 			 sctk_atomics_store_int(&(instance->mvps[current_mvp]->threads[i_thread].for_dyn_chunk_info[i_fordyn].remain), -1);
@@ -487,6 +488,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			 sctk_getcontext (&(instance->mvps[current_mvp]->vp_context));
 
 			 /* Initialize the corresponding microVP (all but tree-related variables) */
+			 instance->mvps[current_mvp]->children_instance = instance ;
 			 instance->mvps[current_mvp]->nb_threads = 0 ;
 			 instance->mvps[current_mvp]->next_nb_threads = 0 ;
 			 instance->mvps[current_mvp]->rank = current_mvp ;

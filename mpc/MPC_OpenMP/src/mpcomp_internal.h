@@ -253,6 +253,9 @@ extern "C"
 	  int next_nb_threads;
 	  struct mpcomp_thread_s threads[MPCOMP_MAX_THREADS_PER_MICROVP];
 
+	  struct mpcomp_instance_s *children_instance; /* Instance for nested parallelism */
+	  int combined_pragma;
+
 	  int *tree_rank; 	          /* Array of rank in every node of the tree */
 	  int rank;    	                  /* Rank within the microVPs */
 	  char pad0[64];                  /* Padding */
@@ -281,6 +284,8 @@ extern "C"
 	  long rank;                      /* Rank among children of my father */
 	  int depth;                      /* Depth in the tree */
 	  int nb_children;                /* Number of children */
+
+	  int combined_pragma;
 
 	  /* The following indices correspond to the 'rank' value in microVPs */
 	  int min_index;   /* Flat min index of leaves in this subtree */
@@ -404,6 +409,9 @@ extern "C"
 	  t->tree_stack = NULL;
 	  t->stolen_mvp = NULL;
 	  t->start_mvp_index = -1; //AMAHEO
+
+	  for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN+1; i++)
+	       sctk_atomics_store_int(&(t->for_dyn_chunk_info[i].remain), -1);
      }
 
      /* mpcomp.c */
@@ -425,6 +433,8 @@ extern "C"
 
      /* mpcomp_loop_dyn.c */
      int __mpcomp_dynamic_steal(int *from, int *to);
+     int __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, int lb, int b, 
+				    int incr, int chunk_size);
      int __mpcomp_dynamic_loop_begin(int lb, int b, int incr,
 				      int chunk_size, int *from, int *to);
      int __mpcomp_dynamic_loop_next(int *from, int *to);
