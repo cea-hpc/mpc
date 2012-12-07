@@ -129,6 +129,7 @@ bool sctk_alloc_chain_is_thread_safe(struct sctk_alloc_chain * chain);
 void sctk_alloc_chain_make_thread_safe(struct sctk_alloc_chain * chain,bool value);
 void sctk_alloc_chain_mark_for_destroy(struct sctk_alloc_chain * chain,void (*destroy_handler)(struct sctk_alloc_chain * chain));
 SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_prepare_and_reg_macro_bloc(struct sctk_alloc_chain * chaine,struct sctk_alloc_macro_bloc * macro_bloc);
+SCTK_STATIC bool sctk_alloc_chain_is_huge_size(struct sctk_alloc_chain * chain,sctk_size_t size);
 
 /************************* FUNCTION ************************/
 //some stat function for debug

@@ -423,6 +423,8 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_request_mem
 	assert(source != NULL);
 	assert(size > 0);
 	assert(size % SCTK_MACRO_BLOC_SIZE == 0 );
+	assert(size >= SCTK_MACRO_BLOC_SIZE);
+	assert(size % SCTK_ALLOC_PAGE_SIZE == 0 );
 
 	//runtime errors
 	if (size == 0)

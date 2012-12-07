@@ -1188,10 +1188,9 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_request_mem(struct sctk_alloc_cha
 	{
 		size = SCTK_MACRO_BLOC_SIZE;
 	} else {
-		if (size % SCTK_PAGE_SIZE)
-			size += SCTK_PAGE_SIZE - size % SCTK_PAGE_SIZE;
+		size = sctk_alloc_align_size_pow_of_2(size,SCTK_ALLOC_PAGE_SIZE);
 	}
-	assert(size % SCTK_PAGE_SIZE == 0);
+	assert(size % SCTK_ALLOC_PAGE_SIZE == 0);
 	assert(size >= SCTK_MACRO_BLOC_SIZE);*/
 	
 	if (size % SCTK_MACRO_BLOC_SIZE != 0)
@@ -1305,6 +1304,18 @@ void * sctk_alloc_chain_alloc(struct sctk_alloc_chain * chain,sctk_size_t size)
 
 /************************* FUNCTION ************************/
 /**
+ * Check if the given size is considered as a huge size (to directly allocate the chunk from memory
+ * source) or not. We consider as huge if larger than a cut limit which must not be too small compared
+ * to macro bloc size. It also work only if we get a memory source for the given alloc chain.
+ */
+SCTK_STATIC bool sctk_alloc_chain_is_huge_size(struct sctk_alloc_chain * chain,sctk_size_t size)
+{
+	assert(chain != NULL);
+	return (SCTK_ALLOC_HUGE_CHUNK_SEGREGATION && chain->source != NULL && sctk_alloc_calc_chunk_size(size) > SCTK_HUGE_BLOC_LIMIT);
+}
+
+/************************* FUNCTION ************************/
+/**
  * Try to allocate a segement of a given size from the given chain.
  * @param chain Define the allocation chain in which to request memory.
  * @param boundary Define the memory alignement to force for the bloc base address.
@@ -1330,8 +1341,7 @@ void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t 
 
 	//check if huge allocation of normal
 	/** @todo Split in two sub-functions **/
-	/** @todo Define a function to detect huge blocs intead of use two time the calculation.**/
-	if (SCTK_ALLOC_HUGE_CHUNK_SEGREGATION && chain->source != NULL && sctk_alloc_calc_chunk_size(size) > SCTK_HUGE_BLOC_LIMIT)
+	if (sctk_alloc_chain_is_huge_size(chain,size))
 	{
 		//for huge block, we bypass the thread pool and call directly the memory source.
 		//huge bloc are > SCTK_MACRO_BLOC_SIZE / 2
@@ -1469,8 +1479,7 @@ void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 
 	//check if huge bloc or not
 	/** @todo Split in two sub-functions **/
-	/** @todo Define a function to detect huge blocs intead of use two time the calculation. **/
-	if (SCTK_ALLOC_HUGE_CHUNK_SEGREGATION && chain->source != NULL && sctk_alloc_get_size(vchunk) > SCTK_HUGE_BLOC_LIMIT)
+	if (sctk_alloc_chain_is_huge_size(chain,sctk_alloc_get_size(vchunk)))
 	{
 		//spy
 		SCTK_ALLOC_HOOK(chain_huge_free,chain,ptr,sctk_alloc_get_size(vchunk));
@@ -2113,7 +2122,8 @@ SCTK_STATIC void sctk_alloc_region_unset_entry(struct sctk_alloc_macro_bloc * ma
 	while (ptr < (sctk_addr_t)macro_bloc + sctk_alloc_get_chunk_header_large_size(&macro_bloc->header))
 	{
 		dest = sctk_alloc_region_get_entry((void *)ptr);
-		dest->macro_bloc = NULL;
+		if (dest->macro_bloc == macro_bloc)
+			dest->macro_bloc = NULL;
 		ptr += SCTK_MACRO_BLOC_SIZE;
 	}
 }
@@ -2143,7 +2153,7 @@ SCTK_STATIC void sctk_alloc_region_set_entry(struct sctk_alloc_chain * chain, st
 		warning("Caution, using macro blocs smaller than SCTK_MACRO_BLOC_SIZE is dangerous, check usage of flag SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER.");
 
 	/** @TODO TO OPTIMIZE by avoiding calling sctk_alloc_region_get_entry each time. **/
-	/** @TODO Support sub link list for macro_bloc imbrication. **/
+	/** @TODO Support sub link list for macro_bloc inclusion (strict). **/
 	while (ptr < (sctk_addr_t)macro_bloc + sctk_alloc_get_chunk_header_large_size(&macro_bloc->header))
 	{
 		dest = sctk_alloc_region_get_entry((void *)ptr);
