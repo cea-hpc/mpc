@@ -357,9 +357,11 @@ int __mpcomp_build_default_tree(mpcomp_instance_t *instance)
      
      /* Get the current VP number */
      current_mpc_vp = sctk_thread_get_vp();
+
+     printf("__mpcomp_build_default_tree: current_mpc_vp=%d\n", current_mpc_vp);
      
      /* TODO So far, we do not fully support when the OpenMP instance is created from any VP */
-     sctk_assert(current_mpc_vp == 0);
+     //sctk_assert(current_mpc_vp == 0);
      sctk_get_neighborhood(current_mpc_vp, nb_cpus, order);
      
      __mpcomp_build_auto_tree_recursive_bloc(instance, order, 

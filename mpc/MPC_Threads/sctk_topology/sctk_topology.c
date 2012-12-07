@@ -533,7 +533,7 @@ sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood)
   }
 
   /* uncomment for printing the returned result */
-  //print_neighborhood(cpuid, nb_cpus, neighborhood, objs);
+  print_neighborhood(cpuid, nb_cpus, neighborhood, objs);
 
   sctk_free(objs);
 }

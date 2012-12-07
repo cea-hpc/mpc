@@ -303,13 +303,14 @@ void __mpcomp_init() {
     mpcomp_thread_t * t ;
     mpcomp_icv_t icvs;
 
+    //printf("__mpcomp_init(): Init current team\n");  //AMAHEO
+
     sctk_thread_mutex_lock (&lock);
     /* Need to initialize the whole runtime (environment variables) */
     if ( done == 0 ) {
       __mpcomp_read_env_variables() ;
       done = 1;
     }
-
 
     /* Allocate an instance of OpenMP */
     instance = (mpcomp_instance_t *)sctk_malloc( sizeof( mpcomp_instance_t ) ) ;
@@ -341,12 +342,17 @@ void __mpcomp_init() {
     // TODO: these lines should be in a function __mpcomp_thread_init(t)
     __mpcomp_thread_init( t, icvs, instance, team_info ) ;
 
+   //printf("__mpcomp_init: t address=%p\n", &t);
+
+    printf("__mpcomp_init: t rank=%ld\n", t->rank);
+
     /* Current thread information is 't' */
     sctk_openmp_thread_tls = t ;
 
     sctk_thread_mutex_unlock (&lock);
 
     sctk_nodebug( "__mpcomp_init: Init done..." ) ;
+    //printf("__mpcomp_init: Init done...\n");
   }
 
 }
@@ -354,13 +360,16 @@ void __mpcomp_init() {
 
 void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps ) {
 
-  sctk_nodebug( "__mpcomp_instance_init: Entering..." ) ;
+  sctk_debug( "__mpcomp_instance_init: Entering..." ) ;
+  //printf("__mpcomp_instance_init: Entering..\n");
 
   /* Alloc memory for 'nb_mvps' microVPs */
   instance->mvps = (mpcomp_mvp_t **)sctk_malloc( nb_mvps * sizeof( mpcomp_mvp_t * ) ) ;
   sctk_assert( instance->mvps != NULL ) ;
 
   instance->nb_mvps = nb_mvps ;
+
+  printf("__mpcomp_instance_init: nb_mvps=%d\n", instance->nb_mvps);
 
   if ( OMP_TREE == NULL ) {
     __mpcomp_build_default_tree( instance ) ;
@@ -374,9 +383,13 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps ) {
 void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     (void *), void *shared) {
   mpcomp_thread_t * t ;
+  mpcomp_mvp_t *mvp;     //AMAHEO
+  int current_vp;       //AMAHEO
   mpcomp_node_t * root ;
   int num_threads ;
   int i ;
+
+  static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER; // Lock initialization (AMAHEO)  
 
   __mpcomp_init() ;
 
@@ -384,6 +397,15 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
 
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
+  //sctk_assert(t->rank == 0);
+
+  current_vp = sctk_thread_get_vp();   //AMAHEO
+  //mvp = t->mvp; //AMAHEO
+  //sctk_assert(mvp != NULL);
+  //printf("__mpcomp_start_parallel_region: t address=%p rank=%ld\n", &t, t->rank);
+  //printf("__mpcomp_start_parallel_region: current vp=%d\n", current_vp); //AMAHEO
+
+  //printf("__mpcomp_start_parallel_region: t address=%p\n", &t);
 
   /* Compute the number of threads for this parallel region */
   num_threads = t->icvs.nthreads_var;
@@ -432,8 +454,16 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     int max_index_with_more_threads ;
 
     /* Get the OpenMP instance already allocated during the initializatino (mpcomp_init) */
+
     instance = t->children_instance ;
+    sctk_assert( t->children_instance != NULL);
     sctk_assert( instance != NULL ) ;
+
+//#if 0
+    t->team->instance = instance; //Put instance into team infos (AMAHEO)
+    t->team->tree_depth = OMP_TREE_DEPTH;
+    t->team->nb_leaves = OMP_TREE_NB_LEAVES;
+//#endif
 
     /* Get the root node of the main tree */
     root = instance->root ;
@@ -556,11 +586,14 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     sctk_nodebug( "__mpcomp_start_parallel_region: ending with current_single = %d",
 	t->team->single_last_current ) ;
 
+    //sctk_openmp_thread_tls = t; //AMAHEO
+
     /* Finish the half barrier by spinning on the root value */
 #if MPCOMP_USE_ATOMICS
     // while (sctk_atomics_load_int(&(root->barrier)) != root->barrier_num_threads ) 
     while (sctk_atomics_load_int(&(new_root->barrier)) != new_root->barrier_num_threads ) 
     {
+      sctk_openmp_thread_tls = t ; //Update tls value before switching (AMAHEO)
       sctk_thread_yield() ;
     }
     // sctk_atomics_store_int(&(root->barrier), 0) ;
@@ -569,6 +602,7 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     // while (root->barrier != root->barrier_num_threads ) 
     while (new_root->barrier != new_root->barrier_num_threads ) 
     {
+      sctk_openmp_thread_tls = t ; //Update tls value before switching (AMAHEO)      
       sctk_thread_yield() ;
     }
     // root->barrier = 0 ;
@@ -576,9 +610,14 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
 #endif
 
 
+    //printf("__mpcomp_start_parallel_region: end, t rank=%ld\n", t->rank);
+
+    sctk_thread_mutex_lock (&lock); //AMAHEO
+
     /* Restore the previous OpenMP info */
     sctk_openmp_thread_tls = t ;
 
+    sctk_thread_mutex_unlock (&lock);  //AMAHEO
 
 #if 0
     /* Sequential check of tree coherency */
@@ -815,6 +854,8 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
   for ( i = 0 ; i < mvp->nb_threads ; i++ ) {
     /* TODO handle out of order */
 
+
+    //printf("in_order_scheduler: current mvp thread rank=%ld\n", mvp->threads[i].rank); //AMAHEO
     sctk_openmp_thread_tls = &mvp->threads[i];
 
     sctk_assert( ((mpcomp_thread_t *)sctk_openmp_thread_tls)->team != NULL ) ;

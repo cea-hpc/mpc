@@ -148,6 +148,10 @@ extern "C"
      {
 	  int depth;			/* Depth of the current thread (0 = sequential region) */
 
+          struct mpcomp_instance_s *instance;   /* Pointer on OpenMP instance (AMAHEO) */
+          int tree_depth;                       /* Depth of the tree (AMAHEO)*/
+          int nb_leaves;                        /*  Number of leaves in the tree (AMAHEO)*/
+
 	  /* -- SINGLE CONSTRUCT -- */
 	  int single_last_current;
 #if MPCOMP_USE_ATOMICS
@@ -390,6 +394,10 @@ extern "C"
      {
 	  int i;
 
+          printf("__mpcomp_thread_init: t address=%p\n", &t);
+
+          sctk_assert(instance != NULL);
+
 	  t->icvs = icvs;
 	  t->stack = NULL;
 	  t->rank = 0;
@@ -399,6 +407,8 @@ extern "C"
 	  t->children_instance = instance;
 	  t->team = team_info;
 	  t->single_current = -1;
+
+          sctk_assert(t->children_instance != NULL);
 
 	  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
 	  t->tree_stack = NULL;
