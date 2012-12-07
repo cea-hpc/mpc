@@ -33,7 +33,7 @@
 
 /************************** MACROS *************************/
 #ifdef MPC_Threads
-#define SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK 1
+	#include "sctk_spinlock.h"
 #endif
 
 /************************** HEADERS ************************/
@@ -73,6 +73,17 @@
 		#ifndef PTHREAD_PROCESS_PRIVATE
 			#define PTHREAD_PROCESS_PRIVATE 0
 		#endif
+	#elif defined(MPC_Threads)
+		#define SCTK_ALLOC_INIT_LOCK_TYPE pthread_mutex_t
+		#define SCTK_ALLOC_INIT_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
+		#define SCTK_ALLOC_INIT_LOCK_LOCK(x) pthread_mutex_lock(x)
+		#define SCTK_ALLOC_INIT_LOCK_UNLOCK(x) pthread_mutex_unlock(x)
+		#define sctk_alloc_spinlock_t sctk_spinlock_t
+		#define sctk_alloc_spinlock_init(x,y) sctk_spinlock_init(x,y)
+		#define sctk_alloc_spinlock_lock(x) sctk_spinlock_lock(x)
+		#define sctk_alloc_spinlock_unlock(x) sctk_spinlock_unlock(x)
+		#define sctk_alloc_spinlock_trylock(x) sctk_spinlock_trylock(x)
+		#define sctk_alloc_spinlock_destroy(x) do{}while(0)
 	#else //SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK
 		#define SCTK_ALLOC_INIT_LOCK_TYPE pthread_mutex_t
 		#define SCTK_ALLOC_INIT_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER

@@ -911,7 +911,7 @@ SCTK_STATIC void sctk_alloc_chain_base_init(struct sctk_alloc_chain * chain,enum
 	sctk_alloc_thread_pool_init(&chain->pool,SCTK_ALLOC_FREE_SIZES);
 
 	//init lock
-	chain->flags = flags,
+	chain->flags = flags;
 	sctk_alloc_spinlock_init(&chain->lock,PTHREAD_PROCESS_PRIVATE);
 
 	//init Remote Free Queue
