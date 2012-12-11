@@ -113,7 +113,7 @@ sctk_expand_pin_processor_add_to_list(hwloc_bitmap_t *bitmap, int limit, int id)
 	hwloc_bitmap_set(*bitmap, id);
 }
 
-  static void 
+  static void
 sctk_expand_pin_processor_list(char *list, hwloc_bitmap_t *bitmap, int limit) {
 	char *c = list;
 	char prev_number[5];
@@ -153,8 +153,8 @@ sctk_expand_pin_processor_list(char *list, hwloc_bitmap_t *bitmap, int limit) {
 			sctk_abort();
 		}
 		++c;
-	} 
-	
+	}
+
 	/*Terminates the string */
 	if (prev_ptr != prev_number) {
 		*prev_ptr='\0';
@@ -372,7 +372,7 @@ sctk_topology_init ()
 
   uname (&utsname);
 
-   sctk_print_topology (stderr);    
+   sctk_print_topology (stderr);
 }
 
 /*! \brief Destroy the topology module

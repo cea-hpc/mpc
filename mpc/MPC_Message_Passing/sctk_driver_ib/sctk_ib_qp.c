@@ -128,6 +128,8 @@ sctk_ib_device_t *sctk_ib_device_init(struct sctk_ib_rail_info_s* rail_ib) {
   rail_ib->device->ondemand.qp_list = NULL;
   rail_ib->device->ondemand.qp_list_ptr = NULL;
   rail_ib->device->ondemand.lock = SCTK_SPINLOCK_INITIALIZER;
+  rail_ib->device->send_comp_channel = NULL;
+  rail_ib->device->recv_comp_channel = NULL;
 
   return device;
 }
@@ -209,15 +211,38 @@ sctk_ib_pd_init(sctk_ib_device_t *device)
 /*-----------------------------------------------------------
  *  Completion queue
  *----------------------------------------------------------*/
+  struct ibv_comp_channel *
+sctk_ib_comp_channel_init(sctk_ib_device_t* device) {
+  struct ibv_comp_channel * comp_channel;
+
+  comp_channel = ibv_create_comp_channel(device->context);
+  if (!comp_channel) {
+    SCTK_IB_ABORT_WITH_ERRNO("Cannot create Completion Channel.");
+  }
+  return comp_channel;
+}
+
+  /*
+   * Create a completion queue and associate it a completion channel.
+   * This argument may be NULL.
+   */
   struct ibv_cq*
 sctk_ib_cq_init(sctk_ib_device_t* device,
-    sctk_ib_config_t *config)
+    sctk_ib_config_t *config, struct ibv_comp_channel * comp_channel)
 {
   struct ibv_cq *cq;
-  cq = ibv_create_cq (device->context, config->ibv_cq_depth, NULL, NULL, 0);
+  cq = ibv_create_cq (device->context, config->ibv_cq_depth, NULL,
+      comp_channel, 0);
 
   if (!cq) {
     SCTK_IB_ABORT_WITH_ERRNO("Cannot create Completion Queue.");
+  }
+
+  if (comp_channel != NULL) {
+    int ret = ibv_req_notify_cq(cq, 0);
+    if (ret != 0) {
+      SCTK_IB_ABORT_WITH_ERRNO("Couldn't request CQ notification");
+    }
   }
   return cq;
 }
@@ -793,7 +818,7 @@ static void* wait_send(void *arg){
 {
   int rc;
 
-  sctk_nodebug("Send no-lock message to process %d %p", remote->rank, remote->qp);
+  sctk_nodebug("Send no-lock message to process %d %p %d", remote->rank, remote->qp, rail_ib->rail->rail_number);
 
   ibuf->remote = remote;
 
@@ -819,6 +844,7 @@ static void* wait_send(void *arg){
 
     sctk_nodebug("[%d] NO LOCK QP message sent to remote %d", rail_ib->rail->rail_number, remote->rank);
   }
+  sctk_nodebug("SENT no-lock message to process %d %p", remote->rank, remote->qp);
 }
 
 /* Send an ibuf to a remote.

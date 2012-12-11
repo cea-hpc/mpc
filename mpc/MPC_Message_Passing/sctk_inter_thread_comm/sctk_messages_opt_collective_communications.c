@@ -40,7 +40,8 @@ static int BROADCAST_CHECK_THREASHOLD = 512;
 static int ALLREDUCE_ARITY_MAX = 8;
 static int ALLREDUCE_MAX_SIZE = 1024;
 static int ALLREDUCE_CHECK_THREASHOLD = 8192;
-#define SCTK_MAX_ASYNC 1
+#define SCTK_MAX_ASYNC 32
+#warning "Change here !!!"
 
 /************************************************************************/
 /*TOOLS                                                                 */
@@ -72,10 +73,11 @@ static void sctk_opt_messages_send(const sctk_communicator_t communicator,int my
   sctk_add_adress_in_message(&(msg_req->msg),buffer,size);
   sctk_set_header_in_message (&(msg_req->msg), tag, communicator, myself, dest,
 			      &(msg_req->request), size,specific_message_tag);
-  if (myself == 0) sctk_nodebug("Send myself: %d %p (%d - %d)", myself, &(msg_req->msg), msg_req->msg.sctk_msg_get_glob_source,
-      msg_req->msg.sctk_msg_get_glob_destination);
+  sctk_send_message(&(msg_req->msg));
+#if 0
   msg_req->msg.tail.need_check_in_wait = /* copy_in_send */1;
   sctk_send_message_try_check (&(msg_req->msg),check);
+#endif
 }
 
 static void sctk_opt_messages_recv(const sctk_communicator_t communicator,int src, int myself,int tag, void* buffer,size_t size,
@@ -87,11 +89,12 @@ static void sctk_opt_messages_recv(const sctk_communicator_t communicator,int sr
   sctk_add_adress_in_message(&(msg_req->msg),buffer,size);
   sctk_set_header_in_message (&(msg_req->msg), tag, communicator,  src,myself,
 			      &(msg_req->request), size,specific_message_tag);
-  if (myself == 0) sctk_nodebug("RECV myself: %d req:%p msg:%p (%d - %d)", myself, &(msg_req->request), &(msg_req->msg), msg_req->msg.sctk_msg_get_glob_source,
-      msg_req->msg.sctk_msg_get_glob_destination);
 
+sctk_recv_message (&(msg_req->msg), ptp_internal, 1);
+#if 0
   msg_req->msg.tail.need_check_in_wait = /* copy_in_recv */1;
   sctk_recv_message_try_check (&(msg_req->msg),ptp_internal,check);
+#endif
 }
 
 static void sctk_opt_messages_wait(sctk_opt_messages_table_t* tab){

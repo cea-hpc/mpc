@@ -103,10 +103,10 @@ sctk_network_notify_matching_message_multirail_ib (sctk_thread_ptp_message_t * m
 }
 
 static void
-sctk_network_notify_perform_message_multirail_ib (int remote){
+sctk_network_notify_perform_message_multirail_ib (int remote_process, int remote_task_id){
   int i;
   for(i = 0; i < NB_RAILS; i++){
-    rails[i]->notify_perform_message(remote,rails[i]);
+    rails[i]->notify_perform_message(remote_process, remote_task_id,rails[i]);
   }
 }
 
@@ -123,17 +123,6 @@ sctk_network_notify_any_source_message_multirail_ib (){
   int i;
   for(i = 0; i < NB_RAILS; i++){
     rails[i]->notify_any_source_message(rails[i]);
-  }
-}
-
-void
-sctk_network_poll_cq (){
-  struct sctk_ib_polling_s poll;
-  POLL_INIT(&poll);
-
-  int i;
-  for(i = 0; i < NB_RAILS; i++){
-    sctk_network_poll_all_cq (rails[i], &poll);
   }
 }
 
@@ -177,6 +166,7 @@ static void* __polling_thread(void *arg) {
 }
 
 static void sctk_network_init_polling_thread (sctk_rail_info_t* rail) {
+  assume(0);
   sctk_thread_t pidt;
   sctk_thread_attr_t attr;
 
@@ -223,9 +213,11 @@ void sctk_network_init_multirail_ib_all(char* name, char* topology){
   sctk_route_init_in_rail(rails[i],topology);
   sctk_network_init_mpi_ib(rails[i]);
   /* If fully mode, we activate the polling thread */
+  /* FIXME: no more needed as the signalization network now
+   * uses async events
   if ( strcmp(topology, "fully") == 0) {
     sctk_network_init_polling_thread (rails[i]);
-  }
+  } */
 
   /* Fallback IB network */
   char signalization_topology[256];
@@ -236,9 +228,12 @@ void sctk_network_init_multirail_ib_all(char* name, char* topology){
   rails[i]->send_message_from_network = sctk_send_message_from_network_multirail_ib;
   sctk_route_init_in_rail(rails[i],signalization_topology);
   sctk_network_init_fallback_ib(rails[i]);
+  /* FIXME: no more needed as the signalization network now
+   * uses async events
   if ( strcmp(signalization_topology, "torus") == 0) {
     sctk_network_init_polling_thread (rails[i]);
-  }
+  } */
+
   /* Set the rail as a signalization rail */
   sctk_route_set_signalization_rail(rails[i]);
 

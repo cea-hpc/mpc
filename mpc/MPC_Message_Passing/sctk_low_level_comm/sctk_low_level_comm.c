@@ -79,15 +79,15 @@ void sctk_network_notify_matching_message_set(void (*sctk_network_notify_matchin
 }
 
 /********** NOTIFY_PERFORM ************/
-static void sctk_network_notify_perform_message_default (int msg){
+static void sctk_network_notify_perform_message_default (int remote_proces, int remote_task_id){
 
 }
-static void (*sctk_network_notify_perform_message_ptr) (int) =
+static void (*sctk_network_notify_perform_message_ptr) (int,int) =
   sctk_network_notify_perform_message_default;
-void sctk_network_notify_perform_message (int msg){
-  sctk_network_notify_perform_message_ptr(msg);
+void sctk_network_notify_perform_message (int remote_process, int remote_task_id){
+  sctk_network_notify_perform_message_ptr(remote_process, remote_task_id);
 }
-void sctk_network_notify_perform_message_set(void (*sctk_network_notify_perform_message_val) (int)){
+void sctk_network_notify_perform_message_set(void (*sctk_network_notify_perform_message_val) (int,int)){
   sctk_network_notify_perform_message_ptr = sctk_network_notify_perform_message_val;
 }
 

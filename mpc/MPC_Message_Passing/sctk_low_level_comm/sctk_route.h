@@ -110,7 +110,7 @@ struct sctk_rail_info_s{
   void (*send_message) (sctk_thread_ptp_message_t *,struct sctk_rail_info_s*);
   void (*notify_recv_message) (sctk_thread_ptp_message_t * ,struct sctk_rail_info_s*);
   void (*notify_matching_message) (sctk_thread_ptp_message_t * ,struct sctk_rail_info_s*);
-  void (*notify_perform_message) (int ,struct sctk_rail_info_s*);
+  void (*notify_perform_message) (int ,int, struct sctk_rail_info_s*);
   void (*notify_idle_message) (struct sctk_rail_info_s*);
   void (*notify_any_source_message) (struct sctk_rail_info_s*);
   int (*send_message_from_network) (sctk_thread_ptp_message_t * );

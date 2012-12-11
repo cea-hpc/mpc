@@ -67,7 +67,7 @@ typedef struct sctk_ib_cp_task_s{
   /* Tasks linked together on NUMA */
   struct sctk_ib_cp_task_s* prev;
   struct sctk_ib_cp_task_s* next;
-  char dummy1[64];
+  char pad[128];
 } sctk_ib_cp_task_t;
 #define CP_PROF_INC(t,x) do {   \
   OPA_incr_int(&t->c[x]);        \

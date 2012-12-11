@@ -30,39 +30,39 @@
 
 static sctk_rail_info_t* rail_0 = NULL;
 
-static void 
+static void
 sctk_network_send_message_simple_tcp (sctk_thread_ptp_message_t * msg){
   rail_0->send_message(msg,rail_0);
 }
 
-static void 
+static void
 sctk_network_notify_recv_message_simple_tcp (sctk_thread_ptp_message_t * msg){
   rail_0->notify_recv_message(msg,rail_0);
 }
 
-static void 
+static void
 sctk_network_notify_matching_message_simple_tcp (sctk_thread_ptp_message_t * msg){
   rail_0->notify_matching_message(msg,rail_0);
 }
 
-static void 
-sctk_network_notify_perform_message_simple_tcp (int remote){
-  rail_0->notify_perform_message(remote,rail_0);
+static void
+sctk_network_notify_perform_message_simple_tcp (int remote, int remote_task_id){
+  rail_0->notify_perform_message(remote,remote_task_id, rail_0);
 }
 
-static void 
+static void
 sctk_network_notify_idle_message_simple_tcp (){
   rail_0->notify_idle_message(rail_0);
 }
 
-static void 
+static void
 sctk_network_notify_any_source_message_simple_tcp (){
   rail_0->notify_any_source_message(rail_0);
 }
 
 
 /************ INIT ****************/
-static 
+static
 void sctk_network_init_simple_tcp_all(char* name, char* topology, int tcpoib){
   sctk_route_set_rail_nb(1);
 

@@ -72,10 +72,10 @@ sctk_network_notify_matching_message_multirail_tcp (sctk_thread_ptp_message_t * 
 }
 
 static void
-sctk_network_notify_perform_message_multirail_tcp (int remote){
+sctk_network_notify_perform_message_multirail_tcp (int remote, int remote_task_id){
   int i;
   for(i = 0; i < NB_RAILS; i++){
-    rails[i]->notify_perform_message(remote,rails[i]);
+    rails[i]->notify_perform_message(remote,remote_task_id,rails[i]);
   }
 }
 

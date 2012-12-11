@@ -152,6 +152,7 @@ extern "C"
 #define MPC_ERR_LASTCODE    50
 
 #define MPC_STATUS_IGNORE NULL
+#define MPC_STATUSES_IGNORE NULL
 #define MPC_ANY_TAG -1
 #define MPC_ANY_SOURCE -1
 #define MPC_PROC_NULL -2
