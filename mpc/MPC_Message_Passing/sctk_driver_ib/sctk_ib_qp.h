@@ -73,6 +73,9 @@ typedef struct sctk_ib_device_s
   struct ibv_cq           *send_cq;  /* outgoing completion queues */
   struct ibv_cq           *recv_cq;  /* incoming completion queues */
 
+  struct ibv_comp_channel * send_comp_channel;
+  struct ibv_comp_channel * recv_comp_channel;
+
   struct sctk_ib_qp_ondemand_s ondemand;
 
   /* Link rate & data rate*/
@@ -216,8 +219,10 @@ sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int r
 
 struct ibv_pd* sctk_ib_pd_init(sctk_ib_device_t *device);
 
+struct ibv_comp_channel * sctk_ib_comp_channel_init(sctk_ib_device_t* device);
+
 struct ibv_cq* sctk_ib_cq_init(sctk_ib_device_t* device,
-    sctk_ib_config_t *config);
+    sctk_ib_config_t *config, struct ibv_comp_channel * comp_chan);
 
 char* sctk_ib_cq_print_status (enum ibv_wc_status status);
 

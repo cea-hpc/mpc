@@ -52,7 +52,7 @@
  * on buffered eager messages */
 //#define IBV_EAGER_LIMIT       (256)
 #define IBV_EAGER_LIMIT       (1024 * 12)
-#define IBV_FRAG_EAGER_LIMIT  (256 * 1024)
+#define IBV_FRAG_EAGER_LIMIT  (1024 * 1024)
 /* FOR PAPER */
 //#define IBV_FRAG_EAGER_LIMIT  (0)
 //#define IBV_FRAG_EAGER_LIMIT  (0 * 1024)

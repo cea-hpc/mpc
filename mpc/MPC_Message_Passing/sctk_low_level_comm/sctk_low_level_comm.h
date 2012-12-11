@@ -36,8 +36,8 @@ void sctk_network_notify_recv_message_set(void (*sctk_network_notify_recv_messag
 void sctk_network_notify_matching_message (sctk_thread_ptp_message_t * msg);
 void sctk_network_notify_matching_message_set(void (*sctk_network_notify_matching_message_val) (sctk_thread_ptp_message_t *));
 
-void sctk_network_notify_perform_message (int global_task_rank);
-void sctk_network_notify_perform_message_set(void (*sctk_network_notify_perform_message_val) (int));
+void sctk_network_notify_perform_message (int remote_process, int remote_task_id);
+void sctk_network_notify_perform_message_set(void (*sctk_network_notify_perform_message_val) (int,int));
 
 void sctk_network_notify_idle_message ();
 void sctk_network_notify_idle_message_set(void (*sctk_network_notify_idle_message_val) ());

@@ -48,51 +48,6 @@
 
 #ifdef SCTK_IB_PROF
 #define PROF_DECL(type, name) type name
-typedef struct sctk_ib_prof_s {
-  /* Type double */
-  PROF_DECL(double, time_steals);
-  PROF_DECL(double, time_own);
-  PROF_DECL(double, time_poll_cq);
-  PROF_DECL(double, time_ptp);
-  PROF_DECL(double, time_coll);
-  PROF_DECL(double, time_send);
-  PROF_DECL(double, poll_send);
-  PROF_DECL(double, poll_recv);
-  PROF_DECL(double, post_send);
-  PROF_DECL(double, resize_rdma);
-  PROF_DECL(double, ibuf_release);
-  PROF_DECL(double, tst);
-
-  /* Type long */
-  PROF_DECL(long, poll_steals);
-  PROF_DECL(long, poll_steals_failed);
-  PROF_DECL(long, poll_steals_success);
-  PROF_DECL(long, poll_steal_same_node);
-  PROF_DECL(long, poll_steal_other_node);
-  PROF_DECL(long, poll_own);
-  PROF_DECL(long, poll_own_failed);
-  PROF_DECL(long, poll_own_success);
-  PROF_DECL(long, call_to_polling);
-  PROF_DECL(long, poll_cq);
-
-  PROF_DECL(long, cp_matched);
-  PROF_DECL(long, cp_not_matched);
-  PROF_DECL(long, poll_found);
-  PROF_DECL(long, poll_not_found);
-  PROF_DECL(long, alloc_mem);
-  PROF_DECL(long, free_mem);
-  PROF_DECL(long, qp_created);
-  PROF_DECL(long, eager_nb);
-  PROF_DECL(long, buffered_nb);
-  PROF_DECL(long, rdma_nb);
-  PROF_DECL(long, ibuf_sr_nb);
-  PROF_DECL(long, ibuf_rdma_nb);
-  PROF_DECL(long, ibuf_rdma_hits_nb);
-  PROF_DECL(long, ibuf_rdma_miss_nb);
-  PROF_DECL(long, rdma_connection);
-  PROF_DECL(long, rdma_resizing);
-  PROF_DECL(long, rdma_deconnection);
-} sctk_ib_prof_t;
 
 extern __thread struct sctk_ib_prof_s * sctk_ib_profiler;
 extern __thread struct sctk_ib_prof_s * sctk_ib_profiler_start;

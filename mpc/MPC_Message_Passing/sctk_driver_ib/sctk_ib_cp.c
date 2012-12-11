@@ -47,7 +47,7 @@
 #include "sctk_ib_toolkit.h"
 #include "math.h"
 
-#define SCTK_IB_PROFILER
+//#define SCTK_IB_PROFILER
 
 extern sctk_request_t *blocked_request;
 
@@ -67,12 +67,7 @@ typedef struct vp_s{
   /* For CDL list */
   struct vp_s *prev;
   struct vp_s *next;
-  /* If the VP has already been added */
-  char  added;
-  /* Number of pending messages */
-  char dummy1[64];
-  OPA_int_t pending_nb;
-  char dummy2[64];
+  char pad[128];
 } vp_t;
 
 typedef struct numa_s{
@@ -85,29 +80,31 @@ typedef struct numa_s{
   /* For CDL list */
   struct numa_s *prev;
   struct numa_s *next;
-  /* If the NODE has already been added */
-  char  added;
   int tasks_nb;
   /* Padding for avoiding false sharing */
-  char pad[64];
   /* CDL of tasks for a NUMA node */
   sctk_ib_cp_task_t *tasks;
+  char pad[128];
 } numa_t;
 
 /* CDL list of numa nodes */
 static numa_t *numa_list = NULL;
 /* Array of numa nodes */
-static numa_t *numas = NULL;
+static numa_t **numas = NULL;
+__thread numa_t **numas_copy = NULL;
+
 static int numa_number = -1;
 int numa_registered = 0;
 /* Array of vps */
-static vp_t   *vps = NULL;
+static vp_t   **vps = NULL;
 static int vp_number = -1;
 static sctk_spinlock_t vps_lock = SCTK_SPINLOCK_INITIALIZER;
 static sctk_ib_cp_task_t* all_tasks = NULL;
 __thread unsigned int seed;
 /* NUMA node where the task is located */
 __thread int task_node_number = -1;
+/* Pointer to the NUMA node on VP */
+__thread numa_t * numa_on_vp = NULL;
 
 #define CHECK_AND_QUIT(rail_ib) do {  \
   LOAD_CONFIG(rail_ib);                             \
@@ -153,8 +150,8 @@ void sctk_ib_cp_init_task(int rank, int vp) {
   static sctk_spinlock_t __global_ibufs_list_lock = SCTK_SPINLOCK_INITIALIZER;
 
   task = sctk_malloc(sizeof(sctk_ib_cp_task_t));
-  ib_assume(task);
   memset(task, 0, sizeof(sctk_ib_cp_task_t));
+  ib_assume(task);
   task->node =  node;
   task->vp = vp;
   task->rank = rank;
@@ -170,36 +167,43 @@ void sctk_ib_cp_init_task(int rank, int vp) {
     numa_number = sctk_get_numa_node_number();
     if (numa_number == 0) numa_number = 1;
     numas = sctk_malloc(sizeof(numa_t) * numa_number);
-    memset(numas, 0, sizeof(numa_t) * numa_number);
+    int i;
+    for (i=0; i < numa_number; ++i) {
+      numas[i] = NULL;
+    }
     ib_assume(numas);
 
     vp_number = sctk_get_cpu_number();
-    vps = sctk_malloc(sizeof(vp_t) * vp_number);
+    vps = sctk_malloc(sizeof(vp_t*) * vp_number);
     ib_assume(vps);
-    memset(vps, 0, sizeof(vp_t) * vp_number);
+    memset(vps, 0, sizeof(vp_t*) * vp_number);
     sctk_nodebug("vp: %d - numa: %d", sctk_get_cpu_number(), numa_number);
   }
   /* Add NUMA node if not already added */
-  if (numas[node].added == 0) {
-    CDL_PREPEND( numa_list, &(numas[node]));
+  if (numas[node] == NULL) {
+    numa_t * tmp_numa = sctk_malloc(sizeof(numa_t));
+    memset(tmp_numa, 0, sizeof(numa_t));
+    CDL_PREPEND( numa_list, tmp_numa);
     numa_registered += 1;
-    numas[node].number = node;
-    numas[node].added = 1;
+    tmp_numa->number = node;
+    numas[node] = tmp_numa;
   }
   /* Add the VP to the CDL list of the correct NUMA node if it not already done */
-  if (vps[vp].added == 0) {
-    OPA_store_int(&vps[vp].pending_nb, 0);
-    vps[vp].node = &numas[node];
-    CDL_PREPEND( numas[node].vps, &(vps[vp]));
-    vps[vp].number = vp;
-    vps[vp].added = 1;
-    numas[node].tasks_nb++;
+  if (vps[vp] == NULL) {
+    vp_t * tmp_vp = sctk_malloc(sizeof(vp_t));
+    memset(tmp_vp, 0, sizeof(vp_t));
+    tmp_vp->node = numas[node];
+    numa_on_vp = numas[node];
+    CDL_PREPEND( numas[node]->vps, tmp_vp);
+    tmp_vp->number = vp;
+    vps[vp] = tmp_vp;
+    numas[node]->tasks_nb++;
   }
-  HASH_ADD(hh_vp, vps[vp].tasks,rank,sizeof(int),task);
+  HASH_ADD(hh_vp, vps[vp]->tasks,rank,sizeof(int),task);
   HASH_ADD(hh_all, all_tasks,rank,sizeof(int),task);
-  CDL_PREPEND(numas[node].tasks, task);
+  CDL_PREPEND(numas[node]->tasks, task);
   sctk_spinlock_unlock(&vps_lock);
-  sctk_ib_debug("Task %d registered on VP %d (numa:%d:tasks_nb:%d)", rank, vp, node, numas[node].tasks_nb);
+  sctk_ib_debug("Task %d registered on VP %d (numa:%d:tasks_nb:%d)", rank, vp, node, numas[node]->tasks_nb);
 
   /* Initialize seed for steal */
   seed = getpid() * time(NULL);
@@ -256,7 +260,7 @@ retry:
         PROF_INC(rail, cp_counter_own);
 #endif
         nb_found++;
-//        goto retry;
+        goto retry;
       } else {
         sctk_spinlock_unlock(lock);
       }
@@ -271,9 +275,10 @@ void sctk_ib_cp_poll_global_list(const struct sctk_rail_info_s const * rail, str
   int nb_found = 0;
   int vp = sctk_thread_get_vp();
 
+  if (vp < 0) return;
   CHECK_ONLINE_PROGRAM;
 
-  task = vps[vp].tasks;
+  task = vps[vp]->tasks;
   if (!task) return;
   ib_assume(task);
 
@@ -286,11 +291,12 @@ int sctk_ib_cp_poll(const struct sctk_rail_info_s const* rail, struct sctk_ib_po
   sctk_ib_cp_task_t *task = NULL;
   int ret = 0;
 
+  if (vp < 0) return;
   CHECK_ONLINE_PROGRAM;
 
-  for (task=vps[vp].tasks; task; task=task->hh_vp.next) {
+  for (task=vps[vp]->tasks; task; task=task->hh_vp.next) {
     ib_assume(vp == task->vp);
-    ib_assume(vps[vp].node->number == task->node);
+    ib_assume(vps[vp]->node->number == task->node);
     ret += __cp_poll(rail, poll, &(task->local_ibufs_list), &(task->local_ibufs_list_lock), task, 0);
   }
   return ret;
@@ -301,7 +307,6 @@ static inline int __cp_steal(struct sctk_rail_info_s* rail,struct sctk_ib_pollin
   int nb_found = 0;
   int max_retry = 1;
 
-retry:
   if (*list != NULL) {
     if (sctk_spinlock_trylock(lock) == 0) {
       if ( *list != NULL) {
@@ -339,10 +344,7 @@ retry:
         }
 #endif
         nb_found++;
-        /* We can retry once again */
-        if (nb_found < max_retry)
-          goto retry;
-        else goto exit;
+        goto exit;
       }
       sctk_spinlock_unlock(lock);
     }
@@ -352,25 +354,28 @@ exit:
   return nb_found;
 }
 
-#define STEAL_CURRENT_NODE(x) do {  \
-  numa = &numas[task_node_number]; \
+#define STEAL_CURRENT_NODE() do {  \
+  numa = numas[task_node_number]; \
   {\
-    CDL_FOREACH(&vps[vp], tmp_vp) { \
-      for (task=tmp_vp->tasks; task; task=task->hh_vp.next) { \
-        nb_found += __cp_steal(rail, poll, x, &(task->local_ibufs_list_lock), task, stealing_task);  \
+    int loops = 0; \
+    CDL_FOREACH(numa->vps, tmp_vp) { \
+      /* for (task=tmp_vp->tasks; task; task=task->hh_vp.next) */{\
+      /* nb_found += __cp_steal(rail, poll, &(task->local_ibufs_list), &(task->local_ibufs_list_lock), task, stealing_task);*/  \
+        loops++; \
       } \
+      if (loops >= 1) return 0; \
       /* Return if message stolen */  \
       if (nb_found) return nb_found;  \
     }\
   } \
 } while (0)
 
-#define STEAL_OTHER_NODE(x) do { \
-  numa = &numas[(rand_r(&seed) + task_node_number)%numa_registered]; \
+#define STEAL_OTHER_NODE() do { \
+  numa = numas[(rand_r(&seed) + task_node_number)%numa_registered]; \
   {\
     CDL_FOREACH(numa->vps, tmp_vp) {  \
       for (task=tmp_vp->tasks; task; task=task->hh_vp.next) { \
-        nb_found += __cp_steal(rail, poll, x, &(task->local_ibufs_list_lock), task, stealing_task);  \
+        nb_found += __cp_steal(rail, poll, &(task->local_ibufs_list), &(task->local_ibufs_list_lock), task, stealing_task);  \
       } \
     } \
   } \
@@ -385,55 +390,54 @@ int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll) {
   vp_t* tmp_vp;
   numa_t* numa;
 
+  if (vp < 0) return;
   CHECK_ONLINE_PROGRAM;
 
+  if (numas_copy == NULL) {
+    static lock = SCTK_SPINLOCK_INITIALIZER;
+    sctk_spinlock_lock(&lock);
+    assume(numa_number != -1);
+    if (numas_copy == NULL) {
+      numas_copy = malloc(sizeof(numa_t) * numa_number);
+      memcpy(numas_copy, numas, sizeof(numa_t) * numa_number);
+    }
+    sctk_spinlock_unlock(&lock);
+  }
+
   /* XXX: Not working with oversubscribing */
-  stealing_task = vps[vp].tasks;
+  stealing_task = vps[vp]->tasks;
 
   /* First, try to steal from the same NUMA node*/
-  STEAL_CURRENT_NODE(&task->local_ibufs_list);
+  numa = numas_copy[task_node_number];
+  {
+    CDL_FOREACH(numa->vps, tmp_vp) {
+      for (task=tmp_vp->tasks; task; task=task->hh_vp.next) {
+        nb_found += __cp_steal(rail, poll, &(task->local_ibufs_list), &(task->local_ibufs_list_lock), task, stealing_task);
+      }
+      /* Return if message stolen */
+      if (nb_found) return nb_found;
+    }
+  }
 
-  /* Secondly, try to steal from another NUMA node  */
-  STEAL_OTHER_NODE(&task->local_ibufs_list);
+#if 1
+  int random = rand_r(&seed) % numa_registered;
+  numa = numas_copy[random];
+  {
+    CDL_FOREACH(numa->vps, tmp_vp) {
+      for (task=tmp_vp->tasks; task; task=task->hh_vp.next) {
+        nb_found += __cp_steal(rail, poll, &(task->local_ibufs_list), &(task->local_ibufs_list_lock), task, stealing_task);
+      if (nb_found) return nb_found;
+      }
+    }
+  }
+#endif
+
   return nb_found;
 }
 
 #define CHECK_IS_READY(x)  do {\
   if (task->ready != 1) return 0; \
 }while(0);
-
-void sctk_ib_cp_block_task(int target_task, sctk_request_t *request) {
-  sctk_ib_cp_task_t *task = NULL;
-
-  /* XXX: Do not support thread migration */
-  HASH_FIND(hh_all,all_tasks,&target_task, sizeof(int),task);
-  if (!task) {
-    sctk_nodebug("Indirect message!!");
-    /* We return without error -> indirect message that we need to handle */
-    return;
-  }
-  ib_assume(task);
-
-  sctk_nodebug("Wait message from %d %d %p", request->header.glob_source,
-      target_task, &vps[task->vp].pending_nb);
-  /* We fist call the polling function */
-  sctk_network_poll_cq ();
-
-  int i=0;
-  while (OPA_load_int(&vps[task->vp].pending_nb) <= 0 ) {
-    i++;
-    /* We sometimes poll the polling function to retreive messages
-     * from the IB network card */
-    if (i > 10) {
-      sctk_perform_all ();
-      sctk_network_poll_cq ();
-      i=0;
-    }
-    /* We relax the CPU for a while */
-     sctk_cpu_relax();
-  }
-  sctk_nodebug("Message for task %d received", target_task);
-}
 
 int sctk_ib_cp_handle_message(sctk_rail_info_t* rail,
     sctk_ibuf_t *ibuf, int dest_task, int target_task) {

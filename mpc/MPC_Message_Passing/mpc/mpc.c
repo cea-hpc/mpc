@@ -247,11 +247,12 @@ void sctk_mpc_perform_messages(MPC_Request * request){
   struct sctk_internal_ptp_s *recv_ptp;
   struct sctk_internal_ptp_s *send_ptp;
   int remote_process;
+  int task_id;
 
   sctk_perform_messages_find_ptp_from_request(request,
-      &recv_ptp, &send_ptp, &remote_process);
+      &recv_ptp, &send_ptp, &remote_process, &task_id);
 
-  sctk_perform_messages(request, recv_ptp, send_ptp, remote_process);
+  sctk_perform_messages(request, recv_ptp, send_ptp, remote_process, task_id);
 }
 
 static inline int sctk_mpc_completion_flag(MPC_Request * request){
@@ -2693,26 +2694,14 @@ __MPC_Waitall (mpc_msg_count count,
 	       MPC_Status array_of_statuses[])
 {
   int i;
-#if 0
   int flag = 1;
-#endif
+  double start, end;
+  int show = 1;
+
+  sctk_nodebug ("waitall count %d\n", count);
+  start = MPC_Wtime();
 
   for (i = 0; i < count; i++) {
-    MPC_Status *status;
-    if(array_of_statuses != NULL){
-      status = &(array_of_statuses[i]);
-    } else {
-      status = MPC_STATUS_IGNORE;
-    }
-
-    __MPC_Wait(&array_of_requests[i], status);
-  }
-  MPC_ERROR_SUCESS();
-#if 0
-  sctk_nodebug ("waitall count %d\n", count);
-
-  for (i = 0; i < count; i++)
-  {
     int tmp_flag = 0;
     MPC_Status *status;
     MPC_Request *request;
@@ -2731,7 +2720,6 @@ __MPC_Waitall (mpc_msg_count count,
 
     flag = flag & tmp_flag;
   }
-
   if (flag == 1) MPC_ERROR_SUCESS();
 
   /* XXX: Waitall has been ported for using wait_for_value_and_poll
@@ -2747,7 +2735,6 @@ __MPC_Waitall (mpc_msg_count count,
      (void(*)(void*))wfv_waitall,(void*)&wfv);
 
   MPC_ERROR_SUCESS ();
-#endif
 }
 
 int

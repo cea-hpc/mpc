@@ -345,134 +345,58 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,
   }
 }
 
-#define MAX_TASKS_ALLOWED 1
 sctk_spinlock_t polling_lock = SCTK_SPINLOCK_INITIALIZER;
 /* Count how many times the vp is entered to the polling function. We
  * allow recursive calls to the polling function */
-__thread int recursive_polling = 0;
 
-void  sctk_network_poll_all_cq (sctk_rail_info_t* rail, sctk_ib_polling_t* poll) {
+static void  sctk_network_poll_all_cq (sctk_rail_info_t* rail, sctk_ib_polling_t* poll) {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
   LOAD_DEVICE(rail_ib);
 
   /* Only one task is allowed to poll new messages from QP */
-  if ( recursive_polling || (sctk_spinlock_trylock(&polling_lock) == 0) )
+  if ( sctk_spinlock_trylock(&polling_lock) == 0 )
   {
-    recursive_polling++;
     /* Poll received messages */
     sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, poll, sctk_network_poll_recv);
     /* Poll sent messages */
     sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, poll, sctk_network_poll_send);
-    recursive_polling--;
     /* Release the lock if this is the end of the recursive polling */
-    if (recursive_polling == 0) {
-      sctk_spinlock_unlock(&polling_lock);
-    }
+    sctk_spinlock_unlock(&polling_lock);
   }
 
   sctk_ib_cp_poll_global_list(rail, poll);
 }
 
-void sctk_network_poll_all_and_steal(sctk_rail_info_t *rail, struct sctk_ib_polling_s *poll) {
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  LOAD_CONFIG(rail_ib);
-  int steal = config->ibv_steal;
-
-  /* Poll the completion queues */
-  POLL_INIT(poll);
-  sctk_network_poll_all_cq(rail, poll);
-
-  POLL_INIT(poll);
-  /* Poll collective list */
-//  sctk_ib_cp_poll_global_list(rail, poll);
-  /* Poll PTP list*/
-  sctk_ib_cp_poll(rail, poll);
-
-#if 0
-  if (poll->recv_found_own == 0 && steal > 1){
-    /* If no message has been found -> steal*/
-    sctk_ib_cp_steal(rail, poll);
-  }
-#endif
-}
-
-static void sctk_network_poll_remote_process(sctk_rail_info_t* rail, int remote_process) {
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  int ret;
-  struct sctk_ib_polling_s poll;
-  POLL_INIT(&poll);
-
-  sctk_network_poll_all_and_steal(rail, &poll);
-
-#if 0
-  /* If the dest is the same process than the current process */
-  if (remote_process == sctk_process_rank) {
-    sctk_ib_qp_t *remote;
-    sctk_ib_data_t *route_data;
-    sctk_route_table_t *route =  sctk_get_route_to_process_no_ondemand(remote_process, rail);
-    ib_assume(route);
-
-    route_data=&route->data.ib;
-    remote=route_data->remote;
-
-    /* Poll messages fistly on RDMA. If no message has been found,
-     * we continue to poll SR channel */
-    ret = sctk_ib_rdma_eager_poll_remote(rail_ib, remote);
-    if (ret != REORDER_FOUND_EXPECTED) {
-      sctk_network_poll_all_and_steal(rail, &poll);
-    }
-  } else {
-    /* Else we simply pool all other channels */
-    sctk_network_poll_all_and_steal(rail, &poll);
-  }
-#endif
-}
+static void
+sctk_network_notify_recv_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){ }
 
 static void
-sctk_network_notify_recv_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
-//  int remote_task = sctk_get_comm_world_rank (msg->tail.request->header.communicator,
-//      msg->tail.request->header.source);
-//  int remote_process = sctk_get_process_rank_from_task_rank(remote_task);
-//  sctk_network_poll_remote_process(rail, remote_process);
-
-}
-
-static void
-sctk_network_notify_matching_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
-  /* POLLING */
-  /* XXX: do not add polling here */
-}
+sctk_network_notify_matching_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){ }
 
 /* WARNING: This function can be called with dest == sctk_process_rank */
 static void
-sctk_network_notify_perform_message_ib (int dest, sctk_rail_info_t* rail){
+sctk_network_notify_perform_message_ib (int remote_process, int remote_task_id, sctk_rail_info_t* rail){
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  LOAD_CONFIG(rail_ib);
+  int ret;
+  struct sctk_ib_polling_s poll;
 
-  sctk_network_poll_remote_process(rail, dest);
+  POLL_INIT(&poll);
+  sctk_network_poll_all_cq(rail, &poll);
+  POLL_INIT(&poll);
+  sctk_ib_cp_poll(rail, &poll);
 }
 
-__thread int toto = 0;
 static void
 sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  int ret;
+  LOAD_CONFIG(rail_ib);
   struct sctk_ib_polling_s poll;
-  POLL_INIT(&poll);
-  SCTK_PROFIL_START(ib_tst);
 
-  /* POLLING */
-  sctk_ib_rdma_eager_walk_remotes(rail_ib, sctk_ib_rdma_eager_poll_remote, &ret);
-  if (ret != REORDER_FOUND_EXPECTED) {
-    sctk_network_poll_all_and_steal(rail, &poll);
+  if (config->ibv_steal > 1) {
+    sctk_ib_cp_steal(rail, &poll);
   }
-
-#if 0
-  if ( (poll.recv_found_own == 0) && (poll.recv_found_other == 0) )  {
-    toto++;
-    if (toto > 10) usleep(150);
-  } else toto = 0;
-#endif
-  SCTK_PROFIL_END(ib_tst);
 }
 
 static void
@@ -480,13 +404,11 @@ sctk_network_notify_any_source_message_ib (sctk_rail_info_t* rail){
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   int ret;
   struct sctk_ib_polling_s poll;
-  POLL_INIT(&poll);
 
-  /* POLLING */
-//  sctk_ib_rdma_eager_walk_remotes(rail_ib, sctk_ib_rdma_eager_poll_remote, &ret);
-//  if (ret != REORDER_FOUND_EXPECTED) {
-    sctk_network_poll_all_and_steal(rail, &poll);
-//  }
+  POLL_INIT(&poll);
+  sctk_network_poll_all_cq(rail, &poll);
+  POLL_INIT(&poll);
+  sctk_ib_cp_poll(rail, &poll);
 }
 
 static void
@@ -520,8 +442,8 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t* rail){
   /* Init Proctection Domain */
   sctk_ib_pd_init(device);
   /* Init Completion Queues */
-  device->send_cq = sctk_ib_cq_init(device, rail_ib->config);
-  device->recv_cq = sctk_ib_cq_init(device, rail_ib->config);
+  device->send_cq = sctk_ib_cq_init(device, rail_ib->config, NULL);
+  device->recv_cq = sctk_ib_cq_init(device, rail_ib->config, NULL);
   /* Init SRQ */
   srq_attr = sctk_ib_srq_init_attr(rail_ib);
   sctk_ib_srq_init(rail_ib, &srq_attr);

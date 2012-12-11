@@ -269,7 +269,7 @@ typedef struct sctk_message_to_copy_s{
   void sctk_perform_messages(sctk_request_t* request,
     struct sctk_internal_ptp_s *recv_ptp,
     struct sctk_internal_ptp_s *send_ptp,
-    int remote_process);
+    int remote_process, int task_id);
 
   void sctk_init_header (sctk_thread_ptp_message_t *tmp, const int myself,
 			 sctk_message_type_t msg_type, void (*free_memory)(void*),
@@ -346,7 +346,7 @@ typedef struct sctk_message_to_copy_s{
       sctk_request_t* request,
       struct sctk_internal_ptp_s **recv_ptp,
       struct sctk_internal_ptp_s **send_ptp,
-      int *remote_process);
+      int *remote_process, int *task_id);
 
   sctk_reorder_list_t * sctk_ptp_get_reorder_from_destination(int task);
 
