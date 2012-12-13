@@ -300,7 +300,7 @@ We propose several solutions to ease the removal of global variables:
 In this mode, the compiler will warn you about every global variable declared in the program.
 \item Use the option \texttt{-fmpc-privatize} to automatically privatize the global variables.
 In this mode, every global variable is duplicated for every MPI task such as the code can run correctly with MPC.
-Note the application has to be compiled as a dynamic library for this solution to work.
+Note than in versions older than 2.4.0, the application has to be compiled as a dynamic library for this solution to work.
 \end{enumerate}
 
 
@@ -328,36 +328,8 @@ with the compiler drivers \texttt{mpc\_cc} (C), \texttt{mpc\_cxx} (C++) or \text
 \paragraph{}
 The OpenMP standard proposes a directive to create \emph{thread-private} variables.
 The MPC implementation follows the standard and supports this feature.
-Nevertheless, for this feature to work, the application has to be compiled as a dynamic library.
 
-Here are a few steps to compile your program as a dynamic library.
-\begin{enumerate}
-\item change the name of the \texttt{main} of your program to \texttt{realmain}
-\item compile your program to \texttt{.o} with the \texttt{-fPIC} option\\
-\verb!mpc_cc -fPIC -o prog.o -c prog.c!
-\item transform your \texttt{.o} into a dynamic library\\
-\verb!mpc_cc -shared -Wl,-soname,libprog.so -o libprog.so prog.o!
-\item compile the file \texttt{main.c} which should call the function \texttt{realmain} located
-in the dynamic library\\
-\verb!mpc_cc -o prog_exec main.c -L. -lprog!
-\item run your program specifying where is your dynamic library. If your program
-executable and the dynamic library are in the current directory, you can use the command\\
-\verb!LD_LIBRARY_PATH=. mpc_run ./prog_exec!
-\end{enumerate}
-
-A typical \texttt{main.c} file should look like this.
-\begin{lstlisting}[language=c]
-#include "mpc.h"
-
-int realmain (int argc, char **argv) ;
-
-int main (int argc, char **argv)
-{
-  int return_value = 0 ;
-  return_value = realmain(argc,argv) ;
-  return return_value ;
-}
-\end{lstlisting}
+For version older than 2.4.0 you need to build you program as a dynamic library.
 
 %%%% Threads %%%%
 \subsection{Threads}
