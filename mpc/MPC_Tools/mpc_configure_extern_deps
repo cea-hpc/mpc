@@ -186,13 +186,12 @@ sctk_internal_setup_lib_hwloc()
 			fi
 
 			#setup rpaths and -L
-			if [ -e "${HWLOC_USER_PREFIX}/lib" ]; then
-				SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${HWLOC_USER_PREFIX}/lib -L${HWLOC_USER_PREFIX}/lib"
-				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib/libhwloc.so"
-			fi
-			if [ -e "${HWLOC_USER_PREFIX}/lib64" ]; then
+			if [ -e "${HWLOC_USER_PREFIX}/lib64/libhwloc.so" ]; then
 				SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${HWLOC_USER_PREFIX}/lib64 -L${HWLOC_USER_PREFIX}/lib64"
 				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib64/libhwloc.so"
+			elif [ -e "${HWLOC_USER_PREFIX}/lib/libhwloc.so" ]; then
+				SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${HWLOC_USER_PREFIX}/lib -L${HWLOC_USER_PREFIX}/lib"
+				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib/libhwloc.so"
 			fi
 		fi
 	fi
@@ -262,13 +261,12 @@ sctk_internal_setup_lib_openpa()
 			fi
 
 			#setup rpaths and -L
-			if [ -e "${OPENPA_USER_PREFIX}/lib" ]; then
-				SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENPA_USER_PREFIX}/lib -L${OPENPA_USER_PREFIX}/lib"
-				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENPA_USER_PREFIX}/lib/libopa.a"
-			fi
-			if [ -e "${OPENPA_USER_PREFIX}/lib64" ]; then
+			if [ -e "${OPENPA_USER_PREFIX}/lib64/libopa.a" ]; then
 				SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENPA_USER_PREFIX}/lib64 -L${OPENPA_USER_PREFIX}/lib64"
 				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENPA_USER_PREFIX}/lib64/libopa.a"
+			elif [ -e "${OPENPA_USER_PREFIX}/lib/libopa.a" ]; then
+				SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENPA_USER_PREFIX}/lib -L${OPENPA_USER_PREFIX}/lib"
+				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENPA_USER_PREFIX}/lib/libopa.a"
 			fi
 		fi
 	fi
@@ -319,27 +317,26 @@ SCTK_CHECK_LIB_OPENPA()
 #   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS , OPENIB_IS_SETUP
 sctk_internal_setup_lib_openib()
 {
-  if [ "$OPENIB_IS_SETUP" != "yes" ]; then
-    #Check candidate prefix for OpenIB
-    if [ -e "${OPENIB_USER_PREFIX}/include/infiniband/verbs.h" ]; then
-      SCTK_CFLAGS="${SCTK_CFLAGS} -I${OPENIB_USER_PREFIX}/include/"
-    else
-      error "Could not locate infiniband/verbs.h header in directory ${OPENIB_USER_PREFIX}/include/"
-    fi
+	if [ "$OPENIB_IS_SETUP" != "yes" ]; then
+		#Check candidate prefix for OpenIB
+		if [ -e "${OPENIB_USER_PREFIX}/include/infiniband/verbs.h" ]; then
+			SCTK_CFLAGS="${SCTK_CFLAGS} -I${OPENIB_USER_PREFIX}/include/"
+		else
+			error "Could not locate infiniband/verbs.h header in directory ${OPENIB_USER_PREFIX}/include/"
+		fi
 
-    #setup rpaths and -L
-    if [ -e "${OPENIB_USER_PREFIX}/lib" ]; then
-      SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENIB_USER_PREFIX}/lib -L${OPENIB_USER_PREFIX}/lib"
-      SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENIB_USER_PREFIX}/lib/libibverbs.so"
-    fi
-    if [ -e "${OPENIB_USER_PREFIX}/lib64" ]; then
-      SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENIB_USER_PREFIX}/lib64 -L${OPENIB_USER_PREFIX}/lib64"
-      SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENIB_USER_PREFIX}/lib64/libibverbs.so"
-    fi
-  fi
+		#setup rpaths and -L
+		if [ -e "${OPENIB_USER_PREFIX}/lib64/libibverbs.so" ]; then
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENIB_USER_PREFIX}/lib64 -L${OPENIB_USER_PREFIX}/lib64"
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENIB_USER_PREFIX}/lib64/libibverbs.so"
+		elif [ -e "${OPENIB_USER_PREFIX}/lib/libibverbs.so" ]; then
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENIB_USER_PREFIX}/lib -L${OPENIB_USER_PREFIX}/lib"
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENIB_USER_PREFIX}/lib/libibverbs.so"
+		fi
+	fi
 
-  #mark as setup
-  OPENIB_IS_SETUP="yes"
+	#mark as setup
+	OPENIB_IS_SETUP="yes"
 }
 
 # Setup vars to use lib openib
@@ -351,25 +348,23 @@ sctk_internal_setup_lib_openib()
 #   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS
 SCTK_CHECK_LIB_OPENIB()
 {
-  # if prefix set
-  if [ "$OPENIB_USER_PREFIX" != "" ]; then
-    #Lets check the provided prefix for correctness
-    sctk_internal_setup_lib_openib;
-  fi
+	# if prefix set
+	if [ "$OPENIB_USER_PREFIX" != "" ]; then
+		#Lets check the provided prefix for correctness
+		sctk_internal_setup_lib_openib;
+	fi
 
-  begin_section "Check OpenIB:"
+	begin_section "Check OpenIB:"
 
-  # Lets ty to detec OpenIB in the current environement
-  SCTK_CHECK_HEADER_NOFAIL infiniband/verbs.h
-  if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
-    SCTK_CHECK_OPTION "-DMPC_USE_INFINIBAND"
-    SCTK_CHECK_LDOPTION "-libverbs"
-  fi
-
-
+	# Lets ty to detec OpenIB in the current environement
+	SCTK_CHECK_HEADER_NOFAIL infiniband/verbs.h
+	if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
+		SCTK_CHECK_OPTION "-DMPC_USE_INFINIBAND"
+		SCTK_CHECK_LDOPTION "-libverbs"
+	fi
 
 	SCTK_NET_LIST="$SCTK_NET_LIST ib"
-  end_section
+	end_section
 }
 
 #setup libxml2 by using given prefix
