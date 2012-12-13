@@ -184,7 +184,7 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_uma_init(void)
 SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init_node(int id)
 {
 	//errors and debug
-	assume_m(id <= SCTK_MAX_NUMA_NODE,"Caution, you get more node than supported by allocator. Limit is setup by SCTK_MAX_NUMA_NODE macro in sctk_alloc_posix.c.");
+	assume_m(id <= SCTK_MAX_NUMA_NODE,"Caution, you get more node than supported by allocator. Limit is setup by SCTK_MAX_NUMA_NODE macro in sctk_alloc_common.h.");
 	SCTK_NO_PDEBUG("Init memory source id = %d , MAX_NUMA_NODE = %d",id,SCTK_MAX_NUMA_NODE);
 
 	SCTK_NO_PDEBUG("Allocator init phase : Default");

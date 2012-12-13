@@ -126,7 +126,7 @@ extern "C"
 //if have NUMA support
 #ifdef HAVE_HWLOC
 /** Define the maximum number of numa node supported. **/
-#define SCTK_MAX_NUMA_NODE 4
+#define SCTK_MAX_NUMA_NODE 128
 #else
 /** Define the maximum number of numa node supported, one if no numa support. **/
 #define SCTK_MAX_NUMA_NODE 1

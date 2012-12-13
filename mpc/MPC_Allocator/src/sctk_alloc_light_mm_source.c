@@ -561,3 +561,47 @@ struct sctk_alloc_mm_source_light * sctk_alloc_get_mm_source_light(struct sctk_a
 	else
 		return NULL;
 }
+
+/************************* FUNCTION ************************/
+/** Need to be tested. **/
+void sctk_alloc_mm_source_light_migrate(struct sctk_alloc_mm_source_light * light_source,int target_numa_node)
+{
+	//vars
+	#ifdef HAVE_HWLOC
+	struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc;
+	#endif //HAVE_HWLOC
+	
+	//errors
+	assert(light_source != NULL);
+
+	#ifdef HAVE_HWLOC
+	//if migration is disabled
+	if ( ! sctk_alloc_config()->numa_migration )
+		return;
+
+	//if already on that numa node
+	if (target_numa_node == light_source->numa_node)
+		return;
+
+	//if unbind to unknown numa node
+	if (target_numa_node == -1)
+	{
+		light_source->numa_node = -1;
+		return;
+	}
+
+	//take the lock
+	sctk_alloc_spinlock_lock(&light_source->spinlock);
+
+	//loop on all pages to remap
+	free_bloc = light_source->cache;
+	while (free_bloc != NULL)
+	{
+		sctk_alloc_migrate_numa_mem(free_bloc,free_bloc->size,target_numa_node);
+		free_bloc = free_bloc->next;
+	}
+
+	//unlock
+	sctk_alloc_spinlock_unlock(&light_source->spinlock);
+	#endif //HAVE_HWLOC
+}
