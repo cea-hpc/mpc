@@ -34,11 +34,6 @@ struct sctk_runtime_config;
 /* reset functions */
 void sctk_runtime_config_struct_init_allocator(void * struct_ptr);
 void sctk_runtime_config_struct_init_launcher(void * struct_ptr);
-void sctk_runtime_config_struct_init_net_driver_fake(void * struct_ptr);
-void sctk_runtime_config_struct_init_net_driver(void * struct_ptr);
-void sctk_runtime_config_struct_init_net_driver_config(void * struct_ptr);
-void sctk_runtime_config_struct_init_net_rail(void * struct_ptr);
-void sctk_runtime_config_struct_init_networks(void * struct_ptr);
 void sctk_runtime_config_struct_init_profiler(void * struct_ptr);
 void sctk_runtime_config_reset(struct sctk_runtime_config * config);
 

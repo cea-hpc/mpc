@@ -210,7 +210,7 @@
 		<xsl:text>&#09;/* sctk_runtime_config */&#10;</xsl:text>
 		<xsl:text>&#09;{"sctk_runtime_config" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config) , NULL , sctk_runtime_config_reset},&#10;</xsl:text>
 		<xsl:text>&#09;{"modules"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config,modules)  , sizeof(struct sctk_runtime_config_modules) , "sctk_runtime_config_modules" , NULL},&#10;</xsl:text>
-		<xsl:text>&#09;{"networks"    , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config,networks)  , sizeof(struct sctk_runtime_config_struct_networks), "sctk_runtime_config_struct_networks" , NULL},&#10;</xsl:text>
+		<!--<xsl:text>&#09;{"networks"    , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config,networks)  , sizeof(struct sctk_runtime_config_struct_networks), "sctk_runtime_config_struct_networks" , NULL},&#10;</xsl:text>-->
 	</xsl:template>
 
 	<!-- ********************************************************* -->
