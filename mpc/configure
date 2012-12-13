@@ -167,6 +167,7 @@ Optional features:
   --enable-debug                   Enable MPC internal debugging features
   --enable-debug-messages          Enable MPC debug message printing in verbose level 3
   --enable-shell-colors            Enable support of colors in shell
+  --enable-valgrind-memcheck       Enable support of valgrind memcheck in MPC_Allocator
 
 Module selection:
 EOF
@@ -222,6 +223,7 @@ SCTK_DEBUG_MESSAGES_DISABLED="0"
 SCTK_CC_DEP="-M"
 SCTK_CFLAGS_NON_GNU=""
 SCTK_MPC_MMAP="0"
+SCTK_VALGRIND_MEMCHECK='0'
 HWLOC_USER_PREFIX=""
 OPENPA_USER_PREFIX=""
 OPENIB_USER_PREFIX=""
@@ -311,6 +313,12 @@ for arg in "$@" ; do
     ;;
     --disable-shm)
     SCTK_SHM="0"
+    ;;
+    --enable-valgrind-memcheck)
+    SCTK_VALGRIND_MEMCHECK='1'
+    ;;
+    --disable-valgrind-memcheck)
+    SCTK_VALGRIND_MEMCHECK='0'
     ;;
     --enable-posix-alloc)
     SCTK_POSIX_ALLOC='1'

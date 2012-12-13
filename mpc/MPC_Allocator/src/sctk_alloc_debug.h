@@ -77,7 +77,8 @@
 /************************** MACROS *************************/
 #ifdef HAVE_MEMCHECK_H
 	#include <valgrind/valgrind.h>
-	#define SCTK_ALLOC_MMCHECK_NOACCESS(ptr,size)     sVALGRIND_MAKE_MEM_NOACCESS((ptr),(size))
+	#include <valgrind/memcheck.h>
+	#define SCTK_ALLOC_MMCHECK_NOACCESS(ptr,size)     VALGRIND_MAKE_MEM_NOACCESS((ptr),(size))
 	#define SCTK_ALLOC_MMCHECK_DEFINED(ptr,size)      VALGRIND_MAKE_MEM_DEFINED((ptr),(size))
 	#define SCTK_ALLOC_MMCHECK_UNDEFINED(ptr,size)    VALGRIND_MAKE_MEM_UNDEFINED((ptr),(size))
 	#define SCTK_ALLOC_MMCHECK_DISABLE_REPORT()       do {sctk_alloc_gbl_notify_memcheck++;assert(sctk_alloc_gbl_notify_memcheck >= 0);VALGRIND_DISABLE_ERROR_REPORTING;} while(0)
