@@ -38,8 +38,6 @@ struct sctk_runtime_config_struct_allocator
 	size_t realloc_threashold;
 	/**Permit to enable of disable NUMA support in MPC Allocator.**/
 	bool numa;
-	/**Define the scope the posix allocator, can be : process | vp | thread.**/
-	char * scope;
 	/**If true, enable usage of abort() on free error, otherwise try to continue by skipping.**/
 	bool strict;
 	/**Maximum amount of memory to keep in memory sources (one per NUMA node). Use 0 to disable cache, huge value to keep all.**/

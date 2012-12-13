@@ -92,7 +92,7 @@ void sctk_runtime_config_override_by_getenv(struct sctk_runtime_config * config)
 void sctk_runtime_config_validate_allocator(struct sctk_runtime_config * config)
 {
 	/* vars */
-	const char * scope = config->modules.allocator.scope;
+	//const char * scope = config->modules.allocator.scope;
 
 	/* check some integer options */
 	/** @TODO Maybe add constrain checker in config-meta.xml format (field constrain='...') **/
@@ -101,8 +101,9 @@ void sctk_runtime_config_validate_allocator(struct sctk_runtime_config * config)
 	         config->modules.allocator.realloc_factor);
 
 	/* check scope option */
-	assume_m(scope != NULL,"Invalid NULL or empty value for allocator.scope.");
+	/* TODO re-enable this when implemented */
+	/*assume_m(scope != NULL,"Invalid NULL or empty value for allocator.scope.");
 	if (strcmp(scope,"process") != 0 && strcmp(scope,"thread") != 0 && strcmp(scope,"vp") != 0)
-		sctk_fatal("Invalid configuration value for allocator.scope : %s, require (process | thread | vp)",scope);
+		sctk_fatal("Invalid configuration value for allocator.scope : %s, require (process | thread | vp)",scope);*/
 }
 

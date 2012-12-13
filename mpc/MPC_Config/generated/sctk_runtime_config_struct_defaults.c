@@ -36,7 +36,6 @@ void sctk_runtime_config_struct_init_allocator(void * struct_ptr)
 	obj->realloc_factor = 2;
 	obj->realloc_threashold = sctk_runtime_config_map_entry_parse_size("50MB");
 	obj->numa = true;
-	obj->scope = "thread";
 	obj->strict = false;
 	obj->keep_mem = sctk_runtime_config_map_entry_parse_size("500MB");
 	obj->keep_max = sctk_runtime_config_map_entry_parse_size("40MB");
