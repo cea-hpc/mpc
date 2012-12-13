@@ -438,6 +438,12 @@ sctk_def_node_nb (char *arg)
   sctk_node_nb_val = atoi (arg);
 }
 
+int
+sctk_get_node_nb()
+{
+  return sctk_node_nb_val;
+}
+
   static void
 sctk_def_enable_smt (char *arg)
 {
