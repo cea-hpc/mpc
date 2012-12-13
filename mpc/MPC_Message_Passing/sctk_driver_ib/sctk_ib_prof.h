@@ -30,7 +30,6 @@
 
 #include <sctk_spinlock.h>
 #include <sctk_debug.h>
-#include <mpc_profiler.h>
 #include <sctk_config.h>
 #include "opa_primitives.h"
 #include "sctk_stdint.h"
@@ -47,6 +46,7 @@
 //#define SCTK_IB_MEM_PROF
 
 #ifdef SCTK_IB_PROF
+#include <mpc_profiler.h>
 #define PROF_DECL(type, name) type name
 
 extern __thread struct sctk_ib_prof_s * sctk_ib_profiler;
@@ -94,10 +94,14 @@ double sctk_ib_prof_get_time_stamp();
 #define PROF_INC_RAIL_IB(x,y) (void)(0)
 #define PROF_INC(x,y) (void)(0)
 #define PROF_INC_RAIL_IB(x,y) (void)(0)
+#define PROF_DECR(r,x,y) (void)(0)
+#define PROF_ADD(r,x,y) (void)(0)
 #define sctk_ib_prof_init(x) (void)(0)
 #define sctk_ib_prof_init_task(x, y) (void)(0)
 #define sctk_ib_prof_print(x) (void)(0)
 #define sctk_ib_prof_finalize(x) (void)(0)
+#define sctk_ib_prof_get_time_stamp() 0
+#define sctk_ib_prof_init_reference_clock() (void)(0)
 static double sctk_ib_prof_get_mem_used() {
   return 0;
 }
