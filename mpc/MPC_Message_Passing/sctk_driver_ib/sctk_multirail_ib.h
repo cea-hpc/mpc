@@ -49,6 +49,7 @@ char sctk_network_is_ib_used();
 
 int sctk_network_ib_get_rail_data();
 int sctk_network_ib_get_rail_signalization();
+sctk_size_t sctk_network_memory_allocator_hook_ib (sctk_size_t size);
 #ifdef __cplusplus
 }
 #endif
