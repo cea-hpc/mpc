@@ -2,7 +2,8 @@
 # If default options, only put MODULE_NAME and VERSION_NAME
 # -> the corresponding configuration will be extracted from the
 # $(MODULE_NAME)/VERSIONS file
-mpc-gcc 440
+
+mpc-gcc 470
 mpc-gdb 7.5
 mpc-hydra 1.4.0
 mpc-hwloc 1.3
