@@ -107,6 +107,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_mmap_new_s
 SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_remap(struct sctk_alloc_macro_bloc * macro_bloc,sctk_size_t size);
 struct sctk_alloc_mm_source_light * sctk_alloc_get_mm_source_light(struct sctk_alloc_mm_source * source);
 SCTK_STATIC bool sctk_alloc_mm_source_light_keep(struct sctk_alloc_mm_source_light * light_source,sctk_size_t size,bool for_register);
+void sctk_alloc_mm_source_light_migrate(struct sctk_alloc_mm_source_light * light_source,int target_numa_node);
 
 /************************* FUNCTION ************************/
 //helpers
