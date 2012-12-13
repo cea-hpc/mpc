@@ -172,7 +172,7 @@
 			<xs:sequence>
 				<xs:element name="name" type="xs:string"/>
 				<xs:element name="modules" type="modules" minOccurs="0"/>
-				<xs:element name="networks" type="user_type_networks" minOccurs="0"/>
+				<!--<xs:element name="networks" type="user_type_networks" minOccurs="0"/>-->
 			</xs:sequence>
 		</xs:complexType>
 		<xsl:comment> ********************************************************* </xsl:comment>
