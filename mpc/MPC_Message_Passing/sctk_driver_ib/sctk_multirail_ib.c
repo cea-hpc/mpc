@@ -50,6 +50,10 @@ struct sctk_rail_info_s** sctk_network_get_rails() {
 #define IB_RAIL_DATA 0          /* Data rail */
 #define IB_RAIL_SIGNALIZATION 1 /* Signalization rail */
 
+TODO("The following value MUST be determined dynamically!!")
+#define IB_MEM_THRESHOLD_ALIGNED_SIZE (256*1024) /* RDMA threshold */
+#define IB_MEM_ALIGNMENT        (4096) /* Page size */
+
 /* Return which rail is used for MPI communications */
 int sctk_network_ib_get_rail_data() {
   assume(rails);
@@ -287,6 +291,14 @@ void sctk_network_finalize_task_multirail_ib (int rank){
     sctk_ib_prof_qp_finalize_task(rank);
   }
 }
+
+/************ MEMORY ALLOCATOR HOOK  ****************/
+sctk_size_t sctk_network_memory_allocator_hook_ib (sctk_size_t size){
+    if (size > IB_MEM_THRESHOLD_ALIGNED_SIZE ) {
+    return ( (size + (IB_MEM_ALIGNMENT-1) ) & ( ~ (IB_MEM_ALIGNMENT-1) ) );
+  }
+}
+
 
 
 #endif
