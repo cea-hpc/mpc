@@ -111,7 +111,6 @@ sctk_update_topology (
 
 	  hwloc_bitmap_copy(cpuset, pin_processor_bitmap);
   }
-  print_cpuset(cpuset);
   err = hwloc_topology_restrict(topology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
   assume(!err);
   hwloc_bitmap_free(cpuset);
@@ -208,7 +207,6 @@ sctk_restrict_topology ()
       hwloc_bitmap_or(cpuset, cpuset, set);
     }
     /* restrict the topology to physical CPUs */
-    print_cpuset(cpuset);
     err = hwloc_topology_restrict(topology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
     assume(!err);
     hwloc_bitmap_free(cpuset);
@@ -400,7 +398,9 @@ sctk_topology_init ()
 
   uname (&utsname);
 
-   sctk_print_topology (stderr);
+  if (!hwloc_bitmap_iszero(pin_processor_bitmap)) {
+    sctk_print_topology (stderr);
+  }
 }
 
 /*! \brief Destroy the topology module
