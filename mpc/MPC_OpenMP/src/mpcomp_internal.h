@@ -166,14 +166,6 @@ extern "C"
 	  int for_dyn_last_current;
 	  mpcomp_atomic_int_pad_t for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
 
-	  /* -- GUIDED FOR LOOP CONSTRUCT -- */
-	  sctk_spinlock_t lock_enter_for_guided[MPCOMP_MAX_ALIVE_FOR_GUIDED + 1]; 
-	  volatile int current_for_guided[MPCOMP_MAX_THREADS];
-	  volatile int nb_threads_entered_for_guided[MPCOMP_MAX_ALIVE_FOR_GUIDED + 1];
-	  volatile int nb_threads_exited_for_guided[MPCOMP_MAX_ALIVE_FOR_GUIDED + 1];
-	  volatile int nb_iterations_remaining[MPCOMP_MAX_ALIVE_FOR_GUIDED + 1];
-	  volatile int current_from_for_guided[MPCOMP_MAX_ALIVE_FOR_GUIDED + 1];
-
 	  /* ORDERED CONSTRUCT */
 	  volatile int next_ordered_offset; 
      } mpcomp_team_t;
