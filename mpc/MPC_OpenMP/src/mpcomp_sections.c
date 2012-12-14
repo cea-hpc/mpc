@@ -28,12 +28,13 @@
 /*
    This file contains all functions related to SECTIONS constructs in OpenMP
  */
-
+#if 0
 int
 __mpcomp_sections_begin (int nb_sections)
 {
-  mpcomp_thread_info_t *self;	/* Info on the current thread */
-  mpcomp_thread_info_t *father;	/* Info on the team */
+  not_implemented();
+  mpcomp_thread_info *self;	/* Info on the current thread */
+  mpcomp_thread_info *father;	/* Info on the team */
   int rank;
   int index;
   int num_threads;
@@ -49,7 +50,7 @@ __mpcomp_sections_begin (int nb_sections)
 
   /* Grab the thread info */
   /* TODO use TLS if available */
-  self = (mpcomp_thread_info_t *) sctk_thread_getspecific
+  self = (mpcomp_thread_info *) sctk_thread_getspecific
     (mpcomp_thread_info_key);
   sctk_assert (self != NULL);
 
@@ -175,6 +176,7 @@ __mpcomp_sections_begin (int nb_sections)
 int
 __mpcomp_sections_next ()
 {
+  not_implemented();
   mpcomp_thread_info_t *self;	/* Info on the current thread */
   mpcomp_thread_info_t *father;	/* Info on the team */
   long rank;
@@ -246,12 +248,14 @@ __mpcomp_sections_end ()
   /* TODO need a dedicated barrier re-initializing only values related to
      in-flight sections */
   /* FIXME use good barrier instead of OLD! */
+  not_implemented();
   __mpcomp_old_barrier ();
 }
 
 void
 __mpcomp_sections_end_nowait ()
 {
+  not_implemented();
   mpcomp_thread_info_t *self;	/* Info on the current thread */
   mpcomp_thread_info_t *father;	/* Info on the team */
   long rank;
@@ -327,6 +331,7 @@ void
 __mpcomp_start_sections_parallel_region (int arg_num_threads, void *(*func) (void *),
 				void *shared, int nb_sections )
 {
+  not_implemented();
   mpcomp_thread_info_t *current_info;
   int num_threads;
 
@@ -594,3 +599,4 @@ TODO("can we only reset sections-team info?")
 
   SCTK_PROFIL_END (__mpcomp_start_parallel_region);
 }
+#endif

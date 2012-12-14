@@ -27,6 +27,7 @@
 
 /* LIB FUNCTIONS */
 
+#if 0
 void
 omp_set_num_threads_ (int *num_threads)
 {
@@ -40,6 +41,7 @@ omp_set_num_threads__ (int *num_threads)
   sctk_nodebug ("Fortran: omp_set_num_threads__ %d", *num_threads);
   mpcomp_set_num_threads (*num_threads);
 }
+#endif
 
 int
 omp_get_num_threads_ ()
@@ -77,6 +79,7 @@ omp_get_thread_num__ ()
   return mpcomp_get_thread_num ();
 }
 
+#if 0
 int
 omp_get_num_procs_ ()
 {
@@ -150,6 +153,7 @@ omp_get_nested__ ()
 {
   return mpcomp_get_nested ();
 }
+#endif
 
 /* TIME FUNCTIONS */
 double
@@ -176,6 +180,7 @@ omp_get_wtick__ ()
   return mpcomp_get_wtick ();
 }
 
+#if 0
 /* LOCK FUNCTIONS */
 void
 omp_init_lock_ (omp_lock_t * lock)
@@ -297,3 +302,4 @@ omp_test_nest_lock__ (omp_nest_lock_t * lock)
 {
   return mpcomp_test_nest_lock( lock ) ;
 }
+#endif

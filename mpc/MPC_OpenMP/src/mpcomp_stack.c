@@ -21,69 +21,52 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include <mpcomp.h>
+#include <mpcomp_abi.h>
 #include "mpcomp_internal.h"
 #include <sctk_debug.h>
 
-/*
-   This file contains all synchronization functions related to OpenMP
- */
 
-/* TODO move these locks (atomic and critical) in a per-task structure:
-   - mpcomp_thread_info, (every instance sharing the same lock) 
-   - Key
-   - TLS if available
- */
-TODO("OpenMP: Anonymous critical and global atomic are not per-task locks")
-static sctk_spinlock_t global_atomic_lock = SCTK_SPINLOCK_INITIALIZER;
-static sctk_thread_mutex_t global_critical_lock =
-  SCTK_THREAD_MUTEX_INITIALIZER;
-
-//#warning "Wrong atomic behavior in case of OpenMP oversubscribing"
-INFO("Wrong atomic behavior in case of OpenMP oversubscribing")
-
-void
-__mpcomp_atomic_begin ()
+mpcomp_stack_t * __mpcomp_create_stack(int max_elements)
 {
-  sctk_spinlock_lock (&(global_atomic_lock));
+     mpcomp_stack_t *s;
+
+     s = (mpcomp_stack_t *) malloc(sizeof(mpcomp_stack_t));
+     s->elements = (mpcomp_node_t **) malloc(max_elements * sizeof(mpcomp_node_t *));
+     sctk_assert(s->elements != NULL);
+     s->max_elements = max_elements;
+     s->n_elements = 0; 
+
+     return s;
 }
 
-void
-__mpcomp_atomic_end ()
+int __mpcomp_is_stack_empty(mpcomp_stack_t *s)
 {
-  sctk_spinlock_unlock (&(global_atomic_lock));
+     return (s->n_elements == 0);
 }
 
-
-//#warning "Wrong critical behavior in case of OpenMP oversubscribing"
-INFO("Wrong critical behavior in case of OpenMP oversubscribing")
-
-void
-__mpcomp_anonymous_critical_begin ()
+void __mpcomp_push(mpcomp_stack_t *s, mpcomp_node_t *n)
 {
-  sctk_nodebug ("__mpcomp_anonymous_critical_begin: Before lock");
-  sctk_thread_mutex_lock (&global_critical_lock);
-  sctk_nodebug ("__mpcomp_anonymous_critical_begin: After lock");
+     if (s->n_elements == s->max_elements)
+	  exit(1);   /* Error */
+
+     s->elements[s->n_elements] = n;
+     s->n_elements++;
 }
 
-void
-__mpcomp_anonymous_critical_end ()
+mpcomp_node_t * __mpcomp_pop(mpcomp_stack_t *s)
 {
-  sctk_nodebug ("__mpcomp_anonymous_critical_end: Before unlock");
-  sctk_thread_mutex_unlock (&global_critical_lock);
-  sctk_nodebug ("__mpcomp_anonymous_critical_end: Before unlock");
+     mpcomp_node_t *n;
+
+     if (s->n_elements == 0)
+	  return NULL;
+     
+     n = s->elements[s->n_elements - 1];
+     s->n_elements--;
+
+     return n;
 }
 
-void
-__mpcomp_named_critical_begin (void **l)
+void __mpcomp_free_stack(mpcomp_stack_t *s)
 {
-  /* TODO check if l==NULL, then allocate memory and lock */
-  TODO("OpenMP: Named critical acts as anonymous critical")
-  sctk_thread_mutex_lock (&global_critical_lock);
-}
-
-void
-__mpcomp_named_critical_end (void **l)
-{
-  /* TODO unlock *l */
-  sctk_thread_mutex_unlock (&global_critical_lock);
+     free(s->elements);
 }
