@@ -49,6 +49,8 @@ extern "C"
 #define MPCOMP_MAX_ALIVE_FOR_DYN 	1023
 /* Maximum number of alive 'for guided' construct */
 #define MPCOMP_MAX_ALIVE_FOR_GUIDED 	1023
+/* Maximum number of alive 'sections/section' construct */
+#define MPCOMP_MAX_ALIVE_SECTIONS 7
 
 #define MPCOMP_NOWAIT_STOP_SYMBOL	(-2)
 #define MPCOMP_NOWAIT_STOP_CONSUMED	(-3)
@@ -160,7 +162,9 @@ extern "C"
 	  void *single_copyprivate_data;
 	  volatile int single_nb_threads_stopped;
 
-	  /* -- SECTION CONSTRUCT -- */
+	  /* -- SECTIONS CONSTRUCT -- */
+    int sections_last_current ;
+    mpcomp_atomic_int_pad_t sections_nb_threads_entered[MPCOMP_MAX_ALIVE_SECTIONS+1] ;
 
 	  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
 	  int for_dyn_last_current;
@@ -197,6 +201,11 @@ extern "C"
 
 	  /* -- SINGLE CONSTRUCT -- */
 	  int single_current;		/* Which 'single' construct did we already go through? */
+
+	  /* -- SECTIONS CONSTRUCT -- */
+    int sections_current ;		/* Which 'sections' construct did we already go through? */
+    int nb_sections ;
+    int previous_section ;
 
 	  /* LOOP CONSTRUCT */
 	  int loop_lb;		        /* Lower bound */
@@ -373,6 +382,13 @@ extern "C"
 	  team_info->single_copyprivate_data = NULL;
 	  team_info->single_nb_threads_stopped = 0;
 
+	  /* -- SECTIONS CONSTRUCT -- */
+	  team_info->sections_last_current = 0 ;
+	  for (i=0; i<MPCOMP_MAX_ALIVE_SECTIONS; i++)
+	       sctk_atomics_store_int(&(team_info->sections_nb_threads_entered[i].i), 0);
+	  sctk_atomics_store_int(&(team_info->sections_nb_threads_entered[MPCOMP_MAX_ALIVE_SECTIONS].i), 
+				 MPCOMP_NOWAIT_STOP_SYMBOL);
+
 	  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
 	  team_info->for_dyn_last_current = MPCOMP_MAX_ALIVE_FOR_DYN;
 	  for (i=0; i<MPCOMP_MAX_ALIVE_FOR_DYN; i++)
@@ -395,7 +411,14 @@ extern "C"
 	  t->done = 0;
 	  t->children_instance = instance;
 	  t->team = team_info;
+
+	  /* -- SINGLE CONSTRUCT -- */
 	  t->single_current = -1;
+
+	  /* -- SECTIONS CONSTRUCT -- */
+    t->sections_current = 0 ;
+    t->nb_sections = 0 ;
+    t->previous_section = 0 ;
 
 	  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
 	  t->tree_stack = NULL;

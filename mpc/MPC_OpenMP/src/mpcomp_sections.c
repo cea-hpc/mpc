@@ -28,6 +28,171 @@
 /*
    This file contains all functions related to SECTIONS constructs in OpenMP
  */
+
+     TODO(handle last_section in mpcomp.c)
+
+#if 1
+/* Return >0 to execute corresponding section.
+   Return 0 otherwise to leave sections construct
+   */
+int
+__mpcomp_sections_begin (int nb_sections)
+{
+  mpcomp_thread_t *t ;  /* Info on the current thread */
+  mpcomp_team_t *team_info ;    /* Info on the team */
+  int index ;
+  int num_threads ;
+  int nb_entered_threads ;
+
+  /* Quit if no sections */
+  if ( nb_sections < 0 ) {
+    return 0 ;
+  }
+
+  /* Handle orphaned directive (initialize OpenMP environment) */
+  __mpcomp_init() ;
+
+  /* Grab the thread info */
+  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+  sctk_assert( t != NULL ) ;
+
+  /* Number of threads in the current team */
+  num_threads = t->num_threads;
+
+  /* Store the total number of sections inside private thread info */
+  t->nb_sections = nb_sections ;
+
+  /* If alone in parallel region -> execute first section */
+  if ( num_threads == 1 ) {
+    t->previous_section = 1 ;
+    return 1 ;
+  }
+
+  /* Grab the current index for sections */
+  index = t->sections_current ;
+
+  /* If too far ==> Wait until the last thread of first in-flight sections has finished */
+  if ( sctk_atomics_load_int(
+        &(team_info->sections_nb_threads_entered[index].i) )
+      == MPCOMP_NOWAIT_STOP_SYMBOL ) {
+
+    while ( sctk_atomics_load_int(
+          &(team_info->sections_nb_threads_entered[index].i) )
+        == MPCOMP_NOWAIT_STOP_SYMBOL ) {
+      sctk_thread_yield() ;
+    }
+  }
+
+  /* Increase the value of the current sections index */
+  nb_entered_threads = sctk_atomics_fetch_and_incr_int(
+      &(team_info->sections_nb_threads_entered[index].i) ) ;
+
+  /* Between 1 to nb_sections => execute the corresponding section */
+  if ( nb_entered_threads < nb_sections ) {
+    return nb_entered_threads + 1 ;
+  }
+
+  /* Else, sections done, increment current sections index */
+
+  if ( nb_entered_threads == nb_sections + num_threads - 1 ) {
+    int previous_index ;
+
+    sctk_atomics_store_int(
+        &(team_info->sections_nb_threads_entered[index].i),
+        MPCOMP_NOWAIT_STOP_SYMBOL
+        ) ;
+
+    previous_index = (index-1+MPCOMP_MAX_ALIVE_SECTIONS+1)%(MPCOMP_MAX_ALIVE_SECTIONS+1) ;
+
+    sctk_atomics_store_int(
+        &(team_info->sections_nb_threads_entered[previous_index].i),
+        0
+        ) ;
+
+
+  }
+
+  t->sections_current = (index + 1)%(MPCOMP_MAX_ALIVE_SECTIONS+1) ;
+
+  return 0 ;
+
+}
+
+int
+__mpcomp_sections_next ()
+{
+  mpcomp_thread_t *t ;  /* Info on the current thread */
+  mpcomp_team_t *team_info ;    /* Info on the team */
+  int index ;
+  int num_threads ;
+  int nb_entered_threads ;
+
+  /* Grab the thread info */
+  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+  sctk_assert( t != NULL ) ;
+
+  /* Number of threads in the current team */
+  num_threads = t->num_threads;
+
+  /* If alone in parallel region -> execute next section or finish */
+  if ( num_threads == 1 ) {
+    t->previous_section++ ;
+    if ( t->previous_section <= t->nb_sections ) {
+      return t->previous_section ;
+    }
+    return 0 ;
+  }
+
+  /* Grab the current index for sections */
+  index = t->sections_current ;
+
+  /* Increase the value of the current sections index */
+  nb_entered_threads = sctk_atomics_fetch_and_incr_int(
+      &(team_info->sections_nb_threads_entered[index].i) ) ;
+
+  /* Between 1 to nb_sections => execute the corresponding section */
+  if ( nb_entered_threads < t->nb_sections ) {
+    return nb_entered_threads + 1 ;
+  }
+
+  /* Else, sections done, increment current sections index */
+
+  if ( nb_entered_threads == t->nb_sections + num_threads - 1 ) {
+    int previous_index ;
+
+    sctk_atomics_store_int(
+        &(team_info->sections_nb_threads_entered[index].i),
+        MPCOMP_NOWAIT_STOP_SYMBOL
+        ) ;
+
+    previous_index = (index-1+MPCOMP_MAX_ALIVE_SECTIONS+1)%(MPCOMP_MAX_ALIVE_SECTIONS+1) ;
+
+    sctk_atomics_store_int(
+        &(team_info->sections_nb_threads_entered[previous_index].i),
+        0
+        ) ;
+
+  }
+
+  t->sections_current = (index + 1)%(MPCOMP_MAX_ALIVE_SECTIONS+1) ;
+
+  return 0 ;
+
+}
+
+void
+__mpcomp_sections_end ()
+{
+  __mpcomp_barrier() ;
+}
+
+void
+__mpcomp_sections_end_nowait ()
+{
+}
+
+#endif
+
 #if 0
 int
 __mpcomp_sections_begin (int nb_sections)
