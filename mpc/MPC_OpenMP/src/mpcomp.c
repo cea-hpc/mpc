@@ -34,7 +34,7 @@
 #define SCTK_OMP_VERSION_MAJOR 3
 #define SCTK_OMP_VERSION_MINOR 0
 
-__thread void *sctk_openmp_thread_tls = NULL ;
+// __thread void *sctk_openmp_thread_tls = NULL ;
 
 /* Schedule type */
 static omp_sched_t OMP_SCHEDULE = 1;
@@ -399,6 +399,7 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
   /* Bypass if the parallel region contains only 1 thread */
   if (num_threads == 1)
   {
+    TODO(BUG for 1 thread w/ nested parallelism)
     sctk_nodebug( "__mpcomp_start_parallel_region: starting w/ 1 thread" ) ;
     t->num_threads = 1 ;
     t->rank = 0 ;

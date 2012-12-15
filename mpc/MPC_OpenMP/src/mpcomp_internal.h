@@ -27,6 +27,7 @@
 #include "sctk.h"
 #include "sctk_atomics.h"
 #include "sctk_context.h"
+#include "sctk_tls.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -345,7 +346,7 @@ extern "C"
  ****** VARIABLES 
  *****************/
 
-     extern __thread void *sctk_openmp_thread_tls;   /* Current thread pointer */
+     // extern __thread void *sctk_openmp_thread_tls;   /* Current thread pointer */
 
 
 

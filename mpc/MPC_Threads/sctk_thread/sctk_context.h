@@ -178,6 +178,10 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
     void *tls_args;
     /* MPC Profiler TLS */
     void *tls_mpc_profiler;
+#if defined (MPC_OpenMP)
+    /* MPC OpenMP TLS */
+    void *sctk_openmp_thread_tls ;
+#endif
   } sctk_mctx_t;
 
   int sctk_getcontext (sctk_mctx_t * ucp);

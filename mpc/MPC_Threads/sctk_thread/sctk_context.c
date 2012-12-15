@@ -45,6 +45,11 @@ __thread void *tls_args = NULL;
 /* MPC Profiler TLS */
 __thread void *tls_mpc_profiler;
 
+#if defined (MPC_OpenMP)
+/* MPC OpenMP TLS */
+__thread void *sctk_openmp_thread_tls;
+#endif
+
 unsigned long mpc_user_tls_1_offset = 0;
 unsigned long mpc_user_tls_1_entry_number = 0;
 unsigned long mpc_user_tls_1_entry_number_max = 0;
