@@ -439,6 +439,9 @@ void sctk_hls_build_repository ()
 {
   page_size = getpagesize ();
 
+/* TODO disable HLS */
+return ;
+
   hwloc_topology_t topology = sctk_get_topology_object() ;
   const int topodepth = hwloc_topology_get_depth(topology);
   const int numa_node_number = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) ;
