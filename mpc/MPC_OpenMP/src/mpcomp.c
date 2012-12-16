@@ -285,6 +285,9 @@ static inline void __mpcomp_read_env_variables() {
 #if MPCOMP_USE_ATOMICS 
     fprintf( stderr, "\tUse atomics for tree operations\n" ) ;
 #endif
+#if MPCOMP_COHERENCY_CHECKING
+    fprintf( stderr, "\tCoherency check enabled\n" ) ;
+#endif
   }
 }
 
@@ -408,23 +411,9 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     return ;
   }
 
-#if 0
+#if MPCOMP_COHERENCY_CHECKING
   /* TODO develop some sequential tests to check the validity of the tree and the corresponding variables */
-  /* Count the number of STOP symbol inside SINGLE variables */
-  int count_single_stop = 0 ;
-  int index_single_stop = -1 ;
-  for ( i = 0 ; i <= MPCOMP_MAX_ALIVE_SINGLE ; i++ ) {
-    sctk_nodebug( "Value of single[%d] -> %d", i, sctk_atomics_load_int(
-	  &(t->team->single_nb_threads_entered[i].i) ) ) ;
-    if ( sctk_atomics_load_int( 
-	  &(t->team->single_nb_threads_entered[i].i) )
-	== MPCOMP_MAX_THREADS ) {
-      count_single_stop++ ;
-      index_single_stop = i ;
-    }
-  }
-  sctk_assert( count_single_stop == 1 ) ;
-  sctk_assert( index_single_stop == t->team->single_last_current ) ;
+  __mpcomp_single_coherency_entering_parallel_region() ;
 #endif
 
   /* First level of parallel region (no nesting) */

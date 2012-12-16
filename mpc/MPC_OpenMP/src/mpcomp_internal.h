@@ -53,11 +53,13 @@ extern "C"
 /* Maximum number of alive 'sections/section' construct */
 #define MPCOMP_MAX_ALIVE_SECTIONS 7
 
+
 #define MPCOMP_NOWAIT_STOP_SYMBOL	(-2)
-#define MPCOMP_NOWAIT_STOP_CONSUMED	(-3)
 
+/* Uncomment to enable coherency checking */
+// #define MPCOMP_COHERENCY_CHECKING 1
 
-     /* MACRO FOR PERFORMANCE */
+/* MACRO FOR PERFORMANCE */
 #define MPCOMP_USE_ATOMICS	1
 #define MPCOMP_MALLOC_ON_NODE	1
 
