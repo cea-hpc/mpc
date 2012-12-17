@@ -102,6 +102,7 @@ SCTK_OS=""
 UNAME_P=""
 SCTK_ARCH=""
 SCTK_DEBUG="0"
+SCTK_DEBUG_STRICT="0"
 SCTK_FORTRAN="1"
 SCTK_MPC_USE_ZLIB="0"
 SCTK_NETWORKS_INIT="0"
@@ -165,6 +166,7 @@ Optional features:
   --disable-shm                    Disable intra-node communication module (SHM)
   --disable-posix-alloc            Disable MPC posix memory allocator.
   --enable-debug                   Enable MPC internal debugging features
+  --enable-debug-strict            Same than --enable-debug but also enable flag -Werror.
   --enable-debug-messages          Enable MPC debug message printing in verbose level 3
   --enable-shell-colors            Enable support of colors in shell
   --enable-valgrind-memcheck       Enable support of valgrind memcheck in MPC_Allocator
@@ -351,6 +353,11 @@ for arg in "$@" ; do
       SCTK_DEBUG_MESSAGES="1"
     fi
     SCTK_CFLAGS="${SCTK_CFLAGS} -Wall"
+    ;;
+    --enable-debug-strict)
+    SCTK_DEBUG="1"
+    SCTK_DEBUG_MESSAGES="1"
+    SCTK_DEBUG_STRICT="1"
     ;;
     --disable-fortran)
     SCTK_FORTRAN="0"
@@ -644,12 +651,17 @@ end_section
 sctk_echo
 fi
 
-if test "$SCTK_DEBUG" = "1" ; then
-    begin_section "Enabling -Wall as we are running in debug mode"
-    SCTK_CHECK_OPTION "-Wall -Wno-unused-variable -Wno-unused-but-set-variable"
-    end_section
-
-    sctk_echo
+#Enable debug compiler flags
+if test "$SCTK_DEBUG_STRICT" = "1"; then
+	begin_section "Enabling -Wall -Werror as we are running in strict debug mode"
+	SCTK_CHECK_OPTION "-Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable"
+	end_section
+	sctk_echo
+elif test "$SCTK_DEBUG" = "1" ; then
+	begin_section "Enabling -Wall as we are running in debug mode"
+	SCTK_CHECK_OPTION "-Wall -Wno-unused-variable -Wno-unused-but-set-variable"
+	end_section
+	sctk_echo
 fi
 
 #Check for _Pragma message in macro
