@@ -181,9 +181,10 @@ mpcomp_slave_checkpointing (void *s)
 int
 __mpcomp_checkpoint ()
 {
+
   if (sctk_check_point_restart_mode)
     {
-      mpcomp_thread_info_t *current_info;
+      //~ mpcomp_thread_info_t *current_info;
       sctk_microthread_t *current_task;
       int i;
       long step;
@@ -199,15 +200,15 @@ __mpcomp_checkpoint ()
       sctk_nodebug ("mpcomp_checkpoint[%d]: Entering", perform);
 
       /* Retrieve the information (microthread structure and current region) */
-      current_info = sctk_thread_getspecific (mpcomp_thread_info_key);
-      sctk_assert (current_info != NULL);
+      //~ current_info = sctk_thread_getspecific (mpcomp_thread_info_key);
+      //~ sctk_assert (current_info != NULL);
 
       /* Check if we are not in a parallel region */
-      if (current_info->depth != 0)
-	{
-	  sctk_error
-	    ("OpenMP checkpointing has to be called in a sequential part.");
-	}
+      //~ if (current_info->depth != 0)
+	//~ {
+	  //~ sctk_error
+	    //~ ("OpenMP checkpointing has to be called in a sequential part.");
+	//~ }
 
       current_task = sctk_thread_getspecific (sctk_microthread_key);
       sctk_assert (current_task != NULL);
@@ -219,8 +220,10 @@ __mpcomp_checkpoint ()
 
       sctk_nodebug ("mpcomp_checkpoint[%d]: Master task added", perform);
 
-      for (i = 1; i < current_info->icvs.nmicrovps_var; i++)
+      //~ for (i = 1; i < current_info->icvs.nmicrovps_var; i++)
+      
 	{
+		i = 1;
 	  long step_slave;
 
 	  sctk_nodebug

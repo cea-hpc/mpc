@@ -30,10 +30,11 @@ int
 __mpcomp_runtime_loop_begin (int lb, int b, int incr, int chunk_size,
 			     int *from, int *to)
 {
-  mpcomp_thread_info_t *info;
+  //~ mpcomp_thread_info_t *info;
   omp_sched_t sched;
   int ret = 0;
-
+  not_implemented ();
+#if 0
   info =
     (mpcomp_thread_info_t *) sctk_thread_getspecific (mpcomp_thread_info_key);
   sctk_assert (info != NULL);
@@ -58,16 +59,18 @@ __mpcomp_runtime_loop_begin (int lb, int b, int incr, int chunk_size,
     default:
       not_reachable() ;
   }
+#endif
   return ret ;
 }
 
 int
 __mpcomp_runtime_loop_next (int *from, int *to)
 {
-  mpcomp_thread_info_t *info;
+  //~ mpcomp_thread_info_t *info;
   omp_sched_t sched;
   int ret = 0;
-
+  not_implemented ();
+#if 0
   info =
     (mpcomp_thread_info_t *) sctk_thread_getspecific (mpcomp_thread_info_key);
   sctk_assert (info != NULL);
@@ -92,6 +95,7 @@ __mpcomp_runtime_loop_next (int *from, int *to)
     default:
       not_reachable() ;
   }
+#endif
   return ret ;
 }
 
@@ -101,15 +105,16 @@ __mpcomp_runtime_loop_end ()
   /* TODO call the correpsonding method instead of barrier (specialized
      barriers inside) */
   /* FIXME use good barrier instead of OLD! */
-  __mpcomp_old_barrier ();
+  __mpcomp_barrier ();
 }
 
 void
 __mpcomp_runtime_loop_end_nowait ()
 {
-  mpcomp_thread_info_t *info;
+  //~ mpcomp_thread_info_t *info;
   omp_sched_t sched;
-
+  not_implemented ();
+#if 0
   info =
     (mpcomp_thread_info_t *) sctk_thread_getspecific (mpcomp_thread_info_key);
   sctk_assert (info != NULL);
@@ -134,6 +139,7 @@ __mpcomp_runtime_loop_end_nowait ()
     default:
       not_reachable() ;
   }
+#endif
   return ;
 }
 
@@ -144,9 +150,10 @@ __mpcomp_start_parallel_runtime_loop (int arg_num_threads, void *(*func)
 				      int incr, int chunk_size)
 {
 
-  mpcomp_thread_info_t *info;
+  //~ mpcomp_thread_info_t *info;
   omp_sched_t sched;
-
+  not_implemented ();
+#if 0
   info =
     (mpcomp_thread_info_t *) sctk_thread_getspecific (mpcomp_thread_info_key);
   sctk_assert (info != NULL);
@@ -171,7 +178,7 @@ __mpcomp_start_parallel_runtime_loop (int arg_num_threads, void *(*func)
     default:
       not_reachable() ;
   }
-
+#endif
 }
 
 int
@@ -193,10 +200,11 @@ int
 __mpcomp_ordered_runtime_loop_begin (int lb, int b, int incr, int chunk_size,
 			    int *from, int *to)
 {
-  mpcomp_thread_info_t *info;
+  //~ mpcomp_thread_info_t *info;
   omp_sched_t sched;
   int ret = 0;
-
+  not_implemented ();
+#if 0
   info =
     (mpcomp_thread_info_t *) sctk_thread_getspecific (mpcomp_thread_info_key);
   sctk_assert (info != NULL);
@@ -221,17 +229,18 @@ __mpcomp_ordered_runtime_loop_begin (int lb, int b, int incr, int chunk_size,
     default:
       not_reachable() ;
   }
-
+#endif
   return ret ;
 }
 
 int
 __mpcomp_ordered_runtime_loop_next(int *from, int *to)
 {
-  mpcomp_thread_info_t *info;
+  //~ mpcomp_thread_info_t *info;
   omp_sched_t sched;
   int ret = 0;
-
+  not_implemented ();
+#if 0
   info =
     (mpcomp_thread_info_t *) sctk_thread_getspecific (mpcomp_thread_info_key);
   sctk_assert (info != NULL);
@@ -256,16 +265,17 @@ __mpcomp_ordered_runtime_loop_next(int *from, int *to)
     default:
       not_reachable() ;
   }
-
+#endif
   return ret ;
 }
 
 void
 __mpcomp_ordered_runtime_loop_end()
 {
-  mpcomp_thread_info_t *info;
+  //~ mpcomp_thread_info_t *info;
   omp_sched_t sched;
-
+  not_implemented ();
+#if 0
   info =
     (mpcomp_thread_info_t *) sctk_thread_getspecific (mpcomp_thread_info_key);
   sctk_assert (info != NULL);
@@ -290,14 +300,16 @@ __mpcomp_ordered_runtime_loop_end()
     default:
       not_reachable() ;
   }
+#endif
 }
 
 void
 __mpcomp_ordered_runtime_loop_end_nowait()
 {
-  mpcomp_thread_info_t *info;
+  //~ mpcomp_thread_info_t *info;
   omp_sched_t sched;
-
+  not_implemented ();
+#if 0
   info =
     (mpcomp_thread_info_t *) sctk_thread_getspecific (mpcomp_thread_info_key);
   sctk_assert (info != NULL);
@@ -322,4 +334,5 @@ __mpcomp_ordered_runtime_loop_end_nowait()
     default:
       not_reachable() ;
   }
+#endif
 }
