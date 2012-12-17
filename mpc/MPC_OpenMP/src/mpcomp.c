@@ -877,6 +877,134 @@ void out_of_order_scheduler() {
 }
 
 
+/*
+ * Return the maximum number of processors.
+ * See OpenMP API 1.0 Section 3.2.5
+ */
+int
+mpcomp_get_num_procs (void)
+{
+  mpcomp_thread_t * t ;
+  __mpcomp_init ();
+  sctk_nodebug( "mpcomp_get_dynamic: entering" ) ;
+  t = sctk_openmp_thread_tls;
+  sctk_assert( t != NULL);
+
+  return t->icvs.nmicrovps_var;
+}
+
+
+/**
+  * Set or unset the dynamic adaptation of the thread number.
+  * See OpenMP API 2.5 Section 3.1.7
+  */
+void
+mpcomp_set_dynamic (int dynamic_threads)
+{
+  mpcomp_thread_t * t ;
+  __mpcomp_init ();
+  sctk_nodebug( "mpcomp_get_dynamic: entering" ) ;
+  t = sctk_openmp_thread_tls;
+  sctk_assert( t != NULL);
+  t->icvs.dyn_var = dynamic_threads;
+}
+
+
+/**
+  * Retrieve the current dynamic adaptation of the program.
+  * See OpenMP API 2.5 Section 3.2.8
+  */
+int
+mpcomp_get_dynamic (void)
+{
+  mpcomp_thread_t * t ;
+  __mpcomp_init ();
+  sctk_nodebug( "mpcomp_get_dynamic: entering" ) ;
+  t = sctk_openmp_thread_tls;
+  sctk_assert( t != NULL);
+  return t->icvs.dyn_var;
+}
+
+/**
+  *
+  * See OpenMP API 2.5 Section 3.2.9
+  */
+void
+mpcomp_set_nested (int nested)
+{
+  mpcomp_thread_t * t ;
+  __mpcomp_init ();
+  sctk_nodebug( "mpcomp_set_nested: entering" ) ;
+  t = sctk_openmp_thread_tls;
+  sctk_assert( t != NULL);
+  t->icvs.nest_var = nested;
+}
+
+/**
+  *
+  * See OpenMP API 2.5 Section 3.2.10
+  */
+int
+mpcomp_get_nested (void)
+{
+  mpcomp_thread_t * t ;
+  __mpcomp_init ();
+  sctk_nodebug( "mpcomp_get_nested: entering" ) ;
+  t = sctk_openmp_thread_tls;
+  sctk_assert( t != NULL);
+  return t->icvs.nest_var;
+}
+
+
+/**
+  *
+  * See OpenMP API 3.0 Section 3.2.11
+  */
+void omp_set_schedule( omp_sched_t kind, int modifier ) {
+  mpcomp_thread_t * t ;
+
+  __mpcomp_init ();
+  sctk_nodebug( "mpcomp_set_schedule: entering" ) ;
+  t = sctk_openmp_thread_tls;
+  sctk_assert( t != NULL);
+
+  t->icvs.run_sched_var = kind ;
+  t->icvs.modifier_sched_var = modifier ;
+}
+
+/**
+  *
+  * See OpenMP API 3.0 Section 3.2.12
+  */
+void omp_get_schedule( omp_sched_t * kind, int * modifier ) {
+  mpcomp_thread_t * t ;
+
+  __mpcomp_init ();
+  sctk_nodebug( "mpcomp_get_chedule: entering" ) ;
+  t = sctk_openmp_thread_tls;
+  sctk_assert( t != NULL);
+  *kind = t->icvs.run_sched_var ;
+  *modifier = t->icvs.modifier_sched_var ;
+}
+
+
+/*
+ * Check whether the current flow is located inside a parallel region or not.
+ * See OpenMP API 2.5 Section 3.2.6
+ */
+int
+mpcomp_in_parallel (void)
+{
+  mpcomp_thread_t * t ;
+
+  __mpcomp_init ();
+  sctk_nodebug( "mpcomp_in_parallel: entering" ) ;
+  t = sctk_openmp_thread_tls;
+  sctk_assert( t != NULL);
+  return (t->team->depth != 0);
+}
+
+
 
 /*
  * Return the number of threads used in the current team (direct enclosing
