@@ -73,6 +73,10 @@ extern "C"
   /* MPC Profiler TLS */
   extern __thread void *tls_mpc_profiler;
 #endif
+#if defined (MPC_OpenMP)
+  /* MPC OpenMP TLS */
+  extern __thread void *sctk_openmp_thread_tls;
+#endif
 
   extern __thread char *mpc_user_tls_1;
   extern unsigned long mpc_user_tls_1_offset;
@@ -120,6 +124,10 @@ extern "C"
     /* MPC Profiler TLS */
     tls_save(tls_mpc_profiler);
 #endif
+#if defined (MPC_OpenMP)
+    /* MPC OpenMP TLS */
+    tls_save(sctk_openmp_thread_tls);
+#endif
     tls_save (mpc_user_tls_1);
     tls_save (sctk_extls);
 	tls_save (sctk_hls_generation);
@@ -146,6 +154,10 @@ extern "C"
 #if defined (MPC_Profiler)
     /* MPC Profiler TLS */
     tls_restore (tls_mpc_profiler);
+#endif
+#if defined (MPC_OpenMP)
+    /* MPC OpenMP TLS */
+    tls_restore (sctk_openmp_thread_tls);
 #endif
     tls_restore (mpc_user_tls_1);
     tls_restore (sctk_extls);
@@ -174,6 +186,10 @@ extern "C"
 #if defined (MPC_Profiler)
     /* MPC Profiler TLS */
     tls_init (tls_mpc_profiler);
+#endif
+#if defined (MPC_OpenMP)
+    /* MPC OpenMP TLS */
+    tls_init (sctk_openmp_thread_tls);
 #endif
     /* tls_init (mpc_user_tls_1); */
     ucp->mpc_user_tls_1 = mpc_user_tls_1 ;

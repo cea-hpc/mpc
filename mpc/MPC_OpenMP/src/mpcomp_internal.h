@@ -27,6 +27,7 @@
 #include "sctk.h"
 #include "sctk_atomics.h"
 #include "sctk_context.h"
+#include "sctk_tls.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -49,12 +50,16 @@ extern "C"
 #define MPCOMP_MAX_ALIVE_FOR_DYN 	1023
 /* Maximum number of alive 'for guided' construct */
 #define MPCOMP_MAX_ALIVE_FOR_GUIDED 	1023
+/* Maximum number of alive 'sections/section' construct */
+#define MPCOMP_MAX_ALIVE_SECTIONS 7
+
 
 #define MPCOMP_NOWAIT_STOP_SYMBOL	(-2)
-#define MPCOMP_NOWAIT_STOP_CONSUMED	(-3)
 
+/* Uncomment to enable coherency checking */
+// #define MPCOMP_COHERENCY_CHECKING 1
 
-     /* MACRO FOR PERFORMANCE */
+/* MACRO FOR PERFORMANCE */
 #define MPCOMP_USE_ATOMICS	1
 #define MPCOMP_MALLOC_ON_NODE	1
 
@@ -164,19 +169,13 @@ extern "C"
 	  void *single_copyprivate_data;
 	  volatile int single_nb_threads_stopped;
 
-	  /* -- SECTION CONSTRUCT -- */
+	  /* -- SECTIONS CONSTRUCT -- */
+    int sections_last_current ;
+    mpcomp_atomic_int_pad_t sections_nb_threads_entered[MPCOMP_MAX_ALIVE_SECTIONS+1] ;
 
 	  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
 	  int for_dyn_last_current;
 	  mpcomp_atomic_int_pad_t for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
-
-	  /* -- GUIDED FOR LOOP CONSTRUCT -- */
-	  sctk_spinlock_t lock_enter_for_guided[MPCOMP_MAX_ALIVE_FOR_GUIDED + 1]; 
-	  volatile int current_for_guided[MPCOMP_MAX_THREADS];
-	  volatile int nb_threads_entered_for_guided[MPCOMP_MAX_ALIVE_FOR_GUIDED + 1];
-	  volatile int nb_threads_exited_for_guided[MPCOMP_MAX_ALIVE_FOR_GUIDED + 1];
-	  volatile int nb_iterations_remaining[MPCOMP_MAX_ALIVE_FOR_GUIDED + 1];
-	  volatile int current_from_for_guided[MPCOMP_MAX_ALIVE_FOR_GUIDED + 1];
 
 	  /* ORDERED CONSTRUCT */
 	  volatile int next_ordered_offset; 
@@ -209,6 +208,11 @@ extern "C"
 
 	  /* -- SINGLE CONSTRUCT -- */
 	  int single_current;		/* Which 'single' construct did we already go through? */
+
+	  /* -- SECTIONS CONSTRUCT -- */
+    int sections_current ;		/* Which 'sections' construct did we already go through? */
+    int nb_sections ;
+    int previous_section ;
 
 	  /* LOOP CONSTRUCT */
 	  int loop_lb;		        /* Lower bound */
@@ -257,8 +261,12 @@ extern "C"
 	  int next_nb_threads;
 	  struct mpcomp_thread_s threads[MPCOMP_MAX_THREADS_PER_MICROVP];
 
+	  struct mpcomp_instance_s *children_instance; /* Instance for nested parallelism */
+	  int combined_pragma;
+
 	  int *tree_rank; 	          /* Array of rank in every node of the tree */
 	  int rank;    	                  /* Rank within the microVPs */
+          int vp;                         /* VP on which microVP is executed (AMAHEO) */
 	  char pad0[64];                  /* Padding */
 	  volatile int enable;
 	  char pad1[64];                  /* Padding */
@@ -285,6 +293,8 @@ extern "C"
 	  long rank;                      /* Rank among children of my father */
 	  int depth;                      /* Depth in the tree */
 	  int nb_children;                /* Number of children */
+
+	  int combined_pragma;
 
 	  /* The following indices correspond to the 'rank' value in microVPs */
 	  int min_index;   /* Flat min index of leaves in this subtree */
@@ -343,7 +353,7 @@ extern "C"
  ****** VARIABLES 
  *****************/
 
-     extern __thread void *sctk_openmp_thread_tls;   /* Current thread pointer */
+     // extern __thread void *sctk_openmp_thread_tls;   /* Current thread pointer */
 
 
 
@@ -380,6 +390,13 @@ extern "C"
 	  team_info->single_copyprivate_data = NULL;
 	  team_info->single_nb_threads_stopped = 0;
 
+	  /* -- SECTIONS CONSTRUCT -- */
+	  team_info->sections_last_current = 0 ;
+	  for (i=0; i<MPCOMP_MAX_ALIVE_SECTIONS; i++)
+	       sctk_atomics_store_int(&(team_info->sections_nb_threads_entered[i].i), 0);
+	  sctk_atomics_store_int(&(team_info->sections_nb_threads_entered[MPCOMP_MAX_ALIVE_SECTIONS].i), 
+				 MPCOMP_NOWAIT_STOP_SYMBOL);
+
 	  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
 	  team_info->for_dyn_last_current = MPCOMP_MAX_ALIVE_FOR_DYN;
 	  for (i=0; i<MPCOMP_MAX_ALIVE_FOR_DYN; i++)
@@ -406,14 +423,24 @@ extern "C"
 	  t->done = 0;
 	  t->children_instance = instance;
 	  t->team = team_info;
+
+	  /* -- SINGLE CONSTRUCT -- */
 	  t->single_current = -1;
 
           sctk_assert(t->children_instance != NULL);
-
+#if 0
+	  /* -- SECTIONS CONSTRUCT -- */
+	  t->sections_current = 0 ;
+          t->nb_sections = 0 ;
+          t->previous_section = 0 ;
+#endif
 	  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
 	  t->tree_stack = NULL;
 	  t->stolen_mvp = NULL;
 	  t->start_mvp_index = -1; //AMAHEO
+
+	  for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN+1; i++)
+	       sctk_atomics_store_int(&(t->for_dyn_chunk_info[i].remain), -1);
      }
 
      /* mpcomp.c */
@@ -435,6 +462,8 @@ extern "C"
 
      /* mpcomp_loop_dyn.c */
      int __mpcomp_dynamic_steal(int *from, int *to);
+     int __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, int lb, int b, 
+				    int incr, int chunk_size);
      int __mpcomp_dynamic_loop_begin(int lb, int b, int incr,
 				      int chunk_size, int *from, int *to);
      int __mpcomp_dynamic_loop_next(int *from, int *to);

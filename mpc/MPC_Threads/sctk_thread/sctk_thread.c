@@ -640,8 +640,11 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 
   /* TLS INTIALIZATION */
   sctk_tls_init ();
+#if 0
+/* TODO disable HLS */
   sctk_hls_checkout_on_vp();
   sctk_hls_register_thread();
+#endif
 
   {
     int keep[sctk_extls_max_scope];
