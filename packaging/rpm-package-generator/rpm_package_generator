@@ -172,13 +172,10 @@ if test -z "$MAKE_J" ; then
 fi
 
 #some pre actions
-if [ ! -d $HOME/rpmbuild/ ]; then
-	echo "rpmbuild tree creation"
-	mkdir -p $HOME/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS} || print_error "Unable to create rpmbuild tree !"
-else
-	echo "Remove previous mpc-framework $MPC_VERSION RPM files"
-	rm -f $ROOT_PACKAGE/SRPMS/mpc-framework-*$MPC_VERSION*.src.rpm $ROOT_PACKAGE/RPMS/x86_64/mpc-framework-*$MPC_VERSION*.rpm
-fi
+echo "rpmbuild tree creation"
+mkdir -p $HOME/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS} || print_error "Unable to create rpmbuild tree !"
+echo "Remove previous mpc-framework $MPC_VERSION RPM files"
+rm -f $ROOT_PACKAGE/SRPMS/mpc-framework-*$MPC_VERSION*.src.rpm $ROOT_PACKAGE/RPMS/x86_64/mpc-framework-*$MPC_VERSION*.rpm
 cp $SOURCES $ROOT_PACKAGE/SOURCES/ || print_error "Tarball checked but impossible to copy her in SOURCES Folder !"
 cp $ROOT_TARBALL/patchs/* $ROOT_PACKAGE/SOURCES/ > /dev/null 2>&1
 
