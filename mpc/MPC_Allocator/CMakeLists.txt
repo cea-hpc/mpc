@@ -86,6 +86,10 @@ else (HWLOC_FOUND)
 	endif()
 endif (HWLOC_FOUND)
 
+if(WIN32)
+	set(OPENPA_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/openpa/src")
+endif(WIN32)
+
 find_package(OpenPA REQUIRED)
 if (OPENPA_FOUND)
     include_directories(${OPENPA_INCLUDE_DIRS})

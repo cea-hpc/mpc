@@ -87,7 +87,6 @@
 	#define SCTK_ALLOC_MMCHECK_UNREG(ptr)             do{if (sctk_alloc_gbl_notify_memcheck == 0) VALGRIND_FREELIKE_BLOCK((ptr),0);}while(0)
 	extern __thread unsigned int sctk_alloc_gbl_notify_memcheck;
 #else //HAVE_MEMCHECK_H
-	extern __thread unsigned int sctk_alloc_gbl_notify_memcheck;
 	#define SCTK_ALLOC_MMCHECK_NOACCESS(ptr,size)     do {} while(0)
 	#define SCTK_ALLOC_MMCHECK_DEFINED(ptr,size)      do {} while(0)
 	#define SCTK_ALLOC_MMCHECK_UNDEFINED(ptr,size)    do {} while(0)

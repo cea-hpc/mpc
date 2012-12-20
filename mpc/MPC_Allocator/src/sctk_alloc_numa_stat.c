@@ -299,7 +299,7 @@ void sctk_alloc_numa_stat_cumul(struct sctk_alloc_numa_stat_s* stat, void* ptr, 
 
 	for (i = 0 ; i < last_page - first_page ; i++)
 	{
-		int node = sctk_alloc_numa_stat_get_node_of_page(ptr + (i << SCTK_ALLOC_NUMA_STAT_PAGE_SHIFT));
+		int node = sctk_alloc_numa_stat_get_node_of_page((void*)((sctk_addr_t)ptr + (i << SCTK_ALLOC_NUMA_STAT_PAGE_SHIFT)));
 		if (node > -1)
 			stat->numa_pages[node]++;
 	}
