@@ -201,16 +201,14 @@ rpmbuild $BUILD_MODE $ROOT_PACKAGE/SPECS/mpc-framework-$MPC_VERSION.spec || prin
 #copy packages
 echo "Saving packages"
 mkdir -p $TARGET_PATH
-if [ "$BUILD_MODE" = "-bs" ]; then
-	cp $ROOT_PACKAGE/SRPMS/mpc-framework-*$MPC_VERSION*.src.rpm $TARGET_PATH/ || print_error "Unable to copy rpm package into $TARGET_PATH"
-else
-	cp $ROOT_PACKAGE/SRPMS/mpc-framework-*$MPC_VERSION*.src.rpm $ROOT_PACKAGE/RPMS/x86_64/mpc-framework-*$MPC_VERSION*.rpm $TARGET_PATH/ || print_error "Unable to copy rpm package into $TARGET_PATH"
+cp $ROOT_PACKAGE/SRPMS/mpc-framework-*$MPC_VERSION*.src.rpm ./ || print_error "Unable to copy srpm package into ./"
+if [ "$BUILD_MODE" = "-ba" ]; then
+	cp $ROOT_PACKAGE/RPMS/x86_64/mpc-framework-*$MPC_VERSION*.rpm $TARGET_PATH/ || print_error "Unable to copy rpm package into $TARGET_PATH"
+	#create packages tarball
+	cd $ROOT_TARBALL
+	rm -rf $TARGET.tar.gz > /dev/null 2>&1
+	tar -czf $TARGET.tar.gz $TARGET || print_error "Unable to compress rpm packages located in $TARGET_PATH"
+	rm -rf $TARGET > /dev/null 2>&1
 fi
-
-#create packages tarball
-cd $ROOT_TARBALL
-rm -rf $TARGET.tar.gz > /dev/null 2>&1
-tar -czf $TARGET.tar.gz $TARGET || print_error "Unable to compress rpm packages located in $TARGET_PATH"
-rm -rf $TARGET > /dev/null 2>&1
 
 echo "done"
