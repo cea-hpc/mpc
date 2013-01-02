@@ -39,7 +39,7 @@
 #define PROF_RAIL_NUMBER 0
 
 /* Uncomment to enable Counters */
-#define SCTK_IB_PROF
+//#define SCTK_IB_PROF
 /* Uncomment to enable QP profiling */
 //#define SCTK_IB_QP_PROF
 /* Uncomment to enable MEM profiling */
