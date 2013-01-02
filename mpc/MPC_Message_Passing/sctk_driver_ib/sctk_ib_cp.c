@@ -42,7 +42,7 @@
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"
 #endif
-//#define SCTK_IB_MODULE_DEBUG
+#define SCTK_IB_MODULE_DEBUG
 #define SCTK_IB_MODULE_NAME "CP"
 #include "sctk_ib_toolkit.h"
 #include "math.h"
@@ -105,6 +105,7 @@ __thread unsigned int seed;
 __thread int task_node_number = -1;
 /* Pointer to the NUMA node on VP */
 __thread numa_t * numa_on_vp = NULL;
+__thread vp_t * thread_on_vp = NULL;
 
 #define CHECK_AND_QUIT(rail_ib) do {  \
   LOAD_CONFIG(rail_ib);                             \
@@ -201,6 +202,7 @@ void sctk_ib_cp_init_task(int rank, int vp) {
   }
   HASH_ADD(hh_vp, vps[vp]->tasks,rank,sizeof(int),task);
   HASH_ADD(hh_all, all_tasks,rank,sizeof(int),task);
+  thread_on_vp = vps[vp];
   CDL_PREPEND(numas[node]->tasks, task);
   sctk_spinlock_unlock(&vps_lock);
   sctk_ib_debug("Task %d registered on VP %d (numa:%d:tasks_nb:%d)", rank, vp, node, numas[node]->tasks_nb);
@@ -277,6 +279,7 @@ void sctk_ib_cp_poll_global_list(const struct sctk_rail_info_s const * rail, str
 
   if (vp < 0) return;
   CHECK_ONLINE_PROGRAM;
+  if (vps[vp] == NULL) return;
 
   task = vps[vp]->tasks;
   if (!task) return;
@@ -287,16 +290,35 @@ void sctk_ib_cp_poll_global_list(const struct sctk_rail_info_s const * rail, str
 
 
 int sctk_ib_cp_poll(const struct sctk_rail_info_s const* rail, struct sctk_ib_polling_s *poll){
-  int vp = sctk_thread_get_vp();
+  int vp_num = sctk_thread_get_vp();
+  vp_t *vp;
   sctk_ib_cp_task_t *task = NULL;
+  int task_rank;
   int ret = 0;
 
-  if (vp < 0) return;
+  if (vp_num < 0) return;
   CHECK_ONLINE_PROGRAM;
 
-  for (task=vps[vp]->tasks; task; task=task->hh_vp.next) {
-    ib_assume(vp == task->vp);
-    ib_assume(vps[vp]->node->number == task->node);
+  if (vps[vp_num] == NULL) {
+    task_rank = sctk_get_task_rank();
+    if (task_rank < 0) {
+      return 0;
+    }
+
+    if (thread_on_vp == NULL) {
+      HASH_FIND(hh_all,all_tasks,&task_rank, sizeof(int),task);
+      assume (task);
+      thread_on_vp = vps[task->vp];
+    }
+    vp = thread_on_vp;
+  } else {
+    vp = vps[vp_num];
+  }
+  assume(vp);
+
+  for (task=vp->tasks; task; task=task->hh_vp.next) {
+    ib_assume(vp_num == task->vp);
+    ib_assume(vp->node->number == task->node);
     ret += __cp_poll(rail, poll, &(task->local_ibufs_list), &(task->local_ibufs_list_lock), task, 0);
   }
   return ret;
@@ -354,34 +376,6 @@ exit:
   return nb_found;
 }
 
-#define STEAL_CURRENT_NODE() do {  \
-  numa = numas[task_node_number]; \
-  {\
-    int loops = 0; \
-    CDL_FOREACH(numa->vps, tmp_vp) { \
-      /* for (task=tmp_vp->tasks; task; task=task->hh_vp.next) */{\
-      /* nb_found += __cp_steal(rail, poll, &(task->local_ibufs_list), &(task->local_ibufs_list_lock), task, stealing_task);*/  \
-        loops++; \
-      } \
-      if (loops >= 1) return 0; \
-      /* Return if message stolen */  \
-      if (nb_found) return nb_found;  \
-    }\
-  } \
-} while (0)
-
-#define STEAL_OTHER_NODE() do { \
-  numa = numas[(rand_r(&seed) + task_node_number)%numa_registered]; \
-  {\
-    CDL_FOREACH(numa->vps, tmp_vp) {  \
-      for (task=tmp_vp->tasks; task; task=task->hh_vp.next) { \
-        nb_found += __cp_steal(rail, poll, &(task->local_ibufs_list), &(task->local_ibufs_list_lock), task, stealing_task);  \
-      } \
-    } \
-  } \
-  if (nb_found) return nb_found;  \
-} while (0)
-
 int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll) {
   int nb_found = 0;
   int vp = sctk_thread_get_vp();
@@ -392,6 +386,7 @@ int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll) {
 
   if (vp < 0) return;
   CHECK_ONLINE_PROGRAM;
+  if (vps[vp] == NULL) return;
 
   if (numas_copy == NULL) {
     static lock = SCTK_SPINLOCK_INITIALIZER;
