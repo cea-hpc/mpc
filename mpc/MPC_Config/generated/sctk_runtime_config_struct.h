@@ -64,6 +64,70 @@ struct sctk_runtime_config_struct_launcher
 };
 
 /******************************** STRUCTURE *********************************/
+/**Declare a fake driver to test the configuration system.**/
+struct sctk_runtime_config_struct_net_driver_fake
+{	/**Size of the buffer used for internal copies.**/
+	int buffer;
+	/**Enable stealing between threads.**/
+	bool stealing;
+};
+
+/********************************** ENUM ************************************/
+/**Define a specific configuration for a network driver to apply in rails.**/
+enum sctk_runtime_config_struct_net_driver_type
+{
+	SCTK_RTCFG_net_driver_NONE,
+	SCTK_RTCFG_net_driver_infiniband,
+	SCTK_RTCFG_net_driver_tcp,
+};
+
+/******************************** STRUCTURE *********************************/
+/**Define a specific configuration for a network driver to apply in rails.**/
+struct sctk_runtime_config_struct_net_driver
+{
+	enum sctk_runtime_config_struct_net_driver_type type;
+	union {
+		struct sctk_runtime_config_struct_net_driver_fake infiniband;
+		struct sctk_runtime_config_struct_net_driver_fake tcp;
+	} value;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Contain a list of driver configuration reused by rail definitions.**/
+struct sctk_runtime_config_struct_net_driver_config
+{	/**Name of the driver configuration to be referenced in rail definitions.**/
+	char * name;
+	/**Define the related driver to use and its configuration.**/
+	struct sctk_runtime_config_struct_net_driver driver;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Define a rail which is a name, a device associate to a driver and a routing topology.**/
+struct sctk_runtime_config_struct_net_rail
+{	/**Define the name of current rail.**/
+	char * name;
+	/**Define the name of the device to use in this rail.**/
+	char * device;
+	/**Define the network topology to apply on this rail.**/
+	char * topology;
+	/**Define the driver config to use for this rail.**/
+	char * config;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Base structure to contain the network configuration**/
+struct sctk_runtime_config_struct_networks
+{	/**Define the configuration driver list to reuse in rail definitions.**/
+	struct sctk_runtime_config_struct_net_driver_config * configs;
+	/** Number of elements in configs array. **/
+	int configs_size;
+	/**List of rails to declare in MPC.**/
+	struct sctk_runtime_config_struct_net_rail * rails;
+	/** Number of elements in rails array. **/
+	int rails_size;
+};
+
+/******************************** STRUCTURE *********************************/
 /**Options for the internal MPC Profiler**/
 struct sctk_runtime_config_struct_profiler
 {	/**Prefix of MPC Profiler outputs**/
@@ -90,6 +154,7 @@ struct sctk_runtime_config_modules
 struct sctk_runtime_config
 {
 	struct sctk_runtime_config_modules modules;
+	struct sctk_runtime_config_struct_networks networks;
 };
 
 #endif /* SCTK_RUNTIME_CONFIG_STRUCT_H */
