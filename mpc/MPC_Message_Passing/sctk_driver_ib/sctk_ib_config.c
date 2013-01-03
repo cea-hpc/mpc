@@ -52,7 +52,7 @@
  * on buffered eager messages */
 //#define IBV_EAGER_LIMIT       (256)
 #define IBV_EAGER_LIMIT       (1024 * 12)
-#define IBV_FRAG_EAGER_LIMIT  (1024 * 1024)
+#define IBV_FRAG_EAGER_LIMIT  (1024 * 256)
 /* FOR PAPER */
 //#define IBV_FRAG_EAGER_LIMIT  (0)
 //#define IBV_FRAG_EAGER_LIMIT  (0 * 1024)
@@ -140,7 +140,7 @@
  * no more MMU entries are available.
  * You must use this option at your own risks! */
 #define IBV_SIZE_MR_CHUNKS  200
-#define IBV_MMU_CACHE_ENABLED 1
+#define IBV_MMU_CACHE_ENABLED 0
 #define IBV_MMU_CACHE_ENTRIES 200
 
 #define IBV_ADM_PORT        1
