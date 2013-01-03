@@ -176,8 +176,8 @@ sctk_net_init_driver (char *name)
 /********************************************************************/
 /* Memory Allocator                                                 */
 /********************************************************************/
-sctk_size_t sctk_net_memory_allocation_hook(sctk_size_t size_origin) {
-  sctk_size_t aligned_size;
+size_t sctk_net_memory_allocation_hook(size_t size_origin) {
+  size_t aligned_size;
 #ifdef MPC_USE_INFINIBAND
   return sctk_network_memory_allocator_hook_ib (size_origin);
 #endif
