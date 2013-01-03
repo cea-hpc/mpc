@@ -402,6 +402,9 @@ int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll) {
   /* XXX: Not working with oversubscribing */
   stealing_task = vps[vp]->tasks;
 
+  /* In PTHREAD mode, the idle task do not call the cp_init_task function.
+   * If task_node_number not initialized, we do it now */
+  if (task_node_number < 0) task_node_number =  sctk_get_node_from_cpu(vp);
   /* First, try to steal from the same NUMA node*/
   numa = numas_copy[task_node_number];
   {
