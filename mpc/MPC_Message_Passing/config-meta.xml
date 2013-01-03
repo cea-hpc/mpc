@@ -1,40 +1,39 @@
 <?xml version="1.0"?>
 <!DOCTYPE config SYSTEM "../MPC_Config/extra/config-meta.dtd">
 <config>
-	<!-- TO RE-ENABLE, PLEASE REVERT THE PATCH WHICH COMMENT THIS AS THERE IS ALSO SOME OTHER POINT TO UNCOMMENT -->
-<!-- 	<usertypes> -->
+	<usertypes>
 
 		<!-- Structure for infiniband driver -->
-		<!--<struct name="net_driver_fake" doc="Declare a fake driver to test the configuration system.">
+		<struct name="net_driver_fake" doc="Declare a fake driver to test the configuration system.">
 			<param name="buffer" type="int" doc="Size of the buffer used for internal copies." default ="1024"/>
 			<param name="stealing" type="bool" doc="Enable stealing between threads." default="true"/>
-		</struct>-->
+		</struct>
 
 		<!-- Union to merge drivers -->
-		<!--<union name="net_driver" doc="Define a specific configuration for a network driver to apply in rails.">
+		<union name="net_driver" doc="Define a specific configuration for a network driver to apply in rails.">
 			<choice name="infiniband" type="net_driver_fake"/>
 			<choice name="tcp" type="net_driver_fake"/>
-		</union>-->
+		</union>
 
 		<!-- define a network driver config -->
-		<!--<struct name="net_driver_config" doc="Contain a list of driver configuration reused by rail definitions.">
+		<struct name="net_driver_config" doc="Contain a list of driver configuration reused by rail definitions.">
 			<param name="name" type="string" doc="Name of the driver configuration to be referenced in rail definitions."/>
 			<param name="driver" type="net_driver" doc="Define the related driver to use and its configuration."/>
-		</struct>-->
+		</struct>
 
 		<!-- Structure for rail definition -->
-		<!--<struct name="net_rail" doc="Define a rail which is a name, a device associate to a driver and a routing topology.">
+		<struct name="net_rail" doc="Define a rail which is a name, a device associate to a driver and a routing topology.">
 			<param name="name" type="string" doc="Define the name of current rail."/>
 			<param name="device" type="string" doc="Define the name of the device to use in this rail."/>
 			<param name="topology" type="string" doc="Define the network topology to apply on this rail."/>
 			<param name="config" type="string" doc="Define the driver config to use for this rail."/>
-		</struct>-->
+		</struct>
 
 		<!-- root structure of network config -->
-		<!--<struct name="networks" doc="Base structure to contain the network configuration">
+		<struct name="networks" doc="Base structure to contain the network configuration">
 			<array name="configs" entry-name="config" type="net_driver_config" doc="Define the configuration driver list to reuse in rail definitions."/>
 			<array name="rails" entry-name="rail" type="net_rail" doc="List of rails to declare in MPC."/>
-		</struct>-->
+		</struct>
 
-<!-- 	</usertypes> -->
+	</usertypes>
 </config>

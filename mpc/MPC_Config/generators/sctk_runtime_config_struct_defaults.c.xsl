@@ -50,7 +50,7 @@
 				</xsl:for-each>
 			</xsl:for-each>
 		</xsl:for-each>
-		<!--<xsl:text>&#09;sctk_runtime_config_struct_init_networks(&amp;config->networks);&#10;</xsl:text>-->
+		<xsl:text>&#09;sctk_runtime_config_struct_init_networks(&amp;config->networks);&#10;</xsl:text>
 		<xsl:text>};&#10;&#10;</xsl:text>
 	</xsl:template>
 
