@@ -145,6 +145,7 @@ int sctk_send_message_from_network_multirail_ib (sctk_thread_ptp_message_t * msg
 }
 
 /************ INIT ****************/
+#if 0
 /* XXX: polling thread used for 'fully-connected' topology initialization. Because
  * of PMI lib, when a barrier occurs, the IB polling cannot be executed.
  * This thread is disbaled when the route is initialized */
@@ -178,6 +179,7 @@ static void sctk_network_init_polling_thread (sctk_rail_info_t* rail) {
   sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
   sctk_user_thread_create (&pidt, &attr, __polling_thread, (void*) rail);
 }
+#endif
 
 /* Choose the topology of the signalization network (ring, torus) */
 static char *__get_signalization_topology(char* topo, size_t size) {
