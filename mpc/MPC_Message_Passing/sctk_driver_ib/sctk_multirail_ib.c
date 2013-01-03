@@ -295,7 +295,7 @@ void sctk_network_finalize_task_multirail_ib (int rank){
 }
 
 /************ MEMORY ALLOCATOR HOOK  ****************/
-sctk_size_t sctk_network_memory_allocator_hook_ib (sctk_size_t size){
+size_t sctk_network_memory_allocator_hook_ib (size_t size){
     if (size > IB_MEM_THRESHOLD_ALIGNED_SIZE ) {
     return ( (size + (IB_MEM_ALIGNMENT-1) ) & ( ~ (IB_MEM_ALIGNMENT-1) ) );
   }

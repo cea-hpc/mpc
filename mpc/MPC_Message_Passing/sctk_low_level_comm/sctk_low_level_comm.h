@@ -44,6 +44,6 @@ void sctk_network_notify_idle_message_set(void (*sctk_network_notify_idle_messag
 
 void sctk_network_notify_any_source_message ();
 void sctk_network_notify_any_source_message_set(void (*sctk_network_notify_perform_message_val) ());
-sctk_size_t sctk_net_memory_allocation_hook(sctk_size_t size_origin);
+size_t sctk_net_memory_allocation_hook(size_t size_origin);
 
 #endif
