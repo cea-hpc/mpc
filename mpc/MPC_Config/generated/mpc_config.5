@@ -178,6 +178,85 @@ Type is string. Default value is .
 .Pp user_launchers
 Permit to extend the launchers available via 'mpcrun -l=...' by providing scripts (named mpcrun_XXXX) in a user directory. Can be override by MPC_USER_LAUNCHERS.
 .El
+.Sh ENTRIES OF TYPE net_driver_fake
+Declare a fake driver to test the configuration system.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm buffer
+Type is int. Default value is 1024. 
+.Pp buffer
+Size of the buffer used for internal copies.
+.It Cm stealing
+Type is bool. Default value is true. 
+.Pp stealing
+Enable stealing between threads.
+.El
+.Sh OPTIONS OF NODE net_driver
+Define a specific configuration for a network driver to apply in rails.
+.Pp
+It can contain a node of type :
+.Pp
+.Bl -tag -width Ds
+.It Cm infiniband
+ of type net_driver_fake. 
+.It Cm tcp
+ of type net_driver_fake. 
+.El
+.Sh ENTRIES OF TYPE net_driver_config
+Contain a list of driver configuration reused by rail definitions.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm name
+Type is string. 
+.Pp name
+Name of the driver configuration to be referenced in rail definitions.
+.It Cm driver
+Type is net_driver. 
+.Pp driver
+Define the related driver to use and its configuration.
+.El
+.Sh ENTRIES OF TYPE net_rail
+Define a rail which is a name, a device associate to a driver and a routing topology.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm name
+Type is string. 
+.Pp name
+Define the name of current rail.
+.It Cm device
+Type is string. 
+.Pp device
+Define the name of the device to use in this rail.
+.It Cm topology
+Type is string. 
+.Pp topology
+Define the network topology to apply on this rail.
+.It Cm config
+Type is string. 
+.Pp config
+Define the driver config to use for this rail.
+.El
+.Sh ENTRIES OF TYPE networks
+Base structure to contain the network configuration
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm configs
+Type is array of net_driver_config. 
+.Pp configs
+Define the configuration driver list to reuse in rail definitions.
+.It Cm rails
+Type is array of net_rail. 
+.Pp rails
+List of rails to declare in MPC.
+.El
 .Sh ENTRIES OF TYPE profiler
 Options for the internal MPC Profiler
 .Pp

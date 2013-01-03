@@ -37,10 +37,9 @@ config-meta.xml automatically.
 			<name>default</name>
 			<modules>
 			</modules>
-			<!-- For future -->
-			<!--<networks>-->
+			<networks>
 				<!-- net config contain complexe structures so default value cannot be setup into config-meta.xml -->
-				<!--<configs>
+				<configs>
 					<config>
 						<name>conf1</name>
 						<driver>
@@ -57,9 +56,9 @@ config-meta.xml automatically.
 							</tcp>
 						</driver>
 					</config>
-				</configs>-->
+				</configs>
 				<!-- rails contain complexe structures so default value cannot be setup into config-meta.xml -->
-				<!--<rails>
+				<rails>
 					<rail>
 						<name>rail1</name>
 						<device>ib1</device>
@@ -73,7 +72,7 @@ config-meta.xml automatically.
 						<config>conf2</config>
 					</rail>
 				</rails>
-			</networks>-->
+			</networks>
 		</profile>
 	</profiles>
 </mpc>
