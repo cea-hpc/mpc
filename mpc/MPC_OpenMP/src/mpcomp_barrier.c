@@ -184,6 +184,8 @@ __mpcomp_internal_full_barrier ( mpcomp_mvp_t * mvp )
     c->barrier_done++ ; /* No need to lock I think... */
   }
 
+  sctk_debug("__mpcomp_internal_full_barrier: node nb children=%d, node depth=%d, mvp address=%p, mvp rank=%d, mvp tree_rank=%d", c->nb_children, c->depth, &mvp, mvp->rank, mvp->tree_rank[c->depth]);
+
   /* Step 3 - Go down */
   while ( c->child_type != MPCOMP_CHILDREN_LEAF )  {
     c = c->children.node[ mvp->tree_rank[ c->depth ] ] ;

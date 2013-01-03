@@ -411,7 +411,7 @@ extern "C"
      {
 	  int i;
 
-          printf("__mpcomp_thread_init: t address=%p\n", &t);
+          sctk_debug("__mpcomp_thread_init: t address=%p", &t);
 
           sctk_assert(instance != NULL);
 

@@ -349,7 +349,7 @@ void __mpcomp_init() {
 
    //printf("__mpcomp_init: t address=%p\n", &t);
 
-    printf("__mpcomp_init: t rank=%ld\n", t->rank);
+    //printf("__mpcomp_init: t rank=%ld\n", t->rank);
 
     /* Current thread information is 't' */
     sctk_openmp_thread_tls = t ;
@@ -374,7 +374,7 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps ) {
 
   instance->nb_mvps = nb_mvps ;
 
-  printf("__mpcomp_instance_init: nb_mvps=%d\n", instance->nb_mvps);
+  //printf("__mpcomp_instance_init: nb_mvps=%d\n", instance->nb_mvps);
 
   if ( OMP_TREE == NULL ) {
     __mpcomp_build_default_tree( instance ) ;
@@ -407,7 +407,7 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
   current_vp = sctk_thread_get_vp();   //AMAHEO
   //mvp = t->mvp; //AMAHEO
   //sctk_assert(mvp != NULL);
-  printf("__mpcomp_start_parallel_region: t address=%p rank=%ld\n", &t, t->rank);
+  //printf("__mpcomp_start_parallel_region: t address=%p rank=%ld\n", &t, t->rank);
   //printf("__mpcomp_start_parallel_region: current vp=%d\n", current_vp); //AMAHEO
 
   //printf("__mpcomp_start_parallel_region: t address=%p\n", &t);
