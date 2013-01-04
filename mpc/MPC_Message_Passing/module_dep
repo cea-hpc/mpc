@@ -23,4 +23,5 @@
 need_module MPC_Threads
 avail_module MPC_Allocator
 need_module MPC_Common
+need_module MPC_Config
 SCTK_INCLUDE_FILES="mpcmp.h"

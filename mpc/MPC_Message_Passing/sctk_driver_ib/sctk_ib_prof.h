@@ -79,7 +79,7 @@ extern __thread struct sctk_ib_prof_s * sctk_ib_profiler_start;
   }
 
 
-void sctk_ib_prof_init(int nb_rails);
+void sctk_ib_prof_init();
 void sctk_ib_prof_init_task(int rank, int vp);
 void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib);
 void sctk_ib_prof_finalize(sctk_ib_rail_info_t *rail_ib);
