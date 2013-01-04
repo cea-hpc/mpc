@@ -174,7 +174,7 @@ MIGRATION=""
 DEBUG=""
 PROCESS_NB="1"
 THREAD_TYPE="--use-$THREAD_TYPE"
-NET_TYPE="--sctk_use_network=none"
+NET_TYPE=""
 
 if test "$VERSION_DETAILS" = "yes" ; then
 VERSION_DETAILS="--version-details"
@@ -407,16 +407,6 @@ for arg in "$@" ; do
 	fi
     fi
 done
-
-# check if we are in a inter-processes configuration
-if test "$PROCESS_NB" != "1"; then
-  if test "$NET_TYPE" = "--sctk_use_network=none"; then
-    NET_TYPE="--sctk_use_network=tcp"
-  fi
-else
-	NET_TYPE="--sctk_use_network=none"
-fi
-
 
 if test "$PROCESS_NB" = "0" ; then
     PROCESS_NB="1"

@@ -126,7 +126,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
 buffered:
   /***** BUFFERED EAGER CHANNEL *****/
-  if (size <= config->ibv_frag_eager_limit)  {
+  if (size <= config->ibv_buffered_limit)  {
     sctk_nodebug("Buffered");
     sctk_ib_buffered_prepare_msg(rail, remote, msg, size);
     sctk_complete_and_free_message(msg);
@@ -394,7 +394,7 @@ sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){
   LOAD_CONFIG(rail_ib);
   struct sctk_ib_polling_s poll;
 
-  if (config->ibv_steal > 1) {
+  if (config->ibv_steal > 0) {
     sctk_ib_cp_steal(rail, &poll);
   }
 }
@@ -428,6 +428,7 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t* rail){
   /* Infiniband Init */
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   memset(rail_ib, 0, sizeof(sctk_ib_rail_info_t));
+  rail_ib->rail = rail;
   /* Profiler init */
   sctk_ib_prof_mem_init(rail_ib);
   sctk_ib_device_t *device;
@@ -436,8 +437,6 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t* rail){
   sctk_ib_config_init(rail_ib, "MPI");
   /* Open device */
   device = sctk_ib_device_init(rail_ib);
-  /* FIXME: pass rail as an arg of sctk_ib_device_init  */
-  rail_ib->rail = rail;
   sctk_ib_device_open(rail_ib, 0);
   /* Init Proctection Domain */
   sctk_ib_pd_init(device);

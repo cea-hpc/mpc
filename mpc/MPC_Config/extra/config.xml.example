@@ -41,35 +41,95 @@ config-meta.xml automatically.
 				<!-- net config contain complexe structures so default value cannot be setup into config-meta.xml -->
 				<configs>
 					<config>
-						<name>conf1</name>
+						<name>config_mpi</name>
 						<driver>
-							<infiniband>
-								<buffer>2048</buffer>
+              <infiniband>
+                <network_type>1</network_type>
+                <adm_port>1</adm_port>
+                <verbose_level>0</verbose_level>
+                <eager_limit>12288</eager_limit>
+                <buffered_limit>262114</buffered_limit>
+                <qp_tx_depth>15000</qp_tx_depth>
+                <qp_rx_depth>0</qp_rx_depth>
+                <cq_depth>40000</cq_depth>
+                <max_sg_sq>4</max_sg_sq>
+                <max_sg_rq>4</max_sg_rq>
+                <max_inline>128</max_inline>
+                <wc_in_number>4</wc_in_number>
+                <wc_out_number>4</wc_out_number>
+                <rdma_depth>4</rdma_depth>
+                <rdma_dest_depth>4</rdma_dest_depth>
+                <rdma_resizing>0</rdma_resizing>
+                <max_rdma_connections>0</max_rdma_connections>
+                <max_rdma_resizing>0</max_rdma_resizing>
+                <init_ibufs>1000</init_ibufs>
+                <max_srq_ibufs_posted>1500</max_srq_ibufs_posted>
+                <max_srq_ibufs>1000</max_srq_ibufs>
+                <srq_credit_limit>500</srq_credit_limit>
+                <srq_credit_thread_limit>100</srq_credit_thread_limit>
+                <size_ibufs_chunk>2000</size_ibufs_chunk>
+                <init_mr>400</init_mr>
+                <size_mr_chunk>200</size_mr_chunk>
+                <mmu_cache_enabled>0</mmu_cache_enabled>
+                <mmu_cache_entries>200</mmu_cache_entries>
+                <steal>1</steal>
+                <quiet_crash>0</quiet_crash>
+                <async_thread>1</async_thread>
 							</infiniband>
 						</driver>
 					</config>
 					<config>
-						<name>conf2</name>
+						<name>config_signalization</name>
 						<driver>
-							<tcp>
-								<stealing>false</stealing>
-							</tcp>
+              <infiniband>
+                <network_type>0</network_type>
+                <adm_port>1</adm_port>
+                <verbose_level>0</verbose_level>
+                <eager_limit>12288</eager_limit>
+                <buffered_limit>262114</buffered_limit>
+                <qp_tx_depth>1000</qp_tx_depth>
+                <qp_rx_depth>0</qp_rx_depth>
+                <cq_depth>2000</cq_depth>
+                <max_sg_sq>4</max_sg_sq>
+                <max_sg_rq>4</max_sg_rq>
+                <max_inline>128</max_inline>
+                <wc_in_number>4</wc_in_number>
+                <wc_out_number>4</wc_out_number>
+                <rdma_depth>4</rdma_depth>
+                <rdma_dest_depth>4</rdma_dest_depth>
+                <rdma_resizing>0</rdma_resizing>
+                <max_rdma_connections>0</max_rdma_connections>
+                <max_rdma_resizing>0</max_rdma_resizing>
+                <init_ibufs>100</init_ibufs>
+                <max_srq_ibufs_posted>100</max_srq_ibufs_posted>
+                <max_srq_ibufs>100</max_srq_ibufs>
+                <srq_credit_limit>100</srq_credit_limit>
+                <srq_credit_thread_limit>100</srq_credit_thread_limit>
+                <size_ibufs_chunk>100</size_ibufs_chunk>
+                <init_mr>10</init_mr>
+                <size_mr_chunk>10</size_mr_chunk>
+                <mmu_cache_enabled>0</mmu_cache_enabled>
+                <mmu_cache_entries>0</mmu_cache_entries>
+                <steal>0</steal>
+                <quiet_crash>0</quiet_crash>
+                <async_thread>1</async_thread>
+              </infiniband>
 						</driver>
 					</config>
 				</configs>
 				<!-- rails contain complexe structures so default value cannot be setup into config-meta.xml -->
-				<rails>
+        <rails>
 					<rail>
-						<name>rail1</name>
-						<device>ib1</device>
-						<topology>ring</topology>
-						<config>conf1</config>
+						<name>mpi</name>
+						<device>0</device>
+						<topology>ondemand</topology>
+						<config>config_mpi</config>
 					</rail>
 					<rail>
-						<name>rail2</name>
-						<device>eth0</device>
-						<topology>tore</topology>
-						<config>conf2</config>
+						<name>signalization</name>
+						<device>0</device>
+						<topology>torus</topology>
+						<config>config_signalization</config>
 					</rail>
 				</rails>
 			</networks>

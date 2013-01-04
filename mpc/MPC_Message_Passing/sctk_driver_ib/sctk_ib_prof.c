@@ -60,7 +60,7 @@ __thread volatile double reference_clock = -1;
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
-void sctk_ib_prof_init(int nb_rails) {
+void sctk_ib_prof_init() {
   sctk_nodebug("VP number: %d", sctk_get_cpu_number());
 
   /* Initialize QP usage profiling */

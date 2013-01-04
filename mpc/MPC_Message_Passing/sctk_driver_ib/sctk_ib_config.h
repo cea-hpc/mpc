@@ -43,7 +43,7 @@ typedef struct sctk_ib_config_s
   unsigned int  ibv_init_ibufs;
 
   unsigned int  ibv_eager_limit;
-  unsigned int  ibv_frag_eager_limit;
+  unsigned int  ibv_buffered_limit;
   unsigned int  ibv_max_rdma_connections;
   unsigned int  ibv_rdma_resizing;
   unsigned int  ibv_qp_tx_depth;
