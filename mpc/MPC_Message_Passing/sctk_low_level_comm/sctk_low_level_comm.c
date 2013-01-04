@@ -25,9 +25,9 @@
 #include <sctk_pmi.h>
 #include <string.h>
 #include "sctk_checksum.h"
+#include "sctk_runtime_config.h"
 
  /*Networks*/
-#include <sctk_simple_tcp.h>
 #include <sctk_multirail_tcp.h>
 #include <sctk_multirail_ib.h>
 #include <sctk_route.h>
@@ -126,6 +126,10 @@ static void sctk_network_not_implemented(char* name){
   sctk_abort();
 }
 
+const struct sctk_runtime_config_struct_networks * sctk_net_get_config() {
+  return (struct sctk_runtime_config_struct_networks*) &sctk_runtime_config_get()->networks;
+}
+
 void
 sctk_net_init_pmi() {
   if(sctk_process_number > 1){
@@ -138,35 +142,48 @@ sctk_net_init_pmi() {
 }
 
 void
-sctk_net_init_driver (char *name)
+sctk_net_init_driver ()
 {
   if(sctk_process_number > 1){
-    char *topo = "ring";
-    int i;
+    int i, j;
+    int rails_nb = 0;
 
-    for(i= 0; i < strlen(name); i++){
-      if(name[i] == ':'){
-	name[i] = '\0';
-	topo = &(name[i+1]);
+    /* Set the number of rails used for the routing interface */
+    sctk_route_set_rail_nb(sctk_net_get_config()->rails_size);
+
+    for (i=0; i<sctk_net_get_config()->rails_size; ++i) {
+      char* config_name = sctk_net_get_config()->rails[i].config;
+
+      /* Try to find the associated configuration */
+      for (j=0; j<sctk_net_get_config()->configs_size; ++j) {
+        if (strcmp(config_name, sctk_net_get_config()->configs[j].name) == 0) {
+          char* topology = sctk_net_get_config()->rails[i].topology;
+          /* Set infos for the current rail */
+          sctk_route_set_rail_infos(i, &sctk_net_get_config()->rails[i],
+            &sctk_net_get_config()->configs[j]);
+
+          /* Switch on the driver to use */
+          switch (sctk_net_get_config()->configs[j].driver.type) {
+#ifdef MPC_USE_INFINIBAND
+            case SCTK_RTCFG_net_driver_infiniband: /* INFINIBAND */
+              sctk_network_init_multirail_ib(i);
+              break;
+#endif
+            case SCTK_RTCFG_net_driver_tcp: /* TCP */
+              sctk_network_init_multirail_tcp(i);
+              break;
+            case SCTK_RTCFG_net_driver_tcpoib: /* TCP */
+              sctk_network_init_multirail_tcpoib(i);
+              break;
+            default:
+              sctk_network_not_implemented("");
+              break;
+          }
+          /* Increment the number of rails used */
+          rails_nb++;
+        }
       }
     }
-
-    sctk_nodebug("Use network %s",name);
-
-    FIRST_TRY_DRIVER(tcp,sctk_network_init_simple_tcp,topo);
-    TRY_DRIVER(tcpoib,sctk_network_init_simple_tcp_o_ib,topo);
-    TRY_DRIVER(simple_tcp,sctk_network_init_simple_tcp,topo);
-    TRY_DRIVER(multirail_tcp,sctk_network_init_multirail_tcp,topo);
-    TRY_DRIVER(multirail_tcpoib,sctk_network_init_multirail_tcpoib,topo);
-
-#ifdef MPC_USE_INFINIBAND
-    /* Driver for Infiniband */
-    TRY_DRIVER(multirail_ib,sctk_network_init_multirail_ib,topo);
-    /* FIXME: For backward compatibility. Should not more be used */
-    TRY_DRIVER(ib,sctk_network_init_ib,"ondemand");
-#endif
-
-    DEFAUT_DRIVER();
 
     sctk_route_finalize();
     sctk_checksum_init();

@@ -35,7 +35,6 @@
 #include <sctk_ibufs_rdma.h>
 #include <sctk_ib_mmu.h>
 #include <sctk_ib_config.h>
-#include <sctk_ib_fallback_config.h>
 #include "sctk_ib_qp.h"
 #include "sctk_ib_cm.h"
 #include "sctk_ib_eager.h"
@@ -116,7 +115,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
 buffered:
   /***** BUFFERED EAGER CHANNEL *****/
-  if (size <= config->ibv_frag_eager_limit)  {
+  if (size <= config->ibv_buffered_limit)  {
     /* Fallback to RDMA if buffered not available or low memory mode */
     if (sctk_ib_buffered_prepare_msg(rail, remote, msg, size) == 1 ) goto error;
     sctk_complete_and_free_message(msg);
@@ -319,16 +318,15 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   /* Infiniband Init */
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   memset(rail_ib, 0, sizeof(sctk_ib_rail_info_t));
+  rail_ib->rail = rail;
   /* Profiler init */
   sctk_ib_prof_init(rail_ib);
   sctk_ib_device_t *device;
   struct ibv_srq_init_attr srq_attr;
   /* Open config */
-  sctk_ib_fallback_config_init(rail_ib, "fallback");
+  sctk_ib_config_init(rail_ib, "fallback");
   /* Open device */
   device = sctk_ib_device_init(rail_ib);
-  /* FIXME: pass rail as an arg of sctk_ib_device_init  */
-  rail_ib->rail = rail;
   sctk_ib_device_open(rail_ib, 0);
   /* Init Proctection Domain */
   sctk_ib_pd_init(device);

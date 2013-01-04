@@ -55,12 +55,49 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_runtime_config_struct_init_net_driver_fake(void * struct_ptr)
+void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 {
-	struct sctk_runtime_config_struct_net_driver_fake * obj = struct_ptr;
+	struct sctk_runtime_config_struct_net_driver_infiniband * obj = struct_ptr;
 	/* Simple params : */
-	obj->buffer = 1024;
-	obj->stealing = true;
+	obj->network_type = 0;
+	obj->adm_port = 0;
+	obj->verbose_level = 0;
+	obj->eager_limit = 12288;
+	obj->buffered_limit = 262114;
+	obj->qp_tx_depth = 15000;
+	obj->qp_rx_depth = 0;
+	obj->cq_depth = 40000;
+	obj->max_sg_sq = 4;
+	obj->max_sg_rq = 4;
+	obj->max_inline = 128;
+	obj->rdma_resizing = 0;
+	obj->max_rdma_connections = 0;
+	obj->max_rdma_resizing = 0;
+	obj->init_ibufs = 1000;
+	obj->max_srq_ibufs_posted = 1500;
+	obj->max_srq_ibufs = 1000;
+	obj->srq_credit_limit = 500;
+	obj->srq_credit_thread_limit = 100;
+	obj->size_ibufs_chunk = 100;
+	obj->init_mr = 400;
+	obj->size_mr_chunk = 200;
+	obj->mmu_cache_enabled = 1;
+	obj->mmu_cache_entries = 1;
+	obj->steal = 2;
+	obj->quiet_crash = 0;
+	obj->async_thread = 0;
+	obj->wc_in_number = 0;
+	obj->wc_out_number = 0;
+	obj->rdma_depth = 0;
+	obj->rdma_dest_depth = 0;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_net_driver_tcp(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_net_driver_tcp * obj = struct_ptr;
+	/* Simple params : */
+	obj->fake_param = 0;
 }
 
 /*******************  FUNCTION  *********************/

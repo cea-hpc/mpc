@@ -125,7 +125,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
 buffered:
   /***** BUFFERED EAGER CHANNEL *****/
-  if (!low_memory_mode && size <= config->ibv_frag_eager_limit)  {
+  if (size <= config->ibv_buffered_limit)  {
     sctk_nodebug("Buffered");
     /* Fallback to RDMA if buffered not available or low memory mode */
     if (sctk_ib_buffered_prepare_msg(rail, remote, msg, size) == 1 ) goto rdma;
@@ -474,6 +474,7 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t* rail){
   /* Infiniband Init */
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   memset(rail_ib, 0, sizeof(sctk_ib_rail_info_t));
+  rail_ib->rail = rail;
   /* Profiler init */
   sctk_ib_prof_init(rail_ib);
   sctk_ib_device_t *device;
@@ -482,8 +483,6 @@ void sctk_network_init_mpi_ib(sctk_rail_info_t* rail){
   sctk_ib_config_init(rail_ib, "MPI");
   /* Open device */
   device = sctk_ib_device_init(rail_ib);
-  /* FIXME: pass rail as an arg of sctk_ib_device_init  */
-  rail_ib->rail = rail;
   sctk_ib_device_open(rail_ib, 0);
   /* Init Proctection Domain */
   sctk_ib_pd_init(device);

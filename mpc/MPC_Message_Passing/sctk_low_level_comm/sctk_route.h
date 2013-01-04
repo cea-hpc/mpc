@@ -23,6 +23,7 @@
 #define __SCTK_ROUTE_H_
 
 #include <sctk_inter_thread_comm.h>
+#include <sctk_runtime_config.h>
 #include <uthash.h>
 #include <math.h>
 
@@ -123,6 +124,9 @@ struct sctk_rail_info_s{
   char on_demand;
   /* If the rail allows on demand-connexions */
   int rail_number;
+  /* Infos from runtime config */
+  struct sctk_runtime_config_struct_net_rail * runtime_config_rail;
+  struct sctk_runtime_config_struct_net_driver_config * runtime_config_driver_config;
 };
 
 typedef enum {
@@ -185,7 +189,10 @@ sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail);
 inline sctk_route_table_t* sctk_get_route_to_process_no_ondemand(int dest, sctk_rail_info_t* rail);
 inline sctk_route_table_t* sctk_get_route_to_process_static(int dest, sctk_rail_info_t* rail);
 
-void sctk_route_set_rail_nb(int i);
+void sctk_route_set_rail_nb(int nb);
+void sctk_route_set_rail_infos(int rail,
+    struct sctk_runtime_config_struct_net_rail * runtime_config_rail,
+    struct sctk_runtime_config_struct_net_driver_config * runtime_config_driver_config);
 int sctk_route_get_rail_nb();
 sctk_rail_info_t* sctk_route_get_rail(int i);
 sctk_route_table_t* sctk_get_route_to_process_no_route(int dest, sctk_rail_info_t* rail);

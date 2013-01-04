@@ -394,10 +394,19 @@ sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail){
   return tmp;
 }
 
-void sctk_route_set_rail_nb(int i){
-  rails = sctk_malloc(i*sizeof(sctk_rail_info_t));
-  rail_number = i;
+void sctk_route_set_rail_nb(int nb){
+  rails = sctk_malloc(nb*sizeof(sctk_rail_info_t));
+  memset(rails, 0, nb*sizeof(sctk_rail_info_t));
+  rail_number = nb;
 }
+
+void sctk_route_set_rail_infos(int rail,
+    struct sctk_runtime_config_struct_net_rail * runtime_config_rail,
+    struct sctk_runtime_config_struct_net_driver_config * runtime_config_driver_config){
+  rails[rail].runtime_config_rail = runtime_config_rail;
+  rails[rail].runtime_config_driver_config = runtime_config_driver_config;
+}
+
 
 int sctk_route_get_rail_nb(){
   return rail_number;
