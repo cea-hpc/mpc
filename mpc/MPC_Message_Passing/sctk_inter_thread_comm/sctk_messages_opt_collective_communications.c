@@ -73,6 +73,7 @@ static void sctk_opt_messages_send(const sctk_communicator_t communicator,int my
   sctk_add_adress_in_message(&(msg_req->msg),buffer,size);
   sctk_set_header_in_message (&(msg_req->msg), tag, communicator, myself, dest,
 			      &(msg_req->request), size,specific_message_tag);
+
   sctk_send_message(&(msg_req->msg));
 #if 0
   msg_req->msg.tail.need_check_in_wait = /* copy_in_send */1;

@@ -1169,12 +1169,9 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
   msg->sctk_msg_get_use_message_numbering = 1;
   assume(request);
 
-  if(request != NULL){
-    sctk_request_init_request(request,SCTK_MESSAGE_PENDING,msg,source,destination,message_tag,communicator,
+  sctk_request_init_request(request,SCTK_MESSAGE_PENDING,msg,source,destination,message_tag,communicator,
 			      count);
-
-    msg->body.completion_flag = &(request->completion_flag);
-  }
+  msg->body.completion_flag = &(request->completion_flag);
   msg->tail.need_check_in_wait = 1;
 }
 
@@ -1463,7 +1460,8 @@ void sctk_perform_messages_find_ptp_from_request(
   sctk_ptp_table_read_unlock();
 
   /* Compute the rank of the remote process */
-  if(request->header.source != MPC_ANY_SOURCE){
+  if(request->header.source != MPC_ANY_SOURCE &&
+      request->header.communicator != MPC_COMM_NULL){
     sctk_nodebug("remote process=%d source=%d comm=%d",
         *remote_process, request->header.source, request->header.communicator);
 
@@ -1511,11 +1509,12 @@ void sctk_wait_message (sctk_request_t * request){
   struct wait_message_s _wait;
   _wait.request = request;
 
+  sctk_perform_messages_find_ptp_from_request(_wait.request,
+      &_wait.recv_ptp, &_wait.send_ptp, &_wait.remote_process,
+      &_wait.task_id);
+
   /* Find the PTPs lists */
   if(request->completion_flag != SCTK_MESSAGE_DONE){
-    sctk_perform_messages_find_ptp_from_request(_wait.request,
-        &_wait.recv_ptp, &_wait.send_ptp, &_wait.remote_process,
-        &_wait.task_id);
 
     sctk_nodebug("Wait from %d to %d (req %p %d) (%p - %p)",
         request->header.glob_source, request->header.glob_destination, request, request->request_type, _wait.send_ptp, _wait.recv_ptp);

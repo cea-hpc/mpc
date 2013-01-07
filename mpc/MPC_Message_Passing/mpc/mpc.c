@@ -273,6 +273,7 @@ static inline void sctk_mpc_init_request (MPC_Request * request, MPC_Comm comm,
       request->header.communicator = comm;
       request->header.msg_size = 0;
       request->completion_flag = SCTK_MESSAGE_DONE;
+      request->request_type = REQUEST_NULL;
       request->is_null = 0;
       request->msg = NULL;
     }

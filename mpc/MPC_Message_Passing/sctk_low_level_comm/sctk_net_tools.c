@@ -97,7 +97,6 @@ TODO("Deal with partial reception")
 
       size = msg->body.header.msg_size;
 
-      sctk_nodebug("MSG SEND |%s|", (char*)msg->tail.message.contiguous.addr);
       sctk_safe_write(fd,msg->tail.message.contiguous.addr,size);
       break;
     }
