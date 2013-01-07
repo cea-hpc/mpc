@@ -55,6 +55,12 @@
 			<param name="driver" type="net_driver" doc="Define the related driver to use and its configuration."/>
 		</struct>
 
+    <!-- Structure for cli_option -->
+		<struct name="net_cli_option" doc="Define a specific configuration for a network provided by '-net'.">
+			<param name="name" type="string" doc="Define the name of the option."/>
+      <array name="rails" entry-name="rail" type="string" doc="Define the driver config to use for this rail."/>
+		</struct>
+
 		<!-- Structure for rail definition -->
 		<struct name="net_rail" doc="Define a rail which is a name, a device associate to a driver and a routing topology.">
 			<param name="name" type="string" doc="Define the name of current rail."/>
@@ -67,6 +73,7 @@
 		<struct name="networks" doc="Base structure to contain the network configuration">
 			<array name="configs" entry-name="config" type="net_driver_config" doc="Define the configuration driver list to reuse in rail definitions."/>
 			<array name="rails" entry-name="rail" type="net_rail" doc="List of rails to declare in MPC."/>
+			<array name="cli_options" entry-name="cli_option" type="net_cli_option" doc="List of networks available through the '-net' argument of mpcrun."/>
 		</struct>
 
 	</usertypes>

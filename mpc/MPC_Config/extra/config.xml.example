@@ -41,7 +41,7 @@ config-meta.xml automatically.
 				<!-- net config contain complexe structures so default value cannot be setup into config-meta.xml -->
 				<configs>
 					<config>
-						<name>config_mpi</name>
+						<name>ib_config_mpi</name>
 						<driver>
               <infiniband>
                 <network_type>1</network_type>
@@ -79,7 +79,7 @@ config-meta.xml automatically.
 						</driver>
 					</config>
 					<config>
-						<name>config_signalization</name>
+						<name>ib_config_signalization</name>
 						<driver>
               <infiniband>
                 <network_type>0</network_type>
@@ -114,24 +114,88 @@ config-meta.xml automatically.
                 <quiet_crash>0</quiet_crash>
                 <async_thread>1</async_thread>
               </infiniband>
-						</driver>
-					</config>
+            </driver>
+          </config>
+          <config>
+            <name>tcp_config_mpi</name>
+            <driver>
+              <tcp>
+                <fake_param>0</fake_param>
+              </tcp>
+            </driver>
+          </config>
+          <config>
+            <name>tcpoib_config_mpi</name>
+            <driver>
+              <tcpoib>
+                <fake_param>0</fake_param>
+              </tcpoib>
+            </driver>
+          </config>
 				</configs>
 				<!-- rails contain complexe structures so default value cannot be setup into config-meta.xml -->
         <rails>
 					<rail>
-						<name>mpi</name>
+						<name>ib_mpi</name>
 						<device>0</device>
 						<topology>ondemand</topology>
-						<config>config_mpi</config>
+						<config>ib_config_mpi</config>
 					</rail>
 					<rail>
-						<name>signalization</name>
+						<name>ib_signalization</name>
 						<device>0</device>
 						<topology>torus</topology>
-						<config>config_signalization</config>
-					</rail>
-				</rails>
+						<config>ib_config_signalization</config>
+          </rail>
+					<rail>
+						<name>tcp_mpi</name>
+						<device>0</device>
+						<topology>fully</topology>
+						<config>tcp_config_mpi</config>
+          </rail>
+					<rail>
+						<name>tcpoib_mpi</name>
+						<device>0</device>
+						<topology>fully</topology>
+						<config>tcpoib_config_mpi</config>
+          </rail>
+        </rails>
+
+        <cli_options>
+          <cli_option>
+            <name>ib</name>
+            <rails>
+              <rail>ib_mpi</rail>
+              <rail>ib_signalization</rail>
+            </rails>
+          </cli_option>
+          <cli_option>
+            <name>tcp</name>
+            <rails>
+              <rail>tcp_mpi</rail>
+            </rails>
+          </cli_option>
+          <cli_option>
+            <name>tcpoib</name>
+            <rails>
+              <rail>tcpoib_mpi</rail>
+            </rails>
+          </cli_option>
+          <cli_option>
+            <name>multirail_tcp</name>
+            <rails>
+              <rail>tcp_mpi</rail>
+              <rail>tcp_mpi</rail>
+            </rails>
+          </cli_option>
+          <cli_option>
+            <name>default</name>
+            <rails>
+              <rail>ib_mpi</rail>
+              <rail>ib_signalization</rail>
+            </rails>
+          </cli_option>
+        </cli_options>
 			</networks>
 		</profile>
 	</profiles>

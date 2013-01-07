@@ -169,6 +169,17 @@ struct sctk_runtime_config_struct_net_driver_config
 };
 
 /******************************** STRUCTURE *********************************/
+/**Define a specific configuration for a network provided by '-net'.**/
+struct sctk_runtime_config_struct_net_cli_option
+{	/**Define the name of the option.**/
+	char * name;
+	/**Define the driver config to use for this rail.**/
+	char * * rails;
+	/** Number of elements in rails array. **/
+	int rails_size;
+};
+
+/******************************** STRUCTURE *********************************/
 /**Define a rail which is a name, a device associate to a driver and a routing topology.**/
 struct sctk_runtime_config_struct_net_rail
 {	/**Define the name of current rail.**/
@@ -192,6 +203,10 @@ struct sctk_runtime_config_struct_networks
 	struct sctk_runtime_config_struct_net_rail * rails;
 	/** Number of elements in rails array. **/
 	int rails_size;
+	/**List of networks available through the '-net' argument of mpcrun.**/
+	struct sctk_runtime_config_struct_net_cli_option * cli_options;
+	/** Number of elements in cli_options array. **/
+	int cli_options_size;
 };
 
 /******************************** STRUCTURE *********************************/
