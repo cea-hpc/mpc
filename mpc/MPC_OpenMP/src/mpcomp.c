@@ -446,7 +446,7 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     int max_index_with_more_threads ;
 
     /* Get the OpenMP instance already allocated during the initializatino (mpcomp_init) */
-
+    
     instance = t->children_instance ;
     sctk_assert( t->children_instance != NULL);
     sctk_assert( instance != NULL ) ;
