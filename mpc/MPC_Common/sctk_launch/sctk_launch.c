@@ -171,6 +171,8 @@ static int sctk_processor_nb_val = 0;
 static int sctk_node_nb_val = 0;
 static int sctk_verbosity = 0;
 static char* sctk_launcher_mode = "none";
+/* Name of the inter-process driver to use. NULL means default driver */
+static char* sctk_network_driver_name = NULL;
 
 /*   void */
 /* sctk_set_net_val (void (*val) (int *, char ***)) */
@@ -256,7 +258,7 @@ sctk_perform_initialisation (void)
 
 #ifdef MPC_Message_Passing
   if (sctk_process_nb_val > 1) {
-    sctk_net_init_driver();
+    sctk_net_init_driver(sctk_network_driver_name);
   }
 #endif
 
@@ -487,9 +489,7 @@ sctk_get_verbosity ()
   static void
 sctk_use_network (char *arg)
 {
-  sctk_error("The argument '-net=' is no longer available. Please switch to the new "
-      "MPC configuration module");
-  sctk_abort();
+  sctk_network_driver_name = arg;
 }
 
 

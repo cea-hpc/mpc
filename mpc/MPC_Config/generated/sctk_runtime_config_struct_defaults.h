@@ -38,6 +38,7 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr);
 void sctk_runtime_config_struct_init_net_driver_tcp(void * struct_ptr);
 void sctk_runtime_config_struct_init_net_driver(void * struct_ptr);
 void sctk_runtime_config_struct_init_net_driver_config(void * struct_ptr);
+void sctk_runtime_config_struct_init_net_cli_option(void * struct_ptr);
 void sctk_runtime_config_struct_init_net_rail(void * struct_ptr);
 void sctk_runtime_config_struct_init_networks(void * struct_ptr);
 void sctk_runtime_config_struct_init_profiler(void * struct_ptr);
