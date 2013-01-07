@@ -1432,9 +1432,9 @@ extern "C"
 /* Idle function is called here to avoid deadlocks.
  * Actually, when calling sctk_thread_yield(), the polling
  * function is not called. */
-#ifdef MPC_Message_Passing
+//#ifdef MPC_Message_Passing
 //	    sctk_notify_idle_message ();
-#endif
+//#endif
 # if 0
 	if ((vp->ready_queue_used == NULL) &&
 	    (vp->incomming_queue == NULL) &&
