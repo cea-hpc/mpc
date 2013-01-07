@@ -43,7 +43,7 @@
 /* Task engine disabled */
 #define SCTK_DISABLE_TASK_ENGINE
 /* Defines if we are in a full MPI mode */
-#define SCTK_ENABLE_FULL_MPI
+//#define SCTK_ENABLE_FULL_MPI
 
 TODO("sctk_cancel_message: need to be implemented")
   void sctk_cancel_message (sctk_request_t * msg){not_implemented();}
