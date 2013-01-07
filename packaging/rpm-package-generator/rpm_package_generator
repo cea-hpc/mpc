@@ -27,7 +27,8 @@ ROOT_PACKAGE="$HOME/rpmbuild"
 ROOT_EXECUTION="$PWD"
 PATCHS_LIST=""
 BUILD_MODE="-ba"
-
+GIT_GENERATION="no"
+AVAILABLES_DISTRIBUTIONS="RedHat Fedora CentOS Suse OpenSuse Mandriva"
 ##################################
 # READ_PARAM_VALUE: 
 # Formatting output to use values of arguments
@@ -49,7 +50,8 @@ print_help(){
 	echo "#                            (can use -v=)                         #"
 	echo "#   --source=<source_file>   Specifies source tarball(can use -s=) #"
 	echo "#   --source=git             Generate the source archive from      #"
-	echo "#                            current git commit.                   #"
+	echo "#                            current git commit. Must specify      #"
+	echo "#                            -v option before !                    #"
 	echo "#   --sprm                   Only generate SRPM                    #"
 	echo "#   -j=<number>              Fix make -j value.                    #"
 	echo "#   -h | --help              Print this help.                      #"
@@ -98,6 +100,25 @@ if [ ! -f 'rpm_package_generator' ] || [ ! -f 'spec_file_rpm_generator' ]; then
 	print_error "You must execute as ./rpm_package_generator."
 fi
 
+#check distribution
+DISTRIBUTION="$(cat /etc/*-release)"
+VALID_DISTRI="no"
+for distrib in $AVAILABLES_DISTRIBUTIONS
+do
+	#test current distribution
+	if test "$(echo "$DISTRIBUTION" | grep "$distrib" -i)" != "" ; then
+		VALID_DISTRI="YES"
+		break;
+	fi
+done
+if test "$VALID_DISTRI" != "YES" ; then
+	echo ""
+	echo "WARNING: This generation system is recommended for distributions below:"
+	echo "WARNING:           $AVAILABLES_DISTRIBUTIONS"
+	echo "WARNING: Your distribution isn't in this list !"
+	echo ""
+fi
+
 #############################################
 #################### MAIN ###################
 #############################################
@@ -117,12 +138,7 @@ do
 			MAKE_J="$arg"
 		;;
 		--source=git|-s=git)
-			echo "Generate tarbal from git mpc-framework-$MPC_VERSION.tar.gz"
-			echo "git archive --format=tar --prefix=mpc-framework-$MPC_VERSION/ HEAD | gzip > mpc-framework-$MPC_VERSION.tar.gz"
-			tmp=$PWD
-			cd ../../ || print_error "Internal error"
-			git archive --format=tar --prefix=mpc-framework-$MPC_VERSION/ HEAD | gzip > $tmp/mpc-framework-$MPC_VERSION.tar.gz || print_error "Failed to generate tarball file from current git repository !"
-			cd "$tmp" || print_error "Internal error"
+			GIT_GENERATION="YES"
 		;;
 		--source=*)
 			SOURCES="$(read_param_value $arg --source)"
@@ -151,6 +167,25 @@ done
 echo "Some Checking..."
 checking_softwares "gcc" "make" "rpmbuild"
 
+#checking git repo
+if test "$GIT_GENERATION" = "YES" ; then
+	#infd MPC_VERSION number
+	if test -z "$MPC_VERSION" ; then
+		MPC_VERSION="$(MPC_SOURCE_DIR=../../mpc/ ../../mpc/MPC_Tools/mpc_print_version)"
+		if test -z "$MPC_VERSION" ; then
+			print_error "Unable to find MPC version Number !"
+			break;
+		fi
+	fi
+	echo "Generate tarball from git mpc-framework-$MPC_VERSION.tar.gz"
+	echo "git archive --format=tar --prefix=mpc-framework-$MPC_VERSION/ HEAD | gzip > mpc-framework-$MPC_VERSION.tar.gz"
+	tmp=$PWD
+	cd ../../ || print_error "Internal error"
+	git archive --format=tar --prefix=mpc-framework-$MPC_VERSION/ HEAD | gzip > $tmp/mpc-framework-$MPC_VERSION.tar.gz || print_error "Failed to generate tarball file from current git repository !"
+	cd "$tmp" || print_error "Internal error"
+	SOURCES="$tmp/mpc-framework-$MPC_VERSION.tar.gz"
+fi
+
 #checking version
 if test -z "$MPC_VERSION" ; then
 	print_error "You must provide a Version Number by argument !"
@@ -173,7 +208,7 @@ fi
 
 #some pre actions
 echo "rpmbuild tree creation"
-mkdir -p $HOME/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS} || print_error "Unable to create rpmbuild tree !"
+mkdir -p $ROOT_PACKAGE/{BUILD,RPMS,SOURCES,SPECS,SRPMS} || print_error "Unable to create rpmbuild tree !"
 echo "Remove previous mpc-framework $MPC_VERSION RPM files"
 rm -f $ROOT_PACKAGE/SRPMS/mpc-framework-*$MPC_VERSION*.src.rpm $ROOT_PACKAGE/RPMS/x86_64/mpc-framework-*$MPC_VERSION*.rpm
 cp $SOURCES $ROOT_PACKAGE/SOURCES/ || print_error "Tarball checked but impossible to copy her in SOURCES Folder !"
