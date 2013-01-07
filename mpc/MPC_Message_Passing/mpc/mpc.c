@@ -23,7 +23,6 @@
 #include "mpc.h"
 #undef main
 
-#include <assert.h>
 #include "sctk.h"
 #include "mpc_reduction.h"
 #include "sctk_debug.h"
@@ -36,6 +35,7 @@
 #include <sctk_inter_thread_comm.h>
 #include <sctk_communicator.h>
 #include <sctk_collective_communications.h>
+#include "sctk_stdint.h"
 
  /*#define MPC_LOG_DEBUG*/
 #ifdef MPC_LOG_DEBUG
@@ -1726,12 +1726,10 @@ __MPC_init_types ()
   mpc_init (MPC_UNSIGNED_LONG, unsigned long);
   mpc_init (MPC_LONG_DOUBLE, long double);
   mpc_init (MPC_LONG_LONG_INT, long long);
-#ifndef NOHAVE_ASSERT_H
-  mpc_init (MPC_INTEGER1, int8_t);
-  mpc_init (MPC_INTEGER2, int16_t);
-  mpc_init (MPC_INTEGER4, int32_t);
-  mpc_init (MPC_INTEGER8, int64_t);
-#endif
+  mpc_init (MPC_INTEGER1, sctk_int8_t);
+  mpc_init (MPC_INTEGER2, sctk_int16_t);
+  mpc_init (MPC_INTEGER4, sctk_int32_t);
+  mpc_init (MPC_INTEGER8, sctk_int64_t);
   mpc_init (MPC_REAL4, float);
   mpc_init (MPC_REAL8, double);
   mpc_init (MPC_REAL16, long double);

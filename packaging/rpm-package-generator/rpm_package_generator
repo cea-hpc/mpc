@@ -22,11 +22,13 @@
 ########################################################################
 
 MPC_VERSION=""
-ROOT_TARBALL="$HOME/rpm-package-generator"
+ROOT_TARBALL="$PWD"
 ROOT_PACKAGE="$HOME/rpmbuild"
 ROOT_EXECUTION="$PWD"
 PATCHS_LIST=""
-
+BUILD_MODE="-ba"
+GIT_GENERATION="no"
+AVAILABLES_DISTRIBUTIONS="RedHat Fedora CentOS Suse OpenSuse Mandriva"
 ##################################
 # READ_PARAM_VALUE: 
 # Formatting output to use values of arguments
@@ -47,6 +49,10 @@ print_help(){
 	echo "#   --version=<version>      Specifies version number to generate. #"
 	echo "#                            (can use -v=)                         #"
 	echo "#   --source=<source_file>   Specifies source tarball(can use -s=) #"
+	echo "#   --source=git             Generate the source archive from      #"
+	echo "#                            current git commit. Must specify      #"
+	echo "#                            -v option before !                    #"
+	echo "#   --sprm                   Only generate SRPM                    #"
 	echo "#   -j=<number>              Fix make -j value.                    #"
 	echo "#   -h | --help              Print this help.                      #"
 	echo "####################################################################"
@@ -87,6 +93,32 @@ checking_softwares(){
 		echo "Checking $soft ... OK"
 	done
 }
+
+#############################################
+#check path
+if [ ! -f 'rpm_package_generator' ] || [ ! -f 'spec_file_rpm_generator' ]; then
+	print_error "You must execute as ./rpm_package_generator."
+fi
+
+#check distribution
+DISTRIBUTION="$(cat /etc/*-release)"
+VALID_DISTRI="no"
+for distrib in $AVAILABLES_DISTRIBUTIONS
+do
+	#test current distribution
+	if test "$(echo "$DISTRIBUTION" | grep "$distrib" -i)" != "" ; then
+		VALID_DISTRI="YES"
+		break;
+	fi
+done
+if test "$VALID_DISTRI" != "YES" ; then
+	echo ""
+	echo "WARNING: This generation system is recommended for distributions below:"
+	echo "WARNING:           $AVAILABLES_DISTRIBUTIONS"
+	echo "WARNING: Your distribution isn't in this list !"
+	echo ""
+fi
+
 #############################################
 #################### MAIN ###################
 #############################################
@@ -105,6 +137,9 @@ do
 		-j*)
 			MAKE_J="$arg"
 		;;
+		--source=git|-s=git)
+			GIT_GENERATION="YES"
+		;;
 		--source=*)
 			SOURCES="$(read_param_value $arg --source)"
 			checking_paths
@@ -112,6 +147,9 @@ do
 		-s=*)
 			SOURCES="$(read_param_value $arg -s)"
 			checking_paths
+		;;
+		--srpm)
+			BUILD_MODE="-bs"
 		;;
 		-h|--help)
 			print_help
@@ -128,6 +166,25 @@ done
 #Checking executables
 echo "Some Checking..."
 checking_softwares "gcc" "make" "rpmbuild"
+
+#checking git repo
+if test "$GIT_GENERATION" = "YES" ; then
+	#infd MPC_VERSION number
+	if test -z "$MPC_VERSION" ; then
+		MPC_VERSION="$(MPC_SOURCE_DIR=../../mpc/ ../../mpc/MPC_Tools/mpc_print_version)"
+		if test -z "$MPC_VERSION" ; then
+			print_error "Unable to find MPC version Number !"
+			break;
+		fi
+	fi
+	echo "Generate tarball from git mpc-framework-$MPC_VERSION.tar.gz"
+	echo "git archive --format=tar --prefix=mpc-framework-$MPC_VERSION/ HEAD | gzip > mpc-framework-$MPC_VERSION.tar.gz"
+	tmp=$PWD
+	cd ../../ || print_error "Internal error"
+	git archive --format=tar --prefix=mpc-framework-$MPC_VERSION/ HEAD | gzip > $tmp/mpc-framework-$MPC_VERSION.tar.gz || print_error "Failed to generate tarball file from current git repository !"
+	cd "$tmp" || print_error "Internal error"
+	SOURCES="$tmp/mpc-framework-$MPC_VERSION.tar.gz"
+fi
 
 #checking version
 if test -z "$MPC_VERSION" ; then
@@ -150,15 +207,19 @@ if test -z "$MAKE_J" ; then
 fi
 
 #some pre actions
-cd $HOME
-echo "Cleaning up \"rpmbuild\" Directory"
-rm -rf $HOME/rpmbuild/ > /dev/null
 echo "rpmbuild tree creation"
-mkdir -p $HOME/rpmbuild/{BUILD,RPMS,SOURCES,SPECS,SRPMS} || print_error "Unable to create rpmbuild tree !"
+mkdir -p $ROOT_PACKAGE/{BUILD,RPMS,SOURCES,SPECS,SRPMS} || print_error "Unable to create rpmbuild tree !"
+echo "Remove previous mpc-framework $MPC_VERSION RPM files"
+rm -f $ROOT_PACKAGE/SRPMS/mpc-framework-*$MPC_VERSION*.src.rpm $ROOT_PACKAGE/RPMS/x86_64/mpc-framework-*$MPC_VERSION*.rpm
 cp $SOURCES $ROOT_PACKAGE/SOURCES/ || print_error "Tarball checked but impossible to copy her in SOURCES Folder !"
 cp $ROOT_TARBALL/patchs/* $ROOT_PACKAGE/SOURCES/ > /dev/null 2>&1
+
 #patchs list to apply
-PATCHS_LIST="$(ls $ROOT_TARBALL/patchs/)"
+if [ -d "$ROOT_TARBALL/patchs/" ]; then
+	PATCHS_LIST="$(ls $ROOT_TARBALL/patchs/)"
+else
+	PATCHS_LIST=''
+fi
 
 #SPEC File generation
 export ROOT_TARBALL
@@ -170,21 +231,19 @@ mv $ROOT_TARBALL/mpc-framework-$MPC_VERSION.spec $ROOT_PACKAGE/SPECS/ || print_e
 
 #package generation
 echo "RPM Package generation"
-rpmbuild -ba $ROOT_PACKAGE/SPECS/mpc-framework-$MPC_VERSION.spec || print_error "RPM PACKAGE GENERATION FAILED !!"
-
+rpmbuild $BUILD_MODE $ROOT_PACKAGE/SPECS/mpc-framework-$MPC_VERSION.spec || print_error "RPM PACKAGE GENERATION FAILED !!"
 
 #copy packages
 echo "Saving packages"
 mkdir -p $TARGET_PATH
-cp $ROOT_PACKAGE/RPMS/x86_64/* $TARGET_PATH/ || print_error "Unable to copy rpm package into $TARGET_PATH"
-
-#clean up generation build (if all is passed)
-rm -rf $ROOT_PACKAGE
-
-#create packages tarball
-cd $ROOT_TARBALL
-rm -rf $TARGET.tar.gz > /dev/null 2>&1
-tar -czf $TARGET.tar.gz $TARGET || print_error "Unable to compress rpm packages located in $TARGET_PATH"
-rm -rf $TARGET > /dev/null 2>&1
+cp $ROOT_PACKAGE/SRPMS/mpc-framework-*$MPC_VERSION*.src.rpm ./ || print_error "Unable to copy srpm package into ./"
+if [ "$BUILD_MODE" = "-ba" ]; then
+	cp $ROOT_PACKAGE/RPMS/x86_64/mpc-framework-*$MPC_VERSION*.rpm $TARGET_PATH/ || print_error "Unable to copy rpm package into $TARGET_PATH"
+	#create packages tarball
+	cd $ROOT_TARBALL
+	rm -rf $TARGET.tar.gz > /dev/null 2>&1
+	tar -czf $TARGET.tar.gz $TARGET || print_error "Unable to compress rpm packages located in $TARGET_PATH"
+	rm -rf $TARGET > /dev/null 2>&1
+fi
 
 echo "done"

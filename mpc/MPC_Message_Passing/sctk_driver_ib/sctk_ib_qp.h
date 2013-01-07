@@ -128,10 +128,10 @@ typedef struct sctk_ibuf_rdma_s
 typedef struct sctk_ib_qp_s
 {
   struct ibv_qp           *qp;       /* queue pair */
-  uint32_t                rq_psn;    /* starting receive packet sequence number
+  sctk_uint32_t           rq_psn;    /* starting receive packet sequence number
                                         (should match remote QP's sq_psn) */
-  uint32_t                psn;       /* packet sequence number */
-  uint32_t                dest_qp_num;/* destination qp number */
+  sctk_uint32_t           psn;       /* packet sequence number */
+  sctk_uint32_t           dest_qp_num;/* destination qp number */
   int                     rank; /* Process rank associated to the QP */
   /* QP state */
   OPA_int_t               state;
@@ -184,7 +184,7 @@ typedef struct sctk_ib_qp_s
 
 void sctk_ib_qp_key_create_value(char *msg, size_t size, sctk_ib_cm_qp_connection_t* keys);
 void sctk_ib_qp_key_fill(sctk_ib_cm_qp_connection_t* keys, sctk_ib_qp_t *remote,
-    uint16_t lid, uint32_t qp_num, uint32_t psn);
+    sctk_uint16_t lid, sctk_uint32_t qp_num, sctk_uint32_t psn);
 void sctk_ib_qp_key_create_key(char *msg, size_t size, int rail, int src, int dest);
 sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_convert( char* msg);
 
@@ -230,7 +230,7 @@ sctk_ib_qp_state_rtr_attr(struct sctk_ib_rail_info_s* rail_ib,
 
 struct ibv_qp_attr
 sctk_ib_qp_state_rts_attr(struct sctk_ib_rail_info_s* rail_ib,
-    uint32_t psn, int *flags);
+    sctk_uint32_t psn, int *flags);
 
 void
 sctk_ib_qp_modify( sctk_ib_qp_t* remote, struct ibv_qp_attr* attr, int flags);

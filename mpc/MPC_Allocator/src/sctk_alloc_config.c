@@ -44,7 +44,7 @@ SCTK_STATIC void sctk_alloc_config_init_static_defaults(struct sctk_runtime_conf
 	config->numa_migration     = false;
 	config->realloc_factor     = 2;
 	config->realloc_threashold = 50*1024*1024;//50MB
-	config->keep_max           = 40*1024*1024;//40MB
+	config->keep_max           = 8*1024*1024;//8MB
 	config->keep_mem           = 512*1024*1014;//512MB
 }
 

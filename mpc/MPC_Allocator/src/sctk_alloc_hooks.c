@@ -26,6 +26,7 @@
 #include "sctk_alloc_hooks.h"
 #include "sctk_alloc_debug.h"
 #include "sctk_alloc_chain.h"
+#include "sctk_alloc_inlined.h"
 
 /********************************** GLOBALS *********************************/
 #ifdef ENABLE_ALLOC_HOOKS
@@ -85,7 +86,8 @@ void sctk_alloc_hooks_set_user_data(struct sctk_alloc_chain * chain,void * data)
 /**
  * Wrapper function to access to the macro bloc size without knowing the internals of the struct.
  */
-size_t sctk_alloc_hoks_get_macro_bloc_size(struct sctk_alloc_macro_bloc * bloc)
+size_t sctk_alloc_hooks_get_macro_bloc_size(struct sctk_alloc_macro_bloc * bloc)
 {
-	return bloc->header.size;
+	//TODO FIX THIS FOR WINDOWS
+	return sctk_alloc_get_chunk_header_large_size(&bloc->header);
 }

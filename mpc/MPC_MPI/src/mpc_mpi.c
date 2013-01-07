@@ -3733,6 +3733,9 @@ __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
 
   if (sctk_is_derived_type (datatype) || (mpi_op->commute == 0))
     {
+
+
+#if 0
       int size;
       int i;
       int rank;
@@ -3743,8 +3746,6 @@ __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
       MPI_Datatype new_datatype;
       __INTERNAL__PMPI_Comm_rank (comm, &rank);
       __INTERNAL__PMPI_Comm_size (comm, &size);
-
-
       __INTERNAL__PMPI_Isend (sendbuf, count, datatype, root, -3, comm,
 			      &request);
 
@@ -3771,7 +3772,7 @@ __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
 	  assume (tmp != NULL);
 
 	  res =
-	    __INTERNAL__PMPI_Recv (recvbuf, count, datatype, 0, -3, comm,
+	    __INTERNAL__PMPI_Recv (recvbuf, count, datatype, root, -3, comm,
 				   MPI_STATUS_IGNORE);
 	  if (res != MPI_SUCCESS)
 	    {
@@ -3811,12 +3812,67 @@ __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
 	      return res;
 	    }
 	}
-
       res = __INTERNAL__PMPI_Wait (&(request), MPI_STATUS_IGNORE);
       if (res != MPI_SUCCESS)
 	{
 	  return res;
 	}
+#else
+      int size;
+      int rank;
+      int res;
+      __INTERNAL__PMPI_Comm_rank (comm, &rank);
+      __INTERNAL__PMPI_Comm_size (comm, &size);
+      if(rank == 0){
+	res = __INTERNAL__PMPI_Send (sendbuf, count, datatype, (rank + 1) % size, -3, comm);
+	if (res != MPI_SUCCESS)
+	  {
+	    return res;
+	  }
+      } else {
+	res =
+	  __INTERNAL__PMPI_Recv (recvbuf, count, datatype, (rank + size - 1) % size, -3, comm,
+				 MPI_STATUS_IGNORE);
+	if (res != MPI_SUCCESS)
+	  {
+	    return res;
+	  }
+      }
+
+      if (mpc_op.u_func != NULL)
+	{
+	  mpc_op.u_func (sendbuf, recvbuf, &count, &datatype);
+	}
+      else
+	{
+	  not_reachable ();
+	}
+      
+      if(rank == size -1){
+	res = __INTERNAL__PMPI_Send (recvbuf, count, datatype, root, -3, comm);
+	if (res != MPI_SUCCESS)
+	  {
+	    return res;
+	  }	
+      } else {
+	res = __INTERNAL__PMPI_Send (recvbuf, count, datatype, (rank + 1) % size, -3, comm);
+	if (res != MPI_SUCCESS)
+	  {
+	    return res;
+	  }	
+      }
+
+      if(rank == root){
+	res =
+	  __INTERNAL__PMPI_Recv (recvbuf, count, datatype, 0, -3, comm,
+				 MPI_STATUS_IGNORE);
+	if (res != MPI_SUCCESS)
+	  {
+	    return res;
+	  }
+      }
+#endif
+
       res = __INTERNAL__PMPI_Barrier (comm);
       return res;
     }

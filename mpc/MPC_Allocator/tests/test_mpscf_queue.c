@@ -2,10 +2,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <assert.h>
-#include <stdbool.h>
 #include <omp.h>
 #include <string.h>
-#include <pthread.h>
 #include <sctk_alloc_rdtsc.h>
 #include <sctk_alloc_mpscf_queue.h>
 #define TEST_SIZE 20000
@@ -56,6 +54,7 @@ void test_with_n_threads(int threads)
 	{
 		//allocate elements to insert
 		struct sctk_mpscf_queue_entry  * entries = malloc(sizeof(struct sctk_mpscft_queue_entry *)*TEST_SIZE);
+		struct sctk_mpscf_queue_entry * res;
 
 		//get current ID
 		int id = omp_get_thread_num();
@@ -82,7 +81,7 @@ void test_with_n_threads(int threads)
 				while (cnt < expected)
 				{
 					t0 = sctk_alloc_rdtsc();
-					struct sctk_mpscf_queue_entry * res = sctk_mpscft_queue_dequeue_all(&queue);
+					res = sctk_mpscft_queue_dequeue_all(&queue);
 					if (res != NULL)
 						tflush += (sctk_alloc_rdtsc() - t0);
 					while (res != NULL)

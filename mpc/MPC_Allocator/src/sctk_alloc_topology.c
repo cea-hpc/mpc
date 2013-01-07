@@ -134,6 +134,7 @@ int sctk_get_preferred_numa_node_no_mpc_numa_binding()
 	hwloc_membind_policy_t policy;
 	int res = -1;
 	int weight;
+	int status;
 	#if defined(SCTK_ALLOC_DEBUG) && defined(hwloc_bitmap_list_snprintf)
 	char buffer[4096];
 	#endif
@@ -144,7 +145,7 @@ int sctk_get_preferred_numa_node_no_mpc_numa_binding()
 
 	//nodes
 	// flags = 0 fallback on PROCESS if THREAD is not supported (as for windows).
-	int status =  hwloc_get_membind_nodeset(topology,nodeset,&policy,0);
+	status =  hwloc_get_membind_nodeset(topology,nodeset,&policy,0);
 	assert(status == 0);
 	if (status == 0)
 		return -1;

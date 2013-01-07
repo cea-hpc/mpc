@@ -54,8 +54,8 @@ struct sctk_ib_data_s;
     {
         int c[MAX_SCTK_FAST_NODE_DIM]; /*!< Node storage */
         int neigh[MAX_SCTK_FAST_NODE_DIM][4]; /*!< Node neigbours storage */
-        uint8_t breakdown[MAX_SCTK_FAST_NODE_DIM*2];
-        uint8_t d;                           /*!< Node dimension */
+        sctk_uint8_t breakdown[MAX_SCTK_FAST_NODE_DIM*2];
+        sctk_uint8_t d;                           /*!< Node dimension */
         int id;						 /*!< Node ident */
     }sctk_Node_t;
 
@@ -76,8 +76,8 @@ struct sctk_ib_data_s;
     typedef struct sctk_Torus_t
     {
         int node_count;             /*!< Number of nodes in the Torus */
-        uint8_t dimension;               /*!< Torus dimension */
-        uint8_t size_last_dimension;	 /*!<minimum number of ranks for the last dimension*/
+        sctk_uint8_t dimension;               /*!< Torus dimension */
+        sctk_uint8_t size_last_dimension;	 /*!<minimum number of ranks for the last dimension*/
         int node_regular; 			 /*!<node_count when it is a perfect torus*/
         int node_left; 			 /*!<zero when it is a perfect torus*/
         sctk_Node_t last_node;		/*!<useful when it is an imperfect torus*/
@@ -295,7 +295,7 @@ sctk_rail_info_t* sctk_route_get_signalization_rail();
     * This call can handle any non null node_count.
     *
     */
-    void sctk_Torus_init ( int node_count, uint8_t dimension);
+    void sctk_Torus_init ( int node_count, sctk_uint8_t dimension);
 
     /**
     * \brief Release a sctk_Torus_t

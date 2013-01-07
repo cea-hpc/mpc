@@ -58,7 +58,7 @@ sctk_ib_rdma_t;
 typedef struct sctk_ib_rdma_ack_s {
   void* addr;
   size_t size;
-  uint32_t  rkey;
+  sctk_uint32_t  rkey;
   sctk_thread_ptp_message_t* src_msg_header;
   sctk_thread_ptp_message_t* dest_msg_header;
 } __attribute__ ((packed))

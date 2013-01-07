@@ -27,6 +27,7 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string.h>   /* memcmp,strlen */
 #include <stddef.h>   /* ptrdiff_t */
 #include <stdlib.h>   /* exit() */
+#include "sctk_stdint.h"
 
 /* These macros use decltype or the earlier __typeof GNU extension.
    As decltype is only available in newer compilers (VS2010 or gcc 4.3+
@@ -54,14 +55,6 @@ do {                                                                            
 do {                                                                             \
   (dst) = DECLTYPE(dst)(src);                                                    \
 } while(0)
-#endif
-
-/* a number of the hash function use uint32_t which isn't defined on win32 */
-#ifdef _MSC_VER
-typedef unsigned int uint32_t;
-typedef unsigned char uint8_t;
-#else
-#include <inttypes.h>   /* uint32_t */
 #endif
 
 #define UTHASH_VERSION 1.9.4
@@ -100,7 +93,7 @@ do {                                                                            
 #define HASH_BLOOM_MAKE(tbl)                                                     \
 do {                                                                             \
   (tbl)->bloom_nbits = HASH_BLOOM;                                               \
-  (tbl)->bloom_bv = (uint8_t*)uthash_malloc(HASH_BLOOM_BYTELEN);                 \
+  (tbl)->bloom_bv = (sctk_uint8_t*)uthash_malloc(HASH_BLOOM_BYTELEN);                 \
   if (!((tbl)->bloom_bv))  { uthash_fatal( "out of memory"); }                   \
   memset((tbl)->bloom_bv, 0, HASH_BLOOM_BYTELEN);                                \
   (tbl)->bloom_sig = HASH_BLOOM_SIGNATURE;                                       \
@@ -115,10 +108,10 @@ do {                                                                            
 #define HASH_BLOOM_BITTEST(bv,idx) (bv[(idx)/8] & (1U << ((idx)%8)))
 
 #define HASH_BLOOM_ADD(tbl,hashv)                                                \
-  HASH_BLOOM_BITSET((tbl)->bloom_bv, (hashv & (uint32_t)((1ULL << (tbl)->bloom_nbits) - 1)))
+  HASH_BLOOM_BITSET((tbl)->bloom_bv, (hashv & (sctk_uint32_t)((1ULL << (tbl)->bloom_nbits) - 1)))
 
 #define HASH_BLOOM_TEST(tbl,hashv)                                               \
-  HASH_BLOOM_BITTEST((tbl)->bloom_bv, (hashv & (uint32_t)((1ULL << (tbl)->bloom_nbits) - 1)))
+  HASH_BLOOM_BITTEST((tbl)->bloom_bv, (hashv & (sctk_uint32_t)((1ULL << (tbl)->bloom_nbits) - 1)))
 
 #else
 #define HASH_BLOOM_MAKE(tbl) 
@@ -431,17 +424,17 @@ do {                                                                            
 #undef get16bits
 #if (defined(__GNUC__) && defined(__i386__)) || defined(__WATCOMC__)             \
   || defined(_MSC_VER) || defined (__BORLANDC__) || defined (__TURBOC__)
-#define get16bits(d) (*((const uint16_t *) (d)))
+#define get16bits(d) (*((const sctk_uint16_t *) (d)))
 #endif
 
 #if !defined (get16bits)
-#define get16bits(d) ((((uint32_t)(((const uint8_t *)(d))[1])) << 8)             \
-                       +(uint32_t)(((const uint8_t *)(d))[0]) )
+#define get16bits(d) ((((sctk_uint32_t)(((const sctk_uint8_t *)(d))[1])) << 8)             \
+                       +(sctk_uint32_t)(((const sctk_uint8_t *)(d))[0]) )
 #endif
 #define HASH_SFH(key,keylen,num_bkts,hashv,bkt)                                  \
 do {                                                                             \
   char *_sfh_key=(char*)(key);                                                   \
-  uint32_t _sfh_tmp, _sfh_len = keylen;                                          \
+  sctk_uint32_t _sfh_tmp, _sfh_len = keylen;                                          \
                                                                                  \
   int _sfh_rem = _sfh_len & 3;                                                   \
   _sfh_len >>= 2;                                                                \
@@ -452,7 +445,7 @@ do {                                                                            
     hashv    += get16bits (_sfh_key);                                            \
     _sfh_tmp       = (get16bits (_sfh_key+2) << 11) ^ hashv;                     \
     hashv     = (hashv << 16) ^ _sfh_tmp;                                        \
-    _sfh_key += 2*sizeof (uint16_t);                                             \
+    _sfh_key += 2*sizeof (sctk_uint16_t);                                             \
     hashv    += hashv >> 11;                                                     \
   }                                                                              \
                                                                                  \
@@ -460,7 +453,7 @@ do {                                                                            
   switch (_sfh_rem) {                                                            \
     case 3: hashv += get16bits (_sfh_key);                                       \
             hashv ^= hashv << 16;                                                \
-            hashv ^= _sfh_key[sizeof (uint16_t)] << 18;                          \
+            hashv ^= _sfh_key[sizeof (sctk_uint16_t)] << 18;                          \
             hashv += hashv >> 11;                                                \
             break;                                                               \
     case 2: hashv += get16bits (_sfh_key);                                       \
@@ -499,7 +492,7 @@ do {                                                                            
 #define MUR_PLUS1_ALIGNED(p) (((unsigned long)p & 0x3) == 1)
 #define MUR_PLUS2_ALIGNED(p) (((unsigned long)p & 0x3) == 2)
 #define MUR_PLUS3_ALIGNED(p) (((unsigned long)p & 0x3) == 3)
-#define WP(p) ((uint32_t*)((unsigned long)(p) & ~3UL))
+#define WP(p) ((sctk_uint32_t*)((unsigned long)(p) & ~3UL))
 #if (defined(__BIG_ENDIAN__) || defined(SPARC) || defined(__ppc__) || defined(__ppc64__))
 #define MUR_THREE_ONE(p) ((((*WP(p))&0x00ffffff) << 8) | (((*(WP(p)+1))&0xff000000) >> 24))
 #define MUR_TWO_TWO(p)   ((((*WP(p))&0x0000ffff) <<16) | (((*(WP(p)+1))&0xffff0000) >> 16))
@@ -526,15 +519,15 @@ do {                 \
 
 #define HASH_MUR(key,keylen,num_bkts,hashv,bkt)                        \
 do {                                                                   \
-  const uint8_t *_mur_data = (const uint8_t*)(key);                    \
+  const sctk_uint8_t *_mur_data = (const sctk_uint8_t*)(key);                    \
   const int _mur_nblocks = (keylen) / 4;                               \
-  uint32_t _mur_h1 = 0xf88D5353;                                       \
-  uint32_t _mur_c1 = 0xcc9e2d51;                                       \
-  uint32_t _mur_c2 = 0x1b873593;                                       \
-  const uint32_t *_mur_blocks = (const uint32_t*)(_mur_data+_mur_nblocks*4); \
+  sctk_uint32_t _mur_h1 = 0xf88D5353;                                       \
+  sctk_uint32_t _mur_c1 = 0xcc9e2d51;                                       \
+  sctk_uint32_t _mur_c2 = 0x1b873593;                                       \
+  const sctk_uint32_t *_mur_blocks = (const sctk_uint32_t*)(_mur_data+_mur_nblocks*4); \
   int _mur_i;                                                          \
   for(_mur_i = -_mur_nblocks; _mur_i; _mur_i++) {                      \
-    uint32_t _mur_k1 = MUR_GETBLOCK(_mur_blocks,_mur_i);               \
+    sctk_uint32_t _mur_k1 = MUR_GETBLOCK(_mur_blocks,_mur_i);               \
     _mur_k1 *= _mur_c1;                                                \
     _mur_k1 = MUR_ROTL32(_mur_k1,15);                                  \
     _mur_k1 *= _mur_c2;                                                \
@@ -543,8 +536,8 @@ do {                                                                   \
     _mur_h1 = MUR_ROTL32(_mur_h1,13);                                  \
     _mur_h1 = _mur_h1*5+0xe6546b64;                                    \
   }                                                                    \
-  const uint8_t *_mur_tail = (const uint8_t*)(_mur_data + _mur_nblocks*4); \
-  uint32_t _mur_k1=0;                                                  \
+  const sctk_uint8_t *_mur_tail = (const sctk_uint8_t*)(_mur_data + _mur_nblocks*4); \
+  sctk_uint32_t _mur_k1=0;                                                  \
   switch((keylen) & 3) {                                               \
     case 3: _mur_k1 ^= _mur_tail[2] << 16;                             \
     case 2: _mur_k1 ^= _mur_tail[1] << 8;                              \
@@ -881,10 +874,10 @@ typedef struct UT_hash_table {
     * the hash will still work, albeit no longer in constant time. */
    unsigned ineff_expands, noexpand;
 
-   uint32_t signature; /* used only to find hash tables in external analysis */
+   sctk_uint32_t signature; /* used only to find hash tables in external analysis */
 #ifdef HASH_BLOOM
-   uint32_t bloom_sig; /* used only to test bloom exists in external analysis */
-   uint8_t *bloom_bv;
+   sctk_uint32_t bloom_sig; /* used only to test bloom exists in external analysis */
+   sctk_uint8_t *bloom_bv;
    char bloom_nbits;
 #endif
 

@@ -564,7 +564,7 @@ void sctk_ibuf_recv_init(sctk_ibuf_t* ibuf)
 }
 
 void sctk_ibuf_barrier_send_init(sctk_ibuf_t* ibuf, void* local_address,
-    uint32_t lkey, void* remote_address, uint32_t rkey,
+    sctk_uint32_t lkey, void* remote_address, sctk_uint32_t rkey,
     int len)
 {
 
@@ -645,7 +645,7 @@ void sctk_ibuf_send_init(
 
 int sctk_ibuf_rdma_write_init(
     sctk_ibuf_t* ibuf, void* local_address,
-    uint32_t lkey, void* remote_address, uint32_t rkey,
+    sctk_uint32_t lkey, void* remote_address, sctk_uint32_t rkey,
     int len, int send_flags, char to_release)
 {
   LOAD_CONFIG(ibuf->region->rail);
@@ -682,8 +682,8 @@ int sctk_ibuf_rdma_write_init(
 
 int sctk_ibuf_rdma_write_with_imm_init(
     sctk_ibuf_t* ibuf, void* local_address,
-    uint32_t lkey, void* remote_address, uint32_t rkey,
-    int len, uint32_t imm_data)
+    sctk_uint32_t lkey, void* remote_address, sctk_uint32_t rkey,
+    int len, sctk_uint32_t imm_data)
 {
   LOAD_CONFIG(ibuf->region->rail);
   int is_inlined = 0;
@@ -722,7 +722,7 @@ int sctk_ibuf_rdma_write_with_imm_init(
 
 void sctk_ibuf_rdma_read_init(
     sctk_ibuf_t* ibuf, void* local_address,
-    uint32_t lkey, void* remote_address, uint32_t rkey,
+    sctk_uint32_t lkey, void* remote_address, sctk_uint32_t rkey,
     int len, void* supp_ptr)
 {
   ibuf->in_srq = 0;

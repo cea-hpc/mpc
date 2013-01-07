@@ -34,8 +34,8 @@ ROOT_FOLDER=""
 CMAKE_ARGS=""
 MAKE_J=1
 EXTERNAL_LIBS="libgcc_s_sjlj-1.dll libgfortran-3.dll libobjc-4.dll libquadmath-0.dll libssp-0.dll libstdc++-6.dll"
-MINGW_PATH="/home/julia/usr/minGW"
-WINE_PATH="/home/julia/usr/wine/bin/wine64"
+MINGW_PATH="${HOME}/usr/minGW"
+WINE_PATH="${HOME}/usr/wine/bin/wine64"
 TARGET_ENV_PATH=""
 INTERNALS_ARGS=""
 

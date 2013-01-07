@@ -27,8 +27,8 @@
 #ifndef __SCTK__INFINIBAND_IBUFS_H_
 #define __SCTK__INFINIBAND_IBUFS_H_
 
-#include "stdint.h"
 #include "infiniband/verbs.h"
+#include "sctk_stdint.h"
 
 enum sctk_ib_cp_poll_cq_e {
   send_cq,
@@ -158,7 +158,7 @@ typedef struct sctk_ibuf_region_s
   struct sctk_ibuf_region_s* next;
   struct sctk_ibuf_region_s* prev;
   /* Number of buffer for the region */
-  uint32_t nb;
+  sctk_uint32_t nb;
   /* Size of the buffers */
   int size_ibufs;
   /* A region is associated to a rail */
@@ -306,10 +306,10 @@ __UNUSED__ static size_t sctk_ibuf_get_payload_size(sctk_ibuf_t *ibuf) {
 void sctk_ibuf_recv_init(sctk_ibuf_t* ibuf);
 
 void sctk_ibuf_rdma_recv_init(sctk_ibuf_t* ibuf, void* local_address,
-    uint32_t lkey);
+    sctk_uint32_t lkey);
 
 void sctk_ibuf_barrier_send_init(sctk_ibuf_t* ibuf, void* local_address,
-    uint32_t lkey, void* remote_address, uint32_t rkey,
+    sctk_uint32_t lkey, void* remote_address, sctk_uint32_t rkey,
     int len);
 
 void sctk_ibuf_send_init(
@@ -320,17 +320,17 @@ int sctk_ibuf_send_inline_init(
 
 int sctk_ibuf_rdma_write_with_imm_init(
     sctk_ibuf_t* ibuf, void* local_address,
-    uint32_t lkey, void* remote_address, uint32_t rkey,
-    int len, uint32_t imm_data);
+    sctk_uint32_t lkey, void* remote_address, sctk_uint32_t rkey,
+    int len, sctk_uint32_t imm_data);
 
 int sctk_ibuf_rdma_write_init(
     sctk_ibuf_t* ibuf, void* local_address,
-    uint32_t lkey, void* remote_address, uint32_t rkey,
+    sctk_uint32_t lkey, void* remote_address, sctk_uint32_t rkey,
     int len, int send_flags, char to_release);
 
 void sctk_ibuf_rdma_read_init(
     sctk_ibuf_t* ibuf, void* local_address,
-    uint32_t lkey, void* remote_address, uint32_t rkey,
+    sctk_uint32_t lkey, void* remote_address, sctk_uint32_t rkey,
     int len, void* supp_ptr);
 
 void sctk_ibuf_release(

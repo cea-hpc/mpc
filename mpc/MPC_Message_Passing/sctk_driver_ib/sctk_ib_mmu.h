@@ -31,7 +31,7 @@
 #include <sctk_spinlock.h>
 #include <sctk_debug.h>
 #include <sctk_config.h>
-#include <stdint.h>
+#include "sctk_stdint.h"
 
 //#define DEBUG_IB_MMU
 

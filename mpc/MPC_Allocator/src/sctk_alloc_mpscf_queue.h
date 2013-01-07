@@ -47,6 +47,17 @@
 /********************************* MACROS ***********************************/
 #ifdef MPC_Common
 	#include <sctk_atomics.h>
+#elif defined(_WIN32)
+	#include <Windows.h>
+	//define the equiavelent of OPA_ptr_t for windows VCC
+	typedef PVOID volatile sctk_atomics_ptr;
+
+	//emulate OPA function for windows VCC (consider 64bit intel x86 atch here)
+	#define	sctk_atomics_load_ptr(target) (*(target))
+	#define sctk_atomics_store_ptr(target,value) ((*(target)) = (value))
+	#define sctk_atomics_swap_ptr(target,value) InterlockedExchangePointer((target),(value))
+	//TODO find something to do 'pause'
+	#define sctk_atomics_pause() do{} while(0)
 #else //MPC_Common
 	#include <opa_primitives.h>
 	// Rename the OPA types into sctk_atomics ones

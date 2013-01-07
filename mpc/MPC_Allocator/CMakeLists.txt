@@ -22,7 +22,7 @@
 ########################################################################
 
 PROJECT(mpc_allocator)
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.6)
 
 enable_testing()
 
@@ -85,6 +85,10 @@ else (HWLOC_FOUND)
 		set(HWLOC_LIBRARY "")
 	endif()
 endif (HWLOC_FOUND)
+
+if(WIN32)
+	set(OPENPA_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/openpa/src")
+endif(WIN32)
 
 find_package(OpenPA REQUIRED)
 if (OPENPA_FOUND)

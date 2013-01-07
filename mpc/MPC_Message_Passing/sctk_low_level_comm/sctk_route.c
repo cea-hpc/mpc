@@ -704,7 +704,7 @@ unsigned sctk_Torus_dim_set(int node_count){
 	return dim;
 }
 
-void sctk_Torus_init ( int node_count, uint8_t dimension)
+void sctk_Torus_init ( int node_count, sctk_uint8_t dimension)
 {
     if ( dimension == 0 )
     {

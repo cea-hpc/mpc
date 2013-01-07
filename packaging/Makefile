@@ -1,4 +1,3 @@
-#!/bin/sh
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -17,14 +16,15 @@
 # terms.                                                               #
 #                                                                      #
 # Authors:                                                             #
-#   - PERACHE Marc marc.perache@cea.fr                                 #
+#   - Adam Julien julien.adam@cea.fr                                   #
 #                                                                      #
 ########################################################################
+ABSOLUTE_PATH=.
+FOLDER=${ABSOLUTE_PATH}/rpm-package-generator/
 
-if test "${MPC_SOURCE_DIR}" = "" ; then
-. ./.MPC_version
-else
-. ${MPC_SOURCE_DIR}.MPC_version
-fi
+rpm:
+	@(cd ${FOLDER} && ./rpm_package_generator -s=git)
 
-echo "${MAJOR}.${MINOR}.${REVISION}$PRE_RELEASE"
+srpm:
+	
+	@(cd ${FOLDER} && ./rpm_package_generator -s=git --srpm)
