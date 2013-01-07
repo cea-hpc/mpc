@@ -105,6 +105,19 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_net_cli_option">
+    <xs:all>
+      <xs:element minOccurs="0" name="name" type="xs:string"/>
+      <xs:element minOccurs="0" name="rails">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="rail" type="xs:string"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_net_rail">
     <xs:all>
       <xs:element minOccurs="0" name="name" type="xs:string"/>
@@ -127,6 +140,13 @@
         <xs:complexType>
           <xs:sequence>
             <xs:element minOccurs="0" maxOccurs="unbounded" name="rail" type="user_type_net_rail"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element minOccurs="0" name="cli_options">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="cli_option" type="user_type_net_cli_option"/>
           </xs:sequence>
         </xs:complexType>
       </xs:element>

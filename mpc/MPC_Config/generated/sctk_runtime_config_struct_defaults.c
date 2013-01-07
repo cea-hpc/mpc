@@ -118,6 +118,17 @@ void sctk_runtime_config_struct_init_net_driver_config(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_net_cli_option(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_net_cli_option * obj = struct_ptr;
+	/* Simple params : */
+	obj->name = NULL;
+	/* array */
+	obj->rails = NULL;
+	obj->rails_size = 0;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_net_rail(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_net_rail * obj = struct_ptr;
@@ -139,6 +150,9 @@ void sctk_runtime_config_struct_init_networks(void * struct_ptr)
 	/* array */
 	obj->rails = NULL;
 	obj->rails_size = 0;
+	/* array */
+	obj->cli_options = NULL;
+	obj->cli_options_size = 0;
 }
 
 /*******************  FUNCTION  *********************/
