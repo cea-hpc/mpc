@@ -1586,7 +1586,7 @@ void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sct
 
 		//get chunk header
 		/** @todo Use a function which compute the inner size instead of hacking with sizeof() . **/
-		old_size = sctk_alloc_get_size(vchunk) - sizeof(struct sctk_alloc_chunk_header_large);
+		old_size = sctk_alloc_get_unpadded_size(vchunk) - sizeof(struct sctk_alloc_chunk_header_large);
 		delta = old_size - size;
 
 		if (old_size >= size && delta <= sctk_alloc_config()->realloc_threashold

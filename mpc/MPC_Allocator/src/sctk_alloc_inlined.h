@@ -283,15 +283,32 @@ static __inline__ sctk_alloc_vchunk sctk_alloc_unpadd_vchunk(struct sctk_alloc_c
  * it will not be called recursivly.
  * @param ptr Define the pointer used by the final user (next byte after the chunk header).
 **/
-static __inline__ sctk_alloc_vchunk sctk_alloc_get_chunk_unpadded(sctk_addr_t ptr)
+static __inline__ sctk_alloc_vchunk sctk_alloc_unpad_vchunk(sctk_alloc_vchunk vchunk)
 {
-	sctk_alloc_vchunk vchunk = sctk_alloc_get_chunk(ptr);
 	if (vchunk == NULL)
 		return vchunk;
 	else if (vchunk->type == SCTK_ALLOC_CHUNK_TYPE_PADDED)
 		return sctk_alloc_unpadd_vchunk(sctk_alloc_get_padded(vchunk));
 	else
 		return vchunk;
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Same than sctk_alloc_get_chunk, but automatically remove padding if get a padded header.
+ * Caution, the current implementation didn't support encapsulation of multiple level of padding,
+ * it will not be called recursivly.
+ * @param ptr Define the pointer used by the final user (next byte after the chunk header).
+**/
+static __inline__ sctk_alloc_vchunk sctk_alloc_get_chunk_unpadded(sctk_addr_t ptr)
+{
+	return sctk_alloc_unpad_vchunk(sctk_alloc_get_chunk(ptr));
+}
+
+/************************* FUNCTION ************************/
+static __inline__ sctk_size_t sctk_alloc_get_unpadded_size(sctk_alloc_vchunk vchunk)
+{
+	return sctk_alloc_get_chunk_header_large_size(sctk_alloc_get_large(sctk_alloc_unpad_vchunk(vchunk)));
 }
 
 /************************* FUNCTION ************************/
