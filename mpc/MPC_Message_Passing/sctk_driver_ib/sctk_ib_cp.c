@@ -240,22 +240,13 @@ retry:
         if (ibuf->cq == recv_cq) {
           SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_recv_polled,
             (sctk_ib_prof_get_time_stamp() - ibuf->polled_timestamp));
-
-          if (from_global)
-            sctk_nodebug("RECV Message read for task %d %d", task->rank, IBUF_GET_DEST_TASK(ibuf->buffer));
-
           sctk_network_poll_recv_ibuf((sctk_rail_info_t *)rail, ibuf, 1, poll);
         } else {
           SCTK_PROFIL_END_WITH_VALUE(ib_ibuf_send_polled,
             (sctk_ib_prof_get_time_stamp() - ibuf->polled_timestamp));
-
-          if (from_global)
-            sctk_nodebug("SEND Message read for task %d %d", task->rank, IBUF_GET_DEST_TASK(ibuf->buffer));
-
           sctk_network_poll_send_ibuf((sctk_rail_info_t *)rail, ibuf, 1, poll);
         }
         poll->recv_found_own++;
-
 
 #ifdef SCTK_IB_PROFILER
         PROF_TIME_END(rail, cp_time_own);
@@ -289,24 +280,20 @@ void sctk_ib_cp_poll_global_list(const struct sctk_rail_info_s const * rail, str
 }
 
 
-int sctk_ib_cp_poll(const struct sctk_rail_info_s const* rail, struct sctk_ib_polling_s *poll){
+int sctk_ib_cp_poll(const struct sctk_rail_info_s const* rail, struct sctk_ib_polling_s *poll,
+    int task_id){
   int vp_num = sctk_thread_get_vp();
   vp_t *vp;
   sctk_ib_cp_task_t *task = NULL;
-  int task_rank;
   int ret = 0;
+  assume(task_id >= 0);
 
   if (vp_num < 0) return;
   CHECK_ONLINE_PROGRAM;
 
   if (vps[vp_num] == NULL) {
-    task_rank = sctk_get_task_rank();
-    if (task_rank < 0) {
-      return 0;
-    }
-
     if (thread_on_vp == NULL) {
-      HASH_FIND(hh_all,all_tasks,&task_rank, sizeof(int),task);
+      HASH_FIND(hh_all,all_tasks,&task_id, sizeof(int),task);
       assume (task);
       thread_on_vp = vps[task->vp];
     }
@@ -386,7 +373,6 @@ int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll) {
 
   if (vp < 0) return;
   CHECK_ONLINE_PROGRAM;
-  if (vps[vp] == NULL) return;
 
   if (numas_copy == NULL) {
     static lock = SCTK_SPINLOCK_INITIALIZER;
@@ -399,21 +385,23 @@ int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll) {
     sctk_spinlock_unlock(&lock);
   }
 
-  /* XXX: Not working with oversubscribing */
-  stealing_task = vps[vp]->tasks;
+  if (vps[vp] != NULL) {
+    /* XXX: Not working with oversubscribing */
+    stealing_task = vps[vp]->tasks;
 
-  /* In PTHREAD mode, the idle task do not call the cp_init_task function.
-   * If task_node_number not initialized, we do it now */
-  if (task_node_number < 0) task_node_number =  sctk_get_node_from_cpu(vp);
-  /* First, try to steal from the same NUMA node*/
-  numa = numas_copy[task_node_number];
-  {
-    CDL_FOREACH(numa->vps, tmp_vp) {
-      for (task=tmp_vp->tasks; task; task=task->hh_vp.next) {
-        nb_found += __cp_steal(rail, poll, &(task->local_ibufs_list), &(task->local_ibufs_list_lock), task, stealing_task);
+    /* In PTHREAD mode, the idle task do not call the cp_init_task function.
+     * If task_node_number not initialized, we do it now */
+    if (task_node_number < 0) task_node_number =  sctk_get_node_from_cpu(vp);
+    /* First, try to steal from the same NUMA node*/
+    numa = numas_copy[task_node_number];
+    {
+      CDL_FOREACH(numa->vps, tmp_vp) {
+        for (task=tmp_vp->tasks; task; task=task->hh_vp.next) {
+          nb_found += __cp_steal(rail, poll, &(task->local_ibufs_list), &(task->local_ibufs_list_lock), task, stealing_task);
+        }
+        /* Return if message stolen */
+        if (nb_found) return nb_found;
       }
-      /* Return if message stolen */
-      if (nb_found) return nb_found;
     }
   }
 
