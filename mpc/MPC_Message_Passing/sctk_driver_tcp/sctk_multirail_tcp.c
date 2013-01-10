@@ -73,10 +73,10 @@ sctk_network_notify_matching_message_multirail_tcp (sctk_thread_ptp_message_t * 
 }
 
 static void
-sctk_network_notify_perform_message_multirail_tcp (int remote, int remote_task_id){
+sctk_network_notify_perform_message_multirail_tcp (int remote, int remote_task_id, int polling_task_id){
   int i;
   for(i = 0; i < rails_nb; i++){
-    rails[i]->notify_perform_message(remote,remote_task_id,rails[i]);
+    rails[i]->notify_perform_message(remote,remote_task_id,polling_task_id, rails[i]);
   }
 }
 
@@ -84,15 +84,15 @@ static void
 sctk_network_notify_idle_message_multirail_tcp (){
   int i;
   for(i = 0; i < rails_nb; i++){
-    rails[i]->notify_any_source_message(rails[i]);
+    rails[i]->notify_idle_message(rails[i]);
   }
 }
 
 static void
-sctk_network_notify_any_source_message_multirail_tcp (){
+sctk_network_notify_any_source_message_multirail_tcp (int polling_task_id){
   int i;
   for(i = 0; i < rails_nb; i++){
-    rails[i]->notify_any_source_message(rails[i]);
+    rails[i]->notify_any_source_message(polling_task_id, rails[i]);
   }
 }
 

@@ -61,9 +61,13 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   char is_control_message = 0;
   specific_message_tag_t tag = msg->body.header.specific_message_tag;
 
-  sctk_nodebug("send message through rail %d from %d to %d",rail->rail_number,
+  sctk_nodebug("send message through rail %d from %d to %d (%d to %d) size:%lu tag:%d",rail->rail_number,
       msg->sctk_msg_get_source,
-      msg->sctk_msg_get_destination);
+      msg->sctk_msg_get_destination,
+      msg->sctk_msg_get_glob_source,
+      msg->sctk_msg_get_glob_destination,
+      msg->body.header.msg_size,
+      msg->sctk_msg_get_message_tag);
   sctk_nodebug("Send message with tag %d", msg->sctk_msg_get_specific_message_tag);
   /* Determine the route to used */
   if( IS_PROCESS_SPECIFIC_MESSAGE_TAG(tag)) {
@@ -89,7 +93,6 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
   route_data=&tmp->data.ib;
   remote=route_data->remote;
-  sctk_nodebug("Go to process %d", remote->rank);
 
   /* Check if the remote task is in low mem mode */
   size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
@@ -376,7 +379,7 @@ sctk_network_notify_matching_message_ib (sctk_thread_ptp_message_t * msg,sctk_ra
 
 /* WARNING: This function can be called with dest == sctk_process_rank */
 static void
-sctk_network_notify_perform_message_ib (int remote_process, int remote_task_id, sctk_rail_info_t* rail){
+sctk_network_notify_perform_message_ib (int remote_process, int remote_task_id, int polling_task_id, sctk_rail_info_t* rail){
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
   int ret;
@@ -385,7 +388,7 @@ sctk_network_notify_perform_message_ib (int remote_process, int remote_task_id, 
   POLL_INIT(&poll);
   sctk_network_poll_all_cq(rail, &poll);
   POLL_INIT(&poll);
-  sctk_ib_cp_poll(rail, &poll);
+  sctk_ib_cp_poll(rail, &poll, polling_task_id);
 }
 
 static void
@@ -400,7 +403,7 @@ sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){
 }
 
 static void
-sctk_network_notify_any_source_message_ib (sctk_rail_info_t* rail){
+sctk_network_notify_any_source_message_ib (int polling_task_id, sctk_rail_info_t* rail){
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   int ret;
   struct sctk_ib_polling_s poll;
@@ -408,7 +411,7 @@ sctk_network_notify_any_source_message_ib (sctk_rail_info_t* rail){
   POLL_INIT(&poll);
   sctk_network_poll_all_cq(rail, &poll);
   POLL_INIT(&poll);
-  sctk_ib_cp_poll(rail, &poll);
+  sctk_ib_cp_poll(rail, &poll, polling_task_id);
 }
 
 static void
