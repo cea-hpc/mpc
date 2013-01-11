@@ -38,9 +38,6 @@ static sctk_spinlock_t global_atomic_lock = SCTK_SPINLOCK_INITIALIZER;
 static sctk_thread_mutex_t global_critical_lock =
   SCTK_THREAD_MUTEX_INITIALIZER;
 
-//#warning "Wrong atomic behavior in case of OpenMP oversubscribing"
-INFO("Wrong atomic behavior in case of OpenMP oversubscribing")
-
 void
 __mpcomp_atomic_begin ()
 {
@@ -53,9 +50,6 @@ __mpcomp_atomic_end ()
   sctk_spinlock_unlock (&(global_atomic_lock));
 }
 
-
-//#warning "Wrong critical behavior in case of OpenMP oversubscribing"
-INFO("Wrong critical behavior in case of OpenMP oversubscribing")
 
 void
 __mpcomp_anonymous_critical_begin ()

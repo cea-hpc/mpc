@@ -24,7 +24,7 @@
 #include "mpcomp_internal.h"
 #include <sctk_debug.h>
 
-/* Return the number of chunks that a static schedule will create for the thread 'rank' */
+/* Return the number of chunks that a static schedule will create */
 int
 __mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads, int lb,
 					int b, int incr, int chunk_size)
@@ -78,8 +78,6 @@ __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
 				      int *from, int *to)
 {
   int trip_count;
-  int local_from ;
-  int local_to ;
 
   /* Compute the trip count (total number of iterations of the original loop) */
   trip_count = (b - lb) / incr;
@@ -87,8 +85,6 @@ __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
   if ( (b - lb) % incr != 0 ) {
     trip_count++ ;
   }
-
-  sctk_nodebug("__mpcomp_get_specific_chunk_per_rank: trip_count=%d", trip_count);
 
   /* The final additionnal chunk is smaller, so its computation is a little bit
      different */
@@ -100,32 +96,29 @@ __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
 							      chunk_size) - 1)
     {
 
-      local_from = lb + (trip_count / chunk_size) * chunk_size * incr;
-      local_to = lb + trip_count * incr;
+      *from = lb + (trip_count / chunk_size) * chunk_size * incr;
+      *to = lb + trip_count * incr;
 
       sctk_nodebug ("__mpcomp_static_schedule_get_specific_chunk: "
 		    "Thread %d: %d -> %d (excl) step %d => "
 		    "%d -> %d (excl) step %d (chunk of %d)\n",
-		    rank, lb, b, incr, local_from, local_to, incr,
+		    rank, lb, b, incr, from, to, incr,
 		    trip_count % chunk_size);
 
     }
   else
     {
-      local_from =
+      *from =
 	lb + chunk_num * nb_threads * chunk_size * incr +
 	chunk_size * incr * rank;
-      local_to =
+      *to =
 	lb + chunk_num * nb_threads * chunk_size * incr +
 	chunk_size * incr * rank + chunk_size * incr;
 
       sctk_nodebug ("__mpcomp_static_schedule_get_specific_chunk: "
 		    "Thread %d / Chunk %d: %d -> %d (excl) step %d => "
 		    "%d -> %d (excl) step %d (chunk of %d)\n",
-		    rank, chunk_num, lb, b, incr, local_from, local_to, incr,
+		    rank, chunk_num, lb, b, incr, *from, *to, incr,
 		    chunk_size);
     }
-
-  *from = local_from ;
-  *to = local_to ;
 }
