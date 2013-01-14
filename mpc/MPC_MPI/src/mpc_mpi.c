@@ -8209,6 +8209,14 @@ PMPI_Comm_set_name (MPI_Comm comm, char *comm_name)
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
+int MPC_Mpi_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
+                    void* attribute_val_in, void* attribute_val_out, int* flag )
+{
+   *flag = 1;
+   *(void**)attribute_val_out = attribute_val_in;
+   return MPI_SUCCESS;
+}
+
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
 INFO("Default mpc_user_main__ has been removed because of TLS compilation...")
 #if 0
