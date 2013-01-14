@@ -262,14 +262,20 @@ typedef struct sctk_message_to_copy_s{
     char from_buffered;
   }sctk_thread_ptp_message_t;
 
+  typedef struct sctk_perform_messages_s {
+    sctk_request_t* request;
+    struct sctk_internal_ptp_s *recv_ptp;
+    struct sctk_internal_ptp_s *send_ptp;
+    int remote_process;
+    int source_task_id;
+    int polling_task_id;
+  } sctk_perform_messages_t;
+
 
   /**
      Check if the message if completed according to the message passed as a request
   */
-  void sctk_perform_messages(sctk_request_t* request,
-    struct sctk_internal_ptp_s *recv_ptp,
-    struct sctk_internal_ptp_s *send_ptp,
-    int remote_process, int source_task_id, int polling_task_id);
+  void sctk_perform_messages(struct sctk_perform_messages_s * wait);
 
   void sctk_init_header (sctk_thread_ptp_message_t *tmp, const int myself,
 			 sctk_message_type_t msg_type, void (*free_memory)(void*),
@@ -342,11 +348,8 @@ typedef struct sctk_message_to_copy_s{
   void sctk_determine_glob_source_and_destination_from_header (
       sctk_thread_ptp_message_body_t* body, int *glob_source, int *glob_destination);
 
-  void sctk_perform_messages_find_ptp_from_request(
-      sctk_request_t* request,
-      struct sctk_internal_ptp_s **recv_ptp,
-      struct sctk_internal_ptp_s **send_ptp,
-      int *remote_process, int *task_id);
+  void sctk_perform_messages_wait_ini(
+    struct sctk_perform_messages_s * wait);
 
   sctk_reorder_list_t * sctk_ptp_get_reorder_from_destination(int task);
 
