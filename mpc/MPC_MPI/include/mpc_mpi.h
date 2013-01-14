@@ -190,6 +190,7 @@ extern "C"
   typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
 #define MPI_NULL_COPY_FN   ((MPI_Copy_function *)NULL)
 #define MPI_NULL_DELETE_FN ((MPI_Delete_function *)NULL)
+#define MPI_DUP_FN ((MPI_Copy_function *)MPC_Mpi_dup_fn)
 
   extern const int MPI_TAG_UB;
   extern const int MPI_HOST;
@@ -200,6 +201,8 @@ extern "C"
   extern const int MPI_APPNUM;
   extern const MPI_Comm MPI_COMM_SELF;
 
+  int MPC_Mpi_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
+                     void* attribute_val_in, void* attribute_val_out, int* flag );
   int MPI_Send (void *, int, MPI_Datatype, int, int, MPI_Comm);
   int MPI_Recv (void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Status *);
   int MPI_Get_count (MPI_Status *, MPI_Datatype, int *);
