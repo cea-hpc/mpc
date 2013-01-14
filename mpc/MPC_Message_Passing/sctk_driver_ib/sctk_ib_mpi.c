@@ -358,14 +358,14 @@ static void  sctk_network_poll_all_cq (sctk_rail_info_t* rail, sctk_ib_polling_t
   LOAD_DEVICE(rail_ib);
 
   /* Only one task is allowed to poll new messages from QP */
-  if ( sctk_spinlock_trylock(&polling_lock) == 0 )
+//  if ( sctk_spinlock_trylock(&polling_lock) == 0 )
   {
     /* Poll received messages */
     sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, poll, sctk_network_poll_recv);
     /* Poll sent messages */
     sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, poll, sctk_network_poll_send);
     /* Release the lock if this is the end of the recursive polling */
-    sctk_spinlock_unlock(&polling_lock);
+//    sctk_spinlock_unlock(&polling_lock);
   }
 
   sctk_ib_cp_poll_global_list(rail, poll);

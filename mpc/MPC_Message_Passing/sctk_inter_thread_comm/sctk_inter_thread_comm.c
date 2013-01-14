@@ -1431,21 +1431,13 @@ static inline int sctk_try_perform_messages_for_pair(sctk_internal_ptp_t* pair){
   return 0;
 }
 
-struct wait_message_s {
-  sctk_request_t* request;
-  sctk_internal_ptp_t *recv_ptp;
-  sctk_internal_ptp_t *send_ptp;
-  int remote_process;
-  int source_task_id;
-  int polling_task_id;
-};
-
-void sctk_perform_messages_find_ptp_from_request(
-    sctk_request_t* request,
-    struct sctk_internal_ptp_s **recv_ptp,
-    struct sctk_internal_ptp_s **send_ptp,
-    int *remote_process, int *source_task_id) {
-
+void sctk_perform_messages_wait_init(
+    struct sctk_perform_messages_s * wait, sctk_request_t * request) {
+  wait->request = request;
+  int * remote_process = &wait->remote_process;
+  int * source_task_id = &wait->source_task_id;
+  sctk_internal_ptp_t **recv_ptp = &wait->recv_ptp;
+  sctk_internal_ptp_t **send_ptp = &wait->send_ptp;
   sctk_comm_dest_key_t recv_key;
   sctk_comm_dest_key_t send_key;
   int remote_task;
@@ -1479,8 +1471,12 @@ void sctk_perform_messages_find_ptp_from_request(
 /*
  *  Function called when the message to receive is already completed
  */
-static void sctk_perform_messages_done(sctk_request_t* request,
-    sctk_internal_ptp_t *recv_ptp, int remote_process, int source_task_id) {
+static void sctk_perform_messages_done(struct sctk_perform_messages_s * wait) {
+    const sctk_request_t* request = wait->request;
+    const sctk_internal_ptp_t *recv_ptp = wait->recv_ptp;
+    const int remote_process = wait->remote_process;
+    const int source_task_id = wait->source_task_id;
+
   /* The message is marked as done.
    * However, we need to poll if it is a inter-process message
    * and if we are wating for a SEND request. If we do not do this,
@@ -1496,11 +1492,9 @@ static void sctk_perform_messages_done(sctk_request_t* request,
 
 
 static void sctk_perform_messages_wait_for_value_and_poll(void* a){
-  struct wait_message_s *_wait = (struct wait_message_s*) a;
+  struct sctk_perform_messages_s *_wait = (struct sctk_perform_messages_s*) a;
 
-  sctk_perform_messages(_wait->request, _wait->recv_ptp,
-      _wait->send_ptp, _wait->remote_process, _wait->source_task_id,
-      _wait->polling_task_id);
+  sctk_perform_messages(_wait);
 
   if ((volatile int) _wait->request->completion_flag != SCTK_MESSAGE_DONE) {
     sctk_network_notify_idle_message();
@@ -1508,27 +1502,32 @@ static void sctk_perform_messages_wait_for_value_and_poll(void* a){
 
 }
 
-void sctk_wait_message (sctk_request_t * request){
-  struct wait_message_s _wait;
-  _wait.request = request;
+void sctk_perform_messages_wait_init_request_type(struct sctk_perform_messages_s * wait) {
+  sctk_request_t* request = wait->request;
+  int * polling_task_id = &wait->polling_task_id;
 
-  sctk_perform_messages_find_ptp_from_request(_wait.request,
-      &_wait.recv_ptp, &_wait.send_ptp, &_wait.remote_process,
-      &_wait.source_task_id);
+  if (request->request_type == REQUEST_SEND) {
+      *polling_task_id = request->header.glob_source;
+    } else if (request->request_type == REQUEST_RECV) {
+      *polling_task_id = request->header.glob_destination;
+    } else {
+      not_reachable();
+    };
+    assume(*polling_task_id >= 0);
+}
+
+void sctk_wait_message (sctk_request_t * request){
+  struct sctk_perform_messages_s _wait;
+
+  sctk_perform_messages_wait_init(&_wait, request);
 
   /* Find the PTPs lists */
   if(request->completion_flag != SCTK_MESSAGE_DONE){
 
+    sctk_perform_messages_wait_init_request_type(&_wait);
+
     sctk_nodebug("Wait from %d to %d (req %p %d) (%p - %p) %d",
         request->header.glob_source, request->header.glob_destination, request, request->request_type, _wait.send_ptp, _wait.recv_ptp, request->header.message_tag);
-
-
-    if (request->request_type == REQUEST_SEND) {
-      _wait.polling_task_id = request->header.glob_source;
-    } else if (request->request_type == REQUEST_RECV) {
-      _wait.polling_task_id = request->header.glob_destination;
-    } else not_reachable();
-    assume(_wait.polling_task_id >= 0);
 
 #ifdef SCTK_ENABLE_FULL_MPI
     while ((volatile int) _wait.request->completion_flag != SCTK_MESSAGE_DONE) {
@@ -1547,7 +1546,7 @@ void sctk_wait_message (sctk_request_t * request){
   }
 #endif
   } else {
-    sctk_perform_messages_done(request, _wait.recv_ptp, _wait.remote_process, _wait.source_task_id);
+    sctk_perform_messages_done(&_wait);
   }
 
 
@@ -1567,10 +1566,13 @@ void sctk_wait_message (sctk_request_t * request){
  * receive (MPC_ANY_SOURCE or not).
  *
  */
-void sctk_perform_messages(sctk_request_t* request,
-    sctk_internal_ptp_t *recv_ptp,
-    sctk_internal_ptp_t *send_ptp,
-    int remote_process, int source_task_id, int polling_task_id){
+void sctk_perform_messages(struct sctk_perform_messages_s * wait){
+    const sctk_request_t* request = wait->request;
+    sctk_internal_ptp_t *recv_ptp = wait->recv_ptp;
+    sctk_internal_ptp_t *send_ptp = wait->send_ptp;
+    const int remote_process = wait->remote_process;
+    const int source_task_id = wait->source_task_id;
+    const int polling_task_id = wait->polling_task_id;
 
   if(request->completion_flag != SCTK_MESSAGE_DONE){
     /* Check the source of the request. We try to poll the
@@ -1595,7 +1597,7 @@ void sctk_perform_messages(sctk_request_t* request,
       sctk_try_perform_messages_for_pair(recv_ptp);
     } else not_reachable();
   } else {
-    sctk_perform_messages_done(request, recv_ptp, remote_process, source_task_id);
+    sctk_perform_messages_done(wait);
   }
 }
 

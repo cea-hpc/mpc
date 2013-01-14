@@ -244,24 +244,12 @@ sctk_communicator_t sctk_mpc_get_communicator_from_request(MPC_Request * request
 
 static inline
 void sctk_mpc_perform_messages(MPC_Request * request){
-  struct sctk_internal_ptp_s *recv_ptp;
-  struct sctk_internal_ptp_s *send_ptp;
-  int remote_process;
-  int task_id;
-  int polling_task_id;
+  struct sctk_perform_messages_s _wait;
 
-  if (request->request_type == REQUEST_SEND) {
-    polling_task_id = request->header.glob_source;
-  } else if (request->request_type == REQUEST_RECV) {
-    polling_task_id = request->header.glob_destination;
-  } else not_reachable();
-  assume(polling_task_id >= 0);
+  sctk_perform_messages_wait_init(&_wait, request);
+  sctk_perform_messages_wait_init_request_type(&_wait);
 
-  sctk_perform_messages_find_ptp_from_request(request,
-      &recv_ptp, &send_ptp, &remote_process, &task_id);
-
-  sctk_perform_messages(request, recv_ptp, send_ptp, remote_process, task_id,
-      polling_task_id);
+  sctk_perform_messages(&_wait);
 }
 
 static inline int sctk_mpc_completion_flag(MPC_Request * request){

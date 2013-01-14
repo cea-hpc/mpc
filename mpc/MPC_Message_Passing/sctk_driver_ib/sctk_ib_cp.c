@@ -105,7 +105,6 @@ __thread unsigned int seed;
 __thread int task_node_number = -1;
 /* Pointer to the NUMA node on VP */
 __thread numa_t * numa_on_vp = NULL;
-__thread vp_t * thread_on_vp = NULL;
 
 #define CHECK_AND_QUIT(rail_ib) do {  \
   LOAD_CONFIG(rail_ib);                             \
@@ -202,7 +201,6 @@ void sctk_ib_cp_init_task(int rank, int vp) {
   }
   HASH_ADD(hh_vp, vps[vp]->tasks,rank,sizeof(int),task);
   HASH_ADD(hh_all, all_tasks,rank,sizeof(int),task);
-  thread_on_vp = vps[vp];
   CDL_PREPEND(numas[node]->tasks, task);
   sctk_spinlock_unlock(&vps_lock);
   sctk_ib_debug("Task %d registered on VP %d (numa:%d:tasks_nb:%d)", rank, vp, node, numas[node]->tasks_nb);
@@ -291,17 +289,11 @@ int sctk_ib_cp_poll(const struct sctk_rail_info_s const* rail, struct sctk_ib_po
   if (vp_num < 0) return;
   CHECK_ONLINE_PROGRAM;
 
-  if (vps[vp_num] == NULL) {
-    if (thread_on_vp == NULL) {
-      HASH_FIND(hh_all,all_tasks,&task_id, sizeof(int),task);
-      assume (task);
-      thread_on_vp = vps[task->vp];
-    }
-    vp = thread_on_vp;
-  } else {
-    vp = vps[vp_num];
-  }
-  assume(vp);
+  /* TODO: Ideally, we should find the VP before calling the sctk_ib_poll function.
+  It does useless computation */
+  HASH_FIND(hh_all,all_tasks,&task_id, sizeof(int),task);
+  assume (task);
+  vp = vps[task->vp];
 
   for (task=vp->tasks; task; task=task->hh_vp.next) {
     ib_assume(vp_num == task->vp);
