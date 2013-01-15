@@ -4978,6 +4978,7 @@ __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
       MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
     }
   keyval -= MPI_MAX_KEY_DEFINED;
+  keyval++;
 
   if (keyval < 0)
     {
@@ -4987,7 +4988,8 @@ __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
   sctk_spinlock_lock(&(tmp->lock));
   if (tmp->attrs_fn[keyval].used == 0)
     {
-      MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
+		sctk_spinlock_unlock(&(tmp->lock));
+		MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
     }
 
   tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
@@ -5048,6 +5050,7 @@ __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value,
       return MPI_SUCCESS;
     }
   keyval -= MPI_MAX_KEY_DEFINED;
+  keyval++;
 
   if (keyval < 0)
     {
@@ -5057,6 +5060,7 @@ __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value,
   sctk_spinlock_lock(&(tmp->lock));
   if (tmp->attrs_fn[keyval].used == 0)
     {
+	  sctk_spinlock_unlock(&(tmp->lock));
       MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
     }
 
@@ -5101,6 +5105,7 @@ __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
       return MPI_ERR_INTERN;
     }
   keyval -= MPI_MAX_KEY_DEFINED;
+  keyval++;
 
   tmp = mpc_mpc_get_per_task_data();
   sctk_spinlock_lock(&(tmp->lock));
