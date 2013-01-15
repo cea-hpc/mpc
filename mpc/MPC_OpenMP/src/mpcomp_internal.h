@@ -102,9 +102,41 @@ extern "C"
  ****** STRUCTURES 
  *****************/
 
-     /* Internal Control Variables */
+     /* /\* Internal Control Variables *\/ */
+     /* /\* One structure per OpenMP thread *\/ */
+     /* typedef struct mpcomp_icv_s  */
+     /* { */
+     /* 	  int nthreads_var;		/\* Number of threads for the next team  */
+     /* 					   creation *\/ */
+     /* 	  int dyn_var;		        /\* Is dynamic thread adjustement on? *\/ */
+     /* 	  int nest_var;		        /\* Is nested OpenMP handled/allowed? *\/ */
+     /* 	  omp_sched_t run_sched_var;	/\* Schedule to use when a 'schedule' clause is */
+     /* 					   set to 'runtime' *\/ */
+     /* 	  int modifier_sched_var;	/\* Size of chunks for loop schedule *\/ */
+     /* 	  omp_sched_t def_sched_var;	/\* Default schedule when no 'schedule' clause */
+     /* 					   is present *\/ */
+     /* 	  int nmicrovps_var;		/\* Number of VPs *\/ */
+     /* } mpcomp_icv_t; */
+
+     /* Global Internal Control Variables */
+     /* One structure per OpenMP instance */
+     typedef struct mpcomp_global_icv_s 
+     {
+	  int modifier_sched_var;	/* Size of chunks for loop schedule */
+	  omp_sched_t def_sched_var;	/* Default schedule when no 'schedule' clause
+					   is present */
+	  int bind_var;                 /* Is the OpenMP threads bound to cpu cores */
+	  int stacksize_var;            /* Size of the stack per thread (in Bytes) */
+	  int active_wait_policy_var;   /* Is the threads wait policy active or passive */
+	  int thread_limit_var;         /* Number of Open threads to use for the whole program */
+	  int max_active_levels_var;    /* Maximum number of nested active parallel regions */
+	  int nmicrovps_var;		/* Number of VPs */
+     } mpcomp_global_icv_t;
+
+
+     /* Local Internal Control Variables */
      /* One structure per OpenMP thread */
-     typedef struct mpcomp_icv_s 
+     typedef struct mpcomp_local_icv_s 
      {
 	  int nthreads_var;		/* Number of threads for the next team 
 					   creation */
@@ -112,11 +144,7 @@ extern "C"
 	  int nest_var;		        /* Is nested OpenMP handled/allowed? */
 	  omp_sched_t run_sched_var;	/* Schedule to use when a 'schedule' clause is
 					   set to 'runtime' */
-	  int modifier_sched_var;	/* Size of chunks for loop schedule */
-	  omp_sched_t def_sched_var;	/* Default schedule when no 'schedule' clause
-					   is present */
-	  int nmicrovps_var;		/* Number of VPs */
-     } mpcomp_icv_t;
+     } mpcomp_local_icv_t;
 
      
     /* Integer atomic with padding to avoid false sharing */
@@ -195,7 +223,7 @@ extern "C"
      {
 	  sctk_mctx_t uc;		/* Context (initializes registers, ...)
 					   Initialized when another thread is blocked */
-	  mpcomp_icv_t icvs;		/* Set of ICVs for the child team */
+	  mpcomp_local_icv_t icvs;	/* Set of ICVs for the child team */
 	  char *stack;                  /* The stack (initialized when another thread is 
 					   blocked) */
 	  long rank;			/* OpenMP rank (0 for master thread per team) */
@@ -210,9 +238,9 @@ extern "C"
 	  int single_current;		/* Which 'single' construct did we already go through? */
 
 	  /* -- SECTIONS CONSTRUCT -- */
-    int sections_current ;		/* Which 'sections' construct did we already go through? */
-    int nb_sections ;
-    int previous_section ;
+	  int sections_current ;	/* Which 'sections' construct did we already go through? */
+	  int nb_sections ;
+	  int previous_section ;
 
 	  /* LOOP CONSTRUCT */
 	  int loop_lb;		        /* Lower bound */
@@ -354,7 +382,7 @@ extern "C"
  *****************/
 
      // extern __thread void *sctk_openmp_thread_tls;   /* Current thread pointer */
-
+     extern mpcomp_global_icv_t mpcomp_global_icvs;
 
 
 /*****************
@@ -405,7 +433,7 @@ extern "C"
 				 MPCOMP_NOWAIT_STOP_SYMBOL);
      }
 
-     static inline void __mpcomp_thread_init(mpcomp_thread_t *t, mpcomp_icv_t icvs,
+     static inline void __mpcomp_thread_init(mpcomp_thread_t *t, mpcomp_local_icv_t icvs,
 					     mpcomp_instance_t *instance,
 					     mpcomp_team_t *team_info)
      {
@@ -427,13 +455,14 @@ extern "C"
 	  /* -- SINGLE CONSTRUCT -- */
 	  t->single_current = -1;
 
+
           sctk_assert(t->children_instance != NULL);
-#if 0
+	  
 	  /* -- SECTIONS CONSTRUCT -- */
 	  t->sections_current = 0 ;
-          t->nb_sections = 0 ;
-          t->previous_section = 0 ;
-#endif
+	  t->nb_sections = 0 ;
+	  t->previous_section = 0 ;
+
 	  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
 	  t->tree_stack = NULL;
 	  t->stolen_mvp = NULL;
