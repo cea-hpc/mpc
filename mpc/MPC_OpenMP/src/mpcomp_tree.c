@@ -143,7 +143,6 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 	       int depth;
 	       mpcomp_node_t *node_tmp;
 	       sctk_thread_attr_t __attr ;
-	       size_t stack_size;
 	       int res ;
 		    
 	       father->child_type = MPCOMP_CHILDREN_LEAF;
@@ -253,12 +252,7 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 	       
 	       sctk_thread_attr_setbinding(& __attr, target_vp);
 	       
-	       if (sctk_is_in_fortran == 1)
-		    stack_size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
-	       else
-		    stack_size = SCTK_ETHREAD_STACK_SIZE;
-
-	       sctk_thread_attr_setstacksize(&__attr, stack_size);
+	       sctk_thread_attr_setstacksize(&__attr, mpcomp_global_icvs.stacksize_var);
 									
 	       if (current_mvp == 0) {   /*  case mvp : root */
 		    leaf->type = MPCOMP_MYSELF_ROOT;
@@ -1566,19 +1560,13 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			 n->children.leaf[i] = instance->mvps[current_mvp] ;
 
 			 sctk_thread_attr_t __attr ;
-			 size_t stack_size;
 			 int res ;
 
 			 sctk_thread_attr_init(&__attr);
 
 			 sctk_thread_attr_setbinding (& __attr, target_vp ) ;
 
-			 if (sctk_is_in_fortran == 1)
-			      stack_size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
-			 else
-			      stack_size = SCTK_ETHREAD_STACK_SIZE;
-
-			 sctk_thread_attr_setstacksize (&__attr, stack_size);
+			 sctk_thread_attr_setstacksize (&__attr, mpcomp_global_icvs.stacksize_var);
 
 			 /* User thread create... */
 			 instance->mvps[current_mvp]->to_run = target_node ;

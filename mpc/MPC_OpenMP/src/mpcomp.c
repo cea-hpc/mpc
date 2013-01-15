@@ -252,6 +252,12 @@ static inline void __mpcomp_read_env_variables() {
   /******* OMP_STACKSIZE *********/
   env = getenv ("OMP_STACKSIZE");
   OMP_STACKSIZE = 0;	/* DEFAULT */
+
+  if (sctk_is_in_fortran == 1)
+       OMP_STACKSIZE = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
+  else
+       OMP_STACKSIZE = SCTK_ETHREAD_STACK_SIZE;
+
   if (env != NULL)
   {
        char *p = env;
