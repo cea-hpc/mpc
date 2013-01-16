@@ -425,8 +425,8 @@ void __mpcomp_init() {
     icvs.dyn_var = OMP_DYNAMIC;
     icvs.nest_var = OMP_NESTED;
     icvs.run_sched_var = OMP_SCHEDULE;
+    icvs.modifier_sched_var = OMP_MODIFIER_SCHEDULE ;
 
-    mpcomp_global_icvs.modifier_sched_var = OMP_MODIFIER_SCHEDULE ;
     mpcomp_global_icvs.def_sched_var = omp_sched_static ;
     mpcomp_global_icvs.bind_var = OMP_PROC_BIND;
     mpcomp_global_icvs.stacksize_var = OMP_STACKSIZE;
@@ -1032,11 +1032,8 @@ mpcomp_get_num_procs (void)
 {
   mpcomp_thread_t * t ;
   __mpcomp_init ();
-  sctk_nodebug( "mpcomp_get_dynamic: entering" ) ;
-  t = sctk_openmp_thread_tls;
-  sctk_assert( t != NULL);
 
-  return t->icvs.nmicrovps_var;
+  return mpcomp_global_icvs.nmicrovps_var;
 }
 
 

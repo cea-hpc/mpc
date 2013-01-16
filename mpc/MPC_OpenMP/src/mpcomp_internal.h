@@ -122,7 +122,6 @@ extern "C"
      /* One structure per OpenMP instance */
      typedef struct mpcomp_global_icv_s 
      {
-	  int modifier_sched_var;	/* Size of chunks for loop schedule */
 	  omp_sched_t def_sched_var;	/* Default schedule when no 'schedule' clause
 					   is present */
 	  int bind_var;                 /* Is the OpenMP threads bound to cpu cores */
@@ -144,6 +143,7 @@ extern "C"
 	  int nest_var;		        /* Is nested OpenMP handled/allowed? */
 	  omp_sched_t run_sched_var;	/* Schedule to use when a 'schedule' clause is
 					   set to 'runtime' */
+	  int modifier_sched_var;	/* Size of chunks for loop schedule */
      } mpcomp_local_icv_t;
 
      
