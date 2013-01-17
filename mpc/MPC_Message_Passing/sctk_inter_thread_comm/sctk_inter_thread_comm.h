@@ -196,6 +196,11 @@ typedef struct sctk_message_to_copy_s{
     unsigned long checksum;
   }sctk_thread_ptp_message_body_t;
 
+typedef struct {
+  sctk_spinlock_t lock;
+  volatile sctk_msg_list_t* list;
+} sctk_internal_ptp_list_completing_t;
+
   /*Data not to tranfers in inter-process communications*/
   typedef struct {
     char remote_source;
@@ -215,6 +220,8 @@ typedef struct sctk_message_to_copy_s{
     /*Storage structs*/
     sctk_msg_list_t distant_list;
     sctk_message_to_copy_t copy_list;
+
+    struct sctk_internal_ptp_s * internal_ptp;
 
     /*Destructor*/
     void (*free_memory)(void*);
