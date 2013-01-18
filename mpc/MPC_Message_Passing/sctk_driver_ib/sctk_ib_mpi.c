@@ -388,7 +388,7 @@ sctk_network_notify_perform_message_ib (int remote_process, int remote_task_id, 
   POLL_INIT(&poll);
   sctk_network_poll_all_cq(rail, &poll);
   POLL_INIT(&poll);
-  sctk_ib_cp_poll(rail, &poll, polling_task_id, 1);
+  sctk_ib_cp_poll(rail, &poll, polling_task_id);
 }
 
 static void
@@ -398,7 +398,7 @@ sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){
   struct sctk_ib_polling_s poll;
 
   if (config->ibv_steal > 0) {
-    sctk_ib_cp_steal(rail, &poll);
+    sctk_ib_cp_steal(rail, &poll, 1);
   }
 }
 
@@ -411,7 +411,7 @@ sctk_network_notify_any_source_message_ib (int polling_task_id, sctk_rail_info_t
   POLL_INIT(&poll);
   sctk_network_poll_all_cq(rail, &poll);
   POLL_INIT(&poll);
-  sctk_ib_cp_poll(rail, &poll, polling_task_id, 1);
+  sctk_ib_cp_poll(rail, &poll, polling_task_id);
 }
 
 static void
