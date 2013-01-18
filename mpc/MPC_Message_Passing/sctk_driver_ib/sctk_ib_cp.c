@@ -284,7 +284,13 @@ int sctk_ib_cp_poll(const struct sctk_rail_info_s const* rail, struct sctk_ib_po
   vp_t *vp;
   sctk_ib_cp_task_t *task = NULL;
   int ret = 0;
-  assume(task_id >= 0);
+
+  if (task_id < 0) {
+    /* The task id may be -1 when the 'fully connected' mode is enabled
+     * FIXME: This code has not yet been tested */
+    assume(task_id >= 0);
+    __cp_steal(rail, poll, 1);
+  }
 
   if (vp_num < 0) return;
   CHECK_ONLINE_PROGRAM;
@@ -355,7 +361,7 @@ exit:
   return nb_found;
 }
 
-int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll) {
+int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll, char other_numa) {
   int nb_found = 0;
   int vp = sctk_thread_get_vp();
   sctk_ib_cp_task_t *stealing_task = NULL;
@@ -397,18 +403,18 @@ int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll) {
     }
   }
 
-#if 1
-  int random = rand_r(&seed) % numa_registered;
-  numa = numas_copy[random];
-  {
-    CDL_FOREACH(numa->vps, tmp_vp) {
-      for (task=tmp_vp->tasks; task; task=task->hh_vp.next) {
-        nb_found += __cp_steal(rail, poll, &(task->local_ibufs_list), &(task->local_ibufs_list_lock), task, stealing_task);
-      if (nb_found) return nb_found;
+  if (other_numa) {
+    int random = rand_r(&seed) % numa_registered;
+    numa = numas_copy[random];
+    {
+      CDL_FOREACH(numa->vps, tmp_vp) {
+        for (task=tmp_vp->tasks; task; task=task->hh_vp.next) {
+          nb_found += __cp_steal(rail, poll, &(task->local_ibufs_list), &(task->local_ibufs_list_lock), task, stealing_task);
+          if (nb_found) return nb_found;
+        }
       }
     }
   }
-#endif
 
   return nb_found;
 }
