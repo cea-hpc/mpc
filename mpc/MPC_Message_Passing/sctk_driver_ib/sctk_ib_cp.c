@@ -113,7 +113,7 @@ __thread numa_t * numa_on_vp = NULL;
 
 extern volatile int sctk_online_program;
 #define CHECK_ONLINE_PROGRAM do {         \
-  if (sctk_online_program != 1) return; \
+  if (sctk_online_program != 1) return 0; \
 }while(0);
 
 
@@ -261,20 +261,20 @@ retry:
   return nb_found;
 }
 
-void sctk_ib_cp_poll_global_list(const struct sctk_rail_info_s const * rail, struct sctk_ib_polling_s *poll){
+int sctk_ib_cp_poll_global_list(const struct sctk_rail_info_s const * rail, struct sctk_ib_polling_s *poll){
   sctk_ib_cp_task_t *task = NULL;
   int nb_found = 0;
   int vp = sctk_thread_get_vp();
 
-  if (vp < 0) return;
+  if (vp < 0) return 0;
   CHECK_ONLINE_PROGRAM;
-  if (vps[vp] == NULL) return;
+  if (vps[vp] == NULL) return 0;
 
   task = vps[vp]->tasks;
-  if (!task) return;
+  if (!task) return 0;
   ib_assume(task);
 
-  __cp_poll(rail, poll, task->global_ibufs_list, task->global_ibufs_list_lock, task, 1);
+  return __cp_poll(rail, poll, task->global_ibufs_list, task->global_ibufs_list_lock, task, 1);
 }
 
 
@@ -289,10 +289,10 @@ int sctk_ib_cp_poll(const struct sctk_rail_info_s const* rail, struct sctk_ib_po
     /* The task id may be -1 when the 'fully connected' mode is enabled
      * FIXME: This code has not yet been tested */
     assume(task_id >= 0);
-    __cp_steal(rail, poll, 1);
+    sctk_ib_cp_steal(rail, poll, 1);
   }
 
-  if (vp_num < 0) return;
+  if (vp_num < 0) return 0;
   CHECK_ONLINE_PROGRAM;
 
   /* TODO: Ideally, we should find the VP before calling the sctk_ib_poll function.
@@ -369,11 +369,11 @@ int sctk_ib_cp_steal( sctk_rail_info_t* rail, struct sctk_ib_polling_s *poll, ch
   vp_t* tmp_vp;
   numa_t* numa;
 
-  if (vp < 0) return;
+  if (vp < 0) return 0;
   CHECK_ONLINE_PROGRAM;
 
   if (numas_copy == NULL) {
-    static lock = SCTK_SPINLOCK_INITIALIZER;
+    static sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
     sctk_spinlock_lock(&lock);
     assume(numa_number != -1);
     if (numas_copy == NULL) {
