@@ -1523,6 +1523,8 @@ static void sctk_perform_messages_wait_for_value_and_poll(void* a){
 
 void sctk_perform_messages_wait_init_request_type(struct sctk_perform_messages_s * wait) {
   sctk_request_t* request = wait->request;
+    /* INFO: The polling task id may be -1. For example when the fully connected mode
+     * is enabled */
   int * polling_task_id = &wait->polling_task_id;
 
   if (request->request_type == REQUEST_SEND) {
@@ -1532,7 +1534,6 @@ void sctk_perform_messages_wait_init_request_type(struct sctk_perform_messages_s
     } else {
       not_reachable();
     };
-    assume(*polling_task_id >= 0);
 }
 
 void sctk_wait_message (sctk_request_t * request){
