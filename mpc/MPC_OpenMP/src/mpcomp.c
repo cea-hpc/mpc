@@ -529,6 +529,8 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     t->rank = 0 ;
 
     func(shared) ;
+    __mpcomp_task_schedule();   /* Look for tasks remaining */
+    
     return ;
   }
 
@@ -684,8 +686,9 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     // while (sctk_atomics_load_int(&(root->barrier)) != root->barrier_num_threads ) 
     while (sctk_atomics_load_int(&(new_root->barrier)) != new_root->barrier_num_threads ) 
     {
-      //sctk_openmp_thread_tls = t ; //Update tls value before switching (AMAHEO)
-      sctk_thread_yield() ;
+	 //sctk_openmp_thread_tls = t ; //Update tls value before switching (AMAHEO)
+	 __mpcomp_task_schedule(); /* Look for tasks remaining */
+	 sctk_thread_yield() ;
     }
     // sctk_atomics_store_int(&(root->barrier), 0) ;
     sctk_atomics_store_int(&(new_root->barrier), 0) ;
@@ -694,12 +697,15 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     while (new_root->barrier != new_root->barrier_num_threads ) 
     {
       //sctk_openmp_thread_tls = t ; //Update tls value before switching (AMAHEO)      
+      __mpcomp_task_schedule(); /* Look for tasks remaining */
       sctk_thread_yield() ;
     }
     // root->barrier = 0 ;
     new_root->barrier = 0 ;
 #endif
 
+    TODO("Place the task scheduling somewhere else")
+    __mpcomp_task_schedule();
 
     //printf("__mpcomp_start_parallel_region: end, t rank=%ld\n", t->rank);
 

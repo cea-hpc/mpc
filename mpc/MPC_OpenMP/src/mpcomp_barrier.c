@@ -43,6 +43,7 @@ __mpcomp_barrier (void)
   sctk_nodebug( "__mpcomp_barrier: thread %p", t ) ;
 
   if ( t->num_threads == 1 ) {
+    __mpcomp_task_schedule();   /* Look for tasks remaining */
     return ;
   }
 
@@ -171,6 +172,7 @@ __mpcomp_internal_full_barrier ( mpcomp_mvp_t * mvp )
 
     /* Wait for c->barrier == c->barrier_num_threads */
     while (b_done == c->barrier_done ) {
+      __mpcomp_task_schedule(); /* Look for tasks remaining */
       sctk_thread_yield() ;
     }
 
@@ -182,6 +184,7 @@ __mpcomp_internal_full_barrier ( mpcomp_mvp_t * mvp )
 #endif
 
     c->barrier_done++ ; /* No need to lock I think... */
+    __mpcomp_task_schedule(); /* Look for tasks remaining */
   }
 
   sctk_debug("__mpcomp_internal_full_barrier: node nb children=%d, node depth=%d, mvp address=%p, mvp rank=%d, mvp tree_rank=%d", c->nb_children, c->depth, &mvp, mvp->rank, mvp->tree_rank[c->depth]);

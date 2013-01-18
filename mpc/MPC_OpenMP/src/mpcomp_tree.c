@@ -135,6 +135,9 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
           /* sctk_assert( node->temporary_tree_rank != NULL );*/
           /* node->temporary_tree_rank[0] = 0;*/
 	
+	  /* OMP 3.0 tasks */
+	  node->untied_tasks = NULL;
+	  node->new_tasks = NULL;
 
      } else {   /* case leaf or node */		
    	  if (__mpcomp_get_cpu_number_below(obj) == 1) {   /* case leaf (mvp) */		
@@ -277,7 +280,12 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 		    leaf->to_run = NULL;
 	       }
 			
-	       sctk_thread_attr_destroy(&__attr);	       
+	       sctk_thread_attr_destroy(&__attr);
+
+	       /* OMP 3.0 */
+	       leaf->untied_tasks = NULL;
+	       leaf->new_tasks = NULL;
+	       
 	  } else {   /* case node */
 	       int id_numa;
 
@@ -331,6 +339,9 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 	       node->children.node = NULL;
 	       node->children.leaf = NULL;
 			
+	       /* OMP 3.0 tasks */
+	       node->untied_tasks = NULL;
+	       node->new_tasks = NULL;
 			
 	       /* tree_rank avec tableaux intermediaires */
                /* #if MPCOMP_MALLOC_ON_NODE */
@@ -1518,6 +1529,10 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	       target_numa = 0 ;
 #endif
 
+	       /* OMP 3.0 tasks */
+	       n->untied_tasks = NULL;
+	       n->new_tasks = NULL;
+
 	       if ( n->depth == depth - 1 ) { 
 
 		    /* Children are leaves */
@@ -1544,6 +1559,10 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			 sctk_assert( instance->mvps[current_mvp]->tree_rank != NULL ) ;
 
 			 instance->mvps[current_mvp]->tree_rank[ depth - 1 ] = i ;
+
+			 /* OMP 3.0 */
+			 instance->mvps[current_mvp]->untied_tasks = NULL ;
+			 instance->mvps[current_mvp]->new_tasks = NULL ;
 
 			 mpcomp_node_t * current_node = n ;
 			 while ( current_node->father != NULL ) {
