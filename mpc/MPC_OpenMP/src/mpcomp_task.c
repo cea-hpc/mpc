@@ -27,6 +27,7 @@
 #include <sctk_asm.h>
 #include "mpcomp_internal.h"
 
+static int mpcomp_task_nb_delayed = 0;
 
 /* Initialization of mpcomp tasks lists (new and untied) */
 void __mpcomp_task_list_infos_init()
@@ -174,7 +175,8 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 
      TODO("Maybe add test in case only one thread is running in the team or if max number of tasks is reached")
      if (!if_clause
-	 || (t->current_task && mpcomp_task_type_isset (t->current_task->type, MPCOMP_TASK_FINAL))) {
+	 || (t->current_task && mpcomp_task_type_isset (t->current_task->type, MPCOMP_TASK_FINAL))
+	 || mpcomp_task_nb_delayed > MPCOMP_TASK_MAX_DELAYED) {
 	  /* Execute directly */
 
 	  struct mpcomp_task_s task;
@@ -216,6 +218,7 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 	  /* The new task may be delayed, so copy arguments in a buffer */
 	  task = sctk_malloc (sizeof (struct mpcomp_task_s) + arg_size + arg_align - 1);
 	  sctk_assert (task != NULL);
+	  mpcomp_task_nb_delayed++;
 	  data_cpy = (char*) (((uintptr_t) (task + 1) + arg_align -1)
 			      & ~(uintptr_t) (arg_align - 1));
 	  if (cpyfn) {
@@ -336,7 +339,8 @@ void __mpcomp_task_schedule()
 
 	  /* Replace current task */
 	  t->current_task = prev_task;
-	 
+
+	  mpcomp_task_nb_delayed--;
 	  free(task);
 	  task = NULL;
      }
@@ -406,6 +410,7 @@ void __mpcomp_taskwait()
 			 t->current_task = prev_task;
 			 
 			 free(task);
+			 mpcomp_task_nb_delayed--;
 		    }
 	       }
 	       

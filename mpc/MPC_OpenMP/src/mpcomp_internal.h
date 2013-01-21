@@ -66,6 +66,9 @@ extern "C"
 #define MPCOMP_CHUNKS_NOT_AVAIL 1
 #define MPCOMP_CHUNKS_AVAIL     2
 
+
+#define MPCOMP_TASK_MAX_DELAYED 1024
+
 /* Tasks type bitmasks */
 #define MPCOMP_TASK_UNDEFERRED   0x00000001 /* A task for which execution is not deferred
 					       with respect to its generating task region */

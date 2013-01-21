@@ -881,6 +881,8 @@ void * mpcomp_slave_mvp_leaf( void * arg ) {
       &(mvp->slave_running), mvp->father ) ;
   sctk_nodebug( "mpcomp_slave_mvp_leaf: Will get value from father %p", mvp->father ) ;
 
+  mvp->spin_done = 0;
+
   /* Spin while this microVP is alive */
   while (mvp->enable) {
     int i ;
@@ -891,6 +893,7 @@ void * mpcomp_slave_mvp_leaf( void * arg ) {
 
     /* Spin for new parallel region */
     sctk_thread_wait_for_value_and_poll( (int*)&(mvp->slave_running), 1, NULL, NULL ) ;
+    
     TODO("maybe wrong if multiple mVPs are waiting on the same node")
     mvp->slave_running = 0 ;
 
@@ -960,7 +963,7 @@ INFO("__mpcomp_flush: need to call mpcomp_macro_scheduler")
 
     /* Half barrier */
     __mpcomp_internal_half_barrier( mvp ) ;
-
+    mvp->spin_done = 1;
   }
 
   return NULL ;
