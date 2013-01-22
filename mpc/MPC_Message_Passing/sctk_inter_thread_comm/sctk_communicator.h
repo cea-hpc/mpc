@@ -34,6 +34,7 @@ int sctk_get_nb_task_local (const sctk_communicator_t communicator);
 int sctk_get_first_task_local (const sctk_communicator_t communicator);
 int sctk_get_last_task_local (const sctk_communicator_t communicator);
 int sctk_get_nb_task_total (const sctk_communicator_t communicator);
+int sctk_get_nb_task_remote (const sctk_communicator_t communicator);
   void sctk_get_rank_size_total (const sctk_communicator_t communicator,
 				 int *rank, int *size, int glob_rank);
 inline int *sctk_get_process_array (const sctk_communicator_t communicator);
@@ -64,5 +65,6 @@ int sctk_is_inter_comm (const sctk_communicator_t communicator);
 						nb_task_involved,
 						const int *task_list,
 						int is_inter_comm);
-
+sctk_communicator_t sctk_create_intercommunicator (sctk_communicator_t local_comm, int local_leader,
+		       sctk_communicator_t peer_comm, int remote_leader, int tag);
 #endif
