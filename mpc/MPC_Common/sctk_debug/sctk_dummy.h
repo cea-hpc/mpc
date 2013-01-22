@@ -3,7 +3,7 @@
 
 
 #define sctk_set_net_migration_available(a) (void)(0);
-#define sctk_get_nb_task_remote(a) 0
+//~ #define sctk_get_nb_task_remote(a) 0
 #define sctk_is_valid_comm(a) 1
 
 #define sctk_net_abort() abort();

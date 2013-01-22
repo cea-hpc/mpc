@@ -4822,6 +4822,7 @@ __INTERNAL__PMPI_Intercomm_create (MPI_Comm local_comm, int local_leader,
 				   MPI_Comm peer_comm, int remote_leader,
 				   int tag, MPI_Comm * newintercomm)
 {
+  /*
   MPI_Group remote_group;
 
   __INTERNAL__PMPI_Barrier (local_comm);
@@ -4835,6 +4836,8 @@ __INTERNAL__PMPI_Intercomm_create (MPI_Comm local_comm, int local_leader,
 
   __INTERNAL__PMPI_Barrier (local_comm);
   return MPI_SUCCESS;
+  */
+  return PMPC_Intercomm_create (local_comm, local_leader, peer_comm, remote_leader, tag, newintercomm);
 }
 
 static int
@@ -7772,6 +7775,24 @@ PMPI_Comm_create (MPI_Comm comm, MPI_Group group, MPI_Comm * newcomm)
 }
 
 int
+PMPI_Intercomm_create (MPI_Comm local_comm, int local_leader,
+		       MPI_Comm peer_comm, int remote_leader, int tag,
+		       MPI_Comm * newintercomm)
+{
+  MPI_Comm comm = MPI_COMM_WORLD;
+  int res = MPI_ERR_INTERN;
+  
+  if (newintercomm == NULL)
+    {
+      MPI_ERROR_REPORT (comm, MPI_ERR_COMM, "");
+    }
+  res =
+    __INTERNAL__PMPI_Intercomm_create (local_comm, local_leader, peer_comm,
+				       remote_leader, tag, newintercomm);
+  SCTK__MPI_Check_retrun_val (res, comm);
+}
+
+int
 PMPI_Comm_split (MPI_Comm comm, int color, int key, MPI_Comm * newcomm)
 {
   int res = MPI_ERR_INTERN;
@@ -7823,19 +7844,6 @@ PMPI_Comm_remote_group (MPI_Comm comm, MPI_Group * group)
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Comm_remote_group (comm, group);
-  SCTK__MPI_Check_retrun_val (res, comm);
-}
-
-int
-PMPI_Intercomm_create (MPI_Comm local_comm, int local_leader,
-		       MPI_Comm peer_comm, int remote_leader, int tag,
-		       MPI_Comm * newintercomm)
-{
-  MPI_Comm comm = MPI_COMM_WORLD;
-  int res = MPI_ERR_INTERN;
-  res =
-    __INTERNAL__PMPI_Intercomm_create (local_comm, local_leader, peer_comm,
-				       remote_leader, tag, newintercomm);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
