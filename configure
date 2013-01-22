@@ -352,6 +352,7 @@ INSTALL_MPC_DEPS=""
 
 # Path of the build directory
 printf "BUILD_DIR=\`pwd\`\n" >> Makefile
+printf "TOP_SOURCE_DIR=\"${TOP_SOURCE_DIR}\"\n" >> Makefile
 
 if test "${ADD_TO_CPATH}" != "" ; then
   printf "ifeq (\${CPATH},)\n" >> Makefile
@@ -596,6 +597,8 @@ printf "make_configure: ${CONFIG_ALL_RULE} \n" >> Makefile
 #
 printf "#\n# Rule install_all\n#\n" >> Makefile
 printf "install_all: ${INSTALL_ALL_RULE} \n" >> Makefile
+
+cat ${TOP_SOURCE_DIR}/packaging/Makefile >> Makefile
 
 echo "Configuration process is done. Type 'make' to start compiling the MPC distribution..."
 
