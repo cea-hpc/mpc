@@ -67,4 +67,5 @@ int sctk_is_inter_comm (const sctk_communicator_t communicator);
 						int is_inter_comm);
 sctk_communicator_t sctk_create_intercommunicator (sctk_communicator_t local_comm, int local_leader,
 		       sctk_communicator_t peer_comm, int remote_leader, int tag);
+int get_remote_task_list_in_global_ranks(const sctk_communicator_t communicator, int i);
 #endif

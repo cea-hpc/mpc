@@ -91,7 +91,7 @@ MPC_Request mpc_request_null;
 __thread struct sctk_thread_specific_s *sctk_message_passing;
 
 inline mpc_per_communicator_t* sctk_thread_getspecific_mpc_per_comm(sctk_task_specific_t* task_specific,sctk_communicator_t comm){
-  mpc_per_communicator_t*per_communicator;
+  mpc_per_communicator_t *per_communicator;
 
   sctk_spinlock_lock(&(task_specific->per_communicator_lock));
   HASH_FIND(hh,task_specific->per_communicator,&comm,sizeof(sctk_communicator_t),per_communicator);
@@ -100,7 +100,7 @@ inline mpc_per_communicator_t* sctk_thread_getspecific_mpc_per_comm(sctk_task_sp
 }
 
 static inline void sctk_thread_addspecific_mpc_per_comm(sctk_task_specific_t* task_specific,mpc_per_communicator_t* mpc_per_comm,sctk_communicator_t comm){
-  mpc_per_communicator_t*per_communicator;
+  mpc_per_communicator_t *per_communicator;
   sctk_spinlock_lock(&(task_specific->per_communicator_lock));
   HASH_FIND(hh,task_specific->per_communicator,&comm,sizeof(sctk_communicator_t),per_communicator);
   assume(per_communicator == NULL);
@@ -177,7 +177,7 @@ static inline mpc_per_communicator_t* sctk_thread_createspecific_mpc_per_comm(){
 }
 
 static inline void sctk_thread_createspecific_mpc_per_comm_from_existing(sctk_task_specific_t* task_specific,sctk_communicator_t new_comm,sctk_communicator_t old_comm){
-  mpc_per_communicator_t*per_communicator;
+  mpc_per_communicator_t* per_communicator;
   mpc_per_communicator_t* per_communicator_new;
 
   assume(new_comm != old_comm);
@@ -1854,8 +1854,10 @@ PMPC_Comm_size (MPC_Comm comm, int *size)
 int
 PMPC_Comm_remote_size (MPC_Comm comm, int *size)
 {
+  SCTK_PROFIL_START (MPC_Comm_remote_size);
   mpc_check_comm (comm, comm);
   __MPC_Comm_remote_size (comm, size);
+  SCTK_PROFIL_END (MPC_Comm_remote_size);
   MPC_ERROR_SUCESS ();
 }
 
@@ -3952,20 +3954,21 @@ PMPC_Comm_group (MPC_Comm comm, MPC_Group * group)
 static inline int
 __MPC_Comm_remote_group (MPC_Comm comm, MPC_Group * group)
 {
-  int size;
-  //~ sctk_internal_communicator_t *tmp = NULL;
-  __MPC_Comm_remote_size (comm, &size);
+	int size;
+    int i;
+    __MPC_Comm_remote_size (comm, &size);
+    sctk_nodebug ("MPC_Comm_group");
 
-  sctk_nodebug ("MPC_Comm_remote_group");
+    *group = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
 
-  *group = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
+    (*group)->task_nb = size;
+    (*group)->task_list_in_global_ranks = (int *) sctk_malloc (size * sizeof (int));
 
-  (*group)->task_nb = size;
-  (*group)->task_list_in_global_ranks = (int *) sctk_malloc (size * sizeof (int));
-
-  //~ tmp = sctk_check_internal_communicator_no_lock (comm);
-  not_implemented ();
-  MPC_ERROR_SUCESS ();
+	for (i = 0; i < size; i++)
+    {
+		(*group)->task_list_in_global_ranks[i] = get_remote_task_list_in_global_ranks(comm, i);
+    }
+	MPC_ERROR_SUCESS ();
 }
 
 int
@@ -4155,15 +4158,13 @@ __MPC_Intercomm_create (MPC_Comm local_comm, int local_leader,
 	(*newintercomm) = sctk_create_intercommunicator (local_comm, local_leader, 
 	                                            peer_comm, remote_leader, tag);
 
-	sctk_debug ("MPC_Comm_create done %d ", *newintercomm);
+	sctk_debug ("MPC_Intercomm_create done %d ", *newintercomm);
 	__MPC_Barrier (local_comm);
-	sctk_debug ("MPC_Comm_create ended %d ", *newintercomm);
-	if (present == 1)
-    {
-		__MPC_Barrier (*newintercomm);
-		sctk_thread_createspecific_mpc_per_comm_from_existing(task_specific,*newintercomm, local_comm);
-		sctk_debug ("MPC_Comm_create ended %d on newly", *newintercomm);
-    }
+	sctk_debug ("MPC_Intercomm_create ended %d ", *newintercomm);
+	
+	__MPC_Barrier (*newintercomm);
+	sctk_thread_createspecific_mpc_per_comm_from_existing(task_specific,*newintercomm, local_comm);
+	sctk_debug ("MPC_Intercomm_create ended %d on newly", *newintercomm);
     
 	MPC_ERROR_SUCESS ();
 }
