@@ -3853,14 +3853,16 @@ __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
 	if (res != MPI_SUCCESS)
 	  {
 	    return res;
-	  }	
+	  }		
       } else {
-	res = __INTERNAL__PMPI_Send (recvbuf, count, datatype, (rank + 1) % size, -3, comm);
-	if (res != MPI_SUCCESS)
-	  {
-	    return res;
-	  }	
-      }
+	if(rank != 0){
+	  res = __INTERNAL__PMPI_Send (recvbuf, count, datatype, (rank + 1) % size, -3, comm);
+	  if (res != MPI_SUCCESS)
+	    {
+	      return res;
+	    }
+	}
+      }      
 
       if(rank == root){
 	res =
