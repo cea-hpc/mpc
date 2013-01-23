@@ -88,6 +88,9 @@ static void *
 kthread_create_start_routine (void *t_arg)
 {
   kthread_create_start_t slot;
+
+  sctk_topology_init_cpu();
+
   memcpy(&slot,t_arg,sizeof(kthread_create_start_t));
   ((kthread_create_start_t*)t_arg)->started = 1;
 

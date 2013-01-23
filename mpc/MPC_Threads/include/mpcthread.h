@@ -28,6 +28,7 @@
 #include "sctk_config.h"
 #include "sctk_posix_thread.h"
 #include "sctk_thread_api.h"
+#include "stdarg.h"
 
 #ifndef MPC_NO_AUTO_MAIN_REDEF
 #undef main
@@ -89,7 +90,7 @@ extern "C"
 
 #undef SEM_VALUE_MAX
 #define SEM_VALUE_MAX SCTK_SEM_VALUE_MAX
-#undef SCTK_SEM_FAILED
+#undef SEM_FAILED
 #define SEM_FAILED SCTK_SEM_FAILED
 
 
@@ -935,7 +936,22 @@ int user_sctk_thread_mutex_unlock (sctk_thread_mutex_t * mutex);
   static inline sctk_thread_sem_t *mpc_thread_sem_open (const char *name,
 							int oflag, ...)
   {
-    return sctk_thread_sem_open (name, oflag);
+	  if ((oflag & SCTK_O_CREAT))
+	  {    
+
+		  va_list ap;
+		  int value;
+		  mode_t mode;
+		  va_start (ap, oflag);
+		  mode = va_arg (ap, mode_t);
+		  value = va_arg (ap, int);
+		  va_end (ap);
+		  return sctk_thread_sem_open (name, oflag,mode,value);
+	  }    
+	  else 
+	  {    
+		  return sctk_thread_sem_open (name, oflag);
+	  }
   }
 
 

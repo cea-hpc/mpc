@@ -24,7 +24,6 @@ OFFSET=""
 
 OFFSET_STEP="4 4 4 4"
 
-
 sctk_echo(){
 	for isctk_echo in $OFFSET ; do
 		printf " "
@@ -526,6 +525,7 @@ cat  << EOF  > ${SCTK_CONF_C}
 #endif
 #include <limits.h>
 #include <pthread.h>
+#include <limits.h>
 
 void *
 start_routine (void *arg)

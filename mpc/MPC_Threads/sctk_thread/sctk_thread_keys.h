@@ -17,23 +17,35 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include <stdio.h>
-#include <mpc.h>
+#ifndef __SCTK_THREAD_KEYS_H_
+#define __SCTK_THREAD_KEYS_H_
 
+#include <stdlib.h>
+#include <string.h>
+#include "sctk_config.h"
+#include "sctk_debug.h"
+#include "sctk_thread.h"
+#include "sctk_internal_thread.h"
+
+typedef struct {
+  void* keys[SCTK_THREAD_KEYS_MAX];
+}sctk_thread_generic_keys_t;
+
+void sctk_thread_generic_keys_init(); 
+void sctk_thread_generic_keys_init_thread(sctk_thread_generic_keys_t* keys);
 int
-main (int argc, char **argv)
-{
-  int rank, size;
-  char name[1024];
-  MPC_Init (&argc, &argv);
-  MPC_Comm_size (MPC_COMM_WORLD, &size);
-  MPC_Comm_rank (MPC_COMM_WORLD, &rank);
-  gethostname (name, 1023);
-  MPC_Barrier(MPC_COMM_WORLD);
-  printf ("Hello world from process %d of %d %s\n", rank, size, name);
-  MPC_Finalize ();
-  return 0;
-}
+sctk_thread_generic_keys_setspecific (sctk_thread_key_t __key, const void *__pointer,sctk_thread_generic_keys_t* keys);
+void *
+sctk_thread_generic_keys_getspecific (sctk_thread_key_t __key,sctk_thread_generic_keys_t* keys);
+int
+sctk_thread_generic_keys_key_create (sctk_thread_key_t * __key,
+				void (*__destr_function) (void *),sctk_thread_generic_keys_t* keys);
+int
+sctk_thread_generic_keys_key_delete (sctk_thread_key_t __key,sctk_thread_generic_keys_t* keys);
+
+inline void
+sctk_thread_generic_keys_key_delete_all ( sctk_thread_generic_keys_t* keys );
+
+#endif

@@ -54,10 +54,10 @@ if test "${MINOR}" = "-1" ; then
 MPC_VERSION="Experimental"
 fi
 
-MODES_MULTITHREAD="ethread"
+MODES_MULTITHREAD="ethread ethread_ng"
 MODES_NET="$SCTK_NET_LIST"
 if test "$SCTK_USE_PTHREAD" = "1" ; then
-MODES_MULTITHREAD="pthread ethread_mxn $MODES_MULTITHREAD"
+MODES_MULTITHREAD="pthread ethread_mxn pthread_ng ethread_mxn_ng $MODES_MULTITHREAD"
 fi
 
 check_net(){

@@ -83,8 +83,7 @@ extern "C"
   extern int (*__sctk_ptr_thread_attr_setguardsize) (sctk_thread_attr_t *
 						     __attr,
 						     size_t __guardsize);
-  extern
-    int (*__sctk_ptr_thread_attr_setinheritsched) (sctk_thread_attr_t *
+  extern int (*__sctk_ptr_thread_attr_setinheritsched) (sctk_thread_attr_t *
 						   __attr, int __inherit);
   extern int (*__sctk_ptr_thread_attr_setschedparam) (sctk_thread_attr_t
 						      * __attr,
@@ -274,6 +273,8 @@ extern "C"
 					    int pshared, unsigned int value);
   extern int (*__sctk_ptr_thread_sem_wait) (sctk_thread_sem_t * sem);
   extern int (*__sctk_ptr_thread_sem_trywait) (sctk_thread_sem_t * sem);
+  extern int (*__sctk_ptr_thread_sem_timedwait) (sctk_thread_sem_t * sem,
+		  				  const struct timespec* __abstime );
   extern int (*__sctk_ptr_thread_sem_post) (sctk_thread_sem_t * sem);
   extern int (*__sctk_ptr_thread_sem_getvalue) (sctk_thread_sem_t * sem,
 						int *sval);
@@ -384,6 +385,8 @@ extern "C"
 #define sctk_add_func_type(newlib,func,t) __sctk_ptr_thread_##func = (t)newlib##_##func
 #define sctk_remove_func(func) __sctk_ptr_thread_##func = sctk_gen_thread_##func
 
+
+#define sctk_thread_generic_check_size(a,b) sctk_size_checking(sizeof(a),sizeof(b),SCTK_STRING(a),SCTK_STRING(b),__FILE__,__LINE__)
 
 #ifdef __cplusplus
 }

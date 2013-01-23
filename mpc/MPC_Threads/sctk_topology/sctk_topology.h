@@ -116,6 +116,7 @@ extern "C"
 */
   hwloc_topology_t sctk_get_topology_object (void);
 
+  void sctk_topology_init_cpu();
 #ifdef __cplusplus
 }
 #endif

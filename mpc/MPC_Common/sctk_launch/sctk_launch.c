@@ -347,23 +347,26 @@ sctk_use_ethread_mxn (void)
   sctk_thread_val = sctk_ethread_mxn_thread_init;
 }
 
-/*   static void */
-/* sctk_use_mpi (void) */
-/* { */
-/* #ifdef MPC_Message_Passing */
-/*   sctk_network_mode = "mpi"; */
-/*   sctk_net_init_driver ("mpi"); */
-/* #endif */
-/* } */
+  static void
+sctk_use_ethread_mxn_ng (void)
+{
+  sctk_multithreading_mode = "ethread_mxn_ng";
+  sctk_thread_val = sctk_ethread_mxn_ng_thread_init;
+}
 
-/*   static void */
-/* sctk_use_tcp (void) */
-/* { */
-/* #ifdef MPC_Message_Passing */
-/*   sctk_network_mode = "tcp"; */
-/*   sctk_net_init_driver ("tcp"); */
-/* #endif */
-/* } */
+  static void
+sctk_use_ethread_ng (void)
+{
+  sctk_multithreading_mode = "ethread_ng";
+  sctk_thread_val = sctk_ethread_ng_thread_init;
+}
+
+  static void
+sctk_use_pthread_ng (void)
+{
+  sctk_multithreading_mode = "pthread_ng";
+  sctk_thread_val = sctk_pthread_ng_thread_init;
+}
 
   static void
 sctk_def_directory (char *arg)
@@ -534,8 +537,11 @@ sctk_threat_arg (char *word)
   sctk_add_arg_eq ("--directory", sctk_def_directory);
   sctk_add_arg ("--version-details", sctk_version_details);
   sctk_add_arg_eq ("--mpc-verbose", sctk_set_verbosity);
+  sctk_add_arg ("--use-pthread_ng", sctk_use_pthread_ng);
   sctk_add_arg ("--use-pthread", sctk_use_pthread);
+  sctk_add_arg ("--use-ethread_mxn_ng", sctk_use_ethread_mxn_ng);
   sctk_add_arg ("--use-ethread_mxn", sctk_use_ethread_mxn);
+  sctk_add_arg ("--use-ethread_ng", sctk_use_ethread_ng);
   sctk_add_arg ("--use-ethread", sctk_use_ethread);
 
 /*   sctk_add_arg ("--use-mpi", sctk_use_mpi); */
@@ -774,6 +780,7 @@ run (sctk_startup_args_t * arg)
 sctk_disable_addr_randomize (int argc, char **argv)
 {
   char *disable_addr_randomize;
+return;
   assume (argc > 0);
   if (getenv ("SCTK_LINUX_KEEP_ADDR_RADOMIZE") == NULL)
   {
@@ -810,7 +817,7 @@ auto_kill_func (void *arg)
     {
       sctk_noalloc_fprintf (stderr, "Autokill in %ds\n", timeout);
     }
-    sleep (timeout);
+	sleep (timeout);
     sctk_noalloc_fprintf (stderr, "TIMEOUT reached\n");
     abort ();
     exit (-1);
@@ -980,6 +987,10 @@ sctk_launch_main (int argc, char **argv)
       exit (1);
     }
   }
+#if defined (SCTK_USE_OPTIMIZED_TLS)
+  /* Set GS register for optimized TLS */
+  sctk_tls_module_set_gs_register();
+#endif
   sctk_nodebug ("new argc %d", argc);
 
   arg.argc = argc;

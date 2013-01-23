@@ -17,23 +17,56 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include <stdio.h>
-#include <mpc.h>
+
+#ifndef __SCTK_THREAD_SPINLOCK_H_
+#define __SCTK_THREAD_SPINLOCK_H_
+
+#include <stdlib.h>
+#include "sctk_config.h"
+#include "sctk_debug.h"
+#include "sctk_thread.h"
+#include "sctk_internal_thread.h"
+#include "sctk_thread_scheduler.h"
+#include "sctk_spinlock.h"
+
+typedef enum{
+  sctk_spin_unitialized,
+  sctk_spin_initialized,
+  sctk_spin_destroyed
+} sctk_spin_state;
+
+typedef struct sctk_thread_generic_spinlock_s{
+	sctk_spinlock_t lock;
+	sctk_spin_state state;
+	sctk_thread_generic_scheduler_t* owner;
+}sctk_thread_generic_spinlock_t;
+
+#define SCTK_THREAD_GENERIC_SPINLOCK_INIT {SCTK_SPINLOCK_INITIALIZER,sctk_spin_unitialized,NULL}
+
+#define SCTK_SPIN_DELAY 10
 
 int
-main (int argc, char **argv)
-{
-  int rank, size;
-  char name[1024];
-  MPC_Init (&argc, &argv);
-  MPC_Comm_size (MPC_COMM_WORLD, &size);
-  MPC_Comm_rank (MPC_COMM_WORLD, &rank);
-  gethostname (name, 1023);
-  MPC_Barrier(MPC_COMM_WORLD);
-  printf ("Hello world from process %d of %d %s\n", rank, size, name);
-  MPC_Finalize ();
-  return 0;
-}
+sctk_thread_generic_spinlocks_spin_destroy( sctk_thread_generic_spinlock_t* spinlock );
+
+int
+sctk_thread_generic_spinlocks_spin_init( sctk_thread_generic_spinlock_t* spinlock,
+					int pshared );
+
+int
+sctk_thread_generic_spinlocks_spin_lock( sctk_thread_generic_spinlock_t* spinlock,
+					sctk_thread_generic_scheduler_t* sched );
+
+int
+sctk_thread_generic_spinlocks_spin_trylock( sctk_thread_generic_spinlock_t* spinlock,
+					sctk_thread_generic_scheduler_t* sched );
+
+int
+sctk_thread_generic_spinlocks_spin_unlock( sctk_thread_generic_spinlock_t* spinlock,
+					sctk_thread_generic_scheduler_t* sched );
+
+void
+sctk_thread_generic_spinlocks_init();
+
+#endif
