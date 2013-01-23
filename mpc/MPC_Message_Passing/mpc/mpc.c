@@ -1795,11 +1795,11 @@ sctk_user_main (int argc, char **argv)
 #ifdef MPC_OpenMP
   __mpcomp_init() ;
 #endif
-
+sctk_debug("toto 1\n");
   __MPC_Barrier (MPC_COMM_WORLD);
-
+sctk_debug("toto 2\n");
   result = mpc_user_main (argc, argv);
-
+sctk_debug("toto 3\n");
   __MPC_Barrier (MPC_COMM_WORLD);
 
 #ifdef MPC_Profiler
