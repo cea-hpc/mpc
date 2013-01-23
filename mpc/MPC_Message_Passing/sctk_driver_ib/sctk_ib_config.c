@@ -161,7 +161,6 @@ static void load_ib_load_config(sctk_ib_rail_info_t *rail_ib)
   SET_RUNTIME_CONFIG(size_mr_chunk);
   SET_RUNTIME_CONFIG(init_ibufs);
   SET_RUNTIME_CONFIG(max_rdma_connections);
-  SET_RUNTIME_CONFIG(rdma_resizing);
   SET_RUNTIME_CONFIG(qp_tx_depth);
   SET_RUNTIME_CONFIG(qp_rx_depth);
   SET_RUNTIME_CONFIG(cq_depth);
@@ -184,22 +183,10 @@ static void load_ib_load_config(sctk_ib_rail_info_t *rail_ib)
   SET_RUNTIME_CONFIG(rdma_dest_depth);
   SET_RUNTIME_CONFIG(steal);
   SET_RUNTIME_CONFIG(quiet_crash);
-  SET_RUNTIME_CONFIG(async_thread);
 
   config->ibv_eager_limit       = ALIGN_ON (runtime_config->eager_limit + IBUF_GET_EAGER_SIZE, 64);
   config->ibv_buffered_limit  = (runtime_config->buffered_limit + sizeof(sctk_thread_ptp_message_body_t));
   config->ibv_rdvz_protocol = IBV_RDVZ_WRITE_PROTOCOL;
-
-  /* For RDMA: FIXME: restore RDMA connections */
-  config->ibv_rdma_min_size = IBV_RDMA_MIN_SIZE;
-  config->ibv_rdma_max_size = IBV_RDMA_MAX_SIZE;
-  config->ibv_rdma_min_nb = IBV_RDMA_MIN_NB;
-  config->ibv_rdma_max_nb = IBV_RDMA_MAX_NB;
-
-  config->ibv_rdma_resizing_min_size = IBV_RDMA_RESIZING_MIN_SIZE;
-  config->ibv_rdma_resizing_max_size = IBV_RDMA_RESIZING_MAX_SIZE;
-  config->ibv_rdma_resizing_min_nb = IBV_RDMA_RESIZING_MIN_NB;
-  config->ibv_rdma_resizing_max_nb = IBV_RDMA_RESIZING_MAX_NB;
 }
 
 #if 0

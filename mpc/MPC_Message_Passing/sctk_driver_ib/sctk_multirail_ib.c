@@ -47,6 +47,29 @@ struct sctk_rail_info_s** sctk_network_get_rails() {
   return rails;
 }
 
+static int ib_rail_data;          /*  Data rail */
+static int ib_rail_signalization; /*  Signalization rail */
+
+/*  Return which rail is used for MPI communications */
+int sctk_network_ib_get_rail_data() {
+  return ib_rail_data;
+}
+/*  Return which rail is used for signalization */
+int sctk_network_ib_get_rail_signalization() {
+  return ib_rail_signalization;
+}
+/*  Set which rail is used for MPI communications */
+void sctk_network_ib_set_rail_data(int id) {
+  ib_rail_data = id;
+}
+/*  Set which rail is used for signalization */
+void sctk_network_ib_set_rail_signalization(int id) {
+  sctk_only_once();
+  ib_rail_signalization = id;
+  /*  Set the rail as a signalization rail */
+  sctk_route_set_signalization_rail(rails[id]);
+}
+
 static void
 sctk_network_send_message_multirail_ib (sctk_thread_ptp_message_t * msg){
   int i ;
@@ -59,9 +82,9 @@ sctk_network_send_message_multirail_ib (sctk_thread_ptp_message_t * msg){
 
   const specific_message_tag_t tag = msg->body.header.specific_message_tag;
   if (IS_PROCESS_SPECIFIC_CONTROL_MESSAGE(tag)) {
-    i = 1;
+    i = sctk_network_ib_get_rail_signalization();
   } else {
-    i = 0;
+    i = sctk_network_ib_get_rail_data();;
   }
   /* Always send using the MPI network */
   sctk_nodebug("Send message using rail %d", i);
@@ -87,7 +110,7 @@ sctk_network_notify_matching_message_multirail_ib (sctk_thread_ptp_message_t * m
 static void
 sctk_network_notify_perform_message_multirail_ib (int remote){
   int i;
-  for(i = 0; i < NB_RAILS; i++){
+  for(i = 0; i < rails_nb; i++){
     rails[i]->notify_perform_message(remote,rails[i]);
   }
 }
@@ -222,7 +245,7 @@ void sctk_network_finalize_multirail_ib (){
 /* Do not report timers */
   int i;
   if (rails) {
-    for(i = 0; i < NB_RAILS; i++){
+    for(i = 0; i < rails_nb; i++){
       TODO("Check those *_info_t typedef coherency");
       sctk_ib_prof_finalize((sctk_ib_rail_info_t *)rails[i]);
     }

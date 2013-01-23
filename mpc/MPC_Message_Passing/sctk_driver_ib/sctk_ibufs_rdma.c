@@ -858,7 +858,7 @@ static void sctk_ibuf_rdma_determine_config(sctk_ib_qp_t *remote, int *determine
     if (*determined_nb > IBV_RDMA_MAX_NB) *determined_nb = IBV_RDMA_MAX_NB;
     if (*determined_nb < IBV_RDMA_MIN_NB) *determined_nb = IBV_RDMA_MIN_NB;
   }
-  *determined_size = ALIGN_ON_64 (*determined_size + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE);
+  *determined_size = ALIGN_ON (*determined_size + IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE, 64);
 }
 
 void sctk_ibuf_rdma_check_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, size_t size) {

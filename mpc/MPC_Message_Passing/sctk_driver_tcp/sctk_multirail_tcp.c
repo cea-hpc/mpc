@@ -75,7 +75,7 @@ sctk_network_notify_matching_message_multirail_tcp (sctk_thread_ptp_message_t * 
 static void
 sctk_network_notify_perform_message_multirail_tcp (int remote){
   int i;
-  for(i = 0; i < NB_RAILS; i++){
+  for(i = 0; i < rails_nb; i++){
     rails[i]->notify_perform_message(remote,rails[i]);
   }
 }
