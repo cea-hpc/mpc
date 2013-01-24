@@ -56,55 +56,57 @@ void __mpcomp_task_list_infos_init()
 	  sctk_assert(n != NULL);
 
 	  /* If the node correspond to the new list depth, allocate the data structure */
-	  if (n->depth == n->team_info->new_depth) {
+	  if (n->depth == t->team->new_depth) {
 	       n->new_tasks = sctk_malloc(sizeof(struct mpcomp_task_list_s));
 	       mpcomp_task_list_new(n->new_tasks);
 	  }
 	  
 	  /* If the node correspond to the untied list depth, allocate the data structure */
-	  if (n->depth == n->team_info->untied_depth) {
+	  if (n->depth == t->team->untied_depth) {
 	       n->untied_tasks = sctk_malloc(sizeof(struct mpcomp_task_list_s));
 	       mpcomp_task_list_new(n->untied_tasks);
 	  }
 	  
-	  switch (n->child_type) {
-	  case MPCOMP_CHILDREN_NODE:
-	       for (i=n->nb_children-1; i>=0; i--) {
-		    /* Insert all the node's children in the stack */
-		    __mpcomp_push(s, n->children.node[i]);
-	       }
-	       break;
-	       
-	  case MPCOMP_CHILDREN_LEAF:
-	       for (i=0; i<n->nb_children; i++) {
-		    /* All the children are leafs */
-
-		    mpcomp_mvp_t *mvp;
-		    
-		    mvp = n->children.leaf[i];
-		    sctk_assert(mvp != NULL);
-
-		    /* If the node correspond to the new list depth, allocate the data structure */
-		    if (n->depth + 1 == n->team_info->new_depth) {
-			 mvp->new_tasks = sctk_malloc(sizeof(struct mpcomp_task_list_s));
-			 mpcomp_task_list_new(n->new_tasks);
+	  if (n->depth <= t->team->untied_depth || n->depth <= t->team->new_depth) {	       
+	       switch (n->child_type) {
+	       case MPCOMP_CHILDREN_NODE:
+		    for (i=n->nb_children-1; i>=0; i--) {
+			 /* Insert all the node's children in the stack */
+			 __mpcomp_push(s, n->children.node[i]);
 		    }
+		    break;
 		    
-		    /* If the node correspond to the untied list depth, allocate the data structure */
-		    if (n->depth + 1 == n->team_info->untied_depth) {
-			 mvp->untied_tasks = sctk_malloc(sizeof(struct mpcomp_task_list_s));
-			 mpcomp_task_list_new(n->untied_tasks);
+	       case MPCOMP_CHILDREN_LEAF:
+		    for (i=0; i<n->nb_children; i++) {
+			 /* All the children are leafs */
+			 
+			 mpcomp_mvp_t *mvp;
+			 
+			 mvp = n->children.leaf[i];
+			 sctk_assert(mvp != NULL);
+			 
+			 /* If the node correspond to the new list depth, allocate the data structure */
+			 if (n->depth + 1 == t->team->new_depth) {
+			      mvp->new_tasks = sctk_malloc(sizeof(struct mpcomp_task_list_s));
+			      mpcomp_task_list_new(mvp->new_tasks);
+			 }
+			 
+			 /* If the node correspond to the untied list depth, allocate the data structure */
+			 if (n->depth + 1 == t->team->untied_depth) {
+			      mvp->untied_tasks = sctk_malloc(sizeof(struct mpcomp_task_list_s));
+			      mpcomp_task_list_new(mvp->untied_tasks);
+			 }
 		    }
+		    break ;
+		    
+	       default:
+		    sctk_nodebug("not reachable"); 
 	       }
-	       break ;
-	
-	  default:
-	       sctk_nodebug("not reachable"); 
 	  }
      }     
      __mpcomp_free_stack(s);
      free(s);
-     
+	  
      return;
 }
 
