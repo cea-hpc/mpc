@@ -405,6 +405,13 @@ void __mpcomp_init() {
     /* Need to initialize the whole runtime (environment variables) */
     if ( done == 0 ) {
       __mpcomp_read_env_variables() ;
+      mpcomp_global_icvs.def_sched_var = omp_sched_static ;
+      mpcomp_global_icvs.bind_var = OMP_PROC_BIND;
+      mpcomp_global_icvs.stacksize_var = OMP_STACKSIZE;
+      mpcomp_global_icvs.active_wait_policy_var = OMP_WAIT_POLICY;
+      mpcomp_global_icvs.thread_limit_var = OMP_THREAD_LIMIT;
+      mpcomp_global_icvs.max_active_levels_var = OMP_MAX_ACTIVE_LEVELS;
+      mpcomp_global_icvs.nmicrovps_var = OMP_MICROVP_NUMBER ;
       done = 1;
     }
 
@@ -427,14 +434,6 @@ void __mpcomp_init() {
     icvs.run_sched_var = OMP_SCHEDULE;
     icvs.modifier_sched_var = OMP_MODIFIER_SCHEDULE ;
 
-    mpcomp_global_icvs.def_sched_var = omp_sched_static ;
-    mpcomp_global_icvs.bind_var = OMP_PROC_BIND;
-    mpcomp_global_icvs.stacksize_var = OMP_STACKSIZE;
-    mpcomp_global_icvs.active_wait_policy_var = OMP_WAIT_POLICY;
-    mpcomp_global_icvs.thread_limit_var = OMP_THREAD_LIMIT;
-    mpcomp_global_icvs.max_active_levels_var = OMP_MAX_ACTIVE_LEVELS;
-    mpcomp_global_icvs.nmicrovps_var = OMP_MICROVP_NUMBER ;
-
     /* Initialize team information */
     team_info = (mpcomp_team_t *)sctk_malloc( sizeof( mpcomp_team_t ) ) ;
     sctk_assert( team_info != NULL ) ;
@@ -446,7 +445,7 @@ void __mpcomp_init() {
     __mpcomp_thread_init( t, icvs, instance, team_info ) ;
     t->mvp = instance->mvps[0];
 
-   //printf("__mpcomp_init: t address=%p\n", &t);
+    //printf("__mpcomp_init: t address=%p\n", &t);
 
     //printf("__mpcomp_init: t rank=%ld\n", t->rank);
 
