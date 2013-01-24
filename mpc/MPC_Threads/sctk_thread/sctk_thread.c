@@ -747,13 +747,16 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 {
   void *res;
   sctk_thread_data_t tmp;
-  struct _sctk_thread_cleanup_buffer *ptr_cleanup;
+  /* FIXME Intel OMP: at some point, in pthread mode, the ptr_cleanup variable seems to
+   * be corrupted. */
+  struct _sctk_thread_cleanup_buffer ** ptr_cleanup = malloc(
+      sizeof(struct _sctk_thread_cleanup_buffer*));
   tmp = *__arg;
 
 
   sctk_set_tls (tmp.tls);
-  ptr_cleanup = NULL;
-  sctk_thread_setspecific (_sctk_thread_handler_key, &ptr_cleanup);
+  *ptr_cleanup = NULL;
+  sctk_thread_setspecific (_sctk_thread_handler_key, ptr_cleanup);
 
 #ifdef MPC_Message_Passing
   __MPC_reinit_task_specific (tmp.father_data);
@@ -787,6 +790,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   sctk_report_creation (sctk_thread_self());
   /** **/
 
+
 #ifdef MPC_Message_Passing
    __MPC_init_thread_specific();
 #endif
@@ -801,12 +805,53 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   sctk_report_death (sctk_thread_self());
   /** **/
 
-
+  sctk_free(ptr_cleanup);
   sctk_thread_remove (&tmp);
   sctk_thread_data_set (NULL);
   sctk_extls_delete ();
   return res;
 }
+
+#include <dlfcn.h>
+#define LIB "/lib64/libpthread.so.0"
+
+int sctk_real_pthread_create (pthread_t  *thread,
+    __const pthread_attr_t *attr, void * (*start_routine)(void *), void *arg) {
+  static void *handle = NULL;
+  static int (*real_pthread_create)(pthread_t  *,
+      __const pthread_attr_t *,
+      void * (*)(void *), void *) = NULL;
+
+  if (real_pthread_create == NULL)
+  {
+    handle = dlopen(LIB,RTLD_LAZY);
+    if (handle == NULL)
+    {
+      fprintf(stderr,"dlopen(%s) failed\n",LIB);
+      exit(1);
+    }
+    real_pthread_create = dlsym(handle,"pthread_create");
+    if (real_pthread_create == NULL)
+    {
+      fprintf(stderr,"dlsym(%s) failed\n","pthread_create");
+      exit(1);
+    }
+  }
+  real_pthread_create(thread, attr, start_routine, arg);
+}
+
+int sylvar_pthread_create(pthread_t  *thread,
+    __const pthread_attr_t *attr,
+    void * (*start_routine)(void *), void * arg) {
+
+  if (sctk_thread_data_get()->task_id == -1) {
+    return sctk_real_pthread_create(thread,attr, start_routine, arg);
+  } else {
+	  sctk_thread_attr_setscope (attr, SCTK_THREAD_SCOPE_SYSTEM);
+  	return sctk_user_thread_create (thread, attr, start_routine, arg);
+  }
+}
+
 
 int
 sctk_user_thread_create (sctk_thread_t * restrict __threadp,

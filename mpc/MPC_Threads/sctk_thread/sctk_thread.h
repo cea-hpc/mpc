@@ -158,6 +158,9 @@ extern "C"
   void sctk_ethread_mxn_init_kethread (void);
   void sctk_get_thread_info (int *task_id, int *thread_id);
 
+  int sctk_real_pthread_create (pthread_t  *thread,
+    __const pthread_attr_t *attr, void * (*start_routine)(void *), void *arg);
+
   /* profiling (exec time & dataused) */
   double sctk_profiling_get_init_time();
   double sctk_profiling_get_dataused();

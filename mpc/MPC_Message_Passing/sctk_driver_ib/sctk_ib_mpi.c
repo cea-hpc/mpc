@@ -399,9 +399,11 @@ sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){
   LOAD_CONFIG(rail_ib);
   struct sctk_ib_polling_s poll;
 
+#if 0
   if (config->ibv_steal > 0) {
-    sctk_ib_cp_steal(rail, &poll, 1);
+    sctk_ib_cp_steal(rail, &poll, 0);
   }
+#endif
 }
 
 static void

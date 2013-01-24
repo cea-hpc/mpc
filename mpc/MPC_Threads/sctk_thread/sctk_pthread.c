@@ -65,6 +65,7 @@ pthread_wait_for_value_and_poll (volatile int *data, int value,
 	  if (i >= 100)
 	    {
 #ifdef MPC_Message_Passing
+#if 0
 	      sctk_notify_idle_message ();
         /* We need to check if we have finished the MPC init step.
          * If we do not that, get_nb_task_local *may* fail because the
@@ -76,12 +77,15 @@ pthread_wait_for_value_and_poll (volatile int *data, int value,
             kthread_usleep (10);
           }
         }
+#endif
 #else
 	      kthread_usleep (10);
 #endif
 	      i = 0;
 	    } else {
+        sleep(5);
 		 sctk_cpu_relax ();
+        sched_yield();
 	  }
 	  /* 	  else */
 /* 	    sched_yield (); */
@@ -246,9 +250,9 @@ pthread_user_create (pthread_t * thread, pthread_attr_t * attr,
       return res;
     }
   else
-    {
+  {
       int res;
-      res = pthread_create (thread, attr, tls_start_routine,
+      res = sctk_real_pthread_create (thread, attr, tls_start_routine,
 			    init_tls_start_routine_arg (def_start_routine,
 							arg));
       if(res != 0){

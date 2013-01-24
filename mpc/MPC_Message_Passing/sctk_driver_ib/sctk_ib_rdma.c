@@ -443,8 +443,13 @@ sctk_ib_rdma_recv_ack(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   SCTK_PROFIL_END_WITH_VALUE(ib_rendezvous_wait_recv_ack,
       (sctk_ib_prof_get_time_stamp() - rdma->local.req_timestamp));
 
+  struct sctk_ib_polling_s poll;
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   /* Wait while the message becomes ready */
-  sctk_thread_wait_for_value((int*) &rdma->local.ready, 1);
+  while (rdma->local.ready != 1) {
+    sctk_ib_cp_poll(rail, &poll, sctk_get_task_rank());
+  }
+//  sctk_thread_wait_for_value((int*) &rdma->local.ready, 1);
 
   sctk_nodebug("Remote addr: %p", rdma_ack->addr);
   rdma->remote.addr = rdma_ack->addr;
@@ -530,7 +535,12 @@ sctk_ib_rdma_recv_done_remote(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   SCTK_PROFIL_END_WITH_VALUE(ib_rendezvous_wait_receiver_done,
       (sctk_ib_prof_get_time_stamp() - rdma->local.send_ack_timestamp));
 
-  sctk_thread_wait_for_value((int*) &dest_msg_header->tail.ib.rdma.local.ready, 1);
+  struct sctk_ib_polling_s poll;
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  while (dest_msg_header->tail.ib.rdma.local.ready != 1) {
+    sctk_ib_cp_poll(rail, &poll, sctk_get_task_rank());
+  }
+//  sctk_thread_wait_for_value((int*) &dest_msg_header->tail.ib.rdma.local.ready, 1);
 
   send = rdma->copy_ptr->msg_send;
   recv = rdma->copy_ptr->msg_recv;
