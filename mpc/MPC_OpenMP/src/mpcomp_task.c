@@ -21,6 +21,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#ifdef MPCOMP_TASK
 
 #include <sctk_bool.h>
 #include <sctk_int.h>
@@ -438,3 +439,5 @@ void __mpcomp_taskyield()
 {
      /* Actually, do nothing */
 }
+
+#endif //MPCOMP_TASK
