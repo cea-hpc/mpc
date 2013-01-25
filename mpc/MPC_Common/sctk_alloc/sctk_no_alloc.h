@@ -83,6 +83,7 @@ sctk_alloc_chain_t *sctk_get_tls (void);
 void sctk_alloc_posix_plug_on_egg_allocator(void);
 sctk_alloc_chain_t * sctk_get_current_alloc_chain(void);
 void sctk_alloc_posix_numa_migrate(void);
+void sctk_alloc_posix_numa_migrate_chain(struct sctk_alloc_chain * chain);
 
 /*******************  FUNCTION  *********************/
 //buffered allocation functions

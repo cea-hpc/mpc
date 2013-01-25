@@ -26,6 +26,7 @@
 #include "sctk_runtime_config.h"
 #include "mpcomp_internal.h"
 #include <sys/time.h>
+#include <ctype.h>
 
 /*****************
   ****** MACROS
@@ -54,6 +55,20 @@ static int * OMP_TREE = NULL ;
 static int OMP_TREE_DEPTH = 0 ;
 /* Total number of leaves for the tree (product of OMP_TREE elements) */
 static int OMP_TREE_NB_LEAVES = 0 ;
+/* Is thread binding enabled or not */
+static int OMP_PROC_BIND = 0;
+/* Size of the thread stack size */
+static int OMP_STACKSIZE = 0;
+/* Behavior of waiting threads */
+static int OMP_WAIT_POLICY = 0;
+/* Maximum number of threads participing in the whole program */
+static int OMP_THREAD_LIMIT = 0;
+/* Maximum number of nested active parallel regions */
+static int OMP_MAX_ACTIVE_LEVELS = 0;
+
+
+mpcomp_global_icv_t mpcomp_global_icvs;
+
 
 
 /*****************
@@ -174,7 +189,7 @@ static inline void __mpcomp_read_env_variables() {
 	  break ;
 	default:
 	  fprintf (stderr,
-	      "Syntax error with envorinment variable OMP_SCHEDULE <%s>,"
+	      "Syntax error with environment variable OMP_SCHEDULE <%s>,"
 	      " should be \"static|dynamic|guided|auto[,chunk_size]\"\n", env ) ;
 	  exit( 1 ) ;
       }
@@ -223,6 +238,84 @@ static inline void __mpcomp_read_env_variables() {
     }
   }
 
+  /******* OMP_PROC_BIND *********/
+  env = getenv ("OMP_PROC_BIND");
+  OMP_PROC_BIND = 0;	/* DEFAULT */
+  if (env != NULL)
+  {
+       if (strcmp (env, "1") == 0 || strcmp (env, "TRUE") == 0 || strcmp (env, "true") == 0 )
+       {
+	    OMP_PROC_BIND = 1;
+       }
+  }
+  
+  /******* OMP_STACKSIZE *********/
+  env = getenv ("OMP_STACKSIZE");
+  OMP_STACKSIZE = 0;	/* DEFAULT */
+
+  if (sctk_is_in_fortran == 1)
+       OMP_STACKSIZE = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
+  else
+       OMP_STACKSIZE = SCTK_ETHREAD_STACK_SIZE;
+
+  if (env != NULL)
+  {
+       char *p = env;
+       OMP_STACKSIZE = strtol(env, NULL, 10);
+
+       while (!isalpha(*p) && *p != '\0')
+	    p++;
+       
+       switch (*p) {
+       case 'b':
+       case 'B':
+	    break;
+	    
+       case 'k':
+       case 'K':
+	    OMP_STACKSIZE *= 1024;
+	    break;
+	    
+       case 'm':
+       case 'M':
+	    OMP_STACKSIZE *= 1024 * 1024;
+	    break;
+
+       case 'g':
+       case 'G':
+	    OMP_STACKSIZE *= 1024 * 1024 * 1024;
+	    break;
+       default:
+	    break;
+       }
+  }
+
+  /******* OMP_WAIT_POLICY *********/
+  env = getenv ("OMP_WAIT_POLICY");
+  OMP_WAIT_POLICY = 0;	/* DEFAULT */
+  if (env != NULL)
+  {
+    if (strcmp (env, "active") == 0 || strcmp (env, "ACTIVE") == 0)
+    {
+      OMP_WAIT_POLICY = 1;
+    }
+  }
+  
+  /******* OMP_THREAD_LIMIT *********/
+  env = getenv ("OMP_THREAD_LIMIT");
+  OMP_THREAD_LIMIT = 0;	/* DEFAULT */
+  if (env != NULL)
+  {
+       OMP_THREAD_LIMIT = strtol(env, NULL, 10);
+  }
+
+  /******* OMP_MAX_ACTIVE_LEVELS *********/
+  env = getenv ("OMP_MAX_ACTIVE_LEVELS");
+  OMP_MAX_ACTIVE_LEVELS = 0;	/* DEFAULT */
+  if (env != NULL)
+  {
+       OMP_MAX_ACTIVE_LEVELS = strtol(env, NULL, 10);
+  }
 
 
   /******* ADDITIONAL VARIABLES *******/
@@ -304,7 +397,7 @@ void __mpcomp_init() {
   if ( sctk_openmp_thread_tls == NULL ) {
     mpcomp_instance_t * instance ;
     mpcomp_thread_t * t ;
-    mpcomp_icv_t icvs;
+    mpcomp_local_icv_t icvs;
 
     //printf("__mpcomp_init(): Init current team\n");  //AMAHEO
 
@@ -312,6 +405,13 @@ void __mpcomp_init() {
     /* Need to initialize the whole runtime (environment variables) */
     if ( done == 0 ) {
       __mpcomp_read_env_variables() ;
+      mpcomp_global_icvs.def_sched_var = omp_sched_static ;
+      mpcomp_global_icvs.bind_var = OMP_PROC_BIND;
+      mpcomp_global_icvs.stacksize_var = OMP_STACKSIZE;
+      mpcomp_global_icvs.active_wait_policy_var = OMP_WAIT_POLICY;
+      mpcomp_global_icvs.thread_limit_var = OMP_THREAD_LIMIT;
+      mpcomp_global_icvs.max_active_levels_var = OMP_MAX_ACTIVE_LEVELS;
+      mpcomp_global_icvs.nmicrovps_var = OMP_MICROVP_NUMBER ;
       done = 1;
     }
 
@@ -335,8 +435,6 @@ void __mpcomp_init() {
     icvs.nest_var = OMP_NESTED;
     icvs.run_sched_var = OMP_SCHEDULE;
     icvs.modifier_sched_var = OMP_MODIFIER_SCHEDULE ;
-    icvs.def_sched_var = omp_sched_static ;
-    icvs.nmicrovps_var = OMP_MICROVP_NUMBER ;
 
     /* Initialize team information */
     team_info = (mpcomp_team_t *)sctk_malloc( sizeof( mpcomp_team_t ) ) ;
@@ -349,7 +447,7 @@ void __mpcomp_init() {
     __mpcomp_thread_init( t, icvs, instance, team_info ) ;
     t->mvp = instance->mvps[0];
 
-   //printf("__mpcomp_init: t address=%p\n", &t);
+    //printf("__mpcomp_init: t address=%p\n", &t);
 
     //printf("__mpcomp_init: t rank=%ld\n", t->rank);
 
@@ -432,6 +530,11 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     t->rank = 0 ;
 
     func(shared) ;
+
+#ifdef MPCOMP_TASK
+    __mpcomp_task_schedule();   /* Look for tasks remaining */
+#endif //MPCOMP_TASK
+
     return ;
   }
 
@@ -448,7 +551,7 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     int max_index_with_more_threads ;
 
     /* Get the OpenMP instance already allocated during the initializatino (mpcomp_init) */
-
+    
     instance = t->children_instance ;
     sctk_assert( t->children_instance != NULL);
     sctk_assert( instance != NULL ) ;
@@ -587,8 +690,11 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     // while (sctk_atomics_load_int(&(root->barrier)) != root->barrier_num_threads ) 
     while (sctk_atomics_load_int(&(new_root->barrier)) != new_root->barrier_num_threads ) 
     {
-      //sctk_openmp_thread_tls = t ; //Update tls value before switching (AMAHEO)
-      sctk_thread_yield() ;
+	 //sctk_openmp_thread_tls = t ; //Update tls value before switching (AMAHEO)
+#ifdef MPCOMP_TASK
+	 __mpcomp_task_schedule(); /* Look for tasks remaining */
+#endif //MPCOMP_TASK
+	 sctk_thread_yield() ;
     }
     // sctk_atomics_store_int(&(root->barrier), 0) ;
     sctk_atomics_store_int(&(new_root->barrier), 0) ;
@@ -597,12 +703,19 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     while (new_root->barrier != new_root->barrier_num_threads ) 
     {
       //sctk_openmp_thread_tls = t ; //Update tls value before switching (AMAHEO)      
+#ifdef MPCOMP_TASK
+     __mpcomp_task_schedule(); /* Look for tasks remaining */
+#endif // MPCOMP_TASK
       sctk_thread_yield() ;
     }
     // root->barrier = 0 ;
     new_root->barrier = 0 ;
 #endif
 
+#ifdef MPCOMP_TASK
+    TODO("Place the task scheduling somewhere else")
+    __mpcomp_task_schedule();
+#endif //MPCOMP_TASK
 
     //printf("__mpcomp_start_parallel_region: end, t rank=%ld\n", t->rank);
 
@@ -809,6 +922,10 @@ void * mpcomp_slave_mvp_leaf( void * arg ) {
       &(mvp->slave_running), mvp->father ) ;
   sctk_nodebug( "mpcomp_slave_mvp_leaf: Will get value from father %p", mvp->father ) ;
 
+#ifdef MPCOMP_TASK
+  mvp->spin_done = 0;
+#endif //MPCOMP_TASK
+
   /* Spin while this microVP is alive */
   while (mvp->enable) {
     int i ;
@@ -819,6 +936,7 @@ void * mpcomp_slave_mvp_leaf( void * arg ) {
 
     /* Spin for new parallel region */
     sctk_thread_wait_for_value_and_poll( (int*)&(mvp->slave_running), 1, NULL, NULL ) ;
+    
     TODO("maybe wrong if multiple mVPs are waiting on the same node")
     mvp->slave_running = 0 ;
 
@@ -888,7 +1006,9 @@ INFO("__mpcomp_flush: need to call mpcomp_macro_scheduler")
 
     /* Half barrier */
     __mpcomp_internal_half_barrier( mvp ) ;
-
+#ifdef MPCOMP_TASK
+    mvp->spin_done = 1;
+#endif //MPCOMP_TASK
   }
 
   return NULL ;
@@ -966,11 +1086,8 @@ mpcomp_get_num_procs (void)
 {
   mpcomp_thread_t * t ;
   __mpcomp_init ();
-  sctk_nodebug( "mpcomp_get_dynamic: entering" ) ;
-  t = sctk_openmp_thread_tls;
-  sctk_assert( t != NULL);
 
-  return t->icvs.nmicrovps_var;
+  return mpcomp_global_icvs.nmicrovps_var;
 }
 
 

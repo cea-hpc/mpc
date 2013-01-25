@@ -630,7 +630,8 @@ fi
 
 if test "$SCTK_DEBUG" = "1" ; then
     begin_section "Enabling -Werror and -Wall as we are running in debug mode"
-    SCTK_CHECK_OPTION "-Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable"
+    SCTK_CHECK_OPTION "-Wall -Werror -Wno-unused-variable" 
+# -Wno-unused-but-set-variable"
     end_section
 
     sctk_echo

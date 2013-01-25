@@ -1315,7 +1315,7 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
 
       sctk_nodebug
 	("__mpcomp_start_parallel_dynamic_loop: starting new team at depth %d on %d microVP(s)",
-	 current_info->depth, current_info->icvs.nmicrovps_var);
+	 current_info->depth, mpcomp_global_icvs.nmicrovps_var);
 
       current_task = current_info->task;
 
@@ -1349,7 +1349,7 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
 
 	      new_task = sctk_malloc (sizeof (sctk_microthread_t));
 	      sctk_assert (new_task != NULL);
-	      sctk_microthread_init (current_info->icvs.nmicrovps_var, new_task);
+	      sctk_microthread_init (mpcomp_global_icvs.nmicrovps_var, new_task);
 	    }
 	}
 
@@ -1365,14 +1365,14 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
 
 	  /* Compute the VP this thread will be scheduled on and the behavior of
 	   * 'add_task' */
-	  if (i < current_info->icvs.nmicrovps_var)
+	  if (i < mpcomp_global_icvs.nmicrovps_var)
 	    {
 	      microVP = i;
 	      val = MPC_MICROTHREAD_LAST_TASK;
 	    }
 	  else
 	    {
-	      microVP = i % (current_info->icvs.nmicrovps_var);
+	      microVP = i % (mpcomp_global_icvs.nmicrovps_var);
 	      val = MPC_MICROTHREAD_NO_TASK_INFO;
 	    }
 

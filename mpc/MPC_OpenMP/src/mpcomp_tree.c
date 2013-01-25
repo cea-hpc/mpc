@@ -137,6 +137,10 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
           /* sctk_assert( node->temporary_tree_rank != NULL );*/
           /* node->temporary_tree_rank[0] = 0;*/
 	
+#ifdef MPCOMP_TASK
+	  node->untied_tasks = NULL;
+	  node->new_tasks = NULL;
+#endif //MPCOMP_TASK
 
      } else {   /* case leaf or node */		
    	  if (__mpcomp_get_cpu_number_below(obj) == 1) {   /* case leaf (mvp) */		
@@ -145,7 +149,6 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 	       int depth;
 	       mpcomp_node_t *node_tmp;
 	       sctk_thread_attr_t __attr ;
-	       size_t stack_size;
 	       int res ;
 		    
 	       father->child_type = MPCOMP_CHILDREN_LEAF;
@@ -255,12 +258,7 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 	       
 	       sctk_thread_attr_setbinding(& __attr, target_vp);
 	       
-	       if (sctk_is_in_fortran == 1)
-		    stack_size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
-	       else
-		    stack_size = SCTK_ETHREAD_STACK_SIZE;
-
-	       sctk_thread_attr_setstacksize(&__attr, stack_size);
+	       sctk_thread_attr_setstacksize(&__attr, mpcomp_global_icvs.stacksize_var);
 									
 	       if (current_mvp == 0) {   /*  case mvp : root */
 		    leaf->type = MPCOMP_MYSELF_ROOT;
@@ -285,7 +283,13 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 		    leaf->to_run = NULL;
 	       }
 			
-	       sctk_thread_attr_destroy(&__attr);	       
+	       sctk_thread_attr_destroy(&__attr);
+
+#ifdef MPCOMP_TASK
+	       leaf->untied_tasks = NULL;
+	       leaf->new_tasks = NULL;
+#endif //MPCOMP_TASK
+	       
 	  } else {   /* case node */
 	       int id_numa;
 
@@ -339,6 +343,10 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 	       node->children.node = NULL;
 	       node->children.leaf = NULL;
 			
+#ifdef MPCOMP_TASK
+	       node->untied_tasks = NULL;
+	       node->new_tasks = NULL;
+#endif //MPCOMP_TASK
 			
 	       /* tree_rank avec tableaux intermediaires */
                /* #if MPCOMP_MALLOC_ON_NODE */
@@ -1526,6 +1534,11 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	       target_numa = 0 ;
 #endif
 
+#ifdef MPCOMP_TASK
+	       n->untied_tasks = NULL;
+	       n->new_tasks = NULL;
+#endif //MPCOMP_TASK
+
 	       if ( n->depth == depth - 1 ) { 
 
 		    /* Children are leaves */
@@ -1546,12 +1559,18 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			 instance->mvps[current_mvp]->nb_threads = 0 ;
 			 instance->mvps[current_mvp]->next_nb_threads = 0 ;
 			 instance->mvps[current_mvp]->rank = current_mvp ;
+			 instance->mvps[current_mvp]->vp = target_vp ;
 			 instance->mvps[current_mvp]->enable = 1 ;
 			 instance->mvps[current_mvp]->tree_rank = 
 			      (int *)sctk_malloc_on_node( depth*sizeof(int), target_numa ) ;
 			 sctk_assert( instance->mvps[current_mvp]->tree_rank != NULL ) ;
 
 			 instance->mvps[current_mvp]->tree_rank[ depth - 1 ] = i ;
+
+#ifdef MPCOMP_TASK
+			 instance->mvps[current_mvp]->untied_tasks = NULL ;
+			 instance->mvps[current_mvp]->new_tasks = NULL ;
+#endif //MPCOMP_TASK
 
 			 mpcomp_node_t * current_node = n ;
 			 while ( current_node->father != NULL ) {
@@ -1568,19 +1587,13 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			 n->children.leaf[i] = instance->mvps[current_mvp] ;
 
 			 sctk_thread_attr_t __attr ;
-			 size_t stack_size;
 			 int res ;
 
 			 sctk_thread_attr_init(&__attr);
 
 			 sctk_thread_attr_setbinding (& __attr, target_vp ) ;
 
-			 if (sctk_is_in_fortran == 1)
-			      stack_size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
-			 else
-			      stack_size = SCTK_ETHREAD_STACK_SIZE;
-
-			 sctk_thread_attr_setstacksize (&__attr, stack_size);
+			 sctk_thread_attr_setstacksize (&__attr, mpcomp_global_icvs.stacksize_var);
 
 			 /* User thread create... */
 			 instance->mvps[current_mvp]->to_run = target_node ;
