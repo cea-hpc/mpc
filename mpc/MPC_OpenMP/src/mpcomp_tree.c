@@ -1553,6 +1553,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			 instance->mvps[current_mvp]->nb_threads = 0 ;
 			 instance->mvps[current_mvp]->next_nb_threads = 0 ;
 			 instance->mvps[current_mvp]->rank = current_mvp ;
+			 instance->mvps[current_mvp]->vp = target_vp ;
 			 instance->mvps[current_mvp]->enable = 1 ;
 			 instance->mvps[current_mvp]->tree_rank = 
 			      (int *)sctk_malloc_on_node( depth*sizeof(int), target_numa ) ;
