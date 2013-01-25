@@ -130,6 +130,8 @@ void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
   char c = 'c';
   struct sctk_internal_ptp_s* ptp_internal;
 
+  sctk_nodebug("sctk_barrier_opt_messages() begin:"); //AMAHEO
+
   sctk_opt_messages_init_items(&table);
 
   thread_data = sctk_thread_data_get ();
@@ -137,12 +139,15 @@ void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
   myself = sctk_get_rank (communicator, thread_data->task_id);
   ptp_internal = sctk_get_internal_ptp(thread_data->task_id);
 
+
   total_max = log(total) / log(BARRIER_ARRITY);
   total_max = pow(BARRIER_ARRITY,total_max);
   if(total_max < total){
     total_max = total_max * BARRIER_ARRITY;
   }
   assume(total_max >= total);
+
+  sctk_nodebug("sctk_barrier_opt_messages: total=%d, myself=%d, barrier arity=%d, total_max=%d", total, myself, BARRIER_ARRITY, total_max ); //AMAHEO  
 
   for(i = BARRIER_ARRITY; i <= total_max; i = i*BARRIER_ARRITY){
     if(myself % i == 0){

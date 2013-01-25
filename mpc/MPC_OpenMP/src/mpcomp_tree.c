@@ -97,6 +97,8 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 	  sctk_assert(node != NULL);
      
 	  instance->root = node;
+
+          sctk_debug("__mpcomp_build_auto_tree_recursive_bloc: root @ %p", instance->root);
 		
 	  node->father = NULL;
 	  node->rank = -1;
@@ -208,8 +210,8 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
                }
                */
 
-               sctk_nodebug("__mpcomp_build_auto_tree_recursive: id_loc=%d", id_loc); //AMAHEO 
-               sctk_assert(id_loc < 40); //AMAHEO
+               sctk_debug("__mpcomp_build_auto_tree_recursive: id_loc=%d, depth=%d", id_loc, depth); //AMAHEO 
+               //sctk_assert(id_loc < 40); //AMAHEO
 //#if MPCOMP_USE_ATOMICS
                //sctk_atomics_int atomics_id_loc;
                //atomics_id_loc = id_loc;
@@ -225,8 +227,8 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
  //   	            sctk_atomics_store_int(&(leaf->tree_rank[i]), node_tmp->rank);		
 //#else
   //sctk_spinlock_lock( &(node->lock) ) ;
-                    sctk_nodebug("__mpcomp_build_auto_tree_recursive: node_tmp rank=%d", node_tmp->rank); //AMAHEO
-                    sctk_assert(node_tmp->rank < 40); //AMAHEO
+                    sctk_debug("__mpcomp_build_auto_tree_recursive: node_tmp rank=%d i=%d" , node_tmp->rank, i); //AMAHEO
+                    //sctk_assert(node_tmp->rank < 40); //AMAHEO
 
 		    leaf->tree_rank[i] = node_tmp->rank;
   //sctk_spinlock_unlock( &(node->lock) ) ;
@@ -236,7 +238,7 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 
                /* Check tree_rank */
                for(i=0;i<depth;i++)
-		sctk_debug("__mpcomp_build_auto_tree_recursive: current_mvp=%d, tree_rank[%d]: %d", current_mvp, i, leaf->tree_rank[i]); //AMAHEO
+		sctk_debug("__mpcomp_build_auto_tree_recursive: instance @ %p, mvp @ %p, mvp father @ %p, current_mvp=%d, tree_rank[%d]: %d, @ %p", instance, leaf, leaf->father, current_mvp, i, leaf->tree_rank[i], leaf->tree_rank); //AMAHEO
 			
 	       /* tree_rank avec tableaux intermediaires */
                /* for(i=1; i<depth; i++){*/
@@ -396,7 +398,7 @@ int __mpcomp_build_default_tree(mpcomp_instance_t *instance)
      /* Get the current VP number */
      current_mpc_vp = sctk_thread_get_vp();
 
-     sctk_debug("__mpcomp_build_default_tree: current_mpc_vp=%d", current_mpc_vp);
+     sctk_nodebug("__mpcomp_build_default_tree: current_mpc_vp=%d", current_mpc_vp);
      
      /* TODO So far, we do not fully support when the OpenMP instance is created from any VP */
      //sctk_assert(current_mpc_vp == 0);
@@ -410,7 +412,7 @@ int __mpcomp_build_default_tree(mpcomp_instance_t *instance)
      
      sctk_nodebug("__mpcomp_build_auto_tree done"); 
 	
-     //__mpcomp_print_tree(instance);
+     __mpcomp_print_tree(instance);
      
      return 1;
 }
@@ -1722,11 +1724,11 @@ void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
 			 fprintf( stderr, "\t" ) ;
 		    }
 
-		    fprintf( stderr, "Leaf %d rank %d vp %d spinning on %p", i, mvp->rank, mvp->vp, mvp->to_run ) ;
+		    fprintf( stderr, "Instance @ %p Leaf %d rank %d @ %p vp %d spinning on %p", instance, i, mvp->rank, &mvp, mvp->vp, mvp->to_run ) ;
 
-		    fprintf( stderr, " tree_rank" ) ;
+		    fprintf( stderr, " tree_rank @ %p", mvp->tree_rank ) ;
 		    for ( j = 0 ; j < n->depth + 1 ; j++ ) {
-			 fprintf( stderr, " %d", mvp->tree_rank[j] ) ;
+			 fprintf( stderr, " j=%d, %d", j, mvp->tree_rank[j] ) ;
 		    }
 
 

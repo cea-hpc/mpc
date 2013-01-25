@@ -322,6 +322,8 @@ void __mpcomp_init() {
     /* Initialization of the OpenMP instance */
     __mpcomp_instance_init( instance, OMP_MICROVP_NUMBER ) ;
 
+    sctk_debug("__mpcomp_instance_init: instance @ %p", instance); //AMAHEO
+
     /* Allocate information for the sequential region */
     t = (mpcomp_thread_t *)sctk_malloc( sizeof(mpcomp_thread_t) ) ;
     //t = &(instance->mvps[0]->threads[0]);
@@ -365,7 +367,7 @@ void __mpcomp_init() {
 
 void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps ) {
 
-  sctk_debug( "__mpcomp_instance_init: Entering..." ) ;
+  sctk_nodebug( "__mpcomp_instance_init: Entering..." ) ;
   //printf("__mpcomp_instance_init: Entering..\n");
 
   /* Alloc memory for 'nb_mvps' microVPs */
@@ -394,7 +396,7 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
   int num_threads ;
   int i ;
 
-  static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER; // Lock initialization (AMAHEO)  
+  //static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER; // Lock initialization (AMAHEO)  
 
   __mpcomp_init() ;
 
@@ -636,12 +638,29 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
  */
 void * mpcomp_slave_mvp_node( void * arg ) {
   int index ;
+  mpcomp_thread_t * t;
   mpcomp_mvp_t * mvp ; /* Current microVP */
   mpcomp_node_t * n ; /* Spinning node + Traversing node */
   mpcomp_node_t * root ; /* Tree root */
 
+  //t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+  //sctk_assert( t != NULL ) ;
+
+  int tree_depth; //AMAHEO
+  int i;
+
   /* Get the current microVP */
   mvp = (mpcomp_mvp_t *)arg ;
+
+  //tree_depth = t->team->tree_depth;
+
+  //sctk_debug("mpcomp_slave_mvp_node: tree_depth=%d", tree_depth);
+  //for(i=0;i<tree_depth;i++) {
+
+  sctk_debug("mpcomp_slave_mvp_node begin: mvp rank %d @ %p instance @ %p tree_rank[0]=%d", mvp->rank, mvp, mvp->children_instance, mvp->tree_rank[0]);
+  sctk_debug("mpcomp_slave_mvp_node begin: mvp rank %d @ %p instance @ %p tree_rank[1]=%d", mvp->rank, mvp, mvp->children_instance, mvp->tree_rank[1]);
+ 
+  //}
 
   /* Capture the node to spin on */
   n = mvp->to_run ;
@@ -652,9 +671,15 @@ void * mpcomp_slave_mvp_node( void * arg ) {
   sctk_nodebug( "mpcomp_slave_mvp_node: Polling address %p -> father is %p",
       &(mvp->slave_running), mvp->father ) ;
 
+  sctk_nodebug("mpcomp_slave_mvp_node begin 1: mvp address=%p rank %d tree_rank=%p tree_rank[0]=%d", &mvp, mvp->rank, &(mvp->tree_rank), mvp->tree_rank[0]);
+  sctk_nodebug("mpcomp_slave_mvp_node begin 1: mvp address=%p rank %d tree_rank=%p tree_rank[1]=%d", &mvp, mvp->rank, &(mvp->tree_rank), mvp->tree_rank[1]);
+
   while (mvp->enable) {
     int i ;
     int num_threads_mvp ;
+
+   sctk_nodebug("mpcomp_slave_mvp_node begin 2: mvp address=%p rank %d tree_rank=%p tree_rank[0]=%d", &mvp, mvp->rank, &(mvp->tree_rank), mvp->tree_rank[0]);
+   sctk_nodebug("mpcomp_slave_mvp_node begin 2: mvp address=%p rank %d tree_rank=%p tree_rank[1]=%d", &mvp, mvp->rank, &(mvp->tree_rank), mvp->tree_rank[1]);
 
     sctk_nodebug( "mpcomp_slave_mvp_node: Polling address %p with ID %d",
 	&(n->slave_running), 0) ;
@@ -697,11 +722,14 @@ void * mpcomp_slave_mvp_node( void * arg ) {
     }
     n->barrier_num_threads = n->nb_children ;
 
+   //sctk_debug("mpcomp_slave_mvp_node middle: mvp rank %d tree_rank[0]=%d", mvp->rank, mvp->tree_rank[0]); //AMAHEO
+   //sctk_debug("mpcomp_slave_mvp_node middle: mvp rank %d tree_rank[1]=%d", mvp->rank, mvp->tree_rank[1]); //AMAHEO
+
     n = mvp->to_run ;
     mvp->func = n->func ;
     mvp->shared = n->shared ;
  
-    mvp->vp = sctk_thread_get_vp(); //AMAHEO
+    //mvp->vp = sctk_thread_get_vp(); //AMAHEO
 
     /* Compute the number of threads for this microVP */
     /* TODO */
@@ -725,6 +753,11 @@ void * mpcomp_slave_mvp_node( void * arg ) {
       mvp->threads[i].team =  mvp->father->team_info ;
       mvp->threads[i].single_current = mvp->father->team_info->single_last_current ;
       mvp->threads[i].for_dyn_current = mvp->father->team_info->for_dyn_last_current ;
+
+      sctk_debug("__mpcomp_slave_mvp_node: mvp rank=%d @ %p, instance @ %p, tree_rank address=%p, depth 0 = %d", mvp->rank, mvp, mvp->children_instance, &(mvp->tree_rank), mvp->tree_rank[0]); //AMAHEO
+      sctk_debug("__mpcomp_slave_mvp_node: mvp rank=%d @ %p, instance @ %p, tree_rank address=%p, depth 1 = %d", mvp->rank, mvp, mvp->children_instance, &(mvp->tree_rank), mvp->tree_rank[1]); //AMAHEO
+      //sctk_debug("__mpcomp_slave_mvp_node: mvp threads[%d] address=%p mvp tree_rank address=%p, depth 0 = %d", i, &(mvp->threads[i].mvp), &(mvp->threads[i].mvp->tree_rank), mvp->threads[i].mvp->tree_rank[0]); //AMAHEO
+      //sctk_debug("__mpcomp_slave_mvp_node: mvp threads[%d] address=%p mvp tree_rank address=%p, depth 1 = %d", i, &(mvp->threads[i].mvp), &(mvp->threads[i].mvp->tree_rank), mvp->threads[i].mvp->tree_rank[1]); //AMAHEO
 
       mpcomp_instance_t *instance;
       instance =  mvp->threads[i].children_instance = mvp->children_instance ;
@@ -794,7 +827,7 @@ void * mpcomp_slave_mvp_leaf( void * arg ) {
     mvp->func = mvp->father->func ;
     mvp->shared = mvp->father->shared ;
 
-    mvp->vp = sctk_thread_get_vp(); //AMAHEO
+    //mvp->vp = sctk_thread_get_vp(); //AMAHEO
 
     sctk_nodebug( "mpcomp_slave_mvp_leaf: Function for this mvp %p, #threads %d (father %p)", 
 	mvp->func, mvp->father->num_threads, mvp->father ) ;

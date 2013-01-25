@@ -823,7 +823,7 @@ SCTK_INTERN void sctk_alloc_posix_numa_migrate_chain(struct sctk_alloc_chain * c
 	if (light_source != NULL)
 		new_numa_node = light_source->numa_node;
 
-	SCTK_PDEBUG("Request NUMA migration to thread allocator %d -> %d",old_numa_node,new_numa_node);
+	//SCTK_PDEBUG("Request NUMA migration to thread allocator %d -> %d",old_numa_node,new_numa_node);
 
 	//check if need to migrate NUMA explicitely
 	if (old_numa_node != new_numa_node && new_numa_node != SCTK_DEFAULT_NUMA_MM_SOURCE_ID)

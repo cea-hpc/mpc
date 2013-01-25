@@ -118,15 +118,15 @@ int __mpcomp_dynamic_steal_index(int *from, int *to)
 
   int i, j;
 
-  int nb_leaves = 12; 
+  int nb_leaves = 32; 
   int current_index;
   int depth_index;
 
   mvp_rank = 0;
   tmp_rank = 1;
  
-  T[0] = 2;
-  T[1] = 6;
+  T[0] = 4;
+  T[1] = 8;
   //T[2] = 2;
 
   //R[0] = 1;
@@ -991,7 +991,7 @@ __mpcomp_dynamic_loop_next (int *from, int *to)
      /* TODO Initialize stealing and try to steal */
 
 #if 0
-     if( __mpcomp_dynamic_steal(from, to)) {
+     if( __mpcomp_dynamic_steal_index(from, to)) {
     
 	  //sctk_nodebug("__mpcomp_dynamic_loop_next: chunk found: id=%d", t->stolen_chunk_id);
 
