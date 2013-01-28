@@ -549,7 +549,7 @@ TODO("to optimize")
     MPI_ERROR_REPORT(comm,MPI_ERR_COUNT,"")
 
 #define mpi_check_rank(task,max_rank,comm)		\
-  if(((task < 0) || (task >= max_rank)) && (task != MPI_ANY_SOURCE) && (task != MPI_PROC_NULL))		\
+  if(((task < 0) || (task > max_rank)) && (task != MPI_ANY_SOURCE) && (task != MPI_PROC_NULL))		\
     MPI_ERROR_REPORT(comm,MPI_ERR_RANK,"")
 
 #define mpi_check_tag(tag,comm)				\
@@ -2124,8 +2124,7 @@ __INTERNAL__PMPI_Sendrecv (void *sendbuf, int sendcount,
       return res;
     }
   res = __INTERNAL__PMPI_Wait (&r_request, status);
-  sctk_nodebug ("__INTERNAL__PMPI_Sendrecv TYPE %d %d done", sendtype,
-		recvtype);
+  sctk_nodebug ("__INTERNAL__PMPI_Sendrecv TYPE %d %d done", sendtype, recvtype);
   return res;
 }
 static int
@@ -4900,7 +4899,7 @@ __INTERNAL__PMPI_Keyval_create (MPI_Copy_function * copy_fn,
   mpc_mpi_data_t* tmp;
 
   tmp = mpc_mpc_get_per_task_data();
-
+  
   sctk_spinlock_lock(&(tmp->lock));
   if (tmp->number >= tmp->max_number)
     {
@@ -4973,24 +4972,24 @@ __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
   int res = MPI_SUCCESS;
   mpc_mpi_data_t* tmp;
   mpc_mpi_per_communicator_t* tmp_per_comm;
+  int val;
+  val = (*((int *) attr_value));
 
   tmp = mpc_mpc_get_per_task_data();
 
-  if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
-    {
-      MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
-    }
   keyval -= MPI_MAX_KEY_DEFINED;
-  keyval++;
-
-  if (keyval < 0)
+  //~ keyval++;
+sctk_debug("keyval %d put : %d", keyval, val);
+  if ((keyval < 0) && (keyval > MPI_MAX_KEY_DEFINED))
     {
+		sctk_debug("Wrong keyval");
       MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
     }
 
   sctk_spinlock_lock(&(tmp->lock));
   if (tmp->attrs_fn[keyval].used == 0)
     {
+		sctk_debug("Already used");
 		sctk_spinlock_unlock(&(tmp->lock));
 		MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
     }
@@ -4998,11 +4997,11 @@ __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
   tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
   sctk_spinlock_lock(&(tmp_per_comm->lock));
 
-  if(tmp_per_comm->max_number >= keyval){
+  if(tmp_per_comm->max_number <= keyval){
     int i;
     tmp_per_comm->key_vals = sctk_realloc(tmp_per_comm->key_vals,keyval*sizeof(MPI_Caching_key_value_t));
 
-    for(i = tmp_per_comm->max_number; i < keyval; i++){
+    for(i = tmp_per_comm->max_number; i <= keyval; i++){
       tmp_per_comm->key_vals[i].flag = 0;
       tmp_per_comm->key_vals[i].attr = NULL;
     }
@@ -5046,15 +5045,17 @@ __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value,
   attr = (void **) attr_value;
   tmp = mpc_mpc_get_per_task_data();
 
+  keyval -= MPI_MAX_KEY_DEFINED;
+  //~ keyval++;
+
   if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
     {
       *flag = 1;
       *attr = defines_attr_tab[keyval];
+      sctk_debug("keyval %d found : %d", keyval, *((int *)attr[keyval]));
       return MPI_SUCCESS;
     }
-  keyval -= MPI_MAX_KEY_DEFINED;
-  keyval++;
-
+    
   if (keyval < 0)
     {
       MPI_ERROR_REPORT (comm, MPI_ERR_INTERN, "");
@@ -5100,7 +5101,7 @@ __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value,
 static int
 __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
 {
-  int res;
+  int res = MPI_SUCCESS;
   mpc_mpi_data_t* tmp;
   mpc_mpi_per_communicator_t* tmp_per_comm;
   if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
@@ -5108,7 +5109,7 @@ __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
       return MPI_ERR_INTERN;
     }
   keyval -= MPI_MAX_KEY_DEFINED;
-  keyval++;
+  //~ keyval++;
 
   tmp = mpc_mpc_get_per_task_data();
   sctk_spinlock_lock(&(tmp->lock));
@@ -7426,7 +7427,7 @@ PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, int root,
 	    MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
-  sctk_nodebug ("Entering BCAST %d", comm);
+  sctk_nodebug ("Entering BCAST %d with count %d", comm, count);
   res = __INTERNAL__PMPI_Bcast (buffer, count, datatype, root, comm);
   SCTK__MPI_Check_retrun_val (res, comm);
 }

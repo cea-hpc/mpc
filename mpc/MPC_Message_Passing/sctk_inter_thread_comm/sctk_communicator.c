@@ -22,6 +22,8 @@
 #include <sctk_inter_thread_comm.h>
 #include <sctk_communicator.h>
 #include <sctk.h>
+#include <mpcmp.h>
+#include <mpc_mpi.h>
 #include <uthash.h>
 #include "utarray.h"
 #include <opa_primitives.h>
@@ -318,6 +320,91 @@ sctk_communicator_get_new_id(int local_root, int rank,
 }
 
 
+static inline
+sctk_communicator_t
+sctk_intercommunicator_get_new_id(int local_root, int rank, int local_leader,
+			     const sctk_communicator_t origin_communicator, sctk_internal_communicator_t * tmp){
+	sctk_communicator_t comm = -1;
+	sctk_communicator_t i = 0;
+	sctk_communicator_t ti = 0;
+	int need_clean;
+
+	do
+	{
+		need_clean = 0;
+		if(rank == local_leader)
+		{
+			sctk_internal_communicator_t * tmp_check;
+			if((i == SCTK_COMM_WORLD) || (i == SCTK_COMM_SELF)) i++;
+			if((i == SCTK_COMM_WORLD) || (i == SCTK_COMM_SELF)) i++;
+
+			sctk_spinlock_lock(&sctk_communicator_all_table_lock);
+
+			i--;
+			do
+			{
+				i++;
+				tmp_check = sctk_check_internal_communicator_no_lock(i);
+			} while(tmp_check != NULL);
+
+			comm = i;
+			tmp->id = comm;
+			sctk_set_internal_communicator_no_lock_no_check(i,tmp);
+
+			sctk_spinlock_unlock(&sctk_communicator_all_table_lock);
+			sctk_nodebug("Try %d",comm);
+		}
+
+		/* Broadcast comm */
+		sctk_broadcast (&comm,sizeof(sctk_communicator_t),0,origin_communicator);
+		sctk_nodebug("Every one try %d",comm);
+
+		if((local_root == 1) && (rank != local_leader))
+		{
+			/*Check if available*/
+			sctk_internal_communicator_t * tmp_check;
+
+			tmp->id = comm;
+			sctk_spinlock_lock(&sctk_communicator_all_table_lock);
+			tmp_check = sctk_check_internal_communicator_no_lock(comm);
+			if(tmp_check != NULL)
+			{
+				sctk_nodebug("Try %d fail",comm);
+				comm = -1;
+			} 
+			else 
+			{
+				need_clean = 1;
+				sctk_set_internal_communicator_no_lock_no_check(comm,tmp);
+			}
+			sctk_spinlock_unlock(&sctk_communicator_all_table_lock);
+		}
+
+		sctk_nodebug("Every one try %d allreduce %d",comm,origin_communicator);
+		/* Check if available every where*/
+		ti = comm;
+		sctk_all_reduce(&ti,&comm,sizeof(sctk_communicator_t),1,(MPC_Op_f)sctk_comm_reduce, origin_communicator,0);
+		sctk_nodebug("DONE Every one try %d allreduce %d",comm,origin_communicator);
+		sctk_nodebug("Every one try %d RES",comm);
+		
+		if(comm == -1)
+		{
+			if(local_root == 1)
+			{
+				sctk_spinlock_lock(&sctk_communicator_all_table_lock);
+				sctk_del_internal_communicator_no_lock_no_check(ti);
+				sctk_spinlock_unlock(&sctk_communicator_all_table_lock);
+			}
+		}
+	}  while(comm == -1);
+
+	assume(comm != SCTK_COMM_WORLD);
+	assume(comm != SCTK_COMM_SELF);
+	assume(comm > 0);
+	sctk_nodebug("return comm = %d", comm);
+	return comm;
+}
+
 /************************************************************************/
 /*Collective accessors                                                  */
 /************************************************************************/
@@ -386,7 +473,6 @@ sctk_communicator_init_intern_init_only(const int nb_task,
   tmp->creation_lock = spinlock;
   tmp->new_comm = NULL;
   tmp->has_zero = 0;
-
   OPA_store_int(&(tmp->nb_to_delete),0);
 }
 
@@ -522,6 +608,8 @@ sctk_communicator_t sctk_delete_communicator (const sctk_communicator_t comm){
       sctk_free(tmp->local_to_global);
       sctk_free(tmp->global_to_local);
       sctk_free(tmp->task_to_process);
+      if(tmp->is_inter_comm == 1)
+		sctk_free(tmp->remote_task_list_in_global_ranks);
 
       sctk_del_internal_communicator_no_lock_no_check(comm);
       sctk_free(tmp);
@@ -751,163 +839,165 @@ sctk_duplicate_communicator (const sctk_communicator_t origin_communicator,
 sctk_communicator_t sctk_create_intercommunicator (const sctk_communicator_t local_comm, const int local_leader,
 		       const sctk_communicator_t peer_comm, const int remote_leader, const int tag)
 {
-	//~ fprintf(stderr, "local_comm = %d, local_leader = %d, peer_comm = %d, remote_leader = %d, tag = %d\n", local_comm, local_leader, peer_comm, remote_leader, tag);
+	MPC_Status status;
+	int local_size = 0, remote_size = 0, save_remote_size = 0;
 	sctk_internal_communicator_t * tmp;
     sctk_internal_communicator_t * new_tmp;
+    int i;
     int local_root = 0;
+    int nb_task_involved;
     sctk_communicator_t comm;
     sctk_thread_data_t *thread_data;
-    int nb_task_involved;
-    int i;
-    int rank;
-    
-    int local_tasks = 0;
-	int* local_to_global;
-	int* global_to_local;
-	int* task_to_process;
-	sctk_process_ht_t *process = NULL;
-	sctk_process_ht_t *tmp_process = NULL;
-	sctk_process_ht_t *current_process = NULL;
-	int *process_array;
-	int process_nb = 0;
+    int rank = 0, grank = 0;
+    int *remote_task_list;
 
-	/* get task id */
+	/* get task rank (COMM_WORLD) */
     thread_data = sctk_thread_data_get ();
     rank = thread_data->task_id;
     sctk_barrier (local_comm);
+    /* get the local group rank of the task */
+    grank = sctk_get_rank(local_comm, rank);
 	/* get comm struct */
     tmp = sctk_get_internal_communicator(local_comm);
-	fprintf(stderr,"intercomm_create : rang = %d, local_leader = %d, remote_leader = %d, adresse communicateur(%d) : %p\n", 
-					rank, local_leader, remote_leader, local_comm, &(sctk_communicator_array[local_comm]));
+	nb_task_involved = tmp->nb_task;
+	local_size = tmp->nb_task;
+	  
     sctk_spinlock_lock(&(tmp->creation_lock));
     if(tmp->new_comm == NULL)
     {
-	  nb_task_involved = tmp->nb_task;
-      local_root = 1;
-      tmp->has_zero = 0;
-      /* allocate new comm */
-      new_tmp = sctk_malloc(sizeof(sctk_internal_communicator_t));
-      memset(new_tmp,0,sizeof(sctk_internal_communicator_t));
+		int local_tasks = 0;
+		int* local_to_global;
+		int* global_to_local;
+		int* task_to_process;
+		sctk_process_ht_t *process = NULL;
+		sctk_process_ht_t *tmp_process = NULL;
+		sctk_process_ht_t *current_process = NULL;
+		int *process_array;
+		int process_nb = 0;
 
-      local_to_global = sctk_malloc(nb_task_involved*sizeof(int));
-      global_to_local = sctk_malloc(sctk_get_nb_task_total(SCTK_COMM_WORLD)*sizeof(int));
-      task_to_process = sctk_malloc(nb_task_involved*sizeof(int));
+		local_root = 1;
+		tmp->has_zero = 0;
+		/* allocate new comm */
+		new_tmp = sctk_malloc(sizeof(sctk_internal_communicator_t));
+		memset(new_tmp,0,sizeof(sctk_internal_communicator_t));
 
-	  /* fill new comm */
-      for(i = 0; i < nb_task_involved; i++){
-        local_to_global[i] = tmp->local_to_global[i];
-        global_to_local[local_to_global[i]] = i;
-        task_to_process[i] = sctk_get_process_rank_from_task_rank(local_to_global[i]);
-        if(task_to_process[i] == sctk_process_rank){
-          local_tasks++;
-        }
-        /* build list of processes */
-        HASH_FIND_INT(process, &task_to_process[i], tmp_process);
-        if (tmp_process == NULL) {
-          tmp_process = sctk_malloc (sizeof(sctk_process_ht_t));
-          tmp_process->process_id = task_to_process[i];
-          HASH_ADD_INT(process, process_id, tmp_process);
-          process_nb ++;
-        }
-      }
-      process_array = sctk_malloc (process_nb * sizeof(int));
-      i = 0;
-      HASH_ITER(hh, process, current_process, tmp_process) {
-        process_array[i++] = current_process->process_id;
-        HASH_DEL(process, current_process);
-        free(current_process);
-      }
+		local_to_global = sctk_malloc(nb_task_involved*sizeof(int));
+		global_to_local = sctk_malloc(sctk_get_nb_task_total(SCTK_COMM_WORLD)*sizeof(int));
+		task_to_process = sctk_malloc(nb_task_involved*sizeof(int));
+		
+		/* fill new comm */
+		for(i = 0; i < nb_task_involved; i++)
+		{
+			local_to_global[i] = tmp->local_to_global[i];
+			global_to_local[local_to_global[i]] = i;
+			task_to_process[i] = sctk_get_process_rank_from_task_rank(local_to_global[i]);
+			if(task_to_process[i] == sctk_process_rank)
+			{
+				local_tasks++;
+			}
+			/* build list of processes */
+			HASH_FIND_INT(process, &task_to_process[i], tmp_process);
+			if (tmp_process == NULL) 
+			{
+				tmp_process = sctk_malloc (sizeof(sctk_process_ht_t));
+				tmp_process->process_id = task_to_process[i];
+				HASH_ADD_INT(process, process_id, tmp_process);
+				process_nb ++;
+			}
+		}
+		process_array = sctk_malloc (process_nb * sizeof(int));
+		i = 0;
+		HASH_ITER(hh, process, current_process, tmp_process) 
+		{
+			process_array[i++] = current_process->process_id;
+			HASH_DEL(process, current_process);
+			free(current_process);
+		}
 
-      tmp->new_comm = new_tmp;
-      /* init new comm */
-     sctk_communicator_init_intern_init_only(nb_task_involved,
-					      -1,
-					      -1,
-					      local_tasks,
-					      local_to_global,
-					      global_to_local,
-					      task_to_process,
-						  process_array,
-						  process_nb,
-					      tmp->new_comm);
+		tmp->new_comm = new_tmp;
+		/* init new comm */
+		sctk_communicator_init_intern_init_only(nb_task_involved, -1, -1, local_tasks,
+			local_to_global, global_to_local, task_to_process, process_array, process_nb, tmp->new_comm);
+		
+		tmp->remote_size = 0;
     }
     sctk_spinlock_unlock(&(tmp->creation_lock));
     sctk_barrier (local_comm);
-    if(rank == 0){
-      tmp->has_zero = 1;
-      local_root = 1;
+    if(grank == local_leader)
+    {
+		tmp->has_zero = 1;
+		local_root = 1;
     }
     sctk_barrier (local_comm);
-    if((tmp->has_zero == 1) && (rank != 0)){
-      local_root = 0;
+    if((tmp->has_zero == 1) && (grank != local_leader))
+    {
+		local_root = 0;
     }
-
 
     new_tmp = tmp->new_comm;
+    
+    tmp->is_inter_comm = 1;
+    
+    if (grank == local_leader)
+    {
+		PMPI_Sendrecv(&local_size, 1, MPC_INT, remote_leader, tag, &remote_size, 1, MPC_INT, remote_leader, tag, peer_comm, &status);
+	}
+	
+	sctk_broadcast (&remote_size,sizeof(int),local_leader,local_comm);
+	save_remote_size = remote_size;
+	new_tmp->remote_size = remote_size;
+	assert(remote_size != 0);
+	
+	remote_task_list= sctk_malloc(remote_size*sizeof(int));
+	if(grank == local_leader)
+    {
+		int *task_list = sctk_malloc(remote_size*sizeof(int));
+		for(i = 0; i < local_size; i++)
+		{
+			task_list[i] = new_tmp->local_to_global[i];
+		}
+		PMPI_Sendrecv(&task_list, local_size, MPC_INT, remote_leader, tag, &remote_task_list, remote_size, MPC_INT, remote_leader, tag, peer_comm, &status);
+	}
+
+	sctk_broadcast(&remote_task_list, save_remote_size*sizeof(int), local_leader, local_comm);
+	
+	new_tmp->remote_task_list_in_global_ranks = remote_task_list;
+
+	sctk_barrier(local_comm);
+   
     sctk_nodebug("Determine New comm");
-
-    comm = sctk_communicator_get_new_id(local_root,rank,local_comm,new_tmp);
-
-    if(local_root){
-      /* Check if the communicator has been well created */
-      sctk_get_internal_communicator(comm);
-      assume(comm >= 0);
-      sctk_nodebug("Init collectives for comm %d",comm);
-      sctk_collectives_init_hook(comm);
+	comm = sctk_intercommunicator_get_new_id(local_root,grank,local_leader,local_comm,new_tmp);
+    //~ sctk_debug("done comm = %d\n", comm);
+    
+    sctk_barrier(local_comm);
+    
+    if(local_root)
+    {
+      
+		sctk_get_internal_communicator(comm);
+		assume(comm >= 0);
+		sctk_nodebug("Init collectives for comm %d",comm);
+		sctk_collectives_init_hook(comm);
     }
 
+	
     sctk_nodebug("New comm %d",comm);
     sctk_barrier (local_comm);
     tmp->new_comm = NULL;
     sctk_barrier (local_comm);
     assume(new_tmp->id != local_comm);
-
-    /*If not involved return MPC_COMM_NULL*/
-    for(i = 0; i < nb_task_involved; i++){
-      if(new_tmp->local_to_global[i] == rank){
-	sctk_barrier (new_tmp->id);
-	return new_tmp->id;
-      }
-    }
-    sctk_nodebug("MPC_COMM_NULL");
-    return MPC_COMM_NULL;
-/*
-    if(rank == local_leader)
-    {
-		new_tmp->is_inter_comm = 1;
-		local_size = tmp->nb_task;
-		PMPC_Sendrecv(&local_size, 1, MPC_INT, remote_leader, tag, 
-                  &remote_size, 1, MPC_INT, remote_leader, tag, peer_comm, MPC_STATUS_IGNORE);
     
-		new_tmp->remote_size = remote_size;
-		
-	}
-	
-	sctk_broadcast(&remote_size, sizeof(int), local_leader, local_comm);
-	if(rank != local_leader)
-		new_tmp->remote_size = remote_size;
-	
-	if(rank == local_leader)
+    sctk_barrier(local_comm);
+    for(i = 0; i < nb_task_involved; i++)
     {
-		task_list = sctk_malloc(remote_size*sizeof(int));
-		for(i = 0; i < local_size; i++)
+		if(new_tmp->local_to_global[i] == rank)
 		{
-			task_list[i] = new_tmp->local_to_global[i];
+			sctk_nodebug("rang %d : new_tmp->id = %d", rank, new_tmp->id);
+			return new_tmp->id;
 		}
-		
-		PMPC_Sendrecv(&task_list, local_size, MPC_INT, remote_leader, tag, 
-                  &remote_task_list, remote_size, MPC_INT, remote_leader, tag, peer_comm, MPC_STATUS_IGNORE);
-		new_tmp->remote_task_list_in_global_ranks = remote_task_list;
-	}
-	
-	sctk_broadcast(&remote_task_list, remote_size*sizeof(int), local_leader, local_comm);
-	if(rank != local_leader)
-		new_tmp->remote_task_list_in_global_ranks = remote_task_list;
-	
-	sctk_debug("remote_size = %d\n", new_tmp->remote_size);
-*/
-	
-    
+    }
+    sctk_nodebug("rang %d : MPC_COMM_NULL", rank);
+    return MPC_COMM_NULL;
 }
 
 sctk_communicator_t sctk_create_communicator (const sctk_communicator_t
@@ -991,6 +1081,8 @@ sctk_communicator_t sctk_create_communicator (const sctk_communicator_t
 						  process_array,
 						  process_nb,
 					      tmp->new_comm);
+	  tmp->remote_size = 0;
+	  tmp->remote_task_list_in_global_ranks = NULL;
     }
     sctk_spinlock_unlock(&(tmp->creation_lock));
     sctk_barrier (origin_communicator);
