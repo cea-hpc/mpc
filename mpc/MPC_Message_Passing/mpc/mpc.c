@@ -1795,11 +1795,10 @@ sctk_user_main (int argc, char **argv)
 #ifdef MPC_OpenMP
   __mpcomp_init() ;
 #endif
-sctk_debug("toto 1\n");
   __MPC_Barrier (MPC_COMM_WORLD);
-sctk_debug("toto 2\n");
+  
   result = mpc_user_main (argc, argv);
-sctk_debug("toto 3\n");
+  
   __MPC_Barrier (MPC_COMM_WORLD);
 
 #ifdef MPC_Profiler
@@ -4140,31 +4139,26 @@ __MPC_Intercomm_create (MPC_Comm local_comm, int local_leader,
 	int rank;
 	int i;
 	int present = 0;
-	MPC_Group *remote_group;
-	MPC_Group *local_group;
-	MPC_Request req;
-	int remote_size;
-	int local_size;
 	sctk_task_specific_t *task_specific;
 	task_specific = __MPC_get_task_specific ();
 	mpc_check_comm (local_comm, local_comm);
 	mpc_check_comm (peer_comm, peer_comm);
 	__MPC_Barrier (local_comm);
 
-	sctk_debug ("MPC_Intercomm_create");
+	sctk_nodebug ("MPC_Intercomm_create");
 	__MPC_Comm_rank (MPC_COMM_WORLD, &rank, task_specific);
 	sctk_assert (local_comm != MPC_COMM_NULL);
 
 	(*newintercomm) = sctk_create_intercommunicator (local_comm, local_leader, 
 	                                            peer_comm, remote_leader, tag);
 
-	sctk_debug ("MPC_Intercomm_create done %d ", *newintercomm);
+	sctk_nodebug ("rank = %d : MPC_Intercomm_create done %d ", rank, *newintercomm);
 	__MPC_Barrier (local_comm);
-	sctk_debug ("MPC_Intercomm_create ended %d ", *newintercomm);
+	sctk_nodebug ("MPC_Intercomm_create ended %d ", *newintercomm);
 	
 	__MPC_Barrier (*newintercomm);
 	sctk_thread_createspecific_mpc_per_comm_from_existing(task_specific,*newintercomm, local_comm);
-	sctk_debug ("MPC_Intercomm_create ended %d on newly", *newintercomm);
+	sctk_nodebug ("MPC_Intercomm_create ended %d on newly", *newintercomm);
     
 	MPC_ERROR_SUCESS ();
 }
@@ -4223,7 +4217,7 @@ __MPC_Comm_free (MPC_Comm * comm)
   __MPC_Barrier (old_comm);
   sctk_nodebug ("Delete Comm %d", old_comm);
   sctk_delete_communicator (old_comm);
-  sctk_nodebug ("Comm free done %d",  ld_comm);
+  sctk_nodebug ("Comm free done %d",  old_comm);
   sctk_thread_removespecific_mpc_per_comm(task_specific, old_comm);
 
   *comm = MPC_COMM_NULL;
