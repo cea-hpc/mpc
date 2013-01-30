@@ -35,15 +35,15 @@ int sctk_get_first_task_local (const sctk_communicator_t communicator);
 int sctk_get_last_task_local (const sctk_communicator_t communicator);
 int sctk_get_nb_task_total (const sctk_communicator_t communicator);
 int sctk_get_nb_task_remote (const sctk_communicator_t communicator);
-  void sctk_get_rank_size_total (const sctk_communicator_t communicator,
-				 int *rank, int *size, int glob_rank);
+void sctk_get_rank_size_total (const sctk_communicator_t communicator, int *rank, int *size, int glob_rank);
 inline int *sctk_get_process_array (const sctk_communicator_t communicator);
 inline int sctk_get_process_nb_in_array (const sctk_communicator_t communicator);
-int sctk_get_rank (const sctk_communicator_t communicator,
-		   const int comm_world_rank);
-int sctk_get_comm_world_rank (const sctk_communicator_t communicator,
-		   const int rank);
+int sctk_get_rank (const sctk_communicator_t communicator, const int comm_world_rank);
+int sctk_get_comm_world_rank (const sctk_communicator_t communicator, const int rank);
+int sctk_get_remote_comm_world_rank (const sctk_communicator_t communicator, const int rank);
 sctk_communicator_t sctk_delete_communicator (const sctk_communicator_t);
+sctk_communicator_t sctk_get_comm_remote_id(const sctk_communicator_t);
+sctk_communicator_t sctk_get_comm_id(const sctk_communicator_t communicator);
 void sctk_communicator_delete();
   sctk_communicator_t
   sctk_duplicate_communicator (const sctk_communicator_t origin_communicator,
@@ -58,8 +58,16 @@ void
 sctk_set_internal_collectives(const sctk_communicator_t id,
 			      struct sctk_internal_collectives_struct_s * tmp);
 int sctk_get_process_rank_from_task_rank(int rank);
-int sctk_is_inter_comm (const sctk_communicator_t communicator);
-  sctk_communicator_t sctk_create_communicator (const sctk_communicator_t
+int sctk_is_inter_comm (const sctk_communicator_t);
+int sctk_get_local_leader (const sctk_communicator_t);
+int sctk_get_remote_leader (const sctk_communicator_t);
+sctk_communicator_t sctk_create_communicator (const sctk_communicator_t
+						origin_communicator,
+						const int
+						nb_task_involved,
+						const int *task_list,
+						int is_inter_comm);
+sctk_communicator_t sctk_create_communicator_from_intercomm (const sctk_communicator_t
 						origin_communicator,
 						const int
 						nb_task_involved,

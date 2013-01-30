@@ -110,6 +110,8 @@ extern "C"
     int source;
     int destination;
     sctk_communicator_t communicator;
+    /* partner in case of intercomm */
+    sctk_communicator_t remote_communicator;
     int message_tag;
     int message_number;
 
