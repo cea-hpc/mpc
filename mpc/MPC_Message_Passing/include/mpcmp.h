@@ -252,6 +252,7 @@ extern "C"
   int MPC_Comm_rank (MPC_Comm comm, int *rank);
   int MPC_Comm_size (MPC_Comm comm, int *size);
   int MPC_Comm_remote_size (MPC_Comm comm, int *size);
+  int MPC_Comm_test_inter (MPC_Comm comm, int *flag);
 
   /* Node topology */
   int MPC_Node_rank (int *rank);
@@ -515,6 +516,7 @@ extern "C"
   int PMPC_Comm_rank (MPC_Comm comm, int *rank);
   int PMPC_Comm_size (MPC_Comm comm, int *size);
   int PMPC_Comm_remote_size (MPC_Comm comm, int *size);
+  int PMPC_Comm_test_inter (MPC_Comm comm, int *flag);
   int PMPC_Node_rank (int *rank);
   int PMPC_Node_number (int *number);
   int PMPC_Processor_rank (int *rank);

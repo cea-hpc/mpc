@@ -144,7 +144,6 @@ void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
   total = sctk_get_nb_task_total(communicator);
   myself = sctk_get_rank (communicator, thread_data->task_id);
   ptp_internal = sctk_get_internal_ptp(thread_data->task_id);
-
   total_max = log(total) / log(BARRIER_ARRITY);
   total_max = pow(BARRIER_ARRITY,total_max);
   if(total_max < total){
