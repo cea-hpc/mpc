@@ -130,11 +130,6 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 	  node->current_mvp = 0;
 	  node->id_numa = 0;
 	  
-	  /* tree_rank avec tableaux intermediaires */
-          /* node->temporary_tree_rank = sctk_malloc_on_node(sizeof(int)*(1), node->id_numa);*/
-          /* sctk_assert( node->temporary_tree_rank != NULL );*/
-          /* node->temporary_tree_rank[0] = 0;*/
-	
 #ifdef MPCOMP_TASK
 	  node->untied_tasks = NULL;
 	  node->new_tasks = NULL;
@@ -159,7 +154,7 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 #if MPCOMP_MALLOC_ON_NODE
 	       instance->mvps[current_mvp] = (mpcomp_mvp_t *) sctk_malloc_on_node(sizeof(mpcomp_mvp_t), father->id_numa);
 #else
-	       instance->mvps[current_mvp] = (mpcomp_mvp_t *) sctk_malloc_on_node(sizeof(mpcomp_mvp_t), 0);
+	       instance->mvps[current_mvp] = (mpcomp_mvp_t *) sctk_malloc(sizeof(mpcomp_mvp_t));
 #endif
 	       sctk_assert(instance->mvps[current_mvp] != NULL);
 	       
@@ -186,66 +181,24 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 	       }
 	       
 	       leaf->rank = current_mvp;
-               //leaf->vp = 0;
-               leaf->vp = sctk_thread_get_vp(); //AMAHEO
-              
+               leaf->vp = target_vp;             
 	       leaf->enable = 1;
 	       depth = father->depth + 1;
 			
 #if MPCOMP_MALLOC_ON_NODE
 	       leaf->tree_rank = (int *) sctk_malloc_on_node(depth * sizeof(int), father->id_numa);
 #else
-	       leaf->tree_rank = (int *) sctk_malloc_on_node(depth * sizeof(int), 0);
+	       leaf->tree_rank = (int *) sctk_malloc(depth * sizeof(int));
 #endif
 	       
 	       sctk_assert(leaf->tree_rank != NULL);
-			
-	       /* tree_rank */
-			
 	       node_tmp = father;
-
-               //AMAHEO
-               /* 
-               for(i=0;i<depth;i++) {
-                 leaf->tree_rank[i] = 0;
-               }
-               */
-
-               sctk_nodebug("__mpcomp_build_auto_tree_recursive: id_loc=%d", id_loc); //AMAHEO 
-               sctk_assert(id_loc < 40); //AMAHEO
-//#if MPCOMP_USE_ATOMICS
-               //sctk_atomics_int atomics_id_loc;
-               //atomics_id_loc = id_loc;
- 	       //sctk_atomics_store_int(&(leaf->tree_rank[depth-1]), &atomics_id_loc);
-  //sctk_spinlock_lock( &(node->lock) ) ;
-//#else
 	       leaf->tree_rank[depth-1] = id_loc;
-  //sctk_spinlock_unlock( &(node->lock) ) ;
 
-//#endif
 	       for(i=depth-2; i>=0; i--) {
-//#if MPCOMP_USE_ATOMICS
- //   	            sctk_atomics_store_int(&(leaf->tree_rank[i]), node_tmp->rank);		
-//#else
-  //sctk_spinlock_lock( &(node->lock) ) ;
-                    sctk_nodebug("__mpcomp_build_auto_tree_recursive: node_tmp rank=%d", node_tmp->rank); //AMAHEO
-                    sctk_assert(node_tmp->rank < 40); //AMAHEO
-
 		    leaf->tree_rank[i] = node_tmp->rank;
-  //sctk_spinlock_unlock( &(node->lock) ) ;
-//#endif
 		    node_tmp = node_tmp->father;
 	       }
-
-               /* Check tree_rank */
-               for(i=0;i<depth;i++)
-		sctk_debug("__mpcomp_build_auto_tree_recursive: current_mvp=%d, tree_rank[%d]: %d", current_mvp, i, leaf->tree_rank[i]); //AMAHEO
-			
-	       /* tree_rank avec tableaux intermediaires */
-               /* for(i=1; i<depth; i++){*/
-               /*      leaf->tree_rank[i-1] = father->temporary_tree_rank[i];*/
-	       /* } */
-               /* leaf->tree_rank[depth-1] = id_loc;*/
 			
 	       leaf->root = instance->root ;
 	       leaf->father = father;
@@ -293,11 +246,11 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 
 #if MPCOMP_MALLOC_ON_NODE
 	       id_numa = sctk_get_node_from_cpu(order[current_mvp]);
+	       node = (mpcomp_node_t *) sctk_malloc_on_node(sizeof(mpcomp_node_t), id_numa);
 #else
 	       id_numa = 0;
-#endif
-	       
-	       node = (mpcomp_node_t *) sctk_malloc_on_node(sizeof(mpcomp_node_t), id_numa);
+	       node = (mpcomp_node_t *) sctk_malloc(sizeof(mpcomp_node_t));
+#endif	       
 	       sctk_assert( node != NULL );
 			
 	       node->id_numa = id_numa;
@@ -306,7 +259,11 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 		    /* only the first child do this */
 		    father->child_type = MPCOMP_CHILDREN_NODE;
 		    /* alloc for the father */
+#if MPCOMP_MALLOC_ON_NODE
 		    father->children.node = (mpcomp_node_t **) sctk_malloc_on_node(sizeof(mpcomp_node_t *) * father->nb_children, father->id_numa);
+#else
+		    father->children.node = (mpcomp_node_t **) sctk_malloc(sizeof(mpcomp_node_t *) * father->nb_children);
+#endif
 		    sctk_assert( father->children.node != NULL );
 	       }
 	       
@@ -344,21 +301,7 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 #ifdef MPCOMP_TASK
 	       node->untied_tasks = NULL;
 	       node->new_tasks = NULL;
-#endif //MPCOMP_TASK
-			
-	       /* tree_rank avec tableaux intermediaires */
-               /* #if MPCOMP_MALLOC_ON_NODE */
-	       /*     node->temporary_tree_rank = (int *)sctk_malloc_on_node((node->depth+1)*sizeof(int), node->id_numa ) ; */
-	       /* #else */
-	       /*     node->temporary_tree_rank = (int *)sctk_malloc_on_node((node->depth+1)*sizeof(int), 0 ) ; */
-	       /* #endif */
-	       /* */
-	       /*    sctk_assert( node->temporary_tree_rank != NULL ); */
-	       /* */
-	       /*    for(i=0; i<node->depth; i++){ */
-	       /* 	 node->temporary_tree_rank[i] = father->temporary_tree_rank[i]; */
-	       /*    } */
-	       /*    node->temporary_tree_rank[node->depth] = node->rank; */
+#endif //MPCOMP_TASK			
 	  }
      }
      
@@ -373,14 +316,10 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 	       __mpcomp_build_auto_tree_recursive_bloc(instance, order, obj->children[i],
 						       node, id_child, i);
 	  }
-	  /* temporary_tree_rank can be safely realeased here -because it's after the recursive call- */
-          /* sctk_free(node->temporary_tree_rank); */
-          /* node->temporary_tree_rank = NULL; */
      }
 }
 
 
-//#if 0
 /*
  * Build the default tree.
  * TODO this function should create a tree according to architecture tolopogy
@@ -422,7 +361,6 @@ int __mpcomp_build_default_tree(mpcomp_instance_t *instance)
      
      return 1;
 }
-//#endif
 
 #if 0
 /*
