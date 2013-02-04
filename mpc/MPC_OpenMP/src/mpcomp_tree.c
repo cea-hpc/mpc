@@ -146,7 +146,11 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 		    
 	       father->child_type = MPCOMP_CHILDREN_LEAF;
 	       if ((father->children.node == NULL) && (father->children.leaf == NULL)) {
-		    father->children.leaf = (mpcomp_mvp_t **) sctk_malloc_on_node(sizeof(mpcomp_mvp_t*), father->id_numa);
+#if MPCOMP_MALLOC_ON_NODE
+		    father->children.leaf = (mpcomp_mvp_t **) sctk_malloc_on_node(sizeof(mpcomp_mvp_t*) * father->nb_children, father->id_numa);
+#else
+		    father->children.leaf = (mpcomp_mvp_t **) sctk_malloc(sizeof(mpcomp_mvp_t*) * father->nb_children);
+#endif
 		    sctk_assert(father->children.leaf != NULL);
 	       }			
 	       
