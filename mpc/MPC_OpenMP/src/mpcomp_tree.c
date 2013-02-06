@@ -63,17 +63,10 @@ int __mpcomp_check_tree_parameters(int n_leaves, int depth, int *degree)
      return 1;
 }
 
-/* recursive function counting the number of core below (so on his sub-tree) an hwloc object */
+/* Count the number of core below (so on his sub-tree) an hwloc object */
 unsigned int __mpcomp_get_cpu_number_below(hwloc_obj_t obj)
 {
-     unsigned int i, count = 0;
-     if (hwloc_compare_types(obj->type, HWLOC_OBJ_PU) == 0)
-	  return 1;
-     
-     for (i=0; i<obj->arity; i++)
-	  count += __mpcomp_get_cpu_number_below(obj->children[i]);
-
-     return count;
+     return hwloc_bitmap_weight(obj->cpuset);
 }
 
 /* recursive function constructing automatically the open-mp tree corresponding to the topology */
