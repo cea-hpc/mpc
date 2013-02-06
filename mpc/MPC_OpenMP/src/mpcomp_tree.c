@@ -82,7 +82,6 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
      while ((obj->arity == 1) && (obj->type != HWLOC_OBJ_PU))
 	  obj = obj->children[0];
 		
-     printf("id_loc: %d ; get_cpu_number_below()=%d, weight: %d\n", id_loc, __mpcomp_get_cpu_number_below(obj), hwloc_bitmap_weight(obj->cpuset));
      if (father == NULL) {   /* case root */
 	  node = (mpcomp_node_t *) sctk_malloc(sizeof(mpcomp_node_t));
 	  sctk_assert(node != NULL);
