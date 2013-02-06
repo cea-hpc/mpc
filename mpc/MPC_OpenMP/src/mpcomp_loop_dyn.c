@@ -160,29 +160,54 @@ int __mpcomp_dynamic_steal_index(int *from, int *to)
      target_loop_index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
    
      /* Grab remaining chunks */ 
+#if MPCOMP_USE_ATOMICS 
      r = sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain) );
-  
+#else
+     r = target_t->for_dyn_chunk_info[target_loop_index].remain;
+#endif  
      if(r > 0) {
 
+#if MPCOMP_USE_ATOMICS 
         real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
-    
+#else
+	sctk_spinlock_lock(&(n->lock));
+	real_r = target_t->for_dyn_chunk_info[target_loop_index].remain;
+	if (real_r == r)
+	     target_t->for_dyn_chunk_info[target_loop_index].remain = r-1;
+	sctk_spinlock_unlock(&(n->lock));
+#endif    
            while(real_r > 0 && real_r != r) {
-		    //sctk_nodebug("test1");
-             r = real_r;
-	     real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
+		r = real_r;
+#if MPCOMP_USE_ATOMICS
+		real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
+#else
+		sctk_spinlock_lock(&(n->lock));
+		real_r = target_t->for_dyn_chunk_info[target_loop_index].remain;
+		if (real_r == r)
+		     target_t->for_dyn_chunk_info[target_loop_index].remain = r-1;
+		sctk_spinlock_unlock(&(n->lock));   
+#endif
 	   }
 
            if(real_r > 0) {
              //t->stolen_chunk_id = sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r;
 	     sctk_nodebug("__mpcomp_dynamic_steal2 rank=%d: get a chunk from previously visited mvp rank=%d", t->rank, t->stolen_mvp->rank);
-//#if 0      
+
+#if MPCOMP_USE_ATOMICS
 	     __mpcomp_get_specific_chunk_per_rank( target_t->rank, target_t->num_threads,
-							  target_t->loop_lb, target_t->loop_b,
-							  target_t->loop_incr, 
-							  target_t->loop_chunk_size, 
-							  sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
-							  from, to ) ;  
-//#endif
+						   target_t->loop_lb, target_t->loop_b,
+						   target_t->loop_incr, 
+						   target_t->loop_chunk_size, 
+						   sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
+						   from, to ) ;  
+#else
+	     __mpcomp_get_specific_chunk_per_rank( target_t->rank, target_t->num_threads,
+						   target_t->loop_lb, target_t->loop_b,
+						   target_t->loop_incr, 
+						   target_t->loop_chunk_size, 
+						   target_t->for_dyn_chunk_info[target_loop_index].total - r, 
+						   from, to ) ;
+#endif
 	     return 1;
 	   }
     }
@@ -214,33 +239,57 @@ int __mpcomp_dynamic_steal_index(int *from, int *to)
    target_t = &(mvp->threads[0]);
    target_rank = target_t->rank;
    target_loop_index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
+#if MPCOMP_USE_ATOMICS
    r = sctk_atomics_load_int(&(target_t->for_dyn_chunk_info[target_loop_index].remain));
+#else
+   r = target_t->for_dyn_chunk_info[target_loop_index].remain;
+#endif
 
    if(r > 0) {
-
+#if MPCOMP_USE_ATOMICS
      real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
-    
+#else
+     sctk_spinlock_lock(&(n->lock));
+     real_r = target_t->for_dyn_chunk_info[target_loop_index].remain;
+     if (real_r == r)
+	  target_t->for_dyn_chunk_info[target_loop_index].remain = r-1;
+     sctk_spinlock_unlock(&(n->lock));   
+#endif
      while(real_r > 0 && real_r != r) {
-        //sctk_nodebug("test1");
         r = real_r;
+#if MPCOMP_USE_ATOMICS
         real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
+#else
+     sctk_spinlock_lock(&(n->lock));
+     real_r = target_t->for_dyn_chunk_info[target_loop_index].remain;
+     if (real_r == r)
+	  target_t->for_dyn_chunk_info[target_loop_index].remain = r-1;
+     sctk_spinlock_unlock(&(n->lock));   	
+#endif
      }
-
+     
      if(real_r > 0) {
         //t->stolen_chunk_id = sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r;
         sctk_nodebug("__mpcomp_dynamic_steal2 rank=%d: get a chunk from previously visited mvp rank=%d", t->rank, t->stolen_mvp->rank);
-//#if 0      
+#if MPCOMP_USE_ATOMICS
         __mpcomp_get_specific_chunk_per_rank( target_t->rank, target_t->num_threads,
-							  target_t->loop_lb, target_t->loop_b,
-							  target_t->loop_incr, 
-							  target_t->loop_chunk_size, 
-							  sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
-							  from, to ) ;  
-//#endif
+					      target_t->loop_lb, target_t->loop_b,
+					      target_t->loop_incr, 
+					      target_t->loop_chunk_size, 
+					      sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
+					      from, to ) ;  
+#else
+        __mpcomp_get_specific_chunk_per_rank( target_t->rank, target_t->num_threads,
+					      target_t->loop_lb, target_t->loop_b,
+					      target_t->loop_incr, 
+					      target_t->loop_chunk_size, 
+					      target_t->for_dyn_chunk_info[target_loop_index].total - r, 
+					      from, to ) ;  
+#endif
         return 1;
-    }
+     }
    }
-
+   
 #if 0
    /* Print state of Leaf iterator */
    printf("L=\t");
@@ -333,29 +382,54 @@ int __mpcomp_dynamic_steal(int *from, int *to)
 	  target_loop_index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
    
 	  /* Grab remaining chunks */ 
+#if MPCOMP_USE_ATOMICS
 	  r = sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain) );
-  
+#else
+	  r = target_t->for_dyn_chunk_info[target_loop_index].remain;
+#endif
 	  if(r > 0) {
 
+#if MPCOMP_USE_ATOMICS
 	       real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
-    
+#else
+	       sctk_spinlock_lock(&(current_mvp->father->lock));
+	       real_r = target_t->for_dyn_chunk_info[target_loop_index].remain;
+	       if (real_r == r)
+		    target_t->for_dyn_chunk_info[target_loop_index].remain = r-1;
+	       sctk_spinlock_unlock(&(current_mvp->father->lock));   	
+#endif
 	       while(real_r > 0 && real_r != r) {
 		    //sctk_nodebug("test1");
 		    r = real_r;
+#if MPCOMP_USE_ATOMICS
 		    real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
+#else
+		    sctk_spinlock_lock(&(current_mvp->father->lock));
+		    real_r = target_t->for_dyn_chunk_info[target_loop_index].remain;
+		    if (real_r == r)
+			 target_t->for_dyn_chunk_info[target_loop_index].remain = r-1;
+		    sctk_spinlock_unlock(&(current_mvp->father->lock));   	
+#endif
 	       }
 
 	       if(real_r > 0) {
 		    //t->stolen_chunk_id = sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r;
 		    sctk_nodebug("__mpcomp_dynamic_steal2 rank=%d: get a chunk from previously visited mvp rank=%d", t->rank, t->stolen_mvp->rank);
-//#if 0      
+#if MPCOMP_USE_ATOMICS
 		    __mpcomp_get_specific_chunk_per_rank( target_t->rank, target_t->num_threads,
-							  target_t->loop_lb, target_t->loop_b,
-							  target_t->loop_incr, 
-							  target_t->loop_chunk_size, 
-							  sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
-							  from, to ) ;  
-//#endif
+			 target_t->loop_lb, target_t->loop_b,
+			 target_t->loop_incr, 
+			 target_t->loop_chunk_size, 
+			 sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
+			 from, to ) ;  
+#else
+		    __mpcomp_get_specific_chunk_per_rank( target_t->rank, target_t->num_threads,
+			 target_t->loop_lb, target_t->loop_b,
+			 target_t->loop_incr, 
+			 target_t->loop_chunk_size, 
+			 target_t->for_dyn_chunk_info[target_loop_index].total - r, 
+			 from, to ) ;  
+#endif
 		    return 1;
 	       }
 	  }
@@ -448,8 +522,11 @@ int __mpcomp_dynamic_steal(int *from, int *to)
 	       target_t = &(l->threads[0]);
 	       target_rank = target_t->rank;
 	       target_loop_index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
+#if MPCOMP_USE_ATOMICS
 	       r = sctk_atomics_load_int(&(target_t->for_dyn_chunk_info[target_loop_index].remain));
-
+#else
+	       r = target_t->for_dyn_chunk_info[target_loop_index].remain;	       
+#endif
 #if 0 
 	       if(r == -1) {
 		    sctk_nodebug("__mpcomp_dynamic_steal2 rank=%d: r=-1", t->rank);
@@ -457,9 +534,19 @@ int __mpcomp_dynamic_steal(int *from, int *to)
 		    total = __mpcomp_get_static_nb_chunks_per_rank(target_t->rank, t->num_threads, t->loop_lb, t->loop_b, t->loop_incr, t->loop_chunk_size);
 
 		    /* Store it w/out verification */
+#if MPCOMP_USE_ATOMICS
 		    sctk_atomics_store_int( &(target_t->for_dyn_chunk_info[target_loop_index].total), total);
    
 		    r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), -1, total-1);
+#else	
+		    target_t->for_dyn_chunk_info[target_loop_index].total = total;
+
+		    sctk_spinlock_lock(&(n->lock));
+		    r = target_t->for_dyn_chunk_info[target_loop_index].remain;
+		    if (r == -1)
+			 target_t->for_dyn_chunk_info[target_loop_index].remain = total-1;
+		    sctk_spinlock_unlock(&(n->lock));   	
+#endif
 
 		    if(r == -1) {
 			 __mpcomp_get_specific_chunk_per_rank(t->rank, t->num_threads, t->loop_lb, t->loop_b, t->loop_incr, t->loop_chunk_size, 0, from, to);
@@ -472,12 +559,27 @@ int __mpcomp_dynamic_steal(int *from, int *to)
 		    sctk_nodebug("__mpcomp_dynamic_steal2 rank=%d: r > 0", t->rank);
 
 		    //int real_r;
+#if MPCOMP_USE_ATOMICS
 		    real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
+#else	
+		    sctk_spinlock_lock(&(n->lock));
+		    real_r = target_t->for_dyn_chunk_info[target_loop_index].remain;
+		    if (real_r == r)
+			 target_t->for_dyn_chunk_info[target_loop_index].remain = r-1;
+		    sctk_spinlock_unlock(&(n->lock));   	
+#endif
 
 		    while( real_r > 0 && real_r != r) {
-			 sctk_nodebug("test2");
 			 r = real_r;
+#if MPCOMP_USE_ATOMICS
 			 real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
+#else	
+			 sctk_spinlock_lock(&(n->lock));
+			 real_r = target_t->for_dyn_chunk_info[target_loop_index].remain;
+			 if (real_r == r)
+			      target_t->for_dyn_chunk_info[target_loop_index].remain = r-1;
+			 sctk_spinlock_unlock(&(n->lock));   	
+#endif
 		    } 
 
 		    if( real_r > 0) {
@@ -487,12 +589,17 @@ int __mpcomp_dynamic_steal(int *from, int *to)
 			 t->stolen_mvp = target_t->mvp;
 			 //t->tree_stack = stack; /* Store stack state */
 
-//#if 0
+#if MPCOMP_USE_ATOMICS
 			 __mpcomp_get_specific_chunk_per_rank( target_t->rank, target_t->num_threads,
-							       target_t->loop_lb, target_t->loop_b, target_t->loop_incr, target_t->loop_chunk_size, 
-							       sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
-							       from, to ) ; 
-//#endif
+			      target_t->loop_lb, target_t->loop_b, target_t->loop_incr, target_t->loop_chunk_size, 
+			      sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
+			      from, to ) ; 
+#else
+			 __mpcomp_get_specific_chunk_per_rank( target_t->rank, target_t->num_threads,
+			      target_t->loop_lb, target_t->loop_b, target_t->loop_incr, target_t->loop_chunk_size, 
+			      target_t->for_dyn_chunk_info[target_loop_index].total - r, 
+			      from, to ) ; 
+#endif
 
 			 return 1;
 		    }        
@@ -578,14 +685,34 @@ int __mpcomp_dynamic_steal2(int *from, int *to)
 	  target_loop_index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
 
 	  /* Grab remaining chunks */
+#if MPCOMP_USE_ATOMICS
 	  r = sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain) );
+#else
+	  r = target_t->for_dyn_chunk_info[target_loop_index].remain;
+#endif
 
 	  if(r > 0) {
+#if MPCOMP_USE_ATOMICS
 	       real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
+#else	
+	       sctk_spinlock_lock(&(current_mvp->father->lock));
+	       real_r = target_t->for_dyn_chunk_info[target_loop_index].remain;
+	       if (real_r == r)
+		    target_t->for_dyn_chunk_info[target_loop_index].remain = r-1;
+	       sctk_spinlock_unlock(&(current_mvp->father->lock));   	
+#endif
 
 	       while ( real_r > 0 && real_r != r)  {
 		    r = real_r; 
+#if MPCOMP_USE_ATOMICS
 		    real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
+#else	
+		    sctk_spinlock_lock(&(current_mvp->father->lock));
+		    real_r = target_t->for_dyn_chunk_info[target_loop_index].remain;
+		    if (real_r == r)
+			 target_t->for_dyn_chunk_info[target_loop_index].remain = r-1;
+		    sctk_spinlock_unlock(&(current_mvp->father->lock));   	
+#endif
 	       }
 
 	       if( real_r > 0) {
@@ -593,12 +720,17 @@ int __mpcomp_dynamic_steal2(int *from, int *to)
 		    //sctk_atomics_incr_int( &(team->stats_last_mvp_chunk));
 		    //t->stolen_chunk_id = sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r;
 
-		    //#if 0
+#if MPCOMP_USE_ATOMICS
 		    __mpcomp_get_specific_chunk_per_rank( target_t->rank, target_t->num_threads,
 							  target_t->loop_lb, target_t->loop_b, target_t->loop_incr, target_t->loop_chunk_size, 
 							  sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
 							  from, to ) ; 
-		    //#endif
+#else
+		    __mpcomp_get_specific_chunk_per_rank( target_t->rank, target_t->num_threads,
+							  target_t->loop_lb, target_t->loop_b, target_t->loop_incr, target_t->loop_chunk_size, 
+							  target_t->for_dyn_chunk_info[target_loop_index].total - r, 
+							  from, to ) ; 
+#endif
 
 		    return 1;
 	       }
@@ -607,9 +739,15 @@ int __mpcomp_dynamic_steal2(int *from, int *to)
 	  n = current_mvp->father;
  
 #if 0
+#if MPCOMP_USE_ATOMICS
 	  /* Update chunks availability infos */
 	  nb_chunks_empty_children = sctk_atomics_load_int( &(n->nb_chunks_empty_children));
 	  chunks_avail = sctk_atomics_load_int( &(n->chunks_avail));
+#else
+	  /* Update chunks availability infos */
+	  nb_chunks_empty_children = n->nb_chunks_empty_children;
+	  chunks_avail = n->chunks_avail;
+#endif
 	  //nb_chunks_empty_children = sctk_atomics_fetch_and_incr_int( &(n->nb_chunks_empty_children));
 	  //if(chunks_avail == MPCOMP_CHUNKS_AVAIL) {
 	  sctk_nodebug("__mpcomp_dynamic_steal rank=%d: check chunks avail=1: nb_chunks_empty_children=%d, real nb chunks empty children=%d, node children=%d", t->rank, nb_chunks_empty_children, n->nb_chunks_empty_children, n->nb_children);
@@ -617,11 +755,18 @@ int __mpcomp_dynamic_steal2(int *from, int *to)
 	  //sctk_assert(nb_chunks_empty_children <= n->nb_children);
 
 	  if((chunks_avail == MPCOMP_CHUNKS_AVAIL) && (nb_chunks_empty_children == n->nb_children)) {
+#if MPCOMP_USE_ATOMICS
 	       sctk_atomics_store_int(&(n->chunks_avail), MPCOMP_CHUNKS_NOT_AVAIL);	
+#else
+	       n->chunks_avail = MPCOMP_CHUNKS_NOT_AVAIL;	
+#endif
 	  }
 	  else if((chunks_avail == MPCOMP_CHUNKS_AVAIL) && (nb_chunks_empty_children < n->nb_children)) {
+#if MPCOMP_USE_ATOMICS
 	       sctk_atomics_incr_int( &(n->nb_chunks_empty_children));
-      
+#else
+	       n->nb_chunks_empty_children++;
+#endif
 	  }
 	  //}
 #endif
@@ -689,48 +834,87 @@ int __mpcomp_dynamic_steal2(int *from, int *to)
 		    target_t = &(n->children.leaf[index]->threads[0]);
 		    target_rank = target_t->rank;
 		    target_loop_index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
+#if MPCOMP_USE_ATOMICS
 		    r = sctk_atomics_load_int(&(target_t->for_dyn_chunk_info[target_loop_index].remain));
+#else
+		    r = target_t->for_dyn_chunk_info[target_loop_index].remain;
+#endif
+
 #if 0 
 		    if(r == -1) {
 //#if 0        
 			 total = __mpcomp_get_static_nb_chunks_per_rank(target_t->rank, target_t->num_threads, target_t->loop_lb, target_t->loop_b, target_t->loop_incr, target_t->loop_chunk_size);
 
 			 /* Store it w/out verification */
+#if MPCOMP_USE_ATOMICS
 			 sctk_atomics_store_int( &(target_t->for_dyn_chunk_info[target_loop_index].total), total);
-//#if 0  
 			 r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), -1, total-1);
-//#if 0
+#else
+			 target_t->for_dyn_chunk_info[target_loop_index].total = total;
+
+			 sctk_spinlock_lock(&(current_mvp->father->lock));
+			 r = target_t->for_dyn_chunk_info[target_loop_index].remain;
+			 if (r == -1)
+			      target_t->for_dyn_chunk_info[target_loop_index].remain = total-1;
+			 sctk_spinlock_unlock(&(current_mvp->father->lock));
+#endif
+
+
 			 if(r == -1) {
 			      __mpcomp_get_specific_chunk_per_rank(target_t->rank, target_t->num_threads, target_t->loop_lb, target_t->loop_b, target_t->loop_incr, target_t->loop_chunk_size, 0, from, to);
  
 			      return 1;
 			 }
-//#endif           
 		    }
 #endif
  
 		    if(r > 0) {
 			 //int real_r;
+#if MPCOMP_USE_ATOMICS
 			 real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
+#else	
+		    sctk_spinlock_lock(&(current_mvp->father->lock));
+		    real_r = target_t->for_dyn_chunk_info[target_loop_index].remain;
+		    if (real_r == r)
+			 target_t->for_dyn_chunk_info[target_loop_index].remain = r-1;
+		    sctk_spinlock_unlock(&(current_mvp->father->lock));   	
+#endif
 
 			 while( real_r > 0 && real_r != r) {
 			      r = real_r;
+#if MPCOMP_USE_ATOMICS
 			      real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
+#else	
+			      sctk_spinlock_lock(&(current_mvp->father->lock));
+			      real_r = target_t->for_dyn_chunk_info[target_loop_index].remain;
+			      if (real_r == r)
+				   target_t->for_dyn_chunk_info[target_loop_index].remain = r-1;
+			      sctk_spinlock_unlock(&(current_mvp->father->lock));   	
+#endif
 			 } 
 
 			 if( real_r > 0) {
 			      //t->stolen_chunk_id = sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r;
+#if MPCOMP_USE_ATOMICS
 			      total = sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[index].total));
+#else
+			      total = target_t->for_dyn_chunk_info[index].total;
+#endif
 			      sctk_nodebug("__mpcomp_dynamic_steal2 rank=%d: chunk found: target mvp rank=%d, node depth=%d, rank=%d", t->rank, target_t->mvp->rank, n->depth, n->rank);
 			      t->stolen_mvp = target_t->mvp;
 			      //t->tree_stack = stack; /* Store stack state */
 
-			      //#if 0
+#if MPCOMP_USE_ATOMICS
 			      __mpcomp_get_specific_chunk_per_rank( target_t->rank, target_t->num_threads,
-								    target_t->loop_lb, target_t->loop_b, target_t->loop_incr, target_t->loop_chunk_size, 
-								    sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
-								    from, to ) ; 
-			      //#endif
+				   target_t->loop_lb, target_t->loop_b, target_t->loop_incr, target_t->loop_chunk_size, 
+				   sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
+				   from, to ) ; 
+#else
+			      __mpcomp_get_specific_chunk_per_rank( target_t->rank, target_t->num_threads,
+				   target_t->loop_lb, target_t->loop_b, target_t->loop_incr, target_t->loop_chunk_size, 
+				   target_t->for_dyn_chunk_info[target_loop_index].total - r, 
+				   from, to ) ; 
+#endif
 
 			      return 1;
 			 }        
@@ -739,21 +923,33 @@ int __mpcomp_dynamic_steal2(int *from, int *to)
 
 #if 0 
 		    /* Update chunks availability infos */
+#if MPCOMP_USE_ATOMICS
 		    nb_chunks_empty_children = sctk_atomics_load_int( &(n->nb_chunks_empty_children));
-		    //nb_chunks_empty_children = sctk_atomics_fetch_and_incr_int (&(n->nb_chunks_empty_children));
 		    chunks_avail = sctk_atomics_load_int( &(n->chunks_avail));
+#else
+		    nb_chunks_empty_children = n->nb_chunks_empty_children;
+		    chunks_avail = n->chunks_avail;
+#endif
 
 		    sctk_nodebug("__mpcomp_dynamic_steal rank=%d: node depth=%d, rank=%d, chunks_avail=%d, nb_children=%d, nb_chunks_empty_children=%d", t->rank, n->depth, n->rank, n->chunks_avail, n->nb_children, nb_chunks_empty_children); 
 		    //sctk_assert(nb_chunks_empty_children <= n->nb_children);
 
 		    if((chunks_avail == MPCOMP_CHUNKS_AVAIL) && (nb_chunks_empty_children == n->nb_children)) {
 			 sctk_nodebug("__mpcomp_dynamic_steal rank=%d: in node depth=%d, rank=%d, nb_children=%d, %d children are chunks empty: FLAG NOT AVAIL", t->rank, n->depth, n->rank,  n->nb_children, nb_chunks_empty_children);
+#if MPCOMP_USE_ATOMICS
 			 sctk_atomics_store_int( &(n->chunks_avail), MPCOMP_CHUNKS_NOT_AVAIL); 
+#else
+			 n->chunks_avail = MPCOMP_CHUNKS_NOT_AVAIL; 
+#endif
 			 break;
 		    }
 		    else if((chunks_avail == MPCOMP_CHUNKS_AVAIL) && (nb_chunks_empty_children < n->nb_children)) {
 			 sctk_nodebug("__mpcomp_dynamic_steal rank=%d: in node depth=%d, rank=%d, nb_chunks_empty_children=%d, increment nb chunks_empty_children", t->rank, n->depth, n->rank, nb_chunks_empty_children);
+#if MPCOMP_USE_ATOMICS
 			 sctk_atomics_incr_int( &(n->nb_chunks_empty_children)); 
+#else
+			 n->nb_chunks_empty_children++; 
+#endif
 		    }
 		    else { 
 			 sctk_nodebug("__mpcomp_dynamic_steal rank=%d: chunks_avail = %d: break", t->rank, chunks_avail);
@@ -773,15 +969,27 @@ int __mpcomp_dynamic_steal2(int *from, int *to)
 #if 0
 	  /* No chunks available */
 	  if(n->father != NULL) {
+#if MPCOMP_USE_ATOMICS
 	       nb_chunks_empty_children = sctk_atomics_load_int( &(n->father->nb_chunks_empty_children));
 	       chunks_avail = sctk_atomics_load_int( &(n->father->chunks_avail));
-	       //nb_chunks_empty_children = sctk_atomics_fetch_and_incr_int( &(n->father->nb_chunks_empty_children));
+#else
+	       nb_chunks_empty_children = n->father->nb_chunks_empty_children;
+	       chunks_avail = n->father->chunks_avail;
+#endif
 
 	       if((chunks_avail == MPCOMP_CHUNKS_AVAIL) && (nb_chunks_empty_children == n->father->nb_children)) {
+#if MPCOMP_USE_ATOMICS
 		    sctk_atomics_store_int( &(n->father->chunks_avail), MPCOMP_CHUNKS_NOT_AVAIL);
+#else
+		    n->father->chunks_avail = MPCOMP_CHUNKS_NOT_AVAIL;
+#endif
 	       }
 	       else if((chunks_avail == MPCOMP_CHUNKS_AVAIL) && (nb_chunks_empty_children < n->father->nb_children)) {
+#if MPCOMP_USE_ATOMICS
 		    sctk_atomics_incr_int( &(n->father->nb_chunks_empty_children));
+#else
+		    n->father->nb_chunks_empty_children++;
+#endif
 	       }
             
 	  }
@@ -837,24 +1045,39 @@ int __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, int lb, int b, int incr, int 
 //>>>>>>> 40b074f7195e5695689153ca61513b4e3c510e36
      /* Reinitialize the previous loop */
      index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
+#if MPCOMP_USE_ATOMICS
      sctk_atomics_store_int(&(t->for_dyn_chunk_info[index].remain), -1);
+#else
+     t->for_dyn_chunk_info[index].remain = -1;
+#endif
      t->for_dyn_current++;
 
      /* Compute the index of the dynamic for construct */
      index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
 
      /* Stop if the maximum number of alive loops is reached */
+#if MPCOMP_USE_ATOMICS
      nb_threads_exited = sctk_atomics_load_int( 
 	  &(team_info->for_dyn_nb_threads_exited[index].i));
+#else
+     nb_threads_exited = team_info->for_dyn_nb_threads_exited[index];
+#endif
 
      sctk_assert((nb_threads_exited >= 0) || (nb_threads_exited == MPCOMP_NOWAIT_STOP_SYMBOL));
 
      if (nb_threads_exited == MPCOMP_NOWAIT_STOP_SYMBOL) {
+#if MPCOMP_USE_ATOMICS
 	  while (sctk_atomics_load_int( 
 		      &(team_info->for_dyn_nb_threads_exited[index].i)) == 
 		 MPCOMP_NOWAIT_STOP_SYMBOL) {
 	       sctk_thread_yield() ;
 	  }
+#else
+	  while (team_info->for_dyn_nb_threads_exited[index] == 
+		 MPCOMP_NOWAIT_STOP_SYMBOL) {
+	       sctk_thread_yield() ;
+	  }
+#endif
      }
 
      /* Fill private info about the loop */
@@ -864,8 +1087,11 @@ int __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, int lb, int b, int incr, int 
      t->loop_chunk_size = chunk_size;     
 
      /* Capture the number of chunks remaining for this thread */
+#if MPCOMP_USE_ATOMICS
      r = sctk_atomics_load_int(&(t->for_dyn_chunk_info[index].remain));
-
+#else
+     r = t->for_dyn_chunk_info[index].remain;     
+#endif
       /* If remain is -1, it means that nothing has been initialized for this loop */
      if (r == -1) {
 	  int total;
@@ -874,11 +1100,23 @@ int __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, int lb, int b, int incr, int 
 	  total = __mpcomp_get_static_nb_chunks_per_rank(t->rank, num_threads,
 							 lb, b, incr, chunk_size);
 
+#if MPCOMP_USE_ATOMICS
 	  /* Store it w/out verification */
 	  sctk_atomics_store_int(&(t->for_dyn_chunk_info[index].total), total);
 
 	  /* Try to change the number of remaining chunks */
 	  r = sctk_atomics_cas_int(&(t->for_dyn_chunk_info[index].remain), -1, total);
+#else
+	  /* Store it w/out verification */
+	  t->for_dyn_chunk_info[index].total = total;
+
+	  /* Try to change the number of remaining chunks */
+	  sctk_spinlock_lock(&(t->mvp->father->lock));
+	  r = t->for_dyn_chunk_info[index].remain;
+	  if (r == -1)
+	       t->for_dyn_chunk_info[index].remain = total;
+	  sctk_spinlock_unlock(&(t->mvp->father->lock));        
+#endif
      }
 
      return r;
@@ -960,28 +1198,53 @@ __mpcomp_dynamic_loop_next (int *from, int *to)
 
      /* TODO check what the status is to see if we have to steal */
 
+#if MPCOMP_USE_ATOMICS
      r = sctk_atomics_load_int( &(t->for_dyn_chunk_info[index].remain) ) ;
-
+#else
+     r = t->for_dyn_chunk_info[index].remain;
+#endif
      sctk_nodebug("__mpcomp_dynamic_loop_next rank=%d: index=%d, r=%d", t->rank, index, t->for_dyn_chunk_info[index].remain);
 
      if ( r > 0 ) {
 	  int real_r ;
 
+#if MPCOMP_USE_ATOMICS
 	  real_r = sctk_atomics_cas_int( &(t->for_dyn_chunk_info[index].remain), r, r-1 ) ;
+#else
+	  sctk_spinlock_lock(&(t->mvp->father->lock));
+	  real_r = t->for_dyn_chunk_info[index].remain;
+	  if (real_r == r)
+	       t->for_dyn_chunk_info[index].remain = r-1;
+	  sctk_spinlock_unlock(&(t->mvp->father->lock));   	
+#endif
 	  while ( real_r > 0 && real_r != r ) {
 	       sctk_nodebug("__mpcomp_dynamic_loop_nex rank=%d: r > 0, real_r=%d", t->rank, real_r);
 	       r = real_r ;
+#if MPCOMP_USE_ATOMICS
 	       real_r = sctk_atomics_cas_int( &(t->for_dyn_chunk_info[index].remain), r, r-1 ) ;
+#else
+	  sctk_spinlock_lock(&(t->mvp->father->lock));
+	  real_r = t->for_dyn_chunk_info[index].remain;
+	  if (real_r == r)
+	       t->for_dyn_chunk_info[index].remain = r-1;
+	  sctk_spinlock_unlock(&(t->mvp->father->lock));   	
+#endif
 	  }
 
 	  if ( real_r > 0 ) {
 	       int chunk_id ;
 
+#if MPCOMP_USE_ATOMICS
 	       __mpcomp_get_specific_chunk_per_rank( t->rank, num_threads,
 						     t->loop_lb, t->loop_b, t->loop_incr, t->loop_chunk_size, 
 						     sctk_atomics_load_int( &(t->for_dyn_chunk_info[index].total) ) - r, 
 						     from, to ) ;
-
+#else
+	       __mpcomp_get_specific_chunk_per_rank( t->rank, num_threads,
+						     t->loop_lb, t->loop_b, t->loop_incr, t->loop_chunk_size, 
+						     t->for_dyn_chunk_info[index].total - r, 
+						     from, to ) ;
+#endif
 	       sctk_nodebug( "__mpcomp_dynamic_loop_next: Get a chunk %d -> %d", *from, *to ) ;
 
 	       return 1 ;
@@ -1049,8 +1312,15 @@ __mpcomp_dynamic_loop_end ()
 
      sctk_nodebug("__mpcomp_dynamic_loop_end rank=%d: begin", t->rank);
 
+#if MPCOMP_USE_ATOMICS
      nb_threads_exited = sctk_atomics_fetch_and_incr_int( 
 	  &(team_info->for_dyn_nb_threads_exited[index].i ) ) ;
+#else
+     sctk_spinlock_lock(&(team_info->for_dyn_lock_exit[index]));
+     nb_threads_exited = team_info->for_dyn_nb_threads_exited[index];
+     team_info->for_dyn_nb_threads_exited[index] = nb_threads_exited + 1;
+     sctk_spinlock_unlock(&(team_info->for_dyn_lock_exit[index]));
+#endif
 
      sctk_nodebug( "__mpcomp_dynamic_loop_end: Exiting loop %d: %d -> %d",
 		   index, nb_threads_exited, nb_threads_exited + 1 ) ;
@@ -1061,18 +1331,26 @@ __mpcomp_dynamic_loop_end ()
 	  int previous_index ;
 
 
+#if MPCOMP_USE_ATOMICS
 	  sctk_atomics_store_int( 
 	       &(team_info->for_dyn_nb_threads_exited[index].i), 
 	       MPCOMP_NOWAIT_STOP_SYMBOL ) ;
+#else
+	  team_info->for_dyn_nb_threads_exited[index] = MPCOMP_NOWAIT_STOP_SYMBOL;
+#endif
 
 	  previous_index = (index - 1 + MPCOMP_MAX_ALIVE_FOR_DYN + 1 ) % 
 	       ( MPCOMP_MAX_ALIVE_FOR_DYN + 1 ) ;
 
 	  sctk_nodebug( "__mpcomp_dynamic_loop_end: Move STOP symbol %d -> %d", previous_index, index ) ;
 
+#if MPCOMP_USE_ATOMICS
 	  sctk_atomics_store_int( 
 	       &(team_info->for_dyn_nb_threads_exited[previous_index].i), 
 	       0 ) ;
+#else
+	  team_info->for_dyn_nb_threads_exited[previous_index] = 0;
+#endif
      }
 
      return ;

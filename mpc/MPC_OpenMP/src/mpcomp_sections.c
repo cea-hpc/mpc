@@ -72,6 +72,7 @@ __mpcomp_sections_begin (int nb_sections)
   /* Grab the current index for sections */
   index = t->sections_current ;
 
+#if MPCOMP_USE_ATOMICS
   /* If too far ==> Wait until the last thread of first in-flight sections has finished */
   if ( sctk_atomics_load_int(
         &(team_info->sections_nb_threads_entered[index].i) )
@@ -83,10 +84,32 @@ __mpcomp_sections_begin (int nb_sections)
       sctk_thread_yield() ;
     }
   }
+#else
+  sctk_spinlock_lock (&(team_info->sections_lock_enter[index]));
+
+  /* If too far ==> Wait until the last thread of first in-flight sections has finished */  
+  if ( team_info->sections_nb_threads_entered[index] 
+       == MPCOMP_NOWAIT_STOP_SYMBOL ) {       
+       while ( team_info->sections_nb_threads_entered[index] 
+	       == MPCOMP_NOWAIT_STOP_SYMBOL ) {
+	    sctk_spinlock_unlock (&(team_info->sections_lock_enter[index]));
+	    sctk_thread_yield() ;
+	    sctk_spinlock_lock (&(team_info->sections_lock_enter[index]));
+       }
+  }
+  sctk_spinlock_unlock (&(team_info->sections_lock_enter[index]));
+#endif
 
   /* Increase the value of the current sections index */
+#if MPCOMP_USE_ATOMICS
   nb_entered_threads = sctk_atomics_fetch_and_incr_int(
       &(team_info->sections_nb_threads_entered[index].i) ) ;
+#else
+  sctk_spinlock_lock (&(team_info->sections_lock_enter[index]));
+  nb_entered_threads = team_info->sections_nb_threads_entered[index];
+  team_info->sections_nb_threads_entered[index] = nb_entered_threads + 1;
+  sctk_spinlock_unlock (&(team_info->sections_lock_enter[index]));
+#endif
 
   /* Between 1 to nb_sections => execute the corresponding section */
   if ( nb_entered_threads < nb_sections ) {
@@ -98,17 +121,29 @@ __mpcomp_sections_begin (int nb_sections)
   if ( nb_entered_threads == nb_sections + num_threads - 1 ) {
     int previous_index ;
 
+#if MPCOMP_USE_ATOMICS
     sctk_atomics_store_int(
         &(team_info->sections_nb_threads_entered[index].i),
         MPCOMP_NOWAIT_STOP_SYMBOL
         ) ;
+#else
+    sctk_spinlock_lock (&(team_info->sections_lock_enter[index]));
+    team_info->sections_nb_threads_entered[index] = MPCOMP_NOWAIT_STOP_SYMBOL;
+    sctk_spinlock_unlock (&(team_info->sections_lock_enter[index]));
+#endif
 
     previous_index = (index-1+MPCOMP_MAX_ALIVE_SECTIONS+1)%(MPCOMP_MAX_ALIVE_SECTIONS+1) ;
 
+#if MPCOMP_USE_ATOMICS
     sctk_atomics_store_int(
         &(team_info->sections_nb_threads_entered[previous_index].i),
         0
         ) ;
+#else
+    sctk_spinlock_lock (&(team_info->sections_lock_enter[previous_index]));
+    team_info->sections_nb_threads_entered[previous_index] = 0;
+    sctk_spinlock_unlock (&(team_info->sections_lock_enter[previous_index]));
+#endif
 
 
   }
@@ -152,8 +187,14 @@ __mpcomp_sections_next ()
   index = t->sections_current ;
 
   /* Increase the value of the current sections index */
+#if MPCOMP_USE_ATOMICS
   nb_entered_threads = sctk_atomics_fetch_and_incr_int(
       &(team_info->sections_nb_threads_entered[index].i) ) ;
+#else
+    sctk_spinlock_lock (&(team_info->sections_lock_enter[index]));
+    nb_entered_threads = team_info->sections_nb_threads_entered[index];
+    sctk_spinlock_unlock (&(team_info->sections_lock_enter[index]));
+#endif
 
   /* Between 1 to nb_sections => execute the corresponding section */
   if ( nb_entered_threads < t->nb_sections ) {
@@ -165,17 +206,29 @@ __mpcomp_sections_next ()
   if ( nb_entered_threads == t->nb_sections + num_threads - 1 ) {
     int previous_index ;
 
+#if MPCOMP_USE_ATOMICS
     sctk_atomics_store_int(
         &(team_info->sections_nb_threads_entered[index].i),
         MPCOMP_NOWAIT_STOP_SYMBOL
         ) ;
+#else
+    sctk_spinlock_lock (&(team_info->sections_lock_enter[index]));
+    team_info->sections_nb_threads_entered[index] = MPCOMP_NOWAIT_STOP_SYMBOL;
+    sctk_spinlock_unlock (&(team_info->sections_lock_enter[index]));
+#endif
 
     previous_index = (index-1+MPCOMP_MAX_ALIVE_SECTIONS+1)%(MPCOMP_MAX_ALIVE_SECTIONS+1) ;
 
+#if MPCOMP_USE_ATOMICS
     sctk_atomics_store_int(
         &(team_info->sections_nb_threads_entered[previous_index].i),
         0
         ) ;
+#else
+    sctk_spinlock_lock (&(team_info->sections_lock_enter[previous_index]));
+    team_info->sections_nb_threads_entered[previous_index] = 0;
+    sctk_spinlock_unlock (&(team_info->sections_lock_enter[previous_index]));
+#endif
 
   }
 
@@ -218,6 +271,7 @@ int __mpcomp_sections_coherency_entering_paralel_region() {
   error = 0 ;
   nb_stop = 0 ;
   for ( i = 0 ; i < MPCOMP_MAX_ALIVE_SINGLE + 1 ; i++ ) {
+#if MPCOMP_USE_ATOMICS
     switch ( sctk_atomics_load_int(
           &(team_info->sections_nb_threads_entered[i].i) ) ) {
       case 0:
@@ -228,6 +282,19 @@ int __mpcomp_sections_coherency_entering_paralel_region() {
       default:
         error = 1 ;
     }
+#else
+    sctk_spinlock_lock (&(team_info->sections_lock_enter[i]));    
+    switch (team_info->sections_nb_threads_entered[i]) {
+      case 0:
+        break ;
+      case MPCOMP_NOWAIT_STOP_SYMBOL:
+        nb_stop++ ;
+        break ;
+      default:
+        error = 1 ;
+    }
+    sctk_spinlock_unlock (&(team_info->sections_lock_enter[i]));    
+#endif
 
   }
 

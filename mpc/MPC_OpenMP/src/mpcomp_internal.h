@@ -245,12 +245,21 @@ extern "C"
 	  volatile int single_nb_threads_stopped;
 
 	  /* -- SECTIONS CONSTRUCT -- */
-    int sections_last_current ;
-    mpcomp_atomic_int_pad_t sections_nb_threads_entered[MPCOMP_MAX_ALIVE_SECTIONS+1] ;
-
+	  int sections_last_current ;
+#if MPCOMP_USE_ATOMICS
+	  mpcomp_atomic_int_pad_t sections_nb_threads_entered[MPCOMP_MAX_ALIVE_SECTIONS+1] ;
+#else
+	  sctk_spinlock_t sections_lock_enter[MPCOMP_MAX_ALIVE_SECTIONS + 1];
+	  volatile int sections_nb_threads_entered[MPCOMP_MAX_ALIVE_SECTIONS + 1];	  
+#endif
 	  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
 	  int for_dyn_last_current;
+#if MPCOMP_USE_ATOMICS
 	  mpcomp_atomic_int_pad_t for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
+#else
+	  sctk_spinlock_t for_dyn_lock_exit[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
+	  volatile int for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN + 1];
+#endif
 
 	  /* ORDERED CONSTRUCT */
 	  volatile int next_ordered_offset; 
@@ -266,8 +275,13 @@ extern "C"
      /* Chunk of iteration loops */
      typedef struct mpcomp_chunk_s
      {
+#if MPCOMP_USE_ATOMICS
 	  sctk_atomics_int total;    /* Number of total chunks */
 	  sctk_atomics_int remain;   /* Number of chunks remaining (to be executed) */
+#else
+	  volatile long total;    /* Number of total chunks */
+	  volatile long remain;   /* Number of chunks remaining (to be executed) */
+#endif
      } mpcomp_chunk_t;
 
 
@@ -492,17 +506,36 @@ extern "C"
 
 	  /* -- SECTIONS CONSTRUCT -- */
 	  team_info->sections_last_current = 0 ;
+#if MPCOMP_USE_ATOMICS
 	  for (i=0; i<MPCOMP_MAX_ALIVE_SECTIONS; i++)
 	       sctk_atomics_store_int(&(team_info->sections_nb_threads_entered[i].i), 0);
 	  sctk_atomics_store_int(&(team_info->sections_nb_threads_entered[MPCOMP_MAX_ALIVE_SECTIONS].i), 
 				 MPCOMP_NOWAIT_STOP_SYMBOL);
+#else
+	  for (i=0 ; i<MPCOMP_MAX_ALIVE_SECTIONS; i++) {
+	       team_info->sections_nb_threads_entered[i] = 0;
+	       team_info->sections_lock_enter[i] = SCTK_SPINLOCK_INITIALIZER;
+	  }
+	  team_info->sections_nb_threads_entered[MPCOMP_MAX_ALIVE_SINGLE] = MPCOMP_NOWAIT_STOP_SYMBOL;
+	  team_info->sections_lock_enter[MPCOMP_MAX_ALIVE_SINGLE] = SCTK_SPINLOCK_INITIALIZER;
 
+#endif
 	  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
 	  team_info->for_dyn_last_current = MPCOMP_MAX_ALIVE_FOR_DYN;
+
+#if MPCOMP_USE_ATOMICS
 	  for (i=0; i<MPCOMP_MAX_ALIVE_FOR_DYN; i++)
 	       sctk_atomics_store_int(&(team_info->for_dyn_nb_threads_exited[i].i), 0);
 	  sctk_atomics_store_int(&(team_info->for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN].i),
 				 MPCOMP_NOWAIT_STOP_SYMBOL);
+#else
+	  for (i=0; i<MPCOMP_MAX_ALIVE_FOR_DYN; i++) {
+	       team_info->for_dyn_nb_threads_exited[i] = 0;
+	       team_info->for_dyn_lock_exit[i] = SCTK_SPINLOCK_INITIALIZER;
+	  }
+	  team_info->for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN] = MPCOMP_NOWAIT_STOP_SYMBOL;
+          team_info->for_dyn_lock_exit[MPCOMP_MAX_ALIVE_FOR_DYN] = SCTK_SPINLOCK_INITIALIZER;
+#endif
 
 #ifdef MPCOMP_TASK
 	  team_info->new_depth = 0;
@@ -545,8 +578,13 @@ extern "C"
 	  t->stolen_mvp = NULL;
 	  t->start_mvp_index = -1; //AMAHEO
 
-	  for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN+1; i++)
+	  for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN+1; i++) {
+#if MPCOMP_USE_ATOMICS
 	       sctk_atomics_store_int(&(t->for_dyn_chunk_info[i].remain), -1);
+#else
+	       t->for_dyn_chunk_info[i].remain = -1;
+#endif
+	  }
 
 #ifdef MPCOMP_TASK
 	  t->tasking_init_done = 0;

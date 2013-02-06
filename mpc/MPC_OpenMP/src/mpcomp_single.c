@@ -209,6 +209,42 @@ __mpcomp_do_single (void)
 }
 #endif
 
+void *
+__mpcomp_do_single_copyprivate_begin (void)
+{
+  /* TODO */
+  not_implemented() ;
+  return NULL;
+}
+
+void
+__mpcomp_do_single_copyprivate_end (void *data)
+{
+  /* TODO */
+  not_implemented() ;
+}
+
+void __mpcomp_single_coherency_entering_parallel_region( 
+    mpcomp_team_t * team_info ) {
+  /* Count the number of STOP symbol inside SINGLE variables */
+  int i ;
+  int count_single_stop = 0 ;
+  int index_single_stop = -1 ;
+
+  for ( i = 0 ; i <= MPCOMP_MAX_ALIVE_SINGLE ; i++ ) {
+    sctk_nodebug( "Value of single[%d] -> %d", i, sctk_atomics_load_int(
+	  &(team_info->single_nb_threads_entered[i].i) ) ) ;
+    if ( sctk_atomics_load_int( 
+	  &(team_info->single_nb_threads_entered[i].i) )
+	== MPCOMP_MAX_THREADS ) {
+      count_single_stop++ ;
+      index_single_stop = i ;
+    }
+  }
+  sctk_assert( count_single_stop == 1 ) ;
+  sctk_assert( index_single_stop == team_info->single_last_current ) ;
+}
+
 #else
 int
 __mpcomp_do_single (void)
@@ -239,12 +275,7 @@ __mpcomp_do_single (void)
   /* Get the team info */
   team_info = t->team ;
   sctk_assert (team_info != NULL);
-   */
-  /* Get the rank of the current thread */
-
-     rank, index, self->vp, MPCOMP_MAX_ALIVE_SINGLE);
-
-
+  
   /* Compute the index of the current single construct */
   index = (t->single_current + 1) % (MPCOMP_MAX_ALIVE_SINGLE + 1);
 
@@ -366,7 +397,6 @@ __mpcomp_do_single (void)
 
   return 0;
 }
-#endif
 
 void *
 __mpcomp_do_single_copyprivate_begin (void)
@@ -391,15 +421,17 @@ void __mpcomp_single_coherency_entering_parallel_region(
   int index_single_stop = -1 ;
 
   for ( i = 0 ; i <= MPCOMP_MAX_ALIVE_SINGLE ; i++ ) {
-    sctk_nodebug( "Value of single[%d] -> %d", i, sctk_atomics_load_int(
-	  &(team_info->single_nb_threads_entered[i].i) ) ) ;
-    if ( sctk_atomics_load_int( 
-	  &(team_info->single_nb_threads_entered[i].i) )
-	== MPCOMP_MAX_THREADS ) {
-      count_single_stop++ ;
-      index_single_stop = i ;
+       sctk_spinlock_lock(&(team_info->single_lock_enter[i]));
+       sctk_nodebug( "Value of single[%d] -> %d", i, 
+		     team_info->single_nb_threads_entered[i]);
+    if ( team_info->single_nb_threads_entered[i]
+	 == MPCOMP_MAX_THREADS ) {
+	 count_single_stop++ ;
+	 index_single_stop = i ;
     }
+    sctk_spinlock_unlock(&(team_info->single_lock_enter[i]));
   }
   sctk_assert( count_single_stop == 1 ) ;
   sctk_assert( index_single_stop == team_info->single_last_current ) ;
 }
+#endif
