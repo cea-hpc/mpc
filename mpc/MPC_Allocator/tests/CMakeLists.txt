@@ -31,13 +31,13 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 #Now you can build your tests
 foreach(i ${ALLOC_TEST_LIST})
 	add_executable(${i} ${i}.cpp)
-	target_link_libraries(${i} ${UNITTEST_LIBRARY} alloc_primitives)
+	target_link_libraries(${i} ${UNITTEST_LIBRARY} mpcalloc_primitives)
 	add_test(${i} ${EXECUTOR_PATH} ${i})
 endforeach(i)
 
 add_executable(simple_malloc simple_malloc-1.cpp)
-target_link_libraries(simple_malloc alloc)
+target_link_libraries(simple_malloc mpcalloc)
 
 add_executable(test_mpscf_queue test_mpscf_queue.c)
-#target_link_libraries(test_mpscf_queue alloc)
+#target_link_libraries(test_mpscf_queue mpcalloc)
 add_test(test_mpscf_queue test_mpscf_queue valid)

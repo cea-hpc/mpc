@@ -263,6 +263,25 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init(void)
 }
 
 /************************* FUNCTION ************************/
+SCTK_STATIC int sctk_alloc_posix_source_round_robin(void)
+{
+	static sctk_alloc_spinlock_t lock;
+	static int cnt = -1;
+	int res;
+	if (cnt == -1)
+	{
+		sctk_alloc_spinlock_init(&lock,PTHREAD_PROCESS_PRIVATE);
+		cnt = 0;
+	}
+
+	sctk_alloc_spinlock_lock(&lock);
+	res = cnt;
+	cnt = (cnt+1)%sctk_get_numa_node_number();
+	sctk_alloc_spinlock_unlock(&lock);
+	return res;
+}
+
+/************************* FUNCTION ************************/
 /**
  * Return the local memory source depeding on the current NUMA node.
  * It will use numa_preferred() to get the current numa node.
@@ -286,6 +305,12 @@ SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(vo
 	#else
 	int node = 0;
 	#endif
+
+	#if !defined(MPC_Common) && defined(HAVE_HWLOC)
+	//use round robin on NUMA source if required, only out of MPC
+	if ((node == -1 || SCTK_DEFAULT_NUMA_MM_SOURCE_ID) && sctk_alloc_config()->numa_round_robin)
+		node = sctk_alloc_posix_source_round_robin();
+	#endif// !defined(MPC_Common) && defined HAVE_HWLOC
 
 	//check res
 	if (node == -1)

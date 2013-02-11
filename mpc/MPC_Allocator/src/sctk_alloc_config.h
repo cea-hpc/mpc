@@ -59,6 +59,9 @@ struct sctk_runtime_config_struct_allocator
 	size_t keep_mem;
 	/**Maximum size of macro blocs to keep in memory source for reuse.**/
 	size_t keep_max;
+	/** Print the config after load. **/
+	bool print_config;
+	bool numa_round_robin;
 };
 #endif //MPC_Common
 
