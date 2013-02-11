@@ -52,7 +52,7 @@ struct sctk_alloc_region
 SCTK_STATIC struct sctk_alloc_region * sctk_alloc_region_setup(void * addr);
 SCTK_STATIC struct sctk_alloc_region * sctk_alloc_region_get(void * addr);
 SCTK_STATIC void sctk_alloc_region_del(struct sctk_alloc_region * region);
-struct sctk_alloc_region_entry * sctk_alloc_region_get_entry(void* addr);
+SCTK_PUBLIC struct sctk_alloc_region_entry * sctk_alloc_region_get_entry(void* addr);
 SCTK_STATIC bool sctk_alloc_region_exist(void * addr);
 SCTK_STATIC void sctk_alloc_region_init(void);
 SCTK_STATIC void sctk_alloc_region_del_all(void);
@@ -61,7 +61,7 @@ SCTK_STATIC int sctk_alloc_region_get_id(void * addr);
 SCTK_STATIC bool sctk_alloc_region_has_ref(struct sctk_alloc_region * region);
 SCTK_STATIC void sctk_alloc_region_del_chain(struct sctk_alloc_region * region,struct sctk_alloc_chain * chain);
 SCTK_STATIC void sctk_alloc_region_unset_entry(struct sctk_alloc_macro_bloc * macro_bloc);
-struct sctk_alloc_macro_bloc * sctk_alloc_region_get_macro_bloc(void * ptr);
+SCTK_PUBLIC struct sctk_alloc_macro_bloc * sctk_alloc_region_get_macro_bloc(void * ptr);
 
 #ifdef __cplusplus
 }

@@ -93,7 +93,7 @@ SCTK_STATIC void sctk_alloc_numa_stat_at_exit(void )
 
 /************************* FUNCTION ************************/
 #ifdef HAVE_NUMAIF_H
-int sctk_alloc_numa_stat_get_node_of_page(void* ptr)
+SCTK_PUBLIC int sctk_alloc_numa_stat_get_node_of_page(void* ptr)
 {
 	//vars
 	int res;
@@ -122,7 +122,7 @@ int sctk_alloc_numa_stat_get_node_of_page(void* ptr)
 #endif
 
 /************************* FUNCTION ************************/
-void sctk_alloc_numa_stat_init(struct sctk_alloc_numa_stat_s* stat)
+SCTK_PUBLIC void sctk_alloc_numa_stat_init(struct sctk_alloc_numa_stat_s* stat)
 {
 	//errors
 	assert(stat != NULL);
@@ -145,7 +145,7 @@ void sctk_alloc_numa_stat_init(struct sctk_alloc_numa_stat_s* stat)
 }
 
 /************************* FUNCTION ************************/
-void sctk_alloc_numa_stat_reset(struct sctk_alloc_numa_stat_s* stat)
+SCTK_PUBLIC void sctk_alloc_numa_stat_reset(struct sctk_alloc_numa_stat_s* stat)
 {
 	//vars
 	int i;
@@ -186,7 +186,7 @@ void sctk_alloc_numa_stat_print(const struct sctk_alloc_numa_stat_s* stat,void *
 		printf("%-20s : %-10lu (%.01f Mo / %.01f %%)\n","NUMA unknown",stat->numa_pages[SCTK_DEFAULT_NUMA_MM_SOURCE_ID],(float)(stat->numa_pages[SCTK_DEFAULT_NUMA_MM_SOURCE_ID] * 4) / 1024.0,100.0*(float)stat->numa_pages[SCTK_DEFAULT_NUMA_MM_SOURCE_ID] / (float)stat->total_mapped);
 }
 #else //HAVE_LINUX_PAGEMAP
-void sctk_alloc_numa_stat_print(const struct sctk_alloc_numa_stat_s* stat,void * ptr,sctk_size_t size)
+SCTK_PUBLIC void sctk_alloc_numa_stat_print(const struct sctk_alloc_numa_stat_s* stat,void * ptr,sctk_size_t size)
 {
 	printf("%-20s : %s\n","Linux pagemap","Not supported");
 }
@@ -194,7 +194,7 @@ void sctk_alloc_numa_stat_print(const struct sctk_alloc_numa_stat_s* stat,void *
 
 /************************* FUNCTION ************************/
 #ifdef HAVE_LINUX_PAGEMAP
-struct sctk_alloc_numa_stat_linux_page_entry_s * sctk_alloc_numa_stat_read_pagemap(sctk_size_t first_page, sctk_size_t last_page)
+SCTK_PUBLIC struct sctk_alloc_numa_stat_linux_page_entry_s * sctk_alloc_numa_stat_read_pagemap(sctk_size_t first_page, sctk_size_t last_page)
 {
 	//vars
 	int status;
@@ -240,7 +240,7 @@ struct sctk_alloc_numa_stat_linux_page_entry_s * sctk_alloc_numa_stat_read_pagem
 
 /************************* FUNCTION ************************/
 #ifdef HAVE_LINUX_PAGEMAP
-void sctk_alloc_numa_stat_cumul(struct sctk_alloc_numa_stat_s* stat, void* ptr, size_t size)
+SCTK_PUBLIC void sctk_alloc_numa_stat_cumul(struct sctk_alloc_numa_stat_s* stat, void* ptr, size_t size)
 {
 	//vars
 	int i;
@@ -278,7 +278,7 @@ void sctk_alloc_numa_stat_cumul(struct sctk_alloc_numa_stat_s* stat, void* ptr, 
 	}
 }
 #else //HAVE_LINUX_PAGEMAP
-void sctk_alloc_numa_stat_cumul(struct sctk_alloc_numa_stat_s* stat, void* ptr, size_t size)
+SCTK_PUBLIC void sctk_alloc_numa_stat_cumul(struct sctk_alloc_numa_stat_s* stat, void* ptr, size_t size)
 {
 	//vars
 	int i;
@@ -307,7 +307,7 @@ void sctk_alloc_numa_stat_cumul(struct sctk_alloc_numa_stat_s* stat, void* ptr, 
 #endif //HAVE_LINUX_PAGEMAP
 
 /************************* FUNCTION ************************/
-void sctk_alloc_numa_stat_get(struct sctk_alloc_numa_stat_s* stat, void* ptr, size_t size)
+SCTK_PUBLIC void sctk_alloc_numa_stat_get(struct sctk_alloc_numa_stat_s* stat, void* ptr, size_t size)
 {
 	sctk_alloc_numa_stat_reset(stat);
 	sctk_alloc_numa_stat_cumul(stat,ptr,size);
@@ -315,7 +315,7 @@ void sctk_alloc_numa_stat_get(struct sctk_alloc_numa_stat_s* stat, void* ptr, si
 
 /************************* FUNCTION ************************/
 #ifdef HAVE_LINUX_PAGEMAP
-void sctk_alloc_numa_stat_print_detail(void* ptr, size_t size)
+SCTK_PUBLIC void sctk_alloc_numa_stat_print_detail(void* ptr, size_t size)
 {
 	//vars
 	int i;
@@ -359,7 +359,7 @@ void sctk_alloc_numa_stat_print_detail(void* ptr, size_t size)
 	free(table);
 }
 #else //HAVE_LINUX_PAGEMAP
-void sctk_alloc_numa_stat_print_detail(void* ptr, size_t size)
+SCTK_PUBLIC void sctk_alloc_numa_stat_print_detail(void* ptr, size_t size)
 {
 	static bool first_call = true;
 	if (first_call)
@@ -371,7 +371,7 @@ void sctk_alloc_numa_stat_print_detail(void* ptr, size_t size)
 #endif //HAVE_LINUX_PAGEMAP
 
 /************************* FUNCTION ************************/
-void sctk_alloc_numa_check(bool fatal_on_fail, const char* filename, int line, void* ptr, size_t size, int required_numa, int min_ratio, const char* message)
+SCTK_PUBLIC void sctk_alloc_numa_check(bool fatal_on_fail, const char* filename, int line, void* ptr, size_t size, int required_numa, int min_ratio, const char* message)
 {
 	//vars
 	struct sctk_alloc_numa_stat_s numa_stat;

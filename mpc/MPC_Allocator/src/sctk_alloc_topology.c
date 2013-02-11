@@ -47,7 +47,7 @@ static hwloc_topology_t topology;
 #endif
 
 /************************* FUNCTION ************************/
-void sctk_alloc_init_topology(void)
+SCTK_INTERN void sctk_alloc_init_topology(void)
 {
 	#ifdef MPC_Threads
 	sctk_topology_init();
@@ -59,7 +59,7 @@ void sctk_alloc_init_topology(void)
 
 /************************* FUNCTION ************************/
 #ifndef MPC_Threads
-int sctk_is_numa_node (void)
+SCTK_INTERN int sctk_is_numa_node (void)
 {
 	#ifdef HAVE_HWLOC
 	//avoid to request multiple times as it will not change
@@ -75,7 +75,7 @@ int sctk_is_numa_node (void)
 
 /************************* FUNCTION ************************/
 #ifndef MPC_Threads
-int sctk_get_numa_node_number ()
+SCTK_INTERN int sctk_get_numa_node_number ()
 {
 	#ifdef HAVE_HWLOC
 	//avoid to request multiple times as it will not change
@@ -91,7 +91,7 @@ int sctk_get_numa_node_number ()
 
 /************************* FUNCTION ************************/
 #ifndef MPC_Threads
-int sctk_get_node_from_cpu (const int vp)
+SCTK_INTERN int sctk_get_node_from_cpu (const int vp)
 {
 	#ifdef HAVE_HWLOC
 	if(sctk_is_numa_node ()){
@@ -109,7 +109,7 @@ int sctk_get_node_from_cpu (const int vp)
 
 /************************* FUNCTION ************************/
 #ifdef HAVE_HWLOC
-int sctk_get_first_bit_in_bitmap(hwloc_bitmap_t bitmap)
+SCTK_INTERN int sctk_get_first_bit_in_bitmap(hwloc_bitmap_t bitmap)
 {
 	int last = hwloc_bitmap_last(bitmap);
 	int current = hwloc_bitmap_first(bitmap);
@@ -127,7 +127,7 @@ int sctk_get_first_bit_in_bitmap(hwloc_bitmap_t bitmap)
 /************************* FUNCTION ************************/
 #ifndef MPC_Threads
 #ifdef HAVE_HWLOC
-int sctk_get_preferred_numa_node_no_mpc_numa_binding()
+SCTK_INTERN int sctk_get_preferred_numa_node_no_mpc_numa_binding()
 {
 	hwloc_nodeset_t nodeset = hwloc_bitmap_alloc();
 	hwloc_cpuset_t cpuset = hwloc_bitmap_alloc();
@@ -192,7 +192,7 @@ int sctk_get_preferred_numa_node_no_mpc_numa_binding()
 /************************* FUNCTION ************************/
 #ifndef MPC_Threads
 #ifdef HAVE_HWLOC
-int sctk_get_preferred_numa_node_no_mpc_thread_binding()
+SCTK_INTERN int sctk_get_preferred_numa_node_no_mpc_thread_binding()
 {
 	hwloc_nodeset_t nodeset = hwloc_bitmap_alloc();
 	hwloc_cpuset_t cpuset = hwloc_bitmap_alloc();
@@ -239,7 +239,7 @@ int sctk_get_preferred_numa_node_no_mpc_thread_binding()
 /************************* FUNCTION ************************/
 #ifndef MPC_Threads
 #ifdef HAVE_HWLOC
-int sctk_get_preferred_numa_node_no_mpc()
+SCTK_INTERN int sctk_get_preferred_numa_node_no_mpc()
 {
 	//vars
 	int res = -1;
@@ -257,7 +257,7 @@ int sctk_get_preferred_numa_node_no_mpc()
 
 /************************* FUNCTION ************************/
 #ifdef HAVE_HWLOC
-int sctk_get_preferred_numa_node()
+SCTK_INTERN int sctk_get_preferred_numa_node()
 {
 	#ifdef MPC_Threads
 	return sctk_get_node_from_cpu(sctk_get_cpu());
@@ -271,7 +271,7 @@ int sctk_get_preferred_numa_node()
 #ifndef MPC_Threads
 #ifdef HAVE_GETCPU
 #ifdef HAVE_HWLOC
-int sctk_alloc_get_current_numa_node_getcpu(void)
+SCTK_INTERN int sctk_alloc_get_current_numa_node_getcpu(void)
 {
 	//get the current cpu ID
 	unsigned int cpu_id;
@@ -291,7 +291,7 @@ int sctk_alloc_get_current_numa_node_getcpu(void)
 
 /************************* FUNCTION ************************/
 #ifdef HAVE_HWLOC
-int sctk_alloc_get_current_numa_node_default(void)
+SCTK_INTERN int sctk_alloc_get_current_numa_node_default(void)
 {
 	//if not, we can use the common memory source which is not specific to one numa node
 	//the other way can be to select by random
@@ -302,7 +302,7 @@ int sctk_alloc_get_current_numa_node_default(void)
 
 /************************* FUNCTION ************************/
 #ifdef HAVE_HWLOC
-int sctk_alloc_init_on_numa_node(void)
+SCTK_INTERN int sctk_alloc_init_on_numa_node(void)
 {
 	int node = sctk_get_preferred_numa_node();
 	if (node != -1)
@@ -315,7 +315,7 @@ int sctk_alloc_init_on_numa_node(void)
 /************************* FUNCTION ************************/
 #ifdef HAVE_HWLOC
 #ifndef MPC_Threads
-hwloc_topology_t sctk_get_topology_object(void)
+SCTK_INTERN hwloc_topology_t sctk_get_topology_object(void)
 {
 	return topology;
 }
@@ -324,7 +324,7 @@ hwloc_topology_t sctk_get_topology_object(void)
 
 /************************* FUNCTION ************************/
 #ifdef HAVE_HWLOC
-void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_node)
+SCTK_INTERN void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_node)
 {
 	//vars
 	hwloc_obj_t obj;
@@ -383,7 +383,7 @@ void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_no
  * 
  * Source : the global layout of this code is taken from hwloc documentation and examples, thanks to them.
 **/
-void sctk_alloc_topology_bind_thread_on_core(int id)
+SCTK_INTERN void sctk_alloc_topology_bind_thread_on_core(int id)
 {
 	//vars
 	int depth;
@@ -425,7 +425,7 @@ void sctk_alloc_topology_bind_thread_on_core(int id)
 	}
 }
 #else
-void sctk_alloc_topology_bind_thread_on_core(int id)
+SCTK_INTERN void sctk_alloc_topology_bind_thread_on_core(int id)
 {
 	warning("Thread binding is not supported, please enable support of hwloc at compile time.");
 }
@@ -437,7 +437,7 @@ void sctk_alloc_topology_bind_thread_on_core(int id)
  * on presence of NUMA on current node and on field "numa" of MPC configuration.
  * @return Return true if NUMA support must be used.
 **/
-bool sctk_alloc_is_numa(void)
+SCTK_INTERN bool sctk_alloc_is_numa(void)
 {
 	return sctk_is_numa_node() && sctk_alloc_config()->numa;
 }
