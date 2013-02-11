@@ -1673,7 +1673,7 @@ sctk_thread_generic_check_signals( int select ){
 	/* Get the current thread */
 	sched = &(sctk_thread_generic_self()->sched);
 	current = sched->th;
-	sctk_assert( current->sched == sched );
+	sctk_assert( &current->sched == sched );
 
 	if( expect_false( current->attr.nb_sig_pending > 0))
 			sctk_thread_generic_treat_signals( current );
@@ -1855,7 +1855,7 @@ sctk_thread_generic_join ( sctk_thread_generic_t threadp, void** val ){
   /* Get the current thread */
   sched = &(sctk_thread_generic_self()->sched);
   current = sched->th;
-  sctk_assert( current->sched == sched );
+  sctk_assert( &current->sched == sched );
   
   sctk_nodebug ("Join Thread %p", th );
 
@@ -1910,7 +1910,7 @@ sctk_thread_generic_exit( void* retval ){
   /* Get the current thread */
   sched = &(sctk_thread_generic_self()->sched);
   current = sched->th;
-  sctk_assert( current->sched == sched );
+  sctk_assert( &current->sched == sched );
 
   current->attr.return_value = retval;
 
