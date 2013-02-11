@@ -8,7 +8,7 @@ ALLOC_SOURCE_PATH="${MPC_TEST_SOURCE_DIR}/../mpc/MPC_Allocator/"
 	
 #Deps
 OPENPA_PREFIX=${MPC_INSTALL_PREFIX}/mpc-openpa-1.0.2/
-HWLOC_PREFIX=${MPC_INSTALL_PREFIX}/mpc-hwloc-1.3/
+HWLOC_PREFIX=${MPC_INSTALL_PREFIX}/mpc-hwloc-1.6.1/
 
 #create dirs
 mkdir numa || exit 1
