@@ -1029,16 +1029,14 @@ void sctk_rebuild_header (sctk_thread_ptp_message_t * msg){
   } else {
     if(msg->sctk_msg_get_source != MPC_ANY_SOURCE) {
       /* Convert the MPI source rank to MPI_COMM_WORLD according to the communicator */
-      msg->sctk_msg_get_glob_source =
-	sctk_get_comm_world_rank (msg->sctk_msg_get_communicator,msg->sctk_msg_get_source);
+      //~ msg->sctk_msg_get_glob_source = sctk_get_comm_world_rank (msg->sctk_msg_get_communicator,msg->sctk_msg_get_source);
     } else {
       /* Source task not available */
       msg->sctk_msg_get_glob_source = -1;
     }
 
     /* Convert the MPI source rank to MPI_COMM_WORLD according to the communicator */
-    msg->sctk_msg_get_glob_destination =
-      sctk_get_comm_world_rank (msg->sctk_msg_get_communicator,msg->sctk_msg_get_destination);
+    //~ msg->sctk_msg_get_glob_destination = sctk_get_comm_world_rank (msg->sctk_msg_get_communicator,msg->sctk_msg_get_destination);
   }
 
   msg->tail.need_check_in_wait = 1;
@@ -1136,80 +1134,90 @@ void sctk_request_init_request(sctk_request_t * request, int completion,
 
 void sctk_set_header_in_message (sctk_thread_ptp_message_t *
 				 msg, const int message_tag,
-				 const sctk_communicator_t
-				 communicator,
+				 const sctk_communicator_t communicator,
 				 const int source,
 				 const int destination,
 				 sctk_request_t * request,
 				 const size_t count,
-				 specific_message_tag_t specific_message_tag){
-  msg->tail.request = request;
-  msg->sctk_msg_get_source = source;
-  msg->sctk_msg_get_destination = destination;
+				 specific_message_tag_t specific_message_tag)
+{
+	msg->tail.request = request;
+	msg->sctk_msg_get_source = source;
+	msg->sctk_msg_get_destination = destination;
   
-  if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(specific_message_tag)){
-    if(source != MPC_ANY_SOURCE) {
-      msg->sctk_msg_get_glob_source = source;
-    }
-    else
-      msg->sctk_msg_get_glob_source = -1;
-
-    msg->sctk_msg_get_glob_destination = -1;
-  } else {
-	if(sctk_is_inter_comm(communicator) && (request->request_type == REQUEST_RECV))
+	if(IS_PROCESS_SPECIFIC_MESSAGE_TAG(specific_message_tag))
 	{
-		msg->sctk_msg_get_glob_source = sctk_get_remote_comm_world_rank (communicator, source);
-	}
-    else if(source != MPC_ANY_SOURCE) {
-      /* If the communicator used is the COMM_SELF */
-      if (communicator == SCTK_COMM_SELF) {
-        /* The world destination is actually ourself :) */
-        int world_src = sctk_get_task_rank ();
-        msg->sctk_msg_get_glob_source = sctk_get_comm_world_rank (communicator, world_src);
-      } else {
-        msg->sctk_msg_get_glob_source = sctk_get_comm_world_rank (communicator, source);
-      }
-    }
-    else
-      msg->sctk_msg_get_glob_source = -1;
+		if(source != MPC_ANY_SOURCE) 
+		{
+			msg->sctk_msg_get_glob_source = source;
+		}
+		else
+			msg->sctk_msg_get_glob_source = -1;
 
-	if(sctk_is_inter_comm(communicator) && (request->request_type == REQUEST_SEND))
+		msg->sctk_msg_get_glob_destination = -1;
+	} 
+	else 
 	{
-		msg->sctk_msg_get_glob_destination = sctk_get_remote_comm_world_rank (communicator, destination);
-	}
-    /* If the communicator used is the COMM_SELF */
-    else if (communicator == SCTK_COMM_SELF) {
-      /* The world destination is actually ourself :) */
-      int world_dest = sctk_get_task_rank ();
-      msg->sctk_msg_get_glob_destination = sctk_get_comm_world_rank (communicator, world_dest);
-    } else {
-      msg->sctk_msg_get_glob_destination = sctk_get_comm_world_rank (communicator, destination);
-    }
-  }
+		if(source != MPC_ANY_SOURCE) 
+		{
+			/* If the communicator used is the COMM_SELF */
+			if (communicator == SCTK_COMM_SELF) 
+			{
+				/* The world destination is actually ourself :) */
+				int world_src = sctk_get_task_rank ();
+				msg->sctk_msg_get_glob_source = sctk_get_comm_world_rank (communicator, world_src);
+			} 
+			else 
+			{
+				if((sctk_is_inter_comm(communicator)) && (request->request_type == REQUEST_RECV))
+				{
+					sctk_nodebug("recv : get comm world rank of rank %d in comm %d", source, communicator);
+					msg->sctk_msg_get_glob_source = sctk_get_remote_comm_world_rank (communicator, source);
+				}
+				else
+					msg->sctk_msg_get_glob_source = sctk_get_comm_world_rank (communicator, source);
+			}
+		}
+		else
+			msg->sctk_msg_get_glob_source = -1;
 
-  if(sctk_is_inter_comm(communicator))
-	msg->body.header.remote_communicator = sctk_get_comm_remote_id(communicator);
-  else
-    msg->body.header.remote_communicator = communicator;
+		/* If the communicator used is the COMM_SELF */
+		if (communicator == SCTK_COMM_SELF) 
+		{
+			/* The world destination is actually ourself :) */
+			int world_dest = sctk_get_task_rank ();
+			msg->sctk_msg_get_glob_destination = sctk_get_comm_world_rank (communicator, world_dest);
+		} else 
+		{
+			if((sctk_is_inter_comm(communicator)) && (request->request_type == REQUEST_SEND))
+			{
+				sctk_nodebug("send : get comm world rank of rank %d in comm %d", destination, communicator);
+				msg->sctk_msg_get_glob_destination = sctk_get_remote_comm_world_rank (communicator, destination);
+			}
+			else
+				msg->sctk_msg_get_glob_destination = sctk_get_comm_world_rank (communicator, destination);
+		}
+	}
     
-  msg->body.header.communicator = communicator;
-  msg->body.header.message_tag = message_tag;
-  msg->body.header.specific_message_tag = specific_message_tag;
-  msg->body.header.msg_size = count;
+	msg->body.header.communicator = communicator;
+	msg->body.header.message_tag = message_tag;
+	msg->body.header.specific_message_tag = specific_message_tag;
+	msg->body.header.msg_size = count;
 
-  msg->sctk_msg_get_use_message_numbering = 1;
-  /*
+	msg->sctk_msg_get_use_message_numbering = 1;
+/*  
 	if(request->request_type == REQUEST_SEND)
-	sctk_debug("Send comm %d : rang %d envoie message a rang %d", communicator, msg->sctk_msg_get_glob_source, msg->sctk_msg_get_glob_destination);
+		sctk_debug("Send comm %d : rang %d envoie message a rang %d", communicator, msg->sctk_msg_get_glob_source, msg->sctk_msg_get_glob_destination);
 	else if(request->request_type == REQUEST_RECV)
-	sctk_debug("Recv comm %d : rang %d envoie message a rang %d", communicator, msg->sctk_msg_get_glob_source, msg->sctk_msg_get_glob_destination);
-  */
-  /* A message can be sent with a NULL request (see the MPI standard) */
-  if (request) {
-    sctk_request_init_request(request,SCTK_MESSAGE_PENDING,msg,source,destination,message_tag,communicator, count, request->request_type);
-    msg->body.completion_flag = &(request->completion_flag);
-  }
-  msg->tail.need_check_in_wait = 1;
+		sctk_debug("Recv comm %d : rang %d recoit message de rang %d", communicator, msg->sctk_msg_get_glob_destination, msg->sctk_msg_get_glob_source);
+*/	
+	/* A message can be sent with a NULL request (see the MPI standard) */
+	if (request) 
+	{
+		sctk_request_init_request(request,SCTK_MESSAGE_PENDING,msg,source,destination,message_tag,communicator, count, request->request_type);
+		msg->body.completion_flag = &(request->completion_flag);
+	}
+	msg->tail.need_check_in_wait = 1;
 }
 
 /********************************************************************/
@@ -1312,7 +1320,7 @@ sctk_msg_list_t* sctk_perform_messages_search_matching(
 	header_found = &(ptr_found->msg->body.header);
 	
 	/* Match the communicator, the tag, the source and the specific message tag */
-	if((header->remote_communicator == header_found->communicator) &&
+	if((header->communicator == header_found->communicator) &&
 	   (header->specific_message_tag == header_found->specific_message_tag) &&
 	   ((header->source == header_found->source) || (header->source == MPC_ANY_SOURCE))&&
 	   ((header->message_tag == header_found->message_tag) || (header->message_tag == MPC_ANY_TAG))){
@@ -1341,7 +1349,7 @@ int sctk_perform_messages_probe_matching(sctk_internal_ptp_t* pair,
     sctk_thread_message_header_t* header_send;
     sctk_assert(ptr_send->msg != NULL);
     header_send = &(ptr_send->msg->body.header);
-    if((header->remote_communicator == header_send->communicator) &&
+    if((header->communicator == header_send->communicator) &&
        (header->specific_message_tag == header_send->specific_message_tag) &&
        ((header->source == header_send->source) || (header->source == MPC_ANY_SOURCE))&&
        ((header->message_tag == header_send->message_tag) || (header->message_tag == MPC_ANY_TAG))){
@@ -1705,7 +1713,7 @@ void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_ch
 
     dest_key.destination = msg->sctk_msg_get_glob_destination;
     src_key.destination = msg->sctk_msg_get_glob_source;
-
+	
     assume(msg->sctk_msg_get_communicator >= 0);
 
     if(msg->body.completion_flag != NULL){
@@ -1727,7 +1735,7 @@ void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_ch
     sctk_ptp_table_find(dest_key,dest_pair);
     sctk_ptp_table_find(src_key,src_pair);
     sctk_ptp_table_read_unlock();
-
+    
     if (src_pair == NULL) {
       assume(dest_pair);
       sctk_internal_ptp_add_pending(dest_pair,msg);

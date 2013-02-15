@@ -170,6 +170,7 @@ extern "C"
 #define MPC_SCATTER_TAG -5
 #define MPC_ALLTOALL_TAG -6
 #define MPC_ALLTOALLV_TAG -7
+#define MPC_BROADCAST_INTERCOMM_TAG -8
 
   typedef struct
   {
@@ -626,6 +627,7 @@ extern "C"
   int PMPC_Convert_to_intercomm (MPC_Comm comm, MPC_Group group);
   int PMPC_Comm_create_list (MPC_Comm, int *list, int nb_elem, MPC_Comm *);
   int PMPC_Comm_create (MPC_Comm, MPC_Group, MPC_Comm *);
+  int PMPC_Comm_create_from_intercomm (MPC_Comm, MPC_Group, MPC_Comm *);
   int PMPC_Comm_free (MPC_Comm *);
   int PMPC_Comm_dup (MPC_Comm, MPC_Comm *);
   int PMPC_Comm_split (MPC_Comm, int, int, MPC_Comm *);
