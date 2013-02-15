@@ -228,6 +228,7 @@ static int __INTERNAL__PMPI_Comm_rank (MPI_Comm, int *);
 static int __INTERNAL__PMPI_Comm_compare (MPI_Comm, MPI_Comm, int *);
 static int __INTERNAL__PMPI_Comm_dup (MPI_Comm, MPI_Comm *);
 static int __INTERNAL__PMPI_Comm_create (MPI_Comm, MPI_Group, MPI_Comm *);
+static int __INTERNAL__PMPI_Comm_create_from_intercomm (MPI_Comm, MPI_Group, MPI_Comm *);
 static int __INTERNAL__PMPI_Comm_split (MPI_Comm, int, int, MPI_Comm *);
 static int __INTERNAL__PMPI_Comm_free (MPI_Comm *);
 static int __INTERNAL__PMPI_Comm_test_inter (MPI_Comm, int *);
@@ -432,6 +433,7 @@ mpc_mpi_per_communicator_t* mpc_mpc_get_per_comm_data(sctk_communicator_t comm){
 
   task_specific = __MPC_get_task_specific ();
   tmp = sctk_thread_getspecific_mpc_per_comm(task_specific,comm);
+  assume(tmp != NULL);
   return tmp->mpc_mpi_per_communicator;
 }
 
@@ -2821,12 +2823,12 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 
 	PMPC_Derived_datatype(newtype, begins_out, ends_out, glob_count_out, new_lb, new_is_lb, new_ub, new_is_ub);
 
-	/*   sctk_debug("new_type %d",* newtype); */
-	/*   sctk_debug("final new_lb %d,%d new_ub %d %d",new_lb,new_is_lb,new_ub,new_is_ub); */
+	/*   sctk_nodebug("new_type %d",* newtype); */
+	/*   sctk_nodebug("final new_lb %d,%d new_ub %d %d",new_lb,new_is_lb,new_ub,new_is_ub); */
 	/*   { */
 	/*     int i ;  */
 	/*     for(i = 0; i < glob_count_out; i++){ */
-	/*       sctk_debug("%d begins %lu ends %lu",i,begins_out[i],ends_out[i]); */
+	/*       sctk_nodebug("%d begins %lu ends %lu",i,begins_out[i],ends_out[i]); */
 	/*     } */
 	/*   } */
 
@@ -4276,7 +4278,10 @@ __sctk_is_part_of_group(MPI_Group group)
 	for(i = 0 ; i <  temp_group->task_nb ; i++)
 	{
 		if(temp_group->task_list_in_global_ranks[i] == rank)
+		{
+			sctk_nodebug("rank = %d, temp_group->task_list_in_global_ranks[%d] == %d", rank, i, temp_group->task_list_in_global_ranks[i]);
 			return 1;
+		}
 	}
 	return 0;
 }
@@ -4340,62 +4345,62 @@ static int
 __INTERNAL__PMPI_Group_compare (MPI_Group mpi_group1, MPI_Group mpi_group2,
 				int *result)
 {
-  int i;
-  int is_ident = 1;
-  int is_similar = 1;
-  MPC_Group group1;
-  MPC_Group group2;
-  group1 = __sctk_convert_mpc_group (mpi_group1);
-  group2 = __sctk_convert_mpc_group (mpi_group2);
-  *result = MPI_UNEQUAL;
+	int i;
+	int is_ident = 1;
+	int is_similar = 1;
+	MPC_Group group1;
+	MPC_Group group2;
+	group1 = __sctk_convert_mpc_group (mpi_group1);
+	group2 = __sctk_convert_mpc_group (mpi_group2);
+	*result = MPI_UNEQUAL;
 
-  if (group1->task_nb != group2->task_nb)
-    {
-      *result = MPI_UNEQUAL;
-      return MPI_SUCCESS;
-    }
-
-  for (i = 0; i < group1->task_nb; i++)
-    {
-      if (group1->task_list_in_global_ranks[i] != group2->task_list_in_global_ranks[i])
+	if (group1->task_nb != group2->task_nb)
 	{
-	  is_ident = 0;
-	  break;
+		*result = MPI_UNEQUAL;
+		return MPI_SUCCESS;
 	}
-    }
 
-  if (is_ident)
-    {
-      *result = MPI_IDENT;
-      return MPI_SUCCESS;
-    }
-
-  for (i = 0; i < group1->task_nb; i++)
-    {
-      int j;
-      int found = 0;
-      for (j = 0; j < group2->task_nb; j++)
+	for (i = 0; i < group1->task_nb; i++)
 	{
-	  if (group1->task_list_in_global_ranks[i] == group2->task_list_in_global_ranks[j])
-	    {
-	      found = 1;
-	      break;
-	    }
+		if (group1->task_list_in_global_ranks[i] != group2->task_list_in_global_ranks[i])
+		{
+			is_ident = 0;
+			break;
+		}
 	}
-      if (found == 0)
+
+	if (is_ident)
 	{
-	  is_similar = 0;
-	  break;
+		*result = MPI_IDENT;
+		return MPI_SUCCESS;
 	}
-    }
 
-  if (is_similar)
-    {
-      *result = MPI_SIMILAR;
-      return MPI_SUCCESS;
-    }
+	for (i = 0; i < group1->task_nb; i++)
+	{
+		int j;
+		int found = 0;
+		for (j = 0; j < group2->task_nb; j++)
+		{
+			if (group1->task_list_in_global_ranks[i] == group2->task_list_in_global_ranks[j])
+			{
+				found = 1;
+				break;
+			}
+		}
+		if(found == 0)
+		{
+			is_similar = 0;
+			break;
+		}
+	}
 
-  return MPI_SUCCESS;
+	if (is_similar)
+	{
+		*result = MPI_SIMILAR;
+		return MPI_SUCCESS;
+	}
+
+	return MPI_SUCCESS;
 }
 
 static int
@@ -4454,7 +4459,9 @@ __INTERNAL__PMPI_Group_union (MPI_Group mpi_group1, MPI_Group mpi_group2,
 			}
 		}
     }
-
+	
+  for(i = 0 ; i < size ; i++)
+	sctk_nodebug("task_list_in_global_ranks[%d] = %d", i, (newgroup)->task_list_in_global_ranks[i]);
   (newgroup)->task_nb = size;
 
   return MPI_SUCCESS;
@@ -4612,8 +4619,9 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 
       sctk_nodebug ("first %d last %d stride %d", first, last, stride);
 
-      for (j = 0; j <= ((last - first) / (stride)); j++)
+      for (j = 0; j < ((last - first) / (stride)); j++)
 	{
+	  sctk_debug("first = %d, last = %d, stride = %d, group->task_nb = %d", first, last, stride, group->task_nb);
 	  assume (first + j * stride < group->task_nb);
 	  (newgroup)->task_list_in_global_ranks[first + j * stride] = -1;
 	  sctk_nodebug ("remove rank %d", first + j * stride);
@@ -4717,30 +4725,66 @@ __INTERNAL__PMPI_Comm_rank (MPI_Comm comm, int *rank)
 static int
 __INTERNAL__PMPI_Comm_compare (MPI_Comm comm1, MPI_Comm comm2, int *result)
 {
-  *result = MPI_UNEQUAL;
-  if (comm1 == comm2)
-    {
-      *result = MPI_IDENT;
-      return MPI_SUCCESS;
-    }
-  else
-    {
-      MPI_Group comm_group1;
-      MPI_Group comm_group2;
-
-      __INTERNAL__PMPI_Comm_group (comm1, &comm_group1);
-      __INTERNAL__PMPI_Comm_group (comm2, &comm_group2);
-
-      __INTERNAL__PMPI_Group_compare (comm_group1, comm_group2, result);
-
-      if (*result == MPI_IDENT)
+	int result_group;
+	*result = MPI_UNEQUAL;
+			
+	if(sctk_is_inter_comm (comm1) != sctk_is_inter_comm (comm2))
 	{
-	  *result = MPI_CONGRUENT;
+		sctk_debug("they are not equals %d", MPI_UNEQUAL);
+		*result = MPI_UNEQUAL;
+		return MPI_SUCCESS;
 	}
+
+	if (comm1 == comm2)
+    {	
+		sctk_debug("they are identical %d", MPI_IDENT);
+		*result = MPI_IDENT;
+		return MPI_SUCCESS;
     }
-  if (sctk_is_inter_comm (comm1) != sctk_is_inter_comm (comm2))
+	else
     {
-      *result = MPI_UNEQUAL;
+		if(sctk_get_nb_task_total(comm1) != sctk_get_nb_task_total(comm2))
+		{
+			*result = MPI_UNEQUAL;
+			return MPI_SUCCESS;
+		}
+		
+		if(comm1 == MPI_COMM_SELF || comm2 == MPI_COMM_SELF)
+		{
+			if(sctk_get_nb_task_total(comm1) != sctk_get_nb_task_total(comm2))
+				*result = MPI_UNEQUAL;
+			else
+				*result = MPI_CONGRUENT;
+			return MPI_SUCCESS;
+		}
+			
+		
+		MPI_Group comm_group1;
+		MPI_Group comm_group2;
+
+		__INTERNAL__PMPI_Comm_group (comm1, &comm_group1);
+		__INTERNAL__PMPI_Comm_group (comm2, &comm_group2);
+
+		__INTERNAL__PMPI_Group_compare (comm_group1, comm_group2, &result_group);
+
+		if (result_group == MPI_SIMILAR)
+		{
+			sctk_debug("they are similar %d", MPI_SIMILAR);
+			*result = MPI_SIMILAR;
+			return MPI_SUCCESS;
+		}
+		else if(result_group == MPI_IDENT)
+		{
+			sctk_debug("they are congruent %d", MPI_CONGRUENT);
+			*result = MPI_CONGRUENT;
+			return MPI_SUCCESS;
+		}
+		else
+		{
+			sctk_debug("They are unequal !");
+			*result = MPI_UNEQUAL;
+			return MPI_SUCCESS;
+		}
     }
 
   return MPI_SUCCESS;
@@ -4784,6 +4828,13 @@ __INTERNAL__PMPI_Comm_create (MPI_Comm comm, MPI_Group group,
 			      MPI_Comm * newcomm)
 {
   return PMPC_Comm_create (comm, __sctk_convert_mpc_group (group), newcomm);
+}
+
+static int
+__INTERNAL__PMPI_Comm_create_from_intercomm (MPI_Comm comm, MPI_Group group,
+			      MPI_Comm * newcomm)
+{
+  return PMPC_Comm_create_from_intercomm (comm, __sctk_convert_mpc_group (group), newcomm);
 }
 
 static int
@@ -4846,23 +4897,79 @@ static int
 __INTERNAL__PMPI_Intercomm_merge (MPI_Comm intercomm, int high,
 				  MPI_Comm * newintracomm)
 {
-  MPI_Group local_group;
-  MPI_Group remote_group;
-  MPI_Group new_group;
-  
-  __INTERNAL__PMPI_Comm_group (intercomm, &local_group);
-  __INTERNAL__PMPI_Comm_remote_group (intercomm, &remote_group);
-  
-  
-  if ((high && __sctk_is_part_of_group(local_group)) || (!high && __sctk_is_part_of_group(remote_group)))
-    {
-      __INTERNAL__PMPI_Group_union (remote_group, local_group, &new_group);
-    }
-  else
-    {
-      __INTERNAL__PMPI_Group_union (local_group, remote_group, &new_group);
-    }
-  return __INTERNAL__PMPI_Comm_create (intercomm, new_group, newintracomm);
+	int rank, grank, remote_high, remote_leader, local_leader;
+	sctk_communicator_t peer_comm;
+	MPI_Group local_group;
+	MPI_Group remote_group;
+	MPI_Group new_group;
+	MPC_Status status;
+	
+	__INTERNAL__PMPI_Comm_rank (MPI_COMM_WORLD, &rank);
+	__INTERNAL__PMPI_Comm_rank (intercomm, &grank);
+	__INTERNAL__PMPI_Comm_group (intercomm, &local_group);
+	__INTERNAL__PMPI_Comm_remote_group (intercomm, &remote_group);
+	
+	remote_leader = sctk_get_remote_leader(intercomm);
+	local_leader = sctk_get_local_leader(intercomm);
+	peer_comm = sctk_get_peer_comm(intercomm);
+	if(grank == local_leader)
+	{
+		sctk_nodebug("grank = %d, rank %d : local_leader %d send to remote_leader %d", grank, rank, local_leader, remote_leader);
+		__INTERNAL__PMPI_Sendrecv(&high, 1, MPC_INT, remote_leader, 629, &remote_high, 1, MPC_INT, remote_leader, 629, peer_comm, &status);
+	}
+	
+	sctk_nodebug("rank %d, grank %d : boroadcast comm %d", rank, grank, intercomm);
+	sctk_broadcast (&remote_high,sizeof(int),0,intercomm);
+	sctk_nodebug("rank %d : merge intercomm %d, high = %d, remote_high = %d", rank, intercomm, high, remote_high);
+	/* TODO : Finir le merge avec le placement des groupes en fonction des paramètres "high" */
+	if(sctk_is_in_local_group(intercomm))
+	{
+		if(high && !remote_high)
+		{
+			sctk_nodebug("high && !remote_high && in local_group");
+			__INTERNAL__PMPI_Group_union (remote_group, local_group, &new_group);
+		}
+		else if(!high && remote_high)
+		{
+			sctk_nodebug("!high && remote_high && in local_group");
+			__INTERNAL__PMPI_Group_union (local_group, remote_group, &new_group);
+		}
+		else if(high && remote_high)
+		{
+			sctk_nodebug("high && remote_high && in local_group");
+			__INTERNAL__PMPI_Group_union (local_group, remote_group, &new_group);
+		}
+		else
+		{
+			sctk_nodebug("!high && !remote_high && in local_group");
+			__INTERNAL__PMPI_Group_union (local_group, remote_group, &new_group);
+		}
+	}
+	else
+	{
+		if(high && !remote_high)
+		{
+			sctk_nodebug("high && !remote_high && in remote_group");
+			__INTERNAL__PMPI_Group_union (remote_group, local_group, &new_group);
+		}
+		else if(!high && remote_high)
+		{
+			sctk_nodebug("!high && remote_high && in remote_group");
+			__INTERNAL__PMPI_Group_union (local_group, remote_group, &new_group);
+		}
+		else if(high && remote_high)
+		{
+			sctk_nodebug("high && remote_high && in remote_group");
+			__INTERNAL__PMPI_Group_union (remote_group, local_group, &new_group);
+		}
+		else
+		{
+			sctk_nodebug("!high && !remote_high && in remote_group");
+			__INTERNAL__PMPI_Group_union (remote_group, local_group, &new_group);
+		}
+	}
+	
+	return __INTERNAL__PMPI_Comm_create_from_intercomm (intercomm, new_group, newintracomm);
 }
 
 /*
@@ -5433,14 +5540,20 @@ __INTERNAL__PMPI_Comm_set_name (MPI_Comm comm, char *comm_name)
 static int
 __INTERNAL__PMPI_Topo_test (MPI_Comm comm, int *topo_type)
 {
-  mpc_mpi_per_communicator_t* tmp;
-  mpi_topology_per_comm_t* topo;
-  tmp = mpc_mpc_get_per_comm_data(comm);
-  topo = &(tmp->topo);
-  sctk_spinlock_lock (&(topo->lock));
- *topo_type = topo->type;
-  sctk_spinlock_unlock (&(topo->lock));
-  return MPI_SUCCESS;
+	mpc_mpi_per_communicator_t* tmp;
+	mpi_topology_per_comm_t* topo;
+	tmp = mpc_mpc_get_per_comm_data(comm);
+	topo = &(tmp->topo);
+	sctk_spinlock_lock (&(topo->lock));
+
+	if((topo->type == MPI_CART) || (topo->type == MPI_GRAPH))
+		*topo_type = topo->type;
+	else
+		*topo_type = MPI_UNDEFINED;
+
+
+	sctk_spinlock_unlock (&(topo->lock));
+	return MPI_SUCCESS;
 }
 
 static int
@@ -5524,114 +5637,267 @@ INFO("Very simple approach never reorder nor take care of hardware topology")
 	}
     }
 
+	if(*comm_cart != MPC_COMM_NULL)
+	{
+		tmp = mpc_mpc_get_per_comm_data(*comm_cart);
+		topo = &(tmp->topo);
+		sctk_spinlock_lock (&(topo->lock));
+			topo->type = MPI_CART;
+			topo->data.cart.ndims = ndims;
+			topo->data.cart.reorder = reorder;
+			topo->data.cart.dims = sctk_malloc (ndims * sizeof (int));
+			memcpy (topo->data.cart.dims, dims, ndims * sizeof (int));
+			topo->data.cart.periods = sctk_malloc (ndims * sizeof (int));
+			memcpy (topo->data.cart.periods, periods, ndims * sizeof (int));
+		sctk_spinlock_unlock (&(topo->lock));
+	}
+	return res;
+}
 
-  tmp = mpc_mpc_get_per_comm_data(*comm_cart);
-  topo = &(tmp->topo);
-  sctk_spinlock_lock (&(topo->lock));
+/*
+ *  assignnodes
+ *
+ *  Function:   - assign processes to dimensions
+ *          - get "best-balanced" grid
+ *          - greedy bin-packing algorithm used
+ *          - sort dimensions in decreasing order
+ *          - dimensions array dynamically allocated
+ *  Accepts:    - # of dimensions
+ *          - # of prime factors
+ *          - array of prime factors
+ *          - array of factor counts
+ *          - ptr to array of dimensions (returned value)
+ *  Returns:    - 0 or ERROR
+ */
+static int
+assignnodes(int ndim, int nfactor, int *pfacts, int *counts, int **pdims)
+{
+    int *bins;
+    int i, j;
+    int n;
+    int f;
+    int *p;
+    int *pmin;
+          
+    if (0 >= ndim) {
+       return MPI_ERR_DIMS;
+    }
 
-  topo->type = MPI_CART;
-  topo->data.cart.ndims = ndims;
-  topo->data.cart.reorder = reorder;
-  topo->data.cart.dims =
-    sctk_malloc (ndims * sizeof (int));
-  memcpy (topo->data.cart.dims, dims,
-	  ndims * sizeof (int));
-  topo->data.cart.periods =
-    sctk_malloc (ndims * sizeof (int));
-  memcpy (topo->data.cart.periods, periods,
-	  ndims * sizeof (int));
+    /* Allocate and initialize the bins */
+    bins = (int *) sctk_malloc((unsigned) ndim * sizeof(int));
+    if (NULL == bins) {
+       return MPI_ERR_INTERN;
+    }
+    *pdims = bins;
 
-  sctk_spinlock_unlock (&(topo->lock));
-  return res;
+    for (i = 0, p = bins; i < ndim; ++i, ++p) {
+        *p = 1;
+     }
+    
+    /* Loop assigning factors from the highest to the lowest */
+    for (j = nfactor - 1; j >= 0; --j) {
+       f = pfacts[j];
+       for (n = counts[j]; n > 0; --n) {
+            /* Assign a factor to the smallest bin */
+            pmin = bins;
+            for (i = 1, p = pmin + 1; i < ndim; ++i, ++p) {
+                if (*p < *pmin) {
+                    pmin = p;
+                }
+            }
+            *pmin *= f;
+        }
+     }
+    
+     /* Sort dimensions in decreasing order (O(n^2) for now) */
+     for (i = 0, pmin = bins; i < ndim - 1; ++i, ++pmin) {
+         for (j = i + 1, p = pmin + 1; j < ndim; ++j, ++p) {
+             if (*p > *pmin) {
+                n = *p;
+                *p = *pmin;
+                *pmin = n;
+             }
+         }
+     }
+
+     return MPI_SUCCESS;
+}
+
+/*
+ *  getfactors
+ *
+ *  Function:   - factorize a number
+ *  Accepts:    - number
+ *          - # of primes
+ *          - array of primes
+ *          - ptr to array of counts (returned value)
+ *  Returns:    - 0 or ERROR
+ */
+static int
+getfactors(int num, int nprime, int *primes, int **pcounts)
+{
+    int *counts;
+    int i;
+    int *p;
+    int *c;
+    
+    if (0 >= nprime) {
+        return MPI_ERR_INTERN;
+    }
+
+    /* Allocate the factor counts array */
+    counts = (int *) sctk_malloc((unsigned) nprime * sizeof(int));
+    if (NULL == counts) {
+       return MPI_ERR_INTERN;
+    }
+
+    *pcounts = counts;
+
+    /* Loop over the prime numbers */
+    i = nprime - 1;
+    p = primes + i;
+    c = counts + i;
+
+    for (; i >= 0; --i, --p, --c) {
+        *c = 0;
+        while ((num % *p) == 0) {
+            ++(*c);
+            num /= *p;
+        }
+    }
+
+    if (1 != num) {
+        return MPI_ERR_INTERN;
+    }
+
+    return MPI_SUCCESS;
+}
+
+/*
+ *  getprimes
+ *
+ *  Function:   - get primes smaller than number
+ *          - array of primes dynamically allocated
+ *  Accepts:    - number
+ *          - ptr # of primes (returned value)
+ *          - ptr array of primes (returned values)
+ *  Returns:    - 0 or ERROR
+ */
+static int
+getprimes(int num, int *pnprime, int **pprimes) {
+
+   int i, j;
+   int n;
+   int size;
+   int *primes;
+
+   /* Allocate the array of primes */
+   size = (num / 2) + 1;
+   primes = (int *) sctk_malloc((unsigned) size * sizeof(int));
+   if (NULL == primes) {
+       return MPI_ERR_INTERN;
+   }
+   *pprimes = primes;
+
+   /* Find the prime numbers */
+   i = 0;
+   primes[i++] = 2;
+
+   for (n = 3; n <= num; n += 2) {
+      for (j = 1; j < i; ++j) {
+         if ((n % primes[j]) == 0) {
+             break;
+          }
+      }
+
+      if (j == i) {
+        if (i >= size) {
+           return MPI_ERR_DIMS;
+         }
+         primes[i++] = n;
+      }
+   }
+
+   *pnprime = i;
+   return MPI_SUCCESS;
 }
 
 static int
 __INTERNAL__PMPI_Dims_create (int nnodes, int ndims, int *dims)
 {
-  int i;
-  int j;
-  int prod = 1;
-  int dim_needed = 0;
-  int *new_dims;
-  int init_nodes;
+    int i;
+    int freeprocs;
+    int freedims;
+    int nprimes;
+    int *primes;
+    int *factors;
+    int *procs;
+    int *p;
+    int err;
 
-  init_nodes = nnodes;
+	if (NULL == dims)
+		MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_ARG, "Invalid arg dims");
+	
+	if (1 > ndims) 
+		MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_DIMS, "Invalid dims");
 
-  for (i = 0; i < ndims; i++)
+    /* Get # of free-to-be-assigned processes and # of free dimensions */
+    freeprocs = nnodes;
+    freedims = 0;
+    for (i = 0, p = dims; i < ndims; ++i,++p) 
     {
-      if (dims[i] > 0)
-	{
-	  prod *= dims[i];
-	}
-      else
-	{
-	  dim_needed++;
-	}
-      if (dims[i] < 0)
-	{
-	  MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_DIMS, "Invalid dims");
-	}
+        if (*p == 0)
+            ++freedims;
+        else if ((*p < 0) || ((nnodes % *p) != 0))
+            MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_DIMS, "Invalid dims");
+        else
+            freeprocs /= *p;
     }
 
-  if (nnodes % prod != 0)
+    if (freedims == 0) 
     {
-      MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_DIMS, "Invalid dims");
+		if (freeprocs == 1)
+			return MPI_SUCCESS;
+		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_DIMS, "Invalid dims");
     }
 
-  if (dim_needed == 0)
+    if (freeprocs < 1)
+		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_DIMS, "Invalid dims");
+    else if (freeprocs == 1) 
     {
-      return MPI_SUCCESS;
-    }
-  new_dims = malloc (dim_needed * sizeof (int));
-
-  for (j = 0; j < dim_needed; j++)
-    {
-      new_dims[j] = 1;
-    }
-  nnodes = nnodes / prod;
-
-  /*Compute decomposition */
-INFO("Approximate dims decomposition")
-  j = 0;
-  for (i = 2; i <= nnodes;)
-    {
-      if (nnodes % i == 0)
-	{
-	  new_dims[j] *= i;
-	  nnodes = nnodes / i;
-	  sctk_nodebug ("Put %d in %d (new %d) remain %d", i, j, new_dims[j],
-			nnodes);
-	  j = (j + 1) % dim_needed;
-	}
-      else
-	{
-	  i++;
-	}
+        for (i = 0; i < ndims; ++i, ++dims) 
+        {
+            if (*dims == 0)
+               *dims = 1;
+        }
+        return MPI_SUCCESS;
     }
 
-  /*Store result */
-  j = 0;
-  for (i = 0; i < ndims; i++)
+    /* Compute the relevant prime numbers for factoring */
+    if (MPI_SUCCESS != (err = getprimes(freeprocs, &nprimes, &primes))) 
+		MPI_ERROR_REPORT(MPI_COMM_WORLD, err, "Error getprimes");
+    
+    /* Factor the number of free processes */
+    if (MPI_SUCCESS != (err = getfactors(freeprocs, nprimes, primes, &factors))) 
+		MPI_ERROR_REPORT(MPI_COMM_WORLD, err, "Error getfactors");
+
+    /* Assign free processes to free dimensions */
+    if (MPI_SUCCESS != (err = assignnodes(freedims, nprimes, primes, factors, &procs))) 
+		MPI_ERROR_REPORT(MPI_COMM_WORLD, err, "Error assignnodes");
+
+    /* Return assignment results */
+    p = procs;
+    for (i = 0; i < ndims; ++i, ++dims) 
     {
-      if (dims[i] == 0)
-	{
-	  dims[i] = new_dims[j];
-	  j++;
-	}
+        if (*dims == 0)
+			*dims = *p++;
     }
-  free (new_dims);
 
-  {
-    int nb_tasks = 1;
-
-    for (i = 0; i < ndims; i++)
-      {
-	nb_tasks *= dims[i];
-      }
-    assume (init_nodes == nb_tasks);
-  }
-
-  return MPI_SUCCESS;
+    free((char *) primes);
+    free((char *) factors);
+    free((char *) procs);
+    	
+	return MPI_SUCCESS;
 }
 
 static int
@@ -5695,26 +5961,20 @@ INFO("Very simple approach never reorder nor take care of hardware topology")
 	}
     }
 
-  tmp = mpc_mpc_get_per_comm_data(*comm_graph);
-  topo = &(tmp->topo);
-  sctk_spinlock_lock (&(topo->lock));
-
-
-  topo->data.graph.nnodes = nnodes;
-  topo->data.graph.reorder = reorder;
-  topo->data.graph.index =
-    sctk_malloc (nnodes * sizeof (int));
-  memcpy (topo->data.graph.index, index,
-	  nnodes * sizeof (int));
-  topo->data.graph.edges =
-    sctk_malloc (index[nnodes - 1] * sizeof (int));
-  memcpy (topo->data.graph.edges, edges,
-	  index[nnodes - 1] * sizeof (int));
-
-  topo->data.graph.nedges = index[nnodes - 1];
-  topo->data.graph.nindex = nnodes;
-  sctk_spinlock_unlock (&(topo->lock));
-  return MPI_SUCCESS;
+	tmp = mpc_mpc_get_per_comm_data(*comm_graph);
+	topo = &(tmp->topo);
+	sctk_spinlock_lock (&(topo->lock));
+		topo->type = MPI_GRAPH;
+		topo->data.graph.nnodes = nnodes;
+		topo->data.graph.reorder = reorder;
+		topo->data.graph.index = sctk_malloc (nnodes * sizeof (int));
+		memcpy (topo->data.graph.index, index, nnodes * sizeof (int));
+		topo->data.graph.edges = sctk_malloc (index[nnodes - 1] * sizeof (int));
+		memcpy (topo->data.graph.edges, edges, index[nnodes - 1] * sizeof (int));
+		topo->data.graph.nedges = index[nnodes - 1];
+		topo->data.graph.nindex = nnodes;
+	sctk_spinlock_unlock (&(topo->lock));
+	return MPI_SUCCESS;
 }
 
 static int
@@ -5798,193 +6058,185 @@ __INTERNAL__PMPI_Cartdim_get (MPI_Comm comm, int *ndims)
 }
 
 static int
-__INTERNAL__PMPI_Cart_get (MPI_Comm comm, int maxdims, int *dims,
-			   int *periods, int *coords)
+__INTERNAL__PMPI_Cart_get (MPI_Comm comm, int maxdims, int *dims, int *periods, int *coords)
 {
-  mpc_mpi_per_communicator_t* tmp;
-  mpi_topology_per_comm_t* topo;
-  int res;
-  int rank;
+	mpc_mpi_per_communicator_t* tmp;
+	mpi_topology_per_comm_t* topo;
+	int res;
+	int rank;
 
-  tmp = mpc_mpc_get_per_comm_data(comm);
-  topo = &(tmp->topo);
+	tmp = mpc_mpc_get_per_comm_data(comm);
+	topo = &(tmp->topo);
+	__INTERNAL__PMPI_Comm_rank (comm, &rank);
+	sctk_debug("rank %d : cart get begin  topo->lock = %d", rank, topo->lock);
+	sctk_spinlock_lock (&(topo->lock));
+		if (topo->type != MPI_CART)
+		{
+			sctk_spinlock_unlock (&(topo->lock));
+			MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
+		}
 
-  sctk_spinlock_lock (&(topo->lock));
+		if (maxdims != topo->data.cart.ndims)
+		{
+			sctk_spinlock_unlock (&(topo->lock));
+			MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid max_dims");
+		}
 
-  __INTERNAL__PMPI_Comm_rank (comm, &rank);
+		memcpy (dims, topo->data.cart.dims, maxdims * sizeof (int));
+		memcpy (periods, topo->data.cart.periods, maxdims * sizeof (int));
 
-  if (topo->type != MPI_CART)
-    {
-      sctk_spinlock_unlock (&(topo->lock));
-      MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
-    }
-
-  if (maxdims != topo->data.cart.ndims)
-    {
-      sctk_spinlock_unlock (&(topo->lock));
-      MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid max_dims");
-    }
-
-  memcpy (dims, topo->data.cart.dims, maxdims * sizeof (int));
-  memcpy (periods,
-	  topo->data.cart.periods, maxdims * sizeof (int));
-
-
-
-  res = __INTERNAL__PMPI_Cart_coords (comm, rank, maxdims, coords, 1);
-  sctk_spinlock_unlock (&(topo->lock));
-  return res;
+		res = __INTERNAL__PMPI_Cart_coords (comm, rank, maxdims, coords, 1);
+	sctk_spinlock_unlock (&(topo->lock));
+	return res;
 }
 
 static int
 __INTERNAL__PMPI_Cart_rank (MPI_Comm comm, int *coords, int *rank, int locked)
 {
-  int loc_rank = 0;
-  int dims_coef = 1;
-  int i;
-  mpc_mpi_per_communicator_t* tmp;
-  mpi_topology_per_comm_t* topo;
+	int loc_rank = 0;
+	int dims_coef = 1;
+	int i;
+	mpc_mpi_per_communicator_t* tmp;
+	mpi_topology_per_comm_t* topo;
 
-  tmp = mpc_mpc_get_per_comm_data(comm);
-  topo = &(tmp->topo);
+	tmp = mpc_mpc_get_per_comm_data(comm);
+	topo = &(tmp->topo);
 
-  if (!locked)
-    sctk_spinlock_lock (&(topo->lock));
+	if (!locked)
+		sctk_spinlock_lock (&(topo->lock));
 
-  if (topo->type != MPI_CART)
-    {
-      if (!locked)
-	sctk_spinlock_unlock (&(topo->lock));
-      MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
-    }
-
-  for (i = topo->data.cart.ndims - 1 ; i >= 0 ; i--)
+	if (topo->type != MPI_CART)
 	{
-	  loc_rank += coords[i] * dims_coef ;
-	  dims_coef *= topo->data.cart.dims[i] ;
+		if (!locked)
+			sctk_spinlock_unlock (&(topo->lock));
+		MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
 	}
 
-  *rank = loc_rank;
-  sctk_nodebug ("rank %d", loc_rank);
-  if (!locked)
-    sctk_spinlock_unlock (&(topo->lock));
-  return MPI_SUCCESS;
+	for (i = topo->data.cart.ndims - 1 ; i >= 0 ; i--)
+	{
+		loc_rank += coords[i] * dims_coef ;
+		dims_coef *= topo->data.cart.dims[i] ;
+	}
+
+	*rank = loc_rank;
+	sctk_nodebug ("rank %d", loc_rank);
+	if (!locked)
+		sctk_spinlock_unlock (&(topo->lock));
+	return MPI_SUCCESS;
 }
 
 static int
 __INTERNAL__PMPI_Cart_coords (MPI_Comm comm, int init_rank, int maxdims,
 			      int *coords, int locked)
 {
-  int i;
-  int pi = 1;
-  int qi = 1;
-  int rank;
-  mpc_mpi_per_communicator_t* tmp;
-  mpi_topology_per_comm_t* topo;
+	int i;
+	int pi = 1;
+	int qi = 1;
+	int rank;
+	mpc_mpi_per_communicator_t* tmp;
+	mpi_topology_per_comm_t* topo;
 
-  tmp = mpc_mpc_get_per_comm_data(comm);
-  topo = &(tmp->topo);
+	tmp = mpc_mpc_get_per_comm_data(comm);
+	topo = &(tmp->topo);
 
-  rank = init_rank;
+	rank = init_rank;
 
-  if (!locked)
-    sctk_spinlock_lock (&(topo->lock));
+	if (!locked)
+		sctk_spinlock_lock (&(topo->lock));
 
-  if (topo->type != MPI_CART)
-    {
-      if (!locked)
-	sctk_spinlock_unlock (&(topo->lock));
-      MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
-    }
+	if (topo->type != MPI_CART)
+	{
+		if (!locked)
+			sctk_spinlock_unlock (&(topo->lock));
+		MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
+	}
 
-  if (maxdims != topo->data.cart.ndims)
-    {
-      if (!locked)
-	sctk_spinlock_unlock (&(topo->lock));
-      MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid max_dims");
-    }
+	if (maxdims != topo->data.cart.ndims)
+	{
+		if (!locked)
+			sctk_spinlock_unlock (&(topo->lock));
+		MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid max_dims");
+	}
 
-  for (i = maxdims-1; i >= 0; --i)
-    {
-      pi *= topo->data.cart.dims[i];
-      coords[i] = ( rank % pi ) / qi ;
-      qi = pi ;
-    }
+	for (i = maxdims-1; i >= 0; --i)
+	{
+		pi *= topo->data.cart.dims[i];
+		coords[i] = ( rank % pi ) / qi ;
+		qi = pi ;
+	}
 
-  if (!locked)
-    sctk_spinlock_unlock (&(topo->lock));
-  return MPI_SUCCESS;
+	if (!locked)
+		sctk_spinlock_unlock (&(topo->lock));
+	return MPI_SUCCESS;
 }
 
 static int
 __INTERNAL__PMPI_Graph_neighbors_count (MPI_Comm comm, int rank,
 					int *nneighbors)
 {
-  int start;
-  int end;
-  mpc_mpi_per_communicator_t* tmp;
-  mpi_topology_per_comm_t* topo;
+	int start;
+	int end;
+	mpc_mpi_per_communicator_t* tmp;
+	mpi_topology_per_comm_t* topo;
 
-  tmp = mpc_mpc_get_per_comm_data(comm);
-  topo = &(tmp->topo);
+	tmp = mpc_mpc_get_per_comm_data(comm);
+	topo = &(tmp->topo);
 
-  sctk_spinlock_lock (&(topo->lock));
+	sctk_spinlock_lock (&(topo->lock));
 
-  if (topo->type != MPI_GRAPH)
+	if (topo->type != MPI_GRAPH)
     {
-      sctk_spinlock_unlock (&(topo->lock));
-      MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
+		sctk_spinlock_unlock (&(topo->lock));
+		MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
     }
 
-  end = topo->data.graph.index[rank];
-  start = 0;
-  if (rank)
+	end = topo->data.graph.index[rank];
+	start = 0;
+	if (rank)
     {
-      start = topo->data.graph.index[rank - 1];
+		start = topo->data.graph.index[rank - 1];
     }
 
-  *nneighbors = end - start;
+	*nneighbors = end - start;
 
 
-  sctk_spinlock_unlock (&(topo->lock));
-  return MPI_SUCCESS;
+	sctk_spinlock_unlock (&(topo->lock));
+	return MPI_SUCCESS;
 }
 
 static int
 __INTERNAL__PMPI_Graph_neighbors (MPI_Comm comm, int rank, int maxneighbors,
 				  int *neighbors)
 {
-  int start;
-  int i;
-  mpc_mpi_per_communicator_t* tmp;
-  mpi_topology_per_comm_t* topo;
+	int start;
+	int i;
+	mpc_mpi_per_communicator_t* tmp;
+	mpi_topology_per_comm_t* topo;
 
-  tmp = mpc_mpc_get_per_comm_data(comm);
-  topo = &(tmp->topo);
+	tmp = mpc_mpc_get_per_comm_data(comm);
+	topo = &(tmp->topo);
 
-  sctk_spinlock_lock (&(topo->lock));
+	sctk_spinlock_lock (&(topo->lock));
 
-  if (topo->type != MPI_GRAPH)
+	if (topo->type != MPI_GRAPH)
     {
-      sctk_spinlock_unlock (&(topo->lock));
-      MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
+		sctk_spinlock_unlock (&(topo->lock));
+		MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
     }
 
-  start = 0;
-  if (rank)
+	start = 0;
+	if (rank)
     {
-      start = topo->data.graph.index[rank - 1];
+		start = topo->data.graph.index[rank - 1];
     }
 
-  for (i = 0;
-       i < maxneighbors && i + start < topo->data.graph.nedges;
-       i++)
+	for (i = 0; i < maxneighbors && i + start < topo->data.graph.nedges; i++)
     {
-      neighbors[i] = topo->data.graph.edges[i + start];
+		neighbors[i] = topo->data.graph.edges[i + start];
     }
 
-  sctk_spinlock_unlock (&(topo->lock));
-  return MPI_SUCCESS;
+	sctk_spinlock_unlock (&(topo->lock));
+	return MPI_SUCCESS;
 }
 
 static int
@@ -6132,108 +6384,100 @@ static int
 __INTERNAL__PMPI_Cart_sub (MPI_Comm comm, int *remain_dims,
 			   MPI_Comm * comm_new)
 {
-  int res;
-  int nb_comm;
-  int i;
-  int *coords_in_new;
-  int color;
-  int rank;
-  int size;
-  int ndims = 0;
-  int j;
-  mpc_mpi_per_communicator_t* tmp;
-  mpi_topology_per_comm_t* topo;
-  mpi_topology_per_comm_t* topo_new;
+	int res;
+	int nb_comm;
+	int i;
+	int *coords_in_new;
+	int color;
+	int rank;
+	int size;
+	int ndims = 0;
+	int j;
+	mpc_mpi_per_communicator_t* tmp;
+	mpi_topology_per_comm_t* topo;
+	mpi_topology_per_comm_t* topo_new;
 
-  tmp = mpc_mpc_get_per_comm_data(comm);
-  topo = &(tmp->topo);
+	tmp = mpc_mpc_get_per_comm_data(comm);
+	topo = &(tmp->topo);
+	__INTERNAL__PMPI_Comm_rank (comm, &rank);
+	sctk_spinlock_lock (&(topo->lock));
+		
 
-  sctk_spinlock_lock (&(topo->lock));
-  __INTERNAL__PMPI_Comm_rank (comm, &rank);
+		if (topo->type != MPI_CART)
+		{
+			sctk_spinlock_unlock (&(topo->lock));
+			MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
+		}
 
-  if (topo->type != MPI_CART)
-    {
-      sctk_spinlock_unlock (&(topo->lock));
-      MPI_ERROR_REPORT (comm, MPI_ERR_TOPOLOGY, "Invalid type");
-    }
+		coords_in_new = malloc (topo->data.cart.ndims * sizeof (int));
 
-  coords_in_new =
-    malloc (topo->data.cart.ndims * sizeof (int));
+		res = __INTERNAL__PMPI_Cart_coords (comm, rank, topo->data.cart.ndims, coords_in_new, 1);
+		if (res != MPI_SUCCESS)
+		{
+			sctk_spinlock_unlock (&(topo->lock));
+			return res;
+		}
 
-  res =
-    __INTERNAL__PMPI_Cart_coords (comm, rank,
-				  topo->data.cart.ndims,
-				  coords_in_new, 1);
-  if (res != MPI_SUCCESS)
-    {
-      sctk_spinlock_unlock (&(topo->lock));
-      return res;
-    }
+		nb_comm = 1;
+		for (i = 0; i < topo->data.cart.ndims; i++)
+		{
+			sctk_nodebug ("Remain %d %d", i, remain_dims[i]);
+			if (remain_dims[i] == 0)
+			{
+				nb_comm *= topo->data.cart.dims[i];
+				coords_in_new[i] = 0;
+			}
+			else
+			{
+				ndims++;
+			}
+		}
 
-  nb_comm = 1;
-  for (i = 0; i < topo->data.cart.ndims; i++)
-    {
-      sctk_nodebug ("Remain %d %d", i, remain_dims[i]);
-      if (remain_dims[i] == 0)
-	{
-	  nb_comm *= topo->data.cart.dims[i];
-	  coords_in_new[i] = 0;
-	}
-      else
-	{
-	  ndims++;
-	}
-    }
+		sctk_nodebug ("%d new comms", nb_comm);
 
-  sctk_nodebug ("%d new comms", nb_comm);
+		res = __INTERNAL__PMPI_Cart_rank (comm, coords_in_new, &color, 1);
+		if (res != MPI_SUCCESS)
+		{
+			sctk_spinlock_unlock (&(topo->lock));
+			return res;
+		}
 
-  res = __INTERNAL__PMPI_Cart_rank (comm, coords_in_new, &color, 1);
-  if (res != MPI_SUCCESS)
-    {
-      sctk_spinlock_unlock (&(topo->lock));
-      return res;
-    }
+		sctk_nodebug ("%d color", color);
+		res = __INTERNAL__PMPI_Comm_split (comm, color, rank, comm_new);
+		if (res != MPI_SUCCESS)
+		{
+			sctk_spinlock_unlock (&(topo->lock));
+			return res;
+		}
 
-  sctk_nodebug ("%d color", color);
-  res = __INTERNAL__PMPI_Comm_split (comm, color, rank, comm_new);
-  if (res != MPI_SUCCESS)
-    {
-      sctk_spinlock_unlock (&(topo->lock));
-      return res;
-    }
+		sctk_free (coords_in_new);
 
-  sctk_free (coords_in_new);
+		tmp = mpc_mpc_get_per_comm_data(*comm_new);
+		topo_new = &(tmp->topo);
 
-  mpc_mpc_get_per_comm_data(*comm_new);
-  topo_new = &(tmp->topo);
+		topo_new->type = MPI_CART;
+		topo_new->data.cart.ndims = ndims;
+		topo_new->data.cart.reorder = 0;
+		topo_new->lock = SCTK_SPINLOCK_INITIALIZER;
+		topo_new->data.cart.dims = sctk_malloc (ndims * sizeof (int));
+		topo_new->data.cart.periods = sctk_malloc (ndims * sizeof (int));
 
-  topo_new->type = MPI_CART;
-  topo_new->data.cart.ndims = ndims;
-  topo_new->data.cart.reorder = 0;
-  topo_new->data.cart.dims =
-    sctk_malloc (ndims * sizeof (int));
-  topo_new->data.cart.periods =
-    sctk_malloc (ndims * sizeof (int));
+		j = 0;
+		for (i = 0; i < topo->data.cart.ndims; i++)
+		{
+			if (remain_dims[i])
+			{
+				topo_new->data.cart.dims[j] = topo->data.cart.dims[i];
+				topo_new->data.cart.periods[j] = topo->data.cart.periods[i];
+				j++;
+			}
+		}
 
-  j = 0;
-  for (i = 0; i < topo->data.cart.ndims; i++)
-    {
-      if (remain_dims[i])
-	{
-	  topo_new->data.cart.dims[j] =
-	    topo->data.cart.dims[i];
-	  topo_new->data.cart.periods[j] =
-	    topo->data.cart.periods[i];
-	  j++;
-	}
-    }
-
-
-  __INTERNAL__PMPI_Comm_size (*comm_new, &size);
-  __INTERNAL__PMPI_Comm_rank (*comm_new, &rank);
-  sctk_nodebug ("%d on %d new rank", rank, size);
-  sctk_spinlock_unlock (&(topo->lock));
-  return MPI_SUCCESS;
+		__INTERNAL__PMPI_Comm_size (*comm_new, &size);
+		__INTERNAL__PMPI_Comm_rank (*comm_new, &rank);
+		sctk_nodebug ("%d on %d new rank", rank, size);
+	sctk_spinlock_unlock (&(topo->lock));
+	return MPI_SUCCESS;
 }
 
 static int
@@ -7633,6 +7877,7 @@ PMPI_Group_compare (MPI_Group group1, MPI_Group group2, int *result)
 int
 PMPI_Comm_group (MPI_Comm comm, MPI_Group * group)
 {
+	sctk_nodebug("Enter Comm_group");
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Comm_group (comm, group);
   SCTK__MPI_Check_retrun_val (res, comm);
@@ -7717,6 +7962,7 @@ PMPI_Group_free (MPI_Group * group)
 int
 PMPI_Comm_size (MPI_Comm comm, int *size)
 {
+	sctk_nodebug("Enter Comm_size comm %d", comm);
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Comm_size (comm, size);
@@ -7726,6 +7972,7 @@ PMPI_Comm_size (MPI_Comm comm, int *size)
 int
 PMPI_Comm_rank (MPI_Comm comm, int *rank)
 {
+	sctk_nodebug("Enter Comm_rank comm %d", comm);
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Comm_rank (comm, rank);
@@ -7735,17 +7982,30 @@ PMPI_Comm_rank (MPI_Comm comm, int *rank)
 int
 PMPI_Comm_compare (MPI_Comm comm1, MPI_Comm comm2, int *result)
 {
-  MPI_Comm comm = MPI_COMM_WORLD;
-  int res = MPI_ERR_INTERN;
-  mpi_check_comm (comm1, comm1);
-  mpi_check_comm (comm2, comm2);
-  res = __INTERNAL__PMPI_Comm_compare (comm1, comm2, result);
-  SCTK__MPI_Check_retrun_val (res, comm);
+	sctk_nodebug("Enter Comm_compare");
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
+	
+	if(comm1 < 0 || comm2 < 0)
+	{
+		if(comm1 != comm2)
+			*result = MPI_UNEQUAL;
+		else
+			*result = MPI_IDENT;
+		return MPI_ERR_ARG;
+	}
+			
+	mpi_check_comm (comm1, comm1);
+	mpi_check_comm (comm2, comm2);
+	res = __INTERNAL__PMPI_Comm_compare (comm1, comm2, result);
+	sctk_debug("result compare comm %d && comm %d = %d", comm1, comm2, *result);
+	SCTK__MPI_Check_retrun_val (res, comm);
 }
 
 int
 PMPI_Comm_dup (MPI_Comm comm, MPI_Comm * newcomm)
 {
+	sctk_nodebug("Enter Comm_dup");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   if (newcomm == NULL)
@@ -7759,6 +8019,7 @@ PMPI_Comm_dup (MPI_Comm comm, MPI_Comm * newcomm)
 int
 PMPI_Comm_create (MPI_Comm comm, MPI_Group group, MPI_Comm * newcomm)
 {
+	sctk_nodebug("Enter Comm_create");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   if (newcomm == NULL)
@@ -7778,6 +8039,7 @@ PMPI_Intercomm_create (MPI_Comm local_comm, int local_leader,
 		       MPI_Comm peer_comm, int remote_leader, int tag,
 		       MPI_Comm * newintercomm)
 {
+	sctk_nodebug("Enter Intercomm_create");
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   
@@ -7785,15 +8047,14 @@ PMPI_Intercomm_create (MPI_Comm local_comm, int local_leader,
     {
       MPI_ERROR_REPORT (comm, MPI_ERR_COMM, "");
     }
-  res =
-    __INTERNAL__PMPI_Intercomm_create (local_comm, local_leader, peer_comm,
-				       remote_leader, tag, newintercomm);
+  res = __INTERNAL__PMPI_Intercomm_create (local_comm, local_leader, peer_comm, remote_leader, tag, newintercomm);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
 int
 PMPI_Comm_split (MPI_Comm comm, int color, int key, MPI_Comm * newcomm)
 {
+	sctk_nodebug("Enter Comm_split");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   if (newcomm == NULL)
@@ -7808,6 +8069,7 @@ PMPI_Comm_split (MPI_Comm comm, int color, int key, MPI_Comm * newcomm)
 int
 PMPI_Comm_free (MPI_Comm * comm)
 {
+	sctk_nodebug("Enter Comm_free");
   int res = MPI_ERR_INTERN;
   if (comm == NULL)
     {
@@ -7821,6 +8083,7 @@ PMPI_Comm_free (MPI_Comm * comm)
 int
 PMPI_Comm_test_inter (MPI_Comm comm, int *flag)
 {
+	sctk_nodebug("Enter Comm_test_inter");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Comm_test_inter (comm, flag);
@@ -7830,6 +8093,7 @@ PMPI_Comm_test_inter (MPI_Comm comm, int *flag)
 int
 PMPI_Comm_remote_size (MPI_Comm comm, int *size)
 {
+	sctk_nodebug("Enter Comm_remote_size comm %d", comm);
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Comm_remote_size (comm, size);
@@ -7839,6 +8103,7 @@ PMPI_Comm_remote_size (MPI_Comm comm, int *size)
 int
 PMPI_Comm_remote_group (MPI_Comm comm, MPI_Group * group)
 {
+	sctk_nodebug("Enter Comm_remote_group");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Comm_remote_group (comm, group);
@@ -7848,6 +8113,7 @@ PMPI_Comm_remote_group (MPI_Comm comm, MPI_Group * group)
 int
 PMPI_Intercomm_merge (MPI_Comm intercomm, int high, MPI_Comm * newintracomm)
 {
+	sctk_nodebug("Enter Intercomm_merge");
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Intercomm_merge (intercomm, high, newintracomm);
@@ -7915,6 +8181,7 @@ int
 PMPI_Cart_create (MPI_Comm comm_old, int ndims, int *dims, int *periods,
 		  int reorder, MPI_Comm * comm_cart)
 {
+	sctk_debug("Enter PMPI_Cart_create");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm_old, comm_old);
   res =
@@ -7926,6 +8193,7 @@ PMPI_Cart_create (MPI_Comm comm_old, int ndims, int *dims, int *periods,
 int
 PMPI_Dims_create (int nnodes, int ndims, int *dims)
 {
+	sctk_debug("Enter PMPI_Dims_create");
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Dims_create (nnodes, ndims, dims);
@@ -7936,6 +8204,7 @@ int
 PMPI_Graph_create (MPI_Comm comm_old, int nnodes, int *index, int *edges,
 		   int reorder, MPI_Comm * comm_graph)
 {
+	sctk_debug("Enter PMPI_Graph_create");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm_old, comm_old);
   res =
@@ -7947,6 +8216,7 @@ PMPI_Graph_create (MPI_Comm comm_old, int nnodes, int *index, int *edges,
 int
 PMPI_Graphdims_get (MPI_Comm comm, int *nnodes, int *nedges)
 {
+	sctk_debug("Enter PMPI_Graphdims_get");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Graphdims_get (comm, nnodes, nedges);
@@ -7957,6 +8227,7 @@ int
 PMPI_Graph_get (MPI_Comm comm, int maxindex, int maxedges,
 		int *index, int *edges)
 {
+	sctk_debug("Enter PMPI_Graph_get");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Graph_get (comm, maxindex, maxedges, index, edges);
@@ -7966,6 +8237,7 @@ PMPI_Graph_get (MPI_Comm comm, int maxindex, int maxedges,
 int
 PMPI_Cartdim_get (MPI_Comm comm, int *ndims)
 {
+	sctk_debug("Enter PMPI_Cartdim_get");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Cartdim_get (comm, ndims);
@@ -7976,6 +8248,7 @@ int
 PMPI_Cart_get (MPI_Comm comm, int maxdims, int *dims, int *periods,
 	       int *coords)
 {
+	sctk_debug("Enter PMPI_Cart_get");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Cart_get (comm, maxdims, dims, periods, coords);
@@ -7985,6 +8258,7 @@ PMPI_Cart_get (MPI_Comm comm, int maxdims, int *dims, int *periods,
 int
 PMPI_Cart_rank (MPI_Comm comm, int *coords, int *rank)
 {
+	sctk_debug("Enter PMPI_Cart_rank");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Cart_rank (comm, coords, rank, 0);
@@ -7994,6 +8268,7 @@ PMPI_Cart_rank (MPI_Comm comm, int *coords, int *rank)
 int
 PMPI_Cart_coords (MPI_Comm comm, int rank, int maxdims, int *coords)
 {
+	sctk_debug("Enter PMPI_Cart_coords");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Cart_coords (comm, rank, maxdims, coords, 0);
@@ -8033,6 +8308,7 @@ PMPI_Cart_shift (MPI_Comm comm, int direction, int displ, int *source,
 int
 PMPI_Cart_sub (MPI_Comm comm, int *remain_dims, MPI_Comm * comm_new)
 {
+	sctk_debug("Enter PMPI_Cart_sub");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Cart_sub (comm, remain_dims, comm_new);
@@ -8043,6 +8319,7 @@ int
 PMPI_Cart_map (MPI_Comm comm_old, int ndims, int *dims, int *periods,
 	       int *newrank)
 {
+	sctk_debug("Enter PMPI_Cart_map");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm_old, comm_old);
   res = __INTERNAL__PMPI_Cart_map (comm_old, ndims, dims, periods, newrank);
@@ -8053,6 +8330,7 @@ int
 PMPI_Graph_map (MPI_Comm comm_old, int nnodes, int *index, int *edges,
 		int *newrank)
 {
+	sctk_debug("Enter PMPI_Graph_map");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm_old, comm_old);
   res = __INTERNAL__PMPI_Graph_map (comm_old, nnodes, index, edges, newrank);
@@ -8220,7 +8498,86 @@ PMPI_Comm_set_name (MPI_Comm comm, char *comm_name)
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
+int MPC_Mpi_null_delete_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
+                    void* attribute_val_in, void* attribute_val_out, int* flag )
+{
+	return MPI_SUCCESS;
+}
+
+int MPC_Mpi_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
+                    void* attribute_val_in, void* attribute_val_out, int* flag )
+{
+	*flag = 0;
+	return MPI_SUCCESS;
+}
+
 int MPC_Mpi_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
+                    void* attribute_val_in, void* attribute_val_out, int* flag )
+{
+   *flag = 1;
+   *(void**)attribute_val_out = attribute_val_in;
+   return MPI_SUCCESS;
+}
+
+/* type */
+int MPC_Mpi_type_null_delete_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
+                    void* attribute_val_in, void* attribute_val_out, int* flag )
+{
+	return MPI_SUCCESS;
+}
+
+int MPC_Mpi_type_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
+                    void* attribute_val_in, void* attribute_val_out, int* flag )
+{
+	*flag = 0;
+	return MPI_SUCCESS;
+}
+
+int MPC_Mpi_type_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
+                    void* attribute_val_in, void* attribute_val_out, int* flag )
+{
+   *flag = 1;
+   *(void**)attribute_val_out = attribute_val_in;
+   return MPI_SUCCESS;
+}
+
+/* comm */
+int MPC_Mpi_comm_null_delete_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
+                    void* attribute_val_in, void* attribute_val_out, int* flag )
+{
+	return MPI_SUCCESS;
+}
+
+int MPC_Mpi_comm_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
+                    void* attribute_val_in, void* attribute_val_out, int* flag )
+{
+	*flag = 0;
+	return MPI_SUCCESS;
+}
+
+int MPC_Mpi_comm_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
+                    void* attribute_val_in, void* attribute_val_out, int* flag )
+{
+   *flag = 1;
+   *(void**)attribute_val_out = attribute_val_in;
+   return MPI_SUCCESS;
+}
+
+/* win */
+int MPC_Mpi_win_null_delete_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
+                    void* attribute_val_in, void* attribute_val_out, int* flag )
+{
+	return MPI_SUCCESS;
+}
+
+int MPC_Mpi_win_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
+                    void* attribute_val_in, void* attribute_val_out, int* flag )
+{
+	*flag = 0;
+	return MPI_SUCCESS;
+}
+
+int MPC_Mpi_win_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
                     void* attribute_val_in, void* attribute_val_out, int* flag )
 {
    *flag = 1;

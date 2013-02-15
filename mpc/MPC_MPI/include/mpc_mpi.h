@@ -188,9 +188,22 @@ extern "C"
   typedef int (MPI_Copy_function) (MPI_Comm, int, void *, void *, void *,
 				   int *);
   typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
-#define MPI_NULL_COPY_FN   ((MPI_Copy_function *)NULL)
-#define MPI_NULL_DELETE_FN ((MPI_Delete_function *)NULL)
+
+#define MPI_NULL_DELETE_FN ((MPI_Copy_function *)MPC_Mpi_null_delete_fn)
+#define MPI_NULL_COPY_FN ((MPI_Copy_function *)MPC_Mpi_null_copy_fn)
 #define MPI_DUP_FN ((MPI_Copy_function *)MPC_Mpi_dup_fn)
+
+#define MPI_TYPE_NULL_DELETE_FN ((MPI_Copy_function *)MPC_Mpi_type_null_delete_fn)
+#define MPI_TYPE_NULL_COPY_FN ((MPI_Copy_function *)MPC_Mpi_type_null_copy_fn)
+#define MPI_TYPE_DUP_FN ((MPI_Copy_function *)MPC_Mpi_type_dup_fn)
+
+#define MPI_COMM_NULL_DELETE_FN ((MPI_Copy_function *)MPC_Mpi_comm_null_delete_fn)
+#define MPI_COMM_NULL_COPY_FN ((MPI_Copy_function *)MPC_Mpi_comm_null_copy_fn)
+#define MPI_COMM_DUP_FN ((MPI_Copy_function *)MPC_Mpi_comm_dup_fn)
+
+#define MPI_WIN_NULL_DELETE_FN ((MPI_Copy_function *)MPC_Mpi_win_null_delete_fn)
+#define MPI_WIN_NULL_COPY_FN ((MPI_Copy_function *)MPC_Mpi_win_null_copy_fn)
+#define MPI_WIN_DUP_FN ((MPI_Copy_function *)MPC_Mpi_win_dup_fn)
 
   extern const int MPI_TAG_UB;
   extern const int MPI_HOST;

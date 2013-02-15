@@ -101,7 +101,9 @@ extern "C"
   typedef enum {
     REQUEST_NULL = 0,
     REQUEST_SEND = 1,
-    REQUEST_RECV = 2
+    REQUEST_RECV = 2,
+    REQUEST_SEND_COLL = 3,
+    REQUEST_RECV_COLL = 4 
   } sctk_request_type_t;
 
   typedef struct sctk_thread_message_header_s
@@ -110,11 +112,10 @@ extern "C"
     int source;
     int destination;
     sctk_communicator_t communicator;
-    /* partner in case of intercomm */
-    sctk_communicator_t remote_communicator;
     int message_tag;
     int message_number;
-
+	int glob_source;
+    int glob_destination;
     char use_message_numbering;
     specific_message_tag_t specific_message_tag;
 
@@ -207,8 +208,6 @@ typedef struct {
   typedef struct {
     char remote_source;
     char remote_destination;
-    int glob_source;
-    int glob_destination;
 
     int need_check_in_wait;
 
@@ -251,8 +250,8 @@ typedef struct {
 #define sctk_msg_get_use_message_numbering body.header.use_message_numbering
 #define sctk_msg_get_source body.header.source
 #define sctk_msg_get_destination body.header.destination
-#define sctk_msg_get_glob_source tail.glob_source
-#define sctk_msg_get_glob_destination tail.glob_destination
+#define sctk_msg_get_glob_source body.header.glob_source
+#define sctk_msg_get_glob_destination body.header.glob_destination
 #define sctk_msg_get_communicator body.header.communicator
 #define sctk_msg_get_message_tag body.header.message_tag
 #define sctk_msg_get_message_number body.header.message_number

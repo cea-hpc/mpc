@@ -55,20 +55,17 @@ sctk_spinlock_lock (sctk_spinlock_t * lock)
 {
   volatile int *p = lock;
   int i=0, j=0;
-  //~ fprintf(stderr,"debut spinlock i = %d, p = %d\n", i, *p);
   while (expect_true (sctk_test_and_set (p)))
     {
 		
       do
 	{
-		//~ fprintf(stderr,"j = %d, i = %d, p = %d\n", j, i, *p);
     	sctk_cpu_relax ();
 	}
       while (*p);
       
       i++;
     }
-//~ fprintf(stderr,"fin spinlock i = %d, p = %d\n", i, *p);
   return 0 ;
 }
 
