@@ -2356,7 +2356,7 @@
 ./mpc-hwloc
     VERSIONS
     configure
-    hwloc-1.2.tar.gz
+    hwloc-1.6.1.tar.gz
 
 ./mpc-hydra
     VERSIONS
