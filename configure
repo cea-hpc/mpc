@@ -502,6 +502,10 @@ if test "$mod" != "#" ; then
 	esac
 	printf "\n" >> Makefile
 
+	#generic rule name
+	printf "${mod}_make:${FULL_NAME}_make\n" >> Makefile
+    printf "\n" >> Makefile
+
 	#TODO Cleanup this, the cases must be done in modules
 	#This can be done by providing a Makefile template in each modules
 	printf "${FULL_NAME}_install: ${FULL_NAME}_make\n" >> Makefile
@@ -517,6 +521,10 @@ if test "$mod" != "#" ; then
 			;;
 	esac
 	printf "\n" >> Makefile
+
+	#generic rule name
+	printf "${mod}_install:${FULL_NAME}_install\n" >> Makefile
+    printf "\n" >> Makefile
   fi
 fi
 done < ${CONFIG_FILE}
