@@ -114,6 +114,13 @@ extern "C"
 	  MPCOMP_MYSELF_LEAF = 2,
      } mpcomp_myself_t ;
 
+     enum mpcomp_topo_obj_type {
+	  MPCOMP_TOPO_OBJ_SOCKET, 
+	  MPCOMP_TOPO_OBJ_CORE, 
+	  MPCOMP_TOPO_OBJ_THREAD, 
+	  MPCOMP_TOPO_OBJ_COUNT
+     };
+
 
 /*****************
  ****** STRUCTURES 

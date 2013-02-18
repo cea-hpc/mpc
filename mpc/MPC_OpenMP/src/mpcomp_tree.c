@@ -69,6 +69,84 @@ unsigned int __mpcomp_get_cpu_number_below(hwloc_obj_t obj)
      return hwloc_bitmap_weight(obj->cpuset);
 }
 
+
+/* 
+ * Return the depth of 'type' object kind from topology 'topology' 
+ * in 'new_topology'.  
+ */
+static unsigned __mpcomp_get_new_depth(hwloc_obj_type_t type, hwloc_topology_t topology, 
+			      hwloc_topology_t new_topology)
+{
+     int nbobjs = hwloc_get_nbobjs_by_type(topology, type);
+     int above_depth = hwloc_get_type_or_above_depth(new_topology, type);
+     int below_depth = hwloc_get_type_or_below_depth(new_topology, type);
+     
+     /* Find the above or below level corresponding to the same amount of objects */
+     if (nbobjs == hwloc_get_nbobjs_by_depth(new_topology, above_depth))
+	  return above_depth;
+     else if (nbobjs == hwloc_get_nbobjs_by_depth(new_topology, below_depth))
+	  return below_depth;
+
+     return 0;
+}
+
+/*
+ * Compute and return a topological tree array where levels that
+ * do not bring any hierarchical structure are ignored.
+ * Also return the 'depth' of the array and return in the 'index' array, 
+ * the three indexes of, respectively, physical threads level, cores level
+ * and socket level. 'index' must be allocated (3 int sized).
+ */
+int *__mpcomp_compute_topo_tree_array(int *depth, int *index)
+{
+     hwloc_topology_t simple_topology;
+     int d;
+     int *tree;
+
+     if (!depth || !index) {
+	  sctk_error("__mpcomp_compute_topo_tree_array: Unable to compute tree (depth or index unallocated)");
+	  return NULL;
+     }
+
+     /* Create a temporary topology */
+     hwloc_topology_init(&simple_topology);
+     hwloc_topology_set_custom(simple_topology);
+     
+     /* Duplicate current topology object */
+     hwloc_custom_insert_topology(simple_topology, 
+				  hwloc_get_obj_by_depth(simple_topology, 0, 0), 
+				  sctk_get_topology_object(), NULL);
+
+     /* Delete unessential levels */
+     hwloc_topology_ignore_all_keep_structure(simple_topology);
+ 
+     hwloc_topology_load(simple_topology);
+
+     *depth = hwloc_topology_get_depth(simple_topology);
+
+     /* Allocate and set the tree array */
+     tree = malloc(*depth * sizeof(int));
+     for (d = 0; d < *depth; d++)
+	  tree[d] =  hwloc_get_nbobjs_by_depth(simple_topology, d);
+
+     /* Set index of threads, cores and sockets levels */
+     index[MPCOMP_TOPO_OBJ_THREAD] = __mpcomp_get_new_depth(HWLOC_OBJ_PU, 
+							    sctk_get_topology_object(), 
+							    simple_topology);
+     index[MPCOMP_TOPO_OBJ_CORE] = __mpcomp_get_new_depth(HWLOC_OBJ_CORE, 
+							  sctk_get_topology_object(), 
+							  simple_topology);
+     index[MPCOMP_TOPO_OBJ_SOCKET] = __mpcomp_get_new_depth(HWLOC_OBJ_SOCKET, 
+							    sctk_get_topology_object(), 
+							    simple_topology);
+
+     /* Release temporary topology structure */
+     hwloc_topology_destroy(simple_topology);
+
+     return tree;
+}
+
+
 /* recursive function constructing automatically the open-mp tree corresponding to the topology */
 void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *order, 
 					     hwloc_obj_t obj, mpcomp_node_t *father, 
@@ -324,7 +402,7 @@ int __mpcomp_build_default_tree(mpcomp_instance_t *instance)
      int nb_cpus;
      int *order;
      int current_mpc_vp;
-     
+
      sctk_nodebug("__mpcomp_build_auto_tree begin"); 
      
      /* Retrieve the number of cores of the machine */
