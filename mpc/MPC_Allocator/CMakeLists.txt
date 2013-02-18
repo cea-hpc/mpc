@@ -104,3 +104,4 @@ IF(EXISTS ${CMAKE_SOURCE_DIR}/tests)
 	add_subdirectory(tests)
 ENDIF(EXISTS ${CMAKE_SOURCE_DIR}/tests)
 
+INSTALL(FILES include/mpcalloc.h DESTINATION include/)

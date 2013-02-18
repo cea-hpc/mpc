@@ -19,58 +19,64 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
+
+#ifndef MPC_ALLOC_PUBLIC_API_H
+#define MPC_ALLOC_PUBLIC_API_H
+
+/********************************* INCLUDES *********************************/
+#include <stdbool.h>
 #include <stdlib.h>
 
-#ifndef __mpcalloc__H
-#define __mpcalloc__H
+/********************************** TYPES ***********************************/
+struct sctk_alloc_chain;
+typedef struct sctk_alloc_chain sctk_alloc_chain_t;
 
-#ifdef MPC_PosixAllocator
-
-#ifdef __cplusplus
-extern "C"
+/********************************** ENUM ************************************/
+/** List of flags to enable options of an allocation chain. **/
+enum sctk_alloc_chain_flags
 {
-#endif
+	/** Default options. By default it is thread safe. **/
+	SCTK_ALLOC_CHAIN_FLAGS_DEFAULT = 0,
+	/** Enable the locks in the chain to use it from multiple threads. **/
+	SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE = 1,
+	/** Disable chunk merge at free time. **/
+	SCTK_ALLOC_CHAIN_DISABLE_MERGE = 2,
+	/**
+	 * Disable global region registry. Caution, in that case, you can't use free/delete on memory
+	 * blocs allocated by this allocation chain. But you do not have the minimum size of 2M for
+	 * macro blocs which is required by region representation.
+	**/
+	SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER = 4,
+	/** Flag to create a simple standalone allocation chain. **/
+	SCTK_ALLOC_CHAIN_STANDALONE = SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER | SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE
+};
 
-  typedef enum
-  {
-    mpc_alloc_type_init,
-    mpc_alloc_type_alloc_block,
-    mpc_alloc_type_dealloc_block,
-    mpc_alloc_type_alloc_mem,
-    mpc_alloc_type_dealloc_mem,
-    mpc_alloc_type_enable,
-    mpc_alloc_type_disable,
-    mpc_alloc_type_show
-  } sctk_alloc_type_t;
+/********************************* FUNCTION *********************************/
+//chain life cycle
+void sctk_alloc_chain_user_init(struct sctk_alloc_chain * chain,void * buffer,sctk_size_t size,enum sctk_alloc_chain_flags flags);
+void sctk_alloc_chain_standalone_init(struct sctk_alloc_chain * chain,void * buffer,sctk_size_t size);
+struct sctk_alloc_chain * sctk_alloc_chain_shared_init(void * buffer, sctk_size_t size);
+void sctk_alloc_chain_destroy(struct sctk_alloc_chain * chain,bool force);
+void sctk_alloc_chain_mark_for_destroy(struct sctk_alloc_chain * chain,void (*destroy_handler)(struct sctk_alloc_chain * chain));
+//chain options
+bool sctk_alloc_chain_is_thread_safe(struct sctk_alloc_chain * chain);
+void sctk_alloc_chain_make_thread_safe(struct sctk_alloc_chain * chain,bool value);
+int sctk_alloc_chain_get_numa_node(struct sctk_alloc_chain * chain);
+size_t sctk_alloc_chain_struct_size(void);
+//chain usage
+void * sctk_alloc_chain_alloc(struct sctk_alloc_chain * chain,sctk_size_t size);
+void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t boundary,sctk_size_t size);
+void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr);
+void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sctk_size_t size);
+void sctk_alloc_chain_purge_rfq(struct sctk_alloc_chain * chain);
+void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_numa_node,bool migrate_chain_struct,bool migrate_content,struct sctk_alloc_mm_source * new_mm_source);
+void sctk_alloc_chain_get_numa_stat(struct sctk_alloc_numa_stat_s * numa_stat,struct sctk_alloc_chain * chain);
+void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain);
+void sctk_alloc_chain_user_refill(struct sctk_alloc_chain * chain, void * buffer, sctk_size_t size);
 
-  typedef sctk_alloc_type_t mpc_alloc_type_t;
+/********************************* FUNCTION *********************************/
+//posix allocator functions
+void sctk_alloc_posix_numa_migrate(void);
+void sctk_alloc_posix_chain_print_stat(void);
 
-  int mpc_alloc_stats_enable (void);
-  int mpc_alloc_stats_disable (void);
-  int mpc_alloc_stats_show (void);
-  size_t mpc_alloc_get_total_memory_allocated (void);
-  size_t mpc_alloc_get_total_memory_used (void);
-  size_t mpc_alloc_get_total_nb_block (void);
-  double mpc_alloc_get_fragmentation (void);
-  void mpc_alloc_flush_alloc_buffers_long_life (void);
-  void mpc_alloc_flush_alloc_buffers_short_life (void);
-  void mpc_alloc_flush_alloc_buffers (void);
-  void mpc_alloc_switch_to_short_life_alloc (void);
-  void mpc_alloc_switch_to_long_life_alloc (void);
-  int mpc_alloc_set_watchpoint (char
-				*(*func_watchpoint) (size_t mem_alloc,
-						     size_t mem_used,
-						     size_t nb_block,
-						     size_t size,
-						     mpc_alloc_type_t
-						     op_type));
-  void mpc_dsm_prefetch (void *addr);
-  void mpc_enable_dsm (void);
-  void mpc_disable_dsm (void);
-  void *tmp_malloc (size_t size);
-
-#ifdef __cplusplus
-}
-#endif
-#endif
-#endif
+#endif //MPC_ALLOC_PUBLIC_API_H

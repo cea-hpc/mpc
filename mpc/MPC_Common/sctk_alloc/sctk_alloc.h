@@ -23,7 +23,6 @@
 #define __SCTK__ALLOC__INT__
 
 #include "sctk_config.h"
-#include "sctk_alloc_api.h"
 #include <sys/mman.h>
 
 //TODO Remove this for version >2.4.1 if no issue were found

@@ -85,6 +85,6 @@ IF(WIN32)
 ENDIF(WIN32)
 
 ######################################################## 
-INSTALL(TARGETS mpcalloc mpcallocprimitives
+INSTALL(TARGETS mpcalloc mpcalloc_trace mpcallocprimitives
         ARCHIVE DESTINATION lib${LIB_SUFFIX}
         LIBRARY DESTINATION lib${LIB_SUFFIX})
