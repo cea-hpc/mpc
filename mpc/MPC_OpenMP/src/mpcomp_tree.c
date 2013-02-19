@@ -174,19 +174,11 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 	  node->lock = SCTK_SPINLOCK_INITIALIZER;
 	  node->slave_running = 0;
 	  
-#if MPCOMP_USE_ATOMICS
 	  sctk_atomics_store_int(&(node->barrier), 0);
 
 	  /* Chunks infos */
 	  sctk_atomics_store_int(&(node->chunks_avail), MPCOMP_CHUNKS_AVAIL);
 	  sctk_atomics_store_int(&(node->nb_chunks_empty_children), 0);
-#else
-	  node->barrier = 0;
-
-	  /* Chunks infos */
-	  node->chunks_avail = MPCOMP_CHUNKS_AVAIL;
-	  node->nb_chunks_empty_children = 0;
-#endif //MPCOMP_USE_ATOMICS
      
 	  node->barrier_done = 0;
 		
@@ -250,11 +242,7 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 	       for (i_thread = 0; i_thread < MPCOMP_MAX_THREADS_PER_MICROVP; i_thread++) {
 		    int i_fordyn;
 		    for (i_fordyn = 0; i_fordyn < MPCOMP_MAX_ALIVE_FOR_DYN+1; i_fordyn++) {
-#if MPCOMP_USE_ATOMICS
 			 sctk_atomics_store_int(&(leaf->threads[i_thread].for_dyn_chunk_info[i_fordyn].remain), -1);
-#else
-			 leaf->threads[i_thread].for_dyn_chunk_info[i_fordyn].remain = -1;
-#endif //MPCOMP_USE_ATOMICS
 		    }
 	       }
 	       
@@ -354,17 +342,11 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 						
 	       node->lock = SCTK_SPINLOCK_INITIALIZER;
 	       node->slave_running = 0;
-#if MPCOMP_USE_ATOMICS
 	       sctk_atomics_store_int(&(node->barrier), 0);
 	       /* Chunks infos*/
 	       sctk_atomics_store_int(&(node->chunks_avail), MPCOMP_CHUNKS_AVAIL);
 	       sctk_atomics_store_int(&(node->nb_chunks_empty_children), 0); 
-#else
-	       node->barrier = 0;
-	       /* Chunks infos */
-	       node->chunks_avail = MPCOMP_CHUNKS_AVAIL;
-	       node->nb_chunks_empty_children = 0;
-#endif //MPCOMP_USE_ATOMICS
+
 	       node->barrier_done = 0;
 	       
 	       node->children.node = NULL;
@@ -493,11 +475,8 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	  root->max_index = n_leaves;
 	  root->lock = SCTK_SPINLOCK_INITIALIZER;
 	  root->slave_running = 0;
-#if MPCOMP_USE_ATOMICS
 	  sctk_atomics_store_int( &(root->barrier), 0 );
-#else
-	  root->barrier = 0;
-#endif //MPCOMP_USE_ATOMICS
+
 	  root->barrier_done = 0;
 
 	  __mpcomp_push( s, root );
@@ -563,11 +542,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			 for (i_thread = 0; i_thread < MPCOMP_MAX_THREADS_PER_MICROVP; i_thread++) {
 			      int i_fordyn;
 			      for (i_fordyn = 0; i_fordyn < MPCOMP_MAX_ALIVE_FOR_DYN+1; i_fordyn++) {
-#if MPCOMP_USE_ATOMICS
 				   sctk_atomics_store_int(&(instance->mvps[current_mvp]->threads[i_thread].for_dyn_chunk_info[i_fordyn].remain), -1);
-#else
-			 instance->mvps[current_mvp]->threads[i_thread].for_dyn_chunk_info[i_fordyn].remain = -1;
-#endif //MPCOMP_USE_ATOMICS
 			      }
 			 }
 
@@ -664,11 +639,9 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			 n2->max_index = n->min_index + (i+1) * (n->max_index - n->min_index) / degree[ n->depth ] - 1;
 			 n2->lock = SCTK_SPINLOCK_INITIALIZER;
 			 n2->slave_running = 0;
-#if MPCOMP_USE_ATOMICS
+
 			 sctk_atomics_store_int( &(n2->barrier), 0 );
-#else
-			 n2->barrier = 0;
-#endif
+
 			 n2->barrier_done = 0;
 
 			 __mpcomp_push( s, n2 );
