@@ -25,10 +25,10 @@ MPC_VERSION=""
 ROOT_TARBALL="$PWD"
 ROOT_PACKAGE="$HOME/rpmbuild"
 ROOT_EXECUTION="$PWD"
-PATCHS_LIST=""
 BUILD_MODE="-ba"
-GIT_GENERATION="no"
 AVAILABLES_DISTRIBUTIONS="RedHat Fedora CentOS Suse OpenSuse Mandriva"
+PATCHS_LIST=""
+OUTPUT_DIR="${ROOT_TARBALL}"
 ##################################
 # READ_PARAM_VALUE: 
 # Formatting output to use values of arguments
@@ -50,9 +50,13 @@ print_help(){
 	echo "#                            (can use -v=)                         #"
 	echo "#   --source=<source_file>   Specifies source tarball(can use -s=) #"
 	echo "#   --source=git             Generate the source archive from      #"
-	echo "#                            current git commit. Must specify      #"
-	echo "#                            -v option before !                    #"
+	echo "#                            current git commit.                   #"
+	echo "#   --source=sources         Generate the source archive from      #"
+	echo "#                            current source dir without using git. #"
+	echo "#   --source=auto            Generate the source archive from      #"
+	echo "#                            appriate method (git or source).      #"
 	echo "#   --sprm                   Only generate SRPM                    #"
+	echo "#   --output=<dir>           Define the output directory.          #"
 	echo "#   -j=<number>              Fix make -j value.                    #"
 	echo "#   -h | --help              Print this help.                      #"
 	echo "####################################################################"
@@ -92,6 +96,51 @@ checking_softwares(){
 		fi
 		echo "Checking $soft ... OK"
 	done
+}
+
+#############################################
+extract_version_from_sources()
+{
+	#infd MPC_VERSION number
+	if test -z "$MPC_VERSION" ; then
+		MPC_VERSION="`MPC_SOURCE_DIR=../../mpc/ ../../mpc/MPC_Tools/mpc_print_version`"
+		if test -z "$MPC_VERSION" ; then
+			print_error "Unable to find MPC version Number !"
+			break;
+		fi
+	fi
+}
+
+#############################################
+gen_source_archive_from_git()
+{
+	extract_version_from_sources
+
+	echo "Generate tarball from git mpc-framework-$MPC_VERSION.tar.gz"
+	echo "git archive --format=tar --prefix=mpc-framework-$MPC_VERSION/ HEAD | gzip > ${OUTPUT_DIR}/mpc-framework-$MPC_VERSION.tar.gz"
+	tmp=$PWD
+	cd ../../ || print_error "Internal error"
+	git archive --format=tar --prefix=mpc-framework-$MPC_VERSION/ HEAD | gzip > "${OUTPUT_DIR}/mpc-framework-$MPC_VERSION.tar.gz" || print_error "Failed to generate tarball file from current git repository !"
+	cd "$tmp" || print_error "Internal error"
+	SOURCES="${OUTPUT_DIR}/mpc-framework-$MPC_VERSION.tar.gz"
+}
+
+#############################################
+gen_source_archive_from_sources()
+{
+	extract_version_from_sources
+	
+	#avoid to use this if git is present as we may export non distributed files due to lack of
+	#export blacklist used by git. With ditributed sources their is no issue as the filter was
+	#already applied
+	if test -d '../../.git'; then
+		print_error "Caution, using -s=sources is deprecated on .git working directory, prefer -s=git."
+	fi
+
+	echo "Generate tarball from sources mpc-framework-$MPC_VERSION.tar.gz"
+	echo "tar --transform='s,^./,mpc-framework-$MPC_VERSION/,' -czf '${OUTPUT_DIR}/mpc-framework-$MPC_VERSION.tar.gz' -C '../../' --exclude='packaging' --exclude='build' --exclude='.git' '.'"
+	tar --transform="s,^./,mpc-framework-$MPC_VERSION/," -czf "${OUTPUT_DIR}/mpc-framework-$MPC_VERSION.tar.gz" -C '../../' --exclude='packaging' --exclude='build' --exclude='.git' '.' || print_error "Internal error"
+	SOURCES="$OUTPUT_DIR/mpc-framework-$MPC_VERSION.tar.gz"
 }
 
 #############################################
@@ -137,20 +186,18 @@ do
 		-j*)
 			MAKE_J="$arg"
 		;;
-		--source=git|-s=git)
-			GIT_GENERATION="YES"
-		;;
 		--source=*)
 			SOURCES="$(read_param_value $arg --source)"
-			checking_paths
 		;;
 		-s=*)
 			SOURCES="$(read_param_value $arg -s)"
-			checking_paths
 		;;
 		--srpm)
 			BUILD_MODE="-bs"
 		;;
+		--output=*)
+			OUTPUT_DIR="$(read_param_value $arg --output)"
+			;;
 		-h|--help)
 			print_help
 			exit 0
@@ -168,34 +215,34 @@ echo "Some Checking..."
 checking_softwares "gcc" "make" "rpmbuild"
 
 #checking git repo
-if test "$GIT_GENERATION" = "YES" ; then
-	#infd MPC_VERSION number
-	if test -z "$MPC_VERSION" ; then
-		MPC_VERSION="$(MPC_SOURCE_DIR=../../mpc/ ../../mpc/MPC_Tools/mpc_print_version)"
-		if test -z "$MPC_VERSION" ; then
-			print_error "Unable to find MPC version Number !"
-			break;
+case "$SOURCES" in
+	git)
+		gen_source_archive_from_git
+		;;
+	sources)
+		gen_source_archive_from_sources
+		;;
+	auto)
+		if test -d '../../.git'; then
+			gen_source_archive_from_git
+		else
+			gen_source_archive_from_sources
 		fi
-	fi
-	echo "Generate tarball from git mpc-framework-$MPC_VERSION.tar.gz"
-	echo "git archive --format=tar --prefix=mpc-framework-$MPC_VERSION/ HEAD | gzip > mpc-framework-$MPC_VERSION.tar.gz"
-	tmp=$PWD
-	cd ../../ || print_error "Internal error"
-	git archive --format=tar --prefix=mpc-framework-$MPC_VERSION/ HEAD | gzip > $tmp/mpc-framework-$MPC_VERSION.tar.gz || print_error "Failed to generate tarball file from current git repository !"
-	cd "$tmp" || print_error "Internal error"
-	SOURCES="$tmp/mpc-framework-$MPC_VERSION.tar.gz"
-fi
+		;;
+esac
 
 #checking version
 if test -z "$MPC_VERSION" ; then
 	print_error "You must provide a Version Number by argument !"
 fi
 TARGET="mpc-framework-$MPC_VERSION-x86_64-complete"
-TARGET_PATH="$ROOT_TARBALL/$TARGET"
+TARGET_PATH="$OUTPUT_DIR/$TARGET"
 
 #checking sources
 if test -z "$SOURCES" ; then
-	SOURCES="$ROOT_TARBALL/mpc-framework-$MPC_VERSION.tar.gz"
+	SOURCES="$OUTPUT_DIR/mpc-framework-$MPC_VERSION.tar.gz"
+else
+	checking_paths
 fi
 
 if test ! -f $SOURCES ; then
@@ -207,9 +254,9 @@ if test -z "$MAKE_J" ; then
 fi
 
 #Extract {MPC}/config file to get versions of embeded deps.
-echo "tar --strip-components=1 -xzf '${SOURCES}' 'mpc-framework-${MPC_VERSION}/config'"
-tar --strip-components=1 -xzf "${SOURCES}" "mpc-framework-${MPC_VERSION}/config" || print_error "Cannot extract mpc-framework-${MPC_VERSION}/config from MPC archive !"
-if test ! -f 'config'; then print_error "Cannot read config file extracted from mpc-framework-${MPC_VERSION}/config in MPC archive !"; fi
+echo "tar --strip-components=1 -xzf '${SOURCES}' -C '${OUTPUT_DIR}' 'mpc-framework-${MPC_VERSION}/config'"
+tar --strip-components=1 -xzf "${SOURCES}" -C "${OUTPUT_DIR}" "mpc-framework-${MPC_VERSION}/config" || print_error "Cannot extract mpc-framework-${MPC_VERSION}/config from MPC archive !"
+if test ! -f "${OUTPUT_DIR}/config"; then print_error "Cannot read ${OUTPUT_DIR}/config file extracted from mpc-framework-${MPC_VERSION}/config in MPC archive !"; fi
 
 #some pre actions
 echo "rpmbuild tree creation"
@@ -231,7 +278,7 @@ export ROOT_TARBALL
 export MAKE_J
 
 echo "Spec File generation"
-$ROOT_TARBALL/spec_file_rpm_generator "--version=$MPC_VERSION" "--config=${ROOT_TARBALL}/config" $PATCHS_LIST > $ROOT_PACKAGE/SPECS/mpc-framework-$MPC_VERSION.spec || print_error "Error during spec file generation !"
+$ROOT_TARBALL/spec_file_rpm_generator "--version=$MPC_VERSION" "--config=${OUTPUT_DIR}/config" $PATCHS_LIST > $ROOT_PACKAGE/SPECS/mpc-framework-$MPC_VERSION.spec || print_error "Error during spec file generation !"
 
 #package generation
 echo "RPM Package generation"
@@ -244,7 +291,7 @@ cp $ROOT_PACKAGE/SRPMS/mpc-framework-*$MPC_VERSION*.src.rpm ./ || print_error "U
 if [ "$BUILD_MODE" = "-ba" ]; then
 	cp $ROOT_PACKAGE/RPMS/x86_64/mpc-framework-*$MPC_VERSION*.rpm $TARGET_PATH/ || print_error "Unable to copy rpm package into $TARGET_PATH"
 	#create packages tarball
-	cd $ROOT_TARBALL
+	cd $OUTPUT_DIR
 	rm -rf $TARGET.tar.gz > /dev/null 2>&1
 	tar -czf $TARGET.tar.gz $TARGET || print_error "Unable to compress rpm packages located in $TARGET_PATH"
 	rm -rf $TARGET > /dev/null 2>&1

@@ -85,14 +85,13 @@ extract_all_dep_versions()
 print_help(){
 
 	echo "########################### RPM GENERATOR USAGE #############################"
-	echo "#  ./rpm_package_generator --version=X.Y.Z --config=./config [--patch=]     #"
+	echo "#  ./rpm_package_generator --version=X.Y.Z --config=./config [patch...]     #"
 	echo "#############################################################################"
 	echo "#   --help                   Show this help.                                #"
 	echo "#   --version=<version>      Specifies version number to generate.          #"
 	echo "#                            (can use -v=)                                  #"
 	echo "#   --config=<config>        Specifies path to the config file with embeded #"
 	echo "#                            dependencies versions                          #"
-	echo "#   --patch=<file>           Patch file to apply (can provide multiple)     #"
 	echo "#############################################################################"
 }
 
@@ -115,9 +114,12 @@ do
 			print_help
 			exit
 			;;
-		*)
+		-*|--*)
 			echo "Invalid option $arg" 1>&2
 			exit 1
+			;;
+		*)
+			PATCHS_LIST="${PATCHS_LIST} $arg"
 			;;
 	esac
 done
