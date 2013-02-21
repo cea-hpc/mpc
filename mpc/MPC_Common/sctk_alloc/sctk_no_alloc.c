@@ -23,7 +23,10 @@
 #ifndef MPC_PosixAllocator
 
 /********************  HEADERS  *********************/
+#ifdef HAVE_MREMAP
 #define _GNU_SOURCE
+#endif /*HAVE_MREMAP*/
+
 #include <unistd.h>
 #include <stdlib.h>
 #include "sctk_alloc_api.h"
@@ -429,7 +432,11 @@ int sctk_user_munmap (void *start, size_t length)
 void * sctk_user_mremap (void *old_address, size_t old_size, size_t new_size,
                          int flags)
 {
+	#ifdef HAVE_MREMAP
 	return mremap (old_address, old_size, new_size, flags);
+	#else /* HAVE_MREMAP*/
+	not_available ();
+	#endif /*HAVE_MREMAP*/
 }
 
 /*******************  FUNCTION  *********************/

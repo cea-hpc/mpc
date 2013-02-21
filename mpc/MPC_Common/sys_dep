@@ -91,6 +91,11 @@ SCTK_CHECK_FUNC_NOFAIL memalign
 if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
    SCTK_CHECK_OPTION "-DHAVE_MEMALIGN"
 fi
+#optional enable of mremap support
+SCTK_CHECK_FUNC_NOFAIL mremap
+if test "${SCTK_SCTK_CHECK_FUNC_RES}" = 0 ; then
+        SCTK_CHECK_OPTION -DHAVE_MREMAP
+fi
 
 SCTK_CHECK_FUNC write
 SCTK_CHECK_FUNC raise
