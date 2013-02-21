@@ -65,11 +65,9 @@ extern "C"
 #define MPCOMP_CHUNKS_NOT_AVAIL 1
 #define MPCOMP_CHUNKS_AVAIL     2
 
+#define MPCOMP_TASK 0
 
-#undef MPCOMP_TASK
-//#define MPCOMP_TASK
-
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
 #define MPCOMP_TASK_MAX_DELAYED 1024
 
 /* Tasks type bitmasks */
@@ -198,7 +196,7 @@ extern "C"
 	  int n_elements;                          /* Corresponds to the head of the stack */
      } mpcomp_stack_node_leaf_t;
 
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
      /* Type of an OpenMP task */
      typedef unsigned char mpcomp_task_type_t;
  
@@ -256,7 +254,7 @@ extern "C"
 	  /* ORDERED CONSTRUCT */
 	  volatile int next_ordered_offset; 
 
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
 	  volatile int new_depth;                    /* Depth in the tree of the new_tasks list */
 	  volatile int untied_depth;                 /* Depth in the tree of the untied_tasks list */
 	  volatile int tasking_init_done;	     /* Thread team task's init tag */
@@ -323,7 +321,7 @@ extern "C"
 							  for chunk stealing
 							  - avoid useless search */
 
-#ifdef MPCOMP_TASK 
+#if MPCOMP_TASK 
 	  int tasking_init_done;                   /* Thread task's init tag */
 	  struct mpcomp_task_s *current_task;	   /* Currently running task */
 	  struct mpcomp_task_list_s *tied_tasks;   /* List of suspended tied tasks */
@@ -370,7 +368,7 @@ extern "C"
 	  enum mpcomp_myself_t type;      /**/
 
 	  /* OMP 3.0 */
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
 	  struct mpcomp_task_list_s *untied_tasks;   /* List of suspended untied tasks */
 	  struct mpcomp_task_list_s *new_tasks;     /* Lists of new tasks */
 	  int spin_done;
@@ -420,7 +418,7 @@ extern "C"
 	  char pad4[64];                       /* Padding */
 
 
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
 	  struct mpcomp_task_list_s *untied_tasks;   /* List of suspended untied tasks */
 	  struct mpcomp_task_list_s *new_tasks;     /* Lists of new tasks */
 #endif //MPCOMP_TASK
@@ -492,7 +490,7 @@ extern "C"
 	  sctk_atomics_store_int(&(team_info->for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN].i),
 				 MPCOMP_NOWAIT_STOP_SYMBOL);
 
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
 	  team_info->new_depth = 0;
 	  team_info->untied_depth = 0;
 #endif //MPCOMP_TASK
@@ -536,14 +534,14 @@ extern "C"
 	  for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN+1; i++)
 	       sctk_atomics_store_int(&(t->for_dyn_chunk_info[i].remain), -1);
 
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
 	  t->tasking_init_done = 0;
 	  t->tied_tasks = NULL;
 #endif //MPCOMP_TASK
      }
 
 
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
     /* Task type primitives */
      static inline void mpcomp_task_reset_type(mpcomp_task_type_t *type)
      {
@@ -718,14 +716,14 @@ extern "C"
      }
 
 
-     static inline struct mpcomp_task_list_s * mpcomp_task_list_get_newlist(mpcomp_thread_t *t)
+     static inline struct mpcomp_task_list_s * mpcomp_task_list_get_newlist(mpcomp_mvp_t *mvp)
      {
 	  struct mpcomp_task_list_s *list;
 	  struct mpcomp_node_s *father;
 
 	  /* Start the tree DFS from the current mvp */
-	  list = t->mvp->new_tasks;
-	  father = t->mvp->father;
+	  list = mvp->new_tasks;
+	  father = mvp->father;
 	  
 	  /* Search for the new_tasks list */
 	  while (list == NULL && father != NULL) {
@@ -739,14 +737,14 @@ extern "C"
 	  return list;	       
      }
 
-    static inline struct mpcomp_task_list_s * mpcomp_task_list_get_untiedlist(mpcomp_thread_t *t)
+    static inline struct mpcomp_task_list_s * mpcomp_task_list_get_untiedlist(mpcomp_mvp_t *mvp)
      {
 	  struct mpcomp_task_list_s *list;
 	  struct mpcomp_node_s *father;
 
 	  /* Start the tree DFS from the current mvp */
-	  list = t->mvp->untied_tasks;
-	  father = t->mvp->father;
+	  list = mvp->untied_tasks;
+	  father = mvp->father;
 	  
 	  /* Search for the new_tasks list */
 	  while (list == NULL && father != NULL) {
@@ -812,7 +810,7 @@ extern "C"
 						 int b, int incr, int chunk_size);
 
 
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
      /* mpcomp_task.c */
      void __mpcomp_task_schedule();
 #endif //MPCOMP_TASK

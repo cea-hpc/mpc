@@ -191,7 +191,7 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 	  node->current_mvp = 0;
 	  node->id_numa = 0;
 	  
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
 	  node->untied_tasks = NULL;
 	  node->new_tasks = NULL;
 #endif //MPCOMP_TASK
@@ -302,7 +302,7 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 		    sctk_thread_attr_destroy(&__attr);
 	       }
 			
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
 	       leaf->untied_tasks = NULL;
 	       leaf->new_tasks = NULL;
 #endif //MPCOMP_TASK
@@ -352,7 +352,7 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 	       node->children.node = NULL;
 	       node->children.leaf = NULL;
 			
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
 	       node->untied_tasks = NULL;
 	       node->new_tasks = NULL;
 #endif //MPCOMP_TASK			
@@ -505,7 +505,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	       target_numa = 0;
 #endif //MPCOMP_MALLOC_ON_NODE
 
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
 	       n->untied_tasks = NULL;
 	       n->new_tasks = NULL;
 #endif //MPCOMP_TASK
@@ -546,7 +546,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			      }
 			 }
 
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
 			 instance->mvps[current_mvp]->untied_tasks = NULL;
 			 instance->mvps[current_mvp]->new_tasks = NULL;
 #endif //MPCOMP_TASK

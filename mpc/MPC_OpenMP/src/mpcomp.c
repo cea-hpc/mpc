@@ -526,7 +526,7 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
 
     func(shared) ;
 
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
     __mpcomp_task_schedule();   /* Look for tasks remaining */
 #endif //MPCOMP_TASK
 
@@ -685,7 +685,7 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     while (sctk_atomics_load_int(&(new_root->barrier)) != new_root->barrier_num_threads ) 
     {
 	 //sctk_openmp_thread_tls = t ; //Update tls value before switching (AMAHEO)
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
 	 __mpcomp_task_schedule(); /* Look for tasks remaining */
 #endif //MPCOMP_TASK
 	 sctk_thread_yield() ;
@@ -693,7 +693,7 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     // sctk_atomics_store_int(&(root->barrier), 0) ;
     sctk_atomics_store_int(&(new_root->barrier), 0) ;
 
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
     TODO("Place the task scheduling somewhere else")
     __mpcomp_task_schedule();
 #endif //MPCOMP_TASK
@@ -872,7 +872,7 @@ void * mpcomp_slave_mvp_leaf( void * arg ) {
       &(mvp->slave_running), mvp->father ) ;
   sctk_nodebug( "mpcomp_slave_mvp_leaf: Will get value from father %p", mvp->father ) ;
 
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
   mvp->spin_done = 0;
 #endif //MPCOMP_TASK
 
@@ -956,7 +956,7 @@ INFO("__mpcomp_flush: need to call mpcomp_macro_scheduler")
 
     /* Half barrier */
     __mpcomp_internal_half_barrier( mvp ) ;
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
     mvp->spin_done = 1;
 #endif //MPCOMP_TASK
   }

@@ -41,7 +41,7 @@ __mpcomp_barrier (void)
      sctk_assert(t != NULL);
      
      if (t->num_threads == 1) {
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
 	  __mpcomp_task_schedule();   /* Look for tasks remaining */
 #endif //MPCOMP_TASK
 	  return;
@@ -106,7 +106,7 @@ __mpcomp_internal_full_barrier (mpcomp_mvp_t *mvp)
 	 (c->father== NULL && (b+1) != c->barrier_num_threads)) {	  
 	  /* Wait for c->barrier == c->barrier_num_threads */
 	  while (b_done == c->barrier_done) {
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
 	       __mpcomp_task_schedule(); /* Look for tasks remaining */
 #endif //MPCOMP_TASK
 	       sctk_thread_yield();
@@ -115,7 +115,7 @@ __mpcomp_internal_full_barrier (mpcomp_mvp_t *mvp)
 	  sctk_atomics_store_int(&(c->barrier), 0);
 
 	  c->barrier_done++ ; /* No need to lock I think... */
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
 	  __mpcomp_task_schedule(); /* Look for tasks remaining */
 #endif //MPCOMP_TASK
      }
