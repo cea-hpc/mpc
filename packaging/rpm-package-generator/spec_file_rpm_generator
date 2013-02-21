@@ -25,21 +25,42 @@ MPC_VERSION="$1"; shift
 PATCHS_LIST="$*"
 OUTPUT_FILE="$ROOT_TARBALL/mpc-framework-$MPC_VERSION.spec"
 cpt=0
+
+#Function to get the default version from {MPC}/config file.
+#Params : 
+#  - $1 : Name of the dependency
+extract_dep_config()
+{
+	cat "${ROOT_TARBALL}/config" | grep "^$1" | cut -d ' ' -f 2
+}
+
+#error
+if test ! -f "${ROOT_TARBALL}/config"; then 
+	echo "Can't access to ${ROOT_TARBALL}/config to get embeded dependencies versions" 1>&2
+	exit 1
+fi
+
 # Checking modules version
 if test -z "$HWLOC_VERSION"  ; then
-	HWLOC_VERSION="1.6.1"
+	HWLOC_VERSION="`extract_dep_config 'mpc-hwloc'`"
 fi
 if test -z "$HYDRA_VERSION"  ; then
-	HYDRA_VERSION="1.4.0"
+	HYDRA_VERSION="`extract_dep_config 'mpc-hydra'`"
 fi
 if test -z "$OPENPA_VERSION" ; then
-	OPENPA_VERSION="1.0.2"
+	OPENPA_VERSION="`extract_dep_config 'mpc-openpa'`"
 fi
 if test -z "$GDB_VERSION" ; then
-	GDB_VERSION="6.8"
+	GDB_VERSION="`extract_dep_config 'mpc-gdb'`"
 fi
 if test -z "$LIBXML_VERSION" ; then
-	LIBXML_VERSION="2.8.0"
+	LIBXML_VERSION="`extract_dep_config 'mpc-libxml2'`"
+fi
+if test -z "$GCC_VERSION" ; then
+	GCC_VERSION="`extract_dep_config 'mpc-gcc'`"
+fi
+if test -z "$BINUTILS_VERSION" ; then
+	BINUTILS_VERSION="`extract_dep_config 'mpc-binutils'`"
 fi
 
 #some pre actions
@@ -129,7 +150,9 @@ echo "%define hwloc_version	$HWLOC_VERSION" >> ${OUTPUT_FILE}
 echo "%define hydra_version	$HYDRA_VERSION" >> ${OUTPUT_FILE}
 echo "%define openpa_version	$OPENPA_VERSION" >> ${OUTPUT_FILE}
 echo "%define gdb_version	$GDB_VERSION" >> ${OUTPUT_FILE}
+echo "%define gcc_version	$GCC_VERSION" >> ${OUTPUT_FILE}
 echo "%define libxml_version    $LIBXML_VERSION" >> ${OUTPUT_FILE}
+echo "%define binutils_version	$BINUTILS_VERSION" >> ${OUTPUT_FILE}
 echo "" >> ${OUTPUT_FILE}
 
 #some pre actions
@@ -223,12 +246,12 @@ echo "" >> ${OUTPUT_FILE}
 #MPC-GCC installation
 echo "%files gcc" >> ${OUTPUT_FILE}
 echo "%defattr(-,root,root,-)" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_cc_440" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_f77_440" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_cc_global_440" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_cxx_440" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-gcc-440/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-binutils-2.22/*" >> ${OUTPUT_FILE}
+echo "/usr/local/mpc/bin/mpc_cc_%{gcc_version}" >> ${OUTPUT_FILE}
+echo "/usr/local/mpc/bin/mpc_f77_%{gcc_version}" >> ${OUTPUT_FILE}
+echo "/usr/local/mpc/bin/mpc_cc_global_%{gcc_version}" >> ${OUTPUT_FILE}
+echo "/usr/local/mpc/bin/mpc_cxx_%{gcc_version}" >> ${OUTPUT_FILE}
+echo "/usr/local/mpc/mpc-gcc-%{gcc_version}/*" >> ${OUTPUT_FILE}
+echo "/usr/local/mpc/mpc-binutils-%{binutils_version}/*" >> ${OUTPUT_FILE}
 echo "" >> ${OUTPUT_FILE}
 
 #MPC-GDB installation

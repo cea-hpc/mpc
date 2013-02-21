@@ -206,6 +206,11 @@ if test -z "$MAKE_J" ; then
 	MAKE_J=""
 fi
 
+#Extract {MPC}/config file to get versions of embeded deps.
+echo "tar --strip-components=1 -xzf '${SOURCES}' 'mpc-framework-${MPC_VERSION}/config'"
+tar --strip-components=1 -xzf "${SOURCES}" "mpc-framework-${MPC_VERSION}/config" || print_error "Cannot extract mpc-framework-${MPC_VERSION}/config from MPC archive !"
+if test ! -f 'config'; then print_error "Cannot read config file extracted from mpc-framework-${MPC_VERSION}/config in MPC archive !"; fi
+
 #some pre actions
 echo "rpmbuild tree creation"
 mkdir -p $ROOT_PACKAGE/{BUILD,RPMS,SOURCES,SPECS,SRPMS} || print_error "Unable to create rpmbuild tree !"
