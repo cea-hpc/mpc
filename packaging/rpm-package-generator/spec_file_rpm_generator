@@ -21,248 +21,309 @@
 #                                                                      #
 ########################################################################
 
-MPC_VERSION="$1"; shift
-PATCHS_LIST="$*"
-OUTPUT_FILE="$ROOT_TARBALL/mpc-framework-$MPC_VERSION.spec"
+########################################################################
+#Setup defaults
+MPC_VERSION=""
+PATCHS_LIST=""
 cpt=0
 
+##################################
+# READ_PARAM_VALUE: 
+# Formatting output to use values of arguments
+# - $1 : arguments (example: --source=mpc-framework.tar.gz)
+# - $2 : pattern to remove to the argument (example: --source)
+read_param_value(){
+	echo "$1" | sed -e "s/^$2=//g"
+}
+
+########################################################################
 #Function to get the default version from {MPC}/config file.
 #Params : 
 #  - $1 : Name of the dependency
-extract_dep_config()
+extract_dep_version()
 {
-	cat "${ROOT_TARBALL}/config" | grep "^$1" | cut -d ' ' -f 2
+	cat "$1" | grep "^$2" | cut -d ' ' -f 2
 }
 
-#error
-if test ! -f "${ROOT_TARBALL}/config"; then 
-	echo "Can't access to ${ROOT_TARBALL}/config to get embeded dependencies versions" 1>&2
-	exit 1
-fi
+########################################################################
+#Check if the given variable is non empty
+assert_non_empty()
+{
+	for name in $*
+	do
+		eval "tmp=\$${name}"
+		if [ -z "${tmp}" ]; then
+			echo "Invalid empty variable : $name !" 1>&2
+			exit 1
+		fi
+	done
+}
 
-# Checking modules version
-if test -z "$HWLOC_VERSION"  ; then
-	HWLOC_VERSION="`extract_dep_config 'mpc-hwloc'`"
-fi
-if test -z "$HYDRA_VERSION"  ; then
-	HYDRA_VERSION="`extract_dep_config 'mpc-hydra'`"
-fi
-if test -z "$OPENPA_VERSION" ; then
-	OPENPA_VERSION="`extract_dep_config 'mpc-openpa'`"
-fi
-if test -z "$GDB_VERSION" ; then
-	GDB_VERSION="`extract_dep_config 'mpc-gdb'`"
-fi
-if test -z "$LIBXML_VERSION" ; then
-	LIBXML_VERSION="`extract_dep_config 'mpc-libxml2'`"
-fi
-if test -z "$GCC_VERSION" ; then
-	GCC_VERSION="`extract_dep_config 'mpc-gcc'`"
-fi
-if test -z "$BINUTILS_VERSION" ; then
-	BINUTILS_VERSION="`extract_dep_config 'mpc-binutils'`"
-fi
+########################################################################
+#Extract embede versions from config file
+extract_all_dep_versions()
+{
+	#error
+	if test ! -f "${1}"; then 
+		echo "Can't access to ${1} to get embeded dependencies versions" 1>&2
+		exit 1
+	fi
 
-#some pre actions
-rm -f ${OUTPUT_FILE}
+	# Checking modules version
+	if test -z "$HWLOC_VERSION"    ; then HWLOC_VERSION="`extract_dep_version    "$1" 'mpc-hwloc'`";     fi
+	if test -z "$HYDRA_VERSION"    ; then HYDRA_VERSION="`extract_dep_version    "$1" 'mpc-hydra'`";     fi
+	if test -z "$OPENPA_VERSION"   ; then OPENPA_VERSION="`extract_dep_version   "$1" 'mpc-openpa'`";    fi
+	if test -z "$GDB_VERSION"      ; then GDB_VERSION="`extract_dep_version      "$1" 'mpc-gdb'`";       fi
+	if test -z "$LIBXML_VERSION"   ; then LIBXML_VERSION="`extract_dep_version   "$1" 'mpc-libxml2'`";   fi
+	if test -z "$GCC_VERSION"      ; then GCC_VERSION="`extract_dep_version      "$1" 'mpc-gcc'`";       fi
+	if test -z "$BINUTILS_VERSION" ; then BINUTILS_VERSION="`extract_dep_version "$1" 'mpc-binutils'`" ; fi
+}
+
+########################################################################
+# PRINT_HELP
+# No arguments
+print_help(){
+
+	echo "########################### RPM GENERATOR USAGE #############################"
+	echo "#  ./rpm_package_generator --version=X.Y.Z --config=./config [--patch=]     #"
+	echo "#############################################################################"
+	echo "#   --help                   Show this help.                                #"
+	echo "#   --version=<version>      Specifies version number to generate.          #"
+	echo "#                            (can use -v=)                                  #"
+	echo "#   --config=<config>        Specifies path to the config file with embeded #"
+	echo "#                            dependencies versions                          #"
+	echo "#   --patch=<file>           Patch file to apply (can provide multiple)     #"
+	echo "#############################################################################"
+}
+
+########################################################################
+#Parse all parameters
+for arg in "$@"
+do
+	case "$arg" in
+		--version=*)
+			MPC_VERSION="$(read_param_value $arg --version)"
+			;;
+		--patch=*)
+			PATCHS_LIST="${PATCHS_LIST} $(read_param_value $arg --patch)"
+			;;
+		--config=*)
+			config_file="$(read_param_value $arg --config)"
+			extract_all_dep_versions "${config_file}"
+			;;
+		-h|--help)
+			print_help
+			exit
+			;;
+		*)
+			echo "Invalid option $arg" 1>&2
+			exit 1
+			;;
+	esac
+done
+
+########################################################################
+#check if we have all vars
+assert_non_empty HWLOC_VERSION HYDRA_VERSION OPENPA_VERSION GDB_VERSION LIBXML_VERSION GCC_VERSION BINUTILS_VERSION
+assert_non_empty MPC_VERSION
 
 ################### SPEC FILE GENERATION #############################
 #MPC Description
-echo "#" >> ${OUTPUT_FILE}
-echo "# MPC-$MPC_VERSION SPEC File" >> ${OUTPUT_FILE}
-echo "# Generated by rpm-package-generator" >> ${OUTPUT_FILE}
-echo "#" >> ${OUTPUT_FILE}
-echo "%undefine _missing_build_ids_terminate_build"  >> ${OUTPUT_FILE}
-echo "Summary: Multi-Processor Computing" >> ${OUTPUT_FILE}
-echo "Name: mpc-framework" >> ${OUTPUT_FILE}
-echo "Version: $MPC_VERSION" >> ${OUTPUT_FILE}
-echo "Release: 1" >> ${OUTPUT_FILE}
-echo "License: LGPL" >> ${OUTPUT_FILE}
-echo "Group: Applications" >> ${OUTPUT_FILE}
-echo "Source: mpc-framework-$MPC_VERSION.tar.gz" >> ${OUTPUT_FILE}
-echo "URL: http://www.mpc.sourceforge.net/" >> ${OUTPUT_FILE}
-echo "Distribution: Linux" >> ${OUTPUT_FILE}
-echo "Packager: MPC Team <mpc-devel@lists.sourceforge.net>" >> ${OUTPUT_FILE}
-echo "BuildRequires: make, gcc, gcc-gfortran, libibverbs-devel, gmp-devel, mpfr-devel, ncurses-devel, patch" >> ${OUTPUT_FILE}
-echo "Requires: mpc-framework-runtime mpc-framework-devel mpc-framework-gcc mpc-framework-gdb" >> ${OUTPUT_FILE}
+echo "#"
+echo "# MPC-$MPC_VERSION SPEC File"
+echo "# Generated by rpm-package-generator"
+echo "#"
+echo "%undefine _missing_build_ids_terminate_build" 
+echo "Summary: Multi-Processor Computing"
+echo "Name: mpc-framework"
+echo "Version: $MPC_VERSION"
+echo "Release: 1"
+echo "License: LGPL"
+echo "Group: Applications"
+echo "Source: mpc-framework-$MPC_VERSION.tar.gz"
+echo "URL: http://www.mpc.sourceforge.net/"
+echo "Distribution: Linux"
+echo "Packager: MPC Team <mpc-devel@lists.sourceforge.net>"
+echo "BuildRequires: make, gcc, gcc-gfortran, libibverbs-devel, gmp-devel, mpfr-devel, ncurses-devel, patch"
+echo "Requires: mpc-framework-runtime mpc-framework-devel mpc-framework-gcc mpc-framework-gdb"
 
 #patchs
 if test ! -z "${PATCHS_LIST}" ; then
 	for patch in ${PATCHS_LIST}
 	do
 		echo "CHILD: PATCH: $patch"
-		echo "Patch$cpt: $patch" >> ${OUTPUT_FILE}
+		echo "Patch$cpt: $patch"
 		cpt=$(( cpt + 1 ))
 	done
 fi
-echo "" >> ${OUTPUT_FILE}
+echo ""
 
 ### Sub-packages
 #Runtime
-echo "%package runtime" >> ${OUTPUT_FILE}
-echo "Requires: libibverbs" >> ${OUTPUT_FILE}
-echo "Group: Applications" >> ${OUTPUT_FILE}
-echo "Summary: Runtime files for the MPC framework." >> ${OUTPUT_FILE}
-echo "" >> ${OUTPUT_FILE}
+echo "%package runtime"
+echo "Requires: libibverbs"
+echo "Group: Applications"
+echo "Summary: Runtime files for the MPC framework."
+echo ""
 #devel
-echo "%package devel" >> ${OUTPUT_FILE}
-echo "Requires: mpc-framework-runtime" >> ${OUTPUT_FILE}
-echo "Group: Applications" >> ${OUTPUT_FILE}
-echo "Summary: The developpement files for the MPC framework." >> ${OUTPUT_FILE}
-echo "" >> ${OUTPUT_FILE}
+echo "%package devel"
+echo "Requires: mpc-framework-runtime"
+echo "Group: Applications"
+echo "Summary: The developpement files for the MPC framework."
+echo ""
 #mpc-gcc
-echo "%package gcc" >> ${OUTPUT_FILE}
-echo "Requires: mpc-framework-runtime gmp mpfr" >> ${OUTPUT_FILE}
-echo "Group: Applications" >> ${OUTPUT_FILE}
-echo "Summary: The patched gcc for the MPC framework (required to use MPC OpenMP)." >> ${OUTPUT_FILE}
-echo "" >> ${OUTPUT_FILE}
+echo "%package gcc"
+echo "Requires: mpc-framework-runtime gmp mpfr"
+echo "Group: Applications"
+echo "Summary: The patched gcc for the MPC framework (required to use MPC OpenMP)."
+echo ""
 #mpc-gdb
-echo "%package gdb" >> ${OUTPUT_FILE}
-echo "Requires: mpc-framework-runtime ncurses" >> ${OUTPUT_FILE}
-echo "Group: Applications" >> ${OUTPUT_FILE}
-echo "Summary: The patched gdb for the MPC framework (to support MPC user threads in GDB debugger)." >> ${OUTPUT_FILE}
-echo "" >> ${OUTPUT_FILE}
+echo "%package gdb"
+echo "Requires: mpc-framework-runtime ncurses"
+echo "Group: Applications"
+echo "Summary: The patched gdb for the MPC framework (to support MPC user threads in GDB debugger)."
+echo ""
 
 #Some sub-packages description
-echo "%description" >> ${OUTPUT_FILE}
-echo "The MPC (MultiProcessor Computing) framework provides a unified parallel runtime designed to improve the scalability and performances of applications running on clusters of (very) large multiprocessor/multicore NUMA nodes." >> ${OUTPUT_FILE}
-echo "This meta-package will install all MPC sub-packages." >> ${OUTPUT_FILE}
-echo "" >> ${OUTPUT_FILE}
-echo "%description runtime" >> ${OUTPUT_FILE}
-echo "The MPC (MultiProcessor Computing) framework provides a unified parallel runtime designed to improve the scalability and performances of applications running on clusters of (very) large multiprocessor/multicore NUMA nodes." >> ${OUTPUT_FILE}
-echo "This package provide all runtime files (libs and launchers)." >> ${OUTPUT_FILE}
-echo "" >> ${OUTPUT_FILE}
-echo "%description devel" >> ${OUTPUT_FILE}
-echo "The MPC (MultiProcessor Computing) framework provides a unified parallel runtime designed to improve the scalability and performances of applications running on clusters of (very) large multiprocessor/multicore NUMA nodes." >> ${OUTPUT_FILE}
-echo "This package provide all developpement files (headers, API manpages, compiler wrappers)" >> ${OUTPUT_FILE}
-echo "" >> ${OUTPUT_FILE}
-echo "%description gcc" >> ${OUTPUT_FILE}
-echo "The MPC (MultiProcessor Computing) framework provides a unified parallel runtime designed to improve the scalability and performances of applications running on clusters of (very) large multiprocessor/multicore NUMA nodes." >> ${OUTPUT_FILE}
-echo "This package provide the patched version of GCC to use MPC implementation of OpenMP standard." >> ${OUTPUT_FILE}
-echo "" >> ${OUTPUT_FILE}
-echo "%description gdb" >> ${OUTPUT_FILE}
-echo "The MPC (MultiProcessor Computing) framework provides a unified parallel runtime designed to improve the scalability and performances of applications running on clusters of (very) large multiprocessor/multicore NUMA nodes." >> ${OUTPUT_FILE}
-echo "This package provide the patched version of GDB to support MPC user threads in GDB." >> ${OUTPUT_FILE}
-echo "" >> ${OUTPUT_FILE}
+echo "%description"
+echo "The MPC (MultiProcessor Computing) framework provides a unified parallel runtime designed to improve the scalability and performances of applications running on clusters of (very) large multiprocessor/multicore NUMA nodes."
+echo "This meta-package will install all MPC sub-packages."
+echo ""
+echo "%description runtime"
+echo "The MPC (MultiProcessor Computing) framework provides a unified parallel runtime designed to improve the scalability and performances of applications running on clusters of (very) large multiprocessor/multicore NUMA nodes."
+echo "This package provide all runtime files (libs and launchers)."
+echo ""
+echo "%description devel"
+echo "The MPC (MultiProcessor Computing) framework provides a unified parallel runtime designed to improve the scalability and performances of applications running on clusters of (very) large multiprocessor/multicore NUMA nodes."
+echo "This package provide all developpement files (headers, API manpages, compiler wrappers)"
+echo ""
+echo "%description gcc"
+echo "The MPC (MultiProcessor Computing) framework provides a unified parallel runtime designed to improve the scalability and performances of applications running on clusters of (very) large multiprocessor/multicore NUMA nodes."
+echo "This package provide the patched version of GCC to use MPC implementation of OpenMP standard."
+echo ""
+echo "%description gdb"
+echo "The MPC (MultiProcessor Computing) framework provides a unified parallel runtime designed to improve the scalability and performances of applications running on clusters of (very) large multiprocessor/multicore NUMA nodes."
+echo "This package provide the patched version of GDB to support MPC user threads in GDB."
+echo ""
 
 #modules versions definition
-echo "%define hwloc_version	$HWLOC_VERSION" >> ${OUTPUT_FILE}
-echo "%define hydra_version	$HYDRA_VERSION" >> ${OUTPUT_FILE}
-echo "%define openpa_version	$OPENPA_VERSION" >> ${OUTPUT_FILE}
-echo "%define gdb_version	$GDB_VERSION" >> ${OUTPUT_FILE}
-echo "%define gcc_version	$GCC_VERSION" >> ${OUTPUT_FILE}
-echo "%define libxml_version    $LIBXML_VERSION" >> ${OUTPUT_FILE}
-echo "%define binutils_version	$BINUTILS_VERSION" >> ${OUTPUT_FILE}
-echo "" >> ${OUTPUT_FILE}
+echo "%define hwloc_version    $HWLOC_VERSION"
+echo "%define hydra_version    $HYDRA_VERSION"
+echo "%define openpa_version   $OPENPA_VERSION"
+echo "%define gdb_version      $GDB_VERSION"
+echo "%define gcc_version      $GCC_VERSION"
+echo "%define libxml_version   $LIBXML_VERSION"
+echo "%define binutils_version $BINUTILS_VERSION"
+echo ""
 
 #some pre actions
-echo "%prep" >> ${OUTPUT_FILE}
-echo "%setup" >> ${OUTPUT_FILE}
+echo "%prep"
+echo "%setup"
 
 if test ! -z "${PATCHS_LIST}" ; then
 	cpt=0
 	for patch in ${PATCHS_LIST}
 	do
-		echo "%patch$cpt -p1" >> ${OUTPUT_FILE}
+		echo "%patch$cpt -p1"
 		cpt=$(( cpt + 1 ))
 	done
 fi
-echo "" >> ${OUTPUT_FILE}
+echo ""
 
 #build instructions
-echo "%build" >> ${OUTPUT_FILE}
-echo "./configure --disable-prefix-check --enable-debug-messages --prefix=/usr/local/mpc" >> ${OUTPUT_FILE}
-echo "make ${MAKE_J}" >> ${OUTPUT_FILE}
-echo "" >> ${OUTPUT_FILE}
+echo "%build"
+echo "./configure --disable-prefix-check --enable-debug-messages --prefix=/usr/local/mpc"
+echo "make ${MAKE_J}"
+echo ""
 
 #installation instructions
-echo "%install" >> ${OUTPUT_FILE}
-echo 'make install DESTDIR=$RPM_BUILD_ROOT' >> ${OUTPUT_FILE}
-echo "" >> ${OUTPUT_FILE}
+echo "%install"
+echo 'make install DESTDIR=$RPM_BUILD_ROOT'
+echo ""
 
 #cleanup instruction
-echo "%clean" >> ${OUTPUT_FILE}
-echo "" >> ${OUTPUT_FILE}
+echo "%clean"
+echo ""
 
 #MPC-FRAMEWORK meta-package installation
-echo "%files" >> ${OUTPUT_FILE}
-echo "%defattr(-,root,root,-)" >> ${OUTPUT_FILE}
-echo "" >> ${OUTPUT_FILE}
+echo "%files"
+echo "%defattr(-,root,root,-)"
+echo ""
 
 #MPC-RUNTIME installation
-echo "%files runtime" >> ${OUTPUT_FILE}
-echo "%defattr(-,root,root,-)" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/lib/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/man/man1/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_status" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpcvars.sh" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpcrun_opt/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpcvars.csh" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpcrun" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_print_config" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/man/man5/mpc_config.5" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-libxml2-%{libxml_version}/bin/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-libxml2-%{libxml_version}/lib/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-libxml2-%{libxml_version}/share/man/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-hydra-%{hydra_version}/lib/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-hydra-%{hydra_version}/bin/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-openpa-%{openpa_version}/lib/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-openpa-%{openpa_version}/share/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-hwloc-%{hwloc_version}/lib/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-hwloc-%{hwloc_version}/bin/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-hwloc-%{hwloc_version}/share/man/man7/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-hwloc-%{hwloc_version}/share/man/man1/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-hwloc-%{hwloc_version}/share/hwloc/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-hwloc-%{hwloc_version}/share/doc/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/share/mpc/config-multi-profile.xml.example" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/share/mpc/config.xml.example" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/share/mpc/mpc-config.xsd" >> ${OUTPUT_FILE}
-echo "" >> ${OUTPUT_FILE}
+echo "%files runtime"
+echo "%defattr(-,root,root,-)"
+echo "/usr/local/mpc/lib/*"
+echo "/usr/local/mpc/man/man1/*"
+echo "/usr/local/mpc/bin/mpc_status"
+echo "/usr/local/mpc/bin/mpcvars.sh"
+echo "/usr/local/mpc/bin/mpcrun_opt/*"
+echo "/usr/local/mpc/bin/mpcvars.csh"
+echo "/usr/local/mpc/bin/mpcrun"
+echo "/usr/local/mpc/bin/mpc_print_config"
+echo "/usr/local/mpc/man/man5/mpc_config.5"
+echo "/usr/local/mpc/mpc-libxml2-%{libxml_version}/bin/*"
+echo "/usr/local/mpc/mpc-libxml2-%{libxml_version}/lib/*"
+echo "/usr/local/mpc/mpc-libxml2-%{libxml_version}/share/man/*"
+echo "/usr/local/mpc/mpc-hydra-%{hydra_version}/lib/*"
+echo "/usr/local/mpc/mpc-hydra-%{hydra_version}/bin/*"
+echo "/usr/local/mpc/mpc-openpa-%{openpa_version}/lib/*"
+echo "/usr/local/mpc/mpc-openpa-%{openpa_version}/share/*"
+echo "/usr/local/mpc/mpc-hwloc-%{hwloc_version}/lib/*"
+echo "/usr/local/mpc/mpc-hwloc-%{hwloc_version}/bin/*"
+echo "/usr/local/mpc/mpc-hwloc-%{hwloc_version}/share/man/man7/*"
+echo "/usr/local/mpc/mpc-hwloc-%{hwloc_version}/share/man/man1/*"
+echo "/usr/local/mpc/mpc-hwloc-%{hwloc_version}/share/hwloc/*"
+echo "/usr/local/mpc/mpc-hwloc-%{hwloc_version}/share/doc/*"
+echo "/usr/local/mpc/share/mpc/config-multi-profile.xml.example"
+echo "/usr/local/mpc/share/mpc/config.xml.example"
+echo "/usr/local/mpc/share/mpc/mpc-config.xsd"
+echo ""
 
 #MPC-DEVEL installation
-echo "%files devel" >> ${OUTPUT_FILE}
-echo "%defattr(-,root,root,-)" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/man/man3/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_cflags" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_cc" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_cc_default" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_cc_global" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_cc_global_default" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_f77_default" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_f77" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_cxx" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_cxx_default" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_ldflags" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/include/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-openpa-%{openpa_version}/include/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-hwloc-%{hwloc_version}/share/man/man3/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-hwloc-%{hwloc_version}/include/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-libxml2-%{libxml_version}/include/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-libxml2-%{libxml_version}/share/aclocal/libxml.m4" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-libxml2-%{libxml_version}/share/doc/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-libxml2-%{libxml_version}/share/gtk-doc/*" >> ${OUTPUT_FILE}
-echo "" >> ${OUTPUT_FILE}
+echo "%files devel"
+echo "%defattr(-,root,root,-)"
+echo "/usr/local/mpc/man/man3/*"
+echo "/usr/local/mpc/bin/mpc_cflags"
+echo "/usr/local/mpc/bin/mpc_cc"
+echo "/usr/local/mpc/bin/mpc_cc_default"
+echo "/usr/local/mpc/bin/mpc_cc_global"
+echo "/usr/local/mpc/bin/mpc_cc_global_default"
+echo "/usr/local/mpc/bin/mpc_f77_default"
+echo "/usr/local/mpc/bin/mpc_f77"
+echo "/usr/local/mpc/bin/mpc_cxx"
+echo "/usr/local/mpc/bin/mpc_cxx_default"
+echo "/usr/local/mpc/bin/mpc_ldflags"
+echo "/usr/local/mpc/include/*"
+echo "/usr/local/mpc/mpc-openpa-%{openpa_version}/include/*"
+echo "/usr/local/mpc/mpc-hwloc-%{hwloc_version}/share/man/man3/*"
+echo "/usr/local/mpc/mpc-hwloc-%{hwloc_version}/include/*"
+echo "/usr/local/mpc/mpc-libxml2-%{libxml_version}/include/*"
+echo "/usr/local/mpc/mpc-libxml2-%{libxml_version}/share/aclocal/libxml.m4"
+echo "/usr/local/mpc/mpc-libxml2-%{libxml_version}/share/doc/*"
+echo "/usr/local/mpc/mpc-libxml2-%{libxml_version}/share/gtk-doc/*"
+echo ""
 
 #MPC-GCC installation
-echo "%files gcc" >> ${OUTPUT_FILE}
-echo "%defattr(-,root,root,-)" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_cc_%{gcc_version}" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_f77_%{gcc_version}" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_cc_global_%{gcc_version}" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/bin/mpc_cxx_%{gcc_version}" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-gcc-%{gcc_version}/*" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-binutils-%{binutils_version}/*" >> ${OUTPUT_FILE}
-echo "" >> ${OUTPUT_FILE}
+echo "%files gcc"
+echo "%defattr(-,root,root,-)"
+echo "/usr/local/mpc/bin/mpc_cc_%{gcc_version}"
+echo "/usr/local/mpc/bin/mpc_f77_%{gcc_version}"
+echo "/usr/local/mpc/bin/mpc_cc_global_%{gcc_version}"
+echo "/usr/local/mpc/bin/mpc_cxx_%{gcc_version}"
+echo "/usr/local/mpc/mpc-gcc-%{gcc_version}/*"
+echo "/usr/local/mpc/mpc-binutils-%{binutils_version}/*"
+echo ""
 
 #MPC-GDB installation
-echo "%files gdb" >> ${OUTPUT_FILE}
-echo "%defattr(-,root,root,-)" >> ${OUTPUT_FILE}
-echo "/usr/local/mpc/mpc-gdb-%{gdb_version}/*" >> ${OUTPUT_FILE}
-echo "" >> ${OUTPUT_FILE}
+echo "%files gdb"
+echo "%defattr(-,root,root,-)"
+echo "/usr/local/mpc/mpc-gdb-%{gdb_version}/*"
+echo ""
 
 #DOC
-echo "%doc" >> ${OUTPUT_FILE}
-echo "" >> ${OUTPUT_FILE}
+echo "%doc"
+echo ""
 
 #CHANGELOG
-echo "%changelog" >> ${OUTPUT_FILE}
+echo "%changelog"

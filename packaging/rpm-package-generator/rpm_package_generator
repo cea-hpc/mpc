@@ -231,8 +231,7 @@ export ROOT_TARBALL
 export MAKE_J
 
 echo "Spec File generation"
-$ROOT_TARBALL/spec_file_rpm_generator $MPC_VERSION $PATCHS_LIST || print_error "Error during spec file generation !"
-mv $ROOT_TARBALL/mpc-framework-$MPC_VERSION.spec $ROOT_PACKAGE/SPECS/ || print_error "Unable to move spec file in SPECS folder !"
+$ROOT_TARBALL/spec_file_rpm_generator "--version=$MPC_VERSION" "--config=${ROOT_TARBALL}/config" $PATCHS_LIST > $ROOT_PACKAGE/SPECS/mpc-framework-$MPC_VERSION.spec || print_error "Error during spec file generation !"
 
 #package generation
 echo "RPM Package generation"
