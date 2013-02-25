@@ -29,7 +29,7 @@
 #include "sctk_alloc_topology.h"
 
 //optional
-#ifdef HAVE_NUMAIF_H
+#if defined(HAVE_NUMAIF_H) && defined(HAVE_MOVE_PAGES)
 #include <numaif.h>
 #endif
 
@@ -92,7 +92,7 @@ SCTK_STATIC void sctk_alloc_numa_stat_at_exit(void )
 }
 
 /************************* FUNCTION ************************/
-#ifdef HAVE_NUMAIF_H
+#if defined(HAVE_NUMAIF_H) && defined(HAVE_MOVE_PAGES)
 int sctk_alloc_numa_stat_get_node_of_page(void* ptr)
 {
 	//vars

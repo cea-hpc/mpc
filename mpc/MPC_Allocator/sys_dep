@@ -83,9 +83,16 @@ if test "${SCTK_SCTK_CHECK_FUNC_RES}" = 0 ; then
 fi
 
 #check if have numaif.h to enable NUMA debug functions (only on Linux)
-SCTK_CHECK_HEADER_NOFAIL numaif.h
-if test "${SCTK_SCTK_CHECK_HEADER_RES}" = 0 ; then
-	SCTK_CHECK_OPTION -DHAVE_NUMAIF_H
+if test "${SCTK_DEBUG}" = 1; then
+	SCTK_CHECK_HEADER_NOFAIL numaif.h
+	if test "${SCTK_SCTK_CHECK_HEADER_RES}" = 0 ; then
+		SCTK_CHECK_OPTION -DHAVE_NUMAIF_H
+		#check if have move_page
+		SCTK_CHECK_FUNC_NOFAIL move_pages
+		if test "${SCTK_SCTK_CHECK_HEADER_RES}" = 0 ; then
+			SCTK_CHECK_OPTION -DHAVE_MOVE_PAGES
+		fi
+	fi
 fi
 
 #check for valgrind support

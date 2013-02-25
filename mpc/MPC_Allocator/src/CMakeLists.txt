@@ -18,10 +18,15 @@ Message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 
 ################# CHECK SOME INCLUDE FILES #############
 include(CheckIncludeFile)
+include(CheckSymbolExists)
 CHECK_INCLUDE_FILE (numaif.h HAVE_NUMAIF_H)
+CHECK_SYMBOL_EXISTS (move_pages numaif.h HAVE_MOVE_PAGES)
 if(HAVE_NUMAIF_H)
 	add_definitions(-DHAVE_NUMAIF_H)
 endif(HAVE_NUMAIF_H)
+if (HAVE_MOVE_PAGES)
+	add_definitions(-DHAVE_MOVE_PAGES)
+endif (HAVE_MOVE_PAGES)
 
 #################### CHECK PAGEMAP ######################
 if (EXISTS /proc/self/pagemap)
