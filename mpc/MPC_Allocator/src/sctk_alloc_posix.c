@@ -158,14 +158,20 @@ SCTK_INTERN void sctk_alloc_tls_chain_local_reset()
 /**
  * Update the current thread local allocation chain.
  * @param chain Define the allocation chain to setup.
+ * @return Return the old chain, if the user want to reset it after capturing some elements.
 **/
-SCTK_INTERN void sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain)
+SCTK_PUBLIC struct sctk_alloc_chain * sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain)
 {
+	//get old one
+	struct sctk_alloc_chain * old_chain = sctk_get_tls_chain();
 	//errors
 	//assume_m(chain != NULL,"Can't set a default NULL allocation chain for local thread.");
 
 	//setup allocation chain for current thread
 	sctk_set_tls_chain(chain);
+
+	//return the old one
+	return old_chain;
 }
 
 /************************* FUNCTION ************************/

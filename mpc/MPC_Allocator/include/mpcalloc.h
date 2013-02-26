@@ -27,6 +27,11 @@
 #include <stdbool.h>
 #include <stdlib.h>
 
+#ifdef __cplusplus
+extern "C"
+{
+#endif //__cplusplus
+
 /********************************** TYPES ***********************************/
 struct sctk_alloc_chain;
 typedef struct sctk_alloc_chain sctk_alloc_chain_t;
@@ -68,6 +73,7 @@ void * sctk_alloc_chain_alloc(struct sctk_alloc_chain * chain,sctk_size_t size);
 void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t boundary,sctk_size_t size);
 void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr);
 void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sctk_size_t size);
+void sctk_alloc_chain_remote_free(struct sctk_alloc_chain * chain,void * ptr);
 void sctk_alloc_chain_purge_rfq(struct sctk_alloc_chain * chain);
 void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_numa_node,bool migrate_chain_struct,bool migrate_content,struct sctk_alloc_mm_source * new_mm_source);
 void sctk_alloc_chain_get_numa_stat(struct sctk_alloc_numa_stat_s * numa_stat,struct sctk_alloc_chain * chain);
@@ -78,5 +84,10 @@ void sctk_alloc_chain_user_refill(struct sctk_alloc_chain * chain, void * buffer
 //posix allocator functions
 void sctk_alloc_posix_numa_migrate(void);
 void sctk_alloc_posix_chain_print_stat(void);
+struct sctk_alloc_chain * sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain);
+
+#ifdef __cplusplus
+}
+#endif //__cplusplus
 
 #endif //MPC_ALLOC_PUBLIC_API_H

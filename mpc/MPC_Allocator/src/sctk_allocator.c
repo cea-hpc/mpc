@@ -1008,7 +1008,7 @@ SCTK_PUBLIC struct sctk_alloc_chain * sctk_alloc_chain_shared_init(void * buffer
 	assume_m(size > sizeof(struct sctk_alloc_chain), "To small segment which cannot contain the allocation chain structure.");
 
 	//setup
-	sctk_alloc_chain_standalone_init(chain+1,size - sizeof(struct sctk_alloc_chain));
+	sctk_alloc_chain_standalone_init(chain,chain+1,size - sizeof(struct sctk_alloc_chain));
 
 	//ok done, return
 	return chain;
@@ -2742,4 +2742,13 @@ SCTK_PUBLIC void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, 
 SCTK_PUBLIC size_t sctk_alloc_chain_struct_size(void)
 {
 	return sizeof(struct sctk_alloc_chain);
+}
+
+/************************* FUNCTION ************************/
+SCTK_PUBLIC void sctk_alloc_chain_remote_free(struct sctk_alloc_chain * chain,void * ptr)
+{
+	if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
+		sctk_alloc_chain_free(ptr);
+	else
+		sctk_alloc_rfq_register(chain->rfq,ptr);
 }

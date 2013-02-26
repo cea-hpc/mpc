@@ -135,6 +135,7 @@ SCTK_PUBLIC void sctk_alloc_chain_mark_for_destroy(struct sctk_alloc_chain * cha
 SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_prepare_and_reg_macro_bloc(struct sctk_alloc_chain * chaine,struct sctk_alloc_macro_bloc * macro_bloc);
 SCTK_STATIC bool sctk_alloc_chain_is_huge_size(struct sctk_alloc_chain * chain,sctk_size_t size);
 SCTK_PUBLIC size_t sctk_alloc_chain_struct_size(void);
+SCTK_PUBLIC void sctk_alloc_chain_remote_free(struct sctk_alloc_chain * chain,void * ptr);
 
 /************************* FUNCTION ************************/
 //some stat function for debug
