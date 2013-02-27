@@ -2748,7 +2748,7 @@ SCTK_PUBLIC size_t sctk_alloc_chain_struct_size(void)
 SCTK_PUBLIC void sctk_alloc_chain_remote_free(struct sctk_alloc_chain * chain,void * ptr)
 {
 	if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
-		sctk_alloc_chain_free(ptr);
+		sctk_alloc_chain_free(chain,ptr);
 	else
-		sctk_alloc_rfq_register(chain->rfq,ptr);
+		sctk_alloc_rfq_register(&chain->rfq,ptr);
 }

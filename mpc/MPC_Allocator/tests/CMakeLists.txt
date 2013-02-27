@@ -31,7 +31,7 @@ set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 #Now you can build your tests
 foreach(i ${ALLOC_TEST_LIST})
 	add_executable(${i} ${i}.cpp)
-	target_link_libraries(${i} ${UNITTEST_LIBRARY} mpcalloc_primitives)
+	target_link_libraries(${i} ${UNITTEST_LIBRARY} mpcalloc_primitives_for_test)
 	add_test(${i} ${EXECUTOR_PATH} ${i})
 endforeach(i)
 

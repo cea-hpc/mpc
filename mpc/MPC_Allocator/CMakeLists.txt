@@ -38,6 +38,14 @@ endif(WIN32)
 ####################  CMAKE MODULES #####################
 INCLUDE (CheckIncludeFiles)
 
+######################  SET RPATHS ######################
+if(ENABLE_RPATH)
+	set(CMAKE_SKIP_BUILD_RPATH FALSE)
+	set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}")
+	set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+endif(ENABLE_RPATH)
+
 ###################### CHECK HEADER #####################
 CHECK_INCLUDE_FILES(stdbool.h HAVE_STDBOOL_H)
 if(HAVE_STDBOOL_H)
@@ -105,3 +113,24 @@ IF(EXISTS ${CMAKE_SOURCE_DIR}/tests)
 ENDIF(EXISTS ${CMAKE_SOURCE_DIR}/tests)
 
 INSTALL(FILES include/mpcalloc.h DESTINATION include/)
+
+######################################################
+#Display info on current configuration
+macro (print_variable_status var_name)
+	if (${var_name})
+		message("${var_name} : yes")
+	else (${var_value})
+		message("${var_name} : no")
+	endif (${var_name})
+endmacro (print_variable_status)
+
+######################################################
+#Summary
+message("============== SUMMARY ==================")
+message("CMAKE_BUILD_TYPE : ${CMAKE_BUILD_TYPE}")
+print_variable_status("ENABLE_GCC_COVERAGE")
+print_variable_status("ENABLE_RPATH")
+print_variable_status("DISABLE_TESTS")
+print_variable_status("HWLOC_FOUND")
+print_variable_status("OPENPA_FOUND")
+message("=========================================")

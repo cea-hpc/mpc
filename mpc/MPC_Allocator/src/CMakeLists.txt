@@ -9,7 +9,7 @@ function(cm_export_file FILE DEST)
 endfunction (cm_export_file)
 
 #################### DEFINE SOURCES #####################
-Message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
+#Message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 #if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	set(alloc_SRC sctk_alloc_debug.c sctk_allocator.c sctk_alloc_posix.c sctk_alloc_topology.c sctk_alloc_light_mm_source.c sctk_alloc_common.c sctk_alloc_numa_stat.c sctk_alloc_on_node.c sctk_alloc_config.c sctk_alloc_hooks.c)
 #else()
@@ -35,8 +35,8 @@ else()
 	set(INCLUDE_PTHREAD "")
 endif()
 #################### SETUP LIBS #########################
-add_library(mpcalloc_primitives STATIC ${alloc_SRC})
-add_library(mpcallocprimitives SHARED ${alloc_SRC})
+add_library(mpcalloc_primitives_for_test STATIC ${alloc_SRC})
+add_library(mpcalloc_primitives SHARED ${alloc_SRC})
 
 if(NOT WIN32)
 	set(alloc_SRC ${alloc_SRC} sctk_alloc_posix_export.c)	
@@ -54,14 +54,14 @@ if (WIN32)
 target_link_libraries(mpc_allocator ${HWLOC_LIBRARY})
 endif()
 target_link_libraries(mpcalloc_trace ${HWLOC_LIBRARY} ${INCLUDE_PTHREAD})
+target_link_libraries(mpcalloc_primitives_for_test ${HWLOC_LIBRARY} ${INCLUDE_PTHREAD})
 target_link_libraries(mpcalloc_primitives ${HWLOC_LIBRARY} ${INCLUDE_PTHREAD})
-target_link_libraries(mpcallocprimitives ${HWLOC_LIBRARY} ${INCLUDE_PTHREAD})
 
 ################### EXTRA FLAGS #########################
 set_target_properties(mpcalloc PROPERTIES COMPILE_FLAGS "-DENABLE_STATIC=yes")
-set_target_properties(mpcallocprimitives PROPERTIES COMPILE_FLAGS "-DENABLE_STATIC=yes")
+set_target_properties(mpcalloc_primitives PROPERTIES COMPILE_FLAGS "-DENABLE_STATIC=yes")
 set_target_properties(mpcalloc_trace PROPERTIES COMPILE_FLAGS "-DENABLE_STATIC=yes -DENABLE_TRACE=yes")
-set_target_properties(mpcalloc_primitives PROPERTIES COMPILE_FLAGS "-DMPC_ALLOCATOR_DISABLE_STATIC=yes")
+set_target_properties(mpcalloc_primitives_for_test PROPERTIES COMPILE_FLAGS "-DMPC_ALLOCATOR_DISABLE_STATIC=yes")
 
 if(WIN32)
 	#cm_export_file("${CMAKE_BINARY_DIR}/src/alloc_primitives.dll" "${CMAKE_BINARY_DIR}/tests/")
@@ -85,6 +85,6 @@ IF(WIN32)
 ENDIF(WIN32)
 
 ######################################################## 
-INSTALL(TARGETS mpcalloc mpcalloc_trace mpcallocprimitives
+INSTALL(TARGETS mpcalloc mpcalloc_trace mpcalloc_primitives
         ARCHIVE DESTINATION lib${LIB_SUFFIX}
         LIBRARY DESTINATION lib${LIB_SUFFIX})
