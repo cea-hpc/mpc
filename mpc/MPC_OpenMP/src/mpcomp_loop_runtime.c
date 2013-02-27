@@ -27,8 +27,8 @@
 /* TODO need to handle chunk size for runtime schedule ('modifier' field) */
 
 int
-__mpcomp_runtime_loop_begin (int lb, int b, int incr, int chunk_size,
-			     int *from, int *to)
+__mpcomp_runtime_loop_begin (long lb, long b, long incr, long chunk_size,
+			     long *from, long *to)
 {
   //~ mpcomp_thread_info_t *info;
   omp_sched_t sched;
@@ -64,7 +64,7 @@ __mpcomp_runtime_loop_begin (int lb, int b, int incr, int chunk_size,
 }
 
 int
-__mpcomp_runtime_loop_next (int *from, int *to)
+__mpcomp_runtime_loop_next (long *from, long *to)
 {
   //~ mpcomp_thread_info_t *info;
   omp_sched_t sched;
@@ -146,8 +146,8 @@ __mpcomp_runtime_loop_end_nowait ()
 
 void
 __mpcomp_start_parallel_runtime_loop (int arg_num_threads, void *(*func)
-				      (void *), void *shared, int lb, int b,
-				      int incr, int chunk_size)
+				      (void *), void *shared, long lb, long b,
+				      long incr, long chunk_size)
 {
 
   //~ mpcomp_thread_info_t *info;
@@ -182,7 +182,7 @@ __mpcomp_start_parallel_runtime_loop (int arg_num_threads, void *(*func)
 }
 
 int
-__mpcomp_runtime_loop_next_ignore_nowait (int *from, int *to)
+__mpcomp_runtime_loop_next_ignore_nowait (long *from, long *to)
 {
   not_implemented ();
   return 0;
@@ -197,8 +197,8 @@ __mpcomp_runtime_loop_next_ignore_nowait (int *from, int *to)
   *****/
 
 int
-__mpcomp_ordered_runtime_loop_begin (int lb, int b, int incr, int chunk_size,
-			    int *from, int *to)
+__mpcomp_ordered_runtime_loop_begin (long lb, long b, long incr, long chunk_size,
+			    long *from, long *to)
 {
   //~ mpcomp_thread_info_t *info;
   omp_sched_t sched;
@@ -234,7 +234,7 @@ __mpcomp_ordered_runtime_loop_begin (int lb, int b, int incr, int chunk_size,
 }
 
 int
-__mpcomp_ordered_runtime_loop_next(int *from, int *to)
+__mpcomp_ordered_runtime_loop_next(long *from, long *to)
 {
   //~ mpcomp_thread_info_t *info;
   omp_sched_t sched;

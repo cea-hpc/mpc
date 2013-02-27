@@ -33,8 +33,8 @@
 TODO("BUG w/ long iterators, need to change signature of every loop function")
 
 int
-__mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size,
-			    int *from, int *to)
+__mpcomp_guided_loop_begin (long lb, long b, long incr, long chunk_size,
+			    long *from, long *to)
 {
   mpcomp_thread_info_t *self;	/* Info on the current thread */
   mpcomp_thread_info_t *father;	/* Info on the team */
@@ -42,25 +42,30 @@ __mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size,
   int index;
   int num_threads;
   int nb_entered_threads;
-  int n;			/* Number of remaining iterations */
-  int cs;			/* Current chunk size */
+  long n;			/* Number of remaining iterations */
+  long cs;			/* Current chunk size */
 
-  sctk_nodebug( "__mpcomp_guided_loop_begin: begin loop %d -> %d [%d], cs=%d",
+  sctk_nodebug( "__mpcomp_guided_loop_begin: begin loop %ld -> %ld [%ld], cs=%ld",
       lb, b, incr, chunk_size ) ;
 
   /* Compute the total number iterations */
   n = (b - lb) / incr;
 
-  /* If this loop contains no iterations then exit */
-  if ( n <= 0 ) {
-    sctk_nodebug( "__mpcomp_guided_loop_begin: no iteration, modulo=%d", (b - lb) % incr ) ;
-    return 0 ;
-  }
-
   /* Grab the thread info */
   self = (mpcomp_thread_info_t *) sctk_thread_getspecific
     (mpcomp_thread_info_key);
   sctk_assert (self != NULL);
+
+  /* If this loop contains no iterations then exit */
+  if ( n <= 0 ) {
+      /* Fill private information about the loop */
+      self->loop_lb = lb;
+      self->loop_b = b;
+      self->loop_incr = incr;
+      self->loop_chunk_size = chunk_size;
+    sctk_nodebug( "__mpcomp_guided_loop_begin: no iteration, modulo=%ld", (b - lb) % incr ) ;
+    return 0 ;
+  }
 
   /* Number of threads in the current team */
   num_threads = self->num_threads;
@@ -71,7 +76,7 @@ __mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size,
   if (num_threads == 1)
     {
 
-      sctk_nodebug( "__mpcomp_guided_loop_begin: only one thread, chunk %d -> %d",
+      sctk_nodebug( "__mpcomp_guided_loop_begin: only one thread, chunk %ld -> %ld",
 	  lb, b ) ;
       *from = lb;
       *to = b;
@@ -161,7 +166,7 @@ __mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size,
 	}
 
       sctk_nodebug
-	("__mpcomp_guided_loop_begin[%d]: First one => n=%d->%d cs=%d", rank,
+	("__mpcomp_guided_loop_begin[%d]: First one => n=%ld->%ld cs=%ld", rank,
 	 n, n - cs, cs);
 
       /* Update the number of remaining iterations */
@@ -202,7 +207,7 @@ __mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size,
   n = father->nb_iterations_remaining[index];
 
   sctk_nodebug
-    ("__mpcomp_guided_loop_begin[%d]: Not first one -> %d iteration(s) remaining",
+    ("__mpcomp_guided_loop_begin[%d]: Not first one -> %ld iteration(s) remaining",
      rank, n);
 
   /* If there is a chunk remaining */
@@ -265,14 +270,14 @@ __mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size,
 }
 
 int
-__mpcomp_guided_loop_next (int *from, int *to)
+__mpcomp_guided_loop_next (long *from, long *to)
 {
   mpcomp_thread_info_t *self;	/* Info on the current thread */
   mpcomp_thread_info_t *father;	/* Info on the team */
   long rank;
   int index;
   int num_threads;
-  int n;
+  long n;
 
 
   /* Grab the thread info */
@@ -308,7 +313,7 @@ __mpcomp_guided_loop_next (int *from, int *to)
   n = father->nb_iterations_remaining[index];
 
   sctk_nodebug
-    ("__mpcomp_guided_loop_next[%d]: Next => %d iteration(s) remaining", rank,
+    ("__mpcomp_guided_loop_next[%d]: Next => %ld iteration(s) remaining", rank,
      n);
 
   /* If there is a chunk remaining */
@@ -337,7 +342,7 @@ __mpcomp_guided_loop_next (int *from, int *to)
 	    }
 	}
 
-      sctk_nodebug ("__mpcomp_guided_loop_next[%d]: Next => n=%d->%d cs=%d",
+      sctk_nodebug ("__mpcomp_guided_loop_next[%d]: Next => n=%ld->%ld cs=%ld",
 		    rank, n, n - cs, cs);
 
       n = n - cs;
@@ -382,9 +387,11 @@ __mpcomp_guided_loop_end_nowait ()
   mpcomp_thread_info_t *self;	/* Info on the current thread */
   mpcomp_thread_info_t *father;	/* Info on the team */
   long rank;
+  long n ;
   int index;
   int num_threads;
   int nb_exited_threads;
+
 
   /* Grab the thread info */
   self = (mpcomp_thread_info_t *) sctk_thread_getspecific
@@ -394,9 +401,13 @@ __mpcomp_guided_loop_end_nowait ()
   /* Number of threads in the current team */
   num_threads = self->num_threads;
 
+  /* Compute the total number iterations */
+  n = (self->loop_b - self->loop_lb) / self->loop_incr;
+
   /* If this function is called from a sequential part (orphaned directive) or
      this team has only 1 thread, no need to handle it */
-  if (num_threads == 1)
+  /* If the number of iterations is 0, leave */
+  if (num_threads == 1 || n <= 0 )
     {
       return;
     }
@@ -476,8 +487,8 @@ __mpcomp_guided_loop_end_nowait ()
 
 void
 __mpcomp_start_parallel_guided_loop (int arg_num_threads, void *(*func)
-				     (void *), void *shared, int lb, int b,
-				     int incr, int chunk_size)
+				     (void *), void *shared, long lb, long b,
+				     long incr, long chunk_size)
 {
 TODO("implement #pragma omp parallel for schedule(guided)")
   not_implemented ();
@@ -489,16 +500,16 @@ TODO("implement #pragma omp parallel for schedule(guided)")
    and nowait clause previously executed in the same parallel region 
    */
 int
-__mpcomp_guided_loop_begin_ignore_nowait (int lb, int b, int incr, int
-					  chunk_size, int *from, int *to)
+__mpcomp_guided_loop_begin_ignore_nowait (long lb, long b, long incr, long 
+					  chunk_size, long *from, long *to)
 {
   mpcomp_thread_info_t *self;	/* Info on the current thread */
   mpcomp_thread_info_t *father;	/* Info on the team */
   long rank;
   int num_threads;
   int nb_entered_threads;
-  int n;			/* Number of remaining iterations */
-  int cs;			/* Current chunk size */
+  long n;			/* Number of remaining iterations */
+  long cs;			/* Current chunk size */
 
   /* Grab the thread info */
   self = (mpcomp_thread_info_t *) sctk_thread_getspecific
@@ -555,7 +566,7 @@ __mpcomp_guided_loop_begin_ignore_nowait (int lb, int b, int incr, int
 	}
 
       sctk_nodebug
-	("__mpcomp_guided_loop_begin[%d]: First one => n=%d->%d cs=%d", rank,
+	("__mpcomp_guided_loop_begin[%d]: First one => n=%ld->%ld cs=%ld", rank,
 	 n, n - cs, cs);
 
       /* Update the number of remaining iterations */
@@ -594,7 +605,7 @@ __mpcomp_guided_loop_begin_ignore_nowait (int lb, int b, int incr, int
   n = father->nb_iterations_remaining[0];
 
   sctk_nodebug
-    ("__mpcomp_guided_loop_begin[%d]: Not first one -> %d iteration(s) remaining",
+    ("__mpcomp_guided_loop_begin[%d]: Not first one -> %ld iteration(s) remaining",
      rank, n);
 
   /* If there is a chunk remaining */
@@ -659,13 +670,13 @@ __mpcomp_guided_loop_begin_ignore_nowait (int lb, int b, int incr, int
 
 
 int
-__mpcomp_guided_loop_next_ignore_nowait (int *from, int *to)
+__mpcomp_guided_loop_next_ignore_nowait (long *from, long *to)
 {
   mpcomp_thread_info_t *self;	/* Info on the current thread */
   mpcomp_thread_info_t *father;	/* Info on the team */
   long rank;
   int num_threads;
-  int n;
+  long n;
 
   /* Grab the thread info */
   self = (mpcomp_thread_info_t *) sctk_thread_getspecific
@@ -696,7 +707,7 @@ __mpcomp_guided_loop_next_ignore_nowait (int *from, int *to)
   n = father->nb_iterations_remaining[0];
 
   sctk_nodebug ("__mpcomp_guided_loop_next_ignore_nowait[%d]: "
-		"Next => %d iteration(s) remaining", rank, n);
+		"Next => %ld iteration(s) remaining", rank, n);
 
   /* If there is a chunk remaining */
   if (n > 0)
@@ -725,7 +736,7 @@ __mpcomp_guided_loop_next_ignore_nowait (int *from, int *to)
 	}
 
       sctk_nodebug ("__mpcomp_guided_loop_next_ignore_nowait[%d]: "
-		    "Next => n=%d->%d cs=%d", rank, n, n - cs, cs);
+		    "Next => n=%ld->%ld cs=%ld", rank, n, n - cs, cs);
 
       n = n - cs;
 
@@ -756,8 +767,8 @@ __mpcomp_guided_loop_next_ignore_nowait (int *from, int *to)
 }
 
 int
-__mpcomp_ordered_guided_loop_begin (int lb, int b, int incr, int chunk_size,
-			    int *from, int *to) {
+__mpcomp_ordered_guided_loop_begin (long lb, long b, long incr, long chunk_size,
+			    long *from, long *to) {
   mpcomp_thread_info_t *info;
   int res ;
 
@@ -773,7 +784,7 @@ __mpcomp_ordered_guided_loop_begin (int lb, int b, int incr, int chunk_size,
 }
 
 int
-__mpcomp_ordered_guided_loop_next (int *from, int *to) {
+__mpcomp_ordered_guided_loop_next (long *from, long *to) {
   mpcomp_thread_info_t *info;
   int res ;
 

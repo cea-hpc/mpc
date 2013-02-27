@@ -30,8 +30,8 @@
 void
 __mpcomp_barrier_for_dyn (void) ;
 
-int __mpcomp_dynamic_loop_begin (int lb, int b, int incr,
-			     int chunk_size, int *from, int *to)
+int __mpcomp_dynamic_loop_begin (long lb, long b, long incr,
+			     long chunk_size, long *from, long *to)
 {
   mpcomp_thread_info_t *self;	/* Info on the current thread */
   mpcomp_thread_info_t *father;	/* Info on the team */
@@ -39,7 +39,7 @@ int __mpcomp_dynamic_loop_begin (int lb, int b, int incr,
   int index;			/* Index of this loop */
   int num_threads;		/* Number of threads of the current team */
   int remain ;
-  int n;			/* Number of remaining iterations */
+  long n;			/* Number of remaining iterations */
 
   /* Compute the total number iterations */
   n = (b - lb) / incr;
@@ -57,24 +57,31 @@ int __mpcomp_dynamic_loop_begin (int lb, int b, int incr,
 
   /* Number of threads in the current team */
   num_threads = self->num_threads;
+  sctk_assert( num_threads > 0 ) ;
+
+  /* Get the father info (team info) */
+  father = self->father;
+  sctk_assert (father != NULL);
+
+  /* Get the rank of the current thread */
+  rank = self->rank;
+  sctk_assert( rank >= 0 && rank < num_threads ) ;
 
   /* If this function is called from a sequential part (orphaned directive) or
    * if this thread is the only one of its team -> it executes the whole loop 
    */
   if (num_threads == 1)
     {
+      /* Fill team info to indicate that there are no chunks anymore.
+	 Index does not increase in such case
+	 */
+      index = self->private_current_for_dyn;
+      father->chunk_info_for_dyn[rank][index].remain = 0 ;
       *from = lb;
       *to = b;
       return 1;
     }
 
-  /* Get the father info (team info) */
-  father = self->father;
-  sctk_assert (father != NULL);
-
-
-  /* Get the rank of the current thread */
-  rank = self->rank;
 
   /* Compute the new index of this loop */
   index = (self->private_current_for_dyn+1)%(MPCOMP_MAX_ALIVE_FOR_DYN + 1);
@@ -82,7 +89,7 @@ int __mpcomp_dynamic_loop_begin (int lb, int b, int incr,
 
   sctk_nodebug
     ("__mpcomp_dynamic_loop_begin[%d]: "
-     "Entering loop (%d -> %d step %d [cs=%d]) with "
+     "Entering loop (%ld -> %ld step %ld [cs=%ld]) with "
      "index %d, microVP=%d (STOP=%d)",
      rank, 
      lb, b, incr, chunk_size, 
@@ -221,7 +228,7 @@ INFO("OpenMP: For/Dyn: Check which barrier is used")
 }
 
 int
-__mpcomp_dynamic_loop_next (int *from, int *to)
+__mpcomp_dynamic_loop_next (long *from, long *to)
 {
   mpcomp_thread_info_t *self;
   mpcomp_thread_info_t *father;
@@ -240,14 +247,6 @@ __mpcomp_dynamic_loop_next (int *from, int *to)
   /* Number of threads in the current team */
   num_threads = self->num_threads;
 
-  /* If this function is called from a sequential part (orphaned directive),
-     or a team w/ only 1 thread, then the current thread is done 
-     (the whole loop has been executed after the 'start' function) */
-  if (num_threads == 1)
-    {
-      return 0;
-    }
-
   /* Get the rank of the current thread */
   rank = self->rank;
 
@@ -257,6 +256,41 @@ __mpcomp_dynamic_loop_next (int *from, int *to)
 
   /* Get the index of the current loop */
   index = self->private_current_for_dyn ;
+
+
+  /* Even if the number of threads is 1, compute the chunk to execute
+     (because this functino is directly call after a #pragma omp parallel for
+     */
+  if (num_threads == 1)
+    {
+      int total ;
+      int chunk_id ;
+
+      sctk_assert( rank == 0 ) ;
+
+      remain = father->chunk_info_for_dyn[0][index].remain ;
+
+      sctk_assert( remain >= 0 ) ;
+
+      if ( remain == 0 ) {
+	/* Reinitialize team info (because it will not be done inside the 
+	   barrier */
+	father->chunk_info_for_dyn[0][index].remain = -1 ;
+	return 0 ;
+      }
+
+      total = father->chunk_info_for_dyn[rank][index].total ;
+      father->chunk_info_for_dyn[rank][index].remain = remain - 1 ;
+
+      chunk_id = total - remain ;
+
+      __mpcomp_get_specific_chunk_per_rank (rank,
+	  num_threads,
+	  self->loop_lb, self->loop_b, self->loop_incr,
+	  self->loop_chunk_size, chunk_id, from, to);
+      
+      return 1;
+    }
 
   sctk_nodebug
     ("__mpcomp_dynamic_loop_next[%d]: Next in loop for index %d on microVP=%d",
@@ -424,13 +458,6 @@ __mpcomp_dynamic_loop_end_nowait ()
   /* Number of threads in the current team */
   num_threads = self->num_threads;
 
-  /* If this function is called from a sequential part (orphaned directive) or
-     this team has only 1 thread, no need to handle it */
-  if (num_threads == 1)
-    {
-      return;
-    }
-
   /* Get the father info (team info) */
   father = self->father;
   sctk_assert (father != NULL);
@@ -438,6 +465,14 @@ __mpcomp_dynamic_loop_end_nowait ()
   /* Get the rank of the current thread */
   rank = self->rank;
   index = self->private_current_for_dyn;
+
+  /* If this function is called from a sequential part (orphaned directive) or
+     this team has only 1 thread, no need to handle it */
+  if (num_threads == 1)
+    {
+      return;
+    }
+
 
     sctk_nodebug( "__mpcomp_dynamic_loop_end_nowait[%d]: Exiting from index %d"
 	, rank, index ) ;
@@ -657,11 +692,11 @@ __mpcomp_barrier_for_dyn (void)
 void
 __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
 				      void *(*func) (void *), void *shared,
-				      int lb, int b, int incr, int chunk_size)
+				      long lb, long b, long incr, long chunk_size)
 {
   mpcomp_thread_info_t *current_info;
   int num_threads;
-  int n;			/* Number of iterations */
+  long n;			/* Number of iterations */
 
   SCTK_PROFIL_START (__mpcomp_start_parallel_region);
 
@@ -695,6 +730,7 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
     }
 
   /* Bypass if the parallel region contains only 1 thread */
+#if 0
   if (num_threads == 1)
     {
       int total_nb_chunks ;
@@ -715,6 +751,7 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
       SCTK_PROFIL_END (__mpcomp_start_parallel_region);
       return;
     }
+#endif
 
   sctk_nodebug
     ("__mpcomp_start_parallel_dynamic_loop: -> Final num threads = %d",
@@ -722,7 +759,7 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
 
   /* Creation of a new microthread structure if the current region is
    * sequential or if nesting is allowed */
-  if (current_info->depth == 0 || mpcomp_get_nested ())
+  if (num_threads != 1 && (current_info->depth == 0 || mpcomp_get_nested ()))
     {
       sctk_microthread_t *new_task;
       sctk_microthread_t *current_task;
@@ -849,8 +886,12 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
 	    ("__mpcomp_start_parallel_dynamic_loop: "
 	     "Adding op %d on microVP %d", i, microVP);
 
+	  /*
 	  res = sctk_microthread_add_task (__mpcomp_wrapper_op, new_info, microVP,
 					   &(new_info->step), new_task, val);
+					   */
+	  res = sctk_microthread_add_task (__mpcomp_wrapper_op, new_info, microVP,
+					   &(new_info->step), new_task, MPC_MICROTHREAD_NO_TASK_INFO);
 	  sctk_assert (res == 0);
 
 
@@ -859,8 +900,12 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
       SCTK_PROFIL_END (__mpcomp_start_parallel_region__creation);
 
       /* Launch the execution of this microthread structure */
+      /*
       sctk_microthread_parallel_exec (new_task,
 				      MPC_MICROTHREAD_DONT_WAKE_VPS);
+				      */
+      sctk_microthread_parallel_exec (new_task,
+				      MPC_MICROTHREAD_WAKE_VPS);
 
       sctk_nodebug
 	("__mpcomp_start_parallel_dynamic_loop: Microthread execution done");
@@ -883,6 +928,7 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
   else
     {
       mpcomp_thread_info_t *new_info;
+      int total_nb_chunks ;
 
       sctk_nodebug
 	("__mpcomp_start_parallel_dynamic_loop: Serialize a new team at depth %d",
@@ -914,10 +960,23 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
 	{
 	  sctk_nodebug
 	    ("__mpcomp_start_parallel_dynamic_loop: Reusing older thread_info");
-	  __mpcomp_reset_thread_info (new_info, func, shared, 0,
+	  __mpcomp_reset_thread_info (new_info, func, shared, 1,
 				      current_info->icvs, 0, 0,
 				      current_info->vp);
 	}
+
+
+      /* Fill thread information about the loop */
+      new_info->loop_lb = lb ;
+      new_info->loop_b = b ;
+      new_info->loop_incr = incr ;
+      new_info->loop_chunk_size = chunk_size ;
+
+      /* Fill team information about the loop */
+      total_nb_chunks = __mpcomp_get_static_nb_chunks_per_rank( 0,
+	  num_threads, lb, b, incr, chunk_size); 
+      current_info->chunk_info_for_dyn[0][0].remain = total_nb_chunks ;
+      current_info->chunk_info_for_dyn[0][0].total  = total_nb_chunks ;
 
       __mpcomp_wrapper_op (new_info);
 
@@ -925,7 +984,8 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
 
       sctk_thread_setspecific (mpcomp_thread_info_key, current_info);
 
-      sctk_free (new_info);
+      TODO("this free generates double-free error")
+      // sctk_free (new_info);
     }
 
 TODO("can we only reset dynamic-team info?")
@@ -944,7 +1004,7 @@ TODO("can we only reset dynamic-team info?")
 } /* __mpcomp_start_parallel_dynamic_loop */
 
 int
-__mpcomp_dynamic_loop_next_ignore_nowait (int *from, int *to)
+__mpcomp_dynamic_loop_next_ignore_nowait (long *from, long *to)
 {
   mpcomp_thread_info_t *self;
   mpcomp_thread_info_t *father;
@@ -962,6 +1022,14 @@ __mpcomp_dynamic_loop_next_ignore_nowait (int *from, int *to)
   /* Number of threads in the current team */
   num_threads = self->num_threads;
 
+  /* Get the rank of the current thread */
+  rank = self->rank;
+
+  /* Get the father info */
+  father = self->father;
+  sctk_assert (father != NULL);
+
+
   /* If this function is called from a sequential part (orphaned directive),
      or a team w/ only 1 thread, then the current thread is done 
      (the whole loop has been executed after the 'start' function) */
@@ -970,13 +1038,13 @@ __mpcomp_dynamic_loop_next_ignore_nowait (int *from, int *to)
       *from = self->loop_lb ;
       *to = self->loop_b ;
 
-      remain = self->chunk_info_for_dyn[0][0].remain ;
+      remain = father->chunk_info_for_dyn[0][0].remain ;
       if ( remain == 0 ) {
 	return 0 ;
       }
 
-      int total = self->chunk_info_for_dyn[0][0].total ;
-      self->chunk_info_for_dyn[0][0].remain = remain - 1 ;
+      int total = father->chunk_info_for_dyn[0][0].total ;
+      father->chunk_info_for_dyn[0][0].remain = remain - 1 ;
 
       int chunk_id = total - remain ;
 
@@ -987,13 +1055,6 @@ __mpcomp_dynamic_loop_next_ignore_nowait (int *from, int *to)
       
       return 1;
     }
-
-  /* Get the rank of the current thread */
-  rank = self->rank;
-
-  /* Get the father info */
-  father = self->father;
-  sctk_assert (father != NULL);
 
   sctk_nodebug
     ("__mpcomp_dynamic_loop_next_ignore_nowait[%d]: "
@@ -1143,8 +1204,8 @@ __mpcomp_dynamic_loop_next_ignore_nowait (int *from, int *to)
   *****/
 
 int
-__mpcomp_ordered_dynamic_loop_begin (int lb, int b, int incr, int chunk_size,
-			    int *from, int *to)
+__mpcomp_ordered_dynamic_loop_begin (long lb, long b, long incr, long chunk_size,
+			    long *from, long *to)
 {
   mpcomp_thread_info_t *info;
   int res ;
@@ -1161,7 +1222,7 @@ __mpcomp_ordered_dynamic_loop_begin (int lb, int b, int incr, int chunk_size,
 }
 
 int
-__mpcomp_ordered_dynamic_loop_next(int *from, int *to)
+__mpcomp_ordered_dynamic_loop_next(long *from, long *to)
 {
   mpcomp_thread_info_t *info;
   int res ;

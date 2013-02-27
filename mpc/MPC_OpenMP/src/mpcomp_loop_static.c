@@ -29,16 +29,16 @@
 
 /* Compute the chunk for a static schedule (without specific chunk size) */
 void
-__mpcomp_static_schedule_get_single_chunk (int lb, int b, int incr, int *from,
-					   int *to)
+__mpcomp_static_schedule_get_single_chunk (long lb, long b, long incr, long *from,
+					   long *to)
 {
   /*
      Original loop -> lb -> b step incr
      New loop -> *from -> *to step incr
    */
 
-  int trip_count;
-  int chunk_size;
+  long trip_count;
+  long chunk_size;
   int num_threads;
   mpcomp_thread_info_t *info;
   int rank;
@@ -75,17 +75,17 @@ __mpcomp_static_schedule_get_single_chunk (int lb, int b, int incr, int *from,
     }
 
   sctk_nodebug ("__mpcomp_static_schedule_get_single_chunk: "
-		"#%d (%d -> %d step %d) -> (%d -> %d step %d)", rank, lb, b,
+		"#%d (%ld -> %ld step %ld) -> (%ld -> %ld step %ld)", rank, lb, b,
 		incr, *from, *to, incr);
 }
 
 /* Return the number of chunks that a static schedule would create */
 int
-__mpcomp_static_schedule_get_nb_chunks (int lb, int b, int incr,
-					int chunk_size)
+__mpcomp_static_schedule_get_nb_chunks (long lb, long b, long incr,
+					long chunk_size)
 {
-  int trip_count;
-  int nb_chunks_per_thread;
+  long trip_count;
+  long nb_chunks_per_thread;
   int nb_threads;
   mpcomp_thread_info_t *info;
   int rank;
@@ -126,7 +126,7 @@ __mpcomp_static_schedule_get_nb_chunks (int lb, int b, int incr,
     }
 
   sctk_nodebug
-    ("__mpcomp_static_schedule_get_nb_chunks[%d]: %d -> [%d] (cs=%d) final nb_chunks = %d",
+    ("__mpcomp_static_schedule_get_nb_chunks[%d]: %ld -> %ld [%ld] (cs=%ld) final nb_chunks = %ld",
      rank, lb, b, incr, chunk_size, nb_chunks_per_thread);
 
 
@@ -136,12 +136,12 @@ __mpcomp_static_schedule_get_nb_chunks (int lb, int b, int incr,
 /* Return the chunk #'chunk_num' assuming a static schedule with 'chunk_size'
  * as a chunk size */
 void
-__mpcomp_static_schedule_get_specific_chunk (int lb, int b, int incr,
-					     int chunk_size, int chunk_num,
-					     int *from, int *to)
+__mpcomp_static_schedule_get_specific_chunk (long lb, long b, long incr,
+					     long chunk_size, long chunk_num,
+					     long *from, long *to)
 {
   mpcomp_thread_info_t *info;
-  int trip_count;
+  long trip_count;
   int nb_threads;
   int rank;
 
@@ -156,7 +156,7 @@ __mpcomp_static_schedule_get_specific_chunk (int lb, int b, int incr,
   /* Compute the trip count (total number of iterations of the original loop) */
   trip_count = (b - lb) / incr;
 
-  if ( (b - lb) % incr != 0 ) {
+  if ( ((b - lb) % incr) != 0 ) {
     trip_count++ ;
   }
 
@@ -175,8 +175,8 @@ __mpcomp_static_schedule_get_specific_chunk (int lb, int b, int incr,
       *to = lb + trip_count * incr;
 
       sctk_nodebug ("__mpcomp_static_schedule_get_specific_chunk: "
-		    "Thread %d / Chunk %d: %d -> %d (excl) step %d => "
-		    "%d -> %d (excl) step %d (chunk of %d)\n",
+		    "Thread %d / Chunk %ld: %ld -> %ld (excl) step %ld => "
+		    "%ld -> %ld (excl) step %ld (chunk of %ld)\n",
 		    rank, nb_chunks_per_thread, lb, b, incr, from, to, incr,
 		    last_chunk_size);
 
@@ -191,16 +191,16 @@ __mpcomp_static_schedule_get_specific_chunk (int lb, int b, int incr,
 	chunk_size * incr * rank + chunk_size * incr;
 
       sctk_nodebug ("__mpcomp_static_schedule_get_specific_chunk: "
-		    "Thread %d / Chunk %d: %d -> %d (excl) step %d => "
-		    "%d -> %d (excl) step %d (chunk of %d)\n",
+		    "Thread %d / Chunk %ld: %ld -> %ld (excl) step %ld => "
+		    "%ld -> %ld (excl) step %ld (chunk of %ld)\n",
 		    rank, chunk_num, lb, b, incr, *from, *to, incr,
 		    chunk_size);
     }
 }
 
 int
-__mpcomp_static_loop_begin (int lb, int b, int incr, int chunk_size,
-			    int *from, int *to)
+__mpcomp_static_loop_begin (long lb, long b, long incr, long chunk_size,
+			    long *from, long *to)
 {
   mpcomp_thread_info_t *info;
 
@@ -245,7 +245,7 @@ __mpcomp_static_loop_begin (int lb, int b, int incr, int chunk_size,
 }
 
 int
-__mpcomp_static_loop_next (int *from, int *to)
+__mpcomp_static_loop_next (long *from, long *to)
 {
   mpcomp_thread_info_t *info;
   int nb_threads;
@@ -288,12 +288,12 @@ __mpcomp_static_loop_end_nowait ()
 
 void
 __mpcomp_start_parallel_static_loop (int arg_num_threads, void *(*func)
-				     (void *), void *shared, int lb, int b,
-				     int incr, int chunk_size)
+				     (void *), void *shared, long lb, long b,
+				     long incr, long chunk_size)
 {
   mpcomp_thread_info_t *current_info;
   int num_threads;
-  int n;			/* Number of iterations */
+  long n;			/* Number of iterations */
 
   SCTK_PROFIL_START (__mpcomp_start_parallel_region);
 
@@ -316,7 +316,7 @@ __mpcomp_start_parallel_static_loop (int arg_num_threads, void *(*func)
 
   sctk_nodebug
     ("__mpcomp_start_parallel_static_loop: "
-     "Entering w/ loop %d -> %d step %d [cs=%d]",
+     "Entering w/ loop %ld -> %ld step %ld [cs=%ld]",
      lb, b, incr, chunk_size);
 
   /* Grab the number of threads */
@@ -563,7 +563,7 @@ __mpcomp_start_parallel_static_loop (int arg_num_threads, void *(*func)
 }
 
 int
-__mpcomp_static_loop_next_ignore_nowait (int *from, int *to)
+__mpcomp_static_loop_next_ignore_nowait (long *from, long *to)
 {
   not_implemented ();
   return 0;
@@ -578,8 +578,8 @@ __mpcomp_static_loop_next_ignore_nowait (int *from, int *to)
   *****/
 
 int
-__mpcomp_ordered_static_loop_begin (int lb, int b, int incr, int chunk_size,
-			    int *from, int *to)
+__mpcomp_ordered_static_loop_begin (long lb, long b, long incr, long chunk_size,
+			    long *from, long *to)
 {
   mpcomp_thread_info_t *info;
   int res ;
@@ -596,7 +596,7 @@ __mpcomp_ordered_static_loop_begin (int lb, int b, int incr, int chunk_size,
 }
 
 int
-__mpcomp_ordered_static_loop_next(int *from, int *to)
+__mpcomp_ordered_static_loop_next(long *from, long *to)
 {
   mpcomp_thread_info_t *info;
   int res ;
