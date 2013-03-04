@@ -1655,42 +1655,59 @@ static int
 __INTERNAL__PMPI_Waitany (int count, MPI_Request * array_of_requests,
 			  int *index, MPI_Status * status)
 {
-  int flag = 0;
-  while (!flag)
+	int flag = 0;
+	while (!flag)
     {
-      __INTERNAL__PMPI_Testany (count, array_of_requests, index, &flag,
-				status);
-      if (!flag) sctk_thread_yield ();
+      __INTERNAL__PMPI_Testany (count, array_of_requests, index, &flag, status);
+		if (!flag)
+			sctk_thread_yield ();
     }
-  return MPI_SUCCESS;
+	return MPI_SUCCESS;
 }
 
 static int
-__INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
-			  int *index, int *flag, MPI_Status * status)
+__INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests, int *index, int *flag, MPI_Status * status)
 {
-  int i;
-  *index = MPI_UNDEFINED;
-  *flag = 0;
-  for (i = 0; i < count; i++)
-    {
-      int tmp;
-      tmp =
-	PMPC_Test (__sctk_convert_mpc_request (&(array_of_requests[i])), flag,
-		  status);
-      if (tmp != MPI_SUCCESS)
-	{
-	  return tmp;
-	}
-      if (*flag)
-	{
-	  __sctk_delete_mpc_request (&(array_of_requests[i]));
-	  *index = i;
-	  return tmp;
-	}
+	int i;
+	*index = MPI_UNDEFINED;
+	*flag = 1;
+	int tmp;
 
-    }
-  return MPI_SUCCESS;
+	for (i = 0; i < count; i++)
+	{
+		if (array_of_requests[i] == MPI_REQUEST_NULL)
+		{
+			continue;
+		}
+		
+		{
+			MPC_Request *req;
+			req = __sctk_convert_mpc_request (&(array_of_requests[i]));
+			if (req == &MPC_REQUEST_NULL)
+			{
+				continue;
+			}
+			else
+			{
+				int flag_test = 0;
+				tmp = PMPC_Test (req, &flag_test, status);
+				if(flag_test == 0)
+					*flag = 0;
+			}
+		}
+
+		if (tmp != MPI_SUCCESS)
+		{
+			return tmp;
+		}
+		if (*flag)
+		{
+			__sctk_delete_mpc_request (&(array_of_requests[i]));
+			*index = i;
+			return tmp;
+		}
+	}
+	return MPI_SUCCESS;
 }
 
 static int
@@ -4617,14 +4634,10 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
       last = ranges[i][1];
       stride = ranges[i][2];
 
-      sctk_nodebug ("first %d last %d stride %d", first, last, stride);
-
       for (j = 0; j < ((last - first) / (stride)); j++)
 	{
-	  sctk_debug("first = %d, last = %d, stride = %d, group->task_nb = %d", first, last, stride, group->task_nb);
 	  assume (first + j * stride < group->task_nb);
 	  (newgroup)->task_list_in_global_ranks[first + j * stride] = -1;
-	  sctk_nodebug ("remove rank %d", first + j * stride);
 	  size--;
 	}
     }
@@ -4730,14 +4743,12 @@ __INTERNAL__PMPI_Comm_compare (MPI_Comm comm1, MPI_Comm comm2, int *result)
 			
 	if(sctk_is_inter_comm (comm1) != sctk_is_inter_comm (comm2))
 	{
-		sctk_debug("they are not equals %d", MPI_UNEQUAL);
 		*result = MPI_UNEQUAL;
 		return MPI_SUCCESS;
 	}
 
 	if (comm1 == comm2)
     {	
-		sctk_debug("they are identical %d", MPI_IDENT);
 		*result = MPI_IDENT;
 		return MPI_SUCCESS;
     }
@@ -4769,19 +4780,16 @@ __INTERNAL__PMPI_Comm_compare (MPI_Comm comm1, MPI_Comm comm2, int *result)
 
 		if (result_group == MPI_SIMILAR)
 		{
-			sctk_debug("they are similar %d", MPI_SIMILAR);
 			*result = MPI_SIMILAR;
 			return MPI_SUCCESS;
 		}
 		else if(result_group == MPI_IDENT)
 		{
-			sctk_debug("they are congruent %d", MPI_CONGRUENT);
 			*result = MPI_CONGRUENT;
 			return MPI_SUCCESS;
 		}
 		else
 		{
-			sctk_debug("They are unequal !");
 			*result = MPI_UNEQUAL;
 			return MPI_SUCCESS;
 		}
@@ -6068,7 +6076,7 @@ __INTERNAL__PMPI_Cart_get (MPI_Comm comm, int maxdims, int *dims, int *periods, 
 	tmp = mpc_mpc_get_per_comm_data(comm);
 	topo = &(tmp->topo);
 	__INTERNAL__PMPI_Comm_rank (comm, &rank);
-	sctk_debug("rank %d : cart get begin  topo->lock = %d", rank, topo->lock);
+
 	sctk_spinlock_lock (&(topo->lock));
 		if (topo->type != MPI_CART)
 		{
@@ -7139,6 +7147,7 @@ PMPI_Irecv (void *buf, int count, MPI_Datatype datatype, int source,
 int
 PMPI_Wait (MPI_Request * request, MPI_Status * status)
 {
+	sctk_nodebug("entering MPI_Wait");
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Wait (request, status);
@@ -7167,6 +7176,7 @@ int
 PMPI_Waitany (int count, MPI_Request array_of_requests[], int *index,
 	      MPI_Status * status)
 {
+	sctk_nodebug("entering PMPI_Waitany");
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Waitany (count, array_of_requests, index, status);
@@ -7188,6 +7198,7 @@ int
 PMPI_Waitall (int count, MPI_Request array_of_requests[],
 	      MPI_Status array_of_statuses[])
 {
+	sctk_nodebug("entering PMPI_Waitall");
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res =
@@ -7998,7 +8009,6 @@ PMPI_Comm_compare (MPI_Comm comm1, MPI_Comm comm2, int *result)
 	mpi_check_comm (comm1, comm1);
 	mpi_check_comm (comm2, comm2);
 	res = __INTERNAL__PMPI_Comm_compare (comm1, comm2, result);
-	sctk_debug("result compare comm %d && comm %d = %d", comm1, comm2, *result);
 	SCTK__MPI_Check_retrun_val (res, comm);
 }
 
@@ -8181,7 +8191,7 @@ int
 PMPI_Cart_create (MPI_Comm comm_old, int ndims, int *dims, int *periods,
 		  int reorder, MPI_Comm * comm_cart)
 {
-	sctk_debug("Enter PMPI_Cart_create");
+	sctk_nodebug("Enter PMPI_Cart_create");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm_old, comm_old);
   res =
@@ -8193,7 +8203,7 @@ PMPI_Cart_create (MPI_Comm comm_old, int ndims, int *dims, int *periods,
 int
 PMPI_Dims_create (int nnodes, int ndims, int *dims)
 {
-	sctk_debug("Enter PMPI_Dims_create");
+	sctk_nodebug("Enter PMPI_Dims_create");
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Dims_create (nnodes, ndims, dims);
@@ -8204,7 +8214,7 @@ int
 PMPI_Graph_create (MPI_Comm comm_old, int nnodes, int *index, int *edges,
 		   int reorder, MPI_Comm * comm_graph)
 {
-	sctk_debug("Enter PMPI_Graph_create");
+	sctk_nodebug("Enter PMPI_Graph_create");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm_old, comm_old);
   res =
@@ -8216,7 +8226,7 @@ PMPI_Graph_create (MPI_Comm comm_old, int nnodes, int *index, int *edges,
 int
 PMPI_Graphdims_get (MPI_Comm comm, int *nnodes, int *nedges)
 {
-	sctk_debug("Enter PMPI_Graphdims_get");
+	sctk_nodebug("Enter PMPI_Graphdims_get");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Graphdims_get (comm, nnodes, nedges);
@@ -8227,7 +8237,7 @@ int
 PMPI_Graph_get (MPI_Comm comm, int maxindex, int maxedges,
 		int *index, int *edges)
 {
-	sctk_debug("Enter PMPI_Graph_get");
+	sctk_nodebug("Enter PMPI_Graph_get");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Graph_get (comm, maxindex, maxedges, index, edges);
@@ -8237,7 +8247,7 @@ PMPI_Graph_get (MPI_Comm comm, int maxindex, int maxedges,
 int
 PMPI_Cartdim_get (MPI_Comm comm, int *ndims)
 {
-	sctk_debug("Enter PMPI_Cartdim_get");
+	sctk_nodebug("Enter PMPI_Cartdim_get");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Cartdim_get (comm, ndims);
@@ -8248,7 +8258,7 @@ int
 PMPI_Cart_get (MPI_Comm comm, int maxdims, int *dims, int *periods,
 	       int *coords)
 {
-	sctk_debug("Enter PMPI_Cart_get");
+	sctk_nodebug("Enter PMPI_Cart_get");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Cart_get (comm, maxdims, dims, periods, coords);
@@ -8258,7 +8268,7 @@ PMPI_Cart_get (MPI_Comm comm, int maxdims, int *dims, int *periods,
 int
 PMPI_Cart_rank (MPI_Comm comm, int *coords, int *rank)
 {
-	sctk_debug("Enter PMPI_Cart_rank");
+	sctk_nodebug("Enter PMPI_Cart_rank");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Cart_rank (comm, coords, rank, 0);
@@ -8268,7 +8278,7 @@ PMPI_Cart_rank (MPI_Comm comm, int *coords, int *rank)
 int
 PMPI_Cart_coords (MPI_Comm comm, int rank, int maxdims, int *coords)
 {
-	sctk_debug("Enter PMPI_Cart_coords");
+	sctk_nodebug("Enter PMPI_Cart_coords");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Cart_coords (comm, rank, maxdims, coords, 0);
@@ -8308,7 +8318,7 @@ PMPI_Cart_shift (MPI_Comm comm, int direction, int displ, int *source,
 int
 PMPI_Cart_sub (MPI_Comm comm, int *remain_dims, MPI_Comm * comm_new)
 {
-	sctk_debug("Enter PMPI_Cart_sub");
+	sctk_nodebug("Enter PMPI_Cart_sub");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
   res = __INTERNAL__PMPI_Cart_sub (comm, remain_dims, comm_new);
@@ -8319,7 +8329,7 @@ int
 PMPI_Cart_map (MPI_Comm comm_old, int ndims, int *dims, int *periods,
 	       int *newrank)
 {
-	sctk_debug("Enter PMPI_Cart_map");
+	sctk_nodebug("Enter PMPI_Cart_map");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm_old, comm_old);
   res = __INTERNAL__PMPI_Cart_map (comm_old, ndims, dims, periods, newrank);
@@ -8330,7 +8340,7 @@ int
 PMPI_Graph_map (MPI_Comm comm_old, int nnodes, int *index, int *edges,
 		int *newrank)
 {
-	sctk_debug("Enter PMPI_Graph_map");
+	sctk_nodebug("Enter PMPI_Graph_map");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm_old, comm_old);
   res = __INTERNAL__PMPI_Graph_map (comm_old, nnodes, index, edges, newrank);
@@ -8498,21 +8508,18 @@ PMPI_Comm_set_name (MPI_Comm comm, char *comm_name)
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
-int MPC_Mpi_null_delete_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
-                    void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_null_delete_fn( MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state )
 {
 	return MPI_SUCCESS;
 }
 
-int MPC_Mpi_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
-                    void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag )
 {
 	*flag = 0;
 	return MPI_SUCCESS;
 }
 
-int MPC_Mpi_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
-                    void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag )
 {
    *flag = 1;
    *(void**)attribute_val_out = attribute_val_in;
@@ -8520,21 +8527,18 @@ int MPC_Mpi_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
 }
 
 /* type */
-int MPC_Mpi_type_null_delete_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
-                    void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_type_null_delete_fn( MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state )
 {
 	return MPI_SUCCESS;
 }
 
-int MPC_Mpi_type_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
-                    void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_type_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag )
 {
 	*flag = 0;
 	return MPI_SUCCESS;
 }
 
-int MPC_Mpi_type_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
-                    void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_type_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag )
 {
    *flag = 1;
    *(void**)attribute_val_out = attribute_val_in;
@@ -8542,21 +8546,18 @@ int MPC_Mpi_type_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
 }
 
 /* comm */
-int MPC_Mpi_comm_null_delete_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
-                    void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_comm_null_delete_fn( MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state )
 {
 	return MPI_SUCCESS;
 }
 
-int MPC_Mpi_comm_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
-                    void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_comm_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag )
 {
 	*flag = 0;
 	return MPI_SUCCESS;
 }
 
-int MPC_Mpi_comm_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
-                    void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_comm_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag )
 {
    *flag = 1;
    *(void**)attribute_val_out = attribute_val_in;
@@ -8564,21 +8565,18 @@ int MPC_Mpi_comm_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
 }
 
 /* win */
-int MPC_Mpi_win_null_delete_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
-                    void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_win_null_delete_fn( MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state )
 {
 	return MPI_SUCCESS;
 }
 
-int MPC_Mpi_win_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
-                    void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_win_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag )
 {
 	*flag = 0;
 	return MPI_SUCCESS;
 }
 
-int MPC_Mpi_win_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
-                    void* attribute_val_in, void* attribute_val_out, int* flag )
+int MPC_Mpi_win_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag )
 {
    *flag = 1;
    *(void**)attribute_val_out = attribute_val_in;
