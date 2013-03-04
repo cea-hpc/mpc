@@ -185,23 +185,23 @@ extern "C"
 #define MPI_ERRORS_ARE_FATAL 2
 
 #define MPI_KEYVAL_INVALID -1
-  typedef int (MPI_Copy_function) (MPI_Comm, int, void *, void *, void *,
-				   int *);
-  typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
 
-#define MPI_NULL_DELETE_FN ((MPI_Copy_function *)MPC_Mpi_null_delete_fn)
+typedef int (MPI_Copy_function) (MPI_Comm, int, void *, void *, void *, int *);
+typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
+
+#define MPI_NULL_DELETE_FN ((MPI_Delete_function *)MPC_Mpi_null_delete_fn)
 #define MPI_NULL_COPY_FN ((MPI_Copy_function *)MPC_Mpi_null_copy_fn)
 #define MPI_DUP_FN ((MPI_Copy_function *)MPC_Mpi_dup_fn)
 
-#define MPI_TYPE_NULL_DELETE_FN ((MPI_Copy_function *)MPC_Mpi_type_null_delete_fn)
+#define MPI_TYPE_NULL_DELETE_FN ((MPI_Delete_function *)MPC_Mpi_type_null_delete_fn)
 #define MPI_TYPE_NULL_COPY_FN ((MPI_Copy_function *)MPC_Mpi_type_null_copy_fn)
 #define MPI_TYPE_DUP_FN ((MPI_Copy_function *)MPC_Mpi_type_dup_fn)
 
-#define MPI_COMM_NULL_DELETE_FN ((MPI_Copy_function *)MPC_Mpi_comm_null_delete_fn)
+#define MPI_COMM_NULL_DELETE_FN ((MPI_Delete_function *)MPC_Mpi_comm_null_delete_fn)
 #define MPI_COMM_NULL_COPY_FN ((MPI_Copy_function *)MPC_Mpi_comm_null_copy_fn)
 #define MPI_COMM_DUP_FN ((MPI_Copy_function *)MPC_Mpi_comm_dup_fn)
 
-#define MPI_WIN_NULL_DELETE_FN ((MPI_Copy_function *)MPC_Mpi_win_null_delete_fn)
+#define MPI_WIN_NULL_DELETE_FN ((MPI_Delete_function *)MPC_Mpi_win_null_delete_fn)
 #define MPI_WIN_NULL_COPY_FN ((MPI_Copy_function *)MPC_Mpi_win_null_copy_fn)
 #define MPI_WIN_DUP_FN ((MPI_Copy_function *)MPC_Mpi_win_dup_fn)
 
@@ -214,8 +214,25 @@ extern "C"
   extern const int MPI_APPNUM;
   extern const MPI_Comm MPI_COMM_SELF;
 
-  int MPC_Mpi_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state,
-                     void* attribute_val_in, void* attribute_val_out, int* flag );
+	int MPC_Mpi_null_delete_fn( MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state );
+	int MPC_Mpi_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );
+	int MPC_Mpi_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );
+
+	/* type */
+	int MPC_Mpi_type_null_delete_fn( MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state );
+	int MPC_Mpi_type_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );
+	int MPC_Mpi_type_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );
+
+	/* comm */
+	int MPC_Mpi_comm_null_delete_fn( MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state );
+	int MPC_Mpi_comm_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );
+	int MPC_Mpi_comm_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );
+
+	/* win */
+	int MPC_Mpi_win_null_delete_fn( MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state );
+	int MPC_Mpi_win_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );
+	int MPC_Mpi_win_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );
+	
   int MPI_Send (void *, int, MPI_Datatype, int, int, MPI_Comm);
   int MPI_Recv (void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Status *);
   int MPI_Get_count (MPI_Status *, MPI_Datatype, int *);

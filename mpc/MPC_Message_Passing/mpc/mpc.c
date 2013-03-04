@@ -240,7 +240,6 @@ static inline void sctk_mpc_verify_request_compatibility()
   /*     assume ((int) mpc_req.completion_flag == (int) sctk_req.completion_flag); */
 }
 
-
 static inline void sctk_mpc_commit_status_from_request(MPC_Request * request, MPC_Status * status){
   if (status != MPC_STATUS_IGNORE)
     {
@@ -891,6 +890,21 @@ int __MPC_Barrier (MPC_Comm comm)
 }
 
 /*Data types*/
+static inline int
+sctk_is_derived_type (MPC_Datatype data_in)
+{
+  if ((data_in >= sctk_user_data_types + sctk_user_data_types_max) &&
+      (data_in < sctk_user_data_types + 2 * sctk_user_data_types_max))
+    {
+      return 1;
+    }
+  else
+    {
+      return 0;
+    }
+}
+
+
 int
 PMPC_Type_free (MPC_Datatype * datatype_p)
 {
@@ -899,7 +913,8 @@ PMPC_Type_free (MPC_Datatype * datatype_p)
   SCTK_PROFIL_START (MPC_Type_free);
   task_specific = __MPC_get_task_specific ();
   datatype = *datatype_p;
-
+  
+  sctk_nodebug("datatype N° %d", datatype);      
   if ((datatype == MPC_DATATYPE_NULL) || (datatype == MPC_PACKED))
     {
       SCTK_PROFIL_END (MPC_Type_free);
@@ -1126,19 +1141,6 @@ PMPC_Derived_datatype (MPC_Datatype * datatype,
   sctk_warning ("Not enough datatypes allowed");
   return -1;
 }
-static inline int
-sctk_is_derived_type (MPC_Datatype data_in)
-{
-  if ((data_in >= sctk_user_data_types + sctk_user_data_types_max) &&
-      (data_in < sctk_user_data_types + 2 * sctk_user_data_types_max))
-    {
-      return 1;
-    }
-  else
-    {
-      return 0;
-    }
-}
 
 
 int
@@ -1243,28 +1245,14 @@ PMPC_Is_derived_datatype (MPC_Datatype datatype, int *res,
       user_types = task_specific->user_types_struct.user_types_struct;
 
       *res = 1;
-      *ends =
-	user_types[datatype - sctk_user_data_types -
-		   sctk_user_data_types_max]->ends;
-      *begins =
-	user_types[datatype - sctk_user_data_types -
-		   sctk_user_data_types_max]->begins;
-      *count =
-	user_types[datatype - sctk_user_data_types -
-		   sctk_user_data_types_max]->count;
+      *ends = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->ends;
+      *begins = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->begins;
+      *count = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->count;
 
-      *lb =
-	user_types[datatype - sctk_user_data_types -
-		   sctk_user_data_types_max]->lb;
-      *ub =
-	user_types[datatype - sctk_user_data_types -
-		   sctk_user_data_types_max]->ub;
-      *is_lb =
-	user_types[datatype - sctk_user_data_types -
-		   sctk_user_data_types_max]->is_lb;
-      *is_ub =
-	user_types[datatype - sctk_user_data_types -
-		   sctk_user_data_types_max]->is_ub;
+      *lb = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->lb;
+      *ub = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->ub;
+      *is_lb = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->is_lb;
+      *is_ub = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->is_ub;
       sctk_spinlock_unlock (&(task_specific->user_types_struct.lock));
     }
   MPC_ERROR_SUCESS ();
@@ -2624,26 +2612,30 @@ __MPC_Wait (MPC_Request * request, MPC_Status * status)
 static inline int
 __MPC_Test (MPC_Request * request, int *flag, MPC_Status * status)
 {
-  mpc_check_comm (sctk_mpc_get_communicator_from_request(request), MPC_COMM_WORLD);
-  *flag = 0;
-  if ((sctk_mpc_completion_flag(request) == SCTK_MESSAGE_PENDING) && (!sctk_mpc_message_is_null(request)))
-    {
-      sctk_mpc_perform_messages(request);
-      sctk_thread_yield ();
-    }
+	mpc_check_comm (sctk_mpc_get_communicator_from_request(request), MPC_COMM_WORLD);
+	*flag = 0;
+	//~ request->completion_flag == 0 && request->is_null == 0
+	if ((sctk_mpc_completion_flag(request) == SCTK_MESSAGE_PENDING) && (!sctk_mpc_message_is_null(request)))
+	{
+		sctk_mpc_perform_messages(request);
+		sctk_thread_yield ();
+	}
+	
+	//~ request->completion_flag != 0
+	if (sctk_mpc_completion_flag(request) != SCTK_MESSAGE_PENDING)
+	{
+		*flag = 1;
+		sctk_mpc_commit_status_from_request(request,status);
+	}
+	
+	//~ request->is_null > 0
+	if(sctk_mpc_message_is_null(request)) 
+	{
+		*flag = 1;
+		sctk_mpc_commit_status_from_request(request,status);
+	}
 
-  if (sctk_mpc_completion_flag(request) != SCTK_MESSAGE_PENDING)
-    {
-      *flag = 1;
-      sctk_mpc_commit_status_from_request(request,status);
-    }
-
-  if(sctk_mpc_message_is_null(request)) {
-    *flag = 1;
-    sctk_mpc_commit_status_from_request(request,status);
-  }
-
-  MPC_ERROR_SUCESS ();
+	MPC_ERROR_SUCESS ();
 }
 
 static inline int
