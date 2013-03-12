@@ -566,6 +566,7 @@ inline void sctk_message_copy(sctk_message_to_copy_t* tmp){
   send = tmp->msg_send;
   recv = tmp->msg_recv;
 
+  sctk_nodebug("Send message type %d, Recv message type %d", send->tail.message_type, recv->tail.message_type);
   assume(send->tail.message_type == recv->tail.message_type);
 
   switch(send->tail.message_type){

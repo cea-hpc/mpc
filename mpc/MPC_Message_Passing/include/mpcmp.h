@@ -148,6 +148,9 @@ extern "C"
 #define MPC_ERR_IN_STATUS   17	/* Look in status for error value */
 #define MPC_ERR_PENDING     18	/* Pending request */
 
+/* Error with comm attributes (keyval) */
+#define MPC_ERR_KEYVAL		19
+
 #define MPC_NOT_IMPLEMENTED 49
 #define MPC_ERR_LASTCODE    50
 

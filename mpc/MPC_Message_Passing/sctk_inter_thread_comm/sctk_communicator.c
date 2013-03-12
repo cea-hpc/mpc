@@ -927,7 +927,6 @@ int* local_to_global, int* global_to_local, int* task_to_process, int *process_a
 	tmp->is_inter_comm = 0;
 	tmp->lock = lock;
 	tmp->creation_lock = spinlock;
-	tmp->new_comm = NULL;
 	tmp->has_zero = 0;
 	OPA_store_int(&(tmp->nb_to_delete),0);
 }
@@ -1532,7 +1531,7 @@ sctk_communicator_t sctk_duplicate_communicator (const sctk_communicator_t origi
 	sctk_internal_communicator_t * tmp;
 	tmp = sctk_get_internal_communicator(origin_communicator);
 	
-	sctk_nodebug("rank %d : duplicate comm %d", rank, origin_communicator);
+	sctk_debug("rank %d : duplicate comm %d", rank, origin_communicator);
 	if(is_inter_comm == 0)
 	{
 		sctk_internal_communicator_t * new_tmp;
@@ -1601,6 +1600,7 @@ sctk_communicator_t sctk_duplicate_communicator (const sctk_communicator_t origi
 	} 
 	else 
 	{
+		assume(tmp->remote_comm != NULL);
 		sctk_internal_communicator_t * new_tmp;
 		sctk_internal_communicator_t * remote_tmp;
 		sctk_communicator_t comm;
@@ -1618,59 +1618,70 @@ sctk_communicator_t sctk_duplicate_communicator (const sctk_communicator_t origi
 		}
 			
 		sctk_barrier (origin_communicator);
-		
-		if(tmp->new_comm == NULL)
-		{
-			sctk_spinlock_lock(&(tmp->creation_lock));
+		sctk_spinlock_lock(&(tmp->creation_lock));
+			if(tmp->new_comm == NULL)
+			{
+				//~ local structure
 				new_tmp = sctk_malloc(sizeof(sctk_internal_communicator_t));
 				memset(new_tmp,0,sizeof(sctk_internal_communicator_t));
 				local_root = 1;
 				tmp->has_zero = 0;
 				tmp->new_comm = new_tmp;
-				sctk_communicator_init_intern_init_only(tmp->nb_task,
+				if(tmp->new_comm == NULL)
+					assume(0);
+
+				//~ initialize the local structure
+				sctk_communicator_init_intern_init_only(
+				tmp->nb_task,
 				tmp->last_local,
 				tmp->first_local,
 				tmp->local_tasks,
 				tmp->local_to_global,
 				tmp->global_to_local,
 				tmp->task_to_process,
-				/* FIXME: process and process_nb have not been
-				* tested for now. Could aim to trouble */
 				tmp->process,
 				tmp->process_nb,
 				tmp->new_comm);
+				if(tmp->new_comm == NULL)
+					assume(0);
+					
+				//~ intercomm attributes
 				tmp->new_comm->is_inter_comm = 1;
 				tmp->new_comm->local_leader = tmp->local_leader;
 				tmp->new_comm->remote_leader = tmp->remote_leader;
 				tmp->new_comm->peer_comm = tmp->peer_comm;
-				tmp->new_comm->new_comm = NULL;
+					
+					if(tmp->new_comm == NULL)
+						assume(0);
+
+					//~ remote structure
 					tmp->new_comm->remote_comm = sctk_malloc(sizeof(sctk_internal_communicator_t));
 					memset(tmp->new_comm->remote_comm,0,sizeof(sctk_internal_communicator_t));
-
-					sctk_communicator_init_intern_init_only(tmp->remote_comm->nb_task,
+					//~ initialize the remote structure
+					sctk_communicator_init_intern_init_only(
+					tmp->remote_comm->nb_task,
 					tmp->remote_comm->last_local,
 					tmp->remote_comm->first_local,
 					tmp->remote_comm->local_tasks,
 					tmp->remote_comm->local_to_global,
 					tmp->remote_comm->global_to_local,
 					tmp->remote_comm->task_to_process,
-					/* FIXME: process and process_nb have not been
-					* tested for now. Could aim to trouble */
 					tmp->remote_comm->process,
 					tmp->remote_comm->process_nb,
 					tmp->new_comm->remote_comm);
+					//~ intercomm attributes
 					tmp->new_comm->remote_comm->is_inter_comm = 1;
 					tmp->new_comm->remote_comm->local_leader = tmp->remote_comm->local_leader;
 					tmp->new_comm->remote_comm->remote_leader = tmp->remote_comm->remote_leader;
 					tmp->new_comm->remote_comm->peer_comm = tmp->remote_comm->peer_comm;
 					assume(tmp->new_comm->remote_comm != NULL);
 				assume(tmp->new_comm != NULL);
-			sctk_spinlock_unlock(&(tmp->creation_lock));
-		}
-		
-		sctk_barrier (origin_communicator);
+			}
+		sctk_spinlock_unlock(&(tmp->creation_lock));
 		
 		new_tmp = tmp->new_comm;
+		assume(new_tmp != NULL);
+		assume(new_tmp->remote_comm != NULL);
 		
 		if(rank == local_leader)
 		{
@@ -2023,8 +2034,6 @@ sctk_communicator_t sctk_create_communicator (const sctk_communicator_t origin_c
 		local_to_global = sctk_malloc(nb_task_involved*sizeof(int));
 		global_to_local = sctk_malloc(sctk_get_nb_task_total(SCTK_COMM_WORLD)*sizeof(int));
 		task_to_process = sctk_malloc(nb_task_involved*sizeof(int));
-		//~ for(i = 0 ; i < sctk_get_nb_task_total(SCTK_COMM_WORLD) ; i++)
-			//~ global_to_local[i] = -1;
 
 		/* fill new comm */
 		for(i = 0; i < nb_task_involved; i++)
