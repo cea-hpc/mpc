@@ -72,6 +72,7 @@ typedef struct {
 
   struct mpc_mpi_per_communicator_s* mpc_mpi_per_communicator;
   void (*mpc_mpi_per_communicator_copy)(struct mpc_mpi_per_communicator_s**,struct mpc_mpi_per_communicator_s*);
+  void (*mpc_mpi_per_communicator_copy_dup)(struct mpc_mpi_per_communicator_s**,struct mpc_mpi_per_communicator_s*);
 
   UT_hash_handle hh;
 }mpc_per_communicator_t;

@@ -102,6 +102,7 @@ inline mpc_per_communicator_t* sctk_thread_getspecific_mpc_per_comm(sctk_task_sp
 static inline void sctk_thread_addspecific_mpc_per_comm(sctk_task_specific_t* task_specific,mpc_per_communicator_t* mpc_per_comm,sctk_communicator_t comm){
   mpc_per_communicator_t *per_communicator;
   sctk_spinlock_lock(&(task_specific->per_communicator_lock));
+  sctk_debug("try to find comm %d", comm);
   HASH_FIND(hh,task_specific->per_communicator,&comm,sizeof(sctk_communicator_t),per_communicator);
   assume(per_communicator == NULL);
   mpc_per_comm->key = comm;
@@ -171,7 +172,8 @@ static inline mpc_per_communicator_t* sctk_thread_createspecific_mpc_per_comm(){
   tmp->err_handler_lock = lock;
   tmp->mpc_mpi_per_communicator = NULL;
   tmp->mpc_mpi_per_communicator_copy = NULL;
-
+  tmp->mpc_mpi_per_communicator_copy_dup = NULL;
+  
   sctk_nodebug("Allocate new per comm %p",tmp);
 
   return tmp;
@@ -214,6 +216,27 @@ static inline void sctk_thread_createspecific_mpc_per_comm_from_existing(sctk_ta
 
   if(per_communicator->mpc_mpi_per_communicator_copy != NULL){
     per_communicator->mpc_mpi_per_communicator_copy(&(per_communicator_new->mpc_mpi_per_communicator),per_communicator->mpc_mpi_per_communicator);
+  }
+  sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
+
+  sctk_thread_addspecific_mpc_per_comm(task_specific,per_communicator_new,new_comm);
+}
+
+static inline void sctk_thread_createspecific_mpc_per_comm_from_existing_dup(sctk_task_specific_t* task_specific,sctk_communicator_t new_comm,sctk_communicator_t old_comm){
+  mpc_per_communicator_t* per_communicator;
+  mpc_per_communicator_t* per_communicator_new;
+
+  assume(new_comm != old_comm);
+
+  sctk_spinlock_lock(&(task_specific->per_communicator_lock));
+  HASH_FIND(hh,task_specific->per_communicator,&old_comm,sizeof(sctk_communicator_t),per_communicator);
+  assume(per_communicator != NULL);
+  
+  per_communicator_new = sctk_thread_createspecific_mpc_per_comm();
+  memcpy(per_communicator_new,per_communicator,sizeof(mpc_per_communicator_t));
+
+  if(per_communicator->mpc_mpi_per_communicator_copy != NULL){
+    per_communicator->mpc_mpi_per_communicator_copy_dup(&(per_communicator_new->mpc_mpi_per_communicator),per_communicator->mpc_mpi_per_communicator);
   }
   sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
 
@@ -4380,7 +4403,7 @@ PMPC_Comm_dup (MPC_Comm comm, MPC_Comm * comm_out)
 	else
 		sctk_nodebug("comm %d duplicate --> newcomm %d", comm, *comm_out);
 
-	sctk_thread_createspecific_mpc_per_comm_from_existing(task_specific, *comm_out, comm);
+	sctk_thread_createspecific_mpc_per_comm_from_existing_dup(task_specific, *comm_out, comm);
 	MPC_ERROR_SUCESS ();
 }
 
