@@ -998,12 +998,10 @@ __MPC_Get_datatype_size (MPC_Datatype datatype,
 
   if (datatype == MPC_UB)
     {
-      assume (0);
       return 0;
     }
   if (datatype == MPC_LB)
     {
-      assume (0);
       return 0;
     }
   if (datatype == MPC_PACKED)
