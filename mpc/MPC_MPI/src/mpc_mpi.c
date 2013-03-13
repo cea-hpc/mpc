@@ -4378,6 +4378,13 @@ __INTERNAL__PMPI_Group_compare (MPI_Group mpi_group1, MPI_Group mpi_group2,
 	MPC_Group group2;
 	group1 = __sctk_convert_mpc_group (mpi_group1);
 	group2 = __sctk_convert_mpc_group (mpi_group2);
+	
+	for(i = 0 ; i < group1->task_nb ; i++)
+	sctk_debug("group1 : task_list_in_global_ranks[%d] = %d", i, group1->task_list_in_global_ranks[i]);
+
+    for(i = 0 ; i < group2->task_nb ; i++)
+	  sctk_debug("group2 : task_list_in_global_ranks[%d] = %d", i, group2->task_list_in_global_ranks[i]);
+	
 	*result = MPI_UNEQUAL;
 
 	if (group1->task_nb != group2->task_nb)
@@ -4449,7 +4456,13 @@ __INTERNAL__PMPI_Group_union (MPI_Group mpi_group1, MPI_Group mpi_group2,
   MPC_Group newgroup;
   group1 = __sctk_convert_mpc_group (mpi_group1);
   group2 = __sctk_convert_mpc_group (mpi_group2);
+  
+  for(i = 0 ; i < group1->task_nb ; i++)
+	sctk_debug("group1 : task_list_in_global_ranks[%d] = %d", i, group1->task_list_in_global_ranks[i]);
 
+  for(i = 0 ; i < group2->task_nb ; i++)
+	sctk_debug("group2 : task_list_in_global_ranks[%d] = %d", i, group2->task_list_in_global_ranks[i]);
+	
   size = group1->task_nb + group2->task_nb;
   newgroup = __sctk_new_mpc_group (mpi_newgroup);
 
@@ -4487,7 +4500,7 @@ __INTERNAL__PMPI_Group_union (MPI_Group mpi_group1, MPI_Group mpi_group2,
     }
 	
   for(i = 0 ; i < size ; i++)
-	sctk_nodebug("task_list_in_global_ranks[%d] = %d", i, (newgroup)->task_list_in_global_ranks[i]);
+	sctk_debug("task_list_in_global_ranks[%d] = %d", i, (newgroup)->task_list_in_global_ranks[i]);
   (newgroup)->task_nb = size;
 
   return MPI_SUCCESS;
@@ -4670,52 +4683,93 @@ static int
 __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 				   int ranges[][3], MPI_Group * mpi_newgroup)
 {
-  int i;
-  int j;
-  int size;
-  MPC_Group group;
-  MPC_Group newgroup;
+	int i;
+	int j;
+	int size;
+	int tmp_size;
+	MPC_Group group;
+	MPC_Group newgroup;
 
-  group = __sctk_convert_mpc_group (mpi_group);
-  newgroup = __sctk_new_mpc_group (mpi_newgroup);
+	group = __sctk_convert_mpc_group (mpi_group);
+	newgroup = __sctk_new_mpc_group (mpi_newgroup);
 
-  size = group->task_nb;
-
-  newgroup = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
-  (newgroup)->task_list_in_global_ranks = (int *) sctk_malloc (size * sizeof (int));
-  (newgroup)->task_nb = size;
-  __sctk_convert_mpc_group_internal (*mpi_newgroup)->group = newgroup;
-
-  for (i = 0; i < size; i++)
-    {
-      (newgroup)->task_list_in_global_ranks[i] = -1;
-    }
-  size = 0;
-
-  for (i = 0; i < n; i++)
-    {
-      int first;
-      int last;
-      int stride;
-
-      first = ranges[i][0];
-      last = ranges[i][1];
-      stride = ranges[i][2];
-
-      sctk_nodebug ("first %d last %d stride %d", first, last, stride);
-
-      for (j = 0; j <= ((last - first) / (stride)); j++)
+	size = 0;
+	
+	for(i=0 ; i<n ; i++)
 	{
-	  (newgroup)->task_list_in_global_ranks[i * n + j] = first + j * stride;
-	  sctk_nodebug ("[%d] = %d", i * n + j,
-			(newgroup)->task_list_in_global_ranks[i * n + j]);
-	  size++;
-	  assume (size <= group->task_nb);
+		if(ranges[i][2] == 0)
+			MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Stride cannot be 0");
 	}
-    }
+	
+	for (i = 0; i < n; i++)
+	{
+		int first;
+		int last;
+		int stride;
 
-  (newgroup)->task_nb = size;
-  return MPI_SUCCESS;
+		first = ranges[i][0];
+		last = ranges[i][1];
+		stride = ranges[i][2];
+		
+		if(first == last)
+			size++;
+		else if(first < last)
+		{
+			for (j = first; j <= last; j+=stride)
+			{
+				size++;
+				assume (size <= group->task_nb);
+			}
+		}
+		else
+		{
+			for (j = first; j >= last; j+=stride)
+			{
+				size++;
+				assume (size <= group->task_nb);
+			}
+		}
+	}
+	sctk_debug("SIZE = %d", size);
+	newgroup = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
+	(newgroup)->task_list_in_global_ranks = (int *) sctk_malloc (size * sizeof (int));
+	(newgroup)->task_nb = size;
+	__sctk_convert_mpc_group_internal (*mpi_newgroup)->group = newgroup;
+	
+	for (i = 0; i < size; i++)
+	{
+		(newgroup)->task_list_in_global_ranks[i] = -1;
+	}
+
+	for (i = 0; i < n; i++)
+	{
+		int first;
+		int last;
+		int stride;
+
+		first = ranges[i][0];
+		last = ranges[i][1];
+		stride = ranges[i][2];
+
+		sctk_debug ("first %d last %d stride %d", first, last, stride);
+		if(first == last)
+			tmp_size = 1;
+		else
+			tmp_size = ((last - first) / (stride));
+		
+		for (j = 0; j <= tmp_size; j++)
+		{
+			(newgroup)->task_list_in_global_ranks[i * tmp_size + j] = first + j * stride;
+			sctk_debug ("[%d] = %d(%d + %d * %d)", i * tmp_size + j, (newgroup)->task_list_in_global_ranks[i * tmp_size + j], first, j, stride);
+		}
+	}
+	sctk_debug("------------------------------------");
+	for(i=0 ; i<size ; i++)
+	{
+		sctk_debug("(newgroup)->task_list_in_global_ranks[%d] = %d", i, (newgroup)->task_list_in_global_ranks[i]);
+	}
+
+	return MPI_SUCCESS;
 }
 
 static int
