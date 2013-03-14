@@ -4340,31 +4340,65 @@ __INTERNAL__PMPI_Group_rank (MPI_Group mpi_group, int *rank)
 }
 
 static int
-__INTERNAL__PMPI_Group_translate_ranks (MPI_Group mpi_group1, int n,
-					int *ranks1, MPI_Group mpi_group2,
-					int *ranks2)
+__INTERNAL__PMPI_Group_translate_ranks (MPI_Group mpi_group1, int n, int *ranks1, MPI_Group mpi_group2, int *ranks2)
 {
-  int j;
-  MPC_Group group1;
-  MPC_Group group2;
-  group1 = __sctk_convert_mpc_group (mpi_group1);
-  group2 = __sctk_convert_mpc_group (mpi_group2);
-  for (j = 0; j < n; j++)
-    {
-      int i;
-      int grank;
-      grank = group1->task_list_in_global_ranks[ranks1[j]];
-      ranks2[j] = MPI_UNDEFINED;
-      for (i = 0; i < group2->task_nb; i++)
+	int i,j;
+	MPC_Group group1;
+	MPC_Group group2;
+	
+	if ( (MPI_GROUP_NULL == mpi_group1) || (MPI_GROUP_NULL == mpi_group2) )
 	{
-	  if (group2->task_list_in_global_ranks[i] == grank)
-	    {
-	      ranks2[j] = i;
-	      sctk_nodebug ("%d is %d", ranks1[j], i);
-	    }
+		sctk_debug("Wrong group 1 : group1 %d, group2 %d", mpi_group1, mpi_group2);
+		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"");
 	}
+	if (n < 0)
+	{
+		sctk_debug("Wrong group (n < 0)");
+		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"");
+	}
+	if (n > 0 && ((NULL == ranks1) || (NULL == ranks2 )))
+	{
+		sctk_debug("Wrong group n > 0 && ((NULL == ranks1) || (NULL == ranks2 ))");
+		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"");
+	}
+	
+	if ( MPI_GROUP_EMPTY == group1 || MPI_GROUP_EMPTY == group2 ) 
+	{
+		for (i = 0; i < n ; i++)
+			ranks2[i] = MPI_UNDEFINED;
+
+		return MPI_SUCCESS;
     }
-  return MPI_SUCCESS;
+    
+	group1 = __sctk_convert_mpc_group (mpi_group1);
+	group2 = __sctk_convert_mpc_group (mpi_group2);
+	
+	sctk_debug("n = %d", n);
+	for(i = 0 ; i < n ; i++)
+		sctk_debug("ranks1[%d] = %d", i, ranks1[i]);
+	
+	for(i = 0 ; i < group1->task_nb ; i++)
+		sctk_debug("group1 : task_list_in_global_ranks[%d] = %d", i, group1->task_list_in_global_ranks[i]);
+
+	for(i = 0 ; i < group2->task_nb ; i++)
+		sctk_debug("group2 : task_list_in_global_ranks[%d] = %d", i, group2->task_list_in_global_ranks[i]);
+	
+	for (j = 0; j < n; j++)
+    {
+		int i;
+		int grank;
+		grank = group1->task_list_in_global_ranks[ranks1[j]];
+		ranks2[j] = MPI_UNDEFINED;
+		for (i = 0; i < group2->task_nb; i++)
+		{
+			if (group2->task_list_in_global_ranks[i] == grank)
+			{
+				ranks2[j] = i;
+			}
+		}
+		sctk_debug ("%d is %d", ranks1[j], ranks2[j]);
+    }
+	return MPI_SUCCESS;
 }
 
 static int
@@ -4378,12 +4412,6 @@ __INTERNAL__PMPI_Group_compare (MPI_Group mpi_group1, MPI_Group mpi_group2,
 	MPC_Group group2;
 	group1 = __sctk_convert_mpc_group (mpi_group1);
 	group2 = __sctk_convert_mpc_group (mpi_group2);
-	
-	for(i = 0 ; i < group1->task_nb ; i++)
-	sctk_debug("group1 : task_list_in_global_ranks[%d] = %d", i, group1->task_list_in_global_ranks[i]);
-
-    for(i = 0 ; i < group2->task_nb ; i++)
-	  sctk_debug("group2 : task_list_in_global_ranks[%d] = %d", i, group2->task_list_in_global_ranks[i]);
 	
 	*result = MPI_UNEQUAL;
 
@@ -4458,10 +4486,10 @@ __INTERNAL__PMPI_Group_union (MPI_Group mpi_group1, MPI_Group mpi_group2,
   group2 = __sctk_convert_mpc_group (mpi_group2);
   
   for(i = 0 ; i < group1->task_nb ; i++)
-	sctk_debug("group1 : task_list_in_global_ranks[%d] = %d", i, group1->task_list_in_global_ranks[i]);
+	sctk_nodebug("group1 : task_list_in_global_ranks[%d] = %d", i, group1->task_list_in_global_ranks[i]);
 
   for(i = 0 ; i < group2->task_nb ; i++)
-	sctk_debug("group2 : task_list_in_global_ranks[%d] = %d", i, group2->task_list_in_global_ranks[i]);
+	sctk_nodebug("group2 : task_list_in_global_ranks[%d] = %d", i, group2->task_list_in_global_ranks[i]);
 	
   size = group1->task_nb + group2->task_nb;
   newgroup = __sctk_new_mpc_group (mpi_newgroup);
@@ -4500,8 +4528,11 @@ __INTERNAL__PMPI_Group_union (MPI_Group mpi_group1, MPI_Group mpi_group2,
     }
 	
   for(i = 0 ; i < size ; i++)
-	sctk_debug("task_list_in_global_ranks[%d] = %d", i, (newgroup)->task_list_in_global_ranks[i]);
+	sctk_nodebug("task_list_in_global_ranks[%d] = %d", i, (newgroup)->task_list_in_global_ranks[i]);
   (newgroup)->task_nb = size;
+  
+  if(size == 0)
+	*mpi_newgroup = MPI_GROUP_EMPTY;
 
   return MPI_SUCCESS;
 }
@@ -4542,6 +4573,8 @@ __INTERNAL__PMPI_Group_intersection (MPI_Group mpi_group1,
 	}
     }
   (newgroup)->task_nb = size;
+  if(size == 0)
+	*mpi_newgroup = MPI_GROUP_EMPTY;
   return MPI_SUCCESS;
 }
 
@@ -4549,14 +4582,21 @@ static int
 __INTERNAL__PMPI_Group_difference (MPI_Group mpi_group1, MPI_Group mpi_group2,
 				   MPI_Group * mpi_newgroup)
 {
+  int result;
   MPC_Group group1;
   MPC_Group group2;
   MPI_internal_group_t *newgroup;
-
+  
   group1 = __sctk_convert_mpc_group (mpi_group1);
   group2 = __sctk_convert_mpc_group (mpi_group2);
   newgroup = __sctk_new_mpc_group_internal (mpi_newgroup);
-  return PMPC_Group_difference (group1, group2, &(newgroup->group));
+  result = PMPC_Group_difference (group1, group2, &(newgroup->group));
+  if(result != MPI_SUCCESS)
+	return result;
+  if(newgroup->group->task_nb == 0)
+	*mpi_newgroup = MPI_GROUP_EMPTY;
+  return result;
+  
 }
 
 static int
@@ -4566,7 +4606,13 @@ __INTERNAL__PMPI_Group_incl (MPI_Group mpi_group, int n, int *ranks,
   int res;
   MPC_Group group;
   MPI_internal_group_t *newgroup;
-
+  
+  if(n == 0)
+	{
+		(*mpi_newgroup) = MPI_GROUP_EMPTY;
+		return MPI_SUCCESS;
+	}
+	
   group = __sctk_convert_mpc_group (mpi_group);
   newgroup = __sctk_new_mpc_group_internal (mpi_newgroup);
 
@@ -4579,197 +4625,445 @@ static int
 __INTERNAL__PMPI_Group_excl (MPI_Group mpi_group, int n, int *ranks,
 			     MPI_Group * mpi_newgroup)
 {
-  int i;
-  int j;
-  int size;
-  MPC_Group group;
-  MPC_Group newgroup;
-
-  group = __sctk_convert_mpc_group (mpi_group);
-  newgroup = __sctk_new_mpc_group (mpi_newgroup);
-  size = group->task_nb;
-
-  newgroup = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
-  (newgroup)->task_list_in_global_ranks = (int *) sctk_malloc (size * sizeof (int));
-  (newgroup)->task_nb = size;
-  __sctk_convert_mpc_group_internal (*mpi_newgroup)->group = newgroup;
-
-  for (i = 0; i < group->task_nb; i++)
-    {
-      (newgroup)->task_list_in_global_ranks[i] = group->task_list_in_global_ranks[i];
-    }
-
-  for (i = 0; i < n; i++)
-    {
-      (newgroup)->task_list_in_global_ranks[ranks[i]] = -1;
-    }
-
-  (newgroup)->task_nb = group->task_nb;
-  for (i = 0; i < (newgroup)->task_nb; i++)
-    {
-      if ((newgroup)->task_list_in_global_ranks[i] == -1)
+	int i;
+	int j;
+	int k;
+	int is_out;
+	int size;
+	MPC_Group group;
+	MPC_Group newgroup;
+	
+	if ( (MPI_GROUP_NULL == mpi_group) || (NULL == mpi_group) || (NULL == mpi_newgroup) )
+		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"");
+	else if (NULL == ranks && n > 0)
+		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"");
+		
+	group = __sctk_convert_mpc_group (mpi_group);
+	newgroup = __sctk_new_mpc_group (mpi_newgroup);
+	size = group->task_nb - n;
+	
+	if(size == 0)
 	{
-	  size--;
-	  for (j = i; j < (newgroup)->task_nb - 1; j++)
-	    {
-	      (newgroup)->task_list_in_global_ranks[j] = (newgroup)->task_list_in_global_ranks[j + 1];
-	    }
+		(*mpi_newgroup) = MPI_GROUP_EMPTY;
+		return MPI_SUCCESS;
 	}
-    }
-
-  (newgroup)->task_nb = size;
-  return MPI_SUCCESS;
+	
+	newgroup = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
+	(newgroup)->task_list_in_global_ranks = (int *) sctk_malloc (size * sizeof (int));
+	(newgroup)->task_nb = size;
+	__sctk_convert_mpc_group_internal (*mpi_newgroup)->group = newgroup;
+	for(i=0; i<size; i++)
+		(newgroup)->task_list_in_global_ranks[i] = -1;
+	
+	k=0;
+	for(i=0 ; i<group->task_nb; i++)
+	{
+		is_out = 0;
+		for(j=0; j<n; j++)
+		{
+			if((ranks[j] < 0) || (ranks[j] >= group->task_nb) || (ranks[j] > n))
+				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Unvalid ranks");
+			if(group->task_list_in_global_ranks[i] == ranks[j])
+			{
+				is_out = 1;
+				break;
+			}
+		}
+		if(!is_out)
+		{
+			(newgroup)->task_list_in_global_ranks[k] = group->task_list_in_global_ranks[i];
+			k++;
+		}
+	}
+	sctk_nodebug("-----");
+	for(i=0; i<size; i++)
+		sctk_nodebug("newgroup[%d] = %d", i, (newgroup)->task_list_in_global_ranks[i]);
+	sctk_nodebug("-----");
+	return MPI_SUCCESS;
 }
 
 static int
 __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 				   int ranges[][3], MPI_Group * mpi_newgroup)
 {
-  int i;
-  int j;
-  int size;
-  MPC_Group group;
-  MPC_Group newgroup;
+	TODO("Cette partie a été reprise sur OpenMPI");
+	int err, i,index;
+    int group_size;
+    int * elements_int_list;
+    
+    int j,k;
+    int *ranks_included=NULL;
+    int *ranks_excluded=NULL;
+    int first_rank,last_rank,stride;
+    int count,result;
+	sctk_debug("MPI_Group_range_excl");
+	MPC_Group group;
+	
+/* Error checking */
+	group = __sctk_convert_mpc_group (mpi_group);
+	
+	if ( (MPI_GROUP_NULL == mpi_group) || (NULL == mpi_group) || (NULL == mpi_newgroup) )
+		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"group must not be MPI_GROUP_NULL");
 
-  group = __sctk_convert_mpc_group (mpi_group);
-  newgroup = __sctk_new_mpc_group (mpi_newgroup);
-
-  size = group->task_nb;
-
-  newgroup = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
-  (newgroup)->task_list_in_global_ranks = (int *) sctk_malloc (size * sizeof (int));
-  (newgroup)->task_nb = size;
-  __sctk_convert_mpc_group_internal (*mpi_newgroup)->group = newgroup;
-
-  for (i = 0; i < size; i++)
-    {
-      (newgroup)->task_list_in_global_ranks[i] = group->task_list_in_global_ranks[i];
-    }
-
-  for (i = 0; i < n; i++)
-    {
-      int first;
-      int last;
-      int stride;
-
-      first = ranges[i][0];
-      last = ranges[i][1];
-      stride = ranges[i][2];
-
-      for (j = 0; j < ((last - first) / (stride)); j++)
+	__INTERNAL__PMPI_Group_size (mpi_group, &group_size);
+	elements_int_list = (int *) malloc(sizeof(int) * (group_size+1));
+	
+	if (NULL == elements_int_list)
+		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_INTERN,"");
+		
+	for (i = 0; i < group_size; i++)
+		elements_int_list[i] = -1;
+	
+	for ( i=0; i < n; i++)
 	{
-	  assume (first + j * stride < group->task_nb);
-	  (newgroup)->task_list_in_global_ranks[first + j * stride] = -1;
-	  size--;
-	}
-    }
+		first_rank = ranges[i][0];
+		last_rank  = ranges[i][1];
+		stride     = ranges[i][2];
+		
+		if ((first_rank < 0) || (first_rank > group_size) || (last_rank < 0) || (last_rank > group_size) || (stride == 0))
+		{
+			MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
+		}
 
-  for (i = 0; i < (newgroup)->task_nb; i++)
+		if ((first_rank < last_rank)) 
+		{
+			if (stride < 0)
+			{
+				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
+			}
+
+			for (index = first_rank; index <= last_rank; index += stride) 
+			{
+				if (elements_int_list[index] != -1)
+				{
+					MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
+				}
+				elements_int_list[index] = i;
+			}
+		} 
+		else if (first_rank > last_rank) 
+		{
+			if (stride > 0)
+			{
+				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
+			}
+
+			for (index = first_rank; index >= last_rank; index += stride) 
+			{
+				if (elements_int_list[index] != -1)
+				{
+					MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
+				}
+				elements_int_list[index] = i;
+			}
+		} 
+		else 
+		{
+			index = first_rank;
+			if (elements_int_list[index] != -1)
+			{
+				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
+			}
+			elements_int_list[index] = i;
+		}
+	}
+	free ( elements_int_list);
+	
+/* computing the ranks to be included */
+    count = 0;
+    /* determine the number of excluded processes for the range-excl-method */
+    for(j=0 ; j<n ; j++) 
+    { 
+        first_rank = ranges[j][0];
+		last_rank = ranges[j][1];
+		stride = ranges[j][2];
+	
+		if (first_rank < last_rank) 
+		{
+			/* positive stride */
+            index = first_rank;
+			while (index <= last_rank) 
+			{
+				count ++;
+				index += stride;
+			}	    
+		} 
+		else if (first_rank > last_rank) 
+		{
+			/* negative stride */
+			index = first_rank;
+			while (index >= last_rank) 
+			{
+				count ++;
+				index += stride;
+			}
+		} 
+		else 
+		{
+			/* first_rank == last_rank */
+            index = first_rank;
+			count ++;
+		}
+    }
+    if (0 != count) 
     {
-      if ((newgroup)->task_list_in_global_ranks[i] == -1)
-	{
-	  for (j = i; j < (newgroup)->task_nb - 1; j++)
-	    {
-	      (newgroup)->task_list_in_global_ranks[j] = (newgroup)->task_list_in_global_ranks[j + 1];
-	    }
-	}
+        ranks_excluded = (int *)malloc( (count)*(sizeof(int)));
     }
+    
+    /* determine the list of excluded processes for the range-excl method */
+    k = 0;
+    i = 0;
+    for(j=0 ; j<n ; j++) 
+    {
+		first_rank = ranges[j][0];
+		last_rank = ranges[j][1];
+		stride = ranges[j][2];
 
-  (newgroup)->task_nb = size;
-  return MPI_SUCCESS;
+		if (first_rank < last_rank) 
+		{
+			/* positive stride */
+			index = first_rank;
+			while (index <= last_rank) 
+			{
+				ranks_excluded[i] = index;
+				i++;
+				index += stride;
+			}    
+		} 
+		else if (first_rank > last_rank) 
+		{
+			/* negative stride */
+			index = first_rank;
+			while (index >= last_rank) 
+			{
+				ranks_excluded[i] = index;
+				i++;
+				index += stride;
+			}
+		} 
+		else 
+		{
+			/* first_rank == last_rank */
+			index = first_rank;
+			ranks_excluded[i] = index;
+			i++;
+		}
+    }
+    
+    if (0 != (group->task_nb - count)) 
+	{
+		ranks_included = (int *)malloc( (group->task_nb - count)*(sizeof(int)));
+	}
+	for (j=0 ; j<group->task_nb ; j++) 
+	{
+		for(index=0 ; index<i ; index++) 
+		{
+			if(ranks_excluded[index] == j) break;
+		}
+		if (index == i) 
+		{
+			ranks_included[k] = j;
+			k++;
+		}
+	}
+	if (NULL != ranks_excluded)
+	{
+		free(ranks_excluded);
+	}
+	
+/* including the ranks in the new group */
+    result = __INTERNAL__PMPI_Group_incl(mpi_group, k, ranks_included, mpi_newgroup);
+
+    if (NULL != ranks_included)
+    {
+        free(ranks_included);
+    }
+	return result;
 }
 
 static int
 __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 				   int ranges[][3], MPI_Group * mpi_newgroup)
 {
-	int i;
-	int j;
-	int size;
-	int tmp_size;
+	TODO("Cette partie a été reprise sur OpenMPI");
+	int err, i,index;
+    int group_size;
+    int * elements_int_list;
+    
+    int j,k;
+    int *ranks_included=NULL;
+    int first_rank,last_rank,stride;
+    int count,result;
+	
 	MPC_Group group;
 	MPC_Group newgroup;
-
-	group = __sctk_convert_mpc_group (mpi_group);
-	newgroup = __sctk_new_mpc_group (mpi_newgroup);
-
-	size = 0;
 	
-	for(i=0 ; i<n ; i++)
+/* Error checking */
+	if(n == 0)
 	{
-		if(ranges[i][2] == 0)
-			MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Stride cannot be 0");
+		(*mpi_newgroup) = MPI_GROUP_EMPTY;
+		return MPI_SUCCESS;
 	}
 	
-	for (i = 0; i < n; i++)
-	{
-		int first;
-		int last;
-		int stride;
+	if ( (MPI_GROUP_NULL == mpi_group) || (NULL == mpi_group) || (NULL == mpi_newgroup) )
+		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"group must not be MPI_GROUP_NULL");
 
-		first = ranges[i][0];
-		last = ranges[i][1];
-		stride = ranges[i][2];
+	__INTERNAL__PMPI_Group_size (mpi_group, &group_size);
+	elements_int_list = (int *) malloc(sizeof(int) * (group_size+1));
+	
+	if (NULL == elements_int_list)
+		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_INTERN,"");
 		
-		if(first == last)
-			size++;
-		else if(first < last)
-		{
-			for (j = first; j <= last; j+=stride)
-			{
-				size++;
-				assume (size <= group->task_nb);
-			}
-		}
-		else
-		{
-			for (j = first; j >= last; j+=stride)
-			{
-				size++;
-				assume (size <= group->task_nb);
-			}
-		}
-	}
-	sctk_debug("SIZE = %d", size);
-	newgroup = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
-	(newgroup)->task_list_in_global_ranks = (int *) sctk_malloc (size * sizeof (int));
-	(newgroup)->task_nb = size;
-	__sctk_convert_mpc_group_internal (*mpi_newgroup)->group = newgroup;
+	for (i = 0; i < group_size; i++)
+		elements_int_list[i] = -1;
 	
-	for (i = 0; i < size; i++)
+	for ( i=0; i < n; i++)
 	{
-		(newgroup)->task_list_in_global_ranks[i] = -1;
-	}
-
-	for (i = 0; i < n; i++)
-	{
-		int first;
-		int last;
-		int stride;
-
-		first = ranges[i][0];
-		last = ranges[i][1];
-		stride = ranges[i][2];
-
-		sctk_debug ("first %d last %d stride %d", first, last, stride);
-		if(first == last)
-			tmp_size = 1;
-		else
-			tmp_size = ((last - first) / (stride));
+		first_rank = ranges[i][0];
+		last_rank  = ranges[i][1];
+		stride     = ranges[i][2];
 		
-		for (j = 0; j <= tmp_size; j++)
+		if ((first_rank < 0) || (first_rank > group_size) || (last_rank < 0) || (last_rank > group_size) || (stride == 0))
 		{
-			(newgroup)->task_list_in_global_ranks[i * tmp_size + j] = first + j * stride;
-			sctk_debug ("[%d] = %d(%d + %d * %d)", i * tmp_size + j, (newgroup)->task_list_in_global_ranks[i * tmp_size + j], first, j, stride);
+			MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
+		}
+
+		if ((first_rank < last_rank)) 
+		{
+			if (stride < 0)
+			{
+				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
+			}
+
+			for (index = first_rank; index <= last_rank; index += stride) 
+			{
+				if (elements_int_list[index] != -1)
+				{
+					MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
+				}
+				elements_int_list[index] = i;
+			}
+		} 
+		else if (first_rank > last_rank) 
+		{
+			if (stride > 0)
+			{
+				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
+			}
+
+			for (index = first_rank; index >= last_rank; index += stride) 
+			{
+				if (elements_int_list[index] != -1)
+				{
+					MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
+				}
+				elements_int_list[index] = i;
+			}
+		} 
+		else 
+		{
+			index = first_rank;
+			if (elements_int_list[index] != -1)
+			{
+				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
+			}
+			elements_int_list[index] = i;
 		}
 	}
-	sctk_debug("------------------------------------");
-	for(i=0 ; i<size ; i++)
-	{
-		sctk_debug("(newgroup)->task_list_in_global_ranks[%d] = %d", i, (newgroup)->task_list_in_global_ranks[i]);
-	}
+	free ( elements_int_list);
+	
+/* computing the ranks to be included */
+    count = 0;
+    /* determine the number of included processes for the range-incl-method */
+    k = 0;
+    for(j=0 ; j<n ; j++) 
+    { 
+	
+        first_rank = ranges[j][0];
+		last_rank = ranges[j][1];
+		stride = ranges[j][2];
+	
+		if (first_rank < last_rank) 
+		{
+			/* positive stride */
+            index = first_rank;
+			while (index <= last_rank) 
+			{
+				count ++;
+				k++;
+				index += stride;
+			}	    
+		} 
+		else if (first_rank > last_rank) 
+		{
+			/* negative stride */
+			index = first_rank;
+			while (index >= last_rank) 
+			{
+				count ++;
+				k++;
+				index += stride;
+			}
+		} 
+		else 
+		{
+			/* first_rank == last_rank */
+            index = first_rank;
+			count ++;
+			k++;
+		}
+    }
+    if (0 != count) 
+    {
+        ranks_included = (int *)malloc( (count)*(sizeof(int)));
+    }
+    
+    /* determine the list of included processes for the range-incl method */
+    k = 0;
+    for(j=0 ; j<n ; j++) 
+    {
+		first_rank = ranges[j][0];
+		last_rank = ranges[j][1];
+		stride = ranges[j][2];
 
-	return MPI_SUCCESS;
+		if (first_rank < last_rank) 
+		{
+			/* positive stride */
+			index = first_rank;
+			while (index <= last_rank) 
+			{
+				ranks_included[k] = index;
+				k++;
+				index += stride;
+			}    
+		} 
+		else if (first_rank > last_rank) 
+		{
+			/* negative stride */
+			index = first_rank;
+			while (index >= last_rank) 
+			{
+				ranks_included[k] = index;
+				k++;
+				index += stride;
+			}
+		} 
+		else 
+		{
+			/* first_rank == last_rank */
+			index = first_rank;
+			ranks_included[k] = index;
+			k++;
+		}
+    }
+/* including the ranks in the new group */
+    result = __INTERNAL__PMPI_Group_incl(mpi_group, k, ranks_included, mpi_newgroup);
+
+    if (NULL != ranks_included)
+    {
+        free(ranks_included);
+    }
+	return result;
 }
 
 static int
@@ -6888,14 +7182,10 @@ __INTERNAL__PMPI_Init (int *argc, char ***argv)
 
       tmp = per_communicator->mpc_mpi_per_communicator;
 
-/*       __sctk_init_mpc_request_per_comm (tmp); */
-/*       __sctk_init_mpi_buffer_per_comm (tmp); */
       __sctk_init_mpi_errors_per_comm (tmp);
       __sctk_init_mpi_topo_per_comm (tmp);
       tmp->max_number = 0;
       tmp->topo.lock = lock;
-/*       __sctk_init_mpi_op_per_comm (tmp); */
-/*       __sctk_init_mpc_group_per_comm (tmp); */
     }
   sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
 
@@ -7955,9 +8245,8 @@ PMPI_Group_translate_ranks (MPI_Group group1, int n, int *ranks1,
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
-  res =
-    __INTERNAL__PMPI_Group_translate_ranks (group1, n, ranks1, group2,
-					    ranks2);
+  res = __INTERNAL__PMPI_Group_translate_ranks (group1, n, ranks1, group2, ranks2);
+  sctk_debug("RES = %d", res);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 

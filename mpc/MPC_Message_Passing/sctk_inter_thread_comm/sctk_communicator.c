@@ -400,7 +400,7 @@ static inline sctk_communicator_t sctk_communicator_get_new_id(int local_root, i
 	sctk_communicator_t ti = 0;
 	int need_clean = 0;
 	
-	sctk_nodebug("get new id local_root %d, rank %d, origin_comm %d", local_root, rank, origin_communicator);
+	sctk_debug("get new id local_root %d, rank %d, origin_comm %d", local_root, rank, origin_communicator);
 	
 	do
 	{
@@ -424,7 +424,7 @@ static inline sctk_communicator_t sctk_communicator_get_new_id(int local_root, i
 				comm = i;
 				tmp->id = comm;
 				sctk_set_internal_communicator_no_lock(comm,tmp);
-				sctk_nodebug("rank %d : Try comm %d", rank, comm);
+				sctk_debug("rank %d : Try comm %d", rank, comm);
 			sctk_spinlock_unlock(&sctk_communicator_all_table_lock);
 		}
 
@@ -439,7 +439,7 @@ static inline sctk_communicator_t sctk_communicator_get_new_id(int local_root, i
 				tmp->id = comm;
 				sctk_internal_communicator_t * tmp_check;
 				sctk_spinlock_lock(&sctk_communicator_all_table_lock);
-					sctk_nodebug("rank %d : check comm %d", rank, comm);
+					sctk_debug("rank %d : check comm %d", rank, comm);
 					tmp_check = sctk_check_internal_communicator_no_lock(comm);
 					if(tmp_check != NULL)
 					{
@@ -466,7 +466,7 @@ static inline sctk_communicator_t sctk_communicator_get_new_id(int local_root, i
 		}
 		
 	}  while(comm == -1);
-	sctk_nodebug("rank %d : comm %d accepted", rank, comm);
+	sctk_debug("rank %d : comm %d accepted", rank, comm);
 	assume(comm != SCTK_COMM_WORLD);
 	assume(comm != SCTK_COMM_SELF);
 	assume(comm > 0);
@@ -991,7 +991,6 @@ int local_tasks, int* local_to_global, int* global_to_local, int* task_to_proces
 **/
 void sctk_communicator_self_init()
 {
-	sctk_internal_communicator_t * tmp_check;
 	const int last_local = 0;
 	const int first_local = 0;
 	const int local_tasks = 1;
@@ -1020,10 +1019,9 @@ void sctk_communicator_world_init(const int nb_task)
 
 	pos = sctk_process_rank;
 	local_tasks = nb_task / sctk_process_number;
-	sctk_nodebug("1: local_tasks %d",local_tasks);
+
 	if (nb_task % sctk_process_number > pos)
 		local_tasks++;
-	sctk_nodebug("2: local_tasks %d",local_tasks);
 
 	first_local = sctk_process_rank * local_tasks;
 
@@ -1418,9 +1416,18 @@ int sctk_get_comm_world_rank (const sctk_communicator_t communicator, const int 
 	sctk_internal_communicator_t * tmp;
 	int ret;
 	int i;
-
-	if (communicator == SCTK_COMM_WORLD || communicator == SCTK_COMM_SELF)
+	
+	if (communicator == SCTK_COMM_WORLD)
 		return rank;
+	else if (communicator == SCTK_COMM_SELF)
+	{
+		sctk_thread_data_t *thread_data;
+		int cwrank;
+		/* get task id */
+		thread_data = sctk_thread_data_get ();
+		cwrank = thread_data->task_id;
+		return cwrank;
+	}
 
 	/* Other communicators */
 	tmp = sctk_get_internal_communicator(communicator);
@@ -1531,7 +1538,7 @@ sctk_communicator_t sctk_duplicate_communicator (const sctk_communicator_t origi
 	sctk_internal_communicator_t * tmp;
 	tmp = sctk_get_internal_communicator(origin_communicator);
 	
-	sctk_debug("rank %d : duplicate comm %d", rank, origin_communicator);
+	sctk_nodebug("rank %d : duplicate comm %d", rank, origin_communicator);
 	if(is_inter_comm == 0)
 	{
 		sctk_internal_communicator_t * new_tmp;
@@ -2100,7 +2107,7 @@ sctk_communicator_t sctk_create_communicator (const sctk_communicator_t origin_c
 
 	new_tmp = tmp->new_comm;
 	
-	sctk_nodebug("new id for rank %d, grank %d, local_root %d, has_zero %d, tmp %p", rank, grank, local_root, tmp->has_zero, tmp);
+	sctk_debug("new id for rank %d, grank %d, local_root %d, has_zero %d, tmp %p", rank, grank, local_root, tmp->has_zero, tmp);
 	/* get new id for comm */
 	comm = sctk_communicator_get_new_id(local_root,grank,origin_communicator,new_tmp);
 	
