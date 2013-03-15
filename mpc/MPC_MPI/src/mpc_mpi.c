@@ -4166,17 +4166,14 @@ __sctk_new_mpc_group_internal (MPI_Group * group)
       old_size = groups->max_size;
       groups->max_size += 10;
       groups->tab =
-	sctk_realloc (groups->tab,
-		      groups->max_size * sizeof (MPI_internal_group_t *));
+		sctk_realloc (groups->tab, groups->max_size * sizeof (MPI_internal_group_t *));
       assume (groups->tab != NULL);
       for (i = groups->max_size - 1; i >= old_size; i--)
 	{
 	  MPI_internal_group_t *tmp;
 	  sctk_nodebug ("%lu", i);
 /* 	  tmp = sctk_malloc(sizeof (MPI_internal_group_t)); */
-	  tmp =
-	    sctk_buffered_malloc (&(groups->buf),
-				  sizeof (MPI_internal_group_t));
+	  tmp = sctk_buffered_malloc (&(groups->buf), sizeof (MPI_internal_group_t));
 	  assume (tmp != NULL);
 	  groups->tab[i] = tmp;
 	  tmp->used = 0;
@@ -4661,8 +4658,8 @@ __INTERNAL__PMPI_Group_excl (MPI_Group mpi_group, int n, int *ranks,
 		is_out = 0;
 		for(j=0; j<n; j++)
 		{
-			if((ranks[j] < 0) || (ranks[j] >= group->task_nb) || (ranks[j] > n))
-				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Unvalid ranks");
+			if((ranks[j] < 0) || (ranks[j] >= group->task_nb))
+				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"");
 			if(group->task_list_in_global_ranks[i] == ranks[j])
 			{
 				is_out = 1;
@@ -4675,10 +4672,6 @@ __INTERNAL__PMPI_Group_excl (MPI_Group mpi_group, int n, int *ranks,
 			k++;
 		}
 	}
-	sctk_nodebug("-----");
-	for(i=0; i<size; i++)
-		sctk_nodebug("newgroup[%d] = %d", i, (newgroup)->task_list_in_global_ranks[i]);
-	sctk_nodebug("-----");
 	return MPI_SUCCESS;
 }
 
@@ -4696,7 +4689,6 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
     int *ranks_excluded=NULL;
     int first_rank,last_rank,stride;
     int count,result;
-	sctk_debug("MPI_Group_range_excl");
 	MPC_Group group;
 	
 /* Error checking */
@@ -4711,7 +4703,7 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 	if (NULL == elements_int_list)
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_INTERN,"");
 		
-	for (i = 0; i < group_size; i++)
+	for (i = 0; i <= group_size; i++)
 		elements_int_list[i] = -1;
 	
 	for ( i=0; i < n; i++)
@@ -6322,14 +6314,14 @@ INFO("Very simple approach never reorder nor take care of hardware topology")
       ranges[0][0] = nnodes;
       ranges[0][1] = size;
       ranges[0][2] = 1;
-
+sctk_debug("range exlusion");
       res =
 	__INTERNAL__PMPI_Group_range_excl (comm_group, 1, ranges, &new_group);
       if (res != MPI_SUCCESS)
 	{
 	  return res;
 	}
-
+sctk_debug("Comm_create");
       res = __INTERNAL__PMPI_Comm_create (comm_old, new_group, comm_graph);
       if (res != MPI_SUCCESS)
 	{
@@ -6346,20 +6338,23 @@ INFO("Very simple approach never reorder nor take care of hardware topology")
 	  return res;
 	}
     }
-
-	tmp = mpc_mpc_get_per_comm_data(*comm_graph);
-	topo = &(tmp->topo);
-	sctk_spinlock_lock (&(topo->lock));
-		topo->type = MPI_GRAPH;
-		topo->data.graph.nnodes = nnodes;
-		topo->data.graph.reorder = reorder;
-		topo->data.graph.index = sctk_malloc (nnodes * sizeof (int));
-		memcpy (topo->data.graph.index, index, nnodes * sizeof (int));
-		topo->data.graph.edges = sctk_malloc (index[nnodes - 1] * sizeof (int));
-		memcpy (topo->data.graph.edges, edges, index[nnodes - 1] * sizeof (int));
-		topo->data.graph.nedges = index[nnodes - 1];
-		topo->data.graph.nindex = nnodes;
-	sctk_spinlock_unlock (&(topo->lock));
+    
+	if(*comm_graph >= 0)
+	{
+		tmp = mpc_mpc_get_per_comm_data(*comm_graph);
+		topo = &(tmp->topo);
+		sctk_spinlock_lock (&(topo->lock));
+			topo->type = MPI_GRAPH;
+			topo->data.graph.nnodes = nnodes;
+			topo->data.graph.reorder = reorder;
+			topo->data.graph.index = sctk_malloc (nnodes * sizeof (int));
+			memcpy (topo->data.graph.index, index, nnodes * sizeof (int));
+			topo->data.graph.edges = sctk_malloc (index[nnodes - 1] * sizeof (int));
+			memcpy (topo->data.graph.edges, edges, index[nnodes - 1] * sizeof (int));
+			topo->data.graph.nedges = index[nnodes - 1];
+			topo->data.graph.nindex = nnodes;
+		sctk_spinlock_unlock (&(topo->lock));
+	}
 	return MPI_SUCCESS;
 }
 

@@ -4082,11 +4082,10 @@ PMPC_Group_incl (MPC_Group group, int n, int *ranks, MPC_Group * newgroup)
 
   (*newgroup)->task_nb = n;
   (*newgroup)->task_list_in_global_ranks = (int *) sctk_malloc (n * sizeof (int));
-
+  assume((*newgroup)->task_list_in_global_ranks != NULL);
   for (i = 0; i < n; i++)
     {
       (*newgroup)->task_list_in_global_ranks[i] = group->task_list_in_global_ranks[ranks[i]];
-      sctk_debug ("newgroup[%d] = %d", i, group->task_list_in_global_ranks[ranks[i]]);
     }
 
   MPC_ERROR_SUCESS ();
