@@ -26,6 +26,7 @@
 #include "mpcomp.h"
 #include "sctk.h"
 #include "sctk_atomics.h"
+#include "sctk_asm.h"
 #include "sctk_context.h"
 #include "sctk_tls.h"
 
@@ -68,7 +69,19 @@ extern "C"
 #define MPCOMP_TASK 0
 
 #if MPCOMP_TASK
+
+#define MPCOMP_TASK_LARCENY_MODE 0
+/*******************************
+ * 0: hierarchical stealing
+ * 1: random stealing
+ * 2: round-robin stealing
+ * 3: production factor stealing
+ ********************************/
+
 #define MPCOMP_TASK_MAX_DELAYED 1024
+
+#define MPCOMP_TASK_NEW_DEPTH 1
+#define MPCOMP_TASK_UNTIED_DEPTH 1
 
 /* Tasks type bitmasks */
 #define MPCOMP_TASK_UNDEFERRED   0x00000001 /* A task for which execution is not deferred
@@ -257,6 +270,9 @@ extern "C"
 #if MPCOMP_TASK
 	  volatile int new_depth;                    /* Depth in the tree of the new_tasks list */
 	  volatile int untied_depth;                 /* Depth in the tree of the untied_tasks list */
+	  volatile int nb_newlists;
+	  volatile int nb_untiedlists;
+
 	  volatile int tasking_init_done;	     /* Thread team task's init tag */
 #endif //MPCOMP_TASK
      } mpcomp_team_t;
@@ -325,6 +341,7 @@ extern "C"
 	  int tasking_init_done;                   /* Thread task's init tag */
 	  struct mpcomp_task_s *current_task;	   /* Currently running task */
 	  struct mpcomp_task_list_s *tied_tasks;   /* List of suspended tied tasks */
+	  int *larceny_order;
 #endif //MPCOMP_TASK
      } mpcomp_thread_t;
 
@@ -370,8 +387,17 @@ extern "C"
 	  /* OMP 3.0 */
 #if MPCOMP_TASK
 	  struct mpcomp_task_list_s *untied_tasks;   /* List of suspended untied tasks */
-	  struct mpcomp_task_list_s *new_tasks;     /* Lists of new tasks */
+	  struct mpcomp_task_list_s *new_tasks;      /* List of new tasks */
 	  int spin_done;
+	  struct mpcomp_task_list_s **dist_untied_tasks;      /* Distant lists of untied tasks */
+	  struct mpcomp_task_list_s **dist_new_tasks;      /* Distant lists of new tasks */
+#if MPCOMP_TASK_LARCENY_MODE == 1
+	  struct drand48_data *untied_rand_buffer;
+	  struct drand48_data *new_rand_buffer;
+#elif MPCOMP_TASK_LARCENY_MODE == 2
+	  unsigned long new_rank;
+	  unsigned long untied_rank;
+#endif //MPCOMP_TASK_LARCENY_MODE == 1,2
 #endif //MPCOMP_TASK
 	  void *(*func) (void *);	  /* Function to call by every thread */
 	  void *shared;		          /* Shared variables (for every thread) */
@@ -419,8 +445,17 @@ extern "C"
 
 
 #if MPCOMP_TASK
-	  struct mpcomp_task_list_s *untied_tasks;   /* List of suspended untied tasks */
-	  struct mpcomp_task_list_s *new_tasks;     /* Lists of new tasks */
+	  struct mpcomp_task_list_s *untied_tasks;          /* List of suspended untied tasks */
+	  struct mpcomp_task_list_s *new_tasks;             /* Lists of new tasks */
+	  struct mpcomp_task_list_s **dist_untied_tasks;    /* Distant lists of untied tasks */
+	  struct mpcomp_task_list_s **dist_new_tasks;       /* Distant lists of new tasks */
+#if MPCOMP_TASK_LARCENY_MODE == 1
+	  struct drand48_data *untied_rand_buffer;
+	  struct drand48_data *new_rand_buffer;
+#elif MPCOMP_TASK_LARCENY_MODE == 2
+	  unsigned long new_rank;
+	  unsigned long untied_rank;
+#endif //MPCOMP_TASK_LARCENY_MODE == 1,2
 #endif //MPCOMP_TASK
 
 	  enum mpcomp_myself_t type;
@@ -491,8 +526,10 @@ extern "C"
 				 MPCOMP_NOWAIT_STOP_SYMBOL);
 
 #if MPCOMP_TASK
-	  team_info->new_depth = 0;
-	  team_info->untied_depth = 0;
+	  team_info->new_depth = MPCOMP_TASK_NEW_DEPTH;
+	  team_info->untied_depth = sctk_max(MPCOMP_TASK_UNTIED_DEPTH, MPCOMP_TASK_NEW_DEPTH);
+	  team_info->nb_newlists = 0;
+	  team_info->nb_untiedlists = 0;
 #endif //MPCOMP_TASK
      }
 
@@ -724,7 +761,7 @@ extern "C"
 	  /* Start the tree DFS from the current mvp */
 	  list = mvp->new_tasks;
 	  father = mvp->father;
-	  
+
 	  /* Search for the new_tasks list */
 	  while (list == NULL && father != NULL) {
 	       list = father->new_tasks;
@@ -745,7 +782,7 @@ extern "C"
 	  /* Start the tree DFS from the current mvp */
 	  list = mvp->untied_tasks;
 	  father = mvp->father;
-	  
+
 	  /* Search for the new_tasks list */
 	  while (list == NULL && father != NULL) {
 	       list = father->untied_tasks;

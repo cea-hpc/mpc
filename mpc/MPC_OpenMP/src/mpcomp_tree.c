@@ -194,6 +194,10 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 #if MPCOMP_TASK
 	  node->untied_tasks = NULL;
 	  node->new_tasks = NULL;
+#if MPCOMP_TASK_LARCENY_MODE == 1
+	  node->untied_rand_buffer = NULL;
+	  node->new_rand_buffer = NULL;
+#endif //MPCOMP_TASK_LARCENY_MODE == 1
 #endif //MPCOMP_TASK
 
      } else {   /* case leaf or node */
@@ -305,6 +309,10 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 #if MPCOMP_TASK
 	       leaf->untied_tasks = NULL;
 	       leaf->new_tasks = NULL;
+#if MPCOMP_TASK_LARCENY_MODE == 1
+	       leaf->untied_rand_buffer = NULL;
+	       leaf->new_rand_buffer = NULL;
+#endif //MPCOMP_TASK_LARCENY_MODE == 1
 #endif //MPCOMP_TASK
 
 	  } else {   /* case node */
@@ -356,6 +364,10 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 #if MPCOMP_TASK
 	       node->untied_tasks = NULL;
 	       node->new_tasks = NULL;
+#if MPCOMP_TASK_LARCENY_MODE == 1
+	       node->untied_rand_buffer = NULL;
+	       node->new_rand_buffer = NULL;
+#endif //MPCOMP_TASK_LARCENY_MODE == 1
 #endif //MPCOMP_TASK			
 	  }
      }
@@ -509,6 +521,10 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 #if MPCOMP_TASK
 	       n->untied_tasks = NULL;
 	       n->new_tasks = NULL;
+#if MPCOMP_TASK_LARCENY_MODE == 1
+	       n->untied_rand_buffer = NULL;
+	       n->new_rand_buffer = NULL;
+#endif //MPCOMP_TASK_LARCENY_MODE == 1
 #endif //MPCOMP_TASK
 
 	       if ( n->depth == depth - 1 ) { 
@@ -550,6 +566,10 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 #if MPCOMP_TASK
 			 instance->mvps[current_mvp]->untied_tasks = NULL;
 			 instance->mvps[current_mvp]->new_tasks = NULL;
+#if MPCOMP_TASK_LARCENY_MODE == 1
+			 instance->mvps[current_mvp]->untied_rand_buffer = NULL;
+			 instance->mvps[current_mvp]->new_rand_buffer = NULL;
+#endif //MPCOMP_TASK_LARCENY_MODE == 1
 #endif //MPCOMP_TASK
 
 			 mpcomp_node_t * current_node = n;
