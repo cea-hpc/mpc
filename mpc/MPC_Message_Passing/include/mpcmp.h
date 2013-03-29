@@ -238,6 +238,8 @@ extern "C"
 #define MPC_REAL4 28
 #define MPC_REAL8 29
 #define MPC_REAL16 30
+#define MPC_LONG_DOUBLE_INT 31
+/*    struct { long double, int } */
 
   /*Initialisation */
   int MPC_Init (int *argc, char ***argv);

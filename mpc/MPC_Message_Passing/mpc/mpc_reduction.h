@@ -41,6 +41,11 @@ extern "C"
     MPC_CREATE_TYPE (short);
     MPC_CREATE_TYPE (int);
 
+  typedef struct {
+       long double val;
+       int pos;
+  } mpc_long_double_int;
+
   typedef struct
   {
     float val;
@@ -76,6 +81,7 @@ extern "C"
     MPC_DEFINED_FUNCS(MPC_FLOAT_INT,mpc_float_int ,name);		\
     MPC_DEFINED_FUNCS(MPC_LONG_INT,mpc_long_int ,name);			\
     MPC_DEFINED_FUNCS(MPC_DOUBLE_INT,mpc_double_int ,name);		\
+    MPC_DEFINED_FUNCS(MPC_LONG_DOUBLE_INT,mpc_long_double_int ,name);		\
     MPC_DEFINED_FUNCS(MPC_SHORT_INT,mpc_short_int ,name);		\
     MPC_DEFINED_FUNCS(MPC_2INT,mpc_int_int ,name);			\
     MPC_DEFINED_FUNCS(MPC_2FLOAT,mpc_float_float ,name)	;		\
