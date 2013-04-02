@@ -74,5 +74,9 @@ typedef OPA_ptr_t sctk_atomics_ptr;
  *
  */
 double sctk_atomics_get_timestamp();
+double sctk_atomics_get_timestamp_gettimeofday ();
+void sctk_atomics_cup_freq_init();
+double sctk_atomics_get_cpu_freq();
+double sctk_atomics_get_timestamp_tsc ();
 
 #endif /* __SCTK_ATOMICS_H */

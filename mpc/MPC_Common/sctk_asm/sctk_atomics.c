@@ -21,8 +21,16 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include "sctk_atomics.h"
-
+#include <unistd.h>
 #include <sys/time.h>
+
+inline double
+sctk_atomics_get_timestamp_gettimeofday ()
+{
+  struct timeval tp;
+  gettimeofday (&tp, NULL);
+  return tp.tv_usec + tp.tv_sec * 1000000;
+}
 
 #if defined(SCTK_ia64_ARCH_SCTK)
 double
@@ -56,8 +64,33 @@ sctk_atomics_get_timestamp ()
 double
 sctk_atomics_get_timestamp ()
 {
-  struct timeval tp;
-  gettimeofday (&tp, NULL);
-  return tp.tv_usec + tp.tv_sec * 1000000;
+  return sctk_atomics_get_timestamp_gettimeofday();
 }
 #endif
+
+static double sctk_cpu_freq = 0;
+
+void sctk_atomics_cup_freq_init(){
+  double begin_tsc, end_tsc;
+  double begin_timeofday, end_timeofday; 
+
+  begin_timeofday = sctk_atomics_get_timestamp_gettimeofday ();
+  begin_tsc = sctk_atomics_get_timestamp (); 
+  usleep(10000);
+  end_tsc = sctk_atomics_get_timestamp ();
+  end_timeofday = sctk_atomics_get_timestamp_gettimeofday ();
+
+  sctk_cpu_freq = (end_tsc-begin_tsc) / ((end_timeofday-begin_timeofday)/1000000.0) ;
+}
+
+double sctk_atomics_get_cpu_freq(){
+  return sctk_cpu_freq;
+}
+
+double sctk_atomics_get_timestamp_tsc (){
+  double res; 
+
+  res = sctk_atomics_get_timestamp();
+  res = res / sctk_cpu_freq;
+  return res;
+}
