@@ -3002,7 +3002,8 @@ __MPC_Ssend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
   size_t msg_size;
   sctk_task_specific_t *task_specific;
   char tmp;
-
+  if(dest == MPC_PROC_NULL)
+	MPC_ERROR_SUCESS ();
   task_specific = __MPC_get_task_specific ();
 
   __MPC_Comm_rank_size (comm, &src, &size, task_specific);
@@ -4079,13 +4080,16 @@ PMPC_Group_incl (MPC_Group group, int n, int *ranks, MPC_Group * newgroup)
 #endif
 
   (*newgroup) = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
-
+  assume((*newgroup) != NULL);
+  
   (*newgroup)->task_nb = n;
   (*newgroup)->task_list_in_global_ranks = (int *) sctk_malloc (n * sizeof (int));
   assume((*newgroup)->task_list_in_global_ranks != NULL);
+  
   for (i = 0; i < n; i++)
     {
       (*newgroup)->task_list_in_global_ranks[i] = group->task_list_in_global_ranks[ranks[i]];
+      sctk_debug ("newgroup[%d] = %d", i, group->task_list_in_global_ranks[ranks[i]]);
     }
 
   MPC_ERROR_SUCESS ();
