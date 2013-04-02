@@ -566,13 +566,14 @@ inline void sctk_message_copy(sctk_message_to_copy_t* tmp){
   send = tmp->msg_send;
   recv = tmp->msg_recv;
 
-  sctk_nodebug("Send message type %d, Recv message type %d", send->tail.message_type, recv->tail.message_type);
+  sctk_debug("Send message type %d, Recv message type %d", send->tail.message_type, recv->tail.message_type);
   assume(send->tail.message_type == recv->tail.message_type);
 
   switch(send->tail.message_type){
   case sctk_message_contiguous: {
     size_t size;
     size = send->tail.message.contiguous.size;
+    assume(size < recv->tail.message.contiguous.size);
     if(size > recv->tail.message.contiguous.size){
       size = recv->tail.message.contiguous.size;
     }
