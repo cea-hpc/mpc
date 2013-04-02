@@ -2714,6 +2714,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 			unsigned long count_in;
 
 			if (sctk_is_derived_type(old_types[i])) {
+/* 			        fprintf(stderr,"Derived type\n"); */
 				PMPC_Is_derived_datatype(old_types[i], &res, &begins_in, &ends_in, &count_in, &lb, &is_lb, &ub, &is_ub);
 				is_contiguous = 0;
 			} else {
@@ -2726,14 +2727,17 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 	if(is_contiguous){
 	  size_t offset = 0;
 	  for(i = 0; i< count; i++){
-/* 	    fprintf(stderr,"offset %ld %ld\n",offset,indices[i]); */
-	    if(offset == indices[i]){
+	    if((old_types[i] != MPI_UB) && (old_types[i] != MPI_LB)){
 	      size_t t_size;
 	      PMPC_Type_size (old_types[i], &t_size);
-	      offset += blocklens[i] * t_size;
-	    } else {
-	      is_contiguous = 0;
-	      break;
+/* 	      fprintf(stderr,"offset %ld %ld %d %ld\n",offset,indices[i],blocklens[i],t_size); */
+	      if(offset == indices[i]){
+		offset += blocklens[i] * t_size;
+	      } else {
+/* 		abort(); */
+		is_contiguous = 0;
+		break;
+	      }
 	    }
 	  }
 	  if(is_contiguous){
@@ -2818,6 +2822,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 					}
 				}
 				sctk_nodebug("simple type %d new_lb %d new_ub %d", i, new_lb, new_ub);
+/* 				fprintf(stderr,"Type struct %ld-%ld\n",begins_out[i],ends_out[i]+1); */
 			}
 
 			prev_count_out = count_out;
@@ -2835,17 +2840,18 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 		}
 		sctk_nodebug("%d new_lb %d new_ub %d", i, new_lb, new_ub);
 	}
+/* 	fprintf(stderr,"End Type\n"); */
 
 	PMPC_Derived_datatype(newtype, begins_out, ends_out, glob_count_out, new_lb, new_is_lb, new_ub, new_is_ub);
 
-	/*   sctk_debug("new_type %d",* newtype); */
-	/*   sctk_debug("final new_lb %d,%d new_ub %d %d",new_lb,new_is_lb,new_ub,new_is_ub); */
-	/*   { */
-	/*     int i ;  */
-	/*     for(i = 0; i < glob_count_out; i++){ */
-	/*       sctk_debug("%d begins %lu ends %lu",i,begins_out[i],ends_out[i]); */
-	/*     } */
-	/*   } */
+/* 	fprintf(stderr,"new_type %d\n",* newtype); */
+/* 	fprintf(stderr,"final new_lb %d,%d new_ub %d %d\n",new_lb,new_is_lb,new_ub,new_is_ub); */
+/* 	  { */
+/* 	    int i ; */
+/* 	    for(i = 0; i < glob_count_out; i++){ */
+/* 	      fprintf(stderr,"%d begins %lu ends %lu\n",i,begins_out[i],ends_out[i]); */
+/* 	    } */
+/* 	  } */
 
 	sctk_free(begins_out);
 	sctk_free(ends_out);
@@ -3797,7 +3803,6 @@ __INTERNAL__PMPI_Reduce_derived_commute (void *sendbuf, void *recvbuf, int count
 					    MPI_Datatype datatype, MPI_Op op, int root,
 					    MPI_Comm comm,MPC_Op mpc_op,sctk_op_t *mpi_op, int size, int rank){
   int res;
-
   /*To optimize*/
 
   if(rank == 0){
@@ -3992,6 +3997,7 @@ __INTERNAL__PMPI_Op_free (MPI_Op * op)
   return MPI_SUCCESS;
 }
 
+static size_t MPI_Allreduce_derived_type_floor = 1024;
 static int
 __INTERNAL__PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
 			    MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
@@ -4002,13 +4008,79 @@ __INTERNAL__PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
   mpi_op = sctk_convert_to_mpc_op (op);
   mpc_op = mpi_op->op;
 
-  if (sctk_is_derived_type (datatype) || (mpi_op->commute == 0))
+  if (sctk_is_derived_type (datatype) && (mpi_op->commute == 1))
     {
-      __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, 0,
-			       comm);
-      __INTERNAL__PMPI_Bcast (recvbuf, count, datatype, 0, comm);
+      int res;
+      mpc_pack_absolute_indexes_t *begins_in;
+      mpc_pack_absolute_indexes_t *ends_in;
+      unsigned long count_in;
+      mpc_pack_absolute_indexes_t lb;
+      int is_lb;
+      mpc_pack_absolute_indexes_t ub;
+      int is_ub;
 
-      return MPI_SUCCESS;
+      int i; 
+
+      size_t size = 0;
+
+      PMPC_Is_derived_datatype (datatype, &res, &begins_in, &ends_in,
+			       &count_in, &lb, &is_lb, &ub, &is_ub);
+      
+      for (i = 0; i < count_in; i++){
+	size_t sizet;
+	sizet = ends_in[i] + 1;
+	if(size < sizet){
+	  size = sizet;
+	}
+      }
+/*       fprintf(stderr,"MAX %ld\n",size); */
+
+      if((mpi_op->commute == 1) && (size < MPI_Allreduce_derived_type_floor) && (count == 1)){
+	int res; 
+	char* tmp_sendbuf;
+	char* tmp_recvbuf;
+	MPI_Datatype datatype_n;
+	int j; 
+
+	tmp_recvbuf = malloc(size*count);
+	tmp_sendbuf = malloc(size*count);
+
+	PMPC_Sizeof_datatype(&datatype_n,size);
+	
+	for (i = 0; i < count_in; i++)
+	  {
+	    size_t sizet;
+	    sizet = ends_in[i] - begins_in[i] + 1;
+/* 	    fprintf(stderr,"Iter %d %ld-%ld\n",i,begins_in[i],ends_in[i]+1); */
+
+	    memcpy(tmp_sendbuf + begins_in[i], ((char*)sendbuf) + begins_in[i],sizet);
+/* 	    fprintf(stderr,"Copy start %ld size %ld\n",begins_in[i],sizet); */
+
+	  }
+
+	res = PMPC_Allreduce (tmp_sendbuf, tmp_recvbuf, count, datatype_n, mpc_op, comm);
+     
+	for (i = 0; i < count_in; i++)
+	  {
+	    size_t sizet;
+	    sizet = ends_in[i] - begins_in[i] + 1;
+/* 	    fprintf(stderr,"Iter %d %ld-%ld\n",i,begins_in[i],ends_in[i]+1); */
+
+	    memcpy(((char*)recvbuf) + begins_in[i],tmp_recvbuf + begins_in[i], sizet);
+/* 	    fprintf(stderr,"Copy start %ld size %ld\n",begins_in[i],sizet); */
+
+	  }
+
+	free(tmp_sendbuf);
+	free(tmp_recvbuf);
+	PMPC_Type_free(&datatype_n);
+	return res;
+      } else {      
+	__INTERNAL__PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, 0,
+				 comm);
+	__INTERNAL__PMPI_Bcast (recvbuf, count, datatype, 0, comm);
+	return MPI_SUCCESS;
+      }
     }
   else
     {
