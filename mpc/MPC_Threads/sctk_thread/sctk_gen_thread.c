@@ -21,6 +21,7 @@
 /* ######################################################################## */
 #include "sctk_debug.h"
 #include "sctk_thread.h"
+#include "sctk_launch.h"
 #include "sctk_internal_thread.h"
 
 #define not_initialized()  sctk_formated_dbg_print_abort(SCTK_DBG_INFO,"You have to initialize the thread library before using MPC thread API!")
@@ -764,10 +765,8 @@ sctk_gen_thread_mutex_init (sctk_thread_mutex_t * restrict __mutex,
 			    const sctk_thread_mutexattr_t *
 			    restrict __mutex_attr)
 {
-  not_initialized ();
-  sctk_touch_ptr (__mutex);
-  sctk_touch_ptr (__mutex_attr);
-  return 0;
+  sctk_init_mpc_runtime();
+  return sctk_thread_mutex_init(__mutex,__mutex_attr);
 }
 
 static int

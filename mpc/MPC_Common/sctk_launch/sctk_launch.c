@@ -766,6 +766,8 @@ run (sctk_startup_args_t * arg)
   return NULL;
 }
 
+static int sctk_mpc_env_initialized = 0;
+
 #ifdef SCTK_LINUX_DISABLE_ADDR_RADOMIZE
 #include <asm/unistd.h>
 #include <linux/personality.h>
@@ -774,23 +776,27 @@ run (sctk_startup_args_t * arg)
   static inline void
 sctk_disable_addr_randomize (int argc, char **argv)
 {
-  char *disable_addr_randomize;
-  assume (argc > 0);
-  if (getenv ("SCTK_LINUX_KEEP_ADDR_RADOMIZE") == NULL)
-  {
-    disable_addr_randomize = getenv ("SCTK_LINUX_DISABLE_ADDR_RADOMIZE");
-    if (disable_addr_randomize)
-    {
-      unsetenv ("SCTK_LINUX_DISABLE_ADDR_RADOMIZE");
-      if (sctk_runtime_config_get()->modules.launcher.banner)
+  if(sctk_mpc_env_initialized == 0){
+    char *disable_addr_randomize;
+    assume (argc > 0);
+    if (getenv ("SCTK_LINUX_KEEP_ADDR_RADOMIZE") == NULL)
       {
-INFO("Addr randomize disabled for large scale runs")
-//        sctk_warning ("Restart execution to disable addr randomize");
+	disable_addr_randomize = getenv ("SCTK_LINUX_DISABLE_ADDR_RADOMIZE");
+	if (disable_addr_randomize)
+	  {
+	    unsetenv ("SCTK_LINUX_DISABLE_ADDR_RADOMIZE");
+	    if (sctk_runtime_config_get()->modules.launcher.banner)
+	      {
+		INFO("Addr randomize disabled for large scale runs")
+		  //        sctk_warning ("Restart execution to disable addr randomize");
+		  }
+	    THIS__set_personality (ADDR_NO_RANDOMIZE);
+	    execvp (argv[0], argv);
+	  }
+	sctk_nodebug ("current brk %p", sbrk (0));
       }
-      THIS__set_personality (ADDR_NO_RANDOMIZE);
-      execvp (argv[0], argv);
-    }
-    sctk_nodebug ("current brk %p", sbrk (0));
+  } else {
+    sctk_warning("Unable to disable addr ramdomization");
   }
 }
 #else
@@ -819,168 +825,146 @@ auto_kill_func (void *arg)
   return NULL;
 }
 
+void sctk_init_mpc_runtime(){
+  if(sctk_mpc_env_initialized == 1){
+    return ;
+  } else {
+    char *sctk_argument;
+    char *sctk_disable_mpc;
+    int argc = 1;
+    char **argv;
+    void **tofree = NULL;
+    int tofree_nb = 0;
+    int auto_kill;
+    char * argv_tmp[1];
+    int init_res;
+
+    argv = argv_tmp; 
+    argv[0] = "main";
+  
+    sctk_mpc_env_initialized = 1;
+
+    //load mpc configuration from XML files if not already done.
+    sctk_runtime_config_init();
+
+    __sctk_profiling__start__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
+  
+
+    auto_kill = sctk_runtime_config_get()->modules.launcher.autokill;
+    if (auto_kill > 0)
+      {
+	pthread_t pid;
+	/*       sctk_warning ("Auto kill in %s s",auto_kill); */
+	pthread_create (&pid, NULL, auto_kill_func, &auto_kill);
+      }
+
+    sctk_use_ethread_mxn ();
+    sctk_def_task_nb ("1");
+    sctk_def_process_nb ("1");
+    /*   sctk_exception_catch (11); */
+
+    /*   sctk_set_execuatble_name (argv[0]); */
+
+    /*   sctk_disable_mpc = getenv ("MPC_DISABLE"); */
+    /*   if (sctk_disable_mpc != NULL) */
+    /*   { */
+    /*     if (strcmp ("1", sctk_disable_mpc) == 0) */
+    /*     { */
+    /*       sctk_pthread_thread_init (); */
+    /*       sctk_thread_init_no_mpc (); */
+    /*       return mpc_user_main (argc, argv); */
+    /*     } */
+    /*   } */
+
+    sctk_argument = getenv ("MPC_STARTUP_ARGS");
+
+    if (sctk_argument != NULL)
+      {
+	/*    size_t len;*/
+	char *cursor;
+	int i;
+	char **new_argv;
+	int new_argc = 0;
+
+	new_argv = (char **) sctk_malloc ((argc + 20) * sizeof (char *));
+	tofree = (void **) sctk_malloc ((argc + 20) * sizeof (void *));
+
+	tofree[tofree_nb] = new_argv;
+	tofree_nb++;
+
+	cursor = sctk_argument;
+	new_argv[new_argc] = argv[0];
+	new_argc++;
+
+	for (i = 1; i < argc; i++)
+	  {
+	    new_argv[new_argc] = argv[i];
+	    new_argc++;
+	  }
+
+	while (*cursor == ' ')
+	  cursor++;
+	while (*cursor != '\0')
+	  {
+	    int word_len = 0;
+	    new_argv[new_argc] = (char *) sctk_malloc (1024 * sizeof (char));
+	    tofree[tofree_nb] = new_argv[new_argc];
+	    tofree_nb++;
+	    while ((word_len < 1024) && (*cursor != '\0') && (*cursor != ' '))
+	      {
+		new_argv[new_argc][word_len] = *cursor;
+		cursor++;
+		word_len++;
+	      }
+	    new_argv[new_argc][word_len] = '\0';
+	    new_argc++;
+	    while (*cursor == ' ')
+	      cursor++;
+	  }
+	new_argv[new_argc] = NULL;
+	argc = new_argc;
+	argv = new_argv;
+
+	/*  for(i = 0; i <= argc; i++){
+	    fprintf(stderr,"%d : %s\n",i,argv[i]);
+	    } */
+      } 
+
+    memcpy (sctk_save_argument, argv, argc * sizeof (char *));
+
+    sctk_nodebug ("init argc %d", argc);
+    init_res = sctk_env_init (&argc, &argv);
+    sctk_nodebug ("init argc %d", argc);
+
+    sctk_free (argv);
+    if (tofree != NULL)
+      {
+	int i;
+	for (i = 0; i < tofree_nb; i++)
+	  {
+	    sctk_free (tofree[i]);
+	  }
+	sctk_free (tofree);
+      }
+  }
+}
+
+#include <sctk_thread.h>
+
   int
 sctk_launch_main (int argc, char **argv)
 {
   sctk_startup_args_t arg;
   char name[SCTK_MAX_FILENAME_SIZE];
   FILE *file;
-  int init_res;
-  char *sctk_argument;
-  char *sctk_disable_mpc;
-  void **tofree = NULL;
-  int tofree_nb = 0;
-  int auto_kill;
 
-  //load mpc configuration from XML files if not already done.
-  sctk_runtime_config_init();
-
-  sctk_disable_addr_randomize (argc, argv);
-
-  __sctk_profiling__start__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
-  
-
-  auto_kill = sctk_runtime_config_get()->modules.launcher.autokill;
-  if (auto_kill > 0)
   {
-    pthread_t pid;
-    /*       sctk_warning ("Auto kill in %s s",auto_kill); */
-    pthread_create (&pid, NULL, auto_kill_func, &auto_kill);
+    sctk_thread_mutex_t lock;
+    sctk_thread_mutex_init(&lock,NULL);
   }
 
-  sctk_use_ethread_mxn ();
-  sctk_def_task_nb ("1");
-  sctk_def_process_nb ("1");
-  /*   sctk_exception_catch (11); */
-
-  /*   sctk_set_execuatble_name (argv[0]); */
-
-  sctk_disable_mpc = getenv ("MPC_DISABLE");
-  if (sctk_disable_mpc != NULL)
-  {
-    if (strcmp ("1", sctk_disable_mpc) == 0)
-    {
-      sctk_pthread_thread_init ();
-      sctk_thread_init_no_mpc ();
-      return mpc_user_main (argc, argv);
-    }
-  }
-
-  sctk_argument = getenv ("MPC_STARTUP_ARGS");
-
-  if (sctk_argument != NULL)
-  {
-    /*    size_t len;*/
-    char *cursor;
-    int i;
-    char **new_argv;
-    int new_argc = 0;
-
-    new_argv = (char **) sctk_malloc ((argc + 20) * sizeof (char *));
-    tofree = (void **) sctk_malloc ((argc + 20) * sizeof (void *));
-
-    tofree[tofree_nb] = new_argv;
-    tofree_nb++;
-
-    cursor = sctk_argument;
-    new_argv[new_argc] = argv[0];
-    new_argc++;
-
-    for (i = 1; i < argc; i++)
-    {
-      new_argv[new_argc] = argv[i];
-      new_argc++;
-    }
-
-    while (*cursor == ' ')
-      cursor++;
-    while (*cursor != '\0')
-    {
-      int word_len = 0;
-      new_argv[new_argc] = (char *) sctk_malloc (1024 * sizeof (char));
-      tofree[tofree_nb] = new_argv[new_argc];
-      tofree_nb++;
-      while ((word_len < 1024) && (*cursor != '\0') && (*cursor != ' '))
-      {
-        new_argv[new_argc][word_len] = *cursor;
-        cursor++;
-        word_len++;
-      }
-      new_argv[new_argc][word_len] = '\0';
-      new_argc++;
-      while (*cursor == ' ')
-        cursor++;
-    }
-    new_argv[new_argc] = NULL;
-    argc = new_argc;
-    argv = new_argv;
-
-/*  for(i = 0; i <= argc; i++){
-      fprintf(stderr,"%d : %s\n",i,argv[i]);
-    } */
-  }
-
-  memcpy (sctk_save_argument, argv, argc * sizeof (char *));
-
-  sctk_nodebug ("init argc %d", argc);
-  init_res = sctk_env_init (&argc, &argv);
-  sctk_nodebug ("init argc %d", argc);
-
-
-/*   if (init_res == 1) */
-/*   { */
-/*     int i; */
-/*     int size; */
-/*     int nb_processes; */
-/*     int nb_args; */
-/*     sprintf (name, "%s/Job_description", sctk_store_dir); */
-
-/*     sctk_nodebug ("Perform restart from protection"); */
-
-/*     file = fopen (name, "r"); */
-/*     assume(fscanf (file, "Job with %d tasks on %d processes\n", &size, */
-/* 		   &nb_processes) == 2); */
-/*     sctk_nodebug ("Previous run with params %d tasks %d processes", */
-/*         size, nb_processes); */
-
-/*     assume(fscanf (file, "ARGC %d\n", &nb_args) == 1); */
-/*     sctk_nodebug ("ARGC %d", nb_args); */
-
-/*     argv = (char **) sctk_malloc ((nb_args + 1) * sizeof (char *)); */
-/*     argc = nb_args; */
-
-/*     for (i = 0; i < nb_args; i++) */
-/*     { */
-/*       long arg_size; */
-/*       assume(fscanf (file, "%ld ", &arg_size) == 1); */
-/*       argv[i] = (char *) sctk_malloc (arg_size * sizeof (char)); */
-/*       assume(fscanf (file, "%s\n", argv[i]) == 1); */
-/*       sctk_nodebug ("Arg read %s", argv[i]); */
-/*     } */
-/*     argv[nb_args] = NULL; */
-
-/*     fclose (file); */
-/*     memcpy (sctk_save_argument, argv, argc * sizeof (char *)); */
-
-/*     sctk_env_init_intern (&argc, &argv); */
-/*     sctk_perform_initialisation (); */
-/*     sctk_nodebug ("Launch environement restored"); */
-/*   } */
-/*   else */
-/*   { */
-/*     sprintf (name, "%s/Job_description", sctk_store_dir); */
-/*     file = fopen (name, "r"); */
-/*     if (file != NULL) */
-/*     { */
-/*       if (sctk_process_rank == 0) */
-/*       { */
-/*         fprintf (stderr, */
-/*             "%s is not clean; specify a clean directiry using --tmp_dir= or use mpc_clean %s\n", */
-/*             sctk_store_dir, sctk_store_dir); */
-/*       } */
-/*       exit (1); */
-/*     } */
-/*   } */
+  sctk_disable_addr_randomize (argc,argv);
+  sctk_init_mpc_runtime();
   sctk_nodebug ("new argc %d", argc);
 
   arg.argc = argc;
@@ -999,51 +983,6 @@ sctk_launch_main (int argc, char **argv)
   sctk_start_func ((void *(*)(void *)) run, &arg);
   sctk_env_exit ();
 
-/*   sprintf (name, "%s/Job_description", sctk_store_dir); */
-/*   remove (name); */
-/*   sprintf (name, "%s/mpcrun_args", sctk_store_dir); */
-/*   remove (name); */
-/*   sprintf (name, "%s/last_point", sctk_store_dir); */
-/*   remove (name); */
-/*   sprintf (name, "%s/Process_%d_topology", sctk_store_dir, sctk_process_rank); */
-/*   remove (name); */
-/*   sprintf (name, "%s/use_%s_%d", sctk_store_dir, sctk_get_node_name (), */
-/*       getpid ()); */
-/*   remove (name); */
-/*   if (sctk_process_rank == 0) */
-/*   { */
-/*     int i; */
-/*     int j; */
-/*     i = 1; */
-/*     j = 0; */
-/*     do */
-/*     { */
-/*       j = 1; */
-/*       do */
-/*       { */
-/*         sprintf (name, "%s/communicator_%d_%d", sctk_store_dir, i, j); */
-/*         j++; */
-/*       } */
-/*       while (remove (name) == 0); */
-/*       sprintf (name, "%s/communicator_%d_%d", sctk_store_dir, i, 0); */
-/*       i++; */
-/*     } */
-/*     while (remove (name) == 0); */
-/*   } */
-/*   sprintf (name, "%s/communicators", sctk_store_dir); */
-/*   remove (name); */
-/*   rmdir (sctk_store_dir); */
-  sctk_free (argv);
-  if (tofree != NULL)
-  {
-    int i;
-    for (i = 0; i < tofree_nb; i++)
-    {
-      sctk_free (tofree[i]);
-    }
-    sctk_free (tofree);
-  }
-  /*   sctk_close_io(); */
   return main_result;
 }
 

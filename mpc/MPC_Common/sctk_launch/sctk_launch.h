@@ -28,6 +28,7 @@
 extern "C"
 {
 #endif
+  void sctk_init_mpc_runtime();
 
   int sctk_env_init (int *argc, char ***argv);
   int sctk_initialisation (char *args, int *argc, char ***argv);
