@@ -2086,7 +2086,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 
 	sctk_mono_init (sctk_mono_bin);
 
-	sprintf (name, "%s/Process_%d", sctk_store_dir, sctk_process_rank);
+/* 	sprintf (name, "%s/Process_%d", sctk_store_dir, sctk_process_rank); */
 
 	/*Prepare free pages */
 	{
@@ -2153,14 +2153,14 @@ sctk_start_func (void *(*run) (void *), void *arg)
 		sctk_nodebug ("Process %d %d-%d", sctk_process_rank,
 			start_thread, start_thread + local_threads - 1);
 
-		if (sctk_check_point_restart_mode)
-		{
-			file = fopen (name, "w");
-			fprintf (file, "Task %d->%d\n", start_thread,
-						   start_thread + local_threads - 1);
-			fprintf (file, "%lu\n", sctk_get_heap_size ());
-			fclose (file);
-		}
+/* 		if (sctk_check_point_restart_mode) */
+/* 		{ */
+/* 			file = fopen (name, "w"); */
+/* 			fprintf (file, "Task %d->%d\n", start_thread, */
+/* 						   start_thread + local_threads - 1); */
+/* 			fprintf (file, "%lu\n", sctk_get_heap_size ()); */
+/* 			fclose (file); */
+/* 		} */
 
 		sctk_first_local = start_thread;
 		sctk_last_local = start_thread + local_threads - 1;
@@ -2182,6 +2182,9 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	}
 	else
 	{
+#if 1
+	  not_implemented();
+#else
 		FILE *last;
 		unsigned long step;
 		char task_name[SCTK_MAX_FILENAME_SIZE];
@@ -2350,6 +2353,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 		{
 			fprintf (stderr, " done\n");
 		}
+#endif
 	}
 
 	sctk_nodebug("sctk_total_number_of_tasks %d",sctk_total_number_of_tasks);

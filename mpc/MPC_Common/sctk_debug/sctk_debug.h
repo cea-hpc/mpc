@@ -42,7 +42,7 @@ extern "C"
   extern int sctk_migration_mode;
   extern char *sctk_multithreading_mode;
   extern char *sctk_network_mode;
-  extern char *sctk_store_dir;
+/*   extern const char *sctk_store_dir; */
   extern int sctk_is_in_fortran;
   extern int sctk_local_process_rank;
   extern int sctk_local_process_number;

@@ -42,6 +42,7 @@
 #include "sctk_debug.h"
 #include "sctk_config.h"
 #include "sctk_asm.h"
+#include "sctk_atomics.h"
 #ifdef MPC_Message_Passing
 #include "sctk_inter_thread_comm.h"
 #include "sctk_low_level_comm.h"
@@ -73,7 +74,7 @@ int sctk_migration_mode = 0;
 #define MAX_TERM_LENGTH 80
 #define MAX_NAME_FORMAT 30
 char *sctk_mono_bin = "";
-char *sctk_store_dir = "/dev/null";
+/* const char *sctk_store_dir = "/dev/null"; */
 static char topology_name[SCTK_MAX_FILENAME_SIZE];
 
 char *sctk_multithreading_mode = "none";
@@ -183,7 +184,7 @@ static char* sctk_launcher_mode = "none";
   static void
 sctk_perform_initialisation (void)
 {
-  mkdir (sctk_store_dir, 0777);
+/*   mkdir (sctk_store_dir, 0777); */
 
   sctk_only_once ();
 
@@ -300,23 +301,23 @@ sctk_perform_initialisation (void)
       fprintf (stderr, "Restart Job\n");
     }
   }
-  {
-    FILE *topo_file = NULL;
-    int max_try = 10;
-    sprintf (topology_name, "%s/Process_%d_topology", sctk_store_dir,
-        sctk_process_rank);
-    do
-    {
-      topo_file = fopen (topology_name, "w");
-      max_try--;
-    }
-    while ((topo_file == NULL) && (max_try >= 0));
-    if (topo_file != NULL)
-    {
-      sctk_print_topology (topo_file);
-      fclose (topo_file);
-    }
-  }
+ /*  { */
+/*     FILE *topo_file = NULL; */
+/*     int max_try = 10; */
+/*     sprintf (topology_name, "%s/Process_%d_topology", sctk_store_dir, */
+/*         sctk_process_rank); */
+/*     do */
+/*     { */
+/*       topo_file = fopen (topology_name, "w"); */
+/*       max_try--; */
+/*     } */
+/*     while ((topo_file == NULL) && (max_try >= 0)); */
+/*     if (topo_file != NULL) */
+/*     { */
+/*       sctk_print_topology (topo_file); */
+/*       fclose (topo_file); */
+/*     } */
+/*   } */
   sctk_flush_version ();
 }
 
@@ -368,7 +369,7 @@ sctk_use_ethread_mxn (void)
   static void
 sctk_def_directory (char *arg)
 {
-  sctk_store_dir = arg;
+/*   sctk_store_dir = arg; */
 }
 
   static void
@@ -926,60 +927,60 @@ sctk_launch_main (int argc, char **argv)
   sctk_nodebug ("init argc %d", argc);
 
 
-  if (init_res == 1)
-  {
-    int i;
-    int size;
-    int nb_processes;
-    int nb_args;
-    sprintf (name, "%s/Job_description", sctk_store_dir);
+/*   if (init_res == 1) */
+/*   { */
+/*     int i; */
+/*     int size; */
+/*     int nb_processes; */
+/*     int nb_args; */
+/*     sprintf (name, "%s/Job_description", sctk_store_dir); */
 
-    sctk_nodebug ("Perform restart from protection");
+/*     sctk_nodebug ("Perform restart from protection"); */
 
-    file = fopen (name, "r");
-    assume(fscanf (file, "Job with %d tasks on %d processes\n", &size,
-		   &nb_processes) == 2);
-    sctk_nodebug ("Previous run with params %d tasks %d processes",
-        size, nb_processes);
+/*     file = fopen (name, "r"); */
+/*     assume(fscanf (file, "Job with %d tasks on %d processes\n", &size, */
+/* 		   &nb_processes) == 2); */
+/*     sctk_nodebug ("Previous run with params %d tasks %d processes", */
+/*         size, nb_processes); */
 
-    assume(fscanf (file, "ARGC %d\n", &nb_args) == 1);
-    sctk_nodebug ("ARGC %d", nb_args);
+/*     assume(fscanf (file, "ARGC %d\n", &nb_args) == 1); */
+/*     sctk_nodebug ("ARGC %d", nb_args); */
 
-    argv = (char **) sctk_malloc ((nb_args + 1) * sizeof (char *));
-    argc = nb_args;
+/*     argv = (char **) sctk_malloc ((nb_args + 1) * sizeof (char *)); */
+/*     argc = nb_args; */
 
-    for (i = 0; i < nb_args; i++)
-    {
-      long arg_size;
-      assume(fscanf (file, "%ld ", &arg_size) == 1);
-      argv[i] = (char *) sctk_malloc (arg_size * sizeof (char));
-      assume(fscanf (file, "%s\n", argv[i]) == 1);
-      sctk_nodebug ("Arg read %s", argv[i]);
-    }
-    argv[nb_args] = NULL;
+/*     for (i = 0; i < nb_args; i++) */
+/*     { */
+/*       long arg_size; */
+/*       assume(fscanf (file, "%ld ", &arg_size) == 1); */
+/*       argv[i] = (char *) sctk_malloc (arg_size * sizeof (char)); */
+/*       assume(fscanf (file, "%s\n", argv[i]) == 1); */
+/*       sctk_nodebug ("Arg read %s", argv[i]); */
+/*     } */
+/*     argv[nb_args] = NULL; */
 
-    fclose (file);
-    memcpy (sctk_save_argument, argv, argc * sizeof (char *));
+/*     fclose (file); */
+/*     memcpy (sctk_save_argument, argv, argc * sizeof (char *)); */
 
-    sctk_env_init_intern (&argc, &argv);
-    sctk_perform_initialisation ();
-    sctk_nodebug ("Launch environement restored");
-  }
-  else
-  {
-    sprintf (name, "%s/Job_description", sctk_store_dir);
-    file = fopen (name, "r");
-    if (file != NULL)
-    {
-      if (sctk_process_rank == 0)
-      {
-        fprintf (stderr,
-            "%s is not clean; specify a clean directiry using --tmp_dir= or use mpc_clean %s\n",
-            sctk_store_dir, sctk_store_dir);
-      }
-      exit (1);
-    }
-  }
+/*     sctk_env_init_intern (&argc, &argv); */
+/*     sctk_perform_initialisation (); */
+/*     sctk_nodebug ("Launch environement restored"); */
+/*   } */
+/*   else */
+/*   { */
+/*     sprintf (name, "%s/Job_description", sctk_store_dir); */
+/*     file = fopen (name, "r"); */
+/*     if (file != NULL) */
+/*     { */
+/*       if (sctk_process_rank == 0) */
+/*       { */
+/*         fprintf (stderr, */
+/*             "%s is not clean; specify a clean directiry using --tmp_dir= or use mpc_clean %s\n", */
+/*             sctk_store_dir, sctk_store_dir); */
+/*       } */
+/*       exit (1); */
+/*     } */
+/*   } */
   sctk_nodebug ("new argc %d", argc);
 
   arg.argc = argc;
@@ -998,40 +999,40 @@ sctk_launch_main (int argc, char **argv)
   sctk_start_func ((void *(*)(void *)) run, &arg);
   sctk_env_exit ();
 
-  sprintf (name, "%s/Job_description", sctk_store_dir);
-  remove (name);
-  sprintf (name, "%s/mpcrun_args", sctk_store_dir);
-  remove (name);
-  sprintf (name, "%s/last_point", sctk_store_dir);
-  remove (name);
-  sprintf (name, "%s/Process_%d_topology", sctk_store_dir, sctk_process_rank);
-  remove (name);
-  sprintf (name, "%s/use_%s_%d", sctk_store_dir, sctk_get_node_name (),
-      getpid ());
-  remove (name);
-  if (sctk_process_rank == 0)
-  {
-    int i;
-    int j;
-    i = 1;
-    j = 0;
-    do
-    {
-      j = 1;
-      do
-      {
-        sprintf (name, "%s/communicator_%d_%d", sctk_store_dir, i, j);
-        j++;
-      }
-      while (remove (name) == 0);
-      sprintf (name, "%s/communicator_%d_%d", sctk_store_dir, i, 0);
-      i++;
-    }
-    while (remove (name) == 0);
-  }
-  sprintf (name, "%s/communicators", sctk_store_dir);
-  remove (name);
-  rmdir (sctk_store_dir);
+/*   sprintf (name, "%s/Job_description", sctk_store_dir); */
+/*   remove (name); */
+/*   sprintf (name, "%s/mpcrun_args", sctk_store_dir); */
+/*   remove (name); */
+/*   sprintf (name, "%s/last_point", sctk_store_dir); */
+/*   remove (name); */
+/*   sprintf (name, "%s/Process_%d_topology", sctk_store_dir, sctk_process_rank); */
+/*   remove (name); */
+/*   sprintf (name, "%s/use_%s_%d", sctk_store_dir, sctk_get_node_name (), */
+/*       getpid ()); */
+/*   remove (name); */
+/*   if (sctk_process_rank == 0) */
+/*   { */
+/*     int i; */
+/*     int j; */
+/*     i = 1; */
+/*     j = 0; */
+/*     do */
+/*     { */
+/*       j = 1; */
+/*       do */
+/*       { */
+/*         sprintf (name, "%s/communicator_%d_%d", sctk_store_dir, i, j); */
+/*         j++; */
+/*       } */
+/*       while (remove (name) == 0); */
+/*       sprintf (name, "%s/communicator_%d_%d", sctk_store_dir, i, 0); */
+/*       i++; */
+/*     } */
+/*     while (remove (name) == 0); */
+/*   } */
+/*   sprintf (name, "%s/communicators", sctk_store_dir); */
+/*   remove (name); */
+/*   rmdir (sctk_store_dir); */
   sctk_free (argv);
   if (tofree != NULL)
   {

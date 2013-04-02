@@ -392,6 +392,9 @@ extern "C"
 	if (vp->dump != NULL)
 	  {
 	    char name[SCTK_MAX_FILENAME_SIZE];
+#if 1
+	    not_implemented();
+#else
 	    if (vp->dump->dump_for_migration == 0)
 	      {
 		sprintf (name, "%s/%s", sctk_store_dir,
@@ -399,6 +402,7 @@ extern "C"
 	      }
 	    else
 	      sprintf (name, "%s/mig_task_%p", sctk_store_dir, vp->dump);
+#endif
 
 /* 	  vp->dump->status = ethread_ready; */
 
@@ -497,6 +501,9 @@ extern "C"
 	      if (vp->dump != NULL)
 		{
 		  char name[SCTK_MAX_FILENAME_SIZE];
+#if 1
+		  not_implemented();
+#else
 		  if (vp->dump->dump_for_migration == 0)
 		    {
 		      sprintf (name, "%s/%s", sctk_store_dir,
@@ -505,7 +512,7 @@ extern "C"
 		  else
 		    sprintf (name, "%s/mig_task_%p", sctk_store_dir,
 			     vp->dump);
-
+#endif
 		  /*      vp->dump->status = ethread_ready; */
 
 		  vp->dump->dump_for_migration = 0;
@@ -1440,21 +1447,14 @@ extern "C"
 	    (vp->incomming_queue == NULL) &&
 	    (vp->ready_queue == NULL) && (vp->poll_list == NULL))
 	  {
-#ifdef MPC_Message_Passing
-	    sctk_notify_idle_message ();
-#endif
-#warning "Optimize to reduce memory BW consumption"
-	    sched_yield();
+	    sctk_cpu_relax();
 	  } else {
 	  if ((vp->ready_queue_used == NULL) &&
 	      (vp->incomming_queue == NULL) &&
 	      (vp->ready_queue == NULL) )
 	    {
-#ifdef MPC_Message_Passing
- 	    sctk_notify_idle_message ();
-#endif
-	      sched_yield();
-	    }
+	      sctk_cpu_relax();
+	    } 
 	}
 #endif
       }

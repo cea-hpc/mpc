@@ -206,12 +206,12 @@ sctk_ethread_mxn_sched_restore (sctk_thread_t thread, char *type, int vp)
   sctk_nodebug ("Restored");
 
   /*Free migration request */
-  sprintf (name, "%s/mig_task", sctk_store_dir);
-  if (strncmp (type, name, strlen (name)) == 0)
-    {
-      remove (type);
-      sctk_nodebug ("%s removed Restored",name);
-    }
+/*   sprintf (name, "%s/mig_task", sctk_store_dir); */
+/*   if (strncmp (type, name, strlen (name)) == 0) */
+/*     { */
+/*       remove (type); */
+/*       sctk_nodebug ("%s removed Restored",name); */
+/*     } */
   sctk_nodebug ("All done Restored");
   return 0;
 }
@@ -224,17 +224,17 @@ sctk_ethread_mxn_sched_dump_clean ()
   FILE *file;
   self = sctk_ethread_mxn_self ();
 
-  sprintf (name, "%s/task_%p_%lu", sctk_store_dir, self, step);
-  file = fopen (name, "r");
-  while (file != NULL)
-    {
-      fclose (file);
-      sctk_nodebug ("Clean file %s", name);
-      remove (name);
-      step++;
-      sprintf (name, "%s/task_%p_%lu", sctk_store_dir, self, step);
-      file = fopen (name, "r");
-    }
+/*   sprintf (name, "%s/task_%p_%lu", sctk_store_dir, self, step); */
+/*   file = fopen (name, "r"); */
+/*   while (file != NULL) */
+/*     { */
+/*       fclose (file); */
+/*       sctk_nodebug ("Clean file %s", name); */
+/*       remove (name); */
+/*       step++; */
+/*       sprintf (name, "%s/task_%p_%lu", sctk_store_dir, self, step); */
+/*       file = fopen (name, "r"); */
+/*     } */
 
   return 0;
 }

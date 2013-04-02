@@ -91,8 +91,7 @@ Informations:
     --help,-h Display this help
     --show, Display command line
     --version-details, Print version of each module used
-    --report, Print profiling report (requires being compiled with Profiling)
-    --tmp_dir=dir, Directory to store mpc files
+    --report, Print report
     --verbose=n,-v,-vv,-vvv Verbose mode (level 1 to 3)
     --verbose Verbose level 1
 
@@ -181,6 +180,11 @@ VERSION_DETAILS="--version-details"
 else
 VERSION_DETAILS=""
 fi
+if test "$REPORT" = "yes" ; then
+REPORT="--report"
+else
+REPORT=""
+fi
 if test "$CHECKPOINT" = "yes" ; then
 CHECKPOINT="--checkpoint"
 else
@@ -197,6 +201,7 @@ READ_MPC_ARG="true"
 
 TMP_DIR_D="TEMP_MPC_$$/"
 TMP_DIR="--directory=${TMP_DIR_D}"
+TMP_DIR="/dev/null"
 LAUNCH_OPTIONS=""
 MPC_CLEAN_TMP_DIR="0"
 
@@ -467,7 +472,7 @@ fi
 MPC_VERBOSE="--mpc-verbose=${MPC_VERBOSE}"
 MPC_PROFILING="--profiling=${MPC_PROFILING}"
 
-SCTK_ARGS="$SCTK_ARGS $VERSION_DETAILS $CHECKPOINT $RESTART $MIGRATION $TMP_DIR $MPC_VERBOSE $MPC_PROFILING"
+SCTK_ARGS="$SCTK_ARGS $VERSION_DETAILS $CHECKPOINT $RESTART $MIGRATION $MPC_VERBOSE $MPC_PROFILING"
 if test "$MPC_MONO" = "1" ; then
 SCTK_ARGS="$SCTK_ARGS --mono=$BINARY"
 BINARY="mpc_mono"
@@ -519,10 +524,10 @@ if test "${DEBUG}" = "mpc-gdb"; then
 fi
 
 if test "$show" != "echo" ; then
-if test "$TMP_DIR_D" != "" ; then
-    mkdir -p ${TMP_DIR_D}
-fi
-echo "$0 $@" > ${TMP_DIR_D}mpcrun_args
+#if test "$TMP_DIR_D" != "" ; then
+#    mkdir -p ${TMP_DIR_D}
+#fi
+#echo "$0 $@" > ${TMP_DIR_D}mpcrun_args
 
 if test "$MPC_VERBOSE" != "--mpc-verbose=0" ; then
 if test "${DEBUG}" = "" ; then
