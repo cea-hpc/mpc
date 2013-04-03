@@ -400,7 +400,7 @@ static inline sctk_communicator_t sctk_communicator_get_new_id(int local_root, i
 	sctk_communicator_t ti = 0;
 	int need_clean = 0;
 	
-	sctk_debug("get new id local_root %d, rank %d, origin_comm %d", local_root, rank, origin_communicator);
+	sctk_nodebug("get new id local_root %d, rank %d, origin_comm %d", local_root, rank, origin_communicator);
 	
 	do
 	{
@@ -424,7 +424,7 @@ static inline sctk_communicator_t sctk_communicator_get_new_id(int local_root, i
 				comm = i;
 				tmp->id = comm;
 				sctk_set_internal_communicator_no_lock(comm,tmp);
-				sctk_debug("rank %d : Try comm %d", rank, comm);
+				sctk_nodebug("rank %d : Try comm %d", rank, comm);
 			sctk_spinlock_unlock(&sctk_communicator_all_table_lock);
 		}
 
@@ -439,7 +439,7 @@ static inline sctk_communicator_t sctk_communicator_get_new_id(int local_root, i
 				tmp->id = comm;
 				sctk_internal_communicator_t * tmp_check;
 				sctk_spinlock_lock(&sctk_communicator_all_table_lock);
-					sctk_debug("rank %d : check comm %d", rank, comm);
+					sctk_nodebug("rank %d : check comm %d", rank, comm);
 					tmp_check = sctk_check_internal_communicator_no_lock(comm);
 					if(tmp_check != NULL)
 					{
@@ -466,7 +466,7 @@ static inline sctk_communicator_t sctk_communicator_get_new_id(int local_root, i
 		}
 		
 	}  while(comm == -1);
-	sctk_debug("rank %d : comm %d accepted", rank, comm);
+	sctk_nodebug("rank %d : comm %d accepted", rank, comm);
 	assume(comm != SCTK_COMM_WORLD);
 	assume(comm != SCTK_COMM_SELF);
 	assume(comm > 0);
@@ -2107,7 +2107,7 @@ sctk_communicator_t sctk_create_communicator (const sctk_communicator_t origin_c
 
 	new_tmp = tmp->new_comm;
 	
-	sctk_debug("new id for rank %d, grank %d, local_root %d, has_zero %d, tmp %p", rank, grank, local_root, tmp->has_zero, tmp);
+	sctk_nodebug("new id for rank %d, grank %d, local_root %d, has_zero %d, tmp %p", rank, grank, local_root, tmp->has_zero, tmp);
 	/* get new id for comm */
 	comm = sctk_communicator_get_new_id(local_root,grank,origin_communicator,new_tmp);
 	

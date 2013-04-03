@@ -559,21 +559,23 @@ TODO("Uselss code")
   sctk_complete_and_free_message(recv);
 }
 
-inline void sctk_message_copy(sctk_message_to_copy_t* tmp){
-  sctk_thread_ptp_message_t* send;
-  sctk_thread_ptp_message_t* recv;
+inline void sctk_message_copy(sctk_message_to_copy_t* tmp)
+{
+	sctk_thread_ptp_message_t* send;
+	sctk_thread_ptp_message_t* recv;
 
-  send = tmp->msg_send;
-  recv = tmp->msg_recv;
+	send = tmp->msg_send;
+	recv = tmp->msg_recv;
 
-  sctk_debug("Send message type %d, Recv message type %d", send->tail.message_type, recv->tail.message_type);
-  assume(send->tail.message_type == recv->tail.message_type);
+	//~ sctk_debug("Send message type %d, Recv message type %d", send->tail.message_type, recv->tail.message_type);
+	assume(send->tail.message_type == sctk_message_contiguous);	
 
   switch(send->tail.message_type){
   case sctk_message_contiguous: {
     size_t size;
     size = send->tail.message.contiguous.size;
-    assume(size < recv->tail.message.contiguous.size);
+    sctk_nodebug("Send message size %d, Recv message size %d", size, recv->tail.message.contiguous.size);
+    assume(size <= recv->tail.message.contiguous.size);
     if(size > recv->tail.message.contiguous.size){
       size = recv->tail.message.contiguous.size;
     }
@@ -1171,7 +1173,7 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
 			} 
 			else 
 			{
-				if((sctk_is_inter_comm(communicator)) && (request->request_type == REQUEST_RECV))
+				if((sctk_is_inter_comm(communicator)) && ((request->request_type == REQUEST_RECV) || (request->request_type == REQUEST_RECV_COLL)))
 				{
 					sctk_nodebug("recv : get comm world rank of rank %d in comm %d", source, communicator);
 					msg->sctk_msg_get_glob_source = sctk_get_remote_comm_world_rank (communicator, source);
@@ -1191,7 +1193,7 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
 			msg->sctk_msg_get_glob_destination = sctk_get_comm_world_rank (communicator, world_dest);
 		} else 
 		{
-			if((sctk_is_inter_comm(communicator)) && (request->request_type == REQUEST_SEND))
+			if((sctk_is_inter_comm(communicator)) && ((request->request_type == REQUEST_SEND) || (request->request_type == REQUEST_SEND_COLL)))
 			{
 				sctk_nodebug("send : get comm world rank of rank %d in comm %d", destination, communicator);
 				msg->sctk_msg_get_glob_destination = sctk_get_remote_comm_world_rank (communicator, destination);
@@ -1207,12 +1209,12 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
 	msg->body.header.msg_size = count;
 
 	msg->sctk_msg_get_use_message_numbering = 1;
-/*  
-	if(request->request_type == REQUEST_SEND)
+  
+	if((request->request_type == REQUEST_SEND) || (request->request_type == REQUEST_SEND_COLL))
 		sctk_debug("Send comm %d : rang %d envoie message a rang %d", communicator, msg->sctk_msg_get_glob_source, msg->sctk_msg_get_glob_destination);
-	else if(request->request_type == REQUEST_RECV)
+	else if((request->request_type == REQUEST_RECV) || (request->request_type == REQUEST_RECV_COLL))
 		sctk_debug("Recv comm %d : rang %d recoit message de rang %d", communicator, msg->sctk_msg_get_glob_destination, msg->sctk_msg_get_glob_source);
-*/	
+	
 	/* A message can be sent with a NULL request (see the MPI standard) */
 	if (request) 
 	{

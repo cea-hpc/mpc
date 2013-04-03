@@ -69,6 +69,7 @@ extern "C"
 #define MPI_COMM_NULL MPC_COMM_NULL
 #define MPI_MAX_PROCESSOR_NAME MPC_MAX_PROCESSOR_NAME
 #define MPI_MAX_NAME_STRING 256
+#define MPI_ROOT MPC_ROOT
 
 /* Communication argument parameters */
 #define MPI_ERR_BUFFER MPC_ERR_BUFFER

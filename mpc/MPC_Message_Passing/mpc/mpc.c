@@ -597,7 +597,7 @@ TODO("To optimize")
 static inline int
 __mpc_check_task__ (int task, int max_rank)
 {
-  return ((task < 0) || (task >= max_rank))&& (task != MPC_ANY_SOURCE);
+  return (((task < 0) && (task != -4) && (task != -2)) || (task >= max_rank))&& (task != MPC_ANY_SOURCE);
 }
 
 #define mpc_check_task(task,comm,max_rank)				\
@@ -3002,8 +3002,7 @@ __MPC_Ssend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
   size_t msg_size;
   sctk_task_specific_t *task_specific;
   char tmp;
-  if(dest == MPC_PROC_NULL)
-	MPC_ERROR_SUCESS ();
+
   task_specific = __MPC_get_task_specific ();
 
   __MPC_Comm_rank_size (comm, &src, &size, task_specific);
