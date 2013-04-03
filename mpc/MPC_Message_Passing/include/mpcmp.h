@@ -161,6 +161,7 @@ extern "C"
 #define MPC_PROC_NULL -2
 #define MPC_COMM_NULL ((MPC_Comm)(-1))
 #define MPC_MAX_PROCESSOR_NAME 255
+#define MPC_ROOT -4
 
 
 /********************************************************************/

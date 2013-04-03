@@ -1512,10 +1512,12 @@ __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype datatype,
 {
   if (sctk_is_derived_type (datatype))
     {
+		sctk_debug("receive derived datatype %d", datatype);
       int res;
 
       if (count > 1)
 	{
+		sctk_debug("count > 1");
 	  MPI_Datatype new_datatype;
 	  res =
 	    __INTERNAL__PMPI_Type_contiguous (count, datatype, &new_datatype);
@@ -1541,6 +1543,7 @@ __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype datatype,
 	}
       else
 	{
+		sctk_debug("count <= 1", datatype);
 	  mpc_pack_absolute_indexes_t *begins;
 	  mpc_pack_absolute_indexes_t *ends;
 	  unsigned long slots_count;
@@ -1599,6 +1602,7 @@ __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype datatype,
     }
   else
     {
+		sctk_debug("receive regular datatype %d", datatype);
       if (is_valid_request)
 	{
 	  return PMPC_Irecv (buf, count, datatype, source, tag, comm,
@@ -2198,7 +2202,7 @@ __INTERNAL__PMPI_Sendrecv_replace (void *buf, int count,
       return res;
     }
   sctk_nodebug ("position %d, %d", position, type_size);
-
+  sctk_nodebug("receive type = %d", datatype);
   res =
     __INTERNAL__PMPI_Irecv (buf, count, datatype, source, recvtag, comm,
 			    &recvreq);
@@ -2207,6 +2211,7 @@ __INTERNAL__PMPI_Sendrecv_replace (void *buf, int count,
       sctk_free (tmp);
       return res;
     }
+  sctk_nodebug("Send type = %d", MPI_PACKED);
   res =
     __INTERNAL__PMPI_Isend (tmp, position, MPI_PACKED, dest, sendtag, comm,
 			    &sendreq);
@@ -3239,8 +3244,6 @@ __INTERNAL__PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype,
 			int root, MPI_Comm comm)
 {
   int res;
-  sctk_nodebug ("BCAST with root %d, datatype %d count %d", root, datatype,
-		count);
 
   if (sctk_is_derived_type (datatype))
     {
@@ -3249,38 +3252,24 @@ __INTERNAL__PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype,
       int offset = 0;
       void *tmp_buf;
 
-
       __INTERNAL__PMPI_Pack_size (count, datatype, comm, &size);
       tmp_buf = sctk_malloc (size);
       assume (tmp_buf != NULL);
 
       __INTERNAL__PMPI_Comm_rank (comm, &rank);
-      sctk_nodebug ("I am %d root %d", rank, root);
       if (root == rank)
 	{
-	  __INTERNAL__PMPI_Pack (buffer, count, datatype, tmp_buf, size,
-				 &offset, comm);
-	  sctk_nodebug ("SEND size %d offset %d", size, offset);
-	  sctk_nodebug ("BEFORE SEND %d %d", ((int *) tmp_buf)[0],
-			((int *) buffer)[0]);
+	  __INTERNAL__PMPI_Pack (buffer, count, datatype, tmp_buf, size, &offset, comm);
 	  res = PMPC_Bcast (tmp_buf, size, MPI_PACKED, root, comm);
-	  sctk_nodebug ("AFTER SEND %d %d", ((int *) tmp_buf)[0],
-			((int *) buffer)[0]);
+
 	}
       else
 	{
 	  res = PMPC_Bcast (tmp_buf, size, MPI_PACKED, root, comm);
-	  sctk_nodebug ("BEFORE RECV %d %d res %d", ((int *) tmp_buf)[0],
-			((int *) buffer)[0], res);
-	  __INTERNAL__PMPI_Unpack (tmp_buf, size, &offset, buffer, count,
-				   datatype, comm);
-	  sctk_nodebug ("RECV size %d offset %d res %d", size, offset, res);
-	  sctk_nodebug ("RECV %d %d", ((int *) tmp_buf)[0],
-			((int *) buffer)[0]);
+	  __INTERNAL__PMPI_Unpack (tmp_buf, size, &offset, buffer, count, datatype, comm);
 	}
 
       sctk_free (tmp_buf);
-      sctk_nodebug ("res after free %d", res);
     }
   else
     {
@@ -7248,7 +7237,9 @@ PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	   MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
-  {
+  if(dest == MPC_PROC_NULL)
+		SCTK__MPI_Check_retrun_val (res, comm);
+  {	
     int size;
     mpi_check_comm (comm, comm);
     mpi_check_type (datatype, comm);
@@ -7271,6 +7262,8 @@ PMPI_Recv (void *buf, int count, MPI_Datatype datatype, int source, int tag,
 	   MPI_Comm comm, MPI_Status * status)
 {
   int res = MPI_ERR_INTERN;
+  if(source == MPC_PROC_NULL)
+		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_STATUS (status);
   {
     int size;
@@ -7317,6 +7310,8 @@ PMPI_Bsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	    MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
+  if(dest == MPC_PROC_NULL)
+		SCTK__MPI_Check_retrun_val (res, comm);
   {
     int size;
     mpi_check_comm (comm, comm);
@@ -7340,6 +7335,8 @@ PMPI_Ssend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	    MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
+  if(dest == MPC_PROC_NULL)
+		SCTK__MPI_Check_retrun_val (res, comm);
   {
     int size;
     mpi_check_comm (comm, comm);
@@ -7363,6 +7360,8 @@ PMPI_Rsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	    MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
+  if(dest == MPC_PROC_NULL)
+		SCTK__MPI_Check_retrun_val (res, comm);
   {
     int size;
     mpi_check_comm (comm, comm);
@@ -7404,6 +7403,8 @@ PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	    MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
+  if(dest == MPC_PROC_NULL)
+		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_REQUEST (request);
   {
     int size;
@@ -7431,6 +7432,8 @@ PMPI_Ibsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	     MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
+  if(dest == MPC_PROC_NULL)
+		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_REQUEST (request);
   {
     int size;
@@ -7456,6 +7459,8 @@ PMPI_Issend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	     MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
+  if(dest == MPC_PROC_NULL)
+		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_REQUEST (request);
   {
     int size;
@@ -7481,6 +7486,8 @@ PMPI_Irsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	     MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
+  if(dest == MPC_PROC_NULL)
+		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_REQUEST (request);
   {
     int size;
@@ -7506,6 +7513,8 @@ PMPI_Irecv (void *buf, int count, MPI_Datatype datatype, int source,
 	    int tag, MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
+  if(source == MPC_PROC_NULL)
+		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_REQUEST (request);
   {
     int size;
