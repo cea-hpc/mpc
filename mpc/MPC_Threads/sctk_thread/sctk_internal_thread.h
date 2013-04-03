@@ -173,8 +173,8 @@ extern "C"
 						  __mutex,
 						  const struct timespec *
 						  __abstime);
-  extern int (*__sctk_ptr_thread_cond_wait) (sctk_thread_cond_t * __cond,
-					     sctk_thread_mutex_t * __mutex);
+  extern int (*__sctk_ptr_thread_cond_wait) (sctk_thread_cond_t * restrict __cond,
+					     sctk_thread_mutex_t * restrict __mutex);
   extern int (*__sctk_ptr_thread_create) (sctk_thread_t * __threadp,
 					  const sctk_thread_attr_t *
 					  __attr,
@@ -379,6 +379,11 @@ extern "C"
   extern int (*__sctk_ptr_thread_proc_migration) (const int cpu);
   extern int (*__sctk_ptr_thread_getattr_np) (sctk_thread_t th,
 					      sctk_thread_attr_t * attr);
+  extern int (*__sctk_ptr_thread_rwlockattr_getkind_np) (sctk_thread_rwlockattr_t *
+							 attr, int *ret);
+  extern int (*__sctk_ptr_thread_rwlockattr_setkind_np) (sctk_thread_rwlockattr_t *
+							 attr, int pref);
+  extern void (*__sctk_ptr_thread_kill_other_threads_np) (void);
 
 #define sctk_add_func(newlib,func) __sctk_ptr_thread_##func = newlib##_##func
 #define sctk_add_func_type(newlib,func,t) __sctk_ptr_thread_##func = (t)newlib##_##func

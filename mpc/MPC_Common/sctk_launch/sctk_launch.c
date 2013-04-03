@@ -949,19 +949,10 @@ void sctk_init_mpc_runtime(){
   }
 }
 
-#include <sctk_thread.h>
-
   int
 sctk_launch_main (int argc, char **argv)
 {
   sctk_startup_args_t arg;
-  char name[SCTK_MAX_FILENAME_SIZE];
-  FILE *file;
-
-  {
-    sctk_thread_mutex_t lock;
-    sctk_thread_mutex_init(&lock,NULL);
-  }
 
   sctk_disable_addr_randomize (argc,argv);
   sctk_init_mpc_runtime();
