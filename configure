@@ -270,6 +270,12 @@ for arg in "$@" ; do
       #for hydra and simple sub packages
       HYDRA_CONFIGURE_ARGUMENTS="${HYDRA_CONFIGURE_ARGUMENTS} $arg"
     ;;
+    CFLAGS=*)
+    MPC_CFLAGS="CFLAGS=\"`echo A$arg | sed -e 's/ACFLAGS=//g'`\""
+    ;;
+    LDFLAGS=*)
+    MPC_LDFLAGS="LDFLAGS=\"`echo A$arg | sed -e 's/ALDFLAGS=//g'`\""
+    ;;
     *)
     MPC_ARGS="$arg $MPC_ARGS"
     ;;
@@ -549,7 +555,7 @@ fi
 printf "#\n# Rule for MPC\n#\n" >> Makefile
 printf "mpc_build/config.status:${CONFIG_MPC_DEPS} Makefile\n" >> Makefile
 printf "\tmkdir -p mpc_build\n" >> Makefile
-printf "\tcd mpc_build && ${MPC_SOURCE_DIR}/configure ${ARG_COMPILER_LIST} ${ARG_LIBRARY_PATH} ${MPC_ARGS} \n" >> Makefile
+printf "\tcd mpc_build && ${MPC_SOURCE_DIR}/configure ${ARG_COMPILER_LIST} ${ARG_LIBRARY_PATH} ${MPC_ARGS} ${MPC_CFLAGS} ${MPC_LDFLAGS}\n" >> Makefile
 printf "\ttouch mpc_build/config.status\n" >> Makefile
 echo "">> Makefile
 echo "Compiler list for MPC: ${COMPILER_LIST}" >> configure.log
