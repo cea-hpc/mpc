@@ -29,6 +29,7 @@ HYDRA_IS_SETUP="no"
 SLURM_IS_SETUP="no"
 OPENIB_IS_SETUP="no"
 LIBXML_IS_SETUP="no"
+LIBSCTK_ARCH_IS_SETUP="no"
 HYDRA_MODULE=${PWD}/../mpc-hydra-1.4.0_build/simple
 PMI_LIB=""
 
@@ -443,4 +444,84 @@ SCTK_CHECK_LIBXML2()
 
 	#mark as done
 	LIBXML_IS_SETUP='yes'
+}
+
+#setup libsctk_arch by using given prefix
+# Params :
+# Global variables :
+#   - SCTK_LIBSCTK_ARCH_PREFIX : Prefix of libsctk_arch, if empty, try pkg-config or default /usr.
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS
+sctk_internal_setup_libsctk_arch()
+{
+	if [ -f ${SCTK_LIBSCTK_ARCH_PREFIX}/lib64/libsctk_arch.so ]; then
+		LIBSCTK_ARCH_LIBDIR=${SCTK_LIBSCTK_ARCH_PREFIX}/lib64
+	elif [ -f ${SCTK_LIBSCTK_ARCH_PREFIX}/lib/libsctk_arch.so ]; then
+		LIBSCTK_ARCH_LIBDIR=${SCTK_LIBSCTK_ARCH_PREFIX}/lib
+	else
+		sctk_error "libsctk_arch.so found neither in ${SCTK_LIBSCTK_ARCH_PREFIX}/lib nor ${SCTK_LIBSCTK_ARCH_PREFIX}/lib64"
+		exit 1
+	fi
+	#setup vars
+	SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBSCTK_ARCH_LIBDIR}/lib/libsctk_arch.so"
+	SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${LIBSCTK_ARCH_LIBDIR} -L${LIBSCTK_ARCH_LIBDIR}"
+	SCTK_CFLAGS="${SCTK_CFLAGS} -I${SCTK_LIBSCTK_ARCH_PREFIX}/include/"
+}
+
+# Setup vars to use libsctk_arch
+# Params :
+# Global variables :
+#   - SCTK_LIBSCTK_ARCH_PREFIX : Prefix of libsctk_arch, if empty, try pkg-config or default /usr.
+#   - LIBSCTK_ARCH_IS_SETUP : To know if libsctk_arch is already setup
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS , LIBSCTK_ARCH_IS_SETUP
+SCTK_CHECK_LIBSCTK_ARCH()
+{
+	#mark test section
+	begin_section libsctk_arch
+
+	#Find paths
+	if [ "$LIBSCTK_ARCH_IS_SETUP" != "yes" ]; then
+		# For the moment, we dont use rpath except for embeded version
+		if [ "${SCTK_LIBSCTK_ARCH_PREFIX}" = "embeded" ]; then
+			#We are relying on our own libsctk_arch
+			#LIBSCTK_ARCH_PREFIX_INSTALL is defined in the root configure
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBSCTK_ARCH_PREFIX_BUILD}/lib/libsctk_arch.so"
+			SCTK_CFLAGS="${SCTK_CFLAGS} -I${LIBSCTK_ARCH_PREFIX_BUILD}/include/"
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${LIBSCTK_ARCH_PREFIX_INSTALL}/lib -L${LIBSCTK_ARCH_PREFIX_BUILD}/lib"
+			EXTERN_NON_TESTED_LIB="${EXTERN_NON_TESTED_LIB} -lsctk_arch"
+		elif [ -d "${SCTK_LIBSCTK_ARCH_PREFIX}" ]; then
+			SCTK_MSG_CHECKING "Search in ${SCTK_LIBSCTK_ARCH_PREFIX}"; result yes
+			sctk_internal_setup_libsctk_arch
+			SCTK_CHECK_LDOPTION "-lsctk_arch"
+		elif pkg-config --exists libsctk_arch; then
+			SCTK_MSG_CHECKING "Find with pkg-config"; result yes
+			SCTK_CHECK_OPTION "$(pkg-config --cflags libsctk_arch)"
+			SCTK_CHECK_LDOPTION "$(pkg-config --libs libsctk_arch)"
+		elif [ -f /usr/include/libsctk_arch/libtimer.h ]; then
+			SCTK_LIBSCTK_ARCH_PREFIX="/usr/"
+			SCTK_MSG_CHECKING "Search in /usr"; result yes
+			sctk_internal_setup_libsctk_arch
+			SCTK_CHECK_LDOPTION "-lsctk_arch"
+		else
+			if [ "x${SCTK_LIBSCTK_ARCH_PREFIX}" != "x" ]; then
+				error "the prefix ${SCTK_LIBSCTK_ARCH_PREFIX} does not seem to contain libsctk_arch"
+			fi
+
+			error "please check if libsctk_arch is installed or provide its prefix with --with-libsctk_arch={PREFIX}."
+			exit 1
+		fi
+	fi
+
+	#check header
+	SCTK_CHECK_HEADER "libtimer.h"
+	SCTK_CHECK_HEADER "libpause.h"
+	SCTK_CHECK_HEADER "sctk_ucontext.h"
+
+
+	#end of section
+	end_section
+
+	#mark as done
+	LIBSCTK_ARCH_IS_SETUP='yes'
 }

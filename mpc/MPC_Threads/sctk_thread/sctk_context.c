@@ -149,6 +149,15 @@ sctk_mctx_save (sctk_mctx_t * mctx)
   getcontext (&((mctx)->uc));
   return (int) (mctx)->restored;
 }
+#elif SCTK_MCTX_MTH(libcontext)
+static inline int
+sctk_mctx_save (sctk_mctx_t * mctx)
+{
+  (mctx)->error = errno;
+  (mctx)->restored = 0;
+  mpc__getcontext (&((mctx)->uc));
+  return (int) (mctx)->restored;
+}
 #elif SCTK_MCTX_MTH(sjlj)
 static inline int
 sctk_mctx_save (sctk_mctx_t * mctx)
@@ -178,6 +187,15 @@ sctk_mctx_restore (sctk_mctx_t * mctx)
   errno = (mctx)->error;
   (mctx)->restored = 1;
   setcontext (&((mctx)->uc));
+  return (mctx)->restored;
+}
+#elif SCTK_MCTX_MTH(libcontext)
+static inline int
+sctk_mctx_restore (sctk_mctx_t * mctx)
+{
+  errno = (mctx)->error;
+  (mctx)->restored = 1;
+  mpc__setcontext (&((mctx)->uc));
   return (mctx)->restored;
 }
 #elif SCTK_MCTX_MTH(sjlj)
@@ -222,6 +240,29 @@ sctk_mctx_set (sctk_mctx_t * mctx,
 
   (mctx)->restored = 0;
   makecontext (&(mctx->uc), (void (*)(void)) func, 1 + 1, arg);
+
+  return TRUE;
+}
+
+#elif SCTK_MCTX_MTH(libcontext)
+static inline int
+sctk_mctx_set (sctk_mctx_t * mctx,
+	       void (*func) (void *), char *sk_addr_lo, char *sk_addr_hi,
+	       void *arg)
+{
+  if (mpc__getcontext (&(mctx->uc)) != 0)
+    return FALSE;
+
+  mctx->uc.uc_link = NULL;
+
+  mctx->uc.uc_stack.ss_sp =
+    sctk_skaddr (mpc__makecontext, sk_addr_lo, sk_addr_hi - sk_addr_lo);
+  mctx->uc.uc_stack.ss_size =
+    sctk_sksize (mpc__makecontext, sk_addr_lo, sk_addr_hi - sk_addr_lo);
+  mctx->uc.uc_stack.ss_flags = 0;
+
+  (mctx)->restored = 0;
+  mpc__makecontext (&(mctx->uc), (void (*)(void)) func, 1 + 1, arg);
 
   return TRUE;
 }
@@ -433,6 +474,8 @@ sctk_swapcontext (sctk_mctx_t * oucp, sctk_mctx_t * ucp)
 
 #if SCTK_MCTX_MTH(mcsc)
   swapcontext (&(oucp->uc), &(ucp->uc));
+#elif SCTK_MCTX_MTH(libcontext)
+  mpc__swapcontext (&(oucp->uc), &(ucp->uc));
 #elif SCTK_MCTX_MTH(sjlj)
   sctk_nodebug ("swap %p to %p", oucp, ucp);
   if (sctk_setjmp ((oucp->jb)) == 0)

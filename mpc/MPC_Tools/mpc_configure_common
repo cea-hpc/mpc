@@ -420,6 +420,10 @@ fi
 fi
 
 cat << EOF >> include/sctk_config.h
+
+#include <sctk_config_arch.h>
+
+#if 0
 /* Configuration: */
 #define ${SCTK_OS}_SYS
 #define SCTK_${SCTK_ARCH}_ARCH_SCTK
@@ -438,6 +442,7 @@ cat << EOF >> include/sctk_config.h
 
 #define SCTK_OS ${SCTK_OS}_SYS
 #define SCTK_ARCH_SCTK SCTK_${SCTK_ARCH}_ARCH_SCTK
+#endif
 
 EOF
 

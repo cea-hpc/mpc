@@ -19,83 +19,77 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#ifndef __SCTK_ASM_H_
-#define __SCTK_ASM_H_
+#include <unistd.h>
+#include <sys/time.h>
+#include <libarch.h>
 
-#include "sctk_config.h"
-#include "sctk_atomics.h"
-
-#include <pthread.h>
-#include <stdio.h>
-#include <sched.h>
-
-#ifdef __cplusplus
-extern "C"
+inline double
+sctk_atomics_get_timestamp_gettimeofday ()
 {
-#endif
+  struct timeval tp;
+  gettimeofday (&tp, NULL);
+  return tp.tv_usec + tp.tv_sec * 1000000;
+}
 
-#define sctk_get_time_stamp               sctk_atomics_get_timestamp
-/* #define sctk_get_time_stamp_gettimeofday  sctk_atomics_get_timestamp */
-
-#define sctk_max(a, b)  ((a) > (b) ? (a) : (b))
-#define sctk_min(a, b)  ((a) < (b) ? (a) : (b))
-
-  double sctk_get_time_stamp_gettimeofday();
-
-  /*
-   * CPU relax implemtation
-   * */
-  typedef volatile int sctk_atomic_test_t;
-
-#if 0
-#if defined(SCTK_COMPILER_ACCEPT_ASM)
-#define LOCK "lock ; "
-#if defined(SCTK_i686_ARCH_SCTK) || defined(SCTK_x86_64_ARCH_SCTK)
-  static __inline__ void __sctk_cpu_relax ()
-  {
-    __asm__ __volatile__ ("rep;nop":::"memory");
-  }
-#elif defined(SCTK_ia64_ARCH_SCTK)
-  static __inline__ void __sctk_cpu_relax ()
-  {
-    __asm__ __volatile__ ("hint @pause":::"memory");
-  }
-#elif defined(SCTK_sparc_ARCH_SCTK)
-#warning sctk_cpu_relax not available for the current architecture. Falling back to sched_yield()
-  static __inline__ void __sctk_cpu_relax ()
-  {
-    sched_yield ();
-  }
-
+#if defined(SCTK_ia64_ARCH_SCTK)
+double
+sctk_atomics_get_timestamp ()
+{
+  unsigned long t;
+  __asm__ volatile ("mov %0=ar%1":"=r" (t):"i" (44));
+  return (double) t;
+}
+#elif defined(SCTK_i686_ARCH_SCTK)
+double
+sctk_atomics_get_timestamp ()
+{
+  unsigned long long t;
+  __asm__ volatile ("rdtsc":"=A" (t));
+  return (double) t;
+}
+#elif defined(SCTK_x86_64_ARCH_SCTK)
+double
+sctk_atomics_get_timestamp ()
+{
+  unsigned int a;
+  unsigned int d;
+  unsigned long t;
+  __asm__ volatile ("rdtsc":"=a" (a), "=d" (d));
+  t = ((unsigned long) a) | (((unsigned long) d) << 32);
+  return (double) t;
+}
 #else
-#if defined(__GNU_COMPILER) || defined(__INTEL_COMPILER)
-#warning "Unsupported architecture using default asm"
-#endif
-
-#define SCTK_USE_DEFAULT_ASM
-  static __inline__ void __sctk_cpu_relax ()
-  {
-    sched_yield ();
-  }
-#endif
-
-#ifndef __SCTK_ASM_C_
-  static __inline__ void sctk_cpu_relax ()
-  {
-    __sctk_cpu_relax ();
-  }
-#endif
-
-#else
-  void sctk_cpu_relax (void);
-#endif
-#else
-#include <libpause.h>
-#endif  
-
-  int sctk_test_and_set (sctk_atomic_test_t * atomic);
-
-#ifdef __cplusplus
+#warning "Use get time of day for profiling"
+double
+sctk_atomics_get_timestamp ()
+{
+  return sctk_atomics_get_timestamp_gettimeofday();
 }
 #endif
-#endif
+
+static double sctk_cpu_freq = 0;
+
+void sctk_atomics_cpu_freq_init(){
+  double begin_tsc, end_tsc;
+  double begin_timeofday, end_timeofday; 
+
+  begin_timeofday = sctk_atomics_get_timestamp_gettimeofday ();
+  begin_tsc = sctk_atomics_get_timestamp (); 
+  usleep(10000);
+  end_tsc = sctk_atomics_get_timestamp ();
+  end_timeofday = sctk_atomics_get_timestamp_gettimeofday ();
+
+  sctk_cpu_freq = (end_tsc-begin_tsc) / ((end_timeofday-begin_timeofday)/1000000.0) ;
+}
+
+double sctk_atomics_get_cpu_freq(){
+  return sctk_cpu_freq;
+}
+
+double sctk_atomics_get_timestamp_tsc (){
+  double res; 
+
+  res = sctk_atomics_get_timestamp();
+  res = res / sctk_cpu_freq;
+  return res;
+}

@@ -266,7 +266,7 @@ sctk_perform_initialisation (void)
   }
 #endif
 
-  sctk_atomics_cup_freq_init();
+  sctk_atomics_cpu_freq_init();
   if (sctk_process_rank == 0)
   {
     char *mpc_lang = "C/C++";

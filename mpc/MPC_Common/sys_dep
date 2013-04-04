@@ -164,3 +164,7 @@ check_debug
 end_section
 
 SCTK_CHECK_LIB_OPENPA
+
+sctk_echo
+
+SCTK_CHECK_LIBSCTK_ARCH

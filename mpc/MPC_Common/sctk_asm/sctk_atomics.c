@@ -24,6 +24,7 @@
 #include <unistd.h>
 #include <sys/time.h>
 
+#if 0
 inline double
 sctk_atomics_get_timestamp_gettimeofday ()
 {
@@ -70,7 +71,7 @@ sctk_atomics_get_timestamp ()
 
 static double sctk_cpu_freq = 0;
 
-void sctk_atomics_cup_freq_init(){
+void sctk_atomics_cpu_freq_init(){
   double begin_tsc, end_tsc;
   double begin_timeofday, end_timeofday; 
 
@@ -94,3 +95,4 @@ double sctk_atomics_get_timestamp_tsc (){
   res = res / sctk_cpu_freq;
   return res;
 }
+#endif

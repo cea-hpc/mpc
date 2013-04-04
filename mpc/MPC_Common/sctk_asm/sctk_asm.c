@@ -21,6 +21,7 @@
 /* ######################################################################## */
 #include <pthread.h>
 
+#if 0
 #if !defined(__INTEL_COMPILER) && defined(__GNUC__)
 #define __SCTK_ASM_C_
 #define SCTK_COMPILER_ACCEPT_ASM
@@ -33,6 +34,7 @@ double sctk_get_time_stamp_gettimeofday(){
   gettimeofday(&t,NULL);
   return t.tv_usec + t.tv_sec * 1000000;
 }
+
 #if !defined(__INTEL_COMPILER) && defined(__GNUC__)
 #ifndef __GNU_COMPILER
 #define __GNU_COMPILER
@@ -52,7 +54,14 @@ void sctk_cpu_relax () {
 #else
 #error "Must be compiled with gcc"
 #endif
-
+#else
+#include "sctk_config.h"
+#include "sctk_atomics.h"
+#include "sctk_asm.h"
+double sctk_get_time_stamp_gettimeofday(){
+  return sctk_atomics_get_timestamp_gettimeofday ();
+}
+#endif
 
 #if ! defined(SCTK_OPENPA_AVAILABLE)
 static pthread_mutex_t sctk_atomics_default_mutex = PTHREAD_MUTEX_INITIALIZER;
