@@ -1664,21 +1664,23 @@ __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
   *flag = 0;
   for (i = 0; i < count; i++)
     {
-      int tmp;
-      tmp =
-	PMPC_Test (__sctk_convert_mpc_request (&(array_of_requests[i])), flag,
-		  status);
-      if (tmp != MPI_SUCCESS)
-	{
-	  return tmp;
-	}
-      if (*flag)
-	{
-	  __sctk_delete_mpc_request (&(array_of_requests[i]));
-	  *index = i;
-	  return tmp;
-	}
-
+      if(array_of_requests[i] != MPI_REQUEST_NULL){
+	int tmp;
+	tmp =
+	  PMPC_Test (__sctk_convert_mpc_request (&(array_of_requests[i])), flag,
+		     status);
+	if (tmp != MPI_SUCCESS)
+	  {
+	    return tmp;
+	  }
+	if (*flag)
+	  {
+	    __sctk_delete_mpc_request (&(array_of_requests[i]));
+	    *index = i;
+	    return tmp;
+	  }
+      }
+      
     }
   return MPI_SUCCESS;
 }
