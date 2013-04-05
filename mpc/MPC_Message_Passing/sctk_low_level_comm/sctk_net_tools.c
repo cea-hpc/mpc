@@ -272,47 +272,10 @@ TODO("Deal with partial reception")
     return msg->body.header.msg_size;
   }
 
-#if 0
-#if (defined(__GNUC__) || defined(__ICC)) && defined(__x86_64__)
-
-  static inline void
-amd64_cpy_nt ( volatile void *dst, const volatile void *src, const size_t n ) {
-	size_t n32 = ( n ) >> 5;
-	size_t nleft = ( n ) & ( 32 - 1 );
-
-	if ( n32 ) {
-		__asm__ __volatile__ ( ".align 16  \n"
-		                       "1:  \n"
-		                       "mov (%1), %%r8  \n"
-		                       "mov 8(%1), %%r9  \n"
-		                       "add $32, %1  \n"
-		                       "movnti %%r8, (%2)  \n"
-		                       "movnti %%r9, 8(%2)  \n"
-		                       "add $32, %2  \n"
-		                       "mov -16(%1), %%r8  \n"
-		                       "mov -8(%1), %%r9  \n"
-		                       "dec %0  \n"
-		                       "movnti %%r8, -16(%2)  \n"
-		                       "movnti %%r9, -8(%2)  \n"
-		                       "jnz 1b  \n"
-		                       "sfence  \n"
-	                       "mfence  \n":"+a" ( n32 ), "+S" ( src ),
-		                       "+D" ( dst ) ::"r8",
-		                       "r9" );
-	}
-
-
-	if ( nleft ) {
-		memcpy ( ( void * ) dst, ( void * ) src, nleft );
-	}
-}
-#else
 static  inline void
 amd64_cpy_nt ( volatile void *dst, volatile void *src, size_t n ) {
 	memcpy ( ( void * ) dst, ( void * ) src, n );
 }
-#endif
-#endif
 
 static inline size_t
 copy_frag ( char *msg,

@@ -47,51 +47,8 @@ extern "C"
    * */
   typedef volatile int sctk_atomic_test_t;
 
-#if 0
-#if defined(SCTK_COMPILER_ACCEPT_ASM)
-#define LOCK "lock ; "
-#if defined(SCTK_i686_ARCH_SCTK) || defined(SCTK_x86_64_ARCH_SCTK)
-  static __inline__ void __sctk_cpu_relax ()
-  {
-    __asm__ __volatile__ ("rep;nop":::"memory");
-  }
-#elif defined(SCTK_ia64_ARCH_SCTK)
-  static __inline__ void __sctk_cpu_relax ()
-  {
-    __asm__ __volatile__ ("hint @pause":::"memory");
-  }
-#elif defined(SCTK_sparc_ARCH_SCTK)
-#warning sctk_cpu_relax not available for the current architecture. Falling back to sched_yield()
-  static __inline__ void __sctk_cpu_relax ()
-  {
-    sched_yield ();
-  }
 
-#else
-#if defined(__GNU_COMPILER) || defined(__INTEL_COMPILER)
-#warning "Unsupported architecture using default asm"
-#endif
-
-#define SCTK_USE_DEFAULT_ASM
-  static __inline__ void __sctk_cpu_relax ()
-  {
-    sched_yield ();
-  }
-#endif
-
-#ifndef __SCTK_ASM_C_
-  static __inline__ void sctk_cpu_relax ()
-  {
-    __sctk_cpu_relax ();
-  }
-#endif
-
-#else
-  void sctk_cpu_relax (void);
-#endif
-#else
 #include <libpause.h>
-#endif  
 
   int sctk_test_and_set (sctk_atomic_test_t * atomic);
 
