@@ -3533,7 +3533,7 @@ __MPC_Gather (void *sendbuf, mpc_msg_count sendcnt, MPC_Datatype sendtype,
 	}  
   }
   else
-  {	
+  {
 	  __MPC_Isend (sendbuf, sendcnt, sendtype, root, MPC_GATHER_TAG, comm, &request, task_specific);
 
 	  __MPC_Comm_rank_size (comm, &rank, &size, task_specific);
@@ -3588,8 +3588,9 @@ __MPC_Allgather (void *sendbuf, mpc_msg_count sendcount,
 		 mpc_msg_count recvcount, MPC_Datatype recvtype,
 		 MPC_Comm comm, sctk_task_specific_t * task_specific)
 {
-  int size, rank;
+  int size, rank, remote_size;
   int root = 0;
+  void *tmp_buf;
   mpc_check_comm (comm, comm);
   mpc_check_buf (sendbuf, comm);
   mpc_check_buf (recvbuf, comm);
@@ -3598,43 +3599,56 @@ __MPC_Allgather (void *sendbuf, mpc_msg_count sendcount,
   mpc_check_type (recvtype, comm);
   mpc_check_count (sendcount, comm);
   __MPC_Comm_rank_size(comm, &rank, &size, task_specific);
+  remote_size = sctk_get_nb_task_remote(comm);
   
-  if(sctk_is_inter_comm(comm))
-  {
-	  if(sctk_is_in_local_group(comm))
-	  {
-		if(rank == root)
+	if(sctk_is_inter_comm(comm))
+	{
+		if(rank == 0 && sendcount > 0)
 		{
-			__MPC_Gather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, MPC_ROOT, comm, task_specific);
-			__MPC_Gather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, task_specific);
+			tmp_buf = (void *)sctk_malloc(sendcount*size*sizeof(void *));
+		}
+		
+		__MPC_Gather (sendbuf, sendcount, sendtype, tmp_buf, sendcount, sendtype, 0, sctk_get_local_comm_id(comm), task_specific);
+
+		if(sctk_is_in_local_group(comm))
+		{
+			if(sendcount != 0)
+			{
+				root = (rank == 0) ? MPC_ROOT : MPC_PROC_NULL;
+				sctk_nodebug("bcast size %d to the left",size*sendcount); 
+				__MPC_Bcast(tmp_buf, size * sendcount, sendtype, root, comm, task_specific);
+			}
+			
+			if(recvcount != 0)
+			{
+				root = 0;
+				sctk_nodebug("bcast size %d from the left", remote_size * recvcount);
+				__MPC_Bcast(recvbuf, remote_size * recvcount, recvtype, root, comm, task_specific);
+			}
 		}
 		else
 		{
-			__MPC_Gather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, MPC_PROC_NULL, comm, task_specific);
-			__MPC_Gather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, task_specific);
+			if(recvcount != 0)
+			{
+				root = 0;
+				sctk_nodebug("bcast size %d from the right", remote_size * recvcount);
+				__MPC_Bcast(recvbuf, remote_size * recvcount, recvtype, root, comm, task_specific);
+			}
+			
+			if(sendcount != 0)
+			{
+				sctk_nodebug("bcast size %d to the right",size*sendcount); 
+				root = (rank == 0) ? MPC_ROOT : MPC_PROC_NULL;
+				__MPC_Bcast(tmp_buf, size * sendcount, sendtype, root, comm, task_specific);
+			}
 		}
-	  }
-	  else
-	  {
-		if(rank == root)
-		{
-			__MPC_Gather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, task_specific);
-			__MPC_Gather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, MPC_ROOT, comm, task_specific);
-		}
-		else
-		{
-			__MPC_Gather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, task_specific);
-			__MPC_Gather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, MPC_PROC_NULL, comm, task_specific);
-		}
-	  }
-	  sctk_broadcast_opt_messages(recvbuf, size * recvcount * __MPC_Get_datatype_size (recvtype, task_specific), root, comm, sctk_get_internal_collectives(comm));  
-  }
-  else
-  {
-    __MPC_Gather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, task_specific);
-    __MPC_Bcast (recvbuf, size * recvcount, recvtype, root, comm, task_specific);
-  }
-  MPC_ERROR_SUCESS ();
+	}
+	else
+	{
+		__MPC_Gather (sendbuf, sendcount, sendtype, recvbuf, recvcount, recvtype, root, comm, task_specific);
+		__MPC_Bcast (recvbuf, size * recvcount, recvtype, root, comm, task_specific);
+	}
+	MPC_ERROR_SUCESS ();
 }
 
 int
