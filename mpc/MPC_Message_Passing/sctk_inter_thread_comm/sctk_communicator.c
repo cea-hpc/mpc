@@ -302,6 +302,7 @@ int sctk_is_in_local_group(const sctk_communicator_t communicator)
 	tmp = sctk_get_internal_communicator(communicator);
 	
 	assume(tmp != NULL);
+
 	if(tmp->local_to_global == NULL)
 		return 1;
 		
@@ -613,6 +614,7 @@ int local_leader, int remote_leader, const sctk_communicator_t origin_communicat
 				comm = remote_comm;
 			
 			tmp->id = comm;
+			tmp->remote_comm->id = comm;
 			sctk_nodebug("rank %d : SECOND try intercomm %d", rank, comm);
 			//~ re-check
 			sctk_spinlock_lock(&sctk_communicator_all_table_lock);
@@ -626,6 +628,7 @@ int local_leader, int remote_leader, const sctk_communicator_t origin_communicat
 				if(comm != -1)
 				{
 					tmp->id = comm;
+					tmp->remote_comm->id = comm;
 					sctk_set_internal_communicator_no_lock(comm,tmp);
 				}
 			sctk_spinlock_unlock(&sctk_communicator_all_table_lock);
@@ -644,6 +647,7 @@ int local_leader, int remote_leader, const sctk_communicator_t origin_communicat
 				/*Check if available*/
 				sctk_internal_communicator_t * tmp_check;
 				tmp->id = comm;
+				tmp->remote_comm->id = comm;
 				sctk_nodebug("Check intercomm %d", comm);
 				sctk_spinlock_lock(&sctk_communicator_all_table_lock);
 					tmp_check = sctk_check_internal_communicator_no_lock(comm);
@@ -1939,13 +1943,19 @@ const sctk_communicator_t peer_comm, const int remote_leader, const int tag, con
 	
 	if(first)
 	{
-		remote_tmp->remote_comm = NULL;
+		local_tmp->remote_comm = sctk_malloc(sizeof(sctk_internal_communicator_t));
+		memset(local_tmp->remote_comm,0,sizeof(sctk_internal_communicator_t));
+		
 		local_tmp->remote_comm = remote_tmp;
+		assume(local_tmp->remote_comm != NULL);
 	}
 	else
 	{
-		local_tmp->remote_comm = NULL;
+		remote_tmp->remote_comm = sctk_malloc(sizeof(sctk_internal_communicator_t));
+		memset(remote_tmp->remote_comm,0,sizeof(sctk_internal_communicator_t));
+		
 		remote_tmp->remote_comm = local_tmp;
+		assume(remote_tmp->remote_comm != NULL);
 	}
 	
 	sctk_barrier(local_comm);
@@ -1963,11 +1973,18 @@ const sctk_communicator_t peer_comm, const int remote_leader, const int tag, con
 		local_root = 0;
 	}
 	sctk_nodebug("new INTERCOMM id for rank %d, grank %d, local_root %d, has_zero %d", rank, grank, local_root, tmp->has_zero);
+	
 	/* get new id for comm */
 	if(first)
+	{
+		assume(local_tmp->remote_comm != NULL);
 		comm = sctk_intercommunicator_get_new_id(local_root, grank, local_leader, remote_leader, local_comm, peer_comm, local_tmp);
+	}
 	else
+	{
+		assume(remote_tmp->remote_comm != NULL);
 		comm = sctk_intercommunicator_get_new_id(local_root, grank, local_leader, remote_leader, local_comm, peer_comm, remote_tmp);
+	}
 	sctk_nodebug("rank %d : intercomm created N° %d", rank, comm);
 	/* Check if the communicator has been well created */
 	sctk_get_internal_communicator(comm);

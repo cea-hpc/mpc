@@ -1209,12 +1209,12 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
 	msg->body.header.msg_size = count;
 
 	msg->sctk_msg_get_use_message_numbering = 1;
-  
+/*  
 	if((request->request_type == REQUEST_SEND) || (request->request_type == REQUEST_SEND_COLL))
 		sctk_debug("Send comm %d : rang %d envoie message a rang %d", communicator, msg->sctk_msg_get_glob_source, msg->sctk_msg_get_glob_destination);
 	else if((request->request_type == REQUEST_RECV) || (request->request_type == REQUEST_RECV_COLL))
 		sctk_debug("Recv comm %d : rang %d recoit message de rang %d", communicator, msg->sctk_msg_get_glob_destination, msg->sctk_msg_get_glob_source);
-	
+*/	
 	/* A message can be sent with a NULL request (see the MPI standard) */
 	if (request) 
 	{
