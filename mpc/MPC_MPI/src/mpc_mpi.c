@@ -1512,12 +1512,10 @@ __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype datatype,
 {
   if (sctk_is_derived_type (datatype))
     {
-		sctk_debug("receive derived datatype %d", datatype);
       int res;
 
       if (count > 1)
 	{
-		sctk_debug("count > 1");
 	  MPI_Datatype new_datatype;
 	  res =
 	    __INTERNAL__PMPI_Type_contiguous (count, datatype, &new_datatype);
@@ -1543,7 +1541,6 @@ __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype datatype,
 	}
       else
 	{
-		sctk_debug("count <= 1", datatype);
 	  mpc_pack_absolute_indexes_t *begins;
 	  mpc_pack_absolute_indexes_t *ends;
 	  unsigned long slots_count;
@@ -1602,7 +1599,6 @@ __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype datatype,
     }
   else
     {
-		sctk_debug("receive regular datatype %d", datatype);
       if (is_valid_request)
 	{
 	  return PMPC_Irecv (buf, count, datatype, source, tag, comm,
@@ -8985,6 +8981,122 @@ int MPC_Mpi_win_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void*
    return MPI_SUCCESS;
 }
 
+
+//~ not implemented
+int PMPI_Info_set( MPI_Info info, const char *key, const char *value ){return MPI_SUCCESS;}
+int PMPI_Info_get(MPI_Info info, const char *key, int valuelen, char *value, int *flag){return MPI_SUCCESS;}
+int PMPI_Info_free( MPI_Info *info ){return MPI_SUCCESS;}
+int PMPI_Info_dup( MPI_Info info, MPI_Info *newinfo ){return MPI_SUCCESS;}
+int PMPI_Info_delete( MPI_Info info, const char *key ){return MPI_SUCCESS;}
+int PMPI_Info_create( MPI_Info *info ){return MPI_SUCCESS;}
+int PMPI_Info_get_nkeys( MPI_Info info, int *nkeys ){return MPI_SUCCESS;}
+int PMPI_Info_get_nthkey( MPI_Info info, int n, char *key ){return MPI_SUCCESS;}
+int PMPI_Info_get_valuelen(MPI_Info info, char *key, int *valuelen, int *flag){return MPI_SUCCESS;}
+
+int PMPI_Type_dup(MPI_Datatype oldtype, MPI_Datatype *newtype){return MPI_SUCCESS;}
+int PMPI_Type_get_name(MPI_Datatype datatype, char *type_name, int *resultlen){return MPI_SUCCESS;}
+int PMPI_Type_set_name(MPI_Datatype datatype, const char *type_name){return MPI_SUCCESS;}
+
+int PMPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val){return MPI_SUCCESS;}
+int PMPI_Win_get_attr(MPI_Win win, int win_keyval, void *attribute_val, int *flag){return MPI_SUCCESS;}
+int PMPI_Win_free_keyval(int *win_keyval){return MPI_SUCCESS;}
+int PMPI_Win_delete_attr(MPI_Win win, int win_keyval){return MPI_SUCCESS;}
+int PMPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_attr_fn, 
+						   MPI_Win_delete_attr_function *win_delete_attr_fn, int *win_keyval, void *extra_state){return MPI_SUCCESS;}
+int PMPI_Win_create(void *base, MPI_Aint size, int disp_unit, MPI_Info info, MPI_Comm comm, MPI_Win *win){return MPI_SUCCESS;}
+int PMPI_Win_free(MPI_Win * win){return MPI_SUCCESS;}
+
+int PMPI_Alloc_mem (MPI_Aint size, MPI_Info info, void *baseptr){return MPI_SUCCESS;}
+int PMPI_Free_mem (void *base){return MPI_SUCCESS;}
+
+int PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sendtypes, 
+				   void *recvbuf, int *recvcnts, int *rdispls, MPI_Datatype *recvtypes, MPI_Comm comm){return MPI_SUCCESS;}
+int PMPI_Type_create_resized(MPI_Datatype oldtype, MPI_Aint lb, MPI_Aint extent, MPI_Datatype *newtype){return MPI_SUCCESS;}
+int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, MPI_Aint *true_extent){return MPI_SUCCESS;}
+int PMPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent){return MPI_SUCCESS;}
+
+int PMPI_Exscan(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm){return MPI_SUCCESS;}
+
+int PMPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler){return MPI_SUCCESS;}
+int PMPI_Finalized( int *flag ){return MPI_SUCCESS;}
+
+int PMPI_Comm_set_attr(MPI_Comm comm, int comm_keyval, void *attribute_val){return MPI_SUCCESS;}
+int PMPI_Comm_get_attr(MPI_Comm comm, int comm_keyval, void *attribute_val, int *flag){return MPI_SUCCESS;}
+int PMPI_Comm_free_keyval(int *comm_keyval){return MPI_SUCCESS;}
+int PMPI_Comm_delete_attr(MPI_Comm comm, int comm_keyval){return MPI_SUCCESS;}
+int PMPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn, 
+						   MPI_Comm_delete_attr_function *comm_delete_attr_fn, int *comm_keyval, void *extra_state){return MPI_SUCCESS;}
+
+int PMPI_Type_set_attr(MPI_Datatype datatype, int type_keyval, void *attribute_val){return MPI_SUCCESS;}
+int PMPI_Type_get_attr(MPI_Datatype datatype, int type_keyval, void *attribute_val, int *flag){return MPI_SUCCESS;}
+int PMPI_Type_free_keyval(int *type_keyval){return MPI_SUCCESS;}
+int PMPI_Type_delete_attr(MPI_Datatype datatype, int type_keyval){return MPI_SUCCESS;}
+int PMPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn, 
+						   MPI_Type_delete_attr_function *type_delete_attr_fn, int *type_keyval, void *extra_state){return MPI_SUCCESS;}
+						   
+int PMPI_Type_create_indexed_block(int count, int blocklength, int array_of_displacements[], MPI_Datatype oldtype, MPI_Datatype *newtype){return MPI_SUCCESS;}
+int PMPI_Type_get_envelope(MPI_Datatype datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner){return MPI_SUCCESS;}
+int PMPI_Type_get_contents(MPI_Datatype datatype, int max_integers, int max_addresses, int max_datatypes, 
+						  int array_of_integers[], MPI_Aint array_of_addresses[], MPI_Datatype array_of_datatypes[]){return MPI_SUCCESS;}
+
+int PMPI_Type_create_darray(int size, int rank, int ndims, int array_of_gsizes[], int array_of_distribs[], int array_of_dargs[],
+                           int array_of_psizes[], int order, MPI_Datatype oldtype, MPI_Datatype *newtype){return MPI_SUCCESS;}
+int PMPI_Get_address( void *location, MPI_Aint *address ){return MPI_SUCCESS;}
+int PMPI_Type_create_struct(int count, int array_of_blocklengths[], MPI_Aint array_of_displacements[], 
+						   MPI_Datatype array_of_types[], MPI_Datatype *newtype){return MPI_SUCCESS;}
+
+int PMPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype, int count){return MPI_SUCCESS;}
+
+int PMPI_Type_size_x(MPI_Datatype datatype, MPI_Count *size){return MPI_SUCCESS;}
+int PMPI_Type_get_extent_x(MPI_Datatype datatype, MPI_Count *lb, MPI_Count *extent){return MPI_SUCCESS;}
+int PMPI_Type_get_true_extent_x(MPI_Datatype datatype, MPI_Count *true_lb, MPI_Count *true_extent){return MPI_SUCCESS;}
+int PMPI_Get_elements_x(const MPI_Status *status, MPI_Datatype datatype, MPI_Count *count){return MPI_SUCCESS;}
+int PMPI_Status_set_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Count count){return MPI_SUCCESS;}
+
+int PMPI_Type_create_hindexed_block(int count, int blocklength, const MPI_Aint array_of_displacements[], 
+								   MPI_Datatype oldtype, MPI_Datatype * newtype){return MPI_SUCCESS;}
+int PMPI_Pack_external_size(char *datarep, int incount, MPI_Datatype datatype, MPI_Aint *size){return MPI_SUCCESS;}
+int PMPI_Pack_external(char *datarep, void *inbuf, int incount, MPI_Datatype datatype, void *outbuf, MPI_Aint outsize, MPI_Aint *position){return MPI_SUCCESS;}
+int PMPI_Unpack_external(char *datarep, void *inbuf, MPI_Aint insize, MPI_Aint *position, void *outbuf, int outcount, MPI_Datatype datatype){return MPI_SUCCESS;}
+
+int PMPI_Type_create_subarray(int ndims, int *array_of_sizes, int *array_of_subsizes, 
+							 int *array_of_starts, int order, MPI_Datatype oldtype, MPI_Datatype *newtype){return MPI_SUCCESS;}
+int PMPI_Type_match_size(int typeclass, int size, MPI_Datatype *type){return MPI_SUCCESS;}
+int PMPI_Reduce_scatter_block(void *sendbuf, void *recvbuf, int recvcount, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm){return MPI_SUCCESS;}
+int PMPI_Comm_dup_with_info(MPI_Comm comm, MPI_Info info, MPI_Comm * newcomm){return MPI_SUCCESS;}
+int PMPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm * newcomm){return MPI_SUCCESS;}
+int PMPI_Comm_set_info(MPI_Comm comm, MPI_Info info){return MPI_SUCCESS;}
+int PMPI_Comm_get_info(MPI_Comm comm, MPI_Info * info_used){return MPI_SUCCESS;}
+int PMPI_Add_error_class(int *errorclass){return MPI_SUCCESS;}
+int PMPI_Add_error_code(int errorclass, int *errorcode){return MPI_SUCCESS;}
+int PMPI_Add_error_string(int errorcode, char *string){return MPI_SUCCESS;}
+int PMPI_Comm_call_errhandler(MPI_Comm comm, int errorcode){return MPI_SUCCESS;}
+int PMPI_Comm_create_errhandler(MPI_Comm_errhandler_function *function, MPI_Errhandler *errhandler){return MPI_SUCCESS;}
+int PMPI_Is_thread_main(int *flag){return MPI_SUCCESS;}
+int PMPI_Query_thread( int *provided ){return MPI_SUCCESS;}
+int PMPI_Get_library_version(char *version, int *resultlen){return MPI_SUCCESS;}
+int PMPI_Request_get_status(MPI_Request request, int *flag, MPI_Status *status){return MPI_SUCCESS;}
+int PMPI_Status_set_cancelled(MPI_Status *status, int flag){return MPI_SUCCESS;}
+int PMPI_Grequest_start( MPI_Grequest_query_function *query_fn, MPI_Grequest_free_function *free_fn, 
+						MPI_Grequest_cancel_function *cancel_fn, void *extra_state, MPI_Request *request ){return MPI_SUCCESS;}
+
+int PMPI_Grequest_complete(MPI_Request request){return MPI_SUCCESS;}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+//~ end
 #ifndef SCTK_DO_NOT_HAVE_WEAK_SYMBOLS
 INFO("Default mpc_user_main__ has been removed because of TLS compilation...")
 #if 0
