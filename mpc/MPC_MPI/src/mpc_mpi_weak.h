@@ -419,3 +419,95 @@
 #pragma weak MPI_Init_thread = PMPI_Init_thread
 #pragma weak mpi_init_thread_ = pmpi_init_thread_
 #pragma weak mpi_init_thread__ = pmpi_init_thread__
+
+//~ not implemented
+#pragma weak MPI_Win_set_attr = PMPI_Win_set_attr
+#pragma weak MPI_Win_get_attr = PMPI_Win_get_attr
+#pragma weak MPI_Win_free_keyval = PMPI_Win_free_keyval
+#pragma weak MPI_Win_delete_attr = PMPI_Win_delete_attr
+#pragma weak MPI_Win_create_keyval = PMPI_Win_create_keyval
+
+#pragma weak MPI_Info_create = PMPI_Info_create
+#pragma weak MPI_Info_delete = PMPI_Info_delete
+#pragma weak MPI_Info_dup = PMPI_Info_dup
+#pragma weak MPI_Info_free = PMPI_Info_free
+#pragma weak MPI_Info_set = PMPI_Info_set
+#pragma weak MPI_Info_get = PMPI_Info_get
+#pragma weak MPI_Info_get_nkeys = PMPI_Info_get_nkeys
+#pragma weak MPI_Info_get_nthkey = PMPI_Info_get_nthkey
+#pragma weak MPI_Info_get_valuelen = PMPI_Info_get_valuelen
+
+#pragma weak MPI_Type_dup = PMPI_Type_dup
+#pragma weak MPI_Type_set_name = PMPI_Type_set_name
+#pragma weak MPI_Type_get_name = PMPI_Type_get_name
+#pragma weak MPI_Type_get_extent = PMPI_Type_get_extent
+#pragma weak MPI_Type_create_resized = PMPI_Type_create_resized
+#pragma weak MPI_Type_get_true_extent = PMPI_Type_get_true_extent
+
+#pragma weak MPI_Win_create = PMPI_Win_create
+#pragma weak MPI_Win_free = PMPI_Win_free
+
+#pragma weak MPI_Alloc_mem = PMPI_Alloc_mem
+#pragma weak MPI_Free_mem = PMPI_Free_mem
+
+#pragma weak MPI_Alltoallw = PMPI_Alltoallw
+#pragma weak MPI_Exscan = PMPI_Exscan
+#pragma weak MPI_Comm_set_errhandler = PMPI_Comm_set_errhandler
+#pragma weak MPI_Finalized = PMPI_Finalized
+
+#pragma weak MPI_Comm_create_keyval = PMPI_Comm_create_keyval
+#pragma weak MPI_Comm_delete_attr  = PMPI_Comm_delete_attr
+#pragma weak MPI_Comm_free_keyval  = PMPI_Comm_free_keyval
+#pragma weak MPI_Comm_get_attr = PMPI_Comm_get_attr
+#pragma weak MPI_Comm_set_attr  = PMPI_Comm_set_attr
+
+#pragma weak MPI_Type_create_keyval = PMPI_Type_create_keyval
+#pragma weak MPI_Type_set_attr = PMPI_Type_set_attr
+#pragma weak MPI_Type_get_attr = PMPI_Type_get_attr
+#pragma weak MPI_Type_delete_attr = PMPI_Type_delete_attr
+#pragma weak MPI_Type_free_keyval = PMPI_Type_free_keyval
+
+#pragma weak MPI_Type_create_indexed_block = PMPI_Type_create_indexed_block
+#pragma weak MPI_Type_get_envelope = PMPI_Type_get_envelope
+#pragma weak MPI_Type_get_contents = PMPI_Type_get_contents
+
+#pragma weak MPI_Type_create_darray = PMPI_Type_create_darray
+#pragma weak MPI_Get_address  = PMPI_Get_address
+#pragma weak MPI_Type_create_struct = PMPI_Type_create_struct
+
+#pragma weak MPI_Status_set_elements = PMPI_Status_set_elements
+#pragma weak MPI_Type_size_x = PMPI_Type_size_x
+#pragma weak MPI_Type_get_extent_x = PMPI_Type_get_extent_x
+#pragma weak MPI_Type_get_true_extent_x = PMPI_Type_get_true_extent_x
+#pragma weak MPI_Get_elements_x = PMPI_Get_elements_x
+#pragma weak MPI_Status_set_elements_x = PMPI_Status_set_elements_x
+
+
+#pragma weak MPI_Type_create_hindexed_block = PMPI_Type_create_hindexed_block
+
+#pragma weak MPI_Pack_external_size = PMPI_Pack_external_size
+#pragma weak MPI_Pack_external = PMPI_Pack_external
+#pragma weak MPI_Unpack_external = PMPI_Unpack_external
+
+#pragma weak MPI_Type_create_subarray = PMPI_Type_create_subarray
+#pragma weak MPI_Type_match_size = PMPI_Type_match_size
+#pragma weak MPI_Reduce_scatter_block = PMPI_Reduce_scatter_block
+#pragma weak MPI_Comm_dup_with_info = PMPI_Comm_dup_with_info
+#pragma weak MPI_Comm_split_type = PMPI_Comm_split_type
+#pragma weak MPI_Comm_set_info = PMPI_Comm_set_info
+#pragma weak MPI_Comm_get_info = PMPI_Comm_get_info
+#pragma weak MPI_Add_error_class = PMPI_Add_error_class
+#pragma weak MPI_Add_error_code = PMPI_Add_error_code
+#pragma weak MPI_Add_error_string = PMPI_Add_error_string
+#pragma weak MPI_Comm_call_errhandler = PMPI_Comm_call_errhandler
+#pragma weak MPI_Comm_create_errhandler = PMPI_Comm_create_errhandler
+#pragma weak MPI_Is_thread_main = PMPI_Is_thread_main
+#pragma weak MPI_Query_thread = PMPI_Query_thread
+#pragma weak MPI_Get_library_version = PMPI_Get_library_version
+#pragma weak MPI_Request_get_status = PMPI_Request_get_status
+#pragma weak MPI_Status_set_cancelled = PMPI_Status_set_cancelled
+#pragma weak MPI_Grequest_start = PMPI_Grequest_start
+#pragma weak MPI_Grequest_complete = PMPI_Grequest_complete
+//~ end
+
+
