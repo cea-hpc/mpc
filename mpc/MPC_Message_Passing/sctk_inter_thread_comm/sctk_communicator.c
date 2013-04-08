@@ -88,6 +88,9 @@ typedef struct sctk_internal_communicator_s
 	int local_leader;
 	/** peer communication (only for intercommunicator) **/
 	sctk_communicator_t peer_comm;
+	/** local id (only for intercommunicators)**/
+	sctk_communicator_t local_id;
+	sctk_communicator_t remote_id;
   
 } sctk_internal_communicator_t;
 
@@ -339,9 +342,26 @@ int sctk_is_in_local_group(const sctk_communicator_t communicator)
 sctk_communicator_t sctk_get_local_comm_id(const sctk_communicator_t communicator)
 {
 	sctk_internal_communicator_t * tmp;
-	tmp = sctk_communicator_array[communicator];
+	tmp = sctk_get_internal_communicator(communicator);
 	assume(tmp != NULL);
-	return tmp->id;
+	//check if intercommunicator
+	if(tmp->is_inter_comm == 1)
+	{
+		int result = sctk_is_in_local_group(communicator);
+		if(result == 0)
+		{
+			return tmp->remote_comm->local_id;
+			
+		}
+		else
+		{
+			return tmp->local_id;
+		}
+	}
+	else
+	{
+		return tmp->id;
+	}
 }
 
 static inline void sctk_communicator_intern_write_lock(sctk_internal_communicator_t * tmp)
@@ -1740,7 +1760,7 @@ const sctk_communicator_t peer_comm, const int remote_leader, const int tag, con
 	sctk_internal_communicator_t * local_tmp;
 	sctk_internal_communicator_t * remote_tmp;
 	int local_root = 0, i, rank, grank, nb_task_involved, local_size, 
-	remote_size, remote_lleader, remote_rleader, rleader, lleader;
+	remote_size, remote_lleader, remote_rleader, rleader, lleader, local_id, remote_id;
 	int *remote_task_list;
 	sctk_thread_data_t *thread_data;
 	
@@ -1756,6 +1776,7 @@ const sctk_communicator_t peer_comm, const int remote_leader, const int tag, con
 	local_size = tmp->nb_task;
 	lleader = local_leader;
 	rleader = remote_leader;
+	local_id = local_comm;
 	
 	sctk_nodebug("rank %d : sctk_intercomm_create, first = %d, local_comm %d, peer_comm %d, local_leader %d, remote_leader %d", rank, first, local_comm, peer_comm, local_leader, remote_leader);
 	
@@ -1795,6 +1816,14 @@ const sctk_communicator_t peer_comm, const int remote_leader, const int tag, con
 	}
 	
 	sctk_broadcast (&remote_rleader,sizeof(int),local_leader,local_comm);
+	
+	//~ exchange local comm ids
+	if(grank == local_leader)
+	{
+		PMPI_Sendrecv(&local_id, 1, MPC_INT, remote_leader, tag, &remote_id, 1, MPC_INT, remote_leader, tag, peer_comm, &status);
+	}
+	
+	sctk_broadcast (&remote_id,sizeof(int),local_leader,local_comm);
 		
 	/* Fill the local structure */
 	sctk_spinlock_lock(&(tmp->creation_lock));
@@ -1865,7 +1894,8 @@ const sctk_communicator_t peer_comm, const int remote_leader, const int tag, con
 		tmp->new_comm->local_leader = local_leader;
 		tmp->new_comm->remote_leader = remote_leader;
 		tmp->new_comm->peer_comm = peer_comm;
-		
+		tmp->new_comm->local_id = local_comm;
+		tmp->new_comm->remote_id = remote_id;
 		//~ --------------------------------------------------------
 		
 		/* Fill the remote structure */
@@ -1934,6 +1964,8 @@ const sctk_communicator_t peer_comm, const int remote_leader, const int tag, con
 		tmp->remote_comm->local_leader = remote_lleader;
 		tmp->remote_comm->remote_leader = remote_rleader;
 		tmp->remote_comm->peer_comm = peer_comm;
+		tmp->remote_comm->local_id = remote_id;
+		tmp->remote_comm->remote_id = local_comm;
 	}
 	sctk_spinlock_unlock(&(tmp->creation_lock));
 	sctk_barrier(local_comm);
