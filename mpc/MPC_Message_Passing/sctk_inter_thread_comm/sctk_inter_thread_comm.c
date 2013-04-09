@@ -574,8 +574,7 @@ inline void sctk_message_copy(sctk_message_to_copy_t* tmp)
   case sctk_message_contiguous: {
     size_t size;
     size = send->tail.message.contiguous.size;
-    sctk_nodebug("Send message size %d, Recv message size %d", size, recv->tail.message.contiguous.size);
-    assume(size <= recv->tail.message.contiguous.size);
+    
     if(size > recv->tail.message.contiguous.size){
       size = recv->tail.message.contiguous.size;
     }

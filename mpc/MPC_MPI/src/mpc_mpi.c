@@ -3654,6 +3654,14 @@ TODO("Should be optimized like PMPC_Alltoallv")
     }
 }
 
+static int 
+__INTERNAL__PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sendtypes, 
+				   void *recvbuf, int *recvcnts, int *rdispls, MPI_Datatype *recvtypes, MPI_Comm comm)
+{
+	return PMPC_Alltoallw (sendbuf, sendcnts, sdispls, sendtypes, recvbuf,
+			    recvcnts, rdispls, recvtypes, comm);
+}
+
 typedef struct
 {
   MPC_Op op;
@@ -8168,6 +8176,14 @@ PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
+int PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sendtypes, 
+				   void *recvbuf, int *recvcnts, int *rdispls, MPI_Datatype *recvtypes, MPI_Comm comm)
+{
+	int res = MPI_ERR_INTERN;
+	res = __INTERNAL__PMPI_Alltoallw (sendbuf, sendcnts, sdispls, sendtypes, recvbuf, recvcnts, rdispls, recvtypes, comm);
+	SCTK__MPI_Check_retrun_val (res, comm);
+}
+
 int
 PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	     MPI_Op op, int root, MPI_Comm comm)
@@ -9008,9 +9024,7 @@ int PMPI_Win_free(MPI_Win * win){return MPI_SUCCESS;}
 
 int PMPI_Alloc_mem (MPI_Aint size, MPI_Info info, void *baseptr){return MPI_SUCCESS;}
 int PMPI_Free_mem (void *base){return MPI_SUCCESS;}
-
-int PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sendtypes, 
-				   void *recvbuf, int *recvcnts, int *rdispls, MPI_Datatype *recvtypes, MPI_Comm comm){return MPI_SUCCESS;}
+				   
 int PMPI_Type_create_resized(MPI_Datatype oldtype, MPI_Aint lb, MPI_Aint extent, MPI_Datatype *newtype){return MPI_SUCCESS;}
 int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, MPI_Aint *true_extent){return MPI_SUCCESS;}
 int PMPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent){return MPI_SUCCESS;}

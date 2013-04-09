@@ -298,7 +298,7 @@ int sctk_is_in_local_group(const sctk_communicator_t communicator)
 	
 	if(communicator == MPC_COMM_WORLD)
 		return 1;
-		
+	
 	/* get task id */
 	thread_data = sctk_thread_data_get ();
 	comm_world_rank = thread_data->task_id;
