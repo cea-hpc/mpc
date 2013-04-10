@@ -2076,18 +2076,41 @@ static inline int
 __MPC_Bcast (void *buffer, mpc_msg_count count, MPC_Datatype datatype,
 	     int root, MPC_Comm comm, sctk_task_specific_t * task_specific)
 {
-  int size;
-  mpc_check_comm (comm, comm);
-  __MPC_Comm_size (comm, &size);
-  mpc_check_task (root, comm, size);
-  mpc_check_type (datatype, comm);
-  mpc_check_count (count, comm);
-  sctk_nodebug ("sctk_broadcast root %d size %d", root,
-		count * __MPC_Get_datatype_size (datatype, task_specific));
-  sctk_broadcast (buffer,
-		  count * __MPC_Get_datatype_size (datatype, task_specific),
-		  root, comm);
-  MPC_ERROR_SUCESS ();
+	int size, rank;
+	MPC_Status status;
+	mpc_check_comm (comm, comm);
+	__MPC_Comm_size (comm, &size);
+	mpc_check_task (root, comm, size);
+	mpc_check_type (datatype, comm);
+	mpc_check_count (count, comm);
+	
+	if(sctk_is_inter_comm(comm))
+	{
+		if (root == MPC_PROC_NULL)
+		{
+			MPC_ERROR_SUCESS ();
+		}
+		else if (root == MPC_ROOT)
+		{
+			PMPC_Send(buffer, count, datatype, 0, 51, comm); 
+		}
+		else
+		{
+			__MPC_Comm_rank(comm, &rank, task_specific);
+			
+			if (rank == 0)
+			{
+				PMPC_Recv(buffer, count, datatype, root, 51, comm, &status);
+			}
+			__MPC_Bcast(buffer, count, datatype, 0, sctk_get_local_comm_id(comm), task_specific);
+		}
+	}
+	else
+	{
+		sctk_nodebug ("sctk_broadcast root %d size %d", root, count * __MPC_Get_datatype_size (datatype, task_specific));
+		sctk_broadcast (buffer, count * __MPC_Get_datatype_size (datatype, task_specific), root, comm);
+	}
+	MPC_ERROR_SUCESS ();
 }
 
 int
