@@ -178,12 +178,11 @@ extern "C"
   
 //~ not implemented
 		typedef int MPI_Win;
-		typedef int MPI_Info;
 		typedef long MPI_Count;
 		typedef long MPI_Offset;
 		
 		/* C functions */
-		typedef void (MPI_Handler_function) ( MPI_Comm *, int *, ... );
+		//~ typedef void (MPC_Handler_function) ( MPI_Comm *, int *, ... );
 		typedef int (MPI_Comm_copy_attr_function)(MPI_Comm, int, void *, void *, 
 						  void *, int *);
 		typedef int (MPI_Comm_delete_attr_function)(MPI_Comm, int, void *, void *);
