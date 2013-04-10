@@ -1244,7 +1244,7 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
   }
   assume (size % sizeof (mpi_buffer_overhead_t) == 0);
 
-  sctk_debug ("MSG size %d", size);
+  sctk_nodebug ("MSG size %d", size);
 
   PMPC_Get_buffers (&tmp);
   sctk_spinlock_lock (&(tmp->lock));
@@ -3204,7 +3204,7 @@ __INTERNAL__PMPI_Pack_size (int incount, MPI_Datatype datatype, MPI_Comm comm,
       int j;
       PMPC_Is_derived_datatype (datatype, &res, &begins_in, &ends_in,
 			       &count_in, &lb, &is_lb, &ub, &is_ub);
-
+	sctk_nodebug("derived datatype : res %d, count_in %d, lb %d, is_lb %d, ub %d, is_ub %d", res, count_in, lb, is_lb, ub, is_ub);
       for (j = 0; j < incount; j++)
 	{
 	  for (i = 0; i < count_in; i++)
@@ -3216,7 +3216,7 @@ __INTERNAL__PMPI_Pack_size (int incount, MPI_Datatype datatype, MPI_Comm comm,
 			    begins_in[i], ends_in[i]);
 	    }
 	}
-      sctk_nodebug ("PACK derived size %d", *size);
+      sctk_nodebug ("PACK derived final size %d", *size);
       return MPI_SUCCESS;
     }
   else
@@ -4668,10 +4668,7 @@ __INTERNAL__PMPI_Group_excl (MPI_Group mpi_group, int n, int *ranks,
 			k++;
 		}
 	}
-	sctk_nodebug("-----");
-	for(i=0; i<size; i++)
-		sctk_nodebug("newgroup[%d] = %d", i, (newgroup)->task_list_in_global_ranks[i]);
-	sctk_nodebug("-----");
+	
 	return MPI_SUCCESS;
 }
 

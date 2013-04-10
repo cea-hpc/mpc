@@ -4620,7 +4620,6 @@ PMPC_Group_incl (MPC_Group group, int n, int *ranks, MPC_Group * newgroup)
   for (i = 0; i < n; i++)
     {
       (*newgroup)->task_list_in_global_ranks[i] = group->task_list_in_global_ranks[ranks[i]];
-      sctk_debug ("newgroup[%d] = %d", i, group->task_list_in_global_ranks[ranks[i]]);
     }
 
   MPC_ERROR_SUCESS ();
@@ -4684,8 +4683,6 @@ PMPC_Group_difference (MPC_Group group1, MPC_Group group2,
 		}
 	}
 	
-	for(i=0; i<(*newgroup)->task_nb; i++)
-		sctk_nodebug("newgroup[%d] = %d", i, (*newgroup)->task_list_in_global_ranks[i]);
 	MPC_ERROR_SUCESS ();
 }
 
@@ -5609,14 +5606,14 @@ PMPC_Irecv_pack (int source, int tag, MPC_Comm comm, MPC_Request * request)
   mpc_log_debug (comm, "MPC_Irecv_pack source=%d tag=%d req=%p", source,
 		 tag, request);
 #endif
-
+	
   msg = sctk_mpc_get_message_in_request(request);
 
   if (source != MPC_ANY_SOURCE)
     {
       mpc_check_msg (src, source, tag, comm, size);
     }
-
+  request->request_type = REQUEST_RECV;
   sctk_mpc_set_header_in_message (msg,
 				  tag,
 				  comm,
