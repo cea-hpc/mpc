@@ -18,10 +18,10 @@ DESTHFILES=$(HFILES:@srcdir@/$(ARCH)/%=../include/%)
 
 all:../lib/libsctk_arch_context.so
 
-$(OBJ):%.o:@srcdir@/$(ARCH)/%.c $(HFILES)
+$(OBJ):%.o:@srcdir@/$(ARCH)/%.c 
 	$(CC) -c $(CFLAGS) -o $@ $?
 
-$(SOBJ):%.o:@srcdir@/$(ARCH)/%.S $(HFILES)
+$(SOBJ):%.o:@srcdir@/$(ARCH)/%.S 
 	$(CC) -c $(CFLAGS) -o $@ $? 
 
 $(DESTHFILES):../include/%:@srcdir@/$(ARCH)/%
