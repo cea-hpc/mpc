@@ -511,7 +511,7 @@ SCTK__MPI_ERROR_REPORT__ (MPC_Comm comm, int error, char *message, char *file,
   error_id = error;
   func = tmp->func;
   func (&comm_id, &error_id, message, file, line);
-
+  sctk_debug("return error %d", error);
   return error;
 }
 
@@ -7249,7 +7249,21 @@ PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
-    mpi_check_rank (dest, size, comm);
+    //~ if(sctk_is_inter_comm(comm))
+    //~ {
+		//~ if(sctk_is_in_local_group(comm))
+		//~ {
+			//~ int remote_size;
+			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
+			//~ mpi_check_rank (dest, remote_size, comm);
+		//~ }
+		//~ else
+		//~ {
+			//~ mpi_check_rank (dest, size, comm);
+		//~ }
+	//~ }
+	//~ else
+		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -7275,7 +7289,21 @@ PMPI_Recv (void *buf, int count, MPI_Datatype datatype, int source, int tag,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
-    mpi_check_rank (source, size, comm);
+    //~ if(sctk_is_inter_comm(comm))
+    //~ {
+		//~ if(sctk_is_in_local_group(comm))
+		//~ {
+			//~ int remote_size;
+			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
+			//~ mpi_check_rank (source, remote_size, comm);
+		//~ }
+		//~ else
+		//~ {
+			//~ mpi_check_rank (source, size, comm);
+		//~ }
+	//~ }
+	//~ else
+		//~ mpi_check_rank (source, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -7322,7 +7350,21 @@ PMPI_Bsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
-    mpi_check_rank (dest, size, comm);
+    //~ if(sctk_is_inter_comm(comm))
+    //~ {
+		//~ if(sctk_is_in_local_group(comm))
+		//~ {
+			//~ int remote_size;
+			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
+			//~ mpi_check_rank (dest, remote_size, comm);
+		//~ }
+		//~ else
+		//~ {
+			//~ mpi_check_rank (dest, size, comm);
+		//~ }
+	//~ }
+	//~ else
+		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -7347,7 +7389,21 @@ PMPI_Ssend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
-    mpi_check_rank (dest, size, comm);
+    //~ if(sctk_is_inter_comm(comm))
+    //~ {
+		//~ if(sctk_is_in_local_group(comm))
+		//~ {
+			//~ int remote_size;
+			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
+			//~ mpi_check_rank (dest, remote_size, comm);
+		//~ }
+		//~ else
+		//~ {
+			//~ mpi_check_rank (dest, size, comm);
+		//~ }
+	//~ }
+	//~ else
+		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -7372,7 +7428,21 @@ PMPI_Rsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
-    mpi_check_rank (dest, size, comm);
+    //~ if(sctk_is_inter_comm(comm))
+    //~ {
+		//~ if(sctk_is_in_local_group(comm))
+		//~ {
+			//~ int remote_size;
+			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
+			//~ mpi_check_rank (dest, remote_size, comm);
+		//~ }
+		//~ else
+		//~ {
+			//~ mpi_check_rank (dest, size, comm);
+		//~ }
+	//~ }
+	//~ else
+		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -7416,7 +7486,21 @@ PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
-    mpi_check_rank (dest, size, comm);
+    //~ if(sctk_is_inter_comm(comm))
+    //~ {
+		//~ if(sctk_is_in_local_group(comm))
+		//~ {
+			//~ int remote_size;
+			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
+			//~ mpi_check_rank (dest, remote_size, comm);
+		//~ }
+		//~ else
+		//~ {
+			//~ mpi_check_rank (dest, size, comm);
+		//~ }
+	//~ }
+	//~ else
+		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -7445,7 +7529,22 @@ PMPI_Ibsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
-    mpi_check_rank (dest, size, comm);
+    //~ if(sctk_is_inter_comm(comm))
+    //~ {
+		//~ if(sctk_is_in_local_group(comm))
+		//~ {
+			//~ int remote_size;
+			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
+			//~ mpi_check_rank (dest, remote_size, comm);
+		//~ }
+		//~ else
+		//~ {
+			//~ mpi_check_rank (dest, size, comm);
+		//~ }
+	//~ }
+	//~ else
+		//~ mpi_check_rank (dest, size, comm);
+    
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -7472,7 +7571,21 @@ PMPI_Issend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
-    mpi_check_rank (dest, size, comm);
+    //~ if(sctk_is_inter_comm(comm))
+    //~ {
+		//~ if(sctk_is_in_local_group(comm))
+		//~ {
+			//~ int remote_size;
+			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
+			//~ mpi_check_rank (dest, remote_size, comm);
+		//~ }
+		//~ else
+		//~ {
+			//~ mpi_check_rank (dest, size, comm);
+		//~ }
+	//~ }
+	//~ else
+		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -7499,7 +7612,21 @@ PMPI_Irsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
-    mpi_check_rank (dest, size, comm);
+    //~ if(sctk_is_inter_comm(comm))
+    //~ {
+		//~ if(sctk_is_in_local_group(comm))
+		//~ {
+			//~ int remote_size;
+			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
+			//~ mpi_check_rank (dest, remote_size, comm);
+		//~ }
+		//~ else
+		//~ {
+			//~ mpi_check_rank (dest, size, comm);
+		//~ }
+	//~ }
+	//~ else
+		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -7526,7 +7653,22 @@ PMPI_Irecv (void *buf, int count, MPI_Datatype datatype, int source,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
-    mpi_check_rank (source, size, comm);
+    //~ if(sctk_is_inter_comm(comm))
+    //~ {
+		//~ if(sctk_is_in_local_group(comm))
+		//~ {
+			//~ int remote_size;
+			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
+			//~ mpi_check_rank (source, remote_size, comm);
+		//~ }
+		//~ else
+		//~ {
+			//~ mpi_check_rank (source, size, comm);
+		//~ }
+	//~ }
+	//~ else
+		//~ mpi_check_rank (source, size, comm);
+
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -7684,7 +7826,21 @@ PMPI_Send_init (void *buf, int count, MPI_Datatype datatype, int dest,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
-    mpi_check_rank (dest, size, comm);
+    //~ if(sctk_is_inter_comm(comm))
+    //~ {
+		//~ if(sctk_is_in_local_group(comm))
+		//~ {
+			//~ int remote_size;
+			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
+			//~ mpi_check_rank (dest, remote_size, comm);
+		//~ }
+		//~ else
+		//~ {
+			//~ mpi_check_rank (dest, size, comm);
+		//~ }
+	//~ }
+	//~ else
+		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -7709,7 +7865,21 @@ PMPI_Bsend_init (void *buf, int count, MPI_Datatype datatype,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
-    mpi_check_rank (dest, size, comm);
+    //~ if(sctk_is_inter_comm(comm))
+    //~ {
+		//~ if(sctk_is_in_local_group(comm))
+		//~ {
+			//~ int remote_size;
+			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
+			//~ mpi_check_rank (dest, remote_size, comm);
+		//~ }
+		//~ else
+		//~ {
+			//~ mpi_check_rank (dest, size, comm);
+		//~ }
+	//~ }
+	//~ else
+		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -7734,7 +7904,21 @@ PMPI_Ssend_init (void *buf, int count, MPI_Datatype datatype, int dest,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
-    mpi_check_rank (dest, size, comm);
+    //~ if(sctk_is_inter_comm(comm))
+    //~ {
+		//~ if(sctk_is_in_local_group(comm))
+		//~ {
+			//~ int remote_size;
+			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
+			//~ mpi_check_rank (dest, remote_size, comm);
+		//~ }
+		//~ else
+		//~ {
+			//~ mpi_check_rank (dest, size, comm);
+		//~ }
+	//~ }
+	//~ else
+		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -7759,7 +7943,21 @@ PMPI_Rsend_init (void *buf, int count, MPI_Datatype datatype, int dest,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
-    mpi_check_rank (dest, size, comm);
+    //~ if(sctk_is_inter_comm(comm))
+    //~ {
+		//~ if(sctk_is_in_local_group(comm))
+		//~ {
+			//~ int remote_size;
+			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
+			//~ mpi_check_rank (dest, remote_size, comm);
+		//~ }
+		//~ else
+		//~ {
+			//~ mpi_check_rank (dest, size, comm);
+		//~ }
+	//~ }
+	//~ else
+		//~ mpi_check_rank (dest, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -7784,7 +7982,21 @@ PMPI_Recv_init (void *buf, int count, MPI_Datatype datatype, int source,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
-    mpi_check_rank (source, size, comm);
+    //~ if(sctk_is_inter_comm(comm))
+    //~ {
+		//~ if(sctk_is_in_local_group(comm))
+		//~ {
+			//~ int remote_size;
+			//~ __INTERNAL__PMPI_Comm_remote_size(comm, &remote_size);
+			//~ mpi_check_rank (source, remote_size, comm);
+		//~ }
+		//~ else
+		//~ {
+			//~ mpi_check_rank (source, size, comm);
+		//~ }
+	//~ }
+	//~ else
+		//~ mpi_check_rank (source, size, comm);
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
