@@ -5277,7 +5277,8 @@ __INTERNAL__PMPI_Intercomm_merge (MPI_Comm intercomm, int high,
 	}
 	
 	sctk_nodebug("rank %d, grank %d : boroadcast comm %d", rank, grank, intercomm);
-	sctk_broadcast (&remote_high,sizeof(int),0,intercomm);
+	sctk_broadcast(&remote_high,sizeof(int),0,sctk_get_local_comm_id(intercomm));
+	//~ PMPI_Bcast(&remote_high, 1, MPC_INT, 0, sctk_get_local_comm_id(intercomm)); 
 	sctk_nodebug("rank %d : merge intercomm %d, high = %d, remote_high = %d", rank, intercomm, high, remote_high);
 	/* TODO : Finir le merge avec le placement des groupes en fonction des paramètres "high" */
 	if(sctk_is_in_local_group(intercomm))

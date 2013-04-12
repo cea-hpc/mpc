@@ -477,7 +477,6 @@ static inline void sctk_ptp_copy_tasks_insert(sctk_msg_list_t* ptr_recv,
   tmp = &(ptr_recv->msg->tail.copy_list);
   tmp->msg_send = ptr_send->msg;
   tmp->msg_recv = ptr_recv->msg;
-
 TODO("Add parapmeter to deal with task engine")
 #ifdef SCTK_DISABLE_TASK_ENGINE
   assume(tmp->msg_send->tail.message_copy);
@@ -568,11 +567,12 @@ inline void sctk_message_copy(sctk_message_to_copy_t* tmp)
 	recv = tmp->msg_recv;
 	
 	assume(send->tail.message_type == sctk_message_contiguous);	
-
+	
 	switch(recv->tail.message_type)
 	{
 		case sctk_message_contiguous: 
 		{
+			sctk_nodebug("sctk_message_contiguous - sctk_message_contiguous");
 			size_t size;
 			size = send->tail.message.contiguous.size;
 			if(size > recv->tail.message.contiguous.size)
@@ -586,18 +586,22 @@ inline void sctk_message_copy(sctk_message_to_copy_t* tmp)
 		}
 		case sctk_message_pack: 
 		{
+			sctk_nodebug("sctk_message_contiguous - sctk_message_pack");
 			size_t i;
 			size_t j;
 			size_t size;
-			for (i = 0; i < recv->tail.message.pack.count; i++)
+			if(send->tail.message.contiguous.size > 0)
 			{
-				for (j = 0; j < recv->tail.message.pack.list.std[i].count; j++)
+				for (i = 0; i < recv->tail.message.pack.count; i++)
 				{
-					size = (recv->tail.message.pack.list.std[i].ends[j] - recv->tail.message.pack.list.std[i].begins[j] + 1) * 
-						recv->tail.message.pack.list.std[i].elem_size;
-					memcpy(((char *) (recv->tail.message.pack.list.std[i].addr)) + recv->tail.message.pack.list.std[i].begins[j] * 
-						recv->tail.message.pack.list.std[i].elem_size,send->tail.message.contiguous.addr,size);
-					send->tail.message.contiguous.addr += size;
+					for (j = 0; j < recv->tail.message.pack.list.std[i].count; j++)
+					{
+						size = (recv->tail.message.pack.list.std[i].ends[j] - recv->tail.message.pack.list.std[i].begins[j] + 1) * 
+							recv->tail.message.pack.list.std[i].elem_size;
+						memcpy((recv->tail.message.pack.list.std[i].addr) + recv->tail.message.pack.list.std[i].begins[j] * 
+							recv->tail.message.pack.list.std[i].elem_size,send->tail.message.contiguous.addr,size);
+						send->tail.message.contiguous.addr += size;
+					}
 				}
 			}
 			sctk_message_completion_and_free(send,recv);
@@ -605,23 +609,24 @@ inline void sctk_message_copy(sctk_message_to_copy_t* tmp)
 		}
 		case sctk_message_pack_absolute: 
 		{
+			sctk_nodebug("sctk_message_contiguous - sctk_message_pack_absolute");
 			size_t i;
 			size_t j;
 			size_t size;
-			size_t total = 0;
-			for (i = 0; i < recv->tail.message.pack.count; i++)
+			if(send->tail.message.contiguous.size > 0)
 			{
-				for (j = 0; j < recv->tail.message.pack.list.absolute[i].count; j++)
+				for (i = 0; i < recv->tail.message.pack.count; i++)
 				{
-					size = (recv->tail.message.pack.list.absolute[i].ends[j] - recv->tail.message.pack.list.absolute[i].begins[j] + 1) * 
-						recv->tail.message.pack.list.absolute[i].elem_size;
-					total += size;
-					memcpy(((char *) (recv->tail.message.pack.list.absolute[i].addr)) + recv->tail.message.pack.list.absolute[i].begins[j] *
-						recv->tail.message.pack.list.absolute[i].elem_size,send->tail.message.contiguous.addr,size);
-					send->tail.message.contiguous.addr += size;
+					for (j = 0; j < recv->tail.message.pack.list.absolute[i].count; j++)
+					{
+						size = (recv->tail.message.pack.list.absolute[i].ends[j] - recv->tail.message.pack.list.absolute[i].begins[j] + 1) * 
+							recv->tail.message.pack.list.absolute[i].elem_size;
+						memcpy((recv->tail.message.pack.list.absolute[i].addr) + recv->tail.message.pack.list.absolute[i].begins[j] *
+							recv->tail.message.pack.list.absolute[i].elem_size,send->tail.message.contiguous.addr,size);
+						send->tail.message.contiguous.addr += size;
+					}
 				}
 			}
-			sctk_debug("SIZE %d", total);
 			sctk_message_completion_and_free(send,recv);
 			break;
 		}
@@ -1007,6 +1012,7 @@ inline void sctk_message_copy_pack(sctk_message_to_copy_t* tmp)
 	{
 		case sctk_message_pack: 
 		{
+			sctk_nodebug("sctk_message_pack - sctk_message_pack");
 			size_t i;
 			for (i = 0; i < send->tail.message.pack.count; i++)
 			{
@@ -1026,6 +1032,7 @@ inline void sctk_message_copy_pack(sctk_message_to_copy_t* tmp)
 		}
 		case sctk_message_pack_absolute: 
 		{
+			sctk_nodebug("sctk_message_pack - sctk_message_pack_absolute");
 			size_t i;
 			for (i = 0; i < send->tail.message.pack.count; i++)
 			{
@@ -1045,6 +1052,7 @@ inline void sctk_message_copy_pack(sctk_message_to_copy_t* tmp)
 		}
 		case sctk_message_contiguous: 
 		{
+			sctk_nodebug("sctk_message_pack - sctk_message_contiguous");
 			size_t i;
 			size_t j;
 			size_t size;
@@ -1089,6 +1097,7 @@ inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp)
 	{
 		case sctk_message_pack: 
 		{
+			sctk_nodebug("sctk_message_pack_absolute - sctk_message_pack");
 			size_t i;
 			for (i = 0; i < send->tail.message.pack.count; i++)
 			{
@@ -1108,6 +1117,7 @@ inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp)
 		}
 		case sctk_message_pack_absolute: 
 		{
+			sctk_nodebug("sctk_message_pack_absolute - sctk_message_pack_absolute");
 			size_t i;
 			for (i = 0; i < send->tail.message.pack.count; i++)
 			{
@@ -1127,6 +1137,7 @@ inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp)
 		}
 		case sctk_message_contiguous: 
 		{
+			sctk_nodebug("sctk_message_pack_absolute - sctk_message_contiguous");
 			size_t i;
 			size_t j;
 			size_t size;

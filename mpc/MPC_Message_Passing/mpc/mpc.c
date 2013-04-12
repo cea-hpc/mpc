@@ -607,7 +607,7 @@ static inline int
 __mpc_check_task_msg__ (int task, int max_rank)
 {
   int res;
-
+  
   res = (((task < 0) || (task >= max_rank)) && (task != MPC_ANY_SOURCE));
   return res;
 }
@@ -628,6 +628,20 @@ __mpc_check_task_msg__ (int task, int max_rank)
   mpc_check_task_msg(src,comm," source",comm_size);		\
   mpc_check_task_msg(dest,comm," destination",comm_size);	\
   mpc_check_tag(tag,comm)
+
+#define mpc_check_msg_inter(src,dest,tag,comm,comm_size,comm_remote_size)		\
+  if(sctk_is_in_local_group(comm))		\
+  {		\
+	mpc_check_task_msg(src,comm," source",comm_size);		\
+    mpc_check_task_msg(dest,comm," destination",comm_remote_size);	\
+    mpc_check_tag(tag,comm);  		\
+  }		\
+  else		\
+  {		\
+	mpc_check_task_msg(src,comm," source",comm_remote_size);		\
+    mpc_check_task_msg(dest,comm," destination",comm_size);	\
+    mpc_check_tag(tag,comm);    		\
+  }
 
 #define mpc_check_msg_size(src,dest,tag,comm,s)		\
   mpc_check_task_msg_size(src,comm," source",s);	\
@@ -2474,6 +2488,7 @@ __MPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
   int com_size;
   int buffer_rank;
   size_t msg_size;
+  int comm_remote_size;
   mpc_buffered_msg_t *restrict tmp_buf;
   char tmp;
 
@@ -2498,7 +2513,30 @@ __MPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
       MPC_ERROR_SUCESS ();
     }
   sctk_mpc_init_request(request,comm,src, REQUEST_SEND);
-  mpc_check_msg (src, dest, tag, comm, com_size);
+  
+	if(sctk_is_inter_comm(comm))
+	{
+		__MPC_Comm_remote_size(comm, &comm_remote_size);
+		sctk_nodebug("intercomm src %d, dst %d, com_size %d, remote_comm_size %d", src, dest, com_size, comm_remote_size);
+		if(sctk_is_in_local_group(comm))		
+		  {		
+			sctk_nodebug("in local_group");
+			mpc_check_task_msg(src,comm," source",com_size);		
+			mpc_check_task_msg(dest,comm," destination",comm_remote_size);	
+			mpc_check_tag(tag,comm);  		
+		  }		
+		  else		
+		  {		
+			sctk_nodebug("in remote_group");
+			mpc_check_task_msg(src,comm," source",comm_remote_size);		
+			mpc_check_task_msg(dest,comm," destination",com_size);	
+			mpc_check_tag(tag,comm);    		
+		  }
+	}
+	else
+	{
+		mpc_check_msg (src, dest, tag, comm, com_size);
+	}
 
   msg = sctk_create_header (src,sctk_message_contiguous);
   d_size = __MPC_Get_datatype_size (datatype, task_specific);
