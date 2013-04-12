@@ -617,35 +617,31 @@ __mpc_check_task_msg__ (int task, int max_rank)
     MPC_ERROR_REPORT(comm,MPC_ERR_RANK,msg)
 
 #define mpc_check_task_msg(task,comm,msg,max_rank)	\
-  if(__mpc_check_task_msg__(task,max_rank))		\
-    MPC_ERROR_REPORT(comm,MPC_ERR_RANK,msg)
+	if(__mpc_check_task_msg__(task,max_rank))		\
+		MPC_ERROR_REPORT(comm,MPC_ERR_RANK,msg)		\
 
 #define mpc_check_tag(tag,comm)						\
   if(!(tag >= MPC_ALLTOALLV_TAG))					\
     MPC_ERROR_REPORT(comm,MPC_ERR_TAG,"")
+
+#define mpc_check_msg_inter(src,dest,tag,comm,comm_size,comm_remote_size)		\
+	mpc_check_task_msg(src,comm," source",comm_size);		\
+    mpc_check_task_msg(dest,comm," destination",comm_remote_size);	\
+    mpc_check_tag(tag,comm)
 
 #define mpc_check_msg(src,dest,tag,comm,comm_size)		\
   mpc_check_task_msg(src,comm," source",comm_size);		\
   mpc_check_task_msg(dest,comm," destination",comm_size);	\
   mpc_check_tag(tag,comm)
 
-#define mpc_check_msg_inter(src,dest,tag,comm,comm_size,comm_remote_size)		\
-  if(sctk_is_in_local_group(comm))		\
-  {		\
-	mpc_check_task_msg(src,comm," source",comm_size);		\
-    mpc_check_task_msg(dest,comm," destination",comm_remote_size);	\
-    mpc_check_tag(tag,comm);  		\
-  }		\
-  else		\
-  {		\
-	mpc_check_task_msg(src,comm," source",comm_remote_size);		\
-    mpc_check_task_msg(dest,comm," destination",comm_size);	\
-    mpc_check_tag(tag,comm);    		\
-  }
-
 #define mpc_check_msg_size(src,dest,tag,comm,s)		\
   mpc_check_task_msg_size(src,comm," source",s);	\
   mpc_check_task_msg_size(dest,comm," destination",s);	\
+  mpc_check_tag(tag,comm)
+  
+#define mpc_check_msg_size_inter(src,dest,tag,comm,s,rs)		\
+  mpc_check_task_msg_size(src,comm," source",s);	\
+  mpc_check_task_msg_size(dest,comm," destination",rs);	\
   mpc_check_tag(tag,comm)
 
 static size_t mpc_common_types[sctk_user_data_types];
@@ -2514,29 +2510,18 @@ __MPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
     }
   sctk_mpc_init_request(request,comm,src, REQUEST_SEND);
   
-	if(sctk_is_inter_comm(comm))
-	{
-		__MPC_Comm_remote_size(comm, &comm_remote_size);
-		sctk_nodebug("intercomm src %d, dst %d, com_size %d, remote_comm_size %d", src, dest, com_size, comm_remote_size);
-		if(sctk_is_in_local_group(comm))		
-		  {		
-			sctk_nodebug("in local_group");
-			mpc_check_task_msg(src,comm," source",com_size);		
-			mpc_check_task_msg(dest,comm," destination",comm_remote_size);	
-			mpc_check_tag(tag,comm);  		
-		  }		
-		  else		
-		  {		
-			sctk_nodebug("in remote_group");
-			mpc_check_task_msg(src,comm," source",comm_remote_size);		
-			mpc_check_task_msg(dest,comm," destination",com_size);	
-			mpc_check_tag(tag,comm);    		
-		  }
-	}
-	else
-	{
-		mpc_check_msg (src, dest, tag, comm, com_size);
-	}
+	//~ if(sctk_is_inter_comm(comm))
+	//~ {
+		//~ __MPC_Comm_remote_size(comm, &comm_remote_size);
+		//~ 
+		//~ mpc_check_task_msg(src,comm," source",com_size);		
+		//~ mpc_check_task_msg(dest,comm," destination",comm_remote_size);	
+		//~ mpc_check_tag(tag,comm);  		
+	//~ }
+	//~ else
+	//~ {
+		//~ mpc_check_msg (src, dest, tag, comm, com_size);
+	//~ }
 
   msg = sctk_create_header (src,sctk_message_contiguous);
   d_size = __MPC_Get_datatype_size (datatype, task_specific);
@@ -2616,7 +2601,16 @@ __MPC_Issend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
       MPC_ERROR_SUCESS ();
     }
 
-  mpc_check_msg (src, dest, tag, comm, com_size);
+  //~ if(sctk_is_inter_comm(comm))
+	//~ {
+		//~ int remote_size;
+		//~ PMPC_Comm_remote_size(comm, &remote_size);
+		//~ mpc_check_msg_inter(src, dest, tag, comm, com_size, remote_size);
+	//~ }
+	//~ else
+	//~ {
+		//~ mpc_check_msg (src, dest, tag, comm, com_size);
+	//~ }
 
   msg = sctk_create_header (src,sctk_message_contiguous);
   d_size = __MPC_Get_datatype_size (datatype, task_specific);
@@ -2732,7 +2726,14 @@ __MPC_Irecv (void *buf, mpc_msg_count count, MPC_Datatype datatype,
   mpc_check_task_msg (src, comm, " destination", comm_size);
   if (source != MPC_ANY_SOURCE)
     {
-      mpc_check_task_msg (source, comm, " source", comm_size);
+		//~ if(sctk_is_inter_comm(comm))
+		//~ {
+			//~ int remote_size;
+			//~ __MPC_Comm_remote_size (comm, &remote_size);
+			//~ mpc_check_task_msg (source, comm, " source", remote_size);
+		//~ }
+		//~ else
+			//~ mpc_check_task_msg (source, comm, " source", comm_size);
     }
   if (tag != MPC_ANY_TAG)
     {
@@ -3170,7 +3171,16 @@ __MPC_Ssend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
       buf = &tmp;
     }
   mpc_check_buf (buf, comm);
-  mpc_check_msg_size (src, dest, tag, comm, size);
+  //~ if(sctk_is_inter_comm(comm))
+	//~ {
+		//~ int remote_size;
+		//~ PMPC_Comm_remote_size(comm, &remote_size);
+		//~ mpc_check_msg_size_inter (src, dest, tag, comm, size, remote_size);
+	//~ }
+	//~ else
+	//~ {
+		//~ mpc_check_msg_size (src, dest, tag, comm, size);
+	//~ }
 
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (comm,
@@ -3228,7 +3238,17 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
       buf = &tmp;
     }
     mpc_check_buf (buf, comm);
-    mpc_check_msg_size (src, dest, tag, comm, size);
+    //~ if(sctk_is_inter_comm(comm))
+	//~ {
+		//~ int remote_size;
+		//~ PMPC_Comm_remote_size(comm, &remote_size);
+		//~ mpc_check_msg_size_inter (src, dest, tag, comm, size, remote_size);
+	//~ }
+	//~ else
+	//~ {
+		//~ mpc_check_msg_size (src, dest, tag, comm, size);
+	//~ }
+    
 
 #ifdef MPC_LOG_DEBUG
     mpc_log_debug (comm,
@@ -3400,7 +3420,17 @@ __MPC_Send (void *restrict buf, mpc_msg_count count, MPC_Datatype datatype,
 
     __MPC_Comm_rank_size (comm, &src, &size, task_specific);
     
-    mpc_check_msg_size (source, src, tag, comm, size);
+    //~ if(sctk_is_inter_comm(comm))
+	//~ {
+		//~ int remote_size;
+		//~ PMPC_Comm_remote_size(comm, &remote_size);
+		//~ mpc_check_msg_size_inter (source, src, tag, comm, size, remote_size);
+	//~ }
+	//~ else
+	//~ {
+		//~ mpc_check_msg_size (source, src, tag, comm, size);
+	//~ }
+    
 
     msg_size = count * __MPC_Get_datatype_size (datatype, task_specific);
 
@@ -5603,7 +5633,16 @@ PMPC_Isend_pack (int dest, int tag, MPC_Comm comm, MPC_Request * request)
 #endif
   msg = sctk_mpc_get_message_in_request(request);
 
-  mpc_check_msg (src, dest, tag, comm, size);
+  //~ if(sctk_is_inter_comm(comm))
+	//~ {
+		//~ int remote_size;
+		//~ PMPC_Comm_remote_size(comm, &remote_size);
+		//~ mpc_check_msg_inter(src, dest, tag, comm, size, remote_size);
+	//~ }
+	//~ else
+	//~ {
+		//~ mpc_check_msg (src, dest, tag, comm, size);
+	//~ }
 
   sctk_mpc_set_header_in_message (msg,
 				  tag,
@@ -5649,7 +5688,16 @@ PMPC_Irecv_pack (int source, int tag, MPC_Comm comm, MPC_Request * request)
 
   if (source != MPC_ANY_SOURCE)
     {
-      mpc_check_msg (src, source, tag, comm, size);
+		//~ if(sctk_is_inter_comm(comm))
+		//~ {
+			//~ int remote_size;
+			//~ PMPC_Comm_remote_size(comm, &remote_size);
+			//~ mpc_check_msg_inter(src, source, tag, comm, size, remote_size);
+		//~ }
+		//~ else
+		//~ {
+			//~ mpc_check_msg (src, source, tag, comm, size);
+		//~ }
     }
   request->request_type = REQUEST_RECV;
   sctk_mpc_set_header_in_message (msg,

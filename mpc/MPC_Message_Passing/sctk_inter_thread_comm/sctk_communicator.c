@@ -1648,7 +1648,7 @@ sctk_communicator_t sctk_duplicate_communicator (const sctk_communicator_t origi
 			remote_leader = tmp->remote_comm->remote_leader;
 		}
 			
-		sctk_barrier (origin_communicator);
+		__MPC_Barrier (origin_communicator);
 		sctk_spinlock_lock(&(tmp->creation_lock));
 			if(tmp->new_comm == NULL)
 			{
@@ -1719,7 +1719,7 @@ sctk_communicator_t sctk_duplicate_communicator (const sctk_communicator_t origi
 			local_root = 1;
 			tmp->has_zero = 1;
 		}
-		sctk_barrier (origin_communicator);
+		__MPC_Barrier (origin_communicator);
 		if((rank != local_leader) && (tmp->has_zero == 1))
 		{
 			local_root = 0;
