@@ -807,7 +807,7 @@ int local_leader, int remote_leader, const sctk_communicator_t origin_communicat
 		}
 		sctk_nodebug("broadcast from intercomm");
 		/* Broadcast comm to local group members*/
-		sctk_broadcast (&comm,sizeof(sctk_communicator_t),local_leader,origin_communicator);
+		sctk_broadcast (&comm,sizeof(sctk_communicator_t),local_leader,sctk_get_local_comm_id(origin_communicator));
 		sctk_nodebug("Every one try %d",comm);
 
 		if((rank != local_leader) && (local_root == 1))
@@ -838,7 +838,7 @@ int local_leader, int remote_leader, const sctk_communicator_t origin_communicat
 		/* Inter-Allreduce */
 		ti = comm;
 		//~ allreduce par groupe
-		sctk_all_reduce(&ti,&comm,sizeof(sctk_communicator_t),1,(MPC_Op_f)sctk_comm_reduce, origin_communicator,0);
+		sctk_all_reduce(&ti,&comm,sizeof(sctk_communicator_t),1,(MPC_Op_f)sctk_comm_reduce, sctk_get_local_comm_id(origin_communicator),0);
 		sctk_nodebug("after allreduce comm %d", comm);
 		//~ echange des resultats du allreduce entre leaders
 		if(rank == local_leader)
@@ -846,7 +846,7 @@ int local_leader, int remote_leader, const sctk_communicator_t origin_communicat
 		
 		sctk_nodebug("after sendrecv comm %d", comm);
 		//~ broadcast aux autres membres par groupe
-		sctk_broadcast (&remote_comm,sizeof(sctk_communicator_t),local_leader,origin_communicator);
+		sctk_broadcast (&remote_comm,sizeof(sctk_communicator_t),local_leader,sctk_get_local_comm_id(origin_communicator));
 		sctk_nodebug("after roadcast comm = %d && remote_comm = %d", comm, remote_comm);
 		//~ on recupère le plus grand des resultats ou -1
 		if(comm != -1 && remote_comm != -1)
@@ -2292,14 +2292,14 @@ sctk_communicator_t sctk_create_communicator_from_intercomm (const sctk_communic
 	}
 	sctk_spinlock_unlock(&(tmp->creation_lock));
 
-	sctk_barrier(origin_communicator);
+	__MPC_Barrier(origin_communicator);
 
 	if(grank == local_leader)
 	{
 		local_root = 1;
 		tmp->has_zero = 1;
 	}
-	sctk_barrier(origin_communicator);
+	__MPC_Barrier(origin_communicator);
 	if((grank != local_leader) && (tmp->has_zero == 1))
 	{
 		local_root = 0;
