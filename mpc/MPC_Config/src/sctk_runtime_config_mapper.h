@@ -56,7 +56,7 @@ typedef void(*sctk_runtime_config_struct_init_handler)(sctk_runtime_config_struc
 
 /******************************** STRUCTURE *********************************/
 /**
- * Structure used to instanciate the meta-description table to map the XML file onto the C struct.
+ * Structure used to instantiate the meta-description table to map the XML file onto the C struct.
  * @brief Structure for the entries of meta-description table.
 **/
 struct sctk_runtime_config_entry_meta {
@@ -82,7 +82,7 @@ struct sctk_runtime_config_entry_meta {
 #define sctk_runtime_config_get_offset_of_member(type,member) ((unsigned long)&(((type*)NULL)->member))
 
 /********************************* FUNCTION *********************************/
-/* mappgin functions */
+/* mapping functions */
 const struct sctk_runtime_config_entry_meta * sctk_runtime_config_get_meta_type( const struct sctk_runtime_config_entry_meta *config_meta, const char * name);
 const struct sctk_runtime_config_entry_meta * sctk_runtime_config_meta_get_first_child(const struct sctk_runtime_config_entry_meta * current);
 const struct sctk_runtime_config_entry_meta * sctk_runtime_config_meta_get_next_child(const struct sctk_runtime_config_entry_meta * current);

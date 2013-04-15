@@ -23,6 +23,7 @@
 #define __SCTK_LAUNCH_H_
 
 #include "sctk_config.h"
+#include "sctk_bool.h"
 #include <stdio.h>
 #ifdef __cplusplus
 extern "C"
@@ -45,8 +46,8 @@ extern "C"
   void sctk_set_net_val (void (*val) (int *, char ***));
 
   extern char *sctk_mono_bin;
-  extern int sctk_enable_smt_capabilities;
-  extern int sctk_share_node_capabilities;
+  extern bool sctk_enable_smt_capabilities;
+  extern bool sctk_share_node_capabilities;
 
   void mpc_start_ (void);
   void mpc_start__ (void);

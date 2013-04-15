@@ -67,7 +67,7 @@ struct sctk_runtime_config_source_xml {
 
 /********************************** ENUM ************************************/
 /**
- * Define some warning levels for errors appening in configuration routines.
+ * Define some warning levels for errors happening in configuration routines.
  * This is mostly for file not found at loading time depending on the level.
 **/
 enum sctk_runtime_config_open_error_level {

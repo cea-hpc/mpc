@@ -46,9 +46,9 @@ extern const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[];
 
 /********************************* FUNCTION *********************************/
 /**
- * Function to be used as entry point to fill a C struct from a profile node. Il will walk in the
+ * Function to be used as entry point to fill a C struct from a profile node. It will walk in the
  * wall tree to fill the C struct. This function search a specific child of given node to use it
- * as root element. This wrapper avoid to make seach/checks in caller.
+ * as root element. This wrapper avoid to make search/checks in caller.
  * @param value Define the base address of the C struct to fill.
  * @param node Define the parent XML node to start from (expect node of type 'profile')
  * @param entry_meta Define the name of the sub node to start from, which is the node to map on 'value'.
@@ -84,7 +84,7 @@ void sctk_runtime_config_map_profile_entry(void * value, xmlNodePtr node,const c
 /********************************* FUNCTION *********************************/
 /**
  * Map the content of a profile XML node on MPC configuration structure.
- * @param config Define the configration structure to use.
+ * @param config Define the configuration structure to use.
  * @param node Define the XML node of the profile. Must be a &lt;profile&gt; balisis.
 **/
 void sctk_runtime_config_map_profile( struct sctk_runtime_config * config, xmlNodePtr node)
@@ -184,7 +184,7 @@ void sctk_runtime_config_made_libxml_silent(void)
 
 /********************************* FUNCTION *********************************/
 /**
- * Function used to initilized the MPC configuration structure. It load the XML files, parse them and
+ * Function used to initialized the MPC configuration structure. It load the XML files, parse them and
  * map the content on the global C structure.
  * CAUTION : This method is not thread safe before end of first execution.
 **/
@@ -207,7 +207,7 @@ void sctk_runtime_config_init(void)
 			/* mark as init */
 			__sctk_global_runtime_config_init__ = true;
 		} else {
-			/* init libxml (safer to manually call it in multi-thread environnement as not threadsafe) */
+			/* init libxml (safer to manually call it in multi-thread environment as not threadsafe) */
 			xmlInitParser();
 
 			/* made silent errors */

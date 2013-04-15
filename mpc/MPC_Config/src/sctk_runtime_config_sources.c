@@ -576,8 +576,8 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 	/*
 	If system file is default and if it didn't exist, fall back onto the .example one.
 	This is a trick, but it permit to not create system config.xml at install, so avoid
-	trouble in case of futur update of the lib and if config file format evolve.
-	The problem stay present only if the admin create system config.xml and modify it.
+	trouble in case of future update of the lib and if config file format evolve.
+	The problem stay present only if the admin creates system config.xml and modifies it.
 	But in that case it's acceptable.
 	*/
 	if (strcmp(config_system,def_sys_path) == 0 && !sckt_runtime_config_file_exist(config_system))

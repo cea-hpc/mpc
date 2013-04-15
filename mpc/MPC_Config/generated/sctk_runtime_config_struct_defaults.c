@@ -52,6 +52,24 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 	obj->banner = true;
 	obj->autokill = 0;
 	obj->user_launchers = "";
+	obj->keep_rand_addr = true;
+	obj->disable_rand_addr = false;
+	obj->disable_mpc = false;
+	obj->startup_args = "";
+	obj->multithreading = "ethread_mxn";
+	obj->nb_task = 1;
+	obj->nb_process = 1;
+	obj->nb_processor = 0;
+	obj->nb_node = 0;
+	obj->launcher = "none";
+	obj->max_try = 10;
+	obj->vers_details = false;
+	obj->profiling = "none";
+	obj->enable_smt = false;
+	obj->share_node = false;
+	obj->restart = false;
+	obj->checkpoint = false;
+	obj->migration = false;
 }
 
 /*******************  FUNCTION  *********************/

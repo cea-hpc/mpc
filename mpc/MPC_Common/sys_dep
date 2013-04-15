@@ -107,9 +107,9 @@ cat  << EOF  > ${SCTK_CONF_C}
 
 static inline void sctk_disable_addr_randomize(int argc, char** argv){
   char* disable_addr_randomize;
-  disable_addr_randomize = getenv("SCTK_LINUX_DISABLE_ADDR_RADOMIZE");
+  disable_addr_randomize = getenv("SCTK_LINUX_DISABLE_ADDR_RANDOMIZE");
   if(disable_addr_randomize){
-    unsetenv("SCTK_LINUX_DISABLE_ADDR_RADOMIZE");
+    unsetenv("SCTK_LINUX_DISABLE_ADDR_RANDOMIZE");
     THIS__set_personality(ADDR_NO_RANDOMIZE);
     execvp(argv[0],argv);
   }
@@ -129,7 +129,7 @@ SCTK_SCTK_CHECK_HEADER_RES="$?"
 rm ${SCTK_CONF_C} ${SCTK_CONF_OBJ} >> ${SCTK_CONF_LOG} 2>&1
 if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
     result yes
-    SCTK_CHECK_OPTION	-DSCTK_LINUX_DISABLE_ADDR_RADOMIZE
+    SCTK_CHECK_OPTION	-DSCTK_LINUX_DISABLE_ADDR_RANDOMIZE
 else
     result no
 fi

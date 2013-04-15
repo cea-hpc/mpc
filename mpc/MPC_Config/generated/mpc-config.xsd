@@ -45,6 +45,24 @@
       <xs:element minOccurs="0" name="banner" type="xs:boolean"/>
       <xs:element minOccurs="0" name="autokill" type="xs:integer"/>
       <xs:element minOccurs="0" name="user_launchers" type="xs:string"/>
+      <xs:element minOccurs="0" name="keep_rand_addr" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="disable_rand_addr" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="disable_mpc" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="startup_args" type="xs:string"/>
+      <xs:element minOccurs="0" name="multithreading" type="xs:string"/>
+      <xs:element minOccurs="0" name="nb_task" type="xs:integer"/>
+      <xs:element minOccurs="0" name="nb_process" type="xs:integer"/>
+      <xs:element minOccurs="0" name="nb_processor" type="xs:integer"/>
+      <xs:element minOccurs="0" name="nb_node" type="xs:integer"/>
+      <xs:element minOccurs="0" name="launcher" type="xs:string"/>
+      <xs:element minOccurs="0" name="max_try" type="xs:integer"/>
+      <xs:element minOccurs="0" name="vers_details" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="profiling" type="xs:string"/>
+      <xs:element minOccurs="0" name="enable_smt" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="share_node" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="restart" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="checkpoint" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="migration" type="xs:boolean"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

@@ -61,6 +61,42 @@ struct sctk_runtime_config_struct_launcher
 	int autokill;
 	/**Permit to extend the launchers available via 'mpcrun -l=...' by providing scripts (named mpcrun_XXXX) in a user directory. Can be override by MPC_USER_LAUNCHERS.**/
 	char * user_launchers;
+	/****/
+	bool keep_rand_addr;
+	/****/
+	bool disable_rand_addr;
+	/****/
+	bool disable_mpc;
+	/****/
+	char * startup_args;
+	/****/
+	char * multithreading;
+	/****/
+	int nb_task;
+	/****/
+	int nb_process;
+	/****/
+	int nb_processor;
+	/****/
+	int nb_node;
+	/****/
+	char * launcher;
+	/****/
+	int max_try;
+	/****/
+	bool vers_details;
+	/****/
+	char * profiling;
+	/****/
+	bool enable_smt;
+	/****/
+	bool share_node;
+	/****/
+	bool restart;
+	/****/
+	bool checkpoint;
+	/****/
+	bool migration;
 };
 
 /******************************** STRUCTURE *********************************/

@@ -33,7 +33,7 @@
 #include "mpc_print_config_xml.h"
 
 /********************************** ENUM ************************************/
-/** Output mode availables to print the config. **/
+/** Output mode available to print the config. **/
 enum output_mode {
 	/** Output an XML file which can be reuse as input configuration file. **/
 	OUTPUT_MODE_XML,
@@ -79,10 +79,10 @@ Options :\n\
   --system={file}   : Override the system configuration file. Use none to disable.\n\
   --user={file}     : Override the user configuration file. Use none to disable.\n\
   --nofile          : Only use the internal default values.\n\
-  --profiles={list} : Manualy enable some profiles (comma separated).\n\
+  --profiles={list} : Manually enable some profiles (comma separated).\n\
   --schema={file}   : Override the default path to XML schema for validation.\n\
 \n\
-You can olso influence the loaded files with environnement variables :\n\
+You can also influence the loaded files with environment variables :\n\
   - MPC_SYSTEM_CONFIG   : System configuration file (" SCTK_INSTALL_PREFIX "/share/mpc/config.xml)\n\
   - MPC_USER_CONFIG     : Application configuration file (disabled)\n\
   - MPC_DISABLE_CONFIG  : Disable loading of configuration files if setup to 1.\n\
@@ -101,7 +101,7 @@ void display_launcher(const struct sctk_runtime_config * config)
 
 /********************************* FUNCTION *********************************/
 /**
- * Standard display of the sturct to see the complete tee
+ * Standard display of the struct to see the complete tree
 **/
 void display_all(const struct sctk_runtime_config * config)
 {
@@ -110,7 +110,7 @@ void display_all(const struct sctk_runtime_config * config)
 
 /********************************* FUNCTION *********************************/
 /**
- * Standard display of the sturct to see the complete tee
+ * Standard display of the struct to see the complete tree
 **/
 void display_xml(const struct sctk_runtime_config * config)
 {
@@ -244,7 +244,7 @@ int load_and_print_mpc_config(const struct command_options * options)
 			printf("CONFIG_FILES_VALID=true\n");
 			break;
 		default:
-			fprintf(stderr,"Error : invalide output mode : %d\n",options->mode);
+			fprintf(stderr,"Error : invalid output mode : %d\n",options->mode);
 			res = EXIT_FAILURE;
 	}
 

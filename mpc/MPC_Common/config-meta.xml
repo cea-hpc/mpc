@@ -9,6 +9,24 @@
 			<param name="banner" type="bool" default="true" doc="Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER."/>
 			<param name="autokill" type="int" default="0" doc="Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT."/>
 			<param name="user_launchers" type="string" default="" doc="Permit to extend the launchers available via 'mpcrun -l=...' by providing scripts (named mpcrun_XXXX) in a user directory. Can be override by MPC_USER_LAUNCHERS."/>
+			<param name="keep_rand_addr" type="bool" default="true" doc=""/>
+			<param name="disable_rand_addr" type="bool" default="false" doc=""/>
+			<param name="disable_mpc" type="bool" default="false" doc=""/>
+			<param name="startup_args" type="string" default="" doc=""/>
+			<param name="multithreading" type="string" default="ethread_mxn" doc=""/>
+			<param name="nb_task" type="int" default="1" doc=""/>
+			<param name="nb_process" type="int" default="1" doc=""/>
+			<param name="nb_processor" type="int" default="0" doc=""/>
+			<param name="nb_node" type="int" default="0" doc=""/>
+			<param name="launcher" type="string" default="none" doc=""/>
+			<param name="max_try" type="int" default="10" doc=""/>
+			<param name="vers_details" type="bool" default="false" doc=""/>
+			<param name="profiling" type="string" default="none" doc=""/>
+			<param name="enable_smt" type="bool" default="false" doc=""/>
+			<param name="share_node" type="bool" default="false" doc=""/>
+			<param name="restart" type="bool" default="false" doc=""/>
+			<param name="checkpoint" type="bool" default="false" doc=""/>
+			<param name="migration" type="bool" default="false" doc=""/>
 		</struct>
 	</usertypes>
 	<modules>

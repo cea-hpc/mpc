@@ -177,6 +177,78 @@ Automatically kill the MPC processes after a given timeout. Use 0 to disable. Ca
 Type is string. Default value is . 
 .Pp user_launchers
 Permit to extend the launchers available via 'mpcrun -l=...' by providing scripts (named mpcrun_XXXX) in a user directory. Can be override by MPC_USER_LAUNCHERS.
+.It Cm keep_rand_addr
+Type is bool. Default value is true. 
+.Pp keep_rand_addr
+
+.It Cm disable_rand_addr
+Type is bool. Default value is false. 
+.Pp disable_rand_addr
+
+.It Cm disable_mpc
+Type is bool. Default value is false. 
+.Pp disable_mpc
+
+.It Cm startup_args
+Type is string. Default value is . 
+.Pp startup_args
+
+.It Cm multithreading
+Type is string. Default value is ethread_mxn. 
+.Pp multithreading
+
+.It Cm nb_task
+Type is int. Default value is 1. 
+.Pp nb_task
+
+.It Cm nb_process
+Type is int. Default value is 1. 
+.Pp nb_process
+
+.It Cm nb_processor
+Type is int. Default value is 0. 
+.Pp nb_processor
+
+.It Cm nb_node
+Type is int. Default value is 0. 
+.Pp nb_node
+
+.It Cm launcher
+Type is string. Default value is none. 
+.Pp launcher
+
+.It Cm max_try
+Type is int. Default value is 10. 
+.Pp max_try
+
+.It Cm vers_details
+Type is bool. Default value is false. 
+.Pp vers_details
+
+.It Cm profiling
+Type is string. Default value is none. 
+.Pp profiling
+
+.It Cm enable_smt
+Type is bool. Default value is false. 
+.Pp enable_smt
+
+.It Cm share_node
+Type is bool. Default value is false. 
+.Pp share_node
+
+.It Cm restart
+Type is bool. Default value is false. 
+.Pp restart
+
+.It Cm checkpoint
+Type is bool. Default value is false. 
+.Pp checkpoint
+
+.It Cm migration
+Type is bool. Default value is false. 
+.Pp migration
+
 .El
 .Sh ENTRIES OF TYPE net_driver_infiniband
 Declare a fake driver to test the configuration system.

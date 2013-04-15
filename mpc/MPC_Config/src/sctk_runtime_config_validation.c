@@ -52,8 +52,8 @@ void sctk_runtime_config_validate(struct sctk_runtime_config * config)
 
 /********************************* FUNCTION *********************************/
 /**
- * Compatility with old getenv() system. Some may be removed soon but
- * need some discutions about that.
+ * Compatibility with old getenv() system. Some may be removed soon but
+ * need some discussions about that.
  * @todo Cleanup non needed old support.
 **/
 void sctk_runtime_config_old_getenv_compatibility(struct sctk_runtime_config * config)
@@ -83,6 +83,21 @@ void sctk_runtime_config_override_by_getenv(struct sctk_runtime_config * config)
 	/* User directory where to search extra launchers for mpcrun -l=... */
 	if ((tmp = getenv("MPC_USER_LAUNCHERS")) != NULL)
 		config->modules.launcher.user_launchers = tmp;
+	/* came from sctk_launch.c for mpc disabling */
+	if ((tmp = getenv("MPC_DISABLE")) != NULL)
+		config->modules.launcher.disable_mpc = atoi(tmp);
+	/* came from sctk_launch.c for keeping randomize addressing */
+	if ((tmp = getenv("SCTK_LINUX_KEEP_ADDR_RANDOMIZE")) != NULL)
+		config->modules.launcher.keep_rand_addr = atoi(tmp);
+	/* came from sctk_launch.c for randomize addressing disabling */
+	if ((tmp = getenv("SCTK_LINUX_DISABLE_ADDR_RANDOMIZE")) != NULL)
+		config->modules.launcher.disable_rand_addr = atoi(tmp);
+	/* came from sctk_launch.c for add extra args to mpc */
+	if ((tmp = getenv("MPC_STARTUP_ARGS")) != NULL)
+		config->modules.launcher.startup_args = tmp;
+	/* came from sctk_launch.c for verbosity level */
+	if ((tmp = getenv("MPC_VERBOSITY")) != NULL)
+		config->modules.launcher.verbosity = atoi(tmp);
 }
 
 /********************************* FUNCTION *********************************/

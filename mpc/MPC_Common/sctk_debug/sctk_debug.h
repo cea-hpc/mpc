@@ -34,12 +34,14 @@ extern "C"
 #include <sctk_config.h>
 #include <assert.h>
 
+#include "sctk_bool.h"
+
 #define SCTK_MAX_FILENAME_SIZE 1024
 #define SCTK_DBG_INFO stderr,__LINE__,__FILE__,SCTK_FUNCTION
 
-  extern int sctk_restart_mode;
-  extern int sctk_check_point_restart_mode;
-  extern int sctk_migration_mode;
+  extern bool sctk_restart_mode;
+  extern bool sctk_check_point_restart_mode;
+  extern bool sctk_migration_mode;
   extern char *sctk_multithreading_mode;
   extern char *sctk_network_mode;
   extern char *sctk_store_dir;
