@@ -7240,7 +7240,10 @@ PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 {
   int res = MPI_ERR_INTERN;
   if(dest == MPC_PROC_NULL)
-		SCTK__MPI_Check_retrun_val (res, comm);
+  {
+	res = MPI_SUCCESS;
+	SCTK__MPI_Check_retrun_val (res, comm);
+  }
   {	
     int size;
     mpi_check_comm (comm, comm);
@@ -7278,8 +7281,6 @@ PMPI_Recv (void *buf, int count, MPI_Datatype datatype, int source, int tag,
 	   MPI_Comm comm, MPI_Status * status)
 {
   int res = MPI_ERR_INTERN;
-  if(source == MPC_PROC_NULL)
-		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_STATUS (status);
   {
     int size;
@@ -7341,7 +7342,10 @@ PMPI_Bsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 {
   int res = MPI_ERR_INTERN;
   if(dest == MPC_PROC_NULL)
-		SCTK__MPI_Check_retrun_val (res, comm);
+  {
+	res = MPI_SUCCESS;
+	SCTK__MPI_Check_retrun_val (res, comm);
+  }
   {
     int size;
     mpi_check_comm (comm, comm);
@@ -7380,7 +7384,10 @@ PMPI_Ssend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 {
   int res = MPI_ERR_INTERN;
   if(dest == MPC_PROC_NULL)
-		SCTK__MPI_Check_retrun_val (res, comm);
+  {
+	res = MPI_SUCCESS;
+	SCTK__MPI_Check_retrun_val (res, comm);
+  }
   {
     int size;
     mpi_check_comm (comm, comm);
@@ -7419,7 +7426,10 @@ PMPI_Rsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 {
   int res = MPI_ERR_INTERN;
   if(dest == MPC_PROC_NULL)
-		SCTK__MPI_Check_retrun_val (res, comm);
+  {
+	res = MPI_SUCCESS;
+	SCTK__MPI_Check_retrun_val (res, comm);
+  }
   {
     int size;
     mpi_check_comm (comm, comm);
@@ -7475,9 +7485,13 @@ PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	    MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
-  if(dest == MPC_PROC_NULL)
-		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_REQUEST (request);
+  if(dest == MPC_PROC_NULL)
+  {
+	res = MPI_SUCCESS;
+	SCTK__MPI_Check_retrun_val (res, comm);
+  }
+  
   {
     int size;
     mpi_check_comm (comm, comm);
@@ -7518,9 +7532,13 @@ PMPI_Ibsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	     MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
-  if(dest == MPC_PROC_NULL)
-		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_REQUEST (request);
+  if(dest == MPC_PROC_NULL)
+  {
+	res = MPI_SUCCESS;
+	SCTK__MPI_Check_retrun_val (res, comm);
+  }
+  
   {
     int size;
     mpi_check_comm (comm, comm);
@@ -7560,9 +7578,13 @@ PMPI_Issend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	     MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
-  if(dest == MPC_PROC_NULL)
-		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_REQUEST (request);
+  if(dest == MPC_PROC_NULL)
+  {
+	res = MPI_SUCCESS;
+	SCTK__MPI_Check_retrun_val (res, comm);
+  }
+  
   {
     int size;
     mpi_check_comm (comm, comm);
@@ -7601,9 +7623,13 @@ PMPI_Irsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	     MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
-  if(dest == MPC_PROC_NULL)
-		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_REQUEST (request);
+  if(dest == MPC_PROC_NULL)
+  {
+	res = MPI_SUCCESS;
+	SCTK__MPI_Check_retrun_val (res, comm);
+  }
+  
   {
     int size;
     mpi_check_comm (comm, comm);
@@ -7642,8 +7668,6 @@ PMPI_Irecv (void *buf, int count, MPI_Datatype datatype, int source,
 	    int tag, MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
-  if(source == MPC_PROC_NULL)
-		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_REQUEST (request);
   {
     int size;

@@ -266,6 +266,7 @@ static inline void sctk_mpc_commit_status_from_request(MPC_Request * request, MP
   if (status != MPC_STATUS_IGNORE)
     {
       status->MPC_SOURCE = request->header.source;
+      sctk_debug("request->header.message_tag = %d", request->header.message_tag);
       status->MPC_TAG = request->header.message_tag;
       status->MPC_ERROR = MPC_SUCCESS;
       status->count = request->header.msg_size;
