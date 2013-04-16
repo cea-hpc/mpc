@@ -28,8 +28,13 @@
 			<param name="checkpoint" type="bool" default="false" doc=""/>
 			<param name="migration" type="bool" default="false" doc=""/>
 		</struct>
+		<struct name="debugger" doc="Options for MPC Debugger">
+			<param name="colors" type="bool" default="true" doc="Print colored text in terminal"/>
+			<param name="max_filename_size" type="int" default="1024" doc=""/>
+		</struct>
 	</usertypes>
 	<modules>
 		<module name="launcher" type="launcher"/>
+		<module name="debugger" type="debugger"/>
 	</modules>
 </config>

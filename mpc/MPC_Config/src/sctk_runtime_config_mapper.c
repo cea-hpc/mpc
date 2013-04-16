@@ -51,7 +51,7 @@ bool sctk_runtime_config_map_entry_to_bool(xmlNodePtr node)
 int sctk_runtime_config_map_entry_to_int(xmlNodePtr node)
 {
 	int res;
-	xmlChar * value = xmlNodeGetContent(node);
+	xmlChar * value = node->children->content; //xmlNodeGetContent(node);
 	res = atoi((char*)value);
 	free(value);
 	return res;
@@ -61,7 +61,7 @@ int sctk_runtime_config_map_entry_to_int(xmlNodePtr node)
 double sctk_runtime_config_map_entry_to_double(xmlNodePtr node)
 {
 	double res;
-	xmlChar * value = xmlNodeGetContent(node);
+	xmlChar * value = node->children->content; //xmlNodeGetContent(node);
 	res = atof((char*)value);
 	xmlFree(value);
 	return res;

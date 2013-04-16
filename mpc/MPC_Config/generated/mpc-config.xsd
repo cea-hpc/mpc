@@ -66,6 +66,13 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_debugger">
+    <xs:all>
+      <xs:element minOccurs="0" name="colors" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="max_filename_size" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_net_driver_infiniband">
     <xs:all>
       <xs:element minOccurs="0" name="network_type" type="xs:integer"/>
@@ -190,6 +197,7 @@
     <xs:all>
       <xs:element minOccurs="0" name="allocator" type="user_type_allocator"/>
       <xs:element minOccurs="0" name="launcher" type="user_type_launcher"/>
+      <xs:element minOccurs="0" name="debugger" type="user_type_debugger"/>
       <xs:element minOccurs="0" name="profiler" type="user_type_profiler"/>
     </xs:all>
   </xs:complexType>

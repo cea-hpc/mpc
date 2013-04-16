@@ -82,85 +82,90 @@
 			<param name="checkpoint" type="bool" default="false" doc=""/>
 			<param name="migration" type="bool" default="false" doc=""/>
 		</struct>
+		<struct name="debugger" doc="Options for MPC Debugger">
+			<param name="colors" type="bool" default="true" doc="Print colored text in terminal"/>
+			<param name="max_filename_size" type="int" default="1024" doc=""/>
+		</struct>
 	</usertypes>
 	<modules>
 		<module name="launcher" type="launcher"/>
+		<module name="debugger" type="debugger"/>
 	</modules>
 </config>
 <config name="MPC_Message_Passing">
-  <usertypes>
+	<usertypes>
 		<!-- Structure for infiniband driver -->
 		<struct name="net_driver_infiniband" doc="Declare a fake driver to test the configuration system.">
-      <param name="network_type" type="int" doc="Define a network's type (0=signalization, 1=data)"/>
-      <param name="adm_port" type="int" doc="Defines the port number to use." default="0"/>
-      <param name="verbose_level" type="int" doc="Defines the verbose level of the Infiniband interface ." default="0"/>
-			<param name="eager_limit" type="int" doc="Size of the eager buffers (short messages)." default ="12288"/>
-      <param name="buffered_limit" type="int" doc="Max size for using the Buffered protocol (message split into several Eager messages)." default="262114"/>
-      <param name="qp_tx_depth" type="int" doc="Number of entries to allocate in the QP for sending messages. If too low, may cause an QP overrun" default="15000"/>
-      <param name="qp_rx_depth" type="int" doc="Number of entries to allocate in the QP for receiving messages. Must be 0 if using SRQ" default="0"/>
-      <param name="cq_depth" type="int" doc="Number of entries to allocate in the CQ. If too low, may cause a CQ overrun" default="40000"/>
-      <param name="max_sg_sq" type="int" doc="Max pending RDMA operations for send" default="4"/>
-      <param name="max_sg_rq" type="int" doc="Max pending RDMA operations for recv" default="4"/>
-      <param name="max_inline" type="int" doc="Max size for inlining messages" default="128"/>
-      <param name="rdma_resizing" type="int" doc="Defines if RDMA connections may be resized." default="0"/>
-      <param name="max_rdma_connections" type="int" doc="Number of RDMA buffers allocated for each neighbor" default="0"/>
-      <param name="max_rdma_resizing" type="int" doc="Max number of RDMA buffers resizing allowed" default="0"/>
-      <param name="init_ibufs" type="int" doc="Max number of Eager buffers to allocate during the initialization step" default="1000"/>
-      <param name="max_srq_ibufs_posted" type="int" doc="Max number of Eager buffers which can be posted to the SRQ. This number cannot be higher than the number fixed by the HW" default="1500"/>
-      <param name="max_srq_ibufs" type="int" doc="Max number of Eager buffers which can be used by the SRQ. This number is not fixed by the HW" default="1000"/>
-      <param name="srq_credit_limit" type="int" doc="Min number of free recv Eager buffers before posting a new buffer." default="500"/>
-      <param name="srq_credit_thread_limit" type="int" doc="Min number of free recv Eager buffers before the activation of the asynchronous thread. If this thread is activated too many times, the performance may be decreased." default="100"/>
-      <param name="size_ibufs_chunk" type="int" doc="Number of new buffers allocated when no more buffers are available." default="100"/>
-      <param name="init_mr" type="int" doc="Number of MMU entries allocated during the MPC initlization." default="400"/>
-      <param name="size_mr_chunk" type="int" doc="Number of MMU entries allocated when no more MMU entries are available." default="200"/>
-      <param name="mmu_cache_enabled" type="int" doc="Defines if the MMU cache is enabled." default="1"/>
-      <param name="mmu_cache_entries" type="int" doc="Defines the number of MMU cache allowed." default="1"/>
-      <param name="steal" type="int" doc="Defines if the steal in MPI is allowed " default="2"/>
-      <param name="quiet_crash" type="int" doc="Defines if the Infiniband interface must crash quietly." default="0"/>
-      <param name="async_thread" type="int" doc="Defines if the asynchronous may be started at the MPC initialization." default="0"/>
-      <param name="wc_in_number" type="int" doc="wc_in_number." default="0"/>
-      <param name="wc_out_number" type="int" doc="wc_out_number." default="0"/>
-      <param name="rdma_depth" type="int" doc="rdma_depth." default="0"/>
-      <param name="rdma_dest_depth" type="int" doc="rdma_dest_depth." default="0"/>
+			<param name="network_type" type="int" doc="Define a network's type (0=signalization, 1=data)" />
+			<param name="adm_port" type="int" doc="Defines the port number to use." default="0" />
+			<param name="verbose_level" type="int" doc="Defines the verbose level of the Infiniband interface ." default="0" />
+			<param name="eager_limit" type="int" doc="Size of the eager buffers (short messages)." default="12288" />
+			<param name="buffered_limit" type="int" doc="Max size for using the Buffered protocol (message split into several Eager messages)." default="262114" />
+			<param name="qp_tx_depth" type="int" doc="Number of entries to allocate in the QP for sending messages. If too low, may cause an QP overrun" default="15000" />
+			<param name="qp_rx_depth" type="int" doc="Number of entries to allocate in the QP for receiving messages. Must be 0 if using SRQ" default="0" />
+			<param name="cq_depth" type="int" doc="Number of entries to allocate in the CQ. If too low, may cause a CQ overrun" default="40000" />
+			<param name="max_sg_sq" type="int" doc="Max pending RDMA operations for send" default="4" />
+			<param name="max_sg_rq" type="int" doc="Max pending RDMA operations for recv" default="4" />
+			<param name="max_inline" type="int" doc="Max size for inlining messages" default="128" />
+			<param name="rdma_resizing" type="int" doc="Defines if RDMA connections may be resized." default="0" />
+			<param name="max_rdma_connections" type="int" doc="Number of RDMA buffers allocated for each neighbor" default="0" />
+			<param name="max_rdma_resizing" type="int" doc="Max number of RDMA buffers resizing allowed" default="0" />
+			<param name="init_ibufs" type="int" doc="Max number of Eager buffers to allocate during the initialization step" default="1000" />
+			<param name="max_srq_ibufs_posted" type="int" doc="Max number of Eager buffers which can be posted to the SRQ. This number cannot be higher than the number fixed by the HW" default="1500" />
+			<param name="max_srq_ibufs" type="int" doc="Max number of Eager buffers which can be used by the SRQ. This number is not fixed by the HW" default="1000" />
+			<param name="srq_credit_limit" type="int" doc="Min number of free recv Eager buffers before posting a new buffer." default="500" />
+			<param name="srq_credit_thread_limit" type="int" doc="Min number of free recv Eager buffers before the activation of the asynchronous thread. If this thread is activated too many times, the performance may be decreased." default="100" />
+			<param name="size_ibufs_chunk" type="int" doc="Number of new buffers allocated when no more buffers are available." default="100" />
+			<param name="init_mr" type="int" doc="Number of MMU entries allocated during the MPC initlization." default="400" />
+			<param name="size_mr_chunk" type="int" doc="Number of MMU entries allocated when no more MMU entries are available." default="200" />
+			<param name="mmu_cache_enabled" type="int" doc="Defines if the MMU cache is enabled." default="1" />
+			<param name="mmu_cache_entries" type="int" doc="Defines the number of MMU cache allowed." default="1" />
+			<param name="steal" type="int" doc="Defines if the steal in MPI is allowed " default="2" />
+			<param name="quiet_crash" type="int" doc="Defines if the Infiniband interface must crash quietly." default="0" />
+			<param name="async_thread" type="int" doc="Defines if the asynchronous may be started at the MPC initialization." default="0" />
+			<param name="wc_in_number" type="int" doc="wc_in_number." default="0" />
+			<param name="wc_out_number" type="int" doc="wc_out_number." default="0" />
+			<param name="rdma_depth" type="int" doc="rdma_depth." default="0" />
+			<param name="rdma_dest_depth" type="int" doc="rdma_dest_depth." default="0" />
 		</struct>
 
-    <!-- Structure for TCP driver -->
+		<!-- Structure for TCP driver -->
 		<struct name="net_driver_tcp" doc="Declare a fake driver to test the configuration system.">
-      <param name="fake_param" type="int" doc="Fake param." default="0"/>
+			<param name="fake_param" type="int" doc="Fake param." default="0" />
 		</struct>
 
 		<!-- Union to merge drivers -->
 		<union name="net_driver" doc="Define a specific configuration for a network driver to apply in rails.">
-			<choice name="infiniband" type="net_driver_infiniband"/>
-			<choice name="tcp" type="net_driver_tcp"/>
-			<choice name="tcpoib" type="net_driver_tcp"/>
+			<choice name="infiniband" type="net_driver_infiniband" />
+			<choice name="tcp" type="net_driver_tcp" />
+			<choice name="tcpoib" type="net_driver_tcp" />
 		</union>
 
 		<!-- define a network driver config -->
 		<struct name="net_driver_config" doc="Contain a list of driver configuration reused by rail definitions.">
-			<param name="name" type="string" doc="Name of the driver configuration to be referenced in rail definitions."/>
-			<param name="driver" type="net_driver" doc="Define the related driver to use and its configuration."/>
+			<param name="name" type="string" doc="Name of the driver configuration to be referenced in rail definitions." />
+			<param name="driver" type="net_driver" doc="Define the related driver to use and its configuration." />
 		</struct>
 
-    <!-- Structure for cli_option -->
+		<!-- Structure for cli_option -->
 		<struct name="net_cli_option" doc="Define a specific configuration for a network provided by '-net'.">
-			<param name="name" type="string" doc="Define the name of the option."/>
-      <array name="rails" entry-name="rail" type="string" doc="Define the driver config to use for this rail."/>
+			<param name="name" type="string" doc="Define the name of the option." />
+			<array name="rails" entry-name="rail" type="string" doc="Define the driver config to use for this rail." />
 		</struct>
 
 		<!-- Structure for rail definition -->
 		<struct name="net_rail" doc="Define a rail which is a name, a device associate to a driver and a routing topology.">
-			<param name="name" type="string" doc="Define the name of current rail."/>
-			<param name="device" type="string" doc="Define the name of the device to use in this rail."/>
-			<param name="topology" type="string" doc="Define the network topology to apply on this rail."/>
-			<param name="config" type="string" doc="Define the driver config to use for this rail."/>
+			<param name="name" type="string" doc="Define the name of current rail." />
+			<param name="device" type="string" doc="Define the name of the device to use in this rail." />
+			<param name="topology" type="string" doc="Define the network topology to apply on this rail." />
+			<param name="config" type="string" doc="Define the driver config to use for this rail." />
 		</struct>
 
 		<!-- root structure of network config -->
 		<struct name="networks" doc="Base structure to contain the network configuration">
-			<array name="configs" entry-name="config" type="net_driver_config" doc="Define the configuration driver list to reuse in rail definitions."/>
-			<array name="rails" entry-name="rail" type="net_rail" doc="List of rails to declare in MPC."/>
-			<array name="cli_options" entry-name="cli_option" type="net_cli_option" doc="List of networks available through the '-net' argument of mpcrun."/>
+			<array name="configs" entry-name="config" type="net_driver_config" doc="Define the configuration driver list to reuse in rail definitions." />
+			<array name="rails" entry-name="rail" type="net_rail" doc="List of rails to declare in MPC." />
+			<array name="cli_options" entry-name="cli_option" type="net_cli_option" doc="List of networks available through the '-net' argument of mpcrun." />
 		</struct>
 
 	</usertypes>

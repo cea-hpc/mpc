@@ -100,6 +100,15 @@ struct sctk_runtime_config_struct_launcher
 };
 
 /******************************** STRUCTURE *********************************/
+/**Options for MPC Debugger**/
+struct sctk_runtime_config_struct_debugger
+{	/**Print colored text in terminal**/
+	bool colors;
+	/****/
+	int max_filename_size;
+};
+
+/******************************** STRUCTURE *********************************/
 /**Declare a fake driver to test the configuration system.**/
 struct sctk_runtime_config_struct_net_driver_infiniband
 {	/**Define a network's type (0=signalization, 1=data)**/
@@ -265,6 +274,7 @@ struct sctk_runtime_config_modules
 {
 	struct sctk_runtime_config_struct_allocator allocator;
 	struct sctk_runtime_config_struct_launcher launcher;
+	struct sctk_runtime_config_struct_debugger debugger;
 	struct sctk_runtime_config_struct_profiler profiler;
 };
 

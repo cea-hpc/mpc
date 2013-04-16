@@ -107,6 +107,10 @@ See type allocator.
 Options for MPC launcher.
 .br
 See type launcher.
+.It Cm debugger
+Options for MPC Debugger
+.br
+See type debugger.
 .It Cm profiler
 Options for the internal MPC Profiler
 .br
@@ -248,6 +252,21 @@ Type is bool. Default value is false.
 .It Cm migration
 Type is bool. Default value is false. 
 .Pp migration
+
+.El
+.Sh ENTRIES OF TYPE debugger
+Options for MPC Debugger
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm colors
+Type is bool. Default value is true. 
+.Pp colors
+Print colored text in terminal
+.It Cm max_filename_size
+Type is int. Default value is 1024. 
+.Pp max_filename_size
 
 .El
 .Sh ENTRIES OF TYPE net_driver_infiniband

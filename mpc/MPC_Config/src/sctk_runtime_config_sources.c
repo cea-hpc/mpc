@@ -593,10 +593,10 @@ void sctk_runtime_config_sources_open(struct sctk_runtime_config_sources * confi
 
 	/*
 	validate XML format with schema
-	but skip it if alread done by in mpcrun, it avoid to open the .xsd file on each node for nothing
+	but skip it if already done by in mpcrun, it avoid to open the .xsd file on each node for nothing
 	and avoid to spam the error stream with multiple instance of error messages.
 	To disable mpcrun need to define CONFIG_SILENT="1" (as for xml loading errors)
-	If launch without mpcrun, it's sequential so need to run it which is ok by default.
+	If launch without mpcrun, it's sequential so need to run it which is okay by default.
 	*/
 	if (strcmp(config_silent,"1") != 0) {
 		status = sctk_runtime_config_sources_validate(config_sources,config_schema);

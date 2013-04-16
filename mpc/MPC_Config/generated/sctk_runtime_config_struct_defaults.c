@@ -73,6 +73,15 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_debugger(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_debugger * obj = struct_ptr;
+	/* Simple params : */
+	obj->colors = true;
+	obj->max_filename_size = 1024;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_net_driver_infiniband * obj = struct_ptr;
@@ -197,6 +206,7 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 {
 	sctk_runtime_config_struct_init_allocator(&config->modules.allocator);
 	sctk_runtime_config_struct_init_launcher(&config->modules.launcher);
+	sctk_runtime_config_struct_init_debugger(&config->modules.debugger);
 	sctk_runtime_config_struct_init_profiler(&config->modules.profiler);
 	sctk_runtime_config_struct_init_networks(&config->networks);
 };
