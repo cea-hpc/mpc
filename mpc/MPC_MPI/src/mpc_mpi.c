@@ -6448,6 +6448,7 @@ __INTERNAL__PMPI_Cart_get (MPI_Comm comm, int maxdims, int *dims, int *periods, 
 	mpi_topology_per_comm_t* topo;
 	int res;
 	int rank;
+<<<<<<< HEAD
 
 	tmp = mpc_mpc_get_per_comm_data(comm);
 	topo = &(tmp->topo);
@@ -7281,6 +7282,8 @@ PMPI_Recv (void *buf, int count, MPI_Datatype datatype, int source, int tag,
 	   MPI_Comm comm, MPI_Status * status)
 {
   int res = MPI_ERR_INTERN;
+  if(source == MPC_PROC_NULL)
+		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_STATUS (status);
   {
     int size;
@@ -7485,6 +7488,8 @@ PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	    MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
+  if(dest == MPC_PROC_NULL)
+		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_REQUEST (request);
   if(dest == MPC_PROC_NULL)
   {
@@ -7532,6 +7537,8 @@ PMPI_Ibsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	     MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
+  if(dest == MPC_PROC_NULL)
+		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_REQUEST (request);
   if(dest == MPC_PROC_NULL)
   {
@@ -7578,6 +7585,8 @@ PMPI_Issend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	     MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
+  if(dest == MPC_PROC_NULL)
+		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_REQUEST (request);
   if(dest == MPC_PROC_NULL)
   {
@@ -7623,6 +7632,8 @@ PMPI_Irsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	     MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
+  if(dest == MPC_PROC_NULL)
+		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_REQUEST (request);
   if(dest == MPC_PROC_NULL)
   {
@@ -7668,6 +7679,8 @@ PMPI_Irecv (void *buf, int count, MPI_Datatype datatype, int source,
 	    int tag, MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
+  if(source == MPC_PROC_NULL)
+		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_REQUEST (request);
   {
     int size;
