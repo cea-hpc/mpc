@@ -20,6 +20,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+//need some fixes
+#if 0
 #ifndef MPC_ALLOC_PUBLIC_API_H
 #define MPC_ALLOC_PUBLIC_API_H
 
@@ -91,3 +93,4 @@ struct sctk_alloc_chain * sctk_alloc_posix_set_default_chain(struct sctk_alloc_c
 #endif //__cplusplus
 
 #endif //MPC_ALLOC_PUBLIC_API_H
+#endif
