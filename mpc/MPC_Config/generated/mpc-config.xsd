@@ -178,6 +178,18 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_inter_thread_comm">
+    <xs:all>
+      <xs:element minOccurs="0" name="barrier_arity" type="xs:integer"/>
+      <xs:element minOccurs="0" name="broadcast_arity_max" type="xs:integer"/>
+      <xs:element minOccurs="0" name="broadcast_max_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="broadcast_check_threshold" type="xs:integer"/>
+      <xs:element minOccurs="0" name="allreduce_arity_max" type="xs:integer"/>
+      <xs:element minOccurs="0" name="allreduce_max_size" type="xs:integer"/>
+      <xs:element minOccurs="0" name="allreduce_check_threshold" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_profiler">
     <xs:all>
       <xs:element minOccurs="0" name="file_prefix" type="xs:string"/>
@@ -198,6 +210,7 @@
       <xs:element minOccurs="0" name="allocator" type="user_type_allocator"/>
       <xs:element minOccurs="0" name="launcher" type="user_type_launcher"/>
       <xs:element minOccurs="0" name="debugger" type="user_type_debugger"/>
+      <xs:element minOccurs="0" name="inter_thread_comm" type="user_type_inter_thread_comm"/>
       <xs:element minOccurs="0" name="profiler" type="user_type_profiler"/>
     </xs:all>
   </xs:complexType>

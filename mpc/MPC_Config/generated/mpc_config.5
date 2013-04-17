@@ -111,6 +111,10 @@ See type launcher.
 Options for MPC Debugger
 .br
 See type debugger.
+.It Cm inter_thread_comm
+Options for communication between threads
+.br
+See type inter_thread_comm.
 .It Cm profiler
 Options for the internal MPC Profiler
 .br
@@ -495,6 +499,41 @@ List of rails to declare in MPC.
 Type is array of net_cli_option. 
 .Pp cli_options
 List of networks available through the '-net' argument of mpcrun.
+.El
+.Sh ENTRIES OF TYPE inter_thread_comm
+Options for communication between threads
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm barrier_arity
+Type is int. Default value is 8. 
+.Pp barrier_arity
+
+.It Cm broadcast_arity_max
+Type is int. Default value is 32. 
+.Pp broadcast_arity_max
+
+.It Cm broadcast_max_size
+Type is int. Default value is 1024. 
+.Pp broadcast_max_size
+
+.It Cm broadcast_check_threshold
+Type is int. Default value is 512. 
+.Pp broadcast_check_threshold
+
+.It Cm allreduce_arity_max
+Type is int. Default value is 8. 
+.Pp allreduce_arity_max
+
+.It Cm allreduce_max_size
+Type is int. Default value is 1024. 
+.Pp allreduce_max_size
+
+.It Cm allreduce_check_threshold
+Type is int. Default value is 8192. 
+.Pp allreduce_check_threshold
+
 .El
 .Sh ENTRIES OF TYPE profiler
 Options for the internal MPC Profiler

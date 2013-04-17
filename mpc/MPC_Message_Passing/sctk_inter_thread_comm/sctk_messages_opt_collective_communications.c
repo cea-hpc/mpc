@@ -30,16 +30,18 @@
 #include <string.h>
 #include <math.h>
 
+#include "sctk_runtime_config.h"
+
 /************************************************************************/
 /*PARAMETERS                                                            */
 /************************************************************************/
-static int BARRIER_ARRITY  = 8;
-static int BROADCAST_ARITY_MAX = 32;
-static int BROADCAST_MAX_SIZE = 1024;
-static int BROADCAST_CHECK_THREASHOLD = 512;
-static int ALLREDUCE_ARITY_MAX = 8;
-static int ALLREDUCE_MAX_SIZE = 1024;
-static int ALLREDUCE_CHECK_THREASHOLD = 8192;
+static int barrier_arity;
+static int broadcast_arity_max;
+static int broadcast_max_size;
+static int broadcast_check_threshold;
+static int allreduce_arity_max;
+static int allreduce_max_size;
+static int allreduce_check_threshold;
 #define SCTK_MAX_ASYNC 32
 
 /************************************************************************/
@@ -62,7 +64,7 @@ typedef struct {
 
 
 /************************************************************************/
-/*FUNCTONS                                                              */
+/*FUNCTIONS                                                             */
 /************************************************************************/
 
 static void sctk_opt_messages_send(const sctk_communicator_t communicator,int myself,int dest,int tag, void* buffer,size_t size,
@@ -137,22 +139,22 @@ void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
   myself = sctk_get_rank (communicator, thread_data->task_id);
   ptp_internal = sctk_get_internal_ptp(thread_data->task_id);
 
-  total_max = log(total) / log(BARRIER_ARRITY);
-  total_max = pow(BARRIER_ARRITY,total_max);
+  total_max = log(total) / log(barrier_arity);
+  total_max = pow(barrier_arity,total_max);
   if(total_max < total){
-    total_max = total_max * BARRIER_ARRITY;
+    total_max = total_max * barrier_arity;
   }
   assume(total_max >= total);
 
-  for(i = BARRIER_ARRITY; i <= total_max; i = i*BARRIER_ARRITY){
+  for(i = barrier_arity; i <= total_max; i = i*barrier_arity){
     if(myself % i == 0){
       int src;
       int j;
 
       src = myself;
-      for(j = 1; j < BARRIER_ARRITY; j++){
-	if((src + (j*(i/BARRIER_ARRITY))) < total){
-	  sctk_opt_messages_recv(communicator,src + (j*(i/BARRIER_ARRITY)),myself,0,&c,1,barrier_specific_message_tag,sctk_opt_messages_get_item(&table),ptp_internal,1,1);
+      for(j = 1; j < barrier_arity; j++){
+	if((src + (j*(i/barrier_arity))) < total){
+	  sctk_opt_messages_recv(communicator,src + (j*(i/barrier_arity)),myself,0,&c,1,barrier_specific_message_tag,sctk_opt_messages_get_item(&table),ptp_internal,1,1);
 	}
       }
       sctk_opt_messages_wait(&table);
@@ -170,15 +172,15 @@ void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
   }
   sctk_opt_messages_wait(&table);
 
-  for(; i >=BARRIER_ARRITY ; i = i / BARRIER_ARRITY){
+  for(; i >=barrier_arity ; i = i / barrier_arity){
     if(myself % i == 0){
       int dest;
       int j;
 
       dest = myself;
-      for(j = 1; j < BARRIER_ARRITY; j++){
-	if((dest + (j*(i/BARRIER_ARRITY))) < total){
-	  sctk_opt_messages_send(communicator,myself,dest+(j*(i/BARRIER_ARRITY)),1,&c,1,barrier_specific_message_tag,sctk_opt_messages_get_item(&table),1,1);
+      for(j = 1; j < barrier_arity; j++){
+	if((dest + (j*(i/barrier_arity))) < total){
+	  sctk_opt_messages_send(communicator,myself,dest+(j*(i/barrier_arity)),1,&c,1,barrier_specific_message_tag,sctk_opt_messages_get_item(&table),1,1);
 	}
       }
     }
@@ -187,6 +189,8 @@ void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
 }
 
 void sctk_barrier_opt_messages_init(sctk_internal_collectives_struct_t * tmp, sctk_communicator_t id){
+  barrier_arity = sctk_runtime_config_get()->modules.inter_thread_comm.barrier_arity;
+
   tmp->barrier_func = sctk_barrier_opt_messages;
 }
 
@@ -212,12 +216,12 @@ void sctk_broadcast_opt_messages (void *buffer, const size_t size,
 
     sctk_opt_messages_init_items(&table);
 
-    BROADCAST_ARRITY = BROADCAST_MAX_SIZE / size;
+    BROADCAST_ARRITY = broadcast_max_size / size;
     if(BROADCAST_ARRITY < 2){
       BROADCAST_ARRITY = 2;
     }
-    if(BROADCAST_ARRITY > BROADCAST_ARITY_MAX){
-      BROADCAST_ARRITY = BROADCAST_ARITY_MAX;
+    if(BROADCAST_ARRITY > broadcast_arity_max){
+      BROADCAST_ARRITY = broadcast_arity_max;
     }
 
     thread_data = sctk_thread_data_get ();
@@ -256,7 +260,7 @@ void sctk_broadcast_opt_messages (void *buffer, const size_t size,
 	for(j = 1; j < BROADCAST_ARRITY; j++){
 	  if((dest + (j*(i/BROADCAST_ARRITY)))< total){
 	    sctk_opt_messages_send(communicator,myself,(dest+root+(j*(i/BROADCAST_ARRITY))) % total,root,buffer,size,broadcast_specific_message_tag,
-				   sctk_opt_messages_get_item(&table),(size<BROADCAST_CHECK_THREASHOLD),(size<BROADCAST_CHECK_THREASHOLD));
+				   sctk_opt_messages_get_item(&table),(size<broadcast_check_threshold),(size<broadcast_check_threshold));
 	  }
 	}
       }
@@ -266,7 +270,11 @@ void sctk_broadcast_opt_messages (void *buffer, const size_t size,
 }
 
 void sctk_broadcast_opt_messages_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id){
-    tmp->broadcast_func = sctk_broadcast_opt_messages;
+  broadcast_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_arity_max;
+  broadcast_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_max_size;
+  broadcast_check_threshold = sctk_runtime_config_get()->modules.inter_thread_comm.broadcast_check_threshold;
+
+  tmp->broadcast_func = sctk_broadcast_opt_messages;
 }
 
 /************************************************************************/
@@ -304,12 +312,12 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
 
     size = elem_size * elem_number;
 
-    ALLREDUCE_ARRITY = ALLREDUCE_MAX_SIZE / size;
+    ALLREDUCE_ARRITY = allreduce_max_size / size;
     if(ALLREDUCE_ARRITY < 2){
       ALLREDUCE_ARRITY = 2;
     }
-    if(ALLREDUCE_ARRITY > ALLREDUCE_ARITY_MAX){
-      ALLREDUCE_ARRITY = ALLREDUCE_ARITY_MAX;
+    if(ALLREDUCE_ARRITY > allreduce_arity_max){
+      ALLREDUCE_ARRITY = allreduce_arity_max;
     }
 
     buffer_tmp = sctk_malloc(size*(ALLREDUCE_ARRITY -1));
@@ -383,7 +391,7 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
           if((dest + (j*(i/ALLREDUCE_ARRITY))) < total){
             sctk_nodebug("send to %d",dest+(j*(i/ALLREDUCE_ARRITY)));
             sctk_opt_messages_send(communicator,myself,dest+(j*(i/ALLREDUCE_ARRITY)),1,buffer_out,size,allreduce_specific_message_tag,sctk_opt_messages_get_item(&table),
-                (size<ALLREDUCE_CHECK_THREASHOLD),(size<ALLREDUCE_CHECK_THREASHOLD));
+                (size<allreduce_check_threshold),(size<allreduce_check_threshold));
           }
         }
       }
@@ -407,7 +415,11 @@ TODO("Add buffer splitting")
 }
 
 void sctk_allreduce_opt_messages_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id){
-    tmp->allreduce_func = sctk_allreduce_opt_messages;
+  allreduce_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_arity_max;
+  allreduce_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_max_size;
+  allreduce_check_threshold = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_check_threshold;
+
+  tmp->allreduce_func = sctk_allreduce_opt_messages;
 }
 
 /************************************************************************/

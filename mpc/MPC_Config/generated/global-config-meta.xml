@@ -167,8 +167,21 @@
 			<array name="rails" entry-name="rail" type="net_rail" doc="List of rails to declare in MPC." />
 			<array name="cli_options" entry-name="cli_option" type="net_cli_option" doc="List of networks available through the '-net' argument of mpcrun." />
 		</struct>
+		
+		<struct name="inter_thread_comm" doc="Options for communication between threads">
+			<param name="barrier_arity" type="int" default="8" doc=""/>
+			<param name="broadcast_arity_max" type="int" default="32" doc=""/>
+			<param name="broadcast_max_size" type="int" default="1024" doc=""/>
+			<param name="broadcast_check_threshold" type="int" default="512" doc=""/>
+			<param name="allreduce_arity_max" type="int" default="8" doc=""/>
+			<param name="allreduce_max_size" type="int" default="1024" doc=""/>
+			<param name="allreduce_check_threshold" type="int" default="8192" doc=""/>
+		</struct>
 
 	</usertypes>
+	<modules>
+		<module name="inter_thread_comm" type="inter_thread_comm" />
+	</modules>
 </config>
 <config name="MPC_Profiler">
 	<usertypes>

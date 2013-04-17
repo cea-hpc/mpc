@@ -255,6 +255,25 @@ struct sctk_runtime_config_struct_networks
 };
 
 /******************************** STRUCTURE *********************************/
+/**Options for communication between threads**/
+struct sctk_runtime_config_struct_inter_thread_comm
+{	/****/
+	int barrier_arity;
+	/****/
+	int broadcast_arity_max;
+	/****/
+	int broadcast_max_size;
+	/****/
+	int broadcast_check_threshold;
+	/****/
+	int allreduce_arity_max;
+	/****/
+	int allreduce_max_size;
+	/****/
+	int allreduce_check_threshold;
+};
+
+/******************************** STRUCTURE *********************************/
 /**Options for the internal MPC Profiler**/
 struct sctk_runtime_config_struct_profiler
 {	/**Prefix of MPC Profiler outputs**/
@@ -275,6 +294,7 @@ struct sctk_runtime_config_modules
 	struct sctk_runtime_config_struct_allocator allocator;
 	struct sctk_runtime_config_struct_launcher launcher;
 	struct sctk_runtime_config_struct_debugger debugger;
+	struct sctk_runtime_config_struct_inter_thread_comm inter_thread_comm;
 	struct sctk_runtime_config_struct_profiler profiler;
 };
 

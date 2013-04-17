@@ -183,6 +183,20 @@ void sctk_runtime_config_struct_init_networks(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_inter_thread_comm(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_inter_thread_comm * obj = struct_ptr;
+	/* Simple params : */
+	obj->barrier_arity = 8;
+	obj->broadcast_arity_max = 32;
+	obj->broadcast_max_size = 1024;
+	obj->broadcast_check_threshold = 512;
+	obj->allreduce_arity_max = 8;
+	obj->allreduce_max_size = 1024;
+	obj->allreduce_check_threshold = 8192;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_profiler(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_profiler * obj = struct_ptr;
@@ -207,6 +221,7 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	sctk_runtime_config_struct_init_allocator(&config->modules.allocator);
 	sctk_runtime_config_struct_init_launcher(&config->modules.launcher);
 	sctk_runtime_config_struct_init_debugger(&config->modules.debugger);
+	sctk_runtime_config_struct_init_inter_thread_comm(&config->modules.inter_thread_comm);
 	sctk_runtime_config_struct_init_profiler(&config->modules.profiler);
 	sctk_runtime_config_struct_init_networks(&config->networks);
 };
