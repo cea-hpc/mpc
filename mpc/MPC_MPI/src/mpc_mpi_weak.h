@@ -421,6 +421,8 @@
 #pragma weak mpi_init_thread__ = pmpi_init_thread__
 
 //~ not implemented
+
+/*
 #pragma weak MPI_Win_set_attr = PMPI_Win_set_attr
 #pragma weak MPI_Win_get_attr = PMPI_Win_get_attr
 #pragma weak MPI_Win_free_keyval = PMPI_Win_free_keyval
@@ -508,6 +510,7 @@
 #pragma weak MPI_Status_set_cancelled = PMPI_Status_set_cancelled
 #pragma weak MPI_Grequest_start = PMPI_Grequest_start
 #pragma weak MPI_Grequest_complete = PMPI_Grequest_complete
+*/
 //~ end
 
 

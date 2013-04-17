@@ -511,7 +511,6 @@ SCTK__MPI_ERROR_REPORT__ (MPC_Comm comm, int error, char *message, char *file,
   error_id = error;
   func = tmp->func;
   func (&comm_id, &error_id, message, file, line);
-  sctk_debug("return error %d", error);
   return error;
 }
 
@@ -9245,6 +9244,7 @@ int MPC_Mpi_win_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void*
 
 
 //~ not implemented
+/*
 int PMPI_Info_set( MPI_Info info, const char *key, const char *value ){return MPI_SUCCESS;}
 int PMPI_Info_get(MPI_Info info, const char *key, int valuelen, char *value, int *flag){return MPI_SUCCESS;}
 int PMPI_Info_free( MPI_Info *info ){return MPI_SUCCESS;}
@@ -9341,7 +9341,7 @@ int PMPI_Grequest_start( MPI_Grequest_query_function *query_fn, MPI_Grequest_fre
 						MPI_Grequest_cancel_function *cancel_fn, void *extra_state, MPI_Request *request ){return MPI_SUCCESS;}
 
 int PMPI_Grequest_complete(MPI_Request request){return MPI_SUCCESS;}
-
+*/
 
 
 

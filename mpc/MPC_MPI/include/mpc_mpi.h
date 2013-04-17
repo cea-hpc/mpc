@@ -445,6 +445,8 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
 /* Here are the bindings of the profiling routines */
 #if !defined(MPI_BUILD_PROFILING)
   //~ not implemented
+  
+  /*
   int PMPI_Alloc_mem (MPI_Aint, MPI_Info , void *);
   int PMPI_Free_mem (void *);
   
@@ -532,7 +534,7 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
   int PMPI_Status_set_cancelled (MPI_Status *, int);
   int PMPI_Grequest_start (MPI_Grequest_query_function *, MPI_Grequest_free_function *, MPI_Grequest_cancel_function *, void *, MPI_Request *);
   int PMPI_Grequest_complete (MPI_Request);
-  
+  */
   
   
   
