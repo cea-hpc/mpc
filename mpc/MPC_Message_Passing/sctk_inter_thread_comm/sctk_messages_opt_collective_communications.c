@@ -41,6 +41,8 @@ static int ALLREDUCE_ARITY_MAX = 8;
 static int ALLREDUCE_MAX_SIZE = 1024;
 static int ALLREDUCE_CHECK_THREASHOLD = 8192;
 #define SCTK_MAX_ASYNC 32
+#define buffer_tmp_static_size 8*16
+#define buffer_table_static_size 8*sizeof(void*)
 
 /************************************************************************/
 /*TOOLS                                                                 */
@@ -295,6 +297,11 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
     int total_max;
     struct sctk_internal_ptp_s* ptp_internal;
 
+    char buffer_tmp_static[buffer_tmp_static_size];
+    char buffer_table_static[buffer_table_static_size];
+    int use_tmp_static;
+    int use_table_static;
+
     /*
       MPI require that the result of the allreduce is the same on all MPI tasks.
       This is an issue for MPI_SUM, MPI_PROD and user defined operation on floating
@@ -312,8 +319,21 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
       ALLREDUCE_ARRITY = ALLREDUCE_ARITY_MAX;
     }
 
-    buffer_tmp = sctk_malloc(size*(ALLREDUCE_ARRITY -1));
-    buffer_table = sctk_malloc((ALLREDUCE_ARRITY -1) * sizeof(void*));
+    if(size*(ALLREDUCE_ARRITY -1) <= sizeof(buffer_tmp_static)){
+      buffer_tmp = buffer_tmp_static;
+      use_tmp_static = 1;
+    } else {
+      buffer_tmp = sctk_malloc(size*(ALLREDUCE_ARRITY -1));
+      use_tmp_static = 0;
+    }
+
+    if((ALLREDUCE_ARRITY -1) * sizeof(void*) <= sizeof(buffer_table_static)){
+      buffer_table = buffer_table_static; 
+      use_table_static = 1;
+    } else {
+      buffer_table = sctk_malloc((ALLREDUCE_ARRITY -1) * sizeof(void*));
+      use_table_static = 0;
+    }
     {
       int j;
       for(j = 1; j < ALLREDUCE_ARRITY; j++){
@@ -389,8 +409,10 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
       }
     }
     sctk_opt_messages_wait(&table);
-    sctk_free(buffer_tmp);
-    sctk_free(buffer_table);
+    if(use_tmp_static == 0)
+      sctk_free(buffer_tmp);
+    if(use_table_static == 0)
+      sctk_free(buffer_table);
   }
 }
 

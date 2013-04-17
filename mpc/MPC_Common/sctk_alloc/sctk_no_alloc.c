@@ -29,7 +29,6 @@
 
 #include <unistd.h>
 #include <stdlib.h>
-#include "sctk_alloc_api.h"
 #include "sctk_alloc.h"
 #include "sctk_debug.h"
 #include <unistd.h>

@@ -158,14 +158,20 @@ SCTK_INTERN void sctk_alloc_tls_chain_local_reset()
 /**
  * Update the current thread local allocation chain.
  * @param chain Define the allocation chain to setup.
+ * @return Return the old chain, if the user want to reset it after capturing some elements.
 **/
-SCTK_INTERN void sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain)
+SCTK_PUBLIC struct sctk_alloc_chain * sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain)
 {
+	//get old one
+	struct sctk_alloc_chain * old_chain = sctk_get_tls_chain();
 	//errors
 	//assume_m(chain != NULL,"Can't set a default NULL allocation chain for local thread.");
 
 	//setup allocation chain for current thread
 	sctk_set_tls_chain(chain);
+
+	//return the old one
+	return old_chain;
 }
 
 /************************* FUNCTION ************************/
@@ -263,6 +269,25 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init(void)
 }
 
 /************************* FUNCTION ************************/
+SCTK_STATIC int sctk_alloc_posix_source_round_robin(void)
+{
+	static sctk_alloc_spinlock_t lock;
+	static int cnt = -1;
+	int res;
+	if (cnt == -1)
+	{
+		sctk_alloc_spinlock_init(&lock,PTHREAD_PROCESS_PRIVATE);
+		cnt = 0;
+	}
+
+	sctk_alloc_spinlock_lock(&lock);
+	res = cnt;
+	cnt = (cnt+1)%sctk_get_numa_node_number();
+	sctk_alloc_spinlock_unlock(&lock);
+	return res;
+}
+
+/************************* FUNCTION ************************/
 /**
  * Return the local memory source depeding on the current NUMA node.
  * It will use numa_preferred() to get the current numa node.
@@ -286,6 +311,12 @@ SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(vo
 	#else
 	int node = 0;
 	#endif
+
+	#if !defined(MPC_Common) && defined(HAVE_HWLOC)
+	//use round robin on NUMA source if required, only out of MPC
+	if ((node == -1 || SCTK_DEFAULT_NUMA_MM_SOURCE_ID) && sctk_alloc_config()->numa_round_robin)
+		node = sctk_alloc_posix_source_round_robin();
+	#endif// !defined(MPC_Common) && defined HAVE_HWLOC
 
 	//check res
 	if (node == -1)

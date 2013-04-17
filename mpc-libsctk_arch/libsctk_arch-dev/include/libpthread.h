@@ -19,8 +19,11 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
+#ifndef __libpthread__h__
+#define __libpthread__h__
 
-#include <setjmp.h>
+#include <libarchconfig.h>
 
-void mpc__longjmp (__jmp_buf, int);
-int mpc__setjmp (__jmp_buf);
+typedef int[SIZEOF_PTHREAD_MUTEX_T/sizeof(int)]  sctk_thread_mutex_t
+
+#endif

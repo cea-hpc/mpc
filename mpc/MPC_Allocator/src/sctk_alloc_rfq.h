@@ -55,7 +55,7 @@ struct sctk_alloc_rfq
 //remote free queue management for allocation chains
 SCTK_STATIC void sctk_alloc_rfq_init(struct sctk_alloc_rfq * rfq);
 SCTK_STATIC bool sctk_alloc_rfq_empty(struct sctk_alloc_rfq * rfq);
-void sctk_alloc_rfq_register(struct sctk_alloc_rfq * rfq,void * ptr);
+SCTK_PUBLIC void sctk_alloc_rfq_register(struct sctk_alloc_rfq * rfq,void * ptr);
 SCTK_STATIC struct sctk_alloc_rfq_entry * sctk_alloc_rfq_extract(struct sctk_alloc_rfq * rfq);
 SCTK_STATIC int sctk_alloc_rfq_count_entries(struct sctk_alloc_rfq_entry * entries);
 SCTK_STATIC void sctk_alloc_rfq_destroy(struct sctk_alloc_rfq * rfq);

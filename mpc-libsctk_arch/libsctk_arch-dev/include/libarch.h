@@ -19,36 +19,22 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
-#include "sctk_debug.h"
-#include <setjmp.h>
-#ifdef MPC_Threads
-#include "sctk_context.h"
-#include "sctk_jumps.h"
+#ifndef __libarch__h__
+#define __libarch__h__
 
-void
-sctk_longjmp (jmp_buf env, int val)
-{
-  mpc__longjmp (env->__jmpbuf, 1);
-}
+#include <libarchconfig.h>
 
-int
-sctk_setjmp (jmp_buf env)
-{
-  int tmp;
-  tmp = mpc__setjmp (env->__jmpbuf);
-  return tmp;
-}
+
+#if defined(__i686__) && !defined(__x86_64__)
+#define SCTK_i686_ARCH_SCTK
+#define SCTK_ARCH_SCTK  SCTK_i686_ARCH_SCTK
+#elif defined(__x86_64__)
+#define SCTK_x86_64_ARCH_SCTK
+#define SCTK_ARCH_SCTK  SCTK_x86_64_ARCH_SCTK
+#elif defined(__ia64__)
+#define SCTK_ia64_ARCH_SCTK
+#define SCTK_ARCH_SCTK  SCTK_ia64_ARCH_SCTK
 #else
-void
-sctk_longjmp (jmp_buf env, int val)
-{
-  not_available ();
-}
-
-int
-sctk_setjmp (jmp_buf env)
-{
-  not_available ();
-  return 0;
-}
+  #error "Unknown architecture"
+#endif
 #endif

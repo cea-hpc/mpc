@@ -132,10 +132,10 @@ extern "C"
 #endif
 
     /* Private info on the current loop (whatever its schedule is)  */
-    int loop_lb;		/* Lower bound */
-    int loop_b;			/* Upper bound */
-    int loop_incr;		/* Step */
-    int loop_chunk_size;	/* Size of each chunk */
+    long loop_lb;		/* Lower bound */
+    long loop_b;			/* Upper bound */
+    long loop_incr;		/* Step */
+    long loop_chunk_size;	/* Size of each chunk */
 
     /* -- FOR LOOPS - STATIC SCHEDULE -- */
     int static_nb_chunks;
@@ -588,27 +588,28 @@ extern "C"
 /* mpcomp_lock.c */
 
 /* mpcomp_loop.c */
-  int __mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads,
-					      int lb, int b, int incr,
-					      int chunk_size);
-  void __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads, int lb,
-					     int b, int incr, int chunk_size,
-					     int chunk_num, int *from,
-					     int *to);
+  long __mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads,
+					      long lb, long b, long incr,
+					      long chunk_size);
+  void __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads, long lb,
+					     long b, long incr, long chunk_size,
+					     long chunk_num, long *from,
+					     long *to);
 
 /* mpcomp_loop_dyn.c */
 
 /* mpcomp_loop_guided.c */
-int __mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size, int *from, int *to) ;
-int __mpcomp_guided_loop_next (int *from, int *to) ;
+int __mpcomp_guided_loop_begin (long lb, long b, long incr, 
+    long chunk_size, long *from, long *to) ;
+int __mpcomp_guided_loop_next (long *from, long *to) ;
 void __mpcomp_guided_loop_end () ;
 void __mpcomp_guided_loop_end_nowait () ;
 void __mpcomp_start_parallel_guided_loop (int arg_num_threads, void *(*func)
-				     (void *), void *shared, int lb, int b,
-				     int incr, int chunk_size) ;
-int __mpcomp_guided_loop_begin_ignore_nowait (int lb, int b, int incr, int
-					  chunk_size, int *from, int *to) ;
-int __mpcomp_guided_loop_next_ignore_nowait (int *from, int *to) ;
+				     (void *), void *shared, long lb, long b,
+				     long incr, long chunk_size) ;
+int __mpcomp_guided_loop_begin_ignore_nowait (long lb, long b, long incr, long 
+					  chunk_size, long *from, long *to) ;
+int __mpcomp_guided_loop_next_ignore_nowait (long *from, long *to) ;
 
 /* mpcomp_loop_runtime.c */
 

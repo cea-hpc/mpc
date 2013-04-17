@@ -158,7 +158,7 @@ void sctk_profile_render_text_render_entry( struct sctk_profiler_array *array, i
 			sctk_profile_renderer_write_ntabs( rd->output_file, depth );
 		}
 
-		if( sctk_profile_get_config()->color_stdout )
+		if( sctk_profile_get_config()->color_stdout && sctk_profile_render_text_is_stdout )
 		{
 				fprintf( rd->output_file, SCTK_COLOR_RED_BOLD(%-15s)"  "SCTK_COLOR_BLUE_BOLD(%10llu)"  "SCTK_COLOR_GREEN_BOLD(%-10s)"  "
 										  SCTK_COLOR_VIOLET_BOLD(( %1g %% ))"  %-10s  %-10s  %-10s\n", sctk_profiler_array_get_desc( id ), (unsigned long long int )sctk_profiler_array_get_hits( array, id ),

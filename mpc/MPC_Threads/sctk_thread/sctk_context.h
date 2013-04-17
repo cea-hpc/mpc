@@ -36,9 +36,11 @@ extern "C"
 #define SCTK_MCTX_MTH_mcsc    1
 #define SCTK_MCTX_MTH_sjlj    2
 #define SCTK_MCTX_MTH_windows 3
+#define SCTK_MCTX_MTH_libcontext    4
 #define SCTK_MCTX_DSP_sc      1
 #define SCTK_MCTX_DSP_sjlj    2
 #define SCTK_MCTX_DSP_windows 3
+#define SCTK_MCTX_DSP_libcontext      4
 
 
 /*Context definition*/
@@ -59,7 +61,12 @@ extern "C"
 #endif
 
 #if defined(SCTK_x86_64_ARCH_SCTK)
-
+#if 1
+#undef SCTK_MCTX_MTH_use
+#undef SCTK_MCTX_DSP_use
+#define SCTK_MCTX_MTH_use SCTK_MCTX_MTH_libcontext
+#define SCTK_MCTX_DSP_use SCTK_MCTX_DSP_libcontext
+#else
 /*
 Get a bug on new version of libs (centos6....), need to fix this. It produce segfault at
 make install with --enable-debug. Seams to be impacted by -OX option.
@@ -77,6 +84,7 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 /*
  * we disable makecontext/swapcontext
  * */
+#endif
 #endif
 
 #ifdef DONOTHAVE_CONTEXTS
@@ -97,11 +105,13 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 #define sctk_skaddr_sigstack(skaddr,sksize) ((skaddr))
 #define sctk_skaddr_sigaltstack(skaddr,sksize) ((skaddr))
 #define sctk_skaddr_makecontext(skaddr,sksize) ((skaddr))
+#define sctk_skaddr_mpc__makecontext(skaddr,sksize) ((skaddr))
 
 /*Stack size*/
 #define sctk_sksize_sigstack(skaddr,sksize) ((sksize))
 #define sctk_sksize_sigaltstack(skaddr,sksize) ((sksize))
 #define sctk_sksize_makecontext(skaddr,sksize) ((sksize))
+#define sctk_sksize_mpc__makecontext(skaddr,sksize) ((sksize))
 
 #if !defined(AIX_SYS)
 #define FALSE 1
@@ -125,6 +135,10 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 
 #if SCTK_MCTX_MTH(mcsc)
 #include <ucontext.h>
+#endif
+
+#if SCTK_MCTX_MTH(libcontext)
+#include <sctk_ucontext.h>
 #endif
 
 #if SCTK_MCTX_MTH(sjlj)
@@ -161,6 +175,8 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
     jmp_buf jb;
 #elif SCTK_MCTX_MTH(windows)
     jmp_buf jb;
+#elif SCTK_MCTX_MTH(libcontext)
+    sctk_ucontext_t uc;
 #else
 #error "unknown mctx method"
 #endif

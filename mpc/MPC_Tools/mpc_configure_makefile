@@ -313,6 +313,7 @@ printf "\t@cp ${MPC_SOURCE_DIR}MPC_Config/generated/*.5 INSTALL/man/man5">> Make
 printf "\t@cp share/mpc/* INSTALL/share/mpc">> Makefile; echo "">> Makefile
 printf "\t@cp ${MPC_SOURCE_DIR}MPC_Config/extra/config-multi-profile.xml.example INSTALL/share/mpc">> Makefile; echo "">> Makefile
 printf "\t@cp ${MPC_SOURCE_DIR}MPC_Config/generated/mpc-config.xsd INSTALL/share/mpc">> Makefile; echo "">> Makefile
+printf "\t@chmod go+r INSTALL/share/mpc/*">> Makefile; echo "">> Makefile
 
 DIR_TEST="MPC_Threads"
 check_module

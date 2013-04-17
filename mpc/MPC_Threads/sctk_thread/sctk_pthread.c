@@ -39,6 +39,10 @@
 #endif
 #include "sctk_asm.h"
 
+#if !defined(HAVE_PTHREAD_CREATE)
+#error "Bad pthread detection"
+#endif
+
 #define SCTK_LOCAL_VERSION_MAJOR 0
 #define SCTK_LOCAL_VERSION_MINOR 1
 

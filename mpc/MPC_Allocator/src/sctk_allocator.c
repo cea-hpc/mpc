@@ -967,7 +967,10 @@ SCTK_STATIC void sctk_alloc_chain_base_init(struct sctk_alloc_chain * chain,enum
 	sctk_alloc_rfq_init(&chain->rfq);
 
 	//defaults
-	chain->name = "Unknwon";
+	chain->name      = "Unknwon";
+	chain->base_addr = NULL;
+	chain->end_addr  = NULL;
+	chain->source    = NULL;
 
 	//destroy system
 	chain->destroy_handler = NULL;
@@ -979,36 +982,92 @@ SCTK_STATIC void sctk_alloc_chain_base_init(struct sctk_alloc_chain * chain,enum
 
 /************************* FUNCTION ************************/
 /**
- * Create a user allocation chain and provide it's fixed segement to manage.
+ * Function to create quickly a user allocation chain to be use in standelone mode.
  * @param buffer Define the segment to be managed by the user allocation chain.
- * @param size Define de size og the segment.
-**/
-void sctk_alloc_chain_user_init(struct sctk_alloc_chain * chain,void * buffer,sctk_size_t size,enum sctk_alloc_chain_flags flags)
+ * @param size Define the size of the segment.
+ */
+SCTK_PUBLIC void sctk_alloc_chain_standalone_init(struct sctk_alloc_chain * chain,void * buffer,sctk_size_t size)
 {
+	sctk_alloc_chain_user_init(chain,buffer,size, SCTK_ALLOC_CHAIN_STANDALONE);
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Function to create quickly a shared memory allocator by placing the allocation chain at beginning
+ * of the given shared memory segment.
+ * @param buffer The shared memory segment to use to store the allocation chain and to be used for allocations.
+ * @param size Define the size of the shared segment.
+ */
+SCTK_PUBLIC struct sctk_alloc_chain * sctk_alloc_chain_shared_init(void * buffer, sctk_size_t size)
+{
+	//vars
+	struct sctk_alloc_chain * chain = buffer;
+
+	//errors
+	assume_m(buffer != NULL,"Can't use NULL buffer to create the allocation chain.");
+	assume_m(size > sizeof(struct sctk_alloc_chain), "To small segment which cannot contain the allocation chain structure.");
+
+	//setup
+	sctk_alloc_chain_standalone_init(chain,chain+1,size - sizeof(struct sctk_alloc_chain));
+
+	//ok done, return
+	return chain;
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Insert fresh memory into the allocation chain to grow it.
+ * @param chain Define the allocation chain to grow.
+ * @param buffer Define the buffer to insert (or NULL if none).
+ * @param size Define the size of the buffer (or 0 is NULL).
+ */
+SCTK_PUBLIC void sctk_alloc_chain_user_refill(struct sctk_alloc_chain * chain, void * buffer, sctk_size_t size)
+{
+	//vars
 	struct sctk_alloc_macro_bloc * macro_bloc;
 	sctk_alloc_vchunk vchunk;
-	
+
 	//error
 	assume_m(buffer != NULL || size == 0, "Can't manage NULL buffer with non NULL size.");
-	/** @TODO compute min size cleaner with size of struct. **/
+	/** @TODO compute min size in cleaner way with size of struct. **/
 	assume_m(size == 0 || size > 64+16, "Buffer size must null or greater than 80o.");
+	//warning if using fill with an active memory source
+	if (chain->source != NULL)
+		warning("Caution, you tried to refill an allocation chain which has a memory source.");
 
-	//base init
-	sctk_alloc_chain_base_init(chain,flags);
-
-	//insert the buffer in the thread pool
-	if (buffer == NULL || size == 0)
+	//create the chunk and register it in chain
+	if (buffer != NULL && size > 0)
 	{
-		chain->base_addr = NULL;
-		chain->end_addr = NULL;
-	} else {
 		macro_bloc = sctk_alloc_setup_macro_bloc(buffer,size);
 		vchunk = sctk_alloc_chain_prepare_and_reg_macro_bloc(chain,macro_bloc);
 		sctk_alloc_free_list_insert(&chain->pool,sctk_alloc_get_large(vchunk),SCTK_ALLOC_INSERT_AT_START);
+	}
+
+	//TODO it may be removed now as we do not use the original memory source anymore
+	if (chain->base_addr == NULL)
+	{
 		chain->base_addr = buffer;
 		chain->end_addr = (char*)buffer + size;
-		chain->cnt_macro_blocs++;
 	}
+
+	//increment the macro bloc counter.
+	chain->cnt_macro_blocs++;
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Create a user allocation chain and provide it's fixed segment to manage.
+ * @param buffer Define the segment to be managed by the user allocation chain.
+ * @param size Define the size of the segment.
+**/
+SCTK_PUBLIC void sctk_alloc_chain_user_init(struct sctk_alloc_chain * chain,void * buffer,sctk_size_t size,enum sctk_alloc_chain_flags flags)
+{
+	//base init
+	sctk_alloc_chain_base_init(chain,flags);
+	//fill with mem
+	if (buffer != NULL)
+		sctk_alloc_chain_user_refill(chain,buffer,size);
+	//use no memory source
 	chain->source = NULL;
 }
 
@@ -1016,7 +1075,7 @@ void sctk_alloc_chain_user_init(struct sctk_alloc_chain * chain,void * buffer,sc
 /**
  * Function to check if the given allocation is thread safe or if locks are disabled.
  */
-bool sctk_alloc_chain_is_thread_safe(struct sctk_alloc_chain * chain)
+SCTK_PUBLIC bool sctk_alloc_chain_is_thread_safe(struct sctk_alloc_chain * chain)
 {
 	//errors
 	assert(chain != NULL);
@@ -1028,7 +1087,7 @@ bool sctk_alloc_chain_is_thread_safe(struct sctk_alloc_chain * chain)
 /**
  * Toggle the flags to enable locking mechanisms in allocation chain to made it thread safe.
  */
-void sctk_alloc_chain_make_thread_safe(struct sctk_alloc_chain * chain,bool value)
+SCTK_PUBLIC void sctk_alloc_chain_make_thread_safe(struct sctk_alloc_chain * chain,bool value)
 {
 	//errors
 	assert(chain != NULL);
@@ -1044,7 +1103,7 @@ void sctk_alloc_chain_make_thread_safe(struct sctk_alloc_chain * chain,bool valu
  * Mark the given allocation for destroy. When is became empty (so when last allocated chunk is freed)
  * it will call the given handler to cleanup the memory allocated to store the chain struct itself.
  */
-void sctk_alloc_chain_mark_for_destroy(struct sctk_alloc_chain * chain,void (*destroy_handler)(struct sctk_alloc_chain * chain))
+SCTK_PUBLIC void sctk_alloc_chain_mark_for_destroy(struct sctk_alloc_chain * chain,void (*destroy_handler)(struct sctk_alloc_chain * chain))
 {
 	//errors
 	assert(chain != NULL);
@@ -1069,7 +1128,7 @@ void sctk_alloc_chain_mark_for_destroy(struct sctk_alloc_chain * chain,void (*de
  * let this to false, this is more for unit test implementation avoiding crashing the whole test
  * suite on test failed.
 **/
-void sctk_alloc_chain_destroy(struct sctk_alloc_chain* chain,bool force)
+SCTK_PUBLIC void sctk_alloc_chain_destroy(struct sctk_alloc_chain* chain,bool force)
 {
 	struct sctk_alloc_region * region;
 	
@@ -1099,7 +1158,7 @@ void sctk_alloc_chain_destroy(struct sctk_alloc_chain* chain,bool force)
 /**
  * Create a standard allocation chain.
 **/
-void sctk_alloc_chain_default_init(struct sctk_alloc_chain * chain, struct sctk_alloc_mm_source * source,enum sctk_alloc_chain_flags flags)
+SCTK_INTERN void sctk_alloc_chain_default_init(struct sctk_alloc_chain * chain, struct sctk_alloc_mm_source * source,enum sctk_alloc_chain_flags flags)
 {
 	//base init
 	sctk_alloc_chain_base_init(chain,flags);
@@ -1221,7 +1280,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_request_mem(struct sctk_alloc_cha
  * This function is a merge of sctk_alloc_chain_request_mem() and sctk_alloc_chain_free_macro_bloc()
  * which exploit mremap capabilities to avoid a copy of large segment for realloc() implementation.
  * @param chain Define the chain in which to realloc. Caution you must ensure that the original
- * segment was managed by the same chain otherwise it can procuce unpredictable behaviors.
+ * segment was managed by the same chain otherwise it can produce unpredictable behaviors.
  * @param size Define the size of the new chunk to allocate.
  * @param vchunk Define the old vchunk to remap. Caution it must be a macro bloc.
 **/
@@ -1297,7 +1356,7 @@ SCTK_STATIC bool sctk_alloc_chain_refill_mem(struct sctk_alloc_chain* chain,sctk
  * @param chain Define the allocation chain in which to request memory.
  * @param size Define the expected size of the segment (can be larger).
 **/
-void * sctk_alloc_chain_alloc(struct sctk_alloc_chain * chain,sctk_size_t size)
+SCTK_PUBLIC void * sctk_alloc_chain_alloc(struct sctk_alloc_chain * chain,sctk_size_t size)
 {
 	return sctk_alloc_chain_alloc_align(chain,0,size);
 }
@@ -1321,7 +1380,7 @@ SCTK_STATIC bool sctk_alloc_chain_is_huge_size(struct sctk_alloc_chain * chain,s
  * @param boundary Define the memory alignement to force for the bloc base address.
  * @param size Define the expected size of the segment (can be larger).
 **/
-void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t boundary,sctk_size_t size)
+SCTK_PUBLIC void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t boundary,sctk_size_t size)
 {
 	struct sctk_alloc_free_chunk * chunk;
 	sctk_alloc_vchunk vchunk;
@@ -1451,7 +1510,7 @@ SCTK_STATIC void sctk_alloc_chain_free_macro_bloc(struct sctk_alloc_chain * chai
  * @param chain Allocation chain responsible of the management of ptr
  * @param ptr The buffer to freed.
 **/
-void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
+SCTK_PUBLIC void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 {
 	sctk_alloc_vchunk vchunk;
 	sctk_alloc_vchunk vfirst = NULL;
@@ -1549,7 +1608,7 @@ SCTK_STATIC bool sctk_alloc_chain_can_remap(struct sctk_alloc_chain * chain)
  * @param ptr Define the base pointer of the segment to reallocate.
  * @param size Define the new size of the segment.
 **/
-void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sctk_size_t size)
+SCTK_PUBLIC void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sctk_size_t size)
 {
 	//vars
 	void * res = NULL;
@@ -1651,7 +1710,7 @@ SCTK_STATIC bool sctk_alloc_chain_can_destroy(struct sctk_alloc_chain* chain)
  * Check if the given allocation chain contain blocs to purge and done a real free on them.
  * @param chain Define the chain we want to purge, if NULL, the function exit immediately.
 **/
-void sctk_alloc_chain_purge_rfq(struct sctk_alloc_chain * chain)
+SCTK_PUBLIC void sctk_alloc_chain_purge_rfq(struct sctk_alloc_chain * chain)
 {
 	struct sctk_alloc_rfq_entry * entries;
 	struct sctk_alloc_rfq_entry * next;
@@ -2090,7 +2149,7 @@ SCTK_STATIC struct sctk_alloc_region * sctk_alloc_region_get(void * addr)
  * trying to access to it.
  * @param addr Define the address for chich we request the related region entry.
 **/
-struct sctk_alloc_region_entry * sctk_alloc_region_get_entry(void* addr)
+SCTK_PUBLIC struct sctk_alloc_region_entry * sctk_alloc_region_get_entry(void* addr)
 {
 	//vars
 	sctk_addr_t id;
@@ -2216,7 +2275,7 @@ SCTK_STATIC void sctk_alloc_region_del_chain(struct sctk_alloc_region * region,s
  * Walk in regions to find the base address of macro bloc which contain the given address.
  * Id not found, return NULL.
  */
-struct sctk_alloc_macro_bloc * sctk_alloc_region_get_macro_bloc(void * ptr)
+SCTK_PUBLIC struct sctk_alloc_macro_bloc * sctk_alloc_region_get_macro_bloc(void * ptr)
 {
 	//vars
 	struct sctk_alloc_macro_bloc * macro_bloc = NULL;
@@ -2370,7 +2429,7 @@ SCTK_STATIC bool sctk_alloc_rfq_empty(struct sctk_alloc_rfq * rfq)
  * @param rfq Define the RFQ into which to insert the free request.
  * @param ptr Define the segment for which to delay the free.
 **/
-void sctk_alloc_rfq_register(struct sctk_alloc_rfq * rfq,void * ptr)
+SCTK_PUBLIC void sctk_alloc_rfq_register(struct sctk_alloc_rfq * rfq,void * ptr)
 {
 	//vars
 	sctk_alloc_vchunk vchunk;
@@ -2495,7 +2554,7 @@ SCTK_STATIC void sctk_alloc_chain_numa_migrate_content(struct sctk_alloc_chain *
  * This is for debug purpose only. This method walk in pages managed by allocation chain and
  * checked their NUMA mappings.
  */
-void sctk_alloc_chain_get_numa_stat(struct sctk_alloc_numa_stat_s * numa_stat,struct sctk_alloc_chain * chain)
+SCTK_PUBLIC void sctk_alloc_chain_get_numa_stat(struct sctk_alloc_numa_stat_s * numa_stat,struct sctk_alloc_chain * chain)
 {
 	//vars
 	int i;
@@ -2584,7 +2643,7 @@ void sctk_alloc_chain_get_stat(struct sctk_alloc_chain_stat * chain_stat,struct 
 /**
  * This is to help debugging by printing some stats from the given allocation chain.
  */
-void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain)
+SCTK_PUBLIC void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain)
 {
 	//vars
 	struct sctk_alloc_numa_stat_s numa_stat;
@@ -2623,7 +2682,7 @@ void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain)
 /**
  * Return the NUMA node on which the given allocation chain is binded. Return -1 if none.
  */
-int sctk_alloc_chain_get_numa_node(struct sctk_alloc_chain * chain)
+SCTK_PUBLIC int sctk_alloc_chain_get_numa_node(struct sctk_alloc_chain * chain)
 {
 	//vars
 	struct sctk_alloc_mm_source_light * light_source;
@@ -2651,7 +2710,7 @@ int sctk_alloc_chain_get_numa_node(struct sctk_alloc_chain * chain)
  * @param new_mm_source Define the new memory source to link to this allocation chain you can use
  * SCTK_ALLOC_KEEP_OLD_MM_SOURCE.
 **/
-void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_numa_node,bool migrate_chain_struct,bool migrate_content,struct sctk_alloc_mm_source * new_mm_source)
+SCTK_PUBLIC void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_numa_node,bool migrate_chain_struct,bool migrate_content,struct sctk_alloc_mm_source * new_mm_source)
 {
 	//errors
 	assert(chain != NULL);
@@ -2673,4 +2732,23 @@ void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_n
 	//update the mm source
 	if (new_mm_source != SCTK_ALLOC_KEEP_OLD_MM_SOURCE)
 		chain->source = new_mm_source;
+}
+
+/************************* FUNCTION ************************/
+/**
+ * @return Return the size of allocation chain structure to be used without knowing the
+ * structure details.
+ */
+SCTK_PUBLIC size_t sctk_alloc_chain_struct_size(void)
+{
+	return sizeof(struct sctk_alloc_chain);
+}
+
+/************************* FUNCTION ************************/
+SCTK_PUBLIC void sctk_alloc_chain_remote_free(struct sctk_alloc_chain * chain,void * ptr)
+{
+	if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
+		sctk_alloc_chain_free(chain,ptr);
+	else
+		sctk_alloc_rfq_register(&chain->rfq,ptr);
 }

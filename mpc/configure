@@ -191,6 +191,7 @@ Optional packages:
   --with-hwloc=prefix     Enable hwloc using given prefix [system default]
   --with-openib=prefix    Enable OpenFabrics using given prefix [system default]
   --with-libxml2=prefix   Enable libxml2 for config file parsing [pkg-config or /usr]
+  --with-libsctk_arch=prefix   Enable libsctk_arch for config file parsing [pkg-config or /usr]
 
 Some influential environment variables:
   CC                               C compiler command
@@ -230,6 +231,7 @@ HWLOC_USER_PREFIX=""
 OPENPA_USER_PREFIX=""
 OPENIB_USER_PREFIX=""
 SCTK_LIBXML2_PREFIX=""
+SCTK_LIBSCTK_ARCH_PREFIX=""
 
 for arg in "$@" ; do
     case $arg in
@@ -415,6 +417,9 @@ for arg in "$@" ; do
     ;;
 	--with-libxml2=*)
 	SCTK_LIBXML2_PREFIX="`echo A$arg | sed -e 's/A--with-libxml2=//g'`"
+	;;
+	--with-libsctk_arch=*)
+	SCTK_LIBSCTK_ARCH_PREFIX="`echo A$arg | sed -e 's/A--with-libsctk_arch=//g'`"
 	;;
     --disable-all)
 	mpc_modules_disable_all

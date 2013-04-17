@@ -318,6 +318,7 @@ static inline void sctk_ptp_copy_tasks_insert(sctk_msg_list_t* ptr_recv,
 					      sctk_msg_list_t* ptr_send,
 					      sctk_internal_ptp_t* pair){
   sctk_message_to_copy_t* tmp;
+  SCTK_PROFIL_START (MPC_Copy_message);
 
   tmp = &(ptr_recv->msg->tail.copy_list);
   tmp->msg_send = ptr_send->msg;
@@ -325,10 +326,11 @@ static inline void sctk_ptp_copy_tasks_insert(sctk_msg_list_t* ptr_recv,
 
 TODO("Add parapmeter to deal with task engine")
 #ifdef SCTK_DISABLE_TASK_ENGINE
-  tmp->msg_send->tail.message_copy(tmp);
+    tmp->msg_send->tail.message_copy(tmp);
 #else
   sctk_ptp_tasks_insert(tmp,pair);
 #endif
+  SCTK_PROFIL_END (MPC_Copy_message);
 }
 
 
@@ -1048,6 +1050,8 @@ sctk_msg_list_t* sctk_perform_messages_search_matching(sctk_internal_ptp_t* pair
     sctk_thread_message_header_t* header_send;
     sctk_assert(ptr_send->msg != NULL);
     header_send = &(ptr_send->msg->body.header);
+    SCTK_PROFIL_START (MPC_Test_message_search_matching);
+    SCTK_PROFIL_END (MPC_Test_message_search_matching);
 
     if((header->communicator == header_send->communicator) &&
        (header->specific_message_tag == header_send->specific_message_tag) &&
@@ -1109,7 +1113,9 @@ static inline void sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t* pa
 
   DL_FOREACH_SAFE(pair->lists.pending_recv.list,ptr_recv,tmp){
     sctk_assert(ptr_recv->msg != NULL);
+    SCTK_PROFIL_START (MPC_Test_message_pair_locked);
     ptr_send = sctk_perform_messages_search_matching(pair,&(ptr_recv->msg->body.header));
+    SCTK_PROFIL_END (MPC_Test_message_pair_locked);
     /* The task has posted the send buffer (i.e: MPI_Send)*/
     if(ptr_send != NULL){
       DL_DELETE(pair->lists.pending_recv.list,ptr_recv);
@@ -1129,6 +1135,7 @@ static inline void sctk_perform_messages_for_pair_locked(sctk_internal_ptp_t* pa
 }
 
 static inline int sctk_perform_messages_for_pair(sctk_internal_ptp_t* pair){
+  SCTK_PROFIL_START (MPC_Test_message_pair);
   if(((pair->lists.pending_send.list != NULL)
 #ifndef SCTK_DISABLE_REENTRANCE
       ||(pair->lists.incomming_send.list != NULL)
@@ -1145,12 +1152,15 @@ static inline int sctk_perform_messages_for_pair(sctk_internal_ptp_t* pair){
 #endif
 ){
 
+      SCTK_PROFIL_START (MPC_Test_message_pair_try_lock);
       sctk_internal_ptp_lock_pending(&(pair->lists));
       sctk_perform_messages_for_pair_locked(pair);
       pair->lists.changed = 0;
       sctk_internal_ptp_unlock_pending(&(pair->lists));
+      SCTK_PROFIL_END (MPC_Test_message_pair_try_lock);
     }
   }
+  SCTK_PROFIL_END (MPC_Test_message_pair);
   return sctk_ptp_tasks_perform(pair);
 }
 
@@ -1158,11 +1168,14 @@ static inline int sctk_perform_messages_for_pair(sctk_internal_ptp_t* pair){
  * This function returns the number of messages processed.
  */
 static inline int sctk_try_perform_messages_for_pair(sctk_internal_ptp_t* pair){
+  int res = 0;
+  SCTK_PROFIL_START (MPC_Test_message_pair_try);
   /* If the lock has not been taken, we continue */
   if(pair->lists.pending_lock == 0){
-    return sctk_perform_messages_for_pair(pair);
+    res = sctk_perform_messages_for_pair(pair);
   }
-  return 0;
+  SCTK_PROFIL_END (MPC_Test_message_pair_try);
+  return res;
 }
 
 void sctk_wait_message (sctk_request_t * request){

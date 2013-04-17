@@ -162,8 +162,8 @@ extern "C"
  */
 
 /* See p34 for variable definition */
-  void __mpcomp_static_schedule_get_single_chunk (int lb, int b, int incr, int
-						  *from, int *to);
+  void __mpcomp_static_schedule_get_single_chunk (long lb, long b, long incr, long 
+						  *from, long *to);
 
 /* 
    Forced chunk size 
@@ -179,16 +179,16 @@ extern "C"
  */
 
 
-  int __mpcomp_static_schedule_get_nb_chunks (int lb, int b, int incr,
-					      int chunk_size);
-  void __mpcomp_static_schedule_get_specific_chunk (int lb, int b, int incr,
-						    int chunk_size,
-						    int chunk_num, int *from,
-						    int *to);
+  int __mpcomp_static_schedule_get_nb_chunks (long lb, long b, long incr,
+					      long chunk_size);
+  void __mpcomp_static_schedule_get_specific_chunk (long lb, long b, long incr,
+						    long chunk_size,
+						    long chunk_num, long *from,
+						    long *to);
 
-  int __mpcomp_static_loop_begin (int lb, int b, int incr, int chunk_size,
-				  int *from, int *to);
-  int __mpcomp_static_loop_next (int *from, int *to);
+  int __mpcomp_static_loop_begin (long lb, long b, long incr, long chunk_size,
+				  long *from, long *to);
+  int __mpcomp_static_loop_next (long *from, long *to);
   void __mpcomp_static_loop_end ();
   void __mpcomp_static_loop_end_nowait ();
 
@@ -213,9 +213,9 @@ extern "C"
    '__mpcomp_dynamic_loop_end' with a call to
    '__mpcomp_dynamic_loop_end_nowait'.
  */
-  int __mpcomp_dynamic_loop_begin (int lb, int b, int incr, int chunk_size,
-				   int *from, int *to);
-  int __mpcomp_dynamic_loop_next (int *from, int *to);
+  int __mpcomp_dynamic_loop_begin (long lb, long b, long incr, long chunk_size,
+				   long *from, long *to);
+  int __mpcomp_dynamic_loop_next (long *from, long *to);
   void __mpcomp_dynamic_loop_end ();
   void __mpcomp_dynamic_loop_end_nowait ();
 
@@ -233,9 +233,9 @@ extern "C"
    }
    __mpcomp_guided_loop_end() ;
  */
-  int __mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size,
-				  int *from, int *to);
-  int __mpcomp_guided_loop_next (int *from, int *to);
+  int __mpcomp_guided_loop_begin (long lb, long b, long incr, long chunk_size,
+				  long *from, long *to);
+  int __mpcomp_guided_loop_next (long *from, long *to);
   void __mpcomp_guided_loop_end ();
   void __mpcomp_guided_loop_end_nowait ();
 
@@ -253,9 +253,9 @@ extern "C"
    }
    __mpcomp_runtime_loop_end() ;
  */
-  int __mpcomp_runtime_loop_begin (int lb, int b, int incr, int chunk_size,
-				   int *from, int *to);
-  int __mpcomp_runtime_loop_next (int *from, int *to);
+  int __mpcomp_runtime_loop_begin (long lb, long b, long incr, long chunk_size,
+				   long *from, long *to);
+  int __mpcomp_runtime_loop_next (long *from, long *to);
   void __mpcomp_runtime_loop_end ();
   void __mpcomp_runtime_loop_end_nowait ();
 
@@ -295,18 +295,18 @@ extern "C"
 void __mpcomp_ordered_begin() ;
 void __mpcomp_ordered_end() ;
 
-int __mpcomp_ordered_static_loop_begin (int lb, int b, int incr, int chunk_size, int *from, int *to) ;
-int __mpcomp_ordered_static_loop_next(int *from, int *to) ;
+int __mpcomp_ordered_static_loop_begin (long lb, long b, long incr, long chunk_size, long *from, long *to) ;
+int __mpcomp_ordered_static_loop_next(long *from, long *to) ;
 void __mpcomp_ordered_static_loop_end() ;
 void __mpcomp_ordered_static_loop_end_nowait() ;
 
-int __mpcomp_ordered_dynamic_loop_begin (int lb, int b, int incr, int chunk_size, int *from, int *to) ;
-int __mpcomp_ordered_dynamic_loop_next(int *from, int *to) ;
+int __mpcomp_ordered_dynamic_loop_begin (long lb, long b, long incr, long chunk_size, long *from, long *to) ;
+int __mpcomp_ordered_dynamic_loop_next(long *from, long *to) ;
 void __mpcomp_ordered_dynamic_loop_end() ;
 void __mpcomp_ordered_dynamic_loop_end_nowait() ;
 
-int __mpcomp_ordered_guided_loop_begin (int lb, int b, int incr, int chunk_size, int *from, int *to) ;
-int __mpcomp_ordered_guided_loop_next (int *from, int *to) ;
+int __mpcomp_ordered_guided_loop_begin (long lb, long b, long incr, long chunk_size, long *from, long *to) ;
+int __mpcomp_ordered_guided_loop_next (long *from, long *to) ;
 void __mpcomp_ordered_guided_loop_end () ;
 void __mpcomp_ordered_guided_loop_end_nowait () ;
 
@@ -323,29 +323,29 @@ void __mpcomp_ordered_guided_loop_end_nowait () ;
 /* COMBINED PARALLEL REGION + IGNORE-NOWAIT VERSIONS */
 
   void __mpcomp_start_parallel_static_loop (int arg_num_threads, void *(*func)
-					    (void *), void *shared, int lb,
-					    int b, int incr, int chunk_size);
-  int __mpcomp_static_loop_next_ignore_nowait (int *from, int *to);
+					    (void *), void *shared, long lb,
+					    long b, long incr, long chunk_size);
+  int __mpcomp_static_loop_next_ignore_nowait (long *from, long *to);
 
   void __mpcomp_start_parallel_guided_loop (int arg_num_threads, void *(*func)
-					    (void *), void *shared, int lb,
-					    int b, int incr, int chunk_size);
-  int __mpcomp_guided_loop_begin_ignore_nowait (int lb, int b, int incr,
-						int chunk_size, int *from,
-						int *to);
-  int __mpcomp_guided_loop_next_ignore_nowait (int *from, int *to);
+					    (void *), void *shared, long lb,
+					    long b, long incr, long chunk_size);
+  int __mpcomp_guided_loop_begin_ignore_nowait (long lb, long b, long incr,
+						long chunk_size, long *from,
+						long *to);
+  int __mpcomp_guided_loop_next_ignore_nowait (long *from, long *to);
 
   void __mpcomp_start_parallel_runtime_loop (int arg_num_threads,
 					     void *(*func) (void *),
-					     void *shared, int lb, int b,
-					     int incr, int chunk_size);
-  int __mpcomp_runtime_loop_next_ignore_nowait (int *from, int *to);
+					     void *shared, long lb, long b,
+					     long incr, long chunk_size);
+  int __mpcomp_runtime_loop_next_ignore_nowait (long *from, long *to);
 
   void __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
 					     void *(*func) (void *),
-					     void *shared, int lb, int b,
-					     int incr, int chunk_size);
-  int __mpcomp_dynamic_loop_next_ignore_nowait (int *from, int *to);
+					     void *shared, long lb, long b,
+					     long incr, long chunk_size);
+  int __mpcomp_dynamic_loop_next_ignore_nowait (long *from, long *to);
 
 #ifdef __cplusplus
 }

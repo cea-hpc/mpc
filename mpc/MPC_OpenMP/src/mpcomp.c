@@ -435,6 +435,7 @@ __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *),
     }
 
   /* Bypass if the parallel region contains only 1 thread */
+#if 0
   if (current_info->depth == 0 && num_threads == 1)
     {
       sctk_nodebug
@@ -450,6 +451,7 @@ __mpcomp_start_parallel_region (int arg_num_threads, void *(*func) (void *),
       SCTK_PROFIL_END (__mpcomp_start_parallel_region);
       return;
     }
+#endif
 
 
   sctk_nodebug

@@ -117,6 +117,13 @@ PROBE( MPI, NO_PARENT, MPI Interface)
 		PROBE( MPC_Finalize, MPI_SETUP , MPC_Finalize)
 		PROBE( MPC_Init, MPI_SETUP , MPC_Init)
 		PROBE( MPC_Initialized, MPI_SETUP , MPC_Initialized)
+	PROBE( MPI_INTERNAL, MPI, Internals)
+                PROBE (MPC_Copy_message,MPI_INTERNAL,MPC_Copy_message)
+                PROBE (MPC_Test_message_search_matching,MPI_INTERNAL,MPC_Test_message_search_matching)
+                PROBE (MPC_Test_message_pair_locked,MPI_INTERNAL,MPC_Test_message_pair_locked)
+                PROBE (MPC_Test_message_pair,MPI_INTERNAL,MPC_Test_message_pair)
+                PROBE (MPC_Test_message_pair_try,MPI_INTERNAL,MPC_Test_message_pair_try)
+                PROBE (MPC_Test_message_pair_try_lock,MPI_INTERNAL,MPC_Test_message_pair_try_lock)
 
 
 

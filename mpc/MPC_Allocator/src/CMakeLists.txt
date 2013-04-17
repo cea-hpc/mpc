@@ -9,7 +9,7 @@ function(cm_export_file FILE DEST)
 endfunction (cm_export_file)
 
 #################### DEFINE SOURCES #####################
-Message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
+#Message("CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}")
 #if (${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	set(alloc_SRC sctk_alloc_debug.c sctk_allocator.c sctk_alloc_posix.c sctk_alloc_topology.c sctk_alloc_light_mm_source.c sctk_alloc_common.c sctk_alloc_numa_stat.c sctk_alloc_on_node.c sctk_alloc_config.c sctk_alloc_hooks.c)
 #else()
@@ -40,7 +40,8 @@ else()
 	set(INCLUDE_PTHREAD "")
 endif()
 #################### SETUP LIBS #########################
-add_library(alloc_primitives STATIC ${alloc_SRC})
+add_library(mpcalloc_primitives_for_test STATIC ${alloc_SRC})
+add_library(mpcalloc_primitives SHARED ${alloc_SRC})
 
 if(NOT WIN32)
 	set(alloc_SRC ${alloc_SRC} sctk_alloc_posix_export.c)	
@@ -48,22 +49,24 @@ else()
 	add_library(mpc_allocator SHARED ${alloc_SRC} win_export/disasm-lib/cpu.c win_export/disasm-lib/disasm.c win_export/disasm-lib/disasm_x86.c win_export/disasm-lib/misc.c win_export/sctk_alloc_win_export.cpp win_export/mhook-lib/mhook.cpp)
 	add_library(mpc_allocator_import STATIC win_export/mpc_alloc_win_load.c)
 endif()
-add_library(alloc SHARED ${alloc_SRC})
+add_library(mpcalloc SHARED ${alloc_SRC})
 
-add_library(alloc_trace SHARED ${alloc_SRC})
+add_library(mpcalloc_trace SHARED ${alloc_SRC})
 
 #################### LINK LIBS ##########################
-target_link_libraries(alloc ${HWLOC_LIBRARY} ${INCLUDE_PTHREAD} )
+target_link_libraries(mpcalloc ${HWLOC_LIBRARY} ${INCLUDE_PTHREAD} )
 if (WIN32)
 target_link_libraries(mpc_allocator ${HWLOC_LIBRARY})
 endif()
-target_link_libraries(alloc_trace ${HWLOC_LIBRARY} ${INCLUDE_PTHREAD})
-target_link_libraries(alloc_primitives ${HWLOC_LIBRARY} ${INCLUDE_PTHREAD})
+target_link_libraries(mpcalloc_trace ${HWLOC_LIBRARY} ${INCLUDE_PTHREAD})
+target_link_libraries(mpcalloc_primitives_for_test ${HWLOC_LIBRARY} ${INCLUDE_PTHREAD})
+target_link_libraries(mpcalloc_primitives ${HWLOC_LIBRARY} ${INCLUDE_PTHREAD})
 
 ################### EXTRA FLAGS #########################
-set_target_properties(alloc PROPERTIES COMPILE_FLAGS "-DENABLE_STATIC=yes")
-set_target_properties(alloc_trace PROPERTIES COMPILE_FLAGS "-DENABLE_STATIC=yes -DENABLE_TRACE=yes")
-set_target_properties(alloc_primitives PROPERTIES COMPILE_FLAGS "-DMPC_ALLOCATOR_DISABLE_STATIC=yes")
+set_target_properties(mpcalloc PROPERTIES COMPILE_FLAGS "-DENABLE_STATIC=yes")
+set_target_properties(mpcalloc_primitives PROPERTIES COMPILE_FLAGS "-DENABLE_STATIC=yes")
+set_target_properties(mpcalloc_trace PROPERTIES COMPILE_FLAGS "-DENABLE_STATIC=yes -DENABLE_TRACE=yes")
+set_target_properties(mpcalloc_primitives_for_test PROPERTIES COMPILE_FLAGS "-DMPC_ALLOCATOR_DISABLE_STATIC=yes")
 
 if(WIN32)
 	#cm_export_file("${CMAKE_BINARY_DIR}/src/alloc_primitives.dll" "${CMAKE_BINARY_DIR}/tests/")
@@ -85,3 +88,8 @@ IF(WIN32)
 		target_link_libraries(win_port_test mpc_allocator)
 	ENDIF(EXISTS ${CMAKE_SOURCE_DIR}/tests/simple_malloc.cpp)
 ENDIF(WIN32)
+
+######################################################## 
+INSTALL(TARGETS mpcalloc mpcalloc_trace mpcalloc_primitives
+        ARCHIVE DESTINATION lib${LIB_SUFFIX}
+        LIBRARY DESTINATION lib${LIB_SUFFIX})

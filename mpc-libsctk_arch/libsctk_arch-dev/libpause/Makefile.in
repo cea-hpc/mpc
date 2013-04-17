@@ -1,0 +1,12 @@
+SRCDIR=@srcdir@/
+
+CC=@CC@
+CFLAGS=@CFLAGS@ -I../include -I$(SRCDIR)/../include
+AR=@AR@
+
+all:../lib/libsctk_arch_pause.so
+
+../lib/libsctk_arch_pause.so:$(SRCDIR)/pause.c
+	$(CC) $(CFLAGS) $(SRCDIR)/pause.c -o pause.o -c
+	mkdir -p ../lib
+	$(CC) -fPIC -shared pause.o  -o ../lib/libsctk_arch_pause.so

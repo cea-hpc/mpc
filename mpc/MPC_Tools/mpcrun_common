@@ -92,7 +92,6 @@ Informations:
     --show, Display command line
     --version-details, Print version of each module used
     --report, Print report
-    --tmp_dir=dir, Directory to store mpc files
     --verbose=n,-v,-vv,-vvv Verbose mode (level 1 to 3)
     --verbose Verbose level 1
 
@@ -128,20 +127,20 @@ Launcher:
 Debugger:
     --dbg=<debugger_name> to use a debugger
     
-Profiling:
+Profiling (if compiled with --enable-MPC_Profiler) :
 	--profiling=AA,BB,...
 	
-	example : --profiling=text_stdout,html,latex
+	example : --profiling=stdout,html,latex
 	
 	With the following output modules :
-		text : Outputs to file indented profile with time in standard units
-		text_raw : Outputs to file unindented profile in ticks (gnuplot compliant)
-		text_noindent : Same as "text" with no indentation
-		text_stdout : "text" to stdout
-		text_stdout_raw : "text_raw" to stdout
-		text_stdout_noindent : "text_noindent" to stdout
-		latex : Outputs profile to a latex source file
-		html : Outputs profile to an html file
+		* file : Outputs to file indented profile with time in standard units
+		* file-raw : Outputs to file unindented profile in ticks (gnuplot compliant)
+		* file-noindent : Same as "text" with no indentation
+		* stdout : "text" to stdout
+		* stdout-raw : "text_raw" to stdout
+		* stdout-noindent : "text_noindent" to stdout
+		* latex : Outputs profile to a latex source file
+		* html : Outputs profile to an html file
 EOF
 }
 
@@ -202,6 +201,7 @@ READ_MPC_ARG="true"
 
 TMP_DIR_D="TEMP_MPC_$$/"
 TMP_DIR="--directory=${TMP_DIR_D}"
+TMP_DIR="/dev/null"
 LAUNCH_OPTIONS=""
 MPC_CLEAN_TMP_DIR="0"
 
@@ -309,10 +309,10 @@ for arg in "$@" ; do
     MIGRATION="--migration"
     ;;
     --noreport)
-    REPORT=""
+    MPC_PROFILING=""
     ;;
     --report)
-    REPORT="--report"
+    MPC_PROFILING="stdout"
     ;;
     --enable-smt)
     ENABLE_SMT="1"
@@ -472,7 +472,7 @@ fi
 MPC_VERBOSE="--mpc-verbose=${MPC_VERBOSE}"
 MPC_PROFILING="--profiling=${MPC_PROFILING}"
 
-SCTK_ARGS="$SCTK_ARGS $VERSION_DETAILS $REPORT $CHECKPOINT $RESTART $MIGRATION $TMP_DIR $MPC_VERBOSE $MPC_PROFILING"
+SCTK_ARGS="$SCTK_ARGS $VERSION_DETAILS $CHECKPOINT $RESTART $MIGRATION $MPC_VERBOSE $MPC_PROFILING"
 if test "$MPC_MONO" = "1" ; then
 SCTK_ARGS="$SCTK_ARGS --mono=$BINARY"
 BINARY="mpc_mono"
@@ -524,10 +524,10 @@ if test "${DEBUG}" = "mpc-gdb"; then
 fi
 
 if test "$show" != "echo" ; then
-if test "$TMP_DIR_D" != "" ; then
-    mkdir -p ${TMP_DIR_D}
-fi
-echo "$0 $@" > ${TMP_DIR_D}mpcrun_args
+#if test "$TMP_DIR_D" != "" ; then
+#    mkdir -p ${TMP_DIR_D}
+#fi
+#echo "$0 $@" > ${TMP_DIR_D}mpcrun_args
 
 if test "$MPC_VERBOSE" != "--mpc-verbose=0" ; then
 if test "${DEBUG}" = "" ; then

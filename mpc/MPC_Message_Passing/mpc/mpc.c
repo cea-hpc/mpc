@@ -36,6 +36,7 @@
 #include <sctk_communicator.h>
 #include <sctk_collective_communications.h>
 #include "sctk_stdint.h"
+#include "sctk_atomics.h"
 
  /*#define MPC_LOG_DEBUG*/
 #ifdef MPC_LOG_DEBUG
@@ -1331,6 +1332,9 @@ MPC_Checkpoint_restart_init ()
 {
   if (sctk_check_point_restart_mode)
     {
+#if 1
+  not_implemented();
+#else
       int rank;
       sctk_task_specific_t *task_specific;
       task_specific = __MPC_get_task_specific ();
@@ -1391,6 +1395,7 @@ MPC_Checkpoint_restart_init ()
       }
       __MPC_Barrier (MPC_COMM_WORLD);
       sctk_restart_mode = 0;
+#endif
     }
 }
 static void
@@ -1398,6 +1403,7 @@ MPC_Checkpoint_restart_end ()
 {
   if (sctk_check_point_restart_mode)
     {
+#if 0
       char name[SCTK_MAX_FILENAME_SIZE];
       int rank;
       sctk_task_specific_t *task_specific;
@@ -1406,6 +1412,9 @@ MPC_Checkpoint_restart_end ()
       sctk_thread_dump_clean ();
       sprintf (name, "%s/Task_%d", sctk_store_dir, rank);
       remove (name);
+#else
+  not_implemented();
+#endif
     }
 }
 
@@ -1434,6 +1443,7 @@ PMPC_Checkpoint ()
 int
 PMPC_Checkpoint_timed (unsigned int sec, MPC_Comm comm)
 {
+#if 0
   if (sctk_check_point_restart_mode)
     {
       static volatile unsigned long perform_check = 1;
@@ -1518,11 +1528,15 @@ INFO("Si on redemarre , recreation des commnicateurs")
       perform_check = tmp_perform;
     }
   MPC_ERROR_SUCESS ();
+#else
+  not_implemented();
+#endif
 }
 
 int
 PMPC_Migrate ()
 {
+#if 0
   if (sctk_check_point_restart_mode)
     {
       FILE *file;
@@ -1560,11 +1574,15 @@ PMPC_Migrate ()
       sctk_register_thread (rank);
     }
   MPC_ERROR_SUCESS ();
+#else
+  not_implemented();
+#endif
 }
 
 int
 PMPC_Restart (int rank)
 {
+#if 0
   if (sctk_check_point_restart_mode)
     {
       FILE *file;
@@ -1593,6 +1611,9 @@ PMPC_Restart (int rank)
       sctk_thread_restore (self_p, name, vp);
     }
   MPC_ERROR_SUCESS ();
+#else
+  not_implemented();
+#endif
 }
 
 int
@@ -1640,6 +1661,7 @@ PMPC_Move_to (int process, int cpuid)
     {
       if (sctk_is_net_migration_available () && sctk_migration_mode)
 	{
+#if 0
 	  FILE *file;
 	  char name[SCTK_MAX_FILENAME_SIZE];
 	  sctk_thread_t self;
@@ -1689,6 +1711,9 @@ PMPC_Move_to (int process, int cpuid)
 	    {
 	      sctk_thread_proc_migration (cpuid);
 	    }
+#else
+  not_implemented();
+#endif
 	}
       else
 	{
@@ -4485,14 +4510,18 @@ PMPC_Error_class (int errorcode, int *errorclass)
 double
 PMPC_Wtime ()
 {
-  SCTK_PROFIL_START (MPC_Wtime);
   double res;
+  SCTK_PROFIL_START (MPC_Wtime);
+#if SCTK_WTIME_USE_GETTIMEOFDAY
   struct timeval tp;
 
   gettimeofday (&tp, NULL);
   res = (double) tp.tv_usec + (double) tp.tv_sec * (double) 1000000;
   res = res / (double) 1000000;
 
+#else
+  res = sctk_atomics_get_timestamp_tsc();
+#endif
   sctk_nodebug ("Wtime = %f", res);
   SCTK_PROFIL_END (MPC_Wtime);
   return res;

@@ -46,7 +46,7 @@ MPC_VERSION="`${MPC_SOURCE_DIR}/MPC_Tools/mpc_print_version`"
 SCTK_PREFIX_CHECK="1"
 
 # List of all modules to add to MPC distribution
-MODULES="mpc-gdb mpc-gcc mpc-hydra mpc-hwloc mpc-openpa mpc-binutils mpc-libxml2"
+MODULES="mpc-gdb mpc-gcc mpc-hydra mpc-hwloc mpc-openpa mpc-binutils mpc-libxml2 mpc-libsctk_arch"
 # List of modules for the 'clean' rule
 MODULES_CLEAN=
 
@@ -68,6 +68,7 @@ HWLOC_CONFIGURE_ARGUMENTS=""
 OPENPA_CONFIGURE_ARGUMENTS=""
 HYDRA_CONFIGURE_ARGUMENTS=""
 LIBXML2_CONFIGURE_ARGUMENTS=""
+LIBSCTK_ARCH_CONFIGURE_ARGUMENTS=""
 
 # Options for SCTK_PMI
 SCTK_PMI_OPTIONS="--with-hydra"
@@ -81,6 +82,9 @@ SCTK_OPENPA_OPTIONS="--with-openpa=embeded"
 
 # Options fo SCTK_LIBXML
 SCTK_LIBXML2_OPTIONS="--with-libxml2=embeded"
+
+# Options fo SCTK_LIBSCTK_ARCH
+SCTK_LIBSCTK_ARCH_OPTIONS="--with-libsctk_arch=embeded"
 
 # Options for OpenIB
 SCTK_OPENIB_OPTIONS=""
@@ -131,6 +135,7 @@ MPC gdb options:
 MPC dependencies:
   --with-hwloc[=prefix]               Use the hwloc provided in prefix if not set MPC will buid its own hwloc
   --with-libxml2[=prefix]             Use the libxml2 provided in prefix if not set MPC will buid its own one
+  --with-libsctk_arch[=prefix]             Use the libsctk_arch provided in prefix if not set MPC will buid its own one
   --hwloc-{enable-debug|...}          Pass option to hwloc configure script.
   --with-openpa[=prefix]              Use the OpenPA in this prefix if not set MPC will build its own OpenPA
   --openpa-{disable-assert|...}       Pass option to OpenPA configure script.
@@ -226,6 +231,16 @@ for arg in "$@" ; do
       SCTK_LIBXML2_OPTIONS="$arg"
       echo "Using libxml2 given by $arg"
     ;;
+    --with-libsctk_arch)
+      MODULES="`echo $MODULES | sed -e 's/mpc-libsctk_arch//g'`"
+      SCTK_LIBSCTK_ARCH_OPTIONS=""
+      echo "Using libsctk_arch located in system"
+    ;;
+    --with-libsctk_arch=*)
+      MODULES="`echo $MODULES | sed -e 's/mpc-libsctk_arch//g'`"
+      SCTK_LIBSCTK_ARCH_OPTIONS="$arg"
+      echo "Using libsctk_arch given by $arg"
+    ;;
     --with-hwloc)
       MODULES="`echo $MODULES | sed -e 's/mpc-hwloc//g'`"
       SCTK_HWLOC_OPTIONS=""
@@ -262,6 +277,9 @@ for arg in "$@" ; do
     --libxml2-*)
       LIBXML2_CONFIGURE_ARGUMENTS="${LIBXML2_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--libxml2//g'`"
     ;;
+    --libsctk_arch-*)
+      LIBSCTK_ARCH_CONFIGURE_ARGUMENTS="${LIBSCTK_ARCH_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--libsctk_arch//g'`"
+    ;;
     --openpa-*)
       OPENPA_CONFIGURE_ARGUMENTS="${OPENPA_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--openpa//g'`"
     ;;
@@ -269,6 +287,12 @@ for arg in "$@" ; do
       #caution, we remove the --hydra- in the hydra configure script as it permit to separate
       #for hydra and simple sub packages
       HYDRA_CONFIGURE_ARGUMENTS="${HYDRA_CONFIGURE_ARGUMENTS} $arg"
+    ;;
+    CFLAGS=*)
+    MPC_CFLAGS="CFLAGS=\"`echo A$arg | sed -e 's/ACFLAGS=//g'`\""
+    ;;
+    LDFLAGS=*)
+    MPC_LDFLAGS="LDFLAGS=\"`echo A$arg | sed -e 's/ALDFLAGS=//g'`\""
     ;;
     *)
     MPC_ARGS="$arg $MPC_ARGS"
@@ -297,6 +321,9 @@ MPC_ARGS="$SCTK_OPENIB_OPTIONS $MPC_ARGS"
 
 # Add arguments linked to SCTK_LIBXML2
 MPC_ARGS="$SCTK_LIBXML2_OPTIONS $MPC_ARGS"
+
+# Add arguments linked to SCTK_LIBSCTK_ARCH
+MPC_ARGS="$SCTK_LIBSCTK_ARCH_OPTIONS $MPC_ARGS"
 
 if [ $SCTK_PREFIX_CHECK -eq 1 ]; then
   check_overwritten_files
@@ -445,6 +472,9 @@ if test "$mod" != "#" ; then
        mpc-libxml2)
          MOD_CONFIGURE_ARGUMENTS="${LIBXML2_CONFIGURE_ARGUMENTS}"
        ;;
+       mpc-libsctk_arch)
+         MOD_CONFIGURE_ARGUMENTS="${LIBSCTK_ARCH_CONFIGURE_ARGUMENTS}"
+       ;;
        *)
          MOD_CONFIGURE_ARGUMENTS=''
        ;;
@@ -459,7 +489,7 @@ if test "$mod" != "#" ; then
     MODULES_CLEAN="${MODULES_CLEAN} ${FULL_NAME}_build"
 
     printf "#\n# Module ${mod} / Version ${ver}\n#\n" >> Makefile
-    if [ "${mod##*-}" = "openpa" ] || [ "${mod##*-}" = "hwloc" ] || [ "${mod##*-}" = "binutils" ] || [ "${mod##*-}" = "libxml2" ]
+    if [ "${mod##*-}" = "openpa" ] || [ "${mod##*-}" = "hwloc" ] || [ "${mod##*-}" = "binutils" ] || [ "${mod##*-}" = "libxml2" ] || [ "${mod##*-}" = "libsctk_arch" ]
     then
         printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_INSTALL=`echo A${SCTK_PREFIX} | sed -e 's/A--prefix=//g'`/${FULL_NAME}\n" >> Makefile
         printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_BUILD=`pwd`/${FULL_NAME}_build/${mod##*-}-${ver}\n" >> Makefile
@@ -472,7 +502,7 @@ if test "$mod" != "#" ; then
     printf "\n" >> Makefile
 
     # We set all depedences for compiling MPC
-    if [ "${mod##*-}" = "openpa" ] || [ "${mod##*-}" = "hwloc" ] || [ "${mod##*-}" = "hydra"  ] || [ "${mod##*-}" = "libxml2" ]; then
+    if [ "${mod##*-}" = "openpa" ] || [ "${mod##*-}" = "hwloc" ] || [ "${mod##*-}" = "hydra"  ] || [ "${mod##*-}" = "libxml2" ] || [ "${mod##*-}" = "libsctk_arch" ]; then
       CONFIG_MPC_DEPS="$CONFIG_MPC_DEPS ${FULL_NAME}_build/config.status"
       MAKE_MPC_DEPS="$MAKE_MPC_DEPS ${FULL_NAME}_make"
       INSTALL_MPC_DEPS="$INSTALL_MPC_DEPS ${FULL_NAME}_install"
@@ -493,7 +523,7 @@ if test "$mod" != "#" ; then
 			printf "\t\$(MAKE) -C ${FULL_NAME}_build/hydra \n" >> Makefile
 			printf "\t\$(MAKE) -C ${FULL_NAME}_build/simple \n" >> Makefile
 			;;
-		openpa|hwloc|binutils|libxml2)
+		openpa|hwloc|binutils|libxml2|libsctk_arch)
 			printf "\t\$(MAKE) -C ${FULL_NAME}_build/${mod##*-}-${ver} \n" >> Makefile
 			;;
 		*)
@@ -513,7 +543,7 @@ if test "$mod" != "#" ; then
 		"hydra")
 			printf "\t\$(MAKE) -C ${FULL_NAME}_build/hydra install \n" >> Makefile
 			;;
-		"openpa"|"hwloc"|"binutils"|"libxml2")
+		"openpa"|"hwloc"|"binutils"|"libxml2"|"libsctk_arch")
 			printf "\t\$(MAKE) -C ${FULL_NAME}_build/${mod##*-}-${ver} install \n" >> Makefile
 			;;
 		*)
@@ -558,7 +588,7 @@ fi
 printf "#\n# Rule for MPC\n#\n" >> Makefile
 printf "mpc_build/config.status:${CONFIG_MPC_DEPS} Makefile\n" >> Makefile
 printf "\tmkdir -p mpc_build\n" >> Makefile
-printf "\tcd mpc_build && ${MPC_SOURCE_DIR}/configure ${ARG_COMPILER_LIST} ${ARG_LIBRARY_PATH} ${MPC_ARGS} \n" >> Makefile
+printf "\tcd mpc_build && ${MPC_SOURCE_DIR}/configure ${ARG_COMPILER_LIST} ${ARG_LIBRARY_PATH} ${MPC_ARGS} ${MPC_CFLAGS} ${MPC_LDFLAGS}\n" >> Makefile
 printf "\ttouch mpc_build/config.status\n" >> Makefile
 echo "">> Makefile
 echo "Compiler list for MPC: ${COMPILER_LIST}" >> configure.log

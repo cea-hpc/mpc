@@ -47,6 +47,9 @@ static volatile unsigned long perform_check = 1;
 static void *
 mpcomp_master_checkpointing (void *s)
 {
+#if 1
+  not_implemented();
+#else
   int restarted;
   unsigned long perform;
 
@@ -139,13 +142,16 @@ mpcomp_master_checkpointing (void *s)
 
 
     }
-
+#endif
   return NULL;
 }
 
 static void *
 mpcomp_slave_checkpointing (void *s)
 {
+#if 1
+  not_implemented();
+#else
   char name[1024];
   sctk_thread_t pid;
   unsigned long perform;
@@ -255,6 +261,6 @@ __mpcomp_checkpoint ()
          - mpcomp_slave_checkpointing (for the rest of the micro VPs)
        */
     }
-
+#endif
   return 0;
 }

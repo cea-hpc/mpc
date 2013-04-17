@@ -1,0 +1,7 @@
+# Version Archive_type Archive_name Archive_dir Patch_needed Patch_name Arguments
+# Archive_type: 1 -> tar.gz
+#		2 -> tar.bz2
+#		3 -> directory
+#		4 -> internet tgz
+#		5 -> internet tgz
+dev 3 libsctk_arch-dev libsctk_arch-dev 0 no

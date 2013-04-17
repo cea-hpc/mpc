@@ -11,8 +11,8 @@ OPENPA_PREFIX=${MPC_INSTALL_PREFIX}/mpc-openpa-1.0.2/
 HWLOC_PREFIX=${MPC_INSTALL_PREFIX}/mpc-hwloc-1.6.1/
 
 #create dirs
-mkdir numa || exit 1
-mkdir uma || exit 1
+mkdir -p ${MPC_TEST_CURRENT_WORK_DIR}/numa || exit 1
+mkdir -p ${MPC_TEST_CURRENT_WORK_DIR}/uma || exit 1
 
 #setup svunittest
 helper_use_svunittest
@@ -23,8 +23,8 @@ else
 fi
 
 #use cmake
-helper_insert_test "compile_MPC_Allocator_numa" '0' "cd numa && cmake -DCMAKE_BUILD_TYPE=Debug -DHWLOC_PREFIX=${HWLOC_PREFIX} -DOPENPA_PREFIX=${OPENPA_PREFIX} ${ALLOC_SOURCE_PATH} ${SVUNITTEST_OPT} && make"
-helper_insert_test "compile_MPC_Allocator_uma" '0' "cd uma && cmake -DCMAKE_BUILD_TYPE=Debug -DDISABLE_LIBNUMA=yes -DOPENPA_PREFIX=${OPENPA_PREFIX} ${ALLOC_SOURCE_PATH} ${SVUNITTEST_OPT} && make"
+helper_insert_test "compile_MPC_Allocator_numa" '0' "cd ${MPC_TEST_CURRENT_WORK_DIR}/numa && cmake -DCMAKE_BUILD_TYPE=Debug -DHWLOC_PREFIX=${HWLOC_PREFIX} -DOPENPA_PREFIX=${OPENPA_PREFIX} ${ALLOC_SOURCE_PATH} ${SVUNITTEST_OPT} && make"
+helper_insert_test "compile_MPC_Allocator_uma" '0' "cd ${MPC_TEST_CURRENT_WORK_DIR}/uma && cmake -DCMAKE_BUILD_TYPE=Debug -DDISABLE_LIBNUMA=yes -DOPENPA_PREFIX=${OPENPA_PREFIX} ${ALLOC_SOURCE_PATH} ${SVUNITTEST_OPT} && make"
 
 #list of tests
 ALLOC_TESTS="test_allocated_chunk \

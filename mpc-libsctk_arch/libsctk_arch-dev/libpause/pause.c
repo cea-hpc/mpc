@@ -20,31 +20,27 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#define JB_RBX	0
-#define JB_RBP	1
-#define JB_R12	2
-#define JB_R13	3
-#define JB_R14	4
-#define JB_R15	5
-#define JB_RSP	6
-#define JB_PC	7
+#include <libarch.h>
+#include <libpause.h>
 
-.global mpc__setjmp
-.type mpc__setjmp,@function;
-.align 4;
-mpc__setjmp:	
-	/* Save registers.  */
-	movq %rbx, (JB_RBX*8)(%rdi)
-	movq %rbp, (JB_RBP*8)(%rdi)
-	movq %r12, (JB_R12*8)(%rdi)
-	movq %r13, (JB_R13*8)(%rdi)
-	movq %r14, (JB_R14*8)(%rdi)
-	movq %r15, (JB_R15*8)(%rdi)
-	leaq 8(%rsp), %rdx	/* Save SP as it will be after we return.  */
-	movq %rdx, (JB_RSP*8)(%rdi)
-	movq (%rsp), %rax	/* Save PC we are returning to now.  */
-	movq %rax, (JB_PC*8)(%rdi)
+#if defined(SCTK_i686_ARCH_SCTK) || defined(SCTK_x86_64_ARCH_SCTK)
+static inline void __sctk_cpu_relax ()
+{
+  __asm__ __volatile__ ("rep;nop":::"memory");
+}
+#elif defined(SCTK_ia64_ARCH_SCTK)
+static inline void __sctk_cpu_relax ()
+{
+  __asm__ __volatile__ ("hint @pause":::"memory");
+}
+#else
+static inline void __sctk_cpu_relax ()
+{
+  sched_yield ();
+}
+#endif
 
-	xorl %eax, %eax
-	retq
-.size mpc__setjmp,.-mpc__setjmp;
+void sctk_cpu_relax ()
+{
+  __sctk_cpu_relax ();
+}

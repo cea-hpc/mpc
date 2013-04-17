@@ -51,7 +51,9 @@ enum sctk_alloc_chain_flags
 	 * blocs allocated by this allocation chain. But you do not have the minimum size of 2M for
 	 * macro blocs which is required by region representation.
 	**/
-	SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER = 4
+	SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER = 4,
+	/** Flag to create a simple standalone allocation chain. **/
+	SCTK_ALLOC_CHAIN_STANDALONE = SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER | SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE
 };
 
 /******************************** STRUCTURE *********************************/
@@ -111,31 +113,35 @@ struct sctk_alloc_chain
 /********************************* FUNCTION *********************************/
 //allocation chain management
 SCTK_STATIC void sctk_alloc_chain_base_init(struct sctk_alloc_chain * chain,enum sctk_alloc_chain_flags flags);
-void sctk_alloc_chain_user_init(struct sctk_alloc_chain * chain,void * buffer,sctk_size_t size,enum sctk_alloc_chain_flags flags);
-void sctk_alloc_chain_default_init(struct sctk_alloc_chain * chain,struct sctk_alloc_mm_source * source,enum sctk_alloc_chain_flags flags);
-void * sctk_alloc_chain_alloc(struct sctk_alloc_chain * chain,sctk_size_t size);
-void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t boundary,sctk_size_t size);
-void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr);
+SCTK_PUBLIC void sctk_alloc_chain_standalone_init(struct sctk_alloc_chain * chain,void * buffer,sctk_size_t size);
+SCTK_PUBLIC void sctk_alloc_chain_user_init(struct sctk_alloc_chain * chain,void * buffer,sctk_size_t size,enum sctk_alloc_chain_flags flags);
+SCTK_PUBLIC void sctk_alloc_chain_user_refill(struct sctk_alloc_chain * chain, void * buffer, sctk_size_t size);
+SCTK_INTERN void sctk_alloc_chain_default_init(struct sctk_alloc_chain * chain,struct sctk_alloc_mm_source * source,enum sctk_alloc_chain_flags flags);
+SCTK_PUBLIC void * sctk_alloc_chain_alloc(struct sctk_alloc_chain * chain,sctk_size_t size);
+SCTK_PUBLIC void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t boundary,sctk_size_t size);
+SCTK_PUBLIC void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr);
 SCTK_STATIC bool sctk_alloc_chain_can_destroy(struct sctk_alloc_chain* chain);
 SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_request_mem(struct sctk_alloc_chain* chain,sctk_size_t size);
 SCTK_STATIC bool sctk_alloc_chain_refill_mem(struct sctk_alloc_chain* chain,sctk_size_t size);
-void sctk_alloc_chain_destroy(struct sctk_alloc_chain * chain,bool force);
-void sctk_alloc_chain_purge_rfq(struct sctk_alloc_chain * chain);
+SCTK_PUBLIC void sctk_alloc_chain_destroy(struct sctk_alloc_chain * chain,bool force);
+SCTK_PUBLIC void sctk_alloc_chain_purge_rfq(struct sctk_alloc_chain * chain);
 SCTK_STATIC void sctk_alloc_chain_free_macro_bloc(struct sctk_alloc_chain * chain,sctk_alloc_vchunk vchunk);
 SCTK_STATIC bool sctk_alloc_chain_can_remap(struct sctk_alloc_chain * chain);
-void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sctk_size_t size);
-void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_numa_node,bool migrate_chain_struct,bool migrate_content,struct sctk_alloc_mm_source * new_mm_source);
-bool sctk_alloc_chain_is_thread_safe(struct sctk_alloc_chain * chain);
-void sctk_alloc_chain_make_thread_safe(struct sctk_alloc_chain * chain,bool value);
-void sctk_alloc_chain_mark_for_destroy(struct sctk_alloc_chain * chain,void (*destroy_handler)(struct sctk_alloc_chain * chain));
+SCTK_PUBLIC void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sctk_size_t size);
+SCTK_PUBLIC void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_numa_node,bool migrate_chain_struct,bool migrate_content,struct sctk_alloc_mm_source * new_mm_source);
+SCTK_PUBLIC bool sctk_alloc_chain_is_thread_safe(struct sctk_alloc_chain * chain);
+SCTK_PUBLIC void sctk_alloc_chain_make_thread_safe(struct sctk_alloc_chain * chain,bool value);
+SCTK_PUBLIC void sctk_alloc_chain_mark_for_destroy(struct sctk_alloc_chain * chain,void (*destroy_handler)(struct sctk_alloc_chain * chain));
 SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_prepare_and_reg_macro_bloc(struct sctk_alloc_chain * chaine,struct sctk_alloc_macro_bloc * macro_bloc);
 SCTK_STATIC bool sctk_alloc_chain_is_huge_size(struct sctk_alloc_chain * chain,sctk_size_t size);
+SCTK_PUBLIC size_t sctk_alloc_chain_struct_size(void);
+SCTK_PUBLIC void sctk_alloc_chain_remote_free(struct sctk_alloc_chain * chain,void * ptr);
 
 /************************* FUNCTION ************************/
 //some stat function for debug
-void sctk_alloc_chain_get_numa_stat(struct sctk_alloc_numa_stat_s * numa_stat,struct sctk_alloc_chain * chain);
-void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain);
-int sctk_alloc_chain_get_numa_node(struct sctk_alloc_chain * chain);
+SCTK_PUBLIC void sctk_alloc_chain_get_numa_stat(struct sctk_alloc_numa_stat_s * numa_stat,struct sctk_alloc_chain * chain);
+SCTK_PUBLIC void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain);
+SCTK_PUBLIC int sctk_alloc_chain_get_numa_node(struct sctk_alloc_chain * chain);
 
 #ifdef __cplusplus
 }

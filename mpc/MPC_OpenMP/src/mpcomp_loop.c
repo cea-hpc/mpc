@@ -25,12 +25,12 @@
 #include <sctk_debug.h>
 
 /* Return the number of chunks that a static schedule will create */
-int
-__mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads, int lb,
-					int b, int incr, int chunk_size)
+long
+__mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads, long lb,
+					long b, long incr, long chunk_size)
 {
-  int trip_count;
-  int nb_chunks_per_thread;
+  long trip_count;
+  long nb_chunks_per_thread;
 
   /* Original loop: lb -> b step incr */
 
@@ -73,11 +73,11 @@ __mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads, int lb,
 
 void
 __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
-				      int lb, int b, int incr,
-				      int chunk_size, int chunk_num,
-				      int *from, int *to)
+				      long lb, long b, long incr,
+				      long chunk_size, long chunk_num,
+				      long *from, long *to)
 {
-  int trip_count;
+  long trip_count;
 
   /* Compute the trip count (total number of iterations of the original loop) */
   trip_count = (b - lb) / incr;
@@ -100,8 +100,8 @@ __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
       *to = lb + trip_count * incr;
 
       sctk_nodebug ("__mpcomp_static_schedule_get_specific_chunk: "
-		    "Thread %d: %d -> %d (excl) step %d => "
-		    "%d -> %d (excl) step %d (chunk of %d)\n",
+		    "Thread %d: %ld -> %ld (excl) step %ld => "
+		    "%ld -> %ld (excl) step %ld (chunk of %ld)\n",
 		    rank, lb, b, incr, from, to, incr,
 		    trip_count % chunk_size);
 
@@ -116,8 +116,8 @@ __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
 	chunk_size * incr * rank + chunk_size * incr;
 
       sctk_nodebug ("__mpcomp_static_schedule_get_specific_chunk: "
-		    "Thread %d / Chunk %d: %d -> %d (excl) step %d => "
-		    "%d -> %d (excl) step %d (chunk of %d)\n",
+		    "Thread %d / Chunk %ld: %ld -> %ld (excl) step %ld => "
+		    "%ld -> %ld (excl) step %ld (chunk of %ld)\n",
 		    rank, chunk_num, lb, b, incr, *from, *to, incr,
 		    chunk_size);
     }

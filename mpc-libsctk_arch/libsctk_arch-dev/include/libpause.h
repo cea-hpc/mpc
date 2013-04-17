@@ -19,8 +19,9 @@
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
 /* #                                                                      # */
 /* ######################################################################## */
+#ifndef __libpause__h__
+#define __libpause__h__
 
-#include <setjmp.h>
+void sctk_cpu_relax ();
 
-void mpc__longjmp (__jmp_buf, int);
-int mpc__setjmp (__jmp_buf);
+#endif
