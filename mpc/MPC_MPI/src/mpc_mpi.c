@@ -6448,7 +6448,6 @@ __INTERNAL__PMPI_Cart_get (MPI_Comm comm, int maxdims, int *dims, int *periods, 
 	mpi_topology_per_comm_t* topo;
 	int res;
 	int rank;
-<<<<<<< HEAD
 
 	tmp = mpc_mpc_get_per_comm_data(comm);
 	topo = &(tmp->topo);
