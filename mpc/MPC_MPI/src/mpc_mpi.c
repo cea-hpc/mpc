@@ -4599,6 +4599,9 @@ __INTERNAL__PMPI_Group_incl (MPI_Group mpi_group, int n, int *ranks,
   MPC_Group group;
   MPI_internal_group_t *newgroup;
   
+  if(n < 0)
+	return MPI_ERR_ARG;
+	
   if(n == 0)
 	{
 		(*mpi_newgroup) = MPI_GROUP_EMPTY;
@@ -7281,7 +7284,10 @@ PMPI_Recv (void *buf, int count, MPI_Datatype datatype, int source, int tag,
 {
   int res = MPI_ERR_INTERN;
   if(source == MPC_PROC_NULL)
-		SCTK__MPI_Check_retrun_val (res, comm);
+  {
+	res = MPI_SUCCESS;
+	SCTK__MPI_Check_retrun_val (res, comm);
+  }
   SCTK__MPI_INIT_STATUS (status);
   {
     int size;
@@ -7535,9 +7541,13 @@ PMPI_Ibsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	     MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
-  if(dest == MPC_PROC_NULL)
-		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_REQUEST (request);
+  if(dest == MPC_PROC_NULL)
+  {
+	  res = MPI_SUCCESS;
+	  SCTK__MPI_Check_retrun_val (res, comm);
+  }
+  
   if(dest == MPC_PROC_NULL)
   {
 	res = MPI_SUCCESS;
@@ -7584,7 +7594,10 @@ PMPI_Issend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 {
   int res = MPI_ERR_INTERN;
   if(dest == MPC_PROC_NULL)
-		SCTK__MPI_Check_retrun_val (res, comm);
+  {
+	  res = MPI_SUCCESS;
+	  SCTK__MPI_Check_retrun_val (res, comm);
+  }
   SCTK__MPI_INIT_REQUEST (request);
   if(dest == MPC_PROC_NULL)
   {
@@ -7631,7 +7644,10 @@ PMPI_Irsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 {
   int res = MPI_ERR_INTERN;
   if(dest == MPC_PROC_NULL)
-		SCTK__MPI_Check_retrun_val (res, comm);
+  {
+	res = MPI_SUCCESS;
+	SCTK__MPI_Check_retrun_val (res, comm);
+  }
   SCTK__MPI_INIT_REQUEST (request);
   if(dest == MPC_PROC_NULL)
   {
@@ -7678,7 +7694,10 @@ PMPI_Irecv (void *buf, int count, MPI_Datatype datatype, int source,
 {
   int res = MPI_ERR_INTERN;
   if(source == MPC_PROC_NULL)
-		SCTK__MPI_Check_retrun_val (res, comm);
+  {
+	res = MPI_SUCCESS;
+	SCTK__MPI_Check_retrun_val (res, comm);
+  }
   SCTK__MPI_INIT_REQUEST (request);
   {
     int size;

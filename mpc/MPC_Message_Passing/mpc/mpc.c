@@ -4678,14 +4678,14 @@ PMPC_Group_incl (MPC_Group group, int n, int *ranks, MPC_Group * newgroup)
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Group_incl");
 #endif
 
-  (*newgroup) = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
-  assume((*newgroup) != NULL);
-  
-  (*newgroup)->task_nb = n;
-  (*newgroup)->task_list_in_global_ranks = (int *) sctk_malloc (n * sizeof (int));
-  assume((*newgroup)->task_list_in_global_ranks != NULL);
-  
-  for (i = 0; i < n; i++)
+	(*newgroup) = (MPC_Group) sctk_malloc(sizeof(MPC_Group));
+	assume((*newgroup) != NULL);
+	
+	(*newgroup)->task_nb = n;
+	(*newgroup)->task_list_in_global_ranks = (int *) sctk_malloc (n * sizeof (int));
+	assume((*newgroup)->task_list_in_global_ranks != NULL);
+
+	for (i = 0; i < n; i++)
     {
       (*newgroup)->task_list_in_global_ranks[i] = group->task_list_in_global_ranks[ranks[i]];
     }

@@ -574,11 +574,8 @@ inline void sctk_message_copy(sctk_message_to_copy_t* tmp)
 		{
 			sctk_nodebug("sctk_message_contiguous - sctk_message_contiguous");
 			size_t size;
-			size = send->tail.message.contiguous.size;
-			if(size > recv->tail.message.contiguous.size)
-			{
-				size = recv->tail.message.contiguous.size;
-			}
+			size = sctk_min(send->tail.message.contiguous.size, recv->tail.message.contiguous.size);
+			
 			memcpy(recv->tail.message.contiguous.addr,send->tail.message.contiguous.addr, size);
 
 			sctk_message_completion_and_free(send,recv);
@@ -609,7 +606,7 @@ inline void sctk_message_copy(sctk_message_to_copy_t* tmp)
 		}
 		case sctk_message_pack_absolute: 
 		{
-			sctk_nodebug("sctk_message_contiguous - sctk_message_pack_absolute");
+			sctk_debug("sctk_message_contiguous - sctk_message_pack_absolute");
 			size_t i;
 			size_t j;
 			size_t size;
@@ -905,94 +902,80 @@ sctk_copy_buffer_std_absolute (sctk_pack_indexes_t * restrict in_begins,
  * Function without description
  */
 static inline void
-sctk_copy_buffer_absolute_absolute (sctk_pack_absolute_indexes_t *
-				    restrict in_begins,
-				    sctk_pack_absolute_indexes_t *
-				    restrict in_ends, size_t in_sizes,
-				    void *restrict in_adress,
-				    size_t in_elem_size,
-				    sctk_pack_absolute_indexes_t *
-				    restrict out_begins,
-				    sctk_pack_absolute_indexes_t *
-				    restrict out_ends, size_t out_sizes,
-				    void *restrict out_adress,
-				    size_t out_elem_size)
+sctk_copy_buffer_absolute_absolute (sctk_pack_absolute_indexes_t * restrict in_begins, 
+									sctk_pack_absolute_indexes_t * restrict in_ends, 
+									size_t in_sizes,
+									void *restrict in_adress,
+									size_t in_elem_size,
+									sctk_pack_absolute_indexes_t * restrict out_begins,
+									sctk_pack_absolute_indexes_t * restrict out_ends, 
+									size_t out_sizes,
+									void *restrict out_adress,
+									size_t out_elem_size)
 {
-  sctk_pack_absolute_indexes_t tmp_begin[1];
-  sctk_pack_absolute_indexes_t tmp_end[1];
-  if ((in_begins == NULL) && (out_begins == NULL))
-    {
-      sctk_nodebug ("sctk_copy_buffer_absolute_absolute no mpc_pack");
-      sctk_nodebug ("%s == %s", out_adress, in_adress);
-      memcpy (out_adress, in_adress, in_sizes);
-      sctk_nodebug ("%s == %s", out_adress, in_adress);
-    }
-  else
-    {
-      unsigned long i;
-      unsigned long j;
-      unsigned long in_i;
-      unsigned long in_j;
-      sctk_nodebug ("sctk_copy_buffer_absolute_absolute mpc_pack");
-      if (in_begins == NULL)
+	sctk_pack_absolute_indexes_t tmp_begin[1];
+	sctk_pack_absolute_indexes_t tmp_end[1];
+	if ((in_begins == NULL) && (out_begins == NULL))
 	{
-	  in_begins = tmp_begin;
-	  in_begins[0] = 0;
-	  in_ends = tmp_end;
-	  in_ends[0] = in_sizes - 1;
-	  in_elem_size = 1;
-	  in_sizes = 1;
+		sctk_nodebug ("sctk_copy_buffer_absolute_absolute no mpc_pack");
+		sctk_nodebug ("%s == %s", out_adress, in_adress);
+		memcpy (out_adress, in_adress, in_sizes);
+		sctk_nodebug ("%s == %s", out_adress, in_adress);
 	}
-      if (out_begins == NULL)
+	else
 	{
-	  out_begins = tmp_begin;
-	  out_begins[0] = 0;
-	  out_ends = tmp_end;
-	  out_ends[0] = out_sizes - 1;
-	  out_elem_size = 1;
-	  out_sizes = 1;
-	}
-      in_i = 0;
-      in_j = in_begins[in_i] * in_elem_size;
-
-      for (i = 0; i < out_sizes; i++)
-	{
-	  for (j = out_begins[i] * out_elem_size;
-	       j <= out_ends[i] * out_elem_size;)
-	    {
-	      size_t max_length;
-	      if (in_j > in_ends[in_i] * in_elem_size)
+		unsigned long i;
+		unsigned long j;
+		unsigned long in_i;
+		unsigned long in_j;
+		sctk_nodebug ("sctk_copy_buffer_absolute_absolute mpc_pack");
+		if (in_begins == NULL)
 		{
-		  in_i++;
-		  if (in_i >= in_sizes)
-		    {
-		      return;
-		    }
-		  in_j = in_begins[in_i] * in_elem_size;
+			in_begins = tmp_begin;
+			in_begins[0] = 0;
+			in_ends = tmp_end;
+			in_ends[0] = in_sizes - 1;
+			in_elem_size = 1;
+			in_sizes = 1;
 		}
+		if (out_begins == NULL)
+		{
+			out_begins = tmp_begin;
+			out_begins[0] = 0;
+			out_ends = tmp_end;
+			out_ends[0] = out_sizes - 1;
+			out_elem_size = 1;
+			out_sizes = 1;
+		}
+		in_i = 0;
+		in_j = in_begins[in_i] * in_elem_size;
 
-	      max_length =
-		sctk_min ((out_ends[i] * out_elem_size - j +
-			   out_elem_size),
-			  (in_ends[in_i] * in_elem_size - in_j +
-			   in_elem_size));
+		for (i = 0; i < out_sizes; i++)
+		{
+			for (j = out_begins[i] * out_elem_size; j <= out_ends[i] * out_elem_size;)
+			{
+				size_t max_length;
+				if (in_j > in_ends[in_i] * in_elem_size)
+				{
+					in_i++;
+					if (in_i >= in_sizes)
+					{
+						return;
+					}
+					in_j = in_begins[in_i] * in_elem_size;
+				}
 
-	      sctk_nodebug ("Copy out[%lu-%lu]%p == in[%lu-%lu]%p", j,
-			    j + max_length, &(((char *) out_adress)[j]),
-			    in_j, in_j + max_length,
-			    &(((char *) in_adress)[in_j]));
-	      memcpy (&(((char *) out_adress)[j]),
-		      &(((char *) in_adress)[in_j]), max_length);
-	      sctk_nodebug ("Copy out[%d-%d]%d == in[%d-%d]%d", j,
-			    j + max_length, (((char *) out_adress)[j]),
-			    in_j, in_j + max_length,
-			    (((char *) in_adress)[in_j]));
+				max_length = sctk_min ((out_ends[i] * out_elem_size - j + out_elem_size), (in_ends[in_i] * in_elem_size - in_j + in_elem_size));
 
-	      j += max_length;
-	      in_j += max_length;
-	    }
+				sctk_nodebug ("Copy out[%lu-%lu]%p == in[%lu-%lu]%p", j, j + max_length, &(((char *) out_adress)[j]), in_j, in_j + max_length, &(((char *) in_adress)[in_j]));
+				memcpy (&(((char *) out_adress)[j]), &(((char *) in_adress)[in_j]), max_length);
+				sctk_nodebug ("Copy out[%d-%d]%d == in[%d-%d]%d", j, j + max_length, (((char *) out_adress)[j]), in_j, in_j + max_length, (((char *) in_adress)[in_j]));
+
+				j += max_length;
+				in_j += max_length;
+			}
+		}
 	}
-    }
 }
 
 /*
