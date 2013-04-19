@@ -1091,63 +1091,55 @@ SCTK__buffer_next_header (mpi_buffer_overhead_t * head, mpi_buffer_t * tmp)
 static inline mpi_buffer_overhead_t *
 SCTK__MPI_Compact_buffer (int size, mpi_buffer_t * tmp)
 {
-  mpi_buffer_overhead_t *found = NULL;
-  mpi_buffer_overhead_t *head;
-  mpi_buffer_overhead_t *head_next;
+	mpi_buffer_overhead_t *found = NULL;
+	mpi_buffer_overhead_t *head;
+	mpi_buffer_overhead_t *head_next;
 
-  int flag;
-  head = (mpi_buffer_overhead_t *) (tmp->buffer);
+	int flag;
+	head = (mpi_buffer_overhead_t *) (tmp->buffer);
 
-  while (head != NULL)
-    {
-      if (head->request != MPI_REQUEST_NULL)
+	while (head != NULL)
 	{
-	  __INTERNAL__PMPI_Test (&(head->request), &flag, MPI_STATUS_IGNORE);
-	}
-      if (head->request == MPI_REQUEST_NULL)
-	{
-	  sctk_nodebug ("%p freed", head);
-	  head_next = SCTK__buffer_next_header (head, tmp);
+		if (head->request != MPI_REQUEST_NULL)
+		{
+			__INTERNAL__PMPI_Test (&(head->request), &flag, MPI_STATUS_IGNORE);
+		}
+		if (head->request == MPI_REQUEST_NULL)
+		{
+			sctk_nodebug ("%p freed", head);
+			head_next = SCTK__buffer_next_header (head, tmp);
 
-	  /*Compact from head */
-	  while (head_next != NULL)
-	    {
-	      if (head->request != MPI_REQUEST_NULL)
-		{
-		  __INTERNAL__PMPI_Test (&(head_next->request), &flag,
-					 MPI_STATUS_IGNORE);
-		}
-	      if (head_next->request == MPI_REQUEST_NULL)
-		{
-		  sctk_nodebug ("%p freed", head_next);
-		  head->size =
-		    head->size + head_next->size +
-		    sizeof (mpi_buffer_overhead_t);
-		  sctk_nodebug
-		    ("MERGE Create new buffer of size %d (%d + %d)",
-		     head->size, head_next->size,
-		     head->size - head_next->size -
-		     sizeof (mpi_buffer_overhead_t));
-		}
-	      else
-		{
-		  break;
+			/*Compact from head */
+			while (head_next != NULL)
+			{
+				if (head->request != MPI_REQUEST_NULL)
+				{
+					__INTERNAL__PMPI_Test (&(head_next->request), &flag, MPI_STATUS_IGNORE);
+				}
+				if (head_next->request == MPI_REQUEST_NULL)
+				{
+					sctk_nodebug ("%p freed", head_next);
+					head->size = head->size + head_next->size + sizeof (mpi_buffer_overhead_t);
+					sctk_nodebug("MERGE Create new buffer of size %d (%d + %d)", head->size, head_next->size, head->size - head_next->size - sizeof (mpi_buffer_overhead_t));
+				}
+				else
+				{
+					break;
+				}
+
+				head_next = SCTK__buffer_next_header (head, tmp);
+			}
 		}
 
-	      head_next = SCTK__buffer_next_header (head, tmp);
-	    }
-	}
+		if ((head->request == MPI_REQUEST_NULL) && (head->size >= size) && (found == NULL))
+		{
+			found = head;
+		}
 
-      if ((head->request == MPI_REQUEST_NULL) && (head->size >= size)
-	  && (found == NULL))
-	{
-	  found = head;
+		head_next = SCTK__buffer_next_header (head, tmp);
+		head = head_next;
 	}
-
-      head_next = SCTK__buffer_next_header (head, tmp);
-      head = head_next;
-    }
-  return found;
+	return found;
 }
 
 static int
