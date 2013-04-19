@@ -842,7 +842,7 @@ void sctk_init_mpc_runtime(){
     char **argv;
     void **tofree = NULL;
     int tofree_nb = 0;
-    int auto_kill;
+    static int auto_kill;
     char * argv_tmp[1];
     int init_res;
 
