@@ -7482,8 +7482,6 @@ PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	    MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
-  if(dest == MPC_PROC_NULL)
-		SCTK__MPI_Check_retrun_val (res, comm);
   SCTK__MPI_INIT_REQUEST (request);
   if(dest == MPC_PROC_NULL)
   {
@@ -7537,13 +7535,7 @@ PMPI_Ibsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	  res = MPI_SUCCESS;
 	  SCTK__MPI_Check_retrun_val (res, comm);
   }
-  
-  if(dest == MPC_PROC_NULL)
-  {
-	res = MPI_SUCCESS;
-	SCTK__MPI_Check_retrun_val (res, comm);
-  }
-  
+ 
   {
     int size;
     mpi_check_comm (comm, comm);
@@ -7589,11 +7581,6 @@ PMPI_Issend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	  SCTK__MPI_Check_retrun_val (res, comm);
   }
   SCTK__MPI_INIT_REQUEST (request);
-  if(dest == MPC_PROC_NULL)
-  {
-	res = MPI_SUCCESS;
-	SCTK__MPI_Check_retrun_val (res, comm);
-  }
   
   {
     int size;
@@ -7633,11 +7620,6 @@ PMPI_Irsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	     MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
-  if(dest == MPC_PROC_NULL)
-  {
-	res = MPI_SUCCESS;
-	SCTK__MPI_Check_retrun_val (res, comm);
-  }
   SCTK__MPI_INIT_REQUEST (request);
   if(dest == MPC_PROC_NULL)
   {
@@ -7683,12 +7665,13 @@ PMPI_Irecv (void *buf, int count, MPI_Datatype datatype, int source,
 	    int tag, MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
+  SCTK__MPI_INIT_REQUEST (request);
   if(source == MPC_PROC_NULL)
   {
 	res = MPI_SUCCESS;
 	SCTK__MPI_Check_retrun_val (res, comm);
   }
-  SCTK__MPI_INIT_REQUEST (request);
+  
   {
     int size;
     mpi_check_comm (comm, comm);
@@ -7729,6 +7712,17 @@ PMPI_Wait (MPI_Request * request, MPI_Status * status)
 	sctk_nodebug("entering MPI_Wait");
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  
+  if(*request == MPI_REQUEST_NULL)
+  {
+	res = MPI_SUCCESS;
+	status->MPC_SOURCE = MPI_PROC_NULL;
+	status->MPC_TAG = MPI_ANY_TAG;
+	status->MPC_ERROR = MPI_SUCCESS;
+	status->count = 0;
+	SCTK__MPI_Check_retrun_val (res, comm);
+  }
+  
   res = __INTERNAL__PMPI_Wait (request, status);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
