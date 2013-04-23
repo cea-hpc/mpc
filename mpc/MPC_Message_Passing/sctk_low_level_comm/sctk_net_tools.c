@@ -556,6 +556,8 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp)
 			size_t i;
 			size_t j;
 			size_t size;
+			size_t total = 0;
+			size_t recv_size = 0;
 			size = send->body.header.msg_size;
 			if(size > 0)
 			{
@@ -566,10 +568,31 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp)
 						size = (recv->tail.message.pack.list.std[i].ends[j] - 
 							recv->tail.message.pack.list.std[i].begins[j] + 1) * 
 							recv->tail.message.pack.list.std[i].elem_size;
+						recv_size += size;
+					}
+				}
+				
+				/* MPI 1.3 : The length of the received message must be less than or equal to the length of the receive buffer */
+				assume(send->body.header.msg_size <= recv_size);
+				char skip = 0;
+				for (i = 0; ((i < recv->tail.message.pack.count) && !skip); i++)
+				{
+					for (j = 0; ((j < recv->tail.message.pack.list.std[i].count) && !skip); j++)
+					{
+						size = (recv->tail.message.pack.list.std[i].ends[j] - 
+							recv->tail.message.pack.list.std[i].begins[j] + 1) * 
+							recv->tail.message.pack.list.std[i].elem_size;
+						if(total + size > send->body.header.msg_size)
+						{
+							skip = 1;
+							size = send->body.header.msg_size - total;
+						}
 						memcpy(((char *) (recv->tail.message.pack.list.std[i].addr)) + 
 							recv->tail.message.pack.list.std[i].begins[j] * 
 							recv->tail.message.pack.list.std[i].elem_size,body,size);
 						body += size;
+						total += size;
+						assume(total <= send->body.header.msg_size);
 					}
 				}
 			}
@@ -581,7 +604,8 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp)
 			size_t i;
 			size_t j;
 			size_t size;
-			sctk_debug("NET TOOL contiguous -> pack absolute");
+			size_t total = 0;
+			size_t recv_size = 0;
 			size = send->body.header.msg_size;
 			if(size > 0)
 			{
@@ -589,13 +613,34 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp)
 				{
 					for (j = 0; j < recv->tail.message.pack.list.absolute[i].count; j++)
 					{
-						size = (recv->tail.message.pack.list.absolute[i].ends[j] -
+						size = (recv->tail.message.pack.list.absolute[i].ends[j] - 
 							recv->tail.message.pack.list.absolute[i].begins[j] + 1) * 
 							recv->tail.message.pack.list.absolute[i].elem_size;
-						memcpy(((char *) (recv->tail.message.pack.list.absolute[i].addr)) +
-							recv->tail.message.pack.list.absolute[i].begins[j] *
+						recv_size += size;
+					}
+				}
+				
+				/* MPI 1.3 : The length of the received message must be less than or equal to the length of the receive buffer */
+				assume(send->body.header.msg_size <= recv_size);
+				char skip = 0;
+				for (i = 0; ((i < recv->tail.message.pack.count) && !skip); i++)
+				{
+					for (j = 0; ((j < recv->tail.message.pack.list.absolute[i].count) && !skip); j++)
+					{
+						size = (recv->tail.message.pack.list.absolute[i].ends[j] - 
+							recv->tail.message.pack.list.absolute[i].begins[j] + 1) * 
+							recv->tail.message.pack.list.absolute[i].elem_size;
+						if(total + size > send->body.header.msg_size)
+						{
+							skip = 1;
+							size = send->body.header.msg_size - total;
+						}
+						memcpy(((char *) (recv->tail.message.pack.list.absolute[i].addr)) + 
+							recv->tail.message.pack.list.absolute[i].begins[j] * 
 							recv->tail.message.pack.list.absolute[i].elem_size,body,size);
 						body += size;
+						total += size;
+						assume(total <= send->body.header.msg_size);
 					}
 				}
 			}

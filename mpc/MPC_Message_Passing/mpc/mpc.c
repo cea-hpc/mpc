@@ -5497,8 +5497,9 @@ __MPC_Add_pack_absolute (void *buf, mpc_msg_count count,
   /*Compute message size */
   for (i = 0; i < count; i++)
     {
-      total += ends[i] - begins[i] + 1;
+      total += ends[i] - begins[i];
     }
+    
   sctk_mpc_add_to_message_size(request,total * data_size);
 
   MPC_ERROR_SUCESS ();

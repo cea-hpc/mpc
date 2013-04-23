@@ -1562,14 +1562,12 @@ __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype datatype,
 
 	  {
 	    mpc_pack_absolute_indexes_t *tmp;
-	    tmp =
-	      sctk_malloc (slots_count * 2 *
-			   sizeof (mpc_pack_absolute_indexes_t));
+	    tmp = sctk_malloc (slots_count * 2 * sizeof (mpc_pack_absolute_indexes_t));
 	    __sctk_add_in_mpc_request (request, tmp);
-	    memcpy (tmp, begins,
-		    slots_count * sizeof (mpc_pack_absolute_indexes_t));
-	    memcpy (&(tmp[slots_count]), ends,
-		    slots_count * sizeof (mpc_pack_absolute_indexes_t));
+	    
+	    memcpy (tmp, begins, slots_count * sizeof (mpc_pack_absolute_indexes_t));
+	    memcpy (&(tmp[slots_count]), ends, slots_count * sizeof (mpc_pack_absolute_indexes_t));
+	    
 	    begins = tmp;
 	    ends = &(tmp[slots_count]);
 	  }

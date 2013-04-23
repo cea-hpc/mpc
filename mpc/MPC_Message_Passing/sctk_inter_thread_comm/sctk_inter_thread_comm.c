@@ -583,10 +583,12 @@ inline void sctk_message_copy(sctk_message_to_copy_t* tmp)
 		}
 		case sctk_message_pack: 
 		{
-			sctk_nodebug("sctk_message_contiguous - sctk_message_pack");
+			sctk_nodebug("sctk_message_contiguous - sctk_message_pack size %d", send->tail.message.contiguous.size);
 			size_t i;
 			size_t j;
 			size_t size;
+			size_t total = 0;
+			size_t recv_size = 0;
 			if(send->tail.message.contiguous.size > 0)
 			{
 				for (i = 0; i < recv->tail.message.pack.count; i++)
@@ -595,9 +597,29 @@ inline void sctk_message_copy(sctk_message_to_copy_t* tmp)
 					{
 						size = (recv->tail.message.pack.list.std[i].ends[j] - recv->tail.message.pack.list.std[i].begins[j] + 1) * 
 							recv->tail.message.pack.list.std[i].elem_size;
-						memcpy((recv->tail.message.pack.list.std[i].addr) + recv->tail.message.pack.list.std[i].begins[j] * 
+						recv_size += size;
+					}
+				}
+				/* MPI 1.3 : The length of the received message must be less than or equal to the length of the receive buffer */
+				assume(send->tail.message.contiguous.size <= recv_size);
+				sctk_nodebug("contiguous size : %d, PACK SIZE : %d", send->tail.message.contiguous.size, recv_size);
+				char skip = 0;
+				for (i = 0; ((i < recv->tail.message.pack.count) && !skip); i++)
+				{
+					for (j = 0; ((j < recv->tail.message.pack.list.std[i].count) && !skip) ; j++)
+					{
+						size = (recv->tail.message.pack.list.std[i].ends[j] - recv->tail.message.pack.list.std[i].begins[j] + 1) * 
+							recv->tail.message.pack.list.std[i].elem_size;
+						if(total + size > send->tail.message.contiguous.size)
+						{
+							skip = 1;
+							size = send->tail.message.contiguous.size - total;
+						}
+						memcpy((recv->tail.message.pack.list.std[i].addr) + recv->tail.message.pack.list.std[i].begins[j] *
 							recv->tail.message.pack.list.std[i].elem_size,send->tail.message.contiguous.addr,size);
+						total += size;
 						send->tail.message.contiguous.addr += size;
+						assume(total <= send->tail.message.contiguous.size);
 					}
 				}
 			}
@@ -606,10 +628,12 @@ inline void sctk_message_copy(sctk_message_to_copy_t* tmp)
 		}
 		case sctk_message_pack_absolute: 
 		{
-			sctk_debug("sctk_message_contiguous - sctk_message_pack_absolute");
+			sctk_nodebug("sctk_message_contiguous - sctk_message_pack_absolute size %d", send->tail.message.contiguous.size);
 			size_t i;
 			size_t j;
 			size_t size;
+			size_t total = 0;
+			size_t recv_size = 0;
 			if(send->tail.message.contiguous.size > 0)
 			{
 				for (i = 0; i < recv->tail.message.pack.count; i++)
@@ -618,9 +642,29 @@ inline void sctk_message_copy(sctk_message_to_copy_t* tmp)
 					{
 						size = (recv->tail.message.pack.list.absolute[i].ends[j] - recv->tail.message.pack.list.absolute[i].begins[j] + 1) * 
 							recv->tail.message.pack.list.absolute[i].elem_size;
+						recv_size += size;
+					}
+				}
+				/* MPI 1.3 : The length of the received message must be less than or equal to the length of the receive buffer */
+				assume(send->tail.message.contiguous.size <= recv_size);
+				sctk_nodebug("contiguous size : %d, ABSOLUTE SIZE : %d", send->tail.message.contiguous.size, recv_size);
+				char skip = 0;
+				for (i = 0; ((i < recv->tail.message.pack.count) && !skip); i++)
+				{
+					for (j = 0; ((j < recv->tail.message.pack.list.absolute[i].count) && !skip) ; j++)
+					{
+						size = (recv->tail.message.pack.list.absolute[i].ends[j] - recv->tail.message.pack.list.absolute[i].begins[j] + 1) * 
+							recv->tail.message.pack.list.absolute[i].elem_size;
+						if(total + size > send->tail.message.contiguous.size)
+						{
+							skip = 1;
+							size = send->tail.message.contiguous.size - total;
+						}
 						memcpy((recv->tail.message.pack.list.absolute[i].addr) + recv->tail.message.pack.list.absolute[i].begins[j] *
 							recv->tail.message.pack.list.absolute[i].elem_size,send->tail.message.contiguous.addr,size);
+						total += size;
 						send->tail.message.contiguous.addr += size;
+						assume(total <= send->tail.message.contiguous.size);
 					}
 				}
 			}
@@ -1484,15 +1528,20 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
 	msg->body.header.communicator = communicator;
 	msg->body.header.message_tag = message_tag;
 	msg->body.header.specific_message_tag = specific_message_tag;
+	
+	if(request->request_type == REQUEST_RECV)
+		sctk_nodebug("RECV count = %d", count);
+	else if(request->request_type == REQUEST_SEND)
+		sctk_nodebug("SEND count = %d", count);
+		
 	msg->body.header.msg_size = count;
-
 	msg->sctk_msg_get_use_message_numbering = 1;
-/*  
+  
 	if((request->request_type == REQUEST_SEND) || (request->request_type == REQUEST_SEND_COLL))
-		sctk_debug("Send comm %d : rang %d envoie message a rang %d", communicator, msg->sctk_msg_get_glob_source, msg->sctk_msg_get_glob_destination);
+		sctk_nodebug("Send comm %d : rang %d envoie message a rang %d", communicator, msg->sctk_msg_get_glob_source, msg->sctk_msg_get_glob_destination);
 	else if((request->request_type == REQUEST_RECV) || (request->request_type == REQUEST_RECV_COLL))
-		sctk_debug("Recv comm %d : rang %d recoit message de rang %d", communicator, msg->sctk_msg_get_glob_destination, msg->sctk_msg_get_glob_source);
-*/	
+		sctk_nodebug("Recv comm %d : rang %d recoit message de rang %d", communicator, msg->sctk_msg_get_glob_destination, msg->sctk_msg_get_glob_source);
+	
 	/* A message can be sent with a NULL request (see the MPI standard) */
 	if (request) 
 	{
@@ -1571,7 +1620,7 @@ sctk_add_pack_in_message_absolute (sctk_thread_ptp_message_t *
   }
 
   step = msg->tail.message.pack.count;
-
+  
   msg->tail.message.pack.list.absolute[step].count = nb_items;
   msg->tail.message.pack.list.absolute[step].begins = begins;
   msg->tail.message.pack.list.absolute[step].ends = ends;
