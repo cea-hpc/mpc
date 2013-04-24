@@ -803,7 +803,7 @@ __INTERNAL__PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest,
 		       int tag, MPI_Comm comm)
 {
   sctk_nodebug ("SEND buf %p", buf);
-  if (sctk_is_derived_type (datatype))
+  if (sctk_is_derived_type (datatype) && (count != 0))
     {
       int res;
 
@@ -863,7 +863,7 @@ __INTERNAL__PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest,
 	    {
 	      return res;
 	    }
-
+		
 	  res = PMPC_Isend_pack (dest, tag, comm, &request);
 	  if (res != MPI_SUCCESS)
 	    {
@@ -879,6 +879,11 @@ __INTERNAL__PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest,
       if (buf == NULL && count != 0)
 	{
 	  MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "");
+	}
+	if(count == 0)
+	{
+		/* code to avoid derived datatype */
+		datatype = MPC_CHAR;
 	}
       return PMPC_Send (buf, count, datatype, dest, tag, comm);
     }
@@ -990,7 +995,7 @@ __INTERNAL__PMPI_Get_count (MPI_Status * status, MPI_Datatype datatype,
   if (data_size != 0)
     {
       size = status->count;
-      sctk_nodebug ("%d count %d data_size", size, data_size);
+      sctk_nodebug ("size = %d, data_size = %d", size, data_size);
       if (size % data_size == 0)
 	{
 	  size = size / data_size;
@@ -1020,7 +1025,7 @@ static int
 __INTERNAL__PMPI_Ssend (void *buf, int count, MPI_Datatype datatype, int dest,
 			int tag, MPI_Comm comm)
 {
-  if (sctk_is_derived_type (datatype))
+  if (sctk_is_derived_type (datatype) && (count != 0))
     {
       return __INTERNAL__PMPI_Send (buf, count, datatype, dest, tag, comm);
     }
@@ -1030,6 +1035,12 @@ __INTERNAL__PMPI_Ssend (void *buf, int count, MPI_Datatype datatype, int dest,
 	{
 	  MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "");
 	}
+	if(count == 0)
+	{
+		/* code to avoid derived datatype */
+		datatype = MPC_CHAR;
+	}
+	
       return PMPC_Ssend (buf, count, datatype, dest, tag, comm);
     }
 }
@@ -1037,7 +1048,7 @@ static int
 __INTERNAL__PMPI_Rsend (void *buf, int count, MPI_Datatype datatype, int dest,
 			int tag, MPI_Comm comm)
 {
-  if (sctk_is_derived_type (datatype))
+  if (sctk_is_derived_type (datatype) && (count != 0))
     {
       return __INTERNAL__PMPI_Send (buf, count, datatype, dest, tag, comm);
     }
@@ -1046,6 +1057,11 @@ __INTERNAL__PMPI_Rsend (void *buf, int count, MPI_Datatype datatype, int dest,
       if (buf == NULL && count != 0)
 	{
 	  MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "");
+	}
+	if(count == 0)
+	{
+		/* code to avoid derived datatype */
+		datatype = MPC_CHAR;
 	}
       return PMPC_Rsend (buf, count, datatype, dest, tag, comm);
     }
@@ -1322,7 +1338,7 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
 				 int dest, int tag, MPI_Comm comm,
 				 MPI_Request * request, int is_valid_request)
 {
-  if (sctk_is_derived_type (datatype))
+  if (sctk_is_derived_type (datatype) && (count != 0))
   {
     int res;
 
@@ -1411,6 +1427,11 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
   }
   else
   {
+	if(count == 0)
+	{
+		/* code to avoid derived datatype */
+		datatype = MPC_CHAR;
+	}
     if (is_valid_request)
     {
       return PMPC_Isend (buf, count, datatype, dest, tag, comm,
@@ -3039,7 +3060,19 @@ __INTERNAL__PMPI_Pack (void *inbuf,
 		       MPI_Comm comm)
 {
   int copied = 0;
-
+  
+	if ((NULL == outbuf) || (NULL == position)) {
+		return MPI_ERR_ARG;
+	} else if (incount < 0) {
+		return MPI_ERR_COUNT;
+	} else if (outcount < 0) {
+		return MPI_ERR_ARG;
+	} else if ((MPI_DATATYPE_NULL == datatype) || (datatype < 0)) {
+		return MPI_ERR_TYPE;
+	} else if(incount == 0) {
+		return MPI_SUCCESS;
+	}
+	
   if (sctk_is_derived_type (datatype))
     {
       int res;
@@ -3055,32 +3088,26 @@ __INTERNAL__PMPI_Pack (void *inbuf,
       int is_ub;
       __INTERNAL__PMPI_Type_extent (datatype, (MPI_Aint *) & extent);
 
-      PMPC_Is_derived_datatype (datatype, &res, &begins_in, &ends_in,
-			       &count_in, &lb, &is_lb, &ub, &is_ub);
+      PMPC_Is_derived_datatype (datatype, &res, &begins_in, &ends_in, &count_in, &lb, &is_lb, &ub, &is_ub);
 
       for (j = 0; j < incount; j++)
-	{
-	  for (i = 0; i < count_in; i++)
-	    {
-	      unsigned long size;
-	      size = ends_in[i] - begins_in[i] + 1;
-	      sctk_nodebug ("Pack %lu->%lu, ==> %lu %lu",
-			    begins_in[i] + extent * j,
-			    ends_in[i] + extent * j, *position, size);
-	      if (size != 0)
 		{
-		  memcpy (&(((char *) outbuf)[*position]),
-			  &(((char *) inbuf)[begins_in[i]]), size);
+		  for (i = 0; i < count_in; i++)
+			{
+			  unsigned long size;
+			  size = ends_in[i] - begins_in[i] + 1;
+			  sctk_nodebug ("Pack %lu->%lu, ==> %lu %lu", begins_in[i] + extent * j, ends_in[i] + extent * j, *position, size);
+			  if (size != 0)
+				{
+				  memcpy (&(((char *) outbuf)[*position]), &(((char *) inbuf)[begins_in[i]]), size);
+				}
+			  copied += size;
+			  sctk_nodebug ("Pack %lu->%lu, ==> %lu %lu done", begins_in[i] + extent * j, ends_in[i] + extent * j, *position, size);
+			  *position = *position + size;
+			  assume (copied <= outcount);
+			}
+		  inbuf = (char *) inbuf + extent;
 		}
-	      copied += size;
-	      sctk_nodebug ("Pack %lu->%lu, ==> %lu %lu done",
-			    begins_in[i] + extent * j,
-			    ends_in[i] + extent * j, *position, size);
-	      *position = *position + size;
-	      assume (copied <= outcount);
-	    }
-	  inbuf = (char *) inbuf + extent;
-	}
 
       sctk_nodebug ("%lu <= %lu", copied, outcount);
       assume (copied <= outcount);
@@ -3090,11 +3117,9 @@ __INTERNAL__PMPI_Pack (void *inbuf,
     {
       size_t size;
       PMPC_Type_size (datatype, &size);
-      sctk_nodebug ("Pack %lu->%lu, ==> %lu %lu", 0, size * incount,
-		    *position, size * incount);
+      sctk_nodebug ("Pack %lu->%lu, ==> %lu %lu", 0, size * incount, *position, size * incount);
       memcpy (&(((char *) outbuf)[*position]), inbuf, size * incount);
-      sctk_nodebug ("Pack %lu->%lu, ==> %lu %lu done", 0, size * incount,
-		    *position, size * incount);
+      sctk_nodebug ("Pack %lu->%lu, ==> %lu %lu done", 0, size * incount, *position, size * incount);
       *position = *position + size * incount;
       copied += size * incount;
       sctk_nodebug ("%lu == %lu", copied, outcount);
@@ -3111,7 +3136,20 @@ __INTERNAL__PMPI_Unpack (void *inbuf,
 			 MPI_Comm comm)
 {
   int copied = 0;
-
+sctk_nodebug("MPI_Unpack insise = %d, position = %d, outcount = %d, datatype = %d, comm = %d", insize, *position, outcount, datatype, comm);
+	if ((NULL == inbuf) || (NULL == position)) {
+		return MPI_ERR_ARG;
+	}
+	else if (outcount < 0) {
+		return MPI_ERR_COUNT;
+	}
+	else if (MPI_DATATYPE_NULL == datatype) {
+		return MPI_ERR_TYPE;
+	}
+	else if (datatype < 0) {
+		return MPI_ERR_TYPE;
+	}
+        
   if (sctk_is_derived_type (datatype))
     {
       int res;
@@ -3127,31 +3165,30 @@ __INTERNAL__PMPI_Unpack (void *inbuf,
       int is_ub;
       __INTERNAL__PMPI_Type_extent (datatype, (MPI_Aint *) & extent);
 
-      PMPC_Is_derived_datatype (datatype, &res, &begins_out, &ends_out,
-			       &count_out, &lb, &is_lb, &ub, &is_ub);
+      PMPC_Is_derived_datatype (datatype, &res, &begins_out, &ends_out, &count_out, &lb, &is_lb, &ub, &is_ub);
       for (j = 0; j < outcount; j++)
-	{
-	  for (i = 0; i < count_out; i++)
-	    {
-	      size_t size;
-	      size = ends_out[i] - begins_out[i] + 1;
-	      copied += size;
-	      sctk_nodebug ("Unpack %lu %lu, ==> %lu->%lu", *position, size,
-			    begins_out[i] + extent * j,
-			    ends_out[i] + extent * j);
-	      if (size != 0)
 		{
-		  memcpy (&(((char *) outbuf)[begins_out[i]]),
-			  &(((char *) inbuf)[*position]), size);
+		  for (i = 0; i < count_out; i++)
+			{
+			  size_t size;
+			  size = ends_out[i] - begins_out[i] + 1;
+			  copied += size;
+			  sctk_nodebug ("Unpack %lu %lu, ==> %lu->%lu", *position, size, begins_out[i] + extent * j, ends_out[i] + extent * j);
+			  if (size != 0)
+				{
+				  memcpy (&(((char *) outbuf)[begins_out[i]]), &(((char *) inbuf)[*position]), size);
+				}
+			  sctk_nodebug ("Unpack %lu %lu, ==> %lu->%lu done", *position, size, begins_out[i] + extent * j, ends_out[i] + extent * j);
+			  *position = *position + size;
+			  /* just to display the data size */
+			  int tmp;
+			  PMPI_Type_size(datatype, &tmp);
+			  sctk_nodebug ("copied %lu <= insize %lu | outcount %d, data_size %d", copied, insize, outcount, tmp);
+			  /* done */
+			  assume (copied <= insize);
+			}
+		  outbuf = (char *) outbuf + extent;
 		}
-	      sctk_nodebug ("Unpack %lu %lu, ==> %lu->%lu done", *position,
-			    size, begins_out[i] + extent * j,
-			    ends_out[i] + extent * j);
-	      *position = *position + size;
-	      assume (copied <= insize);
-	    }
-	  outbuf = (char *) outbuf + extent;
-	}
 
       sctk_nodebug ("%lu <= %lu", copied, insize);
       assume (copied <= insize);
@@ -3161,11 +3198,9 @@ __INTERNAL__PMPI_Unpack (void *inbuf,
     {
       size_t size;
       PMPC_Type_size (datatype, &size);
-      sctk_nodebug ("Unpack %lu %lu, ==> %lu->%lu", *position,
-		    size * outcount, 0, size * outcount);
+      sctk_nodebug ("Unpack %lu %lu, ==> %lu->%lu", *position, size * outcount, 0, size * outcount);
       memcpy (outbuf, &(((char *) inbuf)[*position]), size * outcount);
-      sctk_nodebug ("Unpack %lu %lu, ==> %lu->%lu done", *position,
-		    size * outcount, 0, size * outcount);
+      sctk_nodebug ("Unpack %lu %lu, ==> %lu->%lu done", *position, size * outcount, 0, size * outcount);
       *position = *position + size * outcount;
       copied += size * outcount;
       assume (copied <= insize);
@@ -4330,17 +4365,17 @@ __INTERNAL__PMPI_Group_translate_ranks (MPI_Group mpi_group1, int n, int *ranks1
 	
 	if ( (MPI_GROUP_NULL == mpi_group1) || (MPI_GROUP_NULL == mpi_group2) )
 	{
-		sctk_debug("Wrong group 1 : group1 %d, group2 %d", mpi_group1, mpi_group2);
+		sctk_nodebug("Wrong group 1 : group1 %d, group2 %d", mpi_group1, mpi_group2);
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"");
 	}
 	if (n < 0)
 	{
-		sctk_debug("Wrong group (n < 0)");
+		sctk_nodebug("Wrong group (n < 0)");
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"");
 	}
 	if (n > 0 && ((NULL == ranks1) || (NULL == ranks2 )))
 	{
-		sctk_debug("Wrong group n > 0 && ((NULL == ranks1) || (NULL == ranks2 ))");
+		sctk_nodebug("Wrong group n > 0 && ((NULL == ranks1) || (NULL == ranks2 ))");
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"");
 	}
 	
@@ -4355,15 +4390,15 @@ __INTERNAL__PMPI_Group_translate_ranks (MPI_Group mpi_group1, int n, int *ranks1
 	group1 = __sctk_convert_mpc_group (mpi_group1);
 	group2 = __sctk_convert_mpc_group (mpi_group2);
 	
-	sctk_debug("n = %d", n);
+	sctk_nodebug("n = %d", n);
 	for(i = 0 ; i < n ; i++)
-		sctk_debug("ranks1[%d] = %d", i, ranks1[i]);
+		sctk_nodebug("ranks1[%d] = %d", i, ranks1[i]);
 	
 	for(i = 0 ; i < group1->task_nb ; i++)
-		sctk_debug("group1 : task_list_in_global_ranks[%d] = %d", i, group1->task_list_in_global_ranks[i]);
+		sctk_nodebug("group1 : task_list_in_global_ranks[%d] = %d", i, group1->task_list_in_global_ranks[i]);
 
 	for(i = 0 ; i < group2->task_nb ; i++)
-		sctk_debug("group2 : task_list_in_global_ranks[%d] = %d", i, group2->task_list_in_global_ranks[i]);
+		sctk_nodebug("group2 : task_list_in_global_ranks[%d] = %d", i, group2->task_list_in_global_ranks[i]);
 	
 	for (j = 0; j < n; j++)
     {
@@ -4378,7 +4413,7 @@ __INTERNAL__PMPI_Group_translate_ranks (MPI_Group mpi_group1, int n, int *ranks1
 				ranks2[j] = i;
 			}
 		}
-		sctk_debug ("%d is %d", ranks1[j], ranks2[j]);
+		sctk_nodebug ("%d is %d", ranks1[j], ranks2[j]);
     }
 	return MPI_SUCCESS;
 }
@@ -4678,7 +4713,7 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
     int *ranks_excluded=NULL;
     int first_rank,last_rank,stride;
     int count,result;
-	sctk_debug("MPI_Group_range_excl");
+	sctk_nodebug("MPI_Group_range_excl");
 	MPC_Group group;
 	
 /* Error checking */
@@ -8522,7 +8557,7 @@ PMPI_Group_translate_ranks (MPI_Group group1, int n, int *ranks1,
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Group_translate_ranks (group1, n, ranks1, group2, ranks2);
-  sctk_debug("RES = %d", res);
+  sctk_nodebug("RES = %d", res);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 

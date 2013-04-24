@@ -1044,7 +1044,6 @@ __MPC_Get_datatype_size (MPC_Datatype datatype,
     {
       return 1;
     }
-
   if (datatype < sctk_user_data_types)
     {
       return mpc_common_types[datatype];
@@ -1065,19 +1064,16 @@ __MPC_Get_datatype_size (MPC_Datatype datatype,
       size_t res;
       sctk_derived_type_t **user_types;
       sctk_spinlock_lock (&(task_specific->user_types_struct.lock));
-      sctk_nodebug ("%lu relative datatype max %d",
-		    datatype - sctk_user_data_types -
-		    sctk_user_data_types_max, sctk_user_data_types_max);
-      sctk_assert (datatype - sctk_user_data_types -
-		   sctk_user_data_types_max < sctk_user_data_types_max);
-      user_types = task_specific->user_types_struct.user_types_struct;
-      sctk_assert (user_types != NULL);
-      sctk_assert (user_types
-		   [datatype - sctk_user_data_types -
-		    sctk_user_data_types_max] != NULL);
-      res = user_types[datatype - sctk_user_data_types -
-		       sctk_user_data_types_max]->size;
-
+		  sctk_nodebug ("%lu relative datatype max %d", datatype - sctk_user_data_types - sctk_user_data_types_max, sctk_user_data_types_max);
+		  sctk_assert (datatype - sctk_user_data_types - sctk_user_data_types_max < sctk_user_data_types_max);
+		  
+		  user_types = task_specific->user_types_struct.user_types_struct;
+		  
+		  sctk_assert (user_types != NULL);
+		  sctk_assert (user_types[datatype - sctk_user_data_types - sctk_user_data_types_max] != NULL);
+		  
+		  res = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->size;
+		  sctk_nodebug("Datatype_size = %d", res);
       sctk_spinlock_unlock (&(task_specific->user_types_struct.lock));
       return res;
     }
@@ -3159,7 +3155,6 @@ __MPC_Ssend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
   size_t msg_size;
   sctk_task_specific_t *task_specific;
   char tmp;
-
   task_specific = __MPC_get_task_specific ();
 
   __MPC_Comm_rank_size (comm, &src, &size, task_specific);
@@ -3198,11 +3193,11 @@ __MPC_Ssend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
 
   msg = sctk_create_header (src,sctk_message_contiguous);
   sctk_add_adress_in_message (msg, buf,msg_size);
-
+  sctk_mpc_init_request(&request,comm,src, REQUEST_SEND);
 
   sctk_mpc_set_header_in_message (msg, tag, comm, src, dest, &request, msg_size,pt2pt_specific_message_tag);
 
-  sctk_nodebug ("count = %d", msg->header.msg_size);
+  sctk_nodebug ("count = %d, datatype = %d", msg->body.header.msg_size, datatype);
   sctk_send_message (msg);
   sctk_mpc_wait_message (&request);
   MPC_ERROR_SUCESS ();
@@ -4064,7 +4059,7 @@ PMPC_Scatter (void *sendbuf,
 		{
 			i = 0;
 			dsize = __MPC_Get_datatype_size (sendtype, task_specific);
-			sctk_debug("sendcnt = %d, dsize = %d", sendcnt, dsize);
+			sctk_nodebug("sendcnt = %d, dsize = %d", sendcnt, dsize);
 			while (i < size)
 			{
 				for (j = 0; (i < size) && (j < MPC_MAX_CONCURENT);)
@@ -5497,7 +5492,7 @@ __MPC_Add_pack_absolute (void *buf, mpc_msg_count count,
   /*Compute message size */
   for (i = 0; i < count; i++)
     {
-      total += ends[i] - begins[i];
+      total += ends[i] - begins[i] + 1;
     }
     
   sctk_mpc_add_to_message_size(request,total * data_size);
@@ -5644,7 +5639,7 @@ PMPC_Isend_pack (int dest, int tag, MPC_Comm comm, MPC_Request * request)
 	//~ {
 		//~ mpc_check_msg (src, dest, tag, comm, size);
 	//~ }
-
+  request->request_type = REQUEST_SEND;
   sctk_mpc_set_header_in_message (msg,
 				  tag,
 				  comm,

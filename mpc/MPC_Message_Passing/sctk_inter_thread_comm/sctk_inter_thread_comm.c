@@ -117,7 +117,7 @@ static void sctk_show_requests(sctk_request_t* request, int req_nb) {
 //  for (i=0; i< req_nb; ++i) {
 //    sctk_request_t* request = &requests[req_nb];
 
-    sctk_debug("Request %p from %d to %d (glob=from %d to %d type=%d msg=%p)",
+    sctk_nodebug("Request %p from %d to %d (glob=from %d to %d type=%d msg=%p)",
         request,
         request->header.source,
         request->header.destination,
@@ -127,7 +127,7 @@ static void sctk_show_requests(sctk_request_t* request, int req_nb) {
         request->msg);
 
     if (request->msg) {
-      sctk_debug("Ceck in wait: %d %p", request->msg->tail.need_check_in_wait, request->msg->tail.request);
+      sctk_nodebug("Ceck in wait: %d %p", request->msg->tail.need_check_in_wait, request->msg->tail.request);
 TODO("Fill with infos from the message");
     }
 //  }
@@ -523,22 +523,11 @@ void sctk_message_completion_and_free(sctk_thread_ptp_message_t* send,
 
   /* If a recv request is available */
   if(recv->tail.request){
-
-TODO("Uselss code")
-#if 0
-    /* If the receive request has more bytes than the
-     * send request, we reajust the size
-     */
-    size = send->body.header.msg_size;
-    if(recv->tail.request->header.msg_size > size){
-      recv->tail.request->header.msg_size = size;
-    }
-#endif
-
     /* Update the request with the source, message tag and message size */
     recv->tail.request->header.source = send->body.header.source;
     recv->tail.request->header.message_tag = send->body.header.message_tag;
     recv->tail.request->header.msg_size = send->body.header.msg_size;
+    sctk_nodebug("request->header.msg_size = %d", recv->tail.request->header.msg_size);
 
     recv->tail.request->msg = NULL;
   }
@@ -880,7 +869,7 @@ sctk_copy_buffer_std_absolute (sctk_pack_indexes_t * restrict in_begins,
       unsigned long j;
       unsigned long in_i;
       unsigned long in_j;
-      sctk_debug ("sctk_copy_buffer_absolute_absolute mpc_pack");
+      sctk_nodebug ("sctk_copy_buffer_absolute_absolute mpc_pack");
       if (in_begins == NULL)
 	{
 	  in_begins = tmp_begin;
@@ -1168,15 +1157,31 @@ inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp)
 			size_t i;
 			size_t j;
 			size_t size;
+			size_t send_size = 0;
+			size_t total = 0;
 			char* body;
 
 			body = recv->tail.message.contiguous.addr;
 
 			sctk_nodebug("COUNT %lu",send->tail.message.pack.count);
-
+			
 			for (i = 0; i < send->tail.message.pack.count; i++)
 			{
 				for (j = 0; j < send->tail.message.pack.list.absolute[i].count; j++)
+				{
+					size = (send->tail.message.pack.list.absolute[i].ends[j] - send->tail.message.pack.list.absolute[i].begins[j] + 1) * 
+						send->tail.message.pack.list.absolute[i].elem_size;
+					send_size += size;
+				}
+			}
+			
+			sctk_nodebug("msg_size = %d, send_size = %d, recv_size = %d", send->body.header.msg_size, send_size, recv->tail.message.contiguous.size);
+			/* MPI 1.3 : The length of the received message must be less than or equal to the length of the receive buffer */
+			assume(send_size <= recv->tail.message.contiguous.size); 
+
+			for (i = 0; (i < send->tail.message.pack.count); i++)
+			{
+				for (j = 0; (j < send->tail.message.pack.list.absolute[i].count); j++)
 				{
 					size = (send->tail.message.pack.list.absolute[i].ends[j] - send->tail.message.pack.list.absolute[i].begins[j] + 1) * 
 						send->tail.message.pack.list.absolute[i].elem_size;
@@ -1541,6 +1546,8 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
 		sctk_nodebug("Send comm %d : rang %d envoie message a rang %d", communicator, msg->sctk_msg_get_glob_source, msg->sctk_msg_get_glob_destination);
 	else if((request->request_type == REQUEST_RECV) || (request->request_type == REQUEST_RECV_COLL))
 		sctk_nodebug("Recv comm %d : rang %d recoit message de rang %d", communicator, msg->sctk_msg_get_glob_destination, msg->sctk_msg_get_glob_source);
+	else
+		sctk_nodebug("request_type = %d", request->request_type);
 	
 	/* A message can be sent with a NULL request (see the MPI standard) */
 	if (request) 
