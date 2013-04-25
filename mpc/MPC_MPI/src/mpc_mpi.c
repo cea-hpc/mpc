@@ -1444,6 +1444,7 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
     }
   }
 }
+
 static int
 __INTERNAL__PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest,
 			int tag, MPI_Comm comm, MPI_Request * request)
@@ -1451,12 +1452,13 @@ __INTERNAL__PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest,
   return __INTERNAL__PMPI_Isend_test_req (buf, count, datatype, dest, tag,
 					  comm, request, 0);
 }
+
 static int
 __INTERNAL__PMPI_Issend_test_req (void *buf, int count, MPI_Datatype datatype,
 				  int dest, int tag, MPI_Comm comm,
 				  MPI_Request * request, int is_valid_request)
 {
-  if (sctk_is_derived_type (datatype))
+  if (sctk_is_derived_type (datatype) && (count != 0))
     {
       return __INTERNAL__PMPI_Isend_test_req (buf, count, datatype, dest, tag,
 					      comm, request,
@@ -1464,6 +1466,11 @@ __INTERNAL__PMPI_Issend_test_req (void *buf, int count, MPI_Datatype datatype,
     }
   else
     {
+	if(count == 0)
+	{
+		/* code to avoid derived datatype */
+		datatype = MPC_CHAR;
+	}
       if (is_valid_request)
 	{
 	  return PMPC_Issend (buf, count, datatype, dest, tag, comm,
@@ -7516,6 +7523,7 @@ int
 PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	    MPI_Comm comm, MPI_Request * request)
 {
+	sctk_debug("Isend");
   int res = MPI_ERR_INTERN;
   SCTK__MPI_INIT_REQUEST (request);
   if(dest == MPC_PROC_NULL)
@@ -7610,12 +7618,12 @@ PMPI_Issend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	     MPI_Comm comm, MPI_Request * request)
 {
   int res = MPI_ERR_INTERN;
+  SCTK__MPI_INIT_REQUEST (request);
   if(dest == MPC_PROC_NULL)
   {
 	  res = MPI_SUCCESS;
 	  SCTK__MPI_Check_retrun_val (res, comm);
   }
-  SCTK__MPI_INIT_REQUEST (request);
   
   {
     int size;

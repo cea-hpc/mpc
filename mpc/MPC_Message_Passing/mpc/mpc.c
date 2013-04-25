@@ -2504,7 +2504,6 @@ __MPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
       sctk_mpc_init_request(request,comm,src, REQUEST_SEND);
       MPC_ERROR_SUCESS ();
     }
-  sctk_mpc_init_request(request,comm,src, REQUEST_SEND);
   
 	//~ if(sctk_is_inter_comm(comm))
 	//~ {
@@ -2518,7 +2517,7 @@ __MPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
 	//~ {
 		//~ mpc_check_msg (src, dest, tag, comm, com_size);
 	//~ }
-
+  sctk_mpc_init_request(request,comm,src, REQUEST_SEND);
   msg = sctk_create_header (src,sctk_message_contiguous);
   d_size = __MPC_Get_datatype_size (datatype, task_specific);
   msg_size = count * d_size;
@@ -2607,7 +2606,7 @@ __MPC_Issend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
 	//~ {
 		//~ mpc_check_msg (src, dest, tag, comm, com_size);
 	//~ }
-
+  sctk_mpc_init_request(request,comm,src, REQUEST_SEND);
   msg = sctk_create_header (src,sctk_message_contiguous);
   d_size = __MPC_Get_datatype_size (datatype, task_specific);
   msg_size = count * d_size;
