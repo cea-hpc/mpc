@@ -28,12 +28,19 @@
 	<!-- ********************************************************* -->
 	<xsl:template match="all">
 		<xsl:call-template name="gen-mpc-header"/>
-		<xsl:text>#include &lt;stdlib.h&gt;&#10;&#10;</xsl:text>
+		<xsl:text>#include &lt;stdlib.h&gt;&#10;</xsl:text>
+		<xsl:text>#include &lt;dlfcn.h&gt;&#10;&#10;</xsl:text>
 		<xsl:text>#ifndef SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H&#10;</xsl:text>
 		<xsl:text>#define SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H&#10;</xsl:text>
 		<xsl:call-template name="gen-forward-struct-decl"/>
 		<xsl:call-template name="gen-reset-function"/>
 		<xsl:text>&#10;#endif /* SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H */&#10;</xsl:text>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="gen-var-decl">
+		<xsl:text>&#10;/******************************** VARIABLES *********************************/&#10;</xsl:text>
+		<xsl:text>extern void * sctk_handler;&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->

@@ -35,7 +35,7 @@
 		<xsl:text>#include "sctk_runtime_config_struct.h"&#10;</xsl:text>
 		<xsl:text>#include "sctk_runtime_config_struct_defaults.h"&#10;</xsl:text>
 		<xsl:text>#include "sctk_runtime_config_mapper.h"&#10;</xsl:text>
-		<xsl:text>static void * sctk_handler;&#10;</xsl:text>
+		<xsl:text>void * sctk_handler;&#10;</xsl:text>
 		<xsl:apply-templates select='config'/>
 		<xsl:call-template name="gen-main-reset-function"/>
 	</xsl:template>

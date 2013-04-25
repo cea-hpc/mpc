@@ -29,6 +29,8 @@
 #include "sctk_runtime_config_sources.h"
 #include "sctk_runtime_config_struct.h"
 
+extern void * sctk_handler;
+
 /******************************** STRUCTURE *********************************/
 /**
  * Enum to define internal types supported for meta-data structure.
@@ -106,6 +108,7 @@ double sctk_runtime_config_map_entry_to_double(xmlNodePtr node);
 float sctk_runtime_config_map_entry_to_float(xmlNodePtr node);
 size_t sctk_runtime_config_map_entry_parse_size( const char *value );
 size_t sctk_runtime_config_map_entry_to_size(xmlNodePtr node);
+struct sctk_runtime_config_funcptr sctk_runtime_config_map_entry_to_funcptr(xmlNodePtr node);
 
 /********************************* FUNCTION *********************************/
 void sctk_runtime_config_do_cleanup(struct sctk_runtime_config * config);

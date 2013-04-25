@@ -320,21 +320,21 @@ sctk_version_details (void)
   sctk_version_details_val = 1;
 }
 
-  static void
+  void
 sctk_use_pthread (void)
 {
   sctk_multithreading_mode = "pthread";
   sctk_thread_val = sctk_pthread_thread_init;
 }
 
-  static void
+  void
 sctk_use_ethread (void)
 {
   sctk_multithreading_mode = "ethread";
   sctk_thread_val = sctk_ethread_thread_init;
 }
 
-  static void
+  void
 sctk_use_ethread_mxn (void)
 {
   sctk_multithreading_mode = "ethread_mxn";
@@ -874,7 +874,6 @@ sctk_launch_main (int argc, char **argv)
   sctk_nodebug ("init argc %d", argc);
   init_res = sctk_env_init (&argc, &argv);
   sctk_nodebug ("init argc %d", argc);
-
 
   if (init_res == 1)
   {

@@ -157,13 +157,26 @@ size_t sctk_runtime_config_map_entry_parse_size( const char *pval )
 /******************************** FUNCTION *********************************/
 size_t sctk_runtime_config_map_entry_to_size(xmlNodePtr node)
 {
-	size_t ret = 0;
-	xmlChar * value = xmlNodeGetContent(node);
+  size_t ret = 0;
+  xmlChar * value = xmlNodeGetContent(node);
 
-	ret = sctk_runtime_config_map_entry_parse_size( (char *)value );
+  ret = sctk_runtime_config_map_entry_parse_size( (char *)value );
 
-	xmlFree(value);
-	return ret;
+  xmlFree(value);
+  return ret;
+}
+
+/******************************** FUNCTION *********************************/
+struct sctk_runtime_config_funcptr sctk_runtime_config_map_entry_to_funcptr(xmlNodePtr node)
+{
+  struct sctk_runtime_config_funcptr ret;
+  xmlChar * value = xmlNodeGetContent(node);
+
+  ret.name = sctk_runtime_config_map_entry_to_string(node);
+  *(void **) &(ret.value) = dlsym(sctk_handler, ret.name);
+
+  xmlFree(value);
+  return ret;
 }
 
 /******************************** FUNCTION *********************************/
@@ -396,19 +409,24 @@ void sctk_runtime_config_map_value( const struct sctk_runtime_config_entry_meta 
 
 	/* if not it's a composed type */
 	if ( ! is_plain_type ) {
-		/* get the meta description of the type */
-		entry = sctk_runtime_config_get_meta_type(config_meta, type_name);
+	  if (!strcmp(type_name, "funcptr")) {
+	    *(struct sctk_runtime_config_funcptr*) value = sctk_runtime_config_map_entry_to_funcptr(node);
+	  }
+	  else {
+      /* get the meta description of the type */
+      entry = sctk_runtime_config_get_meta_type(config_meta, type_name);
 
-		/* check for errors and types */
-		if (entry == NULL) {
-			sctk_fatal("Can't find type information for : %s.",type_name);
-		} else if (entry->type == SCTK_CONFIG_META_TYPE_STRUCT) {
-			sctk_runtime_config_map_struct(config_meta,value,entry,node);
-		} else if (entry->type == SCTK_CONFIG_META_TYPE_UNION) {
-			sctk_runtime_config_map_union(config_meta,value,entry,node);
-		} else {
-			sctk_fatal("Unknown custom type : %s (%d)",type_name,entry->type);
-		}
+      /* check for errors and types */
+      if (entry == NULL) {
+        sctk_fatal("Can't find type information for : %s.",type_name);
+      } else if (entry->type == SCTK_CONFIG_META_TYPE_STRUCT) {
+        sctk_runtime_config_map_struct(config_meta,value,entry,node);
+      } else if (entry->type == SCTK_CONFIG_META_TYPE_UNION) {
+        sctk_runtime_config_map_union(config_meta,value,entry,node);
+      } else {
+        sctk_fatal("Unknown custom type : %s (%d)",type_name,entry->type);
+      }
+	  }
 	}
 }
 

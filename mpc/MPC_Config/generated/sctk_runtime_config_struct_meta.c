@@ -23,7 +23,6 @@
 
 #include "sctk_runtime_config_struct.h"
 #include "../src/sctk_runtime_config_mapper.h"
-#include "uthash.h"
 
 /********************************  CONSTS  **********************************/
 const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
@@ -146,7 +145,6 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"allreduce_arity_max"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_inter_thread_comm,allreduce_arity_max)  , sizeof(int) , "int" , NULL},
 	{"allreduce_max_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_inter_thread_comm,allreduce_max_size)  , sizeof(int) , "int" , NULL},
 	{"allreduce_check_threshold"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_inter_thread_comm,allreduce_check_threshold)  , sizeof(int) , "int" , NULL},
-	{"sctk_collectives_init_hook"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_inter_thread_comm,sctk_collectives_init_hook)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL},
 	/* struct */
 	{"sctk_runtime_config_struct_profiler" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_profiler) , NULL , sctk_runtime_config_struct_init_profiler},
 	{"file_prefix"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_profiler,file_prefix)  , sizeof(char *) , "char *" , NULL},
@@ -156,5 +154,4 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	/* end marker */
 	{NULL , SCTK_CONFIG_META_TYPE_END , 0 , 0 , NULL,  NULL}
 };
-
 

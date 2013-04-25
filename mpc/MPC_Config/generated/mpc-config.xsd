@@ -187,7 +187,6 @@
       <xs:element minOccurs="0" name="allreduce_arity_max" type="xs:integer"/>
       <xs:element minOccurs="0" name="allreduce_max_size" type="xs:integer"/>
       <xs:element minOccurs="0" name="allreduce_check_threshold" type="xs:integer"/>
-      <xs:element minOccurs="0" name="sctk_collectives_init_hook" type="xs:string"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

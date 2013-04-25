@@ -27,7 +27,7 @@
 #include "sctk_runtime_config_struct.h"
 #include "sctk_runtime_config_struct_defaults.h"
 #include "sctk_runtime_config_mapper.h"
-static void * sctk_handler;
+void * sctk_handler;
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_allocator(void * struct_ptr)
@@ -197,8 +197,6 @@ void sctk_runtime_config_struct_init_inter_thread_comm(void * struct_ptr)
 	obj->allreduce_arity_max = 8;
 	obj->allreduce_max_size = 1024;
 	obj->allreduce_check_threshold = 8192;
-	obj->sctk_collectives_init_hook.name = "sctk_collectives_init_opt_messages";
-	*(void **) &(obj->sctk_collectives_init_hook.value) = dlsym(sctk_handler, "sctk_collectives_init_opt_messages");
 }
 
 /*******************  FUNCTION  *********************/

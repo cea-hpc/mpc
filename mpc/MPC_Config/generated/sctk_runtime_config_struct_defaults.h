@@ -22,6 +22,7 @@
 /* ######################################################################## */
 
 #include <stdlib.h>
+#include <dlfcn.h>
 
 #ifndef SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H
 #define SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H
