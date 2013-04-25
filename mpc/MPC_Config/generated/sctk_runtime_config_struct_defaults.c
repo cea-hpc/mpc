@@ -23,9 +23,11 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <dlfcn.h>
 #include "sctk_runtime_config_struct.h"
 #include "sctk_runtime_config_struct_defaults.h"
 #include "sctk_runtime_config_mapper.h"
+static void * sctk_handler;
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_allocator(void * struct_ptr)
@@ -56,7 +58,8 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 	obj->disable_rand_addr = false;
 	obj->disable_mpc = false;
 	obj->startup_args = "";
-	obj->multithreading = "ethread_mxn";
+	obj->thread_init.name = "sctk_use_ethread_mxn";
+	*(void **) &(obj->thread_init.value) = dlsym(sctk_handler, "sctk_use_ethread_mxn");
 	obj->nb_task = 1;
 	obj->nb_process = 1;
 	obj->nb_processor = 0;
@@ -194,6 +197,8 @@ void sctk_runtime_config_struct_init_inter_thread_comm(void * struct_ptr)
 	obj->allreduce_arity_max = 8;
 	obj->allreduce_max_size = 1024;
 	obj->allreduce_check_threshold = 8192;
+	obj->sctk_collectives_init_hook.name = "sctk_collectives_init_opt_messages";
+	*(void **) &(obj->sctk_collectives_init_hook.value) = dlsym(sctk_handler, "sctk_collectives_init_opt_messages");
 }
 
 /*******************  FUNCTION  *********************/
@@ -218,6 +223,7 @@ void sctk_runtime_config_struct_init_profiler(void * struct_ptr)
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 {
+	sctk_handler = dlopen(0, RTLD_LAZY | RTLD_GLOBAL);
 	sctk_runtime_config_struct_init_allocator(&config->modules.allocator);
 	sctk_runtime_config_struct_init_launcher(&config->modules.launcher);
 	sctk_runtime_config_struct_init_debugger(&config->modules.debugger);

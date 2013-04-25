@@ -201,9 +201,9 @@ Type is bool. Default value is false.
 Type is string. Default value is . 
 .Pp startup_args
 
-.It Cm multithreading
-Type is string. Default value is ethread_mxn. 
-.Pp multithreading
+.It Cm thread_init
+Type is funcptr. Default value is sctk_use_ethread_mxn. 
+.Pp thread_init
 
 .It Cm nb_task
 Type is int. Default value is 1. 
@@ -533,6 +533,10 @@ Type is int. Default value is 1024.
 .It Cm allreduce_check_threshold
 Type is int. Default value is 8192. 
 .Pp allreduce_check_threshold
+
+.It Cm sctk_collectives_init_hook
+Type is funcptr. Default value is sctk_collectives_init_opt_messages. 
+.Pp sctk_collectives_init_hook
 
 .El
 .Sh ENTRIES OF TYPE profiler

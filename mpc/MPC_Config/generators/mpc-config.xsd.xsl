@@ -94,6 +94,7 @@
 			<xsl:when test="@type = 'float'">xs:decimal</xsl:when>
 			<xsl:when test="@type = 'double'">xs:decimal</xsl:when>
 			<xsl:when test="@type = 'size'">xs:string</xsl:when>
+			<xsl:when test="@type = 'funcptr'">xs:string</xsl:when>
 			<xsl:otherwise><xsl:value-of select="concat('user_type_',@type)"/></xsl:otherwise>
 		</xsl:choose>
 	</xsl:template>

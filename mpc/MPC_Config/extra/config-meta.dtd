@@ -8,11 +8,18 @@
 	<!ATTLIST struct name CDATA #REQUIRED>
 	<!ATTLIST struct doc CDATA #REQUIRED>
 
-<!ELEMENT param EMPTY>
+<!ELEMENT param (return?, arg*)>
 	<!ATTLIST param name CDATA #REQUIRED>
 	<!ATTLIST param type CDATA #REQUIRED>
 	<!ATTLIST param doc CDATA #REQUIRED>
 	<!ATTLIST param default CDATA #IMPLIED>
+
+<!ELEMENT return EMPTY>
+	<!ATTLIST return type CDATA #REQUIRED>
+
+<!ELEMENT arg EMPTY>
+	<!ATTLIST arg name CDATA #REQUIRED>
+	<!ATTLIST arg type CDATA #REQUIRED>
 
 <!ELEMENT union (choice+)>
 	<!ATTLIST union name CDATA #REQUIRED>

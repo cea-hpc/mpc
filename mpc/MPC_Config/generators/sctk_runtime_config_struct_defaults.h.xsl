@@ -40,6 +40,7 @@
 	<xsl:template name="gen-forward-struct-decl">
 		<xsl:text>&#10;/******************************** STRUCTURE *********************************/&#10;</xsl:text>
 		<xsl:text>/* forward declaration functions */&#10;</xsl:text>
+		<xsl:text>struct sctk_runtime_config_funcptr;&#10;</xsl:text>
 		<xsl:text>struct sctk_runtime_config;&#10;</xsl:text>
 	</xsl:template>
 

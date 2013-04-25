@@ -767,6 +767,10 @@ sctk_launch_main (int argc, char **argv)
   int tofree_nb = 0;
   int auto_kill;
 
+  if (getenv("MPC_MAKE_FORTRAN_INTERFACE") != NULL) {
+    return mpc_user_main(argc, argv);
+  }
+
   //load mpc configuration from XML files if not already done.
   sctk_runtime_config_init();
 
@@ -784,19 +788,7 @@ sctk_launch_main (int argc, char **argv)
   }
 
   // Initializing multithreading mode
-  sctk_multithreading_mode = sctk_runtime_config_get()->modules.launcher.multithreading;
-  if (!strcmp(sctk_multithreading_mode, "pthread")) {
-	  sctk_thread_val = sctk_pthread_thread_init;
-  }
-  else if (!strcmp(sctk_multithreading_mode, "ethread")) {
-	  sctk_thread_val = sctk_ethread_thread_init;
-  }
-  else if (!strcmp(sctk_multithreading_mode, "ethread_mxn")) {
-	  sctk_thread_val = sctk_ethread_mxn_thread_init;
-  }
-  else {
-	  not_available();
-  }
+  sctk_runtime_config_get()->modules.launcher.thread_init.value();
 
   sctk_task_nb_val = sctk_runtime_config_get()->modules.launcher.nb_task;
   sctk_process_nb_val = sctk_runtime_config_get()->modules.launcher.nb_process;

@@ -34,6 +34,7 @@
 		<xsl:text>#ifndef SCTK_RUNTIME_CONFIG_STRUCT_H&#10;</xsl:text>
 		<xsl:text>#define SCTK_RUNTIME_CONFIG_STRUCT_H&#10;</xsl:text>
 
+		<xsl:call-template name="gen-funcptr-struct"/>
 		<xsl:apply-templates select="config"/>
 		<xsl:call-template name="gen-final-module-struct"/>
 		<xsl:call-template name="gen-config-struct"/>
@@ -48,6 +49,16 @@
 		<xsl:text>{&#10;</xsl:text>
 		<xsl:text>&#09;struct sctk_runtime_config_modules modules;&#10;</xsl:text>
 		<xsl:text>&#09;struct sctk_runtime_config_struct_networks networks;&#10;</xsl:text>
+		<xsl:text>};&#10;</xsl:text>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="gen-funcptr-struct">
+		<xsl:text>&#10;/******************************** STRUCTURE *********************************/&#10;</xsl:text>
+		<xsl:text>struct sctk_runtime_config_funcptr&#10;</xsl:text>
+		<xsl:text>{&#10;</xsl:text>
+		<xsl:text>&#09;char * name;&#10;</xsl:text>
+		<xsl:text>&#09;void (* value)();&#10;</xsl:text>
 		<xsl:text>};&#10;</xsl:text>
 	</xsl:template>
 
@@ -122,8 +133,15 @@
 			<xsl:value-of select="concat('&#9;/**',@doc,'**/&#10;')"/>
 		</xsl:if>
 		<xsl:text>&#9;</xsl:text>
-		<xsl:call-template name="gen-type-name"/>
-		<xsl:value-of select="concat(' ',@name)"/>
+		<xsl:choose>
+			<xsl:when test="@type = 'funcptr'">
+				<xsl:value-of select="concat('struct sctk_runtime_config_funcptr ',@name)"/>
+			</xsl:when>
+			<xsl:otherwise>
+				<xsl:call-template name="gen-type-name"/>
+				<xsl:value-of select="concat(' ',@name)"/>
+			</xsl:otherwise>
+		</xsl:choose>
 		<xsl:text>;&#10;</xsl:text>
 	</xsl:template>
 
@@ -137,6 +155,34 @@
 		<xsl:value-of select="concat('&#9;/** Number of elements in ',@name,' array. **/&#10;')"/>
 		<xsl:value-of select="concat('&#9;int ',@name,'_size;&#10;')"/>
 	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="gen-funcptr">
+		<xsl:choose>
+			<xsl:when test="return"><xsl:apply-templates select="gen-return" /></xsl:when>
+			<xsl:otherwise><xsl:text>void</xsl:text></xsl:otherwise>
+		</xsl:choose>
+		<xsl:value-of select="concat(' (*',@name, ') (')"/>
+		<xsl:choose>
+			<xsl:when test="arg"><xsl:call-template name="gen-arg"/></xsl:when>
+			<xsl:otherwise><xsl:text>void</xsl:text></xsl:otherwise>
+		</xsl:choose>
+		<xsl:text>)</xsl:text>
+	</xsl:template>
+	
+	<!-- ********************************************************* -->
+	<xsl:template match="return" name="gen-return">
+		<xsl:call-template name="gen-type-name"/>
+	</xsl:template>
+	
+    <!-- ********************************************************* -->
+    <xsl:template name="gen-arg">
+	    <xsl:for-each select="arg">
+		    <xsl:call-template name="gen-type-name"/>
+		    <xsl:value-of select="concat(' ',@name)"/>
+		    <xsl:if test="not(position() = last())">, </xsl:if>
+	    </xsl:for-each>
+    </xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-type-name">

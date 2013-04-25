@@ -13,7 +13,7 @@
 			<param name="disable_rand_addr" type="bool" default="false" doc=""/>
 			<param name="disable_mpc" type="bool" default="false" doc=""/>
 			<param name="startup_args" type="string" default="" doc=""/>
-			<param name="multithreading" type="string" default="ethread_mxn" doc=""/>
+			<param name="thread_init" type="funcptr" doc="" default="sctk_use_ethread_mxn"/>
 			<param name="nb_task" type="int" default="1" doc=""/>
 			<param name="nb_process" type="int" default="1" doc=""/>
 			<param name="nb_processor" type="int" default="0" doc=""/>
@@ -28,6 +28,7 @@
 			<param name="checkpoint" type="bool" default="false" doc=""/>
 			<param name="migration" type="bool" default="false" doc=""/>
 		</struct>
+		
 		<struct name="debugger" doc="Options for MPC Debugger">
 			<param name="colors" type="bool" default="true" doc="Print colored text in terminal"/>
 			<param name="max_filename_size" type="int" default="1024" doc=""/>

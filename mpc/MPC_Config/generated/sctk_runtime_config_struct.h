@@ -28,6 +28,13 @@
 #define SCTK_RUNTIME_CONFIG_STRUCT_H
 
 /******************************** STRUCTURE *********************************/
+struct sctk_runtime_config_funcptr
+{
+	char * name;
+	void (* value)();
+};
+
+/******************************** STRUCTURE *********************************/
 /**Options for MPC memory allocator.**/
 struct sctk_runtime_config_struct_allocator
 {	/**Enable or disable NUMA migration of allocator pages on thread migration.**/
@@ -70,7 +77,7 @@ struct sctk_runtime_config_struct_launcher
 	/****/
 	char * startup_args;
 	/****/
-	char * multithreading;
+	struct sctk_runtime_config_funcptr thread_init;
 	/****/
 	int nb_task;
 	/****/
@@ -271,6 +278,8 @@ struct sctk_runtime_config_struct_inter_thread_comm
 	int allreduce_max_size;
 	/****/
 	int allreduce_check_threshold;
+	/****/
+	struct sctk_runtime_config_funcptr sctk_collectives_init_hook;
 };
 
 /******************************** STRUCTURE *********************************/

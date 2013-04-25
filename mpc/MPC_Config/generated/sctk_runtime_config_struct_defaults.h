@@ -28,6 +28,7 @@
 
 /******************************** STRUCTURE *********************************/
 /* forward declaration functions */
+struct sctk_runtime_config_funcptr;
 struct sctk_runtime_config;
 
 /********************************* FUNCTION *********************************/

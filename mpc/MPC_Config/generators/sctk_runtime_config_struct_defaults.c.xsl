@@ -31,9 +31,11 @@
 		<xsl:call-template name="gen-mpc-header"/>
 		<xsl:text>#include &lt;stdlib.h&gt;&#10;</xsl:text>
 		<xsl:text>#include &lt;string.h&gt;&#10;</xsl:text>
+		<xsl:text>#include &lt;dlfcn.h&gt;&#10;</xsl:text>
 		<xsl:text>#include "sctk_runtime_config_struct.h"&#10;</xsl:text>
 		<xsl:text>#include "sctk_runtime_config_struct_defaults.h"&#10;</xsl:text>
 		<xsl:text>#include "sctk_runtime_config_mapper.h"&#10;</xsl:text>
+		<xsl:text>static void * sctk_handler;&#10;</xsl:text>
 		<xsl:apply-templates select='config'/>
 		<xsl:call-template name="gen-main-reset-function"/>
 	</xsl:template>
@@ -43,6 +45,7 @@
 		<xsl:text>&#10;/*******************  FUNCTION  *********************/&#10;</xsl:text>
 		<xsl:text>void sctk_runtime_config_reset(struct sctk_runtime_config * config)&#10;</xsl:text>
 		<xsl:text>{&#10;</xsl:text>
+		<xsl:text>&#9;sctk_handler = dlopen(0, RTLD_LAZY | RTLD_GLOBAL);&#10;</xsl:text>
 		<xsl:for-each select="config">
 			<xsl:for-each select="modules">
 				<xsl:for-each select="module">
@@ -108,6 +111,7 @@
 			<xsl:when test="@type = 'float'"><xsl:call-template name='gent-default-param-decimal'/></xsl:when>
 			<xsl:when test="@type = 'double'"><xsl:call-template name='gent-default-param-decimal'/></xsl:when>
 			<xsl:when test="@type = 'size'"><xsl:call-template name='gent-default-param-size'/></xsl:when>
+			<xsl:when test="@type = 'funcptr'"><xsl:call-template name='gent-default-param-funcptr'/></xsl:when>
 			<xsl:otherwise><xsl:call-template name="gent-default-param-usertype"/></xsl:otherwise>
 		</xsl:choose>
 	</xsl:template>
@@ -170,6 +174,28 @@
 			<xsl:otherwise>NULL</xsl:otherwise>
 		</xsl:choose>
 		<xsl:text>;&#10;</xsl:text>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="gent-default-param-funcptr">
+		<xsl:choose>
+			<xsl:when test="@default"><xsl:call-template name="funcptr-default-value"/></xsl:when>
+			<xsl:otherwise><xsl:call-template name="funcptr-empty-value"/></xsl:otherwise>
+		</xsl:choose>
+		<xsl:text>;&#10;</xsl:text>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="funcptr-default-value">
+		<xsl:value-of select="concat('&#09;obj->', @name, '.name = &quot;', @default, '&quot;;&#10;')"/>
+		<xsl:text>&#09;*(void **) &amp;(obj-&gt;</xsl:text>
+		<xsl:value-of select="concat(@name,'.value) = dlsym(sctk_handler, &quot;', @default, '&quot;)')"/>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="funcptr-empty-value">
+		<xsl:value-of select="concat('&#09;obj->', @name, '.name = &quot;&quot;;&#10;')"/>
+		<xsl:value-of select="concat('&#09;obj->', @name, '.value = NULL')"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
