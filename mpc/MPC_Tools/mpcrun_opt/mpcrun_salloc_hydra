@@ -21,7 +21,13 @@
 #                                                                      #
 ########################################################################
 if [ "$SCTK_JOB_MANAGER" = "HYDRA" ]; then
-	LAUNCH_COMMAND="salloc $LAUNCH_OPTIONS -n $PROCESS_NB -N $NODE_NB -c $CPU_NB ${SCTK_HYDRA_BINDIR}mpiexec.hydra -n $PROCESS_NB $BINARY $USER_ARGS $SCTK_ARGS"
+	if test "$MPC_AUTO_KILL_TIMEOUT" = "0"  || test  -z "$MPC_AUTO_KILL_TIMEOUT"; then
+		autokill_opt=""
+	else
+		autokill_opt="-t ${MPC_AUTO_KILL_TIMEOUT}"
+	fi
+
+	LAUNCH_COMMAND="salloc $LAUNCH_OPTIONS -n $PROCESS_NB -N $NODE_NB -c $CPU_NB ${autokill_opt} ${SCTK_HYDRA_BINDIR}mpiexec.hydra -n $PROCESS_NB $BINARY $USER_ARGS $SCTK_ARGS"
 else
 	echo  "ERROR mpc is compiled without Hydra support" 1>&2
 	exit 1
