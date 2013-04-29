@@ -1142,9 +1142,15 @@ sctk_gen_thread_wake_thread_on_vp (void **list)
 static int
 sctk_gen_thread_get_vp ()
 {
-  sctk_init_mpc_runtime();
+  TODO("Temporary fix to cleanup, need more investigation.")
+  /* Commented to avoid infinit loop with mpcrun -p=4 -c=4 -N=2 (ticket 254)
+   * Maybe need better fix. */
+
+  /*sctk_init_mpc_runtime();
   assume(sctk_gen_thread_get_vp != __sctk_ptr_thread_get_vp);
   return __sctk_ptr_thread_get_vp();
+  */
+  return 0;
 }
 
 static int
