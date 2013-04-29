@@ -24,6 +24,7 @@ if [ "$SCTK_JOB_MANAGER" = "HYDRA" ]; then
 	if test "$MPC_AUTO_KILL_TIMEOUT" = "0"  || test  -z "$MPC_AUTO_KILL_TIMEOUT"; then
 		autokill_opt=""
 	else
+		export MPIEXEC_TIMEOUT=${MPC_AUTO_KILL_TIMEOUT}
 		autokill_opt="-t ${MPC_AUTO_KILL_TIMEOUT}"
 	fi
 
