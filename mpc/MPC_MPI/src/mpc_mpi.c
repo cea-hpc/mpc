@@ -1962,6 +1962,7 @@ __INTERNAL__PMPI_Send_init (void *buf, int count, MPI_Datatype datatype,
   req = __sctk_new_mpc_request_internal (request);
   req->freeable = 0;
   req->is_active = 0;
+  req->req.request_type = REQUEST_SEND;
 
   req->persistant.buf = buf;
   req->persistant.count = count;
@@ -1983,6 +1984,7 @@ __INTERNAL__PMPI_Bsend_init (void *buf, int count, MPI_Datatype datatype,
   req = __sctk_new_mpc_request_internal (request);
   req->freeable = 0;
   req->is_active = 0;
+  req->req.request_type = REQUEST_SEND;
 
   req->persistant.buf = buf;
   req->persistant.count = count;
@@ -2004,6 +2006,7 @@ __INTERNAL__PMPI_Ssend_init (void *buf, int count, MPI_Datatype datatype,
   req = __sctk_new_mpc_request_internal (request);
   req->freeable = 0;
   req->is_active = 0;
+  req->req.request_type = REQUEST_SEND;
 
   req->persistant.buf = buf;
   req->persistant.count = count;
@@ -2025,6 +2028,7 @@ __INTERNAL__PMPI_Rsend_init (void *buf, int count, MPI_Datatype datatype,
   req = __sctk_new_mpc_request_internal (request);
   req->freeable = 0;
   req->is_active = 0;
+  req->req.request_type = REQUEST_SEND;
 
   req->persistant.buf = buf;
   req->persistant.count = count;
@@ -2046,6 +2050,7 @@ __INTERNAL__PMPI_Recv_init (void *buf, int count, MPI_Datatype datatype,
   req = __sctk_new_mpc_request_internal (request);
   req->freeable = 0;
   req->is_active = 0;
+  req->req.request_type = REQUEST_RECV;
 
   req->persistant.buf = buf;
   req->persistant.count = count;
@@ -7318,6 +7323,13 @@ PMPI_Recv (void *buf, int count, MPI_Datatype datatype, int source, int tag,
   if(source == MPC_PROC_NULL)
   {
 	res = MPI_SUCCESS;
+	MPI_Status empty_status;
+	empty_status.MPC_SOURCE = MPI_PROC_NULL;
+    empty_status.MPC_TAG = MPI_ANY_TAG;
+    empty_status.MPC_ERROR = MPI_SUCCESS;
+    empty_status.cancelled = 0;
+    empty_status.count = 0;
+    *status = empty_status;
 	SCTK__MPI_Check_retrun_val (res, comm);
   }
   SCTK__MPI_INIT_STATUS (status);
@@ -7784,7 +7796,11 @@ PMPI_Request_free (MPI_Request * request)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
-  res = __INTERNAL__PMPI_Request_free (request);
+  if (NULL == request || NULL == *request ||  MPI_REQUEST_NULL == *request) {
+    res = MPI_ERR_REQUEST;
+  }
+  else
+	res = __INTERNAL__PMPI_Request_free (request);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
