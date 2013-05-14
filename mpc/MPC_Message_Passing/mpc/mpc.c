@@ -1050,13 +1050,13 @@ __MPC_Get_datatype_size (MPC_Datatype datatype,
     }
   else if (datatype - sctk_user_data_types < sctk_user_data_types_max)
     {
-      sctk_datatype_t *user_types;
+      sctk_other_datatype_t *other_user_types;
       size_t res;
-      sctk_spinlock_lock (&(task_specific->user_types.lock));
-      user_types = task_specific->user_types.user_types;
-      sctk_assert (user_types != NULL);
-      res = user_types[datatype - sctk_user_data_types];
-      sctk_spinlock_unlock (&(task_specific->user_types.lock));
+      sctk_spinlock_lock (&(task_specific->other_user_types.lock));
+      other_user_types = task_specific->other_user_types.other_user_types;
+      sctk_assert (other_user_types != NULL);
+      res = other_user_types[datatype - sctk_user_data_types].size;
+      sctk_spinlock_unlock (&(task_specific->other_user_types.lock));
       return res;
     }
   else
@@ -1090,29 +1090,32 @@ PMPC_Type_size (MPC_Datatype datatype, size_t * size)
 }
 
 int
-PMPC_Sizeof_datatype (MPC_Datatype * datatype, size_t size)
+PMPC_Sizeof_datatype (MPC_Datatype * datatype, size_t size, size_t count, MPC_Datatype *data_in)
 {
   int i;
-  sctk_datatype_t *user_types;
+  sctk_other_datatype_t *other_user_types;
   sctk_task_specific_t *task_specific;
   SCTK_PROFIL_START (MPC_Sizeof_datatype);
   *datatype = MPC_DATATYPE_NULL;
   task_specific = __MPC_get_task_specific ();
-  sctk_spinlock_lock (&(task_specific->user_types.lock));
-  user_types = task_specific->user_types.user_types;
+  sctk_spinlock_lock (&(task_specific->other_user_types.lock));
+  other_user_types = task_specific->other_user_types.other_user_types;
   for (i = 0; i < sctk_user_data_types_max; i++)
     {
-      if (user_types[i] == 0)
+      if (other_user_types[i].id == 0)
 	{
 	  *datatype = (sctk_user_data_types + i);
-	  user_types[i] = size;
-	  sctk_spinlock_unlock (&(task_specific->user_types.lock));
+	  other_user_types[i].id = i;
+	  other_user_types[i].size = size;
+	  other_user_types[i].count = count;
+	  other_user_types[i].datatype = data_in;
+	  sctk_spinlock_unlock (&(task_specific->other_user_types.lock));
 	  SCTK_PROFIL_END (MPC_Sizeof_datatype);
 	  MPC_ERROR_SUCESS ();
 	}
     }
   sctk_warning ("Not enough datatypes allowed");
-  sctk_spinlock_unlock (&(task_specific->user_types.lock));
+  sctk_spinlock_unlock (&(task_specific->other_user_types.lock));
   return -1;
 }
 
@@ -1137,62 +1140,56 @@ PMPC_Derived_use (MPC_Datatype datatype)
 
 int
 PMPC_Derived_datatype (MPC_Datatype * datatype,
-		       mpc_pack_absolute_indexes_t * begins,
-		       mpc_pack_absolute_indexes_t * ends, unsigned long count,
-		       mpc_pack_absolute_indexes_t lb, int is_lb,
-		       mpc_pack_absolute_indexes_t ub, int is_ub)
+					   mpc_pack_absolute_indexes_t * begins,
+					   mpc_pack_absolute_indexes_t * ends, unsigned long count,
+					   mpc_pack_absolute_indexes_t lb, int is_lb,
+					   mpc_pack_absolute_indexes_t ub, int is_ub)
 {
-  int i;
-  sctk_derived_type_t **user_types;
-  sctk_task_specific_t *task_specific;
-  SCTK_PROFIL_START (MPC_Derived_datatype);
-  *datatype = MPC_DATATYPE_NULL;
-  task_specific = __MPC_get_task_specific ();
-  sctk_spinlock_lock (&(task_specific->user_types_struct.lock));
-  user_types = task_specific->user_types_struct.user_types_struct;
-  for (i = 0; i < sctk_user_data_types_max; i++)
+	int i;
+	sctk_derived_type_t **user_types;
+	sctk_task_specific_t *task_specific;
+	SCTK_PROFIL_START (MPC_Derived_datatype);
+	*datatype = MPC_DATATYPE_NULL;
+	task_specific = __MPC_get_task_specific ();
+	sctk_spinlock_lock (&(task_specific->user_types_struct.lock));
+	user_types = task_specific->user_types_struct.user_types_struct;
+	for (i = 0; i < sctk_user_data_types_max; i++)
     {
-      if (user_types[i] == NULL)
-	{
-	  unsigned long j;
-	  sctk_derived_type_t *t;
-	  *datatype = (sctk_user_data_types + sctk_user_data_types_max + i);
-	  t =
-	    (sctk_derived_type_t *)
-	    sctk_malloc (sizeof (sctk_derived_type_t));
-	  t->begins =
-	    (mpc_pack_absolute_indexes_t *) sctk_malloc (count *
-							 sizeof
-							 (mpc_pack_absolute_indexes_t));
-	  t->ends =
-	    (mpc_pack_absolute_indexes_t *) sctk_malloc (count *
-							 sizeof
-							 (mpc_pack_absolute_indexes_t));
-	  memcpy (t->begins, begins,
-		  count * sizeof (mpc_pack_absolute_indexes_t));
-	  memcpy (t->ends, ends,
-		  count * sizeof (mpc_pack_absolute_indexes_t));
-	  user_types[i] = t;
-	  t->size = 0;
-	  sctk_nodebug ("Create type with count %lu", count);
-	  t->count = count;
-	  t->ref_count = 1;
-	  for (j = 0; j < count; j++)
-	    {
-	      t->size += t->ends[j] - t->begins[j] + 1;
-	    }
-	  t->ub = ub;
-	  t->lb = lb;
-	  t->is_ub = is_ub;
-	  t->is_lb = is_lb;
-	  sctk_spinlock_unlock (&(task_specific->user_types_struct.lock));
-	  SCTK_PROFIL_END (MPC_Derived_datatype);
-	  MPC_ERROR_SUCESS ();
-	}
+		if (user_types[i] == NULL)
+		{
+			unsigned long j;
+			sctk_derived_type_t *t;
+			*datatype = (sctk_user_data_types + sctk_user_data_types_max + i);
+			
+			t = (sctk_derived_type_t *) sctk_malloc (sizeof (sctk_derived_type_t));
+			t->begins = (mpc_pack_absolute_indexes_t *) sctk_malloc (count * sizeof(mpc_pack_absolute_indexes_t));
+			t->ends = (mpc_pack_absolute_indexes_t *) sctk_malloc (count * sizeof(mpc_pack_absolute_indexes_t));
+			
+			memcpy (t->begins, begins, count * sizeof (mpc_pack_absolute_indexes_t));
+			memcpy (t->ends, ends, count * sizeof (mpc_pack_absolute_indexes_t));
+			
+			user_types[i] = t;
+			t->size = 0;
+			t->nb_elements = count;
+			sctk_nodebug ("Create type %d with count %lu", sctk_user_data_types + sctk_user_data_types_max + i, count);
+			t->count = count;
+			t->ref_count = 1;
+			for (j = 0; j < count; j++)
+			{
+				t->size += t->ends[j] - t->begins[j] + 1;
+			}
+			t->ub = ub;
+			t->lb = lb;
+			t->is_ub = is_ub;
+			t->is_lb = is_lb;
+			sctk_spinlock_unlock (&(task_specific->user_types_struct.lock));
+			SCTK_PROFIL_END (MPC_Derived_datatype);
+			MPC_ERROR_SUCESS ();
+		}
     }
-  sctk_spinlock_unlock (&(task_specific->user_types_struct.lock));
-  sctk_warning ("Not enough datatypes allowed");
-  return -1;
+	sctk_spinlock_unlock (&(task_specific->user_types_struct.lock));
+	sctk_warning ("Not enough datatypes allowed");
+	return -1;
 }
 
 
@@ -5460,6 +5457,10 @@ __MPC_Add_pack_absolute (void *buf, mpc_msg_count count,
   size_t data_size;
   size_t total = 0;
 
+  data_size = __MPC_Get_datatype_size (datatype, task_specific);
+
+  sctk_nodebug ("TYPE numer %d size %lu, count = %d", datatype, data_size, count);
+  
   if (request == NULL)
     {
       MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_REQUEST, "");
@@ -5476,10 +5477,6 @@ __MPC_Add_pack_absolute (void *buf, mpc_msg_count count,
     {
       MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_ARG, "");
     }
-
-  data_size = __MPC_Get_datatype_size (datatype, task_specific);
-
-  sctk_nodebug ("TYPE size %lu", data_size);
 
   msg = sctk_mpc_get_message_in_request(request);
 

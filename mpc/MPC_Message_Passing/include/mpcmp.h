@@ -681,7 +681,7 @@ enum MPIR_Combiner_enum {
 
   /*Types */
   int PMPC_Type_size (MPC_Datatype, size_t *);
-  int PMPC_Sizeof_datatype (MPC_Datatype *, size_t);
+  int PMPC_Sizeof_datatype (MPC_Datatype *, size_t, size_t count, MPC_Datatype *data_in);
   int __MPC_Barrier (MPC_Comm comm);
   int PMPC_Type_free (MPC_Datatype * datatype);
 

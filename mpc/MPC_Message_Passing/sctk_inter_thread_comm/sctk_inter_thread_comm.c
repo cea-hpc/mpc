@@ -528,7 +528,6 @@ void sctk_message_completion_and_free(sctk_thread_ptp_message_t* send,
     recv->tail.request->header.message_tag = send->body.header.message_tag;
     recv->tail.request->header.msg_size = send->body.header.msg_size;
     sctk_nodebug("request->header.msg_size = %d", recv->tail.request->header.msg_size);
-
     recv->tail.request->msg = NULL;
   }
 
@@ -1133,7 +1132,7 @@ inline void sctk_message_copy_pack_absolute(sctk_message_to_copy_t* tmp)
 		}
 		case sctk_message_pack_absolute: 
 		{
-			sctk_nodebug("sctk_message_pack_absolute - sctk_message_pack_absolute");
+			sctk_nodebug("sctk_message_pack_absolute - sctk_message_pack_absolute count == %d", send->tail.message.pack.count);
 			size_t i;
 			for (i = 0; i < send->tail.message.pack.count; i++)
 			{
@@ -1627,7 +1626,6 @@ sctk_add_pack_in_message_absolute (sctk_thread_ptp_message_t *
   }
 
   step = msg->tail.message.pack.count;
-  
   msg->tail.message.pack.list.absolute[step].count = nb_items;
   msg->tail.message.pack.list.absolute[step].begins = begins;
   msg->tail.message.pack.list.absolute[step].ends = ends;
@@ -1998,6 +1996,7 @@ void sctk_wait_all (const int task, const sctk_communicator_t com){
 
   do{
     i = OPA_load_int(&pair->pending_nb);
+    sctk_debug("pending = %d", pair->pending_nb);
 
     if (i != 0) {
       /* WARNING: The inter-process module *MUST* implement
