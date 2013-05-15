@@ -1228,6 +1228,10 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
 				  int dest, int tag, MPI_Comm comm,
 				  MPI_Request * request, int is_valid_request)
 {
+  if(dest == MPC_PROC_NULL)
+  {
+	return MPI_SUCCESS;
+  }
   mpi_buffer_t *tmp;
   int size;
   int res;
@@ -1337,6 +1341,10 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
 				 int dest, int tag, MPI_Comm comm,
 				 MPI_Request * request, int is_valid_request)
 {
+  if(dest == MPC_PROC_NULL)
+  {
+	return MPI_SUCCESS;
+  }
   if (sctk_is_derived_type (datatype) && (count != 0))
   {
     int res;
@@ -1457,6 +1465,10 @@ __INTERNAL__PMPI_Issend_test_req (void *buf, int count, MPI_Datatype datatype,
 				  int dest, int tag, MPI_Comm comm,
 				  MPI_Request * request, int is_valid_request)
 {
+  if(dest == MPC_PROC_NULL)
+  {
+	return MPI_SUCCESS;
+  }
   if (sctk_is_derived_type (datatype) && (count != 0))
     {
       return __INTERNAL__PMPI_Isend_test_req (buf, count, datatype, dest, tag,
@@ -1495,6 +1507,10 @@ __INTERNAL__PMPI_Irsend_test_req (void *buf, int count, MPI_Datatype datatype,
 				  int dest, int tag, MPI_Comm comm,
 				  MPI_Request * request, int is_valid_request)
 {
+  if(dest == MPC_PROC_NULL)
+  {
+	return MPI_SUCCESS;
+  }
   if (sctk_is_derived_type (datatype))
     {
       return __INTERNAL__PMPI_Isend_test_req (buf, count, datatype, dest, tag,
@@ -1639,8 +1655,15 @@ static int
 __INTERNAL__PMPI_Wait (MPI_Request * request, MPI_Status * status)
 {
   int res;
+  MPI_internal_request_t *tmp;
+  
   res = PMPC_Wait (__sctk_convert_mpc_request (request), status);
-  __sctk_delete_mpc_request (request);
+  
+  /* Deallocating request if created by non-blocking call */
+  tmp = __sctk_convert_mpc_request_internal(request);
+  if(tmp->freeable)
+	__sctk_delete_mpc_request (request);
+  
   return res;
 }
 
@@ -1981,6 +2004,7 @@ __INTERNAL__PMPI_Bsend_init (void *buf, int count, MPI_Datatype datatype,
 {
   MPI_internal_request_t *req;
   req = __sctk_new_mpc_request_internal (request);
+  sctk_debug("Bsend_init new request = %d", *request);
   req->freeable = 0;
   req->is_active = 0;
   req->req.request_type = REQUEST_SEND;
@@ -2089,7 +2113,7 @@ ____INTERNAL__PMPI_Start (MPI_Request * request)
 					  req->persistant.datatype,
 					  req->persistant.dest_source,
 					  req->persistant.tag,
-					  req->persistant.comm, request, 1);
+					  req->persistant.comm, request, 0);
       break;
     case Rsend_init:
       res =
@@ -7326,7 +7350,7 @@ PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	res = MPI_SUCCESS;
 	SCTK__MPI_Check_retrun_val (res, comm);
   }
-  {	
+  {
     int size;
     mpi_check_comm (comm, comm);
     mpi_check_type (datatype, comm);
@@ -7807,13 +7831,12 @@ PMPI_Irecv (void *buf, int count, MPI_Datatype datatype, int source,
 int
 PMPI_Wait (MPI_Request * request, MPI_Status * status)
 {
-	sctk_nodebug("entering MPI_Wait");
+	sctk_debug("entering MPI_Wait request = %d", *request);
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   
   if(*request == MPI_REQUEST_NULL)
   {
-	sctk_nodebug("REQUEST == NULL");
 	res = MPI_SUCCESS;
 	status->MPC_SOURCE = MPI_PROC_NULL;
 	status->MPC_TAG = MPI_ANY_TAG;
@@ -7840,7 +7863,7 @@ PMPI_Request_free (MPI_Request * request)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_SUCCESS;
-  if (NULL == request || NULL == *request) {
+  if (NULL == request) {
     res = MPI_ERR_REQUEST;
   } else if(MPI_REQUEST_NULL == *request) {
 	SCTK__MPI_Check_retrun_val (res, comm);  
@@ -8027,6 +8050,7 @@ PMPI_Bsend_init (void *buf, int count, MPI_Datatype datatype,
 	mpi_check_buf (buf, comm);
       }
   }
+  sctk_debug("Bsend_init request = %d", *request);
   res =
     __INTERNAL__PMPI_Bsend_init (buf, count, datatype, dest, tag, comm,
 				 request);
