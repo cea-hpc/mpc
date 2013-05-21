@@ -1856,7 +1856,7 @@ static void sctk_perform_messages_done(struct sctk_perform_messages_s * wait) {
 
   /* The message is marked as done.
    * However, we need to poll if it is a inter-process message
-   * and if we are wating for a SEND request. If we do not do this,
+   * and if we are waiting for a SEND request. If we do not do this,
    * we might overflow the number of send buffers waiting to be released
    */
   if (request->header.source == MPC_ANY_SOURCE) {
@@ -1899,7 +1899,7 @@ void sctk_wait_message (sctk_request_t * request)
   struct sctk_perform_messages_s _wait;
 
   sctk_perform_messages_wait_init(&_wait, request);
-
+sctk_debug("request->completion_flag = %d", request->completion_flag);
   /* Find the PTPs lists */
   if(request->completion_flag != SCTK_MESSAGE_DONE){
 

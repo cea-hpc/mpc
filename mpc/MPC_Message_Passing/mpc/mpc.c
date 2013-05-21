@@ -2771,7 +2771,9 @@ __MPC_Wait (MPC_Request * request, MPC_Status * status)
     }
   if (sctk_mpc_message_is_null(request) != 1)
     {
+	  sctk_debug("wait for message ...");
       sctk_mpc_wait_message (request);
+      sctk_debug("found one !");
       sctk_mpc_message_set_is_null(request,1);
     }
   sctk_mpc_commit_status_from_request(request,status);
