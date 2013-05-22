@@ -1973,12 +1973,12 @@ __INTERNAL__PMPI_Send_init (void *buf, int count, MPI_Datatype datatype,
 	{
 		req->freeable = 0;
 		req->is_active = 0;
-		req->req.request_type = REQUEST_SEND;
+		req->req.request_type = REQUEST_NULL;
 
 		req->persistant.buf = buf;
 		req->persistant.count = 0;
 		req->persistant.datatype = datatype;
-		req->persistant.dest_source = dest;
+		req->persistant.dest_source = MPC_PROC_NULL;
 		req->persistant.tag = MPI_ANY_TAG;
 		req->persistant.comm = comm;
 		req->persistant.op = Send_init;
@@ -2012,12 +2012,12 @@ __INTERNAL__PMPI_Bsend_init (void *buf, int count, MPI_Datatype datatype,
 	{
 	  	req->freeable = 0;
 		req->is_active = 0;
-		req->req.request_type = REQUEST_SEND;
+		req->req.request_type = REQUEST_NULL;
 
 		req->persistant.buf = buf;
 		req->persistant.count = 0;
 		req->persistant.datatype = datatype;
-		req->persistant.dest_source = dest;
+		req->persistant.dest_source = MPC_PROC_NULL;
 		req->persistant.tag = MPI_ANY_TAG;
 		req->persistant.comm = comm;
 		req->persistant.op = Bsend_init;
@@ -2050,12 +2050,12 @@ __INTERNAL__PMPI_Ssend_init (void *buf, int count, MPI_Datatype datatype,
 	{
 		req->freeable = 0;
 		req->is_active = 0;
-		req->req.request_type = REQUEST_SEND;
+		req->req.request_type = REQUEST_NULL;
 
 		req->persistant.buf = buf;
 		req->persistant.count = 0;
 		req->persistant.datatype = datatype;
-		req->persistant.dest_source = dest;
+		req->persistant.dest_source = MPC_PROC_NULL;
 		req->persistant.tag = MPI_ANY_TAG;
 		req->persistant.comm = comm;
 		req->persistant.op = Ssend_init;
@@ -2088,12 +2088,12 @@ __INTERNAL__PMPI_Rsend_init (void *buf, int count, MPI_Datatype datatype,
 	{
 		req->freeable = 0;
 		req->is_active = 0;
-		req->req.request_type = REQUEST_SEND;
+		req->req.request_type = REQUEST_NULL;
 
 		req->persistant.buf = buf;
 		req->persistant.count = 0;
 		req->persistant.datatype = datatype;
-		req->persistant.dest_source = dest;
+		req->persistant.dest_source = MPC_PROC_NULL;
 		req->persistant.tag = MPI_ANY_TAG;
 		req->persistant.comm = comm;
 		req->persistant.op = Rsend_init;
@@ -2145,7 +2145,13 @@ ____INTERNAL__PMPI_Start (MPI_Request * request)
 
   req = __sctk_convert_mpc_request_internal (request);
   req->is_active = 1;
-
+  
+  if(req->req.request_type == REQUEST_NULL)
+  {
+    *request = MPI_REQUEST_NULL;
+    return MPI_SUCCESS;
+  }
+  
   switch (req->persistant.op)
     {
     case Send_init:
