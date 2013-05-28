@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<!DOCTYPE config SYSTEM "../MPC_Config/extra/config-meta.dtd">
+<config>
+	<usertypes>
+		<struct name="thread" doc="Options for MPC threads.">
+			<param name="spin_delay" type="int" default="10" doc=""/>
+			<param name="interval" type="int" default="10" doc=""/>
+		</struct>
+	</usertypes>
+	<modules>
+		<module name="thread" type="thread"/>
+	</modules>
+</config>
