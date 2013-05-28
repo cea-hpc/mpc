@@ -23,9 +23,27 @@
 
 #include <stdlib.h>
 #include <dlfcn.h>
+#include "uthash.h"
 
 #ifndef SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H
 #define SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H
+
+/******************************** VARIABLES *********************************/
+void * sctk_handler;
+
+struct enum_value {
+	char name[20];
+	int value;
+	UT_hash_handle hh;
+};
+
+struct enum_type {
+	char name[20];
+	struct enum_value * values;
+	UT_hash_handle hh;
+};
+
+struct enum_type * enums_types;
 
 /******************************** STRUCTURE *********************************/
 /* forward declaration functions */
@@ -45,7 +63,11 @@ void sctk_runtime_config_struct_init_net_cli_option(void * struct_ptr);
 void sctk_runtime_config_struct_init_net_rail(void * struct_ptr);
 void sctk_runtime_config_struct_init_networks(void * struct_ptr);
 void sctk_runtime_config_struct_init_inter_thread_comm(void * struct_ptr);
+void sctk_runtime_config_struct_init_low_level_comm(void * struct_ptr);
+void sctk_runtime_config_struct_init_mpc(void * struct_ptr);
+void sctk_runtime_config_struct_init_openmp(void * struct_ptr);
 void sctk_runtime_config_struct_init_profiler(void * struct_ptr);
+void sctk_runtime_config_struct_init_thread(void * struct_ptr);
 void sctk_runtime_config_reset(struct sctk_runtime_config * config);
 
 #endif /* SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H */

@@ -63,7 +63,7 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template match="usertypes">
-		<xsl:apply-templates select="struct|union"/>
+		<xsl:apply-templates select="struct|union|enum"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -75,6 +75,24 @@
 				<xsl:apply-templates select="param|array"/>
 			</xs:all>
 		</xs:complexType>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template match="enum">
+		<xsl:comment> ********************************************************* </xsl:comment>
+		<xs:simpleType>
+			<xsl:attribute name="name"><xsl:value-of select="concat('user_type_',@name)"/></xsl:attribute>
+			<xs:restriction base="xs:string">
+				<xsl:apply-templates select="value"/>
+			</xs:restriction>
+		</xs:simpleType>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template match="value">
+		<xs:enumeration>
+			<xsl:attribute name="value"><xsl:value-of select="."/></xsl:attribute>
+		</xs:enumeration>
 	</xsl:template>
 
 	<!-- ********************************************************* -->

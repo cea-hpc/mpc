@@ -139,9 +139,22 @@
 			<xsl:when test="@type = 'size'">NULL</xsl:when>
 			<xsl:when test="@type = 'funcptr'">NULL</xsl:when>
 			<xsl:otherwise>
-				<xsl:value-of select="concat('sctk_runtime_config_struct_init_',@type)"/>
+				<xsl:call-template name="gen-user-init-name">
+					<xsl:with-param name="type"><xsl:value-of select='@type'/></xsl:with-param>
+				</xsl:call-template>
 			</xsl:otherwise>
 		</xsl:choose>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="gen-user-init-name">
+		<xsl:param name="type"/>
+			<xsl:choose>
+				<xsl:when test="//enum[@name = $type]">NULL</xsl:when>
+				<xsl:otherwise>
+					<xsl:value-of select="concat('sctk_runtime_config_struct_init_',@type)"/>
+				</xsl:otherwise>
+			</xsl:choose>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -183,23 +196,33 @@
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-user-type-name">
 		<xsl:param name="type"/>
-		<xsl:for-each select="//struct[@name = $type]">
-			<xsl:value-of select="concat('struct sctk_runtime_config_struct_',$type)"/>
-		</xsl:for-each>
-		<xsl:for-each select="//union[@name = $type]">
-			<xsl:value-of select="concat('struct sctk_runtime_config_struct_',$type)"/>
-		</xsl:for-each>
+		<xsl:choose>
+			<xsl:when test="//struct[@name = $type]">
+				<xsl:value-of select="concat('struct sctk_runtime_config_struct_',$type)"/>
+			</xsl:when>
+			<xsl:when test="//union[@name = $type]">
+				<xsl:value-of select="concat('struct sctk_runtime_config_struct_',$type)"/>
+			</xsl:when>
+			<xsl:when test="//enum[@name = $type]">
+				<xsl:value-of select="concat('enum ',$type)"/>
+			</xsl:when>
+		</xsl:choose>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-user-type-name2">
 		<xsl:param name="type"/>
-		<xsl:for-each select="//struct[@name = $type]">
-			<xsl:value-of select="concat('sctk_runtime_config_struct_',$type)"/>
-		</xsl:for-each>
-		<xsl:for-each select="//union[@name = $type]">
-			<xsl:value-of select="concat('sctk_runtime_config_struct_',$type)"/>
-		</xsl:for-each>
+		<xsl:choose>
+			<xsl:when test="//struct[@name = $type]">
+				<xsl:value-of select="concat('sctk_runtime_config_struct_',$type)"/>
+			</xsl:when>
+			<xsl:when test="//union[@name = $type]">
+				<xsl:value-of select="concat('sctk_runtime_config_struct_',$type)"/>
+			</xsl:when>
+			<xsl:when test="//enum[@name = $type]">
+				<xsl:value-of select="concat('enum ',$type)"/>
+			</xsl:when>
+		</xsl:choose>
 	</xsl:template>
 
 	<!-- ********************************************************* -->

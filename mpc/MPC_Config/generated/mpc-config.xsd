@@ -190,6 +190,43 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_low_level_comm">
+    <xs:all>
+      <xs:element minOccurs="0" name="checksum" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="send_msg" type="xs:string"/>
+      <xs:element minOccurs="0" name="notify_recv_msg" type="xs:string"/>
+      <xs:element minOccurs="0" name="notify_matching_msg" type="xs:string"/>
+      <xs:element minOccurs="0" name="notify_perform_msg" type="xs:string"/>
+      <xs:element minOccurs="0" name="notify_idle_msg" type="xs:string"/>
+      <xs:element minOccurs="0" name="notify_any_src_msg" type="xs:string"/>
+      <xs:element minOccurs="0" name="network_mode" type="xs:string"/>
+      <xs:element minOccurs="0" name="dyn_reordering" type="xs:boolean"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_mpc">
+    <xs:all>
+      <xs:element minOccurs="0" name="log_debug" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="hard_checking" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="buffering" type="xs:boolean"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_openmp">
+    <xs:all>
+      <xs:element minOccurs="0" name="vp" type="xs:integer"/>
+      <xs:element minOccurs="0" name="schedule" type="xs:string"/>
+      <xs:element minOccurs="0" name="nb_threads" type="xs:integer"/>
+      <xs:element minOccurs="0" name="adjustment" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="nested" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="max_threads" type="xs:integer"/>
+      <xs:element minOccurs="0" name="max_alive_for_dyn" type="xs:integer"/>
+      <xs:element minOccurs="0" name="max_alive_for_guided" type="xs:integer"/>
+      <xs:element minOccurs="0" name="max_alive_sections" type="xs:integer"/>
+      <xs:element minOccurs="0" name="max_alive_single" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_profiler">
     <xs:all>
       <xs:element minOccurs="0" name="file_prefix" type="xs:string"/>
@@ -205,13 +242,24 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_thread">
+    <xs:all>
+      <xs:element minOccurs="0" name="spin_delay" type="xs:integer"/>
+      <xs:element minOccurs="0" name="interval" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="modules">
     <xs:all>
       <xs:element minOccurs="0" name="allocator" type="user_type_allocator"/>
       <xs:element minOccurs="0" name="launcher" type="user_type_launcher"/>
       <xs:element minOccurs="0" name="debugger" type="user_type_debugger"/>
       <xs:element minOccurs="0" name="inter_thread_comm" type="user_type_inter_thread_comm"/>
+      <xs:element minOccurs="0" name="low_level_comm" type="user_type_low_level_comm"/>
+      <xs:element minOccurs="0" name="mpc" type="user_type_mpc"/>
+      <xs:element minOccurs="0" name="openmp" type="user_type_openmp"/>
       <xs:element minOccurs="0" name="profiler" type="user_type_profiler"/>
+      <xs:element minOccurs="0" name="thread" type="user_type_thread"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

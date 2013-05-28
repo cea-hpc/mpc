@@ -115,10 +115,26 @@ See type debugger.
 Options for communication between threads
 .br
 See type inter_thread_comm.
+.It Cm low_level_comm
+
+.br
+See type low_level_comm.
+.It Cm mpc
+Options for MPC Message Passing
+.br
+See type mpc.
+.It Cm openmp
+Options for MPC OpenMP.
+.br
+See type openmp.
 .It Cm profiler
 Options for the internal MPC Profiler
 .br
 See type profiler.
+.It Cm thread
+Options for MPC threads.
+.br
+See type thread.
 .El
 .Sh ENTRIES OF TYPE allocator
 Options for MPC memory allocator.
@@ -535,6 +551,115 @@ Type is int. Default value is 8192.
 .Pp allreduce_check_threshold
 
 .El
+.Sh ENTRIES OF TYPE low_level_comm
+
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm checksum
+Type is bool. Default value is true. 
+.Pp checksum
+
+.It Cm send_msg
+Type is funcptr. Default value is sctk_network_send_message_default. 
+.Pp send_msg
+
+.It Cm notify_recv_msg
+Type is funcptr. Default value is sctk_network_notify_recv_message_default. 
+.Pp notify_recv_msg
+
+.It Cm notify_matching_msg
+Type is funcptr. Default value is sctk_network_notify_matchin_message_default. 
+.Pp notify_matching_msg
+
+.It Cm notify_perform_msg
+Type is funcptr. Default value is sctk_network_notify_perform_message_default. 
+.Pp notify_perform_msg
+
+.It Cm notify_idle_msg
+Type is funcptr. Default value is sctk_network_notify_idle_message. 
+.Pp notify_idle_msg
+
+.It Cm notify_any_src_msg
+Type is funcptr. Default value is sctk_network_notify_any_source_message_default. 
+.Pp notify_any_src_msg
+
+.It Cm network_mode
+Type is string. Default value is default. 
+.Pp network_mode
+
+.It Cm dyn_reordering
+Type is bool. Default value is false. 
+.Pp dyn_reordering
+
+.El
+.Sh ENTRIES OF TYPE mpc
+Options for MPC Message Passing
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm log_debug
+Type is bool. Default value is false. 
+.Pp log_debug
+Print debug messages
+.It Cm hard_checking
+Type is bool. Default value is false. 
+.Pp hard_checking
+
+.It Cm buffering
+Type is bool. Default value is false. 
+.Pp buffering
+
+.El
+.Sh ENTRIES OF TYPE openmp
+Options for MPC OpenMP.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm vp
+Type is int. 
+.Pp vp
+Number of VPs for each OpenMP team
+.It Cm schedule
+Type is string. Default value is static. 
+.Pp schedule
+Runtime schedule type and chunck size
+.It Cm nb_threads
+Type is int. 
+.Pp nb_threads
+Number of threads to use during execution
+.It Cm adjustment
+Type is bool. Default value is false. 
+.Pp adjustment
+Dynamic adjustment of the number of threads
+.It Cm nested
+Type is bool. Default value is false. 
+.Pp nested
+Nested parallelism
+.It Cm max_threads
+Type is int. Default value is 64. 
+.Pp max_threads
+Maximum number of threads for each team of a parallel region
+.It Cm max_alive_for_dyn
+Type is int. Default value is 7. 
+.Pp max_alive_for_dyn
+Maximum number of shared for loops w/ dynamic schedule alive
+.It Cm max_alive_for_guided
+Type is int. Default value is 3. 
+.Pp max_alive_for_guided
+Maximum number of shared for loops w/ guided schedule alive
+.It Cm max_alive_sections
+Type is int. Default value is 3. 
+.Pp max_alive_sections
+Maximum number of alive sections construct
+.It Cm max_alive_single
+Type is int. Default value is 3. 
+.Pp max_alive_single
+Maximum number of alive single construct
+.El
 .Sh ENTRIES OF TYPE profiler
 Options for the internal MPC Profiler
 .Pp
@@ -557,4 +682,19 @@ Profile in color when outputed to stdout
 Type is array of string. Default value is {#3A4D85, #82A2FF, #B8BDCB, #5D6782, #838383, #5A5757}.
 .Pp level_colors
 Color for levels of profiler output
+.El
+.Sh ENTRIES OF TYPE thread
+Options for MPC threads.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm spin_delay
+Type is int. Default value is 10. 
+.Pp spin_delay
+
+.It Cm interval
+Type is int. Default value is 10. 
+.Pp interval
+
 .El

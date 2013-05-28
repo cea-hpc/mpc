@@ -281,6 +281,65 @@ struct sctk_runtime_config_struct_inter_thread_comm
 };
 
 /******************************** STRUCTURE *********************************/
+/****/
+struct sctk_runtime_config_struct_low_level_comm
+{	/****/
+	bool checksum;
+	/****/
+	struct sctk_runtime_config_funcptr send_msg;
+	/****/
+	struct sctk_runtime_config_funcptr notify_recv_msg;
+	/****/
+	struct sctk_runtime_config_funcptr notify_matching_msg;
+	/****/
+	struct sctk_runtime_config_funcptr notify_perform_msg;
+	/****/
+	struct sctk_runtime_config_funcptr notify_idle_msg;
+	/****/
+	struct sctk_runtime_config_funcptr notify_any_src_msg;
+	/****/
+	char * network_mode;
+	/****/
+	bool dyn_reordering;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Options for MPC Message Passing**/
+struct sctk_runtime_config_struct_mpc
+{	/**Print debug messages**/
+	bool log_debug;
+	/****/
+	bool hard_checking;
+	/****/
+	bool buffering;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Options for MPC OpenMP.**/
+struct sctk_runtime_config_struct_openmp
+{	/**Number of VPs for each OpenMP team**/
+	int vp;
+	/**Runtime schedule type and chunck size**/
+	char * schedule;
+	/**Number of threads to use during execution**/
+	int nb_threads;
+	/**Dynamic adjustment of the number of threads**/
+	bool adjustment;
+	/**Nested parallelism**/
+	bool nested;
+	/**Maximum number of threads for each team of a parallel region**/
+	int max_threads;
+	/**Maximum number of shared for loops w/ dynamic schedule alive**/
+	int max_alive_for_dyn;
+	/**Maximum number of shared for loops w/ guided schedule alive**/
+	int max_alive_for_guided;
+	/**Maximum number of alive sections construct**/
+	int max_alive_sections;
+	/**Maximum number of alive single construct**/
+	int max_alive_single;
+};
+
+/******************************** STRUCTURE *********************************/
 /**Options for the internal MPC Profiler**/
 struct sctk_runtime_config_struct_profiler
 {	/**Prefix of MPC Profiler outputs**/
@@ -296,13 +355,26 @@ struct sctk_runtime_config_struct_profiler
 };
 
 /******************************** STRUCTURE *********************************/
+/**Options for MPC threads.**/
+struct sctk_runtime_config_struct_thread
+{	/****/
+	int spin_delay;
+	/****/
+	int interval;
+};
+
+/******************************** STRUCTURE *********************************/
 struct sctk_runtime_config_modules
 {
 	struct sctk_runtime_config_struct_allocator allocator;
 	struct sctk_runtime_config_struct_launcher launcher;
 	struct sctk_runtime_config_struct_debugger debugger;
 	struct sctk_runtime_config_struct_inter_thread_comm inter_thread_comm;
+	struct sctk_runtime_config_struct_low_level_comm low_level_comm;
+	struct sctk_runtime_config_struct_mpc mpc;
+	struct sctk_runtime_config_struct_openmp openmp;
 	struct sctk_runtime_config_struct_profiler profiler;
+	struct sctk_runtime_config_struct_thread thread;
 };
 
 /******************************** STRUCTURE *********************************/

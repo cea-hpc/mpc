@@ -27,7 +27,6 @@
 #include "sctk_runtime_config_struct.h"
 #include "sctk_runtime_config_struct_defaults.h"
 #include "sctk_runtime_config_mapper.h"
-void * sctk_handler;
 
 /*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_allocator(void * struct_ptr)
@@ -200,6 +199,55 @@ void sctk_runtime_config_struct_init_inter_thread_comm(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_low_level_comm(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_low_level_comm * obj = struct_ptr;
+	/* Simple params : */
+	obj->checksum = true;
+	obj->send_msg.name = "sctk_network_send_message_default";
+	*(void **) &(obj->send_msg.value) = dlsym(sctk_handler, "sctk_network_send_message_default");
+	obj->notify_recv_msg.name = "sctk_network_notify_recv_message_default";
+	*(void **) &(obj->notify_recv_msg.value) = dlsym(sctk_handler, "sctk_network_notify_recv_message_default");
+	obj->notify_matching_msg.name = "sctk_network_notify_matchin_message_default";
+	*(void **) &(obj->notify_matching_msg.value) = dlsym(sctk_handler, "sctk_network_notify_matchin_message_default");
+	obj->notify_perform_msg.name = "sctk_network_notify_perform_message_default";
+	*(void **) &(obj->notify_perform_msg.value) = dlsym(sctk_handler, "sctk_network_notify_perform_message_default");
+	obj->notify_idle_msg.name = "sctk_network_notify_idle_message";
+	*(void **) &(obj->notify_idle_msg.value) = dlsym(sctk_handler, "sctk_network_notify_idle_message");
+	obj->notify_any_src_msg.name = "sctk_network_notify_any_source_message_default";
+	*(void **) &(obj->notify_any_src_msg.value) = dlsym(sctk_handler, "sctk_network_notify_any_source_message_default");
+	obj->network_mode = "default";
+	obj->dyn_reordering = false;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_mpc(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_mpc * obj = struct_ptr;
+	/* Simple params : */
+	obj->log_debug = false;
+	obj->hard_checking = false;
+	obj->buffering = false;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_openmp(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_openmp * obj = struct_ptr;
+	/* Simple params : */
+	obj->vp = 0;
+	obj->schedule = "static";
+	obj->nb_threads = 0;
+	obj->adjustment = false;
+	obj->nested = false;
+	obj->max_threads = 64;
+	obj->max_alive_for_dyn = 7;
+	obj->max_alive_for_guided = 3;
+	obj->max_alive_sections = 3;
+	obj->max_alive_single = 3;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_profiler(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_profiler * obj = struct_ptr;
@@ -219,6 +267,15 @@ void sctk_runtime_config_struct_init_profiler(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_thread(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_thread * obj = struct_ptr;
+	/* Simple params : */
+	obj->spin_delay = 10;
+	obj->interval = 10;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 {
 	sctk_handler = dlopen(0, RTLD_LAZY | RTLD_GLOBAL);
@@ -226,7 +283,11 @@ void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 	sctk_runtime_config_struct_init_launcher(&config->modules.launcher);
 	sctk_runtime_config_struct_init_debugger(&config->modules.debugger);
 	sctk_runtime_config_struct_init_inter_thread_comm(&config->modules.inter_thread_comm);
+	sctk_runtime_config_struct_init_low_level_comm(&config->modules.low_level_comm);
+	sctk_runtime_config_struct_init_mpc(&config->modules.mpc);
+	sctk_runtime_config_struct_init_openmp(&config->modules.openmp);
 	sctk_runtime_config_struct_init_profiler(&config->modules.profiler);
+	sctk_runtime_config_struct_init_thread(&config->modules.thread);
 	sctk_runtime_config_struct_init_networks(&config->networks);
 };
 

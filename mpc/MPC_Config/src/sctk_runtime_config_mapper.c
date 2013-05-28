@@ -180,6 +180,33 @@ struct sctk_runtime_config_funcptr sctk_runtime_config_map_entry_to_funcptr(xmlN
 }
 
 /******************************** FUNCTION *********************************/
+int sctk_runtime_config_map_entry_to_enum(xmlNodePtr node, char * type_name)
+{
+  int res;
+  struct enum_type * current_enum;
+  struct enum_value * current_value;
+
+  xmlChar * value = xmlNodeGetContent(node);
+
+  HASH_FIND_STR(enums_types, type_name, current_enum);
+  if (current_enum) {
+    HASH_FIND_STR(current_enum->values, (char *) value, current_value);
+    if (current_value) {
+      res = current_value->value;
+    }
+    else {
+      sctk_fatal("Invalid enum value.");
+    }
+  }
+  else {
+    sctk_fatal("Invalid enum type.");
+  }
+
+  free(value);
+  return res;
+}
+
+/******************************** FUNCTION *********************************/
 const struct sctk_runtime_config_entry_meta * sctk_runtime_config_meta_get_first_child(const struct sctk_runtime_config_entry_meta * current) {
 	/* error */
 	assert(current != NULL);
@@ -411,6 +438,9 @@ void sctk_runtime_config_map_value( const struct sctk_runtime_config_entry_meta 
 	if ( ! is_plain_type ) {
 	  if (!strcmp(type_name, "funcptr")) {
 	    *(struct sctk_runtime_config_funcptr*) value = sctk_runtime_config_map_entry_to_funcptr(node);
+	  }
+	  else if (!strncmp(type_name, "enum", 4)) {
+	    *(int*) value = sctk_runtime_config_map_entry_to_enum(node, type_name);
 	  }
 	  else {
       /* get the meta description of the type */

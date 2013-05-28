@@ -2,7 +2,7 @@
 
 <!ELEMENT config (usertypes?,modules?,validators?)>
 
-<!ELEMENT usertypes ((struct|union)+)>
+<!ELEMENT usertypes ((struct|union|enum)+)>
 
 <!ELEMENT struct ((param|array)+)>
 	<!ATTLIST struct name CDATA #REQUIRED>
@@ -28,6 +28,10 @@
 <!ELEMENT choice EMPTY>
 	<!ATTLIST choice name CDATA #REQUIRED>
 	<!ATTLIST choice type CDATA #REQUIRED>
+
+<!ELEMENT enum (value+)>
+	<!ATTLIST enum name CDATA #REQUIRED>
+	<!ATTLIST enum doc CDATA #REQUIRED>
 
 <!ELEMENT array (default?)>
 	<!ATTLIST array name CDATA #REQUIRED>

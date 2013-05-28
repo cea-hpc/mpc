@@ -214,6 +214,29 @@ void sctk_runtime_config_walk_value(const struct sctk_runtime_config_entry_meta 
     struct sctk_runtime_config_funcptr * funcptr = (struct sctk_runtime_config_funcptr *) value;
     handler(SCTK_RUNTIME_CONFIG_WALK_VALUE,name,"char *",&funcptr->name,SCTK_RUNTIME_CONFIG_WALK_OPEN,NULL,level,opt);
     handler(SCTK_RUNTIME_CONFIG_WALK_VALUE,name,"char *",&funcptr->name,SCTK_RUNTIME_CONFIG_WALK_CLOSE,NULL,level,opt);
+  } else if (!strncmp(type_name, "enum", 4)) {
+    struct enum_type * current_enum, *s1, *s2;
+    struct enum_value * iter_enum, * tmp;
+    int current_value;
+    char * enum_name = NULL;
+
+    HASH_FIND_STR(enums_types, type_name, current_enum);
+    if (current_enum) {
+      current_value = *(int *) value;
+      HASH_ITER(hh, current_enum->values, iter_enum, tmp) {
+        if (iter_enum->value == current_value) {
+          enum_name = (char *) malloc(sizeof(iter_enum->name));
+          strcpy(enum_name, iter_enum->name);
+          break;
+        }
+      }
+    }
+    else {
+      sctk_fatal("Invalid enum type.");
+    }
+
+    handler(SCTK_RUNTIME_CONFIG_WALK_VALUE,name,"char *",&enum_name,SCTK_RUNTIME_CONFIG_WALK_OPEN,NULL,level,opt);
+    handler(SCTK_RUNTIME_CONFIG_WALK_VALUE,name,"char *",&enum_name,SCTK_RUNTIME_CONFIG_WALK_CLOSE,NULL,level,opt);
   } else {
     /* get meta data of the entry */
     entry = sctk_runtime_config_get_meta_type(config_meta, type_name);

@@ -109,6 +109,7 @@ float sctk_runtime_config_map_entry_to_float(xmlNodePtr node);
 size_t sctk_runtime_config_map_entry_parse_size( const char *value );
 size_t sctk_runtime_config_map_entry_to_size(xmlNodePtr node);
 struct sctk_runtime_config_funcptr sctk_runtime_config_map_entry_to_funcptr(xmlNodePtr node);
+int sctk_runtime_config_map_entry_to_enum(xmlNodePtr node, char * type_name);
 
 /********************************* FUNCTION *********************************/
 void sctk_runtime_config_do_cleanup(struct sctk_runtime_config * config);

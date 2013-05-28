@@ -29,9 +29,11 @@
 	<xsl:template match="all">
 		<xsl:call-template name="gen-mpc-header"/>
 		<xsl:text>#include &lt;stdlib.h&gt;&#10;</xsl:text>
-		<xsl:text>#include &lt;dlfcn.h&gt;&#10;&#10;</xsl:text>
+		<xsl:text>#include &lt;dlfcn.h&gt;&#10;</xsl:text>
+		<xsl:text>#include "uthash.h"&#10;&#10;</xsl:text>
 		<xsl:text>#ifndef SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H&#10;</xsl:text>
 		<xsl:text>#define SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H&#10;</xsl:text>
+		<xsl:call-template name="gen-var-decl"/>
 		<xsl:call-template name="gen-forward-struct-decl"/>
 		<xsl:call-template name="gen-reset-function"/>
 		<xsl:text>&#10;#endif /* SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H */&#10;</xsl:text>
@@ -40,7 +42,20 @@
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-var-decl">
 		<xsl:text>&#10;/******************************** VARIABLES *********************************/&#10;</xsl:text>
-		<xsl:text>extern void * sctk_handler;&#10;</xsl:text>
+		<xsl:text>void * sctk_handler;&#10;</xsl:text>
+		
+		<xsl:text>&#10;struct enum_value {&#10;</xsl:text>
+		<xsl:text>&#9;char name[20];&#10;</xsl:text>
+		<xsl:text>&#9;int value;&#10;</xsl:text>
+		<xsl:text>&#9;UT_hash_handle hh;&#10;</xsl:text>
+		<xsl:text>};&#10;</xsl:text>
+		
+		<xsl:text>&#10;struct enum_type {&#10;</xsl:text>
+		<xsl:text>&#9;char name[20];&#10;</xsl:text>
+		<xsl:text>&#9;struct enum_value * values;&#10;</xsl:text>
+		<xsl:text>&#9;UT_hash_handle hh;&#10;</xsl:text>
+		<xsl:text>};&#10;</xsl:text>
+		<xsl:text>&#10;struct enum_type * enums_types;&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->

@@ -254,6 +254,7 @@ sctk_perform_initialisation (void)
   }
 
 #ifdef MPC_Message_Passing
+  sctk_net_init_low_level_communication();
   if (sctk_process_nb_val > 1) {
     sctk_net_init_driver(sctk_network_driver_name);
   }
@@ -803,6 +804,10 @@ sctk_launch_main (int argc, char **argv)
   sctk_restart_mode = sctk_runtime_config_get()->modules.launcher.restart;
   sctk_check_point_restart_mode = sctk_runtime_config_get()->modules.launcher.checkpoint;
   sctk_migration_mode = sctk_runtime_config_get()->modules.launcher.migration;
+  enum test mytest = sctk_runtime_config_get()->modules.launcher.test_enum;
+
+  mytest = janvier;
+  mytest = 2;
 
   /*   sctk_exception_catch (11); */
 
