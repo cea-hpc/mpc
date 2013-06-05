@@ -34,6 +34,9 @@
 #elif defined(__ia64__)
 #define SCTK_ia64_ARCH_SCTK
 #define SCTK_ARCH_SCTK  SCTK_ia64_ARCH_SCTK
+#elif defined(__arm__)
+#define SCTK_arm_ARCH_SCTK
+#define SCTK_ARCH_SCTK  SCTK_arm_ARCH_SCTK
 #else
   #error "Unknown architecture"
 #endif

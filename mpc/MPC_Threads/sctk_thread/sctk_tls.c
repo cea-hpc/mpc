@@ -904,7 +904,8 @@ __sctk__tls_get_addr__core_scope (size_t m, size_t offset)
   res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_hls[sctk_hls_core_scope].level);
   return res;
 }
-
+#elif defined(SCTK_arm_ARCH_SCTK)
+#warning "ARM doesnot support TLS" 
 #else
 #error "Architecture not available for TLS support"
 #endif

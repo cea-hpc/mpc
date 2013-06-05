@@ -46,7 +46,7 @@ extern "C"
 
 /*********************  TYPES  **********************/
 struct sctk_alloc_block_s;
-
+typedef char sctk_alloc_type_t;
 /*********************  TYPES  **********************/
 typedef struct sctk_alloc_buffer_s
 {

@@ -381,70 +381,73 @@
 /* Define to the one symbol short name of this package. */
 #undef PACKAGE_TARNAME
 
+/* Define to the home page for this package. */
+#undef PACKAGE_URL
+
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
 
-/* The size of a `char', as computed by sizeof. */
+/* The size of `char', as computed by sizeof. */
 #undef SIZEOF_CHAR
 
-/* The size of a `double', as computed by sizeof. */
+/* The size of `double', as computed by sizeof. */
 #undef SIZEOF_DOUBLE
 
-/* The size of a `float', as computed by sizeof. */
+/* The size of `float', as computed by sizeof. */
 #undef SIZEOF_FLOAT
 
-/* The size of a `int', as computed by sizeof. */
+/* The size of `int', as computed by sizeof. */
 #undef SIZEOF_INT
 
-/* The size of a `long', as computed by sizeof. */
+/* The size of `long', as computed by sizeof. */
 #undef SIZEOF_LONG
 
-/* The size of a `long long', as computed by sizeof. */
+/* The size of `long long', as computed by sizeof. */
 #undef SIZEOF_LONG_LONG
 
-/* The size of a `pthread_attr_t', as computed by sizeof. */
+/* The size of `pthread_attr_t', as computed by sizeof. */
 #undef SIZEOF_PTHREAD_ATTR_T
 
-/* The size of a `pthread_barrierattr_t', as computed by sizeof. */
+/* The size of `pthread_barrierattr_t', as computed by sizeof. */
 #undef SIZEOF_PTHREAD_BARRIERATTR_T
 
-/* The size of a `pthread_barrier_t', as computed by sizeof. */
+/* The size of `pthread_barrier_t', as computed by sizeof. */
 #undef SIZEOF_PTHREAD_BARRIER_T
 
-/* The size of a `pthread_condattr_t', as computed by sizeof. */
+/* The size of `pthread_condattr_t', as computed by sizeof. */
 #undef SIZEOF_PTHREAD_CONDATTR_T
 
-/* The size of a `pthread_cond_t', as computed by sizeof. */
+/* The size of `pthread_cond_t', as computed by sizeof. */
 #undef SIZEOF_PTHREAD_COND_T
 
-/* The size of a `pthread_mutexattr_t', as computed by sizeof. */
+/* The size of `pthread_mutexattr_t', as computed by sizeof. */
 #undef SIZEOF_PTHREAD_MUTEXATTR_T
 
-/* The size of a `pthread_mutex_t', as computed by sizeof. */
+/* The size of `pthread_mutex_t', as computed by sizeof. */
 #undef SIZEOF_PTHREAD_MUTEX_T
 
-/* The size of a `pthread_rwlockattr_t', as computed by sizeof. */
+/* The size of `pthread_rwlockattr_t', as computed by sizeof. */
 #undef SIZEOF_PTHREAD_RWLOCKATTR_T
 
-/* The size of a `pthread_rwlock_t', as computed by sizeof. */
+/* The size of `pthread_rwlock_t', as computed by sizeof. */
 #undef SIZEOF_PTHREAD_RWLOCK_T
 
-/* The size of a `pthread_spinlock_t', as computed by sizeof. */
+/* The size of `pthread_spinlock_t', as computed by sizeof. */
 #undef SIZEOF_PTHREAD_SPINLOCK_T
 
-/* The size of a `pthread_t', as computed by sizeof. */
+/* The size of `pthread_t', as computed by sizeof. */
 #undef SIZEOF_PTHREAD_T
 
-/* The size of a `sem_t', as computed by sizeof. */
+/* The size of `sem_t', as computed by sizeof. */
 #undef SIZEOF_SEM_T
 
-/* The size of a `short', as computed by sizeof. */
+/* The size of `short', as computed by sizeof. */
 #undef SIZEOF_SHORT
 
-/* The size of a `size_t', as computed by sizeof. */
+/* The size of `size_t', as computed by sizeof. */
 #undef SIZEOF_SIZE_T
 
-/* The size of a `void*', as computed by sizeof. */
+/* The size of `void*', as computed by sizeof. */
 #undef SIZEOF_VOIDP
 
 /* Define to 1 if you have the ANSI C header files. */
@@ -459,5 +462,5 @@
 #undef inline
 #endif
 
-/* Define to `unsigned' if <sys/types.h> does not define. */
+/* Define to `unsigned int' if <sys/types.h> does not define. */
 #undef size_t

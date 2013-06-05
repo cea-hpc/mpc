@@ -58,6 +58,12 @@ sctk_atomics_get_timestamp ()
   t = ((unsigned long) a) | (((unsigned long) d) << 32);
   return (double) t;
 }
+#elif defined(SCTK_arm_ARCH_SCTK)
+double
+sctk_atomics_get_timestamp ()
+{
+return sctk_atomics_get_timestamp_gettimeofday();
+}
 #else
 #warning "Use get time of day for profiling"
 double
@@ -80,6 +86,9 @@ void sctk_atomics_cpu_freq_init(){
   end_timeofday = sctk_atomics_get_timestamp_gettimeofday ();
 
   sctk_cpu_freq = (end_tsc-begin_tsc) / ((end_timeofday-begin_timeofday)/1000000.0) ;
+  if(sctk_cpu_freq < 1){
+	sctk_cpu_freq = 1;
+  }
 }
 
 double sctk_atomics_get_cpu_freq(){
