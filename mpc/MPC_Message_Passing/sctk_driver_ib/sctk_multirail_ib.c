@@ -1,7 +1,7 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # Copyright or (C) or Copr. 2010-2012 Universit�� de Versailles         # */
 /* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -149,14 +149,14 @@ static void* __polling_thread(void *arg) {
   sctk_rail_info_t* rail = (sctk_rail_info_t*) arg;
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
-  int steal = config->ibv_steal;
+  int steal = config->steal;
 
   /* XXX hack to disable CP when fully is used */
-  config->ibv_steal = -1;
+  config->steal = -1;
   while(1) {
     if (sctk_route_is_finalized())
     {
-      config->ibv_steal = steal;
+      config->steal = steal;
       break;
     }
     sctk_network_poll_all(rail);

@@ -37,6 +37,8 @@
 #include <infiniband/verbs.h>
 #include <inttypes.h>
 
+#include "sctk_runtime_config_struct.h"
+
 struct sctk_ib_qp_s;
 /* Structure related to ondemand
  * connexions */
@@ -197,7 +199,7 @@ sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int r
 struct ibv_pd* sctk_ib_pd_init(sctk_ib_device_t *device);
 
 struct ibv_cq* sctk_ib_cq_init(sctk_ib_device_t* device,
-    sctk_ib_config_t *config);
+    struct sctk_runtime_config_struct_net_driver_infiniband *config);
 
 char* sctk_ib_cq_print_status (enum ibv_wc_status status);
 

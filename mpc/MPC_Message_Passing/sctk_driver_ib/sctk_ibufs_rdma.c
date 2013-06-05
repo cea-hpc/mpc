@@ -1,7 +1,7 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # Copyright or (C) or Copr. 2010-2012 Universit�� de Versailles         # */
 /* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -797,7 +797,7 @@ int sctk_ibuf_rdma_is_connectable(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *re
   int ret = 0;
 
   sctk_spinlock_lock(&rdma_lock);
-  if (config->ibv_max_rdma_connections >= (device->eager_rdma_connections + 1)) {
+  if (config->max_rdma_connections >= (device->eager_rdma_connections + 1)) {
     ret = ++device->eager_rdma_connections;
   }
   sctk_spinlock_unlock(&rdma_lock);

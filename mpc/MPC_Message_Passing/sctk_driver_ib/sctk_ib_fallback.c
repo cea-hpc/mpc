@@ -1,7 +1,7 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # Copyright or (C) or Copr. 2010-2012 Universit�� de Versailles         # */
 /* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -89,7 +89,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   sctk_nodebug("Go to process %d", remote->rank);
 
   size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
-  if (is_control_message && ((size + IBUF_GET_EAGER_SIZE) > config->ibv_eager_limit) ) {
+  if (is_control_message && ((size + IBUF_GET_EAGER_SIZE) > config->eager_limit) ) {
     sctk_error("MPC tries to send a control message without using the Eager protocol."
         "This is not supported and MPC is going to exit ...");
     sctk_abort();
@@ -100,7 +100,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
    *  We switch between available protocols
    *
    * */
-  if (size+IBUF_GET_EAGER_SIZE <= config->ibv_eager_limit)
+  if (size+IBUF_GET_EAGER_SIZE <= config->eager_limit)
   {
     sctk_nodebug("Eager");
     ibuf = sctk_ib_eager_prepare_msg(rail_ib, remote, msg, size, -1, is_control_message);
@@ -115,7 +115,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
 buffered:
   /***** BUFFERED EAGER CHANNEL *****/
-  if (size <= config->ibv_buffered_limit)  {
+  if (size <= config->buffered_limit)  {
     /* Fallback to RDMA if buffered not available or low memory mode */
     if (sctk_ib_buffered_prepare_msg(rail, remote, msg, size) == 1 ) goto error;
     sctk_complete_and_free_message(msg);
@@ -261,9 +261,9 @@ static int sctk_network_poll_all (sctk_rail_info_t* rail) {
   {
     recursive_polling++;
     /* Poll received messages */
-    sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, &poll, sctk_network_poll_recv);
+    sctk_ib_cq_poll(rail, device->recv_cq, config->wc_in_number, &poll, sctk_network_poll_recv);
     /* Poll sent messages */
-    sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, &poll, sctk_network_poll_send);
+    sctk_ib_cq_poll(rail, device->send_cq, config->wc_out_number, &poll, sctk_network_poll_send);
     recursive_polling--;
   }
   OPA_decr_int(&polling_lock);
@@ -345,14 +345,14 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   sctk_ib_mmu_init(rail_ib);
   sctk_ibuf_pool_init(rail_ib);
   /* Fill SRQ with buffers */
-  sctk_ibuf_srq_check_and_post(rail_ib, rail_ib->config->ibv_max_srq_ibufs_posted);
+  sctk_ibuf_srq_check_and_post(rail_ib, rail_ib->config->max_srq_ibufs_posted);
   /* Initialize Async thread */
   sctk_ib_async_init(rail);
 
   LOAD_CONFIG(rail_ib);
   struct ibv_srq_attr mod_attr;
   int rc;
-  mod_attr.srq_limit  = config->ibv_srq_credit_thread_limit;
+  mod_attr.srq_limit  = config->srq_credit_thread_limit;
   rc = ibv_modify_srq(device->srq, &mod_attr, IBV_SRQ_LIMIT);
   assume(rc == 0);
 

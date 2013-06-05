@@ -1,7 +1,7 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # Copyright or (C) or Copr. 2010-2012 Universit�� de Versailles         # */
 /* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -70,12 +70,12 @@ void sctk_ib_config_check(sctk_ib_rail_info_t *rail_ib)
 
   /* TODO: MMU cache is buggy and do not intercept free calls */
   if ( (sctk_process_rank == 0)
-      && (config->ibv_mmu_cache_enabled == 1) ) {
+      && (config->mmu_cache_enabled == 1) ) {
     sctk_error("MMU cache enabled: use it at your own risk!");
   }
 
   if ( (sctk_process_rank == 0)
-      && (config->ibv_low_memory == 1) ) {
+      && (config->low_memory) ) {
     sctk_error("LOW mem module enabled: use it at your own risk!");
   }
 
@@ -89,7 +89,7 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
   LOAD_CONFIG(rail_ib);
   if (sctk_process_rank == 0) {
     fprintf(stderr,
-        "############# IB configuration for %s\n"
+        "############# IB configuration\n"
         "ibv_eager_limit      = %d\n"
         "ibv_buffered_limit = %d\n"
         "ibv_max_rdma_connections = %d\n"
@@ -113,45 +113,53 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         "ibv_adm_port         = %d\n"
         "ibv_rdma_depth       = %d\n"
         "ibv_rdma_dest_depth  = %d\n"
-        "ibv_adaptive_polling = %d\n"
+        //"ibv_adaptive_polling = %d\n"
         "ibv_quiet_crash      = %d\n"
         EXPERIMENTAL(ibv_steal)"            = %d\n"
         "Stealing desc        = %s\n"
         EXPERIMENTAL(ibv_low_memory)"            = %d\n"
         "#############\n",
-        config->network_name,
-        config->ibv_eager_limit,
-        config->ibv_buffered_limit,
-        config->ibv_max_rdma_connections,
-        config->ibv_qp_tx_depth,
-        config->ibv_qp_rx_depth,
-        config->ibv_max_sg_sq,
-        config->ibv_max_sg_rq,
-        config->ibv_max_inline,
-        config->ibv_init_ibufs,
-        config->ibv_max_srq_ibufs_posted,
-        config->ibv_max_srq_ibufs,
-        config->ibv_size_ibufs_chunk,
-        config->ibv_srq_credit_limit,
-        config->ibv_srq_credit_thread_limit,
-        config->ibv_rdvz_protocol,
-        config->ibv_wc_in_number,
-        config->ibv_wc_out_number,
-        config->ibv_init_mr,
-        config->ibv_mmu_cache_enabled,
-        config->ibv_mmu_cache_entries,
-        config->ibv_adm_port,
-        config->ibv_rdma_depth,
-        config->ibv_rdma_dest_depth,
-        config->ibv_adaptive_polling,
-        config->ibv_quiet_crash,
-        config->ibv_steal, steal_names[config->ibv_steal],
-        config->ibv_low_memory);
+        //config->network_name,
+        config->eager_limit,
+        config->buffered_limit,
+        config->max_rdma_connections,
+        config->qp_tx_depth,
+        config->qp_rx_depth,
+        config->max_sg_sq,
+        config->max_sg_rq,
+        config->max_inline,
+        config->init_ibufs,
+        config->max_srq_ibufs_posted,
+        config->max_srq_ibufs,
+        config->size_ibufs_chunk,
+        config->srq_credit_limit,
+        config->srq_credit_thread_limit,
+        config->rdvz_protocol,
+        config->wc_in_number,
+        config->wc_out_number,
+        config->init_mr,
+        config->mmu_cache_enabled,
+        config->mmu_cache_entries,
+        config->adm_port,
+        config->rdma_depth,
+        config->rdma_dest_depth,
+        //config->ibv_adaptive_polling,
+        config->quiet_crash,
+        config->steal, steal_names[config->steal],
+        config->low_memory);
   }
 }
 
-#define SET_RUNTIME_CONFIG(name) config->ibv_##name = runtime_config->name
+void sctk_ib_config_mutate(sctk_ib_rail_info_t *rail_ib) {
+  LOAD_CONFIG(rail_ib);
 
+  config->eager_limit       = ALIGN_ON (config->eager_limit + IBUF_GET_EAGER_SIZE, 64);
+  config->buffered_limit  = (config->buffered_limit + sizeof(sctk_thread_ptp_message_body_t));
+}
+
+//#define SET_RUNTIME_CONFIG(name) config->ibv_##name = runtime_config->name
+
+/*
 static void load_ib_load_config(sctk_ib_rail_info_t *rail_ib)
 {
   LOAD_CONFIG(rail_ib);
@@ -186,8 +194,9 @@ static void load_ib_load_config(sctk_ib_rail_info_t *rail_ib)
 
   config->ibv_eager_limit       = ALIGN_ON (runtime_config->eager_limit + IBUF_GET_EAGER_SIZE, 64);
   config->ibv_buffered_limit  = (runtime_config->buffered_limit + sizeof(sctk_thread_ptp_message_body_t));
-  config->ibv_rdvz_protocol = IBV_RDVZ_WRITE_PROTOCOL;
+  //config->ibv_rdvz_protocol = IBV_RDVZ_WRITE_PROTOCOL;
 }
+*/
 
 #if 0
 /* Set IB configure with env variables */
@@ -211,7 +220,19 @@ void set_ib_env(sctk_ib_rail_info_t *rail_ib)
     c->ibv_rdma_max_size          *=1024;
     c->ibv_rdma_resizing_min_size *=1024;
     c->ibv_rdma_resizing_max_size *=1024;
-  }
+  }sctk_ib_config_mutate(sctk_ib_rail_info_t *rail_ib) {
+  LOAD_CONFIG(rail_ib);
+
+  config->ibv_eager_limit       = ALIGN_ON (config->eager_limit + IBUF_GET_EAGER_SIZE, 64);
+  config->ibv_buffered_limit  = (config->buffered_limit + sizeof(sctk_thread_ptp_message_body_t));
+}
+
+//#define SET_RUNTIME_CONFIG(name) config->ibv_##name = runtime_config->name
+
+
+static void load_ib_load_config(sctk_ib_rail_info_t *rail_ib)
+{
+  LOAD_CONFIG(rail_ib);
 }
 #endif
 
@@ -222,14 +243,13 @@ void sctk_ib_config_init(sctk_ib_rail_info_t *rail_ib, char* network_name)
   config = sctk_malloc(sizeof(sctk_ib_config_t));
   assume(config);
   memset(config, 0, sizeof(sctk_ib_config_t));
-  rail_ib->config = config;
-  rail_ib->config->network_name = strdup(network_name);
+  rail_ib->config = &rail_ib->rail->runtime_config_driver_config->driver.value.infiniband;
+  sctk_ib_config_mutate(rail_ib);
+  //rail_ib->config->network_name = strdup(network_name);
 
-  load_ib_load_config(rail_ib);
+  //load_ib_load_config(rail_ib);
 
-  /*
-   * Check if the variables are well set
-   * */
+  //Check if the variables are well set
   sctk_ib_config_check(rail_ib);
 }
 
