@@ -33,6 +33,7 @@
 		<xsl:text>#include "sctk_runtime_config_struct_defaults.h"&#10;&#10;</xsl:text>
 		<xsl:text>#ifndef SCTK_RUNTIME_CONFIG_STRUCT_H&#10;</xsl:text>
 		<xsl:text>#define SCTK_RUNTIME_CONFIG_STRUCT_H&#10;</xsl:text>
+		<xsl:text>&#10;#define SCTK_RUNTIME_CONFIG_MAX_PROFILES 16&#10;</xsl:text>
 
 		<xsl:call-template name="gen-funcptr-struct"/>
 		<xsl:apply-templates select="config"/>
@@ -47,6 +48,8 @@
 		<xsl:text>&#10;/******************************** STRUCTURE *********************************/&#10;</xsl:text>
 		<xsl:text>struct sctk_runtime_config&#10;</xsl:text>
 		<xsl:text>{&#10;</xsl:text>
+		<xsl:text>&#09;int number_profiles;&#10;</xsl:text>
+		<xsl:text>&#09;char* profiles_name_list[SCTK_RUNTIME_CONFIG_MAX_PROFILES];&#10;</xsl:text>
 		<xsl:text>&#09;struct sctk_runtime_config_modules modules;&#10;</xsl:text>
 		<xsl:text>&#09;struct sctk_runtime_config_struct_networks networks;&#10;</xsl:text>
 		<xsl:text>};&#10;</xsl:text>

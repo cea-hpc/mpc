@@ -36,6 +36,8 @@
 struct sctk_runtime_config __sctk_global_runtime_config__;
 /** To know if already init. **/
 bool __sctk_global_runtime_config_init__ = false;
+/** To avoid crash on symbol load when running mpc_print_config (mpc not linked). **/
+bool sctk_crash_on_symbol_load = true;
 
 /********************************  CONSTS  **********************************/
 /**
@@ -218,6 +220,14 @@ void sctk_runtime_config_init(void)
 
 			/* map to c struct */
 			sctk_runtime_config_runtime_map_sources( &__sctk_global_runtime_config__,&config_sources);
+
+			/* Retrieve the list of profiles names */
+      int i = 0;
+      __sctk_global_runtime_config__.number_profiles = config_sources.cnt_profile_names;
+      for (i = 0; i < config_sources.cnt_profile_names; i ++) {
+        __sctk_global_runtime_config__.profiles_name_list[i] = (char*) malloc (sizeof(strlen((char *) config_sources.profile_names[i])));
+        strcpy(__sctk_global_runtime_config__.profiles_name_list[i], (char *) config_sources.profile_names[i]);
+      }
 
 			/* close */
 			sctk_runtime_config_sources_close(&config_sources);

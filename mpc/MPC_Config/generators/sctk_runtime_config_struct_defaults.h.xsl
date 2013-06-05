@@ -36,6 +36,8 @@
 		<xsl:call-template name="gen-var-decl"/>
 		<xsl:call-template name="gen-forward-struct-decl"/>
 		<xsl:call-template name="gen-reset-function"/>
+		<xsl:text>void sctk_runtime_config_clean_hash_tables();&#10;</xsl:text>
+		<xsl:text>void* sctk_runtime_config_get_symbol();&#10;</xsl:text>
 		<xsl:text>&#10;#endif /* SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H */&#10;</xsl:text>
 	</xsl:template>
 
@@ -45,13 +47,13 @@
 		<xsl:text>void * sctk_handler;&#10;</xsl:text>
 		
 		<xsl:text>&#10;struct enum_value {&#10;</xsl:text>
-		<xsl:text>&#9;char name[20];&#10;</xsl:text>
+		<xsl:text>&#9;char name[50];&#10;</xsl:text>
 		<xsl:text>&#9;int value;&#10;</xsl:text>
 		<xsl:text>&#9;UT_hash_handle hh;&#10;</xsl:text>
 		<xsl:text>};&#10;</xsl:text>
 		
 		<xsl:text>&#10;struct enum_type {&#10;</xsl:text>
-		<xsl:text>&#9;char name[20];&#10;</xsl:text>
+		<xsl:text>&#9;char name[50];&#10;</xsl:text>
 		<xsl:text>&#9;struct enum_value * values;&#10;</xsl:text>
 		<xsl:text>&#9;UT_hash_handle hh;&#10;</xsl:text>
 		<xsl:text>};&#10;</xsl:text>

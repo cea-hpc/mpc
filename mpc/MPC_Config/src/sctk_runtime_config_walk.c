@@ -232,7 +232,7 @@ void sctk_runtime_config_walk_value(const struct sctk_runtime_config_entry_meta 
       }
     }
     else {
-      sctk_fatal("Invalid enum type.");
+      sctk_fatal("Invalid enum type : %s.", type_name);
     }
 
     handler(SCTK_RUNTIME_CONFIG_WALK_VALUE,name,"char *",&enum_name,SCTK_RUNTIME_CONFIG_WALK_OPEN,NULL,level,opt);

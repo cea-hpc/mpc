@@ -204,75 +204,75 @@ Permit to extend the launchers available via 'mpcrun -l=...' by providing script
 .It Cm keep_rand_addr
 Type is bool. Default value is true. 
 .Pp keep_rand_addr
-
+Activate randomization of base addresses
 .It Cm disable_rand_addr
 Type is bool. Default value is false. 
 .Pp disable_rand_addr
-
+Deactivate randomization of base addresses
 .It Cm disable_mpc
 Type is bool. Default value is false. 
 .Pp disable_mpc
-
-.It Cm startup_args
-Type is string. Default value is . 
-.Pp startup_args
-
+Do not use mpc for execution (deprecated?)
 .It Cm thread_init
-Type is funcptr. Default value is sctk_use_ethread_mxn. 
+Type is function pointer. Default value is sctk_use_ethread_mxn. 
 .Pp thread_init
-
+Initialize multithreading mode
 .It Cm nb_task
 Type is int. Default value is 1. 
 .Pp nb_task
-
+Define the number of MPI tasks
 .It Cm nb_process
 Type is int. Default value is 1. 
 .Pp nb_process
-
+Define the number of MPC processes
 .It Cm nb_processor
-Type is int. Default value is 0. 
+Type is int. Default value is 1. 
 .Pp nb_processor
-
+Define the number of virtual processors
 .It Cm nb_node
-Type is int. Default value is 0. 
+Type is int. Default value is 1. 
 .Pp nb_node
-
+Define the number of compute nodes
 .It Cm launcher
 Type is string. Default value is none. 
 .Pp launcher
-
+Define which launcher to use
 .It Cm max_try
 Type is int. Default value is 10. 
 .Pp max_try
-
+Define the max number of tries to access the topology file before failing
 .It Cm vers_details
 Type is bool. Default value is false. 
 .Pp vers_details
-
+Print the MPC version number
 .It Cm profiling
 Type is string. Default value is none. 
 .Pp profiling
-
+Select the type of outputs for the profiling
 .It Cm enable_smt
 Type is bool. Default value is false. 
 .Pp enable_smt
-
+Enable usage of hyperthreaded cores if available on current architecture.
 .It Cm share_node
 Type is bool. Default value is false. 
 .Pp share_node
-
+Enable the restriction on CPU number to share node
 .It Cm restart
 Type is bool. Default value is false. 
 .Pp restart
-
+Restart MPC from a previous checkpoint
 .It Cm checkpoint
 Type is bool. Default value is false. 
 .Pp checkpoint
-
+Enable MPC checkpointing
 .It Cm migration
 Type is bool. Default value is false. 
 .Pp migration
-
+Enable migration
+.It Cm report
+Type is bool. Default value is false. 
+.Pp report
+Enable reporting.
 .El
 .Sh ENTRIES OF TYPE debugger
 Options for MPC Debugger
@@ -406,19 +406,29 @@ Defines if the asynchronous may be started at the MPC initialization.
 .It Cm wc_in_number
 Type is int. Default value is 0. 
 .Pp wc_in_number
-wc_in_number.
+Defines the number of entries for the CQ dedicated to received messages.
 .It Cm wc_out_number
 Type is int. Default value is 0. 
 .Pp wc_out_number
-wc_out_number.
+Defines the number of entries for the CQ dedicated to sent messages.
 .It Cm rdma_depth
 Type is int. Default value is 0. 
 .Pp rdma_depth
-rdma_depth.
+Number of outstanding RDMA reads and atomic operations on the destination QP (to be confirmed)
 .It Cm rdma_dest_depth
 Type is int. Default value is 0. 
 .Pp rdma_dest_depth
-rdma_dest_depth.
+Number of responder resources for handling incoming RDMA reads and atomic operations (to be confirmed)
+.It Cm low_memory
+Type is bool. Default value is false. 
+.Pp low_memory
+Defines if the low memory mode should be activated
+.It Cm rdvz_protocol
+Type is enum ibv_rdvz_protocol. Possible values are : IBV_RDVZ_WRITE_PROTOCOL, IBV_RDVZ_READ_PROTOCOL.
+
+Default value is IBV_RDVZ_WRITE_PROTOCOL. 
+.Pp rdvz_protocol
+Defines the Rendezvous protocol to use (IBV_RDVZ_WRITE_PROTOCOL or IBV_RDVZ_READ_PROTOCOL)
 .El
 .Sh ENTRIES OF TYPE net_driver_tcp
 Declare a fake driver to test the configuration system.
@@ -470,7 +480,7 @@ Type is string.
 .Pp name
 Define the name of the option.
 .It Cm rails
-Type is array of string. 
+Type is array of . 
 .Pp rails
 Define the driver config to use for this rail.
 .El
@@ -504,15 +514,15 @@ It support parameters :
 .Pp
 .Bl -tag -width Ds
 .It Cm configs
-Type is array of net_driver_config. 
+Type is array of . 
 .Pp configs
 Define the configuration driver list to reuse in rail definitions.
 .It Cm rails
-Type is array of net_rail. 
+Type is array of . 
 .Pp rails
 List of rails to declare in MPC.
 .It Cm cli_options
-Type is array of net_cli_option. 
+Type is array of . 
 .Pp cli_options
 List of networks available through the '-net' argument of mpcrun.
 .El
@@ -562,27 +572,27 @@ Type is bool. Default value is true.
 .Pp checksum
 
 .It Cm send_msg
-Type is funcptr. Default value is sctk_network_send_message_default. 
+Type is function pointer. Default value is sctk_network_send_message_default. 
 .Pp send_msg
 
 .It Cm notify_recv_msg
-Type is funcptr. Default value is sctk_network_notify_recv_message_default. 
+Type is function pointer. Default value is sctk_network_notify_recv_message_default. 
 .Pp notify_recv_msg
 
 .It Cm notify_matching_msg
-Type is funcptr. Default value is sctk_network_notify_matchin_message_default. 
+Type is function pointer. Default value is sctk_network_notify_matching_message_default. 
 .Pp notify_matching_msg
 
 .It Cm notify_perform_msg
-Type is funcptr. Default value is sctk_network_notify_perform_message_default. 
+Type is function pointer. Default value is sctk_network_notify_perform_message_default. 
 .Pp notify_perform_msg
 
 .It Cm notify_idle_msg
-Type is funcptr. Default value is sctk_network_notify_idle_message. 
+Type is function pointer. Default value is sctk_network_notify_idle_message_default. 
 .Pp notify_idle_msg
 
 .It Cm notify_any_src_msg
-Type is funcptr. Default value is sctk_network_notify_any_source_message_default. 
+Type is function pointer. Default value is sctk_network_notify_any_source_message_default. 
 .Pp notify_any_src_msg
 
 .It Cm network_mode
@@ -679,7 +689,7 @@ Type is bool. Default value is true.
 .Pp color_stdout
 Profile in color when outputed to stdout
 .It Cm level_colors
-Type is array of string. Default value is {#3A4D85, #82A2FF, #B8BDCB, #5D6782, #838383, #5A5757}.
+Type is array of . Default value is {#3A4D85, #82A2FF, #B8BDCB, #5D6782, #838383, #5A5757}.
 .Pp level_colors
 Color for levels of profiler output
 .El
@@ -692,9 +702,13 @@ It support parameters :
 .It Cm spin_delay
 Type is int. Default value is 10. 
 .Pp spin_delay
-
+Max number of accesses to the lock before calling thread_yield
 .It Cm interval
 Type is int. Default value is 10. 
 .Pp interval
 
+.It Cm kthread_stack_size
+Type is size. Default value is 10MB. 
+.Pp kthread_stack_size
+Define the stack size of MPC user threads
 .El

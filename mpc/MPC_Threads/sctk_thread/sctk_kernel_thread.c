@@ -26,7 +26,7 @@
 #include "sctk_tls.h"
 #include <string.h>
 #include <semaphore.h>
-
+#include "sctk_runtime_config.h"
 
 #ifndef SCTK_KERNEL_THREAD_USE_TLS
 int
@@ -66,8 +66,6 @@ kthread_getspecific (kthread_key_t key)
 }
 #endif
 
-
-#define kthread_stack_size (10*1024*1024)
 
 typedef void *(*start_routine_t) (void *) ;
 
@@ -136,6 +134,7 @@ kthread_create (kthread_t * thread, void *(*start_routine) (void *),
 {
   kthread_create_start_t* found = NULL;
   kthread_create_start_t* cursor;
+  size_t kthread_stack_size = sctk_runtime_config_get()->modules.thread.kthread_stack_size;
 
   sctk_nodebug("Scan already started kthreads");
   sctk_spinlock_lock(&lock);

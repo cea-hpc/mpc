@@ -27,6 +27,8 @@
 #ifndef SCTK_RUNTIME_CONFIG_STRUCT_H
 #define SCTK_RUNTIME_CONFIG_STRUCT_H
 
+#define SCTK_RUNTIME_CONFIG_MAX_PROFILES 16
+
 /******************************** STRUCTURE *********************************/
 struct sctk_runtime_config_funcptr
 {
@@ -68,42 +70,42 @@ struct sctk_runtime_config_struct_launcher
 	int autokill;
 	/**Permit to extend the launchers available via 'mpcrun -l=...' by providing scripts (named mpcrun_XXXX) in a user directory. Can be override by MPC_USER_LAUNCHERS.**/
 	char * user_launchers;
-	/****/
+	/**Activate randomization of base addresses**/
 	bool keep_rand_addr;
-	/****/
+	/**Deactivate randomization of base addresses**/
 	bool disable_rand_addr;
-	/****/
+	/**Do not use mpc for execution (deprecated?)**/
 	bool disable_mpc;
-	/****/
-	char * startup_args;
-	/****/
+	/**Initialize multithreading mode**/
 	struct sctk_runtime_config_funcptr thread_init;
-	/****/
+	/**Define the number of MPI tasks**/
 	int nb_task;
-	/****/
+	/**Define the number of MPC processes**/
 	int nb_process;
-	/****/
+	/**Define the number of virtual processors**/
 	int nb_processor;
-	/****/
+	/**Define the number of compute nodes**/
 	int nb_node;
-	/****/
+	/**Define which launcher to use**/
 	char * launcher;
-	/****/
+	/**Define the max number of tries to access the topology file before failing**/
 	int max_try;
-	/****/
+	/**Print the MPC version number**/
 	bool vers_details;
-	/****/
+	/**Select the type of outputs for the profiling**/
 	char * profiling;
-	/****/
+	/**Enable usage of hyperthreaded cores if available on current architecture.**/
 	bool enable_smt;
-	/****/
+	/**Enable the restriction on CPU number to share node**/
 	bool share_node;
-	/****/
+	/**Restart MPC from a previous checkpoint**/
 	bool restart;
-	/****/
+	/**Enable MPC checkpointing**/
 	bool checkpoint;
-	/****/
+	/**Enable migration**/
 	bool migration;
+	/**Enable reporting.**/
+	bool report;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -113,6 +115,14 @@ struct sctk_runtime_config_struct_debugger
 	bool colors;
 	/****/
 	int max_filename_size;
+};
+
+/********************************** ENUM ************************************/
+/****/
+enum ibv_rdvz_protocol
+{
+	IBV_RDVZ_WRITE_PROTOCOL,
+	IBV_RDVZ_READ_PROTOCOL
 };
 
 /******************************** STRUCTURE *********************************/
@@ -172,14 +182,18 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 	int quiet_crash;
 	/**Defines if the asynchronous may be started at the MPC initialization.**/
 	int async_thread;
-	/**wc_in_number.**/
+	/**Defines the number of entries for the CQ dedicated to received messages.**/
 	int wc_in_number;
-	/**wc_out_number.**/
+	/**Defines the number of entries for the CQ dedicated to sent messages.**/
 	int wc_out_number;
-	/**rdma_depth.**/
+	/**Number of outstanding RDMA reads and atomic operations on the destination QP (to be confirmed)**/
 	int rdma_depth;
-	/**rdma_dest_depth.**/
+	/**Number of responder resources for handling incoming RDMA reads and atomic operations (to be confirmed)**/
 	int rdma_dest_depth;
+	/**Defines if the low memory mode should be activated**/
+	bool low_memory;
+	/**Defines the Rendezvous protocol to use (IBV_RDVZ_WRITE_PROTOCOL or IBV_RDVZ_READ_PROTOCOL)**/
+	enum ibv_rdvz_protocol rdvz_protocol;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -357,10 +371,12 @@ struct sctk_runtime_config_struct_profiler
 /******************************** STRUCTURE *********************************/
 /**Options for MPC threads.**/
 struct sctk_runtime_config_struct_thread
-{	/****/
+{	/**Max number of accesses to the lock before calling thread_yield**/
 	int spin_delay;
 	/****/
 	int interval;
+	/**Define the stack size of MPC user threads**/
+	size_t kthread_stack_size;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -380,6 +396,8 @@ struct sctk_runtime_config_modules
 /******************************** STRUCTURE *********************************/
 struct sctk_runtime_config
 {
+	int number_profiles;
+	char* profiles_name_list[SCTK_RUNTIME_CONFIG_MAX_PROFILES];
 	struct sctk_runtime_config_modules modules;
 	struct sctk_runtime_config_struct_networks networks;
 };

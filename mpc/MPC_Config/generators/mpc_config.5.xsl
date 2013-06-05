@@ -87,7 +87,29 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template match="param">
-		<xsl:value-of select="concat('.It Cm ',@name,'&#10;','Type is ',@type,'. ')"/>
+		<xsl:variable name="type_enum" select="@type"/>
+		<xsl:choose>
+			<xsl:when test="//enum[@name = $type_enum]">
+				<xsl:value-of select="concat('.It Cm ',@name,'&#10;','Type is enum ',@type,'. ')"/>
+				<xsl:text>Possible values are : </xsl:text>
+				<xsl:for-each select="//enum[@name = $type_enum]/value">
+					<xsl:value-of select="."/>
+					<xsl:if test="position() != last()">
+						<xsl:text>, </xsl:text>
+					</xsl:if>
+					<xsl:if test="position() = last()">
+						<xsl:text>.&#10;</xsl:text>
+					</xsl:if>
+				</xsl:for-each>
+				<xsl:text>&#10;</xsl:text>
+			</xsl:when>
+			<xsl:when test="@type = 'funcptr'">
+				<xsl:value-of select="concat('.It Cm ',@name,'&#10;','Type is function pointer. ')"/>
+			</xsl:when>
+			<xsl:otherwise>
+				<xsl:value-of select="concat('.It Cm ',@name,'&#10;','Type is ',@type,'. ')"/>
+			</xsl:otherwise>
+		</xsl:choose>
 		<xsl:if test='@default'><xsl:value-of select="concat('Default value is ',@default,'. ')"/></xsl:if>
 		<xsl:text>&#10;</xsl:text>
 		<xsl:value-of select="concat('.Pp ',@name,'&#10;',@doc,'&#10;')"/>
@@ -95,7 +117,8 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template match="array">
-		<xsl:value-of select="concat('.It Cm ',@name,'&#10;','Type is array of ',@type,'. ')"/>
+		<xsl:param name="type"/>
+		<xsl:value-of select="concat('.It Cm ',@name,'&#10;','Type is array of ',$type,'. ')"/>
 		<xsl:if test='default and default/value'>
 			<xsl:text>Default value is {</xsl:text>
 			<xsl:for-each select='default/value'>

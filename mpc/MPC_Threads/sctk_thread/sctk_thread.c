@@ -64,6 +64,7 @@ MonoDomain *domain;
 #include "sctk_context.h"
 #include "sctk_tls.h"
 #include "sctk_runtime_config.h"
+#include "sctk_runtime_config_struct_defaults.h"
 
 #ifdef MPC_Message_Passing
 #include <mpc_internal_thread.h>
@@ -2383,6 +2384,8 @@ sctk_start_func (void *(*run) (void *), void *arg)
 
 	sctk_mono_end ();
 	remove (name);
+
+	sctk_runtime_config_clean_hash_tables();
 }
 
 void

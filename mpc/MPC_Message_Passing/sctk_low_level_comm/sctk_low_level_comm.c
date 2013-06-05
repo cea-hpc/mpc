@@ -40,7 +40,7 @@ int sctk_is_net_migration_available(){
 }
 
 /********** SEND ************/
-static void sctk_network_send_message_default (sctk_thread_ptp_message_t * msg){
+void sctk_network_send_message_default (sctk_thread_ptp_message_t * msg){
   not_reachable();
 }
 static void (*sctk_network_send_message_ptr) (sctk_thread_ptp_message_t *) = NULL;
@@ -52,7 +52,7 @@ void sctk_network_send_message_set(void (*sctk_network_send_message_val) (sctk_t
 }
 
 /********** NOTIFY_RECV ************/
-static void sctk_network_notify_recv_message_default (sctk_thread_ptp_message_t * msg){
+void sctk_network_notify_recv_message_default (sctk_thread_ptp_message_t * msg){
 
 }
 static void (*sctk_network_notify_recv_message_ptr) (sctk_thread_ptp_message_t *) = NULL;
@@ -64,7 +64,7 @@ void sctk_network_notify_recv_message_set(void (*sctk_network_notify_recv_messag
 }
 
 /********** NOTIFY_MATCHING ************/
-static void sctk_network_notify_matching_message_default (sctk_thread_ptp_message_t * msg){
+void sctk_network_notify_matching_message_default (sctk_thread_ptp_message_t * msg){
 
 }
 static void (*sctk_network_notify_matching_message_ptr) (sctk_thread_ptp_message_t *) = NULL;
@@ -76,7 +76,7 @@ void sctk_network_notify_matching_message_set(void (*sctk_network_notify_matchin
 }
 
 /********** NOTIFY_PERFORM ************/
-static void sctk_network_notify_perform_message_default (int msg){
+void sctk_network_notify_perform_message_default (int msg){
 
 }
 static void (*sctk_network_notify_perform_message_ptr) (int) = NULL;
@@ -88,7 +88,7 @@ void sctk_network_notify_perform_message_set(void (*sctk_network_notify_perform_
 }
 
 /********** NOTIFY_IDLE ************/
-static void sctk_network_notify_idle_message_default (){
+void sctk_network_notify_idle_message_default (){
 
 }
 static void (*sctk_network_notify_idle_message_ptr) () = NULL;
@@ -100,7 +100,7 @@ void sctk_network_notify_idle_message_set(void (*sctk_network_notify_idle_messag
 }
 
 /********** NOTIFY_ANY_SOURCE ************/
-static void sctk_network_notify_any_source_message_default (){
+void sctk_network_notify_any_source_message_default (){
 
 }
 static void (*sctk_network_notify_any_source_message_ptr) () = NULL;
@@ -137,12 +137,12 @@ sctk_net_init_pmi() {
 
 void
 sctk_net_init_low_level_communication() {
-  sctk_network_send_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.send_msg);
-  sctk_network_notify_recv_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_recv_msg);
-  sctk_network_notify_matching_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_matching_msg);
-  sctk_network_notify_perform_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_perform_msg);
-  sctk_network_notify_idle_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_idle_msg);
-  sctk_network_notify_any_source_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_any_src_msg);
+  sctk_network_send_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.send_msg.value);
+  sctk_network_notify_recv_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_recv_msg.value);
+  sctk_network_notify_matching_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_matching_msg.value);
+  sctk_network_notify_perform_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_perform_msg.value);
+  sctk_network_notify_idle_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_idle_msg.value);
+  sctk_network_notify_any_source_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_any_src_msg.value);
 }
 
 void

@@ -31,11 +31,18 @@
 			<param name="steal" type="int" doc="Defines if the steal in MPI is allowed " default="2" />
 			<param name="quiet_crash" type="int" doc="Defines if the Infiniband interface must crash quietly." default="0" />
 			<param name="async_thread" type="int" doc="Defines if the asynchronous may be started at the MPC initialization." default="0" />
-			<param name="wc_in_number" type="int" doc="wc_in_number." default="0" />
-			<param name="wc_out_number" type="int" doc="wc_out_number." default="0" />
-			<param name="rdma_depth" type="int" doc="rdma_depth." default="0" />
-			<param name="rdma_dest_depth" type="int" doc="rdma_dest_depth." default="0" />
+			<param name="wc_in_number" type="int" doc="Defines the number of entries for the CQ dedicated to received messages." default="0" />
+			<param name="wc_out_number" type="int" doc="Defines the number of entries for the CQ dedicated to sent messages." default="0" />
+			<param name="rdma_depth" type="int" doc="Number of outstanding RDMA reads and atomic operations on the destination QP (to be confirmed)" default="0" />
+			<param name="rdma_dest_depth" type="int" doc="Number of responder resources for handling incoming RDMA reads and atomic operations (to be confirmed)" default="0" />
+			<param name="low_memory" type="bool" doc="Defines if the low memory mode should be activated" default="false" />
+			<param name="rdvz_protocol" type="ibv_rdvz_protocol" default="IBV_RDVZ_WRITE_PROTOCOL" doc="Defines the Rendezvous protocol to use (IBV_RDVZ_WRITE_PROTOCOL or IBV_RDVZ_READ_PROTOCOL)"/>
 		</struct>
+		
+		<enum name="ibv_rdvz_protocol" doc="">
+			<value>IBV_RDVZ_WRITE_PROTOCOL</value>
+			<value>IBV_RDVZ_READ_PROTOCOL</value>
+		</enum>
 
 		<!-- Structure for TCP driver -->
 		<struct name="net_driver_tcp" doc="Declare a fake driver to test the configuration system.">
@@ -90,9 +97,9 @@
 			<param name="checksum" type="bool" default="true" doc=""/>
 			<param name="send_msg" type="funcptr" default="sctk_network_send_message_default" doc=""/>
 			<param name="notify_recv_msg" type="funcptr" default="sctk_network_notify_recv_message_default" doc=""/>
-			<param name="notify_matching_msg" type="funcptr" default="sctk_network_notify_matchin_message_default" doc=""/>
+			<param name="notify_matching_msg" type="funcptr" default="sctk_network_notify_matching_message_default" doc=""/>
 			<param name="notify_perform_msg" type="funcptr" default="sctk_network_notify_perform_message_default" doc=""/>
-			<param name="notify_idle_msg" type="funcptr" default="sctk_network_notify_idle_message" doc=""/>
+			<param name="notify_idle_msg" type="funcptr" default="sctk_network_notify_idle_message_default" doc=""/>
 			<param name="notify_any_src_msg" type="funcptr" default="sctk_network_notify_any_source_message_default" doc=""/>
 			<param name="network_mode" type="string" default="default" doc=""/>
 			<param name="dyn_reordering" type="bool" default="false" doc=""/>

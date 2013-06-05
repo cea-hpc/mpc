@@ -63,24 +63,24 @@
 			<param name="banner" type="bool" default="true" doc="Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER."/>
 			<param name="autokill" type="int" default="0" doc="Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT."/>
 			<param name="user_launchers" type="string" default="" doc="Permit to extend the launchers available via 'mpcrun -l=...' by providing scripts (named mpcrun_XXXX) in a user directory. Can be override by MPC_USER_LAUNCHERS."/>
-			<param name="keep_rand_addr" type="bool" default="true" doc=""/>
-			<param name="disable_rand_addr" type="bool" default="false" doc=""/>
-			<param name="disable_mpc" type="bool" default="false" doc=""/>
-			<param name="startup_args" type="string" default="" doc=""/>
-			<param name="thread_init" type="funcptr" doc="" default="sctk_use_ethread_mxn"/>
-			<param name="nb_task" type="int" default="1" doc=""/>
-			<param name="nb_process" type="int" default="1" doc=""/>
-			<param name="nb_processor" type="int" default="0" doc=""/>
-			<param name="nb_node" type="int" default="0" doc=""/>
-			<param name="launcher" type="string" default="none" doc=""/>
-			<param name="max_try" type="int" default="10" doc=""/>
-			<param name="vers_details" type="bool" default="false" doc=""/>
-			<param name="profiling" type="string" default="none" doc=""/>
-			<param name="enable_smt" type="bool" default="false" doc=""/>
-			<param name="share_node" type="bool" default="false" doc=""/>
-			<param name="restart" type="bool" default="false" doc=""/>
-			<param name="checkpoint" type="bool" default="false" doc=""/>
-			<param name="migration" type="bool" default="false" doc=""/>
+			<param name="keep_rand_addr" type="bool" default="true" doc="Activate randomization of base addresses"/>
+			<param name="disable_rand_addr" type="bool" default="false" doc="Deactivate randomization of base addresses"/>
+			<param name="disable_mpc" type="bool" default="false" doc="Do not use mpc for execution (deprecated?)"/>
+			<param name="thread_init" type="funcptr" doc="Initialize multithreading mode" default="sctk_use_ethread_mxn"/>
+			<param name="nb_task" type="int" default="1" doc="Define the number of MPI tasks"/>
+			<param name="nb_process" type="int" default="1" doc="Define the number of MPC processes"/>
+			<param name="nb_processor" type="int" default="1" doc="Define the number of virtual processors"/>
+			<param name="nb_node" type="int" default="1" doc="Define the number of compute nodes"/>
+			<param name="launcher" type="string" default="none" doc="Define which launcher to use"/>
+			<param name="max_try" type="int" default="10" doc="Define the max number of tries to access the topology file before failing"/>
+			<param name="vers_details" type="bool" default="false" doc="Print the MPC version number"/>
+			<param name="profiling" type="string" default="none" doc="Select the type of outputs for the profiling"/>
+			<param name="enable_smt" type="bool" default="false" doc="Enable usage of hyperthreaded cores if available on current architecture."/>
+			<param name="share_node" type="bool" default="false" doc="Enable the restriction on CPU number to share node"/>
+			<param name="restart" type="bool" default="false" doc="Restart MPC from a previous checkpoint"/>
+			<param name="checkpoint" type="bool" default="false" doc="Enable MPC checkpointing"/>
+			<param name="migration" type="bool" default="false" doc="Enable migration"/>
+			<param name="report" type="bool" default="false" doc="Enable reporting."/>
 		</struct>
 		
 		<struct name="debugger" doc="Options for MPC Debugger">
@@ -124,11 +124,18 @@
 			<param name="steal" type="int" doc="Defines if the steal in MPI is allowed " default="2" />
 			<param name="quiet_crash" type="int" doc="Defines if the Infiniband interface must crash quietly." default="0" />
 			<param name="async_thread" type="int" doc="Defines if the asynchronous may be started at the MPC initialization." default="0" />
-			<param name="wc_in_number" type="int" doc="wc_in_number." default="0" />
-			<param name="wc_out_number" type="int" doc="wc_out_number." default="0" />
-			<param name="rdma_depth" type="int" doc="rdma_depth." default="0" />
-			<param name="rdma_dest_depth" type="int" doc="rdma_dest_depth." default="0" />
+			<param name="wc_in_number" type="int" doc="Defines the number of entries for the CQ dedicated to received messages." default="0" />
+			<param name="wc_out_number" type="int" doc="Defines the number of entries for the CQ dedicated to sent messages." default="0" />
+			<param name="rdma_depth" type="int" doc="Number of outstanding RDMA reads and atomic operations on the destination QP (to be confirmed)" default="0" />
+			<param name="rdma_dest_depth" type="int" doc="Number of responder resources for handling incoming RDMA reads and atomic operations (to be confirmed)" default="0" />
+			<param name="low_memory" type="bool" doc="Defines if the low memory mode should be activated" default="false" />
+			<param name="rdvz_protocol" type="ibv_rdvz_protocol" default="IBV_RDVZ_WRITE_PROTOCOL" doc="Defines the Rendezvous protocol to use (IBV_RDVZ_WRITE_PROTOCOL or IBV_RDVZ_READ_PROTOCOL)"/>
 		</struct>
+		
+		<enum name="ibv_rdvz_protocol" doc="">
+			<value>IBV_RDVZ_WRITE_PROTOCOL</value>
+			<value>IBV_RDVZ_READ_PROTOCOL</value>
+		</enum>
 
 		<!-- Structure for TCP driver -->
 		<struct name="net_driver_tcp" doc="Declare a fake driver to test the configuration system.">
@@ -183,9 +190,9 @@
 			<param name="checksum" type="bool" default="true" doc=""/>
 			<param name="send_msg" type="funcptr" default="sctk_network_send_message_default" doc=""/>
 			<param name="notify_recv_msg" type="funcptr" default="sctk_network_notify_recv_message_default" doc=""/>
-			<param name="notify_matching_msg" type="funcptr" default="sctk_network_notify_matchin_message_default" doc=""/>
+			<param name="notify_matching_msg" type="funcptr" default="sctk_network_notify_matching_message_default" doc=""/>
 			<param name="notify_perform_msg" type="funcptr" default="sctk_network_notify_perform_message_default" doc=""/>
-			<param name="notify_idle_msg" type="funcptr" default="sctk_network_notify_idle_message" doc=""/>
+			<param name="notify_idle_msg" type="funcptr" default="sctk_network_notify_idle_message_default" doc=""/>
 			<param name="notify_any_src_msg" type="funcptr" default="sctk_network_notify_any_source_message_default" doc=""/>
 			<param name="network_mode" type="string" default="default" doc=""/>
 			<param name="dyn_reordering" type="bool" default="false" doc=""/>
@@ -251,8 +258,9 @@
 <config name="MPC_Threads">
 	<usertypes>
 		<struct name="thread" doc="Options for MPC threads.">
-			<param name="spin_delay" type="int" default="10" doc=""/>
+			<param name="spin_delay" type="int" default="10" doc="Max number of accesses to the lock before calling thread_yield"/>
 			<param name="interval" type="int" default="10" doc=""/>
+			<param name="kthread_stack_size" type="size" default="10MB" doc="Define the stack size of MPC user threads"/>
 		</struct>
 	</usertypes>
 	<modules>

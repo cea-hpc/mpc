@@ -254,7 +254,6 @@ sctk_perform_initialisation (void)
   }
 
 #ifdef MPC_Message_Passing
-  sctk_net_init_low_level_communication();
   if (sctk_process_nb_val > 1) {
     sctk_net_init_driver(sctk_network_driver_name);
   }
@@ -775,6 +774,10 @@ sctk_launch_main (int argc, char **argv)
   //load mpc configuration from XML files if not already done.
   sctk_runtime_config_init();
 
+#ifdef MPC_Message_Passing
+  sctk_net_init_low_level_communication();
+#endif
+
   sctk_disable_addr_randomize (argc, argv);
 
   __sctk_profiling__start__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
@@ -816,7 +819,7 @@ sctk_launch_main (int argc, char **argv)
     return mpc_user_main (argc, argv);
   }
 
-  sctk_argument = sctk_runtime_config_get()->modules.launcher.startup_args;
+  sctk_argument = getenv("MPC_STARTUP_ARGS");
 
   if (sctk_argument != NULL)
   {

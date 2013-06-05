@@ -30,35 +30,35 @@ cat <<EOF > $MPC_USE_MPCRC_FILE
 #THREAD_TYPE="ethread_mxn"
 
 #Define default network type (none/mpi)
-NET_TYPE="none"
+#NET_TYPE="none"
 
 #Define show version details (yes/no)
-VERSION_DETAILS="no"
+#VERSION_DETAILS="no"
 
 #Define show report details (yes/no)
-REPORT="no"
+#REPORT="no"
 
 #Define enable checkpoint mode (yes/no)
-CHECKPOINT="no"
+#CHECKPOINT="no"
 
 #Define enable migration mode (yes/no)
-MIGRATION="no"
+#MIGRATION="no"
 
 #Define default task number
-TASK_NB="1"
+#TASK_NB="1"
 
 #Define default CPU number
-CPU_NB="1"
+#CPU_NB="1"
 
 #Define default process number
-PROCESS_NB="1"
+#PROCESS_NB="1"
 
 #Define default node number
-NODE_NB="1"
+#NODE_NB="1"
 
 #Define default launcher
-LAUNCH="mpiexec"
+#LAUNCH="mpiexec"
 
 #Define environnement variables that need propagation using space separator
-MPC_ENVIRONNEMENT_PROPAGATE=""
+#MPC_ENVIRONNEMENT_PROPAGATE=""
 EOF

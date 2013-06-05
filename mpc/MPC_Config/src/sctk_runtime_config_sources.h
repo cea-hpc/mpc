@@ -131,7 +131,7 @@ void sctk_runtime_config_sources_insert_profile_node(struct sctk_runtime_config_
 xmlNodePtr sctk_runtime_config_sources_find_profile_node(struct sctk_runtime_config_source_xml * source,const xmlChar * name);
 void sctk_runtime_config_sources_select_profiles_in_file(struct sctk_runtime_config_sources * config_sources,struct sctk_runtime_config_source_xml * source);
 void sctk_runtime_config_sources_select_profiles_in_mapping(struct sctk_runtime_config_sources * config_sources, xmlNodePtr mapping);
-void sctk_runtim_config_sources_select_profile_name(struct sctk_runtime_config_sources * config_sources,xmlChar * profile_name);
+void sctk_runtime_config_sources_select_profile_name(struct sctk_runtime_config_sources * config_sources,xmlChar * profile_name);
 void sctk_runtime_config_sources_select_user_profiles(struct sctk_runtime_config_sources * config_sources);
 
 /********************************* FUNCTION *********************************/

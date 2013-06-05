@@ -69,7 +69,7 @@ static int sctk_runtime_config_sources_profile_name_is_unique( struct sctk_runti
 /** @TODO check that some assert need to be turned into assume (when checking node names...) **/
 
 /********************************* FUNCTION *********************************/
-void sctk_runtim_config_sources_select_profile_name(struct sctk_runtime_config_sources * config_sources,xmlChar * profile_name)
+void sctk_runtime_config_sources_select_profile_name(struct sctk_runtime_config_sources * config_sources,xmlChar * profile_name)
 {
 	/* errors */
 	assert(profile_name != NULL);
@@ -121,7 +121,7 @@ void sctk_runtime_config_sources_select_profiles_in_mapping(struct sctk_runtime_
 				/* if profile, ok add it */
 				if (xmlStrcmp(profile->name,SCTK_RUNTIME_CONFIG_XML_NODE_PROFILE) == 0) {
 					xmlChar *profile_name = xmlNodeGetContent(profile);
-					sctk_runtim_config_sources_select_profile_name(config_sources,profile_name);
+					sctk_runtime_config_sources_select_profile_name(config_sources,profile_name);
 				}
 				/* move to next one */
 				profile = xmlNextElementSibling(profile);
@@ -173,7 +173,7 @@ void sctk_runtime_config_sources_select_user_profiles(struct sctk_runtime_config
 
 			/* mark the profile for use */
 			if (*current != '\0')
-				sctk_runtim_config_sources_select_profile_name(config_sources,BAD_CAST(strdup(current)));
+				sctk_runtime_config_sources_select_profile_name(config_sources,BAD_CAST(strdup(current)));
 
 			/* move start to previous end */
 			current = end;
@@ -325,7 +325,7 @@ void sctk_runtime_config_sources_select_profile_nodes(struct sctk_runtime_config
  * Function used to find the DOM nodes of profiles to map. It fill the array profile_nodes
  * by using the list of names from profile_names. It ensure that a node is present only one time
  * and sort them in priority order.
- * After this call, we can safetely fill the C struct by following the order to support
+ * After this call, we can safely fill the C struct by following the order to support
  * option overriding between config files.
  * @param config_sources Define the configuration sources to use.
 **/
@@ -348,7 +348,7 @@ void sctk_runtime_config_sources_select_profiles_nodes(struct sctk_runtime_confi
 /********************************* FUNCTION *********************************/
 /**
  * This function ensure the selection of all profiles to load from XML files.
- * It will sort them on priority orider in profile_nodes member.
+ * It will sort them on priority order in profile_nodes member.
  * @param config_sources Define the configuration sources to use.
 **/
 void sctk_runtime_config_sources_select_profiles(struct sctk_runtime_config_sources * config_sources)
@@ -373,6 +373,8 @@ void sctk_runtime_config_sources_select_profiles(struct sctk_runtime_config_sour
 /********************************* FUNCTION *********************************/
 /**
  * Check if the file exist before trying to use it with libxml.
+ * @param filename Name of the file to check.
+ * @return true if it exists, false otherwise.
 **/
 bool sckt_runtime_config_file_exist(const char * filename)
 {
@@ -448,6 +450,7 @@ void sctk_runtime_config_source_xml_open(struct sctk_runtime_config_source_xml *
 /**
  * Check if the configuration source if open.
  * @param source Define the configuration source to check.
+ * @return true if yes, false otherwise.
 **/
 bool sctk_runtime_config_source_xml_is_open( struct sctk_runtime_config_source_xml * source )
 {
@@ -456,9 +459,10 @@ bool sctk_runtime_config_source_xml_is_open( struct sctk_runtime_config_source_x
 
 /********************************* FUNCTION *********************************/
 /**
- * Use the value of an environnement variable or a given default value if not defined or if empty.
- * @param env_name The name of the environnement variable to use with getenv()
- * @param fallback_value Define the value to return if the environnement variable is empty.
+ * Use the value of an environment variable or a given default value if not defined or if empty.
+ * @param env_name The name of the environment variable to use with getenv()
+ * @param fallback_value Define the value to return if the environment variable is empty.
+ * @return The value for the requested environment variable.
 **/
 const char * sctk_runtime_config_get_env_or_value(const char * env_name,const char * fallback_value)
 {
@@ -487,6 +491,7 @@ const char * sctk_runtime_config_get_env_or_value(const char * env_name,const ch
  * Some help used for implementation : http://julp.lescigales.org/c/libxml2/validation.php
  * @param config_sources Define the structure containing the list of XML source to validate.
  * @param xml_shema_path Define the path to XML schema file to use for validation.
+ * @return true if all XML sources are valid, false otherwise.
 **/
 bool sctk_runtime_config_sources_validate(struct sctk_runtime_config_sources * config_sources,const char * xml_shema_path)
 {

@@ -92,9 +92,6 @@ void sctk_runtime_config_override_by_getenv(struct sctk_runtime_config * config)
 	/* came from sctk_launch.c for randomize addressing disabling */
 	if ((tmp = getenv("SCTK_LINUX_DISABLE_ADDR_RANDOMIZE")) != NULL)
 		config->modules.launcher.disable_rand_addr = atoi(tmp);
-	/* came from sctk_launch.c for add extra args to mpc */
-	if ((tmp = getenv("MPC_STARTUP_ARGS")) != NULL)
-		config->modules.launcher.startup_args = tmp;
 	/* came from sctk_launch.c for verbosity level */
 	if ((tmp = getenv("MPC_VERBOSITY")) != NULL)
 		config->modules.launcher.verbosity = atoi(tmp);

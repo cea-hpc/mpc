@@ -61,7 +61,6 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"keep_rand_addr"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,keep_rand_addr)  , sizeof(bool) , "bool" , NULL},
 	{"disable_rand_addr"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,disable_rand_addr)  , sizeof(bool) , "bool" , NULL},
 	{"disable_mpc"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,disable_mpc)  , sizeof(bool) , "bool" , NULL},
-	{"startup_args"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,startup_args)  , sizeof(char *) , "char *" , NULL},
 	{"thread_init"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,thread_init)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL},
 	{"nb_task"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,nb_task)  , sizeof(int) , "int" , NULL},
 	{"nb_process"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,nb_process)  , sizeof(int) , "int" , NULL},
@@ -76,6 +75,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"restart"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,restart)  , sizeof(bool) , "bool" , NULL},
 	{"checkpoint"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,checkpoint)  , sizeof(bool) , "bool" , NULL},
 	{"migration"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,migration)  , sizeof(bool) , "bool" , NULL},
+	{"report"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,report)  , sizeof(bool) , "bool" , NULL},
 	/* struct */
 	{"sctk_runtime_config_struct_debugger" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_debugger) , NULL , sctk_runtime_config_struct_init_debugger},
 	{"colors"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_debugger,colors)  , sizeof(bool) , "bool" , NULL},
@@ -113,6 +113,8 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"wc_out_number"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,wc_out_number)  , sizeof(int) , "int" , NULL},
 	{"rdma_depth"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdma_depth)  , sizeof(int) , "int" , NULL},
 	{"rdma_dest_depth"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdma_dest_depth)  , sizeof(int) , "int" , NULL},
+	{"low_memory"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,low_memory)  , sizeof(bool) , "bool" , NULL},
+	{"rdvz_protocol"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdvz_protocol)  , sizeof(enum ibv_rdvz_protocol) , "enum ibv_rdvz_protocol" , NULL},
 	/* struct */
 	{"sctk_runtime_config_struct_net_driver_tcp" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_net_driver_tcp) , NULL , sctk_runtime_config_struct_init_net_driver_tcp},
 	{"fake_param"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_tcp,fake_param)  , sizeof(int) , "int" , NULL},
@@ -187,6 +189,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"sctk_runtime_config_struct_thread" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_thread) , NULL , sctk_runtime_config_struct_init_thread},
 	{"spin_delay"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_thread,spin_delay)  , sizeof(int) , "int" , NULL},
 	{"interval"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_thread,interval)  , sizeof(int) , "int" , NULL},
+	{"kthread_stack_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_thread,kthread_stack_size)  , sizeof(size_t) , "size_t" , NULL},
 	/* end marker */
 	{NULL , SCTK_CONFIG_META_TYPE_END , 0 , 0 , NULL,  NULL}
 };

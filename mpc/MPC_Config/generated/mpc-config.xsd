@@ -48,7 +48,6 @@
       <xs:element minOccurs="0" name="keep_rand_addr" type="xs:boolean"/>
       <xs:element minOccurs="0" name="disable_rand_addr" type="xs:boolean"/>
       <xs:element minOccurs="0" name="disable_mpc" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="startup_args" type="xs:string"/>
       <xs:element minOccurs="0" name="thread_init" type="xs:string"/>
       <xs:element minOccurs="0" name="nb_task" type="xs:integer"/>
       <xs:element minOccurs="0" name="nb_process" type="xs:integer"/>
@@ -63,6 +62,7 @@
       <xs:element minOccurs="0" name="restart" type="xs:boolean"/>
       <xs:element minOccurs="0" name="checkpoint" type="xs:boolean"/>
       <xs:element minOccurs="0" name="migration" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="report" type="xs:boolean"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
@@ -106,8 +106,17 @@
       <xs:element minOccurs="0" name="wc_out_number" type="xs:integer"/>
       <xs:element minOccurs="0" name="rdma_depth" type="xs:integer"/>
       <xs:element minOccurs="0" name="rdma_dest_depth" type="xs:integer"/>
+      <xs:element minOccurs="0" name="low_memory" type="xs:boolean"/>
+      <xs:element minOccurs="0" name="rdvz_protocol" type="user_type_ibv_rdvz_protocol"/>
     </xs:all>
   </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:simpleType name="user_type_ibv_rdvz_protocol">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="IBV_RDVZ_WRITE_PROTOCOL"/>
+      <xs:enumeration value="IBV_RDVZ_READ_PROTOCOL"/>
+    </xs:restriction>
+  </xs:simpleType>
   <!-- ********************************************************* -->
   <xs:complexType name="user_type_net_driver_tcp">
     <xs:all>
@@ -246,6 +255,7 @@
     <xs:all>
       <xs:element minOccurs="0" name="spin_delay" type="xs:integer"/>
       <xs:element minOccurs="0" name="interval" type="xs:integer"/>
+      <xs:element minOccurs="0" name="kthread_stack_size" type="xs:string"/>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

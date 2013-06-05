@@ -32,13 +32,13 @@
 void * sctk_handler;
 
 struct enum_value {
-	char name[20];
+	char name[50];
 	int value;
 	UT_hash_handle hh;
 };
 
 struct enum_type {
-	char name[20];
+	char name[50];
 	struct enum_value * values;
 	UT_hash_handle hh;
 };
@@ -69,5 +69,7 @@ void sctk_runtime_config_struct_init_openmp(void * struct_ptr);
 void sctk_runtime_config_struct_init_profiler(void * struct_ptr);
 void sctk_runtime_config_struct_init_thread(void * struct_ptr);
 void sctk_runtime_config_reset(struct sctk_runtime_config * config);
+void sctk_runtime_config_clean_hash_tables();
+void* sctk_runtime_config_get_symbol();
 
 #endif /* SCTK_RUNTIME_CONFIG_STRUCT_DEFAULTS_H */

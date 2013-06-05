@@ -119,7 +119,7 @@ __mpcomp_init (void)
 #endif
       if ( nb_vps <= 0 ) {
         fprintf( stderr,
-            "Warning: Incorrect number of microVPs (OMP_VP_NUMBER=<%d>) -> "
+            "Warning: Number of microVPs set to <%d> -> "
             "Switching to default value %d\n", nb_vps, OMP_VP_NUMBER ) ;
       } else {
         OMP_VP_NUMBER = nb_vps ;

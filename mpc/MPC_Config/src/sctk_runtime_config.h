@@ -35,6 +35,8 @@
 extern struct sctk_runtime_config __sctk_global_runtime_config__;
 /** To know if already init. **/
 extern bool __sctk_global_runtime_config_init__;
+/** To avoid crash on symbol load when running mpc_print_config (mpc not linked). **/
+extern bool sctk_crash_on_symbol_load;
 
 /******************************** FUNCTION *********************************/
 void sctk_runtime_config_init(void);
