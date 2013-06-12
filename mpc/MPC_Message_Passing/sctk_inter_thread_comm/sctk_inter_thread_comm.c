@@ -1899,7 +1899,6 @@ void sctk_wait_message (sctk_request_t * request)
   struct sctk_perform_messages_s _wait;
 
   sctk_perform_messages_wait_init(&_wait, request);
-sctk_debug("request->completion_flag = %d", request->completion_flag);
   /* Find the PTPs lists */
   if(request->completion_flag != SCTK_MESSAGE_DONE){
 
