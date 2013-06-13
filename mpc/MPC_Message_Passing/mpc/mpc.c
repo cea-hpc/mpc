@@ -987,12 +987,12 @@ PMPC_Type_free (MPC_Datatype * datatype_p)
 	}
 	else if (datatype - sctk_user_data_types < sctk_user_data_types_max)
 	{
-		sctk_datatype_t *user_types;
-		sctk_spinlock_lock (&(task_specific->user_types.lock));
-		user_types = task_specific->user_types.user_types;
-		sctk_assert (user_types != NULL);
-		user_types[datatype - sctk_user_data_types] = 0;
-		sctk_spinlock_unlock (&(task_specific->user_types.lock));
+		sctk_datatype_t *other_user_types;
+		sctk_spinlock_lock (&(task_specific->other_user_types.lock));
+		other_user_types = task_specific->other_user_types.other_user_types;
+		sctk_assert (other_user_types != NULL);
+		other_user_types[datatype - sctk_user_data_types] = 0;
+		sctk_spinlock_unlock (&(task_specific->other_user_types.lock));
 	}
 	else
 	{
