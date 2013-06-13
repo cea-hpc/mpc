@@ -1640,14 +1640,12 @@ __INTERNAL__PMPI_Wait (MPI_Request * request, MPI_Status * status)
 {
   int res;
   MPI_internal_request_t *tmp;
-  sctk_debug("wait for request %d ...", *request);
   res = PMPC_Wait (__sctk_convert_mpc_request (request), status);
-  sctk_debug("DONE");
+
   /* Deallocating request if created by non-blocking call */
   tmp = __sctk_convert_mpc_request_internal(request);
   if(tmp->freeable)
   {
-	sctk_debug("suppression");
 	__sctk_delete_mpc_request (request);
   }
   
@@ -2604,117 +2602,105 @@ __INTERNAL__PMPI_Type_hvector (int count,
     }
 }
 
-static int
-__INTERNAL__PMPI_Type_indexed (int count,
-			       int blocklens[],
-			       int indices[],
-			       MPI_Datatype old_type, MPI_Datatype * newtype)
+static int __INTERNAL__PMPI_Type_indexed (int count, int blocklens[], int indices[], MPI_Datatype old_type, MPI_Datatype * newtype)
 {
-  if (sctk_is_derived_type (old_type))
-    {
-      int res;
-      mpc_pack_absolute_indexes_t *begins_in;
-      mpc_pack_absolute_indexes_t *ends_in;
-      unsigned long count_in;
-      mpc_pack_absolute_indexes_t *begins_out;
-      mpc_pack_absolute_indexes_t *ends_out;
-      unsigned long count_out;
-      int i;
-      int j;
-      unsigned long k;
-      unsigned long step = 0;
-      mpc_pack_absolute_indexes_t lb;
-      int is_lb;
-      mpc_pack_absolute_indexes_t ub;
-      int is_ub;
-
-      unsigned long extent;
-
-      PMPC_Is_derived_datatype (old_type, &res, &begins_in, &ends_in,
-			       &count_in, &lb, &is_lb, &ub, &is_ub);
-      __INTERNAL__PMPI_Type_extent (old_type, (MPI_Aint *) & extent);
-
-      count_out = 0;
-      for (i = 0; i < count; i++)
+	if (sctk_is_derived_type (old_type))
 	{
-	  count_out += count_in * blocklens[i];
-	  sctk_nodebug ("%d %d %d", i, count_in, blocklens[i]);
+		int res;
+		mpc_pack_absolute_indexes_t *begins_in;
+		mpc_pack_absolute_indexes_t *ends_in;
+		unsigned long count_in;
+		mpc_pack_absolute_indexes_t *begins_out;
+		mpc_pack_absolute_indexes_t *ends_out;
+		unsigned long count_out;
+		int i;
+		int j;
+		unsigned long k;
+		unsigned long step = 0;
+		mpc_pack_absolute_indexes_t lb;
+		int is_lb;
+		mpc_pack_absolute_indexes_t ub;
+		int is_ub;
+
+		unsigned long extent;
+
+		PMPC_Is_derived_datatype (old_type, &res, &begins_in, &ends_in, &count_in, &lb, &is_lb, &ub, &is_ub);
+		__INTERNAL__PMPI_Type_extent (old_type, (MPI_Aint *) & extent);
+
+		count_out = 0;
+		for (i = 0; i < count; i++)
+		{
+			count_out += count_in * blocklens[i];
+			sctk_nodebug ("%d %d %d", i, count_in, blocklens[i]);
+		}
+
+		begins_out = sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
+		ends_out =   sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
+
+		for (i = 0; i < count; i++)
+		{
+			for (j = 0; j < blocklens[i]; j++)
+			{
+				for (k = 0; k < count_in; k++)
+				{
+					begins_out[step] = begins_in[k] + (indices[i] + j) * extent;
+					ends_out[step] = ends_in[k] + (indices[i] + j) * extent;
+					step++;
+				}
+			}
+			if (is_ub)
+			{
+				long int new_b;
+				new_b = ub + extent * indices[i] + extent * (blocklens[i] - 1);
+				sctk_nodebug ("cur ub %d", new_b);
+				if ((long int) new_b > (long int) ub)
+				{
+					ub = new_b;
+				}
+				sctk_nodebug ("cur ub %d", ub);
+			}
+			if (is_lb)
+			{
+				long int new_b;
+				new_b = lb + extent * indices[i];
+				if ((long int) new_b < (long int) lb)
+				{
+					lb = new_b;
+				}
+			}
+		}
+		PMPC_Derived_datatype (newtype, begins_out, ends_out, count_out, lb, is_lb, ub, is_ub);
+
+		sctk_free (begins_out);
+		sctk_free (ends_out);
+		return MPI_SUCCESS;
 	}
-
-      begins_out =
-	sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
-      ends_out =
-	sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
-
-      for (i = 0; i < count; i++)
+	else
 	{
-	  for (j = 0; j < blocklens[i]; j++)
-	    {
-	      for (k = 0; k < count_in; k++)
-		{
-		  begins_out[step] = begins_in[k] + (indices[i] + j) * extent;
-		  ends_out[step] = ends_in[k] + (indices[i] + j) * extent;
-		  step++;
-		}
-	    }
-	  if (is_ub)
-	    {
-	      long int new_b;
-	      new_b = ub + extent * indices[i] + extent * (blocklens[i] - 1);
-	      sctk_nodebug ("cur ub %d", new_b);
-	      if ((long int) new_b > (long int) ub)
-		{
-		  ub = new_b;
-		}
-	      sctk_nodebug ("cur ub %d", ub);
-	    }
-	  if (is_lb)
-	    {
-	      long int new_b;
-	      new_b = lb + extent * indices[i];
-	      if ((long int) new_b < (long int) lb)
-		{
-		  lb = new_b;
-		}
-	    }
+		int res;
+		MPI_Datatype data_out;
+		mpc_pack_absolute_indexes_t *begins_out;
+		mpc_pack_absolute_indexes_t *ends_out;
+		unsigned long count_out;
+		size_t tmp;
+
+		count_out = 1;
+		begins_out = sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
+		ends_out = 	 sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
+
+		begins_out[0] = 0;
+		PMPC_Type_size (old_type, &(tmp));
+		ends_out[0] = begins_out[0] + tmp - 1;
+
+		PMPC_Derived_datatype (&data_out, begins_out, ends_out, count_out, 0, 0, 0, 0);
+		res = __INTERNAL__PMPI_Type_indexed (count, blocklens, indices, data_out, newtype);
+		__INTERNAL__PMPI_Type_free (&data_out);
+		
+		sctk_free (begins_out);
+		sctk_free (ends_out);
+		sctk_nodebug("Old datatype %d, new datatype %d", old_type, *newtype);
+		return res;
 	}
-
-      PMPC_Derived_datatype (newtype, begins_out, ends_out, count_out, lb,
-			    is_lb, ub, is_ub);
-
-      sctk_free (begins_out);
-      sctk_free (ends_out);
-      return MPI_SUCCESS;
-    }
-  else
-    {
-      int res;
-      MPI_Datatype data_out;
-      mpc_pack_absolute_indexes_t *begins_out;
-      mpc_pack_absolute_indexes_t *ends_out;
-      unsigned long count_out;
-      size_t tmp;
-
-      count_out = 1;
-      begins_out =
-	sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
-      ends_out =
-	sctk_malloc (count_out * sizeof (mpc_pack_absolute_indexes_t));
-
-      begins_out[0] = 0;
-      PMPC_Type_size (old_type, &(tmp));
-      ends_out[0] = begins_out[0] + tmp - 1;
-
-      PMPC_Derived_datatype (&data_out, begins_out, ends_out, count_out, 0, 0,
-			    0, 0);
-      res =
-	__INTERNAL__PMPI_Type_indexed (count, blocklens, indices, data_out,
-				       newtype);
-      __INTERNAL__PMPI_Type_free (&data_out);
-      sctk_free (begins_out);
-      sctk_free (ends_out);
-      return res;
-    }
 }
 
 static int
@@ -7444,6 +7430,7 @@ int
 PMPI_Recv (void *buf, int count, MPI_Datatype datatype, int source, int tag,
 	   MPI_Comm comm, MPI_Status * status)
 {
+  sctk_nodebug("MPI_Recv count %d, datatype %d, source %d, tag %d, comm %d", count, datatype, source, tag, comm);
   int res = MPI_ERR_INTERN;
   if(source == MPC_PROC_NULL)
   {
@@ -7922,10 +7909,10 @@ PMPI_Request_free (MPI_Request * request)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_SUCCESS;
   if (NULL == request) {
-    sctk_debug("request NULL");
+    sctk_nodebug("request NULL");
     res = MPI_ERR_REQUEST;
   } else if(MPI_REQUEST_NULL == *request) {
-	sctk_debug("request MPI_REQUEST_NULL");
+	sctk_nodebug("request MPI_REQUEST_NULL");
 	SCTK__MPI_Check_retrun_val (res, comm);  
   } else
 	res = __INTERNAL__PMPI_Request_free (request);
