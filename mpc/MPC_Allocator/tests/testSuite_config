@@ -4,31 +4,27 @@
 . ${MPC_TEST_SOURCE_DIR}/UnitTests/tools/helper_svunittest.sh
 
 #sources of the allocator without posix export
-ALLOC_SOURCE_PATH="${MPC_TEST_SOURCE_DIR}/../mpc/MPC_Allocator/src"
-ALLOC_SOURCES="${ALLOC_SOURCE_PATH}/sctk_alloc_common.c \
-	${ALLOC_SOURCE_PATH}/sctk_alloc_debug.c \
-	${ALLOC_SOURCE_PATH}/sctk_alloc_light_mm_source.c \
-	${ALLOC_SOURCE_PATH}/sctk_alloc_posix.c \
-	${ALLOC_SOURCE_PATH}/sctk_alloc_spy.c \
-	${ALLOC_SOURCE_PATH}/sctk_alloc_stats.c \
-	${ALLOC_SOURCE_PATH}/sctk_alloc_topology.c \
-	${ALLOC_SOURCE_PATH}/sctk_allocator.c \
-	${ALLOC_SOURCE_PATH}/sctk_alloc_numa_stat.c \
-	${ALLOC_SOURCE_PATH}/sctk_alloc_on_node.c"
+ALLOC_SOURCE_PATH="${MPC_TEST_SOURCE_DIR}/../mpc/MPC_Allocator/"
+	
+#Deps
+OPENPA_PREFIX=${MPC_INSTALL_PREFIX}/mpc-openpa-1.0.2/
+HWLOC_PREFIX=${MPC_INSTALL_PREFIX}/mpc-hwloc-1.6.1/
 
-#recompile the allocator without NUMA support
-helper_insert_test "compile_MPC_Allocator_uma" "0" "gcc -fPIC -Wall -g -shared ${ALLOC_SOURCES} \
-	-DMPC_ALLOCATOR_DISABLE_STATIC -o ${MPC_TEST_CURRENT_WORK_DIR}/executables/liballoc-uma.so \
-	-lpthread"
-
-#recompile the allocator with NUMA support
-HWLOC_PREFIX=${MPC_INSTALL_PREFIX}/mpc-hwloc-1.3/
-HWLOC_CFLAGS="-I${MPC_INSTALL_PREFIX}/mpc-hwloc-1.3/include"
-HWLOC_LDFLAGS="-L${MPC_INSTALL_PREFIX}/mpc-hwloc-1.3/lib -lhwloc -Wl,-rpath,${MPC_INSTALL_PREFIX}/mpc-hwloc-1.3/lib"
-helper_insert_test "compile_MPC_Allocator_numa" "0" "gcc -fPIC -Wall -g -shared ${ALLOC_SOURCES} -DMPC_ALLOCATOR_DISABLE_STATIC -DHAVE_HWLOC ${HWLOC_CFLAGS} ${HWLOC_LDFLAGS} -o ${MPC_TEST_CURRENT_WORK_DIR}/executables/liballoc-numa.so -lpthread"
+#create dirs
+mkdir numa || exit 1
+mkdir uma || exit 1
 
 #setup svunittest
 helper_use_svunittest
+if [ "${HAVE_SVUNITTEST}" = 'yes' ]; then
+	SVUNITTEST_OPT="-DSVUNITTEST_PREFIX=${SVUNITTEST_PREFIX}"
+else
+	SVUNITTEST_OPT=''
+fi
+
+#use cmake
+helper_insert_test "compile_MPC_Allocator_numa" '0' "cd numa && cmake -DCMAKE_BUILD_TYPE=Debug -DHWLOC_PREFIX=${HWLOC_PREFIX} -DOPENPA_PREFIX=${OPENPA_PREFIX} ${ALLOC_SOURCE_PATH} ${SVUNITTEST_OPT} && make"
+helper_insert_test "compile_MPC_Allocator_uma" '0' "cd uma && cmake -DCMAKE_BUILD_TYPE=Debug -DDISABLE_LIBNUMA=yes -DOPENPA_PREFIX=${OPENPA_PREFIX} ${ALLOC_SOURCE_PATH} ${SVUNITTEST_OPT} && make"
 
 #list of tests
 ALLOC_TESTS="test_allocated_chunk \
@@ -43,15 +39,9 @@ ALLOC_TESTS="test_allocated_chunk \
 	test_regions\
 	test_malloc_on_node"
 
-#loop on tests
-MPC_ALLOC_CFLAGS="-I${MPC_TEST_SOURCE_DIR}/../mpc/MPC_Allocator/src -DMPC_ALLOCATOR_DISABLE_STATIC"
-MPC_ALLOC_LDFLAGS="-L${MPC_TEST_CURRENT_WORK_DIR}/executables/ -Wl,-rpath,${MPC_TEST_CURRENT_WORK_DIR}/executables/"
-for test in $ALLOC_TESTS
-do
-	for mode in uma numa
-	do
-		if [ "${mode}" = 'numa' ]; then EXTRA_CFLAGS="-DHAVE_HWLOC"; else EXTRA_CFLAGS=""; fi
-		compile_command="g++ -g -Wall ${CFLAGS} ${EXTRA_CFLAGS} ${MPC_ALLOC_CFLAGS} ${MPC_ALLOC_LDFLAGS} ${MPC_TEST_CURRENT_SOURCE_DIR}/${test}.cpp ${LDFLAGS} -o ${MPC_TEST_CURRENT_WORK_DIR}/executables/${test}_${mode} -lalloc-${mode} -fopenmp"
-		helper_insert_test "${test}_${mode}" "0" "${compile_command} && ${MPC_TEST_CURRENT_WORK_DIR}/executables/${test}_${mode} -m junit_xml -o output-${test}_${mode}.xml" "compile_MPC_Allocator_${mode}"
+for mode in uma numa; do
+	for test in $ALLOC_TESTS; do
+		helper_insert_test "${test}_${mode}" '0' "${MPC_TEST_CURRENT_WORK_DIR}/${mode}/tests/${test} -m junit_xml -o output-${test}_${mode}.xml" "compile_MPC_Allocator_${mode}"
 	done
+	helper_insert_test "${test}_${mode}" '0' "${MPC_TEST_CURRENT_WORK_DIR}/${mode}/tests/test_mpscf_queue valid" "compile_MPC_Allocator_${mode}"
 done

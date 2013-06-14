@@ -26,6 +26,7 @@
 #include "mpcomp.h"
 #include "sctk.h"
 #include "sctk_atomics.h"
+#include "sctk_asm.h"
 #include "sctk_context.h"
 #include "sctk_tls.h"
 
@@ -60,18 +61,27 @@ extern "C"
 // #define MPCOMP_COHERENCY_CHECKING 1
 
 /* MACRO FOR PERFORMANCE */
-#define MPCOMP_USE_ATOMICS	1
 #define MPCOMP_MALLOC_ON_NODE	1
 
 #define MPCOMP_CHUNKS_NOT_AVAIL 1
 #define MPCOMP_CHUNKS_AVAIL     2
 
+#define MPCOMP_TASK 0
 
-#undef MPCOMP_TASK
-//#define MPCOMP_TASK
+#if MPCOMP_TASK
 
-#ifdef MPCOMP_TASK
+#define MPCOMP_TASK_LARCENY_MODE 0
+/*******************************
+ * 0: hierarchical stealing
+ * 1: random stealing
+ * 2: round-robin stealing
+ * 3: production factor stealing
+ ********************************/
+
 #define MPCOMP_TASK_MAX_DELAYED 1024
+
+#define MPCOMP_TASK_NEW_DEPTH 1
+#define MPCOMP_TASK_UNTIED_DEPTH 1
 
 /* Tasks type bitmasks */
 #define MPCOMP_TASK_UNDEFERRED   0x00000001 /* A task for which execution is not deferred
@@ -113,6 +123,13 @@ extern "C"
 	  MPCOMP_MYSELF_NODE = 1,
 	  MPCOMP_MYSELF_LEAF = 2,
      } mpcomp_myself_t ;
+
+     enum mpcomp_topo_obj_type {
+	  MPCOMP_TOPO_OBJ_SOCKET, 
+	  MPCOMP_TOPO_OBJ_CORE, 
+	  MPCOMP_TOPO_OBJ_THREAD, 
+	  MPCOMP_TOPO_OBJ_COUNT
+     };
 
 
 /*****************
@@ -192,7 +209,7 @@ extern "C"
 	  int n_elements;                          /* Corresponds to the head of the stack */
      } mpcomp_stack_node_leaf_t;
 
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
      /* Type of an OpenMP task */
      typedef unsigned char mpcomp_task_type_t;
  
@@ -234,19 +251,14 @@ extern "C"
 
 	  /* -- SINGLE CONSTRUCT -- */
 	  int single_last_current;
-#if MPCOMP_USE_ATOMICS
 	  mpcomp_atomic_int_pad_t single_nb_threads_entered[MPCOMP_MAX_ALIVE_SINGLE + 1];
-#else
-	  sctk_spinlock_t single_lock_enter[MPCOMP_MAX_ALIVE_SINGLE + 1];
-	  volatile int single_nb_threads_entered[MPCOMP_MAX_ALIVE_SINGLE + 1];
-#endif
 	  volatile int single_first_copyprivate;
 	  void *single_copyprivate_data;
 	  volatile int single_nb_threads_stopped;
 
 	  /* -- SECTIONS CONSTRUCT -- */
-    int sections_last_current ;
-    mpcomp_atomic_int_pad_t sections_nb_threads_entered[MPCOMP_MAX_ALIVE_SECTIONS+1] ;
+	  int sections_last_current ;
+	  mpcomp_atomic_int_pad_t sections_nb_threads_entered[MPCOMP_MAX_ALIVE_SECTIONS+1] ;
 
 	  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
 	  int for_dyn_last_current;
@@ -255,9 +267,12 @@ extern "C"
 	  /* ORDERED CONSTRUCT */
 	  volatile int next_ordered_offset; 
 
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
 	  volatile int new_depth;                    /* Depth in the tree of the new_tasks list */
 	  volatile int untied_depth;                 /* Depth in the tree of the untied_tasks list */
+	  volatile int nb_newlists;
+	  volatile int nb_untiedlists;
+
 	  volatile int tasking_init_done;	     /* Thread team task's init tag */
 #endif //MPCOMP_TASK
      } mpcomp_team_t;
@@ -322,10 +337,11 @@ extern "C"
 							  for chunk stealing
 							  - avoid useless search */
 
-#ifdef MPCOMP_TASK 
+#if MPCOMP_TASK 
 	  int tasking_init_done;                   /* Thread task's init tag */
 	  struct mpcomp_task_s *current_task;	   /* Currently running task */
 	  struct mpcomp_task_list_s *tied_tasks;   /* List of suspended tied tasks */
+	  int *larceny_order;
 #endif //MPCOMP_TASK
      } mpcomp_thread_t;
 
@@ -369,10 +385,19 @@ extern "C"
 	  enum mpcomp_myself_t type;      /**/
 
 	  /* OMP 3.0 */
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
 	  struct mpcomp_task_list_s *untied_tasks;   /* List of suspended untied tasks */
-	  struct mpcomp_task_list_s *new_tasks;     /* Lists of new tasks */
+	  struct mpcomp_task_list_s *new_tasks;      /* List of new tasks */
 	  int spin_done;
+	  struct mpcomp_task_list_s **dist_untied_tasks;      /* Distant lists of untied tasks */
+	  struct mpcomp_task_list_s **dist_new_tasks;      /* Distant lists of new tasks */
+#if MPCOMP_TASK_LARCENY_MODE == 1
+	  struct drand48_data *untied_rand_buffer;
+	  struct drand48_data *new_rand_buffer;
+#elif MPCOMP_TASK_LARCENY_MODE == 2
+	  unsigned long new_rank;
+	  unsigned long untied_rank;
+#endif //MPCOMP_TASK_LARCENY_MODE == 1,2
 #endif //MPCOMP_TASK
 	  void *(*func) (void *);	  /* Function to call by every thread */
 	  void *shared;		          /* Shared variables (for every thread) */
@@ -407,17 +432,10 @@ extern "C"
 	  volatile int slave_running;
 	  char pad1[64];                /* Padding */
 
-#if MPCOMP_USE_ATOMICS
 	  sctk_atomics_int barrier;	                /* Barrier for the child team */
 	  sctk_atomics_int chunks_avail;                /* Flag for presence of chunks 
 							   under current node */
 	  sctk_atomics_int nb_chunks_empty_children;    /* Counter for presence of chunks */
-#else
-	  volatile long barrier;	                /* Barrier for the child team */
-	  volatile long chunks_avail;                   /* Flag for presence of chunks 
-							   under current node */
-	  volatile long nb_chunks_empty_children;       /* Counter for presence of chunks */
-#endif
 
 	  char pad2[64];                       /* Padding */
 	  volatile long barrier_done;          /* Is the barrier (for the child team) over? */
@@ -426,9 +444,18 @@ extern "C"
 	  char pad4[64];                       /* Padding */
 
 
-#ifdef MPCOMP_TASK
-	  struct mpcomp_task_list_s *untied_tasks;   /* List of suspended untied tasks */
-	  struct mpcomp_task_list_s *new_tasks;     /* Lists of new tasks */
+#if MPCOMP_TASK
+	  struct mpcomp_task_list_s *untied_tasks;          /* List of suspended untied tasks */
+	  struct mpcomp_task_list_s *new_tasks;             /* Lists of new tasks */
+	  struct mpcomp_task_list_s **dist_untied_tasks;    /* Distant lists of untied tasks */
+	  struct mpcomp_task_list_s **dist_new_tasks;       /* Distant lists of new tasks */
+#if MPCOMP_TASK_LARCENY_MODE == 1
+	  struct drand48_data *untied_rand_buffer;
+	  struct drand48_data *new_rand_buffer;
+#elif MPCOMP_TASK_LARCENY_MODE == 2
+	  unsigned long new_rank;
+	  unsigned long untied_rank;
+#endif //MPCOMP_TASK_LARCENY_MODE == 1,2
 #endif //MPCOMP_TASK
 
 	  enum mpcomp_myself_t type;
@@ -470,28 +497,21 @@ extern "C"
 
 	  /* -- SINGLE CONSTRUCT -- */
 	  team_info->single_last_current = MPCOMP_MAX_ALIVE_SINGLE;
-#if MPCOMP_USE_ATOMICS
+
 	  for (i=0; i<MPCOMP_MAX_ALIVE_SINGLE; i++)
 	       sctk_atomics_store_int(&(team_info->single_nb_threads_entered[i].i), 0);
 	  sctk_atomics_store_int(&(team_info->single_nb_threads_entered[MPCOMP_MAX_ALIVE_SINGLE].i), 
 				 MPCOMP_MAX_THREADS);
 	  sctk_nodebug("__mpcomp_team_init: Filling cell %d with %d", 
 		       MPCOMP_MAX_ALIVE_SINGLE, MPCOMP_MAX_THREADS);
-#else
-	  sctk_debug("__mpcomp_team_init: no atomics!");
-	  for (i=0 ; i<MPCOMP_MAX_ALIVE_SINGLE; i++) {
-	       team_info->single_nb_threads_entered[i] = 0;
-	       team_info->single_lock_enter[i] = SCTK_SPINLOCK_INITIALIZER;
-	  }
-	  team_info->single_nb_threads_entered[MPCOMP_MAX_ALIVE_SINGLE] = MPCOMP_NOWAIT_STOP_SYMBOL;
-	  team_info->single_lock_enter[MPCOMP_MAX_ALIVE_SINGLE] = SCTK_SPINLOCK_INITIALIZER;
-#endif
+
 	  team_info->single_first_copyprivate = 0;
 	  team_info->single_copyprivate_data = NULL;
 	  team_info->single_nb_threads_stopped = 0;
 
 	  /* -- SECTIONS CONSTRUCT -- */
 	  team_info->sections_last_current = 0 ;
+
 	  for (i=0; i<MPCOMP_MAX_ALIVE_SECTIONS; i++)
 	       sctk_atomics_store_int(&(team_info->sections_nb_threads_entered[i].i), 0);
 	  sctk_atomics_store_int(&(team_info->sections_nb_threads_entered[MPCOMP_MAX_ALIVE_SECTIONS].i), 
@@ -499,14 +519,17 @@ extern "C"
 
 	  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
 	  team_info->for_dyn_last_current = MPCOMP_MAX_ALIVE_FOR_DYN;
+
 	  for (i=0; i<MPCOMP_MAX_ALIVE_FOR_DYN; i++)
 	       sctk_atomics_store_int(&(team_info->for_dyn_nb_threads_exited[i].i), 0);
 	  sctk_atomics_store_int(&(team_info->for_dyn_nb_threads_exited[MPCOMP_MAX_ALIVE_FOR_DYN].i),
 				 MPCOMP_NOWAIT_STOP_SYMBOL);
 
-#ifdef MPCOMP_TASK
-	  team_info->new_depth = 0;
-	  team_info->untied_depth = 0;
+#if MPCOMP_TASK
+	  team_info->new_depth = MPCOMP_TASK_NEW_DEPTH;
+	  team_info->untied_depth = sctk_max(MPCOMP_TASK_UNTIED_DEPTH, MPCOMP_TASK_NEW_DEPTH);
+	  team_info->nb_newlists = 0;
+	  team_info->nb_untiedlists = 0;
 #endif //MPCOMP_TASK
      }
 
@@ -548,14 +571,14 @@ extern "C"
 	  for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN+1; i++)
 	       sctk_atomics_store_int(&(t->for_dyn_chunk_info[i].remain), -1);
 
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
 	  t->tasking_init_done = 0;
 	  t->tied_tasks = NULL;
 #endif //MPCOMP_TASK
      }
 
 
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
     /* Task type primitives */
      static inline void mpcomp_task_reset_type(mpcomp_task_type_t *type)
      {
@@ -730,15 +753,15 @@ extern "C"
      }
 
 
-     static inline struct mpcomp_task_list_s * mpcomp_task_list_get_newlist(mpcomp_thread_t *t)
+     static inline struct mpcomp_task_list_s * mpcomp_task_list_get_newlist(mpcomp_mvp_t *mvp)
      {
 	  struct mpcomp_task_list_s *list;
 	  struct mpcomp_node_s *father;
 
 	  /* Start the tree DFS from the current mvp */
-	  list = t->mvp->new_tasks;
-	  father = t->mvp->father;
-	  
+	  list = mvp->new_tasks;
+	  father = mvp->father;
+
 	  /* Search for the new_tasks list */
 	  while (list == NULL && father != NULL) {
 	       list = father->new_tasks;
@@ -751,15 +774,15 @@ extern "C"
 	  return list;	       
      }
 
-    static inline struct mpcomp_task_list_s * mpcomp_task_list_get_untiedlist(mpcomp_thread_t *t)
+    static inline struct mpcomp_task_list_s * mpcomp_task_list_get_untiedlist(mpcomp_mvp_t *mvp)
      {
 	  struct mpcomp_task_list_s *list;
 	  struct mpcomp_node_s *father;
 
 	  /* Start the tree DFS from the current mvp */
-	  list = t->mvp->untied_tasks;
-	  father = t->mvp->father;
-	  
+	  list = mvp->untied_tasks;
+	  father = mvp->father;
+
 	  /* Search for the new_tasks list */
 	  while (list == NULL && father != NULL) {
 	       list = father->untied_tasks;
@@ -824,7 +847,7 @@ extern "C"
 						 int b, int incr, int chunk_size);
 
 
-#ifdef MPCOMP_TASK
+#if MPCOMP_TASK
      /* mpcomp_task.c */
      void __mpcomp_task_schedule();
 #endif //MPCOMP_TASK

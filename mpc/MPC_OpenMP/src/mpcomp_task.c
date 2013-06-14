@@ -21,12 +21,12 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifdef MPCOMP_TASK
-
 #include <sctk_bool.h>
 #include <sctk_int.h>
 #include <sctk_asm.h>
 #include "mpcomp_internal.h"
+
+#if MPCOMP_TASK
 
 static int mpcomp_task_nb_delayed = 0;
 
@@ -36,7 +36,7 @@ void __mpcomp_task_list_infos_init()
      mpcomp_thread_t *t;
      mpcomp_stack_t *s;
      int i, j;
-     
+
      /* Retrieve the current thread information */
      t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);
@@ -60,12 +60,14 @@ void __mpcomp_task_list_infos_init()
 	  if (n->depth == t->team->new_depth) {
 	       n->new_tasks = sctk_malloc(sizeof(struct mpcomp_task_list_s));
 	       mpcomp_task_list_new(n->new_tasks);
+	       t->team->nb_newlists++;
 	  }
 	  
 	  /* If the node correspond to the untied list depth, allocate the data structure */
 	  if (n->depth == t->team->untied_depth) {
 	       n->untied_tasks = sctk_malloc(sizeof(struct mpcomp_task_list_s));
 	       mpcomp_task_list_new(n->untied_tasks);
+	       t->team->nb_untiedlists++;
 	  }
 	  
 	  if (n->depth <= t->team->untied_depth || n->depth <= t->team->new_depth) {	       
@@ -90,12 +92,14 @@ void __mpcomp_task_list_infos_init()
 			 if (n->depth + 1 == t->team->new_depth) {
 			      mvp->new_tasks = sctk_malloc(sizeof(struct mpcomp_task_list_s));
 			      mpcomp_task_list_new(mvp->new_tasks);
+			      t->team->nb_newlists++;
 			 }
 			 
 			 /* If the node correspond to the untied list depth, allocate the data structure */
 			 if (n->depth + 1 == t->team->untied_depth) {
 			      mvp->untied_tasks = sctk_malloc(sizeof(struct mpcomp_task_list_s));
 			      mpcomp_task_list_new(mvp->untied_tasks);
+			      t->team->nb_untiedlists++;
 			 }
 		    }
 		    break ;
@@ -110,6 +114,194 @@ void __mpcomp_task_list_infos_init()
 	  
      return;
 }
+
+
+
+void __mpcomp_task_list_larceny_init()
+{
+     mpcomp_thread_t *t;
+     mpcomp_stack_t *s;
+     struct mpcomp_task_list_s **newl;
+     struct mpcomp_task_list_s ***dist_newl;
+     struct mpcomp_task_list_s **untiedl;
+     struct mpcomp_task_list_s ***dist_untiedl;
+     int i, ni, ui;
+
+     /* Retrieve the current thread information */
+     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+     sctk_assert(t != NULL);
+
+     /* TODO compute the real number of max elements for this stack */
+     s = __mpcomp_create_stack(2048);
+     sctk_assert(s != NULL);
+
+
+     ni = ui = 0;
+     newl = sctk_malloc(sizeof(struct mpcomp_task_list_s *) * t->team->nb_newlists); 
+     dist_newl = sctk_malloc(sizeof(struct mpcomp_task_list_s **) * t->team->nb_newlists); 
+     untiedl = sctk_malloc(sizeof(struct mpcomp_task_list_s *) * t->team->nb_newlists); 
+     dist_untiedl = sctk_malloc(sizeof(struct mpcomp_task_list_s **) * t->team->nb_newlists); 
+
+     /* Push the root in the stack */
+     __mpcomp_push(s, t->mvp->root);
+
+     /* DFS starting from the root */
+     while (!__mpcomp_is_stack_empty(s)) {
+	  mpcomp_node_t *n;
+
+	  /* Get the last node inserted in the stack */
+	  n = __mpcomp_pop(s);
+	  sctk_assert(n != NULL);
+	  
+	  /* If the node correspond to the new list depth, allocate the data structure */
+	  if (n->depth == t->team->new_depth) {
+#if MPCOMP_MALLOC_ON_NODE
+	       n->dist_new_tasks = sctk_malloc_on_node(sizeof(struct mpcomp_task_list_s *) * t->team->nb_newlists - 1, n->id_numa);
+#if MPCOMP_TASK_LARCENY_MODE == 1
+	       n->new_rand_buffer = sctk_malloc_on_node(sizeof(struct drand48_data), n->id_numa);
+#endif //MPCOMP_TASK_LARCENY_MODE == 1
+#else
+	       n->dist_new_tasks = sctk_malloc(sizeof(struct mpcomp_task_list_s *) * t->team->nb_newlists - 1);
+#if MPCOMP_TASK_LARCENY_MODE == 1
+	       n->new_rand_buffer = sctk_malloc(sizeof(struct drand48_data));
+#endif //MPCOMP_TASK_LARCENY_MODE == 1
+#endif //MALLOC_ON_NODE
+	       for (i=0; i<ni; i++) {
+		    n->dist_new_tasks[i] = newl[i];
+		    dist_newl[i][ni - 1] = n->new_tasks;
+	       }
+	       newl[ni] = n->new_tasks;
+	       dist_newl[ni] = n->dist_new_tasks;
+
+#if MPCOMP_TASK_LARCENY_MODE == 1
+	       srand48_r(time(NULL), n->new_rand_buffer);
+#elif MPCOMP_TASK_LARCENY_MODE == 2
+	       n->new_rank = ni;
+#endif //MPCOMP_TASK_LARCENY_MODE == 1,2
+
+		    ni++;
+	  }
+	  
+	  /* If the node correspond to the untied list depth, allocate the data structure */
+	  if (n->depth == t->team->untied_depth) {
+#if MPCOMP_MALLOC_ON_NODE
+	       n->dist_untied_tasks = sctk_malloc_on_node(sizeof(struct mpcomp_task_list_s *) * t->team->nb_untiedlists - 1, n->id_numa);
+#if MPCOMP_TASK_LARCENY_MODE == 1
+	       n->untied_rand_buffer = sctk_malloc_on_node(sizeof(struct drand48_data), n->id_numa);
+#endif //MPCOMP_TASK_LARCENY_MODE == 1
+#else
+	       n->dist_untied_tasks = sctk_malloc(sizeof(struct mpcomp_task_list_s *) * t->team->nb_untiedlists - 1);
+#if MPCOMP_TASK_LARCENY_MODE == 1
+	       n->untied_rand_buffer = sctk_malloc(sizeof(struct drand48_data));
+#endif //MPCOMP_TASK_LARCENY_MODE == 1
+#endif //MALLOC_ON_NODE
+	       for (i=0; i<ui; i++) {
+		    n->dist_untied_tasks[i] = untiedl[i];
+		    dist_untiedl[i][ui - 1] = n->untied_tasks;
+	       }
+	       untiedl[ui] = n->untied_tasks;
+	       dist_untiedl[ui] = n->dist_untied_tasks;
+
+#if MPCOMP_TASK_LARCENY_MODE == 1
+	       srand48_r(time(NULL), n->untied_rand_buffer);
+#elif MPCOMP_TASK_LARCENY_MODE == 2
+	       n->untied_rank = ui;
+#endif //MPCOMP_TASK_LARCENY_MODE == 1,2
+	       
+	       ui++;
+	  }
+	  
+	  if (n->depth < t->team->untied_depth || n->depth < t->team->new_depth) {	       
+	       switch (n->child_type) {
+	       case MPCOMP_CHILDREN_NODE:
+		    for (i=n->nb_children-1; i>=0; i--) {
+			 /* Insert all the node's children in the stack */
+			 __mpcomp_push(s, n->children.node[i]);
+		    }
+		    break;
+		    
+	       case MPCOMP_CHILDREN_LEAF:
+		    for (i=0; i<n->nb_children; i++) {
+			 /* All the children are leafs */
+			 
+			 mpcomp_mvp_t *mvp;
+			 
+			 mvp = n->children.leaf[i];
+			 sctk_assert(mvp != NULL);
+			 /* If the node correspond to the new list depth, allocate the data structure */
+			 if (n->depth + 1 == t->team->new_depth) {
+#if MPCOMP_MALLOC_ON_NODE
+			      mvp->dist_new_tasks = sctk_malloc_on_node(sizeof(struct mpcomp_task_list_s *) * t->team->nb_newlists - 1, mvp->father->id_numa);
+#if MPCOMP_TASK_LARCENY_MODE == 1
+			      mvp->new_rand_buffer = sctk_malloc_on_node(sizeof(struct drand48_data), mvp->father->id_numa);
+#endif //MPCOMP_TASK_LARCENY_MODE == 1
+#else
+			      mvp->dist_new_tasks = sctk_malloc(sizeof(struct mpcomp_task_list_s *) * t->team->nb_newlists - 1);
+#if MPCOMP_TASK_LARCENY_MODE == 1
+			      mvp->new_rand_buffer = sctk_malloc(sizeof(struct drand48_data));
+#endif //MPCOMP_TASK_LARCENY_MODE == 1
+#endif //MALLOC_ON_NODE
+			      for (i=0; i<ni; i++) {
+				   mvp->dist_new_tasks[i] = newl[i];
+				   dist_newl[i][ni - 1] = mvp->new_tasks;
+			      }
+			      newl[ni] = mvp->new_tasks;
+			      dist_newl[ni] = mvp->dist_new_tasks;
+
+#if MPCOMP_TASK_LARCENY_MODE == 1
+			      srand48_r(time(NULL), mvp->new_rand_buffer);
+#elif MPCOMP_TASK_LARCENY_MODE == 2
+			      mvp->new_rank = ni;
+#endif //MPCOMP_TASK_LARCENY_MODE == 1,2
+
+			      ni++;
+			 }
+			 
+			 /* If the node correspond to the untied list depth, allocate the data structure */
+			 if (n->depth + 1 == t->team->untied_depth) {
+#if MPCOMP_MALLOC_ON_NODE
+			      mvp->dist_untied_tasks = sctk_malloc_on_node(sizeof(struct mpcomp_task_list_s *) * t->team->nb_untiedlists - 1, mvp->father->id_numa);
+#if MPCOMP_TASK_LARCENY_MODE == 1
+			      mvp->untied_rand_buffer = sctk_malloc_on_node(sizeof(struct drand48_data), mvp->father->id_numa);
+#endif //MPCOMP_TASK_LARCENY_MODE == 1
+#else
+			      mvp->dist_untied_tasks = sctk_malloc(sizeof(struct mpcomp_task_list_s *) * t->team->nb_untiedlists - 1);
+#if MPCOMP_TASK_LARCENY_MODE == 1
+			      mvp->untied_rand_buffer = sctk_malloc(sizeof(struct drand48_data));
+#endif //MPCOMP_TASK_LARCENY_MODE == 1
+#endif //MALLOC_ON_NODE
+			      for (i=0; i<ui; i++) {
+				   mvp->dist_untied_tasks[i] = untiedl[i];
+				   dist_untiedl[i][ui - 1] = mvp->untied_tasks;
+			      }
+			      untiedl[ui] = mvp->untied_tasks;
+			      dist_untiedl[ui] = mvp->dist_untied_tasks;
+			      ui++;
+
+#if MPCOMP_TASK_LARCENY_MODE == 1
+			      srand48_r(time(NULL), mvp->untied_rand_buffer);
+#elif MPCOMP_TASK_LARCENY_MODE == 2
+			      mvp->untied_rank = ni;
+#endif //MPCOMP_TASK_LARCENY_MODE == 1,2
+			 }
+		    }
+		    break ;
+		    
+	       default:
+		    sctk_nodebug("not reachable"); 
+	       }
+	  }
+     }     
+     __mpcomp_free_stack(s);
+     free(s);
+     sctk_free(dist_untiedl);
+     sctk_free(untiedl);
+     sctk_free(dist_newl);
+     sctk_free(newl);
+     
+     return;
+}
+
 
 
 /* 
@@ -143,6 +335,7 @@ void __mpcomp_task_infos_init()
 	       /* Executed only one time per process */
 
 	       __mpcomp_task_list_infos_init();
+	       __mpcomp_task_list_larceny_init();
 	       barrier = 1;
 	  }
 	  
@@ -262,13 +455,425 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 	  }
 	  
 	  /* Push the task in the list of new tasks */
-	  new_list = mpcomp_task_list_get_newlist(t);
+	  new_list = mpcomp_task_list_get_newlist(t->mvp);
 	  mpcomp_task_list_lock (new_list);
 	  mpcomp_task_list_pushtotail (new_list, task);
 	  mpcomp_task_list_unlock (new_list);
      }
 }
 
+#if MPCOMP_TASK_LARCENY_MODE == 0
+static struct mpcomp_task_s *__mpcomp_get_new_task(struct mpcomp_node_s *local_root, int new_depth)
+{
+     struct mpcomp_task_list_s *list;
+     struct mpcomp_task_s *task = NULL;
+     struct mpcomp_node_s *n;
+     mpcomp_stack_t *s;
+     int i;
+
+      /* TODO compute the real number of max elements for this stack */
+     s = __mpcomp_create_stack(2048);
+     sctk_assert(s != NULL);
+     
+     if (sctk_atomics_load_int(&(local_root->barrier)) + 1 < local_root->barrier_num_threads) {
+	  /* Some threads are still working under this node*/
+	  
+	  /* Push the node containing new_list in the stack */
+	  __mpcomp_push(s, local_root);
+
+	  while (!__mpcomp_is_stack_empty(s)) {
+	       
+	       /* Get the last node inserted in the stack */
+	       n = __mpcomp_pop(s);
+	       sctk_assert(n != NULL);
+
+	       if (sctk_atomics_load_int(&(n->barrier)) + 1 < n->barrier_num_threads) {
+		    /* Some threads are still working under this node */
+
+		    if (n->depth == new_depth) {
+			 /* If current node own a new list */
+
+			 list = n->new_tasks;
+			 sctk_assert(list != NULL);
+			 mpcomp_task_list_lock(list);
+			 task = mpcomp_task_list_popfromtail(list);
+			 mpcomp_task_list_unlock(list);
+			 if (task != NULL)
+			      return task;
+		    } else {
+			 /* Need to go deeper to find new tasks lists */
+
+			 switch (n->child_type) {
+			 case MPCOMP_CHILDREN_NODE:
+			      for (i=n->nb_children-1; i>=0; i--) {
+				   /* Insert all the node's children in the stack */
+				   __mpcomp_push(s, n->children.node[i]);
+			      }
+			      break;
+			      
+			 case MPCOMP_CHILDREN_LEAF:
+			      for (i=0; i<n->nb_children; i++) {
+				   /* All the children are leafs */
+			      
+				   mpcomp_mvp_t *mvp;
+				   
+				   mvp = n->children.leaf[i];
+				   sctk_assert(mvp != NULL);
+				   
+				   list = mvp->new_tasks;
+				   sctk_assert(list != NULL);
+				   mpcomp_task_list_lock(list);
+				   task = mpcomp_task_list_popfromtail(list);
+				   mpcomp_task_list_unlock(list);
+				   if (task != NULL)
+					return task;
+			      }
+			      break ;
+			      
+			 default:
+			      sctk_nodebug("not reachable"); 
+			 }
+		    }
+	       }
+	  }
+     }
+
+     __mpcomp_free_stack(s);
+     free(s);
+     return NULL;
+}
+
+static struct mpcomp_task_s *__mpcomp_get_untied_task(struct mpcomp_node_s *local_root, int untied_depth)
+{
+     struct mpcomp_task_list_s *list;
+     struct mpcomp_task_s *task = NULL;
+     struct mpcomp_node_s *n;
+     mpcomp_stack_t *s;
+     int i;
+
+      /* TODO compute the real number of max elements for this stack */
+     s = __mpcomp_create_stack(2048);
+     sctk_assert(s != NULL);
+     
+     if (sctk_atomics_load_int(&(local_root->barrier)) + 1 < local_root->barrier_num_threads) {
+	  /* Some threads are still working under this node*/
+	  
+	  /* Push the node containing untied_list in the stack */
+	  __mpcomp_push(s, local_root);
+
+	  while (!__mpcomp_is_stack_empty(s)) {
+	       
+	       /* Get the last node inserted in the stack */
+	       n = __mpcomp_pop(s);
+	       sctk_assert(n != NULL);
+
+	       if (sctk_atomics_load_int(&(n->barrier)) + 1 < n->barrier_num_threads) {
+		    /* Some threads are still working under this node */
+
+		    if (n->depth == untied_depth) {
+			 /* If current node own a untied list */
+
+			 list = n->untied_tasks;
+			 sctk_assert(list != NULL);
+			 mpcomp_task_list_lock(list);
+			 task = mpcomp_task_list_popfromtail(list);
+			 mpcomp_task_list_unlock(list);
+			 if (task != NULL)
+			      return task;
+		    } else {
+			 /* Need to go deeper to find untied tasks lists */
+
+			 switch (n->child_type) {
+			 case MPCOMP_CHILDREN_NODE:
+			      for (i=n->nb_children-1; i>=0; i--) {
+				   /* Insert all the node's children in the stack */
+				   __mpcomp_push(s, n->children.node[i]);
+			      }
+			      break;
+			      
+			 case MPCOMP_CHILDREN_LEAF:
+			      for (i=0; i<n->nb_children; i++) {
+				   /* All the children are leafs */
+			      
+				   mpcomp_mvp_t *mvp;
+				   
+				   mvp = n->children.leaf[i];
+				   sctk_assert(mvp != NULL);
+				   
+				   list = mvp->untied_tasks;
+				   sctk_assert(list != NULL);
+				   mpcomp_task_list_lock(list);
+				   task = mpcomp_task_list_popfromtail(list);
+				   mpcomp_task_list_unlock(list);
+				   if (task != NULL)
+					return task;
+			      }
+			      break ;
+			      
+			 default:
+			      sctk_nodebug("not reachable"); 
+			 }
+		    }
+	       }
+	  }
+     }
+
+     __mpcomp_free_stack(s);
+     free(s);
+     return NULL;
+}
+#endif //MPCOMP_TASK_LARCENY_MODE == 0
+
+#if MPCOMP_TASK_LARCENY_MODE == 0
+static struct mpcomp_task_s * __mpcomp_task_larceny()
+{
+     mpcomp_thread_t *highwayman;
+     struct mpcomp_task_list_s *list;
+     struct mpcomp_task_s *task = NULL;
+     struct mpcomp_node_s *ancestor, *n;
+     int i, checked;
+
+     /* Retrieve the information (microthread structure and current region) */
+     highwayman = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+     sctk_assert(highwayman != NULL);
+
+
+     /* Retrieve the node containing the new list */
+     ancestor = highwayman->mvp->father;
+     if (highwayman->team->new_depth < ancestor->depth + 1) {
+	  while(ancestor->depth >= highwayman->team->new_depth && ancestor->father != NULL)
+	       ancestor = ancestor->father;
+          
+	  /* Look inside each untied list of nearest threads (sharing the same new list) */
+	  task = __mpcomp_get_untied_task(ancestor,  highwayman->team->untied_depth);
+	  if (task)
+	       return task;
+     }
+
+     /* Look inside new lists of others */
+     n = ancestor;
+     while (n->father) {
+	  checked = n->rank;
+	  n = n->father;
+	  
+	  for (i=0; i<n->nb_children; i++)
+	       if (i != checked) {
+		    task = __mpcomp_get_new_task(n->children.node[i], highwayman->team->new_depth);
+		    if (task)
+			 return task;
+	       }
+     }
+
+     /* Look inside untied lists of others */
+     n = ancestor;
+     while (n->father) {
+	  checked = n->rank;
+	  n = n->father;
+	  
+	  for (i=0; i<n->nb_children; i++)
+	       if (i != checked) {
+		    task = __mpcomp_get_untied_task(n->children.node[i], highwayman->team->untied_depth);
+		    if (task)
+			 return task;
+	       }
+     }
+
+     return NULL;
+}
+#endif // MPCOMP_TASK_LARCENY_MODE == 0
+
+
+#if MPCOMP_TASK_LARCENY_MODE == 1 || MPCOMP_TASK_LARCENY_MODE == 2 || MPCOMP_TASK_LARCENY_MODE == 3
+
+#if MPCOMP_TASK_LARCENY_MODE == 1
+static void draw_lot(int res[], int n, struct drand48_data *rand_buffer)
+{
+     int i, k, no, tmp;
+     long int v;
+
+     for (i=0; i<n; i++)
+	  res[i]= i;
+
+     for (i=0, no=n; i<n; i++, no--) {
+          lrand48_r(rand_buffer, &v);
+	  k = v%no;
+	  tmp = res[i];
+	  res[i] = res[i+k];
+	  res[i+k] = tmp;
+     }
+}
+#endif //MPCOMP_TASK_LARCENY_MODE == 1
+
+static int set_order(int res[], int n, mpcomp_node_t *node, mpcomp_mvp_t *mvp, int new)
+{
+#if MPCOMP_TASK_LARCENY_MODE == 1
+     struct drand48_data *rand_buffer;
+
+     if (new == 1)
+	  rand_buffer = node ? node->new_rand_buffer : mvp->new_rand_buffer;
+     else
+	  rand_buffer = node ? node->untied_rand_buffer : mvp->untied_rand_buffer;
+     
+     draw_lot(res, n, rand_buffer);
+     
+     return n;
+#elif MPCOMP_TASK_LARCENY_MODE == 2
+     int i;
+     unsigned long rank;
+
+     if (new == 1)
+	  rank = node ? node->new_rank : mvp->new_rank;
+     else
+	  rank = node ? node->untied_rank : mvp->untied_rank;
+     
+     for (i=0; i<n; i++)
+	  res[i] = (rank + i + 1) % n;
+
+     return n;
+#elif MPCOMP_TASK_LARCENY_MODE == 3
+     int i, j, k, no, nbe;
+     struct mpcomp_task_list_s **tab_list;
+     struct mpcomp_task_list_s *list;
+     int *nb_elements = sctk_malloc(sizeof(int) * n);
+
+     if (new == 1)
+	  tab_list = node ? node->dist_new_tasks : mvp->dist_new_tasks;
+     else
+	  tab_list = node ? node->dist_untied_tasks : mvp->dist_untied_tasks;
+     
+     no = 0;
+     for (i=0; i<n; i++) {
+	  list = tab_list[i];
+	  sctk_assert(list != NULL);
+	  mpcomp_task_list_lock(list);
+	  nbe = list->nb_elements;
+	  mpcomp_task_list_unlock(list);
+	  if (nbe > 0) {
+	       j=0;
+	       while (j<no && nbe <= nb_elements[res[j]])
+		    j++;
+	       
+	       for (k=no; k>j; k++)
+		    res[k] = res[k-1];
+	       
+	       res[j] = i;
+	       nb_elements[i] = nbe;
+	       no++;
+	  }
+     }
+
+     sctk_free(nb_elements);
+     
+     return no;
+
+#endif //MPCOMP_TASK_LARCENY_MODE == 1,2,3
+}
+
+static struct mpcomp_task_s * __mpcomp_task_larceny()
+{
+     mpcomp_thread_t *highwayman;
+     struct mpcomp_task_list_s *list;
+     struct mpcomp_task_s *task = NULL;
+     int i, checked;
+     int nb_newlists, nb_untiedlists, nbl;
+     int *order;
+
+     /* Retrieve the information (microthread structure and current region) */
+     highwayman = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+     sctk_assert(highwayman != NULL);
+
+     nb_newlists = highwayman->team->nb_newlists;
+     nb_untiedlists = highwayman->team->nb_untiedlists;
+     
+     if (!highwayman->larceny_order)
+	  highwayman->larceny_order = sctk_malloc(nb_newlists - 1);
+     order = highwayman->larceny_order;
+
+     if (highwayman->team->new_depth < highwayman->mvp->father->depth + 1) {
+	  /* New lists are at some node level */
+
+	  struct mpcomp_node_s *n;
+	  
+	  /* Retrieve the node containing the new list */
+	  n = highwayman->mvp->father;
+	  while(n->depth > highwayman->team->new_depth && n->father != NULL)
+	       n = n->father;
+
+	  nbl = set_order(order, nb_newlists - 1, n, NULL, 1);
+
+	  for (i=0; i<nbl; i++) {
+	       list = n->dist_new_tasks[order[i]];
+	       sctk_assert(list != NULL);
+	       mpcomp_task_list_lock(list);
+	       task = mpcomp_task_list_popfromtail(list);
+	       mpcomp_task_list_unlock(list);
+	       if (task != NULL)
+		    return task;
+	  }
+     } else {
+	  /* New lists are at mvp level */
+
+	  struct mpcomp_mvp_s *mvp;
+
+	  mvp = highwayman->mvp;
+
+	  nbl = set_order(order, nb_newlists - 1, NULL, mvp, 1);
+
+	  for (i=0; i<nbl; i++) {
+	       list = mvp->dist_new_tasks[order[i]];
+	       sctk_assert(list != NULL);
+	       mpcomp_task_list_lock(list);
+	       task = mpcomp_task_list_popfromtail(list);
+	       mpcomp_task_list_unlock(list);
+	       if (task != NULL)
+		    return task;
+	  }
+     }
+
+     if (highwayman->team->untied_depth < highwayman->mvp->father->depth + 1) {
+	  /* Untied lists are at some node level */
+	  
+	  struct mpcomp_node_s *n;
+	  
+	  /* Retrieve the node containing the untied list */
+	  n = highwayman->mvp->father;
+	  while(n->depth > highwayman->team->new_depth && n->father != NULL)
+	       n = n->father;
+	  
+	  nbl = set_order(order, nb_untiedlists - 1, n, NULL, 0);
+
+	  for (i=0; i<nbl; i++) {
+	       list = n->dist_untied_tasks[order[i]];
+	       sctk_assert(list != NULL);
+	       mpcomp_task_list_lock(list);
+	       task = mpcomp_task_list_popfromtail(list);
+	       mpcomp_task_list_unlock(list);
+	       if (task != NULL)
+		    return task;
+	  }
+     } else {
+	  /* Untied lists are at mvp level */
+	  
+	  struct mpcomp_mvp_s *mvp;
+
+	  mvp = highwayman->mvp;
+
+	  nbl = set_order(order, nb_untiedlists - 1, NULL, mvp, 0);
+
+	  for (i=0; i<nbl; i++) {
+	       list = mvp->dist_untied_tasks[order[i]];
+	       sctk_assert(list != NULL);
+	       mpcomp_task_list_lock(list);
+	       task = mpcomp_task_list_popfromtail(list);
+	       mpcomp_task_list_unlock(list);
+	       if (task != NULL)
+		    return task;
+	  }
+     }
+     
+     return NULL;
+}
+#endif //MPCOMP_TASK_LARCENY_MODE == 1 || MPCOMP_TASK_LARCENY_MODE == 2 || MPCOMP_TASK_LARCENY_MODE == 3
 
 /* 
  * Schedule remaining tasks in the different task lists (tied, untied, new) 
@@ -304,7 +909,7 @@ void __mpcomp_task_schedule()
 	       
 	  if (task == NULL) {
 	       /* If no task found previously, find a remaining untied task */
-	       list = mpcomp_task_list_get_untiedlist(t);
+	       list = mpcomp_task_list_get_untiedlist(t->mvp);
 	       mpcomp_task_list_lock (list);
 	       task = mpcomp_task_list_popfromtail (list);
 	       mpcomp_task_list_unlock (list);
@@ -312,10 +917,15 @@ void __mpcomp_task_schedule()
       
 	  if (task == NULL) {
 	       /* If no task found previously, find a remaining task */
-	       list = mpcomp_task_list_get_newlist(t);		    		    
+	       list = mpcomp_task_list_get_newlist(t->mvp);		    		    
 	       mpcomp_task_list_lock (list);
 	       task = mpcomp_task_list_popfromhead (list);
 	       mpcomp_task_list_unlock (list);
+	  }
+	  
+	  if (task == NULL) {
+	       /* If no task found previously, try to thieve a task somewhere */
+	       task = __mpcomp_task_larceny();
 	  }
 	  
 	  if (task == NULL) {

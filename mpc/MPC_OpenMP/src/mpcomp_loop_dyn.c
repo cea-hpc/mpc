@@ -161,28 +161,25 @@ int __mpcomp_dynamic_steal_index(int *from, int *to)
    
      /* Grab remaining chunks */ 
      r = sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain) );
-  
      if(r > 0) {
+	  real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
 
-        real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
-    
-           while(real_r > 0 && real_r != r) {
-		    //sctk_nodebug("test1");
-             r = real_r;
-	     real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
-	   }
+	  while(real_r > 0 && real_r != r) {
+	       r = real_r;
+	       real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
+	  }
 
            if(real_r > 0) {
              //t->stolen_chunk_id = sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r;
 	     sctk_nodebug("__mpcomp_dynamic_steal2 rank=%d: get a chunk from previously visited mvp rank=%d", t->rank, t->stolen_mvp->rank);
-//#if 0      
+
 	     __mpcomp_get_specific_chunk_per_rank( target_t->rank, target_t->num_threads,
-							  target_t->loop_lb, target_t->loop_b,
-							  target_t->loop_incr, 
-							  target_t->loop_chunk_size, 
-							  sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
-							  from, to ) ;  
-//#endif
+						   target_t->loop_lb, target_t->loop_b,
+						   target_t->loop_incr, 
+						   target_t->loop_chunk_size, 
+						   sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
+						   from, to ) ;  
+
 	     return 1;
 	   }
     }
@@ -214,33 +211,32 @@ int __mpcomp_dynamic_steal_index(int *from, int *to)
    target_t = &(mvp->threads[0]);
    target_rank = target_t->rank;
    target_loop_index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
+
    r = sctk_atomics_load_int(&(target_t->for_dyn_chunk_info[target_loop_index].remain));
 
    if(r > 0) {
-
      real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
-    
+
      while(real_r > 0 && real_r != r) {
-        //sctk_nodebug("test1");
         r = real_r;
         real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
      }
-
+     
      if(real_r > 0) {
         //t->stolen_chunk_id = sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r;
         sctk_nodebug("__mpcomp_dynamic_steal2 rank=%d: get a chunk from previously visited mvp rank=%d", t->rank, t->stolen_mvp->rank);
-//#if 0      
-        __mpcomp_get_specific_chunk_per_rank( target_t->rank, target_t->num_threads,
-							  target_t->loop_lb, target_t->loop_b,
-							  target_t->loop_incr, 
-							  target_t->loop_chunk_size, 
-							  sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
-							  from, to ) ;  
-//#endif
-        return 1;
-    }
-   }
 
+        __mpcomp_get_specific_chunk_per_rank( target_t->rank, target_t->num_threads,
+					      target_t->loop_lb, target_t->loop_b,
+					      target_t->loop_incr, 
+					      target_t->loop_chunk_size, 
+					      sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
+					      from, to ) ;  
+
+        return 1;
+     }
+   }
+   
 #if 0
    /* Print state of Leaf iterator */
    printf("L=\t");
@@ -334,28 +330,28 @@ int __mpcomp_dynamic_steal(int *from, int *to)
    
 	  /* Grab remaining chunks */ 
 	  r = sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain) );
-  
 	  if(r > 0) {
 
 	       real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
-    
+
 	       while(real_r > 0 && real_r != r) {
 		    //sctk_nodebug("test1");
 		    r = real_r;
+
 		    real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
 	       }
 
 	       if(real_r > 0) {
 		    //t->stolen_chunk_id = sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r;
 		    sctk_nodebug("__mpcomp_dynamic_steal2 rank=%d: get a chunk from previously visited mvp rank=%d", t->rank, t->stolen_mvp->rank);
-//#if 0      
+
 		    __mpcomp_get_specific_chunk_per_rank( target_t->rank, target_t->num_threads,
-							  target_t->loop_lb, target_t->loop_b,
-							  target_t->loop_incr, 
-							  target_t->loop_chunk_size, 
-							  sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
-							  from, to ) ;  
-//#endif
+			 target_t->loop_lb, target_t->loop_b,
+			 target_t->loop_incr, 
+			 target_t->loop_chunk_size, 
+			 sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
+			 from, to ) ;  
+
 		    return 1;
 	       }
 	  }
@@ -448,6 +444,7 @@ int __mpcomp_dynamic_steal(int *from, int *to)
 	       target_t = &(l->threads[0]);
 	       target_rank = target_t->rank;
 	       target_loop_index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
+
 	       r = sctk_atomics_load_int(&(target_t->for_dyn_chunk_info[target_loop_index].remain));
 
 #if 0 
@@ -475,7 +472,6 @@ int __mpcomp_dynamic_steal(int *from, int *to)
 		    real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
 
 		    while( real_r > 0 && real_r != r) {
-			 sctk_nodebug("test2");
 			 r = real_r;
 			 real_r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), r, r-1);
 		    } 
@@ -487,12 +483,10 @@ int __mpcomp_dynamic_steal(int *from, int *to)
 			 t->stolen_mvp = target_t->mvp;
 			 //t->tree_stack = stack; /* Store stack state */
 
-//#if 0
 			 __mpcomp_get_specific_chunk_per_rank( target_t->rank, target_t->num_threads,
-							       target_t->loop_lb, target_t->loop_b, target_t->loop_incr, target_t->loop_chunk_size, 
-							       sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
-							       from, to ) ; 
-//#endif
+			      target_t->loop_lb, target_t->loop_b, target_t->loop_incr, target_t->loop_chunk_size, 
+			      sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
+			      from, to ) ; 
 
 			 return 1;
 		    }        
@@ -593,12 +587,10 @@ int __mpcomp_dynamic_steal2(int *from, int *to)
 		    //sctk_atomics_incr_int( &(team->stats_last_mvp_chunk));
 		    //t->stolen_chunk_id = sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r;
 
-		    //#if 0
 		    __mpcomp_get_specific_chunk_per_rank( target_t->rank, target_t->num_threads,
 							  target_t->loop_lb, target_t->loop_b, target_t->loop_incr, target_t->loop_chunk_size, 
 							  sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
 							  from, to ) ; 
-		    //#endif
 
 		    return 1;
 	       }
@@ -610,6 +602,7 @@ int __mpcomp_dynamic_steal2(int *from, int *to)
 	  /* Update chunks availability infos */
 	  nb_chunks_empty_children = sctk_atomics_load_int( &(n->nb_chunks_empty_children));
 	  chunks_avail = sctk_atomics_load_int( &(n->chunks_avail));
+
 	  //nb_chunks_empty_children = sctk_atomics_fetch_and_incr_int( &(n->nb_chunks_empty_children));
 	  //if(chunks_avail == MPCOMP_CHUNKS_AVAIL) {
 	  sctk_nodebug("__mpcomp_dynamic_steal rank=%d: check chunks avail=1: nb_chunks_empty_children=%d, real nb chunks empty children=%d, node children=%d", t->rank, nb_chunks_empty_children, n->nb_chunks_empty_children, n->nb_children);
@@ -621,7 +614,6 @@ int __mpcomp_dynamic_steal2(int *from, int *to)
 	  }
 	  else if((chunks_avail == MPCOMP_CHUNKS_AVAIL) && (nb_chunks_empty_children < n->nb_children)) {
 	       sctk_atomics_incr_int( &(n->nb_chunks_empty_children));
-      
 	  }
 	  //}
 #endif
@@ -689,7 +681,9 @@ int __mpcomp_dynamic_steal2(int *from, int *to)
 		    target_t = &(n->children.leaf[index]->threads[0]);
 		    target_rank = target_t->rank;
 		    target_loop_index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
+
 		    r = sctk_atomics_load_int(&(target_t->for_dyn_chunk_info[target_loop_index].remain));
+
 #if 0 
 		    if(r == -1) {
 //#if 0        
@@ -697,15 +691,13 @@ int __mpcomp_dynamic_steal2(int *from, int *to)
 
 			 /* Store it w/out verification */
 			 sctk_atomics_store_int( &(target_t->for_dyn_chunk_info[target_loop_index].total), total);
-//#if 0  
 			 r = sctk_atomics_cas_int( &(target_t->for_dyn_chunk_info[target_loop_index].remain), -1, total-1);
-//#if 0
+
 			 if(r == -1) {
 			      __mpcomp_get_specific_chunk_per_rank(target_t->rank, target_t->num_threads, target_t->loop_lb, target_t->loop_b, target_t->loop_incr, target_t->loop_chunk_size, 0, from, to);
  
 			      return 1;
 			 }
-//#endif           
 		    }
 #endif
  
@@ -721,16 +713,15 @@ int __mpcomp_dynamic_steal2(int *from, int *to)
 			 if( real_r > 0) {
 			      //t->stolen_chunk_id = sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r;
 			      total = sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[index].total));
+
 			      sctk_nodebug("__mpcomp_dynamic_steal2 rank=%d: chunk found: target mvp rank=%d, node depth=%d, rank=%d", t->rank, target_t->mvp->rank, n->depth, n->rank);
 			      t->stolen_mvp = target_t->mvp;
 			      //t->tree_stack = stack; /* Store stack state */
 
-			      //#if 0
 			      __mpcomp_get_specific_chunk_per_rank( target_t->rank, target_t->num_threads,
-								    target_t->loop_lb, target_t->loop_b, target_t->loop_incr, target_t->loop_chunk_size, 
-								    sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
-								    from, to ) ; 
-			      //#endif
+				   target_t->loop_lb, target_t->loop_b, target_t->loop_incr, target_t->loop_chunk_size, 
+				   sctk_atomics_load_int( &(target_t->for_dyn_chunk_info[target_loop_index].total)) - r, 
+				   from, to ) ; 
 
 			      return 1;
 			 }        
@@ -740,7 +731,6 @@ int __mpcomp_dynamic_steal2(int *from, int *to)
 #if 0 
 		    /* Update chunks availability infos */
 		    nb_chunks_empty_children = sctk_atomics_load_int( &(n->nb_chunks_empty_children));
-		    //nb_chunks_empty_children = sctk_atomics_fetch_and_incr_int (&(n->nb_chunks_empty_children));
 		    chunks_avail = sctk_atomics_load_int( &(n->chunks_avail));
 
 		    sctk_nodebug("__mpcomp_dynamic_steal rank=%d: node depth=%d, rank=%d, chunks_avail=%d, nb_children=%d, nb_chunks_empty_children=%d", t->rank, n->depth, n->rank, n->chunks_avail, n->nb_children, nb_chunks_empty_children); 
@@ -775,7 +765,6 @@ int __mpcomp_dynamic_steal2(int *from, int *to)
 	  if(n->father != NULL) {
 	       nb_chunks_empty_children = sctk_atomics_load_int( &(n->father->nb_chunks_empty_children));
 	       chunks_avail = sctk_atomics_load_int( &(n->father->chunks_avail));
-	       //nb_chunks_empty_children = sctk_atomics_fetch_and_incr_int( &(n->father->nb_chunks_empty_children));
 
 	       if((chunks_avail == MPCOMP_CHUNKS_AVAIL) && (nb_chunks_empty_children == n->father->nb_children)) {
 		    sctk_atomics_store_int( &(n->father->chunks_avail), MPCOMP_CHUNKS_NOT_AVAIL);
@@ -968,6 +957,7 @@ __mpcomp_dynamic_loop_next (int *from, int *to)
 	  int real_r ;
 
 	  real_r = sctk_atomics_cas_int( &(t->for_dyn_chunk_info[index].remain), r, r-1 ) ;
+
 	  while ( real_r > 0 && real_r != r ) {
 	       sctk_nodebug("__mpcomp_dynamic_loop_nex rank=%d: r > 0, real_r=%d", t->rank, real_r);
 	       r = real_r ;
@@ -1059,7 +1049,6 @@ __mpcomp_dynamic_loop_end ()
 
      if ( nb_threads_exited == num_threads - 1 ) {
 	  int previous_index ;
-
 
 	  sctk_atomics_store_int( 
 	       &(team_info->for_dyn_nb_threads_exited[index].i), 
@@ -1241,17 +1230,10 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
 	  t->team->for_dyn_last_current = instance->mvps[0]->threads[0].for_dyn_current ;
 
 	  /* Finish the half barrier by spinning on the root value */
-#if MPCOMP_USE_ATOMICS
 	  while (sctk_atomics_load_int(&(new_root->barrier)) != new_root->barrier_num_threads) 
 	       sctk_thread_yield();
 
 	  sctk_atomics_store_int(&(new_root->barrier), 0);
-#else
-	  while (new_root->barrier != new_root->barrier_num_threads) 
-	       sctk_thread_yield();
-
-	  new_root->barrier = 0 ;
-#endif
 
 	  /* Restore the previous OpenMP info */
 	  sctk_openmp_thread_tls = t;

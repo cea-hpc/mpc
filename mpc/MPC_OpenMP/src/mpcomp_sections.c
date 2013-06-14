@@ -109,8 +109,6 @@ __mpcomp_sections_begin (int nb_sections)
         &(team_info->sections_nb_threads_entered[previous_index].i),
         0
         ) ;
-
-
   }
 
   t->sections_current = (index + 1)%(MPCOMP_MAX_ALIVE_SECTIONS+1) ;
@@ -176,7 +174,6 @@ __mpcomp_sections_next ()
         &(team_info->sections_nb_threads_entered[previous_index].i),
         0
         ) ;
-
   }
 
   t->sections_current = (index + 1)%(MPCOMP_MAX_ALIVE_SECTIONS+1) ;
@@ -228,7 +225,6 @@ int __mpcomp_sections_coherency_entering_paralel_region() {
       default:
         error = 1 ;
     }
-
   }
 
   if ( nb_stop != 1 ) {
