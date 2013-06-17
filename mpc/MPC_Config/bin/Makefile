@@ -47,7 +47,7 @@ FILES=$(wildcard *.c)
 OBJ=$(FILES:%.c=$(BUILD_DIR)/%.o)
 DEP=$(FILES:%.c=$(BUILD_DIR)/%.d)
 CFLAGS+= -I../src -I../generated
-LDFLAGS+= -L$(BUILD_DIR)/../../lib/ -lmpc -lmpc_tdb_remote_static -lm -lpthread
+LDFLAGS+= -L$(BUILD_DIR)/../../lib/ -lmpc -lmpc_tdb_remote_static -lm -lpthread -lrt
 LD_DEPS=$(BUILD_DIR)/../../lib/libmpc.a $(BUILD_DIR)/../../lib/libmpc_tdb_remote_static.a
 
 # Target "all" do nothing as we are called before mpclib finish to build

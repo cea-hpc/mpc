@@ -301,6 +301,9 @@ static inline int sctk_mpc_completion_flag(MPC_Request * request){
 
 static inline void sctk_mpc_init_request_null(){
   mpc_request_null.is_null = 1;
+  mpc_request_null.msg = NULL;
+  mpc_request_null.request_type = 0;
+  mpc_request_null.completion_flag = 1;
 }
 
 static inline void sctk_mpc_init_request (MPC_Request * request, MPC_Comm comm, int src, int request_type){
@@ -5285,8 +5288,9 @@ PMPC_Request_free (MPC_Request * request)
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Request_free req=%p", request);
 #endif
 
-  /* Firstly wait the message before freeing */
-  sctk_mpc_wait_message(request);
+	sctk_debug("wait for message");
+    /* Firstly wait the message before freeing */
+    sctk_mpc_wait_message(request);
   *request = mpc_request_null;
   MPC_ERROR_SUCESS ();
 }
