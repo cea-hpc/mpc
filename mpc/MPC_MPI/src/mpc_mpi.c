@@ -3887,167 +3887,157 @@ sctk_convert_to_mpc_op (MPI_Op op)
   return tmp;
 }
 
-static int
-__INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
-			 MPI_Datatype datatype, MPI_Op op, int root,
-			 MPI_Comm comm)
+static int __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, int root, MPI_Comm comm)
 {
-  MPC_Op mpc_op;
-  sctk_op_t *mpi_op;
+	MPC_Op mpc_op;
+	sctk_op_t *mpi_op;
 
-  mpi_op = sctk_convert_to_mpc_op (op);
-  mpc_op = mpi_op->op;
+	mpi_op = sctk_convert_to_mpc_op (op);
+	mpc_op = mpi_op->op;
 
-  if (sctk_is_derived_type (datatype) || (mpi_op->commute == 0))
+	if (sctk_is_derived_type (datatype) || (mpi_op->commute == 0))
     {
+		/*
+		int size;
+		int i;
+		int rank;
+		MPI_Request request;
+		int dsize;
+		void *tmp;
+		int res;
+		MPI_Datatype new_datatype;
+		__INTERNAL__PMPI_Comm_rank (comm, &rank);
+		__INTERNAL__PMPI_Comm_size (comm, &size);
+		__INTERNAL__PMPI_Isend (sendbuf, count, datatype, root, -3, comm,
+		&request);
 
-
-#if 0
-      int size;
-      int i;
-      int rank;
-      MPI_Request request;
-      int dsize;
-      void *tmp;
-      int res;
-      MPI_Datatype new_datatype;
-      __INTERNAL__PMPI_Comm_rank (comm, &rank);
-      __INTERNAL__PMPI_Comm_size (comm, &size);
-      __INTERNAL__PMPI_Isend (sendbuf, count, datatype, root, -3, comm,
-			      &request);
-
-      if (rank == root)
-	{
-	  res =
-	    __INTERNAL__PMPI_Type_contiguous (count, datatype, &new_datatype);
-	  if (res != MPI_SUCCESS)
-	    {
-	      return res;
-	    }
-	  res = __INTERNAL__PMPI_Type_commit (&new_datatype);
-	  if (res != MPI_SUCCESS)
-	    {
-	      return res;
-	    }
-	  res = __INTERNAL__PMPI_Pack_size (1, new_datatype, comm, &dsize);
-	  if (res != MPI_SUCCESS)
-	    {
-	      return res;
-	    }
-
-	  tmp = sctk_malloc (dsize);
-	  assume (tmp != NULL);
-
-	  res =
-	    __INTERNAL__PMPI_Recv (recvbuf, count, datatype, root, -3, comm,
-				   MPI_STATUS_IGNORE);
-	  if (res != MPI_SUCCESS)
-	    {
-	      return res;
-	    }
-	  for (i = 1; i < size; i++)
-	    {
-	      sctk_nodebug ("RECV %d", i);
-	      res =
-		__INTERNAL__PMPI_Recv (tmp, count, datatype, i, -3, comm,
-				       MPI_STATUS_IGNORE);
-	      if (res != MPI_SUCCESS)
+		if (rank == root)
 		{
-		  return res;
+			res = __INTERNAL__PMPI_Type_contiguous (count, datatype, &new_datatype);
+			if (res != MPI_SUCCESS)
+			{
+				return res;
+			}
+			res = __INTERNAL__PMPI_Type_commit (&new_datatype);
+			if (res != MPI_SUCCESS)
+			{
+				return res;
+			}
+			res = __INTERNAL__PMPI_Pack_size (1, new_datatype, comm, &dsize);
+			if (res != MPI_SUCCESS)
+			{
+				return res;
+			}
+
+			tmp = sctk_malloc (dsize);
+			assume (tmp != NULL);
+
+			res = __INTERNAL__PMPI_Recv (recvbuf, count, datatype, root, -3, comm, MPI_STATUS_IGNORE);
+			if (res != MPI_SUCCESS)
+			{
+				return res;
+			}
+			for (i = 1; i < size; i++)
+			{
+				sctk_nodebug ("RECV %d", i);
+				res = __INTERNAL__PMPI_Recv (tmp, count, datatype, i, -3, comm, MPI_STATUS_IGNORE);
+				if (res != MPI_SUCCESS)
+				{
+					return res;
+				}
+				if (mpc_op.u_func != NULL)
+				{
+					mpc_op.u_func (recvbuf, tmp, &count, &datatype);
+				}
+				else
+				{
+					not_reachable ();
+				}
+
+				if ((i + 1) < size)
+				{
+					int offset = 0;
+					__INTERNAL__PMPI_Unpack (tmp, dsize, &offset, recvbuf, count, datatype, comm);
+				}
+			}
+			sctk_free (tmp);
+			res = __INTERNAL__PMPI_Type_free (&new_datatype);
+			if (res != MPI_SUCCESS)
+			{
+				return res;
+			}
 		}
-	      if (mpc_op.u_func != NULL)
+		res = __INTERNAL__PMPI_Wait (&(request), MPI_STATUS_IGNORE);
+		if (res != MPI_SUCCESS)
 		{
-		  mpc_op.u_func (recvbuf, tmp, &count, &datatype);
+			return res;
 		}
-	      else
+		*/
+		
+		int size;
+		int rank;
+		int res;
+		__INTERNAL__PMPI_Comm_rank (comm, &rank);
+		__INTERNAL__PMPI_Comm_size (comm, &size);
+		if(rank == 0)
 		{
-		  not_reachable ();
-		}
-
-	      if ((i + 1) < size)
+			res = __INTERNAL__PMPI_Send (sendbuf, count, datatype, (rank + 1) % size, -3, comm);
+			if (res != MPI_SUCCESS)
+			{
+				return res;
+			}
+		} 
+		else 
 		{
-		  int offset = 0;
-		  __INTERNAL__PMPI_Unpack (tmp, dsize, &offset, recvbuf,
-					   count, datatype, comm);
+			res = __INTERNAL__PMPI_Recv (recvbuf, count, datatype, (rank + size - 1) % size, -3, comm, MPI_STATUS_IGNORE);
+			if (res != MPI_SUCCESS)
+			{
+				return res;
+			}
 		}
 
-	    }
-	  sctk_free (tmp);
-	  res = __INTERNAL__PMPI_Type_free (&new_datatype);
-	  if (res != MPI_SUCCESS)
-	    {
-	      return res;
-	    }
-	}
-      res = __INTERNAL__PMPI_Wait (&(request), MPI_STATUS_IGNORE);
-      if (res != MPI_SUCCESS)
-	{
-	  return res;
-	}
-#else
-      int size;
-      int rank;
-      int res;
-      __INTERNAL__PMPI_Comm_rank (comm, &rank);
-      __INTERNAL__PMPI_Comm_size (comm, &size);
-      if(rank == 0){
-	res = __INTERNAL__PMPI_Send (sendbuf, count, datatype, (rank + 1) % size, -3, comm);
-	if (res != MPI_SUCCESS)
-	  {
-	    return res;
-	  }
-      } else {
-	res =
-	  __INTERNAL__PMPI_Recv (recvbuf, count, datatype, (rank + size - 1) % size, -3, comm,
-				 MPI_STATUS_IGNORE);
-	if (res != MPI_SUCCESS)
-	  {
-	    return res;
-	  }
-      }
+		if (mpc_op.u_func != NULL)
+		{
+			mpc_op.u_func (sendbuf, recvbuf, &count, &datatype);
+		}
+		else
+		{
+			not_reachable ();
+		}
 
-      if (mpc_op.u_func != NULL)
-	{
-	  mpc_op.u_func (sendbuf, recvbuf, &count, &datatype);
-	}
-      else
-	{
-	  not_reachable ();
-	}
-      
-      if(rank == size -1){
-	res = __INTERNAL__PMPI_Send (recvbuf, count, datatype, root, -3, comm);
-	if (res != MPI_SUCCESS)
-	  {
-	    return res;
-	  }	
-      } else {
-	res = __INTERNAL__PMPI_Send (recvbuf, count, datatype, (rank + 1) % size, -3, comm);
-	if (res != MPI_SUCCESS)
-	  {
-	    return res;
-	  }	
-      }
+		if(rank == size -1)
+		{
+			res = __INTERNAL__PMPI_Send (recvbuf, count, datatype, root, -3, comm);
+			if (res != MPI_SUCCESS)
+			{
+				return res;
+			}	
+		} 
+		else 
+		{
+			res = __INTERNAL__PMPI_Send (recvbuf, count, datatype, (rank + 1) % size, -3, comm);
+			if (res != MPI_SUCCESS)
+			{
+				return res;
+			}	
+		}
 
-      if(rank == root){
-	res =
-	  __INTERNAL__PMPI_Recv (recvbuf, count, datatype, 0, -3, comm,
-				 MPI_STATUS_IGNORE);
-	if (res != MPI_SUCCESS)
-	  {
-	    return res;
-	  }
-      }
-#endif
+		if(rank == root)
+		{
+			res = __INTERNAL__PMPI_Recv (recvbuf, count, datatype, 0, -3, comm, MPI_STATUS_IGNORE);
+			if (res != MPI_SUCCESS)
+			{
+				return res;
+			}
+		}
 
-      res = __INTERNAL__PMPI_Barrier (comm);
-      return res;
-    }
-  else
-    {
-      return PMPC_Reduce (sendbuf, recvbuf, count, datatype, mpc_op, root,
-			 comm);
-    }
+		res = __INTERNAL__PMPI_Barrier (comm);
+		return res;
+	}
+	else
+	{
+		return PMPC_Reduce (sendbuf, recvbuf, count, datatype, mpc_op, root, comm);
+	}
 }
 static int
 __INTERNAL__PMPI_Op_create (MPI_User_function * function, int commute,
