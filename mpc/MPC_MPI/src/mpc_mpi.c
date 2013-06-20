@@ -8332,6 +8332,20 @@ PMPI_Type_hvector (int count,
 }
 
 int
+PMPI_Type_create_hvector (int count,
+		   int blocklen,
+		   MPI_Aint stride,
+		   MPI_Datatype old_type, MPI_Datatype * newtype_p)
+{
+  MPI_Comm comm = MPI_COMM_WORLD;
+  int res = MPI_ERR_INTERN;
+  res =
+    __INTERNAL__PMPI_Type_hvector (count, blocklen, stride, old_type,
+				   newtype_p);
+  SCTK__MPI_Check_retrun_val (res, comm);
+}
+
+int
 PMPI_Type_indexed (int count,
 		   int blocklens[],
 		   int indices[],
@@ -8360,7 +8374,35 @@ PMPI_Type_hindexed (int count,
 }
 
 int
+PMPI_Type_create_hindexed (int count,
+		    int blocklens[],
+		    MPI_Aint indices[],
+		    MPI_Datatype old_type, MPI_Datatype * newtype)
+{
+  MPI_Comm comm = MPI_COMM_WORLD;
+  int res = MPI_ERR_INTERN;
+  res =
+    __INTERNAL__PMPI_Type_hindexed (count, blocklens, indices, old_type,
+				    newtype);
+  SCTK__MPI_Check_retrun_val (res, comm);
+}
+
+int
 PMPI_Type_struct (int count,
+		  int blocklens[],
+		  MPI_Aint indices[],
+		  MPI_Datatype old_types[], MPI_Datatype * newtype)
+{
+  MPI_Comm comm = MPI_COMM_WORLD;
+  int res = MPI_ERR_INTERN;
+  res =
+    __INTERNAL__PMPI_Type_struct (count, blocklens, indices, old_types,
+				  newtype);
+  SCTK__MPI_Check_retrun_val (res, comm);
+}
+
+int
+PMPI_Type_create_struct (int count,
 		  int blocklens[],
 		  MPI_Aint indices[],
 		  MPI_Datatype old_types[], MPI_Datatype * newtype)

@@ -325,12 +325,13 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
 			    MPI_Comm, MPI_Status *);
   int MPI_Type_contiguous (int, MPI_Datatype, MPI_Datatype *);
   int MPI_Type_vector (int, int, int, MPI_Datatype, MPI_Datatype *);
+  int MPI_Type_create_hvector (int, int, MPI_Aint, MPI_Datatype, MPI_Datatype *);
   int MPI_Type_hvector (int, int, MPI_Aint, MPI_Datatype, MPI_Datatype *);
   int MPI_Type_indexed (int, int *, int *, MPI_Datatype, MPI_Datatype *);
-  int MPI_Type_hindexed (int, int *, MPI_Aint *, MPI_Datatype,
-			 MPI_Datatype *);
-  int MPI_Type_struct (int, int *, MPI_Aint *, MPI_Datatype *,
-		       MPI_Datatype *);
+  int MPI_Type_create_hindexed (int, int *, MPI_Aint *, MPI_Datatype, MPI_Datatype *);
+  int MPI_Type_hindexed (int, int *, MPI_Aint *, MPI_Datatype, MPI_Datatype *);
+  int MPI_Type_create_struct (int, int *, MPI_Aint *, MPI_Datatype *, MPI_Datatype *);
+  int MPI_Type_struct (int, int *, MPI_Aint *, MPI_Datatype *, MPI_Datatype *);
   int MPI_Address (void *, MPI_Aint *);
   /* We could add __attribute__((deprecated)) to routines like MPI_Type_extent */
   int MPI_Type_extent (MPI_Datatype, MPI_Aint *);

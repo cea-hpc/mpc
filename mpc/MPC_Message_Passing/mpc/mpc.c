@@ -1838,6 +1838,7 @@ __MPC_init_types ()
   mpc_init (MPC_COMPLEX, mpc_float_float);
   mpc_init (MPC_2DOUBLE_PRECISION, mpc_double_double);
   mpc_init (MPC_DOUBLE_COMPLEX, mpc_double_double);
+  mpc_init (MPC_LONG_DOUBLE_INT, mpc_long_double_int);
 }
 
 #ifdef MPC_OpenMP
@@ -2207,6 +2208,7 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
       ADD_FUNC_HANDLER(func,MPC_2INT,op);		\
       ADD_FUNC_HANDLER(func,MPC_2FLOAT,op);		\
       ADD_FUNC_HANDLER(func,MPC_2DOUBLE_PRECISION,op);	\
+      ADD_FUNC_HANDLER(func,MPC_LONG_DOUBLE_INT,op);    \
     default:not_reachable();				\
     }							\
   }
@@ -2258,7 +2260,7 @@ __MPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
 	mpc_check_type (datatype, comm);
 	__MPC_Comm_rank(comm, &rank, task_specific);
 
-	sctk_nodebug ("Allreduce on %d with type %d", comm, datatype);
+	sctk_debug ("Allreduce on %d with type %d", comm, datatype);
 	if ((op.u_func == NULL) && (datatype < sctk_user_data_types))
     {
 		func = op.func;
