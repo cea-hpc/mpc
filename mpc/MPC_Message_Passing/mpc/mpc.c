@@ -2260,7 +2260,6 @@ __MPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
 	mpc_check_type (datatype, comm);
 	__MPC_Comm_rank(comm, &rank, task_specific);
 
-	sctk_debug ("Allreduce on %d with type %d", comm, datatype);
 	if ((op.u_func == NULL) && (datatype < sctk_user_data_types))
     {
 		func = op.func;
@@ -2289,7 +2288,6 @@ __MPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
 		COMPAT_DATA_TYPE3 (func, MPC_MAXLOC_func)
 		else
 		COMPAT_DATA_TYPE3 (func, MPC_MINLOC_func) 
-		sctk_debug ("Internal reduce");
 	}
 	else
     {
@@ -2297,7 +2295,6 @@ __MPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
 		/*User define function */
 		sctk_thread_setspecific_mpc (sctk_func_key, (void *) op.u_func);
 		func = (MPC_Op_f) MPC_Op_tmp;
-		sctk_debug ("User reduce");
     }
 	
 	/* inter comm */
@@ -5284,7 +5281,7 @@ PMPC_Request_free (MPC_Request * request)
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Request_free req=%p", request);
 #endif
 
-	sctk_debug("wait for message");
+	sctk_nodebug("wait for message");
     /* Firstly wait the message before freeing */
     sctk_mpc_wait_message(request);
   *request = mpc_request_null;

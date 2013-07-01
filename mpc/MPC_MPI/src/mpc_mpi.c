@@ -657,54 +657,51 @@ __sctk_init_mpc_request ()
   sctk_thread_mutex_unlock (&sctk_request_lock);
 }
 
-static inline MPI_internal_request_t *
-__sctk_new_mpc_request_internal (MPI_Request * req)
+static inline MPI_internal_request_t * __sctk_new_mpc_request_internal (MPI_Request * req)
 {
-  MPI_request_struct_t *requests;
-  MPI_internal_request_t *tmp;
+	MPI_request_struct_t *requests;
+	MPI_internal_request_t *tmp;
 
-  PMPC_Get_requests ((void *) &requests);
+	PMPC_Get_requests ((void *) &requests);
 
-  sctk_spinlock_lock (&(requests->lock));
-  if (requests->free_list == NULL)
+	sctk_spinlock_lock (&(requests->lock));
+	if (requests->free_list == NULL)
     {
-      int old_size;
-      int i;
-      old_size = requests->max_size;
-      requests->max_size += 10;
-      requests->tab =
-	sctk_realloc (requests->tab,
-		      requests->max_size * sizeof (MPI_internal_request_t *));
-      assume (requests->tab != NULL);
-      for (i = old_size; i < requests->max_size; i++)
-	{
-	  MPI_internal_request_t *tmp;
-	  sctk_nodebug ("%lu", i);
-	  tmp =
-	    sctk_buffered_malloc (&(requests->buf),
-				  sizeof (MPI_internal_request_t));
-	  assume (tmp != NULL);
-	  requests->tab[i] = tmp;
-	  tmp->used = 0;
-	  tmp->next = requests->free_list;
-	  requests->free_list = tmp;
-	  tmp->rank = i;
-	  tmp->saved_datatype = NULL;
-	}
+		int old_size;
+		int i;
+		old_size = requests->max_size;
+		requests->max_size += 10;
+		requests->tab =
+		sctk_realloc (requests->tab, requests->max_size * sizeof (MPI_internal_request_t *));
+		assume (requests->tab != NULL);
+		
+		for (i = old_size; i < requests->max_size; i++)
+		{
+			MPI_internal_request_t *tmp;
+			sctk_nodebug ("\t%lu", i);
+			tmp = sctk_buffered_malloc (&(requests->buf), sizeof (MPI_internal_request_t));
+			assume (tmp != NULL);
+			requests->tab[i] = tmp;
+			tmp->used = 0;
+			tmp->next = requests->free_list;
+			requests->free_list = tmp;
+			tmp->rank = i;
+			tmp->saved_datatype = NULL;
+		}
     }
-  tmp = (MPI_internal_request_t *) requests->free_list;
-  tmp->used = 1;
-  tmp->freeable = 1;
-  tmp->is_active = 1;
-  tmp->saved_datatype = NULL;
-  requests->free_list = tmp->next;
-  sctk_spinlock_unlock (&(requests->lock));
-  *req = tmp->rank;
-  sctk_nodebug ("Create request %d", *req);
+	tmp = (MPI_internal_request_t *) requests->free_list;
+	tmp->used = 1;
+	tmp->freeable = 1;
+	tmp->is_active = 1;
+	tmp->saved_datatype = NULL;
+	requests->free_list = tmp->next;
+	sctk_spinlock_unlock (&(requests->lock));
+	*req = tmp->rank;
+	sctk_nodebug ("Create request %d", *req);
 
-  memset (&(tmp->req), 0, sizeof (MPC_Request));
+	memset (&(tmp->req), 0, sizeof (MPC_Request));
 
-  return tmp;
+	return tmp;
 }
 
 static inline MPC_Request *
@@ -1232,112 +1229,106 @@ __INTERNAL__PMPI_Buffer_detach (void *bufferptr, int *size)
   return MPI_SUCCESS;
 }
 
-static int
-__INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
-				  int dest, int tag, MPI_Comm comm,
-				  MPI_Request * request, int is_valid_request)
+static int __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype, int dest, int tag, MPI_Comm comm, MPI_Request * request, int is_valid_request)
 {
-  mpi_buffer_t *tmp;
-  int size;
-  int res;
-  mpi_buffer_overhead_t *head;
-  mpi_buffer_overhead_t *head_next;
-  void *head_buf;
-  mpi_buffer_overhead_t *found = NULL;
-  MPI_internal_request_t *req;
-  
-  //~ get the pack size 
-  res = __INTERNAL__PMPI_Pack_size (count, datatype, comm, &size);
-  if (res != MPI_SUCCESS)
-  {
-    return res;
-  }
-  
-  if (size % sizeof (mpi_buffer_overhead_t))
-  {
-    size +=
-      sizeof (mpi_buffer_overhead_t) -
-      (size % sizeof (mpi_buffer_overhead_t));
-  }
-  assume (size % sizeof (mpi_buffer_overhead_t) == 0);
+	mpi_buffer_t *tmp;
+	int size;
+	int res;
+	mpi_buffer_overhead_t *head;
+	mpi_buffer_overhead_t *head_next;
+	void *head_buf;
+	mpi_buffer_overhead_t *found = NULL;
+	MPI_internal_request_t *req;
 
-  sctk_nodebug ("MSG size %d", size);
+	//~ get the pack size 
+	res = __INTERNAL__PMPI_Pack_size (count, datatype, comm, &size);
+	if (res != MPI_SUCCESS)
+	{
+		return res;
+	}
 
-  PMPC_Get_buffers (&tmp);
-  sctk_spinlock_lock (&(tmp->lock));
+	if (size % sizeof (mpi_buffer_overhead_t))
+	{
+		size += sizeof (mpi_buffer_overhead_t) - (size % sizeof (mpi_buffer_overhead_t));
+	}
+	assume (size % sizeof (mpi_buffer_overhead_t) == 0);
 
-  if (tmp->buffer == NULL)
-  {
-    sctk_spinlock_unlock (&(tmp->lock));
-    MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "No buffer available");
-  }
+	sctk_nodebug ("MSG size %d", size);
 
-  found = SCTK__MPI_Compact_buffer (size, tmp);
+	PMPC_Get_buffers (&tmp);
+	sctk_spinlock_lock (&(tmp->lock));
 
-  if (found)
-  {
-    int position = 0;
-    head = found;
-    head_buf = (char *) head + sizeof (mpi_buffer_overhead_t);
+	if (tmp->buffer == NULL)
+	{
+		sctk_spinlock_unlock (&(tmp->lock));
+		MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "No buffer available");
+	}
 
-    assume (head->request == MPI_REQUEST_NULL);
+	found = SCTK__MPI_Compact_buffer (size, tmp);
 
-    if (head->size >= size + (int)sizeof (mpi_buffer_overhead_t))
-    {
-      int old_size;
-      old_size = head->size;
-      head->size = size;
-      head_next = SCTK__buffer_next_header (head, tmp);
-      head_next->size = old_size - size - sizeof (mpi_buffer_overhead_t);
-      head_next->request = MPI_REQUEST_NULL;
-      sctk_nodebug ("SPLIT Create new buffer of size %d old %d",
-          head_next->size, old_size);
-    }
+	if (found)
+	{
+		int position = 0;
+		head = found;
+		head_buf = (char *) head + sizeof (mpi_buffer_overhead_t);
 
-    sctk_nodebug ("CHUNK %p<%p-%p<%p", tmp->buffer, head,
-        SCTK__buffer_next_header (head, tmp),
-        (void *) ((unsigned long) tmp->buffer + tmp->size));
+		assume (head->request == MPI_REQUEST_NULL);
 
-    res =
-      __INTERNAL__PMPI_Pack (buf, count, datatype, head_buf, head->size,
-          &position, comm);
-    if (res != MPI_SUCCESS)
-    {
-      sctk_spinlock_unlock (&(tmp->lock));
-      return res;
-    }
-    assume (position <= size);
+		if (head->size >= size + (int)sizeof (mpi_buffer_overhead_t))
+		{
+			int old_size;
+			old_size = head->size;
+			head->size = size;
+			head_next = SCTK__buffer_next_header (head, tmp);
+			head_next->size = old_size - size - sizeof (mpi_buffer_overhead_t);
+			head_next->request = MPI_REQUEST_NULL;
+			sctk_nodebug ("SPLIT Create new buffer of size %d old %d", head_next->size, old_size);
+		}
 
-    res =
-      __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest,
-          tag, comm, &(head->request), 0);
-    if (res != MPI_SUCCESS)
-    {
-      sctk_spinlock_unlock (&(tmp->lock));
-      return res;
-    }
-    
-    /* init - start */
-	req = __sctk_new_mpc_request_internal (request);
-	assume(req != NULL);
-	if(&(req->persistant) != NULL)
-		return MPI_SUCCESS;
-	
-    if (is_valid_request)
-    {
-      __sctk_delete_mpc_request (request);
-    }
-    *request = MPI_REQUEST_NULL;
+		sctk_nodebug ("CHUNK %p<%p-%p<%p", tmp->buffer, head,
+		SCTK__buffer_next_header (head, tmp), (void *) ((unsigned long) tmp->buffer + tmp->size));
 
-  }
-  else
-  {
-    sctk_spinlock_unlock (&(tmp->lock));
-    MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "No space left in buffer");
-  }
+		res = __INTERNAL__PMPI_Pack (buf, count, datatype, head_buf, head->size, &position, comm);
+		if (res != MPI_SUCCESS)
+		{
+			sctk_spinlock_unlock (&(tmp->lock));
+			return res;
+		}
+		assume (position <= size);
+		
+		/* init - start */
+		req = __sctk_convert_mpc_request_internal (request);
+		assume(req != NULL);
+		
+		//~ res = __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest, tag, comm, (&(req->persistant) != NULL) ? request : &(head->request), (&(req->persistant) != NULL));
+		res = __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest, tag, comm, request, (&(req->persistant) != NULL));
+		if (res != MPI_SUCCESS)
+		{
+			sctk_spinlock_unlock (&(tmp->lock));
+			return res;
+		}
 
-  sctk_spinlock_unlock (&(tmp->lock));
-  return MPI_SUCCESS;
+		if(&(req->persistant) != NULL)
+		{
+			sctk_spinlock_unlock (&(tmp->lock));
+			return MPI_SUCCESS;
+		}
+
+		if (is_valid_request)
+		{
+			__sctk_delete_mpc_request (request);
+		}
+		*request = MPI_REQUEST_NULL;
+
+	}
+	else
+	{
+		sctk_spinlock_unlock (&(tmp->lock));
+		MPI_ERROR_REPORT (comm, MPI_ERR_BUFFER, "No space left in buffer");
+	}
+
+	sctk_spinlock_unlock (&(tmp->lock));
+	return MPI_SUCCESS;
 }
 
 static int
@@ -1354,6 +1345,7 @@ __INTERNAL__PMPI_Isend_test_req (void *buf, int count, MPI_Datatype datatype,
 				 int dest, int tag, MPI_Comm comm,
 				 MPI_Request * request, int is_valid_request)
 {
+	sctk_nodebug("PMPI_Isend_test_req request = %d", *request);
   if (sctk_is_derived_type (datatype) && (count != 0))
   {
     int res;
@@ -1666,6 +1658,7 @@ static int __INTERNAL__PMPI_Wait (MPI_Request * request, MPI_Status * status)
 	
 	if(tmp->freeable)
 	{
+		sctk_debug("deleting request %d", *request);
 		__sctk_delete_mpc_request (request);
 	}
 	return res;
@@ -1674,9 +1667,13 @@ static int __INTERNAL__PMPI_Wait (MPI_Request * request, MPI_Status * status)
 static int __INTERNAL__PMPI_Test (MPI_Request * request, int *flag, MPI_Status * status)
 {
 	int res;
+	MPI_internal_request_t *tmp;
+	tmp = __sctk_convert_mpc_request_internal (request);
+	
 	res = PMPC_Test (__sctk_convert_mpc_request (request), flag, status);
 	if (*flag)
     {
+		if(&(tmp->persistant) == NULL)
 		__sctk_delete_mpc_request (request);
     }
 	else
@@ -1692,6 +1689,12 @@ static int __INTERNAL__PMPI_Request_free (MPI_Request * request)
 	MPI_internal_request_t *tmp;
 
 	tmp = __sctk_convert_mpc_request_internal (request);
+	if(tmp->req.msg == NULL)
+	{
+		tmp->freeable = 1;
+		__sctk_delete_mpc_request (request);
+		return res;
+	}
 	if (tmp)
     {
 		tmp->freeable = 1;
@@ -1719,9 +1722,11 @@ static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
 	*index = MPI_UNDEFINED;
 	*flag = 1;
 	int tmp;
+	MPI_internal_request_t *temp;
 
 	for (i = 0; i < count; i++)
 	{
+		temp = __sctk_convert_mpc_request_internal (&(array_of_requests[i]));
 		if (array_of_requests[i] == MPI_REQUEST_NULL)
 		{
 			continue;
@@ -1749,7 +1754,8 @@ static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
 		}
 		if (*flag)
 		{
-			__sctk_delete_mpc_request (&(array_of_requests[i]));
+			if(&(temp->persistant) == NULL)
+				__sctk_delete_mpc_request (&(array_of_requests[i]));
 			*index = i;
 			return tmp;
 		}
@@ -1760,6 +1766,8 @@ static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
 static int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests, MPI_Status * array_of_statuses)
 {
 	int flag = 0;
+	MPI_internal_request_t *temp;
+	
 	while (!flag)
 	{
 		int i;
@@ -1768,7 +1776,7 @@ static int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests,
 		for (i = 0; i < count; i++)
 		{
 			int tmp;
-
+			temp = __sctk_convert_mpc_request_internal (&(array_of_requests[i]));
 			if (array_of_requests[i] == MPI_REQUEST_NULL)
 			{
 				done++;
@@ -1792,7 +1800,8 @@ static int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests,
 			}
 			if (loc_flag)
 			{
-				__sctk_delete_mpc_request (&(array_of_requests[i]));
+				if(&(temp->persistant) == NULL)
+					__sctk_delete_mpc_request (&(array_of_requests[i]));
 				done++;
 			}
 			if (tmp != MPI_SUCCESS)
@@ -1813,6 +1822,7 @@ static int __INTERNAL__PMPI_Testall (int count, MPI_Request array_of_requests[],
 	int i;
 	int done = 0;
 	int loc_flag;
+	MPI_internal_request_t *temp;
 	*flag = 0;
 	for (i = 0; i < count; i++)
 	{
@@ -1853,9 +1863,11 @@ static int __INTERNAL__PMPI_Testall (int count, MPI_Request array_of_requests[],
 	{
 		for (i = 0; i < count; i++)
 		{
+			temp = __sctk_convert_mpc_request_internal (&(array_of_requests[i]));
 			if (array_of_requests[i] != MPI_REQUEST_NULL)
 			{
-				__sctk_delete_mpc_request (&(array_of_requests[i]));
+				if(&(temp->persistant) == NULL)
+					__sctk_delete_mpc_request (&(array_of_requests[i]));
 			}
 		}
 	}
@@ -1882,8 +1894,11 @@ static int __INTERNAL__PMPI_Testsome (int incount, MPI_Request * array_of_reques
 	int done = 0;
 	int no_active_done = 0;
 	int loc_flag;
+	MPI_internal_request_t *temp;
+	
 	for (i = 0; i < incount; i++)
 	{
+		temp = __sctk_convert_mpc_request_internal (&(array_of_requests[i]));
 		if (array_of_requests[i] != MPI_REQUEST_NULL)
 		{
 			int tmp;
@@ -1902,7 +1917,8 @@ static int __INTERNAL__PMPI_Testsome (int incount, MPI_Request * array_of_reques
 			if (loc_flag)
 			{
 				array_of_indices[done] = i;
-				__sctk_delete_mpc_request (&(array_of_requests[i]));
+				if(&(temp->persistant) == NULL)
+					__sctk_delete_mpc_request (&(array_of_requests[i]));
 				done++;
 			}
 			if (tmp != MPI_SUCCESS)
@@ -2147,13 +2163,14 @@ ____INTERNAL__PMPI_Start (MPI_Request * request)
 
   req = __sctk_convert_mpc_request_internal (request);
   req->is_active = 1;
+  req->freeable = 1;
   
   if(req->req.request_type == REQUEST_NULL)
   {
     *request = MPI_REQUEST_NULL;
     return MPI_SUCCESS;
   }
-  
+  sctk_debug("Start request %d", *request);
   switch (req->persistant.op)
     {
     case Send_init:
@@ -7871,30 +7888,31 @@ int
 PMPI_Wait (MPI_Request * request, MPI_Status * status)
 {
 	sctk_debug("entering MPI_Wait request = %d", *request);
-  MPI_Comm comm = MPI_COMM_WORLD;
-  int res = MPI_ERR_INTERN;
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
   
-  if(*request == MPI_REQUEST_NULL)
-  {
-	res = MPI_SUCCESS;
-	status->MPC_SOURCE = MPI_PROC_NULL;
-	status->MPC_TAG = MPI_ANY_TAG;
-	status->MPC_ERROR = MPI_SUCCESS;
-	status->count = 0;
+	if(*request == MPI_REQUEST_NULL)
+	{
+		res = MPI_SUCCESS;
+		status->MPC_SOURCE = MPI_PROC_NULL;
+		status->MPC_TAG = MPI_ANY_TAG;
+		status->MPC_ERROR = MPI_SUCCESS;
+		status->count = 0;
+		SCTK__MPI_Check_retrun_val (res, comm);
+	}
+  
+	res = __INTERNAL__PMPI_Wait (request, status);
+	sctk_debug("wait done");
 	SCTK__MPI_Check_retrun_val (res, comm);
-  }
-  
-  res = __INTERNAL__PMPI_Wait (request, status);
-  SCTK__MPI_Check_retrun_val (res, comm);
 }
 
 int
 PMPI_Test (MPI_Request * request, int *flag, MPI_Status * status)
 {
-  MPI_Comm comm = MPI_COMM_WORLD;
-  int res = MPI_ERR_INTERN;
-  res = __INTERNAL__PMPI_Test (request, flag, status);
-  SCTK__MPI_Check_retrun_val (res, comm);
+	MPI_Comm comm = MPI_COMM_WORLD;
+	int res = MPI_ERR_INTERN;
+	res = __INTERNAL__PMPI_Test (request, flag, status);
+	SCTK__MPI_Check_retrun_val (res, comm);
 }
 
 int
@@ -7942,7 +7960,7 @@ int
 PMPI_Waitall (int count, MPI_Request array_of_requests[],
 	      MPI_Status array_of_statuses[])
 {
-	sctk_nodebug("entering PMPI_Waitall");
+	sctk_debug("entering PMPI_Waitall");
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res =
@@ -8198,6 +8216,7 @@ int
 PMPI_Recv_init (void *buf, int count, MPI_Datatype datatype, int source,
 		int tag, MPI_Comm comm, MPI_Request * request)
 {
+	sctk_nodebug("MPI_Recv_init");
   int res = MPI_ERR_INTERN;
   {
     int size;
@@ -9348,6 +9367,7 @@ PMPI_Init (int *argc, char ***argv)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  sctk_nodebug("MPI_Init");
   res = __INTERNAL__PMPI_Init (argc, argv);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
