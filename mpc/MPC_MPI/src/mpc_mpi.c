@@ -1331,7 +1331,7 @@ static int __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype 
 		}
 		
 		if(req != NULL)
-			if(&(req->persistant) != NULL)
+			if(req->persistant.buf != NULL)
 			{
 				sctk_spinlock_unlock (&(tmp->lock));
 				return MPI_SUCCESS;
@@ -1361,7 +1361,7 @@ __INTERNAL__PMPI_Ibsend (void *buf, int count, MPI_Datatype datatype,
 			 MPI_Request * request)
 {
   return __INTERNAL__PMPI_Ibsend_test_req (buf, count, datatype, dest, tag,
-					   comm, request, 1);
+					   comm, request, 0);
 }
 
 static int
@@ -1677,7 +1677,7 @@ static int __INTERNAL__PMPI_Wait (MPI_Request * request, MPI_Status * status)
 
 	/* Deallocating request if created by non-blocking call */
 	tmp = __sctk_convert_mpc_request_internal(request);
-	if(&(tmp->persistant) != NULL)
+	if(tmp->persistant.buf != NULL)
 		return res;
 	
 	if(tmp->freeable)
@@ -1693,12 +1693,16 @@ static int __INTERNAL__PMPI_Test (MPI_Request * request, int *flag, MPI_Status *
 	int res;
 	MPI_internal_request_t *tmp;
 	tmp = __sctk_convert_mpc_request_internal (request);
-	
 	res = PMPC_Test (__sctk_convert_mpc_request (request), flag, status);
+	
 	if (*flag)
     {
-		if(&(tmp->persistant) == NULL)
-		__sctk_delete_mpc_request (request);
+		if(tmp->persistant.buf == NULL)
+		{
+			sctk_debug("Libere request normal %d", *request);
+			__sctk_delete_mpc_request (request);
+			*request = MPI_REQUEST_NULL;
+		}
     }
 	else
     {
@@ -1778,7 +1782,7 @@ static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
 		}
 		if (*flag)
 		{
-			if(&(temp->persistant) == NULL)
+			if(temp->persistant.buf == NULL)
 				__sctk_delete_mpc_request (&(array_of_requests[i]));
 			*index = i;
 			return tmp;
@@ -1824,7 +1828,7 @@ static int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests,
 			}
 			if (loc_flag)
 			{
-				if(&(temp->persistant) == NULL)
+				if(temp->persistant.buf == NULL)
 					__sctk_delete_mpc_request (&(array_of_requests[i]));
 				done++;
 			}
@@ -1890,7 +1894,7 @@ static int __INTERNAL__PMPI_Testall (int count, MPI_Request array_of_requests[],
 			temp = __sctk_convert_mpc_request_internal (&(array_of_requests[i]));
 			if (array_of_requests[i] != MPI_REQUEST_NULL)
 			{
-				if(&(temp->persistant) == NULL)
+				if(temp->persistant.buf == NULL)
 					__sctk_delete_mpc_request (&(array_of_requests[i]));
 			}
 		}
@@ -1941,7 +1945,7 @@ static int __INTERNAL__PMPI_Testsome (int incount, MPI_Request * array_of_reques
 			if (loc_flag)
 			{
 				array_of_indices[done] = i;
-				if(&(temp->persistant) == NULL)
+				if(temp->persistant.buf == NULL)
 					__sctk_delete_mpc_request (&(array_of_requests[i]));
 				done++;
 			}

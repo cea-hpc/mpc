@@ -3099,6 +3099,9 @@ PMPC_Test (MPC_Request * request, int *flag, MPC_Status * status)
   int res;
 
   SCTK_PROFIL_START (MPC_Test);
+  if(request == NULL)
+	  return MPC_ERR_REQUEST;
+
   res = __MPC_Test (request, flag, status);
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Test req=%p flag=%d", request, *flag);
