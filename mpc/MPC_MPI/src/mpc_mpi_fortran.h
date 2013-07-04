@@ -156,12 +156,6 @@ void ffunc (mpi_type_hvector) (int *count,
 			       MPI_Aint * stride,
 			       MPI_Datatype * old_type,
 			       MPI_Datatype * newtype_p, int *res);
-			      
-void ffunc (mpi_type_create_hvector) (int *count,
-			       int *blocklen,
-			       MPI_Aint * stride,
-			       MPI_Datatype * old_type,
-			       MPI_Datatype * newtype_p, int *res);
 
 void ffunc (mpi_type_indexed) (int *count,
 			       int blocklens[],
@@ -175,24 +169,12 @@ void ffunc (mpi_type_hindexed) (int *count,
 				MPI_Datatype * old_type,
 				MPI_Datatype * newtype, int *res);
 
-void ffunc (mpi_type_create_hindexed) (int *count,
-				int blocklens[],
-				MPI_Aint indices[],
-				MPI_Datatype * old_type,
-				MPI_Datatype * newtype, int *res);
-				
 void ffunc (mpi_type_struct) (int *count,
 			      int blocklens[],
 			      MPI_Aint indices[],
 			      MPI_Datatype old_types[],
 			      MPI_Datatype * newtype, int *res);
 
-void ffunc (mpi_type_create_struct) (int *count,
-			      int blocklens[],
-			      MPI_Aint indices[],
-			      MPI_Datatype old_types[],
-			      MPI_Datatype * newtype, int *res);
-			      
 void ffunc (mpi_address) (void *location, MPI_Aint * address, int *res);
 
   /* We could add __attribute__((deprecated)) to routines like MPI_Type_extent */
@@ -771,16 +753,6 @@ void ffunc (pmpi_type_hvector) (int *count,
 
 }
 
-void ffunc (pmpi_type_create_hvector) (int *count,
-				int *blocklen,
-				MPI_Aint * stride,
-				MPI_Datatype * old_type,
-				MPI_Datatype * newtype_p, int *res)
-{
-  *res = MPI_Type_hvector (*count, *blocklen, *stride, *old_type, newtype_p);
-
-}
-
 void ffunc (pmpi_type_indexed) (int *count,
 				int blocklens[],
 				int indices[],
@@ -801,27 +773,7 @@ void ffunc (pmpi_type_hindexed) (int *count,
 
 }
 
-void ffunc (pmpi_type_create_hindexed) (int *count,
-				 int blocklens[],
-				 MPI_Aint indices[],
-				 MPI_Datatype * old_type,
-				 MPI_Datatype * newtype, int *res)
-{
-  *res = MPI_Type_hindexed (*count, blocklens, indices, *old_type, newtype);
-
-}
-
 void ffunc (pmpi_type_struct) (int *count,
-			       int blocklens[],
-			       MPI_Aint indices[],
-			       MPI_Datatype old_types[],
-			       MPI_Datatype * newtype, int *res)
-{
-  *res = MPI_Type_struct (*count, blocklens, indices, old_types, newtype);
-
-}
-
-void ffunc (pmpi_type_create_struct) (int *count,
 			       int blocklens[],
 			       MPI_Aint indices[],
 			       MPI_Datatype old_types[],

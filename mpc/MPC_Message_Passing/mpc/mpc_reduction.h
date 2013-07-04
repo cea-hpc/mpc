@@ -46,18 +46,11 @@ extern "C"
     float val;
     float pos;
   } mpc_float_float;
-  
   typedef struct
   {
     double val;
     double pos;
   } mpc_double_double;
-  
-  typedef struct
-  {
-	long double val;
-	int pos;
-  } mpc_long_double_int;
 
   void mpc_no_exec (const void *in, void *inout, size_t size,
 		    MPC_Datatype datatype, int line, char *file);
@@ -94,8 +87,7 @@ extern "C"
     MPC_DEFINED_FUNCS(MPC_INTEGER1,sctk_int8_t,name);			\
     MPC_DEFINED_FUNCS(MPC_INTEGER2,sctk_int16_t,name);			\
     MPC_DEFINED_FUNCS(MPC_INTEGER4,sctk_int32_t,name);			\
-    MPC_DEFINED_FUNCS(MPC_INTEGER8,sctk_int64_t,name);			\
-    MPC_DEFINED_FUNCS(MPC_LONG_DOUBLE_INT,mpc_long_double_int,name)
+    MPC_DEFINED_FUNCS(MPC_INTEGER8,sctk_int64_t,name)
 
     MPC_PROTOTYPES (MIN);
     MPC_PROTOTYPES (MAX);

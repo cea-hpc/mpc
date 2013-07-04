@@ -1838,7 +1838,6 @@ __MPC_init_types ()
   mpc_init (MPC_COMPLEX, mpc_float_float);
   mpc_init (MPC_2DOUBLE_PRECISION, mpc_double_double);
   mpc_init (MPC_DOUBLE_COMPLEX, mpc_double_double);
-  mpc_init (MPC_LONG_DOUBLE_INT, mpc_long_double_int);
 }
 
 #ifdef MPC_OpenMP
@@ -2208,7 +2207,6 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
       ADD_FUNC_HANDLER(func,MPC_2INT,op);		\
       ADD_FUNC_HANDLER(func,MPC_2FLOAT,op);		\
       ADD_FUNC_HANDLER(func,MPC_2DOUBLE_PRECISION,op);	\
-      ADD_FUNC_HANDLER(func,MPC_LONG_DOUBLE_INT,op);    \
     default:not_reachable();				\
     }							\
   }
@@ -2260,6 +2258,7 @@ __MPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
 	mpc_check_type (datatype, comm);
 	__MPC_Comm_rank(comm, &rank, task_specific);
 
+	sctk_nodebug ("Allreduce on %d with type %d", comm, datatype);
 	if ((op.u_func == NULL) && (datatype < sctk_user_data_types))
     {
 		func = op.func;
@@ -2288,6 +2287,7 @@ __MPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
 		COMPAT_DATA_TYPE3 (func, MPC_MAXLOC_func)
 		else
 		COMPAT_DATA_TYPE3 (func, MPC_MINLOC_func) 
+		sctk_nodebug ("Internal reduce");
 	}
 	else
     {
@@ -2295,6 +2295,7 @@ __MPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
 		/*User define function */
 		sctk_thread_setspecific_mpc (sctk_func_key, (void *) op.u_func);
 		func = (MPC_Op_f) MPC_Op_tmp;
+		sctk_nodebug ("User reduce");
     }
 	
 	/* inter comm */
@@ -2359,27 +2360,30 @@ PMPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
 }
 
 #define MPC_Reduce_tmp_recvbuf_size 4096
-
-int PMPC_Reduce (void *sendbuf, void *recvbuf, mpc_msg_count count, MPC_Datatype datatype, MPC_Op op, int root, MPC_Comm comm)
+int
+PMPC_Reduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
+	     MPC_Datatype datatype, MPC_Op op, int root, MPC_Comm comm)
 {
-	unsigned long size;
-	char tmp_recvbuf[MPC_Reduce_tmp_recvbuf_size];
-	sctk_task_specific_t *task_specific;
-	MPC_Status status;
-	int com_size;
-	int com_rank;
-	void *tmp_buf;
-	SCTK_PROFIL_START (MPC_Reduce);
-	task_specific = __MPC_get_task_specific ();
-	mpc_check_comm (comm, comm);
-	__MPC_Comm_rank_size (comm, &com_rank, &com_size, task_specific);
-	mpc_check_task (root, comm, com_size);
-	mpc_check_count (count, comm);
-	mpc_check_type (datatype, comm);
+  unsigned long size;
+  char tmp_recvbuf[MPC_Reduce_tmp_recvbuf_size];
+  sctk_task_specific_t *task_specific;
+  MPC_Status status;
+  int com_size;
+  int com_rank;
+  void *tmp_buf;
+  SCTK_PROFIL_START (MPC_Reduce);
+  task_specific = __MPC_get_task_specific ();
+  mpc_check_comm (comm, comm);
+  __MPC_Comm_rank_size (comm, &com_rank, &com_size, task_specific);
+  mpc_check_task (root, comm, com_size);
+  mpc_check_count (count, comm);
+  mpc_check_type (datatype, comm);
 
-	#ifdef MPC_LOG_DEBUG
-		mpc_log_debug (comm, "MPC_Reduce send_ptr=%p recv_ptr=%p count=%lu, type=%d", sendbuf, recvbuf, count, datatype);
-	#endif
+#ifdef MPC_LOG_DEBUG
+  mpc_log_debug (comm,
+		 "MPC_Reduce send_ptr=%p recv_ptr=%p count=%lu, type=%d",
+		 sendbuf, recvbuf, count, datatype);
+#endif
 
 	/* inter comm */
 	if(sctk_is_inter_comm(comm))
@@ -2387,7 +2391,7 @@ int PMPC_Reduce (void *sendbuf, void *recvbuf, mpc_msg_count count, MPC_Datatype
 		/* do nothing */
 		if (root == MPC_PROC_NULL) 
 			MPC_ERROR_SUCESS ();
-
+		
 		/* root receive from rank 0 on remote group */
 		if (root == MPC_ROOT) 
 		{
@@ -2403,7 +2407,7 @@ int PMPC_Reduce (void *sendbuf, void *recvbuf, mpc_msg_count count, MPC_Datatype
 			}
 			/* reduce on remote group to rank 0*/
 			PMPC_Reduce(sendbuf, tmp_buf, count, datatype, op, 0, sctk_get_local_comm_id(comm));
-
+			
 			if (com_rank == 0)
 			{
 				/* send to root on local group */
@@ -2413,27 +2417,30 @@ int PMPC_Reduce (void *sendbuf, void *recvbuf, mpc_msg_count count, MPC_Datatype
 	}
 	else
 	{
-		if (com_rank != root)
+	  if (com_rank != root)
 		{
-			size = count * __MPC_Get_datatype_size (datatype, task_specific);
-			if (size < MPC_Reduce_tmp_recvbuf_size)
-			{
-				__MPC_Allreduce (sendbuf, tmp_recvbuf, count, datatype, op, comm, task_specific);
-			}
-			else
-			{
-				recvbuf = sctk_malloc (size);
-				__MPC_Allreduce (sendbuf, recvbuf, count, datatype, op, comm, task_specific);
-				sctk_free (recvbuf);
-			}
+		  size = count * __MPC_Get_datatype_size (datatype, task_specific);
+		  if (size < MPC_Reduce_tmp_recvbuf_size)
+		{
+		  __MPC_Allreduce (sendbuf, tmp_recvbuf, count, datatype, op,
+				   comm, task_specific);
 		}
-		else
+		  else
 		{
-			__MPC_Allreduce (sendbuf, recvbuf, count, datatype, op, comm, task_specific);
+		  recvbuf = sctk_malloc (size);
+		  __MPC_Allreduce (sendbuf, recvbuf, count, datatype, op, comm,
+				   task_specific);
+		  sctk_free (recvbuf);
+		}
+		}
+	  else
+		{
+		  __MPC_Allreduce (sendbuf, recvbuf, count, datatype, op, comm,
+				   task_specific);
 		}
 	}
-	SCTK_PROFIL_END (MPC_Reduce);
-	MPC_ERROR_SUCESS ();
+  SCTK_PROFIL_END (MPC_Reduce);
+  MPC_ERROR_SUCESS ();
 }
 
 int
@@ -3099,9 +3106,6 @@ PMPC_Test (MPC_Request * request, int *flag, MPC_Status * status)
   int res;
 
   SCTK_PROFIL_START (MPC_Test);
-  if(request == NULL)
-	  return MPC_ERR_REQUEST;
-
   res = __MPC_Test (request, flag, status);
 #ifdef MPC_LOG_DEBUG
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Test req=%p flag=%d", request, *flag);
@@ -5284,7 +5288,7 @@ PMPC_Request_free (MPC_Request * request)
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Request_free req=%p", request);
 #endif
 
-	sctk_nodebug("wait for message");
+	sctk_debug("wait for message");
     /* Firstly wait the message before freeing */
     sctk_mpc_wait_message(request);
   *request = mpc_request_null;

@@ -125,43 +125,24 @@
 #pragma weak MPI_Sendrecv_replace = PMPI_Sendrecv_replace
 #pragma weak mpi_sendrecv_replace_ = pmpi_sendrecv_replace_
 #pragma weak mpi_sendrecv_replace__ = pmpi_sendrecv_replace__
-
 #pragma weak MPI_Type_contiguous = PMPI_Type_contiguous
 #pragma weak mpi_type_contiguous_ = pmpi_type_contiguous_
 #pragma weak mpi_type_contiguous__ = pmpi_type_contiguous__
-
 #pragma weak MPI_Type_vector = PMPI_Type_vector
 #pragma weak mpi_type_vector_ = pmpi_type_vector_
 #pragma weak mpi_type_vector__ = pmpi_type_vector__
-
 #pragma weak MPI_Type_hvector = PMPI_Type_hvector
 #pragma weak mpi_type_hvector_ = pmpi_type_hvector_
 #pragma weak mpi_type_hvector__ = pmpi_type_hvector__
-
 #pragma weak MPI_Type_indexed = PMPI_Type_indexed
 #pragma weak mpi_type_indexed_ = pmpi_type_indexed_
 #pragma weak mpi_type_indexed__ = pmpi_type_indexed__
-
 #pragma weak MPI_Type_hindexed = PMPI_Type_hindexed
 #pragma weak mpi_type_hindexed_ = pmpi_type_hindexed_
 #pragma weak mpi_type_hindexed__ = pmpi_type_hindexed__
-
 #pragma weak MPI_Type_struct = PMPI_Type_struct
 #pragma weak mpi_type_struct_ = pmpi_type_struct_
 #pragma weak mpi_type_struct__ = pmpi_type_struct__
-
-#pragma weak MPI_Type_create_struct = PMPI_Type_create_struct
-#pragma weak mpi_type_create_struct_ = pmpi_type_create_struct_
-#pragma weak mpi_type_create_struct__ = pmpi_type_create_struct__
-
-#pragma weak MPI_Type_create_hindexed = PMPI_Type_create_hindexed
-#pragma weak mpi_type_create_hindexed_ = pmpi_type_create_hindexed_
-#pragma weak mpi_type_create_hindexed__ = pmpi_type_create_hindexed__
-
-#pragma weak MPI_Type_create_hvector = PMPI_Type_create_hvector
-#pragma weak mpi_type_create_hvector_ = pmpi_type_create_hvector_
-#pragma weak mpi_type_create_hvector__ = pmpi_type_create_hvector__
-
 #pragma weak MPI_Address = PMPI_Address
 #pragma weak mpi_address_ = pmpi_address_
 #pragma weak mpi_address__ = pmpi_address__

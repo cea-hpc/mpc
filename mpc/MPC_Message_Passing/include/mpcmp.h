@@ -235,8 +235,6 @@ extern "C"
 /*    struct { float, float }*/
 #define MPC_2DOUBLE_PRECISION 21
 /*    struct { double, double }*/
-#define MPC_LONG_DOUBLE_INT 32
-/*    struct { long double, int }*/
 #define MPC_LOGICAL 22
 #define MPC_DOUBLE_COMPLEX 23
 
@@ -248,6 +246,7 @@ extern "C"
 #define MPC_REAL8 29
 #define MPC_REAL16 30
 #define MPC_SIGNED_CHAR 31
+#define MPC_LONG_DOUBLE_INT 32
 
 /* for the datatype decoders */
 enum MPIR_Combiner_enum {

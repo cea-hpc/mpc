@@ -38,7 +38,7 @@ mpc_no_exec (const void *mpc_restrict in, void *mpc_restrict inout, size_t size,
   fprintf (stderr,
 	   "Internal error: This can not be run at line %d in %s in %p out %p size %lu, datatype %d\n",
 	   line, file, in, inout, (unsigned long) size, (int) datatype);
-  //~ verb_abort ();
+  verb_abort ();
 }
 
 static inline void
@@ -372,7 +372,6 @@ MPC_DEFINED_FUNCS_NOIMPL (MPC_SHORT_INT, mpc_short_int)
 MPC_DEFINED_FUNCS_NOIMPL (MPC_2INT, mpc_int_int)
 MPC_DEFINED_FUNCS_NOIMPL (MPC_2FLOAT, mpc_float_float)
 MPC_DEFINED_FUNCS_NOIMPL (MPC_2DOUBLE_PRECISION, mpc_double_double)
-MPC_DEFINED_FUNCS_NOIMPL (MPC_LONG_DOUBLE_INT, mpc_long_double_int)
 MPC_DEFINED_FUNCS_NOIMPL (MPC_LOGICAL, int)
 MPC_DEFINED_FUNCS_IMPL2 (MPC_CHAR, char)
 MPC_DEFINED_FUNCS_IMPL2 (MPC_LOGICAL, int)
@@ -416,6 +415,3 @@ MPC_DEFINED_FUNCS_IMPL3 (MPC_SHORT_INT, mpc_short_int)
 MPC_DEFINED_FUNCS_IMPL3 (MPC_2INT, mpc_int_int)
 MPC_DEFINED_FUNCS_IMPL3 (MPC_2FLOAT, mpc_float_float)
 MPC_DEFINED_FUNCS_IMPL3 (MPC_2DOUBLE_PRECISION, mpc_double_double)
-MPC_DEFINED_FUNCS_IMPL3 (MPC_LONG_DOUBLE_INT, mpc_long_double_int)
-
-
