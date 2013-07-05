@@ -1240,6 +1240,7 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
   mpi_buffer_t *tmp;
   int size;
   int res;
+  MPI_request_struct_t *requests;
   mpi_buffer_overhead_t *head;
   mpi_buffer_overhead_t *head_next;
   void *head_buf;
@@ -1271,7 +1272,7 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
   }
 
   found = SCTK__MPI_Compact_buffer (size, tmp);
-
+  sctk_debug("found = %d", found);
   if (found)
   {
     int position = 0;
@@ -1306,17 +1307,27 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
     }
     assume (position <= size);
 	
-	MPI_internal_request_t *req;
-	req = __sctk_convert_mpc_request_internal(request);
-
-	if(req->persistant.buf == NULL)
+	PMPC_Get_requests ((void *) &requests);
+	if((*request >= 0) && (*request < requests->max_size))
 	{
-    	res = __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest, tag, comm, &(head->request), 0);
+		MPI_internal_request_t *req;
+		req = __sctk_convert_mpc_request_internal(request);
+
+		if(req->persistant.buf == NULL)
+		{
+    		res = __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest, tag, comm, &(head->request), 0);
+		}	
+		else
+		{
+    		res = __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest, tag, comm, request, 1);
+		}
 	}
 	else
 	{
-    	res = __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest, tag, comm, request, 1);
+    	res = __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest, tag, comm, &(head->request), 0);
 	}
+		
+
 
     if (res != MPI_SUCCESS)
     {
