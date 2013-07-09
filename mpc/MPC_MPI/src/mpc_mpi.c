@@ -1315,15 +1315,18 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
 
 		if(req->persistant.buf == NULL)
 		{
+			sctk_debug("1 : Ibsend with head->request");
     		res = __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest, tag, comm, &(head->request), 0);
 		}	
 		else
 		{
+			sctk_debug("Ibsend with request");
     		res = __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest, tag, comm, request, 1);
 		}
 	}
 	else
 	{
+		sctk_debug("2 : Ibsend with head->request");
     	res = __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest, tag, comm, &(head->request), 0);
 	}
 		
@@ -1689,7 +1692,7 @@ static int __INTERNAL__PMPI_Wait (MPI_Request * request, MPI_Status * status)
 	{
 		if(tmp->persistant.buf == NULL)
 		{
-			sctk_debug("deleting request wait %d", *request);
+			sctk_nodebug("deleting request wait %d", *request);
 			__sctk_delete_mpc_request (request);
 		}
 	}
@@ -1699,10 +1702,14 @@ static int __INTERNAL__PMPI_Wait (MPI_Request * request, MPI_Status * status)
 static int __INTERNAL__PMPI_Test (MPI_Request * request, int *flag, MPI_Status * status)
 {
 	int res;
+	MPI_internal_request_t *tmp;
+	tmp = __sctk_convert_mpc_request_internal(request);
 	res = PMPC_Test (__sctk_convert_mpc_request (request), flag, status);
 	if (*flag)
     {
-		__sctk_delete_mpc_request (request);
+		tmp = __sctk_convert_mpc_request_internal(request);
+		if(tmp->persistant.buf == NULL)
+			__sctk_delete_mpc_request (request);
     }
 	else
     {
@@ -1715,12 +1722,18 @@ static int __INTERNAL__PMPI_Request_free (MPI_Request * request)
 {
 	int res = MPI_SUCCESS;
 	MPI_internal_request_t *tmp;
-
 	tmp = __sctk_convert_mpc_request_internal (request);
+
 	if (tmp)
     {
 		tmp->freeable = 1;
-		res = PMPC_Request_free (&(tmp->req));
+		if(tmp->req.msg != NULL)
+		{
+			res = PMPC_Request_free (&(tmp->req));
+		}
+		else
+			*request = MPI_REQUEST_NULL;
+
 		__sctk_delete_mpc_request (request);
     }
 	return res;
@@ -2033,6 +2046,7 @@ __INTERNAL__PMPI_Bsend_init (void *buf, int count, MPI_Datatype datatype,
 			     int dest, int tag, MPI_Comm comm,
 			     MPI_Request * request)
 {
+	int rank;
 	MPI_internal_request_t *req;
 	req = __sctk_new_mpc_request_internal (request);
 	sctk_debug("new request %d", *request);
