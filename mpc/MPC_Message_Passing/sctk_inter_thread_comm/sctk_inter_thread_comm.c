@@ -47,7 +47,10 @@
 //~ #define SCTK_ENABLE_FULL_MPI
 
 TODO("sctk_cancel_message: need to be implemented")
-  void sctk_cancel_message (sctk_request_t * msg){not_implemented();}
+void sctk_cancel_message (sctk_request_t * msg)
+{
+	msg->completion_flag = SCTK_MESSAGE_CANCELED;
+}
 
 /********************************************************************/
 /*Structres                                                         */
@@ -2055,6 +2058,9 @@ void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_ch
     if(msg->body.completion_flag != NULL){
       *(msg->body.completion_flag) = SCTK_MESSAGE_PENDING;
     }
+    else if(msg->body.completion_flag != SCTK_MESSAGE_CANCELED) {
+		return;
+	}
 
     if(msg->tail.request != NULL){
       msg->tail.request->need_check_in_wait = msg->tail.need_check_in_wait;
