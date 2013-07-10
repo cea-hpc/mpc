@@ -716,6 +716,34 @@ __sctk_new_mpc_request (MPI_Request * req)
 }
 
 static inline MPI_internal_request_t *
+__sctk_convert_mpc_ibsend_request_internal (MPI_Request * req)
+{
+  MPI_internal_request_t *tmp;
+  MPI_request_struct_t *requests;
+  int int_req;
+
+  int_req = *req;
+  if (int_req == MPI_REQUEST_NULL)
+    {
+      return NULL;
+    }
+
+
+  PMPC_Get_requests ((void *) &requests);
+
+  assume (requests != NULL);
+
+  sctk_spinlock_lock (&(requests->lock));
+	  sctk_nodebug ("Convert request %d", *req);
+	  assume (((int_req) >= 0) && ((int_req) < requests->max_size));
+	  tmp = requests->tab[int_req];
+	  assume (tmp->rank == *req);
+  sctk_spinlock_unlock (&(requests->lock));
+  assume(tmp != NULL);
+  return tmp;
+}
+
+static inline MPI_internal_request_t *
 __sctk_convert_mpc_request_internal (MPI_Request * req)
 {
   MPI_internal_request_t *tmp;
@@ -1311,7 +1339,7 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
 	if((*request >= 0) && (*request < requests->max_size))
 	{
 		MPI_internal_request_t *req;
-		req = __sctk_convert_mpc_request_internal(request);
+		req = __sctk_convert_mpc_ibsend_request_internal(request);
 
 		if(req->persistant.buf == NULL)
 		{
@@ -7943,6 +7971,16 @@ PMPI_Test (MPI_Request * request, int *flag, MPI_Status * status)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  if(*request == MPI_REQUEST_NULL)
+  {
+	res = MPI_SUCCESS;
+	status->MPC_SOURCE = MPI_PROC_NULL;
+	status->MPC_TAG = MPI_ANY_TAG;
+	status->MPC_ERROR = MPI_SUCCESS;
+	status->count = 0;
+	*flag = 1;
+	return res;
+  }
   res = __INTERNAL__PMPI_Test (request, flag, status);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
