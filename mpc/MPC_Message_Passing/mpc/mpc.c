@@ -358,10 +358,6 @@ static inline int sctk_mpc_message_get_is_null(MPC_Request * request){
   return request->is_null;
 }
 
-static inline int sctk_mpc_message_is_cancelled(MPC_Request * request){
-  return request->completion_flag;
-}
-
 static inline void sctk_mpc_set_header_in_message(sctk_thread_ptp_message_t *
 						  msg, const int message_tag,
 						  const sctk_communicator_t
@@ -377,7 +373,6 @@ static inline void sctk_mpc_set_header_in_message(sctk_thread_ptp_message_t *
 
 static inline void sctk_mpc_wait_message (MPC_Request * request){
   if(sctk_mpc_message_is_null(request) == 0){
-	if(request->msg != NULL);
     sctk_wait_message(request);
   }
 }
@@ -2566,7 +2561,6 @@ __MPC_Isend (void *buf, mpc_msg_count count, MPC_Datatype datatype,
 
   sctk_nodebug ("Message from %d to %d", src, dest);
   sctk_nodebug ("isend : snd2, my rank = %d", src);
-  if(request->completion_flag == SCTK_MESSAGE_PENDING)
   sctk_send_message (msg);
   MPC_ERROR_SUCESS ();
 }
@@ -2777,7 +2771,7 @@ __MPC_Wait (MPC_Request * request, MPC_Status * status)
     {
       sctk_mpc_message_set_is_null(request,1);
     }
-  if ((sctk_mpc_message_is_null(request) != 1) && (!sctk_mpc_message_is_cancelled(request)))
+  if (sctk_mpc_message_is_null(request) != 1)
     {
       sctk_mpc_wait_message (request);
       sctk_mpc_message_set_is_null(request,1);

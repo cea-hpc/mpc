@@ -1518,11 +1518,8 @@ static int
 __INTERNAL__PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest,
 			int tag, MPI_Comm comm, MPI_Request * request)
 {
-	sctk_debug("request == %d", *request);
-	if((*request) <= 0)
-		return __INTERNAL__PMPI_Isend_test_req (buf, count, datatype, dest, tag, comm, request, 0);
-	else
-		return __INTERNAL__PMPI_Isend_test_req (buf, count, datatype, dest, tag, comm, request, 1);
+  return __INTERNAL__PMPI_Isend_test_req (buf, count, datatype, dest, tag,
+					  comm, request, 0);
 }
 
 static int
@@ -1713,22 +1710,17 @@ static int __INTERNAL__PMPI_Wait (MPI_Request * request, MPI_Status * status)
 {
 	int res;
 	MPI_internal_request_t *tmp;
-	MPC_Request * req;
 	sctk_debug("wait request %d", *request);
 	tmp = __sctk_convert_mpc_request_internal(request);
-	req = __sctk_convert_mpc_request (request);
-	res = PMPC_Wait (req, status);
+	res = PMPC_Wait (__sctk_convert_mpc_request (request), status);
 
 	/* Deallocating request if created by non-blocking call */
-	if(req->completion_flag == SCTK_MESSAGE_CANCELED)
-	{
-		sctk_debug("request %d cancelled", *request);
-	}
-	else if(tmp->freeable)
+	tmp = __sctk_convert_mpc_request_internal(request);
+	if(tmp->freeable)
 	{
 		if(tmp->persistant.buf == NULL)
 		{
-			sctk_debug("deleting request wait %d", *request);
+			sctk_nodebug("deleting request wait %d", *request);
 			__sctk_delete_mpc_request (request);
 		}
 	}
@@ -2014,20 +2006,21 @@ __INTERNAL__PMPI_Probe (int source, int tag, MPI_Comm comm,
   return PMPC_Probe (source, tag, comm, status);
 }
 
-static int __INTERNAL__PMPI_Cancel (MPI_Request * request)
+static int
+__INTERNAL__PMPI_Cancel (MPI_Request * request)
 {
-	int res = MPI_ERR_INTERN;
-	MPI_internal_request_t *req;
-	req = __sctk_convert_mpc_request_internal (request);
-	if (req->is_active == 1)
+  int res = MPI_ERR_INTERN;
+  MPI_internal_request_t *req;
+  req = __sctk_convert_mpc_request_internal (request);
+  if (req->is_active == 1)
     {
-		res = PMPC_Cancel (__sctk_convert_mpc_request (request));
+      res = PMPC_Cancel (__sctk_convert_mpc_request (request));
     }
-	else
+  else
     {
-		res = MPI_ERR_REQUEST;
+      res = MPI_ERR_REQUEST;
     }
-	return res;
+  return res;
 }
 
 static int
@@ -7509,7 +7502,7 @@ int
 PMPI_Recv (void *buf, int count, MPI_Datatype datatype, int source, int tag,
 	   MPI_Comm comm, MPI_Status * status)
 {
-  sctk_debug("MPI_Recv count %d, datatype %d, source %d, tag %d, comm %d", count, datatype, source, tag, comm);
+  sctk_nodebug("MPI_Recv count %d, datatype %d, source %d, tag %d, comm %d", count, datatype, source, tag, comm);
   int res = MPI_ERR_INTERN;
   if(source == MPC_PROC_NULL)
   {
@@ -7557,20 +7550,25 @@ PMPI_Recv (void *buf, int count, MPI_Datatype datatype, int source, int tag,
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
-int PMPI_Get_count (MPI_Status * status, MPI_Datatype datatype, int * count)
+int
+PMPI_Get_count (MPI_Status * status, MPI_Datatype datatype, int *count)
 {
-	MPI_Comm comm = MPI_COMM_WORLD;
-	int res = MPI_ERR_INTERN;
-	mpi_check_type (datatype, MPI_COMM_WORLD);
+  MPI_Comm comm = MPI_COMM_WORLD;
+  int res = MPI_ERR_INTERN;
+  mpi_check_type (datatype, MPI_COMM_WORLD);
 
-	if (status == NULL) {
+  if (status == NULL)
+    {
       MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_IN_STATUS, "");
-    } else if (count == NULL) {
+    }
+
+  if (count == NULL)
+    {
       MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_COUNT, "");
     }
 
-	res = __INTERNAL__PMPI_Get_count (status, datatype, count);
-	SCTK__MPI_Check_retrun_val (res, comm);
+  res = __INTERNAL__PMPI_Get_count (status, datatype, count);
+  SCTK__MPI_Check_retrun_val (res, comm);
 }
 
 int
@@ -7721,11 +7719,9 @@ int
 PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	    MPI_Comm comm, MPI_Request * request)
 {
-	sctk_debug("MPI_Isend count %d, datatype %d, dest %d, tag %d, comm %d, request %d", count, datatype, dest, tag, comm, *request);
+	sctk_nodebug("Isend");
   int res = MPI_ERR_INTERN;
-  if(*request <= 0)
-	SCTK__MPI_INIT_REQUEST (request);
-  
+  SCTK__MPI_INIT_REQUEST (request);
   if(dest == MPC_PROC_NULL)
   {
 	res = MPI_SUCCESS;
@@ -8109,34 +8105,22 @@ PMPI_Probe (int source, int tag, MPI_Comm comm, MPI_Status * status)
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
-int PMPI_Cancel (MPI_Request * request)
+int
+PMPI_Cancel (MPI_Request * request)
 {
-	MPI_Comm comm = MPI_COMM_WORLD;
-	int res = MPI_ERR_INTERN;
-  
-	if (NULL == request ||  MPI_REQUEST_NULL == *request) {
-		return MPI_ERR_REQUEST;
-	}
-  
-	if (MPI_REQUEST_NULL == *request) {
-		return MPI_SUCCESS;
-	}
-  
-	res = __INTERNAL__PMPI_Cancel (request);
-	SCTK__MPI_Check_retrun_val (res, comm);
+  MPI_Comm comm = MPI_COMM_WORLD;
+  int res = MPI_ERR_INTERN;
+  res = __INTERNAL__PMPI_Cancel (request);
+  SCTK__MPI_Check_retrun_val (res, comm);
 }
 
-int PMPI_Test_cancelled (MPI_Status * status, int *flag)
+int
+PMPI_Test_cancelled (MPI_Status * status, int *flag)
 {
-	MPI_Comm comm = MPI_COMM_WORLD;
-	int res = MPI_ERR_INTERN;
-  
-	if (NULL == flag || NULL == status) {
-		return MPI_ERR_ARG;
-	}
-  
-	res = __INTERNAL__PMPI_Test_cancelled (status, flag);
-	SCTK__MPI_Check_retrun_val (res, comm);
+  MPI_Comm comm = MPI_COMM_WORLD;
+  int res = MPI_ERR_INTERN;
+  res = __INTERNAL__PMPI_Test_cancelled (status, flag);
+  SCTK__MPI_Check_retrun_val (res, comm);
 }
 
 int
