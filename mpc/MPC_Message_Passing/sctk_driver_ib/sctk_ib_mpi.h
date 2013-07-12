@@ -47,7 +47,7 @@ int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
        const char from_cp, struct sctk_ib_polling_s* poll);
 int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
        const char from_cp, struct sctk_ib_polling_s* poll);
-int sctk_network_poll_all (sctk_rail_info_t* rail);
+int sctk_network_poll_all (sctk_rail_info_t* rail, struct sctk_ib_polling_s* poll);
 
 #ifdef __cplusplus
 }

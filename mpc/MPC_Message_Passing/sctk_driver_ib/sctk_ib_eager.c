@@ -66,7 +66,7 @@ void sctk_ib_eager_init(sctk_ib_rail_info_t* rail_ib) {
  * if not found, allocate one
  */
 static inline sctk_thread_ptp_message_t*
-sctk_ib_eager_pick_buffered_ptp_message() {
+sctk_ib_eager_pick_buffered_ptp_message(sctk_rail_info_t *rail) {
   sctk_thread_ptp_message_t *tmp = NULL;
   if (eager_buffered_ptp_message) {
     sctk_spinlock_lock(&eager_lock_buffered_ptp_message);
@@ -78,6 +78,7 @@ sctk_ib_eager_pick_buffered_ptp_message() {
   }
   /* If no more entries are available in the buffered list, we allocate */
   if (tmp == NULL) {
+    PROF_INC(rail, ib_alloc_mem);
     tmp = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
     /* This header must be freed after use */
     tmp->from_buffered = 0;
@@ -88,7 +89,8 @@ sctk_ib_eager_pick_buffered_ptp_message() {
 /*
  * Release an MPC header according to its origin (buffered or allocated)
  */
-void sctk_ib_eager_release_buffered_ptp_message(sctk_thread_ptp_message_t* msg) {
+void sctk_ib_eager_release_buffered_ptp_message(sctk_rail_info_t* rail,
+    sctk_thread_ptp_message_t* msg) {
   if (msg->from_buffered) {
 
     sctk_spinlock_lock(&eager_lock_buffered_ptp_message);
@@ -96,6 +98,7 @@ void sctk_ib_eager_release_buffered_ptp_message(sctk_thread_ptp_message_t* msg) 
     sctk_spinlock_unlock(&eager_lock_buffered_ptp_message);
   } else {
     /* We can simply free the buffer because it was malloc'ed :-) */
+    PROF_INC(rail, ib_free_mem);
     sctk_free(msg);
   }
 }
@@ -110,11 +113,11 @@ sctk_ibuf_t* sctk_ib_eager_prepare_msg(sctk_ib_rail_info_t* rail_ib,
 
   body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
   if (is_control_message) {
-    ibuf = sctk_ibuf_pick_send_sr(rail_ib, task_node_number);
+    ibuf = sctk_ibuf_pick_send_sr(rail_ib, ibuf_node_task);
     sctk_ibuf_prepare(rail_ib, remote, ibuf, ibuf_size);
   } else {
     ibuf = sctk_ibuf_pick_send(rail_ib, remote, &ibuf_size,
-        task_node_number);
+        ibuf_node_task);
   }
   /* We cannot pick an ibuf. We should try the buffered eager protocol */
   if (ibuf == NULL) return NULL;
@@ -147,8 +150,7 @@ static void __free_no_recopy(void* arg) {
   ib_assume(!msg->tail.ib.eager.recopied);
   ibuf = msg->tail.ib.eager.ibuf;
   sctk_ibuf_release(ibuf->region->rail, ibuf);
-  PROF_INC_RAIL_IB(ibuf->region->rail, free_mem);
-  sctk_ib_eager_release_buffered_ptp_message(msg);
+  sctk_ib_eager_release_buffered_ptp_message(ibuf->region->rail->rail, msg);
 }
 
 static void __free_with_recopy(void *arg) {
@@ -156,8 +158,7 @@ static void __free_with_recopy(void *arg) {
   sctk_ibuf_t *ibuf = NULL;
 
   ibuf = msg->tail.ib.eager.ibuf;
-  PROF_INC_RAIL_IB(ibuf->region->rail, free_mem);
-  sctk_ib_eager_release_buffered_ptp_message(msg);
+  sctk_ib_eager_release_buffered_ptp_message(ibuf->region->rail->rail, msg);
 }
 
 /*-----------------------------------------------------------
@@ -194,7 +195,7 @@ sctk_ib_eager_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int recopy,
 
     size = eager_header->payload_size;
     msg = sctk_malloc(size + sizeof(sctk_thread_ptp_message_t));
-    PROF_INC(rail, alloc_mem);
+    PROF_INC(rail, ib_alloc_mem);
     ib_assume(msg);
 
     body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
@@ -204,9 +205,8 @@ sctk_ib_eager_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf, int recopy,
     /* Copy the body of the message */
     memcpy(body, IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer), size);
   } else {
-    msg = sctk_ib_eager_pick_buffered_ptp_message();
+    msg = sctk_ib_eager_pick_buffered_ptp_message(rail);
     ib_assume(msg);
-    PROF_INC(rail, alloc_mem);
 
     /* Copy the header of the message */
     memcpy(msg, IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer), sizeof(sctk_thread_ptp_message_body_t));
@@ -240,7 +240,7 @@ void sctk_ib_eager_recv_msg_no_recopy(sctk_message_to_copy_t* tmp){
   sctk_net_message_copy_from_buffer(body, tmp, 1);
 }
 
-void
+int
 sctk_ib_eager_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   sctk_thread_ptp_message_body_t * msg_ibuf = IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer);
 ;
@@ -258,15 +258,18 @@ sctk_ib_eager_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
         sctk_nodebug("Received OD message");
         msg = sctk_ib_eager_recv(rail, ibuf, recopy, protocol);
         sctk_ib_cm_on_demand_recv(rail, msg, ibuf, recopy);
-        return;
+        return REORDER_FOUND_EXPECTED;
       }
-    } else if (IS_PROCESS_SPECIFIC_LOW_MEM(tag)) {
+    }
+#if 0
+    else if (IS_PROCESS_SPECIFIC_LOW_MEM(tag)) {
       sctk_nodebug("Received low mem message");
       msg = sctk_ib_eager_recv(rail, ibuf, recopy, protocol);
       sctk_ib_low_mem_recv(rail, msg, ibuf, recopy);
 
-      return;
+      return REORDER_FOUND_EXPECTED;
     }
+#endif
   } else {
     /* Do not recopy message if it is not a process specific message.
      *
@@ -281,7 +284,7 @@ sctk_ib_eager_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   /* Normal message: we handle it */
   msg = sctk_ib_eager_recv(rail, ibuf, recopy, protocol);
   sctk_ib_eager_recv_free(rail, msg, ibuf, recopy);
-  rail->send_message_from_network(msg);
+  return rail->send_message_from_network(msg);
 }
 
 #endif

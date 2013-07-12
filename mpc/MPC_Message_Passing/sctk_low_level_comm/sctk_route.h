@@ -23,6 +23,7 @@
 #define __SCTK_ROUTE_H_
 
 #include <sctk_inter_thread_comm.h>
+#include <sctk_runtime_config.h>
 #include <uthash.h>
 #include <math.h>
 
@@ -110,10 +111,10 @@ struct sctk_rail_info_s{
   void (*send_message) (sctk_thread_ptp_message_t *,struct sctk_rail_info_s*);
   void (*notify_recv_message) (sctk_thread_ptp_message_t * ,struct sctk_rail_info_s*);
   void (*notify_matching_message) (sctk_thread_ptp_message_t * ,struct sctk_rail_info_s*);
-  void (*notify_perform_message) (int ,struct sctk_rail_info_s*);
+  void (*notify_perform_message) (int ,int, int, struct sctk_rail_info_s*);
   void (*notify_idle_message) (struct sctk_rail_info_s*);
-  void (*notify_any_source_message) (struct sctk_rail_info_s*);
-  void (*send_message_from_network) (sctk_thread_ptp_message_t * );
+  void (*notify_any_source_message) (int polling_task_id, struct sctk_rail_info_s*);
+  int (*send_message_from_network) (sctk_thread_ptp_message_t * );
   void(*connect_to)(int,int,sctk_rail_info_t*);
   void(*connect_from)(int,int,sctk_rail_info_t*);
   int (*route)(int , sctk_rail_info_t* );
@@ -123,6 +124,9 @@ struct sctk_rail_info_s{
   char on_demand;
   /* If the rail allows on demand-connexions */
   int rail_number;
+  /* Infos from runtime config */
+  struct sctk_runtime_config_struct_net_rail * runtime_config_rail;
+  struct sctk_runtime_config_struct_net_driver_config * runtime_config_driver_config;
 };
 
 typedef enum {
@@ -185,7 +189,10 @@ sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail);
 inline sctk_route_table_t* sctk_get_route_to_process_no_ondemand(int dest, sctk_rail_info_t* rail);
 inline sctk_route_table_t* sctk_get_route_to_process_static(int dest, sctk_rail_info_t* rail);
 
-void sctk_route_set_rail_nb(int i);
+void sctk_route_set_rail_nb(int nb);
+void sctk_route_set_rail_infos(int rail,
+    struct sctk_runtime_config_struct_net_rail * runtime_config_rail,
+    struct sctk_runtime_config_struct_net_driver_config * runtime_config_driver_config);
 int sctk_route_get_rail_nb();
 sctk_rail_info_t* sctk_route_get_rail(int i);
 sctk_route_table_t* sctk_get_route_to_process_no_route(int dest, sctk_rail_info_t* rail);
@@ -214,10 +221,16 @@ typedef enum sctk_route_state_e {
   state_reconnecting  = 444,
   state_reset         = 555,
   state_resizing      = 777,
+  state_requesting      = 888,
 } sctk_route_state_t;
 
 __UNUSED__ static void sctk_route_set_state(sctk_route_table_t* tmp, sctk_route_state_t state){
   OPA_store_int(&tmp->state, state);
+}
+
+__UNUSED__ static int sctk_route_cas_state(sctk_route_table_t* tmp, sctk_route_state_t oldv,
+  sctk_route_state_t newv ){
+  return (int) OPA_cas_int(&tmp->state, oldv, newv);
 }
 
 __UNUSED__ static int sctk_route_get_state(sctk_route_table_t* tmp){

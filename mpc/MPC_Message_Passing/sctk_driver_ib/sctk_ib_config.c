@@ -37,117 +37,28 @@
 #include "sctk_ib_eager.h"
 #include "sctk_ibufs_rdma.h"
 #include "sctk_ib_buffered.h"
+#include "sctk_runtime_config.h"
 
 /*-----------------------------------------------------------
  *  CONSTS
  *----------------------------------------------------------*/
+/* For RDMA connection */
+/* FOR PAPER */
+#define IBV_RDMA_MIN_SIZE (2 * 1024)
+#define IBV_RDMA_MAX_SIZE (12 * 1024)
+#define IBV_RDMA_MIN_NB (16)
+#define IBV_RDMA_MAX_NB (1024)
 
-/* Maximum message size for each channels (in fact this in
- * not really a limit...). Here is the algorithm to
- * select which channel use:
- * if x < IBV_EAGER_LIMIT -> eager msg
- * if x < IBV_FRAG_EAGER_LIMIT -> frag msg (into several eager buffers)
- * if x > IBV_FRAG_EAGER_LIMIT -> rendezvous msg */
-/* !!! WARNING !!! : diminishing IBV_EAGER_LIMIT me cause bad performance
- * on buffered eager messages */
-#define IBV_EAGER_LIMIT       ( 8 * 1024)
-#define IBV_FRAG_EAGER_LIMIT  (256 * 1024)
+/* For RDMA resizing */
+/* FOR PAPER */
+#define IBV_RDMA_RESIZING_MIN_SIZE (2 * 1024)
+#define IBV_RDMA_RESIZING_MAX_SIZE (12 * 1024)
+#define IBV_RDMA_RESIZING_MIN_NB (16)
+#define IBV_RDMA_RESIZING_MAX_NB (1024)
 
-/* Number of allowed pending Work Queue Elements
- * for each QP */
-#define IBV_QP_TX_DEPTH     15000
-/* We don't need recv WQE when using SRQ.
- * This variable must be set to 0 */
-#define IBV_QP_RX_DEPTH     0
-/* Many CQE. In memory, it represents about
- * 1.22Mb for 40000 entries */
-#define IBV_CQ_DEPTH        40000
-#define IBV_MAX_SG_SQ       8
-#define IBV_MAX_SG_RQ       8
-#define IBV_MAX_INLINE      128
-
-/* Number of RDMA buffers allocated for each neighbor.
- * The total memory used is: 2 (1 for send and 1 for receive) * 256 buffers * IBV_EAGER_RDMA_LIMIT */
-#define IBV_MAX_RDMA_CONNECTIONS 24 /* 2*12 */
-
-/* Maximum number of buffers to allocate during the
- * initialization step */
-#define IBV_INIT_IBUFS          3000
-//#define IBV_INIT_IBUFS         100
-
-/* Maximum number of buffers which can be posted to the SRQ.
- * This number cannot be higher than than the number fixed by the HW.
- * The verification is done during the config_check function */
-#define IBV_MAX_SRQ_IBUFS_POSTED     3000
-/* When the async thread wakes, it means that the SRQ is full. We
- * allows the async thread to extract IBV_MAX_SRQ_WR_HANDLE_BY_THREAD messages
- * before posting new buffers .*/
-#define IBV_MAX_SRQ_WR_HANDLE_BY_THREAD 50
-/* Maximum number of buffers which can be used by SRQ. This number
- * is not fixed by the HW */
-#define IBV_MAX_SRQ_IBUFS            3000
-//#define IBV_MAX_SRQ_IBUFS            50
-/* Minimum number of free recv buffer before
- * posting of new buffers. This thread is  activated
- * once a recv buffer is freed. If IBV_SRQ_CREDIT_LIMIT ==
- * IBV_MAX_SRQ_IBUFS_POSTED, receive buffers are re-post every-time
- * they are consumned */
-#define IBV_SRQ_CREDIT_LIMIT  100
-//#define IBV_SRQ_CREDIT_LIMIT  10
-/* Minimum number of free recv buffer before
- * the activation of the asynchronous
- * thread (if this thread is activated too much times,
- * the performance can be decreased) */
-#define IBV_SRQ_CREDIT_THREAD_LIMIT  1
-
-/* threshold before using dynamic allocation. For example, when
- * 80% of the SRQ buffers are busy, we make a copy of the message
- * before sending it to MPC. In the other case, MPC reads the message
- * directly from the network buffer.
- * FIXME: not used now */
-#define IBV_DYNAMIC_ALLOCATION_THRESHOLD 0.80L
-
-/* Number of new buffers allocated when
- * no more buffers are available */
-#define IBV_SIZE_IBUFS_CHUNKS 2000
-
-#define IBV_WC_IN_NUMBER    4
-#define IBV_WC_OUT_NUMBER   4
-
-/* Number of MMU entries allocated during
- * the MPC initialization */
-#define IBV_INIT_MR          400
-/* Number of new MMU allocated when
- * no more MMU entries are available.
- * You must use this option at your own risks! */
-#define IBV_SIZE_MR_CHUNKS  200
-#define IBV_MMU_CACHE_ENABLED 0
-#define IBV_MMU_CACHE_ENTRIES 100
-
-#define IBV_ADM_PORT        1
-
-#define IBV_RDMA_DEPTH       4
-#define IBV_RDMA_DEST_DEPTH  4
-
-#define IBV_LOW_MEMORY 0
-/* Verbosity level (some infos can appears on
- * the terminal during runtime: new ibufs allocated,
- * new MMU entries allocated, etc...) */
-#define IBV_VERBOSE_LEVEL         2
-
-#define IBV_ADAPTIVE_POLLING      0
-
-#define IBV_STEAL                 2
-/*  0 -> MPC in normal mode, without work-stealing */
-/*  1 -> MPC in collaborative-polling mode, without work-stealing */
-/*  2 -> MPC in collaborative-polling mode, with work-stealing */
-
-char* steal_names[3] = {
+char* steal_names[2] = {
   "Normal mode",
-  "Collaborative-polling w/o WS",
-  "Collaborative-polling w/ WS"};
-
-#define IBV_QUIET_CRASH           0
+  "Collaborative-polling mode"};
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
@@ -168,21 +79,6 @@ void sctk_ib_config_check(sctk_ib_rail_info_t *rail_ib)
     sctk_error("LOW mem module enabled: use it at your own risk!");
   }
 
-
-#if 0
-  sctk_ib_config_t *c = rail_ib->config;
-
-  /* FIXME: fix here */
-  c->device_attr = sctk_net_ibv_qp_get_dev_attr();
-
-  /* If more wr for srq available than the hw maximum number */
-  if (c->ibv_max_srq_ibufs_posted > c->device_attr->max_srq_wr) {
-    if (!sctk_process_rank)
-      sctk_warning("ibv_max_srq_ibufs_posted too high. Truncated to %d", c->device_attr->max_srq_wr);
-    c->ibv_max_srq_ibufs_posted = c->device_attr->max_srq_wr;
-  }
-#endif
-
   /* Good conf, we return */
   return;
 }
@@ -195,8 +91,17 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
     fprintf(stderr,
         "############# IB configuration for %s\n"
         "ibv_eager_limit      = %d\n"
-        "ibv_frag_eager_limit = %d\n"
+        "ibv_buffered_limit = %d\n"
         "ibv_max_rdma_connections = %d\n"
+        "ibv_rdma_min_size = %d\n"
+        "ibv_rdma_max_size = %d\n"
+        "ibv_rdma_min_nb = %d\n"
+        "ibv_rdma_max_nb = %d\n"
+        "ibv_rdma_resizing_min_size, = %d\n"
+        "ibv_rdma_resizing_max_size = %d\n"
+        "ibv_rdma_resizing_min_nb = %d\n"
+        "ibv_rdma_resizing_max_nb = %d\n"
+        "ibv_rdma_resizing    = %d\n"
         "ibv_qp_tx_depth      = %d\n"
         "ibv_qp_rx_depth      = %d\n"
         "ibv_max_sg_sq        = %d\n"
@@ -219,14 +124,25 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         "ibv_rdma_dest_depth  = %d\n"
         "ibv_adaptive_polling = %d\n"
         "ibv_quiet_crash      = %d\n"
+        "ibv_async_thread     = %d\n"
         EXPERIMENTAL(ibv_steal)"            = %d\n"
         "Stealing desc        = %s\n"
         EXPERIMENTAL(ibv_low_memory)"            = %d\n"
         "#############\n",
         config->network_name,
         config->ibv_eager_limit,
-        config->ibv_frag_eager_limit,
+        config->ibv_buffered_limit,
         config->ibv_max_rdma_connections,
+        config->ibv_rdma_min_size,
+        config->ibv_rdma_max_size,
+        config->ibv_rdma_min_nb,
+        config->ibv_rdma_max_nb,
+        config->ibv_rdma_resizing_min_size,
+        config->ibv_rdma_resizing_max_size,
+        config->ibv_rdma_resizing_min_nb,
+        config->ibv_rdma_resizing_max_nb,
+
+        config->ibv_rdma_resizing,
         config->ibv_qp_tx_depth,
         config->ibv_qp_rx_depth,
         config->ibv_max_sg_sq,
@@ -249,143 +165,89 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         config->ibv_rdma_dest_depth,
         config->ibv_adaptive_polling,
         config->ibv_quiet_crash,
+        config->ibv_async_thread,
         config->ibv_steal, steal_names[config->ibv_steal],
         config->ibv_low_memory);
   }
 }
 
-void load_ib_default_config(sctk_ib_rail_info_t *rail_ib)
+#define SET_RUNTIME_CONFIG(name) config->ibv_##name = runtime_config->name
+
+static void load_ib_load_config(sctk_ib_rail_info_t *rail_ib)
 {
   LOAD_CONFIG(rail_ib);
+  struct sctk_runtime_config_struct_net_driver_infiniband * runtime_config =
+    &rail_ib->rail->runtime_config_driver_config->driver.value.infiniband;
 
-  config->ibv_size_mr_chunk = IBV_SIZE_MR_CHUNKS;
-  config->ibv_init_ibufs = IBV_INIT_IBUFS;
+  SET_RUNTIME_CONFIG(size_mr_chunk);
+  SET_RUNTIME_CONFIG(init_ibufs);
+  SET_RUNTIME_CONFIG(max_rdma_connections);
+  SET_RUNTIME_CONFIG(rdma_resizing);
+  SET_RUNTIME_CONFIG(qp_tx_depth);
+  SET_RUNTIME_CONFIG(qp_rx_depth);
+  SET_RUNTIME_CONFIG(cq_depth);
+  SET_RUNTIME_CONFIG(max_sg_sq);
+  SET_RUNTIME_CONFIG(max_sg_rq);
+  SET_RUNTIME_CONFIG(max_inline);
+  SET_RUNTIME_CONFIG(max_srq_ibufs_posted);
+  SET_RUNTIME_CONFIG(max_srq_ibufs);
+  SET_RUNTIME_CONFIG(srq_credit_limit);
+  SET_RUNTIME_CONFIG(srq_credit_thread_limit);
+  SET_RUNTIME_CONFIG(verbose_level);
+  SET_RUNTIME_CONFIG(wc_in_number);
+  SET_RUNTIME_CONFIG(wc_out_number);
+  SET_RUNTIME_CONFIG(init_mr);
+  SET_RUNTIME_CONFIG(size_ibufs_chunk);
+  SET_RUNTIME_CONFIG(mmu_cache_enabled);
+  SET_RUNTIME_CONFIG(mmu_cache_entries);
+  SET_RUNTIME_CONFIG(adm_port);
+  SET_RUNTIME_CONFIG(rdma_depth);
+  SET_RUNTIME_CONFIG(rdma_dest_depth);
+  SET_RUNTIME_CONFIG(steal);
+  SET_RUNTIME_CONFIG(quiet_crash);
+  SET_RUNTIME_CONFIG(async_thread);
 
-  config->ibv_eager_limit       = ALIGN_ON_64 (IBV_EAGER_LIMIT + IBUF_GET_EAGER_SIZE);
-  config->ibv_frag_eager_limit  = (IBV_FRAG_EAGER_LIMIT + sizeof(sctk_thread_ptp_message_body_t));
+  config->ibv_eager_limit       = ALIGN_ON (runtime_config->eager_limit + IBUF_GET_EAGER_SIZE, 64);
+  config->ibv_buffered_limit  = (runtime_config->buffered_limit + sizeof(sctk_thread_ptp_message_body_t));
+  config->ibv_rdvz_protocol = IBV_RDVZ_WRITE_PROTOCOL;
 
-  config->ibv_max_rdma_connections  = IBV_MAX_RDMA_CONNECTIONS;
-  config->ibv_qp_tx_depth = IBV_QP_TX_DEPTH;
-  config->ibv_qp_rx_depth = IBV_QP_RX_DEPTH;
-  config->ibv_cq_depth = IBV_CQ_DEPTH;
-  config->ibv_max_sg_sq = IBV_MAX_SG_SQ;
-  config->ibv_max_sg_rq = IBV_MAX_SG_RQ;
-  config->ibv_max_inline = IBV_MAX_INLINE;
-  config->ibv_max_srq_ibufs_posted = IBV_MAX_SRQ_IBUFS_POSTED;
-  config->ibv_max_srq_ibufs = IBV_MAX_SRQ_IBUFS;
-  config->ibv_srq_credit_limit = IBV_SRQ_CREDIT_LIMIT;
-  config->ibv_srq_credit_thread_limit = IBV_SRQ_CREDIT_THREAD_LIMIT;
-  config->ibv_max_srq_wr_handle_by_thread = IBV_MAX_SRQ_WR_HANDLE_BY_THREAD;
-  config->ibv_size_ibufs_chunk = IBV_SIZE_IBUFS_CHUNKS;
-  config->ibv_rdvz_protocol = IBV_RDVZ_READ_PROTOCOL;
+  /* For RDMA: FIXME: restore RDMA connections */
+  config->ibv_rdma_min_size = IBV_RDMA_MIN_SIZE;
+  config->ibv_rdma_max_size = IBV_RDMA_MAX_SIZE;
+  config->ibv_rdma_min_nb = IBV_RDMA_MIN_NB;
+  config->ibv_rdma_max_nb = IBV_RDMA_MAX_NB;
 
-  config->ibv_verbose_level = IBV_VERBOSE_LEVEL;
-  config->ibv_wc_in_number = IBV_WC_IN_NUMBER;
-  config->ibv_wc_out_number = IBV_WC_OUT_NUMBER;
-  config->ibv_init_mr = IBV_INIT_MR;
-  config->ibv_mmu_cache_enabled = IBV_MMU_CACHE_ENABLED;
-  config->ibv_mmu_cache_entries = IBV_MMU_CACHE_ENTRIES;
-  config->ibv_adm_port = IBV_ADM_PORT;
-  config->ibv_rdma_depth = IBV_RDMA_DEPTH;
-  config->ibv_rdma_dest_depth = IBV_RDMA_DEST_DEPTH;
-  config->ibv_adaptive_polling = IBV_ADAPTIVE_POLLING;
-  config->ibv_steal = IBV_STEAL;
-  config->ibv_low_memory = IBV_LOW_MEMORY;
-  config->ibv_quiet_crash = IBV_QUIET_CRASH;
+  config->ibv_rdma_resizing_min_size = IBV_RDMA_RESIZING_MIN_SIZE;
+  config->ibv_rdma_resizing_max_size = IBV_RDMA_RESIZING_MAX_SIZE;
+  config->ibv_rdma_resizing_min_nb = IBV_RDMA_RESIZING_MIN_NB;
+  config->ibv_rdma_resizing_max_nb = IBV_RDMA_RESIZING_MAX_NB;
 }
 
+#if 0
 /* Set IB configure with env variables */
 void set_ib_env(sctk_ib_rail_info_t *rail_ib)
 {
-  char* value;
-  sctk_ib_config_t* c = rail_ib->config;
+  /* Format: "x:x:x:x-x:x:x:x". Buffer sizes are in KB */
+  if ( (value = getenv("MPC_IBV_RDMA_EAGER")) != NULL) {
+    sscanf(value,"%d-(%d:%d:%d:%d)-%d-(%d:%d:%d:%d)",
+        &c->ibv_max_rdma_connections,
+        &c->ibv_rdma_min_size,
+        &c->ibv_rdma_max_size,
+        &c->ibv_rdma_min_nb,
+        &c->ibv_rdma_max_nb,
+        &c->ibv_rdma_resizing,
+        &c->ibv_rdma_resizing_min_size,
+        &c->ibv_rdma_resizing_max_size,
+        &c->ibv_rdma_resizing_min_nb,
+        &c->ibv_rdma_resizing_max_nb);
 
-  if ( (value = getenv("MPC_IBV_EAGER_LIMIT")) != NULL )
-    c->ibv_eager_limit = ALIGN_ON_64 (atoi(value) + IBUF_GET_EAGER_SIZE);
-
-  if ( (value = getenv("MPC_IBV_FRAG_EAGER_LIMIT")) != NULL )
-    c->ibv_frag_eager_limit = ALIGN_ON_64 (atoi(value) + sizeof(sctk_thread_ptp_message_body_t));
-
-  if ( (value = getenv("MPC_IBV_MAX_RDMA_CONNECTIONS")) != NULL )
-    c->ibv_max_rdma_connections = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_QP_TX_DEPTH")) != NULL )
-    c->ibv_qp_tx_depth = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_QP_RX_DEPTH")) != NULL )
-    c->ibv_qp_rx_depth = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_MAX_SG_SQ")) != NULL )
-    c->ibv_max_sg_sq = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_MAX_RG_SQ")) != NULL )
-    c->ibv_max_sg_rq = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_MAX_INLINE")) != NULL )
-    c->ibv_max_inline = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_INIT_IBUFS")) != NULL )
-    c->ibv_init_ibufs = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_MAX_SRQ_IBUFS_POSTED")) != NULL )
-    c->ibv_max_srq_ibufs_posted = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_MAX_SRQ_IBUFS")) != NULL )
-    c->ibv_max_srq_ibufs = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_SRQ_CREDIT_LIMIT")) != NULL )
-    c->ibv_srq_credit_limit = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_SRQ_CREDIT_THREAD_LIMIT")) != NULL )
-    c->ibv_srq_credit_thread_limit = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_RDVZ_WRITE_PROTOCOL")) != NULL )
-    c->ibv_rdvz_protocol = IBV_RDVZ_WRITE_PROTOCOL;
-  if ( (value = getenv("MPC_IBV_RDVZ_READ_PROTOCOL")) != NULL )
-    c->ibv_rdvz_protocol = IBV_RDVZ_READ_PROTOCOL;
-
-  if ( (value = getenv("MPC_IBV_WC_IN_NUMBER")) != NULL )
-    c->ibv_wc_in_number = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_WC_OUT_NUMBER")) != NULL )
-    c->ibv_wc_out_number = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_INIT_MR")) != NULL )
-    c->ibv_init_mr = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_MMU_CACHE_ENTRIES")) != NULL )
-    c->ibv_mmu_cache_entries = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_MMU_CACHE_ENABLED")) != NULL )
-    c->ibv_mmu_cache_enabled = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_ADM_PORT")) != NULL )
-    c->ibv_adm_port = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_RDMA_DEPTH")) != NULL )
-    c->ibv_rdma_depth = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_RDMA_DEST_DEPTH")) != NULL )
-    c->ibv_rdma_dest_depth = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_QP_TX_DEPTH")) != NULL )
-    c->ibv_qp_tx_depth = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_SIZE_IBUFS_CHUNK")) != NULL )
-    c->ibv_size_ibufs_chunk = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_ADAPTIVE_POLLING")) != NULL )
-    c->ibv_adaptive_polling = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_STEAL")) != NULL )
-    c->ibv_steal = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_LOW_MEMORY")) != NULL )
-    c->ibv_low_memory = atoi(value);
-
-  if ( (value = getenv("MPC_IBV_QUIET_CRASH")) != NULL )
-    c->ibv_quiet_crash = atoi(value);
+    c->ibv_rdma_min_size          *=1024;
+    c->ibv_rdma_max_size          *=1024;
+    c->ibv_rdma_resizing_min_size *=1024;
+    c->ibv_rdma_resizing_max_size *=1024;
+  }
 }
+#endif
 
 void sctk_ib_config_init(sctk_ib_rail_info_t *rail_ib, char* network_name)
 {
@@ -397,8 +259,7 @@ void sctk_ib_config_init(sctk_ib_rail_info_t *rail_ib, char* network_name)
   rail_ib->config = config;
   rail_ib->config->network_name = strdup(network_name);
 
-  load_ib_default_config(rail_ib);
-  set_ib_env(rail_ib);
+  load_ib_load_config(rail_ib);
 
   /*
    * Check if the variables are well set

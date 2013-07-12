@@ -44,6 +44,9 @@ extern "C"
   /*
      #define MPI_ MPC_
    */
+
+#define MPI_VERSION    1
+#define MPI_SUBVERSION    3
 #define MPI_SOURCE MPC_SOURCE
 #define MPI_TAG MPC_TAG
 #define MPI_ERROR MPC_ERROR
@@ -69,6 +72,8 @@ extern "C"
 #define MPI_COMM_NULL MPC_COMM_NULL
 #define MPI_MAX_PROCESSOR_NAME MPC_MAX_PROCESSOR_NAME
 #define MPI_MAX_NAME_STRING 256
+#define MPI_ROOT MPC_ROOT
+#define MPI_IN_PLACE MPC_IN_PLACE
 
 /* Communication argument parameters */
 #define MPI_ERR_BUFFER MPC_ERR_BUFFER
@@ -88,10 +93,12 @@ extern "C"
 #define MPI_ERR_OTHER MPC_ERR_OTHER
 #define MPI_ERR_UNKNOWN MPC_ERR_UNKNOWN
 #define MPI_ERR_INTERN MPC_ERR_INTERN
+#define MPI_ERR_KEYVAL MPC_ERR_KEYVAL
 #define MPI_ERR_IN_STATUS MPC_ERR_IN_STATUS
 #define MPI_ERR_PENDING MPC_ERR_PENDING
 #define MPI_ERR_LASTCODE MPC_ERR_LASTCODE
 #define MPI_NOT_IMPLEMENTED MPC_NOT_IMPLEMENTED
+#define MPI_ERR_NO_MEM MPC_ERR_NO_MEM
 
 #define MPI_DATATYPE_NULL MPC_DATATYPE_NULL
 #define MPI_UB MPC_UB
@@ -133,6 +140,8 @@ extern "C"
 #define MPI_REAL4 MPC_REAL4
 #define MPI_REAL8 MPC_REAL8
 #define MPI_REAL16 MPC_REAL16
+#define MPI_SIGNED_CHAR MPC_SIGNED_CHAR
+#define MPI_LONG_DOUBLE_INT MPC_LONG_DOUBLE_INT
 
 
 #define MPI_SUM 0
@@ -167,6 +176,40 @@ extern "C"
   typedef MPC_Status MPI_Status;
   typedef MPC_Handler_function MPI_Handler_function;
   typedef int MPI_Fint;
+  
+//~ not implemented
+		typedef int MPI_Win;
+		typedef long MPI_Count;
+		typedef long MPI_Offset;
+		
+		/* C functions */
+		//~ typedef void (MPC_Handler_function) ( MPI_Comm *, int *, ... );
+		typedef int (MPI_Comm_copy_attr_function)(MPI_Comm, int, void *, void *, 
+						  void *, int *);
+		typedef int (MPI_Comm_delete_attr_function)(MPI_Comm, int, void *, void *);
+		typedef int (MPI_Type_copy_attr_function)(MPI_Datatype, int, void *, void *, 
+						  void *, int *);
+		typedef int (MPI_Type_delete_attr_function)(MPI_Datatype, int, void *, void *);
+		typedef int (MPI_Win_copy_attr_function)(MPI_Win, int, void *, void *, void *,
+						 int *);
+		typedef int (MPI_Win_delete_attr_function)(MPI_Win, int, void *, void *);
+		
+		/* added in MPI-2.2 */
+		typedef void (MPI_Comm_errhandler_function)(MPI_Comm *, int *, ...);
+		//~ typedef void (MPI_File_errhandler_function)(MPI_File *, int *, ...);
+		typedef void (MPI_Win_errhandler_function)(MPI_Win *, int *, ...);
+		/* names that were added in MPI-2.0 and deprecated in MPI-2.2 */
+		typedef MPI_Comm_errhandler_function MPI_Comm_errhandler_fn;
+		//~ typedef MPI_File_errhandler_function MPI_File_errhandler_fn;
+		typedef MPI_Win_errhandler_function MPI_Win_errhandler_fn;
+		
+		/* Typedefs for generalized requests */
+		typedef int (MPI_Grequest_cancel_function)(void *, int); 
+		typedef int (MPI_Grequest_free_function)(void *); 
+		typedef int (MPI_Grequest_query_function)(void *, MPI_Status *); 
+		typedef int (MPIX_Grequest_poll_function)(void *, MPI_Status *);
+		typedef int (MPIX_Grequest_wait_function)(int, void **, double, MPI_Status *);
+//~ End
 
   typedef struct
   {
@@ -186,11 +229,25 @@ extern "C"
 #define MPI_ERRORS_ARE_FATAL 2
 
 #define MPI_KEYVAL_INVALID -1
-  typedef int (MPI_Copy_function) (MPI_Comm, int, void *, void *, void *,
-				   int *);
-  typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
-#define MPI_NULL_COPY_FN   ((MPI_Copy_function *)NULL)
-#define MPI_NULL_DELETE_FN ((MPI_Delete_function *)NULL)
+
+typedef int (MPI_Copy_function) (MPI_Comm, int, void *, void *, void *, int *);
+typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
+
+#define MPI_NULL_DELETE_FN ((MPI_Delete_function *)MPC_Mpi_null_delete_fn)
+#define MPI_NULL_COPY_FN ((MPI_Copy_function *)MPC_Mpi_null_copy_fn)
+#define MPI_DUP_FN ((MPI_Copy_function *)MPC_Mpi_dup_fn)
+
+#define MPI_TYPE_NULL_DELETE_FN ((MPI_Delete_function *)MPC_Mpi_type_null_delete_fn)
+#define MPI_TYPE_NULL_COPY_FN ((MPI_Copy_function *)MPC_Mpi_type_null_copy_fn)
+#define MPI_TYPE_DUP_FN ((MPI_Copy_function *)MPC_Mpi_type_dup_fn)
+
+#define MPI_COMM_NULL_DELETE_FN ((MPI_Delete_function *)MPC_Mpi_comm_null_delete_fn)
+#define MPI_COMM_NULL_COPY_FN ((MPI_Copy_function *)MPC_Mpi_comm_null_copy_fn)
+#define MPI_COMM_DUP_FN ((MPI_Copy_function *)MPC_Mpi_comm_dup_fn)
+
+#define MPI_WIN_NULL_DELETE_FN ((MPI_Delete_function *)MPC_Mpi_win_null_delete_fn)
+#define MPI_WIN_NULL_COPY_FN ((MPI_Copy_function *)MPC_Mpi_win_null_copy_fn)
+#define MPI_WIN_DUP_FN ((MPI_Copy_function *)MPC_Mpi_win_dup_fn)
 
   extern const int MPI_TAG_UB;
   extern const int MPI_HOST;
@@ -201,6 +258,25 @@ extern "C"
   extern const int MPI_APPNUM;
   extern const MPI_Comm MPI_COMM_SELF;
 
+	int MPC_Mpi_null_delete_fn( MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state );
+	int MPC_Mpi_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );
+	int MPC_Mpi_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );
+
+	/* type */
+	int MPC_Mpi_type_null_delete_fn( MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state );
+	int MPC_Mpi_type_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );
+	int MPC_Mpi_type_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );
+
+	/* comm */
+	int MPC_Mpi_comm_null_delete_fn( MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state );
+	int MPC_Mpi_comm_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );
+	int MPC_Mpi_comm_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );
+
+	/* win */
+	int MPC_Mpi_win_null_delete_fn( MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state );
+	int MPC_Mpi_win_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );
+	int MPC_Mpi_win_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );
+	
   int MPI_Send (void *, int, MPI_Datatype, int, int, MPI_Comm);
   int MPI_Recv (void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Status *);
   int MPI_Get_count (MPI_Status *, MPI_Datatype, int *);
@@ -369,6 +445,139 @@ extern "C"
 
 /* Here are the bindings of the profiling routines */
 #if !defined(MPI_BUILD_PROFILING)
+  //~ not implemented
+  
+  /*
+  int PMPI_Alloc_mem (MPI_Aint, MPI_Info , void *);
+  int PMPI_Free_mem (void *);
+  
+  int PMPI_Info_set( MPI_Info, const char *, const char * );
+  int PMPI_Info_free( MPI_Info * );
+  int PMPI_Info_create( MPI_Info * );
+  int PMPI_Info_delete( MPI_Info , const char * );
+  int PMPI_Info_get(MPI_Info , const char *, int , char *, int *);
+  int PMPI_Info_dup( MPI_Info , MPI_Info * );
+  int PMPI_Info_get_nkeys (MPI_Info, int *);
+  int PMPI_Info_get_nthkey (MPI_Info, int, char *);
+  int PMPI_Info_get_valuelen (MPI_Info, char *, int *, int *);
+  
+  int PMPI_Type_dup(MPI_Datatype , MPI_Datatype *);
+  int PMPI_Type_get_name(MPI_Datatype , char *, int *);
+  int PMPI_Type_set_name(MPI_Datatype , const char *);
+  
+  int PMPI_Win_set_attr(MPI_Win , int , void *);
+  int PMPI_Win_get_attr(MPI_Win , int , void *, int *);
+  int PMPI_Win_free_keyval(int *);
+  int PMPI_Win_delete_attr(MPI_Win , int );
+  int PMPI_Win_create_keyval(MPI_Win_copy_attr_function *, MPI_Win_delete_attr_function *, int *, void *);
+  
+  int PMPI_Win_create (void *, MPI_Aint, int, MPI_Info, MPI_Comm, MPI_Win *);
+  int PMPI_Win_free (MPI_Win *);
+  
+  int PMPI_Type_create_resized (MPI_Datatype, MPI_Aint , MPI_Aint , MPI_Datatype *);
+  int PMPI_Type_get_true_extent(MPI_Datatype , MPI_Aint *, MPI_Aint *);
+  int PMPI_Type_get_extent(MPI_Datatype , MPI_Aint *, MPI_Aint *);
+  
+  int PMPI_Exscan(void *, void *, int , MPI_Datatype , MPI_Op , MPI_Comm );
+  int PMPI_Comm_set_errhandler(MPI_Comm , MPI_Errhandler );
+  int PMPI_Finalized( int *flag );
+  
+  int PMPI_Comm_create_keyval (MPI_Comm_copy_attr_function *, MPI_Comm_delete_attr_function *, int *, void *);
+  int PMPI_Comm_delete_attr (MPI_Comm, int);
+  int PMPI_Comm_free_keyval (int *);
+  int PMPI_Comm_get_attr (MPI_Comm, int, void *, int *);
+  int PMPI_Comm_set_attr (MPI_Comm, int, void *);
+  
+  int PMPI_Type_free_keyval (int *);
+  int PMPI_Type_create_keyval (MPI_Type_copy_attr_function *, MPI_Type_delete_attr_function *, int *, void *);
+  int PMPI_Type_delete_attr (MPI_Datatype, int);
+  int PMPI_Type_set_attr (MPI_Datatype, int, void *);
+  int PMPI_Type_get_attr (MPI_Datatype, int, void *, int *);
+  
+  int PMPI_Type_create_indexed_block (int, int, int *, MPI_Datatype, MPI_Datatype *);
+  int PMPI_Type_get_envelope (MPI_Datatype, int *, int *, int *, int *);
+  int PMPI_Type_get_contents (MPI_Datatype, int, int, int, int *, MPI_Aint *, MPI_Datatype *);
+  
+  int PMPI_Type_create_darray (int, int, int, int[], int[], int[], int[], int, MPI_Datatype, MPI_Datatype *);
+  int PMPI_Get_address (void *, MPI_Aint *);
+  int PMPI_Type_create_struct (int, int[], MPI_Aint[], MPI_Datatype[], MPI_Datatype *);
+  
+  int PMPI_Status_set_elements(MPI_Status *, MPI_Datatype , int );
+
+  int PMPI_Type_size_x(MPI_Datatype , MPI_Count *);
+  int PMPI_Type_get_extent_x(MPI_Datatype , MPI_Count *, MPI_Count *);
+  int PMPI_Type_get_true_extent_x(MPI_Datatype , MPI_Count *, MPI_Count *);
+  int PMPI_Get_elements_x(const MPI_Status *, MPI_Datatype , MPI_Count *);
+  int PMPI_Status_set_elements_x(MPI_Status *, MPI_Datatype , MPI_Count );
+  
+  int PMPI_Type_create_hindexed_block(int , int , const MPI_Aint *, MPI_Datatype , MPI_Datatype * );
+  
+  int PMPI_Pack_external_size (char *, int, MPI_Datatype, MPI_Aint *);
+  int PMPI_Pack_external (char *, void *, int, MPI_Datatype, void *, MPI_Aint, MPI_Aint *);
+  int PMPI_Unpack_external (char *, void *, MPI_Aint, MPI_Aint *, void *, int, MPI_Datatype);
+  
+  int PMPI_Type_create_subarray (int, int[], int[], int[], int, MPI_Datatype, MPI_Datatype *);
+  int PMPI_Type_match_size (int, int, MPI_Datatype *);
+  int PMPI_Reduce_scatter_block(void *, void *, int , MPI_Datatype , MPI_Op , MPI_Comm );
+  int PMPI_Comm_dup_with_info(MPI_Comm , MPI_Info , MPI_Comm * );
+  int PMPI_Comm_split_type(MPI_Comm , int , int , MPI_Info , MPI_Comm * );
+  int PMPI_Comm_set_info(MPI_Comm , MPI_Info );
+  int PMPI_Comm_get_info(MPI_Comm , MPI_Info * );
+  int PMPI_Add_error_class (int *);
+  int PMPI_Add_error_code (int, int *);
+  int PMPI_Add_error_string (int, char *);
+  int PMPI_Comm_call_errhandler (MPI_Comm, int);
+  int PMPI_Comm_create_errhandler (MPI_Comm_errhandler_fn *, MPI_Errhandler *);
+  int PMPI_Is_thread_main (int *);
+  int PMPI_Query_thread (int *);
+  int PMPI_Get_library_version(char *, int *);
+  int PMPI_Request_get_status (MPI_Request, int *, MPI_Status *);
+  int PMPI_Status_set_cancelled (MPI_Status *, int);
+  int PMPI_Grequest_start (MPI_Grequest_query_function *, MPI_Grequest_free_function *, MPI_Grequest_cancel_function *, void *, MPI_Request *);
+  int PMPI_Grequest_complete (MPI_Request);
+  */
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  
+  //~ end
+  
   int PMPI_Send (void *, int, MPI_Datatype, int, int, MPI_Comm);
   int PMPI_Recv (void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Status *);
   int PMPI_Get_count (MPI_Status *, MPI_Datatype, int *);
@@ -458,6 +667,7 @@ extern "C"
 		     MPI_Comm);
   int PMPI_Alltoallv (void *, int *, int *, MPI_Datatype, void *, int *,
 		      int *, MPI_Datatype, MPI_Comm);
+  int PMPI_Alltoallw(void *, int *, int *,  MPI_Datatype *, void *, int *,  int *, MPI_Datatype *, MPI_Comm );
   int PMPI_Reduce (void *, void *, int, MPI_Datatype, MPI_Op, int, MPI_Comm);
   int PMPI_Op_create (MPI_User_function *, int, MPI_Op *);
   int PMPI_Op_free (MPI_Op *);
@@ -555,22 +765,17 @@ extern "C"
   int MPI_Comm_disconnect (MPI_Comm *);
   int MPI_Comm_get_parent (MPI_Comm *);
   int MPI_Comm_join (int, MPI_Comm *);
-  int MPI_Comm_spawn (char *, char *[], int, MPI_Info, int, MPI_Comm,
-		      MPI_Comm *, int[]);
-  int MPI_Comm_spawn_multiple (int, char *[], char **[], int[], MPI_Info[],
-			       int, MPI_Comm, MPI_Comm *, int[]);
+  int MPI_Comm_spawn (char *, char *[], int, MPI_Info, int, MPI_Comm, MPI_Comm *, int[]);
+  int MPI_Comm_spawn_multiple (int, char *[], char **[], int[], MPI_Info[], int, MPI_Comm, MPI_Comm *, int[]);
   int MPI_Lookup_name (char *, MPI_Info, char *);
   int MPI_Open_port (MPI_Info, char *);
   int MPI_Publish_name (char *, MPI_Info, char *);
   int MPI_Unpublish_name (char *, MPI_Info, char *);
 
   /* One-Sided Communications */
-  int MPI_Accumulate (void *, int, MPI_Datatype, int, MPI_Aint, int,
-		      MPI_Datatype, MPI_Op, MPI_Win);
-  int MPI_Get (void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype,
-	       MPI_Win);
-  int MPI_Put (void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype,
-	       MPI_Win);
+  int MPI_Accumulate (void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype, MPI_Op, MPI_Win);
+  int MPI_Get (void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype, MPI_Win);
+  int MPI_Put (void *, int, MPI_Datatype, int, MPI_Aint, int, MPI_Datatype, MPI_Win);
   int MPI_Win_complete (MPI_Win);
   int MPI_Win_create (void *, MPI_Aint, int, MPI_Info, MPI_Comm, MPI_Win *);
   int MPI_Win_fence (int, MPI_Win);
@@ -584,8 +789,7 @@ extern "C"
   int MPI_Win_wait (MPI_Win);
 
   /* Extended Collective Operations */
-  int MPI_Alltoallw (void *, int[], int[], MPI_Datatype[], void *, int[],
-		     int[], MPI_Datatype[], MPI_Comm);
+  int MPI_Alltoallw (void *, int[], int[], MPI_Datatype[], void *, int[], int[], MPI_Datatype[], MPI_Comm);
   int MPI_Exscan (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
 
   /* External Interfaces */
@@ -593,38 +797,32 @@ extern "C"
   int MPI_Add_error_code (int, int *);
   int MPI_Add_error_string (int, char *);
   int MPI_Comm_call_errhandler (MPI_Comm, int);
-  int MPI_Comm_create_keyval (MPI_Comm_copy_attr_function *,
-			      MPI_Comm_delete_attr_function *, int *, void *);
+  int MPI_Comm_create_keyval (MPI_Comm_copy_attr_function *, MPI_Comm_delete_attr_function *, int *, void *);
   int MPI_Comm_delete_attr (MPI_Comm, int);
   int MPI_Comm_free_keyval (int *);
   int MPI_Comm_get_attr (MPI_Comm, int, void *, int *);
   int MPI_Comm_set_attr (MPI_Comm, int, void *);
   int MPI_File_call_errhandler (MPI_File, int);
   int MPI_Grequest_complete (MPI_Request);
-  int MPI_Grequest_start (MPI_Grequest_query_function *,
-			  MPI_Grequest_free_function *,
-			  MPI_Grequest_cancel_function *, void *,
-			  MPI_Request *);
+  int MPI_Grequest_start (MPI_Grequest_query_function *, MPI_Grequest_free_function *, MPI_Grequest_cancel_function *, void *, MPI_Request *);
   int MPI_Is_thread_main (int *);
   int MPI_Query_thread (int *);
   int MPI_Status_set_cancelled (MPI_Status *, int);
   int MPI_Status_set_elements (MPI_Status *, MPI_Datatype, int);
-  int MPI_Type_create_keyval (MPI_Type_copy_attr_function *,
-			      MPI_Type_delete_attr_function *, int *, void *);
-  int MPI_Type_delete_attr (MPI_Datatype, int);
   int MPI_Type_dup (MPI_Datatype, MPI_Datatype *);
   int MPI_Type_free_keyval (int *);
+  int MPI_Type_create_keyval (MPI_Type_copy_attr_function *, MPI_Type_delete_attr_function *, int *, void *);
+  int MPI_Type_delete_attr (MPI_Datatype, int);
+  int MPI_Type_set_attr (MPI_Datatype, int, void *);
   int MPI_Type_get_attr (MPI_Datatype, int, void *, int *);
-  int MPI_Type_get_contents (MPI_Datatype, int, int, int, int[], MPI_Aint[],
-			     MPI_Datatype[]);
+  int MPI_Type_get_contents (MPI_Datatype, int, int, int, int[], MPI_Aint[], MPI_Datatype[]);
   int MPI_Type_get_envelope (MPI_Datatype, int *, int *, int *, int *);
   int MPI_Type_get_name (MPI_Datatype, char *, int *);
-  int MPI_Type_set_attr (MPI_Datatype, int, void *);
+  
   int MPI_Type_set_name (MPI_Datatype, char *);
   int MPI_Type_match_size (int, int, MPI_Datatype *);
   int MPI_Win_call_errhandler (MPI_Win, int);
-  int MPI_Win_create_keyval (MPI_Win_copy_attr_function *,
-			     MPI_Win_delete_attr_function *, int *, void *);
+  int MPI_Win_create_keyval (MPI_Win_copy_attr_function *, MPI_Win_delete_attr_function *, int *, void *);
   int MPI_Win_delete_attr (MPI_Win, int);
   int MPI_Win_free_keyval (int *);
   int MPI_Win_get_attr (MPI_Win, int, void *, int *);
@@ -632,7 +830,7 @@ extern "C"
   int MPI_Win_set_attr (MPI_Win, int, void *);
   int MPI_Win_set_name (MPI_Win, char *);
 
-  int MPI_Alloc_mem (MPI_Aint, MPI_Info info, void *baseptr);
+  int MPI_Alloc_mem (MPI_Aint, MPI_Info , void *);
   int MPI_Comm_create_errhandler (MPI_Comm_errhandler_fn *, MPI_Errhandler *);
   int MPI_Comm_get_errhandler (MPI_Comm, MPI_Errhandler *);
   int MPI_Comm_set_errhandler (MPI_Comm, MPI_Errhandler);
@@ -647,37 +845,45 @@ extern "C"
   int MPI_Info_dup (MPI_Info, MPI_Info *);
   int MPI_Info_free (MPI_Info * info);
   int MPI_Info_get (MPI_Info, char *, int, char *, int *);
+  int MPI_Info_set (MPI_Info, char *, char *);
   int MPI_Info_get_nkeys (MPI_Info, int *);
   int MPI_Info_get_nthkey (MPI_Info, int, char *);
   int MPI_Info_get_valuelen (MPI_Info, char *, int *, int *);
-  int MPI_Info_set (MPI_Info, char *, char *);
-  int MPI_Pack_external (char *, void *, int, MPI_Datatype, void *, MPI_Aint,
-			 MPI_Aint *);
+  
+  int MPI_Pack_external (char *, void *, int, MPI_Datatype, void *, MPI_Aint, MPI_Aint *);
   int MPI_Pack_external_size (char *, int, MPI_Datatype, MPI_Aint *);
   int MPI_Request_get_status (MPI_Request, int *, MPI_Status *);
   int MPI_Status_c2f (MPI_Status *, MPI_Fint *);
   int MPI_Status_f2c (MPI_Fint *, MPI_Status *);
-  int MPI_Type_create_darray (int, int, int, int[], int[], int[], int[], int,
-			      MPI_Datatype, MPI_Datatype *);
-  int MPI_Type_create_hindexed (int, int[], MPI_Aint[], MPI_Datatype,
-				MPI_Datatype *);
-  int MPI_Type_create_hvector (int, int, MPI_Aint, MPI_Datatype,
-			       MPI_Datatype *);
-  int MPI_Type_create_indexed_block (int, int, int[], MPI_Datatype,
-				     MPI_Datatype *);
-  int MPI_Type_create_resized (MPI_Datatype, MPI_Aint, MPI_Aint,
-			       MPI_Datatype *);
-  int MPI_Type_create_struct (int, int[], MPI_Aint[], MPI_Datatype[],
-			      MPI_Datatype *);
-  int MPI_Type_create_subarray (int, int[], int[], int[], int, MPI_Datatype,
-				MPI_Datatype *);
+  int MPI_Type_create_darray (int, int, int, int[], int[], int[], int[], int, MPI_Datatype, MPI_Datatype *);
+  int MPI_Type_create_hindexed (int, int[], MPI_Aint[], MPI_Datatype, MPI_Datatype *);
+  int MPI_Type_create_hvector (int, int, MPI_Aint, MPI_Datatype, MPI_Datatype *);
+  int MPI_Type_create_indexed_block (int, int, int[], MPI_Datatype, MPI_Datatype *);
+  int MPI_Type_create_resized (MPI_Datatype, MPI_Aint, MPI_Aint, MPI_Datatype *);
+  int MPI_Type_create_struct (int, int[], MPI_Aint[], MPI_Datatype[], MPI_Datatype *);
+  int MPI_Type_create_subarray (int, int[], int[], int[], int, MPI_Datatype, MPI_Datatype *);
   int MPI_Type_get_extent (MPI_Datatype, MPI_Aint *, MPI_Aint *);
   int MPI_Type_get_true_extent (MPI_Datatype, MPI_Aint *, MPI_Aint *);
-  int MPI_Unpack_external (char *, void *, MPI_Aint, MPI_Aint *, void *, int,
-			   MPI_Datatype);
+  int MPI_Unpack_external (char *, void *, MPI_Aint, MPI_Aint *, void *, int, MPI_Datatype);
   int MPI_Win_create_errhandler (MPI_Win_errhandler_fn *, MPI_Errhandler *);
   int MPI_Win_get_errhandler (MPI_Win, MPI_Errhandler *);
   int MPI_Win_set_errhandler (MPI_Win, MPI_Errhandler);
+  
+  int MPI_Status_set_elements(MPI_Status *, MPI_Datatype , int );
+
+  int MPI_Type_size_x(MPI_Datatype , MPI_Count *);
+  int MPI_Type_get_extent_x(MPI_Datatype , MPI_Count *, MPI_Count *);
+  int MPI_Type_get_true_extent_x(MPI_Datatype , MPI_Count *, MPI_Count *);
+  int MPI_Get_elements_x(const MPI_Status *, MPI_Datatype , MPI_Count *);
+  int MPI_Status_set_elements_x(MPI_Status *, MPI_Datatype , MPI_Count );
+  
+  int MPI_Type_create_hindexed_block(int , int , const MPI_Aint *, MPI_Datatype , MPI_Datatype * );
+  int MPI_Reduce_scatter_block(void *, void *, int , MPI_Datatype , MPI_Op , MPI_Comm );
+  int MPI_Comm_dup_with_info(MPI_Comm comm, MPI_Info info, MPI_Comm * newcomm)
+  int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm * newcomm);
+  int MPI_Comm_set_info(MPI_Comm , MPI_Info );
+  int MPI_Comm_get_info(MPI_Comm , MPI_Info * );
+  int PMPI_Get_library_version(char *, int *);
 #endif
 
 #ifdef __cplusplus

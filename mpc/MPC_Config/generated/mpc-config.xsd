@@ -48,6 +48,111 @@
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_net_driver_infiniband">
+    <xs:all>
+      <xs:element minOccurs="0" name="network_type" type="xs:integer"/>
+      <xs:element minOccurs="0" name="adm_port" type="xs:integer"/>
+      <xs:element minOccurs="0" name="verbose_level" type="xs:integer"/>
+      <xs:element minOccurs="0" name="eager_limit" type="xs:integer"/>
+      <xs:element minOccurs="0" name="buffered_limit" type="xs:integer"/>
+      <xs:element minOccurs="0" name="qp_tx_depth" type="xs:integer"/>
+      <xs:element minOccurs="0" name="qp_rx_depth" type="xs:integer"/>
+      <xs:element minOccurs="0" name="cq_depth" type="xs:integer"/>
+      <xs:element minOccurs="0" name="max_sg_sq" type="xs:integer"/>
+      <xs:element minOccurs="0" name="max_sg_rq" type="xs:integer"/>
+      <xs:element minOccurs="0" name="max_inline" type="xs:integer"/>
+      <xs:element minOccurs="0" name="rdma_resizing" type="xs:integer"/>
+      <xs:element minOccurs="0" name="max_rdma_connections" type="xs:integer"/>
+      <xs:element minOccurs="0" name="max_rdma_resizing" type="xs:integer"/>
+      <xs:element minOccurs="0" name="init_ibufs" type="xs:integer"/>
+      <xs:element minOccurs="0" name="max_srq_ibufs_posted" type="xs:integer"/>
+      <xs:element minOccurs="0" name="max_srq_ibufs" type="xs:integer"/>
+      <xs:element minOccurs="0" name="srq_credit_limit" type="xs:integer"/>
+      <xs:element minOccurs="0" name="srq_credit_thread_limit" type="xs:integer"/>
+      <xs:element minOccurs="0" name="size_ibufs_chunk" type="xs:integer"/>
+      <xs:element minOccurs="0" name="init_mr" type="xs:integer"/>
+      <xs:element minOccurs="0" name="size_mr_chunk" type="xs:integer"/>
+      <xs:element minOccurs="0" name="mmu_cache_enabled" type="xs:integer"/>
+      <xs:element minOccurs="0" name="mmu_cache_entries" type="xs:integer"/>
+      <xs:element minOccurs="0" name="steal" type="xs:integer"/>
+      <xs:element minOccurs="0" name="quiet_crash" type="xs:integer"/>
+      <xs:element minOccurs="0" name="async_thread" type="xs:integer"/>
+      <xs:element minOccurs="0" name="wc_in_number" type="xs:integer"/>
+      <xs:element minOccurs="0" name="wc_out_number" type="xs:integer"/>
+      <xs:element minOccurs="0" name="rdma_depth" type="xs:integer"/>
+      <xs:element minOccurs="0" name="rdma_dest_depth" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_net_driver_tcp">
+    <xs:all>
+      <xs:element minOccurs="0" name="fake_param" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_net_driver">
+    <xs:choice>
+      <xs:element name="infiniband" type="user_type_net_driver_infiniband"/>
+      <xs:element name="tcp" type="user_type_net_driver_tcp"/>
+      <xs:element name="tcpoib" type="user_type_net_driver_tcp"/>
+    </xs:choice>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_net_driver_config">
+    <xs:all>
+      <xs:element minOccurs="0" name="name" type="xs:string"/>
+      <xs:element minOccurs="0" name="driver" type="user_type_net_driver"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_net_cli_option">
+    <xs:all>
+      <xs:element minOccurs="0" name="name" type="xs:string"/>
+      <xs:element minOccurs="0" name="rails">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="rail" type="xs:string"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_net_rail">
+    <xs:all>
+      <xs:element minOccurs="0" name="name" type="xs:string"/>
+      <xs:element minOccurs="0" name="device" type="xs:string"/>
+      <xs:element minOccurs="0" name="topology" type="xs:string"/>
+      <xs:element minOccurs="0" name="config" type="xs:string"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
+  <xs:complexType name="user_type_networks">
+    <xs:all>
+      <xs:element minOccurs="0" name="configs">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="config" type="user_type_net_driver_config"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element minOccurs="0" name="rails">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="rail" type="user_type_net_rail"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+      <xs:element minOccurs="0" name="cli_options">
+        <xs:complexType>
+          <xs:sequence>
+            <xs:element minOccurs="0" maxOccurs="unbounded" name="cli_option" type="user_type_net_cli_option"/>
+          </xs:sequence>
+        </xs:complexType>
+      </xs:element>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_profiler">
     <xs:all>
       <xs:element minOccurs="0" name="file_prefix" type="xs:string"/>
@@ -108,6 +213,7 @@
     <xs:sequence>
       <xs:element name="name" type="xs:string"/>
       <xs:element name="modules" type="modules" minOccurs="0"/>
+      <xs:element name="networks" type="user_type_networks" minOccurs="0"/>
     </xs:sequence>
   </xs:complexType>
   <!-- ********************************************************* -->

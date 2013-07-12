@@ -32,16 +32,25 @@ extern "C"
 #endif
 
 #include <sctk_spinlock.h>
+#include "sctk_runtime_config.h"
 
 struct sctk_rail_info_s;
 
-void sctk_network_init_multirail_ib(char* name, char* topology);
+void sctk_network_init_multirail_ib(int rail_id);
 void sctk_network_init_ib(char* name, char* topology);
+
+/* Initialize */
+void sctk_network_initialize_task_multirail_ib (int rank, int vp);
+
+/* Finalize */
 void sctk_network_finalize_multirail_ib ();
 void sctk_network_finalize_task_multirail_ib (int rank);
 struct sctk_rail_info_s** sctk_network_get_rails();
 char sctk_network_is_ib_used();
 
+int sctk_network_ib_get_rail_data();
+int sctk_network_ib_get_rail_signalization();
+size_t sctk_network_memory_allocator_hook_ib (size_t size);
 #ifdef __cplusplus
 }
 #endif

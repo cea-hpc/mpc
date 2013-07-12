@@ -37,15 +37,20 @@
 typedef struct sctk_ib_buffered_table_s {
   struct sctk_ib_buffered_entry_s* entries;
   sctk_spinlock_t lock;
+
+  OPA_int_t number;
 } sctk_ib_buffered_table_t;
 
 typedef struct sctk_ib_buffered_s {
   sctk_thread_ptp_message_body_t msg;
+  int number;
   int index;
   int nb;
   size_t payload_size;
   size_t copied;
-} sctk_ib_buffered_t;
+}
+__attribute__ ((aligned (16)))
+sctk_ib_buffered_t;
 
 typedef struct sctk_ib_buffered_entry_s {
   struct sctk_thread_ptp_message_s msg;
@@ -71,6 +76,8 @@ struct sctk_ibuf_s;
 
 int sctk_ib_buffered_prepare_msg(struct sctk_rail_info_s *rail,
     struct sctk_ib_qp_s* remote, struct sctk_thread_ptp_message_s * msg, size_t size);
+
+int sctk_ib_buffered_poll_recv(struct sctk_rail_info_s* rail, struct sctk_ibuf_s *ibuf);
 
 #endif
 #endif

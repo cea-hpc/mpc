@@ -156,24 +156,26 @@ sctk_ib_polling_check_wc(struct sctk_ib_rail_info_s* rail_ib,
   }
 }
 
+#define WC_COUNT 100
 __UNUSED__ static inline int sctk_ib_cq_poll(sctk_rail_info_t* rail,
     struct ibv_cq *cq, const int poll_nb, struct sctk_ib_polling_s *poll,
     int (*ptr_func)(sctk_rail_info_t* rail, struct ibv_wc*, struct sctk_ib_polling_s *poll))
 {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  struct ibv_wc wc;
+  struct ibv_wc wc[WC_COUNT];
   int found_nb = 0;
   int res = 0;
-  /* int i; */
+  int i;
 
-  do { /* for(i=0; i < poll_nb; ++i) {  */
-      res = ibv_poll_cq (cq, 1, &wc);
-      if (res) {
-        sctk_ib_polling_check_wc(rail_ib, wc);
-        ptr_func(rail, &wc, poll);
-        found_nb++;
-      }
-    } while(res);
+  do {
+    res = ibv_poll_cq (cq, WC_COUNT, wc);
+    for (i = 0; i < res; ++i) {
+      sctk_ib_polling_check_wc(rail_ib, wc[i]);
+      ptr_func(rail, &wc[i], poll);
+      found_nb++;
+    }
+  } while(res == WC_COUNT);
+
   return found_nb;
 }
 

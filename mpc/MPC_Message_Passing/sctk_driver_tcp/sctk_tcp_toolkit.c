@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <sctk.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
 #include <netdb.h>
 #include <sctk_spinlock.h>
 #include <sctk_net_tools.h>
@@ -107,8 +108,18 @@ sctk_client_create_recv_socket (sctk_rail_info_t* rail)
   struct sockaddr_in serv_addr;
 
   rail->network.tcp.sockfd = socket (AF_INET, SOCK_STREAM, 0);
+
+  /* Modify the socket to force the flush of messages. Increase the
+   * performance for short messages. See http://www.ibm.com/developerworks/library/l-hisock/index.html */
+  int one = 1;
+  if (setsockopt(rail->network.tcp.sockfd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one)) == -1 ){
+    sctk_error("Cannot modify the socket options!");
+    sctk_abort();
+  }
+
   if (rail->network.tcp.sockfd < 0){
     sctk_error ("ERROR opening socket");
+    sctk_abort();
   }
 
   memset ((char *) &serv_addr, 0, sizeof (serv_addr));
@@ -141,6 +152,14 @@ static void sctk_tcp_add_static_route(int dest, int fd,sctk_rail_info_t* rail,
   memset(tmp,0,sizeof(sctk_route_table_t));
 
   sctk_nodebug("Register fd %d",fd);
+
+  /* Modify the socket to force the flush of messages. Increase the
+   * performance for short messages. See http://www.ibm.com/developerworks/library/l-hisock/index.html */
+  int one = 1;
+  if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, &one, sizeof(one)) == -1 ){
+    sctk_error("Cannot modify the socket options!");
+    sctk_abort();
+  }
 
   tmp->data.tcp.fd = fd;
   sctk_nodebug("register route to %d on rail %d",dest,rail->rail_number);

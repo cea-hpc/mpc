@@ -37,6 +37,7 @@ typedef struct mpc_buffered_msg_s
 typedef struct
 {
   size_t size;
+  size_t nb_elements;
   mpc_pack_absolute_indexes_t *begins;
   mpc_pack_absolute_indexes_t *ends;
   unsigned long count;
@@ -47,11 +48,23 @@ typedef struct
   int is_ub;
 } sctk_derived_type_t;
 
+typedef struct 
+{
+	size_t id;
+	size_t size;
+	size_t count;
+	sctk_datatype_t datatype;
+} sctk_other_datatype_t;
+
 #define MPC_DECL_TYPE_PROTECTED(data_type, name_type) typedef struct {data_type; sctk_spinlock_t lock;} name_type##_t
 #define MPC_USE_TYPE(name_type) name_type##_t name_type
 
 MPC_DECL_TYPE_PROTECTED (sctk_datatype_t user_types[sctk_user_data_types_max],
 			 user_types);
+			 
+MPC_DECL_TYPE_PROTECTED (sctk_other_datatype_t other_user_types[sctk_user_data_types_max],
+			 other_user_types);
+			 
 MPC_DECL_TYPE_PROTECTED (sctk_derived_type_t *
 			 user_types_struct[sctk_user_data_types_max],
 			 user_types_struct);
@@ -72,6 +85,7 @@ typedef struct {
 
   struct mpc_mpi_per_communicator_s* mpc_mpi_per_communicator;
   void (*mpc_mpi_per_communicator_copy)(struct mpc_mpi_per_communicator_s**,struct mpc_mpi_per_communicator_s*);
+  void (*mpc_mpi_per_communicator_copy_dup)(struct mpc_mpi_per_communicator_s**,struct mpc_mpi_per_communicator_s*);
 
   UT_hash_handle hh;
 }mpc_per_communicator_t;
@@ -81,6 +95,7 @@ struct sctk_task_specific_s
   int task_id;
 
   MPC_USE_TYPE (user_types);
+  MPC_USE_TYPE (other_user_types);
   MPC_USE_TYPE (user_types_struct);
 
   mpc_per_communicator_t*per_communicator;

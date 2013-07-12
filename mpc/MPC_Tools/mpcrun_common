@@ -126,12 +126,21 @@ Launcher:
 
 Debugger:
     --dbg=<debugger_name> to use a debugger
+<<<<<<< HEAD
     
 Profiling (if compiled with --enable-MPC_Profiler) :
 	--profiling=AA,BB,...
 	
 	example : --profiling=stdout,html,latex
 	
+=======
+
+Profiling:
+	--profiling=AA,BB,...
+
+	example : --profiling=text_stdout,html,latex
+
+>>>>>>> devel_augustin
 	With the following output modules :
 		* file : Outputs to file indented profile with time in standard units
 		* file-raw : Outputs to file unindented profile in ticks (gnuplot compliant)
@@ -173,7 +182,7 @@ MIGRATION=""
 DEBUG=""
 PROCESS_NB="1"
 THREAD_TYPE="--use-$THREAD_TYPE"
-NET_TYPE="--sctk_use_network=none"
+NET_TYPE=""
 
 if test "$VERSION_DETAILS" = "yes" ; then
 VERSION_DETAILS="--version-details"
@@ -268,6 +277,9 @@ for arg in "$@" ; do
     ;;
     --profiling=*)
     MPC_PROFILING="`echo A$arg | sed -e 's/A--profiling=//g'`"
+    ;;
+    --config=*)
+      # We do nothing, we just skip the argument and do not add it to the command line
     ;;
     --show)
     show=echo
@@ -404,16 +416,6 @@ for arg in "$@" ; do
 	fi
     fi
 done
-
-# check if we are in a inter-processes configuration
-if test "$PROCESS_NB" != "1"; then
-  if test "$NET_TYPE" = "--sctk_use_network=none"; then
-    NET_TYPE="--sctk_use_network=tcp"
-  fi
-else
-	NET_TYPE="--sctk_use_network=none"
-fi
-
 
 if test "$PROCESS_NB" = "0" ; then
     PROCESS_NB="1"

@@ -57,6 +57,11 @@
 static int sctk_processor_number_on_node = 0;
 static char sctk_node_name[SCTK_MAX_NODE_NAME];
 static sctk_spinlock_t topology_lock = SCTK_SPINLOCK_INITIALIZER;
+hwloc_bitmap_t pin_processor_bitmap;
+#define MAX_PIN_PROCESSOR_LIST 1024
+int pin_processor_list[MAX_PIN_PROCESSOR_LIST];
+int pin_processor_current = 0;
+int bind_processor_current = 0;
 
 static hwloc_topology_t topology;
 const struct hwloc_topology_support *support;
@@ -81,21 +86,99 @@ sctk_update_topology (
     const int processor_number,
     const int index_first_processor
     ) {
+  const int core_number = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_CORE);
   sctk_processor_number_on_node = processor_number ;
   hwloc_bitmap_t cpuset = hwloc_bitmap_alloc();
   unsigned int i;
   int err;
+
   hwloc_bitmap_zero(cpuset);
-  for( i=index_first_processor; i < index_first_processor+processor_number; ++i)
-  {
-    hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
-    hwloc_cpuset_t set = hwloc_bitmap_dup(pu->cpuset);
-    hwloc_bitmap_singlify(set);
-    hwloc_bitmap_or(cpuset, cpuset, set);
+  if (hwloc_bitmap_iszero(pin_processor_bitmap)) {
+	  for( i=index_first_processor; i < index_first_processor+processor_number; ++i)
+	  {
+		  hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
+		  hwloc_cpuset_t set = hwloc_bitmap_dup(pu->cpuset);
+		  hwloc_bitmap_singlify(set);
+		  hwloc_bitmap_or(cpuset, cpuset, set);
+	  }
+  } else {
+    int sum = 0;
+    sum = hwloc_get_nbobjs_inside_cpuset_by_type(topology, pin_processor_bitmap, HWLOC_OBJ_PU);
+    if (sum != sctk_get_processor_nb ()) {
+      sctk_error("MPC_PIN_PROCESSOR_LIST is set with a different number of processor available on the node: %d in the list, %d on the node", sum, sctk_get_processor_nb());
+      sctk_abort();
+    }
+
+	  hwloc_bitmap_copy(cpuset, pin_processor_bitmap);
   }
   err = hwloc_topology_restrict(topology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
   assume(!err);
   hwloc_bitmap_free(cpuset);
+}
+
+static void
+sctk_expand_pin_processor_add_to_list(int id) {
+  hwloc_cpuset_t previous = hwloc_bitmap_alloc();
+  hwloc_bitmap_copy(previous, pin_processor_bitmap);
+	if ( id > (sctk_processor_number_on_node - 1) ) sctk_error("Error in MPC_PIN_PROCESSOR_LIST: processor %d is more than the max number of cores %d", id, sctk_processor_number_on_node);
+	hwloc_bitmap_set(pin_processor_bitmap, id);
+
+  /* New entry added. We also add it in the list */
+  if ( !hwloc_bitmap_isequal(pin_processor_bitmap, previous)) {
+    assume(pin_processor_current < MAX_PIN_PROCESSOR_LIST);
+    pin_processor_list[pin_processor_current] = id;
+    pin_processor_current++;
+  }
+  hwloc_bitmap_free(previous);
+}
+
+  static void
+sctk_expand_pin_processor_list(char *env) {
+	char *c = env;
+	char prev_number[5];
+	char *prev_ptr=prev_number;
+	int id;
+
+	while(*c != '\0') {
+		if (isdigit(*c)) {
+			*prev_ptr=*c;
+			prev_ptr++;
+		} else if (*c == ',') {
+			*prev_ptr='\0';
+			id = atoi(prev_number);
+			sctk_expand_pin_processor_add_to_list(id);
+			prev_ptr = prev_number;
+		} else if (*c == '-') {
+			*prev_ptr='\0';
+			int start_num = atoi(prev_number);
+			prev_ptr = prev_number;
+			++c;
+			while( isdigit(*c)) {
+				*prev_ptr=*c;
+				prev_ptr++;
+				++c;
+			}
+			--c;
+			*prev_ptr='\0';
+			int end_num = atoi(prev_number);
+			int i;
+			for (i=start_num; i <= end_num; ++i) {
+				sctk_expand_pin_processor_add_to_list(i);
+			}
+			prev_ptr = prev_number;
+		}else{
+			sctk_error("Error in MPC_PIN_PROCESSOR_LIST: wrong character read: %c", *c);
+			sctk_abort();
+		}
+		++c;
+	}
+
+	/*Terminates the string */
+	if (prev_ptr != prev_number) {
+		*prev_ptr='\0';
+		id = atoi(prev_number);
+		sctk_expand_pin_processor_add_to_list(id);
+	}
 }
 
   static void
@@ -130,6 +213,12 @@ sctk_restrict_topology ()
   }
 
   sctk_processor_number_on_node = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
+	pin_processor_bitmap = hwloc_bitmap_alloc();
+  hwloc_bitmap_zero(pin_processor_bitmap);
+  char* pinning_env = getenv("MPC_PIN_PROCESSOR_LIST");
+  if (pinning_env != NULL ) {
+	  sctk_expand_pin_processor_list(pinning_env);
+  }
 
   /* Share nodes */
   sctk_share_node_capabilities = 1;
@@ -148,6 +237,13 @@ sctk_restrict_topology ()
 #else
     detected = 1;
 #endif
+
+    /* More than 1 process per node is not supported by process pinning */
+    int nodes_number = sctk_get_node_nb();
+    if ( (sctk_process_number != nodes_number) && !hwloc_bitmap_iszero(pin_processor_bitmap)) {
+      sctk_error("MPC_PIN_PROCESSOR_LIST cannot be set if more than 1 process per node is set. process_number=%d node_number=%d", sctk_process_number, nodes_number);
+      sctk_abort();
+    }
 
     while (detected != sctk_get_process_nb ());
     sctk_nodebug ("%d/%d host detected %d share %s", detected,
@@ -302,7 +398,9 @@ sctk_topology_init ()
 
   uname (&utsname);
 
-/*   sctk_print_topology (stderr); */
+  if (!hwloc_bitmap_iszero(pin_processor_bitmap)) {
+    sctk_print_topology (stderr);
+  }
 }
 
 /*! \brief Destroy the topology module
@@ -391,7 +489,10 @@ sctk_bind_to_cpu (int i)
 
   if (i >= 0)
   {
+TODO("Handle specific mapping from the user");
     hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
+    assume(pu);
+
     int err = hwloc_set_cpubind(topology, pu->cpuset, HWLOC_CPUBIND_THREAD);
     if (err)
     {

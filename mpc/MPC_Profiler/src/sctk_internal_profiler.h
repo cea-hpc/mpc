@@ -43,6 +43,7 @@ struct sctk_profile_meta *sctk_internal_profiler_get_meta();
 /* Profiler switch */
 
 extern int sctk_profiler_internal_switch;
+extern __thread void* mpc_profiler;
 
 static inline int sctk_profiler_internal_enabled()
 {
@@ -61,12 +62,31 @@ static inline void sctk_profiler_internal_disable()
 
 /* ****************** */
 
+/* MPI Init / MPI Finalize */
+static inline void sctk_profiler_set_initialize_time()
+{
+	struct sctk_profiler_array* array = (struct sctk_profiler_array *)mpc_profiler;
+  array->initialize_time = sctk_atomics_get_timestamp();
+  sctk_profiler_internal_enable();
+}
+
+static inline void sctk_profiler_set_finalize_time()
+{
+	struct sctk_profiler_array* array = (struct sctk_profiler_array *)mpc_profiler;
+	sctk_profiler_internal_disable();
+  array->run_time = ( (double)sctk_atomics_get_timestamp() - (double)array->initialize_time);
+}
+
+
+
+/* ****************** */
+
 
 /* Profiler hit */
 
 static inline struct sctk_profiler_array * sctk_internal_profiler_get_tls_array()
 {
-	return (struct sctk_profiler_array *)tls_mpc_profiler;
+	return (struct sctk_profiler_array *)mpc_profiler;
 }
 
 
@@ -83,9 +103,11 @@ static inline void sctk_profiler_internal_hit( int key, uint64_t duration )
 /* ****************** */
 
 /* Macros */
-
+#define SCTK_PROFIL_START_DECLARE(key) uint64_t ___sctk_profile_begin_ ## key;
+#define SCTK_PROFIL_START_INIT(key) ___sctk_profile_begin_ ## key = sctk_atomics_get_timestamp();
 #define SCTK_PROFIL_START(key) uint64_t ___sctk_profile_begin_ ## key = sctk_atomics_get_timestamp();
 #define SCTK_PROFIL_END(key) sctk_profiler_internal_hit( SCTK_PROFILE_ ## key , sctk_atomics_get_timestamp() - ___sctk_profile_begin_ ## key );
+#define SCTK_PROFIL_END_WITH_VALUE(key, value) sctk_profiler_internal_hit( SCTK_PROFILE_ ## key , value );
 
 #define SCTK_COUNTER_INC(key, value) if( sctk_profiler_array_get_type( SCTK_PROFILE_ ## key ) != SCTK_PROFILE_TIME_PROBE )\
 									{\

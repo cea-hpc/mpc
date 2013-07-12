@@ -477,7 +477,7 @@ SCTK_STATIC void sctk_alloc_free_list_insert(struct sctk_thread_pool * pool,stru
 	struct sctk_alloc_free_chunk* flist;
 	struct sctk_alloc_free_chunk * fchunk;
 	sctk_size_t list_class;
-	
+
 	//errors
 	assert(pool != NULL);
 	assert(chunk_large != NULL);
@@ -611,13 +611,13 @@ SCTK_STATIC bool sctk_alloc_free_list_is_not_empty_quick(struct sctk_thread_pool
 SCTK_STATIC void sctk_alloc_free_list_mark_empty(struct sctk_thread_pool * pool,sctk_alloc_free_list_t * list)
 {
 	//vars
-	short int id; 
+	short int id;
 
 	//error check
 	assert(pool != NULL);
 	assert(list != NULL);
 	assert(list >= pool->free_lists && list < pool->free_lists+SCTK_ALLOC_NB_FREE_LIST);
-	
+
 	//get id
 	id = (short int) (list - pool->free_lists);
 
@@ -659,7 +659,7 @@ SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_find_first_free_non_empty_list(s
 	short int id;
 	short int i;
 	short int nb_free_lists = pool->nb_free_lists;
-	
+
 	//error
 	assert(pool != NULL);
 	assert(list != NULL);
@@ -667,7 +667,7 @@ SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_find_first_free_non_empty_list(s
 	assert(list >= pool->free_lists && list < pool->free_lists+nb_free_lists);
 	//get free list id
 	id = (short int) (list - pool->free_lists);
-	
+
 	assert(id < nb_free_lists);
 
 	for ( i = id ; i < nb_free_lists ; ++i)
@@ -741,7 +741,7 @@ SCTK_STATIC sctk_alloc_free_list_t* sctk_alloc_get_next_list(const struct sctk_t
 	assert(pool != NULL);
 	assert(pool->nb_free_lists <= SCTK_ALLOC_NB_FREE_LIST);
 	assume_m(list - pool->free_lists <= pool->nb_free_lists,"The given list didn't be a member of the given pool");
-	
+
 	if (list == NULL)
 		return NULL;
 	else if (list - pool->free_lists >= pool->nb_free_lists - 1)
@@ -798,11 +798,11 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_split_free_bloc(sctk_alloc_vchunk * chu
 	sctk_size_t residut_size;
 	sctk_addr_t residut_start;
 	sctk_alloc_vchunk next;
-	
+
 	//convert size to take in accound the header size
 	size = sctk_alloc_calc_chunk_size(size);
 	size = sctk_alloc_align_size_pow_of_2(size,SCTK_ALLOC_BASIC_ALIGN);
-	
+
 	//error
 	assert(chunk != NULL);
 	#ifndef SCTK_ALLOC_FAST_BUT_LESS_SAFE
@@ -900,7 +900,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_merge_chunk(struct sctk_thread_pool * p
 	sctk_alloc_vchunk last;
 	sctk_size_t size;
 	struct sctk_alloc_free_chunk * fchunk;
-	
+
 	//error
 	assume_m(chunk->state == SCTK_ALLOC_CHUNK_STATE_ALLOCATED,"The central chunk must be allocated to be merged.");
 
@@ -932,7 +932,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_merge_chunk(struct sctk_thread_pool * p
 		sctk_alloc_free_list_remove(pool,fchunk);
 		//move to next one
 		cur = sctk_alloc_get_next_chunk(cur);
-	} 
+	}
 
 	//calc final bloc size
 	size = sctk_alloc_get_addr(last) - sctk_alloc_get_addr(first_page_chunk) + sctk_alloc_get_size(last);
@@ -941,7 +941,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_merge_chunk(struct sctk_thread_pool * p
 	/** @todo  to test presence and check bloc type **/
 	cur = sctk_alloc_get_next_chunk(last);
 	sctk_alloc_set_chunk_header_large_previous_size(sctk_alloc_get_large(cur), size);
-	
+
 	//setup bloc and return
 	/** @todo Large access, so do not support small blocs **/
 	/** @todo replace substraction by get_prev **/
@@ -1079,7 +1079,7 @@ SCTK_PUBLIC bool sctk_alloc_chain_is_thread_safe(struct sctk_alloc_chain * chain
 {
 	//errors
 	assert(chain != NULL);
-  
+
 	return chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE;
 }
 
@@ -1131,7 +1131,7 @@ SCTK_PUBLIC void sctk_alloc_chain_mark_for_destroy(struct sctk_alloc_chain * cha
 SCTK_PUBLIC void sctk_alloc_chain_destroy(struct sctk_alloc_chain* chain,bool force)
 {
 	struct sctk_alloc_region * region;
-	
+
 	//nothing to do
 	if (chain == NULL)
 		return;
@@ -1251,7 +1251,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_request_mem(struct sctk_alloc_cha
 	}
 	assert(size % SCTK_ALLOC_PAGE_SIZE == 0);
 	assert(size >= SCTK_MACRO_BLOC_SIZE);*/
-	
+
 	if (size % SCTK_MACRO_BLOC_SIZE != 0)
 		size += SCTK_MACRO_BLOC_SIZE - size % SCTK_MACRO_BLOC_SIZE;
 	assert(size % SCTK_MACRO_BLOC_SIZE == 0);
@@ -1288,7 +1288,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_realloc_macro_bloc(struct sctk_al
 {
 	//vars
 	struct sctk_alloc_macro_bloc * macro_bloc;
-	
+
 	//errors
 	assert(chain != NULL);
 	assert(chain->source != NULL);
@@ -1339,7 +1339,7 @@ SCTK_STATIC bool sctk_alloc_chain_refill_mem(struct sctk_alloc_chain* chain,sctk
 {
 	//request a segments
 	sctk_alloc_vchunk vchunk = sctk_alloc_chain_request_mem(chain,size);
-	
+
 	if (vchunk == NULL)
 	{
 		return false;
@@ -1358,7 +1358,11 @@ SCTK_STATIC bool sctk_alloc_chain_refill_mem(struct sctk_alloc_chain* chain,sctk
 **/
 SCTK_PUBLIC void * sctk_alloc_chain_alloc(struct sctk_alloc_chain * chain,sctk_size_t size)
 {
-	return sctk_alloc_chain_alloc_align(chain,0,size);
+  sctk_size_t boundary = 0;
+#ifdef MPC_Message_Passing
+  boundary = sctk_net_memory_allocation_hook (size);
+#endif
+	return sctk_alloc_chain_alloc_align(chain,boundary,size);
 }
 
 /************************* FUNCTION ************************/
@@ -1385,7 +1389,7 @@ SCTK_PUBLIC void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,
 	struct sctk_alloc_free_chunk * chunk;
 	sctk_alloc_vchunk vchunk;
 	sctk_alloc_vchunk residut;
-	
+
 	//error
 	assume_m(chain != NULL,"Can't work with NULL allocation chain.");
 
@@ -1516,7 +1520,7 @@ SCTK_PUBLIC void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * pt
 	sctk_alloc_vchunk vfirst = NULL;
 	bool insert_bloc = true;
 	sctk_size_t old_size;
-	
+
 	//error
 	assume_m(chain != NULL, "Can't free the memory without an allocation chain.");
 
@@ -1542,7 +1546,7 @@ SCTK_PUBLIC void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * pt
 	{
 		//spy
 		SCTK_ALLOC_HOOK(chain_huge_free,chain,ptr,sctk_alloc_get_size(vchunk));
-		
+
 		//for huge blocs, we send the memory directly to the memory source
 		sctk_alloc_chain_free_macro_bloc(chain,vchunk);
 	} else {
@@ -1559,7 +1563,7 @@ SCTK_PUBLIC void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * pt
 			vfirst = sctk_alloc_get_chunk((sctk_addr_t)chain->base_addr+sizeof(struct sctk_alloc_chunk_header_large));
 		if (SCTK_ALLOC_HAS_HOOK(chain_merge))
 			old_size = sctk_alloc_get_size(vchunk);
-		
+
 		if (! (chain->flags & SCTK_ALLOC_CHAIN_DISABLE_MERGE) )
 			vchunk = sctk_alloc_merge_chunk(&chain->pool,vchunk,vfirst,(sctk_addr_t)chain->end_addr);
 		SCTK_ALLOC_COND_HOOK(old_size != sctk_alloc_get_size(vchunk),chain_merge,chain, sctk_alloc_get_ptr(vchunk),sctk_alloc_get_size(vchunk));
@@ -1689,10 +1693,10 @@ SCTK_PUBLIC void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, voi
 SCTK_STATIC bool sctk_alloc_chain_can_destroy(struct sctk_alloc_chain* chain)
 {
 	struct sctk_alloc_chunk_header_large * first;
-	
+
 	//error
 	assert(chain != NULL);
-	
+
 	//nothing to do
 	if (chain == NULL)
 		return false;
@@ -1715,7 +1719,7 @@ SCTK_PUBLIC void sctk_alloc_chain_purge_rfq(struct sctk_alloc_chain * chain)
 	struct sctk_alloc_rfq_entry * entries;
 	struct sctk_alloc_rfq_entry * next;
 	//int cnt = 0;
-	
+
 	//error
 	if (chain == NULL)
 		return;
@@ -1831,7 +1835,7 @@ void sctk_alloc_mm_source_default_init(struct sctk_alloc_mm_source_default* sour
 
 	//basic setup
 	sctk_alloc_mm_source_base_init(&source->source);
-	
+
 	//setup functions
 	source->source.cleanup = sctk_alloc_mm_source_default_cleanup;
 	source->source.free_memory = sctk_alloc_mm_source_default_free_memory;
@@ -1878,7 +1882,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_default_request_m
 	sctk_size_t aligned_size = size;
 	sctk_alloc_vchunk vchunk;
 	sctk_alloc_vchunk residut;
-	
+
 	//errors
 	/** @todo Can down this restriction to multiple of 4k and round here **/
 	assume_m(size % SCTK_MACRO_BLOC_SIZE == 0,"The request size on a memory source must be multiple of SCTK_MACRO_BLOC_SIZE.");
@@ -2157,10 +2161,10 @@ SCTK_PUBLIC struct sctk_alloc_region_entry * sctk_alloc_region_get_entry(void* a
 	if (region == NULL)
 		region = sctk_alloc_region_setup(addr);
 	id = (((sctk_addr_t)addr)%SCTK_REGION_SIZE) / SCTK_MACRO_BLOC_SIZE;
-	
+
 	assert(id < SCTK_REGION_HEADER_ENTRIES);
 	assert(id >= 0);
-	
+
 	return region->entries+id;
 }
 
@@ -2252,11 +2256,11 @@ SCTK_STATIC void sctk_alloc_region_del_chain(struct sctk_alloc_region * region,s
 	//nothing to do
 	if (region == NULL)
 		return;
-	
+
 	//ensure init and take the lock
 	sctk_alloc_region_init();
 	sctk_alloc_spinlock_lock(&sctk_alloc_glob_regions_lock);
-	
+
 	for ( i = 0 ; i < SCTK_REGION_HEADER_ENTRIES ; ++i )
 	{
 		if (chain == NULL)
@@ -2336,7 +2340,7 @@ SCTK_STATIC void sctk_alloc_region_del(struct sctk_alloc_region * region)
 		/** @todo  PARALLEL Check for atomic operation **/
 		sctk_alloc_glob_regions[id] = NULL;
 	}
-	
+
 	//unlock
 	sctk_alloc_spinlock_unlock(&sctk_alloc_glob_regions_lock);
 
@@ -2434,7 +2438,7 @@ SCTK_PUBLIC void sctk_alloc_rfq_register(struct sctk_alloc_rfq * rfq,void * ptr)
 	//vars
 	sctk_alloc_vchunk vchunk;
 	struct sctk_alloc_rfq_entry * entry;
-	
+
 	//nothing to do
 	if (ptr == NULL)
 		return;
@@ -2470,7 +2474,6 @@ SCTK_PUBLIC void sctk_alloc_rfq_register(struct sctk_alloc_rfq * rfq,void * ptr)
 **/
 SCTK_STATIC struct sctk_alloc_rfq_entry * sctk_alloc_rfq_extract(struct sctk_alloc_rfq * rfq)
 {
-	assert(rfq != NULL);
 	return (struct sctk_alloc_rfq_entry *)sctk_mpscft_queue_dequeue_all(&rfq->queue);
 }
 
@@ -2728,7 +2731,7 @@ SCTK_PUBLIC void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, 
 	if (migrate_chain_struct && sctk_alloc_config()->numa_migration )
 		sctk_alloc_chain_numa_migrate_content(chain,target_numa_node);
 	#endif //HAVE_HWLOC
-	
+
 	//update the mm source
 	if (new_mm_source != SCTK_ALLOC_KEEP_OLD_MM_SOURCE)
 		chain->source = new_mm_source;

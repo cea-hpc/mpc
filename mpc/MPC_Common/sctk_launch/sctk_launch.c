@@ -166,14 +166,14 @@ __sctk_add_arg_eq (char *arg, char *argeq,
 
 static int sctk_version_details_val = 0;
 static void (*sctk_thread_val) (void) = NULL;
-static void (*sctk_net_val) (char*) = NULL;
-static char* sctk_net_val_arg  = "none";
 static int sctk_task_nb_val = 0;
 static int sctk_process_nb_val = 0;
 static int sctk_processor_nb_val = 0;
 static int sctk_node_nb_val = 0;
 static int sctk_verbosity = 0;
 static char* sctk_launcher_mode = "none";
+/* Name of the inter-process driver to use. NULL means default driver */
+static char* sctk_network_driver_name = NULL;
 
 /*   void */
 /* sctk_set_net_val (void (*val) (int *, char ***)) */
@@ -190,17 +190,10 @@ sctk_perform_initialisation (void)
 
   if (sctk_process_nb_val > 1)
   {
-    if (sctk_net_val != NULL)
-    {
-      sctk_process_number = sctk_process_nb_val;
-      sctk_nodebug ("%d processes", sctk_process_number);
-    }
-    else
-    {
-      fprintf (stderr, "No network support specified\n");
-      sctk_abort();
-    }
+    sctk_process_number = sctk_process_nb_val;
+    sctk_nodebug ("%d processes", sctk_process_number);
   }
+
   sctk_topology_init ();
   #ifdef HAVE_HWLOC
   sctk_alloc_posix_mmsrc_numa_init_phase_numa();
@@ -225,7 +218,7 @@ sctk_perform_initialisation (void)
 
   if (sctk_processor_nb_val > 1)
   {
-    if (sctk_net_val != NULL)
+    if (sctk_process_nb_val > 1)
     {
       int cpu_detected;
       cpu_detected = sctk_get_cpu_number ();
@@ -239,7 +232,7 @@ sctk_perform_initialisation (void)
   }
 
 #ifdef MPC_Message_Passing
-  if (sctk_net_val != NULL){
+  if (sctk_process_nb_val > 1){
     sctk_ptp_per_task_init(-1);
     sctk_net_init_pmi();
   }
@@ -260,9 +253,13 @@ sctk_perform_initialisation (void)
     sctk_abort ();
   }
 
+#ifdef MPC_Profiler
+	sctk_internal_profiler_init();
+#endif
+
 #ifdef MPC_Message_Passing
-  if (sctk_net_val != NULL){
-    sctk_net_val (sctk_net_val_arg);
+  if (sctk_process_nb_val > 1) {
+    sctk_net_init_driver(sctk_network_driver_name);
   }
 #endif
 
@@ -438,6 +435,12 @@ sctk_def_node_nb (char *arg)
   sctk_node_nb_val = atoi (arg);
 }
 
+int
+sctk_get_node_nb()
+{
+  return sctk_node_nb_val;
+}
+
   static void
 sctk_def_enable_smt (char *arg)
 {
@@ -487,23 +490,7 @@ sctk_get_verbosity ()
   static void
 sctk_use_network (char *arg)
 {
-#ifdef MPC_Message_Passing
-  sctk_network_mode = arg;
-  sctk_net_val_arg = arg;
-  sctk_net_val = sctk_net_init_driver;
-#endif
-
-#if 0
-  /* if the network mode is different to none,
-   * we initialize it. */
-#ifdef MPC_Message_Passing
-  if (strcmp(arg, "none"))
-  {
-    sctk_network_mode = arg;
-    sctk_net_init_driver (arg);
-  }
-#endif
-#endif
+  sctk_network_driver_name = arg;
 }
 
 
@@ -686,27 +673,6 @@ sctk_skip_token (char *p)
     p++;
   return p;
 }
-
-//int
-//sctk_initialisation (char *args, int *argc, char ***argv)
-//{
-//  char tmp[500];
-//  char *cursor;
-//  char *next;
-//  sctk_env_init_intern (argc, argv);
-//  cursor = args;
-//  while (cursor[0] != '\0')
-//    {
-//      next = sctk_skip_token (cursor);
-//      memcpy (tmp, cursor, (size_t) next - (size_t) cursor);
-//      tmp[(size_t) next - (size_t) cursor] = '\0';
-//      if (sctk_threat_arg (tmp, 0) == -1)
-//	break;
-//      cursor = next;
-//    }
-//  sctk_perform_initialisation ();
-//  return 0;
-//}
 
 typedef struct
 {

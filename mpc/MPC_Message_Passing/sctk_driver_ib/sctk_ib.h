@@ -38,7 +38,7 @@ extern "C"
  *  IB module debugging
  *----------------------------------------------------------*/
 /* Uncomment this macro to activate the IB debug */
-/* #define IB_DEBUG */
+//#define IB_DEBUG
 
 #ifdef IB_DEBUG
 #warning "WARNING !!!! Debug activated !!!! WARNING"
@@ -84,7 +84,6 @@ extern "C"
     struct sctk_ib_mmu_s    *mmu;
     struct sctk_ib_config_s *config;
     struct sctk_ib_device_s *device;
-    struct sctk_ib_prof_s   *profiler;
     /* Collaborative polling */
     struct sctk_ib_cp_s *cp;
 
@@ -157,6 +156,10 @@ extern "C"
       size_t size;
       void  *aligned_addr;
       size_t aligned_size;
+      /* Timestamp when the request has been sent */
+      double req_timestamp;
+      double send_rdma_timestamp;
+      double send_ack_timestamp;
       /* Local structure ready to be read */
       volatile int ready;
     } local;

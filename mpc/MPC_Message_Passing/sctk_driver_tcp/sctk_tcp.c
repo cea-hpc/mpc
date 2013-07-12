@@ -131,7 +131,7 @@ sctk_network_notify_matching_message_tcp (sctk_thread_ptp_message_t * msg,sctk_r
 }
 
 static void
-sctk_network_notify_perform_message_tcp (int remote,sctk_rail_info_t* rail){
+sctk_network_notify_perform_message_tcp (int remote,int remote_task_id,int polling_task_id, sctk_rail_info_t* rail){
 }
 
 static void

@@ -33,109 +33,127 @@
 #include <sctk_config.h>
 #include "opa_primitives.h"
 #include "sctk_stdint.h"
+#include <sctk_asm.h>
 
-/* Define for activating profiling */
-/* #define SCTK_IB_PROF */
+/* Rail to profile */
+#define PROF_RAIL_NUMBER 0
 
-enum sctk_ib_prof_counters_e {
-  cp_matched = 0,
-  cp_not_matched = 1,
-  poll_found = 2,
-  poll_not_found = 3,
-  alloc_mem = 4,
-  free_mem = 5,
-  qp_created = 6,
-  eager_nb = 7,
-  buffered_nb = 8,
-  rdma_nb = 9,
-  ibuf_sr_nb = 10,
-  ibuf_rdma_nb = 11,
-  ibuf_rdma_hits_nb = 12,
-  ibuf_rdma_miss_nb = 13,
-};
+/* Uncomment to enable Counters */
+//#define SCTK_IB_PROF
+/* Uncomment to enable QP profiling */
+//#define SCTK_IB_QP_PROF
+/* Uncomment to enable MEM profiling */
+//#define SCTK_IB_MEM_PROF
 
-extern __thread double time_steals;
-extern __thread double time_own;
-extern __thread double time_poll_cq;
-extern __thread double time_ptp;
-extern __thread double time_coll;
-extern __thread long poll_steals;
-extern __thread long poll_steals_failed;
-extern __thread long poll_steals_success;
-extern __thread long poll_steal_same_node;
-extern __thread long poll_steal_other_node;
-extern __thread long poll_own;
-extern __thread long poll_own_failed;
-extern __thread long poll_own_success;
-extern __thread long call_to_polling;
-extern __thread long poll_cq;
+#ifdef SCTK_IB_PROF
+#include <mpc_profiler.h>
+#define PROF_DECL(type, name) type name
 
-extern __thread double time_send;
-extern __thread double poll_send;
-extern __thread double poll_recv;
-extern __thread double tst;
+extern __thread struct sctk_ib_prof_s * sctk_ib_profiler;
+extern __thread struct sctk_ib_prof_s * sctk_ib_profiler_start;
 
-typedef struct sctk_ib_prof_s {
-  OPA_int_t counters[128];
-} sctk_ib_prof_t;
+#define PROF_TIME_START(r, x)                                       \
+  SCTK_PROFIL_START_DECLARE(x);                                     \
+  if (r->rail_number == PROF_RAIL_NUMBER) {                         \
+     SCTK_PROFIL_START_INIT(x);                                     \
+  }
 
+#define PROF_TIME_END(r, x)                                         \
+  if (r->rail_number == PROF_RAIL_NUMBER) {                         \
+    SCTK_PROFIL_END(x);                                        \
+  }                                                         \
+
+#define PROF_INC(r,x)                                               \
+  if (r->rail_number == PROF_RAIL_NUMBER) {                         \
+    SCTK_COUNTER_INC(x, 1);                                    \
+  }
+
+#define PROF_ADD(r,x,y)                                             \
+  if (r->rail_number == PROF_RAIL_NUMBER) {                         \
+    SCTK_COUNTER_INC(x, y);                                    \
+  }
+
+#define PROF_DECR(r,x,y)                                             \
+  if (r->rail_number == PROF_RAIL_NUMBER) {                         \
+    SCTK_COUNTER_DEC(x, y);                                    \
+  }
+
+
+void sctk_ib_prof_init();
+void sctk_ib_prof_init_task(int rank, int vp);
+void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib);
+void sctk_ib_prof_finalize(sctk_ib_rail_info_t *rail_ib);
+double sctk_ib_prof_get_mem_used();
+void sctk_ib_prof_init_reference_clock();
+double sctk_ib_prof_get_time_stamp();
+
+#else
+
+#define PROF_TIME_START(x,y) (void)(0)
+#define PROF_TIME_END(x,y) (void)(0)
+#define PROF_INC_RAIL_IB(x,y) (void)(0)
+#define PROF_INC(x,y) (void)(0)
+#define PROF_INC_RAIL_IB(x,y) (void)(0)
+#define PROF_DECR(r,x,y) (void)(0)
+#define PROF_ADD(r,x,y) (void)(0)
+#define sctk_ib_prof_init(x) (void)(0)
+#define sctk_ib_prof_init_task(x, y) (void)(0)
+#define sctk_ib_prof_print(x) (void)(0)
+#define sctk_ib_prof_finalize(x) (void)(0)
+#define sctk_ib_prof_get_time_stamp() 0
+#define sctk_ib_prof_init_reference_clock() (void)(0)
+static double sctk_ib_prof_get_mem_used() {
+  return 0;
+}
+#endif
+
+/*
+ * QP profiling
+ */
 #define PROF_QP_SEND 0
 #define PROF_QP_RECV 1
 #define PROF_QP_SYNC 2
 #define PROF_QP_CREAT 3
+#define PROF_QP_RDMA_CONNECTED 4
+#define PROF_QP_RDMA_RESIZING 5
+#define PROF_QP_RDMA_DISCONNECTED 6
 
-#if defined(SCTK_IB_PROF) && defined(MPC_USE_INFINIBAND) /* Enable profiling */
-
-#define PROF_INC(r,x) do {                              \
-  sctk_ib_rail_info_t *rail_ib = &(r)->network.ib;      \
-  OPA_incr_int(&rail_ib->profiler->counters[x]);        \
-} while(0)
-
-#define PROF_INC_RAIL_IB(r,x) do {                      \
-  OPA_incr_int(&r->profiler->counters[x]);              \
-} while(0)
-
-#define PROF_LOAD(r,x) OPA_load_int(&r->profiler->counters[x])
-void sctk_ib_prof_init(sctk_ib_rail_info_t *rail_ib);
-void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib);
-void sctk_ib_prof_finalize(sctk_ib_rail_info_t *rail_ib);
-void sctk_ib_prof_qp_init();
-
+#ifdef SCTK_IB_QP_PROF
 /* QP profiling */
+void sctk_ib_prof_qp_init();
 void sctk_ib_prof_qp_init_task(int task_id, int vp);
 void sctk_ib_prof_qp_flush();
 void sctk_ib_prof_qp_finalize_task(int task_id);
 void sctk_ib_prof_qp_write(int proc, size_t size, double ts, char from);
-
-/* MEM profiling */
-void sctk_ib_prof_mem_flush();
-void sctk_ib_prof_mem_write(double ts, double mem);
-void sctk_ib_prof_mem_init(sctk_ib_rail_info_t *rail_ib);
-void sctk_ib_prof_mem_finalize(sctk_ib_rail_info_t *rail_ib);
-
 #else
-
 /* QP profiling */
 #define sctk_ib_prof_qp_init(x) (void)(0)
 #define sctk_ib_prof_qp_init_task(x,y) (void)(0)
 #define sctk_ib_prof_qp_flush() (void)(0)
 #define sctk_ib_prof_qp_finalize_task(x) (void)(0)
 #define sctk_ib_prof_qp_write(a,b,c,d) (void)(0)
+#endif
 
-/* MEM profiling */
+
+/*
+ * Memory profiling
+ */
+/* TODO: no more working. Should be fixed */
+#ifdef SCTK_IB_MEM_PROF
+void sctk_ib_prof_mem_init(sctk_ib_rail_info_t *rail_ib);
+void sctk_ib_prof_mem_flush();
+void sctk_ib_prof_mem_write(double ts, double mem);
+void sctk_ib_prof_mem_finalize(sctk_ib_rail_info_t *rail_ib);
+#else
+#define sctk_ib_prof_mem_init(x) (void)(0)
 #define sctk_ib_prof_mem_flush(x) (void)(0)
 #define sctk_ib_prof_mem_write(x,y) (void)(0)
-#define sctk_ib_prof_mem_init(x) (void)(0)
 #define sctk_ib_prof_mem_finalize(x) (void)(0)
-
-#define PROF_INC(x,y) (void)(0)
-#define PROF_INC_RAIL_IB(x,y) (void)(0)
-#define PROF_LOAD(x,y) 0
-#define sctk_ib_prof_init(x) (void)(0)
-#define sctk_ib_prof_print(x) (void)(0)
-#define sctk_ib_prof_finalize(x) (void)(0)
 
 #endif  /* SCTK_IB_PROF */
 
 #endif  /* MPC_USE_INFINIBAND */
 #endif  /* __SCTK__IB_PROF_H_ */
+
+/* In Bytes */
+#define IBV_MEM_USED_LIMIT (33.0 * 1000.0 * 1000.0 * 1024.0)

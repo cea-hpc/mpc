@@ -20,6 +20,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#include <mpc_mpi.h>
+#include <mpcmp.h>
 #include <sctk_collective_communications.h>
 #include <sctk_inter_thread_comm.h>
 #include <sctk_communicator.h>
@@ -43,6 +45,7 @@ static int ALLREDUCE_CHECK_THREASHOLD = 8192;
 #define SCTK_MAX_ASYNC 32
 #define buffer_tmp_static_size 8*16
 #define buffer_table_static_size 8*sizeof(void*)
+#warning "Change here !!!"
 
 /************************************************************************/
 /*TOOLS                                                                 */
@@ -69,32 +72,38 @@ typedef struct {
 
 static void sctk_opt_messages_send(const sctk_communicator_t communicator,int myself,int dest,int tag, void* buffer,size_t size,
 				   specific_message_tag_t specific_message_tag, sctk_opt_messages_t* msg_req, int check,int copy_in_send){
-
-  sctk_init_header(&(msg_req->msg),myself,sctk_message_contiguous,sctk_free_opt_messages,
-		   sctk_message_copy);
+  sctk_init_header(&(msg_req->msg),myself,sctk_message_contiguous,sctk_free_opt_messages, sctk_message_copy);
   sctk_add_adress_in_message(&(msg_req->msg),buffer,size);
-  sctk_set_header_in_message (&(msg_req->msg), tag, communicator, myself, dest,
-			      &(msg_req->request), size,specific_message_tag);
+  msg_req->request.request_type = REQUEST_SEND_COLL;
+  sctk_set_header_in_message (&(msg_req->msg), tag, communicator, myself, dest, &(msg_req->request), size,specific_message_tag);
+
+  sctk_send_message(&(msg_req->msg));
+#if 0
   msg_req->msg.tail.need_check_in_wait = /* copy_in_send */1;
   sctk_send_message_try_check (&(msg_req->msg),check);
+#endif
 }
 
 static void sctk_opt_messages_recv(const sctk_communicator_t communicator,int src, int myself,int tag, void* buffer,size_t size,
 				   specific_message_tag_t specific_message_tag, sctk_opt_messages_t* msg_req,struct sctk_internal_ptp_s* ptp_internal, int check,
 				   int copy_in_recv){
 
-  sctk_init_header(&(msg_req->msg),myself,sctk_message_contiguous,sctk_free_opt_messages,
-		   sctk_message_copy);
+  sctk_init_header(&(msg_req->msg),myself,sctk_message_contiguous,sctk_free_opt_messages, sctk_message_copy);
   sctk_add_adress_in_message(&(msg_req->msg),buffer,size);
-  sctk_set_header_in_message (&(msg_req->msg), tag, communicator,  src,myself,
-			      &(msg_req->request), size,specific_message_tag);
+  msg_req->request.request_type = REQUEST_RECV_COLL;
+  sctk_set_header_in_message (&(msg_req->msg), tag, communicator,  src,myself, &(msg_req->request), size,specific_message_tag);
+
+sctk_recv_message (&(msg_req->msg), ptp_internal, 1);
+#if 0
   msg_req->msg.tail.need_check_in_wait = /* copy_in_recv */1;
   sctk_recv_message_try_check (&(msg_req->msg),ptp_internal,check);
+#endif
 }
 
 static void sctk_opt_messages_wait(sctk_opt_messages_table_t* tab){
   int i;
   for(i = 0; i < tab->nb_used; i++){
+	sctk_nodebug("Wait for messag %d", i);
     sctk_wait_message (&(tab->msg_req[i].request));
   }
   tab->nb_used = 0;
@@ -109,6 +118,7 @@ static sctk_opt_messages_t* sctk_opt_messages_get_item(sctk_opt_messages_table_t
   }
 
   tmp = &(tab->msg_req[tab->nb_used]);
+  sctk_nodebug("tab->nb_used = %d", tab->nb_used);
   tab->nb_used++;
   return tmp;
 }
@@ -120,76 +130,142 @@ static void sctk_opt_messages_init_items(sctk_opt_messages_table_t* tab){
 /************************************************************************/
 /*BARRIER                                                               */
 /************************************************************************/
-static
-void sctk_barrier_opt_messages(const sctk_communicator_t communicator,
-			   sctk_internal_collectives_struct_t * tmp){
-  sctk_thread_data_t *thread_data;
-  int myself;
-  int total;
-  int total_max;
-  int i;
-  sctk_opt_messages_table_t table;
-  char c = 'c';
-  struct sctk_internal_ptp_s* ptp_internal;
 
-  sctk_opt_messages_init_items(&table);
+static void sctk_barrier_opt_messages(const sctk_communicator_t communicator, sctk_internal_collectives_struct_t * tmp)
+{
+	if(!sctk_is_inter_comm(communicator))
+	{
+		sctk_thread_data_t *thread_data;
+		int myself;
+		int total;
+		int total_max;
+		int i;
+		sctk_opt_messages_table_t table;
+		char c = 'c';
+		struct sctk_internal_ptp_s* ptp_internal;
 
-  thread_data = sctk_thread_data_get ();
-  total = sctk_get_nb_task_total(communicator);
-  myself = sctk_get_rank (communicator, thread_data->task_id);
-  ptp_internal = sctk_get_internal_ptp(thread_data->task_id);
+		sctk_opt_messages_init_items(&table);
 
-  total_max = log(total) / log(BARRIER_ARRITY);
-  total_max = pow(BARRIER_ARRITY,total_max);
-  if(total_max < total){
-    total_max = total_max * BARRIER_ARRITY;
-  }
-  assume(total_max >= total);
+		thread_data = sctk_thread_data_get ();
+		total = sctk_get_nb_task_total(communicator);
+		myself = sctk_get_rank (communicator, thread_data->task_id);
+		ptp_internal = sctk_get_internal_ptp(thread_data->task_id);
+		sctk_nodebug("enter barrier total = %d, myself = %d", total, myself);
+		total_max = log(total) / log(BARRIER_ARRITY);
+		total_max = pow(BARRIER_ARRITY,total_max);
+		if(total_max < total)
+		{
+			total_max = total_max * BARRIER_ARRITY;
+		}
+		assume(total_max >= total);
+		
+		for(i = BARRIER_ARRITY; i <= total_max; i = i*BARRIER_ARRITY)
+		{
+			if(myself % i == 0)
+			{
+				int src;
+				int j;
 
-  for(i = BARRIER_ARRITY; i <= total_max; i = i*BARRIER_ARRITY){
-    if(myself % i == 0){
-      int src;
-      int j;
+				src = myself;
+				for(j = 1; j < BARRIER_ARRITY; j++)
+				{
+					if((src + (j*(i/BARRIER_ARRITY))) < total)
+					{
+						sctk_opt_messages_recv(communicator,src + (j*(i/BARRIER_ARRITY)),myself,0,&c,1,barrier_specific_message_tag,sctk_opt_messages_get_item(&table),ptp_internal,1,1);
+					}
+				}
+				sctk_opt_messages_wait(&table);
+			} 
+			else 
+			{
+				int dest;
 
-      src = myself;
-      for(j = 1; j < BARRIER_ARRITY; j++){
-	if((src + (j*(i/BARRIER_ARRITY))) < total){
-	  sctk_opt_messages_recv(communicator,src + (j*(i/BARRIER_ARRITY)),myself,0,&c,1,barrier_specific_message_tag,sctk_opt_messages_get_item(&table),ptp_internal,1,1);
+				dest = (myself / i) * i;
+				if(dest >= 0)
+				{
+					sctk_opt_messages_send(communicator,myself,dest,0,&c,1,barrier_specific_message_tag,sctk_opt_messages_get_item(&table),0,1);
+					sctk_opt_messages_recv(communicator,dest,myself,1,&c,1,barrier_specific_message_tag,sctk_opt_messages_get_item(&table),ptp_internal,0,1);
+					sctk_opt_messages_wait(&table);
+					break;
+				}
+			}
+		}
+		sctk_opt_messages_wait(&table);
+		for(; i >=BARRIER_ARRITY ; i = i / BARRIER_ARRITY)
+		{
+			if(myself % i == 0)
+			{
+				int dest;
+				int j;
+
+				dest = myself;
+				for(j = 1; j < BARRIER_ARRITY; j++)
+				{
+					if((dest + (j*(i/BARRIER_ARRITY))) < total)
+					{
+						sctk_opt_messages_send(communicator,myself,dest+(j*(i/BARRIER_ARRITY)),1,&c,1,barrier_specific_message_tag,sctk_opt_messages_get_item(&table),1,1);
+					}
+				}
+			}
+		}
+		sctk_opt_messages_wait(&table);
 	}
-      }
-      sctk_opt_messages_wait(&table);
-    } else {
-      int dest;
-
-      dest = (myself / i) * i;
-      if(dest >= 0){
-	sctk_opt_messages_send(communicator,myself,dest,0,&c,1,barrier_specific_message_tag,sctk_opt_messages_get_item(&table),0,1);
-	sctk_opt_messages_recv(communicator,dest,myself,1,&c,1,barrier_specific_message_tag,sctk_opt_messages_get_item(&table),ptp_internal,0,1);
-	sctk_opt_messages_wait(&table);
-	break;
-      }
-    }
-  }
-  sctk_opt_messages_wait(&table);
-
-  for(; i >=BARRIER_ARRITY ; i = i / BARRIER_ARRITY){
-    if(myself % i == 0){
-      int dest;
-      int j;
-
-      dest = myself;
-      for(j = 1; j < BARRIER_ARRITY; j++){
-	if((dest + (j*(i/BARRIER_ARRITY))) < total){
-	  sctk_opt_messages_send(communicator,myself,dest+(j*(i/BARRIER_ARRITY)),1,&c,1,barrier_specific_message_tag,sctk_opt_messages_get_item(&table),1,1);
+	else
+	{
+		int i,j;
+		int dest;
+		int size;
+		int rsize;
+		int total;
+		int myself;
+		char c = 'c';
+		sctk_thread_data_t *thread_data;
+		sctk_opt_messages_table_t table;
+		struct sctk_internal_ptp_s* ptp_internal;
+		
+		sctk_opt_messages_init_items(&table);
+		
+		thread_data = sctk_thread_data_get ();
+		total = sctk_get_nb_task_total(communicator);
+		myself = sctk_get_rank (communicator, thread_data->task_id);
+		ptp_internal = sctk_get_internal_ptp(thread_data->task_id);
+		
+		rsize = sctk_get_nb_task_remote(communicator);
+		size = sctk_get_nb_task_total(communicator);
+		
+		for(i=0 ; i<size ; i++)
+		{
+			sctk_opt_messages_send(	communicator,
+									myself,
+									i,
+									65536,
+									&c,
+									1,
+									broadcast_specific_message_tag,
+									sctk_opt_messages_get_item(&table),
+									(size<BROADCAST_CHECK_THREASHOLD),
+									(size<BROADCAST_CHECK_THREASHOLD));
+		}
+		for(j=0 ; j < rsize ; j++)
+		{
+			sctk_opt_messages_recv(	communicator,
+									j,
+									myself,
+									65536,
+									&c,
+									1,
+									broadcast_specific_message_tag,
+									sctk_opt_messages_get_item(&table),
+									ptp_internal,
+									1,
+									1);
+		}
+		sctk_opt_messages_wait(&table);
 	}
-      }
-    }
-  }
-  sctk_opt_messages_wait(&table);
 }
 
 void sctk_barrier_opt_messages_init(sctk_internal_collectives_struct_t * tmp, sctk_communicator_t id){
-  tmp->barrier_func = sctk_barrier_opt_messages;
+	tmp->barrier_func = sctk_barrier_opt_messages;
 }
 
 /************************************************************************/
@@ -197,78 +273,90 @@ void sctk_barrier_opt_messages_init(sctk_internal_collectives_struct_t * tmp, sc
 /************************************************************************/
 void sctk_broadcast_opt_messages (void *buffer, const size_t size,
 				  const int root, const sctk_communicator_t communicator,
-				  struct sctk_internal_collectives_struct_s *tmp){
+				  struct sctk_internal_collectives_struct_s *tmp)
+{
+	if(size == 0)
+	{
+		sctk_barrier_opt_messages(communicator,tmp);
+	} 
+	else
+	{
+		sctk_thread_data_t *thread_data;
+		int myself;
+		int related_myself;
+		int total;
+		int total_max;
+		int i;
+		sctk_opt_messages_table_t table;
+		int BROADCAST_ARRITY = 2;
+		struct sctk_internal_ptp_s* ptp_internal;
 
-  if(size == 0){
-    sctk_barrier_opt_messages(communicator,tmp);
-  } else {
-    sctk_thread_data_t *thread_data;
-    int myself;
-    int related_myself;
-    int total;
-    int total_max;
-    int i;
-    sctk_opt_messages_table_t table;
-    int BROADCAST_ARRITY = 2;
-    struct sctk_internal_ptp_s* ptp_internal;
+		sctk_opt_messages_init_items(&table);
 
-    sctk_opt_messages_init_items(&table);
+		BROADCAST_ARRITY = BROADCAST_MAX_SIZE / size;
+		if(BROADCAST_ARRITY < 2)
+		{
+			BROADCAST_ARRITY = 2;
+		}
+		if(BROADCAST_ARRITY > BROADCAST_ARITY_MAX)
+		{
+			BROADCAST_ARRITY = BROADCAST_ARITY_MAX;
+		}
 
-    BROADCAST_ARRITY = BROADCAST_MAX_SIZE / size;
-    if(BROADCAST_ARRITY < 2){
-      BROADCAST_ARRITY = 2;
-    }
-    if(BROADCAST_ARRITY > BROADCAST_ARITY_MAX){
-      BROADCAST_ARRITY = BROADCAST_ARITY_MAX;
-    }
+		thread_data = sctk_thread_data_get ();
+		total = sctk_get_nb_task_total(communicator);
+		myself = sctk_get_rank (communicator, thread_data->task_id);
+		related_myself = (myself + total - root) % total;
+		ptp_internal = sctk_get_internal_ptp(thread_data->task_id);
+		total_max = log(total) / log(BROADCAST_ARRITY);
+		total_max = pow(BROADCAST_ARRITY,total_max);
+		if(total_max < total)
+		{
+			total_max = total_max * BROADCAST_ARRITY;
+		}
+		assume(total_max >= total);
+		
+		sctk_nodebug("enter broadcast total = %d, total_max = %d, myself = %d, BROADCAST_ARRITY = %d", total, total_max, myself, BROADCAST_ARRITY);
+		
+		for(i = BROADCAST_ARRITY; i <= total_max; i = i*BROADCAST_ARRITY)
+		{
+			if(related_myself % i != 0)
+			{
+				int dest;
 
-    thread_data = sctk_thread_data_get ();
-    total = sctk_get_nb_task_total(communicator);
-    myself = sctk_get_rank (communicator, thread_data->task_id);
-    related_myself = (myself + total - root) % total;
-    ptp_internal = sctk_get_internal_ptp(thread_data->task_id);
+				dest = (related_myself/i) * i;
+				if(dest >= 0)
+				{
+					sctk_opt_messages_recv(communicator,(dest+root)%total,myself,root,buffer,size,broadcast_specific_message_tag,sctk_opt_messages_get_item(&table),ptp_internal,1,1);
+					sctk_opt_messages_wait(&table);
+				break;
+				}
+			}
+		}
 
-    total_max = log(total) / log(BROADCAST_ARRITY);
-    total_max = pow(BROADCAST_ARRITY,total_max);
-    if(total_max < total){
-      total_max = total_max * BROADCAST_ARRITY;
-    }
-    assume(total_max >= total);
-
-    for(i = BROADCAST_ARRITY; i <= total_max; i = i*BROADCAST_ARRITY){
-      if(related_myself % i != 0){
-	int dest;
-
-	dest = (related_myself/i) * i;
-	if(dest >= 0){
-	  sctk_opt_messages_recv(communicator,(dest+root)%total,myself,root,buffer,size,broadcast_specific_message_tag,sctk_opt_messages_get_item(&table),ptp_internal,
-				 1,1);
-	  sctk_opt_messages_wait(&table);
-	  break;
+		for(; i >=BROADCAST_ARRITY ; i = i / BROADCAST_ARRITY)
+		{
+			if(related_myself % i == 0)
+			{
+				int dest;
+				int j;
+				dest = related_myself;
+				for(j = 1; j < BROADCAST_ARRITY; j++)
+				{
+					if((dest + (j*(i/BROADCAST_ARRITY)))< total)
+					{
+						sctk_opt_messages_send(communicator,myself,(dest+root+(j*(i/BROADCAST_ARRITY))) % total,root,buffer,size,broadcast_specific_message_tag,
+						sctk_opt_messages_get_item(&table),(size<BROADCAST_CHECK_THREASHOLD),(size<BROADCAST_CHECK_THREASHOLD));
+					}
+				}
+			}
+		}
+		sctk_opt_messages_wait(&table);
 	}
-      }
-    }
-
-    for(; i >=BROADCAST_ARRITY ; i = i / BROADCAST_ARRITY){
-      if(related_myself % i == 0){
-	int dest;
-	int j;
-
-	dest = related_myself;
-	for(j = 1; j < BROADCAST_ARRITY; j++){
-	  if((dest + (j*(i/BROADCAST_ARRITY)))< total){
-	    sctk_opt_messages_send(communicator,myself,(dest+root+(j*(i/BROADCAST_ARRITY))) % total,root,buffer,size,broadcast_specific_message_tag,
-				   sctk_opt_messages_get_item(&table),(size<BROADCAST_CHECK_THREASHOLD),(size<BROADCAST_CHECK_THREASHOLD));
-	  }
-	}
-      }
-    }
-    sctk_opt_messages_wait(&table);
-  }
 }
 
 void sctk_broadcast_opt_messages_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id){
-    tmp->broadcast_func = sctk_broadcast_opt_messages;
+		tmp->broadcast_func = sctk_broadcast_opt_messages;
 }
 
 /************************************************************************/
@@ -281,8 +369,9 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
 							      sctk_datatype_t),
 						const sctk_communicator_t communicator,
 						const sctk_datatype_t data_type,
-						struct sctk_internal_collectives_struct_s *tmp){
-  if(elem_number == 0){
+						struct sctk_internal_collectives_struct_s *tmp)
+{
+	if(elem_number == 0){
     sctk_barrier_opt_messages(communicator,tmp);
   } else {
     sctk_thread_data_t *thread_data;
@@ -425,7 +514,7 @@ static void sctk_allreduce_opt_messages (const void *buffer_in, void *buffer_out
 				   const sctk_datatype_t data_type,
 				   struct sctk_internal_collectives_struct_s *tmp){
 TODO("Add buffer splitting")
-  sctk_allreduce_opt_messages_intern(buffer_in,buffer_out,elem_size,elem_number,func,communicator,data_type,tmp);
+    sctk_allreduce_opt_messages_intern(buffer_in,buffer_out,elem_size,elem_number,func,communicator,data_type,tmp);
 }
 
 void sctk_allreduce_opt_messages_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id){

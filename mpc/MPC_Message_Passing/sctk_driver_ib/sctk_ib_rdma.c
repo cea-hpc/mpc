@@ -85,7 +85,7 @@ void sctk_ib_rdma_net_free_recv(void* arg) {
       msg->tail.ib.rdma.local.mmu_entry);
     sctk_nodebug("FREE: %p", msg);
   sctk_free(msg);
-  PROF_INC(rail, free_mem);
+  PROF_INC(rail, ib_free_mem);
 }
 
 /*-----------------------------------------------------------
@@ -114,7 +114,7 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
     page_size = getpagesize();
 
     posix_memalign((void**) &aligned_addr, page_size, aligned_size);
-    PROF_INC_RAIL_IB(rail_ib, alloc_mem);
+    PROF_INC(rail_ib->rail, ib_alloc_mem);
     sctk_net_copy_in_buffer(msg, aligned_addr);
 
     sctk_nodebug("Sending NOT contiguous message %p of size: %lu, add:%p, type:%d (src cs:%lu, dest cs:%lu)", msg, aligned_size, aligned_addr, msg->tail.message_type, msg->body.checksum, sctk_checksum_buffer(aligned_addr,msg));
@@ -125,8 +125,10 @@ void sctk_ib_rdma_prepare_send_msg (sctk_ib_rail_info_t* rail_ib,
   }
 
   /* Register MMU */
+  PROF_TIME_START(rail_ib->rail, send_mmu_register);
   rdma->local.mmu_entry =  sctk_ib_mmu_register (
       rail_ib, aligned_addr, aligned_size);
+  PROF_TIME_END(rail_ib->rail, send_mmu_register);
 
   /* Save addr and size */
   rdma->local.aligned_addr = aligned_addr;
@@ -151,7 +153,7 @@ sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
   size_t ibuf_size = IBUF_GET_RDMA_REQ_SIZE;
 
   ibuf = sctk_ibuf_pick_send(rail_ib, remote, &ibuf_size,
-      task_node_number);
+      ibuf_node_task);
   assume(ibuf);
   IBUF_SET_DEST_TASK(ibuf->buffer, msg->sctk_msg_get_glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->sctk_msg_get_glob_source);
@@ -167,6 +169,7 @@ sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
   rdma->local.ready = 0;
   rdma->rail = rail;
   rdma->remote_peer = remote;
+  rdma->local.req_timestamp = sctk_ib_prof_get_time_stamp();
 
   /* Initialization of the request */
   rdma_req->requested_size = size - sizeof(sctk_thread_ptp_message_body_t);
@@ -181,6 +184,7 @@ sctk_ibuf_t* sctk_ib_rdma_prepare_req(sctk_rail_info_t* rail,
   sctk_nodebug("Request size: %d", IBUF_GET_RDMA_REQ_SIZE);
   sctk_nodebug("Req sent (size:%lu, requested:%d, ibuf:%p)", IBUF_GET_RDMA_REQ_SIZE,
       rdma_req->requested_size, ibuf);
+
 
   return ibuf;
 }
@@ -198,7 +202,7 @@ static inline sctk_ibuf_t* sctk_ib_rdma_prepare_ack(sctk_rail_info_t* rail,
   size_t ibuf_size = IBUF_GET_RDMA_ACK_SIZE;
 
   ibuf = sctk_ibuf_pick_send(rail_ib, rdma->remote_peer, &ibuf_size,
-      task_node_number);
+      ibuf_node_task);
   assume(ibuf);
   IBUF_SET_DEST_TASK(ibuf->buffer, msg->tail.ib.rdma.glob_destination);
   IBUF_SET_SRC_TASK(ibuf, msg->tail.ib.rdma.glob_source);
@@ -232,7 +236,7 @@ sctk_ib_rdma_prepare_data_write(sctk_rail_info_t* rail,
   sctk_ib_rdma_t *rdma_header;
   sctk_ibuf_t* ibuf;
 
-  ibuf = sctk_ibuf_pick_send_sr(rail_ib, task_node_number);
+  ibuf = sctk_ibuf_pick_send_sr(rail_ib, ibuf_node_task );
   assume(ibuf);
 
   rdma_header = IBUF_GET_RDMA_HEADER(ibuf->buffer);
@@ -260,6 +264,8 @@ sctk_ib_rdma_prepare_data_write(sctk_rail_info_t* rail,
 
   sctk_ib_qp_send_ibuf(rail_ib,
       rdma->remote_peer, ibuf, 0);
+
+  rdma->local.send_rdma_timestamp = sctk_ib_prof_get_time_stamp();
 }
 
 /*
@@ -284,9 +290,12 @@ sctk_ib_rdma_prepare_done_write(sctk_rail_info_t* rail, sctk_ibuf_t *incoming_ib
   rdma = &src_msg_header->tail.ib.rdma;
   dest_msg_header = rdma->remote.msg_header;
 
+  SCTK_PROFIL_END_WITH_VALUE(ib_rendezvous_wait_sender_done,
+      (sctk_ib_prof_get_time_stamp() - rdma->local.send_rdma_timestamp));
+
   /* Initialize & send the buffer */
   ibuf = sctk_ibuf_pick_send(rail_ib, rdma->remote_peer, &ibuf_size,
-      task_node_number);
+     ibuf_node_task);
   assume(ibuf);
   rdma_done = IBUF_GET_RDMA_DONE(ibuf->buffer);
   rdma_done->dest_msg_header = dest_msg_header;
@@ -324,7 +333,7 @@ static void sctk_ib_rdma_prepare_recv_recopy(sctk_rail_info_t* rail, sctk_thread
   /* Allocating memory according to the requested size */
   posix_memalign((void**) &send_header->rdma.local.aligned_addr,
       page_size, send_header->rdma.requested_size );
-  PROF_INC(rail, alloc_mem);
+  PROF_INC(rail, ib_alloc_mem);
 
   send_header->rdma.local.aligned_size  = send_header->rdma.requested_size;
   send_header->rdma.local.size          = send_header->rdma.requested_size;
@@ -340,10 +349,13 @@ static void sctk_ib_rdma_send_ack(sctk_rail_info_t* rail, sctk_thread_ptp_messag
   sctk_ib_msg_header_t *send_header;
 
   send_header = &msg->tail.ib;
+  sctk_ib_header_rdma_t * rdma = &send_header->rdma;
   /* Register MMU */
+  PROF_TIME_START(rail_ib->rail, recv_mmu_register);
   send_header->rdma.local.mmu_entry =  sctk_ib_mmu_register (
       rail_ib, send_header->rdma.local.aligned_addr,
       send_header->rdma.local.aligned_size);
+  PROF_TIME_END(rail_ib->rail, recv_mmu_register);
   sctk_nodebug("MMU registered for msg %p", send_header);
 
   ibuf = sctk_ib_rdma_prepare_ack(rail, msg);
@@ -351,6 +363,10 @@ static void sctk_ib_rdma_send_ack(sctk_rail_info_t* rail, sctk_thread_ptp_messag
   /* Send message */
   remote = send_header->rdma.remote_peer;
   sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, 0);
+
+  send_header->rdma.local.send_ack_timestamp = sctk_ib_prof_get_time_stamp();
+  SCTK_PROFIL_END_WITH_VALUE(ib_rendezvous_wait_send_ack,
+      (sctk_ib_prof_get_time_stamp() - rdma->local.req_timestamp));
 }
 
 void sctk_ib_rdma_net_copy(sctk_message_to_copy_t* tmp){
@@ -367,6 +383,9 @@ void sctk_ib_rdma_net_copy(sctk_message_to_copy_t* tmp){
   sctk_spinlock_lock(&send_header->rdma.lock);
   /* If the message has not yet been handled */
   if (send_header->rdma.local.status == not_set) {
+
+    SCTK_PROFIL_END_WITH_VALUE(ib_rendezvous_matching_done,
+      (sctk_ib_prof_get_time_stamp() - send_header->rdma.local.req_timestamp));
 
     if (recv->tail.message_type == sctk_message_contiguous) {
 
@@ -420,6 +439,10 @@ sctk_ib_rdma_recv_ack(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   rdma = &src_msg_header->tail.ib.rdma;
   dest_msg_header = rdma_ack->src_msg_header;
 
+  /* Profile the time to receive the ACK for RDMA messages */
+  SCTK_PROFIL_END_WITH_VALUE(ib_rendezvous_wait_recv_ack,
+      (sctk_ib_prof_get_time_stamp() - rdma->local.req_timestamp));
+
   /* Wait while the message becomes ready */
   sctk_thread_wait_for_value((int*) &rdma->local.ready, 1);
 
@@ -444,14 +467,15 @@ sctk_ib_rdma_recv_req(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   int src_process;
 
   msg = sctk_malloc(sizeof(sctk_thread_ptp_message_t));
-  PROF_INC(rail, alloc_mem);
+  PROF_INC(rail, ib_alloc_mem);
   memcpy(&msg->body, &rdma_req->msg_header, sizeof(sctk_thread_ptp_message_body_t));
 
-  /* We reinit header before calculating the source */
+  /* We reinit the header before calculating the source */
   sctk_rebuild_header(msg);
   sctk_reinit_header(msg, sctk_ib_rdma_net_free_recv, sctk_ib_rdma_net_copy);
   msg->tail.ib.protocol = rdma_protocol;
   rdma = &msg->tail.ib.rdma;
+  rdma->local.req_timestamp = sctk_ib_prof_get_time_stamp();
 
   src_process = sctk_determine_src_process_from_header(&msg->body);
   assume(src_process != -1);
@@ -503,6 +527,9 @@ sctk_ib_rdma_recv_done_remote(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   dest_msg_header = rdma_done->dest_msg_header;
   rdma = &dest_msg_header->tail.ib.rdma;
 
+  SCTK_PROFIL_END_WITH_VALUE(ib_rendezvous_wait_receiver_done,
+      (sctk_ib_prof_get_time_stamp() - rdma->local.send_ack_timestamp));
+
   sctk_thread_wait_for_value((int*) &dest_msg_header->tail.ib.rdma.local.ready, 1);
 
   send = rdma->copy_ptr->msg_send;
@@ -521,7 +548,7 @@ sctk_ib_rdma_recv_done_remote(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     sctk_nodebug("FREE: %p", dest_msg_header->tail.ib.rdma.local.addr);
     /* If we recopy, we can delete the temp buffer */
     sctk_free(dest_msg_header->tail.ib.rdma.local.addr);
-    PROF_INC(rail, free_mem);
+    PROF_INC(rail, ib_free_mem);
    }
   sctk_message_completion_and_free(send,recv);
 
@@ -542,7 +569,7 @@ sctk_ib_rdma_recv_done_local(sctk_rail_info_t* rail, sctk_thread_ptp_message_t* 
     /* Unregister MMU and free message */
     sctk_nodebug("FREE PTR: %p", msg->tail.ib.rdma.local.addr);
     sctk_free(msg->tail.ib.rdma.local.addr);
-    PROF_INC(rail, free_mem);
+    PROF_INC(rail, ib_free_mem);
   }
 
   sctk_nodebug("MSG LOCAL FREE %p", msg);
@@ -563,12 +590,16 @@ sctk_ib_rdma_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   switch(IBUF_GET_RDMA_TYPE(rdma_header)) {
     case rdma_req_type:
       sctk_nodebug("Poll recv: message RDMA req received");
+      SCTK_PROFIL_END_WITH_VALUE(ib_rendezvous_recv_req,
+      (sctk_ib_prof_get_time_stamp() - ibuf->polled_timestamp));
       sctk_ib_rdma_recv_req(rail, ibuf);
       return 1;
       break;
 
     case rdma_ack_type:
       sctk_nodebug("Poll recv: message RDMA ack received");
+      SCTK_PROFIL_END_WITH_VALUE(ib_rendezvous_recv_ack,
+      (sctk_ib_prof_get_time_stamp() - ibuf->polled_timestamp));
       /* Buffer reused: don't need to free it */
       header = sctk_ib_rdma_recv_ack(rail, ibuf);
       sctk_ib_rdma_prepare_data_write(rail, header);
@@ -577,6 +608,8 @@ sctk_ib_rdma_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
 
     case rdma_done_type:
       sctk_nodebug("Poll recv: message RDMA done received");
+      SCTK_PROFIL_END_WITH_VALUE(ib_rendezvous_recv_done,
+      (sctk_ib_prof_get_time_stamp() - ibuf->polled_timestamp));
       sctk_ib_rdma_recv_done_remote(rail, ibuf);
       return 1;
       break;
