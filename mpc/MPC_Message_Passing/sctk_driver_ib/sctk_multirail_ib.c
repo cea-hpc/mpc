@@ -252,6 +252,7 @@ size_t sctk_network_memory_allocator_hook_ib (size_t size){
     if (size > IB_MEM_THRESHOLD_ALIGNED_SIZE ) {
     return ( (size + (IB_MEM_ALIGNMENT-1) ) & ( ~ (IB_MEM_ALIGNMENT-1) ) );
   }
+  return 0;
 }
 
 

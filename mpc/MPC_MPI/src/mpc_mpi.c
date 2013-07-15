@@ -4220,90 +4220,24 @@ static int
 __INTERNAL__PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
 			    MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
-  MPC_Op mpc_op;
+   MPC_Op mpc_op;
   sctk_op_t *mpi_op;
 
   mpi_op = sctk_convert_to_mpc_op (op);
   mpc_op = mpi_op->op;
-
-  if (sctk_is_derived_type (datatype) && (mpi_op->commute == 1))
+  if (sctk_is_derived_type (datatype) || (mpi_op->commute == 0))
     {
-      int res;
-      mpc_pack_absolute_indexes_t *begins_in;
-      mpc_pack_absolute_indexes_t *ends_in;
-      unsigned long count_in;
-      mpc_pack_absolute_indexes_t lb;
-      int is_lb;
-      mpc_pack_absolute_indexes_t ub;
-      int is_ub;
+      __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, 0,
+			       comm);
+      __INTERNAL__PMPI_Bcast (recvbuf, count, datatype, 0, comm);
 
-      int i; 
-
-      size_t size = 0;
-
-      PMPC_Is_derived_datatype (datatype, &res, &begins_in, &ends_in,
-			       &count_in, &lb, &is_lb, &ub, &is_ub);
-      
-      for (i = 0; i < count_in; i++){
-	size_t sizet;
-	sizet = ends_in[i] + 1;
-	if(size < sizet){
-	  size = sizet;
-	}
-      }
-/*       fprintf(stderr,"MAX %ld\n",size); */
-
-      if((mpi_op->commute == 1) && (size < MPI_Allreduce_derived_type_floor) && (count == 1)){
-	int res; 
-	char* tmp_sendbuf;
-	char* tmp_recvbuf;
-	MPI_Datatype datatype_n;
-	int j; 
-
-	tmp_recvbuf = malloc(size*count);
-	tmp_sendbuf = malloc(size*count);
-
-	PMPC_Sizeof_datatype(&datatype_n,size);
-	
-	for (i = 0; i < count_in; i++)
-	  {
-	    size_t sizet;
-	    sizet = ends_in[i] - begins_in[i] + 1;
-/* 	    fprintf(stderr,"Iter %d %ld-%ld\n",i,begins_in[i],ends_in[i]+1); */
-
-	    memcpy(tmp_sendbuf + begins_in[i], ((char*)sendbuf) + begins_in[i],sizet);
-/* 	    fprintf(stderr,"Copy start %ld size %ld\n",begins_in[i],sizet); */
-
-	  }
-
-	res = PMPC_Allreduce (tmp_sendbuf, tmp_recvbuf, count, datatype_n, mpc_op, comm);
-     
-	for (i = 0; i < count_in; i++)
-	  {
-	    size_t sizet;
-	    sizet = ends_in[i] - begins_in[i] + 1;
-/* 	    fprintf(stderr,"Iter %d %ld-%ld\n",i,begins_in[i],ends_in[i]+1); */
-
-	    memcpy(((char*)recvbuf) + begins_in[i],tmp_recvbuf + begins_in[i], sizet);
-/* 	    fprintf(stderr,"Copy start %ld size %ld\n",begins_in[i],sizet); */
-
-	  }
-
-	free(tmp_sendbuf);
-	free(tmp_recvbuf);
-	PMPC_Type_free(&datatype_n);
-	return res;
-      } else {      
-	__INTERNAL__PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, 0,
-				 comm);
-	__INTERNAL__PMPI_Bcast (recvbuf, count, datatype, 0, comm);
-	return MPI_SUCCESS;
-      }
+      return MPI_SUCCESS;
     }
   else
     {
+
       return PMPC_Allreduce (sendbuf, recvbuf, count, datatype, mpc_op, comm);
-    }
+    } 
 }
 static int
 __INTERNAL__PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
