@@ -948,10 +948,6 @@ void * mpcomp_slave_mvp_leaf( void * arg ) {
       &(mvp->slave_running), mvp->father ) ;
   sctk_nodebug( "mpcomp_slave_mvp_leaf: Will get value from father %p", mvp->father ) ;
 
-#if MPCOMP_TASK
-  mvp->spin_done = 0;
-#endif //MPCOMP_TASK
-
   /* Spin while this microVP is alive */
   while (mvp->enable) {
     int i ;
@@ -1032,9 +1028,6 @@ INFO("__mpcomp_flush: need to call mpcomp_macro_scheduler")
 
     /* Half barrier */
     __mpcomp_internal_half_barrier( mvp ) ;
-#if MPCOMP_TASK
-    mvp->spin_done = 1;
-#endif //MPCOMP_TASK
   }
 
   return NULL ;

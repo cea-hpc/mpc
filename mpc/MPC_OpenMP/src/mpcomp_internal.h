@@ -401,7 +401,6 @@ extern "C"
 #if MPCOMP_TASK
 	  struct mpcomp_task_list_s *untied_tasks;   /* List of suspended untied tasks */
 	  struct mpcomp_task_list_s *new_tasks;      /* List of new tasks */
-	  int spin_done;
 	  struct mpcomp_task_list_s **dist_untied_tasks;      /* Distant lists of untied tasks */
 	  struct mpcomp_task_list_s **dist_new_tasks;      /* Distant lists of new tasks */
 #if MPCOMP_TASK_LARCENY_MODE == 1
