@@ -149,22 +149,6 @@ extern "C"
  ****** STRUCTURES 
  *****************/
 
-     /* /\* Internal Control Variables *\/ */
-     /* /\* One structure per OpenMP thread *\/ */
-     /* typedef struct mpcomp_icv_s  */
-     /* { */
-     /* 	  int nthreads_var;		/\* Number of threads for the next team  */
-     /* 					   creation *\/ */
-     /* 	  int dyn_var;		        /\* Is dynamic thread adjustement on? *\/ */
-     /* 	  int nest_var;		        /\* Is nested OpenMP handled/allowed? *\/ */
-     /* 	  omp_sched_t run_sched_var;	/\* Schedule to use when a 'schedule' clause is */
-     /* 					   set to 'runtime' *\/ */
-     /* 	  int modifier_sched_var;	/\* Size of chunks for loop schedule *\/ */
-     /* 	  omp_sched_t def_sched_var;	/\* Default schedule when no 'schedule' clause */
-     /* 					   is present *\/ */
-     /* 	  int nmicrovps_var;		/\* Number of VPs *\/ */
-     /* } mpcomp_icv_t; */
-
      /* Global Internal Control Variables */
      /* One structure per OpenMP instance */
      typedef struct mpcomp_global_icv_s 
