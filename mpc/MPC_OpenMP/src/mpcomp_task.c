@@ -57,20 +57,21 @@ void __mpcomp_task_list_infos_init()
 	  sctk_assert(n != NULL);
 
 	  /* If the node correspond to the new list depth, allocate the data structure */
-	  if (n->depth == t->team->new_depth) {
+	  if (n->depth == t->team->tasklist_depth[MPCOMP_TASK_TYPE_NEW]) {
 	       n->new_tasks = sctk_malloc(sizeof(struct mpcomp_task_list_s));
 	       mpcomp_task_list_new(n->new_tasks);
 	       t->team->nb_newlists++;
 	  }
 	  
 	  /* If the node correspond to the untied list depth, allocate the data structure */
-	  if (n->depth == t->team->untied_depth) {
+	  if (n->depth == t->team->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED]) {
 	       n->untied_tasks = sctk_malloc(sizeof(struct mpcomp_task_list_s));
 	       mpcomp_task_list_new(n->untied_tasks);
 	       t->team->nb_untiedlists++;
 	  }
 	  
-	  if (n->depth <= t->team->untied_depth || n->depth <= t->team->new_depth) {	       
+	  if (n->depth <= t->team->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED] 
+	      || n->depth <= t->team->tasklist_depth[MPCOMP_TASK_TYPE_NEW]) {	       
 	       switch (n->child_type) {
 	       case MPCOMP_CHILDREN_NODE:
 		    for (i=n->nb_children-1; i>=0; i--) {
@@ -89,14 +90,14 @@ void __mpcomp_task_list_infos_init()
 			 sctk_assert(mvp != NULL);
 			 
 			 /* If the node correspond to the new list depth, allocate the data structure */
-			 if (n->depth + 1 == t->team->new_depth) {
+			 if (n->depth + 1 == t->team->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED]) {
 			      mvp->new_tasks = sctk_malloc(sizeof(struct mpcomp_task_list_s));
 			      mpcomp_task_list_new(mvp->new_tasks);
 			      t->team->nb_newlists++;
 			 }
 			 
 			 /* If the node correspond to the untied list depth, allocate the data structure */
-			 if (n->depth + 1 == t->team->untied_depth) {
+			 if (n->depth + 1 == t->team->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED]) {
 			      mvp->untied_tasks = sctk_malloc(sizeof(struct mpcomp_task_list_s));
 			      mpcomp_task_list_new(mvp->untied_tasks);
 			      t->team->nb_untiedlists++;
@@ -154,7 +155,7 @@ void __mpcomp_task_list_larceny_init()
 	  sctk_assert(n != NULL);
 	  
 	  /* If the node correspond to the new list depth, allocate the data structure */
-	  if (n->depth == t->team->new_depth) {
+	  if (n->depth == t->team->tasklist_depth[MPCOMP_TASK_TYPE_NEW]) {
 #if MPCOMP_MALLOC_ON_NODE
 	       n->dist_new_tasks = sctk_malloc_on_node(sizeof(struct mpcomp_task_list_s *) * t->team->nb_newlists - 1, n->id_numa);
 #if MPCOMP_TASK_LARCENY_MODE == 1
@@ -183,7 +184,7 @@ void __mpcomp_task_list_larceny_init()
 	  }
 	  
 	  /* If the node correspond to the untied list depth, allocate the data structure */
-	  if (n->depth == t->team->untied_depth) {
+	  if (n->depth == t->team->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED]) {
 #if MPCOMP_MALLOC_ON_NODE
 	       n->dist_untied_tasks = sctk_malloc_on_node(sizeof(struct mpcomp_task_list_s *) * t->team->nb_untiedlists - 1, n->id_numa);
 #if MPCOMP_TASK_LARCENY_MODE == 1
@@ -211,7 +212,7 @@ void __mpcomp_task_list_larceny_init()
 	       ui++;
 	  }
 	  
-	  if (n->depth < t->team->untied_depth || n->depth < t->team->new_depth) {	       
+	  if (n->depth < t->team->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED] || n->depth < t->team->tasklist_depth[MPCOMP_TASK_TYPE_NEW]) {	       
 	       switch (n->child_type) {
 	       case MPCOMP_CHILDREN_NODE:
 		    for (i=n->nb_children-1; i>=0; i--) {
@@ -229,7 +230,7 @@ void __mpcomp_task_list_larceny_init()
 			 mvp = n->children.leaf[i];
 			 sctk_assert(mvp != NULL);
 			 /* If the node correspond to the new list depth, allocate the data structure */
-			 if (n->depth + 1 == t->team->new_depth) {
+			 if (n->depth + 1 == t->team->tasklist_depth[MPCOMP_TASK_TYPE_NEW]) {
 #if MPCOMP_MALLOC_ON_NODE
 			      mvp->dist_new_tasks = sctk_malloc_on_node(sizeof(struct mpcomp_task_list_s *) * t->team->nb_newlists - 1, mvp->father->id_numa);
 #if MPCOMP_TASK_LARCENY_MODE == 1
@@ -258,7 +259,7 @@ void __mpcomp_task_list_larceny_init()
 			 }
 			 
 			 /* If the node correspond to the untied list depth, allocate the data structure */
-			 if (n->depth + 1 == t->team->untied_depth) {
+			 if (n->depth + 1 == t->team->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED]) {
 #if MPCOMP_MALLOC_ON_NODE
 			      mvp->dist_untied_tasks = sctk_malloc_on_node(sizeof(struct mpcomp_task_list_s *) * t->team->nb_untiedlists - 1, mvp->father->id_numa);
 #if MPCOMP_TASK_LARCENY_MODE == 1
@@ -371,20 +372,20 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 
      TODO("Maybe add test in case only one thread is running in the team or if max number of tasks is reached")
      if (!if_clause
-	 || (t->current_task && mpcomp_task_type_isset (t->current_task->type, MPCOMP_TASK_FINAL))
+	 || (t->current_task && mpcomp_task_property_isset (t->current_task->property, MPCOMP_TASK_FINAL))
 	 || mpcomp_task_nb_delayed > MPCOMP_TASK_MAX_DELAYED) {
 	  /* Execute directly */
 
 	  struct mpcomp_task_s task;
 
 	  __mpcomp_task_init (&task, NULL, NULL, t);
-	  mpcomp_task_set_type (&(task.type), MPCOMP_TASK_UNDEFERRED);
+	  mpcomp_task_set_property (&(task.property), MPCOMP_TASK_UNDEFERRED);
       
 	  if ((t->current_task
-	       && mpcomp_task_type_isset (t->current_task->type, MPCOMP_TASK_FINAL))
+	       && mpcomp_task_property_isset (t->current_task->property, MPCOMP_TASK_FINAL))
 	      || (flags & 2)) {
 	       /* If its parent task is final, the new task must be final too */
-	       mpcomp_task_set_type (&(task.type), MPCOMP_TASK_FINAL);
+	       mpcomp_task_set_property (&(task.property), MPCOMP_TASK_FINAL);
 	  }
 	       
 	  /* Current task is the new task which will be executed immediately */
@@ -425,9 +426,9 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 
 	  /* Create new task */
 	  __mpcomp_task_init (task, fn, data_cpy, t);
-	  mpcomp_task_set_type (&(task->type), MPCOMP_TASK_TIED);
+	  mpcomp_task_set_property (&(task->property), MPCOMP_TASK_TIED);
 	  if (flags & 2) {
-	       mpcomp_task_set_type (&(task->type), MPCOMP_TASK_FINAL);
+	       mpcomp_task_set_property (&(task->property), MPCOMP_TASK_FINAL);
 	  }
 
 	  parent = task->parent;
@@ -640,12 +641,12 @@ static struct mpcomp_task_s * __mpcomp_task_larceny()
 
      /* Retrieve the node containing the new list */
      ancestor = highwayman->mvp->father;
-     if (highwayman->team->new_depth < ancestor->depth + 1) {
-	  while(ancestor->depth >= highwayman->team->new_depth && ancestor->father != NULL)
+     if (highwayman->team->tasklist_depth[MPCOMP_TASK_TYPE_NEW] < ancestor->depth + 1) {
+	  while(ancestor->depth >= highwayman->team->tasklist_depth[MPCOMP_TASK_TYPE_NEW] && ancestor->father != NULL)
 	       ancestor = ancestor->father;
           
 	  /* Look inside each untied list of nearest threads (sharing the same new list) */
-	  task = __mpcomp_get_untied_task(ancestor,  highwayman->team->untied_depth);
+	  task = __mpcomp_get_untied_task(ancestor,  highwayman->team->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED]);
 	  if (task)
 	       return task;
      }
@@ -658,7 +659,7 @@ static struct mpcomp_task_s * __mpcomp_task_larceny()
 	  
 	  for (i=0; i<n->nb_children; i++)
 	       if (i != checked) {
-		    task = __mpcomp_get_new_task(n->children.node[i], highwayman->team->new_depth);
+		    task = __mpcomp_get_new_task(n->children.node[i], highwayman->team->tasklist_depth[MPCOMP_TASK_TYPE_NEW]);
 		    if (task)
 			 return task;
 	       }
@@ -672,7 +673,7 @@ static struct mpcomp_task_s * __mpcomp_task_larceny()
 	  
 	  for (i=0; i<n->nb_children; i++)
 	       if (i != checked) {
-		    task = __mpcomp_get_untied_task(n->children.node[i], highwayman->team->untied_depth);
+		    task = __mpcomp_get_untied_task(n->children.node[i], highwayman->team->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED]);
 		    if (task)
 			 return task;
 	       }
@@ -789,14 +790,14 @@ static struct mpcomp_task_s * __mpcomp_task_larceny()
 	  highwayman->larceny_order = sctk_malloc(nb_newlists - 1);
      order = highwayman->larceny_order;
 
-     if (highwayman->team->new_depth < highwayman->mvp->father->depth + 1) {
+     if (highwayman->team->tasklist_depth[MPCOMP_TASK_TYPE_NEW] < highwayman->mvp->father->depth + 1) {
 	  /* New lists are at some node level */
 
 	  struct mpcomp_node_s *n;
 	  
 	  /* Retrieve the node containing the new list */
 	  n = highwayman->mvp->father;
-	  while(n->depth > highwayman->team->new_depth && n->father != NULL)
+	  while(n->depth > highwayman->team->tasklist_depth[MPCOMP_TASK_TYPE_NEW] && n->father != NULL)
 	       n = n->father;
 
 	  nbl = set_order(order, nb_newlists - 1, n, NULL, 1);
@@ -830,14 +831,14 @@ static struct mpcomp_task_s * __mpcomp_task_larceny()
 	  }
      }
 
-     if (highwayman->team->untied_depth < highwayman->mvp->father->depth + 1) {
+     if (highwayman->team->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED] < highwayman->mvp->father->depth + 1) {
 	  /* Untied lists are at some node level */
 	  
 	  struct mpcomp_node_s *n;
 	  
 	  /* Retrieve the node containing the untied list */
 	  n = highwayman->mvp->father;
-	  while(n->depth > highwayman->team->new_depth && n->father != NULL)
+	  while(n->depth > highwayman->team->tasklist_depth[MPCOMP_TASK_TYPE_NEW] && n->father != NULL)
 	       n = n->father;
 	  
 	  nbl = set_order(order, nb_untiedlists - 1, n, NULL, 0);

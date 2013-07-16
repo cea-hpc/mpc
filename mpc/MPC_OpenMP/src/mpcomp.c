@@ -65,7 +65,14 @@ static int OMP_WAIT_POLICY = 0;
 static int OMP_THREAD_LIMIT = 0;
 /* Maximum number of nested active parallel regions */
 static int OMP_MAX_ACTIVE_LEVELS = 0;
-
+#if MPCOMP_TASK
+/* Depth of the new tasks lists in the tree */
+static int OMP_NEW_TASKS_DEPTH = 0;
+/* Depth of the untied tasks lists in the tree */
+static int OMP_UNTIED_TASKS_DEPTH = 0;
+/* Task stealing policy */
+static int OMP_TASK_LARCENY_MODE = MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL;
+#endif /* MPCOMP_TASK */
 
 mpcomp_global_icv_t mpcomp_global_icvs;
 
@@ -362,6 +369,29 @@ static inline void __mpcomp_read_env_variables() {
 
   }
 
+#if MPCOMP_TASK
+  /******* OMP_NEW_TASKS_DEPTH *********/
+  env = getenv ("OMP_NEW_TASKS_DEPTH");
+  if (env != NULL)
+  {
+       OMP_NEW_TASKS_DEPTH = strtol(env, NULL, 10);       
+  }
+
+  /******* OMP_UNTIED_TASKS_DEPTH *********/
+  env = getenv ("OMP_UNTIED_TASKS_DEPTH");
+  if (env != NULL)
+  {
+       OMP_UNTIED_TASKS_DEPTH = strtol(env, NULL, 10);              
+  }
+
+  /******* OMP_TASK_LARCENY_MODE *********/
+  env = getenv ("OMP_TASK_LARCENY_MODE");
+  if (env != NULL)
+  {
+       OMP_TASK_LARCENY_MODE = strtol(env, NULL, 10);              
+  }
+#endif /* MPCOMP_TASK */
+
   /***** PRINT SUMMARY ******/
   if (getenv ("MPC_DISABLE_BANNER") == NULL) {
     fprintf (stderr,
@@ -443,6 +473,19 @@ void __mpcomp_init() {
     // TODO: these lines should be in a function __mpcomp_thread_init(t)
     __mpcomp_thread_init( t, icvs, instance, team_info ) ;
     t->mvp = instance->mvps[0];
+
+#if MPCOMP_TASK
+    /* Ensure tasks lists depths are correct */
+    OMP_UNTIED_TASKS_DEPTH = sctk_max(OMP_UNTIED_TASKS_DEPTH, OMP_NEW_TASKS_DEPTH);
+    team_info->tasklist_depth[MPCOMP_TASK_TYPE_NEW] = sctk_min(t->mvp->father->depth + 1, OMP_NEW_TASKS_DEPTH);
+    team_info->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED] = sctk_min(t->mvp->father->depth + 1, OMP_UNTIED_TASKS_DEPTH);
+
+    /* Check the validity of larceny mode */
+    if (OMP_TASK_LARCENY_MODE < 0 || OMP_TASK_LARCENY_MODE >= MPCOMP_TASK_LARCENY_MODE_COUNT)
+	 team_info->task_larceny_mode = MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL;
+    else
+	 team_info->task_larceny_mode = OMP_TASK_LARCENY_MODE;
+#endif /* MPCOMP_TASK */
 
     //printf("__mpcomp_init: t address=%p\n", &t);
 

@@ -80,10 +80,7 @@ extern "C"
 
 #define MPCOMP_TASK_MAX_DELAYED 1024
 
-#define MPCOMP_TASK_NEW_DEPTH 1
-#define MPCOMP_TASK_UNTIED_DEPTH 1
-
-/* Tasks type bitmasks */
+/* Tasks property bitmasks */
 #define MPCOMP_TASK_UNDEFERRED   0x00000001 /* A task for which execution is not deferred
 					       with respect to its generating task region */
 #define MPCOMP_TASK_TIED         0x00000002 /* A task that must be executed entirely by
@@ -130,6 +127,22 @@ extern "C"
 	  MPCOMP_TOPO_OBJ_THREAD, 
 	  MPCOMP_TOPO_OBJ_COUNT
      };
+
+    typedef enum mpcomp_tasklist_type_t {
+	  MPCOMP_TASK_TYPE_NEW = 0,
+	  MPCOMP_TASK_TYPE_UNTIED = 1,
+	  MPCOMP_TASK_TYPE_COUNT = 2,
+     } mpcomp_tasklist_type_t;
+
+     typedef enum mpcomp_task_larceny_mode_t {
+	  MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL = 0,
+	  MPCOMP_TASK_LARCENY_MODE_RANDOM = 1,
+	  MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER = 2,
+	  MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN = 3,
+	  MPCOMP_TASK_LARCENY_MODE_PRODUCER = 4,
+	  MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER = 5,
+	  MPCOMP_TASK_LARCENY_MODE_COUNT = 6,
+     } mpcomp_task_larceny_mode_t;
 
 
 /*****************
@@ -210,15 +223,15 @@ extern "C"
      } mpcomp_stack_node_leaf_t;
 
 #if MPCOMP_TASK
-     /* Type of an OpenMP task */
-     typedef unsigned char mpcomp_task_type_t;
- 
+     /* Property of an OpenMP task */
+     typedef unsigned int mpcomp_task_property_t;
+
      /* OpenMP task data structure */
      struct mpcomp_task_s
      {
 	  void *(*func) (void *);             /* Function to execute */
 	  void *data;                         /* Arguments of the function */
-	  mpcomp_task_type_t type;            /* Task type */
+	  mpcomp_task_property_t property;        /* Task property */
 	  struct mpcomp_task_s *parent;       /* Mother task */
 	  struct mpcomp_task_s *children;     /* Children list */
 	  struct mpcomp_task_s *prev_child;   /* Prev sister task in mother task's children list */
@@ -268,12 +281,12 @@ extern "C"
 	  volatile int next_ordered_offset; 
 
 #if MPCOMP_TASK
-	  volatile int new_depth;                    /* Depth in the tree of the new_tasks list */
-	  volatile int untied_depth;                 /* Depth in the tree of the untied_tasks list */
 	  volatile int nb_newlists;
 	  volatile int nb_untiedlists;
 
-	  volatile int tasking_init_done;	     /* Thread team task's init tag */
+	  volatile int tasking_init_done;	        /* Thread team task's init tag */
+	  int tasklist_depth[MPCOMP_TASK_TYPE_COUNT];   /* Depth in the tree of task lists */
+	  int task_larceny_mode;
 #endif //MPCOMP_TASK
      } mpcomp_team_t;
 
@@ -526,8 +539,6 @@ extern "C"
 				 MPCOMP_NOWAIT_STOP_SYMBOL);
 
 #if MPCOMP_TASK
-	  team_info->new_depth = MPCOMP_TASK_NEW_DEPTH;
-	  team_info->untied_depth = sctk_max(MPCOMP_TASK_UNTIED_DEPTH, MPCOMP_TASK_NEW_DEPTH);
 	  team_info->nb_newlists = 0;
 	  team_info->nb_untiedlists = 0;
 #endif //MPCOMP_TASK
@@ -579,25 +590,25 @@ extern "C"
 
 
 #if MPCOMP_TASK
-    /* Task type primitives */
-     static inline void mpcomp_task_reset_type(mpcomp_task_type_t *type)
+    /* Task property primitives */
+     static inline void mpcomp_task_reset_property(mpcomp_task_property_t *property)
      {
-	  *type =0;
+	  *property =0;
      }
 
-     static inline void mpcomp_task_set_type(mpcomp_task_type_t *type, mpcomp_task_type_t mask)
+     static inline void mpcomp_task_set_property(mpcomp_task_property_t *property, mpcomp_task_property_t mask)
      {
-	  *type |= mask;
+	  *property |= mask;
      }
 
-     static inline void mpcomp_task_unset_type(mpcomp_task_type_t *type, mpcomp_task_type_t mask)
+     static inline void mpcomp_task_unset_property(mpcomp_task_property_t *property, mpcomp_task_property_t mask)
      {
-	  *type &= ~(mask);
+	  *property &= ~(mask);
      }
 
-     static inline bool mpcomp_task_type_isset(mpcomp_task_type_t type, mpcomp_task_type_t mask)
+     static inline bool mpcomp_task_property_isset(mpcomp_task_property_t property, mpcomp_task_property_t mask)
      {
-	  return (type & mask);
+	  return (property & mask);
      }
 
 
@@ -611,7 +622,7 @@ extern "C"
      {
 	  task->func = func;
 	  task->data = data;
-	  mpcomp_task_reset_type(&(task->type));
+	  mpcomp_task_reset_property(&(task->property));
 	  task->parent = thread->current_task;
 	  task->children = NULL;
 	  task->prev_child = NULL;
