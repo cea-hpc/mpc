@@ -499,6 +499,15 @@ extern "C"
 /*****************
  ****** FUNCTIONS  
  *****************/
+
+     static inline void *mpcomp_malloc(int numa_aware, int size, int node)
+     {
+     	  if (numa_aware && MPCOMP_MALLOC_ON_NODE)	
+     	       return sctk_malloc_on_node(size, node);		
+     	  					       
+	  return sctk_malloc(size);			
+     }
+
      
      static inline void __mpcomp_team_init(mpcomp_team_t *team_info)
      {
