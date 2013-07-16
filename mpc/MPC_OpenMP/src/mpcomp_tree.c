@@ -161,7 +161,7 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 	  obj = obj->children[0];
 		
      if (father == NULL) {   /* case root */
-	  node = (mpcomp_node_t *) sctk_malloc(sizeof(mpcomp_node_t));
+	  node = (mpcomp_node_t *) mpcomp_malloc(0, sizeof(mpcomp_node_t), 0);
 	  sctk_assert(node != NULL);
      
 	  instance->root = node;
@@ -195,13 +195,13 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 	  node->id_numa = 0;
 	  
 #if MPCOMP_TASK
-	  node->untied_tasks = NULL;
-	  node->new_tasks = NULL;
-#if MPCOMP_TASK_LARCENY_MODE == 1
-	  node->untied_rand_buffer = NULL;
-	  node->new_rand_buffer = NULL;
-#endif //MPCOMP_TASK_LARCENY_MODE == 1
-#endif //MPCOMP_TASK
+	  for (i=0; i<MPCOMP_TASK_TYPE_COUNT; i++) {
+	       node->tasklist[i] = NULL;
+	       node->lastStolen_tasklist[i] = NULL;
+	  }
+	  node->tasklist_randBuffer = NULL;
+	  instance->tree_base[0] = node->nb_children;
+#endif /* MPCOMP_TASK */
 
      } else {   /* case leaf or node */
 	  int target_vp = order[current_mvp];
@@ -214,20 +214,12 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 		    
 	       if ((father->children.node == NULL) && (father->children.leaf == NULL)) { /* Only the first child */
 		    father->child_type = MPCOMP_CHILDREN_LEAF;
-#if MPCOMP_MALLOC_ON_NODE
-		    father->children.leaf = (mpcomp_mvp_t **) sctk_malloc_on_node(sizeof(mpcomp_mvp_t *) * father->nb_children, father->id_numa);
-#else
-		    father->children.leaf = (mpcomp_mvp_t **) sctk_malloc(sizeof(mpcomp_mvp_t *) * father->nb_children);
-#endif //MPCOMP_MALLOC_ON_NODE
+		    father->children.leaf = (mpcomp_mvp_t **) mpcomp_malloc(1, sizeof(mpcomp_mvp_t *) * father->nb_children, father->id_numa);
 		    sctk_assert(father->children.leaf != NULL);
 	       }
 
 	       /* Allocate memory (on the right NUMA Node) */
-#if MPCOMP_MALLOC_ON_NODE
-	       instance->mvps[current_mvp] = (mpcomp_mvp_t *) sctk_malloc_on_node(sizeof(mpcomp_mvp_t), father->id_numa);
-#else
-	       instance->mvps[current_mvp] = (mpcomp_mvp_t *) sctk_malloc(sizeof(mpcomp_mvp_t));
-#endif //MPCOMP_MALLOC_ON_NODE
+	       instance->mvps[current_mvp] = (mpcomp_mvp_t *) mpcomp_malloc(1, sizeof(mpcomp_mvp_t), father->id_numa);
 	       sctk_assert(instance->mvps[current_mvp] != NULL);
 	       
 	       leaf = instance->mvps[current_mvp];
@@ -254,11 +246,7 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 	       }
 	       
 	       depth = father->depth + 1;
-#if MPCOMP_MALLOC_ON_NODE
-	       leaf->tree_rank = (int *) sctk_malloc_on_node(depth * sizeof(int), father->id_numa);
-#else
-	       leaf->tree_rank = (int *) sctk_malloc(depth * sizeof(int));
-#endif //MPCOMP_MALLOC_ON_NODE
+	       leaf->tree_rank = (int *) mpcomp_malloc(1, depth * sizeof(int), father->id_numa);
 	       sctk_assert(leaf->tree_rank != NULL);
 	       
 	       /* Set the tree_rank values (starting from leaves level) */
@@ -310,32 +298,26 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 	       }
 			
 #if MPCOMP_TASK
-	       leaf->untied_tasks = NULL;
-	       leaf->new_tasks = NULL;
-#if MPCOMP_TASK_LARCENY_MODE == 1
-	       leaf->untied_rand_buffer = NULL;
-	       leaf->new_rand_buffer = NULL;
-#endif //MPCOMP_TASK_LARCENY_MODE == 1
-#endif //MPCOMP_TASK
+	       for (i=0; i<MPCOMP_TASK_TYPE_COUNT; i++) {
+		    leaf->tasklist[i] = NULL;
+		    leaf->lastStolen_tasklist[i] = NULL;
+	       }
+	       leaf->tasklist_randBuffer = NULL;
+	       leaf->path = mpcomp_malloc(1, depth, father->id_numa);
+	       for (i=0; i<depth-1; i++)
+		    leaf->path[i] = father->path[i];
+	       leaf->path[depth-1] = id_loc;
+#endif /* MPCOMP_TASK */
 
 	  } else {   /* case node */
-	    int id_numa = 0;
-#if MPCOMP_MALLOC_ON_NODE
-               id_numa = sctk_get_node_from_cpu(target_vp);
-	       node = (mpcomp_node_t *) sctk_malloc_on_node(sizeof(mpcomp_node_t), id_numa);
-#else
-	       node = (mpcomp_node_t *) sctk_malloc(sizeof(mpcomp_node_t));
-#endif // MPCOMP_MALLOC_ON_NODE
+	       int id_numa = sctk_get_node_from_cpu(target_vp);
+	       node = (mpcomp_node_t *) mpcomp_malloc(1, sizeof(mpcomp_node_t), id_numa);
 	       node->id_numa = id_numa;
 	       sctk_assert( node != NULL );
 	       
 	       if ((father->children.node == NULL) && (father->children.leaf == NULL)) {   /* Only the first child */
 		    father->child_type = MPCOMP_CHILDREN_NODE;
-#if MPCOMP_MALLOC_ON_NODE
-		    father->children.node = (mpcomp_node_t **) sctk_malloc_on_node(sizeof(mpcomp_node_t *) * father->nb_children, father->id_numa);
-#else
-		    father->children.node = (mpcomp_node_t **) sctk_malloc(sizeof(mpcomp_node_t *) * father->nb_children);
-#endif //MPCOMP_MALLOC_ON_NODE
+		    father->children.node = (mpcomp_node_t **) mpcomp_malloc(1, sizeof(mpcomp_node_t *) * father->nb_children, father->id_numa);
 		    sctk_assert( father->children.node != NULL );
 	       }
 	       
@@ -365,13 +347,18 @@ void __mpcomp_build_auto_tree_recursive_bloc(mpcomp_instance_t *instance, int *o
 	       node->children.leaf = NULL;
 			
 #if MPCOMP_TASK
-	       node->untied_tasks = NULL;
-	       node->new_tasks = NULL;
-#if MPCOMP_TASK_LARCENY_MODE == 1
-	       node->untied_rand_buffer = NULL;
-	       node->new_rand_buffer = NULL;
-#endif //MPCOMP_TASK_LARCENY_MODE == 1
-#endif //MPCOMP_TASK			
+	       for (i=0; i<MPCOMP_TASK_TYPE_COUNT; i++) {
+		    node->tasklist[i] = NULL;
+		    node->lastStolen_tasklist[i] = NULL;
+	       }
+	       node->tasklist_randBuffer = NULL;
+	       if (node->rank == 0)
+		    instance->tree_base[node->depth] = node->nb_children; 
+	       node->path = mpcomp_malloc(1, node->depth, node->id_numa);
+	       for (i=0; i<node->depth-1; i++)
+		    node->path[i] = father->path[i];
+	       node->path[node->depth-1] = id_loc;
+#endif /* MPCOMP_TASK */
 	  }
      }
      
@@ -400,6 +387,12 @@ int __mpcomp_build_default_tree(mpcomp_instance_t *instance)
      int nb_cpus;
      int *order;
      int current_mpc_vp;
+#if MPCOMP_TASK
+     int max_tree_depth;
+     int i;
+     int tree_depth;
+     int level_size;
+#endif /* MPCOMP_TASK */
 
      sctk_nodebug("__mpcomp_build_auto_tree begin"); 
      
@@ -409,6 +402,12 @@ int __mpcomp_build_default_tree(mpcomp_instance_t *instance)
      order = sctk_malloc(nb_cpus * sizeof(int));
      sctk_assert(order != NULL);
      
+#if MPCOMP_TASK
+     max_tree_depth = hwloc_topology_get_depth(sctk_get_topology_object());
+     instance->tree_base = sctk_malloc(max_tree_depth * sizeof(int));
+     memset(instance->tree_base, 0, max_tree_depth * sizeof(int));
+#endif /* MPCOMP_TASK */
+
      /* Get the current VP number */
      current_mpc_vp = sctk_thread_get_vp();
 
@@ -422,6 +421,21 @@ int __mpcomp_build_default_tree(mpcomp_instance_t *instance)
 					     hwloc_get_root_obj(sctk_get_topology_object()),
 					     NULL, 0, 0);
      
+#if MPCOMP_TASK     
+     tree_depth = instance->mvps[0]->father->depth + 1;
+     instance->tree_level_size = mpcomp_malloc(0, sizeof(int) * (tree_depth + 1), 0);
+     instance->tree_array_first_rank = mpcomp_malloc(0, sizeof(int) * (tree_depth + 1), 0);
+     instance->tree_level_size[0] = 1;
+     instance->tree_array_first_rank[0] = 0;
+     instance->tree_array_size = 1;
+     for (i=1; i<tree_depth + 1; i++) {
+	  instance->tree_level_size[i] = instance->tree_level_size[i-1] * instance->tree_base[i-1];
+	  instance->tree_array_size += instance->tree_level_size[i]; 
+	  instance->tree_array_first_rank[i] = instance->tree_array_first_rank[i-1] + instance->tree_level_size[i-1];
+	  fprintf(stderr, "FirstRank[%d]=%d; tree_level_size[%d]=%d; tree_array_size=%d\n", i, instance->tree_array_first_rank[i], i, instance->tree_level_size[i], instance->tree_array_size);
+     }
+#endif /* MPCOMP_TASK */
+
      sctk_free(order);
      
      sctk_nodebug("__mpcomp_build_auto_tree done"); 
@@ -515,32 +529,26 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	       previous_depth = n->depth;
 
 	       target_vp = order[ current_mvp ];
-#if MPCOMP_MALLOC_ON_NODE
 	       target_numa = sctk_get_node_from_cpu( target_vp );
-#else
-	       target_numa = 0;
-#endif //MPCOMP_MALLOC_ON_NODE
 
 #if MPCOMP_TASK
-	       n->untied_tasks = NULL;
-	       n->new_tasks = NULL;
-#if MPCOMP_TASK_LARCENY_MODE == 1
-	       n->untied_rand_buffer = NULL;
-	       n->new_rand_buffer = NULL;
-#endif //MPCOMP_TASK_LARCENY_MODE == 1
-#endif //MPCOMP_TASK
+	       for (i=0; i<MPCOMP_TASK_TYPE_COUNT; i++) {
+		    n->tasklist[i] = NULL;
+	       }
+	       n->tasklist_randBuffer = NULL;
+#endif /* MPCOMP_TASK */
 
 	       if ( n->depth == depth - 1 ) { 
 		    int i_thread;
 		    
 		    /* Children are leaves */
 		    n->child_type = MPCOMP_CHILDREN_LEAF;
-		    n->children.leaf = (mpcomp_mvp_t **) sctk_malloc_on_node(
+		    n->children.leaf = (mpcomp_mvp_t **) mpcomp_malloc(1,
 			 n->nb_children * sizeof(mpcomp_mvp_t *), target_numa);
 
 		    for ( i = 0; i < n->nb_children; i++ ) {
 			 /* Allocate memory (on the right NUMA Node) */
-			 instance->mvps[current_mvp] = (mpcomp_mvp_t *) sctk_malloc_on_node(
+			 instance->mvps[current_mvp] = (mpcomp_mvp_t *) mpcomp_malloc(1,
 			      sizeof(mpcomp_mvp_t), target_numa);
 
 			 /* Get the set of registers */
@@ -554,7 +562,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			 instance->mvps[current_mvp]->vp = target_vp;
 			 instance->mvps[current_mvp]->enable = 1;
 			 instance->mvps[current_mvp]->tree_rank = 
-			      (int *)sctk_malloc_on_node( depth*sizeof(int), target_numa );
+			      (int *)mpcomp_malloc(1, depth*sizeof(int), target_numa );
 			 sctk_assert( instance->mvps[current_mvp]->tree_rank != NULL );
 
 			 instance->mvps[current_mvp]->tree_rank[ depth - 1 ] = i;
@@ -567,13 +575,11 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			 }
 
 #if MPCOMP_TASK
-			 instance->mvps[current_mvp]->untied_tasks = NULL;
-			 instance->mvps[current_mvp]->new_tasks = NULL;
-#if MPCOMP_TASK_LARCENY_MODE == 1
-			 instance->mvps[current_mvp]->untied_rand_buffer = NULL;
-			 instance->mvps[current_mvp]->new_rand_buffer = NULL;
-#endif //MPCOMP_TASK_LARCENY_MODE == 1
-#endif //MPCOMP_TASK
+			 for (i=0; i<MPCOMP_TASK_TYPE_COUNT; i++) {
+			      instance->mvps[current_mvp]->tasklist[i] = NULL;
+			 }
+			 instance->mvps[current_mvp]->tasklist_randBuffer = NULL;
+#endif /* MPCOMP_TASK */
 
 			 mpcomp_node_t * current_node = n;
 			 while ( current_node->father != NULL ) {
@@ -632,11 +638,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 
 			 /* Recompute the target vp/numa */
 			 target_vp = order[ current_mvp ];
-#if MPCOMP_MALLOC_ON_NODE
 			 target_numa = sctk_get_node_from_cpu( target_vp );
-#else
-			 target_numa = 0;
-#endif //MPCOMP_MALLOC_ON_NODE
 
 			 /* We reached the leaves */
 			 previous_depth++;
@@ -644,14 +646,14 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	       } else {
 		    /* Children are nodes */
 		    n->child_type = MPCOMP_CHILDREN_NODE;
-		    n->children.node= (mpcomp_node_t **) sctk_malloc_on_node( 
+		    n->children.node= (mpcomp_node_t **) mpcomp_malloc(1, 
 			 n->nb_children * sizeof( mpcomp_node_t * ), target_numa );
 
 		    /* Traverse children in reverse order for correct ordering during the DFS */
 		    for ( i = n->nb_children - 1; i >= 0; i-- ) {
 			 mpcomp_node_t * n2;
 
-			 n2 = (mpcomp_node_t *)sctk_malloc_on_node( sizeof( mpcomp_node_t ), target_numa );
+			 n2 = (mpcomp_node_t *)mpcomp_malloc(1, sizeof( mpcomp_node_t ), target_numa );
 
 			 n->children.node[ i ] = n2;
 

@@ -66,9 +66,11 @@ extern "C"
 #define MPCOMP_CHUNKS_NOT_AVAIL 1
 #define MPCOMP_CHUNKS_AVAIL     2
 
-#define MPCOMP_TASK 0
+#define MPCOMP_TASK 1
 
 #if MPCOMP_TASK
+
+#define MPCOMP_TASK_NESTING_MAX 128
 
 #define MPCOMP_TASK_LARCENY_MODE 0
 /*******************************
@@ -230,11 +232,13 @@ extern "C"
      /* OpenMP task list data structure */
      struct mpcomp_task_list_s
      {
-	  int nb_elements;              /* Number of tasks in the list */
-	  sctk_spinlock_t lock;         /* Lock of the list */
-	  struct mpcomp_task_s *head;   /* First task of the list */
-	  struct mpcomp_task_s *tail;   /* Last task of the list */
-     };
+	  sctk_atomics_int nb_elements;    /* Number of tasks in the list */
+	  sctk_spinlock_t lock;            /* Lock of the list */
+	  struct mpcomp_task_s *head;      /* First task of the list */
+	  struct mpcomp_task_s *tail;      /* Last task of the list */
+ 	  int total;                       /* Total number of tasks pushed in the list */
+	  sctk_atomics_int nb_larcenies;   /* Number of tasks in the list */
+    };
 #endif //MPCOMP_TASK
 
      /* Team of OpenMP threads */
@@ -265,10 +269,8 @@ extern "C"
 	  volatile int next_ordered_offset; 
 
 #if MPCOMP_TASK
-	  volatile int nb_newlists;
-	  volatile int nb_untiedlists;
-
 	  volatile int tasking_init_done;	        /* Thread team task's init tag */
+	  sctk_atomics_int tasklist_init_done;
 	  int tasklist_depth[MPCOMP_TASK_TYPE_COUNT];   /* Depth in the tree of task lists */
 	  int task_larceny_mode;
 #endif //MPCOMP_TASK
@@ -349,6 +351,12 @@ extern "C"
 	  int nb_mvps;	        	  /* Number of microVPs for this instance */
 	  struct mpcomp_mvp_s **mvps;	  /* All microVPs of this instance */
 	  struct mpcomp_node_s *root;	  /* Root to the tree linking the microVPs */
+#if MPCOMP_TASK
+	  int *tree_base;
+	  int *tree_level_size;
+	  int tree_array_size;
+	  int *tree_array_first_rank;
+#endif /* MPCOMP_TASK */
      } mpcomp_instance_t;
 
 
@@ -383,18 +391,15 @@ extern "C"
 
 	  /* OMP 3.0 */
 #if MPCOMP_TASK
-	  struct mpcomp_task_list_s *untied_tasks;   /* List of suspended untied tasks */
-	  struct mpcomp_task_list_s *new_tasks;      /* List of new tasks */
-	  struct mpcomp_task_list_s **dist_untied_tasks;      /* Distant lists of untied tasks */
-	  struct mpcomp_task_list_s **dist_new_tasks;      /* Distant lists of new tasks */
-#if MPCOMP_TASK_LARCENY_MODE == 1
-	  struct drand48_data *untied_rand_buffer;
-	  struct drand48_data *new_rand_buffer;
-#elif MPCOMP_TASK_LARCENY_MODE == 2
-	  unsigned long new_rank;
-	  unsigned long untied_rank;
-#endif //MPCOMP_TASK_LARCENY_MODE == 1,2
-#endif //MPCOMP_TASK
+	  struct mpcomp_node_s **tree_array;               /* Array reprensentation of the tree */
+	  unsigned tree_array_rank;                        /* Rank in tree_array */ 
+	  int *path;                                       /* Path in the tree */
+	  struct mpcomp_task_list_s *tasklist[MPCOMP_TASK_TYPE_COUNT]; /* Lists of tasks */
+	  struct mpcomp_task_list_s *lastStolen_tasklist[MPCOMP_TASK_TYPE_COUNT];
+	  int tasklistNodeRank[MPCOMP_TASK_TYPE_COUNT];
+	  struct drand48_data *tasklist_randBuffer;
+#endif /* MPCOMP_TASK */
+
 	  void *(*func) (void *);	  /* Function to call by every thread */
 	  void *shared;		          /* Shared variables (for every thread) */
      } mpcomp_mvp_t;
@@ -441,18 +446,13 @@ extern "C"
 
 
 #if MPCOMP_TASK
-	  struct mpcomp_task_list_s *untied_tasks;          /* List of suspended untied tasks */
-	  struct mpcomp_task_list_s *new_tasks;             /* Lists of new tasks */
-	  struct mpcomp_task_list_s **dist_untied_tasks;    /* Distant lists of untied tasks */
-	  struct mpcomp_task_list_s **dist_new_tasks;       /* Distant lists of new tasks */
-#if MPCOMP_TASK_LARCENY_MODE == 1
-	  struct drand48_data *untied_rand_buffer;
-	  struct drand48_data *new_rand_buffer;
-#elif MPCOMP_TASK_LARCENY_MODE == 2
-	  unsigned long new_rank;
-	  unsigned long untied_rank;
-#endif //MPCOMP_TASK_LARCENY_MODE == 1,2
-#endif //MPCOMP_TASK
+	  struct mpcomp_node_s **tree_array;                /* Array reprensentation of the tree */
+	  unsigned tree_array_rank;                         /* Rank in tree_array */ 
+	  int *path;                                        /* Path in the tree */
+	  struct mpcomp_task_list_s *tasklist[MPCOMP_TASK_TYPE_COUNT]; /* Lists of tasks */
+	  struct mpcomp_task_list_s *lastStolen_tasklist[MPCOMP_TASK_TYPE_COUNT];
+	  struct drand48_data *tasklist_randBuffer;
+#endif /* MPCOMP_TASK */
 
 	  enum mpcomp_myself_t type;
 	  int current_mvp;
@@ -531,9 +531,8 @@ extern "C"
 				 MPCOMP_NOWAIT_STOP_SYMBOL);
 
 #if MPCOMP_TASK
-	  team_info->nb_newlists = 0;
-	  team_info->nb_untiedlists = 0;
-#endif //MPCOMP_TASK
+	  sctk_atomics_store_int(&(team_info->tasklist_init_done), 0);
+#endif /* MPCOMP_TASK */
      }
 
      static inline void __mpcomp_thread_init(mpcomp_thread_t *t, mpcomp_local_icv_t icvs,
@@ -577,7 +576,9 @@ extern "C"
 #if MPCOMP_TASK
 	  t->tasking_init_done = 0;
 	  t->tied_tasks = NULL;
-#endif //MPCOMP_TASK
+	  t->current_task = NULL;
+	  t->larceny_order = NULL;
+#endif /* MPCOMP_TASK */
      }
 
 
@@ -631,10 +632,12 @@ extern "C"
 
      static inline void mpcomp_task_list_new(struct mpcomp_task_list_s *list)
      {
-	  list->nb_elements = 0;
+	  sctk_atomics_store_int(&list->nb_elements, 0);
 	  list->lock = SCTK_SPINLOCK_INITIALIZER;
 	  list->head = NULL;
 	  list->tail = NULL;
+	  list->total = 0;
+	  sctk_atomics_store_int(&list->nb_larcenies, 0);
      }
 
      static inline void mpcomp_task_list_free(struct mpcomp_task_list_s *list)
@@ -644,7 +647,7 @@ extern "C"
 
      static inline int mpcomp_task_list_isempty(struct mpcomp_task_list_s *list)
      {
-	  return (list->nb_elements == 0);
+	  return (sctk_atomics_load_int(&list->nb_elements) == 0);
      }
 
      static inline void mpcomp_task_list_pushtohead(struct mpcomp_task_list_s *list, struct mpcomp_task_s *task)
@@ -661,7 +664,8 @@ extern "C"
 	       list->head = task;
 	  }
 
-	  list->nb_elements++;
+	  sctk_atomics_incr_int(&list->nb_elements);
+	  list->total++;
 	  task->list = list;
      }
 
@@ -679,7 +683,8 @@ extern "C"
 	       list->tail = task;
 	  }
 	  
-	  list->nb_elements++;
+	  sctk_atomics_incr_int(&list->nb_elements);
+	  list->total++;
 	  task->list = list;
      }
 
@@ -691,8 +696,9 @@ extern "C"
 		    if (task->next)
 			 task->next->prev = NULL;
 		    list->head = task->next;
-		    list->nb_elements--;
+		    sctk_atomics_decr_int(&list->nb_elements);
 		    task->list = NULL;
+
 		    return task;
 	       }
 	  }
@@ -708,8 +714,9 @@ extern "C"
 		    if (task->prev)
 			 task->prev->next = NULL;
 		    list->tail = task->prev;
-		    list->nb_elements--;
+		    sctk_atomics_decr_int(&list->nb_elements);
 		    task->list = NULL;
+
 		    return task;
 	       }
 	  }
@@ -734,7 +741,7 @@ extern "C"
 	  if (task->prev)
 	       task->prev->next = task->next;
 	  
-	  list->nb_elements--;
+	  sctk_atomics_decr_int(&list->nb_elements);
 	  task->list = NULL;
 
 	  return 1;	  
@@ -755,49 +762,8 @@ extern "C"
 	  sctk_spinlock_trylock(&(list->lock));
      }
 
+#endif /* MPCOMP_TASK */
 
-     static inline struct mpcomp_task_list_s * mpcomp_task_list_get_newlist(mpcomp_mvp_t *mvp)
-     {
-	  struct mpcomp_task_list_s *list;
-	  struct mpcomp_node_s *father;
-
-	  /* Start the tree DFS from the current mvp */
-	  list = mvp->new_tasks;
-	  father = mvp->father;
-
-	  /* Search for the new_tasks list */
-	  while (list == NULL && father != NULL) {
-	       list = father->new_tasks;
-	       father = father->father;
-	  }
-
-	  /* Be sure we get a valid new_tasks list */
-	  sctk_assert(list != NULL);
-
-	  return list;	       
-     }
-
-    static inline struct mpcomp_task_list_s * mpcomp_task_list_get_untiedlist(mpcomp_mvp_t *mvp)
-     {
-	  struct mpcomp_task_list_s *list;
-	  struct mpcomp_node_s *father;
-
-	  /* Start the tree DFS from the current mvp */
-	  list = mvp->untied_tasks;
-	  father = mvp->father;
-
-	  /* Search for the new_tasks list */
-	  while (list == NULL && father != NULL) {
-	       list = father->untied_tasks;
-	       father = father->father;
-	  }
-
-	  /* Be sure we get a valid new_tasks list */
-	  sctk_assert(list != NULL);
-
-	  return list;	       
-     }
-#endif //MPCOMP_TASK
 
      /* mpcomp.c */
      void __mpcomp_init(void);
@@ -854,7 +820,8 @@ extern "C"
 #if MPCOMP_TASK
      /* mpcomp_task.c */
      void __mpcomp_task_schedule();
-#endif //MPCOMP_TASK
+     void __mpcomp_task_exit();
+#endif /* MPCOMP_TASK */
 
 #ifdef __cplusplus
 }
