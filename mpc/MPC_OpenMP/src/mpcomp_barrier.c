@@ -43,7 +43,7 @@ __mpcomp_barrier (void)
      if (t->num_threads == 1) {
 #if MPCOMP_TASK
 	  __mpcomp_task_schedule();   /* Look for tasks remaining */
-#endif //MPCOMP_TASK
+#endif /* MPCOMP_TASK */
 	  return;
      }
 
@@ -61,57 +61,29 @@ void
 __mpcomp_internal_half_barrier (mpcomp_mvp_t *mvp)
 {
 
-  mpcomp_node_t * c ;
-  long b ;
-  long b_done ;
+  mpcomp_node_t *c;
+  long b;
+  long b_done;
 
-  sctk_nodebug( "__mpcomp_internal_half_barrier: entering" ) ;
+  sctk_nodebug("__mpcomp_internal_half_barrier: entering");
 
   /* Step 0: TODO finish the barrier whithin the current micro VP */
 
   /* Step 1: Climb in the tree */
-  c = mvp->father ;
+  c = mvp->father;
+  b_done = c->barrier_done; /* Move out of sync region? */
+  b = sctk_atomics_fetch_and_incr_int(&(c->barrier));
 
-  b_done = c->barrier_done ; /* Move out of sync region? */
-
-#if MPCOMP_USE_ATOMICS
-  b = sctk_atomics_fetch_and_incr_int( &(c->barrier) ) ;
-#else
-  sctk_spinlock_lock( &(c->lock) ) ;
-  b = c->barrier ;
-  c->barrier = b + 1;
-  sctk_spinlock_unlock( &(c->lock) ) ;
-#endif
-
-  // while ( b == c->barrier_num_threads && c->father != NULL ) 
-  while ( (b+1) == c->barrier_num_threads && c->father != NULL ) 
-  {
-    sctk_nodebug( 
-	"__mpcomp_internal_half_barrier: currently %d thread(s), expected %d ", 
-	b, c->barrier_num_threads ) ;
-
-#if MPCOMP_USE_ATOMICS
-    sctk_atomics_store_int( &(c->barrier), 0 ) ;
-#else
-    c->barrier = 0 ;
-#endif
-    c = c->father ;
-
-#if MPCOMP_USE_ATOMICS
-    b = sctk_atomics_fetch_and_incr_int( &(c->barrier) ) ;
-#else
-    sctk_spinlock_lock( &(c->lock) ) ;
-    b = c->barrier ;
-    c->barrier = b + 1 ;
-    sctk_spinlock_unlock( &(c->lock) ) ;
-#endif
-
+  while ((b+1) == c->barrier_num_threads && c->father != NULL) {
+       sctk_nodebug("__mpcomp_internal_half_barrier: currently %d thread(s), expected %d ", 
+		    b, c->barrier_num_threads);
+       
+    sctk_atomics_store_int(&(c->barrier), 0);
+    c = c->father;
+    b = sctk_atomics_fetch_and_incr_int(&(c->barrier));
   }
 
-  //sctk_debug("__mpcomp_internal_half_barrier: node nb children=%d, node depth=%d, mvp address=%p, mvp rank=%d, mvp tree_rank=%d", c->nb_children, c->depth, &mvp, mvp->rank, mvp->tree_rank[c->depth]);
-  
-
-  sctk_nodebug( "__mpcomp_internal_half_barrier: exiting" ) ;
+  sctk_nodebug("__mpcomp_internal_half_barrier: exiting");
 }
 
 /* Barrier for all threads of the same team */
@@ -139,12 +111,12 @@ __mpcomp_internal_full_barrier (mpcomp_mvp_t *mvp)
      
      /* Step 2 - Wait for the barrier to be done */
      if (c->father != NULL || 
-	 (c->father== NULL && (b+1) != c->barrier_num_threads)) {	  
+	 (c->father == NULL && (b+1) != c->barrier_num_threads)) {	  
 	  /* Wait for c->barrier == c->barrier_num_threads */
 	  while (b_done == c->barrier_done) {
 #if MPCOMP_TASK
 	       __mpcomp_task_schedule(); /* Look for tasks remaining */
-#endif //MPCOMP_TASK
+#endif /* MPCOMP_TASK */
 	       sctk_thread_yield();
 	  }
      } else {
@@ -153,17 +125,12 @@ __mpcomp_internal_full_barrier (mpcomp_mvp_t *mvp)
 	  c->barrier_done++ ; /* No need to lock I think... */
 #if MPCOMP_TASK
 	  __mpcomp_task_schedule(); /* Look for tasks remaining */
-#endif //MPCOMP_TASK
-  }
+#endif /* MPCOMP_TASK */
+     }
 
-  //sctk_debug("__mpcomp_internal_full_barrier: node nb children=%d, node depth=%d, mvp address=%p, mvp rank=%d, mvp tree_rank=%d", c->nb_children, c->depth, &mvp, mvp->rank, mvp->tree_rank[c->depth]);
-
-  /* Step 3 - Go down */
-  while ( c->child_type != MPCOMP_CHILDREN_LEAF )  {
-    c = c->children.node[ mvp->tree_rank[ c->depth ] ] ;
-    c->barrier_done++ ; /* No need to lock I think... */
-  }
-
-  // sctk_assert( b_done + 1 == mvp->father->barrier_done ) ;
-  // sctk_assert( b_done + 1 == mvp->father->father->barrier_done ) ;
+     /* Step 3 - Go down */
+     while ( c->child_type != MPCOMP_CHILDREN_LEAF ) {
+	  c = c->children.node[mvp->tree_rank[c->depth]];
+	  c->barrier_done++; /* No need to lock I think... */
+     }
 }
