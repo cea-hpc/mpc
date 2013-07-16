@@ -347,6 +347,10 @@ void __mpcomp_task_infos_init()
      }
 }
 
+void __mpcomp_task_exit()
+{
+
+}
 
 
 /* 

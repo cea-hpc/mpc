@@ -1808,6 +1808,10 @@ sctk_user_main (int argc, char **argv)
 	sctk_internal_profiler_render();
 #endif
 
+#ifdef MPC_OpenMP
+  __mpcomp_exit() ;
+#endif
+
   MPC_Checkpoint_restart_end ();
 
   sctk_nodebug ("Wait for pending messages");

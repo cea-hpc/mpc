@@ -502,6 +502,12 @@ void __mpcomp_init() {
 
 }
 
+void __mpcomp_exit()
+{
+#if MPCOMP_TASK
+     __mpcomp_task_exit();
+#endif /* MPCOMP_TASK */
+}
 
 void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps ) {
 

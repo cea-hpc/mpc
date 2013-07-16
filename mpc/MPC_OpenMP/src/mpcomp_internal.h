@@ -808,6 +808,7 @@ extern "C"
 
      /* mpcomp.c */
      void __mpcomp_init(void);
+     void __mpcomp_exit(void);
      void __mpcomp_instance_init(mpcomp_instance_t *instance, int nb_mvps);
      void in_order_scheduler(mpcomp_mvp_t * mvp);
      void * mpcomp_slave_mvp_node(void *arg);
