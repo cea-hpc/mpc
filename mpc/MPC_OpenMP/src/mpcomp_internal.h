@@ -66,7 +66,7 @@ extern "C"
 #define MPCOMP_CHUNKS_NOT_AVAIL 1
 #define MPCOMP_CHUNKS_AVAIL     2
 
-#define MPCOMP_TASK 1
+#define MPCOMP_TASK 0
 
 #if MPCOMP_TASK
 
