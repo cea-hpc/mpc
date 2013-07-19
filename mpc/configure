@@ -676,6 +676,7 @@ if test "$SCTK_NOCREATE" != "1" ; then
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_ldflags
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_cflags
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_mpcrun
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_mpc_edit_config
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_compiler
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_env
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_status

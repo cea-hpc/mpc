@@ -29,11 +29,29 @@
     <xs:all>
       <xs:element minOccurs="0" name="numa_migration" type="xs:boolean"/>
       <xs:element minOccurs="0" name="realloc_factor" type="xs:integer"/>
-      <xs:element minOccurs="0" name="realloc_threashold" type="xs:string"/>
+      <xs:element minOccurs="0" name="realloc_threashold">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
       <xs:element minOccurs="0" name="numa" type="xs:boolean"/>
       <xs:element minOccurs="0" name="strict" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="keep_mem" type="xs:string"/>
-      <xs:element minOccurs="0" name="keep_max" type="xs:string"/>
+      <xs:element minOccurs="0" name="keep_mem">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="keep_max">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->
@@ -48,7 +66,13 @@
       <xs:element minOccurs="0" name="keep_rand_addr" type="xs:boolean"/>
       <xs:element minOccurs="0" name="disable_rand_addr" type="xs:boolean"/>
       <xs:element minOccurs="0" name="disable_mpc" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="thread_init" type="xs:string"/>
+      <xs:element minOccurs="0" name="thread_init">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
       <xs:element minOccurs="0" name="nb_task" type="xs:integer"/>
       <xs:element minOccurs="0" name="nb_process" type="xs:integer"/>
       <xs:element minOccurs="0" name="nb_processor" type="xs:integer"/>
@@ -202,12 +226,48 @@
   <xs:complexType name="user_type_low_level_comm">
     <xs:all>
       <xs:element minOccurs="0" name="checksum" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="send_msg" type="xs:string"/>
-      <xs:element minOccurs="0" name="notify_recv_msg" type="xs:string"/>
-      <xs:element minOccurs="0" name="notify_matching_msg" type="xs:string"/>
-      <xs:element minOccurs="0" name="notify_perform_msg" type="xs:string"/>
-      <xs:element minOccurs="0" name="notify_idle_msg" type="xs:string"/>
-      <xs:element minOccurs="0" name="notify_any_src_msg" type="xs:string"/>
+      <xs:element minOccurs="0" name="send_msg">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="notify_recv_msg">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="notify_matching_msg">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="notify_perform_msg">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="notify_idle_msg">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
+      <xs:element minOccurs="0" name="notify_any_src_msg">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
       <xs:element minOccurs="0" name="network_mode" type="xs:string"/>
       <xs:element minOccurs="0" name="dyn_reordering" type="xs:boolean"/>
     </xs:all>
@@ -255,7 +315,13 @@
     <xs:all>
       <xs:element minOccurs="0" name="spin_delay" type="xs:integer"/>
       <xs:element minOccurs="0" name="interval" type="xs:integer"/>
-      <xs:element minOccurs="0" name="kthread_stack_size" type="xs:string"/>
+      <xs:element minOccurs="0" name="kthread_stack_size">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
     </xs:all>
   </xs:complexType>
   <!-- ********************************************************* -->

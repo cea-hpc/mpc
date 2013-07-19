@@ -52,7 +52,7 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 	obj->verbosity = 0;
 	obj->banner = true;
 	obj->autokill = 0;
-	obj->user_launchers = "";
+	obj->user_launchers = "default";
 	obj->keep_rand_addr = true;
 	obj->disable_rand_addr = false;
 	obj->disable_mpc = false;

@@ -302,6 +302,7 @@ printf "\t@mkdir -p \${DESTDIR}${SCTK_MAN_DIR}">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p \${DESTDIR}${SCTK_INCLUDE_DIR}">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p \${DESTDIR}${SCTK_LIB_DIR}">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p \${DESTDIR}${SCTK_SHARE_DIR}">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p \${DESTDIR}${SCTK_SHARE_ED_DIR}">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL/man">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL/man/man1">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL/man/man3">> Makefile; echo "">> Makefile
@@ -313,6 +314,7 @@ printf "\t@cp ${MPC_SOURCE_DIR}MPC_Config/generated/*.5 INSTALL/man/man5">> Make
 printf "\t@cp share/mpc/* INSTALL/share/mpc">> Makefile; echo "">> Makefile
 printf "\t@cp ${MPC_SOURCE_DIR}MPC_Config/extra/config-multi-profile.xml.example INSTALL/share/mpc">> Makefile; echo "">> Makefile
 printf "\t@cp ${MPC_SOURCE_DIR}MPC_Config/generated/mpc-config.xsd INSTALL/share/mpc">> Makefile; echo "">> Makefile
+printf "\t@cp -r ${MPC_SOURCE_DIR}MPC_Config/editor INSTALL/share">> Makefile; echo "">> Makefile
 
 DIR_TEST="MPC_Threads"
 check_module
@@ -358,6 +360,7 @@ printf "\t@\$(F77) \$(FOBJ_LIST) ${EXTERN_NON_TESTED_LIB} -fPIC -shared -o \${DE
 fi
 printf "\t@cp -r INSTALL/bin/* \${DESTDIR}${SCTK_BIN_DIR}">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/share/mpc/* \${DESTDIR}${SCTK_SHARE_DIR}">> Makefile; echo "">> Makefile
+printf "\t@cp -r INSTALL/share/editor/* \${DESTDIR}${SCTK_SHARE_ED_DIR}">> Makefile; echo "">> Makefile
 
 #
 # Rule 'uninstall'
@@ -371,6 +374,7 @@ printf "\t@for i in  INSTALL/man/man1/* ; do rm -rf \${DESTDIR}${SCTK_MAN_DIR}/m
 printf "\t@for i in  INSTALL/man/man3/* ; do rm -rf \${DESTDIR}${SCTK_MAN_DIR}/man3/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
 printf "\t@for i in  INSTALL/man/man5/* ; do rm -rf \${DESTDIR}${SCTK_MAN_DIR}/man5/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
 printf "\t@for i in  INSTALL/share/mpc/* ; do rm -rf \${DESTDIR}${SCTK_SHARE_DIR}/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
+printf "\t@for i in  INSTALL/share/editor/* ; do rm -rf \${DESTDIR}${SCTK_SHARE_ED_DIR}/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
 
 
 TEST_RES="check_results"
