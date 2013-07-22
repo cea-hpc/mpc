@@ -506,15 +506,18 @@ print_neighborhood(int cpuid, int nb_cpus, int* neighborhood, hwloc_obj_t* objs)
 sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood)
 {
   int i;
-
   hwloc_obj_t *objs;
-  hwloc_obj_t currentCPU = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuid);
+  hwloc_obj_t currentCPU ; 
   unsigned nb_cpus_found;
+
+  currentCPU = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuid);
 
   /* alloc size for retreiving objects. We could also use a static array */
   objs = sctk_malloc(nb_cpus * sizeof(hwloc_obj_t));
-  /* the closest CPU is actually... the current CPU :-). Set the closest CPU as the current
-   * CPU */
+  sctk_assert( objs != NULL ) ;
+
+  /* The closest CPU is actually... the current CPU :-). 
+   * Set the closest CPU as the current CPU */
   objs[0] = currentCPU;
 
   /* get closest objects to the current CPU */
