@@ -782,6 +782,7 @@ extern "C"
      int __mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth, int *degree);
      int __mpcomp_check_tree_coherency(mpcomp_instance_t *instance);
      void __mpcomp_print_tree(mpcomp_instance_t *instance);
+     int *__mpcomp_compute_topo_tree_array(int *depth, int *index) ;
 
      /* mpcomp_loop_dyn.c */
      int __mpcomp_dynamic_steal(int *from, int *to);
