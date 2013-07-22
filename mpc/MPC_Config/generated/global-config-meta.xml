@@ -97,7 +97,7 @@
 	<usertypes>
 		<!-- Structure for infiniband driver -->
 		<struct name="net_driver_infiniband" doc="Declare a fake driver to test the configuration system.">
-			<param name="network_type" type="int" doc="Define a network's type (0=signalization, 1=data)" />
+			<param name="network_type" type="int" doc="Define a network's type (0=signalization, 1=data)" default="0"/>
 			<param name="adm_port" type="int" doc="Defines the port number to use." default="0" />
 			<param name="verbose_level" type="int" doc="Defines the verbose level of the Infiniband interface ." default="0" />
 			<param name="eager_limit" type="int" doc="Size of the eager buffers (short messages)." default="12288" />

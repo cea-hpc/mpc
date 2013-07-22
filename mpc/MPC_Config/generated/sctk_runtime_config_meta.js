@@ -40,7 +40,7 @@ meta.types = {
 		max_filename_size: {mode: 'param', name: "max_filename_size", type: "int", doc: "", dflt: "1024", },
 	}},
 	net_driver_infiniband : {type: 'struct', name: "net_driver_infiniband", childs: {
-		network_type: {mode: 'param', name: "network_type", type: "int", doc: "Define a network's type (0=signalization, 1=data)", dflt: null},
+		network_type: {mode: 'param', name: "network_type", type: "int", doc: "Define a network's type (0=signalization, 1=data)", dflt: "0", },
 		adm_port: {mode: 'param', name: "adm_port", type: "int", doc: "Defines the port number to use.", dflt: "0", },
 		verbose_level: {mode: 'param', name: "verbose_level", type: "int", doc: "Defines the verbose level of the Infiniband interface .", dflt: "0", },
 		eager_limit: {mode: 'param', name: "eager_limit", type: "int", doc: "Size of the eager buffers (short messages).", dflt: "12288", },

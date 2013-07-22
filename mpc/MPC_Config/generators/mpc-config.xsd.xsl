@@ -100,7 +100,7 @@
 		<xs:element minOccurs="0">
 			<xsl:attribute name="name"><xsl:value-of select="@name"/></xsl:attribute>
 			<xsl:choose>
-				<xsl:when test="@type = 'size'"><xsl:call-template name="gen-basic-type-size"/></xsl:when>
+                <xsl:when test="@type = 'size'"><xsl:call-template name="gen-basic-type-size"/></xsl:when>
 				<xsl:when test="@type = 'funcptr'"><xsl:call-template name="gen-basic-type-funcptr"/></xsl:when>
 				<xsl:otherwise>
 					<xsl:attribute name="type"><xsl:call-template name="gen-xs-type-name"/></xsl:attribute>
@@ -109,14 +109,14 @@
 		</xs:element>
 	</xsl:template>
 
-	<!-- ********************************************************* -->
-	<xsl:template name="gen-basic-type-size">
-		<xs:simpleType>
-			<xs:restriction base="xs:string">
-				<xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
-			</xs:restriction>
-		</xs:simpleType>
-	</xsl:template>
+    <!-- ********************************************************* -->
+    <xsl:template name="gen-basic-type-size">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xsl:template>
 
 	<!-- ********************************************************* -->
 	<xsl:template name="gen-basic-type-funcptr">

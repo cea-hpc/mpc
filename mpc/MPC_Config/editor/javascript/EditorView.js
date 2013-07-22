@@ -5,30 +5,44 @@
  */
 var View = {};
 
+// List of the available CLI options
+var list_cli_options = [];
+
+// List of the available rails
+var list_rails = [];
+
+// List of the available drivers
+var list_drivers = [];
+
 /*
- * \fn View.createParamView
  * Create an HTML object for a XML node with param mode
+ * \fn String View.createParamView(profile_name, module_name, var_name, module, print)
  * \param String profile_name Name of the modified profile
  * \param String module_name Name of the modified module
  * \param String var_name Name of the modified property
  * \param Boolean print false for size field, true otherwise
+ * \param Boolean network true if it is for a network section, false otherwise
  * \return String The HTML code for the given property
  */
-View.createParamView = function (profile_name, module_name, var_name, module, print) {
-	return View.createView[module.type](profile_name, module_name, var_name, module, print);
+View.createParamView = function (profile_name, module_name, var_name, module, print, network) {
+	return View.createView[module.type](profile_name, module_name, var_name, module, print, network);
 };
 
 /*
- * \fn View.createTexteField
  * Create an HTML input of "text" type
+ * \fn String View.createTexteField(profile_name, module_name, var_name, module, print)
  * \param String profile_name Name of the modified profile
  * \param String module_name Name of the modified module
  * \param String var_name Name of the modified property
  * \param Boolean print false for size field, true otherwise
  * \return String The HTML code for the given property
  */
-View.createTextField = function (profile_name, module_name, var_name, module, print) {
+View.createTextField = function (profile_name, module_name, var_name, module, print, network) {
 	var html = "";
+	network = network ? network : false;
+	var title = module.doc ? module.doc : "";
+	var re = new RegExp("'", "g");
+	title = title.replace(re, "\\'");
 
 	if (print) {
 		html += "<tr><th>" + module.name + "</th>";
@@ -40,19 +54,25 @@ View.createTextField = function (profile_name, module_name, var_name, module, pr
 	html += "' value='" + ((module.type != "size") ? (module.value ? module.value : module.dflt) 
 				 : (module.value ? module.value.match(/\d+/g)[0] : module.dflt.match(/\d+/g)[0]));
 
-	html += "' title='" + module.doc + "\nDefault value: " + module.dflt + "'";
+	html += "' title='" + title + "\nDefault value: " + module.dflt + "'";
 	html += " data-profile='" + profile_name + "'";
 	html += " data-module='" + module_name + "'";
 	html += " data-property='" + module.name + "'";
 	html += " data-default='" + module.dflt + "'";
-		
-	if (module.type == "size") {
-		html += " onchange='Controller.updateSizeInProfile(&quot;" + profile_name + "&quot;, &quot;"
-					+ module_name + "&quot;, &quot;" + module.name + "&quot;)'/>";
+	
+	if (network == true) {
+		html += " onchange='Controller.updateNetwork(&quot;" + profile_name + "&quot;, &quot;"
+		+ module_name + "&quot;, &quot;" + module.name + "&quot;, this)'/>";
 	}
 	else {
-		html += " onchange='Controller.updateProfile(&quot;" + profile_name + "&quot;, &quot;"
-					+ module_name + "&quot;, &quot;" + var_name + "&quot;, this)'/>";
+		if (module.type == "size") {
+			html += " onchange='Controller.updateSizeInProfile(&quot;" + profile_name + "&quot;, &quot;"
+			+ module_name + "&quot;, &quot;" + module.name + "&quot;)'/>";
+		}
+		else {
+			html += " onchange='Controller.updateProfile(&quot;" + profile_name + "&quot;, &quot;"
+			+ module_name + "&quot;, &quot;" + var_name + "&quot;, this)'/>";
+		}
 	}
 	
 	if (print) {
@@ -63,16 +83,21 @@ View.createTextField = function (profile_name, module_name, var_name, module, pr
 };
 
 /*
- * \fn View.createCheckboxField
  * Create an HTML input of "checkbox" type
+ * \fn String View.createCheckboxField(profile_name, module_name, var_name, module, print)
  * \param String profile_name Name of the modified profile
  * \param String module_name Name of the modified module
  * \param String var_name Name of the modified property
  * \param Boolean print false for size field, true otherwise
+ * \param Boolean network true if it is for a network section, false otherwise
  * \return String The HTML code for the given property
  */
-View.createCheckboxField = function (profile_name, module_name, var_name, module, print) {
+View.createCheckboxField = function (profile_name, module_name, var_name, module, print, network) {
 	var html = "";
+	network = network ? network : false;
+	var title = module.doc ? module.doc : "";
+	var re = new RegExp("'", "g");
+	title = title.replace(re, "\\'");
 
 	if (print) {
 		html += "<tr>";
@@ -85,13 +110,21 @@ View.createCheckboxField = function (profile_name, module_name, var_name, module
 		html += " checked='true'";
 	}
 
-	html += " title='" + module.doc + "\nDefault value: " + module.dflt + "'";
+	html += " title='" + title + "\nDefault value: " + module.dflt + "'";
 	html += " data-profile='" + profile_name + "'";
 	html += " data-module='" + module_name + "'";
 	html += " data-property='" + module.name + "'";
 	html += " data-default='" + module.dflt + "'";
-	html += " onchange='Controller.updateProfile(&quot;" + profile_name + "&quot;, &quot;" + 
+	
+	if (network == true) {
+		html += " onchange='Controller.updateNetwork(&quot;" + profile_name + "&quot;, &quot;"
+		+ module_name + "&quot;, &quot;" + module.name + "&quot;, this)'/>";
+	}
+	else {
+		html += " onchange='Controller.updateProfile(&quot;" + profile_name + "&quot;, &quot;" + 
 				module_name + "&quot;, &quot;" + var_name + "&quot;, this)'/>";
+	}
+	
 	html += "</td>";
 	
 	if (print) {
@@ -102,16 +135,21 @@ View.createCheckboxField = function (profile_name, module_name, var_name, module
 };
 
 /*
- * \fn View.createComboboxField
  * Create an HTML "combobox"
+ * \fn String View.createComboboxField(profile_name, module_name, var_name, module, print)
  * \param String profile_name Name of the modified profile
  * \param String module_name Name of the modified module
  * \param String var_name Name of the modified property
  * \param Boolean print false for size field, true otherwise
+ * \param Boolean network true if it is for a network section, false otherwise
  * \return String The HTML code for the given property
  */
-View.createComboboxField = function (profile_name, module_name, var_name, module, print) {
+View.createComboboxField = function (profile_name, module_name, var_name, module, print, network) {
 	var html = "";
+	network = network ? network : false;
+	var title = module.doc ? module.doc : "";
+	var re = new RegExp("'", "g");
+	title = title.replace(re, "\\'");
 
 	if (print) {
 		html += "<tr>";
@@ -121,15 +159,21 @@ View.createComboboxField = function (profile_name, module_name, var_name, module
 
 	html += "<select name='" + profile_name + "_" + module_name + "_" + var_name
 	+ "' id='" + profile_name + "_" + module_name + "_" + var_name
-	+ "' title='" + module.doc + "\nDefault value: " + module.dflt + "'";
-	
-	if (module.type == "size") {
-		html += " onchange='Controller.updateSizeInProfile(&quot;" + profile_name + "&quot;, &quot;"
-					+ module_name + "&quot;, &quot;" + module.name + "&quot;)'/>";
+	+ "' title='" + title + "\nDefault value: " + module.dflt + "'";
+
+	if (network == true) {
+		html += " onchange='Controller.updateNetwork(&quot;" + profile_name + "&quot;, &quot;"
+		+ module_name + "&quot;, &quot;" + module.name + "&quot;, this)'/>";
 	}
 	else {
-		html += " onchange='Controller.updateProfile(&quot;" + profile_name + "&quot;, &quot;"
-					+ module_name + "&quot;, &quot;" + var_name + "&quot;, this)'/>";
+		if (module.type == "size") {
+			html += " onchange='Controller.updateSizeInProfile(&quot;" + profile_name + "&quot;, &quot;"
+			+ module_name + "&quot;, &quot;" + module.name + "&quot;)'/>";
+		}
+		else {
+			html += " onchange='Controller.updateProfile(&quot;" + profile_name + "&quot;, &quot;"
+			+ module_name + "&quot;, &quot;" + var_name + "&quot;, this)'/>";
+		}
 	}
 	
 	var values = (module.type == "size") ? ["B", "KB", "MB", "GB", "TB", "PB"] : meta.enum[module.type].values;
@@ -157,10 +201,21 @@ View.createComboboxField = function (profile_name, module_name, var_name, module
 };
 
 /*
- * Create an HTML input of "checkbox" type.
+ * Create HTML "text" + "combobox" for size property
+ * \fn String View.createSizeField(profile_name, module_name, var_name, module, print)
+ * \param String profile_name Name of the modified profile
+ * \param String module_name Name of the modified module
+ * \param String var_name Name of the modified property
+ * \param Boolean print false for size field, true otherwise
+ * \param Boolean network true if it is for a network section, false otherwise
+ * \return String The HTML code for the given property
  */
-View.createSizeField = function (profile_name, module_name, var_name, module, print) {
+View.createSizeField = function (profile_name, module_name, var_name, module, print, network) {
 	var html = "";
+	network = network ? network : false;
+	var title = module.doc ? module.doc : "";
+	var re = new RegExp("'", "g");
+	title = title.replace(re, "\\'");
 
 	if (print) {
 		html += "<tr>";
@@ -168,8 +223,8 @@ View.createSizeField = function (profile_name, module_name, var_name, module, pr
 		html += "<th>" + var_name + "</th>";
 	}
 
-	html += View.createTextField(profile_name, module_name, var_name + "_text", module, false); 
-	html += View.createComboboxField(profile_name, module_name, var_name + "_cbb", module, false);
+	html += View.createTextField(profile_name, module_name, var_name + "_text", module, false, network); 
+	html += View.createComboboxField(profile_name, module_name, var_name + "_cbb", module, false, network);
 	
 	if (print) {
 		html += "</tr>";
@@ -179,10 +234,21 @@ View.createSizeField = function (profile_name, module_name, var_name, module, pr
 };
 
 /*
- * 
+ * Create HTML "text" for array property
+ * \fn String View.createArrayField(profile_name, module_name, var_name, module, print)
+ * \param String profile_name Name of the modified profile
+ * \param String module_name Name of the modified module
+ * \param String var_name Name of the modified property
+ * \param Boolean print false for size field, true otherwise
+ * \param Boolean network true if it is for a network section, false otherwise
+ * \return String The HTML code for the given property
  */
-View.createArrayField = function (profile_name, module_name, var_name, module, print) {
+View.createArrayField = function (profile_name, module_name, var_name, module, print, network) {
 	var html = "";
+	network = network ? network : false;
+	var title = module.doc ? module.doc : "";
+	var re = new RegExp("'", "g");
+	title = title.replace(re, "\\'");
 
 	if (print) {
 		html += "<tr>";
@@ -201,10 +267,18 @@ View.createArrayField = function (profile_name, module_name, var_name, module, p
 	
 	html += "' value='" + values + "'";
 
-	html += " title='" + module.doc + "\nDefault value: " + module.dflt + "'";
+	html += " title='" + title + "\nDefault value: " + module.dflt + "'";
 	html += " data-default='" + module.dflt + "'";
-	html += " onchange='Controller.updateArrayInProfile(&quot;" + profile_name + "&quot;, &quot;" + 
+	
+	if (network == true) {
+		html += " onchange='Controller.updateNetwork(&quot;" + profile_name + "&quot;, &quot;"
+		+ module_name + "&quot;, &quot;" + module.name + "&quot;, this)'/>";
+	}
+	else {
+		html += " onchange='Controller.updateArrayInProfile(&quot;" + profile_name + "&quot;, &quot;" + 
 				module_name + "&quot;, &quot;" + var_name + "&quot;, this)'/>";
+	}
+	
 	html += "<span class='note'>Enter values separated with comma</span>"
 	html += "</td>";
 	
@@ -216,7 +290,11 @@ View.createArrayField = function (profile_name, module_name, var_name, module, p
 };
 
 /*
- * 
+ * Create the view for a module.
+ * \fn String View.createModulesView(name, hh_modules)
+ * \param name String Name of the module.
+ * \param hh_modules Object Hash table containing all the data for the module
+ * \return String The HTML code
  */
 View.createModulesView = function (name, hh_modules) {
 	var modules_keys = Object.keys(hh_modules);
@@ -251,21 +329,19 @@ View.createModulesView = function (name, hh_modules) {
 	return output.join('');
 };
 
-var list_cli_options = [];
-var list_rails = [];
-var list_drivers = [];
-
 /*
- * 
+ * Update the view for CLI options.
+ * \fn String View.updateCliOptionsView()
+ * \return String The HTML code
  */
 View.updateCliOptionsView = function() {
 	var output = [];
 	
 	var cli_options = myNetworks.networks.cli_options;
-	if (cli_options.values != undefined) {
+	if (cli_options != undefined && cli_options.values != undefined) {
 		var cli_options_keys = Object.keys(cli_options.values);
 		for (var j in cli_options_keys) {
-			output.push("<tr><td><span class='network-th' onclick='View.printConfig(&quot;" + cli_options_keys[j] + "&quot;, " +
+			output.push("<tr><td><span class='network-th' onclick='View.printCliOption(&quot;" + cli_options_keys[j] + "&quot;, " +
 			"&quot;network-print&quot;, this);'>");
 			output.push(cli_options.values[cli_options_keys[j]].name.value);
 
@@ -282,13 +358,15 @@ View.updateCliOptionsView = function() {
 };
 
 /*
- * 
+ * Update the view for rails.
+ * \fn String View.updateRailsView()
+ * \return String The HTML code
  */
 View.updateRailsView = function() {
 	var output = [];
 	var rails = myNetworks.networks.rails;
 	
-	if (rails.values != undefined) {
+	if (rails != undefined && rails.values != undefined) {
 		var rails_keys = Object.keys(rails.values);
 		for (var j in rails_keys) {
 			output.push("<tr><td><span class='network-th' onclick='View.printRail(&quot;" + rails_keys[j] + "&quot;, " +
@@ -308,16 +386,16 @@ View.updateRailsView = function() {
 };
 
 /*
- * Update the drivers section view.
- * \fn View.updateDriversView()
- * \return The HTML code matching to the updated view.
+ * Update the view for drivers.
+ * \fn String View.updateDriversView()
+ * \return String The HTML code
  */
 View.updateDriversView = function() {
 	var output = [];
 	var drivers = myNetworks.networks.configs;
 	
 	// If drivers existed in the configuration file
-	if (drivers.values != undefined) {
+	if (drivers != undefined && drivers.values != undefined) {
 		var drivers_keys = Object.keys(drivers.values);
 		for (var j in drivers_keys) {
 			output.push("<tr><td><span class='network-th' onclick='View.printDriver(&quot;" + drivers_keys[j] + "&quot;, " +
@@ -337,7 +415,10 @@ View.updateDriversView = function() {
 };
 
 /*
- * 
+ * Create the view for the networks.
+ * \fn String View.createNetworksView(hh_networks)
+ * \param hh_networks Object Hash table containing all the data for the networks
+ * \return String The HTML code
  */
 View.createNetworksView = function (hh_networks) {
 	var output = [];
@@ -410,7 +491,14 @@ View.createNetworksView = function (hh_networks) {
 	return output.join('');
 };
 
-View.printConfig = function(cli_options_idx, element, clicked_element) {
+/*
+ * Print a CLI option
+ * \fn void View.printCliOption(cli_options_idx, element, clicked_element)
+ * \param cli_options_idx Integer CLI option index to display
+ * \param element Element Id of where to display this CLI option.
+ * \param clicked_element Element If not null, HTML matching to this CLI option
+ */
+View.printCliOption = function(cli_options_idx, element, clicked_element) {
 	var hh_networks = myNetworks.networks;
 	var name = hh_networks.cli_options.values[cli_options_idx].name.value;
 	var cli_options = hh_networks.cli_options.values[cli_options_idx].rails;
@@ -438,6 +526,7 @@ View.printConfig = function(cli_options_idx, element, clicked_element) {
 	output.push("<td>");
 	output.push("<select id='available_rails_" + cli_options_idx + "' multiple style='width:200px;height:100px;'>");
 	
+	// Create the available rails section
 	for (var i in list_rails) {
 		if (selected_rails.indexOf(list_rails[i]) == -1) {
 			output.push("<option value='" + list_rails[i] + "'" +
@@ -450,6 +539,8 @@ View.printConfig = function(cli_options_idx, element, clicked_element) {
 	output.push("</td><td>");
 	output.push("<select id='selected_rails_" + cli_options_idx + "' multiple style='width:200px;height:100px;'>");
 	
+	
+	// Create the selected rails section
 	for (var i in selected_rails) {
 		output.push("<option value='" + selected_rails[i] + "'" +
 				" ondblclick='View.printRail(&quot;" + list_rails.indexOf(selected_rails[i]) + "&quot;, " +
@@ -464,13 +555,14 @@ View.printConfig = function(cli_options_idx, element, clicked_element) {
 	output.push("</td>");
 	output.push("<td>");
 	output.push("<input type='button' value='<-' onclick='Controller.unselectRailCliOptions(" + cli_options_idx + ")'/>");
-	output.push("<input type='button' value='Add new' onclick='Controller.createNewRailCliOptions(" + cli_options_idx + ", true)'/>");
+	output.push("<input type='button' value='Add new' onclick='Controller.addRail(" + cli_options_idx + ", true)'/>");
 	output.push("</td>");
 	output.push("</tr></tfoot></table>");
 	
 	output.push("</tbody></table>");
 	output.push("<div id='add-rail'></div>");
 
+	// Change the color of the element to identify it in the menu
 	if (clicked_element != null) {		
 		var network_th = XML.getElementsByClassName('network-th');
 		for (var i in network_th) {
@@ -482,6 +574,13 @@ View.printConfig = function(cli_options_idx, element, clicked_element) {
 	document.getElementById(element).innerHTML = output.join('');
 }
 
+/*
+ * Print a rail
+ * \fn void View.printRail(rail_idx, element, clicked_element)
+ * \param rail_idx Integer Rail index to display
+ * \param element Element Id of where to display this rail.
+ * \param clicked_element Element If not null, HTML matching to this rail
+ */
 View.printRail = function(rail_idx, element, clicked_element) {
 	var hh_networks = myNetworks.networks;
 	var name = hh_networks.rails.values[rail_idx].name.value;
@@ -496,41 +595,45 @@ View.printRail = function(rail_idx, element, clicked_element) {
 	output.push("<tbody id='test2_vars'>");
 	
 	for (var i in list_rail_elements) {
-		if (rail_elements[list_rail_elements[i]].name != 'config') {
-			if (isBasicType(rail_elements[list_rail_elements[i]].type)) {
-				output.push(View.createView[rail_elements[list_rail_elements[i]].type]("networks", "rails",
-						list_rail_elements[i], rail_elements[list_rail_elements[i]], true));
+		if (rail_elements[list_rail_elements[i]].name != 'name') {
+			if (rail_elements[list_rail_elements[i]].name != 'config') {
+				if (isBasicType(rail_elements[list_rail_elements[i]].type)) {
+					output.push(View.createView[rail_elements[list_rail_elements[i]].type]("rails", rail_idx,
+							list_rail_elements[i], rail_elements[list_rail_elements[i]], true, true));
+				}
+				else if (Object.keys(meta.enum).indexOf(rail_elements[list_rail_elements[i]].type) != -1) {
+					output.push(View.createComboboxField("rails", rail_idx, list_rail_elements[i], 
+							rail_elements[list_rail_elements[i]], true, true));
+				}
 			}
-			else if (Object.keys(meta.enum).indexOf(rail_elements[list_rail_elements[i]].type) != -1) {
-				output.push(View.createComboboxField("networks", "rails", list_rail_elements[i], 
-						rail_elements[list_rail_elements[i]], true));
+			else {
+				var output_config = [];
+				var id_select = "driver_selection";
+				var selected = false;
+
+				output_config.push("<tr><th>" + rail_elements[list_rail_elements[i]].name + "</th><td>");
+				output_config.push("<select id='" + id_select + "' " +
+						"onchange='View.printDriverThroughRail(\"" + id_select + "\");" +
+								"Controller.updateNetwork(&quot;rails&quot;, " + rail_idx + ", &quot;" 
+								+ rail_elements[list_rail_elements[i]].name + "&quot;, this.options[this.selectedIndex])'>");
+				for (var j in list_drivers) {
+					output_config.push("<option value='" + list_drivers[j] + "'" 
+							+ (list_drivers[j] == rail_elements[list_rail_elements[i]].value ? " selected" : "")
+							+ ">" + list_drivers[j] + "</option>");
+					selected = selected || (list_drivers[j] == rail_elements[list_rail_elements[i]].value);
+				}
+				output_config.push("<option value='undefined'" + (selected == true ? "" : " selected") + ">undefined</option>");
+				output_config.push("</select>");
+				output_config.push("<img src='./images/plus.png' alt='edit' " +
+						"style='padding-left:5px;cursor:pointer;' " +
+						"onclick='Controller.addDriver(\"" + id_select + "\", true);'/>");
+				output_config.push("<img src='./images/edit.png' alt='edit' " +
+						"style='padding-left:5px;cursor:pointer;'' " +
+						"onclick='View.printDriverThroughRail(\"" + id_select + "\");'/>");
+				output_config.push("</td></tr>");
+
+				output.push(output_config.join(''));
 			}
-		}
-		else {
-			var output_config = [];
-			var id_select = "driver_selection";
-			var selected = false;
-			
-			output_config.push("<tr><th>" + rail_elements[list_rail_elements[i]].name + "</th><td>");
-			output_config.push("<select id='" + id_select + "' " +
-					"onchange='View.printDriverThroughRail(\"" + id_select + "\");'>");
-			for (var j in list_drivers) {
-				output_config.push("<option value='" + list_drivers[j] + "'" 
-						+ (list_drivers[j] == rail_elements[list_rail_elements[i]].value ? " selected" : "")
-						+ ">" + list_drivers[j] + "</option>");
-				selected = selected || (list_drivers[j] == rail_elements[list_rail_elements[i]].value);
-			}
-			output_config.push("<option value='undefined'" + (selected == true ? "" : " selected") + ">undefined</option>");
-			output_config.push("</select>");
-			output_config.push("<img src='./images/plus.png' alt='edit' " +
-					"style='padding-left:5px;cursor:pointer;' " +
-					"onclick='Controller.createNewDriver(\"" + id_select + "\", true);'/>");
-			output_config.push("<img src='./images/edit.png' alt='edit' " +
-					"style='padding-left:5px;cursor:pointer;'' " +
-					"onclick='View.printDriverThroughRail(\"" + id_select + "\");'/>");
-			output_config.push("</td></tr>");
-			
-			output.push(output_config.join(''));
 		}
 	}
 	
@@ -548,11 +651,23 @@ View.printRail = function(rail_idx, element, clicked_element) {
 	document.getElementById(element).innerHTML = output.join('');
 };
 
+/*
+ * Print a driver through a rail
+ * \fn void View.printDriverThroughRail(choices_id)
+ * \param choices_id Integer Index of the rail to display.
+ */
 View.printDriverThroughRail = function(choices_id) {
 	var choices = document.getElementById(choices_id);
 	View.printDriver(choices.selectedIndex, "add-driver", null);
 };
 
+/*
+ * Print a driver
+ * \fn void View.printDriver(driver_name, element, clicked_element)
+ * \param driver_name Integer Driver index to display
+ * \param element Element Id of where to display this driver.
+ * \param clicked_element Element If not null, HTML matching to this driver
+ */
 View.printDriver = function(driver_name, element, clicked_element) {
 	var output = [];
 	var drivers = myNetworks.networks.configs.values;
@@ -560,7 +675,7 @@ View.printDriver = function(driver_name, element, clicked_element) {
 	if (drivers[driver_name] != undefined) {
 		var name = drivers[driver_name].name.value;
 		var driver = drivers[driver_name].driver;
-		var list_elements = Object.keys(driver.value);
+		var list_elements = Object.keys(driver.value.childs);
 
 		output.push("<table class='config-driver'>");
 		output.push("<thead><tr><th id='test3' colspan='2' onclick='printElement(this)'>")
@@ -568,13 +683,13 @@ View.printDriver = function(driver_name, element, clicked_element) {
 		output.push("</th><tr></thead>");
 		output.push("<tbody id='test3_vars'>");
 		for (var i in list_elements) {
-			if (isBasicType(driver.value[list_elements[i]].type)) {
-				output.push(View.createView[driver.value[list_elements[i]].type]("networks", "driver",
-						list_elements[i], driver.value[list_elements[i]], true));
+			if (isBasicType(driver.value.childs[list_elements[i]].type)) {
+				output.push(View.createView[driver.value.childs[list_elements[i]].type]("configs", driver_name,
+						list_elements[i], driver.value.childs[list_elements[i]], true, true));
 			}
-			else if (Object.keys(meta.enum).indexOf(driver.value[list_elements[i]].type) != -1) {
-				output.push(View.createComboboxField("networks", "driver", list_elements[i], 
-						driver.value[list_elements[i]], true));
+			else if (Object.keys(meta.enum).indexOf(driver.value.childs[list_elements[i]].type) != -1) {
+				output.push(View.createComboboxField("configs", driver_name, list_elements[i], 
+						driver.value.childs[list_elements[i]], true, true));
 			}
 		}
 		output.push("</tbody></table>");
@@ -596,7 +711,11 @@ View.printDriver = function(driver_name, element, clicked_element) {
 };
 
 /*
- * 
+ * Create the view for the profiles
+ * \fn Object View.createProfilesView = function(hh_profiles, activated)
+ * \param hh_profiles Object Hash table containing all the data profiles
+ * \param activated String Name of the profile to display
+ * \return Object An hash containing the HTML code/
  */
 View.createProfilesView = function(hh_profiles, activated) {
 	var list_profiles = Object.keys(hh_profiles);
@@ -635,7 +754,13 @@ View.createProfilesView = function(hh_profiles, activated) {
 };
 
 /*
- * 
+ * Create the view for a selector of env type
+ * \fn View.createEnvSelectorView(name, value, parent, line_nb)
+ * \param name String Name of the selector
+ * \param value String Value of the selector
+ * \param parent Integer Index of the mapping containing this selector
+ * \param line_nb Integer Index of the selector in the mapping
+ * \return String The HTML code.
  */
 View.createEnvSelectorView = function(name, value, parent, line_nb) {
 	var selector = [];
@@ -663,7 +788,11 @@ View.createEnvSelectorView = function(name, value, parent, line_nb) {
 };
 
 /*
- * 
+ * Create the view for the mappings
+ * \fn String View.createMappingsView = function(hh_mappings, current_mapping)
+ * \param hh_mappings Object Hash table containing all the data mappings
+ * \param current_mapping String Name of the mapping to display
+ * \return String The HTML code
  */
 View.createMappingsView = function(hh_mappings, current_mapping) {
 	var list_mappings = Object.keys(hh_mappings);
@@ -719,6 +848,12 @@ View.createMappingsView = function(hh_mappings, current_mapping) {
 	return mappings.join('');
 };
 
+/*
+ * Create an empty selector
+ * \fn String View.createEmptySelector()
+ * \param parent Integer Index of the mapping in which create a selector
+ * \return String The HTML code
+ */
 View.createEmptySelector = function(parent) {
 	var empty_selector = [];
 	
@@ -731,6 +866,14 @@ View.createEmptySelector = function(parent) {
 	return empty_selector.join('');
 }
 
+/*
+ * Create the available/selected profile section in a mapping.
+ * \fn String View.createMappingProfilesViewmappings, nb, current_mapping)
+ * \param mappings Object Hash table containing the data
+ * \param nb Integer Index of the mapping
+ * \param current_mapping Integer Current mapping displayed.
+ * \return The HTML code.
+ */
 View.createMappingProfilesView = function(mappings, nb, current_mapping) {
 	var available_profiles = Object.keys(myModel);
 	var selected_profiles = mappings.profiles ? Object.keys(mappings.profiles) : [];
@@ -766,12 +909,16 @@ View.createMappingProfilesView = function(mappings, nb, current_mapping) {
 	return mapping_profiles.join('');
 };
 
+//Hash table containing the association between a type and its function of view generation
 View.createSelectorView = {
 	"env": View.createEnvSelectorView,
 };
 
 /*
- * 
+ * Update all the view
+ * \fn void View.updateView(current_profile, current_mapping)
+ * \param current_profile String Name of the displayed profile
+ * \param current_mapping Integer Index of the displayed mapping
  */
 View.updateView = function(current_profile, current_mapping) {
 	View.updateProfilesView(current_profile);
@@ -786,7 +933,9 @@ View.updateView = function(current_profile, current_mapping) {
 };
 
 /*
- * 
+ * Update the profiles view
+ * \fn void View.updateProfilesView(current_profile)
+ * \param current_profile String Name of the displayed profile
  */
 View.updateProfilesView = function(current_profile) {
 	var profile_view = View.createProfilesView(myModel, current_profile);
@@ -798,7 +947,8 @@ View.updateProfilesView = function(current_profile) {
 }
 
 /*
- * 
+ * Update the netwoks view.
+ * \fn void View.updateNetworksView()
  */
 View.updateNetworksView = function() {
 	var networks_view = View.createNetworksView(myNetworks);
@@ -806,7 +956,9 @@ View.updateNetworksView = function() {
 }
 
 /*
- * 
+ * Update the mappings view
+ * \fn void View.updateMappingsView(current_mapping)
+ * \param current_mapping String Name of the displayed mapping
  */
 View.updateMappingsView = function(current_mapping) {
 	var mappings_view = View.createMappingsView(myMappings, current_mapping);
@@ -814,7 +966,8 @@ View.updateMappingsView = function(current_mapping) {
 }
 
 /*
- * 
+ * Update the XML.
+ * \fn void View.updateXML()
  */
 View.updateXML = function() {
 	var new_config = Model.generateXmlConfig();
@@ -823,9 +976,7 @@ View.updateXML = function() {
 	document.getElementById('generated_file').value = new_config;
 };
 
-/*
- * 
- */
+//Hash table containing the association between a type and its function of view generation
 View.createView = {
 		"param" : View.createParamView,
 		"array" : View.createArrayField,
@@ -836,10 +987,18 @@ View.createView = {
 		"size" : View.createSizeField
 };
 
+/*
+ * Reset the content of a HTML element
+ * \fn void View.clearElement()
+ */
 View.clearElement = function(element) {
 	document.getElementById(element).innerHTML = "";
 }
 
+/*
+ * Reset the view.
+ * \fn void View.resetView()
+ */
 View.resetView = function() {
 	var no_config = "<span style='font-style:italic;color:red;'>No loaded configuration file.</span>";
 	document.getElementById('menu_profiles').innerHTML = no_config;

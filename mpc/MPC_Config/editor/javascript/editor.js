@@ -5,19 +5,23 @@ else {
 	alert('The File APIs are not fully supported.');
 }
 
+// This hash table will contains the profiles model
 var myModel = {};
-var myNetworks = {};
-var myMappings = {};
-var myErrors = {};
 
-/*
+// This hash table will contain the network model
+var myNetworks = {};
+
+// This hash table will contain the mappings model
+var myMappings = {};
+
+/*!
  * Check if a given type is basic one.
  * \fn Boolean isBasicType(type)
  * \param String type Type to check.
  * \return Boolean true if it is a basic type, false otherwise.
  */
 function isBasicType(type) {
-	var basicTypes = ["int", "string", "bool", "funcptr", "size", "array", "struct"];
+	var basicTypes = ["int", "string", "bool", "funcptr", "size", "array"];
 	var isBasicType = basicTypes.indexOf(type);
 	
 	if (isBasicType != -1)
@@ -26,7 +30,7 @@ function isBasicType(type) {
 	return false; // Is not a basic type
 }
 
-/*
+/*!
  * Remove spaces at the beginning and at the end of a given string.
  * \fn String trim(myString)
  * \param String myString The string to trim.
@@ -36,20 +40,35 @@ function trim(myString) {
 	return myString.replace(/^\s+/g,'').replace(/\s+$/g,'');
 }
 
-/*
+function getKeys(element) {
+	try {
+		var keys = Object.keys(element);
+		return keys;
+	}
+	catch (err) {
+		return null;
+	}
+}
+
+/*!
  * Display/hide a given element.
  * \fn void printElement(element)
  * \param element Element Element to display/hide.
  */
 function printElement(element) {
 	var id_element = "";
+	
+	// element can be either the id of the element..
 	if (typeof element == "string") {
 		id_element = element;
 		element = document.getElementById(id_element);
 	}
+	// .. or the element itself
 	else {
 		id_element = element.id
 	}
+	
+	// Display/hide the associated element
 	var id_vars = id_element + "_vars";
 	var element_vars = document.getElementById(id_vars);
 	
@@ -63,20 +82,10 @@ function printElement(element) {
 	}
 }
 
-function display(id_element, clicked_element) {
-	var element = document.getElementById(id_element);
-	element.style.display = (element.style.display == "none" ? "block" : "none");
-	
-	var image = (element.style.display == "block" ? "./images/expanded2.png" : "./images/collapsed2.png");
-	clicked_element.style.backgroundImage = "url(" + image + ")";
-	clicked_element.style.backgroundRepeat = "no-repeat";
-	clicked_element.style.backgroundPosition = "left center";
-}
-
-/*
- * Display the selected profile (modules + networks).
+/*!
+ * Display the selected profile.
  * \fn void displayProfile(selected)
- * \param selected Element The profile to display.
+ * \param selected Element The profile index to display.
  */
 function displayProfile(selected) {
 	// Get all the modules sections from all the profiles
@@ -126,7 +135,7 @@ function displayProfile(selected) {
 	document.getElementById("current_profile").value = selected_profile;
 }
 
-/*
+/*!
  * Display the selected mapping.
  * \fn void displayMapping(selected)
  * \param selected Element The mapping to display.
@@ -169,66 +178,7 @@ function displayMapping(selected) {
 	}
 }
 
-/*
- * Add an error message for a given property in the errors hash table.
- * \fn void addError(profile, module, property, message)
- * \param profile String Profile associated to the given property.
- * \param module String Module associated to the given property.
- * \param property String Property in error.
- * \param message String Error message about the property value.
- */
-function addError(profile, module, property, message) {
-	// Initialize the hash table if needed
-	if (myErrors[profile] == undefined) {
-		myErrors[profile] = {};
-	}
-	if (myErrors[profile][module] == undefined) {
-		myErrors[profile][module] = {};
-	}
-	
-	// Add the error message in the errors hash table
-	myErrors[profile][module][property] = message;
-	
-	// Disable the button saving the generated XML file
-	document.getElementById('save').disabled = true;
-}
-
-/*
- * Delete the error message for a given property in the errors hash table.
- * \fn void deleteError(profile, module, property)
- * \param profile String Profile associated to the given property.
- * \param module String Module associated to the given property.
- * \param property String Property no longer in error.
- */
-function deleteError(profile, module, property) {
-	// 
-	if (!myErrors[profile] || !myErrors[profile][module]) {
-		return;
-	}
-	
-	// Delete the property error if existed in the errors hash table
-	var error_property = myErrors[profile][module][property];
-	if (error_property != undefined) {
-		delete myErrors[profile][module][property];
-		
-		// Delete the module in the errors hash table if no property errors remain
-		var error_module = myErrors[profile][module];
-		if (Object.keys(error_module).length == 0) {
-			delete myErrors[profile][module];
-			
-			// Delete the profile in the errors hash table if no module errors remain
-			var error_profile = myErrors[profile];
-			if (Object.keys(error_profile).length == 0) {
-				delete myErrors[profile];
-				
-				// Enable the button saving the generated XML file if no errors remain
-				document.getElementById('save').disabled = false;
-			}
-		}
-	}
-}
-
-/*
+/*!
  * Log the message in the console.
  * \fn void logMessage(message, alert)
  * \param message String Message to log.
@@ -246,12 +196,15 @@ function logMessage(message, alerted) {
 	document.getElementById('messages').value += message + "\n";
 }
 
-/*
- * 
+/*!
+ * Load a configuration file, check its validity and display it.
+ * \fn void displayConfigFile(evt)
+ * \param evt Event Event.
  */
 function displayConfigFile(evt) {
 	var config_file = evt.target.files[0];
 	var message = "";
+	var xml_content = null;
 
 	var reader = new FileReader();
 	
@@ -263,9 +216,6 @@ function displayConfigFile(evt) {
 		return function(e) {
 			// Get the content (as a string) of the opened config file
 			xml_content = e.target.result;
-			
-			// Translate the XSD file into a DOM javascript object
-			xsd_content = XML.StringToXML(sctk_runtime_config_xsd);
 			
 			// Use xmllint to validate the opened config file
 			var xmllint = validateXML(xml_content, sctk_runtime_config_xsd);
@@ -315,58 +265,42 @@ function displayConfigFile(evt) {
 	reader.readAsText(config_file);	
 }
 
-var xml_content;
-var xsd_content;
-
+/*!
+ * Check the validity of the generated XML and save it.
+ * \fn void saveXMLFile()
+ */
 function saveXMLFile() {
 	var console = document.getElementById('messages');
 	var generated_file = document.getElementById("generated_file").value;
 	var message = "";
-	
+
 	// Translate the XML generated file into a DOM javascript object
 	var xml_generated_file = XML.StringToXML(generated_file);
-	
-	// Translate the XSD file into a DOM javascript object
-	xsd_content = XML.StringToXML(sctk_runtime_config_xsd);
-	
-	// Check if all the fields have been correctly completed
-	if (Object.keys(myErrors).length != 0) {
-		message = "[Error] Cannot save generated XML file.. Errors still remain!";
-		alert(message);
-		console.value += message + "\n";
-		
-		var profiles_error = Object.keys(myErrors)
-		for (var i in profiles_error) {
-			console.value += "  -> Profile: " + profiles_error[i] + "\n";
-			var modules_error = Object.keys(myErrors[profiles_error[i]]);
-			for (var j in modules_error) {
-				console.value += "    -> Module: " + modules_error[j] + "\n";
-				var properties_error = Object.keys(myErrors[profiles_error[i]][modules_error[j]]);
-				for (var k in properties_error) {
-					console.value += "      -> Property: " + properties_error[k] + "\n";
-				}
-			}
-		}
+
+	// Use xmllint to validate the generated config file
+	var xmllint = validateXML(generated_file, sctk_runtime_config_xsd);
+	// If the config file is not valid..
+	if (xmllint.indexOf("fails") != -1 || xmllint.indexOf("error") != -1) {
+		// This should never happen!
+		//If so, check the Model.generateXmlConfig() function
+		message = "[Error] The generated XML is not valid..\n\t" + xmllint;
+		logMessage(message);
 	}
+	// Otherwise..
 	else {
-		var xmllint = validateXML(generated_file, sctk_runtime_config_xsd);
-		if (xmllint.indexOf("fails") != -1 || xmllint.indexOf("error") != -1) {
-			// This should never happen!
-			//If so, check the Model.generateXmlConfig() function
-			message = "[Error] The generated XML is not valid..\n\t" + xmllint;
-			alert(message);
-			console.value += message + "\n";
-		} else {
-			var bb = new BlobBuilder;
-			bb.append(generated_file);
-			var blob = bb.getBlob("text/xml");
-			saveAs(blob, "config-new.xml");
-			console.value += "[Info] Saving the generated XML..." + "\n";
-		}
+		var bb = new BlobBuilder;
+		bb.append(generated_file);
+		var blob = bb.getBlob("text/xml");
+		saveAs(blob, "config-new.xml");
+		message = "[Info] Saving the generated XML...";
+		logMessage(message, false);
 	}
-	
 }
 
+/*!
+ * Function to add event listener at the loading of the editor
+ * \fn void load()
+ */
 function load() {
 	document.getElementById('config_xml').addEventListener('change', displayConfigFile, false);
 }

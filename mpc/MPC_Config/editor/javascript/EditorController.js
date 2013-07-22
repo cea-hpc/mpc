@@ -1,16 +1,26 @@
-/*
- *
+/*!
+ * \file EditorController.js
+ * \namespace Controller
+ * Functions helpers to synchronize model and view.
  */
 var Controller = {};
 
-/*
- * 
+/*!
+ * Open a popup to confirm or not a deletion action
+ * \fn Boolean Controller.confirmDelete(message)
+ * \param message String Message to display in the confirm box.
+ * \return Boolean false to stop the deletion, true otherwise.
  */
 Controller.confirmDelete = function(message) {
 	var confirm = window.confirm(message);
 	return confirm;
 };
 
+/*!
+ * Get the index of the current displayed mapping.
+ * \fn Integer Controller.getCurrentMapping()
+ * \return Integer The index of the displayed mapping, -1 if there is a problem.
+ */
 Controller.getCurrentMapping = function() {
 	var menu_items = document.getElementById('menu_mappings').getElementsByTagName('span');
 	for (var i = 0; i < menu_items.length; i ++) {
@@ -22,14 +32,15 @@ Controller.getCurrentMapping = function() {
 	return -1;
 }
 
-/*
+/*!
  * Create a new profile.
- * \fn void addProfile()
+ * \fn void Controller.addProfile()
  */
 Controller.addProfile = function() {
 	var done = false;
 	var canceled = false;
 	var name = "";
+	var message = "";
 
 	// Display prompt window until the user cancel the action,
 	// or he gives a valid profile name
@@ -44,14 +55,16 @@ Controller.addProfile = function() {
 
 		// If no profile name has been specified
 		if (name == "") {
-			alert("[Error] Please specify a profile name.. Or click cancel.");
+			message = "[Error] Please specify a profile name.. Or click cancel.";
+			logMessage(message);
 			done = false;
 			continue;
 		}
 
 		// If the profiling name matches to an existing profile
 		if (myModel[name] != undefined) {
-			alert("[Error] The profile name matches to an existing profile..");
+			message = "[Error] The profile name matches to an existing profile..";
+			logMessage(message);
 			done = false;
 			continue;
 		}
@@ -63,6 +76,8 @@ Controller.addProfile = function() {
 
 	// If the action has been canceled
 	if (canceled) {
+		message = "[Warning] The creation of a new profile has been canceled.";
+		logMessage(message, false);
 		return;
 	}
 
@@ -76,9 +91,9 @@ Controller.addProfile = function() {
 	View.updateXML();
 }
 
-/*
+/*!
  * Delete the current/selected profile.
- * \fn void delProfile()
+ * \fn void Controller.delProfile()
  */
 Controller.delProfile = function() {
 	var message = "";
@@ -114,9 +129,9 @@ Controller.delProfile = function() {
 	View.updateXML();
 }
 
-/*
+/*!
  * Add a new mapping.
- * \fn void addMapping()
+ * \fn void Controller.addMapping()
  */
 Controller.addMapping = function() {
 	// Add an empty mapping
@@ -135,9 +150,9 @@ Controller.addMapping = function() {
 	View.updateXML();
 };
 
-/*
+/*!
  * Delete the current/selected mapping.
- * \fn void delMapping()
+ * \fn void Controller.delMapping()
  */
 Controller.delMapping = function() {
 	var i = 0;
@@ -168,6 +183,8 @@ Controller.delMapping = function() {
 	
 	// Delete the last mapping element
 	delete myMappings[j];
+	message = "[Info] The current mapping has been deleted.";
+	logMessage(message, false);
 	
 	// Update the mappings view and display the first mapping (0)
 	View.updateMappingsView(0);
@@ -177,6 +194,13 @@ Controller.delMapping = function() {
 	View.updateXML();
 };
 
+/*!
+ * Update the name of a selector.
+ * \fn void Controller.updateSelectorName(parent, line_nb, element)
+ * \param parent Integer Index of the mapping containing this selector.
+ * \param line_nb Integer Index of this selector in the mapping.
+ * \param element Element Input field containing the selector name.
+ */
 Controller.updateSelectorName = function(parent, line_nb, element) {
 	var selector_name = document.getElementById('selector_name_' + parent + '_' + line_nb).value;
 	myMappings[parent].selectors[selector_name] = myMappings[parent].selectors[element.oldvalue];
@@ -189,6 +213,13 @@ Controller.updateSelectorName = function(parent, line_nb, element) {
 	View.updateXML();
 }
 
+/*!
+ * Update the value of a selector.
+ * \fn void Controller.updateSelectorValue(parent, line_nb, element)
+ * \param parent Integer Index of the mapping containing this selector.
+ * \param line_nb Integer Index of this selector in the mapping.
+ * \param element Element Input field containing the selector value.
+ */
 Controller.updateSelectorValue = function(parent, line_nb, element) {
 	var selector_name = document.getElementById('selector_name_' + parent + '_' + line_nb).value;
 	myMappings[parent].selectors[selector_name].value = element.value;
@@ -200,15 +231,71 @@ Controller.updateSelectorValue = function(parent, line_nb, element) {
 	View.updateXML();
 }
 
-/*
- * 
+/*!
+ * Add a new CLI options
+ * \fn void Controller.addCliOption()
  */
 Controller.addCliOption = function() {
-	Controller.createNewCliOptions();
+	var cli_option_name = "";
+	var canceled = false;
+	var done = false;
+	
+	do {
+		cli_option_name = window.prompt("Please enter the new cli_option name", "");
+
+		// If the window prompt has been canceled
+		if (cli_option_name == null) {
+			canceled = true;
+			message = "[Warning] The creation of a new cli_option has been canceled.";
+			logMessage(message, false);
+			continue;
+		}
+
+		// If no rail name has been specified
+		if (cli_option_name == "") {
+			done = false;
+			message = "[Error] Please specify a cli_option name.. Or click cancel.";
+			logMessage(message);
+			continue;
+		}
+
+		// If the new name matches to an existing profile
+		if (list_cli_options.indexOf(cli_option_name) != -1) {
+			done = false;
+			message = "[Error] The cli_option name matches to an existing cli_option..";
+			logMessage(message);
+			continue;
+		}
+
+		// The new rail name is correct
+		done = true;
+	}
+	while (!done && !canceled);
+
+	// If the action has been canceled
+	if (canceled) {
+		return;
+	}
+	
+	// Update the model with this new CLI options
+	var idx = Model.createNewCliOption(cli_option_name);
+	
+	// Add the new CLI options to the list of existing ones
+	list_cli_options.push(cli_option_name);
+	
+	// Update the CLI options view
+	document.getElementById("cli_options_vars").innerHTML = View.updateCliOptionsView();
+	
+	// Print the properties of this new CLI options
+	View.printCliOption(idx, "network-print", null);
+	
+	// Update the generated XML
+	View.updateXML();
 };
 
-/*
- * 
+/*!
+ * Delete the selected CLI options
+ * \fn void Controller.delCliOptions()
  */
 Controller.delCliOption = function() {
 	var cli_options_span = document.getElementById("cli_options_vars").getElementsByTagName('span');
@@ -216,9 +303,10 @@ Controller.delCliOption = function() {
 	var idx = -1;
 	var cli_option_name = "";
 	
+	// Get the index of the selected CLI options
 	for (var i in cli_options_span) {
 		if (cli_options_span[i].nodeType == 1 && cli_options_span[i].style.color == "red") {
-			rail_name = myNetworks.networks.cli_options.values[i].name.value;
+			cli_option_name = myNetworks.networks.cli_options.values[i].name.value;
 			idx = i;
 			break;
 		}
@@ -233,29 +321,101 @@ Controller.delCliOption = function() {
 		return;
 	}
 	
+	// If no CLI options selected..
 	if (idx == -1) {
 		var message = "[Warning] No CLI option selected.. Nothing to delete.";
 		logMessage(message, true);
 	}
+	// Otherwise
 	else {
 		// Update the model
 		Model.updateCliOptionsNetworksModel(cli_option_name, nb_cli_options, idx);
+		message = "[Info] The CLI option \"" + cli_option_name + "\" has been deleted.";
+		logMessage(message, true);
 		
 		// Update the view
 		document.getElementById('cli_options_vars').innerHTML = View.updateCliOptionsView();		
 		View.clearElement('network-print');
 	}
+	
+	// Update the generated XML
+	View.updateXML();
 };
 
-/*
- * 
+/*!
+ * Add a new rail.
+ * \fn void Controller.addRail(cli_options_idx)
+ * \param cli_option_idx Integer [Optional] Index of the CLI option in which add the rail.
  */
 Controller.addRail = function(cli_options_idx) {
-	Controller.createNewRailCliOptions(cli_options_idx);
+	var rail_name = "";
+	var canceled = false;
+	var done = false;
+	
+	do {
+		rail_name = window.prompt("Please enter the new rail name", "");
+
+		// If the window prompt has been canceled
+		if (rail_name == null) {
+			canceled = true;
+			message = "[Warning] The creation of a new rail has been canceled.";
+			logMessage(message, false);
+			continue;
+		}
+
+		// If no rail name has been specified
+		if (rail_name == "") {
+			done = false;
+			message = "[Error] Please specify a rail name.. Or click cancel.";
+			logMessage(message);
+			continue;
+		}
+
+		// If the new name matches to an existing profile
+		if (list_rails.indexOf(rail_name) != -1) {
+			done = false;
+			message = "[Error] The rail name matches to an existing rail..";
+			logMessage(message);
+			continue;
+		}
+
+		// The new rail name is correct
+		done = true;
+	}
+	while (!done && !canceled);
+
+	// If the action has been canceled
+	if (canceled) {
+		return;
+	}
+	
+	// Update the model with this new rail
+	var idx = Model.createNewRail(rail_name);
+	
+	// Add the new rail to the list of existing ones
+	list_rails.push(rail_name);
+	
+	// If the rail has been directly added into a CLI option
+	if (cli_options_idx != undefined) {
+		var selected_rails = document.getElementById("selected_rails_" + cli_options_idx);
+		selected_rails.options[selected_rails.length] = new Option(rail_name, rail_name);
+		
+		Model.updateRailsCliOptions(cli_options_idx, idx, true);
+	}
+	
+	// Update the view
+	document.getElementById('rails_vars').innerHTML = View.updateRailsView();
+	
+	// Print the properties of this new rail
+	View.printRail(idx, (cli_options_idx != undefined ? "add-rail" : "network-print"), null);
+	
+	// Update the generated XML
+	View.updateXML();
 };
 
-/*
- * 
+/*!
+ * Delete the selected rail.
+ * \fn void Controller.delRail()
  */
 Controller.delRail = function() {
 	var rails_span = document.getElementById("rails_vars").getElementsByTagName('span');
@@ -263,6 +423,7 @@ Controller.delRail = function() {
 	var idx = -1;
 	var rail_name = "";
 	
+	// Get the index of the selected rail
 	for (var i in rails_span) {
 		if (rails_span[i].nodeType == 1 && rails_span[i].style.color == "red") {
 			rail_name = myNetworks.networks.rails.values[i].name.value;
@@ -280,29 +441,101 @@ Controller.delRail = function() {
 		return;
 	}
 	
+	// If no rail selected..
 	if (idx == -1) {
 		var message = "[Warning] No rail selected.. Nothing to delete.";
 		logMessage(message, true);
 	}
+	// Otherwise..
 	else {
 		// Update the model
 		Model.updateRailsNetworksModel(rail_name, nb_rails, idx);
+		message = "[Info] The rail \"" + rail_name + "\" has been deleted.";
+		logMessage(message, true);
 		
 		// Update the view
 		document.getElementById('rails_vars').innerHTML = View.updateRailsView();		
 		View.clearElement('network-print');
 	}
+	
+	// Update the generated XML
+	View.updateXML();
 };
 
-/*
- * 
+/*!
+ * Add a new driver.
+ * \fn void Controller.addDriver(driver_idx)
+ * \param driver_idx Integer [Optional] Index of the rail in which add the driver.
  */
 Controller.addDriver = function(driver_idx) {
-	Controller.createNewDriver(driver_idx);
+	var driver_name = "";
+	var canceled = false;
+	var done = false;
+	
+	do {
+		driver_name = window.prompt("Please enter the new driver name", "");
+
+		// If the window prompt has been canceled
+		if (driver_name == null) {
+			canceled = true;
+			message = "[Warning] The creation of a new driver has been canceled.";
+			logMessage(message, false);
+			continue;
+		}
+
+		// If no driver name has been specified
+		if (driver_name == "") {
+			done = false;
+			message = "[Error] Please specify a driver name.. Or click cancel.";
+			logMessage(message);
+			continue;
+		}
+
+		// If the new name matches to an existing driver
+		if (list_drivers.indexOf(driver_name) != -1) {
+			done = false;
+			message = "[Error] The driver name matches to an existing driver..";
+			logMessage(message);
+			continue;
+		}
+
+		// The new rail name is correct
+		done = true;
+	}
+	while (!done && !canceled);
+
+	// If the action has been canceled
+	if (canceled) {
+		return;
+	}
+	
+	// Update the model with this new driver
+	var idx = Model.createNewDriver(driver_name);
+	
+	// Add the new driver to the list of existing ones
+	list_drivers.push(driver_name);
+	
+	// If the driver has been directly added into a rail
+	if (driver_idx != undefined) {
+		var choices = document.getElementById('driver_selection');
+		var new_choice = new Option(driver_name, driver_name);
+		new_choice.selected = "selected";
+		choices.options[choices.options.length - 1] = new_choice;
+		choices.options[choices.options.length] = new Option('(null)', 'undefined');
+	}
+	
+	// Update the view
+	document.getElementById('drivers_vars').innerHTML = View.updateDriversView();
+	
+	// Print the properties of this new driver
+	View.printDriver(idx, (driver_idx ? "add-driver" : "network-print"), null);
+	
+	// Update the generated XML
+	View.updateXML();
 };
 
-/*
- * 
+/*!
+ * Delete the selected driver
  */
 Controller.delDriver = function() {
 	var drivers_span = document.getElementById("drivers_vars").getElementsByTagName('span');
@@ -310,6 +543,8 @@ Controller.delDriver = function() {
 	var idx = -1;
 	var driver_name = "";
 	
+	
+	// Get the index of the selected driver
 	for (var i in drivers_span) {
 		if (drivers_span[i].nodeType == 1 && drivers_span[i].style.color == "red") {
 			driver_name = myNetworks.networks.configs.values[i].name.value;
@@ -327,23 +562,30 @@ Controller.delDriver = function() {
 		return;
 	}
 	
+	// If no driver selected..
 	if (idx == -1) {
 		var message = "[Warning] No driver selected.. Nothing to delete.";
 		logMessage(message, true);
 	}
+	// Otherwise
 	else {
 		// Update the model
 		Model.updateDriversNetworksModel(driver_name, nb_drivers, idx);
+		message = "[Info] The driver \"" + driver_name + "\" has been deleted.";
+		logMessage(message, true);
 		
 		// Update the view
 		document.getElementById('drivers_vars').innerHTML = View.updateDriversView();		
 		View.clearElement('network-print');
 	}
+	
+	// Update the generated XML
+	View.updateXML();
 };
 
-/*
+/*!
  * Update the profile name.
- * \fn void update()
+ * \fn void Controller.update()
  */
 Controller.renameProfile = function() {
 	var console = document.getElementById("messages");
@@ -420,146 +662,12 @@ Controller.renameProfile = function() {
 	
 	// Log message
 	var message = "[Info] Profile \"" + old_name + "\" has been renamed to \"" + new_name + "\".";
-	console.value += message + "\n";
+	logMessage(message, false);
 }
 
-/*
- * Check if an element's value is an integer.
- * \fn void is_int(element)
- * \param Node element Element to check.
- */
-Controller.is_int = function(element) {
-	var profile = element.attributes["data-profile"].value;
-	var module = element.attributes["data-module"].value;
-	var property = element.attributes["data-property"].value;
-	
-	// If the element's value is not a valid integer
-	if (!element.value.match("[0-9]+")) {
-		var message = "[Error] \"" + property + "\" should be an integer value. " +
-				"\"" + element.value + "\" is incorrect!";
-
-		// Add a message error in the errors hash table
-		addError(profile, module, property, message);
-		
-		// Log the message & alert
-		logMessage(message);
-	}
-	else {
-		// Delete the eventual error message associated to the given 
-		// element in the errors hash table
-		deleteError(profile, module, property);
-	}
-}
-
-/*
- * Check if an element's value is a string.
- * \fn void is_string(element)
- * \param Node element Element to check.
- */
-Controller.is_string = function(element) {
-	var profile = element.attributes["data-profile"].value;
-	var module = element.attributes["data-module"].value;
-	var property = element.attributes["data-property"].value;
-	
-	// If the element's value is not a valid string
-	// Only alpha-numerical characters and underscore are accepted
-	if (!element.value.match("^[0-9A-Za-z_]+$")) {
-		var message = "[Error] \"" + property + "\" should be a string value with " +
-				"alpha numeric characters. \"" + element.value + "\" is incorrect!";
-		
-		// Add a message error in the errors hash table
-		addError(profile, module, property, message);
-		
-		// Log the message & alert
-		logMessage(message);
-	}
-	else {
-		// Delete the eventual error message associated to the given 
-		// element in the errors hash table
-		deleteError(profile, module, property);
-	}
-}
-
-/*
- * Check if an element's value is a function name.
- * \fn void is_funcptr(element)
- * \param Node element Element to check.
- */
-Controller.is_funcptr = function(element) {
-	var profile = element.attributes["data-profile"].value;
-	var module = element.attributes["data-module"].value;
-	var property = element.attributes["data-property"].value;
-	
-	// If the element's value is not a valid function name
-	// A function name starts with letter or an underscore, and then contains alpha-numerical characters
-	if (!element.value.match("^[A-Za-z_][0-9A-Za-z_]*$")) {
-		var message = "[Error] \"" + property + "\" should be a function name. " +
-				"\"" + element.value + "\" is incorrect!";
-		
-		// Add a message error in the errors hash table
-		addError(profile, module, property, message);
-		
-		// Log the message & alert
-		logMessage(message);
-	}
-	else {
-		// Delete the eventual error message associated to the given 
-		// element in the errors hash table
-		deleteError(profile, module, property);
-	}
-}
-
-/*
- * Check if an element's value is a size.
- * \fn void is_size(element)
- * \param Node element Element to check.
- */
-Controller.is_size = function(element) {
-	if (!element.value.match("[0-9]+[\s]?[K|M|G|T|P]?B")) {
-		throw element + " should be a size value."
-	}
-}
-
-/*
- * Check if an element's value is an enum.
- * \fn void is_enum(element)
- * \param Node element Element to check.
- */
-Controller.is_enum = function(element) {
-	var profile = element.attributes["data-profile"].value;
-	var module = element.attributes["data-module"].value;
-	var property = element.attributes["data-property"].value;
-	
-	var enum_values = meta.enum[element.type].values;
-	var enum_keys = Object.keys(enum_values);
-	var pattern = "[";
-	
-	// Compute the pattern with the possible enum values for the current element
-	for (var i in enum_keys) {
-		pattern += enum_values[enum_keys[i]] + ((i < enum_keys.length - 1) ? "|" : "");
-	}
-	
-	// If the element's value is not a valid enum
-	if (!element.value.match(pattern)) {
-		var message = "[Error] \"" + property + "\" should be an enum value from \"" + element.type 
-				+ "\". " + "\"" + element.value + "\" is incorrect!";
-
-		// Add a message error in the errors hash table
-		addError(profile, module, property, message);
-		
-		// Log the message & alert
-		logMessage(message);
-	}
-	else {
-		// Delete the eventual error message associated to the given 
-		// element in the errors hash table
-		deleteError(profile, module, property);
-	}
-}
-
-/*
+/*!
  * Update the profile when an element's value has been changed.
- * \fn void updateProfile(profile, module, property, element)
+ * \fn void Controller.updateProfile(profile, module, property, element)
  * \param String profile Profile impacted by the change.
  * \param String module Module impacted by the change.
  * \param String property Property changed.
@@ -573,9 +681,9 @@ Controller.updateProfile = function(profile, module, property, element) {
 	View.updateXML();
 };
 
-/*
+/*!
  * Update the profile when an element's value (array type) has been changed.
- * \fn void updateProfile(profile, module, property, element)
+ * \fn void Controller.updateProfile(profile, module, property, element)
  * \param String profile Profile impacted by the change.
  * \param String module Module impacted by the change.
  * \param String property Property changed.
@@ -589,9 +697,9 @@ Controller.updateArrayInProfile = function(profile, module, property, element) {
 	View.updateXML();
 };
 
-/*
+/*!
  * Update the profile when an element's value (size type) has been changed.
- * \fn void updateProfile(profile, module, property, element)
+ * \fn void Controller.updateProfile(profile, module, property, element)
  * \param String profile Profile impacted by the change.
  * \param String module Module impacted by the change.
  * \param String property Property changed.
@@ -604,9 +712,21 @@ Controller.updateSizeInProfile = function(profile, module, property) {
 	View.updateXML();
 };
 
-/*
+/*!
+ * Update the network when an element's value has been changed.
+ * \fn void Controller.updateNetwork()
+ */
+Controller.updateNetwork = function(section, index, property, element) {
+	// Update the network
+	Model.updateNetwork(section, index, property, element);
+	
+	// Update the generated XML
+	View.updateXML();
+};
+
+/*!
  * Add a profile in a mapping condition.
- * \fn void selectMappingProfile(mapping_index)
+ * \fn void Controller.selectMappingProfile(mapping_index)
  * \param Integer mapping_index Index of the impacted mapping.
  */
 Controller.selectMappingProfile = function(mapping_index) {
@@ -640,9 +760,9 @@ Controller.selectMappingProfile = function(mapping_index) {
 	View.updateXML();
 };
 
-/*
+/*!
  * Remove a profile from a mapping condition.
- * \fn void unselectMappingProfile(mapping_index)
+ * \fn void Controller.unselectMappingProfile(mapping_index)
  * \param Integer mapping_index Index of the impacted mapping.
  */
 Controller.unselectMappingProfile = function(mapping_index) {
@@ -676,238 +796,13 @@ Controller.unselectMappingProfile = function(mapping_index) {
 	View.updateXML();
 };
 
-Controller.createNewCliOptions = function() {
-	var cli_option_name = "";
-	var canceled = false;
-	var done = false;
-	
-	do {
-		cli_option_name = window.prompt("Please enter the new cli_option name", "");
-
-		// If the window prompt has been canceled
-		if (cli_option_name == null) {
-			canceled = true;
-			message = "[Warning] The creation of a new cli_option has been canceled.";
-			logMessage(message, false);
-			continue;
-		}
-
-		// If no rail name has been specified
-		if (cli_option_name == "") {
-			done = false;
-			message = "[Error] Please specify a cli_option name.. Or click cancel.";
-			logMessage(message);
-			continue;
-		}
-
-		// If the new name matches to an existing profile
-		if (list_cli_options.indexOf(cli_option_name) != -1) {
-			done = false;
-			message = "[Error] The cli_option name matches to an existing cli_option..";
-			logMessage(message);
-			continue;
-		}
-
-		// The new rail name is correct
-		done = true;
-	}
-	while (!done && !canceled);
-
-	// If the action has been canceled
-	if (canceled) {
-		return;
-	}
-	
-	//
-	var idx = Model.createNewCliOption(cli_option_name);
-	
-	//
-	list_cli_options.push(cli_option_name);
-	
-	//
-	var tbody = document.getElementById("cli_options_vars");
-	var row_count = tbody.rows.length;
-	var row = tbody.insertRow(row_count);
-	var cell = row.insertCell(0);
-	
-	var span_element = document.createElement('span');
-	var text = document.createTextNode(cli_option_name);
-	span_element.className = 'network-th';
-	span_element.onclick = function onclick(event) { View.printConfig(idx, 'network-print', this) };
-	span_element.appendChild(text);
-	cell.appendChild(span_element);
-	
-	//
-	View.printConfig(idx, "network-print", null);
-	
-	// Update the generated XML
-	View.updateXML();
-};
-
-Controller.createNewRailCliOptions = function(cli_options_idx, in_cli_options) {
-	var rail_name = "";
-	var canceled = false;
-	var done = false;
-	
-	do {
-		rail_name = window.prompt("Please enter the new rail name", "");
-
-		// If the window prompt has been canceled
-		if (rail_name == null) {
-			canceled = true;
-			message = "[Warning] The creation of a new rail has been canceled.";
-			logMessage(message, false);
-			continue;
-		}
-
-		// If no rail name has been specified
-		if (rail_name == "") {
-			done = false;
-			message = "[Error] Please specify a rail name.. Or click cancel.";
-			logMessage(message);
-			continue;
-		}
-
-		// If the new name matches to an existing profile
-		if (list_rails.indexOf(rail_name) != -1) {
-			done = false;
-			message = "[Error] The rail name matches to an existing rail..";
-			logMessage(message);
-			continue;
-		}
-
-		// The new rail name is correct
-		done = true;
-	}
-	while (!done && !canceled);
-
-	// If the action has been canceled
-	if (canceled) {
-		return;
-	}
-	
-	//
-	//Model.updateMappingProfiles(value, rail_index, true);
-	//Model.updateRailsCliOptions(cli_options_idx, i, true);
-	var idx = Model.createNewRail(rail_name);
-	
-	//
-	list_rails.push(rail_name);
-	
-	//
-	in_cli_options = in_cli_options ? in_cli_options : false;
-	if (in_cli_options == true) {
-		var selected_rails = document.getElementById("selected_rails_" + cli_options_idx);
-		selected_rails.options[selected_rails.length] = new Option(rail_name, rail_name);
-	}
-	
-	//
-	var tbody = document.getElementById("rails_vars");
-	var row_count = tbody.rows.length;
-	var row = tbody.insertRow(row_count);
-	var cell = row.insertCell(0);
-	
-	var span_element = document.createElement('span');
-	var text = document.createTextNode(rail_name);
-	span_element.className = 'network-th';
-	span_element.onclick = function onclick(event) { View.printRail(idx, 'network-print', this) };
-	span_element.appendChild(text);
-	cell.appendChild(span_element);
-	
-	//
-	var nb_rails = document.getElementById("rails_vars").getElementsByTagName("tr").length;
-	View.printRail(idx, (in_cli_options ? "add-rail" : "network-print"), null);
-	
-	// Update the generated XML
-	View.updateXML();
-};
-
-Controller.createNewDriver = function(driver_idx, in_rail) {
-	var driver_name = "";
-	var canceled = false;
-	var done = false;
-	
-	do {
-		driver_name = window.prompt("Please enter the new driver name", "");
-
-		// If the window prompt has been canceled
-		if (driver_name == null) {
-			canceled = true;
-			message = "[Warning] The creation of a new driver has been canceled.";
-			logMessage(message, false);
-			continue;
-		}
-
-		// If no driver name has been specified
-		if (driver_name == "") {
-			done = false;
-			message = "[Error] Please specify a driver name.. Or click cancel.";
-			logMessage(message);
-			continue;
-		}
-
-		// If the new name matches to an existing driver
-		if (list_drivers.indexOf(driver_name) != -1) {
-			done = false;
-			message = "[Error] The driver name matches to an existing driver..";
-			logMessage(message);
-			continue;
-		}
-
-		// The new rail name is correct
-		done = true;
-	}
-	while (!done && !canceled);
-
-	// If the action has been canceled
-	if (canceled) {
-		return;
-	}
-	
-	//
-	var idx = Model.createNewDriver(driver_name);
-	
-	//
-	list_drivers.push(driver_name);
-	
-	//
-	in_rail = in_rail ? in_rail : false;
-	if (in_rail == true) {
-		var choices = document.getElementById('driver_selection');
-		var new_choice = new Option(driver_name, driver_name);
-		new_choice.selected = "selected";
-		choices.options[choices.options.length - 1] = new_choice;
-		choices.options[choices.options.length] = new Option('undefined', 'undefined');
-	}
-	
-	//
-	var tbody = document.getElementById("drivers_vars");
-	var row_count = tbody.rows.length;
-	var row = tbody.insertRow(row_count);
-	var cell = row.insertCell(0);
-	
-	var span_element = document.createElement('span');
-	var text = document.createTextNode(driver_name);
-	span_element.className = 'network-th';
-	span_element.onclick = function onclick(event) { View.printDriver(idx, 'network-print', this) };
-	span_element.appendChild(text);
-	cell.appendChild(span_element);
-	
-	//
-	var nb_rails = document.getElementById("rails_vars").getElementsByTagName("tr").length;
-	View.printDriver(idx, (in_rail ? "add-driver" : "network-print"), null);
-	
-	// Update the generated XML
-	View.updateXML();
-};
-
-/*
+/*!
  * Add a rail in a CLI options configuration from a give profile.
- * \fn void selectRailCliOptions(profile_name, cli_options_idx)
+ * \fn void Controller.selectRailCliOptions(profile_name, cli_options_idx)
  * \param String profile_name Impacted profile.
  * \param Integer cli_options_idx Index of the impacted CLI options in the profile.
  */
-Controller.selectRailCliOptions = function(profile_name, cli_options_idx) {
+Controller.selectRailCliOptions = function(cli_options_idx) {
 	var available_rails = document.getElementById('available_rails_'  + cli_options_idx);
 	var length = available_rails.length;
 
@@ -927,7 +822,7 @@ Controller.selectRailCliOptions = function(profile_name, cli_options_idx) {
 			length -= 1;
 			
 			// Update the model
-			Model.updateRailsCliOptions(profile_name, cli_options_idx, i, true);
+			Model.updateRailsCliOptions(cli_options_idx, i, true);
 		}
 		// If the current option is not selected
 		else {
@@ -939,13 +834,13 @@ Controller.selectRailCliOptions = function(profile_name, cli_options_idx) {
 	View.updateXML();
 };
 
-/*
+/*!
  * Remove a rail in a CLI options configuration from a give profile.
- * \fn void unselectRailCliOptions(profile_name, cli_options_idx)
+ * \fn void Controller.unselectRailCliOptions(profile_name, cli_options_idx)
  * \param String profile_name Impacted profile.
  * \param Integer cli_options_idx Index of the impacted CLI options in the profile.
  */
-Controller.unselectRailCliOptions = function(profile_name, cli_options_idx) {
+Controller.unselectRailCliOptions = function(cli_options_idx) {
 	var selected_rails = document.getElementById('selected_rails_'  + cli_options_idx);
 	var length = selected_rails.length;
 
@@ -965,7 +860,7 @@ Controller.unselectRailCliOptions = function(profile_name, cli_options_idx) {
 			length -= 1;
 			
 			// Update the model
-			Model.updateRailsCliOptions(profile_name, cli_options_idx, i, false);
+			Model.updateRailsCliOptions(cli_options_idx, i, false);
 		}
 		// If the current option is not selected..
 		else {
@@ -977,6 +872,11 @@ Controller.unselectRailCliOptions = function(profile_name, cli_options_idx) {
 	View.updateXML();
 };
 
+/*!
+ * Add a new selector in the current mapping.
+ * \fn void Controller.addSelector(parent)
+ * \param parent Integer Index of the current mapping.
+ */
 Controller.addSelector = function(parent) {
 	// Get the type of the new selector
 	var select = document.getElementById('new_selector_' + parent)
@@ -998,7 +898,7 @@ Controller.addSelector = function(parent) {
 		// Update the model
 		Model.updateMappingSelectors(name, type, "", parent, true);
 
-		//
+		// Update the mapping view
 		View.updateMappingsView(parent);
 
 		// Update the generated XML
@@ -1006,6 +906,12 @@ Controller.addSelector = function(parent) {
 	}
 };
 
+/*!
+ * Delete a selector in the current mapping.
+ * \fn void Controller.delSelector(parent, line_nb)
+ * \param parent Integer Index of the current mapping.
+ * \param line_nb Integer Index of the selector to delete in the mapping.
+ */
 Controller.delSelector = function(parent, line_nb) {
 	var mapping = document.getElementById("Mapping_" + parent).getElementsByTagName("tbody")[0];
 	var selector = XML.getChildNodes(mapping)[line_nb];
@@ -1032,12 +938,14 @@ Controller.delSelector = function(parent, line_nb) {
 	// Get the value of the selector
 	var id_value = "selector_value_" + parent + "_" + line_nb;
 	var value = document.getElementById(id_value).value;
-	
-	mapping.removeChild(selector);
-	alert("Mapping: " + parent + ", line: " + line_nb);
-	
+		
 	// Update the model
 	Model.updateMappingSelectors(name, type, value, parent, false);
+	message = "[Info] The selector \"" + name + "\" has been deleted.";
+	logMessage(message, true);
+
+	// Update the mapping view
+	View.updateMappingsView(parent);
 	
 	// Update the generated XML
 	View.updateXML();
