@@ -359,7 +359,7 @@ static inline void __mpcomp_read_env_variables() {
       OMP_TREE_NB_LEAVES *= OMP_TREE[i] ;
     }
 
-#if 1
+#if 0
     fprintf( stderr, "OMP_TREE: tree w/ %d level(s)\n", OMP_TREE_DEPTH ) ;
 
     for ( i = 0 ; i < nb_tokens ; i++ ) {
@@ -402,6 +402,17 @@ static inline void __mpcomp_read_env_variables() {
     fprintf (stderr, "\tOMP_DYNAMIC %d\n", OMP_DYNAMIC);
     fprintf (stderr, "\tOMP_NESTED %d\n", OMP_NESTED);
     fprintf (stderr, "\t%d microVPs (OMP_MICROVP_NUMBER)\n", OMP_MICROVP_NUMBER);
+	if ( OMP_TREE != NULL ) {
+	  int i ;
+	  fprintf( stderr, "\tOMP_TREE w/ depth:%d leaves:%d, arity:[%d", 
+		  OMP_TREE_DEPTH, OMP_TREE_NB_LEAVES, OMP_TREE[0] ) ;
+	  for ( i = 1 ; i < OMP_TREE_DEPTH ; i++ ) {
+		fprintf( stderr, ", %d", OMP_TREE[i] ) ;
+	  }
+	  fprintf( stderr, "]\n" ) ;
+	} else {
+	  fprintf( stderr, "\tOMP_TREE default\n" ) ;
+	}
 #if MPCOMP_MALLOC_ON_NODE
     fprintf( stderr, "\tNUMA allocation for tree nodes\n" ) ;
 #endif
@@ -512,15 +523,12 @@ void __mpcomp_exit()
 void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps ) {
 
   sctk_nodebug( "__mpcomp_instance_init: Entering..." ) ;
-  //printf("__mpcomp_instance_init: Entering..\n");
 
   /* Alloc memory for 'nb_mvps' microVPs */
   instance->mvps = (mpcomp_mvp_t **)sctk_malloc( nb_mvps * sizeof( mpcomp_mvp_t * ) ) ;
   sctk_assert( instance->mvps != NULL ) ;
 
   instance->nb_mvps = nb_mvps ;
-
-  //printf("__mpcomp_instance_init: nb_mvps=%d\n", instance->nb_mvps);
 
   if ( OMP_TREE == NULL ) {
     __mpcomp_build_default_tree( instance ) ;
