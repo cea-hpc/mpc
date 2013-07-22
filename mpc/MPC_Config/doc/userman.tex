@@ -61,14 +61,14 @@
 
 \section{Introduction}
 
-Since MPC 2.5.0, a configuration system has been introduced through the module \texttt{MPC\_Config}: it enables the user to setup some parameters at the runtime when running his binary with MPC.
+Since MPC 2.4.1, a configuration system has been introduced through the module \texttt{MPC\_Config}: it enables the user to setup some parameters at the runtime when running his binary with MPC.
 \newline
 
 \noindent This manual will explain to an user how he can use and modify the configuration for running his applications with \texttt{mpcrun}.
 
 \section {The configuration file structure}
 
-In MPC 2.5.0, some variables can be configured during the runtime. To do this, a configuration file defines all the variables and their values, and MPC will load it at the execution.
+In MPC 2.4.1, some variables can be configured during the runtime. To do this, a configuration file defines all the variables and their values, and MPC will load it at the execution.
 \newline
 
 \noindent An example of a configuration file can be found in the \texttt{\$PREFIX/share/mpc} folder, where \texttt{\$PREFIX} matches to the install directory of MPC.
@@ -165,7 +165,7 @@ One way to select the profiles to apply during execution is to define mapping in
 
 \section{Configuration test}
 
-MPC will use many configuration files that it will in the following order:
+MPC will use many configuration files that it will apply in the following order:
 \begin{enumerate}
 \item \texttt{\$PREFIX/share/mpc/config.xml};
 \item \texttt{\$PREFIX/share/mpc/config.xml.example} if the previous file does not exist;
@@ -340,10 +340,124 @@ The network that will be used during the execution can also be parametrized into
 \end{lstlisting}
 
 \noindent The configuration system allow the user to define multirail by selecting many rails for a network mode. Using the previous code, the options for the option \texttt{--net} are \texttt{ib}, \texttt{ib} and \texttt{tcpoib}.
+\newpage
 
-\section{mpc\_print\_config}
+\section{The configuration editor}
 
-\texttt{mpc\_print\_config} is a small executable that print the configuration in different ways:
+The figure \ref{fig:empty_editor} shows the editor interface as the user will see it at launching.
+
+\begin{figure}[!h]
+\includegraphics[width=\textwidth]{./pictures/empty_editor.png}
+\caption{Editor interface at launching}
+\label{fig:empty_editor}
+\end{figure}
+
+\noindent The interface is divided in several parts:
+\begin{enumerate}
+\item Loading of an XML configuration file;
+\item Profiles displaying (modules);
+\item Networks displaying;
+\item Mappings displaying;
+\item XML file generated from data of the previous sections;
+\item Messages console (Info, Warning, Error).
+\end{enumerate}
+
+\subsection{Profiles displaying}
+
+The figure \ref{fig:modules_editor} shows the profiles section once a configuration file loaded.
+
+\begin{figure}[!h]
+\includegraphics[width=\textwidth]{./pictures/modules_editor.png}
+\caption{Profile display}
+\label{fig:modules_editor}
+\end{figure}
+
+\noindent Two buttons let the user to add or delete a profile (in case of deletion, the activated profile will be erased).
+\newline
+
+\noindent A menu let the user to switch between all the available profiles.
+\newline
+
+\noindent A input of text type displays the name of the activated profile. This field lets the user to rename a profile (the ``default'' profile cannot be renamed).
+\newline
+
+\noindent The ``modules'' part displays the modules and their asociated properties (see figure \ref{fig:module_editor}).
+
+\begin{figure}[!h]{c}
+\includegraphics{./pictures/module.png}
+\caption{Module display}
+\label{fig:module_editor}
+\end{figure}
+
+\noindent To help the user who wants to change a property value, a tooltip is associated to each field (see figure \ref{fig:title_editor}: it describes this property, and gives the original default value.
+
+\begin{figure}[!h]
+\includegraphics[width=\textwidth]{./pictures/title_editor.png}
+\caption{Tooltip for the 'realloc\_threshold' property}
+\label{fig:title_editor}
+\end{figure}
+
+\subsection{Networks displaying}
+
+The figure \ref{fig:networks_editor} shows the networks section once a configuration file loaded. The menu (1) lists all the networks options:
+\begin{itemize}
+\item ``CLI options'' is the list of all the available values for the \texttt{-net} option of \texttt{mpcrun};
+\item ``Rails'' is the list of all the available rails;
+\item ``Drivers'' is the list of all the available drivers.
+\end{itemize}
+
+\noindent The editor let the user to add or delete any network option.
+
+\begin{figure}[!h]
+\includegraphics[width=\textwidth]{./pictures/networks_editor.png}
+\caption{Networks display}
+\label{fig:networks_editor}
+\end{figure}
+
+\noindent The properties of a given option are displayed in the right part after a double click on the item. The figure \ref{fig:networks_editor} shows the properties for the ``default'' CLI option and the rail named ``ib\_signalization''.
+
+\subsection{Mappings displaying}
+
+The figure \ref{fig:mappings_editor} shows the mappings section once a configuration file loaded.
+
+\begin{figure}[!h]
+\includegraphics[width=\textwidth]{./pictures/mappings_editor.png}
+\caption{Mappings display}
+\label{fig:mappings_editor}
+\end{figure}
+
+\noindent As for the profiles section, two buttons let the user to add or delete a mapping. Navigation between the different mappings is done within the menu.
+\newline
+
+\noindent The table on the left side of the picture lists all the defined selectors for the current mapping. It is also possible to add or delete a given selector. The other table lists all the profiles that will be loaded if all the selectors are checked.
+
+\subsection{The XML generated file}
+
+The figure \ref{fig:generated_editor} shows the result of the generation of a new XML configuration file using data of the sections ``profiles'', ``networks'' and ``mappings''. The XML code cannot be directly modified through this element. The saving button let the user to save the file on a local storage: if the generated file does not match to the associated XSD, the saving will be impossible.
+
+\begin{figure}[!h]
+\includegraphics[width=\textwidth]{./pictures/generated_editor.png}
+\caption{XML generated display}
+\label{fig:generated_editor}
+\end{figure}
+
+\subsection{Messages console}
+
+The figure \ref{fig:messages_editor} shows the console displaying all the messages (Info, Error, Warning) producing by the editor.
+
+\begin{figure}[!h]
+\includegraphics[width=\textwidth]{./pictures/messages_editor.png}
+\caption{Messages console}
+\label{fig:messages_editor}
+\end{figure}
+
+\newpage
+
+\section{Helpful commands}
+
+\subsection{mpc\_print\_config}
+
+\texttt{mpc\_print\_config} is a small executable that prints the configuration in different ways:
 \begin{itemize}
 \item XML mode:
 \lstset{language=XML}
@@ -380,5 +494,9 @@ config:
 \end{itemize}
 
 \noindent To get more information, execute \texttt{mpc\_print\_config --help}.
+
+\subsection{mpc\_edit\_config}
+
+\texttt{mpc\_edit\_config} is a small executable that opens the editor. By default, the editor is opened with the first \texttt{firefox} founded in the user PATH. However, the option \texttt{-b} or \texttt{--browser} can be used to specify an other browser.
 
 \end{document}
