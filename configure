@@ -164,6 +164,10 @@ for arg in "$@" ; do
     --disable-mpc-gcc)
        MODULES="`echo $MODULES | sed -e 's/mpc-gcc//g' | sed -e 's/mpc-binutils//g'`"
 	;;
+    --disable-mpc-gcc-only)
+       MODULES="`echo $MODULES | sed -e 's/mpc-gcc//g'`"
+        ;;
+
 	--disable-mpc-binutils)
        MODULES="`echo $MODULES | sed -e 's/mpc-binutils//g'`"
     ;;
