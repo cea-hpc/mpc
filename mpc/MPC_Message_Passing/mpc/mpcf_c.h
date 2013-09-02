@@ -606,18 +606,3 @@ void ffunc (mpc_irecv_pack) (int *source, int *tag, MPC_Comm * comm,
   *err = MPC_Irecv_pack (*source, *tag, *comm, request);
 }
 
-/*Other */
-void ffunc (mpc_network_stats) (int *matched, int *not_matched, int *poll_own, int *poll_stolen, int *poll_steals, double *time_stolen, double *time_steals, double *time_own)
-{
-  struct MPC_Network_stats_s stats;
-  MPC_Network_stats(&stats);
-
-  *matched = stats.matched;
-  *not_matched = stats.not_matched;
-  *poll_own = stats.poll_own;
-  *poll_stolen = stats.poll_stolen;
-  *poll_steals = stats.poll_steals;
-  *time_stolen = stats.time_stolen;
-  *time_steals = stats.time_steals;
-  *time_own = stats.time_own;
-}

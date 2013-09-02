@@ -122,7 +122,7 @@ echo "" >> Makefile
 echo "MAKEFLAGS += --no-print-directory"  >> Makefile
 echo "" >> Makefile
 
-echo "all:lib/libmpc.a lib/libmpcf.a lib/libmpc_thread_db.so lib/libmpc_tdb_remote_static.a"  >> Makefile
+echo "all:lib/libmpc.a lib/libmpcf.a lib/libmpc_thread_db.so lib/libmpc_tdb_remote_static.a bin/mpc_print_config"  >> Makefile
 echo "" >> Makefile
 
 echo "#"  >> Makefile
@@ -142,6 +142,14 @@ if test "$SCTK_FORTRAN" = "1"; then
   echo "FOBJ_LIST=\$(shell echo \$(OBJ_LIST) | sed s,BUILD_MPC_Common/lib/main.o,,g)"  >> Makefile
 #  echo "FOBJ_LIST=\$(shell echo \$(OBJ_LIST) | sed s,BUILD_MPC_Common/lib/main_f.o,,g)"  >> Makefile
 fi
+
+#
+# Rule for bin/mpc_print_config
+#
+echo "" >> Makefile
+echo "bin/mpc_print_config: lib/libmpc.a lib/libmpc_tdb_remote_static.a" >> Makefile
+printf "\t@echo Build bin/mpc_print_config" >> Makefile; echo "" >> Makefile
+printf "\t@DIR_DEST_EXE=${PWD}/bin BUILD_DIR=\$(M_PWD)/BUILD_MPC_Config/bin \$(MAKE) -C ${MPC_SOURCE_DIR}MPC_Config/bin build_exe" >> Makefile; echo "" >> Makefile
 
 #
 # Rule to build libmpc.a
@@ -254,10 +262,20 @@ i="MPC_Extras"
 fi
 
 #
+# Rule to generate the example config file
+# LD_LIBRARY_PATH is only needed because it is not possible to build the MPC_Config module an independant
+# library. We dont't need the other part of MPC here and the sources are independent......
+#
+echo "" >> Makefile
+echo "share/mpc/config.xml.example: ${MPC_SOURCE_DIR}MPC_Config/extra/config.xml.example bin/mpc_print_config" >> Makefile
+printf "\t@mkdir -p share/mpc">> Makefile; echo "">> Makefile
+printf "\t@LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) ./bin/mpc_print_config --xml --system=${MPC_SOURCE_DIR}MPC_Config/extra/config.xml.example --schema=${MPC_SOURCE_DIR}MPC_Config/generated/mpc-config.xsd --user= > share/mpc/config.xml.example">> Makefile; echo "">> Makefile
+
+#
 # Rule 'install'
 #
 echo "" >> Makefile
-echo "install: all" >> Makefile
+echo "install: all share/mpc/config.xml.example" >> Makefile
 printf "\t@rm -rf INSTALL">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL">> Makefile; echo "">> Makefile
 printf "\t@cp -r bin INSTALL">> Makefile; echo "">> Makefile
@@ -284,11 +302,18 @@ printf "\t@mkdir -p \${DESTDIR}${SCTK_BIN_DIR}">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p \${DESTDIR}${SCTK_MAN_DIR}">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p \${DESTDIR}${SCTK_INCLUDE_DIR}">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p \${DESTDIR}${SCTK_LIB_DIR}">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p \${DESTDIR}${SCTK_SHARE_DIR}">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL/man">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL/man/man1">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL/man/man3">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p INSTALL/man/man5">> Makefile; echo "">> Makefile
+printf "\t@mkdir -p INSTALL/share/mpc">> Makefile; echo "">> Makefile
 printf "\t@cp ${MPC_SOURCE_DIR}MPC_Doc/man1/*.1 INSTALL/man/man1">> Makefile; echo "">> Makefile
 printf "\t@cp ${MPC_SOURCE_DIR}MPC_Doc/man3/*.3 INSTALL/man/man3">> Makefile; echo "">> Makefile
+printf "\t@cp ${MPC_SOURCE_DIR}MPC_Config/generated/*.5 INSTALL/man/man5">> Makefile; echo "">> Makefile
+printf "\t@cp share/mpc/* INSTALL/share/mpc">> Makefile; echo "">> Makefile
+printf "\t@cp ${MPC_SOURCE_DIR}MPC_Config/extra/config-multi-profile.xml.example INSTALL/share/mpc">> Makefile; echo "">> Makefile
+printf "\t@cp ${MPC_SOURCE_DIR}MPC_Config/generated/mpc-config.xsd INSTALL/share/mpc">> Makefile; echo "">> Makefile
 
 DIR_TEST="MPC_Threads"
 check_module
@@ -324,6 +349,7 @@ printf "\t@chmod -R 755 INSTALL/bin/*">> Makefile; echo "">> Makefile
 printf "\t@chmod -R 644 INSTALL/include/*">> Makefile; echo "">> Makefile
 printf "\t@chmod 644 INSTALL/man/man1/*.1">> Makefile; echo "">> Makefile
 printf "\t@chmod 644 INSTALL/man/man3/*.3">> Makefile; echo "">> Makefile
+printf "\t@chmod 644 INSTALL/man/man5/*.5">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/lib/* \${DESTDIR}${SCTK_LIB_DIR}">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/include/* \${DESTDIR}${SCTK_INCLUDE_DIR}">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/man/* \${DESTDIR}${SCTK_MAN_DIR}">> Makefile; echo "">> Makefile
@@ -333,6 +359,7 @@ if test "$SCTK_FORTRAN" = "1"; then
 printf "\t@\$(F77) \$(FOBJ_LIST) ${EXTERN_NON_TESTED_LIB} -fPIC -shared -o \${DESTDIR}${SCTK_LIB_DIR}/libmpcf.so $SCTK_LDFLAGS|| echo \"Unable to build Fortran shared library\"">> Makefile; echo "">> Makefile
 fi
 printf "\t@cp -r INSTALL/bin/* \${DESTDIR}${SCTK_BIN_DIR}">> Makefile; echo "">> Makefile
+printf "\t@cp -r INSTALL/share/mpc/* \${DESTDIR}${SCTK_SHARE_DIR}">> Makefile; echo "">> Makefile
 
 #
 # Rule 'uninstall'
@@ -344,6 +371,8 @@ printf "\t@for i in  INSTALL/bin/* ; do rm -rf \${DESTDIR}${SCTK_BIN_DIR}/\`base
 printf "\t@for i in  INSTALL/include/* ; do rm -rf \${DESTDIR}${SCTK_INCLUDE_DIR}/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
 printf "\t@for i in  INSTALL/man/man1/* ; do rm -rf \${DESTDIR}${SCTK_MAN_DIR}/man1/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
 printf "\t@for i in  INSTALL/man/man3/* ; do rm -rf \${DESTDIR}${SCTK_MAN_DIR}/man3/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
+printf "\t@for i in  INSTALL/man/man5/* ; do rm -rf \${DESTDIR}${SCTK_MAN_DIR}/man5/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
+printf "\t@for i in  INSTALL/share/mpc/* ; do rm -rf \${DESTDIR}${SCTK_SHARE_DIR}/\`basename \$\$i\`; done">> Makefile; echo "">> Makefile
 
 
 TEST_RES="check_results"

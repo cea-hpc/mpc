@@ -23,8 +23,3 @@
 need_module MPC_Threads
 need_module MPC_Common
 SCTK_INCLUDE_FILES="mpcomp.h"
-
-# Check if binutils are installed and pass the macro SCTK_USE_OPTIMIZED_TLS
-if test ! -z "${BINUTILS_PREFIX_INSTALL}"; then
-	SCTK_CHECK_OPTION "-DSCTK_USE_OPTIMIZED_TLS"
-fi

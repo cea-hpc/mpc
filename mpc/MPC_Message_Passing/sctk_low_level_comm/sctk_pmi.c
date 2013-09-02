@@ -34,6 +34,9 @@ static int sctk_pmi_node_rank;
 static int sctk_pmi_nodes_number;
 static int sctk_pmi_processes_on_node_number;
 
+
+
+
 #define SCTK_PMI_TAG_PMI_HOSTNAME 1
 
 #endif /* MPC_USE_HYDRA */
@@ -212,7 +215,7 @@ int sctk_pmi_init() {
   sctk_pmi_get_node_rank(&sctk_node_rank);
   sctk_pmi_get_node_number(&sctk_node_number);
   sctk_pmi_get_process_on_node_rank(&sctk_local_process_rank);
-  sctk_pmi_get_processes_on_node_number(&sctk_local_process_number);
+  sctk_pmi_get_process_on_node_number(&sctk_local_process_number);
 
 
 #ifdef MPC_USE_SLURM
@@ -485,7 +488,7 @@ int sctk_pmi_get_node_rank(int* rank) {
 /*! \brief Get the number of processes on the current node
  * @param size Pointer to store the number of processes
 */
-int sctk_pmi_get_processes_on_node_number(int* size) {
+int sctk_pmi_get_process_on_node_number(int* size) {
 #ifdef MPC_USE_SLURM
     int rc;
 #endif

@@ -37,9 +37,13 @@ typedef struct
 
 #if defined(SCTK_USE_TLS)
 __thread char *mpc_user_tls_1 = NULL;
-//profiling TLS
+
+/* MPC Tracelib TLS */
 __thread void *tls_trace_module = NULL;
 __thread void *tls_args = NULL;
+
+/* MPC Profiler TLS */
+__thread void *tls_mpc_profiler;
 
 unsigned long mpc_user_tls_1_offset = 0;
 unsigned long mpc_user_tls_1_entry_number = 0;

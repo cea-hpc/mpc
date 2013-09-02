@@ -40,6 +40,10 @@
 #pragma weak MPC_Process_number = PMPC_Process_number
 #pragma weak MPC_Local_process_rank = PMPC_Local_process_rank
 #pragma weak MPC_Local_process_number = PMPC_Local_process_number
+#pragma weak MPC_Task_rank = PMPC_Task_rank
+#pragma weak MPC_Task_number = PMPC_Task_number
+#pragma weak MPC_Local_task_rank = PMPC_Local_task_rank
+#pragma weak MPC_Local_task_number = PMPC_Local_task_number
 #pragma weak MPC_Get_version = PMPC_Get_version
 #pragma weak MPC_Get_multithreading = PMPC_Get_multithreading
 #pragma weak MPC_Get_networking = PMPC_Get_networking

@@ -67,19 +67,21 @@ extern "C"
   void sctk_extls_delete ();
 
 #if defined (MPC_Allocator)
-  extern __thread void *sctk_tls_key;
+  extern __thread struct sctk_alloc_chain * sctk_current_alloc_chain;
 #endif
 #if defined (MPC_Profiler)
-  extern __thread void *sctk_tls_trace;
+  /* MPC Profiler TLS */
+  extern __thread void *tls_mpc_profiler;
 #endif
 
   extern __thread char *mpc_user_tls_1;
   extern unsigned long mpc_user_tls_1_offset;
   extern unsigned long mpc_user_tls_1_entry_number;
   extern __thread void *sctk_extls;
-  //profiling TLS
+  /* MPC Tracelib TLS */
   extern __thread void *tls_trace_module;
   extern __thread void *tls_args;
+
 
   extern __thread void *sctk_hls_generation;
 
@@ -111,11 +113,12 @@ extern "C"
   static inline void sctk_context_save_tls (sctk_mctx_t * ucp)
   {
 #if defined(SCTK_USE_TLS)
-#if defined (MPC_Allocator)
-    ucp->sctk_tls_key_local = sctk_tls_key;
+#if defined (MPC_PosixAllocator)
+    ucp->sctk_current_alloc_chain_local = sctk_current_alloc_chain;
 #endif
 #if defined (MPC_Profiler)
-    ucp->sctk_tls_trace_local = sctk_tls_trace;
+    /* MPC Profiler TLS */
+    tls_save(tls_mpc_profiler);
 #endif
     tls_save (mpc_user_tls_1);
     tls_save (sctk_extls);
@@ -128,7 +131,7 @@ extern "C"
 #ifdef MPC_Message_Passing
     tls_save (sctk_message_passing);
 #endif
-    //profiling TLS
+    /* MPC Tracelib TLS */
     tls_save (tls_args);
     tls_save (tls_trace_module);
 #endif
@@ -137,11 +140,12 @@ extern "C"
   static inline void sctk_context_restore_tls (sctk_mctx_t * ucp)
   {
 #if defined(SCTK_USE_TLS)
-#if defined (MPC_Allocator)
-    sctk_tls_key = ucp->sctk_tls_key_local;
+#if defined (MPC_PosixAllocator)
+    sctk_current_alloc_chain = ucp->sctk_current_alloc_chain_local;
 #endif
 #if defined (MPC_Profiler)
-    sctk_tls_trace = ucp->sctk_tls_trace_local;
+    /* MPC Profiler TLS */
+    tls_restore (tls_mpc_profiler);
 #endif
     tls_restore (mpc_user_tls_1);
     tls_restore (sctk_extls);
@@ -155,7 +159,7 @@ extern "C"
 #ifdef MPC_Message_Passing
     tls_restore (sctk_message_passing);
 #endif
-    //profiling TLS
+    /* MPC Tracelib TLS */
     tls_restore (tls_args);
     tls_restore (tls_trace_module);
 #endif
@@ -165,19 +169,21 @@ extern "C"
   {
 #if defined(SCTK_USE_TLS)
 #if defined (MPC_Allocator)
-    ucp->sctk_tls_key_local = NULL;
+    ucp->sctk_current_alloc_chain_local = NULL;
 #endif
 #if defined (MPC_Profiler)
-    ucp->sctk_tls_trace_local = NULL;
+    /* MPC Profiler TLS */
+    tls_init (tls_mpc_profiler);
 #endif
     /* tls_init (mpc_user_tls_1); */
     ucp->mpc_user_tls_1 = mpc_user_tls_1 ;
 #ifdef MPC_Message_Passing
     tls_init (sctk_message_passing);
 #endif
-    //profiling TLS
+    /* MPC Tracelib TLS */
     tls_init (tls_args);
     tls_init (tls_trace_module);
+
     tls_init (sctk_hls_generation);
 
 #if defined (SCTK_USE_OPTIMIZED_TLS)

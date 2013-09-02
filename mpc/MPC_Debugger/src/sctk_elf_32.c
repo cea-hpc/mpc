@@ -1407,7 +1407,7 @@ restart:
 		{
 		  ptrs[j].absolute = c->dbg_list[restart_val].dir;
 		}
-#warning "Issue in absolute prefix detection"
+TODO("Issue in absolute prefix detection")
 	      ptrs[j].absolute = "";
 
 	      ptrs[j].line = last_line;

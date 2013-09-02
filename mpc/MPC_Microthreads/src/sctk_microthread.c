@@ -221,7 +221,7 @@ sctk_microthread_init (long nb_vp, sctk_microthread_t * self)
 
   sctk_nodebug ("sctk_microthread_init: Ready to enter loop...");
 
-#warning "TODO Put a warning when the #microVP > #cores"
+  TODO("Put a warning when the #microVP > #cores")
 
   /* Update the number of VPs */
   self->__nb_vp = nb_vp;
@@ -267,7 +267,7 @@ sctk_microthread_init (long nb_vp, sctk_microthread_t * self)
 
       sctk_nodebug( "sctk_microthread_init: Before computing target vp" ) ;
 
-#warning "Placement policy of microVPs is not optimal when #microVPs > #VPs"
+      TODO("Placement policy of microVPs is not optimal when #microVPs > #VPs")
       // target_vp = (current_mpc_vp + i) % (sctk_get_cpu_number ()) ;
       target_vp = order[i%sctk_get_cpu_number ()] ;
 

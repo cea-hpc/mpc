@@ -1,6 +1,8 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
 /* # This file is part of the MPC Runtime.                                # */
@@ -17,7 +19,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - DIDELOT Sylvain  sdidelot@exascale-computing.eu                  # */
+/* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
 #include <stdio.h>
@@ -28,9 +30,9 @@
 #include "sctk_debug.h"
 #include "sctk_spinlock.h"
 #include "sctk.h"
+
+
 #include "sctk_shell_colors.h"
-
-
 
 #ifdef MPC_Debugger
 #include <sctk_debugger.h>
@@ -200,9 +202,6 @@ sctk_debug_print_backtrace (const char *format, ...)
   va_start (ap, format);
   sctk_vprint_backtrace (format, ap);
   va_end (ap);
-#endif
-#ifdef MPC_Profiler
-  sctk_profiling_result ();
 #endif
 }
 

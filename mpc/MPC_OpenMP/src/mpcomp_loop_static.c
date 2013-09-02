@@ -211,7 +211,7 @@ __mpcomp_static_loop_begin (int lb, int b, int incr, int chunk_size,
     (mpcomp_thread_info_t *) mpc_thread_getspecific (mpcomp_thread_info_key);
 
   /* Automatic chunk size -> at most one chunk */
-  if (chunk_size == -1) {
+  if (chunk_size == -1 || chunk_size == 0 ) {
       info->static_nb_chunks = 1 ;
       __mpcomp_static_schedule_get_single_chunk (lb, b, incr, from, to);
     }

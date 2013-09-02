@@ -571,12 +571,12 @@ extern "C"
 
     if (expect_true (cur != new_task))
       {
-	SCTK_TRACE_POINT (sctk_swapcontext_out, new_task, NULL, NULL, NULL);
+
 	vp->current = new_task;
 	sctk_nodebug ("Jump %p to %p(%p) on vp %d", cur, new_task,
 		      &(new_task->ctx), vp->rank);
 	sctk_swapcontext (&(cur->ctx), &(new_task->ctx));
-	SCTK_TRACE_POINT (sctk_swapcontext_in, NULL, NULL, NULL, NULL);
+
       }
 
     __sctk_ethread_sched_yield_vp_tail (vp, cur);
@@ -613,15 +613,14 @@ extern "C"
 	  {
 	    sctk_ethread_set_status (cur, sctk_thread_sleep_status);
 	    SCTK_ACTIVITY_UP (vp);
-	    SCTK_TRACE_POINT (sctk_swapcontext_out, new_task, NULL,
-			      NULL, NULL);
+
 	    vp->current = new_task;
 	    sctk_nodebug ("idle Jump %p to %p(%p) on vp %d", cur,
 			  new_task, &(new_task->ctx), vp->rank);
 	    sctk_swapcontext (&(cur->ctx), &(new_task->ctx));
 	    sctk_nodebug ("idle thread %p(%p) restart vp->current %p",
 			  cur, &(cur->ctx), vp->current);
-	    SCTK_TRACE_POINT (sctk_swapcontext_in, NULL, NULL, NULL, NULL);
+
 	  }
 	else
 	  {
@@ -669,12 +668,12 @@ extern "C"
 		 (new_task->status == ethread_idle) ||
 		 (new_task->status == ethread_inside_polling));
 
-    SCTK_TRACE_POINT (sctk_swapcontext_out, new_task, NULL, NULL, NULL);
+
     vp->current = new_task;
     sctk_nodebug ("Jump %p to %p(%p) on vp %d", cur, new_task,
 		  &(new_task->ctx), vp->rank);
     sctk_swapcontext (&(cur->ctx), &(new_task->ctx));
-    SCTK_TRACE_POINT (sctk_swapcontext_in, NULL, NULL, NULL, NULL);
+
 
     __sctk_ethread_sched_yield_vp_tail (vp, cur);
 
@@ -711,12 +710,12 @@ extern "C"
 		 (new_task->status == ethread_idle) ||
 		 (new_task->status == ethread_inside_polling));
 
-    SCTK_TRACE_POINT (sctk_swapcontext_out, new_task, NULL, NULL, NULL);
+
     vp->current = new_task;
     sctk_nodebug ("Jump %p to %p(%p) on vp %d", cur, new_task,
 		  &(new_task->ctx), vp->rank);
     sctk_swapcontext (&(cur->ctx), &(new_task->ctx));
-    SCTK_TRACE_POINT (sctk_swapcontext_in, NULL, NULL, NULL, NULL);
+
 
     __sctk_ethread_sched_yield_vp_tail (vp, cur);
 
@@ -793,7 +792,7 @@ extern "C"
 					   &(vp->zombie_queue_tail));
     while (tmp_pid != NULL)
       {
-	sctk_alloc_thread_data_t *tls;
+	struct sctk_alloc_chain *tls;
 	if (tmp_pid->attr.stack == NULL)
 	  sctk_free (tmp_pid->stack);
 	tls = tmp_pid->tls_mem;
@@ -1198,7 +1197,7 @@ extern "C"
 	sctk_ethread_destr_func_tab[sctk_ethread_key_pos] = destr_func;
 	*key = sctk_ethread_key_pos;
 	sctk_ethread_key_pos++;
-#ifdef MPC_Allocator
+#ifdef MPC_PosixAllocator
 #ifdef SCTK_USE_TLS
 	sctk_add_global_var (key, sizeof (int));
 #else
@@ -1289,12 +1288,10 @@ extern "C"
 		 (new_task->status == ethread_idle) ||
 		 (new_task->status == ethread_inside_polling));
 
-    SCTK_TRACE_POINT (sctk_swapcontext_out, new_task, NULL, NULL, NULL);
     vp->current = new_task;
     sctk_nodebug ("Jump %p to %p(%p) on vp %d", cur, new_task,
 		  &(new_task->ctx), vp->rank);
     sctk_swapcontext (&(cur->ctx), &(new_task->ctx));
-    SCTK_TRACE_POINT (sctk_swapcontext_in, NULL, NULL, NULL, NULL);
 
     __sctk_ethread_sched_yield_vp_tail (vp, cur);
 
@@ -1438,7 +1435,7 @@ extern "C"
 #ifdef MPC_Message_Passing
 	    sctk_notify_idle_message ();
 #endif
-#if 0
+# if 0
 	if ((vp->ready_queue_used == NULL) &&
 	    (vp->incomming_queue == NULL) &&
 	    (vp->ready_queue == NULL) && (vp->poll_list == NULL))

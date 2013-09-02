@@ -1,0 +1,203 @@
+
+.\" ############################# MPC License ##############################
+.\" # Wed Nov 19 15:19:19 CET 2008                                         #
+.\" # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+.\" #                                                                      #
+.\" # IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+.\" # This file is part of the MPC Runtime.                                #
+.\" #                                                                      #
+.\" # This software is governed by the CeCILL-C license under French law   #
+.\" # and abiding by the rules of distribution of free software.  You can  #
+.\" # use, modify and/ or redistribute the software under the terms of     #
+.\" # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+.\" # following URL http://www.cecill.info.                                #
+.\" #                                                                      #
+.\" # The fact that you are presently reading this means that you have     #
+.\" # had knowledge of the CeCILL-C license and that you accept its        #
+.\" # terms.                                                               #
+.\" #                                                                      #
+.\" # Authors:                                                             #
+.\" #   - VALAT Sebastien sebastien.valat@cea.fr                           #
+.\" #   - AUTOMATIC GENERATION                                             #
+.\" #                                                                      #
+.\" ########################################################################
+
+.Dd $Mdocdate: June 6 2012 $
+.Dt MPC_CONFIG 5
+.Os
+.Sh NAME
+.Nm mpc_config
+.Nd MPC runtime configuration files
+.Sh SYNOPSIS
+.Nm ${PREFIX}/share/mpc/config.xml or ${MPC_SYSTEM_CONFIG}
+.Nm File given to ${MPC_USER_CONFIG} or to option --config of
+.Xr mpcrun 1
+.Sh DESCRIPTION
+Their is three important concepts in MPC configuration system :
+.Bl -tag -width Ds
+.It Cm Profile
+Each configuration file provide some profiles. A profile has a name and provide a set of values.
+.It Cm Profile mapping
+At loading time, we can define which profiles to apply to generate the final configuration (mpcrun --profiles=a,b,c...).
+.It Cm Overriding
+Each profile can override values of a previous loaded one of the onces from a file previously loaded. So in your profile you can redefine only the specific values you want to change, the others keep their values.
+.El
+.Pp
+Files are loaded in priority order :
+.Bl -enum -offset indent -compact
+.It
+System configuration (${PREFIX}/share/mpc/config.xml or $MPC_SYSTEM_CONFIG).
+.It
+User configuration given to mpcrun with option --config of $MPC_USER_CONFIG.
+.El
+.Pp
+You can find XML schema file for validation in ${PREFIX}/share/mpc/mpc-config.xsd. You can validate with one of the two solutions :
+.Bl -enum -offset indent -compact
+.It
+mpc_print_config --user={YOUR_XML_FILE}
+.It
+xmllint --noout --schema ${PREFIX}/share/mpc/mpc-config.xsd {YOUR_XML_FILE}
+.El
+.Pp
+.Sh GLOBAL LAYOUT
+The XML file may look like this :
+.PP
+.br
+	<mpc>
+.br
+		<profiles>
+.br
+			<profile>
+.br
+				<name>default</name>
+.br
+				<modules>
+.br
+					...
+.br
+				</modules>
+.br
+			</profile>
+.br
+			<profile>
+.br
+				<name>debug</name>
+.br
+				<modules>
+.br
+					...
+.br
+				</modules>
+.br
+			</profile>
+.br
+		</profiles>
+.br
+	</mpc>
+.Pp
+MPC always use the profile with name "default", others are only enabled with option --profiles= or with automatic mappings by using the <mappins> section.
+.Sh AVAILABLE MODULES
+.Pp The <modules> node can contain the following fields :
+.Bl -tag -width Ds
+.It Cm allocator
+Options for MPC memory allocator.
+.br
+See type allocator.
+.It Cm launcher
+Options for MPC launcher.
+.br
+See type launcher.
+.It Cm profiler
+Options for the internal MPC Profiler
+.br
+See type profiler.
+.El
+.Sh ENTRIES OF TYPE allocator
+Options for MPC memory allocator.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm numa_migration
+Type is bool. Default value is false. 
+.Pp numa_migration
+Enable or disable NUMA migration of allocator pages on thread migration.
+.It Cm realloc_factor
+Type is int. Default value is 2. 
+.Pp realloc_factor
+If the new segment is less than N time smaller than factor, realloc will allocate a new segment, otherwise it will keep the same one. Use 1 to force realloc every time (may be slower but consume less memory).
+.It Cm realloc_threashold
+Type is size. Default value is 50MB. 
+.Pp realloc_threashold
+If the new segment is smaller of N bytes than threashold, realloc will allocate a new segment, otherwise it will keep the same one. Use 0 to force realloc every time (may be slower but consume less memory).
+.It Cm numa
+Type is bool. Default value is true. 
+.Pp numa
+Permit to enable of disable NUMA support in MPC Allocator.
+.It Cm strict
+Type is bool. Default value is false. 
+.Pp strict
+If true, enable usage of abort() on free error, otherwise try to continue by skipping.
+.It Cm keep_mem
+Type is size. Default value is 500MB. 
+.Pp keep_mem
+Maximum amount of memory to keep in memory sources (one per NUMA node). Use 0 to disable cache, huge value to keep all.
+.It Cm keep_max
+Type is size. Default value is 8MB. 
+.Pp keep_max
+Maximum size of macro blocs to keep in memory source for reuse. Use 0 to disable cache, huge value to keep all.
+.El
+.Sh ENTRIES OF TYPE launcher
+Options for MPC launcher.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm smt
+Type is bool. Default value is false. 
+.Pp smt
+Enable usage of hyperthreaded cores if available on current architecture.
+.It Cm cores
+Type is int. Default value is 1. 
+.Pp cores
+Default number of cores if -c=X is not given to mpcrun.
+.It Cm verbosity
+Type is int. Default value is 0. 
+.Pp verbosity
+Default verbosity level from 0 to 3. Can be override by -vv on mpcrun.
+.It Cm banner
+Type is bool. Default value is true. 
+.Pp banner
+Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER.
+.It Cm autokill
+Type is int. Default value is 0. 
+.Pp autokill
+Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT.
+.It Cm user_launchers
+Type is string. Default value is . 
+.Pp user_launchers
+Permit to extend the launchers available via 'mpcrun -l=...' by providing scripts (named mpcrun_XXXX) in a user directory. Can be override by MPC_USER_LAUNCHERS.
+.El
+.Sh ENTRIES OF TYPE profiler
+Options for the internal MPC Profiler
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm file_prefix
+Type is string. Default value is mpc_profile. 
+.Pp file_prefix
+Prefix of MPC Profiler outputs
+.It Cm append_date
+Type is bool. Default value is true. 
+.Pp append_date
+Add a timestamp to profiles file names
+.It Cm color_stdout
+Type is bool. Default value is true. 
+.Pp color_stdout
+Profile in color when outputed to stdout
+.It Cm level_colors
+Type is array of string. Default value is {#3A4D85, #82A2FF, #B8BDCB, #5D6782, #838383, #5A5757}.
+.Pp level_colors
+Color for levels of profiler output
+.El

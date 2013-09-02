@@ -155,8 +155,6 @@ td_err_e td_ta_new (struct ps_prochandle *ph, td_thragent_t **ta) {
   /** */
 
 
-//#warning we need to check if it is the right version of MPC
-  
   tdb_log("td_ta_new Read the address of the thread list");
   ps_err = ps_lookup (ph, THREAD_LIST_HEAD,
 		      &(ta_p->thread_list_p)) ;

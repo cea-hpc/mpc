@@ -146,6 +146,19 @@ if test "$SCTK_DEBUG_MESSAGES" = "1"; then
   SCTK_CHECK_OPTION "-DSCTK_DEBUG_MESSAGES"
 fi
 
+#Check for stdint.h
+SCTK_CHECK_HEADER stdint.h
+if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0; then
+  SCTK_CHECK_OPTION "-DHAVE_STDINT_H"
+fi
+
+#Check for stdbool.h
+SCTK_CHECK_HEADER stdbool.h
+
+if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0; then
+  SCTK_CHECK_OPTION "-DHAVE_STDBOOL_H"
+fi
+
 begin_section Valgrind
 check_debug
 end_section

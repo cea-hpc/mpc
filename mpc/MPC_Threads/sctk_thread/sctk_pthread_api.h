@@ -32,7 +32,7 @@ extern "C"
 #include <sched.h>
 /* #include <pthread.h>  */
 
-#define sem_t mpc_sem_t
+#define sem_t mpc_thread_sem_t
 #define pthread_t mpc_thread_t
 #define pthread_attr_t mpc_thread_attr_t
 #define pthread_condattr_t mpc_thread_condattr_t
@@ -139,7 +139,7 @@ extern "C"
 
 
 /* pthread_attr_setinheritsched */
-#define pthread_attr_setinheritsched mpc_thread_attr_setinheritsched (attr, sched)
+#define pthread_attr_setinheritsched mpc_thread_attr_setinheritsched
 
 
 /* pthread_attr_setschedparam */

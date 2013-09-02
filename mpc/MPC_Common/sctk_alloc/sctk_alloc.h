@@ -26,6 +26,7 @@
 #include "sctk_alloc_api.h"
 #include <sys/mman.h>
 
+//TODO Remove this for version >2.4.1 if no issue were found
 #if 0
 #if defined(SCTK_USE_VALGRIND)
 
@@ -54,22 +55,21 @@
 #define SCTK_MALLOCLIKE_BLOCK(a,b,c,d) (void)(0)
 #define SCTK_FREELIKE_BLOCK(a,b) (void)(0)
 #endif
-#else
-#define SCTK_MAKE_NOACCESS(tmp,size) (void)(0)
-#define SCTK_MAKE_WRITABLE(a,b) (void)(0)
-#define SCTK_MAKE_READABLE(a,b) (void)(0)
-#define SCTK_CHECK_READABLE(a,b) (void)(0)
+#endif
 
-#define SCTK_MALLOCLIKE_BLOCK(a,b,c,d) (void)(0)
-#define SCTK_FREELIKE_BLOCK(a,b) (void)(0)
-#define VALGRIND_STACK_REGISTER(a,b) (void)(0)
+#ifdef HAVE_MEMCHECK_H
+	#include <valgrind/valgrind.h>
+	#include <valgrind/memcheck.h>
+#else //HAVE_MEMCHECK_H
+	#define VALGRIND_STACK_REGISTER(a,b) (void)(0)
 #endif
 
 
-#ifndef MPC_Allocator
+#ifndef MPC_PosixAllocator
 #include "sctk_no_alloc.h"
 #else
-#include <sctk_alloc_internal.h>
+#include <sctk_alloc_posix.h>
+#include <sctk_alloc_on_node.h>
 #endif
 
 #endif

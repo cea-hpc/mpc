@@ -1,6 +1,8 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
 /* # This file is part of the MPC Runtime.                                # */
@@ -139,7 +141,7 @@ sctk_restrict_topology ()
 
 #ifdef MPC_Message_Passing
     /* Determine number of processes on this node */
-    sctk_pmi_get_processes_on_node_number(&detected_on_this_host);
+    sctk_pmi_get_process_on_node_number(&detected_on_this_host);
     sctk_pmi_get_process_on_node_rank(&rank);
     detected = sctk_process_number;
     sctk_nodebug("Nb process on node %d",detected_on_this_host);

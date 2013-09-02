@@ -29,6 +29,7 @@
 #include "sctk_spinlock.h"
 #include "sctk_alloc.h"
 #include "sctk_thread_api.h"
+#include "sctk_dummy.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -65,8 +66,8 @@ extern "C"
   void sctk_ethread_thread_init (void);
   void sctk_ethread_mxn_thread_init (void);
 
-  void sctk_thread_wait_for_value ( int *data, int value);
-  void sctk_thread_wait_for_value_and_poll ( int *data, int value,
+  void sctk_thread_wait_for_value ( volatile int *data, int value);
+  void sctk_thread_wait_for_value_and_poll ( volatile int *data, int value,
 					    void (*func) (void *), void *arg);
   void
     sctk_kthread_wait_for_value_and_poll ( int *data, int value,
@@ -103,10 +104,11 @@ extern "C"
 
   typedef struct sctk_thread_data_s
   {
-    sctk_alloc_thread_data_t *tls;
+    struct sctk_alloc_chain *tls;
     void *__arg;
     void *(*__start_routine) (void *);
     int task_id;
+    int local_task_id;
     int virtual_processor;
     int user_thread;
 
@@ -117,7 +119,7 @@ extern "C"
     volatile sctk_thread_status_t status;
     struct sctk_task_specific_s *father_data;
   } sctk_thread_data_t;
-#define SCTK_THREAD_DATA_INIT { NULL, NULL, NULL, -1, -1, -1 ,\
+#define SCTK_THREAD_DATA_INIT { NULL, NULL, NULL, -1, -1, -1 , -1,\
       NULL,NULL,-1,(void*)NULL,sctk_thread_undef_status,NULL}
 
   void sctk_thread_data_init (void);
@@ -137,7 +139,7 @@ extern "C"
 
   extern volatile unsigned sctk_long_long sctk_timer;
 
-  extern sctk_alloc_thread_data_t *sctk_thread_tls;
+  extern struct sctk_alloc_chain *sctk_thread_tls;
   void __MPC_init_types (void);
 
 #define sctk_time_interval 10	/*millisecondes */

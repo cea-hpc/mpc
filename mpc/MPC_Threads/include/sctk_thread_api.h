@@ -119,7 +119,7 @@ extern "C"
   int sctk_thread_create (sctk_thread_t * __threadp,
 			  const sctk_thread_attr_t * __attr,
 			  void *(*__start_routine) (void *),
-			  void *__arg, long task_id);
+			  void *__arg, long task_id, long local_task_id);
   int
     sctk_user_thread_create (sctk_thread_t * __threadp,
 			     const sctk_thread_attr_t * __attr,

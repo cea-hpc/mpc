@@ -150,7 +150,7 @@ extern "C"
     sigset_t sigs;
     int error;
     void *thread_lib;
-    void *sctk_tls_key_local;
+    void *sctk_current_alloc_chain_local;
     void *sctk_tls_trace_local;
     void *mpc_user_tls_1;
     void *sctk_extls;
@@ -159,9 +159,11 @@ extern "C"
 	void *sctk_tls_module;
 #endif
     void *sctk_message_passing;
-    //profiling TLS
+    /* profiling TLS */
     void *tls_trace_module;
     void *tls_args;
+    /* MPC Profiler TLS */
+    void *tls_mpc_profiler;
   } sctk_mctx_t;
 
   int sctk_getcontext (sctk_mctx_t * ucp);

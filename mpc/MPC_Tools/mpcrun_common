@@ -21,7 +21,7 @@
 #                                                                      #
 ########################################################################
 
-LAUNCH="none"
+LAUNCH="mpiexec"
 BINS_HOME="${MPC_BIN_DIR}/mpcrun_opt/mpcrun"
 
 GDB_LIBTHREAD_DB="${MPC_LIB_DIR}/libmpc_thread_db.so"
@@ -31,6 +31,8 @@ export SCTK_JOB_MANAGER
 
 MPC_VERBOSE="0"
 MPC_DISABLE="0"
+
+MPC_PROFILING="none"
 
 show=
 
@@ -120,6 +122,8 @@ Launcher:
     --launcher=n,-l=n Define launcher
     --opt=<options> launcher specific options
     --launch_list print available launch methods
+    --config=<file> Configuration file to load.
+    --profiles=<p1,p2> List of profiles to enable in config.
 
 Debugger:
     --dbg=<debugger_name> to use a debugger
@@ -128,6 +132,21 @@ MIC:
 	--mic-library-path= Path pour les librairies dynamiques sur le MIC
 	--mic-host= Adresse du MIC
 	--mic-dir= Dossier pour les transferts sur le MIC
+
+Profiling:
+	--profiling=AA,BB,...
+	
+	example : --profiling=text_stdout,html,latex
+	
+	With the following output modules :
+		text : Outputs to file indented profile with time in standard units
+		text_raw : Outputs to file unindented profile in ticks (gnuplot compliant)
+		text_noindent : Same as "text" with no indentation
+		text_stdout : "text" to stdout
+		text_stdout_raw : "text_raw" to stdout
+		text_stdout_noindent : "text_noindent" to stdout
+		latex : Outputs profile to a latex source file
+		html : Outputs profile to an html file
 EOF
 }
 
@@ -143,6 +162,12 @@ if test -f $MPC_USE_MPCRC_FILE; then
 else
 . ${BINS_HOME}_default
 . $MPC_USE_MPCRC_FILE
+fi
+
+# On 2.3.1 .mpcrc was setup with LAUNCH=none, but on 2.4.0 it
+# made all tasks running on interactiv node, so override 'none' values here
+if test "$LAUNCH" = 'none'; then
+	LAUNCH='mpiexec'
 fi
 
 mpi_only=no
@@ -185,6 +210,47 @@ TMP_DIR="--directory=${TMP_DIR_D}"
 LAUNCH_OPTIONS=""
 MPC_CLEAN_TMP_DIR="0"
 
+# Pre-parsing to extrac --config and --profiles, it must be done before parsing all options
+# as config file must feed default value and can be erased by mpcrun arguments.
+for arg in "$@" ; do
+	case $arg in
+		--config=*)
+			MPC_USER_CONFIG="`echo A$arg | sed -e 's/A--config=//g'`"
+			export MPC_USER_CONFIG
+			;;
+		--profiles=*)
+			MPC_USER_PROFILES="`echo A$arg | sed -e 's/A--profiles=//g'`"
+			export MPC_USER_PROFILES
+			;;
+	esac
+done
+
+#check that we have the file
+if [ ! -z "${MPC_USER_CONFIG}" ] && [ ! -e "${MPC_USER_CONFIG}" ]; then
+	echo "ERROR : Configuration file '${MPC_USER_CONFIG}' provided by --config or MPC_USER_CONFIG doesn't exist." 1>&2
+	exit 1
+fi
+
+# Load config files options
+CONFIG_FILES_VALID=false
+config_files_vars="`${MPC_BIN_DIR}/mpc_print_config --launcher`"
+if [ $? -eq 0 ]; then eval "${config_files_vars}"; fi
+if [ "${CONFIG_FILES_VALID}" = "true" ]; then
+	# Default value related to --enable-smt
+	ENABLE_SMT="${CONFIG_LAUNCHER_SMT}"
+	# Default value related to -v/-vv/-vvv
+	MPC_VERBOSE="${CONFIG_LAUNCHER_VERBOSITY}"
+	# User launchers
+	MPC_USER_LAUNCHERS="${CONFIG_LAUNCHER_USER_LAUNCHERS}"
+else
+	mpcrun_error "Error while loading MPC configuration files."
+fi
+
+# Make config loading silent in case of error in all MPC processes and avoid to revalidate XML files
+# with mpc-config.xsd as it's already done. By this way it avoid to open mpc-config.xsd on each nodes.
+export MPC_CONFIG_SILENT=1
+
+# Parse command options
 DEFAULT_CPU_NB=""
 for arg in "$@" ; do
     if test "$READ_MPC_ARG" = "true" ; then
@@ -205,6 +271,9 @@ for arg in "$@" ; do
     --verbose=*)
     MPC_VERBOSE="`echo A$arg | sed -e 's/A--verbose=//g'`"
     ;;
+    --profiling=*)
+    MPC_PROFILING="`echo A$arg | sed -e 's/A--profiling=//g'`"
+    ;;
     --show)
     show=echo
     ;;
@@ -224,9 +293,12 @@ for arg in "$@" ; do
     --clean)
     MPC_CLEAN_TMP_DIR="1"
     ;;
-    --launch_list)
+    --launch_list|-l=help|--launcher=help)
     echo "Available launch method"
     for i in ${MPC_BIN_DIR}/mpcrun_opt/* ; do echo "    - `basename $i`" | sed s,mpcrun_,,g  | grep -v default_param | grep -v propagate_env | grep -v "~" ; done
+    if [ ! -z "${MPC_USER_LAUNCHERS}" ] && [ -e "${MPC_USER_LAUNCHERS}" ]; then
+    	for i in ${MPC_USER_LAUNCHERS}/mpcrun_* ; do echo "    - `basename $i`" | sed s,mpcrun_,,g  | grep -v default_param | grep -v propagate_env | grep -v "~" ; done
+    fi
     exit 0
     ;;
     --nocheckpoint)
@@ -350,9 +422,6 @@ if test "$PROCESS_NB" != "1"; then
   if test "$NET_TYPE" = "--sctk_use_network=none"; then
     NET_TYPE="--sctk_use_network=tcp"
   fi
-  if test "$LAUNCH" = "none"  ; then
-  	LAUNCH="mpiexec"
-  fi
 else
 	NET_TYPE="--sctk_use_network=none"
 fi
@@ -413,8 +482,9 @@ add_arg "$NET_TYPE"
 fi
 
 MPC_VERBOSE="--mpc-verbose=${MPC_VERBOSE}"
+MPC_PROFILING="--profiling=${MPC_PROFILING}"
 
-SCTK_ARGS="$SCTK_ARGS $VERSION_DETAILS $REPORT $CHECKPOINT $RESTART $MIGRATION $TMP_DIR $MPC_VERBOSE "
+SCTK_ARGS="$SCTK_ARGS $VERSION_DETAILS $REPORT $CHECKPOINT $RESTART $MIGRATION $TMP_DIR $MPC_VERBOSE $MPC_PROFILING"
 if test "$MPC_MONO" = "1" ; then
 SCTK_ARGS="$SCTK_ARGS --mono=$BINARY"
 BINARY="mpc_mono"
@@ -429,15 +499,6 @@ PROCESS_NB="$TASK_NB"
 NET_TYPE="--use-mpi"
 fi
 
-# TEST Task and Process number correctness
-if test $TASK_NB -lt $PROCESS_NB;  then
-	mpcrun_error "You cannot have less tasks than processes ($TASK_NB task(s) for $PROCESS_NB processe(s))"
-fi
-
-# TEST Node and Process number correctness
-if test $PROCESS_NB -lt $NODE_NB;  then
-	mpcrun_error "You cannot have less processes than nodes ($NODE_NB nodes(s) for $PROCESS_NB processe(s))"
-fi
 
 export PROCESS_NB
 
@@ -492,13 +553,25 @@ fi
 
 debug_file="${TMP_DIR_D}debug_file"
 
+#compute suffix
 if test "$DEBUG" = "" ; then
-. ${BINS_HOME}_$LAUNCH
+	LAUNCH_SUFFIX="$LAUNCH"
 else
 echo "Using $DEBUG as debugger"
-. ${BINS_HOME}_${LAUNCH}_`basename ${DEBUG}`
+	LAUNCH_SUFFIX="${LAUNCH}_`basename ${DEBUG}`"
 fi
 
+#load launcher
+if [ ! -z "${MPC_USER_LAUNCHERS}" ] && [ -e "${MPC_USER_LAUNCHERS}/mpcrun_${LAUNCH_SUFFIX}" ]; then
+	. "${MPC_USER_LAUNCHERS}/mpcrun_${LAUNCH_SUFFIX}"
+elif [ -e "${BINS_HOME}_${LAUNCH_SUFFIX}" ]; then
+	. "${BINS_HOME}_${LAUNCH_SUFFIX}"
+else
+	echo "Invalid launcher : ${LAUNCH_SUFFIX}" 1>&2
+	exit 1
+fi
+
+export MPC_LAUNCH_COMMAND="${LAUNCH_COMMAND}"
 
 trap "kill -s 2 0" INT
 #echo "LAUNCH_COMMAND $LAUNCH_COMMAND"

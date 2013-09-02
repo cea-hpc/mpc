@@ -1,0 +1,56 @@
+<?xml version="1.0"?>
+<!--
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - VALAT Sebastien sebastien.valat@cea.fr                           #
+#                                                                      #
+########################################################################
+-->
+<!DOCTYPE config SYSTEM "../MPC_Config/extra/config-meta.dtd">
+<config>
+	<usertypes>
+		<struct name="allocator"             doc="Options for MPC memory allocator.">
+			<!--
+			                   !!!!!!  READ THIS BEFORE MODIFY !!!!!!!!!!
+
+			!!!! CAUTION !!!!! Due to initialization steps, we must boostrap egg_allocator with default
+			values, so allocator can only use options which can be override on-fly (during the run)
+			and must not define fixed parameters.
+			There is an exception for all steps which are done after egg_allocator init steps :
+			    - NUMA setup and usage
+				- Setup allocator of threads (memory source mapping, scope selection....)
+			!!!! CAUTION !!!!! If you want to add an array here, you must fix function
+			sctk_alloc_config_egg_init().
+			!!!! CAUTION !!!!! Up to now default values are replicated into sctk_alloc_config_egg_init()
+			don't forget to update it in case of change.
+			-->
+			<param name="numa_migration"     type="bool"    default="false"    doc="Enable or disable NUMA migration of allocator pages on thread migration."/>
+			<param name="realloc_factor"     type="int"     default="2"        doc="If the new segment is less than N time smaller than factor, realloc will allocate a new segment, otherwise it will keep the same one. Use 1 to force realloc every time (may be slower but consume less memory)."/>
+			<param name="realloc_threashold" type="size"    default="50MB"     doc="If the new segment is smaller of N bytes than threashold, realloc will allocate a new segment, otherwise it will keep the same one. Use 0 to force realloc every time (may be slower but consume less memory)."/>
+			<param name="numa"               type="bool"    default="true"     doc="Permit to enable of disable NUMA support in MPC Allocator."/>
+			<!--<param name="scope"              type="string"  default="thread"   doc="Define the scope the posix allocator, can be : process | vp | thread."/>-->
+			<param name="strict"             type="bool"    default="false"    doc="If true, enable usage of abort() on free error, otherwise try to continue by skipping."/>
+			<param name="keep_mem"           type="size"    default="500MB"     doc="Maximum amount of memory to keep in memory sources (one per NUMA node). Use 0 to disable cache, huge value to keep all."/>
+			<param name="keep_max"           type="size"    default="8MB"      doc="Maximum size of macro blocs to keep in memory source for reuse. Use 0 to disable cache, huge value to keep all."/>
+		</struct>
+	</usertypes>
+	<modules>
+		<module name="allocator" type="allocator"/>
+	</modules>
+</config>

@@ -1,6 +1,8 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
 /* # This file is part of the MPC Runtime.                                # */
@@ -17,17 +19,17 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - DIDELOT Sylvain didelot.sylvain@exascale-computing.eu            # */
+/* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
 
 #include <stdio.h>
-#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sctk_config.h>
 #include <sctk_spinlock.h>
 #include <sctk_alloc.h>
+#include "sctk_stdint.h"
 
 #ifndef __SCTK__LIST__
 #define __SCTK__LIST__
@@ -40,9 +42,9 @@ struct sctk_list_elem {
 };
 
 struct sctk_list {
-  uint64_t elem_count;
-  uint8_t is_collector;
-  uint8_t is_initialized;
+  sctk_uint64_t elem_count;
+  sctk_uint8_t is_collector;
+  sctk_uint8_t is_initialized;
   size_t size_payload;
   sctk_spinlock_t   lock;
   struct sctk_list_elem *head;
@@ -51,13 +53,13 @@ struct sctk_list {
 };
 
 void
-sctk_list_new(struct sctk_list* list, uint8_t is_collector, size_t size_payload);
+sctk_list_new(struct sctk_list* list, sctk_uint8_t is_collector, size_t size_payload);
 
 void *
 sctk_list_push(struct sctk_list* list, void *elem);
 
 void *
-sctk_list_get_from_head(struct sctk_list* list, uint32_t n);
+sctk_list_get_from_head(struct sctk_list* list, sctk_uint32_t n);
 
   void*
 sctk_list_remove(struct sctk_list* list, struct sctk_list_elem* elem);

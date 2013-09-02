@@ -29,6 +29,7 @@
 #include <mpcmp.h>
 #include <sctk_reorder.h>
 #include <sctk_ib.h>
+#include <opa_primitives.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -37,6 +38,7 @@ extern "C"
 
   struct sctk_request_s;
   struct sctk_ib_msg_header_s;
+  struct mpc_buffered_msg_s;
 
 #define SCTK_MESSAGE_PENDING 0
 #define SCTK_MESSAGE_DONE 1
@@ -44,18 +46,32 @@ extern "C"
 
   /* Message for a process */
 #define MASK_PROCESS_SPECIFIC 1<<9
+  /* A control message */
+#define MASK_CONTROL_MESSAGE  1<<10
+
   /* Message for a process with ordering */
 #define MASK_PROCESS_SPECIFIC_W_ORDERING (1<<31 | MASK_PROCESS_SPECIFIC)
-  /* Message for a process without ordering */
-#define MASK_PROCESS_SPECIFIC_WO_ORDERING (1<<30 | MASK_PROCESS_SPECIFIC)
 
 #define IS_PROCESS_SPECIFIC_MESSAGE_TAG_WITH_ORDERING(x) ( (MASK_PROCESS_SPECIFIC_W_ORDERING & x) == (MASK_PROCESS_SPECIFIC_W_ORDERING))
 
 #define IS_PROCESS_SPECIFIC_MESSAGE_TAG(x) ( (MASK_PROCESS_SPECIFIC & x) == (MASK_PROCESS_SPECIFIC) )
 
 /* For ondemand connexions */
-#define MASK_PROCESS_SPECIFIC_ONDEMAND (1<<29 | MASK_PROCESS_SPECIFIC)
+#define MASK_PROCESS_SPECIFIC_ONDEMAND (1<<29 | MASK_PROCESS_SPECIFIC | MASK_CONTROL_MESSAGE)
 #define IS_PROCESS_SPECIFIC_ONDEMAND(x) ( (MASK_PROCESS_SPECIFIC_ONDEMAND & x) == (MASK_PROCESS_SPECIFIC_ONDEMAND) )
+
+/* For low memory consumption */
+#define MASK_PROCESS_SPECIFIC_LOW_MEM (1<<28 | MASK_PROCESS_SPECIFIC | MASK_CONTROL_MESSAGE)
+#define IS_PROCESS_SPECIFIC_LOW_MEM(x) ( (MASK_PROCESS_SPECIFIC_LOW_MEM & x) == (MASK_PROCESS_SPECIFIC_LOW_MEM) )
+
+/* For user connexions */
+#define MASK_PROCESS_SPECIFIC_USER (1<<27 | MASK_PROCESS_SPECIFIC | MASK_CONTROL_MESSAGE)
+#define IS_PROCESS_SPECIFIC_USER(x) ( (MASK_PROCESS_SPECIFIC_USER & x) == (MASK_PROCESS_SPECIFIC_USER) )
+
+
+/* Is the message a control message ? */
+#define IS_PROCESS_SPECIFIC_CONTROL_MESSAGE(x) ( (MASK_CONTROL_MESSAGE & x) == (MASK_CONTROL_MESSAGE) )
+
 
 
 
@@ -65,11 +81,20 @@ extern "C"
     broadcast_specific_message_tag = 3,
     allreduce_specific_message_tag = 4,
 
+    /* Process specific */
     process_specific_message_tag = MASK_PROCESS_SPECIFIC,
+    /* On demand */
     ondemand_specific_message_tag =  MASK_PROCESS_SPECIFIC_ONDEMAND,
+    /* Low memory */
+    low_mem_specific_message_tag =  MASK_PROCESS_SPECIFIC_LOW_MEM,
+    /* User */
+    user_specific_message_tag =  MASK_PROCESS_SPECIFIC_USER,
+
+    /* Collective */
     allreduce_hetero_specific_message_tage = MASK_PROCESS_SPECIFIC_W_ORDERING | allreduce_specific_message_tag,
     broadcast_hetero_specific_message_tage = MASK_PROCESS_SPECIFIC_W_ORDERING | broadcast_specific_message_tag,
-    barrier_hetero_specific_message_tage = MASK_PROCESS_SPECIFIC_W_ORDERING | broadcast_specific_message_tag
+    barrier_hetero_specific_message_tage = MASK_PROCESS_SPECIFIC_W_ORDERING | broadcast_specific_message_tag,
+
   }specific_message_tag_t;
 
   typedef struct sctk_thread_message_header_s
@@ -145,9 +170,9 @@ extern "C"
 
   struct sctk_thread_ptp_message_s;
 
-  typedef struct sctk_msg_list_s{
+  typedef volatile struct sctk_msg_list_s{
     struct sctk_thread_ptp_message_s * msg;
-    struct sctk_msg_list_s *prev, *next;
+    volatile struct sctk_msg_list_s *prev, *next;
   }sctk_msg_list_t;
 
 typedef struct sctk_message_to_copy_s{
@@ -193,6 +218,11 @@ typedef struct sctk_message_to_copy_s{
     /*Reoder buffer struct*/
     sctk_reorder_buffer_t reorder;
 
+    /* If the message has been buffered during the
+     * Send function. If it is, we need to free the async
+     * buffer when completing the message */
+    struct mpc_buffered_msg_s * buffer_async;
+
     /* RDMA infos */
     void* rdma_src;
     void* route_table;
@@ -217,6 +247,12 @@ typedef struct sctk_message_to_copy_s{
   typedef struct sctk_thread_ptp_message_s{
     sctk_thread_ptp_message_body_t body;
     sctk_thread_ptp_message_tail_t  tail;
+
+    /* Pointers for chaining elements */
+    struct sctk_thread_ptp_message_s* prev;
+    struct sctk_thread_ptp_message_s* next;
+    /* If the entry comes from a buffered list */
+    char from_buffered;
   }sctk_thread_ptp_message_t;
 
 
@@ -292,6 +328,7 @@ typedef struct sctk_message_to_copy_s{
 					sctk_thread_ptp_message_t* recv);
   void sctk_complete_and_free_message (sctk_thread_ptp_message_t * msg);
   void sctk_rebuild_header (sctk_thread_ptp_message_t * msg);
+  int sctk_determine_src_process_from_header (sctk_thread_ptp_message_body_t * body);
 
 #ifdef __cplusplus
 }

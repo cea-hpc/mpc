@@ -1,6 +1,8 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
 /* # This file is part of the MPC Runtime.                                # */
@@ -17,14 +19,14 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - DIDELOT Sylvain didelot.sylvain@exascale-computing.eu            # */
+/* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
 #include "sctk_buffered_fifo.h"
 
     void
 sctk_buffered_fifo_new(struct sctk_buffered_fifo *fifo, size_t elem_size,
-        uint32_t chunk_size, uint8_t is_collector)
+        sctk_uint32_t chunk_size, sctk_uint8_t is_collector)
 {
     fifo->head = NULL;
     fifo->tail = NULL;
@@ -41,7 +43,7 @@ sctk_buffered_fifo_free(struct sctk_buffered_fifo *fifo,
 {
     struct sctk_buffered_fifo_chunk *tmp = fifo->head;
     struct sctk_buffered_fifo_chunk *to_free = NULL;
-    uint32_t i = 0;
+    sctk_uint32_t i = 0;
     while (tmp) {
         to_free = tmp;
         if (free_func) {
@@ -186,10 +188,10 @@ sctk_buffered_fifo_is_empty(struct sctk_buffered_fifo *fifo)
 
 
 void*
-sctk_buffered_fifo_get_elem_from_tail(struct sctk_buffered_fifo *fifo, uint64_t n)
+sctk_buffered_fifo_get_elem_from_tail(struct sctk_buffered_fifo *fifo, sctk_uint64_t n)
 {
     struct sctk_buffered_fifo_chunk *tmp = fifo->tail;
-    uint64_t n_offset;
+    sctk_uint64_t n_offset;
     char* ret;
 
     while (tmp) {
@@ -213,7 +215,7 @@ sctk_buffered_fifo_get_elem_from_tail(struct sctk_buffered_fifo *fifo, uint64_t 
 }
 
 
-void *sctk_buffered_fifo_getnth(struct sctk_buffered_fifo *fifo, uint64_t n)
+void *sctk_buffered_fifo_getnth(struct sctk_buffered_fifo *fifo, sctk_uint64_t n)
 {
     struct sctk_buffered_fifo_chunk *tmp = fifo->head;
     char* ret;

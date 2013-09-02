@@ -111,7 +111,7 @@ int __mpcomp_dynamic_loop_begin (int lb, int b, int incr,
 	    rank, index ) ;
 
 	/* Generate a barrier (it should reinitialize all counters) */
-#warning "OpenMP: For/Dyn: Check which barrier is used"
+INFO("OpenMP: For/Dyn: Check which barrier is used")
 	__mpcomp_barrier_for_dyn();
 	/* Recall the function */
 	return __mpcomp_dynamic_loop_begin (lb, b, incr, chunk_size, from, to);
@@ -124,7 +124,7 @@ int __mpcomp_dynamic_loop_begin (int lb, int b, int incr,
 	    rank, index ) ;
 
 	/* Generate a barrier (it should reinitialize all counters) */
-#warning "OpenMP: For/Dyn: Check which barrier is used"
+INFO("OpenMP: For/Dyn: Check which barrier is used")
 	__mpcomp_barrier_for_dyn();
 	/* Recall the function */
 	return __mpcomp_dynamic_loop_begin (lb, b, incr, chunk_size, from, to);
@@ -928,7 +928,7 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
       sctk_free (new_info);
     }
 
-#warning "TODO can we only reset dynamic-team info?"
+TODO("can we only reset dynamic-team info?")
   /* Re-initializes team info for this thread */
   __mpcomp_reset_team_info (current_info, num_threads);
 

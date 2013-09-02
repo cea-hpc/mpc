@@ -122,7 +122,7 @@ static void
 sctk_ethread_mxn_migration_task_relocalise (sctk_ethread_per_thread_t * task)
 {
   sctk_nodebug ("sctk_ethread_mxn_migration_task rel %p", task);
-  __sctk_relocalise_tls (task->tls_mem);
+  sctk_alloc_posix_numa_migrate_chain (task->tls_mem);
   sctk_ethread_mxn_place_task_on_vp (task->migrate_to, task);
   sctk_nodebug ("sctk_ethread_mxn_migration_task rel %p done", task);
 }
@@ -183,7 +183,7 @@ sctk_ethread_mxn_sched_migrate ()
 static int
 sctk_ethread_mxn_sched_restore (sctk_thread_t thread, char *type, int vp)
 {
-  sctk_alloc_thread_data_t *tls;
+  struct sctk_alloc_chain *tls;
   sctk_ethread_virtual_processor_t *cpu;
   char name[SCTK_MAX_FILENAME_SIZE];
   sctk_nodebug ("Try to restore %p on vp %d", thread, vp);
@@ -477,6 +477,9 @@ sctk_ethread_mxn_func_kernel_thread (void *arg)
   sctk_thread_data_set (&tmp);
   sctk_set_tls (NULL);
 
+  //avoid to create an allocation chain
+  sctk_alloc_posix_plug_on_egg_allocator();
+
   sctk_spinlock_lock (&sctk_ethread_key_spinlock);
   sctk_nb_vp_initialized++;
   sctk_spinlock_unlock (&sctk_ethread_key_spinlock);
@@ -707,7 +710,6 @@ sctk_ethread_mxn_thread_proc_migration (const int cpu)
 
   if (cpu != last)
     {
-      sctk_clean_memory ();
       current->status = ethread_migrate;
       current->migration_func = sctk_ethread_mxn_migration_task;
       current->migrate_to = sctk_ethread_mxn_vp_list[cpu];
@@ -897,7 +899,7 @@ sctk_ethread_mxn_thread_init (void)
   sctk_thread_data_init ();
 
   sctk_ethread_mxn_sched_yield ();
-#ifdef MPC_Allocator
+#ifdef MPC_PosixAllocator
   sctk_add_global_var (&sctk_ethread_key_pos, sizeof (int));
 #endif
 }

@@ -28,7 +28,8 @@ typedef int sctk_communicator_t;
 #define SCTK_COMM_WORLD 0
 #define SCTK_COMM_SELF 1
 
-void sctk_communicator_init();
+void sctk_communicator_world_init(int task_nb);
+void sctk_communicator_self_init();
 int sctk_get_nb_task_local (const sctk_communicator_t communicator);
 int sctk_get_first_task_local (const sctk_communicator_t communicator);
 int sctk_get_last_task_local (const sctk_communicator_t communicator);

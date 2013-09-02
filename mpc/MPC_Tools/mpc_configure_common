@@ -178,6 +178,7 @@ if test "$SCTK_BIN_DIR" = "" ; then SCTK_BIN_DIR="${SCTK_EPREFIX}/bin"; fi
 if test "$SCTK_LIB_DIR" = "" ; then SCTK_LIB_DIR="${SCTK_EPREFIX}/lib"; fi
 if test "$SCTK_INCLUDE_DIR" = "" ; then SCTK_INCLUDE_DIR="${SCTK_PREFIX}/include"; fi
 if test "$SCTK_MAN_DIR" = "" ; then SCTK_MAN_DIR="${SCTK_EPREFIX}/man"; fi
+if test "$SCTK_SHARE_DIR" = "" ; then SCTK_SHARE_DIR="${SCTK_EPREFIX}/share/mpc"; fi
 }
 
 check_compilers(){
@@ -474,6 +475,9 @@ cat <<EOF >> include/sctk_config.h
 #define SCTK_VERSION_MINOR $MINOR
 #define SCTK_VERSION_REVISION $REVISION
 #define SCTK_VERSION_PRE "$PRE_RELEASE"
+
+/*  Install prefix */
+#define SCTK_INSTALL_PREFIX "${SCTK_PREFIX}"
 EOF
 
 echo "#endif" >> include/sctk_config.h
@@ -523,6 +527,7 @@ cat  << EOF  > ${SCTK_CONF_C}
 #ifdef Linux_SYS
 #define _XOPEN_SOURCE 600
 #endif
+#include <limits.h>
 #include <pthread.h>
 
 void *
@@ -599,6 +604,34 @@ else
 fi
 done
 }
+
+
+SCTK_CHECK_NOFAIL_PRAGMA_MESSAGE(){
+
+cat  << EOF  > ${SCTK_CONF_C}
+#define DO_PRAGMA(x) _Pragma (#x)
+#define TODO(x) DO_PRAGMA(message ("TODO - " #x))
+
+TODO(TEST_PRAGMA)
+
+
+int main(){
+    
+    return 0;
+}
+EOF
+	echo "File ${SCTK_CONF_C}" >> ${SCTK_CONF_LOG} 2>&1
+	cat ${SCTK_CONF_C} >> ${SCTK_CONF_LOG} 2>&1
+	echo "$SCTK_CC $SCTK_CFLAGS -Werror -Wall ${SCTK_CONF_C} -o ${SCTK_CONF_BIN} $SCTK_LDFLAGS">> ${SCTK_CONF_LOG} 2>&1
+	eval "$SCTK_CC $SCTK_CFLAGS  -Werror -Wall ${SCTK_CONF_C} -o ${SCTK_CONF_BIN} $SCTK_LDFLAGS">> ${SCTK_CONF_LOG} 2>&1
+	SCTK_SCTK_CHECK_FUNC_RES="$?"
+	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
+
+}
+
+
+
+
 
 SCTK_CHECK_FUNC_NOFAIL_UNWIND(){
     for i in $1 ; do
@@ -688,6 +721,7 @@ EOF
 }
 
 
+
 check_libunwind_done="0"
 check_libunwind(){
 if test "$check_libunwind_done" = "0" ; then
@@ -736,6 +770,29 @@ else
 sctk_echo "Already done"
 fi
 }
+
+
+check_pragma_message_done="0"
+check_pragma_message(){
+	if test "$check_pragma_message_done" = "0" ; then
+		begin_section "Check Pragma message support:"
+		SCTK_CHECK_NOFAIL_PRAGMA_MESSAGE
+		if test "$SCTK_SCTK_CHECK_FUNC_RES" = "0"; then
+			SCTK_CHECK_OPTION "-DSCTK_HAVE_PRAGMA_MESSAGE"
+		else
+			sctk_printf "#pragma message available: no\n"
+		fi
+		end_section
+	check_pragma_message_done="1"
+	else
+	sctk_echo "Already done"
+	fi
+}
+
+
+
+
+
 
 check_binding_done="0"
 check_binding(){

@@ -1,6 +1,8 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
 /* # This file is part of the MPC Runtime.                                # */
@@ -17,7 +19,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
-/* #   - DIDELOT Sylvain didelot.sylvain@exascale-computing.eu            # */
+/* #   - DIDELOT Sylvain sylvain.didelot@exascale-computing.eu            # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -28,7 +30,7 @@
 
 /* TODO: Collector mode not implemented */
 void
-sctk_list_new(struct sctk_list* list, uint8_t is_collector, size_t size_payload)
+sctk_list_new(struct sctk_list* list, sctk_uint8_t is_collector, size_t size_payload)
 {
   list->elem_count = 0;
   list->lock = SCTK_SPINLOCK_INITIALIZER;
@@ -42,7 +44,7 @@ sctk_list_new(struct sctk_list* list, uint8_t is_collector, size_t size_payload)
 
 
 static struct sctk_list_elem*
-sctk_list_alloc_elem(struct sctk_list* list, void* elem, size_t size, uint8_t collector )
+sctk_list_alloc_elem(struct sctk_list* list, void* elem, size_t size, sctk_uint8_t collector )
 {
   struct sctk_list_elem *tmp =
     sctk_buffered_malloc(&list->alloc_buff, sizeof(struct sctk_list_elem) + size);
@@ -62,7 +64,7 @@ sctk_list_alloc_elem(struct sctk_list* list, void* elem, size_t size, uint8_t co
 }
 
 void *
-sctk_list_get_from_head(struct sctk_list* list, uint32_t n)
+sctk_list_get_from_head(struct sctk_list* list, sctk_uint32_t n)
 {
   struct sctk_list_elem *tmp = list->head;
 

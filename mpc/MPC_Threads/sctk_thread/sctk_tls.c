@@ -1,6 +1,8 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
 /* # This file is part of the MPC Runtime.                                # */
@@ -37,6 +39,9 @@
 #include <fcntl.h>
 #include "hwloc.h"
 
+/* Not present in hwloc.h */
+void hwloc_obj_add_info(hwloc_obj_t obj, const char *name, const char *value);
+
 #if defined(SCTK_USE_TLS)
 __thread void *sctk_extls = NULL;
 
@@ -44,6 +49,14 @@ __thread void *sctk_extls = NULL;
 /* to set GS register */
 #include <asm/prctl.h> /* ARCH_SET_GS */
 #include <sys/prctl.h> /* arch_prctl */
+
+/*
+Function is not defined in headers, manpage say to declare it manually.
+It may be fixed in future glibc.
+*/
+#ifndef arch_prctl
+int arch_prctl(int code, unsigned long addr);
+#endif
 
 /* need to be saved and restored at context switch */
 __thread void *sctk_tls_module_vp[sctk_extls_max_scope+sctk_hls_max_scope] ;
@@ -159,7 +172,6 @@ sctk_tls_unlock_level (tls_level * level)
 static inline void
 sctk_hls_init_level(hls_level * level)
 {
-	int i ;
 	sctk_tls_init_level(&level->level);
 	sctk_atomics_store_int ( &level->toenter, 0 ) ;
 	sctk_atomics_store_int ( &level->entered, 0 ) ;
@@ -199,7 +211,7 @@ sctk_get_module_file_decr (size_t m, size_t module_size)
   sctk_spinlock_lock (&(lock));
   if (size <= m)
     {
-      fds = sctk_realloc (fds, m + 1);
+      fds = sctk_realloc (fds, (m + 1) * sizeof (int));
       for (i = size; i < m + 1; i++)
 	{
 	  fds[i] = -1;
@@ -321,9 +333,11 @@ __sctk__tls_get_addr__generic_scope ( size_t module_id,
 	  if ( tls_level->modules[module_id-1] == NULL )
 		  tls_module = sctk_alloc_module (module_id, tls_level);
 	  sctk_tls_unlock_level (tls_level);
+    assert(tls_level->modules[module_id-1] != NULL);
   }
 
   tls_module = (char *) tls_level->modules[module_id - 1];
+  assert(tls_module != NULL);
   res = tls_module + offset;
   return res;
 }
@@ -408,7 +422,7 @@ sctk_extls_keep ( int *scopes )
 void
 sctk_extls_delete ()
 {
-#warning "Pas de liberation des extls"
+TODO("Liberation des extls")
 }
 
 /*
@@ -450,10 +464,11 @@ void sctk_hls_build_repository ()
 		  char level_id[8] ;
 		  int numa_id = 0 ;
 		  if ( is_numa_node && cur_obj->type != HWLOC_OBJ_MACHINE ) {
-			  if ( cur_obj->type == HWLOC_OBJ_NODE )
-				  numa_id = cur_obj->logical_index ;
-			  else
-			      numa_id = hwloc_get_ancestor_obj_by_type(topology,HWLOC_OBJ_NODE,cur_obj)->logical_index ;
+			  hwloc_obj_t temp_obj = cur_obj;
+			  while (temp_obj->type != HWLOC_OBJ_NODE && temp_obj->type != HWLOC_OBJ_GROUP) {
+				  temp_obj = hwloc_get_ancestor_obj_by_type(topology,HWLOC_OBJ_NODE,temp_obj);
+			  }
+			  numa_id = temp_obj->logical_index ;
 		  }
 		  sprintf ( level_id, "%d", level_number[numa_id] ) ;
 		  hwloc_obj_add_info ( cur_obj, "hls_level", level_id ) ;
@@ -622,7 +637,7 @@ sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( vo
 		if ( extls[i]->modules == NULL || extls[i]->modules[0] == NULL ) {
 			void *dummy = __sctk__tls_get_addr__generic_scope (1,0,extls[i]) ;
 		}
-		assert ( extls[i]->modules[0] != NULL ) ;
+    /* assert ( extls[i]->modules[0] != NULL ) ; */
 		tls_module[i] = extls[i]->modules[0] ;
 	}
 
@@ -636,12 +651,15 @@ sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( vo
 		/* generate a dummy access to an hls variable to initialize memory if needed */
 		if ( sctk_hls[i]->level.modules == NULL || sctk_hls[i]->level.modules[0] == NULL ) {
 			void *dummy = __sctk__tls_get_addr__generic_scope (1,0,&sctk_hls[i]->level) ;
+      /* assert ( sctk_hls[i]->level.modules[0] != NULL ) ; */
+      /* assert ( dummy != NULL ) ; */
 		}
-		assert ( sctk_hls[i]->level.modules[0] != NULL ) ;
+		assert ( sctk_hls[i]->level.modules != NULL ) ;
+		/* assert ( sctk_hls[i]->level.modules[0] != NULL ) ; */
 		tls_module[sctk_extls_max_scope+i] = sctk_hls[i]->level.modules[0] ;
 	}
 
-	*_tls_module = (void**) tls_module ;
+	*((sctk_tls_module_t**) _tls_module) = tls_module ;
 }
 
 /*
@@ -660,7 +678,7 @@ sctk_tls_module_alloc_and_fill ()
 	for ( i=0; i<sctk_extls_max_scope+sctk_hls_max_scope; ++i )
 		sctk_tls_module_vp[i] = tls_module[i] ;
 
-	sctk_tls_module = (void**)tls_module ;
+	sctk_tls_module = (void**) tls_module ;
 }
 #endif
 
@@ -740,7 +758,6 @@ void *
 __sctk__tls_get_addr__numa_level_2_scope (tls_index * tmp)
 {
   void *res;
-  tls_level **hls;
   sctk_nodebug ("__sctk__tls_get_addr__numa_level_2_scope on numa node %d",
     sctk_get_node_from_cpu(sctk_get_cpu()));
   res =
@@ -753,7 +770,6 @@ void *
 __sctk__tls_get_addr__numa_level_1_scope (tls_index * tmp)
 {
   void *res;
-  tls_level **hls;
   sctk_nodebug ("__sctk__tls_get_addr__numa_level_1_scope on numa node %d",
     sctk_get_node_from_cpu(sctk_get_cpu()));
   res =

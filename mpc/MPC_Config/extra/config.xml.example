@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<!--
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - VALAT Sebastien sebastien.valat@cea.fr                           #
+#                                                                      #
+########################################################################
+-->
+
+<!--
+This file contain the default values to override when generating the final file to place into
+{INSTALL_PREFIX}/share/mpc/config.xml.example
+
+PLEASE, setup only complexe structure here, for simple values de default will be taken from
+config-meta.xml automatically.
+-->
+
+<mpc xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="mpc-config.xsd">
+	<profiles>
+		<profile>
+			<name>default</name>
+			<modules>
+			</modules>
+			<!-- For future -->
+			<!--<networks>-->
+				<!-- net config contain complexe structures so default value cannot be setup into config-meta.xml -->
+				<!--<configs>
+					<config>
+						<name>conf1</name>
+						<driver>
+							<infiniband>
+								<buffer>2048</buffer>
+							</infiniband>
+						</driver>
+					</config>
+					<config>
+						<name>conf2</name>
+						<driver>
+							<tcp>
+								<stealing>false</stealing>
+							</tcp>
+						</driver>
+					</config>
+				</configs>-->
+				<!-- rails contain complexe structures so default value cannot be setup into config-meta.xml -->
+				<!--<rails>
+					<rail>
+						<name>rail1</name>
+						<device>ib1</device>
+						<topology>ring</topology>
+						<config>conf1</config>
+					</rail>
+					<rail>
+						<name>rail2</name>
+						<device>eth0</device>
+						<topology>tore</topology>
+						<config>conf2</config>
+					</rail>
+				</rails>
+			</networks>-->
+		</profile>
+	</profiles>
+</mpc>

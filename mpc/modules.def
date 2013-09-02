@@ -1,4 +1,5 @@
 MPC_Common              ;   forced      ;   Bases of MPC framework, common to all modules
+MPC_Config              ;   forced      ;   MPC XML configuration file support
 MPC_Allocator           ;   enabled     ;   MPC memory allocator
 MPC_Message_Passing     ;   enabled     ;   MPC message passing support
 MPC_Microthreads        ;   enabled     ;   MPC microthreads implementation
