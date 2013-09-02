@@ -265,6 +265,7 @@ printf "\t@cp -r \$(DIR_DEST_EXE)/* INSTALL/bin 2>/dev/null || true">> Makefile;
 printf "\t@cp -r lib INSTALL">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL/bin/mpcrun_opt">> Makefile; echo "">> Makefile
 printf "\t@cp ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_opt/* INSTALL/bin/mpcrun_opt">> Makefile; echo "">> Makefile
+cat INSTALL/bin/mpcrun_opt/mpcrun_remote | sed "s:{library_path}:$SCTK_MIC_LIBRARY_PATH:" > INSTALL/bin/mpcrun_opt/mpcrun_remote
 printf "\t@mkdir -p INSTALL/include">> Makefile; echo "">> Makefile
 for i in $MODULE_LIST; do
 if test -d ${MPC_SOURCE_DIR}$i/include ; then

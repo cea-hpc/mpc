@@ -169,6 +169,7 @@ Optional features:
 
 Cross-compilation:
   --mic=ADDRESS                    Cross-compile MPC for Intel MIC
+  --mic-library-path			   Path pour les librairies dynamiques sur le MIC
 
 Module selection:
 EOF
@@ -266,8 +267,13 @@ for arg in "$@" ; do
     SCTK_F77=ifort
     SCTK_CFLAGS="$SCTK_CFLAGS -mmic"
     SCTK_LDFLAGS="$SCTK_LDFLAGS -mmic -lirc -lsvml"
-    SCTK_AR=/usr/linux-l1om-4.7/bin/x86_64-l1om-linux-ar
-    SCTK_LD=/usr/linux-l1om-4.7/bin/x86_64-l1om-linux-ld
+    SCTK_AR=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ar
+    SCTK_LD=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ld
+    ;;
+    --mic-library-path=*)
+      SCTK_MIC_LIBRARY_PATH="`echo A$arg | sed -e 's/A--mic-library-path=//g'`"
+      export SCTK_MIC_LIBRARY_PATH
+      echo "MIC library path updated : $SCTK_MIC_LIBRARY_PATH"
     ;;
     --no-recursion)
     ;;

@@ -102,6 +102,7 @@ Installation directories:
 
 Cross-compilation:
   --mic=ADDRESS                       Cross-compile MPC for Intel MIC
+  --mic-library-path				  Path pour les librairies dynamiques sur le MIC
 
 Optional Features:
   --with-cpath=DIR1:DIR2:...          Add directories to the CPATH environment variable
@@ -259,6 +260,12 @@ for arg in "$@" ; do
     ;;
     --mic=*)
       CROSS_CONFIGURE_ARGUMENTS="--mic"
+      MPC_ARGS="$arg $MPC_ARGS"
+    ;;
+    --mic-library-path=*)
+	  SCTK_MIC_LIBRARY_PATH="`echo A$arg | sed -e 's/A--mic-library-path=//g'`"
+      export SCTK_MIC_LIBRARY_PATH
+      echo "MIC library path updated : $SCTK_MIC_LIBRARY_PATH"
       MPC_ARGS="$arg $MPC_ARGS"
     ;;
     *)
