@@ -283,7 +283,6 @@ printf "\t@cp -r \$(DIR_DEST_EXE)/* INSTALL/bin 2>/dev/null || true">> Makefile;
 printf "\t@cp -r lib INSTALL">> Makefile; echo "">> Makefile
 printf "\t@mkdir -p INSTALL/bin/mpcrun_opt">> Makefile; echo "">> Makefile
 printf "\t@cp ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_opt/* INSTALL/bin/mpcrun_opt">> Makefile; echo "">> Makefile
-cat INSTALL/bin/mpcrun_opt/mpcrun_remote | sed "s:{library_path}:$SCTK_MIC_LIBRARY_PATH:" > INSTALL/bin/mpcrun_opt/mpcrun_remote
 printf "\t@mkdir -p INSTALL/include">> Makefile; echo "">> Makefile
 for i in $MODULE_LIST; do
 if test -d ${MPC_SOURCE_DIR}$i/include ; then
@@ -328,14 +327,13 @@ echo "Preparing includes for Fortran"
 for i in $MODULE_LIST; do
 NAME="fortran_header"
 if test "$SCTK_FORTRAN" = "1" && test "$i" = "MPC_Message_Passing"; then
-printf "\t@\$(CC) -g -DMPC_NO_AUTO_MAIN_REDEF -DMPC_MODULE_MPC_Message_Passing -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME ">> Makefile; echo "">> Makefile
-printf "\t@./$NAME mpc.h > INSTALL/include/mpcf.h">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) -g $SCTK_CFLAGS -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME -LINSTALL/lib -lmpc -lmpc_tdb_remote_static $SCTK_LDFLAGS -lm">> Makefile; echo "">> Makefile
+printf "\t@MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) ./$NAME mpc.h > INSTALL/include/mpcf.h">> Makefile; echo "">> Makefile
 
 DIR_TEST="MPC_MPI"
 check_module
 if test "$FOUND" != "" ; then
-printf "\t@\$(CC) -g -DMPC_NO_AUTO_MAIN_REDEF -DMPC_MPI_C_INCLUDE -DMPC_MPI -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME ">> Makefile; echo "">> Makefile
-printf "\t@./$NAME mpi.h > INSTALL/include/mpif.h">> Makefile; echo "">> Makefile
+printf "\t@MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) ./$NAME mpi.h > INSTALL/include/mpif.h">> Makefile; echo "">> Makefile
 fi
 
 printf "\t@rm ./$NAME">> Makefile; echo "">> Makefile

@@ -1,4 +1,3 @@
-#!/bin/sh
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -21,75 +20,6 @@
 #   - PERACHE Marc marc.perache@cea.fr                                 #
 #                                                                      #
 ########################################################################
-
-# Env variables which can be set
-CC=""
-CFLAGS=""
-CPPFLAGS=""
-LDFLAGS=""
-F77=""
-AR=""
-
-######################################################
-#             CROSS-COMPILATION MIC
-######################################################
-mic_configure_hwloc() {
-  HWLOC_ARGUMENTS="${HWLOC_ARGUMENTS} --host=i686-pc-linux-gnu --target=i686-pc-linux-gnu"
-  F77=ifort
-  CC=icc
-  AR=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ar
-  LD=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ld
-  CFLAGS="${CFLAGS} -mmic"
-  LDFLAGS="${LDFLAGS} -mmic"
-  CPPFLAGS="${CFLAGS}"
-}
-
-mic_configure_hydra() {
-  ARGUMENTS_HYDRA="${ARGUMENTS_HYDRA} --host=i686-pc-linux-gnu --target=i686-pc-linux-gnu"
-  ARGUMENTS_SIMPLE="${ARGUMENTS_SIMPLE} --host=i686-pc-linux-gnu --target=i686-pc-linux-gnu"
-  F77=ifort
-  CC=icc
-  AR=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ar
-  LD=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ld
-  CFLAGS="-mmic ${CFLAGS}"
-  LDFLAGS="-mmic ${LDFLAGS}"
-}
-
-mic_configure_openpa() {
-  ARGUMENTS_OPENPA="${ARGUMENTS_OPENPA} --host=i686-pc-linux --target=i686-pc-linux-gnu"
-  F77=ifort
-  CC=icc
-  AR=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ar
-  LD=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ld
-  CFLAGS="-mmic ${CFLAGS}"
-  LDFLAGS="-mmic ${LDFLAGS}"
-}
-
-prepare_arguments() {
-  OUTPUT=""
-
-  if [ ! -z "${CC}" ]; then
-    OUTPUT="${OUTPUT} CC=${CC}"
-  fi
-
-  if [ ! -z "${F77}" ]; then
-    OUTPUT="${OUTPUT} F77=${F77}"
-  fi
-
-  if [ ! -z "${AR}" ]; then
-    OUTPUT="${OUTPUT} AR=${AR}"
-  fi
-
-  if [ ! -z "${LD}" ]; then
-    OUTPUT="${OUTPUT} LD=${LD}"
-  fi
-
-  echo $OUTPUT
-}
-
-######################################################
-#             ARCHIVES PREPARATION
-######################################################
 
 prepare_archive_directory() {
 
@@ -206,3 +136,4 @@ exit 1
 ;;
 esac
 }
+

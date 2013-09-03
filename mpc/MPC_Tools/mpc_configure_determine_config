@@ -255,11 +255,7 @@ sctk_title (Compiler:);
   fprintf (std_output, "#define %s %s\n", SCTK_STRING (SCTK_COMPILER),
 	   SCTK_COMPILER);
   fprintf (std_output, "#endif\n");
-  if ((strcmp (SCTK_COMPILER, "__GNU_COMPILER") == 0) || (strcmp (SCTK_COMPILER, "__INTEL_COMPILER"))
-#ifdef __x86_64__
-    || (strcmp (SCTK_COMPILER, "__INTEL_COMPILER") == 0)
-#endif
-    )
+  if ((strcmp (SCTK_COMPILER, "__GNU_COMPILER") == 0) || (strcmp (SCTK_COMPILER, "__INTEL_COMPILER")))
     {
       fprintf (std_output, "#define %s\n",
 	       SCTK_STRING (SCTK_COMPILER_ACCEPT_ASM));
@@ -591,8 +587,7 @@ sctk_title (Error values:);
 
 int main(int argc, char **argv)
 {
-  std_output = stdout;
-  /*  std_output = fopen("include/sctk_config.h","a"); */
+    std_output = fopen("include/sctk_config.h","a");
 
 
 fprintf(std_output,"/*BEGIN GENRERATION*/\n");

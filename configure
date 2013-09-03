@@ -70,8 +70,6 @@ HYDRA_CONFIGURE_ARGUMENTS=""
 LIBXML2_CONFIGURE_ARGUMENTS=""
 LIBSCTK_ARCH_CONFIGURE_ARGUMENTS=""
 
-CROSS_CONFIGURE_ARGUMENTS=""
-
 # Options for SCTK_PMI
 SCTK_PMI_OPTIONS="--with-hydra"
 SCTK_PMI_CHOSEN="0"
@@ -107,10 +105,6 @@ Configuration:
 Installation directories:
   --prefix=PREFIX                     Install architecture-independent files in PREFIX [/usr/local]
   --disable-prefix-check              Force given prefix (in case of file conflicts)
-
-Cross-compilation:
-  --mic=ADDRESS                       Cross-compile MPC for Intel MIC
-  --mic-library-path				  Path pour les librairies dynamiques sur le MIC
 
 Optional Features:
   --with-cpath=DIR1:DIR2:...          Add directories to the CPATH environment variable
@@ -170,10 +164,6 @@ for arg in "$@" ; do
     --disable-mpc-gcc)
        MODULES="`echo $MODULES | sed -e 's/mpc-gcc//g' | sed -e 's/mpc-binutils//g'`"
 	;;
-    --disable-mpc-gcc-only)
-       MODULES="`echo $MODULES | sed -e 's/mpc-gcc//g'`"
-        ;;
-
 	--disable-mpc-binutils)
        MODULES="`echo $MODULES | sed -e 's/mpc-binutils//g'`"
     ;;
@@ -303,15 +293,6 @@ for arg in "$@" ; do
     ;;
     LDFLAGS=*)
     MPC_LDFLAGS="LDFLAGS=\"`echo A$arg | sed -e 's/ALDFLAGS=//g'`\""
-    --mic=*)
-      CROSS_CONFIGURE_ARGUMENTS="--mic"
-      MPC_ARGS="$arg $MPC_ARGS"
-    ;;
-    --mic-library-path=*)
-	  SCTK_MIC_LIBRARY_PATH="`echo A$arg | sed -e 's/A--mic-library-path=//g'`"
-      export SCTK_MIC_LIBRARY_PATH
-      echo "MIC library path updated : $SCTK_MIC_LIBRARY_PATH"
-      MPC_ARGS="$arg $MPC_ARGS"
     ;;
     *)
     MPC_ARGS="$arg $MPC_ARGS"
@@ -480,13 +461,13 @@ if test "$mod" != "#" ; then
          MOD_CONFIGURE_ARGUMENTS="${GDB_CONFIGURE_ARGUMENTS}"
        ;;
        mpc-hwloc)
-         MOD_CONFIGURE_ARGUMENTS="${HWLOC_CONFIGURE_ARGUMENTS} ${CROSS_CONFIGURE_ARGUMENTS}"
+         MOD_CONFIGURE_ARGUMENTS="${HWLOC_CONFIGURE_ARGUMENTS}"
        ;;
        mpc-hydra)
-         MOD_CONFIGURE_ARGUMENTS="${HYDRA_CONFIGURE_ARGUMENTS} ${CROSS_CONFIGURE_ARGUMENTS}"
+         MOD_CONFIGURE_ARGUMENTS="${HYDRA_CONFIGURE_ARGUMENTS} CFLAGS=-fPIC"
        ;;
        mpc-openpa)
-         MOD_CONFIGURE_ARGUMENTS="${OPENPA_CONFIGURE_ARGUMENTS} ${CROSS_CONFIGURE_ARGUMENTS}"
+         MOD_CONFIGURE_ARGUMENTS="${OPENPA_CONFIGURE_ARGUMENTS} CFLAGS=-fPIC"
        ;;
        mpc-libxml2)
          MOD_CONFIGURE_ARGUMENTS="${LIBXML2_CONFIGURE_ARGUMENTS}"

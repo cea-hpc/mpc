@@ -439,6 +439,7 @@ sctk_mctx_set_bootstrap (void)
   mctx_starting_func ((void *) args);
   abort ();
 }
+#endif
 #elif SCTK_MCTX_MTH(windows)
 #error "not implemented yet"
 #else
