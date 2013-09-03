@@ -303,6 +303,7 @@ for arg in "$@" ; do
     ;;
     LDFLAGS=*)
     MPC_LDFLAGS="LDFLAGS=\"`echo A$arg | sed -e 's/ALDFLAGS=//g'`\""
+    ;;
     --mic=*)
       CROSS_CONFIGURE_ARGUMENTS="--mic"
       MPC_ARGS="$arg $MPC_ARGS"
