@@ -1,3 +1,4 @@
+#!/bin/sh
 MPC_SOURCE_DIR="`dirname $0`/"
 VERSION="$1"
 PREFIX="$2"
@@ -34,7 +35,25 @@ if test "${PATCH_NEEDED}" = "1" ; then
   cd ${CURRENT_WD} || exit 1
 fi
 
-  echo "cd hwloc-$VERSION && Running: ./configure $PREFIX $ARGUMENTS"
-  cd hwloc-$VERSION && ./configure --disable-cairo $PREFIX $ARGUMENTS || exit 1
+HWLOC_ARGUMENTS=""
+for arg in $ARGUMENTS
+do
+	case $arg in
+   --mic)
+     mic_configure_hwloc
+     ;;
+		*)
+	   HWLOC_ARGUMENTS="${HWLOC_ARGUMENTS} $arg"
+		 ;;
+	esac
+done
+
+HWLOC_ARGUMENTS="${HWLOC_ARGUMENTS} $(prepare_arguments)"
+export CFLAGS
+export CPPFLAGS
+export LDFLAGS
+
+echo "cd hwloc-$VERSION && Running: ./configure $PREFIX $HWLOC_ARGUMENTS"
+cd hwloc-$VERSION && ./configure $PREFIX $HWLOC_ARGUMENTS || exit 1
 
 exit 0

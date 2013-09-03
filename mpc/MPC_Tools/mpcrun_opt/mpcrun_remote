@@ -1,0 +1,151 @@
+#!/bin/sh
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - PERACHE Marc marc.perache@cea.fr                                 #
+#                                                                      #
+########################################################################
+TMP_DIR=MPC_USER_PACKAGE
+LIB_PATH=${SINK_LD_LIBRARY_PATH}
+
+# Ugly hack to determine the lib path of Hwloc
+HWLOC_LIB_DIR=`dirname ${prefix}/mpc-hwloc*/lib`/lib
+
+# FIXME: the following code allows the script to search dynamic libs.
+# The only issue is that it is not recursive and do not handle dependencies
+# of dyn libs.
+
+#function search_lib_in_path {
+#  #1: name of the lib to search
+#
+#  echo -n "Searching lib: $SEARCH_LIB..."
+#  IFS=":"
+#  for path in $LIB_PATH; do
+#    IFS=$'\n'
+#    for file in `ls $path`; do
+#      if [ "$file" == "$1" ]; then
+#        echo "OK"
+#        LIB_FOUND=$path/$file
+#        return
+#      fi
+#    done
+#  done
+#  echo "FAIL"
+#  LIB_FOUND=""
+#}
+#
+#function list_lib_in_binary {
+#  #1: binary
+#  COMMAND=`/usr/linux-l1om-4.7/bin/x86_64-l1om-linux-objdump -x ${1} | grep NEEDED`
+#  IFS=$'\n'
+#  for line in $COMMAND; do
+#    #FIXME: should be better to use SED
+#    SEARCH_LIB=`echo $line | cut -d\  -f18`
+#    search_lib_in_path $SEARCH_LIB
+#
+#    if [ ! -z $LIB_FOUND ]; then
+#      cp -r ${LIB_FOUND} ${TMP_DIR}/lib
+#    fi
+#  done
+##  search_lib_in_path
+#}
+
+copy_remote_iter(){
+	echo "Copying $1"
+	cp $1 ${TMP_DIR}/lib
+}
+
+copy_remote(){
+	read line
+	while test "$line" != "" ; do
+		copy_remote_iter $line
+		read line
+	done
+}
+
+if test "$MPCRUN_REMOTE_HOST" = "" ; then
+	echo Hostname/IP of remote host?
+	read MPCRUN_REMOTE_HOST
+fi
+if test "$MPCRUN_REMOTE_DIR" = "" ; then
+	echo Directory on remote host?
+	read MPCRUN_REMOTE_DIR
+fi
+echo "Launching on host '$MPCRUN_REMOTE_HOST' in '$MPCRUN_REMOTE_DIR'"
+
+ssh $MPCRUN_REMOTE_HOST rm -rf ${MPCRUN_REMOTE_DIR}/${TMP_DIR}
+ssh $MPCRUN_REMOTE_HOST mkdir -p ${MPCRUN_REMOTE_DIR}
+
+rm -rf ${TMP_DIR}
+mkdir ${TMP_DIR}
+
+mkdir -p ${TMP_DIR}/bin
+mkdir -p ${TMP_DIR}/lib
+
+# ----------------------------------------
+# We cannot determine which dyn libs to use
+# because LDD cannot be used on the HOST when
+# cross compiling.
+# ----------------------------------------
+
+export SINK_LD_LIBRARY_PATH=$SINK_LD_LIBRARY_PATH:${HWLOC_LIB_DIR}:${MPC_LIB_DIR}
+TAB=`echo -e "\t"`
+/opt/intel/mic/coi/tools/micnativeloadex/release/micnativeloadex ${BINARY} -le | grep "$TAB$TAB/" | sed "s/$TAB//g" | copy_remote
+echo ""
+
+# Copy binaries
+cp -r ${MPC_BIN_DIR}/mpcrun_opt ${TMP_DIR}/bin
+cp -r ${MPC_BIN_DIR}/mpcrun ${TMP_DIR}/bin
+cp $BINARY ${TMP_DIR}
+
+HYDRA_DIR_REMOTE="`echo  $SCTK_HYDRA_BINDIR | sed s,bin,,g`"
+HYDRA_DIR_REMOTE_VERSION=`basename $HYDRA_DIR_REMOTE`
+
+echo "Use hydra $HYDRA_DIR_REMOTE_VERSION"
+mkdir -p ${TMP_DIR}/$HYDRA_DIR_REMOTE_VERSION/
+cp -r $HYDRA_DIR_REMOTE/bin ${TMP_DIR}/$HYDRA_DIR_REMOTE_VERSION/
+
+#copy_remote_iter(){
+#	echo "Copy $3"
+#	cp $3 ${TMP_DIR}/lib
+#}
+#copy_remote(){
+#	read line
+#	while test "$line" != "" ; do
+#		copy_remote_iter $line
+#		read line
+#	done
+#}
+#ldd $BINARY | grep "$prefix" | copy_remote
+
+echo "Broadcasting binary and libs"
+scp -r ${TMP_DIR} ${MPCRUN_REMOTE_HOST}:${MPCRUN_REMOTE_DIR}
+
+#echo "** -------------------------------------------------- **"
+#echo "Dynamic libraries required by MPC have been copied. "
+#echo "If you need additional dyn libs or files, copy them "
+#echo "'by hand' on the target"
+#echo "** -------------------------------------------------- **"
+
+#~ LAUNCH_COMMAND="ssh $MPCRUN_REMOTE_HOST LD_LIBRARY_PATH=${SCTK_MIC_LIBRARY_PATH} ${MPCRUN_REMOTE_DIR}/${TMP_DIR}/bin/mpcrun_opt/mpcrun_remote_launcher ${MPCRUN_REMOTE_HOST} ${MPCRUN_REMOTE_DIR} $prefix $LAUNCH_OPTIONS -n=$TASK_NB -p=$PROCESS_NB -N=$NODE_NB -c=$CPU_NB ${MPCRUN_REMOTE_DIR}/${TMP_DIR}/`basename $BINARY` $USER_ARGS $SCTK_ARGS"
+LAUNCH_COMMAND="ssh $MPCRUN_REMOTE_HOST LD_LIBRARY_PATH=${SCTK_MIC_LIBRARY_PATH} ${MPCRUN_REMOTE_DIR}/${TMP_DIR}/bin/mpcrun_opt/mpcrun_remote_launcher ${MPCRUN_REMOTE_HOST} ${MPCRUN_REMOTE_DIR} $prefix $LAUNCH_OPTIONS -n=$TASK_NB -p=$PROCESS_NB -N=$NODE_NB -c=$CPU_NB ${MPCRUN_REMOTE_DIR}/${TMP_DIR}/`basename $BINARY` $USER_ARGS $SCTK_ARGS"
+
+
+echo "Launching command $LAUNCH_COMMAND"
+
+rm -rf ${TMP_DIR}

@@ -126,21 +126,17 @@ Launcher:
 
 Debugger:
     --dbg=<debugger_name> to use a debugger
-<<<<<<< HEAD
-    
-Profiling (if compiled with --enable-MPC_Profiler) :
-	--profiling=AA,BB,...
-	
-	example : --profiling=stdout,html,latex
-	
-=======
 
-Profiling:
+MIC:
+	--mic-library-path= Path pour les librairies dynamiques sur le MIC
+	--mic-host= Adresse du MIC
+	--mic-dir= Dossier pour les transferts sur le MIC
+
+Profiling (if compiled with --enable-MPC_Profiler) :
 	--profiling=AA,BB,...
 
 	example : --profiling=text_stdout,html,latex
 
->>>>>>> devel_augustin
 	With the following output modules :
 		* file : Outputs to file indented profile with time in standard units
 		* file-raw : Outputs to file unindented profile in ticks (gnuplot compliant)
@@ -264,7 +260,7 @@ for arg in "$@" ; do
     exit 0;
     ;;
     -v|--verbose)
-    MPC_VERBOSE="1"
+    MPC_VERBOSE="1"A
     ;;
     -vv)
     MPC_VERBOSE="2"
@@ -392,12 +388,19 @@ for arg in "$@" ; do
     --launcher=*)
     LAUNCH="`echo A$arg | sed -e 's/A--launcher=//g'`"
     ;;
+    --mic-host=*)
+    MPCRUN_REMOTE_HOST="`echo A$arg | sed -e 's/A--mic-host=//g'`"
+    ;;
+    --mic-dir=*)
+    MPCRUN_REMOTE_DIR="`echo A$arg | sed -e 's/A--mic-dir=//g'`"
+    ;;
     -mpi-only|-mpi_only)
     mpi_only=yes
     ;;
-    --config=* | --profiles=*)
-    #Already processed in a previous loop on arguments, but need to capture them otherwise
-    #it will be propagated as exe options.
+    --mic-library-path=*)
+	  SCTK_MIC_LIBRARY_PATH="`echo A$arg | sed -e 's/A--mic-library-path=//g'`"
+      export SCTK_MIC_LIBRARY_PATH
+      echo "MIC library path updated : $SCTK_MIC_LIBRARY_PATH"
     ;;
     --)
     READ_MPC_ARG="false"

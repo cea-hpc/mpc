@@ -673,7 +673,7 @@ sctk_tls_module_alloc_and_fill ()
 	sctk_tls_module_t *tls_module ;
 	int i;
 
-	sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( (void**) &tls_module, extls ) ;
+	sctk_tls_module_alloc_and_fill_in_specified_tls_module_with_specified_extls ( &tls_module, extls ) ;
 
 	for ( i=0; i<sctk_extls_max_scope+sctk_hls_max_scope; ++i )
 		sctk_tls_module_vp[i] = tls_module[i] ;

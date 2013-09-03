@@ -171,6 +171,10 @@ Optional features:
   --enable-shell-colors            Enable support of colors in shell
   --enable-valgrind-memcheck       Enable support of valgrind memcheck in MPC_Allocator
 
+Cross-compilation:
+  --mic=ADDRESS                    Cross-compile MPC for Intel MIC
+  --mic-library-path			   Path pour les librairies dynamiques sur le MIC
+
 Module selection:
 EOF
 
@@ -257,6 +261,29 @@ for arg in "$@" ; do
     ;;
     --cross_prefix=*)
     SCTK_CROSS_PREFIX="`echo A$arg | sed -e 's/A--cross_prefix=//g'`"
+    ;;
+    # Rule for MIC
+    --mic=*)
+    SCTK_CROSS_EXEC="${MPC_SOURCE_DIR}MPC_Tools/cross_compilation_scripts/mic.sh"
+    tmp_arg="`echo A$arg | sed -e 's/A--mic=//g'`"
+    # FIXME: we should check if USER and HOSTNAME are well formated
+    SCTK_MIC_HOSTNAME="`echo $tmp_arg | sed -e 's/^.*@//g'`"
+    SCTK_MIC_USER="`echo $tmp_arg | sed -e 's/@.*$//g'`"
+    export SCTK_MIC_USER
+    export SCTK_MIC_HOSTNAME
+    SCTK_GCC=icc
+    SCTK_CC=icc
+    SCTK_CXX=icpc
+    SCTK_F77=ifort
+    SCTK_CFLAGS="$SCTK_CFLAGS -mmic"
+    SCTK_LDFLAGS="$SCTK_LDFLAGS -mmic -lirc -lsvml"
+    SCTK_AR=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ar
+    SCTK_LD=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ld
+    ;;
+    --mic-library-path=*)
+      SCTK_MIC_LIBRARY_PATH="`echo A$arg | sed -e 's/A--mic-library-path=//g'`"
+      export SCTK_MIC_LIBRARY_PATH
+      echo "MIC library path updated : $SCTK_MIC_LIBRARY_PATH"
     ;;
     --no-recursion)
     ;;

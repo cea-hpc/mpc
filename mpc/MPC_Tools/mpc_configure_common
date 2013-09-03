@@ -458,12 +458,15 @@ else
 fi
 sctk_printf "execute configuration detection: "
 chmod 755 ${SCTK_CONF_BIN}
-eval "${SCTK_CROSS_EXEC} ${SCTK_CONF_BIN}"
+#Temp file for getting the output of the binary
+SCTK_CONF_BIN_OUTPUT="${SCTK_CONF_BIN}.output"
+eval "${SCTK_CROSS_EXEC} ${SCTK_CONF_BIN} > ${SCTK_CONF_BIN_OUTPUT}"
 if test "$?" = "0" ; then
-	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
+  cat ${SCTK_CONF_BIN_OUTPUT} >> include/sctk_config.h
+	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN_OUTPUT} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
 	result yes
 else
-	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
+	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN_OUTPUT} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
 	error no
 fi
 

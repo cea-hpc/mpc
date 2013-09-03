@@ -1,3 +1,4 @@
+#!/bin/sh
 MPC_SOURCE_DIR="`dirname $0`/"
 VERSION="$1"
 PREFIX="$2"
@@ -9,6 +10,8 @@ PATCH_NAME="$7"
 ARGUMENTS="$8"
 
 . ${MPC_SOURCE_DIR}/../common_configure
+
+CFLAGS="-fPIC"
 
 #
 # ARGUMENTS
@@ -28,16 +31,34 @@ prepare_archive_directory
 # Apply patch if needed
 if test "${PATCH_NEEDED}" = "1" ; then
   CURRENT_WD=`pwd`
-  echo "Applying patch ${FINAL_PATCH_NAME}..."
   cd ${ARCHIVE_DIR} || exit 1
-  patch -p1 < ${FINAL_PATCH_NAME} || exit 1
+  for file in `ls ${FINAL_PATCH_NAME}/*`; do
+    echo "Applying patch ${file}..."
+    patch -p1 < ${file} || exit 1
+  done
   cd ${CURRENT_WD} || exit 1
 fi
 
-  echo "Running: cd openpa-$VERSION"
-  cd openpa-$VERSION || exit 1
+for arg in $ARGUMENTS
+do
+	case $arg in
+   --mic)
+     mic_configure_openpa
+     ;;
+		*)
+			ARGUMENTS_OPENPA="${ARGUMENTS_OPENPA} $arg"
+			;;
+	esac
+done
 
-  echo "Running: ./configure $PREFIX $ARGUMENTS"
-  ./configure $PREFIX $ARGUMENTS || exit 1
+ARGUMENTS_OPENPA="$ARGUMENTS_OPENPA $(prepare_arguments)"
+export CFLAGS
+export LDFLAGS
+
+echo "Running: cd openpa-$VERSION"
+cd openpa-$VERSION || exit 1
+
+echo "Running: ./configure $PREFIX $ARGUMENTS_OPENPA"
+./configure $PREFIX $ARGUMENTS_OPENPA || exit 1
 
 exit 0
