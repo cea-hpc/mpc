@@ -298,13 +298,11 @@ for arg in "$@" ; do
       #for hydra and simple sub packages
       HYDRA_CONFIGURE_ARGUMENTS="${HYDRA_CONFIGURE_ARGUMENTS} $arg"
     ;;
-<<<<<<< HEAD
     CFLAGS=*)
     MPC_CFLAGS="CFLAGS=\"`echo A$arg | sed -e 's/ACFLAGS=//g'`\""
     ;;
     LDFLAGS=*)
     MPC_LDFLAGS="LDFLAGS=\"`echo A$arg | sed -e 's/ALDFLAGS=//g'`\""
-=======
     --mic=*)
       CROSS_CONFIGURE_ARGUMENTS="--mic"
       MPC_ARGS="$arg $MPC_ARGS"
@@ -314,7 +312,6 @@ for arg in "$@" ; do
       export SCTK_MIC_LIBRARY_PATH
       echo "MIC library path updated : $SCTK_MIC_LIBRARY_PATH"
       MPC_ARGS="$arg $MPC_ARGS"
->>>>>>> MIC
     ;;
     *)
     MPC_ARGS="$arg $MPC_ARGS"
