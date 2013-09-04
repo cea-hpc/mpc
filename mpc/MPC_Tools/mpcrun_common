@@ -126,21 +126,12 @@ Launcher:
 
 Debugger:
     --dbg=<debugger_name> to use a debugger
-<<<<<<< HEAD
     
 Profiling (if compiled with --enable-MPC_Profiler) :
 	--profiling=AA,BB,...
 	
 	example : --profiling=stdout,html,latex
 	
-=======
-
-Profiling:
-	--profiling=AA,BB,...
-
-	example : --profiling=text_stdout,html,latex
-
->>>>>>> devel_augustin
 	With the following output modules :
 		* file : Outputs to file indented profile with time in standard units
 		* file-raw : Outputs to file unindented profile in ticks (gnuplot compliant)
