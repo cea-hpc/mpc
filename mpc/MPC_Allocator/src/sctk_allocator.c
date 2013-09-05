@@ -50,7 +50,10 @@
 #include "sctk_alloc_light_mm_source.h"
 #include "sctk_alloc_mmsrc_default.h"
 #include "sctk_alloc_hooks.h"
-#include "sctk_low_level_comm.h"
+
+#ifdef MPC_Message_Passing
+	#include "sctk_low_level_comm.h"
+#endif
 
 //for getpid
 //optional header
