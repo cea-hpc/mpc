@@ -34,7 +34,7 @@
 #include "sctk_kernel_thread.h"
 #include "sctk_tls.h"
 #include "sctk_topology.h"
-#include "sctk_alloc_spinlock_asm.h"
+//#include "sctk_alloc_spinlock_asm.h"
 
 static void (*sctk_thread_generic_sched_idle_start)(void);
 
@@ -742,7 +742,8 @@ static inline void sctk_generic_sched_yield_intern(sctk_thread_generic_scheduler
 	vp_data.sctk_generic_delegated_spinlock = NULL;
       }
 
-      sctk_cpu_relax ();
+      //sctk_cpu_relax ();
+	  sched_yield();
       goto retry;
     }
   }
