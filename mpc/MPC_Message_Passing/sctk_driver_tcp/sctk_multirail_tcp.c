@@ -104,6 +104,7 @@ int sctk_send_message_from_network_multirail_tcp (sctk_thread_ptp_message_t * ms
     */
     sctk_send_message_try_check(msg,1);
   }
+  return 1;
 }
 
 /************ INIT ****************/

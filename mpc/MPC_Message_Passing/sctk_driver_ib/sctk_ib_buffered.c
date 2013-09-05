@@ -373,5 +373,6 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     }
     sctk_nodebug("Free done:%p", entry);
   }
+  return 0;
 }
 #endif

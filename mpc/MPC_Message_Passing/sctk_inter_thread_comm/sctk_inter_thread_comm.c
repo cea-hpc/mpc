@@ -85,7 +85,7 @@ typedef struct {
 
   /* Messages in the 'sctk_ptp_task_list' have already been
    * matched and are wainting to be copied */
-  volatile sctk_message_to_copy_t* sctk_ptp_task_list;
+  sctk_message_to_copy_t* sctk_ptp_task_list;
   sctk_spinlock_t sctk_ptp_tasks_lock;
 }sctk_internal_ptp_message_lists_t;
 
@@ -111,6 +111,7 @@ typedef struct sctk_internal_ptp_s{
 /*Functions                                                         */
 /********************************************************************/
 
+/* --> not used
 static void sctk_show_requests(sctk_request_t* request, int req_nb) {
   int i;
 
@@ -132,6 +133,7 @@ TODO("Fill with infos from the message");
     }
 //  }
 }
+*/
 
 /*
  * Initialize the 'incoming' list.
@@ -317,6 +319,7 @@ sctk_ptp_table_read_unlock(){
  * The 'func' function is called for each element found.
  * The 'return_on_found' indicates if the function returns if an element has been found.
  */
+/* --> not used
 static int sctk_ptp_table_loop( int (*func)(sctk_internal_ptp_t* pair), char return_on_found ) {
   sctk_internal_ptp_t* pair;
   sctk_internal_ptp_t* tmp;
@@ -331,7 +334,7 @@ static int sctk_ptp_table_loop( int (*func)(sctk_internal_ptp_t* pair), char ret
   } else {
     if (sctk_ptp_array == NULL) {
       sctk_ptp_table_read_unlock();
-      return;
+      return 1;
     }
     int i;
     int max = (sctk_ptp_array_end - sctk_ptp_array_start + 1);
@@ -342,7 +345,9 @@ static int sctk_ptp_table_loop( int (*func)(sctk_internal_ptp_t* pair), char ret
     }
   }
   sctk_ptp_table_read_unlock();
+return -1;
 }
+*/
 
 /*
  * Find an internal ptp according the a key (this key represents the task number)
@@ -2120,7 +2125,7 @@ void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_ch
 void sctk_send_message (sctk_thread_ptp_message_t * msg){
   int need_check = 1;
   /* TODO: need to check in wait */
-#warning "disable checking in wait"
+//#warning "disable checking in wait"
   msg->tail.need_check_in_wait = 1;
   /* We only check if the message is an intra-node message */
   if ( msg->sctk_msg_get_glob_destination != -1 ) {

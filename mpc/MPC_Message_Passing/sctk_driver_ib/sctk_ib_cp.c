@@ -278,7 +278,7 @@ int sctk_ib_cp_poll_global_list(const struct sctk_rail_info_s const * rail, stru
 }
 
 
-int sctk_ib_cp_poll(const struct sctk_rail_info_s const* rail, struct sctk_ib_polling_s *poll,
+int sctk_ib_cp_poll(struct sctk_rail_info_s * rail, struct sctk_ib_polling_s *poll,
     int task_id){
   int vp_num = sctk_thread_get_vp();
   vp_t *vp;

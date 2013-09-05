@@ -48,7 +48,7 @@ void sctk_thread_generic_set_self(sctk_thread_generic_t th){
 inline
 sctk_thread_generic_t sctk_thread_generic_self_check(){
   not_implemented();
-  return;
+  return NULL;
 }
 
 /***************************************/
@@ -362,6 +362,9 @@ sctk_thread_generic_rwlock_timedwrlock( sctk_thread_rwlock_t* lock, const struct
 		  				time, &(sctk_thread_generic_self()->sched) );
 }
 
+/* 
+ * Defined but not used 
+ *
 static int
 sctk_thread_generic_rwlockattr_setkind_np( sctk_thread_rwlockattr_t* attr, int pref ){
   return sctk_thread_generic_rwlocks_rwlockattr_setkind_np( (sctk_thread_generic_rwlockattr_t*) attr,
@@ -373,6 +376,7 @@ sctk_thread_generic_rwlockattr_getkind_np( sctk_thread_rwlockattr_t* attr, int* 
   return sctk_thread_generic_rwlocks_rwlockattr_getkind_np( (sctk_thread_generic_rwlockattr_t*) attr,
 		  				pref );
 }
+*/
 
 /***************************************/
 /* SEMAPHORES                          */
@@ -387,7 +391,7 @@ sctk_thread_generic_sem_init( sctk_thread_sem_t* sem, int pshared, unsigned int 
 static int
 sctk_thread_generic_sem_wait( sctk_thread_sem_t* sem ){
   return sctk_thread_generic_sems_sem_wait( (sctk_thread_generic_sem_t*) sem,
-		  				&(sctk_thread_generic_self()->sched) );
+&(sctk_thread_generic_self()->sched) );
 }
 
 static int
@@ -961,10 +965,14 @@ sctk_thread_generic_kill( sctk_thread_generic_t threadp, int val ){
   return 0;
 }
 
+/*
+ * defined but not used
+ *
 static int
 sctk_thread_generic_kill_other_threads_np(){
   return 0;
 }
+*/
 
 /***************************************/
 /* THREAD CREATION                     */
@@ -2107,19 +2115,19 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
 
   /****** JOIN ******/
   sctk_add_func_type (sctk_thread_generic, join,
-			  int (*)(sctk_thread_generic_t, void** ));
+			  int (*)(sctk_thread_t, void** ));
 
   /****** EXIT ******/
   sctk_add_func_type (sctk_thread_generic, exit,
-		  	  void (*)(int *));
+		  	  void (*)(void *));
 
   /****** EQUAL ******/
   sctk_add_func_type (sctk_thread_generic, equal,
-		  	  int (*)(sctk_thread_generic_t, sctk_thread_generic_t ));
+		  	  int (*)(sctk_thread_t, sctk_thread_t ));
 
   /****** DETACH ******/
   sctk_add_func_type (sctk_thread_generic, detach,
-		  	  int (*)(sctk_thread_generic_t ));
+		  	  int (*)(sctk_thread_t ));
 
   /****** CONCURRENCY ******/
   sctk_add_func_type (sctk_thread_generic, getconcurrency,
@@ -2129,7 +2137,7 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
 
   /****** CPUCLOCKID ******/
   sctk_add_func_type (sctk_thread_generic, getcpuclockid,
-		  	  int (*)( sctk_thread_generic_t, clockid_t* ));
+		  	  int (*)( sctk_thread_t, clockid_t* ));
 
   /****** KEYS ******/
   sctk_thread_generic_keys_init();
@@ -2150,11 +2158,11 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
   sctk_add_func_type (sctk_thread_generic, mutexattr_setpshared,
 		      int (*)(sctk_thread_mutexattr_t *, int));
   sctk_add_func_type (sctk_thread_generic, mutexattr_getpshared,
-		      int (*)(sctk_thread_mutexattr_t *, int *));
+		      int (*)(const sctk_thread_mutexattr_t *, int *));
   sctk_add_func_type (sctk_thread_generic, mutexattr_settype,
 		      int (*)(sctk_thread_mutexattr_t *, int));
   sctk_add_func_type (sctk_thread_generic, mutexattr_gettype,
-		      int (*)(sctk_thread_mutexattr_t *, int *));
+		      int (*)(const sctk_thread_mutexattr_t *, int *));
   sctk_add_func_type (sctk_thread_generic, mutexattr_init,
 		  	  int (*)(sctk_thread_mutexattr_t *));
   sctk_add_func_type (sctk_thread_generic, mutex_lock,
@@ -2177,7 +2185,7 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
    sctk_add_func_type (sctk_thread_generic, condattr_destroy,
 			  int (*)(sctk_thread_condattr_t*));
    sctk_add_func_type (sctk_thread_generic, condattr_getpshared,
-			  int (*)(sctk_thread_condattr_t*, int*));
+			  int (*)(const sctk_thread_condattr_t*, int*));
    sctk_add_func_type (sctk_thread_generic, condattr_init,
 			  int (*)(sctk_thread_condattr_t*));
    sctk_add_func_type (sctk_thread_generic, condattr_setpshared,
@@ -2199,11 +2207,14 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
 
   /****** RWLOCK ******/
   sctk_thread_generic_rwlocks_init();
-  __sctk_ptr_thread_rwlock_init = sctk_thread_generic_rwlock_init;
+  //__sctk_ptr_thread_rwlock_init = sctk_thread_generic_rwlock_init;
+
+  sctk_add_func_type (sctk_thread_generic, rwlock_init,
+  			  int (*)(sctk_thread_rwlock_t *, const sctk_thread_rwlockattr_t *));
   sctk_add_func_type (sctk_thread_generic, rwlockattr_destroy,
 		  	  int (*)( sctk_thread_rwlockattr_t* attr ) );
   sctk_add_func_type (sctk_thread_generic, rwlockattr_getpshared,
-		  	  int (*)( sctk_thread_rwlockattr_t* attr, int* val ) );
+		  	  int (*)( const sctk_thread_rwlockattr_t* attr, int* val ) );
   sctk_add_func_type (sctk_thread_generic, rwlockattr_init,
 		  	  int (*)( sctk_thread_rwlockattr_t* attr ) );
   sctk_add_func_type (sctk_thread_generic, rwlockattr_setpshared,
@@ -2245,11 +2256,11 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
   sctk_add_func_type (sctk_thread_generic, sem_destroy,
 		  	  int (*)( sctk_thread_sem_t* ));
   sctk_add_func_type (sctk_thread_generic, sem_open,
-		  	  sctk_thread_sem_t* (*)( char*, int, ...));
+		  	  sctk_thread_sem_t* (*)( const char*, int, ...));
   sctk_add_func_type (sctk_thread_generic, sem_close,
 		  	  int (*)( sctk_thread_sem_t* ));
   sctk_add_func_type (sctk_thread_generic, sem_unlink,
-		  	  int (*)( char* ));
+		  	  int (*)( const char* ));
 
   /****** THREAD BARRIER *******/
   sctk_thread_generic_barriers_init();
@@ -2289,7 +2300,7 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
   sctk_add_func_type (sctk_thread_generic, attr_destroy,
 		      int (*)(sctk_thread_attr_t *));
   sctk_add_func_type (sctk_thread_generic, getattr_np,
-		  	  int (*)( sctk_thread_generic_t, sctk_thread_attr_t *));
+		  	  int (*)( sctk_thread_t, sctk_thread_attr_t *));
 
   sctk_add_func_type (sctk_thread_generic, attr_getscope,
 		      int (*)(const sctk_thread_attr_t *, int *));
@@ -2297,7 +2308,7 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
 		      int (*)(sctk_thread_attr_t *, int));
 
   sctk_add_func_type (sctk_thread_generic, attr_getbinding,
-		      int (*)(const sctk_thread_attr_t *, int *));
+		      int (*)(sctk_thread_attr_t *, int *));
   sctk_add_func_type (sctk_thread_generic, attr_setbinding,
 		      int (*)(sctk_thread_attr_t *, int));
 
@@ -2319,22 +2330,22 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
   sctk_add_func_type (sctk_thread_generic, attr_setguardsize,
 		  	  int (*)(sctk_thread_attr_t*, size_t ));
   sctk_add_func_type (sctk_thread_generic, attr_getguardsize,
-		  	  int (*)(sctk_thread_attr_t*, size_t* ));
+		  	  int (*)(const sctk_thread_attr_t*, size_t* ));
 
   sctk_add_func_type (sctk_thread_generic, attr_setschedparam,
 		  	  int (*)(sctk_thread_attr_t *, const struct sched_param* ));
   sctk_add_func_type (sctk_thread_generic, attr_getschedparam,
-		  	  int (*)(sctk_thread_attr_t *, struct sched_param* ));
+		  	  int (*)(const sctk_thread_attr_t *, struct sched_param* ));
 
   sctk_add_func_type (sctk_thread_generic, attr_getschedpolicy,
-		  	  int (*)(sctk_thread_attr_t *, int* ));
+		  	  int (*)(const sctk_thread_attr_t *, int* ));
   sctk_add_func_type (sctk_thread_generic, attr_setschedpolicy,
 		  	  int (*)(sctk_thread_attr_t *, int ));
 
   sctk_add_func_type (sctk_thread_generic, attr_setinheritsched,
 		  	  int (*)(sctk_thread_attr_t *, int));
   sctk_add_func_type (sctk_thread_generic, attr_getinheritsched,
-		  	  int (*)(sctk_thread_attr_t *, int*));
+		  	  int (*)(const sctk_thread_attr_t *, int*));
 
   sctk_add_func_type (sctk_thread_generic, attr_setdetachstate,
 		  	  int (*)(sctk_thread_attr_t *, int));
@@ -2358,32 +2369,32 @@ sctk_thread_generic_thread_init (char* thread_type,char* scheduler_type, int vp_
 		  	  int (*)( int ));
 
   sctk_add_func_type (sctk_thread_generic, getschedparam,
-		  	  int (*)( sctk_thread_generic_t, int*, struct sched_param* ));
+		  	  int (*)( sctk_thread_t, int*, struct sched_param* ));
   sctk_add_func_type (sctk_thread_generic, setschedparam,
-		  	  int (*)( sctk_thread_generic_t, int, const struct sched_param* ));
+		  	  int (*)( sctk_thread_t, int, const struct sched_param* ));
 
   /****** THREAD SIGNALS ******/
   sctk_add_func_type (sctk_thread_generic, sigsuspend,
-		  	  int (*)( const sigset_t* ));
+		  	  int (*)( sigset_t* ));
   sctk_add_func_type (sctk_thread_generic, sigpending,
 		  	  int (*)( sigset_t* ));
   sctk_add_func_type (sctk_thread_generic, sigmask,
 		  	  int (*)( int, const sigset_t*, sigset_t*));
   /****** THREAD CANCEL ******/
   sctk_add_func_type (sctk_thread_generic, cancel,
-			  int (*)( sctk_thread_generic_t ));
+			  int (*)( sctk_thread_t ));
   sctk_add_func_type (sctk_thread_generic, setcancelstate,
 			  int (*)( int, int* ));
   sctk_add_func_type (sctk_thread_generic, setcanceltype,
 			  int (*)( int, int* ));
   sctk_add_func_type (sctk_thread_generic, setschedprio,
-		  	  int (*)( sctk_thread_generic_t, int ));
+		  	  int (*)( sctk_thread_t, int ));
   sctk_add_func_type (sctk_thread_generic, testcancel,
 		  	  void (*)());
 
   /****** THREAD KILL ******/
   sctk_add_func_type (sctk_thread_generic, kill,
-		  	  int (*)( sctk_thread_generic_t, int ));
+		  	  int (*)( sctk_thread_t, int ));
   /****** THREAD POLLING ******/  
   sctk_add_func (sctk_thread_generic, wait_for_value_and_poll);
   

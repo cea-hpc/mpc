@@ -231,6 +231,7 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
     }
     return 0;
   }
+  return 0;
 }
 
 /*

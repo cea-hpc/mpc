@@ -55,7 +55,7 @@
  * is listed*/
 sctk_ibuf_rdma_pool_t *rdma_pool_list = NULL;
 /* Elements to merge to the rdma_pool_list */
-volatile sctk_ibuf_rdma_pool_t *rdma_pool_list_to_merge = NULL;
+sctk_ibuf_rdma_pool_t *rdma_pool_list_to_merge = NULL;
 /* Lock when adding and accessing the concat list */
 static sctk_spinlock_t rdma_pool_list_lock = SCTK_SPINLOCK_INITIALIZER;
 
@@ -75,7 +75,7 @@ static sctk_spin_rwlock_t rdma_polling_lock = SCTK_SPIN_RWLOCK_INITIALIZER;
 /*
  * Init the remote for the RDMA connection
  */
-#warning "To reinit when disconnected"
+//#warning "To reinit when disconnected"
 void sctk_ibuf_rdma_remote_init(sctk_ib_qp_t* remote) {
   sctk_ibuf_rdma_set_remote_state_rtr(remote, state_deconnected);
   sctk_ibuf_rdma_set_remote_state_rts(remote, state_deconnected);
@@ -299,7 +299,7 @@ sctk_ibuf_rdma_region_free(struct sctk_ib_rail_info_s *rail_ib,sctk_ib_qp_t* rem
         remote->rank, nb_ibufs, size_ibufs);
 
     sctk_ibuf_rdma_pool_t* pool = remote->rdma.pool;
-#warning "We should lock during DELETING the element."
+//#warning "We should lock during DELETING the element."
     //    sctk_spinlock_write_lock(&rdma_polling_lock);
     DL_DELETE(rdma_pool_list, pool);
     //    sctk_spinlock_write_unlock(&rdma_polling_lock);
@@ -986,6 +986,8 @@ size_t sctk_ibuf_rdma_region_get_allocated_size(sctk_ib_qp_t* remote, int reg) {
   if (region) {
     return region->allocated_size;
   }
+
+  return -1;
 }
 /*
  * Return the size allocated by the RDMA channel for a
@@ -1120,8 +1122,8 @@ void sctk_ibuf_rdma_check_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *rem
 
         sctk_ibuf_rdma_determine_config(rail_ib, remote, &determined_size, &determined_nb, 0);
 
-        sctk_debug("Trying to connect remote %d using RDMA ( messages_nb: %d, determined: %d, pending: %d, iter: %d)", remote->rank, messages_nb, determined_size,
-            determined_nb, iter);
+        sctk_debug("Trying to connect remote %d using RDMA ( messages_nb: %d, determined: %d, pending: %d)", remote->rank, messages_nb, determined_size,
+            determined_nb);
 
         /* Sending the request. If the request has been sent, we reinit */
         sctk_ib_cm_on_demand_rdma_request(rail_ib->rail, remote,
@@ -1148,7 +1150,7 @@ void sctk_ibuf_rdma_check_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *rem
           /* Update the slots values requested */
           remote->rdma.pool->resizing_request.send_keys.nb   = next_nb;
           remote->rdma.pool->resizing_request.send_keys.size = next_size;
-          sctk_ib_debug("Resizing the RMDA buffer for remote %d (%d->%d %d->%d)", remote->rank, previous_nb, next_nb, previous_size, next_size);
+          sctk_ib_debug("Resizing the RMDA buffer for remote %d (%d, %d)", remote->rank, next_nb, next_size);
           sctk_spinlock_unlock(&remote->rdma.flushing_lock);
 
           sctk_ibuf_rdma_check_flush_send(rail_ib, remote);
@@ -1357,7 +1359,9 @@ void sctk_ibuf_rdma_get_allocated_size_from_all_remotes(
       /* If state connected */
       if (state == state_connected) {
         *allocated_size += region->allocated_size;
-        *regions_nb++;
+        /* pas utilisé 
+			*regions_nb++;
+		*/
       }
     }
   }

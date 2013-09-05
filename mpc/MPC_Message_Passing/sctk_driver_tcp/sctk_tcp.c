@@ -139,7 +139,7 @@ sctk_network_notify_idle_message_tcp (sctk_rail_info_t* rail){
 }
 
 static void
-sctk_network_notify_any_source_message_tcp (sctk_rail_info_t* rail){
+sctk_network_notify_any_source_message_tcp (int polling_task_id, sctk_rail_info_t* rail){
 }
 
 /************ INIT ****************/

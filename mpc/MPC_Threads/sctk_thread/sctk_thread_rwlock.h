@@ -67,7 +67,7 @@ typedef struct sctk_thread_generic_rwlock_s{
   volatile unsigned int wait;
   volatile sctk_thread_generic_scheduler_t* writer;
   volatile sctk_thread_generic_rwlock_cell_t* readers;
-  volatile sctk_thread_generic_rwlock_cell_t* waiting;
+  sctk_thread_generic_rwlock_cell_t* waiting;
 }sctk_thread_generic_rwlock_t;
 
 #define SCTK_THREAD_GENERIC_RWLOCK_INIT {SCTK_SPINLOCK_INITIALIZER,SCTK_UNINITIALIZED,0,0,SCTK_RWLOCK_ALONE,SCTK_RWLOCK_NO_WR_WAITING,NULL,NULL,NULL}

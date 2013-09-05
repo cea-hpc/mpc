@@ -32,9 +32,9 @@
 #include "mpcthread.h"
 #include <mpcmp.h>
 #include <sys/time.h>
-#include <sctk_inter_thread_comm.h>
-#include <sctk_communicator.h>
-#include <sctk_collective_communications.h>
+#include "sctk_inter_thread_comm.h"
+#include "sctk_communicator.h"
+#include "sctk_collective_communications.h"
 #include "sctk_stdint.h"
 #include "sctk_atomics.h"
 
@@ -991,11 +991,14 @@ PMPC_Type_free (MPC_Datatype * datatype_p)
 	}
 	else if (datatype - sctk_user_data_types < sctk_user_data_types_max)
 	{
-		sctk_datatype_t *other_user_types;
+		sctk_other_datatype_t *other_user_types;
 		sctk_spinlock_lock (&(task_specific->other_user_types.lock));
 		other_user_types = task_specific->other_user_types.other_user_types;
 		sctk_assert (other_user_types != NULL);
-		other_user_types[datatype - sctk_user_data_types] = 0;
+		other_user_types[datatype - sctk_user_data_types].id = 0;
+		other_user_types[datatype - sctk_user_data_types].size = 0;
+		other_user_types[datatype - sctk_user_data_types].count = 0;
+		other_user_types[datatype - sctk_user_data_types].datatype = 0;
 		sctk_spinlock_unlock (&(task_specific->other_user_types.lock));
 	}
 	else
@@ -1109,7 +1112,7 @@ PMPC_Sizeof_datatype (MPC_Datatype * datatype, size_t size, size_t count, MPC_Da
 	  other_user_types[i].id = i;
 	  other_user_types[i].size = size;
 	  other_user_types[i].count = count;
-	  other_user_types[i].datatype = data_in;
+	  other_user_types[i].datatype = *data_in;
 	  sctk_spinlock_unlock (&(task_specific->other_user_types.lock));
 	  SCTK_PROFIL_END (MPC_Sizeof_datatype);
 	  MPC_ERROR_SUCESS ();
@@ -1626,6 +1629,7 @@ INFO("Si on redemarre , recreation des commnicateurs")
 #else
   not_implemented();
 #endif
+  return 0;
 }
 
 int
@@ -1672,6 +1676,7 @@ PMPC_Migrate ()
 #else
   not_implemented();
 #endif
+  return 0;
 }
 
 int
@@ -1709,6 +1714,7 @@ PMPC_Restart (int rank)
 #else
   not_implemented();
 #endif
+  return 0;
 }
 
 int
@@ -1968,10 +1974,10 @@ PMPC_Comm_size (MPC_Comm comm, int *size)
 int
 PMPC_Comm_remote_size (MPC_Comm comm, int *size)
 {
-  SCTK_PROFIL_START (MPC_Comm_remote_size);
+  //SCTK_PROFIL_START (MPC_Comm_remote_size);
   mpc_check_comm (comm, comm);
   __MPC_Comm_remote_size (comm, size);
-  SCTK_PROFIL_END (MPC_Comm_remote_size);
+  //SCTK_PROFIL_END (MPC_Comm_remote_size);
   MPC_ERROR_SUCESS ();
 }
 

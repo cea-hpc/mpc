@@ -250,8 +250,10 @@ static sctk_spinlock_t polling_lock = SCTK_SPINLOCK_INITIALIZER;
 /* Count how many times the vp is entered to the polling function. We
  * allow recursive calls to the polling function */
 static __thread int recursive_polling = 0;
-static int sctk_network_poll_all (sctk_rail_info_t* rail) {
+
 #if 0
+static int sctk_network_poll_all (sctk_rail_info_t* rail) 
+{
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
   LOAD_DEVICE(rail_ib);
@@ -272,9 +274,8 @@ static int sctk_network_poll_all (sctk_rail_info_t* rail) {
   }
 
   return poll.recv_found_own;
-#endif
 }
-
+#endif
 
 static void
 sctk_network_notify_recv_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){ }
@@ -284,13 +285,13 @@ sctk_network_notify_matching_message_ib (sctk_thread_ptp_message_t * msg,sctk_ra
 
 /* WARNING: This function can be called with dest == sctk_process_rank */
 static void
-sctk_network_notify_perform_message_ib (int remote_process, int remote_task_id, sctk_rail_info_t* rail){}
+sctk_network_notify_perform_message_ib (int remote_process, int remote_task_id, int polling_task_id, sctk_rail_info_t* rail){}
 
 static void
 sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){}
 
 static void
-sctk_network_notify_any_source_message_ib (sctk_rail_info_t* rail){}
+sctk_network_notify_any_source_message_ib (int polling_task_id, sctk_rail_info_t* rail){}
 
 static void
 sctk_network_connection_to_ib(int from, int to,sctk_rail_info_t* rail){
@@ -329,6 +330,7 @@ sctk_ib_fallback_send_polling_thread(void *arg) {
     POLL_INIT(&poll);
     sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, &poll, sctk_network_poll_send);
   }
+  return (void *)0;
 }
 
 static void *
@@ -356,6 +358,7 @@ sctk_ib_fallback_recv_polling_thread(void *arg) {
     POLL_INIT(&poll);
     sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, &poll, sctk_network_poll_recv);
   }
+  return (void *)0;
 }
 static void
 sctk_ib_fallback_init_polling_threads(sctk_rail_info_t* rail) {
@@ -368,7 +371,7 @@ sctk_ib_fallback_init_polling_threads(sctk_rail_info_t* rail) {
   sctk_user_thread_create (&pidt, &attr, sctk_ib_fallback_send_polling_thread, (void*) rail);
   sctk_user_thread_create (&pidt, &attr, sctk_ib_fallback_recv_polling_thread, (void*) rail);
 
-#warning "Join threads"
+//#warning "Join threads"
 }
 
 void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){

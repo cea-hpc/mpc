@@ -20,15 +20,14 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <mpc_mpi.h>
-#include <mpcmp.h>
-#include <sctk_collective_communications.h>
-#include <sctk_inter_thread_comm.h>
-#include <sctk_communicator.h>
-#include <sctk.h>
-#include <sctk_spinlock.h>
-#include <sctk_atomics.h>
-#include <sctk_thread.h>
+#include "mpcmp.h"
+#include "sctk_collective_communications.h"
+#include "sctk_inter_thread_comm.h"
+#include "sctk_communicator.h"
+#include "sctk.h"
+#include "sctk_spinlock.h"
+#include "sctk_atomics.h"
+#include "sctk_thread.h"
 #include <string.h>
 #include <math.h>
 
@@ -45,7 +44,7 @@ static int ALLREDUCE_CHECK_THREASHOLD = 8192;
 #define SCTK_MAX_ASYNC 32
 #define buffer_tmp_static_size 8*16
 #define buffer_table_static_size 8*sizeof(void*)
-#warning "Change here !!!"
+//#warning "Change here !!!"
 
 /************************************************************************/
 /*TOOLS                                                                 */
@@ -380,7 +379,7 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
     size_t size;
     int i;
     void* buffer_tmp;
-    void** buffer_table;
+    char * buffer_table;
     sctk_opt_messages_table_t table;
     int ALLREDUCE_ARRITY = 2;
     int total_max;
@@ -426,7 +425,7 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
     {
       int j;
       for(j = 1; j < ALLREDUCE_ARRITY; j++){
-	buffer_table[j-1] = ((char*)buffer_tmp) + (size * (j-1));
+	buffer_table[j-1] = ((char*)buffer_tmp)[size*(j-1)];
       }
     }
 
@@ -455,14 +454,14 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
         for(j = 1; j < ALLREDUCE_ARRITY; j++){
           if((src + (j*(i/ALLREDUCE_ARRITY))) < total){
             sctk_nodebug("Recv from %d",src + (j*(i/ALLREDUCE_ARRITY)));
-            sctk_opt_messages_recv(communicator,src + (j*(i/ALLREDUCE_ARRITY)),myself,0,buffer_table[j-1],size,allreduce_specific_message_tag,
+            sctk_opt_messages_recv(communicator,src + (j*(i/ALLREDUCE_ARRITY)),myself,0,((char *)buffer_table)+(j-1),size,allreduce_specific_message_tag,
                 sctk_opt_messages_get_item(&table),ptp_internal,0,0);
           }
         }
         sctk_opt_messages_wait(&table);
         for(j = 1; j < ALLREDUCE_ARRITY; j++){
           if((src + (j*(i/ALLREDUCE_ARRITY))) < total){
-            func(buffer_table[j-1],buffer_out,elem_number,data_type);
+            func(((char *)buffer_table)+(j-1),buffer_out,elem_number,data_type);
           }
         }
       } else {

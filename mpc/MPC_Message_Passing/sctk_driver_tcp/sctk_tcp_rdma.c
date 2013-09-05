@@ -171,7 +171,7 @@ sctk_network_notify_matching_message_tcp_rdma (sctk_thread_ptp_message_t * msg,s
 }
 
 static void
-sctk_network_notify_perform_message_tcp_rdma (int remote,sctk_rail_info_t* rail){
+sctk_network_notify_perform_message_tcp_rdma (int remote, int remote_task_id, int polling_task_id, sctk_rail_info_t* rail){
 }
 
 static void
@@ -179,7 +179,7 @@ sctk_network_notify_idle_message_tcp_rdma (sctk_rail_info_t* rail){
 }
 
 static void
-sctk_network_notify_any_source_message_tcp_rdma (sctk_rail_info_t* rail){
+sctk_network_notify_any_source_message_tcp_rdma (int polling_task_id, sctk_rail_info_t* rail){
 }
 
 /************ INIT ****************/

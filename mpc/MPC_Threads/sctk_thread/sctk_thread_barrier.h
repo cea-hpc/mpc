@@ -42,7 +42,7 @@ typedef struct sctk_thread_generic_barrier_s{
   sctk_spinlock_t lock;
   volatile int nb_max;
   volatile int nb_current;
-  volatile sctk_thread_generic_barrier_cell_t* blocked;
+  sctk_thread_generic_barrier_cell_t* blocked;
 }sctk_thread_generic_barrier_t;
 #define SCTK_THREAD_GENERIC_BARRIER_INIT {SCTK_SPINLOCK_INITIALIZER,0,0,NULL}
 

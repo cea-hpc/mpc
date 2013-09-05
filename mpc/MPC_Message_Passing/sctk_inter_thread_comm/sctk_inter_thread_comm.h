@@ -284,7 +284,8 @@ typedef struct {
      Check if the message if completed according to the message passed as a request
   */
   void sctk_perform_messages(struct sctk_perform_messages_s * wait);
-
+  void sctk_perform_messages_wait_init(struct sctk_perform_messages_s * wait, sctk_request_t * request);
+  void sctk_perform_messages_wait_init_request_type(struct sctk_perform_messages_s * wait);
   void sctk_init_header (sctk_thread_ptp_message_t *tmp, const int myself,
 			 sctk_message_type_t msg_type, void (*free_memory)(void*),
 			 void (*message_copy)(sctk_message_to_copy_t*));

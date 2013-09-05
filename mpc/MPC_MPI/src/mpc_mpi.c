@@ -2460,7 +2460,7 @@ __INTERNAL__PMPI_Type_contiguous (int count, MPI_Datatype data_in,
       PMPC_Type_size (data_in, &size);
       size = size * count;
       sctk_nodebug("SIZE = %d", size);
-      return PMPC_Sizeof_datatype (data_out, size, count, data_in);
+      return PMPC_Sizeof_datatype (data_out, size, count, &data_in);
     }
 }
 static int
@@ -3210,7 +3210,7 @@ static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype data
 			sctk_task_specific_t *task_specific;
 			sctk_other_datatype_t *other_user_types;
 			MPI_Datatype data_in;
-			unsigned long data_in_size;
+			int data_in_size;
 			size_t count;
 			task_specific = __MPC_get_task_specific ();
 			
@@ -4589,8 +4589,11 @@ __INTERNAL__PMPI_Group_translate_ranks (MPI_Group mpi_group1, int n, int *ranks1
 		sctk_nodebug("Wrong group n > 0 && ((NULL == ranks1) || (NULL == ranks2 ))");
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"");
 	}
-	
-	if ( MPI_GROUP_EMPTY == group1 || MPI_GROUP_EMPTY == group2 ) 
+
+	if(n == 0)
+		return MPI_SUCCESS;
+
+	if ( MPI_GROUP_EMPTY == mpi_group1 || MPI_GROUP_EMPTY == mpi_group2 ) 
 	{
 		for (i = 0; i < n ; i++)
 			ranks2[i] = MPI_UNDEFINED;
@@ -4864,7 +4867,7 @@ __INTERNAL__PMPI_Group_excl (MPI_Group mpi_group, int n, int *ranks,
 	MPC_Group group;
 	MPC_Group newgroup;
 	
-	if ( (MPI_GROUP_NULL == mpi_group) || (NULL == mpi_group) || (NULL == mpi_newgroup) )
+	if ( (MPI_GROUP_NULL == mpi_group) || (NULL == mpi_newgroup) )
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"");
 	else if (NULL == ranks && n > 0)
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"");
@@ -4930,7 +4933,7 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 /* Error checking */
 	group = __sctk_convert_mpc_group (mpi_group);
 	
-	if ( (MPI_GROUP_NULL == mpi_group) || (NULL == mpi_group) || (NULL == mpi_newgroup) )
+	if ( (MPI_GROUP_NULL == mpi_group) || (NULL == mpi_newgroup) )
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"group must not be MPI_GROUP_NULL");
 
 	__INTERNAL__PMPI_Group_size (mpi_group, &group_size);
@@ -5136,7 +5139,7 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 		return MPI_SUCCESS;
 	}
 	
-	if ( (MPI_GROUP_NULL == mpi_group) || (NULL == mpi_group) || (NULL == mpi_newgroup) )
+	if ( (MPI_GROUP_NULL == mpi_group) || (NULL == mpi_newgroup) )
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"group must not be MPI_GROUP_NULL");
 
 	__INTERNAL__PMPI_Group_size (mpi_group, &group_size);
@@ -8090,7 +8093,7 @@ int PMPI_Testsome (int incount, MPI_Request array_of_requests[], int *outcount, 
 	{
 		for (index = 0; index < incount; ++index) 
 		{
-			if (array_of_requests[index] == NULL) 
+			if (array_of_requests[index] == -1) 
 			{
 				res = MPI_ERR_REQUEST;
 				break;

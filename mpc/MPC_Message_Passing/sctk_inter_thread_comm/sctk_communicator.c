@@ -21,11 +21,10 @@
 /* ######################################################################## */
 
 /********************************* INCLUDES *********************************/
-#include <sctk_inter_thread_comm.h>
-#include <sctk_communicator.h>
-#include <sctk.h>
-#include <mpcmp.h>
-#include <mpc_mpi.h>
+#include "sctk_inter_thread_comm.h"
+#include "sctk_communicator.h"
+#include "sctk.h"
+#include "mpcmp.h"
 #include <uthash.h>
 #include "utarray.h"
 #include <opa_primitives.h>
@@ -624,7 +623,7 @@ int local_leader, int remote_leader, const sctk_communicator_t origin_communicat
 				sctk_nodebug("rank %d : FIRST try intercomm %d", rank, comm);
 			sctk_spinlock_unlock(&sctk_communicator_all_table_lock);
 			//~ exchange comm between leaders
-			PMPI_Sendrecv(&comm, 1, MPC_INT, remote_leader, tag, &remote_comm, 1, MPC_INT, remote_leader, tag, peer_comm, &status);
+			PMPC_Sendrecv(&comm, 1, MPC_INT, remote_leader, tag, &remote_comm, 1, MPC_INT, remote_leader, tag, peer_comm, &status);
 			if(comm != -1)
 			{
 				if(remote_comm > comm)
@@ -692,7 +691,7 @@ int local_leader, int remote_leader, const sctk_communicator_t origin_communicat
 		sctk_all_reduce(&ti,&comm,sizeof(sctk_communicator_t),1,(MPC_Op_f)sctk_comm_reduce, origin_communicator,0);
 		//~ echange des resultats du allreduce entre leaders
 		if(rank == local_leader)
-			PMPI_Sendrecv(&ti, 1, MPC_INT, remote_leader, tag, &remote_ti, 1, MPC_INT, remote_leader, tag, peer_comm, &status);
+			PMPC_Sendrecv(&ti, 1, MPC_INT, remote_leader, tag, &remote_ti, 1, MPC_INT, remote_leader, tag, peer_comm, &status);
 		//~ broadcast aux autres membres par groupe
 		sctk_broadcast (&remote_ti,sizeof(sctk_communicator_t),local_leader,origin_communicator);
 		//~ on recupère le plus grand des resultats ou -1
@@ -773,7 +772,7 @@ int local_leader, int remote_leader, const sctk_communicator_t origin_communicat
 			sctk_spinlock_unlock(&sctk_communicator_all_table_lock);
 			
 			//~ exchange comm between leaders
-			PMPI_Sendrecv(&comm, 1, MPC_INT, remote_leader, tag, &remote_comm, 1, MPC_INT, remote_leader, tag, peer_comm, &status);
+			PMPC_Sendrecv(&comm, 1, MPC_INT, remote_leader, tag, &remote_comm, 1, MPC_INT, remote_leader, tag, peer_comm, &status);
 			if(comm != -1)
 			{
 				if(remote_comm > comm)
@@ -842,7 +841,7 @@ int local_leader, int remote_leader, const sctk_communicator_t origin_communicat
 		sctk_nodebug("after allreduce comm %d", comm);
 		//~ echange des resultats du allreduce entre leaders
 		if(rank == local_leader)
-			PMPI_Sendrecv(&comm, 1, MPC_INT, remote_leader, tag, &remote_comm, 1, MPC_INT, remote_leader, tag, peer_comm, &status);
+			PMPC_Sendrecv(&comm, 1, MPC_INT, remote_leader, tag, &remote_comm, 1, MPC_INT, remote_leader, tag, peer_comm, &status);
 		
 		sctk_nodebug("after sendrecv comm %d", comm);
 		//~ broadcast aux autres membres par groupe
@@ -1783,7 +1782,7 @@ const sctk_communicator_t peer_comm, const int remote_leader, const int tag, con
 	//~ exchange local size
 	if(grank == local_leader)
 	{
-		PMPI_Sendrecv(&local_size, 1, MPC_INT, remote_leader, tag, &remote_size, 1, MPC_INT, remote_leader, tag, peer_comm, &status);
+		PMPC_Sendrecv(&local_size, 1, MPC_INT, remote_leader, tag, &remote_size, 1, MPC_INT, remote_leader, tag, peer_comm, &status);
 	}
 	
 	sctk_broadcast (&remote_size,sizeof(int),local_leader,local_comm);
@@ -1797,7 +1796,7 @@ const sctk_communicator_t peer_comm, const int remote_leader, const int tag, con
 		{
 			task_list[i] = tmp->local_to_global[i];
 		}
-		PMPI_Sendrecv(task_list, local_size, MPC_INT, remote_leader, tag, remote_task_list, remote_size, MPC_INT, remote_leader, tag, peer_comm, &status);
+		PMPC_Sendrecv(task_list, local_size, MPC_INT, remote_leader, tag, remote_task_list, remote_size, MPC_INT, remote_leader, tag, peer_comm, &status);
 	}
 	
 	sctk_broadcast (remote_task_list,(remote_size*sizeof(int)),local_leader,local_comm);
@@ -1805,14 +1804,14 @@ const sctk_communicator_t peer_comm, const int remote_leader, const int tag, con
 	//~ exchange leaders
 	if(grank == local_leader)
 	{
-		PMPI_Sendrecv(&lleader, 1, MPC_INT, remote_leader, tag, &remote_lleader, 1, MPC_INT, remote_leader, tag, peer_comm, &status);
+		PMPC_Sendrecv(&lleader, 1, MPC_INT, remote_leader, tag, &remote_lleader, 1, MPC_INT, remote_leader, tag, peer_comm, &status);
 	}
 	
 	sctk_broadcast (&remote_lleader,sizeof(int),local_leader,local_comm);
 	
 	if(grank == local_leader)
 	{
-		PMPI_Sendrecv(&rleader, 1, MPC_INT, remote_leader, tag, &remote_rleader, 1, MPC_INT, remote_leader, tag, peer_comm, &status);
+		PMPC_Sendrecv(&rleader, 1, MPC_INT, remote_leader, tag, &remote_rleader, 1, MPC_INT, remote_leader, tag, peer_comm, &status);
 	}
 	
 	sctk_broadcast (&remote_rleader,sizeof(int),local_leader,local_comm);
@@ -1820,7 +1819,7 @@ const sctk_communicator_t peer_comm, const int remote_leader, const int tag, con
 	//~ exchange local comm ids
 	if(grank == local_leader)
 	{
-		PMPI_Sendrecv(&local_id, 1, MPC_INT, remote_leader, tag, &remote_id, 1, MPC_INT, remote_leader, tag, peer_comm, &status);
+		PMPC_Sendrecv(&local_id, 1, MPC_INT, remote_leader, tag, &remote_id, 1, MPC_INT, remote_leader, tag, peer_comm, &status);
 	}
 	
 	sctk_broadcast (&remote_id,sizeof(int),local_leader,local_comm);

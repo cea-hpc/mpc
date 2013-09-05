@@ -47,7 +47,7 @@
  *  CONSTS
  *----------------------------------------------------------*/
 #define DESC_EVENT(config, event, desc, level, fatal)  do { \
-  if ( (level != -1) && (level <= (config)->ibv_verbose_level) || fatal) \
+  if ( ((level != -1) && (level <= (config)->ibv_verbose_level)) || fatal) \
     sctk_ib_debug(event":\t"desc); \
   if (fatal) sctk_abort(); \
   } while(0)

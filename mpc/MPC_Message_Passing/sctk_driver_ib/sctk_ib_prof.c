@@ -55,6 +55,10 @@ static size_t mem_used = 0;
 /* Reference clock */
 __thread volatile double reference_clock = -1;
 
+double sctk_ib_prof_get_mem_used() {
+  return mem_used;
+}
+
 #ifdef SCTK_IB_PROF
 
 /*-----------------------------------------------------------
@@ -106,10 +110,6 @@ void * __mem_thread(void* arg) {
     }
     sleep(1);
   }
-}
-
-double sctk_ib_prof_get_mem_used() {
-  return mem_used;
 }
 
 #if 0

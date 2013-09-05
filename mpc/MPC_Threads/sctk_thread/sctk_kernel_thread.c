@@ -24,9 +24,9 @@
 #include "sctk_kernel_thread.h"
 #include "sctk_spinlock.h"
 #include "sctk_tls.h"
+#include "sctk_topology.h"
 #include <string.h>
 #include <semaphore.h>
-
 
 #ifndef SCTK_KERNEL_THREAD_USE_TLS
 int
@@ -176,7 +176,7 @@ kthread_create (kthread_t * thread, void *(*start_routine) (void *),
 
     sctk_nodebug( "kthread_create: value returned by attr_setscope %d", res ) ;
 
-#warning "Move it to the XML configuration file"
+//#warning "Move it to the XML configuration file"
     char *env;
     if ( (env = getenv("MPC_KTHREAD_STACK_SIZE")) != NULL) {
       kthread_stack_size = atoll(env);

@@ -32,6 +32,7 @@
 #include "sctk_ibufs_rdma.h"
 #include "sctk_route.h"
 #include "sctk_asm.h"
+#include "sctk_multirail_ib.h"
 
 /* IB debug macros */
 #if defined SCTK_IB_MODULE_NAME
@@ -823,7 +824,7 @@ static inline int sctk_ib_cm_resizing_rdma_recv_request(RAIL_ARGS, void* request
 /*-----------------------------------------------------------
  *  RDMA deconnection
  *----------------------------------------------------------*/
-int sctk_ib_cm_resizing_rdma_deco_request(sctk_rail_info_t* rail_targ,
+int sctk_ib_cm_resizing_rdma_deco_request(sctk_ib_rail_info_t* rail_targ,
     struct sctk_ib_qp_s *remote){
 
   sctk_ib_cm_rdma_connection_t send_keys;
@@ -833,7 +834,7 @@ int sctk_ib_cm_resizing_rdma_deco_request(sctk_rail_info_t* rail_targ,
   send_keys.size = 0;
 
   sctk_ib_debug("[%d] Sending RDMA DECONNECTION request to %d",
-      rail_targ->rail_number, remote->rank);
+      rail_targ->rail->rail_number, remote->rank);
 
   sctk_route_messages_send(sctk_process_rank,remote->rank,ondemand_specific_message_tag,
       CM_RESIZING_RDMA_DECO_REQ_TAG+CM_MASK_TAG,
@@ -851,7 +852,7 @@ int sctk_ib_cm_resizing_rdma_deco_request(sctk_rail_info_t* rail_targ,
  * - Address of the send region
  * - Address of the recv region
  */
-static inline sctk_ib_cm_resizing_rdma_recv_deco_request(RAIL_ARGS, void* request, int src) {
+static inline int sctk_ib_cm_resizing_rdma_recv_deco_request(RAIL_ARGS, void* request, int src) {
   LOAD_TARG();
   sctk_ib_cm_rdma_connection_t send_keys;
   memset(&send_keys, 0, sizeof(sctk_ib_cm_rdma_connection_t));

@@ -33,6 +33,8 @@
 #include "sctk_thread_generic.h"
 #include "sctk_kernel_thread.h"
 #include "sctk_tls.h"
+#include "sctk_topology.h"
+#include "sctk_alloc_spinlock_asm.h"
 
 static void (*sctk_thread_generic_sched_idle_start)(void);
 
@@ -93,7 +95,7 @@ static void* sctk_thread_generic_scheduler_idle_task(sctk_thread_generic_schedul
 
   sctk_nodebug("End vp");
   
-#warning "Handle zombies"
+//#warning "Handle zombies"
   not_implemented();
   return NULL;
 }
@@ -117,7 +119,7 @@ static void* sctk_thread_generic_scheduler_bootstrap_task(sctk_thread_generic_sc
 
   sctk_nodebug("End vp");
 
-#warning "Handle zombies"
+//#warning "Handle zombies"
 
   return NULL;
 }
@@ -181,9 +183,9 @@ static inline int sctk_thread_generic_scheduler_check_task(sctk_thread_generic_t
 /* CENTRALIZED SCHEDULER               */
 /***************************************/
 static sctk_spinlock_t sctk_centralized_sched_list_lock = SCTK_SPINLOCK_INITIALIZER;
-static volatile sctk_thread_generic_scheduler_generic_t* sctk_centralized_sched_list = NULL;
+static sctk_thread_generic_scheduler_generic_t* sctk_centralized_sched_list = NULL;
 
-static volatile sctk_thread_generic_task_t* sctk_centralized_task_list = NULL;
+static sctk_thread_generic_task_t* sctk_centralized_task_list = NULL;
 static sctk_spinlock_t sctk_centralized_task_list_lock = SCTK_SPINLOCK_INITIALIZER;
 
 static void sctk_centralized_add_to_list(sctk_thread_generic_scheduler_t* sched){
@@ -322,7 +324,7 @@ sctk_centralized_thread_generic_wake_on_task_lock( sctk_thread_generic_scheduler
 
 typedef struct {
   sctk_spinlock_t sctk_multiple_queues_sched_list_lock;
-  volatile sctk_thread_generic_scheduler_generic_t* sctk_multiple_queues_sched_list;
+  sctk_thread_generic_scheduler_generic_t* sctk_multiple_queues_sched_list;
 } sctk_multiple_queues_sched_list_t;
 #define SCTK_MULTIPLE_QUEUES_SCHED_LIST_INIT {SCTK_SPINLOCK_INITIALIZER,NULL}
 
@@ -330,7 +332,7 @@ static sctk_multiple_queues_sched_list_t* sctk_multiple_queues_sched_lists = NUL
 
 
 typedef struct {
-  volatile sctk_thread_generic_task_t* sctk_multiple_queues_task_list;
+  sctk_thread_generic_task_t* sctk_multiple_queues_task_list;
   sctk_spinlock_t sctk_multiple_queues_task_list_lock ;
 }sctk_multiple_queues_task_list_t;
 #define SCTK_MULTIPLE_QUEUES_TASK_LIST_INIT {NULL,SCTK_SPINLOCK_INITIALIZER}
@@ -529,13 +531,13 @@ sctk_thread_generic_wake_on_task_lock( sctk_thread_generic_scheduler_t* sched,
 }
 
 typedef struct sctk_per_vp_data_s{
-  volatile sctk_thread_generic_task_t* sctk_generic_delegated_task_list;
-  volatile sctk_thread_generic_scheduler_generic_t* sctk_generic_delegated_zombie_detach_thread;
-  volatile sctk_thread_generic_scheduler_t* sctk_generic_delegated_add;
-  volatile sctk_spinlock_t* sctk_generic_delegated_spinlock;
-  volatile sctk_thread_generic_scheduler_t*sched_idle;
-  volatile sctk_spinlock_t*registered_spin_unlock;
-  volatile sctk_thread_generic_scheduler_t* swap_to_sched;
+  sctk_thread_generic_task_t* sctk_generic_delegated_task_list;
+  sctk_thread_generic_scheduler_generic_t* sctk_generic_delegated_zombie_detach_thread;
+  sctk_thread_generic_scheduler_t* sctk_generic_delegated_add;
+  sctk_spinlock_t* sctk_generic_delegated_spinlock;
+  sctk_thread_generic_scheduler_t*sched_idle;
+  sctk_spinlock_t*registered_spin_unlock;
+  sctk_thread_generic_scheduler_t* swap_to_sched;
 } sctk_per_vp_data_t;
 
 #define SCTK_PER_VP_DATA_INIT {NULL,NULL,NULL,NULL,NULL,NULL,NULL}
@@ -944,6 +946,8 @@ static void* sctk_generic_polling_func(void*arg){
     sctk_generic_poll_tasks(sched);
     sctk_generic_sched_yield(sched);
   }while(1);
+
+  return (void *)0;
 }
 
 static void sctk_generic_scheduler_init_thread_common(sctk_thread_generic_scheduler_t* sched){

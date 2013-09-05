@@ -149,17 +149,18 @@ int sctk_send_message_from_network_multirail_ib (sctk_thread_ptp_message_t * msg
   return ret;
 }
 
-/* Choose the topology of the signalization network (ring, torus) */
+/* Choose the topology of the signalization network (ring, torus)  --> not used
 static char *__get_signalization_topology(char* topo, size_t size) {
     char *value;
 
     if ( (value = getenv("MPC_IBV_SIGN_TOPO")) != NULL )
         snprintf(topo, size, "%s", value);
-    else  /* Torus is the default */
+    else  // Torus is the default 
         snprintf(topo, size, "%s", "torus");
 
     return topo;
 }
+*/
 
 /************ INIT ****************/
 void sctk_network_init_multirail_ib(int rail_id){

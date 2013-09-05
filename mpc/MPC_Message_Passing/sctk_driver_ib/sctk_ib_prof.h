@@ -45,6 +45,8 @@
 /* Uncomment to enable MEM profiling */
 //#define SCTK_IB_MEM_PROF
 
+double sctk_ib_prof_get_mem_used();
+
 #ifdef SCTK_IB_PROF
 #include <mpc_profiler.h>
 #define PROF_DECL(type, name) type name
@@ -83,7 +85,6 @@ void sctk_ib_prof_init();
 void sctk_ib_prof_init_task(int rank, int vp);
 void sctk_ib_prof_print(sctk_ib_rail_info_t *rail_ib);
 void sctk_ib_prof_finalize(sctk_ib_rail_info_t *rail_ib);
-double sctk_ib_prof_get_mem_used();
 void sctk_ib_prof_init_reference_clock();
 double sctk_ib_prof_get_time_stamp();
 
@@ -102,9 +103,6 @@ double sctk_ib_prof_get_time_stamp();
 #define sctk_ib_prof_finalize(x) (void)(0)
 #define sctk_ib_prof_get_time_stamp() 0
 #define sctk_ib_prof_init_reference_clock() (void)(0)
-static double sctk_ib_prof_get_mem_used() {
-  return 0;
-}
 #endif
 
 /*

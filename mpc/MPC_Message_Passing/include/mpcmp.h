@@ -644,6 +644,9 @@ enum MPIR_Combiner_enum {
   int PMPC_Alltoallv (void *, mpc_msg_count *, mpc_msg_count *,
 		     MPC_Datatype, void *, mpc_msg_count *,
 		     mpc_msg_count *, MPC_Datatype, MPC_Comm);
+  int PMPC_Alltoallw (const void *, const mpc_msg_count *, const mpc_msg_count *,
+		     const MPC_Datatype *, void *, const mpc_msg_count *,
+		     const mpc_msg_count *, const MPC_Datatype *, MPC_Comm);
 
   /*Groups */
   int PMPC_Comm_group (MPC_Comm, MPC_Group *);
@@ -656,6 +659,7 @@ enum MPIR_Combiner_enum {
   int PMPC_Convert_to_intercomm (MPC_Comm comm, MPC_Group group);
   int PMPC_Comm_create_list (MPC_Comm, int *list, int nb_elem, MPC_Comm *);
   int PMPC_Comm_create (MPC_Comm, MPC_Group, MPC_Comm *);
+  int PMPC_Intercomm_create (MPC_Comm local_comm, int local_leader, MPC_Comm peer_comm, int remote_leader, int tag, MPC_Comm * newintercomm);
   int PMPC_Comm_create_from_intercomm (MPC_Comm, MPC_Group, MPC_Comm *);
   int PMPC_Comm_free (MPC_Comm *);
   int PMPC_Comm_dup (MPC_Comm, MPC_Comm *);

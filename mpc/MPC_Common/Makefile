@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile jeu. déc. 20 22:33:54 CET 2012
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile jeu. sept.  5 15:17:34 CEST 2013
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -164,9 +164,9 @@ prepare_includes:$(M_PWD)/include_modules/MPC_Common
 
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)
-DEPENDS=$(DEP_libdict) $(DEP_alloc) $(DEP_asm) $(DEP_basic) $(DEP_datastructures) $(DEP_debug) $(DEP_helpers) $(DEP_launch) $(DEP_optim) $(DEP_spinlock)
+DEPENDS=$(DEP_libdict) $(DEP_alloc) $(DEP_asm) $(DEP_basic) $(DEP_datastructures) $(DEP_debug) $(DEP_helpers) $(DEP_launch) $(DEP_optim) $(DEP_spinlock) 
 
-$(DEPENDS):Makefile
+$(DEPENDS):Makefile 
 endif
 
 ifneq ($(SCTK_MAKE_NO_DEP),yes)

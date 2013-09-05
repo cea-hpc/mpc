@@ -44,6 +44,7 @@ static volatile unsigned long perform_check = 1;
    TODO this checkpointing might not work in a nested-openmp environment! 
  */
 
+#if 0
 static void *
 mpcomp_master_checkpointing (void *s)
 {
@@ -145,13 +146,14 @@ mpcomp_master_checkpointing (void *s)
 #endif
   return NULL;
 }
+#endif
 
+
+
+#if 0
 static void *
 mpcomp_slave_checkpointing (void *s)
 {
-#if 1
-  not_implemented();
-#else
   char name[1024];
   sctk_thread_t pid;
   unsigned long perform;
@@ -183,6 +185,7 @@ mpcomp_slave_checkpointing (void *s)
 
   return NULL;
 }
+
 
 int
 __mpcomp_checkpoint ()
@@ -261,6 +264,6 @@ __mpcomp_checkpoint ()
          - mpcomp_slave_checkpointing (for the rest of the micro VPs)
        */
     }
-#endif
   return 0;
 }
+#endif

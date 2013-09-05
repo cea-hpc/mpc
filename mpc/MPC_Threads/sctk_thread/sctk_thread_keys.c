@@ -52,7 +52,7 @@ sctk_thread_generic_keys_getspecific (sctk_thread_key_t __key,
 				      sctk_thread_generic_keys_t* keys)
 {
   if(sctk_key_used[__key] == 1){
-    return keys->keys[__key];
+    return (void *)keys->keys[__key];
   } else {
     return NULL;
   }
