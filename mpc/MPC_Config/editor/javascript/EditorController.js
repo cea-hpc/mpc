@@ -82,7 +82,7 @@ Controller.addProfile = function() {
 	}
 
 	// Associate the default values to the new profile
-	myModel[name] = myModel["default"];
+	myModel[name] = clone(myModel["default"]);
 
 	// Update the view with the new data model
 	View.updateView(name, Controller.getCurrentMapping());

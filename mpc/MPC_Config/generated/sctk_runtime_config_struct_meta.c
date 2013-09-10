@@ -52,8 +52,6 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"keep_max"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_allocator,keep_max)  , sizeof(size_t) , "size_t" , NULL},
 	/* struct */
 	{"sctk_runtime_config_struct_launcher" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_launcher) , NULL , sctk_runtime_config_struct_init_launcher},
-	{"smt"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,smt)  , sizeof(bool) , "bool" , NULL},
-	{"cores"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,cores)  , sizeof(int) , "int" , NULL},
 	{"verbosity"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,verbosity)  , sizeof(int) , "int" , NULL},
 	{"banner"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,banner)  , sizeof(bool) , "bool" , NULL},
 	{"autokill"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_launcher,autokill)  , sizeof(int) , "int" , NULL},
@@ -151,6 +149,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"allreduce_arity_max"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_inter_thread_comm,allreduce_arity_max)  , sizeof(int) , "int" , NULL},
 	{"allreduce_max_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_inter_thread_comm,allreduce_max_size)  , sizeof(int) , "int" , NULL},
 	{"allreduce_check_threshold"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_inter_thread_comm,allreduce_check_threshold)  , sizeof(int) , "int" , NULL},
+	{"collectives_init_hook"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_inter_thread_comm,collectives_init_hook)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL},
 	/* struct */
 	{"sctk_runtime_config_struct_low_level_comm" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_low_level_comm) , NULL , sctk_runtime_config_struct_init_low_level_comm},
 	{"checksum"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_low_level_comm,checksum)  , sizeof(bool) , "bool" , NULL},

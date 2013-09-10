@@ -47,8 +47,6 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_launcher * obj = struct_ptr;
 	/* Simple params : */
-	obj->smt = false;
-	obj->cores = 1;
 	obj->verbosity = 0;
 	obj->banner = true;
 	obj->autokill = 0;
@@ -220,6 +218,8 @@ void sctk_runtime_config_struct_init_inter_thread_comm(void * struct_ptr)
 	obj->allreduce_arity_max = 8;
 	obj->allreduce_max_size = 1024;
 	obj->allreduce_check_threshold = 8192;
+	obj->collectives_init_hook.name = "sctk_collectives_init_opt_messages";
+	*(void **) &(obj->collectives_init_hook.value) = sctk_runtime_config_get_symbol("sctk_collectives_init_opt_messages");
 }
 
 /*******************  FUNCTION  *********************/

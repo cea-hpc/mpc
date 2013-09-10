@@ -58,11 +58,7 @@ struct sctk_runtime_config_struct_allocator
 /******************************** STRUCTURE *********************************/
 /**Options for MPC launcher.**/
 struct sctk_runtime_config_struct_launcher
-{	/**Enable usage of hyperthreaded cores if available on current architecture.**/
-	bool smt;
-	/**Default number of cores if -c=X is not given to mpcrun.**/
-	int cores;
-	/**Default verbosity level from 0 to 3. Can be override by -vv on mpcrun.**/
+{	/**Default verbosity level from 0 to 3. Can be override by -vv on mpcrun.**/
 	int verbosity;
 	/**Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER.**/
 	bool banner;
@@ -292,6 +288,8 @@ struct sctk_runtime_config_struct_inter_thread_comm
 	int allreduce_max_size;
 	/****/
 	int allreduce_check_threshold;
+	/****/
+	struct sctk_runtime_config_funcptr collectives_init_hook;
 };
 
 /******************************** STRUCTURE *********************************/

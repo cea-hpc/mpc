@@ -57,8 +57,6 @@
 <!-- ********************************************************* -->
   <xs:complexType name="user_type_launcher">
     <xs:all>
-      <xs:element minOccurs="0" name="smt" type="xs:boolean"/>
-      <xs:element minOccurs="0" name="cores" type="xs:integer"/>
       <xs:element minOccurs="0" name="verbosity" type="xs:integer"/>
       <xs:element minOccurs="0" name="banner" type="xs:boolean"/>
       <xs:element minOccurs="0" name="autokill" type="xs:integer"/>
@@ -220,6 +218,13 @@
       <xs:element minOccurs="0" name="allreduce_arity_max" type="xs:integer"/>
       <xs:element minOccurs="0" name="allreduce_max_size" type="xs:integer"/>
       <xs:element minOccurs="0" name="allreduce_check_threshold" type="xs:integer"/>
+      <xs:element minOccurs="0" name="collectives_init_hook">
+        <xs:simpleType>
+          <xs:restriction base="xs:string">
+            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+          </xs:restriction>
+        </xs:simpleType>
+      </xs:element>
     </xs:all>
   </xs:complexType>
 <!-- ********************************************************* -->

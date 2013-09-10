@@ -232,6 +232,8 @@ sctk_perform_initialisation (void)
   }
 
 #ifdef MPC_Message_Passing
+  sctk_collectives_init_hook =
+      *(void**)(&sctk_runtime_config_get()->modules.inter_thread_comm.collectives_init_hook.value);
   if (sctk_process_nb_val > 1){
     sctk_ptp_per_task_init(-1);
     sctk_net_init_pmi();

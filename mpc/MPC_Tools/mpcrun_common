@@ -207,16 +207,26 @@ if [ "${CONFIG_FILES_VALID}" = "true" ]; then
 	MPC_VERBOSE="${CONFIG_LAUNCHER_VERBOSITY}"
 	# User launchers
 	MPC_USER_LAUNCHERS="${CONFIG_LAUNCHER_USER_LAUNCHERS}"
-	# Print version details
-	VERSION_DETAILS="${CONFIG_LAUNCHER_VERS_DETAILS}"
-	# Enable checkpoint
-	CHECKPOINT="${CONFIG_LAUNCHER_CHECKPOINT}"
-	# Enable migration
-	MIGRATION="${CONFIG_LAUNCHER_MIGRATION}"
-	# Enable reporting
-	REPORT="${CONFIG_LAUNCHER_REPORT}"
-	# Enable restart mode
-	RESTART="${CONFIG_LAUNCHER_RESTART}"
+    # Print version details
+    if [ "${CONFIG_LAUNCHER_VERS_DETAILS}" = "true" ]; then
+       VERSION_DETAILS="--version-details"
+    fi
+    # Enable checkpoint
+    if [ "${CONFIG_LAUNCHER_CHECKPOINT}" = "true" ]; then
+       CHECKPOINT="--checkpoint"
+    fi
+    # Enable migration
+    if [ "${CONFIG_LAUNCHER_MIGRATION}" = "true" ]; then
+       MIGRATION="--migration"
+    fi
+    # Enable reporting
+    if [ "${CONFIG_LAUNCHER_REPORT}" = "true" ]; then
+       REPORT="--report"
+    fi
+    # Enable restart mode
+    if [ "${CONFIG_LAUNCHER_RESTART}" = "true" ]; then
+       RESTART="--restart"
+    fi
 	# Number of process
 	PROCESS_NB="${CONFIG_LAUNCHER_NB_PROCESS}"
 	# Number of node
@@ -457,8 +467,7 @@ fi
 MPC_VERBOSE="--mpc-verbose=${MPC_VERBOSE}"
 MPC_PROFILING="--profiling=${MPC_PROFILING}"
 
-#SCTK_ARGS="$SCTK_ARGS $VERSION_DETAILS $REPORT $CHECKPOINT $RESTART $MIGRATION $TMP_DIR $MPC_VERBOSE $MPC_PROFILING"
-SCTK_ARGS="$SCTK_ARGS  $TMP_DIR $MPC_VERBOSE $MPC_PROFILING
+SCTK_ARGS="$SCTK_ARGS $VERSION_DETAILS $REPORT $CHECKPOINT $RESTART $MIGRATION $TMP_DIR $MPC_VERBOSE $MPC_PROFILING"
 if test "$MPC_MONO" = "1" ; then
 SCTK_ARGS="$SCTK_ARGS --mono=$BINARY"
 BINARY="mpc_mono"

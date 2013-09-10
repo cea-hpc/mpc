@@ -10,8 +10,6 @@ meta.types = {
 		keep_max: {mode: 'param', name: "keep_max", type: "size", doc: "Maximum size of macro blocs to keep in memory source for reuse. Use 0 to disable cache, huge value to keep all.", dflt: "8MB", },
 	}},
 	launcher : {type: 'struct', name: "launcher", childs: {
-		smt: {mode: 'param', name: "smt", type: "bool", doc: "Enable usage of hyperthreaded cores if available on current architecture.", dflt: "false", },
-		cores: {mode: 'param', name: "cores", type: "int", doc: "Default number of cores if -c=X is not given to mpcrun.", dflt: "1", },
 		verbosity: {mode: 'param', name: "verbosity", type: "int", doc: "Default verbosity level from 0 to 3. Can be override by -vv on mpcrun.", dflt: "0", },
 		banner: {mode: 'param', name: "banner", type: "bool", doc: "Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER.", dflt: "true", },
 		autokill: {mode: 'param', name: "autokill", type: "int", doc: "Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT.", dflt: "0", },
@@ -109,6 +107,7 @@ meta.types = {
 		allreduce_arity_max: {mode: 'param', name: "allreduce_arity_max", type: "int", doc: "", dflt: "8", },
 		allreduce_max_size: {mode: 'param', name: "allreduce_max_size", type: "int", doc: "", dflt: "1024", },
 		allreduce_check_threshold: {mode: 'param', name: "allreduce_check_threshold", type: "int", doc: "", dflt: "8192", },
+		collectives_init_hook: {mode: 'param', name: "collectives_init_hook", type: "funcptr", doc: "", dflt: "sctk_collectives_init_opt_messages", },
 	}},
 	low_level_comm : {type: 'struct', name: "low_level_comm", childs: {
 		checksum: {mode: 'param', name: "checksum", type: "bool", doc: "", dflt: "true", },

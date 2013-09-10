@@ -57,8 +57,6 @@
 <config name="MPC_Common">
 	<usertypes>
 		<struct name="launcher" doc="Options for MPC launcher.">
-			<param name="smt" type="bool" default="false" doc="Enable usage of hyperthreaded cores if available on current architecture."/>
-			<param name="cores" type="int" default="1" doc="Default number of cores if -c=X is not given to mpcrun."/>
 			<param name="verbosity" type="int" default="0" doc="Default verbosity level from 0 to 3. Can be override by -vv on mpcrun."/>
 			<param name="banner" type="bool" default="true" doc="Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER."/>
 			<param name="autokill" type="int" default="0" doc="Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT."/>
@@ -184,6 +182,7 @@
 			<param name="allreduce_arity_max" type="int" default="8" doc=""/>
 			<param name="allreduce_max_size" type="int" default="1024" doc=""/>
 			<param name="allreduce_check_threshold" type="int" default="8192" doc=""/>
+			<param name="collectives_init_hook" type="funcptr" default="sctk_collectives_init_opt_messages" doc=""/>
 		</struct>
 		
 		<struct name="low_level_comm" doc="">

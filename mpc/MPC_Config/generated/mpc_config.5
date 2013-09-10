@@ -177,14 +177,6 @@ Options for MPC launcher.
 It support parameters :
 .Pp
 .Bl -tag -width Ds
-.It Cm smt
-Type is bool. Default value is false. 
-.Pp smt
-Enable usage of hyperthreaded cores if available on current architecture.
-.It Cm cores
-Type is int. Default value is 1. 
-.Pp cores
-Default number of cores if -c=X is not given to mpcrun.
 .It Cm verbosity
 Type is int. Default value is 0. 
 .Pp verbosity
@@ -559,6 +551,10 @@ Type is int. Default value is 1024.
 .It Cm allreduce_check_threshold
 Type is int. Default value is 8192. 
 .Pp allreduce_check_threshold
+
+.It Cm collectives_init_hook
+Type is function pointer. Default value is sctk_collectives_init_opt_messages. 
+.Pp collectives_init_hook
 
 .El
 .Sh ENTRIES OF TYPE low_level_comm
