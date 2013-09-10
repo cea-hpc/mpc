@@ -58,7 +58,7 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 	*(void **) &(obj->thread_init.value) = sctk_runtime_config_get_symbol("sctk_use_ethread_mxn");
 	obj->nb_task = 1;
 	obj->nb_process = 1;
-	obj->nb_processor = 1;
+	obj->nb_processor = 0;
 	obj->nb_node = 1;
 	obj->launcher = "none";
 	obj->max_try = 10;

@@ -13,7 +13,7 @@
 			<param name="thread_init" type="funcptr" doc="Initialize multithreading mode" default="sctk_use_ethread_mxn"/>
 			<param name="nb_task" type="int" default="1" doc="Define the number of MPI tasks"/>
 			<param name="nb_process" type="int" default="1" doc="Define the number of MPC processes"/>
-			<param name="nb_processor" type="int" default="1" doc="Define the number of virtual processors"/>
+			<param name="nb_processor" type="int" default="0" doc="Define the number of virtual processors"/>
 			<param name="nb_node" type="int" default="1" doc="Define the number of compute nodes"/>
 			<param name="launcher" type="string" default="none" doc="Define which launcher to use"/>
 			<param name="max_try" type="int" default="10" doc="Define the max number of tries to access the topology file before failing"/>
