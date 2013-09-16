@@ -36,237 +36,252 @@ int
 __mpcomp_guided_loop_begin (long lb, long b, long incr, long chunk_size,
 			    long *from, long *to)
 {
-  mpcomp_thread_info_t *self;	/* Info on the current thread */
-  mpcomp_thread_info_t *father;	/* Info on the team */
-  long rank;
-  int index;
-  int num_threads;
-  int nb_entered_threads;
-  long n;			/* Number of remaining iterations */
-  long cs;			/* Current chunk size */
+	mpcomp_thread_info_t *self;	/* Info on the current thread */
+	mpcomp_thread_info_t *father;	/* Info on the team */
+	long rank;
+	int index;
+	int num_threads;
+	int nb_entered_threads;
+	long n;			/* Number of remaining iterations */
+	long cs;			/* Current chunk size */
+	int thread_worked;
 
-  sctk_nodebug( "__mpcomp_guided_loop_begin: begin loop %ld -> %ld [%ld], cs=%ld",
-      lb, b, incr, chunk_size ) ;
+	sctk_nodebug( "__mpcomp_guided_loop_begin: begin loop %ld -> %ld [%ld], cs=%ld",
+			lb, b, incr, chunk_size ) ;
 
-  /* Compute the total number iterations */
-  n = (b - lb) / incr;
+	/* Compute the total number iterations */
+	n = (b - lb) / incr;
 
-  /* Grab the thread info */
-  self = (mpcomp_thread_info_t *) sctk_thread_getspecific
-    (mpcomp_thread_info_key);
-  sctk_assert (self != NULL);
+	/* Grab the thread info */
+	self = (mpcomp_thread_info_t *) sctk_thread_getspecific
+		(mpcomp_thread_info_key);
+	sctk_assert (self != NULL);
 
-  /* If this loop contains no iterations then exit */
-  if ( n <= 0 ) {
-      /* Fill private information about the loop */
-      self->loop_lb = lb;
-      self->loop_b = b;
-      self->loop_incr = incr;
-      self->loop_chunk_size = chunk_size;
-    sctk_nodebug( "__mpcomp_guided_loop_begin: no iteration, modulo=%ld", (b - lb) % incr ) ;
-    return 0 ;
-  }
-
-  /* Number of threads in the current team */
-  num_threads = self->num_threads;
-
-  /* If this function is called from a sequential part (orphaned directive) or
-     this team has only 1 thread, the current thread will execute the whole
-     loop */
-  if (num_threads == 1)
-    {
-
-      sctk_nodebug( "__mpcomp_guided_loop_begin: only one thread, chunk %ld -> %ld",
-	  lb, b ) ;
-      *from = lb;
-      *to = b;
-      return 1;
-    }
-
-  /* Get the father info (team info) */
-  father = self->father;
-  sctk_assert (father != NULL);
-
-  /* Get the rank of the current thread */
-  rank = self->rank;
-  index =
-    (father->current_for_guided[rank] + 1) % (MPCOMP_MAX_ALIVE_FOR_GUIDED +
-					      1);
-
-  sctk_nodebug
-    ("__mpcomp_guided_loop_begin[%d]: Entering loop with index %d, vp=%d",
-     rank, index, self->vp);
-
-  sctk_spinlock_lock (&(father->lock_enter_for_guided[index]));
-
-  nb_entered_threads = father->nb_threads_entered_for_guided[index];
-
-  /* MPCOMP_NOWAIT_STOP_SYMBOL in the next workshare structure means that the
-   * buffer is full (too many alive for loops with guided schedules).
-   * Therefore, the threads of this team have to wait. */
-  if (nb_entered_threads == MPCOMP_NOWAIT_STOP_SYMBOL)
-    {
-
-      sctk_nodebug
-	("__mpcomp_guided_loop_begin[%d]: First barrier at %d (max %d)", rank,
-	 index, MPCOMP_MAX_ALIVE_FOR_GUIDED);
-
-      father->nb_threads_entered_for_guided[index] =
-	MPCOMP_NOWAIT_STOP_CONSUMED;
-
-      sctk_spinlock_unlock (&(father->lock_enter_for_guided[index]));
-
-      /* Generate a barrier (it should reinitialize all counters) */
-      /* FIXME use good barrier instead of OLD! */
-      __mpcomp_old_barrier ();
-
-      return __mpcomp_guided_loop_begin (lb, b, incr, chunk_size, from, to);
-    }
-
-  /* MPCOMP_NOWAIT_STOP_CONSUMED => some else is already blocked here, so just
-   * call the barrier */
-  if (nb_entered_threads == MPCOMP_NOWAIT_STOP_CONSUMED)
-    {
-      sctk_nodebug ("__mpcomp_guided_loop_begin[%d]: Barrier at %d (max %d)",
-		    rank, index, MPCOMP_MAX_ALIVE_FOR_GUIDED);
-
-      sctk_spinlock_unlock (&(father->lock_enter_for_guided[index]));
-
-      /* Generate a barrier (it should reinitialize all counters) */
-      /* FIXME use good barrier instead of OLD! */
-      __mpcomp_old_barrier ();
-
-      return __mpcomp_guided_loop_begin (lb, b, incr, chunk_size, from, to);
-    }
-
-  /* I can start this loop */
-
-  /* Am I the first one? */
-  if (nb_entered_threads == 0)
-    {
-
-      /* I am the first to enter this loop */
-      sctk_nodebug
-	("__mpcomp_guided_loop_begin[%d]: First one => index %d, #threads %d",
-	 rank, index, num_threads);
-
-      /* Update the current information */
-      father->nb_threads_entered_for_guided[index] = 1;
-      father->current_for_guided[rank] = index;
-
-      /* Initialize some information for the rest of the team */
-      father->nb_threads_exited_for_guided[index] = 0;
-
-
-      /* Compute the current chunk size */
-      cs = n / num_threads;
-      if (cs < n && (n % num_threads) != 0)
-	{
-	  cs++;
+	/* If this loop contains no iterations then exit */
+	if ( n <= 0 ) {
+		/* Fill private information about the loop */
+		self->loop_lb = lb;
+		self->loop_b = b;
+		self->loop_incr = incr;
+		self->loop_chunk_size = chunk_size;
+		sctk_nodebug( "__mpcomp_guided_loop_begin: no iteration, modulo=%ld", (b - lb) % incr ) ;
+		return 0 ;
 	}
 
-      sctk_nodebug
-	("__mpcomp_guided_loop_begin[%d]: First one => n=%ld->%ld cs=%ld", rank,
-	 n, n - cs, cs);
+	/* Number of threads in the current team */
+	num_threads = self->num_threads;
 
-      /* Update the number of remaining iterations */
-      n = n - cs;
-
-
-      father->nb_iterations_remaining[index] = n;
-      father->current_from_for_guided[index] = lb + cs * incr;
-
-      sctk_spinlock_unlock (&(father->lock_enter_for_guided[index]));
-
-      /* Fill private information about the loop */
-      self->loop_lb = lb;
-      self->loop_b = b;
-      self->loop_incr = incr;
-      self->loop_chunk_size = chunk_size;
-
-      /* Return the corresponding chunk */
-      *from = lb;
-      *to = lb + cs * incr;
-
-      return 1;
-
-    }
-
-  sctk_assert (nb_entered_threads < num_threads);
-
-  /* I am not the first one to enter
-     -> check if there is still a chunk to execute */
-  sctk_nodebug
-    ("__mpcomp_guided_loop_begin[%d]: Not first one -> index %d, #threads %d",
-     rank, index, num_threads);
-
-  /* Update the current information */
-  father->nb_threads_entered_for_guided[index] = nb_entered_threads + 1;
-  father->current_for_guided[rank] = index;
-
-  n = father->nb_iterations_remaining[index];
-
-  sctk_nodebug
-    ("__mpcomp_guided_loop_begin[%d]: Not first one -> %ld iteration(s) remaining",
-     rank, n);
-
-  /* If there is a chunk remaining */
-  if (n > 0)
-    {
-      int next_from;
-
-      /* Compute the next chunk size */
-      cs = n / num_threads;
-
-      /* Ceil value */
-      if (cs < n && (n % num_threads) != 0)
+	/* If this function is called from a sequential part (orphaned directive) or
+		 this team has only 1 thread, the current thread will execute the whole
+		 loop */
+	if (num_threads == 1)
 	{
-	  cs++;
+
+		sctk_nodebug( "__mpcomp_guided_loop_begin: only one thread, chunk %ld -> %ld",
+				lb, b ) ;
+		*from = lb;
+		*to = b;
+		return 1;
 	}
 
-      /* This size should be at least equal to the 'chunk_size' value */
-      /* Except for the last chunk */
-      if (cs < self->loop_chunk_size)
+	/* Get the father info (team info) */
+	father = self->father;
+	sctk_assert (father != NULL);
+
+	/* Get the rank of the current thread */
+	rank = self->rank;
+	index =
+		(father->current_for_guided[rank] + 1) % (MPCOMP_MAX_ALIVE_FOR_GUIDED +
+				1);
+
+	sctk_nodebug
+		("__mpcomp_guided_loop_begin[%d]: Entering loop with index %d, vp=%d",
+		 rank, index, self->vp);
+
+	sctk_spinlock_lock (&(father->lock_enter_for_guided[index]));
+
+	nb_entered_threads = father->nb_threads_entered_for_guided[index];
+
+	/* MPCOMP_NOWAIT_STOP_SYMBOL in the next workshare structure means that the
+	 * buffer is full (too many alive for loops with guided schedules).
+	 * Therefore, the threads of this team have to wait. */
+	if (nb_entered_threads == MPCOMP_NOWAIT_STOP_SYMBOL)
 	{
-	  cs = self->loop_chunk_size;
-	  if (n < self->loop_chunk_size)
-	    {
-	      cs = n;
-	    }
+
+		sctk_nodebug
+			("__mpcomp_guided_loop_begin[%d]: First barrier at %d (max %d)", rank,
+			 index, MPCOMP_MAX_ALIVE_FOR_GUIDED);
+
+		father->nb_threads_entered_for_guided[index] =
+			MPCOMP_NOWAIT_STOP_CONSUMED;
+
+		sctk_spinlock_unlock (&(father->lock_enter_for_guided[index]));
+
+		/* Generate a barrier (it should reinitialize all counters) */
+		/* FIXME use good barrier instead of OLD! */
+		__mpcomp_old_barrier ();
+
+		return __mpcomp_guided_loop_begin (lb, b, incr, chunk_size, from, to);
 	}
 
-      n = n - cs;
+	/* MPCOMP_NOWAIT_STOP_CONSUMED => some else is already blocked here, so just
+	 * call the barrier */
+	if (nb_entered_threads == MPCOMP_NOWAIT_STOP_CONSUMED)
+	{
+		sctk_nodebug ("__mpcomp_guided_loop_begin[%d]: Barrier at %d (max %d)",
+				rank, index, MPCOMP_MAX_ALIVE_FOR_GUIDED);
 
-      /* Grab the 'from' info */
-      next_from = father->current_from_for_guided[index];
+		sctk_spinlock_unlock (&(father->lock_enter_for_guided[index]));
 
-      /* Update info for the next chunk */
-      father->nb_iterations_remaining[index] = n;
-      father->current_from_for_guided[index] = next_from + cs * incr;
+		/* Generate a barrier (it should reinitialize all counters) */
+		/* FIXME use good barrier instead of OLD! */
+		__mpcomp_old_barrier ();
 
-      sctk_spinlock_unlock (&(father->lock_enter_for_guided[index]));
+		return __mpcomp_guided_loop_begin (lb, b, incr, chunk_size, from, to);
+	}
 
-      /* Fill private information about the loop */
-      self->loop_lb = lb;
-      self->loop_b = b;
-      self->loop_incr = incr;
-      self->loop_chunk_size = chunk_size;
+	/* I can start this loop */
 
-      /* Return the corresponding chunk */
-      *from = next_from;
-      *to = next_from + cs * incr;
+	/* Am I the first one? */
+	if (nb_entered_threads == 0)
+	{
 
-      return 1;
-    }
+		/* I am the first to enter this loop */
+		sctk_nodebug
+			("__mpcomp_guided_loop_begin[%d]: First one => index %d, #threads %d",
+			 rank, index, num_threads);
 
-  sctk_nodebug
-    ("__mpcomp_guided_loop_begin[%d]: Not first one -> no chunk left", rank);
+		/* Update the current information */
+		father->nb_threads_entered_for_guided[index] = 1;
+		father->current_for_guided[rank] = index;
 
-  /* No chunk left... just unlock and return 0 */
+		/* Initialize some information for the rest of the team */
+		father->nb_threads_exited_for_guided[index] = 0;
 
-  sctk_spinlock_unlock (&(father->lock_enter_for_guided[index]));
 
-  return 0;
+		/* Compute the current chunk size */
+		cs = n / num_threads;
+		if (cs < n && (n % num_threads) != 0)
+		{
+			cs++;
+		}
+
+		sctk_nodebug
+			("__mpcomp_guided_loop_begin[%d]: First one => n=%ld->%ld cs=%ld", rank,
+			 n, n - cs, cs);
+
+		/* Update the number of remaining iterations */
+		n = n - cs;
+
+
+		father->nb_iterations_remaining[index] = n;
+		father->current_from_for_guided[index] = lb + cs * incr;
+
+		sctk_spinlock_unlock (&(father->lock_enter_for_guided[index]));
+
+		/* Fill private information about the loop */
+		self->loop_lb = lb;
+		self->loop_b = b;
+		self->loop_incr = incr;
+		self->loop_chunk_size = chunk_size;
+
+		/* Return the corresponding chunk */
+		*from = lb;
+		*to = lb + cs * incr;
+
+		return 1;
+
+	}
+
+	sctk_assert (nb_entered_threads < num_threads);
+
+	/* I am not the first one to enter
+		 -> check if there is still a chunk to execute */
+	sctk_nodebug
+		("__mpcomp_guided_loop_begin[%d]: Not first one -> index %d, #threads %d",
+		 rank, index, num_threads);
+
+	/* Check if the thread already have done some work */
+	thread_worked = father->current_for_guided[rank];
+
+	/* Update the current information */
+	father->nb_threads_entered_for_guided[index] = nb_entered_threads + 1;
+	father->current_for_guided[rank] = index;
+
+	n = father->nb_iterations_remaining[index];
+
+	sctk_nodebug
+		("__mpcomp_guided_loop_begin[%d]: Not first one -> %ld iteration(s) remaining",
+		 rank, n);
+
+	/* If there is a chunk remaining */
+	if (n > 0)
+	{
+		int next_from;
+
+		/* Compute the next chunk size */
+		cs = n / num_threads;
+
+		/* Ceil value */
+		if (cs < n && (n % num_threads) != 0)
+		{
+			cs++;
+		}
+
+		/* This size should be at least equal to the 'chunk_size' value */
+		/* Except for the last chunk */
+		if (cs < self->loop_chunk_size)
+		{
+			cs = self->loop_chunk_size;
+			if (n < self->loop_chunk_size)
+			{
+				cs = n;
+			}
+		}
+
+		n = n - cs;
+
+		/* Grab the 'from' info */
+		next_from = father->current_from_for_guided[index];
+
+		/* Update info for the next chunk */
+		father->nb_iterations_remaining[index] = n;
+		father->current_from_for_guided[index] = next_from + cs * incr;
+
+		sctk_spinlock_unlock (&(father->lock_enter_for_guided[index]));
+
+		/* Fill private information about the loop */
+		self->loop_lb = lb;
+		self->loop_b = b;
+		self->loop_incr = incr;
+		self->loop_chunk_size = chunk_size;
+
+		/* Return the corresponding chunk */
+		*from = next_from;
+		*to = next_from + cs * incr;
+
+		return 1;
+	}
+
+	sctk_nodebug
+		("__mpcomp_guided_loop_begin[%d]: Not first one -> no chunk left", rank);
+
+	/* No chunk left... */
+
+	/* ... if the thread have done no work ->
+		 -> fill private information about the loop, then... */
+	if (thread_worked == -1)
+	{
+		self->loop_lb = lb;
+		self->loop_b = b;
+		self->loop_incr = incr;
+		self->loop_chunk_size = chunk_size;
+	}
+
+	/* ...just unlock and return 0 */
+	sctk_spinlock_unlock (&(father->lock_enter_for_guided[index]));
+
+	return 0;
 }
 
 int
