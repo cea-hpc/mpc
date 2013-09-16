@@ -63,8 +63,8 @@ void sctk_runtime_config_old_getenv_compatibility(struct sctk_runtime_config * c
 
 	/* came from sctk_launch.c for banner disabling, also used into mpcomp.c
 	   and sctk_thread.c */
-	if (getenv ("MPC_DISABLE_BANNER") != NULL)
-		config->modules.launcher.banner = false;
+	if ((tmp = getenv ("MPC_DISABLE_BANNER")) != NULL)
+		config->modules.launcher.banner = atoi(tmp);
 	//came from sctk_launch.c
 	if ((tmp = getenv ("MPC_AUTO_KILL_TIMEOUT")) != NULL)
 		config->modules.launcher.autokill = atoi(tmp);

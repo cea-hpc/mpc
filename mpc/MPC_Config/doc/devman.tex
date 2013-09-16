@@ -134,6 +134,83 @@ The \texttt{src} folder contains the following files:
 
 \section{The configuration system into MPC}
 
+\subsection{Write a \texttt{config-meta.xml} file}
+
+Each module to be added in the configuration system needs its own \texttt{config-meta.xml} file. The general structure of such a file is designed as follow:
+
+\lstset{language=XML}
+\begin{lstlisting}[title=General structure of a \texttt{config-meta.xml} file]
+<config>
+  <usertypes>...</usertypes>
+  <modules>...</modules>
+<profile>
+\end{lstlisting}
+
+\noindent The developer has to defined all the types (\texttt{structure}, \texttt{union}, etc.) that will be used into the configuration system in the \texttt{usertypes} section.
+
+\subsubsection{The \texttt{usertypes} section}
+
+In this section, the developer will define structures (\texttt{struct}), unions (\texttt{union}) and enumerators (\texttt{enum}) that will be used in the configuration system. Each one of them have two required attributes:
+\texttt{name} (resp. \texttt{doc}) is the name (resp. the description) of the variable/object.
+\newline
+
+\noindent A structure (as a C/C++ struct) is a set of \texttt{param} or \texttt{array} which have required attributes:
+\begin{enumerate}
+\item \texttt{name} which is the name of the variable;
+\item \texttt{type} which is its type (simple: \texttt{int}, \texttt{float}, \dots or complex: \texttt{struct}, \texttt{union}, \dots),
+\item \texttt{doc} which shortly describes what it is for,
+\item \verb![!only for \texttt{array}\verb!]! \texttt{entry-name} which matches to the tag name of the array elements.
+\end{enumerate}
+
+\noindent The \texttt{param} have an optional attribute, \texttt{default}, to initialize the variable to a specific default value.
+
+\lstset{language=XML}
+\begin{lstlisting}[title=Example of a \texttt{struct} definition]
+<struct name="my_struct" doc="This a struct test">
+  <param name="param1" type="string" doc="String param." />
+  <param name="param2" type="user_type" doc="Param of type user_type (enum, struct, ...)." />
+  <array name="array1" entry-name="elt" type="int" doc="Array of int with elt as xml tag name." />
+</struct>
+\end{lstlisting}
+
+\noindent An union (as a C/C++ union) matches to a list of choices defined by a name and a type.
+
+\lstset{language=XML}
+\begin{lstlisting}[title=Example of a \texttt{union} definition]
+<union name="my_union" doc="This an union test">
+  <!-- Define a choice with a string param -->
+  <choice name="choice1" type="string" />
+  <!-- Define a choice with an user type param -->
+  <choice name="choice2" type="user_type" />
+  <!-- Define a choice with an int param -->
+  <choice name="choice3" type="int" />
+</union>
+\end{lstlisting}
+
+\noindent An enumerator (as a C/C++ enum) is a set of possible values as shown in the following code.
+
+\lstset{language=XML}
+\begin{lstlisting}[title=Example of a \texttt{enum} definition]
+<enum name="day" doc="Week days">
+  <value>Monday</value>
+  <value>Tuesday</value>
+  <value>Wednesday</value>
+</enum>
+\end{lstlisting}
+
+\subsubsection{The \texttt{modules} section}
+
+In this section, the developer will declare the high-level structures he wants the user to configure. In the following code, there will be two configurable structures of type \texttt{my\_struct\_1} and
+\texttt{my\_struct\_2}.
+
+\lstset{language=XML}
+\begin{lstlisting}[title=Example of a \texttt{modules} definition]
+<modules>
+  <module name="struct_1" type="my_struct_1" />
+  <module name="struct_2" type="my_struct_2" />
+</modules>
+\end{lstlisting}
+
 \subsection{Configuration management workflow}
 
 The workflow of configuration management can be described by steps:

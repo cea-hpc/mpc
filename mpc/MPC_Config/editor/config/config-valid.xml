@@ -22,8 +22,8 @@
 					<disable_rand_addr>false</disable_rand_addr>
 					<disable_mpc>false</disable_mpc>
 					<thread_init>sctk_use_ethread_mxn</thread_init>
-					<nb_task>1</nb_task>
-					<nb_process>1</nb_process>
+					<nb_task>2</nb_task>
+					<nb_process>2</nb_process>
 					<nb_processor>0</nb_processor>
 					<nb_node>0</nb_node>
 					<launcher>none</launcher>
@@ -268,6 +268,11 @@
 					<keep_mem>5 MB</keep_mem>
 					<keep_max>120 PB</keep_max>
 				</allocator>
+                <launcher>
+                    <verbosity>0</verbosity>
+                    <nb_task>8</nb_task>
+                    <thread_init>sctk_use_pthread</thread_init>
+                </launcher>
 			</modules>
 		</profile>
 		<profile>
@@ -275,6 +280,9 @@
 			<modules>
 				<launcher>
 					<verbosity>2</verbosity>
+					<banner>true</banner>
+					<nb_task>4</nb_task>
+					<thread_init>sctk_use_ethread</thread_init>
 				</launcher>
 			</modules>
 		</profile>
