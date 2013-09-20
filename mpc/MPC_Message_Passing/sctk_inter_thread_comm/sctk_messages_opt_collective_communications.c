@@ -20,14 +20,15 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include "mpcmp.h"
-#include "sctk_collective_communications.h"
-#include "sctk_inter_thread_comm.h"
-#include "sctk_communicator.h"
-#include "sctk.h"
-#include "sctk_spinlock.h"
-#include "sctk_atomics.h"
-#include "sctk_thread.h"
+#include <mpc_mpi.h>
+#include <mpcmp.h>
+#include <sctk_collective_communications.h>
+#include <sctk_inter_thread_comm.h>
+#include <sctk_communicator.h>
+#include <sctk.h>
+#include <sctk_spinlock.h>
+#include <sctk_atomics.h>
+#include <sctk_thread.h>
 #include <string.h>
 #include <math.h>
 
@@ -42,9 +43,7 @@ static int ALLREDUCE_ARITY_MAX = 8;
 static int ALLREDUCE_MAX_SIZE = 1024;
 static int ALLREDUCE_CHECK_THREASHOLD = 8192;
 #define SCTK_MAX_ASYNC 32
-#define buffer_tmp_static_size 8*16
-#define buffer_table_static_size 8*sizeof(void*)
-//#warning "Change here !!!"
+#warning "Change here !!!"
 
 /************************************************************************/
 /*TOOLS                                                                 */
@@ -379,16 +378,11 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
     size_t size;
     int i;
     void* buffer_tmp;
-    char * buffer_table;
+    void** buffer_table;
     sctk_opt_messages_table_t table;
     int ALLREDUCE_ARRITY = 2;
     int total_max;
     struct sctk_internal_ptp_s* ptp_internal;
-
-    char buffer_tmp_static[buffer_tmp_static_size];
-    char buffer_table_static[buffer_table_static_size];
-    int use_tmp_static;
-    int use_table_static;
 
     /*
       MPI require that the result of the allreduce is the same on all MPI tasks.
@@ -407,25 +401,12 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
       ALLREDUCE_ARRITY = ALLREDUCE_ARITY_MAX;
     }
 
-    if(size*(ALLREDUCE_ARRITY -1) <= sizeof(buffer_tmp_static)){
-      buffer_tmp = buffer_tmp_static;
-      use_tmp_static = 1;
-    } else {
-      buffer_tmp = sctk_malloc(size*(ALLREDUCE_ARRITY -1));
-      use_tmp_static = 0;
-    }
-
-    if((ALLREDUCE_ARRITY -1) * sizeof(void*) <= sizeof(buffer_table_static)){
-      buffer_table = buffer_table_static; 
-      use_table_static = 1;
-    } else {
-      buffer_table = sctk_malloc((ALLREDUCE_ARRITY -1) * sizeof(void*));
-      use_table_static = 0;
-    }
+    buffer_tmp = sctk_malloc(size*(ALLREDUCE_ARRITY -1));
+    buffer_table = sctk_malloc((ALLREDUCE_ARRITY -1) * sizeof(void*));
     {
       int j;
       for(j = 1; j < ALLREDUCE_ARRITY; j++){
-	buffer_table[j-1] = ((char*)buffer_tmp)[size*(j-1)];
+	buffer_table[j-1] = ((char*)buffer_tmp) + (size * (j-1));
       }
     }
 
@@ -454,14 +435,14 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
         for(j = 1; j < ALLREDUCE_ARRITY; j++){
           if((src + (j*(i/ALLREDUCE_ARRITY))) < total){
             sctk_nodebug("Recv from %d",src + (j*(i/ALLREDUCE_ARRITY)));
-            sctk_opt_messages_recv(communicator,src + (j*(i/ALLREDUCE_ARRITY)),myself,0,((char *)buffer_table)+(j-1),size,allreduce_specific_message_tag,
+            sctk_opt_messages_recv(communicator,src + (j*(i/ALLREDUCE_ARRITY)),myself,0,buffer_table[j-1],size,allreduce_specific_message_tag,
                 sctk_opt_messages_get_item(&table),ptp_internal,0,0);
           }
         }
         sctk_opt_messages_wait(&table);
         for(j = 1; j < ALLREDUCE_ARRITY; j++){
           if((src + (j*(i/ALLREDUCE_ARRITY))) < total){
-            func(((char *)buffer_table)+(j-1),buffer_out,elem_number,data_type);
+            func(buffer_table[j-1],buffer_out,elem_number,data_type);
           }
         }
       } else {
@@ -497,10 +478,8 @@ static void sctk_allreduce_opt_messages_intern (const void *buffer_in, void *buf
       }
     }
     sctk_opt_messages_wait(&table);
-    if(use_tmp_static == 0)
-      sctk_free(buffer_tmp);
-    if(use_table_static == 0)
-      sctk_free(buffer_table);
+    sctk_free(buffer_tmp);
+    sctk_free(buffer_table);
   }
 }
 
