@@ -38,6 +38,8 @@ printf " \'$i\'">> config.status
 done
 echo "\"" >> config.status
 
+export -p  >> config.status
+
 cat <<EOF >> config.status
 MPC_SOURCE_DIR="$MPC_SOURCE_DIR"
 MODULE_LIST="$MODULE_LIST"
@@ -123,6 +125,7 @@ MODULE_LIST="$MODULE_LIST"
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_cflags
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_mpcrun
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_compiler
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_env
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_status
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_reconfigure
 EOF

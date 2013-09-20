@@ -40,6 +40,19 @@
 #define SCTK_OMP_VERSION_MAJOR 2
 #define SCTK_OMP_VERSION_MINOR 5
 
+/*
+  Avoid mix of MPC with Intel and GCC OpenMP runtimes
+ */
+
+#define ABORT_FUNC_OMP(a,b)			\
+  void a(){					\
+    sctk_error(b);				\
+    abort();					\
+  }
+
+ABORT_FUNC_OMP(__kmpc_for_static_init_4,"Mix Intel OpenMP runtime with MPC")
+ABORT_FUNC_OMP(GOMP_parallel_start,"Mix GCC OpenMP runtime with MPC")
+
 
 /*
  * Environment variable used to fill the ICVs (OpenMP 2.5) 

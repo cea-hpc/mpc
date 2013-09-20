@@ -105,7 +105,7 @@ esac
 if test ! -z "${BINUTILS_PREFIX_INSTALL}" && test "$use_mpc_privat" = "true"
 then
 cat <<EOF >> $1
-CFLAGS="\`$SCTK_BIN_DIR/mpc_cflags $2\` -fmpc-privatize"
+CFLAGS="\`$SCTK_BIN_DIR/mpc_cflags $2\`"
 LDFLAGS="\`$SCTK_BIN_DIR/mpc_ldflags $2\` -B$BINUTILS_PREFIX_INSTALL/bin"
 CC=$CC
 EOF
@@ -381,6 +381,43 @@ chmod 755 $1
 
 } # end of printf_compiler()
 
+GNU_PRIVATIZE="-fmpc-privatize"
+INTEL_PRIVATIZE="-mSYMTAB_mpc_privatize"
+#USAGE print_specfific_compiler output_file privatization_option wait_to_launch_compiler compiler_name
+print_specfific_compiler(){
+# Header
+echo "#!/bin/sh" > $1
+header_sh >> $1
+
+cat <<EOF >> $1
+ADD_FLAG_PRIVATIZE=""
+COMPILER_ARGS=""
+
+for i in \$@ ; do
+    CURRENT_ARG="\$i"
+    if test "\$i" = "-fmpc-privatize" ; then
+        ADD_FLAG_PRIVATIZE="$2"
+#        echo "MPC Privatization enabled"
+        CURRENT_ARG=""
+    fi
+    COMPILER_ARGS="\$COMPILER_ARGS \$CURRENT_ARG"
+done
+
+EOF
+if test "$4" = "intel"; then
+cat <<EOF >> $1
+MPC_USE_INTEL_COMPILER=1
+export MPC_USE_INTEL_COMPILER
+EOF
+fi
+cat <<EOF >> $1
+
+$3 \$ADD_FLAG_PRIVATIZE \$COMPILER_ARGS
+
+EOF
+
+}
+
 DEFAULT_VERSION=""
 if test "${COMPILER_LIST}" != "" ; then
   for i in ${COMPILER_LIST} ; do
@@ -452,6 +489,8 @@ end_section
 # Create the link to the default compiler
 rm -f bin/mpc_cc_global
 ln -s mpc_cc_global_${DEFAULT_VERSION} bin/mpc_cc_global
+print_specfific_compiler bin/mpc_gcc $GNU_PRIVATIZE mpc_cc
+print_specfific_compiler bin/mpc_icc $INTEL_PRIVATIZE "mpc_cc -cc=icc" intel
 
 
 # Generate C++ compiler
@@ -464,6 +503,8 @@ end_section
 # Create the link to the default compiler
 rm -f bin/mpc_cxx
 ln -s mpc_cxx_${DEFAULT_VERSION} bin/mpc_cxx
+print_specfific_compiler bin/mpc_g++ $GNU_PRIVATIZE mpc_cxx
+print_specfific_compiler bin/mpc_icpc $INTEL_PRIVATIZE "mpc_cxx -cc=icpc" intel
 
 #
 # Generate Fortran compiler
@@ -477,4 +518,7 @@ if test "$SCTK_FORTRAN" = "1" ; then
   # Create the link to the default compiler
   rm -f bin/mpc_f77
   ln -s mpc_f77_${DEFAULT_VERSION} bin/mpc_f77
+
+  print_specfific_compiler bin/mpc_gfortran $GNU_PRIVATIZE mpc_f77
+  print_specfific_compiler bin/mpc_ifort $INTEL_PRIVATIZE "mpc_f77 -cc=ifort" intel
 fi
