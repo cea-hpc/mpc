@@ -56,26 +56,18 @@
 	#define sctk_alloc_spinlock_trylock(x) (!TryEnterCriticalSection(x))
 	#define sctk_alloc_spinlock_destroy(x) DeleteCriticalSection(x)
 #else //_WIN32
-	#ifdef SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK
-		#define SCTK_ALLOC_INIT_LOCK_TYPE sctk_alloc_spinlock_t
-		#define SCTK_ALLOC_INIT_LOCK_INITIALIZER SCTK_ALLOC_SPINLOCK_INITIALIZER
-		#define SCTK_ALLOC_INIT_LOCK_LOCK(x) sctk_alloc_spinlock_lock(x)
-		#define SCTK_ALLOC_INIT_LOCK_UNLOCK(x) sctk_alloc_spinlock_unlock(x)
-		#ifndef PTHREAD_PROCESS_PRIVATE
-			#define PTHREAD_PROCESS_PRIVATE 0
-		#endif
-	#elif defined(MPC_Threads)
-		#define SCTK_ALLOC_INIT_LOCK_TYPE pthread_mutex_t
-		#define SCTK_ALLOC_INIT_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
-		#define SCTK_ALLOC_INIT_LOCK_LOCK(x) pthread_mutex_lock(x)
-		#define SCTK_ALLOC_INIT_LOCK_UNLOCK(x) pthread_mutex_unlock(x)
+	#ifdef MPC_Threads
+		#define SCTK_ALLOC_INIT_LOCK_TYPE sctk_spinlock_t
+		#define SCTK_ALLOC_INIT_LOCK_INITIALIZER SCTK_SPINLOCK_INITIALIZER
+		#define SCTK_ALLOC_INIT_LOCK_LOCK(x) sctk_spinlock_lock(x)
+		#define SCTK_ALLOC_INIT_LOCK_UNLOCK(x) sctk_spinlock_unlock(x)
 		#define sctk_alloc_spinlock_t sctk_spinlock_t
 		#define sctk_alloc_spinlock_init(x,y) sctk_spinlock_init(x,y)
 		#define sctk_alloc_spinlock_lock(x) sctk_spinlock_lock(x)
 		#define sctk_alloc_spinlock_unlock(x) sctk_spinlock_unlock(x)
 		#define sctk_alloc_spinlock_trylock(x) sctk_spinlock_trylock(x)
 		#define sctk_alloc_spinlock_destroy(x) do{}while(0)
-	#else //SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK
+	#else //MPC_Threads
 		#define SCTK_ALLOC_INIT_LOCK_TYPE pthread_mutex_t
 		#define SCTK_ALLOC_INIT_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
 		#define SCTK_ALLOC_INIT_LOCK_LOCK(x) pthread_mutex_lock(x)
@@ -86,6 +78,6 @@
 		#define sctk_alloc_spinlock_unlock(x) pthread_spin_unlock(x)
 		#define sctk_alloc_spinlock_trylock(x) pthread_spin_trylock(x)
 		#define sctk_alloc_spinlock_destroy(x) pthread_spin_destroy(x)
-	#endif //SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK
+	#endif //MPC_Threads
 #endif //_WIN32
 #endif //SCTK_ALLOC_LOCK_H
