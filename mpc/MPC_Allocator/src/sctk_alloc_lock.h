@@ -36,15 +36,6 @@
 	#include "sctk_spinlock.h"
 #endif
 
-/************************** HEADERS ************************/
-/*#ifdef _WIN32
-	#define SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK	
-#endif*/
-
-#ifdef SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK
-	#include "sctk_alloc_spinlock.h"
-#endif //SCTK_ALLOC_ENABLE_INTERNAL_SPINLOCK
-
 /************************** MACROS *************************/
 //Can't use pthread mutex into MPC as we are called before thread init, so use spinlocks.
 //But in POSIX standard, spinlock didn't have static INITIALIZER, so prefer to use mutex in
