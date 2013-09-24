@@ -21,19 +21,22 @@
 #                                                                      #
 ########################################################################
 
+################### PROJECT SETUP #######################
 PROJECT(mpc_allocator)
 cmake_minimum_required(VERSION 2.6)
 
 enable_testing()
 
+#For debug
 # add_definitions(-DSCTK_ALLOC_SPY)
 # add_definitions(-DENABLE_TRACE)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_SOURCE_DIR}/cmake/)
 
-if(WIN32)
-	SET(EXECUTOR_PATH ${WINE_PATH})
-endif(WIN32)
+#Old testing througt mingw+wine, but now the windows version built with VisualStudio.
+#if(WIN32)
+#	SET(EXECUTOR_PATH ${WINE_PATH})
+#endif(WIN32)
 
 ####################  CMAKE MODULES #####################
 INCLUDE (CheckIncludeFiles)
@@ -63,10 +66,12 @@ else(HAVE_MEMCHECK_H AND NOT DISABLE_VALGRIND)
 endif(HAVE_MEMCHECK_H AND NOT DISABLE_VALGRIND)
 
 ####################### DEPS ############################
+# Search for hwloc for NUMA support
 if (NOT DISABLE_LIBNUMA)
 	find_package(Hwloc)
 endif(NOT DISABLE_LIBNUMA)
 
+#On windows, we help build by placing hwloc in hwloc/ sudirectory of allocator sources.
 if (HWLOC_FOUND)
 	add_definitions(-DHAVE_HWLOC=yes)
 	include_directories(${HWLOC_INCLUDE_DIRS})
@@ -94,10 +99,12 @@ else (HWLOC_FOUND)
 	endif()
 endif (HWLOC_FOUND)
 
+#On windows we help by copying openpa/ in allocator sources
 if(WIN32)
 	set(OPENPA_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/openpa/src")
 endif(WIN32)
 
+#Search for OpenPA
 find_package(OpenPA REQUIRED)
 if (OPENPA_FOUND)
     include_directories(${OPENPA_INCLUDE_DIRS})
@@ -107,11 +114,13 @@ else (OPENPA_FOUND)
     message(FATAL_ERROR "Cannot find OpenPA, please provide the path with -DOPENPA_PREFIX=...")
 endif (OPENPA_FOUND)
 
+#Compile unit tests if not disabled
 add_subdirectory(src)
 IF(EXISTS ${CMAKE_SOURCE_DIR}/tests AND NOT DISABLE_UNIT_TESTS)
 	add_subdirectory(tests)
 ENDIF(EXISTS ${CMAKE_SOURCE_DIR}/tests AND NOT DISABLE_UNIT_TESTS)
 
+#Files to install
 INSTALL(FILES include/mpcalloc.h DESTINATION include/)
 
 ######################################################
