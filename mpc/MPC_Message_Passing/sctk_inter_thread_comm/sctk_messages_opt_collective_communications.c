@@ -20,7 +20,6 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#include <mpc_mpi.h>
 #include <mpcmp.h>
 #include <sctk_collective_communications.h>
 #include <sctk_inter_thread_comm.h>
@@ -43,7 +42,7 @@ static int ALLREDUCE_ARITY_MAX = 8;
 static int ALLREDUCE_MAX_SIZE = 1024;
 static int ALLREDUCE_CHECK_THREASHOLD = 8192;
 #define SCTK_MAX_ASYNC 32
-#warning "Change here !!!"
+/* #warning "Change here !!!" */
 
 /************************************************************************/
 /*TOOLS                                                                 */
