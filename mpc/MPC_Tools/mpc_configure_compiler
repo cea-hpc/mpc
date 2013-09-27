@@ -210,6 +210,14 @@ EOF
 
 cat << EOF >> $1
 
+    -threads)
+    \$CFLAGS="\$CFLAGS -threads"
+    ;;
+
+EOF
+
+cat << EOF >> $1
+
     -show)
     addarg=no
     Show=echo
@@ -397,7 +405,14 @@ for i in \$@ ; do
     CURRENT_ARG="\$i"
     if test "\$i" = "-fmpc-privatize" ; then
         ADD_FLAG_PRIVATIZE="$2"
-#        echo "MPC Privatization enabled"
+        CURRENT_ARG=""
+    fi
+    if test "\$i" = "-fno-mpc-privatize" ; then
+        ADD_FLAG_PRIVATIZE=""
+        CURRENT_ARG=""
+    fi
+    if test "\$i" = "-fnompc-privatize" ; then
+        ADD_FLAG_PRIVATIZE=""
         CURRENT_ARG=""
     fi
     COMPILER_ARGS="\$COMPILER_ARGS \$CURRENT_ARG"
