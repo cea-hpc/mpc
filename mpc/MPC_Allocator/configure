@@ -31,7 +31,7 @@
 #script setup
 PROJECT_NAME='MPC_Allocator'
 # State variables
-PREFIX='/usr/local'
+PREFIX='-DCMAKE_INSTALL_PREFIX=/usr/local'
 CMAKE='cmake'
 EXTRA_CXX=''
 EXTRA_CXXFLAGS=''

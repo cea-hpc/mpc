@@ -102,6 +102,30 @@ int sctk_get_node_from_cpu (int cpu);
 #endif
 
 /*************************** FUNCTION **********************/
+SCTK_PUBLIC void * sctk_malloc_hook(size_t size,const void * caller)
+{
+	return sctk_malloc(size);
+}
+
+/*************************** FUNCTION **********************/
+SCTK_PUBLIC void sctk_free_hook(void * ptr, const void * caller)
+{
+	sctk_free(ptr);
+}
+
+/*************************** FUNCTION **********************/
+SCTK_PUBLIC void * sctk_realloc_hook(void * ptr,size_t size,const void * caller)
+{
+	return sctk_realloc(ptr,size);
+}
+
+/*************************** FUNCTION **********************/
+SCTK_PUBLIC void * sctk_memalign_hook(size_t align,size_t size,const void * caller)
+{
+	return sctk_memalign(align,size);
+}
+
+/*************************** FUNCTION **********************/
 /**
  * Tls chain setter
  * @param chain Define the allocation chain to setup.
@@ -352,8 +376,18 @@ SCTK_INTERN void sctk_alloc_posix_base_init(void)
 	if (sctk_global_base_init >= SCTK_ALLOC_POSIX_INIT_DEFAULT)
 		return;
 
+	//setup hooks
+	__malloc_hook = sctk_malloc_hook;
+	__free_hook = sctk_free_hook;
+	__realloc_hook = sctk_realloc_hook;
+	__memalign_hook = sctk_memalign_hook;
+
 	//critical initialization section
 	SCTK_ALLOC_INIT_LOCK_LOCK(&global_mm_mutex);
+
+	//call the libc handler
+	if (__malloc_initialize_hook != NULL)
+		__malloc_initialize_hook();
 
 	//check if not already init by previous thread
 	if (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_NONE)
@@ -534,6 +568,10 @@ SCTK_PUBLIC void * sctk_malloc (size_t size)
 	if (local_chain == NULL)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
 
+	//call hook if required
+	if (__malloc_hook != sctk_malloc_hook)
+		return __malloc_hook(size,sctk_malloc);
+
 	//purge the remote free queue
 	sctk_alloc_chain_purge_rfq(local_chain);
 
@@ -568,6 +606,10 @@ SCTK_PUBLIC void * sctk_memalign(size_t boundary,size_t size)
 	//setup the local chain if not already done
 	if (local_chain == NULL)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
+
+	//call hook if required
+	if (__memalign_hook != sctk_memalign_hook)
+		return __memalign_hook(boundary,size,sctk_memalign);
 
 	//purge the remote free queue
 	sctk_alloc_chain_purge_rfq(local_chain);
@@ -619,6 +661,10 @@ SCTK_PUBLIC void sctk_free (void * ptr)
 	//call to malloc()
 	if (local_chain == NULL)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
+
+	//call hook if required
+	if (__free_hook != sctk_free_hook)
+		return __free_hook(ptr,sctk_free);
 
 	//purge the remote free queue
 	sctk_alloc_chain_purge_rfq(local_chain);
@@ -727,6 +773,10 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 	struct sctk_alloc_chain * chain = NULL;
 	struct sctk_alloc_macro_bloc * macro_bloc = NULL;
 	void * res = NULL;
+
+	//call hook if required
+	if (__realloc_hook != sctk_realloc_hook)
+		return __realloc_hook(ptr,size,sctk_realloc);
 
 	SCTK_PROFIL_START(sctk_realloc);
 
