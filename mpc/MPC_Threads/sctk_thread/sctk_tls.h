@@ -65,6 +65,7 @@ extern "C"
   void sctk_extls_keep_with_specified_extls (void **extls, int *scopes);
   void sctk_extls_keep_non_current_thread (void **tls, int *scopes);
   void sctk_extls_delete ();
+  size_t sctk_extls_size(); 
 
 #if defined (MPC_Allocator)
   extern __thread struct sctk_alloc_chain * sctk_current_alloc_chain;

@@ -82,6 +82,8 @@ static __thread size_t current_module;
 static __thread size_t total_module;
 static size_t page_size = 0;
 
+static size_t sctk_extls_module_zero = 0;
+
 static int
 callback (struct dl_phdr_info *info, size_t size, void *data)
 {
@@ -93,6 +95,11 @@ callback (struct dl_phdr_info *info, size_t size, void *data)
       if (info->dlpi_phdr[j].p_type == PT_TLS)
 	{
 	  total_module++;
+
+	  if(total_module == 1){
+	      sctk_extls_module_zero = info->dlpi_phdr[j].p_memsz;
+          }
+
 	  if (total_module == current_module)
 	    {
 	      p_memsz = info->dlpi_phdr[j].p_memsz;
@@ -342,6 +349,16 @@ __sctk__tls_get_addr__generic_scope ( size_t module_id,
   return res;
 }
 
+
+size_t sctk_extls_size(){
+  if(sctk_extls_module_zero == 0){
+      current_module = 0;
+      total_module = 0;
+      dl_iterate_phdr (callback, NULL);
+  }
+
+return sctk_extls_module_zero;
+}
 
 static void
 sctk_extls_create ()

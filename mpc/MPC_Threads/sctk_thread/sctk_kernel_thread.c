@@ -179,9 +179,9 @@ kthread_create (kthread_t * thread, void *(*start_routine) (void *),
 //#warning "Move it to the XML configuration file"
     char *env;
     if ( (env = getenv("MPC_KTHREAD_STACK_SIZE")) != NULL) {
-      kthread_stack_size = atoll(env);
+      kthread_stack_size = atoll(env) + sctk_extls_size();
     } else {
-      kthread_stack_size = kthread_stack_size_default;
+      kthread_stack_size = kthread_stack_size_default + sctk_extls_size();
     }
 
 #ifdef PTHREAD_STACK_MIN
