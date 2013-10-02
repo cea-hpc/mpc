@@ -293,9 +293,9 @@ for arg in "$@" ; do
     ;;
     --launch_list|-l=help|--launcher=help)
     echo "Available launch method"
-    for i in ${MPC_BIN_DIR}/mpcrun_opt/* ; do echo "    - `basename $i`" | sed s,mpcrun_,,g  | grep -v default_param | grep -v propagate_env | grep -v "~" ; done
+    for i in ${MPC_BIN_DIR}/mpcrun_opt/* ; do echo "    - `basename $i`" | sed s#mpcrun_##g  | grep -v default_param | grep -v propagate_env | grep -v "~" ; done
     if [ ! -z "${MPC_USER_LAUNCHERS}" ] && [ -e "${MPC_USER_LAUNCHERS}" ]; then
-    	for i in ${MPC_USER_LAUNCHERS}/mpcrun_* ; do echo "    - `basename $i`" | sed s,mpcrun_,,g  | grep -v default_param | grep -v propagate_env | grep -v "~" ; done
+    	for i in ${MPC_USER_LAUNCHERS}/mpcrun_* ; do echo "    - `basename $i`" | sed s#mpcrun_##g  | grep -v default_param | grep -v propagate_env | grep -v "~" ; done
     fi
     exit 0
     ;;
@@ -402,7 +402,7 @@ for arg in "$@" ; do
 	if test "$BINARY" = "" ; then
 	    BINARY="$arg"
 	else
-	    arg="`echo A$arg | sed s,\"A$arg\",\"$arg\",g | sed s,' ',@MPC_LINK_ARGS@,g`"
+	    arg="`echo A$arg | sed s#\"A$arg\"#\"$arg\"#g | sed s#' '#@MPC_LINK_ARGS@#g`"
 	    USER_ARGS="$USER_ARGS $arg"
 	fi
     fi
