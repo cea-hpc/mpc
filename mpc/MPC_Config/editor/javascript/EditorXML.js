@@ -122,7 +122,11 @@ XML.getChildNodes = function (element) {
  * \return String Value of the given node.
  */
 XML.getNodeValue = function (element) {
-	return element.childNodes[0].nodeValue;
+	if (element.nodeType == Node.ATTRIBUTE_NODE) {
+		return element.nodeValue;
+	} else {
+		return element.childNodes[0].nodeValue;
+	}
 };
 
 /*
