@@ -88,7 +88,6 @@ int sctk_network_select_recv_rail() {
 #if 1
   if (__numa == -1) {
     __vp = sctk_get_cpu();
-//    __vp = sctk_communicator_get_endpoint_index(-1);
     node_num =  sctk_get_node_from_cpu(__vp);
     sctk_nodebug("Init vp %d DONE numa %d", __vp, node_num);
     __numa = node_num;
@@ -144,67 +143,29 @@ int sctk_network_select_send_rail(sctk_thread_ptp_message_t * msg) {
   }
 #endif
 
-#if 1
-  if (rails_nb == 5) {
-    if ( msg->body.header.destination_thread == -1) {
-      int glob_dest;
-      glob_dest = sctk_get_comm_world_rank(msg->sctk_msg_get_communicator, msg->sctk_msg_get_glob_destination);
-      i = (glob_dest % 128) / 32;
-      sctk_nodebug("MPI Send to rail %d %d", i, glob_dest);
-    } else {
-      int glob_dest;
-      glob_dest = msg->body.header.destination_thread;
-      i = (glob_dest % 128) / 32;
-      sctk_nodebug("THREAD Send to rail %d %d", i, glob_dest);
-    }
-  } else if (rails_nb == 17) {
-    if ( msg->body.header.destination_thread == -1) {
-      int glob_dest;
-      glob_dest = sctk_get_comm_world_rank(msg->sctk_msg_get_communicator, msg->sctk_msg_get_glob_destination);
-      i = (glob_dest % 128) / 8;
-      sctk_nodebug("MPI Send to rail %d %d", i, glob_dest);
-    } else {
-      int glob_dest;
-      glob_dest = msg->body.header.destination_thread;
-      i = (glob_dest % 128) / 8;
-      sctk_nodebug("THREAD Send to rail %d %d", i, glob_dest);
-    }
-  } else {
-    i = 0;
-  }
-#endif
-
-#if 0
-#if 1
   if (rails_nb == 5)
   {
     int glob_dest;
-    glob_dest = sctk_get_comm_world_rank(msg->sctk_msg_get_communicator, msg->sctk_msg_get_glob_destination);
+    glob_dest = msg->sctk_msg_get_glob_destination;
     i = (glob_dest % 128) / 32;
 
     sctk_nodebug("Message with comm %d to rail %d (dest:%d numa_dest:%d glob_dest:%d)", msg->sctk_msg_get_communicator, i, msg->sctk_msg_get_destination, msg->sctk_msg_get_glob_destination, glob_dest );
   }
-#endif
-#if 1
   else if (rails_nb == 17)
   {
     int glob_dest;
-//    glob_dest = sctk_get_comm_world_rank(msg->sctk_msg_get_communicator, msg->sctk_msg_get_glob_destination);
     glob_dest = msg->sctk_msg_get_glob_destination;
     i = (glob_dest % 128) / 8;
   }
-#endif
   else if (rails_nb == 3)
   {
     int glob_dest;
-//    glob_dest = sctk_get_comm_world_rank(msg->sctk_msg_get_communicator, msg->sctk_msg_get_glob_destination);
     glob_dest = msg->sctk_msg_get_glob_destination;
     i = (glob_dest % 16) / 8;
   }
   else {
     i = 0;
   }
-#endif
 
   return i;
 }
@@ -218,10 +179,6 @@ sctk_network_send_message_multirail_ib (sctk_thread_ptp_message_t * msg){
   sctk_checksum_register(msg);
 #endif
   sctk_prepare_send_message_to_network_reorder(msg);
-
-  if (sctk_get_is_endpoints_communicator(msg->sctk_msg_get_communicator)) {
-    sctk_nodebug("Send endpoint message to thread %d", msg->body.header.destination_thread);
-  }
 
   const specific_message_tag_t tag = msg->body.header.specific_message_tag;
   if (IS_PROCESS_SPECIFIC_CONTROL_MESSAGE(tag)) {

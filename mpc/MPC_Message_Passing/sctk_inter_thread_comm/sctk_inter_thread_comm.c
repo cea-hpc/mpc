@@ -1541,13 +1541,6 @@ void sctk_set_header_in_message (sctk_thread_ptp_message_t *
 		}
 	}
     
-  if (sctk_get_is_endpoints_communicator(communicator)) {
-    msg->body.header.source_thread = source;
-    msg->body.header.destination_thread = destination;
-  } else {
-    msg->body.header.source_thread = -1;
-    msg->body.header.destination_thread = -1;
-  }
 	msg->body.header.communicator = communicator;
 	msg->body.header.message_tag = message_tag;
 	msg->body.header.specific_message_tag = specific_message_tag;
