@@ -63,7 +63,6 @@
 
 #endif
 
-
  /************************************************************************/
  /*GLOBAL VARIABLES                                                      */
  /************************************************************************/
@@ -175,7 +174,6 @@ static inline mpc_per_communicator_t* sctk_thread_createspecific_mpc_per_comm(){
   tmp->mpc_mpi_per_communicator_copy_dup = NULL;
   
   sctk_nodebug("Allocate new per comm %p",tmp);
-
   return tmp;
 }
 
@@ -290,7 +288,7 @@ static inline
 void sctk_mpc_perform_messages(MPC_Request * request){
   struct sctk_perform_messages_s _wait;
 
-  sctk_perform_messages_wait_init(&_wait, request);
+  sctk_perform_messages_wait_init(&_wait, request, 0);
   sctk_perform_messages_wait_init_request_type(&_wait);
 
   sctk_perform_messages(&_wait);
@@ -477,6 +475,7 @@ __MPC_init_task_specific_t (sctk_task_specific_t * tmp)
 
   tmp->init_done = 0;
   tmp->finalize_done = 0;
+  tmp->thread_level = -1;
 
   tmp->my_ptp_internal = sctk_get_internal_ptp(tmp->task_id);
 
@@ -1340,6 +1339,7 @@ PMPC_Init (int *argc, char ***argv)
 
   PMPC_Barrier (MPC_COMM_WORLD);
   task_specific->init_done = 1;
+  task_specific->thread_level = MPC_THREAD_MULTIPLE;
   SCTK_PROFIL_END (MPC_Init);
   MPC_ERROR_SUCESS ();
 }
@@ -1349,11 +1349,26 @@ PMPC_Init_thread (int *argc, char ***argv, int required, int *provided)
 {
   const int res = PMPC_Init (argc, argv);
   if (res == MPC_SUCCESS) {
+    sctk_task_specific_t *task_specific;
+    task_specific->thread_level = required;
     *provided = required;
   }
 
   return res;
 }
+
+int
+PMPC_Query_thread (int *provided)
+{
+  sctk_task_specific_t *task_specific;
+  if (task_specific->thread_level == -1) {
+    return MPC_ERR_OTHER;
+  }
+
+  *provided = task_specific->thread_level;
+  MPC_ERROR_SUCESS ();
+}
+
 
 int
 PMPC_Initialized (int *flag)
@@ -1936,9 +1951,7 @@ sctk_user_main (int argc, char **argv)
 
   sctk_nodebug ("All message done");
 
-  sctk_nodebug ("LAST BARRIER");
   __MPC_Barrier (MPC_COMM_WORLD);
-  sctk_nodebug ("END BARRIER");
 
   __MPC_delete_task_specific ();
 
@@ -2771,7 +2784,7 @@ __MPC_Irecv (void *buf, mpc_msg_count count, MPC_Datatype datatype,
   sctk_mpc_set_header_in_message (msg, tag, comm, source, src,
 				  request, count * d_size,pt2pt_specific_message_tag);
   sctk_nodebug ("ircv : rcv, my rank = %d", src);
-  sctk_recv_message (msg,task_specific->my_ptp_internal, 1);
+  sctk_recv_message (msg,task_specific->my_ptp_internal, 0);
   MPC_ERROR_SUCESS ();
 }
 
@@ -2820,7 +2833,8 @@ __MPC_Test (MPC_Request * request, int *flag, MPC_Status * status)
 	if ((sctk_mpc_completion_flag(request) == SCTK_MESSAGE_PENDING) && (!sctk_mpc_message_is_null(request)))
 	{
 		sctk_mpc_perform_messages(request);
-		sctk_thread_yield ();
+      /* There is no more needs for thread switching here */
+      /* sctk_thread_yield (); */
 	}
 	
 	//~ request->completion_flag != 0
@@ -4206,7 +4220,7 @@ PMPC_Alltoall (void *sendbuf, mpc_msg_count sendcount, MPC_Datatype sendtype,
 				dst = (rank-i-ii+size) % size;
 				__MPC_Isend (((char *) sendbuf) + (dst * sendcount * d_send), sendcount, sendtype, dst, MPC_ALLTOALL_TAG, comm, &requests[i+ss], task_specific);
 			}
-			__MPC_Waitall(2*ss,requests,MPC_STATUS_IGNORE);
+    __MPC_Waitall(2*ss,requests,MPC_STATUSES_IGNORE);
 		}
 	}
 	SCTK_PROFIL_END (MPC_Alltoall);
@@ -4550,7 +4564,7 @@ __MPC_Probe (int source, int tag, MPC_Comm comm, MPC_Status * status,
 
   if (probe_struct.flag != 1)
     {
-      sctk_thread_wait_for_value_and_poll (&probe_struct.flag, 1,
+      sctk_inter_thread_perform_idle (&probe_struct.flag, 1,
 					   (void (*)(void *))
 					   MPC_Probe_poll, &probe_struct);
     }
@@ -4779,8 +4793,7 @@ PMPC_Group_difference (MPC_Group group1, MPC_Group group2,
 	MPC_ERROR_SUCESS ();
 }
 
-/*Communicators*/
-static inline int
+  static inline int
 __MPC_Comm_create_from_intercomm (MPC_Comm comm, MPC_Group group, MPC_Comm * comm_out,
 		   int is_inter_comm)
 {
@@ -5042,7 +5055,6 @@ PMPC_Comm_dup (MPC_Comm comm, MPC_Comm * comm_out)
 	sctk_thread_createspecific_mpc_per_comm_from_existing_dup(task_specific, *comm_out, comm);
 	MPC_ERROR_SUCESS ();
 }
-
 
 typedef struct
 {

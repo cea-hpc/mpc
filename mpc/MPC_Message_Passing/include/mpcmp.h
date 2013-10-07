@@ -274,6 +274,7 @@ enum MPIR_Combiner_enum {
   /*Initialisation */
   int MPC_Init (int *argc, char ***argv);
   int MPC_Init_thread (int *argc, char ***argv, int required, int *provided);
+  int MPC_Query_thread(int *provided);
   int MPC_Initialized (int *flag);
   int MPC_Finalize (void);
   int MPC_Abort (MPC_Comm, int);
@@ -538,6 +539,7 @@ enum MPIR_Combiner_enum {
     /*Initialisation */
   int PMPC_Init (int *argc, char ***argv);
   int PMPC_Init_thread (int *argc, char ***argv, int required, int *provided);
+  int MPC_Init_thread (int *argc, char ***argv, int required, int *provided);
   int PMPC_Initialized (int *flag);
   int PMPC_Finalize (void);
   int PMPC_Abort (MPC_Comm, int);

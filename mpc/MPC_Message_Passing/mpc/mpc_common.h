@@ -107,6 +107,7 @@ struct sctk_task_specific_s
 
   int init_done;  /* =1 if the task has called MPI_Init() */
   int finalize_done; /* =1 if the task has already called MPI_Finalize()  */
+  int thread_level;
 };
 
 mpc_per_communicator_t* sctk_thread_getspecific_mpc_per_comm(struct sctk_task_specific_s* task_specific,sctk_communicator_t comm);

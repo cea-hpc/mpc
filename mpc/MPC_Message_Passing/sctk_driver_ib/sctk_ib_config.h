@@ -41,6 +41,7 @@ typedef struct sctk_ib_config_s
   unsigned int  ibv_mmu_cache_entries;
   /* IBUFS */
   unsigned int  ibv_init_ibufs;
+  unsigned int  ibv_init_recv_ibufs;
 
   unsigned int  ibv_eager_limit;
   unsigned int  ibv_buffered_limit;
@@ -58,6 +59,7 @@ typedef struct sctk_ib_config_s
   unsigned int  ibv_srq_credit_thread_limit;
   unsigned int  ibv_max_srq_wr_handle_by_thread;
   unsigned int  ibv_size_ibufs_chunk;;
+  unsigned int  ibv_size_recv_ibufs_chunk;
   unsigned int  ibv_rdvz_protocol;
 
   unsigned int  ibv_verbose_level;

@@ -196,7 +196,9 @@ void sctk_ibuf_rdma_remote_init(sctk_ib_qp_t* remote);
 
 int sctk_ibuf_rdma_is_connectable(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, int entry_nb, int entry_size);
 
-void sctk_ibuf_rdma_check_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, size_t size);
+void sctk_ibuf_rdma_update_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote, size_t size);
+
+void sctk_ibuf_rdma_check_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *remote);
 
 sctk_ibuf_rdma_pool_t*
 sctk_ibuf_rdma_pool_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t* remote);

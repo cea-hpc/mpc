@@ -66,41 +66,33 @@ enum sctk_ib_cm_change_state_type_e {
   RESIZING = 222,
 };
 
-/* All the following structures are requests
- * for the Connection Manager. */
-typedef enum {
-  cm_request_qp_connection,       /* Connection to a remote QP */
-  cm_request_qp_deconnection,     /* Deconnection from a remote QP */
-  cm_request_rdma_connection,     /* Establishment of a RDMA connection*/
-  cm_request_rdma_deconnection,   /* Remove a RDMA connection */
-  cm_request_rdma_resizing,       /* Resize a RDMA connection */
-} sctk_ib_cm_request_t;
-
 /* ACK */
 typedef struct {
+  int rail_id;  /* rail id. *MUST* be the first field */
   int ack;
 } sctk_ib_cm_ack_t;
 
 /* DONE */
 typedef struct {
+  int rail_id;  /* rail id. *MUST* be the first field */
   int done;
 } sctk_ib_cm_done_t;
 
 /* QP */
 typedef struct {
-  sctk_ib_cm_request_t request_id;  /* Request id. *MUST* be the first field */
+  int rail_id;  /* rail id. *MUST* be the first field */
   sctk_uint16_t lid;
   sctk_uint32_t qp_num;
   sctk_uint32_t psn;
 } sctk_ib_cm_qp_connection_t;
 
 typedef struct {
-  sctk_ib_cm_request_t request_id;  /* Request id. *MUST* be the first field */
+  int rail_id;  /* rail id. *MUST* be the first field */
 } sctk_ib_cm_qp_deconnection_t;
 
 /* RDMA connection and resizing */
 typedef struct {
-  sctk_ib_cm_request_t request_id;  /* Request id. *MUST* be the first field */
+  int rail_id;  /* rail id. *MUST* be the first field */
   int connected;
   int size;   /* Size of a slot */
   int nb;     /* Number of slots */
@@ -109,8 +101,7 @@ typedef struct {
 } sctk_ib_cm_rdma_connection_t;
 
 typedef struct {
-  sctk_ib_cm_request_t request_id;  /* Request id. *MUST* be the first field */
-
+  int rail_id;  /* rail id. *MUST* be the first field */
 } sctk_ib_cm_rdma_deconnection_t;
 
 /*-----------------------------------------------------------

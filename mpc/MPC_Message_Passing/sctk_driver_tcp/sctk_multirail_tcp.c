@@ -73,10 +73,10 @@ sctk_network_notify_matching_message_multirail_tcp (sctk_thread_ptp_message_t * 
 }
 
 static void
-sctk_network_notify_perform_message_multirail_tcp (int remote, int remote_task_id, int polling_task_id){
+sctk_network_notify_perform_message_multirail_tcp (int remote, int remote_task_id, int polling_task_id, int blocking){
   int i;
   for(i = 0; i < rails_nb; i++){
-    rails[i]->notify_perform_message(remote,remote_task_id,polling_task_id, rails[i]);
+    rails[i]->notify_perform_message(remote,remote_task_id,polling_task_id, blocking, rails[i]);
   }
 }
 
@@ -89,10 +89,10 @@ sctk_network_notify_idle_message_multirail_tcp (){
 }
 
 static void
-sctk_network_notify_any_source_message_multirail_tcp (int polling_task_id){
+sctk_network_notify_any_source_message_multirail_tcp (int polling_task_id, int blocking){
   int i;
   for(i = 0; i < rails_nb; i++){
-    rails[i]->notify_any_source_message(polling_task_id, rails[i]);
+    rails[i]->notify_any_source_message(polling_task_id, blocking, rails[i]);
   }
 }
 
@@ -139,9 +139,9 @@ void sctk_network_init_multirail_tcp_all(int rail_id, int tcpoib){
   }
   init_once = 1;
 }
-void sctk_network_init_multirail_tcp(int rail_id){
+void sctk_network_init_multirail_tcp(int rail_id, int max_rails){
   sctk_network_init_multirail_tcp_all(rail_id,0);
 }
-void sctk_network_init_multirail_tcpoib(int rail_id){
+void sctk_network_init_multirail_tcpoib(int rail_id, int max_rails){
   sctk_network_init_multirail_tcp_all(rail_id,1);
 }

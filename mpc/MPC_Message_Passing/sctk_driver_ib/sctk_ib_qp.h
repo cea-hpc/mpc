@@ -78,6 +78,10 @@ typedef struct sctk_ib_device_s
 
   struct sctk_ib_qp_ondemand_s ondemand;
 
+  char pad1[64];
+  sctk_spinlock_t cq_polling_lock;
+  char pad2[64];
+
   /* Link rate & data rate*/
   char link_rate[64];
   int link_width;
@@ -185,6 +189,11 @@ typedef struct sctk_ib_qp_s
   /* ACK for the local and the remote peers */
   int local_ack;
   int remote_ack;
+
+  /* The number of unsignaled messages sent.
+   * ATTENTION: the number of unsignaled messages cannot
+   * excess the max number of send entries in  QP */
+  int unsignaled_counter;
 
   /* List of pending buffered messages */
   struct sctk_ib_buffered_table_s ib_buffered;

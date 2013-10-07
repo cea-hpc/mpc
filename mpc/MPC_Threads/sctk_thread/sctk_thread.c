@@ -31,7 +31,7 @@ MonoAssembly *assembly;
 MonoDomain *domain;
 #endif
 
-
+#include <sctk_low_level_comm.h>
 #ifdef MPC_USE_INFINIBAND
 #include <sctk_ib_cp.h>
 #endif
@@ -764,7 +764,11 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 
   sctk_free (__arg);
   tmp.virtual_processor = sctk_thread_get_vp ();
-  sctk_nodebug ("%d on %d", tmp.task_id, tmp.virtual_processor);
+  sctk_nodebug("%d on %d", tmp.task_id, tmp.virtual_processor);
+
+//  if (tmp.virtual_processor >= 0) {
+//      sctk_network_initialize_task_multirail_ib (tmp.task_id, tmp.virtual_processor);
+//  }
 
   sctk_thread_data_set (&tmp);
   sctk_thread_add (&tmp,sctk_thread_self());
@@ -840,18 +844,34 @@ int sctk_real_pthread_create (pthread_t  *thread,
   real_pthread_create(thread, attr, start_routine, arg);
 }
 
+__thread pthread_t *sylvar_thread = NULL;
 int sylvar_pthread_create(pthread_t  *thread,
     __const pthread_attr_t *attr,
     void * (*start_routine)(void *), void * arg) {
+  int ret;
+  int recursive = 0;
 
-  if (sctk_thread_data_get()->task_id == -1) {
-    return sctk_real_pthread_create(thread,attr, start_routine, arg);
-  } else {
-	  sctk_thread_attr_setscope (attr, SCTK_THREAD_SCOPE_SYSTEM);
-  	return sctk_user_thread_create (thread, attr, start_routine, arg);
+  if (sylvar_thread == thread) {
+    recursive = 1;
   }
-}
 
+  sylvar_thread = thread;
+
+  /* Check if we are trying to create a thread previously passed here */
+
+  sctk_warning("PTHREAD CREATE %p!!", thread);
+  if (sctk_thread_data_get()->task_id == -1 || recursive) {
+    sctk_warning("NOT MPI task creates a thread",sctk_thread_data_get()->task_id);
+    ret=sctk_real_pthread_create(thread,attr, start_routine, arg);
+  } else {
+    sctk_net_set_mode_hybrid();
+    sctk_warning("MPI task %d creates a thread",sctk_thread_data_get()->task_id);
+//	  sctk_thread_attr_setscope (attr, SCTK_THREAD_SCOPE_SYSTEM);
+  	ret=sctk_user_thread_create (thread, attr, start_routine, arg);
+  }
+  sylvar_thread = NULL;
+  return ret;
+}
 
 int
 sctk_user_thread_create (sctk_thread_t * restrict __threadp,
@@ -896,6 +916,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
     {
       tmp->task_id = tmp_father->task_id;
     }
+  sctk_debug("Create Thread with MPI rank %d", tmp->task_id);
 
 #ifndef NO_INTERNAL_ASSERT
   if (__attr != NULL)

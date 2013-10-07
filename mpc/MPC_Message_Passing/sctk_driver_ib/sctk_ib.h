@@ -69,6 +69,7 @@ extern "C"
   struct sctk_ibuf_pool_s;
   struct sctk_ibuf_s;
   struct sctk_ib_mmu_s;
+  struct sctk_ib_topology_s;
   struct sctk_ib_config_s;
   struct sctk_ib_device_s;
   struct sctk_ib_qp_s;
@@ -80,8 +81,9 @@ extern "C"
   struct sctk_ib_qp_ht_s;
 
   typedef struct sctk_ib_rail_info_s {
-    struct sctk_ibuf_pool_s *pool_buffers;
-    struct sctk_ib_mmu_s    *mmu;
+     struct sctk_ibuf_pool_s *pool_buffers;
+    /* struct sctk_ib_mmu_s    *mmu; */
+    struct sctk_ib_topology_s *topology;
     struct sctk_ib_config_s *config;
     struct sctk_ib_device_s *device;
     /* Collaborative polling */
@@ -92,6 +94,12 @@ extern "C"
     struct sctk_ib_qp_ht_s         *remotes;
     /* Pointer to the generic rail */
     struct sctk_rail_info_s        *rail;
+    /* Rail number among other IB rails */
+    int rail_nb;
+
+    /* For Eager messages -> pool of MPC headers */
+    struct sctk_thread_ptp_message_s *eager_buffered_ptp_message;
+    sctk_spinlock_t eager_lock_buffered_ptp_message;
   } sctk_ib_rail_info_t;
 
   typedef struct sctk_ib_data_s {
@@ -137,11 +145,12 @@ extern "C"
   typedef struct sctk_ib_header_rdma_s {
     /* HT */
     UT_hash_handle hh;
-    int ht_msg_number;
+    int ht_key;
 
     size_t requested_size;
     sctk_spinlock_t lock;
     struct sctk_rail_info_s *rail;
+    struct sctk_rail_info_s *remote_rail;
     struct sctk_ib_qp_s *remote_peer;
     struct sctk_message_to_copy_s *copy_ptr;
     /* For collaborative polling: src and dest of msg */

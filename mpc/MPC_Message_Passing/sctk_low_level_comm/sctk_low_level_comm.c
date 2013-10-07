@@ -79,15 +79,15 @@ void sctk_network_notify_matching_message_set(void (*sctk_network_notify_matchin
 }
 
 /********** NOTIFY_PERFORM ************/
-static void sctk_network_notify_perform_message_default (int remote_proces, int remote_task_id, int polling_task_id){
+static void sctk_network_notify_perform_message_default (int remote_proces, int remote_task_id, int polling_task_id, int blocking){
 
 }
-static void (*sctk_network_notify_perform_message_ptr) (int,int,int) =
+static void (*sctk_network_notify_perform_message_ptr) (int,int,int,int) =
   sctk_network_notify_perform_message_default;
-void sctk_network_notify_perform_message (int remote_process, int remote_task_id, int polling_task_id){
-  sctk_network_notify_perform_message_ptr(remote_process, remote_task_id, polling_task_id);
+void sctk_network_notify_perform_message (int remote_process, int remote_task_id, int polling_task_id, int blocking){
+  sctk_network_notify_perform_message_ptr(remote_process, remote_task_id, polling_task_id, blocking);
 }
-void sctk_network_notify_perform_message_set(void (*sctk_network_notify_perform_message_val) (int,int,int)){
+void sctk_network_notify_perform_message_set(void (*sctk_network_notify_perform_message_val) (int,int,int,int)){
   sctk_network_notify_perform_message_ptr = sctk_network_notify_perform_message_val;
 }
 
@@ -105,15 +105,15 @@ void sctk_network_notify_idle_message_set(void (*sctk_network_notify_idle_messag
 }
 
 /********** NOTIFY_ANY_SOURCE ************/
-static void sctk_network_notify_any_source_message_default (int polling_task_id){
+static void sctk_network_notify_any_source_message_default (int polling_task_id,int blocking){
 
 }
-static void (*sctk_network_notify_any_source_message_ptr) (int) =
+static void (*sctk_network_notify_any_source_message_ptr) (int,int) =
   sctk_network_notify_any_source_message_default;
-void sctk_network_notify_any_source_message (int polling_task_id){
-  sctk_network_notify_any_source_message_ptr(polling_task_id);
+void sctk_network_notify_any_source_message (int polling_task_id,int blocking){
+  sctk_network_notify_any_source_message_ptr(polling_task_id,blocking);
 }
-void sctk_network_notify_any_source_message_set(void (*sctk_network_notify_any_source_message_val) (int polling_task_id)){
+void sctk_network_notify_any_source_message_set(void (*sctk_network_notify_any_source_message_val) (int polling_task_id,int blocking)){
   sctk_network_notify_any_source_message_ptr = sctk_network_notify_any_source_message_val;
 }
 
@@ -122,7 +122,8 @@ void sctk_network_notify_any_source_message_set(void (*sctk_network_notify_any_s
 #define DEFAUT_DRIVER() } else {sctk_network_not_implemented(name);}(void)(0)
 
 static void sctk_network_not_implemented(char* name){
-  sctk_error("Network %s not available",name);
+  sctk_error("No configuration found for the network '%s'. Please check you '-net=' argument"
+    " and your configuration file", name);
   sctk_abort();
 }
 
@@ -171,6 +172,54 @@ sctk_net_init_driver (char* name)
     /* Set the number of rails used for the routing interface */
     sctk_route_set_rail_nb(cli_option->rails_size);
 
+    /* Compute the number of rails for each type:
+     * TODO: I think we could simplify this loop ... */
+    int nb_rails_infiniband = 0;
+    int nb_rails_tcp = 0;
+    int nb_rails_tcpoib = 0;
+
+    for (k=0; k<cli_option->rails_size; ++k) {
+      struct sctk_runtime_config_struct_net_rail * rail = NULL;
+      for (l=0; l<sctk_net_get_config()->rails_size; ++l){
+        if (strcmp(cli_option->rails[k], sctk_net_get_config()->rails[l].name) == 0) {
+          rail = &sctk_net_get_config()->rails[l];
+          break;
+        }
+      }
+
+      if (rail == NULL) {
+        sctk_error("Rail with name '%s' not found in config!", cli_option->rails[k]);
+        sctk_abort();
+      }
+
+      /* Try to find the rail associated to the configuration */
+      for (j=0; j<sctk_net_get_config()->configs_size; ++j) {
+        if (strcmp(rail->config, sctk_net_get_config()->configs[j].name) == 0) {
+          char* topology = rail->topology;
+
+          /* Switch on the driver to use */
+          switch (sctk_net_get_config()->configs[j].driver.type) {
+#ifdef MPC_USE_INFINIBAND
+            case SCTK_RTCFG_net_driver_infiniband: /* INFINIBAND */
+              nb_rails_infiniband ++ ;
+              break;
+#endif
+            case SCTK_RTCFG_net_driver_tcp: /* TCP */
+              nb_rails_tcp ++ ;
+              break;
+            case SCTK_RTCFG_net_driver_tcpoib: /* TCP */
+              nb_rails_tcpoib ++ ;
+              break;
+            default:
+              sctk_network_not_implemented(option_name);
+              break;
+          }
+        }
+      }
+    }
+
+    /* End of rails computing. Now allocate ! */
+
     for (k=0; k<cli_option->rails_size; ++k) {
       struct sctk_runtime_config_struct_net_rail * rail = NULL;
       for (l=0; l<sctk_net_get_config()->rails_size; ++l){
@@ -198,17 +247,17 @@ sctk_net_init_driver (char* name)
           switch (sctk_net_get_config()->configs[j].driver.type) {
 #ifdef MPC_USE_INFINIBAND
             case SCTK_RTCFG_net_driver_infiniband: /* INFINIBAND */
-              sctk_network_init_multirail_ib(k);
+              sctk_network_init_multirail_ib(k, nb_rails_infiniband);
               break;
 #endif
             case SCTK_RTCFG_net_driver_tcp: /* TCP */
-              sctk_network_init_multirail_tcp(k);
+              sctk_network_init_multirail_tcp(k, nb_rails_tcp);
               break;
             case SCTK_RTCFG_net_driver_tcpoib: /* TCP */
-              sctk_network_init_multirail_tcpoib(k);
+              sctk_network_init_multirail_tcpoib(k, nb_rails_tcpoib);
               break;
             default:
-              sctk_network_not_implemented("");
+              sctk_network_not_implemented(option_name);
               break;
           }
           /* Increment the number of rails used */
@@ -222,6 +271,19 @@ sctk_net_init_driver (char* name)
   }
 }
 
+
+/********************************************************************/
+/* Hybrid MPI+X                                                    */
+/********************************************************************/
+static int is_mode_hybrid = 0;
+
+int sctk_net_is_mode_hybrid () {
+  return is_mode_hybrid;
+}
+
+int sctk_net_set_mode_hybrid () {
+  is_mode_hybrid = 1;
+}
 /********************************************************************/
 /* Memory Allocator                                                 */
 /********************************************************************/
@@ -234,3 +296,4 @@ size_t sctk_net_memory_allocation_hook(size_t size_origin) {
 #endif
   return 0;
 }
+

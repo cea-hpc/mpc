@@ -344,12 +344,26 @@ sctk_get_cpu_intern ()
 {
   hwloc_cpuset_t set = hwloc_bitmap_alloc();
 
-  int ret = hwloc_get_last_cpu_location(topology, set, 0);
+  int ret = hwloc_get_last_cpu_location(topology, set, HWLOC_CPUBIND_THREAD);
   assert(ret!=-1);
   assert(!hwloc_bitmap_iszero(set));
 
+  /* Check if only one CPU in the CPU set. Maybe there is a simpler function
+   * to do that */
+  assume (hwloc_bitmap_first(set) ==  hwloc_bitmap_last(set));
+
+#if 0
+  /* Convert cpuset to obj */
+  hwloc_obj_t obj_cpu = hwloc_get_obj_covering_cpuset(topology, set);
+  assume(obj_cpu);
+  /* And return the logical index */
+  int cpu = obj_cpu->logical_index;
+#endif
+  int cpu = hwloc_bitmap_first(set);
+//  fprintf(stderr,"CPU: %d\n", cpu);
+
   hwloc_bitmap_free(set);
-  return ret;
+  return cpu;
 }
 
   int
@@ -372,7 +386,6 @@ void sctk_topology_init_cpu(){
   void
 sctk_topology_init ()
 {
-
 #ifdef MPC_Message_Passing
   if(sctk_process_number > 1){
     sctk_pmi_init();
@@ -498,10 +511,39 @@ TODO("Handle specific mapping from the user");
     {
       fprintf(stderr,"%-40s: %sFAILED (%d, %s)\n", msg, supported?"":"X", errno, errmsg);
     }
+//    assume(sctk_get_cpu_intern() == i);
     sctk_get_cpu_val = i;
+//    fprintf(stderr, "Thread bound on cpu %d\n", i);
   }
   sctk_spinlock_unlock(&topology_lock);
   return ret;
+}
+
+  int
+sctk_bind_reset ()
+{
+  char * msg = "Reset Bind to cpu";
+  int supported = support->cpubind->set_thisthread_cpubind;
+
+  sctk_spinlock_lock(&topology_lock);
+
+  hwloc_const_bitmap_t cpuset = hwloc_bitmap_alloc();
+  assume(cpuset);
+//  hwloc_bitmap_fill(cpuset);
+  cpuset = hwloc_topology_get_topology_cpuset(topology);
+  print_cpuset(cpuset);
+
+  int err = hwloc_set_cpubind(topology, cpuset, HWLOC_CPUBIND_THREAD);
+  const char *errmsg = strerror(errno);
+  if (err)
+  {
+    fprintf(stderr,"%-40s: %sFAILED (%d %s)\n", msg, supported?"":"X", errno, errmsg);
+  }
+  //    assume(sctk_get_cpu_intern() == i);
+  sctk_get_cpu_val = -1;
+  sctk_spinlock_unlock(&topology_lock);
+
+  return -1;
 }
 
 /*! \brief Return the type of processor (x86, x86_64, ...)
@@ -651,4 +693,36 @@ sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood)
  */
 #ifdef MPC_USE_INFINIBAND
 /* Add functions here for IB */
+
+int sctk_topology_is_ib_device_close_from_cpu (struct ibv_device * dev, int logical_core_id) {
+  int err;
+
+  hwloc_bitmap_t ib_set;
+  ib_set = hwloc_bitmap_alloc();
+  err = hwloc_ibv_get_device_cpuset(topology, dev, ib_set);
+  if (err < 0) {
+    return -1;
+  } else {
+    int res;
+
+    hwloc_obj_t obj_cpu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, logical_core_id);
+
+#if 0
+    char *cpuset_string = NULL;
+    hwloc_bitmap_list_asprintf(&cpuset_string, ib_set);
+    sctk_debug("String: %s", cpuset_string);
+#endif
+
+    hwloc_bitmap_and(ib_set, ib_set, obj_cpu->cpuset);
+    res = hwloc_bitmap_iszero(ib_set);
+
+    hwloc_bitmap_free(ib_set);
+    /* If the bitmap is different from 0, we are close to the IB card, so
+     * we return 1 */
+    return ! res;
+  }
+}
+
+
+
 #endif

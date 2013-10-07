@@ -141,7 +141,8 @@ sctk_pthread_mutex_init (sctk_thread_mutex_t * mutex,
 static int
 sctk_pthread_get_vp ()
 {
-  return 0;
+  int cpu = sctk_get_cpu();
+  return cpu;
 }
 
 static sem_t sctk_pthread_user_create_sem;
@@ -287,7 +288,18 @@ local_pthread_create (pthread_t * restrict thread,
       pthread_attr_t tmp_attr;
       int res;
       size_t size;
+      char * env;
       pthread_attr_init (&tmp_attr);
+
+      /* We bind the MPI tasks in a round robin manner */
+      env = getenv("MPC_ENABLE_PTHREAD_PINNING");
+      if ( env != NULL ){
+        sctk_thread_data_t * data = (sctk_thread_data_t*) arg;
+        int cpu_number = sctk_get_cpu_number ();
+
+        sctk_debug("Bind VP to core %d\n", data->local_task_id % cpu_number);
+        sctk_bind_to_cpu (data->local_task_id);
+      }
 
       if (sctk_is_in_fortran == 1)
 	size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;

@@ -165,44 +165,4 @@ void sctk_network_stats_ib (struct MPC_Network_stats_s* stats) {
   }
 #endif
 }
-
-
-void sctk_network_deco_neighbor_ib (int process) {
-  sctk_rail_info_t * rail;
-  sctk_ib_rail_info_t* rail_ib;
-;
-
-  /* Select the first rail */
-  rail = sctk_route_get_rail(sctk_network_ib_get_rail_data());
-  rail_ib = &rail->network.ib;
-
-  /* get the route to process */
-  sctk_route_table_t *route_table = sctk_get_route_to_process_no_route(process, rail);
-  ib_assume(route_table);
-  struct sctk_ib_qp_s *remote = route_table->data.ib.remote;
-  ib_assume(remote);
-
-  sctk_debug("Rank: %d -> %d", remote->rank, process);
-
-  sctk_spinlock_lock(&remote->rdma.flushing_lock);
-  sctk_route_state_t ret =
-    sctk_ibuf_rdma_cas_remote_state_rts(remote, state_connected, state_flushing);
-
-  /* If we are allowed to deconnect */
-  if (ret == state_connected) {
-    /* Update the slots values requested to 0 -> means that we want to disconnect */
-    remote->rdma.pool->resizing_request.send_keys.nb   = 0;
-    remote->rdma.pool->resizing_request.send_keys.size = 0;
-    remote->rdma.creation_timestamp = sctk_get_time_stamp();
-    sctk_spinlock_unlock(&remote->rdma.flushing_lock);
-
-    int busy_nb = OPA_load_int(&remote->rdma.pool->busy_nb[REGION_SEND]);
-    sctk_debug("DECONNECTING the RMDA buffer for remote %d busy: %d", remote->rank, busy_nb);
-
-    sctk_ibuf_rdma_check_flush_send(rail_ib, remote);
-  } else {
-    sctk_debug("DECONNECTING ABORTED %d", remote->rank);
-    sctk_spinlock_unlock(&remote->rdma.flushing_lock);
-  }
-}
 #endif

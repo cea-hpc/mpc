@@ -60,6 +60,8 @@ double sctk_ib_prof_get_mem_used() {
 }
 
 #ifdef SCTK_IB_PROF
+OPA_int_t sctk_ib_prof_glob_counters[IB_PROF_GLOB_COUNTERS_MAX];
+#endif
 
 /*-----------------------------------------------------------
  *  FUNCTIONS
@@ -73,6 +75,7 @@ void sctk_ib_prof_init() {
 #endif
 }
 
+#ifdef SCTK_IB_PROF
 double sctk_ib_prof_get_time_stamp() {
   return sctk_get_time_stamp() - reference_clock;
 }
@@ -82,6 +85,7 @@ void sctk_ib_prof_init_reference_clock() {
     reference_clock = sctk_get_time_stamp();
   }
 }
+#endif
 
 void sctk_ib_prof_init_task(int rank, int vp) {
   sctk_nodebug("Initialization with %d rails for rank %d", sctk_route_get_rail_nb(), rank);
@@ -90,9 +94,33 @@ void sctk_ib_prof_init_task(int rank, int vp) {
 
 
 void sctk_ib_prof_finalize(sctk_ib_rail_info_t *rail_ib) {
+#ifdef SCTK_IB_PROF
+
+#ifdef SCTK_IB_MEM_PROF
   sctk_ib_prof_mem_finalize(rail_ib);
+#endif
+
+#if 1
+  char line[1024];
+  char line_res[1024] = "\0";
+  sprintf(line, "%d ", sctk_process_rank);
+  strcat(line_res, line);
+
+  int i;
+  for (i=0; i < IB_PROF_GLOB_COUNTERS_MAX; ++i) {
+    sprintf(line, "%s %d ",
+        sctk_ib_prof_glob_counters_name[i],
+        OPA_load_int(&sctk_ib_prof_glob_counters[i]));
+  strcat(line_res, line);
+  }
+  sprintf(line, "\n");
+  strcat(line_res, line);
+  fprintf(stderr, "%s", line_res);
+#endif
+#endif
 }
 
+#if 0
 void * __mem_thread(void* arg) {
   sctk_ib_rail_info_t *rail_ib = (sctk_ib_rail_info_t*) arg;
 
@@ -112,6 +140,7 @@ void * __mem_thread(void* arg) {
   }
 }
 
+#endif
 #if 0
 /* Process initialization */
 void sctk_ib_prof_mem_init(sctk_ib_rail_info_t *rail_ib) {
@@ -122,7 +151,6 @@ void sctk_ib_prof_mem_init(sctk_ib_rail_info_t *rail_ib) {
   sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
   sctk_user_thread_create (&pidt, &attr, __mem_thread, (void*) rail_ib);
 }
-#endif
 #endif
 
 
@@ -165,6 +193,7 @@ void sctk_ib_prof_qp_init() {
   char dirname[256];
 
   sprintf(dirname, QP_PROF_DIR, sctk_get_process_rank());
+  sctk_debug("Creating dirname %s", dirname);
   mkdir(dirname, S_IRWXU);
 }
 
@@ -298,6 +327,9 @@ void sctk_ib_prof_mem_write(double ts, double mem) {
     sctk_ib_prof_mem_flush();
   }
 
+  if (sctk_process_rank == 0) {
+    sctk_warning("[%d] Memory used: %fMB", sctk_process_rank, mem/1024.0/1024.0);
+  }
   mem_prof->buff[mem_prof->head].ts = ts;
   mem_prof->buff[mem_prof->head].mem = mem;
   mem_prof->head ++;
@@ -320,9 +352,18 @@ void sctk_ib_prof_mem_init(sctk_ib_rail_info_t *rail_ib) {
   mem_prof = sctk_malloc ( sizeof(struct sctk_ib_prof_mem_s) );
   mem_prof->buff = sctk_malloc (MEM_PROF_BUFF_SIZE * sizeof(struct sctk_ib_prof_mem_buff_s));
 
+#if 1
+  char dirname[256];
+
+  sprintf(dirname, MEM_PROF_DIR, sctk_get_process_rank());
+  sctk_debug("Creating dirname %s", dirname);
+  mkdir(dirname, S_IRWXU);
+#endif
+
   sprintf(pathname, MEM_PROF_DIR"/"MEM_PROF_OUTPUT_FILE, sctk_get_process_rank());
   mem_prof->fd = open(pathname, O_WRONLY | O_CREAT | O_TRUNC, S_IRWXU);
   assume (mem_prof->fd != -1);
+
 
   mem_prof->head = 0;
 

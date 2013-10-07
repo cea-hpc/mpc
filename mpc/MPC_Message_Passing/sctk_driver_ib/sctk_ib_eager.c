@@ -32,6 +32,7 @@
 #include "sctk_ib_cp.h"
 #include "sctk_ib_prof.h"
 #include "sctk_ib_low_mem.h"
+#include "sctk_ib_topology.h"
 #define HOSTNAME 2048
 
 /*-----------------------------------------------------------
@@ -41,14 +42,15 @@
  * need to proceed to an dynamic allocation to copy the MPC header with
  * its tail. The body is transfered by the network */
 #define EAGER_BUFFER_SIZE 100
-static sctk_thread_ptp_message_t *eager_buffered_ptp_message = NULL;
-static sctk_spinlock_t eager_lock_buffered_ptp_message = SCTK_SPINLOCK_INITIALIZER;
 
 /*
  * Initialize the eager protocol
  */
 void sctk_ib_eager_init(sctk_ib_rail_info_t* rail_ib) {
   int i;
+
+  rail_ib->eager_buffered_ptp_message = NULL;
+  rail_ib->eager_lock_buffered_ptp_message = SCTK_SPINLOCK_INITIALIZER;
 
   sctk_thread_ptp_message_t *tmp = sctk_malloc(
       EAGER_BUFFER_SIZE * sizeof(sctk_thread_ptp_message_t));
@@ -57,7 +59,7 @@ void sctk_ib_eager_init(sctk_ib_rail_info_t* rail_ib) {
     sctk_thread_ptp_message_t* entry = &tmp[i];
     entry->from_buffered = 1;
     /* Add the entry to the list */
-    LL_PREPEND(eager_buffered_ptp_message, entry);
+    LL_PREPEND(rail_ib->eager_buffered_ptp_message, entry);
   }
 }
 
@@ -67,14 +69,16 @@ void sctk_ib_eager_init(sctk_ib_rail_info_t* rail_ib) {
  */
 static inline sctk_thread_ptp_message_t*
 sctk_ib_eager_pick_buffered_ptp_message(sctk_rail_info_t *rail) {
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+
   sctk_thread_ptp_message_t *tmp = NULL;
-  if (eager_buffered_ptp_message) {
-    sctk_spinlock_lock(&eager_lock_buffered_ptp_message);
-    if (eager_buffered_ptp_message) {
-      tmp = eager_buffered_ptp_message;
-      LL_DELETE(eager_buffered_ptp_message, eager_buffered_ptp_message);
+  if (rail_ib->eager_buffered_ptp_message) {
+    sctk_spinlock_lock(&rail_ib->eager_lock_buffered_ptp_message);
+    if (rail_ib->eager_buffered_ptp_message) {
+      tmp = rail_ib->eager_buffered_ptp_message;
+      LL_DELETE(rail_ib->eager_buffered_ptp_message, rail_ib->eager_buffered_ptp_message);
     }
-    sctk_spinlock_unlock(&eager_lock_buffered_ptp_message);
+    sctk_spinlock_unlock(&rail_ib->eager_lock_buffered_ptp_message);
   }
   /* If no more entries are available in the buffered list, we allocate */
   if (tmp == NULL) {
@@ -92,10 +96,11 @@ sctk_ib_eager_pick_buffered_ptp_message(sctk_rail_info_t *rail) {
 void sctk_ib_eager_release_buffered_ptp_message(sctk_rail_info_t* rail,
     sctk_thread_ptp_message_t* msg) {
   if (msg->from_buffered) {
+    sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
 
-    sctk_spinlock_lock(&eager_lock_buffered_ptp_message);
-    LL_PREPEND(eager_buffered_ptp_message, msg);
-    sctk_spinlock_unlock(&eager_lock_buffered_ptp_message);
+    sctk_spinlock_lock(&rail_ib->eager_lock_buffered_ptp_message);
+    LL_PREPEND(rail_ib->eager_buffered_ptp_message, msg);
+    sctk_spinlock_unlock(&rail_ib->eager_lock_buffered_ptp_message);
   } else {
     /* We can simply free the buffer because it was malloc'ed :-) */
     PROF_INC(rail, ib_free_mem);
@@ -113,23 +118,24 @@ sctk_ibuf_t* sctk_ib_eager_prepare_msg(sctk_ib_rail_info_t* rail_ib,
 
   body = (char*)msg + sizeof(sctk_thread_ptp_message_t);
   if (is_control_message) {
-    ibuf = sctk_ibuf_pick_send_sr(rail_ib, ibuf_node_task);
+    ibuf = sctk_ibuf_pick_send_sr(rail_ib);
     sctk_ibuf_prepare(rail_ib, remote, ibuf, ibuf_size);
   } else {
-    ibuf = sctk_ibuf_pick_send(rail_ib, remote, &ibuf_size,
-        ibuf_node_task);
+    ibuf = sctk_ibuf_pick_send(rail_ib, remote, &ibuf_size);
   }
   /* We cannot pick an ibuf. We should try the buffered eager protocol */
   if (ibuf == NULL) return NULL;
 
   IBUF_SET_DEST_TASK(ibuf->buffer, msg->sctk_msg_get_glob_destination);
-  IBUF_SET_SRC_TASK(ibuf, msg->sctk_msg_get_glob_source);
+  IBUF_SET_SRC_TASK(ibuf->buffer, msg->sctk_msg_get_glob_source);
   IBUF_SET_POISON(ibuf->buffer);
 
+  PROF_TIME_START(rail_ib->rail, ib_ibuf_memcpy);
   /* Copy header */
   memcpy(IBUF_GET_EAGER_MSG_HEADER(ibuf->buffer), msg, sizeof(sctk_thread_ptp_message_body_t));
   /* Copy payload */
   sctk_net_copy_in_buffer(msg, IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer));
+  PROF_TIME_END(rail_ib->rail, ib_ibuf_memcpy);
 
   eager_header = IBUF_GET_EAGER_HEADER(ibuf->buffer);
   eager_header->payload_size = size - sizeof(sctk_thread_ptp_message_body_t);
@@ -149,7 +155,7 @@ static void __free_no_recopy(void* arg) {
   /* Assume msg not recopies */
   ib_assume(!msg->tail.ib.eager.recopied);
   ibuf = msg->tail.ib.eager.ibuf;
-  sctk_ibuf_release(ibuf->region->rail, ibuf);
+  sctk_ibuf_release(ibuf->region->rail, ibuf, 0);
   sctk_ib_eager_release_buffered_ptp_message(ibuf->region->rail->rail, msg);
 }
 
@@ -170,7 +176,7 @@ sctk_ib_eager_recv_free(sctk_rail_info_t* rail, sctk_thread_ptp_message_t *msg,
   /* Read from recopied buffer */
   if (recopy){
     sctk_reinit_header(msg,__free_with_recopy,sctk_net_message_copy);
-    sctk_ibuf_release(&rail->network.ib, ibuf);
+    sctk_ibuf_release(&rail->network.ib, ibuf, 0);
     /* Read from network buffer  */
   } else {
     sctk_reinit_header(msg,__free_no_recopy, sctk_ib_eager_recv_msg_no_recopy);

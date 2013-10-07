@@ -28,6 +28,7 @@
 #include "sctk_ib_mmu.h"
 #include "sctk_ib.h"
 #include "sctk_ib_config.h"
+#include "sctk_ib_topology.h"
 #include "sctk_ib_qp.h"
 #include "sctk_ib_prof.h"
 #include "utlist.h"
@@ -37,7 +38,7 @@
 #if defined SCTK_IB_MODULE_NAME
 #error "SCTK_IB_MODULE already defined"
 #endif
-/* #define SCTK_IB_MODULE_DEBUG */
+//#define SCTK_IB_MODULE_DEBUG
 #define SCTK_IB_MODULE_NAME "MMU"
 #include "sctk_ib_toolkit.h"
 
@@ -54,6 +55,23 @@
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
+
+/*-----------------------------------------------------------
+ *  ACCESSOR
+ *----------------------------------------------------------*/
+sctk_ib_mmu_t * sctk_ib_mmu_get_mmu_from_vp( sctk_ib_rail_info_t *rail_ib ) {
+  struct sctk_ib_topology_numa_node_s * node;
+
+#warning "According if we are in FullMPI or not, we need to use the default NUMA node or not"
+  /* In FullMPI, we MUST have NUMA aware structures, in hybrid we *MUST* use the default structure.
+   * If not, we may register several times the same pinned memory.
+   * We should use a hierarchical NUMA aware cache */
+  node = sctk_ib_topology_get_default_numa_node(rail_ib);
+//  node = sctk_ib_topology_get_numa_node(rail_ib);
+  assume(node);
+
+  return &node->mmu;
+}
 
 /*-----------------------------------------------------------
  *  CACHE
@@ -86,9 +104,7 @@ static inline int sctk_ib_mmu_compare_entries(sctk_ib_mmu_entry_t *a,
 static inline void sctk_ib_mmu_delete_key(sctk_ib_mmu_entry_t *entry) {}
 static inline void sctk_ib_mmu_memlist_delete(sctk_ib_mmu_entry_t *entry) {}
 
-void sctk_ib_mmu_cache_init(sctk_ib_rail_info_t *rail_ib){
-  LOAD_MMU(rail_ib);
-
+void sctk_ib_mmu_cache_init(struct sctk_ib_mmu_s * mmu){
   mmu->cache.hb_entries = hb_tree_new(
       (dict_cmp_func) sctk_ib_mmu_compare_entries,
       (dict_del_func) sctk_ib_mmu_delete_key,
@@ -96,7 +112,7 @@ void sctk_ib_mmu_cache_init(sctk_ib_rail_info_t *rail_ib){
   assume (mmu->cache.hb_entries);
 
   mmu->cache.lru_entries = NULL;
-  mmu->cache.lock = SCTK_SPINLOCK_INITIALIZER;
+  sctk_spin_rwlock_init(&mmu->cache.lock);
   mmu->cache.entries_nb = 0;
 }
 
@@ -105,8 +121,7 @@ void sctk_ib_mmu_cache_init(sctk_ib_rail_info_t *rail_ib){
  * When call this function, the lock has already been
  * taken */
 static inline sctk_ib_mmu_entry_t*
- sctk_ib_mmu_cache_remove(sctk_ib_rail_info_t *rail_ib) {
-   LOAD_MMU(rail_ib);
+ sctk_ib_mmu_cache_remove(sctk_ib_mmu_t * mmu) {
   sctk_ib_mmu_entry_t* mmu_entry;
 
 #ifdef DEBUG_IB_MMU
@@ -133,19 +148,18 @@ static inline sctk_ib_mmu_entry_t*
 
 /* Add a cache entry */
 static inline int
- sctk_ib_mmu_cache_add(sctk_ib_rail_info_t *rail_ib,
+ sctk_ib_mmu_cache_add(sctk_ib_rail_info_t *rail_ib, sctk_ib_mmu_t * mmu,
     sctk_ib_mmu_entry_t* mmu_entry) {
-  LOAD_MMU(rail_ib);
   LOAD_CONFIG(rail_ib);
 
   sctk_nodebug("Try to register (%p) %p %lu to cache %d", mmu_entry, mmu_entry->key.ptr, mmu_entry->key.size, mmu->cache.entries_nb );
-  sctk_spinlock_lock(&mmu->cache.lock);
+  sctk_spinlock_write_lock(&mmu->cache.lock);
   /* Maximum number of cached entries reached */
   if (mmu->cache.entries_nb >= config->ibv_mmu_cache_entries) {
     sctk_ib_mmu_entry_t* mmu_entry_to_remove;
-    mmu_entry_to_remove = sctk_ib_mmu_cache_remove(rail_ib);
+    mmu_entry_to_remove = sctk_ib_mmu_cache_remove(mmu);
     if (!mmu_entry_to_remove) {
-      sctk_spinlock_unlock(&mmu->cache.lock);
+      sctk_spinlock_write_unlock(&mmu->cache.lock);
       return 0;
     }
     sctk_ib_mmu_unregister (rail_ib, mmu_entry_to_remove);
@@ -154,48 +168,48 @@ static inline int
   assume(mmu->cache.entries_nb < config->ibv_mmu_cache_entries);
   assume(mmu_entry->registrations_nb == 0);
 #endif
-  sctk_nodebug("Add entry %p to cache %p %lu", mmu_entry, mmu_entry->key.ptr, mmu_entry->key.size);
+//  sctk_debug("Add entry %p to cache %p %lu %d on node %d", mmu_entry, mmu_entry->key.ptr, mmu_entry->key.size, mmu->cache.entries_nb,
+//      mmu->node->id);
   mmu->cache.entries_nb++;
   mmu_entry->cache_status = cached;
 
   /* Add the entry */
   hb_tree_insert(mmu->cache.hb_entries, mmu_entry, mmu_entry, 0);
   sctk_nodebug("Add %p <-> %lu",  mmu_entry->key.ptr, mmu_entry->key.size);
-  DL_PREPEND(mmu->cache.lru_entries, mmu_entry);
+  DL_PREPEND(mmu_entry->mmu->cache.lru_entries, mmu_entry);
 
   mmu_entry->registrations_nb++;
-  sctk_spinlock_unlock(&mmu->cache.lock);
+  sctk_spinlock_write_unlock(&mmu->cache.lock);
   return 1;
 }
 
 /* Search for a cached entry according to the ptr and
  * the size of the buffer */
 sctk_ib_mmu_entry_t*
- sctk_ib_mmu_cache_search(sctk_ib_rail_info_t *rail_ib,
+ sctk_ib_mmu_cache_search(sctk_ib_mmu_t * mmu,
     void *ptr, size_t size) {
-  LOAD_MMU(rail_ib);
   sctk_ib_mmu_entry_t *mmu_entry = NULL, to_find;
 
   /* Construct the key */
   to_find.key.ptr = ptr;
   to_find.key.size = size;
 
-  sctk_spinlock_lock(&mmu->cache.lock);
+  sctk_spinlock_read_lock(&mmu->cache.lock);
   mmu_entry = (sctk_ib_mmu_entry_t*) hb_tree_search(mmu->cache.hb_entries, &to_find);
+  sctk_spinlock_read_unlock(&mmu->cache.lock);
   if (mmu_entry) {
 #ifdef DEBUG_IB_MMU
     assume(mmu_entry->cache_status == cached);
-    assume(mmu_entry->key.ptr == key.ptr);
-    assume(mmu_entry->key.size == key.size);
 #endif
+    sctk_spinlock_write_lock(&mmu->cache.lock);
     /* If the entry is not the head of the list */
     if (mmu->cache.lru_entries != mmu_entry) {
       DL_DELETE(mmu->cache.lru_entries, mmu_entry);
       DL_PREPEND(mmu->cache.lru_entries, mmu_entry);
     }
     mmu_entry->registrations_nb++;
+    sctk_spinlock_write_unlock(&mmu->cache.lock);
   }
-  sctk_spinlock_unlock(&mmu->cache.lock);
   return mmu_entry;
 }
 
@@ -203,43 +217,27 @@ sctk_ib_mmu_entry_t*
 /*-----------------------------------------------------------
  *  MMU
  *----------------------------------------------------------*/
-void
-check_nb_entries(sctk_ib_rail_info_t *rail_ib, const unsigned int nb_entries)
-{
-  sctk_ib_mmu_t* mmu = rail_ib->mmu;
-  sctk_ib_config_t *config = rail_ib->config;
-
-  if (mmu->nb + nb_entries > config->device_attr->max_mr)
-  {
-    sctk_ib_debug("Cannot allocate more MMU entries: hardware limit %d reached",
-          config->device_attr->max_mr);
-    /* FIXME: behavior needed there */
-    not_implemented();
-  }
-}
 
  void
-sctk_ib_mmu_init(struct sctk_ib_rail_info_s *rail_ib)
+sctk_ib_mmu_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_mmu_t * mmu, sctk_ib_topology_numa_node_t * node)
 {
   LOAD_CONFIG(rail_ib);
-  sctk_ib_mmu_t* mmu;
 
-  mmu = sctk_malloc (sizeof(sctk_ib_mmu_t));
   memset(mmu, 0, sizeof(sctk_ib_mmu_t));
-  assume(mmu);
-  rail_ib->mmu = mmu;
 
   if (config->ibv_mmu_cache_enabled) {
-    sctk_ib_mmu_cache_init(rail_ib);
+    sctk_ib_mmu_cache_init(mmu);
+    mmu->node = node;
   }
-  sctk_ib_mmu_alloc(rail_ib, rail_ib->config->ibv_init_mr);
+  sctk_ib_mmu_alloc(rail_ib, mmu, config->ibv_init_mr);
 }
 
  void
-sctk_ib_mmu_alloc(struct sctk_ib_rail_info_s *rail_ib, const unsigned int nb_entries)
+sctk_ib_mmu_alloc(struct sctk_ib_rail_info_s *rail_ib,
+    struct sctk_ib_mmu_s * mmu,
+    const unsigned int nb_entries)
 {
   int i;
-  sctk_ib_mmu_t* mmu = rail_ib->mmu;
   sctk_ib_mmu_region_t* region = NULL;
   sctk_ib_mmu_entry_t* mmu_entry;
   sctk_ib_mmu_entry_t* mmu_entry_ptr;
@@ -268,6 +266,7 @@ sctk_ib_mmu_alloc(struct sctk_ib_rail_info_s *rail_ib, const unsigned int nb_ent
     mmu_entry_ptr->cache_status = not_cached;
     mmu_entry_ptr->registrations_nb = 0;
     mmu_entry_ptr->rail_ib = rail_ib;
+    mmu_entry_ptr->mmu = mmu;
   }
 
   mmu->nb += nb_entries;
@@ -277,15 +276,13 @@ sctk_ib_mmu_alloc(struct sctk_ib_rail_info_s *rail_ib, const unsigned int nb_ent
 static inline sctk_ib_mmu_entry_t *
 __mmu_register ( sctk_ib_rail_info_t *rail_ib,
     void *ptr, size_t size, const char in_cache) {
-  LOAD_MMU(rail_ib);
+  sctk_ib_mmu_t * mmu = sctk_ib_mmu_get_mmu_from_vp(rail_ib);
   LOAD_DEVICE(rail_ib);
   LOAD_CONFIG(rail_ib);
   sctk_ib_mmu_entry_t* mmu_entry;
 
-  sctk_nodebug("Try to pick entry %p %lu", ptr, size);
-
   if (in_cache && config->ibv_mmu_cache_enabled) {
-    mmu_entry = sctk_ib_mmu_cache_search(rail_ib, ptr, size);
+    mmu_entry = sctk_ib_mmu_cache_search(mmu, ptr, size);
     if (mmu_entry) {
       PROF_INC(rail_ib->rail, mmu_cache_hit);
       return mmu_entry;
@@ -296,14 +293,14 @@ __mmu_register ( sctk_ib_rail_info_t *rail_ib,
   /* No entry available */
   if (!mmu->free_entry) {
     /* Allocate more MMU entries */
-    sctk_ib_mmu_alloc(rail_ib, config->ibv_size_mr_chunk);
+    sctk_ib_mmu_alloc(rail_ib, mmu, config->ibv_size_mr_chunk);
   }
   mmu_entry = mmu->free_entry;
   /* pop the first element */
   DL_DELETE(mmu->free_entry, mmu->free_entry);
   mmu->free_nb--;
   sctk_spinlock_unlock (&mmu->lock);
-  sctk_ib_nodebug("Entry reserved (free_nb:%d size:%lu)", mmu->free_nb, size);
+  sctk_nodebug("Entry reserved (free_nb:%d size:%lu)", mmu->free_nb, size);
   mmu_entry->status = ibv_entry_used;
 
   mmu_entry->mr = ibv_reg_mr (device->pd,
@@ -321,7 +318,7 @@ __mmu_register ( sctk_ib_rail_info_t *rail_ib,
   mmu_entry->key.size   = size;
 
   if (in_cache && config->ibv_mmu_cache_enabled)
-    sctk_ib_mmu_cache_add(rail_ib, mmu_entry);
+    sctk_ib_mmu_cache_add(rail_ib, mmu, mmu_entry);
 
   sctk_nodebug("Entry %p registered", mmu_entry);
   PROF_INC(rail_ib->rail, mmu_cache_miss);
@@ -345,14 +342,15 @@ void
 sctk_ib_mmu_unregister (sctk_ib_rail_info_t *rail_ib,
     sctk_ib_mmu_entry_t *mmu_entry)
 {
-  LOAD_MMU(rail_ib);
+  sctk_ib_mmu_t * mmu = mmu_entry->mmu;
   LOAD_CONFIG(rail_ib);
+  int ret;
 
   if (config->ibv_mmu_cache_enabled) {
     if (mmu_entry->cache_status == cached) {
-      sctk_spinlock_lock (&mmu->cache.lock);
+      sctk_spinlock_write_lock (&mmu->cache.lock);
       mmu_entry->registrations_nb--;
-      sctk_spinlock_unlock (&mmu->cache.lock);
+      sctk_spinlock_write_unlock (&mmu->cache.lock);
       return;
     }
   }
@@ -362,11 +360,13 @@ sctk_ib_mmu_unregister (sctk_ib_rail_info_t *rail_ib,
   mmu_entry->key.ptr = NULL;
   mmu_entry->key.size = 0;
   mmu_entry->status = ibv_entry_free;
-  assume (ibv_dereg_mr (mmu_entry->mr) == 0);
+  if ((ret = ibv_dereg_mr (mmu_entry->mr)) != 0) {
+    sctk_error("ibv_dereg_mr returned an error: %d %s (%p)", ret, strerror(errno), mmu_entry->mr);
+  }
 
   sctk_spinlock_lock (&mmu->lock);
   mmu->free_nb++;
-  DL_PREPEND(mmu->free_entry,mmu_entry);
+  DL_PREPEND(mmu_entry->mmu->free_entry,mmu_entry);
   sctk_spinlock_unlock (&mmu->lock);
 }
 

@@ -285,6 +285,7 @@ static int __INTERNAL__PMPI_Isend_test_req (void *buf, int count,
 static int __INTERNAL__PMPI_Comm_get_name (MPI_Comm, char *, int *);
 static int __INTERNAL__PMPI_Comm_set_name (MPI_Comm, char *);
 static int __INTERNAL__PMPI_Init_thread (int *, char ***, int, int *);
+static int __INTERNAL__PMPI_Query_thread (int *);
 
 static inline int
 sctk_is_derived_type (MPI_Datatype data_in)
@@ -700,7 +701,6 @@ __sctk_new_mpc_request_internal (MPI_Request * req)
   requests->free_list = tmp->next;
   sctk_spinlock_unlock (&(requests->lock));
   *req = tmp->rank;
-  sctk_nodebug ("Create request %d", *req);
 
   memset (&(tmp->req), 0, sizeof (MPC_Request));
 
@@ -758,9 +758,7 @@ __sctk_convert_mpc_request_internal (MPI_Request * req)
 
 
   PMPC_Get_requests ((void *) &requests);
-
   assume (requests != NULL);
-
   sctk_spinlock_lock (&(requests->lock));
 	  sctk_nodebug ("Convert request %d", *req);
 	  assume (((int_req) >= 0) && ((int_req) < requests->max_size));
@@ -771,6 +769,7 @@ __sctk_convert_mpc_request_internal (MPI_Request * req)
   assume(tmp != NULL);
   return tmp;
 }
+
 static inline MPC_Request *
 __sctk_convert_mpc_request (MPI_Request * req)
 {
@@ -1770,11 +1769,12 @@ static int __INTERNAL__PMPI_Request_free (MPI_Request * request)
 static int __INTERNAL__PMPI_Waitany (int count, MPI_Request * array_of_requests, int *index, MPI_Status * status)
 {
 	int flag = 0;
+
 	while (!flag)
     {
 		__INTERNAL__PMPI_Testany (count, array_of_requests, index, &flag, status);
-		if (!flag)
-			sctk_thread_yield ();
+				status);
+      if (!flag) sctk_thread_yield ();
     }
 	return MPI_SUCCESS;
 }
@@ -4047,20 +4047,20 @@ __INTERNAL__PMPI_Reduce_derived_commute (void *sendbuf, void *recvbuf, int count
     {
       not_reachable ();
     }
-	    
+      
   if(rank == size -1){
     res = __INTERNAL__PMPI_Send (recvbuf, count, datatype, root, -3, comm);
     if (res != MPI_SUCCESS)
       {
 	return res;
-      }	
+	  }	
   } else {
     if(rank != 0){
       res = __INTERNAL__PMPI_Send (recvbuf, count, datatype, (rank + 1) % size, -3, comm);
       if (res != MPI_SUCCESS)
 	{
 	  return res;
-	}
+	  }	
     }
   }
   return res;
@@ -7362,6 +7362,13 @@ __INTERNAL__PMPI_Wtick (void)
 }
 
 static int
+__INTERNAL__PMPI_Query_thread (int *provided)
+{
+  return PMPC_Query_thread(provided);
+}
+
+
+static int
 __INTERNAL__PMPI_Init_thread (int *argc, char ***argv, int required,
 			      int *provided)
 {
@@ -7962,6 +7969,7 @@ PMPI_Irecv (void *buf, int count, MPI_Datatype datatype, int source,
   }
   res =
     __INTERNAL__PMPI_Irecv (buf, count, datatype, source, tag, comm, request);
+
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
@@ -9396,6 +9404,16 @@ PMPI_Wtick (void)
   res = __INTERNAL__PMPI_Wtick ();
   return res;
 }
+
+int
+PMPI_Query_thread (int *provided)
+{
+  MPI_Comm comm = MPI_COMM_WORLD;
+  int res = MPI_ERR_INTERN;
+  res = __INTERNAL__PMPI_Query_thread (provided);
+  SCTK__MPI_Check_retrun_val (res, comm);
+}
+
 
 int
 PMPI_Init_thread (int *argc, char ***argv, int required, int *provided)
