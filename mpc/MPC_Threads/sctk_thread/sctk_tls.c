@@ -923,6 +923,8 @@ __sctk__tls_get_addr__core_scope (size_t m, size_t offset)
 }
 #elif defined(SCTK_arm_ARCH_SCTK)
 #warning "ARM doesnot support TLS" 
+#elif defined(SCTK_ppc64_ARCH_SCTK)
+#warning "PPC64 doesnot support TLS"
 #else
 #error "Architecture not available for TLS support"
 #endif

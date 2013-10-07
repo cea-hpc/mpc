@@ -37,6 +37,9 @@
 #elif defined(__arm__)
 #define SCTK_arm_ARCH_SCTK
 #define SCTK_ARCH_SCTK  SCTK_arm_ARCH_SCTK
+#elif defined(__powerpc64__)
+#define SCTK_ppc64_ARCH_SCTK
+#define SCTK_ARCH_SCTK  SCTK_ppc64_ARCH_SCTK
 #else
   #error "Unknown architecture"
 #endif
