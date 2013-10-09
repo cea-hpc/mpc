@@ -152,6 +152,6 @@ int sctk_ib_cm_on_demand_rdma_check_request(
 int sctk_ib_cm_on_demand_rdma_request(
     sctk_rail_info_t* rail_targ, struct sctk_ib_qp_s *remote,
     int entry_size, int entry_nb);
-int sctk_ib_cm_resizing_rdma_deco_request(sctk_ib_rail_info_t* rail_targ, struct sctk_ib_qp_s *remote);
+int sctk_ib_cm_resizing_rdma_deco_request(sctk_rail_info_t* rail_targ, struct sctk_ib_qp_s *remote);
 #endif
 #endif

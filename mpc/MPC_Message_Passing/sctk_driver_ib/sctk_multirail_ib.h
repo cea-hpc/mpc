@@ -53,7 +53,7 @@ int sctk_network_ib_get_rails_nb();
 size_t sctk_network_memory_allocator_hook_ib (size_t size);
 
 
-int sctk_network_select_send_rail(sctk_thread_ptp_message_t * msg);
+int sctk_network_select_send_rail(struct sctk_thread_ptp_message_s * msg);
 int sctk_network_select_recv_rail();
 #ifdef __cplusplus
 }

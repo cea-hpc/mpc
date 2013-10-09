@@ -55,10 +55,6 @@ static size_t mem_used = 0;
 /* Reference clock */
 __thread volatile double reference_clock = -1;
 
-double sctk_ib_prof_get_mem_used() {
-  return mem_used;
-}
-
 #ifdef SCTK_IB_PROF
 OPA_int_t sctk_ib_prof_glob_counters[IB_PROF_GLOB_COUNTERS_MAX];
 #endif

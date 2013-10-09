@@ -47,8 +47,6 @@
 /* Uncomment to enable MEM profiling */
 //#define SCTK_IB_MEM_PROF
 
-double sctk_ib_prof_get_mem_used();
-
 #ifdef SCTK_IB_PROF
 #include <mpc_profiler.h>
 #define PROF_DECL(type, name) type name

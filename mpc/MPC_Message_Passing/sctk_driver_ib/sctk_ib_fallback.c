@@ -248,11 +248,10 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,
 }
 
 
-  return 0;
-static int sctk_network_poll_all (sctk_rail_info_t* rail) 
+static int sctk_network_poll_all (sctk_rail_info_t* rail)
 {
+  return 0;
 }
-#endif
 
 static void
 sctk_network_notify_recv_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){ }

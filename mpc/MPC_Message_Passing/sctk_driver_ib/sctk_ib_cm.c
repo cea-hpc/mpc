@@ -841,7 +841,7 @@ static inline int sctk_ib_cm_resizing_rdma_recv_request(RAIL_ARGS, void* request
 /*-----------------------------------------------------------
  *  RDMA deconnection
  *----------------------------------------------------------*/
-int sctk_ib_cm_resizing_rdma_deco_request(sctk_ib_rail_info_t* rail_targ,
+int sctk_ib_cm_resizing_rdma_deco_request(sctk_rail_info_t* rail_targ,
     struct sctk_ib_qp_s *remote){
 
   sctk_ib_cm_rdma_connection_t send_keys;

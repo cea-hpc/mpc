@@ -281,7 +281,6 @@ int sctk_send_message_from_network_multirail_ib (sctk_thread_ptp_message_t * msg
   return ret;
 }
 
-*/
 /************ INIT ****************/
 void sctk_network_init_multirail_ib(int rail_id, int max_rails){
   static int init_once = 0;

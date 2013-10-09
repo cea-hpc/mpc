@@ -525,6 +525,7 @@ void sctk_hls_checkout_on_vp ()
   const int socket_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_SOCKET);
   const int core_depth   = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE);
   hwloc_obj_t pu = hwloc_get_obj_by_type(topology,HWLOC_OBJ_PU,sctk_get_cpu());
+  assume(pu);
   const int numa_id = sctk_is_numa_node() ?
 	  				  hwloc_get_ancestor_obj_by_type(topology,HWLOC_OBJ_NODE,pu)->logical_index
 					  : 0 ;
@@ -922,7 +923,7 @@ __sctk__tls_get_addr__core_scope (size_t m, size_t offset)
   return res;
 }
 #elif defined(SCTK_arm_ARCH_SCTK)
-#warning "ARM doesnot support TLS" 
+#warning "ARM doesnot support TLS"
 #elif defined(SCTK_ppc64_ARCH_SCTK)
 #warning "PPC64 doesnot support TLS"
 #else
