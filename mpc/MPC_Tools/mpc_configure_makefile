@@ -147,10 +147,10 @@ fi
 # Rule for bin/mpc_print_config
 #
 echo "" >> Makefile
-echo "bin/mpc_print_config: lib/libmpc_framework.a lib/libmpc_tdb_remote_static.a" >> Makefile
+echo "bin/mpc_print_config: lib/libmpc_framework.a lib/libmpc_tdb_remote_static.a " >> Makefile
 printf "\t@echo Build bin/mpc_print_config" >> Makefile; echo "" >> Makefile
 #printf "\t@DIR_DEST_EXE=${PWD}/bin BUILD_DIR=\$(M_PWD)/BUILD_MPC_Config/bin \$(MAKE) -C ${MPC_SOURCE_DIR}MPC_Config/bin build_exe" >> Makefile; echo "" >> Makefile
-printf "\t@\$(CC) -Iinclude_modules -Iinclude $SCTK_CFLAGS  ${MPC_SOURCE_DIR}MPC_Config/bin/*.c  -o bin/mpc_print_config -LINSTALL/lib -lmpc_framework -lmpc_tdb_remote_static $SCTK_LDFLAGS -lm -Llib ">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) -Iinclude_modules -Iinclude $SCTK_CFLAGS  ${MPC_SOURCE_DIR}MPC_Config/bin/*.c  -o bin/mpc_print_config -Llib -lmpc_framework -lmpc_tdb_remote_static $SCTK_LDFLAGS -lm -Llib ">> Makefile; echo "">> Makefile
 
 
 #
