@@ -1915,11 +1915,9 @@ void sctk_inter_thread_perform_idle (volatile int *data, int value,
   while((volatile int) *data != value) {
     func(arg);
 
-#if 1
     if ((volatile int) *data != value) {
       sctk_cpu_relax();
     }
-#endif
   }
 #else
   sctk_thread_wait_for_value_and_poll(data, value, func, arg);
