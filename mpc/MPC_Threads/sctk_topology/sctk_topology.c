@@ -64,6 +64,9 @@ int pin_processor_current = 0;
 int bind_processor_current = 0;
 
 static hwloc_topology_t topology;
+/* Describe the full topology of the machine.
+ * Only used for binding*/
+static hwloc_topology_t topology_full;
 const struct hwloc_topology_support *support;
 
 hwloc_topology_t sctk_get_topology_object(void)
@@ -209,6 +212,7 @@ sctk_restrict_topology ()
     /* restrict the topology to physical CPUs */
     err = hwloc_topology_restrict(topology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
     assume(!err);
+
     hwloc_bitmap_free(cpuset);
   }
 
@@ -346,15 +350,15 @@ sctk_get_cpu_intern ()
 
   int ret = hwloc_get_last_cpu_location(topology, set, HWLOC_CPUBIND_THREAD);
 
-  assert(ret!=-1);
-  assert(!hwloc_bitmap_iszero(set));
+  assume(ret!=-1);
+  assume(!hwloc_bitmap_iszero(set));
 
   /* Check if only one CPU in the CPU set. Maybe there is a simpler function
    * to do that */
   assume (hwloc_bitmap_first(set) ==  hwloc_bitmap_last(set));
 
   /* Convert cpuset to obj */
-  hwloc_obj_t obj_cpu = hwloc_get_obj_covering_cpuset(topology, set);
+  hwloc_obj_t obj_cpu = hwloc_get_obj_covering_cpuset(topology_full, set);
   assume(obj_cpu);
   /* And return the logical index */
   int cpu = obj_cpu->logical_index;
@@ -391,6 +395,9 @@ sctk_topology_init ()
 
   hwloc_topology_init(&topology);
   hwloc_topology_load(topology);
+
+  hwloc_topology_init(&topology_full);
+  hwloc_topology_load(topology_full);
 
   support = hwloc_topology_get_support(topology);
 
