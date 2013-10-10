@@ -252,10 +252,17 @@ pthread_user_create (pthread_t * thread, pthread_attr_t * attr,
     }
   else
   {
-      int res;
+    int res;
+      res = pthread_create (thread, attr, tls_start_routine,
+			    init_tls_start_routine_arg (def_start_routine,
+							arg));
+      /* Sylvain: see file sctk_thread.c for more details about
+       * the following commented block */
+#if 0
       res = sctk_real_pthread_create (thread, attr, tls_start_routine,
 			    init_tls_start_routine_arg (def_start_routine,
 							arg));
+#endif
       if(res != 0){
 	perror("pthread_create: ");
       }
