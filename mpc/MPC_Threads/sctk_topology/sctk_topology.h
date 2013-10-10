@@ -77,8 +77,6 @@ extern "C"
 */
   int sctk_bind_to_cpu (int i);
 
-  int sctk_bind_reset ();
-
 /*! \brief Return the first core_id for a NUMA node
  * @ param node NUMA node id.
 */

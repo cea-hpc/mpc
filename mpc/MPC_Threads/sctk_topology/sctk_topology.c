@@ -515,33 +515,6 @@ TODO("Handle specific mapping from the user");
   return ret;
 }
 
-  int
-sctk_bind_reset ()
-{
-  char * msg = "Reset Bind to cpu";
-  int supported = support->cpubind->set_thisthread_cpubind;
-
-  sctk_spinlock_lock(&topology_lock);
-
-  hwloc_const_bitmap_t cpuset = hwloc_bitmap_alloc();
-  assume(cpuset);
-//  hwloc_bitmap_fill(cpuset);
-  cpuset = hwloc_topology_get_topology_cpuset(topology);
-  print_cpuset(cpuset);
-
-  int err = hwloc_set_cpubind(topology, cpuset, HWLOC_CPUBIND_THREAD);
-  const char *errmsg = strerror(errno);
-  if (err)
-  {
-    fprintf(stderr,"%-40s: %sFAILED (%d %s)\n", msg, supported?"":"X", errno, errmsg);
-  }
-  //    assume(sctk_get_cpu_intern() == i);
-  sctk_get_cpu_val = -1;
-  sctk_spinlock_unlock(&topology_lock);
-
-  return -1;
-}
-
 /*! \brief Return the type of processor (x86, x86_64, ...)
 */
   char *

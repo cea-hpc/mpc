@@ -298,24 +298,23 @@ void sctk_network_init_multirail_ib(int rail_id, int max_rails){
   sctk_route_init_in_rail(rails[rails_nb],rail->topology);
   /* Initialize the IB rail ID */
 
-#if 0
+  int previous_binding;
   {
     if (config->driver.value.infiniband.network_type == 1)
       if ( (max_rails - 1) == 4) {
-        sctk_bind_to_cpu(rail_id*32 % 128);
+        previous_binding = sctk_bind_to_cpu(rail_id*32 % 128);
       } else if ( (max_rails - 1) == 2 ) {
-        sctk_bind_to_cpu(rail_id*8);
+        previous_binding = sctk_bind_to_cpu(rail_id*8);
       } else if ( (max_rails - 1) == 16 ) {
-        sctk_bind_to_cpu(rail_id*8 % 128);
+        previous_binding = sctk_bind_to_cpu(rail_id*8 % 128);
       } else if ( (max_rails - 1) == 1 ) {
-        sctk_bind_to_cpu(0);
+        previous_binding = sctk_bind_to_cpu(0);
       } else {
         not_implemented();
       }
     else
-      sctk_bind_to_cpu(0);
+      previous_binding = sctk_bind_to_cpu(0);
   }
-#endif
 
   if (config->driver.value.infiniband.network_type == 1) {
     /* MPI IB network */
@@ -353,15 +352,10 @@ void sctk_network_init_multirail_ib(int rail_id, int max_rails){
   rails[rails_nb]->initialize_leader_task(rails[rails_nb]);
   rails_nb++;
 
-#if 1
   {
     /* Revert to CPU 0 */
-//    sctk_bind_to_cpu(0);
-#warning "Problem here !!!!"
-    sctk_error("Reset binding on proc %d", sctk_process_rank);
-//    sctk_bind_reset();
+    sctk_bind_to_cpu(previous_binding);
   }
-#endif
 
 }
 
