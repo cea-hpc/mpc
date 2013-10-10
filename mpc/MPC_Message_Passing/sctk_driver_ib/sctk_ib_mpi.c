@@ -200,7 +200,7 @@ int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
   return 0;
 }
 
-int sctk_network_poll_recv_ibuf(const sctk_rail_info_t const * rail, sctk_ibuf_t *ibuf,
+int sctk_network_poll_recv_ibuf(sctk_rail_info_t * rail, sctk_ibuf_t *ibuf,
     const char from_cp, struct sctk_ib_polling_s* poll)
 {
   PROF_TIME_START(rail, ib_poll_recv_ibuf);
@@ -214,7 +214,7 @@ int sctk_network_poll_recv_ibuf(const sctk_rail_info_t const * rail, sctk_ibuf_t
   /* First we check if the message has an immediate data */
   if (wc.wc_flags == IBV_WC_WITH_IMM) {
     sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-    const sctk_ib_qp_t const *remote = sctk_ib_qp_ht_find(rail_ib, wc.qp_num);
+    sctk_ib_qp_t *remote = sctk_ib_qp_ht_find(rail_ib, wc.qp_num);
 
     if (wc.imm_data & IMM_DATA_RDMA_PIGGYBACK ) {
       int piggyback = wc.imm_data - IMM_DATA_RDMA_PIGGYBACK;
@@ -480,7 +480,7 @@ recheck:
 #endif
 
 
-#warning "Should be reactivated for Hetero collective"
+TODO("Should be reactivated for Hetero collective")
 //  sctk_ib_cp_poll_global_list(rail, poll);
 }
 

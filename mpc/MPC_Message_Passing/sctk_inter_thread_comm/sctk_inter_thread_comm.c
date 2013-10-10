@@ -244,7 +244,7 @@ static inline void sctk_internal_ptp_add_send_incomming(sctk_internal_ptp_t* tmp
     sctk_spinlock_unlock(&(tmp->lists.incomming_send.lock));
 }
 #else
-#warning "Using blocking version of send/recv message"
+TODO("Using blocking version of send/recv message")
 /*
  * No 'incoming' recv list. We directly add the message into the 'pending' recv list
  */
@@ -336,7 +336,7 @@ static void sctk_ptp_table_loop( int (*func)(sctk_internal_ptp_t* pair), char re
   } else {
     if (sctk_ptp_array == NULL) {
       sctk_ptp_table_read_unlock();
-      return 1;
+      return;
     }
     int i;
     int max = (sctk_ptp_array_end - sctk_ptp_array_start + 1);
@@ -347,7 +347,7 @@ static void sctk_ptp_table_loop( int (*func)(sctk_internal_ptp_t* pair), char re
     }
   }
   sctk_ptp_table_read_unlock();
-return -1;
+return;
 }
 
 /*
@@ -2015,7 +2015,7 @@ void sctk_wait_all (const int task, const sctk_communicator_t com){
   pair = sctk_get_internal_ptp(task);
   sctk_assert(pair);
 
-#warning "Rewrite the following section"
+TODO("Rewrite the following section")
 #if 0
   do{
     i = OPA_load_int(&pair->pending_nb);
@@ -2140,7 +2140,6 @@ void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_ch
 void sctk_send_message (sctk_thread_ptp_message_t * msg){
   int need_check = 0;
   /* TODO: need to check in wait */
-//#warning "disable checking in wait"
   msg->tail.need_check_in_wait = 1;
   /* We only check if the message is an intra-node message */
   if ( msg->sctk_msg_get_glob_destination != -1 ) {
@@ -2261,7 +2260,7 @@ int sctk_is_net_message (int dest){
 /*Probe                                                             */
 /********************************************************************/
 
-#warning "Probe only occurs on recv"
+TODO("Probe only occurs on recv")
 /* FIXME: is it possible to probe a message from an Isend ? */
 static inline
 void sctk_probe_source_tag_func (int destination, int source,int tag,

@@ -267,7 +267,7 @@ static void
 sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){}
 
 static void
-sctk_network_notify_any_source_message_ib (int polling_task_id, sctk_rail_info_t* rail){}
+sctk_network_notify_any_source_message_ib (int polling_task_id, int blocking, sctk_rail_info_t* rail){}
 
 static void
 sctk_network_connection_to_ib(int from, int to,sctk_rail_info_t* rail){

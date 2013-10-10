@@ -839,73 +839,6 @@ static inline int sctk_ib_cm_resizing_rdma_recv_request(RAIL_ARGS, void* request
 
 
 /*-----------------------------------------------------------
- *  RDMA deconnection
- *----------------------------------------------------------*/
-int sctk_ib_cm_resizing_rdma_deco_request(sctk_rail_info_t* rail_targ,
-    struct sctk_ib_qp_s *remote){
-
-  sctk_ib_cm_rdma_connection_t send_keys;
-
-  send_keys.connected = 1;
-  send_keys.nb = 0;
-  send_keys.size = 0;
-  send_keys.rail_id = rail_targ->rail_number;
-
-  sctk_ib_nodebug("[%d] Sending RDMA DECONNECTION request to %d",
-      rail_targ->rail->rail_number, remote->rank);
-
-  sctk_route_messages_send(sctk_process_rank,remote->rank,ondemand_specific_message_tag,
-      CM_RESIZING_RDMA_DECO_REQ_TAG+CM_MASK_TAG,
-      &send_keys, sizeof(sctk_ib_cm_rdma_connection_t));
-
-  return 1;
-}
-
-
-/*
- * Receive a request for a source process
- * Data exchanged:
- * - size of slots
- * - number of slots
- * - Address of the send region
- * - Address of the recv region
- */
-static inline int sctk_ib_cm_resizing_rdma_recv_deco_request(RAIL_ARGS, void* request, int src) {
-  LOAD_TARG();
-  sctk_ib_cm_rdma_connection_t send_keys;
-  memset(&send_keys, 0, sizeof(sctk_ib_cm_rdma_connection_t));
-
-  /* get the route to process */
-  sctk_route_table_t *route_table = sctk_get_route_to_process_no_ondemand(src, rail_targ);
-  ib_assume(route_table);
-  struct sctk_ib_qp_s *remote = route_table->data.ib.remote;
-  ib_assume(remote);
-
-  /* If the route is connected */
-  if (sctk_route_get_state(route_table) == state_connected) {
-    /* Try to change the state to flushing.
-     * By changing the state of the remote to 'flushing', we automaticaly switch to SR */
-    sctk_spinlock_lock(&remote->rdma.flushing_lock);
-    sctk_route_state_t ret =
-      sctk_ibuf_rdma_cas_remote_state_rts(remote, state_connected, state_flushing);
-
-    if (ret == state_connected) {
-      /* Update the slots values requested to 0 -> means that we want to disconnect */
-      remote->rdma.pool->resizing_request.send_keys.nb   = 0;
-      remote->rdma.pool->resizing_request.send_keys.size = 0;
-      sctk_spinlock_unlock(&remote->rdma.flushing_lock);
-
-      sctk_ib_nodebug("Resizing the RMDA buffer for remote %d", remote->rank);
-      sctk_ibuf_rdma_check_flush_send(rail_ib_targ, remote);
-    } else {
-      sctk_spinlock_unlock(&remote->rdma.flushing_lock);
-    }
-  }
-
-  return 0;
-}
-
-/*-----------------------------------------------------------
  *  Handler of OD connexions
  *----------------------------------------------------------*/
 int sctk_ib_cm_on_demand_recv(sctk_rail_info_t *rail,
@@ -968,10 +901,6 @@ int sctk_ib_cm_on_demand_recv(sctk_rail_info_t *rail,
 
       case CM_RESIZING_RDMA_DONE_TAG:
       sctk_ib_cm_resizing_rdma_done_recv(rail_targ, rail_sign, payload, process_src);
-      break;
-
-      case CM_RESIZING_RDMA_DECO_REQ_TAG:
-      sctk_ib_cm_resizing_rdma_recv_deco_request(rail_targ, rail_sign, payload, process_src);
       break;
 
       default:

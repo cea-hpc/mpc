@@ -64,7 +64,7 @@ typedef struct sctk_ib_topology_s {
 void sctk_ib_topology_init(struct sctk_ib_rail_info_s * rail_ib);
 void sctk_ib_topology_init_task(struct sctk_rail_info_s * rail, int vp);
 
-#warning "The maximum number of NUMA nodes should be dynamically determined!"
+TODO("The maximum number of NUMA nodes should be dynamically determined!")
 #define MAX_NUMA_NODE_NB 32
 __UNUSED__ static void sctk_ib_topology_check_and_allocate_tls (sctk_ib_rail_info_t * rail_ib) {
   /* Create the TLS variable if not already created */

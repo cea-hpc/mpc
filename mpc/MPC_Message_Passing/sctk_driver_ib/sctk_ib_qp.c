@@ -682,7 +682,7 @@ sctk_ib_srq_init_attr(struct sctk_ib_rail_info_s* rail_ib)
   return attr;
 }
 
-#warning "Check the max WR !!"
+TODO("Check the max WR !!")
 int
 sctk_ib_srq_get_max_srq_wr (struct sctk_ib_rail_info_s* rail_ib)
 {

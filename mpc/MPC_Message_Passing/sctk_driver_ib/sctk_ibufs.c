@@ -517,7 +517,7 @@ void sctk_ibuf_release(
           const int srq_cache_nb = ++ closest_node->free_srq_cache_nb;
           DL_APPEND(closest_node->free_srq_cache, ibuf);
 
-#warning "Number of SRQ buffers in the cache -> in the configuration"
+TODO("Number of SRQ buffers in the cache -> in the configuration")
           /* If the max number of SRQ ibufs is reached for the current node, we flush
            * the list to the global queue of buffers */
           if (srq_cache_nb > 40) {

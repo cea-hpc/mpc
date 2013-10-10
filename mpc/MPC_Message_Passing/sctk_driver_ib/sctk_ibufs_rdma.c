@@ -642,7 +642,6 @@ void sctk_ib_rdma_eager_walk_remotes(sctk_ib_rail_info_t *rail, int (func)(sctk_
   /* Set the default value */
   *ret = REORDER_UNDEFINED;
 
-#warning "Polling lock disabled here!"
   sctk_spinlock_read_lock(&rdma_polling_lock);
   DL_FOREACH(rdma_pool_list, pool) {
     /* 'func' needs to check if the remote is in a RTR mode */
@@ -1385,7 +1384,7 @@ void sctk_ibuf_rdma_get_allocated_size_from_all_remotes(
       /* If state connected */
       if (state == state_connected) {
         *allocated_size += region->allocated_size;
-        /* pas utilisé 
+        /* pas utilisé
 			*regions_nb++;
 		*/
       }
@@ -1452,10 +1451,6 @@ int sctk_ibuf_rdma_remote_normalize(sctk_ib_rail_info_t* rail_ib, size_t mem_to_
         if (state == state_connected && (average_size < region->allocated_size) ) {
           /* Change the state to 'requesting' */
           state = sctk_ibuf_rdma_cas_remote_state_rtr(remote, state_connected, state_requesting);
-          /* If the remote was connected, we send a deconnexion request */
-          if (state == state_connected) {
-            sctk_ib_cm_resizing_rdma_deco_request(rail_ib, remote);
-          }
 
         } else not_reachable();
       }
@@ -1602,10 +1597,7 @@ size_t sctk_ibuf_rdma_remote_disconnect(sctk_ib_rail_info_t* rail_ib,
       /* Change the state to 'requesting' */
       sctk_route_state_t ret =
         sctk_ibuf_rdma_cas_remote_state_rtr(remote, state_connected, state_requesting);
-      /* If the remote was connected, we send a deconnexion request */
-      if (ret == state_connected) {
-        sctk_ib_cm_resizing_rdma_deco_request(rail_ib, remote);
-      } else memory_used = 0;
+      memory_used = 0;
     } else not_reachable();
   }
   return memory_used;

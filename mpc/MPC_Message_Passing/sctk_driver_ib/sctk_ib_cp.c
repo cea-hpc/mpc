@@ -243,7 +243,7 @@ void sctk_ib_cp_finalize_task(int rank) {
   ib_assume(task);
 }
 
-static inline int __cp_poll(const sctk_rail_info_t const* rail, struct sctk_ib_polling_s *poll, sctk_ibuf_t * volatile * const list, sctk_spinlock_t *lock, sctk_ib_cp_task_t *task, char from_global){
+static inline int __cp_poll(const sctk_rail_info_t const* rail, struct sctk_ib_polling_s *poll, sctk_ibuf_t * volatile * list, sctk_spinlock_t *lock, sctk_ib_cp_task_t *task, char from_global){
 
   sctk_ibuf_t *ibuf = NULL;
   int nb_found = 0;
@@ -306,7 +306,7 @@ int sctk_ib_cp_poll_global_list(const struct sctk_rail_info_s const * rail, stru
 __thread vp_t* tls_vp = NULL;
 int sctk_ib_cp_poll(struct sctk_rail_info_s * rail, struct sctk_ib_polling_s *poll,
     int task_id){
-  sctk_ib_cp_task_t const * task = NULL;
+  sctk_ib_cp_task_t * task = NULL;
 
   if (task_id < 0) {
     sctk_ib_cp_steal(rail, poll, 1);
@@ -314,7 +314,7 @@ int sctk_ib_cp_poll(struct sctk_rail_info_s * rail, struct sctk_ib_polling_s *po
   }
 
   if (tls_vp == NULL) {
-    sctk_ib_cp_task_t const * task = NULL;
+    sctk_ib_cp_task_t * task = NULL;
     sctk_nodebug("Try to find task %d", task_id);
     HASH_FIND(hh_all, all_tasks, &task_id, sizeof(int),task);
     assume(task);
@@ -333,7 +333,7 @@ int sctk_ib_cp_poll(struct sctk_rail_info_s * rail, struct sctk_ib_polling_s *po
   return 0;
 }
 
-static inline int __cp_steal(const struct sctk_rail_info_s const* rail,struct sctk_ib_polling_s *poll, sctk_ibuf_t** volatile list, sctk_spinlock_t *lock, sctk_ib_cp_task_t *task, sctk_ib_cp_task_t* stealing_task) {
+static inline int __cp_steal(const struct sctk_rail_info_s const* rail,struct sctk_ib_polling_s *poll, sctk_ibuf_t* volatile * list, sctk_spinlock_t *lock, sctk_ib_cp_task_t *task, sctk_ib_cp_task_t* stealing_task) {
   sctk_ibuf_t *ibuf = NULL;
   int nb_found = 0;
 

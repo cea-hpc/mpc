@@ -205,7 +205,7 @@ sctk_network_notify_recv_message_multirail_ib (sctk_thread_ptp_message_t * msg){
 
 static void
 sctk_network_notify_matching_message_multirail_ib (sctk_thread_ptp_message_t * msg){
-#warning "Polling Matching disabled"
+TODO("Polling Matching disabled")
 #if 0
   int i;
   for(i = 0; i < rails_nb; i++){
@@ -234,7 +234,7 @@ sctk_network_notify_perform_message_multirail_ib (int remote_process, int remote
 
 static void
 sctk_network_notify_idle_message_multirail_ib (){
-#warning "Polling Idle disabled"
+TODO("Polling Idle disabled")
 #if 0
   int i;
 

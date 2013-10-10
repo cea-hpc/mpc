@@ -50,7 +50,7 @@ typedef struct sctk_ib_cp_task_s{
   /* rank is the key of HT */
   int rank;
   /* local pending ibufs for the current task  */
-  sctk_ibuf_t *local_ibufs_list;
+  sctk_ibuf_t * volatile local_ibufs_list;
   sctk_spinlock_t local_ibufs_list_lock;
   char dummy[64];
   /* global pending ibufs for the current task  */

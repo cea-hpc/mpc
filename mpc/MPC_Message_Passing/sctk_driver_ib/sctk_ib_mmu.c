@@ -62,12 +62,14 @@
 sctk_ib_mmu_t * sctk_ib_mmu_get_mmu_from_vp( sctk_ib_rail_info_t *rail_ib ) {
   struct sctk_ib_topology_numa_node_s * node;
 
-#warning "According if we are in FullMPI or not, we need to use the default NUMA node or not"
-  /* In FullMPI, we MUST have NUMA aware structures, in hybrid we *MUST* use the default structure.
-   * If not, we may register several times the same pinned memory.
-   * We should use a hierarchical NUMA aware cache */
-  node = sctk_ib_topology_get_default_numa_node(rail_ib);
-//  node = sctk_ib_topology_get_numa_node(rail_ib);
+  if(sctk_net_is_mode_hybrid()) {
+    /* In FullMPI, we MUST have NUMA aware structures, in hybrid we *MUST* use the default structure.
+     * If not, we may register several times the same pinned memory.
+     * We should use a hierarchical NUMA aware cache */
+    node = sctk_ib_topology_get_default_numa_node(rail_ib);
+  } else {
+    node = sctk_ib_topology_get_numa_node(rail_ib);
+  }
   assume(node);
 
   return &node->mmu;
