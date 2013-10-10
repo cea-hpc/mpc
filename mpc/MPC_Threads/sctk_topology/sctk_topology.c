@@ -345,6 +345,7 @@ sctk_get_cpu_intern ()
   hwloc_cpuset_t set = hwloc_bitmap_alloc();
 
   int ret = hwloc_get_last_cpu_location(topology, set, HWLOC_CPUBIND_THREAD);
+
   assert(ret!=-1);
   assert(!hwloc_bitmap_iszero(set));
 
@@ -352,14 +353,11 @@ sctk_get_cpu_intern ()
    * to do that */
   assume (hwloc_bitmap_first(set) ==  hwloc_bitmap_last(set));
 
-#if 0
   /* Convert cpuset to obj */
   hwloc_obj_t obj_cpu = hwloc_get_obj_covering_cpuset(topology, set);
   assume(obj_cpu);
   /* And return the logical index */
   int cpu = obj_cpu->logical_index;
-#endif
-  int cpu = hwloc_bitmap_first(set);
 
   hwloc_bitmap_free(set);
   return cpu;
@@ -503,7 +501,7 @@ sctk_bind_to_cpu (int i)
   {
 TODO("Handle specific mapping from the user");
     hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
-    assume(pu);
+     assume(pu);
 
     int err = hwloc_set_cpubind(topology, pu->cpuset, HWLOC_CPUBIND_THREAD);
     if (err)

@@ -755,7 +755,6 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
   new_binding = sctk_get_init_vp (core);
   core++;
   previous_binding = sctk_bind_to_cpu (new_binding);
-  sctk_debug("Bound to thread %d", new_binding);
 
   tls = __sctk_create_thread_memory_area ();
   sctk_nodebug ("create tls %p", tls);
