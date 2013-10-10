@@ -195,6 +195,14 @@ sctk_perform_initialisation (void)
   }
 
   sctk_topology_init ();
+  /* Bind the main thread to the first VP */
+  const unsigned int core = 0;
+  int binding = 0;
+  binding = sctk_get_init_vp (core);
+  sctk_bind_to_cpu (binding);
+  sctk_nodebug("Init: thread bound to thread %d", binding);
+
+
   #ifdef HAVE_HWLOC
   sctk_alloc_posix_mmsrc_numa_init_phase_numa();
   #endif
@@ -390,6 +398,12 @@ sctk_def_mono (char *arg)
 sctk_def_process_nb (char *arg)
 {
   sctk_process_nb_val = atoi (arg);
+}
+
+
+void (*sctk_get_thread_val(void)) ()
+{
+  return sctk_thread_val;
 }
 
   int
@@ -812,16 +826,16 @@ void sctk_init_mpc_runtime(){
     char * argv_tmp[1];
     int init_res;
 
-    argv = argv_tmp; 
+    argv = argv_tmp;
     argv[0] = "main";
-  
+
     sctk_mpc_env_initialized = 1;
 
     //load mpc configuration from XML files if not already done.
     sctk_runtime_config_init();
 
     __sctk_profiling__start__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
-  
+
 
     auto_kill = sctk_runtime_config_get()->modules.launcher.autokill;
     if (auto_kill > 0)
@@ -901,7 +915,7 @@ void sctk_init_mpc_runtime(){
 	/*  for(i = 0; i <= argc; i++){
 	    fprintf(stderr,"%d : %s\n",i,argv[i]);
 	    } */
-      } 
+      }
 
     memcpy (sctk_save_argument, argv, argc * sizeof (char *));
 
@@ -929,12 +943,12 @@ sctk_launch_main (int argc, char **argv)
 
   sctk_disable_addr_randomize (argc,argv);
   sctk_init_mpc_runtime();
-  
+
 #if defined (SCTK_USE_OPTIMIZED_TLS)
   /* Set GS register for optimized TLS */
   sctk_tls_module_set_gs_register();
 #endif
-  
+
   sctk_nodebug ("new argc %d", argc);
 
   arg.argc = argc;

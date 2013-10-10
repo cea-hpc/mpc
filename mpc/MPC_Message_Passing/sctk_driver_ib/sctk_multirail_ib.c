@@ -298,7 +298,7 @@ void sctk_network_init_multirail_ib(int rail_id, int max_rails){
   sctk_route_init_in_rail(rails[rails_nb],rail->topology);
   /* Initialize the IB rail ID */
 
-#if 1
+#if 0
   {
     if (config->driver.value.infiniband.network_type == 1)
       if ( (max_rails - 1) == 4) {
@@ -356,7 +356,7 @@ void sctk_network_init_multirail_ib(int rail_id, int max_rails){
 #if 1
   {
     /* Revert to CPU 0 */
-    sctk_bind_to_cpu(0);
+//    sctk_bind_to_cpu(0);
 #warning "Problem here !!!!"
     sctk_error("Reset binding on proc %d", sctk_process_rank);
 //    sctk_bind_reset();

@@ -44,6 +44,7 @@ extern "C"
   char* sctk_get_launcher_mode(void);
   int sctk_get_node_nb();
   int sctk_get_verbosity();
+  void (*sctk_get_thread_val(void)) ();
   void sctk_set_net_val (void (*val) (int *, char ***));
 
   extern char *sctk_mono_bin;

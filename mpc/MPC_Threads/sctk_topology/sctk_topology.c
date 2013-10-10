@@ -112,7 +112,6 @@ sctk_update_topology (
 	  hwloc_bitmap_copy(cpuset, pin_processor_bitmap);
   }
   err = hwloc_topology_restrict(topology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
-  fprintf(stderr, "Topology updated!!! (%d %d) \n", processor_number, index_first_processor);
   assume(!err);
   hwloc_bitmap_free(cpuset);
 }
@@ -343,7 +342,6 @@ static __thread int sctk_get_cpu_val = -1;
 static inline  int
 sctk_get_cpu_intern ()
 {
-  return 0;
   hwloc_cpuset_t set = hwloc_bitmap_alloc();
 
   int ret = hwloc_get_last_cpu_location(topology, set, HWLOC_CPUBIND_THREAD);
@@ -362,7 +360,6 @@ sctk_get_cpu_intern ()
   int cpu = obj_cpu->logical_index;
 #endif
   int cpu = hwloc_bitmap_first(set);
-  fprintf(stderr,"CPU: %d\n", cpu);
 
   hwloc_bitmap_free(set);
   return cpu;
@@ -515,7 +512,6 @@ TODO("Handle specific mapping from the user");
     }
 //    assume(sctk_get_cpu_intern() == i);
     sctk_get_cpu_val = i;
-    fprintf(stderr, "Thread bound on cpu %d\n", i);
   }
   sctk_spinlock_unlock(&topology_lock);
   return ret;
@@ -616,6 +612,7 @@ sctk_get_node_from_cpu (const int vp)
 {
   if(sctk_is_numa_node ()){
     const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
+    assume(pu);
     const hwloc_obj_t node = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, pu);
     return node->logical_index;
   } else {
@@ -708,6 +705,7 @@ int sctk_topology_is_ib_device_close_from_cpu (struct ibv_device * dev, int logi
     int res;
 
     hwloc_obj_t obj_cpu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, logical_core_id);
+    assume(obj_cpu);
 
 #if 0
     char *cpuset_string = NULL;

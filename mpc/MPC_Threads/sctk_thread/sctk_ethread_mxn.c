@@ -174,7 +174,7 @@ sctk_ethread_mxn_sched_migrate ()
   self->status = ethread_dump;
   self->dump_for_migration = 1;
   sctk_nodebug("Start migration sctk_ethread_mxn_sched_migrate");
-  res = 
+  res =
     __sctk_ethread_sched_yield_vp ((sctk_ethread_virtual_processor_t *)
 				   self->vp, self);
   sctk_nodebug("Start migration sctk_ethread_mxn_sched_migrate DONE");
@@ -657,7 +657,7 @@ static int
 sctk_ethread_mxn_thread_attr_setbinding (sctk_thread_attr_t * __attr, int __binding)
 {
   sctk_ethread_attr_t * attr;
-  
+
   attr = (sctk_ethread_attr_t *)__attr;
   if(attr == NULL){
     return SCTK_EINVAL;
@@ -666,7 +666,7 @@ sctk_ethread_mxn_thread_attr_setbinding (sctk_thread_attr_t * __attr, int __bind
       return SCTK_EINVAL;
     }
 
-  
+
   attr->ptr->binding = __binding;
   return 0;
 }
@@ -675,7 +675,7 @@ static int
 sctk_ethread_mxn_thread_attr_getbinding (sctk_thread_attr_t * __attr, int *__binding)
 {
   sctk_ethread_attr_t * attr;
-  
+
   attr = (sctk_ethread_attr_t *)__attr;
   if(attr == NULL){
     return SCTK_EINVAL;

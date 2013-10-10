@@ -45,44 +45,44 @@ extern "C"
 
   static inline int sctk_get_local_task_number (void)
   {
-    return sctk_total_number_of_tasks;
+    return sctk_thread_get_current_local_tasks_nb();
   }
 
   static inline int sctk_get_processor_rank (void)
   {
     return (int) (sctk_thread_data_get ()->virtual_processor);
   }
-  
+
   static inline int sctk_get_processor_number (void)
   {
     return sctk_get_cpu_number ();
   }
-  
+
   static inline int sctk_get_process_rank (void)
   {
     return sctk_process_rank;
   }
-  
+
   static inline int sctk_get_process_number (void)
   {
     return sctk_process_number;
   }
-  
+
   static inline int sctk_get_node_rank (void)
   {
     return sctk_node_rank;
   }
-  
+
   static inline int sctk_get_node_number (void)
   {
     return sctk_node_number;
   }
-  
+
   static inline int sctk_get_local_process_rank (void)
   {
     return sctk_local_process_rank;
   }
-  
+
   static inline int sctk_get_local_process_number (void)
   {
     return sctk_local_process_number;

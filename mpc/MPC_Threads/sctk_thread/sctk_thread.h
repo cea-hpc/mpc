@@ -121,6 +121,8 @@ extern "C"
     sctk_thread_t tid;
     volatile sctk_thread_status_t status;
     struct sctk_task_specific_s *father_data;
+    /* Where the thread must be bound */
+    unsigned int bind_to;
   } sctk_thread_data_t;
 #define SCTK_THREAD_DATA_INIT { NULL, NULL, NULL, -1, -1, -1 , -1,\
       NULL,NULL,-1,(void*)NULL,sctk_thread_undef_status,NULL}
@@ -129,9 +131,8 @@ extern "C"
   void sctk_thread_data_set (sctk_thread_data_t * task_id);
   sctk_thread_data_t *sctk_thread_data_get (void);
 
-  extern sctk_thread_mutex_t sctk_total_number_of_tasks_lock;
-  extern volatile int sctk_total_number_of_tasks;
   extern volatile int sctk_thread_running;
+  int sctk_thread_get_current_local_tasks_nb();
   void sctk_start_func (void *(*run) (void *), void *arg);
   int sctk_thread_get_vp (void);
   int sctk_get_init_vp (int i);
