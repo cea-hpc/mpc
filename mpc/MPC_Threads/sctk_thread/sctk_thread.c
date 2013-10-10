@@ -855,6 +855,12 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   return res;
 }
 
+
+/*
+ * Sylvain: the following code was use for creating Intel OpenMP threads with MPC.
+ * The TLS variables are automatically recopied into the OpenMP threads
+ * */
+#if 0
 #include <dlfcn.h>
 #define LIB "/lib64/libpthread.so.0"
 
@@ -883,18 +889,18 @@ int sctk_real_pthread_create (pthread_t  *thread,
   real_pthread_create(thread, attr, start_routine, arg);
 }
 
-__thread pthread_t *sylvar_thread = NULL;
-int sylvar_pthread_create(pthread_t  *thread,
+__thread pthread_t *sctk_pthread_bypass_thread = NULL;
+int sctk_pthread_bypass_create(pthread_t  *thread,
     __const pthread_attr_t *attr,
     void * (*start_routine)(void *), void * arg) {
   int ret;
   int recursive = 0;
 
-  if (sylvar_thread == thread) {
+  if (sctk_pthread_bypass_thread == thread) {
     recursive = 1;
   }
 
-  sylvar_thread = thread;
+  sctk_pthread_bypass_thread = thread;
 
   /* Check if we are trying to create a thread previously passed here */
 
@@ -908,9 +914,10 @@ int sylvar_pthread_create(pthread_t  *thread,
 //	  sctk_thread_attr_setscope (attr, SCTK_THREAD_SCOPE_SYSTEM);
   	ret=sctk_user_thread_create (thread, attr, start_routine, arg);
   }
-  sylvar_thread = NULL;
+  sctk_pthread_bypass_thread = NULL;
   return ret;
 }
+#endif
 
 int
 sctk_user_thread_create (sctk_thread_t * restrict __threadp,
