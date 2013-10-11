@@ -34,4 +34,7 @@ volatile tdb_thread_debug_t *rtdb_thread_list = NULL ;
 void rtdb_bp_creation (void) {}
 void rtdb_bp_death (void) {}
 
+#else
+void rtdb_bp_creation (void) {}
+void rtdb_bp_death (void) {}
 #endif
