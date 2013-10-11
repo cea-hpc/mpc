@@ -202,6 +202,8 @@ int sctk_send_message_from_network_reorder (sctk_thread_ptp_message_t * msg){
 
     if(number == msg->sctk_msg_get_message_number){
       sctk_nodebug("Direct Send %d from %p",msg->sctk_msg_get_message_number, tmp);
+
+      SCTK_COUNTER_INC(count, 1);
       sctk_send_message_try_check(msg,1);
 
       OPA_fetch_and_incr_int(&(tmp->message_number_src));

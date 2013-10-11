@@ -285,6 +285,7 @@ static int __INTERNAL__PMPI_Isend_test_req (void *buf, int count,
 static int __INTERNAL__PMPI_Comm_get_name (MPI_Comm, char *, int *);
 static int __INTERNAL__PMPI_Comm_set_name (MPI_Comm, char *);
 static int __INTERNAL__PMPI_Init_thread (int *, char ***, int, int *);
+static int __INTERNAL__PMPI_Query_thread (int *);
 
 static inline int
 sctk_is_derived_type (MPI_Datatype data_in)
@@ -700,7 +701,6 @@ __sctk_new_mpc_request_internal (MPI_Request * req)
   requests->free_list = tmp->next;
   sctk_spinlock_unlock (&(requests->lock));
   *req = tmp->rank;
-  sctk_nodebug ("Create request %d", *req);
 
   memset (&(tmp->req), 0, sizeof (MPC_Request));
 
@@ -758,9 +758,7 @@ __sctk_convert_mpc_request_internal (MPI_Request * req)
 
 
   PMPC_Get_requests ((void *) &requests);
-
   assume (requests != NULL);
-
   sctk_spinlock_lock (&(requests->lock));
 	  sctk_nodebug ("Convert request %d", *req);
 	  assume (((int_req) >= 0) && ((int_req) < requests->max_size));
@@ -771,6 +769,7 @@ __sctk_convert_mpc_request_internal (MPI_Request * req)
   assume(tmp != NULL);
   return tmp;
 }
+
 static inline MPC_Request *
 __sctk_convert_mpc_request (MPI_Request * req)
 {
@@ -893,7 +892,7 @@ __INTERNAL__PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest,
 	    {
 	      return res;
 	    }
-		
+
 	  res = PMPC_Isend_pack (dest, tag, comm, &request);
 	  if (res != MPI_SUCCESS)
 	    {
@@ -1074,7 +1073,7 @@ __INTERNAL__PMPI_Ssend (void *buf, int count, MPI_Datatype datatype, int dest,
 		/* code to avoid derived datatype */
 		datatype = MPC_CHAR;
 	}
-	
+
       return PMPC_Ssend (buf, count, datatype, dest, tag, comm);
     }
 }
@@ -1273,13 +1272,13 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
   mpi_buffer_overhead_t *head_next;
   void *head_buf;
   mpi_buffer_overhead_t *found = NULL;
-  //~ get the pack size 
+  //~ get the pack size
   res = __INTERNAL__PMPI_Pack_size (count, datatype, comm, &size);
   if (res != MPI_SUCCESS)
   {
     return res;
   }
-  
+
   if (size % sizeof (mpi_buffer_overhead_t))
   {
     size +=
@@ -1334,7 +1333,7 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
       return res;
     }
     assume (position <= size);
-	
+
 	PMPC_Get_requests ((void *) &requests);
 	if((*request >= 0) && (*request < requests->max_size))
 	{
@@ -1345,7 +1344,7 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
 		{
 			sctk_nodebug("1 : Ibsend with head->request");
     		res = __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest, tag, comm, &(head->request), 0);
-		}	
+		}
 		else
 		{
 			sctk_nodebug("Ibsend with request");
@@ -1357,7 +1356,7 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
 		sctk_nodebug("2 : Ibsend with head->request");
     	res = __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest, tag, comm, &(head->request), 0);
 	}
-		
+
 
 
     if (res != MPI_SUCCESS)
@@ -1661,10 +1660,10 @@ __INTERNAL__PMPI_Irecv_test_req (void *buf, int count, MPI_Datatype datatype,
 	    mpc_pack_absolute_indexes_t *tmp;
 	    tmp = sctk_malloc (slots_count * 2 * sizeof (mpc_pack_absolute_indexes_t));
 	    __sctk_add_in_mpc_request (request, tmp);
-	    
+
 	    memcpy (tmp, begins, slots_count * sizeof (mpc_pack_absolute_indexes_t));
 	    memcpy (&(tmp[slots_count]), ends, slots_count * sizeof (mpc_pack_absolute_indexes_t));
-	    
+
 	    begins = tmp;
 	    ends = &(tmp[slots_count]);
 	  }
@@ -1770,11 +1769,11 @@ static int __INTERNAL__PMPI_Request_free (MPI_Request * request)
 static int __INTERNAL__PMPI_Waitany (int count, MPI_Request * array_of_requests, int *index, MPI_Status * status)
 {
 	int flag = 0;
+
 	while (!flag)
     {
 		__INTERNAL__PMPI_Testany (count, array_of_requests, index, &flag, status);
-		if (!flag)
-			sctk_thread_yield ();
+      if (!flag) sctk_thread_yield ();
     }
 	return MPI_SUCCESS;
 }
@@ -1792,7 +1791,7 @@ static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
 		{
 			continue;
 		}
-		
+
 		{
 			MPC_Request *req;
 			req = __sctk_convert_mpc_request (&(array_of_requests[i]));
@@ -1868,7 +1867,7 @@ static int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests,
 		}
 		flag = (done == count);
 		/* XXX: we should place it at another place */
-		if (!flag) 
+		if (!flag)
 			sctk_thread_yield ();
 	}
 	return MPI_SUCCESS;
@@ -2215,13 +2214,13 @@ ____INTERNAL__PMPI_Start (MPI_Request * request)
 
   req = __sctk_convert_mpc_request_internal (request);
   req->is_active = 1;
-  
+
   if(req->req.request_type == REQUEST_NULL)
   {
     *request = MPI_REQUEST_NULL;
     return MPI_SUCCESS;
   }
-  
+
   switch (req->persistant.op)
     {
     case Send_init:
@@ -2767,7 +2766,7 @@ static int __INTERNAL__PMPI_Type_indexed (int count, int blocklens[], int indice
 		PMPC_Derived_datatype (&data_out, begins_out, ends_out, count_out, 0, 0, 0, 0);
 		res = __INTERNAL__PMPI_Type_indexed (count, blocklens, indices, data_out, newtype);
 		__INTERNAL__PMPI_Type_free (&data_out);
-		
+
 		sctk_free (begins_out);
 		sctk_free (ends_out);
 		sctk_nodebug("Old datatype %d, new datatype %d", old_type, *newtype);
@@ -2902,20 +2901,20 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 
 	unsigned long my_count_out = 0;
 	// find malloc size
-	for (i = 0; i < count; i++) 
+	for (i = 0; i < count; i++)
 	{
-		if ((old_types[i] != MPI_UB) && (old_types[i] != MPI_LB)) 
+		if ((old_types[i] != MPI_UB) && (old_types[i] != MPI_LB))
 		{
 			int res, is_lb, is_ub;
 			mpc_pack_absolute_indexes_t *begins_in, *ends_in;
 			mpc_pack_absolute_indexes_t lb, ub;
 			unsigned long count_in;
 
-			if (sctk_is_derived_type(old_types[i])) 
+			if (sctk_is_derived_type(old_types[i]))
 			{
 				PMPC_Is_derived_datatype(old_types[i], &res, &begins_in, &ends_in, &count_in, &lb, &is_lb, &ub, &is_ub);
-			} 
-			else 
+			}
+			else
 			{
 				count_in = 1;
 			}
@@ -2927,9 +2926,9 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 	begins_out = sctk_malloc(my_count_out * sizeof(mpc_pack_absolute_indexes_t));
 	ends_out = sctk_malloc(my_count_out * sizeof(mpc_pack_absolute_indexes_t));
 
-	for (i = 0; i < count; i++) 
+	for (i = 0; i < count; i++)
 	{
-		if ((old_types[i] != MPI_UB) && (old_types[i] != MPI_LB)) 
+		if ((old_types[i] != MPI_UB) && (old_types[i] != MPI_LB))
 		{
 			int res, j, is_lb, is_ub;
 			size_t tmp;
@@ -2939,7 +2938,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 			unsigned long local_count_out = 0;
 			unsigned long prev_count_out = 0;
 
-			if (sctk_is_derived_type(old_types[i])) 
+			if (sctk_is_derived_type(old_types[i]))
 			{
 				PMPC_Is_derived_datatype(old_types[i], &res, &begins_in, &ends_in, &count_in, &lb, &is_lb, &ub, &is_ub);
 				__INTERNAL__PMPI_Type_extent(old_types[i], (MPI_Aint *) &extent);
@@ -2947,7 +2946,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 				stride_t = (unsigned long) indices[i];
 				for (j = 0; j < blocklens[i]; j++)
 				{
-					for (k = 0; k < count_in; k++) 
+					for (k = 0; k < count_in; k++)
 					{
 						begins_out[glob_count_out] = begins_in[k] + stride_t + (extent * j);
 						ends_out[glob_count_out] = ends_in[k] + stride_t + (extent * j);
@@ -2958,7 +2957,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 					}
 				}
 				sctk_nodebug("derived type %d new_lb %d new_ub %d before", i, new_lb, new_ub);
-				if (is_ub) 
+				if (is_ub)
 				{
 					mpc_pack_absolute_indexes_t new_b;
 					new_b = ub + indices[i] + extent * (blocklens[i] - 1);
@@ -2969,20 +2968,20 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 					}
 					new_is_ub = 1;
 				}
-				if (is_lb) 
+				if (is_lb)
 				{
 					mpc_pack_absolute_indexes_t new_b;
 					new_b = lb + indices[i];
 					sctk_nodebug("cur lb %d", new_b);
-					if ((long int) new_b < (long int) new_lb || new_is_lb == 0) 
+					if ((long int) new_b < (long int) new_lb || new_is_lb == 0)
 					{
 						new_lb = new_b;
 					}
 					new_is_lb = 1;
 				}
 				sctk_nodebug("derived type %d new_lb %d new_ub %d after ", i, new_lb, new_ub);
-			} 
-			else 
+			}
+			else
 			{
 				begins_in = &begins_in_static;
 				ends_in = &ends_in_static;
@@ -2995,9 +2994,9 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 				__INTERNAL__PMPI_Type_extent(old_types[i], (MPI_Aint *) &extent);
 
 				stride_t = (unsigned long) indices[i];
-				for (j = 0; j < blocklens[i]; j++) 
+				for (j = 0; j < blocklens[i]; j++)
 				{
-					for (k = 0; k < count_in; k++) 
+					for (k = 0; k < count_in; k++)
 					{
 						begins_out[glob_count_out] = begins_in[k] + stride_t + (extent * j);
 						ends_out[glob_count_out] = ends_in[k] + stride_t + (extent * j);
@@ -3015,15 +3014,15 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 			prev_count_out = count_out;
 			local_count_out = count_in * blocklens[i];
 			count_out += local_count_out;
-		} 
-		else 
+		}
+		else
 		{
-			if (old_types[i] == MPI_UB) 
+			if (old_types[i] == MPI_UB)
 			{
 				new_is_ub = 1;
 				new_ub = indices[i];
-			} 
-			else 
+			}
+			else
 			{
 				new_is_lb = 1;
 				new_lb = indices[i];
@@ -3036,7 +3035,7 @@ static int __INTERNAL__PMPI_Type_struct(int count, int blocklens[], MPI_Aint ind
 
 	res = PMPC_Derived_datatype(newtype, begins_out, ends_out, glob_count_out, new_lb, new_is_lb, new_ub, new_is_ub);
 	assert(res == MPI_SUCCESS);
-	
+
 	/*   sctk_nodebug("new_type %d",* newtype); */
 	/*   sctk_nodebug("final new_lb %d,%d new_ub %d %d",new_lb,new_is_lb,new_ub,new_is_ub); */
 	/*   { */
@@ -3191,18 +3190,18 @@ static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype data
 	int res = MPI_SUCCESS;
 	unsigned long size;
 	int data_size;
-	
+
 	if (NULL == status || MPI_STATUSES_IGNORE == status ||  MPI_STATUS_IGNORE == status || NULL == elements) {
 		MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_ARG, "Invalid argument");
 	} else if (MPI_DATATYPE_NULL == datatype) {
 		MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_TYPE, "Invalid type");
 	}
-	
+
 	res = __INTERNAL__PMPI_Type_size (datatype, &data_size);
 	if (res != MPI_SUCCESS) {
       return res;
     }
-	
+
 	if (data_size != 0)
 	{
 		if (datatype - sctk_user_data_types < sctk_user_data_types_max)
@@ -3213,7 +3212,7 @@ static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype data
 			int data_in_size;
 			size_t count;
 			task_specific = __MPC_get_task_specific ();
-			
+
 			sctk_spinlock_lock (&(task_specific->other_user_types.lock));
 				other_user_types = task_specific->other_user_types.other_user_types;
 				sctk_assert (other_user_types != NULL);
@@ -3224,7 +3223,7 @@ static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype data
 				  return res;
 				}
 			sctk_spinlock_unlock (&(task_specific->other_user_types.lock));
-			
+
 			size = status->count;
 			sctk_nodebug("Other type : count = %d, datatype %d, data_in_size %d,  status_size = %d", count, datatype, data_in_size, size);
 			*elements = size/data_in_size;
@@ -3236,14 +3235,14 @@ static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype data
 			sctk_task_specific_t *task_specific;
 			task_specific = __MPC_get_task_specific ();
 			size = status->count;
-			
+
 			sctk_spinlock_lock (&(task_specific->user_types_struct.lock));
 				sctk_assert (datatype - sctk_user_data_types - sctk_user_data_types_max < sctk_user_data_types_max);
 				user_types = task_specific->user_types_struct.user_types_struct;
 				sctk_assert (user_types[datatype - sctk_user_data_types - sctk_user_data_types_max] != NULL);
 				count = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->nb_elements;
-				
-				sctk_nodebug("Derived type : count = %d, nb_elements %d, ref_count %d, size %d, datatype %d, datasize %d, status_size = %d", count, 
+
+				sctk_nodebug("Derived type : count = %d, nb_elements %d, ref_count %d, size %d, datatype %d, datasize %d, status_size = %d", count,
 				user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->nb_elements,
 				user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->ref_count,
 				user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->size, datatype, data_size, size);
@@ -3874,8 +3873,8 @@ TODO("Should be optimized like PMPC_Alltoallv")
     }
 }
 
-static int 
-__INTERNAL__PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sendtypes, 
+static int
+__INTERNAL__PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sendtypes,
 				   void *recvbuf, int *recvcnts, int *rdispls, MPI_Datatype *recvtypes, MPI_Comm comm)
 {
 	return PMPC_Alltoallw (sendbuf, sendcnts, sdispls, sendtypes, recvbuf,
@@ -3988,7 +3987,7 @@ __INTERNAL__PMPI_Reduce_derived_no_commute (void *sendbuf, void *recvbuf, int co
 	return res;
       }
   }
-	    
+
   if (mpc_op.u_func != NULL)
     {
       mpc_op.u_func (sendbuf, recvbuf, &count, &datatype);
@@ -3997,13 +3996,13 @@ __INTERNAL__PMPI_Reduce_derived_no_commute (void *sendbuf, void *recvbuf, int co
     {
       not_reachable ();
     }
-	    
+
   if(rank == size -1){
     res = __INTERNAL__PMPI_Send (recvbuf, count, datatype, root, -3, comm);
     if (res != MPI_SUCCESS)
       {
 	return res;
-      }	
+      }
   } else {
     if(rank != 0){
       res = __INTERNAL__PMPI_Send (recvbuf, count, datatype, (rank + 1) % size, -3, comm);
@@ -4038,7 +4037,7 @@ __INTERNAL__PMPI_Reduce_derived_commute (void *sendbuf, void *recvbuf, int count
 	return res;
       }
   }
-	    
+
   if (mpc_op.u_func != NULL)
     {
       mpc_op.u_func (sendbuf, recvbuf, &count, &datatype);
@@ -4047,20 +4046,20 @@ __INTERNAL__PMPI_Reduce_derived_commute (void *sendbuf, void *recvbuf, int count
     {
       not_reachable ();
     }
-	    
+
   if(rank == size -1){
     res = __INTERNAL__PMPI_Send (recvbuf, count, datatype, root, -3, comm);
     if (res != MPI_SUCCESS)
       {
 	return res;
-      }	
+	  }
   } else {
     if(rank != 0){
       res = __INTERNAL__PMPI_Send (recvbuf, count, datatype, (rank + 1) % size, -3, comm);
       if (res != MPI_SUCCESS)
 	{
 	  return res;
-	}
+	  }
     }
   }
   return res;
@@ -4091,8 +4090,8 @@ __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
       if(size == 1){
 	MPI_Request request_send;
 	MPI_Request request_recv;
-	
-	res = 
+
+	res =
 	  __INTERNAL__PMPI_Isend (sendbuf, count, datatype, 0, -3, comm,
 				  &request_send);
 	if (res != MPI_SUCCESS)
@@ -4106,7 +4105,7 @@ __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
 	  {
 	    return res;
 	  }
-	
+
 	res = __INTERNAL__PMPI_Wait (&(request_recv), MPI_STATUS_IGNORE);
 	if (res != MPI_SUCCESS)
 	  {
@@ -4237,7 +4236,7 @@ __INTERNAL__PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
     {
 
       return PMPC_Allreduce (sendbuf, recvbuf, count, datatype, mpc_op, comm);
-    } 
+    }
 }
 static int
 __INTERNAL__PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
@@ -4523,7 +4522,7 @@ __sctk_delete_mpc_group (MPI_Group * group)
   sctk_spinlock_unlock (&(groups->lock));
 }
 
-static inline int 
+static inline int
 __sctk_is_part_of_group(MPI_Group group)
 {
 	int rank, i;
@@ -4573,7 +4572,7 @@ __INTERNAL__PMPI_Group_translate_ranks (MPI_Group mpi_group1, int n, int *ranks1
 	int i,j;
 	MPC_Group group1;
 	MPC_Group group2;
-	
+
 	if ( (MPI_GROUP_NULL == mpi_group1) || (MPI_GROUP_NULL == mpi_group2) )
 	{
 		sctk_nodebug("Wrong group 1 : group1 %d, group2 %d", mpi_group1, mpi_group2);
@@ -4593,27 +4592,27 @@ __INTERNAL__PMPI_Group_translate_ranks (MPI_Group mpi_group1, int n, int *ranks1
 	if(n == 0)
 		return MPI_SUCCESS;
 
-	if ( MPI_GROUP_EMPTY == mpi_group1 || MPI_GROUP_EMPTY == mpi_group2 ) 
+	if ( MPI_GROUP_EMPTY == mpi_group1 || MPI_GROUP_EMPTY == mpi_group2 )
 	{
 		for (i = 0; i < n ; i++)
 			ranks2[i] = MPI_UNDEFINED;
 
 		return MPI_SUCCESS;
     }
-    
+
 	group1 = __sctk_convert_mpc_group (mpi_group1);
 	group2 = __sctk_convert_mpc_group (mpi_group2);
-	
+
 	sctk_nodebug("n = %d", n);
 	for(i = 0 ; i < n ; i++)
 		sctk_nodebug("ranks1[%d] = %d", i, ranks1[i]);
-	
+
 	for(i = 0 ; i < group1->task_nb ; i++)
 		sctk_nodebug("group1 : task_list_in_global_ranks[%d] = %d", i, group1->task_list_in_global_ranks[i]);
 
 	for(i = 0 ; i < group2->task_nb ; i++)
 		sctk_nodebug("group2 : task_list_in_global_ranks[%d] = %d", i, group2->task_list_in_global_ranks[i]);
-	
+
 	for (j = 0; j < n; j++)
     {
 		int i;
@@ -4643,7 +4642,7 @@ __INTERNAL__PMPI_Group_compare (MPI_Group mpi_group1, MPI_Group mpi_group2,
 	MPC_Group group2;
 	group1 = __sctk_convert_mpc_group (mpi_group1);
 	group2 = __sctk_convert_mpc_group (mpi_group2);
-	
+
 	*result = MPI_UNEQUAL;
 
 	if (group1->task_nb != group2->task_nb)
@@ -4715,13 +4714,13 @@ __INTERNAL__PMPI_Group_union (MPI_Group mpi_group1, MPI_Group mpi_group2,
   MPC_Group newgroup;
   group1 = __sctk_convert_mpc_group (mpi_group1);
   group2 = __sctk_convert_mpc_group (mpi_group2);
-  
+
   for(i = 0 ; i < group1->task_nb ; i++)
 	sctk_nodebug("group1 : task_list_in_global_ranks[%d] = %d", i, group1->task_list_in_global_ranks[i]);
 
   for(i = 0 ; i < group2->task_nb ; i++)
 	sctk_nodebug("group2 : task_list_in_global_ranks[%d] = %d", i, group2->task_list_in_global_ranks[i]);
-	
+
   size = group1->task_nb + group2->task_nb;
   newgroup = __sctk_new_mpc_group (mpi_newgroup);
 
@@ -4757,11 +4756,11 @@ __INTERNAL__PMPI_Group_union (MPI_Group mpi_group1, MPI_Group mpi_group2,
 			}
 		}
     }
-	
+
   for(i = 0 ; i < size ; i++)
 	sctk_nodebug("task_list_in_global_ranks[%d] = %d", i, (newgroup)->task_list_in_global_ranks[i]);
   (newgroup)->task_nb = size;
-  
+
   if(size == 0)
 	*mpi_newgroup = MPI_GROUP_EMPTY;
 
@@ -4817,7 +4816,7 @@ __INTERNAL__PMPI_Group_difference (MPI_Group mpi_group1, MPI_Group mpi_group2,
   MPC_Group group1;
   MPC_Group group2;
   MPI_internal_group_t *newgroup;
-  
+
   group1 = __sctk_convert_mpc_group (mpi_group1);
   group2 = __sctk_convert_mpc_group (mpi_group2);
   newgroup = __sctk_new_mpc_group_internal (mpi_newgroup);
@@ -4827,7 +4826,7 @@ __INTERNAL__PMPI_Group_difference (MPI_Group mpi_group1, MPI_Group mpi_group2,
   if(newgroup->group->task_nb == 0)
 	*mpi_newgroup = MPI_GROUP_EMPTY;
   return result;
-  
+
 }
 
 static int
@@ -4837,19 +4836,19 @@ __INTERNAL__PMPI_Group_incl (MPI_Group mpi_group, int n, int *ranks,
   int res;
   MPC_Group group;
   MPI_internal_group_t *newgroup;
-  
+
   if(n < 0)
 	return MPI_ERR_ARG;
-	
+
   if(n == 0)
 	{
 		(*mpi_newgroup) = MPI_GROUP_EMPTY;
 		return MPI_SUCCESS;
 	}
-	
+
   group = __sctk_convert_mpc_group (mpi_group);
   newgroup = __sctk_new_mpc_group_internal (mpi_newgroup);
-  
+
   res = PMPC_Group_incl (group, n, ranks, &(newgroup->group));
 
   return res;
@@ -4866,29 +4865,29 @@ __INTERNAL__PMPI_Group_excl (MPI_Group mpi_group, int n, int *ranks,
 	int size;
 	MPC_Group group;
 	MPC_Group newgroup;
-	
+
 	if ( (MPI_GROUP_NULL == mpi_group) || (NULL == mpi_newgroup) )
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"");
 	else if (NULL == ranks && n > 0)
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"");
-		
+
 	group = __sctk_convert_mpc_group (mpi_group);
 	newgroup = __sctk_new_mpc_group (mpi_newgroup);
 	size = group->task_nb - n;
-	
+
 	if(size == 0)
 	{
 		(*mpi_newgroup) = MPI_GROUP_EMPTY;
 		return MPI_SUCCESS;
 	}
-	
+
 	newgroup = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
 	(newgroup)->task_list_in_global_ranks = (int *) sctk_malloc (size * sizeof (int));
 	(newgroup)->task_nb = size;
 	__sctk_convert_mpc_group_internal (*mpi_newgroup)->group = newgroup;
 	for(i=0; i<size; i++)
 		(newgroup)->task_list_in_global_ranks[i] = -1;
-	
+
 	k=0;
 	for(i=0 ; i<group->task_nb; i++)
 	{
@@ -4909,7 +4908,7 @@ __INTERNAL__PMPI_Group_excl (MPI_Group mpi_group, int n, int *ranks,
 			k++;
 		}
 	}
-	
+
 	return MPI_SUCCESS;
 }
 
@@ -4921,7 +4920,7 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 	int err, i,index;
     int group_size;
     int * elements_int_list;
-    
+
     int j,k;
     int *ranks_included=NULL;
     int *ranks_excluded=NULL;
@@ -4929,41 +4928,41 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
     int count,result;
 	sctk_nodebug("MPI_Group_range_excl");
 	MPC_Group group;
-	
+
 /* Error checking */
 	group = __sctk_convert_mpc_group (mpi_group);
-	
+
 	if ( (MPI_GROUP_NULL == mpi_group) || (NULL == mpi_newgroup) )
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"group must not be MPI_GROUP_NULL");
 
 	__INTERNAL__PMPI_Group_size (mpi_group, &group_size);
 	elements_int_list = (int *) malloc(sizeof(int) * (group_size+1));
-	
+
 	if (NULL == elements_int_list)
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_INTERN,"");
-		
+
 	for (i = 0; i <= group_size; i++)
 		elements_int_list[i] = -1;
-	
+
 	for ( i=0; i < n; i++)
 	{
 		first_rank = ranges[i][0];
 		last_rank  = ranges[i][1];
 		stride     = ranges[i][2];
-		
+
 		if ((first_rank < 0) || (first_rank > group_size) || (last_rank < 0) || (last_rank > group_size) || (stride == 0))
 		{
 			MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
 		}
 
-		if ((first_rank < last_rank)) 
+		if ((first_rank < last_rank))
 		{
 			if (stride < 0)
 			{
 				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
 			}
 
-			for (index = first_rank; index <= last_rank; index += stride) 
+			for (index = first_rank; index <= last_rank; index += stride)
 			{
 				if (elements_int_list[index] != -1)
 				{
@@ -4971,15 +4970,15 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 				}
 				elements_int_list[index] = i;
 			}
-		} 
-		else if (first_rank > last_rank) 
+		}
+		else if (first_rank > last_rank)
 		{
 			if (stride > 0)
 			{
 				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
 			}
 
-			for (index = first_rank; index >= last_rank; index += stride) 
+			for (index = first_rank; index >= last_rank; index += stride)
 			{
 				if (elements_int_list[index] != -1)
 				{
@@ -4987,8 +4986,8 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 				}
 				elements_int_list[index] = i;
 			}
-		} 
-		else 
+		}
+		else
 		{
 			index = first_rank;
 			if (elements_int_list[index] != -1)
@@ -4999,80 +4998,80 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 		}
 	}
 	free ( elements_int_list);
-	
+
 /* computing the ranks to be included */
     count = 0;
     /* determine the number of excluded processes for the range-excl-method */
-    for(j=0 ; j<n ; j++) 
-    { 
+    for(j=0 ; j<n ; j++)
+    {
         first_rank = ranges[j][0];
 		last_rank = ranges[j][1];
 		stride = ranges[j][2];
-	
-		if (first_rank < last_rank) 
+
+		if (first_rank < last_rank)
 		{
 			/* positive stride */
             index = first_rank;
-			while (index <= last_rank) 
-			{
-				count ++;
-				index += stride;
-			}	    
-		} 
-		else if (first_rank > last_rank) 
-		{
-			/* negative stride */
-			index = first_rank;
-			while (index >= last_rank) 
+			while (index <= last_rank)
 			{
 				count ++;
 				index += stride;
 			}
-		} 
-		else 
+		}
+		else if (first_rank > last_rank)
+		{
+			/* negative stride */
+			index = first_rank;
+			while (index >= last_rank)
+			{
+				count ++;
+				index += stride;
+			}
+		}
+		else
 		{
 			/* first_rank == last_rank */
             index = first_rank;
 			count ++;
 		}
     }
-    if (0 != count) 
+    if (0 != count)
     {
         ranks_excluded = (int *)malloc( (count)*(sizeof(int)));
     }
-    
+
     /* determine the list of excluded processes for the range-excl method */
     k = 0;
     i = 0;
-    for(j=0 ; j<n ; j++) 
+    for(j=0 ; j<n ; j++)
     {
 		first_rank = ranges[j][0];
 		last_rank = ranges[j][1];
 		stride = ranges[j][2];
 
-		if (first_rank < last_rank) 
+		if (first_rank < last_rank)
 		{
 			/* positive stride */
 			index = first_rank;
-			while (index <= last_rank) 
-			{
-				ranks_excluded[i] = index;
-				i++;
-				index += stride;
-			}    
-		} 
-		else if (first_rank > last_rank) 
-		{
-			/* negative stride */
-			index = first_rank;
-			while (index >= last_rank) 
+			while (index <= last_rank)
 			{
 				ranks_excluded[i] = index;
 				i++;
 				index += stride;
 			}
-		} 
-		else 
+		}
+		else if (first_rank > last_rank)
+		{
+			/* negative stride */
+			index = first_rank;
+			while (index >= last_rank)
+			{
+				ranks_excluded[i] = index;
+				i++;
+				index += stride;
+			}
+		}
+		else
 		{
 			/* first_rank == last_rank */
 			index = first_rank;
@@ -5080,18 +5079,18 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 			i++;
 		}
     }
-    
-    if (0 != (group->task_nb - count)) 
+
+    if (0 != (group->task_nb - count))
 	{
 		ranks_included = (int *)malloc( (group->task_nb - count)*(sizeof(int)));
 	}
-	for (j=0 ; j<group->task_nb ; j++) 
+	for (j=0 ; j<group->task_nb ; j++)
 	{
-		for(index=0 ; index<i ; index++) 
+		for(index=0 ; index<i ; index++)
 		{
 			if(ranks_excluded[index] == j) break;
 		}
-		if (index == i) 
+		if (index == i)
 		{
 			ranks_included[k] = j;
 			k++;
@@ -5104,7 +5103,7 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 	//~ {
 		//~ free(ranks_excluded);
 	//~ }
-	
+
 /* including the ranks in the new group */
     result = __INTERNAL__PMPI_Group_incl(mpi_group, k, ranks_included, mpi_newgroup);
 
@@ -5123,53 +5122,53 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 	int err, i,index;
     int group_size;
     int * elements_int_list;
-    
+
     int j,k;
     int *ranks_included=NULL;
     int first_rank,last_rank,stride;
     int count,result;
-	
+
 	MPC_Group group;
 	MPC_Group newgroup;
-	
+
 /* Error checking */
 	if(n == 0)
 	{
 		(*mpi_newgroup) = MPI_GROUP_EMPTY;
 		return MPI_SUCCESS;
 	}
-	
+
 	if ( (MPI_GROUP_NULL == mpi_group) || (NULL == mpi_newgroup) )
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"group must not be MPI_GROUP_NULL");
 
 	__INTERNAL__PMPI_Group_size (mpi_group, &group_size);
 	elements_int_list = (int *) malloc(sizeof(int) * (group_size+1));
-	
+
 	if (NULL == elements_int_list)
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_INTERN,"");
-		
+
 	for (i = 0; i < group_size; i++)
 		elements_int_list[i] = -1;
-	
+
 	for ( i=0; i < n; i++)
 	{
 		first_rank = ranges[i][0];
 		last_rank  = ranges[i][1];
 		stride     = ranges[i][2];
-		
+
 		if ((first_rank < 0) || (first_rank > group_size) || (last_rank < 0) || (last_rank > group_size) || (stride == 0))
 		{
 			MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
 		}
 
-		if ((first_rank < last_rank)) 
+		if ((first_rank < last_rank))
 		{
 			if (stride < 0)
 			{
 				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
 			}
 
-			for (index = first_rank; index <= last_rank; index += stride) 
+			for (index = first_rank; index <= last_rank; index += stride)
 			{
 				if (elements_int_list[index] != -1)
 				{
@@ -5177,15 +5176,15 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 				}
 				elements_int_list[index] = i;
 			}
-		} 
-		else if (first_rank > last_rank) 
+		}
+		else if (first_rank > last_rank)
 		{
 			if (stride > 0)
 			{
 				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
 			}
 
-			for (index = first_rank; index >= last_rank; index += stride) 
+			for (index = first_rank; index >= last_rank; index += stride)
 			{
 				if (elements_int_list[index] != -1)
 				{
@@ -5193,8 +5192,8 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 				}
 				elements_int_list[index] = i;
 			}
-		} 
-		else 
+		}
+		else
 		{
 			index = first_rank;
 			if (elements_int_list[index] != -1)
@@ -5205,41 +5204,41 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 		}
 	}
 	free ( elements_int_list);
-	
+
 /* computing the ranks to be included */
     count = 0;
     /* determine the number of included processes for the range-incl-method */
     k = 0;
-    for(j=0 ; j<n ; j++) 
-    { 
-	
+    for(j=0 ; j<n ; j++)
+    {
+
         first_rank = ranges[j][0];
 		last_rank = ranges[j][1];
 		stride = ranges[j][2];
-	
-		if (first_rank < last_rank) 
+
+		if (first_rank < last_rank)
 		{
 			/* positive stride */
             index = first_rank;
-			while (index <= last_rank) 
-			{
-				count ++;
-				k++;
-				index += stride;
-			}	    
-		} 
-		else if (first_rank > last_rank) 
-		{
-			/* negative stride */
-			index = first_rank;
-			while (index >= last_rank) 
+			while (index <= last_rank)
 			{
 				count ++;
 				k++;
 				index += stride;
 			}
-		} 
-		else 
+		}
+		else if (first_rank > last_rank)
+		{
+			/* negative stride */
+			index = first_rank;
+			while (index >= last_rank)
+			{
+				count ++;
+				k++;
+				index += stride;
+			}
+		}
+		else
 		{
 			/* first_rank == last_rank */
             index = first_rank;
@@ -5247,42 +5246,42 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 			k++;
 		}
     }
-    if (0 != count) 
+    if (0 != count)
     {
         ranks_included = (int *)malloc( (count)*(sizeof(int)));
     }
-    
+
     /* determine the list of included processes for the range-incl method */
     k = 0;
-    for(j=0 ; j<n ; j++) 
+    for(j=0 ; j<n ; j++)
     {
 		first_rank = ranges[j][0];
 		last_rank = ranges[j][1];
 		stride = ranges[j][2];
 
-		if (first_rank < last_rank) 
+		if (first_rank < last_rank)
 		{
 			/* positive stride */
 			index = first_rank;
-			while (index <= last_rank) 
-			{
-				ranks_included[k] = index;
-				k++;
-				index += stride;
-			}    
-		} 
-		else if (first_rank > last_rank) 
-		{
-			/* negative stride */
-			index = first_rank;
-			while (index >= last_rank) 
+			while (index <= last_rank)
 			{
 				ranks_included[k] = index;
 				k++;
 				index += stride;
 			}
-		} 
-		else 
+		}
+		else if (first_rank > last_rank)
+		{
+			/* negative stride */
+			index = first_rank;
+			while (index >= last_rank)
+			{
+				ranks_included[k] = index;
+				k++;
+				index += stride;
+			}
+		}
+		else
 		{
 			/* first_rank == last_rank */
 			index = first_rank;
@@ -5331,7 +5330,7 @@ __INTERNAL__PMPI_Comm_compare (MPI_Comm comm1, MPI_Comm comm2, int *result)
 {
 	int result_group;
 	*result = MPI_UNEQUAL;
-			
+
 	if(sctk_is_inter_comm (comm1) != sctk_is_inter_comm (comm2))
 	{
 		*result = MPI_UNEQUAL;
@@ -5339,7 +5338,7 @@ __INTERNAL__PMPI_Comm_compare (MPI_Comm comm1, MPI_Comm comm2, int *result)
 	}
 
 	if (comm1 == comm2)
-    {	
+    {
 		*result = MPI_IDENT;
 		return MPI_SUCCESS;
     }
@@ -5350,7 +5349,7 @@ __INTERNAL__PMPI_Comm_compare (MPI_Comm comm1, MPI_Comm comm2, int *result)
 			*result = MPI_UNEQUAL;
 			return MPI_SUCCESS;
 		}
-		
+
 		if(comm1 == MPI_COMM_SELF || comm2 == MPI_COMM_SELF)
 		{
 			if(sctk_get_nb_task_total(comm1) != sctk_get_nb_task_total(comm2))
@@ -5359,8 +5358,8 @@ __INTERNAL__PMPI_Comm_compare (MPI_Comm comm1, MPI_Comm comm2, int *result)
 				*result = MPI_CONGRUENT;
 			return MPI_SUCCESS;
 		}
-			
-		
+
+
 		MPI_Group comm_group1;
 		MPI_Group comm_group2;
 
@@ -5502,12 +5501,12 @@ __INTERNAL__PMPI_Intercomm_merge (MPI_Comm intercomm, int high,
 	MPI_Group remote_group;
 	MPI_Group new_group;
 	MPC_Status status;
-	
+
 	__INTERNAL__PMPI_Comm_rank (MPI_COMM_WORLD, &rank);
 	__INTERNAL__PMPI_Comm_rank (intercomm, &grank);
 	__INTERNAL__PMPI_Comm_group (intercomm, &local_group);
 	__INTERNAL__PMPI_Comm_remote_group (intercomm, &remote_group);
-	
+
 	remote_leader = sctk_get_remote_leader(intercomm);
 	local_leader = sctk_get_local_leader(intercomm);
 	peer_comm = sctk_get_peer_comm(intercomm);
@@ -5516,10 +5515,10 @@ __INTERNAL__PMPI_Intercomm_merge (MPI_Comm intercomm, int high,
 		sctk_nodebug("grank = %d, rank %d : local_leader %d send to remote_leader %d", grank, rank, local_leader, remote_leader);
 		__INTERNAL__PMPI_Sendrecv(&high, 1, MPC_INT, remote_leader, 629, &remote_high, 1, MPC_INT, remote_leader, 629, peer_comm, &status);
 	}
-	
+
 	sctk_nodebug("rank %d, grank %d : boroadcast comm %d", rank, grank, intercomm);
 	sctk_broadcast(&remote_high,sizeof(int),0,sctk_get_local_comm_id(intercomm));
-	//~ PMPI_Bcast(&remote_high, 1, MPC_INT, 0, sctk_get_local_comm_id(intercomm)); 
+	//~ PMPI_Bcast(&remote_high, 1, MPC_INT, 0, sctk_get_local_comm_id(intercomm));
 	sctk_nodebug("rank %d : merge intercomm %d, high = %d, remote_high = %d", rank, intercomm, high, remote_high);
 	/* TODO : Finir le merge avec le placement des groupes en fonction des paramètres "high" */
 	if(sctk_is_in_local_group(intercomm))
@@ -5568,7 +5567,7 @@ __INTERNAL__PMPI_Intercomm_merge (MPI_Comm intercomm, int high,
 			__INTERNAL__PMPI_Group_union (remote_group, local_group, &new_group);
 		}
 	}
-	
+
 	return __INTERNAL__PMPI_Comm_create_from_intercomm (intercomm, new_group, newintracomm);
 }
 
@@ -5682,16 +5681,16 @@ __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
 	mpc_mpi_data_t* tmp;
 	mpc_mpi_per_communicator_t* tmp_per_comm;
 	int i;
-	
+
 	tmp = mpc_mpc_get_per_task_data();
 	keyval -= MPI_MAX_KEY_DEFINED;
-    
+
 	if (keyval < 0)
     {
 		sctk_nodebug("wrong keyval");
 		MPI_ERROR_REPORT (comm, MPI_ERR_KEYVAL, "");
     }
-		
+
 	sctk_spinlock_lock(&(tmp->lock));
 	if (tmp->attrs_fn[keyval].used == 0)
     {
@@ -5717,12 +5716,12 @@ __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
 			return res;
 		}
     }
-    
+
 	if(tmp_per_comm->max_number <= keyval)
 	{
 		if(tmp_per_comm->key_vals == NULL)
 			tmp_per_comm->key_vals = sctk_malloc((keyval+1)*sizeof(MPI_Caching_key_value_t));
-		else	
+		else
 			tmp_per_comm->key_vals = sctk_realloc(tmp_per_comm->key_vals,(keyval+1)*sizeof(MPI_Caching_key_value_t));
 
 		for(i = tmp_per_comm->max_number; i <= keyval; i++)
@@ -5749,7 +5748,7 @@ __INTERNAL__PMPI_Attr_put (MPI_Comm comm, int keyval, void *attr_value)
     }
 
 	tmp_per_comm->key_vals[keyval].flag = 1;
-	
+
 	sctk_spinlock_unlock(&(tmp_per_comm->lock));
 	sctk_spinlock_unlock(&(tmp->lock));
 	return res;
@@ -5764,29 +5763,29 @@ __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value,
 	mpc_mpi_per_communicator_t* tmp_per_comm;
 	void **attr;
 	int i;
-	
+
 	*flag = 0;
 	attr = (void **) attr_value;
-	
+
 	if ((keyval >= 0) && (keyval < MPI_MAX_KEY_DEFINED))
     {
 		*flag = 1;
 		*attr = defines_attr_tab[keyval];
 		return MPI_SUCCESS;
     }
-    
+
 	keyval -= MPI_MAX_KEY_DEFINED;
-	
+
 	/* wrong keyval */
 	if (keyval < 0)
     {
 		MPI_ERROR_REPORT (comm, MPI_ERR_KEYVAL, "");
     }
-	
+
 	/* get TLS var for checking if keyval exist */
 	tmp = mpc_mpc_get_per_task_data();
 	sctk_spinlock_lock(&(tmp->lock));
-	
+
 	/* it doesn-t exist */
 	if (tmp->attrs_fn[keyval].used == 0)
     {
@@ -5798,7 +5797,7 @@ __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value,
 	/* get TLS var to check attributes for keyval */
 	tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
 	sctk_spinlock_lock(&(tmp_per_comm->lock));
-	
+
 	/* it doesn't have any */
 	if(tmp->number > tmp_per_comm->max_number)
 	{
@@ -5859,7 +5858,7 @@ __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
 						  tmp_per_comm->key_vals[keyval].
 						  attr,
 						  tmp->attrs_fn[keyval].
-						  extra_state);		
+						  extra_state);
 	    }
 	  else
 	    {
@@ -5877,7 +5876,7 @@ __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
 	    }
 	}
     }
-	
+
 	if(res == MPI_SUCCESS)
 	{
 		tmp_per_comm->key_vals[keyval].attr = NULL;
@@ -5911,7 +5910,7 @@ SCTK__MPI_Attr_clean_communicator (MPI_Comm comm)
 	  res = __INTERNAL__PMPI_Attr_delete (comm, i + MPI_MAX_KEY_DEFINED);
 	  sctk_spinlock_lock(&(tmp->lock));
 	  sctk_spinlock_lock(&(tmp_per_comm->lock));
-	  
+
 	  if (res != MPI_SUCCESS)
 	    {
 	      sctk_spinlock_unlock(&(tmp_per_comm->lock));
@@ -6302,7 +6301,7 @@ assignnodes(int ndim, int nfactor, int *pfacts, int *counts, int **pdims)
     int f;
     int *p;
     int *pmin;
-          
+
     if (0 >= ndim) {
        return MPI_ERR_DIMS;
     }
@@ -6317,7 +6316,7 @@ assignnodes(int ndim, int nfactor, int *pfacts, int *counts, int **pdims)
     for (i = 0, p = bins; i < ndim; ++i, ++p) {
         *p = 1;
      }
-    
+
     /* Loop assigning factors from the highest to the lowest */
     for (j = nfactor - 1; j >= 0; --j) {
        f = pfacts[j];
@@ -6332,7 +6331,7 @@ assignnodes(int ndim, int nfactor, int *pfacts, int *counts, int **pdims)
             *pmin *= f;
         }
      }
-    
+
      /* Sort dimensions in decreasing order (O(n^2) for now) */
      for (i = 0, pmin = bins; i < ndim - 1; ++i, ++pmin) {
          for (j = i + 1, p = pmin + 1; j < ndim; ++j, ++p) {
@@ -6364,7 +6363,7 @@ getfactors(int num, int nprime, int *primes, int **pcounts)
     int i;
     int *p;
     int *c;
-    
+
     if (0 >= nprime) {
         return MPI_ERR_INTERN;
     }
@@ -6461,14 +6460,14 @@ __INTERNAL__PMPI_Dims_create (int nnodes, int ndims, int *dims)
 
 	if (NULL == dims)
 		MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_ARG, "Invalid arg dims");
-	
-	if (1 > ndims) 
+
+	if (1 > ndims)
 		MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_DIMS, "Invalid dims");
 
     /* Get # of free-to-be-assigned processes and # of free dimensions */
     freeprocs = nnodes;
     freedims = 0;
-    for (i = 0, p = dims; i < ndims; ++i,++p) 
+    for (i = 0, p = dims; i < ndims; ++i,++p)
     {
         if (*p == 0)
             ++freedims;
@@ -6478,7 +6477,7 @@ __INTERNAL__PMPI_Dims_create (int nnodes, int ndims, int *dims)
             freeprocs /= *p;
     }
 
-    if (freedims == 0) 
+    if (freedims == 0)
     {
 		if (freeprocs == 1)
 			return MPI_SUCCESS;
@@ -6487,9 +6486,9 @@ __INTERNAL__PMPI_Dims_create (int nnodes, int ndims, int *dims)
 
     if (freeprocs < 1)
 		MPI_ERROR_REPORT(MPI_COMM_WORLD, MPI_ERR_DIMS, "Invalid dims");
-    else if (freeprocs == 1) 
+    else if (freeprocs == 1)
     {
-        for (i = 0; i < ndims; ++i, ++dims) 
+        for (i = 0; i < ndims; ++i, ++dims)
         {
             if (*dims == 0)
                *dims = 1;
@@ -6498,20 +6497,20 @@ __INTERNAL__PMPI_Dims_create (int nnodes, int ndims, int *dims)
     }
 
     /* Compute the relevant prime numbers for factoring */
-    if (MPI_SUCCESS != (err = getprimes(freeprocs, &nprimes, &primes))) 
+    if (MPI_SUCCESS != (err = getprimes(freeprocs, &nprimes, &primes)))
 		MPI_ERROR_REPORT(MPI_COMM_WORLD, err, "Error getprimes");
-    
+
     /* Factor the number of free processes */
-    if (MPI_SUCCESS != (err = getfactors(freeprocs, nprimes, primes, &factors))) 
+    if (MPI_SUCCESS != (err = getfactors(freeprocs, nprimes, primes, &factors)))
 		MPI_ERROR_REPORT(MPI_COMM_WORLD, err, "Error getfactors");
 
     /* Assign free processes to free dimensions */
-    if (MPI_SUCCESS != (err = assignnodes(freedims, nprimes, primes, factors, &procs))) 
+    if (MPI_SUCCESS != (err = assignnodes(freedims, nprimes, primes, factors, &procs)))
 		MPI_ERROR_REPORT(MPI_COMM_WORLD, err, "Error assignnodes");
 
     /* Return assignment results */
     p = procs;
-    for (i = 0; i < ndims; ++i, ++dims) 
+    for (i = 0; i < ndims; ++i, ++dims)
     {
         if (*dims == 0)
 			*dims = *p++;
@@ -6520,7 +6519,7 @@ __INTERNAL__PMPI_Dims_create (int nnodes, int ndims, int *dims)
     free((char *) primes);
     free((char *) factors);
     free((char *) procs);
-    	
+
 	return MPI_SUCCESS;
 }
 
@@ -6584,7 +6583,7 @@ INFO("Very simple approach never reorder nor take care of hardware topology")
 	  return res;
 	}
     }
-	
+
 	if(*comm_graph >= 0)
 	{
 		tmp = mpc_mpc_get_per_comm_data(*comm_graph);
@@ -7028,7 +7027,7 @@ __INTERNAL__PMPI_Cart_sub (MPI_Comm comm, int *remain_dims,
 	topo = &(tmp->topo);
 	__INTERNAL__PMPI_Comm_rank (comm, &rank);
 	sctk_spinlock_lock (&(topo->lock));
-		
+
 
 		if (topo->type != MPI_CART)
 		{
@@ -7362,6 +7361,13 @@ __INTERNAL__PMPI_Wtick (void)
 {
   return PMPC_Wtick ();
 }
+
+static int
+__INTERNAL__PMPI_Query_thread (int *provided)
+{
+  return PMPC_Query_thread(provided);
+}
+
 
 static int
 __INTERNAL__PMPI_Init_thread (int *argc, char ***argv, int required,
@@ -7749,7 +7755,7 @@ PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	res = MPI_SUCCESS;
 	SCTK__MPI_Check_retrun_val (res, comm);
   }
-  
+
   {
     int size;
     mpi_check_comm (comm, comm);
@@ -7796,7 +7802,7 @@ PMPI_Ibsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	  res = MPI_SUCCESS;
 	  SCTK__MPI_Check_retrun_val (res, comm);
   }
- 
+
   {
     int size;
     mpi_check_comm (comm, comm);
@@ -7820,7 +7826,7 @@ PMPI_Ibsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	//~ }
 	//~ else
 		//~ mpi_check_rank (dest, size, comm);
-    
+
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -7842,7 +7848,7 @@ PMPI_Issend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	  res = MPI_SUCCESS;
 	  SCTK__MPI_Check_retrun_val (res, comm);
   }
-  
+
   {
     int size;
     mpi_check_comm (comm, comm);
@@ -7887,7 +7893,7 @@ PMPI_Irsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	res = MPI_SUCCESS;
 	SCTK__MPI_Check_retrun_val (res, comm);
   }
-  
+
   {
     int size;
     mpi_check_comm (comm, comm);
@@ -7932,7 +7938,7 @@ PMPI_Irecv (void *buf, int count, MPI_Datatype datatype, int source,
 	res = MPI_SUCCESS;
 	SCTK__MPI_Check_retrun_val (res, comm);
   }
-  
+
   {
     int size;
     mpi_check_comm (comm, comm);
@@ -7964,6 +7970,7 @@ PMPI_Irecv (void *buf, int count, MPI_Datatype datatype, int source,
   }
   res =
     __INTERNAL__PMPI_Irecv (buf, count, datatype, source, tag, comm, request);
+
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
@@ -7973,7 +7980,7 @@ PMPI_Wait (MPI_Request * request, MPI_Status * status)
 	sctk_nodebug("entering MPI_Wait request = %d", *request);
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
-  
+
   if(*request == MPI_REQUEST_NULL)
   {
 	res = MPI_SUCCESS;
@@ -7983,7 +7990,7 @@ PMPI_Wait (MPI_Request * request, MPI_Status * status)
 	status->count = 0;
 	SCTK__MPI_Check_retrun_val (res, comm);
   }
-  
+
   res = __INTERNAL__PMPI_Wait (request, status);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -8087,22 +8094,22 @@ int PMPI_Testsome (int incount, MPI_Request array_of_requests[], int *outcount, 
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int index;
 	int res = MPI_ERR_INTERN;
-	if ((array_of_requests == NULL) && (incount != 0)) 
+	if ((array_of_requests == NULL) && (incount != 0))
 	{
 		res = MPI_ERR_REQUEST;
-	} 
-	else 
+	}
+	else
 	{
-		for (index = 0; index < incount; ++index) 
+		for (index = 0; index < incount; ++index)
 		{
-			if (array_of_requests[index] == -1) 
+			if (array_of_requests[index] == -1)
 			{
 				res = MPI_ERR_REQUEST;
 				break;
 			}
 		}
 	}
-	if (((outcount == NULL || array_of_indices == NULL) && incount > 0) || incount < 0) 
+	if (((outcount == NULL || array_of_indices == NULL) && incount > 0) || incount < 0)
 	{
 		return MPI_ERR_ARG;
 	}
@@ -8737,7 +8744,7 @@ PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
-int PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sendtypes, 
+int PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sendtypes,
 				   void *recvbuf, int *recvcnts, int *rdispls, MPI_Datatype *recvtypes, MPI_Comm comm)
 {
 	int res = MPI_ERR_INTERN;
@@ -8959,7 +8966,7 @@ PMPI_Comm_compare (MPI_Comm comm1, MPI_Comm comm2, int *result)
 	sctk_nodebug("Enter Comm_compare");
 	MPI_Comm comm = MPI_COMM_WORLD;
 	int res = MPI_ERR_INTERN;
-	
+
 	if(comm1 < 0 || comm2 < 0)
 	{
 		if(comm1 != comm2)
@@ -8968,7 +8975,7 @@ PMPI_Comm_compare (MPI_Comm comm1, MPI_Comm comm2, int *result)
 			*result = MPI_IDENT;
 		return MPI_ERR_ARG;
 	}
-			
+
 	mpi_check_comm (comm1, comm1);
 	mpi_check_comm (comm2, comm2);
 	res = __INTERNAL__PMPI_Comm_compare (comm1, comm2, result);
@@ -9015,7 +9022,7 @@ PMPI_Intercomm_create (MPI_Comm local_comm, int local_leader,
 	sctk_nodebug("Enter Intercomm_create");
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
-  
+
   if (newintercomm == NULL)
     {
       MPI_ERROR_REPORT (comm, MPI_ERR_COMM, "");
@@ -9400,6 +9407,16 @@ PMPI_Wtick (void)
 }
 
 int
+PMPI_Query_thread (int *provided)
+{
+  MPI_Comm comm = MPI_COMM_WORLD;
+  int res = MPI_ERR_INTERN;
+  res = __INTERNAL__PMPI_Query_thread (provided);
+  SCTK__MPI_Check_retrun_val (res, comm);
+}
+
+
+int
 PMPI_Init_thread (int *argc, char ***argv, int required, int *provided)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
@@ -9579,14 +9596,14 @@ int PMPI_Win_set_attr(MPI_Win win, int win_keyval, void *attribute_val){return M
 int PMPI_Win_get_attr(MPI_Win win, int win_keyval, void *attribute_val, int *flag){return MPI_SUCCESS;}
 int PMPI_Win_free_keyval(int *win_keyval){return MPI_SUCCESS;}
 int PMPI_Win_delete_attr(MPI_Win win, int win_keyval){return MPI_SUCCESS;}
-int PMPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_attr_fn, 
+int PMPI_Win_create_keyval(MPI_Win_copy_attr_function *win_copy_attr_fn,
 						   MPI_Win_delete_attr_function *win_delete_attr_fn, int *win_keyval, void *extra_state){return MPI_SUCCESS;}
 int PMPI_Win_create(void *base, MPI_Aint size, int disp_unit, MPI_Info info, MPI_Comm comm, MPI_Win *win){return MPI_SUCCESS;}
 int PMPI_Win_free(MPI_Win * win){return MPI_SUCCESS;}
 
 int PMPI_Alloc_mem (MPI_Aint size, MPI_Info info, void *baseptr){return MPI_SUCCESS;}
 int PMPI_Free_mem (void *base){return MPI_SUCCESS;}
-				   
+
 int PMPI_Type_create_resized(MPI_Datatype oldtype, MPI_Aint lb, MPI_Aint extent, MPI_Datatype *newtype){return MPI_SUCCESS;}
 int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, MPI_Aint *true_extent){return MPI_SUCCESS;}
 int PMPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent){return MPI_SUCCESS;}
@@ -9600,25 +9617,25 @@ int PMPI_Comm_set_attr(MPI_Comm comm, int comm_keyval, void *attribute_val){retu
 int PMPI_Comm_get_attr(MPI_Comm comm, int comm_keyval, void *attribute_val, int *flag){return MPI_SUCCESS;}
 int PMPI_Comm_free_keyval(int *comm_keyval){return MPI_SUCCESS;}
 int PMPI_Comm_delete_attr(MPI_Comm comm, int comm_keyval){return MPI_SUCCESS;}
-int PMPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn, 
+int PMPI_Comm_create_keyval(MPI_Comm_copy_attr_function *comm_copy_attr_fn,
 						   MPI_Comm_delete_attr_function *comm_delete_attr_fn, int *comm_keyval, void *extra_state){return MPI_SUCCESS;}
 
 int PMPI_Type_set_attr(MPI_Datatype datatype, int type_keyval, void *attribute_val){return MPI_SUCCESS;}
 int PMPI_Type_get_attr(MPI_Datatype datatype, int type_keyval, void *attribute_val, int *flag){return MPI_SUCCESS;}
 int PMPI_Type_free_keyval(int *type_keyval){return MPI_SUCCESS;}
 int PMPI_Type_delete_attr(MPI_Datatype datatype, int type_keyval){return MPI_SUCCESS;}
-int PMPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn, 
+int PMPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn,
 						   MPI_Type_delete_attr_function *type_delete_attr_fn, int *type_keyval, void *extra_state){return MPI_SUCCESS;}
-						   
+
 int PMPI_Type_create_indexed_block(int count, int blocklength, int array_of_displacements[], MPI_Datatype oldtype, MPI_Datatype *newtype){return MPI_SUCCESS;}
 int PMPI_Type_get_envelope(MPI_Datatype datatype, int *num_integers, int *num_addresses, int *num_datatypes, int *combiner){return MPI_SUCCESS;}
-int PMPI_Type_get_contents(MPI_Datatype datatype, int max_integers, int max_addresses, int max_datatypes, 
+int PMPI_Type_get_contents(MPI_Datatype datatype, int max_integers, int max_addresses, int max_datatypes,
 						  int array_of_integers[], MPI_Aint array_of_addresses[], MPI_Datatype array_of_datatypes[]){return MPI_SUCCESS;}
 
 int PMPI_Type_create_darray(int size, int rank, int ndims, int array_of_gsizes[], int array_of_distribs[], int array_of_dargs[],
                            int array_of_psizes[], int order, MPI_Datatype oldtype, MPI_Datatype *newtype){return MPI_SUCCESS;}
 int PMPI_Get_address( void *location, MPI_Aint *address ){return MPI_SUCCESS;}
-int PMPI_Type_create_struct(int count, int array_of_blocklengths[], MPI_Aint array_of_displacements[], 
+int PMPI_Type_create_struct(int count, int array_of_blocklengths[], MPI_Aint array_of_displacements[],
 						   MPI_Datatype array_of_types[], MPI_Datatype *newtype){return MPI_SUCCESS;}
 
 int PMPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype, int count){return MPI_SUCCESS;}
@@ -9629,13 +9646,13 @@ int PMPI_Type_get_true_extent_x(MPI_Datatype datatype, MPI_Count *true_lb, MPI_C
 int PMPI_Get_elements_x(const MPI_Status *status, MPI_Datatype datatype, MPI_Count *count){return MPI_SUCCESS;}
 int PMPI_Status_set_elements_x(MPI_Status *status, MPI_Datatype datatype, MPI_Count count){return MPI_SUCCESS;}
 
-int PMPI_Type_create_hindexed_block(int count, int blocklength, const MPI_Aint array_of_displacements[], 
+int PMPI_Type_create_hindexed_block(int count, int blocklength, const MPI_Aint array_of_displacements[],
 								   MPI_Datatype oldtype, MPI_Datatype * newtype){return MPI_SUCCESS;}
 int PMPI_Pack_external_size(char *datarep, int incount, MPI_Datatype datatype, MPI_Aint *size){return MPI_SUCCESS;}
 int PMPI_Pack_external(char *datarep, void *inbuf, int incount, MPI_Datatype datatype, void *outbuf, MPI_Aint outsize, MPI_Aint *position){return MPI_SUCCESS;}
 int PMPI_Unpack_external(char *datarep, void *inbuf, MPI_Aint insize, MPI_Aint *position, void *outbuf, int outcount, MPI_Datatype datatype){return MPI_SUCCESS;}
 
-int PMPI_Type_create_subarray(int ndims, int *array_of_sizes, int *array_of_subsizes, 
+int PMPI_Type_create_subarray(int ndims, int *array_of_sizes, int *array_of_subsizes,
 							 int *array_of_starts, int order, MPI_Datatype oldtype, MPI_Datatype *newtype){return MPI_SUCCESS;}
 int PMPI_Type_match_size(int typeclass, int size, MPI_Datatype *type){return MPI_SUCCESS;}
 int PMPI_Reduce_scatter_block(void *sendbuf, void *recvbuf, int recvcount, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm){return MPI_SUCCESS;}
@@ -9653,7 +9670,7 @@ int PMPI_Query_thread( int *provided ){return MPI_SUCCESS;}
 int PMPI_Get_library_version(char *version, int *resultlen){return MPI_SUCCESS;}
 int PMPI_Request_get_status(MPI_Request request, int *flag, MPI_Status *status){return MPI_SUCCESS;}
 int PMPI_Status_set_cancelled(MPI_Status *status, int flag){return MPI_SUCCESS;}
-int PMPI_Grequest_start( MPI_Grequest_query_function *query_fn, MPI_Grequest_free_function *free_fn, 
+int PMPI_Grequest_start( MPI_Grequest_query_function *query_fn, MPI_Grequest_free_function *free_fn,
 						MPI_Grequest_cancel_function *cancel_fn, void *extra_state, MPI_Request *request ){return MPI_SUCCESS;}
 
 int PMPI_Grequest_complete(MPI_Request request){return MPI_SUCCESS;}

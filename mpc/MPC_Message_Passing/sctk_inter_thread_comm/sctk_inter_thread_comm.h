@@ -103,7 +103,7 @@ extern "C"
     REQUEST_SEND = 1,
     REQUEST_RECV = 2,
     REQUEST_SEND_COLL = 3,
-    REQUEST_RECV_COLL = 4 
+    REQUEST_RECV_COLL = 4
   } sctk_request_type_t;
 
   typedef struct sctk_thread_message_header_s
@@ -114,7 +114,7 @@ extern "C"
     sctk_communicator_t communicator;
     int message_tag;
     int message_number;
-	int glob_source;
+    int glob_source;
     int glob_destination;
     char use_message_numbering;
     specific_message_tag_t specific_message_tag;
@@ -277,6 +277,8 @@ typedef struct {
     int remote_process;
     int source_task_id;
     int polling_task_id;
+    /* If we are blocked inside a function similar to MPI_Wait */
+    int blocking;
   } sctk_perform_messages_t;
 
 
@@ -284,7 +286,6 @@ typedef struct {
      Check if the message if completed according to the message passed as a request
   */
   void sctk_perform_messages(struct sctk_perform_messages_s * wait);
-  void sctk_perform_messages_wait_init(struct sctk_perform_messages_s * wait, sctk_request_t * request);
   void sctk_perform_messages_wait_init_request_type(struct sctk_perform_messages_s * wait);
   void sctk_init_header (sctk_thread_ptp_message_t *tmp, const int myself,
 			 sctk_message_type_t msg_type, void (*free_memory)(void*),
@@ -357,11 +358,13 @@ typedef struct {
   void sctk_determine_glob_source_and_destination_from_header (
       sctk_thread_ptp_message_body_t* body, int *glob_source, int *glob_destination);
 
-  void sctk_perform_messages_wait_ini(
-    struct sctk_perform_messages_s * wait);
+  void sctk_perform_messages_wait_init(
+    struct sctk_perform_messages_s * wait, sctk_request_t * request, int blocking);
 
   sctk_reorder_list_t * sctk_ptp_get_reorder_from_destination(int task);
 
+  void sctk_inter_thread_perform_idle (volatile int *data, int value,
+				     void (*func) (void *), void *arg);
 #ifdef __cplusplus
 }
 #endif

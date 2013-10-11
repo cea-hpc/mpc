@@ -64,6 +64,9 @@ int pin_processor_current = 0;
 int bind_processor_current = 0;
 
 static hwloc_topology_t topology;
+/* Describe the full topology of the machine.
+ * Only used for binding*/
+static hwloc_topology_t topology_full;
 const struct hwloc_topology_support *support;
 
 hwloc_topology_t sctk_get_topology_object(void)
@@ -209,6 +212,7 @@ sctk_restrict_topology ()
     /* restrict the topology to physical CPUs */
     err = hwloc_topology_restrict(topology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
     assume(!err);
+
     hwloc_bitmap_free(cpuset);
   }
 
@@ -344,12 +348,23 @@ sctk_get_cpu_intern ()
 {
   hwloc_cpuset_t set = hwloc_bitmap_alloc();
 
-  int ret = hwloc_get_last_cpu_location(topology, set, 0);
-  assert(ret!=-1);
-  assert(!hwloc_bitmap_iszero(set));
+  int ret = hwloc_get_last_cpu_location(topology, set, HWLOC_CPUBIND_THREAD);
+
+  assume(ret!=-1);
+  assume(!hwloc_bitmap_iszero(set));
+
+  /* Check if only one CPU in the CPU set. Maybe there is a simpler function
+   * to do that */
+  assume (hwloc_bitmap_first(set) ==  hwloc_bitmap_last(set));
+
+  /* Convert cpuset to obj */
+  hwloc_obj_t obj_cpu = hwloc_get_obj_covering_cpuset(topology_full, set);
+  assume(obj_cpu);
+  /* And return the logical index */
+  int cpu = obj_cpu->logical_index;
 
   hwloc_bitmap_free(set);
-  return ret;
+  return cpu;
 }
 
   int
@@ -372,7 +387,6 @@ void sctk_topology_init_cpu(){
   void
 sctk_topology_init ()
 {
-
 #ifdef MPC_Message_Passing
   if(sctk_process_number > 1){
     sctk_pmi_init();
@@ -381,6 +395,9 @@ sctk_topology_init ()
 
   hwloc_topology_init(&topology);
   hwloc_topology_load(topology);
+
+  hwloc_topology_init(&topology_full);
+  hwloc_topology_load(topology_full);
 
   support = hwloc_topology_get_support(topology);
 
@@ -491,13 +508,14 @@ sctk_bind_to_cpu (int i)
   {
 TODO("Handle specific mapping from the user");
     hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
-    assume(pu);
+     assume(pu);
 
     int err = hwloc_set_cpubind(topology, pu->cpuset, HWLOC_CPUBIND_THREAD);
     if (err)
     {
       fprintf(stderr,"%-40s: %sFAILED (%d, %s)\n", msg, supported?"":"X", errno, errmsg);
     }
+//    assume(sctk_get_cpu_intern() == i);
     sctk_get_cpu_val = i;
   }
   sctk_spinlock_unlock(&topology_lock);
@@ -572,6 +590,7 @@ sctk_get_node_from_cpu (const int vp)
 {
   if(sctk_is_numa_node ()){
     const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
+    assume(pu);
     const hwloc_obj_t node = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, pu);
     return node->logical_index;
   } else {
@@ -651,4 +670,37 @@ sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood)
  */
 #ifdef MPC_USE_INFINIBAND
 /* Add functions here for IB */
+
+int sctk_topology_is_ib_device_close_from_cpu (struct ibv_device * dev, int logical_core_id) {
+  int err;
+
+  hwloc_bitmap_t ib_set;
+  ib_set = hwloc_bitmap_alloc();
+  err = hwloc_ibv_get_device_cpuset(topology, dev, ib_set);
+  if (err < 0) {
+    return -1;
+  } else {
+    int res;
+
+    hwloc_obj_t obj_cpu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, logical_core_id);
+    assume(obj_cpu);
+
+#if 0
+    char *cpuset_string = NULL;
+    hwloc_bitmap_list_asprintf(&cpuset_string, ib_set);
+    sctk_debug("String: %s", cpuset_string);
+#endif
+
+    hwloc_bitmap_and(ib_set, ib_set, obj_cpu->cpuset);
+    res = hwloc_bitmap_iszero(ib_set);
+
+    hwloc_bitmap_free(ib_set);
+    /* If the bitmap is different from 0, we are close to the IB card, so
+     * we return 1 */
+    return ! res;
+  }
+}
+
+
+
 #endif

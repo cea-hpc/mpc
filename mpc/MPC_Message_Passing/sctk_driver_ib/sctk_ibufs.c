@@ -26,17 +26,28 @@
 
 #include "sctk_ibufs.h"
 
-/* #define SCTK_IB_MODULE_DEBUG */
+//#define SCTK_IB_MODULE_DEBUG
 #define SCTK_IB_MODULE_NAME "IBUF"
 #include "sctk_multirail_ib.h"
 #include "sctk_ib_toolkit.h"
 #include "sctk_ib.h"
 #include "sctk_ib_eager.h"
 #include "sctk_ib_config.h"
+#include "sctk_ib_topology.h"
 #include "sctk_ib_low_mem.h"
 #include "sctk_ib_prof.h"
 #include "sctk_ibufs_rdma.h"
 #include "utlist.h"
+
+static sctk_ibuf_numa_t * sctk_ibuf_get_closest_node(struct sctk_ib_rail_info_s * rail_ib) {
+  struct sctk_ib_topology_numa_node_s * closest_node = sctk_ib_topology_get_numa_node(rail_ib);
+  sctk_ibuf_numa_t * node = NULL;
+
+  node = &closest_node->ibufs;
+
+  return node;
+}
+
 /**
    Description: NUMA aware buffers poll interface.
  *  Buffers are stored together in regions. Buffers are
@@ -45,33 +56,15 @@
  *  IB card.
  */
 
-/* Node where SRQ buffers are allocated */
-static struct sctk_ibuf_numa_s* node_srq_buffers  = NULL;
-__thread struct sctk_ibuf_numa_s* ibuf_node_task = NULL;
-static struct sctk_ibuf_numa_s* default_node      = NULL;
-
-void sctk_ibuf_init_task(int rank, int vp) {
-  sctk_rail_info_t *rail;
-  sctk_ib_rail_info_t* rail_ib;
-  rail = sctk_route_get_rail(sctk_network_ib_get_rail_data());
-  rail_ib = &rail->network.ib;
-  LOAD_POOL(rail_ib);
-  int node =  sctk_get_node_from_cpu(vp);
-  /* Set the NUMA node where the vp is allocated */
-
-  ibuf_node_task = &pool->nodes[node];
-}
-
-
 /* Init a poll of buffers on the numa node pointed by 'node'
  * FIXME: use malloc_on_node instead of memalign
  * Carreful: this function is *NOT* thread-safe */
-static inline void
-init_node(struct sctk_ib_rail_info_s *rail_ib,
-    struct sctk_ibuf_numa_s* node, int nb_ibufs)
+void sctk_ibuf_init_numa_node(struct sctk_ib_rail_info_s *rail_ib,
+    struct sctk_ibuf_numa_s* node, int nb_ibufs, char is_initial_allocation)
 {
   LOAD_CONFIG(rail_ib);
-  LOAD_MMU(rail_ib);
+  LOAD_POOL(rail_ib);
+  sctk_ib_mmu_t * mmu = node->mmu;
   sctk_ibuf_region_t *region = NULL;
   void* ptr = NULL;
   void* ibuf;
@@ -79,14 +72,20 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
   int i;
   int free_nb;
 
-#if 0
-  if (node->is_srq_pool) {
-    /* TODO: Allocate the SRQ pool of buffers
-     * on the right node */
+  /* If this allocation is done during initialization */
+  if (is_initial_allocation) {
+    if (pool->default_node == NULL) {
+      pool->default_node = node;
+    }
+    node->lock = SCTK_SPINLOCK_INITIALIZER;
+    node->srq_cache_lock = SCTK_SPINLOCK_INITIALIZER;
+    node->regions = NULL;
+    node->free_entry = NULL;
+    node->free_srq_cache = NULL;
+    OPA_store_int(&node->free_srq_nb, 0);
+    node->free_srq_cache_nb = 0;
+    OPA_store_int(&node->free_nb, 0);
   }
-#endif
-
-  sctk_ib_nodebug("Allocating %d buffers", nb_ibufs);
 
   region = sctk_malloc_on_node(sizeof(sctk_ibuf_region_t), 0);
   ib_assume(region);
@@ -94,13 +93,13 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
   /* XXX: replaced by memalign_on_node */
   sctk_posix_memalign( (void**) &ptr, mmu->page_size, nb_ibufs * config->ibv_eager_limit);
   ib_assume(ptr);
-  // memset(ptr, 0, nb_ibufs * config->ibv_eager_limit);
+  memset(ptr, 0, nb_ibufs * config->ibv_eager_limit);
   PROF_ADD(rail_ib->rail, ib_ibuf_sr_size, nb_ibufs * config->ibv_eager_limit);
 
   /* XXX: replaced by memalign_on_node */
    sctk_posix_memalign(&ibuf, mmu->page_size, nb_ibufs * sizeof(sctk_ibuf_t));
   ib_assume(ibuf);
-  // memset (ibuf, 0, nb_ibufs * sizeof(sctk_ibuf_t));
+  memset (ibuf, 0, nb_ibufs * sizeof(sctk_ibuf_t));
   PROF_ADD(rail_ib->rail, ib_ibuf_sr_size, nb_ibufs * sizeof(sctk_ibuf_t));
 
   region->size_ibufs = config->ibv_eager_limit;
@@ -136,86 +135,46 @@ init_node(struct sctk_ib_rail_info_s *rail_ib,
   free_nb = OPA_load_int(&node->free_nb);
   node->nb += nb_ibufs;
 
-  sctk_ib_debug("[node:%d] Allocation of %d buffers (free_nb:%u got:%u)", node->id, nb_ibufs, free_nb, node->nb - free_nb);
+  sctk_ib_debug("Allocation of %d buffers (free_nb:%u got:%u)", nb_ibufs, free_nb, node->nb - free_nb);
+}
+
+void sctk_ibuf_pool_set_node_srq_buffers(struct sctk_ib_rail_info_s * rail_ib,
+    sctk_ibuf_numa_t * node){
+  LOAD_POOL(rail_ib);
+  pool->node_srq_buffers = node;
+  node->is_srq_pool = 1;
 }
 
 /* Init the pool of buffers on each NUMA node */
 void
 sctk_ibuf_pool_init(struct sctk_ib_rail_info_s *rail_ib)
 {
-  LOAD_CONFIG(rail_ib);
-  sctk_ibuf_pool_t *pool;
-  int i;
-  int alloc_nb;
-  unsigned int nodes_nb;
+  sctk_ibuf_pool_t * pool;
 
-  nodes_nb = sctk_get_numa_node_number();
- /* FIXME: get_numa_node_number may returns 1 when SMP */
-  nodes_nb = (nodes_nb == 0) ? 1 : nodes_nb;
-  /* We allocate a pool in addition in order to store the SRQ buffers */
-  alloc_nb = nodes_nb + 1;
-
-  /* We malloc the entries */
-  pool = sctk_malloc(sizeof(sctk_ibuf_pool_t) +
-      alloc_nb * sizeof(sctk_ibuf_numa_t));
+  pool = sctk_malloc(sizeof(sctk_ibuf_pool_t));
   /* WARNING: Do not remove the following memset.
    * Be sure that is_srq_poll is set to 0 !! */
-  memset(pool, 0, sizeof(sctk_ibuf_pool_t) +
-      alloc_nb * sizeof(sctk_ibuf_numa_t));
-  ib_assume (pool);
-  /* Number of NUMA nodes */
-  pool->nodes_nb = nodes_nb;
-  pool->nodes = (sctk_ibuf_numa_t*)
-    ((char*) pool + sizeof(sctk_ibuf_pool_t));
+  memset(pool, 0, sizeof(sctk_ibuf_pool_t));
   pool->post_srq_lock = SCTK_SPINLOCK_INITIALIZER;
-
-  /* The last pool of buffers is dedicted to the SRQ */
-  node_srq_buffers = &pool->nodes[alloc_nb-1];
-  node_srq_buffers->is_srq_pool = 1;
-
-  /* loop on nodes and create buffers */
-  for (i=0; i < alloc_nb; ++i) {
-    sctk_ibuf_numa_t *node = &pool->nodes[i];
-
-    /* Initialize the default node */
-    if (default_node == NULL) {
-      default_node = node;
-    }
-
-    node->id = i;
-    node->lock = SCTK_SPINLOCK_INITIALIZER;
-    OPA_store_int(&node->free_srq_nb, 0);
-    OPA_store_int(&node->free_nb, 0);
-    init_node(rail_ib, &pool->nodes[i], config->ibv_init_ibufs);
-  }
-
   /* update pool buffer */
   rail_ib->pool_buffers = pool;
 }
 
 sctk_ibuf_t*
-sctk_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib, struct sctk_ibuf_numa_s *node )
+sctk_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib)
 {
-  LOAD_POOL(rail_ib);
   LOAD_CONFIG(rail_ib);
   sctk_ibuf_t* ibuf;
+  PROF_TIME_START(rail_ib->rail, ib_pick_send_sr);
+  sctk_ibuf_numa_t * node = sctk_ibuf_get_closest_node(rail_ib);
 
-#ifdef DEBUG_IB_BUFS
-    if (node != NULL)  {
-      assume(node->id < pool->nodes_nb);
-    }
-#endif
-
-    if (node == NULL) {
-      node = default_node;
-    }
     sctk_spinlock_t *lock = &node->lock;
 
     sctk_spinlock_lock(lock);
 
     /* Allocate additionnal buffers if no more are available */
     if ( !node->free_entry) {
-      init_node(rail_ib, node, config->ibv_size_ibufs_chunk);
+      sctk_ibuf_init_numa_node(rail_ib, node, config->ibv_size_ibufs_chunk, 0);
     }
 
     /* update pointers from buffer pool */
@@ -238,9 +197,11 @@ sctk_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib, struct sctk_ibuf_num
     /* Prepare the buffer for sending */
   IBUF_SET_POISON(ibuf->buffer);
   PROF_INC(rail_ib->rail, ib_ibuf_sr_nb);
+  PROF_TIME_END(rail_ib->rail, ib_pick_send_sr);
 
   return ibuf;
 }
+
 
 /*
  * Prepare a message to send. According to the size and the remote, the function
@@ -250,9 +211,8 @@ sctk_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib, struct sctk_ibuf_num
  */
 sctk_ibuf_t*
 sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
-    size_t *size, struct sctk_ibuf_numa_s *node)
+    size_t *size)
 {
-  LOAD_POOL(rail_ib);
   LOAD_CONFIG(rail_ib);
   sctk_ibuf_t* ibuf = NULL;
   size_t s;
@@ -284,6 +244,7 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
       if ( (IBUF_RDMA_GET_SIZE + s) <= limit) {
         sctk_nodebug("requested:%lu max:%lu header:%lu", s, limit, IBUF_RDMA_GET_SIZE);
         ibuf = sctk_ibuf_rdma_pick(rail_ib, remote);
+        sctk_nodebug("Picked a rdma buffer: %p", ibuf);
 
         /* A buffer has been picked-up */
         if (ibuf) {
@@ -299,11 +260,13 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
             goto exit;
         } else {
           OPA_incr_int(&remote->rdma.miss_nb);
+          PROF_INC(rail_ib->rail, ib_ibuf_rdma_miss_nb);
         }
+      } else {
+        OPA_incr_int(&remote->rdma.miss_nb);
       }
 
       /* If we cannot pick a buffer from the RDMA channel, we switch to SR */
-      PROF_INC(rail_ib->rail, ib_ibuf_rdma_miss_nb);
       OPA_decr_int(&remote->rdma.pool->busy_nb[REGION_SEND]);
       sctk_ibuf_rdma_check_flush_send(rail_ib, remote);
     } else {
@@ -317,22 +280,15 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
 
   if (s <= config->ibv_eager_limit) {
     sctk_nodebug("Picking from SR");
-#ifdef DEBUG_IB_BUFS
-    if (node != NULL)  {
-      assume(node->id < pool->nodes_nb);
-    }
-#endif
 
-    if (node == NULL) {
-      node = default_node;
-    }
+    sctk_ibuf_numa_t * node = sctk_ibuf_get_closest_node(rail_ib);
     sctk_spinlock_t *lock = &node->lock;
 
     sctk_spinlock_lock(lock);
 
     /* Allocate additionnal buffers if no more are available */
     if ( !node->free_entry) {
-      init_node(rail_ib, node, config->ibv_size_ibufs_chunk);
+      sctk_ibuf_init_numa_node(rail_ib, node, config->ibv_size_ibufs_chunk, 0);
     }
 
     /* update pointers from buffer pool */
@@ -374,6 +330,8 @@ exit:
   IBUF_SET_POISON(ibuf->buffer);
 
   PROF_TIME_END(rail_ib->rail, ib_pick_send);
+
+  sctk_ibuf_rdma_check_remote(rail_ib, remote);
   return ibuf;
 }
 
@@ -385,23 +343,14 @@ exit:
 static inline sctk_ibuf_t*
 sctk_ibuf_pick_recv(struct sctk_ib_rail_info_s *rail_ib, struct sctk_ibuf_numa_s* node)
 {
-  LOAD_POOL(rail_ib);
   LOAD_CONFIG(rail_ib);
   sctk_ibuf_t* ibuf;
-#ifdef DEBUG_IB_BUFS
-  if (node != NULL)  {
-    /* <= because we can ask a buffer for the SRQ */
-    assume(node->id <= pool->nodes_nb);
-  }
-#endif
-
-  if (node == NULL) {
-    node = default_node;
-  }
+  PROF_TIME_START(rail_ib->rail, ib_pick_recv);
+  assume(node);
 
   /* Allocate additionnal buffers if no more are available */
   if ( !node->free_entry) {
-      init_node(rail_ib, node, config->ibv_size_ibufs_chunk);
+      sctk_ibuf_init_numa_node(rail_ib, node, config->ibv_size_recv_ibufs_chunk, 0);
   }
 
   /* update pointers from buffer pool */
@@ -409,12 +358,15 @@ sctk_ibuf_pick_recv(struct sctk_ib_rail_info_s *rail_ib, struct sctk_ibuf_numa_s
   DL_DELETE(node->free_entry, node->free_entry);
   OPA_decr_int(&node->free_nb);
 
+
+
 #ifdef DEBUG_IB_BUFS
   assume(ibuf);
   if (ibuf->flag != FREE_FLAG)
   {sctk_error("Wrong flag (%d) got from ibuf", ibuf->flag);}
   sctk_nodebug("ibuf: %p, lock:%p, need_lock:%d next free_entryr: %p, nb_free %d, nb_got %d, nb_free_srq %d, node %d)", ibuf, lock, need_lock, node->free_entry, node->nb_free, node->nb_got, node->nb_free_srq, node->id);
 #endif
+  PROF_TIME_END(rail_ib->rail, ib_pick_recv);
 
 
   return ibuf;
@@ -427,25 +379,42 @@ sctk_ibuf_pick_recv(struct sctk_ib_rail_info_s *rail_ib, struct sctk_ibuf_numa_s
  */
 static int srq_post(
     struct sctk_ib_rail_info_s *rail_ib,
-    int nb_ibufs, sctk_ibuf_numa_t *node)
+    sctk_ibuf_numa_t *node, int force)
 {
   assume(node);
   LOAD_DEVICE(rail_ib);
+  LOAD_CONFIG(rail_ib);
   int i;
   int nb_posted = 0;
   sctk_ibuf_t* ibuf;
   int rc;
   sctk_spinlock_t *lock = &node->lock;
+  int nb_ibufs;
+  int free_srq_nb;
+
+  /* limit of buffer posted */
+  free_srq_nb = OPA_load_int(&node->free_srq_nb);
+  nb_ibufs = config->ibv_max_srq_ibufs_posted - free_srq_nb;
+  sctk_nodebug("TRY Post %d ibufs in SRQ (free:%d max:%d)", nb_ibufs, free_srq_nb, config->ibv_max_srq_ibufs_posted);
+
 
   if (nb_ibufs <= 0) return 0;
 
   PROF_TIME_START(rail_ib->rail, ib_ibuf_srq_post);
 
-  /* Only 1 task can post to the SRQ at the same time. No need more concurrency */
-  if (sctk_spinlock_trylock(&rail_ib->pool_buffers->post_srq_lock) == 0)
-  {
-    sctk_spinlock_lock(lock);
+  if (force)
+    sctk_spinlock_lock(&rail_ib->pool_buffers->post_srq_lock);
+  else if (sctk_spinlock_trylock(&rail_ib->pool_buffers->post_srq_lock) != 0)  goto exit;
 
+  /* Only 1 task can post to the SRQ at the same time. No need more concurrency */
+//  if (sctk_spinlock_trylock(&rail_ib->pool_buffers->post_srq_lock) == 0)
+  {
+    /* limit of buffer posted */
+    free_srq_nb = OPA_load_int(&node->free_srq_nb);
+    nb_ibufs = config->ibv_max_srq_ibufs_posted - free_srq_nb;
+    sctk_nodebug("Post %d ibufs in SRQ (free:%d max:%d force:%d)", nb_ibufs, free_srq_nb, config->ibv_max_srq_ibufs_posted, force);
+
+    sctk_spinlock_lock(lock);
     for (i=0; i < nb_ibufs; ++i)
     {
       /* No need lock */
@@ -470,90 +439,127 @@ static int srq_post(
       }
       else nb_posted++;
     }
-
     sctk_spinlock_unlock(lock);
+
     OPA_add_int(&node->free_srq_nb, nb_posted);
+
     sctk_spinlock_unlock(&rail_ib->pool_buffers->post_srq_lock);
   }
   PROF_TIME_END(rail_ib->rail, ib_ibuf_srq_post);
 
+exit:
   return nb_posted;
 }
 
 /* FIXME: check with buffers near IB card */
 int sctk_ibuf_srq_check_and_post(
-    struct sctk_ib_rail_info_s *rail_ib,
-    int limit)
+    struct sctk_ib_rail_info_s *rail_ib)
 {
   LOAD_POOL(rail_ib);
 
-  return srq_post(rail_ib, limit, node_srq_buffers);
+  return srq_post(rail_ib, pool->node_srq_buffers, 1);
 }
 
 static inline void __release_in_srq(
     struct sctk_ib_rail_info_s *rail_ib,
-    sctk_ibuf_t* ibuf, int need_lock)
+    sctk_ibuf_numa_t * node,
+    sctk_ibuf_t* ibuf,
+    int decr_free_srq_nb)
 {
-  ib_assume(ibuf);
-  LOAD_CONFIG(rail_ib);
-  sctk_ibuf_numa_t *node = ibuf->region->node;
-  int limit;
-  int free_srq_nb;
 
-  ibuf->in_srq = 0;
-  /* limit of buffer posted */
-  free_srq_nb = OPA_fetch_and_decr_int(&node->free_srq_nb) - 1;
-  limit = config->ibv_max_srq_ibufs_posted - free_srq_nb;
-  sctk_nodebug("Post new buffer %d (%d - %d)", limit, config->ibv_max_srq_ibufs_posted, free_srq_nb);
-  srq_post(rail_ib, limit, node);
-  sctk_nodebug("Buffer %p free (%d)", ibuf, is_srq);
+  if (decr_free_srq_nb) {
+    /* limit of buffer posted */
+    OPA_decr_int(&node->free_srq_nb);
+  }
+
+
+  srq_post(rail_ib, node, 0);
 }
 
 void sctk_ibuf_release_from_srq(
     struct sctk_ib_rail_info_s *rail_ib,
     sctk_ibuf_t* ibuf)
 {
-  __release_in_srq(rail_ib, ibuf, 1);
+  sctk_ibuf_numa_t *node = ibuf->region->node;
+
+  __release_in_srq(rail_ib, node, ibuf, 1);
 }
 
 /* release one buffer given as parameter.
  * is_srq: if the buffer is released from the SRQ */
 void sctk_ibuf_release(
     struct sctk_ib_rail_info_s *rail_ib,
-    sctk_ibuf_t* ibuf)
+    sctk_ibuf_t* ibuf,
+    int decr_free_srq_nb)
 {
   ib_assume(ibuf);
 
-  PROF_TIME_START(rail_ib->rail, ib_ibuf_release);
   if (ibuf->to_release & IBUF_RELEASE) {
     if (IBUF_GET_CHANNEL(ibuf) & RDMA_CHANNEL) {
+      PROF_TIME_START(rail_ib->rail, ib_ibuf_rdma_release);
       sctk_ibuf_rdma_release(rail_ib, ibuf);
+      PROF_TIME_END(rail_ib->rail, ib_ibuf_rdma_release);
     } else {
       ib_assume(IBUF_GET_CHANNEL(ibuf) == RC_SR_CHANNEL);
       sctk_ibuf_numa_t *node = ibuf->region->node;
       sctk_spinlock_t *lock = &node->lock;
 
-      ibuf->flag = FREE_FLAG;
-      IBUF_SET_PROTOCOL(ibuf->buffer, null_protocol);
+      if (ibuf->in_srq) { /* If buffer from SRQ */
+        PROF_TIME_START(rail_ib->rail, ib_ibuf_sr_srq_release);
+        ibuf->flag = FREE_FLAG;
+        IBUF_SET_PROTOCOL(ibuf->buffer, null_protocol);
 
-      OPA_incr_int(&node->free_nb);
-      sctk_spinlock_lock(lock);
-      DL_APPEND(node->free_entry, ibuf);
-      sctk_spinlock_unlock(lock);
+        {
+          sctk_ibuf_numa_t * closest_node = sctk_ibuf_get_closest_node(rail_ib);
+          sctk_spinlock_t *srq_cache_lock = &closest_node->srq_cache_lock;
 
-      /* If SRQ, we check and try to post more messages to SRQ */
-      if (ibuf->in_srq) {
-        __release_in_srq(rail_ib, ibuf, 0);
+          sctk_spinlock_lock(srq_cache_lock);
+          const int srq_cache_nb = ++ closest_node->free_srq_cache_nb;
+          DL_APPEND(closest_node->free_srq_cache, ibuf);
+
+TODO("Number of SRQ buffers in the cache -> in the configuration")
+          /* If the max number of SRQ ibufs is reached for the current node, we flush
+           * the list to the global queue of buffers */
+          if (srq_cache_nb > 40) {
+            OPA_add_int(&node->free_nb, srq_cache_nb);
+
+            sctk_spinlock_lock(lock);
+            DL_CONCAT(node->free_entry, closest_node->free_srq_cache);
+            sctk_spinlock_unlock(lock);
+
+            closest_node->free_srq_cache_nb = 0;
+            closest_node->free_srq_cache = NULL;
+          }
+          sctk_spinlock_unlock(srq_cache_lock);
+        }
+
+        /* If SRQ, we check and try to post more messages to SRQ */
+        __release_in_srq(rail_ib, node, ibuf, decr_free_srq_nb);
+        PROF_TIME_END(rail_ib->rail, ib_ibuf_sr_srq_release);
+      } else {
+/* TODO: only for debugging */
+#if 0
+        sctk_ibuf_numa_t * closest_node = sctk_ibuf_get_closest_node(rail_ib);
+        assume(closest_node == node);
+#endif
+        PROF_TIME_START(rail_ib->rail, ib_ibuf_sr_send_release);
+        ibuf->flag = FREE_FLAG;
+        IBUF_SET_PROTOCOL(ibuf->buffer, null_protocol);
+
+        OPA_incr_int(&node->free_nb);
+        sctk_spinlock_lock(lock);
+        DL_APPEND(node->free_entry, ibuf);
+        sctk_spinlock_unlock(lock);
+        PROF_TIME_END(rail_ib->rail, ib_ibuf_sr_send_release);
       }
-      sctk_nodebug("Buffer %p free (%d)", ibuf, ibuf->in_srq);
     }
   } else {
     not_reachable();
   }
-  PROF_TIME_END(rail_ib->rail, ib_ibuf_release);
 }
 
 
+    static int toto = 0;
 void sctk_ibuf_prepare(sctk_ib_rail_info_t* rail_ib, sctk_ib_qp_t *remote,
     sctk_ibuf_t* ibuf, size_t size) {
 
@@ -587,6 +593,7 @@ void sctk_ibuf_recv_init(sctk_ibuf_t* ibuf)
 
   ibuf->to_release = IBUF_RELEASE;
   ibuf->in_srq = 1;
+  ibuf->send_imm_data = 0;
   /* For the SRQ, remote is set to 'NULL' as it is shared
    * between all processes */
   ibuf->remote = NULL;
@@ -612,6 +619,7 @@ void sctk_ibuf_barrier_send_init(sctk_ibuf_t* ibuf, void* local_address,
 
   ibuf->to_release = IBUF_RELEASE;
   ibuf->in_srq = 0;
+  ibuf->send_imm_data = 0;
 
   ibuf->desc.wr.send.next = NULL;
   ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE;
@@ -648,6 +656,7 @@ int sctk_ibuf_send_inline_init(
   }
 
   ibuf->in_srq = 0;
+  ibuf->send_imm_data = 0;
   ibuf->to_release = IBUF_RELEASE;
   ibuf->desc.wr.send.next = NULL;
   ibuf->desc.wr.send.opcode = IBV_WR_SEND;
@@ -668,6 +677,7 @@ void sctk_ibuf_send_init(
     sctk_ibuf_t* ibuf, size_t size)
 {
   ibuf->in_srq = 0;
+  ibuf->send_imm_data = 0;
   ibuf->to_release = IBUF_RELEASE;
   ibuf->desc.wr.send.next = NULL;
   ibuf->desc.wr.send.opcode = IBV_WR_SEND;
@@ -704,6 +714,7 @@ int sctk_ibuf_rdma_write_init(
   }
 
   ibuf->in_srq = 0;
+  ibuf->send_imm_data = 0;
   ibuf->to_release = to_release;
   ibuf->desc.wr.send.next = NULL;
   ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE;
@@ -725,7 +736,7 @@ int sctk_ibuf_rdma_write_init(
 int sctk_ibuf_rdma_write_with_imm_init(
     sctk_ibuf_t* ibuf, void* local_address,
     sctk_uint32_t lkey, void* remote_address, sctk_uint32_t rkey,
-    int len, sctk_uint32_t imm_data)
+    int len, char to_release, sctk_uint32_t imm_data)
 {
   LOAD_CONFIG(ibuf->region->rail);
   int is_inlined = 0;
@@ -741,10 +752,10 @@ int sctk_ibuf_rdma_write_with_imm_init(
   }
 
   ibuf->in_srq = 0;
-  ibuf->to_release = IBUF_DO_NOT_RELEASE;
+  ibuf->send_imm_data = imm_data;
+  ibuf->to_release = to_release;
   ibuf->desc.wr.send.next = NULL;
   ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE_WITH_IMM;
-//  ibuf->desc.wr.send.opcode = IBV_WR_RDMA_WRITE;
   ibuf->desc.wr.send.wr_id = (uintptr_t) ibuf;
 
   ibuf->desc.wr.send.num_sge = 1;
@@ -768,6 +779,7 @@ void sctk_ibuf_rdma_read_init(
     int len, void* supp_ptr)
 {
   ibuf->in_srq = 0;
+  ibuf->send_imm_data = 0;
   ibuf->to_release = IBUF_RELEASE;
   ibuf->desc.wr.send.next = NULL;
   ibuf->desc.wr.send.opcode = IBV_WR_RDMA_READ;

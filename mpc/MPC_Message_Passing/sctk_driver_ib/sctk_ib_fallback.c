@@ -37,6 +37,7 @@
 #include <sctk_ib_config.h>
 #include "sctk_ib_qp.h"
 #include "sctk_ib_cm.h"
+#include "sctk_ib_topology.h"
 #include "sctk_ib_eager.h"
 #include "sctk_ib_polling.h"
 #include "sctk_ib_async.h"
@@ -165,7 +166,7 @@ static int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
   assume(IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL);
   if(release_ibuf) {
     /* sctk_ib_qp_release_entry(&rail->network.ib, ibuf->remote); */
-    sctk_ibuf_release(rail_ib, ibuf);
+    sctk_ibuf_release(rail_ib, ibuf, 1);
   } else {
     sctk_ibuf_release_from_srq(rail_ib, ibuf);
   }
@@ -215,7 +216,7 @@ static int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
 
   if (release_ibuf) {
     /* sctk_ib_qp_release_entry(&rail->network.ib, ibuf->remote); */
-    sctk_ibuf_release(&rail->network.ib, ibuf);
+    sctk_ibuf_release(&rail->network.ib, ibuf, 1);
   } else {
     sctk_ibuf_release_from_srq(&rail->network.ib, ibuf);
   }
@@ -246,36 +247,11 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,
   return sctk_network_poll_send_ibuf(rail, ibuf, 0, poll);
 }
 
-static sctk_spinlock_t polling_lock = SCTK_SPINLOCK_INITIALIZER;
-/* Count how many times the vp is entered to the polling function. We
- * allow recursive calls to the polling function */
-static __thread int recursive_polling = 0;
 
-#if 0
-static int sctk_network_poll_all (sctk_rail_info_t* rail) 
+static int sctk_network_poll_all (sctk_rail_info_t* rail)
 {
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  LOAD_CONFIG(rail_ib);
-  LOAD_DEVICE(rail_ib);
-  sctk_ib_polling_t poll;
-  POLL_INIT(&poll);
-
-  /* Only one task is allowed to poll new messages from QP */
-  if ( recursive_polling || (sctk_spinlock_trylock(&polling_lock) == 0) )
-  {
-    recursive_polling++;
-    /* Poll received messages */
-    sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, &poll, sctk_network_poll_recv);
-    /* Poll sent messages */
-    sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, &poll, sctk_network_poll_send);
-    if (recursive_polling == 0) {
-      sctk_spinlock_unlock(&polling_lock);
-    }
-  }
-
-  return poll.recv_found_own;
+  return 0;
 }
-#endif
 
 static void
 sctk_network_notify_recv_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){ }
@@ -285,13 +261,13 @@ sctk_network_notify_matching_message_ib (sctk_thread_ptp_message_t * msg,sctk_ra
 
 /* WARNING: This function can be called with dest == sctk_process_rank */
 static void
-sctk_network_notify_perform_message_ib (int remote_process, int remote_task_id, int polling_task_id, sctk_rail_info_t* rail){}
+sctk_network_notify_perform_message_ib (int remote_process, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t* rail){}
 
 static void
 sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){}
 
 static void
-sctk_network_notify_any_source_message_ib (int polling_task_id, sctk_rail_info_t* rail){}
+sctk_network_notify_any_source_message_ib (int polling_task_id, int blocking, sctk_rail_info_t* rail){}
 
 static void
 sctk_network_connection_to_ib(int from, int to,sctk_rail_info_t* rail){
@@ -330,7 +306,7 @@ sctk_ib_fallback_send_polling_thread(void *arg) {
     POLL_INIT(&poll);
     sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, &poll, sctk_network_poll_send);
   }
-  return (void *)0;
+  return NULL;
 }
 
 static void *
@@ -358,9 +334,10 @@ sctk_ib_fallback_recv_polling_thread(void *arg) {
     POLL_INIT(&poll);
     sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, &poll, sctk_network_poll_recv);
   }
-  return (void *)0;
+  return NULL;
 }
-static void
+
+void
 sctk_ib_fallback_init_polling_threads(sctk_rail_info_t* rail) {
   sctk_thread_t pidt;
   sctk_thread_attr_t attr;
@@ -374,7 +351,31 @@ sctk_ib_fallback_init_polling_threads(sctk_rail_info_t* rail) {
 //#warning "Join threads"
 }
 
-void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
+void sctk_network_initialize_leader_task_fallback_ib(sctk_rail_info_t* rail) {
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  sctk_ibuf_srq_check_and_post(rail_ib);
+  /* Initialize Async thread */
+  sctk_ib_async_init(rail_ib->rail);
+
+  LOAD_CONFIG(rail_ib);
+  LOAD_DEVICE(rail_ib);
+  struct ibv_srq_attr mod_attr;
+  int rc;
+  mod_attr.srq_limit  = config->ibv_srq_credit_thread_limit;
+  rc = ibv_modify_srq(device->srq, &mod_attr, IBV_SRQ_LIMIT);
+  assume(rc == 0);
+
+  sctk_ib_fallback_init_polling_threads(rail_ib->rail);
+}
+
+
+void sctk_network_initialize_task_fallback_ib(sctk_rail_info_t* rail) {
+}
+
+void sctk_network_finalize_task_fallback_ib(sctk_rail_info_t* rail) {
+}
+
+void sctk_network_init_fallback_ib(sctk_rail_info_t* rail, int ib_rail_nb){
   /* XXX: memory never freed */
   char *network_name = sctk_malloc(256);
 
@@ -382,6 +383,7 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   memset(rail_ib, 0, sizeof(sctk_ib_rail_info_t));
   rail_ib->rail = rail;
+  rail_ib->rail_nb = ib_rail_nb;
   /* Profiler init */
   sctk_ib_device_t *device;
   struct ibv_srq_init_attr srq_attr;
@@ -389,7 +391,7 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   sctk_ib_config_init(rail_ib, "fallback");
   /* Open device */
   device = sctk_ib_device_init(rail_ib);
-  sctk_ib_device_open(rail_ib, 0);
+  sctk_ib_device_open(rail_ib, -1);
   /* Init Proctection Domain */
   sctk_ib_pd_init(device);
   /* Init Completion Queues */
@@ -406,26 +408,17 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   if (sctk_get_verbosity() >= 2) {
     sctk_ib_config_print(rail_ib);
   }
-  sctk_ib_mmu_init(rail_ib);
-  sctk_ibuf_pool_init(rail_ib);
-  /* Fill SRQ with buffers */
-  sctk_ibuf_srq_check_and_post(rail_ib, rail_ib->config->ibv_max_srq_ibufs_posted);
-  /* Initialize Async thread */
-  sctk_ib_async_init(rail);
-
-  LOAD_CONFIG(rail_ib);
-  struct ibv_srq_attr mod_attr;
-  int rc;
-  mod_attr.srq_limit  = config->ibv_srq_credit_thread_limit;
-  rc = ibv_modify_srq(device->srq, &mod_attr, IBV_SRQ_LIMIT);
-  assume(rc == 0);
-
-  sctk_ib_fallback_init_polling_threads(rail);
+  sctk_ib_topology_init(rail_ib);
 
   /* Initialize network */
-  sprintf(network_name, "IB-MT (v2.0) Fallback %d/%d:%s - %dx %s (%d Gb/s)]",
+  int init_cpu = sctk_get_cpu();
+  sprintf(network_name, "IB-MT (v2.0) Fallback %d/%d:%s - %dx %s (%d Gb/s) - %d]",
     device->dev_index+1, device->dev_nb, ibv_get_device_name(device->dev),
-    device->link_width, device->link_rate, device->data_rate);
+    device->link_width, device->link_rate, device->data_rate, init_cpu);
+
+  rail->initialize_task = sctk_network_initialize_task_fallback_ib;
+  rail->initialize_leader_task = sctk_network_initialize_leader_task_fallback_ib;
+  rail->finalize_task = sctk_network_finalize_task_fallback_ib;
 
   rail->connect_to = sctk_network_connection_to_ib;
   rail->connect_from = sctk_network_connection_from_ib;

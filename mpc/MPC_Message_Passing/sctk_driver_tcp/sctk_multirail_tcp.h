@@ -29,8 +29,8 @@ extern "C"
 
 #include <sctk_spinlock.h>
 
-void sctk_network_init_multirail_tcp(int rail_id);
-void sctk_network_init_multirail_tcpoib(int rail_id);
+void sctk_network_init_multirail_tcp(int rail_id, int max_rails);
+void sctk_network_init_multirail_tcpoib(int rail_id, int max_rails);
 
 #ifdef __cplusplus
 }

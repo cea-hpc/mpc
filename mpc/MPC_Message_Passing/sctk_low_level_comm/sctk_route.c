@@ -388,8 +388,12 @@ sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail){
       tmp = sctk_ib_cm_on_demand_request(dest,rail);
       assume(tmp);
       /* If route not connected, so we wait for until it is connected */
-      if (sctk_route_get_state(tmp) != state_connected) {
-        __wait_state(rail, tmp, state_connected);
+      while (sctk_route_get_state(tmp) != state_connected) {
+        sctk_network_notify_idle_message();
+        if (sctk_route_get_state(tmp) != state_connected) {
+          sctk_thread_yield();
+        }
+//        __wait_state(rail, tmp, state_connected);
       }
 
       sctk_nodebug("Connected to process %d", dest);
@@ -558,12 +562,14 @@ void sctk_route_fully_init(sctk_rail_info_t* rail){
 	    tmp = sctk_get_route_to_process_no_route(to,rail);
 	    if(tmp == NULL){
 	      rail->connect_from(from,to,rail);
+        SCTK_COUNTER_INC(signalization_endpoints, 1);
 	    }
 	  }
 	  if(to == sctk_process_rank){
 	    tmp = sctk_get_route_to_process_no_route(from,rail);
 	    if(tmp == NULL){
 	      rail->connect_to(from,to,rail);
+        SCTK_COUNTER_INC(signalization_endpoints, 1);
 	    }
 	  }
 	}
@@ -722,14 +728,24 @@ inline int sctk_Node_distance (int a, int b ,unsigned sdim)
 
 
 unsigned sctk_Torus_dim_set(int node_count){
+TODO("Must be moved to the MPC configuration")
 	unsigned dim = 1;
-	while(pow(MIN_SIZE_DIM,dim+1) <= node_count){
-		dim++;
-		if(dim > MAX_SCTK_FAST_NODE_DIM){
-			sctk_nodebug("\nWARNING : the dimension was set at the maximum (%d) because of the number of nodes which is too big.\nThe size of each dimension may be high\n",MAX_SCTK_FAST_NODE_DIM);
-			return MAX_SCTK_FAST_NODE_DIM;
-		}
-	}
+  char * env;
+
+  if ( (env = getenv("MPC_TORUS_DIMS")) != NULL) {
+    dim = atoi(env);
+    sctk_warning("Torus dimension manually set to %d", dim);
+  } else {
+    while(pow(MIN_SIZE_DIM,dim+1) <= node_count){
+      dim++;
+    }
+  }
+
+  /* Sanity check */
+  if(dim > MAX_SCTK_FAST_NODE_DIM){
+    sctk_nodebug("\nWARNING : the dimension was set at the maximum (%d) because of the number of nodes which is too big.\nThe size of each dimension may be high\n",MAX_SCTK_FAST_NODE_DIM);
+    return MAX_SCTK_FAST_NODE_DIM;
+  }
 
 	return dim;
 }
@@ -1314,6 +1330,7 @@ void sctk_route_torus_init(sctk_rail_info_t* rail){
 								rail->connect_from(me,neigh,rail);
 							else
 								rail->connect_to(neigh,me,rail);
+              SCTK_COUNTER_INC(signalization_endpoints, 1);
 						}
 
 
@@ -1343,6 +1360,7 @@ void sctk_route_torus_init(sctk_rail_info_t* rail){
 								rail->connect_from(me,neigh,rail);
 							else
 								rail->connect_to(neigh,me,rail);
+              SCTK_COUNTER_INC(signalization_endpoints, 1);
 						}
 					}
 					node.c[i] = current_coord;

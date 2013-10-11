@@ -94,7 +94,7 @@ kthread_create_start_routine (void *t_arg)
   memcpy(&slot,t_arg,sizeof(kthread_create_start_t));
   ((kthread_create_start_t*)t_arg)->started = 1;
 
-  //avoir to create an allocation chain 
+  //avoir to create an allocation chain
   sctk_alloc_posix_plug_on_egg_allocator();
 
   sem_init(&(slot.sem), 0,0);

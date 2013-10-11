@@ -31,7 +31,7 @@ MonoAssembly *assembly;
 MonoDomain *domain;
 #endif
 
-
+#include <sctk_low_level_comm.h>
 #ifdef MPC_USE_INFINIBAND
 #include <sctk_ib_cp.h>
 #endif
@@ -594,6 +594,29 @@ sctk_thread_get_vp ()
   return __sctk_ptr_thread_get_vp ();
 }
 
+/* Register, unregister running thread */
+volatile int sctk_current_local_tasks_nb = 0;
+sctk_thread_mutex_t sctk_current_local_tasks_lock =
+  SCTK_THREAD_MUTEX_INITIALIZER;
+
+void sctk_unregister_task (const int i){
+  sctk_thread_mutex_lock (&sctk_current_local_tasks_lock);
+  sctk_current_local_tasks_nb--;
+  sctk_thread_mutex_unlock (&sctk_current_local_tasks_lock);
+}
+
+void sctk_register_task (const int i){
+  sctk_thread_mutex_lock (&sctk_current_local_tasks_lock);
+  sctk_current_local_tasks_nb++;
+  sctk_thread_mutex_unlock (&sctk_current_local_tasks_lock);
+}
+
+/* Return the number of running tasks (i.e tasks already registered) */
+int sctk_thread_get_current_local_tasks_nb() {
+  return sctk_current_local_tasks_nb;
+}
+
+
 static void *
 sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 {
@@ -601,6 +624,11 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   sctk_thread_data_t tmp;
   struct _sctk_thread_cleanup_buffer *ptr_cleanup;
   tmp = *__arg;
+
+  /* Bind the thread to the right core if we are using pthreads */
+  if (sctk_get_thread_val() == sctk_pthread_thread_init) {
+    sctk_bind_to_cpu (tmp.bind_to);
+  }
 
   //mark the given TLS as currant thread allocator
   sctk_set_tls (tmp.tls);
@@ -687,7 +715,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
 #ifdef MPC_USE_INFINIBAND
       sctk_network_finalize_task_multirail_ib (tmp.task_id);
 #endif
-      sctk_unregister_thread (tmp.task_id);
+      sctk_unregister_task (tmp.task_id);
       sctk_net_send_task_end (tmp.task_id, sctk_process_rank);
     }
   else
@@ -695,9 +723,9 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
       not_reachable ();
     }
 #else
-  sctk_thread_mutex_lock (&sctk_total_number_of_tasks_lock);
-  sctk_total_number_of_tasks--;
-  sctk_thread_mutex_unlock (&sctk_total_number_of_tasks_lock);
+  sctk_thread_mutex_lock (&sctk_current_local_tasks_nb_lock);
+  sctk_current_local_tasks_nb--;
+  sctk_thread_mutex_unlock (&sctk_current_local_tasks_nb_lock);
 #endif
 
   sctk_thread_remove (&tmp);
@@ -716,7 +744,17 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
   int res;
   sctk_thread_data_t *tmp;
   struct sctk_alloc_chain *tls;
+  int previous_binding;
+  static unsigned int core = 0;
+  int new_binding;
 
+  /* We bind the parent thread to the vp where the child
+   * will be created. We must bind before calling
+   * __sctk_crete_thread_memory_area(). The child thread
+   * will be bound to the same core after its creation */
+  new_binding = sctk_get_init_vp (core);
+  core++;
+  previous_binding = sctk_bind_to_cpu (new_binding);
 
   tls = __sctk_create_thread_memory_area ();
   sctk_nodebug ("create tls %p", tls);
@@ -729,6 +767,7 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
   tmp->__arg = __arg;
   tmp->__start_routine = __start_routine;
   tmp->user_thread = 0;
+  tmp->bind_to = new_binding;
 
   tmp->task_id = sctk_safe_cast_long_int (task_id);
   tmp->local_task_id = sctk_safe_cast_long_int (local_task_id);
@@ -737,6 +776,10 @@ sctk_thread_create (sctk_thread_t * restrict __threadp,
 				  sctk_thread_create_tmp_start_routine,
 				  (void *) tmp);
 
+  /* We reset the binding */
+  {
+    sctk_bind_to_cpu(previous_binding);
+  }
 
   sctk_check (res, 0);
   return res;
@@ -747,13 +790,16 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 {
   void *res;
   sctk_thread_data_t tmp;
-  struct _sctk_thread_cleanup_buffer *ptr_cleanup;
+  /* FIXME Intel OMP: at some point, in pthread mode, the ptr_cleanup variable seems to
+   * be corrupted. */
+  struct _sctk_thread_cleanup_buffer ** ptr_cleanup = malloc(
+      sizeof(struct _sctk_thread_cleanup_buffer*));
   tmp = *__arg;
 
 
   sctk_set_tls (tmp.tls);
-  ptr_cleanup = NULL;
-  sctk_thread_setspecific (_sctk_thread_handler_key, &ptr_cleanup);
+  *ptr_cleanup = NULL;
+  sctk_thread_setspecific (_sctk_thread_handler_key, ptr_cleanup);
 
 #ifdef MPC_Message_Passing
   __MPC_reinit_task_specific (tmp.father_data);
@@ -761,7 +807,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
 
   sctk_free (__arg);
   tmp.virtual_processor = sctk_thread_get_vp ();
-  sctk_nodebug ("%d on %d", tmp.task_id, tmp.virtual_processor);
+  sctk_nodebug("%d on %d", tmp.task_id, tmp.virtual_processor);
 
   sctk_thread_data_set (&tmp);
   sctk_thread_add (&tmp,sctk_thread_self());
@@ -787,6 +833,7 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   sctk_report_creation (sctk_thread_self());
   /** **/
 
+
 #ifdef MPC_Message_Passing
    __MPC_init_thread_specific();
 #endif
@@ -801,12 +848,76 @@ sctk_thread_create_tmp_start_routine_user (sctk_thread_data_t * __arg)
   sctk_report_death (sctk_thread_self());
   /** **/
 
-
+  sctk_free(ptr_cleanup);
   sctk_thread_remove (&tmp);
   sctk_thread_data_set (NULL);
   sctk_extls_delete ();
   return res;
 }
+
+
+/*
+ * Sylvain: the following code was use for creating Intel OpenMP threads with MPC.
+ * The TLS variables are automatically recopied into the OpenMP threads
+ * */
+#if 0
+#include <dlfcn.h>
+#define LIB "/lib64/libpthread.so.0"
+
+int sctk_real_pthread_create (pthread_t  *thread,
+    __const pthread_attr_t *attr, void * (*start_routine)(void *), void *arg) {
+  static void *handle = NULL;
+  static int (*real_pthread_create)(pthread_t  *,
+      __const pthread_attr_t *,
+      void * (*)(void *), void *) = NULL;
+
+  if (real_pthread_create == NULL)
+  {
+    handle = dlopen(LIB,RTLD_LAZY);
+    if (handle == NULL)
+    {
+      fprintf(stderr,"dlopen(%s) failed\n",LIB);
+      exit(1);
+    }
+    real_pthread_create = dlsym(handle,"pthread_create");
+    if (real_pthread_create == NULL)
+    {
+      fprintf(stderr,"dlsym(%s) failed\n","pthread_create");
+      exit(1);
+    }
+  }
+  real_pthread_create(thread, attr, start_routine, arg);
+}
+
+__thread pthread_t *sctk_pthread_bypass_thread = NULL;
+int sctk_pthread_bypass_create(pthread_t  *thread,
+    __const pthread_attr_t *attr,
+    void * (*start_routine)(void *), void * arg) {
+  int ret;
+  int recursive = 0;
+
+  if (sctk_pthread_bypass_thread == thread) {
+    recursive = 1;
+  }
+
+  sctk_pthread_bypass_thread = thread;
+
+  /* Check if we are trying to create a thread previously passed here */
+
+  sctk_warning("PTHREAD CREATE %p!!", thread);
+  if (sctk_thread_data_get()->task_id == -1 || recursive) {
+    sctk_warning("NOT MPI task creates a thread",sctk_thread_data_get()->task_id);
+    ret=sctk_real_pthread_create(thread,attr, start_routine, arg);
+  } else {
+    sctk_net_set_mode_hybrid();
+    sctk_warning("MPI task %d creates a thread",sctk_thread_data_get()->task_id);
+//	  sctk_thread_attr_setscope (attr, SCTK_THREAD_SCOPE_SYSTEM);
+  	ret=sctk_user_thread_create (thread, attr, start_routine, arg);
+  }
+  sctk_pthread_bypass_thread = NULL;
+  return ret;
+}
+#endif
 
 int
 sctk_user_thread_create (sctk_thread_t * restrict __threadp,
@@ -851,6 +962,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
     {
       tmp->task_id = tmp_father->task_id;
     }
+  sctk_debug("Create Thread with MPI rank %d", tmp->task_id);
 
 #ifndef NO_INTERNAL_ASSERT
   if (__attr != NULL)
@@ -945,7 +1057,7 @@ sctk_thread_exit_cleanup ()
 	  sctk_nodebug ("sctk_terminaison_barrier");
 	  sctk_terminaison_barrier (tmp->task_id);
 	  sctk_nodebug ("sctk_terminaison_barrier done");
-	  sctk_unregister_thread (tmp->task_id);
+	  sctk_unregister_task (tmp->task_id);
 	  sctk_net_send_task_end (tmp->task_id, sctk_process_rank);
 	}
 #endif
@@ -1823,10 +1935,6 @@ sctk_thread_data_get ()
   return tmp;
 }
 
-volatile int sctk_total_number_of_tasks = 0;
-sctk_thread_mutex_t sctk_total_number_of_tasks_lock =
-  SCTK_THREAD_MUTEX_INITIALIZER;
-
 #if 0
 static void
 sctk_net_poll (void *arg)
@@ -1898,23 +2006,19 @@ sctk_get_init_vp (int i)
   int first;
   int last;
   int cpu_nb;
-  int THREAD_NUMBER;
+  int total_tasks_number;
   int cpu_per_task;
   int j;
 
   cpu_nb = sctk_get_cpu_number ();
 
-#ifdef MPC_Message_Passing
-  THREAD_NUMBER = sctk_get_nb_task_total (SCTK_COMM_WORLD);
-#else
-  THREAD_NUMBER = 1;
-#endif
+  total_tasks_number = sctk_get_total_tasks_number();
 
 /*   rank_in_node = i - sctk_first_local; */
 
 /*   sctk_nodebug("check for %d(%d) %d cpu",i,rank_in_node,cpu_nb); */
 
-  assume ((sctk_last_local != 0) || (THREAD_NUMBER == 1)
+  assume ((sctk_last_local != 0) || (total_tasks_number == 1)
 	  || (sctk_process_rank == 0));
 
   task_nb = sctk_last_local - sctk_first_local + 1;
@@ -2050,7 +2154,7 @@ void
 sctk_start_func (void *(*run) (void *), void *arg)
 {
 	int i, cnt;
-	int THREAD_NUMBER;
+	int total_tasks_number;
 	int local_threads;
 	int start_thread;
 	kthread_t timer_thread;
@@ -2087,14 +2191,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
   sctk_profiler_array_init_parent_keys();
 #endif
 
-#ifdef MPC_Message_Passing
-	THREAD_NUMBER = sctk_get_nb_task_total (SCTK_COMM_WORLD);
-#else
-	THREAD_NUMBER = 1;
-#endif
-
-	sctk_total_number_of_tasks = THREAD_NUMBER;
-	sctk_nodebug("sctk_total_number_of_tasks %d",sctk_total_number_of_tasks);
+	total_tasks_number = sctk_get_total_tasks_number();
 
 	sctk_mono_init (sctk_mono_bin);
 
@@ -2153,14 +2250,14 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	if (sctk_restart_mode == 0)
 	{
 		sctk_leave_no_alloc_land ();
-		local_threads = THREAD_NUMBER / sctk_process_number;
+		local_threads = total_tasks_number / sctk_process_number;
 
-		if (THREAD_NUMBER % sctk_process_number > sctk_process_rank)
+		if (total_tasks_number % sctk_process_number > sctk_process_rank)
 			local_threads++;
 
 		start_thread = local_threads * sctk_process_rank;
-		if (THREAD_NUMBER % sctk_process_number <= sctk_process_rank)
-			start_thread += THREAD_NUMBER % sctk_process_number;
+		if (total_tasks_number % sctk_process_number <= sctk_process_rank)
+			start_thread += total_tasks_number % sctk_process_number;
 
 		sctk_nodebug ("Process %d %d-%d", sctk_process_rank,
 			start_thread, start_thread + local_threads - 1);
@@ -2178,7 +2275,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 		sctk_last_local = start_thread + local_threads - 1;
 		threads =
 		(sctk_thread_t *) sctk_malloc (local_threads * sizeof (sctk_thread_t));
-		sctk_total_number_of_tasks = local_threads;
+		sctk_current_local_tasks_nb = local_threads;
 
 		cnt = 0;
 
@@ -2219,12 +2316,12 @@ sctk_start_func (void *(*run) (void *), void *arg)
 			abort ();
 		}
 
-		  sctk_nodebug ("Total task number = %d", THREAD_NUMBER);
+		  sctk_nodebug ("Total task number = %d", total_tasks_number);
 
 		check:
-		sctk_total_number_of_tasks = 0;
+		sctk_current_local_tasks_nb = 0;
 
-		for (i = 0; i < THREAD_NUMBER; i++)
+		for (i = 0; i < total_tasks_number; i++)
 		{
 			char file_name[SCTK_MAX_FILENAME_SIZE];
 			int restart = 0;
@@ -2275,7 +2372,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 		{
 			fprintf (stderr, "Restore dynamic allocations ");
 		}
-		for (i = 0; i < THREAD_NUMBER; i++)
+		for (i = 0; i < total_tasks_number; i++)
 		{
 			int restart = 0;
 			int proc = 0;
@@ -2316,7 +2413,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 			fprintf (stderr, "Restore tasks ");
 		}
 
-		for (i = 0; i < THREAD_NUMBER; i++)
+		for (i = 0; i < total_tasks_number; i++)
 		{
 			int restart = 0;
 			int proc = 0;
@@ -2334,9 +2431,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 			self_p, vp);
 
 #ifdef MPC_Message_Passing
-			sctk_thread_mutex_lock (&sctk_total_number_of_tasks_lock);
-			sctk_total_number_of_tasks++;
-			sctk_thread_mutex_unlock (&sctk_total_number_of_tasks_lock);
+      sctk_register_task(i);
 			sctk_register_restart_thread (i, proc);
 #endif
 
@@ -2368,7 +2463,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 #endif
 	}
 
-	sctk_nodebug("sctk_total_number_of_tasks %d",sctk_total_number_of_tasks);
+	sctk_nodebug("sctk_current_local_tasks_nb %d",sctk_current_local_tasks_nb);
 
 	__sctk_profiling__end__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
 	if (sctk_process_rank == 0)
@@ -2379,7 +2474,7 @@ sctk_start_func (void *(*run) (void *), void *arg)
 		}
 	}
 
-	sctk_thread_wait_for_value_and_poll ((int *) &sctk_total_number_of_tasks, 0, NULL, NULL);
+	sctk_thread_wait_for_value_and_poll ((int *) &sctk_current_local_tasks_nb, 0, NULL, NULL);
 
 	sctk_multithreading_initialised = 0;
 

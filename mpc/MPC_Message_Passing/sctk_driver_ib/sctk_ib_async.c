@@ -47,7 +47,7 @@
  *  CONSTS
  *----------------------------------------------------------*/
 #define DESC_EVENT(config, event, desc, level, fatal)  do { \
-  if ( ((level != -1) && (level <= (config)->ibv_verbose_level)) || fatal) \
+  if ( (level != -1) && ( (level <= (config)->ibv_verbose_level) || fatal )) \
     sctk_ib_debug(event":\t"desc); \
   if (fatal) sctk_abort(); \
   } while(0)
@@ -136,7 +136,7 @@ void* async_thread(void* arg)
 
         /* event triggered when the limit given by ibv_srq_credit_thread_limit is reached */
       case IBV_EVENT_SRQ_LIMIT_REACHED:
-        DESC_EVENT(config, "IBV_EVENT_SRQ_LIMIT_REACHED","SRQ limit was reached", 4, 0);
+        DESC_EVENT(config, "IBV_EVENT_SRQ_LIMIT_REACHED","SRQ limit was reached", 1, 0);
 
         sctk_ib_low_mem_broadcast(rail);
 
@@ -170,7 +170,13 @@ void* async_thread(void* arg)
 #endif
 
         /* We re-arm the limit for the SRQ. */
+        config->ibv_max_srq_ibufs_posted += 50;
+        sctk_ibuf_srq_check_and_post(rail_ib);
+
+        config->ibv_srq_credit_limit = config->ibv_max_srq_ibufs_posted / 2;
         mod_attr.srq_limit    = config->ibv_srq_credit_thread_limit;
+        sctk_debug("Update with max_qr %d and srq_limit %d",
+            config->ibv_max_srq_ibufs_posted, mod_attr.srq_limit);
         rc = ibv_modify_srq(device->srq, &mod_attr, IBV_SRQ_LIMIT);
         assume(rc == 0);
         break;

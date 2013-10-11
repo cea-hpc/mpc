@@ -77,7 +77,7 @@ struct sctk_ibuf_s;
 int sctk_ib_buffered_prepare_msg(struct sctk_rail_info_s *rail,
     struct sctk_ib_qp_s* remote, struct sctk_thread_ptp_message_s * msg, size_t size);
 
-int sctk_ib_buffered_poll_recv(struct sctk_rail_info_s* rail, struct sctk_ibuf_s *ibuf);
+void sctk_ib_buffered_poll_recv(struct sctk_rail_info_s* rail, struct sctk_ibuf_s *ibuf);
 
 #endif
 #endif

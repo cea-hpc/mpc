@@ -44,17 +44,38 @@
  *----------------------------------------------------------*/
 /* For RDMA connection */
 /* FOR PAPER */
-#define IBV_RDMA_MIN_SIZE (2 * 1024)
-#define IBV_RDMA_MAX_SIZE (12 * 1024)
-#define IBV_RDMA_MIN_NB (16)
-#define IBV_RDMA_MAX_NB (1024)
+//#define IBV_RDMA_MIN_SIZE (2 * 1024)
+//#define IBV_RDMA_MAX_SIZE (32 * 1024)
+//#define IBV_RDMA_MIN_NB (16)
+//#define IBV_RDMA_MAX_NB (1024)
+
+#define IBV_RDMA_MIN_SIZE (3*1024)
+#define IBV_RDMA_MAX_SIZE (3*1024)
+#define IBV_RDMA_MIN_NB (2048)
+#define IBV_RDMA_MAX_NB (2048)
+
+//#define IBV_RDMA_MIN_SIZE (1*1024)
+//#define IBV_RDMA_MAX_SIZE (128*1024)
+//#define IBV_RDMA_MIN_NB (2)
+//#define IBV_RDMA_MAX_NB (16384)
+
+/*  BEST RDMA on CURIE */
+//#define IBV_RDMA_MIN_SIZE (32 * 1024)
+//#define IBV_RDMA_MAX_SIZE (32 * 1024)
+//#define IBV_RDMA_MIN_NB (128)
+//#define IBV_RDMA_MAX_NB (128)
 
 /* For RDMA resizing */
 /* FOR PAPER */
-#define IBV_RDMA_RESIZING_MIN_SIZE (2 * 1024)
-#define IBV_RDMA_RESIZING_MAX_SIZE (12 * 1024)
-#define IBV_RDMA_RESIZING_MIN_NB (16)
-#define IBV_RDMA_RESIZING_MAX_NB (1024)
+//#define IBV_RDMA_RESIZING_MIN_SIZE (2 * 1024)
+//#define IBV_RDMA_RESIZING_MAX_SIZE (12 * 1024)
+//#define IBV_RDMA_RESIZING_MIN_NB (16)
+//#define IBV_RDMA_RESIZING_MAX_NB (1024)
+
+#define IBV_RDMA_RESIZING_MIN_SIZE (1*1024)
+#define IBV_RDMA_RESIZING_MAX_SIZE (128 * 1024)
+#define IBV_RDMA_RESIZING_MIN_NB (2)
+#define IBV_RDMA_RESIZING_MAX_NB (16384)
 
 char* steal_names[2] = {
   "Normal mode",
@@ -108,9 +129,11 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         "ibv_max_sg_rq        = %d\n"
         "ibv_max_inline       = %d\n"
         "ibv_init_ibufs        = %d\n"
+        "ibv_init_recv_ibufs        = %d\n"
         "ibv_max_srq_ibufs_posted    = %d\n"
         "ibv_max_srq_ibufs    = %d\n"
         "ibv_size_ibufs_chunk = %d\n"
+        "ibv_size_recv_ibufs_chunk = %d\n"
         "ibv_srq_credit_limit = %d\n"
         "ibv_srq_credit_thread_limit = %d\n"
         "ibv_rdvz_protocol    = %d\n"
@@ -149,9 +172,11 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         config->ibv_max_sg_rq,
         config->ibv_max_inline,
         config->ibv_init_ibufs,
+        config->ibv_init_recv_ibufs,
         config->ibv_max_srq_ibufs_posted,
         config->ibv_max_srq_ibufs,
         config->ibv_size_ibufs_chunk,
+        config->ibv_size_recv_ibufs_chunk,
         config->ibv_srq_credit_limit,
         config->ibv_srq_credit_thread_limit,
         config->ibv_rdvz_protocol,
@@ -221,6 +246,10 @@ static void load_ib_load_config(sctk_ib_rail_info_t *rail_ib)
   config->ibv_rdma_resizing_max_size = IBV_RDMA_RESIZING_MAX_SIZE;
   config->ibv_rdma_resizing_min_nb = IBV_RDMA_RESIZING_MIN_NB;
   config->ibv_rdma_resizing_max_nb = IBV_RDMA_RESIZING_MAX_NB;
+
+  TODO("Move to configuration file");
+  config->ibv_init_recv_ibufs = 10000;
+  config->ibv_size_recv_ibufs_chunk = 1000;
 }
 
 #if 0

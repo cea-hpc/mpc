@@ -154,6 +154,12 @@ void *sctk_malloc_on_node (size_t size, int node);
 void sctk_init_alloc (void);
 char *sctk_alloc_mode (void);
 
+/*******************  FUNCTION  *********************/
+//mmap-related functions
+void *sctk_user_mmap (void *start, size_t length, int prot, int flags, int fd, off_t offset);
+int  sctk_user_munmap (void *start, size_t length);
+void *sctk_user_mremap (void *old_address, size_t old_size, size_t new_size, int flags);
+
 #ifdef __cplusplus
 }/* end of extern "C" */
 #endif

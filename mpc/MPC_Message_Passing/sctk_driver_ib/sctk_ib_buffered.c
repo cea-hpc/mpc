@@ -27,6 +27,7 @@
 #include "sctk_ib.h"
 #include "sctk_ib_buffered.h"
 #include "sctk_ib_polling.h"
+#include "sctk_ib_topology.h"
 #include "sctk_ibufs.h"
 #include "sctk_route.h"
 #include "sctk_ib_mmu.h"
@@ -93,7 +94,7 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
   /* While it reamins slots to copy */
   do {
     size_t ibuf_size = ULONG_MAX;
-    ibuf = sctk_ibuf_pick_send(rail_ib, remote, &ibuf_size, ibuf_node_task);
+    ibuf = sctk_ibuf_pick_send(rail_ib, remote, &ibuf_size);
     ib_assume(ibuf);
 
     size_t buffer_size = ibuf_size;
@@ -130,7 +131,7 @@ int sctk_ib_buffered_prepare_msg(sctk_rail_info_t* rail,
     msg_copied += payload_size;
 
     IBUF_SET_DEST_TASK(ibuf->buffer, msg->sctk_msg_get_glob_destination);
-    IBUF_SET_SRC_TASK(ibuf, msg->sctk_msg_get_glob_source);
+    IBUF_SET_SRC_TASK(ibuf->buffer, msg->sctk_msg_get_glob_source);
 
     /* Recalculate size and send */
     sctk_ibuf_prepare(rail_ib, remote, ibuf, payload_size + IBUF_GET_BUFFERED_SIZE);
@@ -285,7 +286,7 @@ sctk_ib_buffered_get_entry(sctk_rail_info_t* rail, sctk_ib_qp_t *remote, sctk_ib
   return entry;
 }
 
-  int
+ void
 sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   sctk_thread_ptp_message_body_t *body;
   sctk_ib_buffered_t *buffered;
@@ -294,7 +295,6 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   sctk_ib_qp_t *remote;
   size_t current_copied;
   int src_process;
-  int ret;
 
   sctk_nodebug("Polled buffered message");
 
@@ -373,6 +373,5 @@ sctk_ib_buffered_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
     }
     sctk_nodebug("Free done:%p", entry);
   }
-  return 0;
 }
 #endif
