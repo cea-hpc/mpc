@@ -35,6 +35,8 @@ void rtdb_bp_creation (void) {}
 void rtdb_bp_death (void) {}
 
 #else
+#ifndef MPC_Debugger
 void rtdb_bp_creation (void) {}
 void rtdb_bp_death (void) {}
+#endif
 #endif
