@@ -1300,7 +1300,7 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
   }
 
   found = SCTK__MPI_Compact_buffer (size, tmp);
-  sctk_debug("found = %d", found);
+  sctk_nodebug("found = %d", found);
   if (found)
   {
     int position = 0;
@@ -1343,18 +1343,18 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
 
 		if(req->persistant.buf == NULL)
 		{
-			sctk_debug("1 : Ibsend with head->request");
+			sctk_nodebug("1 : Ibsend with head->request");
     		res = __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest, tag, comm, &(head->request), 0);
 		}	
 		else
 		{
-			sctk_debug("Ibsend with request");
+			sctk_nodebug("Ibsend with request");
     		res = __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest, tag, comm, request, 1);
 		}
 	}
 	else
 	{
-		sctk_debug("2 : Ibsend with head->request");
+		sctk_nodebug("2 : Ibsend with head->request");
     	res = __INTERNAL__PMPI_Isend_test_req (head_buf, position, MPI_PACKED, dest, tag, comm, &(head->request), 0);
 	}
 		
@@ -1710,7 +1710,7 @@ static int __INTERNAL__PMPI_Wait (MPI_Request * request, MPI_Status * status)
 {
 	int res;
 	MPI_internal_request_t *tmp;
-	sctk_debug("wait request %d", *request);
+	sctk_nodebug("wait request %d", *request);
 	tmp = __sctk_convert_mpc_request_internal(request);
 	res = PMPC_Wait (__sctk_convert_mpc_request (request), status);
 
@@ -2077,7 +2077,7 @@ __INTERNAL__PMPI_Bsend_init (void *buf, int count, MPI_Datatype datatype,
 	int rank;
 	MPI_internal_request_t *req;
 	req = __sctk_new_mpc_request_internal (request);
-	sctk_debug("new request %d", *request);
+	sctk_nodebug("new request %d", *request);
 	if(dest == MPC_PROC_NULL)
 	{
 	  	req->freeable = 0;
@@ -6195,6 +6195,8 @@ __INTERNAL__PMPI_Cart_create (MPI_Comm comm_old, int ndims, int *dims,
 
   for (i = 0; i < ndims; i++)
     {
+	  if(dims[i] <= 0)
+		MPI_ERROR_REPORT (comm_old, MPI_ERR_DIMS, "One of the dimensions is equal or less than zero");
       nb_tasks *= dims[i];
       sctk_nodebug ("dims[%d] = %d", i, dims[i]);
     }
@@ -7050,11 +7052,11 @@ __INTERNAL__PMPI_Cart_sub (MPI_Comm comm, int *remain_dims,
 			if (remain_dims[i] == 0)
 			{
 				nb_comm *= topo->data.cart.dims[i];
-				coords_in_new[i] = 0;
 			}
 			else
 			{
 				ndims++;
+				coords_in_new[i] = 0;
 			}
 		}
 
@@ -7968,7 +7970,7 @@ PMPI_Irecv (void *buf, int count, MPI_Datatype datatype, int source,
 int
 PMPI_Wait (MPI_Request * request, MPI_Status * status)
 {
-	sctk_debug("entering MPI_Wait request = %d", *request);
+	sctk_nodebug("entering MPI_Wait request = %d", *request);
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   
@@ -8011,10 +8013,10 @@ PMPI_Request_free (MPI_Request * request)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_SUCCESS;
   if (NULL == request) {
-    sctk_debug("request NULL");
+    sctk_nodebug("request NULL");
     res = MPI_ERR_REQUEST;
   } else if(MPI_REQUEST_NULL == *request) {
-	sctk_debug("request MPI_REQUEST_NULL");
+	sctk_nodebug("request MPI_REQUEST_NULL");
 	SCTK__MPI_Check_retrun_val (res, comm);  
   } else
 	res = __INTERNAL__PMPI_Request_free (request);
