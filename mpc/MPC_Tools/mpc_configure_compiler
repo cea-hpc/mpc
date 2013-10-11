@@ -398,7 +398,7 @@ echo "#!/bin/sh" > $1
 header_sh >> $1
 
 cat <<EOF >> $1
-ADD_FLAG_PRIVATIZE=""
+ADD_FLAG_PRIVATIZE="$2"
 COMPILER_ARGS=""
 
 for i in \$@ ; do
