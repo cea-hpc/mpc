@@ -20,7 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 #include <stdio.h>
-#include <mpc.h>
+#include <mpcmp.h>
 #include <assert.h>
 
 #define MPC_INTEGER_VAL(sa,a) printf("       INTEGER %s\n       PARAMETER (%s=%d)\n",sa,sa,(int)a)

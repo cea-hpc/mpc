@@ -249,14 +249,16 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
 #define MPI_WIN_NULL_COPY_FN ((MPI_Copy_function *)MPC_Mpi_win_null_copy_fn)
 #define MPI_WIN_DUP_FN ((MPI_Copy_function *)MPC_Mpi_win_dup_fn)
 
-  extern const int MPI_TAG_UB;
-  extern const int MPI_HOST;
-  extern const int MPI_IO;
-  extern const int MPI_WTIME_IS_GLOBAL;
-  extern const int MPI_UNIVERSE_SIZE;
-  extern const int MPI_LASTUSEDCODE;
-  extern const int MPI_APPNUM;
-  extern const MPI_Comm MPI_COMM_SELF;
+#define MPI_COMM_SELF MPC_COMM_SELF
+
+#define MPI_MAX_KEY_DEFINED 7
+#define MPI_TAG_UB 0
+#define MPI_HOST 1
+#define MPI_IO 2
+#define MPI_WTIME_IS_GLOBAL 3
+#define MPI_UNIVERSE_SIZE MPI_KEYVAL_INVALID
+#define MPI_LASTUSEDCODE MPI_KEYVAL_INVALID
+#define MPI_APPNUM MPI_KEYVAL_INVALID
 
 	int MPC_Mpi_null_delete_fn( MPI_Datatype datatype, int type_keyval, void* attribute_val_out, void* extra_state );
 	int MPC_Mpi_null_copy_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void* attribute_val_in, void* attribute_val_out, int* flag );

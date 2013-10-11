@@ -331,13 +331,14 @@ echo "Preparing includes for Fortran"
 for i in $MODULE_LIST; do
 NAME="fortran_header"
 if test "$SCTK_FORTRAN" = "1" && test "$i" = "MPC_Message_Passing"; then
-printf "\t@\$(CC) -g $SCTK_CFLAGS -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME -LINSTALL/lib -lmpc_framework -lmpc_tdb_remote_static $SCTK_LDFLAGS -lm">> Makefile; echo "">> Makefile
-printf "\t@MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) ./$NAME mpc.h > INSTALL/include/mpcf.h">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) -g -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME -DMPC_NO_AUTO_MAIN_REDEF ">> Makefile; echo "">> Makefile
+printf "\t@./$NAME mpc.h > INSTALL/include/mpcf.h">> Makefile; echo "">> Makefile
 
 DIR_TEST="MPC_MPI"
 check_module
 if test "$FOUND" != "" ; then
-printf "\t@MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) ./$NAME mpi.h > INSTALL/include/mpif.h">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) -g -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME -DMPC_NO_AUTO_MAIN_REDEF -DMPC_MPI">> Makefile; echo "">> Makefile
+printf "\t@./$NAME mpi.h > INSTALL/include/mpif.h">> Makefile; echo "">> Makefile
 fi
 
 printf "\t@rm ./$NAME">> Makefile; echo "">> Makefile
