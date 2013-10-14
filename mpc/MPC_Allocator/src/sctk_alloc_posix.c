@@ -89,7 +89,7 @@ static struct sctk_alloc_chain sctk_global_egg_chain;
 /** Define the TLS pointer to the current allocation chain. **/
 #ifdef _WIN32
 	static int sctk_current_alloc_chain = -1;
-#else 
+#else
 	__thread struct sctk_alloc_chain * sctk_current_alloc_chain = NULL;
 #endif
 
@@ -292,11 +292,11 @@ SCTK_STATIC int sctk_alloc_posix_source_round_robin(void)
  * Return the local memory source depeding on the current NUMA node.
  * It will use numa_preferred() to get the current numa node.
 **/
-SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(void)
+SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(int force_default_numa_mm_source)
 {
 	//vars
 	struct sctk_alloc_mm_source * res;
-	
+
 	//get numa node
 	#ifdef HAVE_HWLOC
 	int node;
@@ -304,7 +304,7 @@ SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(vo
 	//be really numa aware.
 	if (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_EGG || sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_DEFAULT)
 		node = SCTK_DEFAULT_NUMA_MM_SOURCE_ID;
-	else if (sctk_alloc_is_numa())
+	else if (sctk_alloc_is_numa() && !force_default_numa_mm_source)
 		node = sctk_alloc_init_on_numa_node();
 	else
 		node = SCTK_DEFAULT_NUMA_MM_SOURCE_ID;
@@ -441,7 +441,7 @@ SCTK_INTERN struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void
 
 	cnt++;
 	SCTK_NO_PDEBUG("Create new alloc chain, total is %d",cnt);
-	
+
 	//start allocator base initialisation if not already done.
 	sctk_alloc_posix_base_init();
 
@@ -454,7 +454,7 @@ SCTK_INTERN struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void
 	chain->name = "mpc_posix_thread_allocator";
 
 	//bin to the adapted memory source depending on numa node availability
-	chain->source = sctk_alloc_posix_get_local_mm_source();
+	chain->source = sctk_alloc_posix_get_local_mm_source(true);
 
 	//debug
 	SCTK_NO_PDEBUG("Init an allocation chain : %p with mm_source = %p (node = %d)",chain,chain->source,sctk_alloc_chain_get_numa_node(chain));
@@ -519,7 +519,7 @@ SCTK_PUBLIC void * sctk_calloc (size_t nmemb, size_t size)
 /************************* FUNCTION ************************/
 SCTK_PUBLIC void * sctk_malloc (size_t size)
 {
-	
+
 	//vars
 	struct sctk_alloc_chain * local_chain;
 	void * res;
@@ -529,16 +529,16 @@ SCTK_PUBLIC void * sctk_malloc (size_t size)
 
 	//get TLS
 	local_chain = sctk_get_tls_chain();
-	
+
 	//setup the local chain if not already done
 	if (local_chain == NULL)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
 
 	//purge the remote free queue
 	sctk_alloc_chain_purge_rfq(local_chain);
-	
+
 	SCTK_PTRACE("//start alloc on chain %p -> %ld",local_chain,size);
-	
+
 	//to be compatible with glibc policy which didn't return NULL in this case.
 	//otherwise we got crash in sed/grep/nano ...
 	/** @todo Optimize by returning a specific fixed address instead of alloc size=1 **/
@@ -613,7 +613,7 @@ SCTK_PUBLIC void sctk_free (void * ptr)
 
 	SCTK_PROFIL_START(sctk_free);
 	local_chain = sctk_get_tls_chain();
-	
+
 	//setup the local chain if not already done
 	//we need a non null chain when spy is enabled to avoid crash on remote free before a first
 	//call to malloc()
@@ -622,11 +622,11 @@ SCTK_PUBLIC void sctk_free (void * ptr)
 
 	//purge the remote free queue
 	sctk_alloc_chain_purge_rfq(local_chain);
-	
+
 	//if NULL, nothing to do
 	if (ptr == NULL)
 		return;
-	
+
 	//Find the chain corresponding to the given memory bloc
 	macro_bloc = sctk_alloc_region_get_macro_bloc(ptr);
 	if (macro_bloc == NULL)
@@ -652,7 +652,7 @@ SCTK_PUBLIC void sctk_free (void * ptr)
 	} else {
 		assert(ptr > (void*)macro_bloc && (sctk_addr_t)ptr < (sctk_addr_t)macro_bloc + sctk_alloc_get_chunk_header_large_size(&macro_bloc->header));
 	}
-	
+
 	chain = macro_bloc->chain;
 	assume_m(chain != NULL,"Can't free a pointer not manage by an allocation chain from our allocator.");
 
@@ -882,7 +882,7 @@ SCTK_INTERN void sctk_alloc_posix_numa_migrate_chain(struct sctk_alloc_chain * c
 		old_source = chain->source;
 
 	//re-setup the memory source.
-	new_source = sctk_alloc_posix_get_local_mm_source();
+	new_source = sctk_alloc_posix_get_local_mm_source(false);
 
 	//get numa node of sources
 	light_source = sctk_alloc_get_mm_source_light(old_source);

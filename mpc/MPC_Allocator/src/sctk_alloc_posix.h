@@ -53,7 +53,7 @@ SCTK_INTERN void sctk_alloc_posix_numa_migrate_chain(struct sctk_alloc_chain * l
 SCTK_PUBLIC void sctk_alloc_posix_numa_migrate(void);
 SCTK_STATIC void sctk_alloc_posix_mmsrc_uma_init(void);
 SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init(void);
-SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(void);
+SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(int);
 
 /************************* FUNCTION ************************/
 SCTK_PUBLIC void * sctk_calloc (size_t nmemb, size_t size);
