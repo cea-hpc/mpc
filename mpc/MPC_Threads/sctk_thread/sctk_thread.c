@@ -44,6 +44,7 @@ MonoDomain *domain;
 #undef usleep
 
 #include "sctk_debug.h"
+#include "sctk_config.h"
 #include "sctk_thread.h"
 #include "sctk_kernel_thread.h"
 #include "sctk_internal_thread.h"
@@ -931,9 +932,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
   struct sctk_alloc_chain *tls;
   static sctk_spinlock_t lock = 0;
   int user_thread;
-#ifndef NO_INTERNAL_ASSERT
   int scope_init;
-#endif
 
   sctk_spinlock_lock (&lock);
   sctk_nb_user_threads++;
@@ -964,13 +963,14 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
     }
   sctk_debug("Create Thread with MPI rank %d", tmp->task_id);
 
-#ifndef NO_INTERNAL_ASSERT
   if (__attr != NULL)
     {
       sctk_thread_attr_getscope (__attr, &scope_init);
       sctk_nodebug ("Thread to create with scope %d ", scope_init);
+      if (scope_init == SCTK_THREAD_SCOPE_SYSTEM) {
+        sctk_restrict_binding();
+      }
     }
-#endif
 
   res = __sctk_ptr_thread_user_create (__threadp, __attr,
 				       (void *(*)(void *))
