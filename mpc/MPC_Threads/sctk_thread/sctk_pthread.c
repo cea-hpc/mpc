@@ -65,7 +65,7 @@ pthread_wait_for_value_and_poll (volatile int *data, int value,
 	  if (i >= 100)
 	    {
 #ifdef MPC_Message_Passing
-#if 0
+#ifndef SCTK_ENABLE_SPINNING
 	      sctk_notify_idle_message ();
         /* We need to check if we have finished the MPC init step.
          * If we do not that, get_nb_task_local *may* fail because the
@@ -83,7 +83,10 @@ pthread_wait_for_value_and_poll (volatile int *data, int value,
 #endif
 	      i = 0;
 	    } else {
-        sleep(5);
+        /* If the spinning is enable, we slow down the the progression thread */
+#ifdef SCTK_ENABLE_SPINNING
+        sleep(1);
+#endif
 		 sctk_cpu_relax ();
         sched_yield();
 	  }

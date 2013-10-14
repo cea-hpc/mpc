@@ -73,7 +73,8 @@ extern "C"
 /* Is the message a control message ? */
 #define IS_PROCESS_SPECIFIC_CONTROL_MESSAGE(x) ( (MASK_CONTROL_MESSAGE & x) == (MASK_CONTROL_MESSAGE) )
 
-
+/* Defines if we are in a full MPI mode */
+//#define SCTK_ENABLE_SPINNING
 
 
   typedef enum {
