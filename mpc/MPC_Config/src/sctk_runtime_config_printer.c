@@ -49,6 +49,11 @@ void sctk_runtime_config_display_indent(int level)
 }
 
 /********************************* FUNCTION *********************************/
+/**
+ * Display size in B, KB, MB, GB, TB or PB.
+ * @param value The size to display.
+ * @return The value converted using defined units.
+ */
 char * sctk_runtime_config_display_size(size_t value)
 {
 	static char size[500];
@@ -89,8 +94,9 @@ char * sctk_runtime_config_display_size(size_t value)
 /********************************* FUNCTION *********************************/
 /**
  * Display simple values.
- * @param current Define the current meta entry to display.
- * @param value Define the indentation level.
+ * @param type_name Type of the value to display.
+ * @param value Value to display.
+ * @return true if the type value is a basic type, false otherwise.
 **/
 bool sctk_runtime_config_display_plain_type( const char * type_name,void *value)
 {

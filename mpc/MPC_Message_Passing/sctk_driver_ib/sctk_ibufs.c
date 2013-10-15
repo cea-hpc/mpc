@@ -1,7 +1,7 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # Copyright or (C) or Copr. 2010-2012 Universit�� de Versailles         # */
 /* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -91,9 +91,9 @@ void sctk_ibuf_init_numa_node(struct sctk_ib_rail_info_s *rail_ib,
   ib_assume(region);
 
   /* XXX: replaced by memalign_on_node */
-  sctk_posix_memalign( (void**) &ptr, mmu->page_size, nb_ibufs * config->ibv_eager_limit);
+  sctk_posix_memalign( (void**) &ptr, mmu->page_size, nb_ibufs * config->eager_limit);
   ib_assume(ptr);
-  memset(ptr, 0, nb_ibufs * config->ibv_eager_limit);
+  memset(ptr, 0, nb_ibufs * config->eager_limit);
   PROF_ADD(rail_ib->rail, ib_ibuf_sr_size, nb_ibufs * config->ibv_eager_limit);
 
   /* XXX: replaced by memalign_on_node */
@@ -102,7 +102,7 @@ void sctk_ibuf_init_numa_node(struct sctk_ib_rail_info_s *rail_ib,
   memset (ibuf, 0, nb_ibufs * sizeof(sctk_ibuf_t));
   PROF_ADD(rail_ib->rail, ib_ibuf_sr_size, nb_ibufs * sizeof(sctk_ibuf_t));
 
-  region->size_ibufs = config->ibv_eager_limit;
+  region->size_ibufs = config->eager_limit;
   region->list = ibuf;
   region->nb = nb_ibufs;
   region->node = node;
@@ -115,7 +115,7 @@ void sctk_ibuf_init_numa_node(struct sctk_ib_rail_info_s *rail_ib,
   /* register buffers at once
    * FIXME: Always task on NUMA node 0 which firs-touch all pages... really bad */
   region->mmu_entry = sctk_ib_mmu_register_no_cache(rail_ib, ptr,
-      nb_ibufs * config->ibv_eager_limit);
+      nb_ibufs * config->eager_limit);
   sctk_nodebug("Reg %p registered. lkey : %lu", ptr, region->mmu_entry->mr->lkey);
 
   /* init all buffers - the last one */
@@ -126,7 +126,7 @@ void sctk_ibuf_init_numa_node(struct sctk_ib_rail_info_s *rail_ib,
     ibuf_ptr->flag = FREE_FLAG;
     ibuf_ptr->index = i;
 
-    ibuf_ptr->buffer = (unsigned char*) ((char*) ptr + (i*config->ibv_eager_limit));
+    ibuf_ptr->buffer = (unsigned char*) ((char*) ptr + (i*config->eager_limit));
     ib_assume(ibuf_ptr->buffer);
     DL_APPEND(node->free_entry, ((sctk_ibuf_t*) ibuf + i));
   }
@@ -174,7 +174,7 @@ sctk_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib)
 
     /* Allocate additionnal buffers if no more are available */
     if ( !node->free_entry) {
-      sctk_ibuf_init_numa_node(rail_ib, node, config->ibv_size_ibufs_chunk, 0);
+      sctk_ibuf_init_numa_node(rail_ib, node, config->size_ibufs_chunk, 0);
     }
 
     /* update pointers from buffer pool */
@@ -276,9 +276,9 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
 
   s = *size;
   /***** SR CHANNEL *****/
-  if (s == ULONG_MAX) s = config->ibv_eager_limit;
+  if (s == ULONG_MAX) s = config->eager_limit;
 
-  if (s <= config->ibv_eager_limit) {
+  if (s <= config->eager_limit) {
     sctk_nodebug("Picking from SR");
 
     sctk_ibuf_numa_t * node = sctk_ibuf_get_closest_node(rail_ib);
@@ -288,7 +288,7 @@ sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_qp_t *remote,
 
     /* Allocate additionnal buffers if no more are available */
     if ( !node->free_entry) {
-      sctk_ibuf_init_numa_node(rail_ib, node, config->ibv_size_ibufs_chunk, 0);
+      sctk_ibuf_init_numa_node(rail_ib, node, config->size_ibufs_chunk, 0);
     }
 
     /* update pointers from buffer pool */
@@ -350,7 +350,7 @@ sctk_ibuf_pick_recv(struct sctk_ib_rail_info_s *rail_ib, struct sctk_ibuf_numa_s
 
   /* Allocate additionnal buffers if no more are available */
   if ( !node->free_entry) {
-      sctk_ibuf_init_numa_node(rail_ib, node, config->ibv_size_recv_ibufs_chunk, 0);
+      sctk_ibuf_init_numa_node(rail_ib, node, config->size_recv_ibufs_chunk, 0);
   }
 
   /* update pointers from buffer pool */
@@ -604,7 +604,7 @@ void sctk_ibuf_recv_init(sctk_ibuf_t* ibuf)
   ibuf->desc.wr.send.num_sge = 1;
   ibuf->desc.wr.send.sg_list = &(ibuf->desc.sg_entry);
   ibuf->desc.wr.send.imm_data = IMM_DATA_NULL;
-  ibuf->desc.sg_entry.length = config->ibv_eager_limit;
+  ibuf->desc.sg_entry.length = config->eager_limit;
 
   ibuf->desc.sg_entry.lkey = ibuf->region->mmu_entry->mr->lkey;
   ibuf->desc.sg_entry.addr = (uintptr_t) (ibuf->buffer);
@@ -646,7 +646,7 @@ int sctk_ibuf_send_inline_init(
   int is_inlined = 0;
 
   /* If data may be inlined */
-  if(size <= config->ibv_max_inline) {
+  if(size <= config->max_inline) {
     ibuf->desc.wr.send.send_flags = IBV_SEND_INLINE | IBV_SEND_SIGNALED;
     ibuf->flag = SEND_INLINE_IBUF_FLAG;
     is_inlined = 1;
@@ -704,7 +704,7 @@ int sctk_ibuf_rdma_write_init(
   int is_inlined = 0;
 
   /* If data may be inlined */
-  if(len <= config->ibv_max_inline) {
+  if(len <= config->max_inline) {
     ibuf->desc.wr.send.send_flags = IBV_SEND_INLINE | send_flags;
     ibuf->flag = RDMA_WRITE_INLINE_IBUF_FLAG;
     is_inlined = 1;
@@ -742,7 +742,7 @@ int sctk_ibuf_rdma_write_with_imm_init(
   int is_inlined = 0;
 
   /* If data may be inlined */
-  if(len <= config->ibv_max_inline) {
+  if(len <= config->max_inline) {
     ibuf->desc.wr.send.send_flags = IBV_SEND_INLINE | IBV_SEND_SIGNALED;
     ibuf->flag = RDMA_WRITE_INLINE_IBUF_FLAG;
     is_inlined = 1;

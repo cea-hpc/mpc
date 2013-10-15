@@ -43,6 +43,7 @@ XMLLINT=xmllint
 CONFIG_FILES=MPC_*/config-meta.xml
 GENERATORS=MPC_Config/generators/*.xsl
 GLOBAL_CONFIG_FILE=MPC_Config/generated/global-config-meta.xml
+XSD=MPC_Config/generated/*.xsd
 
 #check current dir
 if [ ! -f ./MPC_Tools/mpc_gen_runtime_config ]; then
@@ -107,9 +108,36 @@ gen_global_config_file()
 	sed -i "/<!DOCTYPE config SYSTEM .*>/d" ${GLOBAL_CONFIG_FILE}
 }
 
+# gen xsd file for configuration editor
+gen_xsd_file_editor()
+{
+	for tmp in ${XSD}
+	do
+		first=1
+		while read line
+		do
+			if [[ $first -eq 1 ]]; then
+				modified_line=`echo "$line" | sed -e "s/\"/\'/g"`
+				echo -e "var sctk_runtime_config_xsd = \"$modified_line\\"
+				first=0
+			else
+				echo -e "$line\\" | sed -e "s/x27/\'/g" | sed -e "s/\"/\'/g"
+			fi
+		done < $tmp
+	done
+	echo "\";"
+}
+
 #main
 check_meta_files
 gen_global_config_file
 apply_generators
+gen_xsd_file_editor > MPC_Config/generated/sctk_runtime_config_xsd.js
+
+echo "Copyig files"
+echo "   - cp MPC_Config/generated/sctk_runtime_config_meta.js MPC_Config/editor/javascript/sctk_runtime_config_meta.js"
+cp MPC_Config/generated/sctk_runtime_config_meta.js MPC_Config/editor/javascript/sctk_runtime_config_meta.js
+echo "   - cp MPC_Config/generated/sctk_runtime_config_xsd.js MPC_Config/editor/javascript/sctk_runtime_config_xsd.js"
+cp MPC_Config/generated/sctk_runtime_config_xsd.js MPC_Config/editor/javascript/sctk_runtime_config_xsd.js
 
 echo "Finish"

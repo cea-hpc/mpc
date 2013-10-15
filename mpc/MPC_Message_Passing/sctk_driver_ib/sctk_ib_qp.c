@@ -1,7 +1,7 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # Copyright or (C) or Copr. 2010-2012 Universit�� de Versailles         # */
 /* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -251,10 +251,10 @@ sctk_ib_comp_channel_init(sctk_ib_device_t* device) {
    */
   struct ibv_cq*
 sctk_ib_cq_init(sctk_ib_device_t* device,
-    sctk_ib_config_t *config, struct ibv_comp_channel * comp_channel)
+      struct sctk_runtime_config_struct_net_driver_infiniband *config, struct ibv_comp_channel * comp_channel)
 {
   struct ibv_cq *cq;
-  cq = ibv_create_cq (device->context, config->ibv_cq_depth, NULL,
+  cq = ibv_create_cq (device->context, config->cq_depth, NULL,
       comp_channel, 0);
 
   if (!cq) {
@@ -508,11 +508,11 @@ sctk_ib_qp_init_attr(struct sctk_ib_rail_info_s* rail_ib)
   attr.send_cq  = device->send_cq;
   attr.recv_cq  = device->recv_cq;
   attr.srq      = device->srq;
-  attr.cap.max_send_wr  = config->ibv_qp_tx_depth;
-  attr.cap.max_recv_wr  = config->ibv_qp_rx_depth;
-  attr.cap.max_send_sge = config->ibv_max_sg_sq;
-  attr.cap.max_recv_sge = config->ibv_max_sg_rq;
-  attr.cap.max_inline_data = config->ibv_max_inline;
+  attr.cap.max_send_wr  = config->qp_tx_depth;
+  attr.cap.max_recv_wr  = config->qp_rx_depth;
+  attr.cap.max_send_sge = config->max_sg_sq;
+  attr.cap.max_recv_sge = config->max_sg_rq;
+  attr.cap.max_inline_data = config->max_inline;
   /* RC Transport by default */
   attr.qp_type = IBV_QPT_RC;
   /* if this value is set to 1, all work requests (WR) will
@@ -535,7 +535,7 @@ sctk_ib_qp_state_init_attr(struct sctk_ib_rail_info_s* rail_ib,
   /* pkey index, normally 0 */
   attr.pkey_index = 0;
   /* physical port number (1 .. n) */
-  attr.port_num = config->ibv_adm_port;
+  attr.port_num = config->adm_port;
   attr.qp_access_flags =
     IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE |
     IBV_ACCESS_REMOTE_READ;
@@ -559,7 +559,7 @@ sctk_ib_qp_state_rtr_attr(struct sctk_ib_rail_info_s* rail_ib,
   attr.path_mtu = IBV_MTU_2048;
   /* QP number of remote QP */
   /* maximul number if resiyrces for incoming RDMA request */
-  attr.max_dest_rd_atomic = config->ibv_rdma_dest_depth;
+  attr.max_dest_rd_atomic = config->rdma_dest_depth;
   /* maximum RNR NAK timer (recommanded value: 12) */
   attr.min_rnr_timer = 12;
 
@@ -574,7 +574,7 @@ sctk_ib_qp_state_rtr_attr(struct sctk_ib_rail_info_s* rail_ib,
   attr.ah_attr.sl = 0;
   /* source path bits */
   attr.ah_attr.src_path_bits = 0;
-  attr.ah_attr.port_num = config->ibv_adm_port;
+  attr.ah_attr.port_num = config->adm_port;
 
   *flags = IBV_QP_STATE |
     IBV_QP_AV |
@@ -605,7 +605,7 @@ sctk_ib_qp_state_rts_attr(struct sctk_ib_rail_info_s* rail_ib,
   /* packet sequence number */
   attr.sq_psn = psn;
   /* number or outstanding RDMA reads and atomic operations allowed */
-  attr.max_rd_atomic = config->ibv_rdma_dest_depth;
+  attr.max_rd_atomic = config->rdma_dest_depth;
 
   *flags = IBV_QP_STATE |
     IBV_QP_TIMEOUT |
@@ -659,7 +659,7 @@ sctk_ib_srq_init(struct sctk_ib_rail_info_s* rail_ib,
     sctk_abort();
   }
 
-//  config->ibv_max_srq_ibufs_posted = attr->attr.max_wr;
+  config->max_srq_ibufs_posted = attr->attr.max_wr;
   sctk_ib_debug("Initializing SRQ with %d entries (max:%d)",
       attr->attr.max_wr, sctk_ib_srq_get_max_srq_wr(rail_ib));
   config->ibv_srq_credit_limit = config->ibv_max_srq_ibufs_posted / 2;
@@ -675,9 +675,9 @@ sctk_ib_srq_init_attr(struct sctk_ib_rail_info_s* rail_ib)
 
   memset (&attr, 0, sizeof (struct ibv_srq_init_attr));
 
-  attr.attr.srq_limit = config->ibv_srq_credit_thread_limit;
+  attr.attr.srq_limit = config->srq_credit_thread_limit;
   attr.attr.max_wr = sctk_ib_srq_get_max_srq_wr(rail_ib);
-  attr.attr.max_sge = config->ibv_max_sg_rq;
+  attr.attr.max_sge = config->max_sg_rq;
 
   return attr;
 }
@@ -716,7 +716,7 @@ sctk_ib_qp_allocate_init(struct sctk_ib_rail_info_s* rail_ib,
   remote->route_table = route_table;
   remote->psn = lrand48 () & 0xffffff;
   remote->rank = rank;
-  remote->free_nb = config->ibv_qp_tx_depth;
+  remote->free_nb = config->qp_tx_depth;
   remote->post_lock = SCTK_SPINLOCK_INITIALIZER;
   /* For buffered eager */
   remote->ib_buffered.entries = NULL;

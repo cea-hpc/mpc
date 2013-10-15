@@ -146,24 +146,6 @@ EOF
 
 MPC_MONO="0"
 
-#Open MPC configuration file if it exists
-if test "$MPC_USE_MPCRC_FILE" = "" ; then
-	MPC_USE_MPCRC_FILE="${HOME}/.mpcrc"
-fi
-
-if test -f $MPC_USE_MPCRC_FILE; then
-. $MPC_USE_MPCRC_FILE
-else
-. ${BINS_HOME}_default
-. $MPC_USE_MPCRC_FILE
-fi
-
-# On 2.3.1 .mpcrc was setup with LAUNCH=none, but on 2.4.0 it
-# made all tasks running on interactiv node, so override 'none' values here
-if test "$LAUNCH" = 'none'; then
-	LAUNCH='mpiexec'
-fi
-
 mpi_only=no
 BINARY=""
 USER_ARGS=""
@@ -171,30 +153,18 @@ SHOW_COM=""
 RESTART=""
 MIGRATION=""
 DEBUG=""
-PROCESS_NB="1"
-THREAD_TYPE="--use-$THREAD_TYPE"
 NET_TYPE=""
+PROCESS_NB=""
+NODE_NB=""
+TASK_NB=""
+CPU_NB=""
 
-if test "$VERSION_DETAILS" = "yes" ; then
-VERSION_DETAILS="--version-details"
-else
-VERSION_DETAILS=""
-fi
 if test "$REPORT" = "yes" ; then
 REPORT="--report"
 else
 REPORT=""
 fi
-if test "$CHECKPOINT" = "yes" ; then
-CHECKPOINT="--checkpoint"
-else
-CHECKPOINT=""
-fi
-if test "$MIGRATION" = "yes" ; then
-MIGRATION="--migration"
-else
-MIGRATION=""
-fi
+
 TMP_DIR_D=""
 TMP_DIR=""
 READ_MPC_ARG="true"
@@ -237,6 +207,41 @@ if [ "${CONFIG_FILES_VALID}" = "true" ]; then
 	MPC_VERBOSE="${CONFIG_LAUNCHER_VERBOSITY}"
 	# User launchers
 	MPC_USER_LAUNCHERS="${CONFIG_LAUNCHER_USER_LAUNCHERS}"
+    # Print version details
+    if [ "${CONFIG_LAUNCHER_VERS_DETAILS}" = "true" ]; then
+       VERSION_DETAILS="--version-details"
+    fi
+    # Enable checkpoint
+    if [ "${CONFIG_LAUNCHER_CHECKPOINT}" = "true" ]; then
+       CHECKPOINT="--checkpoint"
+    fi
+    # Enable migration
+    if [ "${CONFIG_LAUNCHER_MIGRATION}" = "true" ]; then
+       MIGRATION="--migration"
+    fi
+    # Enable reporting
+    if [ "${CONFIG_LAUNCHER_REPORT}" = "true" ]; then
+       REPORT="--report"
+    fi
+    # Enable restart mode
+    if [ "${CONFIG_LAUNCHER_RESTART}" = "true" ]; then
+       RESTART="--restart"
+    fi
+	# Number of process
+	PROCESS_NB="${CONFIG_LAUNCHER_NB_PROCESS}"
+	# Number of node
+	NODE_NB="${CONFIG_LAUNCHER_NB_NODE}"
+	# Number of task
+	TASK_NB="${CONFIG_LAUNCHER_NB_TASK}"
+	# Number of core
+	CPU_NB="${CONFIG_LAUNCHER_NB_PROCESSOR}"
+	# Define the launcher to use
+	LAUNCH="${CONFIG_LAUNCHER_LAUNCHER}"
+	# On 2.3.1 LAUNCH can be set to 'none', but on 2.4.0 it
+	# made all tasks running on interactive mode, so override 'none' values here
+	if test "$LAUNCH" = 'none'; then
+		LAUNCH='mpiexec'
+	fi	
 else
 	mpcrun_error "Error while loading MPC configuration files."
 fi
@@ -416,8 +421,8 @@ if test "$NODE_NB" = "0" ; then
 fi
 
 SCTK_ARGS="--sctk-args--"
-SCTK_LINUX_DISABLE_ADDR_RADOMIZE="1"
-export SCTK_LINUX_DISABLE_ADDR_RADOMIZE
+SCTK_LINUX_DISABLE_ADDR_RANDOMIZE="1"
+export SCTK_LINUX_DISABLE_ADDR_RANDOMIZE
 
 LAUNCHED_WITH_MPCRUN="1"
 export LAUNCHED_WITH_MPCRUN

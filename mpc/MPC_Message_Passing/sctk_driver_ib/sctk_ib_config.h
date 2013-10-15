@@ -29,8 +29,8 @@
 
 #include "infiniband/verbs.h"
 
-#define IBV_RDVZ_WRITE_PROTOCOL (1)
-#define IBV_RDVZ_READ_PROTOCOL (2)
+//#define IBV_RDVZ_WRITE_PROTOCOL (1)
+//#define IBV_RDVZ_READ_PROTOCOL (2)
 typedef struct sctk_ib_config_s
 {
   /* Network name */

@@ -1,7 +1,7 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # Copyright or (C) or Copr. 2010-2012 Universit�� de Versailles         # */
 /* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -87,7 +87,7 @@ int sctk_ib_low_mem_recv(sctk_rail_info_t *rail,
   int process_src;
   sctk_ib_low_mem_t* payload;
 
-  if (config->ibv_low_memory == 0) not_reachable();
+  if (! config->low_memory) not_reachable();
 
   payload = (sctk_ib_low_mem_t*) IBUF_GET_EAGER_MSG_PAYLOAD(ibuf->buffer);
   process_dest = msg->sctk_msg_get_destination;
@@ -119,7 +119,7 @@ void sctk_ib_low_mem_broadcast(sctk_rail_info_t* rail) {
   const sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
 
-  if (config->ibv_low_memory == 0) return;
+  if (! config->low_memory) return;
 
   sctk_warning("Send signal to use low mem mode");
   sctk_walk_all_routes(rail, sctk_ib_low_mem_broadcast_func);

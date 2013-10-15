@@ -29,6 +29,8 @@
 #include "sctk_runtime_config_sources.h"
 #include "sctk_runtime_config_struct.h"
 
+extern void * sctk_handler;
+
 /******************************** STRUCTURE *********************************/
 /**
  * Enum to define internal types supported for meta-data structure.
@@ -56,7 +58,7 @@ typedef void(*sctk_runtime_config_struct_init_handler)(sctk_runtime_config_struc
 
 /******************************** STRUCTURE *********************************/
 /**
- * Structure used to instanciate the meta-description table to map the XML file onto the C struct.
+ * Structure used to instantiate the meta-description table to map the XML file onto the C struct.
  * @brief Structure for the entries of meta-description table.
 **/
 struct sctk_runtime_config_entry_meta {
@@ -82,7 +84,7 @@ struct sctk_runtime_config_entry_meta {
 #define sctk_runtime_config_get_offset_of_member(type,member) ((unsigned long)&(((type*)NULL)->member))
 
 /********************************* FUNCTION *********************************/
-/* mappgin functions */
+/* mapping functions */
 const struct sctk_runtime_config_entry_meta * sctk_runtime_config_get_meta_type( const struct sctk_runtime_config_entry_meta *config_meta, const char * name);
 const struct sctk_runtime_config_entry_meta * sctk_runtime_config_meta_get_first_child(const struct sctk_runtime_config_entry_meta * current);
 const struct sctk_runtime_config_entry_meta * sctk_runtime_config_meta_get_next_child(const struct sctk_runtime_config_entry_meta * current);
@@ -106,6 +108,8 @@ double sctk_runtime_config_map_entry_to_double(xmlNodePtr node);
 float sctk_runtime_config_map_entry_to_float(xmlNodePtr node);
 size_t sctk_runtime_config_map_entry_parse_size( const char *value );
 size_t sctk_runtime_config_map_entry_to_size(xmlNodePtr node);
+struct sctk_runtime_config_funcptr sctk_runtime_config_map_entry_to_funcptr(xmlNodePtr node);
+int sctk_runtime_config_map_entry_to_enum(xmlNodePtr node, const char * type_name);
 
 /********************************* FUNCTION *********************************/
 void sctk_runtime_config_do_cleanup(struct sctk_runtime_config * config);

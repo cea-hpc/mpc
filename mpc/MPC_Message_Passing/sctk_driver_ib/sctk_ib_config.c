@@ -1,7 +1,7 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # Copyright or (C) or Copr. 2010-2012 Universit�� de Versailles         # */
 /* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -53,25 +53,21 @@
 #define IBV_RDMA_MAX_SIZE (3*1024)
 #define IBV_RDMA_MIN_NB (2048)
 #define IBV_RDMA_MAX_NB (2048)
-
 //#define IBV_RDMA_MIN_SIZE (1*1024)
 //#define IBV_RDMA_MAX_SIZE (128*1024)
 //#define IBV_RDMA_MIN_NB (2)
 //#define IBV_RDMA_MAX_NB (16384)
-
 /*  BEST RDMA on CURIE */
 //#define IBV_RDMA_MIN_SIZE (32 * 1024)
 //#define IBV_RDMA_MAX_SIZE (32 * 1024)
 //#define IBV_RDMA_MIN_NB (128)
 //#define IBV_RDMA_MAX_NB (128)
-
 /* For RDMA resizing */
 /* FOR PAPER */
 //#define IBV_RDMA_RESIZING_MIN_SIZE (2 * 1024)
 //#define IBV_RDMA_RESIZING_MAX_SIZE (12 * 1024)
 //#define IBV_RDMA_RESIZING_MIN_NB (16)
 //#define IBV_RDMA_RESIZING_MAX_NB (1024)
-
 #define IBV_RDMA_RESIZING_MIN_SIZE (1*1024)
 #define IBV_RDMA_RESIZING_MAX_SIZE (128 * 1024)
 #define IBV_RDMA_RESIZING_MIN_NB (2)
@@ -91,12 +87,12 @@ void sctk_ib_config_check(sctk_ib_rail_info_t *rail_ib)
 
   /* TODO: MMU cache is buggy and do not intercept free calls */
   if ( (sctk_process_rank == 0)
-      && (config->ibv_mmu_cache_enabled == 1) ) {
+      && (config->mmu_cache_enabled == 1) ) {
     sctk_error("MMU cache enabled: use it at your own risk!");
   }
 
   if ( (sctk_process_rank == 0)
-      && (config->ibv_low_memory == 1) ) {
+      && (config->low_memory) ) {
     sctk_error("LOW mem module enabled: use it at your own risk!");
   }
 
@@ -196,8 +192,19 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
   }
 }
 
-#define SET_RUNTIME_CONFIG(name) config->ibv_##name = runtime_config->name
+void sctk_ib_config_mutate(sctk_ib_rail_info_t *rail_ib) {
 
+static void load_ib_load_config(sctk_ib_rail_info_t *rail_ib)
+  LOAD_CONFIG(rail_ib);
+
+  config->eager_limit       = ALIGN_ON (config->eager_limit + IBUF_GET_EAGER_SIZE, 64);
+  config->buffered_limit  = (config->buffered_limit + sizeof(sctk_thread_ptp_message_body_t));
+}
+
+//#define SET_RUNTIME_CONFIG(name) config->ibv_##name = runtime_config->name
+  config->ibv_rdvz_protocol = IBV_RDVZ_WRITE_PROTOCOL;
+
+/*
 static void load_ib_load_config(sctk_ib_rail_info_t *rail_ib)
 {
   LOAD_CONFIG(rail_ib);
@@ -232,16 +239,6 @@ static void load_ib_load_config(sctk_ib_rail_info_t *rail_ib)
   SET_RUNTIME_CONFIG(quiet_crash);
   SET_RUNTIME_CONFIG(async_thread);
 
-  config->ibv_eager_limit       = ALIGN_ON (runtime_config->eager_limit + IBUF_GET_EAGER_SIZE, 64);
-  config->ibv_buffered_limit  = (runtime_config->buffered_limit + sizeof(sctk_thread_ptp_message_body_t));
-  config->ibv_rdvz_protocol = IBV_RDVZ_WRITE_PROTOCOL;
-
-  /* For RDMA: FIXME: restore RDMA connections */
-  config->ibv_rdma_min_size = IBV_RDMA_MIN_SIZE;
-  config->ibv_rdma_max_size = IBV_RDMA_MAX_SIZE;
-  config->ibv_rdma_min_nb = IBV_RDMA_MIN_NB;
-  config->ibv_rdma_max_nb = IBV_RDMA_MAX_NB;
-
   config->ibv_rdma_resizing_min_size = IBV_RDMA_RESIZING_MIN_SIZE;
   config->ibv_rdma_resizing_max_size = IBV_RDMA_RESIZING_MAX_SIZE;
   config->ibv_rdma_resizing_min_nb = IBV_RDMA_RESIZING_MIN_NB;
@@ -250,7 +247,10 @@ static void load_ib_load_config(sctk_ib_rail_info_t *rail_ib)
   TODO("Move to configuration file");
   config->ibv_init_recv_ibufs = 10000;
   config->ibv_size_recv_ibufs_chunk = 1000;
+
+  
 }
+*/
 
 #if 0
 /* Set IB configure with env variables */
@@ -269,6 +269,11 @@ void set_ib_env(sctk_ib_rail_info_t *rail_ib)
         &c->ibv_rdma_resizing_max_size,
         &c->ibv_rdma_resizing_min_nb,
         &c->ibv_rdma_resizing_max_nb);
+    c->ibv_rdma_resizing_min_size *=1024;
+    c->ibv_rdma_resizing_max_size *=1024;
+  }sctk_ib_config_mutate(sctk_ib_rail_info_t *rail_ib) {
+  LOAD_CONFIG(rail_ib);
+}
 
     c->ibv_rdma_min_size          *=1024;
     c->ibv_rdma_max_size          *=1024;
@@ -285,14 +290,13 @@ void sctk_ib_config_init(sctk_ib_rail_info_t *rail_ib, char* network_name)
   config = sctk_malloc(sizeof(sctk_ib_config_t));
   assume(config);
   memset(config, 0, sizeof(sctk_ib_config_t));
-  rail_ib->config = config;
-  rail_ib->config->network_name = strdup(network_name);
+  rail_ib->config = &rail_ib->rail->runtime_config_driver_config->driver.value.infiniband;
+  sctk_ib_config_mutate(rail_ib);
+  //rail_ib->config->network_name = strdup(network_name);
 
-  load_ib_load_config(rail_ib);
+  //load_ib_load_config(rail_ib);
 
-  /*
-   * Check if the variables are well set
-   * */
+  //Check if the variables are well set
   sctk_ib_config_check(rail_ib);
 }
 

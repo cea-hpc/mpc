@@ -31,6 +31,7 @@
 		<xsl:call-template name="gen-mpc-header"/>
 		<xsl:text>#include &lt;stdlib.h&gt;&#10;</xsl:text>
 		<xsl:text>#include &lt;string.h&gt;&#10;</xsl:text>
+		<xsl:text>#include &lt;dlfcn.h&gt;&#10;</xsl:text>
 		<xsl:text>#include "sctk_runtime_config_struct.h"&#10;</xsl:text>
 		<xsl:text>#include "sctk_runtime_config_struct_defaults.h"&#10;</xsl:text>
 		<xsl:text>#include "sctk_runtime_config_mapper.h"&#10;</xsl:text>
@@ -43,15 +44,38 @@
 		<xsl:text>&#10;/*******************  FUNCTION  *********************/&#10;</xsl:text>
 		<xsl:text>void sctk_runtime_config_reset(struct sctk_runtime_config * config)&#10;</xsl:text>
 		<xsl:text>{&#10;</xsl:text>
+		<xsl:text>&#9;sctk_handler = dlopen(0, RTLD_LAZY | RTLD_GLOBAL);&#10;</xsl:text>
 		<xsl:for-each select="config">
 			<xsl:for-each select="modules">
 				<xsl:for-each select="module">
 					<xsl:value-of select="concat('&#9;sctk_runtime_config_struct_init_',@type,'(&amp;config->modules.',@name,');&#10;')"/>
 				</xsl:for-each>
 			</xsl:for-each>
+			<xsl:for-each select="usertypes">
+				<xsl:for-each select="enum">
+					<xsl:value-of select="concat('&#9;sctk_runtime_config_enum_init_',@name,'();&#10;')"/>
+				</xsl:for-each>
+			</xsl:for-each>
 		</xsl:for-each>
 		<xsl:text>&#09;sctk_runtime_config_struct_init_networks(&amp;config->networks);&#10;</xsl:text>
-		<xsl:text>};&#10;&#10;</xsl:text>
+		<xsl:text>&#09;dlclose(sctk_handler);&#10;</xsl:text>
+		<xsl:text>}&#10;&#10;</xsl:text>
+
+		<xsl:text>&#10;/*******************  FUNCTION  *********************/&#10;</xsl:text>
+		<xsl:text>void sctk_runtime_config_clean_hash_tables()&#10;</xsl:text>
+		<xsl:text>{&#10;</xsl:text>
+		<xsl:text>&#09;struct enum_type * current_enum, * tmp_enum;&#10;</xsl:text>
+		<xsl:text>&#09;struct enum_value * current_value, * tmp_value;&#10;&#10;</xsl:text>
+
+		<xsl:text>&#09;HASH_ITER(hh, enums_types, current_enum, tmp_enum) {&#10;</xsl:text>
+		<xsl:text>&#09;&#09;HASH_ITER(hh, current_enum->values, current_value, tmp_value) {&#10;</xsl:text>
+		<xsl:text>&#09;&#09;&#09;HASH_DEL(current_enum->values, current_value);&#10;</xsl:text>
+		<xsl:text>&#09;&#09;&#09;free(current_value);&#10;</xsl:text>
+		<xsl:text>&#09;&#09;}&#10;</xsl:text>
+		<xsl:text>&#09;&#09;HASH_DEL(enums_types, current_enum);&#10;</xsl:text>
+		<xsl:text>&#09;&#09;free(current_enum);&#10;</xsl:text>
+		<xsl:text>&#09;}&#10;</xsl:text>
+		<xsl:text>}&#10;&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -61,7 +85,7 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template match="usertypes">
-		<xsl:apply-templates select='struct|union'/>
+		<xsl:apply-templates select='struct|union|enum'/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -80,6 +104,28 @@
 		<xsl:apply-templates select="param"/>
  		<xsl:apply-templates select="array"/>
 		<xsl:text>}&#10;</xsl:text>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template match="enum">
+		<xsl:text>&#10;/*******************  FUNCTION  *********************/&#10;</xsl:text>
+		<xsl:value-of select="concat('void sctk_runtime_config_enum_init_',@name,'()&#10;')"/>
+		<xsl:text>{&#10;</xsl:text>
+		<xsl:text>&#09;struct enum_type * current_enum = (struct enum_type *) malloc(sizeof(struct enum_type));&#10;</xsl:text>
+		<xsl:text>&#09;struct enum_value * current_value, * values = NULL;&#10;</xsl:text>
+		<xsl:value-of select="concat('&#10;&#09;strncpy(current_enum->name, &quot;enum ', @name, '&quot;, 50);&#10;')"/>
+		<xsl:apply-templates select="value"/>
+		<xsl:text>&#10;&#09;current_enum->values = values;&#10;</xsl:text>
+		<xsl:text>&#09;HASH_ADD_STR(enums_types, name, current_enum);&#10;</xsl:text>
+		<xsl:text>}&#10;</xsl:text>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template match="value">
+		<xsl:text>&#10;&#09;current_value = (struct enum_value *) malloc(sizeof(struct enum_value));&#10;</xsl:text>
+		<xsl:value-of select="concat('&#09;strncpy(current_value->name, &quot;', ., '&quot;, 50);&#10;')"/>
+		<xsl:value-of select="concat('&#09;current_value->value = ', ., ';&#10;')"/>
+		<xsl:text>&#09;HASH_ADD_STR(values, name, current_value);&#10;</xsl:text>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -108,7 +154,12 @@
 			<xsl:when test="@type = 'float'"><xsl:call-template name='gent-default-param-decimal'/></xsl:when>
 			<xsl:when test="@type = 'double'"><xsl:call-template name='gent-default-param-decimal'/></xsl:when>
 			<xsl:when test="@type = 'size'"><xsl:call-template name='gent-default-param-size'/></xsl:when>
-			<xsl:otherwise><xsl:call-template name="gent-default-param-usertype"/></xsl:otherwise>
+			<xsl:when test="@type = 'funcptr'"><xsl:call-template name='gent-default-param-funcptr'/></xsl:when>
+			<xsl:otherwise>
+				<xsl:call-template name="gent-default-param-usertype">
+					<xsl:with-param name="type"><xsl:value-of select='@type'/></xsl:with-param>
+				</xsl:call-template>
+			</xsl:otherwise>
 		</xsl:choose>
 	</xsl:template>
 
@@ -173,8 +224,47 @@
 	</xsl:template>
 
 	<!-- ********************************************************* -->
+	<xsl:template name="gent-default-param-funcptr">
+		<xsl:choose>
+			<xsl:when test="@default"><xsl:call-template name="funcptr-default-value"/></xsl:when>
+			<xsl:otherwise><xsl:call-template name="funcptr-empty-value"/></xsl:otherwise>
+		</xsl:choose>
+		<xsl:text>;&#10;</xsl:text>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="funcptr-default-value">
+		<xsl:value-of select="concat('&#09;obj->', @name, '.name = &quot;', @default, '&quot;;&#10;')"/>
+		<xsl:text>&#09;*(void **) &amp;(obj-&gt;</xsl:text>
+		<xsl:value-of select="concat(@name,'.value) = sctk_runtime_config_get_symbol(&quot;', @default, '&quot;)')"/>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="funcptr-empty-value">
+		<xsl:value-of select="concat('&#09;obj->', @name, '.name = &quot;&quot;;&#10;')"/>
+		<xsl:value-of select="concat('&#09;obj->', @name, '.value = NULL')"/>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
 	<xsl:template name="gent-default-param-usertype">
-		<xsl:value-of select="concat('&#09;sctk_runtime_config_struct_init_',@type,'(&amp;obj->',@name,');&#10;')"/>
+		<xsl:param name="type"/>
+		<xsl:choose>
+			<xsl:when test="//enum[@name = $type]">
+				<xsl:choose>
+					<xsl:when test="@default">
+						<xsl:value-of select="concat('&#09;obj->',@name,' = ', @default, ';&#10;')"/>					
+					</xsl:when>
+					<xsl:otherwise>
+						<xsl:message terminate="yes">
+							<xsl:value-of select="concat('Error : enum ', $type, ' ', @name, ' must have a default value!!')"/>
+						</xsl:message>
+					</xsl:otherwise>
+				</xsl:choose>
+			</xsl:when>
+			<xsl:otherwise>
+				<xsl:value-of select="concat('&#09;sctk_runtime_config_struct_init_',@type,'(&amp;obj->',@name,');&#10;')"/>
+			</xsl:otherwise>
+		</xsl:choose>
 	</xsl:template>
 
 	<!-- ********************************************************* -->

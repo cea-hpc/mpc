@@ -63,7 +63,7 @@
 
 	<!-- ********************************************************* -->
 	<xsl:template match="usertypes">
-		<xsl:apply-templates select="struct|union"/>
+		<xsl:apply-templates select="struct|union|enum"/>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -78,11 +78,53 @@
 	</xsl:template>
 
 	<!-- ********************************************************* -->
+	<xsl:template match="enum">
+		<xsl:comment> ********************************************************* </xsl:comment>
+		<xs:simpleType>
+			<xsl:attribute name="name"><xsl:value-of select="concat('user_type_',@name)"/></xsl:attribute>
+			<xs:restriction base="xs:string">
+				<xsl:apply-templates select="value"/>
+			</xs:restriction>
+		</xs:simpleType>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template match="value">
+		<xs:enumeration>
+			<xsl:attribute name="value"><xsl:value-of select="."/></xsl:attribute>
+		</xs:enumeration>
+	</xsl:template>
+
+	<!-- ********************************************************* -->
 	<xsl:template match="param">
 		<xs:element minOccurs="0">
 			<xsl:attribute name="name"><xsl:value-of select="@name"/></xsl:attribute>
-			<xsl:attribute name="type"><xsl:call-template name="gen-xs-type-name"/></xsl:attribute>
+			<xsl:choose>
+                <xsl:when test="@type = 'size'"><xsl:call-template name="gen-basic-type-size"/></xsl:when>
+				<xsl:when test="@type = 'funcptr'"><xsl:call-template name="gen-basic-type-funcptr"/></xsl:when>
+				<xsl:otherwise>
+					<xsl:attribute name="type"><xsl:call-template name="gen-xs-type-name"/></xsl:attribute>
+				</xsl:otherwise>
+			</xsl:choose>
 		</xs:element>
+	</xsl:template>
+
+    <!-- ********************************************************* -->
+    <xsl:template name="gen-basic-type-size">
+        <xs:simpleType>
+            <xs:restriction base="xs:string">
+                <xs:pattern value="[0-9]+[ ]?[K|M|G|T|P]?B"/>
+            </xs:restriction>
+        </xs:simpleType>
+    </xsl:template>
+
+	<!-- ********************************************************* -->
+	<xsl:template name="gen-basic-type-funcptr">
+		<xs:simpleType>
+			<xs:restriction base="xs:string">
+				<xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
+			</xs:restriction>
+		</xs:simpleType>
 	</xsl:template>
 
 	<!-- ********************************************************* -->
@@ -93,7 +135,8 @@
 			<xsl:when test="@type = 'bool'">xs:boolean</xsl:when>
 			<xsl:when test="@type = 'float'">xs:decimal</xsl:when>
 			<xsl:when test="@type = 'double'">xs:decimal</xsl:when>
-			<xsl:when test="@type = 'size'">xs:string</xsl:when>
+			<xsl:when test="@type = 'size'">size</xsl:when>
+			<xsl:when test="@type = 'funcptr'">funcptr</xsl:when>
 			<xsl:otherwise><xsl:value-of select="concat('user_type_',@type)"/></xsl:otherwise>
 		</xsl:choose>
 	</xsl:template>

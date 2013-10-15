@@ -33,7 +33,7 @@
 #include "mpc_print_config_xml.h"
 
 /********************************** ENUM ************************************/
-/** Output mode availables to print the config. **/
+/** Output mode available to print the config. **/
 enum output_mode {
 	/** Output an XML file which can be reuse as input configuration file. **/
 	OUTPUT_MODE_XML,
@@ -58,8 +58,10 @@ struct command_options {
 	char * schema;
 	/** Request the help of the command (--help). **/
 	bool help;
-	/** Disable the loading of config files (--nofile). **/
-	bool nofile;
+  /** Disable the loading of config files (--nofile). **/
+  bool nofile;
+  /** Display all the available profile names. **/
+  bool list_profiles;
 };
 
 /********************************  CONSTS  **********************************/
@@ -79,10 +81,10 @@ Options :\n\
   --system={file}   : Override the system configuration file. Use none to disable.\n\
   --user={file}     : Override the user configuration file. Use none to disable.\n\
   --nofile          : Only use the internal default values.\n\
-  --profiles={list} : Manualy enable some profiles (comma separated).\n\
+  --profiles={list} : Manually enable some profiles (comma separated).\n\
   --schema={file}   : Override the default path to XML schema for validation.\n\
 \n\
-You can olso influence the loaded files with environnement variables :\n\
+You can also influence the loaded files with environment variables :\n\
   - MPC_SYSTEM_CONFIG   : System configuration file (" SCTK_INSTALL_PREFIX "/share/mpc/config.xml)\n\
   - MPC_USER_CONFIG     : Application configuration file (disabled)\n\
   - MPC_DISABLE_CONFIG  : Disable loading of configuration files if setup to 1.\n\
@@ -101,7 +103,7 @@ void display_launcher(const struct sctk_runtime_config * config)
 
 /********************************* FUNCTION *********************************/
 /**
- * Standard display of the sturct to see the complete tee
+ * Standard display of the struct to see the complete tree
 **/
 void display_all(const struct sctk_runtime_config * config)
 {
@@ -110,7 +112,7 @@ void display_all(const struct sctk_runtime_config * config)
 
 /********************************* FUNCTION *********************************/
 /**
- * Standard display of the sturct to see the complete tee
+ * Standard display of the struct to see the complete tree
 **/
 void display_xml(const struct sctk_runtime_config * config)
 {
@@ -140,6 +142,7 @@ void init_default_options(struct command_options * options)
 	options->user_profiles = NULL;
 	options->schema        = NULL;
 	options->nofile        = false;
+	options->list_profiles = false;
 }
 
 /********************************* FUNCTION *********************************/
@@ -166,26 +169,28 @@ bool parse_args(struct command_options * options,int argc, char ** argv)
 		} else {
 			/* find the good one */
 			if (strcmp(argv[i],"--help") == 0) {
-				options->help = true;
+			  options->help = true;
 			} else if (strcmp(argv[i],"--nofile") == 0) {
-				options->nofile = true;
+			  options->nofile = true;
 			} else if (strcmp(argv[i],"--text") == 0) {
-				options->mode = OUTPUT_MODE_TEXT;
+			  options->mode = OUTPUT_MODE_TEXT;
 			} else if (strcmp(argv[i],"--xml") == 0) {
-				options->mode = OUTPUT_MODE_XML;
+			  options->mode = OUTPUT_MODE_XML;
 			} else if (strcmp(argv[i],"--launcher") == 0) {
-				options->mode = OUTPUT_MODE_LAUNCHER;
+			  options->mode = OUTPUT_MODE_LAUNCHER;
 			} else if (strncmp(argv[i],"--system=",9) == 0) {
-				options->system_file = strdup(argv[i]+9);
+			  options->system_file = strdup(argv[i]+9);
 			} else if (strncmp(argv[i],"--user=",7) == 0) {
-				options->user_file = strdup(argv[i]+7);
+			  options->user_file = strdup(argv[i]+7);
 			} else if (strncmp(argv[i],"--profiles=",11) == 0) {
-				options->user_profiles = strdup(argv[i]+11);
+			  options->user_profiles = strdup(argv[i]+11);
 			} else if (strncmp(argv[i],"--schema=",9) == 0) {
-				options->schema = strdup(argv[i]+9);
-			} else {
-				fprintf(stderr,"Error : invalid argument %s\n",argv[i]);
-				return false;
+        options->schema = strdup(argv[i]+9);
+      } else if (strncmp(argv[i],"--list-profiles",15) == 0) {
+        options->list_profiles = true;
+      } else {
+			  fprintf(stderr,"Error : invalid argument %s\n",argv[i]);
+			  return false;
 			}
 		}
 	}
@@ -211,11 +216,8 @@ void cleanup_options(struct command_options * options)
 }
 
 /********************************* FUNCTION *********************************/
-int load_and_print_mpc_config(const struct command_options * options)
+int load_mpc_config(const struct command_options * options, struct sctk_runtime_config ** config )
 {
-	/* vars */
-	int res = EXIT_SUCCESS;
-
 	/* overwrite files */
 	if (options->system_file != NULL)
 		setenv("MPC_SYSTEM_CONFIG",options->system_file,1);
@@ -229,27 +231,58 @@ int load_and_print_mpc_config(const struct command_options * options)
 		setenv("MPC_CONFIG_SCHEMA",options->schema,1);
 
 	/* load the config */
-	const struct sctk_runtime_config * config = sctk_runtime_config_get_checked();
-
-	/* print */
-	switch(options->mode) {
-		case OUTPUT_MODE_TEXT:
-			display_all(config);;
-			break;
-		case OUTPUT_MODE_XML:
-			display_xml(config);
-			break;
-		case OUTPUT_MODE_LAUNCHER:
-			display_launcher(config);
-			printf("CONFIG_FILES_VALID=true\n");
-			break;
-		default:
-			fprintf(stderr,"Error : invalide output mode : %d\n",options->mode);
-			res = EXIT_FAILURE;
-	}
+	*config = sctk_runtime_config_get_checked();
 
 	/* final return */
-	return res;
+	return EXIT_SUCCESS;
+}
+
+/********************************* FUNCTION *********************************/
+int print_mpc_config(const struct command_options * options, struct sctk_runtime_config ** config)
+{
+  /* vars */
+  int res = EXIT_SUCCESS;
+
+  /* print */
+  switch(options->mode) {
+    case OUTPUT_MODE_TEXT:
+      display_all(*config);;
+      break;
+    case OUTPUT_MODE_XML:
+      display_xml(*config);
+      break;
+    case OUTPUT_MODE_LAUNCHER:
+      display_launcher(*config);
+      printf("CONFIG_FILES_VALID=true\n");
+      break;
+    default:
+      fprintf(stderr,"Error : invalid output mode : %d\n",options->mode);
+      res = EXIT_FAILURE;
+  }
+
+  /* final return */
+  return res;
+}
+
+/********************************* FUNCTION *********************************/
+int print_profiles_names_config(struct sctk_runtime_config ** config)
+{
+  /* vars */
+  int res = EXIT_SUCCESS;
+  int i;
+
+  printf("Names of the available profiles:\n");
+  if (! (*config)->number_profiles) {
+    printf("\tNo available profiles.\n");
+  }
+  else {
+    for (i = 0; i < (*config)->number_profiles; i ++) {
+        printf("\t%d/ %s\n", i + 1, (*config)->profiles_name_list[i]);
+      }
+  }
+
+  /* final return */
+  return res;
 }
 
 /********************************* FUNCTION *********************************/
@@ -258,13 +291,23 @@ int main(int argc, char ** argv)
 	/* vars */
 	int res = EXIT_SUCCESS;
 	struct command_options options;
+	struct sctk_runtime_config *config;
+
+	/** To avoid crash on symbol load when running mpc_print_config (mpc not linked). **/
+	sctk_crash_on_symbol_load = false;
 
 	/* parse options */
 	if (parse_args(&options,argc,argv)) {
 		if (options.help) {
 			display_help();
-		} else {
-			res = load_and_print_mpc_config(&options);
+		} else if(options.list_profiles){
+		  res = load_mpc_config(&options, &config);
+		  print_profiles_names_config(&config);
+		}
+		else
+		{
+			res = load_mpc_config(&options, &config);
+			res = print_mpc_config(&options, &config);
 		}
 	} else {
 		res = EXIT_FAILURE;

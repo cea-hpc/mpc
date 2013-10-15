@@ -1,7 +1,7 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # Copyright or (C) or Copr. 2010-2012 Universit�� de Versailles         # */
 /* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -95,7 +95,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
   remote=route_data->remote;
 
   size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
-  if (is_control_message && ((size + IBUF_GET_EAGER_SIZE) > config->ibv_eager_limit) ) {
+  if (is_control_message && ((size + IBUF_GET_EAGER_SIZE) > config->eager_limit) ) {
     sctk_error("MPC tries to send a control message without using the Eager protocol."
         "This is not supported and MPC is going to exit ...");
     sctk_abort();
@@ -106,7 +106,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
    *  We switch between available protocols
    *
    * */
-  if (size+IBUF_GET_EAGER_SIZE <= config->ibv_eager_limit)
+  if (size+IBUF_GET_EAGER_SIZE <= config->eager_limit)
   {
     ibuf = sctk_ib_eager_prepare_msg(rail_ib, remote, msg, size, -1, is_control_message);
     /* Actually, it is possible to get a NULL pointer for ibuf. We falback to buffered */
@@ -120,7 +120,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
 buffered:
   /***** BUFFERED EAGER CHANNEL *****/
-  if (size <= config->ibv_buffered_limit)  {
+  if (size <= config->buffered_limit)  {
     /* Fallback to RDMA if buffered not available or low memory mode */
     if (sctk_ib_buffered_prepare_msg(rail, remote, msg, size) == 1 ) goto error;
     sctk_complete_and_free_message(msg);

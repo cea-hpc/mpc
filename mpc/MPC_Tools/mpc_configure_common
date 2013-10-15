@@ -178,6 +178,7 @@ if test "$SCTK_LIB_DIR" = "" ; then SCTK_LIB_DIR="${SCTK_EPREFIX}/lib"; fi
 if test "$SCTK_INCLUDE_DIR" = "" ; then SCTK_INCLUDE_DIR="${SCTK_PREFIX}/include"; fi
 if test "$SCTK_MAN_DIR" = "" ; then SCTK_MAN_DIR="${SCTK_EPREFIX}/man"; fi
 if test "$SCTK_SHARE_DIR" = "" ; then SCTK_SHARE_DIR="${SCTK_EPREFIX}/share/mpc"; fi
+if test "$SCTK_SHARE_ED_DIR" = "" ; then SCTK_SHARE_ED_DIR="${SCTK_EPREFIX}/share/editor"; fi
 }
 
 check_compilers(){

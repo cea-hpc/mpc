@@ -31,7 +31,7 @@ static const xmlChar * SCKT_CONFIG_XML_NODE_SELECTOR_ENV = BAD_CAST("env");
 
 /********************************* FUNCTION *********************************/
 /**
- * Check status of &lt;env name='name'&gt;value&lt;/env&gt; selector based on environnement variable.
+ * Check status of &lt;env name='name'&gt;value&lt;/env&gt; selector based on environment variable.
  * @param selector Define the XML node to validation as a selector.
  * @return True if valid, false otherwise.
 **/
@@ -67,7 +67,7 @@ bool sctk_runtime_config_xml_selector_env_check(xmlNodePtr selector)
 /********************************* FUNCTION *********************************/
 /**
  * Check status on a given selector. It currently support :
- *    - env : Check value of an environnement variable, see sctk_runtime_config_xml_selector_env_check().
+ *    - env : Check value of an environment variable, see sctk_runtime_config_xml_selector_env_check().
  * @param selector Define the XML node to validation as a selector.
  * @return True if valid, false otherwise.
 **/

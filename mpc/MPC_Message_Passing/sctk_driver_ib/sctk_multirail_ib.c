@@ -1,7 +1,7 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # Copyright or (C) or Copr. 2010-2012 Universit�� de Versailles         # */
 /* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -315,10 +315,12 @@ void sctk_network_init_multirail_ib(int rail_id, int max_rails){
       }
     else
       previous_binding = sctk_bind_to_cpu(0);
-  }
+  static int init_once = 0;
   #endif
 
   if (config->driver.value.infiniband.network_type == 1) {
+  rails[rails_nb]->send_message_from_network = sctk_send_message_from_network_multirail_ib;
+  sctk_route_init_in_rail(rails[rails_nb],rail->topology);
     /* MPI IB network */
     if (strcmp(rail->topology, "ondemand") && strcmp(rail->topology, "fully")) {
       sctk_error("IB requires the 'ondemand' or the 'fully' topology for the data network! Exiting... Topology provided: %s", rail->topology);
@@ -337,7 +339,10 @@ void sctk_network_init_multirail_ib(int rail_id, int max_rails){
   } else {
     sctk_error("You must provide a network's type equivalent to 'data' or 'signalization'. Value provided:%d", config->driver.value.infiniband.network_type);
     sctk_abort();
+    }
+    sctk_abort();
   }
+  rails_nb++;
 
   if (init_once == 0) {
     sctk_ib_prof_init();
@@ -360,7 +365,6 @@ void sctk_network_init_multirail_ib(int rail_id, int max_rails){
     sctk_bind_to_cpu(previous_binding);
   }
 #endif
-
 }
 
 char sctk_network_is_ib_used() {

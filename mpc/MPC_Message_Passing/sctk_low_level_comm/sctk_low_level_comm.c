@@ -40,11 +40,10 @@ int sctk_is_net_migration_available(){
 }
 
 /********** SEND ************/
-static void sctk_network_send_message_default (sctk_thread_ptp_message_t * msg){
+void sctk_network_send_message_default (sctk_thread_ptp_message_t * msg){
   not_reachable();
 }
-static void (*sctk_network_send_message_ptr) (sctk_thread_ptp_message_t *) =
-  sctk_network_send_message_default;
+static void (*sctk_network_send_message_ptr) (sctk_thread_ptp_message_t *) = NULL;
 void sctk_network_send_message (sctk_thread_ptp_message_t * msg){
   sctk_network_send_message_ptr(msg);
 }
@@ -53,11 +52,10 @@ void sctk_network_send_message_set(void (*sctk_network_send_message_val) (sctk_t
 }
 
 /********** NOTIFY_RECV ************/
-static void sctk_network_notify_recv_message_default (sctk_thread_ptp_message_t * msg){
+void sctk_network_notify_recv_message_default (sctk_thread_ptp_message_t * msg){
 
 }
-static void (*sctk_network_notify_recv_message_ptr) (sctk_thread_ptp_message_t *) =
-  sctk_network_notify_recv_message_default;
+static void (*sctk_network_notify_recv_message_ptr) (sctk_thread_ptp_message_t *) = NULL;
 void sctk_network_notify_recv_message (sctk_thread_ptp_message_t * msg){
   sctk_network_notify_recv_message_ptr(msg);
 }
@@ -66,11 +64,10 @@ void sctk_network_notify_recv_message_set(void (*sctk_network_notify_recv_messag
 }
 
 /********** NOTIFY_MATCHING ************/
-static void sctk_network_notify_matching_message_default (sctk_thread_ptp_message_t * msg){
+void sctk_network_notify_matching_message_default (sctk_thread_ptp_message_t * msg){
 
 }
-static void (*sctk_network_notify_matching_message_ptr) (sctk_thread_ptp_message_t *) =
-  sctk_network_notify_matching_message_default;
+static void (*sctk_network_notify_matching_message_ptr) (sctk_thread_ptp_message_t *) = NULL;
 void sctk_network_notify_matching_message (sctk_thread_ptp_message_t * msg){
   sctk_network_notify_matching_message_ptr(msg);
 }
@@ -83,7 +80,6 @@ static void sctk_network_notify_perform_message_default (int remote_proces, int 
 
 }
 static void (*sctk_network_notify_perform_message_ptr) (int,int,int,int) =
-  sctk_network_notify_perform_message_default;
 void sctk_network_notify_perform_message (int remote_process, int remote_task_id, int polling_task_id, int blocking){
   sctk_network_notify_perform_message_ptr(remote_process, remote_task_id, polling_task_id, blocking);
 }
@@ -92,11 +88,10 @@ void sctk_network_notify_perform_message_set(void (*sctk_network_notify_perform_
 }
 
 /********** NOTIFY_IDLE ************/
-static void sctk_network_notify_idle_message_default (){
+void sctk_network_notify_idle_message_default (){
 
 }
-static void (*sctk_network_notify_idle_message_ptr) () =
-  sctk_network_notify_idle_message_default;
+static void (*sctk_network_notify_idle_message_ptr) () = NULL;
 void sctk_network_notify_idle_message (){
   sctk_network_notify_idle_message_ptr();
 }
@@ -109,7 +104,6 @@ static void sctk_network_notify_any_source_message_default (int polling_task_id,
 
 }
 static void (*sctk_network_notify_any_source_message_ptr) (int,int) =
-  sctk_network_notify_any_source_message_default;
 void sctk_network_notify_any_source_message (int polling_task_id,int blocking){
   sctk_network_notify_any_source_message_ptr(polling_task_id,blocking);
 }
@@ -143,13 +137,23 @@ sctk_net_init_pmi() {
 }
 
 void
+sctk_net_init_low_level_communication() {
+  sctk_network_send_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.send_msg.value);
+  sctk_network_notify_recv_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_recv_msg.value);
+  sctk_network_notify_matching_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_matching_msg.value);
+  sctk_network_notify_perform_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_perform_msg.value);
+  sctk_network_notify_idle_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_idle_msg.value);
+  sctk_network_notify_any_source_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_any_src_msg.value);
+}
+
+void
 sctk_net_init_driver (char* name)
 {
   if(sctk_process_number > 1){
     int j, k, l;
     int rails_nb = 0;
     struct sctk_runtime_config_struct_net_cli_option * cli_option = NULL;
-    char * option_name = "default";
+    char * option_name = sctk_runtime_config_get()->modules.low_level_comm.network_mode;
 
     if (name != NULL) {
       option_name = name;
@@ -199,6 +203,9 @@ sctk_net_init_driver (char* name)
 
           /* Switch on the driver to use */
           switch (sctk_net_get_config()->configs[j].driver.type) {
+
+          /* Switch on the driver to use */
+          switch (sctk_net_get_config()->configs[j].driver.type) {
 #ifdef MPC_USE_INFINIBAND
             case SCTK_RTCFG_net_driver_infiniband: /* INFINIBAND */
               nb_rails_infiniband ++ ;
@@ -217,7 +224,7 @@ sctk_net_init_driver (char* name)
         }
       }
     }
-
+      }
     /* End of rails computing. Now allocate ! */
 
     for (k=0; k<cli_option->rails_size; ++k) {

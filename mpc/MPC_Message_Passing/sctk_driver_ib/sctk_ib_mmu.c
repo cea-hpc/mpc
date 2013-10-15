@@ -1,7 +1,7 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # Copyright or (C) or Copr. 2010-2012 Universit�� de Versailles         # */
 /* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -157,7 +157,7 @@ static inline int
   sctk_nodebug("Try to register (%p) %p %lu to cache %d", mmu_entry, mmu_entry->key.ptr, mmu_entry->key.size, mmu->cache.entries_nb );
   sctk_spinlock_write_lock(&mmu->cache.lock);
   /* Maximum number of cached entries reached */
-  if (mmu->cache.entries_nb >= config->ibv_mmu_cache_entries) {
+  if (mmu->cache.entries_nb >= config->mmu_cache_entries) {
     sctk_ib_mmu_entry_t* mmu_entry_to_remove;
     mmu_entry_to_remove = sctk_ib_mmu_cache_remove(mmu);
     if (!mmu_entry_to_remove) {
@@ -167,7 +167,7 @@ static inline int
     sctk_ib_mmu_unregister (rail_ib, mmu_entry_to_remove);
   }
 #ifdef DEBUG_IB_MMU
-  assume(mmu->cache.entries_nb < config->ibv_mmu_cache_entries);
+  assume(mmu->cache.entries_nb < config->mmu_cache_entries);
   assume(mmu_entry->registrations_nb == 0);
 #endif
 //  sctk_debug("Add entry %p to cache %p %lu %d on node %d", mmu_entry, mmu_entry->key.ptr, mmu_entry->key.size, mmu->cache.entries_nb,
@@ -227,7 +227,7 @@ sctk_ib_mmu_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_mmu_t * mmu, sctk_
 
   memset(mmu, 0, sizeof(sctk_ib_mmu_t));
 
-  if (config->ibv_mmu_cache_enabled) {
+  if (config->mmu_cache_enabled) {
     sctk_ib_mmu_cache_init(mmu);
     mmu->node = node;
   }
@@ -283,7 +283,7 @@ __mmu_register ( sctk_ib_rail_info_t *rail_ib,
   LOAD_CONFIG(rail_ib);
   sctk_ib_mmu_entry_t* mmu_entry;
 
-  if (in_cache && config->ibv_mmu_cache_enabled) {
+  if (in_cache && config->mmu_cache_enabled) {
     mmu_entry = sctk_ib_mmu_cache_search(mmu, ptr, size);
     if (mmu_entry) {
       PROF_INC(rail_ib->rail, mmu_cache_hit);
@@ -319,7 +319,7 @@ __mmu_register ( sctk_ib_rail_info_t *rail_ib,
   mmu_entry->key.ptr    = ptr;
   mmu_entry->key.size   = size;
 
-  if (in_cache && config->ibv_mmu_cache_enabled)
+  if (in_cache && config->mmu_cache_enabled)
     sctk_ib_mmu_cache_add(rail_ib, mmu, mmu_entry);
 
   sctk_nodebug("Entry %p registered", mmu_entry);
@@ -348,7 +348,7 @@ sctk_ib_mmu_unregister (sctk_ib_rail_info_t *rail_ib,
   LOAD_CONFIG(rail_ib);
   int ret;
 
-  if (config->ibv_mmu_cache_enabled) {
+  if (config->mmu_cache_enabled) {
     if (mmu_entry->cache_status == cached) {
       sctk_spinlock_write_lock (&mmu->cache.lock);
       mmu_entry->registrations_nb--;

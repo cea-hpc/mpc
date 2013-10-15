@@ -1,7 +1,7 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # Copyright or (C) or Copr. 2010-2012 Universit�� de Versailles         # */
 /* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -99,7 +99,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
   /* Check if the remote task is in low mem mode */
   size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
-  if (is_control_message && size + IBUF_GET_EAGER_SIZE > config->ibv_eager_limit) {
+  if (is_control_message && size + IBUF_GET_EAGER_SIZE > config->eager_limit) {
     sctk_error("MPC tries to send a control message without using the Eager protocol."
         "This is not supported and MPC is going to exit ...");
     sctk_abort();
@@ -114,7 +114,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
    * */
   if ( ( (sctk_ibuf_rdma_get_remote_state_rts(remote) == state_connected) &&
         (size+IBUF_GET_EAGER_SIZE+IBUF_RDMA_GET_SIZE <= sctk_ibuf_rdma_get_eager_limit(remote) ) )
-      || (size+IBUF_GET_EAGER_SIZE <= config->ibv_eager_limit) )
+      || (size+IBUF_GET_EAGER_SIZE <= config->eager_limit) )
   {
     sctk_nodebug("Eager");
     ibuf = sctk_ib_eager_prepare_msg(rail_ib, remote, msg, size, -1, is_control_message);
@@ -132,7 +132,7 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
 buffered:
   /***** BUFFERED EAGER CHANNEL *****/
-  if (size <= config->ibv_buffered_limit)  {
+  if (size <= config->buffered_limit)  {
     sctk_nodebug("Buffered");
     sctk_ib_buffered_prepare_msg(rail, remote, msg, size);
     sctk_complete_and_free_message(msg);
@@ -423,9 +423,9 @@ recheck:
 #endif
       SCTK_PROFIL_START (ib_poll_cq);
       /* Poll received messages */
-      sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, poll, sctk_network_poll_recv);
+    sctk_ib_cq_poll(rail, device->recv_cq, config->wc_in_number, &poll, sctk_network_poll_recv);
       /* Poll sent messages */
-      sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, poll, sctk_network_poll_send);
+    sctk_ib_cq_poll(rail, device->send_cq, config->wc_out_number, &poll, sctk_network_poll_send);
       SCTK_PROFIL_END (ib_poll_cq);
 
 #ifdef SCTK_IB_CQ_MUTEX

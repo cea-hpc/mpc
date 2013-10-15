@@ -1,7 +1,7 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # Copyright or (C) or Copr. 2010-2012 Universit�� de Versailles         # */
 /* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -143,9 +143,9 @@ void* async_thread(void* arg)
         /* We use now the low memory mode */
         /* TODO: this mode is used until the end of the run */
 #if 0
-        if (config->ibv_low_memory == 0) {
+        if (!config->low_memory) {
           sctk_warning("Falling back to the low memory mode !");
-          config->ibv_low_memory = 1;
+          config->low_memory = true;
         } else {
           sctk_warning("Low memory mode not sufficient. Increase the number of buffers !");
         }
@@ -161,10 +161,10 @@ void* async_thread(void* arg)
         /* If no buffers posted */
         if (ret == 0) {
           if (limit + 128 < sctk_ib_srq_get_max_srq_wr(rail_ib)) {
-            limit = (config->ibv_max_srq_ibufs_posted += 128);
+            limit = (config->max_srq_ibufs_posted += 128);
             ret = sctk_ibuf_srq_check_and_post(rail_ib, limit);
             sctk_debug("Number of ibufs_posted expanded to %d",
-              config->ibv_max_srq_ibufs_posted);
+              config->max_srq_ibufs_posted);
           }
         }
 #endif
@@ -174,7 +174,6 @@ void* async_thread(void* arg)
         sctk_ibuf_srq_check_and_post(rail_ib);
 
         config->ibv_srq_credit_limit = config->ibv_max_srq_ibufs_posted / 2;
-        mod_attr.srq_limit    = config->ibv_srq_credit_thread_limit;
         sctk_debug("Update with max_qr %d and srq_limit %d",
             config->ibv_max_srq_ibufs_posted, mod_attr.srq_limit);
         rc = ibv_modify_srq(device->srq, &mod_attr, IBV_SRQ_LIMIT);

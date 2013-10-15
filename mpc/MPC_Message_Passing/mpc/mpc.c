@@ -37,6 +37,7 @@
 #include "sctk_collective_communications.h"
 #include "sctk_stdint.h"
 #include "sctk_atomics.h"
+#include "sctk_runtime_config.h"
 
  /*#define MPC_LOG_DEBUG*/
 #ifdef MPC_LOG_DEBUG
@@ -890,11 +891,10 @@ void MPC_Hard_Check(){
 }
 
 #if defined(MPC_LOG_DEBUG)
-static int mpc_log_debug_status = 0;
 static inline void
 mpc_log_debug (MPC_Comm comm, const char *fmt, ...)
 {
-  if (mpc_log_debug_status == 1)
+  if (sctk_runtime_config_get()->modules.message_passing.log_debug)
     {
       va_list ap;
       char buff[4096];
@@ -1320,15 +1320,6 @@ PMPC_Init (int *argc, char ***argv)
   sctk_task_specific_t *task_specific;
   SCTK_PROFIL_START (MPC_Init);
 #ifdef MPC_LOG_DEBUG
-  char *mpc_log_debug_env;
-  mpc_log_debug_env = getenv ("MPC_LOG_DEBUG");
-  if (mpc_log_debug_env != NULL)
-    {
-      if (strcmp ("1", mpc_log_debug_env) == 0)
-	{
-	  mpc_log_debug_status = 1;
-	}
-    }
   mpc_log_debug (MPC_COMM_WORLD, "MPC_Init");
 #endif
   task_specific = __MPC_get_task_specific ();
@@ -1916,7 +1907,7 @@ sctk_user_main (int argc, char **argv)
   __MPC_init_task_specific ();
 
   __MPC_Barrier (MPC_COMM_WORLD);
-  if(getenv("MPC_HARD_CHECKING") != NULL){
+  if(sctk_runtime_config_get()->modules.mpc.hard_checking){
     MPC_Hard_Check();
   }
   __MPC_Barrier (MPC_COMM_WORLD);

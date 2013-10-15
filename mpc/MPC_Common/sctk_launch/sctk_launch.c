@@ -53,6 +53,7 @@
 /* #include "sctk_daemons.h" */
 /* #include "sctk_io.h" */
 #include "sctk_runtime_config.h"
+#include "sctk_bool.h"
 
 #ifdef MPC_Profiler
 #include "sctk_profile_render.h"
@@ -68,23 +69,23 @@ static char *sctk_save_argument[SCTK_LAUNCH_MAX_ARG];
 static int sctk_initial_argc = 0;
 static int sctk_start_argc = 0;
 static char **init_argument = NULL;
-int sctk_restart_mode = 0;
-int sctk_check_point_restart_mode = 0;
-int sctk_migration_mode = 0;
+bool sctk_restart_mode;
+bool sctk_check_point_restart_mode;
+bool sctk_migration_mode;
 #define MAX_TERM_LENGTH 80
 #define MAX_NAME_FORMAT 30
 char *sctk_mono_bin = "";
 /* const char *sctk_store_dir = "/dev/null"; */
 static char topology_name[SCTK_MAX_FILENAME_SIZE];
 
-char *sctk_multithreading_mode = "none";
+char *sctk_multithreading_mode;
 char *sctk_network_mode = "none";
-int sctk_enable_smt_capabilities = 0;
-int sctk_share_node_capabilities = 0;
+bool sctk_enable_smt_capabilities;
+bool sctk_share_node_capabilities;
 
 double __sctk_profiling__start__sctk_init_MPC;
 double __sctk_profiling__end__sctk_init_MPC;
-char * sctk_profiling_outputs = "none";
+char * sctk_profiling_outputs;
 
 
 void
@@ -164,14 +165,16 @@ __sctk_add_arg_eq (char *arg, char *argeq,
 
 #define sctk_add_arg_eq(arg,action) if(__sctk_add_arg_eq(arg,arg"=n",action,word) == 0) return 0
 
-static int sctk_version_details_val = 0;
+static bool sctk_version_details_val;
 static void (*sctk_thread_val) (void) = NULL;
-static int sctk_task_nb_val = 0;
-static int sctk_process_nb_val = 0;
-static int sctk_processor_nb_val = 0;
-static int sctk_node_nb_val = 0;
-static int sctk_verbosity = 0;
-static char* sctk_launcher_mode = "none";
+static int sctk_task_nb_val;
+static int sctk_process_nb_val;
+static int sctk_processor_nb_val;
+static int sctk_node_nb_val;
+static int sctk_verbosity;
+static char* sctk_launcher_mode;
+/* Name of the inter-process driver to use. NULL means default driver */
+static char* sctk_network_driver_name = NULL;
 /* Name of the inter-process driver to use. NULL means default driver */
 static char* sctk_network_driver_name = NULL;
 
@@ -240,6 +243,8 @@ sctk_perform_initialisation (void)
   }
 
 #ifdef MPC_Message_Passing
+  sctk_collectives_init_hook =
+      *(void**)(&sctk_runtime_config_get()->modules.inter_thread_comm.collectives_init_hook.value);
   if (sctk_process_nb_val > 1){
     sctk_ptp_per_task_init(-1);
     sctk_net_init_pmi();
@@ -308,7 +313,7 @@ sctk_perform_initialisation (void)
   }
  /*  { */
 /*     FILE *topo_file = NULL; */
-/*     int max_try = 10; */
+/*    int max_try = sctk_runtime_config_get()->modules.launcher.max_try;*/
 /*     sprintf (topology_name, "%s/Process_%d_topology", sctk_store_dir, */
 /*         sctk_process_rank); */
 /*     do */
@@ -359,7 +364,6 @@ sctk_use_ethread_mxn_ng (void)
   sctk_multithreading_mode = "ethread_mxn_ng";
   sctk_thread_val = sctk_ethread_mxn_ng_thread_init;
 }
-
   static void
 sctk_use_ethread_ng (void)
 {
@@ -373,7 +377,6 @@ sctk_use_pthread_ng (void)
   sctk_multithreading_mode = "pthread_ng";
   sctk_thread_val = sctk_pthread_ng_thread_init;
 }
-
   static void
 sctk_def_directory (char *arg)
 {
@@ -753,8 +756,8 @@ run (sctk_startup_args_t * arg)
 }
 
 static int sctk_mpc_env_initialized = 0;
+#ifdef SCTK_LINUX_DISABLE_ADDR_RANDOMIZE
 
-#ifdef SCTK_LINUX_DISABLE_ADDR_RADOMIZE
 #include <asm/unistd.h>
 #include <linux/personality.h>
 #define THIS__set_personality(pers) syscall(__NR_personality,pers)
@@ -762,26 +765,24 @@ static int sctk_mpc_env_initialized = 0;
   static inline void
 sctk_disable_addr_randomize (int argc, char **argv)
 {
+  bool keep_addr_randomize, disable_addr_randomize;
   if(sctk_mpc_env_initialized == 0){
-    char *disable_addr_randomize;
+/* To be check for move into mprcun script */
 return;
     assume (argc > 0);
-    if (getenv ("SCTK_LINUX_KEEP_ADDR_RADOMIZE") == NULL)
-      {
-	disable_addr_randomize = getenv ("SCTK_LINUX_DISABLE_ADDR_RADOMIZE");
-	if (disable_addr_randomize)
-	  {
-	    unsetenv ("SCTK_LINUX_DISABLE_ADDR_RADOMIZE");
-	    if (sctk_runtime_config_get()->modules.launcher.banner)
-	      {
+  keep_addr_randomize = sctk_runtime_config_get()->modules.launcher.keep_rand_addr;
+  disable_addr_randomize = sctk_runtime_config_get()->modules.launcher.disable_rand_addr;
+  if (!keep_addr_randomize && disable_addr_randomize)
+  {
+    if (sctk_runtime_config_get()->modules.launcher.banner)
+    {
 		INFO("Addr randomize disabled for large scale runs")
-		  //        sctk_warning ("Restart execution to disable addr randomize");
-		  }
-	    THIS__set_personality (ADDR_NO_RANDOMIZE);
-	    execvp (argv[0], argv);
-	  }
-	sctk_nodebug ("current brk %p", sbrk (0));
-      }
+//      sctk_warning ("Restart execution to disable addr randomize");
+    }
+    THIS__set_personality (ADDR_NO_RANDOMIZE);
+    execvp (argv[0], argv);
+  }
+  sctk_nodebug ("current brk %p", sbrk (0));
   } else {
     sctk_warning("Unable to disable addr ramdomization");
   }
@@ -831,8 +832,18 @@ void sctk_init_mpc_runtime(){
 
     sctk_mpc_env_initialized = 1;
 
+  /* To check why ? */
+  if (getenv("MPC_MAKE_FORTRAN_INTERFACE") != NULL) {
+    return mpc_user_main(argc, argv);
+  }
+
     //load mpc configuration from XML files if not already done.
     sctk_runtime_config_init();
+
+#ifdef MPC_Message_Passing
+  /* Move this in a common function for post-config setup */
+  sctk_net_init_low_level_communication();
+#endif
 
     __sctk_profiling__start__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
 
@@ -848,20 +859,37 @@ void sctk_init_mpc_runtime(){
     sctk_use_ethread_mxn ();
     sctk_def_task_nb ("1");
     sctk_def_process_nb ("1");
+
+  // Initializing multithreading mode
+  sctk_runtime_config_get()->modules.launcher.thread_init.value();
+
+  /* Move this in a post-config function */
+  sctk_task_nb_val = sctk_runtime_config_get()->modules.launcher.nb_task;
+  sctk_process_nb_val = sctk_runtime_config_get()->modules.launcher.nb_process;
+  sctk_processor_nb_val = sctk_runtime_config_get()->modules.launcher.nb_processor;
+  sctk_node_nb_val = sctk_runtime_config_get()->modules.launcher.nb_node;
+  sctk_verbosity = sctk_runtime_config_get()->modules.launcher.verbosity;
+  sctk_launcher_mode = sctk_runtime_config_get()->modules.launcher.launcher;
+  sctk_version_details_val = sctk_runtime_config_get()->modules.launcher.vers_details;
+  sctk_profiling_outputs = sctk_runtime_config_get()->modules.launcher.profiling;
+  sctk_enable_smt_capabilities = sctk_runtime_config_get()->modules.launcher.enable_smt;
+  sctk_share_node_capabilities = sctk_runtime_config_get()->modules.launcher.share_node;
+  sctk_restart_mode = sctk_runtime_config_get()->modules.launcher.restart;
+  sctk_check_point_restart_mode = sctk_runtime_config_get()->modules.launcher.checkpoint;
+  sctk_migration_mode = sctk_runtime_config_get()->modules.launcher.migration;
+
     /*   sctk_exception_catch (11); */
 
     /*   sctk_set_execuatble_name (argv[0]); */
 
-    /*   sctk_disable_mpc = getenv ("MPC_DISABLE"); */
-    /*   if (sctk_disable_mpc != NULL) */
-    /*   { */
-    /*     if (strcmp ("1", sctk_disable_mpc) == 0) */
-    /*     { */
-    /*       sctk_pthread_thread_init (); */
-    /*       sctk_thread_init_no_mpc (); */
-    /*       return mpc_user_main (argc, argv); */
-    /*     } */
-    /*   } */
+  /*
+  if (sctk_runtime_config_get()->modules.launcher.disable_mpc)
+  {
+    sctk_pthread_thread_init ();
+    sctk_thread_init_no_mpc ();
+    return mpc_user_main (argc, argv);
+  }
+  */
 
     sctk_argument = getenv ("MPC_STARTUP_ARGS");
 

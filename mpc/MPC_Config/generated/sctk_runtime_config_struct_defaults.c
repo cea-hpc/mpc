@@ -23,6 +23,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+#include <dlfcn.h>
 #include "sctk_runtime_config_struct.h"
 #include "sctk_runtime_config_struct_defaults.h"
 #include "sctk_runtime_config_mapper.h"
@@ -46,12 +47,38 @@ void sctk_runtime_config_struct_init_launcher(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_launcher * obj = struct_ptr;
 	/* Simple params : */
-	obj->smt = false;
-	obj->cores = 1;
 	obj->verbosity = 0;
 	obj->banner = true;
 	obj->autokill = 0;
-	obj->user_launchers = "";
+	obj->user_launchers = "default";
+	obj->keep_rand_addr = true;
+	obj->disable_rand_addr = false;
+	obj->disable_mpc = false;
+	obj->thread_init.name = "sctk_use_ethread_mxn";
+	*(void **) &(obj->thread_init.value) = sctk_runtime_config_get_symbol("sctk_use_ethread_mxn");
+	obj->nb_task = 1;
+	obj->nb_process = 1;
+	obj->nb_processor = 0;
+	obj->nb_node = 1;
+	obj->launcher = "none";
+	obj->max_try = 10;
+	obj->vers_details = false;
+	obj->profiling = "none";
+	obj->enable_smt = false;
+	obj->share_node = false;
+	obj->restart = false;
+	obj->checkpoint = false;
+	obj->migration = false;
+	obj->report = false;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_debugger(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_debugger * obj = struct_ptr;
+	/* Simple params : */
+	obj->colors = true;
+	obj->max_filename_size = 1024;
 }
 
 /*******************  FUNCTION  *********************/
@@ -90,6 +117,30 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 	obj->wc_out_number = 0;
 	obj->rdma_depth = 0;
 	obj->rdma_dest_depth = 0;
+	obj->low_memory = false;
+	obj->rdvz_protocol = IBV_RDVZ_WRITE_PROTOCOL;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_enum_init_ibv_rdvz_protocol()
+{
+	struct enum_type * current_enum = (struct enum_type *) malloc(sizeof(struct enum_type));
+	struct enum_value * current_value, * values = NULL;
+
+	strncpy(current_enum->name, "enum ibv_rdvz_protocol", 50);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "IBV_RDVZ_WRITE_PROTOCOL", 50);
+	current_value->value = IBV_RDVZ_WRITE_PROTOCOL;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_value = (struct enum_value *) malloc(sizeof(struct enum_value));
+	strncpy(current_value->name, "IBV_RDVZ_READ_PROTOCOL", 50);
+	current_value->value = IBV_RDVZ_READ_PROTOCOL;
+	HASH_ADD_STR(values, name, current_value);
+
+	current_enum->values = values;
+	HASH_ADD_STR(enums_types, name, current_enum);
 }
 
 /*******************  FUNCTION  *********************/
@@ -156,6 +207,71 @@ void sctk_runtime_config_struct_init_networks(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_inter_thread_comm(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_inter_thread_comm * obj = struct_ptr;
+	/* Simple params : */
+	obj->barrier_arity = 8;
+	obj->broadcast_arity_max = 32;
+	obj->broadcast_max_size = 1024;
+	obj->broadcast_check_threshold = 512;
+	obj->allreduce_arity_max = 8;
+	obj->allreduce_max_size = 1024;
+	obj->allreduce_check_threshold = 8192;
+	obj->collectives_init_hook.name = "sctk_collectives_init_opt_messages";
+	*(void **) &(obj->collectives_init_hook.value) = sctk_runtime_config_get_symbol("sctk_collectives_init_opt_messages");
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_low_level_comm(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_low_level_comm * obj = struct_ptr;
+	/* Simple params : */
+	obj->checksum = true;
+	obj->send_msg.name = "sctk_network_send_message_default";
+	*(void **) &(obj->send_msg.value) = sctk_runtime_config_get_symbol("sctk_network_send_message_default");
+	obj->notify_recv_msg.name = "sctk_network_notify_recv_message_default";
+	*(void **) &(obj->notify_recv_msg.value) = sctk_runtime_config_get_symbol("sctk_network_notify_recv_message_default");
+	obj->notify_matching_msg.name = "sctk_network_notify_matching_message_default";
+	*(void **) &(obj->notify_matching_msg.value) = sctk_runtime_config_get_symbol("sctk_network_notify_matching_message_default");
+	obj->notify_perform_msg.name = "sctk_network_notify_perform_message_default";
+	*(void **) &(obj->notify_perform_msg.value) = sctk_runtime_config_get_symbol("sctk_network_notify_perform_message_default");
+	obj->notify_idle_msg.name = "sctk_network_notify_idle_message_default";
+	*(void **) &(obj->notify_idle_msg.value) = sctk_runtime_config_get_symbol("sctk_network_notify_idle_message_default");
+	obj->notify_any_src_msg.name = "sctk_network_notify_any_source_message_default";
+	*(void **) &(obj->notify_any_src_msg.value) = sctk_runtime_config_get_symbol("sctk_network_notify_any_source_message_default");
+	obj->network_mode = "default";
+	obj->dyn_reordering = false;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_mpc(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_mpc * obj = struct_ptr;
+	/* Simple params : */
+	obj->log_debug = false;
+	obj->hard_checking = false;
+	obj->buffering = false;
+}
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_openmp(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_openmp * obj = struct_ptr;
+	/* Simple params : */
+	obj->vp = 0;
+	obj->schedule = "static";
+	obj->nb_threads = 0;
+	obj->adjustment = false;
+	obj->nested = false;
+	obj->max_threads = 64;
+	obj->max_alive_for_dyn = 7;
+	obj->max_alive_for_guided = 3;
+	obj->max_alive_sections = 3;
+	obj->max_alive_single = 3;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_profiler(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_profiler * obj = struct_ptr;
@@ -175,11 +291,47 @@ void sctk_runtime_config_struct_init_profiler(void * struct_ptr)
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_thread(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_thread * obj = struct_ptr;
+	/* Simple params : */
+	obj->spin_delay = 10;
+	obj->interval = 10;
+	obj->kthread_stack_size = sctk_runtime_config_map_entry_parse_size("10MB");
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_reset(struct sctk_runtime_config * config)
 {
+	sctk_handler = dlopen(0, RTLD_LAZY | RTLD_GLOBAL);
 	sctk_runtime_config_struct_init_allocator(&config->modules.allocator);
 	sctk_runtime_config_struct_init_launcher(&config->modules.launcher);
+	sctk_runtime_config_struct_init_debugger(&config->modules.debugger);
+	sctk_runtime_config_struct_init_inter_thread_comm(&config->modules.inter_thread_comm);
+	sctk_runtime_config_struct_init_low_level_comm(&config->modules.low_level_comm);
+	sctk_runtime_config_struct_init_mpc(&config->modules.mpc);
+	sctk_runtime_config_enum_init_ibv_rdvz_protocol();
+	sctk_runtime_config_struct_init_openmp(&config->modules.openmp);
 	sctk_runtime_config_struct_init_profiler(&config->modules.profiler);
+	sctk_runtime_config_struct_init_thread(&config->modules.thread);
 	sctk_runtime_config_struct_init_networks(&config->networks);
-};
+	dlclose(sctk_handler);
+}
+
+
+/*******************  FUNCTION  *********************/
+void sctk_runtime_config_clean_hash_tables()
+{
+	struct enum_type * current_enum, * tmp_enum;
+	struct enum_value * current_value, * tmp_value;
+
+	HASH_ITER(hh, enums_types, current_enum, tmp_enum) {
+		HASH_ITER(hh, current_enum->values, current_value, tmp_value) {
+			HASH_DEL(current_enum->values, current_value);
+			free(current_value);
+		}
+		HASH_DEL(enums_types, current_enum);
+		free(current_enum);
+	}
+}
 

@@ -33,6 +33,7 @@
 #include "sched.h"
 #include "sctk_asm.h"
 #include "sctk.h"
+#include "sctk_runtime_config.h"
 #ifdef MPC_Message_Passing
 #include <sctk_inter_thread_comm.h>
 #endif
@@ -944,7 +945,7 @@ extern "C"
 	      {
 		__sctk_ethread_sched_yield_vp (vp, owner);
 	      }
-	    /*Courte phase d'attente en cas de libération d'une tâche de polling */
+	    /*Courte phase d'attente en cas de libï¿½ration d'une tï¿½che de polling */
 	    while (lock->owner != owner)
 	      {
 		__sctk_ethread_sched_yield_vp (vp, owner);
@@ -993,8 +994,8 @@ extern "C"
 
     if (lock->lock >= 1)
       {
-	long i = SCTK_ETHREAD_SPIN_DELAY;
-	long j = SCTK_ETHREAD_SPIN_DELAY;
+	long i = sctk_runtime_config_get()->modules.thread.spin_delay;
+	long j = sctk_runtime_config_get()->modules.thread.spin_delay;
 	cell.my_self = owner;
 	cell.next = NULL;
 	cell.wake = 0;
@@ -1019,7 +1020,7 @@ extern "C"
 		  {
 		    j--;
 		    sched_yield ();
-		    i = SCTK_ETHREAD_SPIN_DELAY;
+		    i = sctk_runtime_config_get()->modules.thread.spin_delay;
 		  }
 		else
 		  sctk_cpu_relax ();
@@ -1028,7 +1029,7 @@ extern "C"
 		if (j <= 0)
 		  {
 		    __sctk_ethread_sched_yield_vp (vp, owner);
-		    j = SCTK_ETHREAD_SPIN_DELAY;
+		    j = sctk_runtime_config_get()->modules.thread.spin_delay;
 		  }
 	      }
 	  }
@@ -1039,7 +1040,7 @@ extern "C"
 	      {
 		__sctk_ethread_sched_yield_vp (vp, owner);
 	      }
-	    /*Courte phase d'attente en cas de libération d'une tâche de polling */
+	    /*Courte phase d'attente en cas de libï¿½ration d'une tï¿½che de polling */
 	    while (lock->owner != owner)
 	      {
 		__sctk_ethread_sched_yield_vp (vp, owner);
@@ -1071,7 +1072,7 @@ extern "C"
       {
 	if (lock->type == SCTK_THREAD_MUTEX_RECURSIVE)
 	  {
-	    sctk_nodebug ("on est dans le mutex récursif");
+	    sctk_nodebug ("on est dans le mutex rï¿½cursif");
 	    sctk_spinlock_lock (&lock->spinlock);
 	    lock->lock++;
 	    sctk_spinlock_unlock (&lock->spinlock);
@@ -1093,7 +1094,7 @@ extern "C"
      */
     /*
        On met ce test pour limiter au maximum la contention sur le spinlock.
-       Si on arrive pas à prendre le spinlock, c'est qu'il y a du mon et donc que l'on est
+       Si on arrive pas ï¿½ prendre le spinlock, c'est qu'il y a du mon et donc que l'on est
        pas prioritaire.
      */
     if (sctk_spinlock_trylock (&lock->spinlock))
@@ -1115,7 +1116,7 @@ extern "C"
       }
 
     sctk_assert (lock->lock > 0);
-    /*Courte pahse d'attente en cas de libération d'une tâche de polling */
+    /*Courte pahse d'attente en cas de libï¿½ration d'une tï¿½che de polling */
     while (lock->owner != owner)
       {
 	__sctk_ethread_sched_yield_vp (vp, owner);
@@ -1145,7 +1146,7 @@ extern "C"
 
     sctk_ethread_mutex_cell_t *cell;
     sctk_nodebug
-      (" owner = %p ; le lock appartient à : %p -- on est : %p",
+      (" owner = %p ; le lock appartient ï¿½ : %p -- on est : %p",
        owner, lock->owner, vp->current);
     if (lock->owner != owner)
       {
@@ -1177,7 +1178,7 @@ extern "C"
 	  }
 	to_wake = (sctk_ethread_per_thread_t *) lock->owner;
 	cell->wake = 1;
-	sctk_nodebug ("a réveiller %p", to_wake);
+	sctk_nodebug ("a rï¿½veiller %p", to_wake);
 	retrun_task (to_wake);
       }
     else
