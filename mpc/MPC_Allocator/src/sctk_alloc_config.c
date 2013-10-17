@@ -57,6 +57,7 @@ SCTK_STATIC void sctk_alloc_print_config(void)
 	printf("MPCALLOC_KEEP_MEM           : %lu MB\n",sctk_alloc_global_config.keep_mem/1024/1024);
 	printf("MPCALLOC_REALLOC_THREASHOLD : %lu MB\n",sctk_alloc_global_config.realloc_threashold/1024/1024);
 	printf("MPCALLOC_REALLOC_FACTOR     : %lu\n",sctk_alloc_global_config.realloc_factor);
+	printf("MPCALLOC_MM_SOURCES         : %d\n",sctk_alloc_global_config.mm_sources);
 	printf("==================================================\n");
 }
 #endif //MPC_Common
@@ -71,19 +72,29 @@ SCTK_STATIC void sctk_alloc_config_init_static_defaults(struct sctk_runtime_conf
 	#ifndef MPC_Common
 	config->print_config       = false;
 	config->numa_round_robin   = false;
+	config->mm_sources         = 4;
 	#endif //MPC_Common
+
 	config->strict             = false;
 	config->numa_migration     = false;
-	#ifdef HAVE_HWLOC
-	//TODO make it true if no more bugs...
 	config->numa               = false;
-	#else //HAVE_HWLOC
-	config->numa               = false;
-	#endif //HAVE_HWLOC
 	config->realloc_factor     = 2;
 	config->realloc_threashold = 50*1024*1024;//50MB
 	config->keep_max           = 8*1024*1024;//8MB
 	config->keep_mem           = 512*1024*1024;//512MB
+
+	#if defined(MPC_Common) && defined(__MIC__)
+	config->numa_round_robin   = true;
+	#endif
+
+	#ifdef __MIC__
+	config->keep_mem           = 64*1024*1024;//64MB
+	#endif //__MIC__
+
+	#ifdef HAVE_HWLOC
+	//TODO make it true if no more bugs...
+	config->numa               = false;
+	#else //HAVE_HWLOC
 }
 
 /************************* FUNCTION ************************/
@@ -152,6 +163,7 @@ void sctk_alloc_config_init(void)
 	sctk_alloc_global_config.keep_mem = sctk_alloc_get_size_from_env("MPCALLOC_KEEP_MEM",sctk_alloc_global_config.keep_mem,1024*1024);
 	sctk_alloc_global_config.realloc_threashold = sctk_alloc_get_size_from_env("MPCALLOC_REALLOC_THREASHOLD",sctk_alloc_global_config.realloc_threashold,1024*1024);
 	sctk_alloc_global_config.realloc_factor = sctk_alloc_get_size_from_env("MPCALLOC_REALLOC_FACTOR",sctk_alloc_global_config.realloc_factor,1);
+	sctk_alloc_global_config.mm_sources = sctk_alloc_get_size_from_env("MPCALLOC_MM_SOURCES",sctk_alloc_global_config.mm_sources,1);
 	if (sctk_alloc_global_config.print_config)
 		sctk_alloc_print_config();
 }
