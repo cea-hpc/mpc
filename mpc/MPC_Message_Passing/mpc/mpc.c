@@ -1889,6 +1889,12 @@ __MPC_init_types ()
 #ifdef MPC_OpenMP
 #endif
 
+#ifdef HAVE_ENVIRON_VAR
+#include <stdlib.h>
+#include <stdio.h>
+extern char ** environ;
+#endif
+
 int
 /* main (int argc, char **argv) */
 sctk_user_main (int argc, char **argv)
@@ -1933,7 +1939,11 @@ sctk_user_main (int argc, char **argv)
 #endif
   __MPC_Barrier (MPC_COMM_WORLD);
 
+#ifdef HAVE_ENVIRON_VAR 
+  result = mpc_user_main (argc, argv,environ);
+#else
   result = mpc_user_main (argc, argv);
+#endif
 
   __MPC_Barrier (MPC_COMM_WORLD);
 
@@ -5766,7 +5776,11 @@ PMPC_Main (int argc, char **argv)
 int
 PMPC_User_Main (int argc, char **argv)
 {
+#ifndef HAVE_ENVIRON_VAR
   return mpc_user_main (argc, argv);
+#else
+  return mpc_user_main (argc, argv,environ);
+#endif
 }
 
 /********************************************************************/

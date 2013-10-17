@@ -102,6 +102,36 @@ SCTK_CHECK_FUNC raise
 SCTK_CHECK_FUNC pthread_create
 SCTK_CHECK_FUNC getpid
 
+begin_section Environnement
+SCTK_MSG_CHECKING environ
+cat  << EOF  > ${SCTK_CONF_C}
+#include <stdlib.h>
+#include <stdio.h>
+
+extern char ** environ;
+
+
+int main(int argc, char** argv){
+	fprintf(stderr,"%p\n",environ);
+	return 0;
+}
+EOF
+
+echo "File ${SCTK_CONF_C}" >> ${SCTK_CONF_LOG} 2>&1
+cat ${SCTK_CONF_C} >> ${SCTK_CONF_LOG} 2>&1
+echo "$SCTK_CC $SCTK_CFLAGS -c ${SCTK_CONF_C} -o ${SCTK_CONF_OBJ}">> ${SCTK_CONF_LOG} 2>&1
+eval "$SCTK_CC $SCTK_CFLAGS -c ${SCTK_CONF_C} -o ${SCTK_CONF_OBJ}">> ${SCTK_CONF_LOG} 2>&1
+SCTK_SCTK_CHECK_HEADER_RES="$?"
+rm ${SCTK_CONF_C} ${SCTK_CONF_OBJ} >> ${SCTK_CONF_LOG} 2>&1
+if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
+    result yes
+    SCTK_CHECK_OPTION   -DHAVE_ENVIRON_VAR
+else
+    result no
+fi
+
+end_section
+
 if test "${SCTK_OS}" = "Linux"; then
 begin_section Address randomize
 	SCTK_MSG_CHECKING disable_opt
