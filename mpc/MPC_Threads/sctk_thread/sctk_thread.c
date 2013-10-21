@@ -970,6 +970,8 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
       if (scope_init == SCTK_THREAD_SCOPE_SYSTEM) {
         sctk_restrict_binding();
       }
+    } else {
+        sctk_restrict_binding();
     }
 
   res = __sctk_ptr_thread_user_create (__threadp, __attr,
