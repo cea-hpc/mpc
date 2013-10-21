@@ -320,16 +320,6 @@ struct sctk_runtime_config_struct_low_level_comm
 	/****/
 	struct sctk_runtime_config_funcptr send_msg;
 	/****/
-	struct sctk_runtime_config_funcptr notify_recv_msg;
-	/****/
-	struct sctk_runtime_config_funcptr notify_matching_msg;
-	/****/
-	struct sctk_runtime_config_funcptr notify_perform_msg;
-	/****/
-	struct sctk_runtime_config_funcptr notify_idle_msg;
-	/****/
-	struct sctk_runtime_config_funcptr notify_any_src_msg;
-	/****/
 	char * network_mode;
 	/****/
 	bool dyn_reordering;

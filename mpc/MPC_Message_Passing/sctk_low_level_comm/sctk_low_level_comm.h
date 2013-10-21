@@ -23,7 +23,6 @@
 #define __SCTK_LOW_LEVEL_COMM_H_
 
 #include <sctk_inter_thread_comm.h>
-void sctk_net_init_low_level_communication();
 void sctk_net_init_driver ();
 void sctk_net_init_pmi();
 int sctk_is_net_migration_available();

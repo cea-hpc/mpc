@@ -200,11 +200,6 @@
 		<struct name="low_level_comm" doc="">
 			<param name="checksum" type="bool" default="true" doc=""/>
 			<param name="send_msg" type="funcptr" default="sctk_network_send_message_default" doc=""/>
-			<param name="notify_recv_msg" type="funcptr" default="sctk_network_notify_recv_message_default" doc=""/>
-			<param name="notify_matching_msg" type="funcptr" default="sctk_network_notify_matching_message_default" doc=""/>
-			<param name="notify_perform_msg" type="funcptr" default="sctk_network_notify_perform_message_default" doc=""/>
-			<param name="notify_idle_msg" type="funcptr" default="sctk_network_notify_idle_message_default" doc=""/>
-			<param name="notify_any_src_msg" type="funcptr" default="sctk_network_notify_any_source_message_default" doc=""/>
 			<param name="network_mode" type="string" default="default" doc=""/>
 			<param name="dyn_reordering" type="bool" default="false" doc=""/>
 		</struct>

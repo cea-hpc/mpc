@@ -248,41 +248,6 @@
           </xs:restriction>
         </xs:simpleType>
       </xs:element>
-      <xs:element minOccurs="0" name="notify_recv_msg">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="notify_matching_msg">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="notify_perform_msg">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="notify_idle_msg">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
-      <xs:element minOccurs="0" name="notify_any_src_msg">
-        <xs:simpleType>
-          <xs:restriction base="xs:string">
-            <xs:pattern value="[A-Za-z_][0-9A-Za-z_]*"/>
-          </xs:restriction>
-        </xs:simpleType>
-      </xs:element>
       <xs:element minOccurs="0" name="network_mode" type="xs:string"/>
       <xs:element minOccurs="0" name="dyn_reordering" type="xs:boolean"/>
     </xs:all>

@@ -240,16 +240,6 @@ void sctk_runtime_config_struct_init_low_level_comm(void * struct_ptr)
 	obj->checksum = true;
 	obj->send_msg.name = "sctk_network_send_message_default";
 	*(void **) &(obj->send_msg.value) = sctk_runtime_config_get_symbol("sctk_network_send_message_default");
-	obj->notify_recv_msg.name = "sctk_network_notify_recv_message_default";
-	*(void **) &(obj->notify_recv_msg.value) = sctk_runtime_config_get_symbol("sctk_network_notify_recv_message_default");
-	obj->notify_matching_msg.name = "sctk_network_notify_matching_message_default";
-	*(void **) &(obj->notify_matching_msg.value) = sctk_runtime_config_get_symbol("sctk_network_notify_matching_message_default");
-	obj->notify_perform_msg.name = "sctk_network_notify_perform_message_default";
-	*(void **) &(obj->notify_perform_msg.value) = sctk_runtime_config_get_symbol("sctk_network_notify_perform_message_default");
-	obj->notify_idle_msg.name = "sctk_network_notify_idle_message_default";
-	*(void **) &(obj->notify_idle_msg.value) = sctk_runtime_config_get_symbol("sctk_network_notify_idle_message_default");
-	obj->notify_any_src_msg.name = "sctk_network_notify_any_source_message_default";
-	*(void **) &(obj->notify_any_src_msg.value) = sctk_runtime_config_get_symbol("sctk_network_notify_any_source_message_default");
 	obj->network_mode = "default";
 	obj->dyn_reordering = false;
 }

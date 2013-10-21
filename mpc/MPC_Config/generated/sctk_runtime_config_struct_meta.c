@@ -164,11 +164,6 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"sctk_runtime_config_struct_low_level_comm" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_low_level_comm) , NULL , sctk_runtime_config_struct_init_low_level_comm},
 	{"checksum"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_low_level_comm,checksum)  , sizeof(bool) , "bool" , NULL},
 	{"send_msg"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_low_level_comm,send_msg)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL},
-	{"notify_recv_msg"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_low_level_comm,notify_recv_msg)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL},
-	{"notify_matching_msg"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_low_level_comm,notify_matching_msg)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL},
-	{"notify_perform_msg"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_low_level_comm,notify_perform_msg)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL},
-	{"notify_idle_msg"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_low_level_comm,notify_idle_msg)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL},
-	{"notify_any_src_msg"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_low_level_comm,notify_any_src_msg)  , sizeof(struct sctk_runtime_config_funcptr) , "funcptr" , NULL},
 	{"network_mode"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_low_level_comm,network_mode)  , sizeof(char *) , "char *" , NULL},
 	{"dyn_reordering"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_low_level_comm,dyn_reordering)  , sizeof(bool) , "bool" , NULL},
 	/* struct */

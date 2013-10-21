@@ -43,7 +43,7 @@ int sctk_is_net_migration_available(){
 void sctk_network_send_message_default (sctk_thread_ptp_message_t * msg){
   not_reachable();
 }
-static void (*sctk_network_send_message_ptr) (sctk_thread_ptp_message_t *) = NULL;
+static void (*sctk_network_send_message_ptr) (sctk_thread_ptp_message_t *) = sctk_network_send_message_default;
 void sctk_network_send_message (sctk_thread_ptp_message_t * msg){
   sctk_network_send_message_ptr(msg);
 }
@@ -55,7 +55,7 @@ void sctk_network_send_message_set(void (*sctk_network_send_message_val) (sctk_t
 void sctk_network_notify_recv_message_default (sctk_thread_ptp_message_t * msg){
 
 }
-static void (*sctk_network_notify_recv_message_ptr) (sctk_thread_ptp_message_t *) = NULL;
+static void (*sctk_network_notify_recv_message_ptr) (sctk_thread_ptp_message_t *) = sctk_network_notify_recv_message_default;
 void sctk_network_notify_recv_message (sctk_thread_ptp_message_t * msg){
   sctk_network_notify_recv_message_ptr(msg);
 }
@@ -67,7 +67,7 @@ void sctk_network_notify_recv_message_set(void (*sctk_network_notify_recv_messag
 void sctk_network_notify_matching_message_default (sctk_thread_ptp_message_t * msg){
 
 }
-static void (*sctk_network_notify_matching_message_ptr) (sctk_thread_ptp_message_t *) = NULL;
+static void (*sctk_network_notify_matching_message_ptr) (sctk_thread_ptp_message_t *) = sctk_network_notify_matching_message_default;
 void sctk_network_notify_matching_message (sctk_thread_ptp_message_t * msg){
   sctk_network_notify_matching_message_ptr(msg);
 }
@@ -92,7 +92,7 @@ void sctk_network_notify_perform_message_set(void (*sctk_network_notify_perform_
 void sctk_network_notify_idle_message_default (){
 
 }
-static void (*sctk_network_notify_idle_message_ptr) () = NULL;
+static void (*sctk_network_notify_idle_message_ptr) () = sctk_network_notify_idle_message_default;
 void sctk_network_notify_idle_message (){
   sctk_network_notify_idle_message_ptr();
 }
@@ -136,16 +136,6 @@ sctk_net_init_pmi() {
     sctk_pmi_get_process_on_node_rank(&sctk_local_process_rank);
     sctk_pmi_get_process_on_node_number(&sctk_local_process_number);
   }
-}
-
-void
-sctk_net_init_low_level_communication() {
-  sctk_network_send_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.send_msg.value);
-  sctk_network_notify_recv_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_recv_msg.value);
-  sctk_network_notify_matching_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_matching_msg.value);
-  sctk_network_notify_perform_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_perform_msg.value);
-  sctk_network_notify_idle_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_idle_msg.value);
-  sctk_network_notify_any_source_message_ptr = *(void**)(&sctk_runtime_config_get()->modules.low_level_comm.notify_any_src_msg.value);
 }
 
 void

@@ -122,11 +122,6 @@ meta.types = {
 	low_level_comm : {type: 'struct', name: "low_level_comm", childs: {
 		checksum: {mode: 'param', name: "checksum", type: "bool", doc: "", dflt: "true", },
 		send_msg: {mode: 'param', name: "send_msg", type: "funcptr", doc: "", dflt: "sctk_network_send_message_default", },
-		notify_recv_msg: {mode: 'param', name: "notify_recv_msg", type: "funcptr", doc: "", dflt: "sctk_network_notify_recv_message_default", },
-		notify_matching_msg: {mode: 'param', name: "notify_matching_msg", type: "funcptr", doc: "", dflt: "sctk_network_notify_matching_message_default", },
-		notify_perform_msg: {mode: 'param', name: "notify_perform_msg", type: "funcptr", doc: "", dflt: "sctk_network_notify_perform_message_default", },
-		notify_idle_msg: {mode: 'param', name: "notify_idle_msg", type: "funcptr", doc: "", dflt: "sctk_network_notify_idle_message_default", },
-		notify_any_src_msg: {mode: 'param', name: "notify_any_src_msg", type: "funcptr", doc: "", dflt: "sctk_network_notify_any_source_message_default", },
 		network_mode: {mode: 'param', name: "network_mode", type: "string", doc: "", dflt: "default", },
 		dyn_reordering: {mode: 'param', name: "dyn_reordering", type: "bool", doc: "", dflt: "false", },
 	}},

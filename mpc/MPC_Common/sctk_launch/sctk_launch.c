@@ -833,11 +833,6 @@ void sctk_init_mpc_runtime(){
     //load mpc configuration from XML files if not already done.
     sctk_runtime_config_init();
 
-#ifdef MPC_Message_Passing
-  /* Move this in a common function for post-config setup */
-  sctk_net_init_low_level_communication();
-#endif
-
     __sctk_profiling__start__sctk_init_MPC = sctk_get_time_stamp_gettimeofday ();
 
 
