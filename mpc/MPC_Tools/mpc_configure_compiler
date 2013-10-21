@@ -90,8 +90,19 @@ MPC_COMPILER_CFLAGS="$MPC_COMPILER_CFLAGS"
 EOF
 fi
 
+#Check for use of -fmpc-privatize (must not be enable for *_default compiler wrappers)
+#Maybe need some discutions to work with new icc support of privatization
+case "`basename $1`" in
+	*_default)
+		use_mpc_privat="false"
+		;;
+	*)
+		use_mpc_privat="true"
+		;;
+esac
+
 # Regular flags and compiler (C, C++ or fortran)
-if test ! -z "${BINUTILS_PREFIX_INSTALL}"
+if test ! -z "${BINUTILS_PREFIX_INSTALL}" && test "$use_mpc_privat" = "true"
 then
 cat <<EOF >> $1
 CFLAGS="\`$SCTK_BIN_DIR/mpc_cflags $2\` -fmpc-privatize"

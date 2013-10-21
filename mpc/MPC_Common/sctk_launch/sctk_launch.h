@@ -38,7 +38,11 @@ extern "C"
   void sctk_launch_contribution (FILE * file);
 
   int sctk_user_main (int argc, char **argv);
+#ifdef HAVE_ENVIRON_VAR
+  int mpc_user_main (int, char **, char**);
+#else
   int mpc_user_main (int, char **);
+#endif
 
   int sctk_get_process_nb (void);
   int sctk_get_processor_nb (void);
@@ -55,7 +59,11 @@ extern "C"
   void mpc_start_ (void);
   void mpc_start__ (void);
 
+#ifdef HAVE_ENVIRON_VAR
+  extern int mpc_user_main__ (int, char **,char**);
+#else
   extern int mpc_user_main__ (int, char **);
+#endif
 
   /*  return the number of tasks involved */
   int sctk_get_total_tasks_number();

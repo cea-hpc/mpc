@@ -217,7 +217,8 @@ static inline void sctk_internal_ptp_unlock_pending(sctk_internal_ptp_message_li
 static inline void sctk_internal_ptp_add_pending(sctk_internal_ptp_t* tmp,
 							sctk_thread_ptp_message_t * msg){
     msg->tail.internal_ptp = tmp;
-//    OPA_incr_int(&tmp->pending_nb);
+    assume (tmp);
+    OPA_incr_int(&tmp->pending_nb);
 }
 
 #ifndef SCTK_DISABLE_REENTRANCE
@@ -516,12 +517,11 @@ void sctk_complete_and_free_message (sctk_thread_ptp_message_t * msg){
     *(msg->body.completion_flag) = SCTK_MESSAGE_DONE;
   }
 
-  /* Sometimes we get segfault here ... */
-#if 0
+  /* TODO Sometimes we get segfault here ... */
   if(msg->tail.internal_ptp) {
+    assume(msg->tail.internal_ptp);
     OPA_decr_int(&msg->tail.internal_ptp->pending_nb);
   }
-#endif
 
   free_memory(msg);
 }
@@ -2014,10 +2014,10 @@ void sctk_wait_all (const int task, const sctk_communicator_t com){
   sctk_assert(pair);
 
 TODO("Rewrite the following section")
-#if 0
+#if 1
   do{
     i = OPA_load_int(&pair->pending_nb);
-    sctk_debug("pending = %d", pair->pending_nb);
+    sctk_nodebug("pending = %d", pair->pending_nb);
 
     if (i != 0) {
       /* WARNING: The inter-process module *MUST* implement
