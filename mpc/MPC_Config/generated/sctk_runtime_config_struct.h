@@ -190,6 +190,26 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 	bool low_memory;
 	/**Defines the Rendezvous protocol to use (IBV_RDVZ_WRITE_PROTOCOL or IBV_RDVZ_READ_PROTOCOL)**/
 	enum ibv_rdvz_protocol rdvz_protocol;
+	/**Defines the minimum size for the Eager RDMA buffers**/
+	int rdma_min_size;
+	/**Defines the maximun size for the Eager RDMA buffers**/
+	int rdma_max_size;
+	/**Defines the minimum number of Eager RDMA buffers**/
+	int rdma_min_nb;
+	/**Defines the maximum number of Eager RDMA buffers**/
+	int rdma_max_nb;
+	/**Defines the minimum size for the Eager RDMA buffers (resizing)**/
+	int rdma_resizing_min_size;
+	/**Defines the maximum size for the Eager RDMA buffers (resizing)**/
+	int rdma_resizing_max_size;
+	/**Defines the minimum number of Eager RDMA buffers (resizing)**/
+	int rdma_resizing_min_nb;
+	/**Defines the maximum number of Eager RDMA buffers (resizing)**/
+	int rdma_resizing_max_nb;
+	/**Defines the number of receive buffers initially allocated. The number is on-the-fly expanded when needed (see init_recv_ibufs_chunk)**/
+	int init_recv_ibufs;
+	/**Defines the number of receive buffers allocated on the fly.**/
+	int size_recv_ibufs_chunk;
 };
 
 /******************************** STRUCTURE *********************************/
@@ -349,152 +369,6 @@ struct sctk_runtime_config_struct_openmp
 	int max_alive_sections;
 	/**Maximum number of alive single construct**/
 	int max_alive_single;
-};
-
-/******************************** STRUCTURE *********************************/
-/**Declare a fake driver to test the configuration system.**/
-struct sctk_runtime_config_struct_net_driver_infiniband
-{	/**Define a network's type (0=signalization, 1=data)**/
-	int network_type;
-	/**Defines the port number to use.**/
-	int adm_port;
-	/**Defines the verbose level of the Infiniband interface .**/
-	int verbose_level;
-	/**Size of the eager buffers (short messages).**/
-	int eager_limit;
-	/**Max size for using the Buffered protocol (message split into several Eager messages).**/
-	int buffered_limit;
-	/**Number of entries to allocate in the QP for sending messages. If too low, may cause an QP overrun**/
-	int qp_tx_depth;
-	/**Number of entries to allocate in the QP for receiving messages. Must be 0 if using SRQ**/
-	int qp_rx_depth;
-	/**Number of entries to allocate in the CQ. If too low, may cause a CQ overrun**/
-	int cq_depth;
-	/**Max pending RDMA operations for send**/
-	int max_sg_sq;
-	/**Max pending RDMA operations for recv**/
-	int max_sg_rq;
-	/**Max size for inlining messages**/
-	int max_inline;
-	/**Defines if RDMA connections may be resized.**/
-	int rdma_resizing;
-	/**Number of RDMA buffers allocated for each neighbor**/
-	int max_rdma_connections;
-	/**Max number of RDMA buffers resizing allowed**/
-	int max_rdma_resizing;
-	/**Max number of Eager buffers to allocate during the initialization step**/
-	int init_ibufs;
-	/**Max number of Eager buffers which can be posted to the SRQ. This number cannot be higher than the number fixed by the HW**/
-	int max_srq_ibufs_posted;
-	/**Max number of Eager buffers which can be used by the SRQ. This number is not fixed by the HW**/
-	int max_srq_ibufs;
-	/**Min number of free recv Eager buffers before posting a new buffer.**/
-	int srq_credit_limit;
-	/**Min number of free recv Eager buffers before the activation of the asynchronous thread. If this thread is activated too many times, the performance may be decreased.**/
-	int srq_credit_thread_limit;
-	/**Number of new buffers allocated when no more buffers are available.**/
-	int size_ibufs_chunk;
-	/**Number of MMU entries allocated during the MPC initlization.**/
-	int init_mr;
-	/**Number of MMU entries allocated when no more MMU entries are available.**/
-	int size_mr_chunk;
-	/**Defines if the MMU cache is enabled.**/
-	int mmu_cache_enabled;
-	/**Defines the number of MMU cache allowed.**/
-	int mmu_cache_entries;
-	/**Defines if the steal in MPI is allowed **/
-	int steal;
-	/**Defines if the Infiniband interface must crash quietly.**/
-	int quiet_crash;
-	/**Defines if the asynchronous may be started at the MPC initialization.**/
-	int async_thread;
-	/**wc_in_number.**/
-	int wc_in_number;
-	/**wc_out_number.**/
-	int wc_out_number;
-	/**rdma_depth.**/
-	int rdma_depth;
-	/**rdma_dest_depth.**/
-	int rdma_dest_depth;
-};
-
-/******************************** STRUCTURE *********************************/
-/**Declare a fake driver to test the configuration system.**/
-struct sctk_runtime_config_struct_net_driver_tcp
-{	/**Fake param.**/
-	int fake_param;
-};
-
-/********************************** ENUM ************************************/
-/**Define a specific configuration for a network driver to apply in rails.**/
-enum sctk_runtime_config_struct_net_driver_type
-{
-	SCTK_RTCFG_net_driver_NONE,
-	SCTK_RTCFG_net_driver_infiniband,
-	SCTK_RTCFG_net_driver_tcp,
-	SCTK_RTCFG_net_driver_tcpoib,
-};
-
-/******************************** STRUCTURE *********************************/
-/**Define a specific configuration for a network driver to apply in rails.**/
-struct sctk_runtime_config_struct_net_driver
-{
-	enum sctk_runtime_config_struct_net_driver_type type;
-	union {
-		struct sctk_runtime_config_struct_net_driver_infiniband infiniband;
-		struct sctk_runtime_config_struct_net_driver_tcp tcp;
-		struct sctk_runtime_config_struct_net_driver_tcp tcpoib;
-	} value;
-};
-
-/******************************** STRUCTURE *********************************/
-/**Contain a list of driver configuration reused by rail definitions.**/
-struct sctk_runtime_config_struct_net_driver_config
-{	/**Name of the driver configuration to be referenced in rail definitions.**/
-	char * name;
-	/**Define the related driver to use and its configuration.**/
-	struct sctk_runtime_config_struct_net_driver driver;
-};
-
-/******************************** STRUCTURE *********************************/
-/**Define a specific configuration for a network provided by '-net'.**/
-struct sctk_runtime_config_struct_net_cli_option
-{	/**Define the name of the option.**/
-	char * name;
-	/**Define the driver config to use for this rail.**/
-	char * * rails;
-	/** Number of elements in rails array. **/
-	int rails_size;
-};
-
-/******************************** STRUCTURE *********************************/
-/**Define a rail which is a name, a device associate to a driver and a routing topology.**/
-struct sctk_runtime_config_struct_net_rail
-{	/**Define the name of current rail.**/
-	char * name;
-	/**Define the name of the device to use in this rail.**/
-	char * device;
-	/**Define the network topology to apply on this rail.**/
-	char * topology;
-	/**Define the driver config to use for this rail.**/
-	char * config;
-};
-
-/******************************** STRUCTURE *********************************/
-/**Base structure to contain the network configuration**/
-struct sctk_runtime_config_struct_networks
-{	/**Define the configuration driver list to reuse in rail definitions.**/
-	struct sctk_runtime_config_struct_net_driver_config * configs;
-	/** Number of elements in configs array. **/
-	int configs_size;
-	/**List of rails to declare in MPC.**/
-	struct sctk_runtime_config_struct_net_rail * rails;
-	/** Number of elements in rails array. **/
-	int rails_size;
-	/**List of networks available through the '-net' argument of mpcrun.**/
-	struct sctk_runtime_config_struct_net_cli_option * cli_options;
-	/** Number of elements in cli_options array. **/
-	int cli_options_size;
 };
 
 /******************************** STRUCTURE *********************************/

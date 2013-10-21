@@ -662,7 +662,7 @@ sctk_ib_srq_init(struct sctk_ib_rail_info_s* rail_ib,
   config->max_srq_ibufs_posted = attr->attr.max_wr;
   sctk_ib_debug("Initializing SRQ with %d entries (max:%d)",
       attr->attr.max_wr, sctk_ib_srq_get_max_srq_wr(rail_ib));
-  config->ibv_srq_credit_limit = config->ibv_max_srq_ibufs_posted / 2;
+  config->srq_credit_limit = config->max_srq_ibufs_posted / 2;
 
   return device->srq;
 }
@@ -815,7 +815,7 @@ static int check_signaled(struct sctk_ib_rail_info_s* rail_ib, sctk_ib_qp_t *rem
   char is_signaled = (ibuf->desc.wr.send.send_flags & IBV_SEND_SIGNALED) ? 1 : 0;
 
   if ( ! is_signaled ) {
-    if (remote->unsignaled_counter + 1 > (config->ibv_qp_tx_depth >> 1) ) {
+    if (remote->unsignaled_counter + 1 > (config->qp_tx_depth >> 1) ) {
       ibuf->desc.wr.send.send_flags | IBV_SEND_SIGNALED;
       return 1;
     } else return 0;

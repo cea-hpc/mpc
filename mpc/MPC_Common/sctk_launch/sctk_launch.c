@@ -175,8 +175,6 @@ static int sctk_verbosity;
 static char* sctk_launcher_mode;
 /* Name of the inter-process driver to use. NULL means default driver */
 static char* sctk_network_driver_name = NULL;
-/* Name of the inter-process driver to use. NULL means default driver */
-static char* sctk_network_driver_name = NULL;
 
 /*   void */
 /* sctk_set_net_val (void (*val) (int *, char ***)) */
@@ -351,27 +349,27 @@ sctk_use_ethread (void)
   sctk_thread_val = sctk_ethread_thread_init;
 }
 
-  static void
+  void
 sctk_use_ethread_mxn (void)
 {
   sctk_multithreading_mode = "ethread_mxn";
   sctk_thread_val = sctk_ethread_mxn_thread_init;
 }
 
-  static void
+  void
 sctk_use_ethread_mxn_ng (void)
 {
   sctk_multithreading_mode = "ethread_mxn_ng";
   sctk_thread_val = sctk_ethread_mxn_ng_thread_init;
 }
-  static void
+  void
 sctk_use_ethread_ng (void)
 {
   sctk_multithreading_mode = "ethread_ng";
   sctk_thread_val = sctk_ethread_ng_thread_init;
 }
 
-  static void
+  void
 sctk_use_pthread_ng (void)
 {
   sctk_multithreading_mode = "pthread_ng";
@@ -815,7 +813,7 @@ auto_kill_func (void *arg)
 
 void sctk_init_mpc_runtime(){
   if(sctk_mpc_env_initialized == 1){
-    return ;
+    return;
   } else {
     char *sctk_argument;
     char *sctk_disable_mpc;
@@ -831,11 +829,6 @@ void sctk_init_mpc_runtime(){
     argv[0] = "main";
 
     sctk_mpc_env_initialized = 1;
-
-  /* To check why ? */
-  if (getenv("MPC_MAKE_FORTRAN_INTERFACE") != NULL) {
-    return mpc_user_main(argc, argv);
-  }
 
     //load mpc configuration from XML files if not already done.
     sctk_runtime_config_init();
@@ -968,6 +961,13 @@ void sctk_init_mpc_runtime(){
 sctk_launch_main (int argc, char **argv)
 {
   sctk_startup_args_t arg;
+
+  /* MPC_MAKE_FORTRAN_INTERFACE is set when compiling fortran headers.
+   * To check why ? */
+  if (getenv("MPC_MAKE_FORTRAN_INTERFACE") != NULL) {
+    mpc_user_main(argc, argv);
+    return;
+  }
 
   sctk_disable_addr_randomize (argc,argv);
   sctk_init_mpc_runtime();

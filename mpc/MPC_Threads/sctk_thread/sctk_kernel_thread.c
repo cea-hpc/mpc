@@ -66,6 +66,8 @@ kthread_getspecific (kthread_key_t key)
 }
 #endif
 
+TODO("Move kthread_stack_size_default to the configuration")
+#define kthread_stack_size_default (10*1024*1024)
 
 typedef void *(*start_routine_t) (void *) ;
 

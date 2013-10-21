@@ -423,9 +423,9 @@ recheck:
 #endif
       SCTK_PROFIL_START (ib_poll_cq);
       /* Poll received messages */
-    sctk_ib_cq_poll(rail, device->recv_cq, config->wc_in_number, &poll, sctk_network_poll_recv);
+    sctk_ib_cq_poll(rail, device->recv_cq, config->wc_in_number, poll, sctk_network_poll_recv);
       /* Poll sent messages */
-    sctk_ib_cq_poll(rail, device->send_cq, config->wc_out_number, &poll, sctk_network_poll_send);
+    sctk_ib_cq_poll(rail, device->send_cq, config->wc_out_number, poll, sctk_network_poll_send);
       SCTK_PROFIL_END (ib_poll_cq);
 
 #ifdef SCTK_IB_CQ_MUTEX
@@ -554,7 +554,7 @@ sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){
   if (ret == REORDER_FOUND_EXPECTED) return;
 
 #if 1
-  if (config->ibv_steal > 0) {
+  if (config->steal > 0) {
     sctk_ib_cp_steal(rail, &poll, 0);
   }
 #endif
@@ -615,7 +615,7 @@ void sctk_network_initialize_leader_task_mpi_ib(sctk_rail_info_t* rail) {
   LOAD_DEVICE(rail_ib);
   struct ibv_srq_attr mod_attr;
   int rc;
-  mod_attr.srq_limit  = config->ibv_srq_credit_thread_limit;
+  mod_attr.srq_limit  = config->srq_credit_thread_limit;
   rc = ibv_modify_srq(device->srq, &mod_attr, IBV_SRQ_LIMIT);
   ib_assume(rc == 0);
 }

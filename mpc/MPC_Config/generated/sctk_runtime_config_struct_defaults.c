@@ -119,6 +119,16 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 	obj->rdma_dest_depth = 0;
 	obj->low_memory = false;
 	obj->rdvz_protocol = IBV_RDVZ_WRITE_PROTOCOL;
+	obj->rdma_min_size = 1024;
+	obj->rdma_max_size = 4096;
+	obj->rdma_min_nb = 8;
+	obj->rdma_max_nb = 32;
+	obj->rdma_resizing_min_size = 1024;
+	obj->rdma_resizing_max_size = 4096;
+	obj->rdma_resizing_min_nb = 8;
+	obj->rdma_resizing_max_nb = 32;
+	obj->init_recv_ibufs = 200;
+	obj->size_recv_ibufs_chunk = 400;
 }
 
 /*******************  FUNCTION  *********************/

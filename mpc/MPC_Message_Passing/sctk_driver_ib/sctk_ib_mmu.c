@@ -231,7 +231,7 @@ sctk_ib_mmu_init(struct sctk_ib_rail_info_s *rail_ib, sctk_ib_mmu_t * mmu, sctk_
     sctk_ib_mmu_cache_init(mmu);
     mmu->node = node;
   }
-  sctk_ib_mmu_alloc(rail_ib, mmu, config->ibv_init_mr);
+  sctk_ib_mmu_alloc(rail_ib, mmu, config->init_mr);
 }
 
  void
@@ -295,7 +295,7 @@ __mmu_register ( sctk_ib_rail_info_t *rail_ib,
   /* No entry available */
   if (!mmu->free_entry) {
     /* Allocate more MMU entries */
-    sctk_ib_mmu_alloc(rail_ib, mmu, config->ibv_size_mr_chunk);
+    sctk_ib_mmu_alloc(rail_ib, mmu, config->size_mr_chunk);
   }
   mmu_entry = mmu->free_entry;
   /* pop the first element */

@@ -80,6 +80,7 @@ static void sctk_network_notify_perform_message_default (int remote_proces, int 
 
 }
 static void (*sctk_network_notify_perform_message_ptr) (int,int,int,int) =
+  sctk_network_notify_perform_message_default;
 void sctk_network_notify_perform_message (int remote_process, int remote_task_id, int polling_task_id, int blocking){
   sctk_network_notify_perform_message_ptr(remote_process, remote_task_id, polling_task_id, blocking);
 }
@@ -104,6 +105,7 @@ static void sctk_network_notify_any_source_message_default (int polling_task_id,
 
 }
 static void (*sctk_network_notify_any_source_message_ptr) (int,int) =
+  sctk_network_notify_idle_message_default;
 void sctk_network_notify_any_source_message (int polling_task_id,int blocking){
   sctk_network_notify_any_source_message_ptr(polling_task_id,blocking);
 }

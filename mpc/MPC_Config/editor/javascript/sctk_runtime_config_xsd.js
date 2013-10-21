@@ -130,6 +130,16 @@ var sctk_runtime_config_xsd = "<?xml version='1.0'?>\
 <xs:element minOccurs='0' name='rdma_dest_depth' type='xs:integer'/>\
 <xs:element minOccurs='0' name='low_memory' type='xs:boolean'/>\
 <xs:element minOccurs='0' name='rdvz_protocol' type='user_type_ibv_rdvz_protocol'/>\
+<xs:element minOccurs='0' name='rdma_min_size' type='xs:integer'/>\
+<xs:element minOccurs='0' name='rdma_max_size' type='xs:integer'/>\
+<xs:element minOccurs='0' name='rdma_min_nb' type='xs:integer'/>\
+<xs:element minOccurs='0' name='rdma_max_nb' type='xs:integer'/>\
+<xs:element minOccurs='0' name='rdma_resizing_min_size' type='xs:integer'/>\
+<xs:element minOccurs='0' name='rdma_resizing_max_size' type='xs:integer'/>\
+<xs:element minOccurs='0' name='rdma_resizing_min_nb' type='xs:integer'/>\
+<xs:element minOccurs='0' name='rdma_resizing_max_nb' type='xs:integer'/>\
+<xs:element minOccurs='0' name='init_recv_ibufs' type='xs:integer'/>\
+<xs:element minOccurs='0' name='size_recv_ibufs_chunk' type='xs:integer'/>\
 </xs:all>\
 </xs:complexType>\
 <!-- ********************************************************* -->\

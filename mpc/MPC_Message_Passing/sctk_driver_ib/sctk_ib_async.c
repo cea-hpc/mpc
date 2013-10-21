@@ -47,7 +47,7 @@
  *  CONSTS
  *----------------------------------------------------------*/
 #define DESC_EVENT(config, event, desc, level, fatal)  do { \
-  if ( (level != -1) && ( (level <= (config)->ibv_verbose_level) || fatal )) \
+  if ( (level != -1) && ( (level <= (config)->verbose_level) || fatal )) \
     sctk_ib_debug(event":\t"desc); \
   if (fatal) sctk_abort(); \
   } while(0)
@@ -170,12 +170,12 @@ void* async_thread(void* arg)
 #endif
 
         /* We re-arm the limit for the SRQ. */
-        config->ibv_max_srq_ibufs_posted += 50;
+        config->max_srq_ibufs_posted += 50;
         sctk_ibuf_srq_check_and_post(rail_ib);
 
-        config->ibv_srq_credit_limit = config->ibv_max_srq_ibufs_posted / 2;
+        config->srq_credit_limit = config->max_srq_ibufs_posted / 2;
         sctk_debug("Update with max_qr %d and srq_limit %d",
-            config->ibv_max_srq_ibufs_posted, mod_attr.srq_limit);
+            config->max_srq_ibufs_posted, mod_attr.srq_limit);
         rc = ibv_modify_srq(device->srq, &mod_attr, IBV_SRQ_LIMIT);
         assume(rc == 0);
         break;
@@ -206,7 +206,7 @@ void sctk_ib_async_init(sctk_rail_info_t *rail)
   LOAD_CONFIG(rail_ib);
 
   /* Activate or not the async thread */
-  if (config->ibv_async_thread) {
+  if (config->async_thread) {
     sctk_thread_attr_t attr;
     sctk_thread_t pidt;
 

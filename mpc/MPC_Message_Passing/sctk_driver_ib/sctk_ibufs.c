@@ -94,7 +94,7 @@ void sctk_ibuf_init_numa_node(struct sctk_ib_rail_info_s *rail_ib,
   sctk_posix_memalign( (void**) &ptr, mmu->page_size, nb_ibufs * config->eager_limit);
   ib_assume(ptr);
   memset(ptr, 0, nb_ibufs * config->eager_limit);
-  PROF_ADD(rail_ib->rail, ib_ibuf_sr_size, nb_ibufs * config->ibv_eager_limit);
+  PROF_ADD(rail_ib->rail, ib_ibuf_sr_size, nb_ibufs * config->eager_limit);
 
   /* XXX: replaced by memalign_on_node */
    sctk_posix_memalign(&ibuf, mmu->page_size, nb_ibufs * sizeof(sctk_ibuf_t));
@@ -109,7 +109,7 @@ void sctk_ibuf_init_numa_node(struct sctk_ib_rail_info_s *rail_ib,
   region->rail = rail_ib;
   region->channel = RC_SR_CHANNEL;
   region->ibuf = ibuf;
-  region->allocated_size = (nb_ibufs * (config->ibv_eager_limit +  sizeof(sctk_ibuf_t)));
+  region->allocated_size = (nb_ibufs * (config->eager_limit +  sizeof(sctk_ibuf_t)));
   DL_APPEND(node->regions, region);
 
   /* register buffers at once
@@ -394,8 +394,8 @@ static int srq_post(
 
   /* limit of buffer posted */
   free_srq_nb = OPA_load_int(&node->free_srq_nb);
-  nb_ibufs = config->ibv_max_srq_ibufs_posted - free_srq_nb;
-  sctk_nodebug("TRY Post %d ibufs in SRQ (free:%d max:%d)", nb_ibufs, free_srq_nb, config->ibv_max_srq_ibufs_posted);
+  nb_ibufs = config->max_srq_ibufs_posted - free_srq_nb;
+  sctk_nodebug("TRY Post %d ibufs in SRQ (free:%d max:%d)", nb_ibufs, free_srq_nb, config->max_srq_ibufs_posted);
 
 
   if (nb_ibufs <= 0) return 0;
@@ -411,8 +411,8 @@ static int srq_post(
   {
     /* limit of buffer posted */
     free_srq_nb = OPA_load_int(&node->free_srq_nb);
-    nb_ibufs = config->ibv_max_srq_ibufs_posted - free_srq_nb;
-    sctk_nodebug("Post %d ibufs in SRQ (free:%d max:%d force:%d)", nb_ibufs, free_srq_nb, config->ibv_max_srq_ibufs_posted, force);
+    nb_ibufs = config->max_srq_ibufs_posted - free_srq_nb;
+    sctk_nodebug("Post %d ibufs in SRQ (free:%d max:%d force:%d)", nb_ibufs, free_srq_nb, config->max_srq_ibufs_posted, force);
 
     sctk_spinlock_lock(lock);
     for (i=0; i < nb_ibufs; ++i)

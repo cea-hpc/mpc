@@ -432,15 +432,6 @@ void sctk_route_set_rail_infos(int rail,
   rails[rail].runtime_config_driver_config = runtime_config_driver_config;
 }
 
-
-void sctk_route_set_rail_infos(int rail,
-    struct sctk_runtime_config_struct_net_rail * runtime_config_rail,
-    struct sctk_runtime_config_struct_net_driver_config * runtime_config_driver_config){
-  rails[rail].runtime_config_rail = runtime_config_rail;
-  rails[rail].runtime_config_driver_config = runtime_config_driver_config;
-}
-
-
 int sctk_route_get_rail_nb(){
   return rail_number;
 }

@@ -339,8 +339,6 @@ void sctk_network_init_multirail_ib(int rail_id, int max_rails){
   } else {
     sctk_error("You must provide a network's type equivalent to 'data' or 'signalization'. Value provided:%d", config->driver.value.infiniband.network_type);
     sctk_abort();
-    }
-    sctk_abort();
   }
   rails_nb++;
 

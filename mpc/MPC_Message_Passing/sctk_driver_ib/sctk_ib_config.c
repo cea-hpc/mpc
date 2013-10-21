@@ -107,94 +107,90 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
   if (sctk_process_rank == 0) {
     fprintf(stderr,
         "############# IB configuration for %s\n"
-        "ibv_eager_limit      = %d\n"
-        "ibv_buffered_limit = %d\n"
-        "ibv_max_rdma_connections = %d\n"
-        "ibv_rdma_min_size = %d\n"
-        "ibv_rdma_max_size = %d\n"
-        "ibv_rdma_min_nb = %d\n"
-        "ibv_rdma_max_nb = %d\n"
-        "ibv_rdma_resizing_min_size, = %d\n"
-        "ibv_rdma_resizing_max_size = %d\n"
-        "ibv_rdma_resizing_min_nb = %d\n"
-        "ibv_rdma_resizing_max_nb = %d\n"
-        "ibv_rdma_resizing    = %d\n"
-        "ibv_qp_tx_depth      = %d\n"
-        "ibv_qp_rx_depth      = %d\n"
-        "ibv_max_sg_sq        = %d\n"
-        "ibv_max_sg_rq        = %d\n"
-        "ibv_max_inline       = %d\n"
-        "ibv_init_ibufs        = %d\n"
-        "ibv_init_recv_ibufs        = %d\n"
-        "ibv_max_srq_ibufs_posted    = %d\n"
-        "ibv_max_srq_ibufs    = %d\n"
-        "ibv_size_ibufs_chunk = %d\n"
-        "ibv_size_recv_ibufs_chunk = %d\n"
-        "ibv_srq_credit_limit = %d\n"
-        "ibv_srq_credit_thread_limit = %d\n"
-        "ibv_rdvz_protocol    = %d\n"
-        "ibv_wc_in_number     = %d\n"
-        "ibv_wc_out_number    = %d\n"
-        "ibv_init_mr          = %d\n"
-        "ibv_mmu_cache_enabled = %d\n"
-        "ibv_mmu_cache_entries = %d\n"
-        "ibv_adm_port         = %d\n"
-        "ibv_rdma_depth       = %d\n"
-        "ibv_rdma_dest_depth  = %d\n"
-        "ibv_adaptive_polling = %d\n"
-        "ibv_quiet_crash      = %d\n"
-        "ibv_async_thread     = %d\n"
-        EXPERIMENTAL(ibv_steal)"            = %d\n"
+        "eager_limit      = %d\n"
+        "buffered_limit = %d\n"
+        "max_rdma_connections = %d\n"
+        "rdma_min_size = %d\n"
+        "rdma_max_size = %d\n"
+        "rdma_min_nb = %d\n"
+        "rdma_max_nb = %d\n"
+        "rdma_resizing_min_size, = %d\n"
+        "rdma_resizing_max_size = %d\n"
+        "rdma_resizing_min_nb = %d\n"
+        "rdma_resizing_max_nb = %d\n"
+        "rdma_resizing    = %d\n"
+        "qp_tx_depth      = %d\n"
+        "qp_rx_depth      = %d\n"
+        "max_sg_sq        = %d\n"
+        "max_sg_rq        = %d\n"
+        "max_inline       = %d\n"
+        "init_ibufs        = %d\n"
+        "init_recv_ibufs        = %d\n"
+        "max_srq_ibufs_posted    = %d\n"
+        "max_srq_ibufs    = %d\n"
+        "size_ibufs_chunk = %d\n"
+        "size_recv_ibufs_chunk = %d\n"
+        "srq_credit_limit = %d\n"
+        "srq_credit_thread_limit = %d\n"
+        "rdvz_protocol    = %d\n"
+        "wc_in_number     = %d\n"
+        "wc_out_number    = %d\n"
+        "init_mr          = %d\n"
+        "mmu_cache_enabled = %d\n"
+        "mmu_cache_entries = %d\n"
+        "adm_port         = %d\n"
+        "rdma_depth       = %d\n"
+        "rdma_dest_depth  = %d\n"
+        "quiet_crash      = %d\n"
+        "async_thread     = %d\n"
+        EXPERIMENTAL(steal)"            = %d\n"
         "Stealing desc        = %s\n"
-        EXPERIMENTAL(ibv_low_memory)"            = %d\n"
+        EXPERIMENTAL(low_memory)"            = %d\n"
         "#############\n",
-        config->network_name,
-        config->ibv_eager_limit,
-        config->ibv_buffered_limit,
-        config->ibv_max_rdma_connections,
-        config->ibv_rdma_min_size,
-        config->ibv_rdma_max_size,
-        config->ibv_rdma_min_nb,
-        config->ibv_rdma_max_nb,
-        config->ibv_rdma_resizing_min_size,
-        config->ibv_rdma_resizing_max_size,
-        config->ibv_rdma_resizing_min_nb,
-        config->ibv_rdma_resizing_max_nb,
+        rail_ib->rail->network_name,
+        config->eager_limit,
+        config->buffered_limit,
+        config->max_rdma_connections,
+        config->rdma_min_size,
+        config->rdma_max_size,
+        config->rdma_min_nb,
+        config->rdma_max_nb,
+        config->rdma_resizing_min_size,
+        config->rdma_resizing_max_size,
+        config->rdma_resizing_min_nb,
+        config->rdma_resizing_max_nb,
 
-        config->ibv_rdma_resizing,
-        config->ibv_qp_tx_depth,
-        config->ibv_qp_rx_depth,
-        config->ibv_max_sg_sq,
-        config->ibv_max_sg_rq,
-        config->ibv_max_inline,
-        config->ibv_init_ibufs,
-        config->ibv_init_recv_ibufs,
-        config->ibv_max_srq_ibufs_posted,
-        config->ibv_max_srq_ibufs,
-        config->ibv_size_ibufs_chunk,
-        config->ibv_size_recv_ibufs_chunk,
-        config->ibv_srq_credit_limit,
-        config->ibv_srq_credit_thread_limit,
-        config->ibv_rdvz_protocol,
-        config->ibv_wc_in_number,
-        config->ibv_wc_out_number,
-        config->ibv_init_mr,
-        config->ibv_mmu_cache_enabled,
-        config->ibv_mmu_cache_entries,
-        config->ibv_adm_port,
-        config->ibv_rdma_depth,
-        config->ibv_rdma_dest_depth,
-        config->ibv_adaptive_polling,
-        config->ibv_quiet_crash,
-        config->ibv_async_thread,
-        config->ibv_steal, steal_names[config->ibv_steal],
-        config->ibv_low_memory);
+        config->rdma_resizing,
+        config->qp_tx_depth,
+        config->qp_rx_depth,
+        config->max_sg_sq,
+        config->max_sg_rq,
+        config->max_inline,
+        config->init_ibufs,
+        config->init_recv_ibufs,
+        config->max_srq_ibufs_posted,
+        config->max_srq_ibufs,
+        config->size_ibufs_chunk,
+        config->size_recv_ibufs_chunk,
+        config->srq_credit_limit,
+        config->srq_credit_thread_limit,
+        config->rdvz_protocol,
+        config->wc_in_number,
+        config->wc_out_number,
+        config->init_mr,
+        config->mmu_cache_enabled,
+        config->mmu_cache_entries,
+        config->adm_port,
+        config->rdma_depth,
+        config->rdma_dest_depth,
+        config->quiet_crash,
+        config->async_thread,
+        config->steal, steal_names[config->steal],
+        config->low_memory);
   }
 }
 
 void sctk_ib_config_mutate(sctk_ib_rail_info_t *rail_ib) {
-
-static void load_ib_load_config(sctk_ib_rail_info_t *rail_ib)
   LOAD_CONFIG(rail_ib);
 
   config->eager_limit       = ALIGN_ON (config->eager_limit + IBUF_GET_EAGER_SIZE, 64);
@@ -202,7 +198,6 @@ static void load_ib_load_config(sctk_ib_rail_info_t *rail_ib)
 }
 
 //#define SET_RUNTIME_CONFIG(name) config->ibv_##name = runtime_config->name
-  config->ibv_rdvz_protocol = IBV_RDVZ_WRITE_PROTOCOL;
 
 /*
 static void load_ib_load_config(sctk_ib_rail_info_t *rail_ib)
@@ -248,7 +243,7 @@ static void load_ib_load_config(sctk_ib_rail_info_t *rail_ib)
   config->ibv_init_recv_ibufs = 10000;
   config->ibv_size_recv_ibufs_chunk = 1000;
 
-  
+
 }
 */
 

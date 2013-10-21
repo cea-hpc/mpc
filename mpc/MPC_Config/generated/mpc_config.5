@@ -218,7 +218,7 @@ Type is int. Default value is 1.
 .Pp nb_process
 Define the number of MPC processes
 .It Cm nb_processor
-Type is int. Default value is 1. 
+Type is int. Default value is 0. 
 .Pp nb_processor
 Define the number of virtual processors
 .It Cm nb_node
@@ -421,6 +421,46 @@ Type is enum ibv_rdvz_protocol. Possible values are : IBV_RDVZ_WRITE_PROTOCOL, I
 Default value is IBV_RDVZ_WRITE_PROTOCOL. 
 .Pp rdvz_protocol
 Defines the Rendezvous protocol to use (IBV_RDVZ_WRITE_PROTOCOL or IBV_RDVZ_READ_PROTOCOL)
+.It Cm rdma_min_size
+Type is int. Default value is 1024. 
+.Pp rdma_min_size
+Defines the minimum size for the Eager RDMA buffers
+.It Cm rdma_max_size
+Type is int. Default value is 4096. 
+.Pp rdma_max_size
+Defines the maximun size for the Eager RDMA buffers
+.It Cm rdma_min_nb
+Type is int. Default value is 8. 
+.Pp rdma_min_nb
+Defines the minimum number of Eager RDMA buffers
+.It Cm rdma_max_nb
+Type is int. Default value is 32. 
+.Pp rdma_max_nb
+Defines the maximum number of Eager RDMA buffers
+.It Cm rdma_resizing_min_size
+Type is int. Default value is 1024. 
+.Pp rdma_resizing_min_size
+Defines the minimum size for the Eager RDMA buffers (resizing)
+.It Cm rdma_resizing_max_size
+Type is int. Default value is 4096. 
+.Pp rdma_resizing_max_size
+Defines the maximum size for the Eager RDMA buffers (resizing)
+.It Cm rdma_resizing_min_nb
+Type is int. Default value is 8. 
+.Pp rdma_resizing_min_nb
+Defines the minimum number of Eager RDMA buffers (resizing)
+.It Cm rdma_resizing_max_nb
+Type is int. Default value is 32. 
+.Pp rdma_resizing_max_nb
+Defines the maximum number of Eager RDMA buffers (resizing)
+.It Cm init_recv_ibufs
+Type is int. Default value is 200. 
+.Pp init_recv_ibufs
+Defines the number of receive buffers initially allocated. The number is on-the-fly expanded when needed (see init_recv_ibufs_chunk)
+.It Cm size_recv_ibufs_chunk
+Type is int. Default value is 400. 
+.Pp size_recv_ibufs_chunk
+Defines the number of receive buffers allocated on the fly.
 .El
 .Sh ENTRIES OF TYPE net_driver_tcp
 Declare a fake driver to test the configuration system.
@@ -665,233 +705,6 @@ Maximum number of alive sections construct
 Type is int. Default value is 3. 
 .Pp max_alive_single
 Maximum number of alive single construct
-.El
-.Sh ENTRIES OF TYPE net_driver_infiniband
-Declare a fake driver to test the configuration system.
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm network_type
-Type is int. 
-.Pp network_type
-Define a network's type (0=signalization, 1=data)
-.It Cm adm_port
-Type is int. Default value is 0. 
-.Pp adm_port
-Defines the port number to use.
-.It Cm verbose_level
-Type is int. Default value is 0. 
-.Pp verbose_level
-Defines the verbose level of the Infiniband interface .
-.It Cm eager_limit
-Type is int. Default value is 12288. 
-.Pp eager_limit
-Size of the eager buffers (short messages).
-.It Cm buffered_limit
-Type is int. Default value is 262114. 
-.Pp buffered_limit
-Max size for using the Buffered protocol (message split into several Eager messages).
-.It Cm qp_tx_depth
-Type is int. Default value is 15000. 
-.Pp qp_tx_depth
-Number of entries to allocate in the QP for sending messages. If too low, may cause an QP overrun
-.It Cm qp_rx_depth
-Type is int. Default value is 0. 
-.Pp qp_rx_depth
-Number of entries to allocate in the QP for receiving messages. Must be 0 if using SRQ
-.It Cm cq_depth
-Type is int. Default value is 40000. 
-.Pp cq_depth
-Number of entries to allocate in the CQ. If too low, may cause a CQ overrun
-.It Cm max_sg_sq
-Type is int. Default value is 4. 
-.Pp max_sg_sq
-Max pending RDMA operations for send
-.It Cm max_sg_rq
-Type is int. Default value is 4. 
-.Pp max_sg_rq
-Max pending RDMA operations for recv
-.It Cm max_inline
-Type is int. Default value is 128. 
-.Pp max_inline
-Max size for inlining messages
-.It Cm rdma_resizing
-Type is int. Default value is 0. 
-.Pp rdma_resizing
-Defines if RDMA connections may be resized.
-.It Cm max_rdma_connections
-Type is int. Default value is 0. 
-.Pp max_rdma_connections
-Number of RDMA buffers allocated for each neighbor
-.It Cm max_rdma_resizing
-Type is int. Default value is 0. 
-.Pp max_rdma_resizing
-Max number of RDMA buffers resizing allowed
-.It Cm init_ibufs
-Type is int. Default value is 1000. 
-.Pp init_ibufs
-Max number of Eager buffers to allocate during the initialization step
-.It Cm max_srq_ibufs_posted
-Type is int. Default value is 1500. 
-.Pp max_srq_ibufs_posted
-Max number of Eager buffers which can be posted to the SRQ. This number cannot be higher than the number fixed by the HW
-.It Cm max_srq_ibufs
-Type is int. Default value is 1000. 
-.Pp max_srq_ibufs
-Max number of Eager buffers which can be used by the SRQ. This number is not fixed by the HW
-.It Cm srq_credit_limit
-Type is int. Default value is 500. 
-.Pp srq_credit_limit
-Min number of free recv Eager buffers before posting a new buffer.
-.It Cm srq_credit_thread_limit
-Type is int. Default value is 100. 
-.Pp srq_credit_thread_limit
-Min number of free recv Eager buffers before the activation of the asynchronous thread. If this thread is activated too many times, the performance may be decreased.
-.It Cm size_ibufs_chunk
-Type is int. Default value is 100. 
-.Pp size_ibufs_chunk
-Number of new buffers allocated when no more buffers are available.
-.It Cm init_mr
-Type is int. Default value is 400. 
-.Pp init_mr
-Number of MMU entries allocated during the MPC initlization.
-.It Cm size_mr_chunk
-Type is int. Default value is 200. 
-.Pp size_mr_chunk
-Number of MMU entries allocated when no more MMU entries are available.
-.It Cm mmu_cache_enabled
-Type is int. Default value is 1. 
-.Pp mmu_cache_enabled
-Defines if the MMU cache is enabled.
-.It Cm mmu_cache_entries
-Type is int. Default value is 1. 
-.Pp mmu_cache_entries
-Defines the number of MMU cache allowed.
-.It Cm steal
-Type is int. Default value is 2. 
-.Pp steal
-Defines if the steal in MPI is allowed 
-.It Cm quiet_crash
-Type is int. Default value is 0. 
-.Pp quiet_crash
-Defines if the Infiniband interface must crash quietly.
-.It Cm async_thread
-Type is int. Default value is 0. 
-.Pp async_thread
-Defines if the asynchronous may be started at the MPC initialization.
-.It Cm wc_in_number
-Type is int. Default value is 0. 
-.Pp wc_in_number
-wc_in_number.
-.It Cm wc_out_number
-Type is int. Default value is 0. 
-.Pp wc_out_number
-wc_out_number.
-.It Cm rdma_depth
-Type is int. Default value is 0. 
-.Pp rdma_depth
-rdma_depth.
-.It Cm rdma_dest_depth
-Type is int. Default value is 0. 
-.Pp rdma_dest_depth
-rdma_dest_depth.
-.El
-.Sh ENTRIES OF TYPE net_driver_tcp
-Declare a fake driver to test the configuration system.
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm fake_param
-Type is int. Default value is 0. 
-.Pp fake_param
-Fake param.
-.El
-.Sh OPTIONS OF NODE net_driver
-Define a specific configuration for a network driver to apply in rails.
-.Pp
-It can contain a node of type :
-.Pp
-.Bl -tag -width Ds
-.It Cm infiniband
- of type net_driver_infiniband. 
-.It Cm tcp
- of type net_driver_tcp. 
-.It Cm tcpoib
- of type net_driver_tcp. 
-.El
-.Sh ENTRIES OF TYPE net_driver_config
-Contain a list of driver configuration reused by rail definitions.
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm name
-Type is string. 
-.Pp name
-Name of the driver configuration to be referenced in rail definitions.
-.It Cm driver
-Type is net_driver. 
-.Pp driver
-Define the related driver to use and its configuration.
-.El
-.Sh ENTRIES OF TYPE net_cli_option
-Define a specific configuration for a network provided by '-net'.
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm name
-Type is string. 
-.Pp name
-Define the name of the option.
-.It Cm rails
-Type is array of string. 
-.Pp rails
-Define the driver config to use for this rail.
-.El
-.Sh ENTRIES OF TYPE net_rail
-Define a rail which is a name, a device associate to a driver and a routing topology.
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm name
-Type is string. 
-.Pp name
-Define the name of current rail.
-.It Cm device
-Type is string. 
-.Pp device
-Define the name of the device to use in this rail.
-.It Cm topology
-Type is string. 
-.Pp topology
-Define the network topology to apply on this rail.
-.It Cm config
-Type is string. 
-.Pp config
-Define the driver config to use for this rail.
-.El
-.Sh ENTRIES OF TYPE networks
-Base structure to contain the network configuration
-.Pp
-It support parameters :
-.Pp
-.Bl -tag -width Ds
-.It Cm configs
-Type is array of net_driver_config. 
-.Pp configs
-Define the configuration driver list to reuse in rail definitions.
-.It Cm rails
-Type is array of net_rail. 
-.Pp rails
-List of rails to declare in MPC.
-.It Cm cli_options
-Type is array of net_cli_option. 
-.Pp cli_options
-List of networks available through the '-net' argument of mpcrun.
 .El
 .Sh ENTRIES OF TYPE profiler
 Options for the internal MPC Profiler

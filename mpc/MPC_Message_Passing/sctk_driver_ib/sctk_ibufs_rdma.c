@@ -1059,11 +1059,11 @@ static int sctk_ibuf_rdma_determine_config(sctk_ib_rail_info_t *rail_ib,
 
   /* We determine the size of the slots */
   if (resizing == 0) {
-    if (*determined_size > config->ibv_rdma_max_size) *determined_size = config->ibv_rdma_max_size;
-    else if (*determined_size < config->ibv_rdma_min_size) *determined_size = config->ibv_rdma_min_size;
+    if (*determined_size > config->rdma_max_size) *determined_size = config->rdma_max_size;
+    else if (*determined_size < config->rdma_min_size) *determined_size = config->rdma_min_size;
   } else { /* Buffer resizing */
-    if (*determined_size > config->ibv_rdma_resizing_max_size) *determined_size = config->ibv_rdma_resizing_max_size;
-    else if (*determined_size < config->ibv_rdma_resizing_min_size) *determined_size = config->ibv_rdma_resizing_min_size;
+    if (*determined_size > config->rdma_resizing_max_size) *determined_size = config->rdma_resizing_max_size;
+    else if (*determined_size < config->rdma_resizing_min_size) *determined_size = config->rdma_resizing_min_size;
   }
 
   /* Realign */
@@ -1077,11 +1077,11 @@ static int sctk_ibuf_rdma_determine_config(sctk_ib_rail_info_t *rail_ib,
         IBUF_GET_EAGER_SIZE + IBUF_RDMA_GET_SIZE), 1024);
 
  if (resizing == 0) {
-    if (*determined_nb > config->ibv_rdma_max_nb) *determined_nb = config->ibv_rdma_max_nb;
-    else if (*determined_nb < config->ibv_rdma_min_nb) *determined_nb = config->ibv_rdma_min_nb;
+    if (*determined_nb > config->rdma_max_nb) *determined_nb = config->rdma_max_nb;
+    else if (*determined_nb < config->rdma_min_nb) *determined_nb = config->rdma_min_nb;
   } else { /* Buffer resizing */
-    if (*determined_nb > config->ibv_rdma_resizing_max_nb) *determined_nb = config->ibv_rdma_resizing_max_nb;
-    else if (*determined_nb < config->ibv_rdma_resizing_min_nb) *determined_nb = config->ibv_rdma_resizing_min_nb;
+    if (*determined_nb > config->rdma_resizing_max_nb) *determined_nb = config->rdma_resizing_max_nb;
+    else if (*determined_nb < config->rdma_resizing_min_nb) *determined_nb = config->rdma_resizing_min_nb;
   }
 
   if (resizing == 1) {
@@ -1132,7 +1132,7 @@ void sctk_ibuf_rdma_check_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *rem
   const sctk_route_state_t state_rts = sctk_ibuf_rdma_get_remote_state_rts(remote);
 
   /* We profile only when the RDMA route is deconnected */
-  if (config->ibv_max_rdma_connections != 0 && state_rts == state_deconnected) {
+  if (config->max_rdma_connections != 0 && state_rts == state_deconnected) {
     size_t messages_nb;
     sctk_spinlock_lock(&remote->rdma.stats_lock);
     messages_nb = remote->rdma.messages_nb;
@@ -1155,7 +1155,7 @@ void sctk_ibuf_rdma_check_remote(sctk_ib_rail_info_t *rail_ib, sctk_ib_qp_t *rem
             determined_size, determined_nb);
       }
     }
-  } else if (config->ibv_rdma_resizing && state_rts == state_connected) {
+  } else if (config->rdma_resizing && state_rts == state_connected) {
     sctk_route_state_t ret;
 
     /* Check if we need to resize the RDMA */

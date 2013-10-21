@@ -304,7 +304,7 @@ sctk_ib_fallback_send_polling_thread(void *arg) {
     /* Poll sent messages */
     sctk_ib_polling_t poll;
     POLL_INIT(&poll);
-    sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, &poll, sctk_network_poll_send);
+    sctk_ib_cq_poll(rail, device->send_cq, config->wc_out_number, &poll, sctk_network_poll_send);
   }
   return NULL;
 }
@@ -332,7 +332,7 @@ sctk_ib_fallback_recv_polling_thread(void *arg) {
     /* Poll received messages */
     sctk_ib_polling_t poll;
     POLL_INIT(&poll);
-    sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, &poll, sctk_network_poll_recv);
+    sctk_ib_cq_poll(rail, device->recv_cq, config->wc_in_number, &poll, sctk_network_poll_recv);
   }
   return NULL;
 }
@@ -361,7 +361,7 @@ void sctk_network_initialize_leader_task_fallback_ib(sctk_rail_info_t* rail) {
   LOAD_DEVICE(rail_ib);
   struct ibv_srq_attr mod_attr;
   int rc;
-  mod_attr.srq_limit  = config->ibv_srq_credit_thread_limit;
+  mod_attr.srq_limit  = config->srq_credit_thread_limit;
   rc = ibv_modify_srq(device->srq, &mod_attr, IBV_SRQ_LIMIT);
   assume(rc == 0);
 
