@@ -141,7 +141,7 @@ void* async_thread(void* arg)
         sctk_ib_low_mem_broadcast(rail);
 
         /* We re-arm the limit for the SRQ. */
-        config->max_srq_ibufs_posted += 50;
+        config->max_srq_ibufs_posted += 100;
         sctk_ibuf_srq_check_and_post(rail_ib);
 
         mod_attr.srq_limit = config->srq_credit_thread_limit;

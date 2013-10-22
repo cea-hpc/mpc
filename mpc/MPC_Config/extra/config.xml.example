@@ -62,7 +62,7 @@ config-meta.xml automatically.
                 <rdma_resizing>0</rdma_resizing>
                 <max_rdma_connections>0</max_rdma_connections>
                 <max_rdma_resizing>0</max_rdma_resizing>
-                <init_ibufs>100</init_ibufs>
+                <init_ibufs>200</init_ibufs>
                 <init_recv_ibufs>200</init_recv_ibufs>
                 <max_srq_ibufs_posted>200</max_srq_ibufs_posted>
                 <max_srq_ibufs>200</max_srq_ibufs>
