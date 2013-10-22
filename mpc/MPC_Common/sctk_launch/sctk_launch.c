@@ -960,8 +960,7 @@ sctk_launch_main (int argc, char **argv)
   /* MPC_MAKE_FORTRAN_INTERFACE is set when compiling fortran headers.
    * To check why ? */
   if (getenv("MPC_MAKE_FORTRAN_INTERFACE") != NULL) {
-    mpc_user_main(argc, argv);
-    return;
+    return mpc_user_main(argc, argv);
   }
 
   sctk_disable_addr_randomize (argc,argv);
