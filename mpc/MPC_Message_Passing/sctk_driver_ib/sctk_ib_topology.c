@@ -216,12 +216,6 @@ sctk_ib_topology_get_numa_node(struct sctk_ib_rail_info_s * rail_ib)
     numa_node_task[rail_nb] = node;
     assume(numa_node_task[rail_nb]);
   }
-#if 0
-  if (numa_node_task[rail_nb]->id != sctk_thread_get_vp()/8) {
-    fprintf(stderr, "[%d] node %d --> %d\n", rail_nb, numa_node_task[rail_nb]->id, sctk_thread_get_vp());
-  }
-#endif
-//  fprintf(stderr, "Pick message from node %d\n", numa_node_task[rail_nb]->id);
 
   PROF_TIME_END(rail_ib->rail, ib_get_numa);
   return numa_node_task[rail_nb];

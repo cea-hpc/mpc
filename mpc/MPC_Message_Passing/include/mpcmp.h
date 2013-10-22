@@ -252,14 +252,14 @@ extern "C"
 enum MPIR_Combiner_enum {
     MPI_COMBINER_NAMED            = 1,
     MPI_COMBINER_DUP              = 2,
-    MPI_COMBINER_CONTIGUOUS       = 3, 
+    MPI_COMBINER_CONTIGUOUS       = 3,
     MPI_COMBINER_VECTOR           = 4,
     MPI_COMBINER_HVECTOR_INTEGER  = 5,
     MPI_COMBINER_HVECTOR          = 6,
     MPI_COMBINER_INDEXED          = 7,
-    MPI_COMBINER_HINDEXED_INTEGER = 8, 
-    MPI_COMBINER_HINDEXED         = 9, 
-    MPI_COMBINER_INDEXED_BLOCK    = 10, 
+    MPI_COMBINER_HINDEXED_INTEGER = 8,
+    MPI_COMBINER_HINDEXED         = 9,
+    MPI_COMBINER_INDEXED_BLOCK    = 10,
     MPI_COMBINER_HINDEXED_BLOCK   = 11,
     MPI_COMBINER_STRUCT_INTEGER   = 12,
     MPI_COMBINER_STRUCT           = 13,
@@ -770,59 +770,6 @@ enum MPIR_Combiner_enum {
   int PMPC_Irecv_pack (int source, int tag, MPC_Comm comm,
 		      MPC_Request * request);
 
-/********************************************************************/
-/*Netowk statistics                                                 */
-/********************************************************************/
-  struct MPC_Network_stats_s {
-    struct {
-      int matched;
-      int not_matched;
-      int alloc_mem;
-      int free_mem;
-      int qp_created;
-      int eager_nb;
-      int buffered_nb;
-      int rdma_nb;
-
-      int ibuf_sr_nb;
-      int ibuf_rdma_nb;
-      int ibuf_rdma_miss_nb;
-      int rdma_connection;
-      int rdma_resizing;
-      int rdma_deconnection;
-    } int_t;
-
-    struct {
-      long poll_own;
-      long poll_own_failed;
-      long poll_own_success;
-      long poll_steals_failed;
-      long poll_steals_success;
-
-      /* Number of msg stolen by the current task */
-      long poll_steals;
-
-      long poll_steal_same_node;
-      long poll_steal_other_node;
-      long call_to_polling;
-      long poll_cq;
-    } long_t;
-
-    struct {
-      double time_stolen;
-      double time_steals;
-      double time_own;
-      double time_poll_cq;
-      double time_ptp;
-      double time_coll;
-      double post_send;
-      double resize_rdma;
-      double ibuf_release;
-    } double_t;
-  };
-
-  void MPC_Network_stats(struct MPC_Network_stats_s *stats);
-  void MPC_Network_deco_neighbor(int process);
   /* Send/Recv message using the signalization network */
   void MPC_Send_signalization_network(int dest_process, int tag, void *buff, size_t size);
   void MPC_Recv_signalization_network(int src_process, int tag, void *buff, size_t size);

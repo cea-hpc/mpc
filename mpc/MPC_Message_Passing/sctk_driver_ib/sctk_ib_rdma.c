@@ -62,20 +62,6 @@ static inline void sctk_ib_rdma_align_msg(void *addr, size_t  size,
 
   *aligned_addr = addr;
   *aligned_size = size;
-#if 0
-  size_t page_size;
- /*XXX Get page_size from device */
-page_size = getpagesize();
-
-  /* align on a page size */
-  *aligned_addr = addr -
-    (((unsigned long) addr) % page_size);
-  *aligned_size = size +
-    (((unsigned long) addr) % page_size);
-
-  sctk_nodebug("ptr:%p size:%lu -> ptr:%p size:%lu", addr, size,
-      *aligned_addr, *aligned_size);
-#endif
 }
 
 /*-----------------------------------------------------------
@@ -513,17 +499,8 @@ sctk_ib_rdma_recv_ack(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
 
   /* Wait while the message becomes ready */
   SCTK_PROFIL_START (ib_rdma_idle);
-#if 1
-  while (rdma->local.ready != 1) {
-    sctk_cpu_relax();
-    POLL_INIT(&poll);
-    sctk_network_poll_all_cq(rail, &poll, -1, 0);
-    POLL_INIT(&poll);
-    sctk_ib_cp_poll(rail, &poll, sctk_get_task_rank());
-  }
-#else
-  sctk_thread_wait_for_value((int*) &rdma->local.ready, 1);
-#endif
+  sctk_inter_thread_perform_idle((int*) &rdma->local.ready, 1,
+      (void(*)(void*))sctk_network_notify_idle_message, NULL);
   SCTK_PROFIL_END (ib_rdma_idle);
 
   sctk_nodebug("Remote addr: %p", rdma_ack->addr);
@@ -625,17 +602,8 @@ sctk_ib_rdma_recv_done_remote_imm(sctk_rail_info_t* rail, int imm_data) {
   struct sctk_ib_polling_s poll;
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   SCTK_PROFIL_START (ib_rdma_idle);
-#if 1
-  while (rdma->local.ready != 1) {
-    sctk_cpu_relax();
-    POLL_INIT(&poll);
-    sctk_network_poll_all_cq(rail, &poll, -1, 0);
-    POLL_INIT(&poll);
-    sctk_ib_cp_poll(rail, &poll, sctk_get_task_rank());
-  }
-#else
-  sctk_thread_wait_for_value((int*) &rdma->local.ready, 1);
-#endif
+  sctk_inter_thread_perform_idle((int*) &rdma->local.ready, 1,
+      (void(*)(void*))sctk_network_notify_idle_message, NULL);
   SCTK_PROFIL_END (ib_rdma_idle);
 
   send = rdma->copy_ptr->msg_send;
@@ -682,17 +650,8 @@ sctk_ib_rdma_recv_done_remote(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   struct sctk_ib_polling_s poll;
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   SCTK_PROFIL_START (ib_rdma_idle);
-#if 1
-  while (dest_msg_header->tail.ib.rdma.local.ready != 1) {
-    sctk_cpu_relax();
-    POLL_INIT(&poll);
-    sctk_network_poll_all_cq(rail, &poll, -1, 0);
-    POLL_INIT(&poll);
-    sctk_ib_cp_poll(rail, &poll, sctk_get_task_rank());
-  }
-#else
-sctk_thread_wait_for_value((int*) &dest_msg_header->tail.ib.rdma.local.ready, 1);
-#endif
+  sctk_inter_thread_perform_idle((int*) &dest_msg_header->tail.ib.rdma.local.ready, 1,
+      (void(*)(void*))sctk_network_notify_idle_message, NULL);
   SCTK_PROFIL_END (ib_rdma_idle);
 
   send = rdma->copy_ptr->msg_send;

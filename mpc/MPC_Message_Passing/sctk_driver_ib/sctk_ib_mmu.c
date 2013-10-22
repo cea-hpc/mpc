@@ -84,12 +84,6 @@ sctk_ib_mmu_t * sctk_ib_mmu_get_mmu_from_vp( sctk_ib_rail_info_t *rail_ib ) {
 static inline int sctk_ib_mmu_compare_entries(sctk_ib_mmu_entry_t *a,
     sctk_ib_mmu_entry_t *b){
 
-  /*
-  if ( (a->key.ptr == b->key.ptr) && (a->key.size == b->key.size) ) {
-    return 0;
-  }
-  */
-
   /* Check if the both regions overlap well */
   if ( (a->key.ptr >= b->key.ptr) && (
       ( (uintptr_t) a->key.ptr + a->key.size ) <= ( (uintptr_t) b->key.ptr + b->key.size) ) ) {
@@ -170,8 +164,8 @@ static inline int
   assume(mmu->cache.entries_nb < config->mmu_cache_entries);
   assume(mmu_entry->registrations_nb == 0);
 #endif
-//  sctk_debug("Add entry %p to cache %p %lu %d on node %d", mmu_entry, mmu_entry->key.ptr, mmu_entry->key.size, mmu->cache.entries_nb,
-//      mmu->node->id);
+  sctk_nodebug("Add entry %p to cache %p %lu %d on node %d", mmu_entry, mmu_entry->key.ptr, mmu_entry->key.size, mmu->cache.entries_nb,
+      mmu->node->id);
   mmu->cache.entries_nb++;
   mmu_entry->cache_status = cached;
 

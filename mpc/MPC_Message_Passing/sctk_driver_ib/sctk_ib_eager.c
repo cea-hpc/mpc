@@ -267,15 +267,6 @@ sctk_ib_eager_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
         return REORDER_FOUND_EXPECTED;
       }
     }
-#if 0
-    else if (IS_PROCESS_SPECIFIC_LOW_MEM(tag)) {
-      sctk_nodebug("Received low mem message");
-      msg = sctk_ib_eager_recv(rail, ibuf, recopy, protocol);
-      sctk_ib_low_mem_recv(rail, msg, ibuf, recopy);
-
-      return REORDER_FOUND_EXPECTED;
-    }
-#endif
   } else {
     /* Do not recopy message if it is not a process specific message.
      *

@@ -265,8 +265,6 @@ extern "C"
 
   void sctk_network_free_msg(struct sctk_thread_ptp_message_s *msg);
   /* For getting stats from network usage */
-  void sctk_network_stats_ib (struct MPC_Network_stats_s* stats);
-  void sctk_network_deco_neighbors_ib ();
 
 #ifdef __cplusplus
 }

@@ -548,16 +548,34 @@ sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   LOAD_CONFIG(rail_ib);
   struct sctk_ib_polling_s poll;
+  int polling_task_id = sctk_get_task_rank();
 
   int ret;
   sctk_ib_rdma_eager_walk_remotes(rail_ib, sctk_ib_rdma_eager_poll_remote, &ret);
   if (ret == REORDER_FOUND_EXPECTED) return;
 
-#if 1
+  if (polling_task_id >= 0) {
+    POLL_INIT(&poll);
+    sctk_ib_cp_poll(rail, &poll, polling_task_id);
+  }
+
+  /* If nothing to poll, we poll the CQ */
+  if ( POLL_GET_RECV(&poll) == 0 ) {
+    POLL_INIT(&poll);
+    sctk_network_poll_all_cq(rail, &poll, polling_task_id, 0);
+    /* If the polling returned something or someone already inside the function,
+     * we retry to poll the pending lists */
+    if (POLL_GET_RECV_CQ(&poll) != 0) {
+      if (polling_task_id >= 0) {
+        POLL_INIT(&poll);
+        sctk_ib_cp_poll(rail, &poll, polling_task_id);
+      }
+    }
+  }
+
   if (config->steal > 0) {
     sctk_ib_cp_steal(rail, &poll, 0);
   }
-#endif
 }
 
 static void

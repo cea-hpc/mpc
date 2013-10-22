@@ -1883,11 +1883,9 @@ static void sctk_perform_messages_wait_for_value_and_poll(void* a){
 
   sctk_perform_messages(_wait);
 
-#if 1
   if ((volatile int) _wait->request->completion_flag != SCTK_MESSAGE_DONE) {
     sctk_network_notify_idle_message();
   }
-#endif
 }
 
 void sctk_perform_messages_wait_init_request_type(struct sctk_perform_messages_s * wait) {
@@ -1917,6 +1915,7 @@ void sctk_inter_thread_perform_idle (volatile int *data, int value,
       sctk_cpu_relax();
     }
   }
+
 #else
   sctk_thread_wait_for_value_and_poll(data, value, func, arg);
 #endif

@@ -1930,7 +1930,7 @@ sctk_user_main (int argc, char **argv)
 #endif
   __MPC_Barrier (MPC_COMM_WORLD);
 
-#ifdef HAVE_ENVIRON_VAR 
+#ifdef HAVE_ENVIRON_VAR
   result = mpc_user_main (argc, argv,environ);
 #else
   result = mpc_user_main (argc, argv);
@@ -5778,15 +5778,6 @@ PMPC_User_Main (int argc, char **argv)
 /*    Network functions. These functions are not a part of the      */
 /*    MPI standard.                                                 */
 /********************************************************************/
-
-/* For getting stats about the network */
-void MPC_Network_stats(struct MPC_Network_stats_s *stats) {
-#ifdef MPC_Message_Passing
-#ifdef MPC_USE_INFINIBAND
-  sctk_network_stats_ib(stats);
-#endif
-#endif
-}
 
 /* Send a message to a process using the signalization network */
 void MPC_Send_signalization_network(int dest_process, int tag, void *buff, size_t size) {
