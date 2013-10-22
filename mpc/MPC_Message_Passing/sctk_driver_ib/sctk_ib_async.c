@@ -144,6 +144,7 @@ void* async_thread(void* arg)
         config->max_srq_ibufs_posted += 50;
         sctk_ibuf_srq_check_and_post(rail_ib);
 
+        mod_attr.srq_limit = config->srq_credit_thread_limit;
         config->srq_credit_limit = config->max_srq_ibufs_posted / 2;
         sctk_debug("Update with max_qr %d and srq_limit %d",
             config->max_srq_ibufs_posted, mod_attr.srq_limit);
