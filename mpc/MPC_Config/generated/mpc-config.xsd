@@ -112,6 +112,7 @@
       <xs:element minOccurs="0" name="max_rdma_connections" type="xs:integer"/>
       <xs:element minOccurs="0" name="max_rdma_resizing" type="xs:integer"/>
       <xs:element minOccurs="0" name="init_ibufs" type="xs:integer"/>
+      <xs:element minOccurs="0" name="init_recv_ibufs" type="xs:integer"/>
       <xs:element minOccurs="0" name="max_srq_ibufs_posted" type="xs:integer"/>
       <xs:element minOccurs="0" name="max_srq_ibufs" type="xs:integer"/>
       <xs:element minOccurs="0" name="srq_credit_limit" type="xs:integer"/>
@@ -138,7 +139,6 @@
       <xs:element minOccurs="0" name="rdma_resizing_max_size" type="xs:integer"/>
       <xs:element minOccurs="0" name="rdma_resizing_min_nb" type="xs:integer"/>
       <xs:element minOccurs="0" name="rdma_resizing_max_nb" type="xs:integer"/>
-      <xs:element minOccurs="0" name="init_recv_ibufs" type="xs:integer"/>
       <xs:element minOccurs="0" name="size_recv_ibufs_chunk" type="xs:integer"/>
     </xs:all>
   </xs:complexType>

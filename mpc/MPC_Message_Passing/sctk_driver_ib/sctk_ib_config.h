@@ -31,6 +31,7 @@
 
 //#define IBV_RDVZ_WRITE_PROTOCOL (1)
 //#define IBV_RDVZ_READ_PROTOCOL (2)
+#if 0
 typedef struct sctk_ib_config_s
 {
   /* Network name */
@@ -92,6 +93,7 @@ typedef struct sctk_ib_config_s
   /* DEVICE */
   struct ibv_device_attr *device_attr;
 } sctk_ib_config_t;
+#endif
 
 struct sctk_ib_rail_info_s;
 void sctk_ib_config_init(struct sctk_ib_rail_info_s *rail_ib, char *network_name);

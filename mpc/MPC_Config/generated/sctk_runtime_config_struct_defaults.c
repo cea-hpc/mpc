@@ -101,6 +101,7 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 	obj->max_rdma_connections = 0;
 	obj->max_rdma_resizing = 0;
 	obj->init_ibufs = 1000;
+	obj->init_recv_ibufs = 200;
 	obj->max_srq_ibufs_posted = 1500;
 	obj->max_srq_ibufs = 1000;
 	obj->srq_credit_limit = 500;
@@ -127,7 +128,6 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 	obj->rdma_resizing_max_size = 4096;
 	obj->rdma_resizing_min_nb = 8;
 	obj->rdma_resizing_max_nb = 32;
-	obj->init_recv_ibufs = 200;
 	obj->size_recv_ibufs_chunk = 400;
 }
 

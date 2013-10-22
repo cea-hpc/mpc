@@ -659,7 +659,7 @@ sctk_ib_srq_init(struct sctk_ib_rail_info_s* rail_ib,
     sctk_abort();
   }
 
-  config->max_srq_ibufs_posted = attr->attr.max_wr;
+//  config->max_srq_ibufs_posted = attr->attr.max_wr;
   sctk_ib_debug("Initializing SRQ with %d entries (max:%d)",
       attr->attr.max_wr, sctk_ib_srq_get_max_srq_wr(rail_ib));
   config->srq_credit_limit = config->max_srq_ibufs_posted / 2;

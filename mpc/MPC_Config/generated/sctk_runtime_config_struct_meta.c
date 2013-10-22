@@ -95,6 +95,7 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"max_rdma_connections"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,max_rdma_connections)  , sizeof(int) , "int" , NULL},
 	{"max_rdma_resizing"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,max_rdma_resizing)  , sizeof(int) , "int" , NULL},
 	{"init_ibufs"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,init_ibufs)  , sizeof(int) , "int" , NULL},
+	{"init_recv_ibufs"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,init_recv_ibufs)  , sizeof(int) , "int" , NULL},
 	{"max_srq_ibufs_posted"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,max_srq_ibufs_posted)  , sizeof(int) , "int" , NULL},
 	{"max_srq_ibufs"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,max_srq_ibufs)  , sizeof(int) , "int" , NULL},
 	{"srq_credit_limit"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,srq_credit_limit)  , sizeof(int) , "int" , NULL},
@@ -121,7 +122,6 @@ const struct sctk_runtime_config_entry_meta sctk_runtime_config_db[] = {
 	{"rdma_resizing_max_size"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdma_resizing_max_size)  , sizeof(int) , "int" , NULL},
 	{"rdma_resizing_min_nb"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdma_resizing_min_nb)  , sizeof(int) , "int" , NULL},
 	{"rdma_resizing_max_nb"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,rdma_resizing_max_nb)  , sizeof(int) , "int" , NULL},
-	{"init_recv_ibufs"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,init_recv_ibufs)  , sizeof(int) , "int" , NULL},
 	{"size_recv_ibufs_chunk"     , SCTK_CONFIG_META_TYPE_PARAM  , sctk_runtime_config_get_offset_of_member(struct sctk_runtime_config_struct_net_driver_infiniband,size_recv_ibufs_chunk)  , sizeof(int) , "int" , NULL},
 	/* struct */
 	{"sctk_runtime_config_struct_net_driver_tcp" , SCTK_CONFIG_META_TYPE_STRUCT , 0  , sizeof(struct sctk_runtime_config_struct_net_driver_tcp) , NULL , sctk_runtime_config_struct_init_net_driver_tcp},

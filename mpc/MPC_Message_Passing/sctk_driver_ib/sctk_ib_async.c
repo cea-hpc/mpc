@@ -140,35 +140,6 @@ void* async_thread(void* arg)
 
         sctk_ib_low_mem_broadcast(rail);
 
-        /* We use now the low memory mode */
-        /* TODO: this mode is used until the end of the run */
-#if 0
-        if (!config->low_memory) {
-          sctk_warning("Falling back to the low memory mode !");
-          config->low_memory = true;
-        } else {
-          sctk_warning("Low memory mode not sufficient. Increase the number of buffers !");
-        }
-#endif
-
-#if 0
-        int ret, polled;
-        /* We first try to poll and steal from SRQ */
-        polled = sctk_network_poll_all_entries(rail_ib);
-        /* We try to post new buffers */
-        ret = sctk_ibuf_srq_check_and_post(rail_ib, limit);
-
-        /* If no buffers posted */
-        if (ret == 0) {
-          if (limit + 128 < sctk_ib_srq_get_max_srq_wr(rail_ib)) {
-            limit = (config->max_srq_ibufs_posted += 128);
-            ret = sctk_ibuf_srq_check_and_post(rail_ib, limit);
-            sctk_debug("Number of ibufs_posted expanded to %d",
-              config->max_srq_ibufs_posted);
-          }
-        }
-#endif
-
         /* We re-arm the limit for the SRQ. */
         config->max_srq_ibufs_posted += 50;
         sctk_ibuf_srq_check_and_post(rail_ib);

@@ -100,6 +100,8 @@ extern "C"
     /* For Eager messages -> pool of MPC headers */
     struct sctk_thread_ptp_message_s *eager_buffered_ptp_message;
     sctk_spinlock_t eager_lock_buffered_ptp_message;
+    /* Type of the network */
+    char * network_type;
   } sctk_ib_rail_info_t;
 
   typedef struct sctk_ib_data_s {

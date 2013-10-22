@@ -110,6 +110,7 @@
 			<param name="max_rdma_connections" type="int" doc="Number of RDMA buffers allocated for each neighbor" default="0" />
 			<param name="max_rdma_resizing" type="int" doc="Max number of RDMA buffers resizing allowed" default="0" />
 			<param name="init_ibufs" type="int" doc="Max number of Eager buffers to allocate during the initialization step" default="1000" />
+      <param name="init_recv_ibufs" type="int" doc="Defines the number of receive buffers initially allocated. The number is on-the-fly expanded when needed (see init_recv_ibufs_chunk)" default="200" />
 			<param name="max_srq_ibufs_posted" type="int" doc="Max number of Eager buffers which can be posted to the SRQ. This number cannot be higher than the number fixed by the HW" default="1500" />
 			<param name="max_srq_ibufs" type="int" doc="Max number of Eager buffers which can be used by the SRQ. This number is not fixed by the HW" default="1000" />
 			<param name="srq_credit_limit" type="int" doc="Min number of free recv Eager buffers before posting a new buffer." default="500" />
@@ -127,19 +128,16 @@
 			<param name="rdma_depth" type="int" doc="Number of outstanding RDMA reads and atomic operations on the destination QP (to be confirmed)" default="0" />
 			<param name="rdma_dest_depth" type="int" doc="Number of responder resources for handling incoming RDMA reads and atomic operations (to be confirmed)" default="0" />
 			<param name="low_memory" type="bool" doc="Defines if the low memory mode should be activated" default="false" />
-			<param name="rdvz_protocol" type="ibv_rdvz_protocol" default="IBV_RDVZ_WRITE_PROTOCOL" doc="Defines the Rendezvous protocol to use (IBV_RDVZ_WRITE_PROTOCOL or IBV_RDVZ_READ_PROTOCOL)"/>
-
-      <param name="rdma_min_size" type="int" default="1024" doc="Defines the minimum size for the Eager RDMA buffers"/>
-      <param name="rdma_max_size" type="int" default="4096" doc="Defines the maximun size for the Eager RDMA buffers"/>
-      <param name="rdma_min_nb" type="int" default="8" doc="Defines the minimum number of Eager RDMA buffers"/>
-      <param name="rdma_max_nb" type="int" default="32" doc="Defines the maximum number of Eager RDMA buffers"/>
-
-      <param name="rdma_resizing_min_size" type="int" default="1024" doc="Defines the minimum size for the Eager RDMA buffers (resizing)"/>
-      <param name="rdma_resizing_max_size" type="int" default="4096" doc="Defines the maximum size for the Eager RDMA buffers (resizing)"/>
-      <param name="rdma_resizing_min_nb" type="int" default="8" doc="Defines the minimum number of Eager RDMA buffers (resizing)"/>
-      <param name="rdma_resizing_max_nb" type="int" default="32" doc="Defines the maximum number of Eager RDMA buffers (resizing)"/>
-      <param name="init_recv_ibufs" type="int" default="200" doc="Defines the number of receive buffers initially allocated. The number is on-the-fly expanded when needed (see init_recv_ibufs_chunk)"/>
-      <param name="size_recv_ibufs_chunk" type="int" default="400" doc="Defines the number of receive buffers allocated on the fly."/>
+			<param name="rdvz_protocol" type="ibv_rdvz_protocol" doc="Defines the Rendezvous protocol to use (IBV_RDVZ_WRITE_PROTOCOL or IBV_RDVZ_READ_PROTOCOL)" default="IBV_RDVZ_WRITE_PROTOCOL" />
+      <param name="rdma_min_size" type="int" doc="Defines the minimum size for the Eager RDMA buffers" default="1024" />
+      <param name="rdma_max_size" type="int" doc="Defines the maximun size for the Eager RDMA buffers" default="4096" />
+      <param name="rdma_min_nb" type="int" doc="Defines the minimum number of Eager RDMA buffers" default="8" />
+      <param name="rdma_max_nb" type="int" doc="Defines the maximum number of Eager RDMA buffers" default="32" />
+      <param name="rdma_resizing_min_size" type="int" doc="Defines the minimum size for the Eager RDMA buffers (resizing)" default="1024" />
+      <param name="rdma_resizing_max_size" type="int" doc="Defines the maximum size for the Eager RDMA buffers (resizing)" default="4096" />
+      <param name="rdma_resizing_min_nb" type="int" doc="Defines the minimum number of Eager RDMA buffers (resizing)" default="8" />
+      <param name="rdma_resizing_max_nb" type="int" doc="Defines the maximum number of Eager RDMA buffers (resizing)" default="32" />
+      <param name="size_recv_ibufs_chunk" type="int" doc="Defines the number of receive buffers allocated on the fly." default="400" />
 		</struct>
 
 		<enum name="ibv_rdvz_protocol" doc="">

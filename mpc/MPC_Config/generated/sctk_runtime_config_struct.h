@@ -154,6 +154,8 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 	int max_rdma_resizing;
 	/**Max number of Eager buffers to allocate during the initialization step**/
 	int init_ibufs;
+	/**Defines the number of receive buffers initially allocated. The number is on-the-fly expanded when needed (see init_recv_ibufs_chunk)**/
+	int init_recv_ibufs;
 	/**Max number of Eager buffers which can be posted to the SRQ. This number cannot be higher than the number fixed by the HW**/
 	int max_srq_ibufs_posted;
 	/**Max number of Eager buffers which can be used by the SRQ. This number is not fixed by the HW**/
@@ -206,8 +208,6 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 	int rdma_resizing_min_nb;
 	/**Defines the maximum number of Eager RDMA buffers (resizing)**/
 	int rdma_resizing_max_nb;
-	/**Defines the number of receive buffers initially allocated. The number is on-the-fly expanded when needed (see init_recv_ibufs_chunk)**/
-	int init_recv_ibufs;
 	/**Defines the number of receive buffers allocated on the fly.**/
 	int size_recv_ibufs_chunk;
 };

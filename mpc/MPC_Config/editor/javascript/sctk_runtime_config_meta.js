@@ -53,6 +53,7 @@ meta.types = {
 		max_rdma_connections: {mode: 'param', name: "max_rdma_connections", type: "int", doc: "Number of RDMA buffers allocated for each neighbor", dflt: "0", },
 		max_rdma_resizing: {mode: 'param', name: "max_rdma_resizing", type: "int", doc: "Max number of RDMA buffers resizing allowed", dflt: "0", },
 		init_ibufs: {mode: 'param', name: "init_ibufs", type: "int", doc: "Max number of Eager buffers to allocate during the initialization step", dflt: "1000", },
+		init_recv_ibufs: {mode: 'param', name: "init_recv_ibufs", type: "int", doc: "Defines the number of receive buffers initially allocated. The number is on-the-fly expanded when needed (see init_recv_ibufs_chunk)", dflt: "200", },
 		max_srq_ibufs_posted: {mode: 'param', name: "max_srq_ibufs_posted", type: "int", doc: "Max number of Eager buffers which can be posted to the SRQ. This number cannot be higher than the number fixed by the HW", dflt: "1500", },
 		max_srq_ibufs: {mode: 'param', name: "max_srq_ibufs", type: "int", doc: "Max number of Eager buffers which can be used by the SRQ. This number is not fixed by the HW", dflt: "1000", },
 		srq_credit_limit: {mode: 'param', name: "srq_credit_limit", type: "int", doc: "Min number of free recv Eager buffers before posting a new buffer.", dflt: "500", },
@@ -79,7 +80,6 @@ meta.types = {
 		rdma_resizing_max_size: {mode: 'param', name: "rdma_resizing_max_size", type: "int", doc: "Defines the maximum size for the Eager RDMA buffers (resizing)", dflt: "4096", },
 		rdma_resizing_min_nb: {mode: 'param', name: "rdma_resizing_min_nb", type: "int", doc: "Defines the minimum number of Eager RDMA buffers (resizing)", dflt: "8", },
 		rdma_resizing_max_nb: {mode: 'param', name: "rdma_resizing_max_nb", type: "int", doc: "Defines the maximum number of Eager RDMA buffers (resizing)", dflt: "32", },
-		init_recv_ibufs: {mode: 'param', name: "init_recv_ibufs", type: "int", doc: "Defines the number of receive buffers initially allocated. The number is on-the-fly expanded when needed (see init_recv_ibufs_chunk)", dflt: "200", },
 		size_recv_ibufs_chunk: {mode: 'param', name: "size_recv_ibufs_chunk", type: "int", doc: "Defines the number of receive buffers allocated on the fly.", dflt: "400", },
 	}},
 	net_driver_tcp : {type: 'struct', name: "net_driver_tcp", childs: {

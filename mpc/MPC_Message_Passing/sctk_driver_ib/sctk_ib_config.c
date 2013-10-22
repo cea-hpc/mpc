@@ -147,7 +147,7 @@ void sctk_ib_config_print(sctk_ib_rail_info_t *rail_ib)
         "Stealing desc        = %s\n"
         EXPERIMENTAL(low_memory)"            = %d\n"
         "#############\n",
-        rail_ib->rail->network_name,
+        rail_ib->network_type,
         config->eager_limit,
         config->buffered_limit,
         config->max_rdma_connections,
@@ -282,12 +282,9 @@ void sctk_ib_config_init(sctk_ib_rail_info_t *rail_ib, char* network_name)
 {
   LOAD_CONFIG(rail_ib);
 
-  config = sctk_malloc(sizeof(sctk_ib_config_t));
-  assume(config);
-  memset(config, 0, sizeof(sctk_ib_config_t));
   rail_ib->config = &rail_ib->rail->runtime_config_driver_config->driver.value.infiniband;
   sctk_ib_config_mutate(rail_ib);
-  //rail_ib->config->network_name = strdup(network_name);
+  rail_ib->network_type = strdup(network_name);
 
   //load_ib_load_config(rail_ib);
 
