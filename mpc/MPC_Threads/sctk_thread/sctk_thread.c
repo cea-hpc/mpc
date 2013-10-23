@@ -962,7 +962,7 @@ sctk_user_thread_create (sctk_thread_t * restrict __threadp,
     {
       tmp->task_id = tmp_father->task_id;
     }
-  sctk_debug("Create Thread with MPI rank %d", tmp->task_id);
+  sctk_nodebug("Create Thread with MPI rank %d", tmp->task_id);
 
   if (__attr != NULL)
     {
