@@ -31,7 +31,6 @@
 #include "sctk_net_tools.h"
 #include "sctk_ib_cp.h"
 #include "sctk_ib_prof.h"
-#include "sctk_ib_low_mem.h"
 #include "sctk_ib_topology.h"
 #define HOSTNAME 2048
 

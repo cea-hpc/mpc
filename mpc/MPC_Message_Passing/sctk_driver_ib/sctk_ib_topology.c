@@ -32,7 +32,6 @@
 #include "sctk_ib.h"
 #include "sctk_ib_eager.h"
 #include "sctk_ib_config.h"
-#include "sctk_ib_low_mem.h"
 #include "sctk_ib_prof.h"
 #include "sctk_ibufs_rdma.h"
 #include "sctk_ib_topology.h"
