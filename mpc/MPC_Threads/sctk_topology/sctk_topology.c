@@ -518,7 +518,7 @@ sctk_print_topology (FILE * fd)
 void sctk_restrict_binding() {
   int err;
 
-  err = hwloc_set_cpubind(topology, topology_cpuset, HWLOC_CPUBIND_STRICT);
+  err = hwloc_set_cpubind(topology, topology_cpuset, HWLOC_CPUBIND_THREAD);
   assume(!err);
 
   sctk_topology_init_cpu();
@@ -545,7 +545,7 @@ TODO("Handle specific mapping from the user");
     hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
     assume(pu);
 
-    int err = hwloc_set_cpubind(topology, pu->cpuset, HWLOC_CPUBIND_STRICT);
+    int err = hwloc_set_cpubind(topology, pu->cpuset, HWLOC_CPUBIND_THREAD);
     if (err)
     {
       fprintf(stderr,"%-40s: %sFAILED (%d, %s)\n", msg, supported?"":"X", errno, errmsg);
