@@ -275,6 +275,7 @@ static double __INTERNAL__PMPI_Wtime (void);
 static double __INTERNAL__PMPI_Wtick (void);
 static int __INTERNAL__PMPI_Init (int *, char ***);
 static int __INTERNAL__PMPI_Finalize (void);
+static int __INTERNAL__PMPI_Finalized (int*);
 static int __INTERNAL__PMPI_Initialized (int *);
 static int __INTERNAL__PMPI_Abort (MPI_Comm, int);
 static int __INTERNAL__PMPI_Isend_test_req (void *buf, int count,
@@ -7442,10 +7443,21 @@ __INTERNAL__PMPI_Init (int *argc, char ***argv)
   return res;
 }
 
+static int is_finalized = 0;
 static int
 __INTERNAL__PMPI_Finalize (void)
 {
-  return PMPC_Finalize ();
+  int res; 
+  res = PMPC_Finalize ();
+  is_finalized = 1;
+  return res;
+}
+
+static int
+__INTERNAL__PMPI_Finalized (int* flag)
+{
+  *flag = is_finalized;
+  return MPI_SUCCESS;
 }
 
 static int
@@ -9440,6 +9452,15 @@ PMPI_Finalize (void)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Finalize ();
+  SCTK__MPI_Check_retrun_val (res, comm);
+}
+
+int
+PMPI_Finalized (int *flag)
+{
+  MPI_Comm comm = MPI_COMM_WORLD;
+  int res = MPI_ERR_INTERN;
+  res = __INTERNAL__PMPI_Finalized (flag);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 

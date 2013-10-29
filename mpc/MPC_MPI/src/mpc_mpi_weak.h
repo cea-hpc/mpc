@@ -398,6 +398,9 @@
 #pragma weak MPI_Finalize = PMPI_Finalize
 #pragma weak mpi_finalize_ = pmpi_finalize_
 #pragma weak mpi_finalize__ = pmpi_finalize__
+#pragma weak MPI_Finalized = PMPI_Finalized
+#pragma weak mpi_finalized_ = pmpi_finalized_
+#pragma weak mpi_finalized__ = pmpi_finalized__
 #pragma weak MPI_Initialized = PMPI_Initialized
 #pragma weak mpi_initialized_ = pmpi_initialized_
 #pragma weak mpi_initialized__ = pmpi_initialized__
