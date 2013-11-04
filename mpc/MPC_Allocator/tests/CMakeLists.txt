@@ -22,7 +22,8 @@ add_definitions(-DMPC_ALLOCATOR_DISABLE_STATIC=yes)
 #test list
 set(ALLOC_TEST_LIST test_allocated_chunk test_chunk_padding test_thread_pool test_user_alloc_chain
 	test_default_alloc_chain test_mm_source_default test_full_alloc_chain
-	test_regions test_posix_malloc test_rfq test_light_mm_src test_malloc_on_node)
+	test_regions test_posix_malloc test_rfq test_light_mm_src test_malloc_on_node
+	test_internal_spinlock)
 
 #setup OpenMP for parallel tests (not required for all, but simpler to setup once)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")

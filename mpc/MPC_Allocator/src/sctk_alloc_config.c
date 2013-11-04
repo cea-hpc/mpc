@@ -94,7 +94,7 @@ SCTK_STATIC void sctk_alloc_config_init_static_defaults(struct sctk_runtime_conf
 	#ifdef HAVE_HWLOC
 	//TODO make it true if no more bugs...
 	config->numa               = false;
-	#else //HAVE_HWLOC
+	#endif //HAVE_HWLOC
 }
 
 /************************* FUNCTION ************************/

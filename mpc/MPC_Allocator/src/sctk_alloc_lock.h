@@ -36,6 +36,10 @@
 	#include "sctk_spinlock.h"
 #endif
 
+#ifdef __MIC__
+	#define SCTK_ALLOC_USE_INTERNAL_LOCKS
+#endif //__MIC__
+
 /************************** MACROS *************************/
 //Can't use pthread mutex into MPC as we are called before thread init, so use spinlocks.
 //But in POSIX standard, spinlock didn't have static INITIALIZER, so prefer to use mutex in
@@ -44,7 +48,7 @@
 //on windows, seams to get a bug on our internal spinlock implementation with optim flags
 #ifdef _WIN32
 	//@TODO find a way to use static mutexes, here it didn't failed as long as we use the DLL init step
-	//which is called no nmultithread, but it may fail one day
+	//which is called no multithread, but it may fail one day
 	#define SCTK_ALLOC_INIT_LOCK_TYPE int
 	#define SCTK_ALLOC_INIT_LOCK_INITIALIZER 0
 	#define SCTK_ALLOC_INIT_LOCK_LOCK(x) do {} while(0)
@@ -67,6 +71,18 @@
 		#define sctk_alloc_spinlock_unlock(x) sctk_spinlock_unlock(x)
 		#define sctk_alloc_spinlock_trylock(x) sctk_spinlock_trylock(x)
 		#define sctk_alloc_spinlock_destroy(x) do{}while(0)
+	#elif defined(SCTK_ALLOC_USE_INTERNAL_LOCKS)
+		#include "sctk_alloc_internal_spinlock.h"
+		#define SCTK_ALLOC_INIT_LOCK_TYPE sctk_alloc_internal_spinlock_t
+		#define SCTK_ALLOC_INIT_LOCK_INITIALIZER SCTK_ALLOC_INTERNAL_SPINLOCK_INITIALIZER
+		#define SCTK_ALLOC_INIT_LOCK_LOCK(x) sctk_alloc_internal_spinlock_lock(x)
+		#define SCTK_ALLOC_INIT_LOCK_UNLOCK(x) sctk_alloc_internal_spinlock_unlock(x)
+		#define sctk_alloc_spinlock_t sctk_alloc_internal_spinlock_t
+		#define sctk_alloc_spinlock_init(x,y) sctk_alloc_internal_spinlock_init(x)
+		#define sctk_alloc_spinlock_lock(x) sctk_alloc_internal_spinlock_lock(x)
+		#define sctk_alloc_spinlock_unlock(x) sctk_alloc_internal_spinlock_unlock(x)
+		#define sctk_alloc_spinlock_trylock(x) sctk_alloc_internal_spinlock_trylock(x)
+		#define sctk_alloc_spinlock_destroy(x) sctk_alloc_internal_spinlock_destroy(x)
 	#else //MPC_Threads
 		#define SCTK_ALLOC_INIT_LOCK_TYPE pthread_mutex_t
 		#define SCTK_ALLOC_INIT_LOCK_INITIALIZER PTHREAD_MUTEX_INITIALIZER
