@@ -48,6 +48,7 @@ void sctk_runtime_config_validate(struct sctk_runtime_config * config)
 	sctk_runtime_config_old_getenv_compatibility(config);
 	sctk_runtime_config_override_by_getenv(config);
 	sctk_runtime_config_validate_allocator(config);
+    sctk_runtime_config_override_by_getenv_openmp(config);
 }
 
 /********************************* FUNCTION *********************************/
@@ -95,6 +96,8 @@ void sctk_runtime_config_override_by_getenv(struct sctk_runtime_config * config)
 	/* came from sctk_launch.c for verbosity level */
 	if ((tmp = getenv("MPC_VERBOSITY")) != NULL)
 		config->modules.launcher.verbosity = atoi(tmp);
+
+
 }
 
 /********************************* FUNCTION *********************************/
@@ -119,3 +122,42 @@ void sctk_runtime_config_validate_allocator(struct sctk_runtime_config * config)
 		sctk_fatal("Invalid configuration value for allocator.scope : %s, require (process | thread | vp)",scope);*/
 }
 
+/********************************* FUNCTION *********************************/
+/**
+ * This function may be used to defined all value OPENMP overriding by environment
+ * variables.
+**/
+void sctk_runtime_config_override_by_getenv_openmp(struct sctk_runtime_config * config)
+{
+	/* vars */
+	char * tmp;
+    
+    /******* VP NUMBER *******/
+	if ((tmp = getenv("OMP_VP_NUMBER")) != NULL)
+		config->modules.openmp.vp = atoi(tmp);
+
+    /******* OMP_SCHEDULE *******/
+	if ((tmp = getenv("OMP_SCHEDULE")) != NULL)
+		config->modules.openmp.schedule = tmp;
+    
+    /******* OMP_NUM_THREADS *******/
+	if ((tmp = getenv("OMP_NUM_THREADS")) != NULL)
+		config->modules.openmp.nb_threads = atoi(tmp);
+    
+    /******* OMP_DYNAMIC *******/
+	if ((tmp = getenv("OMP_DYNAMIC")) != NULL)
+    {
+		if(strcmp(tmp, "1") == 0 || strcmp(tmp, "TRUE") == 0 || strcmp(tmp, "true") == 0)
+        {
+            config->modules.openmp.adjustment = 1;
+        }
+    }
+    /******* OMP_NESTED *******/	
+    if ((tmp = getenv("OMP_NESTED")) != NULL)
+    {
+		if(strcmp(tmp, "1") == 0 || strcmp(tmp, "TRUE") == 0 || strcmp(tmp, "true") == 0)
+        {
+            config->modules.openmp.nested = 1;
+        }
+    }
+}
