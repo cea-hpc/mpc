@@ -200,6 +200,34 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	  sctk_assert( instance->mvps != NULL );
 	  sctk_assert( __mpcomp_check_tree_parameters( n_leaves, depth, degree ) );
 
+	  /* Fill instance paratemers regarding tree shape */
+	  instance->tree_depth = depth ;
+	  instance->tree_base = degree ;
+	  TODO( "check that we can copy degree pointer instead of deep copy")
+#if MPCOMP_TASK     
+     instance->tree_level_size = mpcomp_malloc(0, 
+			 sizeof(int) * (instance->tree_depth + 1), 0);
+     instance->tree_array_first_rank = mpcomp_malloc(0, 
+			 sizeof(int) * (instance->tree_depth + 1), 0);
+     instance->tree_level_size[0] = 1;
+     instance->tree_array_first_rank[0] = 0;
+     instance->tree_array_size = 1;
+     for (i=1; i<tree_depth + 1; i++) {
+	  instance->tree_level_size[i] = instance->tree_level_size[i-1] * 
+		  instance->tree_base[i-1];
+	  instance->tree_array_size += instance->tree_level_size[i]; 
+	  instance->tree_array_first_rank[i] = 
+		  instance->tree_array_first_rank[i-1] + 
+		  instance->tree_level_size[i-1];
+
+	  sctk_debug( "__mpcomp_build_tree: FirstRank[%d]=%d; "
+			  "tree_level_size[%d]=%d; tree_array_size=%d", 
+			  i, instance->tree_array_first_rank[i], 
+			  i, instance->tree_level_size[i], 
+			  instance->tree_array_size);
+     }
+#endif /* MPCOMP_TASK */
+
 	  /* Compute the max number of elements on the stack */
 	  max_stack_elements = 1;
 	  for (i = 0; i < depth; i++)
@@ -243,6 +271,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	  root->nb_children = degree[0];
 	  root->min_index = 0;
 	  root->max_index = n_leaves;
+	  root->instance = instance ;
 	  root->lock = SCTK_SPINLOCK_INITIALIZER;
 	  root->slave_running = 0;
 	  sctk_atomics_store_int( &(root->barrier), 0 );
@@ -308,11 +337,11 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			 sctk_getcontext(&(instance->mvps[current_mvp]->vp_context));
 
 			 /* Initialize the corresponding microVP (all but tree-related variables) */
-			 instance->mvps[current_mvp]->children_instance = instance;
 			 instance->mvps[current_mvp]->nb_threads = 0;
 			 instance->mvps[current_mvp]->next_nb_threads = 0;
 			 instance->mvps[current_mvp]->rank = current_mvp;
 			 instance->mvps[current_mvp]->vp = target_vp;
+			 instance->mvps[current_mvp]->min_index = n->min_index+i;
 			 instance->mvps[current_mvp]->enable = 1;
 			 instance->mvps[current_mvp]->tree_rank = 
 			      (int *)mpcomp_malloc(1, depth*sizeof(int), target_numa );
@@ -321,10 +350,13 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			 instance->mvps[current_mvp]->tree_rank[ depth - 1 ] = i;
 
 			 for (i_thread = 0; i_thread < MPCOMP_MAX_THREADS_PER_MICROVP; i_thread++) {
-			      int i_fordyn;
-			      for (i_fordyn = 0; i_fordyn < MPCOMP_MAX_ALIVE_FOR_DYN+1; i_fordyn++) {
-				   sctk_atomics_store_int(&(instance->mvps[current_mvp]->threads[i_thread].for_dyn_chunk_info[i_fordyn].remain), -1);
-			      }
+				 mpcomp_local_icv_t icvs ;
+				 __mpcomp_thread_init( 
+						 &(instance->mvps[current_mvp]->threads[i_thread]),
+						 icvs,
+						 instance ) ;
+				 instance->mvps[current_mvp]->threads[i_thread].mvp = 
+					 instance->mvps[current_mvp] ;
 			 }
 
 #if MPCOMP_TASK
@@ -425,7 +457,8 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			 n2->depth = n->depth+1;
 			 n2->nb_children = degree[ n2->depth ];
 			 n2->min_index = n->min_index + i * (n->max_index - n->min_index) / degree[ n->depth ];
-			 n2->max_index = n->min_index + (i+1) * (n->max_index - n->min_index) / degree[ n->depth ] - 1;
+			 n2->max_index = n->min_index + (i+1) * (n->max_index - n->min_index) / degree[ n->depth ] ;
+			 n2->instance = instance ;
 			 n2->lock = SCTK_SPINLOCK_INITIALIZER;
 			 n2->slave_running = 0;
 
@@ -462,12 +495,24 @@ void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
      sctk_assert( instance != NULL );
 
      /* TODO compute the real number of max elements for this stack */
+     TODO("compute the real number of max elements for this stack")
      s = __mpcomp_create_stack( 2048 );
      sctk_assert( s != NULL );
 
      __mpcomp_push( s, instance->root );
 
      fprintf( stderr, "==== Printing the current OpenMP tree ====\n" );
+
+	 /* Print general information about the instance and the tree */
+	 fprintf( stderr, "Depth = %d, Degree = [",
+			 instance->tree_depth ) ;
+	 for ( i = 0 ; i < instance->tree_depth ; i++ ) {
+		 if ( i != 0 ) {
+			 fprintf( stderr, ", " ) ;
+		 }
+		 fprintf( stderr, "%d", instance->tree_base[i] ) ;
+	 }
+	 fprintf( stderr, "]\n" ) ;
 
      while ( !__mpcomp_is_stack_empty( s ) ) {
 	  mpcomp_node_t * n;
@@ -483,7 +528,8 @@ void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
 	  }
 
 	  /* TODO id numa is temp */
-	  fprintf( stderr, "Node %ld (@ %p) -> NUMA %d\n", n->rank, n, n->id_numa );
+	  fprintf( stderr, "Node %ld (@ %p) -> NUMA %d, min/max %d / %d\n", 
+			  n->rank, n, n->id_numa, n->min_index, n->max_index );
 
 	  switch( n->child_type ) {
 	  case MPCOMP_CHILDREN_NODE:
@@ -505,7 +551,8 @@ void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
 
 		    fprintf( stderr, "Instance @ %p Leaf %d rank %d @ %p vp %d spinning on %p", instance, i, mvp->rank, &mvp, mvp->vp, mvp->to_run ) ;
 
-		    fprintf( stderr, " tree_rank @ %p", mvp->tree_rank ) ;
+		    fprintf( stderr, " min:%d tree_rank @ %p", 
+					mvp->min_index, mvp->tree_rank ) ;
 		    for ( j = 0 ; j < n->depth + 1 ; j++ ) {
 			 fprintf( stderr, " j=%d, %d", j, mvp->tree_rank[j] ) ;
 		    }

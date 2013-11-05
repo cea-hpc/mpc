@@ -32,14 +32,14 @@
 
 
 int
-__mpcomp_guided_loop_begin (int lb, int b, int incr, int chunk_size,
-			    int *from, int *to)
+__mpcomp_guided_loop_begin (long lb, long b, long incr, long chunk_size,
+			    long *from, long *to)
 {
      return __mpcomp_dynamic_loop_begin(lb, b, incr, chunk_size, from, to);
 }
 
 int
-__mpcomp_guided_loop_next (int *from, int *to)
+__mpcomp_guided_loop_next (long *from, long *to)
 {
      return __mpcomp_dynamic_loop_next(from, to);
 }
@@ -59,8 +59,8 @@ __mpcomp_guided_loop_end_nowait ()
 
 void
 __mpcomp_start_parallel_guided_loop (int arg_num_threads, void *(*func)
-				     (void *), void *shared, int lb, int b,
-				     int incr, int chunk_size)
+				     (void *), void *shared, long lb, long b,
+				     long incr, long chunk_size)
 {
      __mpcomp_start_parallel_dynamic_loop(arg_num_threads, func, shared,
 					  lb, b, incr, chunk_size);
@@ -72,8 +72,8 @@ __mpcomp_start_parallel_guided_loop (int arg_num_threads, void *(*func)
    and nowait clause previously executed in the same parallel region 
 */
 int
-__mpcomp_guided_loop_begin_ignore_nowait (int lb, int b, int incr, int
-					  chunk_size, int *from, int *to)
+__mpcomp_guided_loop_begin_ignore_nowait (long lb, long b, long incr, long
+					  chunk_size, long *from, long *to)
 {
      not_implemented();
      return 0;
@@ -81,14 +81,14 @@ __mpcomp_guided_loop_begin_ignore_nowait (int lb, int b, int incr, int
 
 
 int
-__mpcomp_guided_loop_next_ignore_nowait (int *from, int *to)
+__mpcomp_guided_loop_next_ignore_nowait (long *from, long *to)
 {
      return __mpcomp_dynamic_loop_next_ignore_nowait(from, to);
 }
 
 int
-__mpcomp_ordered_guided_loop_begin (int lb, int b, int incr, int chunk_size,
-				    int *from, int *to)
+__mpcomp_ordered_guided_loop_begin (long lb, long b, long incr, long chunk_size,
+				    long *from, long *to)
 {
      mpcomp_thread_t *t;
      int res;
@@ -105,7 +105,7 @@ __mpcomp_ordered_guided_loop_begin (int lb, int b, int incr, int chunk_size,
 }
 
 int
-__mpcomp_ordered_guided_loop_next (int *from, int *to) {
+__mpcomp_ordered_guided_loop_next (long *from, long *to) {
      mpcomp_thread_t *t;
      int res;
 

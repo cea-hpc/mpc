@@ -28,12 +28,9 @@
 TODO(runtime schedule: ICVs are not well transfered!)
 
 int
-// __mpcomp_runtime_loop_begin(
-//   long lb, long b, long incr, long chunk_size, 
-//     long * from, long * to )
 __mpcomp_runtime_loop_begin(
-    int lb, int b, int incr, int chunk_size, 
-    int * from, int * to )
+  long lb, long b, long incr, long chunk_size, 
+    long * from, long * to )
 {
      mpcomp_thread_t *t ;	/* Info on the current thread */
 
@@ -45,14 +42,14 @@ __mpcomp_runtime_loop_begin(
      sctk_assert( t != NULL ) ;
 
      sctk_debug( "__mpcomp_runtime_loop_begin: value of schedule %d",
-         t->icvs.run_sched_var ) ;
+         t->info.icvs.run_sched_var ) ;
 
 
-     t->icvs.run_sched_var = omp_sched_static ;
+     t->info.icvs.run_sched_var = omp_sched_static ;
 
 
 
-     switch( t->icvs.run_sched_var ) {
+     switch( t->info.icvs.run_sched_var ) {
        case omp_sched_static:
          return __mpcomp_static_loop_begin( lb, b, incr, chunk_size, from, to ) ;
          break ;
@@ -71,8 +68,7 @@ __mpcomp_runtime_loop_begin(
 }
 
 int
-// __mpcomp_runtime_loop_next( long * from, long * to )
-__mpcomp_runtime_loop_next( int * from, int * to )
+__mpcomp_runtime_loop_next( long * from, long * to )
 {
      mpcomp_thread_t *t ;	/* Info on the current thread */
 
@@ -83,7 +79,7 @@ __mpcomp_runtime_loop_next( int * from, int * to )
      t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
      sctk_assert( t != NULL ) ;
 
-     switch( t->icvs.run_sched_var ) {
+     switch( t->info.icvs.run_sched_var ) {
        case omp_sched_static:
          return __mpcomp_static_loop_next( from, to ) ;
          break ;

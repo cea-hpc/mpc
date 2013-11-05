@@ -29,21 +29,89 @@
    This file contains all functions related to SECTIONS constructs in OpenMP
  */
 
+static int __mpcomp_sections_internal_next( mpcomp_thread_t * t,
+		mpcomp_team_t * team ) 
+{
+  int r ;
+  int success ;
+
+  t->single_sections_current = sctk_atomics_load_int( 
+		  &(team->single_sections_last_current) ) ;
+
+  sctk_debug( "[%d] __mpcomp_sections_internal_next: Current = %d (target = %d)",
+		  t->rank, t->single_sections_current, t->single_sections_target_current ) ;
+
+  success = 0 ;
+
+  while ( t->single_sections_current < t->single_sections_target_current &&
+		  !success ) {
+	  r = sctk_atomics_cas_int( &(team->single_sections_last_current),
+			  t->single_sections_current, t->single_sections_current + 1 ) ;
+
+	  sctk_debug( "[%d] __mpcomp_sections_internal_next: CAS %d -> %d (res %d)",
+			  t->rank, t->single_sections_current,
+			 t->single_sections_current + 1, r ) ;
+
+	  if ( r != t->single_sections_current ) {
+		  t->single_sections_current = sctk_atomics_load_int( 
+				  &(team->single_sections_last_current) ) ;
+		  if ( t->single_sections_current > t->single_sections_target_current ) {
+			  t->single_sections_current = t->single_sections_target_current ;
+		  }
+	  } else {
+		  success = 1 ;
+	  }
+  }
+
+  if ( t->single_sections_current < t->single_sections_target_current ) {
+	  sctk_debug( "[%d] __mpcomp_sections_internal_next: Success w/ current = %d",
+			  t->rank, t->single_sections_current ) ;
+	  return t->single_sections_current - t->single_sections_start_current + 1 ;
+  }
+
+  sctk_debug( "[%d] __mpcomp_sections_internal_next: Fail w/ final current = %d",
+		  t->rank, t->single_sections_current ) ;
+
+  return 0 ;
+}
+
+
+void __mpcomp_sections_init( mpcomp_thread_t * t, int nb_sections ) {
+  mpcomp_team_t *team ;	/* Info on the team */
+  long num_threads ;
+
+  /* Number of threads in the current team */
+  num_threads = t->info.num_threads;
+  sctk_assert( num_threads > 0 ) ;
+
+  sctk_debug( "[%d] __mpomp_sections_init: Entering w/ %d section(s)",
+		  t->rank, nb_sections ) ;
+
+  /* Update current sections construct and update
+   * the target according to the number of sections */
+  t->single_sections_start_current = t->single_sections_current ;
+  t->single_sections_target_current = t->single_sections_current + nb_sections ;
+
+  sctk_debug( "[%d] __mpomp_sections_init: Current %d, start %d, target %d",
+		  t->rank, t->single_sections_current, 
+		  t->single_sections_start_current, t->single_sections_target_current ) ;
+
+  return ;
+}
+
 /* Return >0 to execute corresponding section.
    Return 0 otherwise to leave sections construct
    */
 int
 __mpcomp_sections_begin (int nb_sections)
 {
-  mpcomp_thread_t *t ;  /* Info on the current thread */
-  mpcomp_team_t *team_info ;    /* Info on the team */
-  int index ;
-  int num_threads ;
-  int nb_entered_threads ;
+  mpcomp_thread_t *t ;	/* Info on the current thread */
+  mpcomp_team_t *team ;	/* Info on the team */
+  long num_threads ;
 
-  /* Quit if no sections */
+  /* Leave if the number of sections is wrong */
   if ( nb_sections <= 0 ) {
-    return 0 ;
+	  return 0 ;
   }
 
   /* Handle orphaned directive (initialize OpenMP environment) */
@@ -53,133 +121,70 @@ __mpcomp_sections_begin (int nb_sections)
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
+  __mpcomp_sections_init( t, nb_sections ) ;
+
   /* Number of threads in the current team */
-  num_threads = t->num_threads;
+  num_threads = t->info.num_threads;
+  sctk_assert( num_threads > 0 ) ;
 
-  /* Store the total number of sections inside private thread info */
-  t->nb_sections = nb_sections ;
-
-  /* If alone in parallel region -> execute first section */
-  if ( num_threads == 1 ) {
-    t->previous_section = 1 ;
-    return 1 ;
+  /* If this function is called from a sequential part (orphaned directive) or 
+     this team has only 1 thread, the current thread will execute all sections 
+   */
+  if (num_threads == 1) {
+	  /* Start with the first section */
+	  t->single_sections_current++ ;
+	  return 1 ;
   }
 
-  /* Get the team info */
-  team_info = t->team ;
-  sctk_assert (team_info != NULL);
+  /* Grab the team info */
+  sctk_assert( t->instance != NULL ) ;
+  team = t->instance->team ;
+  sctk_assert( team != NULL ) ;
 
-  /* Grab the current index for sections */
-  index = t->sections_current ;
-
-  /* If too far ==> Wait until the last thread of first in-flight sections has finished */
-  if ( sctk_atomics_load_int(
-        &(team_info->sections_nb_threads_entered[index].i) )
-      == MPCOMP_NOWAIT_STOP_SYMBOL ) {
-
-    while ( sctk_atomics_load_int(
-          &(team_info->sections_nb_threads_entered[index].i) )
-        == MPCOMP_NOWAIT_STOP_SYMBOL ) {
-      sctk_thread_yield() ;
-    }
-  }
-
-  /* Increase the value of the current sections index */
-  nb_entered_threads = sctk_atomics_fetch_and_incr_int(
-      &(team_info->sections_nb_threads_entered[index].i) ) ;
-
-  /* Between 1 to nb_sections => execute the corresponding section */
-  if ( nb_entered_threads < nb_sections ) {
-    return nb_entered_threads + 1 ;
-  }
-
-  /* Else, sections done, increment current sections index */
-
-  if ( nb_entered_threads == nb_sections + num_threads - 1 ) {
-    int previous_index ;
-
-    sctk_atomics_store_int(
-        &(team_info->sections_nb_threads_entered[index].i),
-        MPCOMP_NOWAIT_STOP_SYMBOL
-        ) ;
-
-    previous_index = (index-1+MPCOMP_MAX_ALIVE_SECTIONS+1)%(MPCOMP_MAX_ALIVE_SECTIONS+1) ;
-
-    sctk_atomics_store_int(
-        &(team_info->sections_nb_threads_entered[previous_index].i),
-        0
-        ) ;
-  }
-
-  t->sections_current = (index + 1)%(MPCOMP_MAX_ALIVE_SECTIONS+1) ;
-
-  return 0 ;
-
+  return __mpcomp_sections_internal_next( t, team ) ;
 }
 
 int
 __mpcomp_sections_next ()
 {
-  mpcomp_thread_t *t ;  /* Info on the current thread */
-  mpcomp_team_t *team_info ;    /* Info on the team */
-  int index ;
-  int num_threads ;
-  int nb_entered_threads ;
+  mpcomp_thread_t *t ;	/* Info on the current thread */
+  mpcomp_team_t *team ;	/* Info on the team */
+  long num_threads ;
 
   /* Grab the thread info */
   t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
   /* Number of threads in the current team */
-  num_threads = t->num_threads;
+  num_threads = t->info.num_threads;
+  sctk_assert( num_threads > 0 ) ;
 
-  /* If alone in parallel region -> execute next section or finish */
-  if ( num_threads == 1 ) {
-    t->previous_section++ ;
-    if ( t->previous_section <= t->nb_sections ) {
-      return t->previous_section ;
-    }
-    return 0 ;
+
+  sctk_debug( "[%d] __mpcomp_sections_next: Current %d, start %d, target %d",
+		  t->rank, t->single_sections_current, 
+		  t->single_sections_start_current, t->single_sections_target_current ) ;
+
+  /* If this function is called from a sequential part (orphaned directive) or 
+     this team has only 1 thread, the current thread will execute all sections 
+   */
+  if (num_threads == 1) {
+	  /* Proceed to the next section if available */
+	  if ( t->single_sections_current >= t->single_sections_target_current ) {
+		  /* Update current section construct */
+		  t->single_sections_current++ ;
+		  return 0 ;
+	  }
+	  /* Update current section construct */
+	  t->single_sections_current++ ;
+	  return t->single_sections_current - t->single_sections_start_current ;
   }
 
-  /* Get the team info */
-  team_info = t->team ;
-  sctk_assert (team_info != NULL);
+  /* Grab the team info */
+  sctk_assert( t->instance != NULL ) ;
+  team = t->instance->team ;
+  sctk_assert( team != NULL ) ;
 
-  /* Grab the current index for sections */
-  index = t->sections_current ;
-
-  /* Increase the value of the current sections index */
-  nb_entered_threads = sctk_atomics_fetch_and_incr_int(
-      &(team_info->sections_nb_threads_entered[index].i) ) ;
-
-  /* Between 1 to nb_sections => execute the corresponding section */
-  if ( nb_entered_threads < t->nb_sections ) {
-    return nb_entered_threads + 1 ;
-  }
-
-  /* Else, sections done, increment current sections index */
-
-  if ( nb_entered_threads == t->nb_sections + num_threads - 1 ) {
-    int previous_index ;
-
-    sctk_atomics_store_int(
-        &(team_info->sections_nb_threads_entered[index].i),
-        MPCOMP_NOWAIT_STOP_SYMBOL
-        ) ;
-
-    previous_index = (index-1+MPCOMP_MAX_ALIVE_SECTIONS+1)%(MPCOMP_MAX_ALIVE_SECTIONS+1) ;
-
-    sctk_atomics_store_int(
-        &(team_info->sections_nb_threads_entered[previous_index].i),
-        0
-        ) ;
-  }
-
-  t->sections_current = (index + 1)%(MPCOMP_MAX_ALIVE_SECTIONS+1) ;
-
-  return 0 ;
-
+  return __mpcomp_sections_internal_next( t, team ) ;
 }
 
 void
@@ -194,45 +199,6 @@ __mpcomp_sections_end_nowait ()
   /* Nothing to do */
 }
 
-
-/* COHERENCY FUNCTIONS */
-
-int __mpcomp_sections_coherency_entering_paralel_region() {
-  int i ;
-  mpcomp_thread_t *t ;  /* Info on the current thread */
-  mpcomp_team_t *team_info ;    /* Info on the team */
-  int error ;
-  int nb_stop ;
-
-  /* Grab the thread info */
-  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-  sctk_assert( t != NULL ) ;
-
-  /* Get the team info */
-  team_info = t->team ;
-  sctk_assert (team_info != NULL);
-
-  error = 0 ;
-  nb_stop = 0 ;
-  for ( i = 0 ; i < MPCOMP_MAX_ALIVE_SINGLE + 1 ; i++ ) {
-    switch ( sctk_atomics_load_int(
-          &(team_info->sections_nb_threads_entered[i].i) ) ) {
-      case 0:
-        break ;
-      case MPCOMP_NOWAIT_STOP_SYMBOL:
-        nb_stop++ ;
-        break ;
-      default:
-        error = 1 ;
-    }
-  }
-
-  if ( nb_stop != 1 ) {
-    error = 1 ;
-  }
-
-  return error ;
-}
 
 int __mpcomp_sections_coherency_exiting_paralel_region() {
   return 0 ;

@@ -1,4 +1,4 @@
-///* ############################# MPC License ############################## */
+/* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
 /* #                                                                      # */
@@ -29,13 +29,8 @@
 #include <ctype.h>
 
 /*****************
-  ****** MACROS
+  ****** GLOBAL VARIABLES 
   *****************/
-
-#define SCTK_OMP_VERSION_MAJOR 3
-#define SCTK_OMP_VERSION_MINOR 0
-
-// __thread void *sctk_openmp_thread_tls = NULL ;
 
 /* Schedule type */
 static omp_sched_t OMP_SCHEDULE = 1;
@@ -202,7 +197,7 @@ static inline void __mpcomp_read_env_variables() {
       }
     }  else {
       fprintf (stderr,
-	  "Warning: Unknown schedule <%s> (must be static, guided or dynamic),"
+	  "Warning: Unknown schedule <%s> (must be static, guided, dynamic or auto),"
 	  " fallback to default schedule <%d>\n", env,
 	  OMP_SCHEDULE);
     }
@@ -220,6 +215,7 @@ static inline void __mpcomp_read_env_variables() {
       OMP_NUM_THREADS = nb_threads;
     }
   }
+  TODO( "OMP_NUM_THREADS: need to handle x,y,z,... and keep only x" )
 
 
   /******* OMP_DYNAMIC *********/
@@ -233,6 +229,16 @@ static inline void __mpcomp_read_env_variables() {
     }
   }
 
+  /******* OMP_PROC_BIND *********/
+  env = getenv ("OMP_PROC_BIND");
+  OMP_PROC_BIND = 0;	/* DEFAULT */
+  if (env != NULL)
+  {
+       if (strcmp (env, "1") == 0 || strcmp (env, "TRUE") == 0 || strcmp (env, "true") == 0 )
+       {
+	    OMP_PROC_BIND = 1;
+       }
+  }
 
   /******* OMP_NESTED *********/
   env = getenv ("OMP_NESTED");
@@ -245,17 +251,6 @@ static inline void __mpcomp_read_env_variables() {
     }
   }
 
-  /******* OMP_PROC_BIND *********/
-  env = getenv ("OMP_PROC_BIND");
-  OMP_PROC_BIND = 0;	/* DEFAULT */
-  if (env != NULL)
-  {
-       if (strcmp (env, "1") == 0 || strcmp (env, "TRUE") == 0 || strcmp (env, "true") == 0 )
-       {
-	    OMP_PROC_BIND = 1;
-       }
-  }
-  
   /******* OMP_STACKSIZE *********/
   env = getenv ("OMP_STACKSIZE");
   OMP_STACKSIZE = 0;	/* DEFAULT */
@@ -296,6 +291,7 @@ static inline void __mpcomp_read_env_variables() {
 	    break;
        }
   }
+  TODO("check STACKSIZE value" ) 
 
   /******* OMP_WAIT_POLICY *********/
   env = getenv ("OMP_WAIT_POLICY");
@@ -331,9 +327,6 @@ static inline void __mpcomp_read_env_variables() {
   env = getenv ("OMP_TREE");
   if (env != NULL)
   {
-    /* TODO check the OMP_TREE variable */
-    fprintf( stderr, "OMP_TREE variable ignored <%s>...\n", env ) ;
-
     int nb_tokens = 0 ;
     char ** tokens = NULL ;
     int i ;
@@ -366,6 +359,7 @@ static inline void __mpcomp_read_env_variables() {
       fprintf( stderr, "OMP_TREE\tLevel %d -> %d children\n", i, OMP_TREE[i] ) ;
     }
 #endif
+	TODO( "check the env variable OMP_TREE" )
 
   }
 
@@ -395,7 +389,7 @@ static inline void __mpcomp_read_env_variables() {
   /***** PRINT SUMMARY ******/
   if (getenv ("MPC_DISABLE_BANNER") == NULL) {
     fprintf (stderr,
-	"MPC OpenMP version %d.%d (NUMA-aware DEV)\n",
+	"MPC OpenMP version %d.%d\n",
 	SCTK_OMP_VERSION_MAJOR, SCTK_OMP_VERSION_MINOR);
     fprintf (stderr, "\tOMP_SCHEDULE %d\n", OMP_SCHEDULE);
     fprintf (stderr, "\tOMP_NUM_THREADS %d\n", OMP_NUM_THREADS);
@@ -419,6 +413,7 @@ static inline void __mpcomp_read_env_variables() {
 #if MPCOMP_COHERENCY_CHECKING
     fprintf( stderr, "\tCoherency check enabled\n" ) ;
 #endif
+    TODO( "Add every env vars when printing info on OpenMP" ) 
   }
 }
 
@@ -429,18 +424,20 @@ static inline void __mpcomp_read_env_variables() {
 void __mpcomp_init() {
   static volatile int done = 0;
   static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
-  mpcomp_team_t * team_info ;
 
   /* Need to initialize the current team */
   if ( sctk_openmp_thread_tls == NULL ) {
+    mpcomp_instance_t * seq_instance ;
     mpcomp_instance_t * instance ;
+	mpcomp_team_t * seq_team_info ;
+	mpcomp_team_t * team_info ;
     mpcomp_thread_t * t ;
     mpcomp_local_icv_t icvs;
 
-    //printf("__mpcomp_init(): Init current team\n");  //AMAHEO
-
+	/* Need to initialize the whole runtime (environment variables) This
+	 * section is shared by every OpenMP instances amon MPI tasks located inside
+	 * the same OS process */
     sctk_thread_mutex_lock (&lock);
-    /* Need to initialize the whole runtime (environment variables) */
     if ( done == 0 ) {
       __mpcomp_read_env_variables() ;
       mpcomp_global_icvs.def_sched_var = omp_sched_static ;
@@ -453,18 +450,36 @@ void __mpcomp_init() {
       done = 1;
     }
 
+
+	/*** Initialize SEQUENTIAL information (current instance + team) ***/
+
+    /* Initialize team information */
+    seq_team_info = (mpcomp_team_t *)sctk_malloc( sizeof( mpcomp_team_t ) ) ;
+    sctk_assert( seq_team_info != NULL ) ;
+    __mpcomp_team_init( seq_team_info ) ;
+
+    /* Allocate an instance of OpenMP */
+    seq_instance = (mpcomp_instance_t *)sctk_malloc( sizeof( mpcomp_instance_t ) ) ;
+    sctk_assert( seq_instance != NULL ) ;
+    __mpcomp_instance_init( seq_instance, 0, seq_team_info ) ;
+
+
+	/*** Initialize PARALLEL information (instance + team for the next parallel
+	 * region) ***/
+
+    /* Initialize team information */
+    team_info = (mpcomp_team_t *)sctk_malloc( sizeof( mpcomp_team_t ) ) ;
+    sctk_assert( team_info != NULL ) ;
+    __mpcomp_team_init( team_info ) ;
+
     /* Allocate an instance of OpenMP */
     instance = (mpcomp_instance_t *)sctk_malloc( sizeof( mpcomp_instance_t ) ) ;
     sctk_assert( instance != NULL ) ;
+    __mpcomp_instance_init( instance, OMP_MICROVP_NUMBER, team_info ) ;
 
-    /* Initialization of the OpenMP instance */
-    __mpcomp_instance_init( instance, OMP_MICROVP_NUMBER ) ;
-
-    sctk_debug("__mpcomp_instance_init: instance @ %p", instance); //AMAHEO
 
     /* Allocate information for the sequential region */
     t = (mpcomp_thread_t *)sctk_malloc( sizeof(mpcomp_thread_t) ) ;
-    //t = &(instance->mvps[0]->threads[0]);
     sctk_assert( t != NULL ) ;
 
     /* Initialize default ICVs */
@@ -474,16 +489,9 @@ void __mpcomp_init() {
     icvs.run_sched_var = OMP_SCHEDULE;
     icvs.modifier_sched_var = OMP_MODIFIER_SCHEDULE ;
 
-    /* Initialize team information */
-    team_info = (mpcomp_team_t *)sctk_malloc( sizeof( mpcomp_team_t ) ) ;
-    sctk_assert( team_info != NULL ) ;
-
-    /* Team initialization */
-    __mpcomp_team_init( team_info ) ;
-
-    // TODO: these lines should be in a function __mpcomp_thread_init(t)
-    __mpcomp_thread_init( t, icvs, instance, team_info ) ;
-    t->mvp = instance->mvps[0];
+	/* Thread info initialization */
+    __mpcomp_thread_init( t, icvs, seq_instance ) ;
+	t->children_instance = instance ;
 
 #if MPCOMP_TASK
     /* Ensure tasks lists depths are correct */
@@ -498,17 +506,12 @@ void __mpcomp_init() {
 	 team_info->task_larceny_mode = OMP_TASK_LARCENY_MODE;
 #endif /* MPCOMP_TASK */
 
-    //printf("__mpcomp_init: t address=%p\n", &t);
-
-    //printf("__mpcomp_init: t rank=%ld\n", t->rank);
-
     /* Current thread information is 't' */
     sctk_openmp_thread_tls = t ;
 
     sctk_thread_mutex_unlock (&lock);
 
     sctk_nodebug( "__mpcomp_init: Init done..." ) ;
-    //printf("__mpcomp_init: Init done...\n");
   }
 
 }
@@ -520,531 +523,45 @@ void __mpcomp_exit()
 #endif /* MPCOMP_TASK */
 }
 
-void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps ) {
+void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
+	   struct mpcomp_team_s * team	) {
 
-  sctk_nodebug( "__mpcomp_instance_init: Entering..." ) ;
+	sctk_nodebug( "__mpcomp_instance_init: Entering..." ) ;
 
-  /* Alloc memory for 'nb_mvps' microVPs */
-  instance->mvps = (mpcomp_mvp_t **)sctk_malloc( nb_mvps * sizeof( mpcomp_mvp_t * ) ) ;
-  sctk_assert( instance->mvps != NULL ) ;
+	/* Assign the current team */
+	instance->team = team ;
 
-  instance->nb_mvps = nb_mvps ;
 
-  if ( OMP_TREE == NULL ) {
-    __mpcomp_build_default_tree( instance ) ;
-  } else {
-    __mpcomp_build_tree( instance, OMP_TREE_NB_LEAVES, OMP_TREE_DEPTH, OMP_TREE ) ; 
-  }
+	if ( nb_mvps > 0 ){
+		/* Alloc memory for 'nb_mvps' microVPs */
+		instance->mvps = (mpcomp_mvp_t **)sctk_malloc( nb_mvps * sizeof( mpcomp_mvp_t * ) ) ;
+		sctk_assert( instance->mvps != NULL ) ;
 
-  /* Do we need a TLS for the openmp instance for every microVPs? */
-}
+		instance->nb_mvps = nb_mvps ;
 
-void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
-    (void *), void *shared) {
-  mpcomp_thread_t * t ;
-  mpcomp_mvp_t *mvp;     //AMAHEO
-  int current_vp;       //AMAHEO
-  mpcomp_node_t * root ;
-  int num_threads ;
-  int i ;
+		if ( OMP_TREE == NULL ) {
+			__mpcomp_build_default_tree( instance ) ;
+		} else {
+			__mpcomp_build_tree( instance, OMP_TREE_NB_LEAVES, OMP_TREE_DEPTH, OMP_TREE ) ; 
+		}
+	} else {
+		mpcomp_local_icv_t icvs ;
+		/* Sequential instance and team */
+		instance->mvps = (mpcomp_mvp_t **)sctk_malloc( 1 * sizeof( mpcomp_mvp_t * ) ) ;
+		sctk_assert( instance->mvps != NULL ) ;
 
-  //static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER; // Lock initialization (AMAHEO)  
+		instance->mvps[0] = (mpcomp_mvp_t *)sctk_malloc( 1 * sizeof( mpcomp_mvp_t ) ) ;
+		sctk_assert( instance->mvps[0] != NULL ) ;
 
-  __mpcomp_init() ;
+		instance->nb_mvps = 1 ;
 
-  sctk_nodebug( "__mpcomp_start_parallel_region: ========== NEW PARALLEL REGION (f %p) =============", func ) ;
+		__mpcomp_thread_init( &(instance->mvps[0]->threads[0]), icvs, instance ) ;
 
-  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-  sctk_assert( t != NULL ) ;
-  //sctk_assert(t->rank == 0);
+	}
 
-  current_vp = sctk_thread_get_vp();   //AMAHEO
-  //mvp = t->mvp; //AMAHEO
-  //sctk_assert(mvp != NULL);
-  //printf("__mpcomp_start_parallel_region: t address=%p rank=%ld\n", &t, t->rank);
-  //printf("__mpcomp_start_parallel_region: current vp=%d\n", current_vp); //AMAHEO
+	sctk_nodebug( "__mpcomp_instance_init: Exiting..." ) ;
 
-  //printf("__mpcomp_start_parallel_region: t address=%p\n", &t);
-
-  /* Compute the number of threads for this parallel region */
-  num_threads = t->icvs.nthreads_var;
-  if ( arg_num_threads > 0 && arg_num_threads < MPCOMP_MAX_THREADS ) {
-    num_threads = arg_num_threads;
-  }
-
-  sctk_nodebug( "__mpcomp_start_parallel_region: Final number of threads %d (default %d)",
-      num_threads, t->icvs.nthreads_var ) ;
-
-  /* Bypass if the parallel region contains only 1 thread */
-  if (num_threads == 1)
-  {
-    TODO(BUG for 1 thread w/ nested parallelism)
-    sctk_nodebug( "__mpcomp_start_parallel_region: starting w/ 1 thread" ) ;
-    t->num_threads = 1 ;
-    t->rank = 0 ;
-
-    func(shared) ;
-
-#if MPCOMP_TASK
-    __mpcomp_task_schedule();   /* Look for tasks remaining */
-#endif //MPCOMP_TASK
-
-    return ;
-  }
-
-#if MPCOMP_COHERENCY_CHECKING
-  /* TODO develop some sequential tests to check the validity of the tree and the corresponding variables */
-  __mpcomp_single_coherency_entering_parallel_region() ;
-#endif
-
-  /* First level of parallel region (no nesting) */
-  if ( t->team->depth == 0 ) {
-    mpcomp_instance_t * instance ;
-    mpcomp_node_t * n ;			/* Temp node */
-    int num_threads_per_child ;
-    int max_index_with_more_threads ;
-
-    /* Get the OpenMP instance already allocated during the initializatino (mpcomp_init) */
-    
-    instance = t->children_instance ;
-    sctk_assert( t->children_instance != NULL);
-    sctk_assert( instance != NULL ) ;
-
-//#if 0
-    t->team->instance = instance; //Put instance into team infos (AMAHEO)
-    t->team->tree_depth = OMP_TREE_DEPTH;
-    t->team->nb_leaves = OMP_TREE_NB_LEAVES;
-//#endif
-
-    /* Get the root node of the main tree */
-    root = instance->root ;
-    sctk_assert( root != NULL ) ;
-
-    /* Root is awake -> propagate the values to children */
-    num_threads_per_child = num_threads / instance->nb_mvps ;
-    max_index_with_more_threads = (num_threads % instance->nb_mvps)-1 ;
-
-    mpcomp_node_t * new_root ; /* Where to spin for the end of the // region */
-#if 1
-    if ( instance->nb_mvps == 128 && num_threads <= 32 ) {
-      if ( num_threads <= 8 ) {
-	n = root->children.node[0]->children.node[0] ;
-	n->team_info = t->team ;
-	// n->barrier_num_threads = num_threads ;
-	n->father = NULL ;
-      } else {
-	n = root->children.node[0] ;
-	n->team_info = t->team ;
-	// n->barrier_num_threads = num_threads ;
-	n->father = NULL ;
-      }
-    } else {
-      n = root ;
-    }
-#endif
-
-#if 0
-    n = root ;
-#endif
-
-    new_root = n ;
-
-    TODO("Forward the team info only one time")
-    n->team_info = t->team;
-    while ( n->child_type != MPCOMP_CHILDREN_LEAF ) {
-      int nb_children_involved = 1 ;
-      /*
-	 n->children.node[0]->func = func ;
-	 n->children.node[0]->shared = shared ;
-	 n->children.node[0]->num_threads = num_threads ;
-       */
-      n->children.node[0]->team_info = t->team ;
-      for ( i = 1 ; i < n->nb_children ; i++ ) {
-	int temp_num_threads ;
-
-	/* Compute the number of threads for the smallest child of the subtree 'n' */
-	temp_num_threads = num_threads_per_child ;
-	if ( n->children.node[i]->min_index < max_index_with_more_threads ) temp_num_threads++ ;
-
-	if ( temp_num_threads > 0 ) {
-	  n->children.node[i]->func = func ;
-	  n->children.node[i]->shared = shared ;
-	  n->children.node[i]->num_threads = num_threads ;
-	  n->children.node[i]->team_info = t->team ;
-	  sctk_assert( t->team != NULL ) ;
-	  n->children.node[i]->slave_running = 1 ;
-	  nb_children_involved++ ;
-	} 
-	/*
-	   else {
-	   break ;
-	   }
-	 */
-
-      }
-      sctk_nodebug( "__mpcomp_start_parallel_region: nb_children_involved=%d\n", nb_children_involved ) ;
-      n->barrier_num_threads = nb_children_involved ;
-      n = n->children.node[0] ;
-    }
-
-    n->func = func ;
-    n->shared = shared ;
-    n->num_threads = num_threads ;
-    /* Wake up children leaf */
-    sctk_assert( n->child_type == MPCOMP_CHILDREN_LEAF ) ;
-    int nb_leaves_involved = 1 ;
-    for ( i = 1 ; i < n->nb_children ; i++ ) {
-      int num_threads_leaf ;
-      num_threads_leaf = num_threads / instance->nb_mvps ;
-      if ( n->children.leaf[i]->rank < (num_threads%instance->nb_mvps) ) num_threads_leaf++ ;
-      if ( num_threads_leaf> 0 ) {
-	n->children.leaf[i]->slave_running = 1 ;
-	nb_leaves_involved++ ;
-      }
-    }
-    sctk_nodebug( "__mpcomp_start_parallel_region: nb_leaves_involved=%d\n", nb_leaves_involved) ;
-    n->barrier_num_threads = nb_leaves_involved ;
-
-    // instance->mvps[0]->region_id = (instance->mvps[0]->region_id+1)%2;
-    instance->mvps[0]->func = func ;
-    instance->mvps[0]->shared = shared ;
-    instance->mvps[0]->nb_threads = 1 ;
-
-    /* Compute the number of OpenMP threads and their rank running on microVP #0 */
-    instance->mvps[0]->threads[0].num_threads = num_threads ;
-    instance->mvps[0]->threads[0].rank = 0 ;
-    instance->mvps[0]->threads[0].team = t->team ;
-    instance->mvps[0]->threads[0].mvp = instance->mvps[0] ;
-    instance->mvps[0]->threads[0].single_current = t->team->single_last_current ;
-    instance->mvps[0]->threads[0].for_dyn_current = t->team->for_dyn_last_current ;
-
-    sctk_nodebug( "__mpcomp_start_parallel_region: starting with current_single = %d",
-	t->team->single_last_current ) ;
-
-    /* Start scheduling */
-    in_order_scheduler(instance->mvps[0]) ;
-
-    sctk_nodebug( "__mpcomp_start_parallel_region: end of in-order scheduling" ) ;
-
-    /* Implicit barrier */
-    __mpcomp_internal_half_barrier( instance->mvps[0] ) ;
-
-    /* Update team info for last values */
-    /* TODO put inside an inlined function */
-    t->team->single_last_current = instance->mvps[0]->threads[0].single_current ;
-    t->team->for_dyn_last_current = instance->mvps[0]->threads[0].for_dyn_current ;
-
-    sctk_nodebug( "__mpcomp_start_parallel_region: ending with current_single = %d",
-	t->team->single_last_current ) ;
-
-    //sctk_openmp_thread_tls = t; //AMAHEO
-
-    /* Finish the half barrier by spinning on the root value */
-    // while (sctk_atomics_load_int(&(root->barrier)) != root->barrier_num_threads ) 
-    while (sctk_atomics_load_int(&(new_root->barrier)) != new_root->barrier_num_threads ) 
-    {
-	 //sctk_openmp_thread_tls = t ; //Update tls value before switching (AMAHEO)
-#if MPCOMP_TASK
-	 __mpcomp_task_schedule(); /* Look for tasks remaining */
-#endif //MPCOMP_TASK
-	 sctk_thread_yield() ;
-    }
-    // sctk_atomics_store_int(&(root->barrier), 0) ;
-    sctk_atomics_store_int(&(new_root->barrier), 0) ;
-
-#if MPCOMP_TASK
-    TODO("Place the task scheduling somewhere else")
-    __mpcomp_task_schedule();
-#endif //MPCOMP_TASK
-
-    //printf("__mpcomp_start_parallel_region: end, t rank=%ld\n", t->rank);
-
-    //sctk_thread_mutex_lock (&lock); //AMAHEO
-
-    //__mpcomp_print_tree(instance); //Print again tree (AMAHE0)
-
-    /* Restore the previous OpenMP info */
-    sctk_openmp_thread_tls = t ;
-
-    //sctk_thread_mutex_unlock (&lock);  //AMAHEO
-
-#if 0
-    /* Sequential check of tree coherency */
-    sctk_assert( root->barrier == 0 ) ;
-    for ( i = 0 ; i < root->nb_children ; i++ ) {
-      sctk_assert( root->children.node[i]->barrier == 0 ) ;
-    }
-#endif
-
-  } else {
-    /* TODO */
-    not_implemented() ;
-  }
-
-  sctk_nodebug( "__mpcomp_start_parallel_region: ========== EXIT PARALLEL REGION =============" ) ;
-
-}
-
-/**
-  Entry point for microVP in charge of passing information to other microVPs.
-  Spinning on a specific node to wake up
- */
-void * mpcomp_slave_mvp_node( void * arg ) {
-  int index ;
-  mpcomp_thread_t * t;
-  mpcomp_mvp_t * mvp ; /* Current microVP */
-  mpcomp_node_t * n ; /* Spinning node + Traversing node */
-  mpcomp_node_t * root ; /* Tree root */
-
-  //t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-  //sctk_assert( t != NULL ) ;
-
-  int tree_depth; //AMAHEO
-  int i;
-
-  /* Get the current microVP */
-  mvp = (mpcomp_mvp_t *)arg ;
-
-  //tree_depth = t->team->tree_depth;
-
-  //sctk_debug("mpcomp_slave_mvp_node: tree_depth=%d", tree_depth);
-  //for(i=0;i<tree_depth;i++) {
-
-  sctk_debug("mpcomp_slave_mvp_node begin: mvp rank %d @ %p instance @ %p tree_rank[0]=%d", mvp->rank, mvp, mvp->children_instance, mvp->tree_rank[0]);
-  sctk_debug("mpcomp_slave_mvp_node begin: mvp rank %d @ %p instance @ %p tree_rank[1]=%d", mvp->rank, mvp, mvp->children_instance, mvp->tree_rank[1]);
- 
-  //}
-
-  /* Capture the node to spin on */
-  n = mvp->to_run ;
-
-  /* Get the root of the topology tree */
-  root = mvp->root ;
-
-  sctk_nodebug( "mpcomp_slave_mvp_node: Polling address %p -> father is %p",
-      &(mvp->slave_running), mvp->father ) ;
-
-  sctk_nodebug("mpcomp_slave_mvp_node begin 1: mvp address=%p rank %d tree_rank=%p tree_rank[0]=%d", &mvp, mvp->rank, &(mvp->tree_rank), mvp->tree_rank[0]);
-  sctk_nodebug("mpcomp_slave_mvp_node begin 1: mvp address=%p rank %d tree_rank=%p tree_rank[1]=%d", &mvp, mvp->rank, &(mvp->tree_rank), mvp->tree_rank[1]);
-
-  while (mvp->enable) {
-    int i ;
-    int num_threads_mvp ;
-
-   sctk_nodebug("mpcomp_slave_mvp_node begin 2: mvp address=%p rank %d tree_rank=%p tree_rank[0]=%d", &mvp, mvp->rank, &(mvp->tree_rank), mvp->tree_rank[0]);
-   sctk_nodebug("mpcomp_slave_mvp_node begin 2: mvp address=%p rank %d tree_rank=%p tree_rank[1]=%d", &mvp, mvp->rank, &(mvp->tree_rank), mvp->tree_rank[1]);
-
-    sctk_nodebug( "mpcomp_slave_mvp_node: Polling address %p with ID %d",
-	&(n->slave_running), 0) ;
-
-    /* Spinning on the designed node */
-    sctk_thread_wait_for_value_and_poll( (int*)&(n->slave_running), 1, NULL, NULL ) ;
-    n->slave_running = 0 ;
-
-    sctk_nodebug( "mpcomp_slave_mvp_node: wake up -> go to children using function %p", n->func ) ;
-
-    /* Wake up children node */
-    while ( n->child_type != MPCOMP_CHILDREN_LEAF ) {
-      sctk_nodebug( "mpcomp_slave_mvp_node: children node passing function %p", n->func ) ;
-	n->children.node[0]->func = n->func ;
-	n->children.node[0]->shared = n->shared ;
-	n->children.node[0]->team_info = n->team_info ;
-	sctk_assert( n->team_info != NULL ) ;
-	n->children.node[0]->num_threads = n->num_threads ;
-	n->children.node[0]->combined_pragma = n->combined_pragma;
-
-      for ( i = 1 ; i < n->nb_children ; i++ ) {
-	n->children.node[i]->func = n->func ;
-	n->children.node[i]->shared = n->shared ;
-	n->children.node[i]->team_info = n->team_info ;
-	sctk_assert( n->team_info != NULL ) ;
-	n->children.node[i]->num_threads = n->num_threads ;
-	n->children.node[i]->combined_pragma = n->combined_pragma;
-	n->children.node[i]->slave_running = 1 ;
-      }
-     TODO(put the real barrier_num_threads)
-      n->barrier_num_threads = n->nb_children ;
-      n = n->children.node[0] ;
-    }
-    /* Wake up children leaf */
-    sctk_assert( n->child_type == MPCOMP_CHILDREN_LEAF ) ;
-    sctk_nodebug( "mpcomp_slave_mvp_node: children leaf will use %p", n->func ) ;
-    for ( i = 1 ; i < n->nb_children ; i++ ) {
-	 n->children.leaf[i]->combined_pragma = n->combined_pragma;	 
-	 n->children.leaf[i]->slave_running = 1 ;
-    }
-    n->barrier_num_threads = n->nb_children ;
-
-   //sctk_debug("mpcomp_slave_mvp_node middle: mvp rank %d tree_rank[0]=%d", mvp->rank, mvp->tree_rank[0]); //AMAHEO
-   //sctk_debug("mpcomp_slave_mvp_node middle: mvp rank %d tree_rank[1]=%d", mvp->rank, mvp->tree_rank[1]); //AMAHEO
-
-    n = mvp->to_run ;
-    mvp->func = n->func ;
-    mvp->shared = n->shared ;
- 
-    //mvp->vp = sctk_thread_get_vp(); //AMAHEO
-
-    /* Compute the number of threads for this microVP */
-    /* TODO */
-    int fetched_num_threads = n->num_threads ;
-    num_threads_mvp = 1 ;
-    if ( fetched_num_threads <= mvp->rank ) {
-      num_threads_mvp = 0 ;
-    }
-
-    for ( i = 0 ; i < num_threads_mvp ; i++ ) {
-      int rank ;
-      /* Allocate this thread if needed */
-
-
-      /* Compute the rank of this thread */
-      rank = mvp->rank ;
-
-      mvp->threads[i].rank = rank ;
-      mvp->threads[i].num_threads = n->num_threads ;
-      mvp->threads[i].mvp = mvp ;
-      mvp->threads[i].team =  mvp->father->team_info ;
-      mvp->threads[i].single_current = mvp->father->team_info->single_last_current ;
-      mvp->threads[i].for_dyn_current = mvp->father->team_info->for_dyn_last_current ;
-
-      sctk_debug("__mpcomp_slave_mvp_node: mvp rank=%d @ %p, instance @ %p, tree_rank address=%p, depth 0 = %d", mvp->rank, mvp, mvp->children_instance, &(mvp->tree_rank), mvp->tree_rank[0]); //AMAHEO
-      sctk_debug("__mpcomp_slave_mvp_node: mvp rank=%d @ %p, instance @ %p, tree_rank address=%p, depth 1 = %d", mvp->rank, mvp, mvp->children_instance, &(mvp->tree_rank), mvp->tree_rank[1]); //AMAHEO
-      //sctk_debug("__mpcomp_slave_mvp_node: mvp threads[%d] address=%p mvp tree_rank address=%p, depth 0 = %d", i, &(mvp->threads[i].mvp), &(mvp->threads[i].mvp->tree_rank), mvp->threads[i].mvp->tree_rank[0]); //AMAHEO
-      //sctk_debug("__mpcomp_slave_mvp_node: mvp threads[%d] address=%p mvp tree_rank address=%p, depth 1 = %d", i, &(mvp->threads[i].mvp), &(mvp->threads[i].mvp->tree_rank), mvp->threads[i].mvp->tree_rank[1]); //AMAHEO
-
-      mpcomp_instance_t *instance;
-      instance =  mvp->threads[i].children_instance = mvp->children_instance ;
-      sctk_assert( instance != NULL ) ;
-
-      if (mvp->combined_pragma == 1) {
-	   /* Fill private info about the loop */	 
-	   mpcomp_thread_t *t = &(mvp->threads[i]);
-	   
-	   t->loop_lb = instance->mvps[0]->threads[0].loop_lb ;
-	   t->loop_b = instance->mvps[0]->threads[0].loop_b ;
-	   t->loop_incr = instance->mvps[0]->threads[0].loop_incr ;
-	   t->loop_chunk_size = instance->mvps[0]->threads[0].loop_chunk_size ;
-      }
-	   
-      //mvp->threads[i].start_steal_chunk = -1; //CHUNK STEALING
-      sctk_nodebug( "mpcomp_slave_mvp: Got num threads %d",
-	  mvp->threads[i].num_threads ) ;
-      /* TODO finish */
-    }
-
-    /* Update the total number of threads for this microVP */
-    mvp->nb_threads = num_threads_mvp ;
-
-    /* Run */
-    in_order_scheduler( mvp ) ;
-
-    sctk_nodebug( "mpcomp_slave_mvp_node: end of in-order scheduling" ) ;
-
-    /* Implicit barrier */
-    __mpcomp_internal_half_barrier( mvp ) ;
-
-  }
-
-  return NULL ;
-}
-
-/**
-  Entry point for microVP working on their own
-  Spinning on a variables inside the microVP.
- */
-void * mpcomp_slave_mvp_leaf( void * arg ) {
-  mpcomp_mvp_t * mvp ;
-
-  /* Grab the current microVP */
-  mvp = (mpcomp_mvp_t *)arg ;
-
-  sctk_nodebug( "mpcomp_slave_mvp_leaf: Polling address %p -> father is %p",
-      &(mvp->slave_running), mvp->father ) ;
-  sctk_nodebug( "mpcomp_slave_mvp_leaf: Will get value from father %p", mvp->father ) ;
-
-  /* Spin while this microVP is alive */
-  while (mvp->enable) {
-    int i ;
-    int num_threads_mvp ;
-
-    sctk_nodebug( "mpcomp_slave_mvp_leaf: Polling address %p with ID %d",
-	&(mvp->slave_running), 0 ) ;
-
-    /* Spin for new parallel region */
-    sctk_thread_wait_for_value_and_poll( (int*)&(mvp->slave_running), 1, NULL, NULL ) ;
-    
-    TODO("maybe wrong if multiple mVPs are waiting on the same node")
-    mvp->slave_running = 0 ;
-
-    sctk_nodebug( "mpcomp_slave_mvp_leaf: wake up" ) ;
-
-    mvp->func = mvp->father->func ;
-    mvp->shared = mvp->father->shared ;
-
-    //mvp->vp = sctk_thread_get_vp(); //AMAHEO
-
-    sctk_nodebug( "mpcomp_slave_mvp_leaf: Function for this mvp %p, #threads %d (father %p)", 
-	mvp->func, mvp->father->num_threads, mvp->father ) ;
-
-    /* Compute the number of threads for this microVP */
-    /* TODO */
-    int fetched_num_threads = mvp->father->num_threads ;
-    num_threads_mvp = 1 ;
-    if ( fetched_num_threads <= mvp->rank ) {
-      num_threads_mvp = 0 ;
-    }
-
-INFO("__mpcomp_flush: need to call mpcomp_macro_scheduler")
-
-    for ( i = 0 ; i < num_threads_mvp ; i++ ) {
-      int rank ;
-      mpcomp_thread_t *t = &(mvp->threads[i]);
-
-      /* Allocate this thread if needed */
-
-      t->mvp = mvp ;
-
-      /* Compute the rank of this thread */
-      rank = mvp->rank ;
-
-      t->rank = rank ;
-
-      /* Copy information */
-      t->num_threads = mvp->father->num_threads ;
-
-      t->team = mvp->father->team_info ;
-
-      t->single_current = mvp->father->team_info->single_last_current ;
-      t->for_dyn_current = mvp->father->team_info->for_dyn_last_current ;
-      t->children_instance = mvp->children_instance;
-      if (mvp->combined_pragma == 1) {
-	   mpcomp_thread_t *t0;
-
-	   /* Fill private info about the loop */	 
-	   sctk_assert(t->children_instance != NULL) ;
-	   t0 = &(t->children_instance->mvps[0]->threads[0]);
-	   __mpcomp_dynamic_loop_init(t, t0->loop_lb, t0->loop_b, t0->loop_incr, 
-				      t0->loop_chunk_size);
-      }
-            
-      //mvp->threads[i].start_steal_chunk = -1; //CHUNK STEALING
-      sctk_nodebug( "mpcomp_slave_mvp_leaf: Got num threads %d", t->num_threads ) ;
-      /* TODO finish */
-    }
-
-    /* Update the total number of threads for this microVP */
-    mvp->nb_threads = num_threads_mvp ;
-
-    /* Run */
-    in_order_scheduler( mvp ) ;
-    
-    sctk_nodebug( "mpcomp_slave_mvp_leaf: end of in-order scheduling" ) ;
-
-    /* Half barrier */
-    __mpcomp_internal_half_barrier( mvp ) ;
-  }
-
-  return NULL ;
+	/* Do we need a TLS for the openmp instance for every microVPs? */
 }
 
 void in_order_scheduler( mpcomp_mvp_t * mvp ) {
@@ -1065,12 +582,12 @@ void in_order_scheduler( mpcomp_mvp_t * mvp ) {
     /* TODO handle out of order */
 
 
-    //printf("in_order_scheduler: current mvp thread rank=%ld\n", mvp->threads[i].rank); //AMAHEO
     sctk_openmp_thread_tls = &mvp->threads[i];
 
-    sctk_assert( ((mpcomp_thread_t *)sctk_openmp_thread_tls)->team != NULL ) ;
+    sctk_assert( ((mpcomp_thread_t *)sctk_openmp_thread_tls)->instance != NULL ) ;
+    sctk_assert( ((mpcomp_thread_t *)sctk_openmp_thread_tls)->instance->team != NULL ) ;
     sctk_assert( mvp != NULL);  
-    mvp->func( mvp->shared ) ;
+    mvp->threads[i].info.func( mvp->threads[i].info.shared ) ;
     mvp->threads[i].done = 1 ;
   }
 }
@@ -1136,7 +653,7 @@ mpcomp_set_dynamic (int dynamic_threads)
   sctk_nodebug( "mpcomp_get_dynamic: entering" ) ;
   t = sctk_openmp_thread_tls;
   sctk_assert( t != NULL);
-  t->icvs.dyn_var = dynamic_threads;
+  t->info.icvs.dyn_var = dynamic_threads;
 }
 
 
@@ -1152,7 +669,7 @@ mpcomp_get_dynamic (void)
   sctk_nodebug( "mpcomp_get_dynamic: entering" ) ;
   t = sctk_openmp_thread_tls;
   sctk_assert( t != NULL);
-  return t->icvs.dyn_var;
+  return t->info.icvs.dyn_var;
 }
 
 /**
@@ -1167,7 +684,7 @@ mpcomp_set_nested (int nested)
   sctk_nodebug( "mpcomp_set_nested: entering" ) ;
   t = sctk_openmp_thread_tls;
   sctk_assert( t != NULL);
-  t->icvs.nest_var = nested;
+  t->info.icvs.nest_var = nested;
 }
 
 /**
@@ -1182,7 +699,7 @@ mpcomp_get_nested (void)
   sctk_nodebug( "mpcomp_get_nested: entering" ) ;
   t = sctk_openmp_thread_tls;
   sctk_assert( t != NULL);
-  return t->icvs.nest_var;
+  return t->info.icvs.nest_var;
 }
 
 
@@ -1198,8 +715,8 @@ void omp_set_schedule( omp_sched_t kind, int modifier ) {
   t = sctk_openmp_thread_tls;
   sctk_assert( t != NULL);
 
-  t->icvs.run_sched_var = kind ;
-  t->icvs.modifier_sched_var = modifier ;
+  t->info.icvs.run_sched_var = kind ;
+  t->info.icvs.modifier_sched_var = modifier ;
 }
 
 /**
@@ -1213,8 +730,8 @@ void omp_get_schedule( omp_sched_t * kind, int * modifier ) {
   sctk_nodebug( "mpcomp_get_chedule: entering" ) ;
   t = sctk_openmp_thread_tls;
   sctk_assert( t != NULL);
-  *kind = t->icvs.run_sched_var ;
-  *modifier = t->icvs.modifier_sched_var ;
+  *kind = t->info.icvs.run_sched_var ;
+  *modifier = t->info.icvs.modifier_sched_var ;
 }
 
 
@@ -1231,7 +748,7 @@ mpcomp_in_parallel (void)
   sctk_nodebug( "mpcomp_in_parallel: entering" ) ;
   t = sctk_openmp_thread_tls;
   sctk_assert( t != NULL);
-  return (t->team->depth != 0);
+  return (t->instance->team->depth != 0);
 }
 
 
@@ -1254,7 +771,7 @@ mpcomp_get_num_threads (void)
   t = sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
-  return t->num_threads;
+  return t->info.num_threads;
 }
 
 void
@@ -1269,7 +786,7 @@ mpcomp_set_num_threads(int num_threads)
  t = sctk_openmp_thread_tls;
  sctk_assert( t != NULL);
 
- t->num_threads = num_threads;
+ t->info.icvs.nthreads_var = num_threads;
 
 }
 
@@ -1311,7 +828,7 @@ mpcomp_get_max_threads (void)
   t = sctk_openmp_thread_tls ;
   sctk_assert( t != NULL ) ;
 
-  return t->icvs.nthreads_var;
+  return t->info.icvs.nthreads_var;
 }
 
 /* timing routines */
@@ -1351,12 +868,13 @@ void __mpcomp_ordered_begin()
      sctk_assert(t != NULL); 
 
      /* First iteration of the loop -> initialize 'next_ordered_offset' */
-     if (t->current_ordered_iteration == t->loop_lb) {
-	  t->team->next_ordered_offset = 0;
+     if (t->current_ordered_iteration == t->info.loop_lb) {
+	  t->instance->team->next_ordered_offset = 0;
      } else {
 	  /* Do we have to wait for the right iteration? */
 	  if (t->current_ordered_iteration != 
-	      (t->loop_lb + t->loop_incr * t->team->next_ordered_offset)) {
+	      (t->info.loop_lb + t->info.loop_incr * 
+		   t->instance->team->next_ordered_offset)) {
 	       mpcomp_mvp_t *mvp;
 	       
 	       sctk_nodebug("__mpcomp_ordered_begin[%d]: Waiting to schedule iteration %d",
@@ -1396,11 +914,11 @@ void __mpcomp_ordered_end()
      t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
      sctk_assert(t != NULL); 
      
-     t->current_ordered_iteration += t->loop_incr ;
-     if ( (t->loop_incr > 0 && t->current_ordered_iteration >= t->loop_b) ||
-	  (t->loop_incr < 0 && t->current_ordered_iteration <= t->loop_b) ) {
-	  t->team->next_ordered_offset = -1 ;
+     t->current_ordered_iteration += t->info.loop_incr ;
+     if ( (t->info.loop_incr > 0 && t->current_ordered_iteration >= t->info.loop_b) ||
+	  (t->info.loop_incr < 0 && t->current_ordered_iteration <= t->info.loop_b) ) {
+	  t->instance->team->next_ordered_offset = -1 ;
      } else {
-	  t->team->next_ordered_offset++ ;
+	  t->instance->team->next_ordered_offset++ ;
      }
 }
