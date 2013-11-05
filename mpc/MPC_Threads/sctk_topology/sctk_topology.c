@@ -54,6 +54,7 @@
 #define SCTK_LOCAL_VERSION_MAJOR 0
 #define SCTK_LOCAL_VERSION_MINOR 1
 
+static char* sctk_xml_specific_path = NULL;
 static int sctk_processor_number_on_node = 0;
 static char sctk_node_name[SCTK_MAX_NODE_NAME];
 static sctk_spinlock_t topology_lock = SCTK_SPINLOCK_INITIALIZER;
@@ -373,6 +374,7 @@ sctk_get_cpu_intern ()
 
   /* Check if only one CPU in the CPU set. Maybe there is a simpler function
    * to do that */
+  if(sctk_xml_specific_path == NULL)
   assume (hwloc_bitmap_first(set) ==  hwloc_bitmap_last(set));
 
   hwloc_obj_t pu = hwloc_get_obj_inside_cpuset_by_type(topology, set, HWLOC_OBJ_PU, 0);
@@ -410,16 +412,26 @@ void sctk_topology_init_cpu(){
   void
 sctk_topology_init ()
 {
+  char* xml_path;
 #ifdef MPC_Message_Passing
   if(sctk_process_number > 1){
     sctk_pmi_init();
   }
 #endif
 
+  xml_path = getenv("MPC_SET_XML_TOPOLOGY_FILE");
+  sctk_xml_specific_path = xml_path;
   hwloc_topology_init(&topology);
+  if(xml_path != NULL){
+    fprintf(stderr,"USE XML file %s\n",xml_path);
+    hwloc_topology_set_xml(topology,xml_path);
+  }
   hwloc_topology_load(topology);
 
   hwloc_topology_init(&topology_full);
+  if(xml_path != NULL){
+    hwloc_topology_set_xml(topology_full,xml_path);
+  }
   hwloc_topology_load(topology_full);
 
   topology_cpuset = hwloc_bitmap_alloc();
