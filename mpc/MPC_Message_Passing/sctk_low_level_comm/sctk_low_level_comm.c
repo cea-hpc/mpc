@@ -195,9 +195,6 @@ sctk_net_init_driver (char* name)
 
           /* Switch on the driver to use */
           switch (sctk_net_get_config()->configs[j].driver.type) {
-
-          /* Switch on the driver to use */
-          switch (sctk_net_get_config()->configs[j].driver.type) {
 #ifdef MPC_USE_INFINIBAND
             case SCTK_RTCFG_net_driver_infiniband: /* INFINIBAND */
               nb_rails_infiniband ++ ;
@@ -216,7 +213,7 @@ sctk_net_init_driver (char* name)
         }
       }
     }
-      }
+    
     /* End of rails computing. Now allocate ! */
 
     for (k=0; k<cli_option->rails_size; ++k) {
