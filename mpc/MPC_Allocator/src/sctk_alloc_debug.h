@@ -41,7 +41,7 @@
 #if defined(MPC_Common)
 	#define SCTK_PDEBUG(...) sctk_debug(__VA_ARGS__)
 	#define SCTK_CRASH_DUMP sctk_alloc_crash_dump
-#elif defined(SCTK_ALLOC_DEBUG2)
+#elif defined(SCTK_ALLOC_DEBUG)
 	#define SCTK_PDEBUG(...) sctk_alloc_pdebug(__VA_ARGS__)
 	#define SCTK_CRASH_DUMP sctk_alloc_crash_dump
 #else //SCTK_ALLOC_DEBUG

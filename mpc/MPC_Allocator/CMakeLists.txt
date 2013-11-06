@@ -54,7 +54,6 @@ CHECK_INCLUDE_FILES(stdbool.h HAVE_STDBOOL_H)
 if(HAVE_STDBOOL_H)
 	add_definitions(-DHAVE_STDBOOL_H)
 endif(HAVE_STDBOOL_H)
-add_definitions(-DENABLE_ALLOC_HOOKS)
 
 ################## VALGRIND SUPPORT #####################
 CHECK_INCLUDE_FILES(valgrind/memcheck.h HAVE_MEMCHECK_H)

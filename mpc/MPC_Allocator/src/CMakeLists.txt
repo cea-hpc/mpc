@@ -63,9 +63,9 @@ target_link_libraries(mpcalloc_primitives_for_test ${HWLOC_LIBRARY} ${INCLUDE_PT
 target_link_libraries(mpcalloc_primitives ${HWLOC_LIBRARY} ${INCLUDE_PTHREAD})
 
 ################### EXTRA FLAGS #########################
-set_target_properties(mpcalloc PROPERTIES COMPILE_FLAGS "-DENABLE_STATIC=yes")
+set_target_properties(mpcalloc PROPERTIES COMPILE_FLAGS "-DENABLE_STATIC=yes -DENABLE_GLIBC_ALLOC_HOOKS")
 set_target_properties(mpcalloc_primitives PROPERTIES COMPILE_FLAGS "-DENABLE_STATIC=yes")
-set_target_properties(mpcalloc_trace PROPERTIES COMPILE_FLAGS "-DENABLE_STATIC=yes -DENABLE_TRACE=yes")
+set_target_properties(mpcalloc_trace PROPERTIES COMPILE_FLAGS "-DENABLE_STATIC=yes -DENABLE_TRACE=yes -DENABLE_GLIBC_ALLOC_HOOKS")
 set_target_properties(mpcalloc_primitives_for_test PROPERTIES COMPILE_FLAGS "-DMPC_ALLOCATOR_DISABLE_STATIC=yes")
 
 if(WIN32)

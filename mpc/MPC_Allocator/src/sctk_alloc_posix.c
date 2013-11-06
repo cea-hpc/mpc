@@ -360,6 +360,22 @@ SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(in
 }
 
 /************************* FUNCTION ************************/
+#ifdef ENABLE_GLIBC_ALLOC_HOOKS
+SCTK_INTERN void sctk_alloc_posix_init_glibc_hooks(void)
+{
+	//setup hooks
+	__malloc_hook = sctk_malloc_hook;
+	__free_hook = sctk_free_hook;
+	__realloc_hook = sctk_realloc_hook;
+	__memalign_hook = sctk_memalign_hook;
+
+	//call the libc handler
+	if (__malloc_initialize_hook != NULL)
+		__malloc_initialize_hook();
+}
+#endif //ENABLE_GLIBC_ALLOC_HOOKS
+
+/************************* FUNCTION ************************/
 /**
  * Method used to setup the memory source (global for the process) at first allocation or at
  * initialisation step if available. This method is protected for exclusive access by an internal
@@ -376,24 +392,19 @@ SCTK_INTERN void sctk_alloc_posix_base_init(void)
 	if (sctk_global_base_init >= SCTK_ALLOC_POSIX_INIT_DEFAULT)
 		return;
 
-	//setup hooks
-	__malloc_hook = sctk_malloc_hook;
-	__free_hook = sctk_free_hook;
-	__realloc_hook = sctk_realloc_hook;
-	__memalign_hook = sctk_memalign_hook;
-
 	//critical initialization section
 	SCTK_ALLOC_INIT_LOCK_LOCK(&global_mm_mutex);
-
-	//call the libc handler
-	if (__malloc_initialize_hook != NULL)
-		__malloc_initialize_hook();
 
 	//check if not already init by previous thread
 	if (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_NONE)
 	{
 		//debug
 		SCTK_NO_PDEBUG("Allocator init phase : Egg");
+
+		//init glibc hooks
+		#ifdef ENABLE_GLIBC_ALLOC_HOOKS
+		sctk_alloc_posix_init_glibc_hooks();
+		#endif //ENABLE_GLIBC_ALLOC_HOOKS
 
 		//setup hooks if required
 		#ifdef ENABLE_ALLOC_HOOKS
@@ -569,8 +580,10 @@ SCTK_PUBLIC void * sctk_malloc (size_t size)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
 
 	//call hook if required
+	#ifdef ENABLE_GLIBC_ALLOC_HOOKS
 	if (__malloc_hook != sctk_malloc_hook)
 		return __malloc_hook(size,sctk_malloc);
+	#endif //ENABLE_GLIBC_ALLOC_HOOKS
 
 	//purge the remote free queue
 	sctk_alloc_chain_purge_rfq(local_chain);
@@ -608,8 +621,10 @@ SCTK_PUBLIC void * sctk_memalign(size_t boundary,size_t size)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
 
 	//call hook if required
+	#ifdef ENABLE_GLIBC_ALLOC_HOOKS
 	if (__memalign_hook != sctk_memalign_hook)
 		return __memalign_hook(boundary,size,sctk_memalign);
+	#endif //ENABLE_GLIBC_ALLOC_HOOKS
 
 	//purge the remote free queue
 	sctk_alloc_chain_purge_rfq(local_chain);
@@ -663,8 +678,10 @@ SCTK_PUBLIC void sctk_free (void * ptr)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
 
 	//call hook if required
+	#ifdef ENABLE_GLIBC_ALLOC_HOOKS
 	if (__free_hook != sctk_free_hook)
 		return __free_hook(ptr,sctk_free);
+	#endif //ENABLE_GLIBC_ALLOC_HOOKS
 
 	//purge the remote free queue
 	sctk_alloc_chain_purge_rfq(local_chain);
@@ -774,10 +791,6 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 	struct sctk_alloc_macro_bloc * macro_bloc = NULL;
 	void * res = NULL;
 
-	//call hook if required
-	if (__realloc_hook != sctk_realloc_hook)
-		return __realloc_hook(ptr,size,sctk_realloc);
-
 	SCTK_PROFIL_START(sctk_realloc);
 
 	//trivial cases
@@ -813,6 +826,12 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 	local_chain = sctk_get_tls_chain();
 	if (local_chain == NULL)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
+
+	#ifdef ENABLE_GLIBC_ALLOC_HOOKS
+	//call hook if required
+	if (__realloc_hook != sctk_realloc_hook)
+		return __realloc_hook(ptr,size,sctk_realloc);
+	#endif //ENABLE_GLIBC_ALLOC_HOOKS
 
 	if (chain == local_chain || sctk_alloc_chain_is_thread_safe(chain))
 	{

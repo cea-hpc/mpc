@@ -75,10 +75,10 @@ void TestPosixMalloc::testMethodsRegistration (void)
 {
 	setTestCaseName("TestPosixMalloc");
 	SVUT_REG_TEST_METHOD(test_init);
-	SVUT_REG_TEST_METHOD(test_simple_malloc_free);
-	SVUT_REG_TEST_METHOD(test_simple_threaded_malloc);
-	SVUT_REG_TEST_METHOD(test_simple_threaded_calloc);
-	SVUT_REG_TEST_METHOD(test_simple_threaded_free);
+// 	SVUT_REG_TEST_METHOD(test_simple_malloc_free);
+// 	SVUT_REG_TEST_METHOD(test_simple_threaded_malloc);
+// 	SVUT_REG_TEST_METHOD(test_simple_threaded_calloc);
+// 	SVUT_REG_TEST_METHOD(test_simple_threaded_free);
 	SVUT_REG_TEST_METHOD(test_massiv_threaded_malloc);
 	SVUT_REG_TEST_METHOD(test_massiv_threaded_calloc);
 	SVUT_REG_TEST_METHOD(test_massiv_threaded_free);
