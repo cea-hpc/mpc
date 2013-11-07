@@ -254,7 +254,7 @@ SCTK_INTERN void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void)
 	assume_m(nodes <= SCTK_MAX_NUMA_NODE,"Caution, you get more node than supported by allocator. Limit is setup by SCTK_MAX_NUMA_NODE macro in sctk_alloc_posix.c.");
 
 	//debug
-	SCTK_PDEBUG("Init with NUMA_NODES = %d , MAX_NUMA_NODE = %d",nodes,SCTK_MAX_NUMA_NODE);
+	SCTK_NO_PDEBUG("Init with NUMA_NODES = %d , MAX_NUMA_NODE = %d",nodes,SCTK_MAX_NUMA_NODE);
 
 	if (nodes <= 1)
 	{
@@ -802,6 +802,17 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 		return NULL;
 	}
 
+	//get the current chain
+	local_chain = sctk_get_tls_chain();
+	if (local_chain == NULL)
+		local_chain = sctk_alloc_posix_setup_tls_chain();
+
+	#ifdef ENABLE_GLIBC_ALLOC_HOOKS
+	//call hook if required
+	if (__realloc_hook != sctk_realloc_hook)
+		return __realloc_hook(ptr,size,sctk_realloc);
+	#endif //ENABLE_GLIBC_ALLOC_HOOKS
+
 	//get the chain of the chunk
 	macro_bloc = sctk_alloc_region_get_macro_bloc(ptr);
 	if (macro_bloc != NULL)
@@ -821,17 +832,6 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 
 	//error handling
 	assume_m (chain != NULL,"Allocator error on realloc(%p,%llu), the address you provide is not managed by this memory allocator.",ptr,size);
-
-	//get the current chain
-	local_chain = sctk_get_tls_chain();
-	if (local_chain == NULL)
-		local_chain = sctk_alloc_posix_setup_tls_chain();
-
-	#ifdef ENABLE_GLIBC_ALLOC_HOOKS
-	//call hook if required
-	if (__realloc_hook != sctk_realloc_hook)
-		return __realloc_hook(ptr,size,sctk_realloc);
-	#endif //ENABLE_GLIBC_ALLOC_HOOKS
 
 	if (chain == local_chain || sctk_alloc_chain_is_thread_safe(chain))
 	{
