@@ -67,6 +67,8 @@ static int OMP_NEW_TASKS_DEPTH = 0;
 static int OMP_UNTIED_TASKS_DEPTH = 0;
 /* Task stealing policy */
 static int OMP_TASK_LARCENY_MODE = MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL;
+/* Task max depth in task generation */
+static int OMP_TASK_NESTING_MAX = 8;
 #endif /* MPCOMP_TASK */
 
 mpcomp_global_icv_t mpcomp_global_icvs;
@@ -384,6 +386,13 @@ static inline void __mpcomp_read_env_variables() {
   {
        OMP_TASK_LARCENY_MODE = strtol(env, NULL, 10);              
   }
+
+  /******* OMP_TASK_NESTING_MAX *********/
+  env = getenv ("OMP_TASK_NESTING_MAX");
+  if (env != NULL)
+  {
+       OMP_TASK_NESTING_MAX = strtol(env, NULL, 10);              
+  }
 #endif /* MPCOMP_TASK */
 
   /***** PRINT SUMMARY ******/
@@ -494,6 +503,8 @@ void __mpcomp_init() {
 	t->children_instance = instance ;
 
 #if MPCOMP_TASK
+    team_info->instance = instance;
+
     /* Ensure tasks lists depths are correct */
     OMP_UNTIED_TASKS_DEPTH = sctk_max(OMP_UNTIED_TASKS_DEPTH, OMP_NEW_TASKS_DEPTH);
     team_info->tasklist_depth[MPCOMP_TASK_TYPE_NEW] = sctk_min(t->mvp->father->depth + 1, OMP_NEW_TASKS_DEPTH);
@@ -504,6 +515,11 @@ void __mpcomp_init() {
 	 team_info->task_larceny_mode = MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL;
     else
 	 team_info->task_larceny_mode = OMP_TASK_LARCENY_MODE;
+
+    /* Check the validity of nesting max depth value */
+    if (OMP_TASK_NESTING_MAX <= 0)
+	 OMP_TASK_NESTING_MAX = 8;
+    team_info->task_nesting_max = OMP_TASK_NESTING_MAX;
 #endif /* MPCOMP_TASK */
 
     /* Current thread information is 't' */
@@ -544,6 +560,9 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 		} else {
 			__mpcomp_build_tree( instance, OMP_TREE_NB_LEAVES, OMP_TREE_DEPTH, OMP_TREE ) ; 
 		}
+  __mpcomp_single_coherency_entering_parallel_region(t->team) ;
+#if 1
+#if 0
 	} else {
 		mpcomp_local_icv_t icvs ;
 		/* Sequential instance and team */

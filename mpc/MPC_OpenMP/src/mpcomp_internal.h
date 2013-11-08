@@ -58,6 +58,7 @@ extern "C"
 
 /* Uncomment to enable coherency checking */
 // #define MPCOMP_COHERENCY_CHECKING 1
+#define MPCOMP_OVERFLOW_CHECKING 0
 
 #define MPCOMP_COMBINED_NONE 0
 #define MPCOMP_COMBINED_SECTION 1
@@ -70,11 +71,9 @@ extern "C"
 #define MPCOMP_CHUNKS_NOT_AVAIL 1
 #define MPCOMP_CHUNKS_AVAIL     2
 
-#define MPCOMP_TASK 0
+#define MPCOMP_TASK 1
 
 #if MPCOMP_TASK
-
-#define MPCOMP_TASK_NESTING_MAX 128
 
 #define MPCOMP_TASK_LARCENY_MODE 0
 /*******************************
@@ -227,6 +226,7 @@ extern "C"
 	  struct mpcomp_task_list_s *list;    /* The current list of the task */
 	  struct mpcomp_task_s *prev;         /* Prev task in the thread's task list */
 	  struct mpcomp_task_s *next;         /* Next task in the thread's task list */
+	  int depth;
      };
 
      /* OpenMP task list data structure */
@@ -286,6 +286,8 @@ typedef struct mpcomp_new_parallel_region_info_s {
 		sctk_atomics_int tasklist_init_done;
 		int tasklist_depth[MPCOMP_TASK_TYPE_COUNT];   /* Depth in the tree of task lists */
 		int task_larceny_mode;
+	  int task_nesting_max;
+	  sctk_atomics_int nb_tasks;
 #endif //MPCOMP_TASK
 	} mpcomp_team_t;
 
@@ -484,6 +486,11 @@ typedef struct mpcomp_thread_s
 	  return sctk_malloc(size);			
      }
 
+     static inline void mpcomp_free(int numa_aware, void *p, int size)
+     {
+	  sctk_free(p);			
+     }     
+     
 	static inline void __mpcomp_new_parallel_region_info_init( 
 			mpcomp_new_parallel_region_info_t * info ) {
 		info->func = NULL ;
@@ -577,7 +584,7 @@ typedef struct mpcomp_thread_s
 	  *property &= ~(mask);
      }
 
-     static inline bool mpcomp_task_property_isset(mpcomp_task_property_t property, mpcomp_task_property_t mask)
+     static inline int mpcomp_task_property_isset(mpcomp_task_property_t property, mpcomp_task_property_t mask)
      {
 	  return (property & mask);
      }
@@ -595,11 +602,15 @@ typedef struct mpcomp_thread_s
 	  task->data = data;
 	  mpcomp_task_reset_property(&(task->property));
 	  task->parent = thread->current_task;
+	  if (task->parent)
+	       task->depth = task->parent->depth + 1;
+	  else
+	       task->depth = 0;
 	  task->children = NULL;
 	  task->prev_child = NULL;
 	  task->next_child = NULL;
 	  task->children_lock = SCTK_SPINLOCK_INITIALIZER;
-	  task->thread = thread;
+	  task->thread = NULL;
 	  task->prev = NULL;
 	  task->next = NULL;
 	  task->list = NULL;
@@ -620,7 +631,7 @@ typedef struct mpcomp_thread_s
 
      static inline void mpcomp_task_list_free(struct mpcomp_task_list_s *list)
      {
-	  sctk_free(list);
+	  mpcomp_free(1, list, sizeof(struct mpcomp_task_list_s));
      }
 
      static inline int mpcomp_task_list_isempty(struct mpcomp_task_list_s *list)
@@ -767,6 +778,9 @@ typedef struct mpcomp_thread_s
 
      /* mpcomp_sections.c */
 	 void __mpcomp_sections_init( mpcomp_thread_t * t, int nb_sections ) ;
+
+     /* mpcomp_single.c */
+     void __mpcomp_single_coherency_entering_parallel_region(mpcomp_team_t *team_info);
 
      /* Stack primitives */
      mpcomp_stack_t * __mpcomp_create_stack(int max_elements);

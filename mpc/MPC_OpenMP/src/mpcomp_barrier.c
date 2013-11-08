@@ -81,8 +81,8 @@ __mpcomp_internal_half_barrier (mpcomp_mvp_t *mvp)
 
 #if MPCOMP_TASK
   sctk_debug("__mpcomp_internal_half_barrier: full barrier for tasks");
-     /* Wait for all tasks to be done */
-     __mpcomp_internal_full_barrier(mvp);
+  /* Wait for all tasks to be done */
+  __mpcomp_internal_full_barrier(mvp);
 #endif /* MPCOMP_TASK */
 
   /* Step 0: TODO finish the barrier whithin the current micro VP */
@@ -140,18 +140,17 @@ __mpcomp_internal_full_barrier (mpcomp_mvp_t *mvp)
      if (c != new_root || (c == new_root && (b+1) != c->barrier_num_threads)) {	  
 	  /* Wait for c->barrier == c->barrier_num_threads */
 	  while (b_done == c->barrier_done) {
+	       sctk_thread_yield();
 #if MPCOMP_TASK
 	       __mpcomp_task_schedule(); /* Look for tasks remaining */
 #endif /* MPCOMP_TASK */
-	       sctk_thread_yield();
 	  }
      } else {
-	  sctk_atomics_store_int(&(c->barrier), 0);
-
-	  c->barrier_done++ ; /* No need to lock I think... */
 #if MPCOMP_TASK
 	  __mpcomp_task_schedule(); /* Look for tasks remaining */
 #endif /* MPCOMP_TASK */
+	  sctk_atomics_store_int(&(c->barrier), 0);
+	  c->barrier_done++ ; /* No need to lock I think... */
      }
 
      /* Step 3 - Go down */

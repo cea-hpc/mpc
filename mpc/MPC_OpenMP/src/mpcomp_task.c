@@ -25,7 +25,7 @@
 #include <sctk_int.h>
 #include <sctk_asm.h>
 #include "mpcomp_internal.h"
-#include "sctk_alloc_numa_stat.h"
+
 
 #if MPCOMP_TASK
 
@@ -59,6 +59,10 @@ int mpcomp_get_neighbour(int globalRank, int i)
      treeLevelSize = instance->tree_level_size;
      treeBase = instance->tree_base;
 
+#if MPCOMP_OVERFLOW_CHECKING
+     sctk_assert(globalRank >= 0 && globalRank < t->team->instance->tree_array_size); 
+#endif /* MPCOMP_OVERFLOW_CHECKING */
+
      if(mpcomp_is_leaf(globalRank)) {
 	  mpcomp_mvp_t *mvp = (mpcomp_mvp_t *) (t->mvp->tree_array[globalRank]);
 	  path = mvp->path;
@@ -79,15 +83,21 @@ int mpcomp_get_neighbour(int globalRank, int i)
 	  int base = treeBase[vectorSize-1-j]; 
 	  int level_size = treeLevelSize[j];
 
+#if MPCOMP_OVERFLOW_CHECKING
+	  sctk_assert(vectorSize-1-j >= 0 && vectorSize-1-j < t->mvp->father->depth + 1); 
+	  sctk_assert(j >= 0 && j <= t->mvp->father->depth + 1); 
+#endif /* MPCOMP_OVERFLOW_CHECKING */
+
 	  /* Somme de i avec le codage de 0 dans le vecteur de l'arbre */
 	  v[j] = r % base;
 	  r /= base;
 
+#if MPCOMP_OVERFLOW_CHECKING
+	  sctk_assert(vectorSize-1-j >= 0); 
+#endif /* MPCOMP_OVERFLOW_CHECKING */
+
 	  /* Addition sans retenue avec le vecteur de n */
 	  res[j] = (path[vectorSize-1-j] + v[j]) % base;	 
-#if MPCOMP_OVERFLOW_CHECKING
-	  res[j] < base;
-#endif /* MPCOMP_OVERFLOW_CHECKING */
 
 	  /* Calcul de l'identifiant du voisin dans l'arbre */
 	  id += res[j] * nbSubleaves;
@@ -113,6 +123,10 @@ int mpcomp_get_ancestor(int globalRank, int depth)
      t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);
 
+#if MPCOMP_OVERFLOW_CHECKING
+     sctk_assert(globalRank >= 0 && globalRank < t->team->instance->tree_array_size); 
+#endif /* MPCOMP_OVERFLOW_CHECKING */
+
      if(mpcomp_is_leaf(globalRank)) {
 	  mpcomp_mvp_t *mvp = (mpcomp_mvp_t *) (t->mvp->tree_array[globalRank]);
 	  path = mvp->path;
@@ -125,6 +139,10 @@ int mpcomp_get_ancestor(int globalRank, int depth)
 
      if (currentDepth == depth)
 	  return globalRank;
+
+#if MPCOMP_OVERFLOW_CHECKING
+     sctk_assert(depth >= 0 && depth < currentDepth); 
+#endif /* MPCOMP_OVERFLOW_CHECKING */
 
      levelSize = t->team->instance->tree_level_size;
      treeBase = t->team->instance->tree_base;
@@ -174,7 +192,7 @@ void __mpcomp_task_list_infos_init_r(mpcomp_node_t *n, struct mpcomp_node_s ***t
 	  if (larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM
 	      || larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER) {
 	       n->tasklist_randBuffer = mpcomp_malloc(1, sizeof(struct drand48_data), n->id_numa);
-	       srand48_r(time(NULL), n->tasklist_randBuffer);
+	       srand48_r(sctk_get_time_stamp()*current_globalRank, n->tasklist_randBuffer);
 	  }
 	  
 #if MPCOMP_OVERFLOW_CHECKING
@@ -193,7 +211,7 @@ void __mpcomp_task_list_infos_init_r(mpcomp_node_t *n, struct mpcomp_node_s ***t
 	      && (larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM
 		  || larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER)) {
 	       n->tasklist_randBuffer = mpcomp_malloc(1, sizeof(struct drand48_data), n->id_numa);
-	       srand48_r(time(NULL), n->tasklist_randBuffer);
+	       srand48_r(sctk_get_time_stamp()*current_globalRank, n->tasklist_randBuffer);
 	  }
 	       
 #if MPCOMP_OVERFLOW_CHECKING
@@ -234,6 +252,11 @@ void __mpcomp_task_list_infos_init_r(mpcomp_node_t *n, struct mpcomp_node_s ***t
 		    for (j=0; j<nb_numa_nodes; j++)
 			 treeArray[j][mvp->tree_array_rank] = (mpcomp_node_t *) mvp;
 		    
+#if MPCOMP_OVERFLOW_CHECKING
+		    assert(n->id_numa < nb_numa_nodes);
+#endif /* MPCOMP_OVERFLOW_CHECKING */
+		    mvp->tree_array = treeArray[n->id_numa];
+
 		    /* If the mvp correspond to the new list depth, allocate the data structure */
 		    if (n->depth + 1 == t->team->tasklist_depth[MPCOMP_TASK_TYPE_NEW]) {
 			 tasklistNodeRank[MPCOMP_TASK_TYPE_NEW] = mvp->tree_array_rank;
@@ -243,13 +266,8 @@ void __mpcomp_task_list_infos_init_r(mpcomp_node_t *n, struct mpcomp_node_s ***t
 			 if (larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM
 			     || larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER) {
 			      mvp->tasklist_randBuffer = mpcomp_malloc(1, sizeof(struct drand48_data), mvp->father->id_numa);
-			      srand48_r(time(NULL), mvp->tasklist_randBuffer);
+			      srand48_r(sctk_get_time_stamp()*current_globalRank, mvp->tasklist_randBuffer);
 			 }
-			 
-#if MPCOMP_OVERFLOW_CHECKING
-			 assert(n->id_numa < nb_numa_nodes);
-#endif /* MPCOMP_OVERFLOW_CHECKING */
-			 mvp->tree_array = treeArray[n->id_numa];
 		    }
 			 
 		    /* If the mvp correspond to the untied list depth, allocate the data structure */
@@ -262,15 +280,10 @@ void __mpcomp_task_list_infos_init_r(mpcomp_node_t *n, struct mpcomp_node_s ***t
 			     && (larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM
 				 || larcenyMode == MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER)) {
 			      mvp->tasklist_randBuffer = mpcomp_malloc(1, sizeof(struct drand48_data), mvp->father->id_numa);
-			      srand48_r(time(NULL), mvp->tasklist_randBuffer);
+			      srand48_r(sctk_get_time_stamp()*current_globalRank, mvp->tasklist_randBuffer);
 			 }
-			 
-#if MPCOMP_OVERFLOW_CHECKING		    
-			 assert(n->id_numa < nb_numa_nodes);
-#endif /* MPCOMP_OVERFLOW_CHECKING */
-			 mvp->tree_array = treeArray[n->id_numa];
 		    }
-		    
+
 		    for (j=0; j<MPCOMP_TASK_TYPE_COUNT; j++)
 			 mvp->tasklistNodeRank[j] = tasklistNodeRank[j];
 
@@ -299,14 +312,14 @@ void __mpcomp_task_list_infos_init()
 
      instance = t->team->instance;
      nbNumaNodes = sctk_get_numa_node_number();	  
-     treeArray = sctk_malloc(sizeof(struct mpcomp_node_s **) * nbNumaNodes);
+     treeArray = mpcomp_malloc(0, sizeof(struct mpcomp_node_s **) * nbNumaNodes, 0);
      for (i=0; i<nbNumaNodes; i++)
 	  treeArray[i] = mpcomp_malloc(1, sizeof(struct mpcomp_node_s *) * instance->tree_array_size, i);
 
      __mpcomp_task_list_infos_init_r(t->mvp->root, treeArray, nbNumaNodes, 0, 1, 0, 
 				     tasklistNodeRank);
 
-     sctk_free(treeArray);
+     mpcomp_free(0, treeArray, sizeof(struct mpcomp_node_s **) * nbNumaNodes);
 }
 
 
@@ -314,7 +327,7 @@ void __mpcomp_task_list_infos_exit_r(mpcomp_node_t *n)
 {
      mpcomp_thread_t *t;
      int i, j;
-
+     
      sctk_assert(n != NULL);
 
      /* Retrieve the current thread information */
@@ -323,14 +336,16 @@ void __mpcomp_task_list_infos_exit_r(mpcomp_node_t *n)
 
      /* If the node correspond to the new list depth, release the data structure */
      if (n->depth == t->team->tasklist_depth[MPCOMP_TASK_TYPE_NEW]) {
-	  //fprintf(stderr, "[node:%d-%d] new_tasks->total:%d\n", n->min_index, n->max_index, n->tasklist[MPCOMP_TASK_TYPE_NEW]->total);
+	  //fprintf(stdout, "[node:%d-%d] new_tasks->total:%d new_tasks->nb_larcenies:%d\n", n->min_index, n->max_index, n->tasklist[MPCOMP_TASK_TYPE_NEW]->total, sctk_atomics_load_int(&n->tasklist[MPCOMP_TASK_TYPE_NEW]->nb_larcenies));
 	  mpcomp_task_list_free(n->tasklist[MPCOMP_TASK_TYPE_NEW]);
+	  n->tasklist[MPCOMP_TASK_TYPE_NEW] = NULL;
      }
 
      /* If the node correspond to the untied list depth, release the data structure */
      if (n->depth == t->team->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED]) {
 	  //fprintf(stderr, "[node:%d-%d] untied_tasks->total:%d\n",  n->min_index, n->max_index, n->tasklist[MPCOMP_TASK_TYPE_UNTIED]->total);	       
 	  mpcomp_task_list_free(n->tasklist[MPCOMP_TASK_TYPE_UNTIED]);
+	  n->tasklist[MPCOMP_TASK_TYPE_UNTIED] = NULL;
      }
      
      /* If the untied or the new lists are at a lower level, look deeper */
@@ -354,14 +369,16 @@ void __mpcomp_task_list_infos_exit_r(mpcomp_node_t *n)
 		    
 		    /* If the node correspond to the new list depth, release the data structure */
 		    if (n->depth + 1 == t->team->tasklist_depth[MPCOMP_TASK_TYPE_NEW]) {
-			 //fprintf(stderr, "[mvp:%d] new_tasks->total:%d\n", mvp->rank, mvp->tasklist[MPCOMP_TASK_TYPE_NEW]->total);
+			 //fprintf(stdout, "[mvp:%d] new_tasks->total:%d new_tasks->nb_larcenies:%d\n", mvp->rank, mvp->tasklist[MPCOMP_TASK_TYPE_NEW]->total, sctk_atomics_load_int(&mvp->tasklist[MPCOMP_TASK_TYPE_NEW]->nb_larcenies));
 			 mpcomp_task_list_free(mvp->tasklist[MPCOMP_TASK_TYPE_NEW]);
+			 mvp->tasklist[MPCOMP_TASK_TYPE_NEW] = NULL;
 		    }
 		    
 		    /* If the node correspond to the untied list depth, release the data structure */
 		    if (n->depth + 1 == t->team->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED]) {
 			 //fprintf(stderr, "[mvp:%d] untied_tasks->total:%d\n", mvp->rank, mvp->tasklist[MPCOMP_TASK_TYPE_UNTIED]->total);
 			 mpcomp_task_list_free(mvp->tasklist[MPCOMP_TASK_TYPE_UNTIED]);
+			 mvp->tasklist[MPCOMP_TASK_TYPE_UNTIED] = NULL;
 		    }
 	       }
 	       break;
@@ -397,6 +414,7 @@ void __mpcomp_task_exit()
 
      if ((t->num_threads > 1 && t->tasking_init_done) || t->children_instance->mvps[0]->threads[0].tasking_init_done) {
 	  //fprintf(stderr, "[t:%lu %p] __mpcomp_task_exit TASK INIT DONE\n", t->rank, t);
+	  fprintf(stderr, "nb_tasks %d\n", sctk_atomics_load_int(&(t->team->nb_tasks)));
 	  __mpcomp_task_list_infos_exit();
      } else {
 	  //fprintf(stderr, "[t:%lu %p] __mpcomp_task_exit TASK INIT NOT DONE\n", t->rank, t);
@@ -481,21 +499,12 @@ void __mpcomp_task_infos_init()
 	  /* Executed only one time per thread */
 
 	  /* Allocate the default current task (no func, no data, no parent) */
-#if MPCOMP_MALLOC_ON_NODE
-	  t->current_task = sctk_malloc_on_node(sizeof(struct mpcomp_task_s), t->mvp->father->id_numa);
-#else
-	  t->current_task = sctk_malloc(sizeof(struct mpcomp_task_s));
-#endif /* MPCOMP_MALLOC_ON_NODE */
-
+	  t->current_task = mpcomp_malloc(1, sizeof(struct mpcomp_task_s), t->mvp->father->id_numa);
 	  __mpcomp_task_init(t->current_task, NULL, NULL, t);
 	  t->current_task->parent = NULL;
 
 	  /* Allocate private task data structures */
-#if MPCOMP_MALLOC_ON_NODE
-	  t->tied_tasks = sctk_malloc_on_node(sizeof(struct mpcomp_task_list_s), t->mvp->father->id_numa);
-#else
-	  t->tied_tasks = sctk_malloc(sizeof(struct mpcomp_task_list_s));
-#endif /* MPCOMP_MALLOC_ON_NODE */
+	  t->tied_tasks = mpcomp_malloc(1, sizeof(struct mpcomp_task_list_s), t->mvp->father->id_numa);
 	  mpcomp_task_list_new (t->tied_tasks);
 	  
 	  t->tasking_init_done = 1;
@@ -511,6 +520,7 @@ void __mpcomp_task_infos_init()
 	       
 	       __mpcomp_task_list_infos_init();
 	       //__mpcomp_task_check_neighbourhood();
+	       sctk_atomics_store_int(&(t->team->nb_tasks), 0);
 	       sctk_atomics_store_int(&(t->team->tasklist_init_done), 1);
 	  }
 	  
@@ -540,22 +550,23 @@ void mpcomp_task_clear_parent(struct mpcomp_task_s *parent)
 	       child->prev_child = NULL;
 	  }
      }
+     parent->children = NULL;
      sctk_spinlock_unlock(&(parent->children_lock));	       
 }
 
-static int
-__mpcomp_task_check_circular_link(struct mpcomp_task_s *task)
-{
-     struct mpcomp_task_s *parent = task->parent;
+/* static int */
+/* __mpcomp_task_check_circular_link(struct mpcomp_task_s *task) */
+/* { */
+/*      struct mpcomp_task_s *parent = task->parent; */
 
-     while (parent) {
-	  parent = parent->parent;
-	  if (parent == task)
-	       return 1;
-     }
+/*      while (parent) { */
+/* 	  parent = parent->parent; */
+/* 	  if (parent == task) */
+/* 	       return 1; */
+/*      } */
 
-     return 0;          
-}
+/*      return 0;           */
+/* } */
 
 /* Return list of 'type' tasks contained in element of rank 'globalRank' */
 static inline struct mpcomp_task_list_s *mpcomp_task_get_list(int globalRank, mpcomp_tasklist_type_t type)
@@ -566,8 +577,13 @@ static inline struct mpcomp_task_list_s *mpcomp_task_get_list(int globalRank, mp
      /* Retrieve the current thread information */
      t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);
+     
+#if MPCOMP_OVERFLOW_CHECKING
+     sctk_assert(globalRank >= 0 && globalRank < t->team->instance->tree_array_size); 
+     sctk_assert(type >= 0 && type < MPCOMP_TASK_TYPE_COUNT); 
+#endif /* MPCOMP_OVERFLOW_CHECKING */
 
-     if (mpcomp_is_leaf(globalRank)) {
+    if (mpcomp_is_leaf(globalRank)) {
 	  mpcomp_mvp_t *mvp = (mpcomp_mvp_t *) (t->mvp->tree_array[globalRank]);
 	  list = mvp->tasklist[type];
      } else {
@@ -592,43 +608,47 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 
      /* Initialize the OpenMP environment (called several times, but really executed
       * once) */
-     __mpcomp_init ();
+     __mpcomp_init();
 
      /* Initialize the OpenMP task environment (called several times, but really 
       * executed once per worker thread) */
      __mpcomp_task_infos_init();
-     
+
      /* Retrieve the information (microthread structure and current region) */
      t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);	 
-
-     new_list = mpcomp_task_get_list(t->mvp->tasklistNodeRank[MPCOMP_TASK_TYPE_NEW], 
-				     MPCOMP_TASK_TYPE_NEW);
+     
+     sctk_atomics_incr_int(&(t->team->nb_tasks));
 
      if (t->num_threads == 1)
      	  nb_delayed = 0;
-     else
+     else {
+	  new_list = mpcomp_task_get_list(t->mvp->tasklistNodeRank[MPCOMP_TASK_TYPE_NEW], 
+				     MPCOMP_TASK_TYPE_NEW);
      	  nb_delayed = sctk_atomics_load_int(&(new_list->nb_elements));
+     }
 
      if (!if_clause
 	 || (t->current_task && mpcomp_task_property_isset (t->current_task->property, MPCOMP_TASK_FINAL))
 	 || t->num_threads == 1
 	 || nb_delayed > MPCOMP_TASK_MAX_DELAYED
-	 /*|| (t->current_task && t->current_task->depth > MPCOMP_TASK_NESTING_MAX)*/) {
+	 || (t->current_task && t->current_task->depth > 8/*t->team->task_nesting_max*/)) {
 	  /* Execute directly */
-
+//	  fn(data);
 	  struct mpcomp_task_s task;
+	  struct mpcomp_task_s *prev_task;
 
 	  __mpcomp_task_init (&task, NULL, NULL, t);
 	  mpcomp_task_set_property (&(task.property), MPCOMP_TASK_UNDEFERRED);
+	  prev_task = t->current_task;
       
-	  if ((t->current_task
-	       && mpcomp_task_property_isset (t->current_task->property, MPCOMP_TASK_FINAL))
+	  if ((prev_task
+	       && mpcomp_task_property_isset (prev_task->property, MPCOMP_TASK_FINAL))
 	      || (flags & 2)) {
 	       /* If its parent task is final, the new task must be final too */
 	       mpcomp_task_set_property (&(task.property), MPCOMP_TASK_FINAL);
 	  }
-	       
+
 	  /* Current task is the new task which will be executed immediately */
 	  t->current_task = &task;
 	  sctk_assert(task.thread == NULL);
@@ -637,18 +657,17 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 	  if (cpyfn != NULL) {
 	       /* If cpyfn is given, use it to copy args */
 	       char tmp[arg_size + arg_align - 1];
-	       char *data_cpy = (char *) (((uintptr_t) tmp + arg_align - 1) 
-					  & ~(uintptr_t) (arg_align - 1));
+	       char *data_cpy = (char *) (((uintptr_t) tmp + arg_align - 1)
+	  				  & ~(uintptr_t) (arg_align - 1));
 
 	       cpyfn (data_cpy, data);
-	       
 	       fn (data_cpy);
 	  } else {
 	       fn (data);
 	  }
-	       
+	  
 	  /* Replace current task */
-	  t->current_task = task.parent;
+	  t->current_task = prev_task;
 	  mpcomp_task_clear_parent(&task);
 	  TODO("Add cleaning for the task data structures")
      } else {
@@ -657,11 +676,7 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 	  char *data_cpy;
 
 	  /* The new task may be delayed, so copy arguments in a buffer */
-#if MPCOMP_MALLOC_ON_NODE
-	  task = sctk_malloc_on_node(sizeof (struct mpcomp_task_s) + arg_size + arg_align - 1, t->mvp->father->id_numa);
-#else
-	  task = sctk_malloc(sizeof (struct mpcomp_task_s) + arg_size + arg_align - 1);
-#endif /* MPCOMP_MALLOC_ON_NODE */
+	  task = mpcomp_malloc(1, sizeof (struct mpcomp_task_s) + arg_size + arg_align - 1, t->mvp->father->id_numa);
 	  sctk_assert (task != NULL);
 
 	  data_cpy = (char*) (((uintptr_t) (task + 1) + arg_align - 1)
@@ -686,7 +701,7 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 
 	  parent = task->parent;
 
-	  assert(__mpcomp_task_check_circular_link(task) == 0);
+	  //sctk_assert(__mpcomp_task_check_circular_link(task) == 0);
 
 	  if (parent) {
 	       /* If task has a parent, add it to the children list */
@@ -712,12 +727,11 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 	  
 	  /* Push the task in the list of new tasks */
 	  mpcomp_task_list_lock(new_list);
-	  mpcomp_task_list_pushtotail(new_list, task);
+	  mpcomp_task_list_pushtohead(new_list, task);
 	  mpcomp_task_list_unlock(new_list);
      }
 }
 
-#if MPCOMP_TASK_LARCENY_MODE == 0
 
 /* Steal a task in the 'type' task list of node identified by 'globalRank' */
 static inline struct mpcomp_task_s *mpcomp_task_steal(struct mpcomp_task_list_s *list)
@@ -727,30 +741,34 @@ static inline struct mpcomp_task_s *mpcomp_task_steal(struct mpcomp_task_list_s 
      sctk_assert(list != NULL);
      mpcomp_task_list_lock(list);
      task = mpcomp_task_list_popfromtail(list);
+     if (task)
+	  sctk_atomics_incr_int(&list->nb_larcenies);
      mpcomp_task_list_unlock(list);
 	 
      return task;
 }
 
-static inline void  mpcomp_task_allocate_larceny_order(mpcomp_thread_t *t)
+static inline void mpcomp_task_allocate_larceny_order(mpcomp_thread_t *t)
 {
-     int nbMaxLists = t->team->instance->tree_level_size[t->team->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED]];
-     
+     int depth = t->team->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED];
+     int nbMaxLists = t->team->instance->tree_level_size[depth];
+
      t->larceny_order = mpcomp_malloc(1, (nbMaxLists-1) * sizeof(int), t->mvp->father->id_numa);
 }
 
 /* Return the ith victim for task stealing initiated from element at 'globalRank' */
-static inline int mpcomp_task_get_victim(int globalRank, int i)
+static inline int mpcomp_task_get_victim(int globalRank, int i, mpcomp_tasklist_type_t type)
 {
      mpcomp_thread_t *highwayman;
      int larcenyMode;
      int victim;
-     int *firstRank;
+     int firstRank;
      long int value;
      int depth;
      int j;
      struct drand48_data *randBuffer;
      int nbVictims;
+     int nbeMax;
      int *larcenyOrder;
 
      /* Retrieve the information (microthread structure and current region) */
@@ -763,22 +781,30 @@ static inline int mpcomp_task_get_victim(int globalRank, int i)
 
      case MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL:
 
+	  /* Recover the ith neighbour according to tree hierarchy */
 	  victim = mpcomp_get_neighbour(globalRank, i);
 	  break;
 
      case MPCOMP_TASK_LARCENY_MODE_RANDOM:
 
-	  if (mpcomp_is_leaf(globalRank)) {
-	       mpcomp_mvp_t *mvp =(mpcomp_mvp_t *) highwayman->mvp->tree_array[globalRank]; 
-	       lrand48_r(mvp->tasklist_randBuffer, &value);
-	       depth = mvp->father->depth + 1;
-	  } else {
-	       mpcomp_node_t *n = highwayman->mvp->tree_array[globalRank]; 
-	       lrand48_r(n->tasklist_randBuffer, &value);
-	       depth = n->depth;
-	  }
-	  victim = (value % (highwayman->team->instance->tree_level_size[depth] - 1)) 
-	       + highwayman->team->instance->tree_array_first_rank[depth];
+	  do { 
+
+	       /* Get a random value */
+	       if (mpcomp_is_leaf(globalRank)) {
+		    mpcomp_mvp_t *mvp =(mpcomp_mvp_t *) highwayman->mvp->tree_array[globalRank]; 
+		    lrand48_r(mvp->tasklist_randBuffer, &value);
+		    depth = mvp->father->depth + 1;
+	       } else {
+		    mpcomp_node_t *n = highwayman->mvp->tree_array[globalRank]; 
+		    lrand48_r(n->tasklist_randBuffer, &value);
+		    depth = n->depth;
+	       }
+
+	       /* Select randomly a globalRank among neighbourhood */
+	       victim = (value % (highwayman->team->instance->tree_level_size[depth])) 
+		    + highwayman->team->instance->tree_array_first_rank[depth];
+	  } while(victim == globalRank); /* Retry random draw if the victim is the thief */
+	       
 	  break;
  
      case MPCOMP_TASK_LARCENY_MODE_RANDOM_ORDER:
@@ -794,21 +820,28 @@ static inline int mpcomp_task_get_victim(int globalRank, int i)
 	  }
 
 	  nbVictims = highwayman->team->instance->tree_level_size[depth] - 1;
-	  
-	  if (!highwayman->larceny_order) {
+
+	  if (!highwayman->larceny_order)
 	       mpcomp_task_allocate_larceny_order(highwayman);
 
-	       larcenyOrder = highwayman->larceny_order;
-
-	       for (j=0; j<nbVictims; j++)
-		    larcenyOrder[j] = j + highwayman->team->instance->tree_array_first_rank[depth];
-	  } else {	  
-	       larcenyOrder = highwayman->larceny_order;
-	  }
+	  larcenyOrder = highwayman->larceny_order;
 
 	  if (i == 1) {
 	       /* Initialization */
+
 	       int n;
+	       firstRank = highwayman->team->instance->tree_array_first_rank[depth];
+
+	       /*  Initialize the values of the random order array 
+		*  with the global ranks of neighbourhood
+		*/
+	       for (j=0; j<nbVictims; j++) {
+		    larcenyOrder[j] = j + firstRank;
+		    if (larcenyOrder[j] >= globalRank)
+			 larcenyOrder[j]++;
+	       }
+
+	       /* Reorder the array according to a random draw */
 	       for (j=0, n=nbVictims; j<nbVictims; j++, n--) {
 		    int k, tmp;
 
@@ -816,32 +849,156 @@ static inline int mpcomp_task_get_victim(int globalRank, int i)
 		    k = value % n;
 		    tmp = larcenyOrder[j];
 		    larcenyOrder[j] = larcenyOrder[j+k];
+#if MPCOMP_OVERFLOW_CHECKING
+		    sctk_assert(j+k < nbVictims);
+#endif /* MPCOMP_OVERFLOW_CHECKING */
 		    larcenyOrder[j+k] = tmp;
-	       }
-	       //fprintf(stderr, "[t %lu]: larcenyOrder = [ ", highwayman->rank);
-	       for (j=0; j<nbVictims; j++) {
-		    fprintf(stderr, "[t %lu]: larcenyOrder[%d] = %d\n", highwayman->rank,
-			    j, larcenyOrder[j]);
-		    //fprintf(stderr, "%d ", larcenyOrder[j]);
-	       }
-	       //fprintf(stderr, "]\n");
-	       
+	       }	       
 	  }
-	  victim = highwayman->larceny_order[i];
+
+	  victim = highwayman->larceny_order[i-1];
 	  break;
 
      case MPCOMP_TASK_LARCENY_MODE_ROUNDROBIN:
-	  //highwayman->team->instance->tree_array_first_rank[]
+
+	  if (mpcomp_is_leaf(globalRank)) {
+	       mpcomp_mvp_t *mvp =(mpcomp_mvp_t *) highwayman->mvp->tree_array[globalRank]; 
+	       depth = mvp->father->depth + 1;
+	  } else {
+	       mpcomp_node_t *n = highwayman->mvp->tree_array[globalRank]; 
+	       depth = n->depth;
+	  }
+
+	  nbVictims = highwayman->team->instance->tree_level_size[depth] - 1;
+
+	  if (!highwayman->larceny_order)
+	       mpcomp_task_allocate_larceny_order(highwayman);
+
+	  larcenyOrder = highwayman->larceny_order;
+
+	  if (i == 1) {
+	       /* Initialization */
+
+	       int n;
+	       firstRank = highwayman->team->instance->tree_array_first_rank[depth];
+
+	       /*  Set the values of the round robin order array 
+		*  with the global ranks of neighbourhood
+		*/
+	       for (j=0, n=(globalRank-firstRank+1)%(nbVictims+1); j<nbVictims; j++, n=(n+1)%(nbVictims+1)) {
+		    larcenyOrder[j] = firstRank + n;
+#if MPCOMP_OVERFLOW_CHECKING
+		    sctk_assert(larcenyOrder[j] != globalRank);
+#endif /* MPCOMP_OVERFLOW_CHECKING */
+	       } 
+	  }
+
+	  victim = highwayman->larceny_order[i-1];
 	  break;
 
      case MPCOMP_TASK_LARCENY_MODE_PRODUCER:
+
+	  if (mpcomp_is_leaf(globalRank)) {
+	       mpcomp_mvp_t *mvp =(mpcomp_mvp_t *) highwayman->mvp->tree_array[globalRank]; 
+	       depth = mvp->father->depth + 1;
+	  } else {
+	       mpcomp_node_t *n = highwayman->mvp->tree_array[globalRank]; 
+	       depth = n->depth;
+	  }
+
+	  nbVictims = highwayman->team->instance->tree_level_size[depth] - 1;
+	  firstRank = highwayman->team->instance->tree_array_first_rank[depth];
+
+	  nbeMax = 0;
+	  victim = (globalRank == firstRank) ? firstRank + 1 : firstRank;
+	  for (j=0; j<nbVictims; j++) {
+	       int rank, nbe;
+	       struct mpcomp_task_list_s *list;
+
+	       /* Compute tree array rank of jth neighbour */
+	       rank = j + firstRank;
+	       if (rank >= globalRank) 
+		    rank++;
+	       
+	       list = mpcomp_task_get_list(rank, type);
+	       nbe = sctk_atomics_load_int(&list->nb_elements);
+	       if (nbeMax < nbe) {
+		    nbeMax = nbe;
+		    victim = rank;
+	       }
+	  }
+
 	  break;
 
      case MPCOMP_TASK_LARCENY_MODE_PRODUCER_ORDER:
+
+	  if (mpcomp_is_leaf(globalRank)) {
+	       mpcomp_mvp_t *mvp =(mpcomp_mvp_t *) highwayman->mvp->tree_array[globalRank]; 
+	       depth = mvp->father->depth + 1;
+	  } else {
+	       mpcomp_node_t *n = highwayman->mvp->tree_array[globalRank]; 
+	       depth = n->depth;
+	  }
+
+	  nbVictims = highwayman->team->instance->tree_level_size[depth] - 1;
+
 	  if (!highwayman->larceny_order)
 	       mpcomp_task_allocate_larceny_order(highwayman);
+
+	  larcenyOrder = highwayman->larceny_order;
+
+	  if (i == 1) {
+	       /* Initialization */
+
+	       int k, nbOrdered, pos, rank, nbe;
+	       int nbElements[nbVictims], neighbour[nbVictims];
+	       struct mpcomp_task_list_s *list;
+
+	       firstRank = highwayman->team->instance->tree_array_first_rank[depth];
+
+	       /*  Reorder the array according to the number of tasks contained
+		*  by each list.
+		*/
+	       nbOrdered = 0;
+	       for (j=0; j<nbVictims; j++) {
+
+		    /* Compute tree array rank of jth neighbour */
+		    rank = j + firstRank;
+		    if (rank >= globalRank) 
+			 rank++;
+		    neighbour[j] = rank;
+
+		    list = mpcomp_task_get_list(rank, type);
+		    nbe = sctk_atomics_load_int(&list->nb_elements);
+
+//		    if (nbe > 0) {
+
+			 /* Find position of neighbour in the ordered array */
+			 pos = 0;
+			 while (pos<nbOrdered && nbe <= nbElements[larcenyOrder[pos]])
+			      pos++;
+			 
+			 /* Shift all values after pos */
+			 for (k=nbOrdered; k>pos; k--)
+			      larcenyOrder[k] = larcenyOrder[k-1];
+			 
+			 /* Add the new value */
+			 larcenyOrder[pos] = j;
+			 nbElements[j] = nbe;
+			 nbOrdered++;
+//		    }
+	       }
+
+	       /* Convert to tree array ranking */
+	       for (j=0; j<nbVictims; j++) {
+		    larcenyOrder[j] = neighbour[larcenyOrder[j]];
+	       }
+	  }
+
+	  victim = larcenyOrder[i-1];
 	  break;
 
+	 
      default:
 	  victim = globalRank;
 	  break;	  
@@ -873,9 +1030,6 @@ static struct mpcomp_task_s * __mpcomp_task_larceny()
 	  tasklistDepth = highwayman->team->tasklist_depth[t];
 	  nbTasklists = highwayman->team->instance->tree_level_size[tasklistDepth];
 
-	  //fprintf(stderr, "[t %lu] MPCOMP_LARCENY tour %d (nbTasklists = %d; tasklistDepth)\n", 
-	  //highwayman->rank, t, nbTasklists, tasklistDepth);
-
 	  if (nbTasklists > 1) {
 	  /* If there are task lists in which we could steal tasks */
 
@@ -883,8 +1037,7 @@ static struct mpcomp_task_s * __mpcomp_task_larceny()
 	       list = mvp->lastStolen_tasklist[t];
 	       if (list) {
 		    task = mpcomp_task_steal(list);
-		    if (task){
-			 //fprintf(stderr, "[t %lu] MPCOMP_LARCENY réussi\n", highwayman->rank);
+		    if (task) {
 			 return task;	       
 		    }
 	       }
@@ -898,18 +1051,14 @@ static struct mpcomp_task_s * __mpcomp_task_larceny()
 	       else
 		    nbVictims = nbTasklists-1;
 	       
-	       //fprintf(stderr, "[t %lu] MPCOMP_LARCENY tenté(nbVictims:%d)\n", 
-	       //highwayman->rank, nbVictims);
-
 	       /* Look for a task in all victims lists */
 	       for (i=1; i<nbVictims+1; i++) {
-		    int victim = mpcomp_task_get_victim(rank, i);
+		    int victim = mpcomp_task_get_victim(rank, i, t);
+		    sctk_assert(victim != rank);
 		    list = mpcomp_task_get_list(victim, t);
-		    fprintf(stderr, "[mvp%d] t=%d list=%p, victim:%d \n", mvp->rank, t, list, victim);
 		    task = mpcomp_task_steal(list);
 		    if (task) {
 			 mvp->lastStolen_tasklist[t] = list;
-			 //fprintf(stderr, "[t %lu] MPCOMP_LARCENY réussi\n", highwayman->rank);
 			 return task;
 		    }
 	       }
@@ -918,256 +1067,7 @@ static struct mpcomp_task_s * __mpcomp_task_larceny()
      
      return NULL;
 }
-#endif /* MPCOMP_TASK_LARCENY_MODE == 0 */
 
-
-#if MPCOMP_TASK_LARCENY_MODE == 1 || MPCOMP_TASK_LARCENY_MODE == 2 || MPCOMP_TASK_LARCENY_MODE == 3
-
-#if MPCOMP_TASK_LARCENY_MODE == 1
-static void draw_lot(int res[], int n, struct drand48_data *rand_buffer)
-{
-     int i, k, no, tmp;
-     long int v;
-
-     for (i=0; i<n; i++)
-	  res[i]= i;
-
-     for (i=0, no=n; i<n; i++, no--) {
-          lrand48_r(rand_buffer, &v);
-	  k = v%no;
-	  tmp = res[i];
-#if MPCOMP_OVERFLOW_CHECKING
-	  sctk_assert(i+k < n);
-#endif /* MPCOMP_OVERFLOW_CHECKING */
-	  res[i] = res[i+k];
-	  res[i+k] = tmp;
-     }
-}
-#endif //MPCOMP_TASK_LARCENY_MODE == 1
-
-static int set_order(int res[], int n, mpcomp_node_t *node, mpcomp_mvp_t *mvp, int new)
-{
-     //fprintf(stderr, "[t:%lu] set_order(%p, %d, %p, %p, %d)\n", ((mpcomp_thread_t *)sctk_openmp_thread_tls)->rank, res, n, node, mvp, new);
-
-#if MPCOMP_TASK_LARCENY_MODE == 1
-     struct drand48_data *rand_buffer;
-     
-     if (new == 1)
-	  rand_buffer = node ? node->new_rand_buffer : mvp->new_rand_buffer;
-     else
-	  rand_buffer = node ? node->untied_rand_buffer : mvp->untied_rand_buffer;
-     
-     draw_lot(res, n, rand_buffer);
-     
-     return n;
-#elif MPCOMP_TASK_LARCENY_MODE == 2
-     int i;
-     unsigned long rank;
-
-     if (new == 1)
-	  rank = node ? node->new_rank : mvp->new_rank;
-     else
-	  rank = node ? node->untied_rank : mvp->untied_rank;
-     
-     for (i=0; i<n; i++)
-	  res[i] = (rank + i + 1) % n;
-
-     return n;
-#elif MPCOMP_TASK_LARCENY_MODE == 3
-     int i, j, k, no, nbe;
-     struct mpcomp_task_list_s **tab_list;
-     struct mpcomp_task_list_s *list;
-     int *nb_elements = sctk_malloc(sizeof(int) * n);
-
-     if (new == 1)
-	  tab_list = node ? node->dist_new_tasks : mvp->dist_new_tasks;
-     else
-	  tab_list = node ? node->dist_untied_tasks : mvp->dist_untied_tasks;
-     
-     /* Order the list according to their size */
-     no = 0;
-     for (i=0; i<n; i++) {
-	  /* Search for every task list */
-	  list = tab_list[i];
-	  sctk_assert(list != NULL);
-
-	  /* Get the number of tasks in the list */
-	  mpcomp_task_list_lock(list);
-	  nbe = sctk_atomics_load_int(&list->nb_elements);
-	  mpcomp_task_list_unlock(list);
-
-	  if (nbe > 0) {
-	       /* If the list is not empty */
-
-	       /* Find the position of the list in the current ordered array */
-	       j=0;
-#if MPCOMP_OVERFLOW_CHECKING
-		    if (j<no)
-			 sctk_assert(res[j] < n);
-#endif /* MPCOMP_OVERFLOW_CHECKING */
-	       while (j<no && nbe <= nb_elements[res[j]]) {
-		    j++;
-#if MPCOMP_OVERFLOW_CHECKING
-		    if (j<no)
-			 sctk_assert(res[j] < n);
-#endif /* MPCOMP_OVERFLOW_CHECKING */
-	       }
-
-#if MPCOMP_OVERFLOW_CHECKING
-//	       fprintf(stderr, "res[j=%d]=%d < n=%d\n",j, res[j], n);
-	       sctk_assert(no < n)
-;
-	       sctk_assert(j < n);
-#endif /* MPCOMP_OVERFLOW_CHECKING */
-	       /* Store the list   */
-	       for (k=no; k>j; k--)
-		    res[k] = res[k-1];
-	       
-	       res[j] = i;
-	       nb_elements[i] = nbe;
-	       no++;
-	  }
-     }
-
-     sctk_free(nb_elements);
-     
-     return no;
-
-#endif //MPCOMP_TASK_LARCENY_MODE == 1,2,3
-}
-
-static struct mpcomp_task_s * __mpcomp_task_larceny()
-{
-     mpcomp_thread_t *highwayman;
-     struct mpcomp_task_list_s *list;
-     struct mpcomp_task_s *task = NULL;
-     int i, checked;
-     int nb_newlists, nb_untiedlists, nbl;
-     int *order;
-     int max_nb_lists;
-
-     /* Retrieve the information (microthread structure and current region) */
-     highwayman = (mpcomp_thread_t *)sctk_openmp_thread_tls;
-     sctk_assert(highwayman != NULL);
-
-     nb_newlists = highwayman->team->instance->tree_level_size[highwayman->team->tasklist_depth[MPCOMP_TASK_TYPE_NEW]];
-     nb_untiedlists = highwayman->team->instance->tree_level_size[highwayman->team->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED]];
-     max_nb_lists = sctk_max(nb_newlists, nb_untiedlists);
-     
-     if (nb_newlists == 1 && nb_untiedlists == 1)
-	  return NULL;
-
-     if (!highwayman->larceny_order) {
-#if MPCOMP_MALLOC_ON_NODE
-	  highwayman->larceny_order = sctk_malloc_on_node(sizeof(int) * (max_nb_lists - 1), highwayman->mvp->father->id_numa);     
-#else
-	  highwayman->larceny_order = sctk_malloc(sizeof(int) * (max_nb_lists - 1));     
-#endif /* MPCOMP_MALLOC_ON_NODE */
-     }
-
-     order = highwayman->larceny_order;
-
-     if (nb_newlists > 1) {
-	  if (highwayman->team->tasklist_depth[MPCOMP_TASK_TYPE_NEW] < highwayman->mvp->father->depth + 1) {
-	       /* New lists are at some node level */
-	       
-	       struct mpcomp_node_s *n;
-	       
-	       /* Retrieve the node containing the new list */
-	       n = highwayman->mvp->father;
-	       while (n->depth > highwayman->team->tasklist_depth[MPCOMP_TASK_TYPE_NEW] && n->father != NULL)
-		    n = n->father;
-	       
-#if MPCOMP_OVERFLOW_CHECKING
-	       sctk_assert(nb_newlists - 1 < max_nb_lists);
-#endif /* MPCOMP_OVERFLOW_CHECKING */
-	       nbl = set_order(order, nb_newlists - 1, n, NULL, 1);
-
-	       for (i=0; i<nbl; i++) {
-		    list = n->dist_new_tasks[order[i]];
-		    sctk_assert(list != NULL);
-		    mpcomp_task_list_lock(list);
-		    task = mpcomp_task_list_popfromhead(list);
-		    mpcomp_task_list_unlock(list);
-		    if (task != NULL)
-			 return task;
-	       }
-	  } else {
-	       /* New lists are at mvp level */
-	       
-	       struct mpcomp_mvp_s *mvp;
-	       
-	       mvp = highwayman->mvp;
-
-#if MPCOMP_OVERFLOW_CHECKING
-	       sctk_assert(nb_newlists - 1 < max_nb_lists);
-#endif /* MPCOMP_OVERFLOW_CHECKING */
-	       nbl = set_order(order, nb_newlists - 1, NULL, mvp, 1);
-	       
-	       for (i=0; i<nbl; i++) {
-		    list = mvp->dist_new_tasks[order[i]];
-		    sctk_assert(list != NULL);
-		    mpcomp_task_list_lock(list);
-		    task = mpcomp_task_list_popfromhead(list);
-		    mpcomp_task_list_unlock(list);
-		    if (task != NULL)
-			 return task;	       
-	       }
-	  }
-     }
-
-     if (nb_untiedlists > 1) {
-	  if (highwayman->team->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED] < highwayman->mvp->father->depth + 1) {
-	       /* Untied lists are at some node level */
-	       
-	       struct mpcomp_node_s *n;
-	       
-	       /* Retrieve the node containing the untied list */
-	       n = highwayman->mvp->father;
-	       while (n->depth > highwayman->team->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED] && n->father != NULL)
-		    n = n->father;
-	       
-#if MPCOMP_OVERFLOW_CHECKING
-	       sctk_assert(nb_untiedlists - 1 < max_nb_lists);
-#endif /* MPCOMP_OVERFLOW_CHECKING */
-	       nbl = set_order(order, nb_untiedlists - 1, n, NULL, 0);
-	       
-	       for (i=0; i<nbl; i++) {
-		    list = n->dist_untied_tasks[order[i]];
-		    sctk_assert(list != NULL);
-		    mpcomp_task_list_lock(list);
-		    task = mpcomp_task_list_popfromhead(list);
-		    mpcomp_task_list_unlock(list);
-		    if (task != NULL)
-			 return task;
-	       }
-	  } else {
-	       /* Untied lists are at mvp level */
-	       
-	       struct mpcomp_mvp_s *mvp;
-	       
-	       mvp = highwayman->mvp;
-	       
-#if MPCOMP_OVERFLOW_CHECKING
-	       sctk_assert(nb_untiedlists - 1 < max_nb_lists);
-#endif /* MPCOMP_OVERFLOW_CHECKING */
-	       nbl = set_order(order, nb_untiedlists - 1, NULL, mvp, 0);
-	       
-	       for (i=0; i<nbl; i++) {
-		    list = mvp->dist_untied_tasks[order[i]];
-		    sctk_assert(list != NULL);
-		    mpcomp_task_list_lock(list);
-		    task = mpcomp_task_list_popfromhead(list);
-		    mpcomp_task_list_unlock(list);
-		    if (task != NULL)
-			 return task;
-	       }
-	  }
-     }
-     
-     return NULL;
-}
-#endif /* MPCOMP_TASK_LARCENY_MODE == 1 || MPCOMP_TASK_LARCENY_MODE == 2 || MPCOMP_TASK_LARCENY_MODE == 3 */
 
 /* 
  * Schedule remaining tasks in the different task lists (tied, untied, new) 
@@ -1183,7 +1083,7 @@ void __mpcomp_task_schedule()
      struct mpcomp_task_s *parent_task = NULL;
      struct mpcomp_task_s *prev_task = NULL;
      struct mpcomp_task_list_s *list;
-     int i, wait;
+     int i;
      
      /* Initialize the OpenMP task environment (call several times, but really executed
       * once per worker thread) */
@@ -1203,14 +1103,13 @@ void __mpcomp_task_schedule()
 	  /* Find a remaining tied task */
 	  list = t->tied_tasks;
 	  task = mpcomp_task_list_popfromtail(list);
-	  wait = 0;
 
 	  if (task == NULL) {
 	       /* If no task found previously, find a remaining untied task */
 	       list = mpcomp_task_get_list(t->mvp->tasklistNodeRank[MPCOMP_TASK_TYPE_UNTIED], 
 					   MPCOMP_TASK_TYPE_UNTIED);
 	       mpcomp_task_list_lock(list);
-	       task = mpcomp_task_list_popfromtail(list);
+	       task = mpcomp_task_list_popfromhead(list);
 	       mpcomp_task_list_unlock(list);
 	  }
       
@@ -1219,13 +1118,12 @@ void __mpcomp_task_schedule()
 	       list = mpcomp_task_get_list(t->mvp->tasklistNodeRank[MPCOMP_TASK_TYPE_NEW], 
 					   MPCOMP_TASK_TYPE_NEW);
 	       mpcomp_task_list_lock(list);
-	       task = mpcomp_task_list_popfromtail(list);
+	       task = mpcomp_task_list_popfromhead(list);
 	       mpcomp_task_list_unlock(list);
 	  }
 	  
 	  if (task == NULL) {
 	       /* If no task found previously, try to thieve a task somewhere */
-
 	       task = __mpcomp_task_larceny();
 	  }
 	  
@@ -1236,9 +1134,9 @@ void __mpcomp_task_schedule()
 
 	  /* Current task is the new task which will be executed */
 	  t->current_task = task;
-	  assert(task->thread == NULL);
+	  sctk_assert(task->thread == NULL);
 	  task->thread = t;
-	  task->func (task->data);
+	  task->func(task->data);
 	  
 	  mpcomp_task_clear_parent(task);
 	  
@@ -1259,16 +1157,18 @@ void __mpcomp_task_schedule()
 	  /* Replace current task */
 	  t->current_task = prev_task;
 	  
-	  sctk_free(task);
+	  mpcomp_free(1, task, sizeof(struct mpcomp_task_s));
 	  task = NULL;
      }
 }
 
 
+#define MY_TASKWAIT 0
 /* 
  * Wait for the completion of the current task's children
  * Called when encountering a taskwait construct
  */
+#if MY_TASKWAIT
 void __mpcomp_taskwait()
 {
      mpcomp_thread_t *t;
@@ -1317,8 +1217,8 @@ void __mpcomp_taskwait()
 		    if (ret == 1) {
 			 /* Current task is the new task which will be executed */
 			 t->current_task = task;
-			 assert(task->thread == NULL);			      
-			 assert(__mpcomp_task_check_circular_link(task) == 0);
+			 sctk_assert(task->thread == NULL);		      
+			 //sctk_assert(__mpcomp_task_check_circular_link(task) == 0);
 			 task->thread = t;
 			 task->func(task->data);
 
@@ -1338,7 +1238,7 @@ void __mpcomp_taskwait()
 			 t->current_task = prev_task;
 			 
 			 next_child = task->next_child;
-			 sctk_free(task);
+			 mpcomp_free(1, task, sizeof(struct mpcomp_task_s));
 			 task = NULL;
 		    }
 	       }
@@ -1353,7 +1253,34 @@ void __mpcomp_taskwait()
 
      sctk_spinlock_unlock(&(prev_task->children_lock));
 }
+#else /* MY_TASKWAIT */
+void __mpcomp_taskwait()
+{
+     mpcomp_thread_t *t;
+     struct mpcomp_task_s *prev_task = NULL;
 
+     /* Initialize the OpenMP task environment (call several times, but really executed
+      * once per worker thread) */
+     __mpcomp_task_infos_init();
+     
+     /* Retrieve the information (microthread structure and current region) */
+     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+     sctk_assert(t != NULL);
+
+     /* If only one thread is running, tasks are not delayed. No need to wait */
+     if (t->num_threads == 1)
+	  return;
+
+     /* Save current task pointer */
+     prev_task = t->current_task;
+     sctk_assert(prev_task != NULL);
+
+     /* Look for a children tasks list */
+     while (prev_task->children != NULL) {
+	  __mpcomp_task_schedule();
+     }
+}
+#endif /* MY_TASKWAIT */
 
 /*
  * The current may be suspended in favor of execution of
@@ -1365,4 +1292,4 @@ void __mpcomp_taskyield()
      /* Actually, do nothing */
 }
 
-#endif //MPCOMP_TASK
+#endif /* MPCOMP_TASK */
