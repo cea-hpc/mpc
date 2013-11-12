@@ -25,6 +25,7 @@
 #Global setup
 PROJECT(mpc_allocator)
 cmake_minimum_required(VERSION 2.6)
+enable_testing()
 
 ########################################################################
 #Some global setup for debug

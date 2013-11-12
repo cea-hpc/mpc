@@ -39,7 +39,7 @@ typedef OPA_int_t sctk_alloc_internal_spinlock_t;
 static inline void sctk_alloc_cpu_relax(void)
 {
 	#ifdef __MIC__
-	__mm_delay_32(20);
+	_mm_delay_32(20);
 	#else
 	__asm__ __volatile__("rep;nop":::"memory");
 	#endif

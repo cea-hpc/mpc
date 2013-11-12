@@ -104,6 +104,10 @@ extern "C"
 #define SCTK_ALLOC_HEAP_SIZE (128ULL*1024ULL*1024ULL*1024ULL)
 /** Maximum number of regions, need to cover the 256TB available with 48bit addressing. **/
 #define SCTK_ALLOC_MAX_REGIONS 256
+/** Initial memory for egg allocator, need to be enought to allocate hwloc memory and all the mmsrc structure.
+ * after this first step, egg allocator is plug on default mm src, so can be refilled.
+**/
+#define SCTK_ALLOC_EGG_INIT_MEM SCTK_MACRO_BLOC_SIZE
 /**
  * Enable or disable huge chunk segregation. Turn off may cause huge memory consumption as
  * memory may be locked due to presence of non free small block at the end of the macro blocs.

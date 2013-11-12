@@ -110,12 +110,12 @@ void sctk_alloc_mm_source_light_init(struct sctk_alloc_mm_source_light * source,
 
 	//if numa is disable we don't know anything, so remove info
 	#ifndef HAVE_HWLOC
-	if (mode |= SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_STRICT)
+	if (mode & SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_STRICT)
 		sctk_alloc_pwarning("Caution, you request NUMA strict but allocator was compiled without NUMA support.");
 	mode &= ~SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_STRICT;
 	numa_node = SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_NODE_IGNORE;
 	#else
-	if (( mode |= SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_STRICT ) && numa_node != -1)
+	if (( mode & SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_STRICT ) && numa_node != -1)
 		source->nodeset = sctk_alloc_mm_source_light_init_nodeset(numa_node);
 	else
 		source->nodeset = NULL;
@@ -208,7 +208,7 @@ SCTK_STATIC void sctk_alloc_mm_source_light_insert_segment(struct sctk_alloc_mm_
 
 	//if need to force binding, as we didn't now the origin, call meme binding method
 	#ifdef HAVE_HWLOC
-	if (light_source->mode | SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_STRICT && light_source->numa_node != SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_NODE_IGNORE)
+	if (light_source->mode & SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_STRICT && light_source->numa_node != SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_NODE_IGNORE)
 		sctk_alloc_force_segment_binding(light_source,base,size,light_source->numa_node);
 	#endif //HAVE_HWLOC
 

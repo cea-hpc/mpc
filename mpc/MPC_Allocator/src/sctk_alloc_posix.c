@@ -265,11 +265,10 @@ SCTK_INTERN void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void)
 		for ( i = 0 ; i < nodes ; ++i)
 			sctk_alloc_posix_mmsrc_numa_init_node(i);
 	}
-	#endif
 
 	//setup malloc on node
-	/** @TODO plug malloc_on_node on std alloc if have no NUMA node. **/
 	sctk_malloc_on_node_init(sctk_get_numa_node_number());
+	#endif
 
 	//mark NUMA init phase as done.
 	sctk_global_base_init = SCTK_ALLOC_POSIX_INIT_NUMA;
@@ -383,10 +382,8 @@ SCTK_INTERN void sctk_alloc_posix_init_glibc_hooks(void)
 **/
 SCTK_INTERN void sctk_alloc_posix_base_init(void)
 {
-	/** @todo check for optimization **/
 	static SCTK_ALLOC_INIT_LOCK_TYPE global_mm_mutex = SCTK_ALLOC_INIT_LOCK_INITIALIZER;
-	/** @todo Maybe allocate this with mmap or sbrk **/
-	static char buffer[SCTK_MACRO_BLOC_SIZE];
+	static char buffer[SCTK_ALLOC_EGG_INIT_MEM];
 
 	//check to avoid taking the mutex if not necessary
 	if (sctk_global_base_init >= SCTK_ALLOC_POSIX_INIT_DEFAULT)
@@ -417,8 +414,7 @@ SCTK_INTERN void sctk_alloc_posix_base_init(void)
 		//tls chain initialization
 		sctk_alloc_tls_chain();
 		//setup egg allocator to bootstrap thread allocation chains.
-		/** @todo Maybe optimize by avoiding loading 2MB of virtual memory on egg allocator. **/
-		sctk_alloc_chain_user_init(&sctk_global_egg_chain,buffer,SCTK_MACRO_BLOC_SIZE,SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE);
+		sctk_alloc_chain_user_init(&sctk_global_egg_chain,buffer,SCTK_ALLOC_EGG_INIT_MEM,SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE);
 
 		//set name
 		sctk_global_egg_chain.name = "mpc_egg_allocator";
@@ -506,13 +502,6 @@ SCTK_INTERN struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void
 
 	//reenable valgrind
 	SCTK_ALLOC_MMCHECK_ENABLE_REPORT();
-
-	/** @todo TODO register the allocation chain for debugging. **/
-	//setup pointer for alocator memory dump in case of crash
-	//#ifdef SCTK_ALLOC_DEBUG
-	//TODO
-	//sctk_alloc_chain_list[0] = &chain;
-	//#endif
 	return chain;
 }
 
@@ -592,7 +581,10 @@ SCTK_PUBLIC void * sctk_malloc (size_t size)
 
 	//to be compatible with glibc policy which didn't return NULL in this case.
 	//otherwise we got crash in sed/grep/nano ...
-	/** @todo Optimize by returning a specific fixed address instead of alloc size=1 **/
+	/**
+	 * @todo Optimize by returning a specific fixed address instead of alloc size=1 *
+	 * but need to check in spec if it was correct.
+	**/
 	if (size == 0)
 		size = 1;
 
@@ -856,7 +848,6 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 }
 
 /************************* FUNCTION ************************/
-/** @TODO optimize this with mremap for huge segments. **/
 SCTK_STATIC void * sctk_realloc_inter_chain (void * ptr, size_t size)
 {
 	sctk_size_t copy_size = size;
