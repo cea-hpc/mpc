@@ -91,7 +91,8 @@ SCTK_STATIC void sctk_alloc_config_init_static_defaults(struct sctk_runtime_conf
 	#endif //__MIC__
 
 	#ifdef HAVE_HWLOC
-	config->numa               = true;
+	/** @todo set true when no mode bugs out of MPC. **/
+	config->numa               = false;
 	#endif //HAVE_HWLOC
 }
 
