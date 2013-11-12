@@ -81,9 +81,8 @@ SCTK_STATIC  hwloc_nodeset_t sctk_alloc_mm_source_light_init_nodeset(int numa_no
 /**
  * Function used to setup the light memory source.
  * @param source Define the memory source to init.
- * @param numa_node Define the NUMA node on which to bind the memory source pages. Use -1 for none.
+ * @param numa_node Define the NUMA node on which to bind the memory source pages. Use SCTK_ALLOC_NOT_BINDED | -1 for none.
  * @param mode Enable some flags defined in sctk_alloc_mm_source_light to configure the memory source.
- * @todo Define a constante instead of -1 for non defined NUMA node.
 **/
 void sctk_alloc_mm_source_light_init(struct sctk_alloc_mm_source_light * source,int numa_node,enum sctk_alloc_mm_source_light_flags mode)
 {
@@ -115,7 +114,7 @@ void sctk_alloc_mm_source_light_init(struct sctk_alloc_mm_source_light * source,
 	mode &= ~SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_STRICT;
 	numa_node = SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_NODE_IGNORE;
 	#else
-	if (( mode & SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_STRICT ) && numa_node != -1)
+	if (( mode & SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_STRICT ) && numa_node != SCTK_ALLOC_NOT_BINDED)
 		source->nodeset = sctk_alloc_mm_source_light_init_nodeset(numa_node);
 	else
 		source->nodeset = NULL;
@@ -126,7 +125,7 @@ void sctk_alloc_mm_source_light_init(struct sctk_alloc_mm_source_light * source,
 	source->mode = mode;
 
 	//setup blocs counter to know if we can safetely delete. (more for debug)
-	source->counter = 0;
+	OPA_store_int(&source->counter,0);
 	source->size = 0;
 
 	//start with empty local cache
@@ -140,7 +139,6 @@ void sctk_alloc_mm_source_light_init(struct sctk_alloc_mm_source_light * source,
  * inserted at the beginning of the fist.
  * @param light_source Define the memory source in which to register.
  * @param free_bloc Define the free_bloc to register in the list.
- * @todo Try to use an atomic list.
 **/
 SCTK_STATIC void sctk_alloc_mm_source_light_reg_in_cache(struct sctk_alloc_mm_source_light * light_source,struct sctk_alloc_mm_source_light_free_macro_bloc * free_bloc)
 {
@@ -206,10 +204,10 @@ SCTK_STATIC void sctk_alloc_mm_source_light_insert_segment(struct sctk_alloc_mm_
 	assume_m((sctk_addr_t)base % SCTK_ALLOC_PAGE_SIZE == 0,"Buffer base adderss must be aligned to page size.");
 	assume_m(size % SCTK_MACRO_BLOC_SIZE == 0,"Buffer size must be aligned to page size.");
 
-	//if need to force binding, as we didn't now the origin, call meme binding method
+	//if need to force binding, as we didn't now the origin, call memory binding method
 	#ifdef HAVE_HWLOC
 	if (light_source->mode & SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_STRICT && light_source->numa_node != SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_NODE_IGNORE)
-		sctk_alloc_force_segment_binding(light_source,base,size,light_source->numa_node);
+		sctk_alloc_force_segment_binding(light_source,base,size);
 	#endif //HAVE_HWLOC
 
 	//setup header
@@ -227,10 +225,9 @@ SCTK_STATIC void sctk_alloc_mm_source_light_insert_segment(struct sctk_alloc_mm_
  * @param base The base address of the segment to bind.
  * @param size The size of the segment to bind.
  * @param numa_node The NUMA node on which to bind (unused, to remote).
- * @todo Remove numa_node param.
 **/
 #ifdef HAVE_HWLOC
-SCTK_STATIC void sctk_alloc_force_segment_binding(struct sctk_alloc_mm_source_light * light_source,void* base, sctk_size_t size,int numa_node)
+SCTK_STATIC void sctk_alloc_force_segment_binding(struct sctk_alloc_mm_source_light * light_source,void* base, sctk_size_t size)
 {
 	//vars
 	int res;
@@ -239,7 +236,7 @@ SCTK_STATIC void sctk_alloc_force_segment_binding(struct sctk_alloc_mm_source_li
 	assert(base != NULL);
 	assert(size > SCTK_ALLOC_PAGE_SIZE);
 	assert(size % SCTK_ALLOC_PAGE_SIZE == 0);
-	assert(numa_node >= 0);
+	assert(light_source->numa_node >= 0);
 
 	//use hwloc to bind the segment
 	//0 on HWLOC_MEMBIND_THREAD for windows
@@ -267,7 +264,7 @@ SCTK_STATIC void sctk_alloc_mm_source_light_cleanup(struct sctk_alloc_mm_source*
 	sctk_alloc_spinlock_lock(&light_source->spinlock);
 
 	//check counters to know if all blocs are returned to the mm source.
-	assume_m(light_source->counter == 0, "Invalid counter status, must be 0 to call cleanup.");
+	assume_m(OPA_load_int(&light_source->counter) == 0, "Invalid counter status, must be 0 to call cleanup.");
 
 	//loop on the blocs in cache to free them
 	free_bloc = light_source->cache;
@@ -394,7 +391,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_find_in_cac
 			light_source->cache = free_bloc->next;
 		else
 			prev_bloc->next = free_bloc->next;
-		light_source->counter++;
+		OPA_incr_int(&light_source->counter);
 		light_source->size -= free_bloc->size;
 	}
 
@@ -454,7 +451,6 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_light_request_mem
 /************************* FUNCTION ************************/
 /**
  * Internal function to request new segments if can't reuse one.
- * @todo add support of NUMA binding.
 **/
 SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_mmap_new_segment(struct sctk_alloc_mm_source_light* light_source,sctk_size_t size)
 {
@@ -468,14 +464,18 @@ SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_mmap_new_s
 	macro_bloc = sctk_mmap(NULL,size);
 	SCTK_NO_PDEBUG("LMMSRC : Map new macro_bloc %p -> %llu",macro_bloc,size);
 	assume_m(macro_bloc != NULL,"Error macro bloc allocation");
+
+	//if need to force binding, as we didn't now the origin, call memory binding method
+	#ifdef HAVE_HWLOC
+	if (light_source->mode & SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_STRICT && light_source->numa_node != SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_NODE_IGNORE)
+		sctk_alloc_force_segment_binding(light_source,macro_bloc,size);
+	#endif //HAVE_HWLOC
+
 	//setup header
 	macro_bloc = sctk_alloc_setup_macro_bloc(macro_bloc,size);
 
 	//increment counters
-	//@TODO use atomic inc
-	sctk_alloc_spinlock_lock(&light_source->spinlock);
-	light_source->counter++;
-	sctk_alloc_spinlock_unlock(&light_source->spinlock);
+	OPA_incr_int(&light_source->counter);
 
 	//return
 	return macro_bloc;
@@ -510,10 +510,7 @@ SCTK_STATIC void sctk_alloc_mm_source_light_free_memory(struct sctk_alloc_mm_sou
 	}
 
 	//increment counters
-	//@TODO use atomic inc and disable in non debug
-	sctk_alloc_spinlock_lock(&light_source->spinlock);
-	light_source->counter--;
-	sctk_alloc_spinlock_unlock(&light_source->spinlock);
+	OPA_decr_int(&light_source->counter);
 }
 
 /************************* FUNCTION ************************/
@@ -584,9 +581,9 @@ void sctk_alloc_mm_source_light_migrate(struct sctk_alloc_mm_source_light * ligh
 		return;
 
 	//if unbind to unknown numa node
-	if (target_numa_node == -1)
+	if (target_numa_node == SCTK_ALLOC_NOT_BINDED)
 	{
-		light_source->numa_node = -1;
+		light_source->numa_node = SCTK_ALLOC_NOT_BINDED;
 		return;
 	}
 

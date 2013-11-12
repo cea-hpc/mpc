@@ -77,6 +77,8 @@ extern "C"
 /************************** CONSTS *************************/
 /** Magic value to be used as check in common header. **/
 #define SCTK_ALLOC_MAGIC_STATUS 0x10
+/** Constant to say to memory source that it wasn't binded on a specific numa node. **/
+#define SCTK_ALLOC_NOT_BINDED -1
 /**
  * Define the cut size for small chunk, for now it can be up to 256o. It was currently 32 because
  * small bloc support is not fully available.

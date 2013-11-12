@@ -56,7 +56,7 @@ SCTK_STATIC void sctk_alloc_print_config(void)
 	printf("MPCALLOC_KEEP_MAX           : %lu MB\n",sctk_alloc_global_config.keep_max/1024/1024);
 	printf("MPCALLOC_KEEP_MEM           : %lu MB\n",sctk_alloc_global_config.keep_mem/1024/1024);
 	printf("MPCALLOC_REALLOC_THREASHOLD : %lu MB\n",sctk_alloc_global_config.realloc_threashold/1024/1024);
-	printf("MPCALLOC_REALLOC_FACTOR     : %lu\n",sctk_alloc_global_config.realloc_factor);
+	printf("MPCALLOC_REALLOC_FACTOR     : %u\n",sctk_alloc_global_config.realloc_factor);
 	printf("MPCALLOC_MM_SOURCES         : %d\n",sctk_alloc_global_config.mm_sources);
 	printf("==================================================\n");
 }
@@ -65,7 +65,6 @@ SCTK_STATIC void sctk_alloc_print_config(void)
 /************************* FUNCTION ************************/
 /**
  * !!!! CAUTION !!!! This method has no allocator, so it musn't do any allocation.
- * @TODO find a way to avoid to recode this manually, import the one from MPC.
 **/
 SCTK_STATIC void sctk_alloc_config_init_static_defaults(struct sctk_runtime_config_struct_allocator * config)
 {
@@ -83,7 +82,7 @@ SCTK_STATIC void sctk_alloc_config_init_static_defaults(struct sctk_runtime_conf
 	config->keep_max           = 8*1024*1024;//8MB
 	config->keep_mem           = 512*1024*1024;//512MB
 
-	#if defined(MPC_Common) && defined(__MIC__)
+	#if !defined(MPC_Common) && defined(__MIC__)
 	config->numa_round_robin   = true;
 	#endif
 
@@ -92,8 +91,7 @@ SCTK_STATIC void sctk_alloc_config_init_static_defaults(struct sctk_runtime_conf
 	#endif //__MIC__
 
 	#ifdef HAVE_HWLOC
-	//TODO make it true if no more bugs...
-	config->numa               = false;
+	config->numa               = true;
 	#endif //HAVE_HWLOC
 }
 
@@ -188,8 +186,6 @@ void sctk_alloc_config_egg_init(void)
 #else //MPC_Common
 void sctk_alloc_config_egg_init(void)
 {
-	//TODO : Damn, with MPC, we may use sctk_runtime_config_struct_init_allocator() but can't due to
-	//usage of strdup in sctk_runtime_config_map_entry_parse_size(), may be we can avoid this
 	sctk_alloc_config_init_static_defaults(&sctk_alloc_global_config);
 }
 #endif //MPC_Common

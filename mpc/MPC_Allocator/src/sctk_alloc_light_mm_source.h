@@ -32,6 +32,7 @@ extern "C"
 #ifdef HAVE_HWLOC
 #include <hwloc.h>
 #endif //HAVE_HWLOC
+#include <opa_primitives.h>
 #include "sctk_alloc_mmsrc.h"
 #include "sctk_alloc_lock.h"
 
@@ -82,7 +83,7 @@ struct sctk_alloc_mm_source_light
 	/** Enable strict NUMA binding. **/
 	bool strict_numa_bind;
 	/** More for debug, to know how-many blocks are in use. **/
-	int counter;
+	OPA_int_t counter;
 	/** Current amount of memory stored in mm source cache. **/
 	size_t size;
 	#ifdef HAVE_HWLOC
@@ -111,7 +112,7 @@ void sctk_alloc_mm_source_light_migrate(struct sctk_alloc_mm_source_light * ligh
 
 /************************* FUNCTION ************************/
 //helpers
-SCTK_STATIC void sctk_alloc_force_segment_binding(struct sctk_alloc_mm_source_light * light_source,void* base, sctk_size_t size,int numa_node);
+SCTK_STATIC void sctk_alloc_force_segment_binding(struct sctk_alloc_mm_source_light * light_source,void* base, sctk_size_t size);
 #ifdef HAVE_HWLOC
 SCTK_STATIC  hwloc_nodeset_t sctk_alloc_mm_source_light_init_nodeset(int numa_node);
 #endif
