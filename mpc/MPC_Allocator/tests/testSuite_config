@@ -43,5 +43,5 @@ for mode in uma numa; do
 	for test in $ALLOC_TESTS; do
 		common_insert_test "${test}_${mode}" '0' "${MPC_TEST_CURRENT_WORK_DIR}/${mode}/tests/${test} -m junit_xml -o output-${test}_${mode}.xml" "compile_MPC_Allocator_${mode}"
 	done
-	common_insert_test "${test}_${mode}" '0' "${MPC_TEST_CURRENT_WORK_DIR}/${mode}/tests/test_mpscf_queue valid" "compile_MPC_Allocator_${mode}"
+	common_insert_test "test_mpscf_queue valid_${mode}" '0' "${MPC_TEST_CURRENT_WORK_DIR}/${mode}/tests/test_mpscf_queue valid" "compile_MPC_Allocator_${mode}"
 done
