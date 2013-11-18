@@ -93,13 +93,16 @@ static unsigned __mpcomp_get_new_depth(hwloc_obj_type_t type, hwloc_topology_t t
 int *__mpcomp_compute_topo_tree_array(int *depth, int *index)
 {
      hwloc_topology_t simple_topology;
+     hwloc_topology_t topology; 
      int d;
      int *tree;
-
+     
      if (!depth || !index) {
 	  sctk_error("__mpcomp_compute_topo_tree_array: Unable to compute tree (depth or index unallocated)");
 	  return NULL;
      }
+
+     topology=sctk_get_topology_object();
 
      /* Create a temporary topology */
      hwloc_topology_init(&simple_topology);
@@ -109,7 +112,7 @@ int *__mpcomp_compute_topo_tree_array(int *depth, int *index)
      hwloc_custom_insert_topology(simple_topology, 
 				  hwloc_get_obj_by_depth(simple_topology, 0, 0), 
 				  sctk_get_topology_object(), NULL);
-
+     
      /* Delete unessential levels */
      hwloc_topology_ignore_all_keep_structure(simple_topology);
  
@@ -127,15 +130,17 @@ int *__mpcomp_compute_topo_tree_array(int *depth, int *index)
 
      /* Set index of threads, cores and sockets levels */
      index[MPCOMP_TOPO_OBJ_THREAD] = __mpcomp_get_new_depth(HWLOC_OBJ_PU, 
-							    sctk_get_topology_object(), 
+							    topology, 
 							    simple_topology);
+printf("PU:%d\n", index[MPCOMP_TOPO_OBJ_THREAD]);
      index[MPCOMP_TOPO_OBJ_CORE] = __mpcomp_get_new_depth(HWLOC_OBJ_CORE, 
-							  sctk_get_topology_object(), 
+							  topology, 
 							  simple_topology);
+printf("CORE:%d\n", index[MPCOMP_TOPO_OBJ_CORE]);
      index[MPCOMP_TOPO_OBJ_SOCKET] = __mpcomp_get_new_depth(HWLOC_OBJ_SOCKET, 
-							    sctk_get_topology_object(), 
+							    topology, 
 							    simple_topology);
-
+printf("SOCKET:%d\n", index[MPCOMP_TOPO_OBJ_SOCKET]);
      /* Release temporary topology structure */
      hwloc_topology_destroy(simple_topology);
 
@@ -212,7 +217,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
      instance->tree_level_size[0] = 1;
      instance->tree_array_first_rank[0] = 0;
      instance->tree_array_size = 1;
-     for (i=1; i<tree_depth + 1; i++) {
+     for (i=1; i<instance->tree_depth + 1; i++) {
 	  instance->tree_level_size[i] = instance->tree_level_size[i-1] * 
 		  instance->tree_base[i-1];
 	  instance->tree_array_size += instance->tree_level_size[i]; 

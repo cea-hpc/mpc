@@ -503,12 +503,10 @@ void __mpcomp_init() {
 	t->children_instance = instance ;
 
 #if MPCOMP_TASK
-    team_info->instance = instance;
-
     /* Ensure tasks lists depths are correct */
     OMP_UNTIED_TASKS_DEPTH = sctk_max(OMP_UNTIED_TASKS_DEPTH, OMP_NEW_TASKS_DEPTH);
-    team_info->tasklist_depth[MPCOMP_TASK_TYPE_NEW] = sctk_min(t->mvp->father->depth + 1, OMP_NEW_TASKS_DEPTH);
-    team_info->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED] = sctk_min(t->mvp->father->depth + 1, OMP_UNTIED_TASKS_DEPTH);
+    team_info->tasklist_depth[MPCOMP_TASK_TYPE_NEW] = sctk_min(instance->tree_depth, OMP_NEW_TASKS_DEPTH);
+    team_info->tasklist_depth[MPCOMP_TASK_TYPE_UNTIED] = sctk_min(instance->tree_depth, OMP_UNTIED_TASKS_DEPTH);
 
     /* Check the validity of larceny mode */
     if (OMP_TASK_LARCENY_MODE < 0 || OMP_TASK_LARCENY_MODE >= MPCOMP_TASK_LARCENY_MODE_COUNT)
@@ -560,9 +558,6 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 		} else {
 			__mpcomp_build_tree( instance, OMP_TREE_NB_LEAVES, OMP_TREE_DEPTH, OMP_TREE ) ; 
 		}
-  __mpcomp_single_coherency_entering_parallel_region(t->team) ;
-#if 1
-#if 0
 	} else {
 		mpcomp_local_icv_t icvs ;
 		/* Sequential instance and team */
