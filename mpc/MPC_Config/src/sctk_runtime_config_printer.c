@@ -113,7 +113,10 @@ bool sctk_runtime_config_display_plain_type( const char * type_name,void *value)
 		printf("%g",*(double*)value);
 		return true;
 	} else if (strcmp(type_name,"char *") == 0) {
-		printf("%s",*((char **)value));
+		if (*((char **)value) == NULL)
+			printf("%s",sctk_cst_string_undefined);
+		else
+			printf("%s",*((char **)value));
 		return true;
 	} else if (strcmp(type_name,"size_t") == 0) {
 		printf("%s", sctk_runtime_config_display_size( *( (size_t *)value ) ) );
