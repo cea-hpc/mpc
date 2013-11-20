@@ -53,7 +53,7 @@ run_alloc_test_with_max_cores()
 	test_exe="$3"
 	shift 3
 	COMMAND_OPTIONS="$@"
-	helper_gen_mpcrun_exec_command "$test_exe" "-c=${CLUSTER_MAX_CORES_PER_NODE}"
+	helper_gen_exec_command "$test_exe" "-c=${CLUSTER_MAX_CORES_PER_NODE}"
 	common_insert_test "$test_name" '0' "$command" "$test_deps"
 }
 
