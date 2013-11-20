@@ -803,7 +803,7 @@ __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
 		long chunk_size, long chunk_num,
 		long *from, long *to) ;
 
-int
+long
 __mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads, long lb,
 					long b, long incr, long chunk_size) ;
 

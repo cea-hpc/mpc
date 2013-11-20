@@ -126,27 +126,33 @@ static inline void __mpcomp_read_env_variables() {
       sctk_get_task_rank ());
 
   /******* OMP_VP_NUMBER *********/
-  env = getenv ("OMP_VP_NUMBER");
-  OMP_MICROVP_NUMBER = sctk_get_processor_number (); /* DEFAULT */
-  if (env != NULL)
-  {
-    int arg = atoi( env ) ;
-    if ( arg <= 0 ) {
+  OMP_MICROVP_NUMBER = sctk_runtime_config_get()->modules.openmp.vp;
+
+  if ( OMP_MICROVP_NUMBER < 0 ) {
       fprintf( stderr, 
 	  "Warning: Incorrect number of microVPs (OMP_MICROVP_NUMBER=<%s>) -> "
 	  "Switching to default value %d\n", env, OMP_MICROVP_NUMBER ) ;
-    } else if ( arg > sctk_get_processor_number () ) {
+      OMP_MICROVP_NUMBER = 0 ;
+  }
+  if ( OMP_MICROVP_NUMBER > sctk_get_processor_number() ) {
       fprintf( stderr,
 	  "Warning: Number of microVPs should be at most the number of cores per node: %d\n"
 	  "Switching to default value %d\n", sctk_get_processor_number (), OMP_MICROVP_NUMBER ) ;
-    }
-    else {
-      OMP_MICROVP_NUMBER = arg ;
-    }
+      OMP_MICROVP_NUMBER = 0 ;
+  }
+  if ( OMP_MICROVP_NUMBER == 0 ) {
+      OMP_MICROVP_NUMBER = sctk_get_processor_number (); /* DEFAULT */
+#ifdef MPC_Message_Passing
+      OMP_MICROVP_NUMBER = OMP_MICROVP_NUMBER /  sctk_get_nb_task_local(SCTK_COMM_WORLD); /* DEFAULT */
+      if(OMP_MICROVP_NUMBER < 1) {
+        OMP_MICROVP_NUMBER = 1;
+      }
+#endif
   }
 
+
   /******* OMP_SCHEDULE *********/
-  env = getenv ("OMP_SCHEDULE");
+  env = sctk_runtime_config_get()->modules.openmp.schedule;
   OMP_SCHEDULE = 1 ;	/* DEFAULT */
   if (env != NULL)
   {
@@ -207,127 +213,50 @@ static inline void __mpcomp_read_env_variables() {
 
 
   /******* OMP_NUM_THREADS *********/
-  env = getenv ("OMP_NUM_THREADS");
-  OMP_NUM_THREADS = OMP_MICROVP_NUMBER;	/* DEFAULT */
-  if (env != NULL)
-  {
-    nb_threads = atoi (env);
-    if (nb_threads > 0)
-    {
-      OMP_NUM_THREADS = nb_threads;
-    }
+  OMP_NUM_THREADS = sctk_runtime_config_get()->modules.openmp.nb_threads;
+  if ( OMP_NUM_THREADS < 0 ) {
+	  OMP_NUM_THREADS = 0 ;
+  }
+  if ( OMP_NUM_THREADS == 0 ) {
+	  OMP_NUM_THREADS = OMP_MICROVP_NUMBER;	/* DEFAULT */
   }
   TODO( "OMP_NUM_THREADS: need to handle x,y,z,... and keep only x" )
 
 
   /******* OMP_DYNAMIC *********/
-  env = getenv ("OMP_DYNAMIC");
-  OMP_DYNAMIC = 0;	/* DEFAULT */
-  if (env != NULL)
-  {
-    if (strcmp (env, "true") == 0)
-    {
-      OMP_DYNAMIC = 1;
-    }
-  }
+  OMP_DYNAMIC = sctk_runtime_config_get()->modules.openmp.adjustment ? 1 : 0;
 
   /******* OMP_PROC_BIND *********/
-  env = getenv ("OMP_PROC_BIND");
-  OMP_PROC_BIND = 0;	/* DEFAULT */
-  if (env != NULL)
-  {
-       if (strcmp (env, "1") == 0 || strcmp (env, "TRUE") == 0 || strcmp (env, "true") == 0 )
-       {
-	    OMP_PROC_BIND = 1;
-       }
-  }
+  OMP_DYNAMIC = sctk_runtime_config_get()->modules.openmp.proc_bind ? 1 : 0;
 
   /******* OMP_NESTED *********/
-  env = getenv ("OMP_NESTED");
-  OMP_NESTED = 0;	/* DEFAULT */
-  if (env != NULL)
-  {
-    if (strcmp (env, "1") == 0 || strcmp (env, "TRUE") == 0 || strcmp (env, "true") == 0 )
-    {
-      OMP_NESTED = 1;
-    }
-  }
+  OMP_NESTED = sctk_runtime_config_get()->modules.openmp.nested ? 1 : 0;
 
   /******* OMP_STACKSIZE *********/
-  env = getenv ("OMP_STACKSIZE");
-  OMP_STACKSIZE = 0;	/* DEFAULT */
-
-  if (sctk_is_in_fortran == 1)
-       OMP_STACKSIZE = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
-  else
-       OMP_STACKSIZE = SCTK_ETHREAD_STACK_SIZE;
-
-  if (env != NULL)
-  {
-       char *p = env;
-       OMP_STACKSIZE = strtol(env, NULL, 10);
-
-       while (!isalpha(*p) && *p != '\0')
-	    p++;
-       
-       switch (*p) {
-       case 'b':
-       case 'B':
-	    break;
-	    
-       case 'k':
-       case 'K':
-	    OMP_STACKSIZE *= 1024;
-	    break;
-	    
-       case 'm':
-       case 'M':
-	    OMP_STACKSIZE *= 1024 * 1024;
-	    break;
-
-       case 'g':
-       case 'G':
-	    OMP_STACKSIZE *= 1024 * 1024 * 1024;
-	    break;
-       default:
-	    break;
-       }
-  }
-  TODO("check STACKSIZE value" ) 
+  OMP_STACKSIZE = sctk_runtime_config_get()->modules.openmp.stack_size ;
+  if ( OMP_STACKSIZE  == 0 ) {
+	  if (sctk_is_in_fortran == 1)
+		  OMP_STACKSIZE = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
+	  else
+		  OMP_STACKSIZE = SCTK_ETHREAD_STACK_SIZE;
+  } 
 
   /******* OMP_WAIT_POLICY *********/
-  env = getenv ("OMP_WAIT_POLICY");
-  OMP_WAIT_POLICY = 0;	/* DEFAULT */
-  if (env != NULL)
-  {
-    if (strcmp (env, "active") == 0 || strcmp (env, "ACTIVE") == 0)
-    {
-      OMP_WAIT_POLICY = 1;
-    }
-  }
+  OMP_WAIT_POLICY = sctk_runtime_config_get()->modules.openmp.wait_policy ;
   
   /******* OMP_THREAD_LIMIT *********/
-  env = getenv ("OMP_THREAD_LIMIT");
-  OMP_THREAD_LIMIT = 0;	/* DEFAULT */
-  if (env != NULL)
-  {
-       OMP_THREAD_LIMIT = strtol(env, NULL, 10);
-  }
+  OMP_THREAD_LIMIT = sctk_runtime_config_get()->modules.openmp.thread_limit ;
 
   /******* OMP_MAX_ACTIVE_LEVELS *********/
-  env = getenv ("OMP_MAX_ACTIVE_LEVELS");
-  OMP_MAX_ACTIVE_LEVELS = 0;	/* DEFAULT */
-  if (env != NULL)
-  {
-       OMP_MAX_ACTIVE_LEVELS = strtol(env, NULL, 10);
-  }
+  OMP_MAX_ACTIVE_LEVELS = sctk_runtime_config_get()->modules.openmp.max_active_levels ;
 
 
   /******* ADDITIONAL VARIABLES *******/
 
   /******* OMP_TREE *********/
-  env = getenv ("OMP_TREE");
-  if (env != NULL)
+  OMP_TREE = sctk_runtime_config_get()->modules.openmp.tree ;
+  
+  if (strlen( OMP_TREE) != 0)
   {
     int nb_tokens = 0 ;
     char ** tokens = NULL ;
@@ -363,7 +292,10 @@ static inline void __mpcomp_read_env_variables() {
 #endif
 	TODO( "check the env variable OMP_TREE" )
 
+  } else {
+	  OMP_TREE = NULL ;
   }
+
 
 #if MPCOMP_TASK
   /******* OMP_NEW_TASKS_DEPTH *********/
