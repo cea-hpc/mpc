@@ -33,11 +33,15 @@ __mpcomp_dynamic_loop_get_chunk_from_rank( mpcomp_thread_t * t, mpcomp_thread_t 
 	int r ;
 	int index;
 	int target_index ;
+	int num_threads;
 
 	/* Stop if target rank has already done this specific loop */
 	if ( t->for_dyn_current < target->for_dyn_current ) {
 		return 0 ;
 	}
+
+	/* Number of threads in the current team */
+	num_threads = t->info.num_threads;
 
 	/* Compute the index of the dynamic for construct */
 	index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
@@ -247,6 +251,11 @@ int __mpcomp_dynamic_loop_begin (long lb, long b, long incr,
 int
 __mpcomp_dynamic_loop_next (long *from, long *to)
 {
+	mpcomp_thread_t *t ;	/* Info on the current thread */
+	int num_threads;
+	int index;
+	int max_depth ;
+
 	/* Grab the thread info */
 	t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
 	sctk_assert( t != NULL ) ;
@@ -263,6 +272,7 @@ __mpcomp_dynamic_loop_next (long *from, long *to)
 
 	/* Check that the target is allocated */
 	if ( t->for_dyn_target == NULL ) {
+		int i ;
 		t->for_dyn_target = (int *)malloc( t->instance->tree_depth * sizeof( int ) ) ;
 		for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
 			t->for_dyn_target[i] = 0 ;
