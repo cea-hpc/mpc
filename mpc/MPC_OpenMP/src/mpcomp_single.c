@@ -141,11 +141,6 @@ __mpcomp_do_single_copyprivate_end (void *data)
 
 #if 0
 
-/* TODO values for different single construct are located on the same cache line
-   Need to create padding for single_nb_threads_entered array
- */
-
-
 void __mpcomp_single_coherency_entering_parallel_region( 
     mpcomp_team_t * team_info ) {
   /* Count the number of STOP symbol inside SINGLE variables */

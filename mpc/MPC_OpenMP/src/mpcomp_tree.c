@@ -283,7 +283,6 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 
 	  root->barrier_done = 0;
 
-	  /* TODO TEMP */
 	  root->id_numa = sctk_get_node_from_cpu( current_mpc_vp ) ;
 
 	  __mpcomp_push( s, root );
@@ -469,7 +468,6 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 
 			 sctk_atomics_store_int( &(n2->barrier), 0 );
 
-			 /* TODO TEMP */
 			 n2->id_numa = child_target_numa ; 
 
 			 n2->barrier_done = 0;
@@ -499,7 +497,6 @@ void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
 
      sctk_assert( instance != NULL );
 
-     /* TODO compute the real number of max elements for this stack */
      TODO("compute the real number of max elements for this stack")
      s = __mpcomp_create_stack( 2048 );
      sctk_assert( s != NULL );
@@ -532,7 +529,6 @@ void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
 	       fprintf( stderr, "\t" );
 	  }
 
-	  /* TODO id numa is temp */
 	  fprintf( stderr, "Node %ld (@ %p) -> NUMA %d, min/max %d / %d\n", 
 			  n->rank, n, n->id_numa, n->min_index, n->max_index );
 
@@ -567,8 +563,7 @@ void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
 	       }
 	       break;
 	  default:
-	       //not_reachable();
-	       sctk_nodebug("not reachable"); 
+	       not_reachable();
 	  }
      }
 

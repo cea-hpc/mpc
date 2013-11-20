@@ -277,7 +277,6 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
 			&(n->children.leaf[0]->threads[0].info.new_root->barrier), 0) ;
 
 #if MPCOMP_TASK
-    TODO("Place the task scheduling somewhere else")
     __mpcomp_task_schedule();
 #endif //MPCOMP_TASK
 
@@ -577,7 +576,6 @@ __mpcomp_start_sections_parallel_region (int arg_num_threads,
 			&(n->children.leaf[0]->threads[0].info.new_root->barrier), 0) ;
 
 #if MPCOMP_TASK
-    TODO("Place the task scheduling somewhere else")
     __mpcomp_task_schedule();
 #endif //MPCOMP_TASK
 

@@ -451,7 +451,7 @@ typedef struct mpcomp_thread_s
 	  struct drand48_data *tasklist_randBuffer;
 #endif /* MPCOMP_TASK */
 
-	  int id_numa; /* TODO temp value to check tree allocation */
+	  int id_numa;  /* NUMA node on which this node is allocated */
         
 	  int num_threads;          /* Number of threads in the current team */
 	  void *(*func) (void *);
