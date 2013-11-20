@@ -21,6 +21,7 @@
 /* ######################################################################## */
 
 /********************************* INCLUDES *********************************/
+#include <ctype.h> /* isalpha */
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
@@ -124,7 +125,7 @@ void sctk_runtime_config_validate_allocator(struct sctk_runtime_config * config)
 
 /********************************* FUNCTION *********************************/
 /**
- * This function may be used to defined all value OPENMP overriding by environment
+ * This function may be used to defined all OpenMP values overrided by environment
  * variables.
 **/
 void sctk_runtime_config_override_by_getenv_openmp(struct sctk_runtime_config * config)
@@ -152,6 +153,14 @@ void sctk_runtime_config_override_by_getenv_openmp(struct sctk_runtime_config * 
             config->modules.openmp.adjustment = 1;
         }
     }
+
+	/******* OMP_PROC_BIND *********/
+	if ((tmp = getenv("OMP_PROC_BIND")) != NULL) {
+		if (strcmp (tmp, "0") == 0 || strcmp (tmp, "FALSE") == 0 || strcmp (tmp, "false") == 0 ) {
+			config->modules.openmp.proc_bind = 0 ;
+		}
+	}
+
     /******* OMP_NESTED *******/	
     if ((tmp = getenv("OMP_NESTED")) != NULL)
     {
@@ -160,4 +169,66 @@ void sctk_runtime_config_override_by_getenv_openmp(struct sctk_runtime_config * 
             config->modules.openmp.nested = 1;
         }
     }
+
+		/******* OMP_STACKSIZE *********/
+		if ((tmp = getenv("OMP_STACKSIZE")) != NULL) {
+
+			if (tmp!= NULL)
+			{
+				char *p = tmp;
+				config->modules.openmp.stack_size = strtol(tmp, NULL, 10);
+
+				while (!isalpha(*p) && *p != '\0')
+					p++;
+
+				switch (*p) {
+					case 'b':
+					case 'B':
+						break;
+
+					case 'k':
+					case 'K':
+						config->modules.openmp.stack_size *= 1024;
+						break;
+
+					case 'm':
+					case 'M':
+						config->modules.openmp.stack_size *= 1024 * 1024;
+						break;
+
+					case 'g':
+					case 'G':
+						config->modules.openmp.stack_size *= 1024 * 1024 * 1024;
+						break;
+					default:
+						break;
+				}
+			}
+			TODO("check STACKSIZE value" ) 
+		}
+
+		/******* OMP_WAIT_POLICY *********/
+		if ((tmp = getenv("OMP_WAIT_POLICY")) != NULL) {
+			if (strcmp (tmp, "active") == 0 || strcmp (tmp, "ACTIVE") == 0)
+			{
+				config->modules.openmp.wait_policy = 1 ;
+			}
+		}
+
+		/******* OMP_THREAD_LIMIT *********/
+		if ((tmp = getenv("OMP_THREAD_LIMIT")) != NULL) {
+			config->modules.openmp.thread_limit = atoi( tmp ) ;
+		}
+
+		/******* OMP_MAX_ACTIVE_LEVELS *********/
+		if ((tmp = getenv("OMP_MAX_ACTIVE_LEVELS")) != NULL) {
+			config->modules.openmp.max_active_levels = atoi( tmp ) ;
+		}
+
+		/******* OMP_MAX_ACTIVE_LEVELS *********/
+		if ((tmp = getenv("OMP_TREE")) != NULL) {
+			config->modules.openmp.tree = tmp ;
+		}
+
+
 }
