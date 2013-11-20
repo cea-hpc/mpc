@@ -33,6 +33,7 @@
 #include "sched.h"
 #include "sctk_asm.h"
 #include "sctk.h"
+#include "sctk_runtime_config.h"
 #ifdef MPC_Message_Passing
 #include <sctk_inter_thread_comm.h>
 #endif
@@ -392,6 +393,9 @@ extern "C"
 	if (vp->dump != NULL)
 	  {
 	    char name[SCTK_MAX_FILENAME_SIZE];
+#if 1
+	    not_implemented();
+#else
 	    if (vp->dump->dump_for_migration == 0)
 	      {
 		sprintf (name, "%s/%s", sctk_store_dir,
@@ -399,6 +403,7 @@ extern "C"
 	      }
 	    else
 	      sprintf (name, "%s/mig_task_%p", sctk_store_dir, vp->dump);
+#endif
 
 /* 	  vp->dump->status = ethread_ready; */
 
@@ -497,6 +502,9 @@ extern "C"
 	      if (vp->dump != NULL)
 		{
 		  char name[SCTK_MAX_FILENAME_SIZE];
+#if 1
+		  not_implemented();
+#else
 		  if (vp->dump->dump_for_migration == 0)
 		    {
 		      sprintf (name, "%s/%s", sctk_store_dir,
@@ -505,7 +513,7 @@ extern "C"
 		  else
 		    sprintf (name, "%s/mig_task_%p", sctk_store_dir,
 			     vp->dump);
-
+#endif
 		  /*      vp->dump->status = ethread_ready; */
 
 		  vp->dump->dump_for_migration = 0;
@@ -792,7 +800,7 @@ extern "C"
 					   &(vp->zombie_queue_tail));
     while (tmp_pid != NULL)
       {
-	sctk_alloc_chain_t *tls;
+	struct sctk_alloc_chain *tls;
 	if (tmp_pid->attr.stack == NULL)
 	  sctk_free (tmp_pid->stack);
 	tls = tmp_pid->tls_mem;
@@ -937,7 +945,7 @@ extern "C"
 	      {
 		__sctk_ethread_sched_yield_vp (vp, owner);
 	      }
-	    /*Courte phase d'attente en cas de libération d'une tâche de polling */
+	    /*Courte phase d'attente en cas de libï¿½ration d'une tï¿½che de polling */
 	    while (lock->owner != owner)
 	      {
 		__sctk_ethread_sched_yield_vp (vp, owner);
@@ -986,8 +994,8 @@ extern "C"
 
     if (lock->lock >= 1)
       {
-	long i = SCTK_ETHREAD_SPIN_DELAY;
-	long j = SCTK_ETHREAD_SPIN_DELAY;
+	long i = sctk_runtime_config_get()->modules.thread.spin_delay;
+	long j = sctk_runtime_config_get()->modules.thread.spin_delay;
 	cell.my_self = owner;
 	cell.next = NULL;
 	cell.wake = 0;
@@ -1012,7 +1020,7 @@ extern "C"
 		  {
 		    j--;
 		    sched_yield ();
-		    i = SCTK_ETHREAD_SPIN_DELAY;
+		    i = sctk_runtime_config_get()->modules.thread.spin_delay;
 		  }
 		else
 		  sctk_cpu_relax ();
@@ -1021,7 +1029,7 @@ extern "C"
 		if (j <= 0)
 		  {
 		    __sctk_ethread_sched_yield_vp (vp, owner);
-		    j = SCTK_ETHREAD_SPIN_DELAY;
+		    j = sctk_runtime_config_get()->modules.thread.spin_delay;
 		  }
 	      }
 	  }
@@ -1032,7 +1040,7 @@ extern "C"
 	      {
 		__sctk_ethread_sched_yield_vp (vp, owner);
 	      }
-	    /*Courte phase d'attente en cas de libération d'une tâche de polling */
+	    /*Courte phase d'attente en cas de libï¿½ration d'une tï¿½che de polling */
 	    while (lock->owner != owner)
 	      {
 		__sctk_ethread_sched_yield_vp (vp, owner);
@@ -1064,7 +1072,7 @@ extern "C"
       {
 	if (lock->type == SCTK_THREAD_MUTEX_RECURSIVE)
 	  {
-	    sctk_nodebug ("on est dans le mutex récursif");
+	    sctk_nodebug ("on est dans le mutex rï¿½cursif");
 	    sctk_spinlock_lock (&lock->spinlock);
 	    lock->lock++;
 	    sctk_spinlock_unlock (&lock->spinlock);
@@ -1086,7 +1094,7 @@ extern "C"
      */
     /*
        On met ce test pour limiter au maximum la contention sur le spinlock.
-       Si on arrive pas à prendre le spinlock, c'est qu'il y a du mon et donc que l'on est
+       Si on arrive pas ï¿½ prendre le spinlock, c'est qu'il y a du mon et donc que l'on est
        pas prioritaire.
      */
     if (sctk_spinlock_trylock (&lock->spinlock))
@@ -1108,7 +1116,7 @@ extern "C"
       }
 
     sctk_assert (lock->lock > 0);
-    /*Courte pahse d'attente en cas de libération d'une tâche de polling */
+    /*Courte pahse d'attente en cas de libï¿½ration d'une tï¿½che de polling */
     while (lock->owner != owner)
       {
 	__sctk_ethread_sched_yield_vp (vp, owner);
@@ -1138,7 +1146,7 @@ extern "C"
 
     sctk_ethread_mutex_cell_t *cell;
     sctk_nodebug
-      (" owner = %p ; le lock appartient à : %p -- on est : %p",
+      (" owner = %p ; le lock appartient ï¿½ : %p -- on est : %p",
        owner, lock->owner, vp->current);
     if (lock->owner != owner)
       {
@@ -1170,7 +1178,7 @@ extern "C"
 	  }
 	to_wake = (sctk_ethread_per_thread_t *) lock->owner;
 	cell->wake = 1;
-	sctk_nodebug ("a réveiller %p", to_wake);
+	sctk_nodebug ("a rï¿½veiller %p", to_wake);
 	retrun_task (to_wake);
       }
     else
@@ -1197,7 +1205,7 @@ extern "C"
 	sctk_ethread_destr_func_tab[sctk_ethread_key_pos] = destr_func;
 	*key = sctk_ethread_key_pos;
 	sctk_ethread_key_pos++;
-#ifdef MPC_Allocator
+#ifdef MPC_PosixAllocator
 #ifdef SCTK_USE_TLS
 	sctk_add_global_var (key, sizeof (int));
 #else
@@ -1432,29 +1440,22 @@ extern "C"
 /* Idle function is called here to avoid deadlocks.
  * Actually, when calling sctk_thread_yield(), the polling
  * function is not called. */
-#ifdef MPC_Message_Passing
-	    sctk_notify_idle_message ();
-#endif
+//#ifdef MPC_Message_Passing
+//	    sctk_notify_idle_message ();
+//#endif
 # if 0
 	if ((vp->ready_queue_used == NULL) &&
 	    (vp->incomming_queue == NULL) &&
 	    (vp->ready_queue == NULL) && (vp->poll_list == NULL))
 	  {
-#ifdef MPC_Message_Passing
-	    sctk_notify_idle_message ();
-#endif
-#warning "Optimize to reduce memory BW consumption"
-	    sched_yield();
+	    sctk_cpu_relax();
 	  } else {
 	  if ((vp->ready_queue_used == NULL) &&
 	      (vp->incomming_queue == NULL) &&
 	      (vp->ready_queue == NULL) )
 	    {
-#ifdef MPC_Message_Passing
- 	    sctk_notify_idle_message ();
-#endif
-	      sched_yield();
-	    }
+	      sctk_cpu_relax();
+	    } 
 	}
 #endif
       }

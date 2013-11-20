@@ -23,11 +23,13 @@
 #define __SCTK_LAUNCH_H_
 
 #include "sctk_config.h"
+#include "sctk_bool.h"
 #include <stdio.h>
 #ifdef __cplusplus
 extern "C"
 {
 #endif
+  void sctk_init_mpc_runtime();
 
   int sctk_env_init (int *argc, char ***argv);
   int sctk_initialisation (char *args, int *argc, char ***argv);
@@ -36,22 +38,32 @@ extern "C"
   void sctk_launch_contribution (FILE * file);
 
   int sctk_user_main (int argc, char **argv);
+#ifdef HAVE_ENVIRON_VAR
+  int mpc_user_main (int, char **, char**);
+#else
   int mpc_user_main (int, char **);
+#endif
 
   int sctk_get_process_nb (void);
   int sctk_get_processor_nb (void);
   char* sctk_get_launcher_mode(void);
+  int sctk_get_node_nb();
   int sctk_get_verbosity();
+  void (*sctk_get_thread_val(void)) ();
   void sctk_set_net_val (void (*val) (int *, char ***));
 
   extern char *sctk_mono_bin;
-  extern int sctk_enable_smt_capabilities;
-  extern int sctk_share_node_capabilities;
+  extern bool sctk_enable_smt_capabilities;
+  extern bool sctk_share_node_capabilities;
 
   void mpc_start_ (void);
   void mpc_start__ (void);
 
+#ifdef HAVE_ENVIRON_VAR
+  extern int mpc_user_main__ (int, char **,char**);
+#else
   extern int mpc_user_main__ (int, char **);
+#endif
 
   /*  return the number of tasks involved */
   int sctk_get_total_tasks_number();

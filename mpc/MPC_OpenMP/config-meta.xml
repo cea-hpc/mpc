@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<!DOCTYPE config SYSTEM "../MPC_Config/extra/config-meta.dtd">
+<config>
+	<usertypes>
+		<struct name="openmp" doc="Options for MPC OpenMP.">
+			<param name="vp" type="int" doc="Number of VPs for each OpenMP team"/>
+			<param name="schedule" type="string" default="static" doc="Runtime schedule type and chunck size"/>
+			<param name="nb_threads" type="int" doc="Number of threads to use during execution"/>
+			<param name="adjustment" type="bool" default="false" doc="Dynamic adjustment of the number of threads"/>
+			<param name="nested" type="bool" default="false" doc="Nested parallelism"/>
+			<param name="max_threads" type="int" default="64" doc="Maximum number of threads for each team of a parallel region"/>
+			<param name="max_alive_for_dyn" type="int" default="7" doc="Maximum number of shared for loops w/ dynamic schedule alive"/>
+			<param name="max_alive_for_guided" type="int" default="3" doc="Maximum number of shared for loops w/ guided schedule alive"/>
+			<param name="max_alive_sections" type="int" default="3" doc="Maximum number of alive sections construct"/>
+			<param name="max_alive_single" type="int" default="3" doc="Maximum number of alive single construct"/>
+		</struct>
+	</usertypes>
+	<modules>
+		<module name="openmp" type="openmp"/>
+	</modules>
+</config>

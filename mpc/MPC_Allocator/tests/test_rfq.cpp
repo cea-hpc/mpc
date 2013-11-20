@@ -90,7 +90,8 @@ void TestAllocRFQ::setUp (void)
 void TestAllocRFQ::tearDown (void)
 {
 	//to avoid propagating errors we force a cleanup
-	rfq.first = rfq.last = NULL;
+	sctk_atomics_store_ptr(&rfq.queue.head,NULL);
+	sctk_atomics_store_ptr(&rfq.queue.tail,NULL);
 	sctk_alloc_rfq_destroy(&rfq);
 	sctk_alloc_chain_destroy(&chain,true);
 	sctk_alloc_region_del_all();
@@ -99,24 +100,24 @@ void TestAllocRFQ::tearDown (void)
 /************************* FUNCTION ************************/
 void TestAllocRFQ::test_init(void )
 {
-	SVUT_ASSERT_NULL(rfq.first);
-	SVUT_ASSERT_NULL(rfq.last);
-	SVUT_ASSERT_EQUAL(0,sctk_alloc_spinlock_trylock(&rfq.lock));
-	sctk_alloc_spinlock_unlock(&rfq.lock);
+	SVUT_ASSERT_NULL(sctk_atomics_load_ptr(&rfq.queue.head));
+	SVUT_ASSERT_NULL(sctk_atomics_load_ptr(&rfq.queue.tail));
+	//SVUT_ASSERT_EQUAL(0,sctk_alloc_spinlock_trylock(&rfq.lock));
+	//sctk_alloc_spinlock_unlock(&rfq.lock);
 }
 
 /************************* FUNCTION ************************/
 void TestAllocRFQ::test_insert_1(void )
 {
-	SVUT_ASSERT_NULL(rfq.first);
-	SVUT_ASSERT_NULL(rfq.last);
+	SVUT_ASSERT_NULL(sctk_atomics_load_ptr(&rfq.queue.head));
+	SVUT_ASSERT_NULL(sctk_atomics_load_ptr(&rfq.queue.tail));
 
 	sctk_alloc_rfq_entry * ptr = (sctk_alloc_rfq_entry * )sctk_alloc_chain_alloc(&chain,256);
 	sctk_alloc_rfq_register(&rfq,ptr);
 
-	SVUT_ASSERT_SAME(ptr,rfq.first);
-	SVUT_ASSERT_SAME(ptr,rfq.last);
-	SVUT_ASSERT_NULL(ptr->next);
+	SVUT_ASSERT_SAME(ptr,sctk_atomics_load_ptr(&rfq.queue.head));
+	SVUT_ASSERT_SAME(ptr,sctk_atomics_load_ptr(&rfq.queue.tail));
+	SVUT_ASSERT_NULL(ptr->entry.next);
 	SVUT_ASSERT_SAME(ptr,ptr->ptr);
 
 	sctk_alloc_chain_free(&chain,ptr);
@@ -125,25 +126,25 @@ void TestAllocRFQ::test_insert_1(void )
 /************************* FUNCTION ************************/
 void TestAllocRFQ::test_insert_2(void )
 {
-	SVUT_ASSERT_NULL(rfq.first);
-	SVUT_ASSERT_NULL(rfq.last);
+	SVUT_ASSERT_NULL(sctk_atomics_load_ptr(&rfq.queue.head));
+	SVUT_ASSERT_NULL(sctk_atomics_load_ptr(&rfq.queue.tail));
 
 	sctk_alloc_rfq_entry * ptr1 = (sctk_alloc_rfq_entry * )sctk_alloc_chain_alloc(&chain,256);
 	sctk_alloc_rfq_entry * ptr2 = (sctk_alloc_rfq_entry * )sctk_alloc_chain_alloc(&chain,256);
 	sctk_alloc_rfq_register(&rfq,ptr1);
 
-	SVUT_ASSERT_SAME(ptr1,rfq.first);
-	SVUT_ASSERT_SAME(ptr1,rfq.last);
-	SVUT_ASSERT_NULL(ptr1->next);
+	SVUT_ASSERT_SAME(ptr1,sctk_atomics_load_ptr(&rfq.queue.head));
+	SVUT_ASSERT_SAME(ptr1,sctk_atomics_load_ptr(&rfq.queue.tail));
+	SVUT_ASSERT_NULL(ptr1->entry.next);
 	SVUT_ASSERT_SAME(ptr1,ptr1->ptr);
 
 	sctk_alloc_rfq_register(&rfq,ptr2);
 
-	SVUT_ASSERT_SAME(ptr1,rfq.first);
-	SVUT_ASSERT_SAME(ptr2,rfq.last);
-	SVUT_ASSERT_NULL(ptr2->next);
+	SVUT_ASSERT_SAME(ptr1,sctk_atomics_load_ptr(&rfq.queue.head));
+	SVUT_ASSERT_SAME(ptr2,sctk_atomics_load_ptr(&rfq.queue.tail));
+	SVUT_ASSERT_NULL(ptr2->entry.next);
 	SVUT_ASSERT_SAME(ptr2,ptr2->ptr);
-	SVUT_ASSERT_SAME(ptr2,ptr1->next);
+	SVUT_ASSERT_SAME(ptr2,ptr1->entry.next);
 
 	sctk_alloc_chain_free(&chain,ptr1);
 	sctk_alloc_chain_free(&chain,ptr2);
@@ -152,8 +153,8 @@ void TestAllocRFQ::test_insert_2(void )
 /************************* FUNCTION ************************/
 void TestAllocRFQ::test_empty_true(void )
 {
-	SVUT_ASSERT_NULL(rfq.first);
-	SVUT_ASSERT_NULL(rfq.last);
+	SVUT_ASSERT_NULL(sctk_atomics_load_ptr(&rfq.queue.head));
+	SVUT_ASSERT_NULL(sctk_atomics_load_ptr(&rfq.queue.tail));
 
 	SVUT_ASSERT_TRUE(sctk_alloc_rfq_empty(&rfq));
 }
@@ -164,8 +165,8 @@ void TestAllocRFQ::test_empty_false(void )
 	sctk_alloc_rfq_entry * ptr = (sctk_alloc_rfq_entry * )sctk_alloc_chain_alloc(&chain,256);
 	sctk_alloc_rfq_register(&rfq,ptr);
 
-	SVUT_ASSERT_NOT_NULL(rfq.first);
-	SVUT_ASSERT_NOT_NULL(rfq.last);
+	SVUT_ASSERT_NOT_NULL(sctk_atomics_load_ptr(&rfq.queue.head));
+	SVUT_ASSERT_NOT_NULL(sctk_atomics_load_ptr(&rfq.queue.tail));
 
 	SVUT_ASSERT_FALSE(sctk_alloc_rfq_empty(&rfq));
 
@@ -175,13 +176,13 @@ void TestAllocRFQ::test_empty_false(void )
 /************************* FUNCTION ************************/
 void TestAllocRFQ::test_export_empty(void )
 {
-	SVUT_ASSERT_NULL(rfq.first);
-	SVUT_ASSERT_NULL(rfq.last);
+	SVUT_ASSERT_NULL(sctk_atomics_load_ptr(&rfq.queue.head));
+	SVUT_ASSERT_NULL(sctk_atomics_load_ptr(&rfq.queue.tail));
 
 	SVUT_ASSERT_NULL(sctk_alloc_rfq_extract(&rfq));
 
-	SVUT_ASSERT_NULL(rfq.first);
-	SVUT_ASSERT_NULL(rfq.last);
+	SVUT_ASSERT_NULL(sctk_atomics_load_ptr(&rfq.queue.head));
+	SVUT_ASSERT_NULL(sctk_atomics_load_ptr(&rfq.queue.tail));
 }
 
 /************************* FUNCTION ************************/
@@ -190,13 +191,13 @@ void TestAllocRFQ::test_export_full(void )
 	sctk_alloc_rfq_entry * ptr = (sctk_alloc_rfq_entry * )sctk_alloc_chain_alloc(&chain,256);
 	sctk_alloc_rfq_register(&rfq,ptr);
 	
-	SVUT_ASSERT_NOT_NULL(rfq.first);
-	SVUT_ASSERT_NOT_NULL(rfq.last);
+	SVUT_ASSERT_NOT_NULL(sctk_atomics_load_ptr(&rfq.queue.head));
+	SVUT_ASSERT_NOT_NULL(sctk_atomics_load_ptr(&rfq.queue.tail));
 
 	SVUT_ASSERT_NOT_NULL(sctk_alloc_rfq_extract(&rfq));
 
-	SVUT_ASSERT_NULL(rfq.first);
-	SVUT_ASSERT_NULL(rfq.last);
+	SVUT_ASSERT_NULL(sctk_atomics_load_ptr(&rfq.queue.head));
+	SVUT_ASSERT_NULL(sctk_atomics_load_ptr(&rfq.queue.tail));
 
 	sctk_alloc_chain_free(&chain,ptr);
 }
@@ -219,10 +220,10 @@ void TestAllocRFQ::test_threaded_insert(void )
 
 	//check
 	int cnt = 0;
-	volatile sctk_alloc_rfq_entry * curr = rfq.first;
+	sctk_alloc_rfq_entry * volatile curr = (sctk_alloc_rfq_entry * volatile)sctk_atomics_load_ptr(&rfq.queue.head);
 	while (curr != NULL)
 	{
-		curr = curr->next;
+		curr = (sctk_alloc_rfq_entry * volatile)curr->entry.next;
 		cnt++;
 	}
 	SVUT_ASSERT_EQUAL(nb,cnt);
@@ -270,10 +271,10 @@ void TestAllocRFQ::test_threaded_export(void )
 		} else {
 			while( cnt != nbprod * base )
 			{
-				volatile sctk_alloc_rfq_entry * curr = sctk_alloc_rfq_extract(&rfq);
+				sctk_alloc_rfq_entry * volatile curr = sctk_alloc_rfq_extract(&rfq);
 				while (curr != NULL)
 				{
-					curr = curr->next;
+					curr = (sctk_alloc_rfq_entry * volatile)curr->entry.next;
 					cnt++;
 				}
 			}

@@ -31,5 +31,7 @@ void sctk_runtime_config_validate(struct sctk_runtime_config * config);
 /* sub functions */
 void sctk_runtime_config_old_getenv_compatibility(struct sctk_runtime_config * config);
 void sctk_runtime_config_validate_allocator(struct sctk_runtime_config * config);
+void sctk_runtime_config_override_by_getenv(struct sctk_runtime_config * config);
+void sctk_runtime_config_override_by_getenv_openmp(struct sctk_runtime_config * config);
 
 #endif /* SCTK_RUNTIME_CONFIG_VALIDATION_H */

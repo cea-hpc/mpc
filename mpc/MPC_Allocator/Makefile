@@ -1,4 +1,4 @@
-# Makefile generated with ../MPC_Tools/mpc_gen_makefile Mon Jul 16 13:52:45 CEST 2012
+# Makefile generated with ../MPC_Tools/mpc_gen_makefile jeu. sept.  5 15:17:34 CEST 2013
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -61,7 +61,7 @@ FOBJ_include=$(FFILES_include:include/%.f=$(M_PWD)/BUILD_MPC_Allocator/lib/%_f.o
 FFILES_src=$(wildcard src/*.f)
 FOBJ_src=$(FFILES_src:src/%.f=$(M_PWD)/BUILD_MPC_Allocator/lib/%_f.o)
 
-all: $(OBJ_cmake) $(FOBJ_cmake) $(SOBJ_cmake) $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_src) $(FOBJ_src) $(SOBJ_src)
+all: $(OBJ_cmake) $(FOBJ_cmake) $(SOBJ_cmake) $(OBJ_include) $(FOBJ_include) $(SOBJ_include) $(OBJ_src) $(FOBJ_src) $(SOBJ_src) build_tests
 
 $(M_PWD)/include_modules/MPC_Allocator:
 	@../MPC_Tools/mpc_prepare_includes $(MPC_SOURCE_DIR)MPC_Allocator/cmake $(M_PWD)/include_modules
@@ -166,3 +166,6 @@ ifeq ($(MAKECMDGOALS),all)
 -include $(DEPENDS)
 endif
 endif
+build_tests:
+	@mkdir -p $(M_PWD)/BUILD_MPC_Allocator/tests
+	@$(MAKE) BUILD_DIR=$(M_PWD)/BUILD_MPC_Allocator/tests -C tests all

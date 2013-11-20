@@ -23,7 +23,7 @@
 #define __SCTK_LOW_LEVEL_COMM_H_
 
 #include <sctk_inter_thread_comm.h>
-void sctk_net_init_driver (char *name);
+void sctk_net_init_driver ();
 void sctk_net_init_pmi();
 int sctk_is_net_migration_available();
 
@@ -36,13 +36,17 @@ void sctk_network_notify_recv_message_set(void (*sctk_network_notify_recv_messag
 void sctk_network_notify_matching_message (sctk_thread_ptp_message_t * msg);
 void sctk_network_notify_matching_message_set(void (*sctk_network_notify_matching_message_val) (sctk_thread_ptp_message_t *));
 
-void sctk_network_notify_perform_message (int global_task_rank);
-void sctk_network_notify_perform_message_set(void (*sctk_network_notify_perform_message_val) (int));
+void sctk_network_notify_perform_message (int remote_process, int remote_task_id, int polling_task_id, int blocking);
+void sctk_network_notify_perform_message_set(void (*sctk_network_notify_perform_message_val) (int,int,int, int));
 
 void sctk_network_notify_idle_message ();
 void sctk_network_notify_idle_message_set(void (*sctk_network_notify_idle_message_val) ());
 
-void sctk_network_notify_any_source_message ();
-void sctk_network_notify_any_source_message_set(void (*sctk_network_notify_perform_message_val) ());
+void sctk_network_notify_any_source_message (int polling_task_id, int blocking);
+void sctk_network_notify_any_source_message_set(void (*sctk_network_notify_perform_message_val) (int polling_task_id, int blocking));
+size_t sctk_net_memory_allocation_hook(size_t size_origin);
+
+int sctk_net_is_mode_hybrid ();
+int sctk_net_set_mode_hybrid ();
 
 #endif

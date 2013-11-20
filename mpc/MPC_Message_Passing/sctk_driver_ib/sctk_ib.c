@@ -33,6 +33,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <sctk.h>
+#include <sctk_asm.h>
 #include <netdb.h>
 #include <sctk_spinlock.h>
 #include <sctk_net_tools.h>
@@ -105,69 +106,5 @@ void sctk_ib_print_msg(sctk_thread_ptp_message_t *msg) {
     default: not_reachable();
   }
 
-}
-
-void sctk_network_stats_ib (struct MPC_Network_stats_s* stats) {
-  sctk_ib_cp_task_t *task = NULL;
-  int task_id;
-  int thread_id;
-  sctk_rail_info_t** rails = sctk_network_get_rails();
-  sctk_ib_rail_info_t* r;
-
-  sctk_get_thread_info (&task_id, &thread_id);
-  task = sctk_ib_cp_get_task(task_id);
-  stats->matched = CP_PROF_PRINT(task, matched);
-  stats->not_matched = CP_PROF_PRINT(task, not_matched);
-
-#if 0
-  stats->poll_own = CP_PROF_PRINT(task, poll_own);
-  stats->poll_own_failed = CP_PROF_PRINT(task, poll_own_failed);
-  stats->poll_steals = CP_PROF_PRINT(task, poll_steals);
-  stats->poll_steals_failed = CP_PROF_PRINT(task, poll_steals_failed);
-  stats->poll_steal_same_node = CP_PROF_PRINT(task, poll_steal_same_node);
-  stats->poll_steal_other_node = CP_PROF_PRINT(task, poll_steal_other_node);
-#endif
-  stats->poll_own = poll_own;
-  stats->poll_own_failed = poll_own_failed;
-  stats->poll_own_success = poll_own_success;
-  stats->poll_steals = poll_steals;
-  stats->poll_steals_failed = poll_steals_failed;
-  stats->poll_steals_success = poll_steals_success;
-  stats->poll_steal_same_node = poll_steal_same_node;
-  stats->poll_steal_other_node = poll_steal_other_node;
-  stats->call_to_polling = call_to_polling;
-  stats->poll_cq = poll_cq;
-
-  stats->time_steals = time_steals;
-  stats->time_own = time_own;
-  stats->time_own = time_own;
-  stats->time_poll_cq = time_poll_cq;
-  stats->time_ptp = time_ptp;
-  stats->time_coll = time_coll;
-
-  if (rails) {
-    if (rails[0]) {
-      r = &rails[0]->network.ib;
-
-      stats->alloc_mem = PROF_LOAD(r, alloc_mem);
-      stats->free_mem = PROF_LOAD(r, free_mem);
-      stats->qp_created = PROF_LOAD(r, qp_created);
-
-      stats->eager_nb = PROF_LOAD(r, eager_nb);
-      stats->buffered_nb = PROF_LOAD(r, buffered_nb);
-      stats->rdma_nb = PROF_LOAD(r, rdma_nb);
-    }
-  }
-}
-
-
-void sctk_network_deco_neighbors_ib () {
-  sctk_rail_info_t ** rails;
-  sctk_ib_rail_info_t* r;
-
-  /* Select the first rail */
-  rails = sctk_network_get_rails();
-  r = &rails[0]->network.ib;
-  sctk_ib_qp_select_victim(r);
 }
 #endif

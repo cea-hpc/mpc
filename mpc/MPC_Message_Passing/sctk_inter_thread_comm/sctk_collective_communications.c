@@ -27,6 +27,7 @@
 #include <sctk_thread.h>
 #include <uthash.h>
 #include <sctk_pmi.h>
+#include <sctk_runtime_config.h>
 
 /************************************************************************/
 /*Terminaison Barrier                                                   */
@@ -53,11 +54,14 @@ sctk_terminaison_barrier (const int id)
       sctk_nodebug("sctk_pmi_barrier");
       sctk_pmi_barrier();
     }
+    sctk_nodebug("WAKE ALL in sctk_terminaison_barrier");
     sctk_thread_cond_broadcast(&cond);
   } else {
+    sctk_nodebug("WAIT in sctk_terminaison_barrier");
     sctk_thread_cond_wait(&cond,&lock);
   }
   sctk_thread_mutex_unlock(&lock);
+  sctk_nodebug("sctk_terminaison_barrier %d %d DONE",done, local);
 }
 
 /************************************************************************/
@@ -115,7 +119,7 @@ void sctk_all_reduce (const void *buffer_in, void *buffer_out,
 /*INIT                                                                  */
 /************************************************************************/
 
-void (*sctk_collectives_init_hook)(sctk_communicator_t id) = sctk_collectives_init_opt_messages;
+void (*sctk_collectives_init_hook)(sctk_communicator_t id) = NULL;//sctk_collectives_init_opt_messages;
 
 /*Init data structures used for task i*/
 void sctk_collectives_init (sctk_communicator_t id,

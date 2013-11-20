@@ -39,6 +39,7 @@ extern "C"
   struct sctk_request_s;
   struct sctk_ib_msg_header_s;
   struct mpc_buffered_msg_s;
+  struct sctk_internal_ptp_s;
 
 #define SCTK_MESSAGE_PENDING 0
 #define SCTK_MESSAGE_DONE 1
@@ -72,7 +73,8 @@ extern "C"
 /* Is the message a control message ? */
 #define IS_PROCESS_SPECIFIC_CONTROL_MESSAGE(x) ( (MASK_CONTROL_MESSAGE & x) == (MASK_CONTROL_MESSAGE) )
 
-
+/* Defines if we are in a full MPI mode */
+//#define SCTK_ENABLE_SPINNING
 
 
   typedef enum {
@@ -97,6 +99,14 @@ extern "C"
 
   }specific_message_tag_t;
 
+  typedef enum {
+    REQUEST_NULL = 0,
+    REQUEST_SEND = 1,
+    REQUEST_RECV = 2,
+    REQUEST_SEND_COLL = 3,
+    REQUEST_RECV_COLL = 4
+  } sctk_request_type_t;
+
   typedef struct sctk_thread_message_header_s
   {
 
@@ -105,7 +115,8 @@ extern "C"
     sctk_communicator_t communicator;
     int message_tag;
     int message_number;
-
+    int glob_source;
+    int glob_destination;
     char use_message_numbering;
     specific_message_tag_t specific_message_tag;
 
@@ -189,12 +200,15 @@ typedef struct sctk_message_to_copy_s{
     unsigned long checksum;
   }sctk_thread_ptp_message_body_t;
 
+typedef struct {
+  sctk_spinlock_t lock;
+  volatile sctk_msg_list_t* list;
+} sctk_internal_ptp_list_completing_t;
+
   /*Data not to tranfers in inter-process communications*/
   typedef struct {
     char remote_source;
     char remote_destination;
-    int glob_source;
-    int glob_destination;
 
     int need_check_in_wait;
 
@@ -208,6 +222,8 @@ typedef struct sctk_message_to_copy_s{
     /*Storage structs*/
     sctk_msg_list_t distant_list;
     sctk_message_to_copy_t copy_list;
+
+    struct sctk_internal_ptp_s * internal_ptp;
 
     /*Destructor*/
     void (*free_memory)(void*);
@@ -235,8 +251,8 @@ typedef struct sctk_message_to_copy_s{
 #define sctk_msg_get_use_message_numbering body.header.use_message_numbering
 #define sctk_msg_get_source body.header.source
 #define sctk_msg_get_destination body.header.destination
-#define sctk_msg_get_glob_source tail.glob_source
-#define sctk_msg_get_glob_destination tail.glob_destination
+#define sctk_msg_get_glob_source body.header.glob_source
+#define sctk_msg_get_glob_destination body.header.glob_destination
 #define sctk_msg_get_communicator body.header.communicator
 #define sctk_msg_get_message_tag body.header.message_tag
 #define sctk_msg_get_message_number body.header.message_number
@@ -255,12 +271,23 @@ typedef struct sctk_message_to_copy_s{
     char from_buffered;
   }sctk_thread_ptp_message_t;
 
+  typedef struct sctk_perform_messages_s {
+    sctk_request_t* request;
+    struct sctk_internal_ptp_s *recv_ptp;
+    struct sctk_internal_ptp_s *send_ptp;
+    int remote_process;
+    int source_task_id;
+    int polling_task_id;
+    /* If we are blocked inside a function similar to MPI_Wait */
+    int blocking;
+  } sctk_perform_messages_t;
+
 
   /**
      Check if the message if completed according to the message passed as a request
   */
-  void sctk_perform_messages(sctk_request_t* request);
-
+  void sctk_perform_messages(struct sctk_perform_messages_s * wait);
+  void sctk_perform_messages_wait_init_request_type(struct sctk_perform_messages_s * wait);
   void sctk_init_header (sctk_thread_ptp_message_t *tmp, const int myself,
 			 sctk_message_type_t msg_type, void (*free_memory)(void*),
 			 void (*message_copy)(sctk_message_to_copy_t*));
@@ -310,8 +337,8 @@ typedef struct sctk_message_to_copy_s{
 				  sctk_thread_message_header_t * msg);
   void sctk_send_message (sctk_thread_ptp_message_t * msg);
   void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_check);
-  struct sctk_internal_ptp_s;
-  void sctk_recv_message (sctk_thread_ptp_message_t * msg, struct sctk_internal_ptp_s* tmp);
+  void sctk_recv_message (sctk_thread_ptp_message_t * msg, struct sctk_internal_ptp_s* tmp,
+      int need_check);
   void sctk_recv_message_try_check (sctk_thread_ptp_message_t * msg,struct sctk_internal_ptp_s* tmp,int perform_check);
   struct sctk_internal_ptp_s* sctk_get_internal_ptp(int glob_id);
   int sctk_is_net_message (int dest);
@@ -329,7 +356,16 @@ typedef struct sctk_message_to_copy_s{
   void sctk_complete_and_free_message (sctk_thread_ptp_message_t * msg);
   void sctk_rebuild_header (sctk_thread_ptp_message_t * msg);
   int sctk_determine_src_process_from_header (sctk_thread_ptp_message_body_t * body);
+  void sctk_determine_glob_source_and_destination_from_header (
+      sctk_thread_ptp_message_body_t* body, int *glob_source, int *glob_destination);
 
+  void sctk_perform_messages_wait_init(
+    struct sctk_perform_messages_s * wait, sctk_request_t * request, int blocking);
+
+  sctk_reorder_list_t * sctk_ptp_get_reorder_from_destination(int task);
+
+  void sctk_inter_thread_perform_idle (volatile int *data, int value,
+				     void (*func) (void *), void *arg);
 #ifdef __cplusplus
 }
 #endif

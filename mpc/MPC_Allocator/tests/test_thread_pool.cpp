@@ -349,7 +349,7 @@ void TestThreadPool::test_sctk_alloc_merge_chunk_1(void )
 	SVUT_ASSERT_EQUAL(64ul,sctk_alloc_get_size(res));
 	SVUT_ASSERT_SAME(buffer+3*64,sctk_alloc_get_large(res));
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_STATE_ALLOCATED,res->state);
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,res->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,res->unused_magik);
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_TYPE_LARGE,res->type);
 	SVUT_ASSERT_EQUAL(64u,sctk_alloc_get_prev_size(res));
 	SVUT_ASSERT_EQUAL(64u,sctk_alloc_get_prev_size(chunkNext));
@@ -375,7 +375,7 @@ void TestThreadPool::test_sctk_alloc_merge_chunk_2(void )
 	SVUT_ASSERT_EQUAL(128ul,sctk_alloc_get_size(res));
 	SVUT_ASSERT_SAME(buffer+3*64,sctk_alloc_get_large(res));
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_STATE_ALLOCATED,res->state);
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,res->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,res->unused_magik);
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_TYPE_LARGE,res->type);
 	SVUT_ASSERT_EQUAL(64u,sctk_alloc_get_prev_size(res));
 	SVUT_ASSERT_EQUAL(128u,sctk_alloc_get_prev_size(chunkNext));
@@ -401,7 +401,7 @@ void TestThreadPool::test_sctk_alloc_merge_chunk_3(void )
 	SVUT_ASSERT_EQUAL(128ul,sctk_alloc_get_size(res));
 	SVUT_ASSERT_SAME(buffer+2*64,sctk_alloc_get_large(res));
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_STATE_ALLOCATED,res->state);
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,res->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,res->unused_magik);
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_TYPE_LARGE,res->type);
 	SVUT_ASSERT_EQUAL(64u,sctk_alloc_get_prev_size(res));
 	SVUT_ASSERT_EQUAL(128u,sctk_alloc_get_prev_size(chunkNext));
@@ -427,7 +427,7 @@ void TestThreadPool::test_sctk_alloc_merge_chunk_4(void )
 	SVUT_ASSERT_EQUAL(3*64ul,sctk_alloc_get_size(res));
 	SVUT_ASSERT_SAME(buffer+2*64,sctk_alloc_get_large(res));
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_STATE_ALLOCATED,res->state);
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,res->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,res->unused_magik);
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_TYPE_LARGE,res->type);
 	SVUT_ASSERT_EQUAL(64u,sctk_alloc_get_prev_size(res));
 	SVUT_ASSERT_EQUAL(3*64u,sctk_alloc_get_prev_size(chunkNext));
@@ -453,7 +453,7 @@ void TestThreadPool::test_sctk_alloc_merge_chunk_5(void )
 	SVUT_ASSERT_EQUAL(5*64ul,sctk_alloc_get_size(res));
 	SVUT_ASSERT_SAME(buffer+1*64,sctk_alloc_get_large(res));
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_STATE_ALLOCATED,res->state);
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,res->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,res->unused_magik);
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_TYPE_LARGE,res->type);
 	SVUT_ASSERT_EQUAL(64u,sctk_alloc_get_prev_size(res));
 	SVUT_ASSERT_EQUAL(5*64u,sctk_alloc_get_prev_size(chunkNext));
@@ -485,7 +485,7 @@ void TestThreadPool::test_sctk_alloc_merge_chunk_6(void )
 	SVUT_ASSERT_EQUAL(7*64ul,sctk_alloc_get_size(res));
 	SVUT_ASSERT_SAME(buffer+0*64,sctk_alloc_get_large(res));
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_STATE_ALLOCATED,res->state);
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,res->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,res->unused_magik);
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_TYPE_LARGE,res->type);
 	SVUT_ASSERT_FALSE(sctk_alloc_free_list_is_not_empty_quick(&pool,pool.free_lists+1));
 	SVUT_ASSERT_TRUE(sctk_alloc_free_list_empty(pool.free_lists+1));
@@ -513,7 +513,7 @@ void TestThreadPool::test_sctk_alloc_merge_chunk_7(void )
 	SVUT_ASSERT_EQUAL(64ul,sctk_alloc_get_size(res));
 	SVUT_ASSERT_SAME(buffer+0*64,sctk_alloc_get_large(res));
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_STATE_ALLOCATED,res->state);
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,res->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,res->unused_magik);
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_TYPE_LARGE,res->type);
 	SVUT_ASSERT_EQUAL(0u,sctk_alloc_get_prev_size(res));
 	SVUT_ASSERT_EQUAL(64u,sctk_alloc_get_prev_size(chunkNext));
@@ -539,7 +539,7 @@ void TestThreadPool::test_sctk_alloc_merge_chunk_8(void )
 	SVUT_ASSERT_EQUAL(64ul,sctk_alloc_get_size(res));
 	SVUT_ASSERT_SAME(buffer+6*64,sctk_alloc_get_large(res));
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_STATE_ALLOCATED,res->state);
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,res->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,res->unused_magik);
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_TYPE_LARGE,res->type);
 }
 
@@ -567,7 +567,7 @@ void TestThreadPool::test_sctk_alloc_split_free_bloc_1(void )
 	SVUT_ASSERT_SAME(buffer,sctk_alloc_get_large(first));
 	SVUT_ASSERT_EQUAL(256u,sctk_alloc_get_size(first));
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_STATE_ALLOCATED,first->state);
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,first->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,first->unused_magik);
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_TYPE_LARGE,first->type);
 	
 	sctk_alloc_vchunk second = sctk_alloc_split_free_bloc(&first,128-16);
@@ -575,13 +575,13 @@ void TestThreadPool::test_sctk_alloc_split_free_bloc_1(void )
 	SVUT_ASSERT_SAME(buffer,sctk_alloc_get_large(first));
 	SVUT_ASSERT_EQUAL(128u,sctk_alloc_get_size(first));
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_STATE_ALLOCATED,first->state);
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,first->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,first->unused_magik);
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_TYPE_LARGE,first->type);
 
 	SVUT_ASSERT_SAME(buffer+128,sctk_alloc_get_large(second));
 	SVUT_ASSERT_EQUAL(128u,sctk_alloc_get_size(second));
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_STATE_ALLOCATED,second->state);
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,second->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,second->unused_magik);
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_TYPE_LARGE,second->type);
 }
 
@@ -596,7 +596,7 @@ void TestThreadPool::test_sctk_alloc_split_free_bloc_2(void )
 	SVUT_ASSERT_SAME(buffer,sctk_alloc_get_large(first));
 	SVUT_ASSERT_EQUAL(256u,sctk_alloc_get_size(first));
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_STATE_ALLOCATED,first->state);
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,first->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,first->unused_magik);
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_TYPE_LARGE,first->type);
 
 	sctk_alloc_vchunk second = sctk_alloc_split_free_bloc(&first,256-32);
@@ -604,7 +604,7 @@ void TestThreadPool::test_sctk_alloc_split_free_bloc_2(void )
 	SVUT_ASSERT_SAME(buffer,sctk_alloc_get_large(first));
 	SVUT_ASSERT_EQUAL(256u,sctk_alloc_get_size(first));
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_STATE_ALLOCATED,first->state);
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,first->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,first->unused_magik);
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_TYPE_LARGE,first->type);
 
 	SVUT_ASSERT_NULL(second);
@@ -622,7 +622,7 @@ void TestThreadPool::test_sctk_alloc_split_free_bloc_3(void )
 	SVUT_ASSERT_SAME(buffer,sctk_alloc_get_large(first));
 	SVUT_ASSERT_EQUAL(256u,sctk_alloc_get_size(first));
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_STATE_ALLOCATED,first->state);
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,first->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,first->unused_magik);
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_TYPE_LARGE,first->type);
 
 	sctk_alloc_vchunk second = sctk_alloc_split_free_bloc(&first,10);
@@ -630,13 +630,13 @@ void TestThreadPool::test_sctk_alloc_split_free_bloc_3(void )
 	SVUT_ASSERT_SAME(buffer,sctk_alloc_get_large(first));
 	SVUT_ASSERT_EQUAL(32u,sctk_alloc_get_size(first));
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_STATE_ALLOCATED,first->state);
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,first->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,first->unused_magik);
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_TYPE_LARGE,first->type);
 
 	SVUT_ASSERT_SAME(buffer+32,sctk_alloc_get_large(second));
 	SVUT_ASSERT_EQUAL(256u-32u,sctk_alloc_get_size(second));
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_STATE_ALLOCATED,second->state);
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,second->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,second->unused_magik);
 	SVUT_ASSERT_EQUAL(SCTK_ALLOC_CHUNK_TYPE_LARGE,second->type);
 }
 

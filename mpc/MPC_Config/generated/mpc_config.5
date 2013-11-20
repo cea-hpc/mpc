@@ -107,10 +107,34 @@ See type allocator.
 Options for MPC launcher.
 .br
 See type launcher.
+.It Cm debugger
+Options for MPC Debugger
+.br
+See type debugger.
+.It Cm inter_thread_comm
+Options for communication between threads
+.br
+See type inter_thread_comm.
+.It Cm low_level_comm
+
+.br
+See type low_level_comm.
+.It Cm mpc
+Options for MPC Message Passing
+.br
+See type mpc.
+.It Cm openmp
+Options for MPC OpenMP.
+.br
+See type openmp.
 .It Cm profiler
 Options for the internal MPC Profiler
 .br
 See type profiler.
+.It Cm thread
+Options for MPC threads.
+.br
+See type thread.
 .El
 .Sh ENTRIES OF TYPE allocator
 Options for MPC memory allocator.
@@ -134,14 +158,18 @@ If the new segment is smaller of N bytes than threashold, realloc will allocate 
 Type is bool. Default value is true. 
 .Pp numa
 Permit to enable of disable NUMA support in MPC Allocator.
-.It Cm scope
-Type is string. Default value is thread. 
-.Pp scope
-Define the scope the posix allocator, can be : process | vp | thread.
 .It Cm strict
 Type is bool. Default value is false. 
 .Pp strict
 If true, enable usage of abort() on free error, otherwise try to continue by skipping.
+.It Cm keep_mem
+Type is size. Default value is 500MB. 
+.Pp keep_mem
+Maximum amount of memory to keep in memory sources (one per NUMA node). Use 0 to disable cache, huge value to keep all.
+.It Cm keep_max
+Type is size. Default value is 8MB. 
+.Pp keep_max
+Maximum size of macro blocs to keep in memory source for reuse. Use 0 to disable cache, huge value to keep all.
 .El
 .Sh ENTRIES OF TYPE launcher
 Options for MPC launcher.
@@ -149,14 +177,6 @@ Options for MPC launcher.
 It support parameters :
 .Pp
 .Bl -tag -width Ds
-.It Cm smt
-Type is bool. Default value is false. 
-.Pp smt
-Enable usage of hyperthreaded cores if available on current architecture.
-.It Cm cores
-Type is int. Default value is 1. 
-.Pp cores
-Default number of cores if -c=X is not given to mpcrun.
 .It Cm verbosity
 Type is int. Default value is 0. 
 .Pp verbosity
@@ -168,22 +188,290 @@ Display the MPC banner at launch time to print some informations about the topol
 .It Cm autokill
 Type is int. Default value is 0. 
 .Pp autokill
-Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT
+Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT.
+.It Cm user_launchers
+Type is string. Default value is default. 
+.Pp user_launchers
+Permit to extend the launchers available via 'mpcrun -l=...' by providing scripts (named mpcrun_XXXX) in a user directory. Can be override by MPC_USER_LAUNCHERS.
+.It Cm keep_rand_addr
+Type is bool. Default value is true. 
+.Pp keep_rand_addr
+Activate randomization of base addresses
+.It Cm disable_rand_addr
+Type is bool. Default value is false. 
+.Pp disable_rand_addr
+Deactivate randomization of base addresses
+.It Cm disable_mpc
+Type is bool. Default value is false. 
+.Pp disable_mpc
+Do not use mpc for execution (deprecated?)
+.It Cm thread_init
+Type is function pointer. Default value is sctk_use_ethread_mxn. 
+.Pp thread_init
+Initialize multithreading mode
+.It Cm nb_task
+Type is int. Default value is 1. 
+.Pp nb_task
+Define the number of MPI tasks
+.It Cm nb_process
+Type is int. Default value is 1. 
+.Pp nb_process
+Define the number of MPC processes
+.It Cm nb_processor
+Type is int. Default value is 0. 
+.Pp nb_processor
+Define the number of virtual processors
+.It Cm nb_node
+Type is int. Default value is 1. 
+.Pp nb_node
+Define the number of compute nodes
+.It Cm launcher
+Type is string. Default value is none. 
+.Pp launcher
+Define which launcher to use
+.It Cm max_try
+Type is int. Default value is 10. 
+.Pp max_try
+Define the max number of tries to access the topology file before failing
+.It Cm vers_details
+Type is bool. Default value is false. 
+.Pp vers_details
+Print the MPC version number
+.It Cm profiling
+Type is string. Default value is none. 
+.Pp profiling
+Select the type of outputs for the profiling
+.It Cm enable_smt
+Type is bool. Default value is false. 
+.Pp enable_smt
+Enable usage of hyperthreaded cores if available on current architecture.
+.It Cm share_node
+Type is bool. Default value is false. 
+.Pp share_node
+Enable the restriction on CPU number to share node
+.It Cm restart
+Type is bool. Default value is false. 
+.Pp restart
+Restart MPC from a previous checkpoint
+.It Cm checkpoint
+Type is bool. Default value is false. 
+.Pp checkpoint
+Enable MPC checkpointing
+.It Cm migration
+Type is bool. Default value is false. 
+.Pp migration
+Enable migration
+.It Cm report
+Type is bool. Default value is false. 
+.Pp report
+Enable reporting.
 .El
-.Sh ENTRIES OF TYPE net_driver_fake
+.Sh ENTRIES OF TYPE debugger
+Options for MPC Debugger
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm colors
+Type is bool. Default value is true. 
+.Pp colors
+Print colored text in terminal
+.It Cm max_filename_size
+Type is int. Default value is 1024. 
+.Pp max_filename_size
+
+.El
+.Sh ENTRIES OF TYPE net_driver_infiniband
 Declare a fake driver to test the configuration system.
 .Pp
 It support parameters :
 .Pp
 .Bl -tag -width Ds
-.It Cm buffer
+.It Cm network_type
+Type is int. Default value is 0. 
+.Pp network_type
+Define a network's type (0=signalization, 1=data)
+.It Cm adm_port
+Type is int. Default value is 0. 
+.Pp adm_port
+Defines the port number to use.
+.It Cm verbose_level
+Type is int. Default value is 0. 
+.Pp verbose_level
+Defines the verbose level of the Infiniband interface .
+.It Cm eager_limit
+Type is int. Default value is 12288. 
+.Pp eager_limit
+Size of the eager buffers (short messages).
+.It Cm buffered_limit
+Type is int. Default value is 262114. 
+.Pp buffered_limit
+Max size for using the Buffered protocol (message split into several Eager messages).
+.It Cm qp_tx_depth
+Type is int. Default value is 15000. 
+.Pp qp_tx_depth
+Number of entries to allocate in the QP for sending messages. If too low, may cause an QP overrun
+.It Cm qp_rx_depth
+Type is int. Default value is 0. 
+.Pp qp_rx_depth
+Number of entries to allocate in the QP for receiving messages. Must be 0 if using SRQ
+.It Cm cq_depth
+Type is int. Default value is 40000. 
+.Pp cq_depth
+Number of entries to allocate in the CQ. If too low, may cause a CQ overrun
+.It Cm max_sg_sq
+Type is int. Default value is 4. 
+.Pp max_sg_sq
+Max pending RDMA operations for send
+.It Cm max_sg_rq
+Type is int. Default value is 4. 
+.Pp max_sg_rq
+Max pending RDMA operations for recv
+.It Cm max_inline
+Type is int. Default value is 128. 
+.Pp max_inline
+Max size for inlining messages
+.It Cm rdma_resizing
+Type is int. Default value is 0. 
+.Pp rdma_resizing
+Defines if RDMA connections may be resized.
+.It Cm max_rdma_connections
+Type is int. Default value is 0. 
+.Pp max_rdma_connections
+Number of RDMA buffers allocated for each neighbor
+.It Cm max_rdma_resizing
+Type is int. Default value is 0. 
+.Pp max_rdma_resizing
+Max number of RDMA buffers resizing allowed
+.It Cm init_ibufs
+Type is int. Default value is 1000. 
+.Pp init_ibufs
+Max number of Eager buffers to allocate during the initialization step
+.It Cm init_recv_ibufs
+Type is int. Default value is 200. 
+.Pp init_recv_ibufs
+Defines the number of receive buffers initially allocated. The number is on-the-fly expanded when needed (see init_recv_ibufs_chunk)
+.It Cm max_srq_ibufs_posted
+Type is int. Default value is 1500. 
+.Pp max_srq_ibufs_posted
+Max number of Eager buffers which can be posted to the SRQ. This number cannot be higher than the number fixed by the HW
+.It Cm max_srq_ibufs
+Type is int. Default value is 1000. 
+.Pp max_srq_ibufs
+Max number of Eager buffers which can be used by the SRQ. This number is not fixed by the HW
+.It Cm srq_credit_limit
+Type is int. Default value is 500. 
+.Pp srq_credit_limit
+Min number of free recv Eager buffers before posting a new buffer.
+.It Cm srq_credit_thread_limit
+Type is int. Default value is 100. 
+.Pp srq_credit_thread_limit
+Min number of free recv Eager buffers before the activation of the asynchronous thread. If this thread is activated too many times, the performance may be decreased.
+.It Cm size_ibufs_chunk
+Type is int. Default value is 100. 
+.Pp size_ibufs_chunk
+Number of new buffers allocated when no more buffers are available.
+.It Cm init_mr
+Type is int. Default value is 400. 
+.Pp init_mr
+Number of MMU entries allocated during the MPC initlization.
+.It Cm size_mr_chunk
+Type is int. Default value is 200. 
+.Pp size_mr_chunk
+Number of MMU entries allocated when no more MMU entries are available.
+.It Cm mmu_cache_enabled
+Type is int. Default value is 1. 
+.Pp mmu_cache_enabled
+Defines if the MMU cache is enabled.
+.It Cm mmu_cache_entries
+Type is int. Default value is 1. 
+.Pp mmu_cache_entries
+Defines the number of MMU cache allowed.
+.It Cm steal
+Type is int. Default value is 2. 
+.Pp steal
+Defines if the steal in MPI is allowed 
+.It Cm quiet_crash
+Type is int. Default value is 0. 
+.Pp quiet_crash
+Defines if the Infiniband interface must crash quietly.
+.It Cm async_thread
+Type is int. Default value is 0. 
+.Pp async_thread
+Defines if the asynchronous may be started at the MPC initialization.
+.It Cm wc_in_number
+Type is int. Default value is 0. 
+.Pp wc_in_number
+Defines the number of entries for the CQ dedicated to received messages.
+.It Cm wc_out_number
+Type is int. Default value is 0. 
+.Pp wc_out_number
+Defines the number of entries for the CQ dedicated to sent messages.
+.It Cm rdma_depth
+Type is int. Default value is 0. 
+.Pp rdma_depth
+Number of outstanding RDMA reads and atomic operations on the destination QP (to be confirmed)
+.It Cm rdma_dest_depth
+Type is int. Default value is 0. 
+.Pp rdma_dest_depth
+Number of responder resources for handling incoming RDMA reads and atomic operations (to be confirmed)
+.It Cm low_memory
+Type is bool. Default value is false. 
+.Pp low_memory
+Defines if the low memory mode should be activated
+.It Cm rdvz_protocol
+Type is enum ibv_rdvz_protocol. Possible values are : IBV_RDVZ_WRITE_PROTOCOL, IBV_RDVZ_READ_PROTOCOL.
+
+Default value is IBV_RDVZ_WRITE_PROTOCOL. 
+.Pp rdvz_protocol
+Defines the Rendezvous protocol to use (IBV_RDVZ_WRITE_PROTOCOL or IBV_RDVZ_READ_PROTOCOL)
+.It Cm rdma_min_size
 Type is int. Default value is 1024. 
-.Pp buffer
-Size of the buffer used for internal copies.
-.It Cm stealing
-Type is bool. Default value is true. 
-.Pp stealing
-Enable stealing between threads.
+.Pp rdma_min_size
+Defines the minimum size for the Eager RDMA buffers
+.It Cm rdma_max_size
+Type is int. Default value is 4096. 
+.Pp rdma_max_size
+Defines the maximun size for the Eager RDMA buffers
+.It Cm rdma_min_nb
+Type is int. Default value is 8. 
+.Pp rdma_min_nb
+Defines the minimum number of Eager RDMA buffers
+.It Cm rdma_max_nb
+Type is int. Default value is 32. 
+.Pp rdma_max_nb
+Defines the maximum number of Eager RDMA buffers
+.It Cm rdma_resizing_min_size
+Type is int. Default value is 1024. 
+.Pp rdma_resizing_min_size
+Defines the minimum size for the Eager RDMA buffers (resizing)
+.It Cm rdma_resizing_max_size
+Type is int. Default value is 4096. 
+.Pp rdma_resizing_max_size
+Defines the maximum size for the Eager RDMA buffers (resizing)
+.It Cm rdma_resizing_min_nb
+Type is int. Default value is 8. 
+.Pp rdma_resizing_min_nb
+Defines the minimum number of Eager RDMA buffers (resizing)
+.It Cm rdma_resizing_max_nb
+Type is int. Default value is 32. 
+.Pp rdma_resizing_max_nb
+Defines the maximum number of Eager RDMA buffers (resizing)
+.It Cm size_recv_ibufs_chunk
+Type is int. Default value is 400. 
+.Pp size_recv_ibufs_chunk
+Defines the number of receive buffers allocated on the fly.
+.El
+.Sh ENTRIES OF TYPE net_driver_tcp
+Declare a fake driver to test the configuration system.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm fake_param
+Type is int. Default value is 0. 
+.Pp fake_param
+Fake param.
 .El
 .Sh OPTIONS OF NODE net_driver
 Define a specific configuration for a network driver to apply in rails.
@@ -192,9 +480,11 @@ It can contain a node of type :
 .Pp
 .Bl -tag -width Ds
 .It Cm infiniband
- of type net_driver_fake. 
+ of type net_driver_infiniband. 
 .It Cm tcp
- of type net_driver_fake. 
+ of type net_driver_tcp. 
+.It Cm tcpoib
+ of type net_driver_tcp. 
 .El
 .Sh ENTRIES OF TYPE net_driver_config
 Contain a list of driver configuration reused by rail definitions.
@@ -210,6 +500,21 @@ Name of the driver configuration to be referenced in rail definitions.
 Type is net_driver. 
 .Pp driver
 Define the related driver to use and its configuration.
+.El
+.Sh ENTRIES OF TYPE net_cli_option
+Define a specific configuration for a network provided by '-net'.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm name
+Type is string. 
+.Pp name
+Define the name of the option.
+.It Cm rails
+Type is array of . 
+.Pp rails
+Define the driver config to use for this rail.
 .El
 .Sh ENTRIES OF TYPE net_rail
 Define a rail which is a name, a device associate to a driver and a routing topology.
@@ -241,13 +546,145 @@ It support parameters :
 .Pp
 .Bl -tag -width Ds
 .It Cm configs
-Type is array of net_driver_config. 
+Type is array of . 
 .Pp configs
 Define the configuration driver list to reuse in rail definitions.
 .It Cm rails
-Type is array of net_rail. 
+Type is array of . 
 .Pp rails
 List of rails to declare in MPC.
+.It Cm cli_options
+Type is array of . 
+.Pp cli_options
+List of networks available through the '-net' argument of mpcrun.
+.El
+.Sh ENTRIES OF TYPE inter_thread_comm
+Options for communication between threads
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm barrier_arity
+Type is int. Default value is 8. 
+.Pp barrier_arity
+
+.It Cm broadcast_arity_max
+Type is int. Default value is 32. 
+.Pp broadcast_arity_max
+
+.It Cm broadcast_max_size
+Type is int. Default value is 1024. 
+.Pp broadcast_max_size
+
+.It Cm broadcast_check_threshold
+Type is int. Default value is 512. 
+.Pp broadcast_check_threshold
+
+.It Cm allreduce_arity_max
+Type is int. Default value is 8. 
+.Pp allreduce_arity_max
+
+.It Cm allreduce_max_size
+Type is int. Default value is 1024. 
+.Pp allreduce_max_size
+
+.It Cm allreduce_check_threshold
+Type is int. Default value is 8192. 
+.Pp allreduce_check_threshold
+
+.It Cm collectives_init_hook
+Type is function pointer. Default value is sctk_collectives_init_opt_messages. 
+.Pp collectives_init_hook
+
+.El
+.Sh ENTRIES OF TYPE low_level_comm
+
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm checksum
+Type is bool. Default value is true. 
+.Pp checksum
+
+.It Cm send_msg
+Type is function pointer. Default value is sctk_network_send_message_default. 
+.Pp send_msg
+
+.It Cm network_mode
+Type is string. Default value is default. 
+.Pp network_mode
+
+.It Cm dyn_reordering
+Type is bool. Default value is false. 
+.Pp dyn_reordering
+
+.El
+.Sh ENTRIES OF TYPE mpc
+Options for MPC Message Passing
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm log_debug
+Type is bool. Default value is false. 
+.Pp log_debug
+Print debug messages
+.It Cm hard_checking
+Type is bool. Default value is false. 
+.Pp hard_checking
+
+.It Cm buffering
+Type is bool. Default value is false. 
+.Pp buffering
+
+.El
+.Sh ENTRIES OF TYPE openmp
+Options for MPC OpenMP.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm vp
+Type is int. 
+.Pp vp
+Number of VPs for each OpenMP team
+.It Cm schedule
+Type is string. Default value is static. 
+.Pp schedule
+Runtime schedule type and chunck size
+.It Cm nb_threads
+Type is int. 
+.Pp nb_threads
+Number of threads to use during execution
+.It Cm adjustment
+Type is bool. Default value is false. 
+.Pp adjustment
+Dynamic adjustment of the number of threads
+.It Cm nested
+Type is bool. Default value is false. 
+.Pp nested
+Nested parallelism
+.It Cm max_threads
+Type is int. Default value is 64. 
+.Pp max_threads
+Maximum number of threads for each team of a parallel region
+.It Cm max_alive_for_dyn
+Type is int. Default value is 7. 
+.Pp max_alive_for_dyn
+Maximum number of shared for loops w/ dynamic schedule alive
+.It Cm max_alive_for_guided
+Type is int. Default value is 3. 
+.Pp max_alive_for_guided
+Maximum number of shared for loops w/ guided schedule alive
+.It Cm max_alive_sections
+Type is int. Default value is 3. 
+.Pp max_alive_sections
+Maximum number of alive sections construct
+.It Cm max_alive_single
+Type is int. Default value is 3. 
+.Pp max_alive_single
+Maximum number of alive single construct
 .El
 .Sh ENTRIES OF TYPE profiler
 Options for the internal MPC Profiler
@@ -268,7 +705,26 @@ Type is bool. Default value is true.
 .Pp color_stdout
 Profile in color when outputed to stdout
 .It Cm level_colors
-Type is array of string. Default value is {#3A4D85, #82A2FF, #B8BDCB, #5D6782, #838383, #5A5757}.
+Type is array of . Default value is {#3A4D85, #82A2FF, #B8BDCB, #5D6782, #838383, #5A5757}.
 .Pp level_colors
 Color for levels of profiler output
+.El
+.Sh ENTRIES OF TYPE thread
+Options for MPC threads.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm spin_delay
+Type is int. Default value is 10. 
+.Pp spin_delay
+Max number of accesses to the lock before calling thread_yield
+.It Cm interval
+Type is int. Default value is 10. 
+.Pp interval
+
+.It Cm kthread_stack_size
+Type is size. Default value is 10MB. 
+.Pp kthread_stack_size
+Define the stack size of MPC user threads
 .El

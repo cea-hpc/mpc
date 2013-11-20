@@ -22,7 +22,7 @@
 ########################################################################
 
 if test "${MPC_SOURCE_DIR}" = "" ; then
-. .MPC_version
+. ./.MPC_version
 else
 . ${MPC_SOURCE_DIR}.MPC_version
 fi

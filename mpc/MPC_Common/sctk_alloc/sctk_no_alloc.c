@@ -20,15 +20,18 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#ifndef MPC_Allocator
+#ifndef MPC_PosixAllocator
 
 /********************  HEADERS  *********************/
+#ifdef HAVE_MREMAP
 #define _GNU_SOURCE
+#endif /*HAVE_MREMAP*/
+
 #include <unistd.h>
 #include <stdlib.h>
-#include "sctk_alloc_api.h"
 #include "sctk_alloc.h"
 #include "sctk_debug.h"
+#include <unistd.h>
 #include <sys/mman.h>
 
 /********************  MACRO  ***********************/
@@ -128,7 +131,7 @@ void sctk_flush_alloc_buffers (void)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_relocalise_memory (void *ptr, sctk_size_t size)
+void sctk_relocalise_memory (void *ptr, size_t size)
 {
 }
 
@@ -184,13 +187,13 @@ void __sctk_update_memory (char *file_name)
 }
 
 /*******************  FUNCTION  *********************/
-sctk_alloc_chain_t * __sctk_create_thread_memory_area (void)
+struct sctk_alloc_chain * __sctk_create_thread_memory_area (void)
 {
 	return (void *) __sctk_create_thread_memory_area;
 }
 
 /*******************  FUNCTION  *********************/
-void __sctk_delete_thread_memory_area (sctk_alloc_chain_t * tmp)
+void __sctk_delete_thread_memory_area (struct sctk_alloc_chain * tmp)
 {
 }
 
@@ -200,14 +203,18 @@ void sctk_alloc_posix_plug_on_egg_allocator(void)
 }
 
 /*******************  FUNCTION  *********************/
-sctk_alloc_chain_t * sctk_get_current_alloc_chain(void)
+void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void)
+{
+}
+
+/*******************  FUNCTION  *********************/
+struct sctk_alloc_chain * sctk_get_current_alloc_chain(void)
 {
 	return NULL;
 }
 
 /*******************  FUNCTION  *********************/
-int __sctk_posix_memalign (void **memptr, size_t alignment, size_t size,
-                           sctk_alloc_chain_t * tls)
+int __sctk_posix_memalign (void **memptr, size_t alignment, size_t size,struct sctk_alloc_chain * tls)
 {
 	#ifdef HAVE_POSIX_MEMALIGN
 	return posix_memalign (memptr, alignment, size);
@@ -218,25 +225,25 @@ int __sctk_posix_memalign (void **memptr, size_t alignment, size_t size,
 }
 
 /*******************  FUNCTION  *********************/
-void * __sctk_realloc (void *ptr, size_t size, sctk_alloc_chain_t * tls)
+void * __sctk_realloc (void *ptr, size_t size, struct sctk_alloc_chain * tls)
 {
 	return realloc (ptr, size);
 }
 
 /*******************  FUNCTION  *********************/
-void __sctk_free (void *ptr, sctk_alloc_chain_t * tls)
+void __sctk_free (void *ptr, struct sctk_alloc_chain * tls)
 {
 	free (ptr);
 }
 
 /*******************  FUNCTION  *********************/
-void * __sctk_calloc (size_t nmemb, size_t size, sctk_alloc_chain_t * tls)
+void * __sctk_calloc (size_t nmemb, size_t size, struct sctk_alloc_chain * tls)
 {
 	return calloc (nmemb, size);
 }
 
 /*******************  FUNCTION  *********************/
-void * __sctk_malloc (size_t size, sctk_alloc_chain_t * tls)
+void * __sctk_malloc (size_t size, struct sctk_alloc_chain * tls)
 {
 	return malloc (size);
 }
@@ -264,18 +271,18 @@ void sctk_view_local_memory (void)
 }
 
 /*******************  FUNCTION  *********************/
-void sctk_set_tls (sctk_alloc_chain_t * tls)
+void sctk_set_tls (struct sctk_alloc_chain * tls)
 {
 }
 
 /*******************  FUNCTION  *********************/
-sctk_alloc_chain_t * sctk_get_tls (void)
+struct sctk_alloc_chain * sctk_get_tls (void)
 {
 	return NULL;
 }
 
 /*******************  FUNCTION  *********************/
-void __sctk_dump_tls (sctk_alloc_chain_t * tls, char *file_name)
+void __sctk_dump_tls (struct sctk_alloc_chain * tls, char *file_name)
 {
 }
 
@@ -285,7 +292,7 @@ void sctk_dump_tls (char *file_name)
 }
 
 /*******************  FUNCTION  *********************/
-void __sctk_restore_tls (sctk_alloc_chain_t ** tls, char *file_name)
+void __sctk_restore_tls (struct sctk_alloc_chain ** tls, char *file_name)
 {
 }
 
@@ -301,7 +308,7 @@ int sctk_check_file (char *file_name)
 }
 
 /*******************  FUNCTION  *********************/
-void __sctk_view_local_memory (sctk_alloc_chain_t * tls)
+void __sctk_view_local_memory (struct sctk_alloc_chain * tls)
 {
 }
 
@@ -390,13 +397,13 @@ int sctk_is_no_alloc_land (void)
 }
 
 /*******************  FUNCTION  *********************/
-void * __sctk_malloc_on_node (size_t size, int node, sctk_alloc_chain_t * tls)
+void * __sctk_malloc_on_node (size_t size, int node, struct sctk_alloc_chain * tls)
 {
 	return malloc (size);
 }
 
 /*******************  FUNCTION  *********************/
-void * __sctk_malloc_new (size_t size, sctk_alloc_chain_t * tls)
+void * __sctk_malloc_new (size_t size, struct sctk_alloc_chain * tls)
 {
 	return malloc (size);
 }
@@ -424,7 +431,11 @@ int sctk_user_munmap (void *start, size_t length)
 void * sctk_user_mremap (void *old_address, size_t old_size, size_t new_size,
                          int flags)
 {
+	#ifdef HAVE_MREMAP
 	return mremap (old_address, old_size, new_size, flags);
+	#else /* HAVE_MREMAP*/
+	not_available ();
+	#endif /*HAVE_MREMAP*/
 }
 
 /*******************  FUNCTION  *********************/

@@ -28,6 +28,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+#define sctk_min(a, b)  ((a) < (b) ? (a) : (b))
+
   void sctk_net_read_in_fd (sctk_thread_ptp_message_t * msg,
 			     int fd)
   {
@@ -56,6 +58,9 @@ TODO("Deal with partial reception")
       size_t i;
       size_t j;
       size_t size;
+      size = msg->body.header.msg_size;
+      if(size > 0)
+      {
       for (i = 0; i < msg->tail.message.pack.count; i++)
 	for (j = 0; j < msg->tail.message.pack.list.std[i].count; j++)
 	  {
@@ -66,24 +71,30 @@ TODO("Deal with partial reception")
 			    msg->tail.message.pack.list.std[i].begins[j] *
 			    msg->tail.message.pack.list.std[i].elem_size,size);
 	  }
+	}
       break;
     }
   case sctk_message_pack_absolute: {
     size_t i;
     size_t j;
     size_t size;
-    for (i = 0; i < msg->tail.message.pack.count; i++)
-      for (j = 0; j < msg->tail.message.pack.list.absolute[i].count; j++)
-	{
-	  size = (msg->tail.message.pack.list.absolute[i].ends[j] -
-		  msg->tail.message.pack.list.absolute[i].begins[j] +
-		  1) * msg->tail.message.pack.list.absolute[i].elem_size;
-	  sctk_safe_read(fd,((char *) (msg->tail.message.pack.list.absolute[i].addr)) +
-			  msg->tail.message.pack.list.absolute[i].begins[j] *
-			  msg->tail.message.pack.list.absolute[i].elem_size,size);
-	}
+    size = msg->body.header.msg_size;
+      if(size > 0)
+      {
+		for (i = 0; i < msg->tail.message.pack.count; i++)
+		  for (j = 0; j < msg->tail.message.pack.list.absolute[i].count; j++)
+		{
+		  size = (msg->tail.message.pack.list.absolute[i].ends[j] -
+			  msg->tail.message.pack.list.absolute[i].begins[j] +
+			  1) * msg->tail.message.pack.list.absolute[i].elem_size;
+		  sctk_safe_read(fd,((char *) (msg->tail.message.pack.list.absolute[i].addr)) +
+				  msg->tail.message.pack.list.absolute[i].begins[j] *
+				  msg->tail.message.pack.list.absolute[i].elem_size,size);
+		}
+	  }
       break;
     }
+	
     default: not_reachable();
     }
   }
@@ -115,15 +126,19 @@ TODO("Deal with partial reception")
       size_t i;
       size_t j;
       size_t size;
-      for (i = 0; i < msg->tail.message.pack.count; i++)
-	for (j = 0; j < msg->tail.message.pack.list.std[i].count; j++)
-	  {
-	    size = (msg->tail.message.pack.list.std[i].ends[j] -
-		    msg->tail.message.pack.list.std[i].begins[j] +
-		    1) * msg->tail.message.pack.list.std[i].elem_size;
-	    sctk_safe_write(fd,((char *) (msg->tail.message.pack.list.std[i].addr)) +
-			    msg->tail.message.pack.list.std[i].begins[j] *
-			    msg->tail.message.pack.list.std[i].elem_size,size);
+      size = msg->body.header.msg_size;
+      if(size > 0)
+      {
+		  for (i = 0; i < msg->tail.message.pack.count; i++)
+			for (j = 0; j < msg->tail.message.pack.list.std[i].count; j++)
+			  {
+				size = (msg->tail.message.pack.list.std[i].ends[j] -
+					msg->tail.message.pack.list.std[i].begins[j] +
+					1) * msg->tail.message.pack.list.std[i].elem_size;
+				sctk_safe_write(fd,((char *) (msg->tail.message.pack.list.std[i].addr)) +
+						msg->tail.message.pack.list.std[i].begins[j] *
+						msg->tail.message.pack.list.std[i].elem_size,size);
+			  }
 	  }
       break;
     }
@@ -131,15 +146,19 @@ TODO("Deal with partial reception")
     size_t i;
     size_t j;
     size_t size;
-    for (i = 0; i < msg->tail.message.pack.count; i++)
-      for (j = 0; j < msg->tail.message.pack.list.absolute[i].count; j++)
-	{
-	  size = (msg->tail.message.pack.list.absolute[i].ends[j] -
-		  msg->tail.message.pack.list.absolute[i].begins[j] +
-		  1) * msg->tail.message.pack.list.absolute[i].elem_size;
-	  sctk_safe_write(fd,((char *) (msg->tail.message.pack.list.absolute[i].addr)) +
-			  msg->tail.message.pack.list.absolute[i].begins[j] *
-			  msg->tail.message.pack.list.absolute[i].elem_size,size);
+    size = msg->body.header.msg_size;
+      if(size > 0)
+      {
+		for (i = 0; i < msg->tail.message.pack.count; i++)
+		  for (j = 0; j < msg->tail.message.pack.list.absolute[i].count; j++)
+			{
+			  size = (msg->tail.message.pack.list.absolute[i].ends[j] -
+				  msg->tail.message.pack.list.absolute[i].begins[j] +
+				  1) * msg->tail.message.pack.list.absolute[i].elem_size;
+			  sctk_safe_write(fd,((char *) (msg->tail.message.pack.list.absolute[i].addr)) +
+					  msg->tail.message.pack.list.absolute[i].begins[j] *
+					  msg->tail.message.pack.list.absolute[i].elem_size,size);
+			}
 	}
       break;
     }
@@ -178,16 +197,20 @@ TODO("Deal with partial reception")
       size_t i;
       size_t j;
       size_t size;
-      for (i = 0; i < msg->tail.message.pack.count; i++)
-	for (j = 0; j < msg->tail.message.pack.list.std[i].count; j++)
-	  {
-	    size = (msg->tail.message.pack.list.std[i].ends[j] -
-		    msg->tail.message.pack.list.std[i].begins[j] +
-		    1) * msg->tail.message.pack.list.std[i].elem_size;
-	    memcpy(buffer,((char *) (msg->tail.message.pack.list.std[i].addr)) +
-			    msg->tail.message.pack.list.std[i].begins[j] *
-			    msg->tail.message.pack.list.std[i].elem_size,size);
-	    buffer += size;
+      size = msg->body.header.msg_size;
+      if(size > 0)
+      {
+		  for (i = 0; i < msg->tail.message.pack.count; i++)
+			for (j = 0; j < msg->tail.message.pack.list.std[i].count; j++)
+			  {
+				size = (msg->tail.message.pack.list.std[i].ends[j] -
+					msg->tail.message.pack.list.std[i].begins[j] +
+					1) * msg->tail.message.pack.list.std[i].elem_size;
+				memcpy(buffer,((char *) (msg->tail.message.pack.list.std[i].addr)) +
+						msg->tail.message.pack.list.std[i].begins[j] *
+						msg->tail.message.pack.list.std[i].elem_size,size);
+				buffer += size;
+			  }
 	  }
       break;
     }
@@ -195,16 +218,20 @@ TODO("Deal with partial reception")
     size_t i;
     size_t j;
     size_t size;
-    for (i = 0; i < msg->tail.message.pack.count; i++)
-      for (j = 0; j < msg->tail.message.pack.list.absolute[i].count; j++)
+    size = msg->body.header.msg_size;
+	if(size > 0)
 	{
-	  size = (msg->tail.message.pack.list.absolute[i].ends[j] -
-		  msg->tail.message.pack.list.absolute[i].begins[j] +
-		  1) * msg->tail.message.pack.list.absolute[i].elem_size;
-	  memcpy(buffer,((char *) (msg->tail.message.pack.list.absolute[i].addr)) +
-			  msg->tail.message.pack.list.absolute[i].begins[j] *
-			  msg->tail.message.pack.list.absolute[i].elem_size,size);
-	  buffer += size;
+		for (i = 0; i < msg->tail.message.pack.count; i++)
+		  for (j = 0; j < msg->tail.message.pack.list.absolute[i].count; j++)
+			{
+			  size = (msg->tail.message.pack.list.absolute[i].ends[j] -
+				  msg->tail.message.pack.list.absolute[i].begins[j] +
+				  1) * msg->tail.message.pack.list.absolute[i].elem_size;
+			  memcpy(buffer,((char *) (msg->tail.message.pack.list.absolute[i].addr)) +
+					  msg->tail.message.pack.list.absolute[i].begins[j] *
+					  msg->tail.message.pack.list.absolute[i].elem_size,size);
+			  buffer += size;
+			}
 	}
       break;
     }
@@ -272,47 +299,10 @@ TODO("Deal with partial reception")
     return msg->body.header.msg_size;
   }
 
-#if 0
-#if (defined(__GNUC__) || defined(__ICC)) && defined(__x86_64__)
-
-  static inline void
-amd64_cpy_nt ( volatile void *dst, const volatile void *src, const size_t n ) {
-	size_t n32 = ( n ) >> 5;
-	size_t nleft = ( n ) & ( 32 - 1 );
-
-	if ( n32 ) {
-		__asm__ __volatile__ ( ".align 16  \n"
-		                       "1:  \n"
-		                       "mov (%1), %%r8  \n"
-		                       "mov 8(%1), %%r9  \n"
-		                       "add $32, %1  \n"
-		                       "movnti %%r8, (%2)  \n"
-		                       "movnti %%r9, 8(%2)  \n"
-		                       "add $32, %2  \n"
-		                       "mov -16(%1), %%r8  \n"
-		                       "mov -8(%1), %%r9  \n"
-		                       "dec %0  \n"
-		                       "movnti %%r8, -16(%2)  \n"
-		                       "movnti %%r9, -8(%2)  \n"
-		                       "jnz 1b  \n"
-		                       "sfence  \n"
-	                       "mfence  \n":"+a" ( n32 ), "+S" ( src ),
-		                       "+D" ( dst ) ::"r8",
-		                       "r9" );
-	}
-
-
-	if ( nleft ) {
-		memcpy ( ( void * ) dst, ( void * ) src, nleft );
-	}
-}
-#else
 static  inline void
 amd64_cpy_nt ( volatile void *dst, volatile void *src, size_t n ) {
 	memcpy ( ( void * ) dst, ( void * ) src, n );
 }
-#endif
-#endif
 
 static inline size_t
 copy_frag ( char *msg,
@@ -496,72 +486,132 @@ int sctk_net_copy_frag_msg (
   return 0;
 }
 
-void sctk_net_message_copy(sctk_message_to_copy_t* tmp){
-  sctk_thread_ptp_message_t* send;
-  sctk_thread_ptp_message_t* recv;
-  char* body;
+void sctk_net_message_copy(sctk_message_to_copy_t* tmp)
+{
+	sctk_thread_ptp_message_t* send;
+	sctk_thread_ptp_message_t* recv;
+	char* body;
 
-  send = tmp->msg_send;
-  recv = tmp->msg_recv;
+	send = tmp->msg_send;
+	recv = tmp->msg_recv;
 
-  body = (char*)send + sizeof(sctk_thread_ptp_message_t);
+	body = (char*)send + sizeof(sctk_thread_ptp_message_t);
 
-  send->body.completion_flag = NULL;
+	send->body.completion_flag = NULL;
 
-  sctk_nodebug("MSG |%s|", (char*)body);
+	sctk_nodebug("MSG |%s|", (char*)body);
 
-  switch(recv->tail.message_type){
-  case sctk_message_contiguous: {
-    size_t size;
-    size = send->body.header.msg_size;
-    if(size > recv->tail.message.contiguous.size){
-      size = recv->tail.message.contiguous.size;
-    }
-
-    memcpy(recv->tail.message.contiguous.addr,body,
-	   size);
-
-    sctk_message_completion_and_free(send,recv);
-    break;
-  }
-  case sctk_message_pack: {
-    size_t i;
-    size_t j;
-    size_t size;
-    for (i = 0; i < recv->tail.message.pack.count; i++)
-      for (j = 0; j < recv->tail.message.pack.list.std[i].count; j++)
+	switch(recv->tail.message_type)
 	{
-	  size = (recv->tail.message.pack.list.std[i].ends[j] -
-		  recv->tail.message.pack.list.std[i].begins[j] +
-		  1) * recv->tail.message.pack.list.std[i].elem_size;
-	  memcpy(((char *) (recv->tail.message.pack.list.std[i].addr)) +
-		 recv->tail.message.pack.list.std[i].begins[j] *
-		 recv->tail.message.pack.list.std[i].elem_size,body,size);
-	  body += size;
+		case sctk_message_contiguous: 
+		{
+			size_t size;
+			size = send->body.header.msg_size;
+			size = sctk_min(send->body.header.msg_size, recv->tail.message.contiguous.size);
+
+			memcpy(recv->tail.message.contiguous.addr,body, size);
+
+			sctk_message_completion_and_free(send,recv);
+			break;
+		}
+		case sctk_message_pack: 
+		{
+			size_t i;
+			size_t j;
+			size_t size;
+			size_t total = 0;
+			size_t recv_size = 0;
+			size = send->body.header.msg_size;
+			if(size > 0)
+			{
+				for (i = 0; i < recv->tail.message.pack.count; i++)
+				{
+					for (j = 0; j < recv->tail.message.pack.list.std[i].count; j++)
+					{
+						size = (recv->tail.message.pack.list.std[i].ends[j] - 
+							recv->tail.message.pack.list.std[i].begins[j] + 1) * 
+							recv->tail.message.pack.list.std[i].elem_size;
+						recv_size += size;
+					}
+				}
+				
+				/* MPI 1.3 : The length of the received message must be less than or equal to the length of the receive buffer */
+				assume(send->body.header.msg_size <= recv_size);
+				char skip = 0;
+				for (i = 0; ((i < recv->tail.message.pack.count) && !skip); i++)
+				{
+					for (j = 0; ((j < recv->tail.message.pack.list.std[i].count) && !skip); j++)
+					{
+						size = (recv->tail.message.pack.list.std[i].ends[j] - 
+							recv->tail.message.pack.list.std[i].begins[j] + 1) * 
+							recv->tail.message.pack.list.std[i].elem_size;
+						if(total + size > send->body.header.msg_size)
+						{
+							skip = 1;
+							size = send->body.header.msg_size - total;
+						}
+						memcpy(((char *) (recv->tail.message.pack.list.std[i].addr)) + 
+							recv->tail.message.pack.list.std[i].begins[j] * 
+							recv->tail.message.pack.list.std[i].elem_size,body,size);
+						body += size;
+						total += size;
+						assume(total <= send->body.header.msg_size);
+					}
+				}
+			}
+			sctk_message_completion_and_free(send,recv);
+			break;
+		}
+		case sctk_message_pack_absolute: 
+		{
+			size_t i;
+			size_t j;
+			size_t size;
+			size_t total = 0;
+			size_t recv_size = 0;
+			size = send->body.header.msg_size;
+			if(size > 0)
+			{
+				for (i = 0; i < recv->tail.message.pack.count; i++)
+				{
+					for (j = 0; j < recv->tail.message.pack.list.absolute[i].count; j++)
+					{
+						size = (recv->tail.message.pack.list.absolute[i].ends[j] - 
+							recv->tail.message.pack.list.absolute[i].begins[j] + 1) * 
+							recv->tail.message.pack.list.absolute[i].elem_size;
+						recv_size += size;
+					}
+				}
+				
+				/* MPI 1.3 : The length of the received message must be less than or equal to the length of the receive buffer */
+				assume(send->body.header.msg_size <= recv_size);
+				char skip = 0;
+				for (i = 0; ((i < recv->tail.message.pack.count) && !skip); i++)
+				{
+					for (j = 0; ((j < recv->tail.message.pack.list.absolute[i].count) && !skip); j++)
+					{
+						size = (recv->tail.message.pack.list.absolute[i].ends[j] - 
+							recv->tail.message.pack.list.absolute[i].begins[j] + 1) * 
+							recv->tail.message.pack.list.absolute[i].elem_size;
+						if(total + size > send->body.header.msg_size)
+						{
+							skip = 1;
+							size = send->body.header.msg_size - total;
+						}
+						memcpy(((char *) (recv->tail.message.pack.list.absolute[i].addr)) + 
+							recv->tail.message.pack.list.absolute[i].begins[j] * 
+							recv->tail.message.pack.list.absolute[i].elem_size,body,size);
+						body += size;
+						total += size;
+						assume(total <= send->body.header.msg_size);
+					}
+				}
+			}
+			sctk_message_completion_and_free(send,recv);
+			break;
+		}
+		default: not_reachable();
 	}
-    sctk_message_completion_and_free(send,recv);
-    break;
-  }
-  case sctk_message_pack_absolute: {
-    size_t i;
-    size_t j;
-    size_t size;
-    for (i = 0; i < recv->tail.message.pack.count; i++)
-      for (j = 0; j < recv->tail.message.pack.list.absolute[i].count; j++)
-	{
-	  size = (recv->tail.message.pack.list.absolute[i].ends[j] -
-		  recv->tail.message.pack.list.absolute[i].begins[j] +
-		  1) * recv->tail.message.pack.list.absolute[i].elem_size;
-	  memcpy(((char *) (recv->tail.message.pack.list.absolute[i].addr)) +
-		 recv->tail.message.pack.list.absolute[i].begins[j] *
-		 recv->tail.message.pack.list.absolute[i].elem_size,body,size);
-	  body += size;
-	}
-    sctk_message_completion_and_free(send,recv);
-    break;
-  }
-  default: not_reachable();
-  }
 }
 
 void sctk_net_message_copy_from_buffer(char* body,
@@ -577,14 +627,10 @@ void sctk_net_message_copy_from_buffer(char* body,
   case sctk_message_contiguous: {
     size_t size;
     size = send->body.header.msg_size;
-    if(size > recv->tail.message.contiguous.size){
-      size = recv->tail.message.contiguous.size;
-    }
+    size = sctk_min(send->body.header.msg_size, recv->tail.message.contiguous.size);
 
-    memcpy(recv->tail.message.contiguous.addr,body,
-	   size);
-    sctk_nodebug("RECV size %lu-%lu %lu %p", size, recv->tail.message.contiguous.size,
-        adler32(0, (unsigned char*) recv->tail.message.contiguous.addr, size), recv);
+    memcpy(recv->tail.message.contiguous.addr,body, size);
+    sctk_nodebug("RECV size %lu-%lu %lu %p", size, recv->tail.message.contiguous.size, adler32(0, (unsigned char*) recv->tail.message.contiguous.addr, size), recv);
 
     if(free_headers) sctk_message_completion_and_free(send,recv);
     break;
@@ -593,16 +639,20 @@ void sctk_net_message_copy_from_buffer(char* body,
     size_t i;
     size_t j;
     size_t size;
-    for (i = 0; i < recv->tail.message.pack.count; i++)
-      for (j = 0; j < recv->tail.message.pack.list.std[i].count; j++)
-	{
-	  size = (recv->tail.message.pack.list.std[i].ends[j] -
-		  recv->tail.message.pack.list.std[i].begins[j] +
-		  1) * recv->tail.message.pack.list.std[i].elem_size;
-	  memcpy(((char *) (recv->tail.message.pack.list.std[i].addr)) +
-		 recv->tail.message.pack.list.std[i].begins[j] *
-		 recv->tail.message.pack.list.std[i].elem_size,body,size);
-	  body += size;
+    size = send->body.header.msg_size;
+    if(size > 0)
+    {
+		for (i = 0; i < recv->tail.message.pack.count; i++)
+		  for (j = 0; j < recv->tail.message.pack.list.std[i].count; j++)
+			{
+			  size = (recv->tail.message.pack.list.std[i].ends[j] -
+				  recv->tail.message.pack.list.std[i].begins[j] +
+				  1) * recv->tail.message.pack.list.std[i].elem_size;
+			  memcpy(((char *) (recv->tail.message.pack.list.std[i].addr)) +
+				 recv->tail.message.pack.list.std[i].begins[j] *
+				 recv->tail.message.pack.list.std[i].elem_size,body,size);
+			  body += size;
+			}
 	}
     if(free_headers) sctk_message_completion_and_free(send,recv);
     break;
@@ -611,16 +661,20 @@ void sctk_net_message_copy_from_buffer(char* body,
     size_t i;
     size_t j;
     size_t size;
-    for (i = 0; i < recv->tail.message.pack.count; i++)
-      for (j = 0; j < recv->tail.message.pack.list.absolute[i].count; j++)
-	{
-	  size = (recv->tail.message.pack.list.absolute[i].ends[j] -
-		  recv->tail.message.pack.list.absolute[i].begins[j] +
-		  1) * recv->tail.message.pack.list.absolute[i].elem_size;
-	  memcpy(((char *) (recv->tail.message.pack.list.absolute[i].addr)) +
-		 recv->tail.message.pack.list.absolute[i].begins[j] *
-		 recv->tail.message.pack.list.absolute[i].elem_size,body,size);
-	  body += size;
+    size = send->body.header.msg_size;
+    if(size > 0)
+    {
+		for (i = 0; i < recv->tail.message.pack.count; i++)
+		  for (j = 0; j < recv->tail.message.pack.list.absolute[i].count; j++)
+			{
+			  size = (recv->tail.message.pack.list.absolute[i].ends[j] -
+				  recv->tail.message.pack.list.absolute[i].begins[j] +
+				  1) * recv->tail.message.pack.list.absolute[i].elem_size;
+			  memcpy(((char *) (recv->tail.message.pack.list.absolute[i].addr)) +
+				 recv->tail.message.pack.list.absolute[i].begins[j] *
+				 recv->tail.message.pack.list.absolute[i].elem_size,body,size);
+			  body += size;
+			}
 	}
     if(free_headers) sctk_message_completion_and_free(send,recv);
     break;

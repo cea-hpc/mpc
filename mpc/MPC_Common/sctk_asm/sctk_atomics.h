@@ -73,6 +73,7 @@ typedef OPA_ptr_t sctk_atomics_ptr;
 /*! \brief Get the timestamp
  *
  */
-double sctk_atomics_get_timestamp();
+
+#include <libtimer.h>
 
 #endif /* __SCTK_ATOMICS_H */

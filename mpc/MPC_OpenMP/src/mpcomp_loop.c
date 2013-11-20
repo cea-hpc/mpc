@@ -25,7 +25,7 @@
 #include <sctk_debug.h>
 
 /* Return the number of chunks that a static schedule will create for the thread 'rank' */
-int
+long
 __mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads, long lb,
 					long b, long incr, long chunk_size)
 {

@@ -1410,10 +1410,16 @@ void ffunc (pmpi_init_thread) (int *required, int *provide, int *res)
   *res = MPI_Init_thread (NULL, NULL, *required, provide);
 }
 
+void ffunc (pmpi_finalized) (int *flag, int *res)
+{
+  *res = MPI_Finalized ();
+}
+
 void ffunc (pmpi_finalize) (int *res)
 {
   *res = MPI_Finalize ();
 }
+
 
 void ffunc (pmpi_initialized) (int *flag, int *res)
 {

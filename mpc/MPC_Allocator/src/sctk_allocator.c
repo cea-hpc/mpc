@@ -27,20 +27,33 @@
 #ifndef _WIN32
 	#include <unistd.h>
 	#include <sys/types.h>
+	#include <sys/mman.h>
 #else
 	#include <process.h>
+	//used for _open and _write functions with VCC
+	#include <io.h>
 #endif
 
 #include <stdarg.h>
 #include <string.h>
 #include "sctk_alloc_lock.h"
 #include "sctk_alloc_debug.h"
-#include "sctk_allocator.h"
 #include "sctk_alloc_config.h"
 #include "sctk_alloc_inlined.h"
 #include "sctk_alloc_topology.h"
 #include "sctk_alloc_numa_stat.h"
+#include "sctk_alloc_chunk.h"
+#include "sctk_alloc_chain.h"
+#include "sctk_alloc_thread_pool.h"
+#include "sctk_alloc_mmsrc.h"
+#include "sctk_alloc_region.h"
 #include "sctk_alloc_light_mm_source.h"
+#include "sctk_alloc_mmsrc_default.h"
+#include "sctk_alloc_hooks.h"
+
+#ifdef MPC_Message_Passing
+	#include "sctk_low_level_comm.h"
+#endif
 
 //for getpid
 //optional header
@@ -62,7 +75,7 @@
 #endif //MPC_Common
 
 /************************* GLOBALS *************************/
-/** @todo to move to a clean global structure, avoid spreading global elements everywheres **/
+/** @todo to move to a clean global structure, avoid spreading global elements everywhere **/
 /**
  * Global pointer to maintain the list of available region. It point the region header which is
  * allocated dynamically. None initialized regions will be represented by a NULL pointer.
@@ -72,7 +85,7 @@ static struct sctk_alloc_region * sctk_alloc_glob_regions[SCTK_ALLOC_MAX_REGIONS
 static sctk_alloc_spinlock_t sctk_alloc_glob_regions_lock;
 /** To know if region spinlock was init. **/
 static bool sctk_alloc_glob_regions_init = false;
-/** @todo  To remove or move elseware **/
+/** @todo  To remove or move elsewhere **/
 /** It serve to find chain list on crash dump in debug mode. **/
 struct sctk_alloc_chain * sctk_alloc_chain_list[2] = {NULL,NULL};
 
@@ -107,11 +120,11 @@ const sctk_alloc_vchunk SCTK_ALLOC_DEFAULT_CHUNK = NULL;
 
 /************************* FUNCTION ************************/
 /**
- * Permit to wrap a standar (small or large) chunk to add padding rules. Caution, it work only on allocated
+ * Permit to wrap a standard (small or large) chunk to add padding rules. Caution, it work only on allocated
  * chunk, free chunks are not accepted here due to larger header. Caution, we didn't cascading of padding
  * header.
  * @param chunk Define the chunk to wrap with padding rules.
- * @param boundary Define the boudary limit to apply for padding.
+ * @param boundary Define the boundary limit to apply for padding.
 **/
 SCTK_STATIC sctk_alloc_vchunk sctk_alloc_setup_chunk_padded(sctk_alloc_vchunk vchunk,sctk_size_t boundary)
 {
@@ -144,7 +157,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_setup_chunk_padded(sctk_alloc_vchunk vc
 		chunk_padded_info = sctk_alloc_get_chunk_header_padded_info(chunk_padded);
 		chunk_padded_info->state = vchunk->state;
 		chunk_padded_info->type = SCTK_ALLOC_CHUNK_TYPE_PADDED;
-		chunk_padded_info->unused_magik = SCTK_ALLOC_MAGIK_STATUS;
+		chunk_padded_info->unused_magik = SCTK_ALLOC_MAGIC_STATUS;
 		//setup final vchunk
 		vchunk = sctk_alloc_padded_to_vchunk(chunk_padded);
 	}
@@ -152,7 +165,14 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_setup_chunk_padded(sctk_alloc_vchunk vc
 }
 
 /************************* FUNCTION ************************/
-/** @todo To document **/
+/**
+ * When splitting a macro bloc in sub-chunk, we produce a chained list.
+ * To close it we use an ended chunk header which size equals to zero.
+ * It's not really clean but simplify some operations an we didn't use
+ * a 'next' pointer but move to next by adding size to current position.
+ * @param ptr Define the address on which to setup the stopper.
+ * @param prev Define the base address of previous chunk.
+ */
 SCTK_STATIC void sctk_alloc_create_stopper(void * ptr,void * prev)
 {
 	sctk_alloc_vchunk res;
@@ -161,6 +181,14 @@ SCTK_STATIC void sctk_alloc_create_stopper(void * ptr,void * prev)
 }
 
 /************************* FUNCTION ************************/
+/**
+ * Compute the size of the chunk to allocate from the user requested size.
+ * It's mostly to add the header size and cut on a minimal size of 32 bytes
+ * to maintain some alignments requirements.
+ * (Maybe the cut is not required to be so large. we get a 16 bytes header
+ * and need to maintain a 8 byte alignment, so maybe putting the cut at
+ * 16+8 = 24 is also OK and better for small blocs.)
+ */
 SCTK_STATIC sctk_size_t sctk_alloc_calc_chunk_size(sctk_size_t user_size)
 {
 	/** @todo  As we do not support small blocs now **/
@@ -177,7 +205,7 @@ SCTK_STATIC sctk_size_t sctk_alloc_calc_chunk_size(sctk_size_t user_size)
 
 /************************* FUNCTION ************************/
 /**
- * Initialize the thead pool. For now it only initialized the free lists.
+ * Initialize the thread pool. For now it only initialized the free lists.
  * @param pool Define the thread pool to initialize.
  * @param alloc_free_sizes Define the size which determine the class of a free bloc for sorting
  * free lists. If NULL, it use a default value : SCTK_ALLOC_FREE_SIZES.
@@ -219,7 +247,7 @@ SCTK_STATIC void sctk_alloc_thread_pool_init(struct sctk_thread_pool* pool,const
 		warning("Caution, the last free list size must be -1, you didn't follow this requirement, this may leed to errors.");
 	}
 
-	//set analitic reverse
+	//set analytic reverse
 	if (alloc_free_sizes == SCTK_ALLOC_FREE_SIZES)
 		pool->reverse_analytic_free_size = sctk_alloc_reverse_analytic_free_size;
 	else
@@ -233,6 +261,10 @@ SCTK_STATIC void sctk_alloc_thread_pool_init(struct sctk_thread_pool* pool,const
 }
 
 /************************* FUNCTION ************************/
+/**
+ * Provide an optimized version to compute log2 on values which are known to be
+ * power of 2.
+ */
 int sctk_alloc_optimized_log2_size_t(sctk_size_t value)
 {
 	//vars
@@ -300,12 +332,12 @@ SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_get_free_list_slow(struct sctk_t
 	assert(pool->alloc_free_sizes != NULL);
 	assert(pool != NULL);
 	assert(size > 0);
-	assert(4 >> 1 == 2);//required property to quicly divide by 2
+	assert(4 >> 1 == 2);//required property to quickly divide by 2
 
 	/** @todo  Remove this old code **/
-	//find the correct size class, none if too large by dicotomic search.
 	/*while (pool->alloc_free_sizes[j] != -1 && pool->alloc_free_sizes[j] < size)
 		++j;*/
+	//find the correct size class, none if too large by dicotomic search.
 	if (ptr[0] >= size)
 	{
 		i = 0;
@@ -449,7 +481,7 @@ SCTK_STATIC void sctk_alloc_free_list_insert(struct sctk_thread_pool * pool,stru
 	struct sctk_alloc_free_chunk* flist;
 	struct sctk_alloc_free_chunk * fchunk;
 	sctk_size_t list_class;
-	
+
 	//errors
 	assert(pool != NULL);
 	assert(chunk_large != NULL);
@@ -491,6 +523,7 @@ SCTK_STATIC void sctk_alloc_free_list_insert(struct sctk_thread_pool * pool,stru
 			break;
 		default:
 			assume_m(false,"Unknown insert mode in free list.");
+			break;
 	}
 
 	//mark non empty
@@ -499,7 +532,7 @@ SCTK_STATIC void sctk_alloc_free_list_insert(struct sctk_thread_pool * pool,stru
 
 /************************* FUNCTION ************************/
 /**
- * Extract the free chunk from the free list. This methode simply update the list pointers.
+ * Extract the free chunk from the free list. This method simply update the list pointers.
  * @param fchunk Define the chunk to remove from the free list.
 **/
 SCTK_STATIC void sctk_alloc_free_list_remove(struct sctk_thread_pool * pool,struct sctk_alloc_free_chunk * fchunk)
@@ -530,6 +563,11 @@ SCTK_STATIC void sctk_alloc_free_list_remove(struct sctk_thread_pool * pool,stru
 }
 
 /************************* FUNCTION ************************/
+/**
+ * Search the first free chunk which is large enough to contain the requested size.
+ * @param list Define the list in which to search.
+ * @param size Define the requested size for which to search.
+ */
 SCTK_STATIC struct sctk_alloc_free_chunk * sctk_alloc_find_adapted_free_chunk(sctk_alloc_free_list_t * list,sctk_size_t size)
 {
 	struct sctk_alloc_free_chunk * fchunk;
@@ -549,6 +587,10 @@ SCTK_STATIC struct sctk_alloc_free_chunk * sctk_alloc_find_adapted_free_chunk(sc
 }
 
 /************************* FUNCTION ************************/
+/**
+ * Check if the given free list is empty.
+ * It use the status array to avoid to do many pointer jump, it is faster.
+ */
 SCTK_STATIC bool sctk_alloc_free_list_is_not_empty_quick(struct sctk_thread_pool * pool,sctk_alloc_free_list_t * list)
 {
 	//vars
@@ -567,16 +609,19 @@ SCTK_STATIC bool sctk_alloc_free_list_is_not_empty_quick(struct sctk_thread_pool
 }
 
 /************************* FUNCTION ************************/
+/**
+ * Update the status array to mark the list as empty at update time.
+ */
 SCTK_STATIC void sctk_alloc_free_list_mark_empty(struct sctk_thread_pool * pool,sctk_alloc_free_list_t * list)
 {
 	//vars
-	short int id; 
+	short int id;
 
 	//error check
 	assert(pool != NULL);
 	assert(list != NULL);
 	assert(list >= pool->free_lists && list < pool->free_lists+SCTK_ALLOC_NB_FREE_LIST);
-	
+
 	//get id
 	id = (short int) (list - pool->free_lists);
 
@@ -585,6 +630,9 @@ SCTK_STATIC void sctk_alloc_free_list_mark_empty(struct sctk_thread_pool * pool,
 }
 
 /************************* FUNCTION ************************/
+/**
+ * Update the status array to mark the list as empty at update time.
+ */
 SCTK_STATIC void sctk_alloc_free_list_mark_non_empty(struct sctk_thread_pool * pool,sctk_alloc_free_list_t * list)
 {
 	//vars
@@ -603,13 +651,19 @@ SCTK_STATIC void sctk_alloc_free_list_mark_non_empty(struct sctk_thread_pool * p
 }
 
 /************************* FUNCTION ************************/
+/**
+ * This is when we can't fint a valid chunk in the smaller list, we checked in larger one, so need
+ * to find the first non empty one, starting at a given position.
+ * @param pool Define the thread pool in which to search.
+ * @param list Define the current list from which to start (start to read from next one).
+ */
 SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_find_first_free_non_empty_list(struct sctk_thread_pool * pool,sctk_alloc_free_list_t * list)
 {
 	//vars
 	short int id;
 	short int i;
 	short int nb_free_lists = pool->nb_free_lists;
-	
+
 	//error
 	assert(pool != NULL);
 	assert(list != NULL);
@@ -617,7 +671,7 @@ SCTK_STATIC sctk_alloc_free_list_t * sctk_alloc_find_first_free_non_empty_list(s
 	assert(list >= pool->free_lists && list < pool->free_lists+nb_free_lists);
 	//get free list id
 	id = (short int) (list - pool->free_lists);
-	
+
 	assert(id < nb_free_lists);
 
 	for ( i = id ; i < nb_free_lists ; ++i)
@@ -662,9 +716,9 @@ SCTK_STATIC struct sctk_alloc_free_chunk * sctk_alloc_find_free_chunk(struct sct
 	if (list != NULL)
 		res = sctk_alloc_find_adapted_free_chunk(list,size);
 
-	//if not found, try our chance in the previous list (we may find some sufficent bloc, but may
-	//require more steps of searching as their may be some smaller blos in this one on the contrary
-	//of our starting point which guaranty to get sufficent size
+	//if not found, try our chance in the previous list (we may find some sufficient bloc, but may
+	//require more steps of searching as their may be some smaller blocs in this one on the contrary
+	//of our starting point which guaranty to get sufficient size
 	if (res == NULL && start_point != pool->free_lists)
 	{
 		list = start_point - 1;
@@ -691,7 +745,7 @@ SCTK_STATIC sctk_alloc_free_list_t* sctk_alloc_get_next_list(const struct sctk_t
 	assert(pool != NULL);
 	assert(pool->nb_free_lists <= SCTK_ALLOC_NB_FREE_LIST);
 	assume_m(list - pool->free_lists <= pool->nb_free_lists,"The given list didn't be a member of the given pool");
-	
+
 	if (list == NULL)
 		return NULL;
 	else if (list - pool->free_lists >= pool->nb_free_lists - 1)
@@ -711,6 +765,9 @@ SCTK_STATIC bool sctk_alloc_free_list_empty(const sctk_alloc_free_list_t* list)
 }
 
 /************************* FUNCTION ************************/
+/**
+ * Compute a size alignment in a safe way (but slow).
+ */
 SCTK_STATIC sctk_size_t sctk_alloc_align_size(sctk_size_t size,sctk_size_t align)
 {
 	if (size%align == 0)
@@ -720,6 +777,10 @@ SCTK_STATIC sctk_size_t sctk_alloc_align_size(sctk_size_t size,sctk_size_t align
 }
 
 /************************* FUNCTION ************************/
+/**
+ * Compute a size alignment if align is a power of 2. Faster, but may be not safe if align
+ * is not a power of 2.
+ */
 SCTK_STATIC sctk_size_t sctk_alloc_align_size_pow_of_2(sctk_size_t size,sctk_size_t align)
 {
 	assert(sctk_alloc_is_power_of_two(align));
@@ -741,11 +802,11 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_split_free_bloc(sctk_alloc_vchunk * chu
 	sctk_size_t residut_size;
 	sctk_addr_t residut_start;
 	sctk_alloc_vchunk next;
-	
+
 	//convert size to take in accound the header size
 	size = sctk_alloc_calc_chunk_size(size);
 	size = sctk_alloc_align_size_pow_of_2(size,SCTK_ALLOC_BASIC_ALIGN);
-	
+
 	//error
 	assert(chunk != NULL);
 	#ifndef SCTK_ALLOC_FAST_BUT_LESS_SAFE
@@ -774,13 +835,15 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_split_free_bloc(sctk_alloc_vchunk * chu
 }
 
 /************************* FUNCTION ************************/
-/** @todo To document **/
+/**
+ * Return the previous chunk of NULL if the current one is the first in macro bloc.
+ */
 SCTK_STATIC sctk_alloc_vchunk sctk_alloc_get_prev_chunk(sctk_alloc_vchunk chunk)
 {
 	sctk_alloc_vchunk res;
 
 	#ifndef SCTK_ALLOC_FAST_BUT_LESS_SAFE
-	assume_m(chunk->unused_magik == SCTK_ALLOC_MAGIK_STATUS,"Small block not supported for now.");
+	assume_m(chunk->unused_magik == SCTK_ALLOC_MAGIC_STATUS,"Small block not supported for now.");
 	#endif
 
 	if (sctk_alloc_get_prev_size(chunk) == 0)
@@ -841,7 +904,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_merge_chunk(struct sctk_thread_pool * p
 	sctk_alloc_vchunk last;
 	sctk_size_t size;
 	struct sctk_alloc_free_chunk * fchunk;
-	
+
 	//error
 	assume_m(chunk->state == SCTK_ALLOC_CHUNK_STATE_ALLOCATED,"The central chunk must be allocated to be merged.");
 
@@ -873,7 +936,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_merge_chunk(struct sctk_thread_pool * p
 		sctk_alloc_free_list_remove(pool,fchunk);
 		//move to next one
 		cur = sctk_alloc_get_next_chunk(cur);
-	} 
+	}
 
 	//calc final bloc size
 	size = sctk_alloc_get_addr(last) - sctk_alloc_get_addr(first_page_chunk) + sctk_alloc_get_size(last);
@@ -882,7 +945,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_merge_chunk(struct sctk_thread_pool * p
 	/** @todo  to test presence and check bloc type **/
 	cur = sctk_alloc_get_next_chunk(last);
 	sctk_alloc_set_chunk_header_large_previous_size(sctk_alloc_get_large(cur), size);
-	
+
 	//setup bloc and return
 	/** @todo Large access, so do not support small blocs **/
 	/** @todo replace substraction by get_prev **/
@@ -901,70 +964,134 @@ SCTK_STATIC void sctk_alloc_chain_base_init(struct sctk_alloc_chain * chain,enum
 	sctk_alloc_thread_pool_init(&chain->pool,SCTK_ALLOC_FREE_SIZES);
 
 	//init lock
-	chain->flags = flags,
+	chain->flags = flags;
 	sctk_alloc_spinlock_init(&chain->lock,PTHREAD_PROCESS_PRIVATE);
 
 	//init Remote Free Queue
 	sctk_alloc_rfq_init(&chain->rfq);
 
 	//defaults
-	chain->name = "Unknwon";
+	chain->name      = "Unknwon";
+	chain->base_addr = NULL;
+	chain->end_addr  = NULL;
+	chain->source    = NULL;
 
 	//destroy system
 	chain->destroy_handler = NULL;
 	chain->cnt_macro_blocs = 0;
 
 	//init spy and stat module
-	SCTK_ALLOC_STATS_HOOK(sctk_alloc_stats_chain_init(&chain->stats));
-	SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_chain_init(chain));
+	SCTK_ALLOC_HOOK(chain_init,chain);
 }
 
 /************************* FUNCTION ************************/
 /**
- * Create a user allocation chain and provide it's fixed segement to manage.
+ * Function to create quickly a user allocation chain to be use in standelone mode.
  * @param buffer Define the segment to be managed by the user allocation chain.
- * @param size Define de size og the segment.
-**/
-void sctk_alloc_chain_user_init(struct sctk_alloc_chain * chain,void * buffer,sctk_size_t size,enum sctk_alloc_chain_flags flags)
+ * @param size Define the size of the segment.
+ */
+SCTK_PUBLIC void sctk_alloc_chain_standalone_init(struct sctk_alloc_chain * chain,void * buffer,sctk_size_t size)
 {
+	sctk_alloc_chain_user_init(chain,buffer,size, SCTK_ALLOC_CHAIN_STANDALONE);
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Function to create quickly a shared memory allocator by placing the allocation chain at beginning
+ * of the given shared memory segment.
+ * @param buffer The shared memory segment to use to store the allocation chain and to be used for allocations.
+ * @param size Define the size of the shared segment.
+ */
+SCTK_PUBLIC struct sctk_alloc_chain * sctk_alloc_chain_shared_init(void * buffer, sctk_size_t size)
+{
+	//vars
+	struct sctk_alloc_chain * chain = buffer;
+
+	//errors
+	assume_m(buffer != NULL,"Can't use NULL buffer to create the allocation chain.");
+	assume_m(size > sizeof(struct sctk_alloc_chain), "To small segment which cannot contain the allocation chain structure.");
+
+	//setup
+	sctk_alloc_chain_standalone_init(chain,chain+1,size - sizeof(struct sctk_alloc_chain));
+
+	//ok done, return
+	return chain;
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Insert fresh memory into the allocation chain to grow it.
+ * @param chain Define the allocation chain to grow.
+ * @param buffer Define the buffer to insert (or NULL if none).
+ * @param size Define the size of the buffer (or 0 is NULL).
+ */
+SCTK_PUBLIC void sctk_alloc_chain_user_refill(struct sctk_alloc_chain * chain, void * buffer, sctk_size_t size)
+{
+	//vars
 	struct sctk_alloc_macro_bloc * macro_bloc;
 	sctk_alloc_vchunk vchunk;
-	
+
 	//error
 	assume_m(buffer != NULL || size == 0, "Can't manage NULL buffer with non NULL size.");
-	/** @TODO compute min size cleaner with size of struct. **/
+	/** @TODO compute min size in cleaner way with size of struct. **/
 	assume_m(size == 0 || size > 64+16, "Buffer size must null or greater than 80o.");
+	//warning if using fill with an active memory source
+	if (chain->source != NULL)
+		warning("Caution, you tried to refill an allocation chain which has a memory source.");
 
-	//base init
-	sctk_alloc_chain_base_init(chain,flags);
-
-	//insert the buffer in the thread pool
-	if (buffer == NULL || size == 0)
+	//create the chunk and register it in chain
+	if (buffer != NULL && size > 0)
 	{
-		chain->base_addr = NULL;
-		chain->end_addr = NULL;
-	} else {
 		macro_bloc = sctk_alloc_setup_macro_bloc(buffer,size);
 		vchunk = sctk_alloc_chain_prepare_and_reg_macro_bloc(chain,macro_bloc);
 		sctk_alloc_free_list_insert(&chain->pool,sctk_alloc_get_large(vchunk),SCTK_ALLOC_INSERT_AT_START);
+	}
+
+	//TODO it may be removed now as we do not use the original memory source anymore
+	if (chain->base_addr == NULL)
+	{
 		chain->base_addr = buffer;
 		chain->end_addr = (char*)buffer + size;
-		chain->cnt_macro_blocs++;
 	}
+
+	//increment the macro bloc counter.
+	chain->cnt_macro_blocs++;
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Create a user allocation chain and provide it's fixed segment to manage.
+ * @param buffer Define the segment to be managed by the user allocation chain.
+ * @param size Define the size of the segment.
+**/
+SCTK_PUBLIC void sctk_alloc_chain_user_init(struct sctk_alloc_chain * chain,void * buffer,sctk_size_t size,enum sctk_alloc_chain_flags flags)
+{
+	//base init
+	sctk_alloc_chain_base_init(chain,flags);
+	//fill with mem
+	if (buffer != NULL)
+		sctk_alloc_chain_user_refill(chain,buffer,size);
+	//use no memory source
 	chain->source = NULL;
 }
 
 /************************* FUNCTION ************************/
-bool sctk_alloc_chain_is_thread_safe(struct sctk_alloc_chain * chain)
+/**
+ * Function to check if the given allocation is thread safe or if locks are disabled.
+ */
+SCTK_PUBLIC bool sctk_alloc_chain_is_thread_safe(struct sctk_alloc_chain * chain)
 {
 	//errors
 	assert(chain != NULL);
-  
+
 	return chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE;
 }
 
 /************************* FUNCTION ************************/
-void sctk_alloc_chain_make_thread_safe(struct sctk_alloc_chain * chain,bool value)
+/**
+ * Toggle the flags to enable locking mechanisms in allocation chain to made it thread safe.
+ */
+SCTK_PUBLIC void sctk_alloc_chain_make_thread_safe(struct sctk_alloc_chain * chain,bool value)
 {
 	//errors
 	assert(chain != NULL);
@@ -976,7 +1103,11 @@ void sctk_alloc_chain_make_thread_safe(struct sctk_alloc_chain * chain,bool valu
 }
 
 /************************* FUNCTION ************************/
-void sctk_alloc_chain_mark_for_destroy(struct sctk_alloc_chain * chain,void (*destroy_handler)(struct sctk_alloc_chain * chain))
+/**
+ * Mark the given allocation for destroy. When is became empty (so when last allocated chunk is freed)
+ * it will call the given handler to cleanup the memory allocated to store the chain struct itself.
+ */
+SCTK_PUBLIC void sctk_alloc_chain_mark_for_destroy(struct sctk_alloc_chain * chain,void (*destroy_handler)(struct sctk_alloc_chain * chain))
 {
 	//errors
 	assert(chain != NULL);
@@ -1001,10 +1132,10 @@ void sctk_alloc_chain_mark_for_destroy(struct sctk_alloc_chain * chain,void (*de
  * let this to false, this is more for unit test implementation avoiding crashing the whole test
  * suite on test failed.
 **/
-void sctk_alloc_chain_destroy(struct sctk_alloc_chain* chain,bool force)
+SCTK_PUBLIC void sctk_alloc_chain_destroy(struct sctk_alloc_chain* chain,bool force)
 {
 	struct sctk_alloc_region * region;
-	
+
 	//nothing to do
 	if (chain == NULL)
 		return;
@@ -1014,8 +1145,7 @@ void sctk_alloc_chain_destroy(struct sctk_alloc_chain* chain,bool force)
 		assume_m(sctk_alloc_chain_can_destroy(chain),"Can't destroy the given allocation chain.");
 
 	//destroy stat and spy module
-	SCTK_ALLOC_STATS_HOOK(sctk_alloc_stats_chain_destroy(&chain->stats));
-	SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_chain_destroy(chain));
+	SCTK_ALLOC_HOOK(chain_destroy,chain);
 
 	//destroy the rfq
 	sctk_alloc_rfq_destroy(&chain->rfq);
@@ -1032,7 +1162,7 @@ void sctk_alloc_chain_destroy(struct sctk_alloc_chain* chain,bool force)
 /**
  * Create a standard allocation chain.
 **/
-void sctk_alloc_chain_default_init(struct sctk_alloc_chain * chain, struct sctk_alloc_mm_source * source,enum sctk_alloc_chain_flags flags)
+SCTK_INTERN void sctk_alloc_chain_default_init(struct sctk_alloc_chain * chain, struct sctk_alloc_mm_source * source,enum sctk_alloc_chain_flags flags)
 {
 	//base init
 	sctk_alloc_chain_base_init(chain,flags);
@@ -1069,6 +1199,9 @@ SCTK_STATIC void * sctk_alloc_chunk_body(sctk_alloc_vchunk vchunk)
 }
 
 /************************* FUNCTION ************************/
+/**
+ * Prepare a macro bloc and register it in regions as owned by given allocation chain.
+ */
 SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_prepare_and_reg_macro_bloc(struct sctk_alloc_chain * chain,struct sctk_alloc_macro_bloc * macro_bloc)
 {
 	//vars
@@ -1118,19 +1251,18 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_request_mem(struct sctk_alloc_cha
 	{
 		size = SCTK_MACRO_BLOC_SIZE;
 	} else {
-		if (size % SCTK_PAGE_SIZE)
-			size += SCTK_PAGE_SIZE - size % SCTK_PAGE_SIZE;
+		size = sctk_alloc_align_size_pow_of_2(size,SCTK_ALLOC_PAGE_SIZE);
 	}
-	assert(size % SCTK_PAGE_SIZE == 0);
+	assert(size % SCTK_ALLOC_PAGE_SIZE == 0);
 	assert(size >= SCTK_MACRO_BLOC_SIZE);*/
-	
+
 	if (size % SCTK_MACRO_BLOC_SIZE != 0)
 		size += SCTK_MACRO_BLOC_SIZE - size % SCTK_MACRO_BLOC_SIZE;
 	assert(size % SCTK_MACRO_BLOC_SIZE == 0);
 
 	//request memory and refill the free list with it
 	bloc = chain->source->request_memory(chain->source,size);
-	SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_add_macro_bloc(chain,bloc));
+	SCTK_ALLOC_HOOK(chain_add_macro_bloc,chain,bloc);
 	if (bloc != NULL)
 		assert(bloc->chain == NULL);
 
@@ -1152,7 +1284,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_request_mem(struct sctk_alloc_cha
  * This function is a merge of sctk_alloc_chain_request_mem() and sctk_alloc_chain_free_macro_bloc()
  * which exploit mremap capabilities to avoid a copy of large segment for realloc() implementation.
  * @param chain Define the chain in which to realloc. Caution you must ensure that the original
- * segment was managed by the same chain otherwise it can procuce unpredictable behaviors.
+ * segment was managed by the same chain otherwise it can produce unpredictable behaviors.
  * @param size Define the size of the new chunk to allocate.
  * @param vchunk Define the old vchunk to remap. Caution it must be a macro bloc.
 **/
@@ -1160,7 +1292,7 @@ SCTK_STATIC sctk_alloc_vchunk sctk_alloc_chain_realloc_macro_bloc(struct sctk_al
 {
 	//vars
 	struct sctk_alloc_macro_bloc * macro_bloc;
-	
+
 	//errors
 	assert(chain != NULL);
 	assert(chain->source != NULL);
@@ -1211,7 +1343,7 @@ SCTK_STATIC bool sctk_alloc_chain_refill_mem(struct sctk_alloc_chain* chain,sctk
 {
 	//request a segments
 	sctk_alloc_vchunk vchunk = sctk_alloc_chain_request_mem(chain,size);
-	
+
 	if (vchunk == NULL)
 	{
 		return false;
@@ -1228,9 +1360,25 @@ SCTK_STATIC bool sctk_alloc_chain_refill_mem(struct sctk_alloc_chain* chain,sctk
  * @param chain Define the allocation chain in which to request memory.
  * @param size Define the expected size of the segment (can be larger).
 **/
-void * sctk_alloc_chain_alloc(struct sctk_alloc_chain * chain,sctk_size_t size)
+SCTK_PUBLIC void * sctk_alloc_chain_alloc(struct sctk_alloc_chain * chain,sctk_size_t size)
 {
-	return sctk_alloc_chain_alloc_align(chain,0,size);
+  sctk_size_t boundary = 0;
+#ifdef MPC_Message_Passing
+  boundary = sctk_net_memory_allocation_hook (size);
+#endif
+	return sctk_alloc_chain_alloc_align(chain,boundary,size);
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Check if the given size is considered as a huge size (to directly allocate the chunk from memory
+ * source) or not. We consider as huge if larger than a cut limit which must not be too small compared
+ * to macro bloc size. It also work only if we get a memory source for the given alloc chain.
+ */
+SCTK_STATIC bool sctk_alloc_chain_is_huge_size(struct sctk_alloc_chain * chain,sctk_size_t size)
+{
+	assert(chain != NULL);
+	return (SCTK_ALLOC_HUGE_CHUNK_SEGREGATION && chain->source != NULL && sctk_alloc_calc_chunk_size(size) > SCTK_HUGE_BLOC_LIMIT);
 }
 
 /************************* FUNCTION ************************/
@@ -1240,12 +1388,12 @@ void * sctk_alloc_chain_alloc(struct sctk_alloc_chain * chain,sctk_size_t size)
  * @param boundary Define the memory alignement to force for the bloc base address.
  * @param size Define the expected size of the segment (can be larger).
 **/
-void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t boundary,sctk_size_t size)
+SCTK_PUBLIC void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t boundary,sctk_size_t size)
 {
 	struct sctk_alloc_free_chunk * chunk;
 	sctk_alloc_vchunk vchunk;
 	sctk_alloc_vchunk residut;
-	
+
 	//error
 	assume_m(chain != NULL,"Can't work with NULL allocation chain.");
 
@@ -1260,15 +1408,14 @@ void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t 
 
 	//check if huge allocation of normal
 	/** @todo Split in two sub-functions **/
-	/** @todo Define a function to detect huge blocs intead of use two time the calculation.**/
-	if (SCTK_ALLOC_HUGE_CHUNK_SEGREGATION && chain->source != NULL && sctk_alloc_calc_chunk_size(size) > SCTK_HUGE_BLOC_LIMIT)
+	if (sctk_alloc_chain_is_huge_size(chain,size))
 	{
 		//for huge block, we bypass the thread pool and call directly the memory source.
 		//huge bloc are > SCTK_MACRO_BLOC_SIZE / 2
 		vchunk = sctk_alloc_chain_request_mem(chain,size);
 
 		//spy
-		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_chain_huge_alloc(chain,size-boundary,sctk_alloc_chunk_body((boundary > 1)?sctk_alloc_setup_chunk_padded(vchunk,boundary):vchunk),sctk_alloc_get_size(vchunk),boundary));
+		SCTK_ALLOC_HOOK(chain_huge_alloc,chain,size-boundary,sctk_alloc_chunk_body((boundary > 1)?sctk_alloc_setup_chunk_padded(vchunk,boundary):vchunk),sctk_alloc_get_size(vchunk),boundary);
 	} else {
 		//lock if required
 		 if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
@@ -1306,11 +1453,11 @@ void * sctk_alloc_chain_alloc_align(struct sctk_alloc_chain * chain,sctk_size_t 
 		if (residut != NULL)
 		{
 			sctk_alloc_free_list_insert(&chain->pool,sctk_alloc_get_large(residut),SCTK_ALLOC_INSERT_AT_START);
-			SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_chain_split(chain,sctk_alloc_get_ptr(vchunk),sctk_alloc_get_size(vchunk),sctk_alloc_get_size(residut)));
+			SCTK_ALLOC_HOOK(chain_split,chain,sctk_alloc_get_ptr(vchunk),sctk_alloc_get_size(vchunk),sctk_alloc_get_size(residut));
 		}
 
 		//spy
-		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_chain_alloc(chain,size,sctk_alloc_chunk_body((boundary > 1)?sctk_alloc_setup_chunk_padded(vchunk,boundary):vchunk),sctk_alloc_get_size(vchunk),boundary));
+		SCTK_ALLOC_HOOK(chain_alloc,chain,size,sctk_alloc_chunk_body((boundary > 1)?sctk_alloc_setup_chunk_padded(vchunk,boundary):vchunk),sctk_alloc_get_size(vchunk),boundary);
 
 		//unlock if required
 		if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
@@ -1353,7 +1500,7 @@ SCTK_STATIC void sctk_alloc_chain_free_macro_bloc(struct sctk_alloc_chain * chai
 		sctk_alloc_region_unset_entry(macro_bloc);
 
 	//free it
-	SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_free_macro_bloc(chain,macro_bloc));
+	SCTK_ALLOC_HOOK(chain_free_macro_bloc,chain,macro_bloc);
 	chain->source->free_memory(chain->source,macro_bloc);
 
 	//update counter
@@ -1361,7 +1508,7 @@ SCTK_STATIC void sctk_alloc_chain_free_macro_bloc(struct sctk_alloc_chain * chai
 	assert(chain->cnt_macro_blocs >= 0);
 
 	//check if we must destroy the allocation chain
-	if (chain->cnt_macro_blocs == 0 && chain->destroy_handler != NULL && chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
+	if (chain->cnt_macro_blocs == 0 && chain->destroy_handler != NULL && (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE))
 		chain->destroy_handler(chain);
 }
 
@@ -1371,15 +1518,13 @@ SCTK_STATIC void sctk_alloc_chain_free_macro_bloc(struct sctk_alloc_chain * chai
  * @param chain Allocation chain responsible of the management of ptr
  * @param ptr The buffer to freed.
 **/
-void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
+SCTK_PUBLIC void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 {
 	sctk_alloc_vchunk vchunk;
 	sctk_alloc_vchunk vfirst = NULL;
 	bool insert_bloc = true;
-	#ifdef SCTK_ALLOC_SPY
 	sctk_size_t old_size;
-	#endif
-	
+
 	//error
 	assume_m(chain != NULL, "Can't free the memory without an allocation chain.");
 
@@ -1401,12 +1546,11 @@ void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 
 	//check if huge bloc or not
 	/** @todo Split in two sub-functions **/
-	/** @todo Define a function to detect huge blocs intead of use two time the calculation. **/
-	if (SCTK_ALLOC_HUGE_CHUNK_SEGREGATION && chain->source != NULL && sctk_alloc_get_size(vchunk) > SCTK_HUGE_BLOC_LIMIT)
+	if (sctk_alloc_chain_is_huge_size(chain,sctk_alloc_get_size(vchunk)))
 	{
 		//spy
-		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_chain_huge_free(chain,ptr,sctk_alloc_get_size(vchunk)));
-		
+		SCTK_ALLOC_HOOK(chain_huge_free,chain,ptr,sctk_alloc_get_size(vchunk));
+
 		//for huge blocs, we send the memory directly to the memory source
 		sctk_alloc_chain_free_macro_bloc(chain,vchunk);
 	} else {
@@ -1415,17 +1559,18 @@ void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 			sctk_alloc_spinlock_lock(&chain->lock);
 
 		//spy
-		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_chain_free(chain,ptr,sctk_alloc_get_size(vchunk)));
+		SCTK_ALLOC_HOOK(chain_free,chain,ptr,sctk_alloc_get_size(vchunk));
 
 		//try some merge
 		/** @todo Here this is a trick, NEED TO BE FIXED => NOW NEED TO REMOVE THIS OR USE THE MACRO BLOC START POINT IF AVAILABLE. **/
 		if (chain->base_addr != NULL)
 			vfirst = sctk_alloc_get_chunk((sctk_addr_t)chain->base_addr+sizeof(struct sctk_alloc_chunk_header_large));
-		SCTK_ALLOC_SPY_HOOK(old_size = sctk_alloc_get_size(vchunk));
-		
+		if (SCTK_ALLOC_HAS_HOOK(chain_merge))
+			old_size = sctk_alloc_get_size(vchunk);
+
 		if (! (chain->flags & SCTK_ALLOC_CHAIN_DISABLE_MERGE) )
 			vchunk = sctk_alloc_merge_chunk(&chain->pool,vchunk,vfirst,(sctk_addr_t)chain->end_addr);
-		SCTK_ALLOC_SPY_COND_HOOK(old_size != sctk_alloc_get_size(vchunk),sctk_alloc_spy_emit_event_chain_merge(chain, sctk_alloc_get_ptr(vchunk),sctk_alloc_get_size(vchunk)));
+		SCTK_ALLOC_COND_HOOK(old_size != sctk_alloc_get_size(vchunk),chain_merge,chain, sctk_alloc_get_ptr(vchunk),sctk_alloc_get_size(vchunk));
 
 		//if whe have a source, we may try to check if we can clear the bloc
 		/** @todo Maybe request the bloc size to memory source insteed of directly use the constant **/
@@ -1446,6 +1591,9 @@ void sctk_alloc_chain_free(struct sctk_alloc_chain * chain,void * ptr)
 }
 
 /************************* FUNCTION ************************/
+/**
+ * Function to check if a given allocation chain can use mremap of not.
+ */
 SCTK_STATIC bool sctk_alloc_chain_can_remap(struct sctk_alloc_chain * chain)
 {
 	#ifdef HAVE_MREMAP
@@ -1468,7 +1616,7 @@ SCTK_STATIC bool sctk_alloc_chain_can_remap(struct sctk_alloc_chain * chain)
  * @param ptr Define the base pointer of the segment to reallocate.
  * @param size Define the new size of the segment.
 **/
-void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sctk_size_t size)
+SCTK_PUBLIC void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sctk_size_t size)
 {
 	//vars
 	void * res = NULL;
@@ -1505,11 +1653,11 @@ void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sct
 
 		//get chunk header
 		/** @todo Use a function which compute the inner size instead of hacking with sizeof() . **/
-		old_size = sctk_alloc_get_size(vchunk) - sizeof(struct sctk_alloc_chunk_header_large);
+		old_size = sctk_alloc_get_unpadded_size(vchunk) - sizeof(struct sctk_alloc_chunk_header_large);
 		delta = old_size - size;
 
 		if (old_size >= size && delta <= sctk_alloc_config()->realloc_threashold
-				&& delta >= SCTK_ALLOC_BASIC_ALIGN
+				//&& delta >= SCTK_ALLOC_BASIC_ALIGN (don't remember why I put this???)
 				&& delta <= old_size / sctk_alloc_config()->realloc_factor) {
 			//simply keep the old segment, nothing to change
 			SCTK_NO_PDEBUG("realloc with same address");
@@ -1549,10 +1697,10 @@ void * sctk_alloc_chain_realloc(struct sctk_alloc_chain * chain, void * ptr, sct
 SCTK_STATIC bool sctk_alloc_chain_can_destroy(struct sctk_alloc_chain* chain)
 {
 	struct sctk_alloc_chunk_header_large * first;
-	
+
 	//error
 	assert(chain != NULL);
-	
+
 	//nothing to do
 	if (chain == NULL)
 		return false;
@@ -1570,12 +1718,12 @@ SCTK_STATIC bool sctk_alloc_chain_can_destroy(struct sctk_alloc_chain* chain)
  * Check if the given allocation chain contain blocs to purge and done a real free on them.
  * @param chain Define the chain we want to purge, if NULL, the function exit immediately.
 **/
-void sctk_alloc_chain_purge_rfq(struct sctk_alloc_chain * chain)
+SCTK_PUBLIC void sctk_alloc_chain_purge_rfq(struct sctk_alloc_chain * chain)
 {
 	struct sctk_alloc_rfq_entry * entries;
 	struct sctk_alloc_rfq_entry * next;
 	//int cnt = 0;
-	
+
 	//error
 	if (chain == NULL)
 		return;
@@ -1589,20 +1737,20 @@ void sctk_alloc_chain_purge_rfq(struct sctk_alloc_chain * chain)
 	//get the list
 	entries = sctk_alloc_rfq_extract(&chain->rfq);
 
-	SCTK_ALLOC_SPY_COND_HOOK(entries != NULL,
-	                         sctk_alloc_spy_emit_event_flush_rfq(chain,sctk_alloc_rfq_count_entries(entries)));
+	SCTK_ALLOC_COND_HOOK(entries != NULL,
+	                         chain_flush_rfq,chain,sctk_alloc_rfq_count_entries(entries));
 	//SCTK_PDEBUG("Need to purge RFQ (%p)",chain);
 
 	//run over the list and call free on segments
 	/** @todo Check for lock **/
 	while (entries != NULL)
 	{
-		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_flush_rfq_entry(chain,entries->ptr));
+		SCTK_ALLOC_HOOK(chain_flush_rfq_entry,chain,entries->ptr);
 		//cnt++;
 		//CAUTION, we store the entry directly in the freed segment, so the content can be erase or
 		//unmap by sctk_alloc_chain_free, we must't use anymore the entry pointer after calling this
 		//method.
-		next = entries->next;
+		next = (struct sctk_alloc_rfq_entry*)entries->entry.next;
 		sctk_alloc_chain_free(chain,entries->ptr);
 		entries = next;
 	}
@@ -1663,6 +1811,9 @@ SCTK_STATIC void sctk_alloc_mm_source_insert_segment(struct sctk_alloc_mm_source
 }
 
 /************************* FUNCTION ************************/
+/**
+ * Init common fields for memory sources.
+ */
 void sctk_alloc_mm_source_base_init(struct sctk_alloc_mm_source * source)
 {
 	source->cleanup        = NULL;
@@ -1688,7 +1839,7 @@ void sctk_alloc_mm_source_default_init(struct sctk_alloc_mm_source_default* sour
 
 	//basic setup
 	sctk_alloc_mm_source_base_init(&source->source);
-	
+
 	//setup functions
 	source->source.cleanup = sctk_alloc_mm_source_default_cleanup;
 	source->source.free_memory = sctk_alloc_mm_source_default_free_memory;
@@ -1735,7 +1886,7 @@ SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_mm_source_default_request_m
 	sctk_size_t aligned_size = size;
 	sctk_alloc_vchunk vchunk;
 	sctk_alloc_vchunk residut;
-	
+
 	//errors
 	/** @todo Can down this restriction to multiple of 4k and round here **/
 	assume_m(size % SCTK_MACRO_BLOC_SIZE == 0,"The request size on a memory source must be multiple of SCTK_MACRO_BLOC_SIZE.");
@@ -1855,6 +2006,9 @@ SCTK_STATIC void sctk_alloc_mm_source_default_free_memory(struct sctk_alloc_mm_s
 }
 
 /************************* FUNCTION ************************/
+/**
+ * At exit, cleanup the memory stored in the given default memory source.
+ */
 SCTK_STATIC void sctk_alloc_mm_source_default_cleanup(struct sctk_alloc_mm_source* source)
 {
 	//vars
@@ -1883,6 +2037,12 @@ SCTK_STATIC void sctk_alloc_mm_source_default_cleanup(struct sctk_alloc_mm_sourc
 }
 
 /************************* FUNCTION ************************/
+/**
+ * CAUTION : This function is valid only when using the default memory source. The other one
+ * did't force alignments on 2M limits so you need  to walk into regions to find the macro bloc base
+ * address.
+ * TODO Remove this unsafe approach and unneeded now.
+ */
 SCTK_STATIC struct sctk_alloc_macro_bloc* sctk_alloc_get_macro_bloc(void* ptr)
 {
 	return (struct sctk_alloc_macro_bloc *)((sctk_addr_t)ptr - ((sctk_addr_t)ptr % SCTK_MACRO_BLOC_SIZE));
@@ -1997,7 +2157,7 @@ SCTK_STATIC struct sctk_alloc_region * sctk_alloc_region_get(void * addr)
  * trying to access to it.
  * @param addr Define the address for chich we request the related region entry.
 **/
-struct sctk_alloc_region_entry * sctk_alloc_region_get_entry(void* addr)
+SCTK_PUBLIC struct sctk_alloc_region_entry * sctk_alloc_region_get_entry(void* addr)
 {
 	//vars
 	sctk_addr_t id;
@@ -2005,14 +2165,17 @@ struct sctk_alloc_region_entry * sctk_alloc_region_get_entry(void* addr)
 	if (region == NULL)
 		region = sctk_alloc_region_setup(addr);
 	id = (((sctk_addr_t)addr)%SCTK_REGION_SIZE) / SCTK_MACRO_BLOC_SIZE;
-	
+
 	assert(id < SCTK_REGION_HEADER_ENTRIES);
 	assert(id >= 0);
-	
+
 	return region->entries+id;
 }
 
 /************************* FUNCTION ************************/
+/**
+ * Reset the region entries corresponding to the given macro bloc.
+ */
 SCTK_STATIC void sctk_alloc_region_unset_entry(struct sctk_alloc_macro_bloc * macro_bloc)
 {
 	//vars
@@ -2026,7 +2189,8 @@ SCTK_STATIC void sctk_alloc_region_unset_entry(struct sctk_alloc_macro_bloc * ma
 	while (ptr < (sctk_addr_t)macro_bloc + sctk_alloc_get_chunk_header_large_size(&macro_bloc->header))
 	{
 		dest = sctk_alloc_region_get_entry((void *)ptr);
-		dest->macro_bloc = NULL;
+		if (dest->macro_bloc == macro_bloc)
+			dest->macro_bloc = NULL;
 		ptr += SCTK_MACRO_BLOC_SIZE;
 	}
 }
@@ -2056,7 +2220,7 @@ SCTK_STATIC void sctk_alloc_region_set_entry(struct sctk_alloc_chain * chain, st
 		warning("Caution, using macro blocs smaller than SCTK_MACRO_BLOC_SIZE is dangerous, check usage of flag SCTK_ALLOC_CHAIN_DISABLE_REGION_REGISTER.");
 
 	/** @TODO TO OPTIMIZE by avoiding calling sctk_alloc_region_get_entry each time. **/
-	/** @TODO Support sub link list for macro_bloc imbrication. **/
+	/** @TODO Support sub link list for macro_bloc inclusion (strict). **/
 	while (ptr < (sctk_addr_t)macro_bloc + sctk_alloc_get_chunk_header_large_size(&macro_bloc->header))
 	{
 		dest = sctk_alloc_region_get_entry((void *)ptr);
@@ -2096,11 +2260,11 @@ SCTK_STATIC void sctk_alloc_region_del_chain(struct sctk_alloc_region * region,s
 	//nothing to do
 	if (region == NULL)
 		return;
-	
+
 	//ensure init and take the lock
 	sctk_alloc_region_init();
 	sctk_alloc_spinlock_lock(&sctk_alloc_glob_regions_lock);
-	
+
 	for ( i = 0 ; i < SCTK_REGION_HEADER_ENTRIES ; ++i )
 	{
 		if (chain == NULL)
@@ -2115,7 +2279,11 @@ SCTK_STATIC void sctk_alloc_region_del_chain(struct sctk_alloc_region * region,s
 }
 
 /************************* FUNCTION ************************/
-struct sctk_alloc_macro_bloc * sctk_alloc_region_get_macro_bloc(void * ptr)
+/**
+ * Walk in regions to find the base address of macro bloc which contain the given address.
+ * Id not found, return NULL.
+ */
+SCTK_PUBLIC struct sctk_alloc_macro_bloc * sctk_alloc_region_get_macro_bloc(void * ptr)
 {
 	//vars
 	struct sctk_alloc_macro_bloc * macro_bloc = NULL;
@@ -2176,7 +2344,7 @@ SCTK_STATIC void sctk_alloc_region_del(struct sctk_alloc_region * region)
 		/** @todo  PARALLEL Check for atomic operation **/
 		sctk_alloc_glob_regions[id] = NULL;
 	}
-	
+
 	//unlock
 	sctk_alloc_spinlock_unlock(&sctk_alloc_glob_regions_lock);
 
@@ -2246,12 +2414,8 @@ SCTK_STATIC void sctk_alloc_region_del_all(void)
 **/
 SCTK_STATIC void sctk_alloc_rfq_init(struct sctk_alloc_rfq * rfq)
 {
-	if (rfq != NULL)
-	{
-		rfq->first = NULL;
-		rfq->last = NULL;
-		sctk_alloc_spinlock_init(&rfq->lock,PTHREAD_PROCESS_PRIVATE);
-	}
+	assert(rfq != NULL);
+	sctk_mpscf_queue_init(&rfq->queue);
 }
 
 /************************* FUNCTION ************************/
@@ -2263,10 +2427,8 @@ SCTK_STATIC void sctk_alloc_rfq_init(struct sctk_alloc_rfq * rfq)
 **/
 SCTK_STATIC bool sctk_alloc_rfq_empty(struct sctk_alloc_rfq * rfq)
 {
-	if (rfq == NULL)
-		return true;
-	else
-		return rfq->first == NULL;
+	assert(rfq != NULL);
+	return sctk_mpscf_queue_is_empty(&rfq->queue);
 }
 
 /************************* FUNCTION ************************/
@@ -2275,12 +2437,12 @@ SCTK_STATIC bool sctk_alloc_rfq_empty(struct sctk_alloc_rfq * rfq)
  * @param rfq Define the RFQ into which to insert the free request.
  * @param ptr Define the segment for which to delay the free.
 **/
-void sctk_alloc_rfq_register(struct sctk_alloc_rfq * rfq,void * ptr)
+SCTK_PUBLIC void sctk_alloc_rfq_register(struct sctk_alloc_rfq * rfq,void * ptr)
 {
 	//vars
 	sctk_alloc_vchunk vchunk;
 	struct sctk_alloc_rfq_entry * entry;
-	
+
 	//nothing to do
 	if (ptr == NULL)
 		return;
@@ -2297,24 +2459,15 @@ void sctk_alloc_rfq_register(struct sctk_alloc_rfq * rfq,void * ptr)
 			break;
 		default:
 			assume_m(false,"Invalid chunk type.");
+			break;
 	}
 
 	//setup entry
 	entry->ptr = ptr;
-	entry->next = NULL;
+	entry->entry.next = NULL;
 
-	//take the lock
-	sctk_alloc_spinlock_lock(&rfq->lock);
-
-	//insert
-	if (rfq->last != NULL)
-		rfq->last->next = entry;
-	rfq->last = entry;
-	if (rfq->first == NULL)
-		rfq->first = entry;
-
-	//let the lock
-	sctk_alloc_spinlock_unlock(&rfq->lock);
+	//reg in queue
+	sctk_mpscf_queue_insert(&rfq->queue,&entry->entry);
 }
 
 /************************* FUNCTION ************************/
@@ -2325,27 +2478,7 @@ void sctk_alloc_rfq_register(struct sctk_alloc_rfq * rfq,void * ptr)
 **/
 SCTK_STATIC struct sctk_alloc_rfq_entry * sctk_alloc_rfq_extract(struct sctk_alloc_rfq * rfq)
 {
-	struct sctk_alloc_rfq_entry * res;
-	
-	//error
-	if (rfq == NULL)
-		return NULL;
-
-	//if empty, no need to take the lock, can exi now
-	if (rfq->first == NULL)
-		return NULL;
-
-	//take the lock
-	sctk_alloc_spinlock_lock(&rfq->lock);
-
-	res = rfq->first;
-	rfq->first = NULL;
-	rfq->last = NULL;
-
-	//let the lock
-	sctk_alloc_spinlock_unlock(&rfq->lock);
-
-	return ( struct sctk_alloc_rfq_entry *)res;
+	return (struct sctk_alloc_rfq_entry *)sctk_mpscft_queue_dequeue_all(&rfq->queue);
 }
 
 /************************* FUNCTION ************************/
@@ -2362,7 +2495,7 @@ SCTK_STATIC int sctk_alloc_rfq_count_entries(struct sctk_alloc_rfq_entry * entri
 	while (entries != NULL)
 	{
 		cnt++;
-		cur = cur->next;
+		cur = (struct sctk_alloc_rfq_entry *)cur->entry.next;
 	}
 	return cnt;
 }
@@ -2376,17 +2509,8 @@ SCTK_STATIC int sctk_alloc_rfq_count_entries(struct sctk_alloc_rfq_entry * entri
 **/
 SCTK_STATIC void sctk_alloc_rfq_destroy(struct sctk_alloc_rfq * rfq)
 {
-	if (rfq == NULL)
-		return;
-
-	//try to take the lock
-	assume_m( ! sctk_alloc_spinlock_trylock(&rfq->lock) ,"Can't take the lock of Remote Free Queue to made the cleanup.");
-
-	//check empty list
-	assume_m(rfq->first == NULL && rfq->last == NULL,"Can't cleanup a non empty Remote Free Queue.");
-
-	//cleanup the spinlock
-	sctk_alloc_spinlock_destroy(&rfq->lock);
+	assert(rfq != NULL);
+	sctk_mpscf_queue_destroy(&rfq->queue);
 }
 
 /************************* FUNCTION ************************/
@@ -2433,7 +2557,11 @@ SCTK_STATIC void sctk_alloc_chain_numa_migrate_content(struct sctk_alloc_chain *
 #endif //HAVE_HWLOC
 
 /************************* FUNCTION ************************/
-void sctk_alloc_chain_get_numa_stat(struct sctk_alloc_numa_stat_s * numa_stat,struct sctk_alloc_chain * chain)
+/**
+ * This is for debug purpose only. This method walk in pages managed by allocation chain and
+ * checked their NUMA mappings.
+ */
+SCTK_PUBLIC void sctk_alloc_chain_get_numa_stat(struct sctk_alloc_numa_stat_s * numa_stat,struct sctk_alloc_chain * chain)
 {
 	//vars
 	int i;
@@ -2466,6 +2594,10 @@ void sctk_alloc_chain_get_numa_stat(struct sctk_alloc_numa_stat_s * numa_stat,st
 }
 
 /************************* FUNCTION ************************/
+/**
+ * Extract some stats by walking in alloc chain memory. NUMA....
+ * For debug purpose only.
+ */
 void sctk_alloc_chain_get_stat(struct sctk_alloc_chain_stat * chain_stat,struct sctk_alloc_chain * chain)
 {
 	//vars
@@ -2515,18 +2647,23 @@ void sctk_alloc_chain_get_stat(struct sctk_alloc_chain_stat * chain_stat,struct 
 }
 
 /************************* FUNCTION ************************/
-void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain)
+/**
+ * This is to help debugging by printing some stats from the given allocation chain.
+ */
+SCTK_PUBLIC void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain)
 {
 	//vars
 	struct sctk_alloc_numa_stat_s numa_stat;
 	struct sctk_alloc_chain_stat chain_stat;
-	
+	int numa_nodes;
+
 	//errors
 	assert(chain != NULL);
 
 	//read stat
 	sctk_alloc_chain_get_numa_stat(&numa_stat,chain);
 	sctk_alloc_chain_get_stat(&chain_stat,chain);
+	numa_nodes = sctk_get_numa_node_number();
 
 	//print it
 	printf("====================== ALLOCATION CHAIN STAT ======================\n");
@@ -2534,7 +2671,7 @@ void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain)
 	printf("%-20s : %s\n","Name",chain->name);
 	printf("%-20s : %p\n","Chain",chain);
 	printf("%-20s : %p\n","Memory source",chain->source);
-	printf("%-20s : %d\n","Source NUMA node",sctk_alloc_chain_get_numa_node(chain));
+	printf("%-20s : %d / %d\n","Source NUMA node",sctk_alloc_chain_get_numa_node(chain),numa_nodes);
 	#ifdef HAVE_HWLOC
 	printf("%-20s : %d\n","Preferred NUMA node",sctk_get_preferred_numa_node());
 	#endif //HAVE_HWLOC
@@ -2549,7 +2686,10 @@ void sctk_alloc_chain_print_stat(struct sctk_alloc_chain * chain)
 }
 
 /************************* FUNCTION ************************/
-int sctk_alloc_chain_get_numa_node(struct sctk_alloc_chain * chain)
+/**
+ * Return the NUMA node on which the given allocation chain is binded. Return -1 if none.
+ */
+SCTK_PUBLIC int sctk_alloc_chain_get_numa_node(struct sctk_alloc_chain * chain)
 {
 	//vars
 	struct sctk_alloc_mm_source_light * light_source;
@@ -2577,7 +2717,7 @@ int sctk_alloc_chain_get_numa_node(struct sctk_alloc_chain * chain)
  * @param new_mm_source Define the new memory source to link to this allocation chain you can use
  * SCTK_ALLOC_KEEP_OLD_MM_SOURCE.
 **/
-void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_numa_node,bool migrate_chain_struct,bool migrate_content,struct sctk_alloc_mm_source * new_mm_source)
+SCTK_PUBLIC void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_numa_node,bool migrate_chain_struct,bool migrate_content,struct sctk_alloc_mm_source * new_mm_source)
 {
 	//errors
 	assert(chain != NULL);
@@ -2595,8 +2735,27 @@ void sctk_alloc_chain_numa_migrate(struct sctk_alloc_chain * chain, int target_n
 	if (migrate_chain_struct && sctk_alloc_config()->numa_migration )
 		sctk_alloc_chain_numa_migrate_content(chain,target_numa_node);
 	#endif //HAVE_HWLOC
-	
+
 	//update the mm source
 	if (new_mm_source != SCTK_ALLOC_KEEP_OLD_MM_SOURCE)
 		chain->source = new_mm_source;
+}
+
+/************************* FUNCTION ************************/
+/**
+ * @return Return the size of allocation chain structure to be used without knowing the
+ * structure details.
+ */
+SCTK_PUBLIC size_t sctk_alloc_chain_struct_size(void)
+{
+	return sizeof(struct sctk_alloc_chain);
+}
+
+/************************* FUNCTION ************************/
+SCTK_PUBLIC void sctk_alloc_chain_remote_free(struct sctk_alloc_chain * chain,void * ptr)
+{
+	if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE)
+		sctk_alloc_chain_free(chain,ptr);
+	else
+		sctk_alloc_rfq_register(&chain->rfq,ptr);
 }

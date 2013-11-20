@@ -157,7 +157,7 @@ sctk_ethread_sched_migrate ()
 static int
 sctk_ethread_sched_restore (sctk_thread_t thread, char *type, int vp)
 {
-  sctk_alloc_chain_t *tls;
+  struct sctk_alloc_chain *tls;
   char name[SCTK_MAX_FILENAME_SIZE];
 
   assume (vp == 0);
@@ -181,13 +181,13 @@ sctk_ethread_sched_restore (sctk_thread_t thread, char *type, int vp)
   sctk_ethread_enqueue_task (&virtual_processor, thread);
 
   /*Free migration request */
-  sprintf (name, "%s/mig_task", sctk_store_dir);
-  if (strncmp (type, name, strlen (name)) == 0)
-    {
-      sctk_nodebug ("Remove %p %s", thread, type);
-      remove (type);
-      sctk_ethread_sched_yield ();
-    }
+/*   sprintf (name, "%s/mig_task", sctk_store_dir); */
+/*   if (strncmp (type, name, strlen (name)) == 0) */
+/*     { */
+/*       sctk_nodebug ("Remove %p %s", thread, type); */
+/*       remove (type); */
+/*       sctk_ethread_sched_yield (); */
+/*     } */
   return 0;
 }
 static int
@@ -199,17 +199,17 @@ sctk_ethread_sched_dump_clean ()
   FILE *file;
   self = sctk_ethread_self ();
 
-  sprintf (name, "%s/task_%p_%lu", sctk_store_dir, self, step);
-  file = fopen (name, "r");
-  while (file != NULL)
-    {
-      fclose (file);
-      sctk_nodebug ("Clean file %s", name);
-      remove (name);
-      step++;
-      sprintf (name, "%s/task_%p_%lu", sctk_store_dir, self, step);
-      file = fopen (name, "r");
-    }
+/*   sprintf (name, "%s/task_%p_%lu", sctk_store_dir, self, step); */
+/*   file = fopen (name, "r"); */
+/*   while (file != NULL) */
+/*     { */
+/*       fclose (file); */
+/*       sctk_nodebug ("Clean file %s", name); */
+/*       remove (name); */
+/*       step++; */
+/*       sprintf (name, "%s/task_%p_%lu", sctk_store_dir, self, step); */
+/*       file = fopen (name, "r"); */
+/*     } */
 
   return 0;
 }
@@ -589,7 +589,7 @@ sctk_ethread_thread_init (void)
 
   sctk_thread_data_init ();
   sctk_set_cpu_number (1);
-#ifdef MPC_Allocator
+#ifdef MPC_PosixAllocator
   sctk_add_global_var (&sctk_ethread_key_pos, sizeof (int));
 #endif
 }

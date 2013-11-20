@@ -1,7 +1,7 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # Copyright or (C) or Copr. 2010-2012 Universit�� de Versailles         # */
 /* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -35,9 +35,9 @@
 #include <sctk_ibufs_rdma.h>
 #include <sctk_ib_mmu.h>
 #include <sctk_ib_config.h>
-#include <sctk_ib_fallback_config.h>
 #include "sctk_ib_qp.h"
 #include "sctk_ib_cm.h"
+#include "sctk_ib_topology.h"
 #include "sctk_ib_eager.h"
 #include "sctk_ib_polling.h"
 #include "sctk_ib_async.h"
@@ -48,6 +48,12 @@
 #include "sctk_ib_prof.h"
 #include "sctk_atomics.h"
 #include "sctk_asm.h"
+
+#define ASYNC_POLLING
+
+#ifndef ASYNC_POLLING
+#error "The fallback network use the async polling !!!"
+#endif
 
 static void
 sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* rail){
@@ -87,10 +93,9 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
 
   route_data=&tmp->data.ib;
   remote=route_data->remote;
-  sctk_nodebug("Go to process %d", remote->rank);
 
   size = msg->body.header.msg_size + sizeof(sctk_thread_ptp_message_body_t);
-  if (is_control_message && ((size + IBUF_GET_EAGER_SIZE) > config->ibv_eager_limit) ) {
+  if (is_control_message && ((size + IBUF_GET_EAGER_SIZE) > config->eager_limit) ) {
     sctk_error("MPC tries to send a control message without using the Eager protocol."
         "This is not supported and MPC is going to exit ...");
     sctk_abort();
@@ -101,26 +106,25 @@ sctk_network_send_message_ib (sctk_thread_ptp_message_t * msg,sctk_rail_info_t* 
    *  We switch between available protocols
    *
    * */
-  if (size+IBUF_GET_EAGER_SIZE <= config->ibv_eager_limit)
+  if (size+IBUF_GET_EAGER_SIZE <= config->eager_limit)
   {
-    sctk_nodebug("Eager");
     ibuf = sctk_ib_eager_prepare_msg(rail_ib, remote, msg, size, -1, is_control_message);
     /* Actually, it is possible to get a NULL pointer for ibuf. We falback to buffered */
     if (ibuf == NULL) goto buffered;
     /* Send message */
     sctk_ib_qp_send_ibuf(rail_ib, remote, ibuf, is_control_message);
     sctk_complete_and_free_message(msg);
-    PROF_INC_RAIL_IB(rail_ib, eager_nb);
+    PROF_INC(rail_ib->rail, ib_eager_nb);
     goto exit;
   }
 
 buffered:
   /***** BUFFERED EAGER CHANNEL *****/
-  if (size <= config->ibv_frag_eager_limit)  {
+  if (size <= config->buffered_limit)  {
     /* Fallback to RDMA if buffered not available or low memory mode */
     if (sctk_ib_buffered_prepare_msg(rail, remote, msg, size) == 1 ) goto error;
     sctk_complete_and_free_message(msg);
-    PROF_INC_RAIL_IB(rail_ib, buffered_nb);
+    PROF_INC(rail_ib->rail, ib_buffered_nb);
     goto exit;
   }
 
@@ -162,7 +166,7 @@ static int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
   assume(IBUF_GET_CHANNEL(ibuf) & RC_SR_CHANNEL);
   if(release_ibuf) {
     /* sctk_ib_qp_release_entry(&rail->network.ib, ibuf->remote); */
-    sctk_ibuf_release(rail_ib, ibuf);
+    sctk_ibuf_release(rail_ib, ibuf, 1);
   } else {
     sctk_ibuf_release_from_srq(rail_ib, ibuf);
   }
@@ -179,7 +183,7 @@ static int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
 
   /* First we check if the message has an immediate data */
   if (wc.wc_flags & IBV_WC_WITH_IMM) {
-    not_reachable();
+    assume(0);
     sctk_abort();
   } else {
 
@@ -212,7 +216,7 @@ static int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf
 
   if (release_ibuf) {
     /* sctk_ib_qp_release_entry(&rail->network.ib, ibuf->remote); */
-    sctk_ibuf_release(&rail->network.ib, ibuf);
+    sctk_ibuf_release(&rail->network.ib, ibuf, 1);
   } else {
     sctk_ibuf_release_from_srq(&rail->network.ib, ibuf);
   }
@@ -236,45 +240,17 @@ static int sctk_network_poll_send(sctk_rail_info_t* rail, struct ibv_wc* wc,
   ibuf = (sctk_ibuf_t*) wc->wr_id;
   assume(ibuf);
 
-  /* Decrease the number of pending requests */
-  sctk_ib_qp_decr_requests_nb(ibuf->remote);
-  sctk_nodebug("Send message released (rank: %d - pending_nb: %d)", ibuf->remote->rank, sctk_ib_qp_get_requests_nb(ibuf->remote));
+  sctk_nodebug("Send message released (rank: %d - pending_nb: %d)",
+      ibuf->remote->rank, sctk_ib_qp_get_requests_nb(ibuf->remote));
 
   ibuf->wc = *wc;
   return sctk_network_poll_send_ibuf(rail, ibuf, 0, poll);
 }
 
-#define MAX_TASKS_ALLOWED 1
-static OPA_int_t polling_lock;
-/* Count how many times the vp is entered to the polling function. We
- * allow recursive calls to the polling function */
-static __thread int recursive_polling = 0;
-static int sctk_network_poll_all (sctk_rail_info_t* rail) {
-  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  LOAD_CONFIG(rail_ib);
-  LOAD_DEVICE(rail_ib);
-  sctk_ib_polling_t poll;
-  POLL_INIT(&poll);
 
-  /* Only one task is allowed to poll new messages from QP */
-  int ret = OPA_fetch_and_incr_int(&polling_lock);
-  if ( recursive_polling || ret < MAX_TASKS_ALLOWED)
-  {
-    recursive_polling++;
-    /* Poll received messages */
-    sctk_ib_cq_poll(rail, device->recv_cq, config->ibv_wc_in_number, &poll, sctk_network_poll_recv);
-    /* Poll sent messages */
-    sctk_ib_cq_poll(rail, device->send_cq, config->ibv_wc_out_number, &poll, sctk_network_poll_send);
-    recursive_polling--;
-  }
-  OPA_decr_int(&polling_lock);
-
-  return poll.recv_found_own;
-}
-
-static int sctk_network_poll_all_and_steal(sctk_rail_info_t *rail) {
-  /* POLLING */
-  return sctk_network_poll_all(rail);
+static int sctk_network_poll_all (sctk_rail_info_t* rail)
+{
+  return 0;
 }
 
 static void
@@ -285,21 +261,13 @@ sctk_network_notify_matching_message_ib (sctk_thread_ptp_message_t * msg,sctk_ra
 
 /* WARNING: This function can be called with dest == sctk_process_rank */
 static void
-sctk_network_notify_perform_message_ib (int dest, sctk_rail_info_t* rail){
-  sctk_network_poll_all_and_steal(rail);
-}
+sctk_network_notify_perform_message_ib (int remote_process, int remote_task_id, int polling_task_id, int blocking, sctk_rail_info_t* rail){}
 
 static void
-sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){
-  /* POLLING */
-  sctk_network_poll_all_and_steal(rail);
-}
+sctk_network_notify_idle_message_ib (sctk_rail_info_t* rail){}
 
 static void
-sctk_network_notify_any_source_message_ib (sctk_rail_info_t* rail){
-  /* POLLING */
-  sctk_network_poll_all_and_steal(rail);
-}
+sctk_network_notify_any_source_message_ib (int polling_task_id, int blocking, sctk_rail_info_t* rail){}
 
 static void
 sctk_network_connection_to_ib(int from, int to,sctk_rail_info_t* rail){
@@ -311,30 +279,126 @@ sctk_network_connection_from_ib(int from, int to,sctk_rail_info_t* rail){
   sctk_ib_cm_connect_from(from,to,rail);
 }
 
-void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
+/*-----------------------------------------------------------
+ *  POLLING THREADS
+ *----------------------------------------------------------*/
+static void *
+sctk_ib_fallback_send_polling_thread(void *arg) {
+  sctk_rail_info_t* rail = (sctk_rail_info_t*) arg;
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  LOAD_DEVICE(rail_ib);
+  LOAD_CONFIG(rail_ib);
+
+  while(1) {
+    void *cq_context;
+    struct ibv_cq *cq;
+
+    if (ibv_get_cq_event(device->send_comp_channel, &cq, &cq_context)) {
+      sctk_error("Error on ibv_get_cq_event"); sctk_abort();
+    }
+    ibv_ack_cq_events(cq, 1);
+    if (ibv_req_notify_cq(cq, 0)) {
+      sctk_error("Error on ibv_req_notify_cq"); sctk_abort();
+    }
+
+    /* Poll sent messages */
+    sctk_ib_polling_t poll;
+    POLL_INIT(&poll);
+    sctk_ib_cq_poll(rail, device->send_cq, config->wc_out_number, &poll, sctk_network_poll_send);
+  }
+  return NULL;
+}
+
+static void *
+sctk_ib_fallback_recv_polling_thread(void *arg) {
+  sctk_rail_info_t* rail = (sctk_rail_info_t*) arg;
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  LOAD_DEVICE(rail_ib);
+  LOAD_CONFIG(rail_ib);
+
+  while(1) {
+    void *cq_context;
+    struct ibv_cq *cq;
+
+    if (ibv_get_cq_event(device->recv_comp_channel, &cq, &cq_context)) {
+      sctk_error("Error on ibv_get_cq_event"); sctk_abort();
+    }
+
+    ibv_ack_cq_events(cq, 1);
+    if (ibv_req_notify_cq(cq, 0)) {
+      sctk_error("Error on ibv_req_notify_cq"); sctk_abort();
+    }
+
+    /* Poll received messages */
+    sctk_ib_polling_t poll;
+    POLL_INIT(&poll);
+    sctk_ib_cq_poll(rail, device->recv_cq, config->wc_in_number, &poll, sctk_network_poll_recv);
+  }
+  return NULL;
+}
+
+void
+sctk_ib_fallback_init_polling_threads(sctk_rail_info_t* rail) {
+  sctk_thread_t pidt;
+  sctk_thread_attr_t attr;
+
+  sctk_thread_attr_init (&attr);
+  sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
+
+  sctk_user_thread_create (&pidt, &attr, sctk_ib_fallback_send_polling_thread, (void*) rail);
+  sctk_user_thread_create (&pidt, &attr, sctk_ib_fallback_recv_polling_thread, (void*) rail);
+
+//#warning "Join threads"
+}
+
+void sctk_network_initialize_leader_task_fallback_ib(sctk_rail_info_t* rail) {
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  sctk_ibuf_srq_check_and_post(rail_ib);
+  /* Initialize Async thread */
+  sctk_ib_async_init(rail_ib->rail);
+
+  LOAD_CONFIG(rail_ib);
+  LOAD_DEVICE(rail_ib);
+  struct ibv_srq_attr mod_attr;
+  int rc;
+  mod_attr.srq_limit  = config->srq_credit_thread_limit;
+  rc = ibv_modify_srq(device->srq, &mod_attr, IBV_SRQ_LIMIT);
+  assume(rc == 0);
+
+  sctk_ib_fallback_init_polling_threads(rail_ib->rail);
+}
+
+
+void sctk_network_initialize_task_fallback_ib(sctk_rail_info_t* rail) {
+}
+
+void sctk_network_finalize_task_fallback_ib(sctk_rail_info_t* rail) {
+}
+
+void sctk_network_init_fallback_ib(sctk_rail_info_t* rail, int ib_rail_nb){
   /* XXX: memory never freed */
   char *network_name = sctk_malloc(256);
 
-  OPA_store_int(&polling_lock, 0);
   /* Infiniband Init */
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
   memset(rail_ib, 0, sizeof(sctk_ib_rail_info_t));
+  rail_ib->rail = rail;
+  rail_ib->rail_nb = ib_rail_nb;
   /* Profiler init */
-  sctk_ib_prof_init(rail_ib);
   sctk_ib_device_t *device;
   struct ibv_srq_init_attr srq_attr;
   /* Open config */
-  sctk_ib_fallback_config_init(rail_ib, "fallback");
+  sctk_ib_config_init(rail_ib, "fallback");
   /* Open device */
   device = sctk_ib_device_init(rail_ib);
-  /* FIXME: pass rail as an arg of sctk_ib_device_init  */
-  rail_ib->rail = rail;
-  sctk_ib_device_open(rail_ib, 0);
+  sctk_ib_device_open(rail_ib, -1);
   /* Init Proctection Domain */
   sctk_ib_pd_init(device);
   /* Init Completion Queues */
-  device->send_cq = sctk_ib_cq_init(device, rail_ib->config);
-  device->recv_cq = sctk_ib_cq_init(device, rail_ib->config);
+  device->send_comp_channel = sctk_ib_comp_channel_init(device);
+  device->recv_comp_channel = sctk_ib_comp_channel_init(device);
+  device->send_cq = sctk_ib_cq_init(device, rail_ib->config, device->send_comp_channel);
+  device->recv_cq = sctk_ib_cq_init(device, rail_ib->config, device->recv_comp_channel);
   /* Init SRQ */
   srq_attr = sctk_ib_srq_init_attr(rail_ib);
   sctk_ib_srq_init(rail_ib, &srq_attr);
@@ -344,24 +408,17 @@ void sctk_network_init_fallback_ib(sctk_rail_info_t* rail){
   if (sctk_get_verbosity() >= 2) {
     sctk_ib_config_print(rail_ib);
   }
-  sctk_ib_mmu_init(rail_ib);
-  sctk_ibuf_pool_init(rail_ib);
-  /* Fill SRQ with buffers */
-  sctk_ibuf_srq_check_and_post(rail_ib, rail_ib->config->ibv_max_srq_ibufs_posted);
-  /* Initialize Async thread */
-  sctk_ib_async_init(rail);
-
-  LOAD_CONFIG(rail_ib);
-  struct ibv_srq_attr mod_attr;
-  int rc;
-  mod_attr.srq_limit  = config->ibv_srq_credit_thread_limit;
-  rc = ibv_modify_srq(device->srq, &mod_attr, IBV_SRQ_LIMIT);
-  assume(rc == 0);
+  sctk_ib_topology_init(rail_ib);
 
   /* Initialize network */
-  sprintf(network_name, "IB-MT (v2.0) Fallback %d/%d:%s - %dx %s (%d Gb/s)]",
+  int init_cpu = sctk_get_cpu();
+  sprintf(network_name, "IB-MT (v2.0) Fallback %d/%d:%s - %dx %s (%d Gb/s) - %d]",
     device->dev_index+1, device->dev_nb, ibv_get_device_name(device->dev),
-    device->link_width, device->link_rate, device->data_rate);
+    device->link_width, device->link_rate, device->data_rate, init_cpu);
+
+  rail->initialize_task = sctk_network_initialize_task_fallback_ib;
+  rail->initialize_leader_task = sctk_network_initialize_leader_task_fallback_ib;
+  rail->finalize_task = sctk_network_finalize_task_fallback_ib;
 
   rail->connect_to = sctk_network_connection_to_ib;
   rail->connect_from = sctk_network_connection_from_ib;

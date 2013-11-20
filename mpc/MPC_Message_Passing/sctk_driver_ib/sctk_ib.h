@@ -1,7 +1,7 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # Copyright or (C) or Copr. 2010-2012 Universit�� de Versailles         # */
 /* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -31,14 +31,14 @@ extern "C"
 #endif
 #include "sctk_spinlock.h"
 #include "uthash.h"
-#include <stdint.h>
 #include <mpcmp.h>
+#include "sctk_stdint.h"
 
 /*-----------------------------------------------------------
  *  IB module debugging
  *----------------------------------------------------------*/
 /* Uncomment this macro to activate the IB debug */
-/* #define IB_DEBUG */
+//#define IB_DEBUG
 
 #ifdef IB_DEBUG
 #warning "WARNING !!!! Debug activated !!!! WARNING"
@@ -69,6 +69,7 @@ extern "C"
   struct sctk_ibuf_pool_s;
   struct sctk_ibuf_s;
   struct sctk_ib_mmu_s;
+  struct sctk_ib_topology_s;
   struct sctk_ib_config_s;
   struct sctk_ib_device_s;
   struct sctk_ib_qp_s;
@@ -80,11 +81,11 @@ extern "C"
   struct sctk_ib_qp_ht_s;
 
   typedef struct sctk_ib_rail_info_s {
-    struct sctk_ibuf_pool_s *pool_buffers;
-    struct sctk_ib_mmu_s    *mmu;
-    struct sctk_ib_config_s *config;
+     struct sctk_ibuf_pool_s *pool_buffers;
+    /* struct sctk_ib_mmu_s    *mmu; */
+    struct sctk_ib_topology_s *topology;
+    struct sctk_runtime_config_struct_net_driver_infiniband *config;
     struct sctk_ib_device_s *device;
-    struct sctk_ib_prof_s   *profiler;
     /* Collaborative polling */
     struct sctk_ib_cp_s *cp;
 
@@ -93,6 +94,14 @@ extern "C"
     struct sctk_ib_qp_ht_s         *remotes;
     /* Pointer to the generic rail */
     struct sctk_rail_info_s        *rail;
+    /* Rail number among other IB rails */
+    int rail_nb;
+
+    /* For Eager messages -> pool of MPC headers */
+    struct sctk_thread_ptp_message_s *eager_buffered_ptp_message;
+    sctk_spinlock_t eager_lock_buffered_ptp_message;
+    /* Type of the network */
+    char * network_type;
   } sctk_ib_rail_info_t;
 
   typedef struct sctk_ib_data_s {
@@ -138,11 +147,12 @@ extern "C"
   typedef struct sctk_ib_header_rdma_s {
     /* HT */
     UT_hash_handle hh;
-    int ht_msg_number;
+    int ht_key;
 
     size_t requested_size;
     sctk_spinlock_t lock;
     struct sctk_rail_info_s *rail;
+    struct sctk_rail_info_s *remote_rail;
     struct sctk_ib_qp_s *remote_peer;
     struct sctk_message_to_copy_s *copy_ptr;
     /* For collaborative polling: src and dest of msg */
@@ -157,6 +167,10 @@ extern "C"
       size_t size;
       void  *aligned_addr;
       size_t aligned_size;
+      /* Timestamp when the request has been sent */
+      double req_timestamp;
+      double send_rdma_timestamp;
+      double send_ack_timestamp;
       /* Local structure ready to be read */
       volatile int ready;
     } local;
@@ -166,7 +180,7 @@ extern "C"
       struct sctk_thread_ptp_message_s *msg_header;
       void  *addr;
       size_t size;
-      uint32_t rkey;
+      sctk_uint32_t rkey;
       void  *aligned_addr;
       size_t aligned_size;
     } remote;
@@ -251,8 +265,6 @@ extern "C"
 
   void sctk_network_free_msg(struct sctk_thread_ptp_message_s *msg);
   /* For getting stats from network usage */
-  void sctk_network_stats_ib (struct MPC_Network_stats_s* stats);
-  void sctk_network_deco_neighbors_ib ();
 
 #ifdef __cplusplus
 }

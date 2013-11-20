@@ -26,14 +26,18 @@ set(ALLOC_TEST_LIST test_allocated_chunk test_chunk_padding test_thread_pool tes
 
 #setup OpenMP for parallel tests (not required for all, but simpler to setup once)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OpenMP_C_FLAGS}")
 
 #Now you can build your tests
 foreach(i ${ALLOC_TEST_LIST})
 	add_executable(${i} ${i}.cpp)
-	target_link_libraries(${i} ${UNITTEST_LIBRARY} alloc_primitives)
+	target_link_libraries(${i} ${UNITTEST_LIBRARY} mpcalloc_primitives_for_test)
 	add_test(${i} ${EXECUTOR_PATH} ${i})
 endforeach(i)
 
 add_executable(simple_malloc simple_malloc-1.cpp)
-target_link_libraries(simple_malloc alloc)
+target_link_libraries(simple_malloc mpcalloc)
 
+add_executable(test_mpscf_queue test_mpscf_queue.c)
+#target_link_libraries(test_mpscf_queue mpcalloc)
+add_test(test_mpscf_queue test_mpscf_queue valid)

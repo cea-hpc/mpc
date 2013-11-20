@@ -41,13 +41,13 @@ extern "C"
     struct sctk_ib_polling_s;
 
 #define MAX_STRING_SIZE 2048
-void sctk_network_init_mpi_ib(sctk_rail_info_t* rail);
+void sctk_network_init_mpi_ib(sctk_rail_info_t* rail, int ib_rail_nb);
 
-int sctk_network_poll_recv_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
+int sctk_network_poll_recv_ibuf(const sctk_rail_info_t const* rail, sctk_ibuf_t *ibuf,
        const char from_cp, struct sctk_ib_polling_s* poll);
 int sctk_network_poll_send_ibuf(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf,
        const char from_cp, struct sctk_ib_polling_s* poll);
-int sctk_network_poll_all (sctk_rail_info_t* rail);
+int sctk_network_poll_all (sctk_rail_info_t* rail, struct sctk_ib_polling_s* poll);
 
 #ifdef __cplusplus
 }

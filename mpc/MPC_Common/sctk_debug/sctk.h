@@ -27,13 +27,14 @@
 #include "sctk_alloc.h"
 #include "sctk_debug.h"
 #include "sctk_launch.h"
+#include "sctk_bool.h"
 
 extern int sctk_process_number;
 extern int sctk_process_rank;
 extern int sctk_node_number;
 extern int sctk_node_rank;
 extern volatile int sctk_multithreading_initialised;
-extern int sctk_migration_mode;
+extern bool sctk_migration_mode;
 
 #ifdef MPC_Message_Passing
 #include "sctk_inter_thread_comm.h"
@@ -45,8 +46,9 @@ extern int sctk_migration_mode;
 #else
 #define SCTK_PROFIL_START(key)	(void)(0)
 #define SCTK_PROFIL_END(key) (void)(0)
-#define SCTK_COUNTER_INC(key) (void)(0);
-#define SCTK_COUNTER_DEC(key) (void)(0);
+#define SCTK_COUNTER_INC(key,val) (void)(0);
+#define SCTK_COUNTER_DEC(key,val) (void)(0);
+#define SCTK_PROFIL_END_WITH_VALUE(key, value) (void)(0);
 #define sctk_internal_profiler_init() (void)(0)
 #define sctk_internal_profiler_render() (void)(0)
 #define sctk_internal_profiler_release() (void)(0)

@@ -174,7 +174,7 @@ sctk_ethread_mxn_sched_migrate ()
   self->status = ethread_dump;
   self->dump_for_migration = 1;
   sctk_nodebug("Start migration sctk_ethread_mxn_sched_migrate");
-  res = 
+  res =
     __sctk_ethread_sched_yield_vp ((sctk_ethread_virtual_processor_t *)
 				   self->vp, self);
   sctk_nodebug("Start migration sctk_ethread_mxn_sched_migrate DONE");
@@ -183,7 +183,7 @@ sctk_ethread_mxn_sched_migrate ()
 static int
 sctk_ethread_mxn_sched_restore (sctk_thread_t thread, char *type, int vp)
 {
-  sctk_alloc_chain_t *tls;
+  struct sctk_alloc_chain *tls;
   sctk_ethread_virtual_processor_t *cpu;
   char name[SCTK_MAX_FILENAME_SIZE];
   sctk_nodebug ("Try to restore %p on vp %d", thread, vp);
@@ -206,12 +206,12 @@ sctk_ethread_mxn_sched_restore (sctk_thread_t thread, char *type, int vp)
   sctk_nodebug ("Restored");
 
   /*Free migration request */
-  sprintf (name, "%s/mig_task", sctk_store_dir);
-  if (strncmp (type, name, strlen (name)) == 0)
-    {
-      remove (type);
-      sctk_nodebug ("%s removed Restored",name);
-    }
+/*   sprintf (name, "%s/mig_task", sctk_store_dir); */
+/*   if (strncmp (type, name, strlen (name)) == 0) */
+/*     { */
+/*       remove (type); */
+/*       sctk_nodebug ("%s removed Restored",name); */
+/*     } */
   sctk_nodebug ("All done Restored");
   return 0;
 }
@@ -224,17 +224,17 @@ sctk_ethread_mxn_sched_dump_clean ()
   FILE *file;
   self = sctk_ethread_mxn_self ();
 
-  sprintf (name, "%s/task_%p_%lu", sctk_store_dir, self, step);
-  file = fopen (name, "r");
-  while (file != NULL)
-    {
-      fclose (file);
-      sctk_nodebug ("Clean file %s", name);
-      remove (name);
-      step++;
-      sprintf (name, "%s/task_%p_%lu", sctk_store_dir, self, step);
-      file = fopen (name, "r");
-    }
+/*   sprintf (name, "%s/task_%p_%lu", sctk_store_dir, self, step); */
+/*   file = fopen (name, "r"); */
+/*   while (file != NULL) */
+/*     { */
+/*       fclose (file); */
+/*       sctk_nodebug ("Clean file %s", name); */
+/*       remove (name); */
+/*       step++; */
+/*       sprintf (name, "%s/task_%p_%lu", sctk_store_dir, self, step); */
+/*       file = fopen (name, "r"); */
+/*     } */
 
   return 0;
 }
@@ -657,7 +657,7 @@ static int
 sctk_ethread_mxn_thread_attr_setbinding (sctk_thread_attr_t * __attr, int __binding)
 {
   sctk_ethread_attr_t * attr;
-  
+
   attr = (sctk_ethread_attr_t *)__attr;
   if(attr == NULL){
     return SCTK_EINVAL;
@@ -666,7 +666,7 @@ sctk_ethread_mxn_thread_attr_setbinding (sctk_thread_attr_t * __attr, int __bind
       return SCTK_EINVAL;
     }
 
-  
+
   attr->ptr->binding = __binding;
   return 0;
 }
@@ -675,7 +675,7 @@ static int
 sctk_ethread_mxn_thread_attr_getbinding (sctk_thread_attr_t * __attr, int *__binding)
 {
   sctk_ethread_attr_t * attr;
-  
+
   attr = (sctk_ethread_attr_t *)__attr;
   if(attr == NULL){
     return SCTK_EINVAL;
@@ -899,7 +899,7 @@ sctk_ethread_mxn_thread_init (void)
   sctk_thread_data_init ();
 
   sctk_ethread_mxn_sched_yield ();
-#ifdef MPC_Allocator
+#ifdef MPC_PosixAllocator
   sctk_add_global_var (&sctk_ethread_key_pos, sizeof (int));
 #endif
 }

@@ -1,7 +1,7 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # Copyright or (C) or Copr. 2010-2012 Universit�� de Versailles         # */
 /* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -37,7 +37,6 @@
 #include "sctk_ib_toolkit.h"
 
 
-#include "sctk_ib_low_mem.h"
 #include "sctk_ib.h"
 #include "sctk_ib_async.h"
 #include "sctk_ib_qp.h"
@@ -47,7 +46,7 @@
  *  CONSTS
  *----------------------------------------------------------*/
 #define DESC_EVENT(config, event, desc, level, fatal)  do { \
-  if ( (level <= (config)->ibv_verbose_level) || fatal) \
+  if ( (level != -1) && ( (level <= (config)->verbose_level) || fatal )) \
     sctk_ib_debug(event":\t"desc); \
   if (fatal) sctk_abort(); \
   } while(0)
@@ -65,7 +64,7 @@ void* async_thread(void* arg)
   struct ibv_srq_attr mod_attr;
   int rc;
 
-  sctk_ib_debug("Async thread running on context %p", device->context);
+  sctk_ib_nodebug("Async thread running on context %p", device->context);
   while(1) {
     if(ibv_get_async_event((struct ibv_context*) device->context, &event))
     {
@@ -91,7 +90,7 @@ void* async_thread(void* arg)
         break;
 
       case IBV_EVENT_COMM_EST:
-        DESC_EVENT(config, "IBV_EVENT_COMM_EST", "Communication was established on a QP", 2, 0);
+        DESC_EVENT(config, "IBV_EVENT_COMM_EST", "Communication was established on a QP", -1, 0);
         break;
 
       case IBV_EVENT_SQ_DRAINED:
@@ -136,41 +135,16 @@ void* async_thread(void* arg)
 
         /* event triggered when the limit given by ibv_srq_credit_thread_limit is reached */
       case IBV_EVENT_SRQ_LIMIT_REACHED:
-        DESC_EVENT(config, "IBV_EVENT_SRQ_LIMIT_REACHED","SRQ limit was reached", 4, 0);
-
-        sctk_ib_low_mem_broadcast(rail);
-
-        /* We use now the low memory mode */
-        /* TODO: this mode is used until the end of the run */
-#if 0
-        if (config->ibv_low_memory == 0) {
-          sctk_warning("Falling back to the low memory mode !");
-          config->ibv_low_memory = 1;
-        } else {
-          sctk_warning("Low memory mode not sufficient. Increase the number of buffers !");
-        }
-#endif
-
-#if 0
-        int ret, polled;
-        /* We first try to poll and steal from SRQ */
-        polled = sctk_network_poll_all_entries(rail_ib);
-        /* We try to post new buffers */
-        ret = sctk_ibuf_srq_check_and_post(rail_ib, limit);
-
-        /* If no buffers posted */
-        if (ret == 0) {
-          if (limit + 128 < sctk_ib_srq_get_max_srq_wr(rail_ib)) {
-            limit = (config->ibv_max_srq_ibufs_posted += 128);
-            ret = sctk_ibuf_srq_check_and_post(rail_ib, limit);
-            sctk_debug("Number of ibufs_posted expanded to %d",
-              config->ibv_max_srq_ibufs_posted);
-          }
-        }
-#endif
+        DESC_EVENT(config, "IBV_EVENT_SRQ_LIMIT_REACHED","SRQ limit was reached", 1, 0);
 
         /* We re-arm the limit for the SRQ. */
-        mod_attr.srq_limit    = config->ibv_srq_credit_thread_limit;
+        config->max_srq_ibufs_posted += 100;
+        sctk_ibuf_srq_check_and_post(rail_ib);
+
+        mod_attr.srq_limit = config->srq_credit_thread_limit;
+        config->srq_credit_limit = config->max_srq_ibufs_posted / 2;
+        sctk_debug("Update with max_qr %d and srq_limit %d",
+            config->max_srq_ibufs_posted, mod_attr.srq_limit);
         rc = ibv_modify_srq(device->srq, &mod_attr, IBV_SRQ_LIMIT);
         assume(rc == 0);
         break;
@@ -197,13 +171,19 @@ void* async_thread(void* arg)
 
 void sctk_ib_async_init(sctk_rail_info_t *rail)
 {
-  sctk_thread_attr_t attr;
-  sctk_thread_t pidt;
+  sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
+  LOAD_CONFIG(rail_ib);
 
-  sctk_thread_attr_init (&attr);
-  /* The thread *MUST* be in a system scope */
-  sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
-  sctk_user_thread_create (&pidt, &attr, async_thread, rail);
+  /* Activate or not the async thread */
+  if (config->async_thread) {
+    sctk_thread_attr_t attr;
+    sctk_thread_t pidt;
+
+    sctk_thread_attr_init (&attr);
+    /* The thread *MUST* be in a system scope */
+    sctk_thread_attr_setscope (&attr, SCTK_THREAD_SCOPE_SYSTEM);
+    sctk_user_thread_create (&pidt, &attr, async_thread, rail);
+  }
 }
 
 #endif

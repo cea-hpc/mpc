@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<!DOCTYPE config SYSTEM "../MPC_Config/extra/config-meta.dtd">
+<config>
+	<usertypes>
+		<struct name="thread" doc="Options for MPC threads.">
+			<param name="spin_delay" type="int" default="10" doc="Max number of accesses to the lock before calling thread_yield"/>
+			<param name="interval" type="int" default="10" doc=""/>
+			<param name="kthread_stack_size" type="size" default="10MB" doc="Define the stack size of MPC user threads"/>
+		</struct>
+	</usertypes>
+	<modules>
+		<module name="thread" type="thread"/>
+	</modules>
+</config>

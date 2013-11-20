@@ -23,6 +23,8 @@
 #ifndef SCTK_ALLOC_POSIX_H
 #define SCTK_ALLOC_POSIX_H
 
+#if defined(MPC_PosixAllocator) || !defined(MPC_Common)
+
 /************************** HEADERS ************************/
 #include <stdlib.h>
 #include "sctk_alloc_common.h"
@@ -35,7 +37,7 @@ extern "C"
 /************************* FUNCTION ************************/
 SCTK_INTERN void sctk_alloc_posix_base_init(void);
 SCTK_INTERN struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void);
-SCTK_INTERN void sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain);
+SCTK_PUBLIC struct sctk_alloc_chain * sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain);
 SCTK_INTERN struct sctk_alloc_chain * sctk_alloc_posix_setup_tls_chain(void);
 SCTK_INTERN sctk_size_t sctk_alloc_posix_get_size(void *ptr);
 SCTK_INTERN void sctk_alloc_posix_plug_on_egg_allocator(void);
@@ -51,7 +53,7 @@ SCTK_INTERN void sctk_alloc_posix_numa_migrate_chain(struct sctk_alloc_chain * l
 SCTK_PUBLIC void sctk_alloc_posix_numa_migrate(void);
 SCTK_STATIC void sctk_alloc_posix_mmsrc_uma_init(void);
 SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init(void);
-SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(void);
+SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(int);
 
 /************************* FUNCTION ************************/
 SCTK_PUBLIC void * sctk_calloc (size_t nmemb, size_t size);
@@ -67,12 +69,14 @@ SCTK_STATIC void sctk_alloc_tls_chain();
 /************************* FUNCTION ************************/
 SCTK_PUBLIC void sctk_alloc_posix_chain_print_stat(void);
 
-#ifdef MPC_Allocator
+#ifdef MPC_PosixAllocator
 	#include "sctk_alloc_to_recode.h"
 #endif
 
 #ifdef __cplusplus
 }
 #endif
+
+#endif //defined(MPC_PosixAllocator) || !defined(MPC_Common)
 
 #endif //SCTK_ALLOC_POSIX_H

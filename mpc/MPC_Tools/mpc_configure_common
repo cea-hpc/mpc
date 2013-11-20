@@ -24,7 +24,6 @@ OFFSET=""
 
 OFFSET_STEP="4 4 4 4"
 
-
 sctk_echo(){
 	for isctk_echo in $OFFSET ; do
 		printf " "
@@ -179,6 +178,7 @@ if test "$SCTK_LIB_DIR" = "" ; then SCTK_LIB_DIR="${SCTK_EPREFIX}/lib"; fi
 if test "$SCTK_INCLUDE_DIR" = "" ; then SCTK_INCLUDE_DIR="${SCTK_PREFIX}/include"; fi
 if test "$SCTK_MAN_DIR" = "" ; then SCTK_MAN_DIR="${SCTK_EPREFIX}/man"; fi
 if test "$SCTK_SHARE_DIR" = "" ; then SCTK_SHARE_DIR="${SCTK_EPREFIX}/share/mpc"; fi
+if test "$SCTK_SHARE_ED_DIR" = "" ; then SCTK_SHARE_ED_DIR="${SCTK_EPREFIX}/share/editor"; fi
 }
 
 check_compilers(){
@@ -420,6 +420,10 @@ fi
 fi
 
 cat << EOF >> include/sctk_config.h
+
+#include <sctk_config_arch.h>
+
+#if 0
 /* Configuration: */
 #define ${SCTK_OS}_SYS
 #define SCTK_${SCTK_ARCH}_ARCH_SCTK
@@ -438,6 +442,7 @@ cat << EOF >> include/sctk_config.h
 
 #define SCTK_OS ${SCTK_OS}_SYS
 #define SCTK_ARCH_SCTK SCTK_${SCTK_ARCH}_ARCH_SCTK
+#endif
 
 EOF
 
@@ -526,6 +531,7 @@ cat  << EOF  > ${SCTK_CONF_C}
 #endif
 #include <limits.h>
 #include <pthread.h>
+#include <limits.h>
 
 void *
 start_routine (void *arg)

@@ -78,12 +78,12 @@ SCTK_STATIC struct sctk_alloc_numa_stat_linux_page_entry_s * sctk_alloc_numa_sta
 
 /************************* FUNCTION ************************/
 //user interface
-void sctk_alloc_numa_stat_init(struct sctk_alloc_numa_stat_s * stat);
-void sctk_alloc_numa_stat_print(const struct sctk_alloc_numa_stat_s * stat,void * ptr,sctk_size_t size);
-void sctk_alloc_numa_stat_reset(struct sctk_alloc_numa_stat_s * stat);
-void sctk_alloc_numa_stat_get(struct sctk_alloc_numa_stat_s * stat,void * ptr,size_t size);
-void sctk_alloc_numa_stat_cumul(struct sctk_alloc_numa_stat_s * stat,void * ptr,size_t size);
-void sctk_alloc_numa_stat_print_detail(void * ptr,size_t size);
+SCTK_PUBLIC void sctk_alloc_numa_stat_init(struct sctk_alloc_numa_stat_s * stat);
+SCTK_PUBLIC void sctk_alloc_numa_stat_print(const struct sctk_alloc_numa_stat_s * stat,void * ptr,sctk_size_t size);
+SCTK_PUBLIC void sctk_alloc_numa_stat_reset(struct sctk_alloc_numa_stat_s * stat);
+SCTK_PUBLIC void sctk_alloc_numa_stat_get(struct sctk_alloc_numa_stat_s * stat,void * ptr,size_t size);
+SCTK_PUBLIC void sctk_alloc_numa_stat_cumul(struct sctk_alloc_numa_stat_s * stat,void * ptr,size_t size);
+SCTK_PUBLIC void sctk_alloc_numa_stat_print_detail(void * ptr,size_t size);
 
 /************************* FUNCTION ************************/
 //helpers for NUMA debugging on Linux only
@@ -94,7 +94,7 @@ void sctk_alloc_numa_stat_print_detail(void * ptr,size_t size);
 #define assert_numa(ptr,size,required_numa,min_ratio,message) while(0) {}
 #define warning_numa(ptr,size,required_numa,min_ratio,message) while(0) {}
 #endif
-void sctk_alloc_numa_check(bool fatal_on_fail,const char * filename,int line,void * ptr,size_t size,int required_numa,int min_ratio,const char * message);
+SCTK_PUBLIC void sctk_alloc_numa_check(bool fatal_on_fail,const char * filename,int line,void * ptr,size_t size,int required_numa,int min_ratio,const char * message);
 
 #ifdef __cplusplus
 }

@@ -27,6 +27,7 @@ extern "C"
 #endif
 
 #include "mpc.h"
+#include "sctk_stdint.h"
 
 #define MPC_CREATE_TYPE(t)\
      typedef struct {\
@@ -39,6 +40,11 @@ extern "C"
     MPC_CREATE_TYPE (double);
     MPC_CREATE_TYPE (short);
     MPC_CREATE_TYPE (int);
+
+  typedef struct {
+       long double val;
+       int pos;
+  } mpc_long_double_int;
 
   typedef struct
   {
@@ -75,11 +81,19 @@ extern "C"
     MPC_DEFINED_FUNCS(MPC_FLOAT_INT,mpc_float_int ,name);		\
     MPC_DEFINED_FUNCS(MPC_LONG_INT,mpc_long_int ,name);			\
     MPC_DEFINED_FUNCS(MPC_DOUBLE_INT,mpc_double_int ,name);		\
+    MPC_DEFINED_FUNCS(MPC_LONG_DOUBLE_INT,mpc_long_double_int ,name);		\
     MPC_DEFINED_FUNCS(MPC_SHORT_INT,mpc_short_int ,name);		\
     MPC_DEFINED_FUNCS(MPC_2INT,mpc_int_int ,name);			\
     MPC_DEFINED_FUNCS(MPC_2FLOAT,mpc_float_float ,name)	;		\
     MPC_DEFINED_FUNCS(MPC_LOGICAL, int,name);				\
-    MPC_DEFINED_FUNCS(MPC_2DOUBLE_PRECISION,mpc_double_double ,name)
+    MPC_DEFINED_FUNCS(MPC_2DOUBLE_PRECISION,mpc_double_double ,name);	\
+    MPC_DEFINED_FUNCS(MPC_REAL4,float,name);				\
+    MPC_DEFINED_FUNCS(MPC_REAL8,double,name);				\
+    MPC_DEFINED_FUNCS(MPC_REAL16,long double,name);			\
+    MPC_DEFINED_FUNCS(MPC_INTEGER1,sctk_int8_t,name);			\
+    MPC_DEFINED_FUNCS(MPC_INTEGER2,sctk_int16_t,name);			\
+    MPC_DEFINED_FUNCS(MPC_INTEGER4,sctk_int32_t,name);			\
+    MPC_DEFINED_FUNCS(MPC_INTEGER8,sctk_int64_t,name)
 
     MPC_PROTOTYPES (MIN);
     MPC_PROTOTYPES (MAX);

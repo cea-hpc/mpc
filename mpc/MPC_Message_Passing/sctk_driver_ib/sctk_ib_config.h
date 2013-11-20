@@ -29,60 +29,75 @@
 
 #include "infiniband/verbs.h"
 
-#define IBV_RDVZ_WRITE_PROTOCOL (1)
-#define IBV_RDVZ_READ_PROTOCOL (2)
+//#define IBV_RDVZ_WRITE_PROTOCOL (1)
+//#define IBV_RDVZ_READ_PROTOCOL (2)
+#if 0
 typedef struct sctk_ib_config_s
 {
   /* Network name */
   char *network_name;
   /* MMU */
-  unsigned int  ibv_size_mr_chunk;
-  unsigned int  ibv_mmu_cache_enabled;
-  unsigned int  ibv_mmu_cache_entries;
+  unsigned int  size_mr_chunk;
+  unsigned int  mmu_cache_enabled;
+  unsigned int  mmu_cache_entries;
   /* IBUFS */
-  unsigned int  ibv_init_ibufs;
+  unsigned int  init_ibufs;
+  unsigned int  init_recv_ibufs;
 
-  unsigned int  ibv_eager_limit;
-  unsigned int  ibv_frag_eager_limit;
-  unsigned int  ibv_max_rdma_connections;
-  unsigned int  ibv_qp_tx_depth;
-  unsigned int  ibv_qp_rx_depth;
-  unsigned int  ibv_cq_depth;
-  unsigned int  ibv_max_sg_sq;
-  unsigned int  ibv_max_sg_rq;
-  unsigned int  ibv_max_inline;
-  unsigned int  ibv_max_srq_ibufs_posted;
-  unsigned int  ibv_max_srq_ibufs;
-  unsigned int  ibv_srq_credit_limit;
-  unsigned int  ibv_srq_credit_thread_limit;
-  unsigned int  ibv_max_srq_wr_handle_by_thread;
-  unsigned int  ibv_size_ibufs_chunk;;
-  unsigned int  ibv_rdvz_protocol;
+  unsigned int  eager_limit;
+  unsigned int  buffered_limit;
+  unsigned int  max_rdma_connections;
+  unsigned int  rdma_resizing;
+  unsigned int  qp_tx_depth;
+  unsigned int  qp_rx_depth;
+  unsigned int  cq_depth;
+  unsigned int  max_sg_sq;
+  unsigned int  max_sg_rq;
+  unsigned int  max_inline;
+  unsigned int  max_srq_ibufs_posted;
+  unsigned int  max_srq_ibufs;
+  unsigned int  srq_credit_limit;
+  unsigned int  srq_credit_thread_limit;
+  unsigned int  max_srq_wr_handle_by_thread;
+  unsigned int  size_ibufs_chunk;;
+  unsigned int  size_recv_ibufs_chunk;
+  unsigned int  rdvz_protocol;
 
-  unsigned int  ibv_verbose_level;
-  unsigned int  ibv_wc_in_number;
-  unsigned int  ibv_wc_out_number;
-  unsigned int  ibv_init_mr;
-  unsigned int  ibv_adm_port;
-  unsigned int  ibv_rdma_depth;
-  unsigned int  ibv_rdma_dest_depth;
-  unsigned int  ibv_no_memory_limitation;
-  unsigned int  ibv_adaptive_polling;
-  unsigned int  ibv_secure_polling;
-  unsigned int  ibv_steal;
-  unsigned int  ibv_low_memory;
-  unsigned int  ibv_quiet_crash;
-  unsigned int  ibv_match;
+  unsigned int  verbose_level;
+  unsigned int  wc_in_number;
+  unsigned int  wc_out_number;
+  unsigned int  init_mr;
+  unsigned int  adm_port;
+  unsigned int  rdma_depth;
+  unsigned int  rdma_dest_depth;
+  unsigned int  no_memory_limitation;
+  unsigned int  adaptive_polling;
+  unsigned int  secure_polling;
+  unsigned int  steal;
+  unsigned int  low_memory;
+  unsigned int  quiet_crash;
+  unsigned int  match;
+  unsigned int  async_thread;
+
+  /* For RDMA */
+  unsigned int  rdma_min_size;
+  unsigned int  rdma_max_size;
+  unsigned int  rdma_min_nb;
+  unsigned int  rdma_max_nb;
+
+  unsigned int  rdma_resizing_min_size;
+  unsigned int  rdma_resizing_max_size;
+  unsigned int  rdma_resizing_min_nb;
+  unsigned int  rdma_resizing_max_nb;
 
   /* DEVICE */
   struct ibv_device_attr *device_attr;
 } sctk_ib_config_t;
+#endif
 
 struct sctk_ib_rail_info_s;
 void sctk_ib_config_init(struct sctk_ib_rail_info_s *rail_ib, char *network_name);
 void sctk_ib_config_print(struct sctk_ib_rail_info_s *rail_ib);
-
-#define IBV_RDMA_RESIZING  0
 
 #endif
 #endif

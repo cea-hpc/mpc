@@ -27,8 +27,8 @@
 #ifndef __SCTK__INFINIBAND_IBUFS_H_
 #define __SCTK__INFINIBAND_IBUFS_H_
 
-#include "stdint.h"
 #include "infiniband/verbs.h"
+#include "sctk_stdint.h"
 
 enum sctk_ib_cp_poll_cq_e {
   send_cq,
@@ -39,6 +39,7 @@ enum sctk_ib_cp_poll_cq_e {
 #include "sctk_ib_mmu.h"
 #include "sctk_ib.h"
 
+struct sctk_rail_info_s;
 struct sctk_ib_rail_info_s;
 struct sctk_ib_qp_s;
 struct sctk_ibuf_rdma_region_s;
@@ -53,9 +54,11 @@ typedef struct sctk_ibuf_header_s
   /* Protocol used */
   int piggyback;
   sctk_ib_protocol_t protocol;
+  int src_task;
   int dest_task;
   int low_memory_mode;
-} __attribute__ ((packed))
+}
+  __attribute__ ((aligned (16)))
 sctk_ibuf_header_t;
 #define IBUF_GET_HEADER(buffer) ((sctk_ibuf_header_t*) buffer)
 #define IBUF_GET_HEADER_SIZE (sizeof(sctk_ibuf_header_t))
@@ -67,13 +70,13 @@ sctk_ibuf_header_t;
 
 #define IBUF_SET_DEST_TASK(buffer,x) (IBUF_GET_HEADER(buffer)->dest_task = x)
 #define IBUF_GET_DEST_TASK(buffer) (IBUF_GET_HEADER(buffer)->dest_task)
-/* XXX: take an ibuf and not a buffer */
-#define IBUF_SET_SRC_TASK(ibuf,x) (ibuf->src_task = x)
-#define IBUF_GET_SRC_TASK(ibuf) (ibuf->src_task)
+#define IBUF_SET_SRC_TASK(buffer,x) (IBUF_GET_HEADER(buffer)->src_task  = x)
+#define IBUF_GET_SRC_TASK(buffer) (IBUF_GET_HEADER(buffer)->src_task)
 #define IBUF_GET_CHANNEL(ibuf) (ibuf->region->channel)
 
 #define IMM_DATA_NULL ~0
 #define IMM_DATA_RDMA_PIGGYBACK (0x1 << 31)
+#define IMM_DATA_RDMA_MSG       (0x1 << 30)
 
 /* Release the buffer after freeing */
 #define IBUF_RELEASE (1<<0)
@@ -112,19 +115,36 @@ typedef struct sctk_ibuf_desc_s
 /* NUMA aware pool of buffers */
 typedef struct sctk_ibuf_numa_s
 {
-  /* id of the region */
-  int id;
+  /* if this is a SRQ pool */
+  char is_srq_pool;
   /* DL list of regions */
   struct sctk_ibuf_region_s  *regions;
   /* flag to the first free header */
   struct sctk_ibuf_s         *free_entry;
+  /* Free SRQ buffers */
+  struct sctk_ibuf_s         *free_srq_cache;
+  char padd3[64];
   /* lock when moving pointers */
   sctk_spinlock_t lock;
+  char padd1[64];
+  sctk_spinlock_t srq_cache_lock;
   /* Number of buffers created and free in total,
    * and free for srq */
   unsigned int nb;
   OPA_int_t free_nb;
   OPA_int_t free_srq_nb;
+  int free_srq_cache_nb;
+  /* Pointer to the MMU used for the node */
+  struct sctk_ib_mmu_s * mmu;
+
+  /* Pointer to the topological NUMA node structure */
+  struct sctk_ib_topology_numa_node_s * numa_node;
+
+
+  /* MMU is now at a node level. We got many issues while
+   * sharing the MMU accross very large NUMA nodes (>=128 cores) */
+  /* FIXME: create a NUMA interface */
+  char padd2[64];
 } sctk_ibuf_numa_t
 /* FIXME: only with GCC and ICC. Padd to the size of a cache
  * for avoind false sharing */
@@ -158,13 +178,21 @@ typedef struct sctk_ibuf_region_s
   struct sctk_ibuf_region_s* next;
   struct sctk_ibuf_region_s* prev;
   /* Number of buffer for the region */
-  uint32_t nb;
+  sctk_uint32_t nb;
   /* Size of the buffers */
   int size_ibufs;
+  /* Number of buffer for the region (previous)*/
+  uint32_t nb_previous;
+  /* Size of the buffers (previous)*/
+  int size_ibufs_previous;
+  /* Memory allocated for the region */
+  size_t allocated_size;
   /* A region is associated to a rail */
   struct sctk_ib_rail_info_s* rail;
   /* MMU entry */
   struct sctk_ib_mmu_entry_s* mmu_entry;
+  /* Number of messages polled */
+  int             polled_nb;
 
   /* List of buffers */
   struct sctk_ibuf_s* list;
@@ -185,15 +213,19 @@ typedef struct sctk_ibuf_region_s
   struct sctk_ib_qp_s *remote;
   /* Locks */
   sctk_spinlock_t lock;
+  /* For clock algorithm */
+  int R_bit;
 } sctk_ibuf_region_t;
 
 /* Poll of ibufs */
 typedef struct sctk_ibuf_pool_s
 {
-  /* number of NUMA nodes */
-  unsigned int nodes_nb;
-  /* NUMA nodes */
-  sctk_ibuf_numa_t *nodes;
+  /* Lock to authorize only 1 task to post
+   * new buffers in SRQ */
+  sctk_spinlock_t post_srq_lock;
+
+  struct sctk_ibuf_numa_s * node_srq_buffers;
+  struct sctk_ibuf_numa_s * default_node;
 
 } sctk_ibuf_pool_t;
 
@@ -249,7 +281,6 @@ typedef struct sctk_ibuf_s
   /* the following infos aren't transmitted by the network */
   struct sctk_ib_qp_s*    remote;
   void* supp_ptr;
-  int src_task;
   /* If the buffer is in a shaed receive queue */
   char in_srq;
   char to_release;
@@ -269,8 +300,14 @@ typedef struct sctk_ibuf_s
   size_t *size_flag;
   /* Previous flag for RDMA */
   int previous_flag;
+  /* Timestamp when the ibuf has been polled from the CQ */
+  double polled_timestamp;
+  /* We save the rail where the message has been pooled*/
+  struct sctk_rail_info_s * rail;
 
   enum sctk_ib_cp_poll_cq_e cq;
+
+  uint32_t send_imm_data;
 } sctk_ibuf_t;
 
 
@@ -280,14 +317,18 @@ typedef struct sctk_ibuf_s
 void sctk_ibuf_pool_init(struct sctk_ib_rail_info_s *rail);
 
 sctk_ibuf_t*
+sctk_ibuf_pick_send_tst(struct sctk_ib_rail_info_s *rail_ib, struct sctk_ib_qp_s *remote,
+   size_t *size);
+
+    sctk_ibuf_t*
 sctk_ibuf_pick_send(struct sctk_ib_rail_info_s *rail_ib, struct sctk_ib_qp_s *remote,
-   size_t *size, int n);
+   size_t *size);
 
 sctk_ibuf_t*
-sctk_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib, int n);
+sctk_ibuf_pick_send_sr(struct sctk_ib_rail_info_s *rail_ib);
 
 int sctk_ibuf_srq_check_and_post(
-    struct sctk_ib_rail_info_s *rail_ib, int limit);
+    struct sctk_ib_rail_info_s *rail_ib);
 
 void sctk_ibuf_release_from_srq( struct sctk_ib_rail_info_s *rail_ib,
     sctk_ibuf_t* ibuf);
@@ -306,10 +347,10 @@ __UNUSED__ static size_t sctk_ibuf_get_payload_size(sctk_ibuf_t *ibuf) {
 void sctk_ibuf_recv_init(sctk_ibuf_t* ibuf);
 
 void sctk_ibuf_rdma_recv_init(sctk_ibuf_t* ibuf, void* local_address,
-    uint32_t lkey);
+    sctk_uint32_t lkey);
 
 void sctk_ibuf_barrier_send_init(sctk_ibuf_t* ibuf, void* local_address,
-    uint32_t lkey, void* remote_address, uint32_t rkey,
+    sctk_uint32_t lkey, void* remote_address, sctk_uint32_t rkey,
     int len);
 
 void sctk_ibuf_send_init(
@@ -320,25 +361,37 @@ int sctk_ibuf_send_inline_init(
 
 int sctk_ibuf_rdma_write_with_imm_init(
     sctk_ibuf_t* ibuf, void* local_address,
-    uint32_t lkey, void* remote_address, uint32_t rkey,
-    int len, uint32_t imm_data);
+    sctk_uint32_t lkey, void* remote_address, sctk_uint32_t rkey,
+    int len, char to_release, sctk_uint32_t imm_data);
 
 int sctk_ibuf_rdma_write_init(
     sctk_ibuf_t* ibuf, void* local_address,
-    uint32_t lkey, void* remote_address, uint32_t rkey,
+    sctk_uint32_t lkey, void* remote_address, sctk_uint32_t rkey,
     int len, int send_flags, char to_release);
 
 void sctk_ibuf_rdma_read_init(
     sctk_ibuf_t* ibuf, void* local_address,
-    uint32_t lkey, void* remote_address, uint32_t rkey,
+    sctk_uint32_t lkey, void* remote_address, sctk_uint32_t rkey,
     int len, void* supp_ptr);
 
 void sctk_ibuf_release(
     struct sctk_ib_rail_info_s *rail_ib,
-    sctk_ibuf_t* ibuf);
+    sctk_ibuf_t* ibuf,
+    int decr_free_srq_nb);
 
 void sctk_ibuf_prepare(struct sctk_ib_rail_info_s* rail_ib, struct sctk_ib_qp_s *remote,
     sctk_ibuf_t* ibuf, size_t size);
 
+void sctk_ibuf_init_task(int rank, int vp);
+
+void sctk_ibuf_pool_set_node_srq_buffers(struct sctk_ib_rail_info_s * rail_ib,
+    sctk_ibuf_numa_t * node);
+
+void sctk_ibuf_init_numa_node(struct sctk_ib_rail_info_s *rail_ib,
+    struct sctk_ibuf_numa_s* node, int nb_ibufs, char is_initial_allocation);
+
+__UNUSED__ static void sctk_ibuf_node_set_mmu(struct sctk_ibuf_numa_s* node, struct sctk_ib_mmu_s * mmu) {
+    node->mmu = mmu;
+}
 #endif
 #endif

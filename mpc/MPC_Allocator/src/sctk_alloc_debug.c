@@ -16,7 +16,7 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
+/* #   - Valat Sebastien sebastien.valat@cea.fr                           # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -34,15 +34,20 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
+#include "sctk_alloc_chunk.h"
 #include "sctk_alloc_debug.h"
 #include "sctk_alloc_inlined.h"
+#include "sctk_alloc_chain.h"
+#include "sctk_alloc_hooks.h"
 
 /************************** CONSTS *************************/
 static const char * SCTK_ALLOC_STATE_NAME[] = {"free","allocated"};
 static const char * SCTK_ALLOC_TYPE_NAME[] = {"small","large"};
 /** PTRACE output file. Use '-' for stderr. You can use %d to get the PID in filename. **/
 // static const char SCTK_ALLOC_TRACE_FILE[] = "-";
+#ifdef ENABLE_TRACE
 static const char SCTK_ALLOC_TRACE_FILE[] = "alloc-trace-%d.txt";
+#endif //ENABLE_TRACE
 
 /*********************** PORTABILITY ***********************/
 #ifndef _WIN32
@@ -69,9 +74,19 @@ static const char SCTK_ALLOC_TRACE_FILE[] = "alloc-trace-%d.txt";
 	static int SCTK_ALLOC_TRACE_FD = -1;
 #endif
 
+/************************* GLOBALS *************************/
+#ifdef HAVE_MEMCHECK_H
+/**
+ * Permit to disable registration of chunk into memcheck for internal usage as we never free the
+ * one from init steps (hwloc....).
+ * Registration is enabled it 0 and disable if > 0.
+ */
+__thread unsigned int sctk_alloc_gbl_notify_memcheck = 0;
+#endif //HAVE_MEMCHECK_H
+
 /************************* FUNCTION ************************/
 /**
- * If SCTK_ALLOC_TRACE_FD is set to -1, setup the output file descriptor for patrace mode.
+ * If SCTK_ALLOC_TRACE_FD is set to -1, setup the output file descriptor for ptrace mode.
 **/
 #ifdef ENABLE_TRACE
 void sctk_alloc_ptrace_init(void )
@@ -86,11 +101,13 @@ void sctk_alloc_ptrace_init(void )
 		SCTK_ALLOC_TRACE_FD = STDERR_FILENO;
 	} else {
 		sctk_alloc_sprintf(fname,2*sizeof(SCTK_ALLOC_TRACE_FILE),SCTK_ALLOC_TRACE_FILE,getpid());
+		puts("Open debug file.......");
+		puts(fname);
 		SCTK_ALLOC_TRACE_FD = open(fname,OPEN_FILE_PERMISSIONS);
 		if (SCTK_ALLOC_TRACE_FD == -1)
 		{
 			perror(fname);
-			return;
+			abort();
 		}
 	}
 }
@@ -177,7 +194,7 @@ void sctk_alloc_debug_dump_segment(int fd,void* base_addr, void* end_addr)
 /************************* FUNCTION ************************/
 void sctk_alloc_debug_dump_free_lists(int fd, struct sctk_alloc_free_chunk* free_lists)
 {
-	int i;
+	/*int i;
 	struct sctk_alloc_free_chunk * fchunk = NULL;
 	
 	sctk_alloc_fprintf(fd,"=========================== FREE LISTS ===========================\n");
@@ -193,20 +210,20 @@ void sctk_alloc_debug_dump_free_lists(int fd, struct sctk_alloc_free_chunk* free
 			fchunk = fchunk->next;
 		}
 	}
-	sctk_alloc_fprintf(fd,"\n");
+	sctk_alloc_fprintf(fd,"\n");*/
 }
 
 /************************* FUNCTION ************************/
 void sctk_alloc_debug_dump_thread_pool(int fd, struct sctk_thread_pool* pool)
 {
-	sctk_alloc_debug_dump_free_lists(fd,pool->free_lists);
+	//sctk_alloc_debug_dump_free_lists(fd,pool->free_lists);
 }
 
 /************************* FUNCTION ************************/
 void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain* chain)
 {
 	/** @todo  Not thread safe **/
-	static int id = 0;
+	/*static int id = 0;
 	int fd;
 	char fname[1024];
 
@@ -231,29 +248,20 @@ void sctk_alloc_debug_dump_alloc_chain(struct sctk_alloc_chain* chain)
 	#ifndef _WIN32
 		sync();
 	#endif
-	close(fd);
+	close(fd);*/
 }
-/************************* FUNCTION ************************/
-#ifdef SCTK_ALLOC_DEBUG
-void sctk_alloc_crash_dump(void)
-{
-	if (sctk_alloc_chain_list[0] != NULL)
-		sctk_alloc_debug_dump_alloc_chain(sctk_alloc_chain_list[0]);
-	abort();
-}
-#endif
 
 /************************* FUNCTION ************************/
-#if defined(SCTK_ALLOC_DEBUG) && !defined(_WIN32)
+/*#if defined(SCTK_ALLOC_DEBUG) && !defined(_WIN32)
 void sctk_alloc_debug_setgault_handler(int signal, siginfo_t *si, void *arg)
 {
 	sctk_alloc_perror("SEGMENTATION FAULT");
 	sctk_alloc_crash_dump();
 }
-#endif
+#endif*/
 
 /************************* FUNCTION ************************/
-#if defined(SCTK_ALLOC_DEBUG) && !defined(_WIN32)
+/*#if defined(SCTK_ALLOC_DEBUG) && !defined(_WIN32)
 void sctk_alloc_debug_setup_sighandler()
 {
 	int res;
@@ -270,15 +278,14 @@ void sctk_alloc_debug_setup_sighandler()
 		exit(1);
 	}
 }
-#endif
+#endif*/
 
 /************************* FUNCTION ************************/
 #ifdef SCTK_ALLOC_DEBUG
 void sctk_alloc_debug_init(void )
 {
-	#ifndef _WIN32
+	/*#ifndef _WIN32
 		sctk_alloc_debug_setup_sighandler();
-	#endif
+	#endif*/
 }
 #endif
-

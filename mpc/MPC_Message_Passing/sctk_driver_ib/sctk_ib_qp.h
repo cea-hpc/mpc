@@ -37,6 +37,8 @@
 #include <infiniband/verbs.h>
 #include <inttypes.h>
 
+#include "sctk_runtime_config_struct.h"
+
 struct sctk_ib_qp_s;
 /* Structure related to ondemand
  * connexions */
@@ -73,7 +75,14 @@ typedef struct sctk_ib_device_s
   struct ibv_cq           *send_cq;  /* outgoing completion queues */
   struct ibv_cq           *recv_cq;  /* incoming completion queues */
 
+  struct ibv_comp_channel * send_comp_channel;
+  struct ibv_comp_channel * recv_comp_channel;
+
   struct sctk_ib_qp_ondemand_s ondemand;
+
+  char pad1[64];
+  sctk_spinlock_t cq_polling_lock;
+  char pad2[64];
 
   /* Link rate & data rate*/
   char link_rate[64];
@@ -88,13 +97,13 @@ typedef struct sctk_ib_device_s
 #define ACK_UNSET   111
 #define ACK_OK      222
 #define ACK_CANCEL  333
-#define IBV_RDMA_SAMPLES 1000
 typedef struct sctk_ibuf_rdma_s
 {
   /* Lock for allocating pool */
   sctk_spinlock_t lock;
-  char dummy[64];
+  char dummy1[64];
   sctk_spinlock_t polling_lock;
+  char dummy2[64];
 
   struct sctk_ibuf_rdma_pool_s *pool;
 
@@ -103,35 +112,49 @@ typedef struct sctk_ibuf_rdma_s
   /* If remote is RTS. Type: sctk_route_state_t */
   OPA_int_t state_rts;
 
-  sctk_spinlock_t mean_size_lock;
+  sctk_spinlock_t pending_data_lock;
   /* Number of resizing */
   OPA_int_t       resizing_nb;
+  /* Number of Connection cancels */
+  OPA_int_t       cancel_nb;
+  char dummy3[64];
 
   /* Max number of pending requests.
    * We this, we can get an approximation of the number
    * of slots to create for the RDMA */
-  int max_pending_requests;
+  int max_pending_data;
+  int previous_max_pending_data;
   /* If the process is the initiator of the request */
   char is_initiator;
   /* Counters */
   OPA_int_t miss_nb;     /* Number of RDMA miss */
   OPA_int_t hits_nb;     /* Number of RDMA hits */
   sctk_spinlock_t flushing_lock; /* Lock while flushing */
-  /* Array for sampling messages: this array might be a scalability problem
-   * if the value is IBV_RDMA_SAMPLES is high */
-  size_t samples[IBV_RDMA_SAMPLES];
+
+  char dummy[64];
+  sctk_spinlock_t stats_lock;
+  /* Cumulative sum of msg sizes */
+  size_t messages_size;
   /* Number of messages exchanged */
-  unsigned int messages_nb;
+  size_t messages_nb;
+  double creation_timestamp;
 } sctk_ibuf_rdma_t;
+
+#define IBV_SR_SAMPLES 1000
+/* Structure which stores some information about SR protocol
+ * TODO: ideally, we should move some variables from ib_qp_s to here... */
+typedef struct sctk_ibuf_sr_s {
+  /* Empty */
+} sctk_ibuf_sr_t;
 
 /*Structure associated to a remote QP */
 typedef struct sctk_ib_qp_s
 {
   struct ibv_qp           *qp;       /* queue pair */
-  uint32_t                rq_psn;    /* starting receive packet sequence number
+  sctk_uint32_t           rq_psn;    /* starting receive packet sequence number
                                         (should match remote QP's sq_psn) */
-  uint32_t                psn;       /* packet sequence number */
-  uint32_t                dest_qp_num;/* destination qp number */
+  sctk_uint32_t           psn;       /* packet sequence number */
+  sctk_uint32_t           dest_qp_num;/* destination qp number */
   int                     rank; /* Process rank associated to the QP */
   /* QP state */
   OPA_int_t               state;
@@ -147,7 +170,7 @@ typedef struct sctk_ib_qp_s
   /* Lock when posting an element */
   sctk_spinlock_t         post_lock;
   /* Number of pending requests */
-  OPA_int_t               pending_requests_nb;
+  OPA_int_t               pending_data;
 
   /* Route */
   sctk_route_table_t      *route_table;
@@ -157,19 +180,30 @@ typedef struct sctk_ib_qp_s
   struct sctk_ib_qp_s *next;
 
   /* Lock for sending messages */
-  sctk_spin_rwlock_t lock_send;
+  sctk_spinlock_t lock_send;
+  char dummy [64];
+  /* Lock for flushing messages */
+  sctk_spinlock_t flushing_lock;
+  int is_flushing_initiator;
+
   /* If a QP deconnexion should be canceled */
   OPA_int_t deco_canceled;
   /* ACK for the local and the remote peers */
   int local_ack;
   int remote_ack;
-  int deco_lock;
+
+  /* The number of unsignaled messages sent.
+   * ATTENTION: the number of unsignaled messages cannot
+   * excess the max number of send entries in  QP */
+  int unsignaled_counter;
 
   /* List of pending buffered messages */
   struct sctk_ib_buffered_table_s ib_buffered;
 
   /* Structure for ibuf rdma */
   struct sctk_ibuf_rdma_s rdma;
+  struct sctk_ibuf_sr_s sr;
+
   /* Structs for requests */
   struct {
     int nb;
@@ -184,7 +218,7 @@ typedef struct sctk_ib_qp_s
 
 void sctk_ib_qp_key_create_value(char *msg, size_t size, sctk_ib_cm_qp_connection_t* keys);
 void sctk_ib_qp_key_fill(sctk_ib_cm_qp_connection_t* keys, sctk_ib_qp_t *remote,
-    uint16_t lid, uint32_t qp_num, uint32_t psn);
+    sctk_uint16_t lid, sctk_uint32_t qp_num, sctk_uint32_t psn);
 void sctk_ib_qp_key_create_key(char *msg, size_t size, int rail, int src, int dest);
 sctk_ib_cm_qp_connection_t sctk_ib_qp_keys_convert( char* msg);
 
@@ -196,8 +230,10 @@ sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int r
 
 struct ibv_pd* sctk_ib_pd_init(sctk_ib_device_t *device);
 
+struct ibv_comp_channel * sctk_ib_comp_channel_init(sctk_ib_device_t* device);
+
 struct ibv_cq* sctk_ib_cq_init(sctk_ib_device_t* device,
-    sctk_ib_config_t *config);
+    struct sctk_runtime_config_struct_net_driver_infiniband *config, struct ibv_comp_channel * comp_chan);
 
 char* sctk_ib_cq_print_status (enum ibv_wc_status status);
 
@@ -230,7 +266,7 @@ sctk_ib_qp_state_rtr_attr(struct sctk_ib_rail_info_s* rail_ib,
 
 struct ibv_qp_attr
 sctk_ib_qp_state_rts_attr(struct sctk_ib_rail_info_s* rail_ib,
-    uint32_t psn, int *flags);
+    sctk_uint32_t psn, int *flags);
 
 void
 sctk_ib_qp_modify( sctk_ib_qp_t* remote, struct ibv_qp_attr* attr, int flags);
@@ -267,22 +303,29 @@ void sctk_ib_qp_release_entry(struct sctk_ib_rail_info_s* rail_ib,
 
 int sctk_ib_qp_get_cap_flags(struct sctk_ib_rail_info_s* rail_ib);
 
-/* Number of pending requests */
-__UNUSED__ static void
-sctk_ib_qp_inc_requests_nb(sctk_ib_qp_t *remote) {
-  OPA_incr_int(&remote->pending_requests_nb);
-}
-__UNUSED__ static void
-sctk_ib_qp_decr_requests_nb(sctk_ib_qp_t *remote) {
-  OPA_decr_int(&remote->pending_requests_nb);
+/* Amount of data pending */
+__UNUSED__ static int
+sctk_ib_qp_fetch_and_add_pending_data(sctk_ib_qp_t *remote, sctk_ibuf_t *ibuf) {
+  const int size = (int) ibuf->desc.sg_entry.length;
+  return OPA_fetch_and_add_int(&remote->pending_data, size);
 }
 __UNUSED__ static int
-sctk_ib_qp_get_requests_nb(sctk_ib_qp_t *remote) {
-  return OPA_load_int(&remote->pending_requests_nb);
+sctk_ib_qp_fetch_and_sub_pending_data(sctk_ib_qp_t *remote, sctk_ibuf_t *ibuf) {
+  const int size = -((int) ibuf->desc.sg_entry.length);
+  return OPA_fetch_and_add_int(&remote->pending_data, size);
 }
 __UNUSED__ static void
-sctk_ib_qp_set_requests_nb(sctk_ib_qp_t *remote, int i) {
-  OPA_store_int(&remote->pending_requests_nb, i);
+sctk_ib_qp_add_pending_data(sctk_ib_qp_t *remote, sctk_ibuf_t *ibuf) {
+  const size_t size = ibuf->desc.sg_entry.length;
+  OPA_add_int(&remote->pending_data, size);
+}
+__UNUSED__ static int
+sctk_ib_qp_get_pending_data(sctk_ib_qp_t *remote) {
+  return OPA_load_int(&remote->pending_data);
+}
+__UNUSED__ static void
+sctk_ib_qp_set_pending_data(sctk_ib_qp_t *remote, int i) {
+  OPA_store_int(&remote->pending_data, i);
 }
 
 /* Flush ACK */
@@ -342,6 +385,11 @@ void sctk_ib_qp_select_victim(struct sctk_ib_rail_info_s* rail_ib);
 void sctk_ib_qp_deco_victim(struct sctk_ib_rail_info_s* rail_ib,
     sctk_route_table_t* route_table);
 
+
+int sctk_ib_qp_check_flush(struct sctk_ib_rail_info_s* rail_ib,
+    sctk_ib_qp_t *remote);
+
+void sctk_ib_qp_try_flush(struct sctk_ib_rail_info_s* rail_ib, sctk_ib_qp_t *remote);
 
 /*-----------------------------------------------------------
  *  QP HT

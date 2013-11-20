@@ -58,27 +58,27 @@ void sctk_performance_tree_relative_percentage( struct sctk_profiler_array *arra
 		{
 			tr->entry_relative_percentage_hits[ id ] =  0;
 		}
-		
+
 		if( 1 < tr->entry_relative_percentage_time[ id ] )
 		{
 			sctk_warning( "sctk_performance_tree detected an overflow in performance measurements");
 			tr->entry_relative_percentage_time[ id ] = 1;
 		}
-		
+
 		if( 1 < tr->entry_relative_percentage_hits[ id ] )
 		{
 			sctk_warning( "sctk_performance_tree detected an overflow in performance measurements");
 			tr->entry_relative_percentage_hits[ id ] = 1;
 		}
-		
+
 	}
 	else
 	{
 		uint64_t roots_hits = 0;
 		uint64_t roots_time = 0;
-		
+
 		int i = 0;
-		
+
 		for( i = 1 ; i < SCTK_PROFILE_KEY_COUNT ; i++ )
 		{
 			if( sctk_profiler_array_get_parent( i ) == SCTK_PROFILE_NO_PARENT )
@@ -87,7 +87,7 @@ void sctk_performance_tree_relative_percentage( struct sctk_profiler_array *arra
 				roots_time += sctk_profiler_array_get_value( array, i );
 			}
 		}
-		
+
 		tr->entry_relative_percentage_time[ id ] = (double)sctk_profiler_array_get_value( array, id ) / roots_time;
 		tr->entry_relative_percentage_hits[ id ] = (double)sctk_profiler_array_get_hits( array, id ) / roots_hits;
 	}
@@ -97,14 +97,14 @@ void sctk_performance_tree_relative_percentage( struct sctk_profiler_array *arra
 void sctk_performance_tree_total_time_and_hits( struct sctk_profiler_array *array, int id, int parent_id, int depth, void *arg, int going_up  )
 {
 	struct sctk_performance_tree *tr = (struct sctk_performance_tree *)arg;
-	
+
 	if( !sctk_profiler_array_has_child( id ) &&  (sctk_profiler_array_get_type(id) == SCTK_PROFILE_TIME_PROBE) )
 	{
 		/* Only process leaf nodes */
-		
-		tr->total_time += sctk_profiler_array_get_value( array, id );
+
+    /* tr->total_time += sctk_profiler_array_get_value( array, id ); */
 		tr->total_hits += sctk_profiler_array_get_hits( array, id );
-		
+
 	}
 
 
@@ -125,7 +125,7 @@ void sctk_performance_tree_absolute_percentage( struct sctk_profiler_array *arra
 		{
 			tr->entry_total_percentage_time[ id ] =  0;
 		}
-		
+
 		if( tr->total_hits )
 		{
 			tr->entry_total_percentage_hits[ id ] = (double)sctk_profiler_array_get_hits( array, id ) / (double)tr->total_hits;
@@ -159,7 +159,9 @@ void  sctk_performance_tree_init( struct sctk_performance_tree *tr, struct sctk_
 	sctk_profiler_array_walk( array, sctk_performance_tree_relative_percentage , (void *)tr , 1);
 	/* Fill Total time and hits */
 	sctk_profiler_array_walk( array, sctk_performance_tree_total_time_and_hits , (void *)tr , 1);
-	/* Compute absolute percentages */
+  /* Fill the total time */
+  tr->total_time = array->run_time;
+  /* Compute absolute percentages */
 	sctk_profiler_array_walk( array, sctk_performance_tree_absolute_percentage , (void *)tr , 1);
 
 	int i = 0;

@@ -96,17 +96,14 @@ sctk_route_table_t *sctk_route_dynamic_safe_add(int dest, sctk_rail_info_t* rail
     sctk_init_dynamic_route(dest, tmp, rail);
     tmp->is_initiator = is_initiator;
     HASH_ADD(hh,sctk_dynamic_route_table,key,sizeof(sctk_route_key_t),tmp);
-    sctk_nodebug("Entry created for %d", dest);
     *added = 1;
-  } else if (sctk_route_get_state(tmp) == state_reset) { /* QP in a reset state */
-    /* If the remote is in a reset state, we can reinit all the fields
-     * and we set added to 1 */
-    /* TODO: Reinit the structures */
+  } else if (sctk_route_get_state(tmp) == state_reconnecting) {
     ROUTE_LOCK(tmp);
-    sctk_route_set_state(tmp, state_reconnecting);
+    sctk_route_set_state(tmp, state_deconnected);
     init_func(dest, rail, tmp, 1);
     sctk_route_set_low_memory_mode_local(tmp, 0);
     sctk_route_set_low_memory_mode_remote(tmp, 0);
+    tmp->is_initiator = is_initiator;
     ROUTE_UNLOCK(tmp);
     *added = 1;
   }
@@ -155,7 +152,6 @@ void sctk_init_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t
   tmp->lock = SCTK_SPINLOCK_INITIALIZER;
 
   tmp->origin = route_origin_dynamic;
-  sctk_add_dynamic_reorder_buffer(dest);
 }
 
 void sctk_add_dynamic_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
@@ -177,7 +173,6 @@ void sctk_init_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t*
   tmp->lock = SCTK_SPINLOCK_INITIALIZER;
 
   tmp->origin = route_origin_static;
-  sctk_add_static_reorder_buffer(dest);
 }
 
 void sctk_add_static_route(int dest, sctk_route_table_t* tmp, sctk_rail_info_t* rail){
@@ -300,6 +295,7 @@ sctk_route_table_t* sctk_get_route_to_process_no_route(int dest, sctk_rail_info_
 }
 
 struct wait_connexion_args_s {
+  sctk_route_state_t state;
   sctk_route_table_t* route_table;
   sctk_rail_info_t* rail;
   int done;
@@ -308,7 +304,7 @@ struct wait_connexion_args_s {
 void* __wait_connexion(void* a) {
   struct wait_connexion_args_s *args = (struct wait_connexion_args_s*) a;
 
-  if (sctk_route_get_state(args->route_table) == state_connected) {
+  if (sctk_route_get_state(args->route_table) == args->state) {
     args->done = 1;
   } else {
     /* The notify idle message *MUST* be filled for supporting on-demand
@@ -316,6 +312,17 @@ void* __wait_connexion(void* a) {
     sctk_network_notify_idle_message();
   }
   return NULL;
+}
+
+static inline void __wait_state(sctk_rail_info_t* rail, sctk_route_table_t *route_table, sctk_route_state_t state) {
+  struct wait_connexion_args_s args;
+  args.route_table = route_table;
+  args.done = 0;
+  args.rail = rail;
+  args.state = state;
+  sctk_thread_wait_for_value_and_poll((int*) &args.done, 1,
+      (void (*)(void*)) __wait_connexion, &args);
+  assume(sctk_route_get_state(route_table) == state);
 }
 
 /* Get a route to a process only on static routes */
@@ -357,18 +364,36 @@ sctk_route_table_t* sctk_get_route_to_process(int dest, sctk_rail_info_t* rail){
 #if MPC_USE_INFINIBAND
     if (rail->on_demand) {
       sctk_nodebug("%d Trying to connect to process %d (remote:%p)", sctk_process_rank, dest, tmp);
+
+      /* Wait until we reach the 'deconnected' state */
+      tmp = sctk_route_dynamic_search(dest, rail);
+      if (tmp) {
+        sctk_route_state_t state;
+          state = sctk_route_get_state(tmp);
+        sctk_nodebug("Got state %d", state);
+        do {
+          state = sctk_route_get_state(tmp);
+
+          if (state != state_deconnected && state != state_connected &&
+              state != state_reconnecting) {
+            sctk_network_notify_idle_message();
+            sctk_thread_yield();
+          }
+        } while(state != state_deconnected && state != state_connected &&
+            state != state_reconnecting);
+      }
+      sctk_nodebug("QP in a KNOWN STATE");
+
       /* We send the request using the signalization rail */
       tmp = sctk_ib_cm_on_demand_request(dest,rail);
       assume(tmp);
       /* If route not connected, so we wait for until it is connected */
-      if (sctk_route_get_state(tmp) != state_connected) {
-        struct wait_connexion_args_s args;
-        args.route_table = tmp;
-        args.done = 0;
-        args.rail = rail;
-        sctk_thread_wait_for_value_and_poll((int*) &args.done, 1,
-            (void (*)(void*)) __wait_connexion, &args);
-        assume(sctk_route_get_state(tmp) == state_connected);
+      while (sctk_route_get_state(tmp) != state_connected) {
+        sctk_network_notify_idle_message();
+        if (sctk_route_get_state(tmp) != state_connected) {
+          sctk_thread_yield();
+        }
+//        __wait_state(rail, tmp, state_connected);
       }
 
       sctk_nodebug("Connected to process %d", dest);
@@ -394,9 +419,17 @@ sctk_route_table_t* sctk_get_route(int dest, sctk_rail_info_t* rail){
   return tmp;
 }
 
-void sctk_route_set_rail_nb(int i){
-  rails = sctk_malloc(i*sizeof(sctk_rail_info_t));
-  rail_number = i;
+void sctk_route_set_rail_nb(int nb){
+  rails = sctk_malloc(nb*sizeof(sctk_rail_info_t));
+  memset(rails, 0, nb*sizeof(sctk_rail_info_t));
+  rail_number = nb;
+}
+
+void sctk_route_set_rail_infos(int rail,
+    struct sctk_runtime_config_struct_net_rail * runtime_config_rail,
+    struct sctk_runtime_config_struct_net_driver_config * runtime_config_driver_config){
+  rails[rail].runtime_config_rail = runtime_config_rail;
+  rails[rail].runtime_config_driver_config = runtime_config_driver_config;
 }
 
 int sctk_route_get_rail_nb(){
@@ -467,7 +500,7 @@ void sctk_route_messages_recv(int src, int myself,specific_message_tag_t specifi
   sctk_add_adress_in_message(&(msg_req->msg),buffer,size);
   sctk_set_header_in_message (&(msg_req->msg), tag, communicator,  src,myself,
 			      &(msg_req->request), size,specific_message_tag);
-  sctk_recv_message (&(msg_req->msg),NULL);
+  sctk_recv_message (&(msg_req->msg),NULL, 1);
   sctk_wait_message (&(msg_req->request));
 }
 
@@ -528,12 +561,14 @@ void sctk_route_fully_init(sctk_rail_info_t* rail){
 	    tmp = sctk_get_route_to_process_no_route(to,rail);
 	    if(tmp == NULL){
 	      rail->connect_from(from,to,rail);
+        SCTK_COUNTER_INC(signalization_endpoints, 1);
 	    }
 	  }
 	  if(to == sctk_process_rank){
 	    tmp = sctk_get_route_to_process_no_route(from,rail);
 	    if(tmp == NULL){
 	      rail->connect_to(from,to,rail);
+        SCTK_COUNTER_INC(signalization_endpoints, 1);
 	    }
 	  }
 	}
@@ -692,19 +727,29 @@ inline int sctk_Node_distance (int a, int b ,unsigned sdim)
 
 
 unsigned sctk_Torus_dim_set(int node_count){
+TODO("Must be moved to the MPC configuration")
 	unsigned dim = 1;
-	while(pow(MIN_SIZE_DIM,dim+1) <= node_count){
-		dim++;
-		if(dim > MAX_SCTK_FAST_NODE_DIM){
-			sctk_nodebug("\nWARNING : the dimension was set at the maximum (%d) because of the number of nodes which is too big.\nThe size of each dimension may be high\n",MAX_SCTK_FAST_NODE_DIM);
-			return MAX_SCTK_FAST_NODE_DIM;
-		}
-	}
+  char * env;
+
+  if ( (env = getenv("MPC_TORUS_DIMS")) != NULL) {
+    dim = atoi(env);
+    sctk_warning("Torus dimension manually set to %d", dim);
+  } else {
+    while(pow(MIN_SIZE_DIM,dim+1) <= node_count){
+      dim++;
+    }
+  }
+
+  /* Sanity check */
+  if(dim > MAX_SCTK_FAST_NODE_DIM){
+    sctk_nodebug("\nWARNING : the dimension was set at the maximum (%d) because of the number of nodes which is too big.\nThe size of each dimension may be high\n",MAX_SCTK_FAST_NODE_DIM);
+    return MAX_SCTK_FAST_NODE_DIM;
+  }
 
 	return dim;
 }
 
-void sctk_Torus_init ( int node_count, uint8_t dimension)
+void sctk_Torus_init ( int node_count, sctk_uint8_t dimension)
 {
     if ( dimension == 0 )
     {
@@ -1284,6 +1329,7 @@ void sctk_route_torus_init(sctk_rail_info_t* rail){
 								rail->connect_from(me,neigh,rail);
 							else
 								rail->connect_to(neigh,me,rail);
+              SCTK_COUNTER_INC(signalization_endpoints, 1);
 						}
 
 
@@ -1313,6 +1359,7 @@ void sctk_route_torus_init(sctk_rail_info_t* rail){
 								rail->connect_from(me,neigh,rail);
 							else
 								rail->connect_to(neigh,me,rail);
+              SCTK_COUNTER_INC(signalization_endpoints, 1);
 						}
 					}
 					node.c[i] = current_coord;

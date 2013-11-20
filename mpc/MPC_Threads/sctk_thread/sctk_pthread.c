@@ -39,6 +39,10 @@
 #endif
 #include "sctk_asm.h"
 
+#if !defined(HAVE_PTHREAD_CREATE)
+#error "Bad pthread detection"
+#endif
+
 #define SCTK_LOCAL_VERSION_MAJOR 0
 #define SCTK_LOCAL_VERSION_MINOR 1
 
@@ -61,6 +65,7 @@ pthread_wait_for_value_and_poll (volatile int *data, int value,
 	  if (i >= 100)
 	    {
 #ifdef MPC_Message_Passing
+#ifndef SCTK_ENABLE_SPINNING
 	      sctk_notify_idle_message ();
         /* We need to check if we have finished the MPC init step.
          * If we do not that, get_nb_task_local *may* fail because the
@@ -72,12 +77,18 @@ pthread_wait_for_value_and_poll (volatile int *data, int value,
             kthread_usleep (10);
           }
         }
+#endif
 #else
 	      kthread_usleep (10);
 #endif
 	      i = 0;
 	    } else {
+        /* If the spinning is enable, we slow down the the progression thread */
+#ifdef SCTK_ENABLE_SPINNING
+        sleep(1);
+#endif
 		 sctk_cpu_relax ();
+        sched_yield();
 	  }
 	  /* 	  else */
 /* 	    sched_yield (); */
@@ -133,7 +144,8 @@ sctk_pthread_mutex_init (sctk_thread_mutex_t * mutex,
 static int
 sctk_pthread_get_vp ()
 {
-  return 0;
+  int cpu = sctk_get_cpu();
+  return cpu;
 }
 
 static sem_t sctk_pthread_user_create_sem;
@@ -242,11 +254,18 @@ pthread_user_create (pthread_t * thread, pthread_attr_t * attr,
       return res;
     }
   else
-    {
-      int res;
+  {
+    int res;
       res = pthread_create (thread, attr, tls_start_routine,
 			    init_tls_start_routine_arg (def_start_routine,
 							arg));
+      /* Sylvain: see file sctk_thread.c for more details about
+       * the following commented block */
+#if 0
+      res = sctk_real_pthread_create (thread, attr, tls_start_routine,
+			    init_tls_start_routine_arg (def_start_routine,
+							arg));
+#endif
       if(res != 0){
 	perror("pthread_create: ");
       }
@@ -279,7 +298,18 @@ local_pthread_create (pthread_t * restrict thread,
       pthread_attr_t tmp_attr;
       int res;
       size_t size;
+      char * env;
       pthread_attr_init (&tmp_attr);
+
+      /* We bind the MPI tasks in a round robin manner */
+      env = getenv("MPC_ENABLE_PTHREAD_PINNING");
+      if ( env != NULL ){
+        sctk_thread_data_t * data = (sctk_thread_data_t*) arg;
+        int cpu_number = sctk_get_cpu_number ();
+
+        sctk_debug("Bind VP to core %d\n", data->local_task_id % cpu_number);
+        sctk_bind_to_cpu (data->local_task_id);
+      }
 
       if (sctk_is_in_fortran == 1)
 	size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;

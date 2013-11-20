@@ -23,6 +23,7 @@
 /************************** HEADERS ************************/
 #include <svUnitTest/svUnitTest.h>
 #include <sctk_allocator.h>
+#include <sctk_alloc_config.h>
 #include <sctk_alloc_light_mm_source.h>
 #include <cstring>
 #include <iostream>
@@ -61,6 +62,8 @@ class TestLightMMSrc : public svutTestCase
 		void test_insert_segemnt(void);
 		void test_new_segment(void);
 		void test_force_binding(void);
+		void test_size_counter_inc(void);
+		void test_size_counter_dec(void);
 		sctk_alloc_mm_source_light light_source;
 		sctk_alloc_mm_source_light_flags mode;
 		/*
@@ -113,12 +116,15 @@ void TestLightMMSrc::testMethodsRegistration (void)
 	SVUT_REG_TEST_METHOD(test_insert_segemnt);
 	SVUT_REG_TEST_METHOD(test_new_segment);
 	SVUT_REG_TEST_METHOD(test_force_binding);
+	SVUT_REG_TEST_METHOD(test_size_counter_inc);
+	SVUT_REG_TEST_METHOD(test_size_counter_dec);
 	sctk_alloc_init_topology();
 }
 
 /************************* FUNCTION ************************/
 void TestLightMMSrc::setUp (void)
 {
+	sctk_alloc_config_egg_init();
 	sctk_alloc_mm_source_light_init(&light_source,0,mode);
 	cout << "ok" << std::endl;
 }
@@ -265,9 +271,12 @@ void TestLightMMSrc::test_request_mem_2(void)
 
 	//request mem
 	sctk_alloc_macro_bloc * macro_bloc = sctk_alloc_mm_source_light_request_memory((sctk_alloc_mm_source*)&light_source,SCTK_MACRO_BLOC_SIZE);
-	#if SCTK_ALLOC_MACRO_BLOC_REUSE_THREASHOLD > 0
-	SVUT_ASSERT_SAME(ptr,macro_bloc);
-	#endif
+	if (sctk_alloc_config()->keep_max > 0)
+	{
+		SVUT_ASSERT_SAME(ptr,macro_bloc);
+	} else {
+		SVUT_ASSERT_NOT_NULL(macro_bloc);
+	}
 
 	//ok didn't need to test the re-registration here.
 	SVUT_ASSERT_EQUAL(1,light_source.counter);
@@ -305,11 +314,12 @@ void TestLightMMSrc::test_free_mem(void)
 	sctk_alloc_mm_source_light_free_memory((sctk_alloc_mm_source*)&light_source,macro_bloc);
 
 	//free it
-	#if SCTK_ALLOC_MACRO_BLOC_REUSE_THREASHOLD > 0
-	SVUT_ASSERT_NOT_NULL(light_source.cache);
-	#else
-	SVUT_ASSERT_NULL(light_source.cache);
-	#endif
+	if (sctk_alloc_config()->keep_max > 0)
+	{
+		SVUT_ASSERT_NOT_NULL(light_source.cache);
+	} else {
+		SVUT_ASSERT_NULL(light_source.cache);
+	}
 	SVUT_ASSERT_EQUAL(0,light_source.counter);
 }
 
@@ -340,6 +350,48 @@ void TestLightMMSrc::test_new_segment(void)
 void TestLightMMSrc::test_force_binding(void)
 {
 	SVUT_ASSERT_TODO("todo");
+}
+
+/************************* FUNCTION ************************/
+void TestLightMMSrc::test_size_counter_inc(void)
+{
+	//mmap a buffer
+	void * ptr = sctk_mmap(NULL,SCTK_MACRO_BLOC_SIZE);
+
+	//check
+	SVUT_ASSERT_NULL(light_source.cache);
+	SVUT_ASSERT_EQUAL(0,light_source.size);
+
+	//insert in source
+	sctk_alloc_mm_source_light_insert_segment(&light_source,ptr,SCTK_MACRO_BLOC_SIZE);
+
+	//check
+	SVUT_ASSERT_EQUAL(SCTK_MACRO_BLOC_SIZE,light_source.cache->size);
+	SVUT_ASSERT_EQUAL(SCTK_MACRO_BLOC_SIZE,light_source.size);
+	SVUT_ASSERT_SAME(ptr,light_source.cache);
+}
+
+/************************* FUNCTION ************************/
+void TestLightMMSrc::test_size_counter_dec(void)
+{
+	//mmap a buffer
+	void * ptr = sctk_mmap(NULL,SCTK_MACRO_BLOC_SIZE);
+
+	//check
+	SVUT_ASSERT_NULL(light_source.cache);
+	SVUT_ASSERT_EQUAL(0,light_source.size);
+
+	//insert in source
+	sctk_alloc_mm_source_light_insert_segment(&light_source,ptr,SCTK_MACRO_BLOC_SIZE);
+
+	//check
+	SVUT_ASSERT_EQUAL(SCTK_MACRO_BLOC_SIZE,light_source.cache->size);
+	SVUT_ASSERT_EQUAL(SCTK_MACRO_BLOC_SIZE,light_source.size);
+	SVUT_ASSERT_SAME(ptr,light_source.cache);
+
+	sctk_alloc_macro_bloc * macro_bloc = sctk_alloc_mm_source_light_request_memory((sctk_alloc_mm_source*)&light_source,SCTK_MACRO_BLOC_SIZE);
+	SVUT_ASSERT_SAME(ptr,macro_bloc);
+	SVUT_ASSERT_EQUAL(0,light_source.size);
 }
 
 SVUT_REGISTER_TEST_CASE(TestLightMMSrcUMA);

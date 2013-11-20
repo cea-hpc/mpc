@@ -145,9 +145,9 @@ void TestChunkPadding::test_sctk_alloc_chunk_body(void )
 	sctk_alloc_set_chunk_header_padded_padding(&chunk,20);
 	sctk_alloc_get_chunk_header_padded_info(&chunk)->state = SCTK_ALLOC_CHUNK_STATE_ALLOCATED;
 	sctk_alloc_get_chunk_header_padded_info(&chunk)->type = SCTK_ALLOC_CHUNK_TYPE_PADDED;
-	sctk_alloc_get_chunk_header_padded_info(&chunk)->unused_magik = SCTK_ALLOC_MAGIK_STATUS;
+	sctk_alloc_get_chunk_header_padded_info(&chunk)->unused_magik = SCTK_ALLOC_MAGIC_STATUS;
 
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,sctk_alloc_get_chunk_header_padded_info(&chunk)->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,sctk_alloc_get_chunk_header_padded_info(&chunk)->unused_magik);
 	void * ptr = ((&chunk)+1);
 	sctk_alloc_vchunk vchunk = sctk_alloc_get_chunk((sctk_addr_t)ptr);
 
@@ -161,9 +161,9 @@ void TestChunkPadding::test_sctk_alloc_get_chunk_padded(void )
 	sctk_alloc_set_chunk_header_padded_padding(&chunk,20);
 	sctk_alloc_get_chunk_header_padded_info(&chunk)->state = SCTK_ALLOC_CHUNK_STATE_ALLOCATED;
 	sctk_alloc_get_chunk_header_padded_info(&chunk)->type = SCTK_ALLOC_CHUNK_TYPE_PADDED;
-	sctk_alloc_get_chunk_header_padded_info(&chunk)->unused_magik = SCTK_ALLOC_MAGIK_STATUS;
+	sctk_alloc_get_chunk_header_padded_info(&chunk)->unused_magik = SCTK_ALLOC_MAGIC_STATUS;
 
-	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,sctk_alloc_get_chunk_header_padded_info(&chunk)->unused_magik);
+	SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,sctk_alloc_get_chunk_header_padded_info(&chunk)->unused_magik);
 	void * ptr = ((&chunk)+1);
 	sctk_alloc_vchunk res = sctk_alloc_get_chunk((sctk_addr_t)ptr);
 
@@ -437,7 +437,7 @@ void TestChunkPadding::test_sctk_alloc_setup_chunk_padded(sctk_size_t boundary,s
 		SVUT_ASSERT_EQUAL(expected,sctk_alloc_get_chunk_header_padded_padding(chunk));
 		SVUT_ASSERT_EQUAL((int)SCTK_ALLOC_CHUNK_STATE_ALLOCATED,(int)sctk_alloc_get_chunk_header_padded_info(chunk)->state);
 		SVUT_ASSERT_EQUAL((int)SCTK_ALLOC_CHUNK_TYPE_PADDED,(int)sctk_alloc_get_chunk_header_padded_info(chunk)->type);
-		SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIK_STATUS,sctk_alloc_get_chunk_header_padded_info(chunk)->unused_magik);
+		SVUT_ASSERT_EQUAL(SCTK_ALLOC_MAGIC_STATUS,sctk_alloc_get_chunk_header_padded_info(chunk)->unused_magik);
 		SVUT_ASSERT_SAME(chunk,sctk_alloc_get_ptr(vchunk));
 
 		//sctk_free(rbuffer);

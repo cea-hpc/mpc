@@ -58,9 +58,10 @@ sctk_ib_rdma_t;
 typedef struct sctk_ib_rdma_ack_s {
   void* addr;
   size_t size;
-  uint32_t  rkey;
+  sctk_uint32_t  rkey;
   sctk_thread_ptp_message_t* src_msg_header;
   sctk_thread_ptp_message_t* dest_msg_header;
+  int ht_key;
 } __attribute__ ((packed))
 sctk_ib_rdma_ack_t;
 
@@ -76,7 +77,7 @@ typedef struct sctk_ib_rdma_req_s {
   sctk_message_type_t message_type;
   int source;
   int glob_source;
-  int msg_number;
+  int remote_rail;
 } __attribute__ ((packed))
 sctk_ib_rdma_req_t;
 
@@ -125,5 +126,8 @@ void sctk_ib_rdma_print(sctk_thread_ptp_message_t* msg);
 
 sctk_ibuf_t* sctk_ib_rdma_eager_prepare_msg(sctk_ib_rail_info_t* rail_ib,
     sctk_ib_qp_t* remote, sctk_thread_ptp_message_t * msg, size_t size);
+
+sctk_thread_ptp_message_t *
+sctk_ib_rdma_recv_done_remote_imm(sctk_rail_info_t* rail, int imm_data);
 #endif
 #endif

@@ -65,6 +65,9 @@ extern "C"
   void sctk_pthread_thread_init (void);
   void sctk_ethread_thread_init (void);
   void sctk_ethread_mxn_thread_init (void);
+  void sctk_ethread_ng_thread_init (void);
+  void sctk_ethread_mxn_ng_thread_init (void);
+  void sctk_pthread_ng_thread_init (void);
 
   void sctk_thread_wait_for_value ( volatile int *data, int value);
   void sctk_thread_wait_for_value_and_poll ( volatile int *data, int value,
@@ -104,7 +107,7 @@ extern "C"
 
   typedef struct sctk_thread_data_s
   {
-    sctk_alloc_chain_t *tls;
+    struct sctk_alloc_chain *tls;
     void *__arg;
     void *(*__start_routine) (void *);
     int task_id;
@@ -118,6 +121,8 @@ extern "C"
     sctk_thread_t tid;
     volatile sctk_thread_status_t status;
     struct sctk_task_specific_s *father_data;
+    /* Where the thread must be bound */
+    unsigned int bind_to;
   } sctk_thread_data_t;
 #define SCTK_THREAD_DATA_INIT { NULL, NULL, NULL, -1, -1, -1 , -1,\
       NULL,NULL,-1,(void*)NULL,sctk_thread_undef_status,NULL}
@@ -126,9 +131,8 @@ extern "C"
   void sctk_thread_data_set (sctk_thread_data_t * task_id);
   sctk_thread_data_t *sctk_thread_data_get (void);
 
-  extern sctk_thread_mutex_t sctk_total_number_of_tasks_lock;
-  extern volatile int sctk_total_number_of_tasks;
   extern volatile int sctk_thread_running;
+  int sctk_thread_get_current_local_tasks_nb();
   void sctk_start_func (void *(*run) (void *), void *arg);
   int sctk_thread_get_vp (void);
   int sctk_get_init_vp (int i);
@@ -139,7 +143,7 @@ extern "C"
 
   extern volatile unsigned sctk_long_long sctk_timer;
 
-  extern sctk_alloc_chain_t *sctk_thread_tls;
+  extern struct sctk_alloc_chain *sctk_thread_tls;
   void __MPC_init_types (void);
 
 #define sctk_time_interval 10	/*millisecondes */
@@ -154,6 +158,9 @@ extern "C"
   void sctk_thread_exit_cleanup (void);
   void sctk_ethread_mxn_init_kethread (void);
   void sctk_get_thread_info (int *task_id, int *thread_id);
+
+  int sctk_real_pthread_create (pthread_t  *thread,
+    __const pthread_attr_t *attr, void * (*start_routine)(void *), void *arg);
 
   /* profiling (exec time & dataused) */
   double sctk_profiling_get_init_time();

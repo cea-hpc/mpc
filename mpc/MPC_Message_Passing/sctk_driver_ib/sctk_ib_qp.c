@@ -1,7 +1,7 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # Copyright or (C) or Copr. 2010-2012 Universit�� de Versailles         # */
 /* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -128,6 +128,8 @@ sctk_ib_device_t *sctk_ib_device_init(struct sctk_ib_rail_info_s* rail_ib) {
   rail_ib->device->ondemand.qp_list = NULL;
   rail_ib->device->ondemand.qp_list_ptr = NULL;
   rail_ib->device->ondemand.lock = SCTK_SPINLOCK_INITIALIZER;
+  rail_ib->device->send_comp_channel = NULL;
+  rail_ib->device->recv_comp_channel = NULL;
 
   return device;
 }
@@ -140,6 +142,29 @@ sctk_ib_device_t *sctk_ib_device_open(struct sctk_ib_rail_info_s* rail_ib, int r
   char *link_rate_string = "unknown";
   int link_rate = -1;
   int data_rate = -1;
+  int i;
+
+
+  /* If the rail number is -1, so we try to estimate which IB card is the closest */
+  if (rail_nb == -1) {
+    for (i=0; i < devices_nb; ++i) {
+      int ret;
+
+      ret = sctk_topology_is_ib_device_close_from_cpu(dev_list[i], sctk_get_cpu());
+      if (ret != 0)
+      {
+        rail_nb = i;
+        break;
+      }
+    }
+
+    /* If no rail open, we open the first one */
+    if (rail_nb == -1) {
+      sctk_error("Cannot determine the closest IB card from the thread allocating the structures. Use the card 0");
+      rail_nb = 0;
+    }
+  }
+
 
   if (rail_nb >= devices_nb)
   {
@@ -209,15 +234,38 @@ sctk_ib_pd_init(sctk_ib_device_t *device)
 /*-----------------------------------------------------------
  *  Completion queue
  *----------------------------------------------------------*/
+  struct ibv_comp_channel *
+sctk_ib_comp_channel_init(sctk_ib_device_t* device) {
+  struct ibv_comp_channel * comp_channel;
+
+  comp_channel = ibv_create_comp_channel(device->context);
+  if (!comp_channel) {
+    SCTK_IB_ABORT_WITH_ERRNO("Cannot create Completion Channel.");
+  }
+  return comp_channel;
+}
+
+  /*
+   * Create a completion queue and associate it a completion channel.
+   * This argument may be NULL.
+   */
   struct ibv_cq*
 sctk_ib_cq_init(sctk_ib_device_t* device,
-    sctk_ib_config_t *config)
+      struct sctk_runtime_config_struct_net_driver_infiniband *config, struct ibv_comp_channel * comp_channel)
 {
   struct ibv_cq *cq;
-  cq = ibv_create_cq (device->context, config->ibv_cq_depth, NULL, NULL, 0);
+  cq = ibv_create_cq (device->context, config->cq_depth, NULL,
+      comp_channel, 0);
 
   if (!cq) {
     SCTK_IB_ABORT_WITH_ERRNO("Cannot create Completion Queue.");
+  }
+
+  if (comp_channel != NULL) {
+    int ret = ibv_req_notify_cq(cq, 0);
+    if (ret != 0) {
+      SCTK_IB_ABORT_WITH_ERRNO("Couldn't request CQ notification");
+    }
   }
   return cq;
 }
@@ -310,7 +358,7 @@ void sctk_ib_qp_key_print(sctk_ib_cm_qp_connection_t *keys) {
 }
 
 void sctk_ib_qp_key_fill(sctk_ib_cm_qp_connection_t* keys, sctk_ib_qp_t *remote,
-    uint16_t lid, uint32_t qp_num, uint32_t psn) {
+    sctk_uint16_t lid, sctk_uint32_t qp_num, sctk_uint32_t psn) {
 
   keys->lid = lid;
   keys->qp_num = qp_num;
@@ -434,14 +482,18 @@ sctk_ib_qp_init(struct sctk_ib_rail_info_s* rail_ib,
   LOAD_DEVICE(rail_ib);
 
   remote->qp = ibv_create_qp (device->pd, attr);
-  PROF_INC_RAIL_IB(rail_ib, qp_created);
+  PROF_INC(rail_ib->rail, ib_qp_created);
   if (!remote->qp) {
     SCTK_IB_ABORT("Cannot create QP for rank %d", rank);
   }
   sctk_nodebug("QP Initialized for rank %d %p", remote->rank, remote->qp);
 
   /* Add QP to HT */
-  sctk_ib_qp_ht_add(rail_ib, remote, remote->qp->qp_num);
+  struct sctk_ib_qp_s *rem;
+  rem = sctk_ib_qp_ht_find(rail_ib, remote->qp->qp_num);
+  if (rem == NULL) {
+    sctk_ib_qp_ht_add(rail_ib, remote, remote->qp->qp_num);
+  }
   return remote->qp;
 }
 
@@ -456,11 +508,11 @@ sctk_ib_qp_init_attr(struct sctk_ib_rail_info_s* rail_ib)
   attr.send_cq  = device->send_cq;
   attr.recv_cq  = device->recv_cq;
   attr.srq      = device->srq;
-  attr.cap.max_send_wr  = config->ibv_qp_tx_depth;
-  attr.cap.max_recv_wr  = config->ibv_qp_rx_depth;
-  attr.cap.max_send_sge = config->ibv_max_sg_sq;
-  attr.cap.max_recv_sge = config->ibv_max_sg_rq;
-  attr.cap.max_inline_data = config->ibv_max_inline;
+  attr.cap.max_send_wr  = config->qp_tx_depth;
+  attr.cap.max_recv_wr  = config->qp_rx_depth;
+  attr.cap.max_send_sge = config->max_sg_sq;
+  attr.cap.max_recv_sge = config->max_sg_rq;
+  attr.cap.max_inline_data = config->max_inline;
   /* RC Transport by default */
   attr.qp_type = IBV_QPT_RC;
   /* if this value is set to 1, all work requests (WR) will
@@ -483,7 +535,7 @@ sctk_ib_qp_state_init_attr(struct sctk_ib_rail_info_s* rail_ib,
   /* pkey index, normally 0 */
   attr.pkey_index = 0;
   /* physical port number (1 .. n) */
-  attr.port_num = config->ibv_adm_port;
+  attr.port_num = config->adm_port;
   attr.qp_access_flags =
     IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_LOCAL_WRITE |
     IBV_ACCESS_REMOTE_READ;
@@ -507,7 +559,7 @@ sctk_ib_qp_state_rtr_attr(struct sctk_ib_rail_info_s* rail_ib,
   attr.path_mtu = IBV_MTU_2048;
   /* QP number of remote QP */
   /* maximul number if resiyrces for incoming RDMA request */
-  attr.max_dest_rd_atomic = config->ibv_rdma_dest_depth;
+  attr.max_dest_rd_atomic = config->rdma_dest_depth;
   /* maximum RNR NAK timer (recommanded value: 12) */
   attr.min_rnr_timer = 12;
 
@@ -522,7 +574,7 @@ sctk_ib_qp_state_rtr_attr(struct sctk_ib_rail_info_s* rail_ib,
   attr.ah_attr.sl = 0;
   /* source path bits */
   attr.ah_attr.src_path_bits = 0;
-  attr.ah_attr.port_num = config->ibv_adm_port;
+  attr.ah_attr.port_num = config->adm_port;
 
   *flags = IBV_QP_STATE |
     IBV_QP_AV |
@@ -537,7 +589,7 @@ sctk_ib_qp_state_rtr_attr(struct sctk_ib_rail_info_s* rail_ib,
 
   struct ibv_qp_attr
 sctk_ib_qp_state_rts_attr(struct sctk_ib_rail_info_s* rail_ib,
-    uint32_t psn, int *flags)
+    sctk_uint32_t psn, int *flags)
 {
   LOAD_CONFIG(rail_ib);
   struct ibv_qp_attr attr;
@@ -553,7 +605,7 @@ sctk_ib_qp_state_rts_attr(struct sctk_ib_rail_info_s* rail_ib,
   /* packet sequence number */
   attr.sq_psn = psn;
   /* number or outstanding RDMA reads and atomic operations allowed */
-  attr.max_rd_atomic = config->ibv_rdma_dest_depth;
+  attr.max_rd_atomic = config->rdma_dest_depth;
 
   *flags = IBV_QP_STATE |
     IBV_QP_TIMEOUT |
@@ -567,7 +619,7 @@ sctk_ib_qp_state_rts_attr(struct sctk_ib_rail_info_s* rail_ib,
 
   struct ibv_qp_attr
 sctk_ib_qp_state_reset_attr(struct sctk_ib_rail_info_s* rail_ib,
-    uint32_t psn, int *flags)
+    sctk_uint32_t psn, int *flags)
 {
   struct ibv_qp_attr attr;
   memset (&attr, 0, sizeof (struct ibv_qp_attr));
@@ -584,7 +636,7 @@ sctk_ib_qp_state_reset_attr(struct sctk_ib_rail_info_s* rail_ib,
   void
 sctk_ib_qp_modify( sctk_ib_qp_t* remote, struct ibv_qp_attr* attr, int flags)
 {
-
+  sctk_nodebug("Modify QP for remote %p to state %d", remote, attr->qp_state );
   if (ibv_modify_qp(remote->qp, attr, flags) != 0)
   {
     SCTK_IB_ABORT_WITH_ERRNO("Cannot modify Queue Pair");
@@ -607,9 +659,10 @@ sctk_ib_srq_init(struct sctk_ib_rail_info_s* rail_ib,
     sctk_abort();
   }
 
-  config->ibv_max_srq_ibufs_posted = attr->attr.max_wr;
+//  config->max_srq_ibufs_posted = attr->attr.max_wr;
   sctk_ib_debug("Initializing SRQ with %d entries (max:%d)",
       attr->attr.max_wr, sctk_ib_srq_get_max_srq_wr(rail_ib));
+  config->srq_credit_limit = config->max_srq_ibufs_posted / 2;
 
   return device->srq;
 }
@@ -622,13 +675,14 @@ sctk_ib_srq_init_attr(struct sctk_ib_rail_info_s* rail_ib)
 
   memset (&attr, 0, sizeof (struct ibv_srq_init_attr));
 
-  attr.attr.srq_limit = config->ibv_srq_credit_thread_limit;
-  attr.attr.max_wr = config->ibv_max_srq_ibufs;
-  attr.attr.max_sge = config->ibv_max_sg_rq;
+  attr.attr.srq_limit = config->srq_credit_thread_limit;
+  attr.attr.max_wr = sctk_ib_srq_get_max_srq_wr(rail_ib);
+  attr.attr.max_sge = config->max_sg_rq;
 
   return attr;
 }
 
+TODO("Check the max WR !!")
 int
 sctk_ib_srq_get_max_srq_wr (struct sctk_ib_rail_info_s* rail_ib)
 {
@@ -657,14 +711,18 @@ sctk_ib_qp_allocate_init(struct sctk_ib_rail_info_s* rail_ib,
   struct ibv_qp_attr       attr;
   int flags;
 
+  sctk_nodebug("QP reinited for rank %d", rank);
+
   remote->route_table = route_table;
   remote->psn = lrand48 () & 0xffffff;
   remote->rank = rank;
-  remote->free_nb = config->ibv_qp_tx_depth;
+  remote->free_nb = config->qp_tx_depth;
   remote->post_lock = SCTK_SPINLOCK_INITIALIZER;
   /* For buffered eager */
   remote->ib_buffered.entries = NULL;
   remote->ib_buffered.lock = SCTK_SPINLOCK_INITIALIZER;
+  remote->unsignaled_counter = 0;
+  OPA_store_int(&remote->ib_buffered.number, 0);
 
   /* Add it to the Cicrular Linked List if the QP is created from
    * an ondemand request */
@@ -684,17 +742,18 @@ sctk_ib_qp_allocate_init(struct sctk_ib_rail_info_s* rail_ib,
   sctk_ib_qp_init(rail_ib, remote, &init_attr, rank);
   sctk_ib_qp_allocate_set_rtr(remote, 0);
   sctk_ib_qp_allocate_set_rts(remote, 0);
-  sctk_ib_qp_set_requests_nb(remote, 0);
+  sctk_ib_qp_set_pending_data(remote, 0);
+  remote->rdma.previous_max_pending_data = 0;
   sctk_ib_qp_set_deco_canceled(remote, ACK_OK);
 
   sctk_ib_qp_set_local_flush_ack(remote, ACK_UNSET);
   sctk_ib_qp_set_remote_flush_ack(remote, ACK_UNSET);
 
-  remote->deco_lock = 0;
   remote->lock_rtr = SCTK_SPINLOCK_INITIALIZER;
   remote->lock_rts = SCTK_SPINLOCK_INITIALIZER;
   /* Lock for sending messages */
-  sctk_spin_rwlock_init(&remote->lock_send);
+  remote->lock_send = SCTK_SPINLOCK_INITIALIZER;
+  remote->flushing_lock = SCTK_SPINLOCK_INITIALIZER;
   /* RDMA */
   sctk_ibuf_rdma_remote_init(remote);
 
@@ -733,17 +792,49 @@ sctk_ib_qp_allocate_reset(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t *remote)
 {
   struct ibv_qp_attr       attr;
+  sctk_route_table_t *route_table = remote->route_table;
   int flags;
 
   attr = sctk_ib_qp_state_reset_attr(rail_ib, remote->psn, &flags);
   sctk_nodebug("Modify QR RESET for rank %d", remote->rank);
   sctk_ib_qp_modify(remote, &attr, flags);
+
+  sctk_ib_qp_allocate_set_rtr(remote, 0);
+  sctk_ib_qp_allocate_set_rts(remote, 0);
 }
 
 
 /*-----------------------------------------------------------
  *  Send a message to a remote QP
  *----------------------------------------------------------*/
+/*
+ * Returns if the counter has to be reset because a signaled message needs to be send
+ */
+static int check_signaled(struct sctk_ib_rail_info_s* rail_ib, sctk_ib_qp_t *remote, sctk_ibuf_t* ibuf) {
+  LOAD_CONFIG(rail_ib);
+  char is_signaled = (ibuf->desc.wr.send.send_flags & IBV_SEND_SIGNALED) ? 1 : 0;
+
+  if ( ! is_signaled ) {
+    if (remote->unsignaled_counter + 1 > (config->qp_tx_depth >> 1) ) {
+      ibuf->desc.wr.send.send_flags | IBV_SEND_SIGNALED;
+      return 1;
+    } else return 0;
+  } else  return 1;
+
+  return 0;
+}
+
+static void inc_signaled(struct sctk_ib_rail_info_s* rail_ib, sctk_ib_qp_t *remote, int need_reset) {
+  LOAD_CONFIG(rail_ib);
+
+  if ( need_reset ) {
+   remote->unsignaled_counter = 0;
+  } else {
+   remote->unsignaled_counter ++;
+  }
+}
+
+
 struct wait_send_s {
   struct sctk_ib_rail_info_s* rail_ib;
   int flag;
@@ -760,8 +851,14 @@ static void* wait_send(void *arg){
   struct wait_send_s *a = (struct wait_send_s*) arg;
   int rc;
 
+  PROF_TIME_START(a->rail_ib->rail, ib_post_send);
+  sctk_spinlock_lock(&a->remote->lock_send);
+  int need_reset = check_signaled(a->rail_ib, a->remote, a->ibuf);
   rc = ibv_post_send(a->remote->qp, &(a->ibuf->desc.wr.send),
       &(a->ibuf->desc.bad_wr.send));
+  if (rc == 0) inc_signaled(a->rail_ib, a->remote, need_reset);
+  sctk_spinlock_unlock(&a->remote->lock_send);
+  PROF_TIME_END(a->rail_ib->rail, ib_post_send);
   if (rc == 0)
   {
     a->flag = 1;
@@ -771,17 +868,30 @@ static void* wait_send(void *arg){
   return NULL;
 }
 
-/* Send a message without locks. Messages which are sent are not blocked by locks. This is usefull for QP deconnexion */
-  static inline void __send_ibuf_nolock(struct sctk_ib_rail_info_s* rail_ib,
+/* Send a message without locks. Messages which are sent are not blocked by locks.
+ * This is useful for QP deconnexion */
+  static inline void __send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t *remote, sctk_ibuf_t* ibuf)
 {
   int rc;
 
-  sctk_nodebug("Send no-lock message to process %d %p", remote->rank, remote->qp);
+  sctk_nodebug("[%d] Send no-lock message to process %d %p %d", rail_ib->rail_nb, remote->rank, remote->qp, rail_ib->rail->rail_number);
 
   ibuf->remote = remote;
 
+  /* We lock here because ibv_post_send uses mutexes which provide really bad performances.
+   * Instead we encapsulate the call between spinlocks */
+  PROF_TIME_START(rail_ib->rail, ib_post_send_lock);
+  sctk_spinlock_lock(&remote->lock_send);
+  PROF_TIME_END(rail_ib->rail, ib_post_send_lock);
+
+  PROF_TIME_START(rail_ib->rail, ib_post_send);
+  int need_reset = check_signaled(rail_ib, remote, ibuf);
   rc = ibv_post_send(remote->qp, &(ibuf->desc.wr.send), &(ibuf->desc.bad_wr.send));
+  PROF_TIME_END(rail_ib->rail, ib_post_send);
+
+  if (rc == 0) inc_signaled(rail_ib, remote, need_reset);
+  sctk_spinlock_unlock(&remote->lock_send);
   if( rc != 0) {
     struct wait_send_s wait_send_arg;
     wait_send_arg.flag = 0;
@@ -789,43 +899,20 @@ static void* wait_send(void *arg){
     wait_send_arg.ibuf = ibuf;
     wait_send_arg.rail_ib = rail_ib;
 
-    sctk_nodebug("[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d)", rail_ib->rail->rail_number,
-        remote->rank, sctk_ib_qp_get_requests_nb(remote));
+//#warning "We should remove these sctk_error and use a counter instead"
+    sctk_error("[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d)", rail_ib->rail->rail_number,
+        remote->rank, sctk_ib_qp_get_pending_data(remote));
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
         (void (*)(void *)) wait_send, &wait_send_arg);
 
     sctk_nodebug("[%d] NO LOCK QP message sent to remote %d", rail_ib->rail->rail_number, remote->rank);
   }
-  sctk_ib_prof_qp_write(remote->rank, ibuf->desc.sg_entry.length,
-      sctk_get_time_stamp(), PROF_QP_SEND);
+  sctk_nodebug("SENT no-lock message to process %d %p", remote->rank, remote->qp);
 }
 
-
-/* Send a message with locks */
-  static inline void __send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
-    sctk_ib_qp_t *remote, sctk_ibuf_t* ibuf)
-{
-  int rc;
-
-  sctk_nodebug("Send locked message to process %d %p", remote->rank, remote->qp);
-
-  ibuf->remote = remote;
-
-  rc = ibv_post_send(remote->qp, &(ibuf->desc.wr.send), &(ibuf->desc.bad_wr.send));
-  if( rc != 0) {
-    struct wait_send_s wait_send_arg;
-    wait_send_arg.flag = 0;
-    wait_send_arg.remote = remote;
-    wait_send_arg.ibuf = ibuf;
-
-    sctk_nodebug("[%d] LOCK QP full for rank %d, waiting for posting message... rc=%d, request_nb=%d", rail_ib->rail->rail_number, remote->rank, rc, sctk_ib_qp_get_requests_nb(remote));
-    sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
-        (void (*)(void *)) wait_send, &wait_send_arg);
-  }
-  sctk_ib_prof_qp_write(remote->rank, ibuf->desc.sg_entry.length,
-      sctk_get_time_stamp(), PROF_QP_SEND);
-}
-
+/* Send an ibuf to a remote.
+ * is_control_message: if the message is a control message
+ */
   int
 sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
     sctk_ib_qp_t *remote, sctk_ibuf_t* ibuf, int is_control_message) {
@@ -837,189 +924,29 @@ sctk_ib_qp_send_ibuf(struct sctk_ib_rail_info_s* rail_ib,
   }
 #endif
 
-  if (is_control_message) {
-    __send_ibuf_nolock(rail_ib, remote, ibuf);
-  } else {
-    __send_ibuf(rail_ib, remote, ibuf);
-  }
 
   /* We inc the number of pending requests */
-  sctk_ib_qp_inc_requests_nb(remote);
+  sctk_ib_qp_add_pending_data(remote, ibuf);
+
+  __send_ibuf(rail_ib, remote, ibuf);
 
   /* We release the buffer if it has been inlined & if it
    * do not generate an event once the transmission done */
   if ( ( ibuf->flag == SEND_INLINE_IBUF_FLAG
       || ibuf->flag == RDMA_WRITE_INLINE_IBUF_FLAG)
       && ( ( (ibuf->desc.wr.send.send_flags & IBV_SEND_SIGNALED) == 0) ) ) {
-      struct sctk_ib_polling_s *poll;
+
+      struct sctk_ib_polling_s poll;
       POLL_INIT(&poll);
 
       /* Decrease the number of pending requests */
-      sctk_ibuf_rdma_update_max_pending_requests(rail_ib, remote);
-      sctk_ib_qp_decr_requests_nb(ibuf->remote);
-      sctk_network_poll_send_ibuf(rail_ib->rail, ibuf, 0, poll);
+      int current_pending;
+      current_pending = sctk_ib_qp_fetch_and_sub_pending_data(remote, ibuf);
+      sctk_ibuf_rdma_update_max_pending_data(rail_ib, remote, current_pending);
+      sctk_network_poll_send_ibuf(rail_ib->rail, ibuf, 0, &poll);
       return 0;
   }
   return 1;
-}
-
-/*-----------------------------------------------------------
- *  Flush messages from a QP. We block the QP to send new messages.
- *  The function waits until no more message has to be sent
- *----------------------------------------------------------*/
-struct flush_send_s {
-  int flag;
-  sctk_ib_qp_t *remote;
-};
-
-static void* flush_send(void *arg){
-  struct flush_send_s *a = (struct flush_send_s*) arg;
-
-  /* Check if there is no more pending requests */
-  if (sctk_ib_qp_get_requests_nb(a->remote) == 0) {
-    a->flag = 1;
-  }
-
-  /* Check if the flush has been canceled */
-  if (a->flag == 0) {
-    if (sctk_ib_qp_get_deco_canceled(a->remote) == 1) {
-      /* We leave the flush function */
-      a->flag = 1;
-    }
-  }
-  return NULL;
-}
-
-/*
- * Flush all pending message from the QP.
- * New messages which are not control messages may no more use this QP.
- * We return 1 if ths flush is canceled, 0 if we can proceed to the deconnexion
- */
-static inline int
-sctk_ib_qp_flush(struct sctk_ib_rail_info_s* rail_ib,
-    sctk_ib_qp_t *remote) {
-
-  sctk_nodebug("Flushing messages from QP");
-  sctk_route_set_state(remote->route_table, state_flushing);
-
-  /* If all requests have not been flushed */
-  if (sctk_ib_qp_get_requests_nb(remote) != 0) {
-    struct flush_send_s flush_send_arg;
-    flush_send_arg.flag = 0;
-    flush_send_arg.remote = remote;
-
-    sctk_thread_wait_for_value_and_poll (&flush_send_arg.flag, 1,
-        (void (*)(void *)) flush_send, &flush_send_arg);
-  }
-
-  sctk_nodebug("Message flushed from QP");
-
-  return sctk_ib_qp_get_deco_canceled(remote);
-}
-
-
-/*-----------------------------------------------------------
- *  On demand deconnexion
- *----------------------------------------------------------*/
-/* Select a victim from the clock algorithm */
-void sctk_ib_qp_select_victim(struct sctk_ib_rail_info_s* rail_ib) {
-  sctk_ib_qp_t *current_qp;
-  LOAD_DEVICE(rail_ib);
-  sctk_ib_qp_ondemand_t *od = &device->ondemand;
-  int cancel;
-
-  sctk_spinlock_lock(&od->lock);
-
-  current_qp = od->qp_list_ptr;
-  if (current_qp == NULL) {
-    sctk_warning("There is no QP to deconnect");
-    sctk_spinlock_unlock(&od->lock);
-    return;
-  }
-
-  while(current_qp) {
-    if (current_qp->R == 0) {
-      /* If the element to remove is the last element */
-      if (current_qp->next == current_qp) {
-        od->qp_list_ptr = NULL;
-      } else {
-        od->qp_list_ptr = od->qp_list_ptr->next;
-      }
-      /* We can deconnect this QP */
-      goto exit;
-    } else {
-      current_qp->R = 0;
-    }
-    current_qp = current_qp->next;
-    od->qp_list_ptr = current_qp;
-  }
-
-exit:
-  ib_assume(current_qp);
-  /* Remove the QP from the list -> cannot be no more deconnected */
-  CDL_DELETE(od->qp_list, current_qp);
-  sctk_spinlock_unlock(&od->lock);
-  sctk_warning("Proceeding to a QP deconnexion: QP to process %d elected %p", current_qp->rank, current_qp);
-
-  /* Send a deconnexion request */
-  sctk_ib_cm_deco_request_send(rail_ib->rail, current_qp->route_table);
-
-  /* ---> We block the message sending and wait until all
-   * task is out from the send function */
-  sctk_spinlock_write_lock(&current_qp->lock_send);
-  /* Deconnection lock which is released once the deconnexion
-   * finished*/
-  current_qp->deco_lock = 1;
-
-  /* Flush all pending requests */
-  cancel = sctk_ib_qp_flush(rail_ib, current_qp);
-  /* FIXME: Restore deco variable */
-  /* sctk_ib_qp_set_deco_canceled(remote, ACK_OK); */
-
-  if (cancel == ACK_CANCEL) {
-    not_implemented();
-    sctk_route_set_state(current_qp->route_table, state_connected);
-    sctk_ib_qp_set_local_flush_ack(current_qp, ACK_CANCEL);
-  } else {
-    /* Flush OK */
-    sctk_ib_qp_set_local_flush_ack(current_qp, ACK_OK);
-  }
-
-  /* <--- We release the message sending */
-  sctk_spinlock_write_unlock(&current_qp->lock_send);
-}
-
-/* CAREFULL: this function may stop the polling function from polling */
-void sctk_ib_qp_deco_victim(struct sctk_ib_rail_info_s* rail_ib,
-    sctk_route_table_t* route_table) {
-  sctk_ib_qp_t *remote = route_table->data.ib.remote;
-  int cancel;
-
-  /* ---> We block the message sending and wait until all
-   * task is out from the send function */
-  sctk_spinlock_write_lock(&remote->lock_send);
-  remote->deco_lock = 1;
-
-  /* Flush all pending requests */
-  cancel = sctk_ib_qp_flush(rail_ib,remote);
-  /* FIXME: Restore deco variable */
-  /* sctk_ib_qp_set_deco_canceled(remote, ACK_OK); */
-
-  /* Restore QP and cancel deconnexion */
-  if (cancel == ACK_CANCEL) {
-    not_implemented();
-    sctk_route_set_state(remote->route_table, state_connected);
-    sctk_ib_qp_set_local_flush_ack(remote, ACK_CANCEL);
-  } else {
-    /* Flush OK */
-    sctk_ib_qp_set_local_flush_ack(remote, ACK_OK);
-  }
-
-  /* Send the deco ack to the remote */
-  sctk_ib_cm_deco_ack_send(rail_ib->rail, route_table, cancel);
-
-  /* <--- We release the message sending */
-  sctk_spinlock_write_unlock(&remote->lock_send);
 }
 
 #endif

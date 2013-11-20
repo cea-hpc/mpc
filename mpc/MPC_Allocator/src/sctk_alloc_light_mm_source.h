@@ -32,21 +32,11 @@ extern "C"
 #ifdef HAVE_HWLOC
 #include <hwloc.h>
 #endif //HAVE_HWLOC
-#include "sctk_allocator.h"
+#include "sctk_alloc_mmsrc.h"
+#include "sctk_alloc_lock.h"
 
 /************************** CONSTS *************************/
 #define SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_NODE_IGNORE -1
-
-/************************** MACROS *************************/
-/**
- * Maximum bloc to keep in memory source for future resuse at free time.
- * The main goal is to resduce the number of calls to mmap and avoid to pass
- * too much time in kernek zero page function.
- * The larger it is, the more it keep the memory in the process.
- * It must be multiples of SCTK_MACRO_BLOC_SIZE.
- * With huge pvalues it tend to consume as much memory than TCMalloc.
-**/
-#define SCTK_ALLOC_MACRO_BLOC_REUSE_THREASHOLD (0*SCTK_MACRO_BLOC_SIZE)
 
 /*************************** ENUM **************************/
 /**
@@ -93,6 +83,8 @@ struct sctk_alloc_mm_source_light
 	bool strict_numa_bind;
 	/** More for debug, to know how-many blocks are in use. **/
 	int counter;
+	/** Current amount of memory stored in mm source cache. **/
+	size_t size;
 	#ifdef HAVE_HWLOC
 	/** Define the nodset related to the NUMA binding for hwloc.**/
 	hwloc_nodeset_t nodeset;
@@ -114,6 +106,8 @@ SCTK_STATIC void sctk_alloc_mm_source_light_insert_segment(struct sctk_alloc_mm_
 SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_mmap_new_segment(struct sctk_alloc_mm_source_light* light_source,sctk_size_t size);
 SCTK_STATIC struct sctk_alloc_macro_bloc * sctk_alloc_mm_source_light_remap(struct sctk_alloc_macro_bloc * macro_bloc,sctk_size_t size);
 struct sctk_alloc_mm_source_light * sctk_alloc_get_mm_source_light(struct sctk_alloc_mm_source * source);
+SCTK_STATIC bool sctk_alloc_mm_source_light_keep(struct sctk_alloc_mm_source_light * light_source,sctk_size_t size,bool for_register);
+void sctk_alloc_mm_source_light_migrate(struct sctk_alloc_mm_source_light * light_source,int target_numa_node);
 
 /************************* FUNCTION ************************/
 //helpers

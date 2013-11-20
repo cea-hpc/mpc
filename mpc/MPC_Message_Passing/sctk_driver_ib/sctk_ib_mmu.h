@@ -32,11 +32,13 @@
 #include <sctk_debug.h>
 #include <sctk_config.h>
 #include <stdint.h>
+#include "hb_tree.h"
 
-//#define DEBUG_IB_MMU
+#define DEBUG_IB_MMU
 
-#define ALIGN_ON_64(x) ( (x + 63) & (~63) )
+#define ALIGN_ON(x, align) ( (x + (align-1)) & (~(align-1)) )
 
+struct sctk_ib_rail_info_s;
 struct sctk_ib_rail_info_s;
 
 /* Enumeration for entry status  */
@@ -69,6 +71,8 @@ typedef struct sctk_ib_mmu_entry_s
 //  void *ptr;                /* ptr to the MR */
 //  size_t size;              /* size of the MR */
   struct ibv_mr *mr;        /* MR */
+  /* Pointer to the MMU the entry owns */
+  struct sctk_ib_mmu_s *mmu;
 
   /* Status of the entry in cache */
   sctk_ib_mmu_cached_status_t cache_status;
@@ -78,6 +82,7 @@ typedef struct sctk_ib_mmu_entry_s
   sctk_ib_mmu_ht_key_t key;
   /* UTHash header */
   UT_hash_handle hh;
+  struct sctk_ib_rail_info_s *rail_ib;
 } sctk_ib_mmu_entry_t;
 
 
@@ -94,12 +99,12 @@ typedef struct sctk_ib_mmu_region_s
 
 typedef struct sctk_ib_cache_s
 {
-  /* MMU entries in cache */
-  sctk_ib_mmu_entry_t* ht_entries;
+  /* Libdict structure to store the MMU cache tree */
+  hb_tree* hb_entries;
   /* LRU list of entries in cache */
   sctk_ib_mmu_entry_t* lru_entries;
 
-  sctk_spinlock_t lock;
+  sctk_spin_rwlock_t lock;
   unsigned int entries_nb;
 } sctk_ib_cache_t;
 
@@ -112,14 +117,17 @@ typedef struct sctk_ib_mmu_s
   size_t page_size; /* size of a system page */
   sctk_ib_mmu_entry_t*  free_entry;
   sctk_ib_cache_t cache;
+  struct sctk_ib_topology_numa_node_s * node;
 } sctk_ib_mmu_t;
 
+struct sctk_ib_topology_numa_node_s;
 /*-----------------------------------------------------------
  *  FUNCTIONS
  *----------------------------------------------------------*/
-void sctk_ib_mmu_init(struct sctk_ib_rail_info_s *rail_ib);
+void sctk_ib_mmu_init(struct sctk_ib_rail_info_s *rail_ib, struct sctk_ib_mmu_s * mmu, struct sctk_ib_topology_numa_node_s * node);
 
  void sctk_ib_mmu_alloc(struct sctk_ib_rail_info_s *rail_ib,
+     struct sctk_ib_mmu_s * mmu,
      const unsigned int nb_entries);
 
 sctk_ib_mmu_entry_t *sctk_ib_mmu_register (
@@ -133,5 +141,7 @@ void ctk_ib_mmu_unregister (struct sctk_ib_rail_info_s *rail_ib,
 void
 sctk_ib_mmu_unregister (struct sctk_ib_rail_info_s *rail_ib,
     sctk_ib_mmu_entry_t *mmu_entry);
+
+sctk_ib_mmu_t * sctk_ib_mmu_get_mmu_from_vp( struct sctk_ib_rail_info_s *rail_ib );
 #endif
 #endif

@@ -51,6 +51,8 @@
 #define CM_RESIZING_RDMA_ACK_TAG (14)
 #define CM_RESIZING_RDMA_DONE_TAG (15)
 
+#define CM_RESIZING_RDMA_DECO_REQ_TAG (16)
+
 struct sctk_thread_ptp_message_body_s;
 
 /*-----------------------------------------------------------
@@ -59,52 +61,47 @@ struct sctk_thread_ptp_message_body_s;
 
 #define CM_SET_REQUEST(r,x) (r->request_id = x)
 #define CM_GET_REQUEST(r) (r->request_id)
-
-/* All the following structures are requests
- * for the Connection Manager. */
-typedef enum {
-  cm_request_qp_connection,       /* Connection to a remote QP */
-  cm_request_qp_deconnection,     /* Deconnection from a remote QP */
-  cm_request_rdma_connection,     /* Establishment of a RDMA connection*/
-  cm_request_rdma_deconnection,   /* Remove a RDMA connection */
-  cm_request_rdma_resizing,       /* Resize a RDMA connection */
-} sctk_ib_cm_request_t;
+enum sctk_ib_cm_change_state_type_e {
+  CONNECTION = 111,
+  RESIZING = 222,
+};
 
 /* ACK */
 typedef struct {
+  int rail_id;  /* rail id. *MUST* be the first field */
   int ack;
 } sctk_ib_cm_ack_t;
 
 /* DONE */
 typedef struct {
+  int rail_id;  /* rail id. *MUST* be the first field */
   int done;
 } sctk_ib_cm_done_t;
 
 /* QP */
 typedef struct {
-  sctk_ib_cm_request_t request_id;  /* Request id. *MUST* be the first field */
-  uint16_t lid;
-  uint32_t qp_num;
-  uint32_t psn;
+  int rail_id;  /* rail id. *MUST* be the first field */
+  sctk_uint16_t lid;
+  sctk_uint32_t qp_num;
+  sctk_uint32_t psn;
 } sctk_ib_cm_qp_connection_t;
 
 typedef struct {
-  sctk_ib_cm_request_t request_id;  /* Request id. *MUST* be the first field */
+  int rail_id;  /* rail id. *MUST* be the first field */
 } sctk_ib_cm_qp_deconnection_t;
 
 /* RDMA connection and resizing */
 typedef struct {
-  sctk_ib_cm_request_t request_id;  /* Request id. *MUST* be the first field */
+  int rail_id;  /* rail id. *MUST* be the first field */
   int connected;
   int size;   /* Size of a slot */
   int nb;     /* Number of slots */
-  uint32_t rkey;
+  sctk_uint32_t rkey;
   void *addr;
 } sctk_ib_cm_rdma_connection_t;
 
 typedef struct {
-  sctk_ib_cm_request_t request_id;  /* Request id. *MUST* be the first field */
-
+  int rail_id;  /* rail id. *MUST* be the first field */
 } sctk_ib_cm_rdma_deconnection_t;
 
 /*-----------------------------------------------------------

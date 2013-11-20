@@ -22,7 +22,7 @@
 ########################################################################
 
 PROJECT(mpc_allocator)
-cmake_minimum_required(VERSION 2.8)
+cmake_minimum_required(VERSION 2.6)
 
 enable_testing()
 
@@ -38,11 +38,29 @@ endif(WIN32)
 ####################  CMAKE MODULES #####################
 INCLUDE (CheckIncludeFiles)
 
+######################  SET RPATHS ######################
+if(ENABLE_RPATH)
+	set(CMAKE_SKIP_BUILD_RPATH FALSE)
+	set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
+	set(CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib${LIB_SUFFIX}")
+	set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+endif(ENABLE_RPATH)
+
 ###################### CHECK HEADER #####################
 CHECK_INCLUDE_FILES(stdbool.h HAVE_STDBOOL_H)
 if(HAVE_STDBOOL_H)
 	add_definitions(-DHAVE_STDBOOL_H)
 endif(HAVE_STDBOOL_H)
+add_definitions(-DENABLE_ALLOC_HOOKS)
+
+################## VALGRIND SUPPORT #####################
+CHECK_INCLUDE_FILES(valgrind/memcheck.h HAVE_MEMCHECK_H)
+if(HAVE_MEMCHECK_H AND NOT DISABLE_VALGRIND)
+    add_definitions(-DHAVE_MEMCHECK_H)
+    message(STATUS "Support memcheck : yes")
+else(HAVE_MEMCHECK_H AND NOT DISABLE_VALGRIND)
+    message(STATUS "Support memcheck : no")
+endif(HAVE_MEMCHECK_H AND NOT DISABLE_VALGRIND)
 
 ####################### DEPS ############################
 if (NOT DISABLE_LIBNUMA)
@@ -51,6 +69,8 @@ endif(NOT DISABLE_LIBNUMA)
 
 if (HWLOC_FOUND)
 	add_definitions(-DHAVE_HWLOC=yes)
+	include_directories(${HWLOC_INCLUDE_DIRS})
+	message(STATUS "Support NUMA : yes")
 else (HWLOC_FOUND)
 	set(hwloc_inner_path ${CMAKE_SOURCE_DIR}/hwloc)
 	#try some other dirs
@@ -66,14 +86,51 @@ else (HWLOC_FOUND)
 		set(HWLOC_INCLUDE_DIR ${hwloc_inner_path}/include)
 		set(HWLOC_FOUND yes)
 		include_directories(${HWLOC_INCLUDE_DIRS})
+		message(STATUS "Support NUMA : yes")
 	else()
-		Message("Hwloc not found, disable NUMA")
+		Message(WARNING "Hwloc not found, disable NUMA")
+		message(STATUS "Support NUMA : no")
 		set(HWLOC_LIBRARY "")
 	endif()
 endif (HWLOC_FOUND)
+
+if(WIN32)
+	set(OPENPA_INCLUDE_DIR "${CMAKE_SOURCE_DIR}/openpa/src")
+endif(WIN32)
+
+find_package(OpenPA REQUIRED)
+if (OPENPA_FOUND)
+    include_directories(${OPENPA_INCLUDE_DIRS})
+    message(STATUS "Use OpenPA : yes")
+else (OPENPA_FOUND)
+    message(STATUS "Use OpenPA : no")
+    message(FATAL_ERROR "Cannot find OpenPA, please provide the path with -DOPENPA_PREFIX=...")
+endif (OPENPA_FOUND)
 
 add_subdirectory(src)
 IF(EXISTS ${CMAKE_SOURCE_DIR}/tests)
 	add_subdirectory(tests)
 ENDIF(EXISTS ${CMAKE_SOURCE_DIR}/tests)
 
+INSTALL(FILES include/mpcalloc.h DESTINATION include/)
+
+######################################################
+#Display info on current configuration
+macro (print_variable_status var_name)
+	if (${var_name})
+		message("${var_name} : yes")
+	else (${var_value})
+		message("${var_name} : no")
+	endif (${var_name})
+endmacro (print_variable_status)
+
+######################################################
+#Summary
+message("============== SUMMARY ==================")
+message("CMAKE_BUILD_TYPE : ${CMAKE_BUILD_TYPE}")
+print_variable_status("ENABLE_GCC_COVERAGE")
+print_variable_status("ENABLE_RPATH")
+print_variable_status("DISABLE_TESTS")
+print_variable_status("HWLOC_FOUND")
+print_variable_status("OPENPA_FOUND")
+message("=========================================")

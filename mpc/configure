@@ -102,6 +102,7 @@ SCTK_OS=""
 UNAME_P=""
 SCTK_ARCH=""
 SCTK_DEBUG="0"
+SCTK_DEBUG_STRICT="0"
 SCTK_FORTRAN="1"
 SCTK_MPC_USE_ZLIB="0"
 SCTK_NETWORKS_INIT="0"
@@ -163,9 +164,12 @@ Optional features:
   --use-network=*                  Select inter-node network type [all]
   --enable-checksum                Enable checksum for inter-processes messages
   --disable-shm                    Disable intra-node communication module (SHM)
+  --disable-posix-alloc            Disable MPC posix memory allocator.
   --enable-debug                   Enable MPC internal debugging features
+  --enable-debug-strict            Same than --enable-debug but also enable flag -Werror.
   --enable-debug-messages          Enable MPC debug message printing in verbose level 3
   --enable-shell-colors            Enable support of colors in shell
+  --enable-valgrind-memcheck       Enable support of valgrind memcheck in MPC_Allocator
 
 Module selection:
 EOF
@@ -187,6 +191,7 @@ Optional packages:
   --with-hwloc=prefix     Enable hwloc using given prefix [system default]
   --with-openib=prefix    Enable OpenFabrics using given prefix [system default]
   --with-libxml2=prefix   Enable libxml2 for config file parsing [pkg-config or /usr]
+  --with-libsctk_arch=prefix   Enable libsctk_arch for config file parsing [pkg-config or /usr]
 
 Some influential environment variables:
   CC                               C compiler command
@@ -213,6 +218,7 @@ SCTK_HYDRA="1"
 SCTK_SLURM="0"
 SCTK_OPENPA="1"
 SCTK_SHM="1"
+SCTK_POSIX_ALLOC="1"
 SCTK_CHECKSUM="0"
 SCTK_SHELL_COLORS="0"
 SCTK_DEBUG_MESSAGES="0"
@@ -220,10 +226,12 @@ SCTK_DEBUG_MESSAGES_DISABLED="0"
 SCTK_CC_DEP="-M"
 SCTK_CFLAGS_NON_GNU=""
 SCTK_MPC_MMAP="0"
+SCTK_VALGRIND_MEMCHECK='0'
 HWLOC_USER_PREFIX=""
 OPENPA_USER_PREFIX=""
 OPENIB_USER_PREFIX=""
 SCTK_LIBXML2_PREFIX=""
+SCTK_LIBSCTK_ARCH_PREFIX=""
 
 for arg in "$@" ; do
     case $arg in
@@ -310,6 +318,18 @@ for arg in "$@" ; do
     --disable-shm)
     SCTK_SHM="0"
     ;;
+    --enable-valgrind-memcheck)
+    SCTK_VALGRIND_MEMCHECK='1'
+    ;;
+    --disable-valgrind-memcheck)
+    SCTK_VALGRIND_MEMCHECK='0'
+    ;;
+    --enable-posix-alloc)
+    SCTK_POSIX_ALLOC='1'
+    ;;
+    --disable-posix-alloc)
+    SCTK_POSIX_ALLOC='0'
+    ;;
     --enable-checksum)
     SCTK_CHECKSUM="1"
     ;;
@@ -335,6 +355,11 @@ for arg in "$@" ; do
       SCTK_DEBUG_MESSAGES="1"
     fi
     SCTK_CFLAGS="${SCTK_CFLAGS} -Wall"
+    ;;
+    --enable-debug-strict)
+    SCTK_DEBUG="1"
+    SCTK_DEBUG_MESSAGES="1"
+    SCTK_DEBUG_STRICT="1"
     ;;
     --disable-fortran)
     SCTK_FORTRAN="0"
@@ -392,6 +417,9 @@ for arg in "$@" ; do
     ;;
 	--with-libxml2=*)
 	SCTK_LIBXML2_PREFIX="`echo A$arg | sed -e 's/A--with-libxml2=//g'`"
+	;;
+	--with-libsctk_arch=*)
+	SCTK_LIBSCTK_ARCH_PREFIX="`echo A$arg | sed -e 's/A--with-libsctk_arch=//g'`"
 	;;
     --disable-all)
 	mpc_modules_disable_all
@@ -628,13 +656,17 @@ end_section
 sctk_echo
 fi
 
-if test "$SCTK_DEBUG" = "1" ; then
-    begin_section "Enabling -Werror and -Wall as we are running in debug mode"
-    SCTK_CHECK_OPTION "-Wall -Werror -Wno-unused-variable" 
-# -Wno-unused-but-set-variable"
-    end_section
-
-    sctk_echo
+#Enable debug compiler flags
+if test "$SCTK_DEBUG_STRICT" = "1"; then
+	begin_section "Enabling -Wall -Werror as we are running in strict debug mode"
+	SCTK_CHECK_OPTION "-Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable"
+	end_section
+	sctk_echo
+elif test "$SCTK_DEBUG" = "1" ; then
+	begin_section "Enabling -Wall as we are running in debug mode"
+	SCTK_CHECK_OPTION "-Wall -Wno-unused-variable -Wno-unused-but-set-variable"
+	end_section
+	sctk_echo
 fi
 
 #Check for _Pragma message in macro
@@ -649,6 +681,7 @@ if test "$SCTK_NOCREATE" != "1" ; then
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_ldflags
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_cflags
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_mpcrun
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_mpc_edit_config
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_compiler
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_env
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_status

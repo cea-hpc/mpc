@@ -21,6 +21,8 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#if defined(MPC_PosixAllocator) || !defined(MPC_Common)
+
 /************************** HEADERS ************************/
 #if defined(_WIN32)
 	#include <windows.h>
@@ -34,14 +36,15 @@
 #include <errno.h>
 #include <malloc.h>
 #include "sctk_alloc_lock.h"
-#include "sctk_allocator.h"
 #include "sctk_alloc_debug.h"
-#include "sctk_alloc_spy.h"
 #include "sctk_alloc_config.h"
 #include "sctk_alloc_inlined.h"
 #include "sctk_alloc_light_mm_source.h"
 #include "sctk_alloc_posix.h"
 #include "sctk_alloc_on_node.h"
+#include "sctk_alloc_chain.h"
+#include "sctk_alloc_region.h"
+#include "sctk_alloc_hooks.h"
 
 //optional headers
 #ifdef HAVE_HWLOC
@@ -86,7 +89,7 @@ static struct sctk_alloc_chain sctk_global_egg_chain;
 /** Define the TLS pointer to the current allocation chain. **/
 #ifdef _WIN32
 	static int sctk_current_alloc_chain = -1;
-#else 
+#else
 	__thread struct sctk_alloc_chain * sctk_current_alloc_chain = NULL;
 #endif
 
@@ -155,14 +158,20 @@ SCTK_INTERN void sctk_alloc_tls_chain_local_reset()
 /**
  * Update the current thread local allocation chain.
  * @param chain Define the allocation chain to setup.
+ * @return Return the old chain, if the user want to reset it after capturing some elements.
 **/
-SCTK_INTERN void sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain)
+SCTK_PUBLIC struct sctk_alloc_chain * sctk_alloc_posix_set_default_chain(struct sctk_alloc_chain * chain)
 {
+	//get old one
+	struct sctk_alloc_chain * old_chain = sctk_get_tls_chain();
 	//errors
 	//assume_m(chain != NULL,"Can't set a default NULL allocation chain for local thread.");
 
 	//setup allocation chain for current thread
 	sctk_set_tls_chain(chain);
+
+	//return the old one
+	return old_chain;
 }
 
 /************************* FUNCTION ************************/
@@ -172,7 +181,7 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_uma_init(void)
 	//error
 	assume_m (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_EGG,"Invalid init state while calling allocator default init phase.");
 
-	sctk_global_memory_source[0] = sctk_alloc_chain_alloc(&sctk_global_egg_chain,sizeof(struct sctk_alloc_mm_source_default));
+	sctk_global_memory_source[0] = sctk_alloc_chain_alloc(&sctk_global_egg_chain,sizeof(struct sctk_alloc_mm_source_light));
 	//sctk_alloc_mm_source_default_init(sctk_global_memory_source[0],SCTK_ALLOC_HEAP_BASE,SCTK_ALLOC_HEAP_SIZE);
 	sctk_alloc_mm_source_light_init(sctk_global_memory_source[0],0,SCTK_ALLOC_MM_SOURCE_LIGHT_DEFAULT);
 }
@@ -181,11 +190,11 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_uma_init(void)
 SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init_node(int id)
 {
 	//errors and debug
-	assume_m(id <= SCTK_MAX_NUMA_NODE,"Caution, you get more node than supported by allocator. Limit is setup by SCTK_MAX_NUMA_NODE macro in sctk_alloc_posix.c.");
+	assume_m(id <= SCTK_MAX_NUMA_NODE,"Caution, you get more node than supported by allocator. Limit is setup by SCTK_MAX_NUMA_NODE macro in sctk_alloc_common.h.");
 	SCTK_NO_PDEBUG("Init memory source id = %d , MAX_NUMA_NODE = %d",id,SCTK_MAX_NUMA_NODE);
 
 	SCTK_NO_PDEBUG("Allocator init phase : Default");
-	sctk_global_memory_source[id] = sctk_alloc_chain_alloc(&sctk_global_egg_chain,sizeof(struct sctk_alloc_mm_source_default));
+	sctk_global_memory_source[id] = sctk_alloc_chain_alloc(&sctk_global_egg_chain,sizeof(struct sctk_alloc_mm_source_light));
 	//sctk_alloc_mm_source_default_init(sctk_global_memory_source[id],SCTK_ALLOC_HEAP_BASE + SCTK_ALLOC_HEAP_SIZE * id,SCTK_ALLOC_HEAP_SIZE);
 	if (id == SCTK_DEFAULT_NUMA_MM_SOURCE_ID)
 		sctk_alloc_mm_source_light_init(sctk_global_memory_source[id],SCTK_ALLOC_MM_SOURCE_LIGHT_NUMA_NODE_IGNORE,SCTK_ALLOC_MM_SOURCE_LIGHT_DEFAULT);
@@ -260,15 +269,34 @@ SCTK_STATIC void sctk_alloc_posix_mmsrc_numa_init(void)
 }
 
 /************************* FUNCTION ************************/
+SCTK_STATIC int sctk_alloc_posix_source_round_robin(void)
+{
+	static sctk_alloc_spinlock_t lock;
+	static int cnt = -1;
+	int res;
+	if (cnt == -1)
+	{
+		sctk_alloc_spinlock_init(&lock,PTHREAD_PROCESS_PRIVATE);
+		cnt = 0;
+	}
+
+	sctk_alloc_spinlock_lock(&lock);
+	res = cnt;
+	cnt = (cnt+1)%sctk_get_numa_node_number();
+	sctk_alloc_spinlock_unlock(&lock);
+	return res;
+}
+
+/************************* FUNCTION ************************/
 /**
  * Return the local memory source depeding on the current NUMA node.
  * It will use numa_preferred() to get the current numa node.
 **/
-SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(void)
+SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(int force_default_numa_mm_source)
 {
 	//vars
 	struct sctk_alloc_mm_source * res;
-	
+
 	//get numa node
 	#ifdef HAVE_HWLOC
 	int node;
@@ -276,13 +304,19 @@ SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(vo
 	//be really numa aware.
 	if (sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_EGG || sctk_global_base_init == SCTK_ALLOC_POSIX_INIT_DEFAULT)
 		node = SCTK_DEFAULT_NUMA_MM_SOURCE_ID;
-	else if (sctk_is_numa_node())
+	else if (sctk_alloc_is_numa() && !force_default_numa_mm_source)
 		node = sctk_alloc_init_on_numa_node();
 	else
 		node = SCTK_DEFAULT_NUMA_MM_SOURCE_ID;
 	#else
 	int node = 0;
 	#endif
+
+	#if !defined(MPC_Common) && defined(HAVE_HWLOC)
+	//use round robin on NUMA source if required, only out of MPC
+	if ((node == -1 || SCTK_DEFAULT_NUMA_MM_SOURCE_ID) && sctk_alloc_config()->numa_round_robin)
+		node = sctk_alloc_posix_source_round_robin();
+	#endif// !defined(MPC_Common) && defined HAVE_HWLOC
 
 	//check res
 	if (node == -1)
@@ -326,6 +360,11 @@ SCTK_INTERN void sctk_alloc_posix_base_init(void)
 	{
 		//debug
 		SCTK_NO_PDEBUG("Allocator init phase : Egg");
+
+		//setup hooks if required
+		#ifdef ENABLE_ALLOC_HOOKS
+		sctk_alloc_hooks_init(&sctk_alloc_gbl_hooks);
+		#endif //ENABLE_ALLOC_HOOKS
 
 		//setup default values of config
 		sctk_alloc_config_egg_init();
@@ -397,9 +436,12 @@ SCTK_INTERN struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void
 	struct sctk_alloc_chain * chain;
 	static int cnt = 0;
 
+	//disable valgrind here as we never free most the the blocs from here
+	SCTK_ALLOC_MMCHECK_DISABLE_REPORT();
+
 	cnt++;
 	SCTK_NO_PDEBUG("Create new alloc chain, total is %d",cnt);
-	
+
 	//start allocator base initialisation if not already done.
 	sctk_alloc_posix_base_init();
 
@@ -412,10 +454,13 @@ SCTK_INTERN struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void
 	chain->name = "mpc_posix_thread_allocator";
 
 	//bin to the adapted memory source depending on numa node availability
-	chain->source = sctk_alloc_posix_get_local_mm_source();
+	chain->source = sctk_alloc_posix_get_local_mm_source(true);
 
 	//debug
-	SCTK_NO_PDEBUG("Init an allocation chain : %p",chain);
+	SCTK_NO_PDEBUG("Init an allocation chain : %p with mm_source = %p (node = %d)",chain,chain->source,sctk_alloc_chain_get_numa_node(chain));
+
+	//reenable valgrind
+	SCTK_ALLOC_MMCHECK_ENABLE_REPORT();
 
 	/** @todo TODO register the allocation chain for debugging. **/
 	//setup pointer for alocator memory dump in case of crash
@@ -465,7 +510,7 @@ SCTK_PUBLIC void * sctk_calloc (size_t nmemb, size_t size)
 {
 	void * ptr;
 	SCTK_PROFIL_START(sctk_calloc);
-	ptr = malloc(nmemb * size);
+	ptr = sctk_malloc(nmemb * size);
 	memset(ptr,0,nmemb * size);
 	SCTK_PROFIL_END(sctk_calloc);
 	return ptr;
@@ -474,7 +519,7 @@ SCTK_PUBLIC void * sctk_calloc (size_t nmemb, size_t size)
 /************************* FUNCTION ************************/
 SCTK_PUBLIC void * sctk_malloc (size_t size)
 {
-	
+
 	//vars
 	struct sctk_alloc_chain * local_chain;
 	void * res;
@@ -484,16 +529,16 @@ SCTK_PUBLIC void * sctk_malloc (size_t size)
 
 	//get TLS
 	local_chain = sctk_get_tls_chain();
-	
+
 	//setup the local chain if not already done
 	if (local_chain == NULL)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
 
 	//purge the remote free queue
 	sctk_alloc_chain_purge_rfq(local_chain);
-	
+
 	SCTK_PTRACE("//start alloc on chain %p -> %ld",local_chain,size);
-	
+
 	//to be compatible with glibc policy which didn't return NULL in this case.
 	//otherwise we got crash in sed/grep/nano ...
 	/** @todo Optimize by returning a specific fixed address instead of alloc size=1 **/
@@ -568,7 +613,7 @@ SCTK_PUBLIC void sctk_free (void * ptr)
 
 	SCTK_PROFIL_START(sctk_free);
 	local_chain = sctk_get_tls_chain();
-	
+
 	//setup the local chain if not already done
 	//we need a non null chain when spy is enabled to avoid crash on remote free before a first
 	//call to malloc()
@@ -577,11 +622,11 @@ SCTK_PUBLIC void sctk_free (void * ptr)
 
 	//purge the remote free queue
 	sctk_alloc_chain_purge_rfq(local_chain);
-	
+
 	//if NULL, nothing to do
 	if (ptr == NULL)
 		return;
-	
+
 	//Find the chain corresponding to the given memory bloc
 	macro_bloc = sctk_alloc_region_get_macro_bloc(ptr);
 	if (macro_bloc == NULL)
@@ -607,19 +652,19 @@ SCTK_PUBLIC void sctk_free (void * ptr)
 	} else {
 		assert(ptr > (void*)macro_bloc && (sctk_addr_t)ptr < (sctk_addr_t)macro_bloc + sctk_alloc_get_chunk_header_large_size(&macro_bloc->header));
 	}
-	
+
 	chain = macro_bloc->chain;
 	assume_m(chain != NULL,"Can't free a pointer not manage by an allocation chain from our allocator.");
 
 	SCTK_PTRACE("free(ptr%p); //%p",ptr,chain);
-	if (chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE || chain == local_chain)
+	if ((chain->flags & SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE) || chain == local_chain)
 	{
 		//local free or protected free in shared allocation chain
 		sctk_alloc_chain_free(chain,ptr);
 	} else {
 		SCTK_NO_PDEBUG("Register in RFQ of chain %p",chain);
 		//remote free => simply register in free queue.
-		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_remote_free(chain,local_chain,ptr));
+		SCTK_ALLOC_HOOK(chain_remote_free,chain,local_chain,ptr);
 		sctk_alloc_rfq_register(&chain->rfq,ptr);
 	}
 	SCTK_PROFIL_END(sctk_free);
@@ -685,23 +730,23 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 
 	SCTK_PROFIL_START(sctk_realloc);
 
-	//get the current chain
-	local_chain = sctk_get_tls_chain();
-	if (local_chain == NULL)
-		local_chain = sctk_alloc_posix_setup_tls_chain();
+	//trivial cases
+	if (ptr == NULL)
+		return sctk_malloc(size);
+	if (size == 0)
+	{
+		sctk_free(ptr);
+		return NULL;
+	}
 
 	//get the chain of the chunk
-	if (ptr != NULL)
-		macro_bloc = sctk_alloc_region_get_macro_bloc(ptr);
+	macro_bloc = sctk_alloc_region_get_macro_bloc(ptr);
 	if (macro_bloc != NULL)
 		chain = macro_bloc->chain;
 
-	if ( chain == NULL && ptr != NULL && sctk_alloc_config()->strict )
-		sctk_fatal("Allocator error on realloc(%p,%llu), the address you provide is not managed by this memory allocator.",ptr,size);
-
 	//on windows we may got some segments allocated by HeapAlloc, detect them and fallback to HeapRealloc for them
 	#ifdef _WIN32
-	if (chain == NULL && ptr != NULL)
+	if (chain == NULL)
 	{
 		//used to fallback on default HeapAlloc/HeapFree/HeapRealloc/HeapSize when getting some legacy
 		//segments not managed by our allocator It append typically with atexit method which init is segment
@@ -711,10 +756,28 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 	}
 	#endif //_WIN32
 
-	if (size != 0 && ptr != NULL && chain == local_chain && chain != NULL)
+	//error handling
+	assume_m (chain != NULL,"Allocator error on realloc(%p,%llu), the address you provide is not managed by this memory allocator.",ptr,size);
+
+	//get the current chain
+	local_chain = sctk_get_tls_chain();
+	if (local_chain == NULL)
+		local_chain = sctk_alloc_posix_setup_tls_chain();
+
+	if (chain == local_chain || sctk_alloc_chain_is_thread_safe(chain))
 	{
+		//if distant chain is thread safe, we can try to use chain_realloc which
+		//use more optimized memory reuse if possible. If local its also good.
 		res = sctk_alloc_chain_realloc(chain,ptr,size);
+	#ifdef HAVE_MREMAP
+	} else if (SCTK_ALLOC_HUGE_CHUNK_SEGREGATION && size > SCTK_HUGE_BLOC_LIMIT && sctk_alloc_chain_can_remap(chain) && sctk_alloc_posix_get_size(ptr) > SCTK_HUGE_BLOC_LIMIT) {
+		//for huge segment, we can try to remap and update register field in region, it may not break
+		//thead-safety as in this case we didn't need to take locks on the chain
+		//remap will also not break current NUMA mapping (hope).
+		res = sctk_alloc_chain_realloc(chain,ptr,size);
+	#endif //HAVE_MREMAP
 	} else {
+		//for other cases we cannot do anything due to thread-safety, so need to alloc/copy/free
 		res = sctk_realloc_inter_chain(ptr,size);
 	}
 
@@ -732,17 +795,18 @@ SCTK_STATIC void * sctk_realloc_inter_chain (void * ptr, size_t size)
 
 	SCTK_PROFIL_START(sctk_realloc_inter_chain);
 
-	#ifdef SCTK_ALLOC_SPY
-	struct sctk_alloc_chain * local_chain = sctk_get_tls_chain();
-	if (local_chain == NULL)
-		local_chain = sctk_alloc_posix_setup_tls_chain();
-	#endif
+	//when using hooking, we need to know the chain
+	if (SCTK_ALLOC_HAS_HOOK(chain_next_is_realloc))
+	{
+		struct sctk_alloc_chain * local_chain = sctk_get_tls_chain();
+		if (local_chain == NULL)
+			local_chain = sctk_alloc_posix_setup_tls_chain();
+		SCTK_ALLOC_HOOK(chain_next_is_realloc,local_chain,ptr,size);
+	}
 
 	if (size != 0)
-	{
-		SCTK_ALLOC_SPY_HOOK(sctk_alloc_spy_emit_event_next_is_realloc(local_chain,ptr,size));
 		res = sctk_malloc(size);
-	}
+
 	if (res != NULL && ptr != NULL)
 	{
 		copy_size = sctk_alloc_posix_get_size(ptr);
@@ -750,6 +814,7 @@ SCTK_STATIC void * sctk_realloc_inter_chain (void * ptr, size_t size)
 			copy_size = size;
 		memcpy(res,ptr,copy_size);
 	}
+
 	if (ptr != NULL)
 		sctk_free(ptr);
 
@@ -779,7 +844,10 @@ SCTK_PUBLIC void sctk_alloc_posix_numa_migrate(void)
 	//if we didn't have an allocation, we can skip this, it will be
 	//create at first use on the current numa node, so automatically OK
 	if (local_chain == NULL)
+	{
+		SCTK_NO_PDEBUG("Not allocation to migrate.");
 		return;
+	}
 
 	//move the chain
 	sctk_alloc_posix_numa_migrate_chain(local_chain);
@@ -796,6 +864,7 @@ SCTK_INTERN void sctk_alloc_posix_numa_migrate_chain(struct sctk_alloc_chain * c
 {
 	//vars
 	struct sctk_alloc_mm_source * old_source;
+	struct sctk_alloc_mm_source * new_source;
 	struct sctk_alloc_mm_source_light * light_source;
 	int old_numa_node = -1;
 	int new_numa_node = -1;
@@ -813,21 +882,21 @@ SCTK_INTERN void sctk_alloc_posix_numa_migrate_chain(struct sctk_alloc_chain * c
 		old_source = chain->source;
 
 	//re-setup the memory source.
-	chain->source = sctk_alloc_posix_get_local_mm_source();
+	new_source = sctk_alloc_posix_get_local_mm_source(false);
 
 	//get numa node of sources
 	light_source = sctk_alloc_get_mm_source_light(old_source);
 	if (light_source != NULL)
 		old_numa_node = light_source->numa_node;
-	light_source = sctk_alloc_get_mm_source_light(chain->source);
+	light_source = sctk_alloc_get_mm_source_light(new_source);
 	if (light_source != NULL)
 		new_numa_node = light_source->numa_node;
 
-	//SCTK_PDEBUG("Request NUMA migration to thread allocator %d -> %d",old_numa_node,new_numa_node);
+	SCTK_NO_PDEBUG("Request NUMA migration to thread allocator (%p) %d -> %d",chain,old_numa_node,new_numa_node);
 
 	//check if need to migrate NUMA explicitely
 	if (old_numa_node != new_numa_node && new_numa_node != SCTK_DEFAULT_NUMA_MM_SOURCE_ID)
-		sctk_alloc_chain_numa_migrate(chain,new_numa_node,true,true,chain->source);
+		sctk_alloc_chain_numa_migrate(chain,new_numa_node,true,true,new_source);
 
 	SCTK_PROFIL_END(sctk_alloc_posix_numa_migrate);
 }
@@ -871,3 +940,5 @@ SCTK_INTERN void sctk_alloc_posix_mark_current_for_destroy(void)
 	//mark the current chain for destroy
 	sctk_alloc_chain_mark_for_destroy(local_chain,sctk_alloc_posix_destroy_handler);
 }
+
+#endif //define(MPC_PosixAllocator) || !defined(MPC_Common)

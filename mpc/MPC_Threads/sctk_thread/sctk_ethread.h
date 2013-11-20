@@ -34,8 +34,11 @@
 #include "sctk_spinlock.h"
 #include "sctk_alloc.h"
 #include "sctk_pthread_compatible_structures.h"
+
+#if 0
 #include <asm/prctl.h>
 #include <asm/unistd.h>
+#endif
 
 #ifdef MPC_Debugger
 #include "sctk_thread_dbg.h"
@@ -148,7 +151,7 @@ extern "C"
     struct sctk_ethread_virtual_processor_s *migrate_to;
     void (*migration_func) (struct sctk_ethread_per_thread_s *);
 
-    sctk_alloc_chain_t *tls_mem;
+    struct sctk_alloc_chain *tls_mem;
     int dump_for_migration;
     char *file_to_dump;
     volatile char cancel_state;

@@ -16,7 +16,7 @@
 /* # terms.                                                               # */
 /* #                                                                      # */
 /* # Authors:                                                             # */
-/* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
+/* #   - Valat Sebastien sebastien.valat@cea.fr                           # */
 /* #   - Adam Julien julien.adam@cea.fr                                   # */
 /* #                                                                      # */
 /* ######################################################################## */
@@ -42,7 +42,7 @@
  * Provide a quick wrapper to mmap. It may help for debugging and instrumentation of malloc.
  * @param addr Define the mapping address to request. NULL to not forced. Must be multiple of
  * OS page size as for mmap.
- * @param size Define the requested segement size. Must be multiple of OS page size as for mmap.
+ * @param size Define the requested segment size. Must be multiple of OS page size as for mmap.
 **/
 #ifdef _WIN32
 void * sctk_mmap(void* addr, size_t size)

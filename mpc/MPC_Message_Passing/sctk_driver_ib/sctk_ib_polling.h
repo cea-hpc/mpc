@@ -1,7 +1,7 @@
 /* ############################# MPC License ############################## */
 /* # Wed Nov 19 15:19:19 CET 2008                                         # */
 /* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
-/* # Copyright or (C) or Copr. 2010-2012 Université de Versailles         # */
+/* # Copyright or (C) or Copr. 2010-2012 Universit�� de Versailles         # */
 /* # St-Quentin-en-Yvelines                                               # */
 /* #                                                                      # */
 /* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
@@ -34,13 +34,45 @@
 #include "sctk_pmi.h"
 #include "utlist.h"
 
+#include "sctk_runtime_config.h"
+
 typedef struct sctk_ib_polling_s{
-  int recv_found_own;
-  int recv_found_other;
+  int recv_own;
+  int recv_other;
+  int recv_cq;
+  int recv;
 } sctk_ib_polling_t;
 
+#define  POLL_CQ_BUSY -1
+#define  POLL_CQ_SKIPPED -2
+
 #define HOSTNAME 2048
-#define POLL_INIT(x) memset((x), 0, sizeof(sctk_ib_polling_t));
+#define POLL_INIT(x) do {   \
+  (x)->recv_other = 0;        \
+  (x)->recv_own = 0;          \
+  (x)->recv = 0;              \
+  (x)->recv_cq = 0; } while(0)
+
+#define POLL_RECV_OWN(x) do { \
+  (x)->recv_own ++;                   \
+  (x)->recv ++; } while(0)
+
+#define POLL_RECV_OTHER(x) do { \
+  (x)->recv_other ++;                   \
+  (x)->recv ++; } while(0)
+
+#define POLL_RECV_CQ(x) do { \
+  (x)->recv_cq ++;                   \
+  (x)->recv ++; } while(0)
+
+#define POLL_RECV_CQ(x) do { \
+  (x)->recv_cq ++;                   \
+  (x)->recv ++; } while(0)
+
+#define POLL_GET_RECV(x) ((x)->recv)
+
+#define POLL_GET_RECV_CQ(x) ((x)->recv_cq)
+#define POLL_SET_RECV_CQ(x, y) ((x)->recv_cq = y)
 
 __UNUSED__  static inline char *
 sctk_ib_polling_print_status (enum ibv_wc_status status)
@@ -120,7 +152,7 @@ sctk_ib_polling_print_status (enum ibv_wc_status status)
 __UNUSED__ static inline void
 sctk_ib_polling_check_wc(struct sctk_ib_rail_info_s* rail_ib,
     struct ibv_wc wc) {
-  sctk_ib_config_t *config = (rail_ib)->config;
+  struct sctk_runtime_config_struct_net_driver_infiniband *config = (rail_ib)->config;
   struct sctk_ibuf_s* ibuf;
   char host[HOSTNAME];
   char ibuf_desc[4096];
@@ -130,7 +162,7 @@ sctk_ib_polling_check_wc(struct sctk_ib_rail_info_s* rail_ib,
     assume(ibuf);
     gethostname(host, HOSTNAME);
 
-    if (config->ibv_quiet_crash){
+    if (config->quiet_crash){
       sctk_error ("\033[1;31mIB - PROCESS %d CRASHED (%s)\033[0m: %s",
           sctk_process_rank, host, sctk_ib_polling_print_status(wc.status));
     } else {
@@ -156,25 +188,25 @@ sctk_ib_polling_check_wc(struct sctk_ib_rail_info_s* rail_ib,
   }
 }
 
-__UNUSED__ static inline int sctk_ib_cq_poll(sctk_rail_info_t* rail,
+#define WC_COUNT 100
+__UNUSED__ static inline void sctk_ib_cq_poll(sctk_rail_info_t* rail,
     struct ibv_cq *cq, const int poll_nb, struct sctk_ib_polling_s *poll,
     int (*ptr_func)(sctk_rail_info_t* rail, struct ibv_wc*, struct sctk_ib_polling_s *poll))
 {
   sctk_ib_rail_info_t *rail_ib = &rail->network.ib;
-  struct ibv_wc wc;
-  int found_nb = 0;
+  struct ibv_wc wc[WC_COUNT];
   int res = 0;
-  /* int i; */
+  int i;
 
-  do { /* for(i=0; i < poll_nb; ++i) {  */
-      res = ibv_poll_cq (cq, 1, &wc);
-      if (res) {
-        sctk_ib_polling_check_wc(rail_ib, wc);
-        ptr_func(rail, &wc, poll);
-        found_nb++;
-      }
-    } while(res);
-  return found_nb;
+  do {
+    res = ibv_poll_cq (cq, WC_COUNT, wc);
+    if (res) sctk_nodebug("Polled %d msgs from cq", res);
+    for (i = 0; i < res; ++i) {
+      sctk_ib_polling_check_wc(rail_ib, wc[i]);
+      ptr_func(rail, &wc[i], poll);
+      POLL_RECV_CQ(poll);
+    }
+  } while(res == WC_COUNT);
 }
 
 #endif

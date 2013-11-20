@@ -144,7 +144,7 @@ static const struct sctk_alloc_function sctk_alloc_hook_functions[]={
 	#endif //_WIN64
 	//Only required in debug mode
 	#ifndef NDEBUG
-	{ "_onexit"			, sctk_alloc_fake_onexit_win	},
+	,{ "_onexit"			, sctk_alloc_fake_onexit_win	},
 	{ "_exit"				, sctk_alloc_fake_exit_win		},
 	#endif //NDEBUG
 };

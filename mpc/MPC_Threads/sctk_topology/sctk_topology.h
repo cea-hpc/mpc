@@ -116,6 +116,17 @@ extern "C"
 */
   hwloc_topology_t sctk_get_topology_object (void);
 
+  void sctk_restrict_binding();
+
+
+#ifdef MPC_USE_INFINIBAND
+#include <infiniband/verbs.h>
+/*! \brief Return if the core_id is close from the core_id. If an error occurs, we get -1
+*/
+int sctk_topology_is_ib_device_close_from_cpu (struct ibv_device * dev, int core_id);
+#endif
+
+  void sctk_topology_init_cpu();
 #ifdef __cplusplus
 }
 #endif

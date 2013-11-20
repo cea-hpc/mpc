@@ -24,10 +24,10 @@
 #include "sctk_kernel_thread.h"
 #include "sctk_spinlock.h"
 #include "sctk_tls.h"
+#include "sctk_topology.h"
 #include <string.h>
 #include <semaphore.h>
-
-
+#include "sctk_runtime_config.h"
 #ifndef SCTK_KERNEL_THREAD_USE_TLS
 int
 kthread_key_create (kthread_key_t * key, void (*destr_function) (void *))
@@ -66,8 +66,8 @@ kthread_getspecific (kthread_key_t key)
 }
 #endif
 
-
-#define kthread_stack_size (10*1024*1024)
+TODO("Move kthread_stack_size_default to the configuration")
+#define kthread_stack_size_default (10*1024*1024)
 
 typedef void *(*start_routine_t) (void *) ;
 
@@ -88,10 +88,13 @@ static void *
 kthread_create_start_routine (void *t_arg)
 {
   kthread_create_start_t slot;
+
+  sctk_topology_init_cpu();
+
   memcpy(&slot,t_arg,sizeof(kthread_create_start_t));
   ((kthread_create_start_t*)t_arg)->started = 1;
 
-  //avoir to create an allocation chain 
+  //avoir to create an allocation chain
   sctk_alloc_posix_plug_on_egg_allocator();
 
   sem_init(&(slot.sem), 0,0);
@@ -136,6 +139,7 @@ kthread_create (kthread_t * thread, void *(*start_routine) (void *),
 {
   kthread_create_start_t* found = NULL;
   kthread_create_start_t* cursor;
+  size_t kthread_stack_size = sctk_runtime_config_get()->modules.thread.kthread_stack_size;
 
   sctk_nodebug("Scan already started kthreads");
   sctk_spinlock_lock(&lock);
@@ -161,6 +165,7 @@ kthread_create (kthread_t * thread, void *(*start_routine) (void *),
   } else {
     pthread_attr_t attr;
     int res;
+    size_t kthread_stack_size;
     kthread_create_start_t tmp;
     sctk_nodebug("Create new kernel thread");
 
@@ -171,6 +176,14 @@ kthread_create (kthread_t * thread, void *(*start_routine) (void *),
     res = pthread_attr_setscope (&attr, PTHREAD_SCOPE_SYSTEM);
 
     sctk_nodebug( "kthread_create: value returned by attr_setscope %d", res ) ;
+
+//#warning "Move it to the XML configuration file"
+    char *env;
+    if ( (env = getenv("MPC_KTHREAD_STACK_SIZE")) != NULL) {
+      kthread_stack_size = atoll(env) + sctk_extls_size();
+    } else {
+      kthread_stack_size = kthread_stack_size_default + sctk_extls_size();
+    }
 
 #ifdef PTHREAD_STACK_MIN
     if (PTHREAD_STACK_MIN > kthread_stack_size)
@@ -223,7 +236,7 @@ kthread_create (kthread_t * thread, void *(*start_routine) (void *),
     pthread_attr_destroy (&attr);
 
     if ( res != 0 ) {
-      sctk_debug( "Warning: Creating kernel threads with no attribute" ) ;
+      sctk_nodebug( "Warning: Creating kernel threads with no attribute" ) ;
       res = pthread_create ((pthread_t *) thread, NULL, kthread_create_start_routine, &tmp);
 
       assume( res == 0 ) ;

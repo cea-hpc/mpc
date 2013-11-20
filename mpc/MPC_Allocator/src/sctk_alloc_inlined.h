@@ -31,8 +31,9 @@ extern "C"
 
 /************************** HEADERS ************************/
 #include <stdlib.h>
-#include "sctk_allocator.h"
 #include "sctk_alloc_debug.h"
+#include "sctk_alloc_chunk.h"
+#include "sctk_alloc_mmsrc.h"
 
 /************************** MACROS *************************/
 #define SCTK_ALLOC_PADDED_VCHUNK_SIZE 1ul
@@ -176,7 +177,7 @@ static __inline__ sctk_alloc_vchunk sctk_alloc_get_chunk(sctk_addr_t ptr)
 	vchunk = ((struct sctk_alloc_chunk_info *)ptr) - 1;
 
 	//check type and magik number
-	if (vchunk->unused_magik != SCTK_ALLOC_MAGIK_STATUS)
+	if (vchunk->unused_magik != SCTK_ALLOC_MAGIC_STATUS)
 	{
 		SCTK_PDEBUG("Bad address is %p.",ptr);
 		warning("Header content error while trying to find chunk header.");
@@ -282,15 +283,32 @@ static __inline__ sctk_alloc_vchunk sctk_alloc_unpadd_vchunk(struct sctk_alloc_c
  * it will not be called recursivly.
  * @param ptr Define the pointer used by the final user (next byte after the chunk header).
 **/
-static __inline__ sctk_alloc_vchunk sctk_alloc_get_chunk_unpadded(sctk_addr_t ptr)
+static __inline__ sctk_alloc_vchunk sctk_alloc_unpad_vchunk(sctk_alloc_vchunk vchunk)
 {
-	sctk_alloc_vchunk vchunk = sctk_alloc_get_chunk(ptr);
 	if (vchunk == NULL)
 		return vchunk;
 	else if (vchunk->type == SCTK_ALLOC_CHUNK_TYPE_PADDED)
 		return sctk_alloc_unpadd_vchunk(sctk_alloc_get_padded(vchunk));
 	else
 		return vchunk;
+}
+
+/************************* FUNCTION ************************/
+/**
+ * Same than sctk_alloc_get_chunk, but automatically remove padding if get a padded header.
+ * Caution, the current implementation didn't support encapsulation of multiple level of padding,
+ * it will not be called recursivly.
+ * @param ptr Define the pointer used by the final user (next byte after the chunk header).
+**/
+static __inline__ sctk_alloc_vchunk sctk_alloc_get_chunk_unpadded(sctk_addr_t ptr)
+{
+	return sctk_alloc_unpad_vchunk(sctk_alloc_get_chunk(ptr));
+}
+
+/************************* FUNCTION ************************/
+static __inline__ sctk_size_t sctk_alloc_get_unpadded_size(sctk_alloc_vchunk vchunk)
+{
+	return sctk_alloc_get_chunk_header_large_size(sctk_alloc_get_large(sctk_alloc_unpad_vchunk(vchunk)));
 }
 
 /************************* FUNCTION ************************/
@@ -306,7 +324,7 @@ static __inline__ sctk_alloc_vchunk sctk_alloc_get_next_chunk(sctk_alloc_vchunk 
 	sctk_alloc_vchunk res;
 
 	#ifndef SCTK_ALLOC_FAST_BUT_LESS_SAFE
-	assume_m(chunk->unused_magik == SCTK_ALLOC_MAGIK_STATUS,"Small block not supported for now.");
+	assume_m(chunk->unused_magik == SCTK_ALLOC_MAGIC_STATUS,"Small block not supported for now.");
 	#endif
 
 	res = (sctk_alloc_vchunk)((sctk_addr_t)chunk + sctk_alloc_get_chunk_header_large_size(sctk_alloc_get_large(chunk)));
@@ -338,7 +356,7 @@ static __inline__ struct sctk_alloc_chunk_header_large * sctk_alloc_setup_large_
 	sctk_alloc_set_chunk_header_large_addr(chunk_large, (unsigned char)((sctk_addr_t)ptr));
 	sctk_alloc_get_chunk_header_large_info(chunk_large)->state = SCTK_ALLOC_CHUNK_STATE_ALLOCATED;
 	sctk_alloc_get_chunk_header_large_info(chunk_large)->type = SCTK_ALLOC_CHUNK_TYPE_LARGE;
-	sctk_alloc_get_chunk_header_large_info(chunk_large)->unused_magik = SCTK_ALLOC_MAGIK_STATUS;
+	sctk_alloc_get_chunk_header_large_info(chunk_large)->unused_magik = SCTK_ALLOC_MAGIC_STATUS;
 	if (prev == NULL || prev == ptr)
 		sctk_alloc_set_chunk_header_large_previous_size(chunk_large, 0);
 	else
@@ -353,6 +371,7 @@ static __inline__ struct sctk_alloc_macro_bloc * sctk_alloc_setup_macro_bloc(voi
 	struct sctk_alloc_macro_bloc * macro_bloc = (struct sctk_alloc_macro_bloc *)ptr;
 	sctk_alloc_setup_large_header(&macro_bloc->header,size,NULL);
 	macro_bloc->chain = NULL;
+	SCTK_ALLOC_MMCHECK_NOACCESS(ptr,size);
 	return macro_bloc;
 }
 

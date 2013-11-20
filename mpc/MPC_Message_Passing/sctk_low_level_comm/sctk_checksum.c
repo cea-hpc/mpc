@@ -28,7 +28,7 @@
 #include "sctk_shell_colors.h"
 #include <zlib.h>
 
-static char checksum_enabled = 1;
+static bool checksum_enabled;
 
 unsigned long sctk_checksum_message(sctk_thread_ptp_message_t *send,
     sctk_thread_ptp_message_t *recv) {
@@ -176,6 +176,7 @@ void sctk_checksum_init() {
   if (sctk_process_rank == 0) {
     fprintf(stderr, SCTK_COLOR_RED_BOLD(WARNING: inter-node message checking enabled!)"\n");
   }
+  checksum_enabled = sctk_runtime_config_get()->modules.low_level_comm.checksum;
 }
 #else
 void sctk_checksum_init() { /* nothing to do */ }

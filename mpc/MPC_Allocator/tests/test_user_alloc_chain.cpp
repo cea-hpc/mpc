@@ -99,7 +99,7 @@ void TestUserAllocChain::testMethodsRegistration (void)
 /************************* FUNCTION ************************/
 void TestUserAllocChain::setUp (void)
 {
-	SCTK_ALLOC_SPY_HOOK(__sctk_alloc_spy_chain_reset());
+	//SCTK_ALLOC_SPY_HOOK(__sctk_alloc_spy_chain_reset());
 	sctk_alloc_chain_user_init(&chain,buffer,BUFFER_TOTAL_SIZE,SCTK_ALLOC_CHAIN_FLAGS_DEFAULT);
 }
 

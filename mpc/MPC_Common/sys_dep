@@ -91,11 +91,46 @@ SCTK_CHECK_FUNC_NOFAIL memalign
 if test "$SCTK_SCTK_CHECK_FUNC_RES" = 0 ; then
    SCTK_CHECK_OPTION "-DHAVE_MEMALIGN"
 fi
+#optional enable of mremap support
+SCTK_CHECK_FUNC_NOFAIL mremap
+if test "${SCTK_SCTK_CHECK_FUNC_RES}" = 0 ; then
+        SCTK_CHECK_OPTION -DHAVE_MREMAP
+fi
 
 SCTK_CHECK_FUNC write
 SCTK_CHECK_FUNC raise
 SCTK_CHECK_FUNC pthread_create
 SCTK_CHECK_FUNC getpid
+
+begin_section Environnement
+SCTK_MSG_CHECKING environ
+cat  << EOF  > ${SCTK_CONF_C}
+#include <stdlib.h>
+#include <stdio.h>
+
+extern char ** environ;
+
+
+int main(int argc, char** argv){
+	fprintf(stderr,"%p\n",environ);
+	return 0;
+}
+EOF
+
+echo "File ${SCTK_CONF_C}" >> ${SCTK_CONF_LOG} 2>&1
+cat ${SCTK_CONF_C} >> ${SCTK_CONF_LOG} 2>&1
+echo "$SCTK_CC $SCTK_CFLAGS -c ${SCTK_CONF_C} -o ${SCTK_CONF_OBJ}">> ${SCTK_CONF_LOG} 2>&1
+eval "$SCTK_CC $SCTK_CFLAGS -c ${SCTK_CONF_C} -o ${SCTK_CONF_OBJ}">> ${SCTK_CONF_LOG} 2>&1
+SCTK_SCTK_CHECK_HEADER_RES="$?"
+rm ${SCTK_CONF_C} ${SCTK_CONF_OBJ} >> ${SCTK_CONF_LOG} 2>&1
+if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
+    result yes
+    SCTK_CHECK_OPTION   -DHAVE_ENVIRON_VAR
+else
+    result no
+fi
+
+end_section
 
 if test "${SCTK_OS}" = "Linux"; then
 begin_section Address randomize
@@ -107,9 +142,9 @@ cat  << EOF  > ${SCTK_CONF_C}
 
 static inline void sctk_disable_addr_randomize(int argc, char** argv){
   char* disable_addr_randomize;
-  disable_addr_randomize = getenv("SCTK_LINUX_DISABLE_ADDR_RADOMIZE");
+  disable_addr_randomize = getenv("SCTK_LINUX_DISABLE_ADDR_RANDOMIZE");
   if(disable_addr_randomize){
-    unsetenv("SCTK_LINUX_DISABLE_ADDR_RADOMIZE");
+    unsetenv("SCTK_LINUX_DISABLE_ADDR_RANDOMIZE");
     THIS__set_personality(ADDR_NO_RANDOMIZE);
     execvp(argv[0],argv);
   }
@@ -129,7 +164,7 @@ SCTK_SCTK_CHECK_HEADER_RES="$?"
 rm ${SCTK_CONF_C} ${SCTK_CONF_OBJ} >> ${SCTK_CONF_LOG} 2>&1
 if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
     result yes
-    SCTK_CHECK_OPTION	-DSCTK_LINUX_DISABLE_ADDR_RADOMIZE
+    SCTK_CHECK_OPTION	-DSCTK_LINUX_DISABLE_ADDR_RANDOMIZE
 else
     result no
 fi
@@ -144,6 +179,12 @@ fi
 #Check if debug messages are enabled
 if test "$SCTK_DEBUG_MESSAGES" = "1"; then
   SCTK_CHECK_OPTION "-DSCTK_DEBUG_MESSAGES"
+fi
+
+#Check for stdint.h
+SCTK_CHECK_HEADER stdint.h
+if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0; then
+  SCTK_CHECK_OPTION "-DHAVE_STDINT_H"
 fi
 
 #Check for stdbool.h
@@ -165,3 +206,7 @@ check_debug
 end_section
 
 SCTK_CHECK_LIB_OPENPA
+
+sctk_echo
+
+SCTK_CHECK_LIBSCTK_ARCH

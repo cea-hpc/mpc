@@ -85,6 +85,8 @@ static __thread size_t current_module;
 static __thread size_t total_module;
 static size_t page_size = 0;
 
+static size_t sctk_extls_module_zero = 0;
+
 static int
 callback (struct dl_phdr_info *info, size_t size, void *data)
 {
@@ -96,6 +98,11 @@ callback (struct dl_phdr_info *info, size_t size, void *data)
       if (info->dlpi_phdr[j].p_type == PT_TLS)
 	{
 	  total_module++;
+
+	  if(total_module == 1){
+	      sctk_extls_module_zero = info->dlpi_phdr[j].p_memsz;
+          }
+
 	  if (total_module == current_module)
 	    {
 	      p_memsz = info->dlpi_phdr[j].p_memsz;
@@ -346,6 +353,16 @@ __sctk__tls_get_addr__generic_scope ( size_t module_id,
 }
 
 
+size_t sctk_extls_size(){
+  if(sctk_extls_module_zero == 0){
+      current_module = 0;
+      total_module = 0;
+      dl_iterate_phdr (callback, NULL);
+  }
+
+return sctk_extls_module_zero;
+}
+
 static void
 sctk_extls_create ()
 {
@@ -470,10 +487,11 @@ return ;
 		  char level_id[8] ;
 		  int numa_id = 0 ;
 		  if ( is_numa_node && cur_obj->type != HWLOC_OBJ_MACHINE ) {
-			  if ( cur_obj->type == HWLOC_OBJ_NODE )
-				  numa_id = cur_obj->logical_index ;
-			  else
-			      numa_id = hwloc_get_ancestor_obj_by_type(topology,HWLOC_OBJ_NODE,cur_obj)->logical_index ;
+			  hwloc_obj_t temp_obj = cur_obj;
+			  while (temp_obj->type != HWLOC_OBJ_NODE && temp_obj->type != HWLOC_OBJ_GROUP) {
+				  temp_obj = hwloc_get_ancestor_obj_by_type(topology,HWLOC_OBJ_NODE,temp_obj);
+			  }
+			  numa_id = temp_obj->logical_index ;
 		  }
 		  sprintf ( level_id, "%d", level_number[numa_id] ) ;
 		  hwloc_obj_add_info ( cur_obj, "hls_level", level_id ) ;
@@ -513,6 +531,7 @@ void sctk_hls_checkout_on_vp ()
   const int socket_depth = hwloc_get_type_depth(topology, HWLOC_OBJ_SOCKET);
   const int core_depth   = hwloc_get_type_depth(topology, HWLOC_OBJ_CORE);
   hwloc_obj_t pu = hwloc_get_obj_by_type(topology,HWLOC_OBJ_PU,sctk_get_cpu());
+  assume(pu);
   const int numa_id = sctk_is_numa_node() ?
 	  				  hwloc_get_ancestor_obj_by_type(topology,HWLOC_OBJ_NODE,pu)->logical_index
 					  : 0 ;
@@ -909,7 +928,10 @@ __sctk__tls_get_addr__core_scope (size_t m, size_t offset)
   res = __sctk__tls_get_addr__generic_scope (m, offset, sctk_hls[sctk_hls_core_scope].level);
   return res;
 }
-
+#elif defined(SCTK_arm_ARCH_SCTK)
+#warning "ARM doesnot support TLS"
+#elif defined(SCTK_ppc64_ARCH_SCTK)
+#warning "PPC64 doesnot support TLS"
 #else
 #error "Architecture not available for TLS support"
 #endif

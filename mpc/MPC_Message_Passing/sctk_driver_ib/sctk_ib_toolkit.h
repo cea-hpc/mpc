@@ -31,6 +31,7 @@
 #define __SCTK__IB_TOOLKIT_H_
 
 #include "sctk_shell_colors.h"
+#include "sctk_runtime_config_struct.h"
 
 #define SMALL_BUFFER_SIZE (4*1024)
 #define HAVE_SHELL_COLORS
@@ -82,7 +83,7 @@ __UNUSED__ static void sctk_ib_debug(const char *fmt, ...)
   }
 #endif
 #define LOAD_RAIL(x) sctk_ib_rail_info_t *rail_ib = &(x)->network.ib;
-#define LOAD_CONFIG(x) sctk_ib_config_t *config = (x)->config;
+#define LOAD_CONFIG(x) struct sctk_runtime_config_struct_net_driver_infiniband *config = (x)->config;
 #define LOAD_MMU(x)    sctk_ib_mmu_t* mmu = (x)->mmu;
 #define LOAD_DEVICE(x)    sctk_ib_device_t* device = (x)->device;
 #define LOAD_POOL(x)    sctk_ibuf_pool_t* pool = (x)->pool_buffers;

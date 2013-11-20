@@ -20,11 +20,14 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
+#if !defined(MPC_Common) || defined(MPC_PosixAllocator)
+
 /************************** HEADERS ************************/
 #include <stdlib.h>
 #include "sctk_alloc_debug.h"
 #include "sctk_alloc_posix.h"
 #include "sctk_alloc_topology.h"
+#include "sctk_alloc_chain.h"
 #include "sctk_alloc_light_mm_source.h"
 
 /************************* GLOBALS *************************/
@@ -137,7 +140,11 @@ SCTK_STATIC struct sctk_alloc_chain * sctk_malloc_on_node_get_chain(int node)
 SCTK_STATIC void * sctk_malloc_on_node_uma(size_t size,int node)
 {
 	assume_m(node == 0,"You request mapping on NUMA node different from 0, but their is no NUMA node or NUMA isn't supported.");
+	#if defined(MPC_Common) && !defined(MPC_PosixAllocator)
+	return malloc(size);
+	#else //defined(MPC_Common) && !defined(MPC_PosixAllocator)
 	return sctk_malloc(size);
+	#endif //defined(MPC_Common) && !defined(MPC_PosixAllocator)
 }
 
 /************************* FUNCTION ************************/
@@ -183,3 +190,5 @@ SCTK_PUBLIC void * sctk_malloc_on_node (size_t size, int node)
 		return sctk_malloc_on_node_uma(size,node);
 	#endif //HAVE_HWLOC
 }
+
+#endif //defined(MPC_Common) && defined(MPC_PosixAllocator)

@@ -446,7 +446,8 @@ cat  << EOF  > ${SCTK_CONF_C}
 #include <stdarg.h>
 
 int main(){
-    vfprintf(stderr,"%d",1);
+    va_list ap;
+    vfprintf(stderr,"%d",ap);
     return 0;
 }
 EOF

@@ -24,9 +24,7 @@
 #define SCTK_ALLOC_TOPOLOGY_H
 
 /************************** HEADERS ************************/
-#if !defined(bool) && !defined(__cplusplus)
-	#include <stdbool.h>
-#endif
+#include "sctk_alloc_common.h"
 
 //optional header
 #ifdef MPC_Threads
@@ -42,18 +40,19 @@ extern "C"
 
 /************************* FUNCTION ************************/
 #ifndef MPC_Threads
-int sctk_is_numa_node(void);
-int sctk_get_numa_node_number (void);
+SCTK_INTERN int sctk_is_numa_node(void);
+SCTK_INTERN int sctk_get_numa_node_number (void);
 #endif
 
-void sctk_alloc_init_topology(void);
-int sctk_get_preferred_numa_node(void);
-int sctk_alloc_init_on_numa_node(void);
-void sctk_alloc_topology_bind_thread_on_core(int id);
+SCTK_INTERN void sctk_alloc_init_topology(void);
+SCTK_INTERN int sctk_get_preferred_numa_node(void);
+SCTK_INTERN int sctk_alloc_init_on_numa_node(void);
+SCTK_INTERN void sctk_alloc_topology_bind_thread_on_core(int id);
+SCTK_INTERN bool sctk_alloc_is_numa(void);
 
 #ifdef HAVE_HWLOC
-hwloc_topology_t sctk_get_topology_object(void);
-void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_node);
+SCTK_INTERN hwloc_topology_t sctk_get_topology_object(void);
+SCTK_INTERN void sctk_alloc_migrate_numa_mem(void * addr,sctk_size_t size,int target_numa_node);
 #endif //HAVE_HWLOC
 
 #ifdef __cplusplus

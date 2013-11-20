@@ -106,6 +106,7 @@ extern "C"
     struct sctk_thread_ptp_message_s* msg;
     int is_null;
     int need_check_in_wait;
+    int request_type;
   } MPC_Request;
 
   extern MPC_Request mpc_request_null;
@@ -147,16 +148,21 @@ extern "C"
 #define MPC_ERR_IN_STATUS   17	/* Look in status for error value */
 #define MPC_ERR_PENDING     18	/* Pending request */
 
+/* Error with comm attributes (keyval) */
+#define MPC_ERR_KEYVAL		19
+
 #define MPC_NOT_IMPLEMENTED 49
 #define MPC_ERR_LASTCODE    50
+#define MPC_ERR_NO_MEM 		51
 
 #define MPC_STATUS_IGNORE NULL
+#define MPC_STATUSES_IGNORE NULL
 #define MPC_ANY_TAG -1
 #define MPC_ANY_SOURCE -1
 #define MPC_PROC_NULL -2
 #define MPC_COMM_NULL ((MPC_Comm)(-1))
 #define MPC_MAX_PROCESSOR_NAME 255
-
+#define MPC_ROOT -4
 
 /********************************************************************/
 /*Special TAGS                                                      */
@@ -168,6 +174,7 @@ extern "C"
 #define MPC_SCATTER_TAG -5
 #define MPC_ALLTOALL_TAG -6
 #define MPC_ALLTOALLV_TAG -7
+#define MPC_BROADCAST_INTERCOMM_TAG -8
 
   typedef struct
   {
@@ -238,10 +245,36 @@ extern "C"
 #define MPC_REAL4 28
 #define MPC_REAL8 29
 #define MPC_REAL16 30
+#define MPC_SIGNED_CHAR 31
+#define MPC_LONG_DOUBLE_INT 32
+
+/* for the datatype decoders */
+enum MPIR_Combiner_enum {
+    MPI_COMBINER_NAMED            = 1,
+    MPI_COMBINER_DUP              = 2,
+    MPI_COMBINER_CONTIGUOUS       = 3,
+    MPI_COMBINER_VECTOR           = 4,
+    MPI_COMBINER_HVECTOR_INTEGER  = 5,
+    MPI_COMBINER_HVECTOR          = 6,
+    MPI_COMBINER_INDEXED          = 7,
+    MPI_COMBINER_HINDEXED_INTEGER = 8,
+    MPI_COMBINER_HINDEXED         = 9,
+    MPI_COMBINER_INDEXED_BLOCK    = 10,
+    MPI_COMBINER_HINDEXED_BLOCK   = 11,
+    MPI_COMBINER_STRUCT_INTEGER   = 12,
+    MPI_COMBINER_STRUCT           = 13,
+    MPI_COMBINER_SUBARRAY         = 14,
+    MPI_COMBINER_DARRAY           = 15,
+    MPI_COMBINER_F90_REAL         = 16,
+    MPI_COMBINER_F90_COMPLEX      = 17,
+    MPI_COMBINER_F90_INTEGER      = 18,
+    MPI_COMBINER_RESIZED          = 19
+};
 
   /*Initialisation */
   int MPC_Init (int *argc, char ***argv);
   int MPC_Init_thread (int *argc, char ***argv, int required, int *provided);
+  int MPC_Query_thread(int *provided);
   int MPC_Initialized (int *flag);
   int MPC_Finalize (void);
   int MPC_Abort (MPC_Comm, int);
@@ -250,6 +283,7 @@ extern "C"
   int MPC_Comm_rank (MPC_Comm comm, int *rank);
   int MPC_Comm_size (MPC_Comm comm, int *size);
   int MPC_Comm_remote_size (MPC_Comm comm, int *size);
+  int MPC_Comm_test_inter (MPC_Comm comm, int *flag);
 
   /* Node topology */
   int MPC_Node_rank (int *rank);
@@ -505,6 +539,7 @@ extern "C"
     /*Initialisation */
   int PMPC_Init (int *argc, char ***argv);
   int PMPC_Init_thread (int *argc, char ***argv, int required, int *provided);
+  int MPC_Init_thread (int *argc, char ***argv, int required, int *provided);
   int PMPC_Initialized (int *flag);
   int PMPC_Finalize (void);
   int PMPC_Abort (MPC_Comm, int);
@@ -513,6 +548,7 @@ extern "C"
   int PMPC_Comm_rank (MPC_Comm comm, int *rank);
   int PMPC_Comm_size (MPC_Comm comm, int *size);
   int PMPC_Comm_remote_size (MPC_Comm comm, int *size);
+  int PMPC_Comm_test_inter (MPC_Comm comm, int *flag);
   int PMPC_Node_rank (int *rank);
   int PMPC_Node_number (int *number);
   int PMPC_Processor_rank (int *rank);
@@ -610,6 +646,9 @@ extern "C"
   int PMPC_Alltoallv (void *, mpc_msg_count *, mpc_msg_count *,
 		     MPC_Datatype, void *, mpc_msg_count *,
 		     mpc_msg_count *, MPC_Datatype, MPC_Comm);
+  int PMPC_Alltoallw (const void *, const mpc_msg_count *, const mpc_msg_count *,
+		     const MPC_Datatype *, void *, const mpc_msg_count *,
+		     const mpc_msg_count *, const MPC_Datatype *, MPC_Comm);
 
   /*Groups */
   int PMPC_Comm_group (MPC_Comm, MPC_Group *);
@@ -622,6 +661,8 @@ extern "C"
   int PMPC_Convert_to_intercomm (MPC_Comm comm, MPC_Group group);
   int PMPC_Comm_create_list (MPC_Comm, int *list, int nb_elem, MPC_Comm *);
   int PMPC_Comm_create (MPC_Comm, MPC_Group, MPC_Comm *);
+  int PMPC_Intercomm_create (MPC_Comm local_comm, int local_leader, MPC_Comm peer_comm, int remote_leader, int tag, MPC_Comm * newintercomm);
+  int PMPC_Comm_create_from_intercomm (MPC_Comm, MPC_Group, MPC_Comm *);
   int PMPC_Comm_free (MPC_Comm *);
   int PMPC_Comm_dup (MPC_Comm, MPC_Comm *);
   int PMPC_Comm_split (MPC_Comm, int, int, MPC_Comm *);
@@ -646,7 +687,7 @@ extern "C"
 
   /*Types */
   int PMPC_Type_size (MPC_Datatype, size_t *);
-  int PMPC_Sizeof_datatype (MPC_Datatype *, size_t);
+  int PMPC_Sizeof_datatype (MPC_Datatype *, size_t, size_t count, MPC_Datatype *data_in);
   int __MPC_Barrier (MPC_Comm comm);
   int PMPC_Type_free (MPC_Datatype * datatype);
 
@@ -729,57 +770,6 @@ extern "C"
   int PMPC_Irecv_pack (int source, int tag, MPC_Comm comm,
 		      MPC_Request * request);
 
-/********************************************************************/
-/*Netowk statistics                                                 */
-/********************************************************************/
-  struct MPC_Network_stats_s {
-    int matched;
-    int not_matched;
-
-#if 0
-    int poll_own;
-    int poll_own_failed;
-    int poll_steals_failed;
-
-    /* Number of msg stolen by the current task */
-    int poll_steals;
-
-    int poll_steal_same_node;
-    int poll_steal_other_node;
-#endif
-    long poll_own;
-    long poll_own_failed;
-    long poll_own_success;
-    long poll_steals_failed;
-    long poll_steals_success;
-
-    /* Number of msg stolen by the current task */
-    long poll_steals;
-
-    long poll_steal_same_node;
-    long poll_steal_other_node;
-    long call_to_polling;
-    long poll_cq;
-
-
-    double time_stolen;
-    double time_steals;
-    double time_own;
-    double time_poll_cq;
-    double time_ptp;
-    double time_coll;
-
-    int alloc_mem;
-    int free_mem;
-    int qp_created;
-
-    int eager_nb;
-    int buffered_nb;
-    int rdma_nb;
-  };
-
-  void MPC_Network_stats(struct MPC_Network_stats_s *stats);
-  void MPC_Network_deco_neighbors();
   /* Send/Recv message using the signalization network */
   void MPC_Send_signalization_network(int dest_process, int tag, void *buff, size_t size);
   void MPC_Recv_signalization_network(int src_process, int tag, void *buff, size_t size);

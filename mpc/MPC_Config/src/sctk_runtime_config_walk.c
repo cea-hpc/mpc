@@ -120,7 +120,7 @@ void sctk_runtime_config_walk_struct(const struct sctk_runtime_config_entry_meta
 		if (child->type == SCTK_CONFIG_META_TYPE_ARRAY) {
 			sctk_runtime_config_walk_array(config_meta, handler, child->name,child,value,level+1,opt);
 		} else {
-			assert(child->type == SCTK_CONFIG_META_TYPE_PARAM || child->type == SCTK_CONFIG_META_TYPE_ARRAY || child->type == SCTK_CONFIG_META_TYPE_UNION_ENTRY);
+			assert(child->type == SCTK_CONFIG_META_TYPE_PARAM || child->type == SCTK_CONFIG_META_TYPE_UNION_ENTRY);
 			sctk_runtime_config_walk_value(config_meta, handler, child->name, child->inner_type,value,level+1,opt);
 		}
 
@@ -198,31 +198,60 @@ void sctk_runtime_config_walk_array(const struct sctk_runtime_config_entry_meta 
 void sctk_runtime_config_walk_value(const struct sctk_runtime_config_entry_meta * config_meta,sckt_runtime_walk_handler handler,
                                     const char * name, const char * type_name,void * value, int level,void * opt)
 {
-	/* vars */
-	const struct sctk_runtime_config_entry_meta * entry;
+  /* vars */
+  const struct sctk_runtime_config_entry_meta * entry;
 
-	/* error */
-	assert(config_meta != NULL);
-	assert(type_name != NULL);
-	assert(value != NULL);
+  /* error */
+  assert(config_meta != NULL);
+  assert(type_name != NULL);
+  assert(value != NULL);
 
-	/* handle the basic type case */
-	if ( sctk_runtime_config_is_basic_type( type_name ) ) {
-		handler(SCTK_RUNTIME_CONFIG_WALK_VALUE,name,type_name,value,SCTK_RUNTIME_CONFIG_WALK_OPEN,NULL,level,opt);
-		handler(SCTK_RUNTIME_CONFIG_WALK_VALUE,name,type_name,value,SCTK_RUNTIME_CONFIG_WALK_CLOSE,NULL,level,opt);
-	} else {
-		/* get meta data of the entry */
-		entry = sctk_runtime_config_get_meta_type(config_meta, type_name);
-		assert(entry != NULL);
+  /* handle the basic type case */
+  if ( sctk_runtime_config_is_basic_type( type_name ) ) {
+    handler(SCTK_RUNTIME_CONFIG_WALK_VALUE,name,type_name,value,SCTK_RUNTIME_CONFIG_WALK_OPEN,NULL,level,opt);
+    handler(SCTK_RUNTIME_CONFIG_WALK_VALUE,name,type_name,value,SCTK_RUNTIME_CONFIG_WALK_CLOSE,NULL,level,opt);
+  } else if (!strcmp(type_name, "funcptr")) {
+    struct sctk_runtime_config_funcptr * funcptr = (struct sctk_runtime_config_funcptr *) value;
+    handler(SCTK_RUNTIME_CONFIG_WALK_VALUE,name,"char *",&funcptr->name,SCTK_RUNTIME_CONFIG_WALK_OPEN,NULL,level,opt);
+    handler(SCTK_RUNTIME_CONFIG_WALK_VALUE,name,"char *",&funcptr->name,SCTK_RUNTIME_CONFIG_WALK_CLOSE,NULL,level,opt);
+  } else if (!strncmp(type_name, "enum", 4)) {
+    struct enum_type * current_enum, *s1, *s2;
+    struct enum_value * iter_enum, * tmp;
+    int current_value;
+    char * enum_name = NULL;
 
-		/* apply related display method. */
-		if (entry->type == SCTK_CONFIG_META_TYPE_STRUCT)
-			sctk_runtime_config_walk_struct(config_meta, handler, name, type_name, value, level,opt);
-		else if (entry->type == SCTK_CONFIG_META_TYPE_UNION)
-			sctk_runtime_config_walk_union(config_meta, handler, name , type_name, value,level,opt);
-		else
-			sctk_fatal("Invalid type.");
-	}
+    HASH_FIND_STR(enums_types, type_name, current_enum);
+    if (current_enum) {
+      current_value = *(int *) value;
+      HASH_ITER(hh, current_enum->values, iter_enum, tmp) {
+        if (iter_enum->value == current_value) {
+          enum_name = (char *) malloc(sizeof(iter_enum->name));
+          strcpy(enum_name, iter_enum->name);
+          break;
+        }
+      }
+    }
+    else {
+      sctk_fatal("Invalid enum type : %s.", type_name);
+    }
+
+    handler(SCTK_RUNTIME_CONFIG_WALK_VALUE,name,"char *",&enum_name,SCTK_RUNTIME_CONFIG_WALK_OPEN,NULL,level,opt);
+    handler(SCTK_RUNTIME_CONFIG_WALK_VALUE,name,"char *",&enum_name,SCTK_RUNTIME_CONFIG_WALK_CLOSE,NULL,level,opt);
+  } else {
+    /* get meta data of the entry */
+    entry = sctk_runtime_config_get_meta_type(config_meta, type_name);
+    assert(entry != NULL);
+    /* apply related display method. */
+    if (entry->type == SCTK_CONFIG_META_TYPE_STRUCT) {
+      sctk_runtime_config_walk_struct(config_meta, handler, name, type_name, value, level,opt);
+    }
+    else if (entry->type == SCTK_CONFIG_META_TYPE_UNION) {
+      sctk_runtime_config_walk_union(config_meta, handler, name , type_name, value,level,opt);
+    }
+    else {
+      sctk_fatal("Invalid type.");
+    }
+  }
 }
 
 /********************************* FUNCTION *********************************/

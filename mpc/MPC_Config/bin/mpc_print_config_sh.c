@@ -45,7 +45,7 @@ void to_upper_case(char * value)
 
 /********************************* FUNCTION *********************************/
 /**
- * Print the name of the variable by reusin the current state to get the full path
+ * Print the name of the variable by reusing the current state to get the full path
  * to access to the current node. It will used path entries in upper case separated
  * by underscore.
 **/
@@ -108,7 +108,7 @@ void display_handler_sh(enum sctk_runtime_config_walk_type type,
 					printf(" ");
 				break;
 			case SCTK_RUNTIME_CONFIG_WALK_ARRAY:
-				/* detect siple array to change the display mode of values to be more compact. */
+				/* detect simple array to change the display mode of values to be more compact. */
 				if (sctk_runtime_config_is_basic_type(type_name)) {
 					print_var_name_sh(state,name,level);
 					state->is_simple_array = true;

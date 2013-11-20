@@ -3,14 +3,37 @@
 <config>
 	<usertypes>
 		<struct name="launcher" doc="Options for MPC launcher.">
-			<param name="smt" type="bool" default="false" doc="Enable usage of hyperthreaded cores if available on current architecture."/>
-			<param name="cores" type="int" default="1" doc="Default number of cores if -c=X is not given to mpcrun."/>
 			<param name="verbosity" type="int" default="0" doc="Default verbosity level from 0 to 3. Can be override by -vv on mpcrun."/>
 			<param name="banner" type="bool" default="true" doc="Display the MPC banner at launch time to print some informations about the topology. Can be override by MPC_DISABLE_BANNER."/>
-			<param name="autokill" type="int" default="0" doc="Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT"/>
+			<param name="autokill" type="int" default="0" doc="Automatically kill the MPC processes after a given timeout. Use 0 to disable. Can be override by MPC_AUTO_KILL_TIMEOUT."/>
+			<param name="user_launchers" type="string" default="default" doc="Permit to extend the launchers available via 'mpcrun -l=...' by providing scripts (named mpcrun_XXXX) in a user directory. Can be override by MPC_USER_LAUNCHERS."/>
+			<param name="keep_rand_addr" type="bool" default="true" doc="Activate randomization of base addresses"/>
+			<param name="disable_rand_addr" type="bool" default="false" doc="Deactivate randomization of base addresses"/>
+			<param name="disable_mpc" type="bool" default="false" doc="Do not use mpc for execution (deprecated?)"/>
+			<param name="thread_init" type="funcptr" doc="Initialize multithreading mode" default="sctk_use_ethread_mxn"/>
+			<param name="nb_task" type="int" default="1" doc="Define the number of MPI tasks"/>
+			<param name="nb_process" type="int" default="1" doc="Define the number of MPC processes"/>
+			<param name="nb_processor" type="int" default="0" doc="Define the number of virtual processors"/>
+			<param name="nb_node" type="int" default="1" doc="Define the number of compute nodes"/>
+			<param name="launcher" type="string" default="none" doc="Define which launcher to use"/>
+			<param name="max_try" type="int" default="10" doc="Define the max number of tries to access the topology file before failing"/>
+			<param name="vers_details" type="bool" default="false" doc="Print the MPC version number"/>
+			<param name="profiling" type="string" default="none" doc="Select the type of outputs for the profiling"/>
+			<param name="enable_smt" type="bool" default="false" doc="Enable usage of hyperthreaded cores if available on current architecture."/>
+			<param name="share_node" type="bool" default="false" doc="Enable the restriction on CPU number to share node"/>
+			<param name="restart" type="bool" default="false" doc="Restart MPC from a previous checkpoint"/>
+			<param name="checkpoint" type="bool" default="false" doc="Enable MPC checkpointing"/>
+			<param name="migration" type="bool" default="false" doc="Enable migration"/>
+			<param name="report" type="bool" default="false" doc="Enable reporting."/>
+		</struct>
+		
+		<struct name="debugger" doc="Options for MPC Debugger">
+			<param name="colors" type="bool" default="true" doc="Print colored text in terminal"/>
+			<param name="max_filename_size" type="int" default="1024" doc=""/>
 		</struct>
 	</usertypes>
 	<modules>
 		<module name="launcher" type="launcher"/>
+		<module name="debugger" type="debugger"/>
 	</modules>
 </config>

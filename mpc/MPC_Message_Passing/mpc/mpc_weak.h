@@ -19,12 +19,13 @@
 /* #   - BESNARD Jean-Baptiste jean-baptiste.besnard@cea.fr               # */
 /* #                                                                      # */
 /* ######################################################################## */
- 
+
     /* PMPC Weak symbol instrumentation interface */
-    
+
     /*Initialisation */
 #pragma weak MPC_Init = PMPC_Init
 #pragma weak MPC_Init_thread = PMPC_Init_thread
+#pragma weak MPC_Query_thread = PMPC_Query_thread
 #pragma weak MPC_Initialized = PMPC_Initialized
 #pragma weak MPC_Finalize = PMPC_Finalize
 #pragma weak MPC_Abort = PMPC_Abort
