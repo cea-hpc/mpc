@@ -1,0 +1,51 @@
+/* ############################# MPC License ############################## */
+/* # Wed Nov 19 15:19:19 CET 2008                                         # */
+/* # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # */
+/* #                                                                      # */
+/* # IDDN.FR.001.230040.000.S.P.2007.000.10000                            # */
+/* # This file is part of the MPC Runtime.                                # */
+/* #                                                                      # */
+/* # This software is governed by the CeCILL-C license under French law   # */
+/* # and abiding by the rules of distribution of free software.  You can  # */
+/* # use, modify and/ or redistribute the software under the terms of     # */
+/* # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # */
+/* # following URL http://www.cecill.info.                                # */
+/* #                                                                      # */
+/* # The fact that you are presently reading this means that you have     # */
+/* # had knowledge of the CeCILL-C license and that you accept its        # */
+/* # terms.                                                               # */
+/* #                                                                      # */
+/* # Authors:                                                             # */
+/* #   - Valat Sébastien sebastien.valat@cea.fr                           # */
+/* #                                                                      # */
+/* ######################################################################## */
+
+Current dependencies for this project are :
+
+ - BUILD \
+         + gcc             (tested version 4.7.3)
+         + g++             (tested version 4.7.3)
+         + cmake           (tested version 2.8.12)
+         + make            (tested version gmake-3.82)
+         + OpenPA          (tested version 1.0.2)
+         + Hwloc           (tested version 1.6.1) [OPTIONAL]
+ - RUN \
+         + Hwloc           (tested version 1.6.1) [OPTIONAL]
+
+Tested systems are :
+
+ - Gentoo x86_64 (2013)
+ - Centos 6.2
+ - Centos 5.3
+
+Tested compilers are :
+
+ - gcc/g++ 4.7.3
+ - gcc/g++ 4.4.5
+ - icc/icpc
+ 
+Deps websites :
+ - gcc        : http://gcc.gnu.org/
+ - cmake      : http://www.cmake.org/
+ - OpenPA     : https://trac.mcs.anl.gov/projects/openpa/
+ - Hwloc      : http://www.open-mpi.org/projects/hwloc/
