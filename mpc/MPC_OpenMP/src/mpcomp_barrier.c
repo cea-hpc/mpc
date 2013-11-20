@@ -46,9 +46,6 @@ __mpcomp_barrier (void)
 	 sctk_debug( "__mpcomp_barrier: Entering w/ %d thread(s)", t->info.num_threads ) ;
      
      if (t->info.num_threads == 1) {
-#if MPCOMP_TASK
-	  __mpcomp_task_schedule();   /* Look for tasks remaining */
-#endif /* MPCOMP_TASK */
 	  return;
      }
 
