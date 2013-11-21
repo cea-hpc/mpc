@@ -128,6 +128,8 @@ int *__mpcomp_compute_topo_tree_array(int *depth, int *index)
      }
 
 
+	 TODO("Bug with c=1 to fill index[THREAD,CORE,SOCKET")
+#if 0
      /* Set index of threads, cores and sockets levels */
      index[MPCOMP_TOPO_OBJ_THREAD] = __mpcomp_get_new_depth(HWLOC_OBJ_PU, 
 							    topology, 
@@ -141,6 +143,8 @@ printf("CORE:%d\n", index[MPCOMP_TOPO_OBJ_CORE]);
 							    topology, 
 							    simple_topology);
 printf("SOCKET:%d\n", index[MPCOMP_TOPO_OBJ_SOCKET]);
+#endif
+
      /* Release temporary topology structure */
      hwloc_topology_destroy(simple_topology);
 
@@ -175,6 +179,19 @@ int __mpcomp_build_default_tree(mpcomp_instance_t *instance)
 	for ( i = 0 ; i < depth ; i++ ) {
 		sctk_debug( "__mpcomp_build_default_tree:\tDegree[%d] = %d", i, degree[i] ) ;
 	}
+
+	/* Check if the tree shape is correct */
+	if ( !__mpcomp_check_tree_parameters( n_leaves, depth, degree ) ) {
+		/* Fall back to a flat tree */
+		sctk_debug( "__mpcomp_build_default_tree: fall back to flat tree" ) ;
+		depth = 1 ;
+		n_leaves = sctk_get_cpu_number() ;
+		degree[0] = n_leaves ;
+	}
+
+	TODO("Check the tree in hybrid mode (not w/ sctk_get_cpu_number)")
+
+
 
 	/* Build the default tree */
 	__mpcomp_build_tree( instance, n_leaves, depth, degree ) ;
