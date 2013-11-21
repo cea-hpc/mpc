@@ -101,7 +101,7 @@
 #ifdef SCTK_ALLOC_DEBUG
 #define assert(x) if (!(x)) { sctk_alloc_perror("Assertion failure at %s!%d\n%s\n",__FILE__,__LINE__,#x); abort(); }
 #else
-#define assert(x) while(0){}
+#define assert(x) do {} while(0)
 #endif
 #endif
 

@@ -53,12 +53,10 @@ static inline void sctk_alloc_internal_spinlock_init(sctk_alloc_internal_spinloc
 /********************************* FUNCTION *********************************/
 static inline void sctk_alloc_internal_spinlock_lock(sctk_alloc_internal_spinlock_t * lock)
 {
-	int i=0;
 	while (OPA_swap_int(lock,SCTK_ALLOC_INTERNAL_LOCKED)) {
 		do {
 			sctk_alloc_cpu_relax ();
 		} while (OPA_load_int(lock));
-		i++;
 	}
 }
 
