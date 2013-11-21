@@ -545,6 +545,7 @@ typedef struct mpcomp_thread_s
 	  t->mvp = NULL;
 	  t->done = 0;
 	  t->instance = instance;
+	  t->children_instance = NULL;
 
 	  /* -- SINGLE CONSTRUCT -- */
 	  t->single_sections_target_current = 0 ;
