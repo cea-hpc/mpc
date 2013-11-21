@@ -200,7 +200,8 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
 
   /* Compute the number of threads for this parallel region */
   num_threads = t->info.icvs.nthreads_var;
-  if ( arg_num_threads > 0 && arg_num_threads < MPCOMP_MAX_THREADS ) {
+  if ( arg_num_threads > 0 && arg_num_threads < MPCOMP_MAX_THREADS && 
+		  arg_num_threads < mpcomp_global_icvs.nmicrovps_var) {
     num_threads = arg_num_threads;
   }
 
