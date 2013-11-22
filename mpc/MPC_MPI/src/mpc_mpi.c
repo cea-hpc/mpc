@@ -553,8 +553,10 @@ __sctk_init_mpi_errors ()
     MPI_ERROR_REPORT (comm, MPI_ERR_TYPE, "");
 
 TODO("to optimize")
-#define mpi_check_comm(com,comm)		\
-  if(mpc_mpc_get_per_comm_data(com) == NULL)	\
+#define mpi_check_comm(com,comm)			\
+  if (com == MPI_COMM_NULL)				\
+    MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_COMM,"");		\
+  else if(mpc_mpc_get_per_comm_data(com) == NULL)	\
     MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"")
 
 #define mpi_check_status(status,comm)		\
@@ -571,6 +573,10 @@ TODO("to optimize")
 
 #define mpi_check_rank(task,max_rank,comm)		\
   if(((task < 0) || (task >= max_rank)) && (task != MPI_ANY_SOURCE) && (task != MPI_PROC_NULL))		\
+    MPI_ERROR_REPORT(comm,MPI_ERR_RANK,"")
+
+#define mpi_check_rank_send(task,max_rank,comm)		\
+  if(((task < 0) || (task >= max_rank)) && (task != MPI_PROC_NULL))		\
     MPI_ERROR_REPORT(comm,MPI_ERR_RANK,"")
 
 #define mpi_check_tag(tag,comm)				\
@@ -7522,7 +7528,7 @@ PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	//~ else
 		//~ mpi_check_rank (dest, size, comm);
     if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank (dest, size, comm);
+      mpi_check_rank_send (dest, size, comm);
     }
     if (count != 0)
       {
@@ -7628,7 +7634,7 @@ PMPI_Bsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
     if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank (dest, size, comm);
+      mpi_check_rank_send (dest, size, comm);
     }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
@@ -7673,7 +7679,7 @@ PMPI_Ssend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
     if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank (dest, size, comm);
+      mpi_check_rank_send (dest, size, comm);
     }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
@@ -7718,7 +7724,7 @@ PMPI_Rsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
     if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank (dest, size, comm);
+      mpi_check_rank_send (dest, size, comm);
     }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
@@ -7784,7 +7790,7 @@ PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
     if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank (dest, size, comm);
+      mpi_check_rank_send (dest, size, comm);
     }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
@@ -7834,7 +7840,7 @@ PMPI_Ibsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
     if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank (dest, size, comm);
+      mpi_check_rank_send (dest, size, comm);
     }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
@@ -7883,7 +7889,7 @@ PMPI_Issend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
     if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank (dest, size, comm);
+      mpi_check_rank_send (dest, size, comm);
     }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
@@ -7931,7 +7937,7 @@ PMPI_Irsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
     if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank (dest, size, comm);
+      mpi_check_rank_send (dest, size, comm);
     }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
@@ -8200,7 +8206,7 @@ PMPI_Send_init (void *buf, int count, MPI_Datatype datatype, int dest,
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
     if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank (dest, size, comm);
+      mpi_check_rank_send (dest, size, comm);
     }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
@@ -8242,7 +8248,7 @@ PMPI_Bsend_init (void *buf, int count, MPI_Datatype datatype,
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
     if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank (dest, size, comm);
+      mpi_check_rank_send (dest, size, comm);
     }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
@@ -8284,7 +8290,7 @@ PMPI_Ssend_init (void *buf, int count, MPI_Datatype datatype, int dest,
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
     if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank (dest, size, comm);
+      mpi_check_rank_send (dest, size, comm);
     }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
@@ -8326,7 +8332,7 @@ PMPI_Rsend_init (void *buf, int count, MPI_Datatype datatype, int dest,
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
     if(sctk_is_inter_comm(comm) == 0){
-      mpi_check_rank (dest, size, comm);
+      mpi_check_rank_send (dest, size, comm);
     }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
@@ -8432,10 +8438,10 @@ PMPI_Sendrecv (void *sendbuf, int sendcount, MPI_Datatype sendtype,
   mpi_check_type (recvtype, comm);
   mpi_check_count (sendcount, comm);
   mpi_check_count (recvcount, comm);
-  mpi_check_tag (sendtag, comm);
+  mpi_check_tag_send (sendtag, comm);
   mpi_check_tag (recvtag, comm);
   __INTERNAL__PMPI_Comm_size (comm, &size);
-  mpi_check_rank(dest,size,comm);
+  mpi_check_rank_send(dest,size,comm);
   mpi_check_rank(source,size,comm);
 
   if (sendcount != 0)
@@ -8459,13 +8465,17 @@ PMPI_Sendrecv_replace (void *buf, int count, MPI_Datatype datatype,
 		       MPI_Comm comm, MPI_Status * status)
 {
   int res = MPI_ERR_INTERN;
+  int size;
   mpi_check_comm (comm, comm);
   mpi_check_type (datatype, comm);
   mpi_check_count (count, comm);
-  mpi_check_tag (sendtag, comm);
+  mpi_check_tag_send (sendtag, comm);
   mpi_check_tag (recvtag, comm);
   mpi_check_type (dest, comm);
   mpi_check_type (source, comm);
+  __INTERNAL__PMPI_Comm_size (comm, &size);
+  mpi_check_rank_send(dest,size,comm);
+  mpi_check_rank(source,size,comm);
   if (count != 0)
     {
       mpi_check_buf (buf, comm);
