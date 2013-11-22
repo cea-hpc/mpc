@@ -570,7 +570,7 @@ TODO("to optimize")
     MPI_ERROR_REPORT(comm,MPI_ERR_COUNT,"")
 
 #define mpi_check_rank(task,max_rank,comm)		\
-  if(((task < 0) || (task > max_rank)) && (task != MPI_ANY_SOURCE) && (task != MPI_PROC_NULL))		\
+  if(((task < 0) || (task >= max_rank)) && (task != MPI_ANY_SOURCE) && (task != MPI_PROC_NULL))		\
     MPI_ERROR_REPORT(comm,MPI_ERR_RANK,"")
 
 #define mpi_check_tag(tag,comm)				\
@@ -7521,6 +7521,9 @@ PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
 	//~ }
 	//~ else
 		//~ mpi_check_rank (dest, size, comm);
+    if(sctk_is_inter_comm(comm) == 0){
+      mpi_check_rank (dest, size, comm);
+    }
     if (count != 0)
       {
 	mpi_check_buf (buf, comm);
@@ -7557,6 +7560,9 @@ PMPI_Recv (void *buf, int count, MPI_Datatype datatype, int source, int tag,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
+    if(sctk_is_inter_comm(comm) == 0){
+      mpi_check_rank (source, size, comm);
+    }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
 		//~ if(sctk_is_in_local_group(comm))
@@ -7621,6 +7627,9 @@ PMPI_Bsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
+    if(sctk_is_inter_comm(comm) == 0){
+      mpi_check_rank (dest, size, comm);
+    }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
 		//~ if(sctk_is_in_local_group(comm))
@@ -7663,6 +7672,9 @@ PMPI_Ssend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
+    if(sctk_is_inter_comm(comm) == 0){
+      mpi_check_rank (dest, size, comm);
+    }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
 		//~ if(sctk_is_in_local_group(comm))
@@ -7705,6 +7717,9 @@ PMPI_Rsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
+    if(sctk_is_inter_comm(comm) == 0){
+      mpi_check_rank (dest, size, comm);
+    }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
 		//~ if(sctk_is_in_local_group(comm))
@@ -7768,6 +7783,9 @@ PMPI_Isend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
+    if(sctk_is_inter_comm(comm) == 0){
+      mpi_check_rank (dest, size, comm);
+    }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
 		//~ if(sctk_is_in_local_group(comm))
@@ -7815,6 +7833,9 @@ PMPI_Ibsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
+    if(sctk_is_inter_comm(comm) == 0){
+      mpi_check_rank (dest, size, comm);
+    }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
 		//~ if(sctk_is_in_local_group(comm))
@@ -7861,6 +7882,9 @@ PMPI_Issend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
+    if(sctk_is_inter_comm(comm) == 0){
+      mpi_check_rank (dest, size, comm);
+    }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
 		//~ if(sctk_is_in_local_group(comm))
@@ -7906,6 +7930,9 @@ PMPI_Irsend (void *buf, int count, MPI_Datatype datatype, int dest, int tag,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
+    if(sctk_is_inter_comm(comm) == 0){
+      mpi_check_rank (dest, size, comm);
+    }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
 		//~ if(sctk_is_in_local_group(comm))
@@ -7951,6 +7978,9 @@ PMPI_Irecv (void *buf, int count, MPI_Datatype datatype, int source,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
+    if(sctk_is_inter_comm(comm) == 0){
+      mpi_check_rank (source, size, comm);
+    }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
 		//~ if(sctk_is_in_local_group(comm))
@@ -8169,6 +8199,9 @@ PMPI_Send_init (void *buf, int count, MPI_Datatype datatype, int dest,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
+    if(sctk_is_inter_comm(comm) == 0){
+      mpi_check_rank (dest, size, comm);
+    }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
 		//~ if(sctk_is_in_local_group(comm))
@@ -8208,6 +8241,9 @@ PMPI_Bsend_init (void *buf, int count, MPI_Datatype datatype,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
+    if(sctk_is_inter_comm(comm) == 0){
+      mpi_check_rank (dest, size, comm);
+    }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
 		//~ if(sctk_is_in_local_group(comm))
@@ -8247,6 +8283,9 @@ PMPI_Ssend_init (void *buf, int count, MPI_Datatype datatype, int dest,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
+    if(sctk_is_inter_comm(comm) == 0){
+      mpi_check_rank (dest, size, comm);
+    }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
 		//~ if(sctk_is_in_local_group(comm))
@@ -8286,6 +8325,9 @@ PMPI_Rsend_init (void *buf, int count, MPI_Datatype datatype, int dest,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag_send (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
+    if(sctk_is_inter_comm(comm) == 0){
+      mpi_check_rank (dest, size, comm);
+    }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
 		//~ if(sctk_is_in_local_group(comm))
@@ -8325,6 +8367,9 @@ PMPI_Recv_init (void *buf, int count, MPI_Datatype datatype, int source,
     sctk_nodebug ("tag %d", tag);
     mpi_check_tag (tag, comm);
     __INTERNAL__PMPI_Comm_size (comm, &size);
+    if(sctk_is_inter_comm(comm) == 0){
+      mpi_check_rank (source, size, comm);
+    }
     //~ if(sctk_is_inter_comm(comm))
     //~ {
 		//~ if(sctk_is_in_local_group(comm))
@@ -8379,6 +8424,7 @@ PMPI_Sendrecv (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	       int source, int recvtag, MPI_Comm comm, MPI_Status * status)
 {
   int res = MPI_ERR_INTERN;
+  int size;
   mpi_check_comm (comm, comm);
   mpi_check_type (dest, comm);
   mpi_check_type (source, comm);
@@ -8388,6 +8434,10 @@ PMPI_Sendrecv (void *sendbuf, int sendcount, MPI_Datatype sendtype,
   mpi_check_count (recvcount, comm);
   mpi_check_tag (sendtag, comm);
   mpi_check_tag (recvtag, comm);
+  __INTERNAL__PMPI_Comm_size (comm, &size);
+  mpi_check_rank(dest,size,comm);
+  mpi_check_rank(source,size,comm);
+
   if (sendcount != 0)
     {
       mpi_check_buf (sendbuf, comm);
