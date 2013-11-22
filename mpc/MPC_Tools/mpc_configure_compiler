@@ -100,6 +100,7 @@ case "`basename $1`" in
 		use_mpc_privat="true"
 		;;
 esac
+use_mpc_privat="true"
 
 # Regular flags and compiler (C, C++ or fortran)
 if test ! -z "${BINUTILS_PREFIX_INSTALL}" && test "$use_mpc_privat" = "true"
@@ -397,8 +398,22 @@ print_specfific_compiler(){
 echo "#!/bin/sh" > $1
 header_sh >> $1
 
+if test "$4" = "intel"; then
 cat <<EOF >> $1
 ADD_FLAG_PRIVATIZE="$2"
+EOF
+else
+if test "${COMPILER_LIST}" != "" ; then
+cat <<EOF >> $1
+ADD_FLAG_PRIVATIZE="$2"
+EOF
+else
+cat <<EOF >> $1
+ADD_FLAG_PRIVATIZE=""
+EOF
+fi
+fi
+cat <<EOF >> $1
 COMPILER_ARGS=""
 
 for i in \$@ ; do
@@ -490,9 +505,6 @@ begin_section Generate Default C Compiler: mpc_cc_default
   printf_compiler bin/mpc_cc_default c
 end_section
 
-# Create the link to the default compiler
-rm -f bin/mpc_cc
-ln -s mpc_cc_${DEFAULT_VERSION} bin/mpc_cc
 
 # Generate dafault C compiler (for global linking)
 begin_section Generate Default C Compiler: mpc_cc_global_default
@@ -504,9 +516,12 @@ end_section
 # Create the link to the default compiler
 rm -f bin/mpc_cc_global
 ln -s mpc_cc_global_${DEFAULT_VERSION} bin/mpc_cc_global
-print_specfific_compiler bin/mpc_gcc $GNU_PRIVATIZE mpc_cc
-print_specfific_compiler bin/mpc_icc $INTEL_PRIVATIZE "mpc_cc -cc=icc" intel
+print_specfific_compiler bin/mpc_gcc $GNU_PRIVATIZE mpc_cc_global
+print_specfific_compiler bin/mpc_icc $INTEL_PRIVATIZE "mpc_cc_default -cc=icc" intel
 
+# Create the link to the default compiler
+rm -f bin/mpc_cc
+ln -s mpc_gcc bin/mpc_cc
 
 # Generate C++ compiler
 begin_section Generate Default C++ Compiler: mpc_cxx_default
@@ -516,10 +531,10 @@ begin_section Generate Default C++ Compiler: mpc_cxx_default
 end_section
 
 # Create the link to the default compiler
+print_specfific_compiler bin/mpc_g++ $GNU_PRIVATIZE mpc_cxx_global
+print_specfific_compiler bin/mpc_icpc $INTEL_PRIVATIZE "mpc_cxx_default -cc=icpc" intel
 rm -f bin/mpc_cxx
-ln -s mpc_cxx_${DEFAULT_VERSION} bin/mpc_cxx
-print_specfific_compiler bin/mpc_g++ $GNU_PRIVATIZE mpc_cxx
-print_specfific_compiler bin/mpc_icpc $INTEL_PRIVATIZE "mpc_cxx -cc=icpc" intel
+ln -s mpc_g++ bin/mpc_cxx
 
 #
 # Generate Fortran compiler
@@ -531,9 +546,9 @@ if test "$SCTK_FORTRAN" = "1" ; then
   end_section
 
   # Create the link to the default compiler
-  rm -f bin/mpc_f77
-  ln -s mpc_f77_${DEFAULT_VERSION} bin/mpc_f77
 
-  print_specfific_compiler bin/mpc_gfortran $GNU_PRIVATIZE mpc_f77
-  print_specfific_compiler bin/mpc_ifort $INTEL_PRIVATIZE "mpc_f77 -cc=ifort" intel
+  print_specfific_compiler bin/mpc_gfortran $GNU_PRIVATIZE mpc_f77_global
+  print_specfific_compiler bin/mpc_ifort $INTEL_PRIVATIZE "mpc_f77_default -cc=ifort" intel
+  rm -f bin/mpc_f77
+  ln -s mpc_gfortran bin/mpc_f77
 fi
