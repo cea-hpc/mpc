@@ -552,3 +552,67 @@ if test "$SCTK_FORTRAN" = "1" ; then
   rm -f bin/mpc_f77
   ln -s mpc_gfortran bin/mpc_f77
 fi
+
+
+cat <<EOF > bin/mpc_compiler_status
+#!/bin/sh
+cat <<EOFINT > mpc_main.c
+#include <mpc.h>
+ int main(int argc, char** argv){
+     return 0;
+}
+EOFINT
+cat <<EOFINT > mpc_main.cpp
+#include <mpc.h>
+ int main(int argc, char** argv){
+     return 0;
+}
+EOFINT
+cat <<EOFINT > mpc_main.f
+      subroutine mpc_user_main
+      include 'mpcf.h'
+      integer ierr
+      call MPC_INIT (ierr)
+      call MPC_FINALIZE (ierr)
+      end
+EOFINT
+
+check_compiler(){
+\$@ -fno-mpc-privatize > /dev/null 2>&1
+LINE="        Compiler \$1"
+if test "\$?" = "0"; then
+LINE="\$LINE OK"
+else
+LINE="\$LINE FAIL"
+fi
+LINE="\$LINE privatization"
+\$@ -fmpc-privatize > /dev/null 2>&1
+if test "\$?" = "0"; then
+LINE="\$LINE OK"
+else
+LINE="\$LINE FAIL"
+fi
+echo "\$LINE"
+}
+
+echo "MPC Compiler Status:"
+
+
+echo "    Check C compiler"
+check_compiler mpc_gcc -c mpc_main.c -o tmp.o
+check_compiler mpc_icc -c mpc_main.c -o tmp.o
+
+echo "    Check C++ compiler"
+check_compiler mpc_g++ -c mpc_main.cpp -o tmp.o
+check_compiler mpc_icpc -c mpc_main.cpp -o tmp.o
+
+
+echo "    Check Fortran compiler"
+check_compiler mpc_gfortran -c mpc_main.f -o tmp.o
+check_compiler mpc_ifort -c mpc_main.f -o tmp.o
+
+
+rm mpc_main.c mpc_main.cpp mpc_main.f tmp.o > /dev/null 2>&1
+
+EOF
+chmod 755 bin/mpc_compiler_status
