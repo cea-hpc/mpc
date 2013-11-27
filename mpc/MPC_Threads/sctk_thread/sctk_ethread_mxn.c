@@ -22,6 +22,7 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
+#include <pthread.h>
 #include "sctk_debug.h"
 #include "sctk_thread.h"
 #include "sctk_ethread.h"
@@ -782,12 +783,29 @@ sctk_ethread_mxn_sigsuspend (sigset_t * set)
   return res;
 }
 
+static void sctk_ethread_mxn_at_fork_child(){
+  sctk_error("Unable to fork with user threads child");
+  sctk_abort();
+}
+
+static void sctk_ethread_mxn_at_fork_parent(){
+  sctk_error("Unable to fork with user threads parent");
+  sctk_abort();
+}
+
+
+static void sctk_ethread_mxn_at_fork_prepare(){
+  sctk_error("Unable to fork with user threads prepare");
+  sctk_abort();
+}
 
 void
 sctk_ethread_mxn_thread_init (void)
 {
   int i;
   sctk_only_once ();
+
+  pthread_atfork(sctk_ethread_mxn_at_fork_prepare,sctk_ethread_mxn_at_fork_parent,sctk_ethread_mxn_at_fork_child);
 
   sctk_init_default_sigset ();
 
