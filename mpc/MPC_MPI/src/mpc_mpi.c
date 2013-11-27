@@ -626,6 +626,9 @@ typedef struct MPI_internal_request_s
 
   /*Datatypes */
   void *saved_datatype;
+
+  /*Req_free*/
+  int auto_free;
 } MPI_internal_request_t;
 
  struct MPI_request_struct_s
@@ -635,6 +638,7 @@ typedef struct MPI_internal_request_s
   int max_size;
   MPI_internal_request_t **tab;
   volatile MPI_internal_request_t *free_list;
+  volatile MPI_internal_request_t *auto_free_list;
   sctk_alloc_buffer_t buf;
 } ;
 
@@ -656,6 +660,7 @@ __sctk_init_mpc_request ()
   requests->lock = 0;
   requests->tab = NULL;
   requests->free_list = NULL;
+  requests->auto_free_list = NULL;
   requests->max_size = 0;
 
   sctk_buffered_alloc_create (&(requests->buf),
@@ -663,6 +668,33 @@ __sctk_init_mpc_request ()
 
   PMPC_Set_requests (requests);
   sctk_thread_mutex_unlock (&sctk_request_lock);
+}
+
+static inline void sctk_delete_internal_request(MPI_internal_request_t *tmp,MPI_request_struct_t *requests){
+	tmp->used = 0;
+	sctk_free (tmp->saved_datatype);
+	tmp->saved_datatype = NULL;
+	tmp->next = requests->free_list;
+	requests->free_list = tmp;
+}
+
+static inline void sctk_check_auto_free_list(MPI_request_struct_t *requests){
+  if(requests->auto_free_list != NULL){
+    MPI_internal_request_t *tmp;
+    int flag;
+    int res;
+
+    tmp = requests->auto_free_list;
+    res = PMPC_Test (&(tmp->req), &flag, MPC_STATUS_IGNORE);
+    if (flag != 0)
+      {
+	MPI_internal_request_t *tmp_new;
+
+	tmp_new = tmp->next;
+	requests->auto_free_list = tmp_new;
+	sctk_delete_internal_request(tmp,requests);
+      }
+  }
 }
 
 static inline MPI_internal_request_t *
@@ -674,6 +706,7 @@ __sctk_new_mpc_request_internal (MPI_Request * req)
   PMPC_Get_requests ((void *) &requests);
 
   sctk_spinlock_lock (&(requests->lock));
+  sctk_check_auto_free_list(requests);
   if (requests->free_list == NULL)
     {
       int old_size;
@@ -704,6 +737,7 @@ __sctk_new_mpc_request_internal (MPI_Request * req)
   tmp->used = 1;
   tmp->freeable = 1;
   tmp->is_active = 1;
+  tmp->auto_free = 0;
   tmp->saved_datatype = NULL;
   requests->free_list = tmp->next;
   sctk_spinlock_unlock (&(requests->lock));
@@ -793,13 +827,16 @@ __sctk_delete_mpc_request (MPI_Request * req)
   tmp->is_active = 0;
   if (tmp->freeable == 1)
     {
-      assume (tmp->rank == *req);
-      tmp->used = 0;
-      sctk_free (tmp->saved_datatype);
-      tmp->saved_datatype = NULL;
-      tmp->next = requests->free_list;
-      requests->free_list = tmp;
-      *req = MPI_REQUEST_NULL;
+      if(tmp->auto_free == 0){
+	assume (tmp->rank == *req);
+	sctk_delete_internal_request(tmp,requests);
+	*req = MPI_REQUEST_NULL;
+      } else {
+	assume (tmp->rank == *req);
+	tmp->next = requests->auto_free_list;
+	requests->auto_free_list = tmp;
+	*req = MPI_REQUEST_NULL;
+      }
     }
   sctk_spinlock_unlock (&(requests->lock));
 }
@@ -1695,9 +1732,8 @@ static int __INTERNAL__PMPI_Request_free (MPI_Request * request)
 	if (tmp)
     {
 		tmp->freeable = 1;
-
-		res = __INTERNAL__PMPI_Wait(request,MPI_STATUS_IGNORE);
-
+		tmp->auto_free = 1;
+		__sctk_delete_mpc_request (request);
 		*request = MPI_REQUEST_NULL;
     }
 	return res;
