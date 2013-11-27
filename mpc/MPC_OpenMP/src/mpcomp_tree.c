@@ -26,6 +26,35 @@
 #include "mpcomp.h"
 #include "mpcomp_internal.h"
 
+#if HWLOC_API_VERSION < 0x00010800
+/* Duplicate the entire topology 'oldtopology' into 'newtopology' */
+int hwloc_topology_dup (hwloc_topology_t * newtopology, hwloc_topology_t *oldtopology)
+{
+     char *xmlBuffer; 
+     int bufLen;
+     int err;
+
+     /* Save 'oldtopology' in a xml buffer */
+     err = hwloc_topology_export_xmlbuffer(*oldtopology, &xmlBuffer, &bufLen);
+     if (err) {
+	  perror("Export topology in xmlbuffer");
+	  return -1;
+     }
+
+     /* Copy the topology saved in xml buffer inside 'newtopology' */
+     err = hwloc_topology_set_xmlbuffer(*newtopology, xmlBuffer, bufLen);
+     if (err) {
+	  perror("Set topology with xmlbuffer");
+	  return -1;
+     }
+     
+     /* Free allocated xml buffer */
+     hwloc_free_xmlbuffer(*oldtopology, xmlBuffer);
+
+     return 0;
+}
+#endif
+
 
 /**
  * Check if the following parameters are correct to build a coherent tree
@@ -73,12 +102,22 @@ static unsigned __mpcomp_get_new_depth(hwloc_obj_type_t type, hwloc_topology_t t
      int nbobjs = hwloc_get_nbobjs_by_type(topology, type);
      int above_depth = hwloc_get_type_or_above_depth(new_topology, type);
      int below_depth = hwloc_get_type_or_below_depth(new_topology, type);
-     
+	  
      /* Find the above or below level corresponding to the same amount of objects */
      if (nbobjs == hwloc_get_nbobjs_by_depth(new_topology, above_depth))
 	  return above_depth;
      else if (nbobjs == hwloc_get_nbobjs_by_depth(new_topology, below_depth))
 	  return below_depth;
+
+     return 0;
+}
+
+int mpcomp_ignore_all_keep_structure(hwloc_topology_t *topology)
+{
+     unsigned type;
+     for(type = HWLOC_OBJ_SYSTEM; type < HWLOC_OBJ_TYPE_MAX; type++)
+	  if (type != HWLOC_OBJ_MACHINE)
+	       hwloc_topology_ignore_type_keep_structure(*topology, type);
 
      return 0;
 }
@@ -106,16 +145,13 @@ int *__mpcomp_compute_topo_tree_array(int *depth, int *index)
 
      /* Create a temporary topology */
      hwloc_topology_init(&simple_topology);
-     hwloc_topology_set_custom(simple_topology);
      
      /* Duplicate current topology object */
-     hwloc_custom_insert_topology(simple_topology, 
-				  hwloc_get_obj_by_depth(simple_topology, 0, 0), 
-				  sctk_get_topology_object(), NULL);
-     
+     hwloc_topology_dup(&simple_topology, &topology);
+
      /* Delete unessential levels */
-     hwloc_topology_ignore_all_keep_structure(simple_topology);
- 
+     mpcomp_ignore_all_keep_structure(&simple_topology);
+
      hwloc_topology_load(simple_topology);
 
      /* Remove 1 because we would like the depth including only nodes (not leaves) */
@@ -127,23 +163,18 @@ int *__mpcomp_compute_topo_tree_array(int *depth, int *index)
 	  tree[d] =  hwloc_get_obj_by_depth(simple_topology, d, 0)->arity;
      }
 
-
-	 TODO("Bug with c=1 to fill index[THREAD,CORE,SOCKET")
-#if 0
      /* Set index of threads, cores and sockets levels */
      index[MPCOMP_TOPO_OBJ_THREAD] = __mpcomp_get_new_depth(HWLOC_OBJ_PU, 
 							    topology, 
 							    simple_topology);
-printf("PU:%d\n", index[MPCOMP_TOPO_OBJ_THREAD]);
+
      index[MPCOMP_TOPO_OBJ_CORE] = __mpcomp_get_new_depth(HWLOC_OBJ_CORE, 
 							  topology, 
 							  simple_topology);
-printf("CORE:%d\n", index[MPCOMP_TOPO_OBJ_CORE]);
+
      index[MPCOMP_TOPO_OBJ_SOCKET] = __mpcomp_get_new_depth(HWLOC_OBJ_SOCKET, 
 							    topology, 
 							    simple_topology);
-printf("SOCKET:%d\n", index[MPCOMP_TOPO_OBJ_SOCKET]);
-#endif
 
      /* Release temporary topology structure */
      hwloc_topology_destroy(simple_topology);

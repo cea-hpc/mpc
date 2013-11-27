@@ -419,8 +419,10 @@ void __mpcomp_task_exit()
      sctk_assert(t != NULL);
 
      if ((t->info.num_threads > 1 && t->tasking_init_done) || t->children_instance->mvps[0]->threads[0].tasking_init_done) {
-	  //fprintf(stderr, "[t:%lu %p] __mpcomp_task_exit TASK INIT DONE\n", t->rank, t);
-	  fprintf(stderr, "nb_tasks %d\n", sctk_atomics_load_int(&(t->instance->team->nb_tasks)));
+	  /*fprintf(stderr, "nb_tasks %d + %d\n", 
+		  sctk_atomics_load_int(&(t->instance->team->nb_tasks)),
+		  sctk_atomics_load_int(&(t->children_instance->team->nb_tasks)));*/
+
 	  __mpcomp_task_list_infos_exit();
      } else {
 	  //fprintf(stderr, "[t:%lu %p] __mpcomp_task_exit TASK INIT NOT DONE\n", t->rank, t);
@@ -504,13 +506,20 @@ void __mpcomp_task_infos_init()
      if (t->tasking_init_done == 0) {
 	  /* Executed only one time per thread */
 
+	  int id_numa;
+
+	  if (t->info.num_threads > 1)
+	       id_numa = t->mvp->father->id_numa;
+	  else
+	       id_numa = sctk_get_node_from_cpu(t->instance->mvps[0]);
+
 	  /* Allocate the default current task (no func, no data, no parent) */
-	  t->current_task = mpcomp_malloc(1, sizeof(struct mpcomp_task_s), t->mvp->father->id_numa);
+	  t->current_task = mpcomp_malloc(1, sizeof(struct mpcomp_task_s), id_numa);
 	  __mpcomp_task_init(t->current_task, NULL, NULL, t);
 	  t->current_task->parent = NULL;
 
 	  /* Allocate private task data structures */
-	  t->tied_tasks = mpcomp_malloc(1, sizeof(struct mpcomp_task_list_s), t->mvp->father->id_numa);
+	  t->tied_tasks = mpcomp_malloc(1, sizeof(struct mpcomp_task_list_s), id_numa);
 	  mpcomp_task_list_new (t->tied_tasks);
 	  
 	  t->tasking_init_done = 1;
