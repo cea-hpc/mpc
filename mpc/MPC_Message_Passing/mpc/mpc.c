@@ -994,7 +994,8 @@ PMPC_Type_free (MPC_Datatype * datatype_p)
 		sctk_spinlock_lock (&(task_specific->other_user_types.lock));
 		other_user_types = task_specific->other_user_types.other_user_types;
 		sctk_assert (other_user_types != NULL);
-		other_user_types[datatype - sctk_user_data_types].id = 0;
+		other_user_types[datatype - sctk_user_data_types].id_rank = 0;
+		other_user_types[datatype - sctk_user_data_types].used = 0;
 		other_user_types[datatype - sctk_user_data_types].size = 0;
 		other_user_types[datatype - sctk_user_data_types].count = 0;
 		other_user_types[datatype - sctk_user_data_types].datatype = 0;
@@ -1105,10 +1106,11 @@ PMPC_Sizeof_datatype (MPC_Datatype * datatype, size_t size, size_t count, MPC_Da
   other_user_types = task_specific->other_user_types.other_user_types;
   for (i = 0; i < sctk_user_data_types_max; i++)
     {
-      if (other_user_types[i].id == 0)
+      if (other_user_types[i].used == 0)
 	{
 	  *datatype = (sctk_user_data_types + i);
-	  other_user_types[i].id = i;
+	  other_user_types[i].id_rank = i;
+	  other_user_types[i].used = 1;
 	  other_user_types[i].size = size;
 	  other_user_types[i].count = count;
 	  other_user_types[i].datatype = *data_in;

@@ -50,10 +50,11 @@ typedef struct
 
 typedef struct 
 {
-	size_t id;
+	size_t id_rank;
 	size_t size;
 	size_t count;
 	sctk_datatype_t datatype;
+  int used;
 } sctk_other_datatype_t;
 
 #define MPC_DECL_TYPE_PROTECTED(data_type, name_type) typedef struct {data_type; sctk_spinlock_t lock;} name_type##_t
