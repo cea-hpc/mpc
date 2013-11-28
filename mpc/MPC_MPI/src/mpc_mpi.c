@@ -5775,7 +5775,12 @@ __INTERNAL__PMPI_Attr_get (MPI_Comm comm, int keyval, void *attr_value,
 		*flag = 0;
 		*attr = NULL;
 	}
-	else if(tmp_per_comm->key_vals == NULL || tmp_per_comm->key_vals[keyval].attr == NULL)
+	else if(tmp_per_comm->key_vals == NULL )
+	{
+		*flag = 0;
+		*attr = NULL;
+	}
+	else if(tmp_per_comm->key_vals[keyval].attr == NULL)
 	{
 		*flag = 0;
 		*attr = NULL;
