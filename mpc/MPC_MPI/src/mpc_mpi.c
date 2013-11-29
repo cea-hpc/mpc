@@ -4000,18 +4000,17 @@ static inline int
 __INTERNAL__PMPI_Reduce_derived_commute (void *sendbuf, void *recvbuf, int count,
 					    MPI_Datatype datatype, MPI_Op op, int root,
 					    MPI_Comm comm,MPC_Op mpc_op,sctk_op_t *mpi_op, int size, int rank){
-  int res;
   /*To optimize*/
-
-  if(rank == 0){
-    res = __INTERNAL__PMPI_Send (sendbuf, count, datatype, (rank + 1) % size, -3, comm);
+  int res;
+  if(rank == size-1){
+    res = __INTERNAL__PMPI_Send (sendbuf, count, datatype, (rank + size - 1) % size, -3, comm);
     if (res != MPI_SUCCESS)
       {
 	return res;
       }
   } else {
     res =
-      __INTERNAL__PMPI_Recv (recvbuf, count, datatype, (rank + size - 1) % size, -3, comm,
+      __INTERNAL__PMPI_Recv (recvbuf, count, datatype, (rank + 1) % size, -3, comm,
 			     MPI_STATUS_IGNORE);
     if (res != MPI_SUCCESS)
       {
@@ -4019,28 +4018,30 @@ __INTERNAL__PMPI_Reduce_derived_commute (void *sendbuf, void *recvbuf, int count
       }
   }
 
-  if (mpc_op.u_func != NULL)
-    {
-      mpc_op.u_func (sendbuf, recvbuf, &count, &datatype);
-    }
-  else
-    {
-      not_reachable ();
-    }
+  if(rank != size-1){
+    if (mpc_op.u_func != NULL)
+      {
+	mpc_op.u_func (sendbuf, recvbuf, &count, &datatype);
+      }
+    else
+      {
+	not_reachable ();
+      }
+  }
 
-  if((rank == size -1) && (rank != root)){
+  if((rank == 0) && (root != 0)){
     res = __INTERNAL__PMPI_Send (recvbuf, count, datatype, root, -3, comm);
     if (res != MPI_SUCCESS)
       {
 	return res;
-	  }
+      }
   } else {
-    if((rank != 0) && (rank != size -1)){
-      res = __INTERNAL__PMPI_Send (recvbuf, count, datatype, (rank + 1) % size, -3, comm);
+    if((rank != size-1) && ((rank != 0))){
+      res = __INTERNAL__PMPI_Send (recvbuf, count, datatype, (rank + size - 1) % size, -3, comm);
       if (res != MPI_SUCCESS)
 	{
 	  return res;
-	  }
+	}
     }
   }
   return res;
@@ -4059,7 +4060,7 @@ __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
 
   assume(recvbuf != NULL);
 
-/*   fprintf(stderr,"Reduce %d %d\n",sctk_is_derived_type (datatype),mpi_op->commute == 0); */
+  /* fprintf(stderr,"Reduce %d %d\n",sctk_is_derived_type (datatype),mpi_op->commute == 0); */
   if (sctk_is_derived_type (datatype) || (mpi_op->commute == 0))
     {
       int size;
@@ -4100,26 +4101,26 @@ __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
       } else {
 	if(mpi_op->commute == 0){
 	  __INTERNAL__PMPI_Reduce_derived_no_commute(sendbuf,recvbuf,count,datatype,op,root,comm,mpc_op,mpi_op,size,rank);
-	if((rank == 0) && (root != 0)){
-	  res =
-	    __INTERNAL__PMPI_Recv (recvbuf, count, datatype,0, -3, comm,
-				   MPI_STATUS_IGNORE);
-	  if (res != MPI_SUCCESS)
-	    {
-	      return res;
-	    }
-	}
+	  if((rank == root) && (root != 0)){
+	    res =
+	      __INTERNAL__PMPI_Recv (recvbuf, count, datatype,0, -3, comm,
+				     MPI_STATUS_IGNORE);
+	    if (res != MPI_SUCCESS)
+	      {
+		return res;
+	      }
+	  }
 	}  else {
 	  __INTERNAL__PMPI_Reduce_derived_commute(sendbuf,recvbuf,count,datatype,op,root,comm,mpc_op,mpi_op,size,rank);
-	  if((rank == root) && (root != size-1)){
-	  res =
-	    __INTERNAL__PMPI_Recv (recvbuf, count, datatype,size-1, -3, comm,
-				   MPI_STATUS_IGNORE);
-	  if (res != MPI_SUCCESS)
-	    {
-	      return res;
-	    }
-	}
+	  if((rank == root) && (root != 0)){
+	    res =
+	      __INTERNAL__PMPI_Recv (recvbuf, count, datatype,0, -3, comm,
+				     MPI_STATUS_IGNORE);
+	    if (res != MPI_SUCCESS)
+	      {
+		return res;
+	      }
+	  }
 	}
 
       }
@@ -4130,7 +4131,7 @@ __INTERNAL__PMPI_Reduce (void *sendbuf, void *recvbuf, int count,
   else
     {
       return PMPC_Reduce (sendbuf, recvbuf, count, datatype, mpc_op, root,
-			 comm);
+			  comm);
     }
 }
 static int
