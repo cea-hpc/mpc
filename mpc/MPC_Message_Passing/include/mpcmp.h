@@ -117,43 +117,85 @@ extern "C"
 #define MPC_SUCCESS 0
 #define MPC_UNDEFINED (-1)
 /* Communication argument parameters */
-#define MPC_ERR_BUFFER       1	/* Invalid buffer pointer */
-#define MPC_ERR_COUNT        2	/* Invalid count argument */
-#define MPC_ERR_TYPE         3	/* Invalid datatype argument */
-#define MPC_ERR_TAG          4	/* Invalid tag argument */
-#define MPC_ERR_COMM         5	/* Invalid communicator */
-#define MPC_ERR_RANK         6	/* Invalid rank */
-#define MPC_ERR_ROOT         7	/* Invalid root */
-#define MPC_ERR_TRUNCATE    14	/* Message truncated on receive */
+#define MPC_ERR_BUFFER                  1  /* Invalid buffer pointer */
+#define MPC_ERR_COUNT                   2  /* Invalid count argument */
+#define MPC_ERR_TYPE                    3  /* Invalid datatype argument */
+#define MPC_ERR_TAG                     4  /* Invalid tag argument */
+#define MPC_ERR_COMM                    5  /* Invalid communicator */
+#define MPC_ERR_RANK                    6  /* Invalid rank */
+#define MPC_ERR_ROOT                    8  /* Invalid root */
+#define MPC_ERR_TRUNCATE               15  /* Message truncated on receive */
+#define MPC_ERR_NOT_SAME               39  /* Collective argument not identical on all processess,
+                                              or collective routines called in a different order
+																							by different processes */
 
 /* MPC Objects (other than COMM) */
-#define MPC_ERR_GROUP        8	/* Invalid group */
-#define MPC_ERR_OP           9	/* Invalid operation */
-#define MPC_ERR_REQUEST     19	/* Invalid mpc_request handle */
+#define MPC_ERR_GROUP                   9  /* Invalid group */
+#define MPC_ERR_OP                     10  /* Invalid operation */
+#define MPC_ERR_REQUEST                 7  /* Invalid mpc_request handle */
 
 /* Special topology argument parameters */
-#define MPC_ERR_TOPOLOGY    10	/* Invalid topology */
-#define MPC_ERR_DIMS        11	/* Invalid dimension argument */
+#define MPC_ERR_TOPOLOGY               11  /* Invalid topology */
+#define MPC_ERR_DIMS                   12	 /* Invalid dimension argument */
 
 /* All other arguments.  This is a class with many kinds */
-#define MPC_ERR_ARG         12	/* Invalid argument */
+#define MPC_ERR_ARG                    13  /* Invalid argument */
+#define MPC_ERR_PORT                   27  /* Invalid port name passed to MPI_COMM_CONNECT */
+#define MPC_ERR_SERVICE                28  /* Invalid service name passed to MPI_UNPUBLISH_NAME */
+#define MPC_ERR_NAME                   29  /* Invalid service name passed to MPI_LOOKUP_NAME */
+#define MPC_ERR_WIN                    30  /* Invalid win argument */
+#define MPC_ERR_SIZE                   31  /* Invalid size argument */
+#define MPC_ERR_DISP                   32  /* Invalid disp argument */
+#define MPC_ERR_INFO                   33  /* Invalid info argument */
+#define MPC_ERR_LOCKTYPE               34  /* Invalid locktype argument */
+#define MPC_ERR_ASSERT                 35  /* Invalid assert argument */
 
-/* Other errors that are not simply an invalid argument */
-#define MPC_ERR_OTHER       15	/* Other error; use Error_string */
-
-#define MPC_ERR_UNKNOWN     13	/* Unknown error */
-#define MPC_ERR_INTERN      16	/* Internal error code    */
+/* Error on File handling*/
+#define MPC_ERR_FILE                   38  /* Invalid file handle */
+#define MPC_ERR_AMODE                  40  /* Error related to the amode passed to MPI_FILE_OPEN */
+#define MPC_ERR_UNSUPPORTED_DATAREP    41  /* Unsupported datarep passed to MPI_FILE_SET_VIEW */
+#define MPC_ERR_NO_SUCH_FILE           43  /* File does not exist */
+#define MPC_ERR_FILE_EXISTS            44  /* File exists */
+#define MPC_ERR_BAD_FILE               45  /* Invalid file name (e.g., path name too long) */
+#define MPC_ERR_ACCESS                 46  /* Permission denied */
+#define MPC_ERR_READ_ONLY              49  /* Read-only file or file system */
+#define MPC_ERR_FILE_IN_USE            50  /* File operation could not completed, as the file is
+                                              currently open by some process */
+#define MPC_ERR_IO                     53  /* Other I/O error */
 
 /* Multiple completion has two special error classes */
-#define MPC_ERR_IN_STATUS   17	/* Look in status for error value */
-#define MPC_ERR_PENDING     18	/* Pending request */
+#define MPC_ERR_IN_STATUS              18  /* Look in status for error value */
+#define MPC_ERR_PENDING                19  /* Pending request */
 
 /* Error with comm attributes (keyval) */
-#define MPC_ERR_KEYVAL		19
+#define MPC_ERR_KEYVAL	               20  /* Invalid keyval has been passed */
+#define MPC_ERR_INFO_KEY               23  /* Key onger than MPI_MAX_INFO_KEY */
+#define MPC_ERR_INFO_VALUE             24  /* Value longer than MPI_MAX_INFO_VAL */
+#define MPC_ERR_INFO_NOKEY             25  /* Invalid key passed to MPI_INFO_DELETE */
 
-#define MPC_NOT_IMPLEMENTED 49
-#define MPC_ERR_LASTCODE    50
-#define MPC_ERR_NO_MEM 		51
+/* Error with memory */
+#define MPC_ERR_NO_MEM 		             21  /* MPI_ALLOC_MEM failed because memory is exhausted */
+#define MPC_ERR_BASE                   22  /* Invalid base passed to MPI_FREE_MEM */
+
+/* Other errors that are not simply an invalid argument */
+#define MPC_ERR_SPAWN                  26  /* Error in spawning processes */
+#define MPC_ERR_RMA_CONFLICT               36  /* Conflicting accesses to window */
+#define MPC_ERR_RMA_SYNC                   37  /* Wrong synchronization of RMA calls */
+#define MPC_ERR_UNSUPPORTED_OPERATION  42  /* Unsupported operation, such as seeking on a file which
+                                              supports sequential access only*/
+#define MPC_ERR_NO_SPACE               47  /* Not enough space */
+#define MPC_ERR_QUOTA                  48  /* Quota exceeded */
+#define MPC_ERR_DUP_DATAREP            51  /* Conversion functions could not be regiestered because a
+																							data representation identifier that was already defined
+																							was passed to MPI_REGISTER_DATAREP */
+#define MPC_ERR_CONVERSION             52  /* An error occured in a user supplied data conversion function */
+#define MPC_ERR_OTHER                  16  /* Other error; use Error_string */
+
+#define MPC_ERR_UNKNOWN                14  /* Unknown error */
+#define MPC_ERR_INTERN                 17  /* Internal error code    */
+
+#define MPC_ERR_LASTCODE               55
+#define MPC_NOT_IMPLEMENTED            56
 
 #define MPC_STATUS_IGNORE NULL
 #define MPC_STATUSES_IGNORE NULL
