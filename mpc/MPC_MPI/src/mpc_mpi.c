@@ -9642,7 +9642,96 @@ int MPC_Mpi_win_dup_fn( MPI_Comm comm, int comm_keyval, void* extra_state, void*
    return MPI_SUCCESS;
 }
 
+/* MPI-2 - Language interoperability - Transfer of Handles*/
+	MPI_Comm PMPI_Comm_f2c(MPI_Fint comm)
+	{
+		return (MPI_Comm)comm;
+	}
 
+	MPI_Fint PMPI_Comm_c2f(MPI_Comm comm)
+	{
+		return (MPI_Fint)comm;
+	}
+
+	MPI_Datatype PMPI_Type_f2c(MPI_Fint datatype)
+	{
+		return (MPI_Datatype)datatype;
+	}
+
+	MPI_Fint PMPI_Type_c2f(MPI_Datatype datatype)
+	{
+		return (MPI_Fint)datatype;
+	}
+
+	MPI_Group PMPI_Group_f2c(MPI_Fint group)
+	{
+		return (MPI_Group)group;
+	}
+
+	MPI_Fint PMPI_Group_c2f(MPI_Group group)
+	{
+		return (MPI_Fint)group;
+	}
+
+	MPI_Request PMPI_Request_f2c(MPI_Fint request)
+	{
+		return (MPI_Request)request;
+	}
+
+	MPI_Fint PMPI_Request_c2f(MPI_Request request)
+	{
+		return (MPI_Fint)request;
+	}
+
+	MPI_File PMPI_File_f2c(MPI_Fint file)
+	{
+		return (MPI_File)file;
+	}
+
+	MPI_Fint PMPI_File_c2f(MPI_File file)
+	{
+		return (MPI_Fint)file;
+	}
+
+	MPI_Win PMPI_Win_f2c(MPI_Fint win)
+	{
+		return (MPI_Win)win;
+	}
+
+	MPI_Fint PMPI_Win_c2f(MPI_Win win)
+	{
+		return (MPI_Fint)win;
+	}
+
+	MPI_Op PMPI_Op_f2c(MPI_Fint op)
+	{
+		return (MPI_Op)op;
+	}
+
+	MPI_Fint PMPI_Op_c2f(MPI_Op op)
+	{
+		return (MPI_Fint)op;
+	}
+
+	MPI_Info PMPI_Info_f2c(MPI_Fint info)
+	{
+		return (MPI_Info)info;
+	}
+
+	MPI_Fint PMPI_Info_c2f(MPI_Info info)
+	{
+		return (MPI_Fint)info;
+	}
+
+	MPI_Errhandler PMPI_Errhandler_f2c(MPI_Fint errhandler)
+	{
+		return (MPI_Errhandler)errhandler;
+	}
+
+	MPI_Fint PMPI_Errhandler_c2f(MPI_Errhandler errhandler)
+	{
+		return (MPI_Fint)errhandler;
+	}
 //~ not implemented
 /*
 int PMPI_Info_set( MPI_Info info, const char *key, const char *value ){return MPI_SUCCESS;}

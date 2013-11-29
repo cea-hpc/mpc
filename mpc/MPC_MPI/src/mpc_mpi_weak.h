@@ -423,7 +423,26 @@
 #pragma weak mpi_init_thread_ = pmpi_init_thread_
 #pragma weak mpi_init_thread__ = pmpi_init_thread__
 
-//~ not implemented
+#pragma weak MPI_Comm_f2c = PMPI_Comm_f2c
+#pragma weak MPI_Errhandler_c2f = PMPI_Errhandler_c2f
+#pragma weak MPI_Type_f2c = PMPI_Type_f2c
+#pragma weak MPI_Type_c2f = PMPI_Type_c2f
+#pragma weak MPI_Group_f2c = PMPI_Group_f2c
+#pragma weak MPI_Group_c2f = PMPI_Group_c2f
+#pragma weak MPI_Request_f2c = PMPI_Request_f2c
+#pragma weak MPI_Request_c2f = PMPI_Request_c2f
+#pragma weak MPI_File_f2c = PMPI_File_f2c
+#pragma weak MPI_File_c2f = PMPI_File_c2f
+#pragma weak MPI_Win_f2c = PMPI_Win_f2c
+#pragma weak MPI_Win_c2f = PMPI_Win_c2f
+#pragma weak MPI_Op_f2c = PMPI_Op_f2c
+#pragma weak MPI_Op_c2f = PMPI_Op_c2f
+#pragma weak MPI_Info_f2c = PMPI_Info_f2c
+#pragma weak MPI_Info_c2f = PMPI_Info_c2f
+#pragma weak MPI_Errhandler_f2c = PMPI_Errhandler_f2c
+#pragma weak MPI_Errhandler_c2f = PMPI_Errhandler_c2f
+
+	//~ not implemented
 
 /*
 #pragma weak MPI_Win_set_attr = PMPI_Win_set_attr
