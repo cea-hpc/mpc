@@ -1319,8 +1319,8 @@ int sctk_determine_src_process_from_header (sctk_thread_ptp_message_body_t * bod
     src_process = body->header.source;
   } else {
     if(body->header.source != MPC_ANY_SOURCE) {
-      task_number = sctk_get_comm_world_rank (body->header.communicator,
-          body->header.source);
+      task_number = /* sctk_get_comm_world_rank (body->header.communicator, */
+          /* body->header.source) */ body->header.glob_source;
     src_process = sctk_get_process_rank_from_task_rank(task_number);
   } else {
       src_process = -1;
