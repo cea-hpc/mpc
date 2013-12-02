@@ -2099,6 +2099,7 @@ void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_ch
 
     if (src_pair == NULL) {
       assume(dest_pair);
+      msg->tail.internal_ptp = NULL;
 /*       sctk_internal_ptp_add_pending(dest_pair,msg); */
     } else {
       sctk_internal_ptp_add_pending(src_pair,msg);
