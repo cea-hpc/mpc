@@ -258,6 +258,8 @@ extern "C"
 #define MPI_MAX_ERROR_STRING MPC_MAX_ERROR_STRING
   void MPI_Default_error (MPI_Comm * comm, int *error, char *msg,
 			  char *file, int line);
+  void MPI_Abort_error (MPI_Comm * comm, int *error, char *msg, char *file,
+			int line);
   void MPI_Return_error (MPI_Comm * comm, int *error, ...);
 
 #define MPI_ERRHANDLER_NULL 0

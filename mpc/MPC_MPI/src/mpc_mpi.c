@@ -540,7 +540,7 @@ __sctk_init_mpi_errors ()
     (MPI_Handler_function *) MPI_Return_error;
   data->user_func[MPI_ERRORS_RETURN].status = 1;
   data->user_func[MPI_ERRORS_ARE_FATAL].func =
-    (MPI_Handler_function *) MPI_Default_error;
+    (MPI_Handler_function *) MPI_Abort_error;
   data->user_func[MPI_ERRORS_ARE_FATAL].status = 1;
 }
 
@@ -7171,6 +7171,21 @@ MPI_Default_error (MPI_Comm * comm, int *error, char *msg, char *file,
     sctk_error ("Unknown error");
   /* The lib is not supposed to crash but deliver message */
   //~ __INTERNAL__PMPI_Abort (*comm, *error);
+}
+
+void
+MPI_Abort_error (MPI_Comm * comm, int *error, char *msg, char *file,
+		   int line)
+{
+  char str[1024];
+  int i;
+  __INTERNAL__PMPI_Error_string (*error, str, &i);
+  if (i != 0)
+    sctk_error ("%s in file %s at line %d %s", str, file, line, msg);
+  else
+    sctk_error ("Unknown error");
+  /* The lib is not supposed to crash but deliver message */
+  __INTERNAL__PMPI_Abort (*comm, *error);
 }
 
 void
