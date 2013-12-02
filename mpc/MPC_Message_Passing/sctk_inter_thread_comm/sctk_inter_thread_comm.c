@@ -2029,6 +2029,9 @@ TODO("Rewrite the following section")
        * has been handled */
       i = OPA_load_int(&pair->pending_nb);
       if (i != 0) sctk_thread_yield();
+
+/*       sleep(5); */
+/*       fprintf(stderr,"Reste %d\n",pair->pending_nb); */
     }
   } while(i != 0);
 #endif
@@ -2096,7 +2099,7 @@ void sctk_send_message_try_check (sctk_thread_ptp_message_t * msg,int perform_ch
 
     if (src_pair == NULL) {
       assume(dest_pair);
-      sctk_internal_ptp_add_pending(dest_pair,msg);
+/*       sctk_internal_ptp_add_pending(dest_pair,msg); */
     } else {
       sctk_internal_ptp_add_pending(src_pair,msg);
     }
