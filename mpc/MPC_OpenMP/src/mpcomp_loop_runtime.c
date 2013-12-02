@@ -29,10 +29,11 @@ TODO(runtime schedule: ICVs are not well transfered!)
 
 int
 __mpcomp_runtime_loop_begin(
-  long lb, long b, long incr, long chunk_size, 
+  long lb, long b, long incr, 
     long * from, long * to )
 {
      mpcomp_thread_t *t ;	/* Info on the current thread */
+     long chunk_size;
 
      /* Handle orphaned directive (initialize OpenMP environment) */
      __mpcomp_init();
@@ -44,10 +45,7 @@ __mpcomp_runtime_loop_begin(
      sctk_debug( "__mpcomp_runtime_loop_begin: value of schedule %d",
          t->info.icvs.run_sched_var ) ;
 
-
-     t->info.icvs.run_sched_var = omp_sched_static ;
-
-
+     chunk_size = t->info.icvs.modifier_sched_var;
 
      switch( t->info.icvs.run_sched_var ) {
        case omp_sched_static:
@@ -60,7 +58,7 @@ __mpcomp_runtime_loop_begin(
          return __mpcomp_guided_loop_begin( lb, b, incr, chunk_size, from, to ) ;
          break ;
        default:
-         not_implemented() ;
+	 not_reachable();
          break ;
      }
 
@@ -90,7 +88,7 @@ __mpcomp_runtime_loop_next( long * from, long * to )
          return __mpcomp_guided_loop_next( from, to ) ;
          break ;
        default:
-         not_implemented() ;
+	 not_reachable();
          break ;
      }
 

@@ -264,7 +264,7 @@ extern "C"
    }
    __mpcomp_runtime_loop_end() ;
  */
-  int __mpcomp_runtime_loop_begin (long lb, long b, long incr, long chunk_size,
+  int __mpcomp_runtime_loop_begin (long lb, long b, long incr,
 				   long *from, long *to);
   int __mpcomp_runtime_loop_next (long *from, long *to);
   void __mpcomp_runtime_loop_end ();

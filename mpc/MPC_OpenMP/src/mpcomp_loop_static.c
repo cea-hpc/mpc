@@ -208,7 +208,7 @@ int __mpcomp_static_loop_begin (long lb, long b, long incr, long chunk_size,
 	  t->static_nb_chunks = __mpcomp_get_static_nb_chunks_per_rank(rank, nb_threads, 
 								       lb, b, incr, 
 								       chunk_size );
-	  
+
 	  /* No chunk -> exit the 'for' loop */
 	  if ( t->static_nb_chunks <= 0 )
 	       return 0;

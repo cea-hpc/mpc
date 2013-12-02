@@ -35,7 +35,7 @@
 /* Schedule type */
 static omp_sched_t OMP_SCHEDULE = 1;
 /* Schedule modifier */
-static int OMP_MODIFIER_SCHEDULE = -1;
+static int OMP_MODIFIER_SCHEDULE = 0;
 /* Defaults number of threads */
 static int OMP_NUM_THREADS = 0;
 /* Is dynamic adaptation on? */
