@@ -4243,7 +4243,7 @@ __INTERNAL__PMPI_Scan (void *sendbuf, void *recvbuf, int count,
   int size;
   int rank;
   MPI_Request request;
-  int dsize;
+  MPI_Aint dsize;
   void *tmp;
   int res;
 
@@ -4256,33 +4256,30 @@ __INTERNAL__PMPI_Scan (void *sendbuf, void *recvbuf, int count,
 
   __INTERNAL__PMPI_Isend (sendbuf, count, datatype, rank, -3, comm, &request);
 
-  res = __INTERNAL__PMPI_Pack_size (count, datatype, comm, &dsize);
+  res =  __INTERNAL__PMPI_Type_extent (datatype, &dsize);
   if (res != MPI_SUCCESS)
     {
       return res;
     }
 
-  tmp = sctk_malloc (dsize);
+  tmp = sctk_malloc (dsize*count);
 
-  if (rank == 0)
+  res =
+    __INTERNAL__PMPI_Recv (recvbuf, count, datatype, rank, -3, comm,
+			   MPI_STATUS_IGNORE);
+  if (res != MPI_SUCCESS)
     {
-      res =
-	__INTERNAL__PMPI_Recv (recvbuf, count, datatype, 0, -3, comm,
-			       MPI_STATUS_IGNORE);
-      if (res != MPI_SUCCESS)
-	{
-	  return res;
-	}
+      return res;
     }
-  else
+
+  res = __INTERNAL__PMPI_Barrier (comm);
+  if (res != MPI_SUCCESS)
     {
-      res =
-	__INTERNAL__PMPI_Recv (recvbuf, count, datatype, rank, -3, comm,
-			       MPI_STATUS_IGNORE);
-      if (res != MPI_SUCCESS)
-	{
-	  return res;
-	}
+      return res;
+    }
+
+  if (rank != 0)
+    {
       res =
 	__INTERNAL__PMPI_Recv (tmp, count, datatype, rank - 1, -3, comm,
 			       MPI_STATUS_IGNORE);
