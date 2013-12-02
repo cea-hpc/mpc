@@ -8661,6 +8661,7 @@ int
 PMPI_Barrier (MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
+  mpi_check_comm (comm, comm);
   sctk_nodebug ("Entering BARRIER %d", comm);
   res = __INTERNAL__PMPI_Barrier (comm);
   SCTK__MPI_Check_retrun_val (res, comm);
