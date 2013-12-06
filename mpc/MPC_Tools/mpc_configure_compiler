@@ -556,7 +556,7 @@ if test "$SCTK_FORTRAN" = "1" ; then
   # Create the link to the default compiler
 
   print_specfific_compiler bin/mpc_gfortran $GNU_PRIVATIZE mpc_f77_${DEFAULT_VERSION}
-  print_specfific_compiler bin/mpc_ifort $INTEL_PRIVATIZE "mpc_f77_default -cc=ifort" intel
+  print_specfific_compiler bin/mpc_ifort $INTEL_PRIVATIZE "mpc_f77_default -cc=ifort -threads" intel
   rm -f bin/mpc_f77
   ln -s mpc_gfortran bin/mpc_f77
 fi
