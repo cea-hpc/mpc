@@ -587,6 +587,10 @@ TODO("to optimize")
   if(((tag < 0) || (tag > MPI_TAG_UB_VALUE)))	\
     MPI_ERROR_REPORT(comm,MPI_ERR_TAG,"")
 
+#define mpi_check_op(op,comm)				\
+  if(op == MPI_OP_NULL)							\
+    MPI_ERROR_REPORT(comm,MPI_ERR_OP,"")
+
 static int SCTK__MPI_Attr_clean_communicator (MPI_Comm comm);
 static int SCTK__MPI_Attr_communicator_dup (MPI_Comm old, MPI_Comm new);
 
@@ -8141,6 +8145,7 @@ PMPI_Iprobe (int source, int tag, MPI_Comm comm, int *flag,
 	     MPI_Status * status)
 {
   int res = MPI_ERR_INTERN;
+	mpi_check_comm(comm, comm);
   res = __INTERNAL__PMPI_Iprobe (source, tag, comm, flag, status);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -8149,6 +8154,7 @@ int
 PMPI_Probe (int source, int tag, MPI_Comm comm, MPI_Status * status)
 {
   int res = MPI_ERR_INTERN;
+	mpi_check_comm(comm, comm);
   res = __INTERNAL__PMPI_Probe (source, tag, comm, status);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -8687,6 +8693,12 @@ PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, int root,
 	    MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
+	mpi_check_comm(comm, comm);
+	mpi_check_buf (buffer, comm);
+	mpi_check_count (count, comm);
+	mpi_check_type (datatype, comm);
+	mpi_check_tag (root, comm);
+
   sctk_nodebug ("Entering BCAST %d with count %d", comm, count);
   res = __INTERNAL__PMPI_Bcast (buffer, count, datatype, root, comm);
   SCTK__MPI_Check_retrun_val (res, comm);
@@ -8698,6 +8710,15 @@ PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	     int root, MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
+	mpi_check_comm (comm, comm);
+	mpi_check_buf (sendbuf, comm);
+	mpi_check_count (sendcnt, comm);
+	mpi_check_type (sendtype, comm);
+	mpi_check_buf (recvbuf, comm);
+	mpi_check_count (recvcnt, comm);
+	mpi_check_type (recvtype, comm);
+	mpi_check_tag (root, comm);
+
   res =
     __INTERNAL__PMPI_Gather (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
 			     recvtype, root, comm);
@@ -8710,7 +8731,15 @@ PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	      MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
-  res =
+	mpi_check_comm (comm, comm);
+	mpi_check_buf (sendbuf, comm);
+	mpi_check_count (sendcnt, comm);
+	mpi_check_type (sendtype, comm);
+	mpi_check_buf (recvbuf, comm);
+//	mpi_check_count (recvcnt, comm);
+	mpi_check_type (recvtype, comm);
+	mpi_check_tag (root, comm);
+ res =
     __INTERNAL__PMPI_Gatherv (sendbuf, sendcnt, sendtype, recvbuf, recvcnts,
 			      displs, recvtype, root, comm);
   SCTK__MPI_Check_retrun_val (res, comm);
@@ -8722,7 +8751,15 @@ PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	      MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
-  res =
+	mpi_check_comm (comm, comm);
+	mpi_check_buf (sendbuf, comm);
+	mpi_check_count (sendcnt, comm);
+	mpi_check_type (sendtype, comm);
+	mpi_check_buf (recvbuf, comm);
+	mpi_check_count (recvcnt, comm);
+	mpi_check_type (recvtype, comm);
+	mpi_check_tag (root, comm);
+ res =
     __INTERNAL__PMPI_Scatter (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
 			      recvtype, root, comm);
   SCTK__MPI_Check_retrun_val (res, comm);
@@ -8734,6 +8771,14 @@ PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 	       MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
+	mpi_check_comm (comm, comm);
+	mpi_check_buf (sendbuf, comm);
+//	mpi_check_count (sendcnt, comm);
+	mpi_check_type (sendtype, comm);
+	mpi_check_buf (recvbuf, comm);
+	mpi_check_count (recvcnt, comm);
+	mpi_check_type (recvtype, comm);
+	mpi_check_tag (root, comm);
   res =
     __INTERNAL__PMPI_Scatterv (sendbuf, sendcnts, displs, sendtype, recvbuf,
 			       recvcnt, recvtype, root, comm);
@@ -8746,6 +8791,13 @@ PMPI_Allgather (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
+	mpi_check_comm (comm, comm);
+	mpi_check_buf (sendbuf, comm);
+	mpi_check_count (sendcount, comm);
+	mpi_check_type (sendtype, comm);
+	mpi_check_buf (recvbuf, comm);
+	mpi_check_count (recvcount, comm);
+	mpi_check_type (recvtype, comm);
   res =
     __INTERNAL__PMPI_Allgather (sendbuf, sendcount, sendtype, recvbuf,
 				recvcount, recvtype, comm);
@@ -8758,6 +8810,13 @@ PMPI_Allgatherv (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 		 MPI_Datatype recvtype, MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
+	mpi_check_comm (comm, comm);
+	mpi_check_buf (sendbuf, comm);
+	mpi_check_count (sendcount, comm);
+	mpi_check_type (sendtype, comm);
+	mpi_check_buf (recvbuf, comm);
+//	mpi_check_count (recvcnt, comm);
+	mpi_check_type (recvtype, comm);
   res =
     __INTERNAL__PMPI_Allgatherv (sendbuf, sendcount, sendtype, recvbuf,
 				 recvcounts, displs, recvtype, comm);
@@ -8770,6 +8829,13 @@ PMPI_Alltoall (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	       MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
+	mpi_check_comm (comm, comm);
+	mpi_check_buf (sendbuf, comm);
+	mpi_check_count (sendcount, comm);
+	mpi_check_type (sendtype, comm);
+	mpi_check_buf (recvbuf, comm);
+	mpi_check_count (recvcount, comm);
+	mpi_check_type (recvtype, comm);
   res =
     __INTERNAL__PMPI_Alltoall (sendbuf, sendcount, sendtype, recvbuf,
 			       recvcount, recvtype, comm);
@@ -8782,6 +8848,13 @@ PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 		int *rdispls, MPI_Datatype recvtype, MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
+	mpi_check_comm (comm, comm);
+	mpi_check_buf (sendbuf, comm);
+//	mpi_check_count (sendcnt, comm);
+	mpi_check_type (sendtype, comm);
+	mpi_check_buf (recvbuf, comm);
+//	mpi_check_count (recvcnt, comm);
+	mpi_check_type (recvtype, comm);
   res =
     __INTERNAL__PMPI_Alltoallv (sendbuf, sendcnts, sdispls, sendtype, recvbuf,
 				recvcnts, rdispls, recvtype, comm);
@@ -8792,6 +8865,13 @@ int PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sen
 				   void *recvbuf, int *recvcnts, int *rdispls, MPI_Datatype *recvtypes, MPI_Comm comm)
 {
 	int res = MPI_ERR_INTERN;
+	mpi_check_comm (comm, comm);
+	mpi_check_buf (sendbuf, comm);
+//	mpi_check_count (sendcnt, comm);
+//	mpi_check_type (sendtype, comm);
+	mpi_check_buf (recvbuf, comm);
+//	mpi_check_count (recvcnt, comm);
+//	mpi_check_type (recvtype, comm);
 	res = __INTERNAL__PMPI_Alltoallw (sendbuf, sendcnts, sdispls, sendtypes, recvbuf, recvcnts, rdispls, recvtypes, comm);
 	SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -8801,6 +8881,13 @@ PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	     MPI_Op op, int root, MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
+	mpi_check_comm (comm, comm);
+	mpi_check_buf (sendbuf, comm);
+	mpi_check_buf (recvbuf, comm);
+	mpi_check_count (count, comm);
+	mpi_check_type (datatype, comm);
+	mpi_check_op (op, comm);
+	mpi_check_tag (root, comm);
   res =
     __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, root,
 			     comm);
@@ -8835,6 +8922,7 @@ PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
   mpi_check_buf (recvbuf, comm);
   mpi_check_count (count, comm);
   mpi_check_type (datatype, comm);
+	mpi_check_op (op, comm);
   sctk_nodebug ("Entering ALLREDUCE %d", comm);
   res =
     __INTERNAL__PMPI_Allreduce (sendbuf, recvbuf, count, datatype, op, comm);
@@ -8846,6 +8934,12 @@ PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 		     MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
+	mpi_check_comm (comm, comm);
+	mpi_check_buf (sendbuf, comm);
+	mpi_check_buf (recvbuf, comm);
+//	mpi_check_count (count, comm);
+	mpi_check_type (datatype, comm);
+	mpi_check_op (op, comm);
   res =
     __INTERNAL__PMPI_Reduce_scatter (sendbuf, recvbuf, recvcnts, datatype, op,
 				     comm);
@@ -8857,6 +8951,12 @@ PMPI_Scan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	   MPI_Op op, MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
+  mpi_check_comm (comm, comm);
+  mpi_check_buf (sendbuf, comm);
+  mpi_check_buf (recvbuf, comm);
+  mpi_check_count (count, comm);
+  mpi_check_type (datatype, comm);
+	mpi_check_op (op, comm);
   res = __INTERNAL__PMPI_Scan (sendbuf, recvbuf, count, datatype, op, comm);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
