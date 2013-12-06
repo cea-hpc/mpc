@@ -39,6 +39,8 @@ cat <<EOF >> ${OUTPUT_FILE}
 
 MPCROOT="${SCTK_PREFIX}"
 
+export MPI_ROOT="\${MPCROOT}"
+
 if test -z "\${PATH}" ; then
    export PATH="\${MPCROOT}/bin"
 else
@@ -99,6 +101,8 @@ header_sh >> ${OUTPUT_FILE}
 cat <<EOF >> ${OUTPUT_FILE}
 
 set MPCROOT="${SCTK_PREFIX}"
+
+setenv MPI_ROOT "\${MPCROOT}"
 
 if (\$?PATH) then
    setenv PATH "\${MPCROOT}/bin:\${PATH}"
