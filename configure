@@ -124,6 +124,7 @@ MPC gcc options:
   --gcc-{with-mpfr|...}               Pass option to GCC configure script.
   --with-mpfr=prefix                  Prefix for libmpfr needed to build gcc.
   --with-gmp=prefix                   Prefix for libgmp needed to build gcc.
+  --with-mpc=prefix                   Prefix for libmpc needed to build gcc.
 
 MPC binutils options:
   --disable-mpc-binutils              Disable compilation of mpc-binutils [enabled]
@@ -194,6 +195,9 @@ for arg in "$@" ; do
       GCC_CONFIGURE_ARGUMENTS="${GCC_CONFIGURE_ARGUMENTS} ${arg}"
     ;;
     --with-gmp=*)
+      GCC_CONFIGURE_ARGUMENTS="${GCC_CONFIGURE_ARGUMENTS} ${arg}"
+    ;;
+    --with-mpc=*)
       GCC_CONFIGURE_ARGUMENTS="${GCC_CONFIGURE_ARGUMENTS} ${arg}"
     ;;
     --with-hydra)
