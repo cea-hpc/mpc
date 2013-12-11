@@ -84,7 +84,7 @@ SCTK_INTERN int sctk_get_numa_node_number ()
 		res = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) ;
 	return res;
 	#else
-	return 1;
+	return sctk_alloc_config()->mm_sources;
 	#endif
 }
 #endif

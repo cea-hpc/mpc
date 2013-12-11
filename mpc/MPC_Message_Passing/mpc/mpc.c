@@ -2214,6 +2214,13 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
       ADD_FUNC_HANDLER(func,MPC_INT,op);                \
       ADD_FUNC_HANDLER(func,MPC_LONG,op);               \
       ADD_FUNC_HANDLER(func,MPC_FLOAT,op);              \
+      ADD_FUNC_HANDLER(func,MPC_INTEGER1,op);           \
+      ADD_FUNC_HANDLER(func,MPC_INTEGER2,op);           \
+      ADD_FUNC_HANDLER(func,MPC_INTEGER4,op);           \
+      ADD_FUNC_HANDLER(func,MPC_INTEGER8,op);           \
+      ADD_FUNC_HANDLER(func,MPC_REAL4,op);              \
+      ADD_FUNC_HANDLER(func,MPC_REAL8,op);              \
+      ADD_FUNC_HANDLER(func,MPC_REAL16,op);             \
       ADD_FUNC_HANDLER(func,MPC_DOUBLE,op);             \
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_CHAR,op);      \
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_SHORT,op);     \
@@ -2234,6 +2241,10 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
       ADD_FUNC_HANDLER(func,MPC_BYTE,op);		\
       ADD_FUNC_HANDLER(func,MPC_SHORT,op);		\
       ADD_FUNC_HANDLER(func,MPC_INT,op);		\
+      ADD_FUNC_HANDLER(func,MPC_INTEGER1,op);           \
+      ADD_FUNC_HANDLER(func,MPC_INTEGER2,op);           \
+      ADD_FUNC_HANDLER(func,MPC_INTEGER4,op);           \
+      ADD_FUNC_HANDLER(func,MPC_INTEGER8,op);           \
       ADD_FUNC_HANDLER(func,MPC_LONG,op);		\
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_CHAR,op);	\
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_SHORT,op);	\
@@ -2319,9 +2330,9 @@ __MPC_Allreduce (void *sendbuf, void *recvbuf, mpc_msg_count count,
 		else
 		COMPAT_DATA_TYPE (func, MPC_MIN_func)
 		else
-	    COMPAT_DATA_TYPE (func, MPC_PROD_func)
-	    else
-	    COMPAT_DATA_TYPE2 (func, MPC_BAND_func)
+	        COMPAT_DATA_TYPE (func, MPC_PROD_func)
+	        else
+	        COMPAT_DATA_TYPE2 (func, MPC_BAND_func)
 		else
 		COMPAT_DATA_TYPE2 (func, MPC_LAND_func)
 		else

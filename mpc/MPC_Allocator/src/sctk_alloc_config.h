@@ -62,6 +62,7 @@ struct sctk_runtime_config_struct_allocator
 	/** Print the config after load. **/
 	bool print_config;
 	bool numa_round_robin;
+	int mm_sources;
 };
 #endif //MPC_Common
 

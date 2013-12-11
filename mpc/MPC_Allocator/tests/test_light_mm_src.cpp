@@ -132,7 +132,7 @@ void TestLightMMSrc::setUp (void)
 /************************* FUNCTION ************************/
 void TestLightMMSrc::tearDown (void)
 {
-	light_source.counter = 0;
+	OPA_store_int(&light_source.counter,0);
 	sctk_alloc_mm_source_light_cleanup((sctk_alloc_mm_source*)&light_source);
 }
 
@@ -207,8 +207,8 @@ void TestLightMMSrc::test_find_in_cache_ok(void)
 	SVUT_ASSERT_SAME(selected_bloc,bloc);
 
 	//ok didn't need to test the re-registration here.
-	SVUT_ASSERT_EQUAL(1,light_source.counter);
-	light_source.counter = 0;
+	SVUT_ASSERT_EQUAL(1,OPA_load_int(&light_source.counter));
+	OPA_store_int(&light_source.counter,0);
 }
 
 /************************* FUNCTION ************************/
@@ -226,8 +226,8 @@ void TestLightMMSrc::test_find_in_cache_on_more(void)
 	SVUT_ASSERT_NULL(selected_bloc);
 
 	//ok didn't need to test the re-registration here.
-	SVUT_ASSERT_EQUAL(1,light_source.counter);
-	light_source.counter = 0;
+	SVUT_ASSERT_EQUAL(1,OPA_load_int(&light_source.counter));
+	OPA_store_int(&light_source.counter,0);
 }
 
 
@@ -257,8 +257,8 @@ void TestLightMMSrc::test_request_mem_1(void)
 	SVUT_ASSERT_NOT_NULL(macro_bloc);
 
 	//ok didn't need to test the re-registration here.
-	SVUT_ASSERT_EQUAL(1,light_source.counter);
-	light_source.counter = 0;
+	SVUT_ASSERT_EQUAL(1,OPA_load_int(&light_source.counter));
+	OPA_store_int(&light_source.counter,0);
 }
 
 /************************* FUNCTION ************************/
@@ -279,8 +279,8 @@ void TestLightMMSrc::test_request_mem_2(void)
 	}
 
 	//ok didn't need to test the re-registration here.
-	SVUT_ASSERT_EQUAL(1,light_source.counter);
-	light_source.counter = 0;
+	SVUT_ASSERT_EQUAL(1,OPA_load_int(&light_source.counter));
+	OPA_store_int(&light_source.counter,0);
 }
 
 /************************* FUNCTION ************************/
@@ -296,8 +296,8 @@ void TestLightMMSrc::test_request_mem_3(void)
 	SVUT_ASSERT_NOT_SAME(ptr,macro_bloc);
 
 	//ok didn't need to test the re-registration here.
-	SVUT_ASSERT_EQUAL(1,light_source.counter);
-	light_source.counter = 0;
+	SVUT_ASSERT_EQUAL(1,OPA_load_int(&light_source.counter));
+	OPA_store_int(&light_source.counter,0);
 }
 
 /************************* FUNCTION ************************/
@@ -307,7 +307,7 @@ void TestLightMMSrc::test_free_mem(void)
 	SVUT_ASSERT_NOT_NULL(macro_bloc);
 
 	//check
-	SVUT_ASSERT_EQUAL(1,light_source.counter);
+	SVUT_ASSERT_EQUAL(1,OPA_load_int(&light_source.counter));
 	SVUT_ASSERT_NULL(light_source.cache);
 
 	//free
@@ -320,7 +320,7 @@ void TestLightMMSrc::test_free_mem(void)
 	} else {
 		SVUT_ASSERT_NULL(light_source.cache);
 	}
-	SVUT_ASSERT_EQUAL(0,light_source.counter);
+	SVUT_ASSERT_EQUAL(0,OPA_load_int(&light_source.counter));
 }
 
 /************************* FUNCTION ************************/

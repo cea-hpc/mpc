@@ -51,7 +51,7 @@
  * 
  * */
 #ifndef LIB_RTDB_SO
-  #define LIB_RTDB_SO "libmpc.so"
+  #define LIB_RTDB_SO "libmpc_framework.so"
 #endif
 
 #if defined (THREAD_DB_COMPLIANT)

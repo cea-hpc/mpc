@@ -91,8 +91,8 @@ SCTK_PUBLIC void sctk_alloc_numa_stat_print_detail(void * ptr,size_t size);
 #define assert_numa(ptr,size,required_numa,min_ratio,message) sctk_alloc_numa_check(true,__FILE__,__LINE__,(ptr),(size),(required_numa),(min_ratio),(message))
 #define warn_numa(ptr,size,required_numa,min_ratio,message) sctk_alloc_numa_check(false,__FILE__,__LINE__,(ptr),(size),(required_numa),(min_ratio),(message))
 #else
-#define assert_numa(ptr,size,required_numa,min_ratio,message) while(0) {}
-#define warning_numa(ptr,size,required_numa,min_ratio,message) while(0) {}
+#define assert_numa(ptr,size,required_numa,min_ratio,message) do {} while(0)
+#define warning_numa(ptr,size,required_numa,min_ratio,message) do {} while(0)
 #endif
 SCTK_PUBLIC void sctk_alloc_numa_check(bool fatal_on_fail,const char * filename,int line,void * ptr,size_t size,int required_numa,int min_ratio,const char * message);
 

@@ -69,6 +69,7 @@ SCTK_CHECK_LIB_HWLOC
 
 #TODO rename this into hwloc as now NUMA is supported via hwloc
 SCTK_CHECK_OPTION -DHAVE_HWLOC
+SCTK_CHECK_OPTION -DENABLE_GLIBC_ALLOC_HOOKS
 
 #TODO maybe reverse this in DISABLE_STATIC for unit test and default static for others
 SCTK_CHECK_OPTION -DENABLE_STATIC

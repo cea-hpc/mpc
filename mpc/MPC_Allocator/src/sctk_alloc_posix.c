@@ -102,6 +102,30 @@ int sctk_get_node_from_cpu (int cpu);
 #endif
 
 /*************************** FUNCTION **********************/
+SCTK_PUBLIC void * sctk_malloc_hook(size_t size,const void * caller)
+{
+	return sctk_malloc(size);
+}
+
+/*************************** FUNCTION **********************/
+SCTK_PUBLIC void sctk_free_hook(void * ptr, const void * caller)
+{
+	sctk_free(ptr);
+}
+
+/*************************** FUNCTION **********************/
+SCTK_PUBLIC void * sctk_realloc_hook(void * ptr,size_t size,const void * caller)
+{
+	return sctk_realloc(ptr,size);
+}
+
+/*************************** FUNCTION **********************/
+SCTK_PUBLIC void * sctk_memalign_hook(size_t align,size_t size,const void * caller)
+{
+	return sctk_memalign(align,size);
+}
+
+/*************************** FUNCTION **********************/
 /**
  * Tls chain setter
  * @param chain Define the allocation chain to setup.
@@ -230,7 +254,7 @@ SCTK_INTERN void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void)
 	assume_m(nodes <= SCTK_MAX_NUMA_NODE,"Caution, you get more node than supported by allocator. Limit is setup by SCTK_MAX_NUMA_NODE macro in sctk_alloc_posix.c.");
 
 	//debug
-	SCTK_PDEBUG("Init with NUMA_NODES = %d , MAX_NUMA_NODE = %d",nodes,SCTK_MAX_NUMA_NODE);
+	SCTK_NO_PDEBUG("Init with NUMA_NODES = %d , MAX_NUMA_NODE = %d",nodes,SCTK_MAX_NUMA_NODE);
 
 	if (nodes <= 1)
 	{
@@ -241,11 +265,10 @@ SCTK_INTERN void sctk_alloc_posix_mmsrc_numa_init_phase_numa(void)
 		for ( i = 0 ; i < nodes ; ++i)
 			sctk_alloc_posix_mmsrc_numa_init_node(i);
 	}
-	#endif
 
 	//setup malloc on node
-	/** @TODO plug malloc_on_node on std alloc if have no NUMA node. **/
 	sctk_malloc_on_node_init(sctk_get_numa_node_number());
+	#endif
 
 	//mark NUMA init phase as done.
 	sctk_global_base_init = SCTK_ALLOC_POSIX_INIT_NUMA;
@@ -336,6 +359,22 @@ SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(in
 }
 
 /************************* FUNCTION ************************/
+#ifdef ENABLE_GLIBC_ALLOC_HOOKS
+SCTK_INTERN void sctk_alloc_posix_init_glibc_hooks(void)
+{
+	//setup hooks
+	__malloc_hook = sctk_malloc_hook;
+	__free_hook = sctk_free_hook;
+	__realloc_hook = sctk_realloc_hook;
+	__memalign_hook = sctk_memalign_hook;
+
+	//call the libc handler
+	if (__malloc_initialize_hook != NULL)
+		__malloc_initialize_hook();
+}
+#endif //ENABLE_GLIBC_ALLOC_HOOKS
+
+/************************* FUNCTION ************************/
 /**
  * Method used to setup the memory source (global for the process) at first allocation or at
  * initialisation step if available. This method is protected for exclusive access by an internal
@@ -343,10 +382,8 @@ SCTK_STATIC struct sctk_alloc_mm_source* sctk_alloc_posix_get_local_mm_source(in
 **/
 SCTK_INTERN void sctk_alloc_posix_base_init(void)
 {
-	/** @todo check for optimization **/
 	static SCTK_ALLOC_INIT_LOCK_TYPE global_mm_mutex = SCTK_ALLOC_INIT_LOCK_INITIALIZER;
-	/** @todo Maybe allocate this with mmap or sbrk **/
-	static char buffer[SCTK_MACRO_BLOC_SIZE];
+	static char buffer[SCTK_ALLOC_EGG_INIT_MEM];
 
 	//check to avoid taking the mutex if not necessary
 	if (sctk_global_base_init >= SCTK_ALLOC_POSIX_INIT_DEFAULT)
@@ -361,6 +398,11 @@ SCTK_INTERN void sctk_alloc_posix_base_init(void)
 		//debug
 		SCTK_NO_PDEBUG("Allocator init phase : Egg");
 
+		//init glibc hooks
+		#ifdef ENABLE_GLIBC_ALLOC_HOOKS
+		sctk_alloc_posix_init_glibc_hooks();
+		#endif //ENABLE_GLIBC_ALLOC_HOOKS
+
 		//setup hooks if required
 		#ifdef ENABLE_ALLOC_HOOKS
 		sctk_alloc_hooks_init(&sctk_alloc_gbl_hooks);
@@ -372,8 +414,7 @@ SCTK_INTERN void sctk_alloc_posix_base_init(void)
 		//tls chain initialization
 		sctk_alloc_tls_chain();
 		//setup egg allocator to bootstrap thread allocation chains.
-		/** @todo Maybe optimize by avoiding loading 2MB of virtual memory on egg allocator. **/
-		sctk_alloc_chain_user_init(&sctk_global_egg_chain,buffer,SCTK_MACRO_BLOC_SIZE,SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE);
+		sctk_alloc_chain_user_init(&sctk_global_egg_chain,buffer,SCTK_ALLOC_EGG_INIT_MEM,SCTK_ALLOC_CHAIN_FLAGS_THREAD_SAFE);
 
 		//set name
 		sctk_global_egg_chain.name = "mpc_egg_allocator";
@@ -461,13 +502,6 @@ SCTK_INTERN struct sctk_alloc_chain * sctk_alloc_posix_create_new_tls_chain(void
 
 	//reenable valgrind
 	SCTK_ALLOC_MMCHECK_ENABLE_REPORT();
-
-	/** @todo TODO register the allocation chain for debugging. **/
-	//setup pointer for alocator memory dump in case of crash
-	//#ifdef SCTK_ALLOC_DEBUG
-	//TODO
-	//sctk_alloc_chain_list[0] = &chain;
-	//#endif
 	return chain;
 }
 
@@ -534,6 +568,12 @@ SCTK_PUBLIC void * sctk_malloc (size_t size)
 	if (local_chain == NULL)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
 
+	//call hook if required
+	#ifdef ENABLE_GLIBC_ALLOC_HOOKS
+	if (__malloc_hook != sctk_malloc_hook)
+		return __malloc_hook(size,sctk_malloc);
+	#endif //ENABLE_GLIBC_ALLOC_HOOKS
+
 	//purge the remote free queue
 	sctk_alloc_chain_purge_rfq(local_chain);
 
@@ -541,7 +581,10 @@ SCTK_PUBLIC void * sctk_malloc (size_t size)
 
 	//to be compatible with glibc policy which didn't return NULL in this case.
 	//otherwise we got crash in sed/grep/nano ...
-	/** @todo Optimize by returning a specific fixed address instead of alloc size=1 **/
+	/**
+	 * @todo Optimize by returning a specific fixed address instead of alloc size=1 *
+	 * but need to check in spec if it was correct.
+	**/
 	if (size == 0)
 		size = 1;
 
@@ -568,6 +611,12 @@ SCTK_PUBLIC void * sctk_memalign(size_t boundary,size_t size)
 	//setup the local chain if not already done
 	if (local_chain == NULL)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
+
+	//call hook if required
+	#ifdef ENABLE_GLIBC_ALLOC_HOOKS
+	if (__memalign_hook != sctk_memalign_hook)
+		return __memalign_hook(boundary,size,sctk_memalign);
+	#endif //ENABLE_GLIBC_ALLOC_HOOKS
 
 	//purge the remote free queue
 	sctk_alloc_chain_purge_rfq(local_chain);
@@ -619,6 +668,12 @@ SCTK_PUBLIC void sctk_free (void * ptr)
 	//call to malloc()
 	if (local_chain == NULL)
 		local_chain = sctk_alloc_posix_setup_tls_chain();
+
+	//call hook if required
+	#ifdef ENABLE_GLIBC_ALLOC_HOOKS
+	if (__free_hook != sctk_free_hook)
+		return __free_hook(ptr,sctk_free);
+	#endif //ENABLE_GLIBC_ALLOC_HOOKS
 
 	//purge the remote free queue
 	sctk_alloc_chain_purge_rfq(local_chain);
@@ -739,6 +794,17 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 		return NULL;
 	}
 
+	//get the current chain
+	local_chain = sctk_get_tls_chain();
+	if (local_chain == NULL)
+		local_chain = sctk_alloc_posix_setup_tls_chain();
+
+	#ifdef ENABLE_GLIBC_ALLOC_HOOKS
+	//call hook if required
+	if (__realloc_hook != sctk_realloc_hook)
+		return __realloc_hook(ptr,size,sctk_realloc);
+	#endif //ENABLE_GLIBC_ALLOC_HOOKS
+
 	//get the chain of the chunk
 	macro_bloc = sctk_alloc_region_get_macro_bloc(ptr);
 	if (macro_bloc != NULL)
@@ -758,11 +824,6 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 
 	//error handling
 	assume_m (chain != NULL,"Allocator error on realloc(%p,%llu), the address you provide is not managed by this memory allocator.",ptr,size);
-
-	//get the current chain
-	local_chain = sctk_get_tls_chain();
-	if (local_chain == NULL)
-		local_chain = sctk_alloc_posix_setup_tls_chain();
 
 	if (chain == local_chain || sctk_alloc_chain_is_thread_safe(chain))
 	{
@@ -787,7 +848,6 @@ SCTK_PUBLIC void * sctk_realloc (void * ptr, size_t size)
 }
 
 /************************* FUNCTION ************************/
-/** @TODO optimize this with mremap for huge segments. **/
 SCTK_STATIC void * sctk_realloc_inter_chain (void * ptr, size_t size)
 {
 	sctk_size_t copy_size = size;

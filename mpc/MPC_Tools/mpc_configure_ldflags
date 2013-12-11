@@ -31,13 +31,27 @@ EOF
 
 header_sh >> bin/mpc_ldflags
 
-FLAGS="-lmpc_tdb_remote_static $SCTK_LDFLAGS -Wl,-rpath,${SCTK_LIB_DIR}"
 
 cat <<EOF >> bin/mpc_ldflags
-if test "\$1" != "fortran" ; then
-echo "-L${SCTK_LIB_DIR} -lmpc $FLAGS"
+
+FLAGS="-lmpc_tdb_remote_static $SCTK_LDFLAGS -Wl,-rpath,${SCTK_LIB_DIR}"
+
+if test "\$MPC_USE_INTEL_COMPILER" = "1"; then
+NEW_FLAGS=""
+for i in \$FLAGS; do
+if test "\$i" = "-lm" ; then
+NEW_FLAGS="\$NEW_FLAGS"
 else
-echo "-L${SCTK_LIB_DIR} -lmpcf $FLAGS"
+NEW_FLAGS="\$NEW_FLAGS \$i"
+fi
+done
+FLAGS="\$NEW_FLAGS"
+fi
+
+if test "\$1" != "fortran" ; then
+echo "-L${SCTK_LIB_DIR} -lmpc_framework \$FLAGS"
+else
+echo "-L${SCTK_LIB_DIR} -lmpc_frameworkf \$FLAGS"
 fi
 EOF
 
