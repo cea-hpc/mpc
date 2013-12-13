@@ -143,8 +143,8 @@ static inline void __mpcomp_read_env_variables() {
 
   if ( OMP_MICROVP_NUMBER < 0 ) {
       fprintf( stderr, 
-	  "Warning: Incorrect number of microVPs (OMP_MICROVP_NUMBER=<%s>) -> "
-	  "Switching to default value %d\n", env, OMP_MICROVP_NUMBER ) ;
+	  "Warning: Incorrect number of microVPs (OMP_MICROVP_NUMBER=<%d>) -> "
+	       "Switching to default value %d\n", OMP_MICROVP_NUMBER, 0 ) ;
       OMP_MICROVP_NUMBER = 0 ;
   }
   if ( OMP_MICROVP_NUMBER > sctk_get_processor_number() ) {
@@ -267,9 +267,9 @@ static inline void __mpcomp_read_env_variables() {
   /******* ADDITIONAL VARIABLES *******/
 
   /******* OMP_TREE *********/
-  OMP_TREE = sctk_runtime_config_get()->modules.openmp.tree ;
+  env = sctk_runtime_config_get()->modules.openmp.tree ;
   
-  if (strlen( OMP_TREE) != 0)
+  if (strlen( env) != 0)
   {
     int nb_tokens = 0 ;
     char ** tokens = NULL ;
