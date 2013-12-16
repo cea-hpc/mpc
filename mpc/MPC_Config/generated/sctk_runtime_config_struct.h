@@ -308,6 +308,8 @@ struct sctk_runtime_config_struct_inter_thread_comm
 	int allreduce_max_size;
 	/****/
 	int allreduce_check_threshold;
+	/**Slot size for allreduce**/
+	int ALLREDUCE_MAX_SLOT;
 	/****/
 	struct sctk_runtime_config_funcptr collectives_init_hook;
 };

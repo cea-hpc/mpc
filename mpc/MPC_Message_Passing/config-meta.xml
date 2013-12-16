@@ -8,7 +8,7 @@
 			<param name="adm_port" type="int" doc="Defines the port number to use." default="0" />
 			<param name="verbose_level" type="int" doc="Defines the verbose level of the Infiniband interface ." default="0" />
 			<param name="eager_limit" type="int" doc="Size of the eager buffers (short messages)." default="12288" />
-			<param name="buffered_limit" type="int" doc="Max size for using the Buffered protocol (message split into several Eager messages)." default="262114" />
+			<param name="buffered_limit" type="int" doc="Max size for using the Buffered protocol (message split into several Eager messages)." default="524288" />
 			<param name="qp_tx_depth" type="int" doc="Number of entries to allocate in the QP for sending messages. If too low, may cause an QP overrun" default="15000" />
 			<param name="qp_rx_depth" type="int" doc="Number of entries to allocate in the QP for receiving messages. Must be 0 if using SRQ" default="0" />
 			<param name="cq_depth" type="int" doc="Number of entries to allocate in the CQ. If too low, may cause a CQ overrun" default="40000" />
@@ -101,7 +101,8 @@
 			<param name="allreduce_arity_max" type="int" default="8" doc=""/>
 			<param name="allreduce_max_size" type="int" default="1024" doc=""/>
 			<param name="allreduce_check_threshold" type="int" default="8192" doc=""/>
-			<param name="collectives_init_hook" type="funcptr" default="sctk_collectives_init_opt_messages" doc=""/>
+			<param name="ALLREDUCE_MAX_SLOT" type="int" default="524288" doc="Slot size for allreduce"/>
+			<param name="collectives_init_hook" type="funcptr" default="sctk_collectives_init_opt_noalloc_split_messages" doc=""/>
 		</struct>
 
 		<struct name="low_level_comm" doc="">

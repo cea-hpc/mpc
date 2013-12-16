@@ -228,6 +228,7 @@ var sctk_runtime_config_xsd = "<?xml version='1.0'?>\
 <xs:element minOccurs='0' name='allreduce_arity_max' type='xs:integer'/>\
 <xs:element minOccurs='0' name='allreduce_max_size' type='xs:integer'/>\
 <xs:element minOccurs='0' name='allreduce_check_threshold' type='xs:integer'/>\
+<xs:element minOccurs='0' name='ALLREDUCE_MAX_SLOT' type='xs:integer'/>\
 <xs:element minOccurs='0' name='collectives_init_hook'>\
 <xs:simpleType>\
 <xs:restriction base='xs:string'>\

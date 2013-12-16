@@ -90,7 +90,7 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 	obj->adm_port = 0;
 	obj->verbose_level = 0;
 	obj->eager_limit = 12288;
-	obj->buffered_limit = 262114;
+	obj->buffered_limit = 524288;
 	obj->qp_tx_depth = 15000;
 	obj->qp_rx_depth = 0;
 	obj->cq_depth = 40000;
@@ -228,8 +228,9 @@ void sctk_runtime_config_struct_init_inter_thread_comm(void * struct_ptr)
 	obj->allreduce_arity_max = 8;
 	obj->allreduce_max_size = 1024;
 	obj->allreduce_check_threshold = 8192;
-	obj->collectives_init_hook.name = "sctk_collectives_init_opt_messages";
-	*(void **) &(obj->collectives_init_hook.value) = sctk_runtime_config_get_symbol("sctk_collectives_init_opt_messages");
+	obj->ALLREDUCE_MAX_SLOT = 524288;
+	obj->collectives_init_hook.name = "sctk_collectives_init_opt_noalloc_split_messages";
+	*(void **) &(obj->collectives_init_hook.value) = sctk_runtime_config_get_symbol("sctk_collectives_init_opt_noalloc_split_messages");
 }
 
 /*******************  FUNCTION  *********************/

@@ -42,7 +42,7 @@ meta.types = {
 		adm_port: {mode: 'param', name: "adm_port", type: "int", doc: "Defines the port number to use.", dflt: "0", },
 		verbose_level: {mode: 'param', name: "verbose_level", type: "int", doc: "Defines the verbose level of the Infiniband interface .", dflt: "0", },
 		eager_limit: {mode: 'param', name: "eager_limit", type: "int", doc: "Size of the eager buffers (short messages).", dflt: "12288", },
-		buffered_limit: {mode: 'param', name: "buffered_limit", type: "int", doc: "Max size for using the Buffered protocol (message split into several Eager messages).", dflt: "262114", },
+		buffered_limit: {mode: 'param', name: "buffered_limit", type: "int", doc: "Max size for using the Buffered protocol (message split into several Eager messages).", dflt: "524288", },
 		qp_tx_depth: {mode: 'param', name: "qp_tx_depth", type: "int", doc: "Number of entries to allocate in the QP for sending messages. If too low, may cause an QP overrun", dflt: "15000", },
 		qp_rx_depth: {mode: 'param', name: "qp_rx_depth", type: "int", doc: "Number of entries to allocate in the QP for receiving messages. Must be 0 if using SRQ", dflt: "0", },
 		cq_depth: {mode: 'param', name: "cq_depth", type: "int", doc: "Number of entries to allocate in the CQ. If too low, may cause a CQ overrun", dflt: "40000", },
@@ -117,7 +117,8 @@ meta.types = {
 		allreduce_arity_max: {mode: 'param', name: "allreduce_arity_max", type: "int", doc: "", dflt: "8", },
 		allreduce_max_size: {mode: 'param', name: "allreduce_max_size", type: "int", doc: "", dflt: "1024", },
 		allreduce_check_threshold: {mode: 'param', name: "allreduce_check_threshold", type: "int", doc: "", dflt: "8192", },
-		collectives_init_hook: {mode: 'param', name: "collectives_init_hook", type: "funcptr", doc: "", dflt: "sctk_collectives_init_opt_messages", },
+		ALLREDUCE_MAX_SLOT: {mode: 'param', name: "ALLREDUCE_MAX_SLOT", type: "int", doc: "Slot size for allreduce", dflt: "524288", },
+		collectives_init_hook: {mode: 'param', name: "collectives_init_hook", type: "funcptr", doc: "", dflt: "sctk_collectives_init_opt_noalloc_split_messages", },
 	}},
 	low_level_comm : {type: 'struct', name: "low_level_comm", childs: {
 		checksum: {mode: 'param', name: "checksum", type: "bool", doc: "", dflt: "true", },
