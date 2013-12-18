@@ -48,7 +48,7 @@ config-meta.xml automatically.
                 <adm_port>1</adm_port>
                 <verbose_level>0</verbose_level>
                 <eager_limit>12288</eager_limit>
-                <buffered_limit>524288</buffered_limit>
+                <buffered_limit>262114</buffered_limit>
                 <qp_tx_depth>15000</qp_tx_depth>
                 <qp_rx_depth>0</qp_rx_depth>
                 <cq_depth>40000</cq_depth>

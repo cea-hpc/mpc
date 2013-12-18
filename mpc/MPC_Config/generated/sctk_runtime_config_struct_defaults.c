@@ -90,7 +90,7 @@ void sctk_runtime_config_struct_init_net_driver_infiniband(void * struct_ptr)
 	obj->adm_port = 0;
 	obj->verbose_level = 0;
 	obj->eager_limit = 12288;
-	obj->buffered_limit = 524288;
+	obj->buffered_limit = 262114;
 	obj->qp_tx_depth = 15000;
 	obj->qp_rx_depth = 0;
 	obj->cq_depth = 40000;
