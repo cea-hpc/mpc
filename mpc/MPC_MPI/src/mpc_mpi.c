@@ -3312,6 +3312,10 @@ __INTERNAL__PMPI_Pack (void *inbuf,
 	return MPI_ERR_BUFFER;
       }
 
+      if(outbuf == NULL){
+	return MPI_ERR_BUFFER;
+      }
+
       PMPC_Type_size (datatype, &size);
       sctk_nodebug ("Pack %lu->%lu, ==> %lu %lu", 0, size * incount, *position, size * incount);
       memcpy (&(((char *) outbuf)[*position]), inbuf, size * incount);
