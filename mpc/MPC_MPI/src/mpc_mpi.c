@@ -1757,46 +1757,48 @@ static int __INTERNAL__PMPI_Waitany (int count, MPI_Request * array_of_requests,
 
 static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests, int *index, int *flag, MPI_Status * status)
 {
-	int i;
-	*index = MPI_UNDEFINED;
-	*flag = 1;
-	int tmp;
+  int i;
+  *index = MPI_UNDEFINED;
+  *flag = 1;
+  int tmp;
 
-	for (i = 0; i < count; i++)
+  for (i = 0; i < count; i++)
+    {
+      if (array_of_requests[i] == MPI_REQUEST_NULL)
 	{
-		if (array_of_requests[i] == MPI_REQUEST_NULL)
-		{
-			continue;
-		}
-
-		{
-			MPC_Request *req;
-			req = __sctk_convert_mpc_request (&(array_of_requests[i]));
-			if (req == &MPC_REQUEST_NULL)
-			{
-				continue;
-			}
-			else
-			{
-				int flag_test = 0;
-				tmp = PMPC_Test (req, &flag_test, status);
-				if(flag_test == 0)
-					*flag = 0;
-			}
-		}
-
-		if (tmp != MPI_SUCCESS)
-		{
-			return tmp;
-		}
-		if (*flag)
-		{
-			__sctk_delete_mpc_request (&(array_of_requests[i]));
-			*index = i;
-			return tmp;
-		}
+	  continue;
 	}
-	return MPI_SUCCESS;
+
+      {
+	MPC_Request *req;
+	req = __sctk_convert_mpc_request (&(array_of_requests[i]));
+	if (req == &MPC_REQUEST_NULL)
+	  {
+	    continue;
+	  }
+	else
+	  {
+	    int flag_test = 0;
+	    tmp = PMPC_Test (req, &flag_test, status);
+	    if(flag_test == 0)
+	      *flag = 0;
+	    else
+	      *flag = 1;
+	  }
+      }
+
+      if (tmp != MPI_SUCCESS)
+	{
+	  return tmp;
+	}
+      if (*flag)
+	{
+	  __sctk_delete_mpc_request (&(array_of_requests[i]));
+	  *index = i;
+	  return tmp;
+	}
+    }
+  return MPI_SUCCESS;
 }
 
 static int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests, MPI_Status * array_of_statuses)
