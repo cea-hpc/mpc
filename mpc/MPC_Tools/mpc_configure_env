@@ -37,7 +37,7 @@ header_sh >> ${OUTPUT_FILE}
 
 cat <<EOF >> ${OUTPUT_FILE}
 
-MPCROOT=${SCTK_PREFIX}
+MPCROOT="${SCTK_PREFIX}"
 
 if test -z "\${PATH}" ; then
    export PATH="\${MPCROOT}/bin"

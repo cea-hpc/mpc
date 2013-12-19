@@ -32,6 +32,19 @@
   ****** GLOBAL VARIABLES 
   *****************/
 
+/*
+  Avoid mix of MPC with Intel and GCC OpenMP runtimes
+ */
+
+#define ABORT_FUNC_OMP(a,b)			\
+  void a(){					\
+    sctk_error(b);				\
+    abort();					\
+  }
+
+ABORT_FUNC_OMP(__kmpc_for_static_init_4,"Mix Intel OpenMP runtime with MPC")
+ABORT_FUNC_OMP(GOMP_parallel_start,"Mix GCC OpenMP runtime with MPC")
+
 /* Schedule type */
 static omp_sched_t OMP_SCHEDULE = 1;
 /* Schedule modifier */
@@ -130,8 +143,8 @@ static inline void __mpcomp_read_env_variables() {
 
   if ( OMP_MICROVP_NUMBER < 0 ) {
       fprintf( stderr, 
-	  "Warning: Incorrect number of microVPs (OMP_MICROVP_NUMBER=<%s>) -> "
-	  "Switching to default value %d\n", env, OMP_MICROVP_NUMBER ) ;
+	  "Warning: Incorrect number of microVPs (OMP_MICROVP_NUMBER=<%d>) -> "
+	       "Switching to default value %d\n", OMP_MICROVP_NUMBER, 0 ) ;
       OMP_MICROVP_NUMBER = 0 ;
   }
   if ( OMP_MICROVP_NUMBER > sctk_get_processor_number() ) {
@@ -257,9 +270,9 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
   /******* ADDITIONAL VARIABLES *******/
 
   /******* OMP_TREE *********/
-  OMP_TREE = sctk_runtime_config_get()->modules.openmp.tree ;
+  env = sctk_runtime_config_get()->modules.openmp.tree ;
   
-  if (strlen( OMP_TREE) != 0)
+  if (strlen( env) != 0)
   {
     int nb_tokens = 0 ;
     char ** tokens = NULL ;

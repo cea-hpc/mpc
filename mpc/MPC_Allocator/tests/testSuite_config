@@ -39,9 +39,28 @@ ALLOC_TESTS="test_allocated_chunk \
 	test_regions\
 	test_malloc_on_node"
 
+#short function to help to transmit -c information to scheduler for test which use OpenMP
+#Maybe find a better way to do this
+#Args :
+#   - $1 : test name
+#   - $2 : dep
+#   - $3 : executable
+#   - $* : options
+run_alloc_test_with_max_cores()
+{
+	test_name="$1"
+	test_dep="$2"
+	test_exe="$3"
+	shift 3
+	COMMAND_OPTIONS="$@"
+	helper_gen_exec_command "$test_exe" "-c=${CLUSTER_MAX_CORES_PER_NODE}"
+	common_insert_test "$test_name" '0' "$command" "$test_deps"
+}
+
+#register tests
 for mode in uma numa; do
 	for test in $ALLOC_TESTS; do
-		common_insert_test "${test}_${mode}" '0' "${MPC_TEST_CURRENT_WORK_DIR}/${mode}/tests/${test} -m junit_xml -o output-${test}_${mode}.xml" "compile_MPC_Allocator_${mode}"
+		run_alloc_test_with_max_cores "${test}_${mode}" "compile_MPC_Allocator_${mode}" "${MPC_TEST_CURRENT_WORK_DIR}/${mode}/tests/${test}" "-m junit_xml -o output-${test}_${mode}.xml"
 	done
-	common_insert_test "test_mpscf_queue valid_${mode}" '0' "${MPC_TEST_CURRENT_WORK_DIR}/${mode}/tests/test_mpscf_queue valid" "compile_MPC_Allocator_${mode}"
+	run_alloc_test_with_max_cores "${test}_${mode}" "compile_MPC_Allocator_${mode}" "${MPC_TEST_CURRENT_WORK_DIR}/${mode}/tests/test_mpscf_queue" "valid"
 done

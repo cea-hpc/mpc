@@ -1,11 +1,25 @@
 #!/bin/sh
-######################################################
-#            PROJECT  : htmltop                      #
-#            VERSION  : 0.1.0-dev                    #
-#            DATE     : 11/2012                      #
-#            AUTHOR   : Valat Sébastien              #
-#            LICENSE  : CeCILL-C                     #
-######################################################
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - Valat Sébastien sebastien.valat@cea.fr                           #
+#                                                                      #
+########################################################################
 
 ######################################################
 # This script provide a simple wrapper to cmake to fix
@@ -17,11 +31,13 @@
 #script setup
 PROJECT_NAME='MPC_Allocator'
 # State variables
-PREFIX='/usr/local'
+PREFIX='-DCMAKE_INSTALL_PREFIX=/usr/local'
 CMAKE='cmake'
 EXTRA_CXX=''
 EXTRA_CXXFLAGS=''
 EXTRA_LDFLAGS=''
+EXTRA_CC=''
+EXTRA_CFLAGS=''
 BUILD_TYPE='Release'
 #features
 ENABLE_DISPLAY_COMMAND='false'
@@ -160,6 +176,12 @@ do
 		--show)
 			ENABLE_DISPLAY_COMMAND='true'
 			;;
+		CC=*)
+			EXTRA_CC="`get_arg_value \"$arg\" CC`"
+			;;
+		CFLAGS=*)
+			EXTRA_CFLAGS="`get_arg_value \"$arg\" CFLAGS`"
+			;;
 		CXX=*)
 			EXTRA_CXX="`get_arg_value \"$arg\" CXX`"
 			;;
@@ -195,6 +217,8 @@ fi
 
 ######################################################
 #Gen CC/CXX/LDFLAGS commands
+if [ ! -z "$EXTRA_CC" ];       then EXTRA_CC="-DCMAKE_C_COMPILER=${EXTRA_CC}"                 ; fi
+if [ ! -z "$EXTRA_CFLAGS" ];   then EXTRA_CFLAGS="-DCMAKE_C_FLAGS=${EXTRA_CFLAGS}"            ; fi
 if [ ! -z "$EXTRA_CXX" ];      then EXTRA_CXX="-DCMAKE_CXX_COMPILER=${EXTRA_CXX}"             ; fi
 if [ ! -z "$EXTRA_CXXFLAGS" ]; then EXTRA_CXXFLAGS="-DCMAKE_CXX_FLAGS=${EXTRA_CXXFLAGS}"      ; fi
 if [ ! -z "$EXTRA_LDFLAGS" ];  then EXTRA_LDFLAGS="-DCMAKE_EXE_LINKER_FLAGS=${EXTRA_LDFLAGS}" ; fi
@@ -216,8 +240,8 @@ gen_clean_command()
 
 ######################################################
 #Gen final command
-COMMAND="`gen_clean_command "${CMAKE}" "-DCMAKE_BUILD_TYPE=${BUILD_TYPE}" "${PREFIX}" "${EXTRA_CXX}" \
-	"${EXTRA_CXXFLAGS}" "${EXTRA_LDFLAGS}" "${ENABLE_RPATH}" \
+COMMAND="`gen_clean_command "${CMAKE}" "-DCMAKE_BUILD_TYPE=${BUILD_TYPE}" "${PREFIX}" \
+	"${EXTRA_CC}" "${EXTRA_CFLAGS}" "${EXTRA_CXX}" "${EXTRA_CXXFLAGS}" "${EXTRA_LDFLAGS}" "${ENABLE_RPATH}" \
 	"${DISABLE_TESTS}" "${LIB_SUFFIX}" "${HWLOC_PREFIX}" "${OPENPA_PREFIX}" "${ENABLE_RPATH}" "${DISABLE_VALGRIND}" "${SOURCE_DIR}"`"
 
 ######################################################

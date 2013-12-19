@@ -29,7 +29,9 @@
 #include "sctk_runtime_config_sources.h"
 #include "sctk_runtime_config_struct.h"
 
+/********************************* GLOBALS **********************************/
 extern void * sctk_handler;
+const char * sctk_cst_string_undefined;
 
 /******************************** STRUCTURE *********************************/
 /**

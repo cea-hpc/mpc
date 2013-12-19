@@ -72,6 +72,18 @@ void free (void * ptr)
 }
 
 /************************* FUNCTION ************************/
+/** @todo do some check at compile time, because, some OS have more parameters in cfree prototype. **/
+void cfree(void * ptr)
+{
+	SCTK_PROFIL_START(cfree);
+	SCTK_ALLOC_MMCHECK_DISABLE_REPORT();
+	SCTK_ALLOC_MMCHECK_UNREG(ptr);
+	sctk_free(ptr);
+	SCTK_ALLOC_MMCHECK_ENABLE_REPORT();
+	SCTK_PROFIL_END(free);
+}
+
+/************************* FUNCTION ************************/
 void * realloc (void * ptr, size_t size)
 {
 	void * res;

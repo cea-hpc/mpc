@@ -55,6 +55,85 @@ int hwloc_topology_dup (hwloc_topology_t * newtopology, hwloc_topology_t *oldtop
 }
 #endif
 
+/*
+ * Walk down the topology object 'topology' from 'obj' node
+ * and return the number of leaves.
+ */
+static int get_number_of_leaves(hwloc_obj_t obj, hwloc_topology_t topology, int *ignoredTypes)
+{
+     if (obj->type == HWLOC_OBJ_PU) {
+	  /* If the object is a at lowest level */
+
+	  return 1;
+     } else {
+	  unsigned nbChildren = obj->arity;
+	  
+	  if (ignoredTypes[obj->children[0]->type] == 0) {
+	       /* Children level is not ignored, so no need to go deeper */
+
+	       return nbChildren;
+	  } else {
+	       unsigned i, nbLeaves = 0;
+	       
+	       for (i=0; i<nbChildren; i++) {
+		    /* Get the real arity of every children and sum up */
+		    nbLeaves += get_number_of_leaves(obj->children[i], topology, ignoredTypes);
+	       }
+
+	       return nbLeaves;
+	  }
+     }
+}
+
+/*
+ * Configure the topology detection for 'flatTopology' in order to get
+ * a symmetric tree (For each level, all node must have the same arity).
+ * Assuming 'flatTopology' has been duplicated from 'topology' but isn't 
+ * yet loaded.
+ */
+int flatten_topology(hwloc_topology_t topology, hwloc_topology_t *flatTopology)
+{
+     unsigned depth, type, topoDepth;
+     int ignoredTypes[HWLOC_OBJ_TYPE_MAX];
+
+     topoDepth = hwloc_topology_get_depth(topology);
+
+     /* Initialize the array of ignored of hwloc objects types */
+     for (type=0; type<HWLOC_OBJ_TYPE_MAX; type++) {
+	  ignoredTypes[type] = 0;
+     }
+
+     /* Walk the topology with a tree style */
+     for (depth=topoDepth-2; depth>0; depth--) {
+	  int i, nbObjs, nbChildren, nbLeaves;
+	  hwloc_obj_t obj = NULL;
+
+	  obj = hwloc_get_next_obj_by_depth(topology, depth, obj);	  
+	  nbObjs = hwloc_get_nbobjs_by_depth(topology, depth);
+	  nbChildren = get_number_of_leaves(obj, topology, ignoredTypes);
+
+	  /* Walk all the objects at current depth */
+	  for (i=1; i<nbObjs; i++) {
+	       obj = hwloc_get_next_obj_by_depth(topology, depth, obj);
+	       nbLeaves = get_number_of_leaves(obj, topology, ignoredTypes);
+	       
+	       if (nbLeaves != nbChildren) {
+		    /* If two object of the topology haven't the same number of leaves */
+
+		    assert(obj->type != HWLOC_OBJ_MACHINE);
+		    ignoredTypes[obj->type] = 1;
+		    
+		    /* Remove this level from topology for the detection */
+		    hwloc_topology_ignore_type(*flatTopology, obj->type);
+
+		    /* Go to next level */
+		    break;
+	       }
+	  }
+     }
+
+     return 0;
+}
 
 /**
  * Check if the following parameters are correct to build a coherent tree

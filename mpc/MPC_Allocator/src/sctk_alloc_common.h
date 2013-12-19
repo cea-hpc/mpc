@@ -77,6 +77,8 @@ extern "C"
 /************************** CONSTS *************************/
 /** Magic value to be used as check in common header. **/
 #define SCTK_ALLOC_MAGIC_STATUS 0x10
+/** Constant to say to memory source that it wasn't binded on a specific numa node. **/
+#define SCTK_ALLOC_NOT_BINDED -1
 /**
  * Define the cut size for small chunk, for now it can be up to 256o. It was currently 32 because
  * small bloc support is not fully available.
@@ -104,6 +106,10 @@ extern "C"
 #define SCTK_ALLOC_HEAP_SIZE (128ULL*1024ULL*1024ULL*1024ULL)
 /** Maximum number of regions, need to cover the 256TB available with 48bit addressing. **/
 #define SCTK_ALLOC_MAX_REGIONS 256
+/** Initial memory for egg allocator, need to be enought to allocate hwloc memory and all the mmsrc structure.
+ * after this first step, egg allocator is plug on default mm src, so can be refilled.
+**/
+#define SCTK_ALLOC_EGG_INIT_MEM SCTK_MACRO_BLOC_SIZE
 /**
  * Enable or disable huge chunk segregation. Turn off may cause huge memory consumption as
  * memory may be locked due to presence of non free small block at the end of the macro blocs.

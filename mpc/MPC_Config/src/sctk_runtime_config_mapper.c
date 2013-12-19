@@ -32,6 +32,10 @@
 
 extern bool sctk_crash_on_symbol_load;
 
+/********************************* CONSTS **********************************/
+/** Special string value to set string pointer to NULL in config management. **/
+const char * sctk_cst_string_undefined = "undefined";
+
 /******************************** FUNCTION *********************************/
 /**
  * Map the given entry to a boolean value.
@@ -63,7 +67,7 @@ bool sctk_runtime_config_map_entry_to_bool(xmlNodePtr node)
 int sctk_runtime_config_map_entry_to_int(xmlNodePtr node)
 {
 	int res;
-  xmlChar * value = xmlNodeGetContent(node);
+  	xmlChar * value = xmlNodeGetContent(node);
 	res = atoi((char*)value);
 	free(value);
 	return res;
@@ -78,7 +82,7 @@ int sctk_runtime_config_map_entry_to_int(xmlNodePtr node)
 double sctk_runtime_config_map_entry_to_double(xmlNodePtr node)
 {
 	double res;
-  xmlChar * value = xmlNodeGetContent(node);
+	xmlChar * value = xmlNodeGetContent(node);
 	res = atof((char*)value);
 	xmlFree(value);
 	return res;
@@ -105,8 +109,13 @@ char * sctk_runtime_config_map_entry_to_string(xmlNodePtr node)
 {
 	char *ret = NULL;
 	xmlChar * value = xmlNodeGetContent(node);
-	ret = strdup( (char*)value );
-	xmlFree(value);
+	if (strcmp(value,sctk_cst_string_undefined) == 0)
+	{
+		ret = NULL;
+	} else {
+		ret = strdup( (char*)value );
+		xmlFree(value);
+	}
 	return ret;
 }
 

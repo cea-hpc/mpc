@@ -122,7 +122,7 @@ echo "" >> Makefile
 echo "MAKEFLAGS += --no-print-directory"  >> Makefile
 echo "" >> Makefile
 
-echo "all:lib/libmpc.a lib/libmpcf.a lib/libmpc_thread_db.so lib/libmpc_tdb_remote_static.a bin/mpc_print_config"  >> Makefile
+echo "all:lib/libmpc_framework.a lib/libmpc_frameworkf.a lib/libmpc_thread_db.so lib/libmpc_tdb_remote_static.a"  >> Makefile
 echo "" >> Makefile
 
 echo "#"  >> Makefile
@@ -147,15 +147,17 @@ fi
 # Rule for bin/mpc_print_config
 #
 echo "" >> Makefile
-echo "bin/mpc_print_config: lib/libmpc.a lib/libmpc_tdb_remote_static.a" >> Makefile
+echo "bin/mpc_print_config: lib/libmpc_framework.a lib/libmpc_tdb_remote_static.a " >> Makefile
 printf "\t@echo Build bin/mpc_print_config" >> Makefile; echo "" >> Makefile
-printf "\t@DIR_DEST_EXE=${PWD}/bin BUILD_DIR=\$(M_PWD)/BUILD_MPC_Config/bin \$(MAKE) -C ${MPC_SOURCE_DIR}MPC_Config/bin build_exe" >> Makefile; echo "" >> Makefile
+#printf "\t@DIR_DEST_EXE=${PWD}/bin BUILD_DIR=\$(M_PWD)/BUILD_MPC_Config/bin \$(MAKE) -C ${MPC_SOURCE_DIR}MPC_Config/bin build_exe" >> Makefile; echo "" >> Makefile
+printf "\t@\$(CC) -Iinclude_modules -Iinclude $SCTK_CFLAGS  ${MPC_SOURCE_DIR}MPC_Config/bin/*.c  -o bin/mpc_print_config -Llib -lmpc_framework -lmpc_tdb_remote_static $SCTK_LDFLAGS -lm -Llib ">> Makefile; echo "">> Makefile
+
 
 #
-# Rule to build libmpc.a
+# Rule to build libmpc_framework.a
 #
 echo "" >> Makefile
-echo "lib/libmpc.a: \$(COMPIL_DIR)" >> Makefile
+echo "lib/libmpc_framework.a: \$(COMPIL_DIR)" >> Makefile
 printf "\t@mkdir -p lib">> Makefile; echo "">> Makefile
 printf "\t@echo Build \$@">> Makefile; echo "">> Makefile
 printf "\t@\$(AR) rcu \$@ \$(COBJ_LIST) \$(SCTK_ARFLAGS)">> Makefile; echo "">> Makefile
@@ -183,10 +185,10 @@ printf "\t@\$(CC) -shared -Iinclude_modules -DTDB_${SCTK_ARCH}_ARCH_TDB -DTDB_${
 printf "\t@\$(CC) -shared -Iinclude_modules -DTDB_${SCTK_ARCH}_ARCH_TDB -DTDB_${SCTK_OS}_SYS -DLIB_THREAD_DB \$(CFLAGS) -DENABLE_TEST -I${MPC_SOURCE_DIR}MPC_Debugger/sctk_dbg_thread/test/ ${MPC_SOURCE_DIR}MPC_Debugger/sctk_dbg_thread/sctk_lib_thread_db*.c ${MPC_SOURCE_DIR}MPC_Debugger/sctk_dbg_thread/test/*.c -o lib/libmpc_thread_db_check.so ">> Makefile; echo "">> Makefile
 
 #
-# Rule to build libmpcf.a
+# Rule to build libmpc_frameworkf.a
 #
 echo "" >> Makefile
-echo "lib/libmpcf.a: \$(COMPIL_DIR)" >> Makefile
+echo "lib/libmpc_frameworkf.a: \$(COMPIL_DIR)" >> Makefile
 printf "\t@mkdir -p lib">> Makefile; echo "">> Makefile
 if test "$SCTK_FORTRAN" = "1"; then
 printf "\t@echo Build \$@">> Makefile; echo "">> Makefile
@@ -329,13 +331,14 @@ echo "Preparing includes for Fortran"
 for i in $MODULE_LIST; do
 NAME="fortran_header"
 if test "$SCTK_FORTRAN" = "1" && test "$i" = "MPC_Message_Passing"; then
-printf "\t@\$(CC) -g $SCTK_CFLAGS -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME -LINSTALL/lib -lmpc -lmpc_tdb_remote_static $SCTK_LDFLAGS -lm">> Makefile; echo "">> Makefile
-printf "\t@MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) ./$NAME mpc.h > INSTALL/include/mpcf.h">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) -g -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME -DMPC_NO_AUTO_MAIN_REDEF ">> Makefile; echo "">> Makefile
+printf "\t@./$NAME mpc.h > INSTALL/include/mpcf.h">> Makefile; echo "">> Makefile
 
 DIR_TEST="MPC_MPI"
 check_module
 if test "$FOUND" != "" ; then
-printf "\t@MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) ./$NAME mpi.h > INSTALL/include/mpif.h">> Makefile; echo "">> Makefile
+printf "\t@\$(CC) -g -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME -DMPC_NO_AUTO_MAIN_REDEF -DMPC_MPI">> Makefile; echo "">> Makefile
+printf "\t@./$NAME mpi.h > INSTALL/include/mpif.h">> Makefile; echo "">> Makefile
 fi
 
 printf "\t@rm ./$NAME">> Makefile; echo "">> Makefile
@@ -355,9 +358,9 @@ printf "\t@cp -r INSTALL/lib/* \${DESTDIR}${SCTK_LIB_DIR}">> Makefile; echo "">>
 printf "\t@cp -r INSTALL/include/* \${DESTDIR}${SCTK_INCLUDE_DIR}">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/man/* \${DESTDIR}${SCTK_MAN_DIR}">> Makefile; echo "">> Makefile
 printf "\t@echo \"Build dynamic libraries\"">> Makefile; echo "">> Makefile
-printf "\t@\$(CC) \$(COBJ_LIST) ${EXTERN_NON_TESTED_LIB} -fPIC -shared -o \${DESTDIR}${SCTK_PREFIX}/lib/libmpc.so $SCTK_LDFLAGS|| echo \"Unable to build C shared library\"">> Makefile; echo "">> Makefile
+printf "\t@\$(CC)  \$(COBJ_LIST) ${EXTERN_NON_TESTED_LIB} -fPIC -shared -o \${DESTDIR}${SCTK_LIB_DIR}/libmpc_framework.so  $SCTK_LDFLAGS|| echo \"Unable to build C shared library\"">> Makefile; echo "">> Makefile
 if test "$SCTK_FORTRAN" = "1"; then
-printf "\t@\$(F77) \$(FOBJ_LIST) ${EXTERN_NON_TESTED_LIB} -fPIC -shared -o \${DESTDIR}${SCTK_LIB_DIR}/libmpcf.so $SCTK_LDFLAGS|| echo \"Unable to build Fortran shared library\"">> Makefile; echo "">> Makefile
+printf "\t@\$(F77) \$(FOBJ_LIST) ${EXTERN_NON_TESTED_LIB} -fPIC -shared -o \${DESTDIR}${SCTK_LIB_DIR}/libmpc_frameworkf.so $SCTK_LDFLAGS|| echo \"Unable to build Fortran shared library\"">> Makefile; echo "">> Makefile
 fi
 printf "\t@cp -r INSTALL/bin/* \${DESTDIR}${SCTK_BIN_DIR}">> Makefile; echo "">> Makefile
 printf "\t@cp -r INSTALL/share/mpc/* \${DESTDIR}${SCTK_SHARE_DIR}">> Makefile; echo "">> Makefile

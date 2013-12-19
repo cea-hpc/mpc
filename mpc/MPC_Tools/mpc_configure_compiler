@@ -100,12 +100,13 @@ case "`basename $1`" in
 		use_mpc_privat="true"
 		;;
 esac
+use_mpc_privat="true"
 
 # Regular flags and compiler (C, C++ or fortran)
 if test ! -z "${BINUTILS_PREFIX_INSTALL}" && test "$use_mpc_privat" = "true"
 then
 cat <<EOF >> $1
-CFLAGS="\`$SCTK_BIN_DIR/mpc_cflags $2\` -fmpc-privatize"
+CFLAGS="\`$SCTK_BIN_DIR/mpc_cflags $2\`"
 LDFLAGS="\`$SCTK_BIN_DIR/mpc_ldflags $2\` -B$BINUTILS_PREFIX_INSTALL/bin"
 CC=$CC
 EOF
@@ -204,6 +205,14 @@ cat << EOF >> $1
     -o)
     next_arg_is_output=yes
     addarg_cpp=no
+    ;;
+
+EOF
+
+cat << EOF >> $1
+
+    -threads)
+    \$CFLAGS="\$CFLAGS -threads"
     ;;
 
 EOF
@@ -381,6 +390,64 @@ chmod 755 $1
 
 } # end of printf_compiler()
 
+GNU_PRIVATIZE="-fmpc-privatize"
+INTEL_PRIVATIZE="-mSYMTAB_mpc_privatize"
+#USAGE print_specfific_compiler output_file privatization_option wait_to_launch_compiler compiler_name
+print_specfific_compiler(){
+# Header
+echo "#!/bin/sh" > $1
+header_sh >> $1
+
+if test "$4" = "intel"; then
+cat <<EOF >> $1
+ADD_FLAG_PRIVATIZE="$2"
+EOF
+else
+if test "${COMPILER_LIST}" != "" ; then
+cat <<EOF >> $1
+ADD_FLAG_PRIVATIZE="$2"
+EOF
+else
+cat <<EOF >> $1
+ADD_FLAG_PRIVATIZE=""
+EOF
+fi
+fi
+cat <<EOF >> $1
+COMPILER_ARGS=""
+
+for i in \$@ ; do
+    CURRENT_ARG="\$i"
+    if test "\$i" = "-fmpc-privatize" ; then
+        ADD_FLAG_PRIVATIZE="$2"
+        CURRENT_ARG=""
+    fi
+    if test "\$i" = "-fno-mpc-privatize" ; then
+        ADD_FLAG_PRIVATIZE=""
+        CURRENT_ARG=""
+    fi
+    if test "\$i" = "-fnompc-privatize" ; then
+        ADD_FLAG_PRIVATIZE=""
+        CURRENT_ARG=""
+    fi
+    COMPILER_ARGS="\$COMPILER_ARGS \$CURRENT_ARG"
+done
+
+EOF
+if test "$4" = "intel"; then
+cat <<EOF >> $1
+MPC_USE_INTEL_COMPILER=1
+export MPC_USE_INTEL_COMPILER
+EOF
+fi
+cat <<EOF >> $1
+
+$SCTK_BIN_DIR/$3 \$ADD_FLAG_PRIVATIZE \$COMPILER_ARGS
+
+EOF
+
+}
+
 DEFAULT_VERSION=""
 if test "${COMPILER_LIST}" != "" ; then
   for i in ${COMPILER_LIST} ; do
@@ -438,9 +505,6 @@ begin_section Generate Default C Compiler: mpc_cc_default
   printf_compiler bin/mpc_cc_default c
 end_section
 
-# Create the link to the default compiler
-rm -f bin/mpc_cc
-ln -s mpc_cc_${DEFAULT_VERSION} bin/mpc_cc
 
 # Generate dafault C compiler (for global linking)
 begin_section Generate Default C Compiler: mpc_cc_global_default
@@ -452,7 +516,12 @@ end_section
 # Create the link to the default compiler
 rm -f bin/mpc_cc_global
 ln -s mpc_cc_global_${DEFAULT_VERSION} bin/mpc_cc_global
+print_specfific_compiler bin/mpc_gcc $GNU_PRIVATIZE mpc_cc_${DEFAULT_VERSION}
+print_specfific_compiler bin/mpc_icc $INTEL_PRIVATIZE "mpc_cc_default -cc=icc" intel
 
+# Create the link to the default compiler
+rm -f bin/mpc_cc
+ln -s mpc_gcc bin/mpc_cc
 
 # Generate C++ compiler
 begin_section Generate Default C++ Compiler: mpc_cxx_default
@@ -462,8 +531,10 @@ begin_section Generate Default C++ Compiler: mpc_cxx_default
 end_section
 
 # Create the link to the default compiler
+print_specfific_compiler bin/mpc_g++ $GNU_PRIVATIZE mpc_cxx_${DEFAULT_VERSION}
+print_specfific_compiler bin/mpc_icpc $INTEL_PRIVATIZE "mpc_cxx_default -cc=icpc" intel
 rm -f bin/mpc_cxx
-ln -s mpc_cxx_${DEFAULT_VERSION} bin/mpc_cxx
+ln -s mpc_g++ bin/mpc_cxx
 
 #
 # Generate Fortran compiler
@@ -475,6 +546,73 @@ if test "$SCTK_FORTRAN" = "1" ; then
   end_section
 
   # Create the link to the default compiler
+
+  print_specfific_compiler bin/mpc_gfortran $GNU_PRIVATIZE mpc_f77_${DEFAULT_VERSION}
+  print_specfific_compiler bin/mpc_ifort $INTEL_PRIVATIZE "mpc_f77_default -cc=ifort" intel
   rm -f bin/mpc_f77
-  ln -s mpc_f77_${DEFAULT_VERSION} bin/mpc_f77
+  ln -s mpc_gfortran bin/mpc_f77
 fi
+
+
+cat <<EOF > bin/mpc_compiler_status
+#!/bin/sh
+cat <<EOFINT > mpc_main.c
+#include <mpc.h>
+ int main(int argc, char** argv){
+     return 0;
+}
+EOFINT
+cat <<EOFINT > mpc_main.cpp
+#include <mpc.h>
+ int main(int argc, char** argv){
+     return 0;
+}
+EOFINT
+cat <<EOFINT > mpc_main.f
+      subroutine mpc_user_main
+      include 'mpcf.h'
+      integer ierr
+      call MPC_INIT (ierr)
+      call MPC_FINALIZE (ierr)
+      end
+EOFINT
+
+check_compiler(){
+\$@ -fno-mpc-privatize > /dev/null 2>&1
+LINE="        Compiler \$1"
+if test "\$?" = "0"; then
+LINE="\$LINE OK"
+else
+LINE="\$LINE FAIL"
+fi
+LINE="\$LINE privatization"
+\$@ -fmpc-privatize > /dev/null 2>&1
+if test "\$?" = "0"; then
+LINE="\$LINE OK"
+else
+LINE="\$LINE FAIL"
+fi
+echo "\$LINE"
+}
+
+echo "MPC Compiler Status:"
+
+
+echo "    Check C compiler"
+check_compiler mpc_gcc -c mpc_main.c -o tmp.o
+check_compiler mpc_icc -c mpc_main.c -o tmp.o
+
+echo "    Check C++ compiler"
+check_compiler mpc_g++ -c mpc_main.cpp -o tmp.o
+check_compiler mpc_icpc -c mpc_main.cpp -o tmp.o
+
+
+echo "    Check Fortran compiler"
+check_compiler mpc_gfortran -c mpc_main.f -o tmp.o
+check_compiler mpc_ifort -c mpc_main.f -o tmp.o
+
+
+rm mpc_main.c mpc_main.cpp mpc_main.f tmp.o > /dev/null 2>&1
+
+EOF
+chmod 755 bin/mpc_compiler_status

@@ -35,6 +35,7 @@ extern "C"
 #include <assert.h>
 
 #include "sctk_bool.h"
+#include "sctk_keywords.h"
 
 #define SCTK_MAX_FILENAME_SIZE 1024
 #define SCTK_DBG_INFO stderr,__LINE__,__FILE__,SCTK_FUNCTION
