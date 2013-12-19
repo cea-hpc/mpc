@@ -140,6 +140,8 @@ static inline void __mpcomp_read_env_variables() {
 	  "Switching to default value %d\n", sctk_get_processor_number (), OMP_MICROVP_NUMBER ) ;
       OMP_MICROVP_NUMBER = 0 ;
   }
+
+  /* TODO: move this default behavior to the instance_init function */
   if ( OMP_MICROVP_NUMBER == 0 ) {
       OMP_MICROVP_NUMBER = sctk_get_processor_number (); /* DEFAULT */
 #ifdef MPC_Message_Passing
@@ -217,6 +219,7 @@ static inline void __mpcomp_read_env_variables() {
   if ( OMP_NUM_THREADS < 0 ) {
 	  OMP_NUM_THREADS = 0 ;
   }
+TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later" )
   if ( OMP_NUM_THREADS == 0 ) {
 	  OMP_NUM_THREADS = OMP_MICROVP_NUMBER;	/* DEFAULT */
   }
@@ -424,6 +427,7 @@ void __mpcomp_init() {
     sctk_assert( t != NULL ) ;
 
     /* Initialize default ICVs */
+TODO( "Initialize thenumber of threads according to OMP_MICROVP_NUMBER if OMP_NUM_THREADS==0" )
     icvs.nthreads_var = OMP_NUM_THREADS;
     icvs.dyn_var = OMP_DYNAMIC;
     icvs.nest_var = OMP_NESTED;
@@ -477,6 +481,8 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 	/* Assign the current team */
 	instance->team = team ;
 
+	/* TODO: act here to adapt the number of microVPs for each MPI task */
+
 
 	if ( nb_mvps > 0 ){
 		/* Alloc memory for 'nb_mvps' microVPs */
@@ -507,7 +513,7 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 
 	sctk_nodebug( "__mpcomp_instance_init: Exiting..." ) ;
 
-	/* Do we need a TLS for the openmp instance for every microVPs? */
+	/* TODO Do we need a TLS for the openmp instance for every microVPs? */
 }
 
 void in_order_scheduler( mpcomp_mvp_t * mvp ) {

@@ -25,11 +25,72 @@
 #include "mpcomp_internal.h"
 #include <sctk_debug.h>
 
+/* dest = src1+src2 in base 'base' of size 'depth' up to dimension 'max_depth'
+ */
+static int
+__mpcomp_dynamic_add( int * dest, int * src1, int *src2, 
+		int * base, int depth, int max_depth, 
+		int include_carry_over ) {
+		int i ;
+		int ret = 1 ;
+		int carry_over = 1 ; 
+
+		/* Step to the next target */
+		for ( i = depth -1 ; i >= max_depth ; i-- ) {
+			int value ;
+
+			value = src1[i] + src2[i];
+
+			carry_over = 0 ;
+			dest[i] = value ;
+			if ( value >= base[i] ) {
+				if ( i == max_depth ) {
+					ret = 0 ;
+				}
+				if ( include_carry_over ) {
+					carry_over = value / base[i] ;
+				}
+				dest[i] = (value %  base[i] ) ;
+			}
+		}
+
+		return ret ;
+}
+
+static int
+__mpcomp_dynamic_increase( int * target, int * base,
+		int depth, int max_depth, int include_carry_over ) {
+		int i ;
+		int carry_over = 1;
+		int ret = 1 ;
+
+		/* Step to the next target */
+		for ( i = depth -1 ; i >= max_depth ; i-- ) {
+			int value ;
+
+			value = target[i] + carry_over ;
+
+			carry_over = 0 ;
+			target[i] = value ;
+			if ( value >= base[i] ) {
+				if ( i == max_depth ) {
+					ret = 0 ;
+				}
+				if ( include_carry_over ) {
+					carry_over = value / base[i] ;
+				}
+				target[i] = (value %  base[i] ) ;
+			}
+		}
+
+		return ret ;
+}
+
 /* From thread t, try to steal a chunk from thread target 
  * Returns 1 on success, 0 otherwise */
 static int
-__mpcomp_dynamic_loop_get_chunk_from_rank( mpcomp_thread_t * t, mpcomp_thread_t * target, 
-		long * from, long * to ) {
+__mpcomp_dynamic_loop_get_chunk_from_rank( mpcomp_thread_t * t, 
+		mpcomp_thread_t * target, long * from, long * to ) {
 	int r ;
 	int index;
 	int target_index ;
@@ -103,88 +164,6 @@ __mpcomp_dynamic_loop_get_chunk_from_rank( mpcomp_thread_t * t, mpcomp_thread_t 
 	return 0 ;
 }
 
-static int 
-__mpcomp_dynamic_loop_steal( mpcomp_thread_t * t, long * from, long * to ) {
-	int i ;
-	int stop = 0 ; 
-	int max_depth ; 
-
-	/* Note: max_depth is a mix of new_root's depth and an artificial depth
-	 * set to reduce the stealing frontiers */
-
-	TODO( "__mpcomp_dynamic_loop_steal: Add artificial depth to limit stealing frontiers" )
-
-	sctk_debug( "__mpcomp_dynamic_loop_steal[%d]: Enter", t->rank ) ;
-	sctk_debug( "__mpcomp_dynamic_loop_steal[%d]: depth of new_root = %d",
-			t->rank, t->info.new_root->depth ) ;
-
-	/* Check that the target is allocated */
-	if ( t->for_dyn_target == NULL ) {
-		t->for_dyn_target = (int *)malloc( t->instance->tree_depth * sizeof( int ) ) ;
-		for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
-			t->for_dyn_target[i] = 0 ;
-		}
-	}
-	sctk_assert( t->for_dyn_target != NULL ) ;
-
-	/* Stop the stealing at the following depth.
-	 * Nodes above this depth will not be traversed
-	 */
-	max_depth = t->info.new_root->depth ;
-
-	while ( !stop ) {
-
-	/* Increase target index */
-	int carry_over = 1;
-	for ( i = t->instance->tree_depth -1 ; i >= max_depth ; i-- ) {
-		int value ;
-
-		value = t->for_dyn_target[i] + carry_over ;
-
-		carry_over = 0 ;
-		t->for_dyn_target[i] = value ;
-		if ( value >= t->instance->tree_base[i] ) {
-			carry_over = value / t->instance->tree_base[i] ;
-			t->for_dyn_target[i] = (value %  (t->instance->tree_base[i]) ) ;
-		}
-	}
-
-#if 0
-	fprintf( stderr, "__mpcomp_dynamic_loop_steal[%ld]: new victim = [",
-			t->rank ) ;
-	for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
-		if ( i != 0 ) {
-			fprintf( stderr, ", " ) ;
-		}
-		fprintf( stderr, "%d", t->for_dyn_target[i] ) ;
-	}
-	fprintf( stderr, "]\n" ) ;
-#endif
-
-	/* Add current microvp coordinates to select the target */
-	for ( i = max_depth ; i < t->instance->tree_depth ; i++ ) {
-		/* Add t->for_dyn_target[i] and t->mvp->tree_rank */
-
-	}
-
-	/* Compute the index of the target mvp according to its coordinates */
-
-	/* Try to steal from this mvp */
-
-
-	/* Check if target is 0 */
-	stop = 1 ;
-	for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
-		if ( t->for_dyn_target[i] != 0 ) {
-			stop = 0 ;
-		}
-	}
-	}
-
-	sctk_debug( "__mpcomp_dynamic_loop_steal[%d]: Exit", t->rank ) ;
-
-	return 0 ;
-}
 
 static void 
 __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, 
@@ -270,21 +249,7 @@ __mpcomp_dynamic_loop_next (long *from, long *to)
 
 	TODO( "__mpcomp_dynamic_loop_next: w/ 1 thread, put an if and remove CAS" )
 
-	/* Check that the target is allocated */
-	if ( t->for_dyn_target == NULL ) {
-		int i ;
-		t->for_dyn_target = (int *)malloc( t->instance->tree_depth * sizeof( int ) ) ;
-		for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
-			t->for_dyn_target[i] = 0 ;
-		}
-	}
-	sctk_assert( t->for_dyn_target != NULL ) ;
-
-	/* Stop the stealing at the following depth.
-	 * Nodes above this depth will not be traversed
-	 */
-	max_depth = t->info.new_root->depth ;
-
+return 0 ;
 
 	/**
 	 * Main algo:
@@ -301,7 +266,146 @@ __mpcomp_dynamic_loop_next (long *from, long *to)
 	 *
 	 *
 	 */
+#if 0
+
+	/* Check that the target is allocated */
+	if ( t->for_dyn_target == NULL ) {
+		int i ;
+		t->for_dyn_target = (int *)malloc( t->instance->tree_depth * sizeof( int ) ) ;
+		for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
+			t->for_dyn_target[i] = t->mvp->tree_rank[i] ;
+		}
+
+		t->for_dyn_shift = (int *)malloc( t->instance->tree_depth * sizeof( int ) ) ;
+		for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
+			t->for_dyn_shift[i] = 0 ;
+		}
+	}
+	sctk_assert( t->for_dyn_target != NULL ) ;
+	sctk_assert( t->for_dyn_shift != NULL ) ;
+
+	/* Stop the stealing at the following depth.
+	 * Nodes above this depth will not be traversed
+	 */
+	max_depth = t->info.new_root->depth ;
+
+	int found = 1 ;
+
+
+	/* While it is not possible to get a chunk */
+	while ( !__mpcomp_dynamic_loop_get_chunk_from_rank( 
+				t, t->for_dyn_target, from, to ) ) {
+
+
+		if (__mpcomp_dynamic_increase( t->for_dyn_shift, t->instance->tree_base,
+				t->instance->tree_depth, max_depth, 1 ) ) {
+			found = 0 ;
+			break ;
+		}
+
+		/* TODO: add t->for_dyn_shift and t->mvp->tree_rank[i] w/out
+		 * carry over and store it into t->for_dyn_target */
+		__mpcomp_dynamic_add(  t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank,
+				t->instance->tree_base, t->instance->tree_depth, max_depth, 0 ) ;
+
+	}
+
+	/* TODO check if we exit w/ or w/out a chunk */
+
+	if ( found ) {
+	return 1 ;
+	}
+
+	return 0 ;
+#endif
+
+
 }
+
+#if 0
+static int 
+__mpcomp_dynamic_loop_steal( mpcomp_thread_t * t, long * from, long * to ) {
+	int i ;
+	int stop = 0 ; 
+	int max_depth ; 
+
+	/* Note: max_depth is a mix of new_root's depth and an artificial depth
+	 * set to reduce the stealing frontiers */
+
+	TODO( "__mpcomp_dynamic_loop_steal: Add artificial depth to limit stealing frontiers" )
+
+	sctk_debug( "__mpcomp_dynamic_loop_steal[%d]: Enter", t->rank ) ;
+	sctk_debug( "__mpcomp_dynamic_loop_steal[%d]: depth of new_root = %d",
+			t->rank, t->info.new_root->depth ) ;
+
+	/* Check that the target is allocated */
+	if ( t->for_dyn_target == NULL ) {
+		t->for_dyn_target = (int *)malloc( t->instance->tree_depth * sizeof( int ) ) ;
+		for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
+			t->for_dyn_target[i] = 0 ;
+		}
+	}
+	sctk_assert( t->for_dyn_target != NULL ) ;
+
+	/* Stop the stealing at the following depth.
+	 * Nodes above this depth will not be traversed
+	 */
+	max_depth = t->info.new_root->depth ;
+
+	while ( !stop ) {
+
+	/* Increase target index */
+	int carry_over = 1;
+	for ( i = t->instance->tree_depth -1 ; i >= max_depth ; i-- ) {
+		int value ;
+
+		value = t->for_dyn_target[i] + carry_over ;
+
+		carry_over = 0 ;
+		t->for_dyn_target[i] = value ;
+		if ( value >= t->instance->tree_base[i] ) {
+			carry_over = value / t->instance->tree_base[i] ;
+			t->for_dyn_target[i] = (value %  (t->instance->tree_base[i]) ) ;
+		}
+	}
+
+#if 0
+	fprintf( stderr, "__mpcomp_dynamic_loop_steal[%ld]: new victim = [",
+			t->rank ) ;
+	for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
+		if ( i != 0 ) {
+			fprintf( stderr, ", " ) ;
+		}
+		fprintf( stderr, "%d", t->for_dyn_target[i] ) ;
+	}
+	fprintf( stderr, "]\n" ) ;
+#endif
+
+	/* Add current microvp coordinates to select the target */
+	for ( i = max_depth ; i < t->instance->tree_depth ; i++ ) {
+		/* Add t->for_dyn_target[i] and t->mvp->tree_rank */
+
+	}
+
+	/* Compute the index of the target mvp according to its coordinates */
+
+	/* Try to steal from this mvp */
+
+
+	/* Check if target is 0 */
+	stop = 1 ;
+	for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
+		if ( t->for_dyn_target[i] != 0 ) {
+			stop = 0 ;
+		}
+	}
+	}
+
+	sctk_debug( "__mpcomp_dynamic_loop_steal[%d]: Exit", t->rank ) ;
+
+	return 0 ;
+}
+#endif
 
 #if 0
 int
@@ -469,25 +573,43 @@ int
 __mpcomp_ordered_dynamic_loop_begin (long lb, long b, long incr, long chunk_size,
 				     long *from, long *to)
 {
-     not_implemented() ;
-     return -1;
+     mpcomp_thread_t *t;
+     int res;
+
+     res = __mpcomp_dynamic_loop_begin(lb, b, incr, chunk_size, from, to);
+
+     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+     sctk_assert(t != NULL);  
+     
+     t->current_ordered_iteration = *from;
+     
+     return res;
 }
 
 int
 __mpcomp_ordered_dynamic_loop_next(long *from, long *to)
 {
-     not_implemented() ;
-     return -1;
+     mpcomp_thread_t *t;
+     int res ;
+     
+     res = __mpcomp_dynamic_loop_next(from, to);
+     
+     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+     sctk_assert(t != NULL);
+     
+     t->current_ordered_iteration = *from;
+     
+     return res;
 }
 
 void
 __mpcomp_ordered_dynamic_loop_end()
 {
-     not_implemented() ;
+     __mpcomp_dynamic_loop_end();
 }
 
 void
 __mpcomp_ordered_dynamic_loop_end_nowait()
 {
-     not_implemented() ;
+     __mpcomp_dynamic_loop_end();
 }
