@@ -7177,13 +7177,13 @@ void
 MPI_Default_error (MPI_Comm * comm, int *error, char *msg, char *file,
 		   int line)
 {
-  char str[1024];
-  int i;
-  __INTERNAL__PMPI_Error_string (*error, str, &i);
-  if (i != 0)
-    sctk_error ("%s in file %s at line %d %s", str, file, line, msg);
-  else
-    sctk_error ("Unknown error");
+/*   char str[1024]; */
+/*   int i; */
+/*   __INTERNAL__PMPI_Error_string (*error, str, &i); */
+/*   if (i != 0) */
+/*     sctk_error ("%s in file %s at line %d %s", str, file, line, msg); */
+/*   else */
+/*     sctk_error ("Unknown error"); */
   /* The lib is not supposed to crash but deliver message */
   //~ __INTERNAL__PMPI_Abort (*comm, *error);
 }
@@ -7331,6 +7331,7 @@ __INTERNAL__PMPI_Error_string (int errorcode, char *string, int *resultlen)
     default:
       sctk_warning ("%d error code unknown", errorcode);
     }
+
   lngt = strlen (string);
   *resultlen = (int) lngt;
   MPI_ERROR_SUCESS ();
@@ -7585,6 +7586,13 @@ PMPI_Recv (void *buf, int count, MPI_Datatype datatype, int source, int tag,
   }
   res =
     __INTERNAL__PMPI_Recv (buf, count, datatype, source, tag, comm, status);
+
+  if(status != MPI_STATUS_IGNORE){
+    if(status->MPI_ERROR != MPI_SUCCESS){
+      res = status->MPI_ERROR;
+    }
+  }
+
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
@@ -8026,6 +8034,12 @@ PMPI_Wait (MPI_Request * request, MPI_Status * status)
   }
 
   res = __INTERNAL__PMPI_Wait (request, status);
+  if(status != MPI_STATUS_IGNORE){
+    if(status->MPI_ERROR != MPI_SUCCESS){
+      res = status->MPI_ERROR;
+    }
+  }
+
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
@@ -8045,6 +8059,12 @@ PMPI_Test (MPI_Request * request, int *flag, MPI_Status * status)
 	return res;
   }
   res = __INTERNAL__PMPI_Test (request, flag, status);
+  if(status != MPI_STATUS_IGNORE){
+    if((status->MPI_ERROR != MPI_SUCCESS) && (status->MPI_ERROR != MPI_ERR_PENDING)){
+      res = status->MPI_ERROR;
+    }
+  }
+
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
@@ -8072,6 +8092,12 @@ PMPI_Waitany (int count, MPI_Request array_of_requests[], int *index,
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   res = __INTERNAL__PMPI_Waitany (count, array_of_requests, index, status);
+  if(status != MPI_STATUS_IGNORE){
+    if(status->MPI_ERROR != MPI_SUCCESS){
+      res = status->MPI_ERROR;
+    }
+  }
+
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
@@ -8083,6 +8109,12 @@ PMPI_Testany (int count, MPI_Request array_of_requests[], int *index,
   int res = MPI_ERR_INTERN;
   res =
     __INTERNAL__PMPI_Testany (count, array_of_requests, index, flag, status);
+  if(status != MPI_STATUS_IGNORE){
+    if((status->MPI_ERROR != MPI_SUCCESS) && (status->MPI_ERROR != MPI_ERR_PENDING)){
+      res = status->MPI_ERROR;
+    }
+  }
+
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
@@ -8093,8 +8125,19 @@ PMPI_Waitall (int count, MPI_Request array_of_requests[],
 	sctk_nodebug("entering PMPI_Waitall");
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+
   res =
     __INTERNAL__PMPI_Waitall (count, array_of_requests, array_of_statuses);
+
+  if(array_of_statuses != MPI_STATUSES_IGNORE){
+    int i;
+    for(i =0; i < count; i++){
+      if(array_of_statuses[i].MPI_ERROR != MPI_SUCCESS){
+	res = MPI_ERR_IN_STATUS;
+      }
+    }
+  }
+
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
@@ -8107,6 +8150,16 @@ PMPI_Testall (int count, MPI_Request array_of_requests[], int *flag,
   res =
     __INTERNAL__PMPI_Testall (count, array_of_requests, flag,
 			      array_of_statuses);
+
+  if(array_of_statuses != MPI_STATUSES_IGNORE){
+    int i;
+    for(i =0; i < count; i++){
+      if((array_of_statuses[i].MPI_ERROR != MPI_SUCCESS) && (array_of_statuses[i].MPI_ERROR != MPI_ERR_PENDING)){
+	res = MPI_ERR_IN_STATUS;
+      }
+    }
+  }
+
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
@@ -8120,6 +8173,16 @@ PMPI_Waitsome (int incount, MPI_Request array_of_requests[],
   res =
     __INTERNAL__PMPI_Waitsome (incount, array_of_requests, outcount,
 			       array_of_indices, array_of_statuses);
+
+  if(array_of_statuses != MPI_STATUSES_IGNORE){
+    int i;
+    for(i =0; i < *outcount; i++){
+      if(array_of_statuses[array_of_indices[i]].MPI_ERROR != MPI_SUCCESS){
+	res = MPI_ERR_IN_STATUS;
+      }
+    }
+  }
+
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
@@ -8148,6 +8211,16 @@ int PMPI_Testsome (int incount, MPI_Request array_of_requests[], int *outcount, 
 		return MPI_ERR_ARG;
 	}
 	res = __INTERNAL__PMPI_Testsome (incount, array_of_requests, outcount, array_of_indices, array_of_statuses);
+
+  if(array_of_statuses != MPI_STATUSES_IGNORE){
+    int i;
+    for(i =0; i < *outcount; i++){
+      if((array_of_statuses[array_of_indices[i]].MPI_ERROR != MPI_SUCCESS) && (array_of_statuses[array_of_indices[i]].MPI_ERROR != MPI_ERR_PENDING)){
+	res = MPI_ERR_IN_STATUS;
+      }
+    }
+  }
+
 	SCTK__MPI_Check_retrun_val (res, comm);
 }
 
@@ -8158,6 +8231,12 @@ PMPI_Iprobe (int source, int tag, MPI_Comm comm, int *flag,
   int res = MPI_ERR_INTERN;
 	mpi_check_comm(comm, comm);
   res = __INTERNAL__PMPI_Iprobe (source, tag, comm, flag, status);
+  if((status != MPI_STATUS_IGNORE) && (*flag != 0)){
+    if(status->MPI_ERROR != MPI_SUCCESS){
+      res = MPI_ERR_IN_STATUS;
+    }
+  }
+
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
@@ -8167,6 +8246,12 @@ PMPI_Probe (int source, int tag, MPI_Comm comm, MPI_Status * status)
   int res = MPI_ERR_INTERN;
 	mpi_check_comm(comm, comm);
   res = __INTERNAL__PMPI_Probe (source, tag, comm, status);
+  if(status != MPI_STATUS_IGNORE){
+    if(status->MPI_ERROR != MPI_SUCCESS){
+      res = MPI_ERR_IN_STATUS;
+    }
+  }
+
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
@@ -8452,6 +8537,12 @@ PMPI_Sendrecv (void *sendbuf, int sendcount, MPI_Datatype sendtype,
     __INTERNAL__PMPI_Sendrecv (sendbuf, sendcount, sendtype, dest, sendtag,
 			       recvbuf, recvcount, recvtype, source, recvtag,
 			       comm, status);
+  if(status != MPI_STATUS_IGNORE){
+    if(status->MPI_ERROR != MPI_SUCCESS){
+      res = MPI_ERR_IN_STATUS;
+    }
+  }
+
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 
@@ -8479,6 +8570,12 @@ PMPI_Sendrecv_replace (void *buf, int count, MPI_Datatype datatype,
   res =
     __INTERNAL__PMPI_Sendrecv_replace (buf, count, datatype, dest, sendtag,
 				       source, recvtag, comm, status);
+  if(status != MPI_STATUS_IGNORE){
+    if(status->MPI_ERROR != MPI_SUCCESS){
+      res = MPI_ERR_IN_STATUS;
+    }
+  }
+
   SCTK__MPI_Check_retrun_val (res, comm);
 }
 

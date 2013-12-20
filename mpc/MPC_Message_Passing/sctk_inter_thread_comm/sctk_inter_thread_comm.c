@@ -526,18 +526,36 @@ void sctk_complete_and_free_message (sctk_thread_ptp_message_t * msg){
   free_memory(msg);
 }
 
+static inline void sctk_message_update_request(sctk_thread_ptp_message_t* recv,size_t send_size, size_t recv_size){
+  if(recv->tail.request){
+    /* Update the request with the source, message tag and message size */
+    recv->tail.request->truncated = (send_size > recv_size);
+    fprintf("send_size %lu recv_size %lu\n",send_size,recv_size);
+  }
+}
+
+static inline size_t sctk_message_deternime_size(sctk_thread_ptp_message_t* msg){
+  return msg->body.header.msg_size;
+}
+
 void sctk_message_completion_and_free(sctk_thread_ptp_message_t* send,
 				     sctk_thread_ptp_message_t* recv){
   size_t size;
 
   /* If a recv request is available */
   if(recv->tail.request){
+    size_t send_size;
+    size_t recv_size;
     /* Update the request with the source, message tag and message size */
     recv->tail.request->header.source = send->body.header.source;
     recv->tail.request->header.message_tag = send->body.header.message_tag;
     recv->tail.request->header.msg_size = send->body.header.msg_size;
     sctk_nodebug("request->header.msg_size = %d", recv->tail.request->header.msg_size);
     recv->tail.request->msg = NULL;
+
+    send_size = sctk_message_deternime_size(send);
+    recv_size = sctk_message_deternime_size(recv);
+    sctk_message_update_request(recv,send_size,recv_size);
   }
 
   /* If a send request is available */

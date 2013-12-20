@@ -268,6 +268,9 @@ static inline void sctk_mpc_commit_status_from_request(MPC_Request * request, MP
       status->MPC_SOURCE = request->header.source;
       status->MPC_TAG = request->header.message_tag;
       status->MPC_ERROR = MPC_SUCCESS;
+      if(request->truncated){
+	status->MPC_ERROR = MPC_ERR_TRUNCATE;
+      }
       status->count = request->header.msg_size;
       if (request->completion_flag == SCTK_MESSAGE_CANCELED)
 	{
@@ -304,6 +307,7 @@ static inline void sctk_mpc_init_request_null(){
   mpc_request_null.msg = NULL;
   mpc_request_null.request_type = 0;
   mpc_request_null.completion_flag = 1;
+  mpc_request_null.truncated = 0;
 }
 
 static inline void sctk_mpc_init_request (MPC_Request * request, MPC_Comm comm, int src, int request_type){
@@ -317,6 +321,7 @@ static inline void sctk_mpc_init_request (MPC_Request * request, MPC_Comm comm, 
       request->completion_flag = SCTK_MESSAGE_DONE;
       request->request_type = request_type;
       request->is_null = 0;
+      request->truncated = 0;
       request->msg = NULL;
     }
 }
@@ -2865,6 +2870,10 @@ __MPC_Test (MPC_Request * request, int *flag, MPC_Status * status)
 		sctk_mpc_commit_status_from_request(request,status);
 	}
 
+	if((status != MPC_STATUS_IGNORE) && (*flag == 0)){
+	  status->MPC_ERROR = MPC_ERR_PENDING;
+	}
+
 	MPC_ERROR_SUCESS ();
 }
 
@@ -2888,6 +2897,10 @@ __MPC_Test_check (MPC_Request * request, int *flag, MPC_Status * status)
       *flag = 1;
       sctk_mpc_commit_status_from_request(request,status);
     }
+
+  if((status != MPC_STATUS_IGNORE) && (*flag == 0)){
+    status->MPC_ERROR = MPC_ERR_PENDING;
+  }
   MPC_ERROR_SUCESS ();
 }
 
@@ -2908,6 +2921,10 @@ __MPC_Test_no_check (MPC_Request * request, int *flag, MPC_Status * status)
       *flag = 1;
       sctk_mpc_commit_status_from_request(request,status);
     }
+
+  if((status != MPC_STATUS_IGNORE) && (*flag == 0)){
+    status->MPC_ERROR = MPC_ERR_PENDING;
+  }
   MPC_ERROR_SUCESS ();
 }
 
@@ -4487,6 +4504,7 @@ MPC_Iprobe_inter (const int source, const int destination,
       status->MPC_SOURCE = msg.source;
       status->MPC_TAG = msg.message_tag;
       status->count = (mpc_msg_count) msg.msg_size;
+      status->MPC_ERROR = MPC_ERR_PENDING;
       MPC_ERROR_SUCESS ();
     }
   if ((source != MPC_ANY_SOURCE) && (tag != MPC_ANY_TAG))
@@ -4496,6 +4514,7 @@ MPC_Iprobe_inter (const int source, const int destination,
       status->MPC_SOURCE = msg.source;
       status->MPC_TAG = msg.message_tag;
       status->count = (mpc_msg_count) msg.msg_size;
+      status->MPC_ERROR = MPC_ERR_PENDING;
       MPC_ERROR_SUCESS ();
     }
   if ((source != MPC_ANY_SOURCE) && (tag == MPC_ANY_TAG))
@@ -4504,6 +4523,7 @@ MPC_Iprobe_inter (const int source, const int destination,
       status->MPC_SOURCE = msg.source;
       status->MPC_TAG = msg.message_tag;
       status->count = (mpc_msg_count) msg.msg_size;
+      status->MPC_ERROR = MPC_ERR_PENDING;
       MPC_ERROR_SUCESS ();
     }
   if ((source == MPC_ANY_SOURCE) && (tag != MPC_ANY_TAG))
@@ -4513,6 +4533,7 @@ MPC_Iprobe_inter (const int source, const int destination,
       status->MPC_SOURCE = msg.source;
       status->MPC_TAG = msg.message_tag;
       status->count = (mpc_msg_count) msg.msg_size;
+      status->MPC_ERROR = MPC_ERR_PENDING;
       MPC_ERROR_SUCESS ();
     }
 

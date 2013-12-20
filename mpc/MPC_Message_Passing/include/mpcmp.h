@@ -107,6 +107,7 @@ extern "C"
     int is_null;
     int need_check_in_wait;
     int request_type;
+    int truncated;
   } MPC_Request;
 
   extern MPC_Request mpc_request_null;
