@@ -3199,40 +3199,47 @@ static int __INTERNAL__PMPI_Get_elements (MPI_Status * status, MPI_Datatype data
 			task_specific = __MPC_get_task_specific ();
 
 			sctk_spinlock_lock (&(task_specific->other_user_types.lock));
-				other_user_types = task_specific->other_user_types.other_user_types;
-				sctk_assert (other_user_types != NULL);
-				count = other_user_types[datatype - sctk_user_data_types].count;
-				data_in = other_user_types[datatype - sctk_user_data_types].datatype;
-				res = __INTERNAL__PMPI_Type_size (data_in, &data_in_size);
-				if (res != MPI_SUCCESS) {
-				  return res;
-				}
+			other_user_types = task_specific->other_user_types.other_user_types;
+			sctk_assert (other_user_types != NULL);
+			count = other_user_types[datatype - sctk_user_data_types].count;
+			data_in = other_user_types[datatype - sctk_user_data_types].datatype;
+			res = __INTERNAL__PMPI_Type_size (data_in, &data_in_size);
 			sctk_spinlock_unlock (&(task_specific->other_user_types.lock));
 
 			size = status->count;
-			sctk_nodebug("Other type : count = %d, datatype %d, data_in_size %d,  status_size = %d", count, datatype, data_in_size, size);
 			*elements = size/data_in_size;
+			if (res != MPI_SUCCESS) {
+			  return res;
+			}
 		}
 		else if(sctk_is_derived_type(datatype))
 		{
 			size_t count;
 			sctk_derived_type_t **user_types;
 			sctk_task_specific_t *task_specific;
+			unsigned long i;
 			task_specific = __MPC_get_task_specific ();
 			size = status->count;
 
-			sctk_spinlock_lock (&(task_specific->user_types_struct.lock));
-				sctk_assert (datatype - sctk_user_data_types - sctk_user_data_types_max < sctk_user_data_types_max);
-				user_types = task_specific->user_types_struct.user_types_struct;
-				sctk_assert (user_types[datatype - sctk_user_data_types - sctk_user_data_types_max] != NULL);
-				count = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->nb_elements;
+			*elements = 0;
 
-				sctk_nodebug("Derived type : count = %d, nb_elements %d, ref_count %d, size %d, datatype %d, datasize %d, status_size = %d", count,
-				user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->nb_elements,
-				user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->ref_count,
-				user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->size, datatype, data_size, size);
+			sctk_spinlock_lock (&(task_specific->user_types_struct.lock));
+			sctk_assert (datatype - sctk_user_data_types - sctk_user_data_types_max < sctk_user_data_types_max);
+			user_types = task_specific->user_types_struct.user_types_struct;
+			sctk_assert (user_types[datatype - sctk_user_data_types - sctk_user_data_types_max] != NULL);
+			count = user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->nb_elements;
+
+			for(i = 0; i < user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->count; i++){
+			  (*elements)++;
+			  size -= user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->ends[i] -
+			    user_types[datatype - sctk_user_data_types - sctk_user_data_types_max]->begins[i] + 1;
+
+			  if(size <= 0){
+			    break;
+			  }
+			}
+
 			sctk_spinlock_unlock (&(task_specific->user_types_struct.lock));
-			*elements = count;
 		}
 		else
 		{
