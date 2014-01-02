@@ -31,6 +31,7 @@ extern "C"
 #endif
 #include <stdio.h>
 #include <stdarg.h>
+#include <sctk_keywords.h>
 #include <sctk_config.h>
 #include <assert.h>
 
