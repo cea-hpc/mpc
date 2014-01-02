@@ -64,6 +64,10 @@
 #define SCTK_LOCAL_VERSION_MAJOR 0
 #define SCTK_LOCAL_VERSION_MINOR 1
 
+#ifdef HAVE_ENVIRON_VAR
+  extern char ** environ;
+#endif
+
 #define SCTK_LAUNCH_MAX_ARG 4096
 static char *sctk_save_argument[SCTK_LAUNCH_MAX_ARG];
 static int sctk_initial_argc = 0;
@@ -960,7 +964,11 @@ sctk_launch_main (int argc, char **argv)
   /* MPC_MAKE_FORTRAN_INTERFACE is set when compiling fortran headers.
    * To check why ? */
   if (getenv("MPC_MAKE_FORTRAN_INTERFACE") != NULL) {
+#ifdef HAVE_ENVIRON_VAR
+    return mpc_user_main(argc, argv, environ);
+#else
     return mpc_user_main(argc, argv);
+#endif
   }
 
   sctk_disable_addr_randomize (argc,argv);

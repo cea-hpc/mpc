@@ -33,9 +33,17 @@ main (int argc, char **argv)
   return tmp;
 }
 #else
+	#ifdef HAVE_ENVIRON_VAR
+	  int mpc_user_main (int argc , char **argv, char**envp)
+	  {
+		  not_available ();
+		  return 0;
+	  }
+	#else
 	  int mpc_user_main (int argc, char ** argv)
 	  {
 		  not_available ();
 		  return 0;
 	  }
+	#endif
 #endif

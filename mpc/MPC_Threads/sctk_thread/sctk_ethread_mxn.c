@@ -907,12 +907,25 @@ sctk_ethread_mxn_thread_init (void)
 
 #ifndef MPC_Message_Passing
 
+#ifdef HAVE_ENVIRON_VAR
+#include <stdlib.h>
+#include <stdio.h>
+extern char ** environ;
+#endif
+
+
 int
 /* main (int argc, char **argv) */
 sctk_user_main (int argc, char **argv)
 {
   int result;
+  
+#ifdef HAVE_ENVIRON_VAR
+  result = mpc_user_main (argc, argv,environ);
+#else
   result = mpc_user_main (argc, argv);
+#endif
+
   return result;
 }
 #endif
