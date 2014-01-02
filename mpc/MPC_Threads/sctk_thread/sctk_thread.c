@@ -31,7 +31,6 @@ MonoAssembly *assembly;
 MonoDomain *domain;
 #endif
 
-#include <sctk_low_level_comm.h>
 #ifdef MPC_USE_INFINIBAND
 #include <sctk_ib_cp.h>
 #endif
@@ -73,8 +72,7 @@ MonoDomain *domain;
 #include "sctk_pmi.h"
 #include "sctk_multirail_ib.h"
 #include "sctk_ib_prof.h"
-/* #include "sctk_hybrid_comm.h" */
-/* #include "sctk_ib_scheduling.h" */
+#include <sctk_low_level_comm.h>
 #endif
 #include <errno.h>
 extern int errno;
@@ -725,9 +723,9 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
       not_reachable ();
     }
 #else
-  sctk_thread_mutex_lock (&sctk_current_local_tasks_nb_lock);
+  sctk_thread_mutex_lock (&sctk_current_local_tasks_lock);
   sctk_current_local_tasks_nb--;
-  sctk_thread_mutex_unlock (&sctk_current_local_tasks_nb_lock);
+  sctk_thread_mutex_unlock (&sctk_current_local_tasks_lock);
 #endif
 
   sctk_thread_remove (&tmp);
