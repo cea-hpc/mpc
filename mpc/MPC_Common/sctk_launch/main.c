@@ -33,12 +33,9 @@ main (int argc, char **argv)
   return tmp;
 }
 #else
-
-int
-mpc_user_main__ (int argc, char **argv)
-{
-  not_available ();
-  return 0;
-}
-
+	  int mpc_user_main (int argc, char ** argv)
+	  {
+		  not_available ();
+		  return 0;
+	  }
 #endif

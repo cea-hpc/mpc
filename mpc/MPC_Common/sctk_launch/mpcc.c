@@ -32,13 +32,8 @@
 #endif
 
 
-#ifdef HAVE_ENVIRON_VAR
 #include <stdlib.h>
 #include <stdio.h>
-extern char ** environ;
-#endif
-
-
 
 static int
 intern_main (int argc, char **argv)
@@ -55,19 +50,11 @@ intern_main (int argc, char **argv)
   return tmp;
 }
 
-#ifdef HAVE_ENVIRON_VAR
-int
-mpc_user_main (int argc, char **argv,char** envp)
-{
-  return mpc_user_main__ (argc, argv,envp);
-}
-#else
 int
 mpc_user_main (int argc, char **argv)
 {
   return mpc_user_main__ (argc, argv);
 }
-#endif
 
 int
 main_c (int argc, char **argv)
@@ -91,11 +78,7 @@ int
 main_fortran (int argc, char **argv)
 {
   int tmp;
-#ifdef HAVE_ENVIRON_VAR
-  mpc_user_main__ (argc, argv,environ);
-#else
   mpc_user_main__ (argc, argv);
-#endif
   exit (0);
   return 0;
 }
