@@ -80,7 +80,7 @@ void cfree(void * ptr)
 	SCTK_ALLOC_MMCHECK_UNREG(ptr);
 	sctk_free(ptr);
 	SCTK_ALLOC_MMCHECK_ENABLE_REPORT();
-	SCTK_PROFIL_END(free);
+	SCTK_PROFIL_END(cfree);
 }
 
 /************************* FUNCTION ************************/

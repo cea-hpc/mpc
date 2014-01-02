@@ -713,10 +713,8 @@ sctk_ib_rdma_poll_recv(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
   switch(IBUF_GET_RDMA_TYPE(rdma_header)) {
     case rdma_req_type:
       {
-      PROF_TIME_START(rail, ib_tst);
       sctk_nodebug("Poll recv: message RDMA req received");
       sctk_ib_rdma_recv_req(rail, ibuf);
-      PROF_TIME_END(rail, ib_tst);
       return 1;
       }
       break;

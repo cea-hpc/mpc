@@ -501,9 +501,7 @@ sctk_network_notify_perform_message_ib (int remote_process, int remote_task_id, 
   {
     sctk_ib_qp_t *remote;
     sctk_ib_data_t *route_data;
-    SCTK_PROFIL_START(ib_tst2);
     sctk_route_table_t *route =  sctk_get_route_to_process_no_ondemand(remote_process, rail);
-    SCTK_PROFIL_END(ib_tst2);
     ib_assume(route);
     int ret;
 
