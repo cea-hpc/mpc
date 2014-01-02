@@ -24,13 +24,6 @@
 #include "sctk_debug.h"
 #include <string.h>
 #include <stdlib.h>
-#if defined(MPC_Message_Passing) || defined(MPC_Threads)
-#include "mpc.h"
-
-#if defined(WINDOWS_SYS)
-#include <pthread.h>
-#endif
-
 
 #ifdef HAVE_ENVIRON_VAR
 #include <stdlib.h>
@@ -38,6 +31,12 @@
 extern char ** environ;
 #endif
 
+#if defined(MPC_Message_Passing) || defined(MPC_Threads)
+#include "mpc.h"
+
+#if defined(WINDOWS_SYS)
+#include <pthread.h>
+#endif
 
 
 static int
