@@ -8238,11 +8238,11 @@ PMPI_Iprobe (int source, int tag, MPI_Comm comm, int *flag,
   int res = MPI_ERR_INTERN;
 	mpi_check_comm(comm, comm);
   res = __INTERNAL__PMPI_Iprobe (source, tag, comm, flag, status);
-  if((status != MPI_STATUS_IGNORE) && (*flag != 0)){
-    if(status->MPI_ERROR != MPI_SUCCESS){
-      res = MPI_ERR_IN_STATUS;
-    }
-  }
+/*   if((status != MPI_STATUS_IGNORE) && (*flag != 0)){ */
+/*     if(status->MPI_ERROR != MPI_SUCCESS){ */
+/*       res = MPI_ERR_IN_STATUS; */
+/*     } */
+/*   }  */
 
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -8253,11 +8253,11 @@ PMPI_Probe (int source, int tag, MPI_Comm comm, MPI_Status * status)
   int res = MPI_ERR_INTERN;
 	mpi_check_comm(comm, comm);
   res = __INTERNAL__PMPI_Probe (source, tag, comm, status);
-  if(status != MPI_STATUS_IGNORE){
-    if(status->MPI_ERROR != MPI_SUCCESS){
-      res = MPI_ERR_IN_STATUS;
-    }
-  }
+/*   if(status != MPI_STATUS_IGNORE){ */
+/*     if(status->MPI_ERROR != MPI_SUCCESS){ */
+/*       res = MPI_ERR_IN_STATUS; */
+/*     } */
+/*   }  */
 
   SCTK__MPI_Check_retrun_val (res, comm);
 }
