@@ -8181,10 +8181,10 @@ PMPI_Waitsome (int incount, MPI_Request array_of_requests[],
     __INTERNAL__PMPI_Waitsome (incount, array_of_requests, outcount,
 			       array_of_indices, array_of_statuses);
 
-  if(array_of_statuses != MPI_STATUSES_IGNORE){
+  if((array_of_statuses != MPI_STATUSES_IGNORE) && (*outcount != MPI_UNDEFINED)){
     int i;
     for(i =0; i < *outcount; i++){
-      if(array_of_statuses[array_of_indices[i]].MPI_ERROR != MPI_SUCCESS){
+      if((array_of_statuses[array_of_indices[i]].MPI_ERROR != MPI_SUCCESS) && (array_of_statuses[array_of_indices[i]].MPI_ERROR != MPI_ERR_PENDING)){
 	res = MPI_ERR_IN_STATUS;
       }
     }
