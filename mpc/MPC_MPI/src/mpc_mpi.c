@@ -701,6 +701,10 @@ static inline void sctk_check_auto_free_list(MPI_request_struct_t *requests){
   }
 }
 
+static inline __sctk_init_mpc_request_internal(MPI_internal_request_t *tmp){
+  memset (&(tmp->req), 0, sizeof (MPC_Request));
+}
+
 static inline MPI_internal_request_t *
 __sctk_new_mpc_request_internal (MPI_Request * req)
 {
@@ -747,7 +751,7 @@ __sctk_new_mpc_request_internal (MPI_Request * req)
   sctk_spinlock_unlock (&(requests->lock));
   *req = tmp->rank;
 
-  memset (&(tmp->req), 0, sizeof (MPC_Request));
+  __sctk_init_mpc_request_internal(tmp);
 
   return tmp;
 }
@@ -844,7 +848,6 @@ __sctk_delete_mpc_request (MPI_Request * req)
     }
   sctk_spinlock_unlock (&(requests->lock));
 }
-
 
 static int
 __INTERNAL__PMPI_Send (void *buf, int count, MPI_Datatype datatype, int dest,
@@ -1910,14 +1913,35 @@ static int __INTERNAL__PMPI_Testall (int count, MPI_Request array_of_requests[],
 
 static int __INTERNAL__PMPI_Waitsome (int incount, MPI_Request * array_of_requests, int *outcount, int *array_of_indices, MPI_Status * array_of_statuses)
 {
-	int flag = 0;
-	while (!flag)
-    {
-		__INTERNAL__PMPI_Testsome (incount, array_of_requests, outcount, array_of_indices, array_of_statuses);
-		flag = *outcount;
-		if (!flag) sctk_thread_yield ();
+  int i;
+  int req_null_count = 0;
+
+  *outcount = MPI_UNDEFINED;
+
+  for(i = 0; i < incount; i++){
+    if(array_of_requests[i] == MPI_REQUEST_NULL){
+      req_null_count++;
+    } else {
+      MPC_Request *req;
+      req = __sctk_convert_mpc_request (&(array_of_requests[i]));
+      if (req == &MPC_REQUEST_NULL)
+	{
+	  req_null_count++;
+	}
     }
-	return MPI_SUCCESS;
+  }
+
+  if(req_null_count == incount){
+    return MPI_SUCCESS;
+  }
+
+  do
+    {
+      sctk_thread_yield ();
+      __INTERNAL__PMPI_Testsome (incount, array_of_requests, outcount, array_of_indices, array_of_statuses);
+    }while (*outcount == MPI_UNDEFINED);
+
+  return MPI_SUCCESS;
 }
 
 static int __INTERNAL__PMPI_Testsome (int incount, MPI_Request * array_of_requests, int *outcount, int *array_of_indices, MPI_Status * array_of_statuses)
@@ -1928,7 +1952,7 @@ static int __INTERNAL__PMPI_Testsome (int incount, MPI_Request * array_of_reques
 	int loc_flag;
 	for (i = 0; i < incount; i++)
 	{
-		if (array_of_requests[i] != MPI_REQUEST_NULL)
+	  if (array_of_requests[i] != MPI_REQUEST_NULL)
 		{
 			int tmp;
 			MPC_Request *req;
@@ -1941,7 +1965,7 @@ static int __INTERNAL__PMPI_Testsome (int incount, MPI_Request * array_of_reques
 			}
 			else
 			{
-				tmp = PMPC_Test (req, &loc_flag,(array_of_statuses == MPC_STATUS_IGNORE) ? MPC_STATUS_IGNORE:&(array_of_statuses[done]));
+				tmp = PMPC_Test (req, &loc_flag,(array_of_statuses == MPI_STATUSES_IGNORE) ? MPC_STATUS_IGNORE:&(array_of_statuses[done]));
 			}
 			if (loc_flag)
 			{
@@ -2200,6 +2224,8 @@ ____INTERNAL__PMPI_Start (MPI_Request * request)
     *request = MPI_REQUEST_NULL;
     return MPI_SUCCESS;
   }
+
+  __sctk_init_mpc_request_internal(req);
 
   switch (req->persistant.op)
     {
@@ -8184,7 +8210,7 @@ PMPI_Waitsome (int incount, MPI_Request array_of_requests[],
   if((array_of_statuses != MPI_STATUSES_IGNORE) && (*outcount != MPI_UNDEFINED)){
     int i;
     for(i =0; i < *outcount; i++){
-      if((array_of_statuses[array_of_indices[i]].MPI_ERROR != MPI_SUCCESS) && (array_of_statuses[array_of_indices[i]].MPI_ERROR != MPI_ERR_PENDING)){
+      if((array_of_statuses[i].MPI_ERROR != MPI_SUCCESS) && (array_of_statuses[i].MPI_ERROR != MPI_ERR_PENDING)){
 	res = MPI_ERR_IN_STATUS;
       }
     }
@@ -8202,27 +8228,27 @@ int PMPI_Testsome (int incount, MPI_Request array_of_requests[], int *outcount, 
 	{
 		res = MPI_ERR_REQUEST;
 	}
-	else
-	{
-		for (index = 0; index < incount; ++index)
-		{
-			if (array_of_requests[index] == -1)
-			{
-				res = MPI_ERR_REQUEST;
-				break;
-			}
-		}
-	}
+/* 	else */
+/* 	{ */
+/* 		for (index = 0; index < incount; ++index) */
+/* 		{ */
+/* 			if (array_of_requests[index] == -1) */
+/* 			{ */
+/* 				res = MPI_ERR_REQUEST; */
+/* 				break; */
+/* 			} */
+/* 		} */
+/* 	} */
 	if (((outcount == NULL || array_of_indices == NULL) && incount > 0) || incount < 0)
 	{
 		return MPI_ERR_ARG;
 	}
 	res = __INTERNAL__PMPI_Testsome (incount, array_of_requests, outcount, array_of_indices, array_of_statuses);
 
-  if(array_of_statuses != MPI_STATUSES_IGNORE){
+	if((array_of_statuses != MPI_STATUSES_IGNORE) && (*outcount != MPI_UNDEFINED)){
     int i;
     for(i =0; i < *outcount; i++){
-      if((array_of_statuses[array_of_indices[i]].MPI_ERROR != MPI_SUCCESS) && (array_of_statuses[array_of_indices[i]].MPI_ERROR != MPI_ERR_PENDING)){
+      if((array_of_statuses[i].MPI_ERROR != MPI_SUCCESS) && (array_of_statuses[i].MPI_ERROR != MPI_ERR_PENDING)){
 	res = MPI_ERR_IN_STATUS;
       }
     }
