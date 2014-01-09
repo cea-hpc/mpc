@@ -7263,6 +7263,10 @@ __INTERNAL__PMPI_Errhandler_set (MPI_Comm comm, MPI_Errhandler errhandler)
   mpc_mpi_data_t* tmp;
   mpc_mpi_per_communicator_t* tmp_per_comm;
 
+  if(MPI_ERRHANDLER_NULL == errhandler){
+      MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_ARG, "Invalid errhandler");
+  }
+
   tmp = mpc_mpc_get_per_task_data();
 
   sctk_spinlock_lock(&(tmp->lock));
