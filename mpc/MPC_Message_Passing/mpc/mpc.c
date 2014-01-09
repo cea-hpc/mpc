@@ -3847,10 +3847,11 @@ __MPC_Gather (void *sendbuf, mpc_msg_count sendcnt, MPC_Datatype sendtype,
 			  j++;
 			}
 		  j--;
-		  for (; j >= 0; j--)
-			{
-			  __MPC_Wait (&(recvrequest[j]), MPC_STATUS_IGNORE);
-			}
+		  __MPC_Waitall(j+1,recvrequest,MPC_STATUSES_IGNORE);
+/* 		  for (; j >= 0; j--) */
+/* 			{ */
+/* 			  __MPC_Wait (&(recvrequest[j]), MPC_STATUS_IGNORE); */
+/* 			} */
 		}
 		}
 	  __MPC_Wait (&(request), MPC_STATUS_IGNORE);
