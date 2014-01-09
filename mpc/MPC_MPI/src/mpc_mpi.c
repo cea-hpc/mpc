@@ -1807,9 +1807,17 @@ static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
 static int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests, MPI_Status * array_of_statuses)
 {
 	int flag = 0;
+	int i;
+
+	if(array_of_statuses != MPC_STATUSES_IGNORE){
+	  for (i = 0; i < count; i++)
+	    {
+	      array_of_statuses[i].MPI_ERROR = MPI_SUCCESS;
+	    }
+	}
+
 	while (!flag)
 	{
-		int i;
 		int done = 0;
 		int loc_flag;
 		for (i = 0; i < count; i++)
@@ -1834,7 +1842,7 @@ static int __INTERNAL__PMPI_Waitall (int count, MPI_Request * array_of_requests,
 				}
 				else
 				{
-					tmp = PMPC_Test (req, &loc_flag, (array_of_statuses == MPC_STATUS_IGNORE) ? MPC_STATUS_IGNORE:&(array_of_statuses[i]));
+					tmp = PMPC_Test (req, &loc_flag, (array_of_statuses == MPC_STATUSES_IGNORE) ? MPC_STATUS_IGNORE:&(array_of_statuses[i]));
 				}
 			}
 			if (loc_flag)
@@ -1861,6 +1869,13 @@ static int __INTERNAL__PMPI_Testall (int count, MPI_Request array_of_requests[],
 	int done = 0;
 	int loc_flag;
 	*flag = 0;
+	if(array_of_statuses != MPC_STATUSES_IGNORE){
+	  for (i = 0; i < count; i++)
+	    {
+	      array_of_statuses[i].MPI_ERROR = MPI_SUCCESS;
+	    }
+	}
+
 	for (i = 0; i < count; i++)
 	{
 		int tmp;
@@ -1883,7 +1898,7 @@ static int __INTERNAL__PMPI_Testall (int count, MPI_Request array_of_requests[],
 			}
 			else
 			{
-				tmp = PMPC_Test (req, &loc_flag, (array_of_statuses == MPC_STATUS_IGNORE) ? MPC_STATUS_IGNORE:&(array_of_statuses[i]));
+				tmp = PMPC_Test (req, &loc_flag, (array_of_statuses == MPC_STATUSES_IGNORE) ? MPC_STATUS_IGNORE:&(array_of_statuses[i]));
 			}
 		}
 		if (loc_flag)
@@ -8164,7 +8179,7 @@ PMPI_Waitall (int count, MPI_Request array_of_requests[],
 
   if(array_of_statuses != MPI_STATUSES_IGNORE){
     int i;
-    for(i =0; i < count; i++){
+    for(i = 0; i < count; i++){
       if(array_of_statuses[i].MPI_ERROR != MPI_SUCCESS){
 	res = MPI_ERR_IN_STATUS;
       }
