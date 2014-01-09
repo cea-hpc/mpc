@@ -1681,7 +1681,7 @@ sctk_msg_list_t* sctk_perform_messages_search_matching(
 	if((header->communicator == header_found->communicator) &&
 	   (header->specific_message_tag == header_found->specific_message_tag) &&
 	   ((header->source == header_found->source) || (header->source == MPC_ANY_SOURCE))&&
-	   ((header->message_tag == header_found->message_tag) || (header->message_tag == MPC_ANY_TAG))){
+	   ((header->message_tag == header_found->message_tag) || ((header->message_tag == MPC_ANY_TAG) && (header_found->message_tag >= 0)))){
 	  /* Message found. We delete it  */
 	  DL_DELETE(pending_list->list,ptr_found);
 
@@ -1711,7 +1711,7 @@ int sctk_perform_messages_probe_matching(sctk_internal_ptp_t* pair,
     if((header->communicator == header_send->communicator) &&
        (header->specific_message_tag == header_send->specific_message_tag) &&
        ((header->source == header_send->source) || (header->source == MPC_ANY_SOURCE))&&
-       ((header->message_tag == header_send->message_tag) || (header->message_tag == MPC_ANY_TAG))){
+       ((header->message_tag == header_send->message_tag) || ((header->message_tag == MPC_ANY_TAG) && (header_send->message_tag >= 0)))){
       memcpy(header,&(ptr_send->msg->body.header),sizeof(sctk_thread_message_header_t));
       return 1;
     }
