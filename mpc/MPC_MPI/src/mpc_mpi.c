@@ -552,9 +552,13 @@ __sctk_init_mpi_errors ()
   if ((datatype >= sctk_user_data_types_max) && (sctk_is_derived_type(datatype) != 1)) \
     MPI_ERROR_REPORT (comm, MPI_ERR_TYPE, "");
 
+static int is_finalized = 0;
+static int is_initialized = 0;
+
 TODO("to optimize")
 #define mpi_check_comm(com,comm)			\
-  if (com == MPI_COMM_NULL)				\
+  if((is_finalized != 0) || (is_initialized != 1)) MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_OTHER,""); \
+  else if (com == MPI_COMM_NULL)				\
     MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_COMM,"");		\
   else if(mpc_mpc_get_per_comm_data(com) == NULL)	\
     MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"")
@@ -578,6 +582,10 @@ TODO("to optimize")
 #define mpi_check_rank_send(task,max_rank,comm)		\
   if(((task < 0) || (task >= max_rank)) && (task != MPI_PROC_NULL))		\
     MPI_ERROR_REPORT(comm,MPI_ERR_RANK,"")
+
+#define mpi_check_root(task,max_rank,comm)		\
+  if(((task < 0) || (task >= max_rank)) && (task != MPI_PROC_NULL))		\
+    MPI_ERROR_REPORT(comm,MPI_ERR_ROOT,"")
 
 #define mpi_check_tag(tag,comm)				\
   if(((tag < 0) || (tag > MPI_TAG_UB_VALUE)) && (tag != MPI_ANY_TAG))	\
@@ -7318,6 +7326,10 @@ __INTERNAL__PMPI_Errhandler_free (MPI_Errhandler * errhandler)
 {
   mpc_mpi_data_t* tmp;
 
+  if(MPI_ERRHANDLER_NULL == *errhandler){
+      MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_ARG, "Invalid errhandler");
+  }
+
   tmp = mpc_mpc_get_per_task_data();
   sctk_spinlock_lock(&(tmp->lock));
 
@@ -7438,9 +7450,11 @@ __INTERNAL__PMPI_Init (int *argc, char ***argv)
 {
   int res;
   int flag; 
+  int flag_finalized; 
   __INTERNAL__PMPI_Initialized(&flag);
-  if(flag != 0){
-    MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_OTHER, "MPI_Init allready called");
+  __INTERNAL__PMPI_Finalized(&flag_finalized);
+  if((flag != 0) || (flag_finalized != 0)){
+    MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_OTHER, "MPI_Init issue");
   } else {
     int rank;
     sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
@@ -7452,6 +7466,7 @@ __INTERNAL__PMPI_Init (int *argc, char ***argv)
       {
 	return res;
       }
+    is_initialized = 1;
 
     task_specific = __MPC_get_task_specific ();
     task_specific->mpc_mpi_data = malloc(sizeof(struct mpc_mpi_data_s));
@@ -7494,11 +7509,13 @@ __INTERNAL__PMPI_Init (int *argc, char ***argv)
   return res;
 }
 
-static int is_finalized = 0;
 static int
 __INTERNAL__PMPI_Finalize (void)
 {
   int res; 
+  if(is_finalized != 0){
+    MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_OTHER, "MPI_Finalize issue");
+  }
   res = PMPC_Finalize ();
   is_finalized = 1;
   return res;
@@ -8859,11 +8876,13 @@ PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, int root,
 	    MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
+  int size;
+  __INTERNAL__PMPI_Comm_size (comm, &size);
+	mpi_check_rank_send(root,size,comm);
 	mpi_check_comm(comm, comm);
 	mpi_check_buf (buffer, comm);
 	mpi_check_count (count, comm);
 	mpi_check_type (datatype, comm);
-	mpi_check_tag (root, comm);
 
   sctk_nodebug ("Entering BCAST %d with count %d", comm, count);
   res = __INTERNAL__PMPI_Bcast (buffer, count, datatype, root, comm);
@@ -8876,6 +8895,9 @@ PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	     int root, MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
+  int size;
+  __INTERNAL__PMPI_Comm_size (comm, &size);
+	mpi_check_root(root,size,comm);
 	mpi_check_comm (comm, comm);
 	mpi_check_buf (sendbuf, comm);
 	mpi_check_count (sendcnt, comm);
@@ -8897,7 +8919,10 @@ PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	      MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
-	mpi_check_comm (comm, comm);
+  int size;
+  __INTERNAL__PMPI_Comm_size (comm, &size);
+	mpi_check_root(root,size,comm);
+ 	mpi_check_comm (comm, comm);
 	mpi_check_buf (sendbuf, comm);
 	mpi_check_count (sendcnt, comm);
 	mpi_check_type (sendtype, comm);
@@ -8917,7 +8942,10 @@ PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	      MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
-	mpi_check_comm (comm, comm);
+  int size;
+  __INTERNAL__PMPI_Comm_size (comm, &size);
+	mpi_check_root(root,size,comm);
+ 	mpi_check_comm (comm, comm);
 	mpi_check_buf (sendbuf, comm);
 	mpi_check_count (sendcnt, comm);
 	mpi_check_type (sendtype, comm);
@@ -8937,6 +8965,9 @@ PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 	       MPI_Datatype recvtype, int root, MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
+  int size;
+  __INTERNAL__PMPI_Comm_size (comm, &size);
+	mpi_check_root(root,size,comm);
 	mpi_check_comm (comm, comm);
 	mpi_check_buf (sendbuf, comm);
 //	mpi_check_count (sendcnt, comm);
@@ -9047,13 +9078,15 @@ PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	     MPI_Op op, int root, MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
+  int size;
+  __INTERNAL__PMPI_Comm_size (comm, &size);
+	mpi_check_root(root,size,comm);
 	mpi_check_comm (comm, comm);
 	mpi_check_buf (sendbuf, comm);
 	mpi_check_buf (recvbuf, comm);
 	mpi_check_count (count, comm);
 	mpi_check_type (datatype, comm);
 	mpi_check_op (op, comm);
-	mpi_check_tag (root, comm);
   res =
     __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, root,
 			     comm);
