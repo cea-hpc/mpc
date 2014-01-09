@@ -1401,6 +1401,11 @@ PMPC_Finalize (void)
   MPC_ERROR_SUCESS ();
 }
 
+static int MPC_EXIT_ON_ABORT_VAL = 0;
+void MPC_EXIT_ON_ABORT(){
+  MPC_EXIT_ON_ABORT_VAL = 1;
+}
+
 int
 PMPC_Abort (MPC_Comm comm, int errorcode)
 {
@@ -1409,7 +1414,12 @@ PMPC_Abort (MPC_Comm comm, int errorcode)
   sctk_error ("MPC_Abort with error %d", errorcode);
   fflush (stderr);
   fflush (stdout);
-  sctk_abort ();
+  if(MPC_EXIT_ON_ABORT_VAL == 0){
+    sctk_abort ();
+  } else {
+    sctk_error ("Skip abort and exit with 0");
+    exit(0);
+  }
   SCTK_PROFIL_END (MPC_Abort);
   MPC_ERROR_SUCESS ();
 }
