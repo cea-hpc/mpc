@@ -7433,54 +7433,60 @@ static int
 __INTERNAL__PMPI_Init (int *argc, char ***argv)
 {
   int res;
-  int rank;
-  sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
-  struct sctk_task_specific_s * task_specific;
-  mpc_per_communicator_t*per_communicator;
-  mpc_per_communicator_t*per_communicator_tmp;
-  res = PMPC_Init (argc, argv);
-  if (res != MPI_SUCCESS)
-    {
-      return res;
-    }
+  int flag; 
+  __INTERNAL__PMPI_Initialized(&flag);
+  if(flag != 0){
+    MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_OTHER, "MPI_Init allready called");
+  } else {
+    int rank;
+    sctk_spinlock_t lock = SCTK_SPINLOCK_INITIALIZER;
+    struct sctk_task_specific_s * task_specific;
+    mpc_per_communicator_t*per_communicator;
+    mpc_per_communicator_t*per_communicator_tmp;
+    res = PMPC_Init (argc, argv);
+    if (res != MPI_SUCCESS)
+      {
+	return res;
+      }
 
-  task_specific = __MPC_get_task_specific ();
-  task_specific->mpc_mpi_data = malloc(sizeof(struct mpc_mpi_data_s));
-  memset(task_specific->mpc_mpi_data,0,sizeof(struct mpc_mpi_data_s));
-  task_specific->mpc_mpi_data->lock = lock;
-  task_specific->mpc_mpi_data->requests = NULL;
-  task_specific->mpc_mpi_data->groups = NULL;
-  task_specific->mpc_mpi_data->buffers = NULL;
-  task_specific->mpc_mpi_data->ops = NULL;
+    task_specific = __MPC_get_task_specific ();
+    task_specific->mpc_mpi_data = malloc(sizeof(struct mpc_mpi_data_s));
+    memset(task_specific->mpc_mpi_data,0,sizeof(struct mpc_mpi_data_s));
+    task_specific->mpc_mpi_data->lock = lock;
+    task_specific->mpc_mpi_data->requests = NULL;
+    task_specific->mpc_mpi_data->groups = NULL;
+    task_specific->mpc_mpi_data->buffers = NULL;
+    task_specific->mpc_mpi_data->ops = NULL;
 
-  __sctk_init_mpc_request ();
-  __sctk_init_mpi_buffer ();
-  __sctk_init_mpi_errors ();
-  __sctk_init_mpi_topo ();
-  __sctk_init_mpi_op ();
-  __sctk_init_mpc_group ();
+    __sctk_init_mpc_request ();
+    __sctk_init_mpi_buffer ();
+    __sctk_init_mpi_errors ();
+    __sctk_init_mpi_topo ();
+    __sctk_init_mpi_op ();
+    __sctk_init_mpc_group ();
 
-  sctk_spinlock_lock(&(task_specific->per_communicator_lock));
-  HASH_ITER(hh,task_specific->per_communicator,per_communicator,per_communicator_tmp)
-    {
-      mpc_mpi_per_communicator_t* tmp;
-      per_communicator->mpc_mpi_per_communicator = sctk_malloc(sizeof(struct mpc_mpi_per_communicator_s));
-      memset(per_communicator->mpc_mpi_per_communicator,0,sizeof(struct mpc_mpi_per_communicator_s));
-      per_communicator->mpc_mpi_per_communicator_copy = mpc_mpi_per_communicator_copy_func;
-      per_communicator->mpc_mpi_per_communicator_copy_dup = mpc_mpi_per_communicator_dup_copy_func;
-      per_communicator->mpc_mpi_per_communicator->lock = lock;
+    sctk_spinlock_lock(&(task_specific->per_communicator_lock));
+    HASH_ITER(hh,task_specific->per_communicator,per_communicator,per_communicator_tmp)
+      {
+	mpc_mpi_per_communicator_t* tmp;
+	per_communicator->mpc_mpi_per_communicator = sctk_malloc(sizeof(struct mpc_mpi_per_communicator_s));
+	memset(per_communicator->mpc_mpi_per_communicator,0,sizeof(struct mpc_mpi_per_communicator_s));
+	per_communicator->mpc_mpi_per_communicator_copy = mpc_mpi_per_communicator_copy_func;
+	per_communicator->mpc_mpi_per_communicator_copy_dup = mpc_mpi_per_communicator_dup_copy_func;
+	per_communicator->mpc_mpi_per_communicator->lock = lock;
 
-      tmp = per_communicator->mpc_mpi_per_communicator;
+	tmp = per_communicator->mpc_mpi_per_communicator;
 
-      __sctk_init_mpi_errors_per_comm (tmp);
-      __sctk_init_mpi_topo_per_comm (tmp);
-      tmp->max_number = 0;
-      tmp->topo.lock = lock;
-    }
-  sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
+	__sctk_init_mpi_errors_per_comm (tmp);
+	__sctk_init_mpi_topo_per_comm (tmp);
+	tmp->max_number = 0;
+	tmp->topo.lock = lock;
+      }
+    sctk_spinlock_unlock(&(task_specific->per_communicator_lock));
 
-  __INTERNAL__PMPI_Comm_rank (MPI_COMM_WORLD, &rank);
-  __INTERNAL__PMPI_Barrier (MPI_COMM_WORLD);
+    __INTERNAL__PMPI_Comm_rank (MPI_COMM_WORLD, &rank);
+    __INTERNAL__PMPI_Barrier (MPI_COMM_WORLD);
+  }
   return res;
 }
 
