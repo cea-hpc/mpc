@@ -2240,7 +2240,7 @@ ____INTERNAL__PMPI_Start (MPI_Request * request)
     return MPI_SUCCESS;
   }
 
-  __sctk_init_mpc_request_internal(req);
+/*   __sctk_init_mpc_request_internal(req); */
 
   switch (req->persistant.op)
     {
