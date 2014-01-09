@@ -8866,6 +8866,9 @@ PMPI_Barrier (MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
+  if(sctk_is_inter_comm (comm)){
+    MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+  }
   sctk_nodebug ("Entering BARRIER %d", comm);
   res = __INTERNAL__PMPI_Barrier (comm);
   SCTK__MPI_Check_retrun_val (res, comm);
@@ -8883,6 +8886,9 @@ PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, int root,
 	mpi_check_buf (buffer, comm);
 	mpi_check_count (count, comm);
 	mpi_check_type (datatype, comm);
+	if(sctk_is_inter_comm (comm)){
+	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+	}
 
   sctk_nodebug ("Entering BCAST %d with count %d", comm, count);
   res = __INTERNAL__PMPI_Bcast (buffer, count, datatype, root, comm);
@@ -8906,7 +8912,10 @@ PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);
 	mpi_check_tag (root, comm);
-
+	if(sctk_is_inter_comm (comm)){
+	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+	}
+	
   res =
     __INTERNAL__PMPI_Gather (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
 			     recvtype, root, comm);
@@ -8930,6 +8939,9 @@ PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 //	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);
 	mpi_check_tag (root, comm);
+	if(sctk_is_inter_comm (comm)){
+	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+	}
  res =
     __INTERNAL__PMPI_Gatherv (sendbuf, sendcnt, sendtype, recvbuf, recvcnts,
 			      displs, recvtype, root, comm);
@@ -8953,6 +8965,9 @@ PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);
 	mpi_check_tag (root, comm);
+	if(sctk_is_inter_comm (comm)){
+	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+	}
  res =
     __INTERNAL__PMPI_Scatter (sendbuf, sendcnt, sendtype, recvbuf, recvcnt,
 			      recvtype, root, comm);
@@ -8976,6 +8991,10 @@ PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);
 	mpi_check_tag (root, comm);
+	if(sctk_is_inter_comm (comm)){
+	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+	}
+
   res =
     __INTERNAL__PMPI_Scatterv (sendbuf, sendcnts, displs, sendtype, recvbuf,
 			       recvcnt, recvtype, root, comm);
@@ -8995,6 +9014,9 @@ PMPI_Allgather (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	mpi_check_buf (recvbuf, comm);
 	mpi_check_count (recvcount, comm);
 	mpi_check_type (recvtype, comm);
+	if(sctk_is_inter_comm (comm)){
+	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+	}
   res =
     __INTERNAL__PMPI_Allgather (sendbuf, sendcount, sendtype, recvbuf,
 				recvcount, recvtype, comm);
@@ -9014,6 +9036,9 @@ PMPI_Allgatherv (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	mpi_check_buf (recvbuf, comm);
 //	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);
+	if(sctk_is_inter_comm (comm)){
+	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+	}
   res =
     __INTERNAL__PMPI_Allgatherv (sendbuf, sendcount, sendtype, recvbuf,
 				 recvcounts, displs, recvtype, comm);
@@ -9033,6 +9058,9 @@ PMPI_Alltoall (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 	mpi_check_buf (recvbuf, comm);
 	mpi_check_count (recvcount, comm);
 	mpi_check_type (recvtype, comm);
+	if(sctk_is_inter_comm (comm)){
+	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+	}
   res =
     __INTERNAL__PMPI_Alltoall (sendbuf, sendcount, sendtype, recvbuf,
 			       recvcount, recvtype, comm);
@@ -9052,6 +9080,9 @@ PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 	mpi_check_buf (recvbuf, comm);
 //	mpi_check_count (recvcnt, comm);
 	mpi_check_type (recvtype, comm);
+	if(sctk_is_inter_comm (comm)){
+	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+	}
   res =
     __INTERNAL__PMPI_Alltoallv (sendbuf, sendcnts, sdispls, sendtype, recvbuf,
 				recvcnts, rdispls, recvtype, comm);
@@ -9069,6 +9100,9 @@ int PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sen
 	mpi_check_buf (recvbuf, comm);
 //	mpi_check_count (recvcnt, comm);
 //	mpi_check_type (recvtype, comm);
+	if(sctk_is_inter_comm (comm)){
+	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+	}
 	res = __INTERNAL__PMPI_Alltoallw (sendbuf, sendcnts, sdispls, sendtypes, recvbuf, recvcnts, rdispls, recvtypes, comm);
 	SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -9087,6 +9121,9 @@ PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	mpi_check_count (count, comm);
 	mpi_check_type (datatype, comm);
 	mpi_check_op (op, comm);
+	if(sctk_is_inter_comm (comm)){
+	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+	}
   res =
     __INTERNAL__PMPI_Reduce (sendbuf, recvbuf, count, datatype, op, root,
 			     comm);
