@@ -253,7 +253,7 @@ extern "C"
     MPI_Request request;
   } mpi_buffer_overhead_t;
 
-#define MPI_BSEND_OVERHEAD (sizeof(mpi_buffer_overhead_t))
+#define MPI_BSEND_OVERHEAD (2*sizeof(mpi_buffer_overhead_t))
 
 #define MPI_MAX_ERROR_STRING MPC_MAX_ERROR_STRING
   void MPI_Default_error (MPI_Comm * comm, int *error, char *msg,
