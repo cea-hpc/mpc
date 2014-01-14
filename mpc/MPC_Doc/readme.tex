@@ -53,7 +53,7 @@ frameround=tttt
 %%%%%%%%%%
 % \def\TODO#1{}
 \def\TODO#1{\textbf{TODO: #1}}
-\def\MPCVERSION{2.4.1}
+\def\MPCVERSION{2.5}
 
 %%%%%%%%%%%%%%%%
 % BIBLIOGRAPHY %
@@ -190,10 +190,11 @@ For csh and tcsh:
 \begin{lstlisting}
       which mpcrun
       which mpc_cc
+      which mpc_icc
 \end{lstlisting}
 
 \item  To compile your first MPC program, you
-may execute the \texttt{mpc\_cc} compiler:
+may execute the \texttt{mpc\_cc} compiler for GNU:
 
 
 \begin{lstlisting}
@@ -222,7 +223,8 @@ If you want to use your favorite compiler instead (loosing some features like
     See the section \emph{Thread types} for details on the '-m' option.
 
 \end{enumerate}
-
+To use the Intel backend, please use the scripts \texttt{mpc\_icc}, 
+\texttt{mpc\_icpc}, and \texttt{mpc\_ifort} to compile the application. 
 \subsection{Custom Installation}
 
 \paragraph{}
