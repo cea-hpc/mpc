@@ -157,11 +157,13 @@ static inline void __mpcomp_read_env_variables() {
   /* TODO: move this default behavior to the instance_init function */
   if ( OMP_MICROVP_NUMBER == 0 ) {
       OMP_MICROVP_NUMBER = sctk_get_processor_number (); /* DEFAULT */
+#if 0
 #ifdef MPC_Message_Passing
       OMP_MICROVP_NUMBER = OMP_MICROVP_NUMBER /  sctk_get_nb_task_local(SCTK_COMM_WORLD); /* DEFAULT */
       if(OMP_MICROVP_NUMBER < 1) {
         OMP_MICROVP_NUMBER = 1;
       }
+#endif
 #endif
   }
 
