@@ -324,7 +324,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	  int max_stack_elements; /* Max elements of the stack computed thanks to depth and degrees */
 	  int previous_depth; /* What was the previously stacked depth (to check if depth is increasing or decreasing on the stack) */
 	  mpcomp_node_t * target_node; /* Target node to spin when creating the next mVP */
-	  int i;
+	  int i, j ;
 	  int nb_cpus; 
 
 	  /* Check input parameters */
@@ -336,6 +336,15 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	  instance->tree_depth = depth ;
 	  instance->tree_base = degree ;
 	  TODO( "check that we can copy degree pointer instead of deep copy")
+	  instance->tree_cumulative = mpcomp_malloc(0,
+			  sizeof(int) * depth, 0 ) ;
+	  for ( i = 0 ; i < depth-1 ; i++ ) {
+		  instance->tree_cumulative[i] = 1 ;
+		  for ( j = i+1 ; j < depth ; j++ ) {
+			  instance->tree_cumulative[i] *= instance->tree_base[j] ;
+		  }
+	  }
+	  instance->tree_cumulative[depth-1] = 1 ; 
 #if MPCOMP_TASK     
      instance->tree_level_size = mpcomp_malloc(0, 
 			 sizeof(int) * (instance->tree_depth + 1), 0);
@@ -359,6 +368,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			  instance->tree_array_size);
      }
 #endif /* MPCOMP_TASK */
+
 
 	  /* Compute the max number of elements on the stack */
 	  max_stack_elements = 1;

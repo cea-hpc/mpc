@@ -325,9 +325,9 @@ typedef struct mpcomp_thread_s
 	int for_dyn_current;    /* Current position in 'for_dyn_chunk_info' array  */
 	/* Chunks array for loop dynamic schedule constructs */
 	mpcomp_atomic_int_pad_t for_dyn_remain[MPCOMP_MAX_ALIVE_FOR_DYN + 1]; 
-	int for_dyn_status ;
 	int for_dyn_total ;
-	int * for_dyn_target ; /* Corrdinates of target thread to steal */
+	int * for_dyn_target ; /* Coordinates of target thread to steal */
+	int * for_dyn_shift ; /* Shift of target thread to steal */
 
 	/* ORDERED CONSTRUCT */
 	int current_ordered_iteration; 
@@ -351,6 +351,7 @@ typedef struct mpcomp_thread_s
 	  int tree_depth ; /* Depth of the tree */
 	  int *tree_base; /* Degree per level of the tree 
 						 (array of size 'tree_depth' */
+	  int *tree_cumulative ; /* Initialized in __mpcomp_build_tree */
 #if MPCOMP_TASK
 	  int *tree_level_size;
 	  int tree_array_size;
@@ -553,11 +554,11 @@ typedef struct mpcomp_thread_s
 
 	  /* -- DYNAMIC FOR LOOP CONSTRUCT -- */
 		t->for_dyn_current = 0 ;
-		t->for_dyn_status = 0 ;
 		t->for_dyn_total = 0 ;
 	  for (i = 0; i < MPCOMP_MAX_ALIVE_FOR_DYN+1; i++)
 	       sctk_atomics_store_int(&(t->for_dyn_remain[i].i), -1);
 	  t->for_dyn_target = NULL ; /* Initialized during the first steal */
+	  t->for_dyn_shift = NULL ; /* Initialized during the first steal */
 
 #if MPCOMP_TASK
 	  t->tasking_init_done = 0;
