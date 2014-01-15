@@ -63,9 +63,10 @@ frameround=tttt
 %%%%%%%%%%%%%%%
 % MAIN HEADER %
 %%%%%%%%%%%%%%%
-\title{Getting Started MPC\\Multi-Processor Communications Library\\Version {\MPCVERSION}}
+\title{MPC\\Multi-Processor Communications Library\\Version {\MPCVERSION} User's Guide}
 
 \author{Patrick Carribault \and Marc P\'{e}rache}
+\author{http://www.paratools.fr/mpc}
 
 \date{\today}
 
@@ -544,8 +545,17 @@ In this file, you can modify the number of cells in each queue (PTP queues,
 collective queues, etc\dots) as well as the size allocated by each cell. Don't
 forget to recompile MPC after each modification.
 
+\subsection*{Q - Why is my MPI program crashing when I use the MPC compilers? }
+In MPC, every MPI task is a thread and thus all tasks share global variables with each other. This sharing can cause undefined behavior, so we propose several solutions to ease the removal of global variables:
+\begin{enumerate}
+\item Use the compiler option \texttt{-fmpc-privatize} to automatically privatize the global variables. In this mode, every global variable is duplicated for every MPI task such as the code can run correctly with MPC. Note than in versions older than 2.4.0, the application has to be compiled as a dynamic library for this solution to work.
+\item Use the option -Wmpc with the patched GCC compiler to generate warnings. In this mode, the compiler will warn you about every global variable declared in the program.
+\end{enumerate}
 \subsection*{Q - When compiling, I have the error undefined reference to \texttt{mpc\_user\_main\_\_}}
 The file containing your \texttt{main} should include \texttt{mpi.h} or
+\subsection*{Q - Why won't HDF5 compile with MPC?}
+MPI-IO is not yet supported.  MPC supports the MPI 1.3 standard, but MPI-IO was added in the MPI 2.0 standard.
+
 \texttt{mpc.h}
 
 \section{Contacts}
@@ -554,6 +564,7 @@ The file containing your \texttt{main} should include \texttt{mpi.h} or
   \item P\'{E}RACHE Marc $\quad$ marc.perache@cea.fr
   \item DIDELOT Sylvain $\quad$ sylvain.didelot@exascale-computing.eu
   \item VALAT S\'{e}bastien $\quad$ sebastien.valat@cea.fr
+  \item ParaTools Staff $\quad$ info@paratools.fr
 \end{itemize}
 
 %%%%%%%%%%%%%%%%
