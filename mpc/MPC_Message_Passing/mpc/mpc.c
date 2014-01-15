@@ -4550,6 +4550,7 @@ MPC_Iprobe_inter (const int source, const int destination,
     }
   if (source == MPC_PROC_NULL)
     {
+      *flag = 1;
       status->MPC_SOURCE = MPC_PROC_NULL;
       status->MPC_TAG = MPC_ANY_TAG;
       status->count = 0;
