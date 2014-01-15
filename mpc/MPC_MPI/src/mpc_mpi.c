@@ -8303,8 +8303,14 @@ int
 PMPI_Iprobe (int source, int tag, MPI_Comm comm, int *flag,
 	     MPI_Status * status)
 {
+    int size;
   int res = MPI_ERR_INTERN;
 	mpi_check_comm(comm, comm);
+    mpi_check_tag (tag, comm);
+    __INTERNAL__PMPI_Comm_size (comm, &size);
+    if(sctk_is_inter_comm(comm) == 0){
+      mpi_check_rank (source, size, comm);
+    }
   res = __INTERNAL__PMPI_Iprobe (source, tag, comm, flag, status);
 /*   if((status != MPI_STATUS_IGNORE) && (*flag != 0)){ */
 /*     if(status->MPI_ERROR != MPI_SUCCESS){ */
@@ -8318,8 +8324,14 @@ PMPI_Iprobe (int source, int tag, MPI_Comm comm, int *flag,
 int
 PMPI_Probe (int source, int tag, MPI_Comm comm, MPI_Status * status)
 {
+    int size;
   int res = MPI_ERR_INTERN;
 	mpi_check_comm(comm, comm);
+    mpi_check_tag (tag, comm);
+    __INTERNAL__PMPI_Comm_size (comm, &size);
+    if(sctk_is_inter_comm(comm) == 0){
+      mpi_check_rank (source, size, comm);
+    }
   res = __INTERNAL__PMPI_Probe (source, tag, comm, status);
 /*   if(status != MPI_STATUS_IGNORE){ */
 /*     if(status->MPI_ERROR != MPI_SUCCESS){ */
