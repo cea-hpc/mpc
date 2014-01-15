@@ -4548,6 +4548,14 @@ MPC_Iprobe_inter (const int source, const int destination,
       status->MPC_ERROR = MPC_ERR_PENDING;
       MPC_ERROR_SUCESS ();
     }
+  if (source == MPC_PROC_NULL)
+    {
+      status->MPC_SOURCE = MPC_PROC_NULL;
+      status->MPC_TAG = MPC_ANY_TAG;
+      status->count = 0;
+      status->MPC_ERROR = MPC_SUCCESS;
+      MPC_ERROR_SUCESS ();
+    }
 
   fprintf (stderr, "source = %d tag = %d\n", source, tag);
   not_reachable ();
