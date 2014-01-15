@@ -8672,6 +8672,8 @@ PMPI_Type_contiguous (int count,
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  mpi_check_type(old_type,comm);
+  mpi_check_count(count,comm);
   res = __INTERNAL__PMPI_Type_contiguous (count, old_type, new_type_p);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -8683,6 +8685,11 @@ PMPI_Type_vector (int count,
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  mpi_check_type(old_type,comm);
+    if(blocklength < 0){
+      MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+    }
+  mpi_check_count(count,comm);
   res =
     __INTERNAL__PMPI_Type_vector (count, blocklength, stride, old_type,
 				  newtype_p);
@@ -8697,6 +8704,30 @@ PMPI_Type_hvector (int count,
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  mpi_check_type(old_type,comm);
+  mpi_check_count(count,comm);
+    if(blocklen < 0){
+      MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+    }
+  res =
+    __INTERNAL__PMPI_Type_hvector (count, blocklen, stride, old_type,
+				   newtype_p);
+  SCTK__MPI_Check_retrun_val (res, comm);
+}
+
+int
+PMPI_Type_create_hvector (int count,
+		   int blocklen,
+		   MPI_Aint stride,
+		   MPI_Datatype old_type, MPI_Datatype * newtype_p)
+{
+  MPI_Comm comm = MPI_COMM_WORLD;
+  int res = MPI_ERR_INTERN;
+  mpi_check_type(old_type,comm);
+  mpi_check_count(count,comm);
+    if(blocklen < 0){
+      MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+    }
   res =
     __INTERNAL__PMPI_Type_hvector (count, blocklen, stride, old_type,
 				   newtype_p);
@@ -8711,6 +8742,18 @@ PMPI_Type_indexed (int count,
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  int i;
+  mpi_check_count(count,comm);
+  if((blocklens == NULL) || (indices == NULL)){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
+  for(i = 0; i < count; i++){
+    if(blocklens[i] < 0){
+      MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+    }
+  }
+
+  mpi_check_type(old_type,comm);
   res =
     __INTERNAL__PMPI_Type_indexed (count, blocklens, indices, old_type,
 				   newtype);
@@ -8725,6 +8768,42 @@ PMPI_Type_hindexed (int count,
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  int i;
+  mpi_check_count(count,comm);
+  if((blocklens == NULL) || (indices == NULL)){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
+  for(i = 0; i < count; i++){
+    if(blocklens[i] < 0){
+      MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+    }
+  }
+  mpi_check_type(old_type,comm);
+  res =
+    __INTERNAL__PMPI_Type_hindexed (count, blocklens, indices, old_type,
+				    newtype);
+  SCTK__MPI_Check_retrun_val (res, comm);
+}
+
+int
+PMPI_Type_create_hindexed (int count,
+		    int blocklens[],
+		    MPI_Aint indices[],
+		    MPI_Datatype old_type, MPI_Datatype * newtype)
+{
+  MPI_Comm comm = MPI_COMM_WORLD;
+  int res = MPI_ERR_INTERN;
+  int i;
+  mpi_check_count(count,comm);
+  if((blocklens == NULL) || (indices == NULL)){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
+  for(i = 0; i < count; i++){
+    if(blocklens[i] < 0){
+      MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+    }
+  }
+  mpi_check_type(old_type,comm);
   res =
     __INTERNAL__PMPI_Type_hindexed (count, blocklens, indices, old_type,
 				    newtype);
@@ -8739,6 +8818,48 @@ PMPI_Type_struct (int count,
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  int i;
+  mpi_check_count(count,comm);
+
+  if((old_types == NULL) || (indices == NULL) || (blocklens == NULL)){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
+
+  for(i = 0; i < count; i++){
+    mpi_check_type(old_types[i],comm); 
+    if(blocklens[i] < 0){
+      MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+    } 
+  }
+
+  res =
+    __INTERNAL__PMPI_Type_struct (count, blocklens, indices, old_types,
+				  newtype);
+  SCTK__MPI_Check_retrun_val (res, comm);
+}
+
+int
+PMPI_Type_create_struct (int count,
+		  int blocklens[],
+		  MPI_Aint indices[],
+		  MPI_Datatype old_types[], MPI_Datatype * newtype)
+{
+  MPI_Comm comm = MPI_COMM_WORLD;
+  int res = MPI_ERR_INTERN;
+  int i;
+  mpi_check_count(count,comm);
+
+  if((old_types == NULL) || (indices == NULL) || (blocklens == NULL)){
+    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+  }
+
+  for(i = 0; i < count; i++){
+    mpi_check_type(old_types[i],comm); 
+    if(blocklens[i] < 0){
+      MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+    } 
+  }
+
   res =
     __INTERNAL__PMPI_Type_struct (count, blocklens, indices, old_types,
 				  newtype);
@@ -8760,6 +8881,7 @@ PMPI_Type_extent (MPI_Datatype datatype, MPI_Aint * extent)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  mpi_check_type(datatype,comm);
   res = __INTERNAL__PMPI_Type_extent (datatype, extent);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -8772,6 +8894,7 @@ PMPI_Type_size (MPI_Datatype datatype, int *size)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  mpi_check_type(datatype,comm);
   res = __INTERNAL__PMPI_Type_size (datatype, size);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -8782,6 +8905,7 @@ PMPI_Type_lb (MPI_Datatype datatype, MPI_Aint * displacement)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  mpi_check_type(datatype,comm);
   res = __INTERNAL__PMPI_Type_lb (datatype, displacement);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -8791,6 +8915,7 @@ PMPI_Type_ub (MPI_Datatype datatype, MPI_Aint * displacement)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  mpi_check_type(datatype,comm);
   res = __INTERNAL__PMPI_Type_ub (datatype, displacement);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -8800,6 +8925,7 @@ PMPI_Type_commit (MPI_Datatype * datatype)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  mpi_check_type(*datatype,comm);
   res = __INTERNAL__PMPI_Type_commit (datatype);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -8810,6 +8936,9 @@ PMPI_Type_free (MPI_Datatype * datatype)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   mpi_check_type (*datatype, MPI_COMM_WORLD);
+  if(*datatype < sctk_user_data_types_max){
+    MPI_ERROR_REPORT (comm, MPI_ERR_TYPE, "");
+  }
   res = __INTERNAL__PMPI_Type_free (datatype);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -8819,6 +8948,7 @@ PMPI_Get_elements (MPI_Status * status, MPI_Datatype datatype, int *elements)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  mpi_check_type(datatype,comm);
   res = __INTERNAL__PMPI_Get_elements (status, datatype, elements);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -8830,16 +8960,21 @@ PMPI_Pack (void *inbuf,
 	   void *outbuf, int outcount, int *position, MPI_Comm comm)
 {
 	int res = MPI_ERR_INTERN;
+	mpi_check_comm(comm,comm);
+	mpi_check_type(datatype,comm);
 	if ((NULL == outbuf) || (NULL == position) || (inbuf == NULL)) {
-		return MPI_ERR_ARG;
+	  MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 	} else if (incount < 0) {
-		return MPI_ERR_COUNT;
+	  MPI_ERROR_REPORT(comm,MPI_ERR_COUNT,"");
 	} else if (outcount < 0) {
-		return MPI_ERR_ARG;
-	} else if ((MPI_DATATYPE_NULL == datatype) || (datatype < 0)) {
-		return MPI_ERR_TYPE;
+	  MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
 	} else if(incount == 0) {
 		return MPI_SUCCESS;
+	}
+	if(datatype < sctk_user_data_types_max){
+	  if(outcount < incount){
+	    MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+	  }
 	}
 	res = __INTERNAL__PMPI_Pack (inbuf, incount, datatype, outbuf, outcount, position, comm);
 	SCTK__MPI_Check_retrun_val (res, comm);
@@ -8852,14 +8987,14 @@ PMPI_Unpack (void *inbuf,
 	     void *outbuf, int outcount, MPI_Datatype datatype, MPI_Comm comm)
 {
 	int res = MPI_ERR_INTERN;
-	if ((NULL == inbuf) || (NULL == position)) {
-		return MPI_ERR_ARG;
-	} else if (outcount < 0) {
-		return MPI_ERR_COUNT;
-	} else if (MPI_DATATYPE_NULL == datatype) {
-		return MPI_ERR_TYPE;
+	mpi_check_comm(comm,comm);
+	mpi_check_type(datatype,comm);
+	if ((NULL == outbuf) || (NULL == inbuf) || (NULL == position)) {
+	  MPI_ERROR_REPORT(comm,MPI_ERR_ARG,"");
+	} else if ((outcount < 0) || (insize < 0)) {
+	  MPI_ERROR_REPORT(comm,MPI_ERR_COUNT,"");
 	} else if (datatype < 0) {
-		return MPI_ERR_TYPE;
+	  MPI_ERROR_REPORT(comm,MPI_ERR_TYPE,"");
 	}
 	res = __INTERNAL__PMPI_Unpack (inbuf, insize, position, outbuf, outcount, datatype, comm);
   SCTK__MPI_Check_retrun_val (res, comm);
@@ -8869,6 +9004,9 @@ int
 PMPI_Pack_size (int incount, MPI_Datatype datatype, MPI_Comm comm, int *size)
 {
   int res = MPI_ERR_INTERN;
+  mpi_check_comm(comm,comm);
+  mpi_check_type(datatype,comm);
+  mpi_check_count(incount,comm);
   res = __INTERNAL__PMPI_Pack_size (incount, datatype, comm, size);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
