@@ -62,5 +62,5 @@ for mode in uma numa; do
 	for test in $ALLOC_TESTS; do
 		run_alloc_test_with_max_cores "${test}_${mode}" "compile_MPC_Allocator_${mode}" "${MPC_TEST_CURRENT_WORK_DIR}/${mode}/tests/${test}" "-m junit_xml -o output-${test}_${mode}.xml"
 	done
-	run_alloc_test_with_max_cores "${test}_${mode}" "compile_MPC_Allocator_${mode}" "${MPC_TEST_CURRENT_WORK_DIR}/${mode}/tests/test_mpscf_queue" "valid"
+	run_alloc_test_with_max_cores "test_mpscf_queue_${mode}" "compile_MPC_Allocator_${mode}" "${MPC_TEST_CURRENT_WORK_DIR}/${mode}/tests/test_mpscf_queue" "valid"
 done
