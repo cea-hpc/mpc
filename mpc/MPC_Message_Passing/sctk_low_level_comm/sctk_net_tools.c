@@ -615,7 +615,7 @@ void sctk_net_message_copy(sctk_message_to_copy_t* tmp)
 }
 
 void sctk_net_message_copy_from_buffer(char* body,
-  sctk_message_to_copy_t* tmp, char free_headers) {
+				       sctk_message_to_copy_t* tmp, char free_headers) {
   sctk_thread_ptp_message_t* send;
   sctk_thread_ptp_message_t* recv;
 
@@ -641,19 +641,28 @@ void sctk_net_message_copy_from_buffer(char* body,
     size_t size;
     size = send->body.header.msg_size;
     if(size > 0)
-    {
-		for (i = 0; i < recv->tail.message.pack.count; i++)
-		  for (j = 0; j < recv->tail.message.pack.list.std[i].count; j++)
-			{
-			  size = (recv->tail.message.pack.list.std[i].ends[j] -
-				  recv->tail.message.pack.list.std[i].begins[j] +
-				  1) * recv->tail.message.pack.list.std[i].elem_size;
-			  memcpy(((char *) (recv->tail.message.pack.list.std[i].addr)) +
-				 recv->tail.message.pack.list.std[i].begins[j] *
-				 recv->tail.message.pack.list.std[i].elem_size,body,size);
-			  body += size;
-			}
-	}
+      {
+	size_t total = 0;
+	char skip = 0;
+	for (i = 0; i < recv->tail.message.pack.count; i++)
+	  for (j = 0; ((j < recv->tail.message.pack.list.std[i].count) && !skip); j++)
+	    {
+	      size = (recv->tail.message.pack.list.std[i].ends[j] -
+		      recv->tail.message.pack.list.std[i].begins[j] +
+		      1) * recv->tail.message.pack.list.std[i].elem_size;
+	      if(total + size > send->body.header.msg_size)
+		{
+		  skip = 1;
+		  size = send->body.header.msg_size - total;
+		}
+	      memcpy(((char *) (recv->tail.message.pack.list.std[i].addr)) +
+		     recv->tail.message.pack.list.std[i].begins[j] *
+		     recv->tail.message.pack.list.std[i].elem_size,body,size);
+	      body += size;
+	      total += size;
+	      assume(total <= send->body.header.msg_size);
+	    }
+      }
     if(free_headers) sctk_message_completion_and_free(send,recv);
     break;
   }
@@ -663,19 +672,28 @@ void sctk_net_message_copy_from_buffer(char* body,
     size_t size;
     size = send->body.header.msg_size;
     if(size > 0)
-    {
-		for (i = 0; i < recv->tail.message.pack.count; i++)
-		  for (j = 0; j < recv->tail.message.pack.list.absolute[i].count; j++)
-			{
-			  size = (recv->tail.message.pack.list.absolute[i].ends[j] -
-				  recv->tail.message.pack.list.absolute[i].begins[j] +
-				  1) * recv->tail.message.pack.list.absolute[i].elem_size;
-			  memcpy(((char *) (recv->tail.message.pack.list.absolute[i].addr)) +
-				 recv->tail.message.pack.list.absolute[i].begins[j] *
-				 recv->tail.message.pack.list.absolute[i].elem_size,body,size);
-			  body += size;
-			}
-	}
+      {
+	size_t total = 0;
+	char skip = 0;
+	for (i = 0; i < recv->tail.message.pack.count; i++)
+	  for (j = 0; ((j < recv->tail.message.pack.list.absolute[i].count) && !skip); j++)
+	    {
+	      size = (recv->tail.message.pack.list.absolute[i].ends[j] -
+		      recv->tail.message.pack.list.absolute[i].begins[j] +
+		      1) * recv->tail.message.pack.list.absolute[i].elem_size;
+	      if(total + size > send->body.header.msg_size)
+		{
+		  skip = 1;
+		  size = send->body.header.msg_size - total;
+		}
+	      memcpy(((char *) (recv->tail.message.pack.list.absolute[i].addr)) +
+		     recv->tail.message.pack.list.absolute[i].begins[j] *
+		     recv->tail.message.pack.list.absolute[i].elem_size,body,size);
+	      body += size;
+	      total += size;
+	      assume(total <= send->body.header.msg_size);
+	    }
+      }
     if(free_headers) sctk_message_completion_and_free(send,recv);
     break;
   }
