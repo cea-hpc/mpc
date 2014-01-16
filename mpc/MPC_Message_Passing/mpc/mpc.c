@@ -4548,6 +4548,8 @@ MPC_Iprobe_inter (const int source, const int destination,
       status->MPC_ERROR = MPC_ERR_PENDING;
       MPC_ERROR_SUCESS ();
     }
+
+  /*handler for MPC_PROC_NULL*/
   if (source == MPC_PROC_NULL)
     {
       *flag = 1;
