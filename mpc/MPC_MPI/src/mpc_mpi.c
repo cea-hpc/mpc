@@ -1202,7 +1202,7 @@ SCTK__MPI_Compact_buffer (int size, mpi_buffer_t * tmp)
 			while (head_next != NULL)
 			{
 /* 	  fprintf(stderr,"NEXT %p %d\n",head_next,head_next->request); */
-				if (head->request != MPI_REQUEST_NULL)
+				if (head_next->request != MPI_REQUEST_NULL)
 				{
 					__INTERNAL__PMPI_Test (&(head_next->request), &flag, MPI_STATUS_IGNORE);
 					assume((head->request == MPI_REQUEST_NULL) || (flag == 0));
@@ -1222,10 +1222,16 @@ SCTK__MPI_Compact_buffer (int size, mpi_buffer_t * tmp)
 			}
 		}
 
-		if ((head->request == MPI_REQUEST_NULL) && (head->size >= size) && (found == NULL))
+		if ((head->request == MPI_REQUEST_NULL) && (head->size >= size) /* && (found == NULL) */)
 		{
-			found = head;
-		}
+		  if(found != NULL){
+		    if(head->size < found->size){
+		      found = head;
+		    }
+		  } else {
+		    found = head;
+		  }
+		} 
 
 		head_next = SCTK__buffer_next_header (head, tmp);
 		head = head_next;
