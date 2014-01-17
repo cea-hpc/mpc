@@ -580,11 +580,11 @@ TODO("to optimize")
     MPI_ERROR_REPORT(comm,MPI_ERR_COUNT,"")
 
 #define mpi_check_rank(task,max_rank,comm)		\
-  if(((task < 0) || (task >= max_rank)) && (task != MPI_ANY_SOURCE) && (task != MPI_PROC_NULL))		\
+  if((((task < 0) || (task >= max_rank)) && (sctk_is_inter_comm (comm) == 0)) && (task != MPI_ANY_SOURCE) && (task != MPI_PROC_NULL)) \
     MPI_ERROR_REPORT(comm,MPI_ERR_RANK,"")
 
 #define mpi_check_rank_send(task,max_rank,comm)		\
-  if(((task < 0) || (task >= max_rank)) && (task != MPI_PROC_NULL))		\
+  if((((task < 0) || (task >= max_rank)) && (sctk_is_inter_comm (comm) == 0)) && (task != MPI_PROC_NULL)) \
     MPI_ERROR_REPORT(comm,MPI_ERR_RANK,"")
 
 #define mpi_check_root(task,max_rank,comm)		\
@@ -8603,16 +8603,16 @@ PMPI_Sendrecv (void *sendbuf, int sendcount, MPI_Datatype sendtype,
 {
   int res = MPI_ERR_INTERN;
   int size;
+
   mpi_check_comm (comm, comm);
-  mpi_check_type (dest, comm);
-  mpi_check_type (source, comm);
+  __INTERNAL__PMPI_Comm_size (comm, &size);
+
   mpi_check_type (sendtype, comm);
   mpi_check_type (recvtype, comm);
   mpi_check_count (sendcount, comm);
   mpi_check_count (recvcount, comm);
   mpi_check_tag_send (sendtag, comm);
   mpi_check_tag (recvtag, comm);
-  __INTERNAL__PMPI_Comm_size (comm, &size);
   mpi_check_rank_send(dest,size,comm);
   mpi_check_rank(source,size,comm);
 
@@ -8649,8 +8649,6 @@ PMPI_Sendrecv_replace (void *buf, int count, MPI_Datatype datatype,
   mpi_check_count (count, comm);
   mpi_check_tag_send (sendtag, comm);
   mpi_check_tag (recvtag, comm);
-  mpi_check_type (dest, comm);
-  mpi_check_type (source, comm);
   __INTERNAL__PMPI_Comm_size (comm, &size);
   mpi_check_rank_send(dest,size,comm);
   mpi_check_rank(source,size,comm);
