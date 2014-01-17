@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - JAEGER Julien julien.jaeger@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
 #ifndef __SCTK_MPC_MPI_H_
@@ -106,6 +107,7 @@ extern "C"
 #define MPI_ERR_SERVICE MPC_ERR_SERVICE
 #define MPI_ERR_NAME MPC_ERR_NAME
 #define MPI_ERR_WIN MPC_ERR_WIN
+#define MPI_ERR_SIZE MPC_ERR_SIZE
 #define MPI_ERR_DISP MPC_ERR_DISP
 #define MPI_ERR_INFO MPC_ERR_INFO
 #define MPI_ERR_LOCKTYPE MPC_ERR_LOCKTYPE

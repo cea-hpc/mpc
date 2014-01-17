@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - JAEGER Julien julien.jaeger@cea.fr                               # */
 /* #                                                                      # */
 /* ######################################################################## */
 #include <mpc.h>
@@ -7548,30 +7549,64 @@ __INTERNAL__PMPI_Error_string (int errorcode, char *string, int *resultlen)
   string[0] = '\0';
   switch (errorcode)
     {
-      MPI_Error_string_convert (MPI_ERR_BUFFER, "Invalid buffer pointer");
-      MPI_Error_string_convert (MPI_ERR_COUNT, "Invalid count argument");
-      MPI_Error_string_convert (MPI_ERR_TYPE, "Invalid datatype argument");
-      MPI_Error_string_convert (MPI_ERR_TAG, "Invalid tag argument");
-      MPI_Error_string_convert (MPI_ERR_COMM, "Invalid communicator");
-      MPI_Error_string_convert (MPI_ERR_RANK, "Invalid rank");
-      MPI_Error_string_convert (MPI_ERR_ROOT, "Invalid root");
-      MPI_Error_string_convert (MPI_ERR_TRUNCATE,
-				"Message truncated on receive");
-      MPI_Error_string_convert (MPI_ERR_GROUP, "Invalid group");
-      MPI_Error_string_convert (MPI_ERR_OP, "Invalid operation");
-      MPI_Error_string_convert (MPI_ERR_REQUEST,
-				"Invalid mpi_request handle");
-      MPI_Error_string_convert (MPI_ERR_TOPOLOGY, "Invalid topology");
-      MPI_Error_string_convert (MPI_ERR_DIMS, "Invalid dimension argument");
-      MPI_Error_string_convert (MPI_ERR_ARG, "Invalid argument");
-      MPI_Error_string_convert (MPI_ERR_OTHER,
-				"Other error; use Error_string");
-      MPI_Error_string_convert (MPI_ERR_UNKNOWN, "Unknown error");
-      MPI_Error_string_convert (MPI_ERR_INTERN, "Internal error code");
-      MPI_Error_string_convert (MPI_ERR_IN_STATUS,
-				"Look in status for error value");
-      MPI_Error_string_convert (MPI_ERR_PENDING, "Pending request");
-      MPI_Error_string_convert (MPI_NOT_IMPLEMENTED, "Not implemented");
+			MPI_Error_string_convert (MPI_ERR_BUFFER , "Invalid buffer pointer");
+			MPI_Error_string_convert (MPI_ERR_COUNT , "Invalid count argument");
+			MPI_Error_string_convert (MPI_ERR_TYPE , "Invalid datatype argument");
+			MPI_Error_string_convert (MPI_ERR_TAG , "Invalid tag argument");
+			MPI_Error_string_convert (MPI_ERR_COMM , "Invalid communicator");
+			MPI_Error_string_convert (MPI_ERR_RANK , "Invalid rank");
+      MPI_Error_string_convert (MPI_ERR_REQUEST, "Invalid mpi_request handle");
+			MPI_Error_string_convert (MPI_ERR_ROOT , "Invalid root");
+			MPI_Error_string_convert (MPI_ERR_GROUP , "Invalid group ");
+			MPI_Error_string_convert (MPI_ERR_OP , "Invalid operation");
+			MPI_Error_string_convert (MPI_ERR_TOPOLOGY , "Invalid topology");
+			MPI_Error_string_convert (MPI_ERR_DIMS , "Invalid dimension argument");
+			MPI_Error_string_convert (MPI_ERR_ARG , "Invalid argument of some other kind");
+			MPI_Error_string_convert (MPI_ERR_UNKNOWN , "Unknown error");
+			MPI_Error_string_convert (MPI_ERR_TRUNCATE , "Message truncated on receive");
+      MPI_Error_string_convert (MPI_ERR_OTHER, "Other error; use Error_string");
+			MPI_Error_string_convert (MPI_ERR_INTERN , "Internal MPI (implementation) error");
+			MPI_Error_string_convert (MPI_ERR_IN_STATUS , "Error code in status");
+			MPI_Error_string_convert (MPI_ERR_PENDING , "Pending request");
+			MPI_Error_string_convert (MPI_ERR_KEYVAL , "Invalid keyval has been passed");
+			MPI_Error_string_convert (MPI_ERR_NO_MEM , "MPI_ALLOC_MEM failed because memory is exhausted");
+			MPI_Error_string_convert (MPI_ERR_BASE , "Invalid base passed to MPI_FREE_MEM");
+			MPI_Error_string_convert (MPI_ERR_INFO_KEY , "Key longer than MPI_MAX_INFO_KEY");
+			MPI_Error_string_convert (MPI_ERR_INFO_VALUE , "Value longer than MPI_MAX_INFO_VAL");
+			MPI_Error_string_convert (MPI_ERR_INFO_NOKEY , "Invalid key passed to MPI_INFO_DELETE");
+			MPI_Error_string_convert (MPI_ERR_SPAWN , "Error in spawning processes");
+			MPI_Error_string_convert (MPI_ERR_PORT , "Ivalid port name passed to MPI_COMM_CONNECT");
+			MPI_Error_string_convert (MPI_ERR_SERVICE , "Invalid service name passed to MPI_UNPUBLISH_NAME");
+			MPI_Error_string_convert (MPI_ERR_NAME , "Invalid service name passed to MPI_LOOKUP_NAME");
+			MPI_Error_string_convert (MPI_ERR_WIN , "Invalid win argument");
+			MPI_Error_string_convert (MPI_ERR_SIZE , "Invalid size argument");
+			MPI_Error_string_convert (MPI_ERR_DISP , "Invalid disp argument");
+			MPI_Error_string_convert (MPI_ERR_INFO , "Invalid info argument");
+			MPI_Error_string_convert (MPI_ERR_LOCKTYPE , "Invalid locktype argument");
+			MPI_Error_string_convert (MPI_ERR_ASSERT , "Invalid assert argument");
+			MPI_Error_string_convert (MPI_ERR_RMA_CONFLICT , "Conflicting accesses to window");
+			MPI_Error_string_convert (MPI_ERR_RMA_SYNC , "Wrong synchronization of RMA calls");
+			MPI_Error_string_convert (MPI_ERR_FILE , "Invalid file handle");
+			MPI_Error_string_convert (MPI_ERR_NOT_SAME , "Collective argument not identical on all processes, \
+				or collective routines called in a different order by	different processes");
+			MPI_Error_string_convert (MPI_ERR_AMODE , "Error related to the amode passed to MPI_FILE_OPEN");
+			MPI_Error_string_convert (MPI_ERR_UNSUPPORTED_DATAEP , "Unsupported datarep passed to MPI_FILE_SET_VIEW");
+			MPI_Error_string_convert (MPI_ERR_UNSUPPORTED_OPERATION , "Unsupported operation, \
+				such as seeking on a file which	supports sequential access only");
+			MPI_Error_string_convert (MPI_ERR_NO_SUCH_FILE , "File does not exist");
+			MPI_Error_string_convert (MPI_ERR_FILE_EXISTS , "File exists");
+			MPI_Error_string_convert (MPI_ERR_BAD_FILE , "Invalid file name (eg, path name too long");
+			MPI_Error_string_convert (MPI_ERR_ACCESS , "Permission denied");
+			MPI_Error_string_convert (MPI_ERR_NO_SPACE , "Not enough space");
+			MPI_Error_string_convert (MPI_ERR_QUORA , "Quota exceeded");
+			MPI_Error_string_convert (MPI_ERR_READ_ONLY , "Read-only file or file system");
+			MPI_Error_string_convert (MPI_ERR_FILE_IN_USE , "File operation could not be completed, \
+				as the file is currently open by some process");
+			MPI_Error_string_convert (MPI_ERR_DUP_DATAREP , "Conversion functions could not be registered because \
+				a data representation identifier that was already defined	was passed to MPI_REGISTER_DATAREP");
+			MPI_Error_string_convert (MPI_ERR_CONVERSION , "An error occurred in a user supplied data conversion function");
+			MPI_Error_string_convert (MPI_ERR_IO , "Other I/O error");
+			MPI_Error_string_convert (MPI_ERR_LASTCODE , "Last error code");
     default:
       sctk_warning ("%d error code unknown", errorcode);
     }
