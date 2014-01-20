@@ -55,6 +55,8 @@ sctk_ethread_mxn_self ()
   sctk_ethread_virtual_processor_t *vp;
   sctk_ethread_per_thread_t *task;
   vp = kthread_getspecific (sctk_ethread_key);
+  if (vp == NULL)
+    return NULL;
   task = (sctk_ethread_t) vp->current;
   return task;
 }
@@ -359,7 +361,8 @@ sctk_ethread_mxn_getspecific (int key)
 {
   sctk_ethread_per_thread_t *current;
   current = sctk_ethread_mxn_self ();
-
+  if(current == NULL)
+    return NULL;
   return __sctk_ethread_getspecific (current, key);
 }
 
