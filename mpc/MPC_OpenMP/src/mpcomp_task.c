@@ -511,7 +511,7 @@ void __mpcomp_task_infos_init()
 	  if (t->info.num_threads > 1)
 	       id_numa = t->mvp->father->id_numa;
 	  else
-	       id_numa = sctk_get_node_from_cpu(t->instance->mvps[0]);
+	       id_numa = sctk_get_node_from_cpu(t->instance->mvps[0]->vp);
 
 	  /* Allocate the default current task (no func, no data, no parent) */
 	  t->current_task = mpcomp_malloc(1, sizeof(struct mpcomp_task_s), id_numa);
