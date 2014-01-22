@@ -844,6 +844,11 @@ __sctk_delete_mpc_request (MPI_Request * req)
   sctk_spinlock_lock (&(requests->lock));
   assume (((*req) >= 0) && ((*req) < requests->max_size));
   tmp = requests->tab[*req];
+
+  if(tmp->is_active == 0){
+    tmp->auto_free = 0;
+  }
+
   tmp->is_active = 0;
   if (tmp->freeable == 1)
     {
