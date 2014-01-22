@@ -455,10 +455,10 @@ sctk_log (FILE * file, const char *fmt, ...)
 void
 sctk_warning (const char *fmt, ...)
 {
-#if defined(MPC_Message_Passing) || defined(MPC_Threads)
-  if( sctk_get_verbosity() < 1 )
-    return;
-#endif
+/* #if defined(MPC_Message_Passing) || defined(MPC_Threads) */
+/*   if( sctk_get_verbosity() < 1 ) */
+/*     return; */
+/* #endif */
 
   va_list ap;
   char buff[SMALL_BUFFER_SIZE];
