@@ -244,6 +244,15 @@ TODO("Polling Idle disabled")
 #endif
 }
 
+ void
+sctk_network_notify_idle_message_multirail_ib_wait_send (){
+  int i;
+
+  for(i = 0; i < rails_nb; i++){
+    rails[i]->notify_idle_message(rails[i]);
+   }
+}
+
 static void
 sctk_network_notify_any_source_message_multirail_ib (int polling_task_id, int blocking){
   int i;

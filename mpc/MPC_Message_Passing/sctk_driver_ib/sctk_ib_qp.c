@@ -847,6 +847,9 @@ void sctk_ib_qp_release_entry(struct sctk_ib_rail_info_s* rail_ib,
   not_implemented();
 }
 
+extern void
+sctk_network_notify_idle_message_multirail_ib_wait_send (); 
+
 static void* wait_send(void *arg){
   struct wait_send_s *a = (struct wait_send_s*) arg;
   int rc;
@@ -863,7 +866,8 @@ static void* wait_send(void *arg){
   {
     a->flag = 1;
   } else {
-    sctk_notify_idle_message ();
+    sctk_network_notify_idle_message_multirail_ib_wait_send();
+/*     sctk_notify_idle_message (); */
   }
   return NULL;
 }
@@ -905,6 +909,8 @@ static void* wait_send(void *arg){
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
         (void (*)(void *)) wait_send, &wait_send_arg);
 
+    sctk_error("[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d) DONE", rail_ib->rail->rail_number,
+        remote->rank, sctk_ib_qp_get_pending_data(remote));
     sctk_nodebug("[%d] NO LOCK QP message sent to remote %d", rail_ib->rail->rail_number, remote->rank);
   }
   sctk_nodebug("SENT no-lock message to process %d %p", remote->rank, remote->qp);
