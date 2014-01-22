@@ -904,12 +904,12 @@ static void* wait_send(void *arg){
     wait_send_arg.rail_ib = rail_ib;
 
 //#warning "We should remove these sctk_error and use a counter instead"
-    sctk_error("[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d)", rail_ib->rail->rail_number,
+    sctk_warning("[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d)", rail_ib->rail->rail_number,
         remote->rank, sctk_ib_qp_get_pending_data(remote));
     sctk_thread_wait_for_value_and_poll (&wait_send_arg.flag, 1,
         (void (*)(void *)) wait_send, &wait_send_arg);
 
-    sctk_error("[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d) DONE", rail_ib->rail->rail_number,
+    sctk_warning("[%d] NO LOCK QP full for remote %d, waiting for posting message... (pending: %d) DONE", rail_ib->rail->rail_number,
         remote->rank, sctk_ib_qp_get_pending_data(remote));
     sctk_nodebug("[%d] NO LOCK QP message sent to remote %d", rail_ib->rail->rail_number, remote->rank);
   }
