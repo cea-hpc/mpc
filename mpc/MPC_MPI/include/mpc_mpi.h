@@ -54,7 +54,7 @@ extern "C"
 
 #define MPI_SUCCESS MPC_SUCCESS
 #define MPI_UNDEFINED MPC_UNDEFINED
-#define MPI_REQUEST_NULL (-1)
+#define MPI_REQUEST_NULL ((MPI_Request)-1)
 #define MPI_COMM_WORLD MPC_COMM_WORLD
 #define MPI_CART (-2)
 #define MPI_GRAPH (-3)
@@ -200,8 +200,14 @@ extern "C"
 #define MPI_BOTTOM MPC_BOTTOM
 
 
-#define MPI_GROUP_EMPTY 0
-#define MPI_GROUP_NULL -1
+#define MPI_GROUP_EMPTY ((MPI_Group)0)
+#define MPI_GROUP_NULL ((MPI_Group)-1)
+
+/* Other Null Handles */
+#define MPI_INFO_NULL ((MPI_Info)-1)
+#define MPI_FILE_NULL ((MPI_File)-1)
+#define MPI_WIN_NULL ((MPI_Win)-1)
+
 
   typedef MPC_Datatype MPI_Datatype;	/* unsigned int */
   typedef MPC_Comm MPI_Comm;	/* unsigned int */
@@ -266,7 +272,7 @@ extern "C"
 			int line);
   void MPI_Return_error (MPI_Comm * comm, int *error, ...);
 
-#define MPI_ERRHANDLER_NULL 0
+#define MPI_ERRHANDLER_NULL ((MPI_Errhandler)0)
 #define MPI_ERRORS_RETURN 1
 #define MPI_ERRORS_ARE_FATAL 2
 
