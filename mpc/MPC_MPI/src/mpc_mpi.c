@@ -8949,7 +8949,7 @@ PMPI_Type_free (MPI_Datatype * datatype)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   mpi_check_type (*datatype, MPI_COMM_WORLD);
-  if(*datatype < sctk_user_data_types_max){
+  if(*datatype < sctk_user_data_types){
     MPI_ERROR_REPORT (comm, MPI_ERR_TYPE, "");
   }
   res = __INTERNAL__PMPI_Type_free (datatype);

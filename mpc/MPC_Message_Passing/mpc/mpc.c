@@ -990,8 +990,8 @@ PMPC_Type_free (MPC_Datatype * datatype_p)
 	if (datatype < sctk_user_data_types)
 	{
 		SCTK_PROFIL_END (MPC_Type_free);
-		return MPC_SUCCESS;
-		//~ MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_TYPE, "");
+/* 		return MPC_SUCCESS; */
+		MPC_ERROR_REPORT (MPC_COMM_WORLD, MPC_ERR_TYPE, "");
 	}
 	else if (datatype - sctk_user_data_types < sctk_user_data_types_max)
 	{
@@ -1403,7 +1403,7 @@ PMPC_Finalize (void)
 
 static int MPC_EXIT_ON_ABORT_VAL = 0;
 void MPC_EXIT_ON_ABORT(){
-  MPC_EXIT_ON_ABORT_VAL = 1;
+/*   MPC_EXIT_ON_ABORT_VAL = 1; */
 }
 
 int
