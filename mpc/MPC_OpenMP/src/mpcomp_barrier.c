@@ -43,7 +43,8 @@ __mpcomp_barrier (void)
      t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
      sctk_assert(t != NULL);
 
-	 sctk_debug( "__mpcomp_barrier: Entering w/ %d thread(s)", t->info.num_threads ) ;
+	 sctk_debug( "[%d] __mpcomp_barrier: Entering w/ %d thread(s)", 
+			 t->rank, t->info.num_threads ) ;
      
      if (t->info.num_threads == 1) {
 	  return;
@@ -52,6 +53,9 @@ __mpcomp_barrier (void)
      /* Get the corresponding microVP */
      mvp = t->mvp;
      sctk_assert(mvp != NULL);
+
+	 sctk_debug( "[%d] __mpcomp_barrier: t->mvp = %p", 
+			 t->rank, t->mvp ) ;
      
      /* Call the real barrier */
      __mpcomp_internal_full_barrier(mvp);
