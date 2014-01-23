@@ -26,7 +26,7 @@ handle SIGUSR1 pass nostop
 EOF
 
 if [ "$SCTK_JOB_MANAGER" = "SLURM" ]; then
-  LAUNCH_COMMAND="srun $LAUNCH_OPTIONS -n $PROCESS_NB -N $NODE_NB -c $CPU_NB /bin/env DISPLAY=$DISPLAY xterm -e $DEBUG -x $debug_file $BINARY $USER_ARGS $SCTK_ARGS"
+  LAUNCH_COMMAND="srun $LAUNCH_OPTIONS --ntasks=$PROCESS_NB --nodes=$NODE_NB --cpus-per-task=$CPU_NB /bin/env DISPLAY=$DISPLAY xterm -e $DEBUG -x $debug_file $BINARY $USER_ARGS $SCTK_ARGS"
 else
   LAUNCH_COMMAND="${SCTK_HYDRA_BINDIR}mpiexec.hydra $LAUNCH_OPTIONS -n $PROCESS_NB -enable-x xterm -e $DEBUG -x $debug_file $BINARY "
 fi

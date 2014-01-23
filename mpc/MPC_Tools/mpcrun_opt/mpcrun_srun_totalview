@@ -22,7 +22,7 @@
 ########################################################################
 
 if [ "$SCTK_JOB_MANAGER" = "SLURM" ]; then
-	LAUNCH_COMMAND="totalview srun -a $LAUNCH_OPTIONS -n $PROCESS_NB -N $NODE_NB -c $CPU_NB $BINARY $USER_ARGS $SCTK_ARGS"
+	LAUNCH_COMMAND="totalview srun -a $LAUNCH_OPTIONS --ntasks=$PROCESS_NB --nodes=$NODE_NB --cpus-per-task=$CPU_NB $BINARY $USER_ARGS $SCTK_ARGS"
 else
 	echo  "ERROR mpc is compiled without slurm support" 1>&2
 	exit 1
