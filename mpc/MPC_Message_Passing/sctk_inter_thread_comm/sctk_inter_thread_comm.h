@@ -82,6 +82,9 @@ extern "C"
     barrier_specific_message_tag = 2,
     broadcast_specific_message_tag = 3,
     allreduce_specific_message_tag = 4,
+    
+    cancel_send_specific_message_tag = 5,
+    cancel_recv_specific_message_tag = 6,
 
     /* Process specific */
     process_specific_message_tag = MASK_PROCESS_SPECIFIC,

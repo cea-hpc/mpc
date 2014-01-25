@@ -45,7 +45,20 @@
 #define SCTK_DISABLE_TASK_ENGINE
 
 TODO("sctk_cancel_message: need to be implemented")
-  void sctk_cancel_message (sctk_request_t * msg){not_implemented();}
+  void sctk_cancel_message (sctk_request_t * msg){
+	if(msg->request_type == REQUEST_RECV){
+  	  msg->msg->sctk_msg_get_specific_message_tag = cancel_recv_specific_message_tag;
+	} else if(msg->request_type == REQUEST_SEND) { 
+	  if(sctk_is_net_message (msg->msg->sctk_msg_get_destination)){
+	    sctk_error("Try to cancel a network message for %d from UNIX process %d",msg->msg->sctk_msg_get_destination,sctk_process_rank);
+	    not_implemented();
+  	  }
+	  msg->msg->sctk_msg_get_specific_message_tag = cancel_send_specific_message_tag;
+	} else { 
+	  not_reachable();
+	}
+	msg->completion_flag = SCTK_MESSAGE_CANCELED;	
+}
 
 /********************************************************************/
 /*Structres                                                         */
@@ -1688,6 +1701,12 @@ sctk_msg_list_t* sctk_perform_messages_search_matching(
 	  /* We return the pointer to the request */
 	  return ptr_found;
 	}
+
+	/* Check for canceled send messages*/
+	if(header_found->specific_message_tag == cancel_send_specific_message_tag){
+	  /* Message found. We delete it  */
+          DL_DELETE(pending_list->list,ptr_found);
+	}
   }
   return NULL;
 }
@@ -1744,6 +1763,11 @@ static inline int sctk_perform_messages_matching_from_recv_msg(sctk_internal_ptp
   ptr_recv = &msg->tail.distant_list;
   ptr_send = sctk_perform_messages_search_matching(
       &pair->lists.pending_send, &(msg->body.header));
+
+  if(msg->body.header.specific_message_tag == cancel_recv_specific_message_tag){
+    DL_DELETE(pair->lists.pending_recv.list, ptr_recv);
+    assume(ptr_send == NULL);
+  }
 
   /* We found a send request which corresponds to the recv request 'ptr_recv' */
   if(ptr_send != NULL){
@@ -1941,6 +1965,10 @@ void sctk_inter_thread_perform_idle (volatile int *data, int value,
 
 void sctk_wait_message(sctk_request_t * request){
   struct sctk_perform_messages_s _wait;
+  
+  if(request->completion_flag == SCTK_MESSAGE_CANCELED){
+    return;
+  }
 
   sctk_perform_messages_wait_init(&_wait, request, 1);
   /* Find the PTPs lists */
