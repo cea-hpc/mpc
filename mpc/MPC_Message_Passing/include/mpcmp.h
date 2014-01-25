@@ -290,7 +290,8 @@ extern "C"
 #define MPC_REAL16 30
 #define MPC_SIGNED_CHAR 31
 #define MPC_LONG_DOUBLE_INT 32
-
+#define MPC_UNSIGNED_LONG_LONG_INT 33
+#define MPC_UNSIGNED_LONG_LONG 33
 /* for the datatype decoders */
 enum MPIR_Combiner_enum {
     MPI_COMBINER_NAMED            = 1,

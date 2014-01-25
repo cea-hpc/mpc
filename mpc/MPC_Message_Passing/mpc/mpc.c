@@ -1875,6 +1875,7 @@ __MPC_init_types ()
   mpc_init (MPC_UNSIGNED_LONG, unsigned long);
   mpc_init (MPC_LONG_DOUBLE, long double);
   mpc_init (MPC_LONG_LONG_INT, long long);
+  mpc_init (MPC_UNSIGNED_LONG_LONG_INT, unsigned long long);
   mpc_init (MPC_INTEGER1, sctk_int8_t);
   mpc_init (MPC_INTEGER2, sctk_int16_t);
   mpc_init (MPC_INTEGER4, sctk_int32_t);
@@ -2241,6 +2242,7 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG,op);      \
       ADD_FUNC_HANDLER(func,MPC_LONG_DOUBLE,op);        \
       ADD_FUNC_HANDLER(func,MPC_LONG_LONG_INT,op);      \
+      ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG_LONG_INT,op);      \
       ADD_FUNC_HANDLER(func,MPC_COMPLEX,op);		\
       ADD_FUNC_HANDLER(func,MPC_DOUBLE_COMPLEX,op);	\
     default:not_reachable();				\
@@ -2264,6 +2266,7 @@ MPC_Op_tmp (void *in, void *inout, size_t size, MPC_Datatype t)
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED,op);		\
       ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG,op);	\
       ADD_FUNC_HANDLER(func,MPC_LONG_LONG_INT,op);	\
+      ADD_FUNC_HANDLER(func,MPC_UNSIGNED_LONG_LONG_INT,op);      \
       ADD_FUNC_HANDLER(func,MPC_LOGICAL,op);		\
     default:not_reachable();				\
     }							\

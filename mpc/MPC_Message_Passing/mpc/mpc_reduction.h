@@ -78,6 +78,7 @@ extern "C"
     MPC_DEFINED_FUNCS(MPC_UNSIGNED_LONG, unsigned long,name);		\
     MPC_DEFINED_FUNCS(MPC_LONG_DOUBLE, long double,name);		\
     MPC_DEFINED_FUNCS(MPC_LONG_LONG_INT, long long,name);		\
+    MPC_DEFINED_FUNCS(MPC_UNSIGNED_LONG_LONG_INT, unsigned long long,name);               \
     MPC_DEFINED_FUNCS(MPC_FLOAT_INT,mpc_float_int ,name);		\
     MPC_DEFINED_FUNCS(MPC_LONG_INT,mpc_long_int ,name);			\
     MPC_DEFINED_FUNCS(MPC_DOUBLE_INT,mpc_double_int ,name);		\
