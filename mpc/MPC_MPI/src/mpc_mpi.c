@@ -9635,6 +9635,10 @@ PMPI_Comm_free (MPI_Comm * comm)
     {
       MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_COMM, "");
     }
+  if (*comm == MPI_COMM_WORLD)
+    {
+      MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_COMM, "");
+    }
   mpi_check_comm (*comm, *comm);
   res = __INTERNAL__PMPI_Comm_free (comm);
   SCTK__MPI_Check_retrun_val (res, *comm);
