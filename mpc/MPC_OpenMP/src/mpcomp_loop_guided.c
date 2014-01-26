@@ -57,15 +57,6 @@ __mpcomp_guided_loop_end_nowait ()
 }
 
 
-void
-__mpcomp_start_parallel_guided_loop (int arg_num_threads, void *(*func)
-				     (void *), void *shared, long lb, long b,
-				     long incr, long chunk_size)
-{
-     __mpcomp_start_parallel_dynamic_loop(arg_num_threads, func, shared,
-					  lb, b, incr, chunk_size);
-}
-
 
 /* Start a loop shared by the team w/ a guided schedule.
    !WARNING! This function assumes that there is no loops w/ guided schedule
@@ -200,6 +191,6 @@ int
 __mpcomp_ordered_guided_loop_ull_next(
 		unsigned long long *from, unsigned long long *to)
 {
-	__mpcomp_ordered_guided_loop_next( (long *)from, (long *)to ) ;
+	return __mpcomp_ordered_guided_loop_next( (long *)from, (long *)to ) ;
 }
 

@@ -902,3 +902,28 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
 		  " === EXIT PARALLEL REGION ===" ) ;
 
 }
+
+void
+__mpcomp_start_parallel_static_loop (int arg_num_threads,
+				      void *(*func) (void *), void *shared,
+				      long lb, long b, long incr, long chunk_size)
+{
+	not_implemented() ;
+}
+
+void
+__mpcomp_start_parallel_guided_loop (int arg_num_threads,
+				      void *(*func) (void *), void *shared,
+				      long lb, long b, long incr, long chunk_size)
+{
+     __mpcomp_start_parallel_dynamic_loop(arg_num_threads, func, shared,
+					  lb, b, incr, chunk_size);
+}
+
+void
+__mpcomp_start_parallel_runtime_loop (int arg_num_threads,
+				      void *(*func) (void *), void *shared,
+				      long lb, long b, long incr, long chunk_size)
+{
+	not_implemented() ;
+}
