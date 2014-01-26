@@ -86,6 +86,13 @@ __mpcomp_guided_loop_next_ignore_nowait (long *from, long *to)
      return __mpcomp_dynamic_loop_next_ignore_nowait(from, to);
 }
 
+/****
+ *
+ * ORDERED VERSION 
+ *
+ *
+ *****/
+
 int
 __mpcomp_ordered_guided_loop_begin (long lb, long b, long incr, long chunk_size,
 				    long *from, long *to)
@@ -130,5 +137,69 @@ void
 __mpcomp_ordered_guided_loop_end_nowait ()
 {
      __mpcomp_guided_loop_end();
+}
+
+/****
+ *
+ * ULL VERSION
+ *
+ *
+ *****/
+
+int
+__mpcomp_guided_loop_ull_begin (
+		unsigned long long lb, 
+		unsigned long long b, 
+		unsigned long long incr, 
+		unsigned long long chunk_size,
+		unsigned long long *from, 
+		unsigned long long *to)
+{
+	not_implemented() ;
+	return __mpcomp_guided_loop_begin(lb, b, incr, chunk_size, (long *)from, (long *)to ) ;
+}
+
+int
+__mpcomp_guided_loop_ull_next (
+		unsigned long long *from, 
+		unsigned long long *to)
+{
+	not_implemented() ;
+	return __mpcomp_guided_loop_next((long *)from, (long *)to) ;
+}
+
+void
+__mpcomp_guided_loop_ull_end ()
+{
+	not_implemented() ;
+	__mpcomp_guided_loop_end() ;
+}
+
+void
+__mpcomp_guided_loop_ull_end_nowait ()
+{
+	not_implemented() ;
+	__mpcomp_guided_loop_end_nowait() ;
+}
+
+/****
+ *
+ * ULL COMBINED VERSION
+ *
+ *
+ *****/
+
+/****
+ *
+ * ULL ORDERED VERSION
+ *
+ *
+ *****/
+
+int
+__mpcomp_ordered_guided_loop_ull_next(
+		unsigned long long *from, unsigned long long *to)
+{
+	__mpcomp_ordered_guided_loop_next( (long *)from, (long *)to ) ;
 }
 
