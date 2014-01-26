@@ -9055,6 +9055,9 @@ PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, int root,
         }
 
   __INTERNAL__PMPI_Comm_size (comm, &size);
+	if((root < 0) || (root >= size)){
+		MPI_ERROR_REPORT(comm,MPI_ERR_ROOT,"");
+        }
 	mpi_check_rank_send(root,size,comm);
 	mpi_check_buf (buffer, comm);
 	mpi_check_count (count, comm);
