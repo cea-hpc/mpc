@@ -2254,7 +2254,8 @@ ____INTERNAL__PMPI_Start (MPI_Request * request)
   MPI_internal_request_t *req;
 
   req = __sctk_convert_mpc_request_internal (request);
-  assume(req->is_active == 0);
+  if(req->is_active != 0)
+	return MPI_ERR_REQUEST;
   req->is_active = 1;
 
   if(req->req.request_type == REQUEST_NULL)
@@ -8595,7 +8596,7 @@ PMPI_Start (MPI_Request * request)
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
   if ((request == NULL) || (*request == MPI_REQUEST_NULL)) {
-    return MPI_ERR_REQUEST;
+    MPI_ERROR_REPORT(comm,MPI_ERR_REQUEST,"");
   }
   res = __INTERNAL__PMPI_Start (request);
   SCTK__MPI_Check_retrun_val (res, comm);
@@ -8606,6 +8607,12 @@ PMPI_Startall (int count, MPI_Request array_of_requests[])
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  int i; 
+  for(i = 0 ; i < count ; i++){
+  if (array_of_requests[i] == MPI_REQUEST_NULL) {
+	MPI_ERROR_REPORT(comm,MPI_ERR_REQUEST,"");    
+  }
+  }
   res = __INTERNAL__PMPI_Startall (count, array_of_requests);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
