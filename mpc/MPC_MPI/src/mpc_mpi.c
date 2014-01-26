@@ -9047,15 +9047,18 @@ PMPI_Bcast (void *buffer, int count, MPI_Datatype datatype, int root,
 {
   int res = MPI_ERR_INTERN;
   int size;
+  
+        mpi_check_comm(comm, comm);
+
+        if(sctk_is_inter_comm (comm)){
+          MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+        }
+
   __INTERNAL__PMPI_Comm_size (comm, &size);
 	mpi_check_rank_send(root,size,comm);
-	mpi_check_comm(comm, comm);
 	mpi_check_buf (buffer, comm);
 	mpi_check_count (count, comm);
 	mpi_check_type (datatype, comm);
-	if(sctk_is_inter_comm (comm)){
-	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
-	}
 
   sctk_nodebug ("Entering BCAST %d with count %d", comm, count);
   res = __INTERNAL__PMPI_Bcast (buffer, count, datatype, root, comm);
