@@ -9069,9 +9069,9 @@ PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 {
   int res = MPI_ERR_INTERN;
   int size;
+  mpi_check_comm (comm, comm);
   __INTERNAL__PMPI_Comm_size (comm, &size);
 	mpi_check_root(root,size,comm);
-	mpi_check_comm (comm, comm);
 	mpi_check_buf (sendbuf, comm);
 	mpi_check_count (sendcnt, comm);
 	mpi_check_type (sendtype, comm);
@@ -9096,9 +9096,9 @@ PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 {
   int res = MPI_ERR_INTERN;
   int size;
+  mpi_check_comm (comm, comm);
   __INTERNAL__PMPI_Comm_size (comm, &size);
 	mpi_check_root(root,size,comm);
- 	mpi_check_comm (comm, comm);
 	mpi_check_buf (sendbuf, comm);
 	mpi_check_count (sendcnt, comm);
 	mpi_check_type (sendtype, comm);
