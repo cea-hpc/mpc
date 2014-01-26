@@ -9347,6 +9347,11 @@ PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
   int i;
   int size; 
   int res = MPI_ERR_INTERN;
+
+        if(sctk_is_inter_comm (comm)){
+          MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+        }
+
 	mpi_check_comm (comm, comm);
 	mpi_check_buf (sendbuf, comm);
 	mpi_check_buf (recvbuf, comm);
