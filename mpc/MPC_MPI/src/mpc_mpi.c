@@ -9469,6 +9469,9 @@ PMPI_Group_difference (MPI_Group group1, MPI_Group group2,
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  if((group1 == MPI_GROUP_NULL) || (group2 == MPI_GROUP_NULL)){
+	MPI_ERROR_REPORT (comm, MPI_ERR_GROUP, "");
+  }
   res = __INTERNAL__PMPI_Group_difference (group1, group2, newgroup);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -9478,6 +9481,10 @@ PMPI_Group_incl (MPI_Group group, int n, int *ranks, MPI_Group * newgroup)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  if(group == MPI_GROUP_NULL){
+        MPI_ERROR_REPORT (comm, MPI_ERR_GROUP, "");
+  }
+
   res = __INTERNAL__PMPI_Group_incl (group, n, ranks, newgroup);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -9487,6 +9494,10 @@ PMPI_Group_excl (MPI_Group group, int n, int *ranks, MPI_Group * newgroup)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  if(group == MPI_GROUP_NULL){
+        MPI_ERROR_REPORT (comm, MPI_ERR_GROUP, "");
+  }
+
   res = __INTERNAL__PMPI_Group_excl (group, n, ranks, newgroup);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -9497,6 +9508,10 @@ PMPI_Group_range_incl (MPI_Group group, int n, int ranges[][3],
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  if(group == MPI_GROUP_NULL){
+        MPI_ERROR_REPORT (comm, MPI_ERR_GROUP, "");
+  }
+
   res = __INTERNAL__PMPI_Group_range_incl (group, n, ranges, newgroup);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -9507,6 +9522,10 @@ PMPI_Group_range_excl (MPI_Group group, int n, int ranges[][3],
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  if(group == MPI_GROUP_NULL){
+        MPI_ERROR_REPORT (comm, MPI_ERR_GROUP, "");
+  }
+
   res = __INTERNAL__PMPI_Group_range_excl (group, n, ranges, newgroup);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -9516,6 +9535,10 @@ PMPI_Group_free (MPI_Group * group)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  if(group == MPI_GROUP_NULL){
+        MPI_ERROR_REPORT (comm, MPI_ERR_GROUP, "");
+  }
+
   res = __INTERNAL__PMPI_Group_free (group);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
