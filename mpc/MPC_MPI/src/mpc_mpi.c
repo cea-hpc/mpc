@@ -9431,6 +9431,10 @@ PMPI_Group_compare (MPI_Group group1, MPI_Group group2, int *result)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  if((group1 == MPI_GROUP_NULL) || (group2 == MPI_GROUP_NULL)){
+        MPI_ERROR_REPORT (comm, MPI_ERR_GROUP, "");
+  }
+
   res = __INTERNAL__PMPI_Group_compare (group1, group2, result);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -9449,6 +9453,10 @@ PMPI_Group_union (MPI_Group group1, MPI_Group group2, MPI_Group * newgroup)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  if((group1 == MPI_GROUP_NULL) || (group2 == MPI_GROUP_NULL)){
+        MPI_ERROR_REPORT (comm, MPI_ERR_GROUP, "");
+  }
+
   res = __INTERNAL__PMPI_Group_union (group1, group2, newgroup);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -9459,6 +9467,10 @@ PMPI_Group_intersection (MPI_Group group1, MPI_Group group2,
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  if((group1 == MPI_GROUP_NULL) || (group2 == MPI_GROUP_NULL)){
+        MPI_ERROR_REPORT (comm, MPI_ERR_GROUP, "");
+  }
+
   res = __INTERNAL__PMPI_Group_intersection (group1, group2, newgroup);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -9481,6 +9493,12 @@ PMPI_Group_incl (MPI_Group group, int n, int *ranks, MPI_Group * newgroup)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  int i; 
+  int size; 
+  __INTERNAL__PMPI_Comm_size (comm, &size);
+  for(i = 0; i < n ; i++){
+    if((ranks[i] < 0) || (ranks[i] >= size)) MPI_ERROR_REPORT (comm, MPI_ERR_RANK, "");
+  }
   if(group == MPI_GROUP_NULL){
         MPI_ERROR_REPORT (comm, MPI_ERR_GROUP, "");
   }
@@ -9626,6 +9644,9 @@ PMPI_Intercomm_create (MPI_Comm local_comm, int local_leader,
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
 
+  mpi_check_comm(local_comm,local_comm);
+  mpi_check_comm(peer_comm,peer_comm);
+
   if (newintercomm == NULL)
     {
       MPI_ERROR_REPORT (comm, MPI_ERR_COMM, "");
@@ -9662,6 +9683,12 @@ PMPI_Comm_free (MPI_Comm * comm)
     {
       MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_COMM, "");
     }
+
+  if (*comm == MPI_COMM_SELF)
+    {
+      MPI_ERROR_REPORT (MPI_COMM_WORLD, MPI_ERR_COMM, "");
+    }
+
   mpi_check_comm (*comm, *comm);
   res = __INTERNAL__PMPI_Comm_free (comm);
   SCTK__MPI_Check_retrun_val (res, *comm);
@@ -9683,6 +9710,9 @@ PMPI_Comm_remote_size (MPI_Comm comm, int *size)
 	sctk_nodebug("Enter Comm_remote_size comm %d", comm);
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
+  if(sctk_is_inter_comm (comm) == 0){
+    MPI_ERROR_REPORT (comm, MPI_ERR_COMM, "");
+  }
   res = __INTERNAL__PMPI_Comm_remote_size (comm, size);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
