@@ -163,20 +163,20 @@ sctk_ib_polling_check_wc(struct sctk_ib_rail_info_s* rail_ib,
     gethostname(host, HOSTNAME);
 
     if (config->quiet_crash){
-      sctk_error ("\033[1;31mIB - PROCESS %d CRASHED (%s)\033[0m: %s",
+      sctk_error ("\IB - PROCESS %d CRASHED (%s): %s",
           sctk_process_rank, host, sctk_ib_polling_print_status(wc.status));
     } else {
       sctk_ibuf_print(ibuf, ibuf_desc);
-      sctk_error ("\033[1;31m\nIB - FATAL ERROR FROM PROCESS %d (%s)\n"
-          "################################\033[0m\n"
+      sctk_error ("\nIB - FATAL ERROR FROM PROCESS %d (%s)\n"
+          "################################\n"
           "Work ID is   : %d\n"
           "Status       : %s\n"
           "ERROR Vendor : %d\n"
           "Byte_len     : %d\n"
           "Dest process : %d\n"
-          "\033[1;31m######### IBUF DESC ############\033[0m\n"
+          "######### IBUF DESC ############\n"
           "%s\n"
-          "\033[1;31m################################\033[0m",
+          "################################",
           sctk_process_rank, host,
           wc.wr_id, sctk_ib_polling_print_status(wc.status),
           wc.vendor_err, wc.byte_len,

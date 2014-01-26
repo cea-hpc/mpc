@@ -784,10 +784,10 @@ sctk_ib_rdma_poll_send(sctk_rail_info_t* rail, sctk_ibuf_t *ibuf) {
       char ibuf_desc[4096];
       sctk_error("BEGIN ERROR");
       sctk_ibuf_print(ibuf, ibuf_desc);
-      sctk_error ("\033[1;31m\nIB - FATAL ERROR FROM PROCESS %d\n"
-          "\033[1;31m######### IBUF DESC ############\033[0m\n"
+      sctk_error ("\nIB - FATAL ERROR FROM PROCESS %d\n"
+          "######### IBUF DESC ############\n"
           "%s\n"
-          "\033[1;31m################################\033[0m",
+          "################################",
           sctk_process_rank, ibuf_desc);
       sctk_error("END ERROR");
 //      not_reachable();
