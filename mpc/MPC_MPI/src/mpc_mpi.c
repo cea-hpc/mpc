@@ -9336,11 +9336,18 @@ int
 PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 		     MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
 {
+  int i;
+  int size; 
   int res = MPI_ERR_INTERN;
 	mpi_check_comm (comm, comm);
 	mpi_check_buf (sendbuf, comm);
 	mpi_check_buf (recvbuf, comm);
-//	mpi_check_count (count, comm);
+  
+  __INTERNAL__PMPI_Comm_size (comm, &size);
+
+  for(i = 0; i < size; i++){
+	mpi_check_count (recvcnts[i], comm);
+  }
 	mpi_check_type (datatype, comm);
 	mpi_check_op (op, comm);
   res =
