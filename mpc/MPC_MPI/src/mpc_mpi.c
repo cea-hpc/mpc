@@ -1824,6 +1824,7 @@ static int __INTERNAL__PMPI_Testany (int count, MPI_Request * array_of_requests,
 	  return tmp;
 	}
     }
+  sctk_thread_yield();
   return MPI_SUCCESS;
 }
 
@@ -1946,6 +1947,9 @@ static int __INTERNAL__PMPI_Testall (int count, MPI_Request array_of_requests[],
 	}
 	sctk_nodebug ("done %d tot %d", done, count);
 	*flag = (done == count);
+ 	if(*flag == 0){
+	  sctk_thread_yield();
+	}
 	return MPI_SUCCESS;
 }
 
