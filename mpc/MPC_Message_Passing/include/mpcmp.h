@@ -587,6 +587,7 @@ enum MPIR_Combiner_enum {
   int PMPC_Initialized (int *flag);
   int PMPC_Finalize (void);
   int PMPC_Abort (MPC_Comm, int);
+  int PMPC_Query_thread (int *provided);
 
   /*Topology informations */
   int PMPC_Comm_rank (MPC_Comm comm, int *rank);
