@@ -9283,9 +9283,9 @@ PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 {
   int res = MPI_ERR_INTERN;
   int size;
+   mpi_check_comm (comm, comm);
   __INTERNAL__PMPI_Comm_size (comm, &size);
 	mpi_check_root(root,size,comm);
-	mpi_check_comm (comm, comm);
 	mpi_check_buf (sendbuf, comm);
 	mpi_check_buf (recvbuf, comm);
 	mpi_check_count (count, comm);
