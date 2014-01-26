@@ -8362,6 +8362,10 @@ PMPI_Cancel (MPI_Request * request)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  if(MPI_REQUEST_NULL == *request) {
+        sctk_nodebug("request MPI_REQUEST_NULL");
+        SCTK__MPI_Check_retrun_val (MPI_ERR_REQUEST, comm);
+  }
   res = __INTERNAL__PMPI_Cancel (request);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
