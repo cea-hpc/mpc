@@ -2029,6 +2029,7 @@ static int __INTERNAL__PMPI_Testsome (int incount, MPI_Request * array_of_reques
 	if (no_active_done == incount)
 	{
 		*outcount = MPI_UNDEFINED;
+		  sctk_thread_yield();
 	}
 	return MPI_SUCCESS;
 }
