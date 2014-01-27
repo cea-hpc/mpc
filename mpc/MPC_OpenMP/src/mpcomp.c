@@ -723,7 +723,98 @@ mpcomp_in_parallel (void)
   return (t->instance->team->depth != 0);
 }
 
+/*
+ * OpenMP 3.0. Returns the nesting level for the parallel block, which enclose the calling call.
+ * TODO : differencier active_level et level
+ */
+int
+mpcomp_get_level (void)
+{
+	not_implemented();
+	/*
+	mpcomp_thread_t *t;
+	__mpcomp_init ();
+	t = sctk_openmp_thread_tls;
+	sctk_assert(t != NULL);
+	sctk_debug( "mpcomp_get_level: entering %d", t->instance->team->depth);
+	return t->instance->team->depth;
+	*/
+}
 
+/*
+ * OpenMP 3.0. Returns the nesting level for the active parallel block, which enclose the calling call.
+ */
+int
+mpcomp_get_active_level (void)
+{
+	mpcomp_thread_t *t;
+	__mpcomp_init ();
+	t = sctk_openmp_thread_tls;
+	sctk_assert(t != NULL);
+	sctk_debug( "mpcomp_get_active_level: entering %d", t->instance->team->depth);
+	return t->instance->team->depth;
+}
+
+/*
+ * OpenMP 3.0. This function returns the thread identification number for the given nesting level of the current thread.
+ * For values of level outside zero to omp_get_level -1 is returned. 
+ * if level is omp_get_level the result is identical to omp_get_thread_num
+ */
+int 
+mpcomp_get_ancestor_thread_num(int level)
+{
+	not_implemented();
+	/*
+	mpcomp_thread_t *t;
+	__mpcomp_init();
+	t = sctk_openmp_thread_tls;
+	sctk_assert(t != NULL);
+	mpcomp_instance_t *instance = t->instance;
+	if (level < 0 || level > (instance->team->depth))
+	{
+	sctk_debug( "mpcomp_get_ancestor_thread_num (%d) = -1", level);
+		return -1;
+	}
+	for (level = (instance->team->depth - level); level > 0; --level)
+		t = &instance->root->father->instance;
+	return (team id);
+	*/
+}
+
+/*
+ * OpenMP 3.0. This function returns the number of threads in a thread team to which either the current thread or its ancestor belongs.
+ * For values of level outside zero to omp_get_level, -1 is returned.
+ * if level is zero, 1 is returned, and for omp_get_level, the result is identical to omp_get_num_threads.
+ */
+int 
+omp_get_team_size(int level)
+{
+	not_implemented();
+	/*
+	mpcomp_thread_t *t;
+	__mpcomp_init();
+	t = sctk_openmp_thread_tls;
+	sctk_assert(t != NULL);
+	mpcomp_instance_t *instance = t->instance;
+	if (level < 0 || level > (instance->team->depth))
+	{
+	sctk_debug( "mpcomp_get_team_size (%d) = -1", level);
+		return -1;
+	}
+	for (level = (instance->team->depth - level); level > 0; --level)
+		t = &instance->root->father->instance;
+	if (instance->team == NULL)
+	{
+	sctk_debug( "mpcomp_get_team_size (%d) = 1", level);
+		return 1;
+	}
+	else
+	{
+	sctk_debug( "mpcomp_get_team_size (%d) = %d", level, instance->team->info.num_threads);
+		return instance->team->info.num_threads;
+	}
+	*/
+}
 
 /*
  * Return the number of threads used in the current team (direct enclosing
