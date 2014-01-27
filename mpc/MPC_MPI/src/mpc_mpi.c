@@ -9331,7 +9331,7 @@ PMPI_Op_free (MPI_Op * op)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
-  if((*op < 0) || (*op >= MAX_MPI_DEFINED_OP)){
+  if((*op < 0) || (*op < MAX_MPI_DEFINED_OP)){
     MPI_ERROR_REPORT(comm,MPI_ERR_OP,"");
   }
   res = __INTERNAL__PMPI_Op_free (op);
