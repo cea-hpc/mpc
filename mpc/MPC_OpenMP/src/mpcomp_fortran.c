@@ -102,6 +102,42 @@ omp_in_parallel__ ()
   return mpcomp_in_parallel ();
 }
 
+int 
+omp_get_active_level_ ()
+{
+	return mpcomp_get_active_level ();
+}
+
+int 
+omp_get_active_level__ ()
+{
+	return mpcomp_get_active_level ();
+}
+
+int
+omp_get_ancestor_thread_num_ (int level)
+{
+	return mpcomp_get_ancestor_thread_num(level);
+}
+
+int
+omp_get_ancestor_thread_num__ (int level)
+{
+	return mpcomp_get_ancestor_thread_num(level);
+}
+
+int 
+omp_get_team_size_ (int level)
+{
+	return mpcomp_get_team_size(level);
+}
+
+int 
+omp_get_team_size__ (int level)
+{
+	return mpcomp_get_team_size(level);
+}
+
 /* DYNAMIC FUNCTIONS */
 void
 omp_set_dynamic_ (int *dynamic_threads)

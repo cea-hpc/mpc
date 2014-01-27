@@ -39,10 +39,14 @@ extern "C"
 #define omp_get_thread_num mpcomp_get_thread_num
 #define omp_get_num_procs mpcomp_get_num_procs
 #define omp_in_parallel mpcomp_in_parallel
+#define omp_get_level mpcomp_get_level
+#define omp_get_active_level mpcomp_get_active_level
 #define omp_set_dynamic mpcomp_set_dynamic
 #define omp_get_dynamic mpcomp_get_dynamic
 #define omp_set_nested mpcomp_set_nested
 #define omp_get_nested mpcomp_get_nested
+#define omp_get_team_size mpcomp_get_team_size
+#define omp_get_ancestor_thread_num mpcomp_get_ancestor_thread_num
 
 #define omp_lock_t mpcomp_lock_t
 #define omp_nest_lock_t mpcomp_nest_lock_t
