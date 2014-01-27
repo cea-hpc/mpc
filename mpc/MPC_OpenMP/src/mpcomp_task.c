@@ -651,6 +651,7 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 //	  fn(data);
 	  struct mpcomp_task_s task;
 	  struct mpcomp_task_s *prev_task;
+	  mpcomp_local_icv_t icvs;
 
 	  __mpcomp_task_init (&task, NULL, NULL, t);
 	  mpcomp_task_set_property (&(task.property), MPCOMP_TASK_UNDEFERRED);
@@ -666,6 +667,8 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 	  /* Current task is the new task which will be executed immediately */
 	  t->current_task = &task;
 	  sctk_assert(task.thread == NULL);
+	  icvs = t->info.icvs;
+	  task.icvs = t->info.icvs;
 	  task.thread = t;
 
 	  if (cpyfn != NULL) {
@@ -683,6 +686,7 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 	  /* Replace current task */
 	  t->current_task = prev_task;
 	  mpcomp_task_clear_parent(&task);
+	  t->info.icvs = icvs;
 	  TODO("Add cleaning for the task data structures")
      } else {
 	  struct mpcomp_task_s *task;
@@ -708,6 +712,7 @@ void __mpcomp_task(void *(*fn) (void *), void *data, void (*cpyfn) (void *, void
 
 	  /* Create new task */
 	  __mpcomp_task_init (task, fn, data_cpy, t);
+	  task->icvs = t->info.icvs;
 	  mpcomp_task_set_property (&(task->property), MPCOMP_TASK_TIED);
 	  if (flags & 2) {
 	       mpcomp_task_set_property (&(task->property), MPCOMP_TASK_FINAL);
@@ -1097,6 +1102,7 @@ void __mpcomp_task_schedule()
      struct mpcomp_task_s *parent_task = NULL;
      struct mpcomp_task_s *prev_task = NULL;
      struct mpcomp_task_list_s *list;
+     mpcomp_local_icv_t icvs;
      int i;
      
      /* Initialize the OpenMP task environment (call several times, but really executed
@@ -1149,9 +1155,13 @@ void __mpcomp_task_schedule()
 	  /* Current task is the new task which will be executed */
 	  t->current_task = task;
 	  sctk_assert(task->thread == NULL);
+	  icvs = t->info.icvs;
+	  t->info.icvs = task->icvs;
 	  task->thread = t;
 	  task->func(task->data);
 	  
+	  t->info.icvs = icvs;
+
 	  mpcomp_task_clear_parent(task);
 	  
 	  parent_task = task->parent;
@@ -1190,6 +1200,7 @@ void __mpcomp_taskwait()
      struct mpcomp_task_s *prev_task = NULL;
      struct mpcomp_task_s *next_child = NULL;
      struct mpcomp_task_list_s *list;
+     mpcomp_local_icv_t icvs;
      int ret;
 
      /* Initialize the OpenMP task environment (call several times, but really executed
@@ -1233,8 +1244,12 @@ void __mpcomp_taskwait()
 			 t->current_task = task;
 			 sctk_assert(task->thread == NULL);		      
 			 //sctk_assert(__mpcomp_task_check_circular_link(task) == 0);
+			 icvs = t->info.icvs;
+			 t->info.icvs = task->icvs;
 			 task->thread = t;
 			 task->func(task->data);
+
+			 t->info.icvs = icvs;
 
 			 mpcomp_task_clear_parent(task);
 			 

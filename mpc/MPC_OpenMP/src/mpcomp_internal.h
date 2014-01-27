@@ -227,6 +227,7 @@ extern "C"
 	  struct mpcomp_task_s *prev;         /* Prev task in the thread's task list */
 	  struct mpcomp_task_s *next;         /* Next task in the thread's task list */
 	  int depth;
+	  mpcomp_local_icv_t icvs;            /* ICVs of the thread that create the task */
      };
 
      /* OpenMP task list data structure */
