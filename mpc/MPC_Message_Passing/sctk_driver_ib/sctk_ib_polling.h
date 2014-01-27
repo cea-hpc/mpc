@@ -163,7 +163,7 @@ sctk_ib_polling_check_wc(struct sctk_ib_rail_info_s* rail_ib,
     gethostname(host, HOSTNAME);
 
     if (config->quiet_crash){
-      sctk_error ("\IB - PROCESS %d CRASHED (%s): %s",
+      sctk_error ("\nIB - PROCESS %d CRASHED (%s): %s",
           sctk_process_rank, host, sctk_ib_polling_print_status(wc.status));
     } else {
       sctk_ibuf_print(ibuf, ibuf_desc);
