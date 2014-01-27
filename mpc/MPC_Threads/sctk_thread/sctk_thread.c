@@ -2063,7 +2063,7 @@ sctk_get_init_vp_and_nbvp (int i, int *nbVp)
 	}
       first = last + 1;
       j++;
-      if (cpu_nb % task_nb > j)
+      if ((cpu_nb % task_nb > j) && (cpu_nb > task_nb))
 	   proc++;
     }
   sctk_nodebug ("sctk_get_init_vp: (After loop) Put task %d on VP %d", i, proc);
