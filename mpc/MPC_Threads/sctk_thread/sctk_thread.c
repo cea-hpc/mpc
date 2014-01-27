@@ -2036,6 +2036,9 @@ sctk_get_init_vp_and_nbvp (int i, int *nbVp)
   /* TODO: cpu_per_task=1 => put MPI tasks close */
   // cpu_per_task = 1 ;
 
+  /* Normalize i if i the the global number insted of localnumber*/
+  if(i >= task_nb) i = i - sctk_first_local;
+
   first = 0;
   sctk_nodebug("cpu_per_task %d",cpu_per_task);
   j = 0;
