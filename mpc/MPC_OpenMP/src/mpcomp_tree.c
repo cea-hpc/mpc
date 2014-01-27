@@ -88,13 +88,26 @@ static int get_number_of_leaves(hwloc_obj_t obj, hwloc_topology_t topology, int 
 /*
  * Configure the topology detection for 'flatTopology' in order to get
  * a symmetric tree (For each level, all node must have the same arity).
- * Assuming 'flatTopology' has been duplicated from 'topology' but isn't 
- * yet loaded.
  */
-int flatten_topology(hwloc_topology_t topology, hwloc_topology_t *flatTopology)
+int __mpcomp_flatten_topology(hwloc_topology_t topology, hwloc_topology_t *flatTopology)
 {
      unsigned depth, type, topoDepth;
+     int err;
      int ignoredTypes[HWLOC_OBJ_TYPE_MAX];
+
+     /* Initialize flat topology object */
+     err = hwloc_topology_init(flatTopology);
+     if (err) {
+	  sctk_debug("Error on initializing topology");
+	  return 1;
+     }
+
+     /* Duplicate 'topology' to flat topology */
+     err = hwloc_topology_dup(flatTopology, &topology);
+     if (err) {
+	  sctk_debug("Error on duplicating topology");
+	  return 1;
+     }
 
      topoDepth = hwloc_topology_get_depth(topology);
 
@@ -132,6 +145,59 @@ int flatten_topology(hwloc_topology_t topology, hwloc_topology_t *flatTopology)
 	  }
      }
 
+     /* Duplicate 'topology' to flat topology */
+     err = hwloc_topology_load(*flatTopology);
+     if (err) {
+	  sctk_debug("Error on loading topology");
+	  return 1;
+     }
+
+     return 0;
+}
+
+/*
+ *  Restrict the topology object of the current mpi task to 'nb_mvps' vps.
+ */
+int __mpcomp_restrict_topology(hwloc_topology_t *restrictedTopology, int nb_mvps)
+{
+     hwloc_topology_t topology;
+     hwloc_cpuset_t cpuset;
+     int taskRank, taskVp, taskNbVp, err;
+
+     taskRank = sctk_get_task_rank();
+
+     /* Get the cpuset of current task */
+     taskVp = sctk_get_init_vp(taskRank);
+     taskNbVp = nb_mvps;
+     cpuset = hwloc_bitmap_alloc();
+     hwloc_bitmap_set_range(cpuset, taskVp, taskVp + taskNbVp - 1);
+
+     topology = sctk_get_topology_object();
+
+     /* Allocate topology object */
+     if ((err = hwloc_topology_init(restrictedTopology))) {
+	  sctk_debug("restrict_topology(): init topology error");
+	  return -1;
+     }
+
+     /* Duplicate current topology object */
+     if ((err = hwloc_topology_dup(restrictedTopology, &topology))) {
+	  sctk_debug("restrict_topology(): dup topology error");
+	  return -1;
+     }
+
+     /* Load topology */
+     if ((err = hwloc_topology_load(*restrictedTopology))) {
+	  sctk_debug("restrict_topology(): load topology error");
+	  return -1;
+     }
+     
+     /* Restrict topology */
+     if ((err = hwloc_topology_restrict(*restrictedTopology, cpuset, 0))) {
+	  sctk_debug("restrict_topology(): restrict topology error");
+	  return -1;
+     }     
+    
      return 0;
 }
 
@@ -208,10 +274,9 @@ int mpcomp_ignore_all_keep_structure(hwloc_topology_t *topology)
  * the three indexes of, respectively, physical threads level, cores level
  * and socket level. 'index' must be allocated (3 int sized).
  */
-int *__mpcomp_compute_topo_tree_array(int *depth, int *index)
+int *__mpcomp_compute_topo_tree_array(hwloc_topology_t topology, int *depth, int *index)
 {
      hwloc_topology_t simple_topology;
-     hwloc_topology_t topology; 
      int d;
      int *tree;
      
@@ -219,8 +284,6 @@ int *__mpcomp_compute_topo_tree_array(int *depth, int *index)
 	  sctk_error("__mpcomp_compute_topo_tree_array: Unable to compute tree (depth or index unallocated)");
 	  return NULL;
      }
-
-     topology=sctk_get_topology_object();
 
      /* Create a temporary topology */
      hwloc_topology_init(&simple_topology);
@@ -275,8 +338,10 @@ int __mpcomp_build_default_tree(mpcomp_instance_t *instance)
 
 	sctk_nodebug("__mpcomp_build_auto_tree begin"); 
 
+	sctk_assert(instance->topology != NULL);
+
 	/* Get the default topology shape */
-	degree = __mpcomp_compute_topo_tree_array( &depth, index ) ;
+	degree = __mpcomp_compute_topo_tree_array(instance->topology, &depth, index ) ;
 
 	/* Compute the number of leaves */
 	n_leaves = 1 ;
@@ -382,10 +447,11 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	  sctk_assert( s != NULL );
 
 	  /* Get the current VP number */
-	  current_mpc_vp = sctk_thread_get_vp ();
+	  //current_mpc_vp = sctk_thread_get_vp ();
+	  current_mpc_vp = 0;
 
 	  /* Get the number of CPUs */
-	  nb_cpus = sctk_get_cpu_number() ;
+	  nb_cpus = sctk_get_cpu_number_topology(instance->topology) ;
 
 	  sctk_debug( "__mpcomp_build_tree: number of cpus: %d", nb_cpus ) ;
 
@@ -393,7 +459,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	  order = sctk_malloc( nb_cpus * sizeof( int ) );
 	  sctk_assert( order != NULL );
 
-	  sctk_get_neighborhood( current_mpc_vp, nb_cpus, order );
+	  sctk_get_neighborhood_topology(instance->topology, current_mpc_vp, nb_cpus, order );
 
 	  /* Build the tree of this OpenMP instance */
 

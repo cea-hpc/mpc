@@ -255,7 +255,6 @@ void __mpcomp_task_list_infos_init_r(mpcomp_node_t *n, struct mpcomp_node_s ***t
 #if MPCOMP_OVERFLOW_CHECKING
 		    assert(n->id_numa < nb_numa_nodes);
 #endif /* MPCOMP_OVERFLOW_CHECKING */
-		    printf("tree_array: %d %p (n->id_numa: %d)\n", mvp->rank, treeArray[n->id_numa], n->id_numa);
 		    mvp->tree_array = treeArray[n->id_numa];
 
 		    /* If the mvp correspond to the new list depth, allocate the data structure */
@@ -314,7 +313,7 @@ void __mpcomp_task_list_infos_init()
      instance = t->instance;
      nbNumaNodes = sctk_max(sctk_get_numa_node_number(), 1);	  
      treeArray = mpcomp_malloc(0, sizeof(struct mpcomp_node_s **) * nbNumaNodes, 0);
-     printf("NBNUMANODEs = %d\n", nbNumaNodes);
+
      for (i=0; i<nbNumaNodes; i++)
 	  treeArray[i] = mpcomp_malloc(1, sizeof(struct mpcomp_node_s *) * instance->tree_array_size, i);
 

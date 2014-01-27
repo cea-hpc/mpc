@@ -154,18 +154,6 @@ static inline void __mpcomp_read_env_variables() {
       OMP_MICROVP_NUMBER = 0 ;
   }
 
-  /* TODO: move this default behavior to the instance_init function */
-  if ( OMP_MICROVP_NUMBER == 0 ) {
-      OMP_MICROVP_NUMBER = sctk_get_processor_number (); /* DEFAULT */
-#if 0
-#ifdef MPC_Message_Passing
-      OMP_MICROVP_NUMBER = OMP_MICROVP_NUMBER /  sctk_get_nb_task_local(SCTK_COMM_WORLD); /* DEFAULT */
-      if(OMP_MICROVP_NUMBER < 1) {
-        OMP_MICROVP_NUMBER = 1;
-      }
-#endif
-#endif
-  }
 
 
   /******* OMP_SCHEDULE *********/
@@ -383,6 +371,7 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
 void __mpcomp_init() {
   static volatile int done = 0;
   static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
+  int nb_mvps;
 
   /* Need to initialize the current team */
   if ( sctk_openmp_thread_tls == NULL ) {
@@ -420,7 +409,7 @@ void __mpcomp_init() {
     /* Allocate an instance of OpenMP */
     seq_instance = (mpcomp_instance_t *)sctk_malloc( sizeof( mpcomp_instance_t ) ) ;
     sctk_assert( seq_instance != NULL ) ;
-    __mpcomp_instance_init( seq_instance, 0, seq_team_info ) ;
+    __mpcomp_instance_init( seq_instance, 1, seq_team_info ) ;
 
 
 	/*** Initialize PARALLEL information (instance + team for the next parallel
@@ -431,10 +420,16 @@ void __mpcomp_init() {
     sctk_assert( team_info != NULL ) ;
     __mpcomp_team_init( team_info ) ;
 
+    if ( OMP_MICROVP_NUMBER == 0 ) {
+	 sctk_get_init_vp_and_nbvp(sctk_get_task_rank(), &nb_mvps);
+    } else {
+	 nb_mvps = OMP_MICROVP_NUMBER;
+    }
+
     /* Allocate an instance of OpenMP */
     instance = (mpcomp_instance_t *)sctk_malloc( sizeof( mpcomp_instance_t ) ) ;
     sctk_assert( instance != NULL ) ;
-    __mpcomp_instance_init( instance, OMP_MICROVP_NUMBER, team_info ) ;
+    __mpcomp_instance_init( instance, nb_mvps, team_info ) ;
 
 
     /* Allocate information for the sequential region */
@@ -442,8 +437,11 @@ void __mpcomp_init() {
     sctk_assert( t != NULL ) ;
 
     /* Initialize default ICVs */
-TODO( "Initialize thenumber of threads according to OMP_MICROVP_NUMBER if OMP_NUM_THREADS==0" )
-    icvs.nthreads_var = OMP_NUM_THREADS;
+    if (OMP_NUM_THREADS == 0) {
+	 icvs.nthreads_var = nb_mvps;
+    } else {
+	 icvs.nthreads_var = OMP_NUM_THREADS;
+    }
     icvs.dyn_var = OMP_DYNAMIC;
     icvs.nest_var = OMP_NESTED;
     icvs.run_sched_var = OMP_SCHEDULE;
@@ -498,13 +496,19 @@ void __mpcomp_instance_init( mpcomp_instance_t * instance, int nb_mvps,
 
 	/* TODO: act here to adapt the number of microVPs for each MPI task */
 
+	if ( nb_mvps > 1 ){
+	     hwloc_topology_t restrictedTopology, flatTopology;
+		int err;
 
-	if ( nb_mvps > 0 ){
 		/* Alloc memory for 'nb_mvps' microVPs */
 		instance->mvps = (mpcomp_mvp_t **)sctk_malloc( nb_mvps * sizeof( mpcomp_mvp_t * ) ) ;
 		sctk_assert( instance->mvps != NULL ) ;
 
 		instance->nb_mvps = nb_mvps ;
+
+		__mpcomp_restrict_topology(&restrictedTopology, instance->nb_mvps);
+		__mpcomp_flatten_topology(restrictedTopology, &flatTopology);
+		instance->topology = flatTopology;
 
 		if ( OMP_TREE == NULL ) {
 			__mpcomp_build_default_tree( instance ) ;

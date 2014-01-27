@@ -627,6 +627,7 @@ sctk_thread_create_tmp_start_routine (sctk_thread_data_t * __arg)
   struct _sctk_thread_cleanup_buffer *ptr_cleanup;
   tmp = *__arg;
 
+
   /* Bind the thread to the right core if we are using pthreads */
   if (sctk_get_thread_val() == sctk_pthread_thread_init) {
     sctk_bind_to_cpu (tmp.bind_to);
@@ -2003,7 +2004,7 @@ double sctk_profiling_get_init_time() {
 }
 
 int
-sctk_get_init_vp (int i)
+sctk_get_init_vp_and_nbvp (int i, int *nbVp)
 {
 /*   int rank_in_node; */
   int slot_size;
@@ -2048,21 +2049,38 @@ sctk_get_init_vp (int i)
 	{
 	  local_slot_size++;
 	}
+
       sctk_nodebug("%d proc %d slot size",proc,local_slot_size);
       last = first + local_slot_size - 1;
       sctk_nodebug("First %d last %d",first,last);
       if ((i >= first) && (i <= last))
 	{
 	  sctk_nodebug ("sctk_get_init_vp: Put task %d on VP %d", i, proc);
+	  if (cpu_nb % task_nb > j) {
+	       *nbVp = cpu_per_task + 1;
+	  } else {
+	       *nbVp = cpu_per_task;
+	  }
 	  return proc;
 	}
       first = last + 1;
       j++;
+      if (cpu_nb % task_nb > j)
+	   proc++;
     }
   sctk_nodebug ("sctk_get_init_vp: (After loop) Put task %d on VP %d", i, proc);
   sctk_abort ();
   return proc;
 }
+
+int
+sctk_get_init_vp (int i)
+{
+     int dummy;
+
+     return sctk_get_init_vp_and_nbvp (i, &dummy);
+}
+
 
 static struct _sctk_thread_cleanup_buffer
   *ptr_cleanup_sctk_thread_init_no_mpc;

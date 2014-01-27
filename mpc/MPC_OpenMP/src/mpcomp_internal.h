@@ -352,6 +352,7 @@ typedef struct mpcomp_thread_s
 	  int *tree_base; /* Degree per level of the tree 
 						 (array of size 'tree_depth' */
 	  int *tree_cumulative ; /* Initialized in __mpcomp_build_tree */
+	  hwloc_topology_t topology;
 #if MPCOMP_TASK
 	  int *tree_level_size;
 	  int tree_array_size;
@@ -769,12 +770,14 @@ typedef struct mpcomp_thread_s
      void __mpcomp_barrier();
 
      /* mpcomp_tree.c */
+     int __mpcomp_flatten_topology(hwloc_topology_t topology, hwloc_topology_t *flatTopology);
+     int __mpcomp_restrict_topology(hwloc_topology_t *restrictedTopology, int nb_mvps);
      int __mpcomp_check_tree_parameters(int n_leaves, int depth, int *degree);
      int __mpcomp_build_default_tree(mpcomp_instance_t *instance);
      int __mpcomp_build_tree(mpcomp_instance_t *instance, int n_leaves, int depth, int *degree);
      int __mpcomp_check_tree_coherency(mpcomp_instance_t *instance);
      void __mpcomp_print_tree(mpcomp_instance_t *instance);
-     int *__mpcomp_compute_topo_tree_array(int *depth, int *index) ;
+     int *__mpcomp_compute_topo_tree_array(hwloc_topology_t topology, int *depth, int *index) ;
 
      /* mpcomp_loop_dyn.c */
 
