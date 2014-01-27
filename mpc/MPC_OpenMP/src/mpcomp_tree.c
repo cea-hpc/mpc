@@ -697,6 +697,9 @@ void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
      mpcomp_stack_t * s;
      int i, j;
 
+	 /* Skip the debug messages if not enough verbosity */
+	 if (sctk_get_verbosity()<3)
+		 return ;
 
      sctk_assert( instance != NULL );
 
@@ -705,6 +708,8 @@ void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
      sctk_assert( s != NULL );
 
      __mpcomp_push( s, instance->root );
+
+	 TODO("port this function w/ new debug function sctk_debug_no_newline") 
 
      fprintf( stderr, "==== Printing the current OpenMP tree ====\n" );
 

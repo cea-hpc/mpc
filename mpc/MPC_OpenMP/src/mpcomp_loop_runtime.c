@@ -94,3 +94,59 @@ __mpcomp_runtime_loop_next( long * from, long * to )
 
      return 0 ;
 }
+
+void
+__mpcomp_runtime_loop_end ()
+{
+     mpcomp_thread_t *t ;	/* Info on the current thread */
+
+     /* Handle orphaned directive (initialize OpenMP environment) */
+     __mpcomp_init();
+
+     /* Grab the thread info */
+     t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+     sctk_assert( t != NULL ) ;
+
+     switch( t->info.icvs.run_sched_var ) {
+       case omp_sched_static:
+         return __mpcomp_static_loop_end() ;
+         break ;
+       case omp_sched_dynamic:
+         return __mpcomp_dynamic_loop_end() ;
+         break ;
+       case omp_sched_guided:
+         return __mpcomp_guided_loop_end() ;
+         break ;
+       default:
+	 not_reachable();
+         break ;
+     }
+}
+
+void
+__mpcomp_runtime_loop_end_nowait ()
+{
+     mpcomp_thread_t *t ;	/* Info on the current thread */
+
+     /* Handle orphaned directive (initialize OpenMP environment) */
+     __mpcomp_init();
+
+     /* Grab the thread info */
+     t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+     sctk_assert( t != NULL ) ;
+
+     switch( t->info.icvs.run_sched_var ) {
+       case omp_sched_static:
+         return __mpcomp_static_loop_end_nowait() ;
+         break ;
+       case omp_sched_dynamic:
+         return __mpcomp_dynamic_loop_end_nowait() ;
+         break ;
+       case omp_sched_guided:
+         return __mpcomp_guided_loop_end_nowait() ;
+         break ;
+       default:
+	 not_reachable();
+         break ;
+     }
+}

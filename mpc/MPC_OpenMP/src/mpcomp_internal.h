@@ -780,6 +780,7 @@ typedef struct mpcomp_thread_s
      int *__mpcomp_compute_topo_tree_array(hwloc_topology_t topology, int *depth, int *index) ;
 
      /* mpcomp_loop_dyn.c */
+	 void __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, long lb, long b, long incr, long chunk_size) ;
 
      /* mpcomp_sections.c */
 	 void __mpcomp_sections_init( mpcomp_thread_t * t, int nb_sections ) ;

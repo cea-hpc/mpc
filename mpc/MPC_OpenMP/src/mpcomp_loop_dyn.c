@@ -253,7 +253,7 @@ __mpcomp_dynamic_loop_get_chunk_from_rank( mpcomp_thread_t * t,
 }
 
 
-static void 
+void 
 __mpcomp_dynamic_loop_init(mpcomp_thread_t *t, 
 		long lb, long b, long incr, long chunk_size)
 {
@@ -340,24 +340,10 @@ __mpcomp_dynamic_loop_next (long *from, long *to)
 	/* Compute the index of the dynamic for construct */
 	index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
 
-	TODO( "__mpcomp_dynamic_loop_next: w/ 1 thread, put an if and remove CAS" )
-
-
-	/**
-	 * Main algo:
-	 * if for_dyn_target is NULL, 
-	 *    intialize for_dyn_shift to (0, ..., 0)
-	 *    initialize for_dyn_target to current t->mvp->tree_rank
-	 *
-	 * while (
-	 *   !__mpcomp_dynamic_loop_get_chunk_from_rank( t, t->for_dyn_target, from, to ) )
-	 *     add 1 to for_dyn_shift (according to max_depth)
-	 *     if for_dyn_shift == (0, ..., 0 )
-	 *       break ;
-	 *     add for_dyn_shift to for_dyn_target (according to max_depth)
-	 *
-	 *
-	 */
+	/* 1 thread => no stealing, directly get a chunk */
+	if ( num_threads == 1 ) {
+		return __mpcomp_dynamic_loop_get_chunk_from_rank(t,t,from,to) ;
+	}
 
 	/* Check that the target is allocated */
 	if ( t->for_dyn_target == NULL ) {
@@ -381,6 +367,7 @@ __mpcomp_dynamic_loop_next (long *from, long *to)
 	sctk_assert( t->for_dyn_target != NULL ) ;
 	sctk_assert( t->for_dyn_shift != NULL ) ;
 
+	/* DEBUG */
 	int i_debug ;
 	for ( i_debug = 0 ; i_debug < t->instance->tree_depth ; i_debug++ ) {
 		sctk_nodebug(
@@ -427,30 +414,24 @@ __mpcomp_dynamic_loop_next (long *from, long *to)
 				from, 
 				to ) ) {
 
-		// if ( t->rank == 0 ) 
-		{
 		sctk_nodebug( 
 				"__mpcomp_dynamic_loop_next[%d]: "
 				"Get chunk failed -> Inside main while loop", 
 				t->rank ) ;
-		}
 
 
 do_increase:
 		if (__mpcomp_dynamic_increase( t->for_dyn_shift, t->instance->tree_base,
-				t->instance->tree_depth, max_depth, 1 ) ) {
+					t->instance->tree_depth, max_depth, 1 ) ) {
 
-		// if ( t->rank == 1 ) 
-		{
 			sctk_nodebug( 
 					"__mpcomp_dynamic_loop_next[%d]: "
 					"Target tour done", t->rank ) ;
-		}
 
-		/* Initialized target to the curent thread */
-		/* TODO maybe find another solution because it can be time consuming */
-		__mpcomp_dynamic_add(  t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank,
-				t->instance->tree_base, t->instance->tree_depth, max_depth, 0 ) ;
+			/* Initialized target to the curent thread */
+			/* TODO maybe find another solution because it can be time consuming */
+			__mpcomp_dynamic_add(  t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank,
+					t->instance->tree_base, t->instance->tree_depth, max_depth, 0 ) ;
 
 			found = 0 ;
 			break ;
@@ -471,34 +452,26 @@ do_increase:
 		if ( t->for_dyn_target[t->instance->tree_depth-1] >= 
 				t->instance->mvps[index_target]->father->barrier_num_threads ) {
 
-		// if ( t->rank == 1 ) 
-		{
-		sctk_nodebug( 
-				"__mpcomp_dynamic_loop_next[%d]: "
-				"target not in scope, skipping..."
-				, t->rank
-				) ;
-		}
+			sctk_nodebug( 
+					"__mpcomp_dynamic_loop_next[%d]: "
+					"target not in scope, skipping..."
+					, t->rank
+					) ;
 
-		/* TODO promote this goto to a loop */
-		goto do_increase ;
+			/* TODO promote this goto to a loop */
+			goto do_increase ;
 		}
 
 
-		// if ( t->rank == 1 ) 
-		{
 		sctk_nodebug( 
 				"__mpcomp_dynamic_loop_next[%d]: "
 				"targetting now mvp #%d",
 				t->rank, index_target
 				) ;
-		}
-
 	}
 
 
-	/* TODO check if we exit w/ or w/out a chunk */
-
+	/* Did we exit w/ or w/out a chunk? */
 	if ( found ) {
 	sctk_nodebug( 
 			"__mpcomp_dynamic_loop_next[%d]: "
@@ -513,8 +486,6 @@ do_increase:
 			"Exiting with no chunks", t->rank ) ;
 
 	return 0 ;
-
-
 }
 
 #if 0
@@ -598,83 +569,6 @@ __mpcomp_dynamic_loop_steal( mpcomp_thread_t * t, long * from, long * to ) {
 
 	sctk_debug( "__mpcomp_dynamic_loop_steal[%d]: Exit", t->rank ) ;
 
-	return 0 ;
-}
-#endif
-
-#if 0
-int
-__mpcomp_dynamic_loop_next (long *from, long *to)
-{
-	mpcomp_thread_t *t ;	/* Info on the current thread */
-	mpcomp_team_t *team_info ;	/* Info on the team */
-	int index;
-	int num_threads;
-	int r ;
-
-	/* Grab the thread info */
-	t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
-	sctk_assert( t != NULL ) ;
-
-	/* Number of threads in the current team */
-	num_threads = t->info.num_threads;
-
-	sctk_nodebug("[%d] __mpcomp_dynamic_loop_next: start", t->rank);   
-
-	/* Compute the index of the dynamic for construct */
-	index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
-
-	TODO( "__mpcomp_dynamic_loop_next: w/ 1 thread, put an if and remove CAS" )
-
-	/* Check what the status is to see if we have to steal */
-	if ( t->for_dyn_status == 0 ) {
-
-		r = sctk_atomics_load_int( &(t->for_dyn_remain[index].i) ) ;
-
-		sctk_nodebug("[%d] __mpcomp_dynamic_loop_next: index=%d, r=%d", 
-				t->rank, index, t->for_dyn_chunk_info[index].remain);
-
-		if ( r > 0 ) {
-			int real_r ;
-
-			real_r = sctk_atomics_cas_int( 
-					&(t->for_dyn_remain[index].i), r, r-1 ) ;
-
-			while ( real_r > 0 && real_r != r ) {
-				sctk_nodebug("[%d] __mpcomp_dynamic_loop_next: r > 0, real_r=%d", 
-						t->rank, real_r);
-				r = real_r ;
-				real_r = sctk_atomics_cas_int( 
-						&(t->for_dyn_remain[index].i), r, r-1 ) ;
-			}
-
-			if ( real_r > 0 ) {
-				int chunk_id ;
-
-				__mpcomp_get_specific_chunk_per_rank( t->rank, num_threads,
-						t->info.loop_lb, t->info.loop_b, t->info.loop_incr, t->info.loop_chunk_size, 
-						t->for_dyn_total - r, from, to ) ;
-
-				sctk_nodebug( "__mpcomp_dynamic_loop_next: Get a chunk %d -> %d", *from, *to ) ;
-
-				return 1 ;
-			}
-		}
-
-		if ( num_threads > 1 ) {
-			/* Entering STEAL state (update status and intialize) */
-			t->for_dyn_status = 1 ;
-		}
-
-	}
-
-	if ( num_threads > 1 ) {
-		/* TODO stealing */
-		__mpcomp_dynamic_loop_steal( t, from, to ) ;
-
-	}
-
-	/* Nothing to do and to steal */
 	return 0 ;
 }
 #endif

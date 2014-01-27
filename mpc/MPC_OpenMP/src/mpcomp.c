@@ -338,6 +338,11 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
     fprintf (stderr,
 	"MPC OpenMP version %d.%d\n",
 	SCTK_OMP_VERSION_MAJOR, SCTK_OMP_VERSION_MINOR);
+#if MPCOMP_TASK
+    fprintf (stderr, "\tTasking on\n" ) ;
+#else
+    fprintf (stderr, "\tTasking off\n" ) ;
+#endif
     fprintf (stderr, "\tOMP_SCHEDULE %d\n", OMP_SCHEDULE);
     fprintf (stderr, "\tOMP_NUM_THREADS %d\n", OMP_NUM_THREADS);
     fprintf (stderr, "\tOMP_DYNAMIC %d\n", OMP_DYNAMIC);
