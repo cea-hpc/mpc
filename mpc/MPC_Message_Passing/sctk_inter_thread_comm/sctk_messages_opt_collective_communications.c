@@ -143,6 +143,8 @@ static void sctk_barrier_opt_messages(const sctk_communicator_t communicator, sc
 		char c = 'c';
 		struct sctk_internal_ptp_s* ptp_internal;
 
+  sctk_nodebug("sctk_barrier_opt_messages() begin:"); //AMAHEO
+
 		sctk_opt_messages_init_items(&table);
 
 		thread_data = sctk_thread_data_get ();

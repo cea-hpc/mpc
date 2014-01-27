@@ -600,6 +600,14 @@ sctk_get_cpu_number ()
   return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
 }
 
+/*! \brief Return the total number of core for the process
+*/
+  int
+sctk_get_cpu_number_topology (hwloc_topology_t topo)
+{
+  return hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_PU);
+}
+
 /*! \brief Set the number of core usable for the current process
  * @ param n Number of cores
  * used in ethread
@@ -680,15 +688,18 @@ print_neighborhood(int cpuid, int nb_cpus, int* neighborhood, hwloc_obj_t* objs)
 sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood)
 {
   int i;
-
   hwloc_obj_t *objs;
-  hwloc_obj_t currentCPU = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuid);
+  hwloc_obj_t currentCPU ; 
   unsigned nb_cpus_found;
+
+  currentCPU = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, cpuid);
 
   /* alloc size for retreiving objects. We could also use a static array */
   objs = sctk_malloc(nb_cpus * sizeof(hwloc_obj_t));
-  /* the closest CPU is actually... the current CPU :-). Set the closest CPU as the current
-   * CPU */
+  sctk_assert( objs != NULL ) ;
+
+  /* The closest CPU is actually... the current CPU :-). 
+   * Set the closest CPU as the current CPU */
   objs[0] = currentCPU;
 
   /* get closest objects to the current CPU */
@@ -712,6 +723,49 @@ sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood)
   sctk_free(objs);
 }
 
+/*! \brief Return the closest core_id
+ * @param cpuid Main core_id
+ * @param nb_cpus Number of neighbor
+ * @param neighborhood Neighbor list
+ */
+  void
+  sctk_get_neighborhood_topology(hwloc_topology_t topo, int cpuid, int nb_cpus, int* neighborhood)
+{
+  int i;
+  hwloc_obj_t *objs;
+  hwloc_obj_t currentCPU ; 
+  unsigned nb_cpus_found;
+
+  currentCPU = hwloc_get_obj_by_type(topo, HWLOC_OBJ_PU, cpuid);
+
+  /* alloc size for retreiving objects. We could also use a static array */
+  objs = sctk_malloc(nb_cpus * sizeof(hwloc_obj_t));
+  sctk_assert( objs != NULL ) ;
+
+  /* The closest CPU is actually... the current CPU :-). 
+   * Set the closest CPU as the current CPU */
+  objs[0] = currentCPU;
+
+  /* get closest objects to the current CPU */
+  nb_cpus_found = hwloc_get_closest_objs(topo, currentCPU, &objs[1], (nb_cpus-1));
+  /*  +1 because of the current cpu not returned by hwloc_get_closest_objs */
+  assume( (nb_cpus_found + 1) == nb_cpus);
+
+  /* fill the neighborhood variable */
+  for (i = 0; i < nb_cpus; i++)
+  {
+    /*
+       hwloc_obj_t current = objs[i];
+       neighborhood[i] = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, current)->logical_index;
+       */
+    neighborhood[i] = objs[i]->logical_index;
+  }
+
+  /* uncomment for printing the returned result */
+  //print_neighborhood(cpuid, nb_cpus, neighborhood, objs);
+
+  sctk_free(objs);
+}
 
 /*
  * For OpenFabrics

@@ -264,7 +264,13 @@ void sctk_runtime_config_struct_init_openmp(void * struct_ptr)
 	obj->schedule = "static";
 	obj->nb_threads = 0;
 	obj->adjustment = false;
+	obj->proc_bind = true;
 	obj->nested = false;
+	obj->stack_size = 0;
+	obj->wait_policy = 0;
+	obj->thread_limit = 0;
+	obj->max_active_levels = 0;
+	obj->tree = "";
 	obj->max_threads = 64;
 	obj->max_alive_for_dyn = 7;
 	obj->max_alive_for_guided = 3;

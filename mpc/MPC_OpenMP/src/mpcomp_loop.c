@@ -24,7 +24,7 @@
 #include "mpcomp_internal.h"
 #include <sctk_debug.h>
 
-/* Return the number of chunks that a static schedule will create */
+/* Return the number of chunks that a static schedule will create for the thread 'rank' */
 long
 __mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads, long lb,
 					long b, long incr, long chunk_size)
@@ -64,7 +64,7 @@ __mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads, long lb,
     }
 
   sctk_nodebug
-    ("__mpcomp_get_static_nb_chunks: final nb_chunks_per_thread = %d",
+    ("__mpcomp_get_static_nb_chunks: final nb_chunks_per_thread = %ld",
      nb_chunks_per_thread);
 
 
@@ -78,6 +78,8 @@ __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
 				      long *from, long *to)
 {
   long trip_count;
+  long local_from ;
+  long local_to ;
 
   /* Compute the trip count (total number of iterations of the original loop) */
   trip_count = (b - lb) / incr;
@@ -85,6 +87,9 @@ __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
   if ( (b - lb) % incr != 0 ) {
     trip_count++ ;
   }
+
+  sctk_nodebug("__mpcomp_get_specific_chunk_per_rank: trip_count=%ld", 
+			trip_count);
 
   /* The final additionnal chunk is smaller, so its computation is a little bit
      different */
@@ -96,29 +101,32 @@ __mpcomp_get_specific_chunk_per_rank (int rank, int nb_threads,
 							      chunk_size) - 1)
     {
 
-      *from = lb + (trip_count / chunk_size) * chunk_size * incr;
-      *to = lb + trip_count * incr;
+      local_from = lb + (trip_count / chunk_size) * chunk_size * incr;
+      local_to = lb + trip_count * incr;
 
       sctk_nodebug ("__mpcomp_static_schedule_get_specific_chunk: "
 		    "Thread %d: %ld -> %ld (excl) step %ld => "
 		    "%ld -> %ld (excl) step %ld (chunk of %ld)\n",
-		    rank, lb, b, incr, from, to, incr,
+		    rank, lb, b, incr, local_from, local_to, incr,
 		    trip_count % chunk_size);
 
     }
   else
     {
-      *from =
+      local_from =
 	lb + chunk_num * nb_threads * chunk_size * incr +
 	chunk_size * incr * rank;
-      *to =
+      local_to =
 	lb + chunk_num * nb_threads * chunk_size * incr +
 	chunk_size * incr * rank + chunk_size * incr;
 
       sctk_nodebug ("__mpcomp_static_schedule_get_specific_chunk: "
 		    "Thread %d / Chunk %ld: %ld -> %ld (excl) step %ld => "
 		    "%ld -> %ld (excl) step %ld (chunk of %ld)\n",
-		    rank, chunk_num, lb, b, incr, *from, *to, incr,
+		    rank, chunk_num, lb, b, incr, local_from, local_to, incr,
 		    chunk_size);
     }
+
+  *from = local_from ;
+  *to = local_to ;
 }

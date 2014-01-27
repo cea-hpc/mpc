@@ -23,1229 +23,683 @@
 #include <mpcomp.h>
 #include <mpcomp_abi.h>
 #include "mpcomp_internal.h"
-#include "sctk.h"
 #include <sctk_debug.h>
-#include "mpcmicrothread_internal.h"
 
-void
-__mpcomp_barrier_for_dyn (void) ;
+/* dest = src1+src2 in base 'base' of size 'depth' up to dimension 'max_depth'
+ */
+static int
+__mpcomp_dynamic_add( int * dest, int * src1, int *src2, 
+		int * base, int depth, int max_depth, 
+		int include_carry_over ) {
+		int i ;
+		int ret = 1 ;
+		int carry_over = 1 ; 
+
+#if 0
+		sctk_debug( "__mpcomp_dynamic_add: "
+				"depth=%d, max_depth=%d "
+				"src1[%d]=%d + src2[%d]=%d, "
+				"src1[%d]=%d + src2[%d]=%d"
+				,
+				depth, max_depth,
+				depth-2, src1[depth-2], depth-2, src2[depth-2],
+				depth-1, src1[depth-1], depth-1, src2[depth-1]
+			   	) ;
+#endif
+
+		/* Step to the next target */
+		for ( i = depth -1 ; i >= max_depth ; i-- ) {
+			int value ;
+
+			value = src1[i] + src2[i];
+
+			carry_over = 0 ;
+			dest[i] = value ;
+			if ( value >= base[i] ) {
+				if ( i == max_depth ) {
+					ret = 0 ;
+				}
+				if ( include_carry_over ) {
+					carry_over = value / base[i] ;
+				}
+				dest[i] = (value %  base[i] ) ;
+			}
+		}
+
+#if 0
+		sctk_debug( "__mpcomp_dynamic_add: "
+				"Exit dest[%d]=%d, dest[%d]=%d"
+				,
+				depth-2, dest[depth-2], 
+				depth-1, dest[depth-1]
+			   	) ;
+#endif
+
+		return ret ;
+}
+
+/* Return 1 if overflow, otherwise 0 */
+static int
+__mpcomp_dynamic_increase( int * target, int * base,
+		int depth, int max_depth, int include_carry_over ) {
+		int i ;
+		int carry_over = 1;
+		int ret = 0 ;
+
+#if 0
+		mpcomp_thread_t *t ;	/* Info on the current thread */
+		t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+		if ( t->rank == 1 ) {
+
+		sctk_debug( "__mpcomp_dynamic_increase[%d]: "
+				"depth=%d, mac_depth=%d, include_carry_over=%d"
+				,
+				t->rank,
+				depth, max_depth, include_carry_over ) ;
+		for ( i = 0 ; i < depth ; i++ ) {
+			sctk_debug( "__mpcomp_dynamic_increase[%d]: "
+					"\ttarget[%d] = %d"
+					,
+					t->rank,
+					i, target[i] ) ;
+		}
+		for ( i = 0 ; i < depth ; i++ ) {
+			sctk_debug( "__mpcomp_dynamic_increase[%d]: "
+					"\tbase[%d] = %d"
+					,
+					t->rank,
+					i, base[i] ) ;
+		}
+		}
+#endif
+
+		/* Step to the next target */
+		for ( i = depth -1 ; i >= max_depth ; i-- ) {
+			int value ;
+
+			value = target[i] + carry_over ;
+
+			carry_over = 0 ;
+			target[i] = value ;
+			if ( value >= base[i] ) {
+				if ( i == max_depth ) {
+					ret = 1 ;
+				}
+				if ( include_carry_over ) {
+					carry_over = value / base[i] ;
+				}
+				target[i] = (value %  base[i] ) ;
+			}
+		}
+
+#if 0
+		{
+		mpcomp_thread_t *t ;	/* Info on the current thread */
+		t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+		if ( t->rank == 1 ) {
+
+		for ( i = 0 ; i < depth ; i++ ) {
+			sctk_debug( "__mpcomp_dynamic_increase[%d]: "
+					"\tFinal target[%d] = %d    (ret=%d)"
+					,
+					t->rank,
+					i, target[i], ret ) ;
+		}
+		}
+		}
+#endif
+
+		return ret ;
+}
+
+/* From thread t, try to steal a chunk from thread target 
+ * Returns 1 on success, 0 otherwise */
+static int
+__mpcomp_dynamic_loop_get_chunk_from_rank( mpcomp_thread_t * t, 
+		mpcomp_thread_t * target, long * from, long * to ) {
+	int r ;
+	int index;
+	int target_index ;
+	int num_threads;
+
+
+	if ( t != target ) return 0 ;
+
+	sctk_nodebug(
+			"__mpcomp_dynamic_loop_get_chunk_from_rank: "
+			"Get chunk from thread %d (current %d) "
+			"to thread %d (current %d)", 
+			t->rank, t->for_dyn_current,
+			target->rank, target->for_dyn_current ) ;
+
+	/* Stop if target rank has already done this specific loop */
+	if ( (t != target) && (t->for_dyn_current < target->for_dyn_current) ) {
+		return 0 ;
+	}
+
+	/* Number of threads in the current team */
+	num_threads = t->info.num_threads;
+
+	/* Compute the index of the dynamic for construct */
+	index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
+
+	/* Get the current id of remaining chink for the target */
+	r = sctk_atomics_load_int( &(target->for_dyn_remain[index].i) ) ;
+
+	sctk_nodebug("[%d] __mpcomp_dynamic_loop_get_chunk_from_rank: target=%d, index=%d, r=%d", 
+			t->rank, target->rank, index, target->for_dyn_chunk_info[index].remain);
+
+	/* r==-1 => Initialize if the target did not reach the current loop already */
+	if ( r == -1 &&  ( (t == target) || (t->for_dyn_current > target->for_dyn_current)) ) {
+		/* Compute the total number of chunks for this thread */
+		t->for_dyn_total = __mpcomp_get_static_nb_chunks_per_rank(
+				target->rank, 
+				num_threads, 
+				t->info.loop_lb, 
+				t->info.loop_b, 
+				t->info.loop_incr, 
+				t->info.loop_chunk_size);
+
+		/* Try to change the number of remaining chunks */
+		r = sctk_atomics_cas_int(&(target->for_dyn_remain[index].i), -1, t->for_dyn_total);
+	}
+
+	/* r>0 => some chunks are remaining, we can try to steal */
+	if ( r > 0 ) {
+		int real_r ;
+
+#if 1
+		/* TEMP 
+		 * TODO need to update this value only when we change the target */
+		t->for_dyn_total = __mpcomp_get_static_nb_chunks_per_rank(
+				target->rank, 
+				num_threads, 
+				t->info.loop_lb, 
+				t->info.loop_b, 
+				t->info.loop_incr, 
+				t->info.loop_chunk_size);
+#endif
+
+		real_r = sctk_atomics_cas_int( 
+				&(target->for_dyn_remain[index].i), r, r-1 ) ;
+
+		while ( real_r > 0 && real_r != r ) {
+			sctk_nodebug("[%d] __mpcomp_dynamic_loop_get_chunk_from_rank: target=%d, r > 0, real_r=%d", 
+					t->rank, target->rank, real_r);
+			r = real_r ;
+			real_r = sctk_atomics_cas_int( 
+					&(target->for_dyn_remain[index].i), r, r-1 ) ;
+		}
+
+		if ( real_r > 0 ) {
+			int chunk_id ;
+
+			__mpcomp_get_specific_chunk_per_rank( target->rank, num_threads,
+					t->info.loop_lb, t->info.loop_b, t->info.loop_incr, t->info.loop_chunk_size, 
+					t->for_dyn_total - r, from, to ) ;
+
+			sctk_nodebug( "[%d] __mpcomp_dynamic_loop_get_chunk_from_rank: Get a chunk #%d out of %d from rank %d %d -> %d", 
+					t->rank, r, t->for_dyn_total, target->rank, *from, *to ) ;
+
+			/* SUCCESS */
+			return 1 ;
+		}
+
+
+	}
+
+	/* FAIL */
+	return 0 ;
+}
+
+
+void 
+__mpcomp_dynamic_loop_init(mpcomp_thread_t *t, 
+		long lb, long b, long incr, long chunk_size)
+{
+	mpcomp_team_t *team_info;	/* Info on the team */
+	int index;
+	int r;
+	int num_threads;
+
+	/* Get the team info */
+	sctk_assert(t->instance != NULL);
+	team_info = t->instance->team;
+	sctk_assert(team_info != NULL);
+
+	/* Number of threads in the current team */
+	num_threads = t->info.num_threads;
+
+	/* Compute the index of the dynamic for construct */
+	index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
+
+	sctk_nodebug( "[%d] __mpcomp_dynamic_loop_init:"
+			"Entering with current %d",
+			t->rank, t->for_dyn_current ) ;
+
+	/* Stop if the maximum number of alive loops is reached */
+	while (sctk_atomics_load_int( 
+				&(team_info->for_dyn_nb_threads_exited[index].i)) == 
+			MPCOMP_NOWAIT_STOP_SYMBOL) {
+		sctk_thread_yield() ;
+	}
+
+	/* Fill private info about the loop */
+	t->info.loop_lb = lb;
+	t->info.loop_b = b;
+	t->info.loop_incr = incr;
+	t->info.loop_chunk_size = chunk_size;     
+
+	/* Compute the total number of chunks for this thread */
+	t->for_dyn_total = __mpcomp_get_static_nb_chunks_per_rank(t->rank, 
+			num_threads, lb, b, incr, chunk_size);
+
+	/* Try to change the number of remaining chunks */
+	sctk_atomics_cas_int(&(t->for_dyn_remain[index].i), -1, t->for_dyn_total);
+
+}
+
 
 int __mpcomp_dynamic_loop_begin (long lb, long b, long incr,
-			     long chunk_size, long *from, long *to)
-{
-  mpcomp_thread_info_t *self;	/* Info on the current thread */
-  mpcomp_thread_info_t *father;	/* Info on the team */
-  long rank;			/* Rank of the thread calling this function */
-  int index;			/* Index of this loop */
-  int num_threads;		/* Number of threads of the current team */
-  int remain ;
-  long n;			/* Number of remaining iterations */
+				 long chunk_size, long *from, long *to)
+{ 
+	mpcomp_thread_t *t ;	/* Info on the current thread */
 
-  /* Compute the total number iterations */
-  n = (b - lb) / incr;
+	/* Handle orphaned directive (initialize OpenMP environment) */
+	__mpcomp_init();
 
-  /* If this loop contains no iterations then exit */
-  if ( n <= 0 ) {
-    return 0 ;
-  }
+	/* Grab the thread info */
+	t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+	sctk_assert( t != NULL ) ;
 
-  /* Grab the thread info */
-  /* TODO Use TLS if available */
-  self = (mpcomp_thread_info_t *) sctk_thread_getspecific
-    (mpcomp_thread_info_key);
-  sctk_assert (self != NULL);
+	/* Initialization of loop internals */
+	__mpcomp_dynamic_loop_init(t, lb, b, incr, chunk_size);
 
-  /* Number of threads in the current team */
-  num_threads = self->num_threads;
-  sctk_assert( num_threads > 0 ) ;
-
-  /* Get the father info (team info) */
-  father = self->father;
-  sctk_assert (father != NULL);
-
-  /* Get the rank of the current thread */
-  rank = self->rank;
-  sctk_assert( rank >= 0 && rank < num_threads ) ;
-
-  /* If this function is called from a sequential part (orphaned directive) or
-   * if this thread is the only one of its team -> it executes the whole loop 
-   */
-  if (num_threads == 1)
-    {
-      /* Fill team info to indicate that there are no chunks anymore.
-	 Index does not increase in such case
-	 */
-      index = self->private_current_for_dyn;
-      father->chunk_info_for_dyn[rank][index].remain = 0 ;
-      *from = lb;
-      *to = b;
-      return 1;
-    }
-
-
-  /* Compute the new index of this loop */
-  index = (self->private_current_for_dyn+1)%(MPCOMP_MAX_ALIVE_FOR_DYN + 1);
-  self->private_current_for_dyn = index ;
-
-  sctk_nodebug
-    ("__mpcomp_dynamic_loop_begin[%d]: "
-     "Entering loop (%ld -> %ld step %ld [cs=%ld]) with "
-     "index %d, microVP=%d (STOP=%d)",
-     rank, 
-     lb, b, incr, chunk_size, 
-     index, self->vp, father->stop_index_for_dyn );
-
-  /* Check if the current index represents a barrier or not */
-  if ( father->stop_index_for_dyn == index ) {
-    int stop_index ;
-    int stop_value ;
-
-    sctk_nodebug( "__mpcomp_dynamic_loop_begin[%d]: Maybe blocked at index %d",
-	rank, index ) ;
-
-    sctk_spinlock_lock (&(father->lock_stop_for_dyn));
-
-    stop_index = father->stop_index_for_dyn ;
-    stop_value = father->stop_value_for_dyn ;
-
-    if ( stop_index == index ) {
-      if ( stop_value == MPCOMP_NOWAIT_STOP_SYMBOL) {
-	father->stop_value_for_dyn = MPCOMP_NOWAIT_STOP_CONSUMED ;
-
-	sctk_spinlock_unlock (&(father->lock_stop_for_dyn));
-
-	sctk_nodebug( "__mpcomp_dynamic_loop_begin[%d]: Blocked at index %d STOP->STOPPED",
-	    rank, index ) ;
-
-	/* Generate a barrier (it should reinitialize all counters) */
-INFO("OpenMP: For/Dyn: Check which barrier is used")
-	__mpcomp_barrier_for_dyn();
-	/* Recall the function */
-	return __mpcomp_dynamic_loop_begin (lb, b, incr, chunk_size, from, to);
-      }
-
-      if ( stop_value == MPCOMP_NOWAIT_STOP_CONSUMED ) {
-	sctk_spinlock_unlock (&(father->lock_stop_for_dyn));
-
-	sctk_nodebug( "__mpcomp_dynamic_loop_begin[%d]: Blocked at index %d STOPPED",
-	    rank, index ) ;
-
-	/* Generate a barrier (it should reinitialize all counters) */
-INFO("OpenMP: For/Dyn: Check which barrier is used")
-	__mpcomp_barrier_for_dyn();
-	/* Recall the function */
-	return __mpcomp_dynamic_loop_begin (lb, b, incr, chunk_size, from, to);
-      }
-    }
-
-    sctk_spinlock_unlock (&(father->lock_stop_for_dyn));
-  }
-
-  /* Check the number of remaining chunk for this index and this rank */
-  sctk_spinlock_lock (&(father->lock_for_dyn[rank][index]));
-
-  remain = father->chunk_info_for_dyn[rank][index].remain ;
-
-  /* If nobody stole my work already */
-  if ( remain == -1 ) {
-    int total_nb_chunks ;
-
-    
-    total_nb_chunks = __mpcomp_get_static_nb_chunks_per_rank( rank,
-	num_threads, lb, b, incr, chunk_size); 
-    father->chunk_info_for_dyn[rank][index].remain = total_nb_chunks - 1 ;
-    father->chunk_info_for_dyn[rank][index].total  = total_nb_chunks ;
-
-    sctk_nodebug
-      ("__mpcomp_dynamic_loop_begin[%d]: (FIRST)First one -> index %d, #chunks %d",
-       rank, index, total_nb_chunks );
-
-    sctk_spinlock_unlock (&(father->lock_for_dyn[rank][index]));
-
-    /* Fill info about the current loop */
-    self->loop_lb = lb;
-    self->loop_b = b;
-    self->loop_incr = incr;
-    self->loop_chunk_size = chunk_size;
-
-    if ( total_nb_chunks == 0 ) {
-      sctk_nodebug
-	("__mpcomp_dynamic_loop_begin[%d]: (FIRST) No chunk 0", rank ) ;
-      return 0 ;
-    }
-
-    __mpcomp_get_specific_chunk_per_rank (rank,
-	num_threads,
-	lb, b, incr,
-	chunk_size, 0, from, to);
-
-    sctk_nodebug
-      ("__mpcomp_dynamic_loop_begin[%d]: (FIRST)chunk 0: %d -> %d", rank,
-       *from, *to);
-
-    return 1 ;
-  }
-
-  /* If somebody stole everything */
-  if ( remain == 0 ) {
-    sctk_spinlock_unlock (&(father->lock_for_dyn[rank][index]));
-    /* Fill info about the current loop */
-    self->loop_lb = lb;
-    self->loop_b = b;
-    self->loop_incr = incr;
-    self->loop_chunk_size = chunk_size;
-    /* TODO Try to steal someone? */
-
-    sctk_nodebug
-      ("__mpcomp_dynamic_loop_begin[%d]: (LAST)Already stolen -> index %d",
-       rank, index );
-
-    return 0 ;
-  }
-
-  int chunk_id = father->chunk_info_for_dyn[rank][index].total - remain ;
-  father->chunk_info_for_dyn[rank][index].remain = remain - 1 ;
-
-  sctk_spinlock_unlock (&(father->lock_for_dyn[rank][index]));
-
-    /* Fill info about the current loop */
-    self->loop_lb = lb;
-    self->loop_b = b;
-    self->loop_incr = incr;
-    self->loop_chunk_size = chunk_size;
-
-
-    __mpcomp_get_specific_chunk_per_rank (rank,
-	num_threads,
-	lb, b, incr,
-	chunk_size, chunk_id, from, to);
-
-    sctk_nodebug
-      ("__mpcomp_dynamic_loop_begin[%d]: (MIDDLE)chunk %d: %d -> %d", rank, chunk_id,
-       *from, *to);
-
-    return 1;
+	/* Return the next chunk to execute */
+	return __mpcomp_dynamic_loop_next(from, to);
 }
 
 int
 __mpcomp_dynamic_loop_next (long *from, long *to)
 {
-  mpcomp_thread_info_t *self;
-  mpcomp_thread_info_t *father;
-  long rank;
-  int index;
-  int num_threads;
-  int i ;
-  int remain ;
+	mpcomp_thread_t *t ;	/* Info on the current thread */
+	int num_threads;
+	int index;
+	int max_depth ;
+	int i ;
 
-  /* Grab the thread info */
-  /* TODO Use TLS if available */
-  self = (mpcomp_thread_info_t *) sctk_thread_getspecific
-    (mpcomp_thread_info_key);
-  sctk_assert (self != NULL);
+	/* Grab the thread info */
+	t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+	sctk_assert( t != NULL ) ;
 
-  /* Number of threads in the current team */
-  num_threads = self->num_threads;
+	sctk_nodebug("[%d] __mpcomp_dynamic_loop_next: start", t->rank);   
 
-  /* Get the rank of the current thread */
-  rank = self->rank;
+	/* Number of threads in the current team */
+	num_threads = t->info.num_threads;
 
-  /* Get the father info */
-  father = self->father;
-  sctk_assert (father != NULL);
+	/* Compute the index of the dynamic for construct */
+	index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
 
-  /* Get the index of the current loop */
-  index = self->private_current_for_dyn ;
+	/* 1 thread => no stealing, directly get a chunk */
+	if ( num_threads == 1 ) {
+		return __mpcomp_dynamic_loop_get_chunk_from_rank(t,t,from,to) ;
+	}
+
+	/* Check that the target is allocated */
+	if ( t->for_dyn_target == NULL ) {
+		int i ;
+		t->for_dyn_target = (int *)malloc( t->instance->tree_depth * sizeof( int ) ) ;
+		for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
+			t->for_dyn_target[i] = t->mvp->tree_rank[i] ;
+		}
+
+		t->for_dyn_shift = (int *)malloc( t->instance->tree_depth * sizeof( int ) ) ;
+		for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
+			t->for_dyn_shift[i] = 0 ;
+		}
+
+		sctk_nodebug( 
+				"[%d] __mpcomp_dynamic_loop_next: "
+				"initialization of target and shift", 
+				t->rank ) ;
+
+	}
+	sctk_assert( t->for_dyn_target != NULL ) ;
+	sctk_assert( t->for_dyn_shift != NULL ) ;
+
+	/* DEBUG */
+	int i_debug ;
+	for ( i_debug = 0 ; i_debug < t->instance->tree_depth ; i_debug++ ) {
+		sctk_nodebug(
+				"[%d] __mpcomp_dynamic_loop_next: "
+				"\ttarget[%d] = %d \t shift[%d] = %d", 
+				t->rank, 
+				i_debug, t->for_dyn_target[i_debug],
+				i_debug, t->for_dyn_shift[i_debug] 
+				) ;
+
+	}
 
 
-  /* Even if the number of threads is 1, compute the chunk to execute
-     (because this functino is directly call after a #pragma omp parallel for
-     */
-  if (num_threads == 1)
-    {
-      int total ;
-      int chunk_id ;
+	/* Stop the stealing at the following depth.
+	 * Nodes above this depth will not be traversed
+	 */
+	max_depth = t->info.new_root->depth ;
 
-      sctk_assert( rank == 0 ) ;
+	sctk_nodebug( 
+				"__mpcomp_dynamic_loop_next[%d]: "
+				"max_depth = %d",
+				t->rank, max_depth 
+			) ;
 
-      remain = father->chunk_info_for_dyn[0][index].remain ;
+	int found = 1 ;
+	int index_target = 0 ;
 
-      sctk_assert( remain >= 0 ) ;
+	/* Compute the index of the target */
+	for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
+		index_target += t->for_dyn_target[i] * t->instance->tree_cumulative[i] ;
+	}
 
-      if ( remain == 0 ) {
-	/* Reinitialize team info (because it will not be done inside the 
-	   barrier */
-	father->chunk_info_for_dyn[0][index].remain = -1 ;
+	sctk_nodebug( 
+				"__mpcomp_dynamic_loop_next[%d]: "
+				"targetting mvp #%d",
+				t->rank, index_target
+			) ;
+
+
+	/* While it is not possible to get a chunk */
+	while ( !__mpcomp_dynamic_loop_get_chunk_from_rank( 
+				t, 
+				&(t->instance->mvps[index_target]->threads[0]), 
+				from, 
+				to ) ) {
+
+		sctk_nodebug( 
+				"__mpcomp_dynamic_loop_next[%d]: "
+				"Get chunk failed -> Inside main while loop", 
+				t->rank ) ;
+
+
+do_increase:
+		if (__mpcomp_dynamic_increase( t->for_dyn_shift, t->instance->tree_base,
+					t->instance->tree_depth, max_depth, 1 ) ) {
+
+			sctk_nodebug( 
+					"__mpcomp_dynamic_loop_next[%d]: "
+					"Target tour done", t->rank ) ;
+
+			/* Initialized target to the curent thread */
+			/* TODO maybe find another solution because it can be time consuming */
+			__mpcomp_dynamic_add(  t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank,
+					t->instance->tree_base, t->instance->tree_depth, max_depth, 0 ) ;
+
+			found = 0 ;
+			break ;
+		}
+
+		/* Add t->for_dyn_shift and t->mvp->tree_rank[i] w/out
+		 * carry over and store it into t->for_dyn_target */
+		__mpcomp_dynamic_add(  t->for_dyn_target, t->for_dyn_shift, t->mvp->tree_rank,
+				t->instance->tree_base, t->instance->tree_depth, max_depth, 0 ) ;
+
+		index_target = 0 ;
+		/* Compute the index of the target */
+		for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
+			index_target += t->for_dyn_target[i] * t->instance->tree_cumulative[i] ;
+		}
+
+		/* Stop if the target is not a launch thread */
+		if ( t->for_dyn_target[t->instance->tree_depth-1] >= 
+				t->instance->mvps[index_target]->father->barrier_num_threads ) {
+
+			sctk_nodebug( 
+					"__mpcomp_dynamic_loop_next[%d]: "
+					"target not in scope, skipping..."
+					, t->rank
+					) ;
+
+			/* TODO promote this goto to a loop */
+			goto do_increase ;
+		}
+
+
+		sctk_nodebug( 
+				"__mpcomp_dynamic_loop_next[%d]: "
+				"targetting now mvp #%d",
+				t->rank, index_target
+				) ;
+	}
+
+
+	/* Did we exit w/ or w/out a chunk? */
+	if ( found ) {
+	sctk_nodebug( 
+			"__mpcomp_dynamic_loop_next[%d]: "
+			"Exiting main while loop with chunk [%d -> %d]", t->rank, 
+			*from, *to ) ;
+
+		return 1 ;
+	}
+
+	sctk_nodebug( 
+			"__mpcomp_dynamic_loop_next[%d]: "
+			"Exiting with no chunks", t->rank ) ;
+
 	return 0 ;
-      }
-
-      total = father->chunk_info_for_dyn[rank][index].total ;
-      father->chunk_info_for_dyn[rank][index].remain = remain - 1 ;
-
-      chunk_id = total - remain ;
-
-      __mpcomp_get_specific_chunk_per_rank (rank,
-	  num_threads,
-	  self->loop_lb, self->loop_b, self->loop_incr,
-	  self->loop_chunk_size, chunk_id, from, to);
-      
-      return 1;
-    }
-
-  sctk_nodebug
-    ("__mpcomp_dynamic_loop_next[%d]: Next in loop for index %d on microVP=%d",
-     rank, index, self->vp);
-
-  sctk_spinlock_lock (&(father->lock_for_dyn[rank][index]));
-
-  remain = father->chunk_info_for_dyn[rank][index].remain ;
-
-  /* Is there anything to do? */
-  if ( remain == 0 ) {
-    /* If not... */
-
-    sctk_spinlock_unlock (&(father->lock_for_dyn[rank][index]));
-
-    sctk_nodebug
-      ("__mpcomp_dynamic_loop_next[%d]: Nothing left, try stealing...",
-       rank );
-
-    for ( i = 1 ; i < num_threads ; i++ ) {
-      int target_rank = (i + rank)%num_threads ;
-      int target_remain ;
-
-
-      /* Trying to steal work from thread 'target_rank' */
-
-      sctk_spinlock_lock (&(father->lock_for_dyn[target_rank][index]));
-
-      target_remain = father->chunk_info_for_dyn[target_rank][index].remain ;
-
-      if ( target_remain == -1 ) { 
-	/* If this thread has not already reached this loop, fill
-	   some info and then steal the first chunk */
-	int nb_chunks ;
-	
-	nb_chunks = 
-	  __mpcomp_get_static_nb_chunks_per_rank( target_rank,
-	      num_threads, self->loop_lb,
-	      self->loop_b, self->loop_incr,
-	      self->loop_chunk_size);
-
-	if ( nb_chunks == 0 ) {
-	  father->chunk_info_for_dyn[target_rank][index].remain = 0 ;
-	} else {
-	  father->chunk_info_for_dyn[target_rank][index].remain = nb_chunks - 1 ;
-	}
-	father->chunk_info_for_dyn[target_rank][index].total = nb_chunks ;
-
-	sctk_spinlock_unlock (&(father->lock_for_dyn[target_rank][index]));
-
-	if ( nb_chunks == 0 ) {
-	  continue ;
-	}
-
-	__mpcomp_get_specific_chunk_per_rank (target_rank,
-	    num_threads,
-	    self->loop_lb,
-	    self->loop_b,
-	    self->loop_incr,
-	    self->loop_chunk_size,
-	    0, from, to);
-
-    sctk_nodebug
-      ("__mpcomp_dynamic_loop_next[%d]: "
-       "(FIRST) steal next chunk (out of %d) from rank %d: %d -> %d",
-       rank, nb_chunks, target_rank, *from, *to);
-
-	return 1 ;
-
-      }
-
-      if ( target_remain == 0 ) { 
-	/* If this thread has already finish the loop 'index', try the next
-	 * thread */
-	sctk_spinlock_unlock (&(father->lock_for_dyn[target_rank][index]));
-	continue ;
-      }
-
-      /* Otherwise, the thread 'target_rank' is currently working on this loop
-       * and is not done. Therefore, steal a chunk */
-
-
-      int target_total ;
-      
-      target_total = father->chunk_info_for_dyn[target_rank][index].total ;
-      father->chunk_info_for_dyn[target_rank][index].remain = target_remain - 1 ;
-
-      sctk_spinlock_unlock (&(father->lock_for_dyn[target_rank][index]));
-
-      int target_chunk_id ;
-
-      target_chunk_id = target_total - target_remain ;
-
-      __mpcomp_get_specific_chunk_per_rank (target_rank,
-					    num_threads,
-					    self->loop_lb,
-					    self->loop_b,
-					    self->loop_incr,
-					    self->loop_chunk_size,
-					    target_chunk_id, from, to);
-
-    sctk_nodebug
-      ("__mpcomp_dynamic_loop_next[%d]: "
-       "(MIDDLE) steal next chunk %d from rank %d: %d -> %d",
-       rank, target_chunk_id, target_rank, *from, *to);
-
-      return 1 ;
-    }
-
-    sctk_nodebug
-      ("__mpcomp_dynamic_loop_next[%d]: "
-       "Nothing found to steal" );
-
-    /* Nothing found to steal */
-    return 0 ;
-
-  }
-
-
-  int total = father->chunk_info_for_dyn[rank][index].total ;
-  father->chunk_info_for_dyn[rank][index].remain = remain - 1 ;
-
-  sctk_spinlock_unlock (&(father->lock_for_dyn[rank][index]));
-
-  int chunk_id = total - remain ;
-
-    __mpcomp_get_specific_chunk_per_rank (rank,
-	num_threads,
-	self->loop_lb, self->loop_b, self->loop_incr,
-	self->loop_chunk_size, chunk_id, from, to);
-
-    sctk_nodebug
-      ("__mpcomp_dynamic_loop_next[%d]: next chunk %d (out of %d) %d -> %d",
-       rank, chunk_id, total, *from, *to);
-
-    return 1;
-
 }
+
+#if 0
+static int 
+__mpcomp_dynamic_loop_steal( mpcomp_thread_t * t, long * from, long * to ) {
+	int i ;
+	int stop = 0 ; 
+	int max_depth ; 
+
+	/* Note: max_depth is a mix of new_root's depth and an artificial depth
+	 * set to reduce the stealing frontiers */
+
+	TODO( "__mpcomp_dynamic_loop_steal: Add artificial depth to limit stealing frontiers" )
+
+	sctk_debug( "__mpcomp_dynamic_loop_steal[%d]: Enter", t->rank ) ;
+	sctk_debug( "__mpcomp_dynamic_loop_steal[%d]: depth of new_root = %d",
+			t->rank, t->info.new_root->depth ) ;
+
+	/* Check that the target is allocated */
+	if ( t->for_dyn_target == NULL ) {
+		t->for_dyn_target = (int *)malloc( t->instance->tree_depth * sizeof( int ) ) ;
+		for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
+			t->for_dyn_target[i] = 0 ;
+		}
+	}
+	sctk_assert( t->for_dyn_target != NULL ) ;
+
+	/* Stop the stealing at the following depth.
+	 * Nodes above this depth will not be traversed
+	 */
+	max_depth = t->info.new_root->depth ;
+
+	while ( !stop ) {
+
+	/* Increase target index */
+	int carry_over = 1;
+	for ( i = t->instance->tree_depth -1 ; i >= max_depth ; i-- ) {
+		int value ;
+
+		value = t->for_dyn_target[i] + carry_over ;
+
+		carry_over = 0 ;
+		t->for_dyn_target[i] = value ;
+		if ( value >= t->instance->tree_base[i] ) {
+			carry_over = value / t->instance->tree_base[i] ;
+			t->for_dyn_target[i] = (value %  (t->instance->tree_base[i]) ) ;
+		}
+	}
+
+#if 0
+	fprintf( stderr, "__mpcomp_dynamic_loop_steal[%ld]: new victim = [",
+			t->rank ) ;
+	for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
+		if ( i != 0 ) {
+			fprintf( stderr, ", " ) ;
+		}
+		fprintf( stderr, "%d", t->for_dyn_target[i] ) ;
+	}
+	fprintf( stderr, "]\n" ) ;
+#endif
+
+	/* Add current microvp coordinates to select the target */
+	for ( i = max_depth ; i < t->instance->tree_depth ; i++ ) {
+		/* Add t->for_dyn_target[i] and t->mvp->tree_rank */
+
+	}
+
+	/* Compute the index of the target mvp according to its coordinates */
+
+	/* Try to steal from this mvp */
+
+
+	/* Check if target is 0 */
+	stop = 1 ;
+	for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
+		if ( t->for_dyn_target[i] != 0 ) {
+			stop = 0 ;
+		}
+	}
+	}
+
+	sctk_debug( "__mpcomp_dynamic_loop_steal[%d]: Exit", t->rank ) ;
+
+	return 0 ;
+}
+#endif
 
 void
 __mpcomp_dynamic_loop_end ()
 {
+	mpcomp_thread_t *t ;	/* Info on the current thread */
+	mpcomp_team_t *team_info ;	/* Info on the team */
+	int index;
+	int num_threads;
+	int nb_threads_exited ; 
 
-  /* Generate a barrier (this barrier will re-initialized values related to
-     in-flight dynamic for loops */
-  __mpcomp_barrier_for_dyn();
+	/* Grab the thread info */
+	t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+	sctk_assert( t != NULL ) ;
+
+	/* Number of threads in the current team */
+	num_threads = t->info.num_threads;
+
+	if (num_threads == 1) {
+		return ;
+	}
+
+	/* Get the team info */
+	sctk_assert (t->instance != NULL);
+	team_info = t->instance->team ;
+	sctk_assert (team_info != NULL);
+
+	/* Compute the index of the dynamic for construct */
+	index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
+
+	sctk_nodebug("[%d] __mpcomp_dynamic_loop_end: begin", t->rank);
+
+	/* WARNING: the following order is important */
+	t->for_dyn_current++ ;
+	sctk_atomics_store_int( &(t->for_dyn_remain[index].i), -1 ) ;
+
+	/* Update the number of threads which ended this loop */
+	nb_threads_exited = sctk_atomics_fetch_and_incr_int( 
+			&(team_info->for_dyn_nb_threads_exited[index].i ) ) ;
+
+	sctk_nodebug( 
+			"[%d]__mpcomp_dynamic_loop_end: Exiting loop %d: %d -> %d",
+			t->rank, index, nb_threads_exited, nb_threads_exited + 1 ) ;
+
+	sctk_assert( nb_threads_exited >= 0 && nb_threads_exited < num_threads ) ;
+
+	if ( nb_threads_exited == num_threads - 1 ) {
+		int previous_index ;
+
+		/* WARNING: the following order is important */
+		sctk_atomics_store_int( 
+				&(team_info->for_dyn_nb_threads_exited[index].i), 
+				MPCOMP_NOWAIT_STOP_SYMBOL ) ;
+
+		previous_index = (index - 1 + MPCOMP_MAX_ALIVE_FOR_DYN + 1 ) % 
+			( MPCOMP_MAX_ALIVE_FOR_DYN + 1 ) ;
+
+		sctk_nodebug( "__mpcomp_dynamic_loop_end: Move STOP symbol %d -> %d", previous_index, index ) ;
+
+		sctk_atomics_store_int( 
+				&(team_info->for_dyn_nb_threads_exited[previous_index].i), 
+				0 ) ;
+	}
+
 }
 
 void
 __mpcomp_dynamic_loop_end_nowait ()
 {
-  mpcomp_thread_info_t *self;	/* Info on the current thread */
-  mpcomp_thread_info_t *father;	/* Info on the team */
-  long rank;
-  int index;
-  int num_threads;
-  int nb_exited_threads;
-  int i ;
-
-  /* Grab the thread info */
-  self = (mpcomp_thread_info_t *) sctk_thread_getspecific
-    (mpcomp_thread_info_key);
-  sctk_assert (self != NULL);
-
-  /* Number of threads in the current team */
-  num_threads = self->num_threads;
-
-  /* Get the father info (team info) */
-  father = self->father;
-  sctk_assert (father != NULL);
-
-  /* Get the rank of the current thread */
-  rank = self->rank;
-  index = self->private_current_for_dyn;
-
-  /* If this function is called from a sequential part (orphaned directive) or
-     this team has only 1 thread, no need to handle it */
-  if (num_threads == 1)
-    {
-      return;
-    }
-
-
-    sctk_nodebug( "__mpcomp_dynamic_loop_end_nowait[%d]: Exiting from index %d"
-	, rank, index ) ;
-
-
-  /* Atomically update the number of exited threads */
-  sctk_spinlock_lock (&(father->lock_exited_for_dyn[index]));
-
-  nb_exited_threads = father->nb_threads_exited_for_dyn[index] ;
-  nb_exited_threads++ ;
-  father->nb_threads_exited_for_dyn[index] = nb_exited_threads ;
-
-  sctk_spinlock_unlock (&(father->lock_exited_for_dyn[index]));
-
-  /* If I was the last one (no data race because noone else will exit) */
-  if ( nb_exited_threads == num_threads ) {
-    //int previous_index = (index-1+MPCOMP_MAX_ALIVE_FOR_DYN+1)%(MPCOMP_MAX_ALIVE_FOR_DYN+1) ;
-
-    sctk_nodebug( "__mpcomp_dynamic_loop_end_nowait[%d]: Reseting dynamic info for index %d"
-	, rank, index ) ;
-
-    /* TODO what if some threads are already waiting on the STOP symbol? */
-
-    /* Reset the number of exited threads for this workshare */
-    father->nb_threads_exited_for_dyn[index] = 0 ;
-
-    /* Update the STOP symbol for the current workshare and the previous one */
-    sctk_spinlock_lock (&(father->lock_stop_for_dyn));
-    if ( father->stop_value_for_dyn == MPCOMP_NOWAIT_STOP_SYMBOL ) {
-    // father->stop_value_for_dyn = MPCOMP_NOWAIT_STOP_SYMBOL ;
-
-    father->stop_index_for_dyn = index ;
-    }
-
-    sctk_spinlock_unlock (&(father->lock_stop_for_dyn));
-
-    /* Re-initialize the chunk info for the current workshare
-       No data race because the 'index' workshare has a STOP symbol 
-     */
-    for ( i = 0 ; i < num_threads ; i++ ) {
-      father->chunk_info_for_dyn[i][index].remain = -1 ;
-    }
-  }
-
+	sctk_nodebug( "__mpcomp_dynamic_loop_end_nowait:" ) ;
+	__mpcomp_dynamic_loop_end() ;
 }
-
-/* TODO temp barrier to test faster overloading */
-void
-__mpcomp_barrier_for_dyn (void)
-{
-  mpcomp_thread_info_t *info;
-
-  /* TODO Use TLS if available */
-  info = sctk_thread_getspecific (mpcomp_thread_info_key);
-
-  /* Re-initialize local values related to for loop w/ dynamic schedule */
-  __mpcomp_reset_dynamic_thread_info( info ) ;
-
-  /* Block only if I'm not the only thread in the team */
-  if (info->num_threads > 1)
-    {
-
-      sctk_microthread_vp_t *my_vp;
-      long micro_vp_barrier;
-      long micro_vp_barrier_done;
-      int num_omp_threads_micro_vp;
-
-      /* Grab the microVP */
-      my_vp = &(info->task->__list[info->vp]);
-
-      /* Get the total number of OpenMP threads on this microVP */
-      num_omp_threads_micro_vp = my_vp->to_do_list;
-
-      /* Is there only 1 OpenMP thread on this microVP? */
-      if (num_omp_threads_micro_vp == 1)
-	{
-	  mpcomp_thread_info_t *father;
-	  long barrier_done_init;
-	  long barrier;
-
-	  /* Grab the father region */
-	  father = info->father;
-
-	  /* Update info on the barrier (father region) */
-	  sctk_spinlock_lock (&(father->lock2));
-	  barrier_done_init = father->barrier_done;
-	  barrier = father->barrier + 1;
-	  father->barrier = barrier;
-
-	  /* If I am the last thread of the team to enter this barrier */
-	  if (barrier == info->num_threads)
-	    {
-	      /* Reset information about dynamic-scheduled loops */
-	      __mpcomp_reset_dynamic_team_info( father, info->num_threads) ;
-
-	      father->barrier = 0;
-	      father->barrier_done++;
-
-	      sctk_spinlock_unlock (&(father->lock2));
-	    }
-	  else
-	    {
-	      sctk_spinlock_unlock (&(father->lock2));
-
-	      /* Wait for the barrier to be done */
-	      while (father->barrier_done == barrier_done_init)
-		{
-		  sctk_thread_yield ();
-		}
-	    }
-
-	}
-      else
-	{
-
-	  sctk_nodebug
-	    ("__mpcomp_barrier[mVP=%d]: number of threads on this vp: %d",
-	     info->vp, num_omp_threads_micro_vp);
-
-	  /* Get the barrier number for this microVP */
-	  micro_vp_barrier = my_vp->barrier;
-	  micro_vp_barrier_done = my_vp->barrier_done;
-
-	  sctk_nodebug
-	    ("__mpcomp_barrier[mVP=%d]: number of threads blocked on this vp: %ld",
-	     info->vp, micro_vp_barrier);
-
-	  /* Create a context for the next microthreads on the same VP (only the
-	   * first time) */
-	  if (micro_vp_barrier == 0)
-	    {
-	      mpcomp_fork_when_blocked (my_vp, info->step);
-	    }
-
-	  /* Increment the barrier counter for this microVP */
-	  my_vp->barrier = micro_vp_barrier + 1;
-
-	  if (my_vp->barrier == num_omp_threads_micro_vp)
-	    {
-	      /* The barrier on this microVP is done, only the barrier between
-	         microVPs has to be done */
-	      mpcomp_thread_info_t *father;
-	      long barrier_done_init;
-	      long barrier;
-
-	      sctk_nodebug
-		("__mpcomp_barrier[mVP=%d]: barrier done for this microVP",
-		 info->vp);
-
-	      /* Grab the father region */
-	      father = info->father;
-
-	      sctk_spinlock_lock (&(father->lock2));
-
-	      barrier_done_init = father->barrier_done;
-	      barrier = father->barrier + num_omp_threads_micro_vp;
-	      father->barrier = barrier;
-
-	      sctk_nodebug
-		("__mpcomp_barrier[mVP=%d]: %d threads have entered (out of %d)",
-		 info->vp, barrier, info->num_threads);
-
-	      /* If I am the last microVP of the current team to finish this barrier */
-	      if (barrier == info->num_threads)
-		{
-
-		  /* Reset information about dynamic-scheduled loops */
-		  __mpcomp_reset_dynamic_team_info( father, info->num_threads) ;
-
-		  father->barrier = 0;
-		  father->barrier_done++;
-		  sctk_spinlock_unlock (&(father->lock2));
-		}
-	      else
-		{
-		  sctk_spinlock_unlock (&(father->lock2));
-
-		  /* No need to give access to other OpenMP threads because the
-		   * intra-microVP barrier is done. Call the main scheduler */
-		  while (father->barrier_done == barrier_done_init)
-		    {
-		      sctk_thread_yield ();
-		    }
-		}
-
-	      /* Release each microVP internally */
-	      my_vp->barrier = 0;
-	      my_vp->barrier_done++;
-
-	    }
-	  else
-	    {
-
-	      sctk_nodebug
-		("__mpcomp_barrier[mVP=%d]: waiting on this microVP",
-		 info->vp);
-
-	      /* Spin while the barrier is not done */
-	      mpcomp_macro_scheduler (my_vp, info->step);
-	      while (my_vp->barrier_done == micro_vp_barrier_done)
-		{
-		  mpcomp_macro_scheduler (my_vp, info->step);
-		  if (my_vp->barrier_done == micro_vp_barrier_done)
-		    {
-		      sctk_thread_yield ();
-		    }
-		}
-	    }
-
-	}
-
-    }
-
-  sctk_nodebug ("__mpcomp_barrier: Leaving");
-}
-
-void
-__mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
-				      void *(*func) (void *), void *shared,
-				      long lb, long b, long incr, long chunk_size)
-{
-  mpcomp_thread_info_t *current_info;
-  int num_threads;
-  long n;			/* Number of iterations */
-
-  SCTK_PROFIL_START (__mpcomp_start_parallel_region);
-
-  /* Compute the total number iterations */
-  n = (b - lb) / incr;
-
-  /* If this loop contains no iterations then exit */
-  if ( n <= 0 ) {
-    return ;
-  }
-
-  /* Initialize the OpenMP environment (call several times, but really executed
-   * once) */
-  __mpcomp_init ();
-
-  /* Retrieve the information (microthread structure and current region) */
-  /* TODO Use TLS if available */
-  current_info = sctk_thread_getspecific (mpcomp_thread_info_key);
-  sctk_assert (current_info != NULL);
-
-  sctk_nodebug
-    ("__mpcomp_start_parallel_dynamic_loop: "
-     "Entering w/ loop %d -> %d step %d [cs=%d]",
-     lb, b, incr, chunk_size);
-
-  /* Grab the number of threads */
-  num_threads = current_info->icvs.nthreads_var;
-  if (arg_num_threads > 0 && arg_num_threads <= MPCOMP_MAX_THREADS)
-    {
-      num_threads = arg_num_threads;
-    }
-
-  /* Bypass if the parallel region contains only 1 thread */
-#if 0
-  if (num_threads == 1)
-    {
-      int total_nb_chunks ;
-      sctk_nodebug
-	("__mpcomp_start_parallel_dynamic_loop: Only 1 thread -> call f");
-
-      current_info->loop_lb = lb ;
-      current_info->loop_b = b ;
-      current_info->loop_incr = incr ;
-      current_info->loop_chunk_size = chunk_size ;
-
-      total_nb_chunks = __mpcomp_get_static_nb_chunks_per_rank( 0,
-	  num_threads, lb, b, incr, chunk_size); 
-      current_info->chunk_info_for_dyn[0][0].remain = total_nb_chunks ;
-      current_info->chunk_info_for_dyn[0][0].total  = total_nb_chunks ;
-
-      func (shared);
-      SCTK_PROFIL_END (__mpcomp_start_parallel_region);
-      return;
-    }
-#endif
-
-  sctk_nodebug
-    ("__mpcomp_start_parallel_dynamic_loop: -> Final num threads = %d",
-     num_threads);
-
-  /* Creation of a new microthread structure if the current region is
-   * sequential or if nesting is allowed */
-  if (num_threads != 1 && (current_info->depth == 0 || mpcomp_get_nested ()))
-    {
-      sctk_microthread_t *new_task;
-      sctk_microthread_t *current_task;
-      int i;
-      /*
-      int n = num_threads / current_info->icvs.nmicrovps_var;
-      int index = num_threads % current_info->icvs.nmicrovps_var;
-      int vp;
-      */
-
-      SCTK_PROFIL_START (__mpcomp_start_parallel_region__creation);
-
-      sctk_nodebug
-	("__mpcomp_start_parallel_dynamic_loop: starting new team at depth %d on %d microVP(s)",
-	 current_info->depth, current_info->icvs.nmicrovps_var);
-
-      current_task = current_info->task;
-
-      /* Initialize a new microthread structure if needed */
-      if (current_info->depth == 0)
-	{
-	  new_task = current_task;
-
-	  sctk_nodebug
-	    ("__mpcomp_start_parallel_dynamic_loop: reusing the thread_info depth 0");
-	}
-      else
-	{
-
-	  /* If the first child has already been created, get the
-	   * corresponding thread-info structure */
-	  if (current_info->children[0] != NULL)
-	    {
-	      sctk_nodebug
-		("__mpcomp_start_parallel_dynamic_loop: reusing thread_info new depth");
-
-	      new_task = current_info->children[0]->task;
-	      sctk_assert (new_task != NULL);
-
-	    }
-	  else
-	    {
-
-	      sctk_nodebug
-		("__mpcomp_start_parallel_dynamic_loop: allocating thread_info new depth");
-
-	      new_task = sctk_malloc (sizeof (sctk_microthread_t));
-	      sctk_assert (new_task != NULL);
-	      sctk_microthread_init (current_info->icvs.nmicrovps_var, new_task);
-	    }
-	}
-
-
-      /* Fill the microthread structure with these new threads */
-      for (i = num_threads - 1; i >= 0; i--)
-	{
-	  mpcomp_thread_info_t *new_info;
-	  int microVP;
-	  int val;
-	  int res;
-	  int total_nb_chunks ;
-
-	  /* Compute the VP this thread will be scheduled on and the behavior of
-	   * 'add_task' */
-	  if (i < current_info->icvs.nmicrovps_var)
-	    {
-	      microVP = i;
-	      val = MPC_MICROTHREAD_LAST_TASK;
-	    }
-	  else
-	    {
-	      microVP = i % (current_info->icvs.nmicrovps_var);
-	      val = MPC_MICROTHREAD_NO_TASK_INFO;
-	    }
-
-	  /* Get the structure of the i-th children */
-	  new_info = current_info->children[i];
-
-	  /* If this is the first time that such a child exists
-	     -> allocate memory once and initialize once */
-	  if (new_info == NULL)
-	    {
-
-	      sctk_nodebug
-		("__mpcomp_start_parallel_dynamic_loop: "
-		 "Child %d is NULL -> allocating thread_info",
-		 i);
-
-	      new_info =
-		sctk_malloc_on_node (sizeof (mpcomp_thread_info_t), sctk_get_node_from_cpu(microVP));
-	      sctk_assert (new_info != NULL);
-
-	      current_info->children[i] = new_info;
-
-	      __mpcomp_init_thread_info (new_info, func, shared, i,
-					 num_threads, current_info->icvs,
-					 current_info->depth + 1, microVP, 0,
-					 current_info, 0, new_task);
-	    }
-	  else
-	    {
-	      __mpcomp_reset_thread_info (new_info, func, shared, num_threads,
-					  current_info->icvs, 0, 0, microVP);
-	    }
-
-
-	  new_info->task = new_task;
-
-	  /* Update private information about dynamic schedule */
-	  new_info->loop_lb = lb ;
-	  new_info->loop_b = b ;
-	  new_info->loop_incr = incr ;
-	  new_info->loop_chunk_size = chunk_size ;
-
-	  /* Update shared information about dynamic schedule */
-	  sctk_spinlock_lock (&(current_info->lock_for_dyn[i][0]));
-	  total_nb_chunks = __mpcomp_get_static_nb_chunks_per_rank( i,
-	      num_threads, lb, b, incr, chunk_size); 
-	  current_info->chunk_info_for_dyn[i][0].remain = total_nb_chunks ;
-	  current_info->chunk_info_for_dyn[i][0].total  = total_nb_chunks ;
-	  sctk_spinlock_unlock (&(current_info->lock_for_dyn[i][0]));
-
-	  sctk_nodebug
-	    ("__mpcomp_start_parallel_dynamic_loop: "
-	     "Adding op %d on microVP %d", i, microVP);
-
-	  /*
-	  res = sctk_microthread_add_task (__mpcomp_wrapper_op, new_info, microVP,
-					   &(new_info->step), new_task, val);
-					   */
-	  res = sctk_microthread_add_task (__mpcomp_wrapper_op, new_info, microVP,
-					   &(new_info->step), new_task, MPC_MICROTHREAD_NO_TASK_INFO);
-	  sctk_assert (res == 0);
-
-
-	}
-
-      SCTK_PROFIL_END (__mpcomp_start_parallel_region__creation);
-
-      /* Launch the execution of this microthread structure */
-      /*
-      sctk_microthread_parallel_exec (new_task,
-				      MPC_MICROTHREAD_DONT_WAKE_VPS);
-				      */
-      sctk_microthread_parallel_exec (new_task,
-				      MPC_MICROTHREAD_WAKE_VPS);
-
-      sctk_nodebug
-	("__mpcomp_start_parallel_dynamic_loop: Microthread execution done");
-
-      /* Restore the key value (microthread structure & OpenMP info) */
-      sctk_thread_setspecific (mpcomp_thread_info_key, current_info);
-      sctk_thread_setspecific (sctk_microthread_key, current_task);
-
-      /* Free the memory allocated for the new microthread structure */
-      if (current_info->depth != 0)
-	{
-	  sctk_free (new_task);
-	}
-
-      /* TODO free the memory allocated for the OpenMP-thread info 
-         maybe not because this is stored in current_info->children[] */
-
-
-    }
-  else
-    {
-      mpcomp_thread_info_t *new_info;
-      int total_nb_chunks ;
-
-      sctk_nodebug
-	("__mpcomp_start_parallel_dynamic_loop: Serialize a new team at depth %d",
-	 current_info->depth);
-
-      /* TODO only flatterned nested supported for now */
-
-      num_threads = 1;
-
-
-      new_info = current_info->children[0];
-      if (new_info == NULL)
-	{
-
-	  sctk_nodebug
-	    ("__mpcomp_start_parallel_dynamic_loop: Allocating new thread_info");
-
-	  new_info = sctk_malloc (sizeof (mpcomp_thread_info_t));
-	  sctk_assert (new_info != NULL);
-	  current_info->children[0] = new_info;
-	  __mpcomp_init_thread_info (new_info, func, shared,
-				     0, 1,
-				     current_info->icvs,
-				     current_info->depth + 1,
-				     current_info->vp, 0,
-				     current_info, 0, current_info->task);
-	}
-      else
-	{
-	  sctk_nodebug
-	    ("__mpcomp_start_parallel_dynamic_loop: Reusing older thread_info");
-	  __mpcomp_reset_thread_info (new_info, func, shared, 1,
-				      current_info->icvs, 0, 0,
-				      current_info->vp);
-	}
-
-
-      /* Fill thread information about the loop */
-      new_info->loop_lb = lb ;
-      new_info->loop_b = b ;
-      new_info->loop_incr = incr ;
-      new_info->loop_chunk_size = chunk_size ;
-
-      /* Fill team information about the loop */
-      total_nb_chunks = __mpcomp_get_static_nb_chunks_per_rank( 0,
-	  num_threads, lb, b, incr, chunk_size); 
-      current_info->chunk_info_for_dyn[0][0].remain = total_nb_chunks ;
-      current_info->chunk_info_for_dyn[0][0].total  = total_nb_chunks ;
-
-      __mpcomp_wrapper_op (new_info);
-
-      sctk_nodebug ("__mpcomp_start_parallel_dynamic_loop: after flat nested");
-
-      sctk_thread_setspecific (mpcomp_thread_info_key, current_info);
-
-      TODO("this free generates double-free error")
-      // sctk_free (new_info);
-    }
-
-TODO("can we only reset dynamic-team info?")
-  /* Re-initializes team info for this thread */
-  __mpcomp_reset_team_info (current_info, num_threads);
-
-
-  /* Restore the TLS for the main thread */
-  sctk_extls = current_info->children[0]->extls;
-#if defined (SCTK_USE_OPTIMIZED_TLS)
-  sctk_tls_module = current_info->children[0]->tls_module;
-  sctk_context_restore_tls_module_vp ();
-#endif
-
-  SCTK_PROFIL_END (__mpcomp_start_parallel_region);
-} /* __mpcomp_start_parallel_dynamic_loop */
 
 int
 __mpcomp_dynamic_loop_next_ignore_nowait (long *from, long *to)
 {
-  mpcomp_thread_info_t *self;
-  mpcomp_thread_info_t *father;
-  long rank;
-  int num_threads;
-  int i ;
-  int remain ;
-
-  /* Grab the thread info */
-  /* TODO Use TLS if available */
-  self = (mpcomp_thread_info_t *) sctk_thread_getspecific
-    (mpcomp_thread_info_key);
-  sctk_assert (self != NULL);
-
-  /* Number of threads in the current team */
-  num_threads = self->num_threads;
-
-  /* Get the rank of the current thread */
-  rank = self->rank;
-
-  /* Get the father info */
-  father = self->father;
-  sctk_assert (father != NULL);
-
-
-  /* If this function is called from a sequential part (orphaned directive),
-     or a team w/ only 1 thread, then the current thread is done 
-     (the whole loop has been executed after the 'start' function) */
-  if (num_threads == 1)
-    {
-      *from = self->loop_lb ;
-      *to = self->loop_b ;
-
-      remain = father->chunk_info_for_dyn[0][0].remain ;
-      if ( remain == 0 ) {
-	return 0 ;
-      }
-
-      int total = father->chunk_info_for_dyn[0][0].total ;
-      father->chunk_info_for_dyn[0][0].remain = remain - 1 ;
-
-      int chunk_id = total - remain ;
-
-      __mpcomp_get_specific_chunk_per_rank (0,
-	  num_threads,
-	  self->loop_lb, self->loop_b, self->loop_incr,
-	  self->loop_chunk_size, chunk_id, from, to);
-      
-      return 1;
-    }
-
-  sctk_nodebug
-    ("__mpcomp_dynamic_loop_next_ignore_nowait[%d]: "
-     "Next in loop on microVP=%d",
-     rank, self->vp);
-
-  sctk_spinlock_lock (&(father->lock_for_dyn[rank][0]));
-
-  remain = father->chunk_info_for_dyn[rank][0].remain ;
-
-  /* Is there anything to do? */
-  if ( remain == 0 ) {
-    /* If not... */
-
-    sctk_spinlock_unlock (&(father->lock_for_dyn[rank][0]));
-
-    sctk_nodebug
-      ("__mpcomp_dynamic_loop_next_ignore_nowait[%d]: "
-       "Nothing left, try stealing...",
-       rank );
-
-    for ( i = 1 ; i < num_threads ; i++ ) {
-      int target_rank = (i + rank)%num_threads ;
-      int target_remain ;
-
-
-      /* Trying to steal work from thread 'target_rank' */
-
-      sctk_spinlock_lock (&(father->lock_for_dyn[target_rank][0]));
-
-      target_remain = father->chunk_info_for_dyn[target_rank][0].remain ;
-
-      if ( target_remain == -1 ) { 
-	/* If this thread has not already reached this loop, fill
-	   some info and then steal the first chunk */
-	int nb_chunks ;
-	
-	nb_chunks = 
-	  __mpcomp_get_static_nb_chunks_per_rank( target_rank,
-	      num_threads, self->loop_lb,
-	      self->loop_b, self->loop_incr,
-	      self->loop_chunk_size);
-
-	if ( nb_chunks == 0 ) {
-	  father->chunk_info_for_dyn[target_rank][0].remain = 0 ;
-	} else {
-	  father->chunk_info_for_dyn[target_rank][0].remain = nb_chunks - 1 ;
-	}
-	father->chunk_info_for_dyn[target_rank][0].total = nb_chunks ;
-
-	sctk_spinlock_unlock (&(father->lock_for_dyn[target_rank][0]));
-
-	if ( nb_chunks == 0 ) {
-	  continue ;
-	}
-
-	__mpcomp_get_specific_chunk_per_rank (target_rank,
-	    num_threads,
-	    self->loop_lb,
-	    self->loop_b,
-	    self->loop_incr,
-	    self->loop_chunk_size,
-	    0, from, to);
-
-    sctk_nodebug
-      ("__mpcomp_dynamic_loop_next_ignore_nowait[%d]: "
-       "(FIRST) stolen next chunk (out of %d) from rank %d: %d -> %d",
-       rank, nb_chunks, target_rank, *from, *to);
-
-	return 1 ;
-
-      }
-
-      if ( target_remain == 0 ) { 
-	/* If this thread has already finish the loop 'index', try the next
-	 * thread */
-	sctk_spinlock_unlock (&(father->lock_for_dyn[target_rank][0]));
-	continue ;
-      }
-
-      /* Otherwise, the thread 'target_rank' is currently working on this loop
-       * and is not done. Therefore, steal a chunk */
-
-
-      int target_total ;
-      
-      target_total = father->chunk_info_for_dyn[target_rank][0].total ;
-      father->chunk_info_for_dyn[target_rank][0].remain = target_remain - 1 ;
-
-      sctk_spinlock_unlock (&(father->lock_for_dyn[target_rank][0]));
-
-      int target_chunk_id ;
-
-      target_chunk_id = target_total - target_remain ;
-
-      __mpcomp_get_specific_chunk_per_rank (target_rank,
-					    num_threads,
-					    self->loop_lb,
-					    self->loop_b,
-					    self->loop_incr,
-					    self->loop_chunk_size,
-					    target_chunk_id, from, to);
-
-    sctk_nodebug
-      ("__mpcomp_dynamic_loop_next_ignore_nowait[%d]: "
-       "(MIDDLE) stolen next chunk %d from rank %d: %d -> %d",
-       rank, target_chunk_id, target_rank, *from, *to);
-
-      return 1 ;
-    }
-
-    sctk_nodebug
-      ("__mpcomp_dynamic_loop_next_ignore_nowait[%d]: "
-       "Nothing found to steal" );
-
-    /* Nothing found to steal */
-    return 0 ;
-
-  }
-
-
-  int total = father->chunk_info_for_dyn[rank][0].total ;
-  father->chunk_info_for_dyn[rank][0].remain = remain - 1 ;
-
-  sctk_spinlock_unlock (&(father->lock_for_dyn[rank][0]));
-
-  int chunk_id = total - remain ;
-
-    __mpcomp_get_specific_chunk_per_rank (rank,
-	num_threads,
-	self->loop_lb, self->loop_b, self->loop_incr,
-	self->loop_chunk_size, chunk_id, from, to);
-
-    sctk_nodebug
-      ("__mpcomp_dynamic_loop_next[%d]: next chunk %d (out of %d) %d -> %d",
-       rank, chunk_id, total, *from, *to);
-
-    return 1;
-
+     not_implemented() ;
+     return 0;
 }
 
+
 /****
-  *
-  * ORDERED VERSION 
-  *
-  *
-  *****/
+ *
+ * ORDERED VERSION 
+ *
+ *
+ *****/
 
 int
 __mpcomp_ordered_dynamic_loop_begin (long lb, long b, long incr, long chunk_size,
-			    long *from, long *to)
+				     long *from, long *to)
 {
-  mpcomp_thread_info_t *info;
-  int res ;
+     mpcomp_thread_t *t;
+     int res;
 
-  res = __mpcomp_dynamic_loop_begin( lb, b, incr, chunk_size, from, to ) ;
+     res = __mpcomp_dynamic_loop_begin(lb, b, incr, chunk_size, from, to);
 
-  /* TODO Use TLS if available */
-  info =
-    (mpcomp_thread_info_t *) mpc_thread_getspecific (mpcomp_thread_info_key);
-
-  info->current_ordered_iteration = *from ;
-
-  return res ;
+     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+     sctk_assert(t != NULL);  
+     
+     t->current_ordered_iteration = *from;
+     
+     return res;
 }
 
 int
 __mpcomp_ordered_dynamic_loop_next(long *from, long *to)
 {
-  mpcomp_thread_info_t *info;
-  int res ;
-
-  res = __mpcomp_dynamic_loop_next( from, to ) ;
-
-  /* TODO Use TLS if available */
-  info =
-    (mpcomp_thread_info_t *) mpc_thread_getspecific (mpcomp_thread_info_key);
-
-  info->current_ordered_iteration = *from ;
-
-  return res ;
+     mpcomp_thread_t *t;
+     int res ;
+     
+     res = __mpcomp_dynamic_loop_next(from, to);
+     
+     t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
+     sctk_assert(t != NULL);
+     
+     t->current_ordered_iteration = *from;
+     
+     return res;
 }
 
 void
 __mpcomp_ordered_dynamic_loop_end()
 {
-  __mpcomp_dynamic_loop_end() ;
+     __mpcomp_dynamic_loop_end();
 }
 
 void
 __mpcomp_ordered_dynamic_loop_end_nowait()
 {
-  __mpcomp_dynamic_loop_end() ;
+     __mpcomp_dynamic_loop_end();
 }

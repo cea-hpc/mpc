@@ -135,6 +135,7 @@ extern "C"
   int sctk_thread_get_current_local_tasks_nb();
   void sctk_start_func (void *(*run) (void *), void *arg);
   int sctk_thread_get_vp (void);
+  int sctk_get_init_vp_and_nbvp (int i, int *nbVp);
   int sctk_get_init_vp (int i);
   void __MPC_init_types (void);
 

@@ -268,7 +268,13 @@ var sctk_runtime_config_xsd = "<?xml version='1.0'?>\
 <xs:element minOccurs='0' name='schedule' type='xs:string'/>\
 <xs:element minOccurs='0' name='nb_threads' type='xs:integer'/>\
 <xs:element minOccurs='0' name='adjustment' type='xs:boolean'/>\
+<xs:element minOccurs='0' name='proc_bind' type='xs:boolean'/>\
 <xs:element minOccurs='0' name='nested' type='xs:boolean'/>\
+<xs:element minOccurs='0' name='stack_size' type='xs:integer'/>\
+<xs:element minOccurs='0' name='wait_policy' type='xs:integer'/>\
+<xs:element minOccurs='0' name='thread_limit' type='xs:integer'/>\
+<xs:element minOccurs='0' name='max_active_levels' type='xs:integer'/>\
+<xs:element minOccurs='0' name='tree' type='xs:string'/>\
 <xs:element minOccurs='0' name='max_threads' type='xs:integer'/>\
 <xs:element minOccurs='0' name='max_alive_for_dyn' type='xs:integer'/>\
 <xs:element minOccurs='0' name='max_alive_for_guided' type='xs:integer'/>\

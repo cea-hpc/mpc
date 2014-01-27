@@ -218,11 +218,17 @@
 <config name="MPC_OpenMP">
 	<usertypes>
 		<struct name="openmp" doc="Options for MPC OpenMP.">
-			<param name="vp" type="int" doc="Number of VPs for each OpenMP team"/>
+			<param name="vp" type="int" default="0" doc="Number of VPs for each OpenMP team"/>
 			<param name="schedule" type="string" default="static" doc="Runtime schedule type and chunck size"/>
 			<param name="nb_threads" type="int" doc="Number of threads to use during execution"/>
 			<param name="adjustment" type="bool" default="false" doc="Dynamic adjustment of the number of threads"/>
+			<param name="proc_bind" type="bool" default="true" doc="Bind threads to processor core"/>
 			<param name="nested" type="bool" default="false" doc="Nested parallelism"/>
+			<param name="stack_size" type="int" default="0" doc="Stack size for OpenMP threads"/>
+			<param name="wait_policy" type="int" default="0" doc="Behavior of threads while waiting"/>
+			<param name="thread_limit" type="int" default="0" doc="Maximum number of OpenMP threads among all teams"/>
+			<param name="max_active_levels" type="int" default="0" doc="Maximum depth of nested parallelism"/>
+			<param name="tree" type="string" default="" doc="Tree shape for OpenMP construct"/>
 			<param name="max_threads" type="int" default="64" doc="Maximum number of threads for each team of a parallel region"/>
 			<param name="max_alive_for_dyn" type="int" default="7" doc="Maximum number of shared for loops w/ dynamic schedule alive"/>
 			<param name="max_alive_for_guided" type="int" default="3" doc="Maximum number of shared for loops w/ guided schedule alive"/>

@@ -39,6 +39,7 @@
 #include <fcntl.h>
 #include "hwloc.h"
 
+
 /* Not present in hwloc.h */
 void hwloc_obj_add_info(hwloc_obj_t obj, const char *name, const char *value);
 
@@ -49,6 +50,8 @@ __thread void *sctk_extls = NULL;
 /* to set GS register */
 #include <asm/prctl.h> /* ARCH_SET_GS */
 #include <sys/prctl.h> /* arch_prctl */
+
+extern int arch_prctl (int code, unsigned long addr); 
 
 /*
 Function is not defined in headers, manpage say to declare it manually.
@@ -452,6 +455,9 @@ TODO("Liberation des extls")
 void sctk_hls_build_repository ()
 {
   page_size = getpagesize ();
+
+/* TODO disable HLS */
+return ;
 
   hwloc_topology_t topology = sctk_get_topology_object() ;
   const int topodepth = hwloc_topology_get_depth(topology);

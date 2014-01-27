@@ -38,7 +38,7 @@ extern "C"
 #include <mpcomp.h>
 
 /* Conditional compilation -> See section 2.2 */
-#define _OPENMP 200505
+#define _OPENMP 200805
 
 
 /* 
@@ -81,7 +81,18 @@ extern "C"
   void __mpcomp_named_critical_begin (void **l);
   void __mpcomp_named_critical_end (void **l);
 
-/* SECTIONS/SECTION construct */
+/* 
+ * SECTIONS/SECTION construct 
+ * --------------------------
+ *  pragma omp sections
+ *  {
+ *    pragma omp section
+ *    { BODY1; }
+ *    pragma omp section
+ *    { BODY2; }
+ *  }
+ *  ->
+ */
   int __mpcomp_sections_begin (int nb_sections);
   int __mpcomp_sections_next ();
   void __mpcomp_sections_end ();
@@ -117,7 +128,7 @@ extern "C"
 	__mpcomp_do_single_copyprivate_end(data) ; 
    } else { a = d->a ; } 
 
-   !WARNING! The 'nowait' clause has not effect here
+	Note: The 'nowait' clause has not effect here
  */
   void *__mpcomp_do_single_copyprivate_begin (void);
   void __mpcomp_do_single_copyprivate_end (void *data);
@@ -162,7 +173,7 @@ extern "C"
  */
 
 /* See p34 for variable definition */
-  void __mpcomp_static_schedule_get_single_chunk (long lb, long b, long incr, long 
+  void __mpcomp_static_schedule_get_single_chunk (long lb, long b, long incr, long
 						  *from, long *to);
 
 /* 
@@ -213,11 +224,11 @@ extern "C"
    '__mpcomp_dynamic_loop_end' with a call to
    '__mpcomp_dynamic_loop_end_nowait'.
  */
-  int __mpcomp_dynamic_loop_begin (long lb, long b, long incr, long chunk_size,
-				   long *from, long *to);
-  int __mpcomp_dynamic_loop_next (long *from, long *to);
-  void __mpcomp_dynamic_loop_end ();
-  void __mpcomp_dynamic_loop_end_nowait ();
+	int __mpcomp_dynamic_loop_begin(long lb, long b, long incr,
+			long chunk_size, long *from, long *to);
+	int __mpcomp_dynamic_loop_next(long *from, long *to);
+	void __mpcomp_dynamic_loop_end();
+	void __mpcomp_dynamic_loop_end_nowait();
 
 /* GUIDED schedule */
 /*
@@ -253,7 +264,7 @@ extern "C"
    }
    __mpcomp_runtime_loop_end() ;
  */
-  int __mpcomp_runtime_loop_begin (long lb, long b, long incr, long chunk_size,
+  int __mpcomp_runtime_loop_begin (long lb, long b, long incr,
 				   long *from, long *to);
   int __mpcomp_runtime_loop_next (long *from, long *to);
   void __mpcomp_runtime_loop_end ();

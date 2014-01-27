@@ -63,6 +63,10 @@ extern "C"
 */
   int sctk_get_cpu_number (void);
 
+/*! \brief Return the total number of core for the process
+*/
+  int sctk_get_cpu_number_topology (hwloc_topology_t topo);
+
 /*! \brief Return 1 if the current node is a NUMA node, 0 otherwise
 */
   int sctk_is_numa_node (void);
@@ -102,6 +106,13 @@ extern "C"
  * @param neighborhood Neighbor list
 */
   void sctk_get_neighborhood(int cpuid, int nb_cpus, int* neighborhood);
+
+/*! \brief Return the closest core_id
+ * @param cpuid Main core_id
+ * @param nb_cpus Number of neighbor
+ * @param neighborhood Neighbor list
+*/
+  void sctk_get_neighborhood_topology(hwloc_topology_t topo, int cpuid, int nb_cpus, int* neighborhood);
 
 /*! \brief Return the number of NUMA nodes
 */

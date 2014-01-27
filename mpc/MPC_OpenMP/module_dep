@@ -24,3 +24,4 @@ need_module MPC_Threads
 need_module MPC_Common
 need_module MPC_Common
 SCTK_INCLUDE_FILES="mpcomp.h"
+SCTK_CHECK_OPTION "-DATOMICS"

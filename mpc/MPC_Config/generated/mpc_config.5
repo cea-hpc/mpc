@@ -650,7 +650,7 @@ It support parameters :
 .Pp
 .Bl -tag -width Ds
 .It Cm vp
-Type is int. 
+Type is int. Default value is 0. 
 .Pp vp
 Number of VPs for each OpenMP team
 .It Cm schedule
@@ -665,10 +665,34 @@ Number of threads to use during execution
 Type is bool. Default value is false. 
 .Pp adjustment
 Dynamic adjustment of the number of threads
+.It Cm proc_bind
+Type is bool. Default value is true. 
+.Pp proc_bind
+Bind threads to processor core
 .It Cm nested
 Type is bool. Default value is false. 
 .Pp nested
 Nested parallelism
+.It Cm stack_size
+Type is int. Default value is 0. 
+.Pp stack_size
+Stack size for OpenMP threads
+.It Cm wait_policy
+Type is int. Default value is 0. 
+.Pp wait_policy
+Behavior of threads while waiting
+.It Cm thread_limit
+Type is int. Default value is 0. 
+.Pp thread_limit
+Maximum number of OpenMP threads among all teams
+.It Cm max_active_levels
+Type is int. Default value is 0. 
+.Pp max_active_levels
+Maximum depth of nested parallelism
+.It Cm tree
+Type is string. Default value is . 
+.Pp tree
+Tree shape for OpenMP construct
 .It Cm max_threads
 Type is int. Default value is 64. 
 .Pp max_threads

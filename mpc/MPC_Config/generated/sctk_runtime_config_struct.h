@@ -349,8 +349,20 @@ struct sctk_runtime_config_struct_openmp
 	int nb_threads;
 	/**Dynamic adjustment of the number of threads**/
 	bool adjustment;
+	/**Bind threads to processor core**/
+	bool proc_bind;
 	/**Nested parallelism**/
 	bool nested;
+	/**Stack size for OpenMP threads**/
+	int stack_size;
+	/**Behavior of threads while waiting**/
+	int wait_policy;
+	/**Maximum number of OpenMP threads among all teams**/
+	int thread_limit;
+	/**Maximum depth of nested parallelism**/
+	int max_active_levels;
+	/**Tree shape for OpenMP construct**/
+	char * tree;
 	/**Maximum number of threads for each team of a parallel region**/
 	int max_threads;
 	/**Maximum number of shared for loops w/ dynamic schedule alive**/
