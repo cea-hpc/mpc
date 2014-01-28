@@ -163,8 +163,6 @@ __mpcomp_dynamic_loop_get_chunk_from_rank( mpcomp_thread_t * t,
 	int num_threads;
 
 
-	if ( t != target ) return 0 ;
-
 	sctk_nodebug(
 			"__mpcomp_dynamic_loop_get_chunk_from_rank: "
 			"Get chunk from thread %d (current %d) "
@@ -187,7 +185,7 @@ __mpcomp_dynamic_loop_get_chunk_from_rank( mpcomp_thread_t * t,
 	r = sctk_atomics_load_int( &(target->for_dyn_remain[index].i) ) ;
 
 	sctk_nodebug("[%d] __mpcomp_dynamic_loop_get_chunk_from_rank: target=%d, index=%d, r=%d", 
-			t->rank, target->rank, index, target->for_dyn_chunk_info[index].remain);
+			t->rank, t->rank, target->rank, index, r);
 
 	/* r==-1 => Initialize if the target did not reach the current loop already */
 	if ( r == -1 &&  ( (t == target) || (t->for_dyn_current > target->for_dyn_current)) ) {
@@ -273,7 +271,7 @@ __mpcomp_dynamic_loop_init(mpcomp_thread_t *t,
 	/* Compute the index of the dynamic for construct */
 	index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
 
-	sctk_debug( "[%d] __mpcomp_dynamic_loop_init:"
+	sctk_nodebug( "[%d] __mpcomp_dynamic_loop_init:"
 			"Entering with current %d",
 			t->rank, t->for_dyn_current ) ;
 
@@ -332,7 +330,7 @@ __mpcomp_dynamic_loop_next (long *from, long *to)
 	t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
 	sctk_assert( t != NULL ) ;
 
-	sctk_debug("[%d] __mpcomp_dynamic_loop_next: start", t->rank);   
+	sctk_nodebug("[%d] __mpcomp_dynamic_loop_next: start", t->rank);   
 
 	/* Number of threads in the current team */
 	num_threads = t->info.num_threads;
@@ -590,6 +588,10 @@ __mpcomp_dynamic_loop_end ()
 	num_threads = t->info.num_threads;
 
 	if (num_threads == 1) {
+		/* In case of 1 thread, re-initialize the number of remaining chunks
+		 * but do not increase the current index */
+		index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
+		sctk_atomics_store_int( &(t->for_dyn_remain[index].i), -1 ) ;
 		return ;
 	}
 
@@ -666,12 +668,19 @@ __mpcomp_ordered_dynamic_loop_begin (long lb, long b, long incr, long chunk_size
      mpcomp_thread_t *t;
      int res;
 
-     res = __mpcomp_dynamic_loop_begin(lb, b, incr, chunk_size, from, to);
-
      t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);  
      
+
+	 sctk_nodebug( "[%d] __mpcomp_dynamic_loop_begin: %d -> %d [%d] cs:%d",
+			 t->rank, lb, b, incr, chunk_size ) ;
+
+     res = __mpcomp_dynamic_loop_begin(lb, b, incr, chunk_size, from, to);
+
      t->current_ordered_iteration = *from;
+
+	 sctk_nodebug( "[%d] __mpcomp_dynamic_loop_begin: exit w/ res=%d",
+			 t->rank, res ) ;
      
      return res;
 }

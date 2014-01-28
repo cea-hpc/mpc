@@ -285,8 +285,8 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
     /* Start scheduling */
     in_order_scheduler(instance->mvps[0]) ;
 
-    sctk_nodebug( 
-			"__mpcomp_start_parallel_region: end of in-order scheduling" ) ;
+    sctk_debug( 
+			"[0] __mpcomp_start_parallel_region: end of in-order scheduling" ) ;
 
     /* Implicit barrier */
     __mpcomp_internal_half_barrier( instance->mvps[0] ) ;

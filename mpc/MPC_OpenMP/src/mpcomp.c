@@ -344,10 +344,18 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
     fprintf (stderr, "\tTasking off\n" ) ;
 #endif
     fprintf (stderr, "\tOMP_SCHEDULE %d\n", OMP_SCHEDULE);
-    fprintf (stderr, "\tOMP_NUM_THREADS %d\n", OMP_NUM_THREADS);
+	if ( OMP_NUM_THREADS == 0 ) {
+		fprintf (stderr, "\tDefault #threads (OMP_NUM_THREADS)\n");
+	} else {
+		fprintf (stderr, "\tOMP_NUM_THREADS %d\n", OMP_NUM_THREADS);
+	}
     fprintf (stderr, "\tOMP_DYNAMIC %d\n", OMP_DYNAMIC);
     fprintf (stderr, "\tOMP_NESTED %d\n", OMP_NESTED);
-    fprintf (stderr, "\t%d microVPs (OMP_MICROVP_NUMBER)\n", OMP_MICROVP_NUMBER);
+	if ( OMP_MICROVP_NUMBER == 0 ) {
+		fprintf (stderr, "\tDefault #microVPs (OMP_MICROVP_NUMBER)\n" );
+	} else {
+		fprintf (stderr, "\t%d microVPs (OMP_MICROVP_NUMBER)\n", OMP_MICROVP_NUMBER);
+	}
 	if ( OMP_TREE != NULL ) {
 	  int i ;
 	  fprintf( stderr, "\tOMP_TREE w/ depth:%d leaves:%d, arity:[%d", 
@@ -938,6 +946,9 @@ void __mpcomp_ordered_begin()
      t = (mpcomp_thread_t *) sctk_openmp_thread_tls;
      sctk_assert(t != NULL); 
 
+	 sctk_nodebug( "[%d] __mpcomp_ordered_begin: enter w/ iteration %d and team %d",
+			 t->rank, t->current_ordered_iteration, t->instance->team->next_ordered_offset ) ;
+
      /* First iteration of the loop -> initialize 'next_ordered_offset' */
      if (t->current_ordered_iteration == t->info.loop_lb) {
 	  t->instance->team->next_ordered_offset = 0;
@@ -954,8 +965,14 @@ void __mpcomp_ordered_begin()
 	       /* Grab the corresponding microVP */
 	       mvp = t->mvp;
 
-	       TODO("use correct primitives")
+		   while ( t->current_ordered_iteration != 
+				   (t->info.loop_lb + t->info.loop_incr * 
+					t->instance->team->next_ordered_offset) )
+		   {
+			   sctk_thread_yield();
+		   }
 #if 0	       
+	       TODO("use correct primitives")
 	       mpcomp_fork_when_blocked (my_vp, info->step);
 	       
 	       /* Spin while the condition is not satisfied */
@@ -969,6 +986,7 @@ void __mpcomp_ordered_begin()
 		    }
 	       }
 #endif
+
 	  }
      }
      

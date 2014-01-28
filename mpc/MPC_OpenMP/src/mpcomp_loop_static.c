@@ -187,6 +187,9 @@ int __mpcomp_static_loop_begin (long lb, long b, long incr, long chunk_size,
      t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);  
 
+	 sctk_debug( "[%d] __mpcomp_static_loop_begin: %d -> %d [%d] cs:%d",
+			 t->rank, lb, b, incr, chunk_size ) ;
+
      /* Automatic chunk size -> at most one chunk */
      if (chunk_size == 0) {
 	  t->static_nb_chunks = 1;

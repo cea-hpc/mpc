@@ -150,3 +150,86 @@ __mpcomp_runtime_loop_end_nowait ()
          break ;
      }
 }
+
+/****
+ *
+ * ORDERED VERSION 
+ *
+ *
+ *****/
+
+int
+__mpcomp_ordered_runtime_loop_begin (long lb, long b, long incr,
+				     long *from, long *to)
+{
+     mpcomp_thread_t *t ;	/* Info on the current thread */
+     long chunk_size;
+
+     /* Handle orphaned directive (initialize OpenMP environment) */
+     __mpcomp_init();
+
+     /* Grab the thread info */
+     t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+     sctk_assert( t != NULL ) ;
+
+     chunk_size = t->info.icvs.modifier_sched_var;
+
+     switch( t->info.icvs.run_sched_var ) {
+       case omp_sched_static:
+         return __mpcomp_ordered_static_loop_begin(lb,b,incr,chunk_size,from,to) ;
+         break ;
+       case omp_sched_dynamic:
+         return __mpcomp_ordered_dynamic_loop_begin(lb,b,incr,chunk_size,from,to) ;
+         break ;
+       case omp_sched_guided:
+         return __mpcomp_ordered_guided_loop_begin(lb,b,incr,chunk_size,from,to) ;
+         break ;
+       default:
+	 not_reachable();
+         break ;
+     }
+
+	 return 0 ;
+}
+
+int
+__mpcomp_ordered_runtime_loop_next(long *from, long *to)
+{
+     mpcomp_thread_t *t ;	/* Info on the current thread */
+
+     /* Handle orphaned directive (initialize OpenMP environment) */
+     __mpcomp_init();
+
+     /* Grab the thread info */
+     t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+     sctk_assert( t != NULL ) ;
+
+     switch( t->info.icvs.run_sched_var ) {
+       case omp_sched_static:
+         return __mpcomp_ordered_static_loop_next(from,to) ;
+         break ;
+       case omp_sched_dynamic:
+         return __mpcomp_ordered_dynamic_loop_next(from,to) ;
+         break ;
+       case omp_sched_guided:
+         return __mpcomp_ordered_guided_loop_next(from,to) ;
+         break ;
+       default:
+	 not_reachable();
+         break ;
+     }
+
+	 return 0 ;
+}
+
+void
+__mpcomp_ordered_runtime_loop_end()
+{
+     __mpcomp_runtime_loop_end();
+}
+
+void
+__mpcomp_ordered_runtime_loop_end_nowait()
+{
+     __mpcomp_runtime_loop_end();
+}
