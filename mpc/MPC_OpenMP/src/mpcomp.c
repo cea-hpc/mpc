@@ -333,8 +333,8 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
   }
 #endif /* MPCOMP_TASK */
 
-  /***** PRINT SUMMARY ******/
-  if (getenv ("MPC_DISABLE_BANNER") == NULL) {
+  /***** PRINT SUMMARY (only first MPI rank) ******/
+  if (getenv ("MPC_DISABLE_BANNER") == NULL && sctk_process_rank == 0) {
     fprintf (stderr,
 	"MPC OpenMP version %d.%d\n",
 	SCTK_OMP_VERSION_MAJOR, SCTK_OMP_VERSION_MINOR);
