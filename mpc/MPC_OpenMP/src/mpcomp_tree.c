@@ -55,6 +55,20 @@ int hwloc_topology_dup (hwloc_topology_t * newtopology, hwloc_topology_t *oldtop
 }
 #endif
 
+static int mpcomp_get_global_index_from_cpu (hwloc_topology_t topo, const int vp)
+{
+     hwloc_topology_t globalTopology = sctk_get_topology_object();
+     const hwloc_obj_t pu = hwloc_get_obj_by_type(topo, HWLOC_OBJ_PU, vp);
+     hwloc_obj_t obj;
+
+     assume(pu);    
+     obj = hwloc_get_pu_obj_by_os_index(globalTopology, pu->os_index);
+ 
+    return obj->logical_index;
+}
+
+
+
 /*
  * Walk down the topology object 'topology' from 'obj' node
  * and return the number of leaves.
@@ -591,7 +605,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			 int res;
 
 			 sctk_thread_attr_init(&__attr);
-			 sctk_thread_attr_setbinding (& __attr, target_vp );
+			 sctk_thread_attr_setbinding (& __attr, mpcomp_get_global_index_from_cpu(instance->topology, target_vp) );
 			 sctk_thread_attr_setstacksize (&__attr, mpcomp_global_icvs.stacksize_var);
 
 			 /* User thread create... */
