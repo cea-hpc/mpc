@@ -1901,7 +1901,7 @@ void td_utils_context_to_prgregset(const td_thragent_t *ta,
 void td_utils_prgregset_to_context(const td_thragent_t *ta,
 				   prgregset_t prgregset, psaddr_t *context) {
 }   
-#warning "Architecture not supported"
+#error "Architecture not supported"
 #endif
 
 /** ***************************************************************************** **/

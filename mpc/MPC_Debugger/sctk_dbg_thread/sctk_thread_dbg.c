@@ -103,9 +103,13 @@ int sctk_init_thread_debug (sctk_thread_data_t *item) {
   rtdb_set_thread_context (thread, tid->ctx.uc.uc_mcontext.gregs) ;
 #elif SCTK_MCTX_MTH(sjlj)
   rtdb_set_thread_context (thread, tid->ctx.jb);
+#elif SCTK_MCTX_MTH(libcontext)
+  rtdb_set_thread_context (thread, tid->ctx.uc.uc_mcontext.gregs) ;
+#else
+#error
 #endif
 #else
-  #warning "Architecture not supported"
+  #error "Architecture not supported"
 #endif
   tid->debug_p = (tdb_thread_debug_t *)thread;
 
@@ -195,6 +199,16 @@ int sctk_enable_lib_thread_db (void) {
   rtdb_set_ebx_offset (0) ;
 #endif
 #elif defined(SCTK_x86_64_ARCH_SCTK)
+#if SCTK_MCTX_MTH(libcontext)
+  rtdb_set_rbx_offset (SCTK_REG_RBX) ;
+  rtdb_set_rbp_offset (SCTK_REG_RBP) ;
+  rtdb_set_r12_offset (SCTK_REG_R12) ;
+  rtdb_set_r13_offset (SCTK_REG_R13) ;
+  rtdb_set_r14_offset (SCTK_REG_R14) ;
+  rtdb_set_r15_offset (SCTK_REG_R15) ;
+  rtdb_set_rsp_offset (SCTK_REG_RSP) ;
+  rtdb_set_pc_offset (SCTK_REG_RIP) ;
+#else
   rtdb_set_rbx_offset (0) ;
   rtdb_set_rbp_offset (1) ;
   rtdb_set_r12_offset (2) ;
@@ -203,8 +217,9 @@ int sctk_enable_lib_thread_db (void) {
   rtdb_set_r15_offset (5) ;
   rtdb_set_rsp_offset (6) ;
   rtdb_set_pc_offset (7) ;  
+#endif
 #else
-#warning "Architecture not supported"
+#error "Architecture not supported"
 #endif
 
   rtdb_set_lock ((void *)&sctk_rtdb_lock,
@@ -239,9 +254,13 @@ int sctk_init_idle_thread_dbg (void *tid, void *start_fct) {
   rtdb_set_thread_context (thread, ttid->ctx.uc.uc_mcontext.gregs) ;
 #elif SCTK_MCTX_MTH(sjlj)
   rtdb_set_thread_context (thread, ttid->ctx.jb);
+#elif SCTK_MCTX_MTH(libcontext)
+  rtdb_set_thread_context (thread, ttid->ctx.uc.uc_mcontext.gregs) ;
+#else
+#error
 #endif
 #else
-  #warning "Architecture not supported"
+  #error "Architecture not supported"
 #endif
 
   ttid->debug_p = (tdb_thread_debug_t *)thread;
