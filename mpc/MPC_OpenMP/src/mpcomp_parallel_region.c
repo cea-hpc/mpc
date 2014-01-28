@@ -211,21 +211,33 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
   TODO("put #mvps as per-thread ICV and test it for the number of threads")
 
   /* Compute the number of threads for this parallel region */
-  num_threads = t->info.icvs.nthreads_var;
   if ( t->children_instance == NULL  ){
+	  /* Nested => 1 thread */
 	  num_threads = 1 ;
   } else {
-	  if ( arg_num_threads > 0 && arg_num_threads < MPCOMP_MAX_THREADS && 
-			  arg_num_threads <= t->children_instance->nb_mvps )
-	  {
-		  num_threads = arg_num_threads;
+	  /* Default number of threads */
+	  num_threads = arg_num_threads ;
+
+	  /* -1 is default, and < 0 too */
+	  if ( num_threads < 0 ) {
+		  num_threads = t->info.icvs.nthreads_var ;
+	  }
+
+	  /* If number of threads too large, set to the max
+	   * no oversubscribing */
+	  if ( num_threads > t->children_instance->nb_mvps ) {
+		  num_threads = t->children_instance->nb_mvps ;
 	  }
   }
 
-
   sctk_debug( 
-		  "__mpcomp_start_parallel_region: Number of threads %d (default %d)",
-		  num_threads, t->info.icvs.nthreads_var ) ;
+		  "__mpcomp_start_parallel_region: "
+		  "Number of threads %d (default %d, #mvps %d arg:%d)",
+		  num_threads, 
+		  t->info.icvs.nthreads_var, 
+		  (t->children_instance == NULL)?1:t->children_instance->nb_mvps, 
+		  arg_num_threads ) ;
+
 
 
   /* First level of parallel region (no nesting and more than 1 thread) */
@@ -519,14 +531,22 @@ __mpcomp_start_sections_parallel_region (int arg_num_threads,
   TODO("put #mvps as per-thread ICV and test it for the number of threads")
 
   /* Compute the number of threads for this parallel region */
-  num_threads = t->info.icvs.nthreads_var;
   if ( t->children_instance == NULL  ){
+	  /* Nested => 1 thread */
 	  num_threads = 1 ;
   } else {
-	  if ( arg_num_threads > 0 && arg_num_threads < MPCOMP_MAX_THREADS && 
-			  arg_num_threads <= t->children_instance->nb_mvps )
-	  {
-		  num_threads = arg_num_threads;
+	  /* Default number of threads */
+	  num_threads = arg_num_threads ;
+
+	  /* -1 is default, and < 0 too */
+	  if ( num_threads < 0 ) {
+		  num_threads = t->info.icvs.nthreads_var ;
+	  }
+
+	  /* If number of threads too large, set to the max
+	   * no oversubscribing */
+	  if ( num_threads > t->children_instance->nb_mvps ) {
+		  num_threads = t->children_instance->nb_mvps ;
 	  }
   }
 
@@ -735,14 +755,22 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
   TODO("put #mvps as per-thread ICV and test it for the number of threads")
 
   /* Compute the number of threads for this parallel region */
-  num_threads = t->info.icvs.nthreads_var;
   if ( t->children_instance == NULL  ){
+	  /* Nested => 1 thread */
 	  num_threads = 1 ;
   } else {
-	  if ( arg_num_threads > 0 && arg_num_threads < MPCOMP_MAX_THREADS && 
-			  arg_num_threads <= t->children_instance->nb_mvps )
-	  {
-		  num_threads = arg_num_threads;
+	  /* Default number of threads */
+	  num_threads = arg_num_threads ;
+
+	  /* -1 is default, and < 0 too */
+	  if ( num_threads < 0 ) {
+		  num_threads = t->info.icvs.nthreads_var ;
+	  }
+
+	  /* If number of threads too large, set to the max
+	   * no oversubscribing */
+	  if ( num_threads > t->children_instance->nb_mvps ) {
+		  num_threads = t->children_instance->nb_mvps ;
 	  }
   }
 
