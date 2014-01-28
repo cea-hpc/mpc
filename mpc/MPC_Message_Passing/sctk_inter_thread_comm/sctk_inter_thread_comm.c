@@ -524,6 +524,11 @@ void sctk_complete_and_free_message (sctk_thread_ptp_message_t * msg){
   free_memory = msg->tail.free_memory;
   assume(free_memory);
 
+  if(msg->tail.internal_ptp) {
+    assume(msg->tail.internal_ptp);
+    OPA_decr_int(&msg->tail.internal_ptp->pending_nb);
+  }
+
   if (msg->tail.buffer_async) {
     mpc_buffered_msg_t* buffer_async = msg->tail.buffer_async;
     buffer_async->completion_flag = SCTK_MESSAGE_DONE;
@@ -531,12 +536,6 @@ void sctk_complete_and_free_message (sctk_thread_ptp_message_t * msg){
 
   if(msg->body.completion_flag) {
     *(msg->body.completion_flag) = SCTK_MESSAGE_DONE;
-  }
-
-  /* TODO Sometimes we get segfault here ... */
-  if(msg->tail.internal_ptp) {
-    assume(msg->tail.internal_ptp);
-    OPA_decr_int(&msg->tail.internal_ptp->pending_nb);
   }
 
   free_memory(msg);
