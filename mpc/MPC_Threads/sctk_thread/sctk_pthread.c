@@ -216,19 +216,23 @@ static int
 pthread_user_create (pthread_t * thread, pthread_attr_t * attr,
 		     void *(*start_routine) (void *), void *arg)
 {
+  size_t size;
   sem_wait (&sctk_pthread_user_create_sem);
   sctk_pthread_user_create_start_routine = start_routine;
+
+  if (sctk_is_in_fortran == 1)
+    size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
+  else
+    size = SCTK_ETHREAD_STACK_SIZE;
+
+  size += sctk_extls_size();
+
+
   if ((attr == NULL) && (sctk_is_in_fortran != 1))
     {
       pthread_attr_t tmp_attr;
       int res;
-      size_t size;
       pthread_attr_init (&tmp_attr);
-
-      if (sctk_is_in_fortran == 1)
-	size = SCTK_ETHREAD_STACK_SIZE_FORTRAN;
-      else
-	size = SCTK_ETHREAD_STACK_SIZE;
 
 #ifdef PTHREAD_STACK_MIN
       if (PTHREAD_STACK_MIN > size)
@@ -243,6 +247,10 @@ pthread_user_create (pthread_t * thread, pthread_attr_t * attr,
       pthread_attr_setstacksize (&tmp_attr, size);
 #endif
 
+      if(res != 0){
+	perror("pthread_attr_setstacksize: ");
+	assume(res == 0);
+      }
 
       res =
 	pthread_create (thread, &tmp_attr, tls_start_routine,
@@ -257,6 +265,25 @@ pthread_user_create (pthread_t * thread, pthread_attr_t * attr,
   else
   {
     int res;
+
+#ifdef PTHREAD_STACK_MIN
+      if (PTHREAD_STACK_MIN > size)
+	{
+	  pthread_attr_setstacksize (attr, PTHREAD_STACK_MIN);
+	}
+      else
+	{
+	  pthread_attr_setstacksize (attr, size);
+	}
+#else
+      pthread_attr_setstacksize (attr, size);
+#endif
+
+      if(res != 0){
+	perror("pthread_attr_setstacksize: ");
+	assume(res == 0);
+      }
+
       res = pthread_create (thread, attr, tls_start_routine,
 			    init_tls_start_routine_arg (def_start_routine,
 							arg));
@@ -318,18 +345,24 @@ local_pthread_create (pthread_t * restrict thread,
       else
 	size = SCTK_ETHREAD_STACK_SIZE;
 
+      size += sctk_extls_size();
+
 #ifdef PTHREAD_STACK_MIN
       if (PTHREAD_STACK_MIN > size)
 	{
-	  pthread_attr_setstacksize (&tmp_attr, PTHREAD_STACK_MIN);
+	  res = pthread_attr_setstacksize (&tmp_attr, PTHREAD_STACK_MIN);
 	}
       else
 	{
-	  pthread_attr_setstacksize (&tmp_attr, size);
+	  res = pthread_attr_setstacksize (&tmp_attr, size);
 	}
 #else
-      pthread_attr_setstacksize (&tmp_attr, size);
+      res = pthread_attr_setstacksize (&tmp_attr, size);
 #endif
+      if(res != 0){
+	perror("pthread_attr_setstacksize: ");
+	assume(res == 0);
+      }
 
       res =
 	pthread_create (thread, &tmp_attr, tls_start_routine,

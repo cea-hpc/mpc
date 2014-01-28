@@ -354,10 +354,15 @@ __sctk__tls_get_addr__generic_scope ( size_t module_id,
 
 
 size_t sctk_extls_size(){
+  page_size = getpagesize ();
   if(sctk_extls_module_zero == 0){
       current_module = 0;
       total_module = 0;
       dl_iterate_phdr (callback, NULL);
+  }
+
+  if(sctk_extls_module_zero % page_size != 0){
+    sctk_extls_module_zero += page_size - (sctk_extls_module_zero % page_size);
   }
 
 return sctk_extls_module_zero;
