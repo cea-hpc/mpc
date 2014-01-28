@@ -49,7 +49,8 @@ extern "C"
 
 
 /* Maximum number of alive 'for dynamic' construct */
-#define MPCOMP_MAX_ALIVE_FOR_DYN 	1023
+// #define MPCOMP_MAX_ALIVE_FOR_DYN 	1023
+#define MPCOMP_MAX_ALIVE_FOR_DYN 	3
 /* Maximum number of alive 'for guided' construct */
 #define MPCOMP_MAX_ALIVE_FOR_GUIDED 	1023
 
