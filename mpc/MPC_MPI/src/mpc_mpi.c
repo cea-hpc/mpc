@@ -5092,7 +5092,7 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
     }
     if (0 != count)
     {
-        ranks_excluded = (int *)malloc( (count)*(sizeof(int)));
+        ranks_excluded = (int *)malloc( group_size*(sizeof(int)));
     }
 
     /* determine the list of excluded processes for the range-excl method */
@@ -5137,7 +5137,7 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 
     if (0 != (group->task_nb - count))
 	{
-		ranks_included = (int *)malloc( (group->task_nb - count)*(sizeof(int)));
+		ranks_included = (int *)malloc( group_size*(sizeof(int)));
 	}
 	for (j=0 ; j<group->task_nb ; j++)
 	{
@@ -5166,6 +5166,11 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
     {
         free(ranks_included);
     }
+    if (NULL != ranks_excluded)
+    {
+        free(ranks_excluded);
+    }
+
 	return result;
 }
 
