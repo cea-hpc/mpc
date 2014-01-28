@@ -46,6 +46,9 @@
 
 TODO("sctk_cancel_message: need to be implemented")
   void sctk_cancel_message (sctk_request_t * msg){
+	if( msg->msg == NULL){
+		return;
+        }
 	if(msg->request_type == REQUEST_RECV){
   	  msg->msg->sctk_msg_get_specific_message_tag = cancel_recv_specific_message_tag;
 	} else if(msg->request_type == REQUEST_SEND) { 
