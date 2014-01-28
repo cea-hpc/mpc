@@ -273,7 +273,7 @@ __mpcomp_dynamic_loop_init(mpcomp_thread_t *t,
 	/* Compute the index of the dynamic for construct */
 	index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
 
-	sctk_nodebug( "[%d] __mpcomp_dynamic_loop_init:"
+	sctk_debug( "[%d] __mpcomp_dynamic_loop_init:"
 			"Entering with current %d",
 			t->rank, t->for_dyn_current ) ;
 
@@ -332,7 +332,7 @@ __mpcomp_dynamic_loop_next (long *from, long *to)
 	t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
 	sctk_assert( t != NULL ) ;
 
-	sctk_nodebug("[%d] __mpcomp_dynamic_loop_next: start", t->rank);   
+	sctk_debug("[%d] __mpcomp_dynamic_loop_next: start", t->rank);   
 
 	/* Number of threads in the current team */
 	num_threads = t->info.num_threads;
