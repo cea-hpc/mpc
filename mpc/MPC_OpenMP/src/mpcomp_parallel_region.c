@@ -484,7 +484,7 @@ void * mpcomp_slave_mvp_leaf( void * arg ) {
 
     /* Run */
     in_order_scheduler( mvp ) ;
-    
+
     sctk_debug( "mpcomp_slave_mvp_leaf: +++ STOP +++" ) ;
 
     /* Half barrier */

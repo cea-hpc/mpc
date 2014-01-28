@@ -71,6 +71,10 @@ extern "C"
 */
   int sctk_is_numa_node (void);
 
+/*! \brief Return 1 if the current node is a NUMA node, 0 otherwise
+*/
+  int sctk_is_numa_node_topology (hwloc_topology_t topo);
+
 /*! \brief Print the topology tree into a file
  * @param fd Destination file descriptor
 */
@@ -122,6 +126,11 @@ extern "C"
  * @param vp VP
 */
   int sctk_get_node_from_cpu (const int vp);
+
+/*! \brief Return the NUMA node according to the code_id number
+ * @param vp VP
+*/
+  int sctk_get_node_from_cpu_topology (hwloc_topology_t topo, const int vp);
 
 /*! \brief Return the hwloc topology object
 */

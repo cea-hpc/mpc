@@ -629,6 +629,14 @@ sctk_is_numa_node ()
   return hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_NODE) != 0;
 }
 
+/*! \brief Return 1 if the current node is a NUMA node, 0 otherwise
+*/
+  int
+sctk_is_numa_node_topology (hwloc_topology_t topo)
+{
+  return hwloc_get_nbobjs_by_type(topo, HWLOC_OBJ_NODE) != 0;
+}
+
 /*! \brief Return the number of NUMA nodes
 */
   int
@@ -647,6 +655,23 @@ sctk_get_node_from_cpu (const int vp)
     const hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, vp);
     assume(pu);
     const hwloc_obj_t node = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, pu);
+
+    return node->logical_index;
+  } else {
+    return 0;
+  }
+}
+
+/*! \brief Return the NUMA node according to the code_id number
+ * @param vp VP
+ */
+  int
+  sctk_get_node_from_cpu_topology (hwloc_topology_t topo, const int vp)
+{
+  if(sctk_is_numa_node_topology (topo)){
+    const hwloc_obj_t pu = hwloc_get_obj_by_type(topo, HWLOC_OBJ_PU, vp);
+    assume(pu);
+    const hwloc_obj_t node = hwloc_get_ancestor_obj_by_type(topo, HWLOC_OBJ_NODE, pu);
 
     return node->logical_index;
   } else {

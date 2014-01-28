@@ -486,7 +486,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 
 	  root->barrier_done = 0;
 
-	  root->id_numa = sctk_get_node_from_cpu( current_mpc_vp ) ;
+	  root->id_numa = sctk_get_node_from_cpu_topology(instance->topology, current_mpc_vp ) ;
 
 	  __mpcomp_push( s, root );
 
@@ -510,7 +510,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	       target_vp = order[ current_mvp ];
 	       sctk_assert( target_vp < nb_cpus && target_vp >= 0 ) ;
 
-	       target_numa = sctk_get_node_from_cpu( target_vp );
+	       target_numa = sctk_get_node_from_cpu_topology(instance->topology, target_vp );
 
 #if MPCOMP_TASK
 	       for (i=0; i<MPCOMP_TASK_TYPE_COUNT; i++) {
@@ -534,7 +534,8 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			    sctk_assert( target_vp < nb_cpus && target_vp >= 0 ) ;
 
 			    /* Recompute the target_numa, in case of target_vp has been updated */
-			    target_numa = sctk_get_node_from_cpu( target_vp );
+			    target_numa = sctk_get_node_from_cpu_topology(instance->topology, target_vp );
+
 
 			    /* Allocate memory (on the right NUMA Node) */
 			 instance->mvps[current_mvp] = (mpcomp_mvp_t *) mpcomp_malloc(1,
@@ -653,7 +654,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 				 i * (n->max_index - n->min_index) / 
 				 degree[ n->depth ];
 
-			 child_target_numa = sctk_get_node_from_cpu( order[ min_index ] ) ;
+			 child_target_numa = sctk_get_node_from_cpu_topology( instance->topology,  order[ min_index ] ) ;
 
 			 n2 = (mpcomp_node_t *)mpcomp_malloc(1, sizeof( mpcomp_node_t ), child_target_numa );
 
