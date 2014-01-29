@@ -1090,7 +1090,13 @@ __INTERNAL__PMPI_Bsend (void *buf, int count, MPI_Datatype datatype, int dest,
 			int tag, MPI_Comm comm)
 {
   MPI_Request request;
-  return __INTERNAL__PMPI_Ibsend (buf, count, datatype, dest, tag, comm, &request);
+  int res;
+  res = __INTERNAL__PMPI_Ibsend (buf, count, datatype, dest, tag, comm, &request);
+  if(res != MPI_SUCCESS){
+    return res;
+  }
+  res = __INTERNAL__PMPI_Wait(&request, MPI_STATUS_IGNORE);
+  return res;
 }
 
 
@@ -1398,7 +1404,11 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
       if(is_valid_request == 1){
 	__sctk_delete_mpc_request (request);
       } else {
-	*request = MPI_REQUEST_NULL;
+//	*request = MPI_REQUEST_NULL;
+	MPI_internal_request_t* tmp_request;
+	__sctk_new_mpc_request (request);
+	tmp_request = __sctk_convert_mpc_request (request);
+	tmp_request->req.completion_flag = SCTK_MESSAGE_DONE;
       }
 
 
