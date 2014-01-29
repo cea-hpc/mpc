@@ -434,7 +434,13 @@ void __mpcomp_init() {
     __mpcomp_team_init( team_info ) ;
 
     if ( OMP_MICROVP_NUMBER == 0 ) {
-	 sctk_get_init_vp_and_nbvp(sctk_get_task_rank(), &nb_mvps);
+	 int task_rank = sctk_get_task_rank();
+	 
+	 if (task_rank == -1) {
+	      nb_mvps = 1;
+	 } else {
+	      sctk_get_init_vp_and_nbvp(task_rank, &nb_mvps);
+	 }
     } else {
 	 nb_mvps = OMP_MICROVP_NUMBER;
     }
