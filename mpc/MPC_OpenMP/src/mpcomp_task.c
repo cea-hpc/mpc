@@ -510,7 +510,7 @@ void __mpcomp_task_infos_init()
 	  if (t->info.num_threads > 1)
 	       id_numa = t->mvp->father->id_numa;
 	  else
-	       id_numa = sctk_get_node_from_cpu(t->instance->mvps[0]->vp);
+	       id_numa = sctk_get_node_from_cpu(sctk_get_init_vp(sctk_get_task_rank()));
 
 	  /* Allocate the default current task (no func, no data, no parent) */
 	  t->current_task = mpcomp_malloc(1, sizeof(struct mpcomp_task_s), id_numa);
@@ -527,9 +527,7 @@ void __mpcomp_task_infos_init()
      if (t->info.num_threads > 1 && sctk_atomics_load_int(&(t->instance->team->tasklist_init_done)) == 0) {
 	  /* Executed only when there are multiple threads */
 
-	  volatile int *done = (volatile int *) &(t->instance->team->tasking_init_done);	  
-
-	  if (sctk_test_and_set(done) == 0) { 
+	  if (sctk_atomics_cas_int(&(t->instance->team->tasking_init_done), 0, 1) == 0) { 
 	       /* Executed only one time per process */
 	       
 	       __mpcomp_task_list_infos_init();

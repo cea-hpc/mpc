@@ -284,7 +284,7 @@ typedef struct mpcomp_new_parallel_region_info_s {
 		volatile int next_ordered_offset; 
 
 #if MPCOMP_TASK
-		volatile int tasking_init_done;	        /* Thread team task's init tag */
+	        sctk_atomics_int tasking_init_done;	        /* Thread team task's init tag */
 		sctk_atomics_int tasklist_init_done;
 		int tasklist_depth[MPCOMP_TASK_TYPE_COUNT];   /* Depth in the tree of task lists */
 		int task_larceny_mode;
@@ -532,6 +532,7 @@ typedef struct mpcomp_thread_s
 				 MPCOMP_NOWAIT_STOP_SYMBOL);
 
 #if MPCOMP_TASK
+	  sctk_atomics_store_int(&(team_info->tasking_init_done), 0);
 	  sctk_atomics_store_int(&(team_info->tasklist_init_done), 0);
 #endif /* MPCOMP_TASK */
      }
