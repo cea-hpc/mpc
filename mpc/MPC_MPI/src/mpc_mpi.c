@@ -1258,7 +1258,10 @@ __INTERNAL__PMPI_Buffer_attach (void *buf, int count)
   PMPC_Get_buffers (&tmp);
 
   sctk_spinlock_lock (&(tmp->lock));
-  assume (tmp->buffer == NULL);
+  if((tmp->buffer != NULL) || (count < 0)){
+    sctk_spinlock_unlock (&(tmp->lock));
+    return MPI_ERR_BUFFER;
+  }
   tmp->buffer = buf;
   tmp->size = count;
   sctk_nodebug ("Buffer size %d", count);
