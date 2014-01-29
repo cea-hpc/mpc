@@ -599,8 +599,143 @@ TODO("to optimize")
   if(((tag < 0) || (tag > MPI_TAG_UB_VALUE)))	\
     MPI_ERROR_REPORT(comm,MPI_ERR_TAG,"")
 
-#define mpi_check_op(op,comm)				\
-  if(op == MPI_OP_NULL)							\
+#define mpi_check_op_type_func(t) case t: return mpi_check_op_type_func_##t(datatype)
+#define mpi_check_op_type_func_notavail(t) case t: return 1 
+
+#if 0
+static int mpi_check_op_type_func_MPI_(MPI_Datatype datatype){
+        switch(datatype){
+		default:return 0;
+        }
+        return 0;
+}
+#endif
+#define mpi_check_op_type_func_integer()\
+	mpi_check_op_type_func_notavail(MPC_INT);\
+        mpi_check_op_type_func_notavail(MPC_LONG)
+
+#define mpi_check_op_type_func_float()\
+        mpi_check_op_type_func_notavail(MPC_FLOAT);\
+	mpi_check_op_type_func_notavail(MPC_DOUBLE)
+
+
+static int mpi_check_op_type_func_MPI_SUM(MPI_Datatype datatype){
+        switch(datatype){
+		mpi_check_op_type_func_notavail(MPI_BYTE);
+                default: return 0;
+        }
+        return 0;
+}
+
+static int mpi_check_op_type_func_MPI_MAX(MPI_Datatype datatype){
+	switch(datatype){
+		mpi_check_op_type_func_notavail(MPI_BYTE);
+	}
+	return 0;
+}
+static int mpi_check_op_type_func_MPI_MIN(MPI_Datatype datatype){
+        switch(datatype){
+		mpi_check_op_type_func_notavail(MPI_BYTE);
+                default:return 0;
+        }
+        return 0;
+}
+static int mpi_check_op_type_func_MPI_PROD(MPI_Datatype datatype){
+        switch(datatype){
+		mpi_check_op_type_func_notavail(MPI_BYTE);	
+                default:return 0;
+        }
+        return 0;
+}
+static int mpi_check_op_type_func_MPI_LAND(MPI_Datatype datatype){
+        switch(datatype){
+		mpi_check_op_type_func_float();
+		mpi_check_op_type_func_notavail(MPI_BYTE);
+                default:return 0;
+        }
+        return 0;
+}
+static int mpi_check_op_type_func_MPI_BAND(MPI_Datatype datatype){
+        switch(datatype){
+                mpi_check_op_type_func_float();
+                default:return 0;
+        }
+        return 0;
+}
+static int mpi_check_op_type_func_MPI_LOR(MPI_Datatype datatype){
+        switch(datatype){
+                mpi_check_op_type_func_float();
+		mpi_check_op_type_func_notavail(MPI_BYTE);
+                default:return 0;
+        }
+        return 0;
+}
+static int mpi_check_op_type_func_MPI_BOR(MPI_Datatype datatype){
+        switch(datatype){
+                mpi_check_op_type_func_float();
+                default:return 0;
+        }
+        return 0;
+}
+static int mpi_check_op_type_func_MPI_LXOR(MPI_Datatype datatype){
+        switch(datatype){
+                mpi_check_op_type_func_float();
+		mpi_check_op_type_func_notavail(MPI_BYTE);
+                default:return 0;
+        }
+        return 0;
+}
+static int mpi_check_op_type_func_MPI_BXOR(MPI_Datatype datatype){
+        switch(datatype){
+                mpi_check_op_type_func_float();
+                default:return 0;
+        }
+        return 0;
+}
+static int mpi_check_op_type_func_MPI_MINLOC(MPI_Datatype datatype){
+        switch(datatype){
+                mpi_check_op_type_func_float();
+		mpi_check_op_type_func_integer();
+		mpi_check_op_type_func_notavail(MPI_BYTE);
+                default:return 0;
+        }
+        return 0;
+}
+static int mpi_check_op_type_func_MPI_MAXLOC(MPI_Datatype datatype){
+        switch(datatype){
+                mpi_check_op_type_func_float();
+		mpi_check_op_type_func_integer();
+		mpi_check_op_type_func_notavail(MPI_BYTE);
+                default:return 0;
+        }
+        return 0;
+}
+
+static int mpi_check_op_type(MPI_Op op, MPI_Datatype datatype){
+#if 1
+	if((op <= MPI_MAXLOC) && (datatype < sctk_user_data_types)){
+		switch(op){
+			mpi_check_op_type_func(MPI_SUM);
+			mpi_check_op_type_func(MPI_MAX);
+			mpi_check_op_type_func(MPI_MIN);
+			mpi_check_op_type_func(MPI_PROD);
+			mpi_check_op_type_func(MPI_LAND);
+			mpi_check_op_type_func(MPI_BAND);
+			mpi_check_op_type_func(MPI_LOR);
+			mpi_check_op_type_func(MPI_BOR);
+			mpi_check_op_type_func(MPI_LXOR);
+			mpi_check_op_type_func(MPI_BXOR);
+			mpi_check_op_type_func(MPI_MINLOC);
+			mpi_check_op_type_func(MPI_MAXLOC);		
+		}
+		return 0;
+	}
+#endif
+	return 0;
+}
+
+#define mpi_check_op(op,type,comm)				\
+  if((op == MPI_OP_NULL) || mpi_check_op_type(op,type))							\
     MPI_ERROR_REPORT(comm,MPI_ERR_OP,"")
 
 static int SCTK__MPI_Attr_clean_communicator (MPI_Comm comm);
@@ -9329,7 +9464,7 @@ PMPI_Reduce (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	mpi_check_buf (recvbuf, comm);
 	mpi_check_count (count, comm);
 	mpi_check_type (datatype, comm);
-	mpi_check_op (op, comm);
+	mpi_check_op (op, datatype,comm);
 	if(sctk_is_inter_comm (comm)){
 	  MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
 	}
@@ -9375,7 +9510,7 @@ PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
   mpi_check_buf (recvbuf, comm);
   mpi_check_count (count, comm);
   mpi_check_type (datatype, comm);
-	mpi_check_op (op, comm);
+	mpi_check_op (op, datatype,comm);
   sctk_nodebug ("Entering ALLREDUCE %d", comm);
   res =
     __INTERNAL__PMPI_Allreduce (sendbuf, recvbuf, count, datatype, op, comm);
@@ -9404,7 +9539,7 @@ PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 	mpi_check_count (recvcnts[i], comm);
   }
 	mpi_check_type (datatype, comm);
-	mpi_check_op (op, comm);
+	mpi_check_op (op,datatype, comm);
   res =
     __INTERNAL__PMPI_Reduce_scatter (sendbuf, recvbuf, recvcnts, datatype, op,
 				     comm);
@@ -9421,7 +9556,7 @@ PMPI_Scan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
   mpi_check_buf (recvbuf, comm);
   mpi_check_count (count, comm);
   mpi_check_type (datatype, comm);
-	mpi_check_op (op, comm);
+	mpi_check_op (op, datatype,comm);
   res = __INTERNAL__PMPI_Scan (sendbuf, recvbuf, count, datatype, op, comm);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
