@@ -81,9 +81,9 @@ __mpcomp_internal_half_barrier (mpcomp_mvp_t *mvp)
   sctk_nodebug("__mpcomp_internal_half_barrier: entering");
 
 #if MPCOMP_TASK
-  sctk_debug("__mpcomp_internal_half_barrier: full barrier for tasks");
-  /* Wait for all tasks to be done */
-  __mpcomp_internal_full_barrier(mvp);
+  //sctk_debug("__mpcomp_internal_half_barrier: full barrier for tasks");
+  ///* Wait for all tasks to be done */
+  //__mpcomp_internal_full_barrier(mvp);
 #endif /* MPCOMP_TASK */
 
   /* Step 0: TODO finish the barrier whithin the current micro VP */
