@@ -411,6 +411,7 @@ void __mpcomp_task_list_infos_exit()
 
 void __mpcomp_task_exit()
 {
+#if 0
      mpcomp_thread_t *t;
 
      /* Retrieve the current thread information */
@@ -426,6 +427,7 @@ void __mpcomp_task_exit()
      } else {
 	  //fprintf(stderr, "[t:%lu %p] __mpcomp_task_exit TASK INIT NOT DONE\n", t->rank, t);
      }
+#endif
 }
 
 /* Recursive call for checking neighbourhood from node n */
