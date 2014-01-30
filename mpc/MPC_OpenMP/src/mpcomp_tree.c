@@ -176,8 +176,8 @@ int __mpcomp_restrict_topology(hwloc_topology_t *restrictedTopology, int nb_mvps
 {
      hwloc_topology_t topology;
      hwloc_cpuset_t cpuset;
-     int taskRank, taskVp, taskNbVp, err;
-	 int i ;
+     hwloc_obj_t obj;
+     int taskRank, taskVp, taskNbVp, err, i ;
 
      taskRank = sctk_get_task_rank();
 
@@ -188,16 +188,10 @@ int __mpcomp_restrict_topology(hwloc_topology_t *restrictedTopology, int nb_mvps
 
      topology = sctk_get_topology_object();
 
-  const int pu_number = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
-  for(i=0;i < pu_number; ++i)
-  {
-    hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
-	hwloc_obj_t tmp = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, pu ) ;
-	if ( tmp->logical_index >= taskVp && tmp->logical_index <= taskVp + taskNbVp - 1 ) 
-	{
-      hwloc_bitmap_or(cpuset, cpuset, pu->cpuset);
-	}
-  }
+     for (i=0; i<taskNbVp; i++) {
+       obj = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, taskVp+i);
+       hwloc_bitmap_or(cpuset, cpuset, obj->cpuset);
+     }
 
 #if 0
   fprintf( stderr, "GENERAL TOPOLOGY (vp=%d, logical range=[%d,%d]) \n", 
