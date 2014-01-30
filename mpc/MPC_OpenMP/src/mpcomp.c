@@ -385,6 +385,7 @@ void __mpcomp_init() {
   static volatile int done = 0;
   static sctk_thread_mutex_t lock = SCTK_THREAD_MUTEX_INITIALIZER;
   int nb_mvps;
+  int task_rank ;
 
   /* Need to initialize the current team */
   if ( sctk_openmp_thread_tls == NULL ) {
@@ -433,17 +434,26 @@ void __mpcomp_init() {
     sctk_assert( team_info != NULL ) ;
     __mpcomp_team_init( team_info ) ;
 
-    if ( OMP_MICROVP_NUMBER == 0 ) {
-	 int task_rank = sctk_get_task_rank();
-	 
-	 if (task_rank == -1) {
-	      nb_mvps = 1;
-	 } else {
-	      sctk_get_init_vp_and_nbvp(task_rank, &nb_mvps);
-	 }
-    } else {
-	 nb_mvps = OMP_MICROVP_NUMBER;
-    }
+	/* Get the rank of current MPI task */
+	task_rank = sctk_get_task_rank();
+
+	if ( task_rank == -1 ) {
+		/* No parallel OpenMP if MPI has not been initialized yet */
+		nb_mvps = 1 ;
+	} else {
+		/* Compute the number of cores for this task */
+		sctk_get_init_vp_and_nbvp(task_rank, &nb_mvps);
+
+		sctk_debug( "__mpcomm_init: #mvps = %d", nb_mvps ) ;
+
+		/* Consider the env variable if between 1 and the number
+		 * of cores for this task */
+		if ( OMP_MICROVP_NUMBER > 0 && OMP_MICROVP_NUMBER <= nb_mvps ) {
+			nb_mvps = OMP_MICROVP_NUMBER ;
+		}
+	}
+
+
 
     /* Allocate an instance of OpenMP */
     instance = (mpcomp_instance_t *)sctk_malloc( sizeof( mpcomp_instance_t ) ) ;
