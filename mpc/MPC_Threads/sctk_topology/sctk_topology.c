@@ -526,6 +526,40 @@ sctk_print_topology (FILE * fd)
   return;
 }
 
+  void
+sctk_print_specific_topology (FILE * fd, hwloc_topology_t topology)
+{
+  int i;
+  fprintf(fd, "Node %s: %s %s %s\n", sctk_node_name, utsname.sysname,
+      utsname.release, utsname.version);
+  const int pu_number = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
+  for(i=0;i < pu_number; ++i)
+  {
+    hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
+    hwloc_obj_t tmp[3];
+    unsigned int node_os_index;
+    tmp[0] = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_NODE, pu);
+    tmp[1] = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_SOCKET, pu);
+    tmp[2] = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, pu);
+
+    if(tmp[0] == NULL){
+      node_os_index = 0;
+    } else {
+      node_os_index = tmp[0]->os_index;
+    }
+
+    fprintf(fd, "\tProcessor %4u real (%4u:%4u:%4u)\n", pu->os_index,
+	    node_os_index, tmp[1]->logical_index, tmp[2]->logical_index );
+  }
+
+  fprintf (fd, "\tNUMA: %d\n", sctk_is_numa_node ());
+  if (sctk_is_numa_node ())
+  {
+    fprintf (fd, "\t\t* Node nb %d\n", sctk_get_numa_node_number());
+  }
+  return;
+}
+
 /* Restrict the binding to the current cpu_set */
 void sctk_restrict_binding() {
   int err;
