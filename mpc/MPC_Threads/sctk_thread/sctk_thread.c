@@ -2057,7 +2057,7 @@ sctk_get_init_vp_and_nbvp (int i, int *nbVp)
       if ((i >= first) && (i <= last))
 	{
 	  sctk_nodebug ("sctk_get_init_vp: Put task %d on VP %d", i, proc);
-	  if (cpu_nb % task_nb > j) {
+	  if ( (cpu_nb % task_nb > j) && (cpu_nb > task_nb)) {
 	       *nbVp = cpu_per_task + 1;
 	  } else {
 	       *nbVp = cpu_per_task;
