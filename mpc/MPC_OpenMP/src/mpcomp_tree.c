@@ -177,6 +177,7 @@ int __mpcomp_restrict_topology(hwloc_topology_t *restrictedTopology, int nb_mvps
      hwloc_topology_t topology;
      hwloc_cpuset_t cpuset;
      int taskRank, taskVp, taskNbVp, err;
+	 int i ;
 
      taskRank = sctk_get_task_rank();
 
@@ -184,9 +185,25 @@ int __mpcomp_restrict_topology(hwloc_topology_t *restrictedTopology, int nb_mvps
      taskVp = sctk_get_init_vp(taskRank);
      taskNbVp = nb_mvps;
      cpuset = hwloc_bitmap_alloc();
-     hwloc_bitmap_set_range(cpuset, taskVp, taskVp + taskNbVp - 1);
 
      topology = sctk_get_topology_object();
+
+  const int pu_number = hwloc_get_nbobjs_by_type(topology, HWLOC_OBJ_PU);
+  for(i=0;i < pu_number; ++i)
+  {
+    hwloc_obj_t pu = hwloc_get_obj_by_type(topology, HWLOC_OBJ_PU, i);
+	hwloc_obj_t tmp = hwloc_get_ancestor_obj_by_type(topology, HWLOC_OBJ_CORE, pu ) ;
+	if ( tmp->logical_index >= taskVp && tmp->logical_index <= taskVp + taskNbVp - 1 ) 
+	{
+      hwloc_bitmap_or(cpuset, cpuset, pu->cpuset);
+	}
+  }
+
+#if 0
+  fprintf( stderr, "GENERAL TOPOLOGY (vp=%d, logical range=[%d,%d]) \n", 
+		  taskVp, taskVp, taskVp + taskNbVp - 1 ) ;
+  sctk_print_specific_topology( stderr, topology ) ;
+#endif
 
      /* Allocate topology object */
      if ((err = hwloc_topology_init(restrictedTopology))) {
@@ -207,10 +224,15 @@ int __mpcomp_restrict_topology(hwloc_topology_t *restrictedTopology, int nb_mvps
      }
      
      /* Restrict topology */
-     if ((err = hwloc_topology_restrict(*restrictedTopology, cpuset, 0))) {
+     if ((err = hwloc_topology_restrict(*restrictedTopology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES))) {
 	  sctk_debug("restrict_topology(): restrict topology error");
 	  return -1;
      }     
+
+#if 0
+fprintf( stderr, "RESTRICTED TOPOLOGY\n" ) ;
+sctk_print_specific_topology( stderr, *restrictedTopology ) ;
+#endif
     
      return 0;
 }
@@ -410,6 +432,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	  sctk_assert( instance != NULL );
 	  sctk_assert( instance->mvps != NULL );
 	  sctk_assert( __mpcomp_check_tree_parameters( n_leaves, depth, degree ) );
+	  sctk_assert( n_leaves == instance->nb_mvps ) ;
 
 	  /* Fill instance paratemers regarding tree shape */
 	  instance->tree_depth = depth ;
