@@ -6,7 +6,7 @@
 //~ #define sctk_get_nb_task_remote(a) 0
 #define sctk_is_valid_comm(a) 1
 
-#define sctk_net_abort() abort();
+//#define sctk_net_abort() abort();
 
 #define sctk_register_thread_initial(a) (void)(0);
 #define sctk_net_send_task_end(a,b) (void)(0);

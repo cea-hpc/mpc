@@ -190,6 +190,8 @@ int sctk_pmi_recv(void* info, size_t size, int src);
 int sctk_pmi_get_max_key_len();
 int sctk_pmi_get_max_val_len();
 
+void sctk_net_abort();
+
 SCTK_PMI_BOOL
 sctk_pmi_is_initialized();
 

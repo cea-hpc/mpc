@@ -585,3 +585,7 @@ sctk_pmi_is_initialized()
 {
   return initialized;
 }
+
+void sctk_net_abort(){
+  PMI_Abort(6,"ABORT");	
+}
