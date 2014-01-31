@@ -237,14 +237,14 @@ pthread_user_create (pthread_t * thread, pthread_attr_t * attr,
 #ifdef PTHREAD_STACK_MIN
       if (PTHREAD_STACK_MIN > size)
 	{
-	  pthread_attr_setstacksize (&tmp_attr, PTHREAD_STACK_MIN);
+	  res = pthread_attr_setstacksize (&tmp_attr, PTHREAD_STACK_MIN);
 	}
       else
 	{
-	  pthread_attr_setstacksize (&tmp_attr, size);
+	  res = pthread_attr_setstacksize (&tmp_attr, size);
 	}
 #else
-      pthread_attr_setstacksize (&tmp_attr, size);
+      res = pthread_attr_setstacksize (&tmp_attr, size);
 #endif
 
       if(res != 0){
@@ -269,14 +269,14 @@ pthread_user_create (pthread_t * thread, pthread_attr_t * attr,
 #ifdef PTHREAD_STACK_MIN
       if (PTHREAD_STACK_MIN > size)
 	{
-	  pthread_attr_setstacksize (attr, PTHREAD_STACK_MIN);
+	  res = pthread_attr_setstacksize (attr, PTHREAD_STACK_MIN);
 	}
       else
 	{
-	  pthread_attr_setstacksize (attr, size);
+	  res = pthread_attr_setstacksize (attr, size);
 	}
 #else
-      pthread_attr_setstacksize (attr, size);
+      res = pthread_attr_setstacksize (attr, size);
 #endif
 
       if(res != 0){
