@@ -9452,7 +9452,14 @@ PMPI_Alltoallv (void *sendbuf, int *sendcnts, int *sdispls,
 		int *rdispls, MPI_Datatype recvtype, MPI_Comm comm)
 {
   int res = MPI_ERR_INTERN;
-	mpi_check_comm (comm, comm);
+  int size;
+  int i; 
+   mpi_check_comm (comm, comm);
+  __INTERNAL__PMPI_Comm_size (comm, &size);
+  for(i = 0; i < size; i++){
+	mpi_check_count (sendcnts[i], comm);
+	mpi_check_count (recvcnts[i], comm);
+  }
 	mpi_check_buf (sendbuf, comm);
 //	mpi_check_count (sendcnt, comm);
 	mpi_check_type (sendtype, comm);
@@ -9472,7 +9479,17 @@ int PMPI_Alltoallw(void *sendbuf, int *sendcnts, int *sdispls, MPI_Datatype *sen
 				   void *recvbuf, int *recvcnts, int *rdispls, MPI_Datatype *recvtypes, MPI_Comm comm)
 {
 	int res = MPI_ERR_INTERN;
-	mpi_check_comm (comm, comm);
+  int size;
+  int i; 
+   mpi_check_comm (comm, comm);
+  __INTERNAL__PMPI_Comm_size (comm, &size);
+ for(i = 0; i < size; i++){
+        mpi_check_count (sendcnts[i], comm);
+        mpi_check_count (recvcnts[i], comm);
+	mpi_check_type (sendtypes[i], comm);
+	mpi_check_type (recvtypes[i], comm);
+  }
+
 	mpi_check_buf (sendbuf, comm);
 //	mpi_check_count (sendcnt, comm);
 //	mpi_check_type (sendtype, comm);
