@@ -9604,6 +9604,11 @@ PMPI_Scan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 {
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
+
+        if(sctk_is_inter_comm (comm)){
+          MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+        }
+
   mpi_check_buf (sendbuf, comm);
   mpi_check_buf (recvbuf, comm);
   mpi_check_count (count, comm);
