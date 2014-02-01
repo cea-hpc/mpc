@@ -337,6 +337,7 @@ sctk_ptp_table_read_unlock(){
  * The 'func' function is called for each element found.
  * The 'return_on_found' indicates if the function returns if an element has been found.
  */
+#if 0
 static void sctk_ptp_table_loop( int (*func)(sctk_internal_ptp_t* pair), char return_on_found ) {
   sctk_internal_ptp_t* pair;
   sctk_internal_ptp_t* tmp;
@@ -364,7 +365,7 @@ static void sctk_ptp_table_loop( int (*func)(sctk_internal_ptp_t* pair), char re
   sctk_ptp_table_read_unlock();
 return;
 }
-
+#endif
 /*
  * Find an internal ptp according the a key (this key represents the task number)
  */
@@ -545,7 +546,7 @@ static inline void sctk_message_update_request(sctk_thread_ptp_message_t* recv,s
   if(recv->tail.request){
     /* Update the request with the source, message tag and message size */
     recv->tail.request->truncated = (send_size > recv_size);
-    fprintf("send_size %lu recv_size %lu\n",send_size,recv_size);
+/*    fprintf(stderr,"send_size %lu recv_size %lu\n",send_size,recv_size);*/
   }
 }
 

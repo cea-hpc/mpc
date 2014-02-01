@@ -836,20 +836,20 @@ static inline void sctk_check_auto_free_list(MPI_request_struct_t *requests){
     int flag;
     int res;
 
-    tmp = requests->auto_free_list;
+    tmp = (MPI_internal_request_t *)requests->auto_free_list;
     res = PMPC_Test (&(tmp->req), &flag, MPC_STATUS_IGNORE);
     if (flag != 0)
       {
 	MPI_internal_request_t *tmp_new;
 
-	tmp_new = tmp->next;
+	tmp_new = (MPI_internal_request_t *)tmp->next;
 	requests->auto_free_list = tmp_new;
 	sctk_delete_internal_request(tmp,requests);
       }
   }
 }
 
-static inline __sctk_init_mpc_request_internal(MPI_internal_request_t *tmp){
+static inline void __sctk_init_mpc_request_internal(MPI_internal_request_t *tmp){
   memset (&(tmp->req), 0, sizeof (MPC_Request));
 }
 
@@ -1543,14 +1543,14 @@ __INTERNAL__PMPI_Ibsend_test_req (void *buf, int count, MPI_Datatype datatype,
       if(is_valid_request == 1){
         MPI_internal_request_t* tmp_request;
 
-        tmp_request = __sctk_convert_mpc_request (request);
+        tmp_request = (MPI_internal_request_t *)__sctk_convert_mpc_request (request);
         tmp_request->req.completion_flag = SCTK_MESSAGE_DONE;
 
       } else {
 //	*request = MPI_REQUEST_NULL;
 	MPI_internal_request_t* tmp_request;
 	__sctk_new_mpc_request (request);
-	tmp_request = __sctk_convert_mpc_request (request);
+	tmp_request = (MPI_internal_request_t *)__sctk_convert_mpc_request (request);
 	tmp_request->req.completion_flag = SCTK_MESSAGE_DONE;
       }
 
@@ -9774,7 +9774,7 @@ PMPI_Group_free (MPI_Group * group)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
-  if(group == MPI_GROUP_NULL){
+  if(*group == MPI_GROUP_NULL){
         MPI_ERROR_REPORT (comm, MPI_ERR_GROUP, "");
   }
 
