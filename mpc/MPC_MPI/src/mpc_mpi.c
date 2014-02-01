@@ -10323,6 +10323,8 @@ int
 PMPI_Abort (MPI_Comm comm, int errorcode)
 {
   int res = MPI_ERR_INTERN;
+  mpi_check_comm (comm, comm);
+
   res = __INTERNAL__PMPI_Abort (comm, errorcode);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
