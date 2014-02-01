@@ -10045,6 +10045,22 @@ PMPI_Graph_create (MPI_Comm comm_old, int nnodes, int *index, int *edges,
 	sctk_nodebug("Enter PMPI_Graph_create");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm_old, comm_old);
+  {
+  int i;
+  int size;
+  __INTERNAL__PMPI_Comm_size (comm_old, &size);
+  if((nnodes < 0) || (nnodes > size)){
+        MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
+  }
+  for(i = 0; i < nnodes; i++){
+	  if(edges[i] < 0){
+        	MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
+	  }
+          if(edges[i] >= size){
+                MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
+          }
+  }
+  }
   res =
     __INTERNAL__PMPI_Graph_create (comm_old, nnodes, index, edges, reorder,
 				   comm_graph);
@@ -10139,6 +10155,10 @@ PMPI_Cart_shift (MPI_Comm comm, int direction, int displ, int *source,
 {
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
+  if(displ <= 0){
+        MPI_ERROR_REPORT (comm, MPI_ERR_ARG, "");
+  }
+
   res = __INTERNAL__PMPI_Cart_shift (comm, direction, displ, source, dest);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -10171,6 +10191,9 @@ PMPI_Graph_map (MPI_Comm comm_old, int nnodes, int *index, int *edges,
 	sctk_nodebug("Enter PMPI_Graph_map");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm_old, comm_old);
+  if(nnodes <= 0){
+	MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
+  }
   res = __INTERNAL__PMPI_Graph_map (comm_old, nnodes, index, edges, newrank);
   SCTK__MPI_Check_retrun_val (res, comm_old);
 }
