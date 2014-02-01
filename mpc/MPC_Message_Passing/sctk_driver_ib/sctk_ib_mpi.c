@@ -388,14 +388,14 @@ __thread int ib_thread_has_cq_lock  = 0;
 int retry;
 
 
-static __release_cq_broadcast () {
+static void __release_cq_broadcast () {
   pthread_mutex_lock(&poll_mutex);
   ib_thread_first_to_poll = 1;
   pthread_cond_broadcast(&poll_cond);
   pthread_mutex_unlock(&poll_mutex);
 }
 
-static __release_cq_signal () {
+static void __release_cq_signal () {
   pthread_mutex_lock(&poll_mutex);
   ib_thread_first_to_poll = 1;
   pthread_cond_signal(&poll_cond);

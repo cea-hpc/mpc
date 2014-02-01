@@ -310,7 +310,7 @@ int sctk_ib_cp_poll(struct sctk_rail_info_s * rail, struct sctk_ib_polling_s *po
 
   if (task_id < 0) {
     sctk_ib_cp_steal(rail, poll, 1);
-    return;
+    return 0;
   }
 
   if (tls_vp == NULL) {
