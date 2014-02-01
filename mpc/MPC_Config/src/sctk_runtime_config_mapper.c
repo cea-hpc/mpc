@@ -678,7 +678,7 @@ void* sctk_runtime_config_get_symbol(char * symbol_name)
   void * symbol = dlsym(sctk_handler, symbol_name);
   if (symbol == NULL && sctk_crash_on_symbol_load) {
     char * msg = dlerror();
-    sctk_fatal("Fail to load config symbol %s : %s", symbol_name, msg);
+    sctk_warning("Fail to load config symbol %s : %s", symbol_name, msg);
   }
   return symbol;
 }
