@@ -209,6 +209,9 @@ sctk_debug_print_backtrace (const char *format, ...)
 /**********************************************************************/
 /*Abort                                                               */
 /**********************************************************************/
+#ifdef MPC_Message_Passing
+void sctk_net_abort ();
+#endif
 void
 sctk_abort (void)
 {

@@ -1459,7 +1459,7 @@ void ffunc (pmpi_init_thread) (int *required, int *provide, int *res)
 
 void ffunc (pmpi_finalized) (int *flag, int *res)
 {
-  *res = MPI_Finalized ();
+  *res = MPI_Finalized (flag);
 }
 
 void ffunc (pmpi_finalize) (int *res)

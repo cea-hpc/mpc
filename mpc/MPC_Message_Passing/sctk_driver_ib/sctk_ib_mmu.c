@@ -33,6 +33,7 @@
 #include "sctk_ib_prof.h"
 #include "utlist.h"
 #include "uthash.h"
+#include <sctk_low_level_comm.h>
 
 /* IB debug macros */
 #if defined SCTK_IB_MODULE_NAME

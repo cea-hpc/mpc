@@ -816,7 +816,7 @@ static int check_signaled(struct sctk_ib_rail_info_s* rail_ib, sctk_ib_qp_t *rem
 
   if ( ! is_signaled ) {
     if (remote->unsignaled_counter + 1 > (config->qp_tx_depth >> 1) ) {
-      ibuf->desc.wr.send.send_flags | IBV_SEND_SIGNALED;
+      /*ibuf->desc.wr.send.send_flags | IBV_SEND_SIGNALED;*/
       return 1;
     } else return 0;
   } else  return 1;

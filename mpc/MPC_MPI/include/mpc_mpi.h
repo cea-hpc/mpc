@@ -487,6 +487,7 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
   double MPI_Wtick (void);
   int MPI_Init (int *, char ***);
   int MPI_Finalize (void);
+  int MPI_Finalized (int *);
   int MPI_Initialized (int *);
   int MPI_Abort (MPI_Comm, int);
 
@@ -796,6 +797,7 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
   int PMPI_Init_thread (int *, char ***, int, int *);
   int PMPI_Query_thread (int *);
   int PMPI_Finalize (void);
+  int PMPI_Finalized( int * );
   int PMPI_Initialized (int *);
   int PMPI_Abort (MPI_Comm, int);
 

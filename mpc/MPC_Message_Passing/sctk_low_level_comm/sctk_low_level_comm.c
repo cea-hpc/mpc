@@ -279,6 +279,7 @@ int sctk_net_is_mode_hybrid () {
 
 int sctk_net_set_mode_hybrid () {
   is_mode_hybrid = 1;
+  return 0;
 }
 /********************************************************************/
 /* Memory Allocator                                                 */
