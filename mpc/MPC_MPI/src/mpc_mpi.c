@@ -9968,6 +9968,10 @@ PMPI_Comm_remote_group (MPI_Comm comm, MPI_Group * group)
 	sctk_nodebug("Enter Comm_remote_group");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm, comm);
+  if(sctk_is_inter_comm (comm) == 0){
+    MPI_ERROR_REPORT (comm, MPI_ERR_COMM, "");
+  }
+
   res = __INTERNAL__PMPI_Comm_remote_group (comm, group);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
