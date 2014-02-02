@@ -10003,6 +10003,11 @@ PMPI_Keyval_free (int *keyval)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+
+  if(*keyval == MPI_KEYVAL_INVALID){
+        MPI_ERROR_REPORT (comm, MPI_ERR_ARG, "");
+  }
+
   res = __INTERNAL__PMPI_Keyval_free (keyval);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
