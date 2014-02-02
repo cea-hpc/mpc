@@ -9625,6 +9625,10 @@ PMPI_Group_size (MPI_Group group, int *size)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  if(group == MPI_GROUP_NULL){
+        MPI_ERROR_REPORT (comm, MPI_ERR_GROUP, "");
+  }
+
   res = __INTERNAL__PMPI_Group_size (group, size);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -9634,6 +9638,10 @@ PMPI_Group_rank (MPI_Group group, int *rank)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  if(group == MPI_GROUP_NULL){
+        MPI_ERROR_REPORT (comm, MPI_ERR_GROUP, "");
+  }
+
   res = __INTERNAL__PMPI_Group_rank (group, rank);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
