@@ -4810,6 +4810,11 @@ __INTERNAL__PMPI_Group_translate_ranks (MPI_Group mpi_group1, int n, int *ranks1
 	for(i = 0 ; i < n ; i++)
 		sctk_nodebug("ranks1[%d] = %d", i, ranks1[i]);
 
+        for(i = 0 ; i < n ; i++){
+                if(ranks1[i] < 0) return MPI_ERR_RANK;
+		if(ranks1[i] >= group1->task_nb) return MPI_ERR_RANK;
+        }
+
 	for(i = 0 ; i < group1->task_nb ; i++)
 		sctk_nodebug("group1 : task_list_in_global_ranks[%d] = %d", i, group1->task_list_in_global_ranks[i]);
 
