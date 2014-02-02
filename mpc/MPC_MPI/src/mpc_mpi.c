@@ -4836,13 +4836,6 @@ __INTERNAL__PMPI_Group_translate_ranks (MPI_Group mpi_group1, int n, int *ranks1
 		}
 		sctk_nodebug ("%d is %d", ranks1[j], ranks2[j]);
     }
-        for (j = 0; j < n; j++)
-    {
-
-                if(ranks2[j] == MPI_UNDEFINED){
-                        return MPI_ERR_RANK;
-                }
-    }
 	return MPI_SUCCESS;
 }
 
