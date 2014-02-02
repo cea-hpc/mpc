@@ -9957,6 +9957,12 @@ PMPI_Intercomm_merge (MPI_Comm intercomm, int high, MPI_Comm * newintracomm)
 	sctk_nodebug("Enter Intercomm_merge");
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+   mpi_check_comm (intercomm,comm);
+
+  if(sctk_is_inter_comm (intercomm) == 0){
+    MPI_ERROR_REPORT (comm, MPI_ERR_COMM, "");
+  }
+
   res = __INTERNAL__PMPI_Intercomm_merge (intercomm, high, newintracomm);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
