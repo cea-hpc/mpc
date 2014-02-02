@@ -6049,12 +6049,12 @@ __INTERNAL__PMPI_Attr_delete (MPI_Comm comm, int keyval)
   if ((tmp == NULL) || (keyval < 0))
     {
       sctk_spinlock_unlock(&(tmp->lock));
-      return MPI_ERR_INTERN;
+      return MPI_ERR_ARG;
     }
   if ((tmp->attrs_fn[keyval].used == 0) )
     {
       sctk_spinlock_unlock(&(tmp->lock));
-      return MPI_ERR_INTERN;
+      return MPI_ERR_ARG;
     }
 
   tmp_per_comm = mpc_mpc_get_per_comm_data(comm);
