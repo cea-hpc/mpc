@@ -5045,6 +5045,8 @@ __INTERNAL__PMPI_Group_incl (MPI_Group mpi_group, int n, int *ranks,
 {
   int res;
   MPC_Group group;
+  int i;
+  int j; 
   MPI_internal_group_t *newgroup;
 
   if(n < 0)
@@ -5056,7 +5058,21 @@ __INTERNAL__PMPI_Group_incl (MPI_Group mpi_group, int n, int *ranks,
 		return MPI_SUCCESS;
 	}
 
+
   group = __sctk_convert_mpc_group (mpi_group);
+
+
+  for(i = 0; i < n ; i++){
+    if((ranks[i] < 0) || (ranks[i] >= group->task_nb))
+      MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Unvalid ranks");
+  }
+  for(i = 0; i < n ; i++){
+    for(j = 0; j < n ; j++){
+	if((j != i) && (ranks[i] == ranks[j]))
+	 MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Unvalid ranks");
+    }
+  }
+
   newgroup = __sctk_new_mpc_group_internal (mpi_newgroup);
 
   res = PMPC_Group_incl (group, n, ranks, &(newgroup->group));
