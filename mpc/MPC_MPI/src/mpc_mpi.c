@@ -4786,11 +4786,6 @@ __INTERNAL__PMPI_Group_translate_ranks (MPI_Group mpi_group1, int n, int *ranks1
 		sctk_nodebug("Wrong group 1 : group1 %d, group2 %d", mpi_group1, mpi_group2);
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"");
 	}
-	if (n < 0)
-	{
-		sctk_nodebug("Wrong group (n < 0)");
-		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"");
-	}
 	if (n > 0 && ((NULL == ranks1) || (NULL == ranks2 )))
 	{
 		sctk_nodebug("Wrong group n > 0 && ((NULL == ranks1) || (NULL == ranks2 ))");
@@ -4835,6 +4830,13 @@ __INTERNAL__PMPI_Group_translate_ranks (MPI_Group mpi_group1, int n, int *ranks1
 			}
 		}
 		sctk_nodebug ("%d is %d", ranks1[j], ranks2[j]);
+    }
+        for (j = 0; j < n; j++)
+    {
+
+                if(ranks2[j] == MPI_UNDEFINED){
+                        return MPI_ERR_RANK;
+                }
     }
 	return MPI_SUCCESS;
 }
@@ -9642,6 +9644,10 @@ PMPI_Group_translate_ranks (MPI_Group group1, int n, int *ranks1,
 {
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  if(n < 0){
+        MPI_ERROR_REPORT (comm, MPI_ERR_ARG, "");
+  }
+
   res = __INTERNAL__PMPI_Group_translate_ranks (group1, n, ranks1, group2, ranks2);
   sctk_nodebug("RES = %d", res);
   SCTK__MPI_Check_retrun_val (res, comm);
