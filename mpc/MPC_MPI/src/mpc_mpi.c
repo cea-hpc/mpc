@@ -5159,8 +5159,8 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 		first_rank = ranges[i][0];
 		last_rank  = ranges[i][1];
 		stride     = ranges[i][2];
-
-		if ((first_rank < 0) || (first_rank > group_size) || (last_rank < 0) || (last_rank > group_size) || (stride == 0))
+		/*fprintf(stderr,"first_rank %d last_rank %d stride %d group_size %d\n",first_rank,last_rank,stride,group_size);*/
+		if ((first_rank < 0) || (first_rank >= group_size) || (last_rank < 0) || (last_rank >= group_size) || (stride == 0))
 		{
 			MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 		}
@@ -5371,7 +5371,7 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 		last_rank  = ranges[i][1];
 		stride     = ranges[i][2];
 
-		if ((first_rank < 0) || (first_rank > group_size) || (last_rank < 0) || (last_rank > group_size) || (stride == 0))
+		if ((first_rank < 0) || (first_rank >= group_size) || (last_rank < 0) || (last_rank >= group_size) || (stride == 0))
 		{
 			MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 		}
@@ -6450,7 +6450,7 @@ INFO("Very simple approach never reorder nor take care of hardware topology")
       /*Retire ranks higher than nb_tasks */
 
       ranges[0][0] = nb_tasks;
-      ranges[0][1] = size;
+      ranges[0][1] = size-1;
       ranges[0][2] = 1;
 
       res =
@@ -6774,7 +6774,7 @@ INFO("Very simple approach never reorder nor take care of hardware topology")
       /*Retire ranks higher than nb_tasks */
 
       ranges[0][0] = nnodes;
-      ranges[0][1] = size;
+      ranges[0][1] = size-1;
       ranges[0][2] = 1;
 
       res =
