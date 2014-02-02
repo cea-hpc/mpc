@@ -9909,9 +9909,19 @@ PMPI_Intercomm_create (MPI_Comm local_comm, int local_leader,
 	sctk_nodebug("Enter Intercomm_create");
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+  int size;
 
   mpi_check_comm(local_comm,local_comm);
   mpi_check_comm(peer_comm,peer_comm);
+  
+    __INTERNAL__PMPI_Comm_size (local_comm, &size);
+    if(sctk_is_inter_comm(local_comm) == 0){
+      mpi_check_rank_send (local_leader, size, comm);
+    }
+    __INTERNAL__PMPI_Comm_size (peer_comm, &size);
+    if(sctk_is_inter_comm(peer_comm) == 0){
+      mpi_check_rank_send (remote_leader, size, comm);
+    }
 
   if (newintercomm == NULL)
     {
