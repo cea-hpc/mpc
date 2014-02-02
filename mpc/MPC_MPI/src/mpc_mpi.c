@@ -5160,7 +5160,7 @@ __INTERNAL__PMPI_Group_range_excl (MPI_Group mpi_group, int n,
 		last_rank  = ranges[i][1];
 		stride     = ranges[i][2];
 
-		if ((first_rank < 0) || (first_rank >= group_size) || (last_rank < 0) || (last_rank >= group_size) || (stride == 0))
+		if ((first_rank < 0) || (first_rank > group_size) || (last_rank < 0) || (last_rank > group_size) || (stride == 0))
 		{
 			MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 		}
@@ -5371,7 +5371,7 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 		last_rank  = ranges[i][1];
 		stride     = ranges[i][2];
 
-		if ((first_rank < 0) || (first_rank >= group_size) || (last_rank < 0) || (last_rank >= group_size) || (stride == 0))
+		if ((first_rank < 0) || (first_rank > group_size) || (last_rank < 0) || (last_rank > group_size) || (stride == 0))
 		{
 			MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 		}
