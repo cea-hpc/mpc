@@ -5106,6 +5106,13 @@ __INTERNAL__PMPI_Group_excl (MPI_Group mpi_group, int n, int *ranks,
 	}
 	if(n >=  group->task_nb )MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"");
 
+  for(i = 0; i < n ; i++){
+    for(j = 0; j < n ; j++){
+        if((j != i) && (ranks[i] == ranks[j]))
+         MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Unvalid ranks");
+    }
+  }
+
 
 	newgroup = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
 	(newgroup)->task_list_in_global_ranks = (int *) sctk_malloc (size * sizeof (int));
