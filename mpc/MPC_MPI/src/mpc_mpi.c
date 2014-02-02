@@ -5078,7 +5078,7 @@ __INTERNAL__PMPI_Group_excl (MPI_Group mpi_group, int n, int *ranks,
 
 	if ( (MPI_GROUP_NULL == mpi_group) || (NULL == mpi_newgroup) )
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_GROUP,"");
-	else if (NULL == ranks && n > 0)
+	else if ((NULL == ranks && n > 0) || (n < 0))
 		MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"");
 
 	group = __sctk_convert_mpc_group (mpi_group);
@@ -5090,6 +5090,8 @@ __INTERNAL__PMPI_Group_excl (MPI_Group mpi_group, int n, int *ranks,
 		(*mpi_newgroup) = MPI_GROUP_EMPTY;
 		return MPI_SUCCESS;
 	}
+	if(n >= size)MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"");
+
 
 	newgroup = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
 	(newgroup)->task_list_in_global_ranks = (int *) sctk_malloc (size * sizeof (int));
