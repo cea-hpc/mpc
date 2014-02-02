@@ -5104,7 +5104,7 @@ __INTERNAL__PMPI_Group_excl (MPI_Group mpi_group, int n, int *ranks,
 		(*mpi_newgroup) = MPI_GROUP_EMPTY;
 		return MPI_SUCCESS;
 	}
-	if(n >= size)MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"");
+	if(n >=  group->task_nb )MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"");
 
 
 	newgroup = (MPC_Group) sctk_malloc (sizeof (MPC_Group_t));
