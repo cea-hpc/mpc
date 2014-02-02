@@ -10022,6 +10022,29 @@ PMPI_Cart_create (MPI_Comm comm_old, int ndims, int *dims, int *periods,
 	sctk_nodebug("Enter PMPI_Cart_create");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm_old, comm_old);
+  {
+  int i;
+  int size;
+  int sum = 1;
+  __INTERNAL__PMPI_Comm_size (comm_old, &size);
+  if((ndims <= 0) || (ndims > size)){
+        MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
+  }
+  for(i = 0; i < ndims; i++){
+          if(dims[i] <= 0){
+                MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
+          }
+          if(dims[i] >= size){
+                MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
+          }
+        sum *= dims[i];
+  }
+  if(sum > size){
+        MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
+  }
+
+  }
+
   res =
     __INTERNAL__PMPI_Cart_create (comm_old, ndims, dims, periods, reorder,
 				  comm_cart);
@@ -10034,6 +10057,11 @@ PMPI_Dims_create (int nnodes, int ndims, int *dims)
 	sctk_nodebug("Enter PMPI_Dims_create");
   MPI_Comm comm = MPI_COMM_WORLD;
   int res = MPI_ERR_INTERN;
+
+  if(nnodes <= 0){
+        MPI_ERROR_REPORT (comm, MPI_ERR_ARG, "");
+  }
+
   res = __INTERNAL__PMPI_Dims_create (nnodes, ndims, dims);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -10104,7 +10132,15 @@ PMPI_Cart_get (MPI_Comm comm, int maxdims, int *dims, int *periods,
 {
 	sctk_nodebug("Enter PMPI_Cart_get");
   int res = MPI_ERR_INTERN;
-  mpi_check_comm (comm, comm);
+  mpi_check_comm (comm, comm);  {
+  int i;
+  int size;
+  __INTERNAL__PMPI_Comm_size (comm, &size);
+  if((maxdims <= 0) || (maxdims > size)){
+        MPI_ERROR_REPORT (comm, MPI_ERR_DIMS, "");
+  }
+  }
+
   res = __INTERNAL__PMPI_Cart_get (comm, maxdims, dims, periods, coords);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
@@ -10180,6 +10216,29 @@ PMPI_Cart_map (MPI_Comm comm_old, int ndims, int *dims, int *periods,
 	sctk_nodebug("Enter PMPI_Cart_map");
   int res = MPI_ERR_INTERN;
   mpi_check_comm (comm_old, comm_old);
+  {
+  int i;
+  int size;
+  int sum = 1;
+  __INTERNAL__PMPI_Comm_size (comm_old, &size);
+  if((ndims <= 0) || (ndims > size)){
+        MPI_ERROR_REPORT (comm_old, MPI_ERR_DIMS, "");
+  }
+  for(i = 0; i < ndims; i++){
+          if(dims[i] <= 0){
+                MPI_ERROR_REPORT (comm_old, MPI_ERR_DIMS, "");
+          }
+          if(dims[i] >= size){
+                MPI_ERROR_REPORT (comm_old, MPI_ERR_DIMS, "");
+          }
+	sum *= dims[i];
+  }
+  if(sum > size){
+        MPI_ERROR_REPORT (comm_old, MPI_ERR_DIMS, "");
+  }
+
+  }
+
   res = __INTERNAL__PMPI_Cart_map (comm_old, ndims, dims, periods, newrank);
   SCTK__MPI_Check_retrun_val (res, comm_old);
 }
@@ -10193,7 +10252,24 @@ PMPI_Graph_map (MPI_Comm comm_old, int nnodes, int *index, int *edges,
   mpi_check_comm (comm_old, comm_old);
   if(nnodes <= 0){
 	MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
+  }  
+{
+  int i;
+  int size;
+  __INTERNAL__PMPI_Comm_size (comm_old, &size);
+  if((nnodes < 0) || (nnodes > size)){
+        MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
   }
+  for(i = 0; i < nnodes; i++){
+          if(edges[i] < 0){
+                MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
+          }
+          if(edges[i] >= size){
+                MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
+          }
+  }
+  }
+
   res = __INTERNAL__PMPI_Graph_map (comm_old, nnodes, index, edges, newrank);
   SCTK__MPI_Check_retrun_val (res, comm_old);
 }
