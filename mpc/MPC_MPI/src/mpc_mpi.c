@@ -9665,6 +9665,7 @@ PMPI_Comm_group (MPI_Comm comm, MPI_Group * group)
 {
 	sctk_nodebug("Enter Comm_group");
   int res = MPI_ERR_INTERN;
+  mpi_check_comm (comm, comm); 
   res = __INTERNAL__PMPI_Comm_group (comm, group);
   SCTK__MPI_Check_retrun_val (res, comm);
 }
