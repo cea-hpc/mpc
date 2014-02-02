@@ -10076,17 +10076,29 @@ PMPI_Graph_create (MPI_Comm comm_old, int nnodes, int *index, int *edges,
   {
   int i;
   int size;
+  int nb_edge = 0;
+  int first_edge = 0;
   __INTERNAL__PMPI_Comm_size (comm_old, &size);
   if((nnodes < 0) || (nnodes > size)){
         MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
   }
-  for(i = 0; i < nnodes; i++){
+  nb_edge = index[nnodes -1];
+  for(i = 0; i < nb_edge; i++){
 	  if(edges[i] < 0){
         	MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
 	  }
           if(edges[i] >= size){
                 MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
           }
+  }
+  for (i = 0; i < nnodes; i++){
+    int j; 
+    for(j = first_edge; j < index[i]; j++){
+          if(edges[j] == i){
+                MPI_ERROR_REPORT (comm_old, MPI_ERR_ARG, "");
+          }
+    }
+    first_edge = index[i];
   }
   }
   res =
