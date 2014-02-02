@@ -5369,23 +5369,23 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 		last_rank  = ranges[i][1];
 		stride     = ranges[i][2];
 
-		if ((first_rank < 0) || (first_rank > group_size) || (last_rank < 0) || (last_rank > group_size) || (stride == 0))
+		if ((first_rank < 0) || (first_rank >= group_size) || (last_rank < 0) || (last_rank >= group_size) || (stride == 0))
 		{
-			MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
+			MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 		}
 
 		if ((first_rank < last_rank))
 		{
 			if (stride < 0)
 			{
-				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
+				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 			}
 
 			for (index = first_rank; index <= last_rank; index += stride)
 			{
 				if (elements_int_list[index] != -1)
 				{
-					MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
+					MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 				}
 				elements_int_list[index] = i;
 			}
@@ -5394,14 +5394,14 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 		{
 			if (stride > 0)
 			{
-				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
+				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 			}
 
 			for (index = first_rank; index >= last_rank; index += stride)
 			{
 				if (elements_int_list[index] != -1)
 				{
-					MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
+					MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 				}
 				elements_int_list[index] = i;
 			}
@@ -5411,7 +5411,7 @@ __INTERNAL__PMPI_Group_range_incl (MPI_Group mpi_group, int n,
 			index = first_rank;
 			if (elements_int_list[index] != -1)
 			{
-				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_RANK,"Wrong ranges");
+				MPI_ERROR_REPORT(MPC_COMM_WORLD,MPI_ERR_ARG,"Wrong ranges");
 			}
 			elements_int_list[index] = i;
 		}
@@ -9749,6 +9749,10 @@ PMPI_Group_range_incl (MPI_Group group, int n, int ranges[][3],
   int res = MPI_ERR_INTERN;
   if(group == MPI_GROUP_NULL){
         MPI_ERROR_REPORT (comm, MPI_ERR_GROUP, "");
+  }
+
+  if(n < 0){
+        MPI_ERROR_REPORT (comm, MPI_ERR_ARG, "");
   }
 
   res = __INTERNAL__PMPI_Group_range_incl (group, n, ranges, newgroup);
