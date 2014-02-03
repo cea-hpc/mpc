@@ -1073,9 +1073,6 @@ __mpcomp_start_parallel_static_loop (int arg_num_threads,
     /* Implicit barrier */
     __mpcomp_internal_half_barrier( instance->mvps[0] ) ;
 
-    /* Update team info for last values */
-	__mpcomp_save_team_info( instance->team, &(n->children.leaf[0]->threads[0]) ) ;
-
     /* Finish the half barrier by spinning on the root value */
     while (sctk_atomics_load_int(
 				&(n->children.leaf[0]->threads[0].info.new_root->barrier)) != 
@@ -1092,6 +1089,9 @@ __mpcomp_start_parallel_static_loop (int arg_num_threads,
 #if MPCOMP_TASK
     __mpcomp_task_schedule();
 #endif //MPCOMP_TASK
+
+    /* Update team info for last values */
+	__mpcomp_save_team_info( instance->team, &(n->children.leaf[0]->threads[0]) ) ;
 
     /* Restore the previous OpenMP info */
     sctk_openmp_thread_tls = t ;
