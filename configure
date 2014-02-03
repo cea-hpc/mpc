@@ -51,7 +51,7 @@ MODULES="mpc-gdb mpc-gcc mpc-hydra mpc-hwloc mpc-openpa mpc-binutils mpc-libxml2
 MODULES_CLEAN=
 
 MPC_ARGS=
-
+MPC_TARGET=
 SCTK_PREFIX="--prefix=/usr/local"
 
 # Default file to read configuration
@@ -65,10 +65,13 @@ CONFIG_FILE=${DEFAULT_CONFIG_FILE}
 GCC_CONFIGURE_ARGUMENTS=""
 GDB_CONFIGURE_ARGUMENTS=""
 HWLOC_CONFIGURE_ARGUMENTS=""
+BINUTILS_CONFIGURE_ARGUMENTS=""
 OPENPA_CONFIGURE_ARGUMENTS=""
 HYDRA_CONFIGURE_ARGUMENTS=""
 LIBXML2_CONFIGURE_ARGUMENTS=""
 LIBSCTK_ARCH_CONFIGURE_ARGUMENTS=""
+
+CROSS_CONFIGURE_ARGUMENTS=""
 
 # Options for SCTK_PMI
 SCTK_PMI_OPTIONS="--with-hydra"
@@ -106,6 +109,9 @@ Installation directories:
   --prefix=PREFIX                     Install architecture-independent files in PREFIX [/usr/local]
   --disable-prefix-check              Force given prefix (in case of file conflicts)
 
+Cross-compilation:
+  --target=arch                       Cross-compile MPC for given arch
+
 Optional Features:
   --with-cpath=DIR1:DIR2:...          Add directories to the CPATH environment variable
                                       for the whole MPC distribution
@@ -124,7 +130,6 @@ MPC gcc options:
   --gcc-{with-mpfr|...}               Pass option to GCC configure script.
   --with-mpfr=prefix                  Prefix for libmpfr needed to build gcc.
   --with-gmp=prefix                   Prefix for libgmp needed to build gcc.
-  --with-mpc=prefix                   Prefix for libmpc needed to build gcc.
 
 MPC binutils options:
   --disable-mpc-binutils              Disable compilation of mpc-binutils [enabled]
@@ -155,14 +160,16 @@ printf "$0 " > configure.log
 for arg in "$@" ; do
     printf "\'$arg\' " >> configure.log
     case $arg in
-    # Prefix for installation of every module
     --prefix=*)
-    SCTK_PREFIX="$arg"
-    MPC_ARGS="$arg $MPC_ARGS"
-    MPC_PREFIX="`echo A$arg | sed -e 's/A--prefix=//g'`"
-    ;;
+		SCTK_PREFIX="$arg"
+		MPC_ARGS="$SCTK_PREFIX $MPC_ARGS"
+		MPC_PREFIX="`echo A$SCTK_PREFIX | sed -e 's/A--prefix=//g'`"
+	;;
     # Usage
     --disable-mpc-gcc)
+       MODULES="`echo $MODULES | sed -e 's/mpc-gcc//g'`"
+	;;
+    --disable-mpc-gcc-only)
        MODULES="`echo $MODULES | sed -e 's/mpc-gcc//g'`"
 	;;
 	--disable-mpc-binutils)
@@ -195,9 +202,6 @@ for arg in "$@" ; do
       GCC_CONFIGURE_ARGUMENTS="${GCC_CONFIGURE_ARGUMENTS} ${arg}"
     ;;
     --with-gmp=*)
-      GCC_CONFIGURE_ARGUMENTS="${GCC_CONFIGURE_ARGUMENTS} ${arg}"
-    ;;
-    --with-mpc=*)
       GCC_CONFIGURE_ARGUMENTS="${GCC_CONFIGURE_ARGUMENTS} ${arg}"
     ;;
     --with-hydra)
@@ -298,6 +302,22 @@ for arg in "$@" ; do
     LDFLAGS=*)
     MPC_LDFLAGS="LDFLAGS=\"`echo A$arg | sed -e 's/ALDFLAGS=//g'`\""
     ;;
+    --target=*)
+		if test "$arg" = "--target=k1om"; then 
+			CROSS_CONFIGURE_ARGUMENTS="--mic"
+			MPC_TARGET="k1om"
+		elif test "$arg" = "--target=arm"; then
+			CROSS_CONFIGURE_ARGUMENTS=" "
+			MPC_TARGET="arm"
+		fi
+		MPC_ARGS="$arg $MPC_ARGS"
+    ;;
+    --mic-library-path=*)
+    SCTK_MIC_LIBRARY_PATH="`echo A$arg | sed -e 's/A--mic-library-path=//g'`"
+    export SCTK_MIC_LIBRARY_PATH
+    echo "MIC library path updated : $SCTK_MIC_LIBRARY_PATH"
+    MPC_ARGS="$arg $MPC_ARGS"
+    ;;
     *)
     MPC_ARGS="$arg $MPC_ARGS"
     ;;
@@ -345,8 +365,18 @@ echo "OK"
 #
 # MAKEFILE GENERATION
 #
+host=`uname -m`
 echo "Generating `pwd`/Makefile"
-cat <<EOF > Makefile
+
+#
+# FUNCTIONS
+#
+mpc_generate_header ()
+{
+	if test ! -d $1; then
+		mkdir $1
+	fi
+cat <<EOF > $1/Makefile
 ############################# MPC License ##############################
 # Wed Nov 19 15:19:19 CET 2008                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
@@ -371,6 +401,236 @@ cat <<EOF > Makefile
 ########################################################################
 
 EOF
+}
+
+mpc_generate_path_build_dir ()
+{
+	printf "BUILD_DIR=\`pwd\`\n" >> $1/Makefile
+	printf "TOP_SOURCE_DIR=\"${TOP_SOURCE_DIR}\"\n" >> $1/Makefile
+
+	if test "${ADD_TO_CPATH}" != "" ; then
+	  printf "ifeq (\${CPATH},)\n" >> $1/Makefile
+	  printf "  CPATH:=${ADD_TO_CPATH}\n" >> $1/Makefile
+	  printf "else\n" >> $1/Makefile
+	  printf "  CPATH:=${ADD_TO_CPATH}:\${CPATH}\n" >> $1/Makefile
+	  printf "endif\n" >> $1/Makefile
+	  printf "export CPATH\n" >> $1/Makefile
+	  printf "\n" >> $1/Makefile
+	fi
+
+	if test "${ADD_TO_LIBRARY_PATH}" != "" ; then
+	  printf "ifeq (\${LIBRARY_PATH},)\n" >> $1/Makefile
+	  printf "  LIBRARY_PATH:=${ADD_TO_LIBRARY_PATH}\n" >> $1/Makefile
+	  printf "else\n" >> $1/Makefile
+	  printf "  LIBRARY_PATH:=${ADD_TO_LIBRARY_PATH}:\${LIBRARY_PATH}\n" >> $1/Makefile
+	  printf "endif\n" >> $1/Makefile
+	  printf "ifeq (\${LD_LIBRARY_PATH},)\n" >> $1/Makefile
+	  printf "  LD_LIBRARY_PATH:=${ADD_TO_LIBRARY_PATH}\n" >> $1/Makefile
+	  printf "else\n" >> $1/Makefile
+	  printf "  LD_LIBRARY_PATH:=${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}\n" >> $1/Makefile
+	  printf "endif\n" >> $1/Makefile
+	  printf "export LIBRARY_PATH\n" >> $1/Makefile
+	  printf "export LD_LIBRARY_PATH\n" >> $1/Makefile
+	  printf "\n" >> $1/Makefile
+	fi
+}
+
+mpc_generate_target_all ()
+{
+	# Rule 'all' (a simple link)
+	printf "#\n# Rule 'all'\n#\n" >> $1/Makefile
+	printf "all:make_all" >> $1/Makefile
+	printf "\n\n" >> $1/Makefile
+
+	# Rule 'configure' (a simple link)
+	printf "#\n# Rule 'configure'\n#\n" >> $1/Makefile
+	printf "configure:make_configure" >> $1/Makefile
+	printf "\n\n" >> $1/Makefile
+
+	# Rule 'build' (a simple link)
+	printf "#\n# Rule 'build'\n#\n" >> $1/Makefile
+	printf "build:make_build" >> $1/Makefile
+	printf "\n\n" >> $1/Makefile
+
+
+	# Rule 'install' (a simple link)
+	printf "#\n# Rule 'install'\n#\n" >> $1/Makefile
+	printf "install:install_all" >> $1/Makefile
+	printf "\n\n" >> $1/Makefile
+
+	# Rule 'check'
+	printf "#\n# Rule check\n#\n" >> $1/Makefile
+	printf "check:" >> $1/Makefile
+	printf "\n" >> $1/Makefile
+	printf "\tcd mpc_build && \$(MAKE) check \n" >> $1/Makefile
+	printf "\n" >> $1/Makefile
+}
+
+mpc_generate_module_target ()
+{
+	# Print message
+	echo "Generating rules for module $mod for $1 (version $ver)"
+	echo "Found version $ver with configuration $conf" >> $1/configure.log
+	echo "Select module configure arguements for $mod-$ver : ${MOD_CONFIGURE_ARGUMENTS}" >> $1/configure.log
+	
+	printf "#\n# Module ${mod} / Version ${ver} for $1\n#\n" >> $1/Makefile
+	if [ "${mod##*-}" = "openpa" ] || [ "${mod##*-}" = "hwloc" ] || [ "${mod##*-}" = "binutils" ] || [ "${mod##*-}" = "libxml2" ] || [ "${mod##*-}" = "libsctk_arch" ]
+	then
+		if test "$2" = "host"; then
+			printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_INSTALL=`echo A${SCTK_PREFIX} | sed -e 's/A--prefix=//g'`/$1/${FULL_NAME}\n" >> $1/Makefile
+			printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_BUILD=`pwd`/$1/${FULL_NAME}_build/${mod##*-}-${ver}\n" >> $1/Makefile
+		elif test "$1" = "k1om"; then
+			printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_INSTALL_MIC=`echo A${SCTK_PREFIX} | sed -e 's/A--prefix=//g'`/$1/${FULL_NAME}\n" >> $1/Makefile
+			printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_BUILD_MIC=`pwd`/$1/${FULL_NAME}_build/${mod##*-}-${ver}\n" >> $1/Makefile
+		elif test "$1" = "arm"; then
+			printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_INSTALL_ARM=`echo A${SCTK_PREFIX} | sed -e 's/A--prefix=//g'`/$1/${FULL_NAME}\n" >> $1/Makefile
+			printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_BUILD_ARM=`pwd`/$1/${FULL_NAME}_build/${mod##*-}-${ver}\n" >> $1/Makefile
+		fi
+	fi
+	printf "${FULL_NAME}_build/config.status: Makefile ${TOP_SOURCE_DIR}/${mod}/configure\n" >> $1/Makefile
+	printf "\tmkdir -p ${FULL_NAME}_build\n" >> $1/Makefile
+	printf "\tcd ${FULL_NAME}_build && ${TOP_SOURCE_DIR}/${mod}/configure \
+	  $ver ${SCTK_PREFIX}/$1/${FULL_NAME} '' '' '' '' '' '${MOD_CONFIGURE_ARGUMENTS}" >> $1/Makefile
+	
+	if test "$2" != "host"; then
+		printf " ${CROSS_CONFIGURE_ARGUMENTS}'\n" >> $1/Makefile
+	else
+		printf "'\n" >> $1/Makefile
+	fi
+	
+	printf "\ttouch ${FULL_NAME}_build/config.status\n" >> $1/Makefile
+	printf "\n" >> $1/Makefile
+
+	printf "${FULL_NAME}_config:${FULL_NAME}_build/config.status\n" >> $1/Makefile
+	printf "\n" >> $1/Makefile
+	printf "${FULL_NAME}_make: ${FULL_NAME}_config\n" >> $1/Makefile
+
+	#TODO Cleanup this, the cases must be done in modules
+	#This can be done by providing a Makefile template in each modules
+	case "${mod##*-}" in
+		hydra)
+			printf "\t\$(MAKE) -C ${FULL_NAME}_build/hydra \n" >> $1/Makefile
+			printf "\t\$(MAKE) -C ${FULL_NAME}_build/simple \n" >> $1/Makefile
+			;;
+		openpa|hwloc|binutils|libxml2|libsctk_arch)
+			printf "\t\$(MAKE) -C ${FULL_NAME}_build/${mod##*-}-${ver} \n" >> $1/Makefile
+			;;
+		*)
+			printf "\t\$(MAKE) -C ${FULL_NAME}_build \n" >> $1/Makefile
+			;;
+	esac
+	printf "\n" >> $1/Makefile
+
+	#generic rule name
+	printf "${mod}_make:${FULL_NAME}_make\n" >> $1/Makefile
+	printf "\n" >> $1/Makefile
+
+	#TODO Cleanup this, the cases must be done in modules
+	#This can be done by providing a Makefile template in each modules
+	printf "${FULL_NAME}_install: ${FULL_NAME}_make\n" >> $1/Makefile
+	case "${mod##*-}" in
+		"hydra")
+			printf "\t\$(MAKE) -C ${FULL_NAME}_build/hydra install \n" >> $1/Makefile
+			;;
+		"openpa"|"hwloc"|"binutils"|"libxml2"|"libsctk_arch")
+			printf "\t\$(MAKE) -C ${FULL_NAME}_build/${mod##*-}-${ver} install \n" >> $1/Makefile
+			;;
+		*)
+			printf "\t\$(MAKE) -C ${FULL_NAME}_build install \n" >> $1/Makefile
+			;;
+	esac
+	printf "\n" >> $1/Makefile
+
+	#generic rule name
+	printf "${mod}_install:${FULL_NAME}_install\n" >> $1/Makefile
+	printf "\n" >> $1/Makefile
+}
+
+mpc_generate_clean ()
+{
+	# Rule 'clean'
+	printf "#\n# Rule clean\n#\n" >> $1/Makefile
+	printf "clean:" >> $1/Makefile
+	printf "\n" >> $1/Makefile
+	printf "\t@rm -fr mpc_build ${MODULES_CLEAN}\n" >> $1/Makefile
+	printf "\n" >> $1/Makefile
+}
+
+mpc_generate_mpc_target ()
+{
+	#
+	# Rules for configuring and compiling MPC
+	#
+	echo "===== MPC for $1 =====" >> $1/configure.log
+	ARG_COMPILER_LIST=""
+	if test "${COMPILER_LIST}" != "" ; then
+	  ARG_COMPILER_LIST="--compilers=\"${COMPILER_LIST}\""
+	fi
+
+	ARG_LIBRARY_PATH=""
+	if test "${ADD_TO_LIBRARY_PATH}" != "" ; then
+	  ARG_LIBRARY_PATH="--add-library-path=\"${ADD_TO_LIBRARY_PATH}\""
+	fi
+
+	printf "#\n# Rule for MPC for $1\n#\n" >> $1/Makefile
+	printf "mpc_build/config.status:${CONFIG_MPC_DEPS} Makefile\n" >> $1/Makefile
+	printf "\tmkdir -p mpc_build\n" >> $1/Makefile
+	
+	printf "\tcd mpc_build && ${MPC_SOURCE_DIR}/configure ${ARG_COMPILER_LIST} ${ARG_LIBRARY_PATH} ${MPC_ARGS} ${MPC_CFLAGS} ${MPC_LDFLAGS}\n" >> $1/Makefile
+	printf "\ttouch mpc_build/config.status\n" >> $1/Makefile
+	echo "">> $1/Makefile
+	echo "Compiler list for MPC: ${COMPILER_LIST}" >> $1/configure.log
+	echo "Additionnal args for MPC ${MPC_ARGS}" >> $1/configure.log
+
+	printf "mpc_config:mpc_build/config.status\n" >> $1/Makefile
+	echo "">> $1/Makefile
+
+	printf "mpc_make: mpc_build/config.status ${MAKE_MPC_DEPS}\n" >> $1/Makefile
+	printf "\t\$(MAKE) -C mpc_build \n" >> $1/Makefile
+	echo "">> $1/Makefile
+
+	printf "mpc_install: mpc_make $INSTALL_MPC_DEPS\n" >> $1/Makefile
+	printf "\t\$(MAKE) -C mpc_build install \n" >> $1/Makefile
+	echo "">> $1/Makefile
+}
+
+mpc_add_mpc_targets()
+{
+	#
+	# Rule "make_all"
+	#
+	printf "#\n# Rule make_all\n#\n" >> $1/Makefile
+	printf "make_all: make_build\n" >> $1/Makefile
+
+	#
+	# Rule "build"
+	#
+	printf "#\n# Rule make_build\n#\n" >> $1/Makefile
+	printf "make_build: ${MAKE_ALL_RULE} \n" >> $1/Makefile
+
+	#
+	# Rule "configure"
+	#
+	printf "#\n# Rule make_configure\n#\n" >> $1/Makefile
+	printf "make_configure: ${CONFIG_ALL_RULE} \n" >> $1/Makefile
+
+	#
+	# Rule "install_all"
+	#
+	printf "#\n# Rule install_all\n#\n" >> $1/Makefile
+	printf "install_all: ${INSTALL_ALL_RULE} \n" >> $1/Makefile
+
+	cat ${TOP_SOURCE_DIR}/packaging/Makefile >> $1/Makefile
+}
+
+#
+# START GENERATION
+#
+
+if test "$MPC_TARGET" != ""; then
+	mpc_generate_header ${MPC_TARGET}
+fi
+mpc_generate_header $host
 
 # Variable initialization
 CONFIG_ALL_RULE=""
@@ -382,64 +642,14 @@ MAKE_MPC_DEPS=""
 INSTALL_MPC_DEPS=""
 
 # Path of the build directory
-printf "BUILD_DIR=\`pwd\`\n" >> Makefile
-printf "TOP_SOURCE_DIR=\"${TOP_SOURCE_DIR}\"\n" >> Makefile
 
-if test "${ADD_TO_CPATH}" != "" ; then
-  printf "ifeq (\${CPATH},)\n" >> Makefile
-  printf "  CPATH:=${ADD_TO_CPATH}\n" >> Makefile
-  printf "else\n" >> Makefile
-  printf "  CPATH:=${ADD_TO_CPATH}:\${CPATH}\n" >> Makefile
-  printf "endif\n" >> Makefile
-  printf "export CPATH\n" >> Makefile
-  printf "\n" >> Makefile
+
+if test "$MPC_TARGET" != ""; then
+	mpc_generate_path_build_dir ${MPC_TARGET}
+	mpc_generate_target_all ${MPC_TARGET}
 fi
-
-if test "${ADD_TO_LIBRARY_PATH}" != "" ; then
-  printf "ifeq (\${LIBRARY_PATH},)\n" >> Makefile
-  printf "  LIBRARY_PATH:=${ADD_TO_LIBRARY_PATH}\n" >> Makefile
-  printf "else\n" >> Makefile
-  printf "  LIBRARY_PATH:=${ADD_TO_LIBRARY_PATH}:\${LIBRARY_PATH}\n" >> Makefile
-  printf "endif\n" >> Makefile
-  printf "ifeq (\${LD_LIBRARY_PATH},)\n" >> Makefile
-  printf "  LD_LIBRARY_PATH:=${ADD_TO_LIBRARY_PATH}\n" >> Makefile
-  printf "else\n" >> Makefile
-  printf "  LD_LIBRARY_PATH:=${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}\n" >> Makefile
-  printf "endif\n" >> Makefile
-  printf "export LIBRARY_PATH\n" >> Makefile
-  printf "export LD_LIBRARY_PATH\n" >> Makefile
-  printf "\n" >> Makefile
-fi
-
-
-
-# Rule 'all' (a simple link)
-printf "#\n# Rule 'all'\n#\n" >> Makefile
-printf "all:make_all" >> Makefile
-printf "\n\n" >> Makefile
-
-# Rule 'configure' (a simple link)
-printf "#\n# Rule 'configure'\n#\n" >> Makefile
-printf "configure:make_configure" >> Makefile
-printf "\n\n" >> Makefile
-
-# Rule 'build' (a simple link)
-printf "#\n# Rule 'build'\n#\n" >> Makefile
-printf "build:make_build" >> Makefile
-printf "\n\n" >> Makefile
-
-
-# Rule 'install' (a simple link)
-printf "#\n# Rule 'install'\n#\n" >> Makefile
-printf "install:install_all" >> Makefile
-printf "\n\n" >> Makefile
-
-# Rule 'check'
-printf "#\n# Rule check\n#\n" >> Makefile
-printf "check:" >> Makefile
-printf "\n" >> Makefile
-printf "\tcd mpc_build && \$(MAKE) check \n" >> Makefile
-printf "\n" >> Makefile
+mpc_generate_path_build_dir $host
+mpc_generate_target_all $host
 
 #
 # Rules for every module
@@ -472,11 +682,14 @@ if test "$mod" != "#" ; then
        mpc-hwloc)
          MOD_CONFIGURE_ARGUMENTS="${HWLOC_CONFIGURE_ARGUMENTS}"
        ;;
+       mpc-binutils)
+         MOD_CONFIGURE_ARGUMENTS="${BINUTILS_CONFIGURE_ARGUMENTS}"
+       ;;
        mpc-hydra)
-         MOD_CONFIGURE_ARGUMENTS="${HYDRA_CONFIGURE_ARGUMENTS} CFLAGS=-fPIC"
+         MOD_CONFIGURE_ARGUMENTS="${HYDRA_CONFIGURE_ARGUMENTS}"
        ;;
        mpc-openpa)
-         MOD_CONFIGURE_ARGUMENTS="${OPENPA_CONFIGURE_ARGUMENTS} CFLAGS=-fPIC"
+         MOD_CONFIGURE_ARGUMENTS="${OPENPA_CONFIGURE_ARGUMENTS}"
        ;;
        mpc-libxml2)
          MOD_CONFIGURE_ARGUMENTS="${LIBXML2_CONFIGURE_ARGUMENTS}"
@@ -488,137 +701,45 @@ if test "$mod" != "#" ; then
          MOD_CONFIGURE_ARGUMENTS=''
        ;;
     esac
-
-    # Print message
-    echo "Generating rules for module $mod (version $ver)"
-    echo "Found version $ver with configuration $conf" >> configure.log
-    echo "Select module configure arguements for $mod-$ver : ${MOD_CONFIGURE_ARGUMENTS}" >> configure.log
-
+    
     FULL_NAME="${mod}-${ver}"
-    MODULES_CLEAN="${MODULES_CLEAN} ${FULL_NAME}_build"
+	MODULES_CLEAN="${MODULES_CLEAN} ${FULL_NAME}_build"
+	
+	# We set all depedences for compiling MPC
+	if [ "${mod##*-}" = "openpa" ] || [ "${mod##*-}" = "hwloc" ] || [ "${mod##*-}" = "hydra"  ] || [ "${mod##*-}" = "libxml2" ] || [ "${mod##*-}" = "libsctk_arch" ]; then
+	  CONFIG_MPC_DEPS="$CONFIG_MPC_DEPS ${FULL_NAME}_build/config.status"
+	  MAKE_MPC_DEPS="$MAKE_MPC_DEPS ${FULL_NAME}_make"
+	  INSTALL_MPC_DEPS="$INSTALL_MPC_DEPS ${FULL_NAME}_install"
+	fi
 
-    printf "#\n# Module ${mod} / Version ${ver}\n#\n" >> Makefile
-    if [ "${mod##*-}" = "openpa" ] || [ "${mod##*-}" = "hwloc" ] || [ "${mod##*-}" = "binutils" ] || [ "${mod##*-}" = "libxml2" ] || [ "${mod##*-}" = "libsctk_arch" ]
-    then
-        printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_INSTALL=`echo A${SCTK_PREFIX} | sed -e 's/A--prefix=//g'`/${FULL_NAME}\n" >> Makefile
-        printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_BUILD=`pwd`/${FULL_NAME}_build/${mod##*-}-${ver}\n" >> Makefile
-    fi
-    printf "${FULL_NAME}_build/config.status: Makefile ${TOP_SOURCE_DIR}/${mod}/configure\n" >> Makefile
-    printf "\tmkdir -p ${FULL_NAME}_build\n" >> Makefile
-    printf "\tcd ${FULL_NAME}_build && ${TOP_SOURCE_DIR}/${mod}/configure \
-      $ver ${SCTK_PREFIX}/${FULL_NAME} '' '' '' '' '' '${MOD_CONFIGURE_ARGUMENTS}'\n" >> Makefile
-    printf "\ttouch ${FULL_NAME}_build/config.status\n" >> Makefile
-    printf "\n" >> Makefile
-
-    # We set all depedences for compiling MPC
-    if [ "${mod##*-}" = "openpa" ] || [ "${mod##*-}" = "hwloc" ] || [ "${mod##*-}" = "hydra"  ] || [ "${mod##*-}" = "libxml2" ] || [ "${mod##*-}" = "libsctk_arch" ]; then
-      CONFIG_MPC_DEPS="$CONFIG_MPC_DEPS ${FULL_NAME}_build/config.status"
-      MAKE_MPC_DEPS="$MAKE_MPC_DEPS ${FULL_NAME}_make"
-      INSTALL_MPC_DEPS="$INSTALL_MPC_DEPS ${FULL_NAME}_install"
-    fi
-
-    CONFIG_ALL_RULE="${CONFIG_ALL_RULE} ${FULL_NAME}_config"
-    MAKE_ALL_RULE="${MAKE_ALL_RULE} ${FULL_NAME}_make"
-    INSTALL_ALL_RULE="${INSTALL_ALL_RULE} ${FULL_NAME}_install"
-
-    printf "${FULL_NAME}_config:${FULL_NAME}_build/config.status\n" >> Makefile
-    printf "\n" >> Makefile
-    printf "${FULL_NAME}_make: ${FULL_NAME}_config\n" >> Makefile
-
-    #TODO Cleanup this, the cases must be done in modules
-	#This can be done by providing a Makefile template in each modules
-	case "${mod##*-}" in
-		hydra)
-			printf "\t\$(MAKE) -C ${FULL_NAME}_build/hydra \n" >> Makefile
-			printf "\t\$(MAKE) -C ${FULL_NAME}_build/simple \n" >> Makefile
-			;;
-		openpa|hwloc|binutils|libxml2|libsctk_arch)
-			printf "\t\$(MAKE) -C ${FULL_NAME}_build/${mod##*-}-${ver} \n" >> Makefile
-			;;
-		*)
-			printf "\t\$(MAKE) -C ${FULL_NAME}_build \n" >> Makefile
-			;;
-	esac
-	printf "\n" >> Makefile
-
-	#generic rule name
-	printf "${mod}_make:${FULL_NAME}_make\n" >> Makefile
-    printf "\n" >> Makefile
-
-	#TODO Cleanup this, the cases must be done in modules
-	#This can be done by providing a Makefile template in each modules
-	printf "${FULL_NAME}_install: ${FULL_NAME}_make\n" >> Makefile
-	case "${mod##*-}" in
-		"hydra")
-			printf "\t\$(MAKE) -C ${FULL_NAME}_build/hydra install \n" >> Makefile
-			;;
-		"openpa"|"hwloc"|"binutils"|"libxml2"|"libsctk_arch")
-			printf "\t\$(MAKE) -C ${FULL_NAME}_build/${mod##*-}-${ver} install \n" >> Makefile
-			;;
-		*)
-			printf "\t\$(MAKE) -C ${FULL_NAME}_build install \n" >> Makefile
-			;;
-	esac
-	printf "\n" >> Makefile
-
-	#generic rule name
-	printf "${mod}_install:${FULL_NAME}_install\n" >> Makefile
-    printf "\n" >> Makefile
+	CONFIG_ALL_RULE="${CONFIG_ALL_RULE} ${FULL_NAME}_config"
+	MAKE_ALL_RULE="${MAKE_ALL_RULE} ${FULL_NAME}_make"
+	INSTALL_ALL_RULE="${INSTALL_ALL_RULE} ${FULL_NAME}_install"
+	
+	if test "${MPC_TARGET}" != ""; then
+		#generate target for mic
+		mpc_generate_module_target ${MPC_TARGET} cross
+	fi
+	#generate target for host
+	mpc_generate_module_target $host host
   fi
 fi
 done < ${CONFIG_FILE}
 done # End for every module
 
-
-# Rule 'check'
-printf "#\n# Rule clean\n#\n" >> Makefile
-printf "clean:" >> Makefile
-printf "\n" >> Makefile
-printf "\t@rm -fr mpc_build ${MODULES_CLEAN}\n" >> Makefile
-printf "\n" >> Makefile
+if test "${MPC_TARGET}" != ""; then
+	mpc_generate_clean ${MPC_TARGET}
+fi
+mpc_generate_clean $host
 
 
 #
 # Rules for configuring and compiling MPC
 #
-
-echo "===== MPC =====" >> configure.log
-
-ARG_COMPILER_LIST=""
-if test "${COMPILER_LIST}" != "" ; then
-  ARG_COMPILER_LIST="--compilers=\"${COMPILER_LIST}\""
+if test "${MPC_TARGET}" != ""; then
+	mpc_generate_mpc_target ${MPC_TARGET}
 fi
-
-ARG_DEBUGGER_LIST=""
-if test "${DEBUGGER_LIST}" != "" ; then
-  ARG_DEBUGGER_LIST="--debuggers=\"${DEBUGGER_LIST}\""
-fi
-
-ARG_LIBRARY_PATH=""
-if test "${ADD_TO_LIBRARY_PATH}" != "" ; then
-  ARG_LIBRARY_PATH="--add-library-path=\"${ADD_TO_LIBRARY_PATH}\""
-fi
-
-printf "#\n# Rule for MPC\n#\n" >> Makefile
-printf "mpc_build/config.status:${CONFIG_MPC_DEPS} Makefile\n" >> Makefile
-printf "\tmkdir -p mpc_build\n" >> Makefile
-printf "\tcd mpc_build && ${MPC_SOURCE_DIR}/configure ${ARG_COMPILER_LIST} ${ARG_DEBUGGER_LIST} ${ARG_LIBRARY_PATH} ${MPC_ARGS} ${MPC_CFLAGS} ${MPC_LDFLAGS}\n" >> Makefile
-printf "\ttouch mpc_build/config.status\n" >> Makefile
-echo "">> Makefile
-echo "Compiler list for MPC: ${COMPILER_LIST}" >> configure.log
-echo "Debugger list for MPC: ${DEBUGGER_LIST}" >> configure.log
-echo "Additionnal args for MPC ${MPC_ARGS}" >> configure.log
-
-printf "mpc_config:mpc_build/config.status\n" >> Makefile
-echo "">> Makefile
-
-printf "mpc_make: mpc_build/config.status ${MAKE_MPC_DEPS}\n" >> Makefile
-printf "\t\$(MAKE) -C mpc_build \n" >> Makefile
-echo "">> Makefile
-
-printf "mpc_install: mpc_make $INSTALL_MPC_DEPS\n" >> Makefile
-printf "\t\$(MAKE) -C mpc_build install \n" >> Makefile
-echo "">> Makefile
+mpc_generate_mpc_target $host
 
 #
 # Add MPC targets (build & install)
@@ -626,32 +747,10 @@ echo "">> Makefile
 CONFIG_ALL_RULE="${CONFIG_ALL_RULE} mpc_config"
 MAKE_ALL_RULE="${MAKE_ALL_RULE} mpc_make"
 INSTALL_ALL_RULE="${INSTALL_ALL_RULE} mpc_install"
-
-#
-# Rule "make_all"
-#
-printf "#\n# Rule make_all\n#\n" >> Makefile
-printf "make_all: make_build\n" >> Makefile
-
-#
-# Rule "build"
-#
-printf "#\n# Rule make_build\n#\n" >> Makefile
-printf "make_build: ${MAKE_ALL_RULE} \n" >> Makefile
-
-#
-# Rule "configure"
-#
-printf "#\n# Rule make_configure\n#\n" >> Makefile
-printf "make_configure: ${CONFIG_ALL_RULE} \n" >> Makefile
-
-#
-# Rule "install_all"
-#
-printf "#\n# Rule install_all\n#\n" >> Makefile
-printf "install_all: ${INSTALL_ALL_RULE} \n" >> Makefile
-
-cat ${TOP_SOURCE_DIR}/packaging/Makefile >> Makefile
+if test "${MPC_TARGET}" != ""; then
+	mpc_add_mpc_targets ${MPC_TARGET}
+fi
+mpc_add_mpc_targets $host
 
 echo "Configuration process is done. Type 'make' to start compiling the MPC distribution..."
 
