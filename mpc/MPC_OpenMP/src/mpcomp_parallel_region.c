@@ -67,7 +67,17 @@ __mpcomp_wakeup_mvp(
 					&(mvp->threads[0]),
 					mvp->threads[0].info.nb_sections ) ;
 			break ;
-		case MPCOMP_COMBINED_LOOP:
+		case MPCOMP_COMBINED_STATIC_LOOP:
+			sctk_debug( "__mpcomp_wakeup_mvp: Combined parallel/loop" ) ;
+			__mpcomp_static_loop_init(
+					&(mvp->threads[0]),
+					mvp->threads[0].info.loop_lb,
+					mvp->threads[0].info.loop_b,
+					mvp->threads[0].info.loop_incr,
+					mvp->threads[0].info.loop_chunk_size
+					) ;
+			break ;
+		case MPCOMP_COMBINED_DYN_LOOP:
 			sctk_debug( "__mpcomp_wakeup_mvp: Combined parallel/loop" ) ;
 			__mpcomp_dynamic_loop_init(
 					&(mvp->threads[0]),
@@ -798,7 +808,7 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
 	instance->team->info.num_threads = num_threads ;
 	instance->team->info.new_root = instance->root ;
 	instance->team->info.icvs = t->info.icvs ;
-	instance->team->info.combined_pragma = MPCOMP_COMBINED_LOOP ;
+	instance->team->info.combined_pragma = MPCOMP_COMBINED_DYN_LOOP ;
 	instance->team->info.loop_lb = lb ;
 	instance->team->info.loop_b = b ;
 	instance->team->info.loop_incr = incr ;
@@ -960,7 +970,227 @@ __mpcomp_start_parallel_static_loop (int arg_num_threads,
 				      void *(*func) (void *), void *shared,
 				      long lb, long b, long incr, long chunk_size)
 {
-	not_implemented() ;
+  mpcomp_thread_t * t ;
+  int num_threads ;
+
+  /* Initialize OpenMP environment */
+  __mpcomp_init() ;
+
+  /* Grab the thread info */
+  t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+  sctk_assert( t != NULL ) ;
+
+  sctk_debug( 
+		  "__mpcomp_start_parallel_static_loop:"
+		  " === ENTER PARALLEL REGION w/ STATIC LOOP %ld -> %ld [%ld] cs:%ld ===",
+		  lb, b, incr, chunk_size ) ;
+
+#if MPCOMP_COHERENCY_CHECKING
+  __mpcomp_single_coherency_entering_parallel_region() ;
+#endif
+
+  TODO("put #mvps as per-thread ICV and test it for the number of threads")
+
+  /* Compute the number of threads for this parallel region */
+  if ( t->children_instance == NULL  ){
+	  /* Nested => 1 thread */
+	  num_threads = 1 ;
+  } else {
+	  /* Default number of threads */
+	  num_threads = arg_num_threads ;
+
+	  /* -1 is default, and < 0 too */
+	  if ( num_threads < 0 ) {
+		  num_threads = t->info.icvs.nthreads_var ;
+	  }
+
+	  /* If number of threads too large, set to the max
+	   * no oversubscribing */
+	  if ( num_threads > t->children_instance->nb_mvps ) {
+		  num_threads = t->children_instance->nb_mvps ;
+	  }
+  }
+
+  sctk_debug( 
+		  "__mpcomp_start_parallel_static_loop:"
+		  " Number of threads %d (default %d)",
+		  num_threads, t->info.icvs.nthreads_var ) ;
+
+
+  /* First level of parallel region (no nesting and more than 1 thread) */
+  if ( num_threads != 1 && t->instance->team->depth == 0 ) {
+    mpcomp_instance_t * instance ;
+    mpcomp_node_t * n ;			/* Temp node */
+	int i ;
+
+	/* Get the OpenMP instance already allocated during the initialization
+	 * (mpcomp_init) */
+    instance = t->children_instance ;
+    sctk_assert( instance != NULL ) ;
+    sctk_assert( instance->team != NULL ) ;
+
+	/* Fill info for transfer */
+	instance->team->info.func = func ;
+	instance->team->info.shared = shared ;
+	instance->team->info.num_threads = num_threads ;
+	instance->team->info.new_root = instance->root ;
+	instance->team->info.icvs = t->info.icvs ;
+	instance->team->info.combined_pragma = MPCOMP_COMBINED_STATIC_LOOP ;
+	instance->team->info.loop_lb = lb ;
+	instance->team->info.loop_b = b ;
+	instance->team->info.loop_incr = incr ;
+	instance->team->info.loop_chunk_size = chunk_size ;
+	instance->team->depth = t->instance->team->depth + 1 ;
+
+
+    /* Get the root node of the main tree */
+    n = instance->root ;
+    sctk_assert( n != NULL ) ;
+
+    /* Root is awake -> propagate the values to children */
+
+#if MPCOMP_TRANSFER_INFO_ON_NODES
+	n->info = instance->team->info ;
+	sctk_debug( "__mpcomp_start_parallel_static_loop: Node transfers ON" ) ;
+#else
+	sctk_debug( "__mpcomp_start_parallel_static_loop: Node transfers OFF" ) ;
+#endif
+
+	/* Wake up children nodes (as the master) */
+	n = __mpcomp_wakeup_node(1, n, num_threads, instance) ;
+
+    /* Wake up children leaf */
+	n = __mpcomp_wakeup_leaf( n, num_threads, instance ) ;
+
+	__mpcomp_wakeup_mvp( n->children.leaf[0], n ) ;
+
+    /* Start scheduling */
+    in_order_scheduler(instance->mvps[0]) ;
+
+    sctk_nodebug( 
+			"__mpcomp_start_parallel_static_loop: end of in-order scheduling" ) ;
+
+    /* Implicit barrier */
+    __mpcomp_internal_half_barrier( instance->mvps[0] ) ;
+
+    /* Update team info for last values */
+	__mpcomp_save_team_info( instance->team, &(n->children.leaf[0]->threads[0]) ) ;
+
+    /* Finish the half barrier by spinning on the root value */
+    while (sctk_atomics_load_int(
+				&(n->children.leaf[0]->threads[0].info.new_root->barrier)) != 
+			n->children.leaf[0]->threads[0].info.new_root->barrier_num_threads ) 
+    {
+#if MPCOMP_TASK
+	 __mpcomp_task_schedule(); /* Look for tasks remaining */
+#endif //MPCOMP_TASK
+	 sctk_thread_yield() ;
+    }
+    sctk_atomics_store_int(
+			&(n->children.leaf[0]->threads[0].info.new_root->barrier), 0) ;
+
+#if MPCOMP_TASK
+    __mpcomp_task_schedule();
+#endif //MPCOMP_TASK
+
+    /* Restore the previous OpenMP info */
+    sctk_openmp_thread_tls = t ;
+
+#if 0
+    /* Sequential check of tree coherency */
+    sctk_assert( root->barrier == 0 ) ;
+    for ( i = 0 ; i < root->nb_children ; i++ ) {
+      sctk_assert( root->children.node[i]->barrier == 0 ) ;
+    }
+#endif
+
+  } else {
+
+	  /* Check whether the number of current thread is 1 or not */
+#if 0
+	  if ( t->info.num_threads == 1 ) {
+		  mpcomp_instance_t * instance ;
+
+		  sctk_debug( "__mpcomp_start_parallel_static_loop:"
+				 " nested 1 thread within 1 thread" ) ;
+
+		  instance = t->instance ;
+		  sctk_assert( instance != NULL ) ;
+		  sctk_assert( instance->team != NULL ) ;
+
+		  instance->team->depth++ ;
+
+		  __mpcomp_static_loop_init(t,lb,b,incr,chunk_size);
+		  func(shared) ;
+
+		  instance->team->depth-- ;
+
+	  } else 
+#endif
+	  {
+		  mpcomp_instance_t * instance ;
+
+		  sctk_debug( "__mpcomp_start_parallel_static_loop:"
+				  " nested 1 thread within %d threads",
+				  t->info.num_threads	) ;
+
+		  /* Check if the children instance exists */
+		  if ( t->children_instance == NULL ) {
+			  mpcomp_team_t * new_team ;
+
+			  sctk_debug( "__mpcomp_start_parallel_static_loop:"
+					  " children instance is NULL, allocating...",
+					  t->info.num_threads	) ;
+
+			  new_team = (mpcomp_team_t *)sctk_malloc( sizeof( mpcomp_team_t ) ) ;
+			  sctk_assert( new_team != NULL ) ;
+			  __mpcomp_team_init( new_team ) ;
+
+			  t->children_instance = 
+				  (mpcomp_instance_t *)sctk_malloc( sizeof( mpcomp_instance_t ) ) ;
+			  sctk_assert( t->children_instance != NULL ) ;
+			  __mpcomp_instance_init( t->children_instance, 0, new_team ) ;
+		  }
+
+		  instance = t->children_instance ;
+		  sctk_assert( instance != NULL ) ;
+		  sctk_assert( instance->team != NULL ) ;
+
+		  /* Fill information for the team */
+		  instance->team->info.func = func ;
+		  instance->team->info.shared = shared ;
+		  instance->team->info.num_threads = 1 ;
+		  instance->team->info.new_root = NULL ;
+		  instance->team->info.icvs = t->info.icvs ;
+		  instance->team->depth = t->instance->team->depth + 1 ;
+
+		  mpcomp_thread_t * target_t ;
+
+		  sctk_debug( "__mpcomp_start_parallel_static_loop:"
+				  " #mVPs for target instance = %d\n", instance->nb_mvps ) ;
+
+		  target_t = &(instance->mvps[0]->threads[0]);
+		  sctk_assert( target_t != NULL ) ;
+
+		  /* Fill information for the target thread */
+		  target_t->info = instance->team->info ;
+		  target_t->rank = 0 ;
+
+		  sctk_openmp_thread_tls = target_t ;
+
+		  __mpcomp_static_loop_init(target_t,lb,b,incr,chunk_size);
+		  func(shared) ;
+
+		  sctk_openmp_thread_tls = t;
+
+	  }
+  }
+
+  sctk_debug( 
+		  "__mpcomp_start_parallel_static_loop:"
+		  " === EXIT PARALLEL REGION ===" ) ;
+
+
 }
 
 void
@@ -977,5 +1207,30 @@ __mpcomp_start_parallel_runtime_loop (int arg_num_threads,
 				      void *(*func) (void *), void *shared,
 				      long lb, long b, long incr, long chunk_size)
 {
-	not_implemented() ;
+     mpcomp_thread_t *t ;	/* Info on the current thread */
+     
+     /* Handle orphaned directive (initialize OpenMP environment) */
+     __mpcomp_init();
+
+     /* Grab the thread info */
+     t = (mpcomp_thread_t *) sctk_openmp_thread_tls ;
+     sctk_assert( t != NULL ) ;
+
+     switch( t->info.icvs.run_sched_var ) {
+     case omp_sched_static:
+	  __mpcomp_start_parallel_static_loop (arg_num_threads, func, shared,
+					       lb, b, incr, chunk_size) ;
+	  break ;
+     case omp_sched_dynamic:
+	  __mpcomp_start_parallel_dynamic_loop (arg_num_threads, func, shared,
+						lb, b, incr, chunk_size) ;
+	  break ;
+     case omp_sched_guided:
+	  __mpcomp_start_parallel_guided_loop (arg_num_threads, func, shared,
+					       lb, b, incr, chunk_size) ;
+	  break ;
+     default:
+	  not_reachable();
+	  break ;
+     }
 }

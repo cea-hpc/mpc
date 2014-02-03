@@ -177,6 +177,56 @@ void __mpcomp_static_schedule_get_specific_chunk (long lb, long b, long incr,
      }
 }
 
+void 
+__mpcomp_static_loop_init(mpcomp_thread_t *t, 
+		long lb, long b, long incr, long chunk_size)
+{
+	int r;
+
+	/* Get the team info */
+	sctk_assert(t->instance != NULL);
+
+	sctk_nodebug( "[%d] __mpcomp_static_loop_init:"
+			"Entering ",
+			t->rank) ;
+
+	/* Automatic chunk size -> at most one chunk */
+	if (chunk_size == 0) {
+	     t->static_nb_chunks = 1;
+
+	     t->info.loop_lb = lb;
+	     t->info.loop_b = b;
+	     t->info.loop_incr = incr;
+	     t->info.loop_chunk_size = 1;
+	} else {
+	     int nb_threads;
+	     int rank;
+	  
+	     /* Retrieve the number of threads and the rank of this thread */
+	     nb_threads = t->info.num_threads;
+
+	     rank = t->rank;
+	  
+	     t->static_nb_chunks = __mpcomp_get_static_nb_chunks_per_rank(rank, nb_threads, 
+									  lb, b, incr, 
+									  chunk_size );
+
+	     /* No chunk -> exit the 'for' loop */
+	     if ( t->static_nb_chunks <= 0 )
+		  return 0;
+
+	     t->info.loop_lb = lb;
+	     t->info.loop_b = b;
+	     t->info.loop_incr = incr;
+	     t->info.loop_chunk_size = chunk_size;
+	  
+	     t->static_current_chunk = 0 ;
+	}
+	return 1;
+}
+
+
+
 int __mpcomp_static_loop_begin (long lb, long b, long incr, long chunk_size,
 				long *from, long *to)
 {
@@ -187,43 +237,17 @@ int __mpcomp_static_loop_begin (long lb, long b, long incr, long chunk_size,
      t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);  
 
-	 sctk_debug( "[%d] __mpcomp_static_loop_begin: %d -> %d [%d] cs:%d",
-			 t->rank, lb, b, incr, chunk_size ) ;
+     sctk_debug( "[%d] __mpcomp_static_loop_begin: %d -> %d [%d] cs:%d",
+		 t->rank, lb, b, incr, chunk_size ) ;
+     
+     /* Initialization of loop internals */
+     __mpcomp_static_loop_init(t, lb, b, incr, chunk_size); 
 
      /* Automatic chunk size -> at most one chunk */
      if (chunk_size == 0) {
-	  t->static_nb_chunks = 1;
 	  __mpcomp_static_schedule_get_single_chunk (lb, b, incr, from, to);
-
-	  t->info.loop_lb = lb;
-	  t->info.loop_b = b;
-	  t->info.loop_incr = incr;
-	  t->info.loop_chunk_size = 1;
      } else {
-	  int nb_threads;
-	  int rank;
-	  
-	  /* Retrieve the number of threads and the rank of this thread */
-	  nb_threads = t->info.num_threads;
-
-	  rank = t->rank;
-	  
-	  t->static_nb_chunks = __mpcomp_get_static_nb_chunks_per_rank(rank, nb_threads, 
-								       lb, b, incr, 
-								       chunk_size );
-
-	  /* No chunk -> exit the 'for' loop */
-	  if ( t->static_nb_chunks <= 0 )
-	       return 0;
-
-	  t->info.loop_lb = lb;
-	  t->info.loop_b = b;
-	  t->info.loop_incr = incr;
-	  t->info.loop_chunk_size = chunk_size;
-	  
-	  t->static_current_chunk = 0 ;
-	  __mpcomp_get_specific_chunk_per_rank(rank, nb_threads, lb, b, incr, chunk_size, 
-					       0, from, to );
+	  return __mpcomp_static_loop_next (from, to);
      }
      return 1;
 }
