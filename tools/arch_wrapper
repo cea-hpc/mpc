@@ -1,0 +1,21 @@
+#!/bin/bash
+
+arch="`uname -m`"
+dir="`dirname $0`"
+cmd="`basename $0`"
+
+case "$arch" in
+	x86_64)
+		subprefix=host
+		;;
+	mic)
+		subprefix=target
+		;;
+	*)
+		echo "Unsupported architecture, or auto-detection error : $arch" 1>&2
+		exit 1
+		;;
+esac
+
+"$dir/../${subprefix}/${cmd}" "$@"
+exit $?

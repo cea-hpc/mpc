@@ -1,0 +1,24 @@
+##########################################################################
+
+#Global setup variables
+PREFIX=@PREFIX@@SUBPREFIX@
+PROJECT_SOURCE_DIR=@PROJECT_SOURCE_DIR@
+PROJECT_BUILD_DIR=@PROJECT_BUILD_DIR@
+PROJECT_PACKAGE_DIR=@PROJECT_PACKAGE_DIR@
+PROJECT_PATCH_DIR=@PROJECT_PATCH_DIR@
+PROJECT_HELP_DIR=@PROJECT_HELP_DIR@
+STEP_WRAPPER=$(PROJECT_SOURCE_DIR)/tools/StepWrapper.sh
+
+#Some commands
+PATCH=patch
+TAR=tar
+
+#do some export
+export ENABLE_COLOR=@ENABLE_COLOR@
+export SUBPREFIX=@SUBPREFIX@
+
+#global target, the install-all one will be built after all packag targets
+all: make-all
+
+#avoid conflict with directory
+.PHONY: all

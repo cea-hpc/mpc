@@ -1,0 +1,6 @@
+##########################################################################
+
+#build all packages
+make-all: @ALL_PACKAGES@
+
+.PHONY: make-all
