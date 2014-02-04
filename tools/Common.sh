@@ -29,7 +29,6 @@ setModulesToInternal()
 	local list=`cat "${PROJECT_SOURCE_DIR}/config.txt" | cut -f 1 -d ';' |  sed -e "s/^#[0-9A-Za-z_-\ #]*//g" | xargs echo`
 	for module in $list; do
 		genPrefix $module
-		echo $module	
 	done	
 }
 
