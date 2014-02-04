@@ -7626,7 +7626,7 @@ __INTERNAL__PMPI_Error_string (int errorcode, char *string, int *resultlen)
 			MPI_Error_string_convert (MPI_ERR_NOT_SAME , "Collective argument not identical on all processes, \
 				or collective routines called in a different order by	different processes");
 			MPI_Error_string_convert (MPI_ERR_AMODE , "Error related to the amode passed to MPI_FILE_OPEN");
-			MPI_Error_string_convert (MPI_ERR_UNSUPPORTED_DATAEP , "Unsupported datarep passed to MPI_FILE_SET_VIEW");
+			MPI_Error_string_convert (MPI_ERR_UNSUPPORTED_DATAREP , "Unsupported datarep passed to MPI_FILE_SET_VIEW");
 			MPI_Error_string_convert (MPI_ERR_UNSUPPORTED_OPERATION , "Unsupported operation, \
 				such as seeking on a file which	supports sequential access only");
 			MPI_Error_string_convert (MPI_ERR_NO_SUCH_FILE , "File does not exist");
