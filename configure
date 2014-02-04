@@ -1,757 +1,280 @@
-#!/bin/sh
-############################# MPC License ##############################
-# Wed Nov 19 15:19:19 CET 2008                                         #
-# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
-#                                                                      #
-# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
-# This file is part of the MPC Runtime.                                #
-#                                                                      #
-# This software is governed by the CeCILL-C license under French law   #
-# and abiding by the rules of distribution of free software.  You can  #
-# use, modify and/ or redistribute the software under the terms of     #
-# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
-# following URL http://www.cecill.info.                                #
-#                                                                      #
-# The fact that you are presently reading this means that you have     #
-# had knowledge of the CeCILL-C license and that you accept its        #
-# terms.                                                               #
-#                                                                      #
-# Authors:                                                             #
-#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
-#   - PERACHE Marc marc.perache@cea.fr                                 #
-#   - VALAT Sebastien sebastien.valat@cea.fr                           #
-#                                                                      #
-########################################################################
+#!/bin/bash
+######################################################
+#            PROJECT  : svMPC                        #
+#            VERSION  : 0.0.0                        #
+#            DATE     : 11/2013                      #
+#            AUTHOR   : Valat Sébastien              #
+#            LICENSE  : CeCILL-C                     #
+######################################################
 
-# Add current directory to the PATH environment
-PATH="$PATH:."
-export PATH
+######################################################
+#setup paths
+PROJECT_SOURCE_DIR="`dirname "$0"`"
+PROJECT_BUILD_DIR="$PWD"
 
-CONF_NAME="configure"
+######################################################
+#avoid to build locally
+if [ "${PROJECT_SOURCE_DIR}" = "." ] || [ "${PROJECT_BUILD_DIR}" = "${PROJECT_SOURCE_DIR}" ]; then
+	PROJECT_BUILD_DIR="${PWD}/build"
+	PROJECT_SOURCE_DIR="${PWD}"
+	mkdir -p build
+	cd build
+fi
 
-BUILD_DIR="`pwd`"
+######################################################
+#compute subdirs
+#TODO: modifier extern-deps pour inclure les dir des deps + patches 
+PROJECT_TEMPLATE_DIR="${PROJECT_SOURCE_DIR}/tools/templates"
+PROJECT_PACKAGE_DIR="${PROJECT_SOURCE_DIR}/extern-deps"
+#PROJECT_PATCH_DIR="${PROJECT_SOURCE_DIR}/patches"
+PROJECT_HELP_DIR="${PROJECT_SOURCE_DIR}/tools/help"
 
-TOP_SOURCE_DIR="`dirname $0`/"
+######################################################
+#include common
+. "${PROJECT_SOURCE_DIR}/tools/Common.sh"
 
-# Update directories to absolute paths
-cd ${TOP_SOURCE_DIR}
-TOP_SOURCE_DIR="`pwd`"
-MPC_SOURCE_DIR="${TOP_SOURCE_DIR}/mpc/"
-cd ${BUILD_DIR}
 
-export MPC_SOURCE_DIR
+######################################################
+#Set all modules to internal
 
-MPC_VERSION="`${MPC_SOURCE_DIR}/MPC_Tools/mpc_print_version`"
-# If the prefix must be checked
-SCTK_PREFIX_CHECK="1"
 
-# List of all modules to add to MPC distribution
-MODULES="mpc-gdb mpc-gcc mpc-hydra mpc-hwloc mpc-openpa mpc-binutils mpc-libxml2 mpc-libsctk_arch"
-# List of modules for the 'clean' rule
-MODULES_CLEAN=
 
-MPC_ARGS=
-MPC_TARGET=
-SCTK_PREFIX="--prefix=/usr/local"
+# TODO : clean this and use it in config file
+setModulesToInternal
 
-# Default file to read configuration
-DEFAULT_CONFIG_FILE=${TOP_SOURCE_DIR}/config
-CONFIG_FILE=${DEFAULT_CONFIG_FILE}
-
-# Check if include files will be overwritten
-. ${TOP_SOURCE_DIR}/tools/check_overwritten_files
-
-# Default options
-GCC_CONFIGURE_ARGUMENTS=""
-GDB_CONFIGURE_ARGUMENTS=""
-HWLOC_CONFIGURE_ARGUMENTS=""
-BINUTILS_CONFIGURE_ARGUMENTS=""
-OPENPA_CONFIGURE_ARGUMENTS=""
-HYDRA_CONFIGURE_ARGUMENTS=""
-LIBXML2_CONFIGURE_ARGUMENTS=""
-LIBSCTK_ARCH_CONFIGURE_ARGUMENTS=""
-
-CROSS_CONFIGURE_ARGUMENTS=""
-
-# Options for SCTK_PMI
-SCTK_PMI_OPTIONS="--with-hydra"
-SCTK_PMI_CHOSEN="0"
-
-# Options for HWLOC
-SCTK_HWLOC_OPTIONS="--with-hwloc=embeded"
-
-# Options for SCTK_OPENPA
-SCTK_OPENPA_OPTIONS="--with-openpa=embeded"
-
-# Options fo SCTK_LIBXML
-SCTK_LIBXML2_OPTIONS="--with-libxml2=embeded"
-
-# Options fo SCTK_LIBSCTK_ARCH
-SCTK_LIBSCTK_ARCH_OPTIONS="--with-libsctk_arch=embeded"
-
-# Options for OpenIB
-SCTK_OPENIB_OPTIONS=""
-
-cat $TOP_SOURCE_DIR/tools/banner
-echo "'configure' configures MPC Distribution ${MPC_VERSION} to adapt to many kinds of systems."
-echo
-
-usage() {
-cat <<EOF
-Usage: $0 [OPTION]... [VAR=VALUE]...
-
-Defaults for the options are specified in brackets.
-
-Configuration:
-  -h, --help                          display this help and exit
-
-Installation directories:
-  --prefix=PREFIX                     Install architecture-independent files in PREFIX [/usr/local]
-  --disable-prefix-check              Force given prefix (in case of file conflicts)
-
-Cross-compilation:
-  --target=arch                       Cross-compile MPC for given arch
-
-Optional Features:
-  --with-cpath=DIR1:DIR2:...          Add directories to the CPATH environment variable
-                                      for the whole MPC distribution
-  --with-library-path=DIR1:DIR2:...   Add directories to the LD_LIBRARY_PATH environment
-                                      variable for the whole MPC distribution
-  --with-config=file                  Read the file 'file' for main configuration
-                                      [${DEFAULT_CONFIG_FILE}]
-
-Launcher selection:
-  --with-hydra                        Use (built-in) HYDRA as launcher [enabled]
-  --hydra-{with-ftb|...}              Pass option to hydra configure script
-  --with-slurm[=prefix]               Use SLURM  as launcher [disabled]
-
-MPC gcc options:
-  --disable-mpc-gcc                   Disable compilation of mpc-gcc and mpc-binutils [enabled]
-  --gcc-{with-mpfr|...}               Pass option to GCC configure script.
-  --with-mpfr=prefix                  Prefix for libmpfr needed to build gcc.
-  --with-gmp=prefix                   Prefix for libgmp needed to build gcc.
-
-MPC binutils options:
-  --disable-mpc-binutils              Disable compilation of mpc-binutils [enabled]
-
-MPC gdb options:
-  --disable-mpc-gdb                   Disable compilation of mpc-gdb [enabled]
-  --gdb-{prefix|...}                  Pass option to GDB configure script.
-
-MPC dependencies:
-  --with-hwloc[=prefix]               Use the hwloc provided in prefix if not set MPC will buid its own hwloc
-  --with-libxml2[=prefix]             Use the libxml2 provided in prefix if not set MPC will buid its own one
-  --with-libsctk_arch[=prefix]             Use the libsctk_arch provided in prefix if not set MPC will buid its own one
-  --hwloc-{enable-debug|...}          Pass option to hwloc configure script.
-  --with-openpa[=prefix]              Use the OpenPA in this prefix if not set MPC will build its own OpenPA
-  --openpa-{disable-assert|...}       Pass option to OpenPA configure script.
-  --with-openib=prefix                Use the OpenFabrics librairies provided in prefix.
-
-Help of sub modules:
-  --help-mpc                          Display available options for MPC library.
-
-EOF
-}
-
-#
-# INPUT-ARGUMENT PARSING
-#
-printf "$0 " > configure.log
-for arg in "$@" ; do
-    printf "\'$arg\' " >> configure.log
-    case $arg in
-    --prefix=*)
-		SCTK_PREFIX="$arg"
-		MPC_ARGS="$SCTK_PREFIX $MPC_ARGS"
-		MPC_PREFIX="`echo A$SCTK_PREFIX | sed -e 's/A--prefix=//g'`"
-	;;
-    # Usage
-    --disable-mpc-gcc)
-       MODULES="`echo $MODULES | sed -e 's/mpc-gcc//g'`"
-	;;
-    --disable-mpc-gcc-only)
-       MODULES="`echo $MODULES | sed -e 's/mpc-gcc//g'`"
-	;;
-	--disable-mpc-binutils)
-       MODULES="`echo $MODULES | sed -e 's/mpc-binutils//g'`"
-    ;;
-    --disable-mpc-gdb)
-        MODULES="`echo $MODULES | sed -e 's/mpc-gdb//g'`"
-    ;;
-    --help)
-	usage
-	exit 1
-    ;;
-    --help-mpc)
-      ${TOP_SOURCE_DIR}/mpc/configure --help
-      exit 0
-    ;;
-    --with-cpath=*)
-      ADD_TO_CPATH="`echo A$arg | sed -e 's/A--with-cpath=//g'`"
-    ;;
-    --with-library-path=*)
-      ADD_TO_LIBRARY_PATH="`echo A$arg | sed -e 's/A--with-library-path=//g'`"
-    ;;
-    --with-config=*)
-      CONFIG_FILE="`echo A$arg | sed -e 's/A--with-config=//g'`"
-    ;;
-    --disable-prefix-check)
-      SCTK_PREFIX_CHECK="0"
-    ;;
-    --with-mpfr=*)
-      GCC_CONFIGURE_ARGUMENTS="${GCC_CONFIGURE_ARGUMENTS} ${arg}"
-    ;;
-    --with-gmp=*)
-      GCC_CONFIGURE_ARGUMENTS="${GCC_CONFIGURE_ARGUMENTS} ${arg}"
-    ;;
-    --with-hydra)
-      if [ $SCTK_PMI_CHOSEN -eq 1 ]; then
-        echo "Error : You can enable only one launcher"
-        exit 1
-      fi
-      SCTK_PMI_CHOSEN="1"
-    ;;
-    --with-slurm)
-      if [ $SCTK_PMI_CHOSEN -eq 1 ]; then
-        echo "Error : You can enable only one launcher."
-        exit 1
-      fi
-      SCTK_PMI_CHOSEN="1"
-  	  SCTK_PMI_OPTIONS="$arg"
-      MODULES="`echo $MODULES | sed -e 's/mpc-hydra//g'`"
-    ;;
-    --with-slurm=*)
-      if [ $SCTK_PMI_CHOSEN -eq 1 ]; then
-        echo "Error : You can enable only one launcher."
-        exit 1
-      fi
-      SCTK_PMI_CHOSEN="1"
-  	  SCTK_PMI_OPTIONS="$arg"
-      MODULES="`echo $MODULES | sed -e 's/mpc-hydra//g'`"
-    ;;
-    --with-libxml2)
-      MODULES="`echo $MODULES | sed -e 's/mpc-libxml2//g'`"
-      SCTK_LIBXML2_OPTIONS=""
-      echo "Using libxml2 located in system"
-    ;;
-    --with-libxml2=*)
-      MODULES="`echo $MODULES | sed -e 's/mpc-libxml2//g'`"
-      SCTK_LIBXML2_OPTIONS="$arg"
-      echo "Using libxml2 given by $arg"
-    ;;
-    --with-libsctk_arch)
-      MODULES="`echo $MODULES | sed -e 's/mpc-libsctk_arch//g'`"
-      SCTK_LIBSCTK_ARCH_OPTIONS=""
-      echo "Using libsctk_arch located in system"
-    ;;
-    --with-libsctk_arch=*)
-      MODULES="`echo $MODULES | sed -e 's/mpc-libsctk_arch//g'`"
-      SCTK_LIBSCTK_ARCH_OPTIONS="$arg"
-      echo "Using libsctk_arch given by $arg"
-    ;;
-    --with-hwloc)
-      MODULES="`echo $MODULES | sed -e 's/mpc-hwloc//g'`"
-      SCTK_HWLOC_OPTIONS=""
-      echo "Using hwloc located in system"
-    ;;
-    --with-hwloc=*)
-      MODULES="`echo $MODULES | sed -e 's/mpc-hwloc//g'`"
-      SCTK_HWLOC_OPTIONS="$arg"
-      echo "Using hwloc given by $arg"
-    ;;
-    --with-openpa)
-      MODULES="`echo $MODULES | sed -e 's/mpc-openpa//g'`"
-      SCTK_OPENPA_OPTIONS=""
-      echo "Using OpenPA located in system"
-    ;;
-    --with-openpa=*)
-      MODULES="`echo $MODULES | sed -e 's/mpc-openpa//g'`"
-      SCTK_OPENPA_OPTIONS="$arg"
-      echo "Using OpenPA given by $arg"
-    ;;
-    --with-openib=*)
-      SCTK_OPENIB_OPTIONS="$arg"
-      echo "Using OpenIB located by $arg"
-    ;;
-    --gcc-*)
-      GCC_CONFIGURE_ARGUMENTS="${GCC_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--gcc//g'`"
-    ;;
-    --gdb-*)
-      GDB_CONFIGURE_ARGUMENTS="${GDB_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--gdb//g'`"
-    ;;
-    --hwloc-*)
-      HWLOC_CONFIGURE_ARGUMENTS="${HWLOC_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--hwloc//g'`"
-    ;;
-    --libxml2-*)
-      LIBXML2_CONFIGURE_ARGUMENTS="${LIBXML2_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--libxml2//g'`"
-    ;;
-    --libsctk_arch-*)
-      LIBSCTK_ARCH_CONFIGURE_ARGUMENTS="${LIBSCTK_ARCH_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--libsctk_arch//g'`"
-    ;;
-    --openpa-*)
-      OPENPA_CONFIGURE_ARGUMENTS="${OPENPA_CONFIGURE_ARGUMENTS} -`echo A$arg | sed -e 's/A--openpa//g'`"
-    ;;
-    --hydra-*)
-      #caution, we remove the --hydra- in the hydra configure script as it permit to separate
-      #for hydra and simple sub packages
-      HYDRA_CONFIGURE_ARGUMENTS="${HYDRA_CONFIGURE_ARGUMENTS} $arg"
-    ;;
-    CFLAGS=*)
-    MPC_CFLAGS="CFLAGS=\"`echo A$arg | sed -e 's/ACFLAGS=//g'`\""
-    ;;
-    LDFLAGS=*)
-    MPC_LDFLAGS="LDFLAGS=\"`echo A$arg | sed -e 's/ALDFLAGS=//g'`\""
-    ;;
-    --target=*)
-		if test "$arg" = "--target=k1om"; then 
-			CROSS_CONFIGURE_ARGUMENTS="--mic"
-			MPC_TARGET="k1om"
-		elif test "$arg" = "--target=arm"; then
-			CROSS_CONFIGURE_ARGUMENTS=" "
-			MPC_TARGET="arm"
-		fi
-		MPC_ARGS="$arg $MPC_ARGS"
-    ;;
-    --mic-library-path=*)
-    SCTK_MIC_LIBRARY_PATH="`echo A$arg | sed -e 's/A--mic-library-path=//g'`"
-    export SCTK_MIC_LIBRARY_PATH
-    echo "MIC library path updated : $SCTK_MIC_LIBRARY_PATH"
-    MPC_ARGS="$arg $MPC_ARGS"
-    ;;
-    *)
-    MPC_ARGS="$arg $MPC_ARGS"
-    ;;
-    esac
+######################################################
+#Parse options
+for arg in "$@"
+do
+	case "$arg" in
+		################# SCTK_ARCH #################
+		--with-hydra=*)
+			extractParamValue 'HYDRA_PREFIX' 'with-hydra' "$arg"
+			;;
+		--hydra-*)
+			extractAndAddPackageOption 'HYDRA_BUILD_PARAMETERS' 'hydra' "$arg"
+			;;
+		################# SCTK_ARCH #################
+		--with-sctk-arch=*)
+			extractParamValue 'SCTK_ARCH_PREFIX' 'with-sctk-arch' "$arg"
+			;;
+		--sctk-arch-*)
+			extractAndAddPackageOption 'SCTK_ARCH_BUILD_PARAMETERS' 'sctk-arch' "$arg"
+			;;
+		#################### OPENPA #################
+		--with-openpa=*)
+			extractParamValue 'OPENPA_PREFIX' 'with-openpa' "$arg"
+			;;
+		--openpa-*)
+			extractAndAddPackageOption 'OPENPA_BUILD_PARAMETERS' 'openpa' "$arg"
+			;;
+		################### MPC GDB #################
+		--with-mpc-gdb=*)
+			extractParamValue 'MPC_GDB_PREFIX' 'with-mpc-gdb' "$arg"
+			;;
+		--mpc-gdb-*)
+			extractAndAddPackageOption 'MPC_GDB_BUILD_PARAMETERS' 'mpc-gdb' "$arg"
+			;;
+		--disable-mpc-gdb)
+			MPC_GDB_PREFIX='disabled'
+			;;
+		################### MPC GCC #################
+		--with-mpc-gcc=*)
+			extractParamValue 'MPC_GCC_PREFIX' 'with-mpc-gcc' "$arg"
+			;;
+		--mpc-gcc-*)
+			extractAndAddPackageOption 'MPC_GCC_BUILD_PARAMETERS' 'mpc-gcc' "$arg"
+			;;
+		--disable-mpc-gcc)
+			MPC_GCC_PREFIX='disabled'
+			;;
+		##################### MPFR ##################
+		--with-mpfr=*)
+			extractParamValue 'MPFR_PREFIX' 'with-mpfr' "$arg"
+			;;
+		--mpfr-*)
+			extractAndAddPackageOption 'MPFR_BUILD_PARAMETERS' 'mpfr' "$arg"
+			;;
+		##################### GMP ###################
+		--with-gmp=*)
+			extractParamValue 'GMP_PREFIX' 'with-gmp' "$arg"
+			;;
+		--gmp-*)
+			extractAndAddPackageOption 'GMP_BUILD_PARAMETERS' 'gmp' "$arg"
+			;;
+		################## BINUTILS #################
+		--with-mpc-binutils=*)
+			extractParamValue 'BINUTILS_PREFIX' 'with-mpc-binutils' "$arg"
+			;;
+		--mpc-binutils-*)
+			extractAndAddPackageOption 'BINUTILS_BUILD_PARAMETERS' 'mpc-binutils' "$arg"
+			;;
+		################## LIBXML2 ##################
+		--with-libxml2=*)
+			extractParamValue 'LIBXML2_PREFIX' 'with-libxml2' "$arg"
+			;;
+		--libxml2-*)
+			extractAndAddPackageOption 'LIBXML2_BUILD_PARAMETERS' 'libxml2' "$arg"
+			;;
+		################### HWLOC ###################
+		--with-hwloc=*)
+			extractParamValue 'HWLOC_PREFIX' 'with-hwloc' "$arg"
+			;;
+		--hwloc-*)
+			extractAndAddPackageOption 'HWLOC_BUILD_PARAMETERS' 'hwloc' "$arg"
+			;;
+		################## COMMON ###################
+		--enable-multi-arch)
+			MULTI_ARCH='true'
+			;;
+		--enable-color)
+			ENABLE_COLOR='true'
+			;;
+		--enable-all-internals)
+			ALL_INTERNALS='true'
+			;;
+		-v | --verbose | --verbose=1)
+			export STEP_WRAPPER_VERBOSE=1;
+			;;
+		-vv | --verbose=2)
+			export STEP_WRAPPER_VERBOSE=2;
+			;;
+		-vvv | --verbose=3)
+			export STEP_WRAPPER_VERBOSE=3;
+			;;
+		-j*)
+			MAKE_J="$arg"
+			;;
+		--prefix=*)
+			extractParamValue 'PREFIX' 'prefix' "$arg"
+			;;
+		--help|-h|-?)
+			showHelp
+			;;
+		*)
+			echo "Invalid argument '$arg', please check your command line or get help with --help." 1>&2
+			exit 1
+	esac
 done
-echo "" >> configure.log
 
-# Print some env info in script for easier debug
-echo "=============== ENV =================" >> configure.log
-echo "uname -rsvpo = `uname -rsvpo`"         >> configure.log
-echo "SHELL        = `echo $SHELL`"          >> configure.log
-echo "make -v      = `make -v | head -n 1`"              >> configure.log
+######################################################
+#Add prefix to local variable to also make the search
+enablePrefixEnv "${PREFIX}"
 
-# Add arguments linked to SCTK_PMI
-MPC_ARGS="$SCTK_PMI_OPTIONS $MPC_ARGS"
+######################################################
+#force MPC
+MPC_PREFIX="${INTERNAL_KEY}"
+#TODO : wrie FindHydra
+HYDRA_PREFIX="${INTERNAL_KEY}"
+HYDRA_REAL_PREFIX="${PREFIX}"
+HYDRA_SIMPLE_PREFIX="${INTERNAL_KEY}"
+HYDRA_SIMPLE_REAL_PREFIX="${PREFIX}"
 
-# Add arguments linked to SCTK_HWLOC
-MPC_ARGS="$SCTK_HWLOC_OPTIONS $MPC_ARGS"
+######################################################
+#Print summary
+echo "=================== SYMMARY =================="
+echo "BUILD        : ${PROJECT_BUILD_DIR}"
+echo "SOURCE       : ${PROJECT_SOURCE_DIR}"
+echo "INSTALL      : ${PREFIX}"
+echo "libxml2      : ${LIBXML2_PREFIX}"
+echo "hwloc        : ${HWLOC_PREFIX}"
+echo "binutils     : ${BINUTILS_PREFIX}"
+echo "gmp          : ${GMP_PREFIX}"
+echo "mpfr         : ${MPFR_PREFIX}"
+echo "openpa       : ${OPENPA_PREFIX}"
+echo "sctk-arch    : ${SCTK_ARCH_PREFIX}"
+echo "mpc-gcc      : ${MPC_GCC_PREFIX}"
+echo "mpc-gdb      : ${MPC_GDB_PREFIX}"
+echo "hydra        : ${HYDRA_PREFIX}"
+echo "hydra-simple : ${HYDRA_SIMPLE_PREFIX}"
+echo "mpc          : ${MPC_PREFIX}"
+echo "=============================================="
 
-# Add arguments linked to SCTK_OPENPA
-MPC_ARGS="$SCTK_OPENPA_OPTIONS $MPC_ARGS"
+######################################################
+#Create glue between packages
+MPC_GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' '--with-mpfr=${MPFR_REAL_PREFIX}' ${MPC_GCC_BUILD_PARAMETERS}"
+MPC_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_REAL_PREFIX}' '--with-openpa=${OPENPA_REAL_PREFIX}' '--with-hwloc=${HWLOC_REAL_PREFIX}' '--with-hydra-simple=${HYDRA_SIMPLE_REAL_PREFIX}' ${MPC_BUILD_PARAMETERS}"
+MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
+HYDRA_SIMPLE_BUILD_PARAMETERS="'--with-hydra-mpl=${HYDRA_REAL_PREFIX}' ${HYDRA_SIMPLE_BUILD_PARAMETERS}"
 
-# Add arguments linked to OpenIB
-MPC_ARGS="$SCTK_OPENIB_OPTIONS $MPC_ARGS"
-
-# Add arguments linked to SCTK_LIBXML2
-MPC_ARGS="$SCTK_LIBXML2_OPTIONS $MPC_ARGS"
-
-# Add arguments linked to SCTK_LIBSCTK_ARCH
-MPC_ARGS="$SCTK_LIBSCTK_ARCH_OPTIONS $MPC_ARGS"
-
-if [ $SCTK_PREFIX_CHECK -eq 1 ]; then
-  check_overwritten_files
-fi
-
-# Check that the configuration file exists
-echo -n "Checking if configuration file exists ... "
-if ! test -f ${CONFIG_FILE} ; then
-  echo "FAILED"
-  echo "Error: configuration file ${CONFIG_FILE} does not exist"
-  exit 1
-fi
-echo "OK"
-
-#
-# MAKEFILE GENERATION
-#
-host=`uname -m`
-echo "Generating `pwd`/Makefile"
-
-#
-# FUNCTIONS
-#
-mpc_generate_header ()
+######################################################
+#Clear makefile to generate it
+genMakefile()
 {
-	if test ! -d $1; then
-		mkdir $1
-	fi
-cat <<EOF > $1/Makefile
-############################# MPC License ##############################
-# Wed Nov 19 15:19:19 CET 2008                                         #
-# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
-#                                                                      #
-# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
-# This file is part of the MPC Runtime.                                #
-#                                                                      #
-# This software is governed by the CeCILL-C license under French law   #
-# and abiding by the rules of distribution of free software.  You can  #
-# use, modify and/ or redistribute the software under the terms of     #
-# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
-# following URL http://www.cecill.info.                                #
-#                                                                      #
-# The fact that you are presently reading this means that you have     #
-# had knowledge of the CeCILL-C license and that you accept its        #
-# terms.                                                               #
-#                                                                      #
-# Authors:                                                             #
-#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
-#   - PERACHE Marc marc.perache@cea.fr                                 #
-#                                                                      #
-########################################################################
-
-EOF
+	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.head.in" > Makefile
+	installAutotoolsExternPackage 'libxml2' 'LIBXML2'  >> Makefile
+	installAutotoolsExternPackage 'hwloc' 'HWLOC'  >> Makefile
+	installAutotoolsExternPackage 'binutils' 'BINUTILS'  >> Makefile
+	installAutotoolsExternPackage 'gmp' 'GMP'  >> Makefile
+	installAutotoolsExternPackage 'mpfr' 'MPFR'  >> Makefile
+	installAutotoolsExternPackage 'openpa' 'OPENPA'  >> Makefile
+	installAutotoolsExternPackage 'gcc' 'MPC_GCC'  >> Makefile
+	installAutotoolsExternPackage 'gdb' 'MPC_GDB'  >> Makefile
+	installAutotoolsExternPackage 'cmake' 'CMAKE'  >> Makefile
+	installAutotoolsExternPackage 'hydra' 'HYDRA'  >> Makefile
+	installAutotoolsLocalPackage 'libsctk-arch' 'SCTK_ARCH' >> Makefile
+	installAutotoolsLocalPackage 'hydra-simple' 'HYDRA_SIMPLE'  >> Makefile
+	installAutotoolsLocalPackage 'mpc' 'MPC'  >> Makefile
+	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot.in" >> Makefile
 }
 
-mpc_generate_path_build_dir ()
+######################################################
+genMakeForSubPrefix()
 {
-	printf "BUILD_DIR=\`pwd\`\n" >> $1/Makefile
-	printf "TOP_SOURCE_DIR=\"${TOP_SOURCE_DIR}\"\n" >> $1/Makefile
-
-	if test "${ADD_TO_CPATH}" != "" ; then
-	  printf "ifeq (\${CPATH},)\n" >> $1/Makefile
-	  printf "  CPATH:=${ADD_TO_CPATH}\n" >> $1/Makefile
-	  printf "else\n" >> $1/Makefile
-	  printf "  CPATH:=${ADD_TO_CPATH}:\${CPATH}\n" >> $1/Makefile
-	  printf "endif\n" >> $1/Makefile
-	  printf "export CPATH\n" >> $1/Makefile
-	  printf "\n" >> $1/Makefile
-	fi
-
-	if test "${ADD_TO_LIBRARY_PATH}" != "" ; then
-	  printf "ifeq (\${LIBRARY_PATH},)\n" >> $1/Makefile
-	  printf "  LIBRARY_PATH:=${ADD_TO_LIBRARY_PATH}\n" >> $1/Makefile
-	  printf "else\n" >> $1/Makefile
-	  printf "  LIBRARY_PATH:=${ADD_TO_LIBRARY_PATH}:\${LIBRARY_PATH}\n" >> $1/Makefile
-	  printf "endif\n" >> $1/Makefile
-	  printf "ifeq (\${LD_LIBRARY_PATH},)\n" >> $1/Makefile
-	  printf "  LD_LIBRARY_PATH:=${ADD_TO_LIBRARY_PATH}\n" >> $1/Makefile
-	  printf "else\n" >> $1/Makefile
-	  printf "  LD_LIBRARY_PATH:=${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}\n" >> $1/Makefile
-	  printf "endif\n" >> $1/Makefile
-	  printf "export LIBRARY_PATH\n" >> $1/Makefile
-	  printf "export LD_LIBRARY_PATH\n" >> $1/Makefile
-	  printf "\n" >> $1/Makefile
-	fi
-}
-
-mpc_generate_target_all ()
-{
-	# Rule 'all' (a simple link)
-	printf "#\n# Rule 'all'\n#\n" >> $1/Makefile
-	printf "all:make_all" >> $1/Makefile
-	printf "\n\n" >> $1/Makefile
-
-	# Rule 'configure' (a simple link)
-	printf "#\n# Rule 'configure'\n#\n" >> $1/Makefile
-	printf "configure:make_configure" >> $1/Makefile
-	printf "\n\n" >> $1/Makefile
-
-	# Rule 'build' (a simple link)
-	printf "#\n# Rule 'build'\n#\n" >> $1/Makefile
-	printf "build:make_build" >> $1/Makefile
-	printf "\n\n" >> $1/Makefile
-
-
-	# Rule 'install' (a simple link)
-	printf "#\n# Rule 'install'\n#\n" >> $1/Makefile
-	printf "install:install_all" >> $1/Makefile
-	printf "\n\n" >> $1/Makefile
-
-	# Rule 'check'
-	printf "#\n# Rule check\n#\n" >> $1/Makefile
-	printf "check:" >> $1/Makefile
-	printf "\n" >> $1/Makefile
-	printf "\tcd mpc_build && \$(MAKE) check \n" >> $1/Makefile
-	printf "\n" >> $1/Makefile
-}
-
-mpc_generate_module_target ()
-{
-	# Print message
-	echo "Generating rules for module $mod for $1 (version $ver)"
-	echo "Found version $ver with configuration $conf" >> $1/configure.log
-	echo "Select module configure arguements for $mod-$ver : ${MOD_CONFIGURE_ARGUMENTS}" >> $1/configure.log
+	local subprefix="$1"
 	
-	printf "#\n# Module ${mod} / Version ${ver} for $1\n#\n" >> $1/Makefile
-	if [ "${mod##*-}" = "openpa" ] || [ "${mod##*-}" = "hwloc" ] || [ "${mod##*-}" = "binutils" ] || [ "${mod##*-}" = "libxml2" ] || [ "${mod##*-}" = "libsctk_arch" ]
-	then
-		if test "$2" = "host"; then
-			printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_INSTALL=`echo A${SCTK_PREFIX} | sed -e 's/A--prefix=//g'`/$1/${FULL_NAME}\n" >> $1/Makefile
-			printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_BUILD=`pwd`/$1/${FULL_NAME}_build/${mod##*-}-${ver}\n" >> $1/Makefile
-		elif test "$1" = "k1om"; then
-			printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_INSTALL_MIC=`echo A${SCTK_PREFIX} | sed -e 's/A--prefix=//g'`/$1/${FULL_NAME}\n" >> $1/Makefile
-			printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_BUILD_MIC=`pwd`/$1/${FULL_NAME}_build/${mod##*-}-${ver}\n" >> $1/Makefile
-		elif test "$1" = "arm"; then
-			printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_INSTALL_ARM=`echo A${SCTK_PREFIX} | sed -e 's/A--prefix=//g'`/$1/${FULL_NAME}\n" >> $1/Makefile
-			printf "export `echo ${mod##*-} | tr [:lower:] [:upper:]`_PREFIX_BUILD_ARM=`pwd`/$1/${FULL_NAME}_build/${mod##*-}-${ver}\n" >> $1/Makefile
-		fi
+	if [ ! -d "$subprefix" ]; then
+		mkdir "$subprefix" || exit 1
 	fi
-	printf "${FULL_NAME}_build/config.status: Makefile ${TOP_SOURCE_DIR}/${mod}/configure\n" >> $1/Makefile
-	printf "\tmkdir -p ${FULL_NAME}_build\n" >> $1/Makefile
-	printf "\tcd ${FULL_NAME}_build && ${TOP_SOURCE_DIR}/${mod}/configure \
-	  $ver ${SCTK_PREFIX}/$1/${FULL_NAME} '' '' '' '' '' '${MOD_CONFIGURE_ARGUMENTS}" >> $1/Makefile
-	
-	if test "$2" != "host"; then
-		printf " ${CROSS_CONFIGURE_ARGUMENTS}'\n" >> $1/Makefile
-	else
-		printf "'\n" >> $1/Makefile
-	fi
-	
-	printf "\ttouch ${FULL_NAME}_build/config.status\n" >> $1/Makefile
-	printf "\n" >> $1/Makefile
 
-	printf "${FULL_NAME}_config:${FULL_NAME}_build/config.status\n" >> $1/Makefile
-	printf "\n" >> $1/Makefile
-	printf "${FULL_NAME}_make: ${FULL_NAME}_config\n" >> $1/Makefile
-
-	#TODO Cleanup this, the cases must be done in modules
-	#This can be done by providing a Makefile template in each modules
-	case "${mod##*-}" in
-		hydra)
-			printf "\t\$(MAKE) -C ${FULL_NAME}_build/hydra \n" >> $1/Makefile
-			printf "\t\$(MAKE) -C ${FULL_NAME}_build/simple \n" >> $1/Makefile
-			;;
-		openpa|hwloc|binutils|libxml2|libsctk_arch)
-			printf "\t\$(MAKE) -C ${FULL_NAME}_build/${mod##*-}-${ver} \n" >> $1/Makefile
-			;;
-		*)
-			printf "\t\$(MAKE) -C ${FULL_NAME}_build \n" >> $1/Makefile
-			;;
-	esac
-	printf "\n" >> $1/Makefile
-
-	#generic rule name
-	printf "${mod}_make:${FULL_NAME}_make\n" >> $1/Makefile
-	printf "\n" >> $1/Makefile
-
-	#TODO Cleanup this, the cases must be done in modules
-	#This can be done by providing a Makefile template in each modules
-	printf "${FULL_NAME}_install: ${FULL_NAME}_make\n" >> $1/Makefile
-	case "${mod##*-}" in
-		"hydra")
-			printf "\t\$(MAKE) -C ${FULL_NAME}_build/hydra install \n" >> $1/Makefile
-			;;
-		"openpa"|"hwloc"|"binutils"|"libxml2"|"libsctk_arch")
-			printf "\t\$(MAKE) -C ${FULL_NAME}_build/${mod##*-}-${ver} install \n" >> $1/Makefile
-			;;
-		*)
-			printf "\t\$(MAKE) -C ${FULL_NAME}_build install \n" >> $1/Makefile
-			;;
-	esac
-	printf "\n" >> $1/Makefile
-
-	#generic rule name
-	printf "${mod}_install:${FULL_NAME}_install\n" >> $1/Makefile
-	printf "\n" >> $1/Makefile
+	cd "$subprefix" || exit 1
+	SUBPREFIX="/$subprefix"
+	genMakefile
+	cd .. || exit 1
 }
 
-mpc_generate_clean ()
+######################################################
+createRootMakefile()
 {
-	# Rule 'clean'
-	printf "#\n# Rule clean\n#\n" >> $1/Makefile
-	printf "clean:" >> $1/Makefile
-	printf "\n" >> $1/Makefile
-	printf "\t@rm -fr mpc_build ${MODULES_CLEAN}\n" >> $1/Makefile
-	printf "\n" >> $1/Makefile
+	SUBPREFIXES="$*"
+	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.multiprefix.root.in" > Makefile
+	for SUBPREFIX in $*
+	do
+		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.multiprefix.subprefix.in" >> Makefile
+	done
 }
 
-mpc_generate_mpc_target ()
-{
-	#
-	# Rules for configuring and compiling MPC
-	#
-	echo "===== MPC for $1 =====" >> $1/configure.log
-	ARG_COMPILER_LIST=""
-	if test "${COMPILER_LIST}" != "" ; then
-	  ARG_COMPILER_LIST="--compilers=\"${COMPILER_LIST}\""
-	fi
-
-	ARG_LIBRARY_PATH=""
-	if test "${ADD_TO_LIBRARY_PATH}" != "" ; then
-	  ARG_LIBRARY_PATH="--add-library-path=\"${ADD_TO_LIBRARY_PATH}\""
-	fi
-
-	printf "#\n# Rule for MPC for $1\n#\n" >> $1/Makefile
-	printf "mpc_build/config.status:${CONFIG_MPC_DEPS} Makefile\n" >> $1/Makefile
-	printf "\tmkdir -p mpc_build\n" >> $1/Makefile
-	
-	printf "\tcd mpc_build && ${MPC_SOURCE_DIR}/configure ${ARG_COMPILER_LIST} ${ARG_LIBRARY_PATH} ${MPC_ARGS} ${MPC_CFLAGS} ${MPC_LDFLAGS}\n" >> $1/Makefile
-	printf "\ttouch mpc_build/config.status\n" >> $1/Makefile
-	echo "">> $1/Makefile
-	echo "Compiler list for MPC: ${COMPILER_LIST}" >> $1/configure.log
-	echo "Additionnal args for MPC ${MPC_ARGS}" >> $1/configure.log
-
-	printf "mpc_config:mpc_build/config.status\n" >> $1/Makefile
-	echo "">> $1/Makefile
-
-	printf "mpc_make: mpc_build/config.status ${MAKE_MPC_DEPS}\n" >> $1/Makefile
-	printf "\t\$(MAKE) -C mpc_build \n" >> $1/Makefile
-	echo "">> $1/Makefile
-
-	printf "mpc_install: mpc_make $INSTALL_MPC_DEPS\n" >> $1/Makefile
-	printf "\t\$(MAKE) -C mpc_build install \n" >> $1/Makefile
-	echo "">> $1/Makefile
-}
-
-mpc_add_mpc_targets()
-{
-	#
-	# Rule "make_all"
-	#
-	printf "#\n# Rule make_all\n#\n" >> $1/Makefile
-	printf "make_all: make_build\n" >> $1/Makefile
-
-	#
-	# Rule "build"
-	#
-	printf "#\n# Rule make_build\n#\n" >> $1/Makefile
-	printf "make_build: ${MAKE_ALL_RULE} \n" >> $1/Makefile
-
-	#
-	# Rule "configure"
-	#
-	printf "#\n# Rule make_configure\n#\n" >> $1/Makefile
-	printf "make_configure: ${CONFIG_ALL_RULE} \n" >> $1/Makefile
-
-	#
-	# Rule "install_all"
-	#
-	printf "#\n# Rule install_all\n#\n" >> $1/Makefile
-	printf "install_all: ${INSTALL_ALL_RULE} \n" >> $1/Makefile
-
-	cat ${TOP_SOURCE_DIR}/packaging/Makefile >> $1/Makefile
-}
-
-#
-# START GENERATION
-#
-
-if test "$MPC_TARGET" != ""; then
-	mpc_generate_header ${MPC_TARGET}
+######################################################
+if [ "$MULTI_ARCH" = 'true' ]; then
+	genMakeForSubPrefix 'host'
+	genMakeForSubPrefix 'target'
+	createRootMakefile 'host' 'target'
+else
+	genMakefile
 fi
-mpc_generate_header $host
 
-# Variable initialization
-CONFIG_ALL_RULE=""
-MAKE_ALL_RULE=""
-INSTALL_ALL_RULE=""
-# Dependences to make_mpc rule
-CONFIG_MPC_DEPS=""
-MAKE_MPC_DEPS=""
-INSTALL_MPC_DEPS=""
-
-# Path of the build directory
-
-
-if test "$MPC_TARGET" != ""; then
-	mpc_generate_path_build_dir ${MPC_TARGET}
-	mpc_generate_target_all ${MPC_TARGET}
+######################################################
+#some info
+if [ ! -z "$MAKE_J" ]; then
+	echo "Running in parallel with $MAKE_J..."
 fi
-mpc_generate_path_build_dir $host
-mpc_generate_target_all $host
 
-#
-# Rules for every module
-#
-COMPILER_LIST=""
-DEBUGGER_LIST=""
-for i in $MODULES ; do
-echo "===== Checking module $i =====" >> configure.log
-# Read config file
-while read mod ver conf; do
-if test "$mod" != "#" ; then
-  if test "$mod" = "$i" ; then
-    # Add this version to the compiler list
-    if test "$mod" = "mpc-gcc" ; then
-      COMPILER_LIST="$ver $COMPILER_LIST"
-    fi
-
-    if test "$mod" = "mpc-gdb" ; then
-      DEBUGGER_LIST="$ver $DEBUGGER_LIST"
-    fi
-
-   # Get configure arguments
-    case $i in
-       mpc-gcc)
-         MOD_CONFIGURE_ARGUMENTS="${GCC_CONFIGURE_ARGUMENTS}"
-       ;;
-       mpc-gdb)
-         MOD_CONFIGURE_ARGUMENTS="${GDB_CONFIGURE_ARGUMENTS}"
-       ;;
-       mpc-hwloc)
-         MOD_CONFIGURE_ARGUMENTS="${HWLOC_CONFIGURE_ARGUMENTS}"
-       ;;
-       mpc-binutils)
-         MOD_CONFIGURE_ARGUMENTS="${BINUTILS_CONFIGURE_ARGUMENTS}"
-       ;;
-       mpc-hydra)
-         MOD_CONFIGURE_ARGUMENTS="${HYDRA_CONFIGURE_ARGUMENTS}"
-       ;;
-       mpc-openpa)
-         MOD_CONFIGURE_ARGUMENTS="${OPENPA_CONFIGURE_ARGUMENTS}"
-       ;;
-       mpc-libxml2)
-         MOD_CONFIGURE_ARGUMENTS="${LIBXML2_CONFIGURE_ARGUMENTS}"
-       ;;
-       mpc-libsctk_arch)
-         MOD_CONFIGURE_ARGUMENTS="${LIBSCTK_ARCH_CONFIGURE_ARGUMENTS}"
-       ;;
-       *)
-         MOD_CONFIGURE_ARGUMENTS=''
-       ;;
-    esac
-    
-    FULL_NAME="${mod}-${ver}"
-	MODULES_CLEAN="${MODULES_CLEAN} ${FULL_NAME}_build"
-	
-	# We set all depedences for compiling MPC
-	if [ "${mod##*-}" = "openpa" ] || [ "${mod##*-}" = "hwloc" ] || [ "${mod##*-}" = "hydra"  ] || [ "${mod##*-}" = "libxml2" ] || [ "${mod##*-}" = "libsctk_arch" ]; then
-	  CONFIG_MPC_DEPS="$CONFIG_MPC_DEPS ${FULL_NAME}_build/config.status"
-	  MAKE_MPC_DEPS="$MAKE_MPC_DEPS ${FULL_NAME}_make"
-	  INSTALL_MPC_DEPS="$INSTALL_MPC_DEPS ${FULL_NAME}_install"
-	fi
-
-	CONFIG_ALL_RULE="${CONFIG_ALL_RULE} ${FULL_NAME}_config"
-	MAKE_ALL_RULE="${MAKE_ALL_RULE} ${FULL_NAME}_make"
-	INSTALL_ALL_RULE="${INSTALL_ALL_RULE} ${FULL_NAME}_install"
-	
-	if test "${MPC_TARGET}" != ""; then
-		#generate target for mic
-		mpc_generate_module_target ${MPC_TARGET} cross
-	fi
-	#generate target for host
-	mpc_generate_module_target $host host
-  fi
+#made verbose if seq
+if [ "$MAKE_J" = "-j1" ] || [ -z "$MAKE_J" ]; then
+	if [ -z "$STEP_WRAPPER_VERBOSE" ]; then export STEP_WRAPPER_VERBOSE=3; fi
 fi
-done < ${CONFIG_FILE}
-done # End for every module
 
-if test "${MPC_TARGET}" != ""; then
-	mpc_generate_clean ${MPC_TARGET}
+#do it
+if [ "$STEP_WRAPPER_VERBOSE" = '3' ]; then
+	make $MAKE_J || fatal "Finish with errors, please read previous messages."
+else
+	make --quiet $MAKE_J || fatal "Finish with errors, please read previous messages."
 fi
-mpc_generate_clean $host
 
-
-#
-# Rules for configuring and compiling MPC
-#
-if test "${MPC_TARGET}" != ""; then
-	mpc_generate_mpc_target ${MPC_TARGET}
-fi
-mpc_generate_mpc_target $host
-
-#
-# Add MPC targets (build & install)
-#
-CONFIG_ALL_RULE="${CONFIG_ALL_RULE} mpc_config"
-MAKE_ALL_RULE="${MAKE_ALL_RULE} mpc_make"
-INSTALL_ALL_RULE="${INSTALL_ALL_RULE} mpc_install"
-if test "${MPC_TARGET}" != ""; then
-	mpc_add_mpc_targets ${MPC_TARGET}
-fi
-mpc_add_mpc_targets $host
-
-echo "Configuration process is done. Type 'make' to start compiling the MPC distribution..."
-
-exit 0
+######################################################
+echo
+echo "FINISHED, you can now use the MPC package installed into $PREFIX"
+echo "You can now use MPC by source XXXXXXXXX (TODO) in your shell"
+echo 
+echo "For developpers, use this in mpc/ subdirectory : "
+echo "mkdir build && cd build && ../configure $MPC_BUILD_PARAMETERS"

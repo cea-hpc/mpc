@@ -6,10 +6,9 @@ binutils       ; 2.22    ; install  ;              ;  host     ; --disable-werro
 gmp            ; 5.1.3   ; dep      ;              ;  host     ;
 mpfr           ; 3.1.2   ; dep      ; gmp          ;  host     ;
 mpc-gcc        ; 4.4.0   ; install  ; gmp mpfr     ;  host     ; --disable-bootstrap --disable-multilib --program-prefix=mpc- --program-suffix=440 --with-pkgversion=MPC --enable-languages=c,c++,fortran
-gdb            ; 6.8     ; install  ;              ;  host     ; --program-prefix=mpc- --disable-werror
 openpa         ; 1.0.2   ; install  ;              ;  all      ; CFLAGS=-fPIC
 libsctk-arch   ; cur     ; install  ;              ;  all      ;
-mpc            ; cur     ; install  ; libxml2 hwloc openpa libsctk-arch cmake hydra hydra-simple ;  all      ; --enable-rpath
+mpc            ; cur     ; install  ; libxml2 hwloc openpa libsctk-arch cmake hydra hydra-simple ;  all      ;
 hydra          ; 1.4     ; install  ;              ;  all      ; CFLAGS=-fPIC
 hydra-simple   ; cur     ; install  ; hydra cmake  ;  all      ; CFLAGS=-fPIC
 mpc-gdb        ; 7.5     ; install  ;              ;  host     ; --program-prefix=mpc- --disable-werror

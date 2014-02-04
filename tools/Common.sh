@@ -260,6 +260,12 @@ installAutotoolsLocalPackage()
 }
 
 ######################################################
+installAutotoolsLocalPackageHydraSimple()
+{
+	setupInstallPackage "$1" "$2" "${PROJECT_TEMPLATE_DIR}/Makefile.local.autotools.hydra_simple.in"
+}
+
+######################################################
 genAbstractMultiArchBinDir()
 {
 	mkdir -p "$PREFIX/generic/bin" || exit 1

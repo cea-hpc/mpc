@@ -213,7 +213,7 @@ genMakefile()
 	installAutotoolsExternPackage 'cmake' 'CMAKE'  >> Makefile
 	installAutotoolsExternPackage 'hydra' 'HYDRA'  >> Makefile
 	installAutotoolsLocalPackage 'libsctk-arch' 'SCTK_ARCH' >> Makefile
-	installAutotoolsLocalPackage 'hydra-simple' 'HYDRA_SIMPLE'  >> Makefile
+	installAutotoolsLocalPackageHydraSimple 'hydra-simple' 'HYDRA_SIMPLE'  >> Makefile
 	installAutotoolsLocalPackage 'mpc' 'MPC'  >> Makefile
 	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot.in" >> Makefile
 }
