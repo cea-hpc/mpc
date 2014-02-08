@@ -3758,11 +3758,14 @@ __INTERNAL__PMPI_Gather (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 		  j++;
 		}
 	      j--;
+	      __INTERNAL__PMPI_Waitall(j+1, recvrequest, MPI_STATUSES_IGNORE);
+/*
 	      for (; j >= 0; j--)
 		{
 		  __INTERNAL__PMPI_Wait (&(recvrequest[j]),
 					 MPI_STATUS_IGNORE);
 		}
+*/
 	    }
 	}
 
@@ -3814,11 +3817,13 @@ __INTERNAL__PMPI_Gatherv (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 		  j++;
 		}
 	      j--;
-	      for (; j >= 0; j--)
+              __INTERNAL__PMPI_Waitall(j+1,recvrequest, MPI_STATUSES_IGNORE);
+
+/*	      for (; j >= 0; j--)
 		{
 		  __INTERNAL__PMPI_Wait (&(recvrequest[j]),
 					 MPI_STATUS_IGNORE);
-		}
+		}*/
 	    }
 	}
 
@@ -3872,11 +3877,14 @@ __INTERNAL__PMPI_Scatter (void *sendbuf, int sendcnt, MPI_Datatype sendtype,
 		  j++;
 		}
 	      j--;
+              __INTERNAL__PMPI_Waitall(j+1,sendrequest, MPI_STATUSES_IGNORE);
+/*
 	      for (; j >= 0; j--)
 		{
 		  __INTERNAL__PMPI_Wait (&(sendrequest[j]),
 					 MPI_STATUS_IGNORE);
 		}
+*/
 	    }
 	}
 
@@ -3929,11 +3937,14 @@ __INTERNAL__PMPI_Scatterv (void *sendbuf, int *sendcnts, int *displs,
 		  j++;
 		}
 	      j--;
+              __INTERNAL__PMPI_Waitall(j+1,sendrequest, MPI_STATUSES_IGNORE);
+/*
 	      for (; j >= 0; j--)
 		{
 		  __INTERNAL__PMPI_Wait (&(sendrequest[j]),
 					 MPI_STATUS_IGNORE);
 		}
+*/
 	    }
 	}
 

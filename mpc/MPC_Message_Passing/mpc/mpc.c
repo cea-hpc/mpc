@@ -4063,10 +4063,13 @@ PMPC_Scatterv (void *sendbuf,
 					j++;
 				}
 				j--;
+                  __MPC_Waitall(j+1,sendrequest,MPC_STATUSES_IGNORE);
+/*
 				for (; j >= 0; j--)
 				{
 					__MPC_Wait (&(sendrequest[j]), MPC_STATUS_IGNORE);
 				}
+*/
 			}
 		}
 
@@ -4162,10 +4165,13 @@ PMPC_Scatter (void *sendbuf,
 					j++;
 				}
 				j--;
+                  __MPC_Waitall(j+1,sendrequest,MPC_STATUSES_IGNORE);
+/*
 				for (; j >= 0; j--)
 				{
 					__MPC_Wait (&(sendrequest[j]), MPC_STATUS_IGNORE);
 				}
+*/
 			}
 		}
 
