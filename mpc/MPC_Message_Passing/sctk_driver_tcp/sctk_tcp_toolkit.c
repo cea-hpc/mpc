@@ -72,7 +72,13 @@ sctk_tcp_connect_to (char *name_init,sctk_rail_info_t* rail)
   if(rail->network.tcp.sctk_use_tcp_o_ib){
     sprintf(name,"%s-ib0",name_init);
   } else {
-    sprintf(name,"%s",name_init);
+    sprintf(name,"%s-ib0",name_init);
+    server = gethostbyname  (name);
+    if (server == NULL)
+    {
+	sprintf(name,"%s",name_init);
+    }
+/*    sctk_warning("Use hostname %s",name);*/
   }
   sctk_nodebug("Connect to %s",name);
 
