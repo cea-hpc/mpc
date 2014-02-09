@@ -226,7 +226,7 @@ void sctk_runtime_config_struct_init_inter_thread_comm(void * struct_ptr)
 	obj->broadcast_max_size = 1024;
 	obj->broadcast_check_threshold = 512;
 	obj->allreduce_arity_max = 8;
-	obj->allreduce_max_size = 1024;
+	obj->allreduce_max_size = 4096;
 	obj->allreduce_check_threshold = 8192;
 	obj->ALLREDUCE_MAX_SLOT = 524288;
 	obj->collectives_init_hook.name = "sctk_collectives_init_opt_noalloc_split_messages";

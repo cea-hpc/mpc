@@ -115,7 +115,7 @@ meta.types = {
 		broadcast_max_size: {mode: 'param', name: "broadcast_max_size", type: "int", doc: "", dflt: "1024", },
 		broadcast_check_threshold: {mode: 'param', name: "broadcast_check_threshold", type: "int", doc: "", dflt: "512", },
 		allreduce_arity_max: {mode: 'param', name: "allreduce_arity_max", type: "int", doc: "", dflt: "8", },
-		allreduce_max_size: {mode: 'param', name: "allreduce_max_size", type: "int", doc: "", dflt: "1024", },
+		allreduce_max_size: {mode: 'param', name: "allreduce_max_size", type: "int", doc: "", dflt: "4096", },
 		allreduce_check_threshold: {mode: 'param', name: "allreduce_check_threshold", type: "int", doc: "", dflt: "8192", },
 		ALLREDUCE_MAX_SLOT: {mode: 'param', name: "ALLREDUCE_MAX_SLOT", type: "int", doc: "Slot size for allreduce", dflt: "524288", },
 		collectives_init_hook: {mode: 'param', name: "collectives_init_hook", type: "funcptr", doc: "", dflt: "sctk_collectives_init_opt_noalloc_split_messages", },
