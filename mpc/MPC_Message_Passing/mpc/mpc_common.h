@@ -20,7 +20,7 @@
 /* #                                                                      # */
 /* ######################################################################## */
 
-#define MAX_MPC_BUFFERED_MSG 16
+#define MAX_MPC_BUFFERED_MSG 32
 #define MAX_MPC_BUFFERED_SIZE (128 * sizeof(long))
 #include <uthash.h>
 
