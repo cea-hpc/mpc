@@ -568,6 +568,10 @@ static void sctk_allreduce_opt_noalloc_split_messages (const void *buffer_in, vo
   }
 }
 
+void sctk_allreduce_opt_noalloc_split_messages_ALLREDUCE_MAX_SLOT(int t){
+ALLREDUCE_MAX_SLOT=t;
+}
+
 void sctk_allreduce_opt_noalloc_split_messages_init(struct sctk_internal_collectives_struct_s * tmp, sctk_communicator_t id){
   allreduce_arity_max = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_arity_max;
   allreduce_max_size = sctk_runtime_config_get()->modules.inter_thread_comm.allreduce_max_size;
