@@ -192,7 +192,7 @@
 			<param name="allreduce_arity_max" type="int" default="8" doc=""/>
 			<param name="allreduce_max_size" type="int" default="4096" doc=""/>
 			<param name="allreduce_check_threshold" type="int" default="8192" doc=""/>
-			<param name="ALLREDUCE_MAX_SLOT" type="int" default="524288" doc="Slot size for allreduce"/>
+			<param name="ALLREDUCE_MAX_SLOT" type="int" default="16384" doc="Slot size for allreduce"/>
 			<param name="collectives_init_hook" type="funcptr" default="sctk_collectives_init_opt_noalloc_split_messages" doc=""/>
 		</struct>
 
