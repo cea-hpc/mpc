@@ -37,6 +37,18 @@ PROJECT_HELP_DIR="${PROJECT_SOURCE_DIR}/tools/help"
 ######################################################
 #Set all modules to internal
 
+######################################################
+#Check if colors could be enabled
+if [ -t 1 ]; then
+
+    # see if it supports colors...
+    ncolors=$(tput colors)
+
+    if test -n "$ncolors" && test $ncolors -ge 8; then
+	ENABLE_COLOR='true'	
+    fi
+fi
+
 
 
 # TODO : clean this and use it in config file
