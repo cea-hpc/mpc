@@ -1,0 +1,9 @@
+# TODO LIST
+ + prendre en charge MPC
+ + récupérer automatiquement le nombre de coeurs (-j)
+ + télécharger les deps sur selon le script de paratools
+ + s'appuyer sur le fichier config pour rendre le script installmpc plus générique
+ + gestion de l'arborescence pour la cross-compil
+
+# DONE
+ - détecter automatiquement le support de la couleur
