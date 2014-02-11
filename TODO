@@ -23,3 +23,7 @@
 # DONE
  - détecter automatiquement le support de la couleur
  - récupérer automatiquement le nombre de coeurs (-j)
+ - ajouter un param pour les versions prises en charge
+
+# TODO : Rebuild if found col {yes|no} => status
+# PATCH : HYDRA binutils SCTK_ARCH GDB ROMIO MBC GCC LIBFORTRAN
