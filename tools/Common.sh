@@ -232,9 +232,9 @@ setupInstallPackage()
 	
 	#Load package options
 	local version=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 2 -d ';' | xargs echo`
-	local status=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 3 -d ';' | xargs echo`
-	local deps=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 4 -d ';' | xargs echo`
-	local options=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 6 -d ';'`
+	local status=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 4 -d ';' | xargs echo`
+	local deps=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 6 -d ';' | xargs echo`
+	local options=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 7 -d ';'`
 	
 	#extract user options
 	eval "userOptions=\"\$${varprefix}_BUILD_PARAMETERS\""

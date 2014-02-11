@@ -1,9 +1,8 @@
 #!/bin/bash
 ######################################################
-#            PROJECT  : svMPC                        #
-#            VERSION  : 0.0.0                        #
-#            DATE     : 11/2013                      #
-#            AUTHOR   : Valat Sébastien              #
+#            PROJECT  : MPC                          #
+#            VERSION  : 2.5.1                        #
+#            DATE     : 02/2014                      #
 #            LICENSE  : CeCILL-C                     #
 ######################################################
 
@@ -184,8 +183,8 @@ HYDRA_SIMPLE_PREFIX="${INTERNAL_KEY}"
 HYDRA_SIMPLE_REAL_PREFIX="${PREFIX}"
 
 ######################################################
-#Print summary
-echo "=================== SYMMARY =================="
+#Print summary (TODO : à générer)
+echo "=================== SUMMARY =================="
 echo "BUILD        : ${PROJECT_BUILD_DIR}"
 echo "SOURCE       : ${PROJECT_SOURCE_DIR}"
 echo "INSTALL      : ${PREFIX}"
@@ -211,7 +210,7 @@ MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
 HYDRA_SIMPLE_BUILD_PARAMETERS="'--with-hydra-mpl=${HYDRA_REAL_PREFIX}' ${HYDRA_SIMPLE_BUILD_PARAMETERS}"
 
 ######################################################
-#Clear makefile to generate it
+#Clear makefile to generate it (TODO à générer, générer la variable en majuscule)
 genMakefile()
 {
 	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.head.in" > Makefile
