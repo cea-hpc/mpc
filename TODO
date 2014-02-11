@@ -1,8 +1,24 @@
 # TODO LIST
+ + check de la presence des deps et des bonnes versions
+ + téléchargement des packets + gestion des mirrors 
  + prendre en charge MPC
  + télécharger les deps sur selon le script de paratools
  + s'appuyer sur le fichier config pour rendre le script installmpc plus générique
  + gestion de l'arborescence pour la cross-compil
+ + ajouter termcap
+ + MPC_Tools/configure_extern_deps (path hydra) ?
+ + pas de chemin en dur dans mpcrun / mpccc
+ + pas de rpath dans libmpc mais sur binaires user oui
+
+# DEP :
+* binutils
+* GMP MPFR MPC CLOOGS -> GCC 
+* HWLOC HYDRA|PMI OpenPA SCTK-ARCH libxml2 -> MPC
+* MPC binutils -> MBC (priv)
+* MPC binutils -> RomIO (priv)
+* binutils
+* termcap -> GDB
+* libgfortran (priv)
 
 # DONE
  - détecter automatiquement le support de la couleur
