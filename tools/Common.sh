@@ -129,6 +129,23 @@ extractParamValue()
 #Extract parameter value and put in given variable
 #Args :
 # -$1 : Output variable name
+# -$2 : parameter name (without -, eg. -XXX)
+# -$3 : User value (-XXX=blablable)
+extractParamValueAlt()
+{
+	#extract in local vars
+	local outputvar="$1"
+	local name="$2"
+	local arg="$3"
+
+	value=`echo "$arg" | sed -e "s/^-${name}//g"`
+	eval "${outputvar}=\"${value}\""
+}
+
+######################################################
+#Extract parameter value and put in given variable
+#Args :
+# -$1 : Output variable name
 # -$2 : parameter prefix (eg --libxml2-XXXX to add --XXX to libxml2 params)
 # -$3 : User value (--libxml2-XXXX)
 extractAndAddPackageOption()

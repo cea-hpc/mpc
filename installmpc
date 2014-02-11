@@ -47,12 +47,10 @@ if [ -t 1 ]; then
 fi
 
 #Check cores available to perform parallel builds 
-if [ -f $FILE ];
+if [ -f /proc/cpuinfo ];
 then
 	MAKE_J=`cat /proc/cpuinfo | egrep "core id|physical id" | tr -d '\n' | sed s/physical/\\\nphysical/g | grep -v "^$" | sort | uniq | wc -l`
 fi
-
-
 
 # TODO : clean this and use it in config file
 setModulesToInternal
@@ -158,7 +156,7 @@ do
 			export STEP_WRAPPER_VERBOSE=3;
 			;;
 		-j*)
-			MAKE_J="$arg"
+			extractParamValueAlt 'MAKE_J' 'j' "$arg"
 			;;
 		--prefix=*)
 			extractParamValue 'PREFIX' 'prefix' "$arg"
@@ -271,19 +269,19 @@ fi
 ######################################################
 #some info
 if [ ! -z "$MAKE_J" ]; then
-	echo "Running in parallel with $MAKE_J..."
+	echo "Running in parallel with -j$MAKE_J..."
 fi
 
 #made verbose if seq
-if [ "$MAKE_J" = "-j1" ] || [ -z "$MAKE_J" ]; then
+if [ "$MAKE_J" = "1" ] || [ -z "$MAKE_J" ]; then
 	if [ -z "$STEP_WRAPPER_VERBOSE" ]; then export STEP_WRAPPER_VERBOSE=3; fi
 fi
 
 #do it
 if [ "$STEP_WRAPPER_VERBOSE" = '3' ]; then
-	make $MAKE_J || fatal "Finish with errors, please read previous messages."
+	make -j$MAKE_J || fatal "Finish with errors, please read previous messages."
 else
-	make --quiet $MAKE_J || fatal "Finish with errors, please read previous messages."
+	make --quiet -j$MAKE_J || fatal "Finish with errors, please read previous messages."
 fi
 
 ######################################################
