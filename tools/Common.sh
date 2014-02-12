@@ -21,15 +21,30 @@ GEN_DEP_HELPS='false'
 SUBPREFIX=''
 
 
+
+######################################################
+#function to get a list of modules 
+#Args   :
+#   -$1 : Variable in witch to put the result
+#Result : Create var
+getModules()
+{
+	#extract parameter
+	local outvar="$1"	
+
+	local list=`cat "${PROJECT_SOURCE_DIR}/config.txt" | cut -f 1 -d ';' |  sed -e "s/^#[0-9A-Za-z_-\ #]*//g" | xargs echo`
+	eval "${outvar}=\"${list}\""
+}
+
 ######################################################
 #function to generate the prefix variable and set it to internal
 #Args   :
-#   -$1 : Module name
-#Result : Create var
+#Result : Set to internal
 setModulesToInternal()
 {
-	local list=`cat "${PROJECT_SOURCE_DIR}/config.txt" | cut -f 1 -d ';' |  sed -e "s/^#[0-9A-Za-z_-\ #]*//g" | xargs echo`
-	for module in $list; do
+	getModules 'LIST'
+
+	for module in $LIST; do
 		genPrefix $module
 	done	
 }
@@ -256,6 +271,46 @@ registerPackage()
 	ALL_PACKAGES="${ALL_PACKAGES} ${1}"
 }
 
+
+######################################################
+#Get compilation options according to HOST TARGET and COMPILER parameters 
+#abort if configuration not supported
+# Args :
+#  -$1 : package name
+#  -$2 : host
+#  -$3 : target
+#  -$4 : compiler
+getPackageCompilationOptions()
+{
+	#made local
+	local package="$1"
+	local host="$2"
+	local target="$3"
+	local compiler="$4"
+
+	local configForCompiler=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "all.*all.*${compiler}"`
+	local config=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "${host}.*${target}.*${compiler}"`
+
+	#check if config variable is not empty
+	if [[ -z "$config" ]]; then
+		echo "Compilation not supported for ${package} with HOST=${host}, TARGET=${target} and COMPILER=${compiler}" 1>&2
+		# TODO: abort
+	fi
+
+	local supported=`echo $config | cut -f 4 -d ';' | xargs echo`
+
+	#check if configuration supported
+	if [[ "${supported}" == "no" ]]; then
+		echo "Compilation not supported for ${package} with HOST=${host}, TARGET=${target} and COMPILER=${compiler}" 1>&2
+		# TODO: abort
+	fi
+
+	local options=`echo ${configForCompiler} | cut -f 5 -d ';'`
+	local options="${options} `echo ${config} | cut -f 5 -d ';'`"
+
+	echo $options
+}
+
 ######################################################
 registerPackageMultiArch()
 {
@@ -273,14 +328,20 @@ registerPackageMultiArch()
 #Generate makefile rules do build package
 # Args :
 #  -$1 : package name (eg. libxml2),
-#  -$2 : variable prefix (eg LIBXML2_PREFIX and check if equal to internal one)
-#  -$3 : [OPTIONAL] template file to use.
+#  -$2 : host
+#  -$3 : target 
+#  -$4 : compiler
+#  -$5 : variable prefix (eg LIBXML2_PREFIX and check if equal to internal one)
+#  -$6 : [OPTIONAL] template file to use.
 setupInstallPackage()
 {
 	#made local
 	local name="$1"
-	local varprefix="$2"
-	local template="$3"
+	local host="$2"
+	local target="$3"	
+	local compiler="$4"
+	local varprefix="$5"
+	local template="$6"
 	
 	#if template is empty, use default
 	if [ -z "$template" ]; then
@@ -294,8 +355,8 @@ setupInstallPackage()
 	local version=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 2 -d ';' | xargs echo`
 	local status=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 4 -d ';' | xargs echo`
 	local deps=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 5 -d ';' | xargs echo`
-	local options=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 7 -d ';'`
-	
+	local options=`getPackageCompilationOptions "${name}" "${host}" "${target}" "${compiler}"`
+
 	#extract user options
 	eval "userOptions=\"\$${varprefix}_BUILD_PARAMETERS\""
 	
@@ -319,6 +380,7 @@ setupInstallPackage()
 	echo ''
 	
 	#register to list
+	### TODO: change to if $host == $target > cible host, sinon target
 	if [ "$status" = 'install' ]; then
 		if [ "$MULTI_ARCH" = 'true' ]; then
 			registerPackageMultiArch "${name}"
@@ -392,7 +454,7 @@ setupInstallPackageMultiArch()
 ######################################################
 installAutotoolsExternPackage()
 {
-	setupInstallPackage "$1" "$2" "${PROJECT_TEMPLATE_DIR}/Makefile.generic.autotools.in"
+	setupInstallPackage "$1" "$2" "$3" "$4" "$5" "${PROJECT_TEMPLATE_DIR}/Makefile.generic.autotools.in"
 }
 
 ######################################################
@@ -429,7 +491,6 @@ installAutotoolsLocalPackageHydraSimpleMultiArch()
 genAbstractMultiArchBinDir()
 {
 	mkdir -p "$PREFIX/generic/bin" || exit 1
-	cp ${PROJECT_SOURCE_DIR}/arch_wrapper "$PREFIX/generic/bin/"
 
 	for exe in $PREFIX/host/bin/*; do
 		ln -sf $PREFIX/generic/bin/arch_wrapper $PREFIX/generic/bin/`basename "$exe"`

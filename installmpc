@@ -13,6 +13,12 @@ PROJECT_BUILD_DIR="$PWD"
 MULTI_ARCH='false'
 
 ######################################################
+#set default configuration behavior
+findCurrentArch 'MPC_HOST'
+MPC_TARGET=$MPC_HOST
+MPC_COMPILER="gcc"
+
+######################################################
 #avoid to build locally
 if [ "${PROJECT_SOURCE_DIR}" = "." ] || [ "${PROJECT_BUILD_DIR}" = "${PROJECT_SOURCE_DIR}" ]; then
 	PROJECT_BUILD_DIR="${PWD}/build"
@@ -26,7 +32,7 @@ fi
 #TODO: modifier extern-deps pour inclure les dir des deps + patches 
 PROJECT_TEMPLATE_DIR="${PROJECT_SOURCE_DIR}/tools/templates"
 PROJECT_PACKAGE_DIR="${PROJECT_SOURCE_DIR}/extern-deps"
-#PROJECT_PATCH_DIR="${PROJECT_SOURCE_DIR}/patches"
+PROJECT_PATCH_DIR="${PROJECT_SOURCE_DIR}/patches"
 PROJECT_HELP_DIR="${PROJECT_SOURCE_DIR}/tools/help"
 
 ######################################################
@@ -192,6 +198,7 @@ SCTK_ARCH_REAL_PREFIX="${PREFIX}"
 ######################################################
 #Print summary (TODO : à générer)
 echo "=================== SUMMARY =================="
+echo "HOST: ${MPC_HOST} | TARGET: ${MPC_TARGET} | COMPILER: ${MPC_COMPILER}"
 echo "BUILD        : ${PROJECT_BUILD_DIR}"
 echo "SOURCE       : ${PROJECT_SOURCE_DIR}"
 echo "INSTALL      : ${PREFIX}"
@@ -222,19 +229,36 @@ HYDRA_SIMPLE_BUILD_PARAMETERS="'--with-hydra-mpl=${HYDRA_REAL_PREFIX}' ${HYDRA_S
 genMakefile()
 {
 	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.head.in" > Makefile
-	installAutotoolsExternPackage 'libxml2' 'LIBXML2'  >> Makefile
-	installAutotoolsExternPackage 'hwloc' 'HWLOC'  >> Makefile
-	installAutotoolsExternPackage 'binutils' 'BINUTILS'  >> Makefile
-	installAutotoolsExternPackage 'gmp' 'GMP'  >> Makefile
-	installAutotoolsExternPackage 'mpfr' 'MPFR'  >> Makefile
-	installAutotoolsExternPackage 'openpa' 'OPENPA'  >> Makefile
-	installAutotoolsExternPackage 'gcc' 'MPC_GCC'  >> Makefile
-	installAutotoolsExternPackage 'gdb' 'MPC_GDB'  >> Makefile
-	installAutotoolsExternPackage 'cmake' 'CMAKE'  >> Makefile
-	installAutotoolsExternPackage 'hydra' 'HYDRA'  >> Makefile
-	installAutotoolsLocalPackageHydraSimple 'hydra-simple' 'HYDRA_SIMPLE'  >> Makefile
-	installAutotoolsLocalPackage 'sctk-arch' 'SCTK_ARCH' >> Makefile
-	installAutotoolsLocalPackage 'mpcframework' 'MPC'  >> Makefile
+	# Get list of dep 
+	#getModules 'LIST' 
+	# for module in $LIST; do
+	# 	UPPER=`echo $module | tr '[:lower:]' '[:upper:]'`
+	# 	installAutotoolsExternPackage $module ${UPPER} >> Makefile
+	# done
+
+#  -$1 : package name (eg. libxml2),
+#  -$2 : host
+#  -$3 : target 
+#  -$4 : compiler
+#  -$5 : variable prefix (eg LIBXML2_PREFIX and check if equal to internal one)
+#  -$6 : [OPTIONAL] template file to use.
+
+	# TODO : check for each package if run-on (main config.txt) to determine if target=MPC_HOST or target=$MPC_TARGET 
+	local host=${MPC_HOST};
+	local target=${MPC_TARGET};
+	installAutotoolsExternPackage 'libxml2' "${host}" "${target}" "${MPC_COMPILER}" 'LIBXML2'  >> Makefile
+	# installAutotoolsExternPackage 'hwloc' 'HWLOC'  >> Makefile
+	# installAutotoolsExternPackage 'binutils' 'BINUTILS'  >> Makefile
+	# installAutotoolsExternPackage 'gmp' 'GMP'  >> Makefile
+	# installAutotoolsExternPackage 'mpfr' 'MPFR'  >> Makefile
+	# installAutotoolsExternPackage 'openpa' 'OPENPA'  >> Makefile
+	# installAutotoolsExternPackage 'gcc' 'MPC_GCC'  >> Makefile
+	# installAutotoolsExternPackage 'gdb' 'MPC_GDB'  >> Makefile
+	# installAutotoolsExternPackage 'hydra' 'HYDRA'  >> Makefile
+	# installAutotoolsLocalPackage 'libsctk-arch' 'SCTK_ARCH' >> Makefile
+	# installAutotoolsLocalPackageHydraSimple 'hydra-simple' 'HYDRA_SIMPLE'  >> Makefile
+	# installAutotoolsLocalPackage 'sctk-arch' 'SCTK_ARCH' >> Makefile
+	# installAutotoolsLocalPackage 'mpcframework' 'MPC'  >> Makefile
 	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot.in" >> Makefile
 }
 
