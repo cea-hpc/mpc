@@ -165,10 +165,12 @@ enablePrefixEnv "${PREFIX}"
 #force MPC
 MPC_PREFIX="${INTERNAL_KEY}"
 #TODO : wrie FindHydra
-HYDRA_PREFIX="${INTERNAL_KEY}"
 HYDRA_REAL_PREFIX="${PREFIX}"
-HYDRA_SIMPLE_PREFIX="${INTERNAL_KEY}"
 HYDRA_SIMPLE_REAL_PREFIX="${PREFIX}"
+LIBXML2_REAL_PREFIX="${PREFIX}"
+OPENPA_REAL_PREFIX="${PREFIX}"
+HWLOC_REAL_PREFIX="${PREFIX}"
+SCTK_ARCH_REAL_PREFIX="${PREFIX}"
 
 ######################################################
 #Print summary
@@ -192,8 +194,9 @@ echo "=============================================="
 
 ######################################################
 #Create glue between packages
+#'--with-hydra-simple=${HYDRA_SIMPLE_REAL_PREFIX}'
 MPC_GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' '--with-mpfr=${MPFR_REAL_PREFIX}' ${MPC_GCC_BUILD_PARAMETERS}"
-MPC_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_REAL_PREFIX}' '--with-openpa=${OPENPA_REAL_PREFIX}' '--with-hwloc=${HWLOC_REAL_PREFIX}' '--with-hydra-simple=${HYDRA_SIMPLE_REAL_PREFIX}' ${MPC_BUILD_PARAMETERS}"
+MPC_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_REAL_PREFIX}' '--with-openpa=${OPENPA_REAL_PREFIX}' '--with-hwloc=${HWLOC_REAL_PREFIX}' --with-libsctk_arch=${SCTK_ARCH_REAL_PREFIX} ${MPC_BUILD_PARAMETERS}"
 MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
 HYDRA_SIMPLE_BUILD_PARAMETERS="'--with-hydra-mpl=${HYDRA_REAL_PREFIX}' ${HYDRA_SIMPLE_BUILD_PARAMETERS}"
 
@@ -212,8 +215,8 @@ genMakefile()
 	installAutotoolsExternPackage 'gdb' 'MPC_GDB'  >> Makefile
 	installAutotoolsExternPackage 'cmake' 'CMAKE'  >> Makefile
 	installAutotoolsExternPackage 'hydra' 'HYDRA'  >> Makefile
-	installAutotoolsLocalPackage 'libsctk-arch' 'SCTK_ARCH' >> Makefile
-	installAutotoolsLocalPackage 'hydra-simple' 'HYDRA_SIMPLE'  >> Makefile
+	installAutotoolsLocalPackageHydraSimple 'hydra-simple' 'HYDRA_SIMPLE'  >> Makefile
+	installAutotoolsLocalPackage 'sctk-arch' 'SCTK_ARCH' >> Makefile
 	installAutotoolsLocalPackage 'mpc' 'MPC'  >> Makefile
 	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot.in" >> Makefile
 }

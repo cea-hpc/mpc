@@ -1,0 +1,35 @@
+
+ARCH=@CONTEXT_ARCH@
+
+CC=@CC@
+CFLAGS=@CFLAGS@ -I@srcdir@/ -I@srcdir@/$(ARCH)/
+
+
+FILES=$(wildcard @srcdir@/$(ARCH)/*.c)
+OBJ=$(FILES:@srcdir@/$(ARCH)/%.c=%.o)
+DEP=$(FILES:@srcdir@/$(ARCH)/%.c=%.d)
+
+SFILES=$(wildcard @srcdir@/$(ARCH)/*.S)
+SOBJ=$(SFILES:@srcdir@/$(ARCH)/%.S=%.o)
+SDEP=$(SFILES:@srcdir@/$(ARCH)/%.S=%.d)
+
+HFILES=$(wildcard @srcdir@/$(ARCH)/*.h)
+DESTHFILES=$(HFILES:@srcdir@/$(ARCH)/%=../include/%)
+
+all:../lib/libsctk_arch_context.so
+
+$(OBJ):%.o:@srcdir@/$(ARCH)/%.c 
+	$(CC) -c $(CFLAGS) -o $@ $?
+
+$(SOBJ):%.o:@srcdir@/$(ARCH)/%.S 
+	$(CC) -c $(CFLAGS) -o $@ $? 
+
+$(DESTHFILES):../include/%:@srcdir@/$(ARCH)/%
+	cp $? $@
+
+../lib/libsctk_arch_context.so:$(OBJ) $(SOBJ) $(DESTHFILES)
+	@echo "Building libsctk_arch_context for arch $(ARCH)"
+	mkdir -p ../lib
+	$(CC) -fPIC -shared $(OBJ) $(SOBJ)  -o ../lib/libsctk_arch_context.so
+	cp @srcdir@/$(ARCH)/*.h ../include
+
