@@ -30,7 +30,7 @@ SLURM_IS_SETUP="no"
 OPENIB_IS_SETUP="no"
 LIBXML_IS_SETUP="no"
 LIBSCTK_ARCH_IS_SETUP="no"
-HYDRA_MODULE=${PWD}/../mpc-hydra-1.4.0_build/simple
+HYDRA_MODULE=${PWD}/../hydra-simple
 PMI_LIB=""
 
 # Setup vars to use lib hydra
@@ -42,8 +42,8 @@ PMI_LIB=""
 sctk_internal_setup_lib_hydra()
 {
 	if [ "$HYDRA_IS_SETUP" != "yes" ]; then
-		SCTK_HYDRA_PREFIX=${SCTK_PREFIX}/mpc-hydra-1.4.0/
-		HYDRA_MODULE=${PWD}/../mpc-hydra-1.4.0_build/simple
+		SCTK_HYDRA_PREFIX=${SCTK_PREFIX}/hydra-1.4/
+		HYDRA_MODULE=${PWD}/../hydra-simple
 		SCTK_CFLAGS="${SCTK_CFLAGS} -I${HYDRA_MODULE} -DMPC_USE_HYDRA"
 		SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HYDRA_MODULE}/safestr2.o ${HYDRA_MODULE}/simple_pmiutil.o ${HYDRA_MODULE}/simple_pmi.o"
 		SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${SCTK_HYDRA_PREFIX}/lib -L${HYDRA_MODULE}"
