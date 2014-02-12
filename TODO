@@ -8,7 +8,7 @@
  + ajouter termcap
  + MPC_Tools/configure_extern_deps (path hydra) ?
  + pas de chemin en dur dans mpcrun / mpccc
- + pas de rpath dans libmpc mais sur binaires user oui
+ + pas de rpath dans libmpc mais sur binaires user oui (vérifier relative rpath pour GCC sinon risque de pb... à checker)
 
 # DEP :
 * binutils
