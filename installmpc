@@ -229,7 +229,7 @@ genMakefile()
 	installAutotoolsExternPackage 'hydra' 'HYDRA'  >> Makefile
 	installAutotoolsLocalPackageHydraSimple 'hydra-simple' 'HYDRA_SIMPLE'  >> Makefile
 	installAutotoolsLocalPackage 'sctk-arch' 'SCTK_ARCH' >> Makefile
-	installAutotoolsLocalPackage 'mpc' 'MPC'  >> Makefile
+	installAutotoolsLocalPackage 'mpcframework' 'MPC'  >> Makefile
 	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot.in" >> Makefile
 }
 
