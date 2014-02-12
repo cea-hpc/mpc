@@ -10,6 +10,7 @@
 #setup paths
 PROJECT_SOURCE_DIR="`dirname "$0"`"
 PROJECT_BUILD_DIR="$PWD"
+MULTI_ARCH='false'
 
 ######################################################
 #avoid to build locally
@@ -32,10 +33,6 @@ PROJECT_HELP_DIR="${PROJECT_SOURCE_DIR}/tools/help"
 #include common
 . "${PROJECT_SOURCE_DIR}/tools/Common.sh"
 
-
-######################################################
-#Set all modules to internal
-
 ######################################################
 #Check if colors could be enabled
 if [ -t 1 ]; then
@@ -51,6 +48,8 @@ then
 	MAKE_J=`cat /proc/cpuinfo | egrep "core id|physical id" | tr -d '\n' | sed s/physical/\\\nphysical/g | grep -v "^$" | sort | uniq | wc -l`
 fi
 
+######################################################
+# Set all modules to internal
 # TODO : clean this and use it in config file
 setModulesToInternal
 
@@ -135,10 +134,16 @@ do
 		--hwloc-*)
 			extractAndAddPackageOption 'HWLOC_BUILD_PARAMETERS' 'hwloc' "$arg"
 			;;
-		################## COMMON ###################
-		--enable-multi-arch)
+		############### CROSS-COMPIL ################
+		--host=*)
+			extractArchValue 'MPC_HOST' 'host' "$arg"
 			MULTI_ARCH='true'
 			;;
+		--target=*)
+			extractArchValue 'MPC_TARGET' 'target' "$arg"
+			MULTI_ARCH='true'
+			;;
+		################## COMMON ###################
 		--enable-color)
 			ENABLE_COLOR='true'
 			;;
@@ -208,7 +213,7 @@ echo "=============================================="
 #Create glue between packages
 #'--with-hydra-simple=${HYDRA_SIMPLE_REAL_PREFIX}'
 MPC_GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' '--with-mpfr=${MPFR_REAL_PREFIX}' ${MPC_GCC_BUILD_PARAMETERS}"
-MPC_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_REAL_PREFIX}' '--with-openpa=${OPENPA_REAL_PREFIX}' '--with-hwloc=${HWLOC_REAL_PREFIX}' --with-libsctk_arch=${SCTK_ARCH_REAL_PREFIX} ${MPC_BUILD_PARAMETERS}"
+MPC_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_REAL_PREFIX}' '--with-openpa=${OPENPA_REAL_PREFIX}' '--with-hwloc=${HWLOC_REAL_PREFIX}' '--with-libsctk_arch=${SCTK_ARCH_REAL_PREFIX}' ${MPC_BUILD_PARAMETERS}"
 MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
 HYDRA_SIMPLE_BUILD_PARAMETERS="'--with-hydra-mpl=${HYDRA_REAL_PREFIX}' ${HYDRA_SIMPLE_BUILD_PARAMETERS}"
 
@@ -234,6 +239,37 @@ genMakefile()
 }
 
 ######################################################
+#Clear makefile to generate it (TODO à générer, générer la variable en majuscule)
+genMakefile_multi_arch()
+{
+	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.head.in" > Makefile
+	case "$1" in
+		host)
+			#TODO: make function for cross-compil (add arguments)
+			installAutotoolsExternPackageMultiArch 'gmp' 'GMP' 'host' >> Makefile
+			installAutotoolsExternPackageMultiArch 'mpfr' 'MPFR' 'host' >> Makefile
+			installAutotoolsExternPackageMultiArch 'gcc' 'MPC_GCC' 'host' >> Makefile
+			installAutotoolsExternPackageMultiArch 'hydra' 'HYDRA' 'host' >> Makefile
+			installAutotoolsLocalPackageHydraSimpleMultiArch 'hydra-simple' 'HYDRA_SIMPLE' 'host' >> Makefile
+			installAutotoolsExternPackageMultiArch 'binutils' 'BINUTILS' 'host' >> Makefile
+			applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot_host.in" >> Makefile
+		;;
+		target)
+			installAutotoolsExternPackageMultiArch 'libxml2' 'LIBXML2' 'target' >> Makefile
+			installAutotoolsExternPackageMultiArch 'hwloc' 'HWLOC' 'target' >> Makefile
+			installAutotoolsExternPackageMultiArch 'binutils' 'BINUTILS' 'target' >> Makefile
+			installAutotoolsExternPackageMultiArch 'openpa' 'OPENPA' 'target' >> Makefile
+			installAutotoolsExternPackageMultiArch 'hydra' 'HYDRA' 'target' >> Makefile
+			installAutotoolsLocalPackageHydraSimpleMultiArch 'hydra-simple' 'HYDRA_SIMPLE' 'target' >> Makefile
+			installAutotoolsLocalPackageMultiArch 'sctk-arch' 'SCTK_ARCH' 'target' >> Makefile
+			installAutotoolsExternPackageMultiArch 'gdb' 'MPC_GDB' 'target' >> Makefile
+			installAutotoolsLocalPackageMultiArch 'mpcframework' 'MPC' 'target' >> Makefile
+			applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot_target.in" >> Makefile
+		;;
+	esac
+}
+
+######################################################
 genMakeForSubPrefix()
 {
 	local subprefix="$1"
@@ -244,7 +280,7 @@ genMakeForSubPrefix()
 
 	cd "$subprefix" || exit 1
 	SUBPREFIX="/$subprefix"
-	genMakefile
+	genMakefile_multi_arch "$2"
 	cd .. || exit 1
 }
 
@@ -261,9 +297,13 @@ createRootMakefile()
 
 ######################################################
 if [ "$MULTI_ARCH" = 'true' ]; then
-	genMakeForSubPrefix 'host'
-	genMakeForSubPrefix 'target'
-	createRootMakefile 'host' 'target'
+	if [ "${MPC_HOST}" = "" ]; then
+		findCurrentArch 'MPC_HOST'
+	fi
+	
+	genMakeForSubPrefix "${MPC_HOST}" 'host'
+	genMakeForSubPrefix "${MPC_TARGET}" 'target'
+	createRootMakefile "${MPC_HOST}" "${MPC_TARGET}"
 else
 	genMakefile
 fi

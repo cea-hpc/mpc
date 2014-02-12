@@ -13,6 +13,8 @@ INTERNAL_KEY='internal'
 PREFIX='/usr/local'
 MAKE_J=''
 ALL_PACKAGES=''
+ALL_PACKAGES_HOST=''
+ALL_PACKAGES_TARGET=''
 ALL_INTERNALS='false'
 ENABLE_COLOR='false'
 GEN_DEP_HELPS='false'
@@ -126,6 +128,51 @@ extractParamValue()
 }
 
 ######################################################
+#Find the current architecture value
+#Args :
+# -$1 : Output arch name (target or host)
+findCurrentArch ()
+{
+	local outputvar="$1"
+	value=`uname -p`
+	if [ "${value}" = "unknown" ]; then
+		value=`uname -m`
+	fi
+	eval "${outputvar}=\"${value}\""
+}
+
+######################################################
+#Extract architecture value and put in given variable
+#Args :
+# -$1 : Output arch name (target or host)
+# -$2 : target or host name (without --, eg. --with-XXX => 'with-XXX')
+# -$3 : User value (--with-XXX=blablable)
+extractArchValue()
+{
+	#extract in local vars
+	local outputvar="$1"
+	local name="$2"
+	local arg="$3"
+
+	value=`echo "$arg" | sed -e "s/^--${name}=//g"`	
+	case "$value" in
+		i686)
+			value="i686"
+		;;
+		x86_64)
+			value="x86_64"
+		;;
+		mic|k1om)
+			value="k1om"
+		;;
+		arm)
+			value="arm"
+		;;
+	esac
+	eval "${outputvar}=\"${value}\""
+}
+
+######################################################
 #Extract parameter value and put in given variable
 #Args :
 # -$1 : Output variable name
@@ -210,6 +257,19 @@ registerPackage()
 }
 
 ######################################################
+registerPackageMultiArch()
+{
+	case "${2}" in
+		host)
+			ALL_PACKAGES_HOST="${ALL_PACKAGES_HOST} ${1}"
+		;;
+		target)
+			ALL_PACKAGES_TARGET="${ALL_PACKAGES_TARGET} ${1}"
+		;;
+	esac
+}
+
+######################################################
 #Generate makefile rules do build package
 # Args :
 #  -$1 : package name (eg. libxml2),
@@ -260,7 +320,72 @@ setupInstallPackage()
 	
 	#register to list
 	if [ "$status" = 'install' ]; then
-		registerPackage "${name}"
+		if [ "$MULTI_ARCH" = 'true' ]; then
+			registerPackageMultiArch "${name}"
+		else
+			registerPackage "${name}"
+		fi
+	fi
+}
+
+######################################################
+#Generate makefile rules do build package for multi architectures
+# Args :
+#  -$1 : package name (eg. libxml2),
+#  -$2 : variable prefix (eg LIBXML2_PREFIX and check if equal to internal one)
+#  -$3 : architecture type (host or target)
+#  -$4 : [OPTIONAL] template file to use.
+setupInstallPackageMultiArch()
+{
+	#made local
+	local name="$1"
+	local varprefix="$2"
+	local archType="$3"
+	local template="$4"
+	
+	#if template is empty, use default
+	if [ -z "$template" ]; then
+		template="${PROJECT_TEMPLATE_DIR}/Makefile.${name}.in"
+	fi
+	
+	#extract prefix target
+	eval "prefix=\${${varprefix}_PREFIX}"
+	
+	#Load package options
+	local version=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 2 -d ';' | xargs echo`
+	local status=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 4 -d ';' | xargs echo`
+	local deps=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 5 -d ';' | xargs echo`
+	local options=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 7 -d ';'`
+	
+	#extract user options
+	eval "userOptions=\"\$${varprefix}_BUILD_PARAMETERS\""
+	
+	#add dep if want to gen help
+	if [ "$GEN_DEP_HELPS" = 'true' ]; then deps="${deps} ${name}-gen-help"; fi
+
+	#check if need to do it
+	if [ "$prefix" = "${INTERNAL_KEY}" ]; then
+		PACKAGE_DEPS="$deps"
+		PACKAGE_VAR_NAME="$varprefix"
+		PACKAGE_OPTIONS="$options"
+		PACKAGE_NAME="${name}"
+		PACKAGE_VERSION="${version}"
+		USER_PARAMETERS="$userOptions"
+		applyOnTemplate "${template}"
+	else
+		echo "${name}:"
+	fi
+
+	#Line to split rules
+	echo ''
+	
+	#register to list
+	if [ "$status" = 'install' ]; then
+		if [ "$MULTI_ARCH" = 'true' ]; then
+			registerPackageMultiArch "${name}" "${archType}"
+		else
+			registerPackage "${name}"
+		fi
 	fi
 }
 
@@ -280,6 +405,24 @@ installAutotoolsLocalPackage()
 installAutotoolsLocalPackageHydraSimple()
 {
 	setupInstallPackage "$1" "$2" "${PROJECT_TEMPLATE_DIR}/Makefile.local.autotools.hydra_simple.in"
+}
+
+######################################################
+installAutotoolsExternPackageMultiArch()
+{
+	setupInstallPackageMultiArch "$1" "$2" "$3" "${PROJECT_TEMPLATE_DIR}/Makefile.generic.autotools.in"
+}
+
+######################################################
+installAutotoolsLocalPackageMultiArch()
+{
+	setupInstallPackageMultiArch "$1" "$2" "$3" "${PROJECT_TEMPLATE_DIR}/Makefile.local.autotools.in"
+}
+
+######################################################
+installAutotoolsLocalPackageHydraSimpleMultiArch()
+{
+	setupInstallPackageMultiArch "$1" "$2" "$3" "${PROJECT_TEMPLATE_DIR}/Makefile.local.autotools.hydra_simple.in"
 }
 
 ######################################################
