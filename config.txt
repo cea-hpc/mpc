@@ -1,15 +1,15 @@
-# name       ; version ; sup versions   ; status  ;   deps                                            ; run-on ; build options
+# name       ; version ; sup versions   ; status  ;   deps                                            ; run-on ; template
 #####################################################################################################################
-libxml2      ; 2.8.0   ;                ; install ;                                                   ; all    ; --without-zlib
+libxml2      ; 2.8.0   ;                ; dep     ;                                                   ; all    ; 
 hwloc        ; 1.6.1   ; 1.6.1          ; install ;                                                   ; all    ;
-binutils     ; 2.22    ; 2.22           ; install ;                                                   ; host   ; --disable-werror --program-prefix=mpc-
+binutils     ; 2.22    ; 2.22           ; install ;                                                   ; host   ; 
 gmp          ; 5.1.3   ;                ; dep     ;                                                   ; host   ;
 mpfr         ; 3.1.2   ;                ; dep     ; gmp                                               ; host   ;
 mpc          ; 3.1.2   ;                ; dep     ; gmp mpfr                                          ; host   ;
-gcc          ; 4.8.0   ;                ; install ; gmp mpfr mpc                                      ; host   ; --disable-bootstrap --disable-multilib --program-prefix=mpc- --program-suffix=480 --with-pkgversion=MPC --enable-languages=c,c++,fortran
-openpa       ; 1.0.2   ;                ; dep     ;                                                   ; all    ; CFLAGS=-fPIC
+gcc          ; 4.8.0   ;                ; install ; gmp mpfr mpc                                      ; host   ; 
+openpa       ; 1.0.2   ;                ; dep     ;                                                   ; all    ; 
 sctk-arch    ; cur     ;                ; install ;                                                   ; all    ;
 mpcframework ; cur     ;                ; install ; libxml2 hwloc openpa sctk-arch hydra hydra-simple ; all    ;
-hydra        ; 1.4     ;                ; install ;                                                   ; all    ; CFLAGS=-fPIC
-hydra-simple ; cur     ;                ; install ; hydra                                             ; all    ; CFLAGS=-fPIC
-gdb          ; 7.5     ;                ; install ;                                                   ; host   ; --program-prefix=mpc- --disable-werror
+hydra        ; 1.4     ;                ; install ;                                                   ; all    ; 
+hydra-simple ; cur     ;                ; install ; hydra                                             ; all    ; 
+gdb          ; 7.5     ;                ; install ;                                                   ; host   ; 
