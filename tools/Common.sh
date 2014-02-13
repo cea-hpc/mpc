@@ -292,7 +292,7 @@ getPackageCompilationOptions()
 	local config=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "${host}.*${target}.*${compiler}"`
 
 	#check if config variable is not empty
-	if [[ -z "$config" ]]; then
+	if [ -z "$config" ]; then
 		echo "Compilation not supported for ${package} with HOST=${host}, TARGET=${target} and COMPILER=${compiler}" 1>&2
 		# TODO: abort
 	fi
@@ -300,13 +300,13 @@ getPackageCompilationOptions()
 	local supported=`echo $config | cut -f 4 -d ';' | xargs echo`
 
 	#check if configuration supported
-	if [[ "${supported}" == "no" ]]; then
+	if [[ "${supported}" = "no" ]]; then
 		echo "Compilation not supported for ${package} with HOST=${host}, TARGET=${target} and COMPILER=${compiler}" 1>&2
 		# TODO: abort
 	fi
 
 	local options=`echo ${configForCompiler} | cut -f 5 -d ';'`
-	local options="${options} `echo ${config} | cut -f 5 -d ';'`"
+	options="${options} `echo ${config} | cut -f 5 -d ';'`"
 
 	echo $options
 }
@@ -380,7 +380,7 @@ setupInstallPackage()
 	echo ''
 	
 	#register to list
-	### TODO: change to if $host == $target > cible host, sinon target
+	### TODO: change to if $host = $target > cible host, sinon target
 	if [ "$status" = 'install' ]; then
 		if [ "$MULTI_ARCH" = 'true' ]; then
 			registerPackageMultiArch "${name}"

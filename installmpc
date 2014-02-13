@@ -15,7 +15,7 @@ MULTI_ARCH='false'
 ######################################################
 #set default configuration behavior
 findCurrentArch 'MPC_HOST'
-MPC_TARGET=$MPC_HOST
+MPC_TARGET="${MPC_HOST}"
 MPC_COMPILER="gcc"
 
 ######################################################
@@ -140,6 +140,11 @@ do
 		--hwloc-*)
 			extractAndAddPackageOption 'HWLOC_BUILD_PARAMETERS' 'hwloc' "$arg"
 			;;
+		################# COMPILER ##################
+		--compiler=*)
+			extractArchValue 'MPC_COMPILER' 'compiler' "$arg"
+			;;
+			
 		############### CROSS-COMPIL ################
 		--host=*)
 			extractArchValue 'MPC_HOST' 'host' "$arg"
