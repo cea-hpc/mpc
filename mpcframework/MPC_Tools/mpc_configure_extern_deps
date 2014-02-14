@@ -463,7 +463,7 @@ sctk_internal_setup_libsctk_arch()
 		exit 1
 	fi
 	#setup vars
-	SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBSCTK_ARCH_LIBDIR}/lib/libsctk_arch.so"
+	SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBSCTK_ARCH_LIBDIR}/libsctk_arch.so"
 	SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${LIBSCTK_ARCH_LIBDIR} -L${LIBSCTK_ARCH_LIBDIR}"
 	SCTK_CFLAGS="${SCTK_CFLAGS} -I${SCTK_LIBSCTK_ARCH_PREFIX}/include/"
 }
