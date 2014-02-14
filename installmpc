@@ -13,6 +13,10 @@ PROJECT_BUILD_DIR="$PWD"
 MULTI_ARCH='false'
 
 ######################################################
+#include common
+. "${PROJECT_SOURCE_DIR}/tools/Common.sh"
+
+######################################################
 #set default configuration behavior
 findCurrentArch 'MPC_HOST'
 MPC_TARGET="${MPC_HOST}"
@@ -34,10 +38,6 @@ PROJECT_TEMPLATE_DIR="${PROJECT_SOURCE_DIR}/tools/templates"
 PROJECT_PACKAGE_DIR="${PROJECT_SOURCE_DIR}/extern-deps"
 PROJECT_PATCH_DIR="${PROJECT_SOURCE_DIR}/patches"
 PROJECT_HELP_DIR="${PROJECT_SOURCE_DIR}/tools/help"
-
-######################################################
-#include common
-. "${PROJECT_SOURCE_DIR}/tools/Common.sh"
 
 ######################################################
 #Check if colors could be enabled
