@@ -460,13 +460,13 @@ installAutotoolsExternPackage()
 ######################################################
 installAutotoolsLocalPackage()
 {
-	setupInstallPackage "$1" "$2" "${PROJECT_TEMPLATE_DIR}/Makefile.local.autotools.in"
+	setupInstallPackage "$1" "$2" "$3" "$4" "$5" "${PROJECT_TEMPLATE_DIR}/Makefile.local.autotools.in"
 }
 
 ######################################################
 installAutotoolsLocalPackageHydraSimple()
 {
-	setupInstallPackage "$1" "$2" "${PROJECT_TEMPLATE_DIR}/Makefile.local.autotools.hydra_simple.in"
+	setupInstallPackage "$1" "$2" "$3" "$4" "$5" "${PROJECT_TEMPLATE_DIR}/Makefile.local.autotools.hydra_simple.in"
 }
 
 ######################################################

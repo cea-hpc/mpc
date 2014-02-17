@@ -252,18 +252,18 @@ genMakefile()
 	local host=${MPC_HOST};
 	local target=${MPC_TARGET};
 	installAutotoolsExternPackage 'libxml2' "${host}" "${target}" "${MPC_COMPILER}" 'LIBXML2'  >> Makefile
-	# installAutotoolsExternPackage 'hwloc' 'HWLOC'  >> Makefile
-	# installAutotoolsExternPackage 'binutils' 'BINUTILS'  >> Makefile
-	# installAutotoolsExternPackage 'gmp' 'GMP'  >> Makefile
-	# installAutotoolsExternPackage 'mpfr' 'MPFR'  >> Makefile
-	# installAutotoolsExternPackage 'openpa' 'OPENPA'  >> Makefile
-	# installAutotoolsExternPackage 'gcc' 'MPC_GCC'  >> Makefile
-	# installAutotoolsExternPackage 'gdb' 'MPC_GDB'  >> Makefile
-	# installAutotoolsExternPackage 'hydra' 'HYDRA'  >> Makefile
-	# installAutotoolsLocalPackage 'libsctk-arch' 'SCTK_ARCH' >> Makefile
-	# installAutotoolsLocalPackageHydraSimple 'hydra-simple' 'HYDRA_SIMPLE'  >> Makefile
-	# installAutotoolsLocalPackage 'sctk-arch' 'SCTK_ARCH' >> Makefile
-	# installAutotoolsLocalPackage 'mpcframework' 'MPC'  >> Makefile
+	installAutotoolsExternPackage 'hwloc' "${host}" "${target}" "${MPC_COMPILER}" 'HWLOC'  >> Makefile
+	installAutotoolsExternPackage 'binutils' "${host}" "${target}" "${MPC_COMPILER}" 'BINUTILS'  >> Makefile
+	installAutotoolsExternPackage 'gmp' "${host}" "${target}" "${MPC_COMPILER}" 'GMP'  >> Makefile
+	installAutotoolsExternPackage 'mpfr' "${host}" "${target}" "${MPC_COMPILER}" 'MPFR'  >> Makefile
+	installAutotoolsExternPackage 'openpa' "${host}" "${target}" "${MPC_COMPILER}" 'OPENPA'  >> Makefile
+	installAutotoolsExternPackage 'gcc' "${host}" "${target}" "${MPC_COMPILER}" 'MPC_GCC'  >> Makefile
+	installAutotoolsExternPackage 'gdb' "${host}" "${target}" "${MPC_COMPILER}" 'MPC_GDB'  >> Makefile
+	installAutotoolsExternPackage 'hydra' "${host}" "${target}" "${MPC_COMPILER}" 'HYDRA'  >> Makefile
+	installAutotoolsLocalPackage 'libsctk-arch' "${host}" "${target}" "${MPC_COMPILER}" 'SCTK_ARCH' >> Makefile
+	installAutotoolsLocalPackageHydraSimple 'hydra-simple' "${host}" "${target}" "${MPC_COMPILER}" 'HYDRA_SIMPLE'  >> Makefile
+	installAutotoolsLocalPackage 'sctk-arch' "${host}" "${target}" "${MPC_COMPILER}" 'SCTK_ARCH' >> Makefile
+	installAutotoolsLocalPackage 'mpcframework' "${host}" "${target}" "${MPC_COMPILER}" 'MPC'  >> Makefile
 	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot.in" >> Makefile
 }
 
