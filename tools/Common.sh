@@ -117,9 +117,8 @@ getMirrorAddress()
 	eval "${outvar}=\"${address}\""
 }
 
-downloadDep()
-{
-
+#downloadDep()
+#{
 # 	if [ ! -r gmp-5.1.3.tar.bz2 ]; then 
 #   wget ${MIRROR}/contrib/gmp-5.1.3.tar.bz2
 # fi
@@ -140,7 +139,7 @@ downloadDep()
 # if [ ! -r MPC_2.5.0.tar.gz ]; then
 #   wget ${MIRROR}/MPC_2.5.0.tar.gz
 # fi
-}
+#}
 
 
 getMirrorAddress()
@@ -167,6 +166,8 @@ getMirrorAddress()
            local address=ftp://paratools08.rrp.net/mpc
            ;;
 	esac
+
+	eval "${outvar}=\"${address}\""
 }
 
 
