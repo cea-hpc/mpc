@@ -20,6 +20,49 @@ ENABLE_COLOR='false'
 GEN_DEP_HELPS='false'
 SUBPREFIX=''
 
+######################################################
+#function to pad text with spaces according to string length
+#Args   :
+#   -$1 : Text to pad
+#	-$2 : Final string lenght
+#Result : print a padded string
+printWithPadding()
+{
+	local text="${1}"
+	local length="${2}"
+	local textSize=${#text}
+	local padding=$(($length-$textSize))
+	local output="${text}"
+
+	for i in `seq 1 1 ${padding}`; do
+		output="${output} "
+	done
+
+	echo "$output"
+}
+
+
+######################################################
+#function designed to print a summary of path selections and dep types
+#Result : print summary
+printSummary()
+{
+	echo "=================== SUMMARY =================="
+	echo "HOST: ${MPC_HOST} | TARGET: ${MPC_TARGET} | COMPILER: ${MPC_COMPILER}"
+	echo "BUILD        : ${PROJECT_BUILD_DIR}"
+	echo "SOURCE       : ${PROJECT_SOURCE_DIR}"
+	echo "INSTALL      : ${PREFIX}"
+	getModules "listDeps"
+
+	for dep in $listDeps; do
+		prefixName=`echo "${dep}" | tr '[:lower:]' '[:upper:]' | sed -e "s/-/_/g"`
+		prefixContent=`eval echo "$"${prefixName}_PREFIX`
+		echo "`printWithPadding "${dep}" 13`: ${prefixContent}"
+	done
+
+	echo "=============================================="
+}
+
 
 #downloadDep()
 #{

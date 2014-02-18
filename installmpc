@@ -193,7 +193,7 @@ enablePrefixEnv "${PREFIX}"
 ######################################################
 #force MPC
 MPCFRAMEWORK_PREFIX="${INTERNAL_KEY}"
-#TODO : wrie FindHydra
+
 GMP_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
 MPFR_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
 MPC_REAL_PREFIX="${PREFIX}/${MPC_TARGET}/mpc/"
@@ -205,26 +205,8 @@ HWLOC_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
 SCTK_ARCH_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
 
 ######################################################
-#Print summary (TODO : à générer)
-echo "=================== SUMMARY =================="
-echo "HOST: ${MPC_HOST} | TARGET: ${MPC_TARGET} | COMPILER: ${MPC_COMPILER}"
-echo "BUILD        : ${PROJECT_BUILD_DIR}"
-echo "SOURCE       : ${PROJECT_SOURCE_DIR}"
-echo "INSTALL      : ${PREFIX}"
-echo "libxml2      : ${LIBXML2_PREFIX}"
-echo "hwloc        : ${HWLOC_PREFIX}"
-echo "binutils     : ${BINUTILS_PREFIX}"
-echo "gmp          : ${GMP_PREFIX}"
-echo "mpfr         : ${MPFR_PREFIX}"
-echo "mpc          : ${MPC_PREFIX}"
-echo "openpa       : ${OPENPA_PREFIX}"
-echo "sctk_arch    : ${SCTK_ARCH_PREFIX}"
-echo "mpc-gcc      : ${MPC_GCC_PREFIX}"
-echo "mpc-gdb      : ${MPC_GDB_PREFIX}"
-echo "hydra        : ${HYDRA_PREFIX}"
-echo "hydra_simple : ${HYDRA_SIMPLE_PREFIX}"
-echo "mpcframework : ${MPCFRAMEWORK_PREFIX}"
-echo "=============================================="
+
+printSummary
 
 ######################################################
 #Create glue between packages
@@ -267,19 +249,6 @@ genMakefile()
 	done
 	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot.in" >> Makefile
 	cd .. || exit 1
-
-#	installAutotoolsExternPackage 'libxml2' "${host}" "${target}" "${MPC_COMPILER}" 'LIBXML2'  >> Makefile
-#	installAutotoolsExternPackage 'hwloc' "${host}" "${target}" "${MPC_COMPILER}" 'HWLOC'  >> Makefile
-#	installAutotoolsExternPackage 'binutils' "${host}" "${target}" "${MPC_COMPILER}" 'BINUTILS'  >> Makefile
-#	installAutotoolsExternPackage 'gmp' "${host}" "${target}" "${MPC_COMPILER}" 'GMP'  >> Makefile
-#	installAutotoolsExternPackage 'mpfr' "${host}" "${target}" "${MPC_COMPILER}" 'MPFR'  >> Makefile
-#	installAutotoolsExternPackage 'openpa' "${host}" "${target}" "${MPC_COMPILER}" 'OPENPA'  >> Makefile
-#	installAutotoolsExternPackage 'gcc' "${host}" "${target}" "${MPC_COMPILER}" 'MPC_GCC'  >> Makefile
-#	installAutotoolsExternPackage 'gdb' "${host}" "${target}" "${MPC_COMPILER}" 'MPC_GDB'  >> Makefile
-#	installAutotoolsExternPackage 'hydra' "${host}" "${target}" "${MPC_COMPILER}" 'HYDRA'  >> Makefile
-#	installAutotoolsLocalPackageHydraSimple 'hydra_simple' "${host}" "${target}" "${MPC_COMPILER}" 'HYDRA_SIMPLE'  >> Makefile
-#	installAutotoolsLocalPackage 'sctk_arch' "${host}" "${target}" "${MPC_COMPILER}" 'SCTK_ARCH' >> Makefile
-#	installAutotoolsLocalPackage 'mpcframework' "${host}" "${target}" "${MPC_COMPILER}" 'MPC'  >> Makefile
 }
 
 ######################################################
