@@ -7,6 +7,10 @@
 #            LICENSE  : CeCILL-C                                         #
 ##########################################################################
 
+ALL_PACKAGES=''
+ALL_PACKAGES_HOST=''
+ALL_PACKAGES_TARGET=''
+
 ######################################################
 #setup paths
 PROJECT_SOURCE_DIR="`dirname "$0"`"
@@ -88,23 +92,23 @@ do
 			;;
 		################### MPC GDB #################
 		--with-mpc-gdb=*)
-			extractParamValue 'MPC_GDB_PREFIX' 'with-mpc-gdb' "$arg"
+			extractParamValue 'GDB_PREFIX' 'with-mpc-gdb' "$arg"
 			;;
 		--mpc-gdb-*)
-			extractAndAddPackageOption 'MPC_GDB_BUILD_PARAMETERS' 'mpc-gdb' "$arg"
+			extractAndAddPackageOption 'GDB_BUILD_PARAMETERS' 'mpc-gdb' "$arg"
 			;;
 		--disable-mpc-gdb)
-			MPC_GDB_PREFIX='disabled'
+			GDB_PREFIX='disabled'
 			;;
 		################### MPC GCC #################
 		--with-mpc-gcc=*)
-			extractParamValue 'MPC_GCC_PREFIX' 'with-mpc-gcc' "$arg"
+			extractParamValue 'GCC_PREFIX' 'with-mpc-gcc' "$arg"
 			;;
 		--mpc-gcc-*)
-			extractAndAddPackageOption 'MPC_GCC_BUILD_PARAMETERS' 'mpc-gcc' "$arg"
+			extractAndAddPackageOption 'GCC_BUILD_PARAMETERS' 'mpc-gcc' "$arg"
 			;;
 		--disable-mpc-gcc)
-			MPC_GCC_PREFIX='disabled'
+			GCC_PREFIX='disabled'
 			;;
 		##################### MPFR ##################
 		--with-mpfr=*)
@@ -205,13 +209,12 @@ HWLOC_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
 SCTK_ARCH_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
 
 ######################################################
-
 printSummary
 
 ######################################################
 #Create glue between packages
 #'--with-hydra-simple=${HYDRA_SIMPLE_REAL_PREFIX}'
-GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' '--with-mpfr=${MPFR_REAL_PREFIX}' '--with-mpc=${MPC_REAL_PREFIX}' ${MPC_GCC_BUILD_PARAMETERS}"
+GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' '--with-mpfr=${MPFR_REAL_PREFIX}' '--with-mpc=${MPC_REAL_PREFIX}' --disable-multilib --disable-bootstrap --disable-multilib --program-prefix=mpc- --program-suffix=_480 --with-pkgversion=MPC --enable-languages=c,c++,fortran ${GCC_BUILD_PARAMETERS}"
 MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_REAL_PREFIX}' '--with-openpa=${OPENPA_REAL_PREFIX}' '--with-hwloc=${HWLOC_REAL_PREFIX}' '--with-libsctk_arch=${SCTK_ARCH_REAL_PREFIX}' ${MPC_BUILD_PARAMETERS}"
 MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
 MPC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' --with-mpfr=${MPFR_REAL_PREFIX} ${MPC_BUILD_PARAMETERS}"
@@ -222,6 +225,7 @@ HYDRA_SIMPLE_BUILD_PARAMETERS="'--with-hydra-mpl=${HYDRA_REAL_PREFIX}' ${HYDRA_S
 genMakefile()
 {
 	local subprefix="$1"
+	local type_arch="$2"
 	local host=${MPC_HOST};
 	local target=${MPC_TARGET};
 	local list=`cat "${PROJECT_SOURCE_DIR}/config.txt" | cut -f 1 -d ';' |  sed -e "s/^#[0-9A-Za-z_-\ #]*//g" | xargs echo`
@@ -235,65 +239,27 @@ genMakefile()
 	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.head.in" > Makefile
 	for module in ${list}; 
 	do
-		local run_on=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 7 -d ';' | xargs echo`
-		UPPER=`echo ${module} | tr '[:lower:]' '[:upper:]'`
-		if [ "${run_on}" = "extern" ]; then
-			installAutotoolsExternPackage "${module}" "${host}" "${target}" "${MPC_COMPILER}" "${UPPER}"  >> Makefile
-		elif [ "${run_on}" = "local" ]; then
-			installAutotoolsLocalPackage "${module}" "${host}" "${target}" "${MPC_COMPILER}" "${UPPER}"  >> Makefile
-		elif [ "${run_on}" = "hydra_simple" ]; then
-			installAutotoolsLocalPackageHydraSimple "${module}" "${host}" "${target}" "${MPC_COMPILER}" "${UPPER}"  >> Makefile
-		elif [ "${run_on}" = "mpc" ]; then
-			installAutotoolsExternPackageMpc "${module}" "${host}" "${target}" "${MPC_COMPILER}" "${UPPER}"  >> Makefile
+		local template=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 7 -d ';' | xargs echo`
+		local run_on=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 6 -d ';' | xargs echo`
+		if [ "${run_on}" = "${2}" ] || [ "${run_on}" = "all" ];
+		then
+			UPPER=`echo ${module} | tr '[:lower:]' '[:upper:]'`
+			if [ "${template}" = "extern" ]; then
+				installAutotoolsExternPackage "${module}" "${host}" "${target}" "${MPC_COMPILER}" "${UPPER}"  >> Makefile
+			elif [ "${template}" = "local" ]; then
+				installAutotoolsLocalPackage "${module}" "${host}" "${target}" "${MPC_COMPILER}" "${UPPER}"  >> Makefile
+			elif [ "${template}" = "hydra_simple" ]; then
+				installAutotoolsLocalPackageHydraSimple "${module}" "${host}" "${target}" "${MPC_COMPILER}" "${UPPER}"  >> Makefile
+			elif [ "${template}" = "mpc" ]; then
+				installAutotoolsExternPackageMpc "${module}" "${host}" "${target}" "${MPC_COMPILER}" "${UPPER}"  >> Makefile
+			fi
 		fi
 	done
-	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot.in" >> Makefile
-	cd .. || exit 1
-}
-
-######################################################
-#Clear makefile to generate it (TODO à générer, générer la variable en majuscule)
-genMakefile_multi_arch()
-{
-	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.head.in" > Makefile
-	case "$1" in
-		host)
-			#TODO: make function for cross-compil (add arguments)
-			installAutotoolsExternPackageMultiArch 'gmp' 'GMP' 'host' >> Makefile
-			installAutotoolsExternPackageMultiArch 'mpfr' 'MPFR' 'host' >> Makefile
-			installAutotoolsExternPackageMultiArch 'gcc' 'MPC_GCC' 'host' >> Makefile
-			installAutotoolsExternPackageMultiArch 'hydra' 'HYDRA' 'host' >> Makefile
-			installAutotoolsLocalPackageHydraSimpleMultiArch 'hydra_simple' 'HYDRA_SIMPLE' 'host' >> Makefile
-			installAutotoolsExternPackageMultiArch 'binutils' 'BINUTILS' 'host' >> Makefile
-			applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot_host.in" >> Makefile
-		;;
-		target)
-			installAutotoolsExternPackageMultiArch 'libxml2' 'LIBXML2' 'target' >> Makefile
-			installAutotoolsExternPackageMultiArch 'hwloc' 'HWLOC' 'target' >> Makefile
-			installAutotoolsExternPackageMultiArch 'binutils' 'BINUTILS' 'target' >> Makefile
-			installAutotoolsExternPackageMultiArch 'openpa' 'OPENPA' 'target' >> Makefile
-			installAutotoolsExternPackageMultiArch 'hydra' 'HYDRA' 'target' >> Makefile
-			installAutotoolsLocalPackageHydraSimpleMultiArch 'hydra_simple' 'HYDRA_SIMPLE' 'target' >> Makefile
-			installAutotoolsLocalPackageMultiArch 'sctk_arch' 'SCTK_ARCH' 'target' >> Makefile
-			installAutotoolsExternPackageMultiArch 'gdb' 'MPC_GDB' 'target' >> Makefile
-			installAutotoolsLocalPackageMultiArch 'mpcframework' 'MPC' 'target' >> Makefile
-			applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot_target.in" >> Makefile
-		;;
-	esac
-}
-
-######################################################
-genMakeForSubPrefix()
-{
-	local subprefix="$1"
-	
-	if [ ! -d "$subprefix" ]; then
-		mkdir "$subprefix" || exit 1
+	if [ "$MULTI_ARCH" = 'false' ]; then
+		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot.in" >> Makefile
+	else
+		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot_${type_arch}.in" >> Makefile
 	fi
-
-	cd "$subprefix" || exit 1
-	SUBPREFIX="/$subprefix"
-	genMakefile_multi_arch "$2"
 	cd .. || exit 1
 }
 
@@ -319,12 +285,11 @@ if [ "$MULTI_ARCH" = 'true' ]; then
 	if [ "${MPC_HOST}" = "" ]; then
 		findCurrentArch 'MPC_HOST'
 	fi
-	
-	genMakeForSubPrefix "${MPC_HOST}" 'host'
-	genMakeForSubPrefix "${MPC_TARGET}" 'target'
+	genMakefile "${MPC_HOST}" "host"
+	genMakefile "${MPC_TARGET}" "target"
 	createRootMakefile "${MPC_HOST}" "${MPC_TARGET}"
 else
-	genMakefile "${MPC_HOST}"
+	genMakefile "${MPC_HOST}" "host"
 	createRootMakefile "${MPC_HOST}"
 fi
 

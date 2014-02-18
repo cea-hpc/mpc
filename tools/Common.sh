@@ -12,9 +12,6 @@
 INTERNAL_KEY='internal'
 PREFIX='/usr/local'
 MAKE_J=''
-ALL_PACKAGES=''
-ALL_PACKAGES_HOST=''
-ALL_PACKAGES_TARGET=''
 ALL_INTERNALS='false'
 ENABLE_COLOR='false'
 GEN_DEP_HELPS='false'
@@ -63,59 +60,6 @@ printSummary()
 	echo "=============================================="
 }
 
-
-#downloadDep()
-#{
-# 	if [ ! -r gmp-5.1.3.tar.bz2 ]; then 
-#   wget ${MIRROR}/contrib/gmp-5.1.3.tar.bz2
-# fi
-# if [ ! -r mpfr-3.1.2.tar.bz2 ]; then 
-#   wget ${MIRROR}/contrib/mpfr-3.1.2.tar.bz2
-# fi
-# if [ ! -r ppl-1.1.tar.bz2 ]; then 
-#   wget ${MIRROR}/contrib/ppl-1.1.tar.bz2
-# fi
-# if [ ! -r cloog-parma-0.16.1.tar.gz ]; then
-#   wget ${MIRROR}/contrib/cloog-parma-0.16.1.tar.gz
-# fi
-
-# if [ ! -r mpc-1.0.2.tar.gz ]; then
-#    wget ${MIRROR}/contrib/mpc-1.0.2.tar.gz
-# fi
-
-# if [ ! -r MPC_2.5.0.tar.gz ]; then
-#   wget ${MIRROR}/MPC_2.5.0.tar.gz
-# fi
-#}
-
-
-getMirrorAddress()
-{
-	#extract parameter
-	local outvar="$1"	
-	local mirrorid="$2"
-	local address=""
-
-	case $mirrorid in
-		1)
-			local address=http://fs.paratools.com/mpc
-			;;
-         2)
-           local address=http://static.paratools.com/mpc/tar
-           ;;
-         3)
-           local address=ftp://fs.paratools.com/mpc
-           ;;
-         4)
-           local address=ftp://paratools08.rrp.net/mpc
-           ;;
-         *)
-           local address=ftp://paratools08.rrp.net/mpc
-           ;;
-	esac
-
-	eval "${outvar}=\"${address}\""
-}
 
 #downloadDep()
 #{
@@ -415,13 +359,6 @@ applyOnTemplate()
 }
 
 ######################################################
-registerPackage()
-{
-	ALL_PACKAGES="${ALL_PACKAGES} ${1}"
-}
-
-
-######################################################
 #Get compilation options according to HOST TARGET and COMPILER parameters 
 #abort if configuration not supported
 # Args :
@@ -437,39 +374,43 @@ getPackageCompilationOptions()
 	local target="$3"
 	local compiler="$4"
 
-	local configForAll=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "all.*all.*all"`
 	local configForCompiler=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "all.*all.*${compiler}"`
 	local config=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "${host}.*${target}.*${compiler}"`
-	local supported="yes"
-	local options=`echo ${configForAll} | cut -f 5 -d ';'`
-	options="${options} `echo ${configForCompiler} | cut -f 5 -d ';'`"
 
 	#check if config variable is not empty
-	if [ -z "$config" ]; then
-		supported=`echo $config | cut -f 4 -d ';' | xargs echo`
-
-		#check if configuration supported
-		if [[ "${supported}" = "no" ]]; then
+	if [ ! -z "$config" ]; then	
+		local supported=`echo $config | cut -f 4 -d ';' | xargs echo`
+		if [ "${supported}" = "no" ]; then
 			echo "Compilation not supported for ${package} with HOST=${host}, TARGET=${target} and COMPILER=${compiler}" 1>&2
-			# TODO: abort
 		fi
-		options="${options} `echo ${config} | cut -f 5 -d ';'`"
 	fi
+
+	local options=`echo ${configForCompiler} | cut -f 5 -d ';'`
+	options="${options} `echo ${config} | cut -f 5 -d ';'`"
 
 	echo $options
 }
 
 ######################################################
-registerPackageMultiArch()
+registerPackage()
 {
-	case "${2}" in
-		host)
-			ALL_PACKAGES_HOST="${ALL_PACKAGES_HOST} ${1}"
-		;;
-		target)
-			ALL_PACKAGES_TARGET="${ALL_PACKAGES_TARGET} ${1}"
-		;;
-	esac
+	if [ "${MULTI_ARCH}" = 'false' ];
+	then
+		ALL_PACKAGES="${ALL_PACKAGES} ${1}"
+	else
+		case "${2}" in
+			host)
+				ALL_PACKAGES_HOST="${ALL_PACKAGES_HOST} ${1}"
+			;;
+			target)
+				ALL_PACKAGES_TARGET="${ALL_PACKAGES_TARGET} ${1}"
+			;;
+			all)
+				ALL_PACKAGES_HOST="${ALL_PACKAGES_HOST} ${1}"
+				ALL_PACKAGES_TARGET="${ALL_PACKAGES_TARGET} ${1}"
+			;;
+		esac
+	fi
 }
 
 ######################################################
@@ -503,6 +444,7 @@ setupInstallPackage()
 	local version=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 2 -d ';' | xargs echo`
 	local status=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 4 -d ';' | xargs echo`
 	local deps=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 5 -d ';' | xargs echo`
+	local run_on=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 6 -d ';' | xargs echo`
 	local options=`getPackageCompilationOptions "${name}" "${host}" "${target}" "${compiler}"`
 
 	#extract user options
@@ -526,76 +468,10 @@ setupInstallPackage()
 
 	#Line to split rules
 	echo ''
-	
 	#register to list
 	### TODO: change to if $host = $target > cible host, sinon target
 	if [ "$status" = 'install' ]; then
-		if [ "$MULTI_ARCH" = 'true' ]; then
-			registerPackageMultiArch "${name}"
-		else
-			registerPackage "${name}"
-		fi
-	fi
-}
-
-######################################################
-#Generate makefile rules do build package for multi architectures
-# Args :
-#  -$1 : package name (eg. libxml2),
-#  -$2 : variable prefix (eg LIBXML2_PREFIX and check if equal to internal one)
-#  -$3 : architecture type (host or target)
-#  -$4 : [OPTIONAL] template file to use.
-setupInstallPackageMultiArch()
-{
-	#made local
-	local name="$1"
-	local varprefix="$2"
-	local archType="$3"
-	local template="$4"
-	
-	#if template is empty, use default
-	if [ -z "$template" ]; then
-		template="${PROJECT_TEMPLATE_DIR}/Makefile.${name}.in"
-	fi
-	
-	#extract prefix target
-	eval "prefix=\${${varprefix}_PREFIX}"
-	
-	#Load package options
-	local version=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 2 -d ';' | xargs echo`
-	local status=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 4 -d ';' | xargs echo`
-	local deps=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 5 -d ';' | xargs echo`
-	local options=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 7 -d ';'`
-	
-	#extract user options
-	eval "userOptions=\"\$${varprefix}_BUILD_PARAMETERS\""
-	
-	#add dep if want to gen help
-	if [ "$GEN_DEP_HELPS" = 'true' ]; then deps="${deps} ${name}-gen-help"; fi
-
-	#check if need to do it
-	if [ "$prefix" = "${INTERNAL_KEY}" ]; then
-		PACKAGE_DEPS="$deps"
-		PACKAGE_VAR_NAME="$varprefix"
-		PACKAGE_OPTIONS="$options"
-		PACKAGE_NAME="${name}"
-		PACKAGE_VERSION="${version}"
-		USER_PARAMETERS="$userOptions"
-		applyOnTemplate "${template}"
-	else
-		echo "${name}:"
-	fi
-
-	#Line to split rules
-	echo ''
-	
-	#register to list
-	if [ "$status" = 'install' ]; then
-		if [ "$MULTI_ARCH" = 'true' ]; then
-			registerPackageMultiArch "${name}" "${archType}"
-		else
-			registerPackage "${name}"
-		fi
+			registerPackage "${name}" "${run_on}"
 	fi
 }
 
@@ -621,24 +497,6 @@ installAutotoolsLocalPackageHydraSimple()
 installAutotoolsExternPackageMpc()
 {
 	setupInstallPackage "$1" "$2" "$3" "$4" "$5" "${PROJECT_TEMPLATE_DIR}/Makefile.generic.autotools.mpc.in"
-}
-
-######################################################
-installAutotoolsExternPackageMultiArch()
-{
-	setupInstallPackageMultiArch "$1" "$2" "$3" "${PROJECT_TEMPLATE_DIR}/Makefile.generic.autotools.in"
-}
-
-######################################################
-installAutotoolsLocalPackageMultiArch()
-{
-	setupInstallPackageMultiArch "$1" "$2" "$3" "${PROJECT_TEMPLATE_DIR}/Makefile.local.autotools.in"
-}
-
-######################################################
-installAutotoolsLocalPackageHydraSimpleMultiArch()
-{
-	setupInstallPackageMultiArch "$1" "$2" "$3" "${PROJECT_TEMPLATE_DIR}/Makefile.local.autotools.hydra_simple.in"
 }
 
 ######################################################
