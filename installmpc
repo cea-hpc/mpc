@@ -231,7 +231,7 @@ genMakefile()
 	fi
 
 	cd "$subprefix" || exit 1
-	SUBPREFIX="/$subprefix"
+	SUBPREFIX="$subprefix"
 	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.head.in" > Makefile
 	for module in ${list}; 
 	do
