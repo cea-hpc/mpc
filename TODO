@@ -9,6 +9,12 @@
  + MPC_Tools/configure_extern_deps (path hydra) ?
  + pas de chemin en dur dans mpcrun / mpccc
  + pas de rpath dans libmpc mais sur binaires user oui (vérifier relative rpath pour GCC sinon risque de pb... à checker)
+ + vérifier les sorties std/error et dispatch en mode verbose
+ + rajouter des fonctions pour les sorties d'erreurs avec gestion des couleurs
+ + rajouter un arg de clean   
+ + corriger pb de ln sur arch_wrapper (+ printer une étape en plus depuis le script install)
+ + propager les nouvelles versions de config par module  
+ 
 
 # DEP :
 * binutils
