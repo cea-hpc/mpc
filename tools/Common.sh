@@ -288,25 +288,24 @@ getPackageCompilationOptions()
 	local target="$3"
 	local compiler="$4"
 
+	local configForAll=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "all.*all.*all"`
 	local configForCompiler=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "all.*all.*${compiler}"`
 	local config=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "${host}.*${target}.*${compiler}"`
+	local supported="yes"
+	local options=`echo ${configForAll} | cut -f 5 -d ';'`
+	options="${options} `echo ${configForCompiler} | cut -f 5 -d ';'`"
 
 	#check if config variable is not empty
 	if [ -z "$config" ]; then
-		echo "Compilation not supported for ${package} with HOST=${host}, TARGET=${target} and COMPILER=${compiler}" 1>&2
-		# TODO: abort
+		supported=`echo $config | cut -f 4 -d ';' | xargs echo`
+
+		#check if configuration supported
+		if [[ "${supported}" = "no" ]]; then
+			echo "Compilation not supported for ${package} with HOST=${host}, TARGET=${target} and COMPILER=${compiler}" 1>&2
+			# TODO: abort
+		fi
+		options="${options} `echo ${config} | cut -f 5 -d ';'`"
 	fi
-
-	local supported=`echo $config | cut -f 4 -d ';' | xargs echo`
-
-	#check if configuration supported
-	if [[ "${supported}" = "no" ]]; then
-		echo "Compilation not supported for ${package} with HOST=${host}, TARGET=${target} and COMPILER=${compiler}" 1>&2
-		# TODO: abort
-	fi
-
-	local options=`echo ${configForCompiler} | cut -f 5 -d ';'`
-	options="${options} `echo ${config} | cut -f 5 -d ';'`"
 
 	echo $options
 }
