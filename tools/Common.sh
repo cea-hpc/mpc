@@ -469,6 +469,12 @@ installAutotoolsLocalPackageHydraSimple()
 }
 
 ######################################################
+installAutotoolsExternPackageMpc()
+{
+	setupInstallPackage "$1" "$2" "$3" "$4" "$5" "${PROJECT_TEMPLATE_DIR}/Makefile.generic.autotools.mpc.in"
+}
+
+######################################################
 installAutotoolsExternPackageMultiArch()
 {
 	setupInstallPackageMultiArch "$1" "$2" "$3" "${PROJECT_TEMPLATE_DIR}/Makefile.generic.autotools.in"
