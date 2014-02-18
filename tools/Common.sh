@@ -117,6 +117,58 @@ getMirrorAddress()
 	eval "${outvar}=\"${address}\""
 }
 
+downloadDep()
+{
+
+# 	if [ ! -r gmp-5.1.3.tar.bz2 ]; then 
+#   wget ${MIRROR}/contrib/gmp-5.1.3.tar.bz2
+# fi
+# if [ ! -r mpfr-3.1.2.tar.bz2 ]; then 
+#   wget ${MIRROR}/contrib/mpfr-3.1.2.tar.bz2
+# fi
+# if [ ! -r ppl-1.1.tar.bz2 ]; then 
+#   wget ${MIRROR}/contrib/ppl-1.1.tar.bz2
+# fi
+# if [ ! -r cloog-parma-0.16.1.tar.gz ]; then
+#   wget ${MIRROR}/contrib/cloog-parma-0.16.1.tar.gz
+# fi
+
+# if [ ! -r mpc-1.0.2.tar.gz ]; then
+#    wget ${MIRROR}/contrib/mpc-1.0.2.tar.gz
+# fi
+
+# if [ ! -r MPC_2.5.0.tar.gz ]; then
+#   wget ${MIRROR}/MPC_2.5.0.tar.gz
+# fi
+}
+
+
+getMirrorAddress()
+{
+	#extract parameter
+	local outvar="$1"	
+	local mirrorid="$2"
+	local address=""
+
+	case $mirrorid in
+		1)
+			local address=http://fs.paratools.com/mpc
+			;;
+         2)
+           local address=http://static.paratools.com/mpc/tar
+           ;;
+         3)
+           local address=ftp://fs.paratools.com/mpc
+           ;;
+         4)
+           local address=ftp://paratools08.rrp.net/mpc
+           ;;
+         *)
+           local address=ftp://paratools08.rrp.net/mpc
+           ;;
+	esac
+}
+
 
 ######################################################
 #function to get a list of modules 
