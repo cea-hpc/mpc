@@ -190,7 +190,15 @@ static char* sctk_network_driver_name = NULL;
 sctk_perform_initialisation (void)
 {
 /*   mkdir (sctk_store_dir, 0777); */
-
+  if(sctk_process_nb_val && sctk_task_nb_val)
+  {
+    if(sctk_task_nb_val < sctk_process_nb_val)
+	{
+		sctk_error( "\n--process-nb=%d\n--nb-task=%d\n Nb tasks must be greater than nb processes\n Run your program with option --nb-task=(>=%d) or --nb-process=(<=%d)", sctk_process_nb_val, sctk_task_nb_val, sctk_process_nb_val, sctk_task_nb_val );
+		abort();
+	}
+  }
+  sctk_debug("nb process = %d, nb threads = %d", sctk_process_nb_val, sctk_task_nb_val);
   sctk_only_once ();
 
   if (sctk_process_nb_val > 1)
