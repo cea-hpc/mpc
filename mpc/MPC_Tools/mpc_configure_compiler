@@ -212,7 +212,7 @@ EOF
 cat << EOF >> $1
 
     -threads)
-    \$CFLAGS="\$CFLAGS -threads"
+    CFLAGS="\$CFLAGS -threads"
     ;;
 
 EOF
