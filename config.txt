@@ -1,15 +1,15 @@
-# name       ; version ; sup versions   ; status  ;   deps                                            ; run-on ; template
-#####################################################################################################################
-libxml2      ; 2.8.0   ;                ; dep     ;                                                   ; target   ; extern
-hwloc        ; 1.6.1   ; 1.6.1          ; install ;                                                   ; target   ; extern
-binutils     ; 2.22    ; 2.22           ; install ;                                                   ; all      ; extern
-gmp          ; 5.1.3   ;                ; dep     ;                                                   ; host     ; extern
-mpfr         ; 3.1.2   ;                ; dep     ; gmp                                               ; host     ; extern
-mpc          ; 1.0.2   ;                ; dep     ; gmp mpfr                                          ; host     ; mpc
-gcc          ; 4.8.0   ;                ; install ; gmp mpfr mpc                                      ; host     ; extern
-openpa       ; 1.0.2   ;                ; dep     ;                                                   ; target   ; extern
-sctk_arch    ; cur     ;                ; install ;                                                   ; target   ; local
-mpcframework ; cur     ;                ; install ; libxml2 hwloc openpa sctk_arch hydra hydra_simple ; target   ; local
-hydra        ; 1.4     ;                ; install ;                                                   ; all      ; extern
-hydra_simple ; cur     ;                ; install ; hydra                                             ; all      ; hydra_simple
-gdb          ; 7.5     ;                ; install ;                                                   ; target   ; extern
+# name       ; version ; sup versions   ; status  ;   deps                                            ; run-on ;type;template
+#############################################################################################################################
+libxml2      ; 2.8.0 ;       ; dep     ;                                                   ; target  ; extern       ; generic.autotools
+hwloc        ; 1.6.1 ; 1.6.1 ; install ;                                                   ; target  ; extern		; generic.autotools
+binutils     ; 2.22  ; 2.22  ; install ;                                                   ; all     ; extern		; generic.autotools
+gmp          ; 5.1.3 ;       ; dep     ;                                                   ; host    ; extern		; generic.autotools
+mpfr         ; 3.1.2 ;       ; dep     ; gmp                                               ; host    ; extern		; generic.autotools
+mpc          ; 1.0.2 ;       ; dep     ; gmp mpfr                                          ; host    ; mpc			; generic.autotools.mpc
+gcc          ; 4.8.0 ;       ; install ; gmp mpfr mpc binutils                             ; host    ; extern		; generic.autotools.gcc
+openpa       ; 1.0.2 ;       ; dep     ;                                                   ; target  ; extern		; generic.autotools
+sctk_arch    ; cur   ;       ; install ;                                                   ; target  ; local		; local.autotools
+mpcframework ; cur   ;       ; install ; libxml2 hwloc openpa sctk_arch hydra hydra_simple ; target  ; local		; local.autotools
+hydra        ; 1.4   ;       ; install ;                                                   ; all     ; extern		; generic.autotools
+hydra_simple ; cur   ;       ; install ; hydra                                             ; all     ; hydra_simple	; local.autotools.hydra_simple
+gdb          ; 7.5   ;       ; install ;                                                   ; target  ; extern		; generic.autotools

@@ -335,6 +335,9 @@ enablePrefixEnv()
 # - $1 : Template file to use
 applyOnTemplate()
 {
+	if [ "${SUBPREFIX}" = "${SUBPREFIX_HOST}" ]; then
+		SUBPREFIX_HOST=""
+	fi
 	#extract args
 	local file="$1"
 
@@ -373,10 +376,11 @@ getPackageCompilationOptions()
 	local host="$2"
 	local target="$3"
 	local compiler="$4"
-
+	local type="$5"
+	
 	local configForCompiler=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "all.*all.*${compiler}"`
-	local config=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "${host}.*${target}.*${compiler}"`
-
+	local config=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "${host} *; *${target} *; *${compiler} *; *${type}"`
+	echo "config = $config" 1>&2
 	#check if config variable is not empty
 	if [ ! -z "$config" ]; then	
 		local supported=`echo $config | cut -f 4 -d ';' | xargs echo`
@@ -384,10 +388,12 @@ getPackageCompilationOptions()
 			echo "Compilation not supported for ${package} with HOST=${host}, TARGET=${target} and COMPILER=${compiler}" 1>&2
 		fi
 	fi
-
-	local options=`echo ${configForCompiler} | cut -f 5 -d ';'`
-	options="${options} `echo ${config} | cut -f 5 -d ';'`"
-
+    
+	local options=`echo ${configForCompiler} | cut -f 6 -d ';'`
+	options="${options} `echo ${config} | cut -f 6 -d ';'`"
+	
+	echo "$package: '$options', on $type" 1>&2
+	echo "------------------------------------" 1>&2
 	echo $options
 }
 
@@ -430,7 +436,8 @@ setupInstallPackage()
 	local target="$3"	
 	local compiler="$4"
 	local varprefix="$5"
-	local template="$6"
+	local template="${PROJECT_TEMPLATE_DIR}/Makefile.${6}.in"
+	local type="$7"
 	
 	#if template is empty, use default
 	if [ -z "$template" ]; then
@@ -445,7 +452,7 @@ setupInstallPackage()
 	local status=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 4 -d ';' | xargs echo`
 	local deps=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 5 -d ';' | xargs echo`
 	local run_on=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 6 -d ';' | xargs echo`
-	local options=`getPackageCompilationOptions "${name}" "${host}" "${target}" "${compiler}"`
+	local options=`getPackageCompilationOptions "${name}" "${host}" "${target}" "${compiler}" "${type}"`
 
 	#extract user options
 	eval "userOptions=\"\$${varprefix}_BUILD_PARAMETERS\""
@@ -473,30 +480,6 @@ setupInstallPackage()
 	if [ "$status" = 'install' ]; then
 			registerPackage "${name}" "${run_on}"
 	fi
-}
-
-######################################################
-installAutotoolsExternPackage()
-{
-	setupInstallPackage "$1" "$2" "$3" "$4" "$5" "${PROJECT_TEMPLATE_DIR}/Makefile.generic.autotools.in"
-}
-
-######################################################
-installAutotoolsLocalPackage()
-{
-	setupInstallPackage "$1" "$2" "$3" "$4" "$5" "${PROJECT_TEMPLATE_DIR}/Makefile.local.autotools.in"
-}
-
-######################################################
-installAutotoolsLocalPackageHydraSimple()
-{
-	setupInstallPackage "$1" "$2" "$3" "$4" "$5" "${PROJECT_TEMPLATE_DIR}/Makefile.local.autotools.hydra_simple.in"
-}
-
-######################################################
-installAutotoolsExternPackageMpc()
-{
-	setupInstallPackage "$1" "$2" "$3" "$4" "$5" "${PROJECT_TEMPLATE_DIR}/Makefile.generic.autotools.mpc.in"
 }
 
 ######################################################

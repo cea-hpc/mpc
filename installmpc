@@ -147,7 +147,14 @@ do
 			;;
 		################# COMPILER ##################
 		--compiler=*)
-			extractArchValue 'MPC_COMPILER' 'compiler' "$arg"
+			extractParamValue 'MPC_COMPILER' 'compiler' "$arg"
+			#if we use icc, no need for gcc and its libs
+			if [ "${MPC_COMPILER}" = "icc" ]; then
+				GMP_PREFIX='disabled'
+				MPFR_PREFIX='disabled'
+				MPC_PREFIX='disabled'
+				GCC_PREFIX='disabled'
+			fi
 			;;
 			
 		############### CROSS-COMPIL ################
@@ -195,12 +202,16 @@ done
 enablePrefixEnv "${PREFIX}"
 
 ######################################################
+#Export PATH for finding Utils
+#export PATH="${PREFIX}/${MPC_HOST}/bin:${PREFIX}/${MPC_TARGET}/bin:$PATH"
+
+######################################################
 #force MPC
 MPCFRAMEWORK_PREFIX="${INTERNAL_KEY}"
 
-GMP_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
-MPFR_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
-MPC_REAL_PREFIX="${PREFIX}/${MPC_TARGET}/mpc/"
+GMP_REAL_PREFIX="${PREFIX}/${MPC_HOST}"
+MPFR_REAL_PREFIX="${PREFIX}/${MPC_HOST}"
+MPC_REAL_PREFIX="${PREFIX}/${MPC_HOST}/mpc/"
 HYDRA_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
 HYDRA_SIMPLE_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
 LIBXML2_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
@@ -214,7 +225,7 @@ printSummary
 ######################################################
 #Create glue between packages
 #'--with-hydra-simple=${HYDRA_SIMPLE_REAL_PREFIX}'
-GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' '--with-mpfr=${MPFR_REAL_PREFIX}' '--with-mpc=${MPC_REAL_PREFIX}' --disable-multilib --disable-bootstrap --disable-multilib --program-prefix=mpc- --program-suffix=_480 --with-pkgversion=MPC --enable-languages=c,c++,fortran ${GCC_BUILD_PARAMETERS}"
+GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' '--with-mpfr=${MPFR_REAL_PREFIX}' '--with-mpc=${MPC_REAL_PREFIX}' --disable-multilib --disable-bootstrap --program-prefix=mpc- --program-suffix=_480 --with-pkgversion=MPC --enable-languages=c,c++,fortran ${GCC_BUILD_PARAMETERS}"
 MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_REAL_PREFIX}' '--with-openpa=${OPENPA_REAL_PREFIX}' '--with-hwloc=${HWLOC_REAL_PREFIX}' '--with-libsctk_arch=${SCTK_ARCH_REAL_PREFIX}' ${MPC_BUILD_PARAMETERS}"
 MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
 MPC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' --with-mpfr=${MPFR_REAL_PREFIX} ${MPC_BUILD_PARAMETERS}"
@@ -239,20 +250,12 @@ genMakefile()
 	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.head.in" > Makefile
 	for module in ${list}; 
 	do
-		local template=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 7 -d ';' | xargs echo`
+		local template=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 8 -d ';' | xargs echo`
 		local run_on=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 6 -d ';' | xargs echo`
 		if [ "${run_on}" = "${2}" ] || [ "${run_on}" = "all" ];
 		then
 			UPPER=`echo ${module} | tr '[:lower:]' '[:upper:]'`
-			if [ "${template}" = "extern" ]; then
-				installAutotoolsExternPackage "${module}" "${host}" "${target}" "${MPC_COMPILER}" "${UPPER}"  >> Makefile
-			elif [ "${template}" = "local" ]; then
-				installAutotoolsLocalPackage "${module}" "${host}" "${target}" "${MPC_COMPILER}" "${UPPER}"  >> Makefile
-			elif [ "${template}" = "hydra_simple" ]; then
-				installAutotoolsLocalPackageHydraSimple "${module}" "${host}" "${target}" "${MPC_COMPILER}" "${UPPER}"  >> Makefile
-			elif [ "${template}" = "mpc" ]; then
-				installAutotoolsExternPackageMpc "${module}" "${host}" "${target}" "${MPC_COMPILER}" "${UPPER}"  >> Makefile
-			fi
+			setupInstallPackage "${module}" "${host}" "${target}" "${MPC_COMPILER}" "${UPPER}" "${template}" "${2}">> Makefile
 		fi
 	done
 	if [ "$MULTI_ARCH" = 'false' ]; then
@@ -269,8 +272,10 @@ createRootMakefile()
 	if [ "$MULTI_ARCH" = 'true' ]; then
 		SUBPREFIXES="$*"
 		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.multiprefix.root.in" > Makefile
-		for SUBPREFIX in $*
+		for SUBPREFIX in ${SUBPREFIXES}
 		do
+			SUBPREFIX_HOST="$1"
+			SUBPREFIX_TARGET="$2"
 			applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.multiprefix.subprefix.in" >> Makefile
 		done
 	else	

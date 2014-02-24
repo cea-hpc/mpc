@@ -1,6 +1,6 @@
 ##########################################################################
 
-@SUBPREFIX@:
+@SUBPREFIX@: @SUBPREFIX_HOST@
 	$(MAKE) -C $@
 
 .PHONY: @SUBPREFIX@
