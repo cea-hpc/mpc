@@ -154,6 +154,8 @@ do
 				MPFR_PREFIX='disabled'
 				MPC_PREFIX='disabled'
 				GCC_PREFIX='disabled'
+				HYDRA_PREFIX='disabled'
+				HYDRA_SIMPLE_PREFIX='disabled'
 			fi
 			;;
 			
@@ -204,6 +206,7 @@ enablePrefixEnv "${PREFIX}"
 ######################################################
 #Export PATH for finding Utils
 #export PATH="${PREFIX}/${MPC_HOST}/bin:${PREFIX}/${MPC_TARGET}/bin:$PATH"
+export LIBRARY_PATH=/usr/lib64/:$LIBRARY_PATH 
 
 ######################################################
 #force MPC
@@ -225,7 +228,7 @@ printSummary
 ######################################################
 #Create glue between packages
 #'--with-hydra-simple=${HYDRA_SIMPLE_REAL_PREFIX}'
-GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' '--with-mpfr=${MPFR_REAL_PREFIX}' '--with-mpc=${MPC_REAL_PREFIX}' --disable-multilib --disable-bootstrap --program-prefix=mpc- --program-suffix=_480 --with-pkgversion=MPC --enable-languages=c,c++,fortran ${GCC_BUILD_PARAMETERS}"
+GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' '--with-mpfr=${MPFR_REAL_PREFIX}' '--with-mpc=${MPC_REAL_PREFIX}' --program-prefix=mpc- --program-suffix=_480 --with-pkgversion=MPC --enable-languages=c,c++,fortran --disable-threads --without-headers --disable-nls --disable-decimal-float --disable-plugin --disable-libssp --disable-libgomp --disable-shared --with-system-zlib --disable-libmudflap --disable-libquadmath --with-system-libunwind --disable-libatomic --enable-multilib --with-newlib ${GCC_BUILD_PARAMETERS}"
 MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_REAL_PREFIX}' '--with-openpa=${OPENPA_REAL_PREFIX}' '--with-hwloc=${HWLOC_REAL_PREFIX}' '--with-libsctk_arch=${SCTK_ARCH_REAL_PREFIX}' ${MPC_BUILD_PARAMETERS}"
 MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
 MPC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' --with-mpfr=${MPFR_REAL_PREFIX} ${MPC_BUILD_PARAMETERS}"

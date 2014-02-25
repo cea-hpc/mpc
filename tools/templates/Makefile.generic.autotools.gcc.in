@@ -24,9 +24,9 @@
 	fi; \
 
 @PACKAGE_NAME@: @PACKAGE_DEPS@ @PACKAGE_NAME@-prepare
-	cd $(@PACKAGE_VAR_NAME@_BUILD_DIR) && $(STEP_WRAPPER) "Configure $(@PACKAGE_VAR_NAME@_STEP_NAME)" ./configure --prefix=$(PREFIX) $(@PACKAGE_VAR_NAME@_BUILD_PARAMETERS)
-	$(STEP_WRAPPER) "Build $(@PACKAGE_VAR_NAME@_STEP_NAME)"   $(MAKE) $(MFLAGS) -C $(@PACKAGE_VAR_NAME@_BUILD_DIR) all-gcc
-	$(STEP_WRAPPER) "Install $(@PACKAGE_VAR_NAME@_STEP_NAME)" $(MAKE) $(MFLAGS) -C $(@PACKAGE_VAR_NAME@_BUILD_DIR) install-gcc
+	cd $(@PACKAGE_VAR_NAME@_BUILD_DIR) && mkdir build && cd build && $(STEP_WRAPPER) "Configure $(@PACKAGE_VAR_NAME@_STEP_NAME)" ../configure --prefix=$(PREFIX) $(@PACKAGE_VAR_NAME@_BUILD_PARAMETERS)
+	$(STEP_WRAPPER) "Build $(@PACKAGE_VAR_NAME@_STEP_NAME)"   $(MAKE) $(MFLAGS) -C $(@PACKAGE_VAR_NAME@_BUILD_DIR)/build/ all-gcc
+	$(STEP_WRAPPER) "Install $(@PACKAGE_VAR_NAME@_STEP_NAME)" $(MAKE) $(MFLAGS) -C $(@PACKAGE_VAR_NAME@_BUILD_DIR)/build/ install-gcc
 
 #avoid conflict with directory
 .PHONY: @PACKAGE_NAME@ @PACKAGE_NAME@-prepare @PACKAGE_NAME@-gen-help

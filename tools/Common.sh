@@ -391,7 +391,16 @@ getPackageCompilationOptions()
     
 	local options=`echo ${configForCompiler} | cut -f 6 -d ';'`
 	options="${options} `echo ${config} | cut -f 6 -d ';'`"
-	
+
+	case ${compiler} in
+		gcc)
+			options="${options} CC=gcc CXX=g++ F77=gfortran"
+		;;
+		icc)
+			options="${options} CC=icc CXX=icpc F77=ifort"
+		;;
+	esac
+
 	echo "$package: '$options', on $type" 1>&2
 	echo "------------------------------------" 1>&2
 	echo $options
