@@ -169,8 +169,8 @@ do
 			MULTI_ARCH='true'
 			;;
 		################## COMMON ###################
-		--enable-color)
-			ENABLE_COLOR='true'
+		--disable-color)
+			ENABLE_COLOR='false'
 			;;
 		--enable-all-internals)
 			ALL_INTERNALS='true'
@@ -238,6 +238,36 @@ HYDRA_SIMPLE_BUILD_PARAMETERS="'--with-hydra-mpl=${HYDRA_REAL_PREFIX}' ${HYDRA_S
 #Clear makefile to generate it (TODO à générer, générer la variable en majuscule)
 genMakefile()
 {
+<<<<<<< Updated upstream
+=======
+	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.head.in" > Makefile
+	# Get list of dep 
+	#getModules 'LIST' 
+	# for module in $LIST; do
+	# 	UPPER=`echo $module | tr '[:lower:]' '[:upper:]'`
+	# 	installAutotoolsExternPackage $module ${UPPER} >> Makefile
+	# done
+
+	installAutotoolsExternPackage 'libxml2' 'LIBXML2'  >> Makefile
+	installAutotoolsExternPackage 'hwloc' 'HWLOC'  >> Makefile
+	installAutotoolsExternPackage 'binutils' 'BINUTILS'  >> Makefile
+	installAutotoolsExternPackage 'gmp' 'GMP'  >> Makefile
+	installAutotoolsExternPackage 'mpfr' 'MPFR'  >> Makefile
+	installAutotoolsExternPackage 'openpa' 'OPENPA'  >> Makefile
+	installAutotoolsExternPackage 'gcc' 'MPC_GCC'  >> Makefile
+	installAutotoolsExternPackage 'gdb' 'MPC_GDB'  >> Makefile
+	installAutotoolsExternPackage 'hydra' 'HYDRA'  >> Makefile
+	installAutotoolsLocalPackage 'libsctk-arch' 'SCTK_ARCH' >> Makefile
+	installAutotoolsLocalPackageHydraSimple 'hydra-simple' 'HYDRA_SIMPLE'  >> Makefile
+	installAutotoolsLocalPackage 'mpcframework' 'MPC'  >> Makefile
+
+	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot.in" >> Makefile
+}
+
+######################################################
+genMakeForSubPrefix()
+{
+>>>>>>> Stashed changes
 	local subprefix="$1"
 	local type_arch="$2"
 	local host=${MPC_HOST};

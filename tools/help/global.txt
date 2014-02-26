@@ -1,10 +1,10 @@
 TODO but list of options (similar to old mpc way) :
 
-#Disable sub packages
+# Disable sub packages
 --disable-mpc-gdb
 --disable-mpc-gcc
 
-#where to find ('internal' to build the embedded one)
+# Where to find ('internal' to build the embedded one)
 --with-cmake=
 --with-sctk-arch=
 --with-openpa=
@@ -16,7 +16,7 @@ TODO but list of options (similar to old mpc way) :
 --with-hwloc=*
 --with-libxml2=
 
-#options to transmit to subpackages
+# Options to transmit to subpackages
 --cmake-*
 --sctk-arch-*
 --openpa-*
@@ -28,9 +28,9 @@ TODO but list of options (similar to old mpc way) :
 --libxml2-*
 --hwloc-*
 
-#features
+# Features
 --enable-multi-arch
---enable-color
+--disable-color
 --enable-all-internals
 -v|-vv|-vvv
 --verbose=1|--verbose=2|--verbose=3
