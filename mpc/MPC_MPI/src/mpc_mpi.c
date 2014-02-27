@@ -206,6 +206,8 @@ static int __INTERNAL__PMPI_Reduce_scatter (void *, void *, int *,
 					    MPI_Datatype, MPI_Op, MPI_Comm);
 static int __INTERNAL__PMPI_Scan (void *, void *, int, MPI_Datatype, MPI_Op,
 				  MPI_Comm);
+static int __INTERNAL__PMPI_Exscan (void *, void *, int, MPI_Datatype, MPI_Op,
+				  MPI_Comm);
 static int __INTERNAL__PMPI_Group_size (MPI_Group, int *);
 static int __INTERNAL__PMPI_Group_rank (MPI_Group, int *);
 static int __INTERNAL__PMPI_Group_translate_ranks (MPI_Group, int, int *,
@@ -4561,6 +4563,92 @@ __INTERNAL__PMPI_Scan (void *sendbuf, void *recvbuf, int count,
     {
       res =
 	__INTERNAL__PMPI_Send (recvbuf, count, datatype, rank + 1, -3, comm);
+      if (res != MPI_SUCCESS)
+	{
+	  return res;
+	}
+    }
+
+  sctk_free (tmp);
+  res = __INTERNAL__PMPI_Wait (&(request), MPI_STATUS_IGNORE);
+  if (res != MPI_SUCCESS)
+    {
+      return res;
+    }
+  res = __INTERNAL__PMPI_Barrier (comm);
+
+  return res;
+}
+
+static int
+__INTERNAL__PMPI_Exscan (void *sendbuf, void *recvbuf, int count,
+		       MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
+{
+  MPC_Op mpc_op;
+  sctk_op_t *mpi_op;
+  int size;
+  int rank;
+  MPI_Request request;
+  MPI_Aint dsize;
+  void *tmp;
+  int res;
+
+  mpi_op = sctk_convert_to_mpc_op (op);
+  mpc_op = mpi_op->op;
+
+  __INTERNAL__PMPI_Comm_rank (comm, &rank);
+  __INTERNAL__PMPI_Comm_size (comm, &size);
+
+
+  __INTERNAL__PMPI_Isend (sendbuf, count, datatype, rank, -3, comm, &request);
+
+  res =  __INTERNAL__PMPI_Type_extent (datatype, &dsize);
+  if (res != MPI_SUCCESS)
+    {
+      return res;
+    }
+
+  tmp = sctk_malloc (dsize*count);
+
+  res =
+    __INTERNAL__PMPI_Recv (tmp, count, datatype, rank, -3, comm,
+			   MPI_STATUS_IGNORE);
+  if (res != MPI_SUCCESS)
+    {
+      return res;
+    }
+
+  res = __INTERNAL__PMPI_Barrier (comm);
+  if (res != MPI_SUCCESS)
+    {
+      return res;
+    }
+
+  if (rank != 0)
+    {
+      res =
+	__INTERNAL__PMPI_Recv (recvbuf, count, datatype, rank - 1, -3, comm,
+			       MPI_STATUS_IGNORE);
+      if (res != MPI_SUCCESS)
+	{
+	  return res;
+	}
+      if (mpc_op.u_func != NULL)
+	{
+	  mpc_op.u_func (recvbuf, tmp, &count, &datatype);
+	}
+      else
+	{
+	  MPC_Op_f func;
+	  func = sctk_get_common_function (datatype, mpc_op);
+	  func (recvbuf, tmp, count, datatype);
+	}
+    }
+
+  if (rank + 1 < size)
+    {
+      res =
+	__INTERNAL__PMPI_Send (tmp, count, datatype, rank + 1, -3, comm);
       if (res != MPI_SUCCESS)
 	{
 	  return res;
@@ -9655,6 +9743,26 @@ PMPI_Scan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 }
 
 int
+PMPI_Exscan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
+	   MPI_Op op, MPI_Comm comm)
+{
+  int res = MPI_ERR_INTERN;
+  mpi_check_comm (comm, comm);
+
+        if(sctk_is_inter_comm (comm)){
+          MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+        }
+
+  mpi_check_buf (sendbuf, comm);
+  mpi_check_buf (recvbuf, comm);
+  mpi_check_count (count, comm);
+  mpi_check_type (datatype, comm);
+	mpi_check_op (op, datatype,comm);
+  res = __INTERNAL__PMPI_Exscan (sendbuf, recvbuf, count, datatype, op, comm);
+  SCTK__MPI_Check_retrun_val (res, comm);
+}
+
+int
 PMPI_Group_size (MPI_Group group, int *size)
 {
   MPI_Comm comm = MPI_COMM_WORLD;
@@ -10758,7 +10866,6 @@ int PMPI_Type_create_resized(MPI_Datatype oldtype, MPI_Aint lb, MPI_Aint extent,
 int PMPI_Type_get_true_extent(MPI_Datatype datatype, MPI_Aint *true_lb, MPI_Aint *true_extent){return MPI_SUCCESS;}
 int PMPI_Type_get_extent(MPI_Datatype datatype, MPI_Aint *lb, MPI_Aint *extent){return MPI_SUCCESS;}
 
-int PMPI_Exscan(void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype, MPI_Op op, MPI_Comm comm){return MPI_SUCCESS;}
 
 int PMPI_Comm_set_errhandler(MPI_Comm comm, MPI_Errhandler errhandler){return MPI_SUCCESS;}
 int PMPI_Finalized( int *flag ){return MPI_SUCCESS;}

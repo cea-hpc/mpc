@@ -534,7 +534,6 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
   int PMPI_Type_get_true_extent(MPI_Datatype , MPI_Aint *, MPI_Aint *);
   int PMPI_Type_get_extent(MPI_Datatype , MPI_Aint *, MPI_Aint *);
   
-  int PMPI_Exscan(void *, void *, int , MPI_Datatype , MPI_Op , MPI_Comm );
   int PMPI_Comm_set_errhandler(MPI_Comm , MPI_Errhandler );
   int PMPI_Finalized( int *flag );
   
@@ -736,6 +735,7 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
   int PMPI_Reduce_scatter (void *, void *, int *, MPI_Datatype, MPI_Op,
 			   MPI_Comm);
   int PMPI_Scan (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
+  int PMPI_Exscan(void *, void *, int , MPI_Datatype , MPI_Op , MPI_Comm );
   int PMPI_Group_size (MPI_Group, int *);
   int PMPI_Group_rank (MPI_Group, int *);
   int PMPI_Group_translate_ranks (MPI_Group, int, int *, MPI_Group, int *);

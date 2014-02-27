@@ -233,6 +233,9 @@
 #pragma weak MPI_Scan = PMPI_Scan
 #pragma weak mpi_scan_ = pmpi_scan_
 #pragma weak mpi_scan__ = pmpi_scan__
+#pragma weak MPI_Exscan = PMPI_Exscan
+#pragma weak mpi_exscan_ = pmpi_exscan_
+#pragma weak mpi_exscan__ = pmpi_exscan__
 #pragma weak MPI_Group_size = PMPI_Group_size
 #pragma weak mpi_group_size_ = pmpi_group_size_
 #pragma weak mpi_group_size__ = pmpi_group_size__
@@ -484,7 +487,6 @@
 #pragma weak MPI_Free_mem = PMPI_Free_mem
 
 #pragma weak MPI_Alltoallw = PMPI_Alltoallw
-#pragma weak MPI_Exscan = PMPI_Exscan
 #pragma weak MPI_Comm_set_errhandler = PMPI_Comm_set_errhandler
 #pragma weak MPI_Finalized = PMPI_Finalized
 

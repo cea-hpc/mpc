@@ -301,6 +301,10 @@ void ffunc (mpi_scan) (void *sendbuf, void *recvbuf, int *count,
 		       MPI_Datatype * datatype, MPI_Op * op, MPI_Comm * comm,
 		       int *res);
 
+void ffunc (mpi_exscan) (void *sendbuf, void *recvbuf, int *count,
+		       MPI_Datatype * datatype, MPI_Op * op, MPI_Comm * comm,
+		       int *res);
+
 void ffunc (mpi_group_size) (MPI_Group * group, int *size, int *res);
 
 void ffunc (mpi_group_rank) (MPI_Group * group, int *rank, int *res);
@@ -1060,6 +1064,14 @@ void ffunc (pmpi_reduce_scatter) (void *sendbuf, void *recvbuf, int *recvcnts,
 }
 
 void ffunc (pmpi_scan) (void *sendbuf, void *recvbuf, int *count,
+			MPI_Datatype * datatype, MPI_Op * op, MPI_Comm * comm,
+			int *res)
+{
+  *res = MPI_Scan (sendbuf, recvbuf, *count, *datatype, *op, *comm);
+
+}
+
+void ffunc (pmpi_exscan) (void *sendbuf, void *recvbuf, int *count,
 			MPI_Datatype * datatype, MPI_Op * op, MPI_Comm * comm,
 			int *res)
 {
