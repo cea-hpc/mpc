@@ -204,6 +204,8 @@ static int __INTERNAL__PMPI_Allreduce (void *, void *, int, MPI_Datatype,
 				       MPI_Op, MPI_Comm);
 static int __INTERNAL__PMPI_Reduce_scatter (void *, void *, int *,
 					    MPI_Datatype, MPI_Op, MPI_Comm);
+static int __INTERNAL__PMPI_Reduce_scatter_block (void *, void *, int,
+					    MPI_Datatype, MPI_Op, MPI_Comm);
 static int __INTERNAL__PMPI_Scan (void *, void *, int, MPI_Datatype, MPI_Op,
 				  MPI_Comm);
 static int __INTERNAL__PMPI_Exscan (void *, void *, int, MPI_Datatype, MPI_Op,
@@ -4458,6 +4460,7 @@ __INTERNAL__PMPI_Allreduce (void *sendbuf, void *recvbuf, int count,
       return PMPC_Allreduce (sendbuf, recvbuf, count, datatype, mpc_op, comm);
     }
 }
+
 static int
 __INTERNAL__PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 				 MPI_Datatype datatype, MPI_Op op,
@@ -4486,6 +4489,36 @@ __INTERNAL__PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 	  return res;
 	}
       acc += recvcnts[i];
+    }
+
+  res = __INTERNAL__PMPI_Barrier (comm);
+
+  return res;
+}
+
+static int
+__INTERNAL__PMPI_Reduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt,
+				 MPI_Datatype datatype, MPI_Op op,
+				 MPI_Comm comm)
+{
+  int res;
+  int i;
+  MPI_Aint dsize;
+  int size;
+  int acc = 0;
+
+  __INTERNAL__PMPI_Comm_size (comm, &size);
+  __INTERNAL__PMPI_Type_extent (datatype, &dsize);
+
+  for (i = 0; i < size; i++)
+    {
+      res =
+	__INTERNAL__PMPI_Reduce (((char *) sendbuf) + (recvcnt * i * dsize), recvbuf,
+				 recvcnt, datatype, op, i, comm);
+      if (res != MPI_SUCCESS)
+	{
+	  return res;
+	}
     }
 
   res = __INTERNAL__PMPI_Barrier (comm);
@@ -9745,16 +9778,9 @@ PMPI_Reduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt,
 	mpi_check_type (datatype, comm);
 	mpi_check_op (op,datatype, comm);
 
-  recvcnts = sctk_malloc(size*sizeof(int));
-  for(i = 0; i < size; i++){
-    recvcnts[i] = recvcnt;
-  }
-
   res =
-    __INTERNAL__PMPI_Reduce_scatter (sendbuf, recvbuf, recvcnts, datatype, op,
+    __INTERNAL__PMPI_Reduce_scatter_block (sendbuf, recvbuf, recvcnt, datatype, op,
 				     comm);
-
-  sctk_free(recvcnts);
 
   SCTK__MPI_Check_retrun_val (res, comm);
 }
