@@ -297,6 +297,10 @@ void ffunc (mpi_reduce_scatter) (void *sendbuf, void *recvbuf, int *recvcnts,
 				 MPI_Datatype * datatype, MPI_Op * op,
 				 MPI_Comm * comm, int *res);
 
+void ffunc (mpi_reduce_scatter_block) (void *sendbuf, void *recvbuf, int recvcnt,
+				 MPI_Datatype * datatype, MPI_Op * op,
+				 MPI_Comm * comm, int *res);
+
 void ffunc (mpi_scan) (void *sendbuf, void *recvbuf, int *count,
 		       MPI_Datatype * datatype, MPI_Op * op, MPI_Comm * comm,
 		       int *res);
@@ -1063,6 +1067,15 @@ void ffunc (pmpi_reduce_scatter) (void *sendbuf, void *recvbuf, int *recvcnts,
 
 }
 
+void ffunc (pmpi_reduce_scatter_block) (void *sendbuf, void *recvbuf, int recvcnt,
+				  MPI_Datatype * datatype, MPI_Op * op,
+				  MPI_Comm * comm, int *res)
+{
+  *res =
+    MPI_Reduce_scatter_block (sendbuf, recvbuf, recvcnt, *datatype, *op, *comm);
+
+}
+
 void ffunc (pmpi_scan) (void *sendbuf, void *recvbuf, int *count,
 			MPI_Datatype * datatype, MPI_Op * op, MPI_Comm * comm,
 			int *res)
@@ -1075,7 +1088,7 @@ void ffunc (pmpi_exscan) (void *sendbuf, void *recvbuf, int *count,
 			MPI_Datatype * datatype, MPI_Op * op, MPI_Comm * comm,
 			int *res)
 {
-  *res = MPI_Scan (sendbuf, recvbuf, *count, *datatype, *op, *comm);
+  *res = MPI_Exscan (sendbuf, recvbuf, *count, *datatype, *op, *comm);
 
 }
 

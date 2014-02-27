@@ -9723,6 +9723,43 @@ PMPI_Reduce_scatter (void *sendbuf, void *recvbuf, int *recvcnts,
 }
 
 int
+PMPI_Reduce_scatter_block (void *sendbuf, void *recvbuf, int recvcnt,
+		     MPI_Datatype datatype, MPI_Op op, MPI_Comm comm)
+{
+  int i;
+  int size; 
+  int res = MPI_ERR_INTERN;
+  int * recvcnts;
+        mpi_check_comm (comm, comm);
+
+        if(sctk_is_inter_comm (comm)){
+          MPI_ERROR_REPORT(comm,MPI_ERR_COMM,"");
+        }
+
+	mpi_check_buf (sendbuf, comm);
+	mpi_check_buf (recvbuf, comm);
+  
+  __INTERNAL__PMPI_Comm_size (comm, &size);
+
+	mpi_check_count (recvcnts, comm);
+	mpi_check_type (datatype, comm);
+	mpi_check_op (op,datatype, comm);
+
+  recvcnts = sctk_malloc(size*sizeof(int));
+  for(i = 0; i < size; i++){
+    recvcnts[i] = recvcnt;
+  }
+
+  res =
+    __INTERNAL__PMPI_Reduce_scatter (sendbuf, recvbuf, recvcnts, datatype, op,
+				     comm);
+
+  sctk_free(recvcnts);
+
+  SCTK__MPI_Check_retrun_val (res, comm);
+}
+
+int
 PMPI_Scan (void *sendbuf, void *recvbuf, int count, MPI_Datatype datatype,
 	   MPI_Op op, MPI_Comm comm)
 {

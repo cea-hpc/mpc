@@ -427,6 +427,7 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
   int MPI_Allreduce (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
   int MPI_Reduce_scatter (void *, void *, int *, MPI_Datatype, MPI_Op,
 			  MPI_Comm);
+  int MPI_Reduce_scatter_block(void *, void *, int , MPI_Datatype , MPI_Op , MPI_Comm );
   int MPI_Scan (void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm);
   int MPI_Group_size (MPI_Group, int *);
   int MPI_Group_rank (MPI_Group, int *);
@@ -961,7 +962,6 @@ typedef int (MPI_Delete_function) (MPI_Comm, int, void *, void *);
   int MPI_Status_set_elements_x(MPI_Status *, MPI_Datatype , MPI_Count );
   
   int MPI_Type_create_hindexed_block(int , int , const MPI_Aint *, MPI_Datatype , MPI_Datatype * );
-  int MPI_Reduce_scatter_block(void *, void *, int , MPI_Datatype , MPI_Op , MPI_Comm );
   int MPI_Comm_dup_with_info(MPI_Comm comm, MPI_Info info, MPI_Comm * newcomm)
   int MPI_Comm_split_type(MPI_Comm comm, int split_type, int key, MPI_Info info, MPI_Comm * newcomm);
   int MPI_Comm_set_info(MPI_Comm , MPI_Info );

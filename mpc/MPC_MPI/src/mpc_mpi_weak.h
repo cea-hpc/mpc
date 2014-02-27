@@ -230,6 +230,9 @@
 #pragma weak MPI_Reduce_scatter = PMPI_Reduce_scatter
 #pragma weak mpi_reduce_scatter_ = pmpi_reduce_scatter_
 #pragma weak mpi_reduce_scatter__ = pmpi_reduce_scatter__
+#pragma weak MPI_Reduce_scatter_block = PMPI_Reduce_scatter_block
+#pragma weak mpi_reduce_scatter_block_ = pmpi_reduce_scatter_block_
+#pragma weak mpi_reduce_scatter_block__ = pmpi_reduce_scatter_block__
 #pragma weak MPI_Scan = PMPI_Scan
 #pragma weak mpi_scan_ = pmpi_scan_
 #pragma weak mpi_scan__ = pmpi_scan__
