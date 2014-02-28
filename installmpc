@@ -154,8 +154,6 @@ do
 				MPFR_PREFIX='disabled'
 				MPC_PREFIX='disabled'
 				GCC_PREFIX='disabled'
-				HYDRA_PREFIX='disabled'
-				HYDRA_SIMPLE_PREFIX='disabled'
 			fi
 			;;
 			
