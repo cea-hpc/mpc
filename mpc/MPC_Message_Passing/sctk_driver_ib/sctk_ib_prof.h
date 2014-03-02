@@ -176,10 +176,12 @@ void sctk_ib_prof_mem_write(double ts, double mem);
 #define sctk_ib_prof_mem_init(x) (void)(0)
 #define sctk_ib_prof_mem_flush(x) (void)(0)
 #define sctk_ib_prof_mem_write(x,y) (void)(0)
+#define sctk_ib_prof_get_mem_used() 0
+#if 0
 static double sctk_ib_prof_get_mem_used() {
   return 0;
 }
-
+#endif
 #endif  /* SCTK_IB_PROF */
 
 #endif  /* MPC_USE_INFINIBAND */
