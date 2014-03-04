@@ -3,7 +3,7 @@ ARCH=@CONTEXT_ARCH@
 
 CC=@CC@
 CFLAGS=@CFLAGS@ -I@srcdir@/ -I@srcdir@/$(ARCH)/
-
+LDFLAGS=@LDFLAGS@
 
 FILES=$(wildcard @srcdir@/$(ARCH)/*.c)
 OBJ=$(FILES:@srcdir@/$(ARCH)/%.c=%.o)
@@ -30,6 +30,6 @@ $(DESTHFILES):../include/%:@srcdir@/$(ARCH)/%
 ../lib/libsctk_arch_context.so:$(OBJ) $(SOBJ) $(DESTHFILES)
 	@echo "Building libsctk_arch_context for arch $(ARCH)"
 	mkdir -p ../lib
-	$(CC) -fPIC -shared $(OBJ) $(SOBJ)  -o ../lib/libsctk_arch_context.so
+	$(CC) $(LDFLAGS) -fPIC -shared $(OBJ) $(SOBJ)  -o ../lib/libsctk_arch_context.so
 	cp @srcdir@/$(ARCH)/*.h ../include
 

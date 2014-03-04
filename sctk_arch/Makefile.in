@@ -13,7 +13,7 @@ HFILES=$(wildcard @srcdir@/include/*.h)
 DESTHFILES=$(HFILES:@srcdir@/%=%)
 
 all:lib/libsctk_arch_pause.so lib/libsctk_arch_context.so lib/libsctk_arch_timer.so $(DESTHFILES)
-	$(CC) -fPIC -shared libpause/*.o libcontext/*.o libtimer/*.o  -o lib/libsctk_arch.so
+	$(CC) $(LDFLAGS) -fPIC -shared libpause/*.o libcontext/*.o libtimer/*.o  -o lib/libsctk_arch.so
 
 lib/libsctk_arch_context.so:
 	$(MAKE) -C libcontext

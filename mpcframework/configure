@@ -22,8 +22,6 @@
 #                                                                      #
 ########################################################################
 
-set -a
-
 PATH="$PATH:."
 export PATH
 
@@ -97,6 +95,7 @@ activate_module(){
     fi
 }
 
+#std_headers std_functions
 #std_headers std_functions
 TO_CHECK="programs compilers cflags keywords module_deps config"
 
@@ -363,7 +362,10 @@ for arg in "$@" ; do
     SCTK_DEBUG_MESSAGES="1"
     SCTK_DEBUG_STRICT="1"
     ;;
-    --disable-fortran)
+    --disable-fortran-header)
+	SCTK_FORTRAN_HEADER_DISABLED="1"
+	;;
+	--disable-fortran)
     SCTK_FORTRAN="0"
     ;;
 

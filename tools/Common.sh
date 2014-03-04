@@ -381,7 +381,7 @@ getPackageCompilationOptions()
 	
 	local configForCompiler=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "all.*all.*${compiler}"`
 	local config=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "${host} *; *${target} *; *${compiler} *; *${type}"`
-	echo "config = $config" 1>&2
+	#echo "config = $config" 1>&2
 	#check if config variable is not empty
 	if [ ! -z "$config" ]; then	
 		local supported=`echo $config | cut -f 4 -d ';' | xargs echo`
@@ -402,8 +402,8 @@ getPackageCompilationOptions()
 		;;
 	esac
 
-	echo "$package: '$options', on $type" 1>&2
-	echo "------------------------------------" 1>&2
+	#echo "$package: '$options', on $type" 1>&2
+	#echo "------------------------------------" 1>&2
 	echo $options
 }
 
@@ -414,15 +414,13 @@ registerPackage()
 	then
 		ALL_PACKAGES="${ALL_PACKAGES} ${1}"
 	else
-		case "${2}" in
+		case "${3}" in
 			host)
+				echo "Add ALL_PACKAGES_HOST=${1}" 1>&2
 				ALL_PACKAGES_HOST="${ALL_PACKAGES_HOST} ${1}"
 			;;
 			target)
-				ALL_PACKAGES_TARGET="${ALL_PACKAGES_TARGET} ${1}"
-			;;
-			all)
-				ALL_PACKAGES_HOST="${ALL_PACKAGES_HOST} ${1}"
+				echo "Add ALL_PACKAGES_TARGET=${1}" 1>&2
 				ALL_PACKAGES_TARGET="${ALL_PACKAGES_TARGET} ${1}"
 			;;
 		esac
@@ -488,7 +486,7 @@ setupInstallPackage()
 	#register to list
 	### TODO: change to if $host = $target > cible host, sinon target
 	if [ "$status" = 'install' ]; then
-			registerPackage "${name}" "${run_on}"
+			registerPackage "${name}" "${run_on}" "${type}"
 	fi
 }
 
