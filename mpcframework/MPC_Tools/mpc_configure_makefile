@@ -82,7 +82,7 @@ MPC_SOURCE_DIR=$MPC_SOURCE_DIR
 SCTK_ARCH_OPTIM=$SCTK_ARCH_OPTIM
 
 CC=$SCTK_CC
-GCC=$SCTK_GCC
+GCC=$SCTK_CC
 F77=$SCTK_F77
 FFLAGS=-D__SCTK__INTERNALS__ -I${PWD}/include -I${PWD}/include_modules $SCTK_FFLAGS
 CFLAGS=-D__SCTK__INTERNALS__ -I${PWD}/include -I${PWD}/include_modules $SCTK_CFLAGS -DTDB_${SCTK_ARCH}_ARCH_TDB -DTDB_${SCTK_OS}_SYS
@@ -268,10 +268,22 @@ fi
 # LD_LIBRARY_PATH is only needed because it is not possible to build the MPC_Config module an independant
 # library. We dont't need the other part of MPC here and the sources are independent......
 #
+
 echo "" >> Makefile
 echo "share/mpc/config.xml.example: ${MPC_SOURCE_DIR}MPC_Config/extra/config.xml.example bin/mpc_print_config" >> Makefile
 printf "\t@mkdir -p share/mpc">> Makefile; echo "">> Makefile
-printf "\t@LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) ./bin/mpc_print_config --xml --system=${MPC_SOURCE_DIR}MPC_Config/extra/config.xml.example --schema=${MPC_SOURCE_DIR}MPC_Config/generated/mpc-config.xsd --user= > share/mpc/config.xml.example">> Makefile; echo "">> Makefile
+printf "\t@echo \"Generate config files\"">> Makefile; echo "">> Makefile
+if test -e ${MPC_SOURCE_DIR}/MPC_Tools/config/config.xml.example ; then
+	printf "\t@cp ${MPC_SOURCE_DIR}/MPC_Tools/config/* share/mpc/" >> Makefile; echo "" >> Makefile
+else
+	if test "$SCTK_CROSS_EXEC" != "" ; then
+		printf "\t@scp ./bin/mpc_print_config ${SCTK_MIC_USER}@${SCTK_MIC_HOSTNAME}:/tmp/" >> Makefile; echo "" >> Makefile
+		printf "\t@ssh ${SCTK_MIC_USER}@${SCTK_MIC_HOSTNAME} LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL_MIC)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL_MIC)/lib:\$(LD_LIBRARY_PATH) /tmp/mpc_print_config --xml --system=${MPC_SOURCE_DIR}MPC_Config/extra/config.xml.example --schema=${MPC_SOURCE_DIR}MPC_Config/generated/mpc-config.xsd > share/mpc/config.xml.example" >> Makefile; echo "" >> Makefile
+	else
+		printf "\t@LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) ./bin/mpc_print_config --xml --system=${MPC_SOURCE_DIR}MPC_Config/extra/config.xml.example --schema=${MPC_SOURCE_DIR}MPC_Config/generated/mpc-config.xsd > share/mpc/config.xml.example">> Makefile; echo "">> Makefile
+	fi  
+fi
+
 
 #
 # Rule 'install'
@@ -326,24 +338,40 @@ printf "\t@cp ${MPC_SOURCE_DIR}/MPC_Threads/sctk_thread/sctk_pthread_api.h  INST
 printf "\t@cp ${MPC_SOURCE_DIR}/MPC_Threads/sctk_thread/sctk_pthread_api.h  INSTALL/include/semaphore.h ">> Makefile; echo "">> Makefile
 fi
 
-
 echo "Preparing includes for Fortran"
-for i in $MODULE_LIST; do
-NAME="fortran_header"
-if test "$SCTK_FORTRAN" = "1" && test "$i" = "MPC_Message_Passing"; then
-printf "\t@\$(CC) -g -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME -DMPC_NO_AUTO_MAIN_REDEF ">> Makefile; echo "">> Makefile
-printf "\t@./$NAME mpc.h > INSTALL/include/mpcf.h">> Makefile; echo "">> Makefile
+if test -e ${MPC_SOURCE_DIR}/MPC_Tools/fortran_headers/mpcf.h -a -e ${MPC_SOURCE_DIR}/MPC_Tools/fortran_headers/mpif.h ; then
+    printf "\t@echo \"Generate fortran mpc/mpi includes\"">> Makefile; echo "" >> Makefile
+    printf "\t@cp ${MPC_SOURCE_DIR}/MPC_Tools/fortran_headers/* INSTALL/include/" >> Makefile; echo "" >> Makefile
+else
+    for i in $MODULE_LIST; do
+        NAME="fortran_header"
+        if test "$SCTK_FORTRAN" = "1" && test "$i" = "MPC_Message_Passing"; then
+            printf "\t@\$(CC) -g $SCTK_CFLAGS -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME -LINSTALL/lib -lmpc -lmpc_tdb_remote_static $SCTK_LDFLAGS -lm" >> Makefile; echo "" >> Makefile
+            if test "$SCTK_FORTRAN_HEADER_DISABLED" != "1" ; then
+                if test "$SCTK_CROSS_EXEC" != "" ; then
+                    printf "\t@echo \"Generate fortran mpc include\"">> Makefile; echo "" >> Makefile
+                    printf "\tscp $NAME ${SCTK_MIC_USER}@${SCTK_MIC_HOSTNAME}:/tmp/" >> Makefile; echo "" >> Makefile
+                    printf "\t@ssh ${SCTK_MIC_USER}@${SCTK_MIC_HOSTNAME} MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" /tmp/$NAME mpc.h > INSTALL/include/mpcf.h">> Makefile; echo "" >> Makefile
+                else
+                    printf "\t@MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) ./$NAME mpc.h > INSTALL/include/mpcf.h">> Makefile; echo "" >> Makefile
+                fi
 
-DIR_TEST="MPC_MPI"
-check_module
-if test "$FOUND" != "" ; then
-printf "\t@\$(CC) -g -IINSTALL/include ${MPC_SOURCE_DIR}MPC_Tools/mpc_make_fortran_interface.c -o ./$NAME -DMPC_NO_AUTO_MAIN_REDEF -DMPC_MPI">> Makefile; echo "">> Makefile
-printf "\t@./$NAME mpi.h > INSTALL/include/mpif.h">> Makefile; echo "">> Makefile
+                DIR_TEST="MPC_MPI"
+                check_module
+                if test "$FOUND" != "" ; then
+                    if test "$SCTK_CROSS_EXEC" != "" ; then
+                        printf "\t@echo \"Generate fortran mpi include\"" >> Makefile; echo "" >> Makefile
+                        printf "\tscp $NAME ${SCTK_MIC_USER}@${SCTK_MIC_HOSTNAME}:/tmp/" >> Makefile; echo "" >> Makefile
+                        printf "\t@ssh ${SCTK_MIC_USER}@${SCTK_MIC_HOSTNAME} MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" /tmp/$NAME mpi.h > INSTALL/include/mpif.h">> Makefile; echo "" >> Makefile
+                    else
+                        printf "\t@MPC_MAKE_FORTRAN_INTERFACE=1 MPC_DISABLE_CONFIG=1 MPC_DISABLE_BANNER=\"1\" LD_LIBRARY_PATH=\$(DESTDIR)/\$(OPENPA_PREFIX_INSTALL)/lib:\$(DESTDIR)/\$(HWLOC_PREFIX_INSTALL)/lib:\$(LD_LIBRARY_PATH) ./$NAME mpi.h > INSTALL/include/mpif.h">> Makefile; echo "" >> Makefile
+                    fi
+                fi
+            fi
+            printf "\t@rm ./$NAME">> Makefile; echo "">> Makefile
+        fi
+    done
 fi
-
-printf "\t@rm ./$NAME">> Makefile; echo "">> Makefile
-fi
-done
 printf "\t@chmod -R 644 INSTALL/lib/*">> Makefile; echo "">> Makefile
 #printf "\t@echo \"Build mpc db\"">> Makefile; echo "">> Makefile
 #printf "\t@\$(CC) $SCTK_CFLAGS ${MPC_SOURCE_DIR}MPC_Tools/mpcrun_tools/mpcdb_client.c -o INSTALL/bin/mpcdb_client $SCTK_LDFLAGS ">> Makefile; echo "">> Makefile

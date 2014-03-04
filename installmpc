@@ -231,7 +231,7 @@ printSummary
 #Create glue between packages
 #'--with-hydra-simple=${HYDRA_SIMPLE_REAL_PREFIX}'
 GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' '--with-mpfr=${MPFR_REAL_PREFIX}' '--with-mpc=${MPC_REAL_PREFIX}' --program-prefix=mpc- --program-suffix=_480 --with-pkgversion=MPC --enable-languages=c,c++,fortran --disable-threads --without-headers --disable-nls --disable-decimal-float --disable-plugin --disable-libssp --disable-libgomp --disable-shared --with-system-zlib --disable-libmudflap --disable-libquadmath --with-system-libunwind --disable-libatomic --enable-multilib --with-newlib ${GCC_BUILD_PARAMETERS}"
-MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_REAL_PREFIX}' '--with-openpa=${OPENPA_REAL_PREFIX}' '--with-hwloc=${HWLOC_REAL_PREFIX}' '--with-libsctk_arch=${SCTK_ARCH_REAL_PREFIX}' '--cross_exec=${PROJECT_SOURCE_DIR}/mpcframework/MPC_Tools/cross_compilation_scripts/cross_compil.sh' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_REAL_PREFIX}' '--with-openpa=${OPENPA_REAL_PREFIX}' '--with-hwloc=${HWLOC_REAL_PREFIX}' '--with-libsctk_arch=${SCTK_ARCH_REAL_PREFIX}' '--cross_exec=${PROJECT_SOURCE_DIR}/mpcframework/MPC_Tools/cross_compilation_scripts/cross_compil.sh' --arch=${MPC_TARGET} ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
 MPC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' --with-mpfr=${MPFR_REAL_PREFIX} ${MPC_BUILD_PARAMETERS}"
 HYDRA_SIMPLE_BUILD_PARAMETERS="'--with-hydra-mpl=${HYDRA_REAL_PREFIX}' ${HYDRA_SIMPLE_BUILD_PARAMETERS}"

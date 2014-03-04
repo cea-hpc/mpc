@@ -446,33 +446,36 @@ cat << EOF >> include/sctk_config.h
 
 EOF
 
-
-gen_config
-echo "$SCTK_CC -D${SCTK_OS}_SYS  $SCTK_CFLAGS ${SCTK_CONF_C} $SCTK_LDFLAGS -o ${SCTK_CONF_BIN}" 1>&2
-exit 1
-sctk_printf "compile configuration detection: "
-echo "$SCTK_CC -D${SCTK_OS}_SYS  $SCTK_CFLAGS ${SCTK_CONF_C} $SCTK_LDFLAGS -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
-eval "$SCTK_CC -D${SCTK_OS}_SYS  $SCTK_CFLAGS ${SCTK_CONF_C} $SCTK_LDFLAGS -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
-if test "$?" = "0" ; then
-	result yes
+if test "${SCTK_ARCH}" = "k1om"; 
+then
+	cp ${MPC_SOURCE_DIR}/MPC_Tools/sctk_configs/sctk_config_k1om.h include/sctk_config.h
 else
-	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
-	error  no
-fi
-sctk_printf "execute configuration detection: "
-chmod 755 ${SCTK_CONF_BIN}
-eval "${SCTK_CROSS_EXEC} ${SCTK_CONF_BIN}"
-if test "$?" = "0" ; then
-	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
-	result yes
-else
-	rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
-	error no
-fi
+	gen_config
+	echo "$SCTK_CC -D${SCTK_OS}_SYS  $SCTK_CFLAGS ${SCTK_CONF_C} $SCTK_LDFLAGS -o ${SCTK_CONF_BIN}" 1>&2
+	exit 1
+	sctk_printf "compile configuration detection: "
+	echo "$SCTK_CC -D${SCTK_OS}_SYS  $SCTK_CFLAGS ${SCTK_CONF_C} $SCTK_LDFLAGS -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
+	eval "$SCTK_CC -D${SCTK_OS}_SYS  $SCTK_CFLAGS ${SCTK_CONF_C} $SCTK_LDFLAGS -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
+	if test "$?" = "0" ; then
+		result yes
+	else
+		rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
+		error  no
+	fi
+	sctk_printf "execute configuration detection: "
+	chmod 755 ${SCTK_CONF_BIN}
+	eval "${SCTK_CROSS_EXEC} ${SCTK_CONF_BIN}"
+	if test "$?" = "0" ; then
+		rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
+		result yes
+	else
+		rm ${SCTK_CONF_C} ${SCTK_CONF_BIN} >> ${SCTK_CONF_LOG} 2>&1
+		error no
+	fi
 
-echo "$SCTK_CHECK_UTSNAME" >> include/sctk_config.h
+	echo "$SCTK_CHECK_UTSNAME" >> include/sctk_config.h
 
-cat <<EOF >> include/sctk_config.h
+	cat <<EOF >> include/sctk_config.h
 
 /* Options: */
 #define SCTK_VERSION_MAJOR ${MAJOR}
@@ -484,9 +487,10 @@ cat <<EOF >> include/sctk_config.h
 #define SCTK_INSTALL_PREFIX "${SCTK_PREFIX}"
 EOF
 
-echo "#endif" >> include/sctk_config.h
+	echo "#endif" >> include/sctk_config.h
 
-cat  include/sctk_config.h >> ${LOG_FILE} 2>&1
+	cat  include/sctk_config.h >> ${LOG_FILE} 2>&1
+fi
 }
 
 check_pthread_flags_comp_done="0"
