@@ -1,5 +1,9 @@
 TODO but list of options (similar to old mpc way) :
 
+# Download missing deps
+--download-missing-deps
+--mirror={1|2|3|4}
+
 # Disable sub packages
 --disable-mpc-gdb
 --disable-mpc-gcc

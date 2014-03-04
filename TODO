@@ -11,7 +11,7 @@
  + rajouter un arg de clean   
  + corriger pb de ln sur arch_wrapper (+ printer une étape en plus depuis le script install)
  + propager les nouvelles versions de config par module  
- 
+ + MAJ de la doc + maj doc sur le site  
 
 # DEP :
 * binutils

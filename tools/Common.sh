@@ -39,7 +39,6 @@ printWithPadding()
 }
 
 
-
 ######################################################
 #function designed to print a summary of path selections and dep types
 #Result : print summary
@@ -61,32 +60,84 @@ printSummary()
 	echo "=============================================="
 }
 
+######################################################
+#function to detect if a package is present
+#Args   :
+#   -$1 : Package name
+#	-$2 : Package version
+#Result : Detect if an extern package is present. If not present, 
+#         download the package (with the option --download-missing-deps)
+findPackage()
+{
+	# TODO Select highest version
 
-#downloadDep()
-#{
-# 	if [ ! -r gmp-5.1.3.tar.bz2 ]; then 
-#   wget ${MIRROR}/contrib/gmp-5.1.3.tar.bz2
-# fi
-# if [ ! -r mpfr-3.1.2.tar.bz2 ]; then 
-#   wget ${MIRROR}/contrib/mpfr-3.1.2.tar.bz2
-# fi
-# if [ ! -r ppl-1.1.tar.bz2 ]; then 
-#   wget ${MIRROR}/contrib/ppl-1.1.tar.bz2
-# fi
-# if [ ! -r cloog-parma-0.16.1.tar.gz ]; then
-#   wget ${MIRROR}/contrib/cloog-parma-0.16.1.tar.gz
-# fi
+	local package="${1}"
+	getPackageVersion "packageVersion" "${package}"
+	getPackageType "packageType" "${package}"
 
-# if [ ! -r mpc-1.0.2.tar.gz ]; then
-#    wget ${MIRROR}/contrib/mpc-1.0.2.tar.gz
-# fi
+	# if not part of MPC, check if package is present
+	if [ "${packageType}" = "extern" ]
+	then
+		if ls ${PROJECT_PACKAGE_DIR}/${package}/${package}-${packageVersion}.*.* &>/dev/null
+		then
+		    echo "Found." &>/dev/null
+		else
+		    echo "Package ${package}, version ${packageVersion} not found."
+		    if [ "${DOWNLOAD}" = "enabled" ]
+		    then
+		    	downloadDep ${package} ${packageVersion}
+		    else
+		    	echo "Download disabled. Try to launch the script with --download-missing-deps"
+		    	exit 1
+		    fi
+		fi
+	fi
+}
 
-# if [ ! -r MPC_2.5.0.tar.gz ]; then
-#   wget ${MIRROR}/MPC_2.5.0.tar.gz
-# fi
-#}
+######################################################
+#function to download a package
+#Args   :
+#   -$1 : Package name
+#	-$2 : Package version
+#Result : print a padded string
+downloadDep()
+{
+	local package="${1}"
+	local version="${2}"
 
+	getMirrorAddress "mirrorAddress" ${MIRROR}
 
+	echo "Downloading ${package}-${version}..."
+
+	# Try to download archive with tar.bz2 extension
+	wgetOutput=$(2>&1 wget --timestamping --progress=dot:mega \
+              "${mirrorAddress}/${package}-${version}.tar.bz2")
+
+	# Make sure the download went okay.
+	if [ $? -ne 0 ]
+	then
+		# Try another extension
+		wgetOutput=$(2>&1 wget --timestamping --progress=dot:mega \
+              "${mirrorAddress}/${package}-${version}.tar.gz")
+
+		# Make sure the download went okay.
+		if [ $? -ne 0 ]
+		then
+	        echo "Cannot download package ${package} on mirror ${MIRROR}"
+	        echo 1>&2 $0: "$wgetOutput"  Exiting.
+	        exit 1
+		fi
+	fi
+
+	mv ${package}-${version}.tar.* ${PROJECT_PACKAGE_DIR}/${package}/
+}
+
+######################################################
+#function to get mirror addresses
+#Args   :
+#   -$1 : Variable in witch to put the result
+#	-$2 : Mirror id 
+#Result : return an URL
 getMirrorAddress()
 {
 	#extract parameter
@@ -96,19 +147,19 @@ getMirrorAddress()
 
 	case $mirrorid in
 		1)
-			local address=http://fs.paratools.com/mpc
+			local address=http://fs.paratools.com/mpc/contrib
 			;;
          2)
-           local address=http://static.paratools.com/mpc/tar
+           local address=http://static.paratools.com/mpc/tar/contrib
            ;;
          3)
-           local address=ftp://fs.paratools.com/mpc
+           local address=ftp://fs.paratools.com/mpc/contrib
            ;;
          4)
-           local address=ftp://paratools08.rrp.net/mpc
+           local address=ftp://paratools08.rrp.net/mpc/contrib
            ;;
          *)
-           local address=ftp://paratools08.rrp.net/mpc
+           local address=ftp://paratools08.rrp.net/mpc/contrib
            ;;
 	esac
 
@@ -128,6 +179,38 @@ getModules()
 
 	local list=`cat "${PROJECT_SOURCE_DIR}/config.txt" | cut -f 1 -d ';' |  sed -e "s/^#[0-9A-Za-z_-\ #]*//g" | xargs echo`
 	eval "${outvar}=\"${list}\""
+}
+
+#function to get the version of a Package
+#Args   :
+#   -$1 : Variable in witch to put the result
+#   -$2 : Package name
+#Result : Create var
+getPackageVersion()
+{
+	#extract parameter
+	local outvar="${1}"	
+	local package="${2}"
+
+	local version=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${package} " | cut -f 2 -d ';' | xargs echo`
+
+	eval "${outvar}=\"${version}\""
+}
+
+#function to get the type of a Package
+#Args   :
+#   -$1 : Variable in witch to put the result
+#   -$2 : Package name
+#Result : Create var
+getPackageType()
+{
+	#extract parameter
+	local outvar="${1}"	
+	local package="${2}"
+
+	local pType=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${package} " | cut -f 7 -d ';' | xargs echo`
+
+	eval "${outvar}=\"${pType}\""
 }
 
 ######################################################

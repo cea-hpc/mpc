@@ -1,4 +1,4 @@
-# name       ; version ; sup versions   ; status  ;   deps                                            ; run-on ;type;template
+# name       ;   v   ; sup v ; status  ;                        deps                       ; run-on  ;     type     ;    template 
 #############################################################################################################################
 libxml2      ; 2.8.0 ;       ; dep     ;                                                   ; target  ; extern       ; generic.autotools
 hwloc        ; 1.6.1 ; 1.6.1 ; install ;                                                   ; target  ; extern		; generic.autotools
@@ -8,8 +8,8 @@ mpfr         ; 3.1.2 ;       ; dep     ; gmp                                    
 mpc          ; 1.0.2 ;       ; dep     ; gmp mpfr                                          ; host    ; mpc			; generic.autotools.mpc
 gcc          ; 4.8.0 ;       ; install ; gmp mpfr mpc binutils                             ; host    ; extern		; generic.autotools.gcc
 openpa       ; 1.0.2 ;       ; dep     ;                                                   ; target  ; extern		; generic.autotools
-sctk_arch    ; cur   ;       ; install ;                                                   ; target  ; local		; local.autotools
-mpcframework ; cur   ;       ; install ; libxml2 hwloc openpa sctk_arch hydra hydra_simple ; target  ; local		; local.autotools
+sctk_arch    ;       ;       ; install ;                                                   ; target  ; local		; local.autotools
+mpcframework ;       ;       ; install ; libxml2 hwloc openpa sctk_arch hydra hydra_simple ; target  ; local		; local.autotools
 hydra        ; 1.4   ;       ; install ;                                                   ; all     ; extern		; generic.autotools
-hydra_simple ; cur   ;       ; install ; hydra                                             ; all     ; hydra_simple	; local.autotools.hydra_simple
+hydra_simple ;       ;       ; install ; hydra                                             ; all     ; hydra_simple	; local.autotools.hydra_simple
 gdb          ; 7.5   ;       ; install ;                                                   ; target  ; extern		; generic.autotools
