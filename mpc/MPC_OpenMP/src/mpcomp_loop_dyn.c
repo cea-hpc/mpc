@@ -572,7 +572,7 @@ __mpcomp_dynamic_loop_steal( mpcomp_thread_t * t, long * from, long * to ) {
 #endif
 
 void
-__mpcomp_dynamic_loop_end ()
+__mpcomp_dynamic_loop_end_nowait ()
 {
 	mpcomp_thread_t *t ;	/* Info on the current thread */
 	mpcomp_team_t *team_info ;	/* Info on the team */
@@ -603,7 +603,7 @@ __mpcomp_dynamic_loop_end ()
 	/* Compute the index of the dynamic for construct */
 	index = (t->for_dyn_current) % (MPCOMP_MAX_ALIVE_FOR_DYN + 1);
 
-	sctk_nodebug("[%d] __mpcomp_dynamic_loop_end: begin", t->rank);
+	sctk_nodebug("[%d] __mpcomp_dynamic_loop_end_nowait: begin", t->rank);
 
 	/* WARNING: the following order is important */
 	t->for_dyn_current++ ;
@@ -614,7 +614,7 @@ __mpcomp_dynamic_loop_end ()
 			&(team_info->for_dyn_nb_threads_exited[index].i ) ) ;
 
 	sctk_nodebug( 
-			"[%d]__mpcomp_dynamic_loop_end: Exiting loop %d: %d -> %d",
+			"[%d]__mpcomp_dynamic_loop_end_nowait: Exiting loop %d: %d -> %d",
 			t->rank, index, nb_threads_exited, nb_threads_exited + 1 ) ;
 
 	sctk_assert( nb_threads_exited >= 0 && nb_threads_exited < num_threads ) ;
@@ -630,7 +630,7 @@ __mpcomp_dynamic_loop_end ()
 		previous_index = (index - 1 + MPCOMP_MAX_ALIVE_FOR_DYN + 1 ) % 
 			( MPCOMP_MAX_ALIVE_FOR_DYN + 1 ) ;
 
-		sctk_nodebug( "__mpcomp_dynamic_loop_end: Move STOP symbol %d -> %d", previous_index, index ) ;
+		sctk_nodebug( "__mpcomp_dynamic_loop_end_nowait: Move STOP symbol %d -> %d", previous_index, index ) ;
 
 		sctk_atomics_store_int( 
 				&(team_info->for_dyn_nb_threads_exited[previous_index].i), 
@@ -640,10 +640,12 @@ __mpcomp_dynamic_loop_end ()
 }
 
 void
-__mpcomp_dynamic_loop_end_nowait ()
+__mpcomp_dynamic_loop_end ()
 {
-	sctk_nodebug( "__mpcomp_dynamic_loop_end_nowait:" ) ;
-	__mpcomp_dynamic_loop_end() ;
+	sctk_nodebug( "__mpcomp_dynamic_loop_end:" ) ;
+	__mpcomp_dynamic_loop_end_nowait() ;
+	__mpcomp_barrier ();
+
 }
 
 int
