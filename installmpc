@@ -34,7 +34,7 @@ MPC_COMPILER="gcc"
 
 ######################################################
 #avoid to build locally
-if [ "${PROJECT_SOURCE_DIR}" = "." ] || [ "${PROJECT_BUILD_DIR}" = "${PROJECT_SOURCE_DIR}" ]; then
+if [ "${PROJECT_SOURCE_DIR}" = "." ] || [ "${PROJECT_BUILD_DIR}" = "${PROJECT_SOURCE_DIR}" ] || [ ! -d "${PWD}/build" ]; then
 	PROJECT_BUILD_DIR="${PWD}/build"
 	PROJECT_SOURCE_DIR="${PWD}"
 	mkdir -p build
@@ -220,15 +220,23 @@ enablePrefixEnv "${PREFIX}"
 ######################################################
 #Export PATH for finding Utils
 #export PATH="${PREFIX}/${MPC_HOST}/bin:${PREFIX}/${MPC_TARGET}/bin:$PATH"
-export LIBRARY_PATH=/usr/lib64/:$LIBRARY_PATH 
+echo "export LIBRARY_PATH=/usr/lib64/:\$LIBRARY_PATH"
+
+######################################################
+#Wrappers for cross-compil
+if [ "$MULTI_ARCH" = 'true' ]; then
+	WRAPPER_CROSS_COMPIL="--cross_exec=${PROJECT_SOURCE_DIR}/mpcframework/MPC_Tools/cross_compilation_scripts/cross_compil.sh"
+else
+	WRAPPER_CROSS_COMPIL=''
+fi
 
 ######################################################
 #force MPC
 MPCFRAMEWORK_PREFIX="${INTERNAL_KEY}"
 
-GMP_REAL_PREFIX="${PREFIX}/${MPC_HOST}"
-MPFR_REAL_PREFIX="${PREFIX}/${MPC_HOST}"
-MPC_REAL_PREFIX="${PREFIX}/${MPC_HOST}/mpc/"
+GMP_REAL_PREFIX="${PREFIX}/${MPC_HOST}/libsgcc/"
+MPFR_REAL_PREFIX="${PREFIX}/${MPC_HOST}/libsgcc/"
+MPC_REAL_PREFIX="${PREFIX}/${MPC_HOST}/libsgcc/"
 HYDRA_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
 HYDRA_SIMPLE_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
 LIBXML2_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
@@ -242,8 +250,8 @@ printSummary
 ######################################################
 #Create glue between packages
 #'--with-hydra-simple=${HYDRA_SIMPLE_REAL_PREFIX}'
-GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' '--with-mpfr=${MPFR_REAL_PREFIX}' '--with-mpc=${MPC_REAL_PREFIX}' --program-prefix=mpc- --program-suffix=_480 --with-pkgversion=MPC --enable-languages=c,c++,fortran --disable-threads --without-headers --disable-nls --disable-decimal-float --disable-plugin --disable-libssp --disable-libgomp --disable-shared --with-system-zlib --disable-libmudflap --disable-libquadmath --with-system-libunwind --disable-libatomic --enable-multilib --with-newlib ${GCC_BUILD_PARAMETERS}"
-MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_REAL_PREFIX}' '--with-openpa=${OPENPA_REAL_PREFIX}' '--with-hwloc=${HWLOC_REAL_PREFIX}' '--with-libsctk_arch=${SCTK_ARCH_REAL_PREFIX}' '--cross_exec=${PROJECT_SOURCE_DIR}/mpcframework/MPC_Tools/cross_compilation_scripts/cross_compil.sh' --arch=${MPC_TARGET} ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' '--with-mpfr=${MPFR_REAL_PREFIX}' '--with-mpc=${MPC_REAL_PREFIX}' --program-prefix=mpc- --program-suffix=_480 --with-pkgversion=MPC --enable-languages=c,c++,fortran --disable-bootstrap --disable-multilib ${GCC_BUILD_PARAMETERS}"
+MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_REAL_PREFIX}' '--with-openpa=${OPENPA_REAL_PREFIX}' '--with-hwloc=${HWLOC_REAL_PREFIX}' '--with-libsctk_arch=${SCTK_ARCH_REAL_PREFIX}' ${WRAPPER_CROSS_COMPIL} --arch=${MPC_TARGET} ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
 MPC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' --with-mpfr=${MPFR_REAL_PREFIX} ${MPC_BUILD_PARAMETERS}"
 HYDRA_SIMPLE_BUILD_PARAMETERS="'--with-hydra-mpl=${HYDRA_REAL_PREFIX}' ${HYDRA_SIMPLE_BUILD_PARAMETERS}"
@@ -269,7 +277,7 @@ genMakefile()
 	do
 		local template=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 8 -d ';' | xargs echo`
 		local run_on=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 6 -d ';' | xargs echo`
-		if [ "${run_on}" = "${2}" ] || [ "${run_on}" = "all" ];
+		if [ "${run_on}" = "${2}" ] || [ "${run_on}" = "all" ] || [ "$MULTI_ARCH" != 'true' ];
 		then
 			UPPER=`echo ${module} | tr '[:lower:]' '[:upper:]'`
 			findPackage "${module}"

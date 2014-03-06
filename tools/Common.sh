@@ -462,7 +462,9 @@ getPackageCompilationOptions()
 	local compiler="$4"
 	local type="$5"
 	
-	local configForCompiler=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "all.*all.*${compiler}"`
+	local all_options=
+	#`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "all *; *all *; *all" | cut -f 6 -d ';'`
+	local configForCompiler=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "all *; *all *; *${compiler}"`
 	local config=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "${host} *; *${target} *; *${compiler} *; *${type}"`
 	#echo "config = $config" 1>&2
 	#check if config variable is not empty
@@ -474,8 +476,8 @@ getPackageCompilationOptions()
 	fi
     
 	local options=`echo ${configForCompiler} | cut -f 6 -d ';'`
-	options="${options} `echo ${config} | cut -f 6 -d ';'`"
-
+	options="${options} ${all_options} `echo ${config} | cut -f 6 -d ';'`"
+	
 	case ${compiler} in
 		gcc)
 			options="${options} CC=gcc CXX=g++ F77=gfortran"
@@ -484,11 +486,11 @@ getPackageCompilationOptions()
 			options="${options} CC=icc CXX=icpc F77=ifort"
 		;;
 	esac
-
+	
 	#echo "$package: '$options', on $type" 1>&2
 	#echo "------------------------------------" 1>&2
 	echo $options
-}
+}	
 
 ######################################################
 registerPackage()

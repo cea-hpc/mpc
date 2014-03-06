@@ -451,8 +451,6 @@ then
 	cp ${MPC_SOURCE_DIR}/MPC_Tools/sctk_configs/sctk_config_k1om.h include/sctk_config.h
 else
 	gen_config
-	echo "$SCTK_CC -D${SCTK_OS}_SYS  $SCTK_CFLAGS ${SCTK_CONF_C} $SCTK_LDFLAGS -o ${SCTK_CONF_BIN}" 1>&2
-	exit 1
 	sctk_printf "compile configuration detection: "
 	echo "$SCTK_CC -D${SCTK_OS}_SYS  $SCTK_CFLAGS ${SCTK_CONF_C} $SCTK_LDFLAGS -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
 	eval "$SCTK_CC -D${SCTK_OS}_SYS  $SCTK_CFLAGS ${SCTK_CONF_C} $SCTK_LDFLAGS -o ${SCTK_CONF_BIN}">> ${SCTK_CONF_LOG} 2>&1
