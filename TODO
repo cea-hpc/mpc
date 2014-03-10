@@ -1,7 +1,11 @@
 # TODO LIST
+ + générer un fake print_config lorsque host=x86... target=arm|mic sans que target=x86... ait été lancé avant.
+ + conserver une version des structures en fonction des archi, si pas présent passer la ccompatibilité avec pthread à 0. (gérer plus tard un executavle standalone pour récupérer les structures)
+ + utiliser les dépendances (gmp, mpfr, mpc) indiquées dans gcc/contrib/download_...
+ + Faire fonctionner le build dans un directory différent 
+ + rajouter une colonne dans config.txt racine pour rajouter un nom de patch particulier
+ + retirer les "local" pour compatiblité avec sh 
  + check de la presence des deps et des bonnes versions
- + téléchargement des packets + gestion des mirrors 
- + télécharger les deps sur selon le script de paratools
  + ajouter termcap
  + MPC_Tools/configure_extern_deps (path hydra) ?
  + pas de chemin en dur dans mpcrun / mpccc
@@ -24,6 +28,8 @@
 * libgfortran (priv)
 
 # DONE
+ - téléchargement des packets + gestion des mirrors
+ - télécharger les deps sur selon le script de paratools
  - gestion de l'arborescence pour la cross-compil
  - s'appuyer sur le fichier config pour rendre le script installmpc plus générique
  - prendre en charge MPC
