@@ -134,7 +134,10 @@ void sctk_runtime_config_override_by_getenv_openmp(struct sctk_runtime_config * 
 	char * tmp;
     
     /******* VP NUMBER *******/
+	/* This test is for compatibility w/ previous versions */
 	if ((tmp = getenv("OMP_VP_NUMBER")) != NULL)
+		config->modules.openmp.vp = atoi(tmp);
+	if ((tmp = getenv("OMP_MICROVP_NUMBER")) != NULL)
 		config->modules.openmp.vp = atoi(tmp);
 
     /******* OMP_SCHEDULE *******/
