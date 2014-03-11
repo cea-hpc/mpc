@@ -550,7 +550,7 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 	       n->tasklist_randBuffer = NULL;
 #endif /* MPCOMP_TASK */
 
-	       if ( n->depth == depth - 1 ) { 
+	       if ( n->depth == depth - 1 ) {
 		    int i_thread;
 		    int i_task ;
 		    
@@ -702,10 +702,14 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			 n2->slave_running = 0;
 
 			 sctk_atomics_store_int( &(n2->barrier), 0 );
+			 sctk_atomics_store_int( &(n2->chunks_avail), 0 );
+			 sctk_atomics_store_int( &(n2->nb_chunks_empty_children), 0 );
+
+			 n2->barrier_done = 0;
+			 n2->barrier_num_threads = 0;
 
 			 n2->id_numa = child_target_numa ; 
 
-			 n2->barrier_done = 0;
 
 			 __mpcomp_push( s, n2 );
 
@@ -769,8 +773,9 @@ void __mpcomp_print_tree( mpcomp_instance_t * instance ) {
 	       fprintf( stderr, "\t" );
 	  }
 
-	  fprintf( stderr, "Node %ld (@ %p) -> NUMA %d, min/max %d / %d\n", 
-			  n->rank, n, n->id_numa, n->min_index, n->max_index );
+	  fprintf( stderr, "Node %ld (@ %p) -> NUMA %d, min/max %d / %d (barrier_num_threads=%ld)\n", 
+			  n->rank, n, n->id_numa, n->min_index, n->max_index,
+		 n->barrier_num_threads );
 
 	  switch( n->child_type ) {
 	  case MPCOMP_CHILDREN_NODE:
