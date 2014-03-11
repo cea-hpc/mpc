@@ -13,8 +13,8 @@ ALL_PACKAGES_TARGET=''
 
 ######################################################
 #setup paths
-PROJECT_SOURCE_DIR="`dirname "$0"`"
-PROJECT_BUILD_DIR="$PWD"
+PROJECT_BUILD_DIR=$PWD
+PROJECT_SOURCE_DIR="${PWD}/`dirname "$0"`"
 
 ######################################################
 #default values
