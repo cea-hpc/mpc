@@ -35,8 +35,7 @@ __mpcomp_dynamic_add( int * dest, int * src1, int *src2,
 		int ret = 1 ;
 		int carry_over = 1 ; 
 
-#if 0
-		sctk_debug( "__mpcomp_dynamic_add: "
+		sctk_nodebug( "__mpcomp_dynamic_add: "
 				"depth=%d, max_depth=%d "
 				"src1[%d]=%d + src2[%d]=%d, "
 				"src1[%d]=%d + src2[%d]=%d"
@@ -45,7 +44,6 @@ __mpcomp_dynamic_add( int * dest, int * src1, int *src2,
 				depth-2, src1[depth-2], depth-2, src2[depth-2],
 				depth-1, src1[depth-1], depth-1, src2[depth-1]
 			   	) ;
-#endif
 
 		/* Step to the next target */
 		for ( i = depth -1 ; i >= max_depth ; i-- ) {
@@ -66,14 +64,12 @@ __mpcomp_dynamic_add( int * dest, int * src1, int *src2,
 			}
 		}
 
-#if 0
-		sctk_debug( "__mpcomp_dynamic_add: "
+		sctk_nodebug( "__mpcomp_dynamic_add: "
 				"Exit dest[%d]=%d, dest[%d]=%d"
 				,
 				depth-2, dest[depth-2], 
 				depth-1, dest[depth-1]
 			   	) ;
-#endif
 
 		return ret ;
 }
@@ -445,6 +441,15 @@ do_increase:
 		for ( i = 0 ; i < t->instance->tree_depth ; i++ ) {
 			index_target += t->for_dyn_target[i] * t->instance->tree_cumulative[i] ;
 		}
+
+		sctk_nodebug( "__mpcomp_dynamic_loop_next[%d]: "
+			"tree_depth=%d, target[%d]=%d, index_target=%d, b_n_threads=%d"
+			,
+			t->rank,
+			t->instance->tree_depth, t->instance->tree_depth-1, 
+			t->for_dyn_target[t->instance->tree_depth-1],
+			index_target,
+			t->instance->mvps[index_target]->father->barrier_num_threads ) ;
 
 		/* Stop if the target is not a launch thread */
 		if ( t->for_dyn_target[t->instance->tree_depth-1] >= 
