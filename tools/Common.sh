@@ -18,6 +18,26 @@ GEN_DEP_HELPS='false'
 SUBPREFIX=''
 
 ######################################################
+# set Compiler list
+setCompilerList()
+{
+	local tmp_list=""
+	local outputvar="$1"
+	local compiler="${MPC_COMPILER}"
+	local gcc_version=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^gcc " | cut -f 2 -d ';' | sed -e 's/\.//g' | xargs echo`
+	if [ "${compiler}" = 'gcc' ] || [ "${GCC_PREFIX}" != 'disabled' ];
+	then
+		tmp_list="${gcc_version} ${tmp_list}"
+	fi
+	if [ "${compiler}" = 'icc' ];
+	then
+		tmp_list="icc ${tmp_list}"
+	fi
+	#echo "COMPILER_LIST='${tmp_list}'"
+	eval "${outputvar}=\"${tmp_list}\""
+}
+
+######################################################
 #function to pad text with spaces according to string length
 #Args   :
 #   -$1 : Text to pad
@@ -424,6 +444,7 @@ applyOnTemplate()
 	fi
 	#extract args
 	local file="$1"
+	export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 
 	#Check if the file exist
 	if [ ! -f "$file" ]; then
@@ -478,9 +499,6 @@ getPackageCompilationOptions()
 	options="${options} ${all_options} `echo ${config} | cut -f 6 -d ';'`"
 	
 	case ${compiler} in
-		gcc)
-			options="${options} CC=gcc CXX=g++ F77=gfortran"
-		;;
 		icc)
 			options="${options} CC=icc CXX=icpc F77=ifort"
 		;;

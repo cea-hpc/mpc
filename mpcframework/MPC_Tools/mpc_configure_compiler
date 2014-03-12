@@ -467,11 +467,11 @@ if test "${COMPILER_LIST}" != "" ; then
     # Generate C compiler
     #
     begin_section Generate C Compiler: mpc_cc_$i
-      CC="${SCTK_PREFIX}/mpc-gcc-$i/bin/mpc-gcc_$i"
+      CC="${SCTK_PREFIX}/bin/mpc-gcc_$i"
       if test "${SCTK_ARCH}" = "x86_64" ; then
-	LIB_PATH="-Wl,-rpath,${SCTK_PREFIX}/mpc-gcc-$i/lib64"
+	LIB_PATH="-Wl,-rpath,${SCTK_PREFIX}/lib64"
       else
-	LIB_PATH="-Wl,-rpath,${SCTK_PREFIX}/mpc-gcc-$i/lib"
+	LIB_PATH="-Wl,-rpath,${SCTK_PREFIX}/lib"
       fi
       printf_compiler bin/mpc_cc_${i} c
     end_section
@@ -487,7 +487,7 @@ if test "${COMPILER_LIST}" != "" ; then
     # Generate C++ compiler
     #
     begin_section Generate C++ Compiler: mpc_cxx_${i}
-      CC="${SCTK_PREFIX}/mpc-gcc-$i/bin/mpc-g++_$i"
+      CC="${SCTK_PREFIX}/bin/mpc-g++_$i"
       printf_compiler bin/mpc_cxx_${i} c++
     end_section
 
@@ -496,7 +496,7 @@ if test "${COMPILER_LIST}" != "" ; then
     #
     if test "$SCTK_FORTRAN" = "1" ; then 
       begin_section Generate Fortran77 Compiler: mpc_f77_${i}
-	CC="${SCTK_PREFIX}/mpc-gcc-$i/bin/mpc-gfortran_$i"
+	CC="${SCTK_PREFIX}/bin/mpc-gfortran_$i"
 	printf_compiler bin/mpc_f77_${i} fortran
       end_section
     fi

@@ -75,6 +75,12 @@ if test -z "\${LD_LIBRARY_PATH}" ; then
 else
    export LD_LIBRARY_PATH="\${MPCROOT}/lib:\${LD_LIBRARY_PATH}"
 fi
+
+if test -z "\${LD_LIBRARY_PATH}" ; then
+   export LD_LIBRARY_PATH="\${MPCROOT}/libsgcc/lib"
+else
+   export LD_LIBRARY_PATH="\${MPCROOT}/libsgcc/lib:\${LD_LIBRARY_PATH}"
+fi
 EOF
 
 else
@@ -83,6 +89,12 @@ if test -z "\${LD_LIBRARY_PATH}" ; then
    export LD_LIBRARY_PATH="\${MPCROOT}/lib:${ADD_TO_LIBRARY_PATH}"
 else
    export LD_LIBRARY_PATH="\${MPCROOT}/lib:${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}"
+fi
+
+if test -z "\${LD_LIBRARY_PATH}" ; then
+   export LD_LIBRARY_PATH="\${MPCROOT}/libsgcc/lib:${ADD_TO_LIBRARY_PATH}"
+else
+   export LD_LIBRARY_PATH="\${MPCROOT}/libsgcc/lib:${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}"
 fi
 EOF
 fi

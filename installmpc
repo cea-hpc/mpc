@@ -10,12 +10,18 @@
 ALL_PACKAGES=''
 ALL_PACKAGES_HOST=''
 ALL_PACKAGES_TARGET=''
+COMPILER_LIST=""
 
 ######################################################
 #setup paths
 PROJECT_BUILD_DIR=$PWD
-PROJECT_SOURCE_DIR="${PWD}/`dirname "$0"`"
-
+PROJECT_SOURCE_DIR="`dirname "$0"`"
+if [ "${PROJECT_SOURCE_DIR}" != "." ];
+then
+	PROJECT_SOURCE_DIR="${PWD}/`dirname "$0"`"
+fi
+echo "PROJECT_SOURCE_DIR=$PROJECT_SOURCE_DIR"
+echo "PROJECT_BUILD_DIR=$PROJECT_BUILD_DIR"
 ######################################################
 #default values
 DOWNLOAD='disabled'
@@ -34,7 +40,8 @@ MPC_COMPILER="gcc"
 
 ######################################################
 #avoid to build locally
-if [ "${PROJECT_SOURCE_DIR}" = "." ] || [ "${PROJECT_BUILD_DIR}" = "${PROJECT_SOURCE_DIR}" ] || [ ! -d "${PWD}/build" ]; then
+if [ "${PROJECT_SOURCE_DIR}" = "." ] || [ "${PROJECT_BUILD_DIR}" = "${PROJECT_SOURCE_DIR}" ] && [ ! -d "${PWD}/build" ]; 
+then
 	PROJECT_BUILD_DIR="${PWD}/build"
 	PROJECT_SOURCE_DIR="${PWD}"
 	mkdir -p build
@@ -160,13 +167,6 @@ do
 		################# COMPILER ##################
 		--compiler=*)
 			extractParamValue 'MPC_COMPILER' 'compiler' "$arg"
-			#if we use icc, no need for gcc and its libs
-			if [ "${MPC_COMPILER}" = "icc" ]; then
-				GMP_PREFIX='disabled'
-				MPFR_PREFIX='disabled'
-				MPC_PREFIX='disabled'
-				GCC_PREFIX='disabled'
-			fi
 			;;
 			
 		############### MPCFRAMEWORK ################
@@ -218,11 +218,6 @@ done
 enablePrefixEnv "${PREFIX}"
 
 ######################################################
-#Export PATH for finding Utils
-#export PATH="${PREFIX}/${MPC_HOST}/bin:${PREFIX}/${MPC_TARGET}/bin:$PATH"
-echo "export LIBRARY_PATH=/usr/lib64/:\$LIBRARY_PATH"
-
-######################################################
 #Wrappers for cross-compil
 if [ "$MULTI_ARCH" = 'true' ]; then
 	WRAPPER_CROSS_COMPIL="--cross_exec=${PROJECT_SOURCE_DIR}/mpcframework/MPC_Tools/cross_compilation_scripts/cross_compil.sh"
@@ -231,12 +226,10 @@ else
 fi
 
 ######################################################
-#force MPC
 MPCFRAMEWORK_PREFIX="${INTERNAL_KEY}"
-
-GMP_REAL_PREFIX="${PREFIX}/${MPC_HOST}/libsgcc/"
-MPFR_REAL_PREFIX="${PREFIX}/${MPC_HOST}/libsgcc/"
-MPC_REAL_PREFIX="${PREFIX}/${MPC_HOST}/libsgcc/"
+GMP_REAL_PREFIX="${PREFIX}/${MPC_HOST}/libsgcc"
+MPFR_REAL_PREFIX="${PREFIX}/${MPC_HOST}/libsgcc"
+MPC_REAL_PREFIX="${PREFIX}/${MPC_HOST}/libsgcc"
 HYDRA_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
 HYDRA_SIMPLE_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
 LIBXML2_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
@@ -245,13 +238,18 @@ HWLOC_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
 SCTK_ARCH_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
 
 ######################################################
+# set compiler list
+setCompilerList "COMPILER_LIST"
+#export LIBRARY_PATH=/usr/lib64/:\$LIBRARY_PATH
+
+######################################################
 printSummary
 
 ######################################################
 #Create glue between packages
 #'--with-hydra-simple=${HYDRA_SIMPLE_REAL_PREFIX}'
 GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' '--with-mpfr=${MPFR_REAL_PREFIX}' '--with-mpc=${MPC_REAL_PREFIX}' --program-prefix=mpc- --program-suffix=_480 --with-pkgversion=MPC --enable-languages=c,c++,fortran --disable-bootstrap --disable-multilib ${GCC_BUILD_PARAMETERS}"
-MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_REAL_PREFIX}' '--with-openpa=${OPENPA_REAL_PREFIX}' '--with-hwloc=${HWLOC_REAL_PREFIX}' '--with-libsctk_arch=${SCTK_ARCH_REAL_PREFIX}' ${WRAPPER_CROSS_COMPIL} --arch=${MPC_TARGET} ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_REAL_PREFIX}' '--with-openpa=${OPENPA_REAL_PREFIX}' '--with-hwloc=${HWLOC_REAL_PREFIX}' '--with-libsctk_arch=${SCTK_ARCH_REAL_PREFIX}' ${WRAPPER_CROSS_COMPIL} --arch=${MPC_TARGET} --compilers=\"${COMPILER_LIST}\" ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
 MPC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' --with-mpfr=${MPFR_REAL_PREFIX} ${MPC_BUILD_PARAMETERS}"
 HYDRA_SIMPLE_BUILD_PARAMETERS="'--with-hydra-mpl=${HYDRA_REAL_PREFIX}' ${HYDRA_SIMPLE_BUILD_PARAMETERS}"
