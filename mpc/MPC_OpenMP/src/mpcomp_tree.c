@@ -622,11 +622,15 @@ int __mpcomp_build_tree( mpcomp_instance_t * instance, int n_leaves, int depth, 
 			 int res;
 
 			 sctk_thread_attr_init(&__attr);
-			 sctk_thread_attr_setbinding (& __attr, mpcomp_get_global_index_from_cpu(instance->topology, target_vp) );
-			 sctk_thread_attr_setstacksize (&__attr, mpcomp_global_icvs.stacksize_var);
+			 sctk_thread_attr_setbinding (& __attr, 
+			     mpcomp_get_global_index_from_cpu(
+			       instance->topology, target_vp) );
+			 sctk_thread_attr_setstacksize (&__attr, 
+			     mpcomp_global_icvs.stacksize_var);
 
 			 /* User thread create... */
 			 instance->mvps[current_mvp]->to_run = target_node;
+			 instance->mvps[current_mvp]->slave_running = 0 ;
 
 			 if ( target_node != root ) {
 			      if ( i == 0 ) {
