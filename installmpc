@@ -19,9 +19,23 @@ PROJECT_SOURCE_DIR="`dirname "$0"`"
 if [ "${PROJECT_SOURCE_DIR}" != "." ];
 then
 	PROJECT_SOURCE_DIR="${PWD}/`dirname "$0"`"
+else 
+	PROJECT_SOURCE_DIR="${PWD}"
 fi
-echo "PROJECT_SOURCE_DIR=$PROJECT_SOURCE_DIR"
-echo "PROJECT_BUILD_DIR=$PROJECT_BUILD_DIR"
+
+#avoid to build locally
+if [ "${PROJECT_BUILD_DIR}" = "${PROJECT_SOURCE_DIR}" ]; 
+then
+	#check if build directory exist
+	if [ ! -d "${PWD}/build" ];
+	then
+		mkdir -p build
+	fi
+	PROJECT_BUILD_DIR="${PWD}/build"
+	PROJECT_SOURCE_DIR="${PWD}"
+	cd build
+fi
+
 ######################################################
 #default values
 DOWNLOAD='disabled'
@@ -37,16 +51,6 @@ MULTI_ARCH='false'
 findCurrentArch 'MPC_HOST'
 MPC_TARGET="${MPC_HOST}"
 MPC_COMPILER="gcc"
-
-######################################################
-#avoid to build locally
-if [ "${PROJECT_SOURCE_DIR}" = "." ] || [ "${PROJECT_BUILD_DIR}" = "${PROJECT_SOURCE_DIR}" ] && [ ! -d "${PWD}/build" ]; 
-then
-	PROJECT_BUILD_DIR="${PWD}/build"
-	PROJECT_SOURCE_DIR="${PWD}"
-	mkdir -p build
-	cd build
-fi
 
 ######################################################
 #compute subdirs
@@ -81,6 +85,51 @@ setModulesToInternal
 for arg in "$@"
 do
 	case "$arg" in
+		############### BUILD SPECIFIC ###############
+		clean)
+			echo "Cleaning everything but Makefile..."
+			#Mark build dir
+			if [ -f "${PROJECT_BUILD_DIR}/.mpcbuilddir" ];
+			then
+				cd ${PROJECT_BUILD_DIR}
+				# RM...
+				for arch in `find . -mindepth 1 -maxdepth 1 -type d`
+				do
+    				cd ${PROJECT_BUILD_DIR}/${arch}
+
+    				#remove all hidden files used by makefile
+    				for hfile in `find . -mindepth 1 -maxdepth 1 -type f | grep "\./\."`
+    				do
+    					rm ${hfile}
+    				done
+    				
+    				#remove all packages
+    				for package in `find . -mindepth 1 -maxdepth 1 -type d`
+    				do
+    					echo "  - removing $package build dir"
+    					rm -rf ${PROJECT_BUILD_DIR}/${arch}/${package}
+    				done
+				done
+				echo "Done !"
+				exit 0
+			else 
+				echo "Wrong directory... abort"
+				exit 1
+			fi
+			;;	
+		distclean)
+			echo "Cleaning everything..."
+			if [ -f "${PROJECT_BUILD_DIR}/.mpcbuilddir" ];
+			then
+				rm -rf "${PROJECT_BUILD_DIR}/*"
+				echo "Done !"
+				exit 0
+			else 
+				echo "Wrong directory... abort"
+				exit 1
+			fi
+			exit 0
+			;;	
 		############### DOWNLOAD DEPS ###############
 		--mirror=*)
 			extractParamValue 'MIRROR' 'mirror' "$arg"
@@ -270,22 +319,29 @@ genMakefile()
 
 	cd "$subprefix" || exit 1
 	SUBPREFIX="/$subprefix"
-	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.head.in" > Makefile
-	for module in ${list}; 
-	do
-		local template=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 8 -d ';' | xargs echo`
-		local run_on=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 6 -d ';' | xargs echo`
-		if [ "${run_on}" = "${2}" ] || [ "${run_on}" = "all" ] || [ "$MULTI_ARCH" != 'true' ];
-		then
-			UPPER=`echo ${module} | tr '[:lower:]' '[:upper:]'`
-			findPackage "${module}"
-			setupInstallPackage "${module}" "${host}" "${target}" "${MPC_COMPILER}" "${UPPER}" "${template}" "${2}">> Makefile
-		fi
-	done
-	if [ "$MULTI_ARCH" = 'false' ]; then
-		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot.in" >> Makefile
+
+	#Check if Makefile exist 
+	if [ -f "Makefile" ]; then
+		echo "Makefile already generated. Use 'distclean' argument to regenerate it."
+		echo "Continuing..."
 	else
-		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot_${type_arch}.in" >> Makefile
+		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.head.in" > Makefile
+		for module in ${list}; 
+		do
+			local template=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 8 -d ';' | xargs echo`
+			local run_on=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 6 -d ';' | xargs echo`
+			if [ "${run_on}" = "${2}" ] || [ "${run_on}" = "all" ] || [ "$MULTI_ARCH" != 'true' ];
+			then
+				UPPER=`echo ${module} | tr '[:lower:]' '[:upper:]'`
+				findPackage "${module}"
+				setupInstallPackage "${module}" "${host}" "${target}" "${MPC_COMPILER}" "${UPPER}" "${template}" "${2}">> Makefile
+			fi
+		done
+		if [ "$MULTI_ARCH" = 'false' ]; then
+			applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot.in" >> Makefile
+		else
+			applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot_${type_arch}.in" >> Makefile
+		fi
 	fi
 	cd .. || exit 1
 }
@@ -333,7 +389,13 @@ if [ "$MAKE_J" = "1" ] || [ -z "$MAKE_J" ]; then
 	if [ -z "$STEP_WRAPPER_VERBOSE" ]; then export STEP_WRAPPER_VERBOSE=3; fi
 fi
 
+#Mark build dir
+if [ ! -f "${PROJECT_BUILD_DIR}/.mpcbuilddir" ]; then
+	touch "${PROJECT_BUILD_DIR}/.mpcbuilddir"
+fi
+
 #do it
+cd ${PROJECT_BUILD_DIR}
 if [ "$STEP_WRAPPER_VERBOSE" = '3' ]; then
 	make -j$MAKE_J || fatal "Finish with errors, please read previous messages."
 else

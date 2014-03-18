@@ -1,4 +1,7 @@
 # TODO LIST
+ + Verif de la reprise lors de l'extraction des packets
+ + Verif fonctionnel avec des espaces dans les chemins
+ + Remonter les erreurs dans le wrapper d'extraction dans les templates
  + générer un fake print_config lorsque host=x86... target=arm|mic sans que target=x86... ait été lancé avant.
  + conserver une version des structures en fonction des archi, si pas présent passer la ccompatibilité avec pthread à 0. (gérer plus tard un executavle standalone pour récupérer les structures)
  + utiliser les dépendances (gmp, mpfr, mpc) indiquées dans gcc/contrib/download_...
@@ -12,7 +15,7 @@
  + pas de rpath dans libmpc mais sur binaires user oui (vérifier relative rpath pour GCC sinon risque de pb... à checker)
  + vérifier les sorties std/error et dispatch en mode verbose
  + rajouter des fonctions pour les sorties d'erreurs avec gestion des couleurs
- + rajouter un arg de clean   
+ + rajouter un arg de clean 
  + corriger pb de ln sur arch_wrapper (+ printer une étape en plus depuis le script install)
  + propager les nouvelles versions de config par module  
  + MAJ de la doc + maj doc sur le site  
@@ -28,6 +31,7 @@
 * libgfortran (priv)
 
 # DONE
+ - rajouter un arg de clean
  - téléchargement des packets + gestion des mirrors
  - télécharger les deps sur selon le script de paratools
  - gestion de l'arborescence pour la cross-compil

@@ -832,8 +832,8 @@ EOF
 
 end_section
 echo ""
-begin_section "Check NON PORTABLE POSIX threads compatibility"
-SCTK_POSIX_CHECK_FUNCS pthread_getattr_np HAVE_PTHREAD_GETATTR_NP
+#begin_section "Check NON PORTABLE POSIX threads compatibility"
+#SCTK_POSIX_CHECK_FUNCS pthread_getattr_np HAVE_PTHREAD_GETATTR_NP
 echo ""
 end_section
 }

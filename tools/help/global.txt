@@ -1,5 +1,9 @@
 TODO but list of options (similar to old mpc way) :
 
+# build
+ clean
+ distclean
+
 # Download missing deps
 --download-missing-deps
 --mirror={1|2|3|4}
@@ -9,7 +13,6 @@ TODO but list of options (similar to old mpc way) :
 --disable-mpc-gcc
 
 # Where to find ('internal' to build the embedded one)
---with-cmake=
 --with-sctk-arch=
 --with-openpa=
 --with-mpc-gdb=*
@@ -21,7 +24,6 @@ TODO but list of options (similar to old mpc way) :
 --with-libxml2=
 
 # Options to transmit to subpackages
---cmake-*
 --sctk-arch-*
 --openpa-*
 --mpc-gdb-*

@@ -541,13 +541,13 @@ registerPackage()
 setupInstallPackage()
 {
 	#made local
-	local name="$1"
-	local host="$2"
-	local target="$3"	
-	local compiler="$4"
-	local varprefix="$5"
+	local name="${1}"
+	local host="${2}"
+	local target="${3}"	
+	local compiler="${4}"
+	local varprefix="${5}"
 	local template="${PROJECT_TEMPLATE_DIR}/Makefile.${6}.in"
-	local type="$7"
+	local type="${7}"
 	
 	#if template is empty, use default
 	if [ -z "$template" ]; then
@@ -572,9 +572,9 @@ setupInstallPackage()
 
 	#check if need to do it
 	if [ "$prefix" = "${INTERNAL_KEY}" ]; then
-		PACKAGE_DEPS="$deps"
-		PACKAGE_VAR_NAME="$varprefix"
-		PACKAGE_OPTIONS="$options"
+		PACKAGE_DEPS=`echo ${deps} | sed 's|[0-9A-Z_a-z\-]\+|.&|g'`
+		PACKAGE_VAR_NAME="${varprefix}"
+		PACKAGE_OPTIONS="${options}"
 		PACKAGE_NAME="${name}"
 		PACKAGE_VERSION="${version}"
 		USER_PARAMETERS="$userOptions"
