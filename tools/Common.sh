@@ -428,9 +428,9 @@ enablePrefixEnv()
 	local prefix="$1"
 
 	#do exports
-	PATH="${prefix}/bin:${PATH}"
-	LD_LIBRARY_PATH="${prefix}/lib:${LD_LIBRARY_PATH}"
-	PKG_CONFIG_PATH="${prefix}/lib/pkg-config/:${prefix}/share/pkg-config/:${PKG_CONFIG_PATH}"
+	export PATH="${prefix}/bin:${PATH}"
+	export LD_LIBRARY_PATH="${prefix}/lib:${LD_LIBRARY_PATH}"
+	export PKG_CONFIG_PATH="${prefix}/lib/pkg-config/:${prefix}/share/pkg-config/:${PKG_CONFIG_PATH}"
 }
 
 ######################################################
