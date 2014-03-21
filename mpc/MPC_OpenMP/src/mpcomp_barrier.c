@@ -117,6 +117,8 @@ __mpcomp_internal_full_barrier (mpcomp_mvp_t *mvp)
      long b_done;
 	 mpcomp_node_t * new_root ;
 
+	 // printf( "!!!!!!!!!!!__mpcomp_internal_full_barrier!!!!!!!!!!!!!!!\n" ) ;
+
      c = mvp->father;
 	 sctk_assert( c != NULL ) ;
 

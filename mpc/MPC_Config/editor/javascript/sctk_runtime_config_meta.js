@@ -148,6 +148,7 @@ meta.types = {
 		max_alive_for_guided: {mode: 'param', name: "max_alive_for_guided", type: "int", doc: "Maximum number of shared for loops w/ guided schedule alive", dflt: "3", },
 		max_alive_sections: {mode: 'param', name: "max_alive_sections", type: "int", doc: "Maximum number of alive sections construct", dflt: "3", },
 		max_alive_single: {mode: 'param', name: "max_alive_single", type: "int", doc: "Maximum number of alive single construct", dflt: "3", },
+		warn_nested: {mode: 'param', name: "warn_nested", type: "bool", doc: "Emit warning when entering nested parallelism", dflt: "false", },
 	}},
 	profiler : {type: 'struct', name: "profiler", childs: {
 		file_prefix: {mode: 'param', name: "file_prefix", type: "string", doc: "Prefix of MPC Profiler outputs", dflt: "mpc_profile", },

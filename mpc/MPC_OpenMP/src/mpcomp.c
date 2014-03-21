@@ -83,6 +83,10 @@ static int OMP_TASK_LARCENY_MODE = MPCOMP_TASK_LARCENY_MODE_HIERARCHICAL;
 /* Task max depth in task generation */
 static int OMP_TASK_NESTING_MAX = 8;
 #endif /* MPCOMP_TASK */
+/* Should we emit a warning when nesting is used? */
+static int OMP_WARN_NESTED = 0 ;
+/* Hybrid MPI/OpenMP mode */
+static mpcomp_mode_t OMP_MODE = MPCOMP_MODE_SIMPLE_MIXED ;
 
 mpcomp_global_icv_t mpcomp_global_icvs;
 
@@ -259,6 +263,9 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
 
   /******* ADDITIONAL VARIABLES *******/
 
+  /******* OMP_WARN_NESTED *******/
+  OMP_WARN_NESTED = sctk_runtime_config_get()->modules.openmp.warn_nested ;
+
   /******* OMP_TREE *********/
   env = sctk_runtime_config_get()->modules.openmp.tree ;
   
@@ -373,6 +380,11 @@ TODO( "If OMP_NUM_THREADS is 0, let it equal to 0 by default and handle it later
 #if MPCOMP_COHERENCY_CHECKING
     fprintf( stderr, "\tCoherency check enabled\n" ) ;
 #endif
+    if ( OMP_WARN_NESTED ) {
+      fprintf( stderr, "\tOMP_WARN_NESTED %d (breakpoint mpcomp_warn_nested)\n", OMP_WARN_NESTED ) ;
+    } else {
+      fprintf( stderr, "\tNo warning for nested parallelism\n" ) ;
+    }
     TODO( "Add every env vars when printing info on OpenMP" ) 
   }
 }
@@ -409,6 +421,7 @@ void __mpcomp_init() {
       mpcomp_global_icvs.thread_limit_var = OMP_THREAD_LIMIT;
       mpcomp_global_icvs.max_active_levels_var = OMP_MAX_ACTIVE_LEVELS;
       mpcomp_global_icvs.nmicrovps_var = OMP_MICROVP_NUMBER ;
+      mpcomp_global_icvs.warn_nested = OMP_WARN_NESTED ;
       done = 1;
     }
 
@@ -437,6 +450,7 @@ void __mpcomp_init() {
 	/* Get the rank of current MPI task */
 	task_rank = sctk_get_task_rank();
 
+
 	if ( task_rank == -1 ) {
 		/* No parallel OpenMP if MPI has not been initialized yet */
 		nb_mvps = 1 ;
@@ -451,6 +465,18 @@ void __mpcomp_init() {
 		if ( OMP_MICROVP_NUMBER > 0 && OMP_MICROVP_NUMBER <= nb_mvps ) {
 			nb_mvps = OMP_MICROVP_NUMBER ;
 		}
+	}
+
+	if ( sctk_get_local_task_rank() == 0 ) {
+	  sctk_debug( "__mpcomm_init: "
+	      "MPI rank=%d, process_rank=%d, local_task_rank=%d => %d mvp(s) out of %d core(s) A",
+	      task_rank, sctk_get_local_process_rank(), sctk_get_local_task_rank(),
+	      sctk_get_processor_number(), sctk_get_processor_number() ) ;
+	} else {
+	sctk_debug( "__mpcomm_init: "
+	    "MPI rank=%d, process_rank=%d, local_task_rank=%d => %d mvp(s) out of %d core(s)",
+	    task_rank, sctk_get_local_process_rank(), sctk_get_local_task_rank(),
+	   nb_mvps, sctk_get_processor_number() ) ;
 	}
 
 
@@ -767,6 +793,7 @@ mpcomp_get_level (void)
 	sctk_debug( "mpcomp_get_level: entering %d", t->instance->team->depth);
 	return t->instance->team->depth;
 	*/
+	return -1 ;
 }
 
 /*
@@ -807,6 +834,7 @@ mpcomp_get_ancestor_thread_num(int level)
 		t = &instance->root->father->instance;
 	return (team id);
 	*/
+	return -1 ;
 }
 
 /*
@@ -842,6 +870,7 @@ omp_get_team_size(int level)
 		return instance->team->info.num_threads;
 	}
 	*/
+	return -1 ;
 }
 
 /*
@@ -1026,4 +1055,10 @@ void __mpcomp_ordered_end()
      } else {
 	  t->instance->team->next_ordered_offset++ ;
      }
+}
+
+void
+mpcomp_warn_nested() 
+{
+  fprintf( stderr, "WARNING: Nested invoked (mpcomp_warn_nested)\n" ) ;
 }

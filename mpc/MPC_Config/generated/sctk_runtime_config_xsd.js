@@ -280,6 +280,7 @@ var sctk_runtime_config_xsd = "<?xml version='1.0'?>\
 <xs:element minOccurs='0' name='max_alive_for_guided' type='xs:integer'/>\
 <xs:element minOccurs='0' name='max_alive_sections' type='xs:integer'/>\
 <xs:element minOccurs='0' name='max_alive_single' type='xs:integer'/>\
+<xs:element minOccurs='0' name='warn_nested' type='xs:boolean'/>\
 </xs:all>\
 </xs:complexType>\
 <!-- ********************************************************* -->\

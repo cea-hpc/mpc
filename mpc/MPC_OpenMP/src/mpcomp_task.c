@@ -1105,10 +1105,6 @@ void __mpcomp_task_schedule()
      mpcomp_local_icv_t icvs;
      int i;
      
-     /* Initialize the OpenMP task environment (call several times, but really executed
-      * once per worker thread) */
-     __mpcomp_task_infos_init();
-     
      /* Retrieve the information (microthread structure and current region) */
      t = (mpcomp_thread_t *)sctk_openmp_thread_tls;
      sctk_assert(t != NULL);	 
@@ -1116,6 +1112,15 @@ void __mpcomp_task_schedule()
      /* If only one thread is running, tasks are not delayed. No need to schedule */
      if (t->info.num_threads == 1)
 	  return;
+
+     if ( t->tasking_init_done == 0 || sctk_atomics_load_int(&(t->instance->team->nb_tasks)) == 0 ) {
+       return ;
+     }
+
+     /* Initialize the OpenMP task environment (call several times, but really executed
+      * once per worker thread) */
+     __mpcomp_task_infos_init();
+     
 
      prev_task = t->current_task;
 	  

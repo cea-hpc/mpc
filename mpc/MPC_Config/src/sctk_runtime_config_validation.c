@@ -233,5 +233,14 @@ void sctk_runtime_config_override_by_getenv_openmp(struct sctk_runtime_config * 
 			config->modules.openmp.tree = tmp ;
 		}
 
+    /******* OMP_WARN_NESTED *******/
+	if ((tmp = getenv("OMP_WARN_NESTED")) != NULL)
+    {
+		if(strcmp(tmp, "1") == 0 || strcmp(tmp, "TRUE") == 0 || strcmp(tmp, "true") == 0)
+        {
+            config->modules.openmp.warn_nested = 1;
+        }
+    }
+
 
 }

@@ -276,6 +276,7 @@ void sctk_runtime_config_struct_init_openmp(void * struct_ptr)
 	obj->max_alive_for_guided = 3;
 	obj->max_alive_sections = 3;
 	obj->max_alive_single = 3;
+	obj->warn_nested = false;
 }
 
 /*******************  FUNCTION  *********************/

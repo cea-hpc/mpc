@@ -147,6 +147,11 @@ extern "C"
      } mpcomp_task_larceny_mode_t;
 #endif
 
+     typedef enum mpcomp_mode_t {
+       MPCOMP_MODE_SIMPLE_MIXED,
+       MPCOMP_MODE_ALTERNATING
+     } mpcomp_mode_t ;
+
 
 /*****************
  ****** STRUCTURES 
@@ -164,6 +169,7 @@ extern "C"
 	  int thread_limit_var;         /* Number of Open threads to use for the whole program */
 	  int max_active_levels_var;    /* Maximum number of nested active parallel regions */
 	  int nmicrovps_var;		/* Number of VPs */
+	  int warn_nested ;		/* Emit warning for nested parallelism? */
      } mpcomp_global_icv_t;
 
 
@@ -823,6 +829,9 @@ __mpcomp_get_static_nb_chunks_per_rank (int rank, int nb_threads, long lb,
      void __mpcomp_task_schedule();
      void __mpcomp_task_exit();
 #endif /* MPCOMP_TASK */
+
+
+     void mpcomp_warn_nested() ;
 
 #ifdef __cplusplus
 }

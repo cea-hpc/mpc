@@ -204,6 +204,8 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
   mpcomp_thread_t * t ;
   int num_threads ;
 
+	 // printf( "!!!!!!!!!!! __mpcomp_start_parallel_region !!!!!!!!!!!!!!!\n" ) ;
+
   /* Initialize OpenMP environment */
   __mpcomp_init() ;
 
@@ -332,6 +334,10 @@ void __mpcomp_start_parallel_region(int arg_num_threads, void *(*func)
 #endif
 
   } else {
+
+    if ( mpcomp_global_icvs.warn_nested && t->instance->team->depth > 0 ) {
+      mpcomp_warn_nested() ;
+    }
 
 	  /* Check whether the number of current thread is 1 or not */
 #if 0
@@ -651,6 +657,10 @@ __mpcomp_start_sections_parallel_region (int arg_num_threads,
 
   } else {
 
+    if ( mpcomp_global_icvs.warn_nested && t->instance->team->depth > 0 ) {
+      mpcomp_warn_nested() ;
+    }
+
 	  /* Check whether the number of current thread is 1 or not */
 #if 0
 	  if ( t->info.num_threads == 1 ) {
@@ -878,6 +888,10 @@ __mpcomp_start_parallel_dynamic_loop (int arg_num_threads,
 
   } else {
 
+    if ( mpcomp_global_icvs.warn_nested && t->instance->team->depth > 0 ) {
+      mpcomp_warn_nested() ;
+    }
+
 	  /* Check whether the number of current thread is 1 or not */
 #if 0
 	  if ( t->info.num_threads == 1 ) {
@@ -1104,6 +1118,10 @@ __mpcomp_start_parallel_static_loop (int arg_num_threads,
 #endif
 
   } else {
+
+    if ( mpcomp_global_icvs.warn_nested && t->instance->team->depth > 0 ) {
+      mpcomp_warn_nested() ;
+    }
 
 	  /* Check whether the number of current thread is 1 or not */
 #if 0

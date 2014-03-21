@@ -373,6 +373,8 @@ struct sctk_runtime_config_struct_openmp
 	int max_alive_sections;
 	/**Maximum number of alive single construct**/
 	int max_alive_single;
+	/**Emit warning when entering nested parallelism**/
+	bool warn_nested;
 };
 
 /******************************** STRUCTURE *********************************/
