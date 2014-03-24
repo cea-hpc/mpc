@@ -27,17 +27,17 @@
 
 @PACKAGE_NAME@: .@PACKAGE_NAME@
 
-.@PACKAGE_NAME@: .@PACKAGE_NAME@.configure .@PACKAGE_NAME@.make .@PACKAGE_NAME@.make
+.@PACKAGE_NAME@: .@PACKAGE_NAME@.configure .@PACKAGE_NAME@.make .@PACKAGE_NAME@.install
 	test -f ".@PACKAGE_NAME@.configure" && test -f ".@PACKAGE_NAME@.make" && test -f ".@PACKAGE_NAME@.install" && touch .@PACKAGE_NAME@  
 
-.@PACKAGE_NAME@.configure: @PACKAGE_DEPS@ @PACKAGE_NAME@-prepare
+.@PACKAGE_NAME@.configure: @PACKAGE_DEPS@ .@PACKAGE_NAME@-prepare
 	cd $(@PACKAGE_VAR_NAME@_BUILD_DIR) && mkdir -p build && cd build && $(STEP_WRAPPER) "Configure $(@PACKAGE_VAR_NAME@_STEP_NAME)" ../configure --prefix=$(PREFIX) $(@PACKAGE_VAR_NAME@_BUILD_PARAMETERS) && cd ../../ && echo "$(@PACKAGE_VAR_NAME@_BUILD_PARAMETERS)" > .@PACKAGE_NAME@.configure
 
 
-.@PACKAGE_NAME@.make: @PACKAGE_DEPS@ @PACKAGE_NAME@-prepare .@PACKAGE_NAME@.configure
+.@PACKAGE_NAME@.make: @PACKAGE_DEPS@ .@PACKAGE_NAME@.configure
 	export LD_LIBRARY_PATH=$(PREFIX)/libsgcc/lib:@LD_LIBRARY_PATH@ && cd $(@PACKAGE_VAR_NAME@_BUILD_DIR)/build && $(STEP_WRAPPER) "Build $(@PACKAGE_VAR_NAME@_STEP_NAME)" $(MAKE) $(MFLAGS) && cd ../../ && echo "$(MAKE) $(MFLAGS)" > .@PACKAGE_NAME@.make
 
-.@PACKAGE_NAME@.install: @PACKAGE_DEPS@ @PACKAGE_NAME@-prepare .@PACKAGE_NAME@.configure .@PACKAGE_NAME@.make
+.@PACKAGE_NAME@.install: @PACKAGE_DEPS@ .@PACKAGE_NAME@.configure .@PACKAGE_NAME@.make
 	$(STEP_WRAPPER) "Install $(@PACKAGE_VAR_NAME@_STEP_NAME)" $(MAKE) $(MFLAGS) -C $(@PACKAGE_VAR_NAME@_BUILD_DIR) install && touch .@PACKAGE_NAME@.install
 
 #avoid conflict with directory
