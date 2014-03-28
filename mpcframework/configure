@@ -29,6 +29,7 @@ LOG_FILE="configure.log"
 
 SCTK_NET_LIST=""
 SCTK_NET_LIST_EXP=""
+MPC_HOST=`uname -m`
 
 rm -rf BUILD_MPC_* > /dev/null 2>&1
 
@@ -54,16 +55,16 @@ MPC_SOURCE_DIR="`pwd`/"
 #echo "Entering ${BUILD_DIR}"
 cd ${BUILD_DIR}
 
-debug "mpc_source dir ${MPC_SOURCE_DIR}"
-
-export MPC_SOURCE_DIR
-
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_common
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_functions
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_determine_config
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_gen_compilation_flags
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_modules
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_extern_deps
+
+debug "mpc_source dir ${MPC_SOURCE_DIR}"
+
+export MPC_SOURCE_DIR
 
 # Catch the MPC version
 MPC_VERSION="`${MPC_SOURCE_DIR}MPC_Tools/mpc_print_version`"
@@ -76,8 +77,6 @@ fi
 MODULE="MPC"
 cat ${MPC_SOURCE_DIR}/../tools/banner
 sctk_echo "'configure' configures ${MODULE} ${MPC_VERSION} to adapt to many kinds of systems."
-
-sctk_echo
 
 # Module Detection #
 
@@ -108,6 +107,7 @@ SCTK_FORTRAN="1"
 SCTK_MPC_USE_ZLIB="0"
 SCTK_NETWORKS_INIT="0"
 SCTK_NETWORKS="all"
+SCTK_MIC_LIBRARY_PATH=
 
 check_arg(){
   VALID_ARG="0"
@@ -252,12 +252,34 @@ for arg in "$@" ; do
     --arch=*)
     SCTK_ARCH="`echo A$arg | sed -e 's/A--arch=//g'`"
     UNAME_P="echo $SCTK_ARCH"
-    ;;
+    MPC_TARGET="$SCTK_ARCH"
+	;;
     --cross_exec=*)
     SCTK_CROSS_EXEC="`echo A$arg | sed -e 's/A--cross_exec=//g'`"
     ;;
     --cross_prefix=*)
     SCTK_CROSS_PREFIX="`echo A$arg | sed -e 's/A--cross_prefix=//g'`"
+    ;;
+    # Rule for MIC
+    --mic)
+    SCTK_MIC="1"
+	export SCTK_MIC
+    SCTK_CROSS_EXEC="${MPC_SOURCE_DIR}MPC_Tools/cross_compilation_scripts/cross_compil.sh"
+    SCTK_GCC=icc
+    SCTK_CC=icc
+    SCTK_CXX=icpc
+    SCTK_F77=ifort
+    SCTK_CFLAGS="$SCTK_CFLAGS -mmic -Wl,-rpath=${SCTK_MIC_LIBRARY_PATH}"
+    SCTK_LDFLAGS="$SCTK_LDFLAGS -mmic "
+    SCTK_AR=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ar
+    SCTK_LD=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ld
+    #SCTK_AR=${SCTK_PREFIX}/../${MPC_HOST}/bin/x86_64-k1om-linux-ar
+    #SCTK_LD=${SCTK_PREFIX}/../${MPC_HOST}/bin/x86_64-k1om-linux-ld
+    ;;
+    --mic-library-path=*)
+    SCTK_MIC_LIBRARY_PATH="`echo A$arg | sed -e 's/A--mic-library-path=//g'`"
+    export SCTK_MIC_LIBRARY_PATH
+    echo "MIC library path updated : $SCTK_MIC_LIBRARY_PATH"
     ;;
     --no-recursion)
     ;;

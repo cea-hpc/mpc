@@ -121,7 +121,8 @@ do
 			echo "Cleaning everything..."
 			if [ -f "${PROJECT_BUILD_DIR}/.mpcbuilddir" ];
 			then
-				rm -rf "${PROJECT_BUILD_DIR}/*"
+				echo "cleaning ${PROJECT_BUILD_DIR}/* directories..."
+				rm -rv "${PROJECT_BUILD_DIR}/*" || echo "Unable to clean ${PROJECT_BUILD_DIR}/* directories"
 				echo "Done !"
 				exit 0
 			else 
@@ -144,6 +145,9 @@ do
 		--hydra-*)
 			extractAndAddPackageOption 'HYDRA_BUILD_PARAMETERS' 'hydra' "$arg"
 			;;
+		--disable-mpc-hydra)
+		    HYDRA_PREFIX='disabled'
+			;;  
 		################# SCTK_ARCH #################
 		--with-sctk-arch=*)
 			extractParamValue 'SCTK_ARCH_PREFIX' 'with-sctk-arch' "$arg"
@@ -199,6 +203,9 @@ do
 		--mpc-binutils-*)
 			extractAndAddPackageOption 'BINUTILS_BUILD_PARAMETERS' 'mpc-binutils' "$arg"
 			;;
+		--disable-mpc-binutils)
+		    BINUTILS_PREFIX='disabled'
+			;;  
 		################## LIBXML2 ##################
 		--with-libxml2=*)
 			extractParamValue 'LIBXML2_PREFIX' 'with-libxml2' "$arg"
@@ -225,10 +232,13 @@ do
 		############### CROSS-COMPIL ################
 		--host=*)
 			extractArchValue 'MPC_HOST' 'host' "$arg"
+			export MPC_HOST
 			MULTI_ARCH='true'
 			;;
 		--target=*)
 			extractArchValue 'MPC_TARGET' 'target' "$arg"
+			export MPC_TARGET
+			export MPC_HOST
 			MULTI_ARCH='true'
 			;;
 		################## COMMON ###################
@@ -298,7 +308,7 @@ printSummary
 #Create glue between packages
 #'--with-hydra-simple=${HYDRA_SIMPLE_REAL_PREFIX}'
 GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' '--with-mpfr=${MPFR_REAL_PREFIX}' '--with-mpc=${MPC_REAL_PREFIX}' --program-prefix=mpc- --program-suffix=_480 --with-pkgversion=MPC --enable-languages=c,c++,fortran --disable-bootstrap --disable-multilib ${GCC_BUILD_PARAMETERS}"
-MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_REAL_PREFIX}' '--with-openpa=${OPENPA_REAL_PREFIX}' '--with-hwloc=${HWLOC_REAL_PREFIX}' '--with-libsctk_arch=${SCTK_ARCH_REAL_PREFIX}' ${WRAPPER_CROSS_COMPIL} --arch=${MPC_TARGET} --compilers=\"${COMPILER_LIST}\" ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=\$\(PREFIX\)/libxml2' '--with-openpa=\$\(PREFIX\)/openpa' '--with-hwloc=\$\(PREFIX\)/hwloc' '--with-libsctk_arch=\$\(PREFIX\)/sctk_arch' ${WRAPPER_CROSS_COMPIL} --arch=${MPC_TARGET} --compilers=\"${COMPILER_LIST}\" ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
 MPC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' --with-mpfr=${MPFR_REAL_PREFIX} ${MPC_BUILD_PARAMETERS}"
 HYDRA_SIMPLE_BUILD_PARAMETERS="'--with-hydra-mpl=${HYDRA_REAL_PREFIX}' ${HYDRA_SIMPLE_BUILD_PARAMETERS}"

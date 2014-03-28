@@ -20,52 +20,38 @@
 #   - PERACHE Marc marc.perache@cea.fr                                 #
 #                                                                      #
 ########################################################################
-begin_section Generate mpc_cflags
 
-mkdir -p bin
-
-cat <<EOF > bin/mpc_cflags
-#!/bin/sh
-EOF
-
-header_sh >> bin/mpc_cflags
-
-FLAGS=""
-for i in $MODULE_LIST; do
-FLAGS="$FLAGS -DMPC_MODULE_$i"
-done
-
-cat <<EOF >> bin/mpc_cflags
-if test "\$1" != "fortran" ; then
-EOF
-if test "${SCTK_MIC}" = "1" ; then
-cat <<EOF >> bin/mpc_cflags
-echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../../sctk_arch/include $FLAGS -L${SCTK_MIC_LIBRARY_PATH} -Wl,-rpath=${SCTK_MIC_LIBRARY_PATH}"
-EOF
-else
-cat <<EOF >> bin/mpc_cflags
-echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../../sctk_arch/include $FLAGS"
-EOF
+#get config file for the run if not already given
+if test "$MPCRUN_CONFIG_FILE" = "" ; then
+	echo processes for the run ?
+	read MPCRUN_CONFIG_FILE
 fi
 
-cat <<EOF >> bin/mpc_cflags
+#verify if hydra is Intel version and not mpich
+HYDRA_VERSION="`mpiexec.hydra --version`"
+if [[ "${HYDRA_VERSION}" =~ "Intel" ]] ; then
+	LAUNCH_COMMAND="mpiexec.hydra"
+	I=0
+	J=0
+	while read line; do 
+		I=$(($I + 1)); 
+	done < "${MPCRUN_CONFIG_FILE}"
+	#create launch command for hydra
+	while read line; do 
+		if test "$J" = $(($I - 1)); then
+			LAUNCH_COMMAND="${LAUNCH_COMMAND} ${line} $USER_ARGS $SCTK_ARGS"; 
+		else
+			LAUNCH_COMMAND="${LAUNCH_COMMAND} ${line} $USER_ARGS $SCTK_ARGS :"; 
+		fi
+		J=$(($J + 1)); 
+	done < "${MPCRUN_CONFIG_FILE}"
+	export I_MPI_MIC=enable
+	echo "Launching command $LAUNCH_COMMAND"
 else
-EOF
-
-if test "${SCTK_MIC}" = "1" ; then
-cat <<EOF >> bin/mpc_cflags
-echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../../sctk_arch/include $FLAGS -L${SCTK_MIC_LIBRARY_PATH} -Wl,-rpath=${SCTK_MIC_LIBRARY_PATH}"
-EOF
-else
-cat <<EOF >> bin/mpc_cflags
-echo "-I${SCTK_INCLUDE_DIR} -I${SCTK_INCLUDE_DIR}/../../sctk_arch/include $FLAGS"
-EOF
+	echo "You must use Intel hydra launcher for hybrid (host + MIC) runs"
+	exit
 fi
 
-cat <<EOF >> bin/mpc_cflags
-fi
-EOF
 
-chmod 755 bin/mpc_cflags
 
-end_section
+

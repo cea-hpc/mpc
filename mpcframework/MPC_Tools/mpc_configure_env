@@ -28,17 +28,27 @@
 #
 
 OUTPUT_FILE=bin/mpcvars.sh
-
+ARCH=`uname -m`
 begin_section Generate Environment Script ${OUTPUT_FILE}
+
+echo "CONFIGURE ENV MPCROOT=${SCTK_PREFIX}"
 
 # Header
 echo "#!/bin/sh" > ${OUTPUT_FILE}
 header_sh >> ${OUTPUT_FILE}
 
+
+#if test "${MPC_HOST}" = "${ARCH}" ; then
 cat <<EOF >> ${OUTPUT_FILE}
-
 MPCROOT="${SCTK_PREFIX}"
+EOF
+#else
+#cat <<EOF >> ${OUTPUT_FILE}
+#MPCROOT="${SCTK_PREFIX}/${MPC_TARGET}"
+#EOF
+#fi
 
+cat <<EOF >> ${OUTPUT_FILE}
 export MPI_ROOT="\${MPCROOT}"
 
 if test -z "\${PATH}" ; then

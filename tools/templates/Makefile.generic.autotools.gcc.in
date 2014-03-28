@@ -31,7 +31,7 @@
 	test -f ".@PACKAGE_NAME@.configure" && test -f ".@PACKAGE_NAME@.make" && test -f ".@PACKAGE_NAME@.install" && touch .@PACKAGE_NAME@  
 
 .@PACKAGE_NAME@.configure: @PACKAGE_DEPS@ .@PACKAGE_NAME@-prepare
-	cd $(@PACKAGE_VAR_NAME@_BUILD_DIR) && mkdir -p build && cd build && $(STEP_WRAPPER) "Configure $(@PACKAGE_VAR_NAME@_STEP_NAME)" ../configure --prefix=$(PREFIX) $(@PACKAGE_VAR_NAME@_BUILD_PARAMETERS) && cd ../../ && echo "$(@PACKAGE_VAR_NAME@_BUILD_PARAMETERS)" > .@PACKAGE_NAME@.configure
+	cd $(@PACKAGE_VAR_NAME@_BUILD_DIR) && mkdir -p build && cd build && $(STEP_WRAPPER) "Configure $(@PACKAGE_VAR_NAME@_STEP_NAME)" ../configure --prefix=$(PREFIX)/@PACKAGE_NAME@ $(@PACKAGE_VAR_NAME@_BUILD_PARAMETERS) && cd ../../ && echo "$(@PACKAGE_VAR_NAME@_BUILD_PARAMETERS)" > .@PACKAGE_NAME@.configure
 
 
 .@PACKAGE_NAME@.make: @PACKAGE_DEPS@ .@PACKAGE_NAME@.configure

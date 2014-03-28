@@ -398,6 +398,34 @@ for arg in "$@" ; do
     #Already processed in a previous loop on arguments, but need to capture them otherwise
     #it will be propagated as exe options.
     ;;
+    --mic-library-path=*)
+    SCTK_MIC_LIBRARY_PATH="`echo A$arg | sed -e 's/A--mic-library-path=//g'`"
+    export SCTK_MIC_LIBRARY_PATH
+    echo "MIC library path updated : $SCTK_MIC_LIBRARY_PATH"
+    ;;
+    --mic-nb-task=*)
+    SCTK_MIC_NB_TASK="`echo A$arg | sed -e 's/A--mic-nb-task=//g'`"
+    export SCTK_MIC_NB_TASK
+    echo "run with $SCTK_MIC_NB_TASK task(s) per MIC"
+    ;;
+    --host-nb-task=*)
+    SCTK_HOST_NB_TASK="`echo A$arg | sed -e 's/A--host-nb-task=//g'`"
+    export SCTK_HOST_NB_TASK
+    echo "run with $SCTK_HOST_NB_TASK task(s) per host"
+    ;;
+    --nb-mic=*)
+    SCTK_NB_MIC="`echo A$arg | sed -e 's/A--nb-mic=//g'`"
+    export SCTK_NB_MIC
+    echo "run with $SCTK_NB_MIC MIC(s)"
+    ;;
+    --nb-host=*)
+    SCTK_NB_HOST="`echo A$arg | sed -e 's/A--nb-host=//g'`"
+    export SCTK_NB_HOST
+    echo "run with $SCTK_NB_HOST host(s)"
+    ;;
+    --mic-config=*)
+    MPCRUN_CONFIG_FILE="`echo A$arg | sed -e 's/A--mic-config=//g'`"
+    ;;
     --)
     READ_MPC_ARG="false"
     ;;

@@ -219,6 +219,19 @@ EOF
 
 cat << EOF >> $1
 
+    -mic)
+    SCTK_MIC=1
+	export SCTK_MIC
+	CC=icc
+	addarg=no
+	CFLAGS="\`$SCTK_BIN_DIR_TARGET/mpc_cflags $2\` -mmic"
+	LDFLAGS="\`$SCTK_BIN_DIR_TARGET/mpc_ldflags $2\`"
+    ;;
+
+EOF
+
+cat << EOF >> $1
+
     -show)
     addarg=no
     Show=echo
@@ -462,7 +475,7 @@ if test "${COMPILER_LIST}" != "" ; then
     if test "${DEFAULT_VERSION}" = "" ; then
       DEFAULT_VERSION="${i}"
     fi
-
+    
     #
     # Generate C compiler
     #
@@ -473,6 +486,10 @@ if test "${COMPILER_LIST}" != "" ; then
       else
 	LIB_PATH="-Wl,-rpath,${SCTK_PREFIX}/lib"
       fi
+      if test "${i}" = "icc" ; then
+		CC=icc
+	  fi
+	  echo "1: CC = '$CC'"
       printf_compiler bin/mpc_cc_${i} c
     end_section
 
@@ -480,6 +497,7 @@ if test "${COMPILER_LIST}" != "" ; then
     # Generate C compiler (for global linking)
     #
     begin_section Generate C Compiler: mpc_cc_global_$i
+		echo "2: CC = '$CC'"
       printf_compiler bin/mpc_cc_global_$i c global
     end_section
 
@@ -488,6 +506,10 @@ if test "${COMPILER_LIST}" != "" ; then
     #
     begin_section Generate C++ Compiler: mpc_cxx_${i}
       CC="${SCTK_PREFIX}/bin/mpc-g++_$i"
+      if test "${i}" = "icc" ; then
+		CC=icpc
+	  fi
+	  echo "3: C++ = '$CC'"
       printf_compiler bin/mpc_cxx_${i} c++
     end_section
 
@@ -497,10 +519,13 @@ if test "${COMPILER_LIST}" != "" ; then
     if test "$SCTK_FORTRAN" = "1" ; then 
       begin_section Generate Fortran77 Compiler: mpc_f77_${i}
 	CC="${SCTK_PREFIX}/bin/mpc-gfortran_$i"
+	if test "${i}" = "icc" ; then
+		CC=ifort
+	fi
+	echo "4: F77 = '$CC'"
 	printf_compiler bin/mpc_f77_${i} fortran
       end_section
     fi
-
   done
 else
 DEFAULT_VERSION="default"

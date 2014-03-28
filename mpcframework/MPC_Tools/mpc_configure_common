@@ -174,6 +174,8 @@ post_update_vars(){
 #update paths
 if test "$SCTK_EPREFIX" = "" ; then SCTK_EPREFIX="${SCTK_PREFIX}"; fi
 if test "$SCTK_BIN_DIR" = "" ; then SCTK_BIN_DIR="${SCTK_EPREFIX}/bin"; fi
+if test "$SCTK_BIN_DIR_TARGET" = "" ; then SCTK_BIN_DIR_TARGET="`echo "$SCTK_BIN_DIR" | sed -e 's|'"${MPC_HOST}"'|'"${MPC_TARGET}"'|g'`"; fi
+echo "SCTK_BIN_DIR = $SCTK_BIN_DIR, SCTK_BIN_DIR_TARGET = $SCTK_BIN_DIR_TARGET"
 if test "$SCTK_LIB_DIR" = "" ; then SCTK_LIB_DIR="${SCTK_EPREFIX}/lib"; fi
 if test "$SCTK_INCLUDE_DIR" = "" ; then SCTK_INCLUDE_DIR="${SCTK_PREFIX}/include"; fi
 if test "$SCTK_MAN_DIR" = "" ; then SCTK_MAN_DIR="${SCTK_EPREFIX}/man"; fi
@@ -448,7 +450,8 @@ EOF
 
 if test "${SCTK_ARCH}" = "k1om"; 
 then
-	cp ${MPC_SOURCE_DIR}/MPC_Tools/sctk_configs/sctk_config_k1om.h include/sctk_config.h
+	#cp ${MPC_SOURCE_DIR}/MPC_Tools/sctk_configs/sctk_config_k1om.h include/sctk_config.h
+	cat "${MPC_SOURCE_DIR}/MPC_Tools/sctk_configs/sctk_config_k1om.h" | sed -e 's|@SCTK_PREFIX@|'\""${SCTK_PREFIX}"\"'|g' > include/sctk_config.h
 else
 	gen_config
 	sctk_printf "compile configuration detection: "
