@@ -781,7 +781,8 @@ td_err_e td_ta_thr_iter (const td_thragent_t *ta,
   tdb_thread_debug_t *current ;
   td_thrhandle_t handle ;
   td_thrinfo_t info ;
-    
+  int is_system;
+
 #if defined (ENABLE_TEST)
   err = test_td_ta_thr_iter(ta, callback, cbdata_p, state,
 			    ti_pri, ti_sigmask_p, ti_user_flags) ;
@@ -823,9 +824,11 @@ td_err_e td_ta_thr_iter (const td_thragent_t *ta,
   } else {
     int nb ;
     td_ta_get_nthreads (ta, &nb) ;
+
     tdb_log("td_ta_thr_iter there are some threads (%d)", nb);
   }
   
+
   current = first ;
   do {
     tdb_log("td_ta_thr_iter current@%p", current);
@@ -838,8 +841,17 @@ td_err_e td_ta_thr_iter (const td_thragent_t *ta,
     }
     
     assert(current != NULL);
+    
+    is_system = 0;
+    if(1){
+      if(info.ti_type == TD_THR_SYSTEM){
+	is_system = 1;
+      } else {
+	is_system = 0;
+      }
+    }
 
-    if (state == TD_THR_ANY_STATE || info.ti_state == state) {
+    if (((state == TD_THR_ANY_STATE || info.ti_state == state)) && (is_system == 0)) {
       handle.th_unique = (psaddr_t) current ;
             
       tdb_log("td_ta_thr_iter callback for %p", current);
