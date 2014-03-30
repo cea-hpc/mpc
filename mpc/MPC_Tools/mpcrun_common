@@ -334,6 +334,9 @@ for arg in "$@" ; do
     --dbg=*)
     DEBUG="`echo A$arg | sed -e 's/A--dbg=//g'`"
     ;;
+    --dbg_opt=*)
+    MPC_GDB_DEBUG_ARGS="`echo A$arg | sed -e 's/A--dbg=//g'`"
+    ;;
     --autokill=*)
     MPC_AUTO_KILL_TIMEOUT="`echo A$arg | sed -e 's/A--autokill=//g'`"
     ;;
@@ -525,7 +528,11 @@ if test "$THREAD_TYPE" = "--use-pthread_ng"; then
 fi
 
 if test "${DEBUG}" = "mpc-gdb"; then
-    DEBUG="${MPC_BIN_DIR}/../mpc-gdb-${DEBUGGER_LIST}/bin/mpc-gdb"
+    if test "$DEBUGGER_LIST" = "" ; then 
+	DEBUG=gdb
+    else
+	DEBUG="${MPC_BIN_DIR}/../mpc-gdb-${DEBUGGER_LIST}/bin/mpc-gdb"
+    fi
     if test "$THREAD_TYPE" = "--use-pthread"; then 
 	DEBUG=gdb
     fi
