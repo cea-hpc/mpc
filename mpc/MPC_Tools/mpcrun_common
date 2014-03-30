@@ -335,7 +335,7 @@ for arg in "$@" ; do
     DEBUG="`echo A$arg | sed -e 's/A--dbg=//g'`"
     ;;
     --dbg_opt=*)
-    MPC_GDB_DEBUG_ARGS="`echo A$arg | sed -e 's/A--dbg=//g'`"
+    MPC_GDB_DEBUG_ARGS="`echo A$arg | sed -e 's/A--dbg_opt=//g'`"
     ;;
     --autokill=*)
     MPC_AUTO_KILL_TIMEOUT="`echo A$arg | sed -e 's/A--autokill=//g'`"
