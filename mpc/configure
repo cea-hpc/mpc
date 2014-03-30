@@ -445,6 +445,9 @@ for arg in "$@" ; do
     --compilers=*)
 	COMPILER_LIST="`echo A$arg | sed -e 's/A--compilers=//g'`"
     ;;
+    --debuggers=*)
+	DEBUGGER_LIST="`echo A$arg | sed -e 's/A--debuggers=//g'`"
+    ;;
     --add-library-path=*)
 	ADD_TO_LIBRARY_PATH="`echo A$arg | sed -e 's/A--add-library-path=//g'`"
     ;;

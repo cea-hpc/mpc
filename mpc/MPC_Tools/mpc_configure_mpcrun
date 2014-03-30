@@ -38,7 +38,7 @@ MPC_INCLUDE_DIR=${SCTK_INCLUDE_DIR}
 SCTK_NET_LIST="$SCTK_NET_LIST"
 SCTK_NET_LIST_EXP="$SCTK_NET_LIST_EXP"
 SCTK_JOB_MANAGER="$SCTK_JOB_MANAGER"
-
+DEBUGGER_LIST="$DEBUGGER_LIST"
 EOF
 
 #setup complete hydra path. Exported to be used into mpcrun_opt/* scripts

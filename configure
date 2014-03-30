@@ -445,6 +445,7 @@ printf "\n" >> Makefile
 # Rules for every module
 #
 COMPILER_LIST=""
+DEBUGGER_LIST=""
 for i in $MODULES ; do
 echo "===== Checking module $i =====" >> configure.log
 # Read config file
@@ -454,6 +455,10 @@ if test "$mod" != "#" ; then
     # Add this version to the compiler list
     if test "$mod" = "mpc-gcc" ; then
       COMPILER_LIST="$ver $COMPILER_LIST"
+    fi
+
+    if test "$mod" = "mpc-gdb" ; then
+      DEBUGGER_LIST="$ver $DEBUGGER_LIST"
     fi
 
    # Get configure arguments
@@ -584,6 +589,11 @@ if test "${COMPILER_LIST}" != "" ; then
   ARG_COMPILER_LIST="--compilers=\"${COMPILER_LIST}\""
 fi
 
+ARG_DEBUGGER_LIST=""
+if test "${DEBUGGER_LIST}" != "" ; then
+  ARG_DEBUGGER_LIST="--debuggers=\"${DEBUGGER_LIST}\""
+fi
+
 ARG_LIBRARY_PATH=""
 if test "${ADD_TO_LIBRARY_PATH}" != "" ; then
   ARG_LIBRARY_PATH="--add-library-path=\"${ADD_TO_LIBRARY_PATH}\""
@@ -592,10 +602,11 @@ fi
 printf "#\n# Rule for MPC\n#\n" >> Makefile
 printf "mpc_build/config.status:${CONFIG_MPC_DEPS} Makefile\n" >> Makefile
 printf "\tmkdir -p mpc_build\n" >> Makefile
-printf "\tcd mpc_build && ${MPC_SOURCE_DIR}/configure ${ARG_COMPILER_LIST} ${ARG_LIBRARY_PATH} ${MPC_ARGS} ${MPC_CFLAGS} ${MPC_LDFLAGS}\n" >> Makefile
+printf "\tcd mpc_build && ${MPC_SOURCE_DIR}/configure ${ARG_COMPILER_LIST} ${ARG_DEBUGGER_LIST} ${ARG_LIBRARY_PATH} ${MPC_ARGS} ${MPC_CFLAGS} ${MPC_LDFLAGS}\n" >> Makefile
 printf "\ttouch mpc_build/config.status\n" >> Makefile
 echo "">> Makefile
 echo "Compiler list for MPC: ${COMPILER_LIST}" >> configure.log
+echo "Debugger list for MPC: ${DEBUGGER_LIST}" >> configure.log
 echo "Additionnal args for MPC ${MPC_ARGS}" >> configure.log
 
 printf "mpc_config:mpc_build/config.status\n" >> Makefile

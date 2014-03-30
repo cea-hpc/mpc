@@ -20,8 +20,5 @@
 #   - PERACHE Marc marc.perache@cea.fr                                 # 
 #                                                                      # 
 ######################################################################## 
-cat <<EOF > $debug_file
-set args $USER_ARGS $SCTK_ARGS
-handle SIGUSR1 pass nostop
-EOF
-LAUNCH_COMMAND="$DEBUG -x $debug_file $BINARY"
+
+LAUNCH_COMMAND="$DEBUG --args $BINARY $USER_ARGS $SCTK_ARGS"
