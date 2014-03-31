@@ -123,6 +123,14 @@ static void sctk_network_not_implemented(char* name){
   sctk_abort();
 }
 
+static void sctk_network_not_implemented_warn(char* name){
+  if(sctk_process_rank == 0){
+    sctk_warning("No configuration found for the network '%s'. Please check you '-net=' argument"
+		 " and your configuration file. FALLBACK to TCP", name);
+    /* sctk_abort(); */
+  }
+}
+
 const struct sctk_runtime_config_struct_networks * sctk_net_get_config() {
   return (struct sctk_runtime_config_struct_networks*) &sctk_runtime_config_get()->networks;
 }
@@ -141,6 +149,8 @@ sctk_net_init_pmi() {
 void
 sctk_net_init_driver (char* name)
 {
+ restart:
+
   if(sctk_process_number > 1){
     int j, k, l;
     int rails_nb = 0;
@@ -207,7 +217,9 @@ sctk_net_init_driver (char* name)
               nb_rails_tcpoib ++ ;
               break;
             default:
-              sctk_network_not_implemented(option_name);
+              sctk_network_not_implemented_warn(option_name);
+              name = "tcp";
+	      goto restart;
               break;
           }
         }
