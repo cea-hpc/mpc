@@ -87,9 +87,9 @@ else
 fi
 
 if test -z "\${LD_LIBRARY_PATH}" ; then
-   export LD_LIBRARY_PATH="\${MPCROOT}/libsgcc/lib"
+   export LD_LIBRARY_PATH="\${MPCROOT}/../libsgcc/lib"
 else
-   export LD_LIBRARY_PATH="\${MPCROOT}/libsgcc/lib:\${LD_LIBRARY_PATH}"
+   export LD_LIBRARY_PATH="\${MPCROOT}/../libsgcc/lib:\${LD_LIBRARY_PATH}"
 fi
 EOF
 
@@ -102,9 +102,9 @@ else
 fi
 
 if test -z "\${LD_LIBRARY_PATH}" ; then
-   export LD_LIBRARY_PATH="\${MPCROOT}/libsgcc/lib:${ADD_TO_LIBRARY_PATH}"
+   export LD_LIBRARY_PATH="\${MPCROOT}/../libsgcc/lib:${ADD_TO_LIBRARY_PATH}"
 else
-   export LD_LIBRARY_PATH="\${MPCROOT}/libsgcc/lib:${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}"
+   export LD_LIBRARY_PATH="\${MPCROOT}/../libsgcc/lib:${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}"
 fi
 EOF
 fi
@@ -160,6 +160,12 @@ if (\$?LD_LIBRARY_PATH) then
 else
    setenv LD_LIBRARY_PATH "\${MPCROOT}/lib"
 endif
+
+if (\$?LD_LIBRARY_PATH) then
+   setenv LD_LIBRARY_PATH "\${MPCROOT}/../libsgcc/lib:\${LD_LIBRARY_PATH}"
+else
+   setenv LD_LIBRARY_PATH "\${MPCROOT}/../libsgcc/lib"
+endif
 EOF
 
 else
@@ -168,6 +174,12 @@ if (\$?LD_LIBRARY_PATH) then
    setenv LD_LIBRARY_PATH "\${MPCROOT}/lib:${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}"
 else
    setenv LD_LIBRARY_PATH "\${MPCROOT}/lib:${ADD_TO_LIBRARY_PATH}"
+endif
+
+if (\$?LD_LIBRARY_PATH) then
+   setenv LD_LIBRARY_PATH "\${MPCROOT}/../libsgcc/lib:${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}"
+else
+   setenv LD_LIBRARY_PATH "\${MPCROOT}/../libsgcc/lib:${ADD_TO_LIBRARY_PATH}"
 endif
 EOF
 fi
