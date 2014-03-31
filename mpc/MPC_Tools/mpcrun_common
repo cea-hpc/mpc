@@ -533,12 +533,12 @@ if test "${DEBUG}" = "mpc-gdb"; then
     else
 	DEBUG="${MPC_BIN_DIR}/../mpc-gdb-${DEBUGGER_LIST}/bin/mpc-gdb"
     fi
-    if test "$THREAD_TYPE" = "--use-pthread"; then 
-	DEBUG=gdb
-    fi
-    if test "$THREAD_TYPE" = "--use-pthread_ng"; then 
-	DEBUG=gdb
-    fi
+#    if test "$THREAD_TYPE" = "--use-pthread"; then 
+#	DEBUG=gdb
+#    fi
+#    if test "$THREAD_TYPE" = "--use-pthread_ng"; then 
+#	DEBUG=gdb
+#    fi
 fi
 
 if test "$show" != "echo" ; then
