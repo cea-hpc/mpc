@@ -106,11 +106,10 @@ do
     				#remove all packages
     				for package in `find . -mindepth 1 -maxdepth 1 -type d`
     				do
-    					echo "  - removing $package build dir"
-    					rm -rf ${PROJECT_BUILD_DIR}/${arch}/${package}
+    					echo -n "  - removing $package build dir... "
+    					rm -rf ${PROJECT_BUILD_DIR}/${arch}/${package} && echo "Done!"
     				done
 				done
-				echo "Done !"
 				exit 0
 			else 
 				echo "Wrong directory... abort"
@@ -118,12 +117,10 @@ do
 			fi
 			;;	
 		distclean)
-			echo "Cleaning everything..."
+			echo -n "Cleaning ${PROJECT_BUILD_DIR}/* directories... "
 			if [ -f "${PROJECT_BUILD_DIR}/.mpcbuilddir" ];
 			then
-				echo "cleaning ${PROJECT_BUILD_DIR}/* directories..."
-				rm -rv "${PROJECT_BUILD_DIR}/*" || echo "Unable to clean ${PROJECT_BUILD_DIR}/* directories"
-				echo "Done !"
+				rm -rfv "${PROJECT_BUILD_DIR}/*" && echo "Done !" || echo "Unable to clean ${PROJECT_BUILD_DIR}/* directories"
 				exit 0
 			else 
 				echo "Wrong directory... abort"
