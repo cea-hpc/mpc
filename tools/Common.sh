@@ -18,6 +18,10 @@ GEN_DEP_HELPS='false'
 SUBPREFIX=''
 
 ######################################################
+#includes
+. "${PROJECT_SOURCE_DIR}/tools/Architectures.sh"
+
+######################################################
 # set Compiler list
 setCompilerList()
 {
@@ -358,30 +362,25 @@ findCurrentArch ()
 #Args :
 # -$1 : Output arch name (target or host)
 # -$2 : target or host name (without --, eg. --with-XXX => 'with-XXX')
-# -$3 : User value (--with-XXX=blablable)
+# -$3 : User value (--with-XXX=value)
 extractArchValue()
 {
 	#extract in local vars
-	local outputvar="$1"
-	local name="$2"
-	local arg="$3"
+	outputvar="$1"
+	name="$2"
+	arg="$3"
 
-	value=`echo "$arg" | sed -e "s/^--${name}=//g"`	
-	case "$value" in
-		i686)
-			value="i686"
-		;;
-		x86_64)
-			value="x86_64"
-		;;
-		mic|k1om)
-			value="k1om"
-		;;
-		arm)
-			value="arm"
-		;;
-	esac
-	eval "${outputvar}=\"${value}\""
+	EAV_value=`echo "$arg" | sed -e "s/^--${name}=//g"`	
+
+	getArch "outTmp" ${EAV_value} 
+
+	#check if architecture is supported
+	if [ "${outTmp}" = "0" ]; then
+		echo "Architecture ${EAV_value} not supported... abort compilation."
+		exit 1
+	fi
+
+	eval "${outputvar}=\"${outTmp}\""
 }
 
 ######################################################
@@ -389,7 +388,7 @@ extractArchValue()
 #Args :
 # -$1 : Output variable name
 # -$2 : parameter name (without -, eg. -XXX)
-# -$3 : User value (-XXX=blablable)
+# -$3 : User value (-XXX=value)
 extractParamValueAlt()
 {
 	#extract in local vars
