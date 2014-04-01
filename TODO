@@ -1,4 +1,12 @@
 # TODO LIST
+
+REU 31/03/2014
+-------------
+ + mpcrun : 1) lire le elf avec readelf du binutils compilé pour récup l archi 2) lors de l utilisation d'un script, remplacer -n par -p
+ + mpc_cc : 1) utiliser le compilo patché 2) si pas de compilo patché, utiliser le compilo qui a servi pour le build. 
+ + mpc_cc : 1) sourcer l'environnement pour build (mpcvars) 2) laisser la possibilité de remplacer cet environnement en utilisant une option --target=
+ + mpc_cc : argument pour lister les archi (--targets)
+
  + Verif de la reprise lors de l'extraction des packets
  + Verif fonctionnel avec des espaces dans les chemins
  + Remonter les erreurs dans le wrapper d'extraction dans les templates
