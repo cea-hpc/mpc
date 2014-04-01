@@ -120,8 +120,11 @@ do
 			echo -n "Cleaning ${PROJECT_BUILD_DIR}/* directories... "
 			if [ -f "${PROJECT_BUILD_DIR}/.mpcbuilddir" ];
 			then
-				rm -rfv "${PROJECT_BUILD_DIR}/*" && echo "Done !" || echo "Unable to clean ${PROJECT_BUILD_DIR}/* directories"
-				exit 0
+				if [ -n "${PROJECT_BUILD_DIR}" ] && [ -d "${PROJECT_BUILD_DIR}" ];
+				then
+					rm -rf "${PROJECT_BUILD_DIR}"/* && rm "${PROJECT_BUILD_DIR}"/.mpcbuilddir && echo "Done !" || echo "Unable to clean ${PROJECT_BUILD_DIR}/* directories"
+					exit 0
+				fi
 			else 
 				echo "Wrong directory... abort"
 				exit 1
