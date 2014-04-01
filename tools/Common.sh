@@ -541,7 +541,7 @@ getPackageCompilationOptions()
 	fi
     
 	local options=`echo ${configForCompiler} | cut -f 6 -d ';'`
-	options="${options} ${all_options} `echo ${config} | cut -f 6 -d ';'`"
+	options="${all_options} ${options} `echo ${config} | cut -f 6 -d ';'`"
 	
 	case ${compiler} in
 		icc)
