@@ -299,7 +299,6 @@ SCTK_ARCH_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
 ######################################################
 # set compiler list
 setCompilerList "COMPILER_LIST"
-#export LIBRARY_PATH=/usr/lib64/:\$LIBRARY_PATH
 
 ######################################################
 printSummary

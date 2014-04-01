@@ -1,10 +1,7 @@
 #!/bin/sh
 ##########################################################################
 #            PROJECT  : MPC                                              #
-#            VERSION  : 2.5.1                                            #
-#            DATE     : 02/2014                                          #
 #			 AUTHORS  : Sebastien Valat, Augustin Serraz, Jean-Yves Vet  #
-#            LICENSE  : CeCILL-C                                         #
 ##########################################################################
 
 ######################################################
@@ -22,21 +19,70 @@ SUBPREFIX=''
 . "${PROJECT_SOURCE_DIR}/tools/Architectures.sh"
 
 ######################################################
-# set Compiler list
+# set Compiler list and config file
 setCompilerList()
 {
 	local tmp_list=""
 	local outputvar="$1"
 	local compiler="${MPC_COMPILER}"
 	local gcc_version=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^gcc " | cut -f 2 -d ';' | sed -e 's/\.//g' | xargs echo`
+	local config_file_c="${PREFIX}/.c_compilers.cfg"
+	local config_file_cplus="${PREFIX}/.c++_compilers.cfg"
+	local config_file_fort="${PREFIX}/.f77_compilers.cfg"
+	
+	if test ! -f "${config_file_c}" ; then
+		touch "${config_file_c}"
+		touch "${config_file_cplus}"
+		touch "${config_file_fort}"
+	fi
+	
+	#add mpc patched gcc
 	if [ "${compiler}" = 'gcc' ] || [ "${GCC_PREFIX}" != 'disabled' ];
 	then
 		tmp_list="${gcc_version} ${tmp_list}"
+		is_there="`cat ${config_file_c} | grep \"mpc-gcc_${gcc_version}\"`"
+		if test ${is_there} = "" ; 
+		then
+			#first patch version
+			echo "${PREFIX}/`uname -m`/gcc/bin/mpc-gcc_${gcc_version}" >> "${config_file_c}"
+			echo "${PREFIX}/`uname -m`/gcc/bin/mpc-g++_${gcc_version}" >> "${config_file_cplus}"
+			echo "${PREFIX}/`uname -m`/gcc/bin/mpc-gfortran_${gcc_version}" >> "${config_file_fort}"
+		elif [[ "${is_there}" =~ "mpc-gcc_${gcc_version}" ]];
+		then
+			#patch version already there
+			echo "patch version already there" > /dev/null
+		else
+			#new patch version 
+			sed -i "1i${PREFIX}/`uname -m`/gcc/bin/mpc-gcc_${gcc_version}" "${config_file_c}"
+			sed -i "1i${PREFIX}/`uname -m`/gcc/bin/mpc-g++_${gcc_version}" "${config_file_cplus}"
+			sed -i "1i${PREFIX}/`uname -m`/gcc/bin/mpc-gfortran_${gcc_version}" "${config_file_fort}"
+		fi
 	fi
+	
+	#add icc
 	if [ "${compiler}" = 'icc' ];
 	then
 		tmp_list="icc ${tmp_list}"
+		is_there="`cat ${config_file_c} | grep \"icc\"`"
+		if test "${is_there}" = "" ; then
+			echo "icc" >> "${config_file_c}"
+			echo "icpc" >> "${config_file_cplus}"
+			echo "ifort" >> "${config_file_fort}"
+		fi
 	fi
+	
+	#check if gcc is on the system
+	gcc --version > /dev/null
+	if test "$?" = "0" ; then
+		tmp_list="gcc ${tmp_list}"
+		is_there="`cat ${config_file_c} | grep \"^gcc\"`"
+		if test "${is_there}" = "" ; then
+			echo "gcc" >> "${config_file_c}"
+			echo "g++" >> "${config_file_cplus}"
+			echo "gfortran" >> "${config_file_fort}"
+		fi
+	fi
+	
 	#echo "COMPILER_LIST='${tmp_list}'"
 	eval "${outputvar}=\"${tmp_list}\""
 }
