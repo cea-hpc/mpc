@@ -493,6 +493,7 @@ EOF
 
 }
 
+echo "COMPILER_LIST='${COMPILER_LIST}'"
 DEFAULT_VERSION=""
 if test "${COMPILER_LIST}" != "" ; then
   for i in ${COMPILER_LIST} ; do

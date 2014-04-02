@@ -12,7 +12,7 @@ install-all : @SUBPREFIX@
 #final install to make generic
 install-generic-subprefix: install-all
 	mkdir -p $(PREFIX)/generic/bin
-	for exe in $(PREFIX)/host/bin/*; do ln -sf $(PREFIX)/generic/bin/arch_wrapper $(PREFIX)/generic/bin/`basename "$$exe"`; done
+	for exe in "$(PREFIX)/x86_64/mpcframework/bin/"*; do ln -sf $(PREFIX)/generic/bin/arch_wrapper $(PREFIX)/generic/bin/`basename "$$exe"`; done
 	cp $(PROJECT_SOURCE_DIR)/tools/arch_wrapper $(PREFIX)/generic/bin/
 
 .PHONY: all install-all install-generic-subprefix

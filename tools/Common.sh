@@ -62,7 +62,11 @@ setCompilerList()
 	#add icc
 	if [ "${compiler}" = 'icc' ];
 	then
-		tmp_list="icc ${tmp_list}"
+		if test ! -z "${tmp_list}"; then
+			tmp_list="${tmp_list} icc"
+		else
+			tmp_list="icc ${tmp_list}"
+		fi
 		is_there="`cat ${config_file_c} | grep \"icc\"`"
 		if test "${is_there}" = "" ; then
 			echo "icc" >> "${config_file_c}"
@@ -74,7 +78,11 @@ setCompilerList()
 	#check if gcc is on the system
 	gcc --version > /dev/null
 	if test "$?" = "0" ; then
-		tmp_list="gcc ${tmp_list}"
+		if test ! -z "${tmp_list}"; then
+			tmp_list="${tmp_list} gcc"
+		else
+			tmp_list="gcc ${tmp_list}"
+		fi
 		is_there="`cat ${config_file_c} | grep \"^gcc\"`"
 		if test "${is_there}" = "" ; then
 			echo "gcc" >> "${config_file_c}"
@@ -83,7 +91,7 @@ setCompilerList()
 		fi
 	fi
 	
-	#echo "COMPILER_LIST='${tmp_list}'"
+	echo "COMPILER_LIST='${tmp_list}'"
 	eval "${outputvar}=\"${tmp_list}\""
 }
 
