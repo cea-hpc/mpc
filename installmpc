@@ -241,6 +241,9 @@ do
 			export MPC_HOST
 			MULTI_ARCH='true'
 			;;
+		--arch-library-path=*)
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${arg}"
+		;;
 		################## COMMON ###################
 		--disable-color)
 			ENABLE_COLOR='false'

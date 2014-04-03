@@ -219,13 +219,46 @@ EOF
 
 cat << EOF >> $1
 
-    -mic)
-    SCTK_MIC=1
-	export SCTK_MIC
-	CC=icc
+	-fmpc-privatize)
+    if test "\${CC}" = "icc"; then
+        addarg=no
+    else
+        qarg="'"\$arg"'"
+    fi  
+    ;;  
+
+EOF
+
+#~ cat << EOF >> $1
+#~ 
+    #~ -target=*)
+	#~ TARGET=\`echo A\$arg | sed -e 's/A-target=//g'\`
+	#~ addarg=no
+	#~ case "\${TARGET}" in
+        #~ k1om|mic)
+        #~ echo "loading k1om options..."
+        #~ . `echo "${SCTK_PREFIX}" | sed -e 's|'"${MPC_HOST}"'|'"${MPC_TARGET}"'|g'`/.target_options
+        #~ cat `echo "${SCTK_PREFIX}" | sed -e 's|'"${MPC_HOST}"'|'"${MPC_TARGET}"'|g'`/.target_options
+        #~ ;;  
+    #~ esac
+    #~ ;;
+#~ 
+#~ EOF
+
+cat << EOF >> $1
+
+    -target=*)
+	TARGET=\`echo A\$arg | sed -e 's/A-target=//g'\`
 	addarg=no
-	CFLAGS="\`$SCTK_BIN_DIR_TARGET/mpc_cflags $2\` -mmic"
-	LDFLAGS="\`$SCTK_BIN_DIR_TARGET/mpc_ldflags $2\`"
+	
+	echo "loading \${TARGET} options..."
+	if test -f "`echo "${SCTK_PREFIX}" | sed -re 's#'"${MPC_HOST}"'|'"${MPC_TARGET}"'#\${TARGET}#g'`/.target_options"; then
+		. `echo "${SCTK_PREFIX}" | sed -re 's#'"${MPC_HOST}"'|'"${MPC_TARGET}"'#\${TARGET}#g'`/.target_options
+		cat `echo "${SCTK_PREFIX}" | sed -re 's#'"${MPC_HOST}"'|'"${MPC_TARGET}"'#\${TARGET}#g'`/.target_options
+	else
+		echo "This architecture is not supported"
+		exit 1
+	fi
     ;;
 
 EOF
@@ -492,6 +525,33 @@ $SCTK_BIN_DIR/$3 \$ADD_FLAG_PRIVATIZE \$COMPILER_ARGS
 EOF
 
 }
+
+#fill target options for mpc_cc
+case "${MPC_TARGET}" in 
+	x86_64)
+		touch "${SCTK_PREFIX}/.target_options"
+	;;
+	k1om)
+	prefix=`echo "${SCTK_PREFIX}" | sed -e 's|'"${MPC_HOST}"'|'"${MPC_TARGET}"'|g'`
+	if test ! -d "${SCTK_PREFIX}"; then
+		mkdir "${SCTK_PREFIX}"
+	fi
+	
+	if test -f "${SCTK_PREFIX}/.target_options"; then
+		rm "${SCTK_PREFIX}/.target_options"
+	else
+		touch "${SCTK_PREFIX}/.target_options"
+	fi
+cat <<EOF >> "${SCTK_PREFIX}/.target_options"
+SCTK_MIC=1
+export SCTK_MIC
+CC=icc
+addarg=no
+CFLAGS="\`${prefix}/bin/mpc_cflags c\` -mmic"
+LDFLAGS="\`${prefix}/bin/mpc_ldflags c\`"	
+EOF
+	;;
+esac
 
 echo "COMPILER_LIST='${COMPILER_LIST}'"
 DEFAULT_VERSION=""

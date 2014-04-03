@@ -107,7 +107,7 @@ SCTK_FORTRAN="1"
 SCTK_MPC_USE_ZLIB="0"
 SCTK_NETWORKS_INIT="0"
 SCTK_NETWORKS="all"
-SCTK_MIC_LIBRARY_PATH=
+SCTK_ARCH_LIBRARY_PATH=
 
 check_arg(){
   VALID_ARG="0"
@@ -216,6 +216,7 @@ SCTK_LIBUNWIND="1"
 SCTK_LIBNUMA="0"
 SCTK_LIBCPUSET="0"
 SCTK_HYDRA="1"
+MPC_HYDRA="1"
 SCTK_SLURM="0"
 SCTK_OPENPA="1"
 SCTK_SHM="1"
@@ -253,6 +254,12 @@ for arg in "$@" ; do
     SCTK_ARCH="`echo A$arg | sed -e 's/A--arch=//g'`"
     UNAME_P="echo $SCTK_ARCH"
     MPC_TARGET="$SCTK_ARCH"
+	case "$SCTK_ARCH" in
+		k1om)
+		MPC_HYDRA="0"
+		export MPC_HYDRA
+		;;
+	esac
 	;;
     --cross_exec=*)
     SCTK_CROSS_EXEC="`echo A$arg | sed -e 's/A--cross_exec=//g'`"
@@ -269,18 +276,17 @@ for arg in "$@" ; do
     SCTK_CC=icc
     SCTK_CXX=icpc
     SCTK_F77=ifort
-    SCTK_CFLAGS="$SCTK_CFLAGS -mmic -Wl,-rpath=${SCTK_MIC_LIBRARY_PATH}"
+    SCTK_CFLAGS="$SCTK_CFLAGS -mmic -Wl,-rpath=${SCTK_ARCH_LIBRARY_PATH}"
     SCTK_LDFLAGS="$SCTK_LDFLAGS -mmic "
     #SCTK_AR=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ar
     #SCTK_LD=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ld
-    #SCTK_AR=/${MPC_TARGET}/ar
-    SCTK_AR=`echo "${SCTK_PREFIX}" | sed -e 's|'"${MPC_TARGET}"'/mpcframework|'"${MPC_HOST}"'/binutils|g'`/bin/x86_64-k1om-linux-ar
-    SCTK_LD=`echo "${SCTK_PREFIX}" | sed -e 's|'"${MPC_TARGET}"'/mpcframework|'"${MPC_HOST}"'/binutils|g'`/bin/x86_64-k1om-linux-ld
+    SCTK_AR=`echo "${SCTK_PREFIX}" | sed -re 's#'"${MPC_TARGET}"'/mpcframework|'"${MPC_HOST}"'/mpcframework#'"${MPC_HOST}"'/binutils#g'`/bin/x86_64-k1om-linux-ar
+    SCTK_LD=`echo "${SCTK_PREFIX}" | sed -re 's#'"${MPC_TARGET}"'/mpcframework|'"${MPC_HOST}"'/mpcframework#'"${MPC_HOST}"'/binutils#g'`/bin/x86_64-k1om-linux-ld
     ;;
-    --mic-library-path=*)
-    SCTK_MIC_LIBRARY_PATH="`echo A$arg | sed -e 's/A--mic-library-path=//g'`"
-    export SCTK_MIC_LIBRARY_PATH
-    echo "MIC library path updated : $SCTK_MIC_LIBRARY_PATH"
+    --arch-library-path=*)
+    SCTK_ARCH_LIBRARY_PATH="`echo A$arg | sed -e 's/A--arch-library-path=//g'`"
+    export SCTK_ARCH_LIBRARY_PATH
+    echo "Arch library path updated : $SCTK_ARCH_LIBRARY_PATH"
     ;;
     --no-recursion)
     ;;

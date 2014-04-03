@@ -398,10 +398,10 @@ for arg in "$@" ; do
     #Already processed in a previous loop on arguments, but need to capture them otherwise
     #it will be propagated as exe options.
     ;;
-    --mic-library-path=*)
-    SCTK_MIC_LIBRARY_PATH="`echo A$arg | sed -e 's/A--mic-library-path=//g'`"
-    export SCTK_MIC_LIBRARY_PATH
-    echo "MIC library path updated : $SCTK_MIC_LIBRARY_PATH"
+    --arch-library-path=*)
+    SCTK_ARCH_LIBRARY_PATH="`echo A$arg | sed -e 's/A--arch-library-path=//g'`"
+    export SCTK_ARCH_LIBRARY_PATH
+    echo "Arch library path updated : $SCTK_ARCH_LIBRARY_PATH"
     ;;
     --mic-nb-task=*)
     SCTK_MIC_NB_TASK="`echo A$arg | sed -e 's/A--mic-nb-task=//g'`"

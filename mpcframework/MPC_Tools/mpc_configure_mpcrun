@@ -42,7 +42,7 @@ DEBUGGER_LIST="$DEBUGGER_LIST"
 EOF
 
 #setup complete hydra path. Exported to be used into mpcrun_opt/* scripts
-if [ $SCTK_HYDRA -eq 1 ] && [ ! -z "$SCTK_HYDRA_PREFIX" ]; then
+if [ $SCTK_HYDRA -eq 1 ] && [ $MPC_HYDRA -eq 1 ] && [ ! -z "$SCTK_HYDRA_PREFIX" ]; then
 	echo "export SCTK_HYDRA_BINDIR=\"${SCTK_PREFIX}/../hydra/bin/\"" >> bin/mpcrun
 	echo "export PATH=\"\${SCTK_HYDRA_BINDIR}:\${PATH}\"" >> bin/mpcrun
 	echo >> bin/mpcrun
