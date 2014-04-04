@@ -2275,17 +2275,73 @@ sctk_start_func (void *(*run) (void *), void *arg)
 	if (sctk_restart_mode == 0)
 	{
 		sctk_leave_no_alloc_land ();
-		local_threads = total_tasks_number / sctk_process_number;
+		if((getenv("SCTK_MIC_NB_TASK") != NULL) || 
+		   (getenv("SCTK_HOST_NB_TASK") != NULL) ||
+		   (getenv("SCTK_NB_HOST") != NULL) ||
+		   (getenv("SCTK_NB_MIC") != NULL))
+		{
+			int node_rank,process_on_node_rank,process_on_node_number;
+			int host_number, mic_nb_task, host_nb_task;
 
-		if (total_tasks_number % sctk_process_number > sctk_process_rank)
-			local_threads++;
+			host_number = (getenv("SCTK_NB_HOST") != NULL) ? atoi(getenv("SCTK_NB_HOST")) : 0;
+			mic_nb_task = (getenv("SCTK_MIC_NB_TASK") != NULL) ? atoi(getenv("SCTK_MIC_NB_TASK")) : 0;
+			host_nb_task = (getenv("SCTK_HOST_NB_TASK") != NULL) ? atoi(getenv("SCTK_HOST_NB_TASK")) : 0;
+			
+			sctk_pmi_get_node_rank(&node_rank);
+			sctk_pmi_get_process_on_node_rank(&process_on_node_rank);
+			sctk_pmi_get_process_on_node_number(&process_on_node_number);
+			
+			#if __MIC__
+				local_threads = mic_nb_task/process_on_node_number;
+				if ((mic_nb_task % process_on_node_number) > process_on_node_rank)
+				{
+					local_threads++;
+					start_thread = (host_nb_task * host_number) + ((node_rank - host_number) * mic_nb_task) + (local_threads*process_on_node_rank);
+				}
+				else
+				{
+					int i=0;
+					start_thread = (host_nb_task * host_number) + ((node_rank - host_number) * mic_nb_task);
+					for(i=0 ; i<process_on_node_rank ; i++)
+					{
+						if((mic_nb_task % process_on_node_number) > i)
+						start_thread += (local_threads+1);
+						else
+						start_thread += local_threads;
+					}
+				}
+			#else
+				local_threads = host_nb_task/process_on_node_number;
+				if ((host_nb_task % process_on_node_number) > process_on_node_rank)
+				{
+					local_threads++;
+					start_thread = (node_rank * host_nb_task) + (local_threads*process_on_node_rank);
+				}
+				else
+				{
+					int i=0;
+					start_thread = (node_rank * host_nb_task);
+					for(i=0 ; i<process_on_node_rank ; i++)
+					{
+						if((host_nb_task % process_on_node_number) > i)
+						start_thread += (local_threads+1);
+						else
+						start_thread += local_threads;
+					}
+				}
+			#endif
+			sctk_debug("lt %d, Process %d %d-%d", local_threads, sctk_process_rank, start_thread, start_thread + local_threads - 1);
+		}
+		else
+		{
+			local_threads = total_tasks_number / sctk_process_number;
+			if (total_tasks_number % sctk_process_number > sctk_process_rank)
+				local_threads++;
 
-		start_thread = local_threads * sctk_process_rank;
-		if (total_tasks_number % sctk_process_number <= sctk_process_rank)
-			start_thread += total_tasks_number % sctk_process_number;
-
-		sctk_nodebug ("Process %d %d-%d", sctk_process_rank,
-			start_thread, start_thread + local_threads - 1);
+			start_thread = local_threads * sctk_process_rank;
+			if (total_tasks_number % sctk_process_number <= sctk_process_rank)
+				start_thread += total_tasks_number % sctk_process_number;
+		}
 
 /* 		if (sctk_check_point_restart_mode) */
 /* 		{ */

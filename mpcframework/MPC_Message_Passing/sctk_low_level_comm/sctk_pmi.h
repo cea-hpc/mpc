@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <uthash.h>
 
 #ifdef __cplusplus
 extern "C"
@@ -61,6 +62,14 @@ extern "C"
 #define SCTK_PMI_TAG_MPCRUNCLIENT		3000
 #define SCTK_PMI_TAG_PMI				4000
 #define SCTK_PMI_TAG_SHM				5000
+#define NODE_NUMBER 1024*1024
+
+struct process_nb_from_node_rank
+{
+	int node_rank;
+	int nb_process;
+	UT_hash_handle hh;
+};
 
 typedef int SCTK_PMI_BOOL;
 #define SCTK_PMI_TRUE     1
@@ -139,6 +148,9 @@ int sctk_pmi_get_connection_info_str(void* info, size_t size, char tag[]);
 /******************************************************************************
 NUMBERING/TOPOLOGY INFORMATION
 ******************************************************************************/
+
+int sctk_pmi_get_process_number_from_node_rank(struct process_nb_from_node_rank ** process_number_from_node_rank);
+
 /*! \brief Get the number of processes
  * @param size Pointer to store the number of processes
 */

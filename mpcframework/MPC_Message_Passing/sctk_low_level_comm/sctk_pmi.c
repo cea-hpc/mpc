@@ -34,6 +34,7 @@ static int sctk_pmi_node_rank;
 static int sctk_pmi_nodes_number;
 static int sctk_pmi_processes_on_node_number;
 
+struct process_nb_from_node_rank * sctk_pmi_process_nb_from_node_rank = NULL;
 
 
 
@@ -192,6 +193,24 @@ int sctk_pmi_init() {
 			sctk_pmi_process_on_node_rank = sctk_pmi_processes_on_node_number-1;
 		while (strcmp(nodes+j*sctk_max_val_len, value) != 0 && j < nodes_nb)
 			j++;
+			
+		//update number of processes per node data
+		struct process_nb_from_node_rank *tmp;
+		HASH_FIND_INT( sctk_pmi_process_nb_from_node_rank, &j, tmp );
+		if (tmp == NULL) 
+		{
+		  //new node
+		  tmp = (struct process_nb_from_node_rank *)sctk_malloc(sizeof(struct process_nb_from_node_rank));
+		  tmp->nb_process = 1;
+		  tmp->node_rank = j;
+		  HASH_ADD_INT( sctk_pmi_process_nb_from_node_rank, node_rank, tmp );
+		}
+		else
+		{
+			//one more process on this node
+			tmp->nb_process++;
+		}
+		
 		if (j == nodes_nb) {
 			//found new node
 			strcpy(nodes+j*sctk_max_val_len,value);
@@ -216,6 +235,7 @@ int sctk_pmi_init() {
   sctk_pmi_get_node_number(&sctk_node_number);
   sctk_pmi_get_process_on_node_rank(&sctk_local_process_rank);
   sctk_pmi_get_process_on_node_number(&sctk_local_process_number);
+  sctk_pmi_get_process_number_from_node_rank(sctk_pmi_process_nb_from_node_rank);
 
 
 #ifdef MPC_USE_SLURM
@@ -418,6 +438,14 @@ int sctk_pmi_get_process_number(int* size) {
 		fprintf(stderr, "FAILURE (sctk_pmi): PMI_Get_universe_size: %d\n", rc);
 	}
     return rc;
+}
+
+int sctk_pmi_get_process_number_from_node_rank(struct process_nb_from_node_rank ** process_number_from_node_rank)
+{
+    #ifdef MPC_USE_HYDRA
+		*process_number_from_node_rank = sctk_pmi_process_nb_from_node_rank;
+		return PMI_SUCCESS;
+	#endif /* MPC_USE_HYDRA */
 }
 
 /*! \brief Get the rank of this process

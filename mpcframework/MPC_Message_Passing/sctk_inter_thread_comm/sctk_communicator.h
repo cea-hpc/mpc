@@ -55,6 +55,7 @@ int sctk_get_local_leader (const sctk_communicator_t);
 int sctk_is_inter_comm (const sctk_communicator_t);
 int sctk_is_in_group(const sctk_communicator_t communicator);
 int sctk_get_rank (const sctk_communicator_t communicator, const int comm_world_rank);
+int sctk_get_node_rank_from_task_rank(const int rank);
 
 int sctk_get_process_rank_from_task_rank(int rank);
 int sctk_get_comm_number();
