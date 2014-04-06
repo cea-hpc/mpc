@@ -764,6 +764,8 @@ exit:
   return err ;
 }
 
+
+
 /** ***************************************************************************** **/
 /** **********************   ITERATORS  ***************************************** **/
 /** ***************************************************************************** **/
@@ -2099,8 +2101,81 @@ void td_log (void) {td_set_tdb_verbosity (10) ;}
 #endif
 
 
+/** ***************************************************************************** **/
+/** **************   TLS********************************************************* **/
+/** ***************************************************************************** **/
+#include <link.h>
+
+#define USE_TLS 1
+td_err_e
+td_thr_tls_get_addr (const td_thrhandle_t *th __attribute__ ((unused)),
+		     void *map_address __attribute__ ((unused)),
+		     size_t offset __attribute__ ((unused)),
+		     void **address __attribute__ ((unused)))
+{
+#if USE_TLS
+  /* Read the module ID from the link_map.  */
+  size_t modid = 0;
+
+  /*
+    HACK do not determine module id
+   */
+#if 0
+  if (ps_pdread (th->th_ta_p->ph,
+		 &((struct link_map *) map_address)->l_tls_modid,
+		 &modid, sizeof modid) != PS_OK)
+    return TD_ERR;	/* XXX Other error value?  */
+#endif
+
+  td_err_e result = td_thr_tlsbase (th, modid, address);
+  if (result == TD_OK)
+    *address += offset;
+  return result;
+#else
+  return TD_ERR;
+#endif
+}
 
 
+td_err_e td_thr_tlsbase (const td_thrhandle_t *th,
+			 unsigned long int __modid,
+			 psaddr_t *__base){
+  ps_err_e ps_err ;
+  tdb_thread_debug_t *thread_p ;
+  void** tls;
+  void* tls_level;
+  char** tls_modules;
+  *__base = NULL;
+
+  thread_p = (tdb_thread_debug_t *) th->th_unique ;
+  
+  ps_err = ps_pdread(th->th_ta_p->ph, &thread_p->extls, &tls, sizeof(tls)) ;
+  if (ps_err != PS_OK) {
+    return TD_ERR;
+  }
+
+
+  /*
+    HACK to have only task scope
+   */
+  ps_err = ps_pdread(th->th_ta_p->ph, &(tls[1]), &tls_level, sizeof(tls_level)) ;
+  if (ps_err != PS_OK) {
+    return TD_ERR;
+  }
+
+  ps_err = ps_pdread(th->th_ta_p->ph, tls_level+sizeof(size_t), &tls_modules, sizeof(tls_level)) ;
+  if (ps_err != PS_OK) {
+    return TD_ERR;
+  }
+
+  ps_err = ps_pdread(th->th_ta_p->ph, &(tls_modules[__modid]) , __base, sizeof(tls_level)) ;
+  if (ps_err != PS_OK) {
+    return TD_ERR;
+  }
+
+  fprintf(stderr,"ERROR in td_thr_tlsbase %p %d tls %p %p\n",th,__modid,tls, tls_level);
+  return TD_OK;
+}
 
 #endif /*SCTK_USE_THREAD_DEBUG*/
 #endif /*LIB_THREAD_DB*/

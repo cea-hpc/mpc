@@ -97,6 +97,9 @@ int sctk_init_thread_debug (sctk_thread_data_t *item) {
   rtdb_set_thread_stkbase (thread, tid->stack);
   rtdb_set_thread_stksize (thread, tid->stack_size) ;
   rtdb_set_thread_type (thread, TD_THR_USER) ;
+
+  rtdb_set_thread_extls(thread,tid->ctx.sctk_extls);
+
   sctk_nodebug("context");
 #if defined(TDB_i686_ARCH_TDB) || defined(TDB_x86_64_ARCH_TDB)
 #if SCTK_MCTX_MTH(mcsc)

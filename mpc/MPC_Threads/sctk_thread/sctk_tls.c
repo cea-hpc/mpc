@@ -738,6 +738,7 @@ __sctk__tls_get_addr__task_scope (tls_index * tmp)
   res =
     __sctk__tls_get_addr__generic_scope (tmp->ti_module, tmp->ti_offset,
 					 extls[sctk_extls_task_scope]);
+
   return res;
 }
 

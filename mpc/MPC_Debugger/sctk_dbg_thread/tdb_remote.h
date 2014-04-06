@@ -95,6 +95,8 @@ extern "C"
     td_thrinfo_t info ;
     td_event_e last_event ;
 
+    void *extls;
+
     volatile struct tdb_thread_debug_s *next ;
     volatile struct tdb_thread_debug_s *prev ;
     
@@ -236,6 +238,18 @@ extern "C"
 
     rtdb_log("set context for tid %p : %p", thread, context);
     thread->context = context ;
+
+    return TDB_OK ;
+  }
+
+  static inline tdb_err_e rtdb_set_thread_extls (
+    volatile tdb_thread_debug_t *thread, void *extls){
+
+    tdb_assert(thread != NULL) ;
+    if (thread == NULL) return TDB_NO_THR ;
+
+    rtdb_log("set extls for tid %p : %p", thread, extls);
+    thread->extls = extls ;
 
     return TDB_OK ;
   }

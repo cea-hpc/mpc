@@ -52,6 +52,7 @@ tdb_err_e rtdb_add_thread (const void *tid, volatile tdb_thread_debug_t **thread
   
   thread->tid = tid ;
   thread->context = NULL ;
+  thread->extls = NULL ;
   thread->last_event = TD_EVENT_NONE ;
 
   bzero((void *) &thread->info, sizeof(td_thrinfo_t)) ;
