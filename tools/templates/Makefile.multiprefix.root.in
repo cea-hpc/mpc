@@ -2,7 +2,6 @@
 
 #Global setup variables
 PREFIX=@PREFIX@
-SUBPREFIXES=@SUBPREFIXES@
 PROJECT_SOURCE_DIR=@PROJECT_SOURCE_DIR@
 
 #Global targets

@@ -1,7 +1,7 @@
 ##########################################################################
 
-@SUBPREFIX@: @SUBPREFIX_HOST@
-	$(MAKE) -C $@
+@TARGETNAME@: @TARGETDEP@
+	$(MAKE) -C @MAKEFILEDIR@
 
-.PHONY: @SUBPREFIX@
+.PHONY: @TARGETNAME@
 

@@ -565,11 +565,7 @@ getPackageCompilationOptions()
 ######################################################
 registerPackage()
 {
-	if [ "${MULTI_ARCH}" = 'false' ];
-	then
-		ALL_PACKAGES="${ALL_PACKAGES} ${1}"
-	else
-		case "${3}" in
+		case "${2}" in
 			host)
 				echo "Add ALL_PACKAGES_HOST=${1}" 1>&2
 				ALL_PACKAGES_HOST="${ALL_PACKAGES_HOST} ${1}"
@@ -579,7 +575,6 @@ registerPackage()
 				ALL_PACKAGES_TARGET="${ALL_PACKAGES_TARGET} ${1}"
 			;;
 		esac
-	fi
 }
 
 ######################################################
@@ -614,23 +609,23 @@ setupInstallPackage()
 	local version=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 2 -d ';' | xargs echo`
 	local status=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 4 -d ';' | xargs echo`
 	local deps=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 5 -d ';' | xargs echo`
-	local run_on=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 6 -d ';' | xargs echo`
+	local runOn=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 6 -d ';' | xargs echo`
 	local options=`getPackageCompilationOptions "${name}" "${host}" "${target}" "${compiler}" "${type}"`
 
 	#extract user options
 	eval "userOptions=\"\$${varprefix}_BUILD_PARAMETERS\""
 	
 	#add dep if want to gen help
-	if [ "$GEN_DEP_HELPS" = 'true' ]; then deps="${deps} ${name}-gen-help"; fi
+	if [ "${GEN_DEP_HELPS}" = 'true' ]; then deps="${deps} ${name}-gen-help"; fi
 
 	#check if need to do it
-	if [ "$prefix" = "${INTERNAL_KEY}" ]; then
+	if [ "${prefix}" = "${INTERNAL_KEY}" ]; then
 		PACKAGE_DEPS=`echo ${deps} | sed 's|[0-9A-Z_a-z\-]\+|.&|g'`
 		PACKAGE_VAR_NAME="${varprefix}"
 		PACKAGE_OPTIONS="${options}"
 		PACKAGE_NAME="${name}"
 		PACKAGE_VERSION="${version}"
-		USER_PARAMETERS="$userOptions"
+		USER_PARAMETERS="${userOptions}"
 		applyOnTemplate "${template}"
 	else
 		echo "${name}:"
@@ -638,10 +633,11 @@ setupInstallPackage()
 
 	#Line to split rules
 	echo ''
-	#register to list
+
+	#Register to list
 	### TODO: change to if $host = $target > cible host, sinon target
-	if [ "$status" = 'install' ]; then
-			registerPackage "${name}" "${run_on}" "${type}"
+	if [ "${status}" = 'install' ]; then
+			registerPackage "${name}" "${runOn}"
 	fi
 }
 

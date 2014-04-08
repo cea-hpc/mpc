@@ -1,5 +1,8 @@
 # TODO LIST
 
+REU 07/04/2014
+ + ajout flavour sur des builds (debug/etc.)
+
 REU 31/03/2014
 -------------
  + mpcrun : 1) lire le elf avec readelf du binutils compilé pour récup l archi 2) lors de l utilisation d'un script, remplacer -n par -p

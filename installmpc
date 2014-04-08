@@ -233,13 +233,13 @@ do
 		--host=*)
 			extractArchValue 'MPC_HOST' 'host' "$arg"
 			export MPC_HOST
-			MULTI_ARCH='true'
+			#MULTI_ARCH='true'
 			;;
 		--target=*)
 			extractArchValue 'MPC_TARGET' 'target' "$arg"
 			export MPC_TARGET
 			export MPC_HOST
-			MULTI_ARCH='true'
+			#MULTI_ARCH='true'
 			;;
 		--arch-library-path=*)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${arg}"
@@ -281,11 +281,11 @@ enablePrefixEnv "${PREFIX}"
 
 ######################################################
 #Wrappers for cross-compil
-if [ "$MULTI_ARCH" = 'true' ]; then
-	WRAPPER_CROSS_COMPIL="--cross_exec=${PROJECT_SOURCE_DIR}/mpcframework/MPC_Tools/cross_compilation_scripts/cross_compil.sh"
-else
-	WRAPPER_CROSS_COMPIL=''
-fi
+#if [ "$MULTI_ARCH" = 'true' ]; then
+#	WRAPPER_CROSS_COMPIL="--cross_exec=${PROJECT_SOURCE_DIR}/mpcframework/MPC_Tools/cross_compilation_scripts/cross_compil.sh"
+#else
+#	WRAPPER_CROSS_COMPIL=''
+#fi
 
 ######################################################
 MPCFRAMEWORK_PREFIX="${INTERNAL_KEY}"
@@ -317,78 +317,158 @@ HYDRA_SIMPLE_BUILD_PARAMETERS="'--with-hydra-mpl=${HYDRA_REAL_PREFIX}' ${HYDRA_S
 
 ######################################################
 #Clear makefile to generate it (TODO à générer, générer la variable en majuscule)
+# genMakefile()
+# {
+# 	local subprefix="$1"
+# 	local type_arch="$2"
+# 	local host=${MPC_HOST};
+# 	local target=${MPC_TARGET};
+# 	local list=`cat "${PROJECT_SOURCE_DIR}/config.txt" | cut -f 1 -d ';' |  sed -e "s/^#[0-9A-Za-z_-\ #]*//g" | xargs echo`
+	
+# 	#Create subdirectories and update subprefix 
+# 	mkdir -p "${subprefix}/${target}" || exit 1
+# 	cd "${subprefix}/${target}" || exit 1
+# 	SUBPREFIX="/${subprefix}/${target}"
+# 	makefilePath="Makefile.${type_arch}_${target}"
+
+# 	#Check if Makefile exists
+# 	if [ -f "Makefile" ]; then
+# 		echo "Makefile already generated. Use 'distclean' argument to regenerate it."
+# 		echo "Continuing..."
+# 	else
+# 		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.head.in" > ${makefilePath}
+# 		for module in ${list}; 
+# 		do
+# 			local template=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 8 -d ';' | xargs echo`
+# 			local run_on=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 6 -d ';' | xargs echo`
+# 			if [ "${run_on}" = "${2}" ] || [ "${run_on}" = "all" ] || [ "$MULTI_ARCH" != 'true' ];
+# 			then
+# 				UPPER=`echo ${module} | tr '[:lower:]' '[:upper:]'`
+# 				findPackage "${module}"
+# 				setupInstallPackage "${module}" "${host}" "${target}" "${MPC_COMPILER}" "${UPPER}" "${template}" "${2}">> ${makefilePath}
+# 			fi
+# 		done
+
+# 		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot_${type_arch}.in" >> ${makefilePath}
+# 	fi
+
+# 	#Restore path
+# 	cd ${PROJECT_BUILD_DIR}
+
+# 	#Generate root architecture for current type
+# 	MAKEFILEDIR="${PROJECT_BUILD_DIR}${SUBPREFIX}"
+# 	MAKEFILENAME="${makefilePath}"
+# 	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.root_arch.head.in" > ${subprefix}/Makefile
+# }
+
+genMakefilePerType()
+{
+	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.head.in" > ${makefilePath}
+	for module in ${list}; 
+	do
+		local template=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 8 -d ';' | xargs echo`
+		local run_on=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 6 -d ';' | xargs echo`
+		if [ "${run_on}" = "${type_arch}" ] || [ "${run_on}" = "all" ];
+		then
+			UPPER=`echo ${module} | tr '[:lower:]' '[:upper:]'`
+			findPackage "${module}"
+			setupInstallPackage "${module}" "${MPC_HOST}" "${MPC_TARGET}" "${MPC_COMPILER}" "${UPPER}" "${template}" "${2}">> ${makefilePath}
+		fi
+	done
+	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot_${type_arch}.in" >> ${makefilePath}
+}
+
 genMakefile()
 {
-	local subprefix="$1"
-	local type_arch="$2"
-	local host=${MPC_HOST};
-	local target=${MPC_TARGET};
 	local list=`cat "${PROJECT_SOURCE_DIR}/config.txt" | cut -f 1 -d ';' |  sed -e "s/^#[0-9A-Za-z_-\ #]*//g" | xargs echo`
 	
-	if [ ! -d "$subprefix" ]; then
-		mkdir "$subprefix" || exit 1
-	fi
-
-	cd "$subprefix" || exit 1
-	SUBPREFIX="/$subprefix"
-
-	#Check if Makefile exist 
+	#Check if Makefile exists
 	if [ -f "Makefile" ]; then
 		echo "Makefile already generated. Use 'distclean' argument to regenerate it."
 		echo "Continuing..."
+
+	#Else create Makefiles
 	else
-		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.head.in" > Makefile
-		for module in ${list}; 
-		do
-			local template=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 8 -d ';' | xargs echo`
-			local run_on=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 6 -d ';' | xargs echo`
-			if [ "${run_on}" = "${2}" ] || [ "${run_on}" = "all" ] || [ "$MULTI_ARCH" != 'true' ];
-			then
-				UPPER=`echo ${module} | tr '[:lower:]' '[:upper:]'`
-				findPackage "${module}"
-				setupInstallPackage "${module}" "${host}" "${target}" "${MPC_COMPILER}" "${UPPER}" "${template}" "${2}">> Makefile
-			fi
-		done
-		if [ "$MULTI_ARCH" = 'false' ]; then
-			applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot.in" >> Makefile
-		else
-			applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot_${type_arch}.in" >> Makefile
+		#Host case
+		local type_arch="host"
+
+		#Create subdirectories and update subprefix 
+		mkdir -p "${MPC_HOST}/${MPC_TARGET}" || exit 1
+		cd "${MPC_HOST}/${MPC_TARGET}" || exit 1
+		SUBPREFIX="/${MPC_HOST}/${MPC_TARGET}"
+		makefilePath="Makefile.${type_arch}_${MPC_HOST}"
+
+		genMakefilePerType
+		#Generate root architecture for current type
+		MAKEFILEDIR="${PROJECT_BUILD_DIR}${SUBPREFIX}"
+		MAKEFILENAME="${makefilePath}"
+		cat "${PROJECT_TEMPLATE_DIR}/Makefile.root_arch.head.in" > ${PROJECT_BUILD_DIR}/${MPC_HOST}/Makefile
+		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.root_arch.in" >> ${PROJECT_BUILD_DIR}/${MPC_HOST}/Makefile
+
+		#Restore current path
+		cd ${PROJECT_BUILD_DIR}
+
+		#############
+		#Target case
+		local type_arch="target"
+
+		#Create subdirectories and update subprefix 
+		mkdir -p "${MPC_TARGET}/${MPC_TARGET}" || exit 1
+		cd "${MPC_TARGET}/${MPC_TARGET}" || exit 1
+		SUBPREFIX="/${MPC_TARGET}/${MPC_TARGET}"
+		makefilePath="Makefile.${type_arch}_${MPC_TARGET}"
+
+		genMakefilePerType
+		#Generate root architecture for current type
+		MAKEFILEDIR="${PROJECT_BUILD_DIR}${SUBPREFIX}"
+		MAKEFILENAME="${makefilePath}"
+		if [ "${MPC_HOST}" != "${MPC_TARGET}" ];
+		then
+			cat "${PROJECT_TEMPLATE_DIR}/Makefile.root_arch.head.in" > ${PROJECT_BUILD_DIR}/${MPC_TARGET}/Makefile
 		fi
+		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.root_arch.in" >> ${PROJECT_BUILD_DIR}/${MPC_TARGET}/Makefile
 	fi
-	cd .. || exit 1
+
+	#Restore current path
+	cd ${PROJECT_BUILD_DIR}
 }
 
 ######################################################
 createRootMakefile()
 {
-	if [ "$MULTI_ARCH" = 'true' ]; then
-		SUBPREFIXES="$*"
+	if [ "${MPC_HOST}" = "${MPC_TARGET}" ];
+	then
+		SUBPREFIXES="${MPC_HOST}"
 		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.multiprefix.root.in" > Makefile
-		for SUBPREFIX in ${SUBPREFIXES}
-		do
-			SUBPREFIX_HOST="$1"
-			SUBPREFIX_TARGET="$2"
-			applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.multiprefix.subprefix.in" >> Makefile
-		done
-	else	
-		SUBPREFIX="$1"
-		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.root.in" > Makefile
+		TARGETNAME="${MPC_HOST}"
+		TARGETDEP=""
+		MAKEFILEDIR="${PROJECT_BUILD_DIR}/${TARGETNAME}"
+		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.multiprefix.subprefix.in" >> Makefile
+	else
+		SUBPREFIXES="${MPC_HOST} ${MPC_TARGET}"
+		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.multiprefix.root.in" > Makefile
+
+		#Host case
+		TARGETNAME="${MPC_HOST}"
+		MAKEFILEDIR="${PROJECT_BUILD_DIR}/${TARGETNAME}"
+		TARGETDEP=""
+		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.multiprefix.subprefix.in" >> Makefile
+
+		#Target case
+		TARGETNAME="${MPC_TARGET}"
+		MAKEFILEDIR="${PROJECT_BUILD_DIR}/${TARGETNAME}"
+		TARGETDEP="${MPC_HOST}"
 		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.multiprefix.subprefix.in" >> Makefile
 	fi
 }
 
 ######################################################
-if [ "$MULTI_ARCH" = 'true' ]; then
-	if [ "${MPC_HOST}" = "" ]; then
-		findCurrentArch 'MPC_HOST'
-	fi
-	genMakefile "${MPC_HOST}" "host"
-	genMakefile "${MPC_TARGET}" "target"
-	createRootMakefile "${MPC_HOST}" "${MPC_TARGET}"
-else
-	genMakefile "${MPC_HOST}" "host"
-	createRootMakefile "${MPC_HOST}"
+if [ "${MPC_HOST}" = "" ]; then
+	findCurrentArch 'MPC_HOST'
 fi
+
+genMakefile
+createRootMakefile
 
 ######################################################
 #some info
