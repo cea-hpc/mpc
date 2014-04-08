@@ -469,6 +469,8 @@ void ffunc (mpi_init) (int *res);
 
 void ffunc (mpi_init_thread) (int *required, int *provide, int *res);
 
+void ffunc (pmpi_query_thread) (int *provided, int *res);
+
 void ffunc (mpi_finalize) (int *res);
 
 void ffunc (mpi_initialized) (int *flag, int *res);
