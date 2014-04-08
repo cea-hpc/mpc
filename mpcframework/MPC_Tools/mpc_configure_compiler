@@ -229,22 +229,6 @@ cat << EOF >> $1
 
 EOF
 
-#~ cat << EOF >> $1
-#~ 
-    #~ -target=*)
-	#~ TARGET=\`echo A\$arg | sed -e 's/A-target=//g'\`
-	#~ addarg=no
-	#~ case "\${TARGET}" in
-        #~ k1om|mic)
-        #~ echo "loading k1om options..."
-        #~ . `echo "${SCTK_PREFIX}" | sed -e 's|'"${MPC_HOST}"'|'"${MPC_TARGET}"'|g'`/.target_options
-        #~ cat `echo "${SCTK_PREFIX}" | sed -e 's|'"${MPC_HOST}"'|'"${MPC_TARGET}"'|g'`/.target_options
-        #~ ;;  
-    #~ esac
-    #~ ;;
-#~ 
-#~ EOF
-
 cat << EOF >> $1
 
     -target=*)
@@ -527,31 +511,76 @@ EOF
 }
 
 #fill target options for mpc_cc
-case "${MPC_TARGET}" in 
-	x86_64)
+#for the host
+if test "`echo ${SCTK_PREFIX} | grep "${SCTK_ARCH}"`" = ""; then
+	if test ! -d "${SCTK_PREFIX}"; then
+			mkdir "${SCTK_PREFIX}"
+	fi
+	
+	if test -f "${SCTK_PREFIX}/.target_options"; then
+		rm "${SCTK_PREFIX}/.target_options"
 		touch "${SCTK_PREFIX}/.target_options"
-	;;
-	k1om)
-	prefix=`echo "${SCTK_PREFIX}" | sed -e 's|'"${MPC_HOST}"'|'"${MPC_TARGET}"'|g'`
+	else
+		touch "${SCTK_PREFIX}/.target_options"
+	fi
+	case `uname -m` in
+		x86_64)
+cat <<EOF >> "${SCTK_PREFIX}/.target_options"
+#!/bin/sh
+export SCTK_MIC=0
+export CC=`head -n 1 ${SCTK_PREFIX}../../.c_compilers`
+addarg=no
+export CFLAGS="\`${SCTK_PREFIX}/bin/mpc_cflags c\`"
+export LDFLAGS="\`${SCTK_PREFIX}/bin/mpc_ldflags c\`"	
+EOF
+		;;
+		k1om)
+cat <<EOF >> "${SCTK_PREFIX}/.target_options"
+#!/bin/sh
+export SCTK_MIC=1
+export CC=icc
+addarg=no
+export CFLAGS="\`${SCTK_PREFIX}/bin/mpc_cflags c\` -mmic"
+export LDFLAGS="\`${SCTK_PREFIX}/bin/mpc_ldflags c\`"	
+EOF
+		;;
+	esac
+else
+#for the target
 	if test ! -d "${SCTK_PREFIX}"; then
 		mkdir "${SCTK_PREFIX}"
 	fi
 	
 	if test -f "${SCTK_PREFIX}/.target_options"; then
 		rm "${SCTK_PREFIX}/.target_options"
+		touch "${SCTK_PREFIX}/.target_options"
 	else
 		touch "${SCTK_PREFIX}/.target_options"
 	fi
+	#for the target
+	case "${SCTK_ARCH}" in 
+		x86_64)
 cat <<EOF >> "${SCTK_PREFIX}/.target_options"
-SCTK_MIC=1
-export SCTK_MIC
-CC=icc
+#!/bin/sh
+export SCTK_MIC=0
+export CC=`head -n 1 ${SCTK_PREFIX}../../.c_compilers`
 addarg=no
-CFLAGS="\`${prefix}/bin/mpc_cflags c\` -mmic"
-LDFLAGS="\`${prefix}/bin/mpc_ldflags c\`"	
+export CFLAGS="\`${SCTK_PREFIX}/bin/mpc_cflags c\`"
+export LDFLAGS="\`${SCTK_PREFIX}/bin/mpc_ldflags c\`"	
 EOF
-	;;
-esac
+		;;
+		k1om)
+cat <<EOF >> "${SCTK_PREFIX}/.target_options"
+#!/bin/sh
+export SCTK_MIC=1
+export CC=icc
+addarg=no
+export CFLAGS="\`${SCTK_PREFIX}/bin/mpc_cflags c\` -mmic"
+export LDFLAGS="\`${SCTK_PREFIX}/bin/mpc_ldflags c\`"	
+EOF
+		;;
+	esac
+fi
 
 echo "COMPILER_LIST='${COMPILER_LIST}'"
 DEFAULT_VERSION=""

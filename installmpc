@@ -415,9 +415,25 @@ else
 fi
 
 ######################################################
+#Generate mpcvars principal
+echo "#!/bin/sh" > "${PREFIX}/mpcvars.sh"
+cat <<EOF >> "${PREFIX}/mpcvars.sh"
+
+if test "\$#" = "1" ; then
+    source "/home/users/aserraz/mpc-build/\$1/mpcframework/bin/mpcvars.sh"
+    source "/home/users/aserraz/mpc-build/\$1/mpcframework/.target_options"
+elif test "\$#" = "0" ; then
+    source "/home/users/aserraz/mpc-build/\`uname -m\`/mpcframework/bin/mpcvars.sh"
+    source "/home/users/aserraz/mpc-build/\`uname -m\`/mpcframework/.target_options"
+else
+    echo "You must specify only the target architecture"
+fi
+
+EOF
+source "${PREFIX}/mpcvars.sh"
+
+######################################################
 echo
 echo "FINISHED, you can now use the MPC package installed into $PREFIX"
-echo "You can now use MPC by source XXXXXXXXX (TODO) in your shell"
-echo 
-echo "For developpers, use this in mpc/ subdirectory : "
-echo "mkdir build && cd build && ../configure $MPC_BUILD_PARAMETERS"
+echo "MPC has sourced the host environment by default but you can source"
+echo "a target environment with the command source $PREFIX/mpcvars.sh 'target'"

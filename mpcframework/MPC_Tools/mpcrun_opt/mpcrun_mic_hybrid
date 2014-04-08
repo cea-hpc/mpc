@@ -37,7 +37,8 @@ if [[ "${HYDRA_VERSION}" =~ "Intel" ]] ; then
 		I=$(($I + 1)); 
 	done < "${MPCRUN_CONFIG_FILE}"
 	#create launch command for hydra
-	while read line; do 
+	while read line; do
+		line=`echo ${line} | sed -e 's/-p/-n/'`
 		if test "$J" = $(($I - 1)); then
 			LAUNCH_COMMAND="${LAUNCH_COMMAND} ${line} $USER_ARGS $SCTK_ARGS"; 
 		else
