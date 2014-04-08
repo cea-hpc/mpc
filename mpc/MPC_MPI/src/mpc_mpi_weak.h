@@ -437,6 +437,9 @@
 #pragma weak MPI_Init_thread = PMPI_Init_thread
 #pragma weak mpi_init_thread_ = pmpi_init_thread_
 #pragma weak mpi_init_thread__ = pmpi_init_thread__
+#pragma weak MPI_Query_thread = PMPI_Query_thread
+#pragma weak mpi_query_thread_ = pmpi_query_thread_
+#pragma weak mpi_query_thread__ = pmpi_query_thread__
 
 #pragma weak MPI_Comm_f2c = PMPI_Comm_f2c
 #pragma weak MPI_Errhandler_c2f = PMPI_Errhandler_c2f
@@ -540,7 +543,6 @@
 #pragma weak MPI_Comm_call_errhandler = PMPI_Comm_call_errhandler
 #pragma weak MPI_Comm_create_errhandler = PMPI_Comm_create_errhandler
 #pragma weak MPI_Is_thread_main = PMPI_Is_thread_main
-#pragma weak MPI_Query_thread = PMPI_Query_thread
 #pragma weak MPI_Get_library_version = PMPI_Get_library_version
 #pragma weak MPI_Request_get_status = PMPI_Request_get_status
 #pragma weak MPI_Status_set_cancelled = PMPI_Status_set_cancelled
