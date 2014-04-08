@@ -1484,6 +1484,11 @@ void ffunc (pmpi_init_thread) (int *required, int *provide, int *res)
   *res = MPI_Init_thread (NULL, NULL, *required, provide);
 }
 
+void ffunc (pmpi_query_thread) (int *provided, int *res)
+{
+  *res = MPI_Query_thread(provided);
+}
+
 void ffunc (pmpi_finalized) (int *flag, int *res)
 {
   *res = MPI_Finalized (flag);
