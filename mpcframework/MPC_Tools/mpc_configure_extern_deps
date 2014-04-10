@@ -42,7 +42,7 @@ PMI_LIB=""
 sctk_internal_setup_lib_hydra()
 {
 	if [ "$HYDRA_IS_SETUP" != "yes" ]; then
-		SCTK_HYDRA_PREFIX=${SCTK_PREFIX}/hydra-1.4/
+		SCTK_HYDRA_PREFIX=${SCTK_PREFIX}/../hydra/
 		HYDRA_MODULE=${PWD}/../hydra_simple
 		SCTK_CFLAGS="${SCTK_CFLAGS} -I${HYDRA_MODULE} -DMPC_USE_HYDRA"
 		SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HYDRA_MODULE}/safestr2.o ${HYDRA_MODULE}/simple_pmiutil.o ${HYDRA_MODULE}/simple_pmi.o"

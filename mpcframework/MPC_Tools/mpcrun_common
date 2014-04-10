@@ -444,6 +444,26 @@ for arg in "$@" ; do
     fi
 done
 
+if test "$BINARY" != ""; then
+    echo "arch_bin=\`${prefix}/../binutils/bin/readelf -a $BINARY | grep 'Machine'\`"
+    arch_bin=`${prefix}/../binutils/bin/readelf -a $BINARY | grep 'Machine'`
+    echo "arch_bin = '$arch_bin'"
+else
+    arch_bin="K1OM"
+fi
+
+if test "`echo ${arch_bin} | grep "K1OM"`" != ""; then 
+    echo "K1OM archi detected"
+else
+    echo "not K1OM architecture"
+    #setup complete hydra path. Exported to be used into mpcrun_opt/* scripts
+	if [ $SCTK_HYDRA -eq 1 ] && [ $MPC_HYDRA -eq 1 ] && [ ! -z "$SCTK_HYDRA_PREFIX" ]; then
+		export SCTK_HYDRA_BINDIR="${SCTK_PREFIX}/../hydra/bin/"
+		export PATH="${SCTK_HYDRA_BINDIR}:${PATH}"
+	fi
+fi
+
+
 if test "$PROCESS_NB" = "0" ; then
     PROCESS_NB="1"
 fi

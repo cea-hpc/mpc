@@ -500,20 +500,21 @@ echo "#!/bin/sh" > "${PREFIX}/mpcvars.sh"
 cat <<EOF >> "${PREFIX}/mpcvars.sh"
 
 if test "\$#" = "1" ; then
-    source "/home/users/aserraz/mpc-build/\$1/mpcframework/bin/mpcvars.sh"
-    source "/home/users/aserraz/mpc-build/\$1/mpcframework/.target_options"
-elif test "\$#" = "0" ; then
-    source "/home/users/aserraz/mpc-build/\`uname -m\`/mpcframework/bin/mpcvars.sh"
-    source "/home/users/aserraz/mpc-build/\`uname -m\`/mpcframework/.target_options"
+    source "${PREFIX}/\$1/\$1/mpcframework/bin/mpcvars.sh"
+    source "${PREFIX}/\$1/\$1/mpcframework/.target_options"
 else
-    echo "You must specify only the target architecture"
+    source "${PREFIX}/\`uname -m\`/\`uname -m\`/mpcframework/bin/mpcvars.sh"
+    source "${PREFIX}/\`uname -m\`/\`uname -m\`/mpcframework/.target_options"
 fi
 
 EOF
-source "${PREFIX}/mpcvars.sh"
+
+echo "source ${PREFIX}/mpcvars.sh"
+source ${PREFIX}/mpcvars.sh
 
 ######################################################
 echo
-echo "FINISHED, you can now use the MPC package installed into $PREFIX"
+echo "FINISHED, you can now use the MPC package installed into ${PREFIX}"
 echo "MPC has sourced the host environment by default but you can source"
-echo "a target environment with the command source $PREFIX/mpcvars.sh 'target'"
+echo "a target environment with the command source ${PREFIX}/mpcvars.sh 'target'"
+
