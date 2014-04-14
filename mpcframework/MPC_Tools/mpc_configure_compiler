@@ -422,8 +422,8 @@ chmod 755 $1
 
 GNU_PRIVATIZE="-fmpc-privatize"
 INTEL_PRIVATIZE="-mSYMTAB_mpc_privatize"
-#USAGE print_specfific_compiler output_file privatization_option wait_to_launch_compiler compiler_name
-print_specfific_compiler(){
+#USAGE print_specific_compiler output_file privatization_option wait_to_launch_compiler compiler_name
+print_specific_compiler(){
 # Header
 echo "#!/bin/sh" > $1
 header_sh >> $1
@@ -670,8 +670,8 @@ end_section
 # Create the link to the default compiler
 rm -f bin/mpc_cc_global
 ln -s mpc_cc_global_${DEFAULT_VERSION} bin/mpc_cc_global
-print_specfific_compiler bin/mpc_gcc $GNU_PRIVATIZE mpc_cc_${DEFAULT_VERSION}
-print_specfific_compiler bin/mpc_icc $INTEL_PRIVATIZE "mpc_cc_default -cc=icc" intel
+print_specific_compiler bin/mpc_gcc "" mpc_cc_${DEFAULT_VERSION}
+print_specific_compiler bin/mpc_icc $INTEL_PRIVATIZE "mpc_cc_default -cc=icc" intel
 
 # Create the link to the default compiler
 rm -f bin/mpc_cc
@@ -685,8 +685,8 @@ begin_section Generate Default C++ Compiler: mpc_cxx_default
 end_section
 
 # Create the link to the default compiler
-print_specfific_compiler bin/mpc_g++ $GNU_PRIVATIZE mpc_cxx_${DEFAULT_VERSION}
-print_specfific_compiler bin/mpc_icpc $INTEL_PRIVATIZE "mpc_cxx_default -cc=icpc" intel
+print_specific_compiler bin/mpc_g++ "" mpc_cxx_${DEFAULT_VERSION}
+print_specific_compiler bin/mpc_icpc $INTEL_PRIVATIZE "mpc_cxx_default -cc=icpc" intel
 rm -f bin/mpc_cxx
 ln -s mpc_g++ bin/mpc_cxx
 
@@ -701,8 +701,8 @@ if test "$SCTK_FORTRAN" = "1" ; then
 
   # Create the link to the default compiler
 
-  print_specfific_compiler bin/mpc_gfortran $GNU_PRIVATIZE mpc_f77_${DEFAULT_VERSION}
-  print_specfific_compiler bin/mpc_ifort $INTEL_PRIVATIZE "mpc_f77_default -cc=ifort -threads" intel
+  print_specific_compiler bin/mpc_gfortran "" mpc_f77_${DEFAULT_VERSION}
+  print_specific_compiler bin/mpc_ifort $INTEL_PRIVATIZE "mpc_f77_default -cc=ifort -threads" intel
   rm -f bin/mpc_f77
   ln -s mpc_gfortran bin/mpc_f77
 fi
