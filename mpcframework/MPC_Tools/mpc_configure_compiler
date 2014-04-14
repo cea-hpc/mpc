@@ -471,20 +471,20 @@ for i in \$@ ; do
 
     if test "\$i" = "-compilers" ; then
     	count=1
-        echo "Liste des compilateurs disponibles :"
+        echo "Compilers available :"
     	for line in \$( < ${SCTK_PREFIX}/../../.c_compilers.cfg) ;
     	do  
         	if [[ "\$line" =~ "mpc-gcc" ]]; 
         	then
             	patched_gcc=\`tail -c 12 <<<\$line\`
             	version=\`tail -c 4 <<<\$patched_gcc\`
-            	echo "\$count: gcc patché version \${version:0:1}.\${version:1:1}.\${version:2:2}"
+            	echo "\$count: patched gcc (version \${version:0:1}.\${version:1:1}.\${version:2:2})"
         	elif test "\$line" = "gcc"; then
             	version=\`gcc --version | grep "GCC" | cut -f 3 -d ' '\`  
-            	echo "\$count: gcc système version \$version"
+            	echo "\$count: gcc (version \$version)"
         	elif test "\$line" = "icc"; then
             	version=\`icc --version | grep "ICC" | cut -f 3 -d ' '\`
-            	echo "\$count: icc système version \$version"
+            	echo "\$count: icc (version \$version)"
         	else
             	echo "\$count: \$line"
         	fi  
