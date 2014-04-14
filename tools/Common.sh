@@ -37,7 +37,7 @@ setCompilerList()
 	fi
 	
 	#add mpc patched gcc
-	if [ "${compiler}" = 'gcc' ] || [ "${GCC_PREFIX}" != 'disabled' ];
+	if [ "${GCC_PREFIX}" != 'disabled' ];
 	then
 		tmp_list="${gcc_version} ${tmp_list}"
 		is_there="`cat ${config_file_c} | grep \"mpc-gcc_${gcc_version}\"`"
