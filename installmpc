@@ -182,6 +182,11 @@ do
 		--disable-mpc-gcc)
 			GCC_PREFIX='disabled'
 			;;
+		################# FORTRAN GCC ###############
+		--disable-mpc-fortran)
+			FORTRAN_PREFIX='disabled'
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --disable-fortran"
+			;;
 		##################### MPFR ##################
 		--with-mpfr=*)
 			extractParamValue 'MPFR_PREFIX' 'with-mpfr' "$arg"
