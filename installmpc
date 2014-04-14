@@ -36,6 +36,7 @@ then
 	cd build
 fi
 
+
 ######################################################
 #default values
 DOWNLOAD='disabled'
@@ -274,6 +275,10 @@ do
 			;;
 		--prefix=*)
 			extractParamValue 'PREFIX' 'prefix' "$arg"
+			#check if prefix directory exists
+			if [ ! -d "${PREFIX}" ]; then
+				mkdir -p ${PREFIX}
+			fi
 			;;
 		--help|-h|-?)
 			showHelp
