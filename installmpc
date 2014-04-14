@@ -245,7 +245,8 @@ do
 			#MULTI_ARCH='true'
 			;;
 		--arch-library-path=*)
-			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${arg}"
+			ARCH_LIBRARY_PATH="${arg}"
+			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${ARCH_LIBRARY_PATH}"
 		;;
 		################## COMMON ###################
 		--disable-color)
@@ -279,6 +280,16 @@ do
 done
 
 ######################################################
+#check for specific arch libs
+if test "${MPC_TARGET}" = "k1om"; then
+	if test "${ARCH_LIBRARY_PATH}" = ""; then
+		echo "You must use --arch-library-path=* to specify the path of the k1om specific libraries."
+		echo "Example: --arch-library-path=/opt/intel/composer_xe_2013.4.183/compiler/libs/mic"
+		exit 1
+	fi
+fi
+
+######################################################
 #Add prefix to local variable to also make the search
 enablePrefixEnv "${PREFIX}"
 
@@ -292,15 +303,15 @@ enablePrefixEnv "${PREFIX}"
 
 ######################################################
 MPCFRAMEWORK_PREFIX="${INTERNAL_KEY}"
-GMP_REAL_PREFIX="${PREFIX}/${MPC_HOST}/libsgcc"
-MPFR_REAL_PREFIX="${PREFIX}/${MPC_HOST}/libsgcc"
-MPC_REAL_PREFIX="${PREFIX}/${MPC_HOST}/libsgcc"
-HYDRA_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
-HYDRA_SIMPLE_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
-LIBXML2_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
-OPENPA_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
-HWLOC_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
-SCTK_ARCH_REAL_PREFIX="${PREFIX}/${MPC_TARGET}"
+GMP_REAL_PREFIX="${PREFIX}/${MPC_HOST}/${MPC_HOST}/libsgcc"
+MPFR_REAL_PREFIX="${PREFIX}/${MPC_HOST}/${MPC_HOST}/libsgcc"
+MPC_REAL_PREFIX="${PREFIX}/${MPC_HOST}/${MPC_HOST}/libsgcc"
+HYDRA_REAL_PREFIX="${PREFIX}/${MPC_TARGET}/${MPC_TARGET}"
+HYDRA_SIMPLE_REAL_PREFIX="${PREFIX}/${MPC_TARGET}/${MPC_TARGET}"
+LIBXML2_REAL_PREFIX="${PREFIX}/${MPC_TARGET}/${MPC_TARGET}"
+OPENPA_REAL_PREFIX="${PREFIX}/${MPC_TARGET}/${MPC_TARGET}"
+HWLOC_REAL_PREFIX="${PREFIX}/${MPC_TARGET}/${MPC_TARGET}"
+SCTK_ARCH_REAL_PREFIX="${PREFIX}/${MPC_TARGET}/${MPC_TARGET}"
 
 ######################################################
 # set compiler list
@@ -511,9 +522,6 @@ else
 fi
 
 EOF
-
-echo "source ${PREFIX}/mpcvars.sh"
-source ${PREFIX}/mpcvars.sh
 
 ######################################################
 echo
