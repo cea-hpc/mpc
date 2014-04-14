@@ -91,7 +91,6 @@ setCompilerList()
 		fi
 	fi
 	
-	echo "COMPILER_LIST='${tmp_list}'"
 	eval "${outputvar}=\"${tmp_list}\""
 }
 

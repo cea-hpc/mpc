@@ -1,13 +1,17 @@
 # TODO LIST
 
+REU 14/04/2014
+ + HYDRA :
+	- verifier que nous pouvons utiliser 2 paths differents pour le proxy d'hydra de l hote et du device
+	- verifier MPMD
+
 REU 07/04/2014
  + ajout flavour sur des builds (debug/etc.)
 
 REU 31/03/2014
 -------------
- + mpcrun : 1) lire le elf avec readelf du binutils compilé pour récup l archi 2) lors de l utilisation d'un script, remplacer -n par -p
+ + mpcrun : 1) lire le elf avec readelf du binutils compilé pour récup l archi 
  + mpc_cc : 1) utiliser le compilo patché 2) si pas de compilo patché, utiliser le compilo qui a servi pour le build. 
- + mpc_cc : 1) sourcer l'environnement pour build (mpcvars) 2) laisser la possibilité de remplacer cet environnement en utilisant une option --target=
  + mpc_cc : argument pour lister les archi (--targets)
 
  + Verif de la reprise lors de l'extraction des packets
@@ -18,9 +22,9 @@ REU 31/03/2014
  + utiliser les dépendances (gmp, mpfr, mpc) indiquées dans gcc/contrib/download_...
  + Faire fonctionner le build dans un directory différent 
  + rajouter une colonne dans config.txt racine pour rajouter un nom de patch particulier
+ (+ termcap)
  + retirer les "local" pour compatiblité avec sh 
  + check de la presence des deps et des bonnes versions
- + ajouter termcap
  + MPC_Tools/configure_extern_deps (path hydra) ?
  + pas de chemin en dur dans mpcrun / mpccc
  + pas de rpath dans libmpc mais sur binaires user oui (vérifier relative rpath pour GCC sinon risque de pb... à checker)
@@ -42,6 +46,8 @@ REU 31/03/2014
 * libgfortran (priv)
 
 # DONE
+ - 2) lors de l utilisation d'un script, remplacer -n par -p
+ - mpc_cc : 1) sourcer l'environnement pour build (mpcvars) 2) laisser la possibilité de remplacer cet environnement en utilisant une option --target=
  - rajouter un arg de clean
  - téléchargement des packets + gestion des mirrors
  - télécharger les deps sur selon le script de paratools
