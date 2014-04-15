@@ -37,7 +37,7 @@ checkIfInstallAlreadyExists()
 		#patch version already there
 		echo "#################################################################################"
 		echo "# Install for host:${host} and target:${target} already exists on that prefix "      
-		echo "# Use --disable-install-check for bypassing this install "    	      
+		echo "# Use --disable-check-install for bypassing this install "    	      
 		echo "#################################################################################"
 		exit 1
 	fi
