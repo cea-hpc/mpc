@@ -11,6 +11,7 @@ ALL_PACKAGES=''
 ALL_PACKAGES_HOST=''
 ALL_PACKAGES_TARGET=''
 COMPILER_LIST=''
+CHECK_INSTALL="true"
 
 ######################################################
 #setup paths
@@ -255,6 +256,9 @@ do
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${ARCH_LIBRARY_PATH}"
 		;;
 		################## COMMON ###################
+		--disable-check-install)
+			CHECK_INSTALL="false"
+			;;
 		--disable-color)
 			ENABLE_COLOR='false'
 			;;
@@ -290,11 +294,19 @@ do
 done
 
 ######################################################
+# Check if the install is already there
+if test "${CHECK_INSTALL}" = "true"; then
+	checkIfInstallAlreadyExists
+fi
+
+######################################################
 #check for specific arch libs
 if test "${MPC_TARGET}" = "k1om"; then
 	if test "${ARCH_LIBRARY_PATH}" = ""; then
-		echo "You must use --arch-library-path=* to specify the path of the k1om specific libraries."
-		echo "Example: --arch-library-path=/opt/intel/composer_xe_2013.4.183/compiler/libs/mic"
+		echo "##########################################################################################"
+		echo "# You must use --arch-library-path=* to specify the path of the k1om specific libraries. #"
+		echo "# Example: --arch-library-path=/opt/intel/composer_xe_2013.4.183/compiler/libs/mic       #"
+		echo "##########################################################################################"
 		exit 1
 	fi
 fi
@@ -483,6 +495,10 @@ else
 fi
 
 EOF
+
+######################################################
+# Put the new install in the list
+putNewInstall
 
 ######################################################
 echo

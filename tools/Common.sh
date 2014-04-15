@@ -19,6 +19,52 @@ SUBPREFIX=''
 . "${PROJECT_SOURCE_DIR}/tools/Architectures.sh"
 
 ######################################################
+# Check if the install is already there
+checkIfInstallAlreadyExists()
+{
+	host="${MPC_HOST}"
+	target="${MPC_TARGET}"
+	installs_file="${PREFIX}/.installs.cfg"
+	
+	if test ! -f "${installs_file}" ; then
+		touch "${installs_file}"
+	fi
+	
+	#Check the list of installs
+	is_there="`cat ${installs_file} | grep \"${host}:${target}\"`"
+	if test "${is_there}" = "${host}:${target}" ; 
+	then
+		#patch version already there
+		echo "#################################################################################"
+		echo "# Install for host:${host} and target:${target} already exists on that prefix "      
+		echo "# Use --disable-install-check for bypassing this install "    	      
+		echo "#################################################################################"
+		exit 1
+	fi
+}
+
+######################################################
+# Put new install
+putNewInstall()
+{
+	host="${MPC_HOST}"
+	target="${MPC_TARGET}"
+	installs_file="${PREFIX}/.installs.cfg"
+	
+	if test ! -f "${installs_file}" ; then
+		touch "${installs_file}"
+	fi
+	
+	#add host and target for this install to the list of installs
+	is_there="`cat ${installs_file} | grep \"${host}:${target}\"`"
+	if test "${is_there}" = "" ; 
+	then
+		#first patch version
+		echo "${host}:${target}" >> "${installs_file}"
+	fi
+}
+
+######################################################
 # set Compiler list and config file
 setCompilerList()
 {
