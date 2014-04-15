@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 ##########################################################################
 #            PROJECT  : MPC                                              #
 #            VERSION  : 2.5.1                                            #
@@ -10,7 +10,7 @@
 ALL_PACKAGES=''
 ALL_PACKAGES_HOST=''
 ALL_PACKAGES_TARGET=''
-COMPILER_LIST=""
+COMPILER_LIST=''
 
 ######################################################
 #setup paths
@@ -390,8 +390,8 @@ genMakefilePerType()
 	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.head.in" > ${makefilePath}
 	for module in ${list}; 
 	do
-		local template=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 8 -d ';' | xargs echo`
-		local run_on=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 6 -d ';' | xargs echo`
+		template=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 8 -d ';' | xargs echo`
+		run_on=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 6 -d ';' | xargs echo`
 		if [ "${run_on}" = "${type_arch}" ] || [ "${run_on}" = "all" ];
 		then
 			if test "${type_arch}" = "host"; then
@@ -409,7 +409,7 @@ genMakefilePerType()
 
 genMakefile()
 {
-	local list=`cat "${PROJECT_SOURCE_DIR}/config.txt" | cut -f 1 -d ';' |  sed -e "s/^#[0-9A-Za-z_-\ #]*//g" | xargs echo`
+	list=`cat "${PROJECT_SOURCE_DIR}/config.txt" | cut -f 1 -d ';' |  sed -e "s/^#[0-9A-Za-z_-\ #]*//g" | xargs echo`
 	
 	#Check if Makefile exists
 	if [ -f "Makefile" ]; then
@@ -419,7 +419,7 @@ genMakefile()
 	#Else create Makefiles
 	else
 		#Host case
-		local type_arch="host"
+		type_arch="host"
 
 		#Create subdirectories and update subprefix 
 		mkdir -p "${MPC_HOST}/${MPC_TARGET}" || exit 1
@@ -439,7 +439,7 @@ genMakefile()
 
 		#############
 		#Target case
-		local type_arch="target"
+		type_arch="target"
 
 		#Create subdirectories and update subprefix 
 		mkdir -p "${MPC_TARGET}/${MPC_TARGET}" || exit 1

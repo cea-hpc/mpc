@@ -22,13 +22,13 @@ SUBPREFIX=''
 # set Compiler list and config file
 setCompilerList()
 {
-	local tmp_list=""
-	local outputvar="$1"
-	local compiler="${MPC_COMPILER}"
-	local gcc_version=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^gcc " | cut -f 2 -d ';' | sed -e 's/\.//g' | xargs echo`
-	local config_file_c="${PREFIX}/.c_compilers.cfg"
-	local config_file_cplus="${PREFIX}/.c++_compilers.cfg"
-	local config_file_fort="${PREFIX}/.f77_compilers.cfg"
+	tmp_list=""
+	outputvar="$1"
+	compiler="${MPC_COMPILER}"
+	gcc_version=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^gcc " | cut -f 2 -d ';' | sed -e 's/\.//g' | xargs echo`
+	config_file_c="${PREFIX}/.c_compilers.cfg"
+	config_file_cplus="${PREFIX}/.c++_compilers.cfg"
+	config_file_fort="${PREFIX}/.f77_compilers.cfg"
 	
 	if test ! -f "${config_file_c}" ; then
 		touch "${config_file_c}"
@@ -102,11 +102,11 @@ setCompilerList()
 #Result : print a padded string
 printWithPadding()
 {
-	local text="${1}"
-	local length="${2}"
-	local textSize=${#text}
-	local padding=$(($length-$textSize))
-	local output="${text}"
+	text="${1}"
+	length="${2}"
+	textSize=${#text}
+	padding=$(($length-$textSize))
+	output="${text}"
 
 	for i in `seq 1 1 ${padding}`; do
 		output="${output} "
@@ -148,16 +148,16 @@ findPackage()
 {
 	# TODO Select highest version
 
-	local package="${1}"
+	package="${1}"
 	getPackageVersion "packageVersion" "${package}"
 	getPackageType "packageType" "${package}"
 
 	# if not part of MPC, check if package is present
 	if [ "${packageType}" = "extern" ]
 	then
-		if ls ${PROJECT_PACKAGE_DIR}/${package}/${package}-${packageVersion}.*.* &>/dev/null
+		if ls ${PROJECT_PACKAGE_DIR}/${package}/${package}-${packageVersion}.*.* > /dev/null 2>&1
 		then
-		    echo "Found." &>/dev/null
+		    echo "Found." > /dev/null 2>&1
 		else
 		    echo "Package ${package}, version ${packageVersion} not found."
 		    if [ "${DOWNLOAD}" = "enabled" ]
@@ -179,8 +179,8 @@ findPackage()
 #Result : print a padded string
 downloadDep()
 {
-	local package="${1}"
-	local version="${2}"
+	package="${1}"
+	version="${2}"
 
 	getMirrorAddress "mirrorAddress" ${MIRROR}
 
@@ -218,25 +218,25 @@ downloadDep()
 getMirrorAddress()
 {
 	#extract parameter
-	local outvar="$1"	
-	local mirrorid="$2"
-	local address=""
+	outvar="$1"	
+	mirrorid="$2"
+	address=""
 
 	case $mirrorid in
 		1)
-			local address=http://fs.paratools.com/mpc/contrib
+			address=http://fs.paratools.com/mpc/contrib
 			;;
          2)
-           local address=http://static.paratools.com/mpc/tar/contrib
+           address=http://static.paratools.com/mpc/tar/contrib
            ;;
          3)
-           local address=ftp://fs.paratools.com/mpc/contrib
+           address=ftp://fs.paratools.com/mpc/contrib
            ;;
          4)
-           local address=ftp://paratools08.rrp.net/mpc/contrib
+           address=ftp://paratools08.rrp.net/mpc/contrib
            ;;
          *)
-           local address=ftp://paratools08.rrp.net/mpc/contrib
+           address=ftp://paratools08.rrp.net/mpc/contrib
            ;;
 	esac
 
@@ -252,9 +252,9 @@ getMirrorAddress()
 getModules()
 {
 	#extract parameter
-	local outvar="$1"	
+	outvar="$1"	
 
-	local list=`cat "${PROJECT_SOURCE_DIR}/config.txt" | cut -f 1 -d ';' |  sed -e "s/^#[0-9A-Za-z_-\ #]*//g" | xargs echo`
+	list=`cat "${PROJECT_SOURCE_DIR}/config.txt" | cut -f 1 -d ';' |  sed -e "s/^#[0-9A-Za-z_-\ #]*//g" | xargs echo`
 	eval "${outvar}=\"${list}\""
 }
 
@@ -266,10 +266,10 @@ getModules()
 getPackageVersion()
 {
 	#extract parameter
-	local outvar="${1}"	
-	local package="${2}"
+	outvar="${1}"	
+	package="${2}"
 
-	local version=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${package} " | cut -f 2 -d ';' | xargs echo`
+	version=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${package} " | cut -f 2 -d ';' | xargs echo`
 
 	eval "${outvar}=\"${version}\""
 }
@@ -282,10 +282,10 @@ getPackageVersion()
 getPackageType()
 {
 	#extract parameter
-	local outvar="${1}"	
-	local package="${2}"
+	outvar="${1}"	
+	package="${2}"
 
-	local pType=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${package} " | cut -f 7 -d ';' | xargs echo`
+	pType=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${package} " | cut -f 7 -d ';' | xargs echo`
 
 	eval "${outvar}=\"${pType}\""
 }
@@ -310,7 +310,7 @@ setModulesToInternal()
 #Result : Create var
 genPrefix()
 {
-	local name=`echo "${1}" | tr '[:lower:]' '[:upper:]' | sed -e "s/-/_/g"`
+	name=`echo "${1}" | tr '[:lower:]' '[:upper:]' | sed -e "s/-/_/g"`
 	eval "${name}_PREFIX=\"${INTERNAL_KEY}\""
 }
 
@@ -323,9 +323,9 @@ genPrefix()
 getPrefixOfCmd()
 {
 	#extract parameters
-	local outvar="$1"
-	local cmd="$2"
-	local prefix=''
+	outvar="$1"
+	cmd="$2"
+	prefix=''
 
 	#if not setup, need to find it, try by xml2-config in PATH
 	if which ${cmd} 1>/dev/null 2>/dev/null; then
@@ -346,9 +346,9 @@ getPrefixOfCmd()
 getPrefixWithPkgConfig()
 {
 	#extract parameters
-	local outvar="$1"
-	local package="$2"
-	local prefix=''
+	outvar="$1"
+	package="$2"
+	prefix=''
 
 	#if not setup, need to find it, try by xml2-config in PATH
 	if pkg-config "${package}" --exists 1>/dev/null 2>/dev/null; then
@@ -368,7 +368,7 @@ getPrefixWithPkgConfig()
 include()
 {
 	#setup local var
-	local file="${PROJECT_SOURCE_DIR}/tools/${1}.sh"
+	file="${PROJECT_SOURCE_DIR}/tools/${1}.sh"
 
 	#check before include
 	if [ -f "${file}" ]; then
@@ -388,9 +388,9 @@ include()
 extractParamValue()
 {
 	#extract in local vars
-	local outputvar="$1"
-	local name="$2"
-	local arg="$3"
+	outputvar="$1"
+	name="$2"
+	arg="$3"
 
 	value=`echo "$arg" | sed -e "s/^--${name}=//g"`
 	eval "${outputvar}=\"${value}\""
@@ -402,7 +402,7 @@ extractParamValue()
 # -$1 : Output arch name (target or host)
 findCurrentArch ()
 {
-	local outputvar="$1"
+	outputvar="$1"
 	value=`uname -p`
 	if [ "${value}" = "unknown" ]; then
 		value=`uname -m`
@@ -445,9 +445,9 @@ extractArchValue()
 extractParamValueAlt()
 {
 	#extract in local vars
-	local outputvar="$1"
-	local name="$2"
-	local arg="$3"
+	outputvar="$1"
+	name="$2"
+	arg="$3"
 
 	value=`echo "$arg" | sed -e "s/^-${name}//g"`
 	eval "${outputvar}=\"${value}\""
@@ -462,9 +462,9 @@ extractParamValueAlt()
 extractAndAddPackageOption()
 {
 	#extract in local vars
-	local outputvar="$1"
-	local name="$2"
-	local arg="$3"
+	outputvar="$1"
+	name="$2"
+	arg="$3"
 	
 	value=`echo "$arg" | sed -e "s/^--${name}//g"`
 	eval "${outputvar}=\"\$${outputvar} ${value}\""
@@ -477,7 +477,7 @@ extractAndAddPackageOption()
 enablePrefixEnv()
 {
 	#extract in local vars
-	local prefix="$1"
+	prefix="$1"
 
 	#do exports
 	export PATH="${prefix}/bin:${PATH}"
@@ -495,7 +495,7 @@ applyOnTemplate()
 		SUBPREFIX_HOST=""
 	fi
 	#extract args
-	local file="$1"
+	file="$1"
 	export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
 
 	#Check if the file exist
@@ -529,25 +529,24 @@ applyOnTemplate()
 getPackageCompilationOptions()
 {
 	#made local
-	local package="$1"
-	local host="$2"
-	local target="$3"
-	local compiler="$4"
-	local type="$5"
+	package="$1"
+	host="$2"
+	target="$3"
+	compiler="$4"
+	type="$5"
 	
-	local all_options=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "all *; *all *; *all" | cut -f 6 -d ';'`
-	local configForCompiler=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "all *; *all *; *${compiler}"`
-	local config=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "${host} *; *${target} *; *${compiler} *; *${type}"`
-
+	all_options=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "all *; *all *; *all" | cut -f 6 -d ';'`
+	configForCompiler=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "all *; *all *; *${compiler}"`
+	config=`cat "${PROJECT_PACKAGE_DIR}/${package}/config.txt" | grep "${host} *; *${target} *; *${compiler} *; *${type}"`
 	#check if config variable is not empty
 	if [ ! -z "$config" ]; then	
-		local supported=`echo $config | cut -f 4 -d ';' | xargs echo`
+		supported=`echo $config | cut -f 4 -d ';' | xargs echo`
 		if [ "${supported}" = "no" ]; then
 			echo "Compilation not supported for ${package} with HOST=${host}, TARGET=${target} and COMPILER=${compiler}" 1>&2
 		fi
 	fi
     
-	local options=`echo ${configForCompiler} | cut -f 6 -d ';'`
+	options=`echo ${configForCompiler} | cut -f 6 -d ';'`
 	options="${all_options} ${options} `echo ${config} | cut -f 6 -d ';'`"
 	
 	case ${compiler} in
@@ -584,13 +583,13 @@ registerPackage()
 setupInstallPackage()
 {
 	#made local
-	local name="${1}"
-	local host="${2}"
-	local target="${3}"	
-	local compiler="${4}"
-	local varprefix="${5}"
-	local template="${PROJECT_TEMPLATE_DIR}/Makefile.${6}.in"
-	local type="${7}"
+	name="${1}"
+	host="${2}"
+	target="${3}"	
+	compiler="${4}"
+	varprefix="${5}"
+	template="${PROJECT_TEMPLATE_DIR}/Makefile.${6}.in"
+	type="${7}"
 	
 	#if template is empty, use default
 	if [ -z "$template" ]; then
@@ -601,11 +600,11 @@ setupInstallPackage()
 	eval "prefix=\${${varprefix}_PREFIX}"
 	
 	#Load package options
-	local version=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 2 -d ';' | xargs echo`
-	local status=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 4 -d ';' | xargs echo`
-	local deps=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 5 -d ';' | xargs echo`
-	local runOn=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 6 -d ';' | xargs echo`
-	local options=`getPackageCompilationOptions "${name}" "${host}" "${target}" "${compiler}" "${type}"`
+	version=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 2 -d ';' | xargs echo`
+	status=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 4 -d ';' | xargs echo`
+	deps=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 5 -d ';' | xargs echo`
+	runOn=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${name} " | cut -f 6 -d ';' | xargs echo`
+	options=`getPackageCompilationOptions "${name}" "${host}" "${target}" "${compiler}" "${type}"`
 
 	#extract user options
 	eval "userOptions=\"\$${varprefix}_BUILD_PARAMETERS\""
