@@ -41,7 +41,7 @@ setCompilerList()
 	then
 		tmp_list="${gcc_version} ${tmp_list}"
 		is_there="`cat ${config_file_c} | grep \"mpc-gcc_${gcc_version}\"`"
-		if test ${is_there} = "" ; 
+		if test "${is_there}" = "" ; 
 		then
 			#first patch version
 			echo "${PREFIX}/`uname -m`/gcc/bin/mpc-gcc_${gcc_version}" >> "${config_file_c}"
