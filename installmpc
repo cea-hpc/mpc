@@ -304,14 +304,6 @@ fi
 enablePrefixEnv "${PREFIX}"
 
 ######################################################
-#Wrappers for cross-compil
-#if [ "$MULTI_ARCH" = 'true' ]; then
-#	WRAPPER_CROSS_COMPIL="--cross_exec=${PROJECT_SOURCE_DIR}/mpcframework/MPC_Tools/cross_compilation_scripts/cross_compil.sh"
-#else
-#	WRAPPER_CROSS_COMPIL=''
-#fi
-
-######################################################
 MPCFRAMEWORK_PREFIX="${INTERNAL_KEY}"
 GMP_REAL_PREFIX="${PREFIX}/${MPC_HOST}/${MPC_HOST}/libsgcc"
 MPFR_REAL_PREFIX="${PREFIX}/${MPC_HOST}/${MPC_HOST}/libsgcc"
@@ -338,52 +330,6 @@ MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=\$\(PREFIX\)/libxml2' '--with-ope
 MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
 MPC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' --with-mpfr=${MPFR_REAL_PREFIX} ${MPC_BUILD_PARAMETERS}"
 HYDRA_SIMPLE_BUILD_PARAMETERS="'--with-hydra-mpl=${HYDRA_REAL_PREFIX}' ${HYDRA_SIMPLE_BUILD_PARAMETERS}"
-
-######################################################
-#Clear makefile to generate it (TODO à générer, générer la variable en majuscule)
-# genMakefile()
-# {
-# 	local subprefix="$1"
-# 	local type_arch="$2"
-# 	local host=${MPC_HOST};
-# 	local target=${MPC_TARGET};
-# 	local list=`cat "${PROJECT_SOURCE_DIR}/config.txt" | cut -f 1 -d ';' |  sed -e "s/^#[0-9A-Za-z_-\ #]*//g" | xargs echo`
-	
-# 	#Create subdirectories and update subprefix 
-# 	mkdir -p "${subprefix}/${target}" || exit 1
-# 	cd "${subprefix}/${target}" || exit 1
-# 	SUBPREFIX="/${subprefix}/${target}"
-# 	makefilePath="Makefile.${type_arch}_${target}"
-
-# 	#Check if Makefile exists
-# 	if [ -f "Makefile" ]; then
-# 		echo "Makefile already generated. Use 'distclean' argument to regenerate it."
-# 		echo "Continuing..."
-# 	else
-# 		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.head.in" > ${makefilePath}
-# 		for module in ${list}; 
-# 		do
-# 			local template=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 8 -d ';' | xargs echo`
-# 			local run_on=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 6 -d ';' | xargs echo`
-# 			if [ "${run_on}" = "${2}" ] || [ "${run_on}" = "all" ] || [ "$MULTI_ARCH" != 'true' ];
-# 			then
-# 				UPPER=`echo ${module} | tr '[:lower:]' '[:upper:]'`
-# 				findPackage "${module}"
-# 				setupInstallPackage "${module}" "${host}" "${target}" "${MPC_COMPILER}" "${UPPER}" "${template}" "${2}">> ${makefilePath}
-# 			fi
-# 		done
-
-# 		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot_${type_arch}.in" >> ${makefilePath}
-# 	fi
-
-# 	#Restore path
-# 	cd ${PROJECT_BUILD_DIR}
-
-# 	#Generate root architecture for current type
-# 	MAKEFILEDIR="${PROJECT_BUILD_DIR}${SUBPREFIX}"
-# 	MAKEFILENAME="${makefilePath}"
-# 	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.root_arch.head.in" > ${subprefix}/Makefile
-# }
 
 genMakefilePerType()
 {
@@ -543,4 +489,3 @@ echo
 echo "FINISHED, you can now use the MPC package installed into ${PREFIX}"
 echo "MPC has sourced the host environment by default but you can source"
 echo "a target environment with the command source ${PREFIX}/mpcvars.sh 'target'"
-
