@@ -394,6 +394,11 @@ genMakefilePerType()
 		local run_on=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^${module} " | cut -f 6 -d ';' | xargs echo`
 		if [ "${run_on}" = "${type_arch}" ] || [ "${run_on}" = "all" ];
 		then
+			if test "${type_arch}" = "host"; then
+				RUN_ON="${MPC_HOST}"
+			else
+				RUN_ON="${MPC_TARGET}"
+			fi
 			UPPER=`echo ${module} | tr '[:lower:]' '[:upper:]'`
 			findPackage "${module}"
 			setupInstallPackage "${module}" "${MPC_HOST}" "${MPC_TARGET}" "${MPC_COMPILER}" "${UPPER}" "${template}" "${2}">> ${makefilePath}
@@ -452,7 +457,7 @@ genMakefile()
 		fi
 		applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.root_arch.in" >> ${PROJECT_BUILD_DIR}/${MPC_TARGET}/Makefile
 	fi
-
+	
 	#Restore current path
 	cd ${PROJECT_BUILD_DIR}
 }
