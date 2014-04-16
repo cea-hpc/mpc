@@ -472,7 +472,7 @@ for i in \$@ ; do
     if test "\$i" = "-compilers" ; then
     	count=1
         echo "Compilers available :"
-    	for line in \$( < ${SCTK_PREFIX}/../../.c_compilers.cfg) ;
+    	for line in \$( < ${SCTK_PREFIX}/../../../.c_compilers.cfg) ;
     	do  
         	if [[ "\$line" =~ "mpc-gcc" ]]; 
         	then
@@ -491,6 +491,24 @@ for i in \$@ ; do
         	count=\$((\$count + 1))
     	done
     	exit 1
+    fi
+    
+    if test "\$i" = "-target_list" ; then
+		uname=\`uname -m\`
+		target_list_tmp="\`ls -A ${SCTK_PREFIX}/../../../\`"
+		for d in \`echo \$target_list_tmp\`; 
+		do
+			if test -d "${SCTK_PREFIX}/../../../\${d}"; then
+				target_list="\${target_list} \${d}"
+			fi
+		done
+		for d in \`echo \${target_list}\`; 
+		do
+			if test "\${d}" != "\${uname}"; then
+				echo "\${d}"
+			fi
+		done
+		exit 1
     fi
     COMPILER_ARGS="\$COMPILER_ARGS \$CURRENT_ARG"
 done
