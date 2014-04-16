@@ -488,10 +488,8 @@ cat <<EOF >> "${PREFIX}/mpcvars.sh"
 
 if test "\$#" = "1" ; then
     . "${PREFIX}/\$1/\$1/mpcframework/bin/mpcvars.sh"
-    . "${PREFIX}/\$1/\$1/mpcframework/.target_options"
 else
     . "${PREFIX}/\`uname -m\`/\`uname -m\`/mpcframework/bin/mpcvars.sh"
-    . "${PREFIX}/\`uname -m\`/\`uname -m\`/mpcframework/.target_options"
 fi
 
 EOF
