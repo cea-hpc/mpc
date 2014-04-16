@@ -4,11 +4,11 @@
 . ${MPC_TEST_SOURCE_DIR}/UnitTests/tools/helper_svunittest.sh
 
 #sources of the allocator without posix export
-ALLOC_SOURCE_PATH="${MPC_TEST_SOURCE_DIR}/../mpc/MPC_Allocator/"
+ALLOC_SOURCE_PATH="${MPC_TEST_SOURCE_DIR}/../mpcframework/MPC_Allocator/"
 	
 #Deps
-OPENPA_PREFIX=${MPC_INSTALL_PREFIX}/mpc-openpa-1.0.2/
-HWLOC_PREFIX=${MPC_INSTALL_PREFIX}/mpc-hwloc-1.6.1/
+OPENPA_PREFIX=${MPC_TARGET_INSTALL_PREFIX}/openpa/
+HWLOC_PREFIX=${MPC_TARGET_INSTALL_PREFIX}/hwloc/
 
 #create dirs
 mkdir -p ${MPC_TEST_CURRENT_WORK_DIR}/numa || exit 1
@@ -54,7 +54,7 @@ run_alloc_test_with_max_cores()
 	shift 3
 	COMMAND_OPTIONS="$@"
 	helper_gen_exec_command "$test_exe" "-c=${CLUSTER_MAX_CORES_PER_NODE}"
-	common_insert_test "$test_name" '0' "$command" "$test_deps"
+	common_insert_test "$test_name" '0' "$command" "$test_dep"
 }
 
 #register tests
