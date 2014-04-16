@@ -476,8 +476,8 @@ for i in \$@ ; do
     	do  
         	if [[ "\$line" =~ "mpc-gcc" ]]; 
         	then
-            	patched_gcc=\`tail -c 12 <<<\$line\`
-            	version=\`tail -c 4 <<<\$patched_gcc\`
+            	patched_gcc=\`echo \$line | tail -c 12\`
+            	version=\`echo \$patched_gcc | tail -c 4\`
             	echo "\$count: patched gcc (version \${version:0:1}.\${version:1:1}.\${version:2:2})"
         	elif test "\$line" = "gcc"; then
             	version=\`gcc --version | grep "GCC" | cut -f 3 -d ' '\`  
