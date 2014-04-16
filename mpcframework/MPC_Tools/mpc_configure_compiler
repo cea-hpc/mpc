@@ -472,18 +472,18 @@ for i in \$@ ; do
     if test "\$i" = "-compilers" ; then
     	count=1
         echo "Compilers available :"
-    	for line in \$( < ${SCTK_PREFIX}/../../../.c_compilers.cfg) ;
+    	for line in \` cat ${SCTK_PREFIX}/../../../.c_compilers.cfg\` ;
     	do  
-        	if [[ "\$line" =~ "mpc-gcc" ]]; 
+        	if test "\${line#*'mpc-gcc'}" != "\$line"; 
         	then
             	patched_gcc=\`echo \$line | tail -c 12\`
             	version=\`echo \$patched_gcc | tail -c 4\`
             	echo "\$count: patched gcc (version \${version:0:1}.\${version:1:1}.\${version:2:2})"
         	elif test "\$line" = "gcc"; then
-            	version=\`gcc --version | grep "GCC" | cut -f 3 -d ' '\`  
+            	version=\`gcc --version | grep -i "gcc" | grep -P '[0-9]\.[0-9]\.[0-9]' -o | head -n 1\`  
             	echo "\$count: gcc (version \$version)"
         	elif test "\$line" = "icc"; then
-            	version=\`icc --version | grep "ICC" | cut -f 3 -d ' '\`
+            	version=\`icc --version | grep -i "icc" | cut -f 3 -d ' '\`
             	echo "\$count: icc (version \$version)"
         	else
             	echo "\$count: \$line"
