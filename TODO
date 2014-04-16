@@ -10,30 +10,23 @@ REU 07/04/2014
 
 REU 31/03/2014
 -------------
- + mpcrun : 1) lire le elf avec readelf du binutils compilé pour récup l archi 
- + mpc_cc : 1) utiliser le compilo patché 2) si pas de compilo patché, utiliser le compilo qui a servi pour le build. 
- + mpc_cc : argument pour lister les archi (--targets)
-
- + Verif de la reprise lors de l'extraction des packets
+ + --with-gmp, --with-mpfr, --with-... : posibilité de donner sa propre version 
  + Verif fonctionnel avec des espaces dans les chemins
  + Remonter les erreurs dans le wrapper d'extraction dans les templates
- + générer un fake print_config lorsque host=x86... target=arm|mic sans que target=x86... ait été lancé avant.
- + conserver une version des structures en fonction des archi, si pas présent passer la ccompatibilité avec pthread à 0. (gérer plus tard un executavle standalone pour récupérer les structures)
+ + conserver une version des structures en fonction des archi, si pas présent passer la ccompatibilité avec pthread à 0. (gérer plus tard un executable standalone pour récupérer les structures)
  + utiliser les dépendances (gmp, mpfr, mpc) indiquées dans gcc/contrib/download_...
- + Faire fonctionner le build dans un directory différent 
  + rajouter une colonne dans config.txt racine pour rajouter un nom de patch particulier
- (+ termcap)
- + retirer les "local" pour compatiblité avec sh 
+(+ termcap)
  + check de la presence des deps et des bonnes versions
- + MPC_Tools/configure_extern_deps (path hydra) ?
- + pas de chemin en dur dans mpcrun / mpccc
- + pas de rpath dans libmpc mais sur binaires user oui (vérifier relative rpath pour GCC sinon risque de pb... à checker)
+ + pas de chemin en dur dans mpcrun / mpc_cc
  + vérifier les sorties std/error et dispatch en mode verbose
  + rajouter des fonctions pour les sorties d'erreurs avec gestion des couleurs
- + rajouter un arg de clean 
- + corriger pb de ln sur arch_wrapper (+ printer une étape en plus depuis le script install)
- + propager les nouvelles versions de config par module  
  + MAJ de la doc + maj doc sur le site  
+ + Check commentaires
+
+# TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES LONG TERME !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ + générer un fake print_config lorsque host=x86... target=arm|mic sans que target=x86... ait été lancé avant.
+ + pas de rpath dans libmpc mais sur binaires user oui (vérifier relative rpath pour GCC sinon risque de pb... à checker)
 
 # DEP :
 * binutils
@@ -46,6 +39,17 @@ REU 31/03/2014
 * libgfortran (priv)
 
 # DONE
+ - propager les nouvelles versions de config par module  
+ - rajouter un arg de clean 
+ - corriger pb de ln sur arch_wrapper (+ printer une étape en plus depuis le script install)
+ - MPC_Tools/configure_extern_deps (path hydra) ?
+ - retirer les "local" pour compatiblité avec sh 
+ - Faire fonctionner le build dans un directory différent 
+ - générer un fake print_config lorsque host=x86... target=arm|mic sans que target=x86... ait été lancé avant. 
+ - Verif de la reprise lors de l'extraction des packets
+ - mpcrun : 1) lire le elf avec readelf du binutils compilé pour récup l archi 
+ - mpc_cc : 1) utiliser le compilo patché 2) si pas de compilo patché, utiliser le compilo qui a servi pour le build.
+ - mpc_cc : argument pour lister les archi (--targets)
  - 2) lors de l utilisation d'un script, remplacer -n par -p
  - mpc_cc : 1) sourcer l'environnement pour build (mpcvars) 2) laisser la possibilité de remplacer cet environnement en utilisant une option --target=
  - rajouter un arg de clean
