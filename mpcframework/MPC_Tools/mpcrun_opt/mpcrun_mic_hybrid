@@ -29,7 +29,7 @@ fi
 
 #verify if hydra is Intel version and not mpich
 HYDRA_VERSION="`mpiexec.hydra --version`"
-if [[ "${HYDRA_VERSION}" =~ "Intel" ]] ; then
+if test "\${HYDRA_VERSION#*'Intel'}" != "\$HYDRA_VERSION"; then
 	LAUNCH_COMMAND="mpiexec.hydra"
 	I=0
 	J=0

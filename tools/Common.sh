@@ -93,7 +93,7 @@ setCompilerList()
 			echo "${PREFIX}/`uname -m`/gcc/bin/mpc-gcc_${gcc_version}" >> "${config_file_c}"
 			echo "${PREFIX}/`uname -m`/gcc/bin/mpc-g++_${gcc_version}" >> "${config_file_cplus}"
 			echo "${PREFIX}/`uname -m`/gcc/bin/mpc-gfortran_${gcc_version}" >> "${config_file_fort}"
-		elif [[ "${is_there}" =~ "mpc-gcc_${gcc_version}" ]];
+		if test "\${is_there#*mpc-gcc_${gcc_version}}" != "\$is_there";
 		then
 			#patch version already there
 			echo "patch version already there" > /dev/null
