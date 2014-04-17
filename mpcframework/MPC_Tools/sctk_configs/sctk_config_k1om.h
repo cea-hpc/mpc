@@ -183,6 +183,5 @@ typedef struct {long word_long[7];} sctk_thread_attr_t;
 #define SCTK_VERSION_PRE ""
 
 /*  Install prefix */
-//#define SCTK_INSTALL_PREFIX "/home/users/aserraz/mpc-build/x86_64/"
 #define SCTK_INSTALL_PREFIX @SCTK_PREFIX@
 #endif
