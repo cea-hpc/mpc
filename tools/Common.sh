@@ -93,7 +93,7 @@ setCompilerList()
 			echo "${PREFIX}/`uname -m`/gcc/bin/mpc-gcc_${gcc_version}" >> "${config_file_c}"
 			echo "${PREFIX}/`uname -m`/gcc/bin/mpc-g++_${gcc_version}" >> "${config_file_cplus}"
 			echo "${PREFIX}/`uname -m`/gcc/bin/mpc-gfortran_${gcc_version}" >> "${config_file_fort}"
-		if test "\${is_there#*mpc-gcc_${gcc_version}}" != "\$is_there";
+		elif test "\${is_there#*mpc-gcc_${gcc_version}}" != "\$is_there";
 		then
 			#patch version already there
 			echo "patch version already there" > /dev/null
@@ -660,7 +660,15 @@ setupInstallPackage()
 
 	#check if need to do it
 	if [ "${prefix}" = "${INTERNAL_KEY}" ]; then
-		PACKAGE_DEPS=`echo ${deps} | sed 's|[0-9A-Z_a-z\-]\+|.&|g'`
+		PACKAGE_DEPS=""
+		for dep in `echo ${deps}`; 
+		do
+			UPPER=`echo ${dep} | tr '[:lower:]' '[:upper:]'`
+			eval "DEP_PREFIX=\"${UPPER}_PREFIX\""
+			if test "${!DEP_PREFIX}" = "internal"; then
+				PACKAGE_DEPS="${PACKAGE_DEPS} `echo ${dep} | sed 's|[0-9A-Z_a-z\-]\+|.&|g'`"
+			fi
+		done
 		PACKAGE_VAR_NAME="${varprefix}"
 		PACKAGE_OPTIONS="${options}"
 		PACKAGE_NAME="${name}"

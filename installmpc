@@ -203,6 +203,13 @@ do
 		--gmp-*)
 			extractAndAddPackageOption 'GMP_BUILD_PARAMETERS' 'gmp' "$arg"
 			;;
+		##################### MPC ###################
+		--with-mpc=*)
+			extractParamValue 'MPC_PREFIX' 'with-mpc' "$arg"
+			;;
+		--mpc-*)
+			extractAndAddPackageOption 'MPC_BUILD_PARAMETERS' 'mpc' "$arg"
+			;;
 		################## BINUTILS #################
 		--with-mpc-binutils=*)
 			extractParamValue 'BINUTILS_PREFIX' 'with-mpc-binutils' "$arg"
@@ -317,15 +324,15 @@ enablePrefixEnv "${PREFIX}"
 
 ######################################################
 MPCFRAMEWORK_PREFIX="${INTERNAL_KEY}"
-GMP_REAL_PREFIX="${PREFIX}/${MPC_HOST}/${MPC_HOST}/libsgcc"
-MPFR_REAL_PREFIX="${PREFIX}/${MPC_HOST}/${MPC_HOST}/libsgcc"
-MPC_REAL_PREFIX="${PREFIX}/${MPC_HOST}/${MPC_HOST}/libsgcc"
-HYDRA_REAL_PREFIX="${PREFIX}/${MPC_TARGET}/${MPC_TARGET}"
-HYDRA_SIMPLE_REAL_PREFIX="${PREFIX}/${MPC_TARGET}/${MPC_TARGET}"
-LIBXML2_REAL_PREFIX="${PREFIX}/${MPC_TARGET}/${MPC_TARGET}"
-OPENPA_REAL_PREFIX="${PREFIX}/${MPC_TARGET}/${MPC_TARGET}"
-HWLOC_REAL_PREFIX="${PREFIX}/${MPC_TARGET}/${MPC_TARGET}"
-SCTK_ARCH_REAL_PREFIX="${PREFIX}/${MPC_TARGET}/${MPC_TARGET}"
+GMP_INTERNAL_PREFIX="${PREFIX}/${MPC_HOST}/${MPC_HOST}/libsgcc"
+MPFR_INTERNAL_PREFIX="${PREFIX}/${MPC_HOST}/${MPC_HOST}/libsgcc"
+MPC_INTERNAL_PREFIX="${PREFIX}/${MPC_HOST}/${MPC_HOST}/libsgcc"
+HYDRA_INTERNAL_PREFIX="${PREFIX}/${MPC_TARGET}/${MPC_TARGET}"
+HYDRA_SIMPLE_INTERNAL_PREFIX="${PREFIX}/${MPC_TARGET}/${MPC_TARGET}"
+LIBXML2_INTERNAL_PREFIX="${PREFIX}/${MPC_TARGET}/${MPC_TARGET}"
+OPENPA_INTERNAL_PREFIX="${PREFIX}/${MPC_TARGET}/${MPC_TARGET}"
+HWLOC_INTERNAL_PREFIX="${PREFIX}/${MPC_TARGET}/${MPC_TARGET}"
+SCTK_ARCH_INTERNAL_PREFIX="${PREFIX}/${MPC_TARGET}/${MPC_TARGET}"
 
 ######################################################
 # set compiler list
@@ -335,13 +342,76 @@ setCompilerList "COMPILER_LIST"
 printSummary
 
 ######################################################
-#Create glue between packages
-#'--with-hydra-simple=${HYDRA_SIMPLE_REAL_PREFIX}'
-GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' '--with-mpfr=${MPFR_REAL_PREFIX}' '--with-mpc=${MPC_REAL_PREFIX}' --program-prefix=mpc- --program-suffix=_480 --with-pkgversion=MPC --enable-languages=c,c++,fortran --disable-bootstrap --disable-multilib ${GCC_BUILD_PARAMETERS}"
-MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=\$\(PREFIX\)/libxml2' '--with-openpa=\$\(PREFIX\)/openpa' '--with-hwloc=\$\(PREFIX\)/hwloc' '--with-libsctk_arch=\$\(PREFIX\)/sctk_arch' ${WRAPPER_CROSS_COMPIL} --arch=${MPC_TARGET} --compilers=\"${COMPILER_LIST}\" ${MPCFRAMEWORK_BUILD_PARAMETERS}"
-MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
-MPC_BUILD_PARAMETERS="'--with-gmp=${GMP_REAL_PREFIX}' --with-mpfr=${MPFR_REAL_PREFIX} ${MPC_BUILD_PARAMETERS}"
-HYDRA_SIMPLE_BUILD_PARAMETERS="'--with-hydra-mpl=${HYDRA_REAL_PREFIX}' ${HYDRA_SIMPLE_BUILD_PARAMETERS}"
+# Fill MPC Build parameters
+fillGCCBuildParameters()
+{
+	#verify if users give path for gmp
+	if test -z "${GMP_PREFIX}"; then
+		MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_INTERNAL_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
+		MPC_BUILD_PARAMETERS="'--with-gmp=${GMP_INTERNAL_PREFIX}' ${MPC_BUILD_PARAMETERS}"
+		GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_INTERNAL_PREFIX}' ${GCC_BUILD_PARAMETERS}"
+	else
+		MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
+		MPC_BUILD_PARAMETERS="'--with-gmp=${GMP_PREFIX}' ${MPC_BUILD_PARAMETERS}"
+		GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_PREFIX}' ${GCC_BUILD_PARAMETERS}"
+	fi
+	#verify if users give path for mpfr
+	if test -z "MPFR_PREFIX"; then
+		MPC_BUILD_PARAMETERS="--with-mpfr=${MPFR_INTERNAL_PREFIX} ${MPC_BUILD_PARAMETERS}"
+		GCC_BUILD_PARAMETERS="'--with-mpfr=${MPFR_INTERNAL_PREFIX}' ${GCC_BUILD_PARAMETERS}"
+	else
+		MPC_BUILD_PARAMETERS="--with-mpfr=${MPFR_PREFIX} ${MPC_BUILD_PARAMETERS}"
+		GCC_BUILD_PARAMETERS="'--with-mpfr=${MPFR_PREFIX}' ${GCC_BUILD_PARAMETERS}"
+	fi
+	#verify if users give path for mpc
+	if test -z "${MPC_PREFIX}"; then
+		GCC_BUILD_PARAMETERS="'--with-mpc=${MPC_INTERNAL_PREFIX}' ${GCC_BUILD_PARAMETERS}"
+	else
+		GCC_BUILD_PARAMETERS="'--with-mpc=${MPC_PREFIX}' ${GCC_BUILD_PARAMETERS}"
+	fi
+	
+	version="`cat ${PROJECT_SOURCE_DIR}/config.txt | grep \"gcc\" | cut -f 2 -d ' ' | sed -e 's/.//g'`"
+	GCC_BUILD_PARAMETERS="--program-prefix=mpc- --program-suffix=_${version} --with-pkgversion=MPC --enable-languages=c,c++,fortran --disable-bootstrap --disable-multilib ${GCC_BUILD_PARAMETERS}"
+}
+
+######################################################
+# Fill GCC Build parameters
+fillMPCBuildParameters()
+{
+	#verify if users give path for hwloc
+	if test -z "${HWLOC_PREFIX}"; then
+		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hwloc=${HWLOC_INTERNAL_PREFIX}' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+	else
+		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hwloc=\$\(PREFIX\)/hwloc' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+	fi
+	#verify if users give path for openpa
+	if test -z "${OPENPA_PREFIX}"; then
+		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-openpa=${OPENPA_INTERNAL_PREFIX}' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+	else
+		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-openpa=\$\(PREFIX\)/openpa' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+	fi
+	#verify if users give path for libxml2
+	if test -z "${LIBXML2_PREFIX}"; then
+		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_INTERNAL_PREFIX}' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+	else
+		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=\$\(PREFIX\)/libxml2' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+	fi
+	#verify if users give path for hydra
+	if test -z "${HYDRA_PREFIX}"; then
+		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hydra=${HYDRA_INTERNAL_PREFIX}' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+	else
+		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hydra=\$\(PREFIX\)/hydra' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+	fi
+	
+	MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libsctk_arch=\$\(PREFIX\)/sctk_arch' ${WRAPPER_CROSS_COMPIL} --arch=${MPC_TARGET} --compilers=\"${COMPILER_LIST}\" ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+}
+
+######################################################
+# Fill some external package options
+fillGCCBuildParameters
+fillMPCBuildParameters
+echo "MPCFRAMEWORK_BUILD_PARAMETERS=$MPCFRAMEWORK_BUILD_PARAMETERS"
+HYDRA_SIMPLE_BUILD_PARAMETERS="'--with-hydra-mpl=${HYDRA_INTERNAL_PREFIX}' ${HYDRA_SIMPLE_BUILD_PARAMETERS}"
 
 genMakefilePerType()
 {
