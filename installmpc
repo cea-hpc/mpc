@@ -350,7 +350,7 @@ fillGCCBuildParameters()
 		GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_PREFIX}' ${GCC_BUILD_PARAMETERS}"
 	fi
 	#verify if users give path for mpfr
-	if test -z "MPFR_PREFIX" -o "${MPFR_PREFIX}" = "internal"; then
+	if test -z "${MPFR_PREFIX}" -o "${MPFR_PREFIX}" = "internal"; then
 		MPC_BUILD_PARAMETERS="--with-mpfr=${MPFR_INTERNAL_PREFIX} ${MPC_BUILD_PARAMETERS}"
 		GCC_BUILD_PARAMETERS="'--with-mpfr=${MPFR_INTERNAL_PREFIX}' ${GCC_BUILD_PARAMETERS}"
 	else
@@ -404,7 +404,6 @@ fillMPCBuildParameters()
 # Fill some external package options
 fillGCCBuildParameters
 fillMPCBuildParameters
-echo "MPCFRAMEWORK_BUILD_PARAMETERS=$MPCFRAMEWORK_BUILD_PARAMETERS"
 HYDRA_SIMPLE_BUILD_PARAMETERS="'--with-hydra-mpl=${HYDRA_INTERNAL_PREFIX}' ${HYDRA_SIMPLE_BUILD_PARAMETERS}"
 
 genMakefilePerType()
