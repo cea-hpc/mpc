@@ -10,7 +10,6 @@ REU 07/04/2014
 
 REU 31/03/2014
 -------------
- + --with-gmp, --with-mpfr, --with-... : posibilité de donner sa propre version 
  + Verif fonctionnel avec des espaces dans les chemins
  + Remonter les erreurs dans le wrapper d'extraction dans les templates
  + conserver une version des structures en fonction des archi, si pas présent passer la ccompatibilité avec pthread à 0. (gérer plus tard un executable standalone pour récupérer les structures)
@@ -39,6 +38,7 @@ REU 31/03/2014
 * libgfortran (priv)
 
 # DONE
+ - --with-gmp, --with-mpfr, --with-... : posibilité de donner sa propre version 
  - propager les nouvelles versions de config par module  
  - rajouter un arg de clean 
  - corriger pb de ln sur arch_wrapper (+ printer une étape en plus depuis le script install)

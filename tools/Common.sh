@@ -19,6 +19,16 @@ SUBPREFIX=''
 . "${PROJECT_SOURCE_DIR}/tools/Architectures.sh"
 
 ######################################################
+# Escape var for to get rid of spaces in names
+escapeName()
+{
+	varname="${1}"
+	outputvar="`echo ${!varname} | sed -e 's/\ /\\\ /g'`"
+	echo "${varname}=${outputvar}" 1>&2
+	eval "${varname}=\"${outputvar}\""
+}
+
+######################################################
 # Check if the install is already there
 checkIfInstallAlreadyExists()
 {

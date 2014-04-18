@@ -364,7 +364,7 @@ fillGCCBuildParameters()
 		GCC_BUILD_PARAMETERS="'--with-mpc=${MPC_PREFIX}' ${GCC_BUILD_PARAMETERS}"
 	fi
 	
-	version="`cat ${PROJECT_SOURCE_DIR}/config.txt | grep \"gcc\" | cut -f 2 -d ' ' | sed -e 's/.//g'`"
+	version="`cat ${PROJECT_SOURCE_DIR}/config.txt | grep \"gcc \" | cut -f 2 -d ';' | sed -e 's/\.//g' | xargs echo`"
 	GCC_BUILD_PARAMETERS="--program-prefix=mpc- --program-suffix=_${version} --with-pkgversion=MPC --enable-languages=c,c++,fortran --disable-bootstrap --disable-multilib ${GCC_BUILD_PARAMETERS}"
 }
 
