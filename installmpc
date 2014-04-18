@@ -346,7 +346,7 @@ printSummary
 fillGCCBuildParameters()
 {
 	#verify if users give path for gmp
-	if test -z "${GMP_PREFIX}"; then
+	if test -z "${GMP_PREFIX}" -o "${GMP_PREFIX}" = "internal"; then
 		MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_INTERNAL_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
 		MPC_BUILD_PARAMETERS="'--with-gmp=${GMP_INTERNAL_PREFIX}' ${MPC_BUILD_PARAMETERS}"
 		GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_INTERNAL_PREFIX}' ${GCC_BUILD_PARAMETERS}"
@@ -356,7 +356,7 @@ fillGCCBuildParameters()
 		GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_PREFIX}' ${GCC_BUILD_PARAMETERS}"
 	fi
 	#verify if users give path for mpfr
-	if test -z "MPFR_PREFIX"; then
+	if test -z "MPFR_PREFIX" -o "${MPFR_PREFIX}" = "internal"; then
 		MPC_BUILD_PARAMETERS="--with-mpfr=${MPFR_INTERNAL_PREFIX} ${MPC_BUILD_PARAMETERS}"
 		GCC_BUILD_PARAMETERS="'--with-mpfr=${MPFR_INTERNAL_PREFIX}' ${GCC_BUILD_PARAMETERS}"
 	else
@@ -364,7 +364,7 @@ fillGCCBuildParameters()
 		GCC_BUILD_PARAMETERS="'--with-mpfr=${MPFR_PREFIX}' ${GCC_BUILD_PARAMETERS}"
 	fi
 	#verify if users give path for mpc
-	if test -z "${MPC_PREFIX}"; then
+	if test -z "${MPC_PREFIX}" -o "${MPC_PREFIX}" = "internal"; then
 		GCC_BUILD_PARAMETERS="'--with-mpc=${MPC_INTERNAL_PREFIX}' ${GCC_BUILD_PARAMETERS}"
 	else
 		GCC_BUILD_PARAMETERS="'--with-mpc=${MPC_PREFIX}' ${GCC_BUILD_PARAMETERS}"
@@ -379,25 +379,25 @@ fillGCCBuildParameters()
 fillMPCBuildParameters()
 {
 	#verify if users give path for hwloc
-	if test -z "${HWLOC_PREFIX}"; then
+	if test -z "${HWLOC_PREFIX}" -o "${HWLOC_PREFIX}" = "internal"; then
 		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hwloc=${HWLOC_INTERNAL_PREFIX}' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	else
 		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hwloc=\$\(PREFIX\)/hwloc' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	fi
 	#verify if users give path for openpa
-	if test -z "${OPENPA_PREFIX}"; then
+	if test -z "${OPENPA_PREFIX}" -o "${OPENPA_PREFIX}" = "internal"; then
 		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-openpa=${OPENPA_INTERNAL_PREFIX}' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	else
 		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-openpa=\$\(PREFIX\)/openpa' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	fi
 	#verify if users give path for libxml2
-	if test -z "${LIBXML2_PREFIX}"; then
+	if test -z "${LIBXML2_PREFIX}" -o "${LIBXML2_PREFIX}" = "internal"; then
 		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_INTERNAL_PREFIX}' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	else
 		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=\$\(PREFIX\)/libxml2' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	fi
 	#verify if users give path for hydra
-	if test -z "${HYDRA_PREFIX}"; then
+	if test -z "${HYDRA_PREFIX}" -o "${HYDRA_PREFIX}" = "internal"; then
 		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hydra=${HYDRA_INTERNAL_PREFIX}' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	else
 		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hydra=\$\(PREFIX\)/hydra' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
