@@ -13,6 +13,8 @@ ALL_PACKAGES_TARGET=''
 COMPILER_LIST=''
 CHECK_INSTALL="true"
 
+#set -x
+
 ######################################################
 #setup paths
 PROJECT_BUILD_DIR=$PWD
