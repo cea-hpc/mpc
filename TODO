@@ -13,7 +13,6 @@ REU 31/03/2014
  + Verif fonctionnel avec des espaces dans les chemins
  + Remonter les erreurs dans le wrapper d'extraction dans les templates
  + conserver une version des structures en fonction des archi, si pas présent passer la ccompatibilité avec pthread à 0. (gérer plus tard un executable standalone pour récupérer les structures)
- + utiliser les dépendances (gmp, mpfr, mpc) indiquées dans gcc/contrib/download_...
  + rajouter une colonne dans config.txt racine pour rajouter un nom de patch particulier
 (+ termcap)
  + check de la presence des deps et des bonnes versions
@@ -38,6 +37,7 @@ REU 31/03/2014
 * libgfortran (priv)
 
 # DONE
+ - utiliser les dépendances (gmp, mpfr, mpc) indiquées dans gcc/contrib/download_...
  - --with-gmp, --with-mpfr, --with-... : posibilité de donner sa propre version 
  - propager les nouvelles versions de config par module  
  - rajouter un arg de clean 
