@@ -674,8 +674,8 @@ setupInstallPackage()
 		for dep in `echo ${deps}`; 
 		do
 			UPPER=`echo ${dep} | tr '[:lower:]' '[:upper:]'`
-			eval "DEP_PREFIX=\"${UPPER}_PREFIX\""
-			if test "${!DEP_PREFIX}" = "internal"; then
+			eval "DEP_PREFIX=\${${UPPER}_PREFIX}"
+			if test "${DEP_PREFIX}" = "internal"; then
 				PACKAGE_DEPS="${PACKAGE_DEPS} `echo ${dep} | sed 's|[0-9A-Z_a-z\-]\+|.&|g'`"
 			fi
 		done
