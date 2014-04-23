@@ -1,5 +1,7 @@
 # TODO LIST
 
+ + Verif si le mirror n+1 est bien testé si mirror down.
+
 REU 14/04/2014
  + HYDRA :
 	- verifier que nous pouvons utiliser 2 paths differents pour le proxy d'hydra de l hote et du device
@@ -25,6 +27,7 @@ REU 31/03/2014
 # TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES TRES LONG TERME !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
  + générer un fake print_config lorsque host=x86... target=arm|mic sans que target=x86... ait été lancé avant.
  + pas de rpath dans libmpc mais sur binaires user oui (vérifier relative rpath pour GCC sinon risque de pb... à checker)
+
 
 # DEP :
 * binutils
