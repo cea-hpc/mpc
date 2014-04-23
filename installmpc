@@ -406,7 +406,6 @@ fillMPCBuildParameters()
 # Fill some external package options
 fillGCCBuildParameters
 fillMPCBuildParameters
-HYDRA_SIMPLE_BUILD_PARAMETERS="'--with-hydra-mpl=${HYDRA_INTERNAL_PREFIX}' ${HYDRA_SIMPLE_BUILD_PARAMETERS}"
 
 genMakefilePerType()
 {

@@ -666,7 +666,9 @@ PACKAGE_VERSION
 PACKAGE_TARNAME
 PACKAGE_NAME
 PATH_SEPARATOR
-SHELL'
+SHELL
+INCLUDES
+mpldir'
 ac_subst_files=''
 ac_user_opts='
 enable_option_checking
@@ -731,7 +733,7 @@ psdir='${docdir}'
 libdir='${exec_prefix}/lib'
 localedir='${datarootdir}/locale'
 mandir='${datarootdir}/man'
-
+mpldir=
 ac_prev=
 ac_dashdash=
 for ac_option
@@ -900,6 +902,10 @@ do
     ac_prev=mandir ;;
   -mandir=* | --mandir=* | --mandi=* | --mand=* | --man=* | --ma=* | --m=*)
     mandir=$ac_optarg ;;
+
+   --with-hydra-mpl=*)
+   mpldir=$ac_optarg
+   export mpldir ;; 
 
   -nfp | --nfp | --nf)
     # Obsolete; use --without-fp.
@@ -1249,6 +1255,8 @@ Installation directories:
                           [$ac_default_prefix]
   --exec-prefix=EPREFIX   install architecture-dependent files in EPREFIX
                           [PREFIX]
+
+  --whith-hydra-mpl=DIR   install directory of a complete hydra version 
 
 By default, \`make install' will install all the files in
 \`$ac_default_prefix/bin', \`$ac_default_prefix/lib' etc.  You can specify
@@ -5306,7 +5314,7 @@ case $srcdir in
     ac_abs_top_srcdir=$ac_pwd/$srcdir ;;
 esac
 ac_abs_srcdir=$ac_abs_top_srcdir$ac_dir_suffix
-
+mpldir=$mpldir
 
   case $ac_mode in
   :F)
@@ -5361,6 +5369,7 @@ s|@configure_input@|$ac_sed_conf_input|;t t
 s&@top_builddir@&$ac_top_builddir_sub&;t t
 s&@top_build_prefix@&$ac_top_build_prefix&;t t
 s&@srcdir@&$ac_srcdir&;t t
+s&@MPLDIR@&$mpldir&;t t
 s&@abs_srcdir@&$ac_abs_srcdir&;t t
 s&@top_srcdir@&$ac_top_srcdir&;t t
 s&@abs_top_srcdir@&$ac_abs_top_srcdir&;t t

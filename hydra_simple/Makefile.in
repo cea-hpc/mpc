@@ -27,8 +27,8 @@ C_COMPILE_SHL   = $(CC_SHL) $(DEFS) $(INCLUDES) $(CFLAGS) $(CPPFLAGS)
 
 VPATH = .:@srcdir@
 HEADERS = simple_pmiutil.h
-INCLUDES = -I../hydra-1.4/mpl/include
-LDFLAGS = -L../hydra-1.4/mpl/
+INCLUDES = -I@MPLDIR@/include
+LDFLAGS = -L@MPLDIR@/lib
 LIBS = -lmpl
 
 .SUFFIXES:
