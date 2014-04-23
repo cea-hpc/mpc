@@ -58,7 +58,6 @@ MPC_COMPILER="gcc"
 
 ######################################################
 #compute subdirs
-#TODO: modifier extern-deps pour inclure les dir des deps + patches 
 PROJECT_TEMPLATE_DIR="${PROJECT_SOURCE_DIR}/tools/templates"
 PROJECT_PACKAGE_DIR="${PROJECT_SOURCE_DIR}/extern-deps"
 PROJECT_PATCH_DIR="${PROJECT_SOURCE_DIR}/patches"
@@ -73,15 +72,8 @@ if [ -t 1 ]; then
     fi
 fi
 
-#Check cores available to perform parallel builds 
-if [ -f /proc/cpuinfo ];
-then
-	MAKE_J=`cat /proc/cpuinfo | egrep "core id|physical id" | tr -d '\n' | sed s/physical/\\\nphysical/g | grep -v "^$" | sort | uniq | wc -l`
-fi
-
 ######################################################
 # Set all modules to internal
-# TODO : clean this and use it in config file
 setModulesToInternal
 
 ######################################################
@@ -335,9 +327,6 @@ MPC_INTERNAL_PREFIX="${PREFIX}/${MPC_HOST}/${MPC_HOST}/libsgcc"
 setCompilerList "COMPILER_LIST"
 
 ######################################################
-printSummary
-
-######################################################
 # Fill MPC Build parameters
 fillGCCBuildParameters()
 {
@@ -518,14 +507,26 @@ if [ "${MPC_HOST}" = "" ]; then
 	findCurrentArch 'MPC_HOST'
 fi
 
-genMakefile
-createRootMakefile
+######################################################
+#some info about parallel building
+if [ ! -z "$MAKE_J" ]; then
+	echo "Running in parallel with -j${MAKE_J}..."
+else 
+	#Check cores available and display info to perform parallel builds
+	if [ -f /proc/cpuinfo ];
+	then
+		MAKE_J_AVAILABLE=`cat /proc/cpuinfo | egrep "core id|physical id" | tr -d '\n' | sed s/physical/\\\nphysical/g | grep -v "^$" | sort | uniq | wc -l`
+		if [ "${MAKE_J_AVAILABLE}" -gt "1" ]; then 
+			echo "Warning: this install script is running sequentially. However ${MAKE_J_AVAILABLE} physical cores were detected on your system.\nThis installation could run faster. Use -j argument (e.g. -j${MAKE_J_AVAILABLE}) to perform a parallel build.\n"
+		fi
+	fi
+fi
 
 ######################################################
-#some info
-if [ ! -z "$MAKE_J" ]; then
-	echo "Running in parallel with -j$MAKE_J..."
-fi
+printSummary
+
+genMakefile
+createRootMakefile
 
 #made verbose if seq
 if [ "$MAKE_J" = "1" ] || [ -z "$MAKE_J" ]; then
