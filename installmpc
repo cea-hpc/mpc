@@ -11,12 +11,15 @@ ALL_PACKAGES=''
 ALL_PACKAGES_HOST=''
 ALL_PACKAGES_TARGET=''
 COMPILER_LIST=''
+
+#Default values
+DOWNLOAD='disabled'
+MIRROR='1'
+MULTI_ARCH='false'
 CHECK_INSTALL="true"
 
-#set -x
-
 ######################################################
-#setup paths
+#Setup paths
 PROJECT_BUILD_DIR=$PWD
 PROJECT_SOURCE_DIR="`dirname "$0"`"
 if [ "${PROJECT_SOURCE_DIR}" != "." ];
@@ -26,7 +29,7 @@ else
 	PROJECT_SOURCE_DIR="${PWD}"
 fi
 
-#avoid to build locally
+#Avoid to build locally
 if [ "${PROJECT_BUILD_DIR}" = "${PROJECT_SOURCE_DIR}" ]; 
 then
 	#check if build directory exist
@@ -39,25 +42,18 @@ then
 	cd build
 fi
 
-
 ######################################################
-#default values
-DOWNLOAD='disabled'
-MIRROR='1'
-MULTI_ARCH='false'
-
-######################################################
-#include common
+#Include common
 . "${PROJECT_SOURCE_DIR}/tools/Common.sh"
 
 ######################################################
-#set default configuration behavior
+#Set default configuration behavior
 findCurrentArch 'MPC_HOST'
 MPC_TARGET="${MPC_HOST}"
 MPC_COMPILER="gcc"
 
 ######################################################
-#compute subdirs
+#Compute subdirs
 PROJECT_TEMPLATE_DIR="${PROJECT_SOURCE_DIR}/tools/templates"
 PROJECT_PACKAGE_DIR="${PROJECT_SOURCE_DIR}/extern-deps"
 PROJECT_PATCH_DIR="${PROJECT_SOURCE_DIR}/patches"
@@ -232,7 +228,6 @@ do
 		--compiler=*)
 			extractParamValue 'MPC_COMPILER' 'compiler' "$arg"
 			;;
-			
 		############### MPCFRAMEWORK ################
 		--mpc-option=*)
 			extractAndAddPackageOption 'MPCFRAMEWORK_BUILD_PARAMETERS' 'mpc-option=' "$arg"
@@ -244,13 +239,11 @@ do
 		--host=*)
 			extractArchValue 'MPC_HOST' 'host' "$arg"
 			export MPC_HOST
-			#MULTI_ARCH='true'
 			;;
 		--target=*)
 			extractArchValue 'MPC_TARGET' 'target' "$arg"
 			export MPC_TARGET
 			export MPC_HOST
-			#MULTI_ARCH='true'
 			;;
 		--arch-library-path=*)
 			ARCH_LIBRARY_PATH="${arg}"
@@ -280,7 +273,7 @@ do
 			;;
 		--prefix=*)
 			extractParamValue 'PREFIX' 'prefix' "$arg"
-			#check if prefix directory exists
+			#Check if prefix directory exists
 			if [ ! -d "${PREFIX}" ]; then
 				mkdir -p ${PREFIX}
 			fi
@@ -295,13 +288,13 @@ do
 done
 
 ######################################################
-# Check if the install is already there
+#Check if install is already there
 if test "${CHECK_INSTALL}" = "true"; then
 	checkIfInstallAlreadyExists
 fi
 
 ######################################################
-#check for specific arch libs
+#Check for specific arch libs
 if test "${MPC_TARGET}" = "k1om"; then
 	if test "${ARCH_LIBRARY_PATH}" = ""; then
 		echo "##########################################################################################"
@@ -323,14 +316,14 @@ MPFR_INTERNAL_PREFIX="${PREFIX}/${MPC_HOST}/${MPC_HOST}/libsgcc"
 MPC_INTERNAL_PREFIX="${PREFIX}/${MPC_HOST}/${MPC_HOST}/libsgcc"
 
 ######################################################
-# set compiler list
+#Set compiler list
 setCompilerList "COMPILER_LIST"
 
 ######################################################
-# Fill MPC Build parameters
+#Fill MPC Build parameters
 fillGCCBuildParameters()
 {
-	#verify if users give path for gmp
+	#Verify if users give path for gmp
 	if test -z "${GMP_PREFIX}" -o "${GMP_PREFIX}" = "internal"; then
 		MPFR_BUILD_PARAMETERS="'--with-gmp=${GMP_INTERNAL_PREFIX}' ${MPFR_BUILD_PARAMETERS}"
 		MPC_BUILD_PARAMETERS="'--with-gmp=${GMP_INTERNAL_PREFIX}' ${MPC_BUILD_PARAMETERS}"
@@ -340,7 +333,7 @@ fillGCCBuildParameters()
 		MPC_BUILD_PARAMETERS="'--with-gmp=${GMP_PREFIX}' ${MPC_BUILD_PARAMETERS}"
 		GCC_BUILD_PARAMETERS="'--with-gmp=${GMP_PREFIX}' ${GCC_BUILD_PARAMETERS}"
 	fi
-	#verify if users give path for mpfr
+	#Verify if users give path for mpfr
 	if test -z "${MPFR_PREFIX}" -o "${MPFR_PREFIX}" = "internal"; then
 		MPC_BUILD_PARAMETERS="--with-mpfr=${MPFR_INTERNAL_PREFIX} ${MPC_BUILD_PARAMETERS}"
 		GCC_BUILD_PARAMETERS="'--with-mpfr=${MPFR_INTERNAL_PREFIX}' ${GCC_BUILD_PARAMETERS}"
@@ -348,7 +341,7 @@ fillGCCBuildParameters()
 		MPC_BUILD_PARAMETERS="--with-mpfr=${MPFR_PREFIX} ${MPC_BUILD_PARAMETERS}"
 		GCC_BUILD_PARAMETERS="'--with-mpfr=${MPFR_PREFIX}' ${GCC_BUILD_PARAMETERS}"
 	fi
-	#verify if users give path for mpc
+	#Verify if users give path for mpc
 	if test -z "${MPC_PREFIX}" -o "${MPC_PREFIX}" = "internal"; then
 		GCC_BUILD_PARAMETERS="'--with-mpc=${MPC_INTERNAL_PREFIX}' ${GCC_BUILD_PARAMETERS}"
 	else
@@ -360,16 +353,16 @@ fillGCCBuildParameters()
 }
 
 ######################################################
-# Fill GCC Build parameters
+#Fill GCC Build parameters
 fillMPCBuildParameters()
 {
-	#verify if users give path for hwloc
+	#Verify if users give path for hwloc
 	if test -z "${HWLOC_PREFIX}" -o "${HWLOC_PREFIX}" = "internal"; then
 		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hwloc=\$\(PREFIX\)/hwloc' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	else
 		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hwloc=${HWLOC_PREFIX}' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	fi
-	#verify if users give path for openpa
+	#Verify if users give path for openpa
 	if test -z "${OPENPA_PREFIX}" -o "${OPENPA_PREFIX}" = "internal"; then
 		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-openpa=\$\(PREFIX\)/openpa' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	else
@@ -381,7 +374,7 @@ fillMPCBuildParameters()
 	else
 		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_PREFIX}' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	fi
-	#verify if users give path for hydra
+	#Verify if users give path for hydra
 	if test -z "${HYDRA_PREFIX}" -o "${HYDRA_PREFIX}" = "internal"; then
 		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hydra=\$\(PREFIX\)/hydra' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	else
@@ -392,7 +385,7 @@ fillMPCBuildParameters()
 }
 
 ######################################################
-# Fill some external package options
+#Fill some external package options
 fillGCCBuildParameters
 fillMPCBuildParameters
 
@@ -508,7 +501,7 @@ if [ "${MPC_HOST}" = "" ]; then
 fi
 
 ######################################################
-#some info about parallel building
+#Print some info about parallel building
 if [ ! -z "$MAKE_J" ]; then
 	echo "Running in parallel with -j${MAKE_J}..."
 else 
@@ -528,7 +521,7 @@ printSummary
 genMakefile
 createRootMakefile
 
-#made verbose if seq
+#Made verbose if seq
 if [ "$MAKE_J" = "1" ] || [ -z "$MAKE_J" ]; then
 	if [ -z "$STEP_WRAPPER_VERBOSE" ]; then export STEP_WRAPPER_VERBOSE=3; fi
 fi
@@ -538,7 +531,7 @@ if [ ! -f "${PROJECT_BUILD_DIR}/.mpcbuilddir" ]; then
 	touch "${PROJECT_BUILD_DIR}/.mpcbuilddir"
 fi
 
-#do it
+#Do it
 cd ${PROJECT_BUILD_DIR}
 if [ "$STEP_WRAPPER_VERBOSE" = '3' ]; then
 	make -j$MAKE_J || fatal "Finish with errors, please read previous messages."
@@ -560,7 +553,7 @@ fi
 EOF
 
 ######################################################
-# Put the new install in the list
+#Put the new install in the list
 putNewInstall
 
 ######################################################
