@@ -25,16 +25,25 @@ begin_section Generate mpcrun
 mkdir -p bin
 
 echo "#!/bin/sh" > bin/mpcrun
+cat <<EOF >> bin/mpcrun
+if test -z \${MPC_RPREFIX}; then
+	echo "################################################################"
+	echo "# No MPC_RPREFIX defined. it is the root of the actual prefix  #"
+	echo "# Yout should source the mpcvars.sh file in root of MPC prefix #"
+	echo "################################################################"
+	exit 1
+fi
+EOF
 header_sh >> bin/mpcrun
 
 cat <<EOF >> bin/mpcrun
 
-prefix=${SCTK_PREFIX}
-exec_prefix=${SCTK_PREFIX}/bin
-MPC_BIN_DIR=${SCTK_BIN_DIR}
-MPC_LIB_DIR=${SCTK_LIB_DIR}
-MPC_SHARE_DIR=${SCTK_SHARE_DIR}
-MPC_INCLUDE_DIR=${SCTK_INCLUDE_DIR}
+prefix=\${MPC_RPREFIX}/${MPC_SUBPREFIX}
+exec_prefix=\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin
+MPC_BIN_DIR=\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin
+MPC_LIB_DIR=\${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib
+MPC_SHARE_DIR=\${MPC_RPREFIX}/${MPC_SUBPREFIX}/share/mpc
+MPC_INCLUDE_DIR=\${MPC_RPREFIX}/${MPC_SUBPREFIX}/include
 SCTK_NET_LIST="$SCTK_NET_LIST"
 SCTK_NET_LIST_EXP="$SCTK_NET_LIST_EXP"
 SCTK_JOB_MANAGER="$SCTK_JOB_MANAGER"

@@ -11,5 +11,5 @@ openpa       ; 1.0.2 ;       ; dep     ;                                        
 sctk_arch    ;       ;       ; install ;                                                   ; target  ; local		; local.autotools
 mpcframework ;       ;       ; install ; libxml2 hwloc openpa sctk_arch hydra hydra_simple ; target  ; local		; local.autotools
 hydra        ; 3.1   ;       ; install ;                                                   ; all     ; extern		; generic.autotools
-hydra_simple ;       ;       ; install ; hydra                                             ; all     ; hydra_simple	; local.autotools.hydra_simple
+hydra_simple ;       ;       ; install ; hydra                                             ; all     ; hydra_simple	; local.autotools
 gdb          ; 7.6.2 ;       ; install ;                                                   ; target  ; extern		; generic.autotools

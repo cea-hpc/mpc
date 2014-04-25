@@ -273,6 +273,7 @@ do
 			;;
 		--prefix=*)
 			extractParamValue 'PREFIX' 'prefix' "$arg"
+			export MPC_RPREFIX="${PREFIX}"
 			#Check if prefix directory exists
 			if [ ! -d "${PREFIX}" ]; then
 				mkdir -p ${PREFIX}
@@ -358,30 +359,30 @@ fillMPCBuildParameters()
 {
 	#Verify if users give path for hwloc
 	if test -z "${HWLOC_PREFIX}" -o "${HWLOC_PREFIX}" = "internal"; then
-		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hwloc=\$\(PREFIX\)/hwloc' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hwloc=\$\(PREFIX\)/' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	else
 		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hwloc=${HWLOC_PREFIX}' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	fi
 	#Verify if users give path for openpa
 	if test -z "${OPENPA_PREFIX}" -o "${OPENPA_PREFIX}" = "internal"; then
-		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-openpa=\$\(PREFIX\)/openpa' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-openpa=\$\(PREFIX\)/' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	else
 		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-openpa=${OPENPA_PREFIX}' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	fi
 	#verify if users give path for libxml2
 	if test -z "${LIBXML2_PREFIX}" -o "${LIBXML2_PREFIX}" = "internal"; then
-		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=\$\(PREFIX\)/libxml2' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=\$\(PREFIX\)/' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	else
 		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libxml2=${LIBXML2_PREFIX}' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	fi
 	#Verify if users give path for hydra
 	if test -z "${HYDRA_PREFIX}" -o "${HYDRA_PREFIX}" = "internal"; then
-		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hydra=\$\(PREFIX\)/hydra' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hydra=\$\(PREFIX\)/' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	else
 		MPCFRAMEWORK_BUILD_PARAMETERS="'--with-hydra=${HYDRA_PREFIX}' ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 	fi
 	
-	MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libsctk_arch=\$\(PREFIX\)/sctk_arch' ${WRAPPER_CROSS_COMPIL} --arch=${MPC_TARGET} --compilers=\"${COMPILER_LIST}\" ${MPCFRAMEWORK_BUILD_PARAMETERS}"
+	MPCFRAMEWORK_BUILD_PARAMETERS="'--with-libsctk_arch=\$\(PREFIX\)/' ${WRAPPER_CROSS_COMPIL} --arch=${MPC_TARGET} --compilers=\"${COMPILER_LIST}\" ${MPCFRAMEWORK_BUILD_PARAMETERS}"
 }
 
 ######################################################
@@ -405,6 +406,10 @@ genMakefilePerType()
 			fi
 			UPPER=`echo ${module} | tr '[:lower:]' '[:upper:]'`
 			findPackage "${module}"
+			tmp=`echo "$LD_LIBRARY_PATH" | grep "${MPC_RPREFIX}/${MPC_HOST}/${MPC_TARGET}/lib"`
+			if test "${tmp}" = ""; then
+				export LD_LIBRARY_PATH="${MPC_RPREFIX}/${MPC_HOST}/${MPC_TARGET}/lib:$LD_LIBRARY_PATH"
+			fi
 			setupInstallPackage "${module}" "${MPC_HOST}" "${MPC_TARGET}" "${MPC_COMPILER}" "${UPPER}" "${template}" "${2}">> ${makefilePath}
 		fi
 	done
@@ -544,10 +549,16 @@ fi
 echo "#!/bin/sh" > "${PREFIX}/mpcvars.sh"
 cat <<EOF >> "${PREFIX}/mpcvars.sh"
 
+SCRIPT=\$(cd \`dirname "\${BASH_SOURCE[0]}"\` && pwd)/\`basename "\${BASH_SOURCE[0]}"\`
+SCRIPTPATH=\$(dirname "\$SCRIPT")
+export MPC_RPREFIX="\$SCRIPTPATH"
+
 if test "\$#" = "1" ; then
-    . "${PREFIX}/\$1/\$1/mpcframework/bin/mpcvars.sh"
+    . "\${MPC_RPREFIX}/\$1/\$1/bin/mpcvars.sh"
+    export MPC_SUBPREFIX="/\$1/\$1/"
 else
-    . "${PREFIX}/\`uname -m\`/\`uname -m\`/mpcframework/bin/mpcvars.sh"
+    . "\${MPC_RPREFIX}/\`uname -m\`/\`uname -m\`/bin/mpcvars.sh"
+    export MPC_SUBPREFIX="/\`uname -m\`/\`uname -m\`/"
 fi
 
 EOF

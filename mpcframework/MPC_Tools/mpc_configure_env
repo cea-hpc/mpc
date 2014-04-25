@@ -40,7 +40,7 @@ header_sh >> ${OUTPUT_FILE}
 
 #if test "${MPC_HOST}" = "${ARCH}" ; then
 cat <<EOF >> ${OUTPUT_FILE}
-MPCROOT="${SCTK_PREFIX}"
+MPCROOT="`echo \"\\${MPC_RPREFIX}/${MPC_SUBPREFIX}\"`"
 EOF
 #else
 #cat <<EOF >> ${OUTPUT_FILE}
@@ -86,10 +86,8 @@ else
    export LD_LIBRARY_PATH="\${MPCROOT}/lib:\${LD_LIBRARY_PATH}"
 fi
 
-if test -z "\${LD_LIBRARY_PATH}" ; then
-   export LD_LIBRARY_PATH="\${MPCROOT}/../libsgcc/lib"
-else
-   export LD_LIBRARY_PATH="\${MPCROOT}/../libsgcc/lib:\${LD_LIBRARY_PATH}"
+if test -z "\${MPCROOT}/libsgcc" ; then
+   export LD_LIBRARY_PATH="\${MPCROOT}/libsgcc/lib:\${LD_LIBRARY_PATH}"
 fi
 EOF
 
@@ -101,10 +99,8 @@ else
    export LD_LIBRARY_PATH="\${MPCROOT}/lib:${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}"
 fi
 
-if test -z "\${LD_LIBRARY_PATH}" ; then
-   export LD_LIBRARY_PATH="\${MPCROOT}/../libsgcc/lib:${ADD_TO_LIBRARY_PATH}"
-else
-   export LD_LIBRARY_PATH="\${MPCROOT}/../libsgcc/lib:${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}"
+if test -z "\${MPCROOT}/libsgcc" ; then
+   export LD_LIBRARY_PATH="\${MPCROOT}/libsgcc/lib:${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}"
 fi
 EOF
 fi
@@ -162,9 +158,9 @@ else
 endif
 
 if (\$?LD_LIBRARY_PATH) then
-   setenv LD_LIBRARY_PATH "\${MPCROOT}/../libsgcc/lib:\${LD_LIBRARY_PATH}"
+   setenv LD_LIBRARY_PATH "\${MPCROOT}/libsgcc/lib:\${LD_LIBRARY_PATH}"
 else
-   setenv LD_LIBRARY_PATH "\${MPCROOT}/../libsgcc/lib"
+   setenv LD_LIBRARY_PATH "\${MPCROOT}/libsgcc/lib"
 endif
 EOF
 
@@ -177,9 +173,9 @@ else
 endif
 
 if (\$?LD_LIBRARY_PATH) then
-   setenv LD_LIBRARY_PATH "\${MPCROOT}/../libsgcc/lib:${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}"
+   setenv LD_LIBRARY_PATH "\${MPCROOT}/libsgcc/lib:${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}"
 else
-   setenv LD_LIBRARY_PATH "\${MPCROOT}/../libsgcc/lib:${ADD_TO_LIBRARY_PATH}"
+   setenv LD_LIBRARY_PATH "\${MPCROOT}/libsgcc/lib:${ADD_TO_LIBRARY_PATH}"
 endif
 EOF
 fi

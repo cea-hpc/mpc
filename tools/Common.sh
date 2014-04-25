@@ -82,9 +82,9 @@ setCompilerList()
 	outputvar="$1"
 	compiler="${MPC_COMPILER}"
 	gcc_version=`cat "${PROJECT_SOURCE_DIR}/config.txt" | grep "^gcc " | cut -f 2 -d ';' | sed -e 's/\.//g' | xargs echo`
-	config_file_c="${PREFIX}/.c_compilers.cfg"
-	config_file_cplus="${PREFIX}/.c++_compilers.cfg"
-	config_file_fort="${PREFIX}/.f77_compilers.cfg"
+	config_file_c="${MPC_RPREFIX}/.c_compilers.cfg"
+	config_file_cplus="${MPC_RPREFIX}/.c++_compilers.cfg"
+	config_file_fort="${MPC_RPREFIX}/.f77_compilers.cfg"
 	
 	if test ! -f "${config_file_c}" ; then
 		touch "${config_file_c}"
@@ -100,18 +100,18 @@ setCompilerList()
 		if test "${is_there}" = "" ; 
 		then
 			#first patch version
-			echo "${PREFIX}/`uname -m`/gcc/bin/mpc-gcc_${gcc_version}" >> "${config_file_c}"
-			echo "${PREFIX}/`uname -m`/gcc/bin/mpc-g++_${gcc_version}" >> "${config_file_cplus}"
-			echo "${PREFIX}/`uname -m`/gcc/bin/mpc-gfortran_${gcc_version}" >> "${config_file_fort}"
+			echo "\${MPC_RPREFIX}/`uname -m`/`uname -m`/gcc/bin/mpc-gcc_${gcc_version}" >> "${config_file_c}"
+			echo "\${MPC_RPREFIX}/`uname -m`/`uname -m`/gcc/bin/mpc-g++_${gcc_version}" >> "${config_file_cplus}"
+			echo "\${MPC_RPREFIX}/`uname -m`/`uname -m`/gcc/bin/mpc-gfortran_${gcc_version}" >> "${config_file_fort}"
 		elif test "\${is_there#*mpc-gcc_${gcc_version}}" != "\$is_there";
 		then
 			#patch version already there
 			echo "patch version already there" > /dev/null
 		else
 			#new patch version 
-			sed -i "1i${PREFIX}/`uname -m`/gcc/bin/mpc-gcc_${gcc_version}" "${config_file_c}"
-			sed -i "1i${PREFIX}/`uname -m`/gcc/bin/mpc-g++_${gcc_version}" "${config_file_cplus}"
-			sed -i "1i${PREFIX}/`uname -m`/gcc/bin/mpc-gfortran_${gcc_version}" "${config_file_fort}"
+			sed -i "1i\${MPC_RPREFIX}/`uname -m`/`uname -m`/gcc/bin/mpc-gcc_${gcc_version}" "${config_file_c}"
+			sed -i "1i\${MPC_RPREFIX}/`uname -m`/`uname -m`/gcc/bin/mpc-g++_${gcc_version}" "${config_file_cplus}"
+			sed -i "1i\${MPC_RPREFIX}/`uname -m`/`uname -m`/gcc/bin/mpc-gfortran_${gcc_version}" "${config_file_fort}"
 		fi
 	fi
 	

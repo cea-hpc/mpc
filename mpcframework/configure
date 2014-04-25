@@ -284,10 +284,10 @@ for arg in "$@" ; do
     SCTK_LDFLAGS="$SCTK_LDFLAGS -mmic "
     #SCTK_AR=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ar
     #SCTK_LD=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ld
-    #SCTK_AR=`echo "${SCTK_PREFIX}" | sed -re 's#'"${MPC_TARGET}"'/mpcframework|'"${MPC_HOST}"'/mpcframework#'"${MPC_HOST}"'/binutils#g'`/bin/x86_64-k1om-linux-ar
-    #SCTK_LD=`echo "${SCTK_PREFIX}" | sed -re 's#'"${MPC_TARGET}"'/mpcframework|'"${MPC_HOST}"'/mpcframework#'"${MPC_HOST}"'/binutils#g'`/bin/x86_64-k1om-linux-ld
-    SCTK_AR=`echo "${SCTK_PREFIX}" | sed '0,/'"${MPC_TARGET}"'/s/'"${MPC_TARGET}"'/'"${MPC_HOST}"'/' | sed 's/mpcframework/binutils/'`/bin/x86_64-k1om-linux-ar
-    SCTK_LD=`echo "${SCTK_PREFIX}" | sed '0,/'"${MPC_TARGET}"'/s/'"${MPC_TARGET}"'/'"${MPC_HOST}"'/' | sed 's/mpcframework/binutils/'`/bin/x86_64-k1om-linux-ld
+    #SCTK_AR=`echo "${SCTK_PREFIX}" | sed -re 's#'"${MPC_TARGET}"'|'"${MPC_HOST}"'#'"${MPC_HOST}"'#g'`/bin/x86_64-k1om-linux-ar
+    #SCTK_LD=`echo "${SCTK_PREFIX}" | sed -re 's#'"${MPC_TARGET}"'|'"${MPC_HOST}"'#'"${MPC_HOST}"'#g'`/bin/x86_64-k1om-linux-ld
+    SCTK_AR=`echo "${SCTK_PREFIX}" | sed '0,/'"${MPC_TARGET}"'/s/'"${MPC_TARGET}"'/'"${MPC_HOST}"'/'`/bin/x86_64-k1om-linux-ar
+    SCTK_LD=`echo "${SCTK_PREFIX}" | sed '0,/'"${MPC_TARGET}"'/s/'"${MPC_TARGET}"'/'"${MPC_HOST}"'/'`/bin/x86_64-k1om-linux-ld
     ;;
     --arch-library-path=*)
     SCTK_ARCH_LIBRARY_PATH="`echo A$arg | sed -e 's/A--arch-library-path=//g'`"
@@ -298,6 +298,8 @@ for arg in "$@" ; do
     ;;
     --prefix=*)
     SCTK_PREFIX="`echo A$arg | sed -e 's/A--prefix=//g'`"
+    MPC_SUBPREFIX="${SCTK_PREFIX#*${MPC_RPREFIX}}"
+    export MPC_SUBPREFIX
     ;;
     --exec-prefix=*)
     SCTK_EPREFIX="`echo A$arg | sed -e 's/A--exec-prefix=//g'`"

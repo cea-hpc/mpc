@@ -9,6 +9,7 @@ SHELL           = @SHELL@
 AR              = ar
 AR_FLAGS        = rcu
 RANLIB          = ranlib
+prefix			= @prefix@
 top_builddir    = @master_top_builddir@
 abs_builddir    = @abs_builddir@
 master_top_srcdir  = @master_top_srcdir@
@@ -90,6 +91,12 @@ libsimple.a: safestr2.o simple_pmiutil.o simple_pmi.o
 	fi
 	@${RANLIB} $@
 	
+install:all
+	@mkdir -p ${prefix}/include
+	@cp ${srcdir}/*.h ${prefix}/include
+	@cp *.h ${prefix}/include
+	@cp *.a ${prefix}/lib
+
 #all-redirect: .libstamp0 ../../../lib/lib${MPILIBNAME}.a
 #	@if [ "@ENABLE_SHLIB@" != "none" ] ; then \
 #	    ${MAKE} .libstamp1 || exit 1; \
@@ -132,4 +139,3 @@ distclean-local:
 .POSIX:
 
 FORCE_TARGET:
-

@@ -32,6 +32,15 @@ printf_compiler(){
 
 # Header
 echo "#!/bin/sh" > $1
+cat <<EOF >> $1
+if test -z \${MPC_RPREFIX}; then
+	echo "################################################################"
+	echo "# No MPC_RPREFIX defined. it is the root of the actual prefix  #"
+	echo "# Yout should source the mpcvars.sh file in root of MPC prefix #"
+	echo "################################################################"
+	exit 1
+fi
+EOF
 header_sh >> $1
 
 
@@ -105,15 +114,16 @@ use_mpc_privat="true"
 # Regular flags and compiler (C, C++ or fortran)
 if test ! -z "${BINUTILS_PREFIX_INSTALL}" && test "$use_mpc_privat" = "true"
 then
+BINUTILS_SUBPREFIX="${BINUTILS_PREFIX_INSTALL#*${MPC_RPREFIX}}"
 cat <<EOF >> $1
-CFLAGS="\`$SCTK_BIN_DIR/mpc_cflags $2\`"
-LDFLAGS="\`$SCTK_BIN_DIR/mpc_ldflags $2\` -B$BINUTILS_PREFIX_INSTALL/bin"
+CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags $2\`"
+LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags $2\` -B\${MPC_RPREFIX}/${BINUTILS_SUBPREFIX}/bin"
 CC=$CC
 EOF
 else
 cat <<EOF >> $1
-CFLAGS="\`$SCTK_BIN_DIR/mpc_cflags $2\`"
-LDFLAGS="\`$SCTK_BIN_DIR/mpc_ldflags $2\`"
+CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags $2\`"
+LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags $2\`"
 CC=$CC
 EOF
 fi
@@ -121,7 +131,7 @@ fi
 
 # More variable definitions (Library path, show and different shades of args)
 cat << EOF >> $1
-LIB_PATH="-Wl,-rpath,$SCTK_LIB_DIR ${LIB_PATH}"
+#LIB_PATH="-Wl,-rpath,\${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib ${LIB_PATH}"
 if test "\$MPC_MAKEFILE" != "" ; then 
 LIB_PATH=""
 fi
@@ -236,9 +246,9 @@ cat << EOF >> $1
 	addarg=no
 	
 	echo "loading \${TARGET} options..."
-	if test -f "`echo "${SCTK_PREFIX}" | sed -re 's#'"${MPC_HOST}"'|'"${MPC_TARGET}"'#\${TARGET}#g'`/.target_options"; then
-		. `echo "${SCTK_PREFIX}" | sed -re 's#'"${MPC_HOST}"'|'"${MPC_TARGET}"'#\${TARGET}#g'`/.target_options
-		cat `echo "${SCTK_PREFIX}" | sed -re 's#'"${MPC_HOST}"'|'"${MPC_TARGET}"'#\${TARGET}#g'`/.target_options
+	if test -f "`echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}" | sed -re 's#'"${MPC_HOST}"'|'"${MPC_TARGET}"'#\${TARGET}#g'`/.target_options"; then
+		. `echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}" | sed -re 's#'"${MPC_HOST}"'|'"${MPC_TARGET}"'#\${TARGET}#g'`/.target_options
+		cat `echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}" | sed -re 's#'"${MPC_HOST}"'|'"${MPC_TARGET}"'#\${TARGET}#g'`/.target_options
 	else
 		echo "This architecture is not supported"
 		exit 1
@@ -426,6 +436,16 @@ INTEL_PRIVATIZE="-mSYMTAB_mpc_privatize"
 print_specific_compiler(){
 # Header
 echo "#!/bin/sh" > $1
+echo "#!/bin/sh" > $1
+cat <<EOF >> $1
+if test -z \${MPC_RPREFIX}; then
+	echo "################################################################"
+	echo "# No MPC_RPREFIX defined. it is the root of the actual prefix  #"
+	echo "# Yout should source the mpcvars.sh file in root of MPC prefix #"
+	echo "################################################################"
+	exit 1
+fi
+EOF
 header_sh >> $1
 
 if test "$4" = "intel"; then
@@ -472,7 +492,7 @@ for i in \$@ ; do
     if test "\$i" = "-compilers" ; then
     	count=1
         echo "Compilers available :"
-    	for line in \` cat ${SCTK_PREFIX}/../../../.c_compilers.cfg\` ;
+    	for line in \` cat \${MPC_RPREFIX}/.c_compilers.cfg\` ;
     	do  
         	if test "\${line#*'mpc-gcc'}" != "\$line"; 
         	then
@@ -495,10 +515,10 @@ for i in \$@ ; do
     
     if test "\$i" = "-target_list" ; then
 		uname=\`uname -m\`
-		target_list_tmp="\`ls -A ${SCTK_PREFIX}/../../../\`"
+		target_list_tmp="\`ls -A \${MPC_RPREFIX}/\`"
 		for d in \`echo \$target_list_tmp\`; 
 		do
-			if test -d "${SCTK_PREFIX}/../../../\${d}"; then
+			if test -d "\${MPC_RPREFIX}/\${d}"; then
 				target_list="\${target_list} \${d}"
 			fi
 		done
@@ -522,7 +542,7 @@ EOF
 fi
 cat <<EOF >> $1
 
-$SCTK_BIN_DIR/$3 \$ADD_FLAG_PRIVATIZE \$COMPILER_ARGS
+\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/$3 \$ADD_FLAG_PRIVATIZE \$COMPILER_ARGS
 
 EOF
 
@@ -530,71 +550,71 @@ EOF
 
 #fill target options for mpc_cc
 #for the host
-if test "`echo ${SCTK_PREFIX} | grep "${SCTK_ARCH}"`" = ""; then
-	if test ! -d "${SCTK_PREFIX}"; then
-			mkdir "${SCTK_PREFIX}"
+if test "`echo ${MPC_RPREFIX}/${MPC_SUBPREFIX}/ | grep "${SCTK_ARCH}"`" = ""; then
+	if test ! -d "${MPC_RPREFIX}/${MPC_SUBPREFIX}/"; then
+			mkdir -p "${MPC_RPREFIX}/${MPC_SUBPREFIX}/"
 	fi
 	
-	if test -f "${SCTK_PREFIX}/.target_options"; then
-		rm "${SCTK_PREFIX}/.target_options"
-		touch "${SCTK_PREFIX}/.target_options"
+	if test -f "\${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"; then
+		rm "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+		touch "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
 	else
-		touch "${SCTK_PREFIX}/.target_options"
+		touch "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
 	fi
 	case `uname -m` in
 		x86_64)
-cat <<EOF >> "${SCTK_PREFIX}/.target_options"
+cat <<EOF >> "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
 #!/bin/sh
 export SCTK_MIC=0
-export CC=`head -n 1 ${SCTK_PREFIX}../../.c_compilers`
+export CC=`head -n 1 \${MPC_RPREFIX}/.c_compilers`
 addarg=no
-export CFLAGS="\`${SCTK_PREFIX}/bin/mpc_cflags c\`"
-export LDFLAGS="\`${SCTK_PREFIX}/bin/mpc_ldflags c\`"	
+export CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\`"
+export LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"	
 EOF
 		;;
 		k1om)
-cat <<EOF >> "${SCTK_PREFIX}/.target_options"
+cat <<EOF >> "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
 #!/bin/sh
 export SCTK_MIC=1
 export CC=icc
 addarg=no
-export CFLAGS="\`${SCTK_PREFIX}/bin/mpc_cflags c\` -mmic"
-export LDFLAGS="\`${SCTK_PREFIX}/bin/mpc_ldflags c\`"	
+export CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\` -mmic"
+export LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"	
 EOF
 		;;
 	esac
 else
 #for the target
-	if test ! -d "${SCTK_PREFIX}"; then
-		mkdir "${SCTK_PREFIX}"
+	if test ! -d "${MPC_RPREFIX}/${MPC_SUBPREFIX}/"; then
+		mkdir -p "${MPC_RPREFIX}/${MPC_SUBPREFIX}/"
 	fi
 	
-	if test -f "${SCTK_PREFIX}/.target_options"; then
-		rm "${SCTK_PREFIX}/.target_options"
-		touch "${SCTK_PREFIX}/.target_options"
+	if test -f "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"; then
+		rm "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+		touch "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
 	else
-		touch "${SCTK_PREFIX}/.target_options"
+		touch "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
 	fi
 	#for the target
 	case "${SCTK_ARCH}" in 
 		x86_64)
-cat <<EOF >> "${SCTK_PREFIX}/.target_options"
+cat <<EOF >> "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
 #!/bin/sh
 export SCTK_MIC=0
-export CC=`head -n 1 ${SCTK_PREFIX}../../.c_compilers`
+export CC=`head -n 1 \${MPC_RPREFIX}/.c_compilers`
 addarg=no
-export CFLAGS="\`${SCTK_PREFIX}/bin/mpc_cflags c\`"
-export LDFLAGS="\`${SCTK_PREFIX}/bin/mpc_ldflags c\`"	
+export CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\`"
+export LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"	
 EOF
 		;;
 		k1om)
-cat <<EOF >> "${SCTK_PREFIX}/.target_options"
+cat <<EOF >> "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
 #!/bin/sh
 export SCTK_MIC=1
 export CC=icc
 addarg=no
-export CFLAGS="\`${SCTK_PREFIX}/bin/mpc_cflags c\` -mmic"
-export LDFLAGS="\`${SCTK_PREFIX}/bin/mpc_ldflags c\`"	
+export CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\` -mmic"
+export LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"	
 EOF
 		;;
 	esac
@@ -612,12 +632,12 @@ if test "${COMPILER_LIST}" != "" ; then
     # Generate C compiler
     #
     begin_section Generate C Compiler: mpc_cc_$i
-      CC=`echo "${SCTK_PREFIX}/bin/mpc-gcc_$i" | sed -e 's|mpcframework|gcc|g'`
-      if test "${SCTK_ARCH}" = "x86_64" ; then
-	LIB_PATH="-Wl,-rpath,${SCTK_PREFIX}/../gcc/lib64"
-      else
-	LIB_PATH="-Wl,-rpath,${SCTK_PREFIX}/../gcc/lib"
-      fi
+      CC=`echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc-gcc_$i"`
+#      if test "${SCTK_ARCH}" = "x86_64" ; then
+#	LIB_PATH="-Wl,-rpath,\${MPC_RPREFIX}/${MPC_SUBPREFIX}/../gcc/lib64"
+#      else
+#	LIB_PATH="-Wl,-rpath,\${MPC_RPREFIX}/${MPC_SUBPREFIX}/../gcc/lib"
+#      fi
 	  
 	  if test "${i}" = "gcc" ; then
 		CC=gcc
@@ -640,7 +660,7 @@ if test "${COMPILER_LIST}" != "" ; then
     # Generate C++ compiler
     #
     begin_section Generate C++ Compiler: mpc_cxx_${i}
-	  CC=`echo "${SCTK_PREFIX}/bin/mpc-g++_$i" | sed -e 's|mpcframework|gcc|g'`
+	  CC=`echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc-g++_$i"`
       if test "${i}" = "gcc" ; then
 		CC=g++
 	  fi
@@ -655,7 +675,7 @@ if test "${COMPILER_LIST}" != "" ; then
     #
     if test "$SCTK_FORTRAN" = "1" ; then 
       begin_section Generate Fortran77 Compiler: mpc_f77_${i}
-	CC=`echo "${SCTK_PREFIX}/bin/mpc-gfortran_$i" | sed -e 's|mpcframework|gcc|g'`
+	CC=`echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc-gfortran_$i"`
 	if test "${i}" = "gcc" ; then
 		CC=gfortran
 	fi

@@ -473,7 +473,7 @@ else
     echo "${arch_bin} architecture detected"
     # setup complete hydra path. Exported to be used into mpcrun_opt/* scripts
 	if [ $SCTK_HYDRA -eq 1 ] && [ $MPC_HYDRA -eq 1 ] && [ ! -z "$SCTK_HYDRA_PREFIX" ]; then
-		export SCTK_HYDRA_BINDIR="${prefix}/../hydra/bin/"
+		export SCTK_HYDRA_BINDIR="${prefix}/bin/"
 		export PATH="${SCTK_HYDRA_BINDIR}:${PATH}"
 	fi
 fi
