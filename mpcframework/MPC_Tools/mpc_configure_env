@@ -54,7 +54,7 @@ export MPI_ROOT="\${MPCROOT}"
 if test -z "\${PATH}" ; then
    export PATH="\${MPCROOT}/bin"
 else
-   export PATH="\${MPCROOT}/bin:\${PATH}"
+   export PATH="\${PATH}:\${MPCROOT}/bin"
 fi
 
 # if test -z "\${CPATH}" ; then
@@ -123,7 +123,7 @@ set MPCROOT="${SCTK_PREFIX}"
 setenv MPI_ROOT "\${MPCROOT}"
 
 if (\$?PATH) then
-   setenv PATH "\${MPCROOT}/bin:\${PATH}"
+   setenv PATH "\${PATH}:\${MPCROOT}/bin"
 else
    setenv PATH "\${MPCROOT}/bin"
 endif
