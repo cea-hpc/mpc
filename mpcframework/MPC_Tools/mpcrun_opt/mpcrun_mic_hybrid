@@ -27,24 +27,28 @@ if test "$MPCRUN_CONFIG_FILE" = "" ; then
 	read MPCRUN_CONFIG_FILE
 fi
 
-#verify if hydra is Intel version and not mpich
+verify if hydra is Intel version and not mpich
 HYDRA_VERSION="`mpiexec.hydra --version`"
 if test "\${HYDRA_VERSION#*'Intel'}" != "\$HYDRA_VERSION"; then
 	LAUNCH_COMMAND="mpiexec.hydra"
 	I=0
 	J=0
 	while read line; do 
-		I=$(($I + 1)); 
+		if test "${line}" != ""; then
+			I=$(($I + 1)); 
+		fi
 	done < "${MPCRUN_CONFIG_FILE}"
 	#create launch command for hydra
 	while read line; do
-		line=`echo ${line} | sed -e 's/-p/-n/'`
-		if test "$J" = $(($I - 1)); then
-			LAUNCH_COMMAND="${LAUNCH_COMMAND} ${line} $USER_ARGS $SCTK_ARGS"; 
-		else
-			LAUNCH_COMMAND="${LAUNCH_COMMAND} ${line} $USER_ARGS $SCTK_ARGS :"; 
+		if test "${line}" != ""; then
+			line=`echo ${line} | sed -e 's/-p/-n/'`
+			if test "$J" = $(($I - 1)); then
+				LAUNCH_COMMAND="${LAUNCH_COMMAND} ${line} $USER_ARGS $SCTK_ARGS"; 
+			else
+				LAUNCH_COMMAND="${LAUNCH_COMMAND} ${line} $USER_ARGS $SCTK_ARGS :"; 
+			fi
+			J=$(($J + 1)); 
 		fi
-		J=$(($J + 1)); 
 	done < "${MPCRUN_CONFIG_FILE}"
 	export I_MPI_MIC=enable
 	echo "Launching command $LAUNCH_COMMAND"
