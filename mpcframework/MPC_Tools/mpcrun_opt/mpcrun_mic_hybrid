@@ -27,9 +27,9 @@ if test "$MPCRUN_CONFIG_FILE" = "" ; then
 	read MPCRUN_CONFIG_FILE
 fi
 
-verify if hydra is Intel version and not mpich
+# verify if hydra is Intel version and not mpich
 HYDRA_VERSION="`mpiexec.hydra --version`"
-if test "\${HYDRA_VERSION#*'Intel'}" != "\$HYDRA_VERSION"; then
+if test "${HYDRA_VERSION#*'Intel'}" != "$HYDRA_VERSION"; then
 	LAUNCH_COMMAND="mpiexec.hydra"
 	I=0
 	J=0

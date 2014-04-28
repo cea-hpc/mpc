@@ -456,7 +456,7 @@ fi
 
 # verify arch bin and host compatibility
 UNAME="`uname -m`"
-if test "`uname -m`" != "${arch_bin}"; then
+if test "`uname -m`" != "${arch_bin}" -a "{MPCRUN_CONFIG_FILE}" = ""; then
 	if test "${arch_bin}" = "0"; then 
 		arch_bin="unknown" 
 	fi
