@@ -18,7 +18,6 @@ REU 31/03/2014
  + rajouter une colonne dans config.txt racine pour rajouter un nom de patch particulier
 (+ termcap)
  + check de la presence des deps et des bonnes versions
- + pas de chemin en dur dans mpcrun / mpc_cc
  + vérifier les sorties std/error et dispatch en mode verbose
  + rajouter des fonctions pour les sorties d'erreurs avec gestion des couleurs
  + MAJ de la doc + maj doc sur le site  
@@ -40,6 +39,7 @@ REU 31/03/2014
 * libgfortran (priv)
 
 # DONE
+ - pas de chemin en dur dans mpcrun / mpc_cc
  - utiliser les dépendances (gmp, mpfr, mpc) indiquées dans gcc/contrib/download_...
  - --with-gmp, --with-mpfr, --with-... : posibilité de donner sa propre version 
  - propager les nouvelles versions de config par module  
