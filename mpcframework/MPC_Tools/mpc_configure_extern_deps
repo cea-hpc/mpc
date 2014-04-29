@@ -1,0 +1,527 @@
+#!/bin/sh
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - VALAT Sebastien sebastien.valat@cea.fr                           #
+#                                                                      #
+########################################################################
+
+#Default values
+EXTERN_NON_TESTED_LIB=""
+HWLOCK_IS_SETUP="no"
+OPENPA_IS_SETUP="no"
+HYDRA_IS_SETUP="no"
+SLURM_IS_SETUP="no"
+OPENIB_IS_SETUP="no"
+LIBXML_IS_SETUP="no"
+LIBSCTK_ARCH_IS_SETUP="no"
+HYDRA_MODULE="${PWD}/../hydra_simple"
+PMI_LIB=""
+
+# Setup vars to use lib hydra
+# Params:
+# Global variales:
+#   - HYDRA_MODULE: path to hydra build dir
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_ARFLAGS , SCTK_LDFLAGS , HYDRA_IS_SETUP
+sctk_internal_setup_lib_hydra()
+{
+	if [ "$HYDRA_IS_SETUP" != "yes" ]; then
+		SCTK_HYDRA_PREFIX="${SCTK_PREFIX}/../hydra/"
+		HYDRA_MODULE="${PWD}/../hydra_simple"
+		SCTK_CFLAGS="${SCTK_CFLAGS} -I${HYDRA_MODULE} -DMPC_USE_HYDRA"
+		SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HYDRA_MODULE}/safestr2.o ${HYDRA_MODULE}/simple_pmiutil.o ${HYDRA_MODULE}/simple_pmi.o"
+		SCTK_LDFLAGS="${SCTK_LDFLAGS} -L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib"
+		EXTERN_NON_TESTED_LIB="${EXTERN_NON_TESTED_LIB} -lsimple"
+	fi
+
+	#mark as setup
+	HYDRA_IS_SETUP="yes"
+}
+
+# Find slurm default prefix
+sctk_internal_setup_lib_slurm_default_prefix()
+{
+	if [ -z "$SLURM_PREFIX" ]; then
+		if [ -f "/usr/local/include/slurm/pmi.h" ]; then
+			SLURM_PREFIX="/usr/local"
+		elif [ -f "/usr/include/slurm/pmi.h" ]; then
+			SLURM_PREFIX="/usr"
+		else
+			error "Cannot find include/slurm/pmi.h in /usr or /usr/local, please provide your slurm prefix with --with-slurm=...."
+			exit 1
+		fi
+	fi
+}
+
+# Setup vars to use lib slurm
+# Params:
+# Global variables:
+#   - SLURM_PREFIX : path to slurm install dir.
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_ARFLAGS , SCTK_LDFLAGS , SLURM_IS_SETUP
+sctk_internal_setup_lib_slurm()
+{
+	if [ "$SLURM_IS_SETUP" != "yes" ]; then
+		# Find default if required
+		sctk_internal_setup_lib_slurm_default_prefix
+		# For the moment, we dont use rpath
+		if [ -d "${SLURM_PREFIX}" ]; then
+			if [ -f ${SLURM_PREFIX}/lib64/libpmi.so ]; then
+				SLURM_LIBDIR=${SLURM_PREFIX}/lib64
+			elif [ -f ${SLURM_PREFIX}/lib/libpmi.so ]; then
+				SLURM_LIBDIR=${SLURM_PREFIX}/lib
+			else
+				sctk_error "libpmi found neither in ${SLURM_PREFIX}/lib nor ${SLURM_PREFIX}/lib64"
+				exit 1
+			fi
+			#setup vars
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${SLURM_LIBDIR}/libpmi.so"
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${SLURM_LIBDIR} -L${SLURM_LIBDIR}"
+			SCTK_CFLAGS="${SCTK_CFLAGS} -I${SLURM_PREFIX}/include/slurm"
+		else
+			error "Invalid slurm prefix : $SLURM_PREFIX"
+			exit 1
+		fi
+		#infor source code
+		SCTK_CFLAGS="${SCTK_CFLAGS} -DMPC_USE_SLURM"
+	fi
+
+	#setup PMI_LIB
+	PMI_LIB="-lpmi"
+
+	#mark as setup
+	SLURM_IS_SETUP="yes"
+}
+
+# Fallback to slurm if can't usr the hydra provide by root configure script.
+# Global vars:
+#   - SCTK_HYDRA , SCTK_SLURM , HYDRA_MODULE
+sctk_internal_setup_pmi_slurm_fallback()
+{
+	if test "$SCTK_HYDRA" = "1" && ! test -e "${HYDRA_MODULE}"; then
+		sctk_echo "========================WARNING========================="
+		sctk_echo "Hydra was not found : Use the root configure in order to"
+		sctk_echo "                      install MPC with Hydra support.   "
+		sctk_echo "=> MPC will now try to use Slurm as default launcher <= "
+		sctk_echo "========================================================"
+		sctk_echo "Setting MPC launcher to:   Slurm (if available)"
+		sctk_wait "Configure" 5
+		#Deactivate Hydra
+		SCTK_HYDRA=0
+		#Try to use Slurm
+		SCTK_SLURM=1
+	fi
+}
+
+#Check presence of libPMI (use hydra or slurm depending on the setting)
+#Automatically setup hydra or slurm is not already setup.
+SCTK_CHECK_LIB_PMI()
+{
+	#begin section
+	begin_section PMI
+
+	#fallback
+	sctk_internal_setup_pmi_slurm_fallback
+
+	SCTK_MSG_CHECKING "Launcher"
+	if [ $SCTK_HYDRA -eq 1 ] && [ $SCTK_SLURM -eq 0 ]; then
+		sctk_internal_setup_lib_hydra
+		result 'hydra'
+	elif [ $SCTK_HYDRA -eq 0 ] && [ $SCTK_SLURM -eq 1 ]; then
+		sctk_internal_setup_lib_slurm
+		result 'slurm'
+		SCTK_MSG_CHECKING "slurm prefix"
+		result "$SLURM_PREFIX"
+	else
+		result 'hydra,slurm'
+		sctk_error "Your must use --with-slurm or --with-hydra, but you can't use both at same time."
+	fi
+
+	#checks
+	SCTK_CHECK_HEADER "pmi.h"
+	SCTK_CHECK_LDOPTION $PMI_LIB
+
+	end_section
+}
+
+# Setup vars to use lib hwloc
+# Params :
+# Global variables :
+#   - HWLOC_USER_PREFIX : Prefix used to search hwloc, embeded to use the one from MPC package.
+#   - HWLOC_PREFIX_BUILD : Build directory where to find the internal hwloc.
+#   - HWLOC_PREFIX_INSTALL : Install directory for hwlock.
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS , HWLOCK_LIB , HWLOCK_IS_SETUP
+sctk_internal_setup_lib_hwloc()
+{
+	if [ "$HWLOCK_IS_SETUP" != "yes" ]; then
+		if [ "${HWLOC_USER_PREFIX}" = "embeded" ]; then
+			#We are relying on our own HWLOC
+			#HWLOC_PREFIX_INSTALL is defined in the root configure
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_PREFIX_BUILD}/src/.libs/libhwloc.so"
+			SCTK_CFLAGS="${SCTK_CFLAGS} -I${HWLOC_PREFIX_BUILD}/include/"
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -L${HWLOC_PREFIX_BUILD}/src/.libs"
+		elif [ -n "${HWLOC_USER_PREFIX}" ]; then
+			#We are relying on a provided HWLOC
+			if [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/include/hwloc.h" ]; then
+				SCTK_CFLAGS="${SCTK_CFLAGS} -I`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/include/"
+			else
+				sctk_printf "Could not locate hwloc.h header in directory ${MPC_RPREFIX}/${MPC_SUBPREFIX}/include/"
+				error "You might build using root configure to build the hwloc library"
+			fi
+
+			#setup rpaths and -L
+			if [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib64/libhwloc.so" ]; then
+				SCTK_LDFLAGS="${SCTK_LDFLAGS} -L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib64"
+				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib64/libhwloc.so"
+			elif [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib/libhwloc.so" ]; then
+				SCTK_LDFLAGS="${SCTK_LDFLAGS} -L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib"
+				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${HWLOC_USER_PREFIX}/lib/libhwloc.so"
+			fi
+		fi
+	fi
+
+	#avoid to test -lopa if used embeded as it was not build while calling configure, so will fail
+	if [ "${OPENPA_USER_PREFIX}" = "embeded"  ]; then
+		EXTERN_NON_TESTED_LIB="${EXTERN_NON_TESTED_LIB} -lhwloc"
+	fi
+
+	#mark as setup
+	HWLOCK_IS_SETUP="yes"
+}
+
+# Setup vars to use lib hwloc
+# Params :
+# Global variables :
+#   - HWLOC_USER_PREFIX : Prefix used to search hwloc, embeded to use the one from MPC package.
+#   - HWLOC_PREFIX_BUILD : Build directory where to find the internal hwloc.
+#   - HWLOC_PREFIX_INSTALL : Install directory for hwlock.
+#   - HWLOCK_IS_SETUP : To know if hwlock is already setup
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS , HWLOCK_LIB
+SCTK_CHECK_LIB_HWLOC()
+{
+	#mark test section
+	begin_section hwloc
+
+	#setup if needed
+	sctk_internal_setup_lib_hwloc
+
+	#check header
+	SCTK_CHECK_HEADER "hwloc.h"
+
+	#avoid to test -lopa if used embeded as it was not build while calling configure, so will fail
+	if [ "${OPENPA_USER_PREFIX}" != "embeded"  ]; then
+		SCTK_CHECK_LDOPTION "-lhwloc"
+	fi
+
+	#end of section
+	end_section
+}
+
+# Setup vars to use lib openpa
+# Params :
+# Global variables :
+#   - OPENPA_USER_PREFIX : Prefix used to search openpa, embeded to use the one from MPC package.
+#   - OPENPA_PREFIX_BUILD : Build directory where to find the internal openpa
+#   - OPENPA_PREFIX_INSTALL : Install directory for openpa
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS , OPENPA_LIB , OPENPA_IS_SETUP
+sctk_internal_setup_lib_openpa()
+{
+	if [ "$OPENPA_IS_SETUP" != "yes" ]; then
+		if [ "${OPENPA_USER_PREFIX}" = "embeded"  ]; then
+			#we are relying on our own OpenPA
+			#OPENPA_PREFIX_INSTALL is defined in the root configure
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENPA_PREFIX_BUILD}/src/opa_primitives.o ${OPENPA_PREFIX_BUILD}/src/opa_queue.o"
+			SCTK_CFLAGS="${SCTK_CFLAGS} -I${OPENPA_PREFIX_BUILD}/src/"
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -L${OPENPA_PREFIX_BUILD}/src"
+		elif [ -n "${OPENPA_USER_PREFIX}" ]; then
+			#We are relying on a provided OpenPA
+			if [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/include/opa_config.h" ]; then
+				SCTK_CFLAGS="${SCTK_CFLAGS} -I`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/include/"
+			else
+				sctk_printf "Could not locate opa_config.h header in directory ${MPC_RPREFIX}/${MPC_SUBPREFIX}/include/"
+				error "You might build using root configure to build the OpenPA library"
+			fi
+
+			#setup rpaths and -L
+			if [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib64/libopa.a" ]; then
+				SCTK_LDFLAGS="${SCTK_LDFLAGS} -L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib64"
+				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENPA_USER_PREFIX}/lib64/libopa.a"
+			elif [ -e "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib/libopa.a" ]; then
+				SCTK_LDFLAGS="${SCTK_LDFLAGS} -L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib"
+				SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENPA_USER_PREFIX}/lib/libopa.a"
+			fi
+		fi
+	fi
+
+	#avoid to test -lopa if used embeded as it was not build while calling configure, so will fail
+	if [ "${OPENPA_USER_PREFIX}" = "embeded"  ]; then
+		EXTERN_NON_TESTED_LIB="${EXTERN_NON_TESTED_LIB} -lopa"
+	fi
+
+	#mark as setup
+	OPENPA_IS_SETUP="yes"
+}
+
+# Setup vars to use lib openpa
+# Params :
+# Global variables :
+#   - OPENPA_USER_PREFIX : Prefix used to search openpa, embeded to use the one from MPC package.
+#   - OPENPA_PREFIX_BUILD : Build directory where to find the internal openpa
+#   - OPENPA_PREFIX_INSTALL : Install directory for openpa
+#   - OPENPA_IS_SETUP : To know is already setup
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS , OPENPA_LIB
+SCTK_CHECK_LIB_OPENPA()
+{
+	#mark test section
+	begin_section OpenPA
+
+	#setup if needed
+	sctk_internal_setup_lib_openpa
+
+	#check headers
+	SCTK_CHECK_HEADER "opa_config.h opa_primitives.h"
+
+	#avoid to test -lopa if used embeded as it was not build while calling configure, so will fail
+	if [ "${OPENPA_USER_PREFIX}" != "embeded"  ]; then
+		SCTK_CHECK_LDOPTION "-lopa"
+	fi
+
+	#end of test section
+	end_section
+}
+
+# Setup vars to use lib OpenIB
+# Params :
+# Global variables :
+#   - OPENIB_USER_PREFIX : Prefix used to search openib, embeded to use the one from MPC package.
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS , OPENIB_IS_SETUP
+sctk_internal_setup_lib_openib()
+{
+	if [ "$OPENIB_IS_SETUP" != "yes" ]; then
+		#Check candidate prefix for OpenIB
+		if [ -e "${OPENIB_USER_PREFIX}/include/infiniband/verbs.h" ]; then
+			SCTK_CFLAGS="${SCTK_CFLAGS} -I${OPENIB_USER_PREFIX}/include/"
+		else
+			error "Could not locate infiniband/verbs.h header in directory ${OPENIB_USER_PREFIX}/include/"
+		fi
+
+		#setup rpaths and -L
+		if [ -e "${OPENIB_USER_PREFIX}/lib64/libibverbs.so" ]; then
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENIB_USER_PREFIX}/lib64 -L${OPENIB_USER_PREFIX}/lib64"
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENIB_USER_PREFIX}/lib64/libibverbs.so"
+		elif [ -e "${OPENIB_USER_PREFIX}/lib/libibverbs.so" ]; then
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -Wl,-rpath,${OPENIB_USER_PREFIX}/lib -L${OPENIB_USER_PREFIX}/lib"
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${OPENIB_USER_PREFIX}/lib/libibverbs.so"
+		fi
+	fi
+
+	#mark as setup
+	OPENIB_IS_SETUP="yes"
+}
+
+# Setup vars to use lib openib
+# Params :
+# Global variables :
+#   - OPENIB_USER_PREFIX : Prefix used to search openib.
+#   - OPENIB_IS_SETUP : To know if openib is already setup
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS
+SCTK_CHECK_LIB_OPENIB()
+{
+	# if prefix set
+	if [ "$OPENIB_USER_PREFIX" != "" ]; then
+		#Lets check the provided prefix for correctness
+		sctk_internal_setup_lib_openib;
+	fi
+
+	begin_section "Check OpenIB:"
+
+	# Lets ty to detec OpenIB in the current environement
+	SCTK_CHECK_HEADER_NOFAIL infiniband/verbs.h
+	if test "$SCTK_SCTK_CHECK_HEADER_RES" = 0 ; then
+		SCTK_CHECK_OPTION "-DMPC_USE_INFINIBAND"
+		SCTK_CHECK_LDOPTION "-libverbs"
+	fi
+
+	SCTK_NET_LIST="$SCTK_NET_LIST ib"
+	end_section
+}
+
+#setup libxml2 by using given prefix
+# Params :
+# Global variables :
+#   - SCTK_LIBXML2_PREFIX : Prefix of libxml, if empty, try pkg-config or default /usr.
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS
+sctk_internal_setup_libxml()
+{
+	if [ -f "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib64/libxml2.so" ]; then
+			LIBXML_LIBDIR="`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib64"
+	elif [ -f "${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib/libxml2.so" ]; then
+		LIBXML_LIBDIR="`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib"
+	else
+		sctk_error "libxml2.so found neither in ${SCTK_LIBXML2_PREFIX}/lib nor ${SCTK_LIBXML2_PREFIX}/lib64"
+		exit 1
+	fi
+	#setup vars
+	SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBXML_LIBDIR}/libxml2.so"
+	SCTK_LDFLAGS="${SCTK_LDFLAGS} -L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib"
+	SCTK_CFLAGS="${SCTK_CFLAGS} -I`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/include/libxml2"
+}
+
+# Setup vars to use libxml2
+# Params :
+# Global variables :
+#   - SCTK_LIBXML2_PREFIX : Prefix of libxml, if empty, try pkg-config or default /usr.
+#   - LIBXML_IS_SETUP : To know if libxml is already setup
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS , LIBXML_IS_SETUP
+SCTK_CHECK_LIBXML2()
+{
+	#mark test section
+	begin_section libxml
+
+	#Find paths
+	if [ "$LIBXML_IS_SETUP" != "yes" ]; then
+		# For the moment, we dont use rpath except for embeded version
+		if [ "${SCTK_LIBXML2_PREFIX}" = "embeded" ]; then
+			#We are relying on our own libxml2
+			#LIBXML2_PREFIX_INSTALL is defined in the root configure
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBXML2_PREFIX_BUILD}/.libs/libxml2.so"
+			SCTK_CFLAGS="${SCTK_CFLAGS} -I${LIBXML2_PREFIX_BUILD}/include/"
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -L${LIBXML2_PREFIX_BUILD}/.libs"
+			EXTERN_NON_TESTED_LIB="${EXTERN_NON_TESTED_LIB} -lxml2"
+		elif [ -d "${SCTK_LIBXML2_PREFIX}" ]; then
+			SCTK_MSG_CHECKING "Search in ${SCTK_LIBXML2_PREFIX}"; result yes
+			sctk_internal_setup_libxml
+			SCTK_CHECK_LDOPTION "-lxml2"
+		elif pkg-config --exists libxml-2.0; then
+			SCTK_MSG_CHECKING "Find with pkg-config"; result yes
+			SCTK_CHECK_OPTION "$(pkg-config --cflags libxml-2.0)"
+			SCTK_CHECK_LDOPTION "$(pkg-config --libs libxml-2.0)"
+		elif [ -f /usr/include/libxml2/libxml/tree.h ]; then
+			SCTK_LIBXML2_PREFIX="/usr/"
+			SCTK_MSG_CHECKING "Search in /usr"; result yes
+			sctk_internal_setup_libxml
+			SCTK_CHECK_LDOPTION "-lxml2"
+		else
+			if [ "x${SCTK_LIBXML2_PREFIX}" != "x" ]; then
+				error "the prefix ${SCTK_LIBXML2_PREFIX} does not seem to contain libxlm2"
+			fi
+
+			error "please check if libxml2 is installed or provide its prefix with --with-libxml2={PREFIX}."
+			exit 1
+		fi
+	fi
+
+	#check header
+	SCTK_CHECK_HEADER "libxml/tree.h"
+	SCTK_CHECK_HEADER "libxml/parser.h"
+
+	#end of section
+	end_section
+
+	#mark as done
+	LIBXML_IS_SETUP='yes'
+}
+
+#setup libsctk_arch by using given prefix
+# Params :
+# Global variables :
+#   - SCTK_LIBSCTK_ARCH_PREFIX : Prefix of libsctk_arch, if empty, try pkg-config or default /usr.
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS
+sctk_internal_setup_libsctk_arch()
+{
+	if [ -f "${SCTK_LIBSCTK_ARCH_PREFIX}/lib64/libsctk_arch.so" ]; then
+		LIBSCTK_ARCH_LIBDIR="`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib64"
+	elif [ -f "${SCTK_LIBSCTK_ARCH_PREFIX}/lib/libsctk_arch.so" ]; then
+		LIBSCTK_ARCH_LIBDIR="`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib"
+	else
+		sctk_error "libsctk_arch.so found neither in ${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib nor ${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib64"
+		exit 1
+	fi
+	#setup vars
+	SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBSCTK_ARCH_LIBDIR}/libsctk_arch.so"
+	SCTK_LDFLAGS="${SCTK_LDFLAGS} -L`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/lib"
+	SCTK_CFLAGS="${SCTK_CFLAGS} -I`echo \"\\${MPC_RPREFIX}\"`/${MPC_SUBPREFIX}/include/"
+}
+
+# Setup vars to use libsctk_arch
+# Params :
+# Global variables :
+#   - SCTK_LIBSCTK_ARCH_PREFIX : Prefix of libsctk_arch, if empty, try pkg-config or default /usr.
+#   - LIBSCTK_ARCH_IS_SETUP : To know if libsctk_arch is already setup
+# Will setup:
+#   - SCTK_CFLAGS , SCTK_LDFLAGS , SCTK_ARFLAGS , LIBSCTK_ARCH_IS_SETUP
+SCTK_CHECK_LIBSCTK_ARCH()
+{
+	#mark test section
+	begin_section libsctk_arch
+
+	#Find paths
+	if [ "$LIBSCTK_ARCH_IS_SETUP" != "yes" ]; then
+		# For the moment, we dont use rpath except for embeded version
+		if [ "${SCTK_LIBSCTK_ARCH_PREFIX}" = "embeded" ]; then
+			#We are relying on our own libsctk_arch
+			#LIBSCTK_ARCH_PREFIX_INSTALL is defined in the root configure
+			SCTK_ARFLAGS="${SCTK_ARFLAGS} ${LIBSCTK_ARCH_PREFIX_BUILD}/lib/libsctk_arch.so"
+			SCTK_CFLAGS="${SCTK_CFLAGS} -I${LIBSCTK_ARCH_PREFIX_BUILD}/include/"
+			SCTK_LDFLAGS="${SCTK_LDFLAGS} -L${LIBSCTK_ARCH_PREFIX_BUILD}/lib"
+			EXTERN_NON_TESTED_LIB="${EXTERN_NON_TESTED_LIB} -lsctk_arch"
+		elif [ -d "${SCTK_LIBSCTK_ARCH_PREFIX}" ]; then
+			SCTK_MSG_CHECKING "Search in ${SCTK_LIBSCTK_ARCH_PREFIX}"; result yes
+			sctk_internal_setup_libsctk_arch
+			SCTK_CHECK_LDOPTION "-lsctk_arch"
+		elif pkg-config --exists libsctk_arch; then
+			SCTK_MSG_CHECKING "Find with pkg-config"; result yes
+			SCTK_CHECK_OPTION "$(pkg-config --cflags libsctk_arch)"
+			SCTK_CHECK_LDOPTION "$(pkg-config --libs libsctk_arch)"
+		elif [ -f /usr/include/libsctk_arch/libtimer.h ]; then
+			SCTK_LIBSCTK_ARCH_PREFIX="/usr/"
+			SCTK_MSG_CHECKING "Search in /usr"; result yes
+			sctk_internal_setup_libsctk_arch
+			SCTK_CHECK_LDOPTION "-lsctk_arch"
+		else
+			if [ "x${SCTK_LIBSCTK_ARCH_PREFIX}" != "x" ]; then
+				error "the prefix ${SCTK_LIBSCTK_ARCH_PREFIX} does not seem to contain libsctk_arch"
+			fi
+
+			error "please check if libsctk_arch is installed or provide its prefix with --with-libsctk_arch={PREFIX}."
+			exit 1
+		fi
+	fi
+
+	#check header
+	SCTK_CHECK_HEADER "libtimer.h"
+	SCTK_CHECK_HEADER "libpause.h"
+	SCTK_CHECK_HEADER "sctk_ucontext.h"
+
+
+	#end of section
+	end_section
+
+	#mark as done
+	LIBSCTK_ARCH_IS_SETUP='yes'
+}

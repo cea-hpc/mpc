@@ -1,0 +1,810 @@
+#!/bin/sh
+############################# MPC License ############################## 
+# Wed Nov 19 15:19:19 CET 2008                                         # 
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          # 
+#                                                                      # 
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            # 
+# This file is part of the MPC Runtime.                                # 
+#                                                                      # 
+# This software is governed by the CeCILL-C license under French law   # 
+# and abiding by the rules of distribution of free software.  You can  # 
+# use, modify and/ or redistribute the software under the terms of     # 
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     # 
+# following URL http://www.cecill.info.                                # 
+#                                                                      # 
+# The fact that you are presently reading this means that you have     # 
+# had knowledge of the CeCILL-C license and that you accept its        # 
+# terms.                                                               # 
+#                                                                      # 
+# Authors:                                                             # 
+#   - PERACHE Marc marc.perache@cea.fr                                 # 
+#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     # 
+#                                                                      # 
+######################################################################## 
+
+#
+# Generate the main MPC compiler driver
+#
+# $1: target script (e.g., mpc_cc) 
+# $2: target language (c, c++ or fortran)
+#
+printf_compiler(){
+
+# Header
+echo "#!/bin/sh" > $1
+cat <<EOF >> $1
+if test -z \${MPC_RPREFIX}; then
+	echo "################################################################"
+	echo "# No MPC_RPREFIX defined. it is the root of the actual prefix  #"
+	echo "# Yout should source the mpcvars.sh file in root of MPC prefix #"
+	echo "################################################################"
+	exit 1
+fi
+EOF
+header_sh >> $1
+
+
+# For Fortran, generate a small object w/ main routine
+if test "$2" = "fortran" ; then 
+cat <<EOF >> $1
+FORTRAN_START="/tmp/tmp_mpc_fotran_\$\$.f"
+FORTRAN_OBJ="/tmp/tmp_mpc_fotran_\$\$.o"
+
+#echo "\$FORTRAN_START \$FORTRAN_OBJ"
+
+cat <<THIS_EOF > \$FORTRAN_START
+! ############################# MPC License ##############################
+! # Wed Nov 19 15:19:19 CET 2008                                         #
+! # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+! #                                                                      #
+! # IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+! # This file is part of the MPC Runtime.                                #
+! #                                                                      #
+! # This software is governed by the CeCILL-C license under French law   #
+! # and abiding by the rules of distribution of free software.  You can  #
+! # use, modify and/ or redistribute the software under the terms of     #
+! # the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+! # following URL http://www.cecill.info.                                #
+! #                                                                      #
+! # The fact that you are presently reading this means that you have     #
+! # had knowledge of the CeCILL-C license and that you accept its        #
+! # terms.                                                               #
+! #                                                                      #
+! # Authors:                                                             #
+! #   - PERACHE Marc marc.perache@cea.fr                                 #
+! #   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
+! ########################################################################
+      subroutine mpc_user_main_
+      call mpc_user_main()
+      end
+
+      program main
+      call mpc_start()
+      call exit(0)
+      end
+THIS_EOF
+EOF
+fi
+
+# CFlags and FFlags
+if test "$2" = "fortran" ; then 
+cat <<EOF >> $1
+FFLAGS="$SCTK_FFLAGS"
+MPC_COMPILER_CFLAGS=
+EOF
+else
+cat <<EOF >> $1
+FFLAGS=
+MPC_COMPILER_CFLAGS="$MPC_COMPILER_CFLAGS"
+EOF
+fi
+
+#Check for use of -fmpc-privatize (must not be enable for *_default compiler wrappers)
+#Maybe need some discutions to work with new icc support of privatization
+case "`basename $1`" in
+	*_default)
+		use_mpc_privat="false"
+		;;
+	*)
+		use_mpc_privat="true"
+		;;
+esac
+use_mpc_privat="true"
+
+# Regular flags and compiler (C, C++ or fortran)
+if test ! -z "${BINUTILS_PREFIX_INSTALL}" && test "$use_mpc_privat" = "true"
+then
+BINUTILS_SUBPREFIX="${BINUTILS_PREFIX_INSTALL#*${MPC_RPREFIX}}"
+cat <<EOF >> $1
+CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags $2\`"
+LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags $2\` -B\${MPC_RPREFIX}/${BINUTILS_SUBPREFIX}/bin"
+CC=$CC
+EOF
+else
+cat <<EOF >> $1
+CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags $2\`"
+LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags $2\`"
+CC=$CC
+EOF
+fi
+
+
+# More variable definitions (Library path, show and different shades of args)
+cat << EOF >> $1
+#LIB_PATH="-Wl,-rpath,\${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib ${LIB_PATH}"
+if test "\$MPC_MAKEFILE" != "" ; then 
+LIB_PATH=""
+fi
+
+# This variable is updated to 'echo' when '-show' is active
+Show=eval
+
+# Do we have to link eventually?
+linking=yes
+
+# All args concerning the compiling process (w/out mpc_cc-related options)
+allargs=""
+
+# Name of the output filename if the option '-o' is set
+output_filename=""
+output_file=""
+next_arg_is_output=no
+EOF
+
+#
+# For loop on the input arguments
+#
+cat << EOF >> $1
+for arg in "\$@" ; do
+    # Set addarg to no if this arg should be ignored by the C compiler
+    addarg=yes
+    qarg=\$arg
+EOF
+
+cat << EOF >> $1
+    # Only valid if addarg is set to 'yes'
+    addarg_cpp=yes
+    addarg_opp=no
+
+    if [ \$next_arg_is_output = yes ] ; then
+      output_filename=\$qarg
+      next_arg_is_output=no
+
+      allargs="\$allargs \$qarg"
+      continue
+    fi
+
+EOF
+
+#
+# '-c' option
+#
+cat << EOF >> $1
+    case \$arg in
+        # ----------------------------------------------------------------
+        # Compiler options that affect whether we are linking or not
+    -c)
+    # The compiler links by default
+    linking=no
+EOF
+
+#
+# Others option involving processing the input files
+# -S, -E, -M or -MM
+#
+cat << EOF >> $1
+    ;;
+    -S|-E|-M|-MM)
+    # The compiler links by default
+    linking=no
+EOF
+
+cat << EOF >> $1
+    ;;
+
+    -cc=*)
+    CC=\`echo A\$arg | sed -e 's/A-cc=//g'\`
+    addarg=no
+    MPC_COMPILER_CFLAGS=""
+    ;;
+
+EOF
+
+cat << EOF >> $1
+
+    -o)
+    next_arg_is_output=yes
+    addarg_cpp=no
+    ;;
+
+EOF
+
+cat << EOF >> $1
+
+    -threads)
+    CFLAGS="\$CFLAGS -threads"
+    ;;
+
+EOF
+
+cat << EOF >> $1
+
+	-fmpc-privatize)
+    if test "\${CC}" = "icc"; then
+        addarg=no
+    else
+        qarg="'"\$arg"'"
+    fi  
+    ;;  
+
+EOF
+
+cat << EOF >> $1
+
+    -target=*)
+	TARGET=\`echo A\$arg | sed -e 's/A-target=//g'\`
+	addarg=no
+	
+	echo "loading \${TARGET} options..."
+	if test -f "`echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}" | sed -re 's#'"${MPC_HOST}"'|'"${MPC_TARGET}"'#\${TARGET}#g'`/.target_options"; then
+		. `echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}" | sed -re 's#'"${MPC_HOST}"'|'"${MPC_TARGET}"'#\${TARGET}#g'`/.target_options
+		cat `echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}" | sed -re 's#'"${MPC_HOST}"'|'"${MPC_TARGET}"'#\${TARGET}#g'`/.target_options
+	else
+		echo "This architecture is not supported"
+		exit 1
+	fi
+    ;;
+
+EOF
+
+cat << EOF >> $1
+
+    -show)
+    addarg=no
+    Show=echo
+    ;;
+
+    # Verbose mode
+    -v)
+    # Pass this argument to the pre-compiler/compiler as well.
+    echo "mpc_cc for \$MPC_VERSION"
+EOF
+
+
+cat << EOF >> $1
+    ;;
+
+    # Help
+    -help)
+    ;;
+        # -----------------------------------------------------------------
+        # Other arguments.  We are careful to handle arguments with
+        # quotes (we try to quote all arguments in case they include
+        # any spaces)
+    *\"*)
+    qarg="'"\$arg"'"
+    ;;
+    *\'*)
+    qarg='\"'"\$arg"'\"'
+    ;;
+    *)
+    ;;
+
+    esac
+
+    # Update compiler arguments
+    if [ \$addarg = yes ] ; then
+        allargs="\$allargs \$qarg"
+EOF
+
+cat << EOF >> $1
+    fi
+EOF
+
+cat << EOF >> $1
+done
+
+CFLAGS="\$CFLAGS \$MPC_COMPILER_CFLAGS"
+EOF
+
+cat <<EOF >> $1
+
+if [ "\$linking" = yes ] ; then
+EOF
+
+if test "$2" = "fortran" ; then 
+cat <<EOF >> $1
+    \$Show \$CC \$FFLAGS \$CFLAGS -c \$FORTRAN_START -o \$FORTRAN_OBJ
+    rc=\$?
+    if test "\$rc" != "0" ; then 
+        exit \$rc
+    fi
+EOF
+fi
+
+if test "$2" = "fortran" ; then 
+cat <<EOF >> $1
+    \$Show \$CC \$LIB_PATH \$FORTRAN_OBJ \$LDFLAGS \$FFLAGS \$CFLAGS \$allargs \$LDFLAGS 
+    rc=\$?
+    if test "\$rc" != "0" ; then 
+        exit \$rc
+    fi
+EOF
+else
+if test "$3" = "global" ; then 
+cat <<EOF >> $1
+    if test "\${output_filename}" = "" ; then 
+        output_filename="./a.out"
+    fi
+    global_local_args=""
+    global_local_args_redefine="no"
+    for global_local_args_i in \$allargs; do 
+
+        if test "\$global_local_args_redefine" = "yes" ; then 
+            global_local_args_redefine="no"
+            global_local_args_i=""
+        fi
+
+        if test "\$global_local_args_i" = "-o" ; then 
+            global_local_args_redefine="yes"
+            global_local_args_i=""
+        fi
+        global_local_args="\$global_local_args \$global_local_args_i"
+    done
+    \$Show \$CC \$LIB_PATH \$LDFLAGS \$CFLAGS \$global_local_args \$LDFLAGS -fpic -shared -o lib\`basename \${output_filename}\`.so
+    global_local_args=""
+    global_local_args_redefine="no"
+    global_local_args_skip="no"
+    for global_local_args_i in \$allargs; do 
+
+        if test "\`basename -- \$global_local_args_i .o\`" != "\`basename -- \$global_local_args_i\`" ; then 
+            global_local_args_skip="yes"
+        fi
+
+        if test "\$global_local_args_skip" = "no" ; then 
+        global_local_args="\$global_local_args \$global_local_args_i"
+        fi
+        global_local_args_skip="no"
+    done
+
+    global_dir_lib="\`dirname \${output_filename}\`"
+    
+    \$Show \$CC -L\$global_dir_lib -Wl,-rpath=\$global_dir_lib -l\`basename \${output_filename}\` \$LIB_PATH \$LDFLAGS \$global_local_args \$CFLAGS  \$LDFLAGS 
+    rc=\$?
+EOF
+else
+cat <<EOF >> $1
+    \$Show \$CC \$LIB_PATH \$LDFLAGS \$CFLAGS \$allargs \$LDFLAGS 
+    # The first \$LDFLAGS should be removed, but still some issues... 
+    # \$Show \$CC \$LIB_PATH \$CFLAGS \$allargs \$LDFLAGS 
+    rc=\$?
+EOF
+fi
+fi
+
+if test "$2" = "fortran" ; then 
+cat <<EOF >> $1
+    rm \$FORTRAN_OBJ
+EOF
+fi
+
+cat <<EOF >> $1
+else
+EOF
+if test "$2" = "fortran" ; then 
+cat <<EOF >> $1
+    \$Show \$CC \$FFLAGS \$CFLAGS \$allargs
+    rc=\$?
+EOF
+else
+if test "$3" = "global" ; then 
+cat <<EOF >> $1
+    \$Show \$CC \$CFLAGS \$allargs -fpic 
+    rc=\$?
+EOF
+else
+cat <<EOF >> $1
+    \$Show \$CC \$CFLAGS \$allargs
+    rc=\$?
+EOF
+fi
+fi
+cat <<EOF >> $1
+fi
+
+EOF
+
+if test "$2" = "fortran" ; then 
+cat <<EOF >> $1
+rm -f \$FORTRAN_START > /dev/null 2>&1 
+EOF
+fi 
+
+cat << EOF >> $1
+
+exit \$rc
+
+EOF
+
+chmod 755 $1
+
+} # end of printf_compiler()
+
+GNU_PRIVATIZE="-fmpc-privatize"
+INTEL_PRIVATIZE="-mSYMTAB_mpc_privatize"
+#USAGE print_specific_compiler output_file privatization_option wait_to_launch_compiler compiler_name
+print_specific_compiler(){
+# Header
+echo "#!/bin/sh" > $1
+echo "#!/bin/sh" > $1
+cat <<EOF >> $1
+if test -z \${MPC_RPREFIX}; then
+	echo "################################################################"
+	echo "# No MPC_RPREFIX defined. it is the root of the actual prefix  #"
+	echo "# Yout should source the mpcvars.sh file in root of MPC prefix #"
+	echo "################################################################"
+	exit 1
+fi
+EOF
+header_sh >> $1
+
+if test "$4" = "intel"; then
+cat <<EOF >> $1
+ADD_FLAG_PRIVATIZE="$2"
+EOF
+else
+if test "${COMPILER_LIST}" != "" ; then
+cat <<EOF >> $1
+ADD_FLAG_PRIVATIZE="$2"
+EOF
+else
+cat <<EOF >> $1
+ADD_FLAG_PRIVATIZE=""
+EOF
+fi
+fi
+cat <<EOF >> $1
+COMPILER_ARGS=""
+
+for i in \$@ ; do
+    CURRENT_ARG="\$i"
+    
+    #This is used to add the mpc.h include
+    #when compiling third party modules
+    #which does not necessarilly use mpc.h/mpi.h
+    #common case being configure time
+    if test "\$i" = "-fmpc-include" ; then
+        CURRENT_ARG="-include mpc.h"
+    fi
+    if test "\$i" = "-fmpc-privatize" ; then
+        ADD_FLAG_PRIVATIZE="$2"
+        CURRENT_ARG=""
+    fi
+    if test "\$i" = "-fno-mpc-privatize" ; then
+        ADD_FLAG_PRIVATIZE=""
+        CURRENT_ARG=""
+    fi
+    if test "\$i" = "-fnompc-privatize" ; then
+        ADD_FLAG_PRIVATIZE=""
+        CURRENT_ARG=""
+    fi
+
+    if test "\$i" = "-compilers" ; then
+    	count=1
+        echo "Compilers available :"
+    	for line in \` cat \${MPC_RPREFIX}/.c_compilers.cfg\` ;
+    	do  
+        	if test "\${line#*'mpc-gcc'}" != "\$line"; 
+        	then
+            	patched_gcc=\`echo \$line | tail -c 12\`
+            	version=\`echo \$patched_gcc | tail -c 4\`
+            	echo "\$count: patched gcc (version \${version:0:1}.\${version:1:1}.\${version:2:2})"
+        	elif test "\$line" = "gcc"; then
+            	version=\`gcc --version | grep -i "gcc" | grep -P '[0-9]\.[0-9]\.[0-9]' -o | head -n 1\`  
+            	echo "\$count: gcc (version \$version)"
+        	elif test "\$line" = "icc"; then
+            	version=\`icc --version | grep -i "icc" | cut -f 3 -d ' '\`
+            	echo "\$count: icc (version \$version)"
+        	else
+            	echo "\$count: \$line"
+        	fi  
+        	count=\$((\$count + 1))
+    	done
+    	exit 1
+    fi
+    
+    if test "\$i" = "-target_list" ; then
+		uname=\`uname -m\`
+		target_list_tmp="\`ls -A \${MPC_RPREFIX}/\`"
+		for d in \`echo \$target_list_tmp\`; 
+		do
+			if test -d "\${MPC_RPREFIX}/\${d}"; then
+				target_list="\${target_list} \${d}"
+			fi
+		done
+		for d in \`echo \${target_list}\`; 
+		do
+			if test "\${d}" != "\${uname}"; then
+				echo "\${d}"
+			fi
+		done
+		exit 1
+    fi
+    COMPILER_ARGS="\$COMPILER_ARGS \$CURRENT_ARG"
+done
+
+EOF
+if test "$4" = "intel"; then
+cat <<EOF >> $1
+MPC_USE_INTEL_COMPILER=1
+export MPC_USE_INTEL_COMPILER
+EOF
+fi
+cat <<EOF >> $1
+
+\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/$3 \$ADD_FLAG_PRIVATIZE \$COMPILER_ARGS
+
+EOF
+
+}
+
+#fill target options for mpc_cc
+#for the host
+if test "`echo ${MPC_RPREFIX}/${MPC_SUBPREFIX}/ | grep "${SCTK_ARCH}"`" = ""; then
+	if test ! -d "${MPC_RPREFIX}/${MPC_SUBPREFIX}/"; then
+			mkdir -p "${MPC_RPREFIX}/${MPC_SUBPREFIX}/"
+	fi
+	
+	if test -f "\${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"; then
+		rm "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+		touch "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+	else
+		touch "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+	fi
+	case `uname -m` in
+		x86_64)
+cat <<EOF >> "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+#!/bin/sh
+export SCTK_MIC=0
+export CC=`head -n 1 \${MPC_RPREFIX}/.c_compilers`
+addarg=no
+export CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\`"
+export LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"	
+EOF
+		;;
+		k1om)
+cat <<EOF >> "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+#!/bin/sh
+export SCTK_MIC=1
+export CC=icc
+addarg=no
+export CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\` -mmic"
+export LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"	
+EOF
+		;;
+	esac
+else
+#for the target
+	if test ! -d "${MPC_RPREFIX}/${MPC_SUBPREFIX}/"; then
+		mkdir -p "${MPC_RPREFIX}/${MPC_SUBPREFIX}/"
+	fi
+	
+	if test -f "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"; then
+		rm "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+		touch "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+	else
+		touch "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+	fi
+	#for the target
+	case "${SCTK_ARCH}" in 
+		x86_64)
+cat <<EOF >> "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+#!/bin/sh
+export SCTK_MIC=0
+export CC=`head -n 1 \${MPC_RPREFIX}/.c_compilers`
+addarg=no
+export CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\`"
+export LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"	
+EOF
+		;;
+		k1om)
+cat <<EOF >> "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
+#!/bin/sh
+export SCTK_MIC=1
+export CC=icc
+addarg=no
+export CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\` -mmic"
+export LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"	
+EOF
+		;;
+	esac
+fi
+
+echo "COMPILER_LIST='${COMPILER_LIST}'"
+DEFAULT_VERSION=""
+if test "${COMPILER_LIST}" != "" ; then
+  for i in ${COMPILER_LIST} ; do
+    if test "${DEFAULT_VERSION}" = "" ; then
+      DEFAULT_VERSION="${i}"
+    fi
+    
+    #
+    # Generate C compiler
+    #
+    begin_section Generate C Compiler: mpc_cc_$i
+      CC=`echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc-gcc_$i"`
+#      if test "${SCTK_ARCH}" = "x86_64" ; then
+#	LIB_PATH="-Wl,-rpath,\${MPC_RPREFIX}/${MPC_SUBPREFIX}/../gcc/lib64"
+#      else
+#	LIB_PATH="-Wl,-rpath,\${MPC_RPREFIX}/${MPC_SUBPREFIX}/../gcc/lib"
+#      fi
+	  
+	  if test "${i}" = "gcc" ; then
+		CC=gcc
+	  fi
+      
+	  if test "${i}" = "icc" ; then
+		CC=icc
+	  fi
+      printf_compiler bin/mpc_cc_${i} c
+    end_section
+
+    #
+    # Generate C compiler (for global linking)
+    #
+    begin_section Generate C Compiler: mpc_cc_global_$i
+      printf_compiler bin/mpc_cc_global_$i c global
+    end_section
+
+    #
+    # Generate C++ compiler
+    #
+    begin_section Generate C++ Compiler: mpc_cxx_${i}
+	  CC=`echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc-g++_$i"`
+      if test "${i}" = "gcc" ; then
+		CC=g++
+	  fi
+      if test "${i}" = "icc" ; then
+		CC=icpc
+	  fi
+      printf_compiler bin/mpc_cxx_${i} c++
+    end_section
+
+    #
+    # Generate Fortran compiler
+    #
+    if test "$SCTK_FORTRAN" = "1" ; then 
+      begin_section Generate Fortran77 Compiler: mpc_f77_${i}
+	CC=`echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc-gfortran_$i"`
+	if test "${i}" = "gcc" ; then
+		CC=gfortran
+	fi
+	if test "${i}" = "icc" ; then
+		CC=ifort
+	fi
+	printf_compiler bin/mpc_f77_${i} fortran
+      end_section
+    fi
+  done
+else
+DEFAULT_VERSION="default"
+fi
+
+# Generate default C compiler
+begin_section Generate Default C Compiler: mpc_cc_default
+  CC="$SCTK_CC"
+  LIB_PATH=""
+  printf_compiler bin/mpc_cc_default c
+end_section
+
+
+# Generate dafault C compiler (for global linking)
+begin_section Generate Default C Compiler: mpc_cc_global_default
+  CC="$SCTK_CC"
+  LIB_PATH=""
+  printf_compiler bin/mpc_cc_global_default c global
+end_section
+
+# Create the link to the default compiler
+rm -f bin/mpc_cc_global
+ln -s mpc_cc_global_${DEFAULT_VERSION} bin/mpc_cc_global
+print_specific_compiler bin/mpc_gcc "" mpc_cc_${DEFAULT_VERSION}
+print_specific_compiler bin/mpc_icc $INTEL_PRIVATIZE "mpc_cc_default -cc=icc" intel
+
+# Create the link to the default compiler
+rm -f bin/mpc_cc
+ln -s mpc_gcc bin/mpc_cc
+
+# Generate C++ compiler
+begin_section Generate Default C++ Compiler: mpc_cxx_default
+  CC="$SCTK_CXX"
+  LIB_PATH=""
+  printf_compiler bin/mpc_cxx_default c++
+end_section
+
+# Create the link to the default compiler
+print_specific_compiler bin/mpc_g++ "" mpc_cxx_${DEFAULT_VERSION}
+print_specific_compiler bin/mpc_icpc $INTEL_PRIVATIZE "mpc_cxx_default -cc=icpc" intel
+rm -f bin/mpc_cxx
+ln -s mpc_g++ bin/mpc_cxx
+
+#
+# Generate Fortran compiler
+#
+if test "$SCTK_FORTRAN" = "1" ; then 
+  begin_section Generate Default Fortran77 Compiler: mpc_f77_default
+    CC="$SCTK_F77"
+    printf_compiler bin/mpc_f77_default fortran
+  end_section
+
+  # Create the link to the default compiler
+
+  print_specific_compiler bin/mpc_gfortran "" mpc_f77_${DEFAULT_VERSION}
+  print_specific_compiler bin/mpc_ifort $INTEL_PRIVATIZE "mpc_f77_default -cc=ifort -threads" intel
+  rm -f bin/mpc_f77
+  ln -s mpc_gfortran bin/mpc_f77
+fi
+
+
+cat <<EOF > bin/mpc_compiler_status
+#!/bin/sh
+cat <<EOFINT > mpc_main.c
+#include <mpc.h>
+ int main(int argc, char** argv){
+     return 0;
+}
+EOFINT
+cat <<EOFINT > mpc_main.cpp
+#include <mpc.h>
+ int main(int argc, char** argv){
+     return 0;
+}
+EOFINT
+cat <<EOFINT > mpc_main.f
+      subroutine mpc_user_main
+      include 'mpcf.h'
+      integer ierr
+      call MPC_INIT (ierr)
+      call MPC_FINALIZE (ierr)
+      end
+EOFINT
+
+check_compiler(){
+\$@ -fno-mpc-privatize > /dev/null 2>&1
+LINE="        Compiler \$1"
+if test "\$?" = "0"; then
+LINE="\$LINE OK"
+else
+LINE="\$LINE FAIL"
+fi
+LINE="\$LINE privatization"
+\$@ -fmpc-privatize > /dev/null 2>&1
+if test "\$?" = "0"; then
+LINE="\$LINE OK"
+else
+LINE="\$LINE FAIL"
+fi
+echo "\$LINE"
+}
+
+echo "MPC Compiler Status:"
+
+
+echo "    Check C compiler"
+check_compiler mpc_gcc -c mpc_main.c -o tmp.o
+check_compiler mpc_icc -c mpc_main.c -o tmp.o
+
+echo "    Check C++ compiler"
+check_compiler mpc_g++ -c mpc_main.cpp -o tmp.o
+check_compiler mpc_icpc -c mpc_main.cpp -o tmp.o
+
+
+echo "    Check Fortran compiler"
+check_compiler mpc_gfortran -c mpc_main.f -o tmp.o
+check_compiler mpc_ifort -c mpc_main.f -o tmp.o
+
+
+rm mpc_main.c mpc_main.cpp mpc_main.f tmp.o > /dev/null 2>&1
+
+EOF
+chmod 755 bin/mpc_compiler_status

@@ -1,0 +1,7 @@
+##########################################################################
+
+@TARGETNAME@: @TARGETDEP@
+	$(MAKE) -C @MAKEFILEDIR@
+
+.PHONY: @TARGETNAME@
+

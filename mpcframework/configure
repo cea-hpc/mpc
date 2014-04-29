@@ -1,0 +1,738 @@
+#!/bin/sh
+############################# MPC License ##############################
+# Wed Nov 19 15:19:19 CET 2008                                         #
+# Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
+#                                                                      #
+# IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
+# This file is part of the MPC Runtime.                                #
+#                                                                      #
+# This software is governed by the CeCILL-C license under French law   #
+# and abiding by the rules of distribution of free software.  You can  #
+# use, modify and/ or redistribute the software under the terms of     #
+# the CeCILL-C license as circulated by CEA, CNRS and INRIA at the     #
+# following URL http://www.cecill.info.                                #
+#                                                                      #
+# The fact that you are presently reading this means that you have     #
+# had knowledge of the CeCILL-C license and that you accept its        #
+# terms.                                                               #
+#                                                                      #
+# Authors:                                                             #
+#   - PERACHE Marc marc.perache@cea.fr                                 #
+#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
+#                                                                      #
+########################################################################
+
+PATH="$PATH:."
+export PATH
+
+LOG_FILE="configure.log"
+
+SCTK_NET_LIST=""
+SCTK_NET_LIST_EXP=""
+MPC_HOST=`uname -m`
+
+rm -rf BUILD_MPC_* > /dev/null 2>&1
+
+date > $LOG_FILE
+
+##Set to 1 to force configure debugging
+#ENABLE_DEBUG="1"
+
+debug(){
+    if test "$ENABLE_DEBUG" = "1" ; then
+	echo "[DEBUG] $@"
+    fi
+}
+
+CONF_NAME="configure"
+
+MPC_SOURCE_DIR="`dirname $0`/"
+
+BUILD_DIR="`pwd`"
+#echo "Entering ${MPC_SOURCE_DIR}"
+cd ${MPC_SOURCE_DIR}
+MPC_SOURCE_DIR="`pwd`/"
+#echo "Entering ${BUILD_DIR}"
+cd ${BUILD_DIR}
+
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_common
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_functions
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_determine_config
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_gen_compilation_flags
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_modules
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_extern_deps
+
+debug "mpc_source dir ${MPC_SOURCE_DIR}"
+
+export MPC_SOURCE_DIR
+
+# Catch the MPC version
+MPC_VERSION="`${MPC_SOURCE_DIR}MPC_Tools/mpc_print_version`"
+if test "${MPC_SOURCE_DIR}" = "" ; then
+. .MPC_version
+else
+. ${MPC_SOURCE_DIR}.MPC_version
+fi
+
+MODULE="MPC"
+cat ${MPC_SOURCE_DIR}/../tools/banner
+sctk_echo "'configure' configures ${MODULE} ${MPC_VERSION} to adapt to many kinds of systems."
+
+# Module Detection #
+
+# Module list
+
+MODULES="`mpc_modules_get_list`"
+
+activate_module(){
+    if test -d ${MPC_SOURCE_DIR}$1 ; then
+	sctk_echo "   - $1 available"
+	eval "${1}=${MPC_SOURCE_DIR}$1"
+    else
+	sctk_echo "   - $1 N/A"
+	eval "${1}=''"
+    fi
+}
+
+#std_headers std_functions
+#std_headers std_functions
+TO_CHECK="programs compilers cflags keywords module_deps config"
+
+SCTK_OS=""
+UNAME_P=""
+SCTK_ARCH=""
+SCTK_DEBUG="0"
+SCTK_DEBUG_STRICT="0"
+SCTK_FORTRAN="1"
+SCTK_MPC_USE_ZLIB="0"
+SCTK_NETWORKS_INIT="0"
+SCTK_NETWORKS="all"
+SCTK_ARCH_LIBRARY_PATH=
+
+check_arg(){
+  VALID_ARG="0"
+  for i in $MODULES ; do
+  if test "$1" = "$i" ; then
+      VALID_ARG="1"
+  fi
+  done
+  if test "$VALID_ARG" = "0" ; then
+      echo "Unknown arg $1"
+      exit 1
+  fi
+}
+
+SCTK_NODEP="0"
+
+sctk_print_help(){
+cat <<EOF
+Usage: $0 [OPTION]... [VAR=VALUE]...
+
+To assign environment variables (e.g., CC, CFLAGS...), specify them as
+VAR=VALUE.  See below for descriptions of some of the useful variables.
+
+Defaults for the options are specified in brackets.
+
+Configuration:
+  -h, --help              Display this help and exit
+  -n, --no-create         Do not create output files
+
+EOF
+
+cat <<EOF
+Installation directories:
+  --prefix=PREFIX         Install architecture-independent files in PREFIX [/usr/local]
+  --exec-prefix=EPREFIX   Install architecture-dependent files in EPREFIX [PREFIX]
+
+By default, 'make install' will install all the files in
+'/usr/local/bin', '/usr/local/lib' etc.  You can specify
+an installation prefix other than '/usr/local' using '--prefix',
+for instance '--prefix=\$HOME'.
+
+Fine tuning of the installation directories:
+  --bindir=DIR            User executables in DIR [EPREFIX/bin]
+  --includedir=DIR        C header files in DIR [PREFIX/include]
+  --libdir=DIR            Object code libraries in DIR [EPREFIX/lib]
+  --mandir=DIR            Man documentation in DIR [PREFIX/man]
+
+EOF
+
+cat <<EOF
+Optional features:
+  --disable-FEATURE                Do not include FEATURE
+  --enable-FEATURE                 Include FEATURE
+  --enable-fortran                 Build MPC fortran API
+  --use-network=*                  Select inter-node network type [all]
+  --enable-checksum                Enable checksum for inter-processes messages
+  --disable-shm                    Disable intra-node communication module (SHM)
+  --disable-posix-alloc            Disable MPC posix memory allocator.
+  --enable-debug                   Enable MPC internal debugging features
+  --enable-debug-strict            Same than --enable-debug but also enable flag -Werror.
+  --enable-debug-messages          Enable MPC debug message printing in verbose level 3
+  --enable-shell-colors            Enable support of colors in shell
+  --enable-valgrind-memcheck       Enable support of valgrind memcheck in MPC_Allocator
+
+Module selection:
+EOF
+
+mpc_modules_print_help disabled
+mpc_modules_print_help enabled
+
+cat <<EOF
+
+Optional packages:
+  --with-PACKAGE          Use PACKAGE
+  --without-PACKAGE       Do not use PACKAGE
+  --without-libunwind     Disable libunwind backtraces [enabled]
+  --with-libnuma          Enable libnuma for memory and cpu binding [disabled]
+  --with-libcpuset        Enable libcpuset for memory and cpu binding [disabled]
+  --without-slurm         Disable slurm detection [enabled]
+  --without-mpc_mmap      Disable mpc mmap/munmap support [enabled]
+  --with-openpa=prefix    Enable OpenPA using given prefix [system default]
+  --with-hwloc=prefix     Enable hwloc using given prefix [system default]
+  --with-openib=prefix    Enable OpenFabrics using given prefix [system default]
+  --with-libxml2=prefix   Enable libxml2 for config file parsing [pkg-config or /usr]
+  --with-libsctk_arch=prefix   Enable libsctk_arch for config file parsing [pkg-config or /usr]
+
+Some influential environment variables:
+  CC                               C compiler command
+  CFLAGS                           C compiler flags
+  CFLAGS_NON_GNU                   C compiler flags except for gcc
+  LDFLAGS                          Linker flags, e.g. -L<lib dir> if you have libraries in a
+                                   Nonstandard directory <lib dir>
+  CXX                              C++ compiler command
+  F77                              Fortran compiler command
+
+EOF
+
+}
+
+begin_section "Module detection:"
+# Activate all modules (look for the directory)
+mpc_modules_activate_modules
+sctk_echo ""
+
+SCTK_LIBUNWIND="1"
+SCTK_LIBNUMA="0"
+SCTK_LIBCPUSET="0"
+SCTK_HYDRA="1"
+MPC_HYDRA="1"
+SCTK_SLURM="0"
+SCTK_OPENPA="1"
+SCTK_SHM="1"
+SCTK_POSIX_ALLOC="1"
+SCTK_CHECKSUM="0"
+SCTK_SHELL_COLORS="0"
+SCTK_DEBUG_MESSAGES="0"
+SCTK_DEBUG_MESSAGES_DISABLED="0"
+SCTK_CC_DEP="-M"
+SCTK_CFLAGS_NON_GNU=""
+SCTK_MPC_MMAP="0"
+SCTK_VALGRIND_MEMCHECK='0'
+HWLOC_USER_PREFIX=""
+OPENPA_USER_PREFIX=""
+OPENIB_USER_PREFIX=""
+SCTK_LIBXML2_PREFIX=""
+SCTK_LIBSCTK_ARCH_PREFIX=""
+
+for arg in "$@" ; do
+    case $arg in
+    -h|--help)
+    sctk_print_help;
+    exit 0;
+    ;;
+    -n|--no-create)
+    SCTK_NOCREATE="1"
+    ;;
+    --no-dep)
+    SCTK_NODEP="1"
+    ;;
+    --os=*)
+    SCTK_OS="`echo A$arg | sed -e 's/A--os=//g'`"
+    ;;
+    --arch=*)
+    SCTK_ARCH="`echo A$arg | sed -e 's/A--arch=//g'`"
+    UNAME_P="echo $SCTK_ARCH"
+    MPC_TARGET="$SCTK_ARCH"
+	case "$SCTK_ARCH" in
+		k1om)
+		MPC_HYDRA="0"
+		export MPC_HYDRA
+		;;
+		x86_64)
+		MPC_HYDRA="1"
+		export MPC_HYDRA
+		;;
+	esac
+	;;
+    --cross_exec=*)
+    SCTK_CROSS_EXEC="`echo A$arg | sed -e 's/A--cross_exec=//g'`"
+    ;;
+    --cross_prefix=*)
+    SCTK_CROSS_PREFIX="`echo A$arg | sed -e 's/A--cross_prefix=//g'`"
+    ;;
+    # Rule for MIC
+    --mic)
+    SCTK_MIC="1"
+	export SCTK_MIC
+    SCTK_CROSS_EXEC="${MPC_SOURCE_DIR}MPC_Tools/cross_compilation_scripts/cross_compil.sh"
+    SCTK_GCC=icc
+    SCTK_CC=icc
+    SCTK_CXX=icpc
+    SCTK_F77=ifort
+    SCTK_CFLAGS="$SCTK_CFLAGS -mmic -Wl,-rpath=${SCTK_ARCH_LIBRARY_PATH}"
+    SCTK_LDFLAGS="$SCTK_LDFLAGS -mmic "
+    #SCTK_AR=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ar
+    #SCTK_LD=/usr/linux-k1om-4.7/bin/x86_64-k1om-linux-ld
+    #SCTK_AR=`echo "${SCTK_PREFIX}" | sed -re 's#'"${MPC_TARGET}"'|'"${MPC_HOST}"'#'"${MPC_HOST}"'#g'`/bin/x86_64-k1om-linux-ar
+    #SCTK_LD=`echo "${SCTK_PREFIX}" | sed -re 's#'"${MPC_TARGET}"'|'"${MPC_HOST}"'#'"${MPC_HOST}"'#g'`/bin/x86_64-k1om-linux-ld
+    SCTK_AR=`echo "${SCTK_PREFIX}" | sed '0,/'"${MPC_TARGET}"'/s/'"${MPC_TARGET}"'/'"${MPC_HOST}"'/'`/bin/x86_64-k1om-linux-ar
+    SCTK_LD=`echo "${SCTK_PREFIX}" | sed '0,/'"${MPC_TARGET}"'/s/'"${MPC_TARGET}"'/'"${MPC_HOST}"'/'`/bin/x86_64-k1om-linux-ld
+    ;;
+    --arch-library-path=*)
+    SCTK_ARCH_LIBRARY_PATH="`echo A$arg | sed -e 's/A--arch-library-path=//g'`"
+    export SCTK_ARCH_LIBRARY_PATH
+    echo "Arch library path updated : $SCTK_ARCH_LIBRARY_PATH"
+    ;;
+    --no-recursion)
+    ;;
+    --prefix=*)
+    SCTK_PREFIX="`echo A$arg | sed -e 's/A--prefix=//g'`"
+    MPC_SUBPREFIX="${SCTK_PREFIX#*${MPC_RPREFIX}}"
+    export MPC_SUBPREFIX
+    ;;
+    --exec-prefix=*)
+    SCTK_EPREFIX="`echo A$arg | sed -e 's/A--exec-prefix=//g'`"
+    ;;
+    --includedir=*)
+    SCTK_INCLUDE_DIR="`echo A$arg | sed -e 's/A--includedir=//g'`"
+    ;;
+    --libdir=*)
+    SCTK_LIB_DIR="`echo A$arg | sed -e 's/A--libdir=//g'`"
+    ;;
+    --mandir=*)
+    SCTK_MAN_DIR="`echo A$arg | sed -e 's/A--mandir=//g'`"
+    ;;
+    --bindir=*)
+    SCTK_BIN_DIR="`echo A$arg | sed -e 's/A--bindir=//g'`"
+    ;;
+    CC=*)
+    SCTK_CC="`echo A$arg | sed -e 's/ACC=//g'`"
+    ;;
+    CXX=*)
+    SCTK_CXX="`echo A$arg | sed -e 's/ACXX=//g'`"
+    ;;
+    CFLAGS=*)
+    SCTK_CFLAGS="`echo A$arg | sed -e 's/ACFLAGS=//g'`"
+    ;;
+    CFLAGS_NON_GNU=*)
+    SCTK_CFLAGS_NON_GNU="`echo A$arg | sed -e 's/ACFLAGS_NON_GNU=//g'`"
+    ;;
+    LDFLAGS=*)
+    SCTK_LDFLAGS="`echo A$arg | sed -e 's/ALDFLAGS=//g'`"
+    ;;
+    F77=*)
+    SCTK_F77="`echo A$arg | sed -e 's/AF77=//g'`"
+    ;;
+    FFLAGS=*)
+    SCTK_FFLAGS="`echo A$arg | sed -e 's/AFFLAGS=//g'`"
+    ;;
+    --use-network=*)
+    if test "${SCTK_NETWORKS_INIT}" = "0" ; then
+	SCTK_NETWORKS_INIT="1"
+	SCTK_NETWORKS=""
+    fi
+    SCTK_NETWORKS="$SCTK_NETWORKS `echo A$arg | sed -e 's/A--use-network=//g'`"
+    ;;
+    --enable-mpi)
+    SCTK_NETWORKS="$SCTK_NETWORKS mpi"
+    ;;
+    --enable-fortran)
+    SCTK_FORTRAN="1"
+    ;;
+    --enable-shm)
+    SCTK_SHM="1"
+    ;;
+    --disable-shm)
+    SCTK_SHM="0"
+    ;;
+    --enable-valgrind-memcheck)
+    SCTK_VALGRIND_MEMCHECK='1'
+    ;;
+    --disable-valgrind-memcheck)
+    SCTK_VALGRIND_MEMCHECK='0'
+    ;;
+    --enable-posix-alloc)
+    SCTK_POSIX_ALLOC='1'
+    ;;
+    --disable-posix-alloc)
+    SCTK_POSIX_ALLOC='0'
+    ;;
+    --enable-checksum)
+    SCTK_CHECKSUM="1"
+    ;;
+    --disable-checksum)
+    SCTK_CHECKSUM="0"
+    ;;
+    --enable-shell-colors)
+    SCTK_SHELL_COLORS="1"
+    ;;
+    --disable-shell-colors)
+    SCTK_SHELL_COLORS="0"
+    ;;
+    --enable-debug-messages)
+    SCTK_DEBUG_MESSAGES="1"
+    ;;
+    --disable-debug-messages)
+    SCTK_DEBUG_MESSAGES_DISABLED="1"
+    SCTK_DEBUG_MESSAGES="0"
+    ;;
+    --enable-debug)
+    SCTK_DEBUG="1"
+    if [ "$SCTK_DEBUG_MESSAGES_DISABLED" -eq "0" ]; then
+      SCTK_DEBUG_MESSAGES="1"
+    fi
+    SCTK_CFLAGS="${SCTK_CFLAGS} -Wall"
+    ;;
+    --enable-debug-strict)
+    SCTK_DEBUG="1"
+    SCTK_DEBUG_MESSAGES="1"
+    SCTK_DEBUG_STRICT="1"
+    ;;
+    --disable-fortran-header)
+	SCTK_FORTRAN_HEADER_DISABLED="1"
+	;;
+	--disable-fortran)
+    SCTK_FORTRAN="0"
+    ;;
+
+    --without-libunwind)
+    SCTK_LIBUNWIND="0"
+    ;;
+    --with-libunwind)
+    SCTK_LIBUNWIND="1"
+    ;;
+
+    --without-mpc_mmap)
+    SCTK_MPC_MMAP="0"
+    ;;
+    --with-mpc_mmap)
+    SCTK_MPC_MMAP="1"
+    ;;
+
+    --without-libnuma)
+    SCTK_LIBNUMA="0"
+    ;;
+    --with-libnuma)
+    SCTK_LIBNUMA="1"
+    ;;
+
+    --without-libcpuset)
+    SCTK_LIBCPUSET="0"
+    ;;
+    --with-libcpuset)
+    SCTK_LIBCPUSET="1"
+    ;;
+
+    --with-hydra)
+    SCTK_SLURM="0"
+    SCTK_HYDRA="1"
+    ;;
+    --with-slurm)
+    SCTK_SLURM="1"
+    SCTK_HYDRA="0"
+    ;;
+    --with-slurm=*)
+    SCTK_SLURM="1"
+    SCTK_HYDRA="0"
+    export SLURM_PREFIX="`echo A$arg | sed -e 's/A--with-slurm=//g'`"
+    ;;
+    --with-hydra=*)
+	SCTK_SLURM="0"
+	SCTK_HYDRA="1"
+	export HYDRA_PREFIX="`echo A$arg | sed -e 's/A--with-hydra=//g'`"
+	;;
+	--with-hwloc=*)
+    HWLOC_USER_PREFIX="`echo A$arg | sed -e 's/A--with-hwloc=//g'`"
+    ;;
+    --with-openpa=*)
+    OPENPA_USER_PREFIX="`echo A$arg | sed -e 's/A--with-openpa=//g'`"
+    ;;
+    --with-openib=*)
+    OPENIB_USER_PREFIX="`echo A$arg | sed -e 's/A--with-openib=//g'`"
+    ;;
+	--with-libxml2=*)
+	SCTK_LIBXML2_PREFIX="`echo A$arg | sed -e 's/A--with-libxml2=//g'`"
+	;;
+	--with-libsctk_arch=*)
+	SCTK_LIBSCTK_ARCH_PREFIX="`echo A$arg | sed -e 's/A--with-libsctk_arch=//g'`"
+	;;
+    --disable-all)
+	mpc_modules_disable_all
+    ;;
+    --disable-*)
+    CONF_ARG="`echo A$arg | sed -e 's/A--disable-//g'`"
+    check_arg $CONF_ARG
+    debug "$CONF_ARG=''"
+    eval "$CONF_ARG=''"
+    ;;
+    --enable-*)
+    CONF_ARG="`echo A$arg | sed -e 's/A--enable-//g'`"
+    check_arg $CONF_ARG
+    debug "$CONF_ARG"
+    if test -d ${MPC_SOURCE_DIR}$CONF_ARG ; then
+	OPT_PATH="${MPC_SOURCE_DIR}$CONF_ARG"
+	debug  "${CONF_ARG}=${OPT_PATH}"
+	eval "${CONF_ARG}=${OPT_PATH}"
+    fi
+    ;;
+    --compilers=*)
+	COMPILER_LIST="`echo A$arg | sed -e 's/A--compilers=//g'`"
+    ;;
+    --debuggers=*)
+	DEBUGGER_LIST="`echo A$arg | sed -e 's/A--debuggers=//g'`"
+    ;;
+    --add-library-path=*)
+	ADD_TO_LIBRARY_PATH="`echo A$arg | sed -e 's/A--add-library-path=//g'`"
+    ;;
+    *)
+	perror "$0: error: unrecognized option: $arg"
+	exit 1
+    ;;
+    esac
+done
+
+#update paths
+post_update_vars
+
+SCTK_CFLAGS="$SCTK_CFLAGS $SCTK_CFLAGS_NON_GNU"
+
+# export launcher information
+
+# Make sure Hydra is present before making it default.
+# If you directly run the mpc configure without the
+# root configure Hydra might not be installed hence
+# should not be used => Fallback to slurm if available
+
+if [ $SCTK_HYDRA -eq 1 ]; then
+  SCTK_JOB_MANAGER="HYDRA"
+elif [ $SCTK_SLURM -eq 1 ]; then
+  SCTK_JOB_MANAGER="SLURM"
+else
+  perror "Neither Hydra nor Slurm has been selected"
+  exit 1
+fi
+export SCTK_JOB_MANAGER
+
+tmp_cross_gen(){
+    TMP_CROSS="$@"
+    TMP_CROSS_NEW=""
+    for i in $TMP_CROSS; do
+	TMP_CROSS_NEW="$TMP_CROSS_NEW ${SCTK_CROSS_PREFIX}${i}"
+    done
+    echo $TMP_CROSS_NEW
+}
+
+SCTK_AR="`tmp_cross_gen $SCTK_AR`"
+SCTK_GCC="`tmp_cross_gen $SCTK_GCC`"
+SCTK_CC="`tmp_cross_gen $SCTK_CC`"
+SCTK_CXX="`tmp_cross_gen $SCTK_CXX`"
+SCTK_F77="`tmp_cross_gen $SCTK_F77`"
+
+if test "$SCTK_OS" = "" ; then
+SCTK_OS="`uname`"
+fi
+
+if test "$SCTK_ARCH" = "" ; then
+UNAME_P=""
+for i in "arch" "uname -p" "uname -m"; do
+if test "$UNAME_P" = "" ; then
+#sctk_echo "check $i"
+eval "$i" > /dev/null 2>&1
+if test "$?" = 0 ; then
+if test "`$i`" != "unknown" ; then
+   UNAME_P="$i"
+fi
+fi
+fi
+done
+SCTK_ARCH="`$UNAME_P`"
+fi
+
+sctk_echo
+
+case $SCTK_OS in
+    SunOS)
+    ;;
+    AIX)
+    ;;
+    HP_UX)
+    ;;
+    WINDOWS)
+    ;;
+    OSF1)
+    ;;
+    Linux)
+    ;;
+    IRIX64)
+    ;;
+    *)
+    sctk_echo "$SCTK_OS unknown: availables SunOS AIX HP_UX WINDOWS OSF1 Linux IRIX64"
+    sctk_echo ""
+    ;;
+esac
+
+begin_section "OS options:"
+case ${SCTK_OS} in
+    SunOS)
+    SCTK_CHECK_LDOPTION "-lsocket -lnsl -lrt"
+    ;;
+    *)
+    sctk_echo "No specific libs"
+esac
+end_section
+
+begin_section "Check module dependencies:"
+# MPC Module Dependency Check
+
+rm -rf include > /dev/null 2>&1
+rm -rf include_modules > /dev/null 2>&1
+
+mkdir -p include
+header > include/mpc.h
+echo "#ifndef ___MPC___GLOBAL___HEADER___FILE___" >> include/mpc.h
+echo "#define ___MPC___GLOBAL___HEADER___FILE___" >> include/mpc.h
+
+echo "#include <sctk_config.h>">> include/mpc.h
+
+for module in $MODULES ; do
+    MODULE_NAME="\$$module"
+    SCTK_INCLUDE_FILES=""
+    if test "`eval echo $MODULE_NAME`" != "" ; then
+    if test -f ${MPC_SOURCE_DIR}${module}/module_dep; then
+    sctk_echo
+    begin_module $module
+    begin_section "Check module dependencies:"
+    . ${MPC_SOURCE_DIR}${module}/module_dep
+    end_section
+    if test "$SCTK_INCLUDE_FILES" != "" ; then
+    for files in $SCTK_INCLUDE_FILES; do
+	sctk_echo "Add in mpc.h #include <$files>"
+	echo "#include <$files>" >> include/mpc.h
+    done
+    fi
+    end_module $module
+    fi
+    fi
+done
+
+cat <<EOF>> include/mpc.h
+int MPC_check_compatibility_lib(int major, int minor, char* pre);
+void MPC_printf (const char *fmt, ...);
+#define MPC_check_compatibility() MPC_check_compatibility_lib(SCTK_VERSION_MAJOR,SCTK_VERSION_MINOR,SCTK_VERSION_PRE)
+EOF
+
+echo "#endif" >> include/mpc.h
+end_section
+
+check_module_deps(){
+# MPC Module System Dependency Check
+for module in $MODULES ; do
+    MODULE_NAME="\$$module"
+    if test "`eval echo $MODULE_NAME`" != "" ; then
+    if test -f ${MPC_SOURCE_DIR}${module}/sys_dep; then
+    sctk_echo
+    begin_module $module
+    begin_section "Check system dependencies:"
+    . ${MPC_SOURCE_DIR}${module}/sys_dep
+    end_section
+    end_module $module
+    fi
+    fi
+done
+}
+
+sctk_echo
+sctk_echo "Build for ${SCTK_OS}/${SCTK_ARCH}"
+
+
+for i in $TO_CHECK; do
+begin_section "Check $i"
+    eval check_$i
+end_section
+sctk_echo
+done
+
+begin_section "Define configuration"
+MODULE_LIST=""
+for i in $MODULES ; do
+    NAME="\$$i"
+    if test "`eval echo $NAME`" != "" ; then
+	MODULE_LIST="$i $MODULE_LIST"
+	SCTK_CHECK_OPTION "-D$i"
+    fi
+done
+end_section
+
+sctk_echo
+
+
+for i in $MODULES; do
+    rm -rf BUILD_$i
+done
+
+begin_section "Check for optimizations"
+SCTK_MSG_CHECKING "${SCTK_OS}_${SCTK_ARCH} optimization"
+if test -d ${MPC_SOURCE_DIR}MPC_Common/sctk_optim/${SCTK_OS}_${SCTK_ARCH}; then
+    SCTK_ARCH_OPTIM="${SCTK_OS}_${SCTK_ARCH}"
+    result yes
+else
+    SCTK_ARCH_OPTIM="generic"
+    result no
+fi
+end_section
+
+sctk_echo
+
+
+if test "$SCTK_MPC_MMAP" = "1" ; then
+begin_section "Use MPC mmap implementation"
+SCTK_CHECK_OPTION "-DSCTK_MPC_MMAP"
+SCTK_CHECK_LDOPTION "-Wl,--wrap,mmap -Wl,--wrap,munmap -Wl,--wrap,mremap"
+
+end_section
+
+sctk_echo
+fi
+
+#Enable debug compiler flags
+if test "$SCTK_DEBUG_STRICT" = "1"; then
+	begin_section "Enabling -Wall -Werror as we are running in strict debug mode"
+	SCTK_CHECK_OPTION "-Wall -Werror -Wno-unused-variable -Wno-unused-but-set-variable"
+	end_section
+	sctk_echo
+elif test "$SCTK_DEBUG" = "1" ; then
+	begin_section "Enabling -Wall as we are running in debug mode"
+	SCTK_CHECK_OPTION "-Wall -Wno-unused-variable -Wno-unused-but-set-variable"
+	end_section
+	sctk_echo
+fi
+
+#Check for _Pragma message in macro
+#It may be better to move this in MPC_Common/sys_dep file but we need to check with -Werror
+check_pragma_message
+
+COMPILER_SPECIFC_FLAGS="$COMPILER_SPECIFC_FLAGS $SCTK_CFLAGS_NON_GNU"
+
+if test "$SCTK_NOCREATE" != "1" ; then
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_config.status
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_makefile
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_ldflags
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_cflags
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_mpcrun
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_mpc_edit_config
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_compiler
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_env
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_status
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_reconfigure
+fi

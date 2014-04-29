@@ -1,0 +1,49 @@
+SRCDIR=@srcdir@/
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+
+CC=@CC@
+CFLAGS=@CFLAGS@ -Iinclude
+LDFLAGS=@LDFLAGS@ -Llib 
+
+TESTFILES=$(wildcard @srcdir@/test/*.c)
+TESTBIN=$(TESTFILES:@srcdir@/%.c=%)
+
+HFILES=$(wildcard @srcdir@/include/*.h)
+DESTHFILES=$(HFILES:@srcdir@/%=%)
+
+all:lib/libsctk_arch_pause.so lib/libsctk_arch_context.so lib/libsctk_arch_timer.so $(DESTHFILES)
+	$(CC) $(LDFLAGS) -fPIC -shared libpause/*.o libcontext/*.o libtimer/*.o  -o lib/libsctk_arch.so
+
+lib/libsctk_arch_context.so:
+	$(MAKE) -C libcontext
+
+lib/libsctk_arch_pause.so:
+	$(MAKE) -C libpause
+
+lib/libsctk_arch_timer.so:
+	$(MAKE) -C libtimer
+
+clean:
+	rm libpause/*.o libcontext/*.o libtimer/*.o lib/*.a test/test* lib/*.so $(DESTHFILES)
+
+$(DESTHFILES):%:@srcdir@/%
+	cp $? $@
+
+test:$(TESTBIN)
+
+$(TESTBIN):%:@srcdir@/%.c
+	mkdir -p test
+	$(CC)  -o $@ $? $(CFLAGS) $(LDFLAGS) -lsctk_arch  -DENABLE_GEN_COMPATIBILITY -Wl,-rpath,lib
+	./$@
+
+prepare:$(SRCDIR)/configure.in
+	cd $(SRCDIR)/; autoconf
+	cd $(SRCDIR)/; autoheader
+
+install:all
+	mkdir -p @includedir@
+	cp include/*.h @includedir@
+	mkdir -p @libdir@
+	cp lib/*.so @libdir@
+
