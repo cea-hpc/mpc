@@ -549,8 +549,13 @@ fi
 echo "#!/bin/sh" > "${PREFIX}/mpcvars.sh"
 cat <<EOF >> "${PREFIX}/mpcvars.sh"
 
-SCRIPT=\$(cd \`dirname "\${BASH_SOURCE[0]}"\` && pwd)/\`basename "\${BASH_SOURCE[0]}"\`
-SCRIPTPATH=\$(dirname "\$SCRIPT")
+if test "\${MPCVARS_PREFIX}" = ""; then
+	SCRIPT=\$(cd \`dirname "\${BASH_SOURCE[0]}"\` && pwd)/\`basename "\${BASH_SOURCE[0]}"\`
+	SCRIPTPATH=\$(dirname "\$SCRIPT")
+else
+	SCRIPTPATH="\${MPCVARS_PREFIX}"
+fi
+
 export MPC_RPREFIX="\$SCRIPTPATH"
 
 if test "\$#" = "1" ; then
@@ -566,6 +571,11 @@ EOF
 ######################################################
 #Put the new install in the list
 putNewInstall
+
+######################################################
+# source the mpcvars.sh file
+MPCVARS_PREFIX="${PREFIX}"
+. "${PREFIX}/mpcvars.sh"
 
 ######################################################
 echo
