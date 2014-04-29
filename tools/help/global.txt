@@ -1,48 +1,47 @@
-TODO but list of options (similar to old mpc way) :
-
 # build
- clean
- distclean
+ clean					: delete directories inside build directory
+ distclean				: delete directories and makefiles inside build directory
 
 # Download missing deps
---download-missing-deps
---mirror={1|2|3|4}
+--download-missing-deps			: download dependencies
+--mirror={1|2|3|4}			: choose a mirror for downloading dependencies
 
 # Disable sub packages
---disable-mpc-gdb
---disable-mpc-gcc
+--disable-mpc-gdb			: disable gdb
+--disable-mpc-gcc			: disable gcc
+--disable-mpc-binutils			: disable binutils
+--disable-mpc-gcc			: disabl fortran
 
-# Where to find ('internal' to build the embedded one)
---with-sctk-arch=
---with-openpa=
---with-mpc-gdb=*
---with-mpc-gcc=
---with-mpfr=*
---with-gmp=
---with-mpc-binutils=*
---with-hwloc=*
---with-libxml2=
+# Specify system subpackages
+--with-mpc-gdb=*			: specify gdb prefix on the system
+--with-mpc-gcc=*			: specify gcc prefix on the system
+--with-sctk-arch=*			: specify sctk_arch prefix on the system
+--with-openpa=*				: specify openpa prefix on the system
+--with-mpfr=*				: specify mpfr prefix on the system
+--with-gmp=*				: specify gmp prefix on the system
+--with-mpc-binutils=*			: specify binutils prefix on the system
+--with-hwloc=*				: specify hwloc prefix on the system
+--with-libxml2=*			: specify libxml2 prefix on the system
 
 # Options to transmit to subpackages
---sctk-arch-*
---openpa-*
---mpc-gdb-*
---mpc-gcc-*
---mpfr-*
---gmp-*
---mpc-binutils-*
---libxml2-*
---hwloc-*
+--mpc-gcc-*				: add options to gcc configure
+--mpc-gdb-*				: add options to gdb configure
+--sctk-arch-*				: add options to sctk-arch configure
+--openpa-*				: add options to openpa configure
+--gmp-*					: add options to gmp configure
+--mpfr-*				: add options to mpfr configure
+--mpc-*					: add options to mpc multiprecision library configure
+--mpc-binutils-*			: add options to binutils configure
+--libxml2-*				: add options to libxml2 configure
+--hwloc-*				: add options to hwloc configure
+
+--mpc-option=*				: add options to mpc framework configure
 
 # Features
---enable-multi-arch
---disable-color
---enable-all-internals
--v|-vv|-vvv
---verbose=1|--verbose=2|--verbose=3
--jX
---prefix=
---help|-h|-?
-
-#get help of subpackages
---help-XXX   (TODO)
+--disable-check-install			: override installation if it already exists in the prefix
+--disable-color				: disable colors in display
+--verbose=1|--verbose=2|--verbose=3	: level of verbosity
+-v|-vv|-vvv				: level of verbosity
+--prefix=*				: specify prefix for installation
+--help|-h|-?				: display this help
+-jX					: install on parallel
