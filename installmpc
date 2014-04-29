@@ -416,6 +416,8 @@ genMakefilePerType()
 	applyOnTemplate "${PROJECT_TEMPLATE_DIR}/Makefile.foot_${type_arch}.in" >> ${makefilePath}
 }
 
+#####################################################
+# generate Makefiles
 genMakefile()
 {
 	list=`cat "${PROJECT_SOURCE_DIR}/config.txt" | cut -f 1 -d ';' |  sed -e "s/^#[0-9A-Za-z_-\ #]*//g" | xargs echo`
@@ -427,6 +429,7 @@ genMakefile()
 
 	#Else create Makefiles
 	else
+		#############
 		#Host case
 		type_arch="host"
 
@@ -472,6 +475,7 @@ genMakefile()
 }
 
 ######################################################
+# Create root Makefile
 createRootMakefile()
 {
 	if [ "${MPC_HOST}" = "${MPC_TARGET}" ];
@@ -501,6 +505,7 @@ createRootMakefile()
 }
 
 ######################################################
+# Determine host architecture
 if [ "${MPC_HOST}" = "" ]; then
 	findCurrentArch 'MPC_HOST'
 fi
@@ -522,7 +527,6 @@ fi
 
 ######################################################
 printSummary
-
 genMakefile
 createRootMakefile
 
@@ -545,7 +549,7 @@ else
 fi
 
 ######################################################
-#Generate mpcvars principal
+#Generate main mpcvars.sh
 echo "#!/bin/sh" > "${PREFIX}/mpcvars.sh"
 cat <<EOF >> "${PREFIX}/mpcvars.sh"
 

@@ -20,6 +20,7 @@ SUBPREFIX=''
 
 ######################################################
 # Escape var for to get rid of spaces in names
+# $1 : prefix to escape
 escapeName()
 {
 	varname="${1}"
@@ -615,6 +616,10 @@ getPackageCompilationOptions()
 }	
 
 ######################################################
+# Push packages to install for makefiles
+# Args :
+#  -$1 : package name
+#  -$2 : package type
 registerPackage()
 {
 		case "${2}" in
