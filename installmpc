@@ -282,6 +282,9 @@ do
 		--help|-h|-?)
 			showHelp
 			;;
+		--version)
+			showVersion
+			;;
 		*)
 			echo "Invalid argument '$arg', please check your command line or get help with --help." 1>&2
 			exit 1

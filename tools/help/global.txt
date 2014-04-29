@@ -1,52 +1,64 @@
-# build
- clean					: delete directories inside build directory
- distclean				: delete directories and makefiles inside build directory
+
+Build script - MPC Distribution @MPC_VERSION@ to adapt to many kinds of systems.
+
+Usage: ./installmpc [OPTION]... [VAR=VALUE]...
+
+Defaults for the options are specified in brackets.
+
+# Information
+  --help|-h|-?                            : Display this help and exit
+  --version                               : Report version number and exit
+
+# Installation
+  --prefix=PREFIX                         : Install architecture-independent files in PREFIX [/usr/local]
+  --disable-check-install                 : Override installation if it already exists in the prefix
+
+# Build
+  --compiler                              : Default compiler
+  clean                                   : Delete directories inside build directory 
+  distclean                               : Delete directories and makefiles inside build directory
 
 # Download missing deps
---download-missing-deps			: download dependencies
---mirror={1|2|3|4}			: choose a mirror for downloading dependencies
+  --download-missing-deps                 : Download dependencies
+  --mirror={1|2|3|4}                      : Choose a mirror for downloading dependencies
 
 # Disable sub packages
---disable-mpc-gdb			: disable gdb
---disable-mpc-gcc			: disable gcc
---disable-mpc-binutils			: disable binutils
---disable-mpc-gcc			: disabl fortran
+  --disable-mpc-gdb                       : Disable gdb
+  --disable-mpc-gcc                       : Disable gcc
+  --disable-mpc-binutils                  : Disable binutils
+  --disable-mpc-gcc                       : Disable fortran
 
 # Specify system subpackages
---with-mpc-gdb=*			: specify gdb prefix on the system
---with-mpc-gcc=*			: specify gcc prefix on the system
---with-sctk-arch=*			: specify sctk_arch prefix on the system
---with-openpa=*				: specify openpa prefix on the system
---with-mpfr=*				: specify mpfr prefix on the system
---with-gmp=*				: specify gmp prefix on the system
---with-mpc-binutils=*			: specify binutils prefix on the system
---with-hwloc=*				: specify hwloc prefix on the system
---with-libxml2=*			: specify libxml2 prefix on the system
+  --with-mpc-gdb=*                        : Specify gdb prefix on the system
+  --with-mpc-gcc=*                        : Specify gcc prefix on the system
+  --with-sctk-arch=*                      : Specify sctk_arch prefix on the system
+  --with-openpa=*                         : Specify openpa prefix on the system
+  --with-mpfr=*                           : Specify mpfr prefix on the system
+  --with-gmp=*                            : Specify gmp prefix on the system
+  --with-mpc-binutils=*                   : Specify binutils prefix on the system
+  --with-hwloc=*                          : Specify hwloc prefix on the system
+  --with-libxml2=*                        : Specify libxml2 prefix on the system
 
 # Options to transmit to subpackages
---mpc-gcc-*				: add options to gcc configure
---mpc-gdb-*				: add options to gdb configure
---sctk-arch-*				: add options to sctk-arch configure
---openpa-*				: add options to openpa configure
---gmp-*					: add options to gmp configure
---mpfr-*				: add options to mpfr configure
---mpc-*					: add options to mpc multiprecision library configure
---mpc-binutils-*			: add options to binutils configure
---libxml2-*				: add options to libxml2 configure
---hwloc-*				: add options to hwloc configure
-
---mpc-option=*				: add options to mpc framework configure
+  --mpc-gcc-*                             : Add options to gcc configure
+  --mpc-gdb-*                             : Add options to gdb configure
+  --sctk-arch-*                           : Add options to sctk-arch configure
+  --openpa-*                              : Add options to openpa configure
+  --gmp-*                                 : Add options to gmp configure
+  --mpfr-*                                : Add options to mpfr configure
+  --mpc-*                                 : Add options to mpc multiprecision library configure
+  --mpc-binutils-*                        : Add options to binutils configure
+  --libxml2-*                             : Add options to libxml2 configure
+  --hwloc-*                               : Add options to hwloc configure
+  --mpc-option=*                          : Add options to mpc framework configure
 
 # Cross-compilation
---target=*				: specify architecture for target
---host=*				: specify architecture for host
---arch-library-path			: specify path for architecture libraries
+  --target=*                              : Specify architecture for target
+  --host=*                                : Specify architecture for host
+  --arch-library-path                     : Specify path for architecture libraries
 
 # Features
---disable-check-install			: override installation if it already exists in the prefix
---disable-color				: disable colors in display
---verbose=1|--verbose=2|--verbose=3	: level of verbosity
--v|-vv|-vvv				: level of verbosity
---prefix=*				: specify prefix for installation
---help|-h|-?				: display this help
--jX					: install on parallel
+  --disable-color                         : Disable colors in display
+  --verbose=1|2|3                         : Level of verbosity
+  -v|-vv|-vvv                             : Level of verbosity
+  -jN                                     : Allow N jobs at once (parallel install)

@@ -704,10 +704,35 @@ setupInstallPackage()
 	fi
 }
 
+
+#function to get MPC version
+#Args   :
+#   -$1 : Variable in witch to put the result
+#Result : Get a version string
+getVersion()
+{
+        #extract parameter
+        outvar="$1"
+	MPC_SOURCE_DIR="${PROJECT_SOURCE_DIR}/mpcframework/"
+	export MPC_SOURCE_DIR="${MPC_SOURCE_DIR}"
+	MPC_VERSION="`${MPC_SOURCE_DIR}/MPC_Tools/mpc_print_version`"
+
+        eval "${outvar}=\"${MPC_VERSION}\""
+}
+
 ######################################################
+showVersion()
+{
+	getVersion "MPC_VERSION"
+	echo ${MPC_VERSION}
+	exit 1
+}
+
 showHelp()
 {
-	cat "${PROJECT_SOURCE_DIR}/tools/help/global.txt"
+	getVersion "MPC_VERSION"
+	cat "${PROJECT_SOURCE_DIR}/tools/banner"
+	cat "${PROJECT_SOURCE_DIR}/tools/help/global.txt" |  sed -e "s/@MPC_VERSION@/${MPC_VERSION}/g"
 	exit 1
 }
 
