@@ -37,6 +37,11 @@
 
 --mpc-option=*				: add options to mpc framework configure
 
+# Cross-compilation
+--target=*				: specify architecture for target
+--host=*				: specify architecture for host
+--arch-library-path			: specify path for architecture libraries
+
 # Features
 --disable-check-install			: override installation if it already exists in the prefix
 --disable-color				: disable colors in display
