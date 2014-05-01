@@ -2287,9 +2287,11 @@ sctk_start_func (void *(*run) (void *), void *arg)
 			mic_nb_task = (getenv("SCTK_MIC_NB_TASK") != NULL) ? atoi(getenv("SCTK_MIC_NB_TASK")) : 0;
 			host_nb_task = (getenv("SCTK_HOST_NB_TASK") != NULL) ? atoi(getenv("SCTK_HOST_NB_TASK")) : 0;
 			
+#ifdef MPC_Message_Passing
 			sctk_pmi_get_node_rank(&node_rank);
 			sctk_pmi_get_process_on_node_rank(&process_on_node_rank);
 			sctk_pmi_get_process_on_node_number(&process_on_node_number);
+#endif
 			
 			#if __MIC__
 				local_threads = mic_nb_task/process_on_node_number;
