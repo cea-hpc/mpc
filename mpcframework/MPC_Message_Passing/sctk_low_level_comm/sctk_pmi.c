@@ -443,10 +443,12 @@ int sctk_pmi_get_process_number(int* size) {
 
 int sctk_pmi_get_process_number_from_node_rank(struct process_nb_from_node_rank ** process_number_from_node_rank)
 {
-    #ifdef MPC_USE_HYDRA
-		*process_number_from_node_rank = sctk_pmi_process_nb_from_node_rank;
-		return PMI_SUCCESS;
-	#endif /* MPC_USE_HYDRA */
+#ifdef MPC_USE_HYDRA
+  *process_number_from_node_rank = sctk_pmi_process_nb_from_node_rank;
+  return PMI_SUCCESS;
+#else
+  not_implemented();
+#endif 
 }
 
 /*! \brief Get the rank of this process
