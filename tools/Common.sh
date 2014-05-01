@@ -311,7 +311,7 @@ getModules()
 	#extract parameter
 	outvar="$1"	
 
-	list=`cat "${PROJECT_SOURCE_DIR}/config.txt" | cut -f 1 -d ';' |  sed -e "s/^#[0-9A-Za-z_-\ #]*//g" | xargs echo`
+	list=`cat "${PROJECT_SOURCE_DIR}/config.txt" | cut -f 1 -d ';' |  sed -e "s/^#.*//g" | xargs echo`
 	eval "${outvar}=\"${list}\""
 }
 
