@@ -193,13 +193,6 @@ do
 		--gmp-*)
 			extractAndAddPackageOption 'GMP_BUILD_PARAMETERS' 'gmp' "$arg"
 			;;
-		##################### MPC ###################
-		--with-mpc=*)
-			extractParamValue 'MPC_PREFIX' 'with-mpc' "$arg"
-			;;
-		--mpc-*)
-			extractAndAddPackageOption 'MPC_BUILD_PARAMETERS' 'mpc' "$arg"
-			;;
 		################## BINUTILS #################
 		--with-mpc-binutils=*)
 			extractParamValue 'BINUTILS_PREFIX' 'with-mpc-binutils' "$arg"
@@ -234,6 +227,13 @@ do
 			;;
 		--enable-mpc-debug)
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} --enable-debug --enable-debug-messages --enable-MPC_Debugger"
+			;;
+		##################### MPC ###################
+		--with-mpc=*)
+			extractParamValue 'MPC_PREFIX' 'with-mpc' "$arg"
+			;;
+		--mpc-*)
+			extractAndAddPackageOption 'MPC_BUILD_PARAMETERS' 'mpc' "$arg"
 			;;
 		############### CROSS-COMPIL ################
 		--host=*)
