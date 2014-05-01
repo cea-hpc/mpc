@@ -34,13 +34,14 @@ static int sctk_pmi_node_rank;
 static int sctk_pmi_nodes_number;
 static int sctk_pmi_processes_on_node_number;
 
-struct process_nb_from_node_rank * sctk_pmi_process_nb_from_node_rank = NULL;
 
 
 
 #define SCTK_PMI_TAG_PMI_HOSTNAME 1
 
 #endif /* MPC_USE_HYDRA */
+
+struct process_nb_from_node_rank * sctk_pmi_process_nb_from_node_rank = NULL;
 
 #ifdef MPC_USE_SLURM
 #include <pmi.h>
