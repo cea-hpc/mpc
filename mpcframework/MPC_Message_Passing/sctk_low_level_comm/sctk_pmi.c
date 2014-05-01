@@ -236,7 +236,9 @@ int sctk_pmi_init() {
   sctk_pmi_get_node_number(&sctk_node_number);
   sctk_pmi_get_process_on_node_rank(&sctk_local_process_rank);
   sctk_pmi_get_process_on_node_number(&sctk_local_process_number);
+#ifdef MPC_USE_HYDRA
   sctk_pmi_get_process_number_from_node_rank(sctk_pmi_process_nb_from_node_rank);
+#endif
 
 
 #ifdef MPC_USE_SLURM
