@@ -556,22 +556,47 @@ fi
 echo "#!/bin/sh" > "${PREFIX}/mpcvars.sh"
 cat <<EOF >> "${PREFIX}/mpcvars.sh"
 
-if test "\${MPCVARS_PREFIX}" = ""; then
+if test "\${0}" = "bash"; then
 	SCRIPT=\$(cd \`dirname "\${BASH_SOURCE[0]}"\` && pwd)/\`basename "\${BASH_SOURCE[0]}"\`
-	SCRIPTPATH=\$(dirname "\$SCRIPT")
 else
-	SCRIPTPATH="\${MPCVARS_PREFIX}"
+	SCRIPT=\$(cd \`dirname "\${0}"\` && pwd)/\`basename "\${0}"\`
 fi
 
+SCRIPTPATH=\$(dirname "\$SCRIPT")
 export MPC_RPREFIX="\$SCRIPTPATH"
 
-if test "\$#" = "1" ; then
+uname=\`uname -m\`
+if test "\$#" = "1" -a "\$0" != "bash" ; then
+	echo "load \$1 module (\${MPC_RPREFIX})"
     . "\${MPC_RPREFIX}/\$1/\$1/bin/mpcvars.sh"
     export MPC_SUBPREFIX="/\$1/\$1/"
 else
-    . "\${MPC_RPREFIX}/\`uname -m\`/\`uname -m\`/bin/mpcvars.sh"
-    export MPC_SUBPREFIX="/\`uname -m\`/\`uname -m\`/"
+	echo "load \${uname} module (\${MPC_RPREFIX})"
+    . "\${MPC_RPREFIX}/\${uname}/\${uname}/bin/mpcvars.sh"
+    export MPC_SUBPREFIX="/\${uname}/\${uname}/"
 fi
+
+EOF
+#generate main mpcvars.csh
+echo "#!/bin/csh" > "${PREFIX}/mpcvars.csh"
+cat <<EOF >> "${PREFIX}/mpcvars.csh"
+
+set DIRNAME=\`dirname "\${0}"\`
+set SCRIPT=\`cd \${DIRNAME} && pwd\`/\`basename "\${0}"\`
+set SCRIPTPATH=\`dirname "\$SCRIPT"\`
+
+setenv MPC_RPREFIX "\$SCRIPTPATH"
+
+set uname=\`uname -m\`
+if ( "\$#argv" == "1" ) then
+	echo "load \$argv[1] module (\${MPC_RPREFIX})"
+    source "\${MPC_RPREFIX}/\$argv[1]/\$argv[1]/bin/mpcvars.csh"
+    setenv MPC_SUBPREFIX "/\$argv[1]/\$argv[1]/"
+else
+	echo "load \${uname} module (\${MPC_RPREFIX})"
+    source "\${MPC_RPREFIX}/\${uname}/\${uname}/bin/mpcvars.csh"
+    setenv MPC_SUBPREFIX "/\${uname}/\${uname}/"
+endif
 
 EOF
 
@@ -580,12 +605,7 @@ EOF
 putNewInstall
 
 ######################################################
-# source the mpcvars.sh file
-MPCVARS_PREFIX="${PREFIX}"
-. "${PREFIX}/mpcvars.sh"
-
-######################################################
 echo
 echo "FINISHED, you can now use the MPC package installed into ${PREFIX}"
-echo "MPC has sourced the host environment by default but you can source"
-echo "a target environment with the command source ${PREFIX}/mpcvars.sh 'target'"
+echo "You must source "source ${PREFIX}/mpcvars.sh" to load the environment variables for the system"
+echo "You can choose a target environment with the command source ${PREFIX}/mpcvars.sh 'target'"
