@@ -555,7 +555,7 @@ fi
 #Generate main mpcvars.sh
 echo "#!/bin/sh" > "${PREFIX}/mpcvars.sh"
 cat <<EOF >> "${PREFIX}/mpcvars.sh"
-
+MPC_INSTALL_DIR_PREFIX="${PREFIX}"
 SHELL_NAME="\${0}"
 
 if test "\${0}"  = "-bash"; then
@@ -565,7 +565,8 @@ fi
 if test "\${SHELL_NAME}" = "bash" -o "\${SHELL_NAME}" = "sh" ; then
 	SCRIPT=\$(cd \`dirname "\${BASH_SOURCE[0]}"\` && pwd)/\`basename "\${BASH_SOURCE[0]}"\`
 else
-	SCRIPT=\$(cd \`dirname "\${0}"\` && pwd)/\`basename "\${0}"\`
+	#SCRIPT=\$(cd \`dirname "\${0}"\` && pwd)/\`basename "\${0}"\`
+	SCRIPT="\${MPC_INSTALL_DIR_PREFIX}/mpcvars.sh"
 fi
 
 SCRIPTPATH=\$(dirname "\$SCRIPT")
@@ -586,6 +587,7 @@ EOF
 #generate main mpcvars.csh
 echo "#!/bin/csh" > "${PREFIX}/mpcvars.csh"
 cat <<EOF >> "${PREFIX}/mpcvars.csh"
+MPC_INSTALL_DIR_PREFIX="${PREFIX}"
 
 set called=(\$_)
 if ( "\$called" != "" ) then
