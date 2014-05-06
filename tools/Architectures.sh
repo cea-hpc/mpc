@@ -33,7 +33,7 @@ getArchList()
 	#extract parameter
 	outvar="${1}"	
 
-	archList=`cat "${PROJECT_SOURCE_DIR}/config.arch.txt" | cut -f 1 -d ';' |  sed -e "s/^#[0-9A-Za-z_-\ #]*//g" | xargs echo`
+	archList=`cat "${PROJECT_SOURCE_DIR}/config.arch.txt" | cut -f 1 -d ';' |  sed -e "s/^#[0-9A-Za-z_\-\ #]*//g" | xargs echo`
 	eval "${outvar}=\"${archList}\""
 }
 
