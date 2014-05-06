@@ -523,7 +523,7 @@ else
 	then
 		MAKE_J_AVAILABLE=`cat /proc/cpuinfo | egrep "core id|physical id" | tr -d '\n' | sed s/physical/\\\nphysical/g | grep -v "^$" | sort | uniq | wc -l`
 		if [ "${MAKE_J_AVAILABLE}" -gt "1" ]; then 
-			echo "Warning: this install script is running sequentially. However ${MAKE_J_AVAILABLE} physical cores were detected on your system.\nThis installation could run faster. Use -j argument (e.g. -j${MAKE_J_AVAILABLE}) to perform a parallel build.\n"
+			echo "Warning: this install script is running sequentially. However ${MAKE_J_AVAILABLE} physical cores were detected on your system. This installation could run faster. Use -j argument (e.g. -j${MAKE_J_AVAILABLE}) to perform a parallel build."
 		fi
 	fi
 fi
