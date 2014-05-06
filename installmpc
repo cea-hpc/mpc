@@ -556,7 +556,13 @@ fi
 echo "#!/bin/sh" > "${PREFIX}/mpcvars.sh"
 cat <<EOF >> "${PREFIX}/mpcvars.sh"
 
-if test "\${0}" = "bash"; then
+SHELL_NAME="\${0}"
+
+if test "\${0}"  = "-bash"; then
+SHELL_NAME="bash"
+fi
+
+if test "\${SHELL_NAME}" = "bash"; then
 	SCRIPT=\$(cd \`dirname "\${BASH_SOURCE[0]}"\` && pwd)/\`basename "\${BASH_SOURCE[0]}"\`
 else
 	SCRIPT=\$(cd \`dirname "\${0}"\` && pwd)/\`basename "\${0}"\`
