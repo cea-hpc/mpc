@@ -33,7 +33,7 @@ getArchList()
 	#extract parameter
 	outvar="${1}"	
 
-	archList=`cat "${MPC_BIN_DIR}/mpcrun_opt/config.arch.txt" | cut -f 1 -d ';' |  sed -e "s/^#[0-9A-Za-z_-\ #]*//g" | xargs echo`
+	archList=`cat "${MPC_BIN_DIR}/mpcrun_opt/config.arch.txt" | cut -f 1 -d ';' |  sed -e "s/^#.*//g" | xargs echo`
 	eval "${outvar}=\"${archList}\""
 }
 
