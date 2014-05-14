@@ -461,8 +461,10 @@ void sctk_hls_build_repository ()
 {
   page_size = getpagesize ();
 
+#ifdef MPC_DISABLE_HLS
 /* TODO disable HLS */
 return ;
+#endif
 
   hwloc_topology_t topology = sctk_get_topology_object() ;
   const int topodepth = hwloc_topology_get_depth(topology);
