@@ -194,6 +194,7 @@ sctk_restrict_topology ()
   int rank ;
   sctk_only_once();
 
+ restart_restrict:
   if (sctk_enable_smt_capabilities)
   {
     int i;
@@ -228,7 +229,13 @@ sctk_restrict_topology ()
     }
     /* restrict the topology to physical CPUs */
     err = hwloc_topology_restrict(topology, cpuset, HWLOC_RESTRICT_FLAG_ADAPT_DISTANCES);
-    assume(!err);
+    if(err){
+      hwloc_bitmap_free(cpuset);
+      hwloc_bitmap_free(set);
+      sctk_enable_smt_capabilities = 1;
+      sctk_warning ("Topology reduction issue");
+      goto restart_restrict;
+    }
     hwloc_bitmap_copy(topology_cpuset, cpuset);
 
     hwloc_bitmap_free(cpuset);
