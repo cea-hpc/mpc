@@ -554,7 +554,7 @@ void sctk_hls_checkout_on_vp ()
 
   sctk_hls[sctk_hls_node_scope] = sctk_hls_repository[0] ;
   for ( i = 1 ; i < sctk_hls_max_scope ; ++i )
-	  sctk_hls[i] = NULL ;
+	  sctk_hls[i] =  sctk_hls_repository[0];
 
   obj = hwloc_get_ancestor_obj_by_depth (topology, socket_depth-1, pu) ;
   if ( obj != NULL && obj->type == HWLOC_OBJ_NODE ) {
