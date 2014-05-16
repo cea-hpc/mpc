@@ -905,8 +905,9 @@ read_dwarf_abbrev_64 (elf_class_t * c, char *abbrev,
 		    }
 		  break;
 		default:
-		  fprintf (stderr, "Unknown %02x\n", (unsigned int) form);
+		  /* fprintf (stderr, "Unknown %02x\n", (unsigned int) form); */
 		  /*assert (0);*/
+		  (void)(0);
 		}
 	    }
 
