@@ -11,3 +11,4 @@ all:../lib/libsctk_arch_pause.so
 	$(CC) $(CFLAGS) $(SRCDIR)/pause.c -o pause.o -c
 	mkdir -p ../lib
 	$(CC) $(LDFLAGS) -fPIC -shared pause.o  -o ../lib/libsctk_arch_pause.so
+	$(AR) rcu  ../lib/libsctk_arch_pause.a  pause.o

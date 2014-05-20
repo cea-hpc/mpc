@@ -2,6 +2,7 @@ SRCDIR=@srcdir@/
 prefix=@prefix@
 exec_prefix=@exec_prefix@
 
+AR=@AR@
 CC=@CC@
 CFLAGS=@CFLAGS@ -Iinclude
 LDFLAGS=@LDFLAGS@ -Llib 
@@ -14,6 +15,7 @@ DESTHFILES=$(HFILES:@srcdir@/%=%)
 
 all:lib/libsctk_arch_pause.so lib/libsctk_arch_context.so lib/libsctk_arch_timer.so $(DESTHFILES)
 	$(CC) $(LDFLAGS) -fPIC -shared libpause/*.o libcontext/*.o libtimer/*.o  -o lib/libsctk_arch.so
+	$(AR) rcu lib/libsctk_arch.a libpause/*.o libcontext/*.o libtimer/*.o
 
 lib/libsctk_arch_context.so:
 	$(MAKE) -C libcontext
@@ -46,4 +48,5 @@ install:all
 	cp include/*.h @includedir@
 	mkdir -p @libdir@
 	cp lib/*.so @libdir@
+	cp lib/*.a @libdir@
 

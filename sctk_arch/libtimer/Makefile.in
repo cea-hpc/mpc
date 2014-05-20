@@ -11,3 +11,4 @@ all:../lib/libsctk_arch_timer.so
 	$(CC) $(CFLAGS) $(SRCDIR)/timer.c -o timer.o -c
 	mkdir -p ../lib
 	$(CC) $(LDFLAGS) -fPIC -shared timer.o  -o ../lib/libsctk_arch_timer.so
+	$(AR) rcu  ../lib/libsctk_arch_timer.a timer.o
