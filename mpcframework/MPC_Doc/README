@@ -1,0 +1,21 @@
+How to generate documentations
+==============================
+
+All document files are written in Markdown syntax which can be easily converted to HTML or a PDF files. To render a PDF file either *pandoc* or *gimli* may be used. 
+
+
+Gimli installation
+------------------
+
+With a debian distribution gimli may be install with the following commands:
+
+      $ apt-get install ruby rubygems wkhtmltopdf libxml2-dev libxslt-dev
+      $ gem install gimli
+
+
+PDF Generation
+--------------
+
+We can now convert our Markdown file to a PDF document. In the current folder type:
+
+      $ make

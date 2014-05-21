@@ -1,5 +1,6 @@
+#!/bin/sh
 ############################# MPC License ##############################
-# Wed Nov 19 15:19:19 CET 2008                                         #
+# Wed May 21 15:46:19 CET 2014                                         #
 # Copyright or (C) or Copr. Commissariat a l'Energie Atomique          #
 #                                                                      #
 # IDDN.FR.001.230040.000.S.P.2007.000.10000                            #
@@ -16,24 +17,22 @@
 # terms.                                                               #
 #                                                                      #
 # Authors:                                                             #
-#   - PERACHE Marc marc.perache@cea.fr                                 #
-#   - CARRIBAULT Patrick patrick.carribault@cea.fr                     #
+#   - VET Jean-Yves vet.jean.yves@gmail.com                            #
 #                                                                      #
 ########################################################################
 
-all: GettingStarted.pdf InstallationGuide.pdf  
+. ../.MPC_version
 
-GettingStarted.pdf:
-	@./updatesrc "GettingStarted.md"
-	@gimli -f ./GettingStarted.md
-	@cp GettingStarted.pdf ../../README.pdf 
+# Update variables
+MPC_VERSION="${MAJOR}.${MINOR}.${REVISION}"
+OMP_VERSION="2.5"
+MPI_VERSION="1.3"
 
-InstallationGuide.pdf:
-	@./updatesrc "InstallationGuide.md"
-	@../../installmpc --help | sed 's/^/      /' >> InstallationGuide.md
-	@gimli -f ./InstallationGuide.md
-	@cp InstallationGuide.pdf ../../
+# Replace variables
+cat ${1}.template \
+	| sed -e "s/@MPC_VERSION@/${MPC_VERSION}/g" \
+	| sed -e "s/@OMP_VERSION@/${OMP_VERSION}/g" \
+	| sed -e "s/@MPI_VERSION@/${MPI_VERSION}/g" \
+	> ${1}
 
-clean:
-	@rm -f GettingStarted.pdf InstallationGuide.pdf
-
+gimli -f ${1}

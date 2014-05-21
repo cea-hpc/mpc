@@ -1,0 +1,18 @@
+Multi-Processor Computing framework _(MPC version @MPC_VERSION@)_
+=======================================================
+_Installation guide_
+=======================
+
+Prerequisites
+-------------
+
+The following prerequisites are required to compile MPC:
+
+  * The main archive file from the [Downloads page](http://mpc.paratools.com/Download)
+  * A *C* compiler (e.g., *gcc*)
+  * An optional *Fortran* compiler if Fortran applications are to be used (e.g., *g77* or *gfortran*)
+  * Optional *SLURM*, *HWLOC* and *OPENPA* libraries installed
+  * For *Infiniband* support *libibvers* is required
+
+Arguments
+---------
