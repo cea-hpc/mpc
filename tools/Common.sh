@@ -715,7 +715,7 @@ getVersion()
         outvar="$1"
 	MPC_SOURCE_DIR="${PROJECT_SOURCE_DIR}/mpcframework/"
 	export MPC_SOURCE_DIR="${MPC_SOURCE_DIR}"
-	MPC_VERSION="`${MPC_SOURCE_DIR}/MPC_Tools/mpc_print_version`"
+	MPC_VERSION="`${MPC_SOURCE_DIR}/MPC_Tools/mpc_print_version | sed -e 's/_[a-zA-Z0-9]*//g'`"
 
         eval "${outvar}=\"${MPC_VERSION}\""
 }
