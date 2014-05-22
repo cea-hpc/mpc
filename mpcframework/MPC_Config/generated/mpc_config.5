@@ -462,6 +462,17 @@ Type is int. Default value is 400.
 .Pp size_recv_ibufs_chunk
 Defines the number of receive buffers allocated on the fly.
 .El
+.Sh ENTRIES OF TYPE net_driver_portals
+Declare a fake driver to test the configuration system.
+.Pp
+It support parameters :
+.Pp
+.Bl -tag -width Ds
+.It Cm fake_param
+Type is int. Default value is 0. 
+.Pp fake_param
+Fake param.
+.El
 .Sh ENTRIES OF TYPE net_driver_tcp
 Declare a fake driver to test the configuration system.
 .Pp
@@ -485,6 +496,8 @@ It can contain a node of type :
  of type net_driver_tcp. 
 .It Cm tcpoib
  of type net_driver_tcp. 
+.It Cm portals
+ of type net_driver_portals. 
 .El
 .Sh ENTRIES OF TYPE net_driver_config
 Contain a list of driver configuration reused by rail definitions.

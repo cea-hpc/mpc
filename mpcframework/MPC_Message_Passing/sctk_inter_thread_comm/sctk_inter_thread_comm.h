@@ -250,6 +250,10 @@ typedef struct {
     void* rdma_src;
     void* route_table;
 
+    /* Portals infos */
+    void* portals_message_info_t;
+    void* portals_info_t;
+
     /* XXX:Specific to IB */
     struct sctk_ib_msg_header_s ib;
 

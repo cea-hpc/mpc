@@ -54,6 +54,11 @@
 			<value>IBV_RDVZ_READ_PROTOCOL</value>
 		</enum>
 
+                <!-- Structure for Portals driver -->
+                <struct name="net_driver_portals" doc="Declare a fake driver to test the configuration system.">
+                        <param name="fake_param" type="int" doc="Fake param." default="0" />
+                </struct>
+
 		<!-- Structure for TCP driver -->
 		<struct name="net_driver_tcp" doc="Declare a fake driver to test the configuration system.">
 			<param name="fake_param" type="int" doc="Fake param." default="0" />
@@ -64,6 +69,7 @@
 			<choice name="infiniband" type="net_driver_infiniband" />
 			<choice name="tcp" type="net_driver_tcp" />
 			<choice name="tcpoib" type="net_driver_tcp" />
+			<choice name="portals" type="net_driver_portals" />
 		</union>
 
 		<!-- define a network driver config -->

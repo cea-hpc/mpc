@@ -154,6 +154,14 @@ void sctk_runtime_config_enum_init_ibv_rdvz_protocol()
 }
 
 /*******************  FUNCTION  *********************/
+void sctk_runtime_config_struct_init_net_driver_portals(void * struct_ptr)
+{
+	struct sctk_runtime_config_struct_net_driver_portals * obj = struct_ptr;
+	/* Simple params : */
+	obj->fake_param = 0;
+}
+
+/*******************  FUNCTION  *********************/
 void sctk_runtime_config_struct_init_net_driver_tcp(void * struct_ptr)
 {
 	struct sctk_runtime_config_struct_net_driver_tcp * obj = struct_ptr;

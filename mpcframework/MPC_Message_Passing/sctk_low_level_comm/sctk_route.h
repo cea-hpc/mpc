@@ -26,6 +26,8 @@
 #include <sctk_runtime_config.h>
 #include <uthash.h>
 #include <math.h>
+#include <sctk_portals.h>
+
 
 typedef struct sctk_rail_info_s sctk_rail_info_t;
 struct sctk_ib_data_s;
@@ -153,6 +155,7 @@ void sctk_Torus_init ( int node_count, sctk_uint8_t dimension);
 inline int sctk_Torus_Node_distance (int a, int b ,unsigned sdim);
 
 
+
 /**
 * \brief Release a sctk_Torus_t
 * After this call any call reffering the Torus
@@ -189,6 +192,7 @@ typedef union
 {
 	sctk_tcp_rail_info_t tcp;	/**< TCP Rail Info */
 	sctk_ib_rail_info_t ib;		/**< IB Rail Info */
+	sctk_portals_rail_info_t portals; /**< Portals Info */
 }sctk_rail_info_spec_t;
 
 /** This structure gathers all informations linked to a network rail
@@ -260,6 +264,7 @@ typedef union
 {
 	sctk_tcp_route_info_t tcp; /**< TCP route info */
 	sctk_ib_data_t ib; /**< IB route info */
+	sctk_portals_data_t portals; /**< Portals route info */
 }sctk_route_info_spec_t;
 
 /** \brief Route table entry

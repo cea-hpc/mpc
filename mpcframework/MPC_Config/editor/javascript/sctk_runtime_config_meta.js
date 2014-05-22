@@ -82,6 +82,9 @@ meta.types = {
 		rdma_resizing_max_nb: {mode: 'param', name: "rdma_resizing_max_nb", type: "int", doc: "Defines the maximum number of Eager RDMA buffers (resizing)", dflt: "32", },
 		size_recv_ibufs_chunk: {mode: 'param', name: "size_recv_ibufs_chunk", type: "int", doc: "Defines the number of receive buffers allocated on the fly.", dflt: "400", },
 	}},
+	net_driver_portals : {type: 'struct', name: "net_driver_portals", childs: {
+		fake_param: {mode: 'param', name: "fake_param", type: "int", doc: "Fake param.", dflt: "0", },
+	}},
 	net_driver_tcp : {type: 'struct', name: "net_driver_tcp", childs: {
 		fake_param: {mode: 'param', name: "fake_param", type: "int", doc: "Fake param.", dflt: "0", },
 	}},
@@ -89,6 +92,7 @@ meta.types = {
 		infiniband: {name: "infiniband", type: "net_driver_infiniband"},
 		tcp: {name: "tcp", type: "net_driver_tcp"},
 		tcpoib: {name: "tcpoib", type: "net_driver_tcp"},
+		portals: {name: "portals", type: "net_driver_portals"},
 	}},
 	net_driver_config : {type: 'struct', name: "net_driver_config", childs: {
 		name: {mode: 'param', name: "name", type: "string", doc: "Name of the driver configuration to be referenced in rail definitions.", dflt: null},

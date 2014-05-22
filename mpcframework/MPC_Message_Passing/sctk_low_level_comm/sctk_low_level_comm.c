@@ -316,6 +316,7 @@ void sctk_net_init_driver (char* name)
 	int nb_rails_infiniband = 0;
 	int nb_rails_tcp = 0;
 	int nb_rails_tcpoib = 0;
+    int nb_rails_portals = 0;
 
 	for (k=0; k<cli_option->rails_size; ++k)
 	{
@@ -346,7 +347,10 @@ void sctk_net_init_driver (char* name)
 			case SCTK_RTCFG_net_driver_tcp: /* TCP */
 				nb_rails_tcp++ ;
 			break;
-			case SCTK_RTCFG_net_driver_tcpoib: /* TCP */
+	    case SCTK_RTCFG_net_driver_portals: /* PORTALS */
+              nb_rails_portals ++ ;
+              break;
+            case SCTK_RTCFG_net_driver_tcpoib: /* TCP O IB*/
 				nb_rails_tcpoib++ ;
 			break;
 			default:
@@ -392,6 +396,9 @@ void sctk_net_init_driver (char* name)
 				sctk_network_init_multirail_ib(k, nb_rails_infiniband);
 			break;
 			#endif
+            case SCTK_RTCFG_net_driver_portals: /* TCP */
+              sctk_network_init_multirail_portals(k, nb_rails_portals);
+              break;
 			case SCTK_RTCFG_net_driver_tcp: /* TCP */
 				sctk_network_init_multirail_tcp(k, nb_rails_tcp);
 			break;

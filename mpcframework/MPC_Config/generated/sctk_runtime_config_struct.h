@@ -214,6 +214,13 @@ struct sctk_runtime_config_struct_net_driver_infiniband
 
 /******************************** STRUCTURE *********************************/
 /**Declare a fake driver to test the configuration system.**/
+struct sctk_runtime_config_struct_net_driver_portals
+{	/**Fake param.**/
+	int fake_param;
+};
+
+/******************************** STRUCTURE *********************************/
+/**Declare a fake driver to test the configuration system.**/
 struct sctk_runtime_config_struct_net_driver_tcp
 {	/**Fake param.**/
 	int fake_param;
@@ -227,6 +234,7 @@ enum sctk_runtime_config_struct_net_driver_type
 	SCTK_RTCFG_net_driver_infiniband,
 	SCTK_RTCFG_net_driver_tcp,
 	SCTK_RTCFG_net_driver_tcpoib,
+	SCTK_RTCFG_net_driver_portals,
 };
 
 /******************************** STRUCTURE *********************************/
@@ -238,6 +246,7 @@ struct sctk_runtime_config_struct_net_driver
 		struct sctk_runtime_config_struct_net_driver_infiniband infiniband;
 		struct sctk_runtime_config_struct_net_driver_tcp tcp;
 		struct sctk_runtime_config_struct_net_driver_tcp tcpoib;
+		struct sctk_runtime_config_struct_net_driver_portals portals;
 	} value;
 };
 

@@ -150,6 +150,12 @@
     </xs:restriction>
   </xs:simpleType>
   <!-- ********************************************************* -->
+  <xs:complexType name="user_type_net_driver_portals">
+    <xs:all>
+      <xs:element minOccurs="0" name="fake_param" type="xs:integer"/>
+    </xs:all>
+  </xs:complexType>
+  <!-- ********************************************************* -->
   <xs:complexType name="user_type_net_driver_tcp">
     <xs:all>
       <xs:element minOccurs="0" name="fake_param" type="xs:integer"/>
@@ -161,6 +167,7 @@
       <xs:element name="infiniband" type="user_type_net_driver_infiniband"/>
       <xs:element name="tcp" type="user_type_net_driver_tcp"/>
       <xs:element name="tcpoib" type="user_type_net_driver_tcp"/>
+      <xs:element name="portals" type="user_type_net_driver_portals"/>
     </xs:choice>
   </xs:complexType>
   <!-- ********************************************************* -->
