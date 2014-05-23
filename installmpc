@@ -587,7 +587,7 @@ EOF
 #generate main mpcvars.csh
 echo "#!/bin/csh" > "${PREFIX}/mpcvars.csh"
 cat <<EOF >> "${PREFIX}/mpcvars.csh"
-MPC_INSTALL_DIR_PREFIX="${PREFIX}"
+set MPC_INSTALL_DIR_PREFIX="${PREFIX}"
 
 set called=(\$_)
 if ( "\$called" != "" ) then
