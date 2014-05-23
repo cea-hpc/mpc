@@ -42,20 +42,26 @@ These steps describe the default installation of MPC with its additional compone
 
 4. Launch the installation script for MPC and its dependencies. Specifying the installation directory:
 
-        $ ./configure --prefix=$HOME/mpc-install
+        $ ./installmpc --prefix=$HOME/mpc-install
   **Note**: you can use the flag *-jX* to perform a faster installation. *X* should be a number and is the total amount of processes launched by *Make*.
 
 
-5. Source the *mpcvars* script (located inside the MPC installation directory) to update environment variables (e.g., *PATH* and *LD\_LIBRARY\_PATH*). For *csh* and *tcsh*:
+5. Source the *mpcvars* script (located at the root of the MPC installation directory) to update environment variables (e.g., *PATH* and *LD\_LIBRARY\_PATH*). 
+        
+        For *csh* and *tcsh*:
 
         $ source $(HOME)/mpc-install/mpcvars.csh
-  For *bash* and *sh*:
+        
+        For *bash* and *sh*:
 
-        $ source $HOME/mpc-install/mpcvars.sh
-  Check that everything went well at this point by running
-
+        $ source $(HOME)/mpc-install/mpcvars.sh
+        
+        Check that everything went well at this point by running
+		
+		$ which mpc_cc
         $ which mpcrun
-        $ which mpc_cc
+        
+        If there was no errors, it should display the path of the mpc_cc and mpcrun scripts.
 
 6. To compile your first MPC program, you may execute the mpc\_cc compiler:
 
@@ -66,9 +72,9 @@ These steps describe the default installation of MPC with its additional compone
 
 7. To execute your MPC program, use the mpcrun command:
 
-        $ mpcrun -m=ethread      -n=4 hello_world
-        $ mpcrun -m=ethread_mxn  -n=4 hello_world
-        $ mpcrun -m=pthread      -n=4 hello_world
+        $ mpcrun -m=ethread      -p=1 -n=4 hello_world
+        $ mpcrun -m=ethread_mxn  -p=1 -n=4 hello_world
+        $ mpcrun -m=pthread      -p=1 -n=4 hello_world
 
 See [supported APIs](http://mpc.paratools.com/UsersGuide/SupportedAPIs) for details on the ’-m’ option.
 
@@ -83,15 +89,23 @@ Specify the PMI based launcher to be used by MPC as follows:
 * __-with-hydra__ *Compile MPC with the Hydra launcher (embedded in the MPC distribution). This option is enabled by default.*
 * __-with-slurm[=prefix]__ *Compile MPC with the SLURM launcher.*
 
-Note that MPC can be compiled with only one launcher. The following options are related to additional libraries required to compile the MPC distribution:
+Specify external libraries used by MPC:
 
-* __-with-cpath=DIR1:DIR2:...__ *Add directories to the CPATH environment variable for the whole MPC distribution.*
-* __-with-library-path=DIR1:DIR2:...__ *Add directories to the LD\_LIBRARY\_PATH environment variable for the whole MPC distribution.*
+* __-with-hwloc=prefix__ *Specify the prefix of hwloc library
+* __-with-openpa=prefix__ *Specify the prefix of OpenPA library
+* __-with-libxml2=prefix__ *Specify the prefix of libxml2 library
+* __-with-mpc-binutils=prefix__ *Specify the prefix of the binutils
 
-Known issues
-------------
+Specify external libraries for gcc compilation:
 
-* In case of conflicts with *libgmp*, it may be preferable to avoid the version *4.3.2* which broke its ABI due to a mistake in documentation and move to *5.0.1* or higher.
+* __-with-gmp=prefix__ *Specify the prefix of gmp library
+* __-with-mpfr=prefix__ *Specify the prefix of mpfr library
+* __-with-mpc=prefix__ *Specify the prefix of mpc multiprecision library
+
+Specify external gcc and gdb:
+
+* __-with-mpc-gcc=prefix__ *Specify the prefix of the gcc used by MPC
+* __-with-mpc-gdb=prefix__ *Specify the prefix of the gdb used by MPC
 
 Running MPC
 -----------
@@ -219,24 +233,6 @@ FAQ
 
 ###Q - How can I disable the MPC SHared Memory module (*SHM*) ?
 > The *SHM* module is enabled by default. To disable it, pass the argument *--disable-shm* to the MPC configure. Don't forget to recompile MPC.
-
-###Q - MPC configure gives me a "FATAL ERROR" message. What can I do ?
-
-        ####################### FATAL ERROR #######################
-          MPC *WILL* overwrite the following include file(s):
-          include/mpi.h
-          include/pthread.h
-          include/semaphore.h
-          include/omp.h
-
-          Please set your --prefix correctly and run configure again.
-          If you know what you are doing, you can use the configure
-          flag --disable-prefix-check. Keep in mind that your headers
-          will be *DEFINITIVELY* overwritten.
-          Configure exiting with no Makefile generated....
-          ###########################################################
-
-> You must be careful with this error message. MPC detected that the prefix path you have given already includes header files. I.e: mpi.h, pthread.h, semaphore.h and omp.h. If you continue the MPC installation using this prefix path, these files will be **DEFINITIVELY** overwritten. As a conclusion, either you change the prefix path (recommended choice), or you pass the argument *--disable-prefix-check* to MPC configure being aware that your headers **WILL** be overwritten.
 
 ###Q - Can I tune the MPC SHared Memory module (*SHM*) according to my needs ?
 > You need to edit the file located there : 
