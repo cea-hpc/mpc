@@ -1,182 +1,122 @@
 Multi-Processor Computing framework _(MPC version @MPC_VERSION@)_
 =======================================================
-_General Installation guide_
-=======================
 
-You can see the GettingStarted.pdf for general installation if you never done one.
+General Installation guide
+--------------------------
 
-Arguments of the installmpc installation script
------------------------------------------------
-      ___  _________ _____    __                                             _
-      |  \/  || ___ |  __ \  / _|                                           | |
-      | .  . || |_/ / /  \/ | |_ _ __ __ _ _ __ ___   _____      _____  _ __| | __
-      | |\/| ||  __/| |     |  _| '__/ _` | '_ ` _ \ / _ \ \ /\ / / _ \| '__| |/ /
-      | |  | || |   | \__/\ | | | | | (_| | | | | | |  __/\ V  V / (_) | |  |   <
-      \_|  |_/\_|    \____/ |_| |_|  \__,_|_| |_| |_|\___| \_/\_/ \___/|_|  |_|\_\
-      
-      
-      Build script - MPC Distribution 2.5.1 to adapt to many kinds of systems.
-      
-      Usage: ./installmpc [OPTION]... [VAR=VALUE]...
-      
-      Defaults for the options are specified in brackets.
-      
-      # Information
-        --help|-h|-?                            : Display this help and exit
-        --version                               : Report version number and exit
-      
-      # Installation
-        --prefix=PREFIX                         : Install architecture-independent files in PREFIX [/usr/local]
-        --disable-check-install                 : Override installation if it already exists in the prefix
-      
-      # Build
-        --compiler                              : Default compiler
-        clean                                   : Delete directories inside build directory 
-        distclean                               : Delete directories and makefiles inside build directory
-      
-      # Download missing deps
-        --download-missing-deps                 : Download dependencies
-        --mirror={1|2|3|4}                      : Choose a mirror for downloading dependencies
-      
-      # Disable sub packages
-        --disable-mpc-gdb                       : Disable gdb
-        --disable-mpc-gcc                       : Disable gcc
-        --disable-mpc-binutils                  : Disable binutils
-        --disable-mpc-fortran                   : Disable fortran
-      
-      # Specify system subpackages
-        --with-mpc-gdb=*                        : Specify gdb prefix on the system
-        --with-mpc-gcc=*                        : Specify gcc prefix on the system
-        --with-sctk-arch=*                      : Specify sctk_arch prefix on the system
-        --with-openpa=*                         : Specify openpa prefix on the system
-        --with-mpfr=*                           : Specify mpfr prefix on the system
-        --with-gmp=*                            : Specify gmp prefix on the system
-        --with-mpc-binutils=*                   : Specify binutils prefix on the system
-        --with-hwloc=*                          : Specify hwloc prefix on the system
-        --with-libxml2=*                        : Specify libxml2 prefix on the system
-      
-      # Options to transmit to subpackages
-        --mpc-gcc-*                             : Add options to gcc configure
-        --mpc-gdb-*                             : Add options to gdb configure
-        --sctk-arch-*                           : Add options to sctk-arch configure
-        --openpa-*                              : Add options to openpa configure
-        --gmp-*                                 : Add options to gmp configure
-        --mpfr-*                                : Add options to mpfr configure
-        --mpc-*                                 : Add options to mpc multiprecision library configure
-        --mpc-binutils-*                        : Add options to binutils configure
-        --libxml2-*                             : Add options to libxml2 configure
-        --hwloc-*                               : Add options to hwloc configure
-        --mpc-option=*                          : Add options to mpc framework configure
-      
-      # Cross-compilation
-        --target=*                              : Specify architecture for target
-        --host=*                                : Specify architecture for host
-        --arch-library-path                     : Specify path for architecture libraries
-      
-      # Features
-        --disable-color                         : Disable colors in display
-        --verbose=1|2|3                         : Level of verbosity
-        -v|-vv|-vvv                             : Level of verbosity
-        -jN                                     : Allow N jobs at once (parallel install)
-        
+Please refer to the [GettingStarted.pdf](http://mpc.paratools.com/Documentation) document for general installation.
     
-_Cross-compilation Installation guide_
-======================================
+Cross-compilation Installation guide
+------------------------------------
 
-Prerequisites
--------------
+### Prerequisites
 
-* __For ARM architecture__* : a cross-compiled gcc which generate code for ARM architecture
-* __For MIC architecture__* : The Intel Compiler suite and the Intel libraries (libimf.so, etc)
+* __For ARM architecture__: a cross-compiled gcc which generate code for ARM architecture
+* __For MIC architecture__: The Intel Compiler suite and the Intel libraries (_libimf.so_, etc.)
 
-MIC Compilation
----------------
 
-1.	Load the modules from Intel (icc, libraries, etc) in your environment.
-2.	Launch the installmpc script for the host:
+### MIC Compilation
+
+1.	Load Intel modules (_icc_, _libraries_, etc) in your environment.
+2.	Launch the __installmpc__ script for the host:
 		
-		$ ./installmpc --prefix=$HOME/install-mpc
+		    $ ./installmpc --prefix=$HOME/install-mpc
 
-3.	Launch the installmpc script for the MIC:
+3.	Launch the __installmpc__ script for the MIC:
 
-        $ ./installmpc --prefix=$HOME/install-mpc --target=mic --compiler=icc --arch-library-path=(Path to Intel libraries for mic architecture)
+        $ ./installmpc --prefix=$HOME/install-mpc --target=mic --compiler=icc  
+          --arch-library-path=(Path to Intel lib for mic architecture)
         
-        __--target=mic__ : specify the target architecture to be MIC. you can use --target=k1om too.  
-        __--compiler=icc__ : specify the compiler which be used by MPC. here, icc.  
-        __--arch-library-path=path__ : specify the path of libraries used for the target architecture.  
+    __--target=mic__: specify the target architecture. You can either use _--target=mic_ or _--target=k1om_.  
+    __--compiler=icc__: specify the compiler to be used by MPC. Here _icc_ has to be selected.  
+    __--arch-library-path=path__: specify the path of libraries used for the target architecture.  
         
-        Don't forget to add --disable-mpc-gcc and --disable-mpc-gdb options to installmpc script. 
-        You could have errors installing these two programs with icc.
+    __Note:__ Do not forget to add _--disable-mpc-gcc_ and _--disable-mpc-gdb_ options to the installmpc script.  
+    You could have errors installing these two programs with icc.
         
-3.	source the mpcvars script at the root of your MPC installation prefix
+4.	Source the mpcvars script located in the root directory of your MPC installation prefix
 	
-		$ source $HOME/install-mpc/mpcvars.sh for sh or bash shells
-		$ source $HOME/install-mpc/mpcvars.csh for csh or tcsh shells
+		    $ source $HOME/install-mpc/mpcvars.sh for sh or bash shells
+		    $ source $HOME/install-mpc/mpcvars.csh for csh or tcsh shells
 		
-		This will load the MPC environment for the architecture you are in. 
-		You can load the environment for the MIC architecture:
+	  This will load the MPC environment for the current architecture. 
+	  You can force to load the environment for the MIC architecture by typing:
 		
-		$ source $HOME/install-mpc/mpcvars.sh k1om
+		    $ source $HOME/install-mpc/mpcvars.sh k1om
 
-4.	To compile your first MPC program for MIC architecture, you may execute the mpc\_cc compiler:
+5.	To compile your first MPC program for a MIC architecture, you may execute the mpc\_cc compiler:
 
-		if you have load MIC environment:
-		$ mpc_cc main.c -o main.mic 
+    If you have loaded the MIC environment:
 
-		if you have load host environment:
-		$ mpc_cc -target=k1om main.c -o main.mic 
+		    $ mpc_cc main.c -o main.mic 
 
-5.	Execution your MPC program:
+    If you have loaded the host environment:
 
-    * homogeneous launch :
-        * Compile binary for MIC architecture (main.mic)  
-        * Create config.cfg file:  
-            -host mic0 -p 1 ./main.mic
-        * Launch the binary with mpcrun script:  
-            $ mpcrun -p=1 -n=4 -net=tcp -l=mic_hybrid --mic-config=config.cfg  
-            -l=mic_hybrid: load the mic launcher  
-            --mic-config=*: load the config file for launch  
-            Note that your process number have to be the same in config.cfg and launch command  
-    * heterogeneous launch :
-        * Compile binary for MIC architecture (main.mic)  and binary for host architecture (main.host)  
-        * Create config.cfg file:
-            -host knc02 -p 4 ./main.host
-            -host mic0  -p 3 ./main.mic
-            -host mic1  -p 2 ./main.mic
-        * Launch the binaries with mpcrun script:  
-            $ mpcrun -p=9 -n=16 -net=tcp -l=mic_hybrid --mic-config=config.cfg --mic-nb-task=5 --nb-mic=2 --nb-host=1 --host-nb-task=6  
-            --nb-mic=*: number of MIC devices for the launch  
-            --nb-host=*: number of host devices for the launch  
-            --mic-nb-task=*: number of tasks per MIC device  
-            --host-nb-task=*: number of tasks per host device  
+		    $ mpc_cc -target=k1om main.c -o main.mic 
 
-ARM Compilation
----------------
+6.	Execute your MPC program:
+
+  * __Homogeneous launch:__  
+    * Compile your code for the MIC architecture (main.mic)
+    * Create config.cfg file:
+
+              -host mic0 -p 1 ./main.mic
+    * Launch the binary with mpcrun script:
+
+              $ mpcrun -p=1 -n=4 -net=tcp -l=mic_hybrid --mic-config=config.cfg
+
+          **-l=mic\_hybrid**: load the mic launcher  
+          __--mic-config=*__: load the config file for launch  
+          Note that your process number have to be the same in _config.cfg_ and launch command
+
+  * __Heterogeneous launch:__
+    * Compile your code for the MIC architecture (_main.mic_) as well as for the host architecture (_main.host_)  
+    * Create config.cfg file:
+
+              -host knc02 -p 4 ./main.host
+              -host mic0  -p 3 ./main.mic
+              -host mic1  -p 2 ./main.mic
+    * Launch the binaries with mpcrun script:
+
+              $ mpcrun -p=9 -n=16 -net=tcp -l=mic_hybrid  
+                --mic-config=config.cfg --mic-nb-task=5 --nb-mic=2 --nb-host=1 --host-nb-task=6
+
+          __--nb-mic=\*__: number of MIC devices for the launch  
+          __--nb-host=\*__: number of host devices for the launch  
+          __--mic-nb-task=\*__: number of tasks per MIC device  
+          __--host-nb-task=\*__: number of tasks per host device
+
+### ARM Compilation
 
 1.	Cross-compile gcc for ARM architecture
-2.	Launch the installmpc script for the host:
+2.	Launch the _installmpc_ script for the host:
 		
-		$ ./installmpc --prefix=$HOME/install-mpc --with-mpc-gcc=prefix --target=arm
-		with prefix being where you installed the cross-compiler for ARM architecture
+        $ ./installmpc --prefix=$HOME/install-mpc --with-mpc-gcc=prefix --target=arm
+
+    with prefix being where you installed the cross-compiler for ARM architecture.
         
-2.	source the mpcvars script at the root of your MPC installation prefix
+2.	Source the _mpcvars_ script at the root of your MPC installation prefix
 	
-		$ source $HOME/install-mpc/mpcvars.sh for sh or bash shells
-		$ source $HOME/install-mpc/mpcvars.csh for csh or tcsh shells
+        $ source $HOME/install-mpc/mpcvars.sh for sh or bash shells
+        $ source $HOME/install-mpc/mpcvars.csh for csh or tcsh shells
 		
-		This will load the MPC environment for the architecture you are in. 
-		You can load the environment for the MIC architecture:
+    This will load the MPC environment for the current architecture you are using.  
+    You can force to load the environment for the ARM architecture:
 		
-		$ source $HOME/install-mpc/mpcvars.sh arm
+        $ source $HOME/install-mpc/mpcvars.sh arm
 
-3.	To compile your first MPC program for ARM architecture, you may execute the mpc\_cc compiler on the host:
+3.	To compile your first MPC program for ARM architecture, you may execute the *mpc\_cc* compiler on the host:
 
-		if you have load MIC environment:
-		$ mpc_cc main.c -o main 
+    If you have load MIC environment:
+
+        $ mpc_cc main.c -o main 
 
 4.	Copy the installation prefix into your ARM device
 5.	Copy your ARM binary into your ARM device
-6.	ssh on your ARM device and source the root mpcvars script
+6.	ssh on your ARM device and source the root *mpcvars* script
 7.	Execute your ARM binary with mpcrun command:  
     
-    $ mpcrun -n=4 ./main
+        $ mpcrun -n=4 ./main
+
+Arguments of the installmpc installation script
+-----------------------------------------------
