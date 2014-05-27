@@ -12,20 +12,53 @@ Cross-compilation Installation guide
 ### Prerequisites
 
 * __For ARM architecture__: a cross-compiled gcc which generate code for ARM architecture
-* __For MIC architecture__: The Intel Compiler suite and the Intel libraries (_libimf.so_, etc.)
+* __For MIC architecture__: the Intel Compiler suite and the Intel libraries ([Intel MPSS](http://link))
 
+
+### Cross-Compilation, ARM example
+
+1.	Cross-compile gcc for ARM architecture
+2.	Launch the _installmpc_ script for the host:
+		
+        $ ./installmpc --prefix=$HOME/install-mpc --with-mpc-gcc=prefix --target=arm
+
+    with prefix being where you installed the cross-compiler for ARM architecture.
+        
+2.	Source the _mpcvars_ script at the root of your MPC installation prefix
+	
+        $ source $HOME/install-mpc/mpcvars.sh for sh or bash shells
+        $ source $HOME/install-mpc/mpcvars.csh for csh or tcsh shells
+		
+    This will load the MPC environment for the current architecture you are using.  
+    You can force to load the environment for the ARM architecture:
+		
+        $ source $HOME/install-mpc/mpcvars.sh arm
+
+3.	To compile your first MPC program for ARM architecture, you may execute the *mpc\_cc* compiler on the host:
+
+    If you loaded an ARM environment:
+
+        $ mpc_cc main.c -o main 
+
+4.	Copy the installation prefix into your ARM device
+5.	Copy your ARM binary into your ARM device
+6.	ssh on your ARM device and source the root *mpcvars* script
+7.	Execute your ARM binary with mpcrun command:  
+    
+        $ mpcrun -n=4 ./main
 
 ### MIC Compilation
 
-1.	Load Intel modules (_icc_, _libraries_, etc) in your environment.
-2.	Launch the __installmpc__ script for the host:
-		
-		    $ ./installmpc --prefix=$HOME/install-mpc
+1.  Load Intel modules (_icc_, _libraries_, etc) in your environment.
+2.  Launch the __installmpc__ script for the host:
 
-3.	Launch the __installmpc__ script for the MIC:
+        $ ./installmpc --prefix=$HOME/install-mpc
+
+3.  Launch the __installmpc__ script for the MIC:
 
         $ ./installmpc --prefix=$HOME/install-mpc --target=mic --compiler=icc  
-          --arch-library-path=(Path to Intel lib for mic architecture)
+          --arch-library-path=(Path to Intel lib for mic architecture) --disable-mpc-gcc 
+          --disable-mpc-gdb
         
     __--target=mic__: specify the target architecture. You can either use _--target=mic_ or _--target=k1om_.  
     __--compiler=icc__: specify the compiler to be used by MPC. Here _icc_ has to be selected.  
@@ -34,27 +67,27 @@ Cross-compilation Installation guide
     __Note:__ Do not forget to add _--disable-mpc-gcc_ and _--disable-mpc-gdb_ options to the installmpc script.  
     You could have errors installing these two programs with icc.
         
-4.	Source the mpcvars script located in the root directory of your MPC installation prefix
-	
-		    $ source $HOME/install-mpc/mpcvars.sh for sh or bash shells
-		    $ source $HOME/install-mpc/mpcvars.csh for csh or tcsh shells
-		
-	  This will load the MPC environment for the current architecture. 
-	  You can force to load the environment for the MIC architecture by typing:
-		
-		    $ source $HOME/install-mpc/mpcvars.sh k1om
+4.  Source the _mpcvars_ script located in the root directory of your MPC installation prefix
+  
+        $ . $HOME/install-mpc/mpcvars.sh for sh or bash shells
+        $ source $HOME/install-mpc/mpcvars.csh for csh or tcsh shells
+    
+    This will load the MPC environment for the current architecture. 
+    You can force to load the environment for the MIC architecture by typing:
+    
+        $ . $HOME/install-mpc/mpcvars.sh k1om
 
-5.	To compile your first MPC program for a MIC architecture, you may execute the mpc\_cc compiler:
+5.  To compile your first MPC program for a MIC architecture, you may execute the mpc\_cc compiler:
 
     If you have loaded the MIC environment:
 
-		    $ mpc_cc main.c -o main.mic 
+        $ mpc_cc main.c -o main.mic 
 
     If you have loaded the host environment:
 
-		    $ mpc_cc -target=k1om main.c -o main.mic 
+        $ mpc_cc -target=k1om main.c -o main.mic 
 
-6.	Execute your MPC program:
+6.  Execute your MPC program:
 
   * __Homogeneous launch:__  
     * Compile your code for the MIC architecture (main.mic)
@@ -83,40 +116,9 @@ Cross-compilation Installation guide
 
           __--nb-mic=\*__: number of MIC devices for the launch  
           __--nb-host=\*__: number of host devices for the launch  
-          __--mic-nb-task=\*__: number of tasks per MIC device  
-          __--host-nb-task=\*__: number of tasks per host device
+          __--mic-nb-task=\*__: number of tasks per MIC device (optional)
+          __--host-nb-task=\*__: number of tasks per host device (optional)
 
-### ARM Compilation
-
-1.	Cross-compile gcc for ARM architecture
-2.	Launch the _installmpc_ script for the host:
-		
-        $ ./installmpc --prefix=$HOME/install-mpc --with-mpc-gcc=prefix --target=arm
-
-    with prefix being where you installed the cross-compiler for ARM architecture.
-        
-2.	Source the _mpcvars_ script at the root of your MPC installation prefix
-	
-        $ source $HOME/install-mpc/mpcvars.sh for sh or bash shells
-        $ source $HOME/install-mpc/mpcvars.csh for csh or tcsh shells
-		
-    This will load the MPC environment for the current architecture you are using.  
-    You can force to load the environment for the ARM architecture:
-		
-        $ source $HOME/install-mpc/mpcvars.sh arm
-
-3.	To compile your first MPC program for ARM architecture, you may execute the *mpc\_cc* compiler on the host:
-
-    If you have load MIC environment:
-
-        $ mpc_cc main.c -o main 
-
-4.	Copy the installation prefix into your ARM device
-5.	Copy your ARM binary into your ARM device
-6.	ssh on your ARM device and source the root *mpcvars* script
-7.	Execute your ARM binary with mpcrun command:  
-    
-        $ mpcrun -n=4 ./main
 
 Arguments of the installmpc installation script
 -----------------------------------------------
