@@ -260,20 +260,24 @@ do
 			ALL_INTERNALS='true'
 			;;
 		-v | --verbose | --verbose=1)
-			export STEP_WRAPPER_VERBOSE=1;
+			STEP_WRAPPER_VERBOSE=1
+			export STEP_WRAPPER_VERBOSE
 			;;
 		-vv | --verbose=2)
-			export STEP_WRAPPER_VERBOSE=2;
+			STEP_WRAPPER_VERBOSE=2
+			export STEP_WRAPPER_VERBOSE
 			;;
 		-vvv | --verbose=3)
-			export STEP_WRAPPER_VERBOSE=3;
+			STEP_WRAPPER_VERBOSE=3
+			export STEP_WRAPPER_VERBOSE
 			;;
 		-j*)
 			extractParamValueAlt 'MAKE_J' 'j' "$arg"
 			;;
 		--prefix=*)
 			extractParamValue 'PREFIX' 'prefix' "$arg"
-			export MPC_RPREFIX="${PREFIX}"
+			MPC_RPREFIX="${PREFIX}"
+			export MPC_RPREFIX
 			#Check if prefix directory exists
 			if [ ! -d "${PREFIX}" ]; then
 				mkdir -p ${PREFIX}
@@ -411,7 +415,8 @@ genMakefilePerType()
 			findPackage "${module}"
 			tmp=`echo "$LD_LIBRARY_PATH" | grep "${MPC_RPREFIX}/${MPC_HOST}/${MPC_TARGET}/lib"`
 			if test "${tmp}" = ""; then
-				export LD_LIBRARY_PATH="${MPC_RPREFIX}/${MPC_HOST}/${MPC_TARGET}/lib:$LD_LIBRARY_PATH"
+				LD_LIBRARY_PATH="${MPC_RPREFIX}/${MPC_HOST}/${MPC_TARGET}/lib:$LD_LIBRARY_PATH"
+				export LD_LIBRARY_PATH
 			fi
 			setupInstallPackage "${module}" "${MPC_HOST}" "${MPC_TARGET}" "${MPC_COMPILER}" "${UPPER}" "${template}" "${2}">> ${makefilePath}
 		fi
@@ -535,7 +540,10 @@ createRootMakefile
 
 #Made verbose if seq
 if [ "$MAKE_J" = "1" ] || [ -z "$MAKE_J" ]; then
-	if [ -z "$STEP_WRAPPER_VERBOSE" ]; then export STEP_WRAPPER_VERBOSE=3; fi
+	if [ -z "$STEP_WRAPPER_VERBOSE" ]; then 
+		STEP_WRAPPER_VERBOSE=3
+		export STEP_WRAPPER_VERBOSE  
+	fi
 fi
 
 #Mark build dir
@@ -570,17 +578,20 @@ else
 fi
 
 SCRIPTPATH=\$(dirname "\$SCRIPT")
-export MPC_RPREFIX="\$SCRIPTPATH"
+MPC_RPREFIX="\$SCRIPTPATH"
+export MPC_RPREFIX
 
 uname=\`uname -m\`
 if test "\$#" = "1" -a "\$0" != "bash" ; then
 	echo "load \$1 module (\${MPC_RPREFIX})"
     . "\${MPC_RPREFIX}/\$1/\$1/bin/mpcvars.sh"
-    export MPC_SUBPREFIX="/\$1/\$1/"
+    MPC_SUBPREFIX="/\$1/\$1/"
+    export MPC_SUBPREFIX
 else
 	echo "load \${uname} module (\${MPC_RPREFIX})"
     . "\${MPC_RPREFIX}/\${uname}/\${uname}/bin/mpcvars.sh"
-    export MPC_SUBPREFIX="/\${uname}/\${uname}/"
+    MPC_SUBPREFIX="/\${uname}/\${uname}/"
+    export MPC_SUBPREFIX
 fi
 
 EOF

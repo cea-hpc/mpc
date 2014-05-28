@@ -38,7 +38,7 @@
 	export LD_LIBRARY_PATH=$(PREFIX)/libsgcc/lib:@LD_LIBRARY_PATH@ && cd $(@PACKAGE_VAR_NAME@_BUILD_DIR)/build && $(STEP_WRAPPER) "Build $(@PACKAGE_VAR_NAME@_STEP_NAME)" $(MAKE) $(MFLAGS) && cd ../../ && echo "$(MAKE) $(MFLAGS)" > .@PACKAGE_NAME@.make
 
 .@PACKAGE_NAME@.install: @PACKAGE_DEPS@ .@PACKAGE_NAME@.configure .@PACKAGE_NAME@.make
-	$(STEP_WRAPPER) "Install $(@PACKAGE_VAR_NAME@_STEP_NAME)" $(MAKE) $(MFLAGS) -C $(@PACKAGE_VAR_NAME@_BUILD_DIR)/build install && touch .@PACKAGE_NAME@.install && export LD_LIBRARY_PATH=$(PREFIX)/@PACKAGE_NAME@/lib:$LD_LIBRARY_PATH
+	$(STEP_WRAPPER) "Install $(@PACKAGE_VAR_NAME@_STEP_NAME)" $(MAKE) $(MFLAGS) -C $(@PACKAGE_VAR_NAME@_BUILD_DIR)/build install && touch .@PACKAGE_NAME@.install && LD_LIBRARY_PATH=$(PREFIX)/lib:$(LD_LIBRARY_PATH) && export LD_LIBRARY_PATH
 
 #avoid conflict with directory
 .PHONY: @PACKAGE_NAME@ @PACKAGE_NAME@-gen-help

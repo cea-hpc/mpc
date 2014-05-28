@@ -49,12 +49,15 @@ EOF
 #fi
 
 cat <<EOF >> ${OUTPUT_FILE}
-export MPI_ROOT="\${MPCROOT}"
+MPI_ROOT="\${MPCROOT}"
+export MPI_ROOT
 
 if test -z "\${PATH}" ; then
-   export PATH="\${MPCROOT}/bin"
+	PATH="\${MPCROOT}/bin"
+	export PATH
 else
-   export PATH="\${PATH}:\${MPCROOT}/bin"
+	PATH="\${PATH}:\${MPCROOT}/bin"
+	export PATH
 fi
 
 # if test -z "\${CPATH}" ; then
@@ -64,15 +67,19 @@ fi
 # fi
 
 if test -z "\${MANPATH}" ; then
-  export MANPATH="\${MPCROOT}/man"
+	MANPATH="\${MPCROOT}/man"
+	export MANPATH
 else
-  export MANPATH="\${MPCROOT}/man:\${MANPATH}"
+	MANPATH="\${MPCROOT}/man:\${MANPATH}"
+	export MANPATH
 fi
 
 if test -z "\${LIBRARY_PATH}" ; then
-   export LIBRARY_PATH="\${MPCROOT}/lib"
+	LIBRARY_PATH="\${MPCROOT}/lib"
+	export LIBRARY_PATH
 else
-   export LIBRARY_PATH="\${MPCROOT}/lib:\${LIBRARY_PATH}"
+	LIBRARY_PATH="\${MPCROOT}/lib:\${LIBRARY_PATH}"
+	export LIBRARY_PATH
 fi
 
 EOF
@@ -82,26 +89,32 @@ if test "${ADD_TO_LIBRARY_PATH}" = "" ; then
  + Check commentaires
 cat <<EOF >> ${OUTPUT_FILE}
 if test -z "\${LD_LIBRARY_PATH}" ; then
-   export LD_LIBRARY_PATH="\${MPCROOT}/lib"
+	LD_LIBRARY_PATH="\${MPCROOT}/lib"
+	export LD_LIBRARY_PATH
 else
-   export LD_LIBRARY_PATH="\${MPCROOT}/lib:\${LD_LIBRARY_PATH}"
+	LD_LIBRARY_PATH="\${MPCROOT}/lib:\${LD_LIBRARY_PATH}"
+	export LD_LIBRARY_PATH
 fi
 
 if test -d "\${MPCROOT}/libsgcc" ; then
-   export LD_LIBRARY_PATH="\${MPCROOT}/libsgcc/lib:\${LD_LIBRARY_PATH}"
+	LD_LIBRARY_PATH="\${MPCROOT}/libsgcc/lib:\${LD_LIBRARY_PATH}"
+	export LD_LIBRARY_PATH
 fi
 EOF
 
 else
 cat <<EOF >> ${OUTPUT_FILE}
 if test -z "\${LD_LIBRARY_PATH}" ; then
-   export LD_LIBRARY_PATH="\${MPCROOT}/lib:${ADD_TO_LIBRARY_PATH}"
+	LD_LIBRARY_PATH="\${MPCROOT}/lib:${ADD_TO_LIBRARY_PATH}"
+	export LD_LIBRARY_PATH
 else
-   export LD_LIBRARY_PATH="\${MPCROOT}/lib:${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}"
+	LD_LIBRARY_PATH="\${MPCROOT}/lib:${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}"
+	export LD_LIBRARY_PATH
 fi
 
 if test -d "\${MPCROOT}/libsgcc" ; then
-   export LD_LIBRARY_PATH="\${MPCROOT}/libsgcc/lib:${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}"
+	LD_LIBRARY_PATH="\${MPCROOT}/libsgcc/lib:${ADD_TO_LIBRARY_PATH}:\${LD_LIBRARY_PATH}"
+	export LD_LIBRARY_PATH
 fi
 EOF
 fi

@@ -445,12 +445,14 @@ for arg in "$@" ; do
     --with-slurm=*)
     SCTK_SLURM="1"
     SCTK_HYDRA="0"
-    export SLURM_PREFIX="`echo A$arg | sed -e 's/A--with-slurm=//g'`"
+    SLURM_PREFIX="`echo A$arg | sed -e 's/A--with-slurm=//g'`"
+    export SLURM_PREFIX
     ;;
     --with-hydra=*)
 	SCTK_SLURM="0"
 	SCTK_HYDRA="1"
-	export HYDRA_PREFIX="`echo A$arg | sed -e 's/A--with-hydra=//g'`"
+	HYDRA_PREFIX="`echo A$arg | sed -e 's/A--with-hydra=//g'`"
+	export HYDRA_PREFIX
 	;;
 	--with-hwloc=*)
     HWLOC_USER_PREFIX="`echo A$arg | sed -e 's/A--with-hwloc=//g'`"

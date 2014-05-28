@@ -537,9 +537,12 @@ enablePrefixEnv()
 	prefix="$1"
 
 	#do exports
-	export PATH="${prefix}/bin:${PATH}"
-	export LD_LIBRARY_PATH="${prefix}/lib:${LD_LIBRARY_PATH}"
-	export PKG_CONFIG_PATH="${prefix}/lib/pkg-config/:${prefix}/share/pkg-config/:${PKG_CONFIG_PATH}"
+	PATH="${prefix}/bin:${PATH}"
+	export PATH
+	LD_LIBRARY_PATH="${prefix}/lib:${LD_LIBRARY_PATH}"
+	export LD_LIBRARY_PATH
+	PKG_CONFIG_PATH="${prefix}/lib/pkg-config/:${prefix}/share/pkg-config/:${PKG_CONFIG_PATH}"
+	export PKG_CONFIG_PATH
 }
 
 ######################################################
@@ -553,7 +556,8 @@ applyOnTemplate()
 	fi
 	#extract args
 	file="$1"
-	export LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+	LD_LIBRARY_PATH=${LD_LIBRARY_PATH}
+	export LD_LIBRARY_PATH
 
 	#Check if the file exist
 	if [ ! -f "$file" ]; then
@@ -714,7 +718,8 @@ getVersion()
         #extract parameter
         outvar="$1"
 	MPC_SOURCE_DIR="${PROJECT_SOURCE_DIR}/mpcframework/"
-	export MPC_SOURCE_DIR="${MPC_SOURCE_DIR}"
+	MPC_SOURCE_DIR="${MPC_SOURCE_DIR}"
+	export MPC_SOURCE_DIR
 	MPC_VERSION="`${MPC_SOURCE_DIR}/MPC_Tools/mpc_print_version | sed -e 's/_[a-zA-Z0-9]*//g'`"
 
         eval "${outvar}=\"${MPC_VERSION}\""

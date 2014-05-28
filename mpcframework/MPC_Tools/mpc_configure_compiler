@@ -565,21 +565,29 @@ if test "`echo ${MPC_RPREFIX}/${MPC_SUBPREFIX}/ | grep "${SCTK_ARCH}"`" = ""; th
 		x86_64)
 cat <<EOF >> "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
 #!/bin/sh
-export SCTK_MIC=0
-export CC=`head -n 1 \${MPC_RPREFIX}/.c_compilers`
+SCTK_MIC=0
+export SCTK_MIC
+CC=`head -n 1 \${MPC_RPREFIX}/.c_compilers`
+export CC
 addarg=no
-export CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\`"
-export LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"	
+CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\`"
+export CFLAGS
+LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"	
+export LDFLAGS
 EOF
 		;;
 		k1om)
 cat <<EOF >> "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
 #!/bin/sh
-export SCTK_MIC=1
-export CC=icc
+SCTK_MIC=1
+export SCTK_MIC
+CC=icc
+export CC
 addarg=no
-export CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\` -mmic"
-export LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"	
+CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\` -mmic"
+export CFLAGS
+LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"
+export LDFLAGS
 EOF
 		;;
 	esac
@@ -600,21 +608,29 @@ else
 		x86_64)
 cat <<EOF >> "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
 #!/bin/sh
-export SCTK_MIC=0
-export CC=`head -n 1 \${MPC_RPREFIX}/.c_compilers`
+SCTK_MIC=0
+export SCTK_MIC
+CC=`head -n 1 \${MPC_RPREFIX}/.c_compilers`
+export CC
 addarg=no
-export CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\`"
-export LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"	
+CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\`"
+export CFLAGS
+LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"	
+export LDFLAGS
 EOF
 		;;
 		k1om)
 cat <<EOF >> "${MPC_RPREFIX}/${MPC_SUBPREFIX}/.target_options"
 #!/bin/sh
-export SCTK_MIC=1
-export CC=icc
+SCTK_MIC=1
+export SCTK_MIC
+CC=icc
+export CC
 addarg=no
-export CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\` -mmic"
-export LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"	
+CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags c\` -mmic"
+export CFLAGS
+LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags c\`"	
+export LDFLAGS
 EOF
 		;;
 	esac
