@@ -4,18 +4,28 @@
 AC_PREREQ([2.69])
 AC_INIT([FULL-PACKAGE-NAME], [VERSION], [BUG-REPORT-ADDRESS])
 
-# Checks for libraries.
+# Check for fortran compiler
 AC_MSG_CHECKING([for fortran compiler])
 AC_PROG_F77(f77 f90 gfortran g77 ifort fl32 fort77 xlf cf77 f90 xlf90)
-AC_MSG_CHECKING([for Termcap library])
-AC_CHECK_LIB(termcap, tgetent, , [AC_MSG_NOTICE([Termcap library not found, see http://ftp.gnu.org/gnu/termcap/])])
+
+# Checks for libraries.
 AC_MSG_CHECKING([for CLooG library])
 AC_CHECK_LIB(cloog-ppl,cloog_clast_create, , [AC_MSG_NOTICE([CLooG library not found, see www.cloog.org])])
+
 AC_MSG_CHECKING([for ISL library])
 AC_CHECK_LIB(isl, isl_printer_to_str, , [AC_MSG_NOTICE([ISL library not found])])
 
+AC_MSG_CHECKING([for Termcap library])
+AC_CHECK_LIB(termcap, tgetent, , [AC_MSG_NOTICE([Termcap library not found, see http://ftp.gnu.org/gnu/termcap/])])
+
+AC_CHECK_PROG([TEXINFO], [makeinfo], [yes])
+AS_IF([test "x$TEXINFO" != "xyes"],[
+	AC_MSG_ERROR([Please install the 'texinfo' program and make sure 'makeinfo' is in the PATH.])
+])
+
 AC_MSG_CHECKING([for infiniband])
 AC_CHECK_LIB(ibverbs, ibv_get_device_list, [], AC_MSG_NOTICE([libibverbs not found.]))
+
 #
 # Check for whether to build slurm module
 # 

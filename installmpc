@@ -29,29 +29,6 @@ else
 	PROJECT_SOURCE_DIR="${PWD}"
 fi
 
-for arg in "$@"
-do
-	case "$arg" in
-		--check-deps)
-			${PROJECT_SOURCE_DIR}/check_deps --with-slurm
-			exit
-		;;
-	esac
-done
-
-#Avoid to build locally
-if [ "${PROJECT_BUILD_DIR}" = "${PROJECT_SOURCE_DIR}" ]; 
-then
-	#check if build directory exist
-	if [ ! -d "${PWD}/build" ];
-	then
-		mkdir -p build
-	fi
-	PROJECT_BUILD_DIR="${PWD}/build"
-	PROJECT_SOURCE_DIR="${PWD}"
-	cd build
-fi
-
 ######################################################
 #Include common
 . "${PROJECT_SOURCE_DIR}/tools/Common.sh"
@@ -304,6 +281,33 @@ do
 			exit 1
 	esac
 done
+
+#######################################################
+# Check for dependencies
+if test "${HYDRA_PREFIX}" = "disabled"; 
+then
+	${PROJECT_SOURCE_DIR}/check_deps --with-slurm > deps_result.txt
+else
+	${PROJECT_SOURCE_DIR}/check_deps > deps_result.txt
+fi
+check_dependencies
+#if test -f "deps_result.txt"; then 
+#	rm deps_result.txt
+#fi
+
+#######################################################
+# Avoid to build locally
+if [ "${PROJECT_BUILD_DIR}" = "${PROJECT_SOURCE_DIR}" ]; 
+then
+	#check if build directory exist
+	if [ ! -d "${PWD}/build" ];
+	then
+		mkdir -p build
+	fi
+	PROJECT_BUILD_DIR="${PWD}/build"
+	PROJECT_SOURCE_DIR="${PWD}"
+	cd build
+fi
 
 ######################################################
 #Check if install is already there

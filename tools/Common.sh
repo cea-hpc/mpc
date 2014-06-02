@@ -30,6 +30,83 @@ escapeName()
 }
 
 ######################################################
+# Check dependencies for MPC installation
+check_dependencies()
+{
+	stop="0"
+	#dependencies for gcc and gdb
+	if test "${GCC_PREFIX}" != "disabled" -o "${GDB_PREFIX}" != "disabled"; 
+	then
+		echo "# Deps for GCC and GDB:"
+		#test for lib CLooG
+		res="`cat deps_result.txt | grep \"CLooG\"`"
+		if test "`echo \"${res}\" | grep \"no\"`"; 
+		then
+			echo "Pas de lib CLooG"
+			stop="1"
+		else
+			echo "Lib CLooG found"
+		fi
+
+		#test for lib ISL
+		res="`cat deps_result.txt | grep \"ISL\"`"
+		if test "`echo \"${res}\" | grep \"no\"`";
+		then
+			echo "Pas de lib ISL"
+			stop="1"
+		else
+			echo "Lib ISL Found"
+		fi  
+	fi
+
+	#Dependencies for gdb only
+	if test "${GDB_PREFIX}" != "disabled"; 
+	then
+		echo "# Deps for GDB only:"
+		#test for lib termcap
+		res="`cat deps_result.txt | grep \"Termcap\"`"
+		if test "`echo \"${res}\" | grep \"no\"`";
+		then
+			echo "Pas de lib Termcap"
+			stop="1"
+		else
+			echo "Lib Termcap found"
+		fi
+
+		#test for lib termcap
+        res="`cat deps_result.txt | grep \"makeinfo\"`"
+		if test "`echo \"${res}\" | grep \"no\"`";
+		then
+			echo "Pas de Textinfo"
+			stop="1"
+		else
+			echo "Textinfo found"
+		fi  
+																				
+	fi
+
+	#Dependencies for infiniband
+	echo "# Deps for Infiniband network:"
+	res="`cat deps_result.txt | grep \"infiniband\"`"
+	if test "`echo \"${res}\" | grep \"no\"`";
+	then
+		echo "Pas de lib ibverbs"
+		stop="1"
+	else
+		echo "Lib ibverbs found"
+	fi
+
+	#stop
+	if test "${stop}" = "1";
+	then
+		if test -f "deps_result.txt"; then 
+			rm deps_result.txt
+		fi
+		exit
+	fi
+}
+
+######################################################
 # Check if the install is already there
 checkIfInstallAlreadyExists()
 {
