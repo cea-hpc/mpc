@@ -29,6 +29,16 @@ else
 	PROJECT_SOURCE_DIR="${PWD}"
 fi
 
+for arg in "$@"
+do
+	case "$arg" in
+		--check-deps)
+			${PROJECT_SOURCE_DIR}/check_deps --with-slurm
+			exit
+		;;
+	esac
+done
+
 #Avoid to build locally
 if [ "${PROJECT_BUILD_DIR}" = "${PROJECT_SOURCE_DIR}" ]; 
 then
@@ -306,8 +316,8 @@ fi
 if test "${MPC_TARGET}" = "k1om"; then
 	if test "${ARCH_LIBRARY_PATH}" = ""; then
 		echo "##########################################################################################"
-		echo "# You must use --arch-library-path=* to specify the path of the k1om specific libraries. #"
-		echo "# Example: --arch-library-path=/opt/intel/composer_xe_2013.4.183/compiler/libs/mic       #"
+		echo "# You must use --arch-library-path=* to specify the path of the k1om specific libraries. #"
+		echo "# Example: --arch-library-path=/opt/intel/composer_xe_2013.4.183/compiler/libs/mic       #"
 		echo "##########################################################################################"
 		exit 1
 	fi
