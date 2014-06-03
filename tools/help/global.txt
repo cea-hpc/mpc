@@ -12,6 +12,7 @@ Defaults for the options are specified in brackets.
 # Installation
   --prefix=PREFIX                         : Install architecture-independent files in PREFIX [/usr/local]
   --disable-check-install                 : Override installation if it already exists in the prefix
+  --disable-check-deps                    : Disable dependency checking
 
 # Build
   --compiler                              : Default compiler
