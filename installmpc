@@ -17,7 +17,7 @@ DOWNLOAD='disabled'
 MIRROR='1'
 MULTI_ARCH='false'
 CHECK_INSTALL="true"
-CHECK_DEPS="true"
+CHECK_DEPS="false"
 
 ######################################################
 #Setup paths
