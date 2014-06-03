@@ -73,15 +73,15 @@ check_dependencies()
 			echo "Lib Termcap found"
 		fi
 
-		#test for lib termcap
-        res="`cat deps_result.txt | grep \"makeinfo\"`"
-		if test "`echo \"${res}\" | grep \"no\"`";
-		then
-			echo "Pas de Textinfo"
-			stop="1"
-		else
-			echo "Textinfo found"
-		fi  
+		#test for lib texinfo
+  		#res="`cat deps_result.txt | grep \"makeinfo\"`"
+		# if test "`echo \"${res}\" | grep \"no\"`";
+		# then
+		# 	echo "Pas de Texinfo"
+		# 	stop="1"
+		# else
+		# 	echo "Texinfo found"
+		# fi  
 																				
 	fi
 
