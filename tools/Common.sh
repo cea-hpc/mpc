@@ -38,43 +38,32 @@ check_dependencies()
 	#dependencies for gcc and gdb
 	if test "${GCC_PREFIX}" != "disabled" -o "${GDB_PREFIX}" != "disabled"; 
 	then
-		echo "# Deps for GCC and GDB:"
 		#test for lib CLooG
 		res="`cat deps_result.txt | grep \"CLooG\"`"
 		if test "`echo \"${res}\" | grep \"no\"`"; 
 		then
-			#echo "Pas de lib CLooG"
 			list_deps="$list_deps libcloog-ppl-dev"
 			stop="1"
-		else
-			#echo "Lib CLooG found"
 		fi
 
 		#test for lib ISL
 		res="`cat deps_result.txt | grep \"ISL\"`"
 		if test "`echo \"${res}\" | grep \"no\"`";
 		then
-			#echo "Pas de lib ISL"
-			list_deps="$list_deps libcloog-isl-dev libcloog-isl4"
+			list_deps="$list_deps libcloog-isl-dev"
 			stop="1"
-		else
-			#echo "Lib ISL Found"
 		fi  
 	fi
 
 	#Dependencies for gdb only
 	if test "${GDB_PREFIX}" != "disabled"; 
 	then
-		echo "# Deps for GDB only:"
 		#test for lib termcap
 		res="`cat deps_result.txt | grep \"Termcap\"`"
 		if test "`echo \"${res}\" | grep \"no\"`";
 		then
-			#echo "Pas de lib Termcap"
 			list_deps="$list_deps libncurses5-dev"
 			stop="1"
-		else
-			#echo "Lib Termcap found"
 		fi
 
 		#test for lib texinfo
@@ -86,34 +75,27 @@ check_dependencies()
 		# else
 		# 	echo "Texinfo found"
 		# fi  
-																				
 	fi
 
 	#Dependencies for infiniband
-	echo "# Deps for Infiniband network:"
 	res="`cat deps_result.txt | grep \"infiniband\"`"
 	if test "`echo \"${res}\" | grep \"no\"`";
 	then
-		#echo "Pas de lib ibverbs"
 		list_deps="$list_deps libibverbs-dev"
 		stop="1"
-	else
-		#echo "Lib ibverbs found"
 	fi
 
 	#stop
 	if test "${stop}" = "1";
 	then
-		system=`uname -v | cut -f 3 -d " "`
-		#echo "system = $system"
-		case "$system" in 
-			Debian)
-				echo "############################################################################"
-				echo "# Il vous manque des paquets. Intallez-les avec la commande:"
-				echo "# sudo apt-get install $list_deps"
-				echo "############################################################################"
-			;;
-		esac
+		echo "#################################################################################"
+		echo "# The following packages are missing: "
+		echo "# ${list_deps}"
+		echo "#"
+		echo "# Please contact your administrator to install them or type the following"
+		echo "# command if you are using a debian based distribution and you get admin rights"
+		echo "# sudo apt-get install $list_deps"
+		echo "#################################################################################"
 		if test -f "deps_result.txt"; then 
 			rm deps_result.txt
 		fi
