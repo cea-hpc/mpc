@@ -490,7 +490,7 @@ for i in \$@ ; do
     fi
 
     if test "\$i" = "-fopenmp" -o "\$i" = "-openmp" ; then
-	CURRENT_ARG="-B \${MPC_RPREFIX}/\${MPC_SUBPREFIX}"
+	CURRENT_ARG="${CURRENT_ARG} -B \${MPC_RPREFIX}/\${MPC_SUBPREFIX}"
     fi
 
     if test "\$i" = "-compilers" ; then
