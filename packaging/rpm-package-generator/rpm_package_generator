@@ -103,7 +103,7 @@ extract_version_from_sources()
 {
 	#infd MPC_VERSION number
 	if test -z "$MPC_VERSION" ; then
-		MPC_VERSION="`MPC_SOURCE_DIR=../../mpc/ ../../mpc/MPC_Tools/mpc_print_version`"
+		MPC_VERSION="`MPC_SOURCE_DIR=../../mpcframework/ ../../mpcframework/MPC_Tools/mpc_print_version`"
 		if test -z "$MPC_VERSION" ; then
 			print_error "Unable to find MPC version Number !"
 			break;
