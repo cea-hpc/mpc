@@ -1,7 +1,7 @@
 # name       ;   v   ; sup v ; status  ;                        deps                       ; run-on  ;     type     ;    template 
 #############################################################################################################################
 libxml2      ; 2.8.0 ;       ; dep     ;                                                   ; target  ; extern       ; generic.autotools
-hwloc        ; 1.6.1 ; 1.6.1 ; install ;                                                   ; target  ; extern		; generic.autotools
+hwloc        ; 1.9   ; 1.9   ; install ;                                                   ; target  ; extern		; generic.autotools
 binutils     ; 2.22  ; 2.22  ; install ;                                                   ; host    ; extern		; generic.autotools
 gmp          ; 4.3.2 ;       ; dep     ;                                                   ; host    ; extern		; generic.autotools.libsgcc
 mpfr         ; 2.4.2 ;       ; dep     ; gmp                                               ; host    ; extern		; generic.autotools.libsgcc
