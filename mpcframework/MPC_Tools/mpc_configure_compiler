@@ -112,12 +112,11 @@ esac
 use_mpc_privat="true"
 
 # Regular flags and compiler (C, C++ or fortran)
-if test ! -z "${BINUTILS_PREFIX_INSTALL}" && test "$use_mpc_privat" = "true"
+if test "${BINUTILS_PREFIX}" != "disabled" && test "$use_mpc_privat" = "true"
 then
-BINUTILS_SUBPREFIX="${BINUTILS_PREFIX_INSTALL#*${MPC_RPREFIX}}"
 cat <<EOF >> $1
 CFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_cflags $2\`"
-LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags $2\` -B\${MPC_RPREFIX}/${BINUTILS_SUBPREFIX}/bin"
+LDFLAGS="\`\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/mpc_ldflags $2\` -B\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin"
 CC=$CC
 EOF
 else
