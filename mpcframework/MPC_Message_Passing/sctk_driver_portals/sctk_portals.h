@@ -17,6 +17,7 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - GONCALVES Thomas thomas.goncalves@cea.fr                         # */
 /* #                                                                      # */
 /* ######################################################################## */
 
@@ -31,6 +32,7 @@ extern "C"
 #error "sctk_route must be included before sctk_portals.h"
 #endif
 
+#ifdef MPC_USE_PORTALS
 #include <sctk_spinlock.h>
 #include <portals4.h>
 
@@ -87,7 +89,7 @@ extern "C"
         case PTL_NO_SPACE: fprintf(stderr, "=> %s returned PTL_NO_SPACE (line %u)\n", #x, (unsigned int)__LINE__); abort(); break; \
         case PTL_ARG_INVALID: fprintf(stderr, "=> %s returned PTL_ARG_INVALID (line %u)\n", #x, (unsigned int)__LINE__); abort(); break; \
         case PTL_NO_INIT: fprintf(stderr, "=> %s returned PTL_NO_INIT (line %u)\n", #x, (unsigned int)__LINE__); abort(); break; \
-	case PTL_PT_IN_USE: fprintf(stderr, "=> %s returned PTL_PT_IN_USE (line %u)\n", #x, (unsigned int)__LINE__); abort(); break; \
+		case PTL_PT_IN_USE: fprintf(stderr, "=> %s returned PTL_PT_IN_USE (line %u)\n", #x, (unsigned int)__LINE__); abort(); break; \
         case PTL_IN_USE: fprintf(stderr, "=> %s returned PTL_IN_USE (line %u)\n", #x, (unsigned int)__LINE__); abort(); break; \
         default: fprintf(stderr, "=> %s returned failcode %i (line %u)\n", #x, ret, (unsigned int)__LINE__); abort(); break; \
     } } while (0)
@@ -174,5 +176,6 @@ void sctk_network_init_multirail_portals(int rail_id, int max_rails);
 #endif 
 #ifdef __cplusplus
 }
+#endif
 #endif
 #endif

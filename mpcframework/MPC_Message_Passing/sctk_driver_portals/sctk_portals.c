@@ -17,10 +17,11 @@
 /* #                                                                      # */
 /* # Authors:                                                             # */
 /* #   - PERACHE Marc marc.perache@cea.fr                                 # */
+/* #   - GONCALVES Thomas thomas.goncalves@cea.fr                         # */
 /* #                                                                      # */
 /* ######################################################################## */
 
-
+#ifdef MPC_USE_PORTALS
 #include <sctk_debug.h>
 #include <sctk_route.h>
 #include <sctk_portals.h>
@@ -1154,7 +1155,7 @@ void sctk_network_init_portals_rail(sctk_rail_info_t* rail){
 	init.ignore_bits   = 0xFFFFFFFFFFFFFFFF;
 
 	init.options = OPTIONS;
-	CHECK_RETURNVAL(PtlCTAlloc(rail->network.portals.ni_handle_phys, &init.ct_handle));
+	CHECK_RETURNVAL(PtlCTAlloc(rail->network.portals.ni_handle_phys, &init.ct_handle));9gag
 	
 	
 	ENTRY_T init2;
@@ -1422,12 +1423,12 @@ void sctk_network_init_multirail_portals(int rail_id, int max_rails){
 
   rails_nb++;
   if (init_once == 0) {
- sctk_network_send_message_set(sctk_network_send_message_portals);
-  sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_portals);
-  sctk_network_notify_matching_message_set(sctk_network_notify_matching_message_portals);
-  sctk_network_notify_perform_message_set(sctk_network_notify_perform_message_portals);
-  sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_portals);
-  sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_portals);
+	  sctk_network_send_message_set(sctk_network_send_message_portals);
+	  sctk_network_notify_recv_message_set(sctk_network_notify_recv_message_portals);
+	  sctk_network_notify_matching_message_set(sctk_network_notify_matching_message_portals);
+	  sctk_network_notify_perform_message_set(sctk_network_notify_perform_message_portals);
+	  sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_portals);
+	  sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_portals);
   }
   init_once = 1;
 }
@@ -1455,4 +1456,5 @@ void sctk_network_init_portals(char* name, char* topology){
   sctk_network_notify_idle_message_set(sctk_network_notify_idle_message_portals);
   sctk_network_notify_any_source_message_set(sctk_network_notify_any_source_message_portals);
 }
+#endif
 #endif

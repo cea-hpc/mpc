@@ -396,9 +396,11 @@ void sctk_net_init_driver (char* name)
 				sctk_network_init_multirail_ib(k, nb_rails_infiniband);
 			break;
 			#endif
+#ifdef MPC_USE_PORTALS
             case SCTK_RTCFG_net_driver_portals: /* TCP */
               sctk_network_init_multirail_portals(k, nb_rails_portals);
               break;
+#endif
 			case SCTK_RTCFG_net_driver_tcp: /* TCP */
 				sctk_network_init_multirail_tcp(k, nb_rails_tcp);
 			break;
