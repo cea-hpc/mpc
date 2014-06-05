@@ -238,6 +238,9 @@ do
 			MPCFRAMEWORK_BUILD_PARAMETERS="${MPCFRAMEWORK_BUILD_PARAMETERS} ${ARCH_LIBRARY_PATH}"
 		;;
 		################## COMMON ###################
+		--enable-check-deps)
+			CHECK_DEPS="true"
+			;;
 		--disable-check-deps)
 			CHECK_DEPS="false"
 			;;
@@ -290,13 +293,22 @@ done
 # Check for dependencies
 if test "${CHECK_DEPS}" = "true";
 then 
+	package_list=""
 	if test "${HYDRA_PREFIX}" = "disabled"; 
 	then
 		${PROJECT_SOURCE_DIR}/check_deps --with-slurm > deps_result.txt
 	else
 		${PROJECT_SOURCE_DIR}/check_deps > deps_result.txt
 	fi
-	check_dependencies
+	if test "${GCC_PREFIX}" != "disabled"; then
+		package_list="gcc"
+	fi
+	if test "${GDB_PREFIX}" != "disabled"; then
+		package_list="${package_list} gdb"
+	fi
+	package_list="${package_list} infiniband"
+
+	check_dependencies "${package_list}"
 	if test -f "deps_result.txt"; then 
 		rm deps_result.txt
 	fi

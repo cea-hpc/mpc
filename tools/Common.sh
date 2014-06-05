@@ -31,70 +31,45 @@ escapeName()
 
 ######################################################
 # Check dependencies for MPC installation
+# $1 : list of packages which need dependencies
 check_dependencies()
 {
+	list_missing_deps=""
 	list_deps=""
 	stop="0"
-	#dependencies for gcc and gdb
-	if test "${GCC_PREFIX}" != "disabled" -o "${GDB_PREFIX}" != "disabled"; 
-	then
-		#test for lib CLooG
-		res="`cat deps_result.txt | grep \"CLooG\"`"
-		if test "`echo \"${res}\" | grep \"no\"`"; 
-		then
-			list_deps="$list_deps libcloog-ppl-dev"
-			stop="1"
-		fi
-
-		#test for lib ISL
-		res="`cat deps_result.txt | grep \"ISL\"`"
-		if test "`echo \"${res}\" | grep \"no\"`";
-		then
-			list_deps="$list_deps libcloog-isl-dev"
-			stop="1"
-		fi  
-	fi
-
-	#Dependencies for gdb only
-	if test "${GDB_PREFIX}" != "disabled"; 
-	then
-		#test for lib termcap
-		res="`cat deps_result.txt | grep \"Termcap\"`"
-		if test "`echo \"${res}\" | grep \"no\"`";
-		then
-			list_deps="$list_deps libncurses5-dev"
-			stop="1"
-		fi
-
-		#test for lib texinfo
-  		#res="`cat deps_result.txt | grep \"makeinfo\"`"
-		# if test "`echo \"${res}\" | grep \"no\"`";
-		# then
-		# 	echo "Pas de Texinfo"
-		# 	stop="1"
-		# else
-		# 	echo "Texinfo found"
-		# fi  
-	fi
-
-	#Dependencies for infiniband
-	res="`cat deps_result.txt | grep \"infiniband\"`"
-	if test "`echo \"${res}\" | grep \"no\"`";
-	then
-		list_deps="$list_deps libibverbs-dev"
-		stop="1"
-	fi
-
-	#stop
+	# list of packages which need dependencies
+	for package in ${1}
+	do
+		# fetch list of dependencies for the package
+		list_deps=`cat "${PROJECT_SOURCE_DIR}/.dep_config" | grep "${package}" | cut -f 2 -d " "`
+		for list_pattern in ${list_deps}
+		do
+			pattern=`echo "${list_pattern}" | cut -f 1 -d ':'`
+			install=`echo "${list_pattern}" | cut -f 2 -d ':'`
+			res="`cat deps_result.txt | grep \"${pattern}\"`"
+			# if dependencies not found
+			if test "`echo \"${res}\" | grep \"no\"`"; 
+			then
+				tmp=`echo "${list_missing_deps}" | grep "${install}"`
+				# avoid doubles
+				if test "$tmp" = ""; then
+					# add dependencies to the list
+					list_missing_deps="$list_missing_deps ${install}"
+					stop="1"
+				fi
+			fi
+		done
+	done
+	#stop install
 	if test "${stop}" = "1";
 	then
 		echo "#################################################################################"
 		echo "# The following packages are missing: "
-		echo "# ${list_deps}"
+		echo "# ${list_missing_deps}"
 		echo "#"
 		echo "# Please contact your administrator to install them or type the following"
 		echo "# command if you are using a debian based distribution and you get admin rights"
-		echo "# sudo apt-get install $list_deps"
+		echo "# sudo apt-get install $list_missing_deps"
 		echo "#################################################################################"
 		if test -f "deps_result.txt"; then 
 			rm deps_result.txt
