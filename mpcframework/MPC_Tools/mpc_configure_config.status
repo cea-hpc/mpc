@@ -55,6 +55,7 @@ SCTK_INCLUDE_DIR="$SCTK_INCLUDE_DIR"
 MPC_VERSION="$MPC_VERSION"
 SCTK_FORTRAN="$SCTK_FORTRAN"
 IN_CONFIG_STATUS="1"
+COMPILER_LIST="$COMPILER_LIST"
 
 SCTK_CROSS_EXEC="$SCTK_CROSS_EXEC"
 SCTK_CROSS_PREFIX="$SCTK_CROSS_PREFIX"
@@ -76,6 +77,7 @@ SCTK_PTHREAD_COMPATIBILITY="$SCTK_PTHREAD_COMPATIBILITY"
 SCTK_CC_DEP="$SCTK_CC_DEP"
 SCTK_OS="${SCTK_OS}"
 SCTK_ARCH="${SCTK_ARCH}"
+SCTK_SHM="$SCTK_SHM"
 
 for i in \$MODULE_LIST; do 
     eval "\${i}=1"
@@ -124,6 +126,7 @@ MODULE_LIST="$MODULE_LIST"
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_ldflags
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_cflags
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_mpcrun
+. ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_mpc_edit_config
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_compiler
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_env
 . ${MPC_SOURCE_DIR}MPC_Tools/mpc_configure_status
