@@ -472,10 +472,12 @@ if test "${arch_bin}" = "k1om"; then
 else
     echo "${arch_bin} architecture detected"
     # setup complete hydra path. Exported to be used into mpcrun_opt/* scripts
-	if [ $SCTK_HYDRA -eq 1 ] && [ $MPC_HYDRA -eq 1 ] && [ ! -z "$SCTK_HYDRA_PREFIX" ]; then
+    if test "$SCTK_HYDRA" != ""; then 
+	if [ $SCTK_HYDRA -eq 1 ] && [ ! -z "$SCTK_HYDRA_PREFIX" ]; then
 		export SCTK_HYDRA_BINDIR="${prefix}/bin/"
 		export PATH="${SCTK_HYDRA_BINDIR}:${PATH}"
 	fi
+    fi
 fi
 
 if test "$PROCESS_NB" = "0" ; then
