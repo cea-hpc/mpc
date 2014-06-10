@@ -231,6 +231,8 @@ cat << EOF >> $1
 	-fmpc-privatize)
     if test "\${CC}" = "icc"; then
         addarg=no
+    elif test "\${CC}" = "gcc"; then
+        addarg=no
     else
         qarg="'"\$arg"'"
     fi  
