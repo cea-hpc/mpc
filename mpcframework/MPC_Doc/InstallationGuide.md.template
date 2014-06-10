@@ -11,11 +11,13 @@ Cross-compilation Installation guide
 
 ### Prerequisites
 
-* __For ARM architecture__: a cross-compiled gcc which generate code for ARM architecture
-* __For MIC architecture__: the Intel Compiler suite and the Intel libraries ([Intel MPSS](http://link))
 * __General__:
-  * You need to install MPC for the architecture you will compile for _AND_ the architecture you will launch on.
-  * The prefix for both installations have to be on the _SAME_ prefix.
+  * You need to install MPC for the architecture you will target _AND_ for the architecture from which you will launch your programs. For instance, __For ARM architecture__: a cross-compiled gcc which generate code for ARM architecture.
+  * The prefix for both installations has to be on the same.
+
+* __For ARM architecture__: a cross-compiled gcc which generate code for ARM architecture
+* __For MIC architecture__: the Intel Compiler suite and the Intel libraries ([Intel MPSS](https://software.intel.com/en-us/articles/intel-manycore-platform-software-stack-mpss))
+
 
 ### MIC Compilation
 
@@ -36,7 +38,8 @@ Cross-compilation Installation guide
 3.  Source the _mpcvars_ script located in the root directory of your MPC installation prefix
   
         $ . $HOME/install-mpc/mpcvars.sh for sh shells
-        $ source $HOME/install-mpc/mpcvars.csh for csh, tcsh or bash shells
+	$ source $HOME/install-mpc/mpcvars.sh for bash shells
+        $ source $HOME/install-mpc/mpcvars.csh for csh or tcsh shells
     
     This will load the MPC environment for the current architecture. 
     You can force to load the environment for the MIC architecture by typing:
@@ -121,3 +124,5 @@ Cross-compilation Installation guide
 
 Arguments of the installmpc installation script
 -----------------------------------------------
+ 
+>
