@@ -37,7 +37,7 @@
 	$(STEP_WRAPPER) "Build $(@PACKAGE_VAR_NAME@_STEP_NAME)"   $(MAKE) $(MFLAGS) -C $(@PACKAGE_VAR_NAME@_BUILD_DIR) && echo "$(MAKE) $(MFLAGS)" > .@PACKAGE_NAME@.make
 
 .@PACKAGE_NAME@.install: @PACKAGE_DEPS@ .@PACKAGE_NAME@-prepare .@PACKAGE_NAME@.configure .@PACKAGE_NAME@.make
-	$(STEP_WRAPPER) "Install $(@PACKAGE_VAR_NAME@_STEP_NAME)" $(MAKE) $(MFLAGS) -C $(@PACKAGE_VAR_NAME@_BUILD_DIR) install && touch .@PACKAGE_NAME@.install && LD_LIBRARY_PATH=$(PREFIX)/lib:$(LD_LIBRARY_PATH) && export LD_LIBRARY_PATH
+	$(STEP_WRAPPER) "Install $(@PACKAGE_VAR_NAME@_STEP_NAME)" $(MAKE) -j1 $(MFLAGS) -C $(@PACKAGE_VAR_NAME@_BUILD_DIR) install && touch .@PACKAGE_NAME@.install && LD_LIBRARY_PATH=$(PREFIX)/lib:$(LD_LIBRARY_PATH) && export LD_LIBRARY_PATH
 
 #avoid conflict with directory
 .PHONY: @PACKAGE_NAME@ @PACKAGE_NAME@-gen-help

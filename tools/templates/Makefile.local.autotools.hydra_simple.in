@@ -25,7 +25,7 @@
 	cd $(@PACKAGE_VAR_NAME@_BUILD_DIR) && $(STEP_WRAPPER) "Configure $(@PACKAGE_VAR_NAME@_STEP_NAME)" $(@PACKAGE_VAR_NAME@_SOURCE_DIR)/configure --prefix=$(PREFIX)/@PACKAGE_NAME@ $(@PACKAGE_VAR_NAME@_BUILD_PARAMETERS) && cd ../ && echo "$(MAKE) $(MFLAGS)" > .@PACKAGE_NAME@.make
 
 .@PACKAGE_NAME@.install: @PACKAGE_DEPS@ .@PACKAGE_NAME@.configure .@PACKAGE_NAME@.make
-	$(STEP_WRAPPER) "Build $(@PACKAGE_VAR_NAME@_STEP_NAME)"   $(MAKE) $(MFLAGS) -C $(@PACKAGE_VAR_NAME@_BUILD_DIR) && touch .@PACKAGE_NAME@.install
+	$(STEP_WRAPPER) "Build $(@PACKAGE_VAR_NAME@_STEP_NAME)"   $(MAKE) -j1 $(MFLAGS) -C $(@PACKAGE_VAR_NAME@_BUILD_DIR) && touch .@PACKAGE_NAME@.install
 
 #avoid conflict with directory
 .PHONY: @PACKAGE_NAME@ @PACKAGE_NAME@-gen-help
