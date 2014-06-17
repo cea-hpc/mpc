@@ -176,7 +176,7 @@ if test "$SCTK_EPREFIX" = "" ; then SCTK_EPREFIX=`echo "\\${MPC_RPREFIX}/${MPC_S
 if test "$SCTK_BIN_DIR" = "" ; then SCTK_BIN_DIR=`echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin"`; fi
 if test "$SCTK_BIN_DIR_TARGET" = "" ; then SCTK_BIN_DIR_TARGET="`echo "$SCTK_BIN_DIR" | sed -e 's|'"${MPC_HOST}"'|'"${MPC_TARGET}"'|g'`"; fi
 if test "$SCTK_LIB_DIR" = "" ; then SCTK_LIB_DIR=`echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}/lib"`; fi
-if test "$SCTK_INCLUDE_DIR" = "" ; then SCTK_INCLUDE_DIR=`echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}/include"`; fi
+if test "$SCTK_INCLUDE_DIR" = "" ; then SCTK_INCLUDE_DIR=`echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}/include/mpcframework"`; fi
 if test "$SCTK_MAN_DIR" = "" ; then SCTK_MAN_DIR=`echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}/man"`; fi
 if test "$SCTK_SHARE_DIR" = "" ; then SCTK_SHARE_DIR=`echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}/share/mpc"`; fi
 if test "$SCTK_SHARE_ED_DIR" = "" ; then SCTK_SHARE_ED_DIR=`echo "\\${MPC_RPREFIX}/${MPC_SUBPREFIX}/share/editor"`; fi
