@@ -467,8 +467,8 @@ fi
 cat <<EOF >> $1
 COMPILER_ARGS=""
 
-for i in \$@ ; do
-    CURRENT_ARG="\$i"
+for i in "\$@" ; do
+    CURRENT_ARG="'\$i'"
     
     #This is used to add the mpc.h include
     #when compiling third party modules
@@ -547,7 +547,7 @@ EOF
 fi
 cat <<EOF >> $1
 
-\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/$3 \$ADD_FLAG_PRIVATIZE \$COMPILER_ARGS
+eval "\${MPC_RPREFIX}/${MPC_SUBPREFIX}/bin/$3 \$ADD_FLAG_PRIVATIZE \$COMPILER_ARGS"
 
 EOF
 
