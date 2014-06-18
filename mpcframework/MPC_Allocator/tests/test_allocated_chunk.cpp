@@ -24,6 +24,7 @@
 /************************** HEADERS ************************/
 #include <svUnitTest/svUnitTest.h>
 #include <sctk_allocator.h>
+#include <unistd.h>
 #include <cstring>
 #include "test_helper.h"
 #include "sctk_alloc_inlined.h"
