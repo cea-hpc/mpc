@@ -206,7 +206,7 @@ sctk_init_module (size_t m, char *module, size_t size)
     }
 }
 
-#define SCTK_COW_TLS
+/* #define SCTK_COW_TLS */
 static inline int
 sctk_get_module_file_decr (size_t m, size_t module_size)
 {
