@@ -372,10 +372,27 @@ sctk_get_cpu_intern ()
   assume(ret!=-1);
   assume(!hwloc_bitmap_iszero(set));
 
-  /* Check if only one CPU in the CPU set. Maybe there is a simpler function
-   * to do that */
-  if(sctk_xml_specific_path == NULL)
-  assume (hwloc_bitmap_first(set) ==  hwloc_bitmap_last(set));
+
+  /* Check if HWLOC_XMLFILE env variable is set. This variable aims at modifing 
+   *  a fake topology to test the runtime bahivior. On the downside, hwloc 
+   *  disables binding. */
+  
+  int isset_hwloc_xmlfile =  (getenv ("HWLOC_XMLFILE") != NULL);
+
+  /* Check if HWLOC_THISSYSTEM env variable is set. This variable aims at asserting 
+   *  that the topology loaded with the HWLOC_XMLFILE env variable is the same as
+   *  this system. */
+
+  int isset_hwloc_thissystem = 0;
+  char* hwloc_thissystem = getenv ("HWLOC_THISSYSTEM");
+  if (hwloc_thissystem != NULL) isset_hwloc_thissystem =  (strcmp ( hwloc_thissystem , "1") == 0);
+
+  if ( !isset_hwloc_xmlfile || (isset_hwloc_xmlfile && isset_hwloc_thissystem) ) {
+    /* Check if only one CPU in the CPU set. Maybe there is a simpler function
+     * to do that */
+    if(sctk_xml_specific_path == NULL)  
+      assume (hwloc_bitmap_first(set) ==  hwloc_bitmap_last(set));
+  }
 
   hwloc_obj_t pu = hwloc_get_obj_inside_cpuset_by_type(topology, set, HWLOC_OBJ_PU, 0);
 
