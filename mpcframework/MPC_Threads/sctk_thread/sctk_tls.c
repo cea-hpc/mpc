@@ -238,7 +238,12 @@ sctk_get_module_file_decr (size_t m, size_t module_size)
 
       remove (name);
       fd = open (name, O_CREAT | O_RDWR | O_TRUNC,S_IRWXU);
-      assert (fd > 0);
+      /* assert (fd > 0); */
+	  if(fd <= 0)
+	  {
+		sctk_spinlock_unlock (&(lock));
+		return -1;
+	  }
 
       tls_module = sctk_malloc (module_size);
 
