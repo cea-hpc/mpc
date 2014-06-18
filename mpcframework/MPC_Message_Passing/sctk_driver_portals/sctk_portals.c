@@ -1155,7 +1155,7 @@ void sctk_network_init_portals_rail(sctk_rail_info_t* rail){
 	init.ignore_bits   = 0xFFFFFFFFFFFFFFFF;
 
 	init.options = OPTIONS;
-	CHECK_RETURNVAL(PtlCTAlloc(rail->network.portals.ni_handle_phys, &init.ct_handle));9gag
+	CHECK_RETURNVAL(PtlCTAlloc(rail->network.portals.ni_handle_phys, &init.ct_handle));
 	
 	
 	ENTRY_T init2;
