@@ -83,6 +83,11 @@ Need to check this in more depth for futur version ( > 2.4.0-1).
 #endif
 #endif
 
+#ifdef __MIC__
+	#undef DONOTHAVE_CONTEXTS
+	#define DONOTHAVE_CONTEXTS
+#endif
+
 #ifdef DONOTHAVE_CONTEXTS
 #undef SCTK_MCTX_MTH_use
 #undef SCTK_MCTX_DSP_use
