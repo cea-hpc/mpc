@@ -28,6 +28,9 @@
 #include <pthread.h>
 #include <stdio.h>
 #include <sched.h>
+#ifdef __MIC__
+#include <immintrin.h>
+#endif
 
 #ifdef __cplusplus
 extern "C"
